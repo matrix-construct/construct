@@ -1,3 +1,16 @@
+nenolod     2007/01/25 06:40:21 UTC	(20070125-3143)
+  Log:
+  - the new plan:
+    + branches/release-2.1 -> 2.2 base
+    + 3.0 -> branches/cxxconversion
+    + backport some immediate 3.0 functionality for 2.2
+    + other stuff
+  
+
+  Changes:	Modified:
+  + -		trunk/ (File Added) 
+
+
 jilles      2007/01/23 23:48:50 UTC	(20070123-3139)
   Log:
   Merged revisions 3135,3137 via svnmerge from 

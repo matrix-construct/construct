@@ -1,5 +1,7 @@
-This is charybdis 2.1.2, Copyright (c) 2005-2006 Charybdis team.
+This is charybdis 2.2.0, Copyright (c) 2005-2007 Charybdis team.
 See LICENSE for licensing details (GPL v2).
+
+-- charybdis-2.2.0
 
 -- charybdis-2.1.2
 
@@ -332,5 +334,5 @@ modules in case the developers need them.
 Other files recommended for reading: BUGS, README.FIRST, INSTALL
 
 --------------------------------------------------------------------------------
-$Id: NEWS 2813 2006-12-05 13:24:19Z jilles $
+$Id: NEWS 3145 2007-01-25 06:45:04Z nenolod $
 
