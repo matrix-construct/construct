@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c 3131 2007-01-21 15:36:31Z jilles $
+ *  $Id: s_user.c 3159 2007-01-25 07:08:21Z nenolod $
  */
 
 #include "stdinc.h"
@@ -56,6 +56,7 @@
 #include "monitor.h"
 #include "snomask.h"
 #include "blacklist.h"
+#include "substitution.h"
 
 static void report_and_set_user_flags(struct Client *, struct ConfItem *);
 void user_welcome(struct Client *source_p);
@@ -452,10 +453,22 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 					source_p->sockhost, source_p->preClient->dnsbl_listed->host);
 		else
 		{
+			dlink_list varlist;
+
+			substitution_append_var(&varlist, "nick", source_p->name);
+			substitution_append_var(&varlist, "ip", source_p->sockhost);
+			substitution_append_var(&varlist, "host", source_p->host);
+			substitution_append_var(&varlist, "dnsbl-host", source_p->preClient->dnsbl_listed->host);
+			substitution_append_var(&varlist, "network-name", ServerInfo.network_name);
+
 			ServerStats->is_ref++;
+
 			sendto_one(source_p, form_str(ERR_YOUREBANNEDCREEP),
 					me.name, source_p->name,
-					source_p->preClient->dnsbl_listed->reject_reason);
+					substitution_parse(source_p->preClient->dnsbl_listed->reject_reason, &varlist));
+
+			substitution_free(&varlist);
+
 			sendto_one_notice(source_p, ":*** Your IP address %s is listed in %s",
 					source_p->sockhost, source_p->preClient->dnsbl_listed->host);
 			source_p->preClient->dnsbl_listed->hits++;

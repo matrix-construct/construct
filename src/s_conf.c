@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.c 3131 2007-01-21 15:36:31Z jilles $
+ *  $Id: s_conf.c 3159 2007-01-25 07:08:21Z nenolod $
  */
 
 #include "stdinc.h"
@@ -379,7 +379,7 @@ verify_access(struct Client *client_p, const char *username)
 		if(ConfigFileEntry.kline_with_reason)
 		{
 			sendto_one(client_p,
-					":%s NOTICE %s :*** Banned %s",
+					form_str(ERR_YOUREBANNEDCREEP),
 					me.name, client_p->name, aconf->passwd);
 		}
 		return (BANNED_CLIENT);
@@ -390,7 +390,7 @@ verify_access(struct Client *client_p, const char *username)
 
 		if(ConfigFileEntry.kline_with_reason)
 			sendto_one(client_p,
-					":%s NOTICE %s :*** Banned %s",
+					form_str(ERR_YOUREBANNEDCREEP),
 					me.name, client_p->name, aconf->passwd);
 
 		return (BANNED_CLIENT);
