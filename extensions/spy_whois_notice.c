@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: spy_whois_notice.c 498 2006-01-15 16:40:33Z jilles $
+ *  $Id: spy_whois_notice.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 #include "stdinc.h"
 #include "modules.h"
@@ -35,7 +35,7 @@ mapi_hfn_list_av1 whois_hfnlist[] = {
 	{NULL, NULL}
 };
 
-DECLARE_MODULE_AV1(whois_spy, NULL, NULL, NULL, NULL, whois_hfnlist, "$Revision: 498 $");
+DECLARE_MODULE_AV1(whois_spy, NULL, NULL, NULL, NULL, whois_hfnlist, "$Revision: 3161 $");
 
 void
 show_whois(hook_data_client *data)
@@ -47,9 +47,9 @@ show_whois(hook_data_client *data)
 	if(MyClient(target_p) && IsOper(target_p) && (source_p != target_p) &&
 	   (target_p->snomask & SNO_SPY))
 	{
-		sendto_one(target_p,
-				":%s NOTICE %s :*** Notice -- %s (%s@%s) is doing a whois on you [%s]",
-				me.name, target_p->name, source_p->name,
+		sendto_one_notice(target_p,
+				":*** Notice -- %s (%s@%s) is doing a whois on you [%s]",
+				source_p->name,
 				source_p->username, source_p->host,
 				source_p->user->server);
 	}

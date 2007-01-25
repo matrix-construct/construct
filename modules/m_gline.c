@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_gline.c 1146 2006-04-07 22:52:35Z jilles $
+ *  $Id: m_gline.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 #include "stdinc.h"
@@ -63,7 +63,7 @@ struct Message ungline_msgtab = {
 };
 
 mapi_clist_av1 gline_clist[] = { &gline_msgtab, &ungline_msgtab, NULL };
-DECLARE_MODULE_AV1(gline, NULL, NULL, gline_clist, NULL, NULL, "$Revision: 1146 $");
+DECLARE_MODULE_AV1(gline, NULL, NULL, gline_clist, NULL, NULL, "$Revision: 3161 $");
 
 static int majority_gline(struct Client *source_p, const char *user,
 			  const char *host, const char *reason);
@@ -93,8 +93,7 @@ mo_gline(struct Client *client_p, struct Client *source_p, int parc, const char 
 
 	if(!ConfigFileEntry.glines)
 	{
-		sendto_one(source_p, ":%s NOTICE %s :GLINE disabled, perhaps you want a clustered or remote KLINE?",
-			   me.name, source_p->name);
+		sendto_one_notice(source_p, ":GLINE disabled, perhaps you want a clustered or remote KLINE?");
 		return 0;
 	}
 
@@ -123,9 +122,7 @@ mo_gline(struct Client *client_p, struct Client *source_p, int parc, const char 
 		/* ok, its not a host.. abort */
 		if(strchr(parv[1], '.') == NULL)
 		{
-			sendto_one(source_p,
-				   ":%s NOTICE %s :Invalid parameters",
-				   me.name, source_p->name);
+			sendto_one_notice(source_p, ":Invalid parameters");
 			return 0;
 		}
 
@@ -142,10 +139,8 @@ mo_gline(struct Client *client_p, struct Client *source_p, int parc, const char 
 	if(check_wild_gline(user, host))
 	{
 		if(MyClient(source_p))
-			sendto_one(source_p,
-				   ":%s NOTICE %s :Please include at least %d non-wildcard "
-				   "characters with the user@host",
-				   me.name, source_p->name, 
+			sendto_one_notice(source_p,
+				   ":Please include at least %d non-wildcard characters with the user@host",
 				   ConfigFileEntry.min_nonwildcard);
 		return 0;
 	}
@@ -160,8 +155,7 @@ mo_gline(struct Client *client_p, struct Client *source_p, int parc, const char 
 		{
 			if(bitlen < ConfigFileEntry.gline_min_cidr)
 			{
-				sendto_one(source_p, ":%s NOTICE %s :Cannot set G-Lines with cidr length < %d",
-					   me.name, source_p->name,
+				sendto_one_notice(source_p, ":Cannot set G-Lines with cidr length < %d",
 					   ConfigFileEntry.gline_min_cidr);
 				return 0;
 			}
@@ -169,8 +163,7 @@ mo_gline(struct Client *client_p, struct Client *source_p, int parc, const char 
 		/* ipv6 */
 		else if(bitlen < ConfigFileEntry.gline_min_cidr6)
 		{
-			sendto_one(source_p, ":%s NOTICE %s :Cannot set G-Lines with cidr length < %d",
-				   me.name, source_p->name, 
+			sendto_one_notice(source_p, ":Cannot set G-Lines with cidr length < %d",
 				   ConfigFileEntry.gline_min_cidr6);
 			return 0;
 		}
@@ -402,7 +395,7 @@ mo_ungline(struct Client *client_p, struct Client *source_p, int parc, const cha
 
 	if(!ConfigFileEntry.glines)
 	{
-		sendto_one(source_p, ":%s NOTICE %s :UNGLINE disabled, perhaps you want UNKLINE?", me.name, parv[0]);
+		sendto_one_notice(source_p, ":UNGLINE disabled, perhaps you want UNKLINE?");
 		return 0;
 	}
 
@@ -438,14 +431,13 @@ mo_ungline(struct Client *client_p, struct Client *source_p, int parc, const cha
 	}
 	else
 	{
-		sendto_one(source_p, ":%s NOTICE %s :Invalid parameters", me.name, parv[0]);
+		sendto_one_notice(source_p, ":Invalid parameters");
 		return 0;
 	}
 
 	if(remove_temp_gline(user, host))
 	{
-		sendto_one(source_p, ":%s NOTICE %s :Un-glined [%s@%s]",
-			   me.name, parv[0], user, host);
+		sendto_one_notice(source_p, ":Un-glined [%s@%s]", user, host);
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "%s has removed the G-Line for: [%s@%s]",
 				     get_oper_name(source_p), user, host);
@@ -455,8 +447,7 @@ mo_ungline(struct Client *client_p, struct Client *source_p, int parc, const cha
 	}
 	else
 	{
-		sendto_one(source_p, ":%s NOTICE %s :No G-Line for %s@%s",
-			   me.name, parv[0], user, host);
+		sendto_one_notice(source_p, ":No G-Line for %s@%s", user, host);
 	}
 
 	return 0;
@@ -519,8 +510,7 @@ invalid_gline(struct Client *source_p, const char *luser,
 {
 	if(strchr(luser, '!'))
 	{
-		sendto_one(source_p, ":%s NOTICE %s :Invalid character '!' in gline",
-			   me.name, source_p->name);
+		sendto_one_notice(source_p, ":Invalid character '!' in gline");
 		return 1;
 	}
 

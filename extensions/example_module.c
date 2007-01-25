@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: example_module.c 494 2006-01-15 16:08:28Z jilles $
+ *   $Id: example_module.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 /* List of ircd includes from ../include/ */
@@ -144,7 +144,7 @@ DECLARE_MODULE_AV1(
 			  /* Then the hook function list, if we have one */
 			  test_hfnlist,
 			  /* And finally the version number of this module. */
-			  "$Revision: 494 $");
+			  "$Revision: 3161 $");
 
 /* Any of the above arguments can be NULL to indicate they aren't used. */
 
@@ -163,13 +163,11 @@ munreg_test(struct Client *client_p, struct Client *source_p, int parc, const ch
 {
 	if(parc < 2)
 	{
-		sendto_one(source_p, ":%s NOTICE %s :You are unregistered and sent no parameters",
-			   me.name, source_p->name);
+		sendto_one_notice(source_p, ":You are unregistered and sent no parameters");
 	}
 	else
 	{
-		sendto_one(source_p, ":%s NOTICE %s :You are unregistered and sent parameter: %s",
-			   me.name, source_p->name, parv[1]);
+		sendto_one_notice(source_p, ":You are unregistered and sent parameter: %s", parv[1]);
 	}
 
 	/* illustration of how to call a hook function */
@@ -188,14 +186,11 @@ mclient_test(struct Client *client_p, struct Client *source_p, int parc, const c
 {
 	if(parc < 2)
 	{
-		sendto_one(source_p, ":%s NOTICE %s :You are a normal user, and sent no parameters",
-			   me.name, source_p->name);
+		sendto_one_notice(source_p, ":You are a normal user, and sent no parameters");
 	}
 	else
 	{
-		sendto_one(source_p,
-			   ":%s NOTICE %s :You are a normal user, and send parameters: %s", me.name,
-			   source_p->name, parv[1]);
+		sendto_one_notice(source_p, ":You are a normal user, and send parameters: %s", parv[1]);
 	}
 
 	/* illustration of how to call a hook function */
@@ -214,15 +209,11 @@ mrclient_test(struct Client *client_p, struct Client *source_p, int parc, const 
 {
 	if(parc < 2)
 	{
-		sendto_one(source_p,
-			   ":%s NOTICE %s :You are a remote client, and sent no parameters",
-			   me.name, source_p->name);
+		sendto_one_notice(source_p, ":You are a remote client, and sent no parameters");
 	}
 	else
 	{
-		sendto_one(source_p,
-			   ":%s NOTICE %s :You are a remote client, and sent parameters: %s",
-			   me.name, source_p->name, parv[1]);
+		sendto_one_notice(source_p, ":You are a remote client, and sent parameters: %s", parv[1]);
 	}
 	return 0;
 }
@@ -237,15 +228,11 @@ mserver_test(struct Client *client_p, struct Client *source_p, int parc, const c
 {
 	if(parc < 2)
 	{
-		sendto_one(source_p,
-			   ":%s NOTICE %s :You are a server, and sent no parameters",
-			   me.name, source_p->name);
+		sendto_one_notice(source_p, ":You are a server, and sent no parameters");
 	}
 	else
 	{
-		sendto_one(source_p,
-			   ":%s NOTICE %s :You are a server, and sent parameters: %s",
-			   me.name, source_p->name, parv[1]);
+		sendto_one_notice(source_p, ":You are a server, and sent parameters: %s", parv[1]);
 	}
 	return 0;
 }
@@ -260,13 +247,11 @@ moper_test(struct Client *client_p, struct Client *source_p, int parc, const cha
 {
 	if(parc < 2)
 	{
-		sendto_one(source_p, ":%s NOTICE %s :You are an operator, and sent no parameters",
-			   me.name, source_p->name);
+		sendto_one_notice(source_p, ":You are an operator, and sent no parameters");
 	}
 	else
 	{
-		sendto_one(source_p, ":%s NOTICE %s :You are an operator, and sent parameters: %s",
-			   me.name, source_p->name, parv[1]);
+		sendto_one_notice(source_p, ":You are an operator, and sent parameters: %s", parv[1]);
 	}
 	return 0;
 }

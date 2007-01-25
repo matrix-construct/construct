@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: chmode.c 3131 2007-01-21 15:36:31Z jilles $
+ *  $Id: chmode.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 #include "stdinc.h"
@@ -964,9 +964,9 @@ chm_forward(struct Client *source_p, struct Channel *chptr,
 		if (!(*errors & SM_ERR_RPL_F))
 		{
 			if (*chptr->mode.forward == '\0')
-				sendto_one(source_p, ":%s NOTICE %s :%s has no forward channel", me.name, source_p->name, chptr->chname);
+				sendto_one_notice(source_p, ":%s has no forward channel", chptr->chname);
 			else
-				sendto_one(source_p, ":%s NOTICE %s :%s forward channel is %s", me.name, source_p->name, chptr->chname, chptr->mode.forward);
+				sendto_one_notice(source_p, ":%s forward channel is %s", chptr->chname, chptr->mode.forward);
 			*errors |= SM_ERR_RPL_F;
 		}
 		return;

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_kline.c 3063 2006-12-27 00:47:45Z jilles $
+ *  $Id: m_kline.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 #include "stdinc.h"
@@ -65,7 +65,7 @@ struct Message unkline_msgtab = {
 };
 
 mapi_clist_av1 kline_clist[] = { &kline_msgtab, &unkline_msgtab, NULL };
-DECLARE_MODULE_AV1(kline, NULL, NULL, kline_clist, NULL, NULL, "$Revision: 3063 $");
+DECLARE_MODULE_AV1(kline, NULL, NULL, kline_clist, NULL, NULL, "$Revision: 3161 $");
 
 /* Local function prototypes */
 static int find_user_host(struct Client *source_p, const char *userhost, char *user, char *host);
@@ -387,7 +387,7 @@ mo_unkline(struct Client *client_p, struct Client *source_p, int parc, const cha
 	}
 	else
 	{
-		sendto_one(source_p, ":%s NOTICE %s :Invalid parameters", me.name, source_p->name);
+		sendto_one_notice(source_p, ":Invalid parameters");
 		return 0;
 	}
 
@@ -413,9 +413,7 @@ mo_unkline(struct Client *client_p, struct Client *source_p, int parc, const cha
 
 	if(remove_temp_kline(user, host))
 	{
-		sendto_one(source_p,
-			   ":%s NOTICE %s :Un-klined [%s@%s] from temporary k-lines",
-			   me.name, parv[0], user, host);
+		sendto_one_notice(source_p, ":Un-klined [%s@%s] from temporary k-lines", user, host);
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "%s has removed the temporary K-Line for: [%s@%s]",
 				     get_oper_name(source_p), user, host);

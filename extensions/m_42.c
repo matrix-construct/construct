@@ -2,7 +2,7 @@
  *   Copyright (C) infinity-infinity God <God@Heaven>
  *
  *   Bob was here 
- *   $Id: m_42.c 6 2005-09-10 01:02:21Z nenolod $
+ *   $Id: m_42.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 #include "stdinc.h"
@@ -28,8 +28,7 @@ DECLARE_MODULE_AV1(42, NULL, NULL, hgtg_clist, NULL, NULL, "Revision 0.42");
 static int
 mclient_42(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	sendto_one(source_p, ":%s NOTICE %s :The Answer to Life, the Universe, and Everything.",
-		   me.name, source_p->name);
+	sendto_one_notice(source_p, ":The Answer to Life, the Universe, and Everything.");
 	return 0;
 }
 

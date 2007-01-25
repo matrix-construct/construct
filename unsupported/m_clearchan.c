@@ -17,7 +17,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_clearchan.c 1425 2006-05-23 16:41:33Z jilles $
+ *   $Id: m_clearchan.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -46,7 +46,7 @@ struct Message clearchan_msgtab = {
 
 mapi_clist_av1 clearchan_clist[] = { &clearchan_msgtab, NULL };
 
-DECLARE_MODULE_AV1(clearchan, NULL, NULL, clearchan_clist, NULL, NULL, "$Revision: 1425 $");
+DECLARE_MODULE_AV1(clearchan, NULL, NULL, clearchan_clist, NULL, NULL, "$Revision: 3161 $");
 
 /*
 ** mo_clearchan
@@ -65,7 +65,7 @@ mo_clearchan(struct Client *client_p, struct Client *source_p, int parc, const c
 	/* admins only */
 	if(!IsOperAdmin(source_p))
 	{
-		sendto_one(source_p, ":%s NOTICE %s :You have no A flag", me.name, parv[0]);
+		sendto_one_notice(source_p, ":You have no A flag");
 		return 0;
 	}
 
@@ -79,8 +79,7 @@ mo_clearchan(struct Client *client_p, struct Client *source_p, int parc, const c
 
 	if(IsMember(source_p, chptr))
 	{
-		sendto_one(source_p, ":%s NOTICE %s :*** Please part %s before using CLEARCHAN",
-			   me.name, source_p->name, parv[1]);
+		sendto_one_notice(source_p, ":*** Please part %s before using CLEARCHAN", parv[1]);
 		return 0;
 	}
 

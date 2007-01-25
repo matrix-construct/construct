@@ -29,7 +29,7 @@
  *  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- *  $Id: m_testmask.c 2775 2006-11-27 11:45:31Z jilles $
+ *  $Id: m_testmask.c 3161 2007-01-25 07:23:01Z nenolod $
  *
  */
 
@@ -57,7 +57,7 @@ struct Message testmask_msgtab = {
 };
 
 mapi_clist_av1 testmask_clist[] = { &testmask_msgtab, NULL };
-DECLARE_MODULE_AV1(testmask, NULL, NULL, testmask_clist, NULL, NULL, "$Revision: 2775 $");
+DECLARE_MODULE_AV1(testmask, NULL, NULL, testmask_clist, NULL, NULL, "$Revision: 3161 $");
 
 static const char *empty_sockhost = "255.255.255.255";
 static const char *spoofed_sockhost = "0";
@@ -80,8 +80,7 @@ mo_testmask(struct Client *client_p, struct Client *source_p,
 	/* username is required */
 	if((hostname = strchr(name, '@')) == NULL)
 	{
-		sendto_one(source_p, ":%s NOTICE %s :Invalid parameters",
-				me.name, source_p->name);
+		sendto_one_notice(source_p, ":Invalid parameters");
 		return 0;
 	}
 
@@ -98,8 +97,7 @@ mo_testmask(struct Client *client_p, struct Client *source_p,
 
 	if(EmptyString(username) || EmptyString(hostname))
 	{
-		sendto_one(source_p, ":%s NOTICE %s :Invalid parameters",
-				me.name, source_p->name);
+		sendto_one_notice(source_p, ":Invalid parameters");
 		return 0;
 	}
 

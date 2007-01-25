@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_squit.c 698 2006-02-04 18:26:55Z jilles $
+ *  $Id: m_squit.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 #include "stdinc.h"
@@ -50,7 +50,7 @@ struct Message squit_msgtab = {
 
 mapi_clist_av1 squit_clist[] = { &squit_msgtab, NULL };
 
-DECLARE_MODULE_AV1(squit, NULL, NULL, squit_clist, NULL, NULL, "$Revision: 698 $");
+DECLARE_MODULE_AV1(squit, NULL, NULL, squit_clist, NULL, NULL, "$Revision: 3161 $");
 
 struct squit_parms
 {
@@ -210,8 +210,8 @@ find_squit(struct Client *client_p, struct Client *source_p, const char *server)
 		if(IsClient(client_p))
 		{
 			if(MyClient(client_p))
-				sendto_one(source_p, ":%s NOTICE %s :You are trying to squit me.",
-					   me.name, client_p->name);
+				sendto_one_notice(source_p, ":You are trying to squit me.");
+
 			return NULL;
 		}
 		else

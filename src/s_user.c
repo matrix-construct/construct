@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c 3159 2007-01-25 07:08:21Z nenolod $
+ *  $Id: s_user.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 #include "stdinc.h"
@@ -300,9 +300,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 
 	if(!valid_hostname(source_p->host))
 	{
-		sendto_one(source_p,
-			   ":%s NOTICE %s :*** Notice -- You have an illegal character in your hostname",
-			   me.name, source_p->name);
+		sendto_one_notice(source_p, ":*** Notice -- You have an illegal character in your hostname");
 
 		strlcpy(source_p->host, source_p->sockhost, sizeof(source_p->host));
 
@@ -329,9 +327,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 		if(IsNeedIdentd(aconf))
 		{
 			ServerStats->is_ref++;
-			sendto_one(source_p,
-				   ":%s NOTICE %s :*** Notice -- You need to install identd to use this server",
-				   me.name, client_p->name);
+			sendto_one_notice(source_p, ":*** Notice -- You need to install identd to use this server");
 			exit_client(client_p, source_p, &me, "Install identd");
 			return (CLIENT_EXITED);
 		}
@@ -358,9 +354,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 	if(IsNeedSasl(aconf) && !*user->suser)
 	{
 		ServerStats->is_ref++;
-		sendto_one(source_p,
-				":%s NOTICE %s :*** Notice -- You need to identify via SASL to use this server",
-				me.name, client_p->name);
+		sendto_one_notice(source_p, ":*** Notice -- You need to identify via SASL to use this server");
 		exit_client(client_p, source_p, &me, "SASL access only");
 		return (CLIENT_EXITED);
 	}
@@ -811,18 +805,14 @@ report_and_set_user_flags(struct Client *source_p, struct ConfItem *aconf)
 	/* If this user is being spoofed, tell them so */
 	if(IsConfDoSpoofIp(aconf))
 	{
-		sendto_one(source_p,
-			   ":%s NOTICE %s :*** Spoofing your IP. congrats.",
-			   me.name, source_p->name);
+		sendto_one_notice(source_p, ":*** Spoofing your IP. congrats.");
 	}
 
 	/* If this user is in the exception class, Set it "E lined" */
 	if(IsConfExemptKline(aconf))
 	{
 		SetExemptKline(source_p);
-		sendto_one(source_p,
-			   ":%s NOTICE %s :*** You are exempt from K/D/G/X lines. congrats.",
-			   me.name, source_p->name);
+		sendto_one_notice(source_p, ":*** You are exempt from K/D/G/X lines. congrats.");
 	}
 
 	if(IsConfExemptGline(aconf))
@@ -831,74 +821,56 @@ report_and_set_user_flags(struct Client *source_p, struct ConfItem *aconf)
 
 		/* dont send both a kline and gline exempt notice */
 		if(!IsConfExemptKline(aconf))
-			sendto_one(source_p,
-				   ":%s NOTICE %s :*** You are exempt from G lines.",
-				   me.name, source_p->name);
+			sendto_one_notice(source_p, ":*** You are exempt from G lines.");
 	}
 
 	if(IsConfExemptDNSBL(aconf))
 		/* kline exempt implies this, don't send both */
 		if(!IsConfExemptKline(aconf))
-			sendto_one(source_p,
-				   ":%s NOTICE %s :*** You are exempt from DNS blacklists.",
-				   me.name, source_p->name);
+			sendto_one_notice(source_p, ":*** You are exempt from DNS blacklists.");
 
 	/* If this user is exempt from user limits set it F lined" */
 	if(IsConfExemptLimits(aconf))
 	{
 		SetExemptLimits(source_p);
-		sendto_one(source_p,
-			   ":%s NOTICE %s :*** You are exempt from user limits. congrats.",
-			   me.name, source_p->name);
+		sendto_one_notice(source_p, "*** You are exempt from user limits. congrats.");
 	}
 
 	/* If this user is exempt from idle time outs */
 	if(IsConfIdlelined(aconf))
 	{
 		SetIdlelined(source_p);
-		sendto_one(source_p,
-			   ":%s NOTICE %s :*** You are exempt from idle limits. congrats.",
-			   me.name, source_p->name);
+		sendto_one_notice(source_p, ":*** You are exempt from idle limits. congrats.");
 	}
 
 	if(IsConfExemptFlood(aconf))
 	{
 		SetExemptFlood(source_p);
-		sendto_one(source_p,
-			   ":%s NOTICE %s :*** You are exempt from flood limits.",
-			   me.name, source_p->name);
+		sendto_one_notice(source_p, ":*** You are exempt from flood limits.");
 	}
 
 	if(IsConfExemptSpambot(aconf))
 	{
 		SetExemptSpambot(source_p);
-		sendto_one(source_p,
-			   ":%s NOTICE %s :*** You are exempt from spambot checks.",
-			   me.name, source_p->name);
+		sendto_one_notice(source_p, ":*** You are exempt from spambot checks.");
 	}
 
 	if(IsConfExemptJupe(aconf))
 	{
 		SetExemptJupe(source_p);
-		sendto_one(source_p,
-				":%s NOTICE %s :*** You are exempt from juped channel warnings.",
-				me.name, source_p->name);
+		sendto_one_notice(source_p, ":*** You are exempt from juped channel warnings.");
 	}
 
 	if(IsConfExemptResv(aconf))
 	{
 		SetExemptResv(source_p);
-		sendto_one(source_p,
-				":%s NOTICE %s :*** You are exempt from resvs.",
-				me.name, source_p->name);
+		sendto_one_notice(source_p, ":*** You are exempt from resvs.");
 	}
 
 	if(IsConfExemptShide(aconf))
 	{
 		SetExemptShide(source_p);
-		sendto_one(source_p,
-			   ":%s NOTICE %s :*** You are exempt from serverhiding.",
-			   me.name, source_p->name);
+		sendto_one_notice(source_p, ":*** You are exempt from serverhiding.");
 	}
 }
 
@@ -1110,23 +1082,20 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 
 	if(MyClient(source_p) && (source_p->snomask & SNO_NCHANGE) && !IsOperN(source_p))
 	{
-		sendto_one(source_p,
-			   ":%s NOTICE %s :*** You need oper and N flag for +s +n", me.name, parv[0]);
+		sendto_one_notice(source_p, ":*** You need oper and N flag for +s +n");
 		source_p->snomask &= ~SNO_NCHANGE;	/* only tcm's really need this */
 	}
 
 	if(MyClient(source_p) && (source_p->umodes & UMODE_OPERWALL) && !IsOperOperwall(source_p))
 	{
-		sendto_one(source_p,
-			   ":%s NOTICE %s :*** You need oper and operwall flag for +z", me.name, parv[0]);
+		sendto_one_notice(source_p, ":*** You need oper and operwall flag for +z");
 		source_p->umodes &= ~UMODE_OPERWALL;
 	}
 
 	if(MyConnect(source_p) && (source_p->umodes & UMODE_ADMIN) &&
 	   (!IsOperAdmin(source_p) || IsOperHiddenAdmin(source_p)))
 	{
-		sendto_one(source_p,
-			   ":%s NOTICE %s :*** You need oper and A flag for +a", me.name, parv[0]);
+		sendto_one_notice(source_p, ":*** You need oper and A flag for +a");
 		source_p->umodes &= ~UMODE_ADMIN;
 	}
 
@@ -1261,13 +1230,8 @@ user_welcome(struct Client *source_p)
 
 	if(ConfigFileEntry.short_motd)
 	{
-		sendto_one(source_p,
-			   "NOTICE %s :*** Notice -- motd was last changed at %s",
-			   source_p->name, user_motd_changed);
-
-		sendto_one(source_p,
-			   "NOTICE %s :*** Notice -- Please read the motd if you haven't read it",
-			   source_p->name);
+		sendto_one_notice(source_p, ":*** Notice -- motd was last changed at %s", user_motd_changed);
+		sendto_one_notice(source_p, ":*** Notice -- Please read the motd if you haven't read it");
 
 		sendto_one(source_p, form_str(RPL_MOTDSTART), 
 			   me.name, source_p->name, me.name);
@@ -1345,8 +1309,7 @@ oper_up(struct Client *source_p, struct oper_conf *oper_p)
 	sendto_one(source_p, form_str(RPL_SNOMASK), me.name, source_p->name,
 		   construct_snobuf(source_p->snomask));
 	sendto_one(source_p, form_str(RPL_YOUREOPER), me.name, source_p->name);
-	sendto_one(source_p, ":%s NOTICE %s :*** Oper privs are %s", me.name,
-		   source_p->name, get_oper_privs(oper_p->flags));
+	sendto_one_notice(source_p, ":*** Oper privs are %s", get_oper_privs(oper_p->flags));
 	send_oper_motd(source_p);
 
 	return (1);

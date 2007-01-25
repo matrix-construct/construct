@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_challenge.c 1483 2006-05-27 18:58:12Z jilles $
+ *  $Id: m_challenge.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 #include "stdinc.h"
@@ -70,7 +70,7 @@ static int	challenge_load(void)
 #endif
 }
 
-DECLARE_MODULE_AV1(challenge, challenge_load, NULL, NULL, NULL, NULL, "$Revision: 1483 $");
+DECLARE_MODULE_AV1(challenge, challenge_load, NULL, NULL, NULL, NULL, "$Revision: 3161 $");
 #else
 
 static int m_challenge(struct Client *, struct Client *, int, const char **);
@@ -82,7 +82,7 @@ struct Message challenge_msgtab = {
 };
 
 mapi_clist_av1 challenge_clist[] = { &challenge_msgtab, NULL };
-DECLARE_MODULE_AV1(challenge, NULL, NULL, challenge_clist, NULL, NULL, "$Revision: 1483 $");
+DECLARE_MODULE_AV1(challenge, NULL, NULL, challenge_clist, NULL, NULL, "$Revision: 3161 $");
 
 static int generate_challenge(char **r_challenge, char **r_response, RSA * key);
 
@@ -220,8 +220,7 @@ m_challenge(struct Client *client_p, struct Client *source_p, int parc, const ch
 
 	if(!oper_p->rsa_pubkey)
 	{
-		sendto_one(source_p, ":%s NOTICE %s :I'm sorry, PK authentication "
-			   "is not enabled for your oper{} block.", me.name, parv[0]);
+		sendto_one_notice(source_p, ":I'm sorry, PK authentication is not enabled for your oper{} block.");
 		return 0;
 	}
 

@@ -417,6 +417,8 @@
 	<para>
 	  Adds a D:line to <filename>dline.conf</filename>, which will deny any connections
 	  from the given IP address.
+	  The IP address can be given as a full address (192.168.0.1) or
+	  as a CIDR mask (192.168.0.0/24).
 	</para>
 	<para>
 	  If the optional parameter <replaceable>length</replaceable> is given, the D:line will

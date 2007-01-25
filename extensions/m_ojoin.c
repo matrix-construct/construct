@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_ojoin.c 3121 2007-01-02 13:23:04Z jilles $
+ *   $Id: m_ojoin.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 #include "stdinc.h"
@@ -49,7 +49,7 @@ struct Message ojoin_msgtab = {
 
 mapi_clist_av1 ojoin_clist[] = { &ojoin_msgtab, NULL };
 
-DECLARE_MODULE_AV1(ojoin, NULL, NULL, ojoin_clist, NULL, NULL, "$Revision: 3121 $");
+DECLARE_MODULE_AV1(ojoin, NULL, NULL, ojoin_clist, NULL, NULL, "$Revision: 3161 $");
 
 /*
 ** mo_ojoin
@@ -84,8 +84,7 @@ mo_ojoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 
 	if(IsMember(source_p, chptr))
 	{
-		sendto_one(source_p, ":%s NOTICE %s :Please part %s before using OJOIN",
-			   me.name, source_p->name, parv[1]);
+		sendto_one_notice(source_p, ":Please part %s before using OJOIN", parv[1]);
 		return 0;
 	}
 

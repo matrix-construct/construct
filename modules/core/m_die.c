@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_die.c 98 2005-09-11 03:37:47Z nenolod $
+ *  $Id: m_die.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 #include "stdinc.h"
@@ -48,7 +48,7 @@ static struct Message die_msgtab = {
 
 mapi_clist_av1 die_clist[] = { &die_msgtab, NULL };
 
-DECLARE_MODULE_AV1(die, NULL, NULL, die_clist, NULL, NULL, "$Revision: 98 $");
+DECLARE_MODULE_AV1(die, NULL, NULL, die_clist, NULL, NULL, "$Revision: 3161 $");
 
 /*
  * mo_die - DIE command handler
@@ -67,14 +67,12 @@ mo_die(struct Client *client_p __unused, struct Client *source_p, int parc, cons
 
 	if(parc < 2 || EmptyString(parv[1]))
 	{
-		sendto_one(source_p, ":%s NOTICE %s :Need server name /die %s",
-			   me.name, source_p->name, me.name);
+		sendto_one_notice(source_p, ":Need server name /die %s", me.name);
 		return 0;
 	}
 	else if(irccmp(parv[1], me.name))
 	{
-		sendto_one(source_p, ":%s NOTICE %s :Mismatch on /die %s",
-			   me.name, source_p->name, me.name);
+		sendto_one_notice(source_p, ":Mismatch on /die %s", me.name);
 		return 0;
 	}
 
@@ -82,9 +80,7 @@ mo_die(struct Client *client_p __unused, struct Client *source_p, int parc, cons
 	{
 		target_p = ptr->data;
 
-		sendto_one(target_p,
-			   ":%s NOTICE %s :Server Terminating. %s",
-			   me.name, target_p->name, get_client_name(source_p, HIDE_IP));
+		sendto_one_notice(target_p, ":Server Terminating. %s", get_client_name(source_p, HIDE_IP));
 	}
 
 	DLINK_FOREACH(ptr, serv_list.head)

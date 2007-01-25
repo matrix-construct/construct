@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_rehash.c 932 2006-03-05 03:39:14Z nenolod $
+ *  $Id: m_rehash.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 #include "stdinc.h"
@@ -55,7 +55,7 @@ struct Message rehash_msgtab = {
 };
 
 mapi_clist_av1 rehash_clist[] = { &rehash_msgtab, NULL };
-DECLARE_MODULE_AV1(rehash, NULL, NULL, rehash_clist, NULL, NULL, "$Revision: 932 $");
+DECLARE_MODULE_AV1(rehash, NULL, NULL, rehash_clist, NULL, NULL, "$Revision: 3161 $");
 
 struct hash_commands
 {
@@ -332,8 +332,7 @@ do_rehash(struct Client *source_p, const char *type)
 			strlcat(cmdbuf, " ", sizeof(cmdbuf));
 			strlcat(cmdbuf, rehash_commands[x].cmd, sizeof(cmdbuf));
 		}
-		sendto_one(source_p, ":%s NOTICE %s :rehash one of:%s", me.name, source_p->name,
-			   cmdbuf);
+		sendto_one_notice(source_p, ":rehash one of:%s", cmdbuf);
 	}
 	else
 	{

@@ -27,7 +27,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: m_xline.c 3059 2006-12-27 00:36:54Z jilles $
+ * $Id: m_xline.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 #include "stdinc.h"
@@ -70,7 +70,7 @@ struct Message unxline_msgtab = {
 };
 
 mapi_clist_av1 xline_clist[] =  { &xline_msgtab, &unxline_msgtab, NULL };
-DECLARE_MODULE_AV1(xline, NULL, NULL, xline_clist, NULL, NULL, "$Revision: 3059 $");
+DECLARE_MODULE_AV1(xline, NULL, NULL, xline_clist, NULL, NULL, "$Revision: 3161 $");
 
 static int valid_xline(struct Client *, const char *, const char *);
 static void apply_xline(struct Client *client_p, const char *name, 
@@ -222,9 +222,7 @@ handle_remote_xline(struct Client *source_p, int temp_time,
 	/* already xlined */
 	if((aconf = find_xline(name, 0)) != NULL)
 	{
-		sendto_one(source_p, ":%s NOTICE %s :[%s] already X-Lined by [%s] - %s",
-				me.name, source_p->name, name, 
-				aconf->name, aconf->passwd);
+		sendto_one_notice(source_p, ":[%s] already X-Lined by [%s] - %s", name, aconf->name, aconf->passwd);
 		return;
 	}
 

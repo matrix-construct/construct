@@ -6,7 +6,7 @@
  *
  *  You can use this code in any way as long as these names remain.
  *
- *  $Id: m_mkpasswd.c 6 2005-09-10 01:02:21Z nenolod $
+ *  $Id: m_mkpasswd.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 /* List of ircd includes from ../include/ */
@@ -47,7 +47,7 @@ struct Message mkpasswd_msgtab = {
 
 mapi_clist_av1 mkpasswd_clist[] = { &mkpasswd_msgtab, NULL };
 
-DECLARE_MODULE_AV1(mkpasswd, NULL, NULL, mkpasswd_clist, NULL, NULL, "$Revision: 6 $");
+DECLARE_MODULE_AV1(mkpasswd, NULL, NULL, mkpasswd_clist, NULL, NULL, "$Revision: 3161 $");
 
 
 static int
@@ -82,9 +82,7 @@ m_mkpasswd(struct Client *client_p, struct Client *source_p, int parc, const cha
 		}
 		else
 		{
-			sendto_one(source_p,
-				   ":%s NOTICE %s :MKPASSWD syntax error:  MKPASSWD pass [DES|MD5]",
-				   me.name, parv[0]);
+			sendto_one_notice(source_p, ":MKPASSWD syntax error:  MKPASSWD pass [DES|MD5]");
 			return 0;
 		}
 	}
@@ -92,8 +90,8 @@ m_mkpasswd(struct Client *client_p, struct Client *source_p, int parc, const cha
 	if(parc == 1)
 		sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS), me.name, parv[0], "MKPASSWD");
 	else
-		sendto_one(source_p, ":%s NOTICE %s :Encryption for [%s]:  %s",
-			   me.name, parv[0], parv[1], crypt(parv[1],
+		sendto_one_notice(source_p, ":Encryption for [%s]:  %s",
+			   parv[1], crypt(parv[1],
 							    is_md5 ? make_md5_salt() :
 							    make_salt()));
 
@@ -125,9 +123,8 @@ mo_mkpasswd(struct Client *client_p, struct Client *source_p, int parc, const ch
 		}
 		else
 		{
-			sendto_one(source_p,
-				   ":%s NOTICE %s :MKPASSWD syntax error:  MKPASSWD pass [DES|MD5]",
-				   me.name, parv[0]);
+			sendto_one_notice(source_p,
+				   ":MKPASSWD syntax error:  MKPASSWD pass [DES|MD5]");
 			return 0;
 		}
 	}
@@ -135,10 +132,8 @@ mo_mkpasswd(struct Client *client_p, struct Client *source_p, int parc, const ch
 	if(parc == 1)
 		sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS), me.name, parv[0], "MKPASSWD");
 	else
-		sendto_one(source_p, ":%s NOTICE %s :Encryption for [%s]:  %s",
-			   me.name, parv[0], parv[1], crypt(parv[1],
-							    is_md5 ? make_md5_salt() :
-							    make_salt()));
+		sendto_one_notice(source_p, ":Encryption for [%s]:  %s",
+			   parv[1], crypt(parv[1], is_md5 ? make_md5_salt() : make_salt()));
 
 	return 0;
 }

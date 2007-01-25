@@ -20,7 +20,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_unreject.c 254 2005-09-21 23:35:12Z nenolod $
+ *  $Id: m_unreject.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 #include "stdinc.h"
@@ -40,7 +40,7 @@ struct Message unreject_msgtab = {
 };
 
 mapi_clist_av1 unreject_clist[] = { &unreject_msgtab, NULL };
-DECLARE_MODULE_AV1(unreject, NULL, NULL, unreject_clist, NULL, NULL, "$Revision: 254 $");
+DECLARE_MODULE_AV1(unreject, NULL, NULL, unreject_clist, NULL, NULL, "$Revision: 3161 $");
 
 /*
  * mo_unreject
@@ -52,23 +52,20 @@ mo_unreject(struct Client *client_p, struct Client *source_p, int parc, const ch
 	if(ConfigFileEntry.reject_after_count == 0 || ConfigFileEntry.reject_ban_time == 0 ||
 	   ConfigFileEntry.reject_duration == 0)
 	{
-		sendto_one(source_p, ":%s NOTICE %s :Reject cache is disabled",
-			   me.name, source_p->name);
+		sendto_one_notice(source_p, ":Reject cache is disabled");
 		return 0;			
 	}
 
 	if(!parse_netmask(parv[1], NULL, NULL))
 	{
-		sendto_one(source_p, ":%s NOTICE %s :Unable to parse netmask %s", 
-			   me.name, source_p->name, parv[1]);
+		sendto_one_notice(source_p, ":Unable to parse netmask %s", parv[1]);
 		return 0;
 	}	
 	
 	if(remove_reject(parv[1]))
-		sendto_one(source_p, ":%s NOTICE %s :Removed reject for %s", 
-			   me.name, source_p->name, parv[1]);
+		sendto_one_notice(source_p, ":Removed reject for %s", parv[1]);
 	else
-		sendto_one(source_p, ":%s NOTICE %s :Unable to remove reject for %s",
-			   me.name, source_p->name, parv[1]);
+		sendto_one_notice(source_p, ":Unable to remove reject for %s", parv[1]);
+
 	return 0;
 }

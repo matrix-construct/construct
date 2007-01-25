@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_kill.c 2755 2006-11-10 19:08:03Z jilles $
+ *  $Id: m_kill.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 #include "stdinc.h"
@@ -55,7 +55,7 @@ struct Message kill_msgtab = {
 
 mapi_clist_av1 kill_clist[] = { &kill_msgtab, NULL };
 
-DECLARE_MODULE_AV1(kill, NULL, NULL, kill_clist, NULL, NULL, "$Revision: 2755 $");
+DECLARE_MODULE_AV1(kill, NULL, NULL, kill_clist, NULL, NULL, "$Revision: 3161 $");
 
 /*
 ** mo_kill
@@ -106,14 +106,14 @@ mo_kill(struct Client *client_p, struct Client *source_p, int parc, const char *
 						   form_str(ERR_NOSUCHNICK), user);
 			return 0;
 		}
-		sendto_one(source_p, ":%s NOTICE %s :KILL changed from %s to %s",
-			   me.name, parv[0], user, target_p->name);
+		sendto_one_notice(source_p, ":KILL changed from %s to %s", user, target_p->name);
 	}
 
 	if(!MyConnect(target_p) && (!IsOperGlobalKill(source_p)))
 	{
-		sendto_one(source_p, ":%s NOTICE %s :Nick %s isnt on your server",
-			   me.name, parv[0], target_p->name);
+		sendto_one_notice(source_p, ":Nick %s is not on your server "
+				            "and you do not have the global_kill flag",
+				target_p->name);
 		return 0;
 	}
 
@@ -125,8 +125,9 @@ mo_kill(struct Client *client_p, struct Client *source_p, int parc, const char *
 	/* Do not change the format of this message.  There's no point in changing messages
 	 * that have been around for ever, for no reason.. */
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
-			     "Received KILL message for %s. From %s Path: %s (%s)",
-			     target_p->name, parv[0], me.name, reason);
+			     "Received KILL message for %s[%s@%s]. From %s Path: %s (%s)",
+			     target_p->name, target_p->username, target_p->host, 
+			     parv[0], me.name, reason);
 
 	ilog(L_KILL, "%c %s %s!%s@%s %s %s",
 	     MyConnect(target_p) ? 'L' : 'G', get_oper_name(source_p),
@@ -244,9 +245,10 @@ ms_kill(struct Client *client_p, struct Client *source_p, int parc, const char *
 	if(IsOper(source_p))	/* send it normally */
 	{
 		sendto_realops_snomask(IsService(source_p) ? SNO_SKILL : SNO_GENERAL, L_ALL,
-				     "Received KILL message for %s. From %s Path: %s!%s!%s!%s %s",
-				     target_p->name, parv[0], source_p->user->server,
-				     source_p->host, source_p->username, source_p->name, reason);
+				     "Received KILL message for %s[%s@%s]. From %s Path: %s!%s!%s!%s %s",
+				     target_p->name, target_p->username, target_p->host, parv[0], 
+				     source_p->user->server, source_p->host, source_p->username,
+				     source_p->name, reason);
 
 		ilog(L_KILL, "%c %s %s!%s@%s %s %s",
 		     MyConnect(target_p) ? 'O' : 'R', get_oper_name(source_p),
@@ -256,8 +258,9 @@ ms_kill(struct Client *client_p, struct Client *source_p, int parc, const char *
 	else
 	{
 		sendto_realops_snomask(SNO_SKILL, L_ALL,
-				     "Received KILL message for %s. From %s %s",
-				     target_p->name, parv[0], reason);
+				     "Received KILL message for %s[%s@%s]. From %s %s",
+				     target_p->name, target_p->username, target_p->host,
+				     parv[0], reason);
 
 		ilog(L_KILL, "S %s %s!%s@%s %s %s",
 		     source_p->name, target_p->name, target_p->username,

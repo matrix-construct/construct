@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_dline.c 3051 2006-12-27 00:02:32Z jilles $
+ *  $Id: m_dline.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 #include "stdinc.h"
@@ -59,7 +59,7 @@ struct Message undline_msgtab = {
 };
 
 mapi_clist_av1 dline_clist[] = { &dline_msgtab, &undline_msgtab, NULL };
-DECLARE_MODULE_AV1(dline, NULL, NULL, dline_clist, NULL, NULL, "$Revision: 3051 $");
+DECLARE_MODULE_AV1(dline, NULL, NULL, dline_clist, NULL, NULL, "$Revision: 3161 $");
 
 static int valid_comment(char *comment);
 static int flush_write(struct Client *, FILE *, char *, char *);
@@ -274,8 +274,7 @@ mo_undline(struct Client *client_p, struct Client *source_p, int parc, const cha
 
 	if(parse_netmask(cidr, NULL, NULL) == HM_HOST)
 	{
-		sendto_one(source_p, ":%s NOTICE %s :Invalid D-Line",
-			   me.name, source_p->name);
+		sendto_one_notice(source_p, ":Invalid D-Line");
 		return 0;
 	}
 
@@ -426,8 +425,7 @@ flush_write(struct Client *source_p, FILE * out, char *buf, char *temppath)
 
 	if(error_on_write)
 	{
-		sendto_one(source_p, ":%s NOTICE %s :Unable to write to %s",
-			   me.name, source_p->name, temppath);
+		sendto_one_notice(source_p, ":Unable to write to %s", temppath);
 		fclose(out);
 		if(temppath != NULL)
 			(void) unlink(temppath);

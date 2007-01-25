@@ -29,7 +29,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: s_newconf.c 1747 2006-07-25 21:22:45Z jilles $
+ * $Id: s_newconf.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 #include "stdinc.h"
@@ -504,8 +504,7 @@ set_server_conf_autoconn(struct Client *source_p, char *name, int newval)
 				get_oper_name(source_p), name, newval);
 	}
 	else
-		sendto_one(source_p, ":%s NOTICE %s :Can't find %s",
-				me.name, source_p->name, name);
+		sendto_one_notice(source_p, ":Can't find %s", name);
 }
 
 struct ConfItem *

@@ -4,7 +4,7 @@
  * Copyright (C) 2006 charybdis development team
  * All rights reserved
  *
- * $Id: hurt.c 1905 2006-08-29 14:51:31Z jilles $
+ * $Id: hurt.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 #include "stdinc.h"
 #include "modules.h"
@@ -115,7 +115,7 @@ DECLARE_MODULE_AV1(
 	hurt_clist,
 	NULL,
 	hurt_hfnlist,
-	"$Revision: 1905 $"
+	"$Revision: 3161 $"
 );
 /* }}} */
 
@@ -196,15 +196,11 @@ mo_hurt(struct Client *client_p, struct Client *source_p,
 	if (!expire)
 		expire_time = HURT_DEFAULT_EXPIRE;
 	if (expire && (expire_time = valid_temp_time(expire)) < 1) {
-		sendto_one(source_p,
-				":%s NOTICE %s :Permanent HURTs are not supported",
-				me.name, source_p->name);
+		sendto_one_notice(source_p, ":Permanent HURTs are not supported");
 		return 0;
 	}
 	if (EmptyString(reason)) {
-		sendto_one(source_p,
-				":%s NOTICE %s :Empty HURT reasons are bad for business",
-				me.name, source_p->name);
+		sendto_one_notice(source_p, ":Empty HURT reasons are bad for business");
 		return 0;
 	}
 
@@ -233,9 +229,7 @@ mo_hurt(struct Client *client_p, struct Client *source_p,
 	}
 
 	if (hurt_find(ip) != NULL) {
-		sendto_one(source_p,
-				":%s NOTICE %s :[%s] already HURT",
-				me.name, source_p->name, ip);
+		sendto_one(source_p, ":[%s] already HURT", ip);
 		return 0;
 	}
 
@@ -334,8 +328,7 @@ mo_heal(struct Client *client_p, struct Client *source_p,
 	{
 		if (hurt_find_exact(parv[1]) == NULL)
 		{
-			sendto_one(source_p, ":%s NOTICE %s :Mask [%s] is not HURT",
-					me.name, source_p->name, parv[1]);
+			sendto_one_notice(source_p, ":Mask [%s] is not HURT", parv[1]);
 			return 0;
 		}
 		hurt_remove(parv[1]);
@@ -346,9 +339,7 @@ mo_heal(struct Client *client_p, struct Client *source_p,
 	}
 	else
 	{
-		sendto_one(source_p,
-				":%s NOTICE %s :[%s] is not a valid IP address/nick",
-				me.name, source_p->name, parv[1]);
+		sendto_one(source_p, ":[%s] is not a valid IP address/nick", parv[1]);
 		return 0;
 	}
 

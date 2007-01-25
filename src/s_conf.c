@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.c 3159 2007-01-25 07:08:21Z nenolod $
+ *  $Id: s_conf.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 #include "stdinc.h"
@@ -386,7 +386,7 @@ verify_access(struct Client *client_p, const char *username)
 	}
 	else if(aconf->status & CONF_GLINE)
 	{
-		sendto_one(client_p, ":%s NOTICE %s :*** G-lined", me.name, client_p->name);
+		sendto_one_notice(client_p, ":*** G-lined");
 
 		if(ConfigFileEntry.kline_with_reason)
 			sendto_one(client_p,
@@ -597,8 +597,7 @@ attach_conf(struct Client *client_p, struct ConfItem *aconf)
 		}
 		else
 		{
-			sendto_one(client_p, ":%s NOTICE %s :*** I: line is full, but you have an >I: line!", 
-			                      me.name, client_p->name);
+			sendto_one_notice(client_p, ":*** I: line is full, but you have an >I: line!");
 			SetExemptLimits(client_p);
 		}
 
@@ -1355,9 +1354,7 @@ write_confitem(KlineType type, struct Client *source_p, char *user,
 				reason, oper_reason);
 		}
 
-		sendto_one(source_p,
-			   ":%s NOTICE %s :Added D-Line [%s] to %s", me.name,
-			   source_p->name, host, filename);
+		sendto_one_notice(source_p, ":Added D-Line [%s] to %s", host, filename);
 
 	}
 	else if(type == RESV_TYPE)

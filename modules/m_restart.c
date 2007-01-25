@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_restart.c 254 2005-09-21 23:35:12Z nenolod $
+ *  $Id: m_restart.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 #include "stdinc.h"
@@ -48,7 +48,7 @@ struct Message restart_msgtab = {
 };
 
 mapi_clist_av1 restart_clist[] = { &restart_msgtab, NULL };
-DECLARE_MODULE_AV1(restart, NULL, NULL, restart_clist, NULL, NULL, "$Revision: 254 $");
+DECLARE_MODULE_AV1(restart, NULL, NULL, restart_clist, NULL, NULL, "$Revision: 3161 $");
 
 /*
  * mo_restart
@@ -70,14 +70,12 @@ mo_restart(struct Client *client_p, struct Client *source_p, int parc, const cha
 
 	if(parc < 2 || EmptyString(parv[1]))
 	{
-		sendto_one(source_p, ":%s NOTICE %s :Need server name /restart %s",
-			   me.name, source_p->name, me.name);
+		sendto_one_notice(source_p, ":Need server name /restart %s", me.name);
 		return 0;
 	}
 	else if(irccmp(parv[1], me.name))
 	{
-		sendto_one(source_p, ":%s NOTICE %s :Mismatch on /restart %s",
-			   me.name, source_p->name, me.name);
+		sendto_one_notice(source_p, ":Mismatch on /restart %s", me.name);
 		return 0;
 	}
 
@@ -85,9 +83,7 @@ mo_restart(struct Client *client_p, struct Client *source_p, int parc, const cha
 	{
 		target_p = ptr->data;
 
-		sendto_one(target_p,
-			   ":%s NOTICE %s :Server Restarting. %s",
-			   me.name, target_p->name, get_client_name(source_p, HIDE_IP));
+		sendto_one_notice(target_p, ":Server Restarting. %s", get_client_name(source_p, HIDE_IP));
 	}
 
 	DLINK_FOREACH(ptr, serv_list.head)

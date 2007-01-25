@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_connect.c 254 2005-09-21 23:35:12Z nenolod $
+ *  $Id: m_connect.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 #include "stdinc.h"
@@ -49,7 +49,7 @@ struct Message connect_msgtab = {
 };
 
 mapi_clist_av1 connect_clist[] = { &connect_msgtab, NULL };
-DECLARE_MODULE_AV1(connect, NULL, NULL, connect_clist, NULL, NULL, "$Revision: 254 $");
+DECLARE_MODULE_AV1(connect, NULL, NULL, connect_clist, NULL, NULL, "$Revision: 3161 $");
 
 /*
  * mo_connect - CONNECT command handler
@@ -84,8 +84,8 @@ mo_connect(struct Client *client_p, struct Client *source_p, int parc, const cha
 
 	if((target_p = find_server(source_p, parv[1])))
 	{
-		sendto_one(source_p, ":%s NOTICE %s :Connect: Server %s already exists from %s.",
-			   me.name, parv[0], parv[1], target_p->from->name);
+		sendto_one_notice(source_p, ":Connect: Server %s already exists from %s.", parv[1], 
+			target_p->from->name);
 		return 0;
 	}
 
@@ -94,9 +94,7 @@ mo_connect(struct Client *client_p, struct Client *source_p, int parc, const cha
 	 */
 	if((server_p = find_server_conf(parv[1])) == NULL)
 	{
-		sendto_one(source_p,
-			   "NOTICE %s :Connect: Host %s not listed in ircd.conf",
-			   parv[0], parv[1]);
+		sendto_one_notice(source_p, ":Connect: Host %s not listed in ircd.conf", parv[1]);
 		return 0;
 	}
 
@@ -110,14 +108,13 @@ mo_connect(struct Client *client_p, struct Client *source_p, int parc, const cha
 	{
 		if((port = atoi(parv[2])) <= 0)
 		{
-			sendto_one(source_p, "NOTICE %s :Connect: Illegal port number", parv[0]);
+			sendto_one_notice(source_p, ":Connect: Illegal port number");
 			return 0;
 		}
 	}
 	else if(port <= 0 && (port = PORTNUM) <= 0)
 	{
-		sendto_one(source_p, ":%s NOTICE %s :Connect: missing port number",
-			   me.name, parv[0]);
+		sendto_one_notice(source_p, ":Connect: missing port number");
 		return 0;
 	}
 	/*
@@ -134,19 +131,18 @@ mo_connect(struct Client *client_p, struct Client *source_p, int parc, const cha
 	if(serv_connect(server_p, source_p))
 	{
 #ifndef HIDE_SERVERS_IPS
-			sendto_one(source_p, ":%s NOTICE %s :*** Connecting to %s[%s].%d",
-				   me.name, parv[0], server_p->host, server_p->name, server_p->port);
+			sendto_one_notice(source_p, ":*** Connecting to %s[%s].%d",
+				server_p->host, server_p->name, server_p->port);
 #else
-			sendto_one(source_p, ":%s NOTICE %s :*** Connecting to %s.%d",
-				   me.name, parv[0], server_p->name, server_p->port);
+			sendto_one_notice(source_p, ":*** Connecting to %s.%d",
+				server_p->name, server_p->port);
 #endif
 
 	}
 	else
 	{
-		sendto_one(source_p, ":%s NOTICE %s :*** Couldn't connect to %s.%d",
-			   me.name, parv[0], server_p->name, server_p->port);
-
+		sendto_one_notice(source_p, ":*** Couldn't connect to %s.%d",
+			server_p->name, server_p->port);
 	}
 
 	/*

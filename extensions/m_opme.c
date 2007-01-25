@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_opme.c 3121 2007-01-02 13:23:04Z jilles $
+ *   $Id: m_opme.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -46,7 +46,7 @@ struct Message opme_msgtab = {
 
 mapi_clist_av1 opme_clist[] = { &opme_msgtab, NULL };
 
-DECLARE_MODULE_AV1(opme, NULL, NULL, opme_clist, NULL, NULL, "$Revision: 3121 $");
+DECLARE_MODULE_AV1(opme, NULL, NULL, opme_clist, NULL, NULL, "$Revision: 3161 $");
 
 
 /*
@@ -81,8 +81,7 @@ mo_opme(struct Client *client_p, struct Client *source_p, int parc, const char *
 
 		if(is_chanop(msptr))
 		{
-			sendto_one(source_p, ":%s NOTICE %s :%s Channel is not opless",
-				   me.name, parv[0], parv[1]);
+			sendto_one_notice(source_p, ":%s Channel is not opless", parv[1]);
 			return 0;
 		}
 	}

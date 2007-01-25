@@ -26,7 +26,7 @@
  *  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: m_force.c 1425 2006-05-23 16:41:33Z jilles $
+ * $Id: m_force.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 #include "stdinc.h"
@@ -70,7 +70,7 @@ struct Message forcepart_msgtab = {
 
 mapi_clist_av1 force_clist[] = { &forcejoin_msgtab, &forcepart_msgtab, NULL };
 
-DECLARE_MODULE_AV1(force, NULL, NULL, force_clist, NULL, NULL, "$Revision: 1425 $");
+DECLARE_MODULE_AV1(force, NULL, NULL, force_clist, NULL, NULL, "$Revision: 3161 $");
 
 /*
  * m_forcejoin
@@ -146,8 +146,8 @@ mo_forcejoin(struct Client *client_p, struct Client *source_p, int parc, const c
 		if(IsMember(target_p, chptr))
 		{
 			/* debugging is fun... */
-			sendto_one(source_p, ":%s NOTICE %s :*** Notice -- %s is already in %s",
-				   me.name, source_p->name, target_p->name, chptr->chname);
+			sendto_one_notice(source_p, ":*** Notice -- %s is already in %s",
+				 target_p->name, chptr->chname);
 			return 0;
 		}
 
@@ -198,8 +198,7 @@ mo_forcejoin(struct Client *client_p, struct Client *source_p, int parc, const c
 		/* newch can't be longer than CHANNELLEN */
 		if(strlen(newch) > CHANNELLEN)
 		{
-			sendto_one(source_p, ":%s NOTICE %s :Channel name is too long", me.name,
-				   source_p->name);
+			sendto_one_notice(source_p, ":Channel name is too long");
 			return 0;
 		}
 
@@ -227,8 +226,7 @@ mo_forcejoin(struct Client *client_p, struct Client *source_p, int parc, const c
 		 * seen from the server handling the command instead of the server that
 		 * the oper is on.
 		 */
-		sendto_one(source_p, ":%s NOTICE %s :*** Notice -- Creating channel %s", me.name,
-			   source_p->name, chptr->chname);
+		sendto_one_notice(source_p, ":*** Notice -- Creating channel %s", chptr->chname);
 	}
 	return 0;
 }

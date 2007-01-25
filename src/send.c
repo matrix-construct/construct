@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: send.c 1379 2006-05-20 14:11:07Z jilles $
+ *  $Id: send.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 #include "stdinc.h"
@@ -371,6 +371,7 @@ sendto_one_notice(struct Client *target_p, const char *pattern, ...)
 	struct Client *dest_p;
 	va_list args;
 	buf_head_t linebuf;
+	char *to;
 
 	/* send remote if to->from non NULL */
 	if(target_p->from != NULL)
@@ -391,7 +392,7 @@ sendto_one_notice(struct Client *target_p, const char *pattern, ...)
 	va_start(args, pattern);
 	linebuf_putmsg(&linebuf, pattern, &args,
 		       ":%s NOTICE %s ",
-		       get_id(&me, target_p), get_id(target_p, target_p));
+		       get_id(&me, target_p), *(to = get_id(target_p, target_p)) != '\0' ? to : "*");
 	va_end(args);
 
 	_send_linebuf(dest_p, &linebuf);
@@ -411,6 +412,7 @@ sendto_one_numeric(struct Client *target_p, int numeric, const char *pattern, ..
 	struct Client *dest_p;
 	va_list args;
 	buf_head_t linebuf;
+	char *to;
 
 	/* send remote if to->from non NULL */
 	if(target_p->from != NULL)
@@ -432,7 +434,7 @@ sendto_one_numeric(struct Client *target_p, int numeric, const char *pattern, ..
 	linebuf_putmsg(&linebuf, pattern, &args,
 		       ":%s %03d %s ",
 		       get_id(&me, target_p),
-		       numeric, get_id(target_p, target_p));
+		       numeric, *(to = get_id(target_p, target_p)) != '\0' ? to : "*");
 	va_end(args);
 
 	_send_linebuf(dest_p, &linebuf);

@@ -1,3 +1,18 @@
+nenolod     2007/01/25 07:08:21 UTC	(20070125-3159)
+  Log:
+  - keyword-subst from charybdis 2.2.
+  
+
+  Changes:	Modified:
+  +12 -3	trunk/doc/example.conf (File Modified) 
+  +58 -3	trunk/doc/reference.conf (File Modified) 
+  + -		trunk/include/substitution.h (File Added) 
+  +1 -0		trunk/src/Makefile.in (File Modified) 
+  +2 -2		trunk/src/s_conf.c (File Modified) 
+  +164 -1	trunk/src/s_user.c (File Modified) 
+  + -		trunk/src/substitution.c (File Added) 
+
+
 nenolod     2007/01/25 07:00:49 UTC	(20070125-3157)
   Log:
   Removed merge tracking for "svnmerge" for 
