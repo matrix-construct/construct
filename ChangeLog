@@ -1,3 +1,185 @@
+nenolod     2007/01/25 07:23:01 UTC	(20070125-3161)
+  Log:
+  Backport from early 3.x: 
+  
+  --
+  nenolod     2006/09/27 16:39:14 UTC	(20060927-2178)
+    Log:
+    - remove "Processing connection to foobar.net" message
+    
+  
+    Changes:	Modified:
+    +0 -3		trunk/src/s_auth.c (File Modified) 
+  
+  
+  nenolod     2006/09/27 16:34:26 UTC	(20060927-2176)
+    Log:
+    - missed the processing connection one (actually, we can probably nuke this one)
+    
+  
+    Changes:	Modified:
+    +1 -2		trunk/src/s_auth.c (File Modified) 
+  
+  
+  river       2006/09/27 16:33:05 UTC	(20060927-2174)
+    Log:
+    get_client_name = stupid
+    
+    
+  
+    Changes:	Modified:
+    +10 -7	trunk/modules/core/m_kill.c (File Modified) 
+  
+  
+  nenolod     2006/09/27 16:32:37 UTC	(20060927-2172)
+    Log:
+    - remove excessive arguments
+    
+  
+    Changes:	Modified:
+    +1 -2		trunk/src/s_conf.c (File Modified) 
+    +1 -1		trunk/src/s_user.c (File Modified) 
+  
+  
+  nenolod     2006/09/27 16:30:59 UTC	(20060927-2170)
+    Log:
+    - use sendto_one_notice() for on-connect notices too.
+    
+  
+    Changes:	Modified:
+    +10 -10	trunk/src/s_auth.c (File Modified) 
+  
+  
+  nenolod     2006/09/27 16:27:01 UTC	(20060927-2168)
+    Log:
+    - use sendto_one_notice() in the core, too.
+    
+  
+    Changes:	Modified:
+    +2 -2		trunk/src/chmode.c (File Modified) 
+    +8 -15	trunk/src/modules.c (File Modified) 
+    +3 -5		trunk/src/s_conf.c (File Modified) 
+    +1 -2		trunk/src/s_newconf.c (File Modified) 
+    +20 -57	trunk/src/s_user.c (File Modified) 
+  
+  
+  river       2006/09/27 16:19:25 UTC	(20060927-2166)
+    Log:
+    the KILL command will use get_client_name(, SHOW_IP) instead of
+    target->name, and will show a more useful error for local opers
+    
+    
+  
+    Changes:	Modified:
+    +6 -4		trunk/modules/core/m_kill.c (File Modified) 
+  
+  
+  nenolod     2006/09/27 16:09:48 UTC	(20060927-2164)
+    Log:
+    - fix bugs in sendto_one_notice()/sendto_one_numeric() where a client identifier won't be sent to unregistered clients
+    
+  
+    Changes:	Modified:
+    +4 -2		trunk/src/send.c (File Modified) 
+  
+  
+  nenolod     2006/09/27 16:05:46 UTC	(20060927-2161)
+    Log:
+    - back out r2159
+    
+  
+    Changes:	Modified:
+    +1 -1		trunk/include/client.h (File Modified) 
+  
+  
+  nenolod     2006/09/27 16:04:05 UTC	(20060927-2159)
+    Log:
+    - get_id(): fall back to "*" if client has no known name
+    
+  
+    Changes:	Modified:
+    +1 -1		trunk/include/client.h (File Modified) 
+  
+  
+  nenolod     2006/09/27 16:01:29 UTC	(20060927-2157)
+    Log:
+    - convert to sendto_one_notice().
+    
+  
+    Changes:	Modified:
+    +2 -3		trunk/unsupported/m_clearchan.c (File Modified) 
+    +4 -6		trunk/unsupported/m_force.c (File Modified) 
+  
+  
+  nenolod     2006/09/27 15:57:11 UTC	(20060927-2155)
+    Log:
+    - use sendto_one_notice() in many places instead of 
+  sendto_one(source_p, ":%s NOTICE %s :", ...);
+    
+  
+    Changes:	Modified:
+    +10 -25	trunk/extensions/example_module.c (File Modified) 
+    +5 -14	trunk/extensions/hurt.c (File Modified) 
+    +1 -2		trunk/extensions/m_42.c (File Modified) 
+    +7 -12	trunk/extensions/m_mkpasswd.c (File Modified) 
+    +1 -2		trunk/extensions/m_ojoin.c (File Modified) 
+    +1 -2		trunk/extensions/m_opme.c (File Modified) 
+    +3 -3		trunk/extensions/spy_whois_notice.c (File Modified) 
+    +3 -3		trunk/extensions/spy_whois_notice_global.c (File Modified) 
+    +3 -7		trunk/modules/core/m_die.c (File Modified) 
+    +2 -4		trunk/modules/core/m_kill.c (File Modified) 
+    +2 -2		trunk/modules/core/m_squit.c (File Modified) 
+    +1 -2		trunk/modules/m_challenge.c (File Modified) 
+    +11 -15	trunk/modules/m_connect.c (File Modified) 
+    +20 -28	trunk/modules/m_dline.c (File Modified) 
+    +2 -2		trunk/modules/m_etrace.c (File Modified) 
+    +11 -21	trunk/modules/m_gline.c (File Modified) 
+    +2 -4		trunk/modules/m_kline.c (File Modified) 
+    +1 -2		trunk/modules/m_rehash.c (File Modified) 
+    +3 -7		trunk/modules/m_restart.c (File Modified) 
+    +31 -45	trunk/modules/m_set.c (File Modified) 
+    +2 -4		trunk/modules/m_testmask.c (File Modified) 
+    +5 -8		trunk/modules/m_unreject.c (File Modified) 
+    +2 -5		trunk/modules/m_xline.c (File Modified) 
+  --
+  
+
+  Changes:	Modified:
+  +2 -0		trunk/doc/sgml/oper-guide/commands.sgml (File Modified) 
+  +10 -25	trunk/extensions/example_module.c (File Modified) 
+  +5 -14	trunk/extensions/hurt.c (File Modified) 
+  +1 -2		trunk/extensions/m_42.c (File Modified) 
+  +7 -12	trunk/extensions/m_mkpasswd.c (File Modified) 
+  +1 -2		trunk/extensions/m_ojoin.c (File Modified) 
+  +1 -2		trunk/extensions/m_opme.c (File Modified) 
+  +3 -3		trunk/extensions/spy_whois_notice.c (File Modified) 
+  +3 -3		trunk/extensions/spy_whois_notice_global.c (File Modified) 
+  +3 -7		trunk/modules/core/m_die.c (File Modified) 
+  +14 -11	trunk/modules/core/m_kill.c (File Modified) 
+  +2 -2		trunk/modules/core/m_squit.c (File Modified) 
+  +1 -2		trunk/modules/m_challenge.c (File Modified) 
+  +11 -15	trunk/modules/m_connect.c (File Modified) 
+  +2 -4		trunk/modules/m_dline.c (File Modified) 
+  +2 -2		trunk/modules/m_etrace.c (File Modified) 
+  +11 -21	trunk/modules/m_gline.c (File Modified) 
+  +2 -4		trunk/modules/m_kline.c (File Modified) 
+  +1 -2		trunk/modules/m_rehash.c (File Modified) 
+  +3 -7		trunk/modules/m_restart.c (File Modified) 
+  +31 -45	trunk/modules/m_set.c (File Modified) 
+  +2 -4		trunk/modules/m_testmask.c (File Modified) 
+  +5 -8		trunk/modules/m_unreject.c (File Modified) 
+  +1 -3		trunk/modules/m_xline.c (File Modified) 
+  +2 -2		trunk/src/chmode.c (File Modified) 
+  +8 -15	trunk/src/modules.c (File Modified) 
+  +10 -14	trunk/src/s_auth.c (File Modified) 
+  +3 -6		trunk/src/s_conf.c (File Modified) 
+  +1 -2		trunk/src/s_newconf.c (File Modified) 
+  +20 -57	trunk/src/s_user.c (File Modified) 
+  +4 -2		trunk/src/send.c (File Modified) 
+  +2 -3		trunk/unsupported/m_clearchan.c (File Modified) 
+  +4 -6		trunk/unsupported/m_force.c (File Modified) 
+
+
 nenolod     2007/01/25 07:08:21 UTC	(20070125-3159)
   Log:
   - keyword-subst from charybdis 2.2.
