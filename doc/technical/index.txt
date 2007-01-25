@@ -1,0 +1,19 @@
+Technical Documentation for ircd-hybrid-7
+
+Persistent_Clients.txt    - A global UID and Persistent client (with cookies)
+                            proposal
+README.TSora              - Description of the TS3 protocol
+README.openssl            - Information for users who have problems with
+                            Hybrid, OpenSSL, and their operating system
+cryptlink.txt             - Outline of CRYPTLINK protocol
+event.txt                 - Outline of the event system
+fd-management.txt         - Outline of the file descriptor management system
+file-management.txt       - Outline of the disk file management system
+hostmask.txt              - Outline of hostmask handling
+linebuf.txt               - Outline of the linebuf system (dbuf replacement)
+network.txt               - Outline of the network traffic subsystem
+rfc1459.txt               - The IRC RFC
+send.txt                  - Document on all of the send_to functions
+whats-new-code.txt        - Whats changed in the code
+
+# $Id: index.txt 6 2005-09-10 01:02:21Z nenolod $

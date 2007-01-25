@@ -1,0 +1,6 @@
+CHANTRACE <#channel>
+
+Outputs a list of members in #channel in ETRACE format, with the classname
+replaced by the server the users are on.
+
+You must be a member of the channel to perform this command.

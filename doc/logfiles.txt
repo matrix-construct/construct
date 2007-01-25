@@ -1,0 +1,36 @@
+ircd-ratbox logfiles - Lee H <lee -at- leeh.co.uk>
+$Id: logfiles.txt 6 2005-09-10 01:02:21Z nenolod $
+---------------------------
+
+fname_killlog
+-------------
+<date> <time> <token> <source> <target> <targets server> <reason>
+
+Where token is one of:
+  L = local oper, local target
+  G = local oper, remote target
+  R = remote oper, remote target
+  O = remote oper, local target
+  S = server
+
+fname_glinelog
+--------------
+<date> <time> <token> <src nick> <src username> <src host> <src server> <user> <host> <reason>
+
+Where token is one of:
+  R = gline request
+  T = gline trigger, always by previous three requests
+
+fname_klinelog
+--------------
+<date> <time> [U]<token> <source> <time> <info> <reason>[|<oper_reason>]
+
+Time is always in minutes, 0 for permanent
+
+
+If 'U' is specified before token, it is a removal rather than an addition.
+Token is one of:
+  K = kline
+  D = dline
+  X = xline
+  R = resv

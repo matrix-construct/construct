@@ -1,0 +1,8 @@
+TESTLINE [[nick!]user@]host
+
+Looks up given mask, looking for any matching I/K/D/G lines.
+If username is not specified, it will look up "dummy@host".
+If nickname is specified it will also search for RESVs.
+
+This command will not perform dns lookups on a host, for best
+results you must testline a host and its IP form.

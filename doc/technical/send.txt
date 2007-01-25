@@ -1,0 +1,253 @@
+
+send.c re-work
+
+PREFIXES
+========
+
+  Server prefixes are the ":%s" strings at the beginning of messages.
+They are used by servers to route the message properly and by servers to
+local clients to update their idea of who is whom.
+
+":nick!user@host" is a prefix ":name" where name is either a nick
+or name of a server is another valid prefix.
+
+Typical prefix for a local client to a channel:
+
+":Dianora!db@irc.db.net"
+
+for a prefix to a remote server:
+":Dianora"
+
+e.g. as seen locally on a channel:
+
+":Dianora!db@irc.db.net PRIVMSG #us-opers :ON TOP OF ...\r\n"
+
+e.g. as seen sent to a remote server:
+":Dianora PRIVMSG #us-opers :ON TOP OF ...\r\n"
+
+  It has been argued that full prefixes sent locally are a waste of bandwidth
+(Isomer from Undernet has argued this). i.e. instead of sending:
+":nick!user@host" for a local prefix, one could just send ":nick"..
+Unfortunately, this breaks many clients badly. Personally I feel that
+until clients are updated to understand that a full prefix isn't always
+going to be sent, that this should be held off on.
+
+  As much as possible, prefix generation is now moved "upstairs" as
+much as possible. i.e. if its known its a local client only, then the
+onus of the prefix generation, is the users, not hidden in send.c
+This allows somewhat faster code to be written, as the prefix doesn't
+have to be regenerated over and over again.
+
+  Prefixes aren't sent in all cases, such as a new user using NICK
+A prefix is needed when it must be routed.
+
+i.e.
+
+NICK newnick
+
+  There is obviously no prefix needed from a locally connected client.
+
+
+
+FUNCTIONS
+=========
+
+sendto_one()    - Should be used for _local_ clients only
+                  it expects the prefix to be pre-built by user.
+		  
+                  usage - sendto_one(struct Client *to, char *pattern, ...);
+
+                  typical use:
+
+                  sendto_one(acptr,":%s NOTICE %s :I'm tired", me.name,
+		             acptr->name);
+                  Note: This was from a server "me" hence only one
+                  name in prefix.
+
+                  This would be an example of a client sptr, noticing
+                  acptr IF acptr is known to be a local client:
+
+                  sendto_one(acptr,":%s!%s@%s NOTICE %s :You there?",
+                             sptr->name,
+                             sptr->username,
+                             sptr->host,
+                             acptr->name);
+
+sendto_one_prefix()
+                - Sends a message to a remote client, with proper
+		  prefix and target (name or UID).
+                  usage - sendto_one_prefix(struct Client *target_p,
+		                            struct Client *source_p,
+		                            const char *command,
+					    const char *pattern, ...)
+
+		  typical use:
+
+		  sendto_one_prefix(target_p, source_p, "INVITE", ":%s",
+				    chptr->chname);
+
+
+sendto_one_notice()
+                - Sends a notice from this server to target. Target may
+		  be a local or remote client.
+		  Prefix and target are chosen based on TS6 capability.
+
+		  typical use:
+
+		  sendto_one_notice(source_p, ":You suck. Yes, really.");
+
+sendto_one_numeric()
+                - Sends a numeric from this server to target. Target may
+		  be a local or remote client.
+		  Prefix and target are chosen based on TS6 capability.
+
+		  typical use:
+
+		  sendto_one_numeric(source_p, RPL_STATSDEBUG,
+		                     "p :%u staff members", count);
+
+sendto_channel_flags()
+                - This function sends a var args message to a channel globally,
+                  except to the client specified as "one", the prefix
+                  is built by this function on the fly as it has to
+                  be sent both to local clients on this server and to
+                  remote servers.
+		  For type use one of:
+                  ONLY_SERVERS ALL_MEMBERS ONLY_CHANOPS ONLY_CHANOPSVOICED
+		  If type is not ALL_MEMBERS it's not sent to not-CHW-capable
+		  servers.
+		  Deaf (umode +D) clients are always skipped.
+
+                  usage - sendto_channel_flags(struct Client *one,
+                                               int type,
+                                               struct Client *from,
+                                               struct Channel *chptr,
+                                               const char *pattern, ... );
+
+                  sendto_channel_butone(cptr, ALL_MEMBERS, sptr, chptr
+                                        "PRIVMSG %s :HI!",
+                                        chptr->chname);
+
+                  e.g. if channel message is coming from "cptr"
+                  it must not be sent back to cptr.
+
+
+sendto_server()
+                - This function sends specified var args message
+                  to all connected servers except the client "one"
+                  which have all of "caps" capabilities but none
+		  of "nocaps" capabilities.
+
+		  If "chptr" is not NULL and is a local channel,
+		  nothing is sent.
+
+                  usage - sendto_server(struct Client *one,
+                                        struct Channel *chptr,
+					unsigned long caps,
+					unsigned long nocaps,
+                                        const char *format, ... );  
+
+sendto_common_channels_local()
+                - This function is used only by m_nick and exit_one_client
+                  its used to propagate nick changes to all channels user
+                  is in, and QUIT messages to all channels user is in.
+                  As it only sends to local clients, prefix generation
+                  is left to the user. It also sends the message to the
+                  user if the user isn't on any channels.
+
+                  usage - sendto_common_channels_local(struct Client *user,
+                                                       const char *pattern,
+                                                       ...);
+
+sendto_channel_local()
+                - This function is used to send only locally, never
+                  to remote servers. This is useful when removing
+                  local chanops, or adding a local chanop. MODE/SJOIN
+                  sent to remote server allows that server to propagate
+                  mode changes to its clients locally.
+		  The message is also sent to deaf (umode +D) clients.
+
+                  usage - sendto_channel_local(int type,
+                                               struct Channel *chptr,
+                                               const char *pattern, ... );
+
+                  prefix must be pre-built. type is a flag
+                  denoting ONE of 
+                  ALL_MEMBERS		- all members locally are sent to
+                  ONLY_CHANOPS_VOICED	- only chanops and voiced see this
+                  ONLY_CHANOPS		- only chanops see this
+
+
+sendto_match_butone()
+                - only used for the old style oper masking
+                  i.e. /msg #hostmask which in hyb7 is /msg $#hostmask
+                  or  /msg $servermask in hyb7 /msg $$servermask
+
+                  usage - sendto_match_butone(struct Client *one,
+                                              struct Client *source_p,
+                                              char *mask,
+                                              int what,
+                                              const char *pattern, ... );
+
+                  one is the client not to send to
+                  mask is the actual mask
+                  what is either MATCH_HOST or MATCH_SERVER
+
+sendto_match_servs()
+                - Allows sending a message to servers whose names match
+		  the given mask. A message is also sent to non-matching
+		  servers which have matching servers behind them.
+		  Used for ENCAP, remote kline, etc.
+		  No message is sent to source_p->from.
+
+		  usage - sendto_match_servs(struct Client *source_p,
+					     const char *mask,
+					     int cap, int nocap,
+					     const char *pattern, ...);
+
+sendto_anywhere()
+                - Allows the sending of a message to any client on the net
+                  without knowing whether its local or remote. The penalty
+                  is the calculation of a run-time prefix.
+                  It is less efficient then sendto_one()
+
+                  usage - sendto_anywhere(struct Client *to,
+                                          struct Client *from,
+                                          const char *command,
+                                          const char *pattern, ...);
+
+                  e.g.
+                  sendto_anywhere(target_p, source_p,
+                                  "PRIVMSG", ":Hi, Where ever you are");
+
+sendto_realops_flags()
+                - combines old sendto_realops and sendto_realops_flags
+                  sends specified message to opers locally only
+                  depending on umodes. UMODE_ALL is UMODE_SERVNOTICE.
+                  the message is sent as a server notice, prefixed with
+		  "*** Notice -- ".
+
+                  usage - sendto_realops_flags(int flags,
+                                               const char *pattern, ... );
+
+                  e.g.
+                  sendto_realops_flags(UMODE_ALL,
+                                 "Don't eat the yellow snow");
+
+sendto_wallops_flags()
+                - sends specified message to opers/users locally, 
+                  depending on umodes.  used for messages that need
+                  to be in wallops form
+                - some policy decisions about who gets what live in here
+
+                  usage - sendto_wallops_flags(int flags,
+                                    struct Client *, const char *patterm ...);
+
+                  e.g.
+                  sendto_wallops_flags(UMODE_LOCOPS,
+                                      sptr, "Message");
+
+-- Diane Bruce 
+Updated Jan 2006 by jilles with ratbox and late hybrid7 changes
+
+$Id: send.txt 587 2006-01-27 19:45:11Z jilles $

@@ -1,0 +1,82 @@
+#
+# Makefile.in for servlink/src
+#
+# $Id: Makefile.in 1285 2006-05-05 15:03:53Z nenolod $
+#
+
+CC              = @CC@
+INSTALL         = @INSTALL@
+INSTALL_BIN     = @INSTALL_PROGRAM@
+INSTALL_DATA    = @INSTALL_DATA@
+INSTALL_SUID    = @INSTALL_PROGRAM@ -o root -m 4755
+RM              = @RM@
+LEX             = @LEX@
+LEXLIB          = @LEXLIB@
+CFLAGS          = @IRC_CFLAGS@ -DIRCD_PREFIX=\"@prefix@\"
+LDFLAGS         = @LDFLAGS@
+MKDEP           = @MKDEP@ -DIRCD_PREFIX=\"@prefix@\"
+MV              = @MV@
+RM              = @RM@
+prefix          = @prefix@
+exec_prefix     = @exec_prefix@
+bindir          = @bindir@
+libexecdir      = @libexecdir@
+confdir         = @confdir@
+localstatedir   = @localstatedir@
+
+ZIP_LIB		= @ZLIB_LD@
+
+IRCDLIBS        = @LIBS@ $(ZIP_LIB)
+
+INCLUDES        = -I. -I../include $(SSL_INCLUDES)
+CPPFLAGS        = ${INCLUDES} @CPPFLAGS@
+
+PROGS		= servlink
+
+SOURCES =     \
+  servlink.c  \
+  io.c        \
+  control.c
+  
+
+OBJECTS = ${SOURCES:.c=.o}
+
+all: servlink
+
+build: all
+
+servlink: ${OBJECTS}
+	${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${OBJECTS} ${IRCDLIBS}
+
+install: build
+	@echo "ircd: installing servlink ($(PROGS))"
+	@for i in $(PROGS); do \
+                if test -f $(DESTDIR)$(bindir)/$$i; then \
+                        $(MV) $(DESTDIR)$(bindir)/$$i $(DESTDIR)$(bindir)/$$i.old; \
+                fi; \
+                $(INSTALL_BIN) $$i $(DESTDIR)$(bindir); \
+        done
+
+.c.o:
+	${CC} ${CPPFLAGS} ${CFLAGS} -c $<
+
+.PHONY: depend clean distclean
+depend:
+	@${MKDEP} ${CPPFLAGS} ${SOURCES} > .depend.tmp
+	@sed -e '/^# DO NOT DELETE THIS LINE/,$$d' <Makefile >Makefile.depend
+	@echo '# DO NOT DELETE THIS LINE!!!' >>Makefile.depend
+	@echo '# make depend needs it.' >>Makefile.depend
+	@cat .depend.tmp >>Makefile.depend
+	@mv Makefile.depend Makefile
+	@rm -f .depend.tmp
+
+clean:
+	${RM} -f *.o *~ *.core core servlink
+
+lint:
+	lint -aacgprxhH $(CPPFLAGS) -DIRCD_PREFIX=\"@prefix@\" $(SOURCES) >>../lint.out
+
+distclean: clean
+	${RM} -f Makefile
+
+# End of Makefile

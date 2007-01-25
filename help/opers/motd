@@ -1,0 +1,5 @@
+MOTD [servername]
+
+MOTD will display the message of the day for the
+server name specified, or the local server if there
+was no parameter.

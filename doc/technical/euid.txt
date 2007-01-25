@@ -1,0 +1,71 @@
+$Id: euid.txt 1863 2006-08-27 13:40:37Z jilles $
+
+Extended UID command proposal
+Jilles Tjoelker <jilles@stack.nl>
+
+Introduction
+------------
+
+The current protocol to deal with real and visible hosts, with UID, ENCAP
+REALHOST and ENCAP CHGHOST commands has several problems.
+
+In some cases (MONITOR) real hosts are used inappropriately because the UID
+command contains the real host for new users. In other cases (atheme
+akills), the visible host is used inappropriately because the UID command
+contains the visible host for burst users. In both cases nothing is sent
+after the UID command if real and visible hosts are equal. In the latter
+case this problem can be worked around with end-of-burst detection but in
+the former case that is not possible.
+
+This can be fixed by sending both real and visible host in the same command.
+
+This command can also include the data that is currently sent with ENCAP
+LOGIN.
+
+Another problem is that CHGHOST is an ENCAP command although it is important
+for synchronization. One of the problems is that the target often remains
+a UID even if sent to a TS5 server (various old services packages).
+
+This can be fixed by making it a regular command.
+
+Current commands
+----------------
+
+(TS6 form only)
+
+:<SID> UID <NICK> <HOPS> <TS> +<UMODE> <USERNAME> <HOSTNAME> <IP> <UID> :<GECOS>
+
+Introduces a user, see Lee Hardy's ts6.txt.
+
+:<UID> ENCAP * REALHOST <REALHOST>
+
+Sets the real host of a user (the hostname in UID is the visible host).
+
+:<SID> ENCAP * CHGHOST <UID> <VHOST>
+
+Sets/changes the visible host of a user (the hostname in UID is the real host).
+
+:<UID> ENCAP * LOGIN <ACCOUNT>
+
+Sets the login name of a user.
+
+New commands
+------------
+
+:<SID> EUID <NICK> <HOPS> <TS> +<UMODE> <USERNAME> <VHOST> <IP> <UID> <REALHOST> <ACCOUNT> :<GECOS>
+
+Introduces a user. The hostname field is now always the visible host.
+The realhost field is * if the real host is equal to the visible host.
+The account field is * if the login is not set.
+Note that even if both new fields are *, an EUID command still carries more
+information than a UID command (namely that real host is visible host and the
+user is not logged in with services). Hence a NICK or UID command received
+from a remote server should not be sent in EUID form to other servers.
+
+:<SID> CHGHOST <UID> <VHOST>
+
+Changes the visible host of a user.
+
+A new server capab named EUID will be sent if these commands are supported.
+If the capab is not present, the old commands must be used.
+EUID can (in principle) also be used with TS5.

@@ -1,0 +1,92 @@
+Extended bans
+Jilles Tjoelker <jilles -at- stack.nl>
+--------------------------------------
+
+Extended bans (ban conditionals) allow different checks than the usual
+nick!user@host or nick!user@ip match to determine whether someone should
+be banned, quieted, exempted or invited.
+
+Extended bans are of the form $[~]<type>[:<data>]. The <type> is one
+character (case insensitive) and determines the type of match. Most types
+allow or require an extra field <data>. If the tilde (~) is present, the
+result of the comparison will be negated, unless the ban is invalid in which
+case it will never match. Invalid bans are ones where <data> is missing but
+required or where <data> is otherwise invalid as noted below.
+
+Unless noted below, all types can be used with +b, +q, +e and +I.
+
+If any extended ban types are loaded, they are listed in 005 (RPL_ISUPPORT)
+as EXTBAN=$:<types>.
+
+Local users cannot add extended bans of an unknown type or invalid bans. If a
+remote user adds an extended ban of an unknown type, the mode change is
+processed normally. Furthermore, extended bans of an unknown type can always be
+listed or removed.
+
+The ability to send to a channel is cached; this cache may not be updated
+if a condition for an extended ban changes. To work around this, part and
+rejoin the channel, or add or remove a +b, +q or +e entry.
+
+The extban types that come with charybdis are:
+
+extb_account.so
+	$a
+matches all logged in users
+	$a:<mask>
+matches users logged in with a username matching the mask (* and ? wildcards)
+
+extb_channel.so
+	$c:<channel>
+matches users who are on the given channel; this is only valid if the channel
+exists and is not +s or +p. (The ops of the channel the ban is on cannot
+necessarily see whether the user is in the target channel, so it should not
+influence whether they can join either.)
+
+extb_oper.so
+	$o
+matches opers (most useful with +I)
+
+extb_realname.so
+	$r:<mask>
+matches users with a realname (gecos) matching the mask (* and ? wildcards);
+this can only be used with +b and +q
+
+extb_server.so
+	$s:<mask>
+matches users connected to a server matching the mask (* and ? wildcards);
+this can only be used with +b and +q
+
+Comparisons:
+
++b $~a is similar to +r but also prevents not logged in users talking or
+changing their nick while on channel.
+
++iI $o is the same as +O in dreamforge-derived ircds.
+
+Creating extban types:
+
+extban_table, indexed by the extban character, contains function pointers
+of the following type:
+typedef int (*ExtbanFunc)(const char *data, struct Client *client_p,
+		struct Channel *chptr, long mode_type);
+
+The arguments are as follows:
+data: the text after the colon, NULL if there was no colon
+client_p: the client to check; this is always a local client, which may be
+on or off channel
+chptr: the channel
+mode_type: CHFL_BAN, CHFL_QUIET, CHFL_EXCEPTION or CHFL_INVEX
+
+The return value:
+EXTBAN_INVALID: the mask is invalid, it never matches even if negated and
+cannot be added; if this is returned for one client_p it must be returned
+for all
+EXTBAN_NOMATCH: the client_p does not match the mask
+EXTBAN_MATCH: the client_p matches the mask
+
+The function is called whenever a (local) client needs to be checked against
+a +bqeI entry of the given extban type, and whenever a local client tries to
+add such an entry. (Clients are allowed to add bans matching themselves.)
+
+-- 
+$Id: extban.txt 1639 2006-06-04 23:26:47Z jilles $

@@ -1,0 +1,84 @@
+Overview of the event subsystem
+Adrian Chadd <adrian@creative.net.au>
+
+$Id: event.txt 6 2005-09-10 01:02:21Z nenolod $
+
+
+One of the things that immediately struck me whilst first looking at the
+code was that the ircd periodically scheduled things in io_loop() but
+it did them manually. This is very wasteful and very tedious.
+
+Therefore, an event system was added to hybrid. src/event.c contains an
+event system ported from the squid web cache. It is pretty self contained,
+and only a few things (debugging, time resolution) needed changing.
+
+An event is scheduled through eventAdd() or eventAddIsh() :
+
+eventAdd(const char *name, EVH * func, void *arg, time_t when, int weight)
+eventAddIsh(const char *name, EVH * func, void *arg, time_t delta_ish,
+  int weight)
+
+after 'when' (or delta_ish) seconds has elapsed from the time the above
+functions are called, the 'func' is called with the given data 'arg'. The
+event is then deleted.
+
+To delete an event, use eventDelete() :
+
+eventDelete(EVH * func, void *arg)
+
+An event is identified by its callback function and data pair.
+
+Events are run through eventRun(). This is designed to be called *BEFORE*
+your IO handlers, to let events scheduled immediately (ie a time of 0)
+to initiate IO before the IO handlers are called.
+
+(Believe me, its useful.)
+
+
+
+Example:
+
+Say you have something which must be called every 15 seconds.
+
+* You would first define the callback in your module:
+
+static EVH foo_periodic_event;
+static int initialised = 0;
+
+* You would then add the event in your initialization function:
+
+void foo_init(void)
+{
+    if (!initialised) {
+        eventAdd("foo_periodic_event", foo_periodic_event, NULL, 0, 0);
+        initialised = 1;
+    }
+}
+
+  This will force the event to be called the next time eventRun() is called,
+  rather than waiting 15 seconds.
+
+* You then define your event callback:
+
+static void
+foo_periodic_event(void *data)
+{
+    /* We'd do our work here */
+
+    /* Then we'd finish */
+    eventAdd("foo_periodic_event", foo_periodic_event, NULL, 15, 0);
+}
+
+
+Notes:
+
+* I really should change the timeout value to be in milliseconds. Squid used
+  a double, but Dianora had something against floating point code in the main
+  loop (which is understandable). If someone wants a fun task .. :-)
+
+* Note that the 'name' parameter to eventAdd() / eventAddIsh() is a const
+  char *, and is *not copied* but *referenced*. Therefore, it is in your
+  best interest to use string constants.
+
+* /stats E for an oper shows pending events. Thanks Diane!
+

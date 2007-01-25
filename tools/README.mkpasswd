@@ -1,0 +1,59 @@
+mkpasswd.c documentation
+$Id: README.mkpasswd 6 2005-09-10 01:02:21Z nenolod $
+
+This is documentation for the updated mkpasswd.c included with a number
+of ircd, irc services, and non-IRC related programs
+
+This version of mkpasswd can create DES, Extended DES, BlowFish, and MD5
+passwords, with either randomly generated or user provided salts.  
+
+Options:
+-m Generate an MD5 password
+-d Generate a DES password
+-b Generate a BlowFish password
+-e Generate an Extended (BSDi) DES password
+-l Specify a length for a random MD5 or BlowFish salt
+-r Specify a number of rounds for a BlowFish or Extended DES password
+   BlowFish: no more than 6 recommended, no less than 4 accepted
+   Extended DES: default of 25
+-s Specify a salt, 2 alphanumeric characters for DES, up to 16 for MD5,
+   up to 22 for BlowFish, 2 for Extended DES
+-p Specify a plaintext password to use
+-? Get brief help
+-h Get extended help
+
+Without the presence of any parameters, it'll behave like the old mkpasswd,
+creating a DES password with a randomly generated salt and prompting for
+the password (without echo).
+
+A DES salt is a pair of alphanumeric characters ('.' and '/' are permitted
+as well), such as 'a4' or 'Td'.
+
+An MD5 salt consists of up to 16 (though most implementations limit you to
+8) alphanumeric characters (plus '.' and '/'),
+such as 'tGd' or 'J6d4dfG'.
+
+A BlowFish salt consists of up to 22 alphanumeric characters (plus '.' and
+'/').  BlowFish also specifies a number of rounds*, by default 4.
+
+Known bugs:
+The encryption algorithms supported depend on your system's crypt()
+  implementation.
+The maximum length of an MD5 salt is limited to your systems crypt()
+  implementation, typically 8.
+
+Supported Platforms (Known and tested):
+Linux glibc (DES and MD5)
+FreeBSD 3.x (DES (MD5 maybe))
+FreeBSD 4.x (DES, MD5, BlowFish, Extended DES)
+Solaris 2.5-2.6 (DES only)
+Cygwin 1.1.4 (DES only)
+Prior Cygwin with the MD5 libcrypt (MD5 only)
+OpenBSD 2.7 (don't link with -lcrypt) (DES, MD5, Blowfish)
+Mac OS-X (Darwin) (don't link with -lcrypt) (DES only)
+
+An MMK build script is included, as well as an MD5 crypt() implementation
+
+Other systems probably work, but they haven't been amply tested.
+
+* BlowFish's rounds parameter is a logarithm, not an integer value

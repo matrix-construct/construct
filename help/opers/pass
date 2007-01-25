@@ -1,0 +1,6 @@
+PASS <password>
+
+PASS is used during registration to access
+a password protected auth {} block.
+
+PASS is also used during server registration.

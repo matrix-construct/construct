@@ -1,0 +1,38 @@
+Target Change for Messages
+Lee H <lee -at- leeh.co.uk>
+---------------------------
+
+If the server you are using uses the target change mechanism, then
+restrictions are placed on how many different users you can message in a set
+timeframe.
+
+Target change does not apply to channels, ctcp replies or messages to
+yourself.
+
+You will have a set number of 'slots', each different client you message
+will take up one slot.  A client doing a nick change will not use a new slot,
+however a client leaving the network and reconnecting will.  You will
+receive 1 new slot roughly every minute.
+
+When all slots are filled, messages to new clients will not be accepted.
+Messages to clients already filling a slot will be accepted.  If all slots
+are full, you will receive the ERR_TARGCHANGE numeric, number 707 in the
+form:
+:<server> 707 <yournick> <targetnick> :Targets changing too fast, message dropped
+
+The slots are operated as a FIFO (first in, first out), so the first person
+you message will be the first person removed from a slot, even if you are
+still talking to this person.
+
+The number of slots in use will be kept through a reconnection, though the
+information in those slots will be dropped.  However, you will always
+receive one free slot on a reconnection.  Other servers using this mechanism
+will also be made aware of details about slots.
+
+Target change can be avoided via the CNOTICE and CPRIVMSG commands, when you 
+are opped or voiced in a channel, and you are messaging a client within that 
+channel.  See /quote help cnotice and /quote help cprivmsg for more
+information.
+
+-- 
+$Id: tgchange.txt 6 2005-09-10 01:02:21Z nenolod $

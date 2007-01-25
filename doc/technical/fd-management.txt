@@ -1,0 +1,81 @@
+Overview of the filedescriptor subsystem
+Adrian Chadd <adrian@creative.net.au>
+
+$Id: fd-management.txt 6 2005-09-10 01:02:21Z nenolod $
+
+
+Filedescriptor lists
+--------------------
+
+The filedescriptor list is managed through the routines in fdlist.c .
+These include:
+
+fd_open() - tag an FD as "open" and active
+fd_close() - tag an FD as "closed" and close() the filedescriptor
+fd_note() - update the filedescriptor tag
+
+You can get the current list of open filedescriptors through /stats F as
+an oper.
+
+
+
+FD lists
+--------
+
+The FD list support is very alpha. There are a few lists defined:
+
+typedef enum fdlist_t {
+    FDLIST_NONE,
+    FDLIST_SERVICE,
+    FDLIST_SERVER,
+    FDLIST_IDLECLIENT,
+    FDLIST_BUSYCLIENT,
+    FDLIST_MAX
+} fdlist_t;
+
+FDLIST_NONE		Not on any list (ie close()d)
+FDLIST_SERVICE		A service - listen() sockets, resolver, etc
+FDLIST_SERVER		Server connections
+FDLIST_IDLECLIENT	An idle client
+FDLIST_BUSYCLIENT	A busy client
+FDLIST_MAX		Used for bounds checking
+
+The idea is that the SERVICE sockets need polling frequently, the SERVER
+sockets also need polling frequently, BUSYCLIENT is for busy clients
+which need frequent polling (eg we're trying to write to them), and
+IDLECLIENT is for clients which we don't need to poll frequently.
+THIS hasn't been decided upon yet.
+
+
+
+File operations
+---------------
+
+The file operations are also wrapped through file_open() and file_close()
+which handle calling fd_open() / fd_close() and tracking the filedescriptors
+correctly. fbopen() / fbclose() use file_open() / file_close() too.
+
+fileio.c defines the functions:
+
+int
+file_open(const char *filename, int mode, int fmode)
+
+A wrapper around open(filename, flags, mode). Read the open manpage for
+information. file_open() enforces filedescriptor limits and tags the FD
+through fd_open().
+
+void
+file_close(int fd)
+
+A wrapper around close() for files. close() handles fd_close()ing the fd.
+
+
+FBFILE *
+fbopen(const char *filename, const char *mode)
+
+void
+fbclose(FBFILE *fb)
+
+These are the 'buffered disk IO' routines. You can read the code yourself.
+Note that these routines use file_open() and file_close().
+

@@ -1,0 +1,69 @@
+# $Id: whats-new-2.1.txt 6 2005-09-10 01:02:21Z nenolod $
+
+The following is a list of the major changes between ircd-ratbox-2.0 and
+ircd-ratbox-2.1.
+
+Config file
+-----------
+- IP entries within exempt {}; can now be stacked, eg:
+  exempt { ip = "127.0.0.1"; ip = "192.168.0.0/24"; };
+- shared {}; has been completely reworked so that it allows stacking.
+  shared {}; blocks for 2.0 and earlier will no longer work.  
+  See example.conf for the new format.
+- cluster {}; has been reworked to allow stacking.
+  cluster {}; blocks for 2.0 and earlier will no longer work.
+  See example.conf for the new format.
+- New auth flag, jupe_exempt.  When set on a client, that client will not
+  generate jupe warning notices when they try to join juped channels.
+- You may no longer specify klines, dlines, xlines and resvs in ircd.conf.
+  Instead, there is no support for banconfigs with a ".perm" extension,
+  eg kline.conf.perm.  Anything within a .perm file will be read, but
+  cannot be removed via the ircd.  The format of these files is the same
+  format as their normal non-permanent counterpart.  So kline.conf.perm
+  takes the same format as kline.conf, and so on.
+- rehash and kill -HUP no longer reread the ban configs kline.conf etc.
+  You must now use /rehash bans, or kill -USR2
+- New config option to general {};, dline_with_reason = yes|no;.  Default no.
+  Traditionally, when a client connects and is dlined, the reason is never
+  shown.  Enabling this will output the reason to clients.
+
+
+Client
+------
+- Support for "deaf", umode +D.  When a client is 'deaf', they will not
+  receive any messages sent towards channels.  They will still receive joins
+  etc, but normal channel chat will not be sent.  Any private messages
+  will still be sent.
+- Target change anti-spam system.  Restrictions are now placed upon how many
+  different clients (not channels) can be messaged within a specific time
+  period.
+- Server-side notify lists.  These allow a client to request a server
+  notifies them when a nickname comes online or goesoffline.  See 
+  doc/monitor.txt for more information.
+- Client capabilities.  These allow clients to negotiate capabilities with
+  the server.  Currently supports:
+    - multi-prefix: A +ov client will have "@+" shown in names/who replies.
+
+Oper
+----
+- RESVs are now tracked.  Stats q/Q have been modified so that the first
+  field of the output is now a number indicating how many times the RESV
+  has been hit.
+
+ratbox-services support (non-efnet)
+-----------------------------------
+- For those of you using ratbox-services, there is now compatibility code
+  within ircd, enabled by passing '--enable-services' to configure.
+  See doc/services.txt for more information.
+
+Code cleanups
+-------------
+- Removed the custom file implementation, use the system one instead.
+- The hook system has been redesigned, theres now a more thorough set of
+  hooks that may be used.  See docs/hooks.txt
+- Removed support for VMS.  It hasnt worked for a long time.
+- Cleanups to the expiry of temp klines/dlines.
+- Various other things ;-).
+- Better splitcode, it now works on how many servers have notified
+  us of burst finishing, rather than how many servers are linked to the
+  network.

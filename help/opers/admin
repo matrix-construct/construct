@@ -1,0 +1,11 @@
+ADMIN [server]
+
+With no arguments, ADMIN shows the information that was set by the
+administrator of the server. This information can take any form that
+will fit in three lines of text but is usually a list of contacts
+for the persons that run the server.
+
+With a second argument, the administrative information for the
+specified server is displayed.
+
+See also: stats

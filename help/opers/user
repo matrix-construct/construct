@@ -1,0 +1,7 @@
+USER <username> <unused> <unused> :<real name/gecos>
+
+USER is used during registration to set your gecos
+and to set your username if the server cannot get
+a valid ident response.  The second and third fields
+are not used, but there must be something in them.
+The reason is backwards compatibility

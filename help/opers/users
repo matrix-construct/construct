@@ -1,0 +1,6 @@
+USERS [remoteserver]
+
+USERS will display the local and global current
+and maximum user statistics for the specified
+server, or the local server if there was no
+parameter.

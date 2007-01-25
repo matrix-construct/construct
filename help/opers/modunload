@@ -1,0 +1,7 @@
+MODUNLOAD <module.so>
+
+-- Unload a module from the ircd
+Use just the module name, the path is not needed.
+When a module is unloaded, all commands associated
+with it are unloaded as well.
+NOTE:  Restricted to admins only

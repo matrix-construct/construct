@@ -1,0 +1,105 @@
+Overview of the network subsystem
+Adrian Chadd <adrian@creative.net.au>
+
+$Id: network.txt 6 2005-09-10 01:02:21Z nenolod $
+
+
+This document is an overview of the new and hopefully improved network
+subsystem.
+
+The code is based loosely upon the network core found in the Squid web cache
+server, with some optimizations for ircd-specific IO patterns.
+
+
+
+Filedescriptor IO
+-----------------
+
+Filedescriptor IO is initiated using comm_setselect(). comm_setselect()
+registers interest in reading from or writing to a file descriptor.
+When a filedescriptor is ready for the required IO a callback is called
+from the IO loop.
+
+The comm_setselect() usage is:
+
+void
+comm_setselect(int fd, fdlist_t list, int type, PF *callback, void *cbdata,
+    int timeout)
+
+where:
+  fd 		filedescriptor
+  list		Which list the FD should be put on
+  type		IO type. Can currently include:
+			COMM_SELECT_READ  - register for read
+			COMM_SELECT_WRITE - register for write
+  callback	Function to call when the FD is ready
+  cbdata	Data to be passed to above function
+  timeout	Update the timeout value. 0 is "don't update".
+
+
+A typical use is:
+
+..
+
+/* Register interest in the FD for a read event */
+comm_setselect(fd, FDLIST_SERVICE, COMM_SELECT_READ, read_callback, read_data,
+    0);
+
+..
+
+(FD becomes ready for read in the IO loop)
+
+void
+read_callback(int fd, void *data)
+{
+    /* called when the FD becomes ready for read */
+    retval = read(fd, buf, len);
+
+    ..
+    /* Ok, we need to read some more when its ready */
+    comm_setselect(fd, FDLIST_SERVICE, COMM_SELECT_READ, read_callback, data,
+        0);
+}
+
+
+
+
+Socket timeouts
+---------------
+
+A "socket timeout" is a callback registered to be called when a certain
+amount of time has elapsed. Think of it as an event, but against a FD.
+
+A good example of socket timeouts is in the comm_connect_tcp() code.
+When the connect() begins, comm_settimeout() is called to call
+comm_connect_timeout() if the timeout occurs. Once the connect() completes,
+comm_settimeout() is called with a timeout of 0 and callback of NULL 
+to deregister the timeout. If the timeout occurs, comm_connect_timeout()
+is called and the connection attempt is aborted.
+
+
+
+
+Functions
+---------
+
+comm_open() - a socket() wrapper, enforcing fd limitations and tagging the
+  file descriptor with a note
+
+comm_accept() - an accept() wrapper, enforcing fd limitations and tagging
+  the file descriptor with a note
+
+comm_connect_tcp() - attempt an async connect(). Handles DNS lookups if
+  required, and will call the given callback at completion or error
+
+comm_settimeout() - set a callback to be called after a given time period.
+  This is good to implement things like PING checks and connect() timeouts.
+
+Notes:
+
+* All socket creation should go through comm_open() / comm_accept().
+* All socket closing should go through fd_close(). comm_close() isn't
+  implemented yet.
+* comm_connect_tcp() is your best friend. :-)
+* *ALL* network sockets should be non-blocking. If your OS doesn't support
+  non-blocking sockets, you shouldn't be here.

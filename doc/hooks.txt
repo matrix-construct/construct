@@ -1,0 +1,122 @@
+Hook documentation - <lee -at- leeh.co.uk>
+------------------------------------------
+
+Documentation on how to actually develop code to use hooks is contained in
+contrib/example_module.c, this document simply describes which hooks are
+available.
+
+There are various hook structures available that may be passed to hooks:
+hook_data		- struct Client *client; const void *arg1; 
+			  const void *arg2;
+hook_data_int		- struct Client *client; const void *arg1; int arg2;
+hook_data_client	- struct Client *client; struct Client *target;
+hook_data_channel	- struct Client *client; struct Channel *chptr;
+
+
+Spy Hooks
+---------
+The following spy hooks are called only when the request is handled by the
+local server.  They will not be called if the command is being sent remotely
+for another server to handle:
+"doing_admin"		- Passes hook_data:
+			  hdata->client = client requesting ADMIN
+
+"doing_info"		- Passes hook_data:
+			  hdata->client = client requesting INFO
+
+"doing_links"		- Passes hook_data:
+			  hdata->client = client doing LINKS
+			  (const char *) hdata->arg1 = optional mask
+
+"doing_motd"		- Passes hook_data:
+			  hdata->client = client doing MOTD
+
+"doing_stats"		- Passes hook_data_int:
+			  hdata->client = client doing STATS
+			  (const char *) hdata->arg1 = optional stats l target
+			  (char) hdata->arg2 = statchar being requested
+
+"doing_stats_p"		- Passes hook_data:
+			  hdata->client = client doing STATS p
+
+"doing_trace"		- Passes hook_data_client:
+			  hdata->client = client doing TRACE
+			  hdata->target = optional target of TRACE
+
+"doing_whois"		- Passes hook_data_client:
+			  hdata->client = local client doing WHOIS
+			  hdata->target = target of WHOIS
+
+"doing_whois_global"	- Passes hook_data_client:
+			  hdata->client = remote client doing WHOIS
+			  hdata->target = target of WHOIS
+
+
+Netburst Hooks
+--------------
+The following burst hooks are called when we are sending a netburst to a
+server.
+
+"burst_client"		- Sent after we have just burst a user.
+			  Passes hook_data_client:
+			  hdata->client = server we are bursting to
+			  hdata->target = user we have just burst
+
+"burst_channel"		- Sent after we have just burst a channel.
+			  Passes hook_data_channel:
+			  hdata->client = server we are bursting to
+			  hdata->chptr = channel we have just burst
+
+"burst_finished"	- Sent after we have just finished bursting users/chans
+			  Passes hook_data_client:
+			  hdata->client = server we are bursting to
+
+
+Server Hooks
+------------
+The following hooks are called during server connects/exits.
+
+"server_eob"		- Sent after a server finishes bursting to us.
+			  Passes struct Client, the server that has
+			  finished bursting.
+
+"server_introduced"	- Sent after a server is introduced to the network,
+			  local or remote.
+			  Passes hook_data_client:
+			  hdata->client = uplink server (&me if local)
+			  hdata->target = server being introduced
+
+
+Client Hooks
+------------
+The following hooks are called during various events related to clients.
+
+"introduce_client"	- Sent after introducing a client to the (rest of the)
+			  network.
+			  Passes hook_data_client:
+			  hdata->client = server that introduced this client
+			  hdata->target = client being introduced
+
+"new_local_user"	- Sent just before introducing a new local user
+			  to the network.
+			  Passes struct Client, the client being introduced.
+
+"new_remote_user"	- Sent just before introducing a new remote user
+			  to the rest of the network.
+			  Passes struct Client, the client being introduced.
+
+"umode_changed"		- Sent each time a user's mode or snomask changes.
+			  Passes hook_data_umode_changed:
+			  client = client whose modes are changing
+			  oldumodes = new user mode field
+			  oldsnomask = new snomask field
+
+
+The following are for debugging and take struct hook_io_data for arguments. 
+These can be used for a variety of purposes, but are aimed at the developer
+community.
+"iosend"
+"iorecv"
+"iorecvctrl"
+
+$Id: hooks.txt 710 2006-02-06 03:10:01Z gxti $

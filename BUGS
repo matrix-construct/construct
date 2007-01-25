@@ -1,0 +1,27 @@
+ Known Bugs worthy of a mention:
+--------------------------------------------------------------------------------
+  
+1.  /MODUNLOAD causes cores:
+    - If a module is modified before being unloaded, /MODUNLOAD (and
+      therefore /MODRELOAD) may cause a core.
+
+      This problem is caused by the behaviour of the OS, which treats
+      shared libraries differently to executables (modifying the ircd
+      binary whilst it is running would also cause a core, but is denied
+      by the OS).
+
+      A workaround to avoid coring is possible however.  To install new
+      modules, first remove or rename the old module, then copy/move the
+      new file into place.  install or make install is also safe.
+      /MODUNLOAD will then work successfully.
+
+      We will likely have a workaround implemented in the next version.
+
+BUG REPORTS: If you run this code and encounter problems, you must report
+ the bug via IRC, irc.atheme.net #athemenet-dev.
+
+ Please include a gdb backtrace and keep your binaries, modules and core file
+ in case the developers need more information.
+
+--------------------------------------------------------------------------------
+$Id: BUGS 1634 2006-06-04 13:26:04Z jilles $

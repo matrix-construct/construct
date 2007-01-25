@@ -1,0 +1,316 @@
+$Id: CIDR.txt 6 2005-09-10 01:02:21Z nenolod $
+
+CIDR Information
+----------------
+  Presently, we all use IPv4.  The format of IPv4 is the following:
+
+A.B.C.D
+
+  Where letters 'A' through 'D' are 8-bit values.  In English, this
+  means each digit can have a value of 0 to 255.  Example:
+
+129.56.4.234
+
+  Digits are called octets.  Oct meaning 8, hence 8-bit values.  An
+  octet cannot be greater than 255, and cannot be less than 0 (eg. a
+  negative number).
+
+  CIDR stands for "classless inter domain routing", details covered
+  in RFC's 1518 and 1519. It was introduced mainly due to waste within
+  A and B classes space. The goal was to make it possible to use
+  smaller nets than it would seem from (above) IP classes, for instance
+  by dividing one B class into 256 "C like" classes. The other goal was
+  to allow aggregation of routing information, so that routers could use
+  one aggregated route (like 194.145.96.0/20) instead of
+  advertising 16 C classes.
+
+  Class A are all these addresses which first bit is "0",
+  bitmap: 0nnnnnnn.hhhhhhhh.hhhhhhhh.hhhhhhhh (n=net, h=host)
+  IP range is 0.0.0.0 - 127.255.255.255
+
+  Class B are all these addresses which first two bits are "10",
+  bitmap: 10nnnnnn.nnnnnnnn.hhhhhhhh.hhhhhhhh (n=net, h=host)
+  IP range is 128.0.0.0 - 191.255.255.255
+
+  Class C are all these addresses which first three bits are "110",
+  bitmap: 110nnnnn.nnnnnnnn.nnnnnnnn.hhhhhhhh (n=net, h=host)
+  IP range is 192.0.0.0 - 223.255.255.255
+
+  Class D are all these addresses which first four bits are "1110",
+  this is multicast class and net/host bitmap doesn't apply here
+  IP range is 224.0.0.0 - 239.255.255.255
+  I bet they will never IRC, unless someone creates multicast IRC :)
+
+  Class E are all these addresses which first five bits are "11110",
+  this class is reserved for future use
+  IP range is 240.0.0.0 - 247.255.255.255
+
+  So, here is how CIDR notation comes into play.
+
+  For those of you who have real basic exposure to how networks are
+  set up, you should be aware of the term "netmask."  Basically, this
+  is a IPv4 value which specifies the "size" of a network.  You can
+  assume the word "size" means "range" if you want.
+
+  A chart describing the different classes in CIDR format and their
+  wildcard equivalents would probably help at this point:
+
+CIDR version	dot notation (netmask)	Wildcard equivalent
+-----------------------------------------------------------------
+A.0.0.0/8	A.0.0.0/255.0.0.0	A.*.*.*  or  A.*
+A.B.0.0/16	A.B.0.0/255.255.0.0	A.B.*.*  or  A.B.*
+A.B.C.0/24	A.B.C.0/255.255.255.0	A.B.C.*  or  A.B.C.*
+A.B.C.D/32	A.B.C.D/255.255.255.255	A.B.C.D
+
+
+  The question on any newbies mind at this point is "So what do all
+  of those values & numbers actually mean?"
+
+  Everything relating to computers is based on binary values (1s and
+  zeros).  Binary plays a *tremendous* role in CIDR notation.  Let's
+  break it down to the following table:
+
+          A            B            C            D
+       --------     --------     --------     --------
+/8  == 11111111  .  00000000  .  00000000  .  00000000  == 255.0.0.0
+/16 == 11111111  .  11111111  .  00000000  .  00000000  == 255.255.0.0
+/24 == 11111111  .  11111111  .  11111111  .  00000000  == 255.255.255.0
+/32 == 11111111  .  11111111  .  11111111  .  11111111  == 255.255.255.255
+
+  The above is basically a binary table for the most common netblock
+  sizes.  The "1"s you see above are the 8-bit values for each octet.
+  If you split an 8-bit value into each of it's bits, you find the
+  following:
+
+00000000
+^^^^^^^^_ 1sts place  (1)
+|||||||__ 2nds place  (2)
+||||||___ 3rds place  (4)
+|||||____ 4ths place  (8)
+||||_____ 5ths place  (16)
+|||______ 6ths place  (32)
+||_______ 7ths place  (64)
+|________ 8ths place  (128)
+
+  Now, since computers consider zero a number, you pretty much have
+  to subtract one (so-to-speak; this is not really how its done, but
+  just assume it's -1 :-) ) from all the values possible.  Some
+  examples of decimal values in binary:
+
+15  == 00001111  (from left to right: 8+4+2+1)
+16  == 00010000  (from left to right: 16)
+53  == 00110101  (from left to right: 32+16+4+1)
+79  == 01001111  (from left to right: 64+8+4+1)
+254 == 11111110  (from left to right: 128+64+32+16+8+4+2)
+
+  So, with 8 bits, the range (as I said before) is zero to 255.
+
+  If none of this is making sense to you at this point, you should
+  back up and re-read all of the above.  I realize it's a lot, but
+  it'll do you some good to re-read it until you understand :-).
+
+  So, let's modify the original table a bit by providing CIDR info
+  for /1 through /8:
+
+          A            B            C            D
+       --------     --------     --------     --------
+/1  == 10000000  .  00000000  .  00000000  .  00000000  == 128.0.0.0
+/2  == 11000000  .  00000000  .  00000000  .  00000000  == 192.0.0.0
+/3  == 11100000  .  00000000  .  00000000  .  00000000  == 224.0.0.0
+/4  == 11110000  .  00000000  .  00000000  .  00000000  == 240.0.0.0
+/5  == 11111000  .  00000000  .  00000000  .  00000000  == 248.0.0.0
+/6  == 11111100  .  00000000  .  00000000  .  00000000  == 252.0.0.0
+/7  == 11111110  .  00000000  .  00000000  .  00000000  == 254.0.0.0
+/8  == 11111111  .  00000000  .  00000000  .  00000000  == 255.0.0.0
+
+  At this point, all of this should making a lot of sense, and you
+  should be able to see the precision that you can get by using CIDR
+  at this point.  If not, well, I guess the best way to put it would
+  be that wildcards always assume /8, /16, or /24 (yes hello Piotr,
+  we can argue this later: I am referring to IPs *ONLY*, not domains
+  or FQDNs :-) ).
+
+  This table will provide a reference to all of the IPv4 CIDR values
+
+cidr|netmask (dot notation)
+----+---------------------
+/1  | 128.0.0.0
+/2  | 192.0.0.0
+/3  | 224.0.0.0
+/4  | 240.0.0.0
+/5  | 248.0.0.0
+/6  | 252.0.0.0
+/7  | 254.0.0.0
+/8  | 255.0.0.0
+/9  | 255.128.0.0
+/10 | 255.192.0.0
+/11 | 255.224.0.0
+/12 | 255.240.0.0
+/13 | 255.248.0.0
+/14 | 255.252.0.0
+/15 | 255.254.0.0
+/16 | 255.255.0.0
+/17 | 255.255.128.0
+/18 | 255.255.192.0
+/19 | 255.255.224.0
+/20 | 255.255.240.0
+/21 | 255.255.248.0
+/22 | 255.255.252.0
+/23 | 255.255.254.0
+/24 | 255.255.255.0
+/25 | 255.255.255.128
+/26 | 255.255.255.192
+/27 | 255.255.255.224
+/28 | 255.255.255.240
+/29 | 255.255.255.248
+/30 | 255.255.255.252
+/31 | 255.255.255.254
+/32 | 255.255.255.255
+
+  So, let's take all of the information above, and apply it to a
+  present-day situation on IRC.
+
+  Let's say you have a set of flooding clients who all show up from
+  the following hosts.  For lack-of a better example, I'll use a
+  subnet here at Best:
+
+nick1  (xyz@shell9.ba.best.com)  [206.184.139.140]
+nick2  (abc@shell8.ba.best.com)  [206.184.139.139]
+nick3  (foo@shell12.ba.best.com) [206.184.139.143]
+
+  Most people will assume the  they were all in the same class C
+  (206.184.139.0/24  or  206.184.139.*).
+
+  This, as a matter of fact, is not true.  Now, the reason *I* know
+  this is solely because I work on the network here; those IPs are
+  not delegated to a class C, but two portions of a class C (128 IPs
+  each).  That means the class C is actually split into these two
+  portions:
+
+Netblock               IP range
+--------               --------
+206.184.139.0/25       206.184.139.0   to 206.184.139.127
+206.184.139.128/25     206.184.139.128 to 206.184.139.255
+
+  For the record, 206.184.139.0 and 206.184.139.128 are both known as
+  "network addresses" (not to be confused with "netblocks" or "Ethernet
+  hardware addresses" or "MAC addresses").  Network addresses are
+  *ALWAYS EVEN*.
+
+  206.184.139.127 and 206.184.139.255 are what are known as broadcast
+  addresses.  Broadcast addresses are *ALWAYS ODD*.
+
+  Now, the aforementioned list of clients are in the 2nd subnet shown
+  above, not the first.  The reason for this should be obvious.
+
+  The remaining question is, "Well that's nice, you know what the netblock
+  is for Best.  What about us?  We don't know that!"
+
+  Believe it or not, you can find out the network block size by using
+  whois -h WHOIS.ARIN.NET on the IP in question.  ARIN keeps a list of
+  all network blocks and who owns them -- quite useful, trust me.  I
+  think I use ARIN 5 or 6 times a day, especially when dealing with
+  D-lines.  Example:
+
+$ whois -h whois.arin.net 206.184.139.140
+Best Internet Communications, Inc. (NETBLK-NBN-206-184-BEST)
+345 East Middlefield Road
+Mountain View, CA 94043
+
+Netname: NBN-206-184-BEST
+Netblock: 206.184.0.0 - 206.184.255.255
+Maintainer: BEST
+
+  Does this mean you should D-line 206.184.0.0/16?  Probably not.
+  That's an entire class B-sized block, while you're only trying
+  to deny access to a subnetted class C.
+
+  So then how do you get the *real* info?  Well, truth is, you don't.
+  You have to pretty much take a guess at what it is, if ARIN reports
+  something that's overly vague.  Best, for example, was assigned the
+  above class B-sized block.  We can subnet it however we want without
+  reporting back to ARIN how we have it subnetted.  We own the block,
+  and that's all that matters (to ARIN).
+
+  Not all subnets are like this, however.  Smaller subnets you may
+  find partitioned and listed on ARIN; I've seen /29 blocks for DSL
+  customers show up in ARIN before.
+
+  So, use ARIN any chance you get.  The more precision the better!
+
+  Now, there is a small issue I want to address regarding use of CIDR
+  notation.  Let's say you D-line the following in CIDR format (hi
+  sion ;-) ):
+
+205.100.132.18/24
+
+  Entries like this really makes my blood boil, solely because it adds
+  excessive confusion and is just basically pointless.  If you
+  examine the above, you'll see the /24 is specifying an entire
+  class C -- so then what's the purpose of using .18 versus .0?
+
+  There IS no purpose.  The netmask itself will mask out the .18 and
+  continue to successfully use 205.100.132.0/24.
+
+  Doing things this way just adds confusion, especially on non-octet-
+  aligned subnets (such as /8, /16, /24, or /32).  Seeing that on a
+  /27 or a /19 might make people go "wtf?"
+
+  I know for a fact this doc lacks a lot of necessary information,
+  like how the actual netmask/CIDR value play a role in "masking out"
+  the correct size, and what to do is WHOIS.ARIN.NET returns no
+  netblock information but instead a few different company names with
+  NIC handles.  I'm sure you can figure this stuff out on your own,
+  or just ask an administrator friend of yours who DOES know.  A lot
+  of us admins are BOFH types, but if you ask us the right questions,
+  you'll benefit from the answer quite thoroughly.
+
+  Oh, I almost forgot.  Most Linux systems use a different version of
+  "whois" than FreeBSD does.  The syntax for whois on Linux is
+  "whois <INFO>@whois.arin.net", while under FreeBSD it is
+  "whois -h whois.arin.net <INFO>"  Debian uses yet another version
+  of whois that is incompatible with the above syntax options.
+
+  Note that the FreeBSD whois client has shortcuts for the most commonly
+  used whois servers.  "whois -a <INFO>" is the shortcut for ARIN.
+
+  Also note that ARIN is not authoritative for all IP blocks on the 
+  Internet.  Take for example 212.158.123.66.  A whois query to ARIN
+  will return the following information:
+
+$ whois -h whois.arin.net 212.158.123.66
+European Regional Internet Registry/RIPE NCC (NET-RIPE-NCC-)
+   These addresses have been further assigned to European users.
+   Contact information can be found in the RIPE database, via the
+   WHOIS and TELNET servers at whois.ripe.net, and at
+   http://www.ripe.net/db/whois.html
+
+   Netname: RIPE-NCC-212
+   Netblock: 212.0.0.0 - 212.255.255.255
+   Maintainer: RIPE
+
+  This query tells us that it is a European IP block, and is further
+  handled by RIPE's whois server.  We must then query whois.ripe.net
+  to get more information.
+
+$ whois -h whois.ripe.net 212.158.123.66
+
+% Rights restricted by copyright. See
+  http://www.ripe.net/ripencc/pub-services/db/copyright.html
+
+inetnum:     212.158.120.0 - 212.158.123.255
+netname:     INSNET-P2P
+descr:       Point to Point Links for for London Nodes
+country:     GB
+--snip--
+
+  This tells us the actual IP block that the query was a part of.
+
+  Other whois servers that you may see blocks referred to are: 
+  whois.ripn.net for Russia, whois.apnic.net for Asia, Australia, and
+  the Pacific, and whois.6bone.net for IPv6 blocks.
+
+Contributed by Jeremy Chadwick <jdc@best.net>
+Piotr Kucharski <chopin@sgh.waw.pl> 
+W. Campbell <wcampbel@botbay.net> and
+Ariel Biener <ariel@fireball.tau.ac.il>

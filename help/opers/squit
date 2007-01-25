@@ -1,0 +1,4 @@
+SQUIT <server> [reason]
+
+Splits <server> away from your side of the net with [reason].
+- Requires Oper Priv: R for servers not connected to you

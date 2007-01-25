@@ -1,0 +1,6 @@
+ISON <nick_A> [nick_B] :[nick_C] [nick_D]
+
+ISON will return a list of users who are present
+on the network from the list that was passed in.
+
+This command is rarely used directly.

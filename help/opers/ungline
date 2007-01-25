@@ -1,0 +1,8 @@
+UNGLINE <user@host>
+
+-- if glines are enabled --
+Will attempt to remove gline matching <user@host>
+This will only remove the gline from YOUR server, it
+does not try to remove it globally.
+
+- Requires Oper Privs: G and U

@@ -1,0 +1,28 @@
+XLINE [time] <gecos> :<reason>
+
+Bans by gecos (aka 'real name') field.  If [time] is not specified
+this is added to xline.conf, otherwise is temporary for [time] 
+minutes.
+
+Eg. /quote xline eggdrop?bot :no bots
+
+The <gecos> field contains certain special characters:
+  ? - Match any single character
+  * - Many any characters
+  @ - Match any letter [A-Za-z]
+  # - Match any digit [0-9]
+
+To use a literal one of these characters, escape it with '\'.  A 
+literal '\' character must also be escaped.  You may also insert \s
+which will be converted into a space.
+
+If the <gecos> field is purely numeric (ie "123") then the time
+field must be specified.  "0" must be used to denote a permanent 
+numeric XLINE.
+
+XLINE [time] <gecos> ON <server> :<reason>
+
+Will attempt to set the XLINE on <server> if <server> accepts
+remote xlines.
+
+- Requires Oper Priv: X

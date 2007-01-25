@@ -1,0 +1,347 @@
+/* include/setup.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Size of the ban heap. */
+#undef BAN_HEAP_SIZE
+
+/* Size of the channel heap. */
+#undef CHANNEL_HEAP_SIZE
+
+/* Define this if you are profiling. */
+#undef CHARYBDIS_PROFILE
+
+/* Size of the client heap. */
+#undef CLIENT_HEAP_SIZE
+
+/* Size of the confitem heap. */
+#undef CONFITEM_HEAP_SIZE
+
+/* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
+   systems. This function is required for `alloca.c' support on those systems.
+   */
+#undef CRAY_STACKSEG_END
+
+/* Define to 1 if using `alloca.c'. */
+#undef C_ALLOCA
+
+/* Size of the dlink_node heap. */
+#undef DNODE_HEAP_SIZE
+
+/* Prefix where config files are installed. */
+#undef ETC_DIR
+
+/* Define to 1 if you have `alloca', as a function or macro. */
+#undef HAVE_ALLOCA
+
+/* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
+   */
+#undef HAVE_ALLOCA_H
+
+/* Define to 1 if you have the <crypt.h> header file. */
+#undef HAVE_CRYPT_H
+
+/* Define to 1 if you have the <devpoll.h> header file. */
+#undef HAVE_DEVPOLL_H
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
+
+/* Define to 1 if you have the `dlfunc' function. */
+#undef HAVE_DLFUNC
+
+/* Define if the dlopen function is available. */
+#undef HAVE_DLOPEN
+
+/* Define if your system supports the epoll system calls */
+#undef HAVE_EPOLL
+
+/* Define to 1 if you have the `epoll_ctl' function. */
+#undef HAVE_EPOLL_CTL
+
+/* Define to 1 if you have the <errno.h> header file. */
+#undef HAVE_ERRNO_H
+
+/* Define to 1 if you have the `gettimeofday' function. */
+#undef HAVE_GETTIMEOFDAY
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the `kevent' function. */
+#undef HAVE_KEVENT
+
+/* Define to 1 if you have the `crypto' library (-lcrypto). */
+#undef HAVE_LIBCRYPTO
+
+/* Define to 1 if zlib (-lz) is available. */
+#undef HAVE_LIBZ
+
+/* Define to 1 if you have the <machine/endian.h> header file. */
+#undef HAVE_MACHINE_ENDIAN_H
+
+/* Define to 1 if you have the <mach-o/dyld.h> header file. */
+#undef HAVE_MACH_O_DYLD_H
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the `mmap' function. */
+#undef HAVE_MMAP
+
+/* Define if nanosleep exists */
+#undef HAVE_NANOSLEEP
+
+/* Define to 1 if you have the `poll' function. */
+#undef HAVE_POLL
+
+/* Define to 1 if you have the `select' function. */
+#undef HAVE_SELECT
+
+/* Define if the shl_load function is available. */
+#undef HAVE_SHL_LOAD
+
+/* Define to 1 if you have the `socketpair' function. */
+#undef HAVE_SOCKETPAIR
+
+/* Define to 1 if you have the <stddef.h> header file. */
+#undef HAVE_STDDEF_H
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the `strdup' function. */
+#undef HAVE_STRDUP
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the `strlcat' function. */
+#undef HAVE_STRLCAT
+
+/* Define to 1 if you have the `strlcpy' function. */
+#undef HAVE_STRLCPY
+
+/* Define to 1 if you have the `strndup' function. */
+#undef HAVE_STRNDUP
+
+/* Define to 1 if you have the <sys/devpoll.h> header file. */
+#undef HAVE_SYS_DEVPOLL_H
+
+/* Define to 1 if you have the <sys/epoll.h> header file. */
+#undef HAVE_SYS_EPOLL_H
+
+/* Define to 1 if you have the <sys/param.h> header file. */
+#undef HAVE_SYS_PARAM_H
+
+/* Define to 1 if you have the <sys/resource.h> header file. */
+#undef HAVE_SYS_RESOURCE_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/syslog.h> header file. */
+#undef HAVE_SYS_SYSLOG_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <sys/uio.h> header file. */
+#undef HAVE_SYS_UIO_H
+
+/* Define to 1 if you have the <sys/wait.h> header file. */
+#undef HAVE_SYS_WAIT_H
+
+/* Define to 1 if the system has the type `uintptr_t'. */
+#undef HAVE_UINTPTR_T
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the `vsnprintf' function. */
+#undef HAVE_VSNPRINTF
+
+/* Define to 1 if you have the <wait.h> header file. */
+#undef HAVE_WAIT_H
+
+/* Prefix where help file are installed. */
+#undef HELP_DIR
+
+/* Define if IPv6 support is present and available. */
+#undef IPV6
+
+/* Prefix where the ircd is installed. */
+#undef IRCD_PREFIX
+
+/* Size of the local client heap. */
+#undef LCLIENT_HEAP_SIZE
+
+/* Size of the linebuf heap. */
+#undef LINEBUF_HEAP_SIZE
+
+/* Prefix where to write logfiles. */
+#undef LOG_DIR
+
+/* the system's memory page size */
+#undef MALLOC_PAGESIZE
+
+/* Maximum number of network connections */
+#undef MAX_CLIENTS
+
+/* Sizeof member heap. */
+#undef MEMBER_HEAP_SIZE
+
+/* Prefix where modules are installed. */
+#undef MODULE_DIR
+
+/* Size of the monitor heap. */
+#undef MONITOR_HEAP_SIZE
+
+/* Define this to disable debugging support. */
+#undef NDEBUG
+
+/* Size of the nick delay heap. */
+#undef ND_HEAP_SIZE
+
+/* Nickname length */
+#undef NICKLEN
+
+/* Size of the WHOWAS array. */
+#undef NICKNAMEHISTORYLENGTH
+
+/* Define to 1 if you wish to disable the block allocator. */
+#undef NOBALLOC
+
+/* Define to 1 if your system has no in6addr_any. */
+#undef NO_IN6ADDR_ANY
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Path to /dev/null */
+#undef PATH_DEVNULL
+
+/* Size of the pre-client heap. */
+#undef PCLIENT_HEAP_SIZE
+
+/* Define to 1 if you are using the assembly-based hashing routines. */
+#undef RICER_HASHING
+
+/* This is the type of IO loop we are using */
+#undef SELECT_TYPE
+
+/* Suffix for shared libraries on this platform. */
+#undef SHARED_SUFFIX
+
+/* The size of a `int', as computed by sizeof. */
+#undef SIZEOF_INT
+
+/* The size of a `long', as computed by sizeof. */
+#undef SIZEOF_LONG
+
+/* The size of a `long long', as computed by sizeof. */
+#undef SIZEOF_LONG_LONG
+
+/* The size of a `short', as computed by sizeof. */
+#undef SIZEOF_SHORT
+
+/* Define to 1 if sockaddr has a 'sa_len' member. */
+#undef SOCKADDR_IN_HAS_LEN
+
+/* Define this to enable soft asserts. */
+#undef SOFT_ASSERT
+
+/* If using the C implementation of alloca, define if you know the
+   direction of stack growth for your system; otherwise it will be
+   automatically deduced at run-time.
+	STACK_DIRECTION > 0 => grows toward higher addresses
+	STACK_DIRECTION < 0 => grows toward lower addresses
+	STACK_DIRECTION = 0 => direction of growth unknown */
+#undef STACK_DIRECTION
+
+/* Define to 1 if dynamic modules can't be used. */
+#undef STATIC_MODULES
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Define to 1 if string.h may be included along with strings.h */
+#undef STRING_WITH_STRINGS
+
+/* String containing extra underscores prepended to symbols loaded from
+   modules. */
+#undef SYMBOL_PREFIX
+
+/* Maximum topic length (<=390) */
+#undef TOPICLEN
+
+/* Size of the topic heap. */
+#undef TOPIC_HEAP_SIZE
+
+/* Size of the user heap. */
+#undef USER_HEAP_SIZE
+
+/* Define this to enable IO Debug hooks. */
+#undef USE_IODEBUG_HOOKS
+
+/* Define to 1 if your processor stores words with the most significant byte
+   first (like Motorola and SPARC, unlike Intel and VAX). */
+#undef WORDS_BIGENDIAN
+
+/* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
+   `char[]'. */
+#undef YYTEXT_POINTER
+
+/* Enable GNU extensions on systems that have them.  */
+#ifndef _GNU_SOURCE
+# undef _GNU_SOURCE
+#endif
+
+/* This is needed to use strtok_r on Solaris. */
+#undef __EXTENSIONS__
+
+/* Define to empty if `const' does not conform to ANSI C. */
+#undef const
+
+/* If system does not define in_port_t, define it to what it should be. */
+#undef in_port_t
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+#undef inline
+#endif
+
+/* Define to `int' if <sys/types.h> does not define. */
+#undef pid_t
+
+/* If system does not define sa_family_t, define it here. */
+#undef sa_family_t
+
+/* Define to `unsigned' if <sys/types.h> does not define. */
+#undef size_t
+
+/* If we don't have a real socklen_t, unsigned int is good enough. */
+#undef socklen_t
+
+/* If system does not define u_int16_t, define a usable substitute. */
+#undef u_int16_t
+
+/* If system does not define u_int32_t, define to unsigned long int here. */
+#undef u_int32_t

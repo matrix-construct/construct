@@ -1,0 +1,5 @@
+INFO
+
+INFO displays the copyright, list of authors and contributors
+to ircd, and the server configuration (as defined in config.h
+and ircd.conf).

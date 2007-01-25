@@ -1,0 +1,86 @@
+------------------------------------------------------
+-    Oper Challenge/Response System Documentation    -
+- Copyright (C) 2006 Lee Hardy <lee -at- leeh.co.uk> -
+- Copyright (C) 2006 ircd-ratbox development team    -
+------------------------------------------------------
+
+The challenge/response system allows the ability to oper though public key
+authentication, without the insecurity of oper passwords.
+
+The challenge system documented here was redesigned in
+ircd-ratbox-2.2/charybdis-1.1 and is not compatible with earlier versions.
+
+This document does not describe the technical details of the challenge
+system.  If you are reading this as part of the ircd distribution, the
+programs referred to are contained in ratbox-respond, see
+http://respond.ircd-ratbox.org for more information and downloads.
+
+
+- Challenge basics -
+--------------------
+When a user requests a challenge to oper up, the ircd takes some random
+data, encodes it using the opers public key, encodes this output in base64
+and sends it to the user as a challenge.  The server then stores a hash of
+the original random data.
+
+The user must then decrypt the data using their private key and generate a
+hash of the decrypted data.  Then the hash is base64 encoded and sent back
+to the server.
+
+If the stored hash the server has matches the reply from the client, they
+are opered up.
+
+
+- Generating a public/private keypair -
+---------------------------------------
+The first step is to use the makekeypair script to generate a public and
+private key.  The public key is set in the ircd config (operator {};
+rsa_public_key_file) instead of a password, and the private key should 
+be kept secret.  It is highly recommended that the key is generated with 
+a secure password.  Generating keys without a password is fundamentally
+insecure.
+
+
+The commands used in makekeypair to generate keys are as follows:
+	openssl genrsa -out private.key -aes256 2048
+	openssl rsa -in private.key -out public.key -pubout
+
+If aes256 is not available, the following is used instead:
+	openssl genrsa -out private.key -des3 2048
+
+
+- Building ratbox-respond -
+---------------------------
+If you are using the unix based ratbox-respond this must be built.  For the
+windows version, ratbox-winrespond, please see http://respond.ircd-ratbox.org
+
+ratbox-respond takes the challenge from the server, and together with your 
+private key file generates a response to be sent back.  ratbox-respond
+requires the openssl headers (ie, development files) and openssl libraries
+are installed for compilation.
+
+Change into the ratbox-respond directory, and run:
+	./configure
+	make
+
+This will generate a 'ratbox-respond' binary, which you may place wherever
+you like.  If configure does not detect your openssl installation, you may
+pass it the directory where it is installed to via --enable-openssl, this
+should be the base directory which has lib/ and include/openssl/ within it:
+	./configure --enable-openssl=/path/to/opensslbase
+
+
+- Opering up -
+--------------
+Once you have your public key set in ircd and built ratbox-respond, you oper
+up by issuing "/challenge <opername>".  You should then run:
+	/path/to/ratbox-respond /path/to/private.key
+and input the challenge.  This will give you a response to paste back to the
+server.  The ratbox-respond binary also accepts piped input, see
+ratbox-respond/README for more information.
+
+A number of scripts for clients have already been written to automate this
+process, see client-scripts/README for more information.
+
+-- 
+$Id: challenge.txt 678 2006-02-03 20:25:01Z jilles $

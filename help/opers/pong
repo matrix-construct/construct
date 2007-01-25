@@ -1,0 +1,6 @@
+PONG <pinged-client> :<source-client>
+
+PONG is the response to a PING command.  The
+source client is the user or server that issued
+the command, and the pinged client is the
+user or server that received the PING.

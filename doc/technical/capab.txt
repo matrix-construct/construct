@@ -1,0 +1,34 @@
+Server capabilities
+William Pitcock <nenolod -at- nenolod.net>
+-------------------
+
+Not all TSora IRCd's support these.
+
+QS          - supports Quit Storm (SQUIT does not have to send recursive quits)
+EX          - supports ban exceptions (+e)
+CHW         - supports messages directed to channel operators only i.e. @#channel
+IE          - supports invite exceptions (+I)
+EOB         - supports end of burst notification (EOB token)
+KLN         - supports remote KLINE
+UNKLN       - supports remote UNKLINE
+GLN         - supports hybrid7-style GLINE (:oper GLINE user host :reason)
+HOPS        - supports halfops (+h -- %<nick>)
+HUB         - denotes that the target server is a HUB
+AOPS        - supports anonymous ops (+a, op hiding/op status hiding)
+KNOCK       - supports KNOCK extension (request invite to +ikl channel)
+TBURST      - supports old TBURST command [broken, don't use.]
+TB          - supports new TB command [do use.]
+PARA        - supports sending invite notices via INVITE from server
+ENCAP       - supports message encapsulation
+SERVICES    - supports ratbox's services extensions
+SAVE        - supports SAVE extension (friendlier alternative to KILL on nick collide)
+RSFNC       - supports RSFNC extension (forcenick)
+CLUSTER     - supports remote XLINE, UNXLINE, RESV, UNRESV and LOCOPS
+EUID        - supports EUID, non-ENCAP CHGHOST and NICKDELAY
+ZIP         - supports ziplinks
+ENC         - supports encryption (cryptlinks)
+
+The KLN, UNKLN and CLUSTER capabilities do not apply to klines, xlines
+and resvs sent over ENCAP.
+
+Disabling ban/invite exceptions in ircd.conf does not remove the EX/IE capabs.

@@ -1,0 +1,5 @@
+UNDLINE <ip>
+
+Will attempt to undline the given <ip>
+
+- Requires Oper Priv: U

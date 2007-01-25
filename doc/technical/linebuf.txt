@@ -1,0 +1,139 @@
+
+linebuf - a dbuf replacement for the New World Order(tm)
+
+By Adrian Chadd <adrian@creative.net.au>
+
+$Id: linebuf.txt 6 2005-09-10 01:02:21Z nenolod $
+
+
+History
+-------
+
+I could probably learn the dbuf history, but basically its evil. The
+general idea is that a dbuf holds incoming and outgoing data streams.
+The trouble is that well.. it was evil. You can check it out by getting
+the old src/dbuf.c and include/dbuf.h files if you really want.
+
+
+Replacement
+-----------
+
+The linebuf system is a replacement for the dbuf code. The general idea here
+is that the data should be buffered in "lines" rather than just linearly
+like in the dbuf code. This lends to easier manipulation at a later date
+(think flushing data lines to a socket, and even "sharing" linebufs to
+reduce the copying required for one to many delivery.)
+
+The linebuf system is broken into two structures, the buf_head and buf_line .
+buf_head contains the buffer information (queue head/tail, length, allocated
+length and the write offset for flushing), and buf_line contains the
+line buffer information (buffer and various flags.)
+
+linebuf->terminated is *only* set when a CR/LF combination is received.
+
+linebuf->overflow is set if we get more data than we should, and we simply
+  truncate the incoming data.
+
+linebuf->flushing is set when we are currently writing the buffer. We should
+  _NEVER_ be appending to a buffer which we're flushing!
+
+When you get a buffer through linebuf_get() or write one through
+linebuf_flush(), it will *always* be terminated with a CR/LF (and a NUL if
+its a linebuf_get()).
+
+
+Linebuf manipulation
+--------------------
+
+To use a linebuf, you simply stick a buf_head_t in your structure somewhere.
+You then use the following routines:
+
+int
+linebuf_parse(buf_head_t *bufhead, char *buf, int len)
+
+Parse the given buf. This routine does some complex manipulation:
+
+- if there is an incomplete buffer at the tail, buf is parsed to try and
+  fill that incomplete buffer
+- a buffer is completed by a CR/LF/CRLF/LFCR. It accepts everything purely
+  because I wanted to be "liberal in what you accept" .. 
+- If a buffer is terminated, the linebuf is flagged terminated
+- If more data is trying to be squeezed into the buffer than space LEFT
+  in the buffer, we skip to the next "CRLF", and tag the buffer terminated
+  _and_ overflowed.
+- We treat multiple runs of CR/LF/CRLF/LFCR as a single CRLF. This is just
+  a little extra goody to stop people sending hundreds of "CRLF"s and creating
+  unnecessary buffers.
+- The number of lines parsed is returned (so you can implement per-line flood
+  protection ..)
+
+
+void
+linebuf_put(buf_head_t *bufhead, char *buf, int len)
+
+Parse the given buf, ASSUMING it is a single buffer line. This is useful
+for server-generated messages where you know you have a single line, and
+you don't want to go through the overhead of parsing the data just for
+this.
+
+
+int
+linebuf_get(buf_head_t *bufhead, char *buf, int maxlen)
+
+Get a single line from the buffer. This removes data from the head of the
+buffer. If the first buffer is empty or is not terminated, 0 is returned
+which indicates that there is no data to parse. Terminated buffers are
+returned (CR/LF/NUL), and the length INCLUDING the CR/LF/NUL is returned.
+The buffer is copied and the linebuf is then deallocated.
+
+
+int
+linebuf_flush(int fd, buf_head_t *bufhead)
+
+Attempt to flush some data to the given socket. bufhead->writeofs tracks
+where in the head buffer we currently are. If the buffer is not terminated,
+-1 is returned with errno == EWOULDBLOCK to simulate a "retry me" condition.
+(See TODO..)
+
+linebuf_flush() returns whatever write() returns, and sets (ie doesn't touch
+after write()) errno accordingly.
+
+
+int
+linebuf_len(buf_head_t *bufhead)
+
+Return the length of the buffer, in bytes. This should be used when calculating
+how big a buffer is for statistics.
+
+
+int
+linebuf_alloclen(buf_head_t *bufhead)
+
+Return how big the *allocated* space is. This is much more suitable for
+anti-flood checking, as someone might be sending a whole bunch of 1-byte
+linebufs which might not trigger a recvq / sendq limit but might chew up
+way too much memory.
+
+
+
+Notes
+-----
+
+* Remember that the trailing NUL isn't covered in the string length.
+
+
+Limitations
+-----------
+
+* all the buffers are a fixed size - here they are current 513 bytes
+  (510 bytes + CR/LF/NUL)
+
+
+TODO
+----
+
+* linebuf_flush() should be changed a little so if the buffer isn't
+  terminated, we *dont* retry flushing a buffer until we get more data.
+
+* Implement a reference-friendly linebuf to reduce copies ..
+

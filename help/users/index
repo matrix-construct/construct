@@ -1,0 +1,13 @@
+Help topics available to users:
+
+ACCEPT          ADMIN           AWAY            CHALLENGE
+CMODE           CNOTICE         CPRIVMSG        CREDITS
+ERROR           HELP            INDEX           INFO
+INVITE          ISON            JOIN            KICK
+KNOCK           LINKS           LIST            LUSERS
+MAP             MOTD            NAMES           NICK
+NOTICE          OPER            PART            PASS
+PING            PONG            PRIVMSG         QUIT
+STATS           TIME            TOPIC           TRACE
+UMODE           USER            USERHOST        USERS
+VERSION         WHO             WHOIS           WHOWAS

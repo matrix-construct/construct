@@ -1,0 +1,10 @@
+PART <#channel> :[part message]
+
+PART requires at least a channel argument to be given. It will
+exit the client from the specified channel. More than one
+channel may be specified, separated with commas (no spaces).
+
+An optional part message may be given to be displayed to the
+channel.
+
+See also: join

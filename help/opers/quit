@@ -1,0 +1,5 @@
+QUIT :[quit message]
+
+QUIT sends a message to the IRC server letting it know you would 
+like to disconnect.  The quit message will be displayed to the 
+users in the channels you were in when you are disconnected. 

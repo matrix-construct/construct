@@ -1,0 +1,69 @@
+#
+# Makefile.in for ircd/unsupported
+#
+# $Id: Makefile.in 1425 2006-05-23 16:41:33Z jilles $
+#
+CC		= @CC@
+RM		= @RM@
+SED             = @SED@
+LEX		= @LEX@
+LEXLIB		= @LEXLIB@
+CFLAGS		= @IRC_CFLAGS@ -DIRCD_PREFIX=\"@prefix@\"
+PICFLAGS	= @PICFLAGS@
+MKDEP		= @MKDEP@
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM	= @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+INSTALL_SUID    = @INSTALL_PROGRAM@ -o root -m 4755
+SHELL		= /bin/sh
+AUTOMODULEDIR	= @moduledir@/unsupported
+
+SSL_LIBS	= @SSL_LIBS@
+SSL_INCLUDES	= @SSL_INCLUDES@
+
+IRCDLIBS	= @LIBS@ $(SSL_LIBS)
+
+INCLUDES	= -I. -I../include -I../libcharybdis -I../adns $(SSL_INCLUDES)
+CPPFLAGS	= ${INCLUDES} @CPPFLAGS@
+
+SRCS =                          \
+  m_clearchan.c			\
+  m_force.c
+
+OBJS = ${SRCS:.c=.so}
+
+default:	build
+build: all
+all: $(OBJS)
+
+install: all
+	-@if test ! -d $(DESTDIR)$(AUTOMODULEDIR); then \
+                mkdir $(DESTDIR)$(AUTOMODULEDIR); \
+        fi
+	@echo "Installing modules into $(DESTDIR)$(AUTOMODULEDIR) .."
+	@for file in $(OBJS); do \
+		$(INSTALL_DATA) $$file $(DESTDIR)$(AUTOMODULEDIR); \
+	done
+
+.SUFFIXES: .so
+
+.c.so:
+	${CC} ${PICFLAGS}  ${CPPFLAGS} ${CFLAGS} $< -o $@
+
+.PHONY: depend clean distclean
+depend:
+	@${MKDEP} ${CPPFLAGS} ${SRCS} > .depend
+	@sed s/\\\.o/\\\.so/ < .depend > .depend.tmp
+	@sed -e '/^# DO NOT DELETE THIS LINE/,$$d' <Makefile >Makefile.depend
+	@echo '# DO NOT DELETE THIS LINE!!!' >>Makefile.depend
+	@echo '# make depend needs it.' >>Makefile.depend
+	@cat .depend.tmp >>Makefile.depend
+	@mv Makefile.depend Makefile
+	@rm -f .depend.tmp .depend
+
+clean:
+	${RM} -f *.so *~ 
+
+distclean: clean
+	${RM} -f Makefile
+

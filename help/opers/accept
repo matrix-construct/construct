@@ -1,0 +1,8 @@
+ACCEPT <parameter>
+
+ACCEPT allows you to control who can send you a NOTICE or PRIVMSG
+while you have user mode +g enabled.
+
+For +g: /QUOTE ACCEPT <nick>   -- Add a permitted nickname
+        /QUOTE ACCEPT -<nick>  -- Remove a permitted nickname
+        /QUOTE ACCEPT *        -- List the present permitted nicknames

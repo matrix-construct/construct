@@ -1,0 +1,169 @@
+  <chapter id="oprivs">
+    <title>Oper privileges</title>
+    <sect1 id="oprivlist">
+      <title>Meanings of oper privileges</title>
+      <para>
+        These are flags in operator{}.
+        The letter appears after opering up and in /stats o; an uppercase
+        letter means the privilege is possessed, lowercase means it is not.
+      </para>
+      <sect2>
+	<title>admin (A), server administrator</title>
+	<para>
+	  Various privileges intended for server administrators.
+	  Among other things, this automatically sets umode +a and allows
+	  loading modules.
+	</para>
+      </sect2>
+      <sect2>
+	<title>remoteban (B), set remote bans</title>
+	<para>
+	  This grants the ability to use the ON argument on KLINE/XLINE/RESV
+	  and UNKLINE/UNXLINE/UNRESV to set and unset bans on other servers,
+	  and the server argument on REHASH.
+	  This is only allowed if the oper may perform the action locally,
+	  and if the remote server has a shared{} block.
+	</para>
+	<note><para>
+	  If a cluster{} block is present, bans are sent remotely even
+	  if the oper does not have remoteban privilege.
+	</para></note>
+      </sect2>
+      <sect2>
+	<title>local_kill (C), kill local users</title>
+	<para>
+	  This grants permission to use KILL on users on the same server,
+	  disconnecting them from the network.
+	</para>
+      </sect2>
+      <sect2>
+	<title>die (D), die and restart</title>
+	<para>
+	  This grants permission to use DIE and RESTART, shutting down
+	  or restarting the server.
+	</para>
+      </sect2>
+      <sect2>
+	<title>gline (G), gline</title>
+	<para>
+	  This allows using GLINE (network wide temp bans if 3 opers agree).
+	  If unkline privilege is also possessed, allow UNGLINE (remove gline
+	  locally).
+	</para>
+      </sect2>
+      <sect2>
+	<title>rehash (H), rehash</title>
+	<para>
+	  Allows using the REHASH command, to rehash various configuration
+	  files or clear certain lists.
+	</para>
+      </sect2>
+      <sect2>
+	<title>kline (K), kline and dline</title>
+	<para>
+	  Allows using KLINE and DLINE, to ban users by user@host mask
+	  or IP address.
+	</para>
+      </sect2>
+      <sect2>
+	<title>operwall (L), send/receive operwall</title>
+	<para>
+	  Allows using the OPERWALL command and umode +z to send and
+	  receive operwalls.
+	</para>
+      </sect2>
+      <sect2>
+	<title>nick_changes (N), see nick changes</title>
+	<para>
+	  Allows using snomask +n to see local client nick changes.
+	  This is designed for monitor bots.
+	</para>
+      </sect2>
+      <sect2>
+	<title>global_kill (O), global kill</title>
+	<para>
+	  Allows using KILL on users on any server.
+	</para>
+      </sect2>
+      <sect2>
+	<title>hidden_oper (P), hide from /stats p</title>
+	<para>
+	  This privilege currently does nothing, but was designed
+	  to hide bots from /stats p so users will not message them
+	  for help.
+	</para>
+      </sect2>
+      <sect2>
+	<title>remote (R), remote routing</title>
+	<para>
+	  This allows using the third argument of the CONNECT command, to
+	  instruct another server to connect somewhere, and using SQUIT
+	  with an argument that is not locally connected.
+	  (In both cases all opers with +w set will be notified.)
+	</para>
+      </sect2>
+      <sect2>
+	<title>oper_spy (S), use operspy</title>
+	<para>
+	  This allows using /mode !#channel, /whois !nick, /who !#channel,
+	  /chantrace !#channel, /who !mask, /masktrace !user@host :gecos
+	  and /scan umodes +modes-modes global list to see through secret
+	  channels, invisible users, etc.
+	</para>
+	<para>
+	  All operspy usage is broadcasted to opers with snomask +Z set
+	  (on the entire network) and optionally logged.
+	  If you grant this to anyone, it is a good idea to establish 
+	  concrete policies describing what it is to be used for, and
+	  what not.
+	</para>
+	<para>
+	  If operspy_dont_care_user_info is enabled, /who mask is operspy
+	  also, and /who !mask, /who mask, /masktrace !user@host :gecos
+	  and /scan umodes +modes-modes global list do not generate +Z notices
+	  or logs.
+	</para>
+      </sect2>
+      <sect2>
+	<title>unkline (U), unkline</title>
+	<para>
+	  Allows using UNKLINE and UNDLINE, and if gline privilege is also
+	  possessed, UNGLINE.
+	</para>
+      </sect2>
+      <sect2>
+	<title>xline (X), xline and unxline</title>
+	<para>
+	  Allows using XLINE and UNXLINE, to ban/unban users by realname.
+	</para>
+      </sect2>
+      <sect2>
+	<title>hidden_admin, hidden administrator</title>
+	<para>
+	  This grants everything granted to the admin privilege,
+	  except the ability to set umode +a. If both admin and hidden_admin
+	  are possessed, umode +a can still not be used.
+	</para>
+	<note><para>
+	  This privilege does not appear in /stats o or oper up notices.
+	</para></note>
+      </sect2>
+    </sect1>
+  </chapter>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-namecase-general:t
+sgml-general-insert-case:lower
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:2
+sgml-indent-data:t
+sgml-parent-document: ("charybdis-oper-guide.sgml" "book")
+sgml-exposed-tags:nil
+fill-column: 105
+sgml-validate-command: "nsgmls -e -g -s -u charybdis-oper-guide.sgml"
+End:
+-->

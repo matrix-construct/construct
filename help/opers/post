@@ -1,0 +1,5 @@
+POST
+
+The POST command is used to help protect against
+insecure HTTP proxies.  Any proxy that sends a POST
+command during registration will be exited.

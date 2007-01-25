@@ -1,0 +1,28 @@
+REHASH [option]
+
+When no [option] is given, ircd will re-read the
+ircd.conf file.
+
+[option] can be one of the following:
+  BANS     - Re-reads kline.conf, dline.conf, resv.conf and xline.conf
+  DNS      - Re-read the /etc/resolv.conf file
+  GLINES   - Clears G Lines
+  HELP     - Re-reads help files
+  MOTD     - Re-reads MOTD file
+  NICKDELAY - Clears delayed nicks
+  OMOTD    - Re-reads Oper MOTD file
+  PGLINES  - Clears pending G Lines
+  REJECTCACHE - Clears the reject cache
+  TDLINES  - Clears temporary D Lines
+  TKLINES  - Clears temporary K Lines
+  TRESVS   - Clears temporary nick and channel resvs
+  TXLINES  - Clears temporary X Lines
+
+- Requires Oper Priv: H
+
+REHASH [option] irc.server
+
+Rehashes [option], or the config file if none given, on irc.server if
+irc.server accepts remote rehashes.
+
+- Requires Oper Priv: HB

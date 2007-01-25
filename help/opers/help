@@ -1,0 +1,6 @@
+HELP [topic]
+
+HELP displays the contents of the help
+file for topic requested.  If no topic is
+requested, it will perform the equivalent
+to HELP index.

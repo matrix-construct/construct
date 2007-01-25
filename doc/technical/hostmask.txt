@@ -1,0 +1,115 @@
+The hostmask/netmask system.
+Copyright(C) 2001 by Andrew Miller(A1kmm)<a1kmm@mware.virtualave.net>
+$Id: hostmask.txt 6 2005-09-10 01:02:21Z nenolod $
+
+Contents
+========
+* Section 1: Motivation
+* Section 2: Underlying mechanism
+  - 2.1: General overview.
+  - 2.2: IPv4 netmasks.
+  - 2.3: IPv6 netmasks.
+  - 2.4: Hostmasks.
+* Section 3: Exposed abstraction layer
+  - 3.1: Parsing masks.
+  - 3.2: Adding configuration items.
+  - 3.3: Initialising or rehashing.
+  - 3.4: Finding IP/host confs.
+  - 3.5: Deleting entries.
+  - 3.6: Reporting entries.
+
+Section 1: Motivation
+=====================
+Looking up config hostnames and IP addresses(such as for I-lines and
+K-lines) needs to be implemented efficiently. It turns out a hash
+based algorithm like that employed here performs well on the average
+case, which is what we should be the most concerned about. A profiling
+comparison with the mtrie code using data from a real network confirmed
+that this algorithm performs much better.
+
+Section 2: Underlying mechanism
+===============================
+2.1: General overview
+---------------------
+In short, a hash-table with linked lists for buckets is used to locate
+the correct hostname/netmask entries. In order to support CIDR IPs and
+wildcard masks, the entire key cannot be hashed, and there is a need to
+rehash. The means for deciding how much to hash differs between hostmasks
+and IPv4/6 netmasks.
+
+2.2: IPv4 netmasks
+------------------
+In order to hash IPv4 netmasks for addition to the hash, the mask is first
+processed to a 32 bit address and a number of bits used. All unused bits
+are set to 0. The mask could be in the forms:
+1.2.3.4     => 1.2.3.4  32
+1.2.3.*     => 1.2.3.0  24
+1.2         => 1.2.0.0  16
+1.2.3.64/26 => 1.2.3.64 26
+The number of whole bytes is then calculated, and only those bytes are
+hashed. (e.g. 1.2.3.64/26 and 1.2.3.0/24 hash the same).
+When a complete IPv4 address is given so that an IPv4 match can be found,
+the entire IP address is first hashed, and looked up in the table. Then
+the most significant three bytes are hashed, followed by the most
+significant two, the most significant one, and finally the 'identity hash'
+bucket is searched(to match masks like 192/7).
+
+2.3: IPv6 netmasks
+------------------
+As per IPv4 netmasks, except that instead of rehashing with a one byte
+granularity, a 16 bit(two byte) granularity is used, as 16 rehashes is
+considered too great a fixed offset to be justified for a (possible)
+slight reduction in hash collisions.
+
+2.4: Hostmasks
+--------------
+On adding a hostmask to the hash, all of the hostmask right of the next
+dot after the last wildcard character in the string is hashed, or in the
+case that there are no wildcards in the hostmask, the entire string is
+hashed.
+On searching for a hostmask match, the entire hostname is hashed, followed
+by the entire hostmask after the first dot, followed by the entire
+hostmask after the second dot, and so on. Finally, the 'identity' hash
+bucket is checked, to catch hostnames like *test*.
+
+Section 3: Exposed abstraction layer
+====================================
+Section 3.1: Parsing masks
+--------------------------
+Call "parse_netmask()" with the netmask and a pointer to an irc_inaddr
+structure to be filled in, as well as a pointer to an integer where the
+number of bits will be placed.
+Always check the return value. If it returns HM_HOST, it means that the
+mask is probably a hostname mask. If it returns HM_IPV4, it means it was
+an IPv4 address. If it returns HM_IPV6, it means it was an IPv6 address.
+If parse_netmask returns HM_HOST, no change is made to the irc_inaddr
+structure or the number of bits.
+
+Section 3.2: Adding configuration items
+---------------------------------------
+Call "add_conf_by_address" with the hostname or IP mask, the username,
+and the ConfItem* to associate with this mask.
+
+Section 3.3: Initialising and rehashing
+----------------------------------------
+To initialise, call init_host_hash(). This only needs to be done once on
+startup.
+On rehash, to wipe out the old unwanted conf, and free them if there are
+no references to them, call clear_out_address_conf(). 
+
+Section 3.4: Finding IP/host confs
+----------------------------------
+Call find_address_conf() with the hostname, the username, the address,
+and the address family.
+To find a d-line, call find_dline() with the address and address family.
+
+Section 3.5: Deletiing entries
+------------------------------
+Call delete_one_address_conf() with the hostname and the ConfItem*.
+
+Section 3.6: Reporting entries
+------------------------------
+Call report_dlines, report_exemptlines, report_Klines() or report_Ilines()
+with the client pointer to report to. Note these walk the hash, which is
+inefficient, but these are not called often enough to justify the memory
+and maintenance clockcycles to for more efficient data structure.

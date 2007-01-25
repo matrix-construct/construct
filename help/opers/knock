@@ -1,0 +1,7 @@
+KNOCK <channel>
+
+KNOCK requests access to a channel that
+for some reason is not open.
+
+KNOCK cannot be used if you are banned, the
+channel is +p, or it is open.

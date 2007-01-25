@@ -1,0 +1,103 @@
+# $Id: Makefile.in 6 2005-09-10 01:02:21Z nenolod $
+
+CC		= @CC@
+INSTALL		= @INSTALL@
+INSTALL_BIN	= @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+INSTALL_SUID	= @INSTALL_PROGRAM@ -o root -m 4755
+RM		= @RM@
+LEX		= @LEX@
+LEXLIB		= @LEXLIB@
+CFLAGS		= @IRC_CFLAGS@ -DIRCD_PREFIX=\"@prefix@\"
+LDFLAGS   	= @LDFLAGS@
+MKDEP		= @MKDEP@ -DIRCD_PREFIX=\"@prefix@\"
+MV		= @MV@
+RM		= @RM@
+LN              = @LN@
+
+IRCDLIBS	= @LIBS@ 
+INCLUDES	= -I../include 
+CPPFLAGS	= ${INCLUDES} @CPPFLAGS@
+
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+bindir		= @bindir@
+libexecdir	= @libexecdir@
+confdir		= @confdir@
+localstatedir	= @localstatedir@
+
+PROGS		= viconf mkpasswd convertilines convertklines 
+
+all: $(PROGS)
+
+build: all
+
+mkpasswd: mkpasswd.c
+	$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) mkpasswd.c -o mkpasswd $(IRCDLIBS)
+
+viconf: viconf.c
+	$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) viconf.c -o viconf $(IRCDLIBS)
+
+convertilines: convertilines.c
+	$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) convertilines.c -o convertilines $(IRCDLIBS)
+
+convertklines: convertklines.c
+	$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) convertklines.c -o convertklines $(IRCDLIBS)
+
+clean:
+	$(RM) -f encspeed viconf chkconf mkpasswd *~ core *.exe convertklines convertilines
+
+distclean: clean
+	$(RM) -f Makefile
+
+lint:
+	lint -aacgprxhH $(CPPFLAGS) -DIRCD_PREFIX=\"@prefix@\" $(convertklines_SOURCES) $(mkpasswd_SOURCES) $(viconf_SOURCES) $(encspeed_SOURCES) >>../lint.out
+
+depend:
+
+.c.o:
+	$(CC) $(CFLAGS) $(INCLUDES) $(CPPFLAGS) -c $<
+
+# DO NOT DELETE
+
+viconf.o: ../include/config.h ../include/setup.h
+viconf.o:
+
+
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+exec_suffix	= @exec_suffix@
+bindir		= @bindir@
+libexecdir	= @libexecdir@
+confdir		= @confdir@
+localstatedir	= @localstatedir@
+# Change this later! -- adrian
+moduledir	= @moduledir@
+automoduledir	= @moduledir@/autoload
+
+
+ 
+install-mkdirs:
+	-@if test ! -d $(DESTDIR)$(prefix); then \
+		echo "ircd: setting up tools directory structure"; \
+		mkdir $(DESTDIR)$(prefix); \
+	fi
+	-@if test ! -d $(DESTDIR)$(exec_prefix); then \
+		mkdir $(DESTDIR)$(exec_prefix); \
+	fi
+	-@if test ! -d $(DESTDIR)$(bindir); then \
+		mkdir $(DESTDIR)$(bindir); \
+	fi
+
+install: install-mkdirs build
+	@echo "ircd: installing tools ($(PROGS))"
+	@for i in $(PROGS); do \
+		if test -f $(DESTDIR)$(bindir)/$$i; then \
+			$(MV) $(DESTDIR)$(bindir)/$$i $(DESTDIR)$(bindir)/$$i.old; \
+		fi; \
+		$(INSTALL_BIN) $$i $(DESTDIR)$(bindir); \
+	done; \
+	$(RM) -f $(DESTDIR)$(bindir)/vimotd $(DESTDIR)$(bindir)/viklines
+	$(LN) $(DESTDIR)$(bindir)/viconf $(DESTDIR)$(bindir)/vimotd
+	$(LN) $(DESTDIR)$(bindir)/viconf $(DESTDIR)$(bindir)/viklines
+

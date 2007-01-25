@@ -1,0 +1,6 @@
+MODRESTART
+
+-- Reload all modules into the ircd
+All modules are unloaded, then those in modules/autoload
+are loaded
+NOTE:  Restricted to admins only

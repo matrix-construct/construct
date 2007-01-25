@@ -1,0 +1,5 @@
+The charybdis repository is available for anonymous access:
+	svn co http://svn.atheme.org/charybdis/trunk charybdis-devel
+
+For the latest stable:
+	svn co http://svn.atheme.org/charybdis/branches/stable charybdis-stable

@@ -1,0 +1,140 @@
+                         User Mode +g Documentation
+
+Hybrid 7 includes a new and power feature that all users can take advantage
+of to help prevent flooding and unwanted messages.  This new feature is 
+invoked by setting user mode +g.  When a client is set +g, that user will
+be in "Caller ID" mode.  Any user that messages a +g client will receive
+a notice saying that they are in +g (server side ignore) mode.  The target
+client (who is set +g) will also receive a notice saying that so and so
+messaged them, and that they are in +g mode.
+
+The target of the message will only receive one notification per minute, from
+any client, in order to help prevent flooding.  The sender will NOT have the
+rate limit, and will receive a notice saying the target is in +g mode every
+time they send a message.  Note that this behavior is similar to the way AWAY
+messages are done.
+
+There are numerous benefits for both opers and regular users, including the
+ability to stop spambot messages from ever reaching your client, stopping
+private message and CTCP floods, and being able to sit on IRC in privacy.
+
+One question that arises is how to message specific users, while blocking
+out everyone else.  The command ACCEPT is your answer.  To add a user to
+your accept list, issue the raw command ACCEPT <nick>,<nick>,<nick>,...
+
+You will not receive a reply from the ACCEPT command if it is succesful,
+only if an error has occured.  There are three possible errors, shown by
+numerics:
+
+   ERR_ACCEPTFULL (456): :irc.server 456 client :Accept list is full
+     - This is sent when an accept list is full.
+   ERR_ACCEPTEXIST (457): :irc.server 457 client target :already exists
+     - This is sent when a client tries to add a user to the accept list
+       that already exists there
+   ERR_ACCEPTNOT (458): :irc.server 458 client target :doesnt exist
+     - This is sent when a client tries to remove a user from their accept
+       list who is not on the accept list.
+
+That user will now be able to send messages to your client until the
+association is broken.
+
+Associations break in one of the following situations:  when an accepted user
+QUIT's (or is on the other side of a split), you QUIT, or the accepted user
+changes their nick.  The reason why a remote user's nick change will remove
+them from your accept list is so that you cannot track a user after they
+changed their nick.
+
+Viewing the accept list is also very easy.  Issue the raw command ACCEPT *.
+Removing a user from your accept list is also simple.  Issue the command
+ACCEPT -<nick>.  
+
+                              Sample Session
+
+The easiest way to see how this works is by experiencing it.  Seeing a sample
+session can help understand what goes on though.
+
+Client Hwy-LL is set +g initially.
+Client Hwy101 wants to message Hwy-LL
+
+Note that some clients may have to use /quote ACCEPT instead of /accept.
+
+--
+
+Client Hwy101:  /msg Hwy-LL hi
+Hwy101 will see:  -Hwy-LL- *** I'm in +g mode (server side ignore).
+                  -Hwy-LL- *** I've been informed you messaged me.
+
+Hwy-LL will see:  Client Hwy101 [wcampbel@admin.irc.monkie.org] is messaging
+                    you and you are +g
+
+The sender will receive the NOTICE from the target of the message, while
+the recipient will receive the NOTICE from the server.
+
+--
+
+If Hwy101 sends another message to Hwy-LL (before the minute expires), he will
+see:  -Hwy-LL- *** I'm in +g mode (server side ignore).
+and will not receive the second notice
+
+Hwy-LL will NOT see any notice.
+
+--
+
+Hwy-LL now wishes to see messages from Hwy101 and SpamBot
+
+Client Hwy-LL:  /accept Hwy101,SpamBot
+
+Neither side will be told of the change in the accept list, Hwy-LL should
+presume that the accept was succesful if no error occurs.
+
+Now Hwy-LL can see messages from Hwy101 and SpamBot without any blockage.
+If Hwy101 was also set +g, then he would have to issue /accept Hwy-LL
+before he would be able to see messages from Hwy-LL.
+
+--
+
+Hwy-LL now wants to see who is on his accept list.
+
+Client Hwy-LL:  /accept *
+
+Hwy-LL will see:
+  irc.server 281 Hwy-LL Hwy101 SpamBot
+  irc.server 282 Hwy-LL :End of /ACCEPT list
+
+The replies are in numeric form to help parsing by scripts.
+--
+
+Hwy-LL realises he added a spambot to his list, and wants to remove it, and
+allow messages from services
+
+Client Hwy-LL:  /accept -SpamBot,services
+
+Hwy-LL will now only accept messages from Hwy101 and services.
+
+--
+
+The nicks to be added can be in ANY order, however you cannot add or remove
+AND list.  
+    /ACCEPT x,y,-z,f,-a would be acceptable.
+    /ACCEPT x,y,-z,* would ignore the * and generate an invalid nick
+                     response.
+
+Like Dalnet and Undernet's SILENCE system, the accept list only exists while
+you are connected to IRC.  In order for you to have the same accept list
+every time you come onto IRC, you must put the accept commands into your 
+client's auto-perform, or manually issue the commands each time.  
+
+This system may seem similar to the SILENCE system, but it is actually a
+reverse SILENCE.  SILENCE ignores certain users and allows the rest.  Mode
++g ignores all users except certain ones (on your accept list.)  Both systems
+have their place, but the mode +g in Hybrid 7 is what the developers thought
+would be most useful for clients.
+
+The goals of this user mode is to provide protection from flooding and
+spamming, and to provide users with a means to keep their privacy.
+
+We hope that these goals are obtained.
+
+--
+W. Campbell
+$Id: modeg.txt 6 2005-09-10 01:02:21Z nenolod $

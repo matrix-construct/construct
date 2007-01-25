@@ -1,0 +1,101 @@
+#
+# Makefile.in for ircd/contrib
+#
+# $Id: Makefile.in 1849 2006-08-23 12:40:21Z jilles $
+#
+CC		= @CC@
+RM		= @RM@
+SED             = @SED@
+LEX		= @LEX@
+LEXLIB		= @LEXLIB@
+CFLAGS		= @IRC_CFLAGS@ -DIRCD_PREFIX=\"@prefix@\"
+PICFLAGS	= @PICFLAGS@
+MKDEP		= @MKDEP@
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM	= @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+INSTALL_SUID    = @INSTALL_PROGRAM@ -o root -m 4755
+SHELL		= /bin/sh
+AUTOMODULEDIR	= @moduledir@/extensions
+
+SSL_LIBS	= @SSL_LIBS@
+SSL_INCLUDES	= @SSL_INCLUDES@
+
+IRCDLIBS	= @LIBS@ $(SSL_LIBS)
+
+INCLUDES	= -I. -I../include -I../libcharybdis -I../adns $(SSL_INCLUDES)
+CPPFLAGS	= ${INCLUDES} @CPPFLAGS@
+
+SRCS =                          \
+  createauthonly.c		\
+  extb_account.c		\
+  extb_canjoin.c		\
+  extb_channel.c		\
+  extb_oper.c			\
+  extb_server.c			\
+  extb_realname.c		\
+  extb_extgecos.c		\
+  hurt.c			\
+  ip_cloaking.c			\
+  sno_farconnect.c		\
+  sno_globalkline.c		\
+  sno_globaloper.c		\
+  m_42.c			\
+  m_findforwards.c		\
+  m_identify.c			\
+  m_mkpasswd.c                  \
+  m_ojoin.c			\
+  m_olist.c			\
+  m_okick.c			\
+  m_omode.c			\
+  m_opme.c			\
+  m_webirc.c			\
+  no_oper_invis.c		\
+  spy_admin_notice.c		\
+  spy_info_notice.c		\
+  spy_links_notice.c		\
+  spy_motd_notice.c		\
+  spy_stats_notice.c            \
+  spy_stats_p_notice.c		\
+  spy_trace_notice.c		\
+  spy_whois_notice.c            \
+  spy_whois_notice_global.c	\
+  example_module.c
+
+OBJS = ${SRCS:.c=.so}
+
+default:	build
+build: all
+all: $(OBJS)
+
+install: all
+	-@if test ! -d $(DESTDIR)$(AUTOMODULEDIR); then \
+                mkdir $(DESTDIR)$(AUTOMODULEDIR); \
+        fi
+	@echo "Installing modules into $(DESTDIR)$(AUTOMODULEDIR) .."
+	@for file in $(OBJS); do \
+		$(INSTALL_DATA) $$file $(DESTDIR)$(AUTOMODULEDIR); \
+	done
+
+.SUFFIXES: .so
+
+.c.so:
+	${CC} ${PICFLAGS}  ${CPPFLAGS} ${CFLAGS} $< -o $@
+
+.PHONY: depend clean distclean
+depend:
+	@${MKDEP} ${CPPFLAGS} ${SRCS} > .depend
+	@sed s/\\\.o/\\\.so/ < .depend > .depend.tmp
+	@sed -e '/^# DO NOT DELETE THIS LINE/,$$d' <Makefile >Makefile.depend
+	@echo '# DO NOT DELETE THIS LINE!!!' >>Makefile.depend
+	@echo '# make depend needs it.' >>Makefile.depend
+	@cat .depend.tmp >>Makefile.depend
+	@mv Makefile.depend Makefile
+	@rm -f .depend.tmp .depend
+
+clean:
+	${RM} -f *.so *~ 
+
+distclean: clean
+	${RM} -f Makefile
+

@@ -1,0 +1,10 @@
+UNXLINE <gecos>
+
+Will attempt to unxline the given <gecos>
+
+
+UNXLINE <gecos> ON <server>
+
+Will attempt to unxline the given <gecos> on <server>.
+
+- Requires Oper Priv: X

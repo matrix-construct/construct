@@ -1,0 +1,5 @@
+CNOTICE <nick> <channel> :<text>
+
+Providing you are opped (+o) or voiced (+v) in <channel>, and <nick>
+is a member of <channel>, CNOTICE generates a NOTICE towards 
+<nick>.  CNOTICE bypasses any anti-spam measures in place.

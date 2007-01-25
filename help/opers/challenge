@@ -1,0 +1,10 @@
+CHALLENGE <nick|+response>
+
+CHALLENGE is used in the RSA controlled
+oper {} system.  CHALLENGE requires you to
+issue the command using the nickname in the
+operator block, while matching the username
+and hostname specified.  The server will
+send you an RSA challenge.  You must send
+a valid RSA response back to the server,
+proceeded with a '+' symbol.

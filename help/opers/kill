@@ -1,0 +1,5 @@
+KILL <nick> <reason>
+
+Disconnects user <nick> from the IRC server he/she
+is connected to with reason <reason>.
+- Requires Oper Priv: O for users not on your IRC server

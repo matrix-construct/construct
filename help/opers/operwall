@@ -1,0 +1,4 @@
+OPERWALL :<message>
+
+Sends an OPERWALL message of <message> to all
+opers who are umode +z

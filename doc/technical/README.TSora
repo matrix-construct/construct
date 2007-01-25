@@ -1,0 +1,330 @@
+                       Protocol changes for +TSora
+                       ---------------------------
+
+
+Note: 
+
+The protocols described here implement TimeStamps on IRC channels and 
+nicks. The idea of IRC TimeStamps was started on Undernet, and first 
+implemented by Run <carlo@runaway.xs4all.nl>. The protocols used here 
+are not exactly the same as the ones used on Undernet; the nick-kill 
+handling is very similar and must be credited to Run, while the 
+"TimeStamped channel description" protocol is quite different.
+
+
+
+TSora servers keep track of which version of the TS protocol (if any) 
+their neighboring servers are using, and take it into account when 
+sending messages to them. This allows for seamless integration of TS 
+servers into a non-TS net, and for upgrades of the protocol.
+
+Each server knows which is the lowest and the highest version of the
+TS protocol it can interact with; currently both of these are set to 1:
+
+#define TS_CURRENT 1		/* the highest TS ver we can do */
+#define TS_MIN 1		/* the lowest TS ver we can do  */
+
+
+Timings and TS versions:
+========================
+
+. Keep a 'delta' value to be added to the result of all calls to time(),
+  initially 0.
+
+. Send a second argument to the PASS command, ending in the 'TS' string.
+
+. Send a
+
+  SVINFO <TS_CURRENT> <TS_MIN> <STANDALONE> :<UTC-TIME>
+  
+  just after "SERVER", where <STANDALONE> is 1 if we're connected to 
+  more TSora servers, and 0 if not, and <UTC-TIME> is our idea of the 
+  current UTC time, fixed with the delta.
+
+. When we receive a "SVINFO <x> <y> <z> :<t>" line from a connecting 
+  server, we ignore it if TS_CURRENT<y or x<TS_MIN, otherwise we
+  set a flag remembering that that server is TS-aware, remember the TS 
+  version to use with it (min(TS_CURRENT, x)). Additionally, if this is 
+  our first connected TS server, we set our delta to t-<OUR_UTC> if
+  z==0, and to (t-<OUR_UTC>)/2 if z!=0. The SVINFO data is kept around
+  until the server has effectively registered with SERVER, and used
+  *after* sending our own SVINFO to that server.
+
+
+Explanations:
+
+  Servers will always know which of their directly-linked servers can do 
+  TS, and will use the TS protocol only with servers that do understand 
+  it. This makes it possible to switch to full TS in just one 
+  code-replacement step, without incompatibilities.
+
+  As long as not all servers are TS-aware, the net will be divided into 
+  "zones" of linked TS-aware servers. Channel modes will be kept 
+  synchronized at least within the zone in which the channel was 
+  created, and nick collisions between servers in the same zone will 
+  result in only one client being killed.
+
+  Time synchronization ensures that servers have the same idea of the 
+  current time, and achieves this purpose as long as TS servers are 
+  introduced one by one within the same 'zone'. The merging of two zones 
+  cannot synchronize them completely, but it is to be expected that 
+  within each zone the effective time will be very close to the real 
+  time. 
+
+  By sending TSINFO after SERVER rather than before, we avoid the extra 
+  lag created by the identd check on the server. To be able to send 
+  immediately a connect burst of either type (TS or not), we need to 
+  know before that if the server does TS or not, so we send that 
+  information with PASS as an extra argument. And to avoid being 
+  incompatible with 2.9 servers, which check that this second argument 
+  begins with "2.9", we check that it *ends* with "TS".
+
+  The current time is only used when setting a TS on a new channel or 
+  nick, and once such a TS is set, it is never modified because of 
+  synchronization, as it is much more important that the TS for a 
+  channel or nick stays the same across all servers than that it is 
+  accurate to the second.
+
+  Note that Undernet's 2.8.x servers have no time synchronization at 
+  all, and have had no problems because of it - all of this is more to 
+  catch the occasional server with a way-off clock than anything.
+
+
+NICK handling patches (anti-nick-collide + shorter connect burst):
+==================================================================
+
+. For each nick, store a TS value = the TS value received if any, or our 
+  UTC+delta at the time we first heard of the nick. TS's are propagated 
+  to TS-aware servers whenever sending a NICK command.
+
+. Nick changes reset the TS to the current time.
+
+. When sending a connect burst to another TS server, replace the 
+  NICK/USER pair with only one NICK command containing the nick, the 
+  hopcount, the TS, the umode, and all the USER information.
+
+  The format for a full NICK line is:
+  NICK <nick> <hops> <TS> <umode> <user> <host> <server> :<ircname>
+
+  The umode is a + followed by any applying usermodes.
+
+  The format for a nick-change NICK line is:
+  :<oldnick> NICK <newnick> :<TS>
+
+. When a NICK is received from a TS server, that conflicts with an 
+  existing nick:
+  + if the userhosts differ or one is not known:
+    * if the timestamps are equal, kill ours and the old one if it
+      was a nick change
+    * if the incoming timestamp is older than ours, kill ours and 
+      propagate the new one
+    * if the incoming timestamp is younger, ignore the line, but kill 
+      the old nick if it was a nick change
+  + if the userhosts are the same:
+    * if the timestamps are equal, kill ours and the old one if it
+      was a nick change
+    * if the incoming timestamp is younger, kill ours and propagate
+      the new one
+    * if the incoming timestamp is older, ignore the line but kill
+      the old nick if it was a nick change
+
+. When a NICK is received from a non-TS server that conflicts with
+  an existing nick, kill both.
+
+. Do not send "Fake Prefix" kills in response to lines coming from TS 
+  servers; the sanitization works anyway, and this allows the "newer
+  nick overruled" case to work.
+
+Explanations:
+
+  The modified nick-introduction syntax allows for a slightly shorter 
+  connect-burst, and most importantly lets the server compare 
+  user@host's when determining which nick to kill:  if the user@host
+  is the same, then the older nick must be killed rather than the
+  newer.
+
+  When talking to a non-TS server, we need to behave exactly like one
+  because it expects us to. When talkign to a TS server, we don't kill
+  the nicks it's introducing, as we know it'll be smart enough to do it
+  itself when seeing our own introduced nick.
+
+  When we see a nick arriving from a non-TS server, it won't have a TS, 
+  but it's safe enough to give it the current time rather than keeping 
+  it 0; such TS's won't be the same all across the network (as long as 
+  there is more than one TS zone), and when there's a collision, the TS 
+  used will be the one in the zone the collision occurs in.
+
+  Also, it is important to note that by the time a server sees (and 
+  chooses to ignore) a nick introduction, the introducing server has 
+  also had the time to put umode changes for that nick on its queue, so 
+  we must ignore them too... so we need to ignore fake-prefix lines 
+  rather than sending kills for them. This is safe enough, as the rest 
+  of the protocol ensures that they'll get killed anyway (and the 
+  Undernet does it too, so it's been more than enough tested). Just for 
+  an extra bit of compatibility, we still kill fake prefixes coming from 
+  non-TS servers.
+
+  This part of the TS protocol is almost exactly the same as the 
+  Undernet's .anc (anti-nick-collide) patches, except that Undernet 
+  servers don't add usermodes to the NICK line.
+
+
+TimeStamped channel descriptions (avoiding hacked ops and desynchs):
+====================================================================
+
+. For each channel, keep a timestamp, set to the current time when the
+  channel is created by a client on the local server, or to the received 
+  value if the channel has been propagated from a TS server, or to 0 
+  otherwise. This value will have the semantics of "the time of creation 
+  of the current ops on the channel", and 0 will mean that the channel 
+  is in non-TS mode.
+
+  A new server protocol command is introduced, SJOIN, which introduces 
+  a full channel description: a timestamp, all the modes (except bans),
+  and the list of channel members with their ops and voices. This 
+  command will be used instead of JOIN and of (most) MODEs both in 
+  connect bursts and when propagating channel creations among TS 
+  servers. SJOIN will never be accepted from or sent to users.
+
+  The syntax for the command is:
+
+  SJOIN <TS> #<channel> <modes> :[@][+]<nick_1> ...  [@][+]<nick_n>
+
+  The fields have the following meanings:
+
+  * <TS> is the timestamp for the channel
+
+  * <modes> is the list of global channel modes, starting with a +
+    and a letter for each of the active modes (spmntkil), followed
+    by an argument for +l if there is a limit, and an argument for
+    +k if there's a key (in the same order they were mentioned in
+    the string of letters).
+
+    A channel with no modes will have a "+" in that field.
+
+    A special value of "0" means that the server does not specify the 
+    modes, and will be used when more than one SJOIN line is needed
+    to completely describe a channel, or when propagating a SJOIN
+    the modes of which were rejected.
+
+  * Each nick is preceded by a "@" if the user has ops, and a "+" if
+    the user has a voice. For mode +ov, both flags are used.
+
+  SJOINs will be propagated (when appropriate) to neighboring TS 
+  servers, and converted to JOINs and MODEs for neighboring non-TS 
+  servers.
+  
+  To propagate channels for which not all users fit in one 
+  SJOIN line, several SJOINs will be sent consecutively, only the first
+  one including actual information in the <mode> field.
+  
+  An extra ad-hoc restriction is imposed on SJOIN messages, to simplify 
+  processing: if a channel has ops, then the first <nick> of the first 
+  SJOIN sent to propagate that channel must be one of the ops.
+
+  Servers will never attempt to reconstruct a SJOIN from JOIN/MODE 
+  information being received at the moment from other servers.
+
+. For each user on a channel, keep an extra flag (like ops and voice)
+  that is set when the user has received channel ops from another 
+  server (in a SJOIN channel description), which we rejected (ignored). 
+  Mode changes (but NOT kicks) coming from a TS server and from someone 
+  with this flag set will be ignored. The flag will be reset when the 
+  user gets ops from another user or server.
+
+. On deops done by non-local users, coming from TS servers, on channels 
+  with a non-zero TS, do not check that the user has ops but check that 
+  their 'deopped' flag is not set. For kicks coming from a TS server, do 
+  not check either. This will avoid desynchs, and 'bad' modechanges are 
+  avoided anyway. Other mode changes will still only be taken into 
+  account and propagated when done by users that are seen as having ops.
+
+. When a MODE change that ops someone is received from a server for a 
+  channel, that channel's TS is set to 0, and the mode change is 
+  propagated. 
+
+. When a SJOIN is received for a channel, deal with it in this way:
+  * received-TS = 0: 
+    + if we have ops or the SJOIN doesn't op anyone, SJOIN propagated
+      with our own TS.
+    + otherwise, TS set to 0 and SJOIN propagated with 0.
+  * received-TS > 0, own-TS = 0: 
+    + if the SJOIN ops someone or we don't have ops, set our TS to the
+      received TS and propagate.
+    + otherwise, propagate with TS = 0.
+  * received-TS = own-TS: propagate.
+  * received-TS < own-TS: 
+    + if the SJOIN ops someone, remove *all* modes (except bans) from 
+      the channel and propagate these mode changes to all neighboring
+      non-TS servers, and copy the received TS and propagate the SJOIN.
+    + if the SJOIN does not op anyone and we have ops, propagate
+      with our own TS.
+    + otherwise, copy the received TS and propagate the SJOIN.
+  * received-TS > own-TS: 
+    + if the SJOIN does not introduce any ops, process and propagate
+      with our own TS.
+    + if we have ops: for each person the mode change would op, set the 
+      'deopped' flag; process all the JOINs ignoring the '@' and '+' 
+      flags; propagate without the flags and with our TS.
+    + if we don't have ops: set our TS to the received one, propagate
+      with the flags.
+
+
+Explanations:
+
+  This part of the protocol is the one that is most different (and 
+  incompatible) with the Undernet's: we never timestamp MODE changes, 
+  but instead we introduce the concept of time-stamped channel 
+  descriptions. This way each server can determine, based on its state 
+  and the received description, what the correct modes for a channel 
+  are, and deop its own users if necessary. With this protocol, there is 
+  *never* the need to reverse and bounce back a mode change. This is
+  both faster and more bandwith-effective.
+
+  The end goal is to have a protocol will eventually protect channels 
+  against hacked ops, while minimizing the impact on a mixed-server net. 
+  In order to do this, whenever there is a conflict between a TS server 
+  and a non-TS one, the non-TS one's idea of the whole situation 
+  prevails. This means that channels will only have a TS when they have 
+  been created on a TS-aware server, and will lose it whenever a server 
+  op comes from a non-TS server. Also, at most one 'zone' will have a TS 
+  for any given channel at any given time, ensuring that there won't be 
+  any deops when zones are merged. However, when TS zones are merged, if 
+  the side that has a TS also has ops, then the TS is kept across the 
+  whole new zone. Effective protection will only be ensured once all 
+  servers run TS patches and channels have been re-created, as there is 
+  no way servers can assign a TS to a channel they are not creating 
+  (like they do with nicks) without having unwanted deops later.
+
+  The visible effects of this timestamped channel-description protocol 
+  are that when a split rejoins, and one side has hacked ops, the other 
+  side doesn't see any server mode changes (just like with Undernet's
+  TS), but the side that has hacked ops sees:
+
+  * first the first server on the other side deopping and devoicing 
+    everyone, and fixing the +spmntkli modes
+  * then other users joining, and getting server ops and voices
+
+  The less obvious part of this protocol is its behavior in the case 
+  that the younger side of a rejoin has servers that are lagged with 
+  each other. In such a situation, a SJOIN that clears all modes and 
+  sets the legitimate ones is being propagated from one server, and 
+  lagged illegitimate mode changes and kicks are being propagated in the 
+  opposite direction. In this case, a kick done by someone who is being 
+  deopped by the SJOIN must be taken into account to keep the name list 
+  in sync (and since it can only be kicking someone who also was on the 
+  younger side), while a deop does not matter (and will be ignored by 
+  the first server on the other side), and an opping *needs* to be 
+  discareded to avoid hacked ops.
+
+  The main property of timestamped channel descriptions that makes them 
+  a very stable protocol even with lag and splits, is that they leave a 
+  server in the same final state, independently of the order in which 
+  channel descriptions coming from different servers are received. Even 
+  when SJOINs and MODEs for the same channel are being propagated in 
+  different direction because of several splits rejoining, the final 
+  state will be the same, independently of the exact order in which each 
+  server received the SJOINs, and will be the same across all the 
+  servers in the same zone.
+
+

@@ -1,0 +1,14 @@
+MODE <nick> <+|-><modes>
+
+Usermodes:
+
+     USERMODE     DESCRIPTION
+-----------------------------------------------------------------
+         +o     - Designates this client is an IRC Operator.
+                  Use the /oper command to attain this.
+         +i     - Designates this client 'invisible'.
+         +g     - "caller id" mode only allow accept clients to message you
+         +w     - Can see oper wallops.
+         +D     - Deaf - ignores all channel messages.
+         +Q     - Prevents you from being affected by channel forwarding.
+         +R     - Prevents non accept unidentified users from messaging you.

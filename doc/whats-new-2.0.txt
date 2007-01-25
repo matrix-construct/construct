@@ -1,0 +1,113 @@
+$Id: whats-new-2.0.txt 6 2005-09-10 01:02:21Z nenolod $
+
+The following is a list of major changes between ircd-ratbox-1.x and
+ircd-ratbox-2.0
+
+Config File
+-----------
+- name="foo"; is no longer supported in connect {}; operator {}; and
+  class {};.  You must now use connect "irc.foo.com" { ... }; etc.
+- operator {}; no longer contains a class
+- kline_with_connection_closed is gone, replaced with 
+  kline_reason = "Connection closed";
+- logging {}; is gone, replaced with more advanced log system - see
+  example.conf log {}; for more info.  Note, by default only very basic
+  information will be logged.
+- support for a specific opers initial umodes on /oper, by umodes = ...;
+  in operator {};
+- added stats_e_disabled = yes|no; to general {};, controlling whether stats
+  e (which can contain server ips) is never shown to anyone
+- support for compressed|encrypted|topicburst|autoconn = yes|no; is gone,
+  replaced with flags = compressed, encrypted, topicburst, autoconn;
+- support for individual auth flags "kline_exempt = yes"; etc removed, now
+  must use flags = ...; method
+- support for individual oper flags "kline = yes;" etc removed, now must use
+  flags = ...; method.
+- extended flags = ...; method to allow negation, so you may prefix a flag
+  with '~' to negate it.  Default oper flags are operwall, remoteban and
+  encrypted (indicates password is encrypted with mkpasswd)
+- new flags in shared {};, tkline, txline and tresv, allowing temp only of
+  kline, xline and resv respectively.
+- new flags in cluster {}; tkline, txline and tresv which will cluster
+  only the temp of each type.  kline, xline and resv will now only
+  cluster the permanent ones of each type.
+- cluster {}; no longer allows a server to place klines etc locally, it
+  simply dictates who we send to.
+- shared {}; is now ordered top-down and the first one that matches the
+  user@host and server will be used, and the flags taken from this.  This
+  means if a remote oper matches a shared block without kline privs, even
+  though there is a shared {}; block they match under it with kline privs 
+  they will not be able to place klines.
+- added invite_ops_only to channel {}; which will restrict the use of INVITE
+  to chanops on that channel always, rather than just to +i chans.
+
+Client
+------
+- /help is now available for all users, as its now cached in memory.
+  removes config option use_help from general {};
+- default CHANNELLEN for local clients is now 50
+- AWAYLEN added to 005, default is 90
+- kick/part/quit now use REASONLEN (120) rather than TOPICLEN
+- umode +g now exempts users messaging themselves
+
+Oper
+----
+- kline/dline <nick> is no longer supported
+- oper reasons are now more fully supported
+- opers can now be hidden from stats p, by flag "invisible"
+- XLINEs no longer contain a type field, theyll now all just silently reject
+- xlines are now 'tracked' - stats X shows how many times each xline has
+  rejected a client
+- temp xlines and resvs
+- klines set against spoofed users will now take effect when the user
+  connects as well, if the user is not kline_exempt
+- trace spy now contains target param if its against a single user
+- the old "you need xline=yes;" notices have been replaced by ERR_NOPRIVS
+  (numeric 723)
+- umode +C, machine parsable client connect/exit notices which includes the
+  two unused fields sent in the USER command
+
+Channels
+--------
+- persistent channels have been removed
+- quiet_on_ban now uses a cache, which should speed it up
+
+Server <-> Server Protocol
+--------------------------
+- support for bursting away messages on connect, controlled by
+  burst_away = yes|no; in general {};
+- TS6, the new server <-> server protocol.  As part of this you *must*
+  specify a "sid" in serverinfo {}; that is three alphanumeric characters,
+  and must start with a digit.  use_ts6 = yes|no; in general controls
+  whether it is actually used or not.  For more information, see:
+  http://www.ircd-ratbox.org/TS6.txt 
+- fakename in connect {}; is gone, you can no longer mask servers.
+- support for encrypted links are gone
+- global capabilities.  The server will now inform the rest of the network
+  over ENCAP about the capabilities of other servers.
+
+Misc
+----
+- support for message translation has been removed.  If you want these,
+  modify messages.tab and distribute that.
+- most of server hiding is gone, only thing that is left is flattened links
+- flattened links cache is now stored in memory instead of a file
+- nick delay.  any client which splits will have their nick 'locked', until
+  a remote client uses this nick, or until it expires after the time nick_delay 
+  in general {}.  This prevents the masses of kills from clients 'regaining'
+  nicknames on a short split.
+- support for disabling bold chars etc in channel names for local users, to
+  prevent faking channels.  disable_fake_channels = <yes|no>; in general {};
+
+Code cleanups
+-------------
+- remove mapped ipv4 in ipv6 sockets, the correct native socket will now be
+  used for each.
+- module API has been rewritten, 1.x modules will no longer work.
+- hook API has been rewritten
+- proper handlers for ENCAP commands
+- support for vms ast i/o
+- connect {}; and operator {}; are now in their own structs, saving memory
+  in ConfItem
+- shared/cluster now use the same struct and flags
+- various other code cleanups thatd take all year to list ;)

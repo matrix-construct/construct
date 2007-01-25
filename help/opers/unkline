@@ -1,0 +1,10 @@
+UNKLINE <user@host>
+
+Will attempt to unkline the given <user@host>
+Will unkline a temporary kline.
+
+UNKLINE <user@host> ON irc.server will unkline
+the user on irc.server if irc.server accepts
+remote unklines.
+
+- Requires Oper Priv: U

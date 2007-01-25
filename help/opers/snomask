@@ -1,0 +1,19 @@
+MODE <nick> +s <+|-><modes>
+
+Server notice masks:
+
+    SNOMASK     DESCRIPTION
+-----------------------------------------------------------------
+       +b     - Possible bot warnings
+       +c     - Local client connections and exits
+       +C     - Extended local client connections and exits
+       +d     - Server debug messages
+       +f     - 'I-line is full' notices
+       +k     - Server and service kill messages
+       +n     - Local client nick changes
+       +r     - 'Rejected' client notices
+       +s     - Generic server messages and oper kills
+       +u     - Unauthorised client connections
+       +x     - New server introduction and split messages
+       +y     - Juped channel join attempts, etc
+       +Z     - Operspy notices

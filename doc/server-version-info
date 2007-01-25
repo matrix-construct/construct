@@ -1,0 +1,51 @@
+                              Server VERSION Info
+
+   $Id: server-version-info 1851 2006-08-24 17:16:53Z jilles $
+
+   Copyright (c) 2001 by ircd-hybrid team
+   Copyright (c) 2002 ircd-ratbox development team
+
+     ----------------------------------------------------------------------
+
+   When you type /version, you will often see something like this:
+
+ ircd-ratbox-1.0rc7(20021120_0). embers.lan egGHIKMpZ6 TS5ow
+
+   Ever wondered what those funny chars mean after the version number? Well
+   here they are:
+
+   +----------------------------+
+   | 'e'  | USE_EXCEPT          |
+   |------+---------------------|
+   | 'g'  | NO_FAKE_GLINES      |
+   |------+---------------------|
+   | 'G'  | GLINES              |
+   |------+---------------------|
+   | 'H'  | HUB                 |
+   |------+---------------------|
+   | 'I'  | USE_INVEX           |
+   |------+---------------------|
+   | 'K'  | USE_KNOCK           |
+   |------+---------------------|
+   | 'M'  | IDLE_FROM_MSG       |
+   |------+---------------------|
+   | 'p'  | CRYPT_OPER_PASSWORD |
+   |------+---------------------|
+   | 'S'  | OPERS_SEE_ALL_USERS |
+   |------+---------------------|
+   | 'T'  | IGNORE_BOGUS_TS     |
+   |------+---------------------|
+   | 'Z'  | ZIPLINKS            |
+   |------+---------------------|
+   | '6'  | IPv6                |
+   |------+---------------------|
+   |      |                     |
+   |------+---------------------|
+   | 'TS' | Supports TS         |
+   |------+---------------------|
+   | '5'  | TS Version 5        |
+   |------+---------------------|
+   | 'o'  | TS Only             |
+   |------+---------------------|
+   | 'w'  | TS Warnings         |
+   +----------------------------+

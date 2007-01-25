@@ -1,0 +1,10 @@
+Standard user modes are listed in help/opers/umode
+Standard server notice masks are listed in help/opers/snomask
+Standard channel modes are listed in help/opers/cmode
+
+The sgml docs have more detailed descriptions.
+
+User mode +h (hide hostname) is provided by contrib/ip_cloaking.so
+Server notice mask +F (far connects) is provided by contrib/sno_farconnect.so
+
+# $Id: modes.txt 996 2006-03-09 01:14:34Z jilles $

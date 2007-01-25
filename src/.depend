@@ -1,0 +1,587 @@
+cache.o: cache.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/s_log.h ../include/ircd_defs.h ../include/send.h \
+  ../include/common.h ../include/s_conf.h ../include/class.h \
+  ../libcharybdis/tools.h ../include/client.h ../libcharybdis/linebuf.h \
+  ../libcharybdis/tools.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../libcharybdis/commio.h ../include/setup.h \
+  ../include/config.h ../include/ircd_defs.h ../include/reslib.h \
+  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
+  ../libcharybdis/memory.h ../libcharybdis/balloc.h \
+  ../libcharybdis/memory.h ../include/snomask.h ../include/patricia.h \
+  ../include/numeric.h ../libcharybdis/tools.h ../include/client.h \
+  ../libcharybdis/memory.h ../libcharybdis/balloc.h \
+  ../libcharybdis/event.h ../include/hash.h ../include/cache.h \
+  ../include/sprintf_irc.h
+channel.o: channel.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../libcharybdis/tools.h \
+  ../include/channel.h ../include/ircd_defs.h ../include/s_log.h \
+  ../include/send.h ../include/client.h ../libcharybdis/linebuf.h \
+  ../libcharybdis/tools.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../libcharybdis/commio.h ../include/setup.h \
+  ../include/config.h ../include/ircd_defs.h ../include/reslib.h \
+  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
+  ../libcharybdis/tools.h ../libcharybdis/memory.h \
+  ../libcharybdis/balloc.h ../libcharybdis/memory.h ../include/snomask.h \
+  ../include/client.h ../include/common.h ../include/hash.h \
+  ../include/hook.h ../include/irc_string.h ../include/sprintf_irc.h \
+  ../include/ircd.h ../include/numeric.h ../include/s_serv.h \
+  ../include/s_user.h ../include/send.h ../include/whowas.h \
+  ../include/s_conf.h ../include/class.h ../include/patricia.h \
+  ../include/numeric.h ../include/s_newconf.h ../libcharybdis/event.h \
+  ../libcharybdis/memory.h ../libcharybdis/balloc.h ../include/s_log.h
+chmode.o: chmode.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../libcharybdis/tools.h \
+  ../include/channel.h ../include/ircd_defs.h ../include/s_log.h \
+  ../include/send.h ../include/client.h ../libcharybdis/linebuf.h \
+  ../libcharybdis/tools.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../libcharybdis/commio.h ../include/setup.h \
+  ../include/config.h ../include/ircd_defs.h ../include/reslib.h \
+  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
+  ../libcharybdis/tools.h ../libcharybdis/memory.h \
+  ../libcharybdis/balloc.h ../libcharybdis/memory.h ../include/snomask.h \
+  ../include/client.h ../include/common.h ../include/hash.h \
+  ../include/hook.h ../include/irc_string.h ../include/sprintf_irc.h \
+  ../include/ircd.h ../include/numeric.h ../include/s_serv.h \
+  ../include/s_user.h ../include/send.h ../include/whowas.h \
+  ../include/s_conf.h ../include/class.h ../include/patricia.h \
+  ../include/numeric.h ../include/s_newconf.h ../libcharybdis/event.h \
+  ../libcharybdis/memory.h ../libcharybdis/balloc.h ../include/s_log.h
+class.o: class.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/config.h \
+  ../libcharybdis/tools.h ../include/class.h ../libcharybdis/tools.h \
+  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
+  ../include/send.h ../libcharybdis/linebuf.h ../libcharybdis/tools.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../libcharybdis/commio.h ../include/setup.h ../include/config.h \
+  ../include/ircd_defs.h ../include/reslib.h ../include/irc_string.h \
+  ../include/sprintf_irc.h ../include/ircd.h ../libcharybdis/memory.h \
+  ../libcharybdis/balloc.h ../libcharybdis/memory.h ../include/snomask.h \
+  ../include/client.h ../include/common.h ../include/ircd.h \
+  ../include/numeric.h ../include/s_conf.h ../include/class.h \
+  ../include/patricia.h ../include/numeric.h ../include/s_newconf.h \
+  ../include/send.h ../include/irc_string.h ../libcharybdis/memory.h \
+  ../include/patricia.h
+client.o: client.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/config.h \
+  ../libcharybdis/tools.h ../include/client.h ../include/ircd_defs.h \
+  ../include/s_log.h ../include/send.h ../libcharybdis/linebuf.h \
+  ../libcharybdis/tools.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../libcharybdis/commio.h ../include/setup.h \
+  ../include/config.h ../include/ircd_defs.h ../include/reslib.h \
+  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
+  ../libcharybdis/tools.h ../libcharybdis/memory.h \
+  ../libcharybdis/balloc.h ../libcharybdis/memory.h ../include/snomask.h \
+  ../include/client.h ../include/class.h ../include/common.h \
+  ../libcharybdis/event.h ../include/hash.h ../include/irc_string.h \
+  ../include/sprintf_irc.h ../include/ircd.h ../include/s_gline.h \
+  ../include/numeric.h ../include/packet.h ../include/s_auth.h \
+  ../libcharybdis/commio.h ../include/s_conf.h ../include/class.h \
+  ../include/patricia.h ../include/numeric.h ../include/s_newconf.h \
+  ../include/s_log.h ../include/s_serv.h ../include/s_stats.h \
+  ../include/send.h ../include/whowas.h ../include/s_user.h \
+  ../libcharybdis/linebuf.h ../libcharybdis/memory.h \
+  ../include/hostmask.h ../libcharybdis/balloc.h ../include/listener.h \
+  ../include/hook.h ../include/msg.h ../include/monitor.h
+getopt.o: getopt.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_getopt.h
+hash.o: hash.c ../include/stdinc.h ../include/config.h ../include/setup.h \
+  ../include/defaults.h ../include/ircd_defs.h ../include/s_log.h \
+  ../include/ircd_defs.h ../include/send.h ../libcharybdis/tools.h \
+  ../include/s_conf.h ../include/class.h ../libcharybdis/tools.h \
+  ../include/client.h ../libcharybdis/linebuf.h ../libcharybdis/tools.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../libcharybdis/commio.h ../include/setup.h ../include/config.h \
+  ../include/ircd_defs.h ../include/reslib.h ../include/irc_string.h \
+  ../include/sprintf_irc.h ../include/ircd.h ../libcharybdis/memory.h \
+  ../libcharybdis/balloc.h ../libcharybdis/memory.h ../include/snomask.h \
+  ../include/patricia.h ../include/numeric.h ../include/channel.h \
+  ../include/client.h ../include/common.h ../include/hash.h \
+  ../include/irc_string.h ../include/ircd.h ../include/numeric.h \
+  ../include/send.h ../libcharybdis/memory.h ../include/msg.h \
+  ../include/cache.h ../include/s_newconf.h
+hook.o: hook.c ../include/stdinc.h ../include/config.h ../include/setup.h \
+  ../include/defaults.h ../libcharybdis/memory.h ../include/ircd_defs.h \
+  ../include/s_log.h ../include/ircd_defs.h ../include/send.h \
+  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
+  ../libcharybdis/memory.h ../libcharybdis/tools.h ../include/hook.h \
+  ../include/irc_string.h
+hostmask.o: hostmask.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../libcharybdis/memory.h \
+  ../include/ircd_defs.h ../include/s_log.h ../include/ircd_defs.h \
+  ../include/send.h ../include/setup.h ../libcharybdis/balloc.h \
+  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
+  ../include/s_conf.h ../include/class.h ../libcharybdis/tools.h \
+  ../include/client.h ../libcharybdis/linebuf.h ../include/channel.h \
+  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
+  ../include/config.h ../include/reslib.h ../include/irc_string.h \
+  ../include/sprintf_irc.h ../include/ircd.h ../libcharybdis/memory.h \
+  ../include/snomask.h ../include/patricia.h ../include/numeric.h \
+  ../include/hostmask.h ../include/numeric.h ../include/send.h \
+  ../include/irc_string.h
+irc_string.o: irc_string.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/sprintf_irc.h \
+  ../libcharybdis/tools.h ../include/irc_string.h ../include/ircd_defs.h \
+  ../include/s_log.h ../include/send.h ../include/client.h \
+  ../libcharybdis/linebuf.h ../libcharybdis/tools.h ../include/channel.h \
+  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
+  ../include/setup.h ../include/config.h ../include/ircd_defs.h \
+  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
+  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
+  ../libcharybdis/balloc.h ../libcharybdis/memory.h ../include/snomask.h \
+  ../include/client.h ../libcharybdis/memory.h ../include/setup.h
+ircd.o: ircd.c ../include/stdinc.h ../include/config.h ../include/setup.h \
+  ../include/defaults.h ../include/setup.h ../include/config.h \
+  ../libcharybdis/tools.h ../include/ircd.h ../libcharybdis/tools.h \
+  ../libcharybdis/memory.h ../include/ircd_defs.h ../include/s_log.h \
+  ../include/ircd_defs.h ../include/send.h ../include/setup.h \
+  ../libcharybdis/balloc.h ../libcharybdis/tools.h \
+  ../libcharybdis/memory.h ../include/channel.h ../include/class.h \
+  ../include/client.h ../libcharybdis/linebuf.h ../include/channel.h \
+  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
+  ../include/config.h ../include/reslib.h ../include/irc_string.h \
+  ../include/sprintf_irc.h ../include/ircd.h ../include/snomask.h \
+  ../include/client.h ../include/common.h ../libcharybdis/event.h \
+  ../include/hash.h ../include/irc_string.h ../include/ircd_signal.h \
+  ../include/sprintf_irc.h ../include/s_gline.h ../include/msg.h \
+  ../include/hostmask.h ../include/numeric.h ../include/parse.h \
+  ../include/res.h ../include/restart.h ../include/s_auth.h \
+  ../libcharybdis/commio.h ../include/s_conf.h ../include/class.h \
+  ../include/patricia.h ../include/numeric.h ../include/s_log.h \
+  ../include/s_serv.h ../include/s_user.h ../include/s_stats.h \
+  ../include/scache.h ../include/send.h ../include/whowas.h \
+  ../include/modules.h ../include/parse.h ../include/msg.h \
+  ../include/hook.h ../libcharybdis/memory.h ../include/hook.h \
+  ../include/ircd_getopt.h ../libcharybdis/balloc.h ../include/newconf.h \
+  ../include/patricia.h ../include/reject.h ../include/s_newconf.h \
+  ../include/cache.h ../include/monitor.h ../libcharybdis/libcharybdis.h \
+  ../include/stdinc.h ../include/res.h ../include/numeric.h \
+  ../libcharybdis/linebuf.h ../include/sprintf_irc.h \
+  ../libcharybdis/commio.h ../libcharybdis/event.h \
+  ../include/patchlevel.h ../include/serno.h
+ircd_signal.o: ircd_signal.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_signal.h \
+  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
+  ../include/ircd_defs.h ../include/s_log.h ../include/ircd_defs.h \
+  ../include/send.h ../include/setup.h ../libcharybdis/balloc.h \
+  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/restart.h \
+  ../include/s_log.h ../libcharybdis/memory.h ../libcharybdis/commio.h \
+  ../include/config.h ../include/s_conf.h ../include/class.h \
+  ../include/client.h ../libcharybdis/linebuf.h ../include/channel.h \
+  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
+  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
+  ../include/ircd.h ../include/snomask.h ../include/patricia.h \
+  ../include/numeric.h ../include/client.h ../include/send.h
+ircd_state.o: ircd_state.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/setup.h \
+  ../include/config.h ../include/client.h ../include/ircd_defs.h \
+  ../include/s_log.h ../include/send.h ../libcharybdis/linebuf.h \
+  ../libcharybdis/tools.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../libcharybdis/commio.h ../include/setup.h \
+  ../include/config.h ../include/ircd_defs.h ../include/reslib.h \
+  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
+  ../libcharybdis/tools.h ../libcharybdis/memory.h \
+  ../libcharybdis/balloc.h ../libcharybdis/memory.h ../include/snomask.h \
+  ../include/client.h ../libcharybdis/tools.h ../include/ircd.h \
+  ../include/channel.h ../include/class.h ../include/common.h \
+  ../libcharybdis/event.h ../include/hash.h ../include/irc_string.h \
+  ../include/ircd_signal.h ../include/sprintf_irc.h ../include/s_gline.h \
+  ../include/msg.h ../include/hostmask.h ../include/numeric.h \
+  ../include/parse.h ../include/res.h ../include/restart.h \
+  ../include/s_auth.h ../libcharybdis/commio.h ../include/s_conf.h \
+  ../include/class.h ../include/patricia.h ../include/numeric.h \
+  ../include/s_log.h ../include/s_serv.h ../include/s_user.h \
+  ../include/s_stats.h ../include/scache.h ../include/send.h \
+  ../include/whowas.h ../include/modules.h ../include/parse.h \
+  ../include/msg.h ../include/hook.h ../libcharybdis/memory.h \
+  ../include/hook.h ../include/ircd_getopt.h ../libcharybdis/balloc.h \
+  ../include/newconf.h ../include/patricia.h ../include/reject.h \
+  ../include/s_newconf.h ../include/cache.h ../include/monitor.h \
+  ../libcharybdis/libcharybdis.h ../include/stdinc.h ../include/res.h \
+  ../include/numeric.h ../libcharybdis/linebuf.h ../include/sprintf_irc.h \
+  ../libcharybdis/commio.h ../libcharybdis/event.h \
+  ../include/patchlevel.h ../include/serno.h
+kdparse.o: kdparse.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../libcharybdis/tools.h \
+  ../include/s_log.h ../include/ircd_defs.h ../include/s_log.h \
+  ../include/send.h ../include/s_conf.h ../include/class.h \
+  ../libcharybdis/tools.h ../include/client.h ../libcharybdis/linebuf.h \
+  ../libcharybdis/tools.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../libcharybdis/commio.h ../include/setup.h \
+  ../include/config.h ../include/ircd_defs.h ../include/reslib.h \
+  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
+  ../libcharybdis/memory.h ../libcharybdis/balloc.h \
+  ../libcharybdis/memory.h ../include/snomask.h ../include/patricia.h \
+  ../include/numeric.h ../include/s_newconf.h ../include/hostmask.h \
+  ../include/client.h ../include/irc_string.h ../libcharybdis/memory.h \
+  ../include/hash.h
+listener.o: listener.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/setup.h \
+  ../include/listener.h ../include/ircd_defs.h ../include/s_log.h \
+  ../include/send.h ../include/client.h ../libcharybdis/linebuf.h \
+  ../libcharybdis/tools.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../libcharybdis/commio.h ../include/setup.h \
+  ../include/config.h ../include/ircd_defs.h ../include/reslib.h \
+  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
+  ../libcharybdis/tools.h ../libcharybdis/memory.h \
+  ../libcharybdis/balloc.h ../libcharybdis/memory.h ../include/snomask.h \
+  ../include/client.h ../include/irc_string.h ../include/sprintf_irc.h \
+  ../include/ircd.h ../include/ircd_defs.h ../include/numeric.h \
+  ../libcharybdis/commio.h ../include/s_conf.h ../include/class.h \
+  ../include/patricia.h ../include/numeric.h ../include/s_newconf.h \
+  ../include/s_stats.h ../include/send.h ../libcharybdis/memory.h \
+  ../include/s_auth.h ../include/reject.h
+match.o: match.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/config.h \
+  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
+  ../include/send.h ../libcharybdis/linebuf.h ../libcharybdis/tools.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../libcharybdis/commio.h ../include/setup.h ../include/config.h \
+  ../include/ircd_defs.h ../include/reslib.h ../include/irc_string.h \
+  ../include/sprintf_irc.h ../include/ircd.h ../libcharybdis/tools.h \
+  ../libcharybdis/memory.h ../libcharybdis/balloc.h \
+  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
+  ../include/ircd.h ../include/irc_string.h
+modules.o: modules.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/modules.h \
+  ../include/parse.h ../libcharybdis/tools.h ../include/msg.h \
+  ../libcharybdis/memory.h ../include/ircd_defs.h ../include/s_log.h \
+  ../include/ircd_defs.h ../include/send.h ../include/setup.h \
+  ../libcharybdis/balloc.h ../libcharybdis/tools.h \
+  ../libcharybdis/memory.h ../include/hook.h ../include/s_log.h \
+  ../include/ircd.h ../include/client.h ../libcharybdis/linebuf.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../libcharybdis/commio.h ../include/config.h ../include/reslib.h \
+  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/send.h \
+  ../include/s_conf.h ../include/class.h ../include/patricia.h \
+  ../include/numeric.h ../include/s_newconf.h ../include/numeric.h \
+  ../include/parse.h ../include/ircd_defs.h ../include/irc_string.h \
+  ../libcharybdis/memory.h ../libcharybdis/tools.h \
+  ../include/sprintf_irc.h
+monitor.o: monitor.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../libcharybdis/tools.h \
+  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
+  ../include/send.h ../libcharybdis/linebuf.h ../libcharybdis/tools.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../libcharybdis/commio.h ../include/setup.h ../include/config.h \
+  ../include/ircd_defs.h ../include/reslib.h ../include/irc_string.h \
+  ../include/sprintf_irc.h ../include/ircd.h ../libcharybdis/tools.h \
+  ../libcharybdis/memory.h ../libcharybdis/balloc.h \
+  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
+  ../libcharybdis/memory.h ../libcharybdis/balloc.h ../include/monitor.h \
+  ../include/hash.h ../libcharybdis/event.h ../include/numeric.h
+newconf.o: newconf.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../libcharybdis/memory.h \
+  ../include/ircd_defs.h ../include/s_log.h ../include/ircd_defs.h \
+  ../include/send.h ../include/setup.h ../libcharybdis/balloc.h \
+  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/newconf.h \
+  ../libcharybdis/tools.h ../include/client.h ../libcharybdis/linebuf.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../libcharybdis/commio.h ../include/config.h ../include/reslib.h \
+  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
+  ../libcharybdis/memory.h ../include/snomask.h ../libcharybdis/tools.h \
+  ../include/ircd_defs.h ../include/sprintf_irc.h ../include/common.h \
+  ../include/s_log.h ../include/s_conf.h ../include/class.h \
+  ../include/patricia.h ../include/numeric.h ../include/s_user.h \
+  ../include/s_newconf.h ../include/send.h ../include/setup.h \
+  ../include/modules.h ../include/parse.h ../include/msg.h \
+  ../include/hook.h ../include/listener.h ../include/hostmask.h \
+  ../include/s_serv.h ../libcharybdis/event.h ../include/hash.h \
+  ../include/cache.h ../include/ircd.h ../include/snomask.h
+numeric.o: numeric.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/setup.h \
+  ../include/config.h ../include/s_conf.h ../include/ircd_defs.h \
+  ../include/s_log.h ../include/send.h ../include/class.h \
+  ../libcharybdis/tools.h ../include/client.h ../libcharybdis/linebuf.h \
+  ../libcharybdis/tools.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../libcharybdis/commio.h ../include/setup.h \
+  ../include/config.h ../include/ircd_defs.h ../include/reslib.h \
+  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
+  ../libcharybdis/memory.h ../libcharybdis/balloc.h \
+  ../libcharybdis/memory.h ../include/snomask.h ../include/patricia.h \
+  ../include/numeric.h ../include/numeric.h ../include/irc_string.h \
+  ../include/common.h ../libcharybdis/memory.h messages.tab
+packet.o: packet.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../libcharybdis/tools.h \
+  ../libcharybdis/commio.h ../include/setup.h ../include/config.h \
+  ../include/ircd_defs.h ../include/s_log.h ../include/ircd_defs.h \
+  ../include/send.h ../include/s_conf.h ../include/class.h \
+  ../libcharybdis/tools.h ../include/client.h ../libcharybdis/linebuf.h \
+  ../libcharybdis/tools.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
+  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
+  ../libcharybdis/memory.h ../libcharybdis/balloc.h \
+  ../libcharybdis/memory.h ../include/snomask.h ../include/patricia.h \
+  ../include/numeric.h ../include/s_serv.h ../include/client.h \
+  ../include/common.h ../include/ircd.h ../include/parse.h \
+  ../include/packet.h ../include/irc_string.h ../libcharybdis/memory.h \
+  ../include/hook.h ../include/send.h
+parse.o: parse.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/parse.h \
+  ../libcharybdis/tools.h ../include/client.h ../include/ircd_defs.h \
+  ../include/s_log.h ../include/send.h ../libcharybdis/linebuf.h \
+  ../libcharybdis/tools.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../libcharybdis/commio.h ../include/setup.h \
+  ../include/config.h ../include/ircd_defs.h ../include/reslib.h \
+  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
+  ../libcharybdis/memory.h ../libcharybdis/balloc.h \
+  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
+  ../include/channel.h ../include/common.h ../include/hash.h \
+  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
+  ../include/numeric.h ../include/s_log.h ../include/s_stats.h \
+  ../include/send.h ../include/msg.h ../include/s_conf.h \
+  ../include/class.h ../include/patricia.h ../include/numeric.h \
+  ../libcharybdis/memory.h ../include/s_serv.h
+patricia.o: patricia.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/config.h \
+  ../include/ircd_defs.h ../include/s_log.h ../include/ircd_defs.h \
+  ../include/send.h ../include/patricia.h ../include/class.h \
+  ../libcharybdis/tools.h ../include/client.h ../libcharybdis/linebuf.h \
+  ../libcharybdis/tools.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../libcharybdis/commio.h ../include/setup.h \
+  ../include/config.h ../include/ircd_defs.h ../include/reslib.h \
+  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
+  ../libcharybdis/memory.h ../libcharybdis/balloc.h \
+  ../libcharybdis/memory.h ../include/snomask.h ../include/numeric.h \
+  ../libcharybdis/balloc.h
+res.o: res.c ../include/stdinc.h ../include/config.h ../include/setup.h \
+  ../include/defaults.h ../include/ircd_defs.h ../include/s_log.h \
+  ../include/ircd_defs.h ../include/send.h ../include/common.h \
+  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
+  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
+  ../libcharybdis/tools.h ../libcharybdis/memory.h \
+  ../libcharybdis/commio.h ../include/config.h ../include/res.h \
+  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
+  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
+  ../include/reslib.h ../libcharybdis/tools.h ../libcharybdis/event.h \
+  ../include/irc_string.h ../include/sprintf_irc.h ../include/numeric.h
+reslib.o: reslib.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/s_log.h ../include/ircd_defs.h ../include/send.h \
+  ../include/common.h ../include/ircd.h ../libcharybdis/tools.h \
+  ../libcharybdis/memory.h ../include/ircd_defs.h ../include/setup.h \
+  ../libcharybdis/balloc.h ../libcharybdis/tools.h \
+  ../libcharybdis/memory.h ../libcharybdis/commio.h ../include/config.h \
+  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
+  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
+  ../include/ircd.h ../include/reslib.h ../libcharybdis/tools.h \
+  ../libcharybdis/event.h ../include/irc_string.h \
+  ../include/sprintf_irc.h
+reject.o: reject.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/config.h \
+  ../include/patricia.h ../include/class.h ../libcharybdis/tools.h \
+  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
+  ../include/send.h ../libcharybdis/linebuf.h ../libcharybdis/tools.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../libcharybdis/commio.h ../include/setup.h ../include/config.h \
+  ../include/ircd_defs.h ../include/reslib.h ../include/irc_string.h \
+  ../include/sprintf_irc.h ../include/ircd.h ../libcharybdis/memory.h \
+  ../libcharybdis/balloc.h ../libcharybdis/memory.h ../include/snomask.h \
+  ../include/numeric.h ../include/client.h ../include/s_conf.h \
+  ../include/patricia.h ../libcharybdis/event.h ../libcharybdis/tools.h \
+  ../include/reject.h ../include/s_stats.h ../include/msg.h
+restart.o: restart.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../libcharybdis/tools.h \
+  ../include/restart.h ../include/common.h ../include/ircd.h \
+  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
+  ../include/s_log.h ../include/ircd_defs.h ../include/send.h \
+  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
+  ../libcharybdis/memory.h ../include/send.h ../include/s_log.h \
+  ../include/client.h ../libcharybdis/linebuf.h ../include/channel.h \
+  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
+  ../include/config.h ../include/reslib.h ../include/irc_string.h \
+  ../include/sprintf_irc.h ../include/ircd.h ../include/snomask.h \
+  ../include/client.h ../libcharybdis/memory.h
+s_auth.o: s_auth.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/config.h \
+  ../libcharybdis/tools.h ../include/s_auth.h ../include/res.h \
+  ../include/ircd_defs.h ../include/s_log.h ../include/send.h \
+  ../include/common.h ../libcharybdis/commio.h ../include/setup.h \
+  ../include/config.h ../include/ircd_defs.h ../include/reslib.h \
+  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
+  ../libcharybdis/tools.h ../libcharybdis/memory.h \
+  ../libcharybdis/balloc.h ../libcharybdis/tools.h \
+  ../libcharybdis/memory.h ../include/s_conf.h ../include/class.h \
+  ../include/client.h ../libcharybdis/linebuf.h ../include/channel.h \
+  ../include/snomask.h ../include/patricia.h ../include/numeric.h \
+  ../include/client.h ../include/common.h ../libcharybdis/event.h \
+  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
+  ../include/numeric.h ../include/packet.h ../include/res.h \
+  ../libcharybdis/commio.h ../include/s_log.h ../include/s_stats.h \
+  ../include/send.h ../libcharybdis/memory.h ../include/hook.h
+s_conf.o: s_conf.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/s_log.h ../include/ircd_defs.h ../include/send.h \
+  ../libcharybdis/tools.h ../include/s_conf.h ../include/class.h \
+  ../libcharybdis/tools.h ../include/client.h ../libcharybdis/linebuf.h \
+  ../libcharybdis/tools.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../libcharybdis/commio.h ../include/setup.h \
+  ../include/config.h ../include/ircd_defs.h ../include/reslib.h \
+  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
+  ../libcharybdis/memory.h ../libcharybdis/balloc.h \
+  ../libcharybdis/memory.h ../include/snomask.h ../include/patricia.h \
+  ../include/numeric.h ../include/s_newconf.h ../include/s_serv.h \
+  ../include/s_stats.h ../include/channel.h ../include/class.h \
+  ../include/client.h ../include/common.h ../libcharybdis/event.h \
+  ../include/hash.h ../include/irc_string.h ../include/sprintf_irc.h \
+  ../include/ircd.h ../include/listener.h ../include/hostmask.h \
+  ../include/modules.h ../include/parse.h ../include/msg.h \
+  ../include/hook.h ../include/numeric.h ../libcharybdis/commio.h \
+  ../include/s_log.h ../include/send.h ../include/s_gline.h \
+  ../libcharybdis/memory.h ../libcharybdis/balloc.h ../include/patricia.h \
+  ../include/reject.h ../include/cache.h
+s_newconf.o: s_newconf.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/s_log.h ../include/ircd_defs.h ../include/send.h \
+  ../include/common.h ../include/s_conf.h ../include/class.h \
+  ../libcharybdis/tools.h ../include/client.h ../libcharybdis/linebuf.h \
+  ../libcharybdis/tools.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../libcharybdis/commio.h ../include/setup.h \
+  ../include/config.h ../include/ircd_defs.h ../include/reslib.h \
+  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
+  ../libcharybdis/memory.h ../libcharybdis/balloc.h \
+  ../libcharybdis/memory.h ../include/snomask.h ../include/patricia.h \
+  ../include/numeric.h ../include/s_newconf.h ../libcharybdis/tools.h \
+  ../include/client.h ../libcharybdis/memory.h ../include/s_serv.h \
+  ../include/send.h ../include/hostmask.h ../include/newconf.h \
+  ../include/hash.h ../libcharybdis/balloc.h ../libcharybdis/event.h \
+  ../include/sprintf_irc.h
+s_gline.o: s_gline.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../libcharybdis/tools.h \
+  ../include/channel.h ../include/ircd_defs.h ../include/s_log.h \
+  ../include/send.h ../include/client.h ../libcharybdis/linebuf.h \
+  ../libcharybdis/tools.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../libcharybdis/commio.h ../include/setup.h \
+  ../include/config.h ../include/ircd_defs.h ../include/reslib.h \
+  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
+  ../libcharybdis/tools.h ../libcharybdis/memory.h \
+  ../libcharybdis/balloc.h ../libcharybdis/memory.h ../include/snomask.h \
+  ../include/client.h ../include/common.h ../include/config.h \
+  ../include/irc_string.h ../include/ircd.h ../include/hostmask.h \
+  ../include/numeric.h ../libcharybdis/commio.h ../include/s_conf.h \
+  ../include/class.h ../include/patricia.h ../include/numeric.h \
+  ../include/scache.h ../include/send.h ../include/msg.h \
+  ../include/s_serv.h ../include/s_gline.h ../include/hash.h \
+  ../libcharybdis/event.h ../libcharybdis/memory.h
+s_log.o: s_log.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/s_log.h ../include/ircd_defs.h ../include/send.h \
+  ../include/s_log.h ../include/s_conf.h ../include/class.h \
+  ../libcharybdis/tools.h ../include/client.h ../libcharybdis/linebuf.h \
+  ../libcharybdis/tools.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../libcharybdis/commio.h ../include/setup.h \
+  ../include/config.h ../include/ircd_defs.h ../include/reslib.h \
+  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
+  ../libcharybdis/memory.h ../libcharybdis/balloc.h \
+  ../libcharybdis/memory.h ../include/snomask.h ../include/patricia.h \
+  ../include/numeric.h ../include/sprintf_irc.h ../include/send.h \
+  ../include/client.h ../include/s_serv.h
+s_serv.o: s_serv.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../libcharybdis/tools.h \
+  ../include/s_serv.h ../include/class.h ../libcharybdis/tools.h \
+  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
+  ../include/send.h ../libcharybdis/linebuf.h ../libcharybdis/tools.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../libcharybdis/commio.h ../include/setup.h ../include/config.h \
+  ../include/ircd_defs.h ../include/reslib.h ../include/irc_string.h \
+  ../include/sprintf_irc.h ../include/ircd.h ../libcharybdis/memory.h \
+  ../libcharybdis/balloc.h ../libcharybdis/memory.h ../include/snomask.h \
+  ../include/client.h ../include/common.h ../libcharybdis/event.h \
+  ../include/hash.h ../include/irc_string.h ../include/sprintf_irc.h \
+  ../include/ircd.h ../include/ircd_defs.h ../include/numeric.h \
+  ../include/packet.h ../include/res.h ../libcharybdis/commio.h \
+  ../include/s_conf.h ../include/class.h ../include/patricia.h \
+  ../include/numeric.h ../include/s_newconf.h ../include/s_log.h \
+  ../include/s_stats.h ../include/s_user.h ../include/scache.h \
+  ../include/send.h ../libcharybdis/memory.h ../include/channel.h \
+  ../include/hook.h ../include/msg.h
+s_stats.o: s_stats.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/s_stats.h \
+  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
+  ../include/send.h ../libcharybdis/linebuf.h ../libcharybdis/tools.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../libcharybdis/commio.h ../include/setup.h ../include/config.h \
+  ../include/ircd_defs.h ../include/reslib.h ../include/irc_string.h \
+  ../include/sprintf_irc.h ../include/ircd.h ../libcharybdis/tools.h \
+  ../libcharybdis/memory.h ../libcharybdis/balloc.h \
+  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
+  ../include/irc_string.h ../include/ircd.h ../include/numeric.h \
+  ../libcharybdis/commio.h ../include/send.h ../libcharybdis/memory.h \
+  ../include/s_conf.h ../include/class.h ../include/patricia.h \
+  ../include/numeric.h ../include/s_newconf.h ../include/whowas.h \
+  ../include/hash.h ../include/scache.h ../include/reject.h
+s_user.o: s_user.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../libcharybdis/tools.h \
+  ../include/s_user.h ../include/channel.h ../include/ircd_defs.h \
+  ../include/s_log.h ../include/send.h ../include/class.h \
+  ../libcharybdis/tools.h ../include/client.h ../libcharybdis/linebuf.h \
+  ../libcharybdis/tools.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../libcharybdis/commio.h ../include/setup.h \
+  ../include/config.h ../include/ircd_defs.h ../include/reslib.h \
+  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
+  ../libcharybdis/memory.h ../libcharybdis/balloc.h \
+  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
+  ../include/common.h ../include/hash.h ../include/irc_string.h \
+  ../include/sprintf_irc.h ../include/ircd.h ../include/listener.h \
+  ../include/msg.h ../include/numeric.h ../libcharybdis/commio.h \
+  ../include/s_conf.h ../include/class.h ../include/patricia.h \
+  ../include/numeric.h ../include/s_newconf.h ../include/s_log.h \
+  ../include/s_serv.h ../include/s_stats.h ../include/scache.h \
+  ../include/send.h ../include/supported.h ../include/whowas.h \
+  ../libcharybdis/memory.h ../include/packet.h ../include/reject.h \
+  ../include/cache.h ../include/hook.h ../include/monitor.h \
+  ../include/snomask.h
+scache.o: scache.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/client.h \
+  ../include/ircd_defs.h ../include/s_log.h ../include/send.h \
+  ../libcharybdis/linebuf.h ../libcharybdis/tools.h ../include/channel.h \
+  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
+  ../include/setup.h ../include/config.h ../include/ircd_defs.h \
+  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
+  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
+  ../libcharybdis/balloc.h ../libcharybdis/memory.h ../include/snomask.h \
+  ../include/client.h ../include/common.h ../include/irc_string.h \
+  ../include/ircd.h ../include/numeric.h ../include/send.h \
+  ../include/scache.h ../libcharybdis/memory.h
+send.o: send.c ../include/stdinc.h ../include/config.h ../include/setup.h \
+  ../include/defaults.h ../libcharybdis/tools.h ../include/send.h \
+  ../include/ircd_defs.h ../include/s_log.h ../include/send.h \
+  ../include/channel.h ../include/class.h ../libcharybdis/tools.h \
+  ../include/client.h ../libcharybdis/linebuf.h ../libcharybdis/tools.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../libcharybdis/commio.h ../include/setup.h ../include/config.h \
+  ../include/ircd_defs.h ../include/reslib.h ../include/irc_string.h \
+  ../include/sprintf_irc.h ../include/ircd.h ../libcharybdis/memory.h \
+  ../libcharybdis/balloc.h ../libcharybdis/memory.h ../include/snomask.h \
+  ../include/client.h ../include/common.h ../include/irc_string.h \
+  ../include/ircd.h ../include/numeric.h ../libcharybdis/commio.h \
+  ../include/s_serv.h ../include/sprintf_irc.h ../include/s_conf.h \
+  ../include/class.h ../include/patricia.h ../include/numeric.h \
+  ../include/s_newconf.h ../libcharybdis/linebuf.h ../include/s_log.h \
+  ../libcharybdis/memory.h ../include/hook.h
+snomask.o: snomask.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/client.h \
+  ../include/ircd_defs.h ../include/s_log.h ../include/send.h \
+  ../libcharybdis/linebuf.h ../libcharybdis/tools.h ../include/channel.h \
+  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
+  ../include/setup.h ../include/config.h ../include/ircd_defs.h \
+  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
+  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
+  ../libcharybdis/balloc.h ../libcharybdis/memory.h ../include/snomask.h \
+  ../include/client.h ../include/snomask.h
+whowas.o: whowas.c ../include/stdinc.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/whowas.h \
+  ../include/ircd_defs.h ../include/s_log.h ../include/send.h \
+  ../include/client.h ../libcharybdis/linebuf.h ../libcharybdis/tools.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../libcharybdis/commio.h ../include/setup.h ../include/config.h \
+  ../include/ircd_defs.h ../include/reslib.h ../include/irc_string.h \
+  ../include/sprintf_irc.h ../include/ircd.h ../libcharybdis/tools.h \
+  ../libcharybdis/memory.h ../libcharybdis/balloc.h \
+  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
+  ../include/common.h ../include/hash.h ../include/irc_string.h \
+  ../include/ircd.h ../include/ircd_defs.h ../include/numeric.h \
+  ../include/s_serv.h ../include/s_user.h ../include/send.h \
+  ../include/s_conf.h ../include/class.h ../include/patricia.h \
+  ../include/numeric.h ../libcharybdis/memory.h

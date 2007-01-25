@@ -1,0 +1,10 @@
+DLINE [duration] <ip> :[reason]
+
+Adds a DLINE to the ircd.conf or klines.conf file
+which will deny any connections from the IP address
+of the banned client.  The banned client will receive
+a message saying he/she is banned with reason [reason]
+
+Duration is optional, and is in minutes.
+
+- Requires Oper Priv: K

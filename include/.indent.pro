@@ -1,0 +1,1 @@
+-i8 -bli0 -cs -ut -nsai -nsaw -nsaf -npcs -nprs -l100

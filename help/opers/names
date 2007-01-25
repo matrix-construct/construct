@@ -1,0 +1,11 @@
+NAMES [channel]
+
+With no channel argument, NAMES shows the names (nicks) of all clients
+logged in to the network that do not have +i flag.
+
+With the #channel argument, it displays the nicks on that channel,
+also respecting the +i flag of each client. If the channel specified
+is a channel that the issuing client is currently in, all nicks are
+listed in similar fashion to when the user first joins a channel.
+
+See also: join

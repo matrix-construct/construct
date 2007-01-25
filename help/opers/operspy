@@ -1,0 +1,13 @@
+OPERSPY
+
+Opers with the "oper_spy" flag will be allowed uses of the following
+commands if they are compiled in.  Usage will be sent to +Z and all 
+other servers.
+
+whois !nick     - Gives a full output of channels the user is in.
+who !mask       - Lists all users networkwide whose nick, ident, host,
+                  server or gecos match the mask.
+who !#channel   - Gives a full output of users on the channel.
+mode !#channel  - Gives the full modes of a channel including any keys.
+chantrace !#channel - Gives full output despite not being on channel.
+masktrace !nick!user@host :gecos - Lists matching users on all servers.

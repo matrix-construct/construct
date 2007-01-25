@@ -1,0 +1,29 @@
+
+# $Id: index.txt 6 2005-09-10 01:02:21Z nenolod $
+Here is the overview of the documents in the doc/ directory.
+
+CIDR.txt		- Description of CIDR in IPv4
+Tao-of-IRC.940110       - No comment...
+challenge.txt           - Overview of the challenge/response system for
+                          obtaining operator status
+example.conf            - An example ircd.conf file describing most of the
+                          user settable options
+guidelines.txt		- Documentation guidelines
+hooks.txt		- Overview of the hooks available
+index.txt		- This file
+ircd.8                  - The new revised manpage, read with the following
+                          commands in the prefix directory:
+                          man -M . ircd
+ircd.motd               - A default ircd.motd used by make install
+logfiles.txt		- Description of formatting of some logfiles
+modeg.txt               - An in depth description of the server side silence
+                          user mode (+g)
+modes.txt               - A list of all user and channel modes
+operguide.txt           - EFnet operator's guide
+opermyth.txt            - Oper myth's, describes what opers can and cannot do
+server-version-info     - Overview of the flags shown in /version
+whats-new.txt		- What new features are available
+
+Also in the contrib/ directory you will find:
+example_module.c - An example module, detailing what the code in a module
+		   does.  Useful for building your own modules.

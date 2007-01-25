@@ -1,0 +1,41 @@
+  <chapter id="intro">
+    <title>Introduction</title>
+    <sect1>
+      <title>Scope of this document</title>
+      <para>
+	This document describes the commands and functions available to operators in
+	the charybdis ircd, as used on <ulink url="http://www.atheme.net">AthemeNet</ulink>.
+      </para>
+      <para>
+        This document, and various ideas for features of charybdis, have
+	been taken from dancer-ircd/hyperion, the ircd used on freenode,
+	mainly written by Andrew Suffield and Jilles Tjoelker.
+      </para>
+      <para>
+	While this document may be of some interest to the users of charybdis servers,
+	it is intended as a reference for network staff.
+      </para>
+      <para>
+	Charybdis is based on ircd-ratbox 2.1.4, although much has changed.
+	<ulink url="http://www.ircd-ratbox.org">ircd-ratbox</ulink> is commonly used
+	on efnet, and some other networks.
+      </para>
+    </sect1>
+  </chapter>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-namecase-general:t
+sgml-general-insert-case:lower
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:2
+sgml-indent-data:t
+sgml-parent-document: ("charybdis-oper-guide.sgml" "book")
+sgml-exposed-tags:nil
+fill-column:105
+sgml-validate-command: "nsgmls -e -g -s -u charybdis-oper-guide.sgml"
+End:
+-->

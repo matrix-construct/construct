@@ -1,0 +1,122 @@
+.\" @(#)ircd.8 2.0 22 April 2004
+.\" $Id: ircd.8 6 2005-09-10 01:02:21Z nenolod $
+.TH IRCD 8 "ircd-ratbox 22 April 2004
+.SH NAME
+ircd \- The Internet Relay Chat Program Server 
+.SH SYNOPSIS
+.hy 0
+.IP \fBircd\fP
+[-dlinefile filename] [-configfile filename] [-klinefile filename]
+[-logfile filename] [-pidfile filename] [-resvfile filename]
+[-xlinefile filename] [-conftest] [-foreground] [-version]
+.SH DESCRIPTION
+.LP
+\fIircd\fP is the server (daemon) program for the Internet Relay Chat
+Program.  The \fIircd\fP is a server in that its function is to "serve"
+the client program \fIirc(1)\fP with messages and commands.  All commands
+and user messages are passed directly to the \fIircd\fP for processing
+and relaying to other ircd sites.
+.SH OPTIONS
+.TP
+.B \-dlinefile filename
+Specifies the D-line file to be used.  This file is used for both reading
+D-lines at startup, and writing to while \fIircd\fP is running.
+.TP
+.B \-configfile filename
+Specifies the ircd.conf file to be used for this ircdaemon. The option
+is used to override the default ircd.conf given at compile time.
+.TP
+.B \-klinefile filename
+Specifies the K-line file to be used.  This file is used for both reading
+K-lines at startup, and writing to while \fIircd\fP is running.
+.TP
+.B \-logfile filename
+Specifies an alternative logfile to be used than that specified in config.h
+.TP
+.B \-pidfile filename
+Specifies the ircd.pid used. The option is used to override the default
+ircd.pid given at compile time.
+.TP
+.B \-resvfile filename
+Specifies the resv.conf file to be used for this ircdaemon. The option
+is used to override the default resv.conf given at compile time.
+.TP
+.B \-xlinefile filename
+Specifies the xline.conf file to be used for this ircdaemon. The option
+is used to override the default xline.conf given at compile time.
+.TP
+.B \-conftest
+Makes \fIircd\fP check the ircd.conf for errors
+.TP
+.B \-foreground
+Makes \fIircd\fP run in the foreground
+.TP
+.B \-version
+Makes \fIircd\fP print its version, and exit.
+.SH USAGE
+If you plan to connect your \fIircd\fP server to an existing Irc-Network,
+you will need to alter your local IRC configuration file (typically named
+"ircd.conf") so that it will accept and make connections to other \fIircd\fP
+servers.  This file contains the hostnames, Network Addresses, and sometimes
+passwords for connections to other ircds around the world.  Because 
+description of the actual file format of the "ircd.conf" file is beyond the
+scope of this document, please refer to the file INSTALL in the IRC source
+files documentation directory.
+.LP
+.SH BOOTING THE SERVER
+The \fIircd\fP server can be started as part of the
+Unix boot procedure or just by placing the server into Unix Background.
+Keep in mind that if it is \fBnot\fP part of your Unix's boot-up procedure 
+then you will have to manually start the \fIircd\fP server each time your
+Unix is rebooted.  This means if your Unix is prone to crashing
+or going for for repairs a lot it would make sense to start the \fIircd\fP
+server as part of your UNIX bootup procedure.  
+.SH EXAMPLE
+.RS
+.nf
+tolsun% \fBbin/ircd\fP
+.fi
+.RE
+.LP
+Places \fIircd\fP into Unix background and starts up the server for use.
+Note:  You do not have to add the "&" to this command, the program will
+automatically detach itself from tty.
+.RS
+.nf
+leguin% \fBbin/ircd -foreground\fP
+.fi
+.RE
+.LP
+Runs ircd in the foreground.
+.RS
+.nf
+.SH COPYRIGHT
+(c) 1988,1989 University of Oulu, Computing Center, Finland,
+.LP
+(c) 1988,1989 Department of Information Processing Science,
+University of Oulu, Finland
+.LP
+(c) 1988,1989,1990,1991 Jarkko Oikarinen
+.LP
+(c) 1997,1998,1999,2000,2001 The IRCD-Hybrid project.
+.LP
+For full COPYRIGHT see LICENSE file with IRC package.
+.LP
+.RE
+.SH FILES
+ "ircd.conf"
+.SH "SEE ALSO"
+ircd.conf(5)
+.SH BUGS
+None... ;-) if somebody finds one, please inform author
+.SH AUTHOR
+irc2.8 and earlier: Jarkko Oikarinen, currently jto@tolsun.oulu.fi.
+.LP
+ircd-hybrid-7: IRCD-Hybrid Project, ircd-hybrid@the-project.org.
+.LP
+manual page written by Jeff Trim, jtrim@orion.cair.du.edu,
+later modified by jto@tolsun.oulu.fi.
+.LP
+modified for ircd-hybrid-7 by Edward Brocklesby, ejb@klamath.uucp.leguin.org.uk.
+.LP
+updated by W. Campbell, wcampbel@botbay.net

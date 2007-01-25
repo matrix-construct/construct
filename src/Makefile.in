@@ -1,0 +1,165 @@
+#
+# Makefile.in for ircd/src
+#
+# $Id: Makefile.in 1887 2006-08-29 13:42:56Z jilles $
+#
+CC		= @CC@
+INSTALL		= @INSTALL@
+INSTALL_BIN	= @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+INSTALL_SUID	= @INSTALL_PROGRAM@ -o root -m 4755
+RM		= @RM@
+LEX		= @LEX@
+LEXLIB		= @LEXLIB@
+PICFLAGS	= @PICFLAGS@
+CFLAGS		= @IRC_CFLAGS@ -DIRCD_PREFIX=\"@prefix@\"
+LDFLAGS   	= @LDFLAGS@
+MKDEP		= @MKDEP@ -DIRCD_PREFIX=\"@prefix@\"
+MV		= @MV@
+RM		= @RM@
+YACC		= @YACC@
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+bindir		= @bindir@
+libdir		= @libdir@
+libexecdir	= @libexecdir@
+
+FNVHASH_S	= @FNVHASH_S@
+
+DOLLAR = $$
+
+IRCD_EXE	= ircd
+
+PROGS		= $(IRCD_EXE)
+
+SSL_LIBS	= @SSL_LIBS@
+SSL_INCLUDES	= @SSL_INCLUDES@
+
+IRCDLIBS	= @MODULES_LIBS@ -L../libcharybdis -lcharybdis @LIBS@ $(SSL_LIBS)
+
+INCLUDES	= -I../include -I../libcharybdis $(SSL_INCLUDES)
+CPPFLAGS	= ${INCLUDES} @CPPFLAGS@
+ 
+default:	all
+
+y.tab.o:	y.tab.c ircd_parser.y
+	${CC} ${CPPFLAGS} ${PICFLAGS} ${CFLAGS} -I. -c y.tab.c
+
+# Note GNU bison uses <file>.tab.c not y.tab.c
+y.tab.c:	ircd_parser.y
+	${YACC} -d ircd_parser.y
+
+lex.yy.o:	lex.yy.c ircd_lexer.l
+	${CC} ${CPPFLAGS} ${PICFLAGS} ${CFLAGS} -I. -c lex.yy.c
+
+lex.yy.c:	ircd_lexer.l
+	${LEX} ircd_lexer.l
+
+BASE_SRCS =                     \
+  blacklist.c			\
+  cache.c			\
+  channel.c                     \
+  chmode.c			\
+  class.c                       \
+  client.c                      \
+  extban.c                      \
+  getopt.c                      \
+  hash.c                        \
+  hook.c                        \
+  hostmask.c			\
+  irc_string.c                  \
+  ircd.c                        \
+  ircd_signal.c                 \
+  ircd_state.c			\
+  kdparse.c			\
+  listener.c                    \
+  match.c                       \
+  modules.c                     \
+  monitor.c			\
+  newconf.c			\
+  numeric.c                     \
+  packet.c                      \
+  parse.c                       \
+  patricia.c			\
+  res.c				\
+  reslib.c			\
+  reject.c			\
+  restart.c                     \
+  s_auth.c                      \
+  s_conf.c                      \
+  s_newconf.c			\
+  s_gline.c                     \
+  s_log.c                       \
+  s_serv.c                      \
+  s_stats.c                     \
+  s_user.c                      \
+  scache.c                      \
+  send.c                        \
+  snomask.c			\
+  supported.c			\
+  whowas.c			\
+  $(FNVHASH_S)
+
+SRCS = ${BASE_SRCS:.s=.o}
+
+OBJS = ${SRCS:.c=.o}
+
+all: ircd
+
+build: all
+
+ircd: $(OBJS) y.tab.o lex.yy.o version.o
+	${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${OBJS} lex.yy.o y.tab.o version.o ${IRCDLIBS} ${LEXLIB}
+	mv version.c version.c.last
+
+install-mkdirs:
+	-@if test ! -d $(DESTDIR)$(prefix); then \
+		echo "ircd: setting up ircd directory structure"; \
+		mkdir $(DESTDIR)$(prefix); \
+	fi
+	-@if test ! -d $(DESTDIR)$(exec_prefix); then \
+		mkdir $(DESTDIR)$(exec_prefix); \
+	fi
+	-@if test ! -d $(DESTDIR)$(bindir); then \
+		mkdir $(DESTDIR)$(bindir); \
+	fi
+	-@if test ! -d $(DESTDIR)$(libdir); then \
+		mkdir $(DESTDIR)$(libdir); \
+	fi
+
+install: install-mkdirs build
+	-@if test -f $(DESTDIR)$(bindir)/ircd; then \
+		echo "ircd: backing up ircd"; \
+	fi
+	@echo "ircd: installing ircd ($(PROGS))"
+	@for i in $(PROGS); do \
+		if test -f $(DESTDIR)$(bindir)/$$i; then \
+			$(MV) $(DESTDIR)$(bindir)/$$i $(DESTDIR)$(bindir)/$$i.old; \
+		fi; \
+		$(INSTALL_BIN) $$i $(DESTDIR)$(bindir); \
+	done
+
+version.c: version.c.SH
+	/bin/sh ./version.c.SH
+
+
+# this is really the default rule for c files
+.c.o:
+	${CC} ${CPPFLAGS} ${CFLAGS} -c $<
+.s.o:
+	${CC} ${CPPFLAGS} ${CFLAGS} -c $<
+
+.PHONY: depend clean distclean
+depend:
+	${MKDEP} ${CPPFLAGS} ${BASE_SRCS} > .depend
+
+clean:
+	${RM} -f *.o *.exe *~ y.tab.* lex.yy.c ircd.core core ircd
+
+lint:
+	lint -aacgprxhH $(CPPFLAGS) -DIRCD_PREFIX=\"@prefix@\" $(SRCS) >>../lint.out
+
+distclean: clean
+	${RM} -f Makefile version.c.last
+
+include .depend

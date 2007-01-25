@@ -1,0 +1,61 @@
+$Id: Hybrid-team 54 2005-09-10 05:12:55Z nenolod $
+
+The hybrid team is a group of ircd coders who were frustrated
+with the instability and all-out "dirtiness" of the EFnet ircd's
+available. "hybrid" is the name for the collective efforts of a group
+of people, all of us.
+
+Anyone is welcome to contribute to this effort. You are encouraged
+to participate in the Hybrid mailing list. To subscribe to the
+Hybrid List, use this link:
+  https://lists.ircd-hybrid.org/mailman/listinfo/hybrid
+
+The core team as, of this major release:
+
+adx, Piotr Nizynski <adx@irc7.pl>
+billy-jon, William Bierman III <bill@mu.org>
+cryogen, Stuart Walsh <stu@ipng.org.uk>
+Dianora, Diane Bruce <db@db.net>
+joshk, Joshua Kwan <joshk@triplehelix.org>
+kire, Erik Small <smalle@hawaii.edu>
+knight, Alan LeVee <alan.levee@prometheus-designs.net>
+metalrock, Jack Low <jclow@csupomona.edu>
+Michael, Michael Wobst <michael.wobst@gmail.com>
+Rodder, Jon Lusky <lusky@blown.net>
+Wohali, Joan Touzet <joant@ieee.org>
+
+The following people have contributed blood, sweat, and/or code to
+recent releases of Hybrid, in nick alphabetical order:
+
+A1kmm, Andrew Miller <a1kmm@mware.virtualave.net>
+AndroSyn, Aaron Sethman <androsyn@ratbox.org>
+bane, Dragan Dosen <bane@idolnet.org>
+bysin, Ben Kittridge <bkittridge@cfl.rr.com>
+cosine, Patrick Alken <wnder@uwns.underworld.net>
+David-T, David Taylor <davidt@yadt.co.uk>
+fl, Lee Hardy <lee@leeh.co.uk>
+Garion, Joost Vunderink <garion@efnet.nl>
+Habeeb, David Supuran <habeeb@cfl.rr.com>
+Hwy101, W. Campbell <wcampbel@botbay.net>
+jmallett, Juli Mallett <jmallett@FreeBSD.org>
+jv, Jakub Vlasek <jv@pilsedu.cz>
+k9, Jeremy Chadwick <ircd@jdc.parodius.com>
+kre, Dinko Korunic <kreator@fly.srk.fer.hr>
+madmax, Paul Lomax <madmax@efnet.org>
+nenolod, William Pitcock <nenolod@nenolod.net>
+Riedel, Dennis Vink, <riedel@chaotic.nl>
+scuzzy, David Todd <scuzzy@aniverse.net>
+spookey, David Colburn <spookey@spookey.org>
+TimeMr14C, Yusuf Iskenderoglu <uhc0@stud.uni-karlsruhe.de>
+toot, Toby Verrall <to7@antipope.fsnet.co.uk>
+vx0, Mark Miller <mark@oc768.net>
+wiz, Jason Dambrosio <jason@wiz.cx>
+Xride, Søren Straarup <xride@x12.dk>
+zb^3, Alfred Perlstein <alfred@freebsd.org>
+
+Others are welcome. Always. And if we left anyone off the above list,
+be sure to let us know that too. Many others have contributed to
+previous versions of this ircd and its ancestors, too many to list
+here.
+
+Send bug fixes/complaints/rotten tomatoes to bugs@ircd-hybrid.org.

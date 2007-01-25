@@ -1,0 +1,24 @@
+Help topics available to opers:
+
+ACCEPT          ADMIN           AWAY            CAPAB
+CHALLENGE       CHANTRACE       CLOSE           CMODE
+CNOTICE         CONNECT         CPRIVMSG        CREDITS
+DIE             DLINE           ERROR           ETRACE
+GLINE           HELP            INDEX           INFO
+INVITE          ISON            JOIN            KICK
+KILL            KLINE           KNOCK           LINKS
+LIST            LOCOPS          LUSERS          MAP
+MASKTRACE       MODLIST         MODLOAD         MODRESTART
+MODUNLOAD       MOTD            NAMES           NICK
+NOTICE          OPER            OPERSPY         OPERWALL
+PART            PASS            PING            PONG
+POST            PRIVMSG         QUIT            REHASH
+RESTART         RESV            SCAN            SERVER
+SET             SJOIN           SNOMASK         SQUIT
+STATS           SVINFO          TESTGECOS       TESTLINE
+TESTMASK        TIME            TOPIC           TRACE
+UHELP           UMODE           UNDLINE         UNGLINE
+UNKLINE         UNREJECT        UNRESV          UNXLINE
+USER            USERHOST        USERS           VERSION
+WALLOPS         WHO             WHOIS           WHOWAS
+XLINE

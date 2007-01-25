@@ -1,0 +1,35 @@
+WHO <#channel|user>
+
+The WHO command displays information about a user, 
+such as their GECOS information, their user@host, 
+whether they are an IRC operator or not, etc.  A
+sample WHO result from a command issued like 
+"WHO pokey" may look something like this:
+
+#lamers pokey H pokey@ppp.newbies.net :0 Jim Jones
+
+The first field indicates the last channel the user
+has joined.  The second is the user's nickname.  
+The third field describes the status information about 
+the user.  The possible combinations for this field 
+are listed below:
+
+H       -       The user is not away.
+G       -       The user is set away.
+*       -       The user is an IRC operator.
+@       -       The user is a channel op in the channel listed
+                in the first field.
++       -       The user is voiced in the channel listed.
+
+The next field contains the username@host of the user.  
+The final field displays the number of server hops and 
+the user's GECOS information.
+
+This command may be executed on a channel, such as
+"WHO #lamers"  The output will consist of WHO 
+listings for each user on the channel.
+
+This command may also be used in conjunction with wildcards 
+such as * and ?.
+
+See also: whois, userhost

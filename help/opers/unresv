@@ -1,0 +1,6 @@
+UNRESV <channel|nick>
+
+-- Remove a RESV on a channel or nick
+Will attempt to remove the resv for the given
+channel/nick.  If the resv is ircd.conf based, 
+the resv will not be removed.

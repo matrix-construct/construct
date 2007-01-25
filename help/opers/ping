@@ -1,0 +1,6 @@
+PING <source> :<target>
+
+PING will request a PONG from the target.  If a
+user or operator issues this command, the source
+will always be turned into the nick that issued
+the PING.

@@ -1,0 +1,71 @@
+Servlink protocol documentation.
+$Id: README 1285 2006-05-05 15:03:53Z nenolod $
+--------------
+
+After negotiating an incoming/outgoing server connection, the ircd will
+fork, then execve servlink, with fd 0 as one end of a control pipe and
+fd 1 as one end of a data pipe. fd 2 will be the socket connected to
+the remote server.
+
+The data pipe is used by the ircd to send/receive normal, decrypted,
+uncompressed IRC commands to/from the remote server.  The socket is used to
+send the (processed) data to the remote server, and receive the data from
+the remote server.
+
+The control pipe is used to activate encryption/compression and to set the
+encryption key/algorithm to be used.
+
+Format of control messages:
+
+<u8 command><optional data>
+
+data format:
+<u16 len><data>
+
+Commands:
+
+001 - SET_ZIP_OUT_LEVEL
+	data: yes
+	description:
+		set compression level (0 [use default, 6], or 1-9)
+
+002 - START_ZIP_OUT
+	data: no
+	description:
+		all data written to the data pipe will be compressed
+		prior to being sent to the remote server.
+
+003 - START_ZIP_IN
+	data: no
+	description:
+		all data not yet read from the slink program will be
+		decompressed before reading
+
+004 - INJECT_RECVQ
+	data: recvq
+
+	Used before INIT to inject any data read from the server fd which
+	should be pre-processed by servlink before being sent back
+	to the LOCAL_FD through the data fd.
+
+005 - INJECT_SENDQ
+	data: sendq
+
+	As above, but sent to remote server without processing.
+
+006 - INIT
+
+007 - ZIPSTATS
+	request to send ziplinks statistics reply.
+
+replies
+
+001 - ERROR
+	data: u32 len/char error[len]
+
+	fatal error message.
+
+002 - ZIPSTATS
+        data: u32 in/u32 in_wire/u32 out/u32 out_wire                           
+
+	ziplinks commpression statistics

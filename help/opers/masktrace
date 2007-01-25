@@ -1,0 +1,9 @@
+MASKTRACE [<nick>!]<user>@<host> :<gecos>
+
+Outputs a list of local users matching the given masks
+in ETRACE format, with the classname replaced by
+the server the users are on. Gecos uses the same
+wildcards as xlines; nick, user and host use just
+? and *.
+
+Supports using CIDR ip masks as a hostname.

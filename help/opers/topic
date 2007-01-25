@@ -1,0 +1,10 @@
+TOPIC <#channel> :[new topic]
+
+With only a channel argument, TOPIC shows the current topic of
+the specified channel.
+
+With a second argument, it changes the topic on that channel to
+<new topic>.  If the channel is +t, only chanops may change the
+topic.
+
+See also: cmode

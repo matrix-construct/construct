@@ -1,0 +1,41 @@
+Nick collision FNC
+Jilles Tjoelker <jilles -at- stack.nl>
+--------------------------------------
+
+Nick collision FNC performs a forced nick change to the user's UID instead
+of a kill. The criteria for which user may keep the nick are the same as
+before. Server notices will say the clients are being "saved" instead of
+"killed". The client will get a 043 numeric, like this:
+:<server> 043 <uid> :Nick collision, forcing nick change to your unique ID
+
+The following conditions must be fulfilled:
+
+- All servers on the network must allow remote nicks starting with a digit.
+  This is not checked; if this is not fulfilled, users will be killed right
+  after being FNCed.
+
+- All servers on the path between the two clients must support TS6 and
+  nick collision FNC (SAVE capab). If this is not fulfilled, the collision is
+  resolved with kills as before. (This uses the ENCAP GCAP data for remotes.)
+
+- The general::collision_fnc option must be enabled on the server(s) that
+  detect the collision.
+
+Technical details:
+
+The following message is used to propagate the nick change coming from the
+server that detected the collision:
+
+:<sid> SAVE <uid> <ts>
+
+The TS is compared to the current nick TS for the user; if it is not equal,
+the message is dropped. This prevents nick desyncs if the user changed their
+nick after being collided. A SAVE message also generates a server notice to
++k.
+
+The SAVE message is used for propagation to the target's server, and also
+in several other cases if the destination supports SAVE. In other cases, a
+normal nick change or introduction with the UID as nick is sent.
+
+-- 
+$Id: collision_fnc.txt 276 2005-10-02 20:23:15Z jilles $

@@ -1,0 +1,4 @@
+INVITE <nickname> <channel>
+
+INVITE sends a notice to the user that you have 
+asked him/her to come to the specified channel.

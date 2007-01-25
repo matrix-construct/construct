@@ -1,0 +1,7 @@
+NICK <nickname>
+
+When first connected to the IRC server, NICK is required to
+set the client's nickname.
+
+NICK will also change the client's nickname once a connection
+has been established.

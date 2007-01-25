@@ -1,0 +1,8 @@
+ERROR :<message>
+
+ERROR is sent by the server to clients
+or other servers when an exception occurs.
+
+If another server sends your server an
+ERROR, it will be shown to all operators
+on the server.

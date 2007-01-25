@@ -1,0 +1,37 @@
+Overview of the file management subsystem
+Adrian Chadd <adrian@creative.net.au>
+
+$Id: file-management.txt 6 2005-09-10 01:02:21Z nenolod $
+
+
+File operations
+---------------
+
+The file operations are also wrapped through file_open() and file_close()
+which handle calling fd_open() / fd_close() and tracking the filedescriptors
+correctly. fbopen() / fbclose() use file_open() / file_close() too.
+
+fileio.c defines the functions:
+
+int
+file_open(const char *filename, int mode, int fmode)
+
+A wrapper around open(filename, flags, mode). Read the open manpage for
+information. file_open() enforces filedescriptor limits and tags the FD
+through fd_open().
+
+void
+file_close(int fd)
+
+A wrapper around close() for files. close() handles fd_close()ing the fd.
+
+
+FBFILE *
+fbopen(const char *filename, const char *mode)
+
+void
+fbclose(FBFILE *fb)
+
+These are the 'buffered disk IO' routines. You can read the code yourself.
+Note that these routines use file_open() and file_close().
+

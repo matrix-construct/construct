@@ -1,0 +1,10 @@
+USERHOST <nick>
+
+USERHOST displays the username, hostname, 
+operator status, and presence of valid ident of
+the specified nickname.
+
+If you use USERHOST on yourself, the hostname
+is replaced with the IP you are connecting from.
+This is needed to provide DCC support for spoofed
+hostnames.

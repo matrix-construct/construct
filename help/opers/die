@@ -1,0 +1,5 @@
+DIE server.name
+
+Terminates the IRC server
+
+- Requires Oper Priv: D

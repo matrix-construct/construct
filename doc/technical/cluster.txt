@@ -1,0 +1,26 @@
+$Id: cluster.txt 6 2005-09-10 01:02:21Z nenolod $
+
+Short description of how remote kline and friends are propagated under
+the old hyb7 style (CAP_KLN etc) and under the new style over ENCAP.
+
+CAP_KLN:
+:<source> KLINE <target> <time> <user> <host> :<reason>
+:<source> ENCAP <target> KLINE <time> <user> <host> :<reason>
+
+CAP_UNKLN:
+:<source> UNKLINE <target> <user> <host>
+:<source> ENCAP <target> UNKLINE <user> <host>
+
+CAP_CLUSTER:
+:<source> XLINE <target> <gecos> <type> :<reason>
+:<source> ENCAP <target> XLINE <time> <gecos> <type> :<reason>
+
+:<source> UNXLINE <target> <gecos>
+:<source> ENCAP <target> UNXLINE <gecos>
+
+:<source> RESV <target> <name> :<reason>
+:<source> ENCAP <target> RESV <time> <name> 0 :<reason>
+
+:<source> UNRESV <target> <name>
+:<source> ENCAP <target> UNRESV <name>
+

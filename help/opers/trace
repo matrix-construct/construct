@@ -1,0 +1,17 @@
+TRACE [server | nick] [location]
+
+With no argument, TRACE gives a list of all clients connected
+to the local server, both users and operators.
+
+With one argument which is a server, TRACE displays the path 
+to the specified server, and all servers, opers and -i users
+on that server.
+
+Nonopers can only see themselves, opers and servers in the
+first two forms.
+
+With one argument which is a client, TRACE displays the
+path to that client, and that client's information.
+
+If location is given, the command is executed on that server;
+no path is displayed.

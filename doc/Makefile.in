@@ -1,0 +1,96 @@
+# $Id: Makefile.in 138 2005-09-12 00:48:18Z nenolod $
+CC		= @CC@
+INSTALL		= @INSTALL@
+INSTALL_BIN	= @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+INSTALL_SUID	= @INSTALL_PROGRAM@ -o root -m 4755
+RM		= @RM@
+LEX		= @LEX@
+LEXLIB		= @LEXLIB@
+CFLAGS		= @IRC_CFLAGS@ -DIRCD_PREFIX=\"@prefix@\"
+LDFLAGS		= @LDFLAGS@
+MKDEP		= ${CC} -MM
+MV		= @MV@
+RM		= @RM@
+CP		= @CP@
+TOUCH		= @TOUCH@
+
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+exec_suffix	= @exec_suffix@
+bindir		= @bindir@
+libexecdir	= @libexecdir@
+confdir		= @confdir@
+localstatedir	= @localstatedir@
+# Change this later! -- adrian
+moduledir	= @moduledir@
+automoduledir	= @moduledir@/autoload
+
+# Local to the etc Makefile
+mandir          = @mandir@/man8
+MANPAGES        = ircd.8
+
+CONFS		= example.conf reference.conf
+DEFAULTCONFS	= kline.conf dline.conf xline.conf resv.conf
+
+SSL_LIBS	= @SSL_LIBS@
+SSL_INCLUDES	= @SSL_INCLUDES@
+
+IRCDLIBS	= @LIBS@ $(SSL_LIBS)
+
+INCLUDES	= -I../include $(SSL_INCLUDES)
+CPPFLAGS	= ${INCLUDES} @CPPFLAGS@
+ 
+install-mkdirs:
+	-@if test ! -d $(DESTDIR)$(confdir); then \
+		echo "mkdir $(confdir)"; \
+		mkdir $(DESTDIR)$(confdir); \
+	fi
+
+	-@if test ! -d $(DESTDIR)$(mandir); then \
+		echo "mkdir $(mandir)"; \
+		mkdir $(DESTDIR)$(mandir); \
+	fi
+
+install: install-mkdirs build
+	@echo "ircd: installing example config files ($(CONFS))"
+	@for i in $(CONFS); do \
+		if test -f $(DESTDIR)$(confdir)/$$i; then \
+			$(MV) $(DESTDIR)$(confdir)/$$i $(DESTDIR)$(confdir)/$$i.old; \
+		fi; \
+		$(INSTALL_DATA) $$i $(DESTDIR)$(confdir); \
+	done
+
+	@for i in $(DEFAULTCONFS); do \
+		if test ! -f $(DESTDIR)$(confdir)/$$i; then \
+			echo "ircd: creating config file ($$i)"; \
+			${TOUCH} $(DESTDIR)$(confdir)/$$i; \
+		fi; \
+	done
+
+	-@if test ! -f $(DESTDIR)$(confdir)/ircd.motd; then \
+		echo "ircd: installing motd file (ircd.motd)"; \
+		$(INSTALL_DATA) ircd.motd $(DESTDIR)$(confdir); \
+	fi
+
+	-@if test -f $(DESTDIR)$(confdir)/links.txt; then \
+		$(RM) $(DESTDIR)$(confdir)/links.txt; \
+	fi
+
+	@echo "ircd: installing manpage"
+	@for i in $(MANPAGES); do \
+		if test ! -f $(DESTDIR)$(mandir)/$$i; then \
+			$(INSTALL_DATA) $$i $(DESTDIR)$(mandir); \
+		fi; \
+	done
+
+build:
+
+clean:
+
+depend:
+
+lint:
+
+distclean:
+	${RM} -f Makefile

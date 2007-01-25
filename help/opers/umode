@@ -1,0 +1,18 @@
+MODE <nick> <+|-><modes>
+
+Usermodes: (* designates that the umode is oper only)
+
+     USERMODE     DESCRIPTION
+-----------------------------------------------------------------
+         +i     - Designates this client 'invisible'.
+         +g     - "caller id" mode only allow accept clients to message you
+         +w     - Can see oper and server wallops.
+         +o     - Designates this client is an IRC Operator.
+                  Use the /oper command to attain this.
+       * +a     - Is marked as a server admin in whois.
+       * +l     - Can see oper locops (local wallops).
+       * +s     - Can see server notices (see /quote help snomask).
+       * +z     - Can see operwalls.
+         +D     - Deaf - ignores all channel messages.
+         +Q     - Prevents you from being affected by channel forwarding.
+         +R     - Prevents non accept unidentified users from messaging you.

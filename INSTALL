@@ -1,0 +1,266 @@
+                            Hybrid INSTALL Document
+
+   $Id: INSTALL 1837 2006-08-22 14:05:58Z nenolod $
+
+   Copyright (c) 2001 by ircd-hybrid team
+   Copyright (c) 2002-2004 ircd-ratbox development team
+
+     ----------------------------------------------------------------------
+
+   +------------------------------------------------------------------------+
+   | Note for those who dont bother reading docs                            |
+   |                                                                        |
+   | Reading INSTALL is now a must, as the old DPATH is now specified when  |
+   | configure is run.                                                      |
+   |                                                                        |
+   | - You now need to ./configure --prefix="/path/to/install/it"           |
+   |                                                                        |
+   |   Important: The old config format WILL NOT WORK. Please see point 6!  |
+   |                                                                        |
+   |   The old kline format WILL NOT WORK. Please see point 7!              |
+   +------------------------------------------------------------------------+
+
+     ----------------------------------------------------------------------
+
+                                  HOW TO BUILD
+
+   As of hybrid-4, the distribution uses GNU autoconf instead of the old
+   Config script. The Makefile has also been updated to include CFLAGS
+   defines for popular modern OSes.
+
+   1. 
+
+       Read the ChangeLog file to find out about the exciting new features in
+       this version. Other good reads are doc/whats-new.txt, BUGS,
+       doc/example.conf, and README.FIRST.
+
+       An example.conf for EFnet is in doc/ with the values "approved" on 12
+       December 2001.
+
+   2. 
+
+       Run the configure script. It will create include/setup.h and the
+       Makefiles to match your system. In ircd-ratbox, the paths are now handled
+       with the --prefix option to configure, not in config.h.
+       /usr/local/ircd is the default if no prefix is specified.
+
+       ./configure --prefix="/usr/local/ircd"
+
+         Note: There are some special optional parameters to the configure
+         script that some admins may wish to use.
+
+          * 
+
+            --enable-kqueue - Use the superior kqueue(2) system call as
+            opposed to the default poll(2). This is currently only available
+            on FreeBSD 4.1 or higher.
+
+          * 
+
+            --enable-devpoll - Enable the superior /dev/poll support on
+            Solaris. Linux /dev/poll is broken and will not work with this
+            option.
+
+          * 
+
+            --enable-epoll - Enable the superior Linux Edge-Triggered Polling
+            system. This is currently only available on 2.5 Linux kernel
+            versions or later.
+
+          * 
+
+            --enable-openssl - Enable the openssl dependent crypto functions.
+            This will allow CHALLENGE to work and encrypted links. On systems
+            where the configure script can automatically detect OpenSSL, this
+            option is not necessary. If configure cannot find OpenSSL, you
+            must specify a path with this option
+            (--enable-openssl=/path/to/openssl)
+
+          * 
+
+            --enable-ipv6 - Enable IPv6 support.
+
+          * 
+
+            --disable-shared-modules - Disable module support. This option is
+            more secure, but reduces a lot of the flexibility in Hybrid 7.
+            This may need to be used on some systems without a working dl
+            library.
+
+          * 
+
+            --disable-assert - Disable some of the debugging code. This
+            should be used on all production servers for maximum speed and to
+            prevent cores from things that shouldn't normally happen.
+
+          * 
+
+            --enable-small-net - Tunes the server for smaller networks by
+            reducing the startup memory footprint. This should really only be
+            used for *small* networks, as this tends to be a performance hit
+            on larger networks.
+
+          * 
+
+            --with-nicklen - Sets the maximum NICK length. Note that this
+            must be consistant across your entire network.
+
+          * 
+
+            --with-maxclients - Sets the maximum number of clients support by
+            the server. Note that this also twiddles the HARD_FDLIMIT_ define
+            so it is no longer necessary to modify include/config.h for this.
+            If HARD_FDLIMIT_ ends up being larger that FD_SETSIZE when using
+            select() for your I/O loop, s_bsd_select.c will refuse to compile
+            (and tell you to use poll instead). Take this error's advice and
+            use --enable-poll or something a bit more efficient. You'll be
+            happier at the end of the day for it.
+
+   3. 
+
+       Look over the "include/config.h" file. This allows you to change the
+       few remaining hard coded options of how the ircd will operate. Most
+       admins will only have to change a few settings. USE_SYSLOG is the only
+       one that most admins will need to edit.
+
+         Note: Note that you must have permission by the sysadmin to send
+         messages to the system log files.
+
+         All other settings in config.h are not necessary to edit.
+
+   4. 
+
+       make should build ircd.
+
+   5. 
+
+       make install will install the server, modules(1), and tools in the
+       path defined in config.h and the prefix specified when configure was
+       run.
+
+       (1) Unless the server was compiled without module support.
+
+   6. 
+
+       If you wish to enable the user log, oper log, and failed oper log,
+       issue these commands at the shell prompt (in the prefix directory)
+
+ $ touch logs/userlog
+ $ touch logs/operlog
+ $ touch logs/foperlog
+
+         Note: If you use different names in ircd.conf, you must 'touch' the
+         specific names.
+
+   7. 
+
+       If you are upgrading from Hybrid 5 or Hybrid 6, the config file has
+       changed drastically...
+
+       There is a utility to convert your old config file to the new format.
+       In prefix/bin there is something called "convertconf". Its usage is:
+       ./convertconf (old config file to convert) (converted file name)
+
+       Convertconf will NOT convert I: lines.  You must use "convertilines"
+       for this which contains a much superior method of conversion and
+       will group I: together under one auth {};.
+
+       Once this is done, move your new config to prefix/etc/ircd.conf and
+       EDIT IT! There are still things that need changing in the config,
+       including the fact that classes MUST be above auth/connect blocks!
+
+   8. 
+
+       If you are upgrading from Hybrid 5 or Hybrid 6, the kline file has
+       also changed...
+
+       There is a utility to convert the old kline configuration file to the
+       new format. In prefix/bin there is a program called "convertklines".
+       Its usage is: ./convertklines (old kline.conf filename) (new
+       kline.conf filename) (dline.conf filename).
+
+       Once this is done, move the new files into the prefix/etc/ directory
+       under their proper names. By default, the kline file is named
+       kline.conf and the dline file is named dline.conf.
+
+     ----------------------------------------------------------------------
+
+                                HOW TO GET HELP
+
+   Send Check or Money Order to... just kidding! You're on your own for
+   support. Try asking other ircd-ratbox admins on EFnet if you can't fix it
+   yourself. If you do fix anything, however, please send context or unified
+   diffs to ircd-ratbox@lists.ratbox.org so the fixes can be incorporated into
+   the next release of ircd-hybrid. If ratbox crashes on you, PLEASE contact
+   ircd-ratbox@lists.ratbox.org ASAP with a backtrace of the core.
+
+   DISCUSSION: There is a mailing list for discussion of ratbox issues,
+    To subscribe, visit:
+       http://lists.ratbox.org/cgi-bin/mailman/listinfo/ircd-ratbox
+       
+     ----------------------------------------------------------------------
+
+                                     NOTES
+
+   The best way to get a backtrace of the core is to follow this sequence of
+   instructions:
+
+   1. 
+
+       Change to the directory containing the core file
+
+   2. 
+
+       Run gdb on the binary and the core file. With an unmodified ircd-ratbox
+       installation, an example command line is below (in the /usr/local/ircd
+       directory)
+
+ $ gdb bin/ircd ircd.core
+
+   3. 
+
+       At the "(gdb)" prompt, enter the command "bt"
+
+   4. 
+
+       Save the output of the backtrace command and send it to
+       ircd-ratbox@lists.ratbox.org
+
+   5. 
+
+       Be sure to save the ircd binary, the modules, and the core file in a
+       safe place in case the developers need to look deeper than a backtrace
+       provides.
+
+     ----------------------------------------------------------------------
+
+                                 OPENSSL NOTES
+
+   Older FreeBSD machines sometimes have the obsolete ports version of
+   OpenSSL libcrypto in /usr/local/lib. When configure is used with
+   --enable-openssl, and libintl is detected in /usr/local/lib, the
+   /usr/local/lib directory will be searched BEFORE the system /usr/lib for
+   libraries by the linker. The linker may try to link to the old
+   /usr/local/lib libcrypto instead of the system /usr/lib libcrypto. Some
+   older versions may cause error messages similar to the following:
+
+ gcc -g -O2 -DIRCD_PREFIX=\"/home/wcampbel/ircd\" -Wl,-export-dynamic
+ -L/usr/local/lib -o ircd blalloc.o channel.o vchannel.o class.o client.o
+ dline_conf.o event.o fdlist.o fileio.o hash.o irc_string.o ircd.o ircdauth.o
+ ircd_signal.o linebuf.o list.o listener.o m_error.o match.o memdebug.o
+ modules.o motd.o mtrie_conf.o oldparse.o numeric.o packet.o parse.o res.o rsa.o
+ restart.o s_auth.o s_bsd.o s_bsd_kqueue.o s_conf.o s_debug.o s_gline.o s_log.o
+ s_misc.o s_serv.o s_stats.o s_user.o scache.o send.o sprintf_irc.o tools.o
+ whowas.o lex.yy.o y.tab.o version.o -lintl -ldescrypt  -lcrypto -lfl
+ rsa.o: In function `get_randomness':
+ /home/wcampbel/dev/ircd-ratbox/src/rsa.c(.text+0x60): undefined reference to
+ `RAND_pseudo_bytes'
+ /usr/local/lib/libcrypto.so: undefined reference to `ERR_load_RSAREF_strings'
+ /usr/local/lib/libcrypto.so: undefined reference to `RSA_PKCS1_RSAref'
+ *** Error code 1
+
+   If this is the case, you may need to rerun configure without the
+   --enable-openssl option, manually edit src/Makefile and modules/Makefile
+   to put -L/usr/lib before the -L/usr/local/lib in LDFLAGS, or remove the
+   old OpenSSL from /usr/local, and recompile all applications that use
+   libcrypto to use the system one.
