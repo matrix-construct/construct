@@ -1,3 +1,12 @@
+jilles      2007/01/26 16:52:29 UTC	(20070126-3165)
+  Log:
+  Rerun autoconf.
+  
+
+  Changes:	Modified:
+  +29 -29	trunk/configure (File Modified) 
+
+
 nenolod     2007/01/25 07:36:23 UTC	(20070125-3163)
   Log:
   - nick[user@host] -> nick!user@host in kill messages. based on jilles' change in 3.0
