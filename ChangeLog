@@ -1,3 +1,14 @@
+jilles      2007/01/26 18:52:11 UTC	(20070126-3167)
+  Log:
+  Include real hostname in Closing Link message for unknown
+  connections that have sent USER. This is helpful for
+  k-lined users while not breaking server IP hiding.
+  
+
+  Changes:	Modified:
+  +3 -1		trunk/src/client.c (File Modified) 
+
+
 jilles      2007/01/26 16:52:29 UTC	(20070126-3165)
   Log:
   Rerun autoconf.
