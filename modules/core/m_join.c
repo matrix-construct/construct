@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_join.c 3131 2007-01-21 15:36:31Z jilles $
+ *  $Id: m_join.c 3173 2007-01-31 23:57:18Z jilles $
  */
 
 #include "stdinc.h"
@@ -62,7 +62,7 @@ mapi_hlist_av1 join_hlist[] = {
 	{ NULL, NULL },
 };
 
-DECLARE_MODULE_AV1(join, NULL, NULL, join_clist, join_hlist, NULL, "$Revision: 3131 $");
+DECLARE_MODULE_AV1(join, NULL, NULL, join_clist, join_hlist, NULL, "$Revision: 3173 $");
 
 static void do_join_0(struct Client *client_p, struct Client *source_p);
 static int check_channel_name_loc(struct Client *source_p, const char *name);
@@ -175,7 +175,7 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 				sendto_realops_snomask(SNO_SPY, L_NETWIDE,
 						     "User %s (%s@%s) is attempting to join locally juped channel %s (%s)",
 						     source_p->name, source_p->username,
-						     source_p->host, name, aconf->passwd);
+						     source_p->orighost, name, aconf->passwd);
 			/* dont update tracking for jupe exempt users, these
 			 * are likely to be spamtrap leaves
 			 */

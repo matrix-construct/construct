@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_message.c 1761 2006-07-27 19:27:49Z jilles $
+ *  $Id: m_message.c 3173 2007-01-31 23:57:18Z jilles $
  */
 
 #include "stdinc.h"
@@ -76,7 +76,7 @@ struct Message notice_msgtab = {
 
 mapi_clist_av1 message_clist[] = { &privmsg_msgtab, &notice_msgtab, NULL };
 
-DECLARE_MODULE_AV1(message, modinit, moddeinit, message_clist, NULL, NULL, "$Revision: 1761 $");
+DECLARE_MODULE_AV1(message, modinit, moddeinit, message_clist, NULL, NULL, "$Revision: 3173 $");
 
 struct entity
 {
@@ -784,7 +784,7 @@ flood_attack_client(int p_or_n, struct Client *source_p, struct Client *target_p
 				sendto_realops_snomask(SNO_BOTS, L_ALL,
 						     "Possible Flooder %s[%s@%s] on %s target: %s",
 						     source_p->name, source_p->username,
-						     source_p->host,
+						     source_p->orighost,
 						     source_p->user->server, target_p->name);
 				target_p->localClient->flood_noticed = 1;
 				/* add a bit of penalty */
@@ -839,7 +839,7 @@ flood_attack_channel(int p_or_n, struct Client *source_p, struct Channel *chptr,
 				sendto_realops_snomask(SNO_BOTS, L_ALL,
 						     "Possible Flooder %s[%s@%s] on %s target: %s",
 						     source_p->name, source_p->username,
-						     source_p->host,
+						     source_p->orighost,
 						     source_p->user->server, chptr->chname);
 				chptr->flood_noticed = 1;
 

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.c 3131 2007-01-21 15:36:31Z jilles $
+ *  $Id: channel.c 3173 2007-01-31 23:57:18Z jilles $
  */
 
 #include "stdinc.h"
@@ -922,12 +922,12 @@ check_spambot_warning(struct Client *source_p, const char *name)
 				sendto_realops_snomask(SNO_BOTS, L_ALL,
 						     "User %s (%s@%s) trying to join %s is a possible spambot",
 						     source_p->name,
-						     source_p->username, source_p->host, name);
+						     source_p->username, source_p->orighost, name);
 			else
 				sendto_realops_snomask(SNO_BOTS, L_ALL,
 						     "User %s (%s@%s) is a possible spambot",
 						     source_p->name,
-						     source_p->username, source_p->host);
+						     source_p->username, source_p->orighost);
 			source_p->localClient->oper_warn_count_down = OPER_SPAM_COUNTDOWN;
 		}
 	}

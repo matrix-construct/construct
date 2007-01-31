@@ -1,3 +1,12 @@
+jilles      2007/01/28 22:13:18 UTC	(20070128-3169)
+  Log:
+  Add documentation for SASL client protocol, same as atheme doc/SASL.
+  
+
+  Changes:	Modified:
+  + -		trunk/doc/sasl.txt (File Added) 
+
+
 jilles      2007/01/26 18:52:11 UTC	(20070126-3167)
   Log:
   Include real hostname in Closing Link message for unknown
