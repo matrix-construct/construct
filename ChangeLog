@@ -1,3 +1,17 @@
+jilles      2007/02/01 00:19:14 UTC	(20070201-3177)
+  Log:
+  Remove hash_find_masked_server(), which made it possible
+  to specify the full (unmasked) name of a server behind
+  a hostmask. As a result find_any_client() (for prefixes)
+  becomes equal to find_client(), so remove that too.
+  
+
+  Changes:	Modified:
+  +0 -1		trunk/include/hash.h (File Modified) 
+  +1 -75	trunk/src/hash.c (File Modified) 
+  +1 -1		trunk/src/parse.c (File Modified) 
+
+
 jilles      2007/02/01 00:02:35 UTC	(20070201-3175)
   Log:
   Remove '*' from valid server name characters.

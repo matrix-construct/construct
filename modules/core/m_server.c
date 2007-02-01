@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_server.c 2733 2006-11-10 00:04:08Z jilles $
+ *  $Id: m_server.c 3179 2007-02-01 00:34:33Z jilles $
  */
 
 #include "stdinc.h"
@@ -59,10 +59,9 @@ struct Message sid_msgtab = {
 
 mapi_clist_av1 server_clist[] = { &server_msgtab, &sid_msgtab, NULL };
 
-DECLARE_MODULE_AV1(server, NULL, NULL, server_clist, NULL, NULL, "$Revision: 2733 $");
+DECLARE_MODULE_AV1(server, NULL, NULL, server_clist, NULL, NULL, "$Revision: 3179 $");
 
 int bogus_host(const char *host);
-struct Client *server_exists(const char *);
 static int set_server_gecos(struct Client *, const char *);
 
 /*
@@ -167,7 +166,7 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 		break;
 	}
 
-	if((target_p = server_exists(name)))
+	if((target_p = find_server(NULL, name)))
 	{
 		/*
 		 * This link is trying feed me a server that I already have
@@ -246,7 +245,7 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 	hop = atoi(parv[2]);
 	strlcpy(info, parv[3], sizeof(info));
 
-	if((target_p = server_exists(name)))
+	if((target_p = find_server(NULL, name)))
 	{
 		/*
 		 * This link is trying feed me a server that I already have
@@ -454,7 +453,7 @@ ms_sid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	hop = atoi(parv[2]);
 
 	/* collision on the name? */
-	if((target_p = server_exists(parv[1])) != NULL)
+	if((target_p = find_server(NULL, parv[1])) != NULL)
 	{
 		sendto_one(client_p, "ERROR :Server %s already exists", parv[1]);
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
@@ -697,27 +696,4 @@ bogus_host(const char *host)
 		return 1;
 
 	return 0;
-}
-
-/*
- * server_exists()
- * 
- * inputs	- servername
- * output	- 1 if server exists, 0 if doesnt exist
- */
-struct Client *
-server_exists(const char *servername)
-{
-	struct Client *target_p;
-	dlink_node *ptr;
-
-	DLINK_FOREACH(ptr, global_serv_list.head)
-	{
-		target_p = ptr->data;
-
-		if(match(target_p->name, servername) || match(servername, target_p->name))
-			return target_p;
-	}
-
-	return NULL;
 }
