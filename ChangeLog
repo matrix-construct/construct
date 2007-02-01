@@ -1,3 +1,15 @@
+jilles      2007/02/01 00:49:07 UTC	(20070201-3181)
+  Log:
+  Do not try find_server() on a name find_client() has
+  returned NULL for, as this will always return NULL
+  since the removal of hostmasking.
+  
+
+  Changes:	Modified:
+  +1 -2		trunk/modules/m_pong.c (File Modified) 
+  +0 -4		trunk/src/s_serv.c (File Modified) 
+
+
 jilles      2007/02/01 00:34:33 UTC	(20070201-3179)
   Log:
   Remove server_exists() which checked whether the

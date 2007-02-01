@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_trace.c 609 2006-01-28 21:44:33Z jilles $
+ *  $Id: m_trace.c 3183 2007-02-01 01:07:42Z jilles $
  */
 
 #include "stdinc.h"
@@ -59,7 +59,7 @@ mapi_hlist_av1 trace_hlist[] = {
 	{ "doing_trace",	&doing_trace_hook },
 	{ NULL, NULL }
 };
-DECLARE_MODULE_AV1(trace, NULL, NULL, trace_clist, trace_hlist, NULL, "$Revision: 609 $");
+DECLARE_MODULE_AV1(trace, NULL, NULL, trace_clist, trace_hlist, NULL, "$Revision: 3183 $");
 
 static void count_downlinks(struct Client *server_p, int *pservcount, int *pusercount);
 static int report_this_status(struct Client *source_p, struct Client *target_p, int dow);
@@ -115,7 +115,7 @@ m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *
 				{
 					ac2ptr = ptr->data;
 
-					if(match(tname, ac2ptr->name) || match(ac2ptr->name, tname))
+					if(match(tname, ac2ptr->name))
 						break;
 					else
 						ac2ptr = NULL;

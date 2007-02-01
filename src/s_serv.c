@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.c 3181 2007-02-01 00:49:07Z jilles $
+ *  $Id: s_serv.c 3183 2007-02-01 01:07:42Z jilles $
  */
 
 #include "stdinc.h"
@@ -260,8 +260,7 @@ hunt_server(struct Client *client_p, struct Client *source_p,
 	 * Assume it's me, if no server
 	 */
 	if(parc <= server || EmptyString(parv[server]) ||
-	   match(me.name, parv[server]) || match(parv[server], me.name) ||
-	   (strcmp(parv[server], me.id) == 0))
+	   match(parv[server], me.name) || (strcmp(parv[server], me.id) == 0))
 		return (HUNTED_ISME);
 	
 	new = LOCAL_COPY(parv[server]);
