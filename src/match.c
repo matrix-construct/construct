@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: match.c 708 2006-02-05 22:44:03Z jilles $
+ * $Id: match.c 3175 2007-02-01 00:02:35Z jilles $
  *
  */
 #include "stdinc.h"
@@ -599,7 +599,7 @@ const unsigned int CharAttrs[] = {
 /* ' */ PRINT_C | CHAN_C | NONEOS_C,
 /* ( */ PRINT_C | CHAN_C | NONEOS_C,
 /* ) */ PRINT_C | CHAN_C | NONEOS_C,
-/* * */ PRINT_C | KWILD_C | MWILD_C | CHAN_C | NONEOS_C | SERV_C,
+/* * */ PRINT_C | KWILD_C | MWILD_C | CHAN_C | NONEOS_C,
 /* + */ PRINT_C | CHAN_C | NONEOS_C,
 /* , */ PRINT_C | NONEOS_C,
 /* - */ PRINT_C | NICK_C | CHAN_C | NONEOS_C | USER_C | HOST_C,

@@ -1,3 +1,14 @@
+jilles      2007/01/31 23:57:18 UTC	(20070131-3173)
+  Log:
+  Change spambot, flooder and jupe joiner notices from host to orighost.
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/modules/core/m_join.c (File Modified) 
+  +2 -2		trunk/modules/core/m_message.c (File Modified) 
+  +2 -2		trunk/src/channel.c (File Modified) 
+
+
 jilles      2007/01/28 22:13:18 UTC	(20070128-3169)
   Log:
   Add documentation for SASL client protocol, same as atheme doc/SASL.
