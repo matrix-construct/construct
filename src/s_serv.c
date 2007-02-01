@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.c 2723 2006-11-09 23:35:48Z jilles $
+ *  $Id: s_serv.c 3181 2007-02-01 00:49:07Z jilles $
  */
 
 #include "stdinc.h"
@@ -277,10 +277,6 @@ hunt_server(struct Client *client_p, struct Client *source_p,
 		target_p = find_client(new);
 
 	if(target_p)
-		if(target_p->from == source_p->from && !MyConnect(target_p))
-			target_p = NULL;
-
-	if(target_p == NULL && (target_p = find_server(source_p, new)))
 		if(target_p->from == source_p->from && !MyConnect(target_p))
 			target_p = NULL;
 

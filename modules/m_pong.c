@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_pong.c 522 2006-01-15 20:55:27Z jilles $
+ *  $Id: m_pong.c 3181 2007-02-01 00:49:07Z jilles $
  */
 
 #include "stdinc.h"
@@ -49,7 +49,7 @@ struct Message pong_msgtab = {
 };
 
 mapi_clist_av1 pong_clist[] = { &pong_msgtab, NULL };
-DECLARE_MODULE_AV1(pong, NULL, NULL, pong_clist, NULL, NULL, "$Revision: 522 $");
+DECLARE_MODULE_AV1(pong, NULL, NULL, pong_clist, NULL, NULL, "$Revision: 3181 $");
 
 static int
 ms_pong(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
@@ -69,8 +69,7 @@ ms_pong(struct Client *client_p, struct Client *source_p, int parc, const char *
 	if(!EmptyString(destination) && !match(destination, me.name) &&
 	   irccmp(destination, me.id))
 	{
-		if((target_p = find_client(destination)) || 
-		   (target_p = find_server(NULL, destination)))
+		if((target_p = find_client(destination)))
 			sendto_one(target_p, ":%s PONG %s %s", 
 				   get_id(source_p, target_p), parv[1], 
 				   get_id(target_p, target_p));

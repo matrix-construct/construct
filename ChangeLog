@@ -1,3 +1,16 @@
+jilles      2007/02/01 00:34:33 UTC	(20070201-3179)
+  Log:
+  Remove server_exists() which checked whether the
+  server name existed taking hostmasking into account
+  and just check with find_server(); admittedly
+  this checks if the name is a SID but that's not
+  a real problem.
+  
+
+  Changes:	Modified:
+  +3 -27	trunk/modules/core/m_server.c (File Modified) 
+
+
 jilles      2007/02/01 00:19:14 UTC	(20070201-3177)
   Log:
   Remove hash_find_masked_server(), which made it possible
