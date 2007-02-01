@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: hash.h 722 2006-02-08 21:51:28Z nenolod $
+ *  $Id: hash.h 3177 2007-02-01 00:19:14Z jilles $
  */
 
 #ifndef INCLUDED_hash_h
@@ -76,7 +76,6 @@ extern void init_hash(void);
 
 extern void add_to_client_hash(const char *name, struct Client *client);
 extern void del_from_client_hash(const char *name, struct Client *client);
-extern struct Client *find_any_client(const char *name);
 extern struct Client *find_client(const char *name);
 extern struct Client *find_named_client(const char *name);
 extern struct Client *find_server(struct Client *source_p, const char *name);

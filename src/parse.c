@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: parse.c 2723 2006-11-09 23:35:48Z jilles $
+ *  $Id: parse.c 3177 2007-02-01 00:19:14Z jilles $
  */
 
 #include "stdinc.h"
@@ -162,7 +162,7 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 
 		if(*sender && IsServer(client_p))
 		{
-			from = find_any_client(sender);
+			from = find_client(sender);
 
 			/* didnt find any matching client, issue a kill */
 			if(from == NULL)

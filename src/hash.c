@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: hash.c 1321 2006-05-13 23:49:14Z nenolod $
+ *  $Id: hash.c 3177 2007-02-01 00:19:14Z jilles $
  */
 
 #include "stdinc.h"
@@ -447,79 +447,6 @@ find_id(const char *name)
 	return NULL;
 }
 
-/* hash_find_masked_server()
- * 
- * Whats happening in this next loop ? Well, it takes a name like
- * foo.bar.edu and proceeds to earch for *.edu and then *.bar.edu.
- * This is for checking full server names against masks although
- * it isnt often done this way in lieu of using matches().
- *
- * Rewrote to do *.bar.edu first, which is the most likely case,
- * also made const correct
- * --Bleep
- */
-static struct Client *
-hash_find_masked_server(struct Client *source_p, const char *name)
-{
-	char buf[HOSTLEN + 1];
-	char *p = buf;
-	char *s;
-	struct Client *server;
-
-	if('*' == *name || '.' == *name)
-		return NULL;
-
-	/* copy it across to give us a buffer to work on */
-	strlcpy(buf, name, sizeof(buf));
-
-	while ((s = strchr(p, '.')) != 0)
-	{
-		*--s = '*';
-		/*
-		 * Dont need to check IsServer() here since nicknames cant
-		 * have *'s in them anyway.
-		 */
-		if((server = find_server(source_p, s)))
-			return server;
-		p = s + 2;
-	}
-
-	return NULL;
-}
-
-/* find_any_client()
- *
- * finds a client/server/masked server entry from the hash
- */
-struct Client *
-find_any_client(const char *name)
-{
-	struct Client *target_p;
-	dlink_node *ptr;
-	unsigned int hashv;
-
-	s_assert(name != NULL);
-	if(EmptyString(name))
-		return NULL;
-
-	/* hunting for an id, not a nick */
-	if(IsDigit(*name))
-		return (find_id(name));
-
-	hashv = hash_nick(name);
-
-	DLINK_FOREACH(ptr, clientTable[hashv].head)
-	{
-		target_p = ptr->data;
-
-		if(irccmp(name, target_p->name) == 0)
-			return target_p;
-	}
-
-	/* wasnt found, look for a masked server */
-	return hash_find_masked_server(NULL, name);
-}
-
 /* find_client()
  *
  * finds a client/server entry from the client hash table
@@ -612,8 +539,7 @@ find_server(struct Client *source_p, const char *name)
 				return target_p;
 	}
 
-	/* wasnt found, look for a masked server */
-	return hash_find_masked_server(source_p, name);
+	return NULL;
 }
 
 /* find_hostname()

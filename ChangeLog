@@ -1,3 +1,15 @@
+jilles      2007/02/01 00:02:35 UTC	(20070201-3175)
+  Log:
+  Remove '*' from valid server name characters.
+  This makes it impossible to connect hostmasked servers.
+  (This support didn't work well anyway, was incompatible
+  with TS6 and we never masked ourselves.)
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/src/match.c (File Modified) 
+
+
 jilles      2007/01/31 23:57:18 UTC	(20070131-3173)
   Log:
   Change spambot, flooder and jupe joiner notices from host to orighost.
