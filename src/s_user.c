@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c 3201 2007-02-04 01:59:38Z jilles $
+ *  $Id: s_user.c 3203 2007-02-04 15:08:04Z jilles $
  */
 
 #include "stdinc.h"
@@ -65,6 +65,7 @@ extern char *crypt();
 
 char umodebuf[128];
 
+static int orphaned_umodes = 0;
 int user_modes[256] = {
 	/* 0x00 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x0F */
 	/* 0x10 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x1F */
@@ -520,7 +521,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 		add_to_id_hash(source_p->id, source_p);
 	}
 
-	source_p->umodes |= ConfigFileEntry.default_umodes & ~ConfigFileEntry.oper_only_umodes;
+	source_p->umodes |= ConfigFileEntry.default_umodes & ~ConfigFileEntry.oper_only_umodes & ~orphaned_umodes;
 
 	if (source_p->umodes & UMODE_INVISIBLE)
 		Count.invisi++;
@@ -1055,8 +1056,9 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 			if((flag = user_modes[(unsigned char) *pm]))
 			{
 				if(MyConnect(source_p)
-				   && !IsOper(source_p)
-				   && (ConfigFileEntry.oper_only_umodes & flag))
+						&& ((!IsOper(source_p)
+							&& (ConfigFileEntry.oper_only_umodes & flag))
+						|| (orphaned_umodes & flag)))
 				{
 					if (what == MODE_ADD || source_p->umodes & flag)
 						badflag = YES;
@@ -1342,12 +1344,31 @@ construct_umodebuf(void)
 {
 	int i;
 	char *ptr = umodebuf;
+	static int prev_user_modes[128];
 
 	*ptr = '\0';
 
 	for (i = 0; i < 128; i++)
+	{
+		if (prev_user_modes[i] != 0 && prev_user_modes[i] != user_modes[i])
+		{
+			if (user_modes[i] == 0)
+			{
+				orphaned_umodes |= prev_user_modes[i];
+				sendto_realops_snomask(SNO_DEBUG, L_ALL, "Umode +%c is now orphaned", i);
+			}
+			else
+			{
+				orphaned_umodes &= ~prev_user_modes[i];
+				sendto_realops_snomask(SNO_DEBUG, L_ALL, "Orphaned umode +%c is picked up by module", i);
+			}
+			user_modes[i] = prev_user_modes[i];
+		}
+		else
+			prev_user_modes[i] = user_modes[i];
 		if (user_modes[i])
 			*ptr++ = (char) i;
+	}
 
 	*ptr++ = '\0';
 }

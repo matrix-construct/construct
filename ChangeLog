@@ -1,3 +1,15 @@
+jilles      2007/02/04 01:59:38 UTC	(20070204-3201)
+  Log:
+  Move find_umode_slot() from libcharybdis/tools.c to src/s_user.c.
+  
+
+  Changes:	Modified:
+  +1 -0		trunk/include/s_user.h (File Modified) 
+  +0 -22	trunk/libcharybdis/tools.c (File Modified) 
+  +0 -1		trunk/libcharybdis/tools.h (File Modified) 
+  +22 -0	trunk/src/s_user.c (File Modified) 
+
+
 jilles      2007/02/01 01:44:31 UTC	(20070201-3195)
   Log:
   DNSBL keyword substitution is available as of 2.1.3.
