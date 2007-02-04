@@ -20,7 +20,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: tools.c 1110 2006-03-29 22:55:25Z nenolod $
+ *  $Id: tools.c 3201 2007-02-04 01:59:38Z jilles $
  *
  *  Here is the original header:
  *
@@ -96,26 +96,4 @@ free_dlink_node(dlink_node * ptr)
 	assert(ptr != NULL);
 
 	BlockHeapFree(dnode_heap, ptr);
-}
-
-/*
- * find_umode_slot
- *
- * inputs       - NONE
- * outputs      - an available umode bitmask or
- *                0 if no umodes are available
- * side effects - NONE
- */
-unsigned int
-find_umode_slot(void)
-{
-	unsigned int all_umodes = 0, my_umode = 0, i;
-
-	for (i = 0; i < 128; i++)
-		all_umodes |= user_modes[i];
-
-	for (my_umode = 1; my_umode && (all_umodes & my_umode);
-		my_umode <<= 1);
-
-	return my_umode;
 }

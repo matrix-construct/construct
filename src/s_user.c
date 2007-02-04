@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c 3161 2007-01-25 07:23:01Z nenolod $
+ *  $Id: s_user.c 3201 2007-02-04 01:59:38Z jilles $
  */
 
 #include "stdinc.h"
@@ -1313,6 +1313,28 @@ oper_up(struct Client *source_p, struct oper_conf *oper_p)
 	send_oper_motd(source_p);
 
 	return (1);
+}
+
+/*
+ * find_umode_slot
+ *
+ * inputs       - NONE
+ * outputs      - an available umode bitmask or
+ *                0 if no umodes are available
+ * side effects - NONE
+ */
+unsigned int
+find_umode_slot(void)
+{
+	unsigned int all_umodes = 0, my_umode = 0, i;
+
+	for (i = 0; i < 128; i++)
+		all_umodes |= user_modes[i];
+
+	for (my_umode = 1; my_umode && (all_umodes & my_umode);
+		my_umode <<= 1);
+
+	return my_umode;
 }
 
 void

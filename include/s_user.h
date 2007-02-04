@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.h 1887 2006-08-29 13:42:56Z jilles $
+ *  $Id: s_user.h 3201 2007-02-04 01:59:38Z jilles $
  */
 
 #ifndef INCLUDED_s_user_h
@@ -50,6 +50,7 @@ extern void change_nick_user_host(struct Client *target_p, const char *nick, con
 				  const char *host, int newts, char *format, ...);
 
 extern int user_modes[256];
+extern unsigned int find_umode_slot(void);
 extern void construct_umodebuf(void);
 
 extern int oper_up(struct Client *, struct oper_conf *);

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: tools.h 382 2005-12-07 15:15:59Z nenolod $
+ *  $Id: tools.h 3201 2007-02-04 01:59:38Z jilles $
  */
 
 #ifndef __TOOLS_H__
@@ -126,7 +126,6 @@ dlink_node *dlinkFindDelete(void *data, dlink_list *list);
 int dlinkFindDestroy(void *data, dlink_list *list);
 dlink_node *dlinkFind(void *data, dlink_list *list);
 void dlinkMoveList(dlink_list * from, dlink_list * to);
-unsigned int find_umode_slot(void);
 
 #if defined(NEED_INLINES) || defined(TOOLS_C)
 INLINE_FUNC void
