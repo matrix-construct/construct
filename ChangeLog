@@ -1,3 +1,18 @@
+jilles      2007/02/04 15:08:04 UTC	(20070204-3203)
+  Log:
+  Change handling of modularized umodes:
+  - keep the bitmask reserved forever to the letter, fixing
+    the problems when loading multiple umode modules,
+    unloading them and then loading them in a different order
+  - don't allow local users to change umodes which have
+    been unloaded and don't set them on new users via
+    default_umodes
+  
+
+  Changes:	Modified:
+  +24 -3	trunk/src/s_user.c (File Modified) 
+
+
 jilles      2007/02/04 01:59:38 UTC	(20070204-3201)
   Log:
   Move find_umode_slot() from libcharybdis/tools.c to src/s_user.c.

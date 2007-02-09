@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: kqueue.c 398 2005-12-12 18:12:46Z nenolod $
+ *  $Id: kqueue.c 3205 2007-02-09 22:18:23Z nenolod $
  */
 
 #include "stdinc.h"
@@ -103,7 +103,7 @@ kq_update_events(fde_t * F, short filter, PF * handler)
 
 		EV_SET(kep, (uintptr_t) F->fd, filter, kep_flags, 0, 0, (void *) F);
 
-		if(kqoff == kqmax)
+		if(++kqoff == kqmax)
 		{
 			int ret;
 
@@ -115,10 +115,6 @@ kq_update_events(fde_t * F, short filter, PF * handler)
 				return;
 			}
 			kqoff = 0;
-		}
-		else
-		{
-			kqoff++;
 		}
 	}
 }
