@@ -28,7 +28,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: s_log.c 1563 2006-06-02 00:43:35Z nenolod $
+ * $Id: s_log.c 3209 2007-02-11 16:54:43Z jilles $
  */
 
 #include "stdinc.h"
@@ -77,7 +77,7 @@ void
 init_main_logfile(void)
 {
 	if(log_main == NULL)
-		log_main = fopen(LPATH, "a");
+		log_main = fopen(logFileName, "a");
 }
 
 void
@@ -88,7 +88,7 @@ open_logfiles(void)
 	if(log_main != NULL)
 		fclose(log_main);
 
-	log_main = fopen(LPATH, "a");
+	log_main = fopen(logFileName, "a");
 
 	/* log_main is handled above, so just do the rest */
 	for(i = 1; i < LAST_LOGFILE; i++)
