@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_join.c 3173 2007-01-31 23:57:18Z jilles $
+ *  $Id: m_join.c 3211 2007-02-20 00:34:28Z jilles $
  */
 
 #include "stdinc.h"
@@ -62,7 +62,7 @@ mapi_hlist_av1 join_hlist[] = {
 	{ NULL, NULL },
 };
 
-DECLARE_MODULE_AV1(join, NULL, NULL, join_clist, join_hlist, NULL, "$Revision: 3173 $");
+DECLARE_MODULE_AV1(join, NULL, NULL, join_clist, join_hlist, NULL, "$Revision: 3211 $");
 
 static void do_join_0(struct Client *client_p, struct Client *source_p);
 static int check_channel_name_loc(struct Client *source_p, const char *name);
@@ -342,17 +342,15 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		}
 		else
 		{
-			const char *modes = channel_modes(chptr, &me);
-
 			sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
-				      ":%s JOIN %ld %s %s",
+				      ":%s JOIN %ld %s +",
 				      use_id(source_p), (long) chptr->channelts,
-				      chptr->chname, modes);
+				      chptr->chname);
 
 			sendto_server(client_p, chptr, NOCAPS, CAP_TS6,
-				      ":%s SJOIN %ld %s %s :%s",
+				      ":%s SJOIN %ld %s + :%s",
 				      me.name, (long) chptr->channelts,
-				      chptr->chname, modes, source_p->name);
+				      chptr->chname, source_p->name);
 		}
 
 		del_invite(chptr, source_p);
@@ -396,13 +394,10 @@ static int
 ms_join(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr;
-	static struct Mode mode, *oldmode;
-	const char *s;
-	const char *modes;
+	static struct Mode mode;
 	time_t oldts;
 	time_t newts;
 	int isnew;
-	int args = 0;
 	int keep_our_modes = YES;
 	int keep_new_modes = YES;
 	dlink_node *ptr, *next_ptr;
@@ -428,89 +423,11 @@ ms_join(struct Client *client_p, struct Client *source_p, int parc, const char *
 	mode.key[0] = mode.forward[0] = '\0';
 	mode.mode = mode.limit = mode.join_num = mode.join_time = 0;
 
-	s = parv[3];
-	while(*s)
-	{
-		switch (*(s++))
-		{
-		case 'i':
-			mode.mode |= MODE_INVITEONLY;
-			break;
-		case 'n':
-			mode.mode |= MODE_NOPRIVMSGS;
-			break;
-		case 'p':
-			mode.mode |= MODE_PRIVATE;
-			break;
-		case 's':
-			mode.mode |= MODE_SECRET;
-			break;
-		case 'm':
-			mode.mode |= MODE_MODERATED;
-			break;
-		case 't':
-			mode.mode |= MODE_TOPICLIMIT;
-			break;
-		case 'r':
-			mode.mode |= MODE_REGONLY;
-			break;
-		case 'L':
-			mode.mode |= MODE_EXLIMIT;
-			break;
-		case 'P':
-			mode.mode |= MODE_PERMANENT;
-			break;
-		case 'c':
-			mode.mode |= MODE_NOCOLOR;
-			break;
-		case 'g':
-			mode.mode |= MODE_FREEINVITE;
-			break;
-		case 'z':
-			mode.mode |= MODE_OPMODERATE;
-			break;
-		case 'F':
-			mode.mode |= MODE_FREETARGET;
-			break;
-		case 'Q':
-			mode.mode |= MODE_DISFORWARD;
-			break;
-		case 'f':
-			if(parc < 5 + args)
-				return 0;
-			strlcpy(mode.forward, parv[4 + args], sizeof(mode.forward));
-			args++;
-			break;
-		case 'j':
-			/* sent a +j without an arg. */
-			if(parc < 5 + args)
-				return 0;
-			sscanf(parv[4 + args], "%d:%d", &mode.join_num, &mode.join_time);
-			args++;
-			break;
-		case 'k':
-			/* sent a +k without a key, eek. */
-			if(parc < 5 + args)
-				return 0;
-			strlcpy(mode.key, parv[4 + args], sizeof(mode.key));
-			args++;
-			break;
-		case 'l':
-			/* sent a +l without a limit. */
-			if(parc < 5 + args)
-				return 0;
-			mode.limit = atoi(parv[4 + args]);
-			args++;
-			break;
-		}
-	}
-
 	if((chptr = get_or_create_channel(source_p, parv[2], &isnew)) == NULL)
 		return 0;
 
 	newts = atol(parv[1]);
 	oldts = chptr->channelts;
-	oldmode = &chptr->mode;
 
 #ifdef IGNORE_BOGUS_TS
 	if(newts < 800000000)
@@ -547,54 +464,29 @@ ms_join(struct Client *client_p, struct Client *source_p, int parc, const char *
 	else
 		keep_new_modes = NO;
 
-	if(!keep_new_modes)
-		mode = *oldmode;
-	else if(keep_our_modes)
-	{
-		mode.mode |= oldmode->mode;
-		if(oldmode->limit > mode.limit)
-			mode.limit = oldmode->limit;
-		if(strcmp(mode.key, oldmode->key) < 0)
-			strcpy(mode.key, oldmode->key);
-		if(oldmode->join_num > mode.join_num ||
-				(oldmode->join_num == mode.join_num &&
-				 oldmode->join_time > mode.join_time))
-		{
-			mode.join_num = oldmode->join_num;
-			mode.join_time = oldmode->join_time;
-		}
-		if(irccmp(mode.forward, oldmode->forward) < 0)
-			strcpy(mode.forward, oldmode->forward);
-	}
-	else
-	{
-		/* If setting -j, clear join throttle state -- jilles */
-		if (!mode.join_num)
-			chptr->join_count = chptr->join_delta = 0;
-	}
-
-	set_final_mode(&mode, oldmode);
-	chptr->mode = mode;
-
 	/* Lost the TS, other side wins, so remove modes on this side */
 	if(!keep_our_modes)
 	{
+		set_final_mode(&mode, &chptr->mode);
+		chptr->mode = mode;
 		remove_our_modes(chptr, source_p);
 		DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->invites.head)
 		{
 			del_invite(chptr, ptr->data);
 		}
+		/* If setting -j, clear join throttle state -- jilles */
+		chptr->join_count = chptr->join_delta = 0;
 		sendto_channel_local(ALL_MEMBERS, chptr,
 				     ":%s NOTICE %s :*** Notice -- TS for %s changed from %ld to %ld",
 				     me.name, chptr->chname, chptr->chname,
 				     (long) oldts, (long) newts);
+		if(*modebuf != '\0')
+			sendto_channel_local(ALL_MEMBERS, chptr,
+					     ":%s MODE %s %s %s",
+					     source_p->servptr->name,
+					     chptr->chname, modebuf, parabuf);
+		*modebuf = *parabuf = '\0';
 	}
-
-	if(*modebuf != '\0')
-		sendto_channel_local(ALL_MEMBERS, chptr, ":%s MODE %s %s %s",
-				     source_p->user->server, chptr->chname, modebuf, parabuf);
-
-	*modebuf = *parabuf = '\0';
 
 	if(!IsMember(source_p, chptr))
 	{
@@ -611,14 +503,14 @@ ms_join(struct Client *client_p, struct Client *source_p, int parc, const char *
 				     source_p->host, chptr->chname);
 	}
 
-	modes = channel_modes(chptr, client_p);
 	sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
-		      ":%s JOIN %ld %s %s",
-		      source_p->id, (long) chptr->channelts, chptr->chname, modes);
+		      ":%s JOIN %ld %s +",
+		      source_p->id, (long) chptr->channelts, chptr->chname);
 	sendto_server(client_p, chptr, NOCAPS, CAP_TS6,
 		      ":%s SJOIN %ld %s %s :%s",
 		      source_p->user->server, (long) chptr->channelts,
-		      chptr->chname, modes, source_p->name);
+		      chptr->chname, keep_new_modes ? "+" : "0",
+		      source_p->name);
 	return 0;
 }
 
