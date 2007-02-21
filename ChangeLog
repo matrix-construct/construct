@@ -1,3 +1,28 @@
+jilles      2007/02/20 00:34:28 UTC	(20070220-3211)
+  Log:
+  Port over ratbox 2.2 r23507, r23624, r23626 (jilles/anfl):
+  Change TS6 JOIN processing
+  - don't send out simple modes in TS6 JOIN and TS5 SJOIN when
+    a local user joins an existing channel
+  - don't send out simple modes in TS6 JOIN and TS5 SJOIN when
+    propagating a TS6 JOIN
+  - don't interpret simple modes in an incoming TS6 JOIN
+  
+  This is to avoid desyncs when certain mode changes (e.g. -im)
+  cross with joins. A downside is that simple modes will be
+  more desynched when a JOIN creates a channel or lowers TS,
+  but that's less important.
+  
+  Update the TS6 specification to include this, and clarify
+  that TMODE can come from a server and that MODE must be
+  translated into TMODE from other servers too.
+  
+
+  Changes:	Modified:
+  +69 -39	trunk/doc/technical/ts6.txt (File Modified) 
+  +19 -127	trunk/modules/core/m_join.c (File Modified) 
+
+
 jilles      2007/02/11 16:54:43 UTC	(20070211-3209)
   Log:
   Make -logfile work again.

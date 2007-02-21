@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: chmode.c 3161 2007-01-25 07:23:01Z nenolod $
+ *  $Id: chmode.c 3213 2007-02-21 19:52:51Z jilles $
  */
 
 #include "stdinc.h"
@@ -581,7 +581,10 @@ chm_ban(struct Client *source_p, struct Channel *chptr,
 				   me.name, source_p->name, chptr->chname,
 				   banptr->banstr, banptr->who, banptr->when);
 		}
-		sendto_one(source_p, form_str(rpl_endlist), me.name, source_p->name, chptr->chname);
+		if (mode_type == CHFL_QUIET)
+			sendto_one(source_p, ":%s %d %s %s :End of Channel Quiet List", me.name, rpl_endlist, source_p->name, chptr->chname);
+		else
+			sendto_one(source_p, form_str(rpl_endlist), me.name, source_p->name, chptr->chname);
 		return;
 	}
 
