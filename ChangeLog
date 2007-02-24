@@ -1,3 +1,15 @@
+jilles      2007/02/21 19:52:51 UTC	(20070221-3213)
+  Log:
+  Put "End of Channel Quiet List" instead of
+  "End of Channel Ban List" for a +q list.
+  Due to client restrictions the numerics for
+  quiet lists must be the same as for ban lists.
+  
+
+  Changes:	Modified:
+  +4 -1		trunk/src/chmode.c (File Modified) 
+
+
 jilles      2007/02/20 00:34:28 UTC	(20070220-3211)
   Log:
   Port over ratbox 2.2 r23507, r23624, r23626 (jilles/anfl):
