@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c 3203 2007-02-04 15:08:04Z jilles $
+ *  $Id: s_user.c 3219 2007-02-24 19:34:28Z jilles $
  */
 
 #include "stdinc.h"
@@ -1307,6 +1307,10 @@ oper_up(struct Client *source_p, struct oper_conf *oper_p)
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "%s (%s@%s) is now an operator", source_p->name,
 			     source_p->username, source_p->host);
+	if(!(old & UMODE_INVISIBLE) && IsInvisible(source_p))
+		++Count.invisi;
+	if((old & UMODE_INVISIBLE) && !IsInvisible(source_p))
+		--Count.invisi;
 	send_umode_out(source_p, source_p, old);
 	sendto_one(source_p, form_str(RPL_SNOMASK), me.name, source_p->name,
 		   construct_snobuf(source_p->snomask));
