@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.c 3161 2007-01-25 07:23:01Z nenolod $
+ *  $Id: s_conf.c 3223 2007-03-02 17:45:47Z jilles $
  */
 
 #include "stdinc.h"
@@ -188,10 +188,15 @@ check_client(struct Client *client_p, struct Client *source_p, const char *usern
 		break;
 
 	case TOO_MANY_LOCAL:
+		/* Note that these notices are sent to opers on other
+		 * servers also, so even if local opers are allowed to
+		 * see the IP, we still cannot send it.
+		 */
 		sendto_realops_snomask(SNO_FULL, L_NETWIDE,
 				"Too many local connections for %s!%s%s@%s",
 				source_p->name, IsGotId(source_p) ? "" : "~",
-				source_p->username, source_p->sockhost);
+				source_p->username,
+				show_ip(NULL, source_p) && !IsIPSpoof(source_p) ? source_p->sockhost : source_p->host);
 
 		ilog(L_FUSER, "Too many local connections from %s!%s%s@%s",
 			source_p->name, IsGotId(source_p) ? "" : "~",
@@ -205,7 +210,8 @@ check_client(struct Client *client_p, struct Client *source_p, const char *usern
 		sendto_realops_snomask(SNO_FULL, L_NETWIDE,
 				"Too many global connections for %s!%s%s@%s",
 				source_p->name, IsGotId(source_p) ? "" : "~",
-				source_p->username, source_p->sockhost);
+				source_p->username,
+				show_ip(NULL, source_p) && !IsIPSpoof(source_p) ? source_p->sockhost : source_p->host);
 		ilog(L_FUSER, "Too many global connections from %s!%s%s@%s",
 			source_p->name, IsGotId(source_p) ? "" : "~",
 			source_p->username, source_p->sockhost);
@@ -218,7 +224,8 @@ check_client(struct Client *client_p, struct Client *source_p, const char *usern
 		sendto_realops_snomask(SNO_FULL, L_NETWIDE,
 				"Too many user connections for %s!%s%s@%s",
 				source_p->name, IsGotId(source_p) ? "" : "~",
-				source_p->username, source_p->sockhost);
+				source_p->username,
+				show_ip(NULL, source_p) && !IsIPSpoof(source_p) ? source_p->sockhost : source_p->host);
 		ilog(L_FUSER, "Too many user connections from %s!%s%s@%s",
 			source_p->name, IsGotId(source_p) ? "" : "~",
 			source_p->username, source_p->sockhost);

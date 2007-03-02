@@ -1,3 +1,15 @@
+jilles      2007/02/24 19:34:28 UTC	(20070224-3219)
+  Log:
+  Make oper_up() take +i/-i during opering up into account
+  (e.g. no_oper_invis extension, +i in operator::umodes).
+  Remove the hack from no_oper_invis.
+  
+
+  Changes:	Modified:
+  +0 -2		trunk/extensions/no_oper_invis.c (File Modified) 
+  +4 -0		trunk/src/s_user.c (File Modified) 
+
+
 jilles      2007/02/24 18:35:58 UTC	(20070224-3215)
   Log:
   no_oper_invis: decrement invisible count when clearing
