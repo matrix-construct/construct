@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_kline.c 3161 2007-01-25 07:23:01Z nenolod $
+ *  $Id: m_kline.c 3225 2007-03-04 23:42:55Z jilles $
  */
 
 #include "stdinc.h"
@@ -65,7 +65,7 @@ struct Message unkline_msgtab = {
 };
 
 mapi_clist_av1 kline_clist[] = { &kline_msgtab, &unkline_msgtab, NULL };
-DECLARE_MODULE_AV1(kline, NULL, NULL, kline_clist, NULL, NULL, "$Revision: 3161 $");
+DECLARE_MODULE_AV1(kline, NULL, NULL, kline_clist, NULL, NULL, "$Revision: 3225 $");
 
 /* Local function prototypes */
 static int find_user_host(struct Client *source_p, const char *userhost, char *user, char *host);
@@ -659,8 +659,8 @@ valid_comment(struct Client *source_p, char *comment)
 		return 0;
 	}
 
-	if(strlen(comment) > REASONLEN)
-		comment[REASONLEN] = '\0';
+	if(strlen(comment) > BANREASONLEN)
+		comment[BANREASONLEN] = '\0';
 
 	return 1;
 }

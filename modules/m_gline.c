@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_gline.c 3161 2007-01-25 07:23:01Z nenolod $
+ *  $Id: m_gline.c 3225 2007-03-04 23:42:55Z jilles $
  */
 
 #include "stdinc.h"
@@ -63,7 +63,7 @@ struct Message ungline_msgtab = {
 };
 
 mapi_clist_av1 gline_clist[] = { &gline_msgtab, &ungline_msgtab, NULL };
-DECLARE_MODULE_AV1(gline, NULL, NULL, gline_clist, NULL, NULL, "$Revision: 3161 $");
+DECLARE_MODULE_AV1(gline, NULL, NULL, gline_clist, NULL, NULL, "$Revision: 3225 $");
 
 static int majority_gline(struct Client *source_p, const char *user,
 			  const char *host, const char *reason);
@@ -514,8 +514,8 @@ invalid_gline(struct Client *source_p, const char *luser,
 		return 1;
 	}
 
-	if(strlen(lreason) > REASONLEN)
-		lreason[REASONLEN] = '\0';
+	if(strlen(lreason) > BANREASONLEN)
+		lreason[BANREASONLEN] = '\0';
 
 	return 0;
 }
@@ -546,8 +546,8 @@ set_local_gline(struct Client *source_p, const char *user,
 	aconf->status = CONF_GLINE;
 	aconf->flags |= CONF_FLAGS_TEMPORARY;
 
-	if(strlen(my_reason) > REASONLEN)
-		my_reason[REASONLEN-1] = '\0';
+	if(strlen(my_reason) > BANREASONLEN)
+		my_reason[BANREASONLEN-1] = '\0';
 
 	if((oper_reason = strchr(my_reason, '|')) != NULL)
 	{

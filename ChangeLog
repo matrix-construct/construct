@@ -1,3 +1,13 @@
+jilles      2007/03/02 17:45:47 UTC	(20070302-3223)
+  Log:
+  Don't leak auth{} spoofed IP addresses in +f notices.
+  from ratbox (androsyn)
+  
+
+  Changes:	Modified:
+  +10 -3	trunk/src/s_conf.c (File Modified) 
+
+
 jilles      2007/02/24 19:34:28 UTC	(20070224-3219)
   Log:
   Make oper_up() take +i/-i during opering up into account

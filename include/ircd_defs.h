@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd_defs.h 865 2006-02-16 14:05:37Z nenolod $
+ *  $Id: ircd_defs.h 3225 2007-03-04 23:42:55Z jilles $
  */
 
 /*
@@ -101,9 +101,14 @@
 #define LOC_CHANNELLEN	50
 
 /* reason length of klines, parts, quits etc */
-#define REASONLEN	TOPICLEN	/* in charybdis, reasonlen is controlled via topiclen */
-#define AWAYLEN		TOPICLEN	/* ditto for awaylen */
-#define KILLLEN         TOPICLEN	/* and killlen. have a nice day. --nenolod */
+/* for quit messages, note that a client exit server notice
+ * :012345678901234567890123456789012345678901234567890123456789123 NOTICE * :*** Notice -- Client exiting: 012345678901234567 (0123456789@012345678901234567890123456789012345678901234567890123456789123) [] [1111:2222:3333:4444:5555:6666:7777:8888]
+ * takes at most 246 bytes (including CRLF and '\0') and together with the
+ * quit reason should fit in 512 */
+#define REASONLEN	260	/* kick/part/quit */
+#define BANREASONLEN	390	/* kline/dline/gline */
+#define AWAYLEN		TOPICLEN
+#define KILLLEN         200	/* with Killed (nick ()) added this should fit in quit */
 
 /* 23+1 for \0 */
 #define KEYLEN          24
