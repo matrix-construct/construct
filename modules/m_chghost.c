@@ -48,7 +48,7 @@ struct Message chghost_msgtab = {
 
 mapi_clist_av1 chghost_clist[] = { &chghost_msgtab, &realhost_msgtab, NULL };
 
-DECLARE_MODULE_AV1(chghost, NULL, NULL, chghost_clist, NULL, NULL, "$Revision: 1865 $");
+DECLARE_MODULE_AV1(chghost, NULL, NULL, chghost_clist, NULL, NULL, "$Revision: 3227 $");
 
 /* clean_host()
  *
@@ -93,7 +93,7 @@ me_realhost(struct Client *client_p, struct Client *source_p,
 		return 0;
 
 	del_from_hostname_hash(source_p->orighost, source_p);
-	strlcpy(source_p->orighost, parv[1], HOSTLEN);
+	strlcpy(source_p->orighost, parv[1], sizeof source_p->orighost);
 	if (irccmp(source_p->host, source_p->orighost))
 		SetDynSpoof(source_p);
 	else

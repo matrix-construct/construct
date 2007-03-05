@@ -7,7 +7,7 @@
  * The authors takes no responsibility for any damage or loss
  * of property which results from the use of this software.
  *
- * $Id: res.c 2023 2006-09-02 23:47:27Z jilles $
+ * $Id: res.c 3227 2007-03-05 01:14:46Z jilles $
  * from Hybrid Id: res.c 459 2006-02-12 22:21:37Z db $
  *
  * July 1999 - Rewrote a bunch of stuff here. Change hostent builder code,
@@ -408,7 +408,7 @@ static void do_query_name(struct DNSQuery *query, const char *name, struct resli
 {
 	char host_name[HOSTLEN + 1];
 
-	strlcpy(host_name, name, HOSTLEN);
+	strlcpy(host_name, name, HOSTLEN + 1);
 	add_local_domain(host_name, HOSTLEN);
 
 	if (request == NULL)
@@ -682,7 +682,7 @@ static int proc_answer(struct reslist *request, HEADER * header, char *buf, char
 			  else if (n == 0)
 				  return (0);	/* no more answers left */
 
-			  strlcpy(request->name, hostbuf, HOSTLEN);
+			  strlcpy(request->name, hostbuf, HOSTLEN + 1);
 
 			  return (1);
 			  break;

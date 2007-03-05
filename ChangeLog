@@ -1,3 +1,19 @@
+jilles      2007/03/04 23:42:55 UTC	(20070304-3225)
+  Log:
+  Cut down quit/part/kick reasons to avoid quit reasons
+  overflowing the client exiting server notice (from
+  TOPICLEN to 260). kill reasons become shorter accordingly.
+  kline/dline/gline reasons become 390.
+  away messages stay at TOPICLEN for now.
+  
+
+  Changes:	Modified:
+  +8 -3		trunk/include/ircd_defs.h (File Modified) 
+  +2 -2		trunk/modules/m_dline.c (File Modified) 
+  +4 -4		trunk/modules/m_gline.c (File Modified) 
+  +2 -2		trunk/modules/m_kline.c (File Modified) 
+
+
 jilles      2007/03/02 17:45:47 UTC	(20070302-3223)
   Log:
   Don't leak auth{} spoofed IP addresses in +f notices.

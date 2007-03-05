@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c 3219 2007-02-24 19:34:28Z jilles $
+ *  $Id: s_user.c 3227 2007-03-05 01:14:46Z jilles $
  */
 
 #include "stdinc.h"
@@ -1452,8 +1452,8 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 				target_p->host, nick);
 	}
 
-	strlcpy(target_p->username, user, USERLEN);
-	strlcpy(target_p->host, host, HOSTLEN);
+	strlcpy(target_p->username, user, sizeof target_p->username);
+	strlcpy(target_p->host, host, sizeof target_p->host);
 
 	if (changed)
 		add_history(target_p, 1);
