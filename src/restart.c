@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: restart.c 486 2006-01-15 10:36:32Z nenolod $
+ *  $Id: restart.c 3249 2007-03-05 18:51:17Z nenolod $
  */
 
 #include "stdinc.h"
@@ -46,7 +46,7 @@ restart(const char *mesg)
 		abort();
 	was_here = YES;
 
-	ilog(L_MAIN, "Restarting Server because: %s, memory data limit: %ld", mesg, get_maxrss());
+	ilog(L_MAIN, "Restarting Server because: %s", mesg);
 
 	server_reboot();
 }

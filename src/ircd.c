@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd.c 3047 2006-12-26 23:18:05Z jilles $
+ *  $Id: ircd.c 3249 2007-03-05 18:51:17Z nenolod $
  */
 
 #include "stdinc.h"
@@ -79,38 +79,9 @@
  */
 int _charybdis_data_version = CHARYBDIS_DV;
 
-extern int ServerRunning, initialVMTop;
+extern int ServerRunning;
 extern struct LocalUser meLocalUser;
 extern char **myargv;
-
-/*
- * get_vm_top - get the operating systems notion of the resident set size
- */
-static unsigned long
-get_vm_top(void)
-{
-	/*
-	 * NOTE: sbrk is not part of the ANSI C library or the POSIX.1 standard
-	 * however it seems that everyone defines it. Calling sbrk with a 0
-	 * argument will return a pointer to the top of the process virtual
-	 * memory without changing the process size, so this call should be
-	 * reasonably safe (sbrk returns the new value for the top of memory).
-	 * This code relies on the notion that the address returned will be an 
-	 * offset from 0 (NULL), so the result of sbrk is cast to a size_t and 
-	 * returned. We really shouldn't be using it here but...
-	 */
-	void *vptr = sbrk(0);
-	return (unsigned long) vptr;
-}
-
-/*
- * get_maxrss - get the operating systems notion of the resident set size
- */
-unsigned long
-get_maxrss(void)
-{
-	return get_vm_top() - initialVMTop;
-}
 
 /*
  * print_startup - print startup information
@@ -173,11 +144,10 @@ init_sys(void)
 
 	if(!getrlimit(RLIMIT_FD_MAX, &limit))
 	{
-
 		if(limit.rlim_max < MAXCONNECTIONS)
 		{
-			fprintf(stderr, "ircd fd table too big\n");
-			fprintf(stderr, "Hard Limit: %ld IRC max: %d\n",
+			fprintf(stderr, "ircd's bootstrap fd table is too big\n");
+			fprintf(stderr, "Hard Limit: %ld bootstrap size: %d\n",
 				(long) limit.rlim_max, MAXCONNECTIONS);
 			fprintf(stderr, "Fix MAXCONNECTIONS\n");
 			exit(-1);
@@ -512,11 +482,6 @@ main(int argc, char *argv[])
 	 * Setup corefile size immediately after boot -kre
 	 */
 	setup_corefile();
-
-	/*
-	 * set initialVMTop before we allocate any memory
-	 */
-	initialVMTop = get_vm_top();
 
 	ServerRunning = 0;
 	/* It ain't random, but it ought to be a little harder to guess */

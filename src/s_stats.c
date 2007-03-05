@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_stats.c 1409 2006-05-21 14:46:17Z jilles $
+ *  $Id: s_stats.c 3249 2007-03-05 18:51:17Z nenolod $
  */
 
 #include "stdinc.h"
@@ -386,8 +386,4 @@ count_memory(struct Client *source_p)
 			   "z :Remote client Memory in use: %ld(%ld)",
 			   (long)remote_client_count,
 			   (long)remote_client_memory_used);
-
-	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			   "z :TOTAL: %d Available:  Current max RSS: %lu",
-			   (int) total_memory, get_maxrss());
 }

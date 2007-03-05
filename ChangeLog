@@ -1,3 +1,12 @@
+nenolod     2007/03/05 18:42:24 UTC	(20070305-3247)
+  Log:
+  - avoid some potential NULL dereferencing
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/libcharybdis/commio.c (File Modified) 
+
+
 nenolod     2007/03/05 18:41:14 UTC	(20070305-3245)
   Log:
   - fix a typo
