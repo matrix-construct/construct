@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: commio.c 3235 2007-03-05 17:31:35Z nenolod $
+ *  $Id: commio.c 3237 2007-03-05 17:35:17Z nenolod $
  */
 
 #include "libcharybdis.h"
@@ -324,7 +324,7 @@ comm_checktimeouts(void *notused)
 	int i;
 	dlink_node *n, *n2;
 
-	for (i = 0; i <= FD_HASH_SIZE; i)
+	for (i = 0; i <= FD_HASH_SIZE; i++)
 	{
 		bucket = &fd_table[i];
 
