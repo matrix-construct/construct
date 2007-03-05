@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: kqueue.c 3229 2007-03-05 17:23:07Z nenolod $
+ *  $Id: kqueue.c 3241 2007-03-05 17:52:28Z jilles $
  */
 
 #include "stdinc.h"
@@ -246,6 +246,13 @@ comm_select(unsigned long delay)
 			errno = (int) ke[i].data;
 			/* XXX error == bad! -- adrian */
 			continue;	/* XXX! */
+		}
+		if (F == NULL)
+		{
+			/* XXX this is because of our "queueing" of
+			 * kqueue changes so we may get ones for fds
+			 * we have already closed? -- jilles */
+			continue;
 		}
 
 		switch (ke[i].filter)

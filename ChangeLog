@@ -1,3 +1,12 @@
+jilles      2007/03/05 17:41:40 UTC	(20070305-3239)
+  Log:
+  Don't reference freed memory (fde_t) in comm_close().
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/libcharybdis/commio.c (File Modified) 
+
+
 nenolod     2007/03/05 17:35:17 UTC	(20070305-3237)
   Log:
   - fix for 100% cpu use
