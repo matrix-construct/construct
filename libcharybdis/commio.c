@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: commio.c 3229 2007-03-05 17:23:07Z nenolod $
+ *  $Id: commio.c 3235 2007-03-05 17:31:35Z nenolod $
  */
 
 #include "libcharybdis.h"
@@ -317,39 +317,51 @@ comm_setflush(int fd, time_t timeout, PF * callback, void *cbdata)
 void
 comm_checktimeouts(void *notused)
 {
-	int fd;
 	PF *hdl;
 	void *data;
 	fde_t *F;
-	for (fd = 0; fd <= highest_fd; fd++)
+	dlink_list *bucket;
+	int i;
+	dlink_node *n, *n2;
+
+	for (i = 0; i <= FD_HASH_SIZE; i)
 	{
-		F = comm_locate_fd(fd);
-		if(F == NULL)
-			continue;
-		if(!F->flags.open)
-			continue;
-		if(F->flags.closing)
+		bucket = &fd_table[i];
+
+		if (dlink_list_length(bucket) <= 0)
 			continue;
 
-		/* check flush functions */
-		if(F->flush_handler &&
-		   F->flush_timeout > 0 && F->flush_timeout < CurrentTime)
+		DLINK_FOREACH_SAFE(n, n2, bucket->head)
 		{
-			hdl = F->flush_handler;
-			data = F->flush_data;
-			comm_setflush(F->fd, 0, NULL, NULL);
-			hdl(F->fd, data);
-		}
+			F = (fde_t *) n->data;
 
-		/* check timeouts */
-		if(F->timeout_handler &&
-		   F->timeout > 0 && F->timeout < CurrentTime)
-		{
-			/* Call timeout handler */
-			hdl = F->timeout_handler;
-			data = F->timeout_data;
-			comm_settimeout(F->fd, 0, NULL, NULL);
-			hdl(F->fd, data);
+			if(F == NULL)
+				continue;
+			if(!F->flags.open)
+				continue;
+			if(F->flags.closing)
+				continue;
+
+			/* check flush functions */
+			if(F->flush_handler &&
+			   F->flush_timeout > 0 && F->flush_timeout < CurrentTime)
+			{
+				hdl = F->flush_handler;
+				data = F->flush_data;
+				comm_setflush(F->fd, 0, NULL, NULL);
+				hdl(F->fd, data);
+			}
+
+			/* check timeouts */
+			if(F->timeout_handler &&
+			   F->timeout > 0 && F->timeout < CurrentTime)
+			{
+				/* Call timeout handler */
+				hdl = F->timeout_handler;
+				data = F->timeout_data;
+				comm_settimeout(F->fd, 0, NULL, NULL);
+				hdl(F->fd, data);
+			}
 		}
 	}
 }
