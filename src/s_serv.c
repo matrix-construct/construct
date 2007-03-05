@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.c 3183 2007-02-01 01:07:42Z jilles $
+ *  $Id: s_serv.c 3233 2007-03-05 17:28:27Z nenolod $
  */
 
 #include "stdinc.h"
@@ -1631,6 +1631,7 @@ serv_connect_callback(int fd, int status, void *data)
 	struct Client *client_p = data;
 	struct server_conf *server_p;
 	char *errstr;
+	fde_t *F = comm_locate_fd(fd);
 
 	/* First, make sure its a real client! */
 	s_assert(client_p != NULL);
@@ -1649,9 +1650,9 @@ serv_connect_callback(int fd, int status, void *data)
 	}
 
 	/* Next, for backward purposes, record the ip of the server */
-	memcpy(&client_p->localClient->ip, &fd_table[fd].connect.hostaddr, sizeof client_p->localClient->ip);
+	memcpy(&client_p->localClient->ip, &F->connect.hostaddr, sizeof client_p->localClient->ip);
 	/* Set sockhost properly now -- jilles */
-	inetntop_sock((struct sockaddr *)&fd_table[fd].connect.hostaddr,
+	inetntop_sock((struct sockaddr *)&F->connect.hostaddr,
 			client_p->sockhost, sizeof client_p->sockhost);
 	
 	/* Check the status */

@@ -1,3 +1,19 @@
+nenolod     2007/03/05 17:23:07 UTC	(20070305-3229)
+  Log:
+  - use a hashtable for fdlist storage. first step to making the amount of allowed clients dynamic and removing MAXCONNECTIONS.
+  
+
+  Changes:	Modified:
+  +97 -26	trunk/libcharybdis/commio.c (File Modified) 
+  +3 -2		trunk/libcharybdis/commio.h (File Modified) 
+  +8 -6		trunk/libcharybdis/devpoll.c (File Modified) 
+  +1 -1		trunk/libcharybdis/epoll.c (File Modified) 
+  +2 -2		trunk/libcharybdis/kqueue.c (File Modified) 
+  +3 -3		trunk/libcharybdis/poll.c (File Modified) 
+  +2 -2		trunk/libcharybdis/ports.c (File Modified) 
+  +2 -2		trunk/libcharybdis/select.c (File Modified) 
+
+
 jilles      2007/03/05 01:14:46 UTC	(20070305-3227)
   Log:
   Fix some cases where the size argument to strlcpy()
