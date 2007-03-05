@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: commio.c 3239 2007-03-05 17:41:40Z jilles $
+ *  $Id: commio.c 3247 2007-03-05 18:42:24Z nenolod $
  */
 
 #include "libcharybdis.h"
@@ -740,7 +740,7 @@ fdlist_update_biggest(int fd, int opening)
 	 * re-opening it
 	 */
 	s_assert(!opening);
-	while (highest_fd >= 0 && comm_locate_fd(fd)->flags.open) /* XXX */
+	while (highest_fd >= 0 && comm_locate_fd(fd) != NULL)
 		highest_fd--;
 }
 
