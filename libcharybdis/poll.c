@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: poll.c 3229 2007-03-05 17:23:07Z nenolod $
+ *  $Id: poll.c 3243 2007-03-05 18:40:39Z nenolod $
  */
 
 #include "config.h"
@@ -41,8 +41,9 @@
 
 struct _pollfd_list
 {
-	struct pollfd pollfds[MAXCONNECTIONS];
+	struct pollfd *pollfds;
 	int maxindex;		/* highest FD number */
+	int allocated;
 };
 
 typedef struct _pollfd_list pollfd_list_t;
@@ -51,6 +52,45 @@ pollfd_list_t pollfd_list;
 static void poll_update_pollfds(int, short, PF *);
 static unsigned long last_count = 0; 
 static unsigned long empty_count = 0;
+
+/*
+ * init_netio
+ *
+ * This is a needed exported function which will be called to initialise
+ * the network loop code.
+ */
+void
+init_netio(void)
+{
+	int fd;
+
+	pollfd_list.pollfds = calloc(sizeof(struct pollfd), MAXCONNECTIONS);
+
+	for (fd = 0; fd < MAXCONNECTIONS; fd++)
+		pollfd_list.pollfds[fd].fd = -1;
+
+	pollfd_list.maxindex = 0;
+	pollfd_list.allocated = MAXCONNECTIONS;
+}
+
+static inline void
+resize_poll_array(int fd)
+{
+	int i, old_value = pollfd_list.allocated;
+
+	if (fd < pollfd_list.allocated)
+		return;
+
+	pollfd_list.allocated += 1024;
+	pollfd_list.pollfds = MyRealloc(pollfd_list.pollfds, pollfd_list.allocated * sizeof(struct pollfd));
+
+	/* because realloced memory can contain junk, we have to zero it out. */
+	memset(&pollfd_list.pollfds[old_value+1], 0, sizeof(struct pollfd) * 1024);
+
+	for (i = old_value + 1; i <= pollfd_list.allocated; i++)
+		pollfd_list.pollfds[i].fd = -1;
+}
+
 /* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
 /* Private functions */
 
@@ -62,7 +102,7 @@ static inline int
 poll_findslot(void)
 {
 	int i;
-	for (i = 0; i < MAXCONNECTIONS; i++)
+	for (i = 0; i < pollfd_list.allocated; i++)
 	{
 		if(pollfd_list.pollfds[i].fd == -1)
 		{
@@ -70,6 +110,7 @@ poll_findslot(void)
 			return i;
 		}
 	}
+
 	s_assert(1 == 0);
 	/* NOTREACHED */
 	return -1;
@@ -84,10 +125,11 @@ poll_update_pollfds(int fd, short event, PF * handler)
 	fde_t *F = comm_locate_table(fd);
 	int comm_index;
 
+	resize_poll_array(fd);
+
 	if(F->comm_index < 0)
-	{
 		F->comm_index = poll_findslot();
-	}
+
 	comm_index = F->comm_index;
 
 	/* Update the events */
@@ -125,25 +167,6 @@ poll_update_pollfds(int fd, short event, PF * handler)
 
 /* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
 /* Public functions */
-
-
-/*
- * init_netio
- *
- * This is a needed exported function which will be called to initialise
- * the network loop code.
- */
-void
-init_netio(void)
-{
-	int fd;
-
-	for (fd = 0; fd < MAXCONNECTIONS; fd++)
-	{
-		pollfd_list.pollfds[fd].fd = -1;
-	}
-	pollfd_list.maxindex = 0;
-}
 
 /*
  * comm_setselect

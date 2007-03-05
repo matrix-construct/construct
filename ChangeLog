@@ -1,3 +1,13 @@
+jilles      2007/03/05 17:52:28 UTC	(20070305-3241)
+  Log:
+  Our way of using kqueue may cause it to report fds we
+  don't know about anymore, cope.
+  
+
+  Changes:	Modified:
+  +7 -0		trunk/libcharybdis/kqueue.c (File Modified) 
+
+
 jilles      2007/03/05 17:41:40 UTC	(20070305-3239)
   Log:
   Don't reference freed memory (fde_t) in comm_close().
