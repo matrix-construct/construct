@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: commio.c 3237 2007-03-05 17:35:17Z nenolod $
+ *  $Id: commio.c 3239 2007-03-05 17:41:40Z jilles $
  */
 
 #include "libcharybdis.h"
@@ -801,6 +801,7 @@ comm_close(int fd)
 	}
 	comm_setselect(F->fd, FDLIST_NONE, COMM_SELECT_WRITE | COMM_SELECT_READ, NULL, NULL, 0);
 	comm_setflush(F->fd, 0, NULL, NULL);
+	F->timeout = 0;
 	
 	if (F->dns_query != NULL)
 	{
@@ -814,7 +815,6 @@ comm_close(int fd)
 	number_fd--;
 	comm_remove_fd(fd);
 
-	F->timeout = 0;
 	/* Unlike squid, we're actually closing the FD here! -- adrian */
 	close(fd);
 }
