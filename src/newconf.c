@@ -1,5 +1,5 @@
 /* This code is in the public domain.
- * $Id: newconf.c 3131 2007-01-21 15:36:31Z jilles $
+ * $Id: newconf.c 3251 2007-03-05 18:58:38Z nenolod $
  */
 
 #include "stdinc.h"
@@ -1917,6 +1917,8 @@ static struct ConfEntry conf_serverinfo_table[] =
 	{ "sid", 		CF_QSTRING, conf_set_serverinfo_sid,	0, NULL },
 	{ "vhost", 		CF_QSTRING, conf_set_serverinfo_vhost,	0, NULL },
 	{ "vhost6", 		CF_QSTRING, conf_set_serverinfo_vhost6,	0, NULL },
+
+	{ "max_clients",	CF_INT,	    NULL, 0, &ServerInfo.max_clients    },
 
 	{ "\0",	0, NULL, 0, NULL }
 };

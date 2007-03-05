@@ -1,3 +1,14 @@
+nenolod     2007/03/05 18:51:17 UTC	(20070305-3249)
+  Log:
+  - remove get_maxrss() and all of that insecure and unsafe nonsense
+  
+
+  Changes:	Modified:
+  +3 -38	trunk/src/ircd.c (File Modified) 
+  +1 -1		trunk/src/restart.c (File Modified) 
+  +0 -4		trunk/src/s_stats.c (File Modified) 
+
+
 nenolod     2007/03/05 18:42:24 UTC	(20070305-3247)
   Log:
   - avoid some potential NULL dereferencing

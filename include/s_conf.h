@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.h 3131 2007-01-21 15:36:31Z jilles $
+ *  $Id: s_conf.h 3251 2007-03-05 18:58:38Z nenolod $
  */
 
 #ifndef INCLUDED_s_conf_h
@@ -298,6 +298,8 @@ struct server_info
 #ifdef IPV6
 	int specific_ipv6_vhost;
 #endif
+
+	int max_clients;
 };
 
 struct admin_info
