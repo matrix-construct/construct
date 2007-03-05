@@ -1,3 +1,12 @@
+nenolod     2007/03/05 18:40:39 UTC	(20070305-3243)
+  Log:
+  - rework poll a bit for the MAXCONNECTIONS changes.
+  
+
+  Changes:	Modified:
+  +46 -23	trunk/libcharybdis/poll.c (File Modified) 
+
+
 jilles      2007/03/05 17:52:28 UTC	(20070305-3241)
   Log:
   Our way of using kqueue may cause it to report fds we

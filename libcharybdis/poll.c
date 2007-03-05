@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: poll.c 3243 2007-03-05 18:40:39Z nenolod $
+ *  $Id: poll.c 3245 2007-03-05 18:41:14Z nenolod $
  */
 
 #include "config.h"
@@ -122,7 +122,7 @@ poll_findslot(void)
 static void
 poll_update_pollfds(int fd, short event, PF * handler)
 {
-	fde_t *F = comm_locate_table(fd);
+	fde_t *F = comm_locate_fd(fd);
 	int comm_index;
 
 	resize_poll_array(fd);
