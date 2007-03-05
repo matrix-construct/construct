@@ -98,7 +98,7 @@ void
 ircd_setselect(int fd, fdlist_t list, unsigned int type, PF * handler,
 	       void *client_data)
 {
-	fde_t *F = &fd_table[fd];
+	fde_t *F = comm_locate_fd(fd);
 	s_assert(fd >= 0);
 	s_assert(F->flags.open);
 
@@ -148,7 +148,7 @@ ircd_select(unsigned long delay)
 		case PORT_SOURCE_FD:
 			fd = pelst[i].portev_object;
 			PF *hdl = NULL;
-			fde_t *F = &fd_table[fd];
+			fde_t *F = comm_locate_fd(fd);
 
 			if ((pelst[i].portev_events & POLLRDNORM) && (hdl = F->read_handler)) {
 				F->read_handler = NULL;

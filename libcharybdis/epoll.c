@@ -23,7 +23,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: epoll.c 390 2005-12-07 18:46:56Z nenolod $
+ *  $Id: epoll.c 3229 2007-03-05 17:23:07Z nenolod $
  */
 
 #include "config.h"
@@ -80,7 +80,7 @@ comm_setselect(int fd, fdlist_t list, unsigned int type, PF * handler,
 	       void *client_data, time_t timeout)
 {
 	struct epoll_event ep_event;
-	fde_t *F = &fd_table[fd];
+	fde_t *F = comm_locate_fd(fd);
 	int old_flags = F->pflags;
 	int op = -1;
 	

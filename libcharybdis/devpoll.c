@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: devpoll.c 390 2005-12-07 18:46:56Z nenolod $
+ *  $Id: devpoll.c 3229 2007-03-05 17:23:07Z nenolod $
  */
 
 #include "config.h"
@@ -77,24 +77,26 @@ devpoll_update_events(int fd, short filter, PF * handler)
 	int cur_mask = fdmask[fd];
 	PF *cur_handler;
 	fdmask[fd] = 0;
+	fde_t *F = comm_locate_fd(fd);
+
 	switch (filter)
 	{
 	case COMM_SELECT_READ:
-		cur_handler = fd_table[fd].read_handler;
+		cur_handler = F->read_handler;
 		if(handler)
 			fdmask[fd] |= POLLRDNORM;
 		else
 			fdmask[fd] &= ~POLLRDNORM;
-		if(fd_table[fd].write_handler)
+		if(F->write_handler)
 			fdmask[fd] |= POLLWRNORM;
 		break;
 	case COMM_SELECT_WRITE:
-		cur_handler = fd_table[fd].write_handler;
+		cur_handler = F->write_handler;
 		if(handler)
 			fdmask[fd] |= POLLWRNORM;
 		else
 			fdmask[fd] &= ~POLLWRNORM;
-		if(fd_table[fd].read_handler)
+		if(F->read_handler)
 			fdmask[fd] |= POLLRDNORM;
 		break;
 	default:
@@ -166,7 +168,7 @@ void
 comm_setselect(int fd, fdlist_t list, unsigned int type, PF * handler,
 	       void *client_data, time_t timeout)
 {
-	fde_t *F = &fd_table[fd];
+	fde_t *F = comm_locate_fd(fd);
 	s_assert(fd >= 0);
 	s_assert(F->flags.open);
 
@@ -235,7 +237,7 @@ comm_select(unsigned long delay)
 		{
 			int fd = dopoll.dp_fds[i].fd;
 			PF *hdl = NULL;
-			fde_t *F = &fd_table[fd];
+			fde_t *F = comm_locate_fd(fd);
 			if((dopoll.dp_fds[i].
 			    revents & (POLLRDNORM | POLLIN | POLLHUP |
 				       POLLERR))
