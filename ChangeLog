@@ -1,3 +1,12 @@
+nenolod     2007/03/05 19:01:05 UTC	(20070305-3253)
+  Log:
+  - MASTER_MAX is no longer relevant
+  
+
+  Changes:	Modified:
+  +0 -7		trunk/modules/m_set.c (File Modified) 
+
+
 nenolod     2007/03/05 18:58:38 UTC	(20070305-3251)
   Log:
   - add config option for setting max_clients.

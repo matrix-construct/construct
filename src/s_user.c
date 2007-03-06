@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c 3227 2007-03-05 01:14:46Z jilles $
+ *  $Id: s_user.c 3255 2007-03-06 14:07:11Z jilles $
  */
 
 #include "stdinc.h"
@@ -415,21 +415,6 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 		return (CLIENT_EXITED);
 	}
 
-	/* valid user name check */
-
-	if(!valid_username(source_p->username))
-	{
-		sendto_realops_snomask(SNO_REJ, L_ALL,
-				     "Invalid username: %s (%s@%s)",
-				     source_p->name, source_p->username, source_p->host);
-		ServerStats->is_ref++;
-		ircsprintf(tmpstr2, "Invalid username [%s]", source_p->username);
-		exit_client(client_p, source_p, &me, tmpstr2);
-		return (CLIENT_EXITED);
-	}
-
-	/* end of valid user name check */
-
 	/* kline exemption extends to xline too */
 	if(!IsExemptKline(source_p) &&
 	   find_xline(source_p->info, 1) != NULL)
@@ -472,6 +457,21 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 			return CLIENT_EXITED;
 		}
 	}
+
+	/* valid user name check */
+
+	if(!valid_username(source_p->username))
+	{
+		sendto_realops_snomask(SNO_REJ, L_ALL,
+				     "Invalid username: %s (%s@%s)",
+				     source_p->name, source_p->username, source_p->host);
+		ServerStats->is_ref++;
+		ircsprintf(tmpstr2, "Invalid username [%s]", source_p->username);
+		exit_client(client_p, source_p, &me, tmpstr2);
+		return (CLIENT_EXITED);
+	}
+
+	/* end of valid user name check */
 
 	/* Store original hostname -- jilles */
 	strlcpy(source_p->orighost, source_p->host, HOSTLEN + 1);
