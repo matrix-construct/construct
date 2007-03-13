@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.h 3251 2007-03-05 18:58:38Z nenolod $
+ *  $Id: s_conf.h 3257 2007-03-13 16:09:28Z jilles $
  */
 
 #ifndef INCLUDED_s_conf_h
@@ -268,7 +268,6 @@ struct config_channel_entry
 	int default_split_server_count;
 	int default_split_user_count;
 	int burst_topicwho;
-	int invite_ops_only;
 	int kick_on_split_riding;
 };
 

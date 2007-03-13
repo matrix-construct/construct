@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_invite.c 718 2006-02-08 20:26:58Z jilles $
+ *  $Id: m_invite.c 3257 2007-03-13 16:09:28Z jilles $
  */
 
 #include "stdinc.h"
@@ -48,7 +48,7 @@ struct Message invite_msgtab = {
 	{mg_unreg, {m_invite, 3}, {m_invite, 3}, mg_ignore, mg_ignore, {m_invite, 3}}
 };
 mapi_clist_av1 invite_clist[] = { &invite_msgtab, NULL };
-DECLARE_MODULE_AV1(invite, NULL, NULL, invite_clist, NULL, NULL, "$Revision: 718 $");
+DECLARE_MODULE_AV1(invite, NULL, NULL, invite_clist, NULL, NULL, "$Revision: 3257 $");
 
 static void add_invite(struct Channel *, struct Client *);
 
@@ -126,22 +126,18 @@ m_invite(struct Client *client_p, struct Client *source_p, int parc, const char 
 	}
 
 	/* only store invites for +i channels */
-	/* if the invite could allow someone to join who otherwise could not,
-	 * unconditionally require ops, unless the channel is +g */
-	if(ConfigChannel.invite_ops_only || (chptr->mode.mode & MODE_INVITEONLY))
+	/* unconditionally require ops, unless the channel is +g */
+	/* treat remote clients as chanops */
+	if(MyClient(source_p) && !is_chanop(msptr) &&
+			!(chptr->mode.mode & MODE_FREEINVITE))
 	{
-		/* treat remote clients as chanops */
-		if(MyClient(source_p) && !is_chanop(msptr) &&
-				!(chptr->mode.mode & MODE_FREEINVITE))
-		{
-			sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
-				   me.name, source_p->name, parv[2]);
-			return 0;
-		}
-
-		if(chptr->mode.mode & MODE_INVITEONLY)
-			store_invite = 1;
+		sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
+			   me.name, source_p->name, parv[2]);
+		return 0;
 	}
+
+	if(chptr->mode.mode & MODE_INVITEONLY)
+		store_invite = 1;
 
 	if(MyConnect(source_p))
 	{

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.c 3251 2007-03-05 18:58:38Z nenolod $
+ *  $Id: s_conf.c 3257 2007-03-13 16:09:28Z jilles $
  */
 
 #include "stdinc.h"
@@ -830,7 +830,6 @@ set_default_conf(void)
 	ConfigChannel.max_bans = 25;
 	ConfigChannel.max_bans_large = 500;
 	ConfigChannel.burst_topicwho = NO;
-	ConfigChannel.invite_ops_only = YES;
 	ConfigChannel.kick_on_split_riding = NO;
 
 	ConfigChannel.default_split_user_count = 15000;

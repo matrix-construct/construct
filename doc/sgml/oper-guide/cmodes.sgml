@@ -95,9 +95,7 @@
 	<title>+g, allow anybody to invite</title>
 	<para>
 	  When this mode is set, anybody may use the INVITE command on the channel in question. When it
-	  is unset, only channel operators may use the INVITE command
-	  (unless the invite_ops_only option is disabled and +i is
-	  not set).
+	  is unset, only channel operators may use the INVITE command.
 	</para>
 	<para>
 	  When this mode is set together with +i, all channel members can influence who can join.

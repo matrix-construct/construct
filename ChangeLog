@@ -1,3 +1,14 @@
+jilles      2007/03/06 14:07:11 UTC	(20070306-3255)
+  Log:
+  Move username check after xline and dnsbl checks, so it
+  will not complain to opers about clients who are xlined
+  or blacklisted anyway (both of which silently reject).
+  
+
+  Changes:	Modified:
+  +15 -15	trunk/src/s_user.c (File Modified) 
+
+
 nenolod     2007/03/05 19:01:05 UTC	(20070305-3253)
   Log:
   - MASTER_MAX is no longer relevant

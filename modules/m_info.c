@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_info.c 3131 2007-01-21 15:36:31Z jilles $
+ *  $Id: m_info.c 3257 2007-03-13 16:09:28Z jilles $
  */
 
 #include "stdinc.h"
@@ -63,7 +63,7 @@ mapi_hlist_av1 info_hlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(info, NULL, NULL, info_clist, info_hlist, NULL, "$Revision: 3131 $");
+DECLARE_MODULE_AV1(info, NULL, NULL, info_clist, info_hlist, NULL, "$Revision: 3257 $");
 
 /*
  * jdc -- Structure for our configuration value table
@@ -530,12 +530,6 @@ static struct InfoStruct info_table[] = {
 		OUTPUT_DECIMAL,
 		&ConfigChannel.knock_delay_channel,
 		"Delay between KNOCK attempts to a channel",
-	},
-	{
-		"invite_ops_only",
-		OUTPUT_BOOLEAN_YN,
-		&ConfigChannel.invite_ops_only,
-		"INVITE is restricted to channelops only"
 	},
 	{
 		"kick_on_split_riding",

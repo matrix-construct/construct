@@ -1,5 +1,5 @@
 /* This code is in the public domain.
- * $Id: newconf.c 3251 2007-03-05 18:58:38Z nenolod $
+ * $Id: newconf.c 3257 2007-03-13 16:09:28Z jilles $
  */
 
 #include "stdinc.h"
@@ -2085,7 +2085,6 @@ static struct ConfEntry conf_channel_table[] =
 	{ "default_split_user_count",	CF_INT,  NULL, 0, &ConfigChannel.default_split_user_count	 },
 	{ "default_split_server_count",	CF_INT,	 NULL, 0, &ConfigChannel.default_split_server_count },
 	{ "burst_topicwho",	CF_YESNO, NULL, 0, &ConfigChannel.burst_topicwho	},
-	{ "invite_ops_only",	CF_YESNO, NULL, 0, &ConfigChannel.invite_ops_only	},
 	{ "kick_on_split_riding", CF_YESNO, NULL, 0, &ConfigChannel.kick_on_split_riding },
 	{ "knock_delay",	CF_TIME,  NULL, 0, &ConfigChannel.knock_delay		},
 	{ "knock_delay_channel",CF_TIME,  NULL, 0, &ConfigChannel.knock_delay_channel	},
