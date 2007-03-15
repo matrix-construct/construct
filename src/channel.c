@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.c 3173 2007-01-31 23:57:18Z jilles $
+ *  $Id: channel.c 3259 2007-03-15 18:09:08Z jilles $
  */
 
 #include "stdinc.h"
@@ -716,13 +716,14 @@ is_quieted(struct Channel *chptr, struct Client *who, struct membership *msptr,
 int
 can_join(struct Client *source_p, struct Channel *chptr, char *key)
 {
-	dlink_node *lp;
+	dlink_node *invite = NULL;
 	dlink_node *ptr;
 	struct Ban *invex = NULL;
 	char src_host[NICKLEN + USERLEN + HOSTLEN + 6];
 	char src_iphost[NICKLEN + USERLEN + HOSTLEN + 6];
 	char src_althost[NICKLEN + USERLEN + HOSTLEN + 6];
 	int use_althost = 0;
+	int i = 0;
 	hook_data_channel moduledata;
 
 	s_assert(source_p->localClient != NULL);
@@ -751,12 +752,12 @@ can_join(struct Client *source_p, struct Channel *chptr, char *key)
 
 	if(chptr->mode.mode & MODE_INVITEONLY)
 	{
-		DLINK_FOREACH(lp, source_p->user->invited.head)
+		DLINK_FOREACH(invite, source_p->user->invited.head)
 		{
-			if(lp->data == chptr)
+			if(invite->data == chptr)
 				break;
 		}
-		if(lp == NULL)
+		if(invite == NULL)
 		{
 			if(!ConfigChannel.use_invex)
 				return (ERR_INVITEONLYCHAN);
@@ -780,18 +781,28 @@ can_join(struct Client *source_p, struct Channel *chptr, char *key)
 
 	if(chptr->mode.limit &&
 	   dlink_list_length(&chptr->members) >= (unsigned long) chptr->mode.limit)
-		return (ERR_CHANNELISFULL);
-
+		i = ERR_CHANNELISFULL;
 	if(chptr->mode.mode & MODE_REGONLY && EmptyString(source_p->user->suser))
-		return ERR_NEEDREGGEDNICK;
-
+		i = ERR_NEEDREGGEDNICK;
 	/* join throttling stuff --nenolod */
-	if(chptr->mode.join_num > 0 && chptr->mode.join_time > 0)
+	else if(chptr->mode.join_num > 0 && chptr->mode.join_time > 0)
 	{
 		if ((CurrentTime - chptr->join_delta <= 
 			chptr->mode.join_time) && (chptr->join_count >=
 			chptr->mode.join_num))
-			return ERR_THROTTLE;
+			i = ERR_THROTTLE;
+	}
+
+	/* allow /invite to override +l/+r/+j also -- jilles */
+	if (i != 0 && invite == NULL)
+	{
+		DLINK_FOREACH(invite, source_p->user->invited.head)
+		{
+			if(invite->data == chptr)
+				break;
+		}
+		if (invite == NULL)
+			return i;
 	}
 
 	moduledata.client = source_p;

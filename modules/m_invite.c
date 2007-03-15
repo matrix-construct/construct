@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_invite.c 3257 2007-03-13 16:09:28Z jilles $
+ *  $Id: m_invite.c 3259 2007-03-15 18:09:08Z jilles $
  */
 
 #include "stdinc.h"
@@ -48,7 +48,7 @@ struct Message invite_msgtab = {
 	{mg_unreg, {m_invite, 3}, {m_invite, 3}, mg_ignore, mg_ignore, {m_invite, 3}}
 };
 mapi_clist_av1 invite_clist[] = { &invite_msgtab, NULL };
-DECLARE_MODULE_AV1(invite, NULL, NULL, invite_clist, NULL, NULL, "$Revision: 3257 $");
+DECLARE_MODULE_AV1(invite, NULL, NULL, invite_clist, NULL, NULL, "$Revision: 3259 $");
 
 static void add_invite(struct Channel *, struct Client *);
 
@@ -125,7 +125,6 @@ m_invite(struct Client *client_p, struct Client *source_p, int parc, const char 
 		return 0;
 	}
 
-	/* only store invites for +i channels */
 	/* unconditionally require ops, unless the channel is +g */
 	/* treat remote clients as chanops */
 	if(MyClient(source_p) && !is_chanop(msptr) &&
@@ -136,7 +135,12 @@ m_invite(struct Client *client_p, struct Client *source_p, int parc, const char 
 		return 0;
 	}
 
-	if(chptr->mode.mode & MODE_INVITEONLY)
+	/* store invites when they could affect the ability to join
+	 * for +l/+j just check if the mode is set, this varies over time
+	 */
+	if(chptr->mode.mode & MODE_INVITEONLY ||
+			(chptr->mode.mode & MODE_REGONLY && EmptyString(target_p->user->suser)) ||
+			chptr->mode.limit || chptr->mode.join_num)
 		store_invite = 1;
 
 	if(MyConnect(source_p))
