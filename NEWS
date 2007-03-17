@@ -3,6 +3,43 @@ See LICENSE for licensing details (GPL v2).
 
 -- charybdis-2.2.0
 
+- Improve error checking and error messages for kline/dline/xline/resv files.
+- Allow kline ipv6:address, unkline some.host and unkline ipv6:address
+  without *@.
+- Add accountability (wallops, log) to OKICK extension.
+- Add opernick to OPME/OMODE/OJOIN log messages.
+- Add use_forward option, allows disabling cmode +fFQ and umode +Q.
+- Add keyword substitution to DNSBL reasons, making it possible to show
+  things like the user's IP address in the reason.
+- Use sendto_one_notice() more.
+- Server notices about kills now include the victim's nick!user@host instead
+  of just nick.
+- Include real hostname in Closing Link message for unknown connections
+  that have sent USER, in particular banned users.
+- Add some documentation about the SASL client protocol.
+- Change spambot, flooder and jupe joiner notices from host to orighost.
+- Remove the last remains of server hostmasking (this made it possible to
+  have multiple servers with similar names appear as a single server).
+- Keep bitmasks of modularized umodes reserved forever to the letter,
+  avoiding problems when reloading umode modules in a different order.
+- Fix -logfile.
+- Update to the new revision (v8) of the TS6 spec, this fixes problems with
+  joins reversing certain mode changes crossing them.
+- Put "End of Channel Quiet List" at the end of +q lists.
+- Fix invisible count getting desynched from reality if the act of opering
+  up sets -i or +i.
+- Don't leak auth{} spoofed IP addresses in +f notices.
+- Shorten quit/part/kick reasons to avoid quit reasons overflowing the
+  client exiting server notice (from TOPICLEN to 260).
+- Fix some cases where 10 char usernames lose their final character.
+- Move username check after xline and dnsbl checks, so it will not complain
+  to opers about clients who are xlined or blacklisted anyway (both of
+  which silently reject).
+- Remove invite_ops_only config option, forcing it to YES.
+- Allow /invite (but not invex) to override +r, +l, +j in addition to +i.
+- Remove the need to compile in the maximum number of clients, it can be
+  set in ircd.conf now.
+
 -- charybdis-2.1.2
 
 - Fix bug that could cause all hostmangled users to be exempted when a
@@ -334,5 +371,5 @@ modules in case the developers need them.
 Other files recommended for reading: BUGS, README.FIRST, INSTALL
 
 --------------------------------------------------------------------------------
-$Id: NEWS 3145 2007-01-25 06:45:04Z nenolod $
+$Id: NEWS 3265 2007-03-17 23:50:25Z jilles $
 

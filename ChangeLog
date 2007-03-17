@@ -1,3 +1,19 @@
+jilles      2007/03/15 18:09:08 UTC	(20070315-3259)
+  Log:
+  Allow /invite (but not invex) to override +r, +l, +j in
+  addition to +i. As before, a restrictive mode must be in
+  place at /invite time for the invite to have an effect;
+  +r does not count as a restrictive mode if the user is
+  logged in; +l and +j always count as restrictive modes to
+  allow for cases where they would allow join at /invite
+  time but not when the user tries to join.
+  
+
+  Changes:	Modified:
+  +6 -2		trunk/modules/m_invite.c (File Modified) 
+  +21 -10	trunk/src/channel.c (File Modified) 
+
+
 jilles      2007/03/13 16:09:28 UTC	(20070313-3257)
   Log:
   Remove invite_ops_only, forcing it to YES.
