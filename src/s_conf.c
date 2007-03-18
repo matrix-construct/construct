@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.c 3257 2007-03-13 16:09:28Z jilles $
+ *  $Id: s_conf.c 3271 2007-03-18 14:44:24Z jilles $
  */
 
 #include "stdinc.h"
@@ -239,7 +239,7 @@ check_client(struct Client *client_p, struct Client *source_p, const char *usern
 				"I-line is full for %s!%s%s@%s (%s).",
 				source_p->name, IsGotId(source_p) ? "" : "~",
 				source_p->username, source_p->host,
-				source_p->sockhost);
+				show_ip(NULL, source_p) && !IsIPSpoof(source_p) ? source_p->sockhost : "255.255.255.255");
 
 		ilog(L_FUSER, "Too many connections from %s!%s%s@%s.", 
 			source_p->name, IsGotId(source_p) ? "" : "~",
