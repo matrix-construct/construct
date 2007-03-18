@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: config.h.dist 438 2006-01-06 01:00:44Z jilles $
+ *  $Id: config.h.dist 3275 2007-03-18 16:29:31Z jilles $
  */
 
 #ifndef INCLUDED_config_h
@@ -81,8 +81,8 @@
 
 /* HIDE_SERVERS_IPS
  *
- * If this is undefined, opers will be unable to see servers ips and will be
- * shown a masked ip, admins will be shown the real ip.
+ * If this is undefined, everybody can see a servers ip.  This includes
+ * nonopers if flatten links is not enabled.
  *
  * If this is defined, nobody can see a servers ip.
  */

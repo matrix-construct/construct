@@ -1,3 +1,12 @@
+jilles      2007/03/18 14:44:24 UTC	(20070318-3271)
+  Log:
+  Don't leak auth{} spoofed ip for I-line is full notice either.
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/src/s_conf.c (File Modified) 
+
+
 jilles      2007/03/17 23:50:25 UTC	(20070317-3265)
   Log:
   Update NEWS.
