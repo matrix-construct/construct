@@ -1,3 +1,12 @@
+jilles      2007/03/18 16:29:31 UTC	(20070318-3275)
+  Log:
+  Fix documentation of HIDE_SERVERS_IPS define.
+  
+
+  Changes:	Modified:
+  +2 -2		trunk/include/config.h.dist (File Modified) 
+
+
 jilles      2007/03/18 14:44:24 UTC	(20070318-3271)
   Log:
   Don't leak auth{} spoofed ip for I-line is full notice either.

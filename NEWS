@@ -24,7 +24,8 @@ See LICENSE for licensing details (GPL v2).
   avoiding problems when reloading umode modules in a different order.
 - Fix -logfile.
 - Update to the new revision (v8) of the TS6 spec, this fixes problems with
-  joins reversing certain mode changes crossing them.
+  joins reversing certain mode changes crossing them. This interoperates
+  with older versions.
 - Put "End of Channel Quiet List" at the end of +q lists.
 - Fix invisible count getting desynched from reality if the act of opering
   up sets -i or +i.
@@ -371,5 +372,5 @@ modules in case the developers need them.
 Other files recommended for reading: BUGS, README.FIRST, INSTALL
 
 --------------------------------------------------------------------------------
-$Id: NEWS 3265 2007-03-17 23:50:25Z jilles $
+$Id: NEWS 3281 2007-03-25 17:59:50Z jilles $
 
