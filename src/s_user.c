@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c 3255 2007-03-06 14:07:11Z jilles $
+ *  $Id: s_user.c 3293 2007-03-28 14:33:50Z jilles $
  */
 
 #include "stdinc.h"
@@ -433,7 +433,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 					source_p->sockhost, source_p->preClient->dnsbl_listed->host);
 		else
 		{
-			dlink_list varlist;
+			dlink_list varlist = { NULL, NULL, 0 };
 
 			substitution_append_var(&varlist, "nick", source_p->name);
 			substitution_append_var(&varlist, "ip", source_p->sockhost);

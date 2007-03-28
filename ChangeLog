@@ -1,3 +1,17 @@
+jilles      2007/03/28 14:30:10 UTC	(20070328-3291)
+  Log:
+  Merge old trunk r2226:
+  If we are connecting outward to a server, check if the
+  server name they sent is the same as what we tried to
+  connect to. Previously such a connection could succeed
+  if there existed connect blocks with the same IP and
+  passwords for the other server name.
+  
+
+  Changes:	Modified:
+  +11 -0	trunk/modules/core/m_server.c (File Modified) 
+
+
 jilles      2007/03/28 14:21:37 UTC	(20070328-3289)
   Log:
   Merge old trunk r2212:
