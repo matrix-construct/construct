@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_opme.c 3161 2007-01-25 07:23:01Z nenolod $
+ *   $Id: m_opme.c 3297 2007-03-28 14:49:48Z jilles $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -46,7 +46,7 @@ struct Message opme_msgtab = {
 
 mapi_clist_av1 opme_clist[] = { &opme_msgtab, NULL };
 
-DECLARE_MODULE_AV1(opme, NULL, NULL, opme_clist, NULL, NULL, "$Revision: 3161 $");
+DECLARE_MODULE_AV1(opme, NULL, NULL, opme_clist, NULL, NULL, "$Revision: 3297 $");
 
 
 /*
@@ -64,7 +64,7 @@ mo_opme(struct Client *client_p, struct Client *source_p, int parc, const char *
 	/* admins only */
 	if(!IsOperAdmin(source_p))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "opme");
+		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "admin");
 		return 0;
 	}
 

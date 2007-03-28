@@ -1,3 +1,14 @@
+jilles      2007/03/28 14:45:46 UTC	(20070328-3295)
+  Log:
+  Merge old trunk r2695:
+  Send an SQUIT instead of an ERROR to announce /die to connected servers.
+  This will generate better server notices.
+  
+
+  Changes:	Modified:
+  +3 -2		trunk/modules/core/m_die.c (File Modified) 
+
+
 jilles      2007/03/28 14:33:50 UTC	(20070328-3293)
   Log:
   Merge old trunk r2294:
