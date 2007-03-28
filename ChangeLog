@@ -1,3 +1,15 @@
+jilles      2007/03/28 15:40:24 UTC	(20070328-3307)
+  Log:
+  Merge old trunk r2081:
+  Don't say that services cannot be killed in
+  ERR_ISCHANSERVICE message (given when trying
+  to kick or deop them), as that's not the case.
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/src/messages.tab (File Modified) 
+
+
 jilles      2007/03/28 15:30:56 UTC	(20070328-3305)
   Log:
   Merge old trunk r2059

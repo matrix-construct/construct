@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_kick.c 258 2005-09-21 23:57:17Z nenolod $
+ *  $Id: m_kick.c 3317 2007-03-28 23:17:06Z jilles $
  */
 
 #include "stdinc.h"
@@ -49,7 +49,7 @@ struct Message kick_msgtab = {
 
 mapi_clist_av1 kick_clist[] = { &kick_msgtab, NULL };
 
-DECLARE_MODULE_AV1(kick, NULL, NULL, kick_clist, NULL, NULL, "$Revision: 258 $");
+DECLARE_MODULE_AV1(kick, NULL, NULL, kick_clist, NULL, NULL, "$Revision: 3317 $");
 
 /*
 ** m_kick
@@ -73,10 +73,6 @@ m_kick(struct Client *client_p, struct Client *source_p, int parc, const char *p
 
 	if(MyClient(source_p) && !IsFloodDone(source_p))
 		flood_endgrace(source_p);
-
-	comment = LOCAL_COPY((EmptyString(parv[3])) ? parv[2] : parv[3]);
-	if(strlen(comment) > (size_t) REASONLEN)
-		comment[REASONLEN] = '\0';
 
 	*buf = '\0';
 	if((p = strchr(parv[1], ',')))
@@ -162,6 +158,10 @@ m_kick(struct Client *client_p, struct Client *source_p, int parc, const char *p
 				   me.name, source_p->name, who->name, chptr->chname);
 			return 0;
 		}
+
+		comment = LOCAL_COPY((EmptyString(parv[3])) ? who->name : parv[3]);
+		if(strlen(comment) > (size_t) REASONLEN)
+			comment[REASONLEN] = '\0';
 
 		/* jdc
 		 * - In the case of a server kicking a user (i.e. CLEARCHAN),
