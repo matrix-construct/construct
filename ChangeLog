@@ -1,3 +1,15 @@
+jilles      2007/03/28 15:22:49 UTC	(20070328-3303)
+  Log:
+  Merge old trunk r2907,r2991:
+  Allow TESTLINE on channel names.
+  
+
+  Changes:	Modified:
+  +4 -0		trunk/doc/sgml/oper-guide/commands.sgml (File Modified) 
+  +4 -0		trunk/help/opers/testline (File Modified) 
+  +22 -0	trunk/modules/m_testline.c (File Modified) 
+
+
 jilles      2007/03/28 15:04:06 UTC	(20070328-3301)
   Log:
   Merge old trunk r2835:

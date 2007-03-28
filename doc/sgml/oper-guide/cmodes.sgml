@@ -58,6 +58,12 @@
 	  overrides +b and +q bans for all clients it matches.
 	</para>
 	<para>
+	  This can be useful if it is necessary to ban an entire ISP
+	  due to persistent abuse, but some users from that ISP should
+	  still be allowed in. For example:
+	  /mode #channel +be *!*@*.example.com *!*someuser@host3.example.com
+	</para>
+	<para>
 	  Only channel operators can see +e changes or request the list.
 	</para>
       </sect2>

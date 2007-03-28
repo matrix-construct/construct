@@ -105,9 +105,10 @@
 	      This is a user umode, which anybody can set. It is not specific to operators.
 	    </para>
 	  </note>
-          This umode prevents you from being affected by any of the channel forwarding mechanisms. In
-          any event where you would normally be forwarded, instead you will get the usual error message
-          as if no forwarding was in effect.
+          This umode prevents you from being affected by channel forwarding.
+	  If enabled on a channel, channel forwarding sends you to another
+	  channel if you could not join. See channel mode +f for more
+	  information.
 	</para>
       </sect2>
       <sect2>
