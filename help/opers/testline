@@ -6,3 +6,7 @@ If nickname is specified it will also search for RESVs.
 
 This command will not perform dns lookups on a host, for best
 results you must testline a host and its IP form.
+
+TESTLINE <#channel>
+
+Shows whether the channel is reserved or not.

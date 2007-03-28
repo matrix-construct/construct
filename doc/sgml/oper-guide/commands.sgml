@@ -532,6 +532,10 @@
 	  in use. As of charybdis 2.1.1, no_tilde and username truncation will
 	  be taken into account like in the normal client access check.
 	</para>
+	<para>
+	  As of charybdis 2.2.0, a channel name can be specified and the
+	  RESV will be returned, if there is one.
+	</para>
       </sect2>
       <sect2>
 	<title>TESTMASK</title>

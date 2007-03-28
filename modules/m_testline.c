@@ -27,7 +27,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: m_testline.c 2757 2006-11-10 22:58:15Z jilles $
+ * $Id: m_testline.c 3303 2007-03-28 15:22:49Z jilles $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -35,6 +35,7 @@
 #include "client.h"
 #include "modules.h"
 #include "msg.h"
+#include "hash.h"
 #include "hostmask.h"
 #include "numeric.h"
 #include "s_conf.h"
@@ -54,7 +55,7 @@ struct Message testgecos_msgtab = {
 };
 
 mapi_clist_av1 testline_clist[] = { &testline_msgtab, &testgecos_msgtab, NULL };
-DECLARE_MODULE_AV1(testline, NULL, NULL, testline_clist, NULL, NULL, "$Revision: 2757 $");
+DECLARE_MODULE_AV1(testline, NULL, NULL, testline_clist, NULL, NULL, "$Revision: 3303 $");
 
 static int
 mo_testline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
@@ -72,6 +73,27 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 	int type;
 
 	mask = LOCAL_COPY(parv[1]);
+
+	if (IsChannelName(mask))
+	{
+		resv_p = hash_find_resv(mask);
+		if (resv_p != NULL)
+		{
+			sendto_one(source_p, form_str(RPL_TESTLINE),
+					me.name, source_p->name,
+					resv_p->hold ? 'q' : 'Q',
+					resv_p->hold ? (long) ((resv_p->hold - CurrentTime) / 60) : 0L,
+					resv_p->name, resv_p->passwd);
+			/* this is a false positive, so make sure it isn't counted in stats q
+			 * --nenolod
+			 */
+			resv_p->port--;
+		}
+		else
+			sendto_one(source_p, form_str(RPL_NOTESTLINE),
+					me.name, source_p->name, parv[1]);
+		return 0;
+	}
 
 	if((p = strchr(mask, '!')))
 	{

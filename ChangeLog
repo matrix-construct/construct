@@ -1,3 +1,13 @@
+jilles      2007/03/28 15:04:06 UTC	(20070328-3301)
+  Log:
+  Merge old trunk r2835:
+  resolver: if sendto(2) fails, try sending to the next nameserver
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/src/res.c (File Modified) 
+
+
 jilles      2007/03/28 14:54:10 UTC	(20070328-3299)
   Log:
   Merge old trunk r2817:
