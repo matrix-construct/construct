@@ -1,3 +1,16 @@
+jilles      2007/03/28 14:21:37 UTC	(20070328-3289)
+  Log:
+  Merge old trunk r2212:
+  Another handling of SJOINs without nicks:
+  Propagate them if the channel is +P or the channel
+  already existed, otherwise remove the channel again
+  and do not propagate the SJOIN.
+  
+
+  Changes:	Modified:
+  +2 -3		trunk/modules/core/m_sjoin.c (File Modified) 
+
+
 jilles      2007/03/28 13:49:57 UTC	(20070328-3287)
   Log:
   Remove channels entirely from /whois on services.

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_server.c 3179 2007-02-01 00:34:33Z jilles $
+ *  $Id: m_server.c 3291 2007-03-28 14:30:10Z jilles $
  */
 
 #include "stdinc.h"
@@ -59,7 +59,7 @@ struct Message sid_msgtab = {
 
 mapi_clist_av1 server_clist[] = { &server_msgtab, &sid_msgtab, NULL };
 
-DECLARE_MODULE_AV1(server, NULL, NULL, server_clist, NULL, NULL, "$Revision: 3179 $");
+DECLARE_MODULE_AV1(server, NULL, NULL, server_clist, NULL, NULL, "$Revision: 3291 $");
 
 int bogus_host(const char *host);
 static int set_server_gecos(struct Client *, const char *);
@@ -82,6 +82,17 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 	name = parv[1];
 	hop = atoi(parv[2]);
 	strlcpy(info, parv[3], sizeof(info));
+
+	if (IsHandshake(client_p) && irccmp(client_p->name, name))
+	{
+		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
+				"Server %s has unexpected name %s",
+				get_server_name(client_p, HIDE_IP), name);
+		ilog(L_SERVER, "Server %s has unexpected name %s",
+				log_client_name(client_p, SHOW_IP), name);
+		exit_client(client_p, client_p, client_p, "Server name mismatch");
+		return 0;
+	}
 
 	/* 
 	 * Reject a direct nonTS server connection if we're TS_ONLY -orabidoo
