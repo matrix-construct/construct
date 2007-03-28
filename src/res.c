@@ -7,7 +7,7 @@
  * The authors takes no responsibility for any damage or loss
  * of property which results from the use of this software.
  *
- * $Id: res.c 3227 2007-03-05 01:14:46Z jilles $
+ * $Id: res.c 3301 2007-03-28 15:04:06Z jilles $
  * from Hybrid Id: res.c 459 2006-02-12 22:21:37Z db $
  *
  * July 1999 - Rewrote a bunch of stuff here. Change hostent builder code,
@@ -352,7 +352,7 @@ static int send_res_msg(const char *msg, int len, int rcount)
 	if (max_queries == 0)
 		max_queries = 1;
 
-	for (i = 0; i < max_queries; i++)
+	for (i = 0; sent < max_queries && i < irc_nscount; i++)
 	{
 		if (sendto(res_fd, msg, len, 0,
 		     (struct sockaddr *)&(irc_nsaddr_list[i]), 

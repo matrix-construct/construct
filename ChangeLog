@@ -1,3 +1,16 @@
+jilles      2007/03/28 14:54:10 UTC	(20070328-3299)
+  Log:
+  Merge old trunk r2817:
+  WHOIS: Show the given nick in ERR_NOSUCHNICK even if it
+  starts with a digit. This is safe because the last
+  parameter is a nick and never a UID. (The first parameter
+  in a server-server two-param whois is a UID/SID.)
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/modules/m_whois.c (File Modified) 
+
+
 jilles      2007/03/28 14:49:48 UTC	(20070328-3297)
   Log:
   Merge old trunk r2779,r2785:
