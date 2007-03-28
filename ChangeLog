@@ -1,3 +1,12 @@
+jilles      2007/03/28 13:11:30 UTC	(20070328-3283)
+  Log:
+  Fix /who on channels with ** in their name.
+  
+
+  Changes:	Modified:
+  +2 -2		trunk/modules/m_who.c (File Modified) 
+
+
 jilles      2007/03/25 17:59:50 UTC	(20070325-3281)
   Log:
   NEWS: As in 2.1.3, mention that the TS6 revision will

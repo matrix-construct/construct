@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_whois.c 1879 2006-08-27 21:18:43Z jilles $
+ *  $Id: m_whois.c 3287 2007-03-28 13:49:57Z jilles $
  */
 
 #include "stdinc.h"
@@ -67,7 +67,7 @@ mapi_hlist_av1 whois_hlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(whois, NULL, NULL, whois_clist, whois_hlist, NULL, "$Revision: 1879 $");
+DECLARE_MODULE_AV1(whois, NULL, NULL, whois_clist, whois_hlist, NULL, "$Revision: 3287 $");
 
 /*
  * m_whois
@@ -280,28 +280,31 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 
 	t = buf + mlen;
 
-	DLINK_FOREACH(ptr, target_p->user->channel.head)
+	if (!IsService(target_p))
 	{
-		msptr = ptr->data;
-		chptr = msptr->chptr;
-
-		visible = IsService(target_p) ? IsMember(source_p, chptr) : ShowChannel(source_p, chptr);
-
-		if(visible || operspy)
+		DLINK_FOREACH(ptr, target_p->user->channel.head)
 		{
-			if((cur_len + strlen(chptr->chname) + 3) > (BUFSIZE - 5))
-			{
-				sendto_one(source_p, "%s", buf);
-				cur_len = mlen + extra_space;
-				t = buf + mlen;
-			}
+			msptr = ptr->data;
+			chptr = msptr->chptr;
 
-			tlen = ircsprintf(t, "%s%s%s ",
-					visible ? "" : "!",
-					find_channel_status(msptr, 1),
-					chptr->chname);
-			t += tlen;
-			cur_len += tlen;
+			visible = ShowChannel(source_p, chptr);
+
+			if(visible || operspy)
+			{
+				if((cur_len + strlen(chptr->chname) + 3) > (BUFSIZE - 5))
+				{
+					sendto_one(source_p, "%s", buf);
+					cur_len = mlen + extra_space;
+					t = buf + mlen;
+				}
+
+				tlen = ircsprintf(t, "%s%s%s ",
+						visible ? "" : "!",
+						find_channel_status(msptr, 1),
+						chptr->chname);
+				t += tlen;
+				cur_len += tlen;
+			}
 		}
 	}
 
