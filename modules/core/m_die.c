@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_die.c 3161 2007-01-25 07:23:01Z nenolod $
+ *  $Id: m_die.c 3295 2007-03-28 14:45:46Z jilles $
  */
 
 #include "stdinc.h"
@@ -48,7 +48,7 @@ static struct Message die_msgtab = {
 
 mapi_clist_av1 die_clist[] = { &die_msgtab, NULL };
 
-DECLARE_MODULE_AV1(die, NULL, NULL, die_clist, NULL, NULL, "$Revision: 3161 $");
+DECLARE_MODULE_AV1(die, NULL, NULL, die_clist, NULL, NULL, "$Revision: 3295 $");
 
 /*
  * mo_die - DIE command handler
@@ -87,8 +87,9 @@ mo_die(struct Client *client_p __unused, struct Client *source_p, int parc, cons
 	{
 		target_p = ptr->data;
 
-		sendto_one(target_p, ":%s ERROR :Terminated by %s",
-			   me.name, get_client_name(source_p, HIDE_IP));
+		sendto_one(target_p, "SQUIT %s :Terminated by %s",
+			   use_id(target_p),
+			   get_client_name(source_p, HIDE_IP));
 	}
 
 	/*
