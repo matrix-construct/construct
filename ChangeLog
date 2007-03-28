@@ -1,3 +1,15 @@
+jilles      2007/03/28 14:49:48 UTC	(20070328-3297)
+  Log:
+  Merge old trunk r2779,r2785:
+  Show correct privilege name in a few ERR_NOPRIVS numerics.
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/extensions/m_ojoin.c (File Modified) 
+  +1 -1		trunk/extensions/m_opme.c (File Modified) 
+  +2 -2		trunk/unsupported/m_force.c (File Modified) 
+
+
 jilles      2007/03/28 14:45:46 UTC	(20070328-3295)
   Log:
   Merge old trunk r2695:

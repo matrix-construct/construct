@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_whois.c 3287 2007-03-28 13:49:57Z jilles $
+ *  $Id: m_whois.c 3299 2007-03-28 14:54:10Z jilles $
  */
 
 #include "stdinc.h"
@@ -67,7 +67,7 @@ mapi_hlist_av1 whois_hlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(whois, NULL, NULL, whois_clist, whois_hlist, NULL, "$Revision: 3287 $");
+DECLARE_MODULE_AV1(whois, NULL, NULL, whois_clist, whois_hlist, NULL, "$Revision: 3299 $");
 
 /*
  * m_whois
@@ -210,7 +210,7 @@ do_whois(struct Client *client_p, struct Client *source_p, int parc, const char 
 	else
 		sendto_one_numeric(source_p, ERR_NOSUCHNICK,
 				   form_str(ERR_NOSUCHNICK), 
-				   IsDigit(*nick) ? "*" : nick);
+				   nick);
 
 	sendto_one_numeric(source_p, RPL_ENDOFWHOIS, 
 			   form_str(RPL_ENDOFWHOIS), parv[1]);
