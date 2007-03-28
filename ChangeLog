@@ -1,3 +1,13 @@
+jilles      2007/03/28 13:49:57 UTC	(20070328-3287)
+  Log:
+  Remove channels entirely from /whois on services.
+  This cannot be overridden with operspy.
+  
+
+  Changes:	Modified:
+  +20 -17	trunk/modules/m_whois.c (File Modified) 
+
+
 jilles      2007/03/28 13:11:30 UTC	(20070328-3283)
   Log:
   Fix /who on channels with ** in their name.

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_sjoin.c 3131 2007-01-21 15:36:31Z jilles $
+ *  $Id: m_sjoin.c 3289 2007-03-28 14:21:37Z jilles $
  */
 
 #include "stdinc.h"
@@ -50,7 +50,7 @@ struct Message sjoin_msgtab = {
 
 mapi_clist_av1 sjoin_clist[] = { &sjoin_msgtab, NULL };
 
-DECLARE_MODULE_AV1(sjoin, NULL, NULL, sjoin_clist, NULL, NULL, "$Revision: 3131 $");
+DECLARE_MODULE_AV1(sjoin, NULL, NULL, sjoin_clist, NULL, NULL, "$Revision: 3289 $");
 
 /*
  * ms_sjoin
@@ -556,10 +556,9 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 				     CheckEmpty(para[2]), CheckEmpty(para[3]));
 	}
 
-	if(!joins && !(chptr->mode.mode & MODE_PERMANENT))
+	if(!joins && !(chptr->mode.mode & MODE_PERMANENT) && isnew)
 	{
-		if(isnew)
-			destroy_channel(chptr);
+		destroy_channel(chptr);
 
 		return 0;
 	}
