@@ -1,3 +1,15 @@
+jilles      2007/03/28 15:30:56 UTC	(20070328-3305)
+  Log:
+  Merge old trunk r2059
+  Clarifications to the descriptions of umode +Q and cmode +F,
+  suggested by Ariadne@SorceryNet.
+  
+
+  Changes:	Modified:
+  +6 -0		trunk/doc/sgml/oper-guide/cmodes.sgml (File Modified) 
+  +4 -3		trunk/doc/sgml/oper-guide/umodes.sgml (File Modified) 
+
+
 jilles      2007/03/28 15:22:49 UTC	(20070328-3303)
   Log:
   Merge old trunk r2907,r2991:

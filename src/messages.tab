@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: messages.tab 2731 2006-11-09 23:53:43Z jilles $
+ *   $Id: messages.tab 3307 2007-03-28 15:40:24Z jilles $
  */
 
 static  const char *  replies[] = {
@@ -506,7 +506,7 @@ static  const char *  replies[] = {
 /* 481 ERR_NOPRIVILEGES, */	":Permission Denied - You're not an IRC operator",
 /* 482 ERR_CHANOPRIVSNEEDED, */ ":%s 482 %s %s :You're not channel operator",
 /* 483 ERR_CANTKILLSERVER, */   ":You can't kill a server!",
-/* 484 ERR_ISCHANSERVICE */     ":%s 484 %s %s %s :Cannot kill, kick or deop a network service",
+/* 484 ERR_ISCHANSERVICE */     ":%s 484 %s %s %s :Cannot kick or deop a network service",
 /* 485 ERR_BANNEDNICK, */	NULL,
 /* 486 ERR_NONONREG */          "%s :You must log in with services to message this user",
 /* 487 */       NULL,
