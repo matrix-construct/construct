@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.c 3167 2007-01-26 18:52:11Z jilles $
+ *  $Id: client.c 3319 2007-03-29 20:03:06Z jilles $
  */
 #include "stdinc.h"
 #include "config.h"
@@ -1554,12 +1554,6 @@ exit_local_server(struct Client *client_p, struct Client *source_p, struct Clien
 			   source_p->name, comment);
 	}
 	
-	if(source_p->localClient->ctrlfd >= 0)
-	{
-		comm_close(source_p->localClient->ctrlfd);
-		source_p->localClient->ctrlfd = -1;
-	}
-
 	if(source_p->servptr && source_p->servptr->serv)
 		dlinkDelete(&source_p->lnode, &source_p->servptr->serv->servers);
 	else
@@ -2105,13 +2099,10 @@ close_connection(struct Client *client_p)
 		client_p->localClient->fd = -1;
 	}
 
-	if(HasServlink(client_p))
+	if(-1 < client_p->localClient->ctrlfd)
 	{
-		if(client_p->localClient->fd > -1)
-		{
-			comm_close(client_p->localClient->ctrlfd);
-			client_p->localClient->ctrlfd = -1;
-		}
+		comm_close(client_p->localClient->ctrlfd);
+		client_p->localClient->ctrlfd = -1;
 	}
 
 	linebuf_donebuf(&client_p->localClient->buf_sendq);

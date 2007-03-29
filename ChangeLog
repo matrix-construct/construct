@@ -1,3 +1,14 @@
+jilles      2007/03/28 23:17:06 UTC	(20070328-3317)
+  Log:
+  Don't show the UID if a TS6 server sends a kick with
+  an empty or no comment. Note that charybdis never sends
+  such kicks.
+  
+
+  Changes:	Modified:
+  +4 -4		trunk/modules/core/m_kick.c (File Modified) 
+
+
 jilles      2007/03/28 15:40:24 UTC	(20070328-3307)
   Log:
   Merge old trunk r2081:

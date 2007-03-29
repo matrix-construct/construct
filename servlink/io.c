@@ -15,7 +15,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: io.c 1285 2006-05-05 15:03:53Z nenolod $
+ *   $Id: io.c 3319 2007-03-29 20:03:06Z jilles $
  */
 
 #include "setup.h"
@@ -95,7 +95,7 @@ io_loop(int nfds)
 		else if(ret > 0)
 		{
 			/* call any callbacks */
-			for (i = 0; i < 3; i++)
+			for (i = 2; i >= 0; i--)
 			{
 				if(FD_ISSET(fds[i].fd, &rfds) && fds[i].read_cb)
 					(*fds[i].read_cb) ();
