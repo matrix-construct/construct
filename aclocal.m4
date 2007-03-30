@@ -1,4 +1,4 @@
-# $Id: aclocal.m4 918 2006-02-23 18:17:21Z nenolod $ - aclocal.m4 - Autoconf fun...
+# $Id: aclocal.m4 3321 2007-03-30 23:32:43Z jilles $ - aclocal.m4 - Autoconf fun...
 AC_DEFUN([AC_DEFINE_DIR], [
   test "x$prefix" = xNONE && prefix="$ac_default_prefix"
   test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
@@ -34,7 +34,7 @@ AC_DEFUN([CHARYBDIS_C_GCC_TRY_FLAGS],[
 #include <stdio.h>
 int main(void);
 ],[
-    strcmp("a","b"); fprintf(stdout,"test ok\n");
+    (void)strcmp("a","b"); fprintf(stdout,"test ok\n");
 ], [$2=yes], [$2=no])
    CFLAGS="${oldcflags}"])
   if test "x$$2" = xyes; then

@@ -1,3 +1,21 @@
+jilles      2007/03/29 20:03:06 UTC	(20070329-3319)
+  Log:
+  Merge old trunk r2077,r2079:
+  - Move closing of servlink control fd to close_connection()
+    instead of doing it in exit_local_server(), and make sure
+    we first close the data fd and then the control fd.
+  - Have servlink process ready fds in order net, data, ctrl
+    instead of ctrl, data, net.  This seems to fix the problem
+    that squit reasons do not show up on the other side of a
+    ziplink (by making it send any final SQUIT and/or ERROR
+    before noticing the closed control fd).
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/servlink/io.c (File Modified) 
+  +3 -12	trunk/src/client.c (File Modified) 
+
+
 jilles      2007/03/28 23:17:06 UTC	(20070328-3317)
   Log:
   Don't show the UID if a TS6 server sends a kick with
