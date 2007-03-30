@@ -1,3 +1,13 @@
+jilles      2007/03/30 23:33:43 UTC	(20070330-3323)
+  Log:
+  Need to check for various flavours of epoll,
+  even if --enable-epoll is forced.
+  
+
+  Changes:	Modified:
+  +1 -0		trunk/configure.ac (File Modified) 
+
+
 jilles      2007/03/30 23:32:43 UTC	(20070330-3321)
   Log:
   Hack to allow some more warnings, already present in configure (?).
