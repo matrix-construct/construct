@@ -1,3 +1,12 @@
+jilles      2007/03/30 23:32:43 UTC	(20070330-3321)
+  Log:
+  Hack to allow some more warnings, already present in configure (?).
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/aclocal.m4 (File Modified) 
+
+
 jilles      2007/03/29 20:03:06 UTC	(20070329-3319)
   Log:
   Merge old trunk r2077,r2079:

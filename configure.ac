@@ -1,4 +1,4 @@
-dnl $Id: configure.ac 3145 2007-01-25 06:45:04Z nenolod $
+dnl $Id: configure.ac 3323 2007-03-30 23:33:43Z jilles $
 dnl Process this file with autoconf to produce a configure script.
 
 dnl TODO: clean up all the OpenSSL and shared module checking stuff;
@@ -8,7 +8,7 @@ dnl said functions need to be just about as complex as they already are.
 AC_PREREQ(2.57)
 
 dnl Sneaky way to get an Id tag into the configure script
-AC_COPYRIGHT([$Id: configure.ac 3145 2007-01-25 06:45:04Z nenolod $])
+AC_COPYRIGHT([$Id: configure.ac 3323 2007-03-30 23:33:43Z jilles $])
 
 AC_INIT([charybdis],[2.2.0])
 
@@ -668,6 +668,7 @@ AC_ARG_ENABLE(devpoll,AC_HELP_STRING([--enable-devpoll],[Force usage of /dev/pol
 AC_ARG_ENABLE(epoll, AC_HELP_STRING([--enable-epoll],[Force sys_epoll usage (Linux only).]),
 [ if test $enableval = yes; then 
 	SELECT_TYPE_EXPLICIT="epoll"
+	AC_CHECK_FUNCS(epoll_ctl, [haveepoll=yes], [haveepoll=no])
   else
   	use_epoll=no
   fi
