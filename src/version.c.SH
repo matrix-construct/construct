@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: version.c.SH 1028 2006-03-10 15:28:58Z jilles $ 
+# $Id: version.c.SH 3342 2007-04-01 22:10:05Z jilles $ 
 
 spitshell=cat
 package=IRC
@@ -64,8 +64,8 @@ const char *infotext[] =
   "Based on the original code written by Jarkko Oikarinen",
   "Copyright 1988, 1989, 1990, 1991 University of Oulu, Computing Center",
   "Copyright (c) 1996-2001 Hybrid Development Team", 
-  "Copyright (c) 2002-2005 ircd-ratbox Development Team",
-  "Copyright (c) 2005-2006 charybdis development team",
+  "Copyright (c) 2002-2007 ircd-ratbox Development Team",
+  "Copyright (c) 2005-2007 charybdis development team",
   "",
   "This program is free software; you can redistribute it and/or",
   "modify it under the terms of the GNU General Public License as",
