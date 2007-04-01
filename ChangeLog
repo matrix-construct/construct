@@ -1,3 +1,12 @@
+jilles      2007/04/01 22:10:05 UTC	(20070401-3342)
+  Log:
+  Change copyright years in version.c.SH as in release-2.1 r3339.
+  
+
+  Changes:	Modified:
+  +2 -2		trunk/src/version.c.SH (File Modified) 
+
+
 jilles      2007/03/30 23:34:11 UTC	(20070330-3325)
   Log:
   Rerun autoconf.

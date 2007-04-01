@@ -364,7 +364,8 @@ See LICENSE for licensing details (GPL v2).
 BUGS: Major bugs in this release are listed in BUGS
 
 BUG REPORTS: If you run this code and encounter problems, you must report
-via IRC to irc.atheme.net, #athemenet-dev.
+via IRC to irc.atheme.org, #charybdis. For specific bugs you can use
+http://bugs-meta.atheme.org/ (Charybdis project).
 
 Please include a gdb backtrace and keep the core file, binaries and 
 modules in case the developers need them.
@@ -372,5 +373,5 @@ modules in case the developers need them.
 Other files recommended for reading: BUGS, README.FIRST, INSTALL
 
 --------------------------------------------------------------------------------
-$Id: NEWS 3281 2007-03-25 17:59:50Z jilles $
+$Id: NEWS 3344 2007-04-01 22:20:00Z jilles $
 

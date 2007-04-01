@@ -18,10 +18,11 @@
       We will likely have a workaround implemented in the next version.
 
 BUG REPORTS: If you run this code and encounter problems, you must report
- the bug via IRC, irc.atheme.net #athemenet-dev.
+ the bug on http://bugs-meta.atheme.org/ (Charybdis project) or via IRC,
+ irc.atheme.org #charybdis.
 
  Please include a gdb backtrace and keep your binaries, modules and core file
  in case the developers need more information.
 
 --------------------------------------------------------------------------------
-$Id: BUGS 1634 2006-06-04 13:26:04Z jilles $
+$Id: BUGS 3344 2007-04-01 22:20:00Z jilles $
