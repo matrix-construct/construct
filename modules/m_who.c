@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_who.c 3283 2007-03-28 13:11:30Z jilles $
+ *  $Id: m_who.c 3350 2007-04-02 22:03:08Z jilles $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -51,7 +51,7 @@ struct Message who_msgtab = {
 };
 
 mapi_clist_av1 who_clist[] = { &who_msgtab, NULL };
-DECLARE_MODULE_AV1(who, NULL, NULL, who_clist, NULL, NULL, "$Revision: 3283 $");
+DECLARE_MODULE_AV1(who, NULL, NULL, who_clist, NULL, NULL, "$Revision: 3350 $");
 
 static void do_who_on_channel(struct Client *source_p, struct Channel *chptr,
 			      int server_oper, int member);
@@ -119,7 +119,7 @@ m_who(struct Client *client_p, struct Client *source_p, int parc, const char *pa
 	if(IsChannelName(mask))
 	{
 		/* List all users on a given channel */
-		chptr = find_channel(parv[1]);
+		chptr = find_channel(parv[1] + operspy);
 		if(chptr != NULL)
 		{
 			if(operspy)
@@ -131,7 +131,7 @@ m_who(struct Client *client_p, struct Client *source_p, int parc, const char *pa
 				do_who_on_channel(source_p, chptr, server_oper, NO);
 		}
 		sendto_one(source_p, form_str(RPL_ENDOFWHO),
-			   me.name, source_p->name, parv[1]);
+			   me.name, source_p->name, parv[1] + operspy);
 		return 0;
 	}
 
