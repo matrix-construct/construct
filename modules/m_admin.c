@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_admin.c 254 2005-09-21 23:35:12Z nenolod $
+ *  $Id: m_admin.c 3368 2007-04-03 10:11:06Z nenolod $
  */
 
 #include "stdinc.h"
@@ -56,7 +56,7 @@ mapi_hlist_av1 admin_hlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(admin, NULL, NULL, admin_clist, admin_hlist, NULL, "$Revision: 254 $");
+DECLARE_MODULE_AV1(admin, NULL, NULL, admin_clist, admin_hlist, NULL, "$Revision: 3368 $");
 
 /*
  * mr_admin - ADMIN command handler
@@ -142,22 +142,16 @@ ms_admin(struct Client *client_p, struct Client *source_p, int parc, const char 
 static void
 do_admin(struct Client *source_p)
 {
-	const char *myname;
-	const char *nick;
-
 	if(IsPerson(source_p))
 		admin_spy(source_p);
 
-	myname = get_id(&me, source_p);
-	nick = EmptyString(source_p->name) ? "*" : get_id(source_p, source_p);
-
-	sendto_one(source_p, form_str(RPL_ADMINME), myname, nick, me.name);
+	sendto_one_numeric(source_p, RPL_ADMINME, form_str(RPL_ADMINME), me.name);
 	if(AdminInfo.name != NULL)
-		sendto_one(source_p, form_str(RPL_ADMINLOC1), myname, nick, AdminInfo.name);
+		sendto_one_numeric(source_p, RPL_ADMINLOC1, form_str(RPL_ADMINLOC1), AdminInfo.name);
 	if(AdminInfo.description != NULL)
-		sendto_one(source_p, form_str(RPL_ADMINLOC2), myname, nick, AdminInfo.description);
+		sendto_one_numeric(source_p, RPL_ADMINLOC2, form_str(RPL_ADMINLOC2), AdminInfo.description);
 	if(AdminInfo.email != NULL)
-		sendto_one(source_p, form_str(RPL_ADMINEMAIL), myname, nick, AdminInfo.email);
+		sendto_one_numeric(source_p, RPL_ADMINEMAIL, form_str(RPL_ADMINEMAIL), AdminInfo.email);
 }
 
 /* admin_spy()

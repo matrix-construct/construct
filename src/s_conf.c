@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.c 3354 2007-04-03 09:21:31Z nenolod $
+ *  $Id: s_conf.c 3368 2007-04-03 10:11:06Z nenolod $
  */
 
 #include "stdinc.h"
@@ -337,8 +337,7 @@ verify_access(struct Client *client_p, const char *username)
 	{
 		if(aconf->flags & CONF_FLAGS_REDIR)
 		{
-			sendto_one(client_p, form_str(RPL_REDIR),
-					me.name, client_p->name,
+			sendto_one_numeric(client_p, RPL_REDIR, form_str(RPL_REDIR),
 					aconf->name ? aconf->name : "", aconf->port);
 			return (NOT_AUTHORISED);
 		}

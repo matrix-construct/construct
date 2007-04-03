@@ -16,28 +16,28 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: messages.tab 3307 2007-03-28 15:40:24Z jilles $
+ *   $Id: messages.tab 3368 2007-04-03 10:11:06Z nenolod $
  */
 
 static  const char *  replies[] = {
 /* 000 */       NULL,
-/* 001  RPL_WELCOME, */ ":%s 001 %s :Welcome to the %s Internet Relay Chat Network %s",
-/* 002  RPL_YOURHOST,*/ ":%s 002 %s :Your host is %s, running version %s",
-/* 003  RPL_CREATED, */ ":%s 003 %s :This server was created %s",
-/* 004  RPL_MYINFO, */ ":%s 004 %s %s %s %s biklmnopstveqrcgzjfILPQF bkloveqjfI",
+/* 001  RPL_WELCOME, */ ":Welcome to the %s Internet Relay Chat Network %s",
+/* 002  RPL_YOURHOST,*/ ":Your host is %s, running version %s",
+/* 003  RPL_CREATED, */ ":This server was created %s",
+/* 004  RPL_MYINFO, */ "%s %s %s biklmnopstveqrcgzjfILPQF bkloveqjfI",
 /* 005  RPL_ISUPPORT, */ "%s :are supported by this server",
 /* 006 */       NULL,
 /* 007 */       NULL,
-/* 008  RPL_SNOMASK */  ":%s 008 %s %s :Server notice mask",
+/* 008  RPL_SNOMASK */  "%s :Server notice mask",
 /* 009 */       NULL,
-/* 010  RPL_REDIR, */ ":%s 010 %s %s %d :Please use this Server/Port instead",
+/* 010  RPL_REDIR, */ "%s %d :Please use this Server/Port instead",
 /* 011 */       NULL,
 /* 012 */       NULL,
 /* 013 */       NULL,
 /* 014 */       NULL,
-/* 015 RPL_MAP */    ":%s 015 %s :%s",
+/* 015 RPL_MAP */    ":%s",
 /* 016 */       NULL,
-/* 017 RPL_MAPEND */ ":%s 017 %s :End of /MAP",
+/* 017 RPL_MAPEND */ ":End of /MAP",
 /* 018 */       NULL,
 /* 019 */       NULL,
 /* 020 */	NULL,
@@ -277,10 +277,10 @@ static  const char *  replies[] = {
 /* 253 RPL_LUSERUNKNOWN, */     "%d :unknown connection(s)",
 /* 254 RPL_LUSERCHANNELS, */    "%d :channels formed",
 /* 255 RPL_LUSERME, */          ":I have %d clients and %d servers",
-/* 256 RPL_ADMINME, */          ":%s 256 %s :Administrative info about %s",
-/* 257 RPL_ADMINLOC1, */        ":%s 257 %s :%s",
-/* 258 RPL_ADMINLOC2, */        ":%s 258 %s :%s",
-/* 259 RPL_ADMINEMAIL, */       ":%s 259 %s :%s",
+/* 256 RPL_ADMINME, */          ":Administrative info about %s",
+/* 257 RPL_ADMINLOC1, */        ":%s",
+/* 258 RPL_ADMINLOC2, */        ":%s",
+/* 259 RPL_ADMINEMAIL, */       ":%s",
 /* 260 */       NULL,
 /* 261 RPL_TRACELOG, */         NULL,
 /* 262 RPL_ENDOFTRACE, */       "%s :End of TRACE",

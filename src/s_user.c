@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c 3293 2007-03-28 14:33:50Z jilles $
+ *  $Id: s_user.c 3368 2007-04-03 10:11:06Z nenolod $
  */
 
 #include "stdinc.h"
@@ -942,9 +942,11 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 
 		*m = '\0';
 		sendto_one(source_p, form_str(RPL_UMODEIS), me.name, source_p->name, buf);
+
 		if (source_p->snomask != 0)
-			sendto_one(source_p, form_str(RPL_SNOMASK), me.name, source_p->name,
+			sendto_one_numeric(source_p, RPL_SNOMASK, form_str(RPL_SNOMASK),
 				construct_snobuf(source_p->snomask));
+
 		return 0;
 	}
 
@@ -1117,7 +1119,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 	 */
 	send_umode_out(client_p, source_p, setflags);
 	if (showsnomask && MyConnect(source_p))
-		sendto_one(source_p, form_str(RPL_SNOMASK), me.name, source_p->name,
+		sendto_one_numeric(source_p, RPL_SNOMASK, form_str(RPL_SNOMASK),
 			construct_snobuf(source_p->snomask));
 
 	return (0);
@@ -1217,14 +1219,11 @@ send_umode_out(struct Client *client_p, struct Client *source_p, int old)
 void
 user_welcome(struct Client *source_p)
 {
-	sendto_one(source_p, form_str(RPL_WELCOME), me.name, source_p->name,
-		   ServerInfo.network_name, source_p->name);
-	sendto_one(source_p, form_str(RPL_YOURHOST), me.name,
-		   source_p->name,
+	sendto_one_numeric(source_p, RPL_WELCOME, form_str(RPL_WELCOME), ServerInfo.network_name, source_p->name);
+	sendto_one_numeric(source_p, RPL_YOURHOST, form_str(RPL_YOURHOST),
 		   get_listener_name(source_p->localClient->listener), ircd_version);
-
-	sendto_one(source_p, form_str(RPL_CREATED), me.name, source_p->name, creation);
-	sendto_one(source_p, form_str(RPL_MYINFO), me.name, source_p->name, me.name, ircd_version, umodebuf);
+	sendto_one_numeric(source_p, RPL_CREATED, form_str(RPL_CREATED), creation);
+	sendto_one_numeric(source_p, RPL_MYINFO, form_str(RPL_MYINFO), me.name, ircd_version, umodebuf);
 
 	show_isupport(source_p);
 
@@ -1312,7 +1311,7 @@ oper_up(struct Client *source_p, struct oper_conf *oper_p)
 	if((old & UMODE_INVISIBLE) && !IsInvisible(source_p))
 		--Count.invisi;
 	send_umode_out(source_p, source_p, old);
-	sendto_one(source_p, form_str(RPL_SNOMASK), me.name, source_p->name,
+	sendto_one_numeric(source_p, RPL_SNOMASK, form_str(RPL_SNOMASK),
 		   construct_snobuf(source_p->snomask));
 	sendto_one(source_p, form_str(RPL_YOUREOPER), me.name, source_p->name);
 	sendto_one_notice(source_p, ":*** Oper privs are %s", get_oper_privs(oper_p->flags));

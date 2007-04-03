@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_map.c 254 2005-09-21 23:35:12Z nenolod $
+ *  $Id: m_map.c 3368 2007-04-03 10:11:06Z nenolod $
  */
 
 #include "stdinc.h"
@@ -41,7 +41,7 @@ struct Message map_msgtab = {
 };
 
 mapi_clist_av1 map_clist[] = { &map_msgtab, NULL };
-DECLARE_MODULE_AV1(map, NULL, NULL, map_clist, NULL, NULL, "$Revision: 254 $");
+DECLARE_MODULE_AV1(map, NULL, NULL, map_clist, NULL, NULL, "$Revision: 3368 $");
 
 static void dump_map(struct Client *client_p, struct Client *root, char *pbuf);
 
@@ -61,7 +61,7 @@ m_map(struct Client *client_p, struct Client *source_p, int parc, const char *pa
 	}
 
 	dump_map(client_p, &me, buf);
-	sendto_one(client_p, form_str(RPL_MAPEND), me.name, client_p->name);
+	sendto_one_numeric(client_p, RPL_MAPEND, form_str(RPL_MAPEND));
 	return 0;
 }
 
@@ -73,7 +73,7 @@ static int
 mo_map(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	dump_map(client_p, &me, buf);
-	sendto_one(client_p, form_str(RPL_MAPEND), me.name, client_p->name);
+	sendto_one_numeric(client_p, RPL_MAPEND, form_str(RPL_MAPEND));
 
 	return 0;
 }
@@ -112,7 +112,7 @@ dump_map(struct Client *client_p, struct Client *root_p, char *pbuf)
 		 " | Users: %5lu (%4.1f%%)", dlink_list_length(&root_p->serv->users),
 		 100 * (float) dlink_list_length(&root_p->serv->users) / (float) Count.total);
 
-	sendto_one(client_p, form_str(RPL_MAP), me.name, client_p->name, buf);
+	sendto_one_numeric(client_p, RPL_MAP, form_str(RPL_MAP), buf);
 
 	if(root_p->serv->servers.head != NULL)
 	{

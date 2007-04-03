@@ -1,3 +1,13 @@
+nenolod     2007/04/03 09:57:53 UTC	(20070403-3366)
+  Log:
+  - river's ports.c from old charybdis trunk
+  
+
+  Changes:	Modified:
+  +195 -0	trunk/configure.ac (File Modified) 
+  + -		trunk/libcharybdis/ports.c (File Added) 
+
+
 nenolod     2007/04/03 09:50:56 UTC	(20070403-3364)
   Log:
   - remove broken ports stuff and devpoll stuff.
