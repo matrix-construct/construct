@@ -1,7 +1,7 @@
 #
 # Makefile.in for ircd/src
 #
-# $Id: Makefile.in 3159 2007-01-25 07:08:21Z nenolod $
+# $Id: Makefile.in 3360 2007-04-03 09:37:03Z nenolod $
 #
 CC		= @CC@
 INSTALL		= @INSTALL@
@@ -23,8 +23,6 @@ exec_prefix	= @exec_prefix@
 bindir		= @bindir@
 libdir		= @libdir@
 libexecdir	= @libexecdir@
-
-FNVHASH_S	= @FNVHASH_S@
 
 DOLLAR = $$
 
@@ -55,7 +53,7 @@ lex.yy.o:	lex.yy.c ircd_lexer.l
 lex.yy.c:	ircd_lexer.l
 	${LEX} ircd_lexer.l
 
-BASE_SRCS =                     \
+SRCS =                          \
   blacklist.c			\
   cache.c			\
   channel.c                     \
@@ -98,10 +96,7 @@ BASE_SRCS =                     \
   snomask.c			\
   substitution.c		\
   supported.c			\
-  whowas.c			\
-  $(FNVHASH_S)
-
-SRCS = ${BASE_SRCS:.s=.o}
+  whowas.c
 
 OBJS = ${SRCS:.c=.o}
 

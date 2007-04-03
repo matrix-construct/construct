@@ -1,3 +1,12 @@
+nenolod     2007/04/03 09:34:38 UTC	(20070403-3358)
+  Log:
+  - apparently setting KE_LENGTH to 128 is fine.
+  
+
+  Changes:	Modified:
+  +3 -5		trunk/libcharybdis/kqueue.c (File Modified) 
+
+
 nenolod     2007/04/03 09:31:11 UTC	(20070403-3356)
   Log:
   - remove the rest of the MAX_CLIENTS stuff. change kqueue implementation accordingly. (needs testing)

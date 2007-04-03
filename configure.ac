@@ -1,4 +1,4 @@
-dnl $Id: configure.ac 3356 2007-04-03 09:31:11Z nenolod $
+dnl $Id: configure.ac 3360 2007-04-03 09:37:03Z nenolod $
 dnl Process this file with autoconf to produce a configure script.
 
 dnl TODO: clean up all the OpenSSL and shared module checking stuff;
@@ -8,7 +8,7 @@ dnl said functions need to be just about as complex as they already are.
 AC_PREREQ(2.57)
 
 dnl Sneaky way to get an Id tag into the configure script
-AC_COPYRIGHT([$Id: configure.ac 3356 2007-04-03 09:31:11Z nenolod $])
+AC_COPYRIGHT([$Id: configure.ac 3360 2007-04-03 09:37:03Z nenolod $])
 
 AC_INIT([charybdis],[2.2.0])
 
@@ -912,19 +912,6 @@ AC_HELP_STRING([--disable-balloc],[Disable the block allocator.]),
 if test "$balloc" = no; then
 	AC_DEFINE([NOBALLOC], 1, [Define to 1 if you wish to disable the block allocator.])
 fi
-
-AC_ARG_ENABLE(ricer-hashing,
-AC_HELP_STRING([--enable-ricer-hashing],[Enable assembly-based hashing routines.]),
-[ricer_hashing=$enableval], [ricer_hashing=no])
-
-FNVHASH_S=""
-
-if test "$ricer_hashing" = "yes"; then
-	AC_DEFINE([RICER_HASHING], 1, [Define to 1 if you are using the assembly-based hashing routines.])
-	FNVHASH_S="fnvhash.s"
-fi
-
-AC_SUBST(FNVHASH_S)
 
 AC_ARG_ENABLE(small-net,
 AC_HELP_STRING([--enable-small-net],[Enable small network support.]),
