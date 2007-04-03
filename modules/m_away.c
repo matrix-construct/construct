@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_away.c 254 2005-09-21 23:35:12Z nenolod $
+ *  $Id: m_away.c 3370 2007-04-03 10:15:39Z nenolod $
  */
 
 #include "stdinc.h"
@@ -46,7 +46,7 @@ struct Message away_msgtab = {
 };
 
 mapi_clist_av1 away_clist[] = { &away_msgtab, NULL };
-DECLARE_MODULE_AV1(away, NULL, NULL, away_clist, NULL, NULL, "$Revision: 254 $");
+DECLARE_MODULE_AV1(away, NULL, NULL, away_clist, NULL, NULL, "$Revision: 3370 $");
 
 /***********************************************************************
  * m_away() - Added 14 Dec 1988 by jto. 
@@ -95,8 +95,7 @@ m_away(struct Client *client_p, struct Client *source_p, int parc, const char *p
 			source_p->user->away = NULL;
 		}
 		if(MyConnect(source_p))
-			sendto_one(source_p, form_str(RPL_UNAWAY),
-				   me.name, source_p->name);
+			sendto_one_numeric(source_p, RPL_UNAWAY, form_str(RPL_UNAWAY));
 		return 0;
 	}
 
@@ -135,7 +134,7 @@ m_away(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	source_p->user->away = away;
 
 	if(MyConnect(source_p))
-		sendto_one(source_p, form_str(RPL_NOWAWAY), me.name, source_p->name);
+		sendto_one_numeric(source_p, RPL_NOWAWAY, form_str(RPL_NOWAWAY));
 
 	return 0;
 }

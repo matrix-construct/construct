@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: messages.tab 3368 2007-04-03 10:11:06Z nenolod $
+ *   $Id: messages.tab 3370 2007-04-03 10:15:39Z nenolod $
  */
 
 static  const char *  replies[] = {
@@ -241,7 +241,7 @@ static  const char *  replies[] = {
 /* 218 RPL_STATSYLINE, */       "Y %s %d %d %d %u %d.%d %d.%d %u",
 /* 219 RPL_ENDOFSTATS, */       "%c :End of /STATS report",
 /* 220 RPL_STATSPLINE, */       "%c %d %s %d :%s",
-/* 221 RPL_UMODEIS, */          ":%s 221 %s %s",
+/* 221 RPL_UMODEIS, */          "%s",
 /* 222 */	NULL,
 /* 223 */       NULL,
 /* 224 */       NULL,
@@ -327,8 +327,8 @@ static  const char *  replies[] = {
 /* 302 RPL_USERHOST, */  ":%s 302 %s :%s",
 /* 303 RPL_ISON, */     ":%s 303 %s :",
 /* 304 RPL_TEXT, */      NULL,
-/* 305 RPL_UNAWAY, */   ":%s 305 %s :You are no longer marked as being away",
-/* 306 RPL_NOWAWAY, */  ":%s 306 %s :You have been marked as being away",
+/* 305 RPL_UNAWAY, */   ":You are no longer marked as being away",
+/* 306 RPL_NOWAWAY, */  ":You have been marked as being away",
 /* 307 */       NULL,
 /* 308 */       NULL,
 /* 309 */       NULL,

@@ -1,3 +1,16 @@
+nenolod     2007/04/03 10:11:06 UTC	(20070403-3368)
+  Log:
+  - change some sendto_one() to sendto_one_numeric().
+  
+
+  Changes:	Modified:
+  +4 -10	trunk/modules/m_admin.c (File Modified) 
+  +3 -3		trunk/modules/m_map.c (File Modified) 
+  +12 -12	trunk/src/messages.tab (File Modified) 
+  +1 -2		trunk/src/s_conf.c (File Modified) 
+  +9 -10	trunk/src/s_user.c (File Modified) 
+
+
 nenolod     2007/04/03 09:57:53 UTC	(20070403-3366)
   Log:
   - river's ports.c from old charybdis trunk

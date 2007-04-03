@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c 3368 2007-04-03 10:11:06Z nenolod $
+ *  $Id: s_user.c 3370 2007-04-03 10:15:39Z nenolod $
  */
 
 #include "stdinc.h"
@@ -941,7 +941,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 				*m++ = (char) i;
 
 		*m = '\0';
-		sendto_one(source_p, form_str(RPL_UMODEIS), me.name, source_p->name, buf);
+		sendto_one_numeric(source_p, RPL_UMODEIS, form_str(RPL_UMODEIS), buf);
 
 		if (source_p->snomask != 0)
 			sendto_one_numeric(source_p, RPL_SNOMASK, form_str(RPL_SNOMASK),
