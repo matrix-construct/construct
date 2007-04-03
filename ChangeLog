@@ -1,3 +1,12 @@
+jilles      2007/04/03 22:25:11 UTC	(20070403-3380)
+  Log:
+  Make the code that raises fd rlimit to hard limit work.
+  
+
+  Changes:	Modified:
+  +5 -5		trunk/src/ircd.c (File Modified) 
+
+
 nenolod     2007/04/03 11:45:22 UTC	(20070403-3378)
   Log:
   - note the I/O reworking
