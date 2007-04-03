@@ -1,4 +1,4 @@
-# $Id: Makefile.in 138 2005-09-12 00:48:18Z nenolod $
+# $Id: Makefile.in 3376 2007-04-03 11:37:39Z nenolod $
 CC		= @CC@
 INSTALL		= @INSTALL@
 INSTALL_BIN	= @INSTALL_PROGRAM@
@@ -43,13 +43,13 @@ CPPFLAGS	= ${INCLUDES} @CPPFLAGS@
  
 install-mkdirs:
 	-@if test ! -d $(DESTDIR)$(confdir); then \
-		echo "mkdir $(confdir)"; \
-		mkdir $(DESTDIR)$(confdir); \
+		echo "mkdir -p $(confdir)"; \
+		mkdir -p $(DESTDIR)$(confdir); \
 	fi
 
 	-@if test ! -d $(DESTDIR)$(mandir); then \
-		echo "mkdir $(mandir)"; \
-		mkdir $(DESTDIR)$(mandir); \
+		echo "mkdir -p $(mandir)"; \
+		mkdir -p $(DESTDIR)$(mandir); \
 	fi
 
 install: install-mkdirs build
