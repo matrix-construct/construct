@@ -30,7 +30,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: m_list_safelist.c 1393 2006-05-20 19:28:16Z jilles $
+ * $Id: m_list.c 3372 2007-04-03 10:18:07Z nenolod $
  */
 
 #include "stdinc.h"
@@ -77,7 +77,7 @@ mapi_hfn_list_av1 list_hfnlist[] = {
 	{NULL, NULL}
 };
 
-DECLARE_MODULE_AV1(list, _modinit, _moddeinit, list_clist, NULL, list_hfnlist, "$Revision: 1393 $");
+DECLARE_MODULE_AV1(list, _modinit, _moddeinit, list_clist, NULL, list_hfnlist, "$Revision: 3372 $");
 
 static int _modinit(void)
 {

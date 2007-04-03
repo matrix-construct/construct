@@ -1,3 +1,14 @@
+nenolod     2007/04/03 10:15:39 UTC	(20070403-3370)
+  Log:
+  - some more transit to sendto_one_numeric().
+  
+
+  Changes:	Modified:
+  +2 -3		trunk/modules/m_away.c (File Modified) 
+  +3 -3		trunk/src/messages.tab (File Modified) 
+  +1 -1		trunk/src/s_user.c (File Modified) 
+
+
 nenolod     2007/04/03 10:11:06 UTC	(20070403-3368)
   Log:
   - change some sendto_one() to sendto_one_numeric().
