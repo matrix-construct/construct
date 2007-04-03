@@ -1,3 +1,15 @@
+nenolod     2007/04/03 10:18:07 UTC	(20070403-3372)
+  Log:
+  - rename m_list_safelist to m_list and remove ratbox implementation
+  
+
+  Changes:	Modified:
+  +393 -664	trunk/modules/Makefile.in (File Modified) 
+  + -		trunk/modules/m_list.c (File Added) 
+  + -		trunk/modules/m_list_ratbox.c (File Deleted) 
+  + -		trunk/modules/m_list_safelist.c (File Deleted) 
+
+
 nenolod     2007/04/03 10:15:39 UTC	(20070403-3370)
   Log:
   - some more transit to sendto_one_numeric().
