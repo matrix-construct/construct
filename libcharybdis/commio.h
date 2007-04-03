@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: commio.h 3229 2007-03-05 17:23:07Z nenolod $
+ *  $Id: commio.h 3354 2007-04-03 09:21:31Z nenolod $
  */
 
 #ifndef INCLUDED_commio_h
@@ -187,6 +187,8 @@ extern void mangle_mapped_sockaddr(struct sockaddr *in);
 #else
 #define mangle_mapped_sockaddr(x) 
 #endif
+
+extern int comm_get_maxconnections(void);
 
 extern fde_t *comm_locate_fd(int fd);
 

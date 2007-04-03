@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: poll.c 3245 2007-03-05 18:41:14Z nenolod $
+ *  $Id: poll.c 3354 2007-04-03 09:21:31Z nenolod $
  */
 
 #include "config.h"
@@ -63,14 +63,15 @@ void
 init_netio(void)
 {
 	int fd;
+	int maxconn = comm_get_maxconnections();
 
-	pollfd_list.pollfds = calloc(sizeof(struct pollfd), MAXCONNECTIONS);
+	pollfd_list.pollfds = calloc(sizeof(struct pollfd), maxconn);
 
-	for (fd = 0; fd < MAXCONNECTIONS; fd++)
+	for (fd = 0; fd < maxconn; fd++)
 		pollfd_list.pollfds[fd].fd = -1;
 
 	pollfd_list.maxindex = 0;
-	pollfd_list.allocated = MAXCONNECTIONS;
+	pollfd_list.allocated = maxconn;
 }
 
 static inline void

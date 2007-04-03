@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: commio.c 3247 2007-03-05 18:42:24Z nenolod $
+ *  $Id: commio.c 3354 2007-04-03 09:21:31Z nenolod $
  */
 
 #include "libcharybdis.h"
@@ -56,6 +56,7 @@ static void comm_connect_callback(int fd, int status);
 static PF comm_connect_timeout;
 static void comm_connect_dns_callback(void *vptr, struct DNSReply *reply);
 static PF comm_connect_tryconnect;
+static int comm_max_connections = 0;
 
 inline fde_t *
 comm_locate_fd(int fd)
@@ -140,10 +141,11 @@ comm_close_all(void)
 	int fd;
 #endif
 
-	/* XXX someone tell me why we care about 4 fd's ? */
-	/* XXX btw, fd 3 is used for profiler ! */
-
-	for (i = 4; i < MAXCONNECTIONS; ++i)
+	/*
+         * we start at 4 to avoid giving fds where malloc messages
+         * could be written --nenolod
+         */
+	for (i = 4; i < comm_max_connections; ++i)
 	{
 		fde_t *F = comm_locate_fd(i);
 
@@ -600,7 +602,7 @@ comm_socket(int family, int sock_type, int proto, const char *note)
 {
 	int fd;
 	/* First, make sure we aren't going to run out of file descriptors */
-	if(number_fd >= MASTER_MAX)
+	if(number_fd >= comm_max_connections)
 	{
 		errno = ENFILE;
 		return -1;
@@ -658,7 +660,7 @@ int
 comm_accept(int fd, struct sockaddr *pn, socklen_t *addrlen)
 {
 	int newfd;
-	if(number_fd >= MASTER_MAX)
+	if(number_fd >= comm_max_connections)
 	{
 		errno = ENFILE;
 		return -1;
@@ -722,7 +724,7 @@ fdlist_update_biggest(int fd, int opening)
 {
 	if(fd < highest_fd)
 		return;
-	s_assert(fd < MAXCONNECTIONS);
+	s_assert(fd < comm_max_connections);
 
 	if(fd > highest_fd)
 	{
@@ -749,10 +751,16 @@ void
 fdlist_init(void)
 {
 	static int initialized = 0;
+	struct rlimit limit;
 
 	if(!initialized)
 	{
 		memset(&fd_table, '\0', sizeof(dlink_list) * FD_HASH_SIZE);
+
+		/* set up comm_max_connections. */
+		if(!getrlimit(RLIMIT_NOFILE, &limit))
+			comm_max_connections = limit.rlim_cur;
+
 		initialized = 1;
 	}
 }
@@ -870,4 +878,10 @@ comm_note(int fd, const char *format, ...)
 		F->desc[0] = '\0';
 }
 
+extern int
+comm_get_maxconnections(void)
+{
+	fdlist_init();
 
+	return comm_max_connections;
+}

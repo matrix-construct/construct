@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd.c 3251 2007-03-05 18:58:38Z nenolod $
+ *  $Id: ircd.c 3354 2007-04-03 09:21:31Z nenolod $
  */
 
 #include "stdinc.h"
@@ -144,15 +144,6 @@ init_sys(void)
 
 	if(!getrlimit(RLIMIT_FD_MAX, &limit))
 	{
-		if(limit.rlim_max < MAXCONNECTIONS)
-		{
-			fprintf(stderr, "ircd's bootstrap fd table is too big\n");
-			fprintf(stderr, "Hard Limit: %ld bootstrap size: %d\n",
-				(long) limit.rlim_max, MAXCONNECTIONS);
-			fprintf(stderr, "Fix MAXCONNECTIONS\n");
-			exit(-1);
-		}
-
 		limit.rlim_cur = limit.rlim_max;	/* make soft limit the max */
 		if(setrlimit(RLIMIT_FD_MAX, &limit) == -1)
 		{

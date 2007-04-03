@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: config.h 1701 2006-06-27 16:25:52Z jilles $
+ *  $Id: config.h 3354 2007-04-03 09:21:31Z nenolod $
  */
 
 #ifndef INCLUDED_config_h
@@ -145,11 +145,6 @@
  * and dns lookups.
  */
 #define MAX_BUFFER      60
-
-/* HARD_FDLIMIT_
- * The maximum amount of FDs to use.  MAX_CLIENTS is set in ./configure.
- */
-#define HARD_FDLIMIT_    MAX_CLIENTS + MAX_BUFFER + 20
 
 #define CONFIG_RATBOX_LEVEL_2
 

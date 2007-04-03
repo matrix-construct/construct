@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.c 3233 2007-03-05 17:28:27Z nenolod $
+ *  $Id: s_serv.c 3354 2007-04-03 09:21:31Z nenolod $
  */
 
 #include "stdinc.h"
@@ -1368,8 +1368,10 @@ fork_server(struct Client *server)
 		goto fork_error;
 	else if(ret == 0)
 	{
+		int maxconn = comm_get_maxconnections();
+
 		/* set our fds as non blocking and close everything else */
-		for (i = 0; i < HARD_FDLIMIT; i++)
+		for (i = 0; i < maxconn; i++)
 		{
 				
 

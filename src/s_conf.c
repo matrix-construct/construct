@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.c 3271 2007-03-18 14:44:24Z jilles $
+ *  $Id: s_conf.c 3354 2007-04-03 09:21:31Z nenolod $
  */
 
 #include "stdinc.h"
@@ -852,7 +852,7 @@ set_default_conf(void)
 	ConfigFileEntry.reject_ban_time = 300;  
 	ConfigFileEntry.reject_duration = 120;
 
-	ServerInfo.max_clients = MAXCONNECTIONS;
+	ServerInfo.max_clients = comm_get_maxconnections();
 }
 
 #undef YES

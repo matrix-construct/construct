@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: restart.c 3249 2007-03-05 18:51:17Z nenolod $
+ *  $Id: restart.c 3354 2007-04-03 09:21:31Z nenolod $
  */
 
 #include "stdinc.h"
@@ -55,6 +55,7 @@ void
 server_reboot(void)
 {
 	int i;
+	int maxconn = comm_get_maxconnections();
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "Restarting server...");
 
@@ -69,7 +70,7 @@ server_reboot(void)
 	 * bah, for now, the program ain't coming back to here, so forcibly
 	 * close everything the "wrong" way for now, and just LEAVE...
 	 */
-	for (i = 0; i < MAXCONNECTIONS; ++i)
+	for (i = 0; i < maxconn; ++i)
 		close(i);
 
 	unlink(pidFileName);

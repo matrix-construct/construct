@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: devpoll.c 3229 2007-03-05 17:23:07Z nenolod $
+ *  $Id: devpoll.c 3354 2007-04-03 09:21:31Z nenolod $
  */
 
 #include "config.h"
@@ -32,8 +32,7 @@
 
 #include "libcharybdis.h"
 
-#define POLL_LENGTH	HARD_FDLIMIT
-
+#define POLL_LENGTH 1024
 
 static void devpoll_update_events(int, short, PF *);
 static int dpfd;

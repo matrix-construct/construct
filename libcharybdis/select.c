@@ -22,16 +22,13 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: select.c 3229 2007-03-05 17:23:07Z nenolod $
+ *  $Id: select.c 3354 2007-04-03 09:21:31Z nenolod $
  */
 
 #include "config.h"
 
 #include "libcharybdis.h"
 
-#if HARD_FDLIMIT_ >= FD_SETSIZE
-#error HARD_FDLIMIT_ must be less than FD_SETSIZE(try using poll instead of select)
-#endif
 /*
  * Note that this is only a single list - multiple lists is kinda pointless
  * under select because the list size is a function of the highest FD :-)

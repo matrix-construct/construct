@@ -1,3 +1,12 @@
+jilles      2007/04/02 22:03:08 UTC	(20070402-3350)
+  Log:
+  Repair operspy who !#channel, broken by me in r3283.
+  
+
+  Changes:	Modified:
+  +2 -2		trunk/modules/m_who.c (File Modified) 
+
+
 jilles      2007/04/01 22:20:00 UTC	(20070401-3344)
   Log:
   Update bug report and IRC channel information.

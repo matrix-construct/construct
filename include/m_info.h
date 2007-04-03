@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_info.h 70 2005-09-10 07:03:09Z nenolod $
+ *  $Id: m_info.h 3354 2007-04-03 09:21:31Z nenolod $
  */
 
 #ifndef INCLUDED_m_info_h
@@ -63,9 +63,6 @@ Info MyInformation[] = {
 #else
 	{"RESVPATH", "NONE", 0, "Path to resv file"},
 #endif
-
-	{"HARD_FDLIMIT_", "", HARD_FDLIMIT_,
-	 "Maximum Number of File Descriptors Available"},
 
 #ifdef HPATH
 	{"HPATH", HPATH, 0, "Path to Operator Help Files"},
