@@ -1,3 +1,12 @@
+nenolod     2007/04/03 11:45:22 UTC	(20070403-3378)
+  Log:
+  - note the I/O reworking
+  
+
+  Changes:	Modified:
+  +2 -0		trunk/NEWS (File Modified) 
+
+
 nenolod     2007/04/03 11:37:39 UTC	(20070403-3376)
   Log:
   - use mkdir -p

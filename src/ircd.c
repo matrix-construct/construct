@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd.c 3354 2007-04-03 09:21:31Z nenolod $
+ *  $Id: ircd.c 3380 2007-04-03 22:25:11Z jilles $
  */
 
 #include "stdinc.h"
@@ -139,19 +139,19 @@ ircd_die_cb(const char *str)
 static void
 init_sys(void)
 {
-#if defined(RLIMIT_FD_MAX) && defined(HAVE_SYS_RLIMIT_H)
+#if defined(RLIMIT_NOFILE) && defined(HAVE_SYS_RESOURCE_H)
 	struct rlimit limit;
 
-	if(!getrlimit(RLIMIT_FD_MAX, &limit))
+	if(!getrlimit(RLIMIT_NOFILE, &limit))
 	{
 		limit.rlim_cur = limit.rlim_max;	/* make soft limit the max */
-		if(setrlimit(RLIMIT_FD_MAX, &limit) == -1)
+		if(setrlimit(RLIMIT_NOFILE, &limit) == -1)
 		{
 			fprintf(stderr, "error setting max fd's to %ld\n", (long) limit.rlim_cur);
 			exit(EXIT_FAILURE);
 		}
 	}
-#endif /* RLIMIT_FD_MAX */
+#endif /* RLIMIT_NOFILE */
 }
 
 static int
@@ -552,8 +552,8 @@ main(int argc, char *argv[])
 	}
 
 	/* Init the event subsystem */
-	libcharybdis_init(ircd_log_cb, restart, ircd_die_cb);
 	init_sys();
+	libcharybdis_init(ircd_log_cb, restart, ircd_die_cb);
 
 	fdlist_init();
 	if(!server_state_foreground)
