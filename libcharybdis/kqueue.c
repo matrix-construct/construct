@@ -22,13 +22,15 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: kqueue.c 3356 2007-04-03 09:31:11Z nenolod $
+ *  $Id: kqueue.c 3358 2007-04-03 09:34:38Z nenolod $
  */
 
 #include "stdinc.h"
 #include <sys/event.h>
 
 #include "libcharybdis.h"
+
+#define KE_LENGTH 128
 
 /* jlemon goofed up and didn't add EV_SET until fbsd 4.3 */
 
@@ -197,12 +199,8 @@ int
 comm_select(unsigned long delay)
 {
 	int num, i;
-	static struct kevent *ke = NULL;
+	static struct kevent ke[KE_LENGTH];
 	struct timespec poll_time;
-
-	/* allocate ke if it has not been allocated already */
-	if (ke == NULL)
-		ke = MyMalloc(sizeof(struct kevent) * comm_get_maxconnections());
 
 	/*
 	 * remember we are doing NANOseconds here, not micro/milli. God knows
