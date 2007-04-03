@@ -1,4 +1,4 @@
-dnl $Id: configure.ac 3364 2007-04-03 09:50:56Z nenolod $
+dnl $Id: configure.ac 3366 2007-04-03 09:57:53Z nenolod $
 dnl Process this file with autoconf to produce a configure script.
 
 dnl TODO: clean up all the OpenSSL and shared module checking stuff;
@@ -8,7 +8,7 @@ dnl said functions need to be just about as complex as they already are.
 AC_PREREQ(2.57)
 
 dnl Sneaky way to get an Id tag into the configure script
-AC_COPYRIGHT([$Id: configure.ac 3364 2007-04-03 09:50:56Z nenolod $])
+AC_COPYRIGHT([$Id: configure.ac 3366 2007-04-03 09:57:53Z nenolod $])
 
 AC_INIT([charybdis],[2.2.0])
 
@@ -631,6 +631,14 @@ fi
 dnl IO Loop Selection
 dnl =================
 
+AC_ARG_ENABLE(ports, AC_HELP_STRING([--enable-ports],[Force solaris I/O ports subsystem usage.]),
+[ if test $enableval = yes; then 
+	SELECT_TYPE_EXPLICIT="ports"
+  else
+  	use_ports=no
+  fi
+],)
+
 AC_ARG_ENABLE(poll, AC_HELP_STRING([--enable-poll],[Force poll() usage.]),
 [ if test $enableval = yes; then 
 	SELECT_TYPE_EXPLICIT="poll"
@@ -740,6 +748,13 @@ if test ! -z "$SELECT_TYPE_EXPLICIT"; then
 	SELECT_TYPE="$SELECT_TYPE_EXPLICIT";
 	echo "Forcing $SELECT_TYPE to be enabled"
 else
+
+if test ! "x$use_ports" = "xno"; then
+	AC_CHECK_FUNCS(port_getn, [haveports=yes], [haveports=no])
+	if test "x$haveports" = "xyes" ; then
+		SELECT_TYPE="ports"
+	fi
+fi
 
 if test ! "x$use_select" = "xno"; then
 	AC_CHECK_FUNCS(select, [haveselect=yes], [haveselect=no])
