@@ -1,3 +1,14 @@
+nenolod     2007/04/03 09:37:03 UTC	(20070403-3360)
+  Log:
+  - remove x86-optimized hash code.
+  
+
+  Changes:	Modified:
+  +0 -13	trunk/configure.ac (File Modified) 
+  +2 -187	trunk/src/Makefile.in (File Modified) 
+  + -		trunk/src/fnvhash.s (File Deleted) 
+
+
 nenolod     2007/04/03 09:34:38 UTC	(20070403-3358)
   Log:
   - apparently setting KE_LENGTH to 128 is fine.

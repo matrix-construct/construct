@@ -237,9 +237,6 @@
 /* Size of the pre-client heap. */
 #undef PCLIENT_HEAP_SIZE
 
-/* Define to 1 if you are using the assembly-based hashing routines. */
-#undef RICER_HASHING
-
 /* This is the type of IO loop we are using */
 #undef SELECT_TYPE
 
