@@ -1,3 +1,28 @@
+nenolod     2007/04/03 09:21:31 UTC	(20070403-3354)
+  Log:
+  - remove ALL braindead 2.8 I/O artifacts: MASTER_MAX, HARD_FDLIMIT, HARD_FDLIMIT_, MAXCONNECTIONS, MAX_CLIENTS, etc.
+    they are ALL gone. all of this stuff is now determined at runtime via getrlimit(2).
+  - due to this, devpoll is broken. i'm not motivated to fix it at the moment.
+  
+
+  Changes:	Modified:
+  +0 -5		trunk/include/config.h (File Modified) 
+  +0 -5		trunk/include/config.h.dist (File Modified) 
+  +0 -6		trunk/include/defaults.h (File Modified) 
+  +0 -3		trunk/include/m_info.h (File Modified) 
+  +21 -7	trunk/libcharybdis/commio.c (File Modified) 
+  +2 -0		trunk/libcharybdis/commio.h (File Modified) 
+  +1 -2		trunk/libcharybdis/devpoll.c (File Modified) 
+  +4 -3		trunk/libcharybdis/poll.c (File Modified) 
+  +0 -3		trunk/libcharybdis/select.c (File Modified) 
+  +0 -9		trunk/src/ircd.c (File Modified) 
+  +23 -26	trunk/src/listener.c (File Modified) 
+  +2 -1		trunk/src/restart.c (File Modified) 
+  +5 -1		trunk/src/s_auth.c (File Modified) 
+  +1 -1		trunk/src/s_conf.c (File Modified) 
+  +3 -1		trunk/src/s_serv.c (File Modified) 
+
+
 jilles      2007/04/02 22:03:08 UTC	(20070402-3350)
   Log:
   Repair operspy who !#channel, broken by me in r3283.

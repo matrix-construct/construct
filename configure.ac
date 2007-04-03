@@ -1,4 +1,4 @@
-dnl $Id: configure.ac 3323 2007-03-30 23:33:43Z jilles $
+dnl $Id: configure.ac 3356 2007-04-03 09:31:11Z nenolod $
 dnl Process this file with autoconf to produce a configure script.
 
 dnl TODO: clean up all the OpenSSL and shared module checking stuff;
@@ -8,7 +8,7 @@ dnl said functions need to be just about as complex as they already are.
 AC_PREREQ(2.57)
 
 dnl Sneaky way to get an Id tag into the configure script
-AC_COPYRIGHT([$Id: configure.ac 3323 2007-03-30 23:33:43Z jilles $])
+AC_COPYRIGHT([$Id: configure.ac 3356 2007-04-03 09:31:11Z nenolod $])
 
 AC_INIT([charybdis],[2.2.0])
 
@@ -987,23 +987,8 @@ AC_HELP_STRING([--with-topiclen=NUMBER],[Set the max topic length to NUMBER (def
  fi
 ], [TOPICLEN=390])
 
-AC_ARG_WITH(maxclients,
-AC_HELP_STRING([--with-maxclients=NUMBER],[Maximum number of connections the ircd can handle]),
-        MAX_CLIENTS="$withval", MAX_CLIENTS=3000)
-
-
-if test "$MAX_CLIENTS" = yes; then
-	MAX_CLIENTS=3000
-fi
-
-if test $MAX_CLIENTS -gt 65536; then
-	MAX_CLIENTS=65536
-	AC_MSG_WARN([Max connections cannot be larger than 65536!])
-fi
-
 AC_DEFINE_UNQUOTED(TOPICLEN, ${TOPICLEN}, [Maximum topic length (<=390)])
 AC_DEFINE_UNQUOTED(NICKLEN, (${NICKLEN}+1), [Nickname length])
-AC_DEFINE_UNQUOTED(MAX_CLIENTS, ${MAX_CLIENTS}, [Maximum number of network connections])
 
 AC_ARG_ENABLE(shared-modules,
 AC_HELP_STRING([--disable-shared-modules],[ Disable shared modules.]),

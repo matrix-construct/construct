@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_info.h 3354 2007-04-03 09:21:31Z nenolod $
+ *  $Id: m_info.h 3356 2007-04-03 09:31:11Z nenolod $
  */
 
 #ifndef INCLUDED_m_info_h
@@ -89,8 +89,6 @@ Info MyInformation[] = {
 #else
 	{"IPV6", "OFF", 0, "IPv6 Support"},
 #endif
-
-	{"MAX_CLIENTS", "", MAX_CLIENTS, "Default maximum Clients"},
 
 	{"JOIN_LEAVE_COUNT_EXPIRE_TIME", "", JOIN_LEAVE_COUNT_EXPIRE_TIME,
 	 "Anti SpamBot Parameter"},
