@@ -3,6 +3,8 @@ See LICENSE for licensing details (GPL v2).
 
 -- charybdis-2.2.0
 
+- The I/O code has been reworked, file descriptor metadata is stored in a
+  hashtable and there are no longer any compiletime defines.
 - Improve error checking and error messages for kline/dline/xline/resv files.
 - Allow kline ipv6:address, unkline some.host and unkline ipv6:address
   without *@.
@@ -373,5 +375,5 @@ modules in case the developers need them.
 Other files recommended for reading: BUGS, README.FIRST, INSTALL
 
 --------------------------------------------------------------------------------
-$Id: NEWS 3344 2007-04-01 22:20:00Z jilles $
+$Id: NEWS 3378 2007-04-03 11:45:22Z nenolod $
 

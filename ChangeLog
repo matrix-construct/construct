@@ -1,3 +1,12 @@
+nenolod     2007/04/03 11:37:39 UTC	(20070403-3376)
+  Log:
+  - use mkdir -p
+  
+
+  Changes:	Modified:
+  +4 -4		trunk/doc/Makefile.in (File Modified) 
+
+
 nenolod     2007/04/03 10:49:11 UTC	(20070403-3374)
   Log:
   - enforce proper conditions for EPOLL_CTL_DEL.
