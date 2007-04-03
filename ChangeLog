@@ -1,3 +1,13 @@
+nenolod     2007/04/03 09:49:11 UTC	(20070403-3362)
+  Log:
+  - regenerate files
+  
+
+  Changes:	Modified:
+  +1 -25	trunk/configure (File Modified) 
+  +0 -3		trunk/include/setup.h.in (File Modified) 
+
+
 nenolod     2007/04/03 09:37:03 UTC	(20070403-3360)
   Log:
   - remove x86-optimized hash code.

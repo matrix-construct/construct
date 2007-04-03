@@ -1,4 +1,4 @@
-dnl $Id: configure.ac 3360 2007-04-03 09:37:03Z nenolod $
+dnl $Id: configure.ac 3364 2007-04-03 09:50:56Z nenolod $
 dnl Process this file with autoconf to produce a configure script.
 
 dnl TODO: clean up all the OpenSSL and shared module checking stuff;
@@ -8,7 +8,7 @@ dnl said functions need to be just about as complex as they already are.
 AC_PREREQ(2.57)
 
 dnl Sneaky way to get an Id tag into the configure script
-AC_COPYRIGHT([$Id: configure.ac 3360 2007-04-03 09:37:03Z nenolod $])
+AC_COPYRIGHT([$Id: configure.ac 3364 2007-04-03 09:50:56Z nenolod $])
 
 AC_INIT([charybdis],[2.2.0])
 
@@ -655,16 +655,6 @@ AC_ARG_ENABLE(kqueue, AC_HELP_STRING([--enable-kqueue],[Force kqueue() usage.]),
   fi
 ],)
 
-AC_ARG_ENABLE(devpoll,AC_HELP_STRING([--enable-devpoll],[Force usage of /dev/poll.]),
-[ if test $enableval = yes; then 
-	SELECT_TYPE_EXPLICIT="devpoll" 
-	dnl These need to be defined or not defined
-	AC_CHECK_HEADERS([sys/devpoll.h devpoll.h])
-  else
-  	use_devpoll=no;
-  fi
-],)
-
 AC_ARG_ENABLE(epoll, AC_HELP_STRING([--enable-epoll],[Force sys_epoll usage (Linux only).]),
 [ if test $enableval = yes; then 
 	SELECT_TYPE_EXPLICIT="epoll"
@@ -762,17 +752,6 @@ if test ! "x$use_poll" = "xno"; then
 	AC_CHECK_FUNCS(poll, [havepoll=yes], [havepoll=no])
 	if test "x$havepoll" = "xyes" ; then
 		SELECT_TYPE="poll"
-	fi
-fi
-
-if test ! "x$use_devpoll" = "xno"; then
-	AC_MSG_CHECKING(for /dev/poll)
-	if test -c "/dev/poll"; then
-	        AC_MSG_RESULT(yes)
-		AC_CHECK_HEADERS([devpoll.h sys/devpoll.h])
-	        SELECT_TYPE="devpoll"
-	else
-		AC_MSG_RESULT(no)	
 	fi
 fi
 
