@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_set.c 3253 2007-03-05 19:01:05Z nenolod $
+ *  $Id: m_set.c 3394 2007-04-05 00:33:52Z jilles $
  */
 
 /* rewritten by jdc */
@@ -52,7 +52,7 @@ struct Message set_msgtab = {
 };
 
 mapi_clist_av1 set_clist[] = { &set_msgtab, NULL };
-DECLARE_MODULE_AV1(set, NULL, NULL, set_clist, NULL, NULL, "$Revision: 3253 $");
+DECLARE_MODULE_AV1(set, NULL, NULL, set_clist, NULL, NULL, "$Revision: 3394 $");
 
 /* Structure used for the SET table itself */
 struct SetStruct
@@ -246,6 +246,14 @@ quote_max(struct Client *source_p, int newval)
 {
 	if(newval > 0)
 	{
+		if(newval > ServerInfo.max_clients)
+		{
+			sendto_one(source_p,
+				   ":%s NOTICE %s :You cannot set MAXCLIENTS to > max_clients (%d)",
+				   me.name, source_p->name, ServerInfo.max_clients);
+			return;
+		}
+
 		if(newval < 32)
 		{
 			sendto_one_notice(source_p, ":You cannot set MAXCLIENTS to < 32 (%d:%d)",

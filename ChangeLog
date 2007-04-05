@@ -1,3 +1,16 @@
+jilles      2007/04/05 00:24:47 UTC	(20070405-3392)
+  Log:
+  Change code that checks maxclients limit: allow exactly
+  the configured amount of non-exceed_limit clients.
+  Code that appeared to limit exceed_limit clients too
+  but less heavily removed (it was not effective because
+  the parentheses were wrong).
+  
+
+  Changes:	Modified:
+  +2 -4		trunk/src/s_user.c (File Modified) 
+
+
 jilles      2007/04/05 00:12:55 UTC	(20070405-3390)
   Log:
   By default, leave MAX_BUFFER fds free for log files,
