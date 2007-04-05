@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c 3370 2007-04-03 10:15:39Z nenolod $
+ *  $Id: s_user.c 3392 2007-04-05 00:24:47Z jilles $
  */
 
 #include "stdinc.h"
@@ -402,10 +402,8 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 	 *   -Taner
 	 */
 	/* Except "F:" clients */
-	if(((dlink_list_length(&lclient_list) + 1) >= 
-	   ((unsigned long)GlobalSetOptions.maxclients + MAX_BUFFER) ||
-           (dlink_list_length(&lclient_list) + 1) >= 
-	    ((unsigned long)GlobalSetOptions.maxclients - 5)) && !(IsExemptLimits(source_p)))
+	if(dlink_list_length(&lclient_list) >=
+	    (unsigned long)GlobalSetOptions.maxclients && !IsExemptLimits(source_p))
 	{
 		sendto_realops_snomask(SNO_FULL, L_ALL,
 				     "Too many clients, rejecting %s[%s].", source_p->name, source_p->host);
