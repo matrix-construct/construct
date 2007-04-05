@@ -1,3 +1,13 @@
+jilles      2007/04/05 00:33:52 UTC	(20070405-3394)
+  Log:
+  Don't allow /quote set max higher than the
+  serverinfo::max_clients ircd.conf value.
+  
+
+  Changes:	Modified:
+  +8 -0		trunk/modules/m_set.c (File Modified) 
+
+
 jilles      2007/04/05 00:24:47 UTC	(20070405-3392)
   Log:
   Change code that checks maxclients limit: allow exactly
