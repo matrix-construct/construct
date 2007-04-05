@@ -1,3 +1,12 @@
+jilles      2007/04/03 22:45:04 UTC	(20070403-3384)
+  Log:
+  --with-maxclients configure option is gone
+  
+
+  Changes:	Modified:
+  +0 -11	trunk/INSTALL (File Modified) 
+
+
 jilles      2007/04/03 22:25:11 UTC	(20070403-3380)
   Log:
   Make the code that raises fd rlimit to hard limit work.
