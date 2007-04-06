@@ -1,3 +1,12 @@
+jilles      2007/04/05 00:38:52 UTC	(20070405-3396)
+  Log:
+  Show max_clients in /info.
+  
+
+  Changes:	Modified:
+  +6 -0		trunk/modules/m_info.c (File Modified) 
+
+
 jilles      2007/04/05 00:33:52 UTC	(20070405-3394)
   Log:
   Don't allow /quote set max higher than the

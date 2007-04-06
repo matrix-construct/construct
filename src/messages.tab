@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: messages.tab 3370 2007-04-03 10:15:39Z nenolod $
+ *   $Id: messages.tab 3404 2007-04-06 21:25:37Z nenolod $
  */
 
 static  const char *  replies[] = {
@@ -403,7 +403,7 @@ static  const char *  replies[] = {
 /* 378 RPL_WHOISHOST, */        "%s :is connecting from *@%s %s",
 /* 379 */       NULL,
 /* 380 */       NULL,
-/* 381 RPL_YOUREOPER, */        ":%s 381 %s :Here I am with a brain the size of a planet, and they want me to bring them coffee. I think I'll just kill myself...",
+/* 381 RPL_YOUREOPER, */        ":%s 381 %s :Congrats! You passed Internet Memes 101.",
 /* 382 RPL_REHASHING, */        ":%s 382 %s %s :Rehashing",
 /* 383 */       NULL,
 /* 384 RPL_MYPORTIS, */		NULL,
