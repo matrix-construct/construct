@@ -1,3 +1,12 @@
+nenolod     2007/04/06 21:25:37 UTC	(20070406-3404)
+  Log:
+  - 2.2 operline
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/src/messages.tab (File Modified) 
+
+
 jilles      2007/04/05 00:38:52 UTC	(20070405-3396)
   Log:
   Show max_clients in /info.
