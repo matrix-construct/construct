@@ -1,3 +1,12 @@
+jilles      2007/04/13 19:06:53 UTC	(20070413-3406)
+  Log:
+  set: Use sendto_one_notice() for MAXCLIENTS too high notice.
+  
+
+  Changes:	Modified:
+  +3 -3		trunk/modules/m_set.c (File Modified) 
+
+
 nenolod     2007/04/06 21:25:37 UTC	(20070406-3404)
   Log:
   - 2.2 operline

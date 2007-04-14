@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_kill.c 3163 2007-01-25 07:36:23Z nenolod $
+ *  $Id: m_kill.c 3408 2007-04-14 20:58:56Z jilles $
  */
 
 #include "stdinc.h"
@@ -55,7 +55,7 @@ struct Message kill_msgtab = {
 
 mapi_clist_av1 kill_clist[] = { &kill_msgtab, NULL };
 
-DECLARE_MODULE_AV1(kill, NULL, NULL, kill_clist, NULL, NULL, "$Revision: 3163 $");
+DECLARE_MODULE_AV1(kill, NULL, NULL, kill_clist, NULL, NULL, "$Revision: 3408 $");
 
 /*
 ** mo_kill
@@ -126,7 +126,7 @@ mo_kill(struct Client *client_p, struct Client *source_p, int parc, const char *
 	 * that have been around for ever, for no reason.. */
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "Received KILL message for %s!%s@%s. From %s Path: %s (%s)",
-			     target_p->name, target_p->username, target_p->host, 
+			     target_p->name, target_p->username, target_p->orighost, 
 			     parv[0], me.name, reason);
 
 	ilog(L_KILL, "%c %s %s!%s@%s %s %s",
@@ -246,7 +246,7 @@ ms_kill(struct Client *client_p, struct Client *source_p, int parc, const char *
 	{
 		sendto_realops_snomask(IsService(source_p) ? SNO_SKILL : SNO_GENERAL, L_ALL,
 				     "Received KILL message for %s!%s@%s. From %s Path: %s!%s!%s!%s %s",
-				     target_p->name, target_p->username, target_p->host, parv[0], 
+				     target_p->name, target_p->username, target_p->orighost, parv[0], 
 				     source_p->user->server, source_p->host, source_p->username,
 				     source_p->name, reason);
 
@@ -259,7 +259,7 @@ ms_kill(struct Client *client_p, struct Client *source_p, int parc, const char *
 	{
 		sendto_realops_snomask(SNO_SKILL, L_ALL,
 				     "Received KILL message for %s!%s@%s. From %s %s",
-				     target_p->name, target_p->username, target_p->host,
+				     target_p->name, target_p->username, target_p->orighost,
 				     parv[0], reason);
 
 		ilog(L_KILL, "S %s %s!%s@%s %s %s",
