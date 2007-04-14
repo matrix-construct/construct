@@ -1,3 +1,12 @@
+jilles      2007/04/14 20:58:56 UTC	(20070414-3408)
+  Log:
+  Use orighost in kill server notices.
+  
+
+  Changes:	Modified:
+  +3 -3		trunk/modules/core/m_kill.c (File Modified) 
+
+
 jilles      2007/04/13 19:06:53 UTC	(20070413-3406)
   Log:
   set: Use sendto_one_notice() for MAXCLIENTS too high notice.

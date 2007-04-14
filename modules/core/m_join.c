@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_join.c 3211 2007-02-20 00:34:28Z jilles $
+ *  $Id: m_join.c 3410 2007-04-14 21:53:28Z jilles $
  */
 
 #include "stdinc.h"
@@ -62,7 +62,7 @@ mapi_hlist_av1 join_hlist[] = {
 	{ NULL, NULL },
 };
 
-DECLARE_MODULE_AV1(join, NULL, NULL, join_clist, join_hlist, NULL, "$Revision: 3211 $");
+DECLARE_MODULE_AV1(join, NULL, NULL, join_clist, join_hlist, NULL, "$Revision: 3410 $");
 
 static void do_join_0(struct Client *client_p, struct Client *source_p);
 static int check_channel_name_loc(struct Client *source_p, const char *name);
@@ -536,7 +536,8 @@ do_join_0(struct Client *client_p, struct Client *source_p)
 		flood_endgrace(source_p);
 
 
-	sendto_server(client_p, NULL, NOCAPS, NOCAPS, ":%s JOIN 0", source_p->name);
+	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s JOIN 0", use_id(source_p));
+	sendto_server(client_p, NULL, NOCAPS, CAP_TS6, ":%s JOIN 0", source_p->name);
 
 	if(source_p->user->channel.head && MyConnect(source_p) &&
 	   !IsOper(source_p) && !IsExemptSpambot(source_p))
