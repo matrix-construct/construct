@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_user.c 1459 2006-05-26 20:50:41Z jilles $
+ *  $Id: m_user.c 3416 2007-04-15 20:18:54Z jilles $
  */
 
 #include "stdinc.h"
@@ -38,8 +38,6 @@
 #include "sprintf_irc.h"
 #include "blacklist.h"
 
-#define UFLAGS  (FLAGS_INVISIBLE|FLAGS_WALLOP|FLAGS_SERVNOTICE)
-
 static int mr_user(struct Client *, struct Client *, int, const char **);
 
 struct Message user_msgtab = {
@@ -48,7 +46,7 @@ struct Message user_msgtab = {
 };
 
 mapi_clist_av1 user_clist[] = { &user_msgtab, NULL };
-DECLARE_MODULE_AV1(user, NULL, NULL, user_clist, NULL, NULL, "$Revision: 1459 $");
+DECLARE_MODULE_AV1(user, NULL, NULL, user_clist, NULL, NULL, "$Revision: 3416 $");
 
 static int do_local_user(struct Client *client_p, struct Client *source_p,
 			 const char *username, const char *realname);

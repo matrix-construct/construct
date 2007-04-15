@@ -1,3 +1,14 @@
+jilles      2007/04/15 16:54:50 UTC	(20070415-3414)
+  Log:
+  Move new_local_user hook, so it is possible to call
+  exit_client() from it, refusing the connection.
+  
+
+  Changes:	Modified:
+  +3 -1		trunk/doc/hooks.txt (File Modified) 
+  +10 -9	trunk/src/s_user.c (File Modified) 
+
+
 jilles      2007/04/15 16:49:56 UTC	(20070415-3412)
   Log:
   Only free PreClient struct when the rest of the Client
