@@ -1,3 +1,12 @@
+jilles      2007/04/14 21:53:28 UTC	(20070414-3410)
+  Log:
+  Use TS6 prefix for server-server JOIN 0.
+  
+
+  Changes:	Modified:
+  +2 -1		trunk/modules/core/m_join.c (File Modified) 
+
+
 jilles      2007/04/14 20:58:56 UTC	(20070414-3408)
   Log:
   Use orighost in kill server notices.
