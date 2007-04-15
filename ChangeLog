@@ -1,3 +1,15 @@
+jilles      2007/04/15 16:49:56 UTC	(20070415-3412)
+  Log:
+  Only free PreClient struct when the rest of the Client
+  is freed, not immediately upon exit_client(). Doing this
+  would cause problems with sasl's new_local_user hook
+  vs hooks that exit the client there.
+  
+
+  Changes:	Modified:
+  +0 -1		trunk/src/client.c (File Modified) 
+
+
 jilles      2007/04/14 21:53:28 UTC	(20070414-3410)
   Log:
   Use TS6 prefix for server-server JOIN 0.

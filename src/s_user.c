@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c 3392 2007-04-05 00:24:47Z jilles $
+ *  $Id: s_user.c 3414 2007-04-15 16:54:50Z jilles $
  */
 
 #include "stdinc.h"
@@ -484,9 +484,18 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 			SetDynSpoof(source_p);
 	}
 
-	if(IsAnyDead(client_p))
+	source_p->umodes |= ConfigFileEntry.default_umodes & ~ConfigFileEntry.oper_only_umodes & ~orphaned_umodes;
+
+	call_hook(h_new_local_user, source_p);
+
+	/* If they have died in send_* or were thrown out by the
+	 * new_local_user hook don't do anything. */
+	if(IsAnyDead(source_p))
 		return CLIENT_EXITED;
 
+	/* To avoid inconsistencies, do not abort the registration
+	 * starting from this point -- jilles
+	 */
 	inetntop_sock((struct sockaddr *)&source_p->localClient->ip, ipaddr, sizeof(ipaddr));
 
 	sendto_realops_snomask(SNO_CCONN, L_ALL,
@@ -504,10 +513,6 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 			show_ip(NULL, source_p) ? source_p->localClient->fullcaps : "<hidden> <hidden>",
 			source_p->info);
 
-	/* If they have died in send_* don't do anything. */
-	if(IsAnyDead(source_p))
-		return CLIENT_EXITED;
-
 	add_to_hostname_hash(source_p->orighost, source_p);
 
 	/* Allocate a UID if it was not previously allocated.
@@ -518,8 +523,6 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 		strcpy(source_p->id, generate_uid());
 		add_to_id_hash(source_p->id, source_p);
 	}
-
-	source_p->umodes |= ConfigFileEntry.default_umodes & ~ConfigFileEntry.oper_only_umodes & ~orphaned_umodes;
 
 	if (source_p->umodes & UMODE_INVISIBLE)
 		Count.invisi++;
@@ -551,8 +554,6 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 	/* they get a reduced limit */
 	if(find_tgchange(source_p->sockhost))
 		USED_TARGETS(source_p) = 6;
-
-	call_hook(h_new_local_user, source_p);
 
 	monitor_signon(source_p);
 	user_welcome(source_p);

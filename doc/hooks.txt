@@ -98,7 +98,9 @@ The following hooks are called during various events related to clients.
 			  hdata->target = client being introduced
 
 "new_local_user"	- Sent just before introducing a new local user
-			  to the network.
+			  to the network. IsUnknown is still true for the
+			  client but everything else is set up; it is ok to
+			  call exit_client() to refuse the client.
 			  Passes struct Client, the client being introduced.
 
 "new_remote_user"	- Sent just before introducing a new remote user
@@ -119,4 +121,4 @@ community.
 "iorecv"
 "iorecvctrl"
 
-$Id: hooks.txt 710 2006-02-06 03:10:01Z gxti $
+$Id: hooks.txt 3414 2007-04-15 16:54:50Z jilles $
