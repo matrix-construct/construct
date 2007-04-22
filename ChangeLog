@@ -1,3 +1,12 @@
+jilles      2007/04/22 11:22:10 UTC	(20070422-3418)
+  Log:
+  Force nickTS to increase when a local user changes their nick.
+  
+
+  Changes:	Modified:
+  +5 -1		trunk/modules/core/m_nick.c (File Modified) 
+
+
 jilles      2007/04/15 20:18:54 UTC	(20070415-3416)
   Log:
   Remove #define UFLAGS. We haven't allowed this

@@ -37,5 +37,10 @@ The SAVE message is used for propagation to the target's server, and also
 in several other cases if the destination supports SAVE. In other cases, a
 normal nick change or introduction with the UID as nick is sent.
 
+The TS of the UID nick is 100. This is necessary to ensure nick TS is always
+the same on all servers for each nick-user pair, also if a user with a UID
+nick changes their nick but is collided again (the server detecting the
+collision will not propagate the nick change further).
+
 -- 
-$Id: collision_fnc.txt 276 2005-10-02 20:23:15Z jilles $
+$Id: collision_fnc.txt 3420 2007-04-22 14:02:54Z jilles $

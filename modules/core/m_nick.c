@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_nick.c 3418 2007-04-22 11:22:10Z jilles $
+ *  $Id: m_nick.c 3420 2007-04-22 14:02:54Z jilles $
  */
 
 #include "stdinc.h"
@@ -47,6 +47,13 @@
 #include "scache.h"
 #include "s_newconf.h"
 #include "monitor.h"
+
+/* Give all UID nicks the same TS. This ensures nick TS is always the same on
+ * all servers for each nick-user pair, also if a user with a UID nick changes
+ * their nick but is collided again (the server detecting the collision will
+ * not propagate the nick change further). -- jilles
+ */
+#define SAVE_NICKTS 100
 
 static int mr_nick(struct Client *, struct Client *, int, const char **);
 static int m_nick(struct Client *, struct Client *, int, const char **);
@@ -78,7 +85,7 @@ struct Message save_msgtab = {
 mapi_clist_av1 nick_clist[] = { &nick_msgtab, &uid_msgtab, &euid_msgtab,
 	&save_msgtab, NULL };
 
-DECLARE_MODULE_AV1(nick, NULL, NULL, nick_clist, NULL, NULL, "$Revision: 3418 $");
+DECLARE_MODULE_AV1(nick, NULL, NULL, nick_clist, NULL, NULL, "$Revision: 3420 $");
 
 static int change_remote_nick(struct Client *, struct Client *, time_t,
 			      const char *, int);
@@ -925,7 +932,7 @@ perform_nick_collides(struct Client *source_p, struct Client *client_p,
 			sendto_one(client_p, ":%s SAVE %s %ld", me.id,
 					uid, (long)newts);
 			register_client(client_p, source_p,
-					uid, newts, parc, parv);
+					uid, SAVE_NICKTS, parc, parv);
 		}
 		else
 		{
@@ -966,7 +973,7 @@ perform_nick_collides(struct Client *source_p, struct Client *client_p,
 				sendto_one(client_p, ":%s SAVE %s %ld", me.id,
 						uid, (long)newts);
 				register_client(client_p, source_p,
-						uid, newts, parc, parv);
+						uid, SAVE_NICKTS, parc, parv);
 			}
 			else if(uid)
 				sendto_one(client_p,
@@ -1044,7 +1051,7 @@ perform_nickchange_collides(struct Client *source_p, struct Client *client_p,
 					source_p->id, (long)newts);
 			/* don't send a redundant nick change */
 			if (!IsDigit(source_p->name[0]))
-				change_remote_nick(client_p, source_p, CurrentTime, source_p->id, 1);
+				change_remote_nick(client_p, source_p, SAVE_NICKTS, source_p->id, 1);
 		}
 		else
 		{
@@ -1092,10 +1099,9 @@ perform_nickchange_collides(struct Client *source_p, struct Client *client_p,
 				 * but not in other directions -- jilles */
 				sendto_one(client_p, ":%s SAVE %s %ld", me.id,
 						source_p->id, (long)newts);
-				/* same CurrentTime as in save_user() */
 				/* send a :<id> NICK <id> <ts> (!) */
 				if (!IsDigit(source_p->name[0]))
-					change_remote_nick(client_p, source_p, CurrentTime, source_p->id, 1);
+					change_remote_nick(client_p, source_p, SAVE_NICKTS, source_p->id, 1);
 			}
 			else
 			{
@@ -1343,9 +1349,9 @@ save_user(struct Client *client_p, struct Client *source_p,
 	sendto_server(client_p, NULL, CAP_SAVE|CAP_TS6, NOCAPS, ":%s SAVE %s %ld",
 			source_p->id, target_p->id, (long)target_p->tsinfo);
 	sendto_server(client_p, NULL, CAP_TS6, CAP_SAVE, ":%s NICK %s :%ld",
-			target_p->id, target_p->id, (long)CurrentTime);
+			target_p->id, target_p->id, (long)SAVE_NICKTS);
 	sendto_server(client_p, NULL, NOCAPS, CAP_TS6, ":%s NICK %s :%ld",
-			target_p->name, target_p->id, (long)CurrentTime);
+			target_p->name, target_p->id, (long)SAVE_NICKTS);
 	if (!IsMe(client_p))
 		sendto_realops_snomask(SNO_SKILL, L_ALL,
 				"Received SAVE message for %s from %s",
@@ -1355,10 +1361,8 @@ save_user(struct Client *client_p, struct Client *source_p,
 		sendto_one_numeric(target_p, RPL_SAVENICK,
 				form_str(RPL_SAVENICK), target_p->id);
 		change_local_nick(target_p, target_p, target_p->id, 0);
+		target_p->tsinfo = SAVE_NICKTS;
 	}
 	else
-	{
-		/* XXX the uid nick gets garbage TS; shouldn't matter though */
-		change_remote_nick(target_p, target_p, CurrentTime, target_p->id, 0);
-	}
+		change_remote_nick(target_p, target_p, SAVE_NICKTS, target_p->id, 0);
 }
