@@ -6,7 +6,8 @@ Nick collision FNC performs a forced nick change to the user's UID instead
 of a kill. The criteria for which user may keep the nick are the same as
 before. Server notices will say the clients are being "saved" instead of
 "killed". The client will get a 043 numeric, like this:
-:<server> 043 <uid> :Nick collision, forcing nick change to your unique ID
+
+:<server> 043 <nick> <uid> :Nick collision, forcing nick change to your unique ID
 
 The following conditions must be fulfilled:
 
@@ -43,4 +44,4 @@ nick changes their nick but is collided again (the server detecting the
 collision will not propagate the nick change further).
 
 -- 
-$Id: collision_fnc.txt 3420 2007-04-22 14:02:54Z jilles $
+$Id: collision_fnc.txt 3422 2007-04-22 14:35:28Z jilles $

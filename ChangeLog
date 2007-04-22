@@ -1,3 +1,14 @@
+jilles      2007/04/22 14:02:54 UTC	(20070422-3420)
+  Log:
+  SAVE: make the nickTS of the UID nick equal to 100, so it
+  is always in sync on the network.
+  
+
+  Changes:	Modified:
+  +5 -0		trunk/doc/collision_fnc.txt (File Modified) 
+  +15 -11	trunk/modules/core/m_nick.c (File Modified) 
+
+
 jilles      2007/04/22 11:22:10 UTC	(20070422-3418)
   Log:
   Force nickTS to increase when a local user changes their nick.
