@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_nick.c 1885 2006-08-28 10:09:50Z jilles $
+ *  $Id: m_nick.c 3418 2007-04-22 11:22:10Z jilles $
  */
 
 #include "stdinc.h"
@@ -78,7 +78,7 @@ struct Message save_msgtab = {
 mapi_clist_av1 nick_clist[] = { &nick_msgtab, &uid_msgtab, &euid_msgtab,
 	&save_msgtab, NULL };
 
-DECLARE_MODULE_AV1(nick, NULL, NULL, nick_clist, NULL, NULL, "$Revision: 1885 $");
+DECLARE_MODULE_AV1(nick, NULL, NULL, nick_clist, NULL, NULL, "$Revision: 3418 $");
 
 static int change_remote_nick(struct Client *, struct Client *, time_t,
 			      const char *, int);
@@ -786,7 +786,11 @@ change_local_nick(struct Client *client_p, struct Client *source_p,
 	/* dont reset TS if theyre just changing case of nick */
 	if(!samenick)
 	{
-		source_p->tsinfo = CurrentTime;
+		/* force the TS to increase -- jilles */
+		if (source_p->tsinfo >= CurrentTime)
+			source_p->tsinfo++;
+		else
+			source_p->tsinfo = CurrentTime;
 		monitor_signoff(source_p);
 		/* we only do bancache for local users -- jilles */
 		if(source_p->user)

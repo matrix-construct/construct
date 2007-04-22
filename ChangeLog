@@ -1,3 +1,14 @@
+jilles      2007/04/15 20:18:54 UTC	(20070415-3416)
+  Log:
+  Remove #define UFLAGS. We haven't allowed this
+  undocumented extension to the IRC protocol for
+  years (allowing an initial umode in USER).
+  
+
+  Changes:	Modified:
+  +0 -2		trunk/modules/m_user.c (File Modified) 
+
+
 jilles      2007/04/15 16:54:50 UTC	(20070415-3414)
   Log:
   Move new_local_user hook, so it is possible to call
