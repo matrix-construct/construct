@@ -1,3 +1,12 @@
+jilles      2007/04/22 14:35:28 UTC	(20070422-3422)
+  Log:
+  Fix description of 043 numeric.
+  
+
+  Changes:	Modified:
+  +2 -1		trunk/doc/collision_fnc.txt (File Modified) 
+
+
 jilles      2007/04/22 14:02:54 UTC	(20070422-3420)
   Log:
   SAVE: make the nickTS of the UID nick equal to 100, so it

@@ -48,7 +48,7 @@ struct Message chghost_msgtab = {
 
 mapi_clist_av1 chghost_clist[] = { &chghost_msgtab, &realhost_msgtab, NULL };
 
-DECLARE_MODULE_AV1(chghost, NULL, NULL, chghost_clist, NULL, NULL, "$Revision: 3227 $");
+DECLARE_MODULE_AV1(chghost, NULL, NULL, chghost_clist, NULL, NULL, "$Revision: 3424 $");
 
 /* clean_host()
  *
@@ -60,6 +60,9 @@ static int
 clean_host(const char *host)
 {
 	int len = 0;
+	
+	if (*host == '\0' || *host == ':')
+		return 0;
 
 	for(; *host; host++)
 	{
