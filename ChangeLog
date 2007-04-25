@@ -1,3 +1,13 @@
+jilles      2007/04/25 15:21:34 UTC	(20070425-3424)
+  Log:
+  chghost: refuse spoofs which are empty or start with a colon
+  (would break the protocol)
+  
+
+  Changes:	Modified:
+  +3 -0		trunk/modules/m_chghost.c (File Modified) 
+
+
 jilles      2007/04/22 14:35:28 UTC	(20070422-3422)
   Log:
   Fix description of 043 numeric.

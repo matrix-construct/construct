@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_webirc.c 2757 2006-11-10 22:58:15Z jilles $
+ *  $Id: m_webirc.c 3426 2007-04-25 15:22:28Z jilles $
  */
 /* Usage:
  * auth {
@@ -59,7 +59,7 @@ static int mr_webirc(struct Client *, struct Client *, int, const char **);
 
 struct Message webirc_msgtab = {
 	"WEBIRC", 0, 0, 0, MFLG_SLOW | MFLG_UNREG,
-	{{mr_webirc, 4}, mg_reg, mg_ignore, mg_ignore, mg_ignore, mg_reg}
+	{{mr_webirc, 5}, mg_reg, mg_ignore, mg_ignore, mg_ignore, mg_reg}
 };
 
 mapi_clist_av1 webirc_clist[] = { &webirc_msgtab, NULL };
