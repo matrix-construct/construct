@@ -1,3 +1,12 @@
+jilles      2007/04/25 15:22:28 UTC	(20070425-3426)
+  Log:
+  webirc bugfix
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/extensions/m_webirc.c (File Modified) 
+
+
 jilles      2007/04/25 15:21:34 UTC	(20070425-3424)
   Log:
   chghost: refuse spoofs which are empty or start with a colon

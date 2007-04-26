@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.c 3259 2007-03-15 18:09:08Z jilles $
+ *  $Id: channel.c 3432 2007-04-26 23:01:16Z jilles $
  */
 
 #include "stdinc.h"
@@ -1110,9 +1110,8 @@ static const struct mode_letter
  *
  * inputs       - pointer to channel
  *              - pointer to client
- * output       - NONE
- * side effects - write the "simple" list of channel modes for channel
- * chptr onto buffer mbuf with the parameters in pbuf.
+ * output       - string with simple modes
+ * side effects - result from previous calls overwritten
  *
  * Stolen from ShadowIRCd 4 --nenolod
  */
@@ -1137,38 +1136,39 @@ channel_modes(struct Channel *chptr, struct Client *client_p)
 	{
 		*mbuf++ = 'l';
 
-		if(IsMember(client_p, chptr) || IsServer(client_p) || IsMe(client_p))
-			pbuf += ircsprintf(pbuf, "%d ", chptr->mode.limit);
+		if(!IsClient(client_p) || IsMember(client_p, chptr))
+			pbuf += ircsprintf(pbuf, " %d", chptr->mode.limit);
 	}
 
 	if(*chptr->mode.key)
 	{
 		*mbuf++ = 'k';
 
-		if(*pbuf || IsMember(client_p, chptr) || IsServer(client_p) || IsMe(client_p))
-			pbuf += ircsprintf(pbuf, "%s ", chptr->mode.key);
+		if(pbuf > buf2 || !IsClient(client_p) || IsMember(client_p, chptr))
+			pbuf += ircsprintf(pbuf, " %s", chptr->mode.key);
 	}
 
 	if(chptr->mode.join_num)
 	{
 		*mbuf++ = 'j';
 
-		if(*pbuf || IsMember(client_p, chptr) || IsServer(client_p) || IsMe(client_p))
-			pbuf += ircsprintf(pbuf, "%d:%d ", chptr->mode.join_num,
+		if(pbuf > buf2 || !IsClient(client_p) || IsMember(client_p, chptr))
+			pbuf += ircsprintf(pbuf, " %d:%d", chptr->mode.join_num,
 					   chptr->mode.join_time);
 	}
 
-	if(*chptr->mode.forward && (ConfigChannel.use_forward || IsServer(client_p) || IsMe(client_p)))
+	if(*chptr->mode.forward && (ConfigChannel.use_forward || !IsClient(client_p)))
 	{
 		*mbuf++ = 'f';
 
-		if(*pbuf || IsMember(client_p, chptr) || IsServer(client_p) || IsMe(client_p))
-			pbuf += ircsprintf(pbuf, "%s ", chptr->mode.forward);
+		if(pbuf > buf2 || !IsClient(client_p) || IsMember(client_p, chptr))
+			pbuf += ircsprintf(pbuf, " %s", chptr->mode.forward);
 	}
 
 	*mbuf = '\0';
 
-	ircsprintf(final, "%s %s", buf1, buf2);
+	strlcpy(final, buf1, sizeof final);
+	strlcat(final, buf2, sizeof final);
 	return final;
 }
 
