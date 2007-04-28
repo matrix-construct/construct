@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_sjoin.c 3289 2007-03-28 14:21:37Z jilles $
+ *  $Id: m_sjoin.c 3434 2007-04-28 23:47:25Z jilles $
  */
 
 #include "stdinc.h"
@@ -50,7 +50,7 @@ struct Message sjoin_msgtab = {
 
 mapi_clist_av1 sjoin_clist[] = { &sjoin_msgtab, NULL };
 
-DECLARE_MODULE_AV1(sjoin, NULL, NULL, sjoin_clist, NULL, NULL, "$Revision: 3289 $");
+DECLARE_MODULE_AV1(sjoin, NULL, NULL, sjoin_clist, NULL, NULL, "$Revision: 3434 $");
 
 /*
  * ms_sjoin
@@ -351,6 +351,9 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 				     ":%s NOTICE %s :*** Notice -- TS for %s changed from %ld to %ld",
 				     me.name, chptr->chname, chptr->chname,
 				     (long) oldts, (long) newts);
+		/* Update capitalization in channel name, this makes the
+		 * capitalization timestamped like modes are -- jilles */
+		strcpy(chptr->chname, parv[2]);
 	}
 
 	if(*modebuf != '\0')

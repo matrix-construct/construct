@@ -1,3 +1,17 @@
+jilles      2007/04/26 23:01:16 UTC	(20070426-3432)
+  Log:
+  Merge old trunk r2065,r2067:
+  channel_modes(): get rid of the trailing space
+  also make the *pbuf check work like it should
+  (don't call IsMember another time if we already
+  gave one parameter)
+  simplify a bit more, update comments
+  
+
+  Changes:	Modified:
+  +13 -13	trunk/src/channel.c (File Modified) 
+
+
 jilles      2007/04/25 15:22:28 UTC	(20070425-3426)
   Log:
   webirc bugfix

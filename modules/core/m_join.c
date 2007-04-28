@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_join.c 3410 2007-04-14 21:53:28Z jilles $
+ *  $Id: m_join.c 3434 2007-04-28 23:47:25Z jilles $
  */
 
 #include "stdinc.h"
@@ -62,7 +62,7 @@ mapi_hlist_av1 join_hlist[] = {
 	{ NULL, NULL },
 };
 
-DECLARE_MODULE_AV1(join, NULL, NULL, join_clist, join_hlist, NULL, "$Revision: 3410 $");
+DECLARE_MODULE_AV1(join, NULL, NULL, join_clist, join_hlist, NULL, "$Revision: 3434 $");
 
 static void do_join_0(struct Client *client_p, struct Client *source_p);
 static int check_channel_name_loc(struct Client *source_p, const char *name);
@@ -480,6 +480,9 @@ ms_join(struct Client *client_p, struct Client *source_p, int parc, const char *
 				     ":%s NOTICE %s :*** Notice -- TS for %s changed from %ld to %ld",
 				     me.name, chptr->chname, chptr->chname,
 				     (long) oldts, (long) newts);
+		/* Update capitalization in channel name, this makes the
+		 * capitalization timestamped like modes are -- jilles */
+		strcpy(chptr->chname, parv[2]);
 		if(*modebuf != '\0')
 			sendto_channel_local(ALL_MEMBERS, chptr,
 					     ":%s MODE %s %s %s",
