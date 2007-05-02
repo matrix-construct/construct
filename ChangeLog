@@ -1,3 +1,16 @@
+jilles      2007/04/28 23:47:25 UTC	(20070428-3434)
+  Log:
+  Merge old trunk r2767:
+  Copy channel name from command on lowerTS JOIN/SJOIN,
+  this makes the capitalization of the channel name
+  timestamped like modes are.
+  
+
+  Changes:	Modified:
+  +3 -0		trunk/modules/core/m_join.c (File Modified) 
+  +3 -0		trunk/modules/core/m_sjoin.c (File Modified) 
+
+
 jilles      2007/04/26 23:01:16 UTC	(20070426-3432)
   Log:
   Merge old trunk r2065,r2067:

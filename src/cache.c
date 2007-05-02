@@ -29,7 +29,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: cache.c 254 2005-09-21 23:35:12Z nenolod $
+ * $Id: cache.c 3436 2007-05-02 19:56:40Z jilles $
  */
 
 #include "stdinc.h"
@@ -50,7 +50,6 @@ static BlockHeap *cacheline_heap = NULL;
 
 struct cachefile *user_motd = NULL;
 struct cachefile *oper_motd = NULL;
-struct cacheline *emptyline = NULL;
 dlink_list links_cache_list;
 char user_motd_changed[MAX_DATE_STRING];
 
@@ -66,10 +65,6 @@ init_cache(void)
 	cachefile_heap = BlockHeapCreate(sizeof(struct cachefile), CACHEFILE_HEAP_SIZE);
 	cacheline_heap = BlockHeapCreate(sizeof(struct cacheline), CACHELINE_HEAP_SIZE);
 
-	/* allocate the emptyline */
-	emptyline = BlockHeapAlloc(cacheline_heap);
-	emptyline->data[0] = ' ';
-	emptyline->data[1] = '\0';
 	user_motd_changed[0] = '\0';
 
 	user_motd = cache_file(MPATH, "ircd.motd", 0);
@@ -124,14 +119,12 @@ cache_file(const char *filename, const char *shortname, int flags)
 		if((p = strchr(line, '\n')) != NULL)
 			*p = '\0';
 
-		if(!EmptyString(line))
-		{
-			lineptr = BlockHeapAlloc(cacheline_heap);
-			strlcpy(lineptr->data, line, sizeof(lineptr->data));
-			dlinkAddTail(lineptr, &lineptr->linenode, &cacheptr->contents);
-		}
+		lineptr = BlockHeapAlloc(cacheline_heap);
+		if(EmptyString(line))
+			strlcpy(lineptr->data, " ", sizeof(lineptr->data));
 		else
-			dlinkAddTailAlloc(emptyline, &cacheptr->contents);
+			strlcpy(lineptr->data, line, sizeof(lineptr->data));
+		dlinkAddTail(lineptr, &lineptr->linenode, &cacheptr->contents);
 	}
 
 	fclose(in);
@@ -192,8 +185,7 @@ free_cachefile(struct cachefile *cacheptr)
 
 	DLINK_FOREACH_SAFE(ptr, next_ptr, cacheptr->contents.head)
 	{
-		if(ptr->data != emptyline)
-			BlockHeapFree(cacheline_heap, ptr->data);
+		BlockHeapFree(cacheline_heap, ptr->data);
 	}
 
 	BlockHeapFree(cachefile_heap, cacheptr);
