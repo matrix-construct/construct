@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_invite.c 3259 2007-03-15 18:09:08Z jilles $
+ *  $Id: m_invite.c 3438 2007-05-06 14:46:45Z jilles $
  */
 
 #include "stdinc.h"
@@ -48,7 +48,7 @@ struct Message invite_msgtab = {
 	{mg_unreg, {m_invite, 3}, {m_invite, 3}, mg_ignore, mg_ignore, {m_invite, 3}}
 };
 mapi_clist_av1 invite_clist[] = { &invite_msgtab, NULL };
-DECLARE_MODULE_AV1(invite, NULL, NULL, invite_clist, NULL, NULL, "$Revision: 3259 $");
+DECLARE_MODULE_AV1(invite, NULL, NULL, invite_clist, NULL, NULL, "$Revision: 3438 $");
 
 static void add_invite(struct Channel *, struct Client *);
 
@@ -70,9 +70,14 @@ m_invite(struct Client *client_p, struct Client *source_p, int parc, const char 
 
 	if((target_p = find_person(parv[1])) == NULL)
 	{
-		sendto_one_numeric(source_p, ERR_NOSUCHNICK, 
-				   form_str(ERR_NOSUCHNICK), 
-				   IsDigit(parv[1][0]) ? "*" : parv[1]);
+		if(!MyClient(source_p) && IsDigit(parv[1][0]))
+			sendto_one_numeric(source_p, ERR_NOSUCHNICK, 
+					   "* :Target left IRC. Failed to invite to %s", 
+					   parv[2]);
+		else
+			sendto_one_numeric(source_p, ERR_NOSUCHNICK, 
+					   form_str(ERR_NOSUCHNICK), 
+					   parv[1]);
 		return 0;
 	}
 
