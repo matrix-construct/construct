@@ -1,3 +1,13 @@
+jilles      2007/05/06 14:46:45 UTC	(20070506-3438)
+  Log:
+  Target left IRC (more friendly error message if a UID
+  cannot be found) for /invite.
+  
+
+  Changes:	Modified:
+  +8 -3		trunk/modules/m_invite.c (File Modified) 
+
+
 jilles      2007/05/02 19:56:40 UTC	(20070502-3436)
   Log:
   Remove emptyline craq because it leaks memory on /rehash motd etc.
