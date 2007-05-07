@@ -1,3 +1,12 @@
+nenolod     2007/05/07 02:53:54 UTC	(20070507-3440)
+  Log:
+  - remove "ASM hashing code" from the configure overview
+  
+
+  Changes:	Modified:
+  +0 -1		trunk/configure.ac (File Modified) 
+
+
 jilles      2007/05/06 14:46:45 UTC	(20070506-3438)
   Log:
   Target left IRC (more friendly error message if a UID
