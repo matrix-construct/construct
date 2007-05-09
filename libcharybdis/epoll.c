@@ -23,7 +23,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: epoll.c 3374 2007-04-03 10:49:11Z nenolod $
+ *  $Id: epoll.c 3444 2007-05-09 00:32:08Z nenolod $
  */
 
 #include "config.h"
@@ -112,7 +112,9 @@ comm_setselect(int fd, fdlist_t list, unsigned int type, PF * handler,
 	if(timeout)
 		F->timeout = CurrentTime + (timeout / 1000);
 
-	if(!(F->pflags & EPOLLIN) && !(F->pflags & EPOLLOUT))
+	if(old_flags == 0 && F->pflags == 0)
+		return;
+	else if(F->pflags <= 0)
 		op = EPOLL_CTL_DEL;
 	else if(old_flags == 0 && F->pflags > 0)
 		op = EPOLL_CTL_ADD;
@@ -131,6 +133,8 @@ comm_setselect(int fd, fdlist_t list, unsigned int type, PF * handler,
 		libcharybdis_log("comm_setselect(): epoll_ctl failed: %s", strerror(errno));
 		abort();
 	}
+
+
 }
 
 /*

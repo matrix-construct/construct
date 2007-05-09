@@ -1,3 +1,12 @@
+nenolod     2007/05/07 02:57:50 UTC	(20070507-3442)
+  Log:
+  - regen configure
+  
+
+  Changes:	Modified:
+  +114 -1	trunk/configure (File Modified) 
+
+
 nenolod     2007/05/07 02:53:54 UTC	(20070507-3440)
   Log:
   - remove "ASM hashing code" from the configure overview
