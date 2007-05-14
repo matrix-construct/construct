@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: packet.c 262 2005-09-22 00:38:45Z jilles $
+ *  $Id: packet.c 3446 2007-05-14 22:21:16Z jilles $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -56,12 +56,9 @@ parse_client_queued(struct Client *client_p)
 
 	if(IsUnknown(client_p))
 	{
-		int i = 0;
-
 		for (;;)
 		{
-			/* rate unknown clients at MAX_FLOOD per loop */
-			if(i >= MAX_FLOOD)
+			if(client_p->localClient->sent_parsed >= client_p->localClient->allow_read)
 				break;
 
 			dolen = linebuf_get(&client_p->localClient->
@@ -72,7 +69,7 @@ parse_client_queued(struct Client *client_p)
 				break;
 
 			client_dopacket(client_p, readBuf, dolen);
-			i++;
+			client_p->localClient->sent_parsed++;
 
 			/* He's dead cap'n */
 			if(IsAnyDead(client_p))
@@ -81,7 +78,13 @@ parse_client_queued(struct Client *client_p)
 			 * to the parsing for their appropriate status.  --fl
 			 */
 			if(!IsUnknown(client_p))
+			{
+				/* reset their flood limits, they're now
+				 * graced to flood
+				 */
+				client_p->localClient->sent_parsed = 0;
 				break;
+			}
 
 		}
 	}

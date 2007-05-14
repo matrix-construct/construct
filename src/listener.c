@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: listener.c 3354 2007-04-03 09:21:31Z nenolod $
+ *  $Id: listener.c 3446 2007-05-14 22:21:16Z jilles $
  */
 
 #include "stdinc.h"
@@ -477,6 +477,9 @@ add_connection(listener_t *listener, int fd, struct sockaddr *sai)
 
 	if(check_reject(new_client))
 		return; 
+	if(add_unknown_ip(new_client))
+		return;
+
 	start_auth(new_client);
 }
 

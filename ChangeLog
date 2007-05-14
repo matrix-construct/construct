@@ -1,3 +1,12 @@
+nenolod     2007/05/09 00:32:08 UTC	(20070509-3444)
+  Log:
+  - fix a bug here
+  
+
+  Changes:	Modified:
+  +5 -1		trunk/libcharybdis/epoll.c (File Modified) 
+
+
 nenolod     2007/05/07 02:57:50 UTC	(20070507-3442)
   Log:
   - regen configure

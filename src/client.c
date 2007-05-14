@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.c 3412 2007-04-15 16:49:56Z jilles $
+ *  $Id: client.c 3446 2007-05-14 22:21:16Z jilles $
  */
 #include "stdinc.h"
 #include "config.h"
@@ -58,6 +58,7 @@
 #include "msg.h"
 #include "monitor.h"
 #include "blacklist.h"
+#include "reject.h"
 
 #define DEBUG_EXITED_CLIENTS
 
@@ -1419,6 +1420,7 @@ exit_unknown_client(struct Client *client_p, struct Client *source_p, struct Cli
 {
 	delete_auth_queries(source_p);
 	client_flush_input(source_p);
+	del_unknown_ip(source_p);
 	dlinkDelete(&source_p->localClient->tnode, &unknown_list);
 
 	if(!IsIOError(source_p))

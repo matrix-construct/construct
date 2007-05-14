@@ -21,7 +21,7 @@
  *  USA
  *
  *
- *  $Id: reject.h 6 2005-09-10 01:02:21Z nenolod $
+ *  $Id: reject.h 3446 2007-05-14 22:21:16Z jilles $
  */
 #ifndef INCLUDED_reject_h
 #define INCLUDED_reject_h
@@ -36,5 +36,9 @@ int check_reject(struct Client *);
 void add_reject(struct Client *);
 void flush_reject(void);
 int remove_reject(const char *ip);
+
+int add_unknown_ip(struct Client *client_p);
+void del_unknown_ip(struct Client *client_p);
+
 #endif
 

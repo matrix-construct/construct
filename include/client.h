@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: client.h 2023 2006-09-02 23:47:27Z jilles $
+ *  $Id: client.h 3446 2007-05-14 22:21:16Z jilles $
  */
 
 #ifndef INCLUDED_client_h
@@ -431,6 +431,7 @@ struct exit_client_hook
 #define FLAGS_SERVICE	   0x400000	/* network service */
 #define FLAGS_TGCHANGE     0x800000	/* we're allowed to clear something */
 #define FLAGS_DYNSPOOF     0x1000000	/* dynamic spoof, only opers see ip */
+#define FLAGS_EXUNKNOWN	   0x2000000	/* too many unknowns exit.. */
 
 /* umodes, settable flags */
 /* lots of this moved to snomask -- jilles */
@@ -512,6 +513,8 @@ struct exit_client_hook
 #define IsDynSpoof(x)		((x)->flags & FLAGS_DYNSPOOF)
 #define SetDynSpoof(x)		((x)->flags |= FLAGS_DYNSPOOF)
 #define ClearDynSpoof(x)	((x)->flags &= ~FLAGS_DYNSPOOF)
+#define IsExUnknown(x)		((x)->flags & FLAGS_EXUNKNOWN)
+#define SetExUnknown(x)		((x)->flags |= FLAGS_EXUNKNOWN)
 
 /* oper flags */
 #define MyOper(x)               (MyConnect(x) && IsOper(x))

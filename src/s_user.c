@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c 3414 2007-04-15 16:54:50Z jilles $
+ *  $Id: s_user.c 3446 2007-05-14 22:21:16Z jilles $
  */
 
 #include "stdinc.h"
@@ -528,6 +528,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 		Count.invisi++;
 
 	s_assert(!IsClient(source_p));
+	del_unknown_ip(source_p);
 	dlinkMoveNode(&source_p->localClient->tnode, &unknown_list, &lclient_list);
 	SetClient(source_p);
 

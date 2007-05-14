@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.h 3257 2007-03-13 16:09:28Z jilles $
+ *  $Id: s_conf.h 3446 2007-05-14 22:21:16Z jilles $
  */
 
 #ifndef INCLUDED_s_conf_h
@@ -250,6 +250,7 @@ struct config_file_entry
 	int default_umodes;
 	int global_snotices;
 	int operspy_dont_care_user_info;
+	int max_unknown_ip;
 };
 
 struct config_channel_entry
