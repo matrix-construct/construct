@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.h 3446 2007-05-14 22:21:16Z jilles $
+ *  $Id: s_conf.h 3460 2007-05-18 20:31:33Z jilles $
  */
 
 #ifndef INCLUDED_s_conf_h
@@ -352,8 +352,6 @@ extern int attach_conf(struct Client *, struct ConfItem *);
 extern int check_client(struct Client *client_p, struct Client *source_p, const char *);
 
 extern int detach_conf(struct Client *);
-
-extern struct ConfItem *conf_connect_allowed(struct sockaddr *addr, int);
 
 extern struct ConfItem *find_tkline(const char *, const char *, struct sockaddr *);
 extern char *show_iline_prefix(struct Client *, struct ConfItem *, char *);

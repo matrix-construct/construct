@@ -436,7 +436,8 @@ exempt {
 	ip = "<replaceable>ip</replaceable>";
 };</synopsis>
 	<para>
-	  An exempt block specifies IP addresses which are exempt from D:lines.
+	  An exempt block specifies IP addresses which are exempt from D:lines
+	  and throttling.
 	  Multiple addresses can be specified in one block.
 	  Clients coming from these addresses can still be K/G/X:lined or
 	  banned by a DNS blacklist unless

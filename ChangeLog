@@ -1,3 +1,13 @@
+jilles      2007/05/18 19:51:22 UTC	(20070518-3458)
+  Log:
+  m_webirc: call del_unknown_ip() otherwise the unknown will
+  never be subtracted from the cgiirc ip
+  
+
+  Changes:	Modified:
+  +2 -0		trunk/extensions/m_webirc.c (File Modified) 
+
+
 jilles      2007/05/18 19:14:18 UTC	(20070518-3456)
   Log:
   Remove s_assert in del_unknown_ip() supposedly if the ip
