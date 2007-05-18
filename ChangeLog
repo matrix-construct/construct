@@ -1,3 +1,14 @@
+jilles      2007/05/18 19:14:18 UTC	(20070518-3456)
+  Log:
+  Remove s_assert in del_unknown_ip() supposedly if the ip
+  cannot be found, it is not feasible to avoid that case
+  entirely with m_webirc.c.
+  
+
+  Changes:	Modified:
+  +1 -2		trunk/src/reject.c (File Modified) 
+
+
 jilles      2007/05/14 22:21:16 UTC	(20070514-3446)
   Log:
   Apply ratbox flood fix.
