@@ -20,7 +20,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: reject.c 3446 2007-05-14 22:21:16Z jilles $
+ *  $Id: reject.c 3456 2007-05-18 19:14:18Z jilles $
  */
 
 #include "stdinc.h"
@@ -262,6 +262,5 @@ del_unknown_ip(struct Client *client_p)
 			patricia_remove(unknown_tree, pnode);
 		}
 	}
-	/* well..this shouldn't happen */
-	s_assert(0);
+	/* this can happen due to m_webirc.c's manipulations, for example */
 }
