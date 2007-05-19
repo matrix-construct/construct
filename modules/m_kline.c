@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_kline.c 3464 2007-05-19 22:21:10Z jilles $
+ *  $Id: m_kline.c 3466 2007-05-19 23:36:51Z jilles $
  */
 
 #include "stdinc.h"
@@ -65,7 +65,7 @@ struct Message unkline_msgtab = {
 };
 
 mapi_clist_av1 kline_clist[] = { &kline_msgtab, &unkline_msgtab, NULL };
-DECLARE_MODULE_AV1(kline, NULL, NULL, kline_clist, NULL, NULL, "$Revision: 3464 $");
+DECLARE_MODULE_AV1(kline, NULL, NULL, kline_clist, NULL, NULL, "$Revision: 3466 $");
 
 /* Local function prototypes */
 static int find_user_host(struct Client *source_p, const char *userhost, char *user, char *host);
@@ -614,6 +614,7 @@ valid_wild_card(struct Client *source_p, const char *luser, const char *lhost)
 	const char *p;
 	char tmpch;
 	int nonwild = 0;
+	int bitlen;
 
 	/* user has no wildcards, always accept -- jilles */
 	if (!strchr(luser, '?') && !strchr(luser, '*'))
@@ -632,12 +633,23 @@ valid_wild_card(struct Client *source_p, const char *luser, const char *lhost)
 	}
 
 	/* try host, as user didnt contain enough */
-	p = lhost;
-	while ((tmpch = *p++))
+	/* special case for cidr masks -- jilles */
+	if ((p = strrchr(lhost, '/')) != NULL && IsDigit(p[1]))
 	{
-		if(!IsKWildChar(tmpch))
-			if(++nonwild >= ConfigFileEntry.min_nonwildcard)
-				return 1;
+		bitlen = atoi(p + 1);
+		/* much like non-cidr for ipv6, rather arbitrary for ipv4 */
+		if (bitlen > 0 && bitlen >= (strchr(lhost, ':') ? 4 * (ConfigFileEntry.min_nonwildcard - nonwild) : 6 - 2 * nonwild))
+			return 1;
+	}
+	else
+	{
+		p = lhost;
+		while ((tmpch = *p++))
+		{
+			if(!IsKWildChar(tmpch))
+				if(++nonwild >= ConfigFileEntry.min_nonwildcard)
+					return 1;
+		}
 	}
 
 	sendto_one_notice(source_p,

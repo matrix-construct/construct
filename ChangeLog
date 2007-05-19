@@ -1,3 +1,12 @@
+jilles      2007/05/19 22:21:10 UTC	(20070519-3464)
+  Log:
+  Exempt klines with a fixed user@ (no */?) from min_nonwildcard checks.
+  
+
+  Changes:	Modified:
+  +4 -0		trunk/modules/m_kline.c (File Modified) 
+
+
 jilles      2007/05/18 20:31:33 UTC	(20070518-3460)
   Log:
   - fold conf_connect_allowed() into accept_connection()
