@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_kline.c 3225 2007-03-04 23:42:55Z jilles $
+ *  $Id: m_kline.c 3464 2007-05-19 22:21:10Z jilles $
  */
 
 #include "stdinc.h"
@@ -65,7 +65,7 @@ struct Message unkline_msgtab = {
 };
 
 mapi_clist_av1 kline_clist[] = { &kline_msgtab, &unkline_msgtab, NULL };
-DECLARE_MODULE_AV1(kline, NULL, NULL, kline_clist, NULL, NULL, "$Revision: 3225 $");
+DECLARE_MODULE_AV1(kline, NULL, NULL, kline_clist, NULL, NULL, "$Revision: 3464 $");
 
 /* Local function prototypes */
 static int find_user_host(struct Client *source_p, const char *userhost, char *user, char *host);
@@ -614,6 +614,10 @@ valid_wild_card(struct Client *source_p, const char *luser, const char *lhost)
 	const char *p;
 	char tmpch;
 	int nonwild = 0;
+
+	/* user has no wildcards, always accept -- jilles */
+	if (!strchr(luser, '?') && !strchr(luser, '*'))
+		return 1;
 
 	/* check there are enough non wildcard chars */
 	p = luser;

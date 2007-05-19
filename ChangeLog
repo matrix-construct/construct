@@ -1,3 +1,19 @@
+jilles      2007/05/18 20:31:33 UTC	(20070518-3460)
+  Log:
+  - fold conf_connect_allowed() into accept_connection()
+  - extend add_connection() so that exempt{}s apply to max unregistered
+    connections per ip
+  from ratbox
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/doc/example.conf (File Modified) 
+  +1 -1		trunk/doc/reference.conf (File Modified) 
+  +2 -1		trunk/doc/sgml/oper-guide/config.sgml (File Modified) 
+  +0 -2		trunk/include/s_conf.h (File Modified) 
+  +14 -7	trunk/src/listener.c (File Modified) 
+
+
 jilles      2007/05/18 19:51:22 UTC	(20070518-3458)
   Log:
   m_webirc: call del_unknown_ip() otherwise the unknown will
