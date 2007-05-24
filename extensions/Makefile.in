@@ -1,7 +1,7 @@
 #
 # Makefile.in for ircd/contrib
 #
-# $Id: Makefile.in 3474 2007-05-24 04:16:02Z nenolod $
+# $Id: Makefile.in 3476 2007-05-24 04:28:36Z nenolod $
 #
 CC		= @CC@
 RM		= @RM@
@@ -28,6 +28,7 @@ CPPFLAGS	= ${INCLUDES} @CPPFLAGS@
 
 SRCS =                          \
   createauthonly.c		\
+  createoperonly.c		\
   extb_account.c		\
   extb_canjoin.c		\
   extb_channel.c		\
