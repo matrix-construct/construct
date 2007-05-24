@@ -5,7 +5,7 @@
  * To be discussed:
  *    + part notices?
  *
- * $Id: sno_channeljoin.c 3474 2007-05-24 04:16:02Z nenolod $
+ * $Id: sno_channeljoin.c 3478 2007-05-24 15:10:06Z jilles $
  */
 
 #include "stdinc.h"
@@ -42,4 +42,4 @@ fini(void)
 	snomask_modes['j'] = 0;
 }
 
-DECLARE_MODULE_AV1(sno_channeljoin, init, fini, NULL, NULL, channeljoin_hfnlist, "$Revision: 3474 $");
+DECLARE_MODULE_AV1(sno_channeljoin, init, fini, NULL, NULL, channeljoin_hfnlist, "$Revision: 3478 $");

@@ -1,7 +1,7 @@
 #
 # Makefile.in for ircd/unsupported
 #
-# $Id: Makefile.in 1425 2006-05-23 16:41:33Z jilles $
+# $Id: Makefile.in 3478 2007-05-24 15:10:06Z jilles $
 #
 CC		= @CC@
 RM		= @RM@
@@ -28,7 +28,8 @@ CPPFLAGS	= ${INCLUDES} @CPPFLAGS@
 
 SRCS =                          \
   m_clearchan.c			\
-  m_force.c
+  m_force.c			\
+  sno_channeljoin.c
 
 OBJS = ${SRCS:.c=.so}
 

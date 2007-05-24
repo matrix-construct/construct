@@ -1,7 +1,7 @@
 #
 # Makefile.in for ircd/contrib
 #
-# $Id: Makefile.in 3476 2007-05-24 04:28:36Z nenolod $
+# $Id: Makefile.in 3478 2007-05-24 15:10:06Z jilles $
 #
 CC		= @CC@
 RM		= @RM@
@@ -38,7 +38,6 @@ SRCS =                          \
   extb_extgecos.c		\
   hurt.c			\
   ip_cloaking.c			\
-  sno_channeljoin.c		\
   sno_farconnect.c		\
   sno_globalkline.c		\
   sno_globaloper.c		\

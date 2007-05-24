@@ -1,3 +1,13 @@
+nenolod     2007/05/24 04:28:36 UTC	(20070524-3476)
+  Log:
+  - createoperonly: like createauthonly, but checks opered status instead of authed status
+  
+
+  Changes:	Modified:
+  +41 -0	trunk/extensions/Makefile.in (File Modified) 
+  + -		trunk/extensions/createoperonly.c (File Added) 
+
+
 nenolod     2007/05/24 04:16:02 UTC	(20070524-3474)
   Log:
   - sno_channeljoin: implements snomask +j and sends channel join notices there from local users
