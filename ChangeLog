@@ -1,3 +1,14 @@
+nenolod     2007/05/24 04:01:12 UTC	(20070524-3470)
+  Log:
+  - fold in whois_notice_global functionality.
+  
+
+  Changes:	Modified:
+  +0 -1		trunk/extensions/Makefile.in (File Modified) 
+  +1 -56	trunk/extensions/sno_whois.c (File Modified) 
+  + -		trunk/extensions/spy_whois_notice_global.c (File Deleted) 
+
+
 nenolod     2007/05/24 03:58:27 UTC	(20070524-3468)
   Log:
   - rework spy_whois_notice as a snomask-implementing module, snomask +W.
