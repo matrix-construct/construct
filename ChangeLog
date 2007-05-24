@@ -1,3 +1,14 @@
+nenolod     2007/05/24 03:58:27 UTC	(20070524-3468)
+  Log:
+  - rework spy_whois_notice as a snomask-implementing module, snomask +W.
+  
+
+  Changes:	Modified:
+  +64 -57	trunk/extensions/Makefile.in (File Modified) 
+  + -		trunk/extensions/sno_whois.c (File Added) 
+  + -		trunk/extensions/spy_whois_notice.c (File Deleted) 
+
+
 jilles      2007/05/19 23:36:51 UTC	(20070519-3466)
   Log:
   Prevent too wide klines with CIDR masks.

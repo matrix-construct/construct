@@ -4,7 +4,7 @@
  *
  * If #define OPERONLY is removed, then any user can use this snomask.
  *
- * $Id: sno_whois.c 3468 2007-05-24 03:58:27Z nenolod $
+ * $Id: sno_whois.c 3470 2007-05-24 04:01:12Z nenolod $
  */
 
 #include "stdinc.h"
@@ -21,6 +21,7 @@ void show_whois(hook_data_client *);
 
 mapi_hfn_list_av1 whois_hfnlist[] = {
 	{"doing_whois", (hookfn) show_whois},
+	{"doing_whois_global", (hookfn) show_whois},
 	{NULL, NULL}
 };
 
@@ -38,7 +39,7 @@ fini(void)
 	snomask_modes['W'] = find_snomask_slot();
 }
 
-DECLARE_MODULE_AV1(sno_whois, init, fini, NULL, NULL, whois_hfnlist, "$Revision: 3468 $");
+DECLARE_MODULE_AV1(sno_whois, init, fini, NULL, NULL, whois_hfnlist, "$Revision: 3470 $");
 
 void
 show_whois(hook_data_client *data)

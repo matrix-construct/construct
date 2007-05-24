@@ -1,7 +1,7 @@
 #
 # Makefile.in for ircd/contrib
 #
-# $Id: Makefile.in 3468 2007-05-24 03:58:27Z nenolod $
+# $Id: Makefile.in 3470 2007-05-24 04:01:12Z nenolod $
 #
 CC		= @CC@
 RM		= @RM@
@@ -59,7 +59,6 @@ SRCS =                          \
   spy_stats_notice.c            \
   spy_stats_p_notice.c		\
   spy_trace_notice.c		\
-  spy_whois_notice_global.c	\
   example_module.c
 
 OBJS = ${SRCS:.c=.so}
