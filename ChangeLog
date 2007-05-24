@@ -1,3 +1,12 @@
+jilles      2007/05/19 23:36:51 UTC	(20070519-3466)
+  Log:
+  Prevent too wide klines with CIDR masks.
+  
+
+  Changes:	Modified:
+  +17 -5	trunk/modules/m_kline.c (File Modified) 
+
+
 jilles      2007/05/19 22:21:10 UTC	(20070519-3464)
   Log:
   Exempt klines with a fixed user@ (no */?) from min_nonwildcard checks.

@@ -1,7 +1,7 @@
 #
 # Makefile.in for ircd/contrib
 #
-# $Id: Makefile.in 1849 2006-08-23 12:40:21Z jilles $
+# $Id: Makefile.in 3468 2007-05-24 03:58:27Z nenolod $
 #
 CC		= @CC@
 RM		= @RM@
@@ -40,6 +40,7 @@ SRCS =                          \
   sno_farconnect.c		\
   sno_globalkline.c		\
   sno_globaloper.c		\
+  sno_whois.c			\
   m_42.c			\
   m_findforwards.c		\
   m_identify.c			\
@@ -58,7 +59,6 @@ SRCS =                          \
   spy_stats_notice.c            \
   spy_stats_p_notice.c		\
   spy_trace_notice.c		\
-  spy_whois_notice.c            \
   spy_whois_notice_global.c	\
   example_module.c
 

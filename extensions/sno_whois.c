@@ -1,0 +1,63 @@
+/*
+ * +W snomask: Displays if a local user has done a WHOIS request on you.
+ * derived from spy_whois_notice.c.
+ *
+ * If #define OPERONLY is removed, then any user can use this snomask.
+ *
+ * $Id: sno_whois.c 3468 2007-05-24 03:58:27Z nenolod $
+ */
+
+#include "stdinc.h"
+#include "modules.h"
+#include "hook.h"
+#include "client.h"
+#include "ircd.h"
+#include "send.h"
+
+/* undefine this to allow anyone to receive whois notifications */
+#define OPERONLY
+
+void show_whois(hook_data_client *);
+
+mapi_hfn_list_av1 whois_hfnlist[] = {
+	{"doing_whois", (hookfn) show_whois},
+	{NULL, NULL}
+};
+
+static int
+init(void)
+{
+	snomask_modes['W'] = find_snomask_slot();
+
+	return 0;
+}
+
+static void
+fini(void)
+{
+	snomask_modes['W'] = find_snomask_slot();
+}
+
+DECLARE_MODULE_AV1(sno_whois, init, fini, NULL, NULL, whois_hfnlist, "$Revision: 3468 $");
+
+void
+show_whois(hook_data_client *data)
+{
+	struct Client *source_p = data->client;
+	struct Client *target_p = data->target;
+
+	/* source being MyConnect() is implicit here from m_whois.c --fl */
+	if(MyClient(target_p) && 
+#ifdef OPERONLY
+	   IsOper(target_p) &&
+#endif
+	   (source_p != target_p) &&
+	   (target_p->snomask & snomask_modes['W']))
+	{
+		sendto_one_notice(target_p,
+				":*** Notice -- %s (%s@%s) is doing a whois on you [%s]",
+				source_p->name,
+				source_p->username, source_p->host,
+				source_p->user->server);
+	}
+}
