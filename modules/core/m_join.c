@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_join.c 3486 2007-05-27 05:44:35Z nenolod $
+ *  $Id: m_join.c 3494 2007-05-27 13:07:27Z jilles $
  */
 
 #include "stdinc.h"
@@ -62,8 +62,9 @@ mapi_hlist_av1 join_hlist[] = {
 	{ NULL, NULL },
 };
 
-DECLARE_MODULE_AV1(join, NULL, NULL, join_clist, join_hlist, NULL, "$Revision: 3486 $");
+DECLARE_MODULE_AV1(join, NULL, NULL, join_clist, join_hlist, NULL, "$Revision: 3494 $");
 
+static void do_join_0(struct Client *client_p, struct Client *source_p);
 static int check_channel_name_loc(struct Client *source_p, const char *name);
 
 static void set_final_mode(struct Mode *mode, struct Mode *oldmode);
@@ -148,6 +149,13 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 			continue;
 		}
 
+		/* join 0 parts all channels */
+		if(*name == '0' && (name[1] == ',' || name[1] == '\0') && name == chanlist)
+		{
+			(void) strcpy(jbuf, "0");
+			continue;
+		}
+
 		/* check it begins with # or &, and local chans are disabled */
 		else if(!IsChannelName(name))
 		{
@@ -200,6 +208,16 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	    key = (key) ? strtoken(&p2, NULL, ",") : NULL, name = strtoken(&p, NULL, ","))
 	{
 		hook_data_channel_activity hook_info;
+
+		/* JOIN 0 simply parts all channels the user is in */
+		if(*name == '0' && !atoi(name))
+		{
+			if(source_p->user->channel.head == NULL)
+				continue;
+
+			do_join_0(&me, source_p);
+			continue;
+		}
 
 		/* look for the channel */
 		if((chptr = find_channel(name)) != NULL)
@@ -384,6 +402,13 @@ ms_join(struct Client *client_p, struct Client *source_p, int parc, const char *
 	int keep_new_modes = YES;
 	dlink_node *ptr, *next_ptr;
 
+	/* special case for join 0 */
+	if((parv[1][0] == '0') && (parv[1][1] == '\0') && parc == 2)
+	{
+		do_join_0(client_p, source_p);
+		return 0;
+	}
+
 	if(parc < 4)
 		return 0;
 
@@ -490,6 +515,46 @@ ms_join(struct Client *client_p, struct Client *source_p, int parc, const char *
 		      chptr->chname, keep_new_modes ? "+" : "0",
 		      source_p->name);
 	return 0;
+}
+
+/*
+ * do_join_0
+ *
+ * inputs	- pointer to client doing join 0
+ * output	- NONE
+ * side effects	- Use has decided to join 0. This is legacy
+ *		  from the days when channels were numbers not names. *sigh*
+ *		  There is a bunch of evilness necessary here due to
+ * 		  anti spambot code.
+ */
+static void
+do_join_0(struct Client *client_p, struct Client *source_p)
+{
+	struct membership *msptr;
+	struct Channel *chptr = NULL;
+	dlink_node *ptr;
+
+	/* Finish the flood grace period... */
+	if(MyClient(source_p) && !IsFloodDone(source_p))
+		flood_endgrace(source_p);
+
+
+	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s JOIN 0", use_id(source_p));
+	sendto_server(client_p, NULL, NOCAPS, CAP_TS6, ":%s JOIN 0", source_p->name);
+
+	if(source_p->user->channel.head && MyConnect(source_p) &&
+	   !IsOper(source_p) && !IsExemptSpambot(source_p))
+		check_spambot_warning(source_p, NULL);
+
+	while((ptr = source_p->user->channel.head))
+	{
+		msptr = ptr->data;
+		chptr = msptr->chptr;
+		sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@%s PART %s",
+				     source_p->name,
+				     source_p->username, source_p->host, chptr->chname);
+		remove_user_from_channel(msptr);
+	}
 }
 
 static int

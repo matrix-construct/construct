@@ -1,3 +1,13 @@
+nenolod     2007/05/27 06:33:26 UTC	(20070527-3488)
+  Log:
+  - add some IDEAS, including SASL based opering, internally reworking channel access (custom access 
+    levels?), hideops, namespace cleanups, etc
+  
+
+  Changes:	Modified:
+  + -		trunk/IDEAS (File Added) 
+
+
 nenolod     2007/05/27 05:44:35 UTC	(20070527-3486)
   Log:
   - disallow JOIN 0
