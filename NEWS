@@ -42,6 +42,9 @@ See LICENSE for licensing details (GPL v2).
 - Allow /invite (but not invex) to override +r, +l, +j in addition to +i.
 - Remove the need to compile in the maximum number of clients, it can be
   set in ircd.conf now.
+- Add several new extensions, including createoperonly, and sno_whois.
+- Use ERR_TARGETLEFTIRC in some places where appropriate, instead of vague
+  error messages.
 
 -- charybdis-2.1.2
 
@@ -375,5 +378,5 @@ modules in case the developers need them.
 Other files recommended for reading: BUGS, README.FIRST, INSTALL
 
 --------------------------------------------------------------------------------
-$Id: NEWS 3378 2007-04-03 11:45:22Z nenolod $
+$Id: NEWS 3480 2007-05-27 05:30:41Z nenolod $
 

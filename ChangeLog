@@ -1,3 +1,19 @@
+jilles      2007/05/24 15:10:06 UTC	(20070524-3478)
+  Log:
+  Move sno_channeljoin to unsupported, due to the privacy
+  issue and the fact that any oper with admin or hidden_admin
+  can load extensions.
+  
+
+  Changes:	Modified:
+  +0 -1		trunk/doc/example.conf (File Modified) 
+  +0 -2		trunk/doc/reference.conf (File Modified) 
+  +0 -46	trunk/extensions/Makefile.in (File Modified) 
+  + -		trunk/extensions/sno_channeljoin.c (File Deleted) 
+  +47 -1	trunk/unsupported/Makefile.in (File Modified) 
+  + -		trunk/unsupported/sno_channeljoin.c (File Added) 
+
+
 nenolod     2007/05/24 04:28:36 UTC	(20070524-3476)
   Log:
   - createoperonly: like createauthonly, but checks opered status instead of authed status
