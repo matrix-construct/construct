@@ -1,3 +1,12 @@
+jilles      2007/05/30 10:22:01 UTC	(20070530-3496)
+  Log:
+  Tweak NEWS a little.
+  
+
+  Changes:	Modified:
+  +3 -6		trunk/NEWS (File Modified) 
+
+
 jilles      2007/05/27 13:07:27 UTC	(20070527-3494)
   Log:
   - allow JOIN 0 from remotes

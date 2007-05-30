@@ -2,9 +2,10 @@
  * +W snomask: Displays if a local user has done a WHOIS request on you.
  * derived from spy_whois_notice.c.
  *
- * If #define OPERONLY is removed, then any user can use this snomask.
+ * If #define OPERONLY is removed, then any user can use this snomask
+ * (you need to put ~servnotice in oper_only_umodes for this to work).
  *
- * $Id: sno_whois.c 3470 2007-05-24 04:01:12Z nenolod $
+ * $Id: sno_whois.c 3498 2007-05-30 10:22:25Z jilles $
  */
 
 #include "stdinc.h"
@@ -39,7 +40,7 @@ fini(void)
 	snomask_modes['W'] = find_snomask_slot();
 }
 
-DECLARE_MODULE_AV1(sno_whois, init, fini, NULL, NULL, whois_hfnlist, "$Revision: 3470 $");
+DECLARE_MODULE_AV1(sno_whois, init, fini, NULL, NULL, whois_hfnlist, "$Revision: 3498 $");
 
 void
 show_whois(hook_data_client *data)
@@ -47,7 +48,6 @@ show_whois(hook_data_client *data)
 	struct Client *source_p = data->client;
 	struct Client *target_p = data->target;
 
-	/* source being MyConnect() is implicit here from m_whois.c --fl */
 	if(MyClient(target_p) && 
 #ifdef OPERONLY
 	   IsOper(target_p) &&
