@@ -1,3 +1,14 @@
+jilles      2007/05/27 13:07:27 UTC	(20070527-3494)
+  Log:
+  - allow JOIN 0 from remotes
+  - allow JOIN 0 from locals, but only if it is exactly one
+    zero and is the first channel
+  
+
+  Changes:	Modified:
+  +65 -0	trunk/modules/core/m_join.c (File Modified) 
+
+
 nenolod     2007/05/27 06:33:26 UTC	(20070527-3488)
   Log:
   - add some IDEAS, including SASL based opering, internally reworking channel access (custom access 

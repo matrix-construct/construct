@@ -4,7 +4,7 @@ See LICENSE for licensing details (GPL v2).
 -- charybdis-2.2.0
 
 - The I/O code has been reworked, file descriptor metadata is stored in a
-  hashtable and there are no longer any compiletime defines.
+  hashtable and the maximum number of clients can now be set in ircd.conf.
 - Improve error checking and error messages for kline/dline/xline/resv files.
 - Allow kline ipv6:address, unkline some.host and unkline ipv6:address
   without *@.
@@ -40,11 +40,8 @@ See LICENSE for licensing details (GPL v2).
   which silently reject).
 - Remove invite_ops_only config option, forcing it to YES.
 - Allow /invite (but not invex) to override +r, +l, +j in addition to +i.
-- Remove the need to compile in the maximum number of clients, it can be
-  set in ircd.conf now.
-- Add several new extensions, including createoperonly, and sno_whois.
-- Use ERR_TARGETLEFTIRC in some places where appropriate, instead of vague
-  error messages.
+- Add several new extensions, such as createoperonly.
+- Merge whois notice extensions into one and move it from snomask +y to +W.
 
 -- charybdis-2.1.2
 
@@ -378,5 +375,5 @@ modules in case the developers need them.
 Other files recommended for reading: BUGS, README.FIRST, INSTALL
 
 --------------------------------------------------------------------------------
-$Id: NEWS 3480 2007-05-27 05:30:41Z nenolod $
+$Id: NEWS 3496 2007-05-30 10:22:01Z jilles $
 
