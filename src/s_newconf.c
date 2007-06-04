@@ -29,7 +29,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: s_newconf.c 3161 2007-01-25 07:23:01Z nenolod $
+ * $Id: s_newconf.c 3508 2007-06-04 16:04:49Z jilles $
  */
 
 #include "stdinc.h"
@@ -595,6 +595,7 @@ valid_wild_card_simple(const char *data)
 	const char *p;
 	char tmpch;
 	int nonwild = 0;
+	int wild = 0;
 
 	/* check the string for minimum number of nonwildcard chars */
 	p = data;
@@ -604,9 +605,11 @@ valid_wild_card_simple(const char *data)
 		/* found an escape, p points to the char after it, so skip
 		 * that and move on.
 		 */
-		if(tmpch == '\\')
+		if(tmpch == '\\' && *p)
 		{
 			p++;
+			if(++nonwild >= ConfigFileEntry.min_nonwildcard_simple)
+				return 1;
 		}
 		else if(!IsMWildChar(tmpch))
 		{
@@ -614,9 +617,12 @@ valid_wild_card_simple(const char *data)
 			if(++nonwild >= ConfigFileEntry.min_nonwildcard_simple)
 				return 1;
 		}
+		else
+			wild++;
 	}
 
-	return 0;
+	/* strings without wilds are also ok */
+	return wild == 0;
 }
 
 time_t
