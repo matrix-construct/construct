@@ -1,3 +1,13 @@
+nenolod     2007/06/06 16:20:40 UTC	(20070606-3512)
+  Log:
+  Add IRC_DEPRECATED macro for marking functions and data structures
+  as deprecated on compilers that support it.
+  
+
+  Changes:	Modified:
+  +14 -4	trunk/include/ircd_defs.h (File Modified) 
+
+
 nenolod     2007/06/06 15:46:12 UTC	(20070606-3510)
   Log:
   - update IDEAS with link failover
