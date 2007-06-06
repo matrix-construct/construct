@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd_defs.h 3225 2007-03-04 23:42:55Z jilles $
+ *  $Id: ircd_defs.h 3512 2007-06-06 16:20:40Z nenolod $
  */
 
 /*
@@ -30,10 +30,11 @@
  * Otherwise there are no user servicable part here. 
  *
  */
- /* ircd_defs.h - Global size definitions for record entries used
-  * througout ircd. Please think 3 times before adding anything to this
-  * file.
-  */
+
+/* ircd_defs.h - Global size definitions for record entries used
+ * througout ircd. Please think 3 times before adding anything to this
+ * file.
+ */
 #ifndef INCLUDED_ircd_defs_h
 #define INCLUDED_ircd_defs_h
 
@@ -48,6 +49,15 @@
 #define AFP(a,b)
 #endif
 
+/*
+ * This ensures that __attribute__((deprecated)) is not used in for example
+ * sun CC, since it's a GNU-specific extension. -nenolod
+ */
+#ifdef __GNUC__
+#define IRC_DEPRECATED __attribute__((deprecated))
+#else
+#define IRC_DEPRECATED
+#endif
 
 #include "s_log.h"
 #include "send.h"
