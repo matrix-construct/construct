@@ -7,6 +7,7 @@ Some of this may not be possible to do in 2.3...
   special access levels, halfops, etc. (would need to match globally, somehow. extra SVINFO param?)
 - somehow hide channel operators like ircnet can do?
 - SASL opering?
+- link failover?
 
 --
-$Id: IDEAS 3488 2007-05-27 06:33:26Z nenolod $
+$Id: IDEAS 3510 2007-06-06 15:46:12Z nenolod $

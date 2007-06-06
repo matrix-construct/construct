@@ -1,3 +1,14 @@
+jilles      2007/06/04 16:04:49 UTC	(20070604-3508)
+  Log:
+  xline/resv wildcard checking:
+  - count escaped (\) characters as one nonwild
+  - accept strings without wilds no matter how short they are
+  
+
+  Changes:	Modified:
+  +8 -2		trunk/src/s_newconf.c (File Modified) 
+
+
 jilles      2007/05/30 10:22:25 UTC	(20070530-3498)
   Log:
   Tweak some comments in sno_whois extension.
