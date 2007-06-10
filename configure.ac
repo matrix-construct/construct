@@ -1,4 +1,4 @@
-dnl $Id: configure.ac 3440 2007-05-07 02:53:54Z nenolod $
+dnl $Id: configure.ac 3516 2007-06-10 16:14:03Z jilles $
 dnl Process this file with autoconf to produce a configure script.
 
 dnl TODO: clean up all the OpenSSL and shared module checking stuff;
@@ -8,9 +8,9 @@ dnl said functions need to be just about as complex as they already are.
 AC_PREREQ(2.57)
 
 dnl Sneaky way to get an Id tag into the configure script
-AC_COPYRIGHT([$Id: configure.ac 3440 2007-05-07 02:53:54Z nenolod $])
+AC_COPYRIGHT([$Id: configure.ac 3516 2007-06-10 16:14:03Z jilles $])
 
-AC_INIT([charybdis],[2.2.0])
+AC_INIT([charybdis],[2.3])
 
 AC_CONFIG_HEADER(include/setup.h)
 

@@ -1,3 +1,12 @@
+nenolod     2007/06/06 16:25:21 UTC	(20070606-3514)
+  Log:
+  - "please report this to the ratbox developers" -> "please report this to the charybdis developers". not sure how we overlooked this for so long.
+  
+
+  Changes:	Modified:
+  +2 -2		trunk/src/client.c (File Modified) 
+
+
 nenolod     2007/06/06 16:20:40 UTC	(20070606-3512)
   Log:
   Add IRC_DEPRECATED macro for marking functions and data structures
