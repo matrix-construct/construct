@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_nick.c 3420 2007-04-22 14:02:54Z jilles $
+ *  $Id: m_nick.c 3518 2007-06-22 21:59:09Z jilles $
  */
 
 #include "stdinc.h"
@@ -85,7 +85,7 @@ struct Message save_msgtab = {
 mapi_clist_av1 nick_clist[] = { &nick_msgtab, &uid_msgtab, &euid_msgtab,
 	&save_msgtab, NULL };
 
-DECLARE_MODULE_AV1(nick, NULL, NULL, nick_clist, NULL, NULL, "$Revision: 3420 $");
+DECLARE_MODULE_AV1(nick, NULL, NULL, nick_clist, NULL, NULL, "$Revision: 3518 $");
 
 static int change_remote_nick(struct Client *, struct Client *, time_t,
 			      const char *, int);
@@ -1219,7 +1219,7 @@ register_client(struct Client *client_p, struct Client *server,
 		free_nd_entry(nd);
 
 	add_to_client_hash(nick, source_p);
-	add_to_hostname_hash(source_p->host, source_p);
+	add_to_hostname_hash(source_p->orighost, source_p);
 	monitor_signon(source_p);
 
 	m = &parv[4][1];
