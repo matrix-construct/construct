@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: send.c 3161 2007-01-25 07:23:01Z nenolod $
+ *  $Id: send.c 3520 2007-06-30 22:15:35Z jilles $
  */
 
 #include "stdinc.h"
@@ -43,6 +43,7 @@
 #include "s_log.h"
 #include "memory.h"
 #include "hook.h"
+#include "monitor.h"
 
 #define LOG_BUFSIZE 2048
 
@@ -926,6 +927,40 @@ sendto_match_servs(struct Client *source_p, const char *mask, int cap,
 
 	linebuf_donebuf(&linebuf_id);
 	linebuf_donebuf(&linebuf_name);
+}
+
+/* sendto_monitor()
+ *
+ * inputs	- monitor nick to send to, format, va_args
+ * outputs	- message to local users monitoring the given nick
+ * side effects -
+ */
+void
+sendto_monitor(struct monitor *monptr, const char *pattern, ...)
+{
+	va_list args;
+	buf_head_t linebuf;
+	struct Client *target_p;
+	dlink_node *ptr;
+	dlink_node *next_ptr;
+	
+	linebuf_newbuf(&linebuf); 
+	
+	va_start(args, pattern);
+	linebuf_putmsg(&linebuf, pattern, &args, NULL);
+	va_end(args);
+
+	DLINK_FOREACH_SAFE(ptr, next_ptr, monptr->users.head)
+	{
+		target_p = ptr->data;
+
+		if(IsIOError(target_p))
+			continue;
+
+		_send_linebuf(target_p, &linebuf);
+	}
+
+	linebuf_donebuf(&linebuf);
 }
 
 /* sendto_anywhere()

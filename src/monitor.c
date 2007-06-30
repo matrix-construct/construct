@@ -29,7 +29,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: monitor.c 312 2005-11-07 10:47:33Z jilles $
+ * $Id: monitor.c 3520 2007-06-30 22:15:35Z jilles $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -98,8 +98,6 @@ monitor_signon(struct Client *client_p)
 {
 	char buf[USERHOST_REPLYLEN];
 	struct monitor *monptr = find_monitor(client_p->name, 0);
-	struct Client *target_p;
-	dlink_node *ptr;
 
 	/* noones watching this nick */
 	if(monptr == NULL)
@@ -108,13 +106,7 @@ monitor_signon(struct Client *client_p)
 	ircsnprintf(buf, sizeof(buf), "%s!%s@%s",
 		    client_p->name, client_p->username, client_p->host);
 
-	DLINK_FOREACH(ptr, monptr->users.head)
-	{
-		target_p = ptr->data;
-
-		sendto_one(target_p, form_str(RPL_MONONLINE),
-				me.name, target_p->name, buf);
-	}
+	sendto_monitor(monptr, form_str(RPL_MONONLINE), me.name, "*", buf);
 }
 
 /* monitor_signoff()
@@ -128,17 +120,13 @@ void
 monitor_signoff(struct Client *client_p)
 {
 	struct monitor *monptr = find_monitor(client_p->name, 0);
-	dlink_node *ptr;
 
 	/* noones watching this nick */
 	if(monptr == NULL)
 		return;
 
-	DLINK_FOREACH(ptr, monptr->users.head)
-	{
-		sendto_one(ptr->data, form_str(RPL_MONOFFLINE),
-				me.name, ((struct Client *) ptr->data)->name, client_p->name);
-	}
+	sendto_monitor(monptr, form_str(RPL_MONOFFLINE), me.name, "*",
+			client_p->name);
 }
 
 void

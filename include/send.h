@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: send.h 661 2006-02-03 04:20:31Z gxti $
+ *  $Id: send.h 3520 2007-06-30 22:15:35Z jilles $
  */
 
 #ifndef INCLUDED_send_h
@@ -33,6 +33,7 @@
 struct Client;
 struct Channel;
 struct dlink_list;
+struct monitor;
 
 /* The nasty global also used in s_serv.c for server bursts */
 extern unsigned long current_serial;
@@ -64,6 +65,8 @@ extern void sendto_match_butone(struct Client *, struct Client *,
 				const char *, int, const char *, ...) AFP(5, 6);
 extern void sendto_match_servs(struct Client *source_p, const char *mask, 
 				int capab, int, const char *, ...) AFP(5, 6);
+
+extern void sendto_monitor(struct monitor *monptr, const char *, ...) AFP(2, 3);
 
 extern void sendto_anywhere(struct Client *, struct Client *, const char *,
 			    const char *, ...) AFP(4, 5);

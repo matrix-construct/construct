@@ -1,6 +1,6 @@
 MONITOR - Protocol for notification of when clients become online/offline
              Lee Hardy <lee -at- leeh.co.uk>
-$Id: monitor.txt 6 2005-09-10 01:02:21Z nenolod $
+$Id: monitor.txt 3520 2007-06-30 22:15:35Z jilles $
 -------------------------------------------------------------------------
 
 Currently, ISON requests by clients use a large amount of bandwidth.  It is
@@ -76,6 +76,10 @@ This numeric is used to indicate to a client that either a nickname has just
 become online, or that a nickname they have added to their monitor list is
 online.
 
+The server may send "*" instead of the target nick (<nick>). (This makes it
+possible to send the exact same message to all clients monitoring a certain
+nick.)
+
 731 - RPL_MONOFFLINE
 --------------------
 :<server> 731 <nick> :nick[,nick1]*
@@ -85,6 +89,8 @@ left the irc network, or that a nickname they have added to their monitor
 list is offline.
 
 The argument is a chained list of nicknames that are offline.
+
+As with 730 the server may send "*" instead of the target nick.
 
 732 - RPL_MONLIST
 -----------------
