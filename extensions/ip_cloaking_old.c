@@ -1,4 +1,4 @@
-/* $Id: ip_cloaking.c 3522 2007-07-06 07:48:28Z nenolod $ */
+/* $Id: ip_cloaking_old.c 3522 2007-07-06 07:48:28Z nenolod $ */
 
 #include "stdinc.h"
 #include "modules.h"
@@ -69,82 +69,45 @@ distribute_hostchange(struct Client *client)
 		ClearDynSpoof(client);
 }
 
-#define Nval 0x8c3a48ac
-#define HOSTLEN 63
-#define INITDATA "98fwqefnoiqefv03f423t34gbv3vb89tg432t3b8" /* change this */
-
-static inline unsigned int
-get_string_entropy(const char *inbuf)
-{
-	unsigned int accum = 1;
-
-	while(*inbuf != '\0')
-		accum += *inbuf++;
-
-	return accum;
-}
-
-/* calls get_string_entropy() and toasts it against INITDATA */
-static inline unsigned int
-get_string_weighted_entropy(const char *inbuf)
-{
-	static int base_entropy = 0;
-        unsigned int accum = get_string_entropy(inbuf);
-
-	/* initialize the algorithm if it is not yet ready */
-	if (base_entropy == 0)
-		base_entropy = get_string_entropy(INITDATA);
-
-        return (Nval * accum) ^ base_entropy;
-}
-
 static void
-do_host_cloak_ip(const char *inbuf, char *outbuf)
+do_host_cloak(const char *inbuf, char *outbuf, int ipmask)
 {
-	char *tptr;
-	unsigned int accum = get_string_weighted_entropy(inbuf);
-	char buf[HOSTLEN];
+	int cyc;
+	unsigned int hosthash = 1, hosthash2 = 1;
+	unsigned int maxcycle = strlen(inbuf); 	
+	int len1;
+	const char *rest, *next;
 
-	strncpy(buf, inbuf, HOSTLEN);
-	tptr = strrchr(buf, '.');
-	*tptr++ = '\0';
+	for (cyc = 0; cyc < maxcycle - 2; cyc += 2)
+		hosthash *= (unsigned int) inbuf[cyc];
 
-	snprintf(outbuf, HOSTLEN, "%s.%x", buf, accum);
-}
+	/* safety: decrement ourselves two steps back */
+	for (cyc = maxcycle - 1; cyc >= 1; cyc -= 2)
+		hosthash2 *= (unsigned int) inbuf[cyc];
 
-static void
-do_host_cloak_host(const char *inbuf, char *outbuf)
-{
-	char b26_alphabet[] = "abcdefghijklmnopqrstuvwxyz";
-	char *tptr;
-	unsigned int accum = get_string_weighted_entropy(inbuf);
-
-	strncpy(outbuf, inbuf, HOSTLEN);
-
-	/* pass 1: scramble first section of hostname using base26 
-	 * alphabet toasted against the weighted entropy of the string.
-	 *
-	 * numbers are not changed at this time, only letters.
+	/* lets do some bitshifting -- this pretty much destroys the IP
+	 * sequence, while still providing a checksum. exactly what
+	 * we're shooting for. --nenolod
 	 */
-	for (tptr = outbuf; *tptr != '\0'; tptr++)
+	hosthash += (hosthash2 / KEY);
+	hosthash2 += (hosthash / KEY);
+
+	if (ipmask == 0)
 	{
-		if (*tptr == '.')
-			break;
-
-		if (isdigit(*tptr) || *tptr == '-')
-			continue;
-
-		*tptr = b26_alphabet[(*tptr * accum) % 26];
+		ircsnprintf(outbuf, HOSTLEN, "%s-%X%X",
+			ServerInfo.network_name, hosthash2, hosthash);
+		len1 = strlen(outbuf);
+		rest = strchr(inbuf, '.');
+		if (rest == NULL)
+			rest = ".";
+		/* try to avoid truncation -- jilles */
+		while (len1 + strlen(rest) >= HOSTLEN && (next = strchr(rest + 1, '.')) != NULL)
+			rest = next;
+		strlcat(outbuf, rest, HOSTLEN);
 	}
-
-	/* pass 2: scramble each number in the address */
-	for (tptr = outbuf; *tptr != '\0'; tptr++)
-	{
-		if (isdigit(*tptr))
-		{
-			*tptr = 48 + ((*tptr * accum) % 10);
-		}
-	}	
+	else
+		ircsnprintf(outbuf, HOSTLEN, "%X%X.%s",
+			hosthash2, hosthash, ServerInfo.network_name);
 }
 
 static void
@@ -199,9 +162,9 @@ check_new_user(void *vdata)
 	}
 	source_p->localClient->mangledhost = MyMalloc(HOSTLEN);
 	if (!irccmp(source_p->orighost, source_p->sockhost))
-		do_host_cloak_ip(source_p->orighost, source_p->localClient->mangledhost);
+		do_host_cloak(source_p->orighost, source_p->localClient->mangledhost, 1);
 	else
-		do_host_cloak_host(source_p->orighost, source_p->localClient->mangledhost);
+		do_host_cloak(source_p->orighost, source_p->localClient->mangledhost, 0);
 	if (IsDynSpoof(source_p))
 		source_p->umodes &= ~user_modes['h'];
 	if (source_p->umodes & user_modes['h'])

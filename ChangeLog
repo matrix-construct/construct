@@ -1,3 +1,17 @@
+jilles      2007/06/30 22:15:35 UTC	(20070630-3520)
+  Log:
+  monitor: send the same message buffer to all users
+  monitoring a certain nick; the target field of the
+  numeric becomes *, much like server notices
+  
+
+  Changes:	Modified:
+  +6 -0		trunk/doc/monitor.txt (File Modified) 
+  +3 -0		trunk/include/send.h (File Modified) 
+  +3 -15	trunk/src/monitor.c (File Modified) 
+  +35 -0	trunk/src/send.c (File Modified) 
+
+
 jilles      2007/06/22 21:59:09 UTC	(20070622-3518)
   Log:
   Call add_to_hostname_hash() with correct (orig) hostname.
