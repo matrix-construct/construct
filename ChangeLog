@@ -1,3 +1,12 @@
+nenolod     2007/07/06 07:54:54 UTC	(20070706-3524)
+  Log:
+  - fix a possible problem with ipv6
+  
+
+  Changes:	Modified:
+  +4 -0		trunk/extensions/ip_cloaking.c (File Modified) 
+
+
 nenolod     2007/07/06 07:48:28 UTC	(20070706-3522)
   Log:
   - new ip cloaking module
