@@ -1,3 +1,14 @@
+nenolod     2007/07/06 07:48:28 UTC	(20070706-3522)
+  Log:
+  - new ip cloaking module
+  
+
+  Changes:	Modified:
+  +1 -0		trunk/extensions/Makefile.in (File Modified) 
+  +246 -33	trunk/extensions/ip_cloaking.c (File Modified) 
+  + -		trunk/extensions/ip_cloaking_old.c (File Added) 
+
+
 jilles      2007/06/30 22:15:35 UTC	(20070630-3520)
   Log:
   monitor: send the same message buffer to all users

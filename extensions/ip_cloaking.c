@@ -1,4 +1,4 @@
-/* $Id: ip_cloaking.c 3522 2007-07-06 07:48:28Z nenolod $ */
+/* $Id: ip_cloaking.c 3524 2007-07-06 07:54:54Z nenolod $ */
 
 #include "stdinc.h"
 #include "modules.h"
@@ -42,7 +42,7 @@ mapi_hfn_list_av1 ip_cloaking_hfnlist[] = {
 };
 
 DECLARE_MODULE_AV1(ip_cloaking, _modinit, _moddeinit, NULL, NULL,
-			ip_cloaking_hfnlist, "$Revision: 3522 $");
+			ip_cloaking_hfnlist, "$Revision: 3524 $");
 
 static void
 distribute_hostchange(struct Client *client)
@@ -107,6 +107,10 @@ do_host_cloak_ip(const char *inbuf, char *outbuf)
 
 	strncpy(buf, inbuf, HOSTLEN);
 	tptr = strrchr(buf, '.');
+
+	if (tptr == NULL)
+		return;
+
 	*tptr++ = '\0';
 
 	snprintf(outbuf, HOSTLEN, "%s.%x", buf, accum);
