@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: select.c 3354 2007-04-03 09:21:31Z nenolod $
+ *  $Id: select.c 3528 2007-07-07 08:08:23Z nenolod $
  */
 
 #include "config.h"
@@ -104,7 +104,9 @@ comm_setselect(int fd, fdlist_t list, unsigned int type, PF * handler,
 {
 	fde_t *F = comm_locate_fd(fd);
 	s_assert(fd >= 0);
-	s_assert(F->flags.open);
+
+	if (!F)
+		F = comm_add_fd(fd);
 
 	if(type & COMM_SELECT_READ)
 	{
