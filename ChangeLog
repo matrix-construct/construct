@@ -1,3 +1,14 @@
+jilles      2007/07/14 13:34:50 UTC	(20070714-3534)
+  Log:
+  Use mask_match() to check bans from local clients for
+  redundancy. This fixes the problem that bans like *!?@*
+  prevent any ban starting with *!*@ being set.
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/src/chmode.c (File Modified) 
+
+
 jilles      2007/07/14 13:32:18 UTC	(20070714-3532)
   Log:
   Add mask_match(), like ircu mmatch().
