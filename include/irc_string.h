@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: irc_string.h 678 2006-02-03 20:25:01Z jilles $
+ *  $Id: irc_string.h 3532 2007-07-14 13:32:18Z jilles $
  */
 
 #ifndef INCLUDED_irc_string_h
@@ -34,11 +34,13 @@
  * match - compare name with mask, mask may contain * and ? as wildcards
  * match - returns 1 on successful match, 0 otherwise
  *
+ * mask_match - compare one mask to another
  * match_esc - compare with support for escaping chars
  * match_cidr - compares u!h@addr with u!h@addr/cidr
  * match_ips - compares addr with addr/cidr in ascii form
  */
 extern int match(const char *mask, const char *name);
+extern int mask_match(const char *oldmask, const char *newmask);
 extern int match_esc(const char *mask, const char *name);
 extern int match_cidr(const char *mask, const char *name);
 extern int match_ips(const char *mask, const char *name);

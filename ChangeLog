@@ -1,3 +1,14 @@
+jilles      2007/07/14 12:20:48 UTC	(20070714-3530)
+  Log:
+  add_id() for local client: do not collapse() the ban mask.
+  The code calling this already collapses the mask, and if
+  not, doing it here would cause a desync.
+  
+
+  Changes:	Modified:
+  +0 -2		trunk/src/chmode.c (File Modified) 
+
+
 nenolod     2007/07/07 08:08:23 UTC	(20070707-3528)
   Log:
   - fix dereference problems with not widely used polling engines

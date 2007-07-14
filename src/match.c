@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: match.c 3175 2007-02-01 00:02:35Z jilles $
+ * $Id: match.c 3532 2007-07-14 13:32:18Z jilles $
  *
  */
 #include "stdinc.h"
@@ -104,6 +104,79 @@ int match(const char *mask, const char *name)
 		}
 	}
 }
+
+/** Check a mask against a mask.
+ * This test checks using traditional IRC wildcards only: '*' means
+ * match zero or more characters of any type; '?' means match exactly
+ * one character of any type.
+ * The difference between mask_match() and match() is that in mask_match()
+ * a '?' in mask does not match a '*' in name.
+ *
+ * @param[in] mask Existing wildcard-containing mask.
+ * @param[in] name New wildcard-containing mask.
+ * @return 1 if \a name is equal to or more specific than \a mask, 0 otherwise.
+ */
+int mask_match(const char *mask, const char *name)
+{
+	const char *m = mask, *n = name;
+	const char *m_tmp = mask, *n_tmp = name;
+	int star_p;
+
+	s_assert(mask != NULL);
+	s_assert(name != NULL);
+
+	for (;;)
+	{
+		switch (*m)
+		{
+		  case '\0':
+			  if (!*n)
+				  return 1;
+		  backtrack:
+			  if (m_tmp == mask)
+				  return 0;
+			  m = m_tmp;
+			  n = ++n_tmp;
+			  break;
+		  case '*':
+		  case '?':
+			  for (star_p = 0;; m++)
+			  {
+				  if (*m == '*')
+					  star_p = 1;
+				  else if (*m == '?')
+				  {
+					  /* changed for mask_match() */
+					  if (*n == '*' || !*n)
+						  goto backtrack;
+					  n++;
+				  }
+				  else
+					  break;
+			  }
+			  if (star_p)
+			  {
+				  if (!*m)
+					  return 1;
+				  else
+				  {
+					  m_tmp = m;
+					  for (n_tmp = n; *n && ToLower(*n) != ToLower(*m); n++);
+				  }
+			  }
+			  /* and fall through */
+		  default:
+			  if (!*n)
+				  return (*m != '\0' ? 0 : 1);
+			  if (ToLower(*m) != ToLower(*n))
+				  goto backtrack;
+			  m++;
+			  n++;
+			  break;
+		}
+	}
+}
+
 
 /** Check a string against a mask.
  * This test checks using traditional IRC wildcards only: '*' means
