@@ -1,3 +1,17 @@
+jilles      2007/07/14 13:32:18 UTC	(20070714-3532)
+  Log:
+  Add mask_match(), like ircu mmatch().
+  This compares two masks and returns whether the "new" is
+  more specific than or equal to the "old". The difference
+  with match() is that a '?' in "old" does not match a '*' in
+  "new".
+  
+
+  Changes:	Modified:
+  +2 -0		trunk/include/irc_string.h (File Modified) 
+  +73 -0	trunk/src/match.c (File Modified) 
+
+
 jilles      2007/07/14 12:20:48 UTC	(20070714-3530)
   Log:
   add_id() for local client: do not collapse() the ban mask.

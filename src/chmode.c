@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: chmode.c 3530 2007-07-14 12:20:48Z jilles $
+ *  $Id: chmode.c 3534 2007-07-14 13:34:50Z jilles $
  */
 
 #include "stdinc.h"
@@ -111,7 +111,7 @@ add_id(struct Client *source_p, struct Channel *chptr, const char *banid,
 		DLINK_FOREACH(ptr, list->head)
 		{
 			actualBan = ptr->data;
-			if(match(actualBan->banstr, realban))
+			if(mask_match(actualBan->banstr, realban))
 				return 0;
 		}
 	}
