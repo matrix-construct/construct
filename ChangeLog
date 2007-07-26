@@ -1,3 +1,13 @@
+jilles      2007/07/14 21:50:21 UTC	(20070714-3536)
+  Log:
+  In a two-argument whois, RPL_ENDOFWHOIS should show second arg.
+  This already works correctly for successful/notfound case.
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/modules/m_whois.c (File Modified) 
+
+
 jilles      2007/07/14 13:34:50 UTC	(20070714-3534)
   Log:
   Use mask_match() to check bans from local clients for

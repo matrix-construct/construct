@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: irc_string.h 3532 2007-07-14 13:32:18Z jilles $
+ *  $Id: irc_string.h 3538 2007-07-26 14:21:57Z jilles $
  */
 
 #ifndef INCLUDED_irc_string_h
@@ -131,7 +131,7 @@ char *strip_tabs(char *dest, const unsigned char *src, size_t len);
 
 const char *myctime(time_t);
 
-#define EmptyString(x) (!(x) || (*(x) == '\0'))
+#define EmptyString(x) ((x) == NULL || *(x) == '\0')
 #define CheckEmpty(x) EmptyString(x) ? "" : x
 
 char *strtoken(char **save, char *str, const char *fs);
