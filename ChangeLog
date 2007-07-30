@@ -1,3 +1,13 @@
+jilles      2007/07/26 14:21:57 UTC	(20070726-3538)
+  Log:
+  Change EmptyString so gcc 4.2 doesn't complain.
+  from ratbox (androsyn), slightly changed
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/include/irc_string.h (File Modified) 
+
+
 jilles      2007/07/14 21:50:21 UTC	(20070714-3536)
   Log:
   In a two-argument whois, RPL_ENDOFWHOIS should show second arg.
