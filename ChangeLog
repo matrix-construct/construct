@@ -1,3 +1,13 @@
+jilles      2007/08/01 20:18:12 UTC	(20070801-3542)
+  Log:
+  Make highest connection counts a bit more consistent.
+  
+
+  Changes:	Modified:
+  +5 -0		trunk/src/s_serv.c (File Modified) 
+  +8 -8		trunk/src/s_user.c (File Modified) 
+
+
 jilles      2007/07/30 17:26:00 UTC	(20070730-3540)
   Log:
   Fix wrong line numbers in ircd.conf parser (some comments).
