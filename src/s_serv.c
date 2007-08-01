@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.c 3446 2007-05-14 22:21:16Z jilles $
+ *  $Id: s_serv.c 3542 2007-08-01 20:18:12Z jilles $
  */
 
 #include "stdinc.h"
@@ -1130,6 +1130,11 @@ server_estab(struct Client *client_p)
 	find_or_add(client_p->name);
 	client_p->localClient->firsttime = CurrentTime;
 	/* fixing eob timings.. -gnp */
+
+	if((dlink_list_length(&lclient_list) + dlink_list_length(&serv_list)) >
+	   (unsigned long)MaxConnectionCount)
+		MaxConnectionCount = dlink_list_length(&lclient_list) + 
+					dlink_list_length(&serv_list);
 
 	/* Show the real host/IP to admins */
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,

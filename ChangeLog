@@ -1,3 +1,13 @@
+jilles      2007/07/30 17:26:00 UTC	(20070730-3540)
+  Log:
+  Fix wrong line numbers in ircd.conf parser (some comments).
+  from ratbox 2.2 (androsyn).
+  
+
+  Changes:	Modified:
+  +1 -0		trunk/src/ircd_lexer.l (File Modified) 
+
+
 jilles      2007/07/26 14:21:57 UTC	(20070726-3538)
   Log:
   Change EmptyString so gcc 4.2 doesn't complain.

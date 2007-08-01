@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c 3446 2007-05-14 22:21:16Z jilles $
+ *  $Id: s_user.c 3542 2007-08-01 20:18:12Z jilles $
  */
 
 #include "stdinc.h"
@@ -147,6 +147,14 @@ int user_modes[256] = {
 int
 show_lusers(struct Client *source_p)
 {
+	if(dlink_list_length(&lclient_list) > (unsigned long)MaxClientCount)
+		MaxClientCount = dlink_list_length(&lclient_list);
+
+	if((dlink_list_length(&lclient_list) + dlink_list_length(&serv_list)) >
+	   (unsigned long)MaxConnectionCount)
+		MaxConnectionCount = dlink_list_length(&lclient_list) + 
+					dlink_list_length(&serv_list);
+
 	sendto_one_numeric(source_p, RPL_LUSERCLIENT, form_str(RPL_LUSERCLIENT),
 			   (Count.total - Count.invisi),
 			   Count.invisi, dlink_list_length(&global_serv_list));
@@ -184,14 +192,6 @@ show_lusers(struct Client *source_p)
 			   form_str(RPL_STATSCONN),
 			   MaxConnectionCount, MaxClientCount, 
 			   Count.totalrestartcount);
-
-	if(dlink_list_length(&lclient_list) > (unsigned long)MaxClientCount)
-		MaxClientCount = dlink_list_length(&lclient_list);
-
-	if((dlink_list_length(&lclient_list) + dlink_list_length(&serv_list)) >
-	   (unsigned long)MaxConnectionCount)
-		MaxConnectionCount = dlink_list_length(&lclient_list) + 
-					dlink_list_length(&serv_list);
 
 	return 0;
 }
