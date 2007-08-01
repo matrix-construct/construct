@@ -90,6 +90,9 @@
 /* Define to 1 if you have the `poll' function. */
 #undef HAVE_POLL
 
+/* Define to 1 if you have the `port_getn' function. */
+#undef HAVE_PORT_GETN
+
 /* Define to 1 if you have the `select' function. */
 #undef HAVE_SELECT
 

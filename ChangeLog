@@ -1,3 +1,12 @@
+jilles      2007/08/01 20:50:54 UTC	(20070801-3544)
+  Log:
+  Rerun autoconf for version bump, at last.
+  
+
+  Changes:	Modified:
+  +9 -9		trunk/configure (File Modified) 
+
+
 jilles      2007/08/01 20:18:12 UTC	(20070801-3542)
   Log:
   Make highest connection counts a bit more consistent.
