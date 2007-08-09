@@ -1,6 +1,6 @@
 Some of this may not be possible to do in 2.3...
 
-- go TS6 only?
+- go TS6 only? [partially done; TS6 is always enabled now]
 - client.c, channel.c is very 2.8 style still. it'd be nice to pack them into their own namespace and 
   such. moreover, the other 2.8 code needs similar rewriting/reworking too...
 - internally split out +o/+v "ranks" into a series of permissions. this could allow for configure-defined 
@@ -10,4 +10,4 @@ Some of this may not be possible to do in 2.3...
 - link failover?
 
 --
-$Id: IDEAS 3510 2007-06-06 15:46:12Z nenolod $
+$Id: IDEAS 3552 2007-08-09 06:50:13Z nenolod $
