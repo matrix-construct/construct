@@ -1,3 +1,12 @@
+nenolod     2007/08/09 06:40:52 UTC	(20070809-3548)
+  Log:
+  - better text for RPL_LOAD2HI explaining in a better way what is going on
+  
+
+  Changes:	Modified:
+  +1 -2		trunk/src/messages.tab (File Modified) 
+
+
 jilles      2007/08/01 20:52:54 UTC	(20070801-3546)
   Log:
   Also rerun autoheader, for solaris ports changes.

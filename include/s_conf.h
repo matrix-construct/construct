@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.h 3460 2007-05-18 20:31:33Z jilles $
+ *  $Id: s_conf.h 3550 2007-08-09 06:47:26Z nenolod $
  */
 
 #ifndef INCLUDED_s_conf_h
@@ -289,7 +289,6 @@ struct server_info
 	char *network_name;
 	char *network_desc;
 	int hub;
-	int use_ts6;
 	struct sockaddr_in ip;
 #ifdef IPV6
 	struct sockaddr_in6 ip6;

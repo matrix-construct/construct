@@ -42,7 +42,6 @@ loadmodule "<replaceable>text</replaceable>";</synopsis>
 	<synopsis>
 serverinfo {
         name = "<replaceable>text</replaceable>";
-        use_ts6 = <replaceable>boolean</replaceable>;
         sid = "<replaceable>text</replaceable>";
         description = "<replaceable>text</replaceable>";
         network_name = "<replaceable>text</replaceable>";
@@ -64,15 +63,6 @@ serverinfo {
 		must contain at least one dot. It is not necessarily equal
 		to any DNS name. This must be unique on the IRC network.
 	      </para>
-	    </listitem>
-	  </varlistentry>
-	  <varlistentry>
-	    <term>use_ts6</term>
-	    <listitem>
-	      <para>
-                A boolean which defines whether or not you want to use the new TS6 protocol, which provides
-                many improvements over the old protocol, TS5, which is used in Hyperion.
-              </para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>

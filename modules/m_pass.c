@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_pass.c 1291 2006-05-05 19:00:19Z jilles $
+ *  $Id: m_pass.c 3550 2007-08-09 06:47:26Z nenolod $
  */
 
 #include "stdinc.h"
@@ -45,7 +45,7 @@ struct Message pass_msgtab = {
 };
 
 mapi_clist_av1 pass_clist[] = { &pass_msgtab, NULL };
-DECLARE_MODULE_AV1(pass, NULL, NULL, pass_clist, NULL, NULL, "$Revision: 1291 $");
+DECLARE_MODULE_AV1(pass, NULL, NULL, pass_clist, NULL, NULL, "$Revision: 3550 $");
 
 /*
  * m_pass() - Added Sat, 4 March 1989
@@ -86,7 +86,7 @@ mr_pass(struct Client *client_p, struct Client *source_p, int parc, const char *
 		/* kludge, if we're not using ts6, dont ever mark a server
 		 * as TS6 capable, that way we'll never send them TS6 data.
 		 */
-		if(ServerInfo.use_ts6 && parc == 5 && atoi(parv[3]) >= 6)
+		if(parc == 5 && atoi(parv[3]) >= 6)
 		{
 			/* only mark as TS6 if the SID is valid.. */
 			if(IsDigit(parv[4][0]) && IsIdChar(parv[4][1]) &&

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_conf.c 3446 2007-05-14 22:21:16Z jilles $
+ *  $Id: s_conf.c 3550 2007-08-09 06:47:26Z nenolod $
  */
 
 #include "stdinc.h"
@@ -737,7 +737,6 @@ set_default_conf(void)
 	memset(&ServerInfo.ip6, 0, sizeof(ServerInfo.ip6));
 	ServerInfo.specific_ipv6_vhost = 0;
 #endif
-	ServerInfo.use_ts6 = YES;
 
 	/* Don't reset hub, as that will break lazylinks */
 	/* ServerInfo.hub = NO; */

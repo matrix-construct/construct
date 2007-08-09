@@ -1,5 +1,5 @@
 /* This code is in the public domain.
- * $Id: newconf.c 3446 2007-05-14 22:21:16Z jilles $
+ * $Id: newconf.c 3550 2007-08-09 06:47:26Z nenolod $
  */
 
 #include "stdinc.h"
@@ -1910,7 +1910,6 @@ static struct ConfEntry conf_serverinfo_table[] =
 	{ "description", 	CF_QSTRING, NULL, 0, &ServerInfo.description	},
 	{ "network_desc", 	CF_QSTRING, NULL, 0, &ServerInfo.network_desc	},
 	{ "hub", 		CF_YESNO,   NULL, 0, &ServerInfo.hub		},
-	{ "use_ts6", 		CF_YESNO,   NULL, 0, &ServerInfo.use_ts6	},
 
 	{ "network_name", 	CF_QSTRING, conf_set_serverinfo_network_name,	0, NULL },
 	{ "name", 		CF_QSTRING, conf_set_serverinfo_name,	0, NULL },

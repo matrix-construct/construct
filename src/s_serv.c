@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_serv.c 3542 2007-08-01 20:18:12Z jilles $
+ *  $Id: s_serv.c 3550 2007-08-09 06:47:26Z nenolod $
  */
 
 #include "stdinc.h"
@@ -1049,15 +1049,8 @@ server_estab(struct Client *client_p)
 		 */
 		if(!EmptyString(server_p->spasswd))
 		{
-			/* kludge, if we're not using TS6, dont ever send
-			 * ourselves as being TS6 capable.
-			 */
-			if(ServerInfo.use_ts6)
-				sendto_one(client_p, "PASS %s TS %d :%s", 
-					   server_p->spasswd, TS_CURRENT, me.id);
-			else
-				sendto_one(client_p, "PASS %s :TS",
-					   server_p->spasswd);
+			sendto_one(client_p, "PASS %s TS %d :%s", 
+				   server_p->spasswd, TS_CURRENT, me.id);
 		}
 
 		/* pass info to new server */
@@ -1724,12 +1717,8 @@ serv_connect_callback(int fd, int status, void *data)
 	 */
 	if(!EmptyString(server_p->spasswd))
 	{
-		if(ServerInfo.use_ts6)
-			sendto_one(client_p, "PASS %s TS %d :%s", 
-				   server_p->spasswd, TS_CURRENT, me.id);
-		else
-			sendto_one(client_p, "PASS %s :TS",
-				   server_p->spasswd);
+		sendto_one(client_p, "PASS %s TS %d :%s", 
+			   server_p->spasswd, TS_CURRENT, me.id);
 	}
 
 	/* pass my info to the new server */
