@@ -1,3 +1,12 @@
+jilles      2007/08/01 20:52:54 UTC	(20070801-3546)
+  Log:
+  Also rerun autoheader, for solaris ports changes.
+  
+
+  Changes:	Modified:
+  +3 -0		trunk/include/setup.h.in (File Modified) 
+
+
 jilles      2007/08/01 20:50:54 UTC	(20070801-3544)
   Log:
   Rerun autoconf for version bump, at last.

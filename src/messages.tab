@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: messages.tab 3404 2007-04-06 21:25:37Z nenolod $
+ *   $Id: messages.tab 3548 2007-08-09 06:40:52Z nenolod $
  */
 
 static  const char *  replies[] = {
@@ -284,8 +284,7 @@ static  const char *  replies[] = {
 /* 260 */       NULL,
 /* 261 RPL_TRACELOG, */         NULL,
 /* 262 RPL_ENDOFTRACE, */       "%s :End of TRACE",
-/* 263 RPL_LOAD2HI, */          
-":%s 263 %s %s :Server load is temporarily too heavy. Please wait a while and try again.",
+/* 263 RPL_LOAD2HI, */          ":%s 263 %s %s :This command could not be completed because it has been used recently, and is rate-limited.",
 /* 264 */       NULL,
 /* 265 RPL_LOCALUSERS, */       "%d %d :Current local users %d, max %d",
 /* 266 RPL_GLOBALUSERS, */      "%d %d :Current global users %d, max %d",
