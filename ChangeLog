@@ -1,3 +1,12 @@
+nenolod     2007/08/09 06:50:13 UTC	(20070809-3552)
+  Log:
+  - update IDEAS as TS6 only is partially done
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/IDEAS (File Modified) 
+
+
 nenolod     2007/08/09 06:47:26 UTC	(20070809-3550)
   Log:
   - TS6 is always enabled now.

@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_ojoin.c 3297 2007-03-28 14:49:48Z jilles $
+ *   $Id: m_ojoin.c 3554 2007-08-10 22:31:14Z jilles $
  */
 
 #include "stdinc.h"
@@ -49,7 +49,7 @@ struct Message ojoin_msgtab = {
 
 mapi_clist_av1 ojoin_clist[] = { &ojoin_msgtab, NULL };
 
-DECLARE_MODULE_AV1(ojoin, NULL, NULL, ojoin_clist, NULL, NULL, "$Revision: 3297 $");
+DECLARE_MODULE_AV1(ojoin, NULL, NULL, ojoin_clist, NULL, NULL, "$Revision: 3554 $");
 
 /*
 ** mo_ojoin
@@ -105,7 +105,10 @@ mo_ojoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 	if(*parv[1] == '@')
 	{
 		add_user_to_channel(chptr, source_p, CHFL_CHANOP);
-		sendto_server(client_p, chptr, NOCAPS, NOCAPS,
+		sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
+			      ":%s SJOIN %ld %s + :@%s",
+			      me.id, (long) chptr->channelts, chptr->chname, source_p->id);
+		sendto_server(client_p, chptr, NOCAPS, CAP_TS6,
 			      ":%s SJOIN %ld %s + :@%s",
 			      me.name, (long) chptr->channelts, chptr->chname, source_p->name);
 		sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@%s JOIN %s",
@@ -118,7 +121,10 @@ mo_ojoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 	else if(*parv[1] == '+')
 	{
 		add_user_to_channel(chptr, source_p, CHFL_VOICE);
-		sendto_server(client_p, chptr, NOCAPS, NOCAPS,
+		sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
+			      ":%s SJOIN %ld %s + :+%s",
+			      me.id, (long) chptr->channelts, chptr->chname, source_p->id);
+		sendto_server(client_p, chptr, NOCAPS, CAP_TS6,
 			      ":%s SJOIN %ld %s + :+%s",
 			      me.name, (long) chptr->channelts, chptr->chname, source_p->name);
 		sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@%s JOIN %s",
@@ -130,7 +136,10 @@ mo_ojoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 	else
 	{
 		add_user_to_channel(chptr, source_p, CHFL_PEON);
-		sendto_server(client_p, chptr, NOCAPS, NOCAPS,
+		sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
+			      ":%s JOIN %ld %s +",
+			      source_p->id, (long) chptr->channelts, chptr->chname);
+		sendto_server(client_p, chptr, NOCAPS, CAP_TS6,
 			      ":%s SJOIN %ld %s + :%s",
 			      me.name, (long) chptr->channelts, chptr->chname, source_p->name);
 		sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@%s JOIN %s",

@@ -20,7 +20,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_okick.c 3117 2007-01-02 13:11:04Z jilles $
+ *  $Id: m_okick.c 3554 2007-08-10 22:31:14Z jilles $
  */
 
 #include "stdinc.h"
@@ -49,7 +49,7 @@ struct Message okick_msgtab = {
 
 mapi_clist_av1 okick_clist[] = { &okick_msgtab, NULL };
 
-DECLARE_MODULE_AV1(okick, NULL, NULL, okick_clist, NULL, NULL, "$Revision: 3117 $");
+DECLARE_MODULE_AV1(okick, NULL, NULL, okick_clist, NULL, NULL, "$Revision: 3554 $");
 
 /*
 ** m_okick
@@ -135,7 +135,9 @@ mo_okick(struct Client *client_p, struct Client *source_p, int parc, const char 
 
 	sendto_channel_local(ALL_MEMBERS, chptr, ":%s KICK %s %s :%s",
 			     me.name, chptr->chname, who->name, comment);
-	sendto_server(&me, chptr, NOCAPS, NOCAPS,
+	sendto_server(&me, chptr, CAP_TS6, NOCAPS,
+		      ":%s KICK %s %s :%s", me.id, chptr->chname, who->id, comment);
+	sendto_server(&me, chptr, NOCAPS, CAP_TS6,
 		      ":%s KICK %s %s :%s", me.name, chptr->chname, who->name, comment);
 	remove_user_from_channel(msptr);
 	return 0;

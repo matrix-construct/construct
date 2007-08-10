@@ -16,7 +16,7 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *   $Id: m_opme.c 3297 2007-03-28 14:49:48Z jilles $
+ *   $Id: m_opme.c 3554 2007-08-10 22:31:14Z jilles $
  */
 #include "stdinc.h"
 #include "tools.h"
@@ -46,7 +46,7 @@ struct Message opme_msgtab = {
 
 mapi_clist_av1 opme_clist[] = { &opme_msgtab, NULL };
 
-DECLARE_MODULE_AV1(opme, NULL, NULL, opme_clist, NULL, NULL, "$Revision: 3297 $");
+DECLARE_MODULE_AV1(opme, NULL, NULL, opme_clist, NULL, NULL, "$Revision: 3554 $");
 
 
 /*
@@ -105,8 +105,12 @@ mo_opme(struct Client *client_p, struct Client *source_p, int parc, const char *
 		sendto_server(NULL, NULL, NOCAPS, NOCAPS,
 			      ":%s WALLOPS :OPME called for [%s] by %s!%s@%s",
 			      me.name, parv[1], source_p->name, source_p->username, source_p->host);
-		sendto_server(NULL, chptr, NOCAPS, NOCAPS, ":%s PART %s", source_p->name, parv[1]);
-		sendto_server(NULL, chptr, NOCAPS, NOCAPS,
+		sendto_server(NULL, chptr, CAP_TS6, NOCAPS, ":%s PART %s", source_p->id, parv[1]);
+		sendto_server(NULL, chptr, NOCAPS, CAP_TS6, ":%s PART %s", source_p->name, parv[1]);
+		sendto_server(NULL, chptr, CAP_TS6, NOCAPS,
+			      ":%s SJOIN %ld %s + :@%s",
+			      me.id, (long) chptr->channelts, parv[1], source_p->id);
+		sendto_server(NULL, chptr, NOCAPS, CAP_TS6,
 			      ":%s SJOIN %ld %s + :@%s",
 			      me.name, (long) chptr->channelts, parv[1], source_p->name);
 	}
