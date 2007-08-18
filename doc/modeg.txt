@@ -1,5 +1,12 @@
                          User Mode +g Documentation
 
+Support of this specification is indicated by the CALLERID token in
+RPL_ISUPPORT (005).  This token takes an optional parameter, of the letter
+of the user mode.  If no parameter is specified, the user mode is g.  A
+typical token would be: CALLERID=g
+The rest of this specification will assume the user mode is g, as
+implemented in hybrid, ratbox and charybdis.
+
 Hybrid 7 includes a new and power feature that all users can take advantage
 of to help prevent flooding and unwanted messages.  This new feature is 
 invoked by setting user mode +g.  When a client is set +g, that user will
@@ -10,7 +17,7 @@ messaged them, and that they are in +g mode.
 
 The target of the message will only receive one notification per minute, from
 any client, in order to help prevent flooding.  The sender will NOT have the
-rate limit, and will receive a notice saying the target is in +g mode every
+rate limit, and will receive a numeric saying the target is in +g mode every
 time they send a message.  Note that this behavior is similar to the way AWAY
 messages are done.
 
@@ -48,6 +55,16 @@ Viewing the accept list is also very easy.  Issue the raw command ACCEPT *.
 Removing a user from your accept list is also simple.  Issue the command
 ACCEPT -<nick>.  
 
+The ACCEPT command can be used whether or not +g is enabled at the time.
+Setting -g does not clear the accept list.
+
+Some users (in particular IRC operators and services) may be exempt from
+CallerID, and able to message a +g user without being on their accept list.
+
+Being on the accept list may allow a user to bypass more than +g (for example,
+a +R user can use the ACCEPT command to receive messages from unidentified
+users in charybdis).
+
                               Sample Session
 
 The easiest way to see how this works is by experiencing it.  Seeing a sample
@@ -61,22 +78,19 @@ Note that some clients may have to use /quote ACCEPT instead of /accept.
 --
 
 Client Hwy101:  /msg Hwy-LL hi
-Hwy101 will see:  -Hwy-LL- *** I'm in +g mode (server side ignore).
-                  -Hwy-LL- *** I've been informed you messaged me.
+Hwy101 will see:  -!- Hwy-LL is in +g mode (server-side ignore.)
+                  -!- Hwy-LL has been informed that you messaged them.
 
-Hwy-LL will see:  Client Hwy101 [wcampbel@admin.irc.monkie.org] is messaging
-                    you and you are +g
-
-The sender will receive the NOTICE from the target of the message, while
-the recipient will receive the NOTICE from the server.
+Hwy-LL will see:  -!- Hwy101 wcampbel@admin.irc.monkie.org is messaging you, and you have umode +g.
 
 --
 
 If Hwy101 sends another message to Hwy-LL (before the minute expires), he will
-see:  -Hwy-LL- *** I'm in +g mode (server side ignore).
+see:  -!- Hwy-LL is in +g mode (server-side ignore.)
 and will not receive the second notice
 
-Hwy-LL will NOT see any notice.
+Hwy-LL will NOT see any notice. This also applies if the second message comes
+from a different user.
 
 --
 
@@ -135,6 +149,70 @@ spamming, and to provide users with a means to keep their privacy.
 
 We hope that these goals are obtained.
 
+Numeric replies
+---------------
+
+280 - RPL_ACCEPTLIST
+--------------------
+:<server> 280 <nick> <accepted1> <accepted2> ...
+
+This numeric is used to indicate to a client the list of nicknames they are
+accepting. At most 15 accepted nicknames may be included; if this is exceeded
+multiple RPL_ACCEPTLIST must be sent.
+
+281 - RPL_ENDOFACCEPT
+---------------------
+:<server> 281 <nick> :End of /ACCEPT list.
+
+This numeric is used to indicate to a client the end of an accept list.
+
+456 - ERR_ACCEPTFULL
+--------------------
+:<server> 456 <nick> :Accept list is full
+
+This numeric is used to indicate to a client that their accept list is full
+and one or more nicks could not be added.
+
+457 - ERR_ACCEPTEXIST
+---------------------
+:<server> 457 <nick> <target> :is already on your accept list
+
+This numeric is used to indicate to a client that the given nick was already
+on their accept list.
+
+458 - ERR_ACCEPTNOT
+-------------------
+:<server> 458 <nick> <target> :is not on your accept list
+
+This numeric is used to indicate to a client that the given nick was not on
+their accept list.
+
+716 - ERR_TARGUMODEG
+--------------------
+:<server> 716 <nick> <target> :is in +g mode (server-side ignore.)
+
+This numeric is used to indicate that a message (PRIVMSG) the client sent
+could not be delivered because of CallerID restrictions. The <target>
+parameter is the target user's nick.
+
+717 - RPL_TARGNOTIFY
+--------------------
+:<server> 717 <nick> <target> :has been informed that you messaged them.
+
+This numeric is sent after 716 if the target user was notified of the message.
+
+718 - RPL_UMODEGMSG
+-------------------
+:<server> 718 <nick> <target> <user>@<host> :is messaging you, and you have umode +g.
+
+This numeric is sent when a message (PRIVMSG or NOTICE) sent to the user is
+blocked by CallerID, at most once per minute.
+
+Problem: hybrid uses the following form instead
+:<server> 718 <nick> <target>[<user>@<host>] :is messaging you, and you have umode +g.
+which is ambiguous if the user may contain a [ and in the author's opinion ugly.
+
 --
 W. Campbell
-$Id: modeg.txt 6 2005-09-10 01:02:21Z nenolod $
+updated by J. Tjoelker
+$Id: modeg.txt 3556 2007-08-18 14:45:10Z jilles $
