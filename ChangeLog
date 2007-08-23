@@ -1,3 +1,12 @@
+jilles      2007/08/23 19:00:10 UTC	(20070823-3558)
+  Log:
+  Add what /invite actually does (bypass +ijlr).
+  
+
+  Changes:	Modified:
+  +2 -0		trunk/help/opers/invite (File Modified) 
+
+
 jilles      2007/08/18 14:45:10 UTC	(20070818-3556)
   Log:
   callerid (+g) documentation:

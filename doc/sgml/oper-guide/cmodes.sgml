@@ -104,7 +104,7 @@
 	  is unset, only channel operators may use the INVITE command.
 	</para>
 	<para>
-	  When this mode is set together with +i, all channel members can influence who can join.
+	  When this mode is set together with +i, +j, +l or +r, all channel members can influence who can join.
 	</para>
       </sect2>
       <sect2>
@@ -119,6 +119,7 @@
 	<para>
 	  This mode takes one parameter of the same form as bans. Matching
 	  clients do not need to be invited to join the channel when it is invite-only (+i).
+	  Unlike the INVITE command, this does not override +j, +l and +r.
 	</para>
 	<para>
 	  Only channel operators can see +I changes or request the list.
@@ -129,6 +130,9 @@
         <para>
           This mode takes one parameter of the form <replaceable>n</replaceable>:<replaceable>t</replaceable>, where <replaceable>n</replaceable> and <replaceable>t</replaceable> are positive integers. Only <replaceable>n</replaceable> users may join in each period of <replaceable>t</replaceable> seconds.
         </para>
+	<para>
+	  Invited users can join regardless of +j, but are counted as normal.
+	</para>
 	<para>
 	  Due to propagation delays between servers, more users may be
 	  able to join (by racing for the last slot on each server).
@@ -146,6 +150,7 @@
 	<para>
 	  Takes one numeric parameter, the number of users which are allowed to be in the channel before
 	  further joins are blocked.
+	  Invited users may join regardless.
 	</para>
 	<para>
 	  Due to propagation delays between servers, more users may be
@@ -243,6 +248,7 @@
         <title>+r, block unidentified</title>
         <para>
           When set, this mode prevents unidentified users from joining.
+	  Invited users can still join.
         </para>
       </sect2>
       <!-- not planned (jilles)
