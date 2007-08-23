@@ -1,3 +1,21 @@
+jilles      2007/08/18 14:45:10 UTC	(20070818-3556)
+  Log:
+  callerid (+g) documentation:
+  - Mention 005 (isupport) token with possibility of different mode letter.
+  - Explicitly clarify that /accept can be used while -g, and setting -g
+    does not clear the accept list.
+  - Mention that some users may be able to bypass +g.
+  - Mention that /accept may allow more than just going through +g.
+  - Update to 716/717/718 numerics instead of notices.
+  - Clarify that the one-minute period applies to messages from all users,
+    not just one user.
+  - Add a numerics section with more exact syntax.
+  
+
+  Changes:	Modified:
+  +88 -10	trunk/doc/modeg.txt (File Modified) 
+
+
 jilles      2007/08/10 22:31:14 UTC	(20070810-3554)
   Log:
   Send TS6 protocol for the actual work of override modules.
