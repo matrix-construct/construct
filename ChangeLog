@@ -1,3 +1,12 @@
+jilles      2007/08/23 21:02:31 UTC	(20070823-3560)
+  Log:
+  Add more information about invitations and invexes.
+  
+
+  Changes:	Modified:
+  +7 -1		trunk/doc/sgml/oper-guide/cmodes.sgml (File Modified) 
+
+
 jilles      2007/08/23 19:00:10 UTC	(20070823-3558)
   Log:
   Add what /invite actually does (bypass +ijlr).
