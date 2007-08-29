@@ -1,3 +1,13 @@
+jilles      2007/08/29 22:04:45 UTC	(20070829-3562)
+  Log:
+  Clarify format of IPv6 addresses in auth{} and connect{}.
+  
+
+  Changes:	Modified:
+  +7 -3		trunk/doc/example.conf (File Modified) 
+  +9 -2		trunk/doc/reference.conf (File Modified) 
+
+
 jilles      2007/08/23 21:02:31 UTC	(20070823-3560)
   Log:
   Add more information about invitations and invexes.

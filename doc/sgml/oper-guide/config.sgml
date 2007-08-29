@@ -293,7 +293,13 @@ auth {
 	  <varlistentry>
             <term>user</term>
             <listitem>
-              <para>A hostmask (user@host) that the auth{} block is matched against. You can have multiple user entries.</para>
+              <para>
+                A hostmask (user@host) that the auth {} block applies to.
+                It is matched against the hostname and IP address (using ::
+                shortening for IPv6 and prepending a 0 if it starts with
+                a colon) and can also use CIDR masks.
+                You can have multiple user entries.
+              </para>
             </listitem>
           </varlistentry>
 	  <varlistentry>
@@ -555,6 +561,10 @@ connect "<replaceable>name</replaceable>" {
 		Furthermore, if a hostname is used, it must have an A or AAAA
 		record (no CNAME) and it must be the primary
 		hostname for inbound connections to work.
+	      </para><para>
+	        IPv6 addresses must be in :: shortened form; addresses which
+		then start with a colon must be prepended with a zero,
+		for example 0::1.
 	      </para></note>
 	    </listitem>
 	  </varlistentry>
