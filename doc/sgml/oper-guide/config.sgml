@@ -69,8 +69,7 @@ serverinfo {
 	    <term>sid</term>
 	    <listitem>
 	      <para>
-                A unique ID which describes the server. This is required regardless of whether you are using
-		TS6 or not.
+                A unique ID which describes the server.
 		This consists of one digit and two characters which can be
 		digits or letters.
 	      </para>

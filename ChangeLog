@@ -1,3 +1,12 @@
+jilles      2007/08/29 22:18:31 UTC	(20070829-3564)
+  Log:
+  Clarify format of IPv6 addresses in SGML documentation.
+  
+
+  Changes:	Modified:
+  +11 -1	trunk/doc/sgml/oper-guide/config.sgml (File Modified) 
+
+
 jilles      2007/08/29 22:04:45 UTC	(20070829-3562)
   Log:
   Clarify format of IPv6 addresses in auth{} and connect{}.
