@@ -28,7 +28,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- *  $Id: supported.c 3131 2007-01-21 15:36:31Z jilles $
+ *  $Id: supported.c 3568 2007-09-09 18:59:08Z jilles $
  */
 
 /* From the old supported.h which is
@@ -260,7 +260,7 @@ isupport_extban(void *ptr)
 	p = get_extban_string();
 	if (EmptyString(p))
 		return NULL;
-	ircsnprintf(result, sizeof result, "$:%s", p);
+	ircsnprintf(result, sizeof result, "$,%s", p);
 	return result;
 }
 
