@@ -1,3 +1,12 @@
+jilles      2007/09/09 18:59:08 UTC	(20070909-3568)
+  Log:
+  Make EXTBAN 005 token like unreal's (, instead of :).
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/src/supported.c (File Modified) 
+
+
 jilles      2007/09/06 20:30:22 UTC	(20070906-3566)
   Log:
   Remove a sentence which gives the impression that TS6 is optional.

@@ -20,7 +20,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: m_knock.c 752 2006-02-11 20:55:03Z jilles $
+ *  $Id: m_knock.c 3570 2007-09-09 19:19:23Z jilles $
  */
 
 #include "stdinc.h"
@@ -47,7 +47,7 @@ struct Message knock_msgtab = {
 };
 
 mapi_clist_av1 knock_clist[] = { &knock_msgtab, NULL };
-DECLARE_MODULE_AV1(knock, NULL, NULL, knock_clist, NULL, NULL, "$Revision: 752 $");
+DECLARE_MODULE_AV1(knock, NULL, NULL, knock_clist, NULL, NULL, "$Revision: 3570 $");
 
 /* m_knock
  *    parv[0] = sender prefix
@@ -161,7 +161,8 @@ m_knock(struct Client *client_p, struct Client *source_p, int parc, const char *
 	chptr->last_knock = CurrentTime;
 
 	if(ConfigChannel.use_knock)
-		sendto_channel_local(ONLY_CHANOPS, chptr, form_str(RPL_KNOCK),
+		sendto_channel_local(chptr->mode.mode & MODE_FREEINVITE ? ALL_MEMBERS : ONLY_CHANOPS,
+				     chptr, form_str(RPL_KNOCK),
 				     me.name, name, name, source_p->name,
 				     source_p->username, source_p->host);
 
