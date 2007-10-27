@@ -1,3 +1,12 @@
+jilles      2007/09/09 19:19:23 UTC	(20070909-3570)
+  Log:
+  Make /knock send to all channel members on +g (anyone may invite) channels.
+  
+
+  Changes:	Modified:
+  +2 -1		trunk/modules/m_knock.c (File Modified) 
+
+
 jilles      2007/09/09 18:59:08 UTC	(20070909-3568)
   Log:
   Make EXTBAN 005 token like unreal's (, instead of :).

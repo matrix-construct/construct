@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.c 3432 2007-04-26 23:01:16Z jilles $
+ *  $Id: channel.c 3574 2007-10-27 21:56:53Z jilles $
  */
 
 #include "stdinc.h"
@@ -384,6 +384,7 @@ destroy_channel(struct Channel *chptr)
 	free_channel_list(&chptr->banlist);
 	free_channel_list(&chptr->exceptlist);
 	free_channel_list(&chptr->invexlist);
+	free_channel_list(&chptr->quietlist);
 
 	/* Free the topic */
 	free_topic(chptr);
