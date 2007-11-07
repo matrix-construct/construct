@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.c 3574 2007-10-27 21:56:53Z jilles $
+ *  $Id: channel.c 3578 2007-11-07 21:45:14Z jilles $
  */
 
 #include "stdinc.h"
@@ -93,7 +93,7 @@ allocate_channel(const char *chname)
 {
 	struct Channel *chptr;
 	chptr = BlockHeapAlloc(channel_heap);
-	DupNString(chptr->chname, chname, CHANNELLEN);
+	DupString(chptr->chname, chname);
 	return (chptr);
 }
 
