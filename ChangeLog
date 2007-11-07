@@ -1,3 +1,13 @@
+jilles      2007/11/07 21:45:14 UTC	(20071107-3578)
+  Log:
+  allocate_channel(): no need to truncate name, its only caller already does it
+  furthermore, truncating here causes an inconsistent channel name
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/src/channel.c (File Modified) 
+
+
 jilles      2007/10/27 21:56:53 UTC	(20071027-3574)
   Log:
   Fix a memory leak.

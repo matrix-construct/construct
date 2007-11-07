@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.h 2727 2006-11-09 23:48:45Z jilles $
+ *  $Id: channel.h 3580 2007-11-07 23:45:14Z jilles $
  */
 
 #ifndef INCLUDED_channel_h
@@ -93,7 +93,7 @@ struct membership
 	unsigned long bants;
 };
 
-#define BANLEN NICKLEN+USERLEN+HOSTLEN+6
+#define BANLEN 195
 struct Ban
 {
 	char *banstr;

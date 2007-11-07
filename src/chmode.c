@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: chmode.c 3534 2007-07-14 13:34:50Z jilles $
+ *  $Id: chmode.c 3580 2007-11-07 23:45:14Z jilles $
  */
 
 #include "stdinc.h"
@@ -92,7 +92,7 @@ add_id(struct Client *source_p, struct Channel *chptr, const char *banid,
        dlink_list * list, long mode_type)
 {
 	struct Ban *actualBan;
-	static char who[BANLEN];
+	static char who[USERHOST_REPLYLEN];
 	char *realban = LOCAL_COPY(banid);
 	dlink_node *ptr;
 
@@ -615,8 +615,11 @@ chm_ban(struct Client *source_p, struct Channel *chptr,
 	else
 		mask = pretty_mask(raw_mask);
 
-	/* we'd have problems parsing this, hyb6 does it too */
-	if(strlen(mask) > (MODEBUFLEN - 2))
+	/* we'd have problems parsing this, hyb6 does it too
+	 * also make sure it will always fit on a line with channel
+	 * name etc.
+	 */
+	if(strlen(mask) > IRCD_MIN(BANLEN, MODEBUFLEN - 5))
 		return;
 
 	/* if we're adding a NEW id */

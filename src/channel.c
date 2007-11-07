@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: channel.c 3578 2007-11-07 21:45:14Z jilles $
+ *  $Id: channel.c 3580 2007-11-07 23:45:14Z jilles $
  */
 
 #include "stdinc.h"
@@ -109,8 +109,8 @@ allocate_ban(const char *banstr, const char *who)
 {
 	struct Ban *bptr;
 	bptr = BlockHeapAlloc(ban_heap);
-	DupNString(bptr->banstr, banstr, BANLEN);
-	DupNString(bptr->who, who, BANLEN);
+	DupString(bptr->banstr, banstr);
+	DupString(bptr->who, who);
 
 	return (bptr);
 }
