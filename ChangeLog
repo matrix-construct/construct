@@ -1,3 +1,14 @@
+jilles      2007/11/07 23:45:14 UTC	(20071107-3580)
+  Log:
+  Fix desyncs with very long extbans. Bans can now be upto 195 chars long.
+  
+
+  Changes:	Modified:
+  +1 -1		trunk/include/channel.h (File Modified) 
+  +2 -2		trunk/src/channel.c (File Modified) 
+  +6 -3		trunk/src/chmode.c (File Modified) 
+
+
 jilles      2007/11/07 21:45:14 UTC	(20071107-3578)
   Log:
   allocate_channel(): no need to truncate name, its only caller already does it
