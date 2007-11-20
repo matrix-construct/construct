@@ -43,5 +43,5 @@ show_stats_p(hook_data *data)
 	sendto_realops_snomask(SNO_SPY, L_ALL,
 			     "STATS p requested by %s (%s@%s) [%s]",
 			     data->client->name, data->client->username,
-			     data->client->host, data->client->user->server);
+			     data->client->host, data->client->servptr->name);
 }

@@ -637,7 +637,7 @@ introduce_client(struct Client *client_p, struct Client *source_p, struct User *
 			      nick, source_p->hopcount + 1,
 			      (long) source_p->tsinfo,
 			      ubuf, source_p->username, source_p->host,
-			      user->server, source_p->info);
+			      source_p->servptr->name, source_p->info);
 	}
 	else
 		sendto_server(client_p, NULL, NOCAPS, NOCAPS,
@@ -645,7 +645,7 @@ introduce_client(struct Client *client_p, struct Client *source_p, struct User *
 			      nick, source_p->hopcount + 1,
 			      (long) source_p->tsinfo,
 			      ubuf, source_p->username, source_p->host,
-			      user->server, source_p->info);
+			      source_p->servptr->name, source_p->info);
 
 	if (IsDynSpoof(source_p))
 	{

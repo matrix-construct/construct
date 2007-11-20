@@ -52,19 +52,19 @@ show_stats(hook_data_int *data)
 					statchar, data->client->name,
 					data->client->username,
 					data->client->host,
-					data->client->user->server, name);
+					data->client->servptr->name, name);
 		else
 			sendto_realops_snomask(SNO_SPY, L_ALL,
 					"STATS %c requested by %s (%s@%s) [%s]",
 					statchar, data->client->name,
 					data->client->username,
-					data->client->host, data->client->user->server);
+					data->client->host, data->client->servptr->name);
 	}
 	else
 	{
 		sendto_realops_snomask(SNO_SPY, L_ALL,
 				"STATS %c requested by %s (%s@%s) [%s]",
 				statchar, data->client->name, data->client->username,
-				data->client->host, data->client->user->server);
+				data->client->host, data->client->servptr->name);
 	}
 }

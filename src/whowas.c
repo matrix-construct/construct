@@ -39,6 +39,7 @@
 #include "send.h"
 #include "s_conf.h"
 #include "memory.h"
+#include "scache.h"
 
 /* internally defined function */
 static void add_whowas_to_clist(struct Whowas **, struct Whowas *);
@@ -86,7 +87,7 @@ void add_history(struct Client *client_p, int online)
 	else
 		who->sockhost[0] = '\0';
 
-	who->servername = client_p->user->server;
+	who->servername = find_or_add(client_p->servptr->name);
 
 	if(online)
 	{

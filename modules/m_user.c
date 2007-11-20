@@ -90,7 +90,6 @@ do_local_user(struct Client *client_p, struct Client *source_p,
 	s_assert(source_p->username != username);
 
 	user = make_user(source_p);
-	user->server = me.name;
 
 	if (!(source_p->flags & FLAGS_SENTUSER))
 	{

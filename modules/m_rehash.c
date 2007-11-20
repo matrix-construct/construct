@@ -402,7 +402,7 @@ me_rehash(struct Client *client_p, struct Client *source_p, int parc, const char
 		return 0;
 
 	if (!find_shared_conf(source_p->username, source_p->host,
-				source_p->user->server, SHARED_REHASH))
+				source_p->servptr->name, SHARED_REHASH))
 		return 0;
 
 	do_rehash(source_p, parc > 1 ? parv[1] : NULL);

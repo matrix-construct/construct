@@ -107,7 +107,7 @@ mo_etrace(struct Client *client_p, struct Client *source_p, int parc, const char
 				if(!MyClient(target_p))
 					sendto_one(target_p, ":%s ENCAP %s ETRACE %s",
 						get_id(source_p, target_p),
-						target_p->user->server,
+						target_p->servptr->name,
 						get_id(target_p, target_p));
 				else
 					do_single_etrace(source_p, target_p);

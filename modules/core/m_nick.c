@@ -284,7 +284,7 @@ mc_nick(struct Client *client_p, struct Client *source_p, int parc, const char *
 		ServerStats->is_kill++;
 		sendto_realops_snomask(SNO_DEBUG, L_ALL,
 				     "Bad Nick: %s From: %s(via %s)",
-				     parv[1], source_p->user->server, client_p->name);
+				     parv[1], source_p->servptr->name, client_p->name);
 		sendto_one(client_p, ":%s KILL %s :%s (Bad Nickname)", me.name, parv[1], me.name);
 
 		/* bad nick change, issue kill for the old nick to the rest
@@ -1186,7 +1186,6 @@ register_client(struct Client *client_p, struct Client *server,
 
 	if(parc == 12)
 	{
-		user->server = find_or_add(server->name);
 		strlcpy(source_p->info, parv[11], sizeof(source_p->info));
 		strlcpy(source_p->sockhost, parv[7], sizeof(source_p->sockhost));
 		strlcpy(source_p->id, parv[8], sizeof(source_p->id));
@@ -1202,7 +1201,6 @@ register_client(struct Client *client_p, struct Client *server,
 	}
 	else if(parc == 10)
 	{
-		user->server = find_or_add(server->name);
 		strlcpy(source_p->info, parv[9], sizeof(source_p->info));
 		strlcpy(source_p->sockhost, parv[7], sizeof(source_p->sockhost));
 		strlcpy(source_p->id, parv[8], sizeof(source_p->id));
@@ -1210,7 +1208,6 @@ register_client(struct Client *client_p, struct Client *server,
 	}
 	else
 	{
-		user->server = find_or_add(parv[7]);
 		strlcpy(source_p->info, parv[8], sizeof(source_p->info));
 	}
 
@@ -1234,7 +1231,7 @@ register_client(struct Client *client_p, struct Client *server,
 
 			DLINK_FOREACH(ptr, service_list.head)
 			{
-				if(!irccmp((const char *) ptr->data, user->server))
+				if(!irccmp((const char *) ptr->data, server->name))
 				{
 					hit++;
 					break;
@@ -1270,11 +1267,11 @@ register_client(struct Client *client_p, struct Client *server,
 
 	if(server == NULL)
 	{
-		if((source_p->servptr = find_server(NULL, user->server)) == NULL)
+		if((source_p->servptr = find_server(NULL, server->name)) == NULL)
 		{
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					     "Ghost killed: %s on invalid server %s",
-					     source_p->name, user->server);
+					     source_p->name, server->name);
 			kill_client(client_p, source_p, "%s (Server doesn't exist)", me.name);
 			source_p->flags |= FLAGS_KILLED;
 			return exit_client(NULL, source_p, &me, "Ghosted Client");
@@ -1294,10 +1291,10 @@ register_client(struct Client *client_p, struct Client *server,
 				     "Bad User [%s] :%s USER %s@%s %s, != %s[%s]",
 				     client_p->name, source_p->name,
 				     source_p->username, source_p->host,
-				     user->server, target_p->name, target_p->from->name);
+				     server->name, target_p->name, target_p->from->name);
 		kill_client(client_p, source_p,
 			    "%s (NICK from wrong direction (%s != %s))",
-			    me.name, user->server, target_p->from->name);
+			    me.name, server->name, target_p->from->name);
 		source_p->flags |= FLAGS_KILLED;
 		return exit_client(source_p, source_p, &me, "USER server wrong direction");
 	}

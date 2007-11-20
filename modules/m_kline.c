@@ -280,7 +280,7 @@ handle_remote_kline(struct Client *source_p, int tkline_time,
 	char *oper_reason;
 
 	if(!find_shared_conf(source_p->username, source_p->host,
-				source_p->user->server, 
+				source_p->servptr->name, 
 				(tkline_time > 0) ? SHARED_TKLINE : SHARED_PKLINE))
 		return;
 
@@ -466,7 +466,7 @@ static void
 handle_remote_unkline(struct Client *source_p, const char *user, const char *host)
 {
 	if(!find_shared_conf(source_p->username, source_p->host,
-				source_p->user->server, SHARED_UNKLINE))
+				source_p->servptr->name, SHARED_UNKLINE))
 		return;
 
 	if(remove_temp_kline(user, host))

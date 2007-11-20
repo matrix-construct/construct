@@ -95,7 +95,6 @@ struct User
 	dlink_list invited;	/* chain of invite pointer blocks */
 	char *away;		/* pointer to away message */
 	int refcnt;		/* Number of times this block is referenced */
-	const char *server;	/* pointer to scached server name */
 
 	char suser[NICKLEN+1];
 };

@@ -785,7 +785,7 @@ flood_attack_client(int p_or_n, struct Client *source_p, struct Client *target_p
 						     "Possible Flooder %s[%s@%s] on %s target: %s",
 						     source_p->name, source_p->username,
 						     source_p->orighost,
-						     source_p->user->server, target_p->name);
+						     source_p->servptr->name, target_p->name);
 				target_p->localClient->flood_noticed = 1;
 				/* add a bit of penalty */
 				target_p->localClient->received_number_of_privmsgs += 2;
@@ -840,7 +840,7 @@ flood_attack_channel(int p_or_n, struct Client *source_p, struct Channel *chptr,
 						     "Possible Flooder %s[%s@%s] on %s target: %s",
 						     source_p->name, source_p->username,
 						     source_p->orighost,
-						     source_p->user->server, chptr->chname);
+						     source_p->servptr->name, chptr->chname);
 				chptr->flood_noticed = 1;
 
 				/* Add a bit of penalty */

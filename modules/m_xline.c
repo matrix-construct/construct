@@ -212,7 +212,7 @@ handle_remote_xline(struct Client *source_p, int temp_time,
 	struct ConfItem *aconf;
 
 	if(!find_shared_conf(source_p->username, source_p->host,
-				source_p->user->server,
+				source_p->servptr->name,
 				(temp_time > 0) ? SHARED_TXLINE : SHARED_PXLINE))
 		return;
 
@@ -524,7 +524,7 @@ static void
 handle_remote_unxline(struct Client *source_p, const char *name)
 {
 	if(!find_shared_conf(source_p->username, source_p->host,
-				source_p->user->server, SHARED_UNXLINE))
+				source_p->servptr->name, SHARED_UNXLINE))
 		return;
 
 	if(remove_temp_xline(source_p, name))

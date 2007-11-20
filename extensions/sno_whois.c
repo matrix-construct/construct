@@ -59,6 +59,6 @@ show_whois(hook_data_client *data)
 				":*** Notice -- %s (%s@%s) is doing a whois on you [%s]",
 				source_p->name,
 				source_p->username, source_p->host,
-				source_p->user->server);
+				source_p->servptr->name);
 	}
 }

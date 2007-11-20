@@ -186,7 +186,7 @@ parse_resv(struct Client *source_p, const char *name,
 
 	if(!MyClient(source_p) && 
 	   !find_shared_conf(source_p->username, source_p->host,
-			source_p->user->server, 
+			source_p->servptr->name, 
 			(temp_time > 0) ? SHARED_TRESV : SHARED_PRESV))
 		return;
 
@@ -435,7 +435,7 @@ static void
 handle_remote_unresv(struct Client *source_p, const char *name)
 {
 	if(!find_shared_conf(source_p->username, source_p->host,
-				source_p->user->server, SHARED_UNRESV))
+				source_p->servptr->name, SHARED_UNRESV))
 		return;
 
 	if(remove_temp_resv(source_p, name))

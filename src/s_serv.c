@@ -695,7 +695,7 @@ burst_TS5(struct Client *client_p)
 			   target_p->name, target_p->hopcount + 1,
 			   (long) target_p->tsinfo, ubuf,
 			   target_p->username, target_p->host,
-			   target_p->user->server, target_p->info);
+			   target_p->servptr->name, target_p->info);
 
 		if(IsDynSpoof(target_p))
 			sendto_one(client_p, ":%s ENCAP * REALHOST %s",
@@ -849,7 +849,7 @@ burst_TS6(struct Client *client_p)
 					(long) target_p->tsinfo,
 					ubuf,
 					target_p->username, target_p->host,
-					target_p->user->server, target_p->info);
+					target_p->servptr->name, target_p->info);
 
 		if(!has_id(target_p) || !IsCapable(client_p, CAP_EUID))
 		{
