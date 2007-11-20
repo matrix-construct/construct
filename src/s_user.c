@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c 3584 2007-11-20 11:08:23Z nenolod $
+ *  $Id: s_user.c 3586 2007-11-20 11:16:43Z nenolod $
  */
 
 #include "stdinc.h"
@@ -534,12 +534,13 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 	dlinkMoveNode(&source_p->localClient->tnode, &unknown_list, &lclient_list);
 	SetClient(source_p);
 
-	/* XXX source_p->servptr is &me, since local client */
-	source_p->servptr = find_server(NULL, user->server);
+	source_p->servptr = &me;
 	dlinkAdd(source_p, &source_p->lnode, &source_p->servptr->serv->users);
+
 	/* Increment our total user count here */
 	if(++Count.total > Count.max_tot)
 		Count.max_tot = Count.total;
+
 	source_p->localClient->allow_read = MAX_FLOOD_BURST;
 
 	Count.totalrestartcount++;

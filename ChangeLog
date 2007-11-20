@@ -1,3 +1,12 @@
+nenolod     2007/11/20 11:08:23 UTC	(20071120-3584)
+  Log:
+  Explain invalid username rejections to users when they are rejected.
+  
+
+  Changes:	Modified:
+  +2 -0		trunk/src/s_user.c (File Modified) 
+
+
 jilles      2007/11/17 21:55:48 UTC	(20071117-3582)
   Log:
   Update description of oper privileges a bit.
