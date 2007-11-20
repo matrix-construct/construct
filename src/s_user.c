@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: s_user.c 3542 2007-08-01 20:18:12Z jilles $
+ *  $Id: s_user.c 3584 2007-11-20 11:08:23Z nenolod $
  */
 
 #include "stdinc.h"
@@ -464,6 +464,8 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 				     "Invalid username: %s (%s@%s)",
 				     source_p->name, source_p->username, source_p->host);
 		ServerStats->is_ref++;
+		sendto_one_notice(source_p, ":*** Your username is invalid. Please make sure that your username contains "
+					    "only alphanumeric characters.");
 		ircsprintf(tmpstr2, "Invalid username [%s]", source_p->username);
 		exit_client(client_p, source_p, &me, tmpstr2);
 		return (CLIENT_EXITED);
