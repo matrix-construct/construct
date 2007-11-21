@@ -102,8 +102,6 @@ struct User
 struct Server
 {
 	user_t *user;		/* who activated this connection */
-	const char *up;		/* Pointer to scache name */
-	const char *upid;
 	char by[NICKLEN];
 	dlink_list servers;
 	dlink_list users;

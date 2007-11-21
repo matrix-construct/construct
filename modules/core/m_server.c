@@ -38,7 +38,6 @@
 #include "s_log.h"		/* log level defines */
 #include "s_serv.h"		/* server_estab, check_server */
 #include "s_stats.h"		/* ServerStats */
-#include "scache.h"		/* find_or_add */
 #include "send.h"		/* sendto_one */
 #include "msg.h"
 #include "parse.h"
@@ -418,11 +417,6 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 
 	set_server_gecos(target_p, info);
 
-	target_p->serv->up = find_or_add(source_p->name);
-
-	if(has_id(source_p))
-		target_p->serv->upid = source_p->id;
-
 	target_p->servptr = source_p;
 
 	SetServer(target_p);
@@ -569,11 +563,6 @@ ms_sid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	target_p->hopcount = atoi(parv[2]);
 	strcpy(target_p->id, parv[3]);
 	set_server_gecos(target_p, parv[4]);
-
-	target_p->serv->up = find_or_add(source_p->name);
-
-	if(has_id(source_p))
-		target_p->serv->upid = source_p->id;
 
 	target_p->servptr = source_p;
 	SetServer(target_p);

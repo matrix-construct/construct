@@ -635,7 +635,6 @@ main(int argc, char *argv[])
 	me.servptr = &me;
 	SetMe(&me);
 	make_server(&me);
-	me.serv->up = me.name;
 	startup_time = CurrentTime;
 	add_to_client_hash(me.name, &me);
 	add_to_id_hash(me.id, &me);
