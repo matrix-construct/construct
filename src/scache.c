@@ -185,6 +185,33 @@ scache_send_flattened_links(struct Client *source_p)
 	sendto_one_numeric(source_p, RPL_ENDOFLINKS, form_str(RPL_ENDOFLINKS), "*");
 }
 
+#define MISSING_TIMEOUT 86400
+
+/* scache_send_missing()
+ *
+ * inputs	- client to send to
+ * outputs	- recently split servers
+ * side effects	-
+ */
+void
+scache_send_missing(struct Client *source_p)
+{
+	struct scache_entry *scache_ptr;
+	int i;
+
+	for (i = 0; i < SCACHE_HASH_SIZE; i++)
+	{
+		scache_ptr = scache_hash[i];
+		while (scache_ptr)
+		{
+			if (!(scache_ptr->flags & SC_ONLINE) && scache_ptr->last_split > CurrentTime - MISSING_TIMEOUT)
+				sendto_one_numeric(source_p, RPL_MAP, "** %s (recently split)", 
+						   scache_ptr->name);
+
+			scache_ptr = scache_ptr->next;
+		}
+	}
+}
 /*
  * count_scache
  * inputs	- pointer to where to leave number of servers cached
