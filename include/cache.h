@@ -9,8 +9,6 @@
 
 #define CACHELINELEN	81
 #define CACHEFILELEN	30
-/* two servernames, a gecos, three spaces, ":1", '\0' */
-#define LINKSLINELEN	(HOSTLEN + HOSTLEN + REALLEN + 6)
 
 #define HELP_USER	0x001
 #define HELP_OPER	0x002
@@ -33,13 +31,11 @@ struct cacheline
 extern struct cachefile *user_motd;
 extern struct cachefile *oper_motd;
 extern struct cacheline *emptyline;
-extern dlink_list links_cache_list;
 
 extern char user_motd_changed[MAX_DATE_STRING];
 
 extern void init_cache(void);
 extern struct cachefile *cache_file(const char *, const char *, int);
-extern void cache_links(void *unused);
 extern void free_cachefile(struct cachefile *);
 
 extern void load_help(void);

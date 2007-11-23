@@ -69,6 +69,7 @@ struct LocalUser;
 struct AuthRequest;
 struct PreClient;
 struct ListClient;
+struct scache_entry;
 
 /* 
  * Atheme's coding standards require that we use BSD-style user-defined types
@@ -107,6 +108,7 @@ struct Server
 	dlink_list users;
 	int caps;		/* capabilities bit-field */
 	char *fullcaps;
+	struct scache_entry *nameinfo;
 };
 
 struct SlinkRpl

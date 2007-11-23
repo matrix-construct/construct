@@ -638,6 +638,7 @@ main(int argc, char *argv[])
 	startup_time = CurrentTime;
 	add_to_client_hash(me.name, &me);
 	add_to_id_hash(me.id, &me);
+	me.serv->nameinfo = scache_connect(me.name, me.info, 0);
 
 	dlinkAddAlloc(&me, &global_serv_list);
 
@@ -666,12 +667,6 @@ main(int argc, char *argv[])
 	eventAddIsh("comm_checktimeouts", comm_checktimeouts, NULL, 1);
 
 	eventAdd("check_rehash", check_rehash, NULL, 1);
-
-	if(ConfigServerHide.links_delay > 0)
-		eventAdd("cache_links", cache_links, NULL,
-			    ConfigServerHide.links_delay);
-	else
-		ConfigServerHide.links_disabled = 1;
 
 	if(splitmode)
 		eventAdd("check_splitmode", check_splitmode, NULL, 2);

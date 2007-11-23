@@ -87,7 +87,7 @@ void add_history(struct Client *client_p, int online)
 	else
 		who->sockhost[0] = '\0';
 
-	who->servername = find_or_add(client_p->servptr->name);
+	who->servername = scache_get_name(client_p->servptr->serv->nameinfo);
 
 	if(online)
 	{
