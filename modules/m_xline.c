@@ -156,7 +156,7 @@ mo_xline(struct Client *client_p, struct Client *source_p, int parc, const char 
 	else if(dlink_list_length(&cluster_conf_list) > 0)
 		cluster_xline(source_p, temp_time, name, reason);
 
-	if((aconf = find_xline(name, 0)) != NULL)
+	if((aconf = find_xline_mask(name)) != NULL)
 	{
 		sendto_one(source_p, ":%s NOTICE %s :[%s] already X-Lined by [%s] - %s",
 			   me.name, source_p->name, parv[1], aconf->name, aconf->passwd);
@@ -220,7 +220,7 @@ handle_remote_xline(struct Client *source_p, int temp_time,
 		return;
 
 	/* already xlined */
-	if((aconf = find_xline(name, 0)) != NULL)
+	if((aconf = find_xline_mask(name)) != NULL)
 	{
 		sendto_one_notice(source_p, ":[%s] already X-Lined by [%s] - %s", name, aconf->name, aconf->passwd);
 		return;

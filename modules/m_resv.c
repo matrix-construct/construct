@@ -264,7 +264,7 @@ parse_resv(struct Client *source_p, const char *name,
 			return;
 		}
 
-		if(find_nick_resv(name))
+		if(find_nick_resv_mask(name))
 		{
 			sendto_one_notice(source_p,
 					   ":A RESV has already been placed on nick: %s",
