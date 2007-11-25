@@ -159,7 +159,7 @@ mo_xline(struct Client *client_p, struct Client *source_p, int parc, const char 
 	if((aconf = find_xline_mask(name)) != NULL)
 	{
 		sendto_one(source_p, ":%s NOTICE %s :[%s] already X-Lined by [%s] - %s",
-			   me.name, source_p->name, parv[1], aconf->name, aconf->passwd);
+			   me.name, source_p->name, name, aconf->name, aconf->passwd);
 		return 0;
 	}
 
