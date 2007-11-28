@@ -40,6 +40,8 @@ int parse_netmask(const char *, struct sockaddr *, int *);
 struct ConfItem *find_conf_by_address(const char *host, const char *sockhost,
 				      const char *orighost, struct sockaddr *,
 				      int, int, const char *);
+struct ConfItem *find_exact_conf_by_address(const char *address, int type,
+					    const char *username);
 void add_conf_by_address(const char *, int, const char *, struct ConfItem *);
 void delete_one_address_conf(const char *, struct ConfItem *);
 void clear_out_address_conf(void);
