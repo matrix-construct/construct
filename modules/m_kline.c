@@ -83,9 +83,9 @@ static int already_placed_kline(struct Client *, const char *, const char *, int
 
 static void handle_remote_unkline(struct Client *source_p, 
 			const char *user, const char *host);
-static void remove_permkline_match(struct Client *, const char *, const char *);
+static void remove_permkline_match(struct Client *, struct ConfItem *);
 static int flush_write(struct Client *, FILE *, const char *, const char *);
-static int remove_temp_kline(const char *, const char *);
+static int remove_temp_kline(struct ConfItem *);
 
 /* mo_kline()
  *
@@ -353,6 +353,7 @@ mo_unkline(struct Client *client_p, struct Client *source_p, int parc, const cha
 	char *host;
 	char splat[] = "*";
 	char *h = LOCAL_COPY(parv[1]);
+	struct ConfItem *aconf;
 
 	if(!IsOperUnkline(source_p))
 	{
@@ -411,7 +412,14 @@ mo_unkline(struct Client *client_p, struct Client *source_p, int parc, const cha
 		cluster_generic(source_p, "UNKLINE", SHARED_UNKLINE, CAP_UNKLN,
 				"%s %s", user, host);
 
-	if(remove_temp_kline(user, host))
+	aconf = find_exact_conf_by_address(host, CONF_KILL, user);
+	if(aconf == NULL)
+	{
+		sendto_one_notice(source_p, ":No K-Line for %s@%s", user, host);
+		return 0;
+	}
+
+	if(remove_temp_kline(aconf))
 	{
 		sendto_one_notice(source_p, ":Un-klined [%s@%s] from temporary k-lines", user, host);
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
@@ -422,7 +430,7 @@ mo_unkline(struct Client *client_p, struct Client *source_p, int parc, const cha
 		return 0;
 	}
 
-	remove_permkline_match(source_p, host, user);
+	remove_permkline_match(source_p, aconf);
 
 	return 0;
 }
@@ -465,11 +473,20 @@ me_unkline(struct Client *client_p, struct Client *source_p, int parc, const cha
 static void
 handle_remote_unkline(struct Client *source_p, const char *user, const char *host)
 {
+	struct ConfItem *aconf;
+
 	if(!find_shared_conf(source_p->username, source_p->host,
 				source_p->servptr->name, SHARED_UNKLINE))
 		return;
 
-	if(remove_temp_kline(user, host))
+	aconf = find_exact_conf_by_address(host, CONF_KILL, user);
+	if(aconf == NULL)
+	{
+		sendto_one_notice(source_p, ":No K-Line for %s@%s", user, host);
+		return;
+	}
+
+	if(remove_temp_kline(aconf))
 	{
 		sendto_one_notice(source_p,
 				":Un-klined [%s@%s] from temporary k-lines",
@@ -484,7 +501,7 @@ handle_remote_unkline(struct Client *source_p, const char *user, const char *hos
 		return;
 	}
 
-	remove_permkline_match(source_p, host, user);
+	remove_permkline_match(source_p, aconf);
 }
 
 /* apply_kline()
@@ -739,7 +756,7 @@ already_placed_kline(struct Client *source_p, const char *luser, const char *lho
  * hunts for a permanent kline, and removes it.
  */
 static void
-remove_permkline_match(struct Client *source_p, const char *host, const char *user)
+remove_permkline_match(struct Client *source_p, struct ConfItem *aconf)
 {
 	FILE *in, *out;
 	int pairme = 0;
@@ -748,8 +765,12 @@ remove_permkline_match(struct Client *source_p, const char *host, const char *us
 	char matchbuf[BUFSIZE];
 	char temppath[BUFSIZE];
 	const char *filename;
+	const char *host, *user;
 	mode_t oldumask;
 	int matchlen;
+
+	host = aconf->host;
+	user = aconf->user;
 
 	ircsnprintf(temppath, sizeof(temppath),
 		 "%s.tmp", ConfigFileEntry.klinefile);
@@ -820,7 +841,7 @@ remove_permkline_match(struct Client *source_p, const char *host, const char *us
 	}
 	else if(!pairme)
 	{
-		sendto_one_notice(source_p, ":No K-Line for %s@%s",
+		sendto_one_notice(source_p, ":Cannot find K-Line for %s@%s in file",
 				  user, host);
 
 		if(temppath != NULL)
@@ -834,7 +855,6 @@ remove_permkline_match(struct Client *source_p, const char *host, const char *us
 		sendto_one_notice(source_p, ":Couldn't rename temp file, aborted");
 		return;
 	}
-	rehash_bans(0);
 
 	sendto_one_notice(source_p, ":K-Line for [%s@%s] is removed",
 			  user, host);
@@ -845,6 +865,9 @@ remove_permkline_match(struct Client *source_p, const char *host, const char *us
 
 	ilog(L_KLINE, "UK %s %s %s",
 		get_oper_name(source_p), user, host);
+
+	delete_one_address_conf(aconf->host, aconf);
+
 	return;
 }
 
@@ -890,41 +913,21 @@ flush_write(struct Client *source_p, FILE * out, const char *buf, const char *te
  * side effects - tries to unkline anything that matches
  */
 static int
-remove_temp_kline(const char *user, const char *host)
+remove_temp_kline(struct ConfItem *aconf)
 {
-	struct ConfItem *aconf;
 	dlink_node *ptr;
-	struct irc_sockaddr_storage addr, caddr;
-	int bits, cbits;
-	int mtype, ktype;
 	int i;
-
-	mtype = parse_netmask(host, (struct sockaddr *)&addr, &bits);
 
 	for (i = 0; i < LAST_TEMP_TYPE; i++)
 	{
 		DLINK_FOREACH(ptr, temp_klines[i].head)
 		{
-			aconf = ptr->data;
-
-			ktype = parse_netmask(aconf->host, (struct sockaddr *)&caddr, &cbits);
-
-			if(ktype != mtype || (user && irccmp(user, aconf->user)))
-				continue;
-
-			if(ktype == HM_HOST)
+			if (aconf == ptr->data)
 			{
-				if(irccmp(aconf->host, host))
-					continue;
+				dlinkDestroy(ptr, &temp_klines[i]);
+				delete_one_address_conf(aconf->host, aconf);
+				return YES;
 			}
-			else if(bits != cbits || 
-				!comp_with_mask_sock((struct sockaddr *)&addr,
-						(struct sockaddr *)&caddr, bits))
-				continue;
-
-			dlinkDestroy(ptr, &temp_klines[i]);
-			delete_one_address_conf(aconf->host, aconf);
-			return YES;
 		}
 	}
 
