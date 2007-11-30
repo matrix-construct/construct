@@ -67,7 +67,7 @@ static void cluster_resv(struct Client *source_p, int temp_time,
 
 static void handle_remote_unresv(struct Client *source_p, const char *name);
 static void remove_resv(struct Client *source_p, const char *name);
-static int remove_temp_resv(struct Client *source_p, const char *name);
+static int remove_resv_from_file(struct Client *source_p, const char *name);
 
 /*
  * mo_resv()
@@ -389,9 +389,6 @@ mo_unresv(struct Client *client_p, struct Client *source_p, int parc, const char
 		cluster_generic(source_p, "UNRESV", SHARED_UNRESV, CAP_CLUSTER,
 				"%s", parv[1]);
 
-	if(remove_temp_resv(source_p, parv[1]))
-		return 0;
-
 	remove_resv(source_p, parv[1]);
 	return 0;
 }
@@ -438,30 +435,38 @@ handle_remote_unresv(struct Client *source_p, const char *name)
 				source_p->servptr->name, SHARED_UNRESV))
 		return;
 
-	if(remove_temp_resv(source_p, name))
-		return;
-
 	remove_resv(source_p, name);
 
 	return;
 }
 
-static int
-remove_temp_resv(struct Client *source_p, const char *name)
+static void
+remove_resv(struct Client *source_p, const char *name)
 {
 	struct ConfItem *aconf = NULL;
 
 	if(IsChannelName(name))
 	{
 		if((aconf = hash_find_resv(name)) == NULL)
-			return 0;
+		{
+			sendto_one_notice(source_p, ":No RESV for %s", name);
+			return;
+		}
 
-		/* its permanent, let remove_resv do it properly */
 		if(!aconf->hold)
-			return 0;
-
+		{
+			if (!remove_resv_from_file(source_p, name))
+				return;
+		}
+		else
+		{
+			sendto_one_notice(source_p, ":RESV for [%s] is removed", name);
+			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+					"%s has removed the RESV for: [%s]", 
+					get_oper_name(source_p), name);
+			ilog(L_KLINE, "UR %s %s", get_oper_name(source_p), name);
+		}
 		del_from_resv_hash(name, aconf);
-		free_conf(aconf);
 	}
 	else
 	{
@@ -478,35 +483,42 @@ remove_temp_resv(struct Client *source_p, const char *name)
 		}
 
 		if(aconf == NULL)
-			return 0;
+		{
+			sendto_one_notice(source_p, ":No RESV for %s", name);
+			return;
+		}
 
-		/* permanent, remove_resv() needs to do it properly */
 		if(!aconf->hold)
-			return 0;
-
+		{
+			if (!remove_resv_from_file(source_p, name))
+				return;
+		}
+		else
+		{
+			sendto_one_notice(source_p, ":RESV for [%s] is removed", name);
+			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+					"%s has removed the RESV for: [%s]", 
+					get_oper_name(source_p), name);
+			ilog(L_KLINE, "UR %s %s", get_oper_name(source_p), name);
+		}
 		/* already have ptr from the loop above.. */
 		dlinkDestroy(ptr, &resv_conf_list);
-		free_conf(aconf);
 	}
+	free_conf(aconf);
 
-	sendto_one_notice(source_p, ":RESV for [%s] is removed", name);
-	sendto_realops_snomask(SNO_GENERAL, L_ALL,
-			"%s has removed the RESV for: [%s]", 
-			get_oper_name(source_p), name);
-	ilog(L_KLINE, "UR %s %s", get_oper_name(source_p), name);
-
-	return 1;
+	return;
 }
 
-/* remove_resv()
+/* remove_resv_from_file()
  *
  * inputs	- client removing the resv
  * 		- resv to remove
  * outputs	-
- * side effects - resv if found, is removed
+ * side effects - resv if found, is removed from conf
+ *              - does not touch resv hash or resv_conf_list
  */
-static void
-remove_resv(struct Client *source_p, const char *name)
+static int
+remove_resv_from_file(struct Client *source_p, const char *name)
 {
 	FILE *in, *out;
 	char buf[BUFSIZE];
@@ -524,7 +536,7 @@ remove_resv(struct Client *source_p, const char *name)
 	if((in = fopen(filename, "r")) == NULL)
 	{
 		sendto_one_notice(source_p, ":Cannot open %s", filename);
-		return;
+		return 0;
 	}
 
 	oldumask = umask(0);
@@ -534,7 +546,7 @@ remove_resv(struct Client *source_p, const char *name)
 		sendto_one_notice(source_p, ":Cannot open %s", temppath);
 		fclose(in);
 		umask(oldumask);
-		return;
+		return 0;
 	}
 
 	umask(oldumask);
@@ -585,27 +597,28 @@ remove_resv(struct Client *source_p, const char *name)
 	if(error_on_write)
 	{
 		sendto_one_notice(source_p, ":Couldn't write temp resv file, aborted");
-		return;
+		return 0;
 	}
 	else if(!found_resv)
 	{
-		sendto_one_notice(source_p, ":No RESV for %s", name);
+		sendto_one_notice(source_p, ":Cannot find RESV for %s in file", name);
 
 		if(temppath != NULL)
 			(void) unlink(temppath);
 
-		return;
+		return 0;
 	}
 
 	if (rename(temppath, filename))
 	{
 		sendto_one_notice(source_p, ":Couldn't rename temp file, aborted");
-		return;
+		return 0;
 	}
-	rehash_bans(0);
 
 	sendto_one_notice(source_p, ":RESV for [%s] is removed", name);
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "%s has removed the RESV for: [%s]", get_oper_name(source_p), name);
 	ilog(L_KLINE, "UR %s %s", get_oper_name(source_p), name);
+
+	return 1;
 }
