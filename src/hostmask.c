@@ -432,8 +432,7 @@ find_dline(struct sockaddr *addr, int aftype)
 	return find_conf_by_address(NULL, NULL, NULL, addr, CONF_DLINE | 1, aftype, NULL);
 }
 
-/* void find_exact_conf_by_address(const char*, int, const char *,
- *         struct ConfItem *aconf)
+/* void find_exact_conf_by_address(const char*, int, const char *)
  * Input: 
  * Output: ConfItem if found
  * Side-effects: None
@@ -471,7 +470,7 @@ find_exact_conf_by_address(const char *address, int type, const char *username)
 	{
 		if (arec->type == type &&
 				arec->masktype == masktype &&
-				!irccmp(arec->username, username))
+				(arec->username == NULL || username == NULL ? arec->username == username : !irccmp(arec->username, username)))
 		{
 			if (masktype == HM_HOST)
 			{
