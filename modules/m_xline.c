@@ -86,7 +86,7 @@ static void handle_remote_xline(struct Client *source_p, int temp_time,
 				const char *name, const char *reason);
 static void handle_remote_unxline(struct Client *source_p, const char *name);
 
-static int remove_xline(struct Client *source_p, const char *name);
+static void remove_xline(struct Client *source_p, const char *name);
 static int remove_xline_from_file(struct Client *source_p, const char *gecos);
 
 
@@ -529,7 +529,7 @@ handle_remote_unxline(struct Client *source_p, const char *name)
 	return;
 }
 
-static int
+static void
 remove_xline(struct Client *source_p, const char *name)
 {
 	struct ConfItem *aconf;
@@ -544,7 +544,7 @@ remove_xline(struct Client *source_p, const char *name)
 			if (!aconf->hold)
 			{
 				if (!remove_xline_from_file(source_p, name))
-					return 0;
+					return;
 			}
 			else
 			{
@@ -560,16 +560,16 @@ remove_xline(struct Client *source_p, const char *name)
 			
 			free_conf(aconf);
 			dlinkDestroy(ptr, &xline_conf_list);
-			return 1;
+			return;
 		}
 	}
 
 	sendto_one_notice(source_p, ":No X-Line for %s", name);
 
-	return 0;
+	return;
 }
 
-/* remove_xline()
+/* remove_xline_from_file()
  *
  * inputs	- gecos to remove
  * outputs	- 
