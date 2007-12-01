@@ -19,11 +19,14 @@ m_42.c         - The Answer to Life, the Universe, and Everything.
 m_findforwards.c - Find channels that forward (+f) to a given channel.
                    Syntax: FINDFORWARDS <channel>
 
+m_identify.c - Identifies to NickServ or ChanServ
+               Syntax: IDENTIFY [nick|channel] <password>
+
 m_mkpasswd.c   - MKPASSWD - generate a DES or MD5 encryption of a password
                  Syntax:  MKPASSWD <plaintext> [MD5|DES]
 
 m_ojoin.c      - OJOIN - Join a channel through any modes or limits with 
-                         an optional status (@%+)
+                         an optional status (@+)
                  Syntax: OJOIN [status]<channel>
 
 m_olist.c      - OLIST - Lists channels like LIST, but shows hidden
@@ -45,7 +48,7 @@ example_module.c - An example module to be used for creating your own.
 Spy Modules
 -----------
 
-The following are the 'spy' parts, accessible via the +y usermode
+The following are the 'spy' parts, accessible via the +y snomask
 
 spy_admin_notice.c   - Spy on clients doing ADMIN
 spy_info_notice.c    - Spy on clients doing INFO
@@ -53,9 +56,7 @@ spy_links_notice.c   - Spy on clients doing LINKS
 spy_motd_notice.c    - Spy on clients doing MOTD
 spy_stats_notice.c   - Spy on clients doing all STATS
 spy_stats_p_notice.c - Spy on clients doing STATS p only
-spy_trace_notice.c   - Spy on clients doing TRACE/LTRACE
-spy_whois_notice.c   - Spy on local clients who WHOIS you.
-spy_whois_notice_global.c - Spy on remote clients who WHOIS you.
+spy_trace_notice.c   - Spy on clients doing TRACE
 
 Note: if you have both spy_stats_notice.c and spy_stats_p_notice.c loaded
 you will get two messages.
@@ -66,3 +67,15 @@ Snomask Modules
 sno_farconnect.c  - Remote client connect/exit notices (snomask +F)
 sno_globalkline.c - Global K/D/X-line activation notices
 sno_globaloper.c  - Global oper-up notices
+sno_whois.c       - Spy on clients who WHOIS you seeing idle time (snomask +W).
+
+Extban Modules
+--------------
+
+extb_account.so  - Account bans (+b $a[:mask])
+extb_canjoin.so  - Banned from another channel (+b $j:mask)
+extb_channel.so  - Other-channel bans (+b $c:mask)
+extb_extgecos.so - Extended ban (+b $x:mask)
+extb_oper.so     - Oper bans (+b $o)
+extb_realname.so - Realname (gecos) bans (+b $r:mask)
+extb_server.so   - Server bans (+b $s:mask)
