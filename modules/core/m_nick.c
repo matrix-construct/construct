@@ -1172,6 +1172,19 @@ register_client(struct Client *client_p, struct Client *server,
 	const char *m;
 	int flag;
 
+	if(server == NULL)
+	{
+		if((server = find_server(NULL, parv[7])) == NULL)
+		{
+			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+					     "Ghost killed: %s on invalid server %s",
+					     nick, parv[7]);
+			sendto_one(client_p, ":%s KILL %s :%s (Server doesn't exist)",
+					get_id(&me, client_p), nick, me.name);
+			return 0;
+		}
+	}
+
 	source_p = make_client(client_p);
 	user = make_user(source_p);
 	dlinkAddTail(source_p, &source_p->node, &global_client_list);
@@ -1265,20 +1278,7 @@ register_client(struct Client *client_p, struct Client *server,
 	if(++Count.total > Count.max_tot)
 		Count.max_tot = Count.total;
 
-	if(server == NULL)
-	{
-		if((source_p->servptr = find_server(NULL, server->name)) == NULL)
-		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
-					     "Ghost killed: %s on invalid server %s",
-					     source_p->name, server->name);
-			kill_client(client_p, source_p, "%s (Server doesn't exist)", me.name);
-			source_p->flags |= FLAGS_KILLED;
-			return exit_client(NULL, source_p, &me, "Ghosted Client");
-		}
-	}
-	else
-		source_p->servptr = server;
+	source_p->servptr = server;
 
 	dlinkAdd(source_p, &source_p->lnode, &source_p->servptr->serv->users);
 
