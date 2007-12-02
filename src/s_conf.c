@@ -1225,7 +1225,6 @@ clear_out_old_conf(void)
 	struct Class *cltmp;
 	dlink_node *ptr;
 	dlink_node *next_ptr;
-	int i;
 
 	/*
 	 * don't delete the class table, rather mark all entries

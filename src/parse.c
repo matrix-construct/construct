@@ -63,8 +63,6 @@ static void do_alias(struct alias_entry *, struct Client *, char *);
 
 static int handle_command(struct Message *, struct Client *, struct Client *, int, const char**);
 
-static int cmd_hash(const char *p);
-
 static char buffer[1024];
 
 /* turn a string into a parc/parv pair */
@@ -218,7 +216,7 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 		if((s = strchr(ch, ' ')))
 			*s++ = '\0';
 
-		mptr = irc_dictionary_retrieve(cmd_dict, mptr);
+		mptr = irc_dictionary_retrieve(cmd_dict, ch);
 
 		/* no command or its encap only, error */
 		if(!mptr || !mptr->cmd)
@@ -475,7 +473,7 @@ report_messages(struct Client *source_p)
 	struct Message *msg;
 	struct alias_entry *amsg;
 
-	IRC_DICTIONARY_FOREACH(msg, &iter, cmd_dict)
+	DICTIONARY_FOREACH(msg, &iter, cmd_dict)
 	{
 		s_assert(msg->cmd != NULL);
 		sendto_one_numeric(source_p, RPL_STATSCOMMANDS, 
@@ -484,7 +482,7 @@ report_messages(struct Client *source_p)
 				   msg->bytes, msg->rcount);
 	}
 
-	IRC_DICTIONARY_FOREACH(amsg, &iter, alias_dict)
+	DICTIONARY_FOREACH(amsg, &iter, alias_dict)
 	{
 		s_assert(amsg->name != NULL);
 		sendto_one_numeric(source_p, RPL_STATSCOMMANDS,
