@@ -1200,6 +1200,19 @@ read_conf_files(int cold)
 }
 
 /*
+ * free an alias{} entry.
+ */
+static void
+free_alias_cb(struct DictionaryElement *ptr, void *unused)
+{
+	struct alias_entry *aptr = ptr->data;
+
+	MyFree(aptr->name);
+	MyFree(aptr->target);
+	MyFree(aptr);
+}
+
+/*
  * clear_out_old_conf
  *
  * inputs       - none
@@ -1269,19 +1282,8 @@ clear_out_old_conf(void)
 	}
 
 	/* remove any aliases... -- nenolod */
-	for (i = 0; i < MAX_MSG_HASH; i++)
-	{
-		DLINK_FOREACH_SAFE(ptr, next_ptr, alias_hash_table[i].head)
-		{
-			struct alias_entry *aptr = ptr->data;
-
-			MyFree(aptr->name);
-			MyFree(aptr->target);
-			MyFree(aptr);
-
-			dlinkDestroy(ptr, &alias_hash_table[i]);
-		}
-	}
+	irc_dictionary_destroy(alias_dict, free_alias_cb, NULL);
+	alias_dict = NULL;
 
 	destroy_blacklists();
 

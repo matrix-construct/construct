@@ -1,10 +1,11 @@
 /*
- *  ircd-ratbox: A slightly useful ircd.
+ *  charybdis: an advanced ircd.
  *  parse.c: The message parser.
  *
  *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center
  *  Copyright (C) 1996-2002 Hybrid Development Team
  *  Copyright (C) 2002-2005 ircd-ratbox development team
+ *  Copyright (C) 2007 William Pitcock
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -43,6 +44,9 @@
 #include "s_serv.h"
 #include "packet.h"
 
+static struct Dictionary *cmd_dict = NULL;
+struct Dictionary *alias_dict = NULL;
+
 /*
  * NOTE: parse() should not be called recursively by other functions!
  */
@@ -60,14 +64,8 @@ static void do_alias(struct alias_entry *, struct Client *, char *);
 static int handle_command(struct Message *, struct Client *, struct Client *, int, const char**);
 
 static int cmd_hash(const char *p);
-static struct Message *hash_parse(const char *);
-static struct alias_entry *alias_parse(const char *);
-
-struct MessageHash *msg_hash_table[MAX_MSG_HASH];
 
 static char buffer[1024];
-
-dlink_list alias_hash_table[MAX_MSG_HASH];
 
 /* turn a string into a parc/parv pair */
 
@@ -220,7 +218,7 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 		if((s = strchr(ch, ' ')))
 			*s++ = '\0';
 
-		mptr = hash_parse(ch);
+		mptr = irc_dictionary_retrieve(cmd_dict, mptr);
 
 		/* no command or its encap only, error */
 		if(!mptr || !mptr->cmd)
@@ -240,7 +238,7 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 			{
 				if (IsPerson(client_p))
 				{
-					struct alias_entry *aptr = alias_parse(ch);
+					struct alias_entry *aptr = irc_dictionary_retrieve(alias_dict, ch);
 					if (aptr != NULL)
 					{
 						do_alias(aptr, client_p, s);
@@ -391,7 +389,7 @@ handle_encap(struct Client *client_p, struct Client *source_p,
 
 	parv[0] = source_p->name;
 
-	mptr = hash_parse(command);
+	mptr = irc_dictionary_retrieve(cmd_dict, command);
 
 	if(mptr == NULL || mptr->cmd == NULL)
 		return;
@@ -418,7 +416,7 @@ handle_encap(struct Client *client_p, struct Client *source_p,
 void
 clear_hash_parse()
 {
-	memset(msg_hash_table, 0, sizeof(msg_hash_table));
+	cmd_dict = irc_dictionary_create(strcasecmp);
 }
 
 /* mod_add_cmd
@@ -433,38 +431,18 @@ clear_hash_parse()
 void
 mod_add_cmd(struct Message *msg)
 {
-	struct MessageHash *ptr;
-	struct MessageHash *last_ptr = NULL;
-	struct MessageHash *new_ptr;
-	int msgindex;
-
 	s_assert(msg != NULL);
 	if(msg == NULL)
 		return;
 
-	msgindex = cmd_hash(msg->cmd);
-
-	for (ptr = msg_hash_table[msgindex]; ptr; ptr = ptr->next)
-	{
-		if(strcasecmp(msg->cmd, ptr->cmd) == 0)
-			return;	/* Its already added */
-		last_ptr = ptr;
-	}
-
-	new_ptr = (struct MessageHash *) MyMalloc(sizeof(struct MessageHash));
-
-	new_ptr->next = NULL;
-	DupString(new_ptr->cmd, msg->cmd);
-	new_ptr->msg = msg;
+	if (irc_dictionary_find(cmd_dict, msg->cmd) != NULL)
+		return;
 
 	msg->count = 0;
 	msg->rcount = 0;
 	msg->bytes = 0;
 
-	if(last_ptr == NULL)
-		msg_hash_table[msgindex] = new_ptr;
-	else
-		last_ptr->next = new_ptr;
+	irc_dictionary_add(cmd_dict, msg->cmd, msg);
 }
 
 /* mod_del_cmd
@@ -476,101 +454,11 @@ mod_add_cmd(struct Message *msg)
 void
 mod_del_cmd(struct Message *msg)
 {
-	struct MessageHash *ptr;
-	struct MessageHash *last_ptr = NULL;
-	int msgindex;
-
 	s_assert(msg != NULL);
 	if(msg == NULL)
 		return;
 
-	msgindex = cmd_hash(msg->cmd);
-
-	for (ptr = msg_hash_table[msgindex]; ptr; ptr = ptr->next)
-	{
-		if(strcasecmp(msg->cmd, ptr->cmd) == 0)
-		{
-			MyFree(ptr->cmd);
-			if(last_ptr != NULL)
-				last_ptr->next = ptr->next;
-			else
-				msg_hash_table[msgindex] = ptr->next;
-			MyFree(ptr);
-			return;
-		}
-		last_ptr = ptr;
-	}
-}
-
-/* hash_parse
- *
- * inputs	- command name
- * output	- pointer to struct Message
- * side effects - 
- */
-static struct Message *
-hash_parse(const char *cmd)
-{
-	struct MessageHash *ptr;
-	int msgindex;
-
-	msgindex = cmd_hash(cmd);
-
-	for (ptr = msg_hash_table[msgindex]; ptr; ptr = ptr->next)
-	{
-		if(strcasecmp(cmd, ptr->cmd) == 0)
-			return (ptr->msg);
-	}
-
-	return NULL;
-}
-
-/* alias_parse
- *
- * inputs	- command name
- * output	- pointer to struct Message
- * side effects - 
- */
-static struct alias_entry *
-alias_parse(const char *cmd)
-{
-	dlink_node *ptr;
-	int msgindex;
-
-	msgindex = cmd_hash(cmd);
-
-	DLINK_FOREACH(ptr, alias_hash_table[msgindex].head)
-	{
-		struct alias_entry *ent = (struct alias_entry *) ptr->data;
-
-		if(strcasecmp(cmd, ent->name) == 0)
-			return ent;
-	}
-
-	return NULL;
-}
-
-/*
- * hash
- *
- * inputs	- char string
- * output	- hash index
- * side effects - NONE
- *
- * BUGS		- This a HORRIBLE hash function
- */
-static int
-cmd_hash(const char *p)
-{
-	int hash_val = 0;
-
-	while (*p)
-	{
-		hash_val += ((int) (*p) & 0xDF);
-		p++;
-	}
-
-	return (hash_val % MAX_MSG_HASH);
+	irc_dictionary_delete(cmd_dict, msg->cmd);
 }
 
 /*
@@ -583,33 +471,25 @@ cmd_hash(const char *p)
 void
 report_messages(struct Client *source_p)
 {
-	int i;
-	struct MessageHash *ptr;
-	dlink_node *pptr;
+	struct DictionaryIter iter;
+	struct Message *msg;
+	struct alias_entry *amsg;
 
-	for (i = 0; i < MAX_MSG_HASH; i++)
+	IRC_DICTIONARY_FOREACH(msg, &iter, cmd_dict)
 	{
-		for (ptr = msg_hash_table[i]; ptr; ptr = ptr->next)
-		{
-			s_assert(ptr->msg != NULL);
-			s_assert(ptr->cmd != NULL);
+		s_assert(msg->cmd != NULL);
+		sendto_one_numeric(source_p, RPL_STATSCOMMANDS, 
+				   form_str(RPL_STATSCOMMANDS),
+				   msg->cmd, msg->count, 
+				   msg->bytes, msg->rcount);
+	}
 
-			sendto_one_numeric(source_p, RPL_STATSCOMMANDS, 
-					   form_str(RPL_STATSCOMMANDS),
-					   ptr->cmd, ptr->msg->count, 
-					   ptr->msg->bytes, ptr->msg->rcount);
-		}
-
-		DLINK_FOREACH(pptr, alias_hash_table[i].head)
-		{
-			struct alias_entry *aptr = (struct alias_entry *) pptr->data;
-
-			s_assert(aptr->name != NULL);
-
-			sendto_one_numeric(source_p, RPL_STATSCOMMANDS,
-					   form_str(RPL_STATSCOMMANDS),
-					   aptr->name, aptr->hits, 0, 0);
-		}
+	IRC_DICTIONARY_FOREACH(amsg, &iter, alias_dict)
+	{
+		s_assert(amsg->name != NULL);
+		sendto_one_numeric(source_p, RPL_STATSCOMMANDS,
+				   form_str(RPL_STATSCOMMANDS),
+				   amsg->name, amsg->hits, 0, 0);
 	}
 }
 

@@ -1581,20 +1581,6 @@ conf_set_service_name(void *data)
 }
 
 static int
-alias_hash(const char *p)
-{
-	int hash_val = 0;
-
-	while (*p)
-	{
-		hash_val += ((int) (*p) & 0xDF);
-		p++;
-	}
-
-	return (hash_val % MAX_MSG_HASH);
-}
-
-static int
 conf_begin_alias(struct TopConf *tc)
 {
 	yy_alias = MyMalloc(sizeof(struct alias_entry));
@@ -1611,8 +1597,6 @@ conf_begin_alias(struct TopConf *tc)
 static int
 conf_end_alias(struct TopConf *tc)
 {
-	int hashval;
-
 	if (yy_alias == NULL)
 		return -1;
 
@@ -1634,9 +1618,10 @@ conf_end_alias(struct TopConf *tc)
 		return -1;
 	}
 
-	hashval = alias_hash(yy_alias->name);
+	if (!alias_dict)
+		alias_dict = irc_dictionary_create(alias_dict);
 
-	dlinkAddAlloc(yy_alias, &alias_hash_table[hashval]);
+	irc_dictionary_add(alias_dict, yy_alias->name, yy_alias);
 
 	return 0;
 }

@@ -32,15 +32,6 @@
 struct Message;
 struct Client;
 
-struct MessageHash
-{
-	char *cmd;
-	struct Message *msg;
-	struct MessageHash *next;
-};
-
-#define MAX_MSG_HASH  387
-
 extern void parse(struct Client *, char *, char *);
 extern void handle_encap(struct Client *, struct Client *, 
 		         const char *, int, const char *parv[]);
@@ -49,6 +40,6 @@ extern void mod_add_cmd(struct Message *msg);
 extern void mod_del_cmd(struct Message *msg);
 extern void report_messages(struct Client *);
 
-extern dlink_list alias_hash_table[MAX_MSG_HASH];
+extern struct Dictionary *alias_dict;
 
 #endif /* INCLUDED_parse_h_h */
