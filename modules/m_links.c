@@ -36,7 +36,7 @@
 #include "parse.h"
 #include "modules.h"
 #include "hook.h"
-#include "cache.h"
+#include "scache.h"
 
 static int m_links(struct Client *, struct Client *, int, const char **);
 static int mo_links(struct Client *, struct Client *, int, const char **);
@@ -56,8 +56,6 @@ mapi_hlist_av1 links_hlist[] = {
 
 DECLARE_MODULE_AV1(links, NULL, NULL, links_clist, links_hlist, NULL, "$Revision: 254 $");
 
-static void send_links_cache(struct Client *source_p);
-
 /*
  * m_links - LINKS message handler
  *      parv[0] = sender prefix
@@ -71,7 +69,7 @@ static int
 m_links(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(ConfigServerHide.flatten_links && !IsExemptShide(source_p))
-		send_links_cache(source_p);
+		scache_send_flattened_links(source_p);
 	else
 		mo_links(client_p, source_p, parc, parv);
 
@@ -129,28 +127,5 @@ mo_links(struct Client *client_p, struct Client *source_p, int parc, const char 
 			   EmptyString(mask) ? "*" : mask);
 
 	return 0;
-}
-
-/* send_links_cache()
- *
- * inputs	- client to send to
- * outputs	- the cached links, us, and RPL_ENDOFLINKS
- * side effects	-
- */
-static void
-send_links_cache(struct Client *source_p)
-{
-	dlink_node *ptr;
-
-	DLINK_FOREACH(ptr, links_cache_list.head)
-	{
-		sendto_one(source_p, ":%s 364 %s %s",
-			   me.name, source_p->name, (const char *)ptr->data);
-	}
-
-	sendto_one_numeric(source_p, RPL_LINKS, form_str(RPL_LINKS), 
-			   me.name, me.name, 0, me.info);
-
-	sendto_one_numeric(source_p, RPL_ENDOFLINKS, form_str(RPL_ENDOFLINKS), "*");
 }
 

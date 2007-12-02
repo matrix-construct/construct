@@ -50,7 +50,6 @@ static BlockHeap *cacheline_heap = NULL;
 
 struct cachefile *user_motd = NULL;
 struct cachefile *oper_motd = NULL;
-dlink_list links_cache_list;
 char user_motd_changed[MAX_DATE_STRING];
 
 /* init_cache()
@@ -69,7 +68,6 @@ init_cache(void)
 
 	user_motd = cache_file(MPATH, "ircd.motd", 0);
 	oper_motd = cache_file(OPATH, "opers.motd", 0);
-	memset(&links_cache_list, 0, sizeof(links_cache_list));
 }
 
 /* cache_file()
@@ -129,43 +127,6 @@ cache_file(const char *filename, const char *shortname, int flags)
 
 	fclose(in);
 	return cacheptr;
-}
-
-void
-cache_links(void *unused)
-{
-	struct Client *target_p;
-	dlink_node *ptr;
-	dlink_node *next_ptr;
-	char *links_line;
-
-	DLINK_FOREACH_SAFE(ptr, next_ptr, links_cache_list.head)
-	{
-		MyFree(ptr->data);
-		free_dlink_node(ptr);
-	}
-
-	links_cache_list.head = links_cache_list.tail = NULL;
-	links_cache_list.length = 0;
-
-	DLINK_FOREACH(ptr, global_serv_list.head)
-	{
-		target_p = ptr->data;
-
-		/* skip ourselves (done in /links) and hidden servers */
-		if(IsMe(target_p) ||
-		   (IsHidden(target_p) && !ConfigServerHide.disable_hidden))
-			continue;
-
-		/* if the below is ever modified, change LINKSLINELEN */
-		links_line = MyMalloc(LINKSLINELEN);
-		ircsnprintf(links_line, LINKSLINELEN, "%s %s :1 %s",
-			   target_p->name, me.name, 
-			   target_p->info[0] ? target_p->info : 
-			    "(Unknown Location)");
-
-		dlinkAddTailAlloc(links_line, &links_cache_list);
-	}
 }
 
 /* free_cachefile()

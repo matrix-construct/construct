@@ -38,6 +38,7 @@
 #include "s_log.h"		/* log level defines */
 #include "s_serv.h"		/* server_estab, check_server */
 #include "s_stats.h"		/* ServerStats */
+#include "scache.h"
 #include "send.h"		/* sendto_one */
 #include "msg.h"
 #include "parse.h"
@@ -426,6 +427,8 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 	add_to_client_hash(target_p->name, target_p);
 	dlinkAdd(target_p, &target_p->lnode, &target_p->servptr->serv->servers);
 
+	target_p->serv->nameinfo = scache_connect(target_p->name, target_p->info, IsHidden(target_p));
+
 	sendto_server(client_p, NULL, NOCAPS, NOCAPS,
 		      ":%s SERVER %s %d :%s%s",
 		      source_p->name, target_p->name, target_p->hopcount + 1,
@@ -572,6 +575,8 @@ ms_sid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	add_to_client_hash(target_p->name, target_p);
 	add_to_id_hash(target_p->id, target_p);
 	dlinkAdd(target_p, &target_p->lnode, &target_p->servptr->serv->servers);
+
+	target_p->serv->nameinfo = scache_connect(target_p->name, target_p->info, IsHidden(target_p));
 
 	sendto_server(client_p, NULL, CAP_TS6, NOCAPS,
 		      ":%s SID %s %d %s :%s%s",

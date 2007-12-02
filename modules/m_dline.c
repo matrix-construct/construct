@@ -63,7 +63,7 @@ DECLARE_MODULE_AV1(dline, NULL, NULL, dline_clist, NULL, NULL, "$Revision: 3225 
 
 static int valid_comment(char *comment);
 static int flush_write(struct Client *, FILE *, char *, char *);
-static int remove_temp_dline(const char *);
+static int remove_temp_dline(struct ConfItem *);
 
 /* mo_dline()
  * 
@@ -258,6 +258,7 @@ mo_undline(struct Client *client_p, struct Client *source_p, int parc, const cha
 	char buf[BUFSIZE], buff[BUFSIZE], temppath[BUFSIZE], *p;
 	const char *filename, *found_cidr;
 	const char *cidr;
+	struct ConfItem *aconf;
 	int pairme = NO, error_on_write = NO;
 	mode_t oldumask;
 
@@ -278,15 +279,23 @@ mo_undline(struct Client *client_p, struct Client *source_p, int parc, const cha
 		return 0;
 	}
 
-	if(remove_temp_dline(cidr))
+	aconf = find_exact_conf_by_address(cidr, CONF_DLINE, NULL);
+	if(aconf == NULL)
+	{
+		sendto_one_notice(source_p, ":No D-Line for %s", cidr);
+		return 0;
+	}
+
+	strlcpy(buf, aconf->host, sizeof buf);
+	if(remove_temp_dline(aconf))
 	{
 		sendto_one(source_p,
 			   ":%s NOTICE %s :Un-dlined [%s] from temporary D-lines",
-			   me.name, parv[0], cidr);
+			   me.name, parv[0], buf);
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "%s has removed the temporary D-Line for: [%s]",
-				     get_oper_name(source_p), cidr);
-		ilog(L_KLINE, "UD %s %s", get_oper_name(source_p), cidr);
+				     get_oper_name(source_p), buf);
+		ilog(L_KLINE, "UD %s %s", get_oper_name(source_p), buf);
 		return 0;
 	}
 
@@ -330,7 +339,7 @@ mo_undline(struct Client *client_p, struct Client *source_p, int parc, const cha
 			continue;
 		}
 
-		if(irccmp(found_cidr, cidr) == 0)
+		if(irccmp(found_cidr, aconf->host) == 0)
 		{
 			pairme++;
 		}
@@ -355,8 +364,8 @@ mo_undline(struct Client *client_p, struct Client *source_p, int parc, const cha
 	}
 	else if(!pairme)
 	{
-		sendto_one(source_p, ":%s NOTICE %s :No D-Line for %s",
-			   me.name, parv[0], cidr);
+		sendto_one_notice(source_p, ":Cannot find D-Line for %s in file",
+			   aconf->host);
 
 		if(temppath != NULL)
 			(void) unlink(temppath);
@@ -369,13 +378,13 @@ mo_undline(struct Client *client_p, struct Client *source_p, int parc, const cha
 		sendto_one_notice(source_p, ":Couldn't rename temp file, aborted");
 		return 0;
 	}
-	rehash_bans(0);
 
-
-	sendto_one(source_p, ":%s NOTICE %s :D-Line for [%s] is removed", me.name, parv[0], cidr);
+	sendto_one(source_p, ":%s NOTICE %s :D-Line for [%s] is removed", me.name, parv[0], aconf->host);
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
-			     "%s has removed the D-Line for: [%s]", get_oper_name(source_p), cidr);
-	ilog(L_KLINE, "UD %s %s", get_oper_name(source_p), cidr);
+			     "%s has removed the D-Line for: [%s]", get_oper_name(source_p), aconf->host);
+	ilog(L_KLINE, "UD %s %s", get_oper_name(source_p), aconf->host);
+
+	delete_one_address_conf(aconf->host, aconf);
 
 	return 0;
 }
@@ -435,30 +444,21 @@ flush_write(struct Client *source_p, FILE * out, char *buf, char *temppath)
 
 /* remove_temp_dline()
  *
- * inputs       - hostname to undline
+ * inputs       - confitem to undline
  * outputs      -
  * side effects - tries to undline anything that matches
  */
 static int
-remove_temp_dline(const char *host)
+remove_temp_dline(struct ConfItem *aconf)
 {
-	struct ConfItem *aconf;
 	dlink_node *ptr;
-	struct irc_sockaddr_storage addr, caddr;
-	int bits, cbits;
 	int i;
-
-	parse_netmask(host, (struct sockaddr *)&addr, &bits);
 
 	for (i = 0; i < LAST_TEMP_TYPE; i++)
 	{
 		DLINK_FOREACH(ptr, temp_dlines[i].head)
 		{
-			aconf = ptr->data;
-
-			parse_netmask(aconf->host, (struct sockaddr *)&caddr, &cbits);
-
-			if(comp_with_mask_sock((struct sockaddr *)&addr, (struct sockaddr *)&caddr, bits) && bits == cbits)
+			if (aconf == ptr->data)
 			{
 				dlinkDestroy(ptr, &temp_dlines[i]);
 				delete_one_address_conf(aconf->host, aconf);

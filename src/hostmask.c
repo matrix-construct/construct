@@ -432,6 +432,62 @@ find_dline(struct sockaddr *addr, int aftype)
 	return find_conf_by_address(NULL, NULL, NULL, addr, CONF_DLINE | 1, aftype, NULL);
 }
 
+/* void find_exact_conf_by_address(const char*, int, const char *)
+ * Input: 
+ * Output: ConfItem if found
+ * Side-effects: None
+ */
+struct ConfItem *
+find_exact_conf_by_address(const char *address, int type, const char *username)
+{
+	int masktype, bits;
+	unsigned long hv;
+	struct AddressRec *arec;
+	struct irc_sockaddr_storage addr;
+
+	if(address == NULL)
+		address = "/NOMATCH!/";
+	arec = MyMalloc(sizeof(struct AddressRec));
+	masktype = parse_netmask(address, (struct sockaddr *)&addr, &bits);
+#ifdef IPV6
+	if(masktype == HM_IPV6)
+	{
+		/* We have to do this, since we do not re-hash for every bit -A1kmm. */
+		hv = hash_ipv6((struct sockaddr *)&addr, bits - bits % 16);
+	}
+	else
+#endif
+	if(masktype == HM_IPV4)
+	{
+		/* We have to do this, since we do not re-hash for every bit -A1kmm. */
+		hv = hash_ipv4((struct sockaddr *)&addr, bits - bits % 8);
+	}
+	else
+	{
+		hv = get_mask_hash(address);
+	}
+	for (arec = atable[hv]; arec; arec = arec->next)
+	{
+		if (arec->type == type &&
+				arec->masktype == masktype &&
+				(arec->username == NULL || username == NULL ? arec->username == username : !irccmp(arec->username, username)))
+		{
+			if (masktype == HM_HOST)
+			{
+				if (!irccmp(arec->Mask.hostname, address))
+					return arec->aconf;
+			}
+			else
+			{
+				if (arec->Mask.ipa.bits == bits &&
+					comp_with_mask_sock((struct sockaddr *)&arec->Mask.ipa.addr, (struct sockaddr *)&addr, bits))
+					return arec->aconf;
+			}
+		}
+	}
+	return NULL;
+}
+
 /* void add_conf_by_address(const char*, int, const char *,
  *         struct ConfItem *aconf)
  * Input: 

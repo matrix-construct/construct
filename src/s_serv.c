@@ -1117,6 +1117,7 @@ server_estab(struct Client *client_p)
 		client_p->localClient->fullcaps = NULL;
 	}
 
+	client_p->serv->nameinfo = scache_connect(client_p->name, client_p->info, IsHidden(client_p));
 	client_p->localClient->firsttime = CurrentTime;
 	/* fixing eob timings.. -gnp */
 

@@ -33,6 +33,7 @@
 #include "send.h"
 #include "scache.h"
 #include "memory.h"
+#include "s_conf.h"
 
 
 /*
@@ -42,19 +43,29 @@
  * in its lifetime is at most a few hundred.  by tokenizing server
  * names internally, the server can easily save 2 or 3 megs of RAM.  
  * -orabidoo
+ *
+ * reworked to serve for flattening/delaying /links also
+ * -- jilles
  */
 
 
 #define SCACHE_HASH_SIZE 257
 
-typedef struct scache_entry
+#define SC_ONLINE 1
+#define SC_HIDDEN 2
+
+struct scache_entry
 {
 	char name[HOSTLEN + 1];
+	char info[REALLEN + 1];
+	int flags;
+	time_t known_since;
+	time_t last_connect;
+	time_t last_split;
 	struct scache_entry *next;
-}
-SCACHE;
+};
 
-static SCACHE *scache_hash[SCACHE_HASH_SIZE];
+static struct scache_entry *scache_hash[SCACHE_HASH_SIZE];
 
 void
 clear_scache_hash_table(void)
@@ -76,37 +87,131 @@ sc_hash(const char *string)
 	return hash_value % SCACHE_HASH_SIZE;
 }
 
-/*
- * this takes a server name, and returns a pointer to the same string
- * (up to case) in the server name token list, adding it to the list if
- * it's not there.  care must be taken not to call this with
- * user-supplied arguments that haven't been verified to be a valid,
- * existing, servername.  use the hash in list.c for those.  -orabidoo
- */
-
-const char *
+static struct scache_entry *
 find_or_add(const char *name)
 {
 	int hash_index;
-	SCACHE *ptr;
+	struct scache_entry *ptr;
 
 	ptr = scache_hash[hash_index = sc_hash(name)];
 	for (; ptr; ptr = ptr->next)
 	{
 		if(!irccmp(ptr->name, name))
-			return (ptr->name);
+			return ptr;
 	}
 
-	ptr = (SCACHE *) MyMalloc(sizeof(SCACHE));
+	ptr = (struct scache_entry *) MyMalloc(sizeof(struct scache_entry));
 	s_assert(0 != ptr);
 
 	strlcpy(ptr->name, name, sizeof(ptr->name));
+	ptr->info[0] = '\0';
+	ptr->flags = 0;
+	ptr->known_since = CurrentTime;
+	ptr->last_connect = 0;
+	ptr->last_split = 0;
 
 	ptr->next = scache_hash[hash_index];
 	scache_hash[hash_index] = ptr;
+	return ptr;
+}
+
+struct scache_entry *
+scache_connect(const char *name, const char *info, int hidden)
+{
+	struct scache_entry *ptr;
+
+	ptr = find_or_add(name);
+	strlcpy(ptr->info, info, sizeof(ptr->info));
+	ptr->flags |= SC_ONLINE;
+	if (hidden)
+		ptr->flags |= SC_HIDDEN;
+	else
+		ptr->flags &= ~SC_HIDDEN;
+	ptr->last_connect = CurrentTime;
+	return ptr;
+}
+
+void
+scache_split(struct scache_entry *ptr)
+{
+	if (ptr == NULL)
+		return;
+	ptr->flags &= ~SC_ONLINE;
+	ptr->last_split = CurrentTime;
+}
+
+const char *scache_get_name(struct scache_entry *ptr)
+{
 	return ptr->name;
 }
 
+/* scache_send_flattened_links()
+ *
+ * inputs	- client to send to
+ * outputs	- the cached links, us, and RPL_ENDOFLINKS
+ * side effects	-
+ */
+void
+scache_send_flattened_links(struct Client *source_p)
+{
+	struct scache_entry *scache_ptr;
+	int i;
+	int show;
+
+	for (i = 0; i < SCACHE_HASH_SIZE; i++)
+	{
+		scache_ptr = scache_hash[i];
+		while (scache_ptr)
+		{
+			if (!irccmp(scache_ptr->name, me.name))
+				show = FALSE;
+			else if (scache_ptr->flags & SC_HIDDEN &&
+					!ConfigServerHide.disable_hidden)
+				show = FALSE;
+			else if (scache_ptr->flags & SC_ONLINE)
+				show = scache_ptr->known_since < CurrentTime - ConfigServerHide.links_delay;
+			else
+				show = scache_ptr->last_split > CurrentTime - ConfigServerHide.links_delay && scache_ptr->last_split - scache_ptr->known_since > ConfigServerHide.links_delay;
+			if (show)
+				sendto_one_numeric(source_p, RPL_LINKS, form_str(RPL_LINKS), 
+						   scache_ptr->name, me.name, 1, scache_ptr->info);
+
+			scache_ptr = scache_ptr->next;
+		}
+	}
+	sendto_one_numeric(source_p, RPL_LINKS, form_str(RPL_LINKS), 
+			   me.name, me.name, 0, me.info);
+
+	sendto_one_numeric(source_p, RPL_ENDOFLINKS, form_str(RPL_ENDOFLINKS), "*");
+}
+
+#define MISSING_TIMEOUT 86400
+
+/* scache_send_missing()
+ *
+ * inputs	- client to send to
+ * outputs	- recently split servers
+ * side effects	-
+ */
+void
+scache_send_missing(struct Client *source_p)
+{
+	struct scache_entry *scache_ptr;
+	int i;
+
+	for (i = 0; i < SCACHE_HASH_SIZE; i++)
+	{
+		scache_ptr = scache_hash[i];
+		while (scache_ptr)
+		{
+			if (!(scache_ptr->flags & SC_ONLINE) && scache_ptr->last_split > CurrentTime - MISSING_TIMEOUT)
+				sendto_one_numeric(source_p, RPL_MAP, "** %s (recently split)", 
+						   scache_ptr->name);
+
+			scache_ptr = scache_ptr->next;
+		}
+	}
+}
 /*
  * count_scache
  * inputs	- pointer to where to leave number of servers cached
@@ -117,7 +222,7 @@ find_or_add(const char *name)
 void
 count_scache(size_t * number_servers_cached, size_t * mem_servers_cached)
 {
-	SCACHE *scache_ptr;
+	struct scache_entry *scache_ptr;
 	int i;
 
 	*number_servers_cached = 0;
@@ -130,7 +235,7 @@ count_scache(size_t * number_servers_cached, size_t * mem_servers_cached)
 		{
 			*number_servers_cached = *number_servers_cached + 1;
 			*mem_servers_cached = *mem_servers_cached +
-				(strlen(scache_ptr->name) + sizeof(SCACHE *));
+				sizeof(struct scache_entry );
 
 			scache_ptr = scache_ptr->next;
 		}

@@ -59,6 +59,7 @@
 #include "monitor.h"
 #include "blacklist.h"
 #include "reject.h"
+#include "scache.h"
 
 #define DEBUG_EXITED_CLIENTS
 
@@ -1487,6 +1488,7 @@ exit_remote_server(struct Client *client_p, struct Client *source_p, struct Clie
 
 	del_from_client_hash(source_p->name, source_p);
 	remove_client_from_list(source_p);  
+	scache_split(source_p->serv->nameinfo);
 	
 	SetDead(source_p);
 #ifdef DEBUG_EXITED_CLIENTS
@@ -1583,6 +1585,7 @@ exit_local_server(struct Client *client_p, struct Client *source_p, struct Clien
 
 	del_from_client_hash(source_p->name, source_p);
 	remove_client_from_list(source_p);
+	scache_split(source_p->serv->nameinfo);
 	
 	SetDead(source_p);
 	dlinkAddAlloc(source_p, &dead_list);

@@ -177,7 +177,7 @@ parse_x_file(FILE * file)
 			continue;
 
 		/* sanity checking */
-		if((find_xline(gecos_field, 0) != NULL) ||
+		if((find_xline_mask(gecos_field) != NULL) ||
 		   (strchr(reason_field, ':') != NULL))
 			continue;
 
@@ -231,7 +231,7 @@ parse_resv_file(FILE * file)
 		}
 		else if(clean_resv_nick(host_field))
 		{
-			if(find_nick_resv(host_field))
+			if(find_nick_resv_mask(host_field))
 				continue;
 
 			aconf = make_conf();

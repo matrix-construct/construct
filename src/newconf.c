@@ -1528,14 +1528,6 @@ conf_set_serverhide_links_delay(void *data)
 {
 	int val = *(unsigned int *) data;
 
-	if((val > 0) && ConfigServerHide.links_disabled == 1)
-	{
-		eventAddIsh("cache_links", cache_links, NULL, val);
-		ConfigServerHide.links_disabled = 0;
-	}
-	else if(val != ConfigServerHide.links_delay)
-		eventUpdate("cache_links", val);
-
 	ConfigServerHide.links_delay = val;
 }
 
