@@ -198,40 +198,6 @@ irc_dictionary_get_linear_index(struct Dictionary *dict, const char *key)
  *
  * Retunes the tree, self-optimizing for the element which belongs to key.
  *
- * Tuning the tree structure is a very complex operation. Unlike
- * 2-3-4 trees and BTree/BTree+ structures, this structure is a
- * constantly evolving algorithm.
- *
- * Instead of maintaining a balanced tree, we constantly adapt the
- * tree by nominating a new root nearby the most recently looked up
- * or added data. We are constantly retuning ourselves instead of
- * doing massive O(n) rebalance operations as seen in BTrees,
- * and the level of data stored in a tree is dynamic, instead of being
- * held to a restricted design like other trees.
- *
- * Moreover, we are different than a radix/patricia tree, because we
- * don't statically allocate positions. Radix trees have the advantage
- * of not requiring tuning or balancing operations while having the
- * disadvantage of requiring a large amount of memory to store
- * large trees. Our efficiency as far as speed goes is not as
- * fast as a radix tree; but is close to it.
- *
- * The retuning algorithm uses the comparison callback that is
- * passed in the initialization of the tree container. If the
- * comparator returns a value which is less than zero, we push the
- * losing node out of the way, causing it to later be reparented
- * with another node. The winning child of this comparison is always
- * the right-most node.
- *
- * Once we have reached the key which has been targeted, or have reached
- * a deadend, we nominate the nearest node as the new root of the tree.
- * If an exact match has been found, the new root becomes the node which
- * represents key.
- *
- * This results in a tree which can self-optimize for both critical
- * conditions: nodes which are distant and similar and trees which
- * have ordered lookups.
- *
  * Inputs:
  *     - node to begin search from
  *
