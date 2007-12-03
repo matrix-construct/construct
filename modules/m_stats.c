@@ -259,16 +259,13 @@ static void
 stats_delay(struct Client *source_p)
 {
 	struct nd_entry *nd;
-	dlink_node *ptr;
-	int i;
+	struct DictionaryIter iter;
 
-	HASH_WALK(i, U_MAX, ptr, ndTable)
+	DICTIONARY_FOREACH(nd, &iter, nd_dict)
 	{
-		nd = ptr->data;
 		sendto_one_notice(source_p, "Delaying: %s for %ld",
 				nd->name, (long) nd->expire);
 	}
-	HASH_WALK_END
 }
 
 static void

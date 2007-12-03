@@ -45,9 +45,8 @@ dlink_list *clientTable;
 dlink_list *channelTable;
 dlink_list *idTable;
 dlink_list *resvTable;
-dlink_list *hostTable;
+dlink_list *hostTable; 
 dlink_list *helpTable;
-dlink_list *ndTable;
 
 /*
  * look in whowas.c for the missing ...[WW_MAX]; entry
@@ -95,7 +94,6 @@ init_hash(void)
 {
 	clientTable = MyMalloc(sizeof(dlink_list) * U_MAX);
 	idTable = MyMalloc(sizeof(dlink_list) * U_MAX);
-	ndTable = MyMalloc(sizeof(dlink_list) * U_MAX);
 	channelTable = MyMalloc(sizeof(dlink_list) * CH_MAX);
 	hostTable = MyMalloc(sizeof(dlink_list) * HOST_MAX);
 	resvTable = MyMalloc(sizeof(dlink_list) * R_MAX);
@@ -304,13 +302,6 @@ add_to_help_hash(const char *name, struct cachefile *hptr)
 
 	hashv = hash_help(name);
 	dlinkAddAlloc(hptr, &helpTable[hashv]);
-}
-
-void
-add_to_nd_hash(const char *name, struct nd_entry *nd)
-{
-	nd->hashv = hash_nick(name);
-	dlinkAdd(nd, &nd->hnode, &ndTable[nd->hashv]);
 }
 
 /* del_from_id_hash()
@@ -731,29 +722,6 @@ clear_resv_hash(void)
 		dlinkDestroy(ptr, &resvTable[i]);
 	}
 	HASH_WALK_END
-}
-
-struct nd_entry *
-hash_find_nd(const char *name)
-{
-	struct nd_entry *nd;
-	dlink_node *ptr;
-	unsigned int hashv;
-
-	if(EmptyString(name))
-		return NULL;
-
-	hashv = hash_nick(name);
-
-	DLINK_FOREACH(ptr, ndTable[hashv].head)
-	{
-		nd = ptr->data;
-
-		if(!irccmp(name, nd->name))
-			return nd;
-	}
-
-	return NULL;
 }
 
 static void

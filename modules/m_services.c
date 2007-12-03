@@ -259,7 +259,7 @@ me_nickdelay(struct Client *client_p, struct Client *source_p, int parc, const c
 	duration = atoi(parv[1]);
 	if (duration <= 0)
 	{
-		nd = hash_find_nd(parv[2]);
+		nd = irc_dictionary_retrieve(nd_dict, parv[2]);
 		if (nd != NULL)
 			free_nd_entry(nd);
 	}
@@ -268,7 +268,7 @@ me_nickdelay(struct Client *client_p, struct Client *source_p, int parc, const c
 		if (duration > 86400)
 			duration = 86400;
 		add_nd_entry(parv[2]);
-		nd = hash_find_nd(parv[2]);
+		nd = irc_dictionary_retrieve(nd_dict, parv[2]);
 		if (nd != NULL)
 			nd->expire = CurrentTime + duration;
 	}

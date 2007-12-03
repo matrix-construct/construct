@@ -156,7 +156,7 @@ mr_nick(struct Client *client_p, struct Client *source_p, int parc, const char *
 		return 0;
 	}
 
-	if(hash_find_nd(nick))
+	if(irc_dictionary_find(nd_dict, nick))
 	{
 		sendto_one(source_p, form_str(ERR_UNAVAILRESOURCE),
 			   me.name, EmptyString(source_p->name) ? "*" : source_p->name, nick);
@@ -217,7 +217,7 @@ m_nick(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		return 0;
 	}
 
-	if(hash_find_nd(nick))
+	if(irc_dictionary_find(nd_dict, nick))
 	{
 		sendto_one(source_p, form_str(ERR_UNAVAILRESOURCE),
 			   me.name, EmptyString(source_p->name) ? "*" : source_p->name, nick);
@@ -890,7 +890,7 @@ change_remote_nick(struct Client *client_p, struct Client *source_p,
 	del_from_client_hash(source_p->name, source_p);
 
 	/* invalidate nick delay when a remote client uses the nick.. */
-	if((nd = hash_find_nd(nick)))
+	if((nd = irc_dictionary_retrieve(nd_dict, nick)))
 		free_nd_entry(nd);
 
 	strcpy(source_p->name, nick);
@@ -1225,7 +1225,7 @@ register_client(struct Client *client_p, struct Client *server,
 	}
 
 	/* remove any nd entries for this nick */
-	if((nd = hash_find_nd(nick)))
+	if((nd = irc_dictionary_retrieve(nd_dict, nick)))
 		free_nd_entry(nd);
 
 	add_to_client_hash(nick, source_p);

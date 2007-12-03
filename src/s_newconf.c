@@ -48,6 +48,7 @@
 #include "balloc.h"
 #include "event.h"
 #include "sprintf_irc.h"
+#include "irc_dictionary.h"
 
 dlink_list shared_conf_list;
 dlink_list cluster_conf_list;
@@ -744,13 +745,17 @@ get_nd_count(void)
 	return(dlink_list_length(&nd_list));
 }
 
+struct Dictionary *nd_dict = NULL;
 
 void
 add_nd_entry(const char *name)
 {
 	struct nd_entry *nd;
 
-	if(hash_find_nd(name) != NULL)
+	if(nd_dict == NULL)
+		nd_dict = irc_dictionary_create(irccmp);
+
+	if(irc_dictionary_find(nd_dict, name) != NULL)
 		return;
 
 	nd = BlockHeapAlloc(nd_heap);
@@ -760,14 +765,16 @@ add_nd_entry(const char *name)
 
 	/* this list is ordered */
 	dlinkAddTail(nd, &nd->lnode, &nd_list);
-	add_to_nd_hash(name, nd);
+
+	irc_dictionary_add(nd_dict, nd->name, nd);
 }
 
 void
 free_nd_entry(struct nd_entry *nd)
 {
+	irc_dictionary_delete(nd_dict, nd->name);
+
 	dlinkDelete(&nd->lnode, &nd_list);
-	dlinkDelete(&nd->hnode, &ndTable[nd->hashv]);
 	BlockHeapFree(nd_heap, nd);
 }
 

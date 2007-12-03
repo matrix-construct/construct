@@ -29,13 +29,16 @@
 
 #include "tools.h"
 
+struct Dictionary;
+
 extern dlink_list *clientTable;
 extern dlink_list *channelTable;
 extern dlink_list *idTable;
 extern dlink_list *resvTable;
 extern dlink_list *hostTable;
 extern dlink_list *helpTable;
-extern dlink_list *ndTable;
+
+extern struct Dictionary *nd_dict;
 
 /* Magic value for FNV hash functions */
 #define FNV1_32_INIT 0x811c9dc5UL
@@ -100,9 +103,6 @@ extern void clear_resv_hash(void);
 extern void add_to_help_hash(const char *name, struct cachefile *hptr);
 extern void clear_help_hash(void);
 extern struct cachefile *hash_find_help(const char *name, int flags);
-
-extern void add_to_nd_hash(const char *name, struct nd_entry *nd);
-extern struct nd_entry *hash_find_nd(const char *name);
 
 extern void hash_stats(struct Client *);
 
