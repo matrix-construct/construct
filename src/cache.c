@@ -44,6 +44,7 @@
 #include "hash.h"
 #include "cache.h"
 #include "sprintf_irc.h"
+#include "irc_dictionary.h"
 
 static BlockHeap *cachefile_heap = NULL;
 static BlockHeap *cacheline_heap = NULL;
@@ -51,6 +52,8 @@ static BlockHeap *cacheline_heap = NULL;
 struct cachefile *user_motd = NULL;
 struct cachefile *oper_motd = NULL;
 char user_motd_changed[MAX_DATE_STRING];
+
+struct Dictionary *help_dict = NULL;
 
 /* init_cache()
  *
@@ -68,6 +71,8 @@ init_cache(void)
 
 	user_motd = cache_file(MPATH, "ircd.motd", 0);
 	oper_motd = cache_file(OPATH, "opers.motd", 0);
+
+	help_dict = irc_dictionary_create(strcasecmp);
 }
 
 /* cache_file()
@@ -180,7 +185,7 @@ load_help(void)
 	{
 		ircsnprintf(filename, sizeof(filename), "%s/%s", HPATH, ldirent->d_name);
 		cacheptr = cache_file(filename, ldirent->d_name, HELP_OPER);
-		add_to_help_hash(cacheptr->name, cacheptr);
+		irc_dictionary_add(help_dict, cacheptr->name, cacheptr);
 	}
 
 	closedir(helpfile_dir);
@@ -202,9 +207,9 @@ load_help(void)
 		 */
 		if(S_ISLNK(sb.st_mode))
 		{
-			cacheptr = hash_find_help(ldirent->d_name, HELP_OPER);
+			cacheptr = irc_dictionary_retrieve(help_dict, ldirent->d_name);
 
-			if(cacheptr != NULL)
+			if(cacheptr != NULL && cacheptr->flags & HELP_OPER)  /* is this really needed? --nenolod */
 			{
 				cacheptr->flags |= HELP_USER;
 				continue;
@@ -213,7 +218,7 @@ load_help(void)
 #endif
 
 		cacheptr = cache_file(filename, ldirent->d_name, HELP_USER);
-		add_to_help_hash(cacheptr->name, cacheptr);
+		irc_dictionary_add(help_dict, cacheptr->name, cacheptr);
 	}
 
 	closedir(helpfile_dir);

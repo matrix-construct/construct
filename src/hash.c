@@ -46,7 +46,6 @@ dlink_list *channelTable;
 dlink_list *idTable;
 dlink_list *resvTable;
 dlink_list *hostTable; 
-dlink_list *helpTable;
 
 /*
  * look in whowas.c for the missing ...[WW_MAX]; entry
@@ -97,7 +96,6 @@ init_hash(void)
 	channelTable = MyMalloc(sizeof(dlink_list) * CH_MAX);
 	hostTable = MyMalloc(sizeof(dlink_list) * HOST_MAX);
 	resvTable = MyMalloc(sizeof(dlink_list) * R_MAX);
-	helpTable = MyMalloc(sizeof(dlink_list) * HELP_MAX);
 }
 
 #ifndef RICER_HASHING
@@ -209,19 +207,6 @@ hash_resv(const char *name)
 	return fnv_hash_upper_len((const unsigned char *) name, R_MAX_BITS, 30);
 }
 
-static unsigned int
-hash_help(const char *name)
-{
-	unsigned int h = 0;
-
-	while(*name)
-	{
-		h += (unsigned int) (ToLower(*name++) & 0xDF);
-	}
-
-	return (h % HELP_MAX);
-}
-
 /* add_to_id_hash()
  *
  * adds an entry to the id hash table
@@ -290,18 +275,6 @@ add_to_resv_hash(const char *name, struct ConfItem *aconf)
 
 	hashv = hash_resv(name);
 	dlinkAddAlloc(aconf, &resvTable[hashv]);
-}
-
-void
-add_to_help_hash(const char *name, struct cachefile *hptr)
-{
-	unsigned int hashv;
-
-	if(EmptyString(name) || hptr == NULL)
-		return;
-
-	hashv = hash_help(name);
-	dlinkAddAlloc(hptr, &helpTable[hashv]);
 }
 
 /* del_from_id_hash()
@@ -394,21 +367,6 @@ del_from_resv_hash(const char *name, struct ConfItem *aconf)
 	hashv = hash_resv(name);
 
 	dlinkFindDestroy(aconf, &resvTable[hashv]);
-}
-
-void
-clear_help_hash(void)
-{
-	dlink_node *ptr;
-	dlink_node *next_ptr;
-	int i;
-
-	HASH_WALK_SAFE(i, HELP_MAX, ptr, next_ptr, helpTable)
-	{
-		free_cachefile(ptr->data);
-		dlinkDestroy(ptr, &helpTable[i]);
-	}
-	HASH_WALK_END
 }
 
 /* find_id()
@@ -673,30 +631,6 @@ hash_find_resv(const char *name)
 			aconf->port++;
 			return aconf;
 		}
-	}
-
-	return NULL;
-}
-
-struct cachefile *
-hash_find_help(const char *name, int flags)
-{
-	struct cachefile *hptr;
-	dlink_node *ptr;
-	unsigned int hashv;
-
-	if(EmptyString(name))
-		return NULL;
-
-	hashv = hash_help(name);
-
-	DLINK_FOREACH(ptr, helpTable[hashv].head)
-	{
-		hptr = ptr->data;
-
-		if((irccmp(name, hptr->name) == 0) &&
-		   (hptr->flags & flags))
-			return hptr;
 	}
 
 	return NULL;

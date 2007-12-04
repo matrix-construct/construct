@@ -36,6 +36,7 @@
 #include "modules.h"
 #include "hash.h"
 #include "cache.h"
+#include "irc_dictionary.h"
 
 static int m_help(struct Client *, struct Client *, int, const char **);
 static int mo_help(struct Client *, struct Client *, int, const char **);
@@ -61,24 +62,6 @@ DECLARE_MODULE_AV1(help, NULL, NULL, help_clist, NULL, NULL, "$Revision: 254 $")
 static int
 m_help(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	static time_t last_used = 0;
-
-	/* HELP is always local */
-	if((last_used + ConfigFileEntry.pace_wait_simple) > CurrentTime)
-	{
-		/* safe enough to give this on a local connect only */
-		sendto_one(source_p, form_str(RPL_LOAD2HI), 
-			   me.name, source_p->name, "HELP");
-		sendto_one(source_p, form_str(RPL_ENDOFHELP),
-			   me.name, source_p->name,
-			   (parc > 1 && !EmptyString(parv[1])) ? parv[1] : "index");
-		return 0;
-	}
-	else
-	{
-		last_used = CurrentTime;
-	}
-
 	dohelp(source_p, HELP_USER, parc > 1 ? parv[1] : NULL);
 
 	return 0;
@@ -119,9 +102,9 @@ dohelp(struct Client *source_p, int flags, const char *topic)
 	if(EmptyString(topic))
 		topic = ntopic;
 
-	hptr = hash_find_help(topic, flags);
+	hptr = irc_dictionary_retrieve(help_dict, topic);
 
-	if(hptr == NULL)
+	if(hptr == NULL || !(hptr->flags & flags))
 	{
 		sendto_one(source_p, form_str(ERR_HELPNOTFOUND),
 			   me.name, source_p->name, topic);
