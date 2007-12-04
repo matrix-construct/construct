@@ -745,15 +745,10 @@ get_nd_count(void)
 	return(dlink_list_length(&nd_list));
 }
 
-struct Dictionary *nd_dict = NULL;
-
 void
 add_nd_entry(const char *name)
 {
 	struct nd_entry *nd;
-
-	if(nd_dict == NULL)
-		nd_dict = irc_dictionary_create(irccmp);
 
 	if(irc_dictionary_find(nd_dict, name) != NULL)
 		return;
