@@ -1476,6 +1476,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	struct Client *client_p;
 	struct irc_sockaddr_storage myipnum; 
 	int fd;
+	char vhoststr[HOSTIPLEN];
 
 	s_assert(server_p != NULL);
 	if(server_p == NULL)
@@ -1565,13 +1566,6 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	SetConnecting(client_p);
 	dlinkAddTail(client_p, &client_p->node, &global_client_list);
 
-	/* log */
-	ilog(L_SERVER, "Connecting to %s[%s] port %d (%s)", server_p->name, server_p->host, server_p->port,
-#ifdef IPV6
-			server_p->aftype == AF_INET6 ? "IPv6" :
-#endif
-			(server_p->aftype == AF_INET ? "IPv4" : "?"));
-
 	if(ServerConfVhosted(server_p))
 	{
 		memcpy(&myipnum, &server_p->my_ipnum, sizeof(myipnum));
@@ -1598,12 +1592,28 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 #endif
 	else
 	{
+		/* log */
+		ilog(L_SERVER, "Connecting to %s[%s] port %d (%s)", server_p->name, server_p->host, server_p->port,
+#ifdef IPV6
+				server_p->aftype == AF_INET6 ? "IPv6" :
+#endif
+				(server_p->aftype == AF_INET ? "IPv4" : "?"));
+
 		comm_connect_tcp(client_p->localClient->fd, server_p->host,
 				 server_p->port, NULL, 0, serv_connect_callback, 
 				 client_p, server_p->aftype, 
 				 ConfigFileEntry.connect_timeout);
 		 return 1;
 	}
+
+	/* log */
+	inetntop_sock((struct sockaddr *)&myipnum, vhoststr, sizeof vhoststr);
+	ilog(L_SERVER, "Connecting to %s[%s] port %d (%s) (vhost %s)", server_p->name, server_p->host, server_p->port,
+#ifdef IPV6
+			server_p->aftype == AF_INET6 ? "IPv6" :
+#endif
+			(server_p->aftype == AF_INET ? "IPv4" : "?"), vhoststr);
+
 
 	comm_connect_tcp(client_p->localClient->fd, server_p->host,
 			 server_p->port, (struct sockaddr *) &myipnum,
