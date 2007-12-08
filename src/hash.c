@@ -109,7 +109,8 @@ fnv_hash_upper(const unsigned char *s, int bits)
          	h ^= ToUpper(*s++);
 		h += (h<<1) + (h<<4) + (h<<7) + (h << 8) + (h << 24);
 	}
-        h = (h >> bits) ^ (h & ((2^bits)-1));
+	if (bits < 32)
+		h = ((h >> bits) ^ h) & ((1<<bits)-1);
 	return h;
 }
 
@@ -123,7 +124,8 @@ fnv_hash(const unsigned char *s, int bits)
 		h ^= *s++;
 		h += (h<<1) + (h<<4) + (h<<7) + (h << 8) + (h << 24);
 	}
-        h = (h >> bits) ^ (h & ((2^bits)-1));
+	if (bits < 32)
+		h = ((h >> bits) ^ h) & ((1<<bits)-1);
 	return h;
 }
 
@@ -137,7 +139,8 @@ fnv_hash_len(const unsigned char *s, int bits, int len)
 		h ^= *s++;
 		h += (h<<1) + (h<<4) + (h<<7) + (h << 8) + (h << 24);
 	}
-        h = (h >> bits) ^ (h & ((2^bits)-1));
+	if (bits < 32)
+		h = ((h >> bits) ^ h) & ((1<<bits)-1);
 	return h;
 }
 
@@ -151,7 +154,8 @@ fnv_hash_upper_len(const unsigned char *s, int bits, int len)
          	h ^= ToUpper(*s++);
 		h += (h<<1) + (h<<4) + (h<<7) + (h << 8) + (h << 24);
 	}
-        h = (h >> bits) ^ (h & ((2^bits)-1));
+	if (bits < 32)
+		h = ((h >> bits) ^ h) & ((1<<bits)-1);
 	return h;
 }
 #endif

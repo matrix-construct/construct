@@ -44,19 +44,19 @@ extern struct Dictionary *nd_dict;
 #define FNV1_32_INIT 0x811c9dc5UL
 
 /* Client hash table size, used in hash.c/s_debug.c */
-#define U_MAX_BITS (32-17)
+#define U_MAX_BITS 17
 #define U_MAX 131072 /* 2^17 */
 
 /* Channel hash table size, hash.c/s_debug.c */
-#define CH_MAX_BITS (32-16)
+#define CH_MAX_BITS 16
 #define CH_MAX 65536 /* 2^16 */
 
 /* hostname hash table size */
-#define HOST_MAX_BITS (32-17)
+#define HOST_MAX_BITS 17
 #define HOST_MAX 131072 /* 2^17 */
 
 /* RESV/XLINE hash table size, used in hash.c */
-#define R_MAX_BITS (32-10)
+#define R_MAX_BITS 10
 #define R_MAX 1024 /* 2^10 */
 
 
