@@ -46,6 +46,7 @@
 #include "parse.h"
 #include "modules.h"
 #include "event.h"
+#include "reject.h"
 
 static int mo_kline(struct Client *, struct Client *, int, const char **);
 static int ms_kline(struct Client *, struct Client *, int, const char **);
@@ -866,6 +867,7 @@ remove_permkline_match(struct Client *source_p, struct ConfItem *aconf)
 	ilog(L_KLINE, "UK %s %s %s",
 		get_oper_name(source_p), user, host);
 
+	remove_reject_mask(aconf->user, aconf->host);
 	delete_one_address_conf(aconf->host, aconf);
 
 	return;
@@ -925,6 +927,7 @@ remove_temp_kline(struct ConfItem *aconf)
 			if (aconf == ptr->data)
 			{
 				dlinkDestroy(ptr, &temp_klines[i]);
+				remove_reject_mask(aconf->user, aconf->host);
 				delete_one_address_conf(aconf->host, aconf);
 				return YES;
 			}

@@ -281,13 +281,12 @@ check_client(struct Client *client_p, struct Client *source_p, const char *usern
 				source_p->name, IsGotId(source_p) ? "" : "~",
 				source_p->username, source_p->sockhost,
 				source_p->localClient->listener->name, port);
-			add_reject(client_p);
+			add_reject(client_p, NULL, NULL);
 			exit_client(client_p, source_p, &me,
 				    "You are not authorised to use this server");
 			break;
 		}
 	case BANNED_CLIENT:
-		add_reject(client_p);
 		exit_client(client_p, client_p, &me, "*** Banned ");
 		ServerStats->is_ref++;
 		break;
@@ -388,6 +387,7 @@ verify_access(struct Client *client_p, const char *username)
 					form_str(ERR_YOUREBANNEDCREEP),
 					me.name, client_p->name, aconf->passwd);
 		}
+		add_reject(client_p, aconf->user, aconf->host);
 		return (BANNED_CLIENT);
 	}
 	else if(aconf->status & CONF_GLINE)
@@ -399,6 +399,7 @@ verify_access(struct Client *client_p, const char *username)
 					form_str(ERR_YOUREBANNEDCREEP),
 					me.name, client_p->name, aconf->passwd);
 
+		add_reject(client_p, aconf->user, aconf->host);
 		return (BANNED_CLIENT);
 	}
 

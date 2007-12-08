@@ -33,6 +33,7 @@
 #include "reject.h"
 #include "s_stats.h"
 #include "msg.h"
+#include "hash.h"
 
 static patricia_tree_t *reject_tree;
 dlink_list delay_exit;
@@ -45,6 +46,7 @@ struct reject_data
 	dlink_node rnode;
 	time_t time;
 	unsigned int count;
+	uint32_t mask_hashv;
 };
 
 static patricia_tree_t *unknown_tree;
@@ -118,14 +120,21 @@ init_reject(void)
 
 
 void
-add_reject(struct Client *client_p)
+add_reject(struct Client *client_p, const char *mask1, const char *mask2)
 {
 	patricia_node_t *pnode;
 	struct reject_data *rdata;
+	uint32_t hashv;
 
 	/* Reject is disabled */
 	if(ConfigFileEntry.reject_after_count == 0 || ConfigFileEntry.reject_ban_time == 0)
 		return;
+
+	hashv = 0;
+	if (mask1 != NULL)
+		hashv ^= fnv_hash_upper(mask1, 32);
+	if (mask2 != NULL)
+		hashv ^= fnv_hash_upper(mask2, 32);
 
 	if((pnode = match_ip(reject_tree, (struct sockaddr *)&client_p->localClient->ip)) != NULL)
 	{
@@ -146,6 +155,7 @@ add_reject(struct Client *client_p)
 		rdata->time = CurrentTime;
 		rdata->count = 1;
 	}
+	rdata->mask_hashv = hashv;
 }
 
 int
@@ -197,7 +207,7 @@ flush_reject(void)
 }
 
 int 
-remove_reject(const char *ip)
+remove_reject_ip(const char *ip)
 {
 	patricia_node_t *pnode;
 	
@@ -215,6 +225,35 @@ remove_reject(const char *ip)
 		return 1;
 	}
 	return 0;
+}
+
+int
+remove_reject_mask(const char *mask1, const char *mask2)
+{
+	dlink_node *ptr, *next;
+	patricia_node_t *pnode;
+	struct reject_data *rdata;
+	uint32_t hashv;
+	int n = 0;
+	
+	hashv = 0;
+	if (mask1 != NULL)
+		hashv ^= fnv_hash_upper(mask1, 32);
+	if (mask2 != NULL)
+		hashv ^= fnv_hash_upper(mask2, 32);
+	DLINK_FOREACH_SAFE(ptr, next, reject_list.head)
+	{
+		pnode = ptr->data;
+		rdata = pnode->data;
+		if (rdata->mask_hashv == hashv)
+		{
+			dlinkDelete(ptr, &reject_list);
+			MyFree(rdata);
+			patricia_remove(reject_tree, pnode);
+			n++;
+		}
+	}
+	return n;
 }
 
 

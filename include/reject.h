@@ -33,9 +33,10 @@ extern dlink_list delay_exit;
 
 void init_reject(void);
 int check_reject(struct Client *);
-void add_reject(struct Client *);
+void add_reject(struct Client *, const char *mask1, const char *mask2);
 void flush_reject(void);
-int remove_reject(const char *ip);
+int remove_reject_ip(const char *ip);
+int remove_reject_mask(const char *mask1, const char *mask2);
 
 int add_unknown_ip(struct Client *client_p);
 void del_unknown_ip(struct Client *client_p);

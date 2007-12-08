@@ -47,6 +47,7 @@
 #include "parse.h"
 #include "modules.h"
 #include "s_log.h"
+#include "reject.h"
 
 static int mo_gline(struct Client *, struct Client *, int, const char **);
 static int mc_gline(struct Client *, struct Client *, int, const char **);
@@ -722,6 +723,7 @@ remove_temp_gline(const char *user, const char *host)
 			continue;
 
 		dlinkDestroy(ptr, &glines);
+		remove_reject_mask(aconf->user, aconf->host);
 		delete_one_address_conf(aconf->host, aconf);
 		return YES;
 	}

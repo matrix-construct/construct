@@ -52,6 +52,7 @@
 #include "modules.h"
 #include "s_conf.h"
 #include "s_newconf.h"
+#include "reject.h"
 
 static int mo_xline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static int ms_xline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
@@ -558,6 +559,7 @@ remove_xline(struct Client *source_p, const char *name)
 						get_oper_name(source_p), name);
 			}
 			
+			remove_reject_mask(aconf->name, NULL);
 			free_conf(aconf);
 			dlinkDestroy(ptr, &xline_conf_list);
 			return;
