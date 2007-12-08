@@ -971,10 +971,7 @@ AC_HELP_STRING([--with-topiclen=NUMBER],[Set the max topic length to NUMBER (def
 AC_DEFINE_UNQUOTED(TOPICLEN, ${TOPICLEN}, [Maximum topic length (<=390)])
 AC_DEFINE_UNQUOTED(NICKLEN, (${NICKLEN}+1), [Nickname length])
 
-AC_ARG_ENABLE(shared-modules,
-AC_HELP_STRING([--disable-shared-modules],[ Disable shared modules.]),
-[shared_modules=$enableval], [shared_modules="yes"])
-
+shared_modules="yes"
 dnl Some first-stage sanity checks.
 if test "$shared_modules" = yes; then
   	
@@ -1265,7 +1262,6 @@ Configuration:
 
 	Ziplinks           : $zlib
 	OpenSSL            : $openssl
-	Modules            : $modules
 	IPv6 support       : $have_v6
 	Socket Engine      : $SELECT_TYPE
 	Small network      : $small_net
