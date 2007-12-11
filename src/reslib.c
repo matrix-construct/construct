@@ -149,7 +149,10 @@ int
 irc_res_init(void)
 {
   irc_nscount = 0;
-  return parse_resvconf();
+  parse_resvconf();
+  if (irc_nscount == 0)
+    add_nameserver("127.0.0.1");
+  return 0;
 }
 
 /* parse_resvconf()
