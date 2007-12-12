@@ -259,7 +259,6 @@ rehash_help(struct Client *source_p)
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "%s is forcing re-reading of HELP files", 
 			     get_oper_name(source_p));
-	clear_help_hash();
 	load_help();
 }
 

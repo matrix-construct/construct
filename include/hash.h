@@ -100,10 +100,6 @@ extern void del_from_resv_hash(const char *name, struct ConfItem *aconf);
 extern struct ConfItem *hash_find_resv(const char *name);
 extern void clear_resv_hash(void);
 
-extern void add_to_help_hash(const char *name, struct cachefile *hptr);
-extern void clear_help_hash(void);
-extern struct cachefile *hash_find_help(const char *name, int flags);
-
 extern void hash_stats(struct Client *);
 
 #endif /* INCLUDED_hash_h */

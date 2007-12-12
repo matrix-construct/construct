@@ -161,7 +161,8 @@ free_cachefile(struct cachefile *cacheptr)
  *
  * inputs	-
  * outputs	-
- * side effects - contents of help directories are loaded.
+ * side effects - old help cache deleted
+ *		- contents of help directories are loaded.
  */
 void
 load_help(void)
@@ -170,10 +171,17 @@ load_help(void)
 	struct dirent *ldirent= NULL;
 	char filename[MAXPATHLEN];
 	struct cachefile *cacheptr;
+	struct DictionaryIter iter;
 
 #if defined(S_ISLNK) && defined(HAVE_LSTAT)
 	struct stat sb;
 #endif
+
+	DICTIONARY_FOREACH(cacheptr, &iter, help_dict)
+	{
+		irc_dictionary_delete(help_dict, cacheptr->name);
+		free_cachefile(cacheptr);
+	}
 
 	/* opers must be done first */
 	helpfile_dir = opendir(HPATH);
