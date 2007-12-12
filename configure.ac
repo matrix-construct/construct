@@ -796,7 +796,7 @@ main(int argc, char **argv)
         int epfd;
 
         epfd = epoll_create(256);
-        exit (epfd == -1 ? 1 : 0);
+        return (epfd == -1 ? 1 : 0);
 }, [AC_MSG_RESULT(yes)
 	    AC_DEFINE(HAVE_EPOLL, 1,
 	        [Define if your system supports the epoll system calls])
