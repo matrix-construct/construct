@@ -536,7 +536,7 @@ conf_end_oper(struct TopConf *tc)
 			yy_tmpoper->rsa_pubkey =
 				(RSA *) PEM_read_bio_RSA_PUBKEY(file, NULL, 0, NULL);
 
-			BIO_set_close(file, BIO_CLOSE);
+			(void)BIO_set_close(file, BIO_CLOSE);
 			BIO_free(file);
 
 			if(yy_tmpoper->rsa_pubkey == NULL)
