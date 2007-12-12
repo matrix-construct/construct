@@ -39,10 +39,10 @@ typedef struct _hurt_state {
 } hurt_state_t;
 
 typedef struct _hurt {
-        const char *ip;
+        char *ip;
         struct sockaddr *saddr;
         int saddr_bits;
-        const char *reason;
+        char *reason;
         time_t expire;
 } hurt_t;
 /* }}} */
@@ -559,8 +559,8 @@ hurt_destroy(void *hurt)
 		return;
 
 	h = (hurt_t *) hurt;
-	MyFree((char *) h->ip);
-	MyFree((char *) h->reason);
+	MyFree(h->ip);
+	MyFree(h->reason);
 	MyFree(h);
 }
 /* }}} */
