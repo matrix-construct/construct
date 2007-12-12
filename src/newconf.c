@@ -85,7 +85,7 @@ add_top_conf(const char *name, int (*sfunc) (struct TopConf *),
 
 	tc = MyMalloc(sizeof(struct TopConf));
 
-	DupString(tc->tc_name, name);
+	tc->tc_name = name;
 	tc->tc_sfunc = sfunc;
 	tc->tc_efunc = efunc;
 	tc->tc_entries = items;
@@ -153,7 +153,6 @@ remove_top_conf(char *name)
 		return -1;
 
 	dlinkDestroy(ptr, &conf_items);
-	MyFree(tc->tc_name);
 	MyFree(tc);
 
 	return 0;
@@ -1849,7 +1848,7 @@ add_conf_item(const char *topconf, const char *name, int type, void (*func) (voi
 
 	cf = MyMalloc(sizeof(struct ConfEntry));
 
-	DupString(cf->cf_name, name);
+	cf->cf_name = name;
 	cf->cf_type = type;
 	cf->cf_func = func;
 	cf->cf_arg = NULL;
