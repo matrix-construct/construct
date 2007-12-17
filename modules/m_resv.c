@@ -84,6 +84,13 @@ mo_resv(struct Client *client_p, struct Client *source_p, int parc, const char *
 	int temp_time;
 	int loc = 1;
 
+	if(!IsOperResv(source_p))
+	{
+		sendto_one(source_p, form_str(ERR_NOPRIVS),
+			   me.name, source_p->name, "resv");
+		return 0;
+	}
+
 	/* RESV [time] <name> [ON <server>] :<reason> */
 
 	if((temp_time = valid_temp_time(parv[loc])) >= 0)
@@ -370,6 +377,13 @@ cluster_resv(struct Client *source_p, int temp_time, const char *name,
 static int
 mo_unresv(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
+	if(!IsOperResv(source_p))
+	{
+		sendto_one(source_p, form_str(ERR_NOPRIVS),
+			   me.name, source_p->name, "resv");
+		return 0;
+	}
+
 	if((parc == 4) && (irccmp(parv[2], "ON") == 0))
 	{
 		if(!IsOperRemoteBan(source_p))

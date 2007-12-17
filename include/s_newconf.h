@@ -171,6 +171,7 @@ extern void cluster_generic(struct Client *, const char *, int cltype,
 #define IsOperN(x)              ((x)->flags2 & OPER_NICKS)
 #define IsOperK(x)              ((x)->flags2 & OPER_KLINE)
 #define IsOperXline(x)          ((x)->flags2 & OPER_XLINE)
+#define IsOperResv(x)           ((x)->flags2 & OPER_RESV)
 #define IsOperDie(x)            ((x)->flags2 & OPER_DIE)
 #define IsOperRehash(x)         ((x)->flags2 & OPER_REHASH)
 #define IsOperHiddenAdmin(x)    ((x)->flags2 & OPER_HADMIN)

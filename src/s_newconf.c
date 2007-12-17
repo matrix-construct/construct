@@ -331,6 +331,7 @@ static struct oper_flags oper_flagtable[] =
 	{ OPER_GLINE,		'G', 'g' },
 	{ OPER_KLINE,		'K', 'k' },
 	{ OPER_XLINE,		'X', 'x' },
+	{ OPER_RESV,		'Q', 'q' },
 	{ OPER_GLOBKILL,	'O', 'o' },
 	{ OPER_LOCKILL,		'C', 'c' },
 	{ OPER_REMOTE,		'R', 'r' },
