@@ -236,7 +236,7 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 
 			call_hook(h_can_create_channel, &moduledata);
 
-			if(moduledata.approved != 0 && !IsOper(source_p))
+			if(moduledata.approved != 0)
 			{
 				sendto_one(source_p, form_str(moduledata.approved),
 					   me.name, source_p->name, name);
