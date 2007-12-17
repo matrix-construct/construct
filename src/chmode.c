@@ -449,6 +449,14 @@ chm_staff(struct Client *source_p, struct Channel *chptr,
 		*errors |= SM_ERR_NOPRIVS;
 		return;
 	}
+	if(MyClient(source_p) && !IsOperResv(source_p))
+	{
+		if(!(*errors & SM_ERR_NOPRIVS))
+			sendto_one(source_p, form_str(ERR_NOPRIVS), me.name,
+					source_p->name, "resv");
+		*errors |= SM_ERR_NOPRIVS;
+		return;
+	}
 
 	/* setting + */
 	if((dir == MODE_ADD) && !(chptr->mode.mode & mode_type))
