@@ -44,6 +44,7 @@ SRCS =                          \
   sno_globaloper.c		\
   sno_whois.c			\
   m_42.c			\
+  m_adminwall.c			\
   m_findforwards.c		\
   m_identify.c			\
   m_mkpasswd.c                  \
