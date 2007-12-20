@@ -1,5 +1,5 @@
 /*
- *  ircd-ratbox: A slightly useful ircd.
+ *  charybdis: A slightly useful ircd.
  *  epoll.c: Linux epoll compatible network routines.
  *
  *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center
@@ -7,6 +7,7 @@
  *  Copyright (C) 2001 Adrian Chadd <adrian@creative.net.au>
  *  Copyright (C) 2002-2005 ircd-ratbox development team
  *  Copyright (C) 2002 Aaron Sethman <androsyn@ratbox.org>
+ *  Copyright (C) 2008 William Pitcock <nenolod@sacredspiral.co.uk>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -133,8 +134,6 @@ comm_setselect(int fd, fdlist_t list, unsigned int type, PF * handler,
 		libcharybdis_log("comm_setselect(): epoll_ctl failed: %s", strerror(errno));
 		abort();
 	}
-
-
 }
 
 /*
@@ -178,7 +177,6 @@ comm_select(unsigned long delay)
 			}
 			else
 				libcharybdis_log("epoll.c: NULL read handler called");
-
 		}
 
 
@@ -198,15 +196,30 @@ comm_select(unsigned long delay)
 				libcharybdis_log("epoll.c: NULL write handler called");
 		}
 		
-		if(F->flags.open == 0)
-			continue;		
+		if(F->flags.open == 0 && F->pflags == 0)
+			continue;
+		else if (F->flags.open == 0)
+		{
+			F->pflags = ep_event.events = flags;
+			ep_event.data.ptr = F;
+
+			if(epoll_ctl(ep, EPOLL_CTL_DEL, F->fd, &ep_event) != 0) {
+				libcharybdis_log("comm_select(): epoll_ctl failed while trying to delete a closed FD: %s", strerror(errno));
+				abort();
+			}
+		}
 		
 		flags = 0;
 		
 		if(F->read_handler != NULL)
 			flags |= EPOLLIN;
+		else
+			flags &= ~EPOLLIN;
+
 		if(F->write_handler != NULL)
 			flags |= EPOLLOUT;
+		else
+			flags &= ~EPOLLOUT;
 		
 		if(old_flags != flags)
 		{
@@ -214,12 +227,12 @@ comm_select(unsigned long delay)
 				op = EPOLL_CTL_DEL;			
 			else
 				op = EPOLL_CTL_MOD;
+
 			F->pflags = ep_event.events = flags;
 			ep_event.data.ptr = F;
+
 			if(epoll_ctl(ep, op, F->fd, &ep_event) != 0)
-			{
-				libcharybdis_log("comm_setselect(): epoll_ctl failed: %s", strerror(errno));
-			}
+				libcharybdis_log("comm_select(): epoll_ctl failed: %s", strerror(errno));
 		}
 					
 	}
