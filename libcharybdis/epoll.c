@@ -180,8 +180,25 @@ comm_select(unsigned long delay)
 		}
 
 
-		if(F->flags.open == 0)
+		if(F->flags.open == 0 && F->pflags == 0)
 			continue;
+		else if (F->flags.open == 0)
+		{
+			F->pflags = ep_event.events = flags;
+			ep_event.data.ptr = F;
+
+			if(epoll_ctl(ep, EPOLL_CTL_DEL, F->fd, &ep_event) != 0) {
+				/* XXX: we assume this is because close(2) has been called here. */
+				if (errno == EBADF)
+					continue;
+
+				libcharybdis_log("comm_select(): epoll_ctl failed while trying to delete an FD marked as closed: %s", strerror(errno));
+				abort();
+			}
+
+			continue;
+		}
+
 		if(pfd[i].events & (EPOLLOUT | EPOLLHUP | EPOLLERR))
 		{
 			hdl = F->write_handler;
@@ -211,6 +228,8 @@ comm_select(unsigned long delay)
 				libcharybdis_log("comm_select(): epoll_ctl failed while trying to delete an FD marked as closed: %s", strerror(errno));
 				abort();
 			}
+
+			continue;
 		}
 		
 		flags = 0;
