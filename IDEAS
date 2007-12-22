@@ -1,3 +1,10 @@
+Important stuff:
+- our I/O operates on raw fds. we should use fde_t's everywhere so that
+  lookups are less necessary and so that I/O is done using the virtual functors,
+  IOFuncRead and IOFuncWrite.
+- implement comm_get_io_direction(fde_t *) and use it to determine how to reschedule
+  I/O direction when needed.
+
 Some of this may not be possible to do in 2.3...
 
 - go TS6 only? [partially done; TS6 is always enabled now]
