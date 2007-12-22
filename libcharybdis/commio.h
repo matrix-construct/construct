@@ -35,6 +35,10 @@
 /* Callback for completed IO events */
 typedef void PF(int fd, void *);
 
+/* virtual function types for I/O --nenolod */
+typedef void IOFuncRead(int fd, void *buf, size_t count);
+typedef void IOFuncWrite(int fd, const void *buf, size_t count);
+
 /* Callback for completed connections */
 /* int fd, int status, void * */
 typedef void CNCB(int fd, int, void *);
@@ -96,16 +100,24 @@ struct _fde
 	fdlist_t list;		/* Which list this FD should sit on */
 	int comm_index;		/* where in the poll list we live */
 	char desc[FD_DESC_SZ];
+
 	PF *read_handler;
 	void *read_data;
+
 	PF *write_handler;
 	void *write_data;
+
 	PF *timeout_handler;
 	void *timeout_data;
 	time_t timeout;
+
 	PF *flush_handler;
 	void *flush_data;
 	time_t flush_timeout;
+
+	IOReadFunc *read_impl;
+	IOWriteFunc *write_impl;
+
 	struct DNSQuery *dns_query;
 	struct
 	{

@@ -85,8 +85,12 @@ comm_add_fd(int fd)
 	if (F != NULL)
 		return F;
 
-	F = calloc(sizeof(fde_t), 1);
+	F = MyMalloc(sizeof(fde_t));
 	F->fd = fd;
+
+	F->read_impl = read;
+	F->write_impl = write;
+
 	list = &fd_table[fd % FD_HASH_SIZE];
 	dlinkAdd(F, &F->node, list);
 
