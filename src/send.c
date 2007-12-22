@@ -168,6 +168,10 @@ send_queued_write(int fd, void *data)
 #ifdef USE_IODEBUG_HOOKS
 	hook_data_int hd;
 #endif
+	fde_t *F = comm_lookup_fd(to->localClient->fd);
+	if (!F)
+		return;
+
 	/* cant write anything to a dead socket. */
 	if(IsIOError(to))
 		return;
@@ -182,7 +186,7 @@ send_queued_write(int fd, void *data)
 	if(linebuf_len(&to->localClient->buf_sendq))
 	{
 		while ((retlen =
-			linebuf_flush(to->localClient->fd, &to->localClient->buf_sendq)) > 0)
+			linebuf_flush(F, &to->localClient->buf_sendq)) > 0)
 		{
 			/* We have some data written .. update counters */
 #ifdef USE_IODEBUG_HOOKS

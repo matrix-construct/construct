@@ -28,6 +28,7 @@
 #define __LINEBUF_H__
 
 #include "tools.h"
+#include "commio.h"
 
 /* How big we want a buffer - 510 data bytes, plus space for a '\0' */
 #define BUF_DATA_SIZE		511
@@ -80,7 +81,7 @@ extern void linebuf_donebuf(buf_head_t *);
 extern int linebuf_parse(buf_head_t *, char *, int, int);
 extern int linebuf_get(buf_head_t *, char *, int, int, int);
 extern void linebuf_putmsg(buf_head_t *, const char *, va_list *, const char *, ...);
-extern int linebuf_flush(int, buf_head_t *);
+extern int linebuf_flush(fde_t *, buf_head_t *);
 extern void linebuf_attach(buf_head_t *, buf_head_t *);
 extern void count_linebuf_memory(size_t *, size_t *);
 #endif
