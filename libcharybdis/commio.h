@@ -32,12 +32,14 @@
 #include "ircd_defs.h"
 #include "tools.h"
 
+typedef struct _fde fde_t;
+
 /* Callback for completed IO events */
 typedef void PF(int fd, void *);
 
 /* virtual function types for I/O --nenolod */
-typedef void IOFuncRead(int fd, void *buf, size_t count);
-typedef void IOFuncWrite(int fd, const void *buf, size_t count);
+typedef int IOFuncRead(fde_t *, void *buf, size_t count);
+typedef int IOFuncWrite(fde_t *, const void *buf, size_t count);
 
 /* Callback for completed connections */
 /* int fd, int status, void * */
@@ -80,8 +82,6 @@ typedef enum fdlist_t
 }
 fdlist_t;
 
-typedef struct _fde fde_t;
-
 
 extern int highest_fd;
 extern int number_fd;
@@ -115,8 +115,8 @@ struct _fde
 	void *flush_data;
 	time_t flush_timeout;
 
-	IOReadFunc *read_impl;
-	IOWriteFunc *write_impl;
+	IOFuncRead *read_impl;
+	IOFuncWrite *write_impl;
 
 	struct DNSQuery *dns_query;
 	struct
