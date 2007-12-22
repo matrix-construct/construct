@@ -168,7 +168,7 @@ send_queued_write(int fd, void *data)
 #ifdef USE_IODEBUG_HOOKS
 	hook_data_int hd;
 #endif
-	fde_t *F = comm_lookup_fd(to->localClient->fd);
+	fde_t *F = comm_locate_fd(to->localClient->fd);
 	if (!F)
 		return;
 
