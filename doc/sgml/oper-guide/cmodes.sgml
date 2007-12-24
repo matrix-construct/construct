@@ -162,7 +162,7 @@
 	<para>
 	  Channels with this mode will be allowed larger banlists (by default,
           500 instead of 50 entries for +b, +q, +e and +I together).
-	  Only network operators may set this mode.
+	  Only network operators with resv privilege may set this mode.
 	</para>
       </sect2>
       <sect2>
@@ -216,7 +216,7 @@
       <sect2>
 	<title>+P, permanent channel</title>
 	<para>
-	  Channels with this mode (which is accessible only to network operators) set will not be destroyed
+	  Channels with this mode (which is accessible only to network operators with resv privilege) set will not be destroyed
 	  when the last user leaves.
 	</para>
 	<para>

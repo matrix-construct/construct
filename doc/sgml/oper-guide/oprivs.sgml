@@ -94,6 +94,13 @@
 	</para>
       </sect2>
       <sect2>
+	<title>resv (Q), channel control</title>
+	<para>
+	  This allows using /resv, /unresv and changing the channel
+	  modes +L and +P.
+	</para>
+      </sect2>
+      <sect2>
 	<title>remote (R), remote routing</title>
 	<para>
 	  This allows using the third argument of the CONNECT command, to
