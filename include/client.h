@@ -415,8 +415,11 @@ struct exit_client_hook
 #define FLAGS_DEAD	   0x0002	/* Local socket is dead--Exiting soon */
 #define FLAGS_KILLED       0x0004	/* Prevents "QUIT" from being sent for this */
 #define FLAGS_SENTUSER     0x0008	/* Client sent a USER command. */
+#define FLAGS_CLICAP       0x0010	/* In CAP negotiation, wait for CAP END */
 #define FLAGS_CLOSING      0x0020	/* set when closing to suppress errors */
+#define FLAGS_PING_COOKIE  0x0040	/* has sent ping cookie */
 #define FLAGS_GOTID        0x0080	/* successful ident lookup achieved */
+#define FLAGS_FLOODDONE    0x0100	/* flood grace period over / reported */
 #define FLAGS_NORMALEX     0x0400	/* Client exited normally */
 #define FLAGS_SENDQEX      0x0800	/* Sendq exceeded */
 #define FLAGS_SERVLINK     0x10000	/* servlink has servlink process */
@@ -457,10 +460,7 @@ struct exit_client_hook
 #define FLAGS2_EXEMPTFLOOD      0x0400000
 #define FLAGS2_NOLIMIT          0x0800000
 #define FLAGS2_IDLE_LINED       0x1000000
-#define FLAGS2_CLICAP		0x2000000
-#define FLAGS2_PING_COOKIE      0x4000000
 #define FLAGS2_IP_SPOOFING      0x8000000
-#define FLAGS2_FLOODDONE        0x10000000
 #define FLAGS2_EXEMPTSPAMBOT	0x20000000
 #define FLAGS2_EXEMPTSHIDE	0x40000000
 #define FLAGS2_EXEMPTJUPE	0x80000000
@@ -563,8 +563,8 @@ struct exit_client_hook
 /* for local users: flood grace period is over
  * for servers: mentioned in networknotice.c notice
  */
-#define IsFloodDone(x)          ((x)->flags2 & FLAGS2_FLOODDONE)
-#define SetFloodDone(x)         ((x)->flags2 |= FLAGS2_FLOODDONE)
+#define IsFloodDone(x)          ((x)->flags & FLAGS_FLOODDONE)
+#define SetFloodDone(x)         ((x)->flags |= FLAGS_FLOODDONE)
 
 /*
  * definitions for get_client_name

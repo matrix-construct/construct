@@ -250,14 +250,14 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 			source_p->flags |= FLAGS_PINGSENT;
 			return -1;
 		}
-		if(!(source_p->flags2 & FLAGS2_PING_COOKIE))
+		if(!(source_p->flags & FLAGS_PING_COOKIE))
 		{
 			return -1;
 		}
 	}
 
 	/* hasnt finished client cap negotiation */
-	if(source_p->flags2 & FLAGS2_CLICAP)
+	if(source_p->flags & FLAGS_CLICAP)
 		return -1;
 
 	/* still has DNSbls to validate against */

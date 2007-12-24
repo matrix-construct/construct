@@ -318,7 +318,7 @@ cap_end(struct Client *source_p, const char *arg)
 	if(IsRegistered(source_p))
 		return;
 
-	source_p->flags2 &= ~FLAGS2_CLICAP;
+	source_p->flags &= ~FLAGS_CLICAP;
 
 	if(source_p->name[0] && source_p->user)
 	{
@@ -340,7 +340,7 @@ static void
 cap_ls(struct Client *source_p, const char *arg)
 {
 	if(!IsRegistered(source_p))
-		source_p->flags2 |= FLAGS2_CLICAP;
+		source_p->flags |= FLAGS_CLICAP;
 
 	/* list of what we support */
 	clicap_generate(source_p, "LS", 0, 0);
@@ -358,7 +358,7 @@ cap_req(struct Client *source_p, const char *arg)
 	int finished = 0, negate;
 
 	if(!IsRegistered(source_p))
-		source_p->flags2 |= FLAGS2_CLICAP;
+		source_p->flags |= FLAGS_CLICAP;
 
 	if(EmptyString(arg))
 		return;
