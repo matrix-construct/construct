@@ -173,8 +173,6 @@ check_client(struct Client *client_p, struct Client *source_p, const char *usern
 {
 	int i;
 
-	ClearAccess(source_p);
-
 	if((i = verify_access(source_p, username)))
 	{
 		ilog(L_FUSER, "Access denied: %s[%s]", 

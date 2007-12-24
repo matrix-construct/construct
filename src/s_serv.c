@@ -1003,7 +1003,6 @@ server_estab(struct Client *client_p)
 	s_assert(NULL != client_p);
 	if(client_p == NULL)
 		return -1;
-	ClearAccess(client_p);
 
 	host = client_p->name;
 
