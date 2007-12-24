@@ -417,7 +417,6 @@ struct exit_client_hook
 #define FLAGS_SENTUSER     0x0008	/* Client sent a USER command. */
 #define FLAGS_CLOSING      0x0020	/* set when closing to suppress errors */
 #define FLAGS_GOTID        0x0080	/* successful ident lookup achieved */
-#define FLAGS_NEEDID       0x0100	/* I-lines say must use ident return */
 #define FLAGS_NORMALEX     0x0400	/* Client exited normally */
 #define FLAGS_SENDQEX      0x0800	/* Sendq exceeded */
 #define FLAGS_SERVLINK     0x10000	/* servlink has servlink process */
@@ -469,8 +468,6 @@ struct exit_client_hook
 #define DEFAULT_OPER_UMODES (UMODE_SERVNOTICE | UMODE_OPERWALL | \
                              UMODE_WALLOP | UMODE_LOCOPS)
 #define DEFAULT_OPER_SNOMASK SNO_GENERAL
-
-#define FLAGS_ID     (FLAGS_NEEDID | FLAGS_GOTID)
 
 #define CLICAP_MULTI_PREFIX	0x0001
 #define CLICAP_SASL		0x0002
@@ -539,9 +536,6 @@ struct exit_client_hook
 #define IsDeaf(x)		((x)->umodes & UMODE_DEAF)
 #define IsNoForward(x)		((x)->umodes & UMODE_NOFORWARD)
 #define IsSetRegOnlyMsg(x)	((x)->umodes & UMODE_REGONLYMSG)
-
-#define SetNeedId(x)            ((x)->flags |= FLAGS_NEEDID)
-#define IsNeedId(x)             (((x)->flags & FLAGS_NEEDID) != 0)
 
 #define SetGotId(x)             ((x)->flags |= FLAGS_GOTID)
 #define IsGotId(x)              (((x)->flags & FLAGS_GOTID) != 0)
