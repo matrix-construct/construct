@@ -32,8 +32,14 @@
 #include "ircd_defs.h"
 #include "tools.h"
 
+typedef struct _fde fde_t;
+
 /* Callback for completed IO events */
 typedef void PF(int fd, void *);
+
+/* virtual function types for I/O --nenolod */
+typedef int IOFuncRead(fde_t *, void *buf, size_t count);
+typedef int IOFuncWrite(fde_t *, const void *buf, size_t count);
 
 /* Callback for completed connections */
 /* int fd, int status, void * */
@@ -76,8 +82,6 @@ typedef enum fdlist_t
 }
 fdlist_t;
 
-typedef struct _fde fde_t;
-
 
 extern int highest_fd;
 extern int number_fd;
@@ -96,16 +100,24 @@ struct _fde
 	fdlist_t list;		/* Which list this FD should sit on */
 	int comm_index;		/* where in the poll list we live */
 	char desc[FD_DESC_SZ];
+
 	PF *read_handler;
 	void *read_data;
+
 	PF *write_handler;
 	void *write_data;
+
 	PF *timeout_handler;
 	void *timeout_data;
 	time_t timeout;
+
 	PF *flush_handler;
 	void *flush_data;
 	time_t flush_timeout;
+
+	IOFuncRead *read_impl;
+	IOFuncWrite *write_impl;
+
 	struct DNSQuery *dns_query;
 	struct
 	{

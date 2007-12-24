@@ -58,6 +58,26 @@ static void comm_connect_dns_callback(void *vptr, struct DNSReply *reply);
 static PF comm_connect_tryconnect;
 static int comm_max_connections = 0;
 
+static int
+comm_read_raw(fde_t *F, void *buf, size_t count)
+{
+	s_assert(F != NULL);
+	s_assert(buf != NULL);
+	s_assert(count > 0);
+
+	return read(F->fd, buf, count);
+}
+
+static int
+comm_write_raw(fde_t *F, const void *buf, size_t count)
+{
+	s_assert(F != NULL);
+	s_assert(buf != NULL);
+	s_assert(count > 0);
+
+	return write(F->fd, buf, count);
+}
+
 inline fde_t *
 comm_locate_fd(int fd)
 {
@@ -85,8 +105,12 @@ comm_add_fd(int fd)
 	if (F != NULL)
 		return F;
 
-	F = calloc(sizeof(fde_t), 1);
+	F = MyMalloc(sizeof(fde_t));
 	F->fd = fd;
+
+	F->read_impl = comm_read_raw;
+	F->write_impl = comm_write_raw;
+
 	list = &fd_table[fd % FD_HASH_SIZE];
 	dlinkAdd(F, &F->node, list);
 

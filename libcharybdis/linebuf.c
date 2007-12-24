@@ -623,7 +623,7 @@ linebuf_putmsg(buf_head_t * bufhead, const char *format, va_list * va_args,
  */
 
 int
-linebuf_flush(int fd, buf_head_t * bufhead)
+linebuf_flush(fde_t *fd, buf_head_t * bufhead)
 {
 	buf_line_t *bufline;
 	int retval;
@@ -652,7 +652,7 @@ linebuf_flush(int fd, buf_head_t * bufhead)
 	}
 
 	/* Now, try writing data */
-	retval = send(fd, bufline->buf + bufhead->writeofs, bufline->len - bufhead->writeofs, 0);
+	retval = fd->write_impl(fd, bufline->buf + bufhead->writeofs, bufline->len - bufhead->writeofs);
 
 	if(retval <= 0)
 		return retval;

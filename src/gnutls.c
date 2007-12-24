@@ -23,15 +23,8 @@
 
 #ifdef GNUTLS
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <unistd.h>
+#include "stdinc.h"
+#include "config.h"
 #include <gnutls/gnutls.h>
 #include <gcrypt.h> /* for gcry_control */
 
