@@ -931,12 +931,12 @@ check_spambot_warning(struct Client *source_p, const char *name)
 		{
 			/* Its already known as a possible spambot */
 			if(name != NULL)
-				sendto_realops_snomask(SNO_BOTS, L_ALL,
+				sendto_realops_snomask(SNO_BOTS, L_NETWIDE,
 						     "User %s (%s@%s) trying to join %s is a possible spambot",
 						     source_p->name,
 						     source_p->username, source_p->orighost, name);
 			else
-				sendto_realops_snomask(SNO_BOTS, L_ALL,
+				sendto_realops_snomask(SNO_BOTS, L_NETWIDE,
 						     "User %s (%s@%s) is a possible spambot",
 						     source_p->name,
 						     source_p->username, source_p->orighost);
