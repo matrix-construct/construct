@@ -518,19 +518,14 @@ struct exit_client_hook
 				 if (MyClient((x)) && !IsOper((x)) && !IsServer((x))) \
 				  (x)->handler = CLIENT_HANDLER; }
 
-#define IsPrivileged(x)         (IsOper(x) || IsServer(x))
-
 /* umode flags */
 #define IsInvisible(x)          ((x)->umodes & UMODE_INVISIBLE)
 #define SetInvisible(x)         ((x)->umodes |= UMODE_INVISIBLE)
 #define ClearInvisible(x)       ((x)->umodes &= ~UMODE_INVISIBLE)
 #define SendWallops(x)          ((x)->umodes & UMODE_WALLOP)
-#define ClearWallops(x)         ((x)->umodes &= ~UMODE_WALLOP)
 #define SendLocops(x)           ((x)->umodes & UMODE_LOCOPS)
 #define SendServNotice(x)       ((x)->umodes & UMODE_SERVNOTICE)
 #define SendOperwall(x)         ((x)->umodes & UMODE_OPERWALL)
-#define SetWallops(x)           ((x)->umodes |= UMODE_WALLOP)
-#define SetCallerId(x)		((x)->umodes |= UMODE_CALLERID)
 #define IsSetCallerId(x)	((x)->umodes & UMODE_CALLERID)
 #define IsService(x)		((x)->umodes & UMODE_SERVICE)
 #define IsDeaf(x)		((x)->umodes & UMODE_DEAF)
