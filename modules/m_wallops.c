@@ -104,6 +104,13 @@ ms_wallops(struct Client *client_p, struct Client *source_p, int parc, const cha
 {
 	const char *prefix = "";
 
+	if (MyClient(source_p) && !IsOperMassNotice(source_p))
+	{
+		sendto_one(source_p, form_str(ERR_NOPRIVS),
+			   me.name, source_p->name, "mass_notice");
+		return 0;
+	}
+
 	if (IsPerson(source_p))
 	{
 		if (!strncmp(parv[1], "OPERWALL - ", 11) ||

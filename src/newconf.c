@@ -326,6 +326,7 @@ static struct mode_table flag_table[] = {
 	{"oper_spy",		OPER_SPY		},
 	{"hidden_oper",		OPER_INVIS		},
 	{"remoteban",		OPER_REMOTEBAN		},
+	{"mass_notice",		OPER_MASSNOTICE		},
 	{NULL, 0}
 };
 
@@ -466,7 +467,7 @@ conf_begin_oper(struct TopConf *tc)
 	}
 
 	yy_oper = make_oper_conf();
-	yy_oper->flags |= OPER_ENCRYPTED|OPER_RESV|OPER_OPERWALL|OPER_REMOTEBAN;
+	yy_oper->flags |= OPER_ENCRYPTED|OPER_RESV|OPER_OPERWALL|OPER_REMOTEBAN|OPER_MASSNOTICE;
 
 	return 0;
 }
