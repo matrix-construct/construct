@@ -465,13 +465,6 @@ add_connection(listener_t *listener, int fd, struct sockaddr *sai, int exempt)
 
 	strlcpy(new_client->host, new_client->sockhost, sizeof(new_client->host));
 
-#ifdef IPV6
-	if(new_client->localClient->ip.ss_family == AF_INET6 && ConfigFileEntry.dot_in_ip6_addr == 1)
-	{
-		strlcat(new_client->host, ".", sizeof(new_client->host));
-	}
-#endif
-
 	new_client->localClient->fd = fd;
 
 	new_client->localClient->listener = listener;

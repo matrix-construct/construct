@@ -304,11 +304,6 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 		sendto_one_notice(source_p, ":*** Notice -- You have an illegal character in your hostname");
 
 		strlcpy(source_p->host, source_p->sockhost, sizeof(source_p->host));
-
-#ifdef IPV6
-		if(ConfigFileEntry.dot_in_ip6_addr == 1)
-			strlcat(source_p->host, ".", sizeof(source_p->host));
-#endif
  	}
  
 

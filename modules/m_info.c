@@ -171,12 +171,6 @@ static struct InfoStruct info_table[] = {
 		"Controls whether bold etc are disabled for JOIN"
 	},
 	{
-		"dot_in_ip6_addr",
-		OUTPUT_BOOLEAN,
-		&ConfigFileEntry.dot_in_ip6_addr,
-		"Suffix a . to ip6 addresses",
-	},
-	{
 		"dots_in_ident",
 		OUTPUT_DECIMAL,
 		&ConfigFileEntry.dots_in_ident,

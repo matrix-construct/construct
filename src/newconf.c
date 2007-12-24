@@ -2011,7 +2011,6 @@ static struct ConfEntry conf_general_table[] =
 	{ "connect_timeout",	CF_TIME,  NULL, 0, &ConfigFileEntry.connect_timeout	},
 	{ "default_floodcount", CF_INT,   NULL, 0, &ConfigFileEntry.default_floodcount	},
 	{ "disable_auth",	CF_YESNO, NULL, 0, &ConfigFileEntry.disable_auth	},
-	{ "dot_in_ip6_addr",	CF_YESNO, NULL, 0, &ConfigFileEntry.dot_in_ip6_addr	},
 	{ "dots_in_ident",	CF_INT,   NULL, 0, &ConfigFileEntry.dots_in_ident	},
 	{ "failed_oper_notice",	CF_YESNO, NULL, 0, &ConfigFileEntry.failed_oper_notice	},
 	{ "glines",		CF_YESNO, NULL, 0, &ConfigFileEntry.glines		},
