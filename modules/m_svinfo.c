@@ -103,7 +103,7 @@ ms_svinfo(struct Client *client_p, struct Client *source_p, int parc, const char
 
 	if(deltat > ConfigFileEntry.ts_warn_delta)
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
 				     "Link %s notable TS delta"
 				     " (my TS=%ld, their TS=%ld, delta=%d)",
 				     source_p->name, (long) CurrentTime, (long) theirtime, deltat);
