@@ -73,6 +73,15 @@
 	</para>
       </sect2>
       <sect2>
+	<title>mass_notice (M), global notices and wallops</title>
+	<para>
+	  Allows using server name ($$mask) and hostname ($#mask) masks in
+	  NOTICE and PRIVMSG to send a message to all matching users, and
+	  allows using the WALLOPS command to send a message to all users
+	  with umode +w set.
+	</para>
+      </sect2>
+      <sect2>
 	<title>nick_changes (N), see nick changes</title>
 	<para>
 	  Allows using snomask +n to see local client nick changes.

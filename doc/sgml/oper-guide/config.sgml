@@ -520,8 +520,8 @@ operator "<replaceable>name</replaceable>" {
 	    <listitem>
               <para>
 		A listing of privileges granted to operators using this block.
-		By default, the operwall, remoteban and resv privileges are granted;
-		use ~operwall, ~remoteban and ~resv to disable them if necessary.
+		By default, the mass_notice, operwall, remoteban and resv privileges are granted;
+		use ~mass_notice, ~operwall, ~remoteban and ~resv to disable them if necessary.
 	      </para>
 	      <para>
 		In addition, a flag designating if the password is encrypted is here.
