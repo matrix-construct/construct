@@ -2140,8 +2140,6 @@ error_exit_client(struct Client *client_p, int error)
 
 	if(IsServer(client_p) || IsHandshake(client_p))
 	{
-		int connected = CurrentTime - client_p->localClient->firsttime;
-
 		if(error == 0)
 		{
 			sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) && !IsServer(client_p) ? L_NETWIDE : L_ALL,
@@ -2159,13 +2157,6 @@ error_exit_client(struct Client *client_p, int error)
 			ilog(L_SERVER, "Lost connection to %s: %s",
 				log_client_name(client_p, SHOW_IP), strerror(current_error));
 		}
-
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "%s had been connected for %d day%s, %2d:%02d:%02d",
-				     client_p->name, connected / 86400,
-				     (connected / 86400 == 1) ? "" : "s",
-				     (connected % 86400) / 3600,
-				     (connected % 3600) / 60, connected % 60);
 	}
 
 	if(error == 0)
