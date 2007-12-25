@@ -86,7 +86,7 @@ static void handle_remote_unkline(struct Client *source_p,
 			const char *user, const char *host);
 static void remove_permkline_match(struct Client *, struct ConfItem *);
 static int flush_write(struct Client *, FILE *, const char *, const char *);
-static int remove_temp_kline(struct ConfItem *);
+static int remove_temp_kline(struct Client *, struct ConfItem *);
 
 /* mo_kline()
  *
@@ -420,16 +420,8 @@ mo_unkline(struct Client *client_p, struct Client *source_p, int parc, const cha
 		return 0;
 	}
 
-	if(remove_temp_kline(aconf))
-	{
-		sendto_one_notice(source_p, ":Un-klined [%s@%s] from temporary k-lines", user, host);
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "%s has removed the temporary K-Line for: [%s@%s]",
-				     get_oper_name(source_p), user, host);
-		ilog(L_KLINE, "UK %s %s %s",
-			get_oper_name(source_p), user, host);
+	if(remove_temp_kline(source_p, aconf))
 		return 0;
-	}
 
 	remove_permkline_match(source_p, aconf);
 
@@ -487,20 +479,8 @@ handle_remote_unkline(struct Client *source_p, const char *user, const char *hos
 		return;
 	}
 
-	if(remove_temp_kline(aconf))
-	{
-		sendto_one_notice(source_p,
-				":Un-klined [%s@%s] from temporary k-lines",
-				user, host);
-
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				"%s has removed the temporary K-Line for: [%s@%s]",
-				get_oper_name(source_p), user, host);
-
-		ilog(L_KLINE, "UK %s %s %s",
-			get_oper_name(source_p), user, host);
+	if(remove_temp_kline(source_p, aconf))
 		return;
-	}
 
 	remove_permkline_match(source_p, aconf);
 }
@@ -915,7 +895,7 @@ flush_write(struct Client *source_p, FILE * out, const char *buf, const char *te
  * side effects - tries to unkline anything that matches
  */
 static int
-remove_temp_kline(struct ConfItem *aconf)
+remove_temp_kline(struct Client *source_p, struct ConfItem *aconf)
 {
 	dlink_node *ptr;
 	int i;
@@ -926,6 +906,16 @@ remove_temp_kline(struct ConfItem *aconf)
 		{
 			if (aconf == ptr->data)
 			{
+				sendto_one_notice(source_p,
+						":Un-klined [%s@%s] from temporary k-lines",
+						aconf->user, aconf->host);
+				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+						"%s has removed the temporary K-Line for: [%s@%s]",
+						get_oper_name(source_p), aconf->user, aconf->host);
+
+				ilog(L_KLINE, "UK %s %s %s",
+					get_oper_name(source_p),
+					aconf->user, aconf->host);
 				dlinkDestroy(ptr, &temp_klines[i]);
 				remove_reject_mask(aconf->user, aconf->host);
 				delete_one_address_conf(aconf->host, aconf);
