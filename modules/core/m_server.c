@@ -134,7 +134,7 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 		break;
 
 	case -2:
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 				     "Unauthorised server connection attempt from %s: "
 				     "Bad password for server %s",
 				     get_server_name(client_p, HIDE_IP), name);
@@ -203,7 +203,7 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 
 	if(has_id(client_p) && (target_p = find_id(client_p->id)) != NULL)
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 				     "Attempt to re-introduce SID %s from %s%s",
 				     client_p->id,
 				     EmptyString(client_p->name) ? name : "",
