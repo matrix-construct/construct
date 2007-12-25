@@ -54,6 +54,7 @@ SRCS =                          \
   m_omode.c			\
   m_opme.c			\
   m_webirc.c			\
+  no_locops.c			\
   no_oper_invis.c		\
   spy_admin_notice.c		\
   spy_info_notice.c		\
