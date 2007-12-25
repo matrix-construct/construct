@@ -484,7 +484,7 @@ ms_sid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		ilog(L_SERVER, "Link %s cancelled, SID %s already exists",
 			client_p->name, parv[3]);
 
-		exit_client(NULL, client_p, &me, "Server Exists");
+		exit_client(NULL, client_p, &me, "SID Exists");
 		return 0;
 	}
 
