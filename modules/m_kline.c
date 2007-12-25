@@ -693,13 +693,16 @@ valid_comment(struct Client *source_p, char *comment)
 static int
 already_placed_kline(struct Client *source_p, const char *luser, const char *lhost, int tkline)
 {
-	const char *reason;
+	const char *reason, *p;
 	struct irc_sockaddr_storage iphost, *piphost;
 	struct ConfItem *aconf;
-        int t;
-	if(ConfigFileEntry.non_redundant_klines)
+        int t, bits;
+
+	aconf = find_exact_conf_by_address(lhost, CONF_KILL, luser);
+	if (aconf == NULL && ConfigFileEntry.non_redundant_klines)
 	{
-		if((t = parse_netmask(lhost, (struct sockaddr *)&iphost, NULL)) != HM_HOST)
+		bits = 0;
+		if((t = parse_netmask(lhost, (struct sockaddr *)&iphost, &bits)) != HM_HOST)
 		{
 #ifdef IPV6
 			if(t == HM_IPV6)
@@ -713,19 +716,31 @@ already_placed_kline(struct Client *source_p, const char *luser, const char *lho
 		else
 			piphost = NULL;
 
-		if((aconf = find_conf_by_address(lhost, NULL, NULL, (struct sockaddr *)piphost, CONF_KILL, t, luser)))
+		aconf = find_conf_by_address(lhost, NULL, NULL, (struct sockaddr *)piphost, CONF_KILL, t, luser);
+		if (aconf != NULL)
 		{
-			/* setting a tkline, or existing one is perm */
-			if(tkline || ((aconf->flags & CONF_FLAGS_TEMPORARY) == 0))
-			{
-				reason = aconf->passwd ? aconf->passwd : "<No Reason>";
+			/* The above was really a lookup of a single IP,
+			 * so check if the new kline is wider than the
+			 * existing one.
+			 * -- jilles
+			 */
+			p = strchr(aconf->host, '/');
+			if (bits > 0 && (p == NULL || bits < atoi(p + 1)))
+				aconf = NULL;
+		}
+	}
+	if (aconf != NULL)
+	{
+		/* setting a tkline, or existing one is perm */
+		if(tkline || ((aconf->flags & CONF_FLAGS_TEMPORARY) == 0))
+		{
+			reason = aconf->passwd ? aconf->passwd : "<No Reason>";
 
-				sendto_one_notice(source_p,
-						  ":[%s@%s] already K-Lined by [%s@%s] - %s",
-						  luser, lhost, aconf->user,
-						  aconf->host, reason);
-				return 1;
-			}
+			sendto_one_notice(source_p,
+					  ":[%s@%s] already K-Lined by [%s@%s] - %s",
+					  luser, lhost, aconf->user,
+					  aconf->host, reason);
+			return 1;
 		}
 	}
 
