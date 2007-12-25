@@ -102,6 +102,12 @@ struct Ban
 	dlink_node node;
 };
 
+struct mode_letter
+{
+	int mode;
+	char letter;
+};
+
 struct ChModeChange
 {
 	char letter;
@@ -253,6 +259,8 @@ extern void send_cap_mode_changes(struct Client *client_p, struct Client *source
 
 extern void set_channel_mode(struct Client *client_p, struct Client *source_p,
             	struct Channel *chptr, struct membership *msptr, int parc, const char *parv[]);
+
+extern const struct mode_letter chmode_flags[];
 
 extern struct ChannelMode chmode_table[256];
 

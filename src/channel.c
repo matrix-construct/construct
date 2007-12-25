@@ -1084,11 +1084,7 @@ set_channel_topic(struct Channel *chptr, const char *topic, const char *topic_in
 	}
 }
 
-static const struct mode_letter
-{
-	const unsigned int mode;
-	const unsigned char letter;
-} flags[] =
+const struct mode_letter chmode_flags[] =
 {
 	{MODE_INVITEONLY, 'i'},
 	{MODE_MODERATED, 'm'},
@@ -1129,9 +1125,9 @@ channel_modes(struct Channel *chptr, struct Client *client_p)
 	*mbuf++ = '+';
 	*pbuf = '\0';
 
-	for (i = 0; flags[i].mode; ++i)
-		if(chptr->mode.mode & flags[i].mode)
-			*mbuf++ = flags[i].letter;
+	for (i = 0; chmode_flags[i].mode; ++i)
+		if(chptr->mode.mode & chmode_flags[i].mode)
+			*mbuf++ = chmode_flags[i].letter;
 
 	if(chptr->mode.limit)
 	{

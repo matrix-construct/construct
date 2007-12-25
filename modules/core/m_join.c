@@ -584,30 +584,6 @@ check_channel_name_loc(struct Client *source_p, const char *name)
 	return 1;
 }
 
-struct mode_letter
-{
-	int mode;
-	char letter;
-};
-
-static struct mode_letter flags[] = {
-	{MODE_NOPRIVMSGS, 'n'},
-	{MODE_TOPICLIMIT, 't'},
-	{MODE_SECRET, 's'},
-	{MODE_MODERATED, 'm'},
-	{MODE_INVITEONLY, 'i'},
-	{MODE_PRIVATE, 'p'},
-	{MODE_REGONLY, 'r'},
-	{MODE_EXLIMIT, 'L'},
-	{MODE_PERMANENT, 'P'},
-	{MODE_NOCOLOR, 'c'},
-	{MODE_FREEINVITE, 'g'},
-	{MODE_OPMODERATE, 'z'},
-	{MODE_FREETARGET, 'F'},
-	{MODE_DISFORWARD, 'Q'},
-	{0, 0}
-};
-
 static void
 set_final_mode(struct Mode *mode, struct Mode *oldmode)
 {
@@ -617,30 +593,30 @@ set_final_mode(struct Mode *mode, struct Mode *oldmode)
 	int i;
 
 	/* ok, first get a list of modes we need to add */
-	for(i = 0; flags[i].letter; i++)
+	for(i = 0; chmode_flags[i].letter; i++)
 	{
-		if((mode->mode & flags[i].mode) && !(oldmode->mode & flags[i].mode))
+		if((mode->mode & chmode_flags[i].mode) && !(oldmode->mode & chmode_flags[i].mode))
 		{
 			if(dir != MODE_ADD)
 			{
 				*mbuf++ = '+';
 				dir = MODE_ADD;
 			}
-			*mbuf++ = flags[i].letter;
+			*mbuf++ = chmode_flags[i].letter;
 		}
 	}
 
 	/* now the ones we need to remove. */
-	for(i = 0; flags[i].letter; i++)
+	for(i = 0; chmode_flags[i].letter; i++)
 	{
-		if((oldmode->mode & flags[i].mode) && !(mode->mode & flags[i].mode))
+		if((oldmode->mode & chmode_flags[i].mode) && !(mode->mode & chmode_flags[i].mode))
 		{
 			if(dir != MODE_DEL)
 			{
 				*mbuf++ = '-';
 				dir = MODE_DEL;
 			}
-			*mbuf++ = flags[i].letter;
+			*mbuf++ = chmode_flags[i].letter;
 		}
 	}
 
