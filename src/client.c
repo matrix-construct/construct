@@ -304,10 +304,6 @@ check_pings_list(dlink_list * list)
 	{
 		client_p = ptr->data;
 
-		/*
-		 ** Note: No need to notify opers here. It's
-		 ** already done when "FLAGS_DEADSOCKET" is set.
-		 */
 		if(!MyConnect(client_p) || IsDead(client_p))
 			continue;
 
