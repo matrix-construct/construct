@@ -465,7 +465,7 @@ add_connection(listener_t *listener, int fd, struct sockaddr *sai, int exempt)
 
 	strlcpy(new_client->host, new_client->sockhost, sizeof(new_client->host));
 
-	new_client->localClient->fd = fd;
+	new_client->localClient->F = comm_add_fd(fd);
 
 	new_client->localClient->listener = listener;
 	++listener->ref_count;

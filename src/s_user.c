@@ -296,7 +296,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 		del_from_client_hash(source_p->name, source_p);
 		strlcpy(source_p->name, source_p->preClient->spoofnick, NICKLEN + 1);
 		add_to_client_hash(source_p->name, source_p);
-		comm_note(source_p->localClient->fd, "Nick: %s", source_p->name);
+		comm_note(source_p->localClient->F->fd, "Nick: %s", source_p->name);
 	}
 
 	if(!valid_hostname(source_p->host))

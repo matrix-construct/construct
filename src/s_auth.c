@@ -149,8 +149,8 @@ release_auth_client(struct AuthRequest *auth)
 	client->localClient->auth_request = NULL;
 	dlinkDelete(&auth->node, &auth_poll_list);
 	free_auth_request(auth);	
-	if(client->localClient->fd > highest_fd)
-		highest_fd = client->localClient->fd;
+	if(client->localClient->F->fd > highest_fd)
+		highest_fd = client->localClient->F->fd;
 
 	/*
 	 * When a client has auth'ed, we want to start reading what it sends
@@ -158,9 +158,9 @@ release_auth_client(struct AuthRequest *auth)
 	 *     -- adrian
 	 */
 	client->localClient->allow_read = MAX_FLOOD;
-	comm_setflush(client->localClient->fd, 1000, flood_recalc, client);
+	comm_setflush(client->localClient->F->fd, 1000, flood_recalc, client);
 	dlinkAddTail(client, &client->node, &global_client_list);
-	read_packet(client->localClient->fd, client);
+	read_packet(client->localClient->F->fd, client);
 }
 
 /*
@@ -309,7 +309,7 @@ start_auth_query(struct AuthRequest *auth)
 	 * and machines with multiple IP addresses are common now
 	 */
 	memset(&localaddr, 0, locallen);
-	getsockname(auth->client->localClient->fd,
+	getsockname(auth->client->localClient->F->fd,
 		    (struct sockaddr *) &localaddr, &locallen);
 	
 	mangle_mapped_sockaddr((struct sockaddr *)&localaddr);
@@ -492,9 +492,9 @@ auth_connect_callback(int fd, int error, void *data)
 	}
 
 	if(getsockname
-	   (auth->client->localClient->fd, (struct sockaddr *) &us,
+	   (auth->client->localClient->F->fd, (struct sockaddr *) &us,
 	    (socklen_t *) & ulen)
-	   || getpeername(auth->client->localClient->fd,
+	   || getpeername(auth->client->localClient->F->fd,
 			  (struct sockaddr *) &them, (socklen_t *) & tlen))
 	{
 		ilog(L_IOERROR, "auth get{sock,peer}name error for %s:%m",

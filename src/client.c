@@ -162,7 +162,7 @@ make_client(struct Client *from)
 
 		client_p->localClient->lasttime = client_p->localClient->firsttime = CurrentTime;
 
-		client_p->localClient->fd = -1;
+		client_p->localClient->F = NULL;
 		client_p->localClient->ctrlfd = -1;
 
 		client_p->preClient = (struct PreClient *) BlockHeapAlloc(pclient_heap);
@@ -222,8 +222,8 @@ free_local_client(struct Client *client_p)
 		client_p->localClient->listener = 0;
 	}
 
-	if(client_p->localClient->fd >= 0)
-		comm_close(client_p->localClient->fd);
+	if(client_p->localClient->F->fd >= 0)
+		comm_close(client_p->localClient->F->fd);
 
 	if(client_p->localClient->passwd)
 	{
@@ -2101,14 +2101,14 @@ close_connection(struct Client *client_p)
 	else
 		ServerStats->is_ni++;
 
-	if(-1 < client_p->localClient->fd)
+	if(client_p->localClient->F)
 	{
 		/* attempt to flush any pending dbufs. Evil, but .. -- adrian */
 		if(!IsIOError(client_p))
-			send_queued_write(client_p->localClient->fd, client_p);
+			send_queued_write(client_p->localClient->F->fd, client_p);
 
-		comm_close(client_p->localClient->fd);
-		client_p->localClient->fd = -1;
+		comm_close(client_p->localClient->F->fd);
+		client_p->localClient->F = NULL;
 	}
 
 	if(-1 < client_p->localClient->ctrlfd)
@@ -2144,7 +2144,7 @@ error_exit_client(struct Client *client_p, int error)
 	 * for reading even though it ends up being an EOF. -avalon
 	 */
 	char errmsg[255];
-	int current_error = comm_get_sockerr(client_p->localClient->fd);
+	int current_error = comm_get_sockerr(client_p->localClient->F->fd);
 
 	SetIOError(client_p);
 

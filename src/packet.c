@@ -356,13 +356,13 @@ read_packet(int fd, void *data)
 	 * I personally think it makes the code too hairy to make sane.
 	 *     -- adrian
 	 */
-	length = read(client_p->localClient->fd, readBuf, READBUF_SIZE);
+	length = client_p->localClient->F->read_impl(client_p->localClient->F, readBuf, READBUF_SIZE);
 
 	if(length <= 0)
 	{
 		if((length == -1) && ignoreErrno(errno))
 		{
-			comm_setselect(client_p->localClient->fd, FDLIST_IDLECLIENT,
+			comm_setselect(client_p->localClient->F->fd, FDLIST_IDLECLIENT,
 				       COMM_SELECT_READ, read_packet, client_p, 0);
 			return;
 		}
@@ -416,12 +416,12 @@ read_packet(int fd, void *data)
 	/* If we get here, we need to register for another COMM_SELECT_READ */
 	if(PARSE_AS_SERVER(client_p))
 	{
-		comm_setselect(client_p->localClient->fd, FDLIST_SERVER, COMM_SELECT_READ,
+		comm_setselect(client_p->localClient->F->fd, FDLIST_SERVER, COMM_SELECT_READ,
 			      read_packet, client_p, 0);
 	}
 	else
 	{
-		comm_setselect(client_p->localClient->fd, FDLIST_IDLECLIENT,
+		comm_setselect(client_p->localClient->F->fd, FDLIST_IDLECLIENT,
 			       COMM_SELECT_READ, read_packet, client_p, 0);
 	}
 }

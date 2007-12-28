@@ -1063,7 +1063,7 @@ server_estab(struct Client *client_p)
 			   (me.info[0]) ? (me.info) : "IRCers United");
 	}
 
-	if(!comm_set_buffers(client_p->localClient->fd, READBUF_SIZE))
+	if(!comm_set_buffers(client_p->localClient->F->fd, READBUF_SIZE))
 		report_error(SETBUF_ERROR_MSG, 
 			     get_server_name(client_p, SHOW_IP), 
 			     log_client_name(client_p, SHOW_IP), errno);
@@ -1143,11 +1143,11 @@ server_estab(struct Client *client_p)
 		/* we won't overflow FD_DESC_SZ here, as it can hold
 		 * client_p->name + 64
 		 */
-		comm_note(client_p->localClient->fd, "slink data: %s", client_p->name);
+		comm_note(client_p->localClient->F->fd, "slink data: %s", client_p->name);
 		comm_note(client_p->localClient->ctrlfd, "slink ctrl: %s", client_p->name);
 	}
 	else
-		comm_note(client_p->localClient->fd, "Server: %s", client_p->name);
+		comm_note(client_p->localClient->F->fd, "Server: %s", client_p->name);
 
 	/*
 	 ** Old sendto_serv_but_one() call removed because we now
@@ -1371,7 +1371,7 @@ fork_server(struct Client *server)
 		{
 				
 
-			if((i == ctrl_fds[1]) || (i == data_fds[1]) || (i == server->localClient->fd)) 
+			if((i == ctrl_fds[1]) || (i == data_fds[1]) || (i == server->localClient->F->fd)) 
 			{
 				comm_set_nb(i);
 			}
@@ -1386,7 +1386,7 @@ fork_server(struct Client *server)
 
 		ircsnprintf(fd_str[0], sizeof(fd_str[0]), "%d", ctrl_fds[1]);
 		ircsnprintf(fd_str[1], sizeof(fd_str[1]), "%d", data_fds[1]);
-		ircsnprintf(fd_str[2], sizeof(fd_str[2]), "%d", server->localClient->fd);
+		ircsnprintf(fd_str[2], sizeof(fd_str[2]), "%d", server->localClient->F->fd);
 		kid_argv[0] = slink;
 		kid_argv[1] = fd_str[0];
 		kid_argv[2] = fd_str[1];
@@ -1401,7 +1401,7 @@ fork_server(struct Client *server)
 	}
 	else
 	{
-		comm_close(server->localClient->fd);
+		comm_close(server->localClient->F->fd);
 
 		/* close the childs end of the pipes */
 		close(ctrl_fds[1]);
@@ -1409,9 +1409,9 @@ fork_server(struct Client *server)
 		
 		s_assert(server->localClient);
 		server->localClient->ctrlfd = ctrl_fds[0];
-		server->localClient->fd = data_fds[0];
+		server->localClient->F->fd = data_fds[0];
 
-		if(!comm_set_nb(server->localClient->fd))
+		if(!comm_set_nb(server->localClient->F->fd))
 		{
 			report_error(NONB_ERROR_MSG,
 					get_server_name(server, SHOW_IP),
@@ -1428,10 +1428,10 @@ fork_server(struct Client *server)
 		}
 
 		comm_open(server->localClient->ctrlfd, FD_SOCKET, NULL);
-		comm_open(server->localClient->fd, FD_SOCKET, NULL);
+		comm_open(server->localClient->F->fd, FD_SOCKET, NULL);
 
 		read_ctrl_packet(server->localClient->ctrlfd, server);
-		read_packet(server->localClient->fd, server);
+		read_packet(server->localClient->F->fd, server);
 	}
 
 	return 0;
@@ -1517,7 +1517,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	strlcpy(client_p->name, server_p->name, sizeof(client_p->name));
 	strlcpy(client_p->host, server_p->host, sizeof(client_p->host));
 	strlcpy(client_p->sockhost, server_p->host, sizeof(client_p->sockhost));
-	client_p->localClient->fd = fd;
+	client_p->localClient->F->fd = fd;
 
 	/*
 	 * Set up the initial server evilness, ripped straight from
@@ -1525,7 +1525,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	 *   -- adrian
 	 */
 
-	if(!comm_set_buffers(client_p->localClient->fd, READBUF_SIZE))
+	if(!comm_set_buffers(client_p->localClient->F->fd, READBUF_SIZE))
 	{
 		report_error(SETBUF_ERROR_MSG,
 				get_server_name(client_p, SHOW_IP),
@@ -1598,7 +1598,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 #endif
 				(server_p->aftype == AF_INET ? "IPv4" : "?"));
 
-		comm_connect_tcp(client_p->localClient->fd, server_p->host,
+		comm_connect_tcp(client_p->localClient->F->fd, server_p->host,
 				 server_p->port, NULL, 0, serv_connect_callback, 
 				 client_p, server_p->aftype, 
 				 ConfigFileEntry.connect_timeout);
@@ -1614,7 +1614,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 			(server_p->aftype == AF_INET ? "IPv4" : "?"), vhoststr);
 
 
-	comm_connect_tcp(client_p->localClient->fd, server_p->host,
+	comm_connect_tcp(client_p->localClient->F->fd, server_p->host,
 			 server_p->port, (struct sockaddr *) &myipnum,
 			 GET_SS_LEN(myipnum), serv_connect_callback, client_p,
 			 myipnum.ss_family, ConfigFileEntry.connect_timeout);
@@ -1641,7 +1641,7 @@ serv_connect_callback(int fd, int status, void *data)
 
 	/* First, make sure its a real client! */
 	s_assert(client_p != NULL);
-	s_assert(client_p->localClient->fd == fd);
+	s_assert(client_p->localClient->F->fd == fd);
 
 	if(client_p == NULL)
 		return;

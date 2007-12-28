@@ -179,7 +179,7 @@ check_reject(struct Client *client_p)
 		{
 			ServerStats->is_rej++;
 			SetReject(client_p);
-			comm_setselect(client_p->localClient->fd, FDLIST_NONE, COMM_SELECT_WRITE | COMM_SELECT_READ, NULL, NULL, 0);
+			comm_setselect(client_p->localClient->F->fd, FDLIST_NONE, COMM_SELECT_WRITE | COMM_SELECT_READ, NULL, NULL, 0);
 			SetClosing(client_p);
 			dlinkMoveNode(&client_p->localClient->tnode, &unknown_list, &delay_exit);
 			return 1;
@@ -277,7 +277,7 @@ add_unknown_ip(struct Client *client_p)
 	{
 		SetExUnknown(client_p);
 		SetReject(client_p);
-		comm_setselect(client_p->localClient->fd, FDLIST_NONE, COMM_SELECT_WRITE | COMM_SELECT_READ, NULL, NULL, 0);
+		comm_setselect(client_p->localClient->F->fd, FDLIST_NONE, COMM_SELECT_WRITE | COMM_SELECT_READ, NULL, NULL, 0);
 		SetClosing(client_p);
 		dlinkMoveNode(&client_p->localClient->tnode, &unknown_list, &delay_exit);
 		return 1;

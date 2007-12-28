@@ -108,7 +108,7 @@ _send_linebuf(struct Client *to, buf_head_t *linebuf)
 	to->localClient->sendM += 1;
 	me.localClient->sendM += 1;
 	if(linebuf_len(&to->localClient->buf_sendq) > 0)
-		send_queued_write(to->localClient->fd, to);
+		send_queued_write(to->localClient->F->fd, to);
 	return 0;
 }
 
@@ -168,7 +168,7 @@ send_queued_write(int fd, void *data)
 #ifdef USE_IODEBUG_HOOKS
 	hook_data_int hd;
 #endif
-	fde_t *F = comm_locate_fd(to->localClient->fd);
+	fde_t *F = comm_locate_fd(to->localClient->F->fd);
 	if (!F)
 		return;
 

@@ -251,7 +251,7 @@ struct LocalUser
 	char *fullcaps;
 
 	int caps;		/* capabilities bit-field */
-	int fd;			/* >= 0, for local clients */
+	fde_t *F;		/* >= 0, for local clients */
 
 	/* time challenge response is valid for */
 	time_t chal_time;

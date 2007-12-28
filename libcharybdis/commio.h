@@ -203,5 +203,6 @@ extern void mangle_mapped_sockaddr(struct sockaddr *in);
 extern int comm_get_maxconnections(void);
 
 extern fde_t *comm_locate_fd(int fd);
+extern fde_t *comm_add_fd(int fd);
 
 #endif /* INCLUDED_commio_h */
