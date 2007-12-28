@@ -396,6 +396,7 @@ check_unknowns_list(dlink_list * list)
 {
 	dlink_node *ptr, *next_ptr;
 	struct Client *client_p;
+	int timeout;
 
 	DLINK_FOREACH_SAFE(ptr, next_ptr, list->head)
 	{
@@ -409,8 +410,20 @@ check_unknowns_list(dlink_list * list)
 		 * for > 30s, close them.
 		 */
 
-		if((CurrentTime - client_p->localClient->firsttime) > 30)
+		timeout = IsAnyServer(client_p) ? ConfigFileEntry.connect_timeout : 30;
+		if((CurrentTime - client_p->localClient->firsttime) > timeout)
+		{
+			if(IsAnyServer(client_p))
+			{
+				sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
+						     "No response from %s, closing link",
+						     get_server_name(client_p, HIDE_IP));
+				ilog(L_SERVER,
+				     "No response from %s, closing link",
+				     log_client_name(client_p, HIDE_IP));
+			}
 			exit_client(client_p, client_p, &me, "Connection timed out");
+		}
 	}
 }
 
