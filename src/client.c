@@ -339,10 +339,7 @@ check_pings_list(dlink_list * list)
 			}
 		}
 
-		if(!IsRegistered(client_p))
-			ping = ConfigFileEntry.connect_timeout;
-		else
-			ping = get_client_ping(client_p);
+		ping = get_client_ping(client_p);
 
 		if(ping < (CurrentTime - client_p->localClient->lasttime))
 		{
@@ -353,9 +350,9 @@ check_pings_list(dlink_list * list)
 			if(((CurrentTime - client_p->localClient->lasttime) >= (2 * ping)
 			    && (client_p->flags & FLAGS_PINGSENT)))
 			{
-				if(IsAnyServer(client_p))
+				if(IsServer(client_p))
 				{
-					sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) && !IsServer(client_p) ? L_NETWIDE : L_ALL,
+					sendto_realops_snomask(SNO_GENERAL, L_ALL,
 							     "No response from %s, closing link",
 							     get_server_name(client_p, HIDE_IP));
 					ilog(L_SERVER,
