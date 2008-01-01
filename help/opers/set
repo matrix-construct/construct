@@ -10,8 +10,6 @@ SET <option> <value>
                 Note that this variable is used for both
                 channels and clients
   IDENTTIMEOUT- Timeout for requesting ident from a client
-  IDLETIME    - The number of seconds a client can be idle
-                before disconnecting them
   MAX         - Sets the number of max connections
                 to <value>.  (This number cannot exceed
                 HARD_FDLIMIT in config.h)

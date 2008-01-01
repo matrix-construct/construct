@@ -692,8 +692,6 @@ show_iline_prefix(struct Client *sptr, struct ConfItem *aconf, char *name)
 		*prefix_ptr++ = '^';
 	if(IsOper(sptr) && IsConfExemptLimits(aconf))
 		*prefix_ptr++ = '>';
-	if(IsOper(sptr) && IsConfIdlelined(aconf))
-		*prefix_ptr++ = '<';
 	*prefix_ptr = '\0';
 	strncpy(prefix_ptr, name, USERLEN);
 	return (prefix_of_host);

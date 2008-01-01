@@ -459,7 +459,6 @@ struct exit_client_hook
 #define FLAGS2_EXEMPTKLINE      0x01000000
 #define FLAGS2_EXEMPTFLOOD      0x02000000
 #define FLAGS2_NOLIMIT          0x04000000
-#define FLAGS2_IDLE_LINED       0x08000000
 #define FLAGS2_IP_SPOOFING      0x10000000
 #define FLAGS2_EXEMPTSPAMBOT	0x20000000
 #define FLAGS2_EXEMPTSHIDE	0x40000000
@@ -556,9 +555,6 @@ struct exit_client_hook
 #define SetExemptResv(x)	((x)->flags2 |= FLAGS2_EXEMPTRESV)
 #define IsIPSpoof(x)            ((x)->flags2 & FLAGS2_IP_SPOOFING)
 #define SetIPSpoof(x)           ((x)->flags2 |= FLAGS2_IP_SPOOFING)
-
-#define SetIdlelined(x)         ((x)->flags2 |= FLAGS2_IDLE_LINED)
-#define IsIdlelined(x)          ((x)->flags2 & FLAGS2_IDLE_LINED)
 
 /* for local users: flood grace period is over
  * for servers: mentioned in networknotice.c notice

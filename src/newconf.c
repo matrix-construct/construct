@@ -2019,7 +2019,6 @@ static struct ConfEntry conf_general_table[] =
 	{ "gline_min_cidr6",	CF_INT,   NULL, 0, &ConfigFileEntry.gline_min_cidr6	},
 	{ "gline_time",		CF_TIME,  NULL, 0, &ConfigFileEntry.gline_time		},
 	{ "global_snotices",	CF_YESNO, NULL, 0, &ConfigFileEntry.global_snotices	},
-	{ "idletime",		CF_TIME,  NULL, 0, &ConfigFileEntry.idletime		},
 	{ "hide_spoof_ips",	CF_YESNO, NULL, 0, &ConfigFileEntry.hide_spoof_ips	},
 	{ "dline_with_reason",	CF_YESNO, NULL, 0, &ConfigFileEntry.dline_with_reason	},
 	{ "kline_with_reason",	CF_YESNO, NULL, 0, &ConfigFileEntry.kline_with_reason	},

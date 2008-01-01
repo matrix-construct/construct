@@ -286,12 +286,6 @@ static struct InfoStruct info_table[] = {
 		"Server is a hub"
 	},
 	{
-		"idletime",
-		OUTPUT_DECIMAL,
-		&ConfigFileEntry.idletime,
-		"Number of minutes before a client is considered idle"
-	},
-	{
 		"kline_delay",
 		OUTPUT_DECIMAL,
 		&ConfigFileEntry.kline_delay,

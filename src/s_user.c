@@ -835,13 +835,6 @@ report_and_set_user_flags(struct Client *source_p, struct ConfItem *aconf)
 		sendto_one_notice(source_p, "*** You are exempt from user limits. congrats.");
 	}
 
-	/* If this user is exempt from idle time outs */
-	if(IsConfIdlelined(aconf))
-	{
-		SetIdlelined(source_p);
-		sendto_one_notice(source_p, ":*** You are exempt from idle limits. congrats.");
-	}
-
 	if(IsConfExemptFlood(aconf))
 	{
 		SetExemptFlood(source_p);

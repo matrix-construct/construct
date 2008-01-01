@@ -39,8 +39,6 @@ struct SetOptions
 	int maxclients;		/* max clients allowed */
 	int autoconn;		/* autoconn enabled for all servers? */
 
-	int idletime;
-
 	int floodcount;		/* Number of messages in 1 second */
 	int ident_timeout;	/* timeout for identd lookups */
 
