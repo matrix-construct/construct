@@ -37,19 +37,27 @@
 
 /* conf_add_fields()
  * 
- * inputs       - pointer to config item, host/pass/user/operreason fields
+ * inputs       - pointer to config item, host/pass/user/operreason/date fields
  * output       - NONE
  * side effects - update respective fields with pointers
  */
 static void
 conf_add_fields(struct ConfItem *aconf,	const char *host_field,
 		const char *pass_field,	const char *user_field,
-		const char *operreason_field)
+		const char *operreason_field, const char *date_field)
 {
 	if(host_field != NULL)
 		DupString(aconf->host, host_field);
 	if(pass_field != NULL)
-		DupString(aconf->passwd, pass_field);
+	{
+		if(!EmptyString(date_field))
+		{
+			aconf->passwd = MyMalloc(strlen(pass_field) + strlen(date_field) + 4);
+			ircsprintf(aconf->passwd, "%s (%s)", pass_field, date_field);
+		}
+		else
+			DupString(aconf->passwd, pass_field);
+	}
 	if(user_field != NULL)
 		DupString(aconf->user, user_field);
 	if(operreason_field != NULL)
@@ -71,6 +79,7 @@ parse_k_file(FILE * file)
 	char *reason_field = NULL;
 	char *operreason_field = NULL;
 	char *host_field = NULL;
+	char *date_field = NULL;
 	char line[BUFSIZE];
 	char *p;
 
@@ -95,11 +104,12 @@ parse_k_file(FILE * file)
 			continue;
 
 		operreason_field = getfield(NULL);
+		date_field = getfield(NULL);
 
 		aconf = make_conf();
 		aconf->status = CONF_KILL;
 		conf_add_fields(aconf, host_field, reason_field,
-				user_field, operreason_field);
+				user_field, operreason_field, date_field);
 
 		if(aconf->host != NULL)
 			add_conf_by_address(aconf->host, CONF_KILL, aconf->user, aconf);
@@ -120,6 +130,7 @@ parse_d_file(FILE * file)
 	char *reason_field = NULL;
 	char *host_field = NULL;
 	char *operreason_field = NULL;
+	char *date_field = NULL;
 	char line[BUFSIZE];
 	char *p;
 
@@ -140,10 +151,11 @@ parse_d_file(FILE * file)
 			continue;
 
 		operreason_field = getfield(NULL);
+		date_field = getfield(NULL);
 
 		aconf = make_conf();
 		aconf->status = CONF_DLINE;
-		conf_add_fields(aconf, host_field, reason_field, "", operreason_field);
+		conf_add_fields(aconf, host_field, reason_field, "", operreason_field, date_field);
 		conf_add_d_conf(aconf);
 	}
 }
