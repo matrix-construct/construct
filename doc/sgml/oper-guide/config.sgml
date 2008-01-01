@@ -314,13 +314,13 @@ auth {
 	  <varlistentry>
             <term>spoof</term>
             <listitem>
-              <para>An optional fake hostname (or user@host) to apply to users authenticated to this auth{} block.</para>
+              <para>An optional fake hostname (or user@host) to apply to users authenticated to this auth{} block. In STATS i and TESTLINE, an equals sign (=) appears before the user@host and the spoof is shown.</para>
             </listitem>
           </varlistentry>
 	  <varlistentry>
             <term>flags</term>
             <listitem>
-              <para>A list of flags to apply to this auth{} block. They are listed below.</para>
+              <para>A list of flags to apply to this auth{} block. They are listed below. Some of the flags appear as a special character, parenthesized in the list, before the user@host in STATS i and TESTLINE.</para>
             </listitem>
           </varlistentry>
 	  <varlistentry>
@@ -345,25 +345,25 @@ auth {
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>exceed_limit</term>
+	    <term>exceed_limit (&gt;)</term>
 	    <listitem>
 	      <para>Users in this auth{} block can exceed class-wide limitations.</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>dnsbl_exempt</term>
+	    <term>dnsbl_exempt ($)</term>
 	    <listitem>
 	      <para>Users in this auth{} block are exempted from DNS blacklist checks. However, they will still be warned if they are listed.</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>kline_exempt</term>
+	    <term>kline_exempt (^)</term>
 	    <listitem>
 	      <para>Users in this auth{} block are exempted from DNS blacklists, k:lines, g:lines and x:lines, and will not be disconnected because of d:lines.</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>gline_exempt</term>
+	    <term>gline_exempt (_)</term>
 	    <listitem>
 	      <para>Users in this auth{} block are exempted from g:lines.</para>
 	    </listitem>
@@ -394,7 +394,7 @@ auth {
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>flood_exempt</term>
+	    <term>flood_exempt (|)</term>
 	    <listitem>
 	      <para>
                 Users in this auth{} block may send arbitrary amounts of
@@ -405,13 +405,13 @@ auth {
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>no_tilde</term>
+	    <term>no_tilde (-)</term>
 	    <listitem>
 	      <para>Users in this auth{} block will not have a tilde added to their username if they do not run identd.</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>need_ident</term>
+	    <term>need_ident (+)</term>
 	    <listitem>
 	      <para>Users in this auth{} block must have identd, otherwise they will be rejected.</para>
 	    </listitem>
