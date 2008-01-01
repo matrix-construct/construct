@@ -1409,7 +1409,7 @@ fork_server(struct Client *server)
 		
 		s_assert(server->localClient);
 		server->localClient->ctrlfd = ctrl_fds[0];
-		server->localClient->F->fd = data_fds[0];
+		server->localClient->F = comm_add_fd(data_fds[0]);
 
 		if(!comm_set_nb(server->localClient->F->fd))
 		{
@@ -1517,7 +1517,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	strlcpy(client_p->name, server_p->name, sizeof(client_p->name));
 	strlcpy(client_p->host, server_p->host, sizeof(client_p->host));
 	strlcpy(client_p->sockhost, server_p->host, sizeof(client_p->sockhost));
-	client_p->localClient->F->fd = fd;
+	client_p->localClient->F = comm_add_fd(fd);
 
 	/*
 	 * Set up the initial server evilness, ripped straight from
