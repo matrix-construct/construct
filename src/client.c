@@ -222,7 +222,7 @@ free_local_client(struct Client *client_p)
 		client_p->localClient->listener = 0;
 	}
 
-	if(client_p->localClient->F->fd >= 0)
+	if(client_p->localClient->F)
 		comm_close(client_p->localClient->F->fd);
 
 	if(client_p->localClient->passwd)
