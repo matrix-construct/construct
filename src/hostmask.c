@@ -682,11 +682,11 @@ show_iline_prefix(struct Client *sptr, struct ConfItem *aconf, char *name)
 		*prefix_ptr++ = '+';
 	if(IsConfDoSpoofIp(aconf))
 		*prefix_ptr++ = '=';
-	if(MyOper(sptr) && IsConfExemptKline(aconf))
+	if(IsOper(sptr) && IsConfExemptKline(aconf))
 		*prefix_ptr++ = '^';
-	if(MyOper(sptr) && IsConfExemptLimits(aconf))
+	if(IsOper(sptr) && IsConfExemptLimits(aconf))
 		*prefix_ptr++ = '>';
-	if(MyOper(sptr) && IsConfIdlelined(aconf))
+	if(IsOper(sptr) && IsConfIdlelined(aconf))
 		*prefix_ptr++ = '<';
 	*prefix_ptr = '\0';
 	strncpy(prefix_ptr, name, USERLEN);
@@ -713,7 +713,7 @@ report_auth(struct Client *client_p)
 			{
 				aconf = arec->aconf;
 
-				if(!MyOper(client_p) && IsConfDoSpoofIp(aconf))
+				if(!IsOper(client_p) && IsConfDoSpoofIp(aconf))
 					continue;
 
 				get_printable_conf(aconf, &name, &host, &pass, &user, &port,
