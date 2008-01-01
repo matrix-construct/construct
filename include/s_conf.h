@@ -74,7 +74,6 @@ struct ConfItem
 };
 
 #define CONF_ILLEGAL            0x80000000
-#define CONF_QUARANTINED_NICK   0x0001
 #define CONF_CLIENT             0x0002
 #define CONF_KILL               0x0040
 #define CONF_XLINE		0x0080
@@ -82,10 +81,6 @@ struct ConfItem
 #define CONF_RESV_NICK		0x0200
 #define CONF_RESV		(CONF_RESV_CHANNEL | CONF_RESV_NICK)
 
-#define CONF_CLASS              0x0400
-#define CONF_LISTEN_PORT        0x1000
-#define CONF_EXEMPTKLINE        0x4000
-#define CONF_NOLIMIT            0x8000
 #define CONF_GLINE             0x10000
 #define CONF_DLINE             0x20000
 #define CONF_EXEMPTDLINE      0x100000
@@ -96,11 +91,8 @@ struct ConfItem
 
 /* Generic flags... */
 /* access flags... */
-#define CONF_FLAGS_LIMIT_IP             0x00000002
 #define CONF_FLAGS_NO_TILDE             0x00000004
 #define CONF_FLAGS_NEED_IDENTD          0x00000008
-#define CONF_FLAGS_PASS_IDENTD          0x00000010
-#define CONF_FLAGS_NOMATCH_IP           0x00000020
 #define CONF_FLAGS_EXEMPTKLINE          0x00000040
 #define CONF_FLAGS_NOLIMIT              0x00000080
 #define CONF_FLAGS_IDLE_LINED           0x00000100
@@ -126,11 +118,8 @@ struct ConfItem
 
 
 /* Macros for struct ConfItem */
-#define IsLimitIp(x)            ((x)->flags & CONF_FLAGS_LIMIT_IP)
 #define IsNoTilde(x)            ((x)->flags & CONF_FLAGS_NO_TILDE)
 #define IsNeedIdentd(x)         ((x)->flags & CONF_FLAGS_NEED_IDENTD)
-#define IsPassIdentd(x)         ((x)->flags & CONF_FLAGS_PASS_IDENTD)
-#define IsNoMatchIp(x)          ((x)->flags & CONF_FLAGS_NOMATCH_IP)
 #define IsConfExemptKline(x)    ((x)->flags & CONF_FLAGS_EXEMPTKLINE)
 #define IsConfExemptLimits(x)   ((x)->flags & CONF_FLAGS_NOLIMIT)
 #define IsConfExemptGline(x)    ((x)->flags & CONF_FLAGS_EXEMPTGLINE)
