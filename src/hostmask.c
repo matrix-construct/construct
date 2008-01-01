@@ -682,6 +682,12 @@ show_iline_prefix(struct Client *sptr, struct ConfItem *aconf, char *name)
 		*prefix_ptr++ = '+';
 	if(IsConfDoSpoofIp(aconf))
 		*prefix_ptr++ = '=';
+	if(IsOper(sptr) && IsConfExemptFlood(aconf))
+		*prefix_ptr++ = '|';
+	if(IsOper(sptr) && IsConfExemptGline(aconf) && !IsConfExemptKline(aconf))
+		*prefix_ptr++ = '_';
+	if(IsOper(sptr) && IsConfExemptDNSBL(aconf) && !IsConfExemptKline(aconf))
+		*prefix_ptr++ = '$';
 	if(IsOper(sptr) && IsConfExemptKline(aconf))
 		*prefix_ptr++ = '^';
 	if(IsOper(sptr) && IsConfExemptLimits(aconf))
