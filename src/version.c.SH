@@ -65,7 +65,7 @@ const char *infotext[] =
   "Copyright 1988, 1989, 1990, 1991 University of Oulu, Computing Center",
   "Copyright (c) 1996-2001 Hybrid Development Team", 
   "Copyright (c) 2002-2007 ircd-ratbox Development Team",
-  "Copyright (c) 2005-2007 charybdis development team",
+  "Copyright (c) 2005-2008 charybdis development team",
   "",
   "This program is free software; you can redistribute it and/or",
   "modify it under the terms of the GNU General Public License as",
