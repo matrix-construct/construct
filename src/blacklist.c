@@ -2,7 +2,7 @@
  * charybdis: A slightly useful ircd.
  * blacklist.c: Manages DNS blacklist entries and lookups
  *
- * Copyright (C) 2006 charybdis development team
+ * Copyright (C) 2006-2008 charybdis development team
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
