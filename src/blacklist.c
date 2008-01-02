@@ -65,6 +65,7 @@ static struct Blacklist *find_blacklist(char *name)
 static void blacklist_dns_callback(void *vptr, struct DNSReply *reply)
 {
 	struct BlacklistClient *blcptr = (struct BlacklistClient *) vptr;
+	int listed = 0;
 
 	if (blcptr == NULL || blcptr->client_p == NULL)
 		return;
@@ -77,8 +78,15 @@ static void blacklist_dns_callback(void *vptr, struct DNSReply *reply)
 		return;
 	}
 
+	if (reply != NULL)
+	{
+		/* only accept 127.0.0.x as a listing */
+		listed = reply->addr.ss_family == AF_INET &&
+				!memcmp(&((struct sockaddr_in *)&reply->addr)->sin_addr, "\177\0\0", 3);
+	}
+
 	/* they have a blacklist entry for this client */
-	if (reply != NULL && blcptr->client_p->preClient->dnsbl_listed == NULL)
+	if (listed && blcptr->client_p->preClient->dnsbl_listed == NULL)
 	{
 		blcptr->client_p->preClient->dnsbl_listed = blcptr->blacklist;
 		/* reference to blacklist moves from blcptr to client_p->preClient... */
