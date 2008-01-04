@@ -32,6 +32,7 @@ struct Blacklist {
 	char host[HOSTLEN];
 	char reject_reason[IRCD_BUFSIZE];
 	unsigned int hits;
+	time_t lastwarning;
 };
 
 /* A lookup in progress for a particular DNSBL for a particular client */

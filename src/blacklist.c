@@ -81,8 +81,16 @@ static void blacklist_dns_callback(void *vptr, struct DNSReply *reply)
 	if (reply != NULL)
 	{
 		/* only accept 127.0.0.x as a listing */
-		listed = reply->addr.ss_family == AF_INET &&
-				!memcmp(&((struct sockaddr_in *)&reply->addr)->sin_addr, "\177\0\0", 3);
+		if (reply->addr.ss_family == AF_INET &&
+				!memcmp(&((struct sockaddr_in *)&reply->addr)->sin_addr, "\177\0\0", 3))
+			listed = TRUE;
+		else if (blcptr->blacklist->lastwarning + 3600 < CurrentTime)
+		{
+			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+					"Garbage reply from blacklist %s",
+					blcptr->blacklist->host);
+			blcptr->blacklist->lastwarning = CurrentTime;
+		}
 	}
 
 	/* they have a blacklist entry for this client */
@@ -150,6 +158,7 @@ struct Blacklist *new_blacklist(char *name, char *reject_reason)
 		blptr->status &= ~CONF_ILLEGAL;
 	strlcpy(blptr->host, name, HOSTLEN);
 	strlcpy(blptr->reject_reason, reject_reason, IRCD_BUFSIZE);
+	blptr->lastwarning = 0;
 
 	return blptr;
 }
