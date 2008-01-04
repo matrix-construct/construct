@@ -1,24 +1,10 @@
-                            Hybrid INSTALL Document
+                           Charybdis INSTALL Document
 
    $Id: INSTALL 3384 2007-04-03 22:45:04Z jilles $
 
    Copyright (c) 2001 by ircd-hybrid team
    Copyright (c) 2002-2004 ircd-ratbox development team
-
-     ----------------------------------------------------------------------
-
-   +------------------------------------------------------------------------+
-   | Note for those who dont bother reading docs                            |
-   |                                                                        |
-   | Reading INSTALL is now a must, as the old DPATH is now specified when  |
-   | configure is run.                                                      |
-   |                                                                        |
-   | - You now need to ./configure --prefix="/path/to/install/it"           |
-   |                                                                        |
-   |   Important: The old config format WILL NOT WORK. Please see point 6!  |
-   |                                                                        |
-   |   The old kline format WILL NOT WORK. Please see point 7!              |
-   +------------------------------------------------------------------------+
+   Copyright (c) 2005-2008 charybdis development team
 
      ----------------------------------------------------------------------
 
@@ -30,12 +16,9 @@
 
    1. 
 
-       Read the ChangeLog file to find out about the exciting new features in
-       this version. Other good reads are doc/whats-new.txt, BUGS,
-       doc/example.conf, and README.FIRST.
-
-       An example.conf for EFnet is in doc/ with the values "approved" on 12
-       December 2001.
+       Read the NEWS file to find out about the exciting new features in
+       this version. Other good reads are BUGS, doc/example.conf, and
+       README.FIRST.
 
    2. 
 
@@ -82,13 +65,6 @@
 
           * 
 
-            --disable-shared-modules - Disable module support. This option is
-            more secure, but reduces a lot of the flexibility in Hybrid 7.
-            This may need to be used on some systems without a working dl
-            library.
-
-          * 
-
             --disable-assert - Disable some of the debugging code. This
             should be used on all production servers for maximum speed and to
             prevent cores from things that shouldn't normally happen.
@@ -102,34 +78,18 @@
 
           * 
 
-            --with-nicklen - Sets the maximum NICK length. Note that this
-            must be consistant across your entire network.
-
+            --with-nicklen=LENGTH - Sets the maximum NICK length. Note that
+            this must be consistent across your entire network.
    3. 
-
-       Look over the "include/config.h" file. This allows you to change the
-       few remaining hard coded options of how the ircd will operate. Most
-       admins will only have to change a few settings. USE_SYSLOG is the only
-       one that most admins will need to edit.
-
-         Note: Note that you must have permission by the sysadmin to send
-         messages to the system log files.
-
-         All other settings in config.h are not necessary to edit.
-
-   4. 
 
        make should build ircd.
 
+   4. 
+
+       make install will install the server, modules, and tools in the
+       the prefix specified when configure was run.
+
    5. 
-
-       make install will install the server, modules(1), and tools in the
-       path defined in config.h and the prefix specified when configure was
-       run.
-
-       (1) Unless the server was compiled without module support.
-
-   6. 
 
        If you wish to enable the user log, oper log, and failed oper log,
        issue these commands at the shell prompt (in the prefix directory)
@@ -141,7 +101,7 @@
          Note: If you use different names in ircd.conf, you must 'touch' the
          specific names.
 
-   7. 
+   6. 
 
        If you are upgrading from Hybrid 5 or Hybrid 6, the config file has
        changed drastically...
@@ -158,7 +118,7 @@
        EDIT IT! There are still things that need changing in the config,
        including the fact that classes MUST be above auth/connect blocks!
 
-   8. 
+   7. 
 
        If you are upgrading from Hybrid 5 or Hybrid 6, the kline file has
        also changed...
