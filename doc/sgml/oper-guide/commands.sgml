@@ -426,6 +426,9 @@
 	  long in minutes.
 	</para>
 	<para>
+	  All clients matching the D:line will be disconnected from the server immediately.
+	</para>
+	<para>
 	  If a reason is specified, it will be sent to the client when they are disconnected, and,
 	  if dline_reason is enabled,
 	  whenever a connection is attempted which is banned.
@@ -438,7 +441,7 @@
 	  D:lines cannot be set remotely on other servers.
 	</para>
 	<para>
-	  Only exempt{} blocks exempt from D:lines on initial connection.
+	  Only exempt{} blocks exempt from D:lines.
 	  Being a server or having kline_exempt in auth{} does
 	  <emphasis>not</emphasis> exempt (different from K/G/X:lines).
 	</para>
