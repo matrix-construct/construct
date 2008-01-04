@@ -96,18 +96,6 @@
  */
 #undef TS6_ONLY
 
-/* USE_LOGFILE - log errors and such to LPATH
- * If you wish to have the server send 'vital' messages about server
- * to a logfile, define USE_LOGFILE.
- */
-#define USE_LOGFILE
-
-/* CLIENT_FLOOD - client excess flood threshold(in messages)
- * The number of messages that we can receive before we disconnect the
- * remote client...
- */
-#define CLIENT_FLOOD 20
-
 /* HANGONGOODLINK and HANGONRETRYDELAY
  * Often net breaks for a short time and it's useful to try to
  * establishing the same connection again faster than CONNECTFREQUENCY
@@ -133,18 +121,18 @@
  */
 #define RATBOX_SOMAXCONN 25
 
+/* MAX_BUFFER
+ * The amount of fds to reserve for clients exempt from limits
+ * and dns lookups.
+ */
+#define MAX_BUFFER      60
+
 /* ----------------------------------------------------------------
  * STOPSTOPSTOPSTOPSTOPSTOPSTOPSTOPSTOPSTOPSTOPSTOPSTOPSTOPSTOPSTOP
  * ----------------------------------------------------------------
  * The options below this line should NOT be modified.
  * ----------------------------------------------------------------
  */
-
-/* MAX_BUFFER
- * The amount of fds to reserve for clients exempt from limits
- * and dns lookups.
- */
-#define MAX_BUFFER      60
 
 #define CONFIG_RATBOX_LEVEL_2
 
