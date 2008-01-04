@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: config.h.dist 3354 2007-04-03 09:21:31Z nenolod $
+ *  $Id: config.h 3354 2007-04-03 09:21:31Z nenolod $
  */
 
 #ifndef INCLUDED_config_h
@@ -50,26 +50,28 @@
 /* dirs */
 #define DPATH   IRCD_PREFIX
 #define BINPATH IRCD_PREFIX "/bin/"
-#define MODPATH IRCD_PREFIX "/modules/"
-#define AUTOMODPATH IRCD_PREFIX "/modules/autoload/"
-#define ETCPATH IRCD_PREFIX "/etc"
-#define LOGPATH IRCD_PREFIX "/logs"
-#define UHPATH   IRCD_PREFIX "/help/users"
-#define HPATH  IRCD_PREFIX "/help/opers"
+#define LIBPATH IRCD_PREFIX "/lib/"
+#define MODPATH MODULE_DIR
+#define AUTOMODPATH MODULE_DIR "/autoload/"
+#define ETCPATH ETC_DIR 
+#define LOGPATH LOG_DIR
+#define UHPATH   HELP_DIR "/users"
+#define HPATH  HELP_DIR "/opers"
 
 /* files */
-#define SPATH    BINPATH "/ircd"	/* ircd executable */
-#define SLPATH   BINPATH "/servlink"	/* servlink executable */
-#define CPATH    ETCPATH "/ircd.conf"	/* ircd.conf file */
-#define KPATH    ETCPATH "/kline.conf"	/* kline file */
-#define DLPATH   ETCPATH "/dline.conf"	/* dline file */
-#define XPATH	 ETCPATH "/xline.conf"	/* xline file */
-#define RESVPATH ETCPATH "/resv.conf"	/* resv file */
-#define RPATH    ETCPATH "/ircd.rsa"	/* ircd rsa private keyfile */
-#define MPATH    ETCPATH "/ircd.motd"	/* MOTD file */
-#define LPATH    LOGPATH "/ircd.log"	/* ircd logfile */
-#define PPATH    ETCPATH "/ircd.pid"	/* pid file */
-#define OPATH    ETCPATH "/opers.motd"	/* oper MOTD file */
+#define SPATH    BINPATH "/ircd"		   /* ircd executable */
+#define LIPATH   LIBPATH "/libircd" SHARED_SUFFIX  /* ircd library */
+#define SLPATH   BINPATH "/servlink"		   /* servlink executable */
+#define CPATH    ETCPATH "/ircd.conf"		   /* ircd.conf file */
+#define KPATH    ETCPATH "/kline.conf"		   /* kline file */
+#define DLPATH   ETCPATH "/dline.conf"		   /* dline file */
+#define XPATH	 ETCPATH "/xline.conf"		   /* xline file */
+#define RESVPATH ETCPATH "/resv.conf"		   /* resv file */
+#define RPATH    ETCPATH "/ircd.rsa"		   /* ircd rsa private keyfile */
+#define MPATH    ETCPATH "/ircd.motd"		   /* MOTD file */
+#define LPATH    LOGPATH "/ircd.log"		   /* ircd logfile */
+#define PPATH    ETCPATH "/ircd.pid"		   /* pid file */
+#define OPATH    ETCPATH "/opers.motd"		   /* oper MOTD file */
 
 /* IGNORE_BOGUS_TS
  * Ignore bogus timestamps from other servers. Yes this will desync
@@ -81,10 +83,8 @@
 
 /* HIDE_SERVERS_IPS
  *
- * If this is undefined, everybody can see a servers ip.  This includes
- * nonopers if flatten links is not enabled.
- *
- * If this is defined, nobody can see a servers ip.
+ * If this is undefined, anyone can see a servers ip.  If it is defined,
+ * noone can.
  */
 #define  HIDE_SERVERS_IPS
 
@@ -108,20 +108,7 @@
  */
 #define CLIENT_FLOOD 20
 
-/* NICKNAMEHISTORYLENGTH - size of WHOWAS array
- * this defines the length of the nickname history.  each time a user changes
- * nickname or signs off, their old nickname is added to the top of the list.
- * NOTE: this is directly related to the amount of memory ircd will use whilst
- *       resident and running - it hardly ever gets swapped to disk!  Memory
- *       will be preallocated for the entire whowas array when ircd is started.
- */
-#ifndef SMALL_NET
-#define NICKNAMEHISTORYLENGTH 15000
-#else
-#define NICKNAMEHISTORYLENGTH 1500
-#endif
-
-/* HANGONGOODLINK and HANGONGOODLINK
+/* HANGONGOODLINK and HANGONRETRYDELAY
  * Often net breaks for a short time and it's useful to try to
  * establishing the same connection again faster than CONNECTFREQUENCY
  * would allow. But, to keep trying on bad connection, we require
