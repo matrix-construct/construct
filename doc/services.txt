@@ -1,9 +1,9 @@
 ratbox-services compatibility documentation - Lee H <lee -at- leeh.co.uk>
 -------------------------------------------------------------------------
 
-Compatibility with ratbox-services can be enabled by passing the
-'--enable-services' flag to configure.  It will add the following features
-to ircd:
+Compatibility with ratbox-services is always enabled.  Note that some or
+all of this is also used by atheme-services and anope.  It will add the
+following features to ircd:
 
 1. Channel mode +r
 
