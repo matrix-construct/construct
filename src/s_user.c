@@ -1077,7 +1077,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 
 	if(MyClient(source_p) && (source_p->snomask & SNO_NCHANGE) && !IsOperN(source_p))
 	{
-		sendto_one_notice(source_p, ":*** You need oper and N flag for +s +n");
+		sendto_one_notice(source_p, ":*** You need oper and nick_changes flag for +s +n");
 		source_p->snomask &= ~SNO_NCHANGE;	/* only tcm's really need this */
 	}
 
@@ -1090,7 +1090,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 	if(MyConnect(source_p) && (source_p->umodes & UMODE_ADMIN) &&
 	   (!IsOperAdmin(source_p) || IsOperHiddenAdmin(source_p)))
 	{
-		sendto_one_notice(source_p, ":*** You need oper and A flag for +a");
+		sendto_one_notice(source_p, ":*** You need oper and admin flag for +a");
 		source_p->umodes &= ~UMODE_ADMIN;
 	}
 
