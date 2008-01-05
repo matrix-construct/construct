@@ -263,7 +263,7 @@ stats_delay(struct Client *source_p)
 
 	DICTIONARY_FOREACH(nd, &iter, nd_dict)
 	{
-		sendto_one_notice(source_p, "Delaying: %s for %ld",
+		sendto_one_notice(source_p, ":Delaying: %s for %ld",
 				nd->name, (long) nd->expire);
 	}
 }
