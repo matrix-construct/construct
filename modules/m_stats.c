@@ -637,8 +637,8 @@ stats_tklines(struct Client *source_p)
 		get_printable_kline(source_p, aconf, &host, &pass, &user, &oper_reason);
 
 		sendto_one_numeric(source_p, RPL_STATSKLINE, 
-				   form_str(RPL_STATSKLINE), 'k',
-				   user, pass, oper_reason ? "|" : "",
+				   form_str(RPL_STATSKLINE), aconf->flags & CONF_FLAGS_TEMPORARY ? 'k' : 'K',
+				   host, user, pass, oper_reason ? "|" : "",
 				   oper_reason ? oper_reason : "");
 	}
 	/* Theyre opered, or allowed to see all klines */
@@ -696,14 +696,11 @@ stats_klines(struct Client *source_p)
 		if(aconf == NULL)
 			return;
 
-		/* dont report a tkline as a kline */
-		if(aconf->flags & CONF_FLAGS_TEMPORARY)
-			return;
-
 		get_printable_kline(source_p, aconf, &host, &pass, &user, &oper_reason);
 
 		sendto_one_numeric(source_p, RPL_STATSKLINE, form_str(RPL_STATSKLINE),
-				   'K', host, user, pass, oper_reason ? "|" : "",
+				   aconf->flags & CONF_FLAGS_TEMPORARY ? 'k' : 'K',
+				   host, user, pass, oper_reason ? "|" : "",
 				   oper_reason ? oper_reason : "");
 	}
 	/* Theyre opered, or allowed to see all klines */
