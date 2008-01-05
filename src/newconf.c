@@ -307,7 +307,7 @@ static struct mode_table umode_table[] = {
 	{NULL, 0}
 };
 
-static struct mode_table flag_table[] = {
+static struct mode_table oper_table[] = {
 	{"encrypted",		OPER_ENCRYPTED		},
 	{"local_kill",		OPER_LOCKILL		},
 	{"global_kill",		OPER_GLOBKILL|OPER_LOCKILL	},
@@ -566,7 +566,7 @@ conf_set_oper_flags(void *data)
 {
 	conf_parm_t *args = data;
 
-	set_modes_from_table(&yy_oper->flags, "flag", flag_table, args);
+	set_modes_from_table(&yy_oper->flags, "flag", oper_table, args);
 }
 
 static void
