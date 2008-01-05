@@ -54,6 +54,7 @@ SRCS =                          \
   m_okick.c			\
   m_omode.c			\
   m_opme.c			\
+  m_privs.c			\
   m_webirc.c			\
   no_locops.c			\
   no_oper_invis.c		\
