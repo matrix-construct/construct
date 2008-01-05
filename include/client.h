@@ -458,7 +458,6 @@ struct exit_client_hook
 #define FLAGS2_EXEMPTGLINE      0x00800000
 #define FLAGS2_EXEMPTKLINE      0x01000000
 #define FLAGS2_EXEMPTFLOOD      0x02000000
-#define FLAGS2_NOLIMIT          0x04000000
 #define FLAGS2_IP_SPOOFING      0x10000000
 #define FLAGS2_EXEMPTSPAMBOT	0x20000000
 #define FLAGS2_EXEMPTSHIDE	0x40000000
@@ -539,8 +538,6 @@ struct exit_client_hook
  */
 #define IsExemptKline(x)        ((x)->flags2 & FLAGS2_EXEMPTKLINE)
 #define SetExemptKline(x)       ((x)->flags2 |= FLAGS2_EXEMPTKLINE)
-#define IsExemptLimits(x)       ((x)->flags2 & FLAGS2_NOLIMIT)
-#define SetExemptLimits(x)      ((x)->flags2 |= FLAGS2_NOLIMIT)
 #define IsExemptGline(x)        ((x)->flags2 & FLAGS2_EXEMPTGLINE)
 #define SetExemptGline(x)       ((x)->flags2 |= FLAGS2_EXEMPTGLINE)
 #define IsExemptFlood(x)        ((x)->flags2 & FLAGS2_EXEMPTFLOOD)

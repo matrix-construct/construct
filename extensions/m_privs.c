@@ -91,7 +91,6 @@ static struct mode_table auth_client_table[] = {
 	{"gline_exempt",	FLAGS2_EXEMPTGLINE	},
 	{"kline_exempt",	FLAGS2_EXEMPTKLINE	},
 	{"flood_exempt",	FLAGS2_EXEMPTFLOOD	},
-	/*{"exceed_limit",	FLAGS2_NOLIMIT		}, no effect (?) */
 	{"spambot_exempt",	FLAGS2_EXEMPTSPAMBOT	},
 	{"shide_exempt",	FLAGS2_EXEMPTSHIDE	},
 	{"jupe_exempt",		FLAGS2_EXEMPTJUPE	},

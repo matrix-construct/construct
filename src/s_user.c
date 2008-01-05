@@ -398,7 +398,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 	 */
 	/* Except "F:" clients */
 	if(dlink_list_length(&lclient_list) >=
-	    (unsigned long)GlobalSetOptions.maxclients && !IsExemptLimits(source_p))
+	    (unsigned long)GlobalSetOptions.maxclients && !IsConfExemptLimits(aconf))
 	{
 		sendto_realops_snomask(SNO_FULL, L_ALL,
 				     "Too many clients, rejecting %s[%s].", source_p->name, source_p->host);
@@ -831,7 +831,6 @@ report_and_set_user_flags(struct Client *source_p, struct ConfItem *aconf)
 	/* If this user is exempt from user limits set it F lined" */
 	if(IsConfExemptLimits(aconf))
 	{
-		SetExemptLimits(source_p);
 		sendto_one_notice(source_p, ":*** You are exempt from user limits. congrats.");
 	}
 
