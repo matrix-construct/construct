@@ -120,7 +120,8 @@ static void show_privs(struct Client *source_p, struct Client *target_p)
 	{
 		if (buf[0] != '\0')
 			strlcat(buf, " ", sizeof buf);
-		strlcat(buf, "O", sizeof buf);
+		strlcat(buf, "operator:", sizeof buf);
+		strlcat(buf, target_p->localClient->opername, sizeof buf);
 	}
 	p = &auth_client_table[0];
 	while (p->name != NULL)
