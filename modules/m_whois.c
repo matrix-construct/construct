@@ -231,7 +231,6 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 {
 	char buf[BUFSIZE];
 	dlink_node *ptr;
-	struct Client *a2client_p;
 	struct membership *msptr;
 	struct Channel *chptr;
 	int cur_len = 0;
@@ -254,8 +253,6 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 		s_assert(0);
 		return;
 	}
-
-	a2client_p = target_p->servptr;
 
 	sendto_one_numeric(source_p, RPL_WHOISUSER, form_str(RPL_WHOISUSER),
 			   target_p->name, target_p->username, 
@@ -313,7 +310,7 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 
 	sendto_one_numeric(source_p, RPL_WHOISSERVER, form_str(RPL_WHOISSERVER),
 			   target_p->name, target_p->servptr->name,
-			   a2client_p ? a2client_p->info : "*Not On This Net*");
+			   target_p->servptr->info);
 
 	if(target_p->user->away)
 		sendto_one_numeric(source_p, RPL_AWAY, form_str(RPL_AWAY),
