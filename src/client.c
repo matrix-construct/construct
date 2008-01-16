@@ -1502,6 +1502,7 @@ qs_server(struct Client *client_p, struct Client *source_p, struct Client *from,
 
 	del_from_client_hash(source_p->name, source_p);
 	remove_client_from_list(source_p);  
+	scache_split(source_p->serv->nameinfo);
 	
 	SetDead(source_p);
 	dlinkAddAlloc(source_p, &dead_list);	
