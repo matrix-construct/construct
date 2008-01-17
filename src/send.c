@@ -124,30 +124,7 @@ send_linebuf_remote(struct Client *to, struct Client *from, buf_head_t *linebuf)
 	if(to->from)
 		to = to->from;
 
-	/* test for fake direction */
-	if(!MyClient(from) && IsPerson(to) && (to == from->from))
-	{
-		if(IsServer(from))
-		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
-					     "Send message to %s[%s] dropped from %s(Fake Dir)",
-					     to->name, to->from->name, from->name);
-			return;
-		}
-
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "Ghosted: %s[%s@%s] from %s[%s@%s] (%s)",
-				     to->name, to->username, to->host,
-				     from->name, from->username, from->host, to->from->name);
-		kill_client_serv_butone(NULL, to, "%s (%s[%s@%s] Ghosted %s)",
-					me.name, to->name, to->username,
-					to->host, to->from->name);
-
-		to->flags |= FLAGS_KILLED;
-
-		exit_client(NULL, to, &me, "Ghosted client");
-		return;
-	}
+	/* we assume the caller has already tested for fake direction */
 
 	_send_linebuf(to, linebuf);
 	return;
