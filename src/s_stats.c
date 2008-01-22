@@ -180,7 +180,6 @@ count_memory(struct Client *source_p)
 	int channel_invex = 0;
 	int channel_quiets = 0;
 
-	size_t wwu = 0;		/* whowas users */
 	int class_count = 0;	/* classes */
 	int conf_count = 0;	/* conf lines */
 	int users_invited_count = 0;	/* users invited */
@@ -195,6 +194,7 @@ count_memory(struct Client *source_p)
 	size_t channel_quiet_memory = 0;
 
 	size_t away_memory = 0;	/* memory used by aways */
+	size_t ww = 0;		/* whowas array count */
 	size_t wwm = 0;		/* whowas array memory used */
 	size_t conf_memory = 0;	/* memory used by conf lines */
 	size_t mem_servers_cached;	/* memory used by scache */
@@ -213,7 +213,7 @@ count_memory(struct Client *source_p)
 
 	size_t total_memory = 0;
 
-	count_whowas_memory(&wwu, &wwm);
+	count_whowas_memory(&ww, &wwm);
 
 	DLINK_FOREACH(ptr, global_client_list.head)
 	{
@@ -334,14 +334,10 @@ count_memory(struct Client *source_p)
 		channel_users * sizeof(dlink_node) + channel_invites * sizeof(dlink_node);
 
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			   "z :Whowas users %ld(%ld)",
-			   (long)wwu, (long) (wwu * sizeof(struct User)));
+			   "z :Whowas array %ld(%ld)",
+			   (long)ww, (long)wwm);
 
-	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			   "z :Whowas array %u(%d)",
-			   NICKNAMEHISTORYLENGTH, (int) wwm);
-
-	totww = wwu * sizeof(struct User) + wwm;
+	totww = wwm;
 
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			   "z :Hash: client %u(%ld) chan %u(%ld)",
