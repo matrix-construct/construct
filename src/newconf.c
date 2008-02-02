@@ -1108,6 +1108,7 @@ conf_begin_connect(struct TopConf *tc)
 
 	yy_server = make_server_conf();
 	yy_server->port = PORTNUM;
+	yy_server->flags |= SERVER_TB;
 
 	if(conf_cur_block_name != NULL)
 		DupString(yy_server->name, conf_cur_block_name);
