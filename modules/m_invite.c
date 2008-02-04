@@ -68,7 +68,11 @@ m_invite(struct Client *client_p, struct Client *source_p, int parc, const char 
 	if(MyClient(source_p) && !IsFloodDone(source_p))
 		flood_endgrace(source_p);
 
-	if((target_p = find_person(parv[1])) == NULL)
+	if(MyClient(source_p))
+		target_p = find_named_person(parv[1]);
+	else
+		target_p = find_person(parv[1]);
+	if(target_p == NULL)
 	{
 		if(!MyClient(source_p) && IsDigit(parv[1][0]))
 			sendto_one_numeric(source_p, ERR_NOSUCHNICK, 
