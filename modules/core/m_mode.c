@@ -205,10 +205,6 @@ ms_tmode(struct Client *client_p, struct Client *source_p, int parc, const char 
 	{
 		msptr = find_channel_membership(chptr, source_p);
 
-		/* this can still happen on a mixed ts network. */
-		if(is_deop(msptr))
-			return 0;
-
 		set_channel_mode(client_p, source_p, chptr, msptr, parc - 3, parv + 3);
 	}
 
