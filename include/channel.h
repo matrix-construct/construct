@@ -147,7 +147,6 @@ typedef int (*ExtbanFunc)(const char *data, struct Client *client_p,
 #define CHFL_PEON		0x0000	/* normal member of channel */
 #define CHFL_CHANOP     	0x0001	/* Channel operator */
 #define CHFL_VOICE      	0x0002	/* the power to speak */
-#define CHFL_DEOPPED    	0x0004	/* deopped on sjoin, bounce modes */
 #define CHFL_BANNED		0x0008  /* cached as banned */
 #define CHFL_QUIETED		0x0010  /* cached as being +q victim */
 #define ONLY_SERVERS		0x0020
@@ -158,7 +157,6 @@ typedef int (*ExtbanFunc)(const char *data, struct Client *client_p,
 #define is_chanop(x)	((x) && (x)->flags & CHFL_CHANOP)
 #define is_voiced(x)	((x) && (x)->flags & CHFL_VOICE)
 #define is_chanop_voiced(x) ((x) && (x)->flags & (CHFL_CHANOP|CHFL_VOICE))
-#define is_deop(x)	((x) && (x)->flags & CHFL_DEOPPED)
 #define can_send_banned(x) ((x) && (x)->flags & (CHFL_BANNED|CHFL_QUIETED))
 
 /* channel modes ONLY */

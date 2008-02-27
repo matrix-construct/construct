@@ -738,7 +738,6 @@ chm_op(struct Client *source_p, struct Channel *chptr,
 		mode_changes[mode_count++].client = targ_p;
 
 		mstptr->flags |= CHFL_CHANOP;
-		mstptr->flags &= ~CHFL_DEOPPED;
 	}
 	else
 	{

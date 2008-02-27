@@ -463,12 +463,7 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 		len_uid += len;
 
 		if(!keep_new_modes)
-		{
-			if(fl & CHFL_CHANOP)
-				fl = CHFL_DEOPPED;
-			else
-				fl = 0;
-		}
+			fl = 0;
 
 		if(!IsMember(target_p, chptr))
 		{

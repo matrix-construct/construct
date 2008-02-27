@@ -136,9 +136,6 @@ m_mode(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	{
 		msptr = find_channel_membership(chptr, source_p);
 
-		if(is_deop(msptr))
-			return 0;
-
 		/* Finish the flood grace period... */
 		if(MyClient(source_p) && !IsFloodDone(source_p))
 		{
