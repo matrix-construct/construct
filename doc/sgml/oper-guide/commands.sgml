@@ -940,8 +940,9 @@
 	      <para>
 		Show hostname and link information about the given nick.
 		With a server name, show information about opers and servers
-		on that server; opers also get information about all local users
-		if they query their own server.
+		on that server; opers get information about all local
+		connections if they query their own server.
+		No hostname is shown for server connections.
 	      </para>
 	    </listitem>
 	  </varlistentry>
@@ -960,7 +961,7 @@
 	  <varlistentry>
 	    <term>n</term>
 	    <listitem>
-	      <para>Show blacklist blocks (DNS blacklists) with hit counts.</para>
+	      <para>Show blacklist blocks (DNS blacklists) with hit counts since last rehash and (parenthesized) reference counts. The reference count shows how many clients are waiting on a lookup of this blacklist or have been found and are waiting on registration to complete.</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
@@ -978,19 +979,19 @@
 	  <varlistentry>
 	    <term>P</term>
 	    <listitem>
-	      <para>Show listen blocks</para>
+	      <para>Show listen blocks (ports)</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
 	    <term>q</term>
 	    <listitem>
-	      <para>Show temporarily resv'ed nicks and channels</para>
+	      <para>Show temporarily resv'ed nicks and channels with hit counts</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
 	    <term>Q</term>
 	    <listitem>
-	      <para>Show permanently resv'ed nicks and channels</para>
+	      <para>Show permanently resv'ed nicks and channels with hit counts since last rehash bans</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
@@ -1002,7 +1003,7 @@
 	  <varlistentry>
 	    <term>t</term>
 	    <listitem>
-	      <para>Show generic server statistics</para>
+	      <para>Show generic server statistics about local connections</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
@@ -1026,13 +1027,13 @@
 	  <varlistentry>
 	    <term>x</term>
 	    <listitem>
-	      <para>Show temporary X:lines</para>
+	      <para>Show temporary X:lines with hit counts</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
 	    <term>X</term>
 	    <listitem>
-	      <para>Show permanent X:lines</para>
+	      <para>Show permanent X:lines with hit counts since last rehash bans</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
@@ -1056,7 +1057,7 @@
 	  <varlistentry>
 	    <term>?</term>
 	    <listitem>
-	      <para>Show connected servers and sendq information about them</para>
+	      <para>Show connected servers and link information about them</para>
 	    </listitem>
 	  </varlistentry>
 	</variablelist>
