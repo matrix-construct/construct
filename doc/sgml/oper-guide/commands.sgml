@@ -925,13 +925,13 @@
 	  <varlistentry>
 	    <term>k</term>
 	    <listitem>
-	      <para>Show temporary K:lines, or matched temporary K:lines</para>
+	      <para>Show temporary K:lines, or matched K:lines</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
 	    <term>K</term>
 	    <listitem>
-	      <para>Show permanent K:lines, or matched permanent K:lines</para>
+	      <para>Show permanent K:lines, or matched K:lines</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
