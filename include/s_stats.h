@@ -71,6 +71,7 @@ struct ServerStatistics
 	unsigned int is_rej;	/* rejected from cache */
 	unsigned int is_ssuc;	/* successful sasl authentications */
 	unsigned int is_sbad;	/* failed sasl authentications */
+	unsigned int is_tgch;	/* messages blocked due to target change */
 };
 
 extern struct ServerStatistics *ServerStats;

@@ -44,6 +44,7 @@
 #include "event.h"
 #include "patricia.h"
 #include "s_newconf.h"
+#include "s_stats.h"
 
 static int m_message(int, const char *, struct Client *, struct Client *, int, const char **);
 static int m_privmsg(struct Client *, struct Client *, int, const char **);
@@ -609,6 +610,7 @@ add_target(struct Client *source_p, struct Client *target_p)
 		/* cant clear any, full target list */
 		else if(USED_TARGETS(source_p) == 10)
 		{
+			ServerStats->is_tgch++;
 			add_tgchange(source_p->sockhost);
 			return 0;
 		}
