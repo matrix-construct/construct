@@ -659,6 +659,7 @@ connect "<replaceable>name</replaceable>" {
 	    <term>topicburst</term>
 	    <listitem>
 	      <para>Topics should be bursted to this server.</para>
+	      <para>This is enabled by default.</para>
 	    </listitem>
 	  </varlistentry>
 	</variablelist>
