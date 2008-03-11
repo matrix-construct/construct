@@ -211,10 +211,11 @@ isupport_chanmodes(void *ptr)
 {
 	static char result[80];
 
-	ircsnprintf(result, sizeof result, "%s%sbq,k,%slj,imnpstrcgzLP%s",
+	ircsnprintf(result, sizeof result, "%s%sbq,k,%slj,imnpst%scgzLP%s",
 			ConfigChannel.use_except ? "e" : "",
 			ConfigChannel.use_invex ? "I" : "",
 			ConfigChannel.use_forward ? "f" : "",
+			dlink_list_length(&service_list) ? "r" : "",
 			ConfigChannel.use_forward ? "QF" : "");
 	return result;
 }
