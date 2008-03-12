@@ -66,6 +66,11 @@ build:
 		echo "Doing so now."; \
 		sh configure; \
 	fi
+	@if [ -d .hg ] ; then \
+		revh=`hg parents --template '#date|shortdate#_#node|short#' 2>/dev/null | sed -e s/-//g -e s/_/-/`;\
+		[ -z "$$revh" ] || echo '#define SERNO "'$$revh'"' >include/serno.h ; \
+	fi
+	@[ -f include/serno.h ] || echo '#define SERNO "unknown"' >include/serno.h
 	@for i in $(SUBDIRS); do \
 		echo "build ==> $$i";\
 		cd $$i;\
@@ -94,6 +99,7 @@ distclean:
 	done
 
 depend:
+	@[ -f include/serno.h ] || echo '#define SERNO "unknown"' >include/serno.h
 	@for i in $(SUBDIRS); do \
 		echo "depend ==> $$i";\
 		cd $$i;\
