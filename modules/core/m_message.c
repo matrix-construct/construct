@@ -566,6 +566,7 @@ static int
 add_target(struct Client *source_p, struct Client *target_p)
 {
 	int i, j;
+	uint32_t hashv;
 
 	/* can msg themselves or services without using any target slots */
 	if(source_p == target_p || IsService(target_p))
@@ -579,13 +580,15 @@ add_target(struct Client *source_p, struct Client *target_p)
 	if(source_p->localClient->target_last > CurrentTime && IsOper(target_p))
 		return 1;
 
+	hashv = fnv_hash_upper(use_id(target_p), 32);
+
 	if(USED_TARGETS(source_p))
 	{
 		/* hunt for an existing target */
 		for(i = PREV_FREE_TARGET(source_p), j = USED_TARGETS(source_p);
 		    j; --j, PREV_TARGET(i))
 		{
-			if(source_p->localClient->targets[i] == target_p)
+			if(source_p->localClient->targets[i] == hashv)
 				return 1;
 		}
 
@@ -624,7 +627,7 @@ add_target(struct Client *source_p, struct Client *target_p)
 		SetTGChange(source_p);
 	}
 
-	source_p->localClient->targets[FREE_TARGET(source_p)] = target_p;
+	source_p->localClient->targets[FREE_TARGET(source_p)] = hashv;
 	NEXT_TARGET(FREE_TARGET(source_p));
 	++USED_TARGETS(source_p);
 	return 1;

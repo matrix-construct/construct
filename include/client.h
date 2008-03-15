@@ -290,7 +290,7 @@ struct LocalUser
 	auth_request_t	*auth_request;
 
 	/* target change stuff */
-	void *targets[10];		/* targets were aware of */
+	uint32_t targets[10];		/* targets were aware of (fnv32(use_id(target_p))) */
 	unsigned int targinfo[2];	/* cyclic array, no in use */
 	time_t target_last;		/* last time we cleared a slot */
 

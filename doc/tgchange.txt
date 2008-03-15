@@ -11,8 +11,8 @@ yourself.
 
 You will have a set number of 'slots', each different client you message
 will take up one slot.  A client doing a nick change will not use a new slot,
-however a client leaving the network and reconnecting will.  You will
-receive 1 new slot roughly every minute.
+however a client disconnecting from the server it is on and reconnecting
+will.  You will receive 1 new slot roughly every minute.
 
 When all slots are filled, messages to new clients will not be accepted.
 Messages to clients already filling a slot will be accepted.  If all slots
