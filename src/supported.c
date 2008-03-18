@@ -87,19 +87,20 @@
 #include "numeric.h"
 #include "ircd.h"
 #include "s_conf.h"
+#include "supported.h"
 
 dlink_list isupportlist;
 
 struct isupportitem
 {
 	const char *name;
-	const char *(*func)(void *);
-	void *param;
+	const char *(*func)(const void *);
+	const void *param;
 	dlink_node node;
 };
 
 void
-add_isupport(const char *name, const char *(*func)(void *), void *param)
+add_isupport(const char *name, const char *(*func)(const void *), const void *param)
 {
 	struct isupportitem *item;
 
@@ -137,7 +138,7 @@ show_isupport(struct Client *client_p)
 	const char *value;
 	char buf[512];
 	int extra_space;
-	int nchars, nparams;
+	unsigned int nchars, nparams;
 	int l;
 
 	extra_space = strlen(client_p->name);
@@ -177,37 +178,35 @@ show_isupport(struct Client *client_p)
 }
 
 const char *
-isupport_intptr(void *ptr)
+isupport_intptr(const void *ptr)
 {
 	static char buf[15];
-
-	ircsnprintf(buf, sizeof buf, "%d", *(int *)ptr);
+	ircsnprintf(buf, sizeof buf, "%d", *(const int *)ptr);
 	return buf;
 }
 
 const char *
-isupport_boolean(void *ptr)
+isupport_boolean(const void *ptr)
 {
 
-	return *(int *)ptr ? "" : NULL;
+	return *(const int *)ptr ? "" : NULL;
 }
 
 const char *
-isupport_string(void *ptr)
+isupport_string(const void *ptr)
 {
 
 	return (const char *)ptr;
 }
 
 const char *
-isupport_stringptr(void *ptr)
+isupport_stringptr(const void *ptr)
 {
-
-	return *(const char **)ptr;
+	return *(char * const *)ptr;	
 }
 
-const char *
-isupport_chanmodes(void *ptr)
+static const char *
+isupport_chanmodes(const void *ptr)
 {
 	static char result[80];
 
@@ -220,8 +219,8 @@ isupport_chanmodes(void *ptr)
 	return result;
 }
 
-const char *
-isupport_chanlimit(void *ptr)
+static const char *
+isupport_chanlimit(const void *ptr)
 {
 	static char result[30];
 
@@ -229,8 +228,8 @@ isupport_chanlimit(void *ptr)
 	return result;
 }
 
-const char *
-isupport_maxlist(void *ptr)
+static const char *
+isupport_maxlist(const void *ptr)
 {
 	static char result[30];
 
@@ -241,8 +240,8 @@ isupport_maxlist(void *ptr)
 	return result;
 }
 
-const char *
-isupport_targmax(void *ptr)
+static const char *
+isupport_targmax(const void *ptr)
 {
 	static char result[200];
 
@@ -252,8 +251,8 @@ isupport_targmax(void *ptr)
 	return result;
 }
 
-const char *
-isupport_extban(void *ptr)
+static const char *
+isupport_extban(const void *ptr)
 {
 	const char *p;
 	static char result[200];
