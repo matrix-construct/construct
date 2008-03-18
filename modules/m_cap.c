@@ -467,7 +467,8 @@ m_cap(struct Client *client_p, struct Client *source_p, int parc, const char *pa
 				sizeof(struct clicap_cmd), (bqcmp) clicap_cmd_search)))
 	{
 		sendto_one(source_p, form_str(ERR_INVALIDCAPCMD),
-				me.name, source_p->name, parv[1]);
+				me.name, EmptyString(source_p->name) ? "*" : source_p->name,
+				parv[1]);
 		return 0;
 	}
 
