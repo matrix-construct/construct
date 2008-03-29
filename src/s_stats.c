@@ -140,7 +140,7 @@ tstats(struct Client *source_p)
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			   "T :numerics seen %u", sp->is_num);
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			   "T :tgchange blocked msgs %u restricted addrs %u",
+			   "T :tgchange blocked msgs %u restricted addrs %lu",
 			   sp->is_tgch, dlink_list_length(&tgchange_list));
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			   "T :auth successes %u fails %u",
