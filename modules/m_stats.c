@@ -226,11 +226,16 @@ m_stats(struct Client *client_p, struct Client *source_p, int parc, const char *
 			/* Called for remote clients and for local opers, so check need_admin
 			 * and need_oper
 			 */
-			if((stats_cmd_table[i].need_admin && !IsOperAdmin (source_p)) ||
-			   (stats_cmd_table[i].need_oper && !IsOper (source_p)))
+			if(stats_cmd_table[i].need_oper && !IsOper(source_p))
 			{
 				sendto_one_numeric(source_p, ERR_NOPRIVILEGES,
 						   form_str (ERR_NOPRIVILEGES));
+				break;
+			}
+			if(stats_cmd_table[i].need_admin && !IsOperAdmin(source_p))
+			{
+				sendto_one(source_p, form_str(ERR_NOPRIVS),
+					   me.name, source_p->name, "admin");
 				break;
 			}
 
