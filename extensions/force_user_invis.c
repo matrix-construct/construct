@@ -3,6 +3,7 @@
  *
  * Based off no_oper_invis.c by jilles
  *
+ * Note that +i must be included in default_umodes
  */
 
 #include "stdinc.h"
