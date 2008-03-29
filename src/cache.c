@@ -53,7 +53,8 @@ struct cachefile *user_motd = NULL;
 struct cachefile *oper_motd = NULL;
 char user_motd_changed[MAX_DATE_STRING];
 
-struct Dictionary *help_dict = NULL;
+struct Dictionary *help_dict_oper = NULL;
+struct Dictionary *help_dict_user = NULL;
 
 /* init_cache()
  *
@@ -72,7 +73,8 @@ init_cache(void)
 	user_motd = cache_file(MPATH, "ircd.motd", 0);
 	oper_motd = cache_file(OPATH, "opers.motd", 0);
 
-	help_dict = irc_dictionary_create(strcasecmp);
+	help_dict_oper = irc_dictionary_create(strcasecmp);
+	help_dict_user = irc_dictionary_create(strcasecmp);
 }
 
 /* cache_file()
@@ -173,17 +175,17 @@ load_help(void)
 	struct cachefile *cacheptr;
 	struct DictionaryIter iter;
 
-#if defined(S_ISLNK) && defined(HAVE_LSTAT)
-	struct stat sb;
-#endif
-
-	DICTIONARY_FOREACH(cacheptr, &iter, help_dict)
+	DICTIONARY_FOREACH(cacheptr, &iter, help_dict_oper)
 	{
-		irc_dictionary_delete(help_dict, cacheptr->name);
+		irc_dictionary_delete(help_dict_oper, cacheptr->name);
+		free_cachefile(cacheptr);
+	}
+	DICTIONARY_FOREACH(cacheptr, &iter, help_dict_user)
+	{
+		irc_dictionary_delete(help_dict_user, cacheptr->name);
 		free_cachefile(cacheptr);
 	}
 
-	/* opers must be done first */
 	helpfile_dir = opendir(HPATH);
 
 	if(helpfile_dir == NULL)
@@ -193,7 +195,7 @@ load_help(void)
 	{
 		ircsnprintf(filename, sizeof(filename), "%s/%s", HPATH, ldirent->d_name);
 		cacheptr = cache_file(filename, ldirent->d_name, HELP_OPER);
-		irc_dictionary_add(help_dict, cacheptr->name, cacheptr);
+		irc_dictionary_add(help_dict_oper, cacheptr->name, cacheptr);
 	}
 
 	closedir(helpfile_dir);
@@ -206,27 +208,8 @@ load_help(void)
 	{
 		ircsnprintf(filename, sizeof(filename), "%s/%s", UHPATH, ldirent->d_name);
 
-#if defined(S_ISLNK) && defined(HAVE_LSTAT)
-		if(lstat(filename, &sb) < 0)
-			continue;
-
-		/* ok, if its a symlink, we work on the presumption if an
-		 * oper help exists of that name, its a symlink to that --fl
-		 */
-		if(S_ISLNK(sb.st_mode))
-		{
-			cacheptr = irc_dictionary_retrieve(help_dict, ldirent->d_name);
-
-			if(cacheptr != NULL && cacheptr->flags & HELP_OPER)  /* is this really needed? --nenolod */
-			{
-				cacheptr->flags |= HELP_USER;
-				continue;
-			}
-		}
-#endif
-
 		cacheptr = cache_file(filename, ldirent->d_name, HELP_USER);
-		irc_dictionary_add(help_dict, cacheptr->name, cacheptr);
+		irc_dictionary_add(help_dict_user, cacheptr->name, cacheptr);
 	}
 
 	closedir(helpfile_dir);

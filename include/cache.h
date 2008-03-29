@@ -44,7 +44,8 @@ extern void send_user_motd(struct Client *);
 extern void send_oper_motd(struct Client *);
 
 struct Dictionary;
-extern struct Dictionary *help_dict;
+extern struct Dictionary *help_dict_oper;
+extern struct Dictionary *help_dict_user;
 
 #endif
 
