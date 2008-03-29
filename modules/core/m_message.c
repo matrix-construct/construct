@@ -580,7 +580,7 @@ add_target(struct Client *source_p, struct Client *target_p)
 	if(source_p->localClient->target_last > CurrentTime && IsOper(target_p))
 		return 1;
 
-	hashv = fnv_hash_upper(use_id(target_p), 32);
+	hashv = fnv_hash_upper((const unsigned char *)use_id(target_p), 32);
 
 	if(USED_TARGETS(source_p))
 	{
