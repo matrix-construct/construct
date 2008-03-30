@@ -240,7 +240,8 @@ mo_chghost(struct Client *client_p, struct Client *source_p,
 		NOCAPS, CAP_TS6, ":%s ENCAP * CHGHOST %s :%s",
 		source_p->name, target_p->name, parv[2]);
 #else
-	sendto_one_notice(source_p, ":CHGHOST is disabled");
+	sendto_one_numeric(source_p, ERR_DISABLED, form_str(ERR_DISABLED),
+			"CHGHOST");
 #endif
 
 	return 0;

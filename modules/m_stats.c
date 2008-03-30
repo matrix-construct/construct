@@ -424,8 +424,8 @@ stats_exempt(struct Client *source_p)
 
 	if(ConfigFileEntry.stats_e_disabled)
 	{
-		sendto_one_numeric(source_p, ERR_NOPRIVILEGES,
-				   form_str (ERR_NOPRIVILEGES));
+		sendto_one_numeric(source_p, ERR_DISABLED,
+				   form_str(ERR_DISABLED), "STATS e");
 		return;
 	}
 
