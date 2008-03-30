@@ -301,6 +301,8 @@ extern const char *form_str(int);
  */
 #define ERR_WRONGPONG	     513
 
+#define ERR_DISABLED         517 /* from ircu */
+
 #define ERR_HELPNOTFOUND     524
 
 #define RPL_MODLIST          702

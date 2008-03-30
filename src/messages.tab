@@ -538,7 +538,7 @@ static  const char *  replies[] = {
 /* 514 */	NULL,
 /* 515 */	NULL,
 /* 516 */	NULL,
-/* 517 */	NULL,
+/* 517 ERR_DISABLED */		"%s :This command has been administratively disabled",
 /* 518 */	NULL,
 /* 519 */	NULL,
 /* 520 */	NULL,
