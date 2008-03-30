@@ -15,7 +15,10 @@
       <firstname>William</firstname>
       <surname>Pitcock</surname>
     </author>
-    <address><email>nenolod@nenolod.net</email></address>
+    <author>
+      <firstname>Jilles</firstname>
+      <surname>Tjoelker</surname>
+    </author>
     <copyright>
       <year>2005-2008</year>
       <holder>William Pitcock and Jilles Tjoelker</holder>
