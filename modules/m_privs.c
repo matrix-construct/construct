@@ -40,8 +40,6 @@
 #include "s_conf.h"
 #include "s_newconf.h"
 
-#define RPL_PRIVS 270 /* from ircu */
-
 static int me_privs(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static int mo_privs(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
@@ -134,7 +132,8 @@ static void show_privs(struct Client *source_p, struct Client *target_p)
 		}
 		p++;
 	}
-	sendto_one_numeric(source_p, RPL_PRIVS, "%s :%s", target_p->name, buf);
+	sendto_one_numeric(source_p, RPL_PRIVS, form_str(RPL_PRIVS),
+			target_p->name, buf);
 }
 
 static int me_privs(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])

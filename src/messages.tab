@@ -291,7 +291,7 @@ static  const char *  replies[] = {
 /* 267 */       NULL,
 /* 268 */       NULL,
 /* 269 */       NULL,
-/* 270 */       NULL,
+/* 270 RPL_PRIVS, */            "%s :%s",
 /* 271 */       NULL,
 /* 272 */       NULL,
 /* 273 */       NULL,

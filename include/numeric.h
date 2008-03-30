@@ -118,6 +118,8 @@ extern const char *form_str(int);
 #define RPL_LOCALUSERS       265
 #define RPL_GLOBALUSERS      266
 
+#define RPL_PRIVS            270 /* from ircu */
+
 #define RPL_ACCEPTLIST	     281
 #define RPL_ENDOFACCEPT      282
 
