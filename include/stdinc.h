@@ -23,7 +23,7 @@
  *
  */
 
-
+#include "ratbox_lib.h"
 #include "config.h"		/* Gotta pull in the autoconf stuff */
 
 /* AIX requires this to be the first thing in the file.  */

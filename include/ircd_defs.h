@@ -169,17 +169,4 @@
 #define PATRICIA_BITS	32
 #endif
 
-#ifdef SOCKADDR_IN_HAS_LEN
-#define SET_SS_LEN(x, y) (x).ss_len = (y)
-#define GET_SS_LEN(x) x.ss_len
-#else
-#define SET_SS_LEN(x, y)
-#ifdef IPV6
-#define GET_SS_LEN(x) x.ss_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6)
-#else
-#define GET_SS_LEN(x) sizeof(struct sockaddr_in)
-#endif
-#endif
-
-
 #endif /* INCLUDED_ircd_defs_h */

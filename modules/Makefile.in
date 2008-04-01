@@ -32,7 +32,7 @@ moduledir       = @moduledir@
 # Change this later! -- adrian
 automoduledir   = @moduledir@/autoload
 
-INCLUDES	= -I../include -I../libcharybdis -I../adns $(SSL_INCLUDES)
+INCLUDES	= -I../include -I../libcharybdis -I../libratbox/include $(SSL_INCLUDES)
 CPPFLAGS	= ${INCLUDES} @CPPFLAGS@
 
 CORE_SRCS = \
