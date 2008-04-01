@@ -70,71 +70,46 @@ DECLARE_MODULE_AV1(away, NULL, NULL, away_clist, NULL, NULL, "$Revision: 3370 $"
 static int
 m_away(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	char *away;
-	char *awy2;
-
 	if(MyClient(source_p) && !IsFloodDone(source_p))
 		flood_endgrace(source_p);
 
 	if(!IsClient(source_p))
 		return 0;
 
-	away = source_p->user->away;
-
 	if(parc < 2 || EmptyString(parv[1]))
 	{
 		/* Marking as not away */
-		if(away)
+		if(source_p->user->away != NULL)
 		{
 			/* we now send this only if they were away before --is */
 			sendto_server(client_p, NULL, CAP_TS6, NOCAPS,
 				      ":%s AWAY", use_id(source_p));
 			sendto_server(client_p, NULL, NOCAPS, CAP_TS6, 
 				      ":%s AWAY", source_p->name);
-			rb_free(away);
-			source_p->user->away = NULL;
+			free_away(source_p);
 		}
 		if(MyConnect(source_p))
-			sendto_one_numeric(source_p, RPL_UNAWAY, form_str(RPL_UNAWAY));
+			sendto_one(source_p, form_str(RPL_UNAWAY),
+				   me.name, source_p->name);
 		return 0;
 	}
 
-	/* Marking as away */
 
-	if(MyConnect(source_p))
+	if(source_p->user->away == NULL)
 	{
-		if(!IsOper(source_p) &&
-		   (CurrentTime - source_p->localClient->last_away) < ConfigFileEntry.pace_wait)
-		{
-			sendto_one(source_p, form_str(RPL_LOAD2HI), 
-				   me.name, source_p->name, "AWAY");
-			return 0;
-		}
-
-		source_p->localClient->last_away = CurrentTime;
-	}
-
-	awy2 = LOCAL_COPY(parv[1]);
-	if(strlen(awy2) > AWAYLEN)
-		awy2[AWAYLEN] = '\0';
-
-	/* we now send this only if they weren't away already --is */
-	if(!away)
-	{
+		allocate_away(source_p);
+		rb_strlcpy(source_p->user->away, parv[1], AWAYLEN);
 		sendto_server(client_p, NULL, CAP_TS6, NOCAPS, 
-			      ":%s AWAY :%s", use_id(source_p), awy2);
+			      ":%s AWAY :%s", use_id(source_p), source_p->user->away);
 		sendto_server(client_p, NULL, NOCAPS, CAP_TS6,
-			      ":%s AWAY :%s", source_p->name, awy2);
+			      ":%s AWAY :%s", source_p->name, source_p->user->away);
+			
+	} else {
+		rb_strlcpy(source_p->user->away, parv[1], AWAYLEN);
 	}
-	else
-		rb_free(away);
-
-	DupString(away, awy2);
-
-	source_p->user->away = away;
-
+	
 	if(MyConnect(source_p))
-		sendto_one_numeric(source_p, RPL_NOWAWAY, form_str(RPL_NOWAWAY));
+		sendto_one(source_p, form_str(RPL_NOWAWAY), me.name, source_p->name);
 
 	return 0;
 }
