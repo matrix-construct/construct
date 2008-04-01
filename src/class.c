@@ -38,7 +38,6 @@
 #include "send.h"
 #include "irc_string.h"
 #include "memory.h"
-#include "patricia.h"
 
 #define BAD_CONF_CLASS          -1
 #define BAD_PING                -2
@@ -59,7 +58,7 @@ make_class(void)
 	MaxUsers(tmp) = 1;
 	MaxSendq(tmp) = DEFAULT_SENDQ;
 
-	tmp->ip_limits = New_Patricia(PATRICIA_BITS);
+	tmp->ip_limits = rb_new_patricia(PATRICIA_BITS);
 	return tmp;
 }
 
@@ -67,7 +66,7 @@ void
 free_class(struct Class *tmp)
 {
 	if(tmp->ip_limits)
-		Destroy_Patricia(tmp->ip_limits, NULL);
+		rb_destroy_patricia(tmp->ip_limits, NULL);
 
 	MyFree(tmp->class_name);
 	MyFree(tmp);
