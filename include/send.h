@@ -38,6 +38,8 @@ struct monitor;
 /* The nasty global also used in s_serv.c for server bursts */
 extern unsigned long current_serial;
 
+extern void send_pop_queue(struct Client *);
+
 extern void send_queued(struct Client *to);
 
 extern void send_queued_slink_write(int fd, void *data);
