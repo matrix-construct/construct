@@ -105,7 +105,7 @@ static void	free_cur_list(conf_parm_t* list)
 	{
 		case CF_STRING:
 		case CF_QSTRING:
-			MyFree(list->v.string);
+			rb_free(list->v.string);
 			break;
 		case CF_LIST:
 			free_cur_list(list->v.list);

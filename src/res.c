@@ -172,12 +172,12 @@ static int res_ourserver(const struct irc_sockaddr_storage *inp)
 static time_t timeout_query_list(time_t now)
 {
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 	struct reslist *request;
 	time_t next_time = 0;
 	time_t timeout = 0;
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, request_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, request_list.head)
 	{
 		request = ptr->data;
 		timeout = request->sentat + request->timeout;
@@ -287,8 +287,8 @@ void add_local_domain(char *hname, size_t size)
 static void rem_request(struct reslist *request)
 {
 	rb_dlinkDelete(&request->node, &request_list);
-	MyFree(request->name);
-	MyFree(request);
+	rb_free(request->name);
+	rb_free(request);
 }
 
 /*
@@ -317,10 +317,10 @@ static struct reslist *make_request(struct DNSQuery *query)
 void delete_resolver_queries(const struct DNSQuery *query)
 {
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 	struct reslist *request;
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, request_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, request_list.head)
 	{
 		if ((request = ptr->data) != NULL)
 		{
@@ -831,7 +831,7 @@ static void res_readreply(int fd, void *data)
 			 */
 			reply = make_dnsreply(request);
 			(*request->query->callback) (request->query->ptr, reply);
-			MyFree(reply);
+			rb_free(reply);
 			rem_request(request);
 		}
 	}

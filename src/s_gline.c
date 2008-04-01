@@ -154,9 +154,9 @@ expire_pending_glines()
 		    CurrentTime) || find_is_glined(glp_ptr->host, glp_ptr->user))
 
 		{
-			MyFree(glp_ptr->reason1);
-			MyFree(glp_ptr->reason2);
-			MyFree(glp_ptr);
+			rb_free(glp_ptr->reason1);
+			rb_free(glp_ptr->reason2);
+			rb_free(glp_ptr);
 			rb_dlinkDestroy(pending_node, &pending_glines);
 		}
 	}

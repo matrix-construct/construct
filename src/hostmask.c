@@ -578,7 +578,7 @@ delete_one_address_conf(const char *address, struct ConfItem *aconf)
 			aconf->status |= CONF_ILLEGAL;
 			if(!aconf->clients)
 				free_conf(aconf);
-			MyFree(arec);
+			rb_free(arec);
 			return;
 		}
 		arecl = arec;
@@ -618,7 +618,7 @@ clear_out_address_conf(void)
 				arec->aconf->status |= CONF_ILLEGAL;
 				if(!arec->aconf->clients)
 					free_conf(arec->aconf);
-				MyFree(arec);
+				rb_free(arec);
 			}
 		}
 		*store_next = NULL;
@@ -651,7 +651,7 @@ clear_out_address_conf_bans(void)
 				arec->aconf->status |= CONF_ILLEGAL;
 				if(!arec->aconf->clients)
 					free_conf(arec->aconf);
-				MyFree(arec);
+				rb_free(arec);
 			}
 		}
 		*store_next = NULL;

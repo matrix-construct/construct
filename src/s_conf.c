@@ -139,12 +139,12 @@ free_conf(struct ConfItem *aconf)
 	if(aconf->spasswd)
 		memset(aconf->spasswd, 0, strlen(aconf->spasswd));
 
-	MyFree(aconf->passwd);
-	MyFree(aconf->spasswd);
-	MyFree(aconf->name);
-	MyFree(aconf->className);
-	MyFree(aconf->user);
-	MyFree(aconf->host);
+	rb_free(aconf->passwd);
+	rb_free(aconf->spasswd);
+	rb_free(aconf->name);
+	rb_free(aconf->className);
+	rb_free(aconf->user);
+	rb_free(aconf->host);
 
 	BlockHeapFree(confitem_heap, aconf);
 }
@@ -1005,10 +1005,10 @@ static void
 expire_temp_kd(void *list)
 {
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 	struct ConfItem *aconf;
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, ((rb_dlink_list *) list)->head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, ((rb_dlink_list *) list)->head)
 	{
 		aconf = ptr->data;
 
@@ -1031,9 +1031,9 @@ static void
 reorganise_temp_kd(void *list)
 {
 	struct ConfItem *aconf;
-	rb_dlink_node *ptr, *rb_free(;
+	rb_dlink_node *ptr, *next_ptr;
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, ((rb_dlink_list *) list)->head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, ((rb_dlink_list *) list)->head)
 	{
 		aconf = ptr->data;
 
@@ -1193,9 +1193,9 @@ free_alias_cb(struct DictionaryElement *ptr, void *unused)
 {
 	struct alias_entry *aptr = ptr->data;
 
-	MyFree(aptr->name);
-	MyFree(aptr->target);
-	MyFree(aptr);
+	rb_free(aptr->name);
+	rb_free(aptr->target);
+	rb_free(aptr);
 }
 
 /*
@@ -1210,7 +1210,7 @@ clear_out_old_conf(void)
 {
 	struct Class *cltmp;
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 
 	/*
 	 * don't delete the class table, rather mark all entries
@@ -1233,19 +1233,19 @@ clear_out_old_conf(void)
 #endif
 
 	/* clean out ServerInfo */
-	MyFree(ServerInfo.description);
+	rb_free(ServerInfo.description);
 	ServerInfo.description = NULL;
-	MyFree(ServerInfo.network_name);
+	rb_free(ServerInfo.network_name);
 	ServerInfo.network_name = NULL;
-	MyFree(ServerInfo.network_desc);
+	rb_free(ServerInfo.network_desc);
 	ServerInfo.network_desc = NULL;
 
 	/* clean out AdminInfo */
-	MyFree(AdminInfo.name);
+	rb_free(AdminInfo.name);
 	AdminInfo.name = NULL;
-	MyFree(AdminInfo.email);
+	rb_free(AdminInfo.email);
 	AdminInfo.email = NULL;
-	MyFree(AdminInfo.description);
+	rb_free(AdminInfo.description);
 	AdminInfo.description = NULL;
 
 	/* operator{} and class{} blocks are freed above */
@@ -1257,12 +1257,12 @@ clear_out_old_conf(void)
 	 */
 
 	/* clean out general */
-	MyFree(ConfigFileEntry.servlink_path);
+	rb_free(ConfigFileEntry.servlink_path);
 	ConfigFileEntry.servlink_path = NULL;
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, service_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, service_list.head)
 	{
-		MyFree(ptr->data);
+		rb_free(ptr->data);
 		rb_dlinkDestroy(ptr, &service_list);
 	}
 
@@ -1460,7 +1460,7 @@ conf_add_class_to_conf(struct ConfItem *aconf)
 					     aconf->className, aconf->user, aconf->host);
 		}
 
-		MyFree(aconf->className);
+		rb_free(aconf->className);
 		DupString(aconf->className, "default");
 		return;
 	}
@@ -1468,7 +1468,7 @@ conf_add_class_to_conf(struct ConfItem *aconf)
 	if(ConfMaxUsers(aconf) < 0)
 	{
 		ClassPtr(aconf) = default_class;
-		MyFree(aconf->className);
+		rb_free(aconf->className);
 		DupString(aconf->className, "default");
 		return;
 	}

@@ -66,8 +66,8 @@ free_class(struct Class *tmp)
 	if(tmp->ip_limits)
 		rb_destroy_patricia(tmp->ip_limits, NULL);
 
-	MyFree(tmp->class_name);
-	MyFree(tmp);
+	rb_free(tmp->class_name);
+	rb_free(tmp);
 
 }
 
@@ -246,9 +246,9 @@ check_class()
 {
 	struct Class *cltmp;
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, class_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, class_list.head)
 	{
 		cltmp = ptr->data;
 

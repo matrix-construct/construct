@@ -73,7 +73,7 @@ mr_user(struct Client *client_p, struct Client *source_p, int parc, const char *
 		*p = '\0';
 
 	rb_snprintf(buf, sizeof(buf), "%s %s", parv[2], parv[3]);
-	MyFree(source_p->localClient->fullcaps);
+	rb_free(source_p->localClient->fullcaps);
 	DupString(source_p->localClient->fullcaps, buf);
 
 	do_local_user(client_p, source_p, parv[1], parv[4]);

@@ -283,7 +283,7 @@ static void safelist_client_release(struct Client *client_p)
 
 	rb_dlinkFindDestroy(client_p, &safelisting_clients);
 
-	MyFree(client_p->localClient->safelist_data);
+	rb_free(client_p->localClient->safelist_data);
 
 	client_p->localClient->safelist_data = NULL;
 

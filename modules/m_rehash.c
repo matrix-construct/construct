@@ -108,12 +108,12 @@ static void
 rehash_glines(struct Client *source_p)
 {
 	struct ConfItem *aconf;
-	rb_dlink_node *ptr, *rb_free(;
+	rb_dlink_node *ptr, *next_ptr;
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing G-lines",
 				get_oper_name(source_p));
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, glines.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, glines.head)
 	{
 		aconf = ptr->data;
 
@@ -127,18 +127,18 @@ rehash_pglines(struct Client *source_p)
 {
 	struct gline_pending *glp_ptr;
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing pending glines",
 				get_oper_name(source_p));
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, pending_glines.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, pending_glines.head)
 	{
 		glp_ptr = ptr->data;
 
-		MyFree(glp_ptr->reason1);
-		MyFree(glp_ptr->reason2);
-		MyFree(glp_ptr);
+		rb_free(glp_ptr->reason1);
+		rb_free(glp_ptr->reason2);
+		rb_free(glp_ptr);
 		rb_dlinkDestroy(ptr, &pending_glines);
 	}
 }
@@ -147,7 +147,7 @@ static void
 rehash_tklines(struct Client *source_p)
 {
 	struct ConfItem *aconf;
-	rb_dlink_node *ptr, *rb_free(;
+	rb_dlink_node *ptr, *next_ptr;
 	int i;
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing temp klines",
@@ -155,7 +155,7 @@ rehash_tklines(struct Client *source_p)
 
 	for(i = 0; i < LAST_TEMP_TYPE; i++)
 	{
-		RB_DLINK_FOREACH_SAFE(ptr, rb_free(, temp_klines[i].head)
+		RB_DLINK_FOREACH_SAFE(ptr, next_ptr, temp_klines[i].head)
 		{
 			aconf = ptr->data;
 
@@ -169,7 +169,7 @@ static void
 rehash_tdlines(struct Client *source_p)
 {
 	struct ConfItem *aconf;
-	rb_dlink_node *ptr, *rb_free(;
+	rb_dlink_node *ptr, *next_ptr;
 	int i;
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing temp dlines",
@@ -177,7 +177,7 @@ rehash_tdlines(struct Client *source_p)
 
 	for(i = 0; i < LAST_TEMP_TYPE; i++)
 	{
-		RB_DLINK_FOREACH_SAFE(ptr, rb_free(, temp_dlines[i].head)
+		RB_DLINK_FOREACH_SAFE(ptr, next_ptr, temp_dlines[i].head)
 		{
 			aconf = ptr->data;
 
@@ -192,12 +192,12 @@ rehash_txlines(struct Client *source_p)
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing temp xlines",
 				get_oper_name(source_p));
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, xline_conf_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, xline_conf_list.head)
 	{
 		aconf = ptr->data;
 
@@ -214,13 +214,13 @@ rehash_tresvs(struct Client *source_p)
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 	int i;
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing temp resvs",
 				get_oper_name(source_p));
 
-	HASH_WALK_SAFE(i, R_MAX, ptr, rb_free(, resvTable)
+	HASH_WALK_SAFE(i, R_MAX, ptr, next_ptr, resvTable)
 	{
 		aconf = ptr->data;
 
@@ -232,7 +232,7 @@ rehash_tresvs(struct Client *source_p)
 	}
 	HASH_WALK_END
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, resv_conf_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, resv_conf_list.head)
 	{
 		aconf = ptr->data;
 

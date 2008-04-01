@@ -319,7 +319,7 @@ read_ctrl_packet(int fd, void *data)
 
 	/* reset SlinkRpl */
 	if(reply->datalen > 0)
-		MyFree(reply->data);
+		rb_free(reply->data);
 	reply->command = 0;
 
 	if(IsAnyDead(server))

@@ -129,9 +129,9 @@ void
 clear_monitor(struct Client *client_p)
 {
 	struct monitor *monptr;
-	rb_dlink_node *ptr, *rb_free(;
+	rb_dlink_node *ptr, *next_ptr;
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, client_p->localClient->monitor_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, client_p->localClient->monitor_list.head)
 	{
 		monptr = ptr->data;
 
@@ -150,22 +150,22 @@ static void
 cleanup_monitor(void *unused)
 {
 	struct monitor *last_ptr = NULL;
-	struct monitor *rb_free(, *ptr;
+	struct monitor *next_ptr, *ptr;
 	int i;
 
 	for(i = 0; i < MONITOR_HASH_SIZE; i++)
 	{
 		last_ptr = NULL;
-		for(ptr = monitorTable[i]; ptr; ptr = rb_free()
+		for(ptr = monitorTable[i]; ptr; ptr = next_ptr)
 		{
-			rb_free( = ptr->hnext;
+			next_ptr = ptr->hnext;
 
 			if(!rb_dlink_list_length(&ptr->users))
 			{
 				if(last_ptr)
-					last_ptr->hnext = rb_free(;
+					last_ptr->hnext = next_ptr;
 				else
-					monitorTable[i] = rb_free(;
+					monitorTable[i] = next_ptr;
 
 				BlockHeapFree(monitor_heap, ptr);
 			}

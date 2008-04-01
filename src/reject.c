@@ -102,7 +102,7 @@ reject_expires(void *unused)
 			continue;
 
 		rb_dlinkDelete(ptr, &reject_list);
-		MyFree(rdata);
+		rb_free(rdata);
 		patricia_remove(reject_tree, pnode);
 	}
 }
@@ -199,7 +199,7 @@ flush_reject(void)
 		pnode = ptr->data;
 		rdata = pnode->data;
 		rb_dlinkDelete(ptr, &reject_list);
-		MyFree(rdata);
+		rb_free(rdata);
 		patricia_remove(reject_tree, pnode);
 	}
 }
@@ -218,7 +218,7 @@ remove_reject_ip(const char *ip)
 	{
 		struct reject_data *rdata = pnode->data;
 		rb_dlinkDelete(&rdata->rnode, &reject_list);
-		MyFree(rdata);
+		rb_free(rdata);
 		patricia_remove(reject_tree, pnode);
 		return 1;
 	}
@@ -246,7 +246,7 @@ remove_reject_mask(const char *mask1, const char *mask2)
 		if (rdata->mask_hashv == hashv)
 		{
 			rb_dlinkDelete(ptr, &reject_list);
-			MyFree(rdata);
+			rb_free(rdata);
 			patricia_remove(reject_tree, pnode);
 			n++;
 		}

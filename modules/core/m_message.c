@@ -545,9 +545,9 @@ static void
 expire_tgchange(void *unused)
 {
 	tgchange *target;
-	rb_dlink_node *ptr, *rb_free(;
+	rb_dlink_node *ptr, *next_ptr;
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, tgchange_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, tgchange_list.head)
 	{
 		target = ptr->data;
 

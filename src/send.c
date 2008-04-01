@@ -263,7 +263,7 @@ send_queued_slink_write(int fd, void *data)
 			else
 			{
 				to->localClient->slinkq_ofs = 0;
-				MyFree(to->localClient->slinkq);
+				rb_free(to->localClient->slinkq);
 				to->localClient->slinkq = NULL;
 			}
 		}
@@ -453,7 +453,7 @@ sendto_server(struct Client *one, struct Channel *chptr, unsigned long caps,
 	va_list args;
 	struct Client *target_p;
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 	buf_head_t linebuf;
 
 	/* noone to send to.. */
@@ -468,7 +468,7 @@ sendto_server(struct Client *one, struct Channel *chptr, unsigned long caps,
 	rb_linebuf_putmsg(&linebuf, format, &args, NULL);
 	va_end(args);
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, serv_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, serv_list.head)
 	{
 		target_p = ptr->data;
 
@@ -509,7 +509,7 @@ sendto_channel_flags(struct Client *one, int type, struct Client *source_p,
 	struct Client *target_p;
 	struct membership *msptr;
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 
 	rb_linebuf_newbuf(&rb_linebuf_local);
 	rb_linebuf_newbuf(&rb_linebuf_name);
@@ -533,7 +533,7 @@ sendto_channel_flags(struct Client *one, int type, struct Client *source_p,
 	rb_linebuf_putmsg(&rb_linebuf_name, NULL, NULL, ":%s %s", source_p->name, buf);
 	rb_linebuf_putmsg(&rb_linebuf_id, NULL, NULL, ":%s %s", use_id(source_p), buf);
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, chptr->members.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->members.head)
 	{
 		msptr = ptr->data;
 		target_p = msptr->client_p;
@@ -589,7 +589,7 @@ sendto_channel_local(int type, struct Channel *chptr, const char *pattern, ...)
 	struct membership *msptr;
 	struct Client *target_p;
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 	
 	rb_linebuf_newbuf(&linebuf); 
 	
@@ -597,7 +597,7 @@ sendto_channel_local(int type, struct Channel *chptr, const char *pattern, ...)
 	rb_linebuf_putmsg(&linebuf, pattern, &args, NULL);
 	va_end(args);
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, chptr->locmembers.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->locmembers.head)
 	{
 		msptr = ptr->data;
 		target_p = msptr->client_p;
@@ -629,7 +629,7 @@ sendto_channel_local_butone(struct Client *one, int type, struct Channel *chptr,
 	struct membership *msptr;
 	struct Client *target_p;
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 	
 	rb_linebuf_newbuf(&linebuf); 
 	
@@ -637,7 +637,7 @@ sendto_channel_local_butone(struct Client *one, int type, struct Channel *chptr,
 	rb_linebuf_putmsg(&linebuf, pattern, &args, NULL);
 	va_end(args);
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, chptr->locmembers.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->locmembers.head)
 	{
 		msptr = ptr->data;
 		target_p = msptr->client_p;
@@ -672,7 +672,7 @@ sendto_common_channels_local(struct Client *user, const char *pattern, ...)
 {
 	va_list args;
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 	rb_dlink_node *uptr;
 	rb_dlink_node *next_uptr;
 	struct Channel *chptr;
@@ -688,7 +688,7 @@ sendto_common_channels_local(struct Client *user, const char *pattern, ...)
 
 	++current_serial;
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, user->user->channel.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, user->user->channel.head)
 	{
 		mscptr = ptr->data;
 		chptr = mscptr->chptr;
@@ -730,7 +730,7 @@ sendto_common_channels_local_butone(struct Client *user, const char *pattern, ..
 {
 	va_list args;
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 	rb_dlink_node *uptr;
 	rb_dlink_node *next_uptr;
 	struct Channel *chptr;
@@ -748,7 +748,7 @@ sendto_common_channels_local_butone(struct Client *user, const char *pattern, ..
 	/* Skip them -- jilles */
 	user->serial = current_serial;
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, user->user->channel.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, user->user->channel.head)
 	{
 		mscptr = ptr->data;
 		chptr = mscptr->chptr;
@@ -784,7 +784,7 @@ sendto_match_butone(struct Client *one, struct Client *source_p,
 	va_list args;
 	struct Client *target_p;
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 	buf_head_t rb_linebuf_local;
 	buf_head_t rb_linebuf_name;
 	buf_head_t rb_linebuf_id;
@@ -811,7 +811,7 @@ sendto_match_butone(struct Client *one, struct Client *source_p,
 
 	if(what == MATCH_HOST)
 	{
-		RB_DLINK_FOREACH_SAFE(ptr, rb_free(, lclient_list.head)
+		RB_DLINK_FOREACH_SAFE(ptr, next_ptr, lclient_list.head)
 		{
 			target_p = ptr->data;
 
@@ -822,7 +822,7 @@ sendto_match_butone(struct Client *one, struct Client *source_p,
 	/* what = MATCH_SERVER, if it doesnt match us, just send remote */
 	else if(match(mask, me.name))
 	{
-		RB_DLINK_FOREACH_SAFE(ptr, rb_free(, lclient_list.head)
+		RB_DLINK_FOREACH_SAFE(ptr, next_ptr, lclient_list.head)
 		{
 			target_p = ptr->data;
 			_send_linebuf(target_p, &rb_linebuf_local);
@@ -929,7 +929,7 @@ sendto_monitor(struct monitor *monptr, const char *pattern, ...)
 	buf_head_t linebuf;
 	struct Client *target_p;
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 	
 	rb_linebuf_newbuf(&linebuf); 
 	
@@ -937,7 +937,7 @@ sendto_monitor(struct monitor *monptr, const char *pattern, ...)
 	rb_linebuf_putmsg(&linebuf, pattern, &args, NULL);
 	va_end(args);
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, monptr->users.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, monptr->users.head)
 	{
 		target_p = ptr->data;
 
@@ -1005,7 +1005,7 @@ sendto_realops_flags(int flags, int level, const char *pattern, ...)
 {
 	struct Client *client_p;
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 	va_list args;
 	buf_head_t linebuf;
 
@@ -1016,7 +1016,7 @@ sendto_realops_flags(int flags, int level, const char *pattern, ...)
 		       ":%s NOTICE * :*** Notice -- ", me.name);
 	va_end(args);
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, local_oper_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, local_oper_list.head)
 	{
 		client_p = ptr->data;
 
@@ -1047,7 +1047,7 @@ sendto_realops_snomask(int flags, int level, const char *pattern, ...)
 	char *snobuf;
 	struct Client *client_p;
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 	va_list args;
 	buf_head_t linebuf;
 
@@ -1083,7 +1083,7 @@ sendto_realops_snomask(int flags, int level, const char *pattern, ...)
 	}
 	level &= ~L_NETWIDE;
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, local_oper_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, local_oper_list.head)
 	{
 		client_p = ptr->data;
 
@@ -1112,7 +1112,7 @@ sendto_realops_snomask_from(int flags, int level, struct Client *source_p,
 {
 	struct Client *client_p;
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 	va_list args;
 	buf_head_t linebuf;
 
@@ -1123,7 +1123,7 @@ sendto_realops_snomask_from(int flags, int level, struct Client *source_p,
 		       ":%s NOTICE * :*** Notice -- ", source_p->name);
 	va_end(args);
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, local_oper_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, local_oper_list.head)
 	{
 		client_p = ptr->data;
 
@@ -1155,7 +1155,7 @@ sendto_wallops_flags(int flags, struct Client *source_p, const char *pattern, ..
 {
 	struct Client *client_p;
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 	va_list args;
 	buf_head_t linebuf;
 
@@ -1172,7 +1172,7 @@ sendto_wallops_flags(int flags, struct Client *source_p, const char *pattern, ..
 
 	va_end(args);
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, IsPerson(source_p) && flags == UMODE_WALLOP ? lclient_list.head : local_oper_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, IsPerson(source_p) && flags == UMODE_WALLOP ? lclient_list.head : local_oper_list.head)
 	{
 		client_p = ptr->data;
 
@@ -1225,7 +1225,7 @@ kill_client_serv_butone(struct Client *one, struct Client *target_p, const char 
 	va_list args;
 	struct Client *client_p;
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 	buf_head_t rb_linebuf_id;
 	buf_head_t rb_linebuf_name;
 
@@ -1241,7 +1241,7 @@ kill_client_serv_butone(struct Client *one, struct Client *target_p, const char 
 	rb_linebuf_putmsg(&rb_linebuf_id, NULL, NULL, ":%s KILL %s :%s",
 		       use_id(&me), use_id(target_p), buf);
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, serv_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, serv_list.head)
 	{
 		client_p = ptr->data;
 

@@ -78,7 +78,7 @@ mr_capab(struct Client *client_p, struct Client *source_p, int parc, const char 
 	else
 		client_p->localClient->caps |= CAP_CAP;
 
-	MyFree(client_p->localClient->fullcaps);
+	rb_free(client_p->localClient->fullcaps);
 	DupString(client_p->localClient->fullcaps, parv[1]);
 
 	for (i = 1; i < parc; i++)
@@ -116,7 +116,7 @@ me_gcap(struct Client *client_p, struct Client *source_p,
 	if(!EmptyString(source_p->serv->fullcaps))
 	{
 		source_p->serv->caps = 0;
-		MyFree(source_p->serv->fullcaps);
+		rb_free(source_p->serv->fullcaps);
 	}
 
 	DupString(source_p->serv->fullcaps, parv[1]);

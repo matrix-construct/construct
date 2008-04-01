@@ -93,7 +93,7 @@ free_listener(listener_t *listener)
 	}
 
 	/* free */
-	MyFree(listener);
+	rb_free(listener);
 }
 
 #define PORTNAMELEN 6		/* ":31337" */

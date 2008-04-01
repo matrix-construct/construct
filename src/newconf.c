@@ -150,7 +150,7 @@ remove_top_conf(char *name)
 		return -1;
 
 	rb_dlinkDestroy(ptr, &conf_items);
-	MyFree(tc);
+	rb_free(tc);
 
 	return 0;
 }
@@ -222,7 +222,7 @@ conf_set_serverinfo_network_name(void *data)
 	if((p = strchr((char *) data, ' ')))
 		*p = '\0';
 
-	MyFree(ServerInfo.network_name);
+	rb_free(ServerInfo.network_name);
 	DupString(ServerInfo.network_name, (char *) data);
 }
 
@@ -268,7 +268,7 @@ conf_set_modules_module(void *data)
 
 	load_one_module((char *) data, 0);
 
-	MyFree(m_bn);
+	rb_free(m_bn);
 #else
 	conf_report_error("Ignoring modules::module -- loadable module support not present.");
 #endif
@@ -449,7 +449,7 @@ static int
 conf_begin_oper(struct TopConf *tc)
 {
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 
 	if(yy_oper != NULL)
 	{
@@ -457,7 +457,7 @@ conf_begin_oper(struct TopConf *tc)
 		yy_oper = NULL;
 	}
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, yy_oper_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, yy_oper_list.head)
 	{
 		free_oper_conf(ptr->data);
 		rb_dlinkDestroy(ptr, &yy_oper_list);
@@ -474,7 +474,7 @@ conf_end_oper(struct TopConf *tc)
 {
 	struct oper_conf *yy_tmpoper;
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 
 	if(conf_cur_block_name != NULL)
 	{
@@ -505,7 +505,7 @@ conf_end_oper(struct TopConf *tc)
 	 * and host in, yy_oper contains the rest of the information which
 	 * we need to copy into each element in yy_oper_list
 	 */
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, yy_oper_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, yy_oper_list.head)
 	{
 		yy_tmpoper = ptr->data;
 
@@ -605,7 +605,7 @@ conf_set_oper_password(void *data)
 	if(yy_oper->passwd)
 	{
 		memset(yy_oper->passwd, 0, strlen(yy_oper->passwd));
-		MyFree(yy_oper->passwd);
+		rb_free(yy_oper->passwd);
 	}
 
 	DupString(yy_oper->passwd, (char *) data);
@@ -615,7 +615,7 @@ static void
 conf_set_oper_rsa_public_key_file(void *data)
 {
 #ifdef HAVE_LIBCRYPTO
-	MyFree(yy_oper->rsa_pubkey_file);
+	rb_free(yy_oper->rsa_pubkey_file);
 	DupString(yy_oper->rsa_pubkey_file, (char *) data);
 #else
 	conf_report_error("Warning -- ignoring rsa_public_key_file (OpenSSL support not available");
@@ -731,7 +731,7 @@ static char *listener_address;
 static int
 conf_begin_listen(struct TopConf *tc)
 {
-	MyFree(listener_address);
+	rb_free(listener_address);
 	listener_address = NULL;
 	return 0;
 }
@@ -739,7 +739,7 @@ conf_begin_listen(struct TopConf *tc)
 static int
 conf_end_listen(struct TopConf *tc)
 {
-	MyFree(listener_address);
+	rb_free(listener_address);
 	listener_address = NULL;
 	return 0;
 }
@@ -783,7 +783,7 @@ conf_set_listen_port(void *data)
 static void
 conf_set_listen_address(void *data)
 {
-	MyFree(listener_address);
+	rb_free(listener_address);
 	DupString(listener_address, data);
 }
 
@@ -791,12 +791,12 @@ static int
 conf_begin_auth(struct TopConf *tc)
 {
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 
 	if(yy_aconf)
 		free_conf(yy_aconf);
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, yy_aconf_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, yy_aconf_list.head)
 	{
 		free_conf(ptr->data);
 		rb_dlinkDestroy(ptr, &yy_aconf_list);
@@ -813,7 +813,7 @@ conf_end_auth(struct TopConf *tc)
 {
 	struct ConfItem *yy_tmp;
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 
 	if(EmptyString(yy_aconf->name))
 		DupString(yy_aconf->name, "NOMATCH");
@@ -831,7 +831,7 @@ conf_end_auth(struct TopConf *tc)
 	conf_add_class_to_conf(yy_aconf);
 	add_conf_by_address(yy_aconf->host, CONF_CLIENT, yy_aconf->user, yy_aconf);
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, yy_aconf_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, yy_aconf_list.head)
 	{
 		yy_tmp = ptr->data;
 
@@ -897,7 +897,7 @@ conf_set_auth_passwd(void *data)
 {
 	if(yy_aconf->passwd)
 		memset(yy_aconf->passwd, 0, strlen(yy_aconf->passwd));
-	MyFree(yy_aconf->passwd);
+	rb_free(yy_aconf->passwd);
 	DupString(yy_aconf->passwd, data);
 }
 
@@ -957,7 +957,7 @@ conf_set_auth_spoof(void *data)
 		return;
 	}
 
-	MyFree(yy_aconf->name);
+	rb_free(yy_aconf->name);
 	DupString(yy_aconf->name, data);
 	yy_aconf->flags |= CONF_FLAGS_SPOOF_IP;
 }
@@ -974,7 +974,7 @@ static void
 conf_set_auth_redir_serv(void *data)
 {
 	yy_aconf->flags |= CONF_FLAGS_REDIR;
-	MyFree(yy_aconf->name);
+	rb_free(yy_aconf->name);
 	DupString(yy_aconf->name, data);
 }
 
@@ -990,7 +990,7 @@ conf_set_auth_redir_port(void *data)
 static void
 conf_set_auth_class(void *data)
 {
-	MyFree(yy_aconf->className);
+	rb_free(yy_aconf->className);
 	DupString(yy_aconf->className, data);
 }
 
@@ -1001,9 +1001,9 @@ conf_set_auth_class(void *data)
 static int
 conf_cleanup_shared(struct TopConf *tc)
 {
-	rb_dlink_node *ptr, *rb_free(;
+	rb_dlink_node *ptr, *next_ptr;
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, yy_shared_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, yy_shared_list.head)
 	{
 		free_remote_conf(ptr->data);
 		rb_dlinkDestroy(ptr, &yy_shared_list);
@@ -1078,14 +1078,14 @@ conf_set_shared_flags(void *data)
 {
 	conf_parm_t *args = data;
 	int flags = 0;
-	rb_dlink_node *ptr, *rb_free(;
+	rb_dlink_node *ptr, *next_ptr;
 
 	if(yy_shared != NULL)
 		free_remote_conf(yy_shared);
 
 	set_modes_from_table(&flags, "flag", shared_table, args);
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, yy_shared_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, yy_shared_list.head)
 	{
 		yy_shared = ptr->data;
 
@@ -1161,7 +1161,7 @@ conf_end_connect(struct TopConf *tc)
 static void
 conf_set_connect_host(void *data)
 {
-	MyFree(yy_server->host);
+	rb_free(yy_server->host);
 	DupString(yy_server->host, data);
 	if (strchr(yy_server->host, ':'))
 		yy_server->aftype = AF_INET6;
@@ -1186,7 +1186,7 @@ conf_set_connect_send_password(void *data)
 	if(yy_server->spasswd)
 	{
 		memset(yy_server->spasswd, 0, strlen(yy_server->spasswd));
-		MyFree(yy_server->spasswd);
+		rb_free(yy_server->spasswd);
 	}
 
 	DupString(yy_server->spasswd, data);
@@ -1198,7 +1198,7 @@ conf_set_connect_accept_password(void *data)
 	if(yy_server->passwd)
 	{
 		memset(yy_server->passwd, 0, strlen(yy_server->passwd));
-		MyFree(yy_server->passwd);
+		rb_free(yy_server->passwd);
 	}
 	DupString(yy_server->passwd, data);
 }
@@ -1275,7 +1275,7 @@ conf_set_connect_leaf_mask(void *data)
 static void
 conf_set_connect_class(void *data)
 {
-	MyFree(yy_server->class_name);
+	rb_free(yy_server->class_name);
 	DupString(yy_server->class_name, data);
 }
 
@@ -1300,9 +1300,9 @@ conf_set_exempt_ip(void *data)
 static int
 conf_cleanup_cluster(struct TopConf *tc)
 {
-	rb_dlink_node *ptr, *rb_free(;
+	rb_dlink_node *ptr, *next_ptr;
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, yy_cluster_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, yy_cluster_list.head)
 	{
 		free_remote_conf(ptr->data);
 		rb_dlinkDestroy(ptr, &yy_cluster_list);
@@ -1335,14 +1335,14 @@ conf_set_cluster_flags(void *data)
 {
 	conf_parm_t *args = data;
 	int flags = 0;
-	rb_dlink_node *ptr, *rb_free(;
+	rb_dlink_node *ptr, *next_ptr;
 
 	if(yy_shared != NULL)
 		free_remote_conf(yy_shared);
 
 	set_modes_from_table(&flags, "flag", cluster_table, args);
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, yy_cluster_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, yy_cluster_list.head)
 	{
 		yy_shared = ptr->data;
 		yy_shared->flags = flags;
@@ -1603,7 +1603,7 @@ conf_end_alias(struct TopConf *tc)
 	{
 		conf_report_error("Ignoring alias -- must have a name.");
 
-		MyFree(yy_alias);
+		rb_free(yy_alias);
 
 		return -1;
 	}
@@ -1612,7 +1612,7 @@ conf_end_alias(struct TopConf *tc)
 	{
 		conf_report_error("Ignoring alias -- must have a target.");
 
-		MyFree(yy_alias);
+		rb_free(yy_alias);
 
 		return -1;
 	}
@@ -1657,8 +1657,8 @@ conf_set_blacklist_reason(void *data)
 	if (yy_blacklist_host && yy_blacklist_reason)
 	{
 		new_blacklist(yy_blacklist_host, yy_blacklist_reason);
-		MyFree(yy_blacklist_host);
-		MyFree(yy_blacklist_reason);
+		rb_free(yy_blacklist_host);
+		rb_free(yy_blacklist_reason);
 		yy_blacklist_host = NULL;
 		yy_blacklist_reason = NULL;
 	}
@@ -1714,7 +1714,7 @@ conf_end_block(struct TopConf *tc)
 	if(tc->tc_efunc)
 		return tc->tc_efunc(tc);
 
-	MyFree(conf_cur_block_name);
+	rb_free(conf_cur_block_name);
 	return 0;
 }
 
@@ -1733,7 +1733,7 @@ conf_set_generic_string(void *data, int len, void *location)
 	if(len && strlen(input) > len)
 		input[len] = '\0';
 
-	MyFree(*loc);
+	rb_free(*loc);
 	DupString(*loc, input);
 }
 
@@ -1875,7 +1875,7 @@ remove_conf_item(const char *topconf, const char *name)
 		return -1;
 
 	rb_dlinkDestroy(ptr, &tc->tc_items);
-	MyFree(cf);
+	rb_free(cf);
 
 	return 0;
 }

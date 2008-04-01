@@ -1016,7 +1016,7 @@ server_estab(struct Client *client_p)
 	if(client_p->localClient->passwd)
 	{
 		memset(client_p->localClient->passwd, 0, strlen(client_p->localClient->passwd));
-		MyFree(client_p->localClient->passwd);
+		rb_free(client_p->localClient->passwd);
 		client_p->localClient->passwd = NULL;
 	}
 
@@ -1108,7 +1108,7 @@ server_estab(struct Client *client_p)
 	if(client_p->localClient->fullcaps)
 	{
 		DupString(client_p->serv->fullcaps, client_p->localClient->fullcaps);
-		MyFree(client_p->localClient->fullcaps);
+		rb_free(client_p->localClient->fullcaps);
 		client_p->localClient->fullcaps = NULL;
 	}
 

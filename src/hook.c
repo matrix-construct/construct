@@ -97,7 +97,7 @@ grow_hooktable(void)
 	newhooks = MyMalloc(sizeof(hook) * (max_hooks + HOOK_INCREMENT));
 	memcpy(newhooks, hooks, sizeof(hook) * num_hooks);
 
-	MyFree(hooks);
+	rb_free(hooks);
 	hooks = newhooks;
 	max_hooks += HOOK_INCREMENT;
 }

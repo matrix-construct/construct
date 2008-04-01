@@ -143,12 +143,12 @@ void
 free_cachefile(struct cachefile *cacheptr)
 {
 	rb_dlink_node *ptr;
-	rb_dlink_node *rb_free(;
+	rb_dlink_node *next_ptr;
 
 	if(cacheptr == NULL)
 		return;
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, cacheptr->contents.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, cacheptr->contents.head)
 	{
 		BlockHeapFree(cacheline_heap, ptr->data);
 	}

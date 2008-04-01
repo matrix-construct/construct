@@ -113,17 +113,17 @@ add_isupport(const char *name, const char *(*func)(const void *), const void *pa
 void
 delete_isupport(const char *name)
 {
-	rb_dlink_node *ptr, *rb_free(;
+	rb_dlink_node *ptr, *next_ptr;
 	struct isupportitem *item;
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, isupportlist.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, isupportlist.head)
 	{
 		item = ptr->data;
 
 		if (!strcmp(item->name, name))
 		{
 			rb_dlinkDelete(ptr, &isupportlist);
-			MyFree(item);
+			rb_free(item);
 		}
 	}
 }

@@ -179,11 +179,11 @@ mod_add_path(const char *path)
 void
 mod_clear_paths(void)
 {
-	rb_dlink_node *ptr, *rb_free(;
+	rb_dlink_node *ptr, *next_ptr;
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, mod_paths.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, mod_paths.head)
 	{
-		MyFree(ptr->data);
+		rb_free(ptr->data);
 		free_rb_dlink_node(ptr);
 	}
 
@@ -364,13 +364,13 @@ mo_modload(struct Client *client_p, struct Client *source_p, int parc, const cha
 	if(findmodule_byname(m_bn) != -1)
 	{
 		sendto_one_notice(source_p, ":Module %s is already loaded", m_bn);
-		MyFree(m_bn);
+		rb_free(m_bn);
 		return 0;
 	}
 
 	load_one_module(parv[1], 0);
 
-	MyFree(m_bn);
+	rb_free(m_bn);
 
 	return 0;
 }
@@ -395,14 +395,14 @@ mo_modunload(struct Client *client_p, struct Client *source_p, int parc, const c
 	if((modindex = findmodule_byname(m_bn)) == -1)
 	{
 		sendto_one_notice(source_p, ":Module %s is not loaded", m_bn);
-		MyFree(m_bn);
+		rb_free(m_bn);
 		return 0;
 	}
 
 	if(modlist[modindex]->core == 1)
 	{
 		sendto_one_notice(source_p, ":Module %s is a core module and may not be unloaded", m_bn);
-		MyFree(m_bn);
+		rb_free(m_bn);
 		return 0;
 	}
 
@@ -411,7 +411,7 @@ mo_modunload(struct Client *client_p, struct Client *source_p, int parc, const c
 		sendto_one_notice(source_p, ":Module %s is not loaded", m_bn);
 	}
 
-	MyFree(m_bn);
+	rb_free(m_bn);
 	return 0;
 }
 
@@ -435,7 +435,7 @@ mo_modreload(struct Client *client_p, struct Client *source_p, int parc, const c
 	if((modindex = findmodule_byname(m_bn)) == -1)
 	{
 		sendto_one_notice(source_p, ":Module %s is not loaded", m_bn);
-		MyFree(m_bn);
+		rb_free(m_bn);
 		return 0;
 	}
 
@@ -444,7 +444,7 @@ mo_modreload(struct Client *client_p, struct Client *source_p, int parc, const c
 	if(unload_one_module(m_bn, 1) == -1)
 	{
 		sendto_one_notice(source_p, ":Module %s is not loaded", m_bn);
-		MyFree(m_bn);
+		rb_free(m_bn);
 		return 0;
 	}
 
@@ -456,7 +456,7 @@ mo_modreload(struct Client *client_p, struct Client *source_p, int parc, const c
 		exit(0);
 	}
 
-	MyFree(m_bn);
+	rb_free(m_bn);
 	return 0;
 }
 
@@ -757,7 +757,7 @@ unload_one_module(const char *name, int warn)
 
 	dlclose(modlist[modindex]->address);
 
-	MyFree(modlist[modindex]->name);
+	rb_free(modlist[modindex]->name);
 	memcpy(&modlist[modindex], &modlist[modindex + 1],
 	       sizeof(struct module) * ((num_mods - 1) - modindex));
 
@@ -806,7 +806,7 @@ load_a_module(const char *path, int warn, int core)
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Error loading module %s: %s", mod_basename, err);
 		ilog(L_MAIN, "Error loading module %s: %s", mod_basename, err);
-		MyFree(mod_basename);
+		rb_free(mod_basename);
 		return -1;
 	}
 
@@ -827,7 +827,7 @@ load_a_module(const char *path, int warn, int core)
 				     mod_basename);
 		ilog(L_MAIN, "Data format error: module %s has no MAPI header.", mod_basename);
 		(void) dlclose(tmpptr);
-		MyFree(mod_basename);
+		rb_free(mod_basename);
 		return -1;
 	}
 
@@ -844,7 +844,7 @@ load_a_module(const char *path, int warn, int core)
 						     "Module %s indicated failure during load.",
 						     mod_basename);
 				dlclose(tmpptr);
-				MyFree(mod_basename);
+				rb_free(mod_basename);
 				return -1;
 			}
 			if(mheader->mapi_command_list)
@@ -879,7 +879,7 @@ load_a_module(const char *path, int warn, int core)
 				     "Module %s has unknown/unsupported MAPI version %d.",
 				     mod_basename, *mapi_version);
 		dlclose(tmpptr);
-		MyFree(mod_basename);
+		rb_free(mod_basename);
 		return -1;
 	}
 
@@ -906,7 +906,7 @@ load_a_module(const char *path, int warn, int core)
 		ilog(L_MAIN, "Module %s [version: %s; MAPI version: %d] loaded at 0x%lx",
 		     mod_basename, ver, MAPI_VERSION(*mapi_version), (unsigned long) tmpptr);
 	}
-	MyFree(mod_basename);
+	rb_free(mod_basename);
 	return 0;
 }
 
@@ -929,7 +929,7 @@ increase_modlist(void)
 						  (max_mods + MODS_INCREMENT));
 	memcpy((void *) new_modlist, (void *) modlist, sizeof(struct module) * num_mods);
 
-	MyFree(modlist);
+	rb_free(modlist);
 	modlist = new_modlist;
 	max_mods += MODS_INCREMENT;
 }

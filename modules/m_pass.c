@@ -64,7 +64,7 @@ mr_pass(struct Client *client_p, struct Client *source_p, int parc, const char *
 	{
 		memset(client_p->localClient->passwd, 0,
 			strlen(client_p->localClient->passwd));
-		MyFree(client_p->localClient->passwd);
+		rb_free(client_p->localClient->passwd);
 	}
 
 	DupNString(client_p->localClient->passwd, parv[1], PASSWDLEN);

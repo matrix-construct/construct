@@ -377,7 +377,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 		if(source_p->localClient->passwd)
 		{
 			memset(source_p->localClient->passwd, 0, strlen(source_p->localClient->passwd));
-			MyFree(source_p->localClient->passwd);
+			rb_free(source_p->localClient->passwd);
 			source_p->localClient->passwd = NULL;
 		}
 	}
@@ -673,7 +673,7 @@ introduce_client(struct Client *client_p, struct Client *source_p, struct User *
 						source_p->localClient->passwd);
 		}
 		memset(source_p->localClient->passwd, 0, strlen(source_p->localClient->passwd));
-		MyFree(source_p->localClient->passwd);
+		rb_free(source_p->localClient->passwd);
 		source_p->localClient->passwd = NULL;
 	}
 
@@ -987,7 +987,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 					}
 					source_p->flags2 &= ~OPER_FLAGS;
 
-					MyFree(source_p->localClient->opername);
+					rb_free(source_p->localClient->opername);
 					source_p->localClient->opername = NULL;
 
 					rb_dlinkFindDestroy(source_p, &local_oper_list);

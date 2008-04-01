@@ -476,7 +476,7 @@ void irc_dictionary_destroy(struct Dictionary *dtree,
 		BlockHeapFree(elem_heap, n);
 	}
 
-	MyFree(dtree);
+	rb_free(dtree);
 }
 
 /*

@@ -72,7 +72,7 @@ static void blacklist_dns_callback(void *vptr, struct DNSReply *reply)
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				"blacklist_dns_callback(): blcptr->client_p->preClient (%s) is NULL", get_client_name(blcptr->client_p, HIDE_IP));
-		MyFree(blcptr);
+		rb_free(blcptr);
 		return;
 	}
 
@@ -110,7 +110,7 @@ static void blacklist_dns_callback(void *vptr, struct DNSReply *reply)
 		register_local_user(blcptr->client_p, blcptr->client_p, buf);
 	}
 
-	MyFree(blcptr);
+	rb_free(blcptr);
 }
 
 /* XXX: no IPv6 implementation, not to concerned right now though. */
@@ -167,7 +167,7 @@ void unref_blacklist(struct Blacklist *blptr)
 	if (blptr->status & CONF_ILLEGAL && blptr->refcount <= 0)
 	{
 		rb_dlinkFindDestroy(blptr, &blacklist_list);
-		MyFree(blptr);
+		rb_free(blptr);
 	}
 }
 
@@ -190,27 +190,27 @@ void lookup_blacklists(struct Client *client_p)
 
 void abort_blacklist_queries(struct Client *client_p)
 {
-	rb_dlink_node *ptr, *rb_free(;
+	rb_dlink_node *ptr, *next_ptr;
 	struct BlacklistClient *blcptr;
 
 	if (client_p->preClient == NULL)
 		return;
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, client_p->preClient->dnsbl_queries.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, client_p->preClient->dnsbl_queries.head)
 	{
 		blcptr = ptr->data;
 		rb_dlinkDelete(&blcptr->node, &client_p->preClient->dnsbl_queries);
 		unref_blacklist(blcptr->blacklist);
 		delete_resolver_queries(&blcptr->dns_query);
-		MyFree(blcptr);
+		rb_free(blcptr);
 	}
 }
 
 void destroy_blacklists(void)
 {
-	rb_dlink_node *ptr, *rb_free(;
+	rb_dlink_node *ptr, *next_ptr;
 	struct Blacklist *blptr;
 
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, blacklist_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, blacklist_list.head)
 	{
 		blptr = ptr->data;
 		blptr->hits = 0; /* keep it simple and consistent */
@@ -218,7 +218,7 @@ void destroy_blacklists(void)
 			blptr->status |= CONF_ILLEGAL;
 		else
 		{
-			MyFree(ptr->data);
+			rb_free(ptr->data);
 			rb_dlinkDestroy(ptr, &blacklist_list);
 		}
 	}

@@ -759,7 +759,7 @@ change_local_nick(struct Client *client_p, struct Client *source_p,
 		char *nick, int dosend)
 {
 	struct Client *target_p;
-	rb_dlink_node *ptr, *rb_free(;
+	rb_dlink_node *ptr, *next_ptr;
 	struct Channel *chptr;
 	char note[NICKLEN + 10];
 	int samenick;
@@ -843,7 +843,7 @@ change_local_nick(struct Client *client_p, struct Client *source_p,
 	 * to clear a clients own list of accepted clients.  So just remove
 	 * them from everyone elses list --anfl
 	 */
-	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, source_p->on_allow_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, source_p->on_allow_list.head)
 	{
 		target_p = ptr->data;
 

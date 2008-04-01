@@ -399,7 +399,7 @@ ms_join(struct Client *client_p, struct Client *source_p, int parc, const char *
 	int isnew;
 	int keep_our_modes = YES;
 	int keep_new_modes = YES;
-	rb_dlink_node *ptr, *rb_free(;
+	rb_dlink_node *ptr, *next_ptr;
 
 	/* special case for join 0 */
 	if((parv[1][0] == '0') && (parv[1][1] == '\0') && parc == 2)
@@ -469,7 +469,7 @@ ms_join(struct Client *client_p, struct Client *source_p, int parc, const char *
 		set_final_mode(&mode, &chptr->mode);
 		chptr->mode = mode;
 		remove_our_modes(chptr, source_p);
-		RB_DLINK_FOREACH_SAFE(ptr, rb_free(, chptr->invites.head)
+		RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->invites.head)
 		{
 			del_invite(chptr, ptr->data);
 		}

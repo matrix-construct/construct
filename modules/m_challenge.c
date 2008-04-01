@@ -91,8 +91,8 @@ cleanup_challenge(struct Client *target_p)
 	if(target_p->localClient == NULL)
 		return;
 	
-	MyFree(target_p->localClient->challenge);
-	MyFree(target_p->localClient->opername);
+	rb_free(target_p->localClient->challenge);
+	rb_free(target_p->localClient->opername);
 	target_p->localClient->challenge = NULL;
 	target_p->localClient->opername = NULL;
 	target_p->localClient->chal_time = 0;
@@ -160,12 +160,12 @@ m_challenge(struct Client *client_p, struct Client *source_p, int parc, const ch
 						     source_p->name, source_p->username,
 						     source_p->host);
 
-			MyFree(b_response);
+			rb_free(b_response);
 			cleanup_challenge(source_p);
 			return 0;
 		}
 
-		MyFree(b_response);
+		rb_free(b_response);
 
 		oper_p = find_oper_conf(source_p->username, source_p->orighost, 
 					source_p->sockhost, 
@@ -239,7 +239,7 @@ m_challenge(struct Client *client_p, struct Client *source_p, int parc, const ch
 		}
 		sendto_one(source_p, form_str(RPL_ENDOFRSACHALLENGE2), 
 			   me.name, source_p->name);
-		MyFree(challenge);
+		rb_free(challenge);
 		DupString(source_p->localClient->opername, oper_p->name);
 	}
 	else
@@ -296,11 +296,11 @@ generate_challenge(char **r_challenge, char **r_response, RSA * rsa)
 		if (ret >= 0)
 		{
 			*r_challenge = (char *)ircd_base64_encode(tmp, ret);
-			MyFree(tmp);
+			rb_free(tmp);
 			return 0;
 		}
-		MyFree(tmp);
-		MyFree(*r_response);
+		rb_free(tmp);
+		rb_free(*r_response);
 		*r_response = NULL;
 	}
 
