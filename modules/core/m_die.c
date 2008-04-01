@@ -25,12 +25,10 @@
  */
 
 #include "stdinc.h"
-#include "tools.h"
 #include "client.h"
 #include "ircd.h"
 #include "irc_string.h"
 #include "numeric.h"
-#include "commio.h"
 #include "s_log.h"
 #include "s_conf.h"
 #include "send.h"

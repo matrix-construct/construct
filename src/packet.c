@@ -24,8 +24,6 @@
  *  $Id: packet.c 3446 2007-05-14 22:21:16Z jilles $
  */
 #include "stdinc.h"
-#include "tools.h"
-#include "commio.h"
 #include "s_conf.h"
 #include "s_serv.h"
 #include "client.h"
@@ -34,7 +32,6 @@
 #include "parse.h"
 #include "packet.h"
 #include "irc_string.h"
-#include "memory.h"
 #include "hook.h"
 #include "send.h"
 

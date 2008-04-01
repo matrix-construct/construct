@@ -24,7 +24,6 @@
  *  $Id: m_who.c 3350 2007-04-02 22:03:08Z jilles $
  */
 #include "stdinc.h"
-#include "tools.h"
 #include "common.h"
 #include "client.h"
 #include "channel.h"

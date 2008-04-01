@@ -1271,5 +1271,5 @@ Configuration:
 	Nickname length    : $NICKLEN
 	Topic length       : $TOPICLEN
 
-Use (g)make to compile Charybdis, then (g)make install to install it.
+Use make to compile Charybdis, then make install to install it.
 "

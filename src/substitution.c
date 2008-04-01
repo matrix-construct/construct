@@ -34,8 +34,6 @@
  */
 
 #include "stdinc.h"
-#include "tools.h"
-#include "balloc.h"
 #include "s_user.h"
 #include "irc_string.h"
 

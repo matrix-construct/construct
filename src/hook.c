@@ -37,8 +37,6 @@
  * $Id: hook.c 712 2006-02-06 04:42:14Z gxti $
  */
 #include "stdinc.h"
-#include "memory.h"
-#include "tools.h"
 #include "hook.h"
 #include "irc_string.h"
 

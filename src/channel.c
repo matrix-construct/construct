@@ -25,7 +25,6 @@
  */
 
 #include "stdinc.h"
-#include "tools.h"
 #include "channel.h"
 #include "client.h"
 #include "common.h"
@@ -41,9 +40,6 @@
 #include "whowas.h"
 #include "s_conf.h"		/* ConfigFileEntry, ConfigChannel */
 #include "s_newconf.h"
-#include "event.h"
-#include "memory.h"
-#include "balloc.h"
 #include "s_log.h"
 
 extern rb_dlink_list global_channel_list;

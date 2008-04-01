@@ -24,12 +24,9 @@
 
 #include "stdinc.h"
 #include "sprintf_irc.h"
-#include "tools.h"
 #include "irc_string.h"
 #include "client.h"
-#include "memory.h"
 #include "setup.h"
-#include "balloc.h"
 #include "irc_dictionary.h"
 
 static BlockHeap *elem_heap = NULL;

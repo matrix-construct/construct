@@ -34,7 +34,6 @@
  */
 
 #include "stdinc.h"
-#include "tools.h"
 #include "channel.h"
 #include "client.h"
 #include "hash.h"
@@ -47,7 +46,6 @@
 #include "msg.h"
 #include "parse.h"
 #include "modules.h"
-#include "event.h"
 
 static rb_dlink_list safelisting_clients = { NULL, NULL, 0 };
 

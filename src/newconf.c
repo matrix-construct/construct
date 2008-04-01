@@ -9,9 +9,7 @@
 #include <openssl/rsa.h>
 #endif
 
-#include "memory.h"
 #include "newconf.h"
-#include "tools.h"
 #include "ircd_defs.h"
 #include "sprintf_irc.h"
 #include "common.h"
@@ -25,7 +23,6 @@
 #include "listener.h"
 #include "hostmask.h"
 #include "s_serv.h"
-#include "event.h"
 #include "hash.h"
 #include "cache.h"
 #include "ircd.h"

@@ -9,7 +9,6 @@
 
 #include "ircd_defs.h"
 #include "common.h"
-#include "commio.h"
 #include "reslib.h"
 #include "irc_string.h"
 #include "sprintf_irc.h"

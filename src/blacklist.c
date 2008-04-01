@@ -36,8 +36,6 @@
 #include "stdinc.h"
 #include "client.h"
 #include "res.h"
-#include "tools.h"
-#include "memory.h"
 #include "numeric.h"
 #include "reject.h"
 #include "s_conf.h"

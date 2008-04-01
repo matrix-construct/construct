@@ -35,14 +35,12 @@
 #endif
 
 #include "ircd_defs.h"
-#include "linebuf.h"
 #include "channel.h"
 #include "res.h"
 #include "snomask.h"
 #include "irc_string.h"
 #include "sprintf_irc.h"
 #include "ircd.h"
-#include "commio.h"
 
 /* other structs */
 struct Blacklist;

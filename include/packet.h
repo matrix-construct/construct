@@ -27,8 +27,6 @@
 #ifndef INCLUDED_packet_h
 #define INCLUDED_packet_h
 
-#include "commio.h"
-
 /*
  * this hides in here rather than a config.h because it really shouldn't
  * be tweaked unless you *REALLY REALLY* know what you're doing!

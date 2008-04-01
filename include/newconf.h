@@ -10,7 +10,6 @@
 
 #include <stdio.h>
 
-#include "tools.h"
 #include "client.h"
 
 struct ConfEntry

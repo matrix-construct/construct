@@ -38,7 +38,6 @@
 #include "s_user.h"
 #include "send.h"
 #include "s_conf.h"
-#include "memory.h"
 #include "scache.h"
 
 /* internally defined function */

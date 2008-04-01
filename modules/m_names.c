@@ -26,7 +26,6 @@
 
 #include "stdinc.h"
 #include "sprintf_irc.h"
-#include "tools.h"
 #include "channel.h"
 #include "client.h"
 #include "common.h"

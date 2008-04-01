@@ -30,7 +30,6 @@
  * $Id: m_testline.c 3303 2007-03-28 15:22:49Z jilles $
  */
 #include "stdinc.h"
-#include "tools.h"
 #include "send.h"
 #include "client.h"
 #include "modules.h"

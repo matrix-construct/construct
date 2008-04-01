@@ -31,7 +31,6 @@
  */
 
 #include "stdinc.h"
-#include "tools.h"
 #include "class.h"
 #include "client.h"
 #include "irc_string.h"

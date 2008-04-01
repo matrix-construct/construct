@@ -26,7 +26,6 @@
 
 #include "stdinc.h"
 #include "ircd_defs.h"
-#include "tools.h"
 #include "s_conf.h"
 #include "channel.h"
 #include "client.h"
@@ -36,7 +35,6 @@
 #include "ircd.h"
 #include "numeric.h"
 #include "send.h"
-#include "memory.h"
 #include "msg.h"
 #include "cache.h"
 #include "s_newconf.h"

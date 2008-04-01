@@ -30,12 +30,10 @@
 #include <openssl/rsa.h>
 #endif
 
-#include "tools.h"
 #include "s_serv.h"
 #include "class.h"
 #include "client.h"
 #include "common.h"
-#include "event.h"
 #include "hash.h"
 #include "irc_string.h"
 #include "sprintf_irc.h"
@@ -44,7 +42,6 @@
 #include "numeric.h"
 #include "packet.h"
 #include "res.h"
-#include "commio.h"
 #include "s_conf.h"
 #include "s_newconf.h"
 #include "s_log.h"
@@ -53,7 +50,6 @@
 #include "scache.h"
 #include "send.h"
 #include "client.h"
-#include "memory.h"
 #include "channel.h"		/* chcap_usage_counts stuff... */
 #include "hook.h"
 #include "msg.h"

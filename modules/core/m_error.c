@@ -31,7 +31,6 @@
 #include "numeric.h"
 #include "send.h"
 #include "msg.h"
-#include "memory.h"
 #include "modules.h"
 #include "s_log.h"
 #include "s_conf.h"

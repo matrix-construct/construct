@@ -40,7 +40,6 @@
 #endif
 
 #include "msg.h"
-#include "memory.h"
 #include "hook.h"
 
 struct module

@@ -26,7 +26,6 @@
  */
 
 #include "stdinc.h"
-#include "memory.h"
 #include "ircd_defs.h"
 #include "s_conf.h"
 #include "hostmask.h"

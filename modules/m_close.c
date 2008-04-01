@@ -25,11 +25,9 @@
  */
 
 #include "stdinc.h"
-#include "tools.h"
 #include "client.h"
 #include "ircd.h"
 #include "numeric.h"
-#include "commio.h"
 #include "send.h"
 #include "msg.h"
 #include "parse.h"

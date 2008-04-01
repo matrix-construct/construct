@@ -25,7 +25,6 @@
  */
 
 #include "stdinc.h"
-#include "tools.h"
 #include "common.h"
 #include "client.h"
 #include "hash.h"

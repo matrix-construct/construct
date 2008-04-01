@@ -34,7 +34,6 @@
  */
 
 #include "stdinc.h"
-#include "tools.h"
 
 #ifndef SUBSTITUTION_H
 #define SUBSTITUTION_H

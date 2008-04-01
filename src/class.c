@@ -27,7 +27,6 @@
 #include "stdinc.h"
 #include "config.h"
 
-#include "tools.h"
 #include "class.h"
 #include "client.h"
 #include "common.h"
@@ -37,7 +36,6 @@
 #include "s_newconf.h"
 #include "send.h"
 #include "irc_string.h"
-#include "memory.h"
 
 #define BAD_CONF_CLASS          -1
 #define BAD_PING                -2

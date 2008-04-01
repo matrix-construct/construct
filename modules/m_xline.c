@@ -31,7 +31,6 @@
  */
 
 #include "stdinc.h"
-#include "tools.h"
 #include "send.h"
 #include "channel.h"
 #include "client.h"
@@ -40,7 +39,6 @@
 #include "class.h"
 #include "ircd.h"
 #include "numeric.h"
-#include "memory.h"
 #include "s_log.h"
 #include "s_serv.h"
 #include "whowas.h"

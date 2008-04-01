@@ -25,7 +25,6 @@
  */
 
 #include "stdinc.h"
-#include "tools.h"
 #include "channel.h"
 #include "class.h"
 #include "client.h"
@@ -35,7 +34,6 @@
 #include "ircd.h"
 #include "hostmask.h"
 #include "numeric.h"
-#include "commio.h"
 #include "s_conf.h"
 #include "s_newconf.h"
 #include "s_log.h"
@@ -45,7 +43,6 @@
 #include "msg.h"
 #include "parse.h"
 #include "modules.h"
-#include "event.h"
 #include "reject.h"
 
 static int mo_kline(struct Client *, struct Client *, int, const char **);

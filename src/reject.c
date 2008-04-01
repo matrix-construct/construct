@@ -28,8 +28,6 @@
 #include "patricia.h"
 #include "client.h"
 #include "s_conf.h"
-#include "event.h"
-#include "tools.h"
 #include "reject.h"
 #include "s_stats.h"
 #include "msg.h"

@@ -36,7 +36,6 @@
 #include <openssl/err.h>
 #endif
 
-#include "memory.h"
 #include "client.h"
 #include "ircd.h"
 #include "modules.h"

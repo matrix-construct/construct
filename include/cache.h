@@ -3,7 +3,6 @@
 #define INCLUDED_CACHE_H
 
 #include "client.h"
-#include "tools.h"
 
 #define HELP_MAX	100
 

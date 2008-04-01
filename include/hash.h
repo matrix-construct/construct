@@ -27,8 +27,6 @@
 #ifndef INCLUDED_hash_h
 #define INCLUDED_hash_h
 
-#include "tools.h"
-
 struct Dictionary;
 
 extern rb_dlink_list *clientTable;

@@ -41,7 +41,6 @@
 #include "irc_string.h"
 #include "ircd.h"
 #include "numeric.h"
-#include "commio.h"
 #include "s_serv.h"
 #include "s_conf.h"
 #include "s_newconf.h"

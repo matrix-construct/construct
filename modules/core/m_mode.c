@@ -25,8 +25,6 @@
  */
 
 #include "stdinc.h"
-#include "tools.h"
-#include "balloc.h"
 #include "channel.h"
 #include "client.h"
 #include "hash.h"

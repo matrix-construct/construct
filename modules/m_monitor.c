@@ -31,7 +31,6 @@
  */
 
 #include "stdinc.h"
-#include "tools.h"
 #include "client.h"
 #include "msg.h"
 #include "parse.h"

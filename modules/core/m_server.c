@@ -25,10 +25,8 @@
  */
 
 #include "stdinc.h"
-#include "tools.h"
 #include "client.h"		/* client struct */
 #include "common.h"		/* TRUE bleah */
-#include "event.h"
 #include "hash.h"		/* add_to_client_hash */
 #include "irc_string.h"
 #include "ircd.h"		/* me */

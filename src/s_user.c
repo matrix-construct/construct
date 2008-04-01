@@ -25,7 +25,6 @@
  */
 
 #include "stdinc.h"
-#include "tools.h"
 #include "s_user.h"
 #include "channel.h"
 #include "class.h"
@@ -38,7 +37,6 @@
 #include "listener.h"
 #include "msg.h"
 #include "numeric.h"
-#include "commio.h"
 #include "s_conf.h"
 #include "s_newconf.h"
 #include "s_log.h"
@@ -48,7 +46,6 @@
 #include "send.h"
 #include "supported.h"
 #include "whowas.h"
-#include "memory.h"
 #include "packet.h"
 #include "reject.h"
 #include "cache.h"

@@ -25,7 +25,6 @@
  */
 
 #include "stdinc.h"
-#include "tools.h"
 #include "s_gline.h"
 #include "channel.h"
 #include "client.h"
@@ -36,7 +35,6 @@
 #include "ircd.h"
 #include "hostmask.h"
 #include "numeric.h"
-#include "commio.h"
 #include "s_conf.h"
 #include "s_newconf.h"
 #include "scache.h"

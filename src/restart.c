@@ -25,14 +25,12 @@
  */
 
 #include "stdinc.h"
-#include "tools.h"
 #include "restart.h"
 #include "common.h"
 #include "ircd.h"
 #include "send.h"
 #include "s_log.h"
 #include "client.h"		/* for FLAGS_ALL */
-#include "memory.h"
 
 /* external var */
 extern char **myargv;

@@ -25,7 +25,6 @@
  */
 
 #include "stdinc.h"
-#include "tools.h"
 #include "channel.h"
 #include "client.h"
 #include "common.h"
@@ -34,7 +33,6 @@
 #include "ircd.h"
 #include "hostmask.h"
 #include "numeric.h"
-#include "commio.h"
 #include "s_conf.h"
 #include "scache.h"
 #include "send.h"
@@ -42,8 +40,6 @@
 #include "s_serv.h"
 #include "s_gline.h"
 #include "hash.h"
-#include "event.h"
-#include "memory.h"
 
 rb_dlink_list glines;
 

@@ -32,13 +32,9 @@
  * $Id: monitor.c 3520 2007-06-30 22:15:35Z jilles $
  */
 #include "stdinc.h"
-#include "tools.h"
 #include "client.h"
-#include "memory.h"
-#include "balloc.h"
 #include "monitor.h"
 #include "hash.h"
-#include "event.h"
 #include "numeric.h"
 
 static struct monitor *monitorTable[MONITOR_HASH_SIZE];

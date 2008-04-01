@@ -36,7 +36,6 @@
 #define INCLUDED_s_newconf_h
 
 #include "setup.h"
-#include "tools.h"
 
 #ifdef HAVE_LIBCRYPTO
 #include <openssl/rsa.h>

@@ -25,14 +25,12 @@
  */
 
 #include "stdinc.h"
-#include "tools.h"
 #include "s_log.h"
 #include "s_conf.h"
 #include "s_newconf.h"
 #include "hostmask.h"
 #include "client.h"
 #include "irc_string.h"
-#include "memory.h"
 #include "hash.h"
 
 /* conf_add_fields()

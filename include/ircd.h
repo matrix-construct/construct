@@ -28,8 +28,6 @@
 #define INCLUDED_ircd_h
 
 #include "config.h"
-#include "tools.h"
-#include "memory.h"
 
 struct Client;
 struct rb_dlink_list;

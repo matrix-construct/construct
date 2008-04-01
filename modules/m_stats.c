@@ -25,7 +25,6 @@
  */
 
 #include "stdinc.h"
-#include "tools.h"		/* rb_dlink_node/rb_dlink_list */
 #include "class.h"		/* report_classes */
 #include "client.h"		/* Client */
 #include "common.h"		/* TRUE/FALSE */
@@ -38,14 +37,11 @@
 #include "numeric.h"		/* ERR_xxx */
 #include "scache.h"		/* list_scache */
 #include "send.h"		/* sendto_one */
-#include "commio.h"		/* highest_fd */
 #include "s_conf.h"		/* ConfItem */
 #include "s_serv.h"		/* hunt_server */
 #include "s_stats.h"		/* tstats */
 #include "s_user.h"		/* show_opers */
-#include "event.h"		/* events */
 #include "blacklist.h"		/* dnsbl stuff */
-#include "linebuf.h"
 #include "parse.h"
 #include "modules.h"
 #include "hook.h"

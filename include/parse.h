@@ -28,7 +28,6 @@
 #define INCLUDED_parse_h_h
 
 #include "irc_dictionary.h"
-#include "tools.h"
 
 struct Message;
 struct Client;

@@ -29,7 +29,6 @@
 #include "ircd.h"
 #include "irc_string.h"
 #include "numeric.h"
-#include "commio.h"
 #include "s_conf.h"
 #include "s_newconf.h"
 #include "s_log.h"

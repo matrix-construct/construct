@@ -81,7 +81,6 @@
  */
 
 #include "stdinc.h"
-#include "tools.h"
 #include "client.h"
 #include "common.h"
 #include "numeric.h"

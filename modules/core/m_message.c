@@ -41,7 +41,6 @@
 #include "msg.h"
 #include "packet.h"
 #include "send.h"
-#include "event.h"
 #include "s_newconf.h"
 #include "s_stats.h"
 

@@ -31,7 +31,6 @@
  */
 
 #include "stdinc.h"
-#include "tools.h"
 #include "send.h"
 #include "channel.h"
 #include "client.h"
