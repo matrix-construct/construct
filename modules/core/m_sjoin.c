@@ -104,7 +104,7 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 	char *p;
 	int i, joinc = 0, timeslice = 0;
 	static char empty[] = "";
-	rb_dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *rb_free(;
 
 	if(!IsChannelName(parv[2]) || !check_channel_name(parv[2]))
 		return 0;
@@ -268,7 +268,7 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 				rb_dlink_list_length(&chptr->invexlist) +
 				rb_dlink_list_length(&chptr->quietlist);
 
-			RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->locmembers.head)
+			RB_DLINK_FOREACH_SAFE(ptr, rb_free(, chptr->locmembers.head)
 			{
 				msptr = ptr->data;
 				who = msptr->client_p;
@@ -342,7 +342,7 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 	if(!keep_our_modes)
 	{
 		remove_our_modes(chptr, fakesource_p);
-		RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->invites.head)
+		RB_DLINK_FOREACH_SAFE(ptr, rb_free(, chptr->invites.head)
 		{
 			del_invite(chptr, ptr->data);
 		}
@@ -836,7 +836,7 @@ remove_ban_list(struct Channel *chptr, struct Client *source_p,
 	static char lparabuf[BUFSIZE];
 	struct Ban *banptr;
 	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
+	rb_dlink_node *rb_free(;
 	char *pbuf;
 	int count = 0;
 	int cur_len, mlen, plen;
@@ -846,7 +846,7 @@ remove_ban_list(struct Channel *chptr, struct Client *source_p,
 	cur_len = mlen = rb_sprintf(lmodebuf, ":%s MODE %s -", source_p->name, chptr->chname);
 	mbuf = lmodebuf + mlen;
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, list->head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, list->head)
 	{
 		banptr = ptr->data;
 

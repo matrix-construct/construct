@@ -643,10 +643,10 @@ clear_resv_hash(void)
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
+	rb_dlink_node *rb_free(;
 	int i;
 
-	HASH_WALK_SAFE(i, R_MAX, ptr, next_ptr, resvTable)
+	HASH_WALK_SAFE(i, R_MAX, ptr, rb_free(, resvTable)
 	{
 		aconf = ptr->data;
 

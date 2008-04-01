@@ -190,12 +190,12 @@ void lookup_blacklists(struct Client *client_p)
 
 void abort_blacklist_queries(struct Client *client_p)
 {
-	rb_dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *rb_free(;
 	struct BlacklistClient *blcptr;
 
 	if (client_p->preClient == NULL)
 		return;
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, client_p->preClient->dnsbl_queries.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, client_p->preClient->dnsbl_queries.head)
 	{
 		blcptr = ptr->data;
 		rb_dlinkDelete(&blcptr->node, &client_p->preClient->dnsbl_queries);
@@ -207,10 +207,10 @@ void abort_blacklist_queries(struct Client *client_p)
 
 void destroy_blacklists(void)
 {
-	rb_dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *rb_free(;
 	struct Blacklist *blptr;
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, blacklist_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, blacklist_list.head)
 	{
 		blptr = ptr->data;
 		blptr->hits = 0; /* keep it simple and consistent */

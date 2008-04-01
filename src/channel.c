@@ -264,12 +264,12 @@ remove_user_from_channels(struct Client *client_p)
 	struct Channel *chptr;
 	struct membership *msptr;
 	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
+	rb_dlink_node *rb_free(;
 
 	if(client_p == NULL)
 		return;
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, client_p->user->channel.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, client_p->user->channel.head)
 	{
 		msptr = ptr->data;
 		chptr = msptr->chptr;
@@ -347,10 +347,10 @@ void
 free_channel_list(rb_dlink_list * list)
 {
 	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
+	rb_dlink_node *rb_free(;
 	struct Ban *actualBan;
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, list->head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, list->head)
 	{
 		actualBan = ptr->data;
 		free_ban(actualBan);
@@ -369,9 +369,9 @@ free_channel_list(rb_dlink_list * list)
 void
 destroy_channel(struct Channel *chptr)
 {
-	rb_dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *rb_free(;
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->invites.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, chptr->invites.head)
 	{
 		del_invite(chptr, ptr->data);
 	}

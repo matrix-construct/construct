@@ -179,9 +179,9 @@ mod_add_path(const char *path)
 void
 mod_clear_paths(void)
 {
-	rb_dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *rb_free(;
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, mod_paths.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, mod_paths.head)
 	{
 		MyFree(ptr->data);
 		free_rb_dlink_node(ptr);

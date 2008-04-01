@@ -77,34 +77,34 @@ clear_s_newconf(void)
 {
 	struct server_conf *server_p;
 	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
+	rb_dlink_node *rb_free(;
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, shared_conf_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, shared_conf_list.head)
 	{
 		/* ptr here is ptr->data->node */
 		rb_dlinkDelete(ptr, &shared_conf_list);
 		free_remote_conf(ptr->data);
 	}
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, cluster_conf_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, cluster_conf_list.head)
 	{
 		rb_dlinkDelete(ptr, &cluster_conf_list);
 		free_remote_conf(ptr->data);
 	}
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, hubleaf_conf_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, hubleaf_conf_list.head)
 	{
 		rb_dlinkDelete(ptr, &hubleaf_conf_list);
 		free_remote_conf(ptr->data);
 	}
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, oper_conf_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, oper_conf_list.head)
 	{
 		free_oper_conf(ptr->data);
 		rb_dlinkDestroy(ptr, &oper_conf_list);
 	}
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, server_conf_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, server_conf_list.head)
 	{
 		server_p = ptr->data;
 
@@ -122,9 +122,9 @@ void
 clear_s_newconf_bans(void)
 {
 	struct ConfItem *aconf;
-	rb_dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *rb_free(;
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, xline_conf_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, xline_conf_list.head)
 	{
 		aconf = ptr->data;
 
@@ -135,7 +135,7 @@ clear_s_newconf_bans(void)
 		rb_dlinkDestroy(ptr, &xline_conf_list);
 	}
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, resv_conf_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, resv_conf_list.head)
 	{
 		aconf = ptr->data;
 
@@ -686,10 +686,10 @@ expire_temp_rxlines(void *unused)
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
+	rb_dlink_node *rb_free(;
 	int i;
 
-	HASH_WALK_SAFE(i, R_MAX, ptr, next_ptr, resvTable)
+	HASH_WALK_SAFE(i, R_MAX, ptr, rb_free(, resvTable)
 	{
 		aconf = ptr->data;
 
@@ -706,7 +706,7 @@ expire_temp_rxlines(void *unused)
 	}
 	HASH_WALK_END
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, resv_conf_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, resv_conf_list.head)
 	{
 		aconf = ptr->data;
 
@@ -721,7 +721,7 @@ expire_temp_rxlines(void *unused)
 		}
 	}
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, xline_conf_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, xline_conf_list.head)
 	{
 		aconf = ptr->data;
 
@@ -776,9 +776,9 @@ expire_nd_entries(void *unused)
 {
 	struct nd_entry *nd;
 	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
+	rb_dlink_node *rb_free(;
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, nd_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, nd_list.head)
 	{
 		nd = ptr->data;
 

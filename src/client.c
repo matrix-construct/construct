@@ -292,9 +292,9 @@ check_pings_list(rb_dlink_list * list)
 	char scratch[32];	/* way too generous but... */
 	struct Client *client_p;	/* current local client_p being examined */
 	int ping = 0;		/* ping time value from client */
-	rb_dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *rb_free(;
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, list->head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, list->head)
 	{
 		client_p = ptr->data;
 
@@ -356,11 +356,11 @@ check_pings_list(rb_dlink_list * list)
 static void
 check_unknowns_list(rb_dlink_list * list)
 {
-	rb_dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *rb_free(;
 	struct Client *client_p;
 	int timeout;
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, list->head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, list->head)
 	{
 		client_p = ptr->data;
 
@@ -443,9 +443,9 @@ check_banned_lines(void)
 {
 	struct Client *client_p;	/* current local client_p being examined */
 	struct ConfItem *aconf = NULL;
-	rb_dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *rb_free(;
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, lclient_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, lclient_list.head)
 	{
 		client_p = ptr->data;
 
@@ -533,7 +533,7 @@ check_banned_lines(void)
 	}
 
 	/* also check the unknowns list for new dlines */
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, unknown_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, unknown_list.head)
 	{
 		client_p = ptr->data;
 
@@ -573,9 +573,9 @@ check_klines(void)
 	struct Client *client_p;
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
+	rb_dlink_node *rb_free(;
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, lclient_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, lclient_list.head)
 	{
 		client_p = ptr->data;
 
@@ -614,9 +614,9 @@ check_glines(void)
 	struct Client *client_p;
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
+	rb_dlink_node *rb_free(;
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, lclient_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, lclient_list.head)
 	{
 		client_p = ptr->data;
 
@@ -663,9 +663,9 @@ check_dlines(void)
 	struct Client *client_p;
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
+	rb_dlink_node *rb_free(;
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, lclient_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, lclient_list.head)
 	{
 		client_p = ptr->data;
 
@@ -687,7 +687,7 @@ check_dlines(void)
 	}
 
 	/* dlines need to be checked against unknowns too */
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, unknown_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, unknown_list.head)
 	{
 		client_p = ptr->data;
 
@@ -713,9 +713,9 @@ check_xlines(void)
 	struct Client *client_p;
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
+	rb_dlink_node *rb_free(;
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, lclient_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, lclient_list.head)
 	{
 		client_p = ptr->data;
 
@@ -1321,7 +1321,7 @@ static inline void
 exit_generic_client(struct Client *client_p, struct Client *source_p, struct Client *from,
 		   const char *comment)
 {
-	rb_dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *rb_free(;
 
 	if(IsOper(source_p))
 		rb_dlinkFindDestroy(source_p, &oper_list);
@@ -1336,7 +1336,7 @@ exit_generic_client(struct Client *client_p, struct Client *source_p, struct Cli
 	s_assert(source_p->user->channel.head == NULL);
 
 	/* Clean up invitefield */
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, source_p->user->invited.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, source_p->user->invited.head)
 	{
 		del_invite(ptr->data, source_p);
 	}
@@ -1756,7 +1756,7 @@ void
 del_all_accepts(struct Client *client_p)
 {
 	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
+	rb_dlink_node *rb_free(;
 	struct Client *target_p;
 
 	if(MyClient(client_p) && client_p->localClient->allow_list.head)
@@ -1764,7 +1764,7 @@ del_all_accepts(struct Client *client_p)
 		/* clear this clients accept list, and remove them from
 		 * everyones on_accept_list
 		 */
-		RB_DLINK_FOREACH_SAFE(ptr, next_ptr, client_p->localClient->allow_list.head)
+		RB_DLINK_FOREACH_SAFE(ptr, rb_free(, client_p->localClient->allow_list.head)
 		{
 			target_p = ptr->data;
 			rb_dlinkFindDestroy(client_p, &target_p->on_allow_list);
@@ -1773,7 +1773,7 @@ del_all_accepts(struct Client *client_p)
 	}
 
 	/* remove this client from everyones accept list */
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, client_p->on_allow_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, client_p->on_allow_list.head)
 	{
 		target_p = ptr->data;
 		rb_dlinkFindDestroy(client_p, &target_p->localClient->allow_list);

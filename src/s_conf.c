@@ -1005,10 +1005,10 @@ static void
 expire_temp_kd(void *list)
 {
 	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
+	rb_dlink_node *rb_free(;
 	struct ConfItem *aconf;
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, ((rb_dlink_list *) list)->head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, ((rb_dlink_list *) list)->head)
 	{
 		aconf = ptr->data;
 
@@ -1031,9 +1031,9 @@ static void
 reorganise_temp_kd(void *list)
 {
 	struct ConfItem *aconf;
-	rb_dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *rb_free(;
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, ((rb_dlink_list *) list)->head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, ((rb_dlink_list *) list)->head)
 	{
 		aconf = ptr->data;
 
@@ -1210,7 +1210,7 @@ clear_out_old_conf(void)
 {
 	struct Class *cltmp;
 	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
+	rb_dlink_node *rb_free(;
 
 	/*
 	 * don't delete the class table, rather mark all entries
@@ -1260,7 +1260,7 @@ clear_out_old_conf(void)
 	MyFree(ConfigFileEntry.servlink_path);
 	ConfigFileEntry.servlink_path = NULL;
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, service_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, service_list.head)
 	{
 		MyFree(ptr->data);
 		rb_dlinkDestroy(ptr, &service_list);

@@ -545,9 +545,9 @@ static void
 expire_tgchange(void *unused)
 {
 	tgchange *target;
-	rb_dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *rb_free(;
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, tgchange_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, tgchange_list.head)
 	{
 		target = ptr->data;
 
@@ -555,8 +555,8 @@ expire_tgchange(void *unused)
 		{
 			rb_dlinkDelete(ptr, &tgchange_list);
 			rb_patricia_remove(tgchange_tree, target->pnode);
-			MyFree(target->ip);
-			MyFree(target);
+			rb_free(target->ip);
+			rb_free(target);
 		}
 	}
 }

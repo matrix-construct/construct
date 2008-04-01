@@ -172,12 +172,12 @@ static int res_ourserver(const struct irc_sockaddr_storage *inp)
 static time_t timeout_query_list(time_t now)
 {
 	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
+	rb_dlink_node *rb_free(;
 	struct reslist *request;
 	time_t next_time = 0;
 	time_t timeout = 0;
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, request_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, request_list.head)
 	{
 		request = ptr->data;
 		timeout = request->sentat + request->timeout;
@@ -317,10 +317,10 @@ static struct reslist *make_request(struct DNSQuery *query)
 void delete_resolver_queries(const struct DNSQuery *query)
 {
 	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
+	rb_dlink_node *rb_free(;
 	struct reslist *request;
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, request_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, request_list.head)
 	{
 		if ((request = ptr->data) != NULL)
 		{

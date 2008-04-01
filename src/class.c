@@ -246,9 +246,9 @@ check_class()
 {
 	struct Class *cltmp;
 	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
+	rb_dlink_node *rb_free(;
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, class_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, rb_free(, class_list.head)
 	{
 		cltmp = ptr->data;
 
