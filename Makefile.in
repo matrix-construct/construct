@@ -74,7 +74,7 @@ build:
 	@for i in $(SUBDIRS); do \
 		echo "build ==> $$i";\
 		cd $$i;\
-		${MAKE} build || exit; cd ..;\
+		${MAKE} || exit; cd ..;\
 	done
 
 clean:
