@@ -345,7 +345,7 @@ apply_xline(struct Client *source_p, const char *name, const char *reason,
 			get_oper_name(source_p), name, reason);
 	}
 
-	dlinkAddAlloc(aconf, &xline_conf_list);
+	rb_dlinkAddAlloc(aconf, &xline_conf_list);
 	check_xlines();
 }
 
