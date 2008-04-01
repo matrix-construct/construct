@@ -79,7 +79,7 @@ mr_capab(struct Client *client_p, struct Client *source_p, int parc, const char 
 		client_p->localClient->caps |= CAP_CAP;
 
 	rb_free(client_p->localClient->fullcaps);
-	DupString(client_p->localClient->fullcaps, parv[1]);
+	client_p->localClient->fullcaps = rb_strdup(parv[1]);
 
 	for (i = 1; i < parc; i++)
 	{
