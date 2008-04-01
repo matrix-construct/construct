@@ -32,7 +32,7 @@ enum {
 typedef struct _hurt_state {
         time_t start_time;
         uint32_t n_hurts;
-        dlink_list hurt_clients;
+        rb_dlink_list hurt_clients;
         uint16_t cutoff;
         time_t default_expire;
         const char *exit_reason;
@@ -78,7 +78,7 @@ static int nick_is_valid(const char *);
 
 /* {{{ State containers */
 
-dlink_list hurt_confs = { NULL, NULL, 0 };
+rb_dlink_list hurt_confs = { NULL, NULL, 0 };
 
 /* }}} */
 
@@ -152,15 +152,15 @@ modinit(void)
 static void
 modfini(void)
 {
-	dlink_node	*ptr, *next_ptr;
+	rb_dlink_node	*ptr, *next_ptr;
 
 	/* and delete our events. */
 	rb_event_delete(hurt_expire_ev);
 	rb_event_delete(hurt_check_ev);
 
-	DLINK_FOREACH_SAFE (ptr, next_ptr, hurt_state.hurt_clients.head)
+	RB_DLINK_FOREACH_SAFE (ptr, next_ptr, hurt_state.hurt_clients.head)
 	{
-		dlinkDestroy(ptr, &hurt_state.hurt_clients);
+		rb_dlinkDestroy(ptr, &hurt_state.hurt_clients);
 	}
 }
 /* }}} */
@@ -392,14 +392,14 @@ me_heal(struct Client *client_p, struct Client *source_p,
 static void
 hurt_check_event(void *arg)
 {
-	dlink_node	*ptr, *next_ptr;
+	rb_dlink_node	*ptr, *next_ptr;
 	struct Client	*client_p;
 
-	DLINK_FOREACH_SAFE (ptr, next_ptr, hurt_state.hurt_clients.head) {
+	RB_DLINK_FOREACH_SAFE (ptr, next_ptr, hurt_state.hurt_clients.head) {
 		client_p = ptr->data;
 		if (!EmptyString(client_p->user->suser))
 		{
-			dlinkDestroy(ptr, &hurt_state.hurt_clients);
+			rb_dlinkDestroy(ptr, &hurt_state.hurt_clients);
 			sendto_one_notice(client_p, ":HURT restriction removed for this session");
 			USED_TARGETS(client_p) = 0;
 			client_p->localClient->target_last = CurrentTime;		/* don't ask --nenolod */
@@ -414,16 +414,16 @@ hurt_check_event(void *arg)
 static void
 hurt_expire_event(void *unused)
 {
-	dlink_node	*ptr, *next_ptr;
+	rb_dlink_node	*ptr, *next_ptr;
 	hurt_t		*hurt;
 
-	DLINK_FOREACH_SAFE (ptr, next_ptr, hurt_confs.head)
+	RB_DLINK_FOREACH_SAFE (ptr, next_ptr, hurt_confs.head)
 	{
 		hurt = (hurt_t *) ptr->data;
 
 		if (hurt->expire <= CurrentTime)
 		{
-			dlinkFindDestroy(hurt, &hurt_confs);
+			rb_dlinkFindDestroy(hurt, &hurt_confs);
 			hurt_destroy(hurt);
 		}
 	}
@@ -441,7 +441,7 @@ client_exit_hook(hook_data_client_exit *data)
 	s_assert(data != NULL);
 	s_assert(data->target != NULL);
 
-	dlinkFindDestroy(data->target, &hurt_state.hurt_clients);
+	rb_dlinkFindDestroy(data->target, &hurt_state.hurt_clients);
 }
 /* }}} */
 
@@ -458,7 +458,7 @@ new_local_user_hook(struct Client *source_p)
 		USED_TARGETS(source_p) = 10;
 		source_p->localClient->target_last = CurrentTime + 600;		/* don't ask --nenolod */
 		SetTGChange(source_p);
-		dlinkAddAlloc(source_p, &hurt_state.hurt_clients);
+		rb_dlinkAddAlloc(source_p, &hurt_state.hurt_clients);
 		sendto_one_notice(source_p, ":You are hurt. Please identify to services immediately, or use /stats p for assistance.");
 	}	
 }
@@ -468,7 +468,7 @@ new_local_user_hook(struct Client *source_p)
 static void
 doing_stats_hook(hook_data_int *hdata)
 {
-	dlink_node	*ptr;
+	rb_dlink_node	*ptr;
 	hurt_t		*hurt;
 	struct Client	*source_p;
 
@@ -502,7 +502,7 @@ doing_stats_hook(hook_data_int *hdata)
 		return;
 	}
 
-	DLINK_FOREACH(ptr, hurt_confs.head)
+	RB_DLINK_FOREACH(ptr, hurt_confs.head)
 	{
 		hurt = (hurt_t *) ptr->data;
 		sendto_one_numeric(source_p, RPL_STATSKLINE,
@@ -572,16 +572,16 @@ hurt_destroy(void *hurt)
 static void
 hurt_add(hurt_t *hurt)
 {
-	dlinkAddAlloc(hurt, &hurt_confs);
+	rb_dlinkAddAlloc(hurt, &hurt_confs);
 }
 
 static hurt_t *
 hurt_find_exact(const char *ip)
 {
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	hurt_t *hurt;
 
-	DLINK_FOREACH(ptr, hurt_confs.head)
+	RB_DLINK_FOREACH(ptr, hurt_confs.head)
 	{
 		hurt = (hurt_t *) ptr->data;
 
@@ -595,10 +595,10 @@ hurt_find_exact(const char *ip)
 static hurt_t *
 hurt_find(const char *ip)
 {
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	hurt_t *hurt;
 
-	DLINK_FOREACH(ptr, hurt_confs.head)
+	RB_DLINK_FOREACH(ptr, hurt_confs.head)
 	{
 		hurt = (hurt_t *) ptr->data;
 
@@ -614,7 +614,7 @@ hurt_remove(const char *ip)
 {
 	hurt_t *hurt = hurt_find_exact(ip);
 
-	dlinkFindDestroy(hurt, &hurt_confs);
+	rb_dlinkFindDestroy(hurt, &hurt_confs);
 	hurt_destroy(hurt);
 }
 
@@ -622,7 +622,7 @@ hurt_remove(const char *ip)
 static int
 heal_nick(struct Client *source_p, struct Client *target_p)
 {
-	if (dlinkFindDestroy(target_p, &hurt_state.hurt_clients))
+	if (rb_dlinkFindDestroy(target_p, &hurt_state.hurt_clients))
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s used HEAL on %s",
 				get_oper_name(source_p), get_client_name(target_p, HIDE_IP));
