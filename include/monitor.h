@@ -10,6 +10,8 @@
 #ifndef INCLUDED_monitor_h
 #define INCLUDED_monitor_h
 
+struct BlockHeap;
+
 struct monitor
 {
 	struct monitor *hnext;
@@ -17,14 +19,15 @@ struct monitor
 	rb_dlink_list users;
 };
 
-extern BlockHeap *monitor_heap;
+extern struct monitor *monitorTable[];
 
-#define MONITOR_HASH_SIZE 65536
 #define MONITOR_HASH_BITS 16
+#define MONITOR_HASH_SIZE (1<<MONITOR_HASH_BITS)
+
+void free_monitor(struct monitor *);
 
 void init_monitor(void);
 struct monitor *find_monitor(const char *name, int add);
-void clear_monitor(struct Client *);
 
 void monitor_signon(struct Client *);
 void monitor_signoff(struct Client *);

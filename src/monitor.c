@@ -37,22 +37,19 @@
 #include "hash.h"
 #include "numeric.h"
 
-static struct monitor *monitorTable[MONITOR_HASH_SIZE];
-BlockHeap *monitor_heap;
-
-static void cleanup_monitor(void *unused);
+struct monitor *monitorTable[MONITOR_HASH_SIZE];
+static rb_bh *monitor_heap;
 
 void
 init_monitor(void)
 {
-	monitor_heap = BlockHeapCreate(sizeof(struct monitor), MONITOR_HEAP_SIZE);
-	eventAddIsh("cleanup_monitor", cleanup_monitor, NULL, 3600);
+	monitor_heap = rb_bh_create(sizeof(struct monitor), MONITOR_HEAP_SIZE, "monitor_heap");
 }
 
 static inline unsigned int
 hash_monitor_nick(const char *name)
 {
-	return fnv_hash_upper((const unsigned char *) name, MONITOR_HASH_BITS);
+	return fnv_hash_upper((const unsigned char *)name, MONITOR_HASH_BITS, 0);
 }
 
 struct monitor *
@@ -70,8 +67,8 @@ find_monitor(const char *name, int add)
 
 	if(add)
 	{
-		monptr = BlockHeapAlloc(monitor_heap);
-		strlcpy(monptr->name, name, sizeof(monptr->name));
+		monptr = rb_bh_alloc(monitor_heap);
+		rb_strlcpy(monptr->name, name, sizeof(monptr->name));
 
 		monptr->hnext = monitorTable[hashv];
 		monitorTable[hashv] = monptr;
@@ -80,6 +77,12 @@ find_monitor(const char *name, int add)
 	}
 
 	return NULL;
+}
+
+void
+free_monitor(struct monitor *monptr)
+{
+	rb_bh_free(monitor_heap, monptr);
 }
 
 /* monitor_signon()
@@ -99,8 +102,7 @@ monitor_signon(struct Client *client_p)
 	if(monptr == NULL)
 		return;
 
-	rb_snprintf(buf, sizeof(buf), "%s!%s@%s",
-		    client_p->name, client_p->username, client_p->host);
+	rb_snprintf(buf, sizeof(buf), "%s!%s@%s", client_p->name, client_p->username, client_p->host);
 
 	sendto_monitor(monptr, form_str(RPL_MONONLINE), me.name, "*", buf);
 }
@@ -135,42 +137,10 @@ clear_monitor(struct Client *client_p)
 	{
 		monptr = ptr->data;
 
-		/* we leave the actual entry around with no users, itll be
-		 * cleaned up periodically by cleanup_monitor() --anfl
-		 */
 		rb_dlinkFindDestroy(client_p, &monptr->users);
-		free_rb_dlink_node(ptr);
+		rb_free_rb_dlink_node(ptr);
 	}
 
 	client_p->localClient->monitor_list.head = client_p->localClient->monitor_list.tail = NULL;
 	client_p->localClient->monitor_list.length = 0;
-}
-
-static void
-cleanup_monitor(void *unused)
-{
-	struct monitor *last_ptr = NULL;
-	struct monitor *next_ptr, *ptr;
-	int i;
-
-	for(i = 0; i < MONITOR_HASH_SIZE; i++)
-	{
-		last_ptr = NULL;
-		for(ptr = monitorTable[i]; ptr; ptr = next_ptr)
-		{
-			next_ptr = ptr->hnext;
-
-			if(!rb_dlink_list_length(&ptr->users))
-			{
-				if(last_ptr)
-					last_ptr->hnext = next_ptr;
-				else
-					monitorTable[i] = next_ptr;
-
-				BlockHeapFree(monitor_heap, ptr);
-			}
-			else
-				last_ptr = ptr;
-		}
-	}
 }
