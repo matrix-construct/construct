@@ -79,16 +79,18 @@ mapi_hfn_list_av1 list_hfnlist[] = {
 
 DECLARE_MODULE_AV1(list, _modinit, _moddeinit, list_clist, NULL, list_hfnlist, "$Revision: 3372 $");
 
+static struct ev_entry *iterate_clients_ev = NULL;
+
 static int _modinit(void)
 {
-	rb_event_add("safelist_iterate_clients", safelist_iterate_clients, NULL, 3);
+	iterate_clients_ev = rb_event_add("safelist_iterate_clients", safelist_iterate_clients, NULL, 3);
 
 	return 0;
 }
 
 static void _moddeinit(void)
 {
-	rb_event_delete(safelist_iterate_clients, NULL);
+	rb_event_delete(iterate_clients_ev);
 }
 
 static void safelist_check_cliexit(hook_data_client_exit * hdata)
@@ -224,7 +226,7 @@ static int mo_list(struct Client *client_p, struct Client *source_p, int parc, c
  */
 static int safelist_sendq_exceeded(struct Client *client_p)
 {
-	if (linebuf_len(&client_p->localClient->buf_sendq) > (get_sendq(client_p) / 2))
+	if (rb_linebuf_len(&client_p->localClient->buf_sendq) > (get_sendq(client_p) / 2))
 		return YES;
 	else
 		return NO;
@@ -260,7 +262,7 @@ static void safelist_client_instantiate(struct Client *client_p, struct ListClie
 	sendto_one(client_p, form_str(RPL_LISTSTART), me.name, client_p->name);
 
 	/* pop the client onto the queue for processing */
-	dlinkAddAlloc(client_p, &safelisting_clients);
+	rb_dlinkAddAlloc(client_p, &safelisting_clients);
 
 	/* give the user some initial data to work with */
 	safelist_iterate_client(client_p);

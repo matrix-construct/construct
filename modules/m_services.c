@@ -154,6 +154,7 @@ me_rsfnc(struct Client *client_p, struct Client *source_p,
 	struct Client *target_p;
 	struct Client *exist_p;
 	time_t newts, curts;
+	char note[NICKLEN + 10];
 
 	if(!(source_p->flags & FLAGS_SERVICE))
 		return 0;
@@ -237,7 +238,8 @@ me_rsfnc(struct Client *client_p, struct Client *source_p,
 
 	del_all_accepts(target_p);
 
-	rb_note(target_p->localClient->F->fd, "Nick: %s", target_p->name);
+	rb_snprintf(note, NICKLEN + 10, "Nick: %s", target_p->name);
+	rb_note(target_p->localClient->F, note);
 	return 0;
 }
 
