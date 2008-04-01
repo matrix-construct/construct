@@ -63,7 +63,6 @@
 #include "ircd_getopt.h"
 #include "balloc.h"
 #include "newconf.h"
-#include "patricia.h"
 #include "reject.h"
 #include "s_conf.h"
 #include "s_newconf.h"
@@ -84,6 +83,8 @@ int _charybdis_data_version = CHARYBDIS_DV;
 extern int ServerRunning;
 extern struct LocalUser meLocalUser;
 extern char **myargv;
+
+extern int maxconnections; /* XXX */
 
 /*
  * print_startup - print startup information
@@ -250,7 +251,7 @@ set_time(void)
 	
 #endif
 	if(newtime.tv_sec < CurrentTime)
-		set_back_events(CurrentTime - newtime.tv_sec);
+		rb_set_back_events(CurrentTime - newtime.tv_sec);
 
 	SystemTime.tv_sec = newtime.tv_sec;
 	SystemTime.tv_usec = newtime.tv_usec;
@@ -295,9 +296,9 @@ charybdis_io_loop(void)
 		 * event
 		 */
 
-		delay = eventNextTime();
+		delay = rb_event_next();
 		if(delay <= CurrentTime)
-			eventRun();
+			rb_event_run();
 
 
 		rb_select(250);
@@ -564,16 +565,9 @@ main(int argc, char *argv[])
 	/* Init the event subsystem */
 	init_sys();
 	libcharybdis_init(ircd_log_cb, restart, ircd_die_cb);
-	rb_lib_init(ircd_log_cb, restart, ircd_die_cb);
-
-	fdlist_init();
-	if(!server_state_foreground)
-	{
-		rb_close_all();
-	}
+	rb_lib_init(ircd_log_cb, restart, ircd_die_cb, !server_state_foreground, maxconnections, DNODE_HEAP_SIZE, FD_HEAP_SIZE);
 
 	init_main_logfile();
-	init_patricia();
 	newconf_init();
 	init_s_conf();
 	init_s_newconf();

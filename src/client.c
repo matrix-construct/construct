@@ -2072,9 +2072,9 @@ close_connection(struct Client *client_p)
 	{
 		/* attempt to flush any pending dbufs. Evil, but .. -- adrian */
 		if(!IsIOError(client_p))
-			send_queued_write(client_p->localClient->F->fd, client_p);
+			send_queued(client_p);
 
-		rb_close(client_p->localClient->F->fd);
+		rb_close(client_p->localClient->F);
 		client_p->localClient->F = NULL;
 	}
 
@@ -2084,8 +2084,8 @@ close_connection(struct Client *client_p)
 		client_p->localClient->ctrlfd = -1;
 	}
 
-	linebuf_donebuf(&client_p->localClient->buf_sendq);
-	linebuf_donebuf(&client_p->localClient->buf_recvq);
+	rb_linebuf_donebuf(&client_p->localClient->buf_sendq);
+	rb_linebuf_donebuf(&client_p->localClient->buf_recvq);
 	detach_conf(client_p);
 
 	/* XXX shouldnt really be done here. */
@@ -2111,7 +2111,7 @@ error_exit_client(struct Client *client_p, int error)
 	 * for reading even though it ends up being an EOF. -avalon
 	 */
 	char errmsg[255];
-	int current_error = rb_get_sockerr(client_p->localClient->F->fd);
+	int current_error = rb_get_sockerr(client_p->localClient->F);
 
 	SetIOError(client_p);
 
