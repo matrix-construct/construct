@@ -1,0 +1,18 @@
+$Id: CREDITS 23020 2006-09-01 18:20:19Z androsyn $
+ 
+ircd-ratbox is an evolution where ircd-hybrid left off around version 7-rc1.  
+Currently the ircd-ratbox team consists of the following developers:
+ 
+AndroSyn, Aaron Sethman <androsyn -at- ratbox.org>
+anfl, Lee Hardy <lee -at- leeh.co.uk>
+
+Special thanks for support, code and ideas to:
+
+Hwy, W. Campbell <wcampbel -at- botbay.net>
+jilles, Jilles Tjoelker <jilles -at- stack.nl>
+larne, Edward Brocklesby <ejb -at- sdf.lonestar.org>
+ 
+Of course our work is based on the work of many, many others over the past
+10 or so years since irc has existed, including the work done by the Hybrid
+team, our thanks goes to them.
+ 

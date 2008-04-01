@@ -1,0 +1,11 @@
+This is libircd from ircd-ratbox.  A few notes about this library:
+
+1. Most of this code isn't anywhere near threadsafe at this point.  Don't
+   hold your breath on this either.
+2. The linebuf code is designed to deal with pretty much 512 bytes per line
+   and that is it.  Anything beyond that length unless in raw mode, gets
+   discard.  For some non-irc purposes, this can be a problem, but for
+   ircd stuff its fine.
+3. The helper code when transmitting data between helpers, the same 512 byte
+   limit applies there as we recycle the linebuf code for this.  
+

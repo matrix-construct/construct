@@ -26,6 +26,8 @@ AC_LANG(C)
 dnl Make sure autoconf doesn't interfere with cflags -jmallett
 CFLAGS="$OLD_CFLAGS"
 
+AC_CONFIG_SUBDIRS(libratbox)
+
 dnl Check for various compilers. -jmallett
 dnl But if $CC turns out to be gcc, sure as hell it's, well, gcc. -joshk
 
