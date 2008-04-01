@@ -444,9 +444,16 @@ stats_exempt(struct Client *source_p)
 
 
 static void
+stats_events_cb(char *str, void *ptr)
+{
+	sendto_one_numeric(ptr, RPL_STATSDEBUG, "E :%s", str);
+}
+
+static void
 stats_events (struct Client *source_p)
 {
-	show_events (source_p);
+	rb_dump_events(stats_events_cb, source_p);
+	send_pop_queue(source_p);
 }
 
 /* stats_pending_glines()
@@ -1057,7 +1064,7 @@ stats_servers (struct Client *source_p)
 				   target_p->name,
 				   (target_p->serv->by[0] ? target_p->serv->by : "Remote."),
 				   (int) (CurrentTime - target_p->localClient->lasttime),
-				   (int) linebuf_len (&target_p->localClient->buf_sendq),
+				   (int) rb_linebuf_len (&target_p->localClient->buf_sendq),
 				   days, (days == 1) ? "" : "s", hours, minutes, 
 				   (int) seconds);
 	}
