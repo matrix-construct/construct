@@ -103,11 +103,11 @@ add_monitor(struct Client *client_p, const char *nicks)
 		monptr = find_monitor(name, 1);
 
 		/* already monitoring this nick */
-		if(dlinkFind(client_p, &monptr->users))
+		if(rb_dlinkFind(client_p, &monptr->users))
 			continue;
 
-		dlinkAddAlloc(client_p, &monptr->users);
-		dlinkAddAlloc(monptr, &client_p->localClient->monitor_list);
+		rb_dlinkAddAlloc(client_p, &monptr->users);
+		rb_dlinkAddAlloc(monptr, &client_p->localClient->monitor_list);
 
 		if((target_p = find_named_person(name)) != NULL)
 		{
