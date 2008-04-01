@@ -29,7 +29,7 @@
 /* amount of time to delay a rejected clients exit */
 #define DELAYED_EXIT_TIME	10
 
-extern dlink_list delay_exit;
+extern rb_dlink_list delay_exit;
 
 void init_reject(void);
 int check_reject(struct Client *);

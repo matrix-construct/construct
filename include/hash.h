@@ -31,12 +31,12 @@
 
 struct Dictionary;
 
-extern dlink_list *clientTable;
-extern dlink_list *channelTable;
-extern dlink_list *idTable;
-extern dlink_list *resvTable;
-extern dlink_list *hostTable;
-extern dlink_list *helpTable;
+extern rb_dlink_list *clientTable;
+extern rb_dlink_list *channelTable;
+extern rb_dlink_list *idTable;
+extern rb_dlink_list *resvTable;
+extern rb_dlink_list *hostTable;
+extern rb_dlink_list *helpTable;
 
 extern struct Dictionary *nd_dict;
 
@@ -60,8 +60,8 @@ extern struct Dictionary *nd_dict;
 #define R_MAX 1024 /* 2^10 */
 
 
-#define HASH_WALK(i, max, ptr, table) for (i = 0; i < max; i++) { DLINK_FOREACH(ptr, table[i].head)
-#define HASH_WALK_SAFE(i, max, ptr, nptr, table) for (i = 0; i < max; i++) { DLINK_FOREACH_SAFE(ptr, nptr, table[i].head)
+#define HASH_WALK(i, max, ptr, table) for (i = 0; i < max; i++) { RB_DLINK_FOREACH(ptr, table[i].head)
+#define HASH_WALK_SAFE(i, max, ptr, nptr, table) for (i = 0; i < max; i++) { RB_DLINK_FOREACH_SAFE(ptr, nptr, table[i].head)
 #define HASH_WALK_END }
 
 struct Client;
@@ -93,7 +93,7 @@ extern struct Channel *find_channel(const char *name);
 
 extern void add_to_hostname_hash(const char *, struct Client *);
 extern void del_from_hostname_hash(const char *, struct Client *);
-extern dlink_node *find_hostname(const char *);
+extern rb_dlink_node *find_hostname(const char *);
 
 extern void add_to_resv_hash(const char *name, struct ConfItem *aconf);
 extern void del_from_resv_hash(const char *name, struct ConfItem *aconf);

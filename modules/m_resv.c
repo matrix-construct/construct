@@ -132,7 +132,7 @@ mo_resv(struct Client *client_p, struct Client *source_p, int parc, const char *
 		if(match(target_server, me.name) == 0)
 			return 0;
 	}
-	else if(dlink_list_length(&cluster_conf_list) > 0)
+	else if(rb_dlink_list_length(&cluster_conf_list) > 0)
 		cluster_resv(source_p, temp_time, name, reason);
 
 	parse_resv(source_p, name, reason, temp_time);
@@ -337,9 +337,9 @@ cluster_resv(struct Client *source_p, int temp_time, const char *name,
 		const char *reason)
 {
 	struct remote_conf *shared_p;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 
-	DLINK_FOREACH(ptr, cluster_conf_list.head)
+	RB_DLINK_FOREACH(ptr, cluster_conf_list.head)
 	{
 		shared_p = ptr->data;
 
@@ -399,7 +399,7 @@ mo_unresv(struct Client *client_p, struct Client *source_p, int parc, const char
 		if(match(parv[3], me.name) == 0)
 			return 0;
 	}
-	else if(dlink_list_length(&cluster_conf_list) > 0)
+	else if(rb_dlink_list_length(&cluster_conf_list) > 0)
 		cluster_generic(source_p, "UNRESV", SHARED_UNRESV, CAP_CLUSTER,
 				"%s", parv[1]);
 
@@ -484,9 +484,9 @@ remove_resv(struct Client *source_p, const char *name)
 	}
 	else
 	{
-		dlink_node *ptr;
+		rb_dlink_node *ptr;
 
-		DLINK_FOREACH(ptr, resv_conf_list.head)
+		RB_DLINK_FOREACH(ptr, resv_conf_list.head)
 		{
 			aconf = ptr->data;
 

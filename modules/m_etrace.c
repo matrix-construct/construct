@@ -145,10 +145,10 @@ static void
 do_etrace(struct Client *source_p, int ipv4, int ipv6)
 {
 	struct Client *target_p;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 
 	/* report all direct connections */
-	DLINK_FOREACH(ptr, lclient_list.head)
+	RB_DLINK_FOREACH(ptr, lclient_list.head)
 	{
 		target_p = ptr->data;
 
@@ -173,9 +173,9 @@ do_etrace(struct Client *source_p, int ipv4, int ipv6)
 static void
 do_etrace_full(struct Client *source_p)
 {
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 
-	DLINK_FOREACH(ptr, lclient_list.head)
+	RB_DLINK_FOREACH(ptr, lclient_list.head)
 	{
 		do_single_etrace(source_p, ptr->data);
 	}
@@ -221,7 +221,7 @@ mo_chantrace(struct Client *client_p, struct Client *source_p, int parc, const c
 	struct membership *msptr;
 	const char *sockhost;
 	const char *name;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	int operspy = 0;
 
 	name = parv[1];
@@ -257,7 +257,7 @@ mo_chantrace(struct Client *client_p, struct Client *source_p, int parc, const c
 		return 0;
 	}
 
-	DLINK_FOREACH(ptr, chptr->members.head)
+	RB_DLINK_FOREACH(ptr, chptr->members.head)
 	{
 		msptr = ptr->data;
 		target_p = msptr->client_p;
@@ -283,12 +283,12 @@ mo_chantrace(struct Client *client_p, struct Client *source_p, int parc, const c
 }
 
 static void
-match_masktrace(struct Client *source_p, dlink_list *list,
+match_masktrace(struct Client *source_p, rb_dlink_list *list,
 	const char *username, const char *hostname, const char *name,
 	const char *gecos)
 {
 	struct Client *target_p;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	const char *sockhost;	
 	char *mangle_gecos = NULL;
 	
@@ -329,7 +329,7 @@ match_masktrace(struct Client *source_p, dlink_list *list,
 	                mangle_gecos = LOCAL_COPY(gecos);
 	}
 
-	DLINK_FOREACH(ptr, list->head)
+	RB_DLINK_FOREACH(ptr, list->head)
 	{
 		target_p = ptr->data;
 		if(!IsPerson(target_p))

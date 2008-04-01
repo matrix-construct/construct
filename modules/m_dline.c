@@ -451,12 +451,12 @@ flush_write(struct Client *source_p, FILE * out, char *buf, char *temppath)
 static int
 remove_temp_dline(struct ConfItem *aconf)
 {
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	int i;
 
 	for (i = 0; i < LAST_TEMP_TYPE; i++)
 	{
-		DLINK_FOREACH(ptr, temp_dlines[i].head)
+		RB_DLINK_FOREACH(ptr, temp_dlines[i].head)
 		{
 			if (aconf == ptr->data)
 			{

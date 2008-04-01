@@ -36,7 +36,6 @@
 #include "class.h"
 #include "client.h"
 #include "common.h"
-#include "patricia.h"
 
 struct Client;
 struct DNSReply;
@@ -70,7 +69,7 @@ struct ConfItem
 	time_t hold;		/* Hold action until this time (calendar time) */
 	char *className;	/* Name of class */
 	struct Class *c_class;	/* Class of connection */
-	patricia_node_t *pnode;	/* Our patricia node */
+	rb_patricia_node_t *pnode;	/* Our patricia node */
 };
 
 #define CONF_ILLEGAL            0x80000000
@@ -308,7 +307,7 @@ extern struct server_info ServerInfo;	/* defined in ircd.c */
 extern struct admin_info AdminInfo;	/* defined in ircd.c */
 /* End GLOBAL section */
 
-dlink_list service_list;
+rb_dlink_list service_list;
 
 typedef enum temp_list
 {
@@ -319,8 +318,8 @@ typedef enum temp_list
 	LAST_TEMP_TYPE
 } temp_list;
 
-dlink_list temp_klines[LAST_TEMP_TYPE];
-dlink_list temp_dlines[LAST_TEMP_TYPE];
+rb_dlink_list temp_klines[LAST_TEMP_TYPE];
+rb_dlink_list temp_dlines[LAST_TEMP_TYPE];
 
 extern void init_s_conf(void);
 
@@ -359,7 +358,7 @@ extern void write_confitem(KlineType, struct Client *, char *, char *,
 extern void add_temp_kline(struct ConfItem *);
 extern void add_temp_dline(struct ConfItem *);
 extern void report_temp_klines(struct Client *);
-extern void show_temp_klines(struct Client *, dlink_list *);
+extern void show_temp_klines(struct Client *, rb_dlink_list *);
 
 extern const char *get_conf_name(KlineType);
 extern int rehash(int);

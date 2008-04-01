@@ -84,7 +84,7 @@ mo_links(struct Client *client_p, struct Client *source_p, int parc, const char 
 	char clean_mask[2 * HOSTLEN + 4];
 	hook_data hd;
 
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 
 	if(parc > 2)
 	{
@@ -107,7 +107,7 @@ mo_links(struct Client *client_p, struct Client *source_p, int parc, const char 
 
 	call_hook(doing_links_hook, &hd);
 
-	DLINK_FOREACH(ptr, global_serv_list.head)
+	RB_DLINK_FOREACH(ptr, global_serv_list.head)
 	{
 		target_p = ptr->data;
 

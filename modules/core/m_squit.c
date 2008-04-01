@@ -174,7 +174,7 @@ find_squit(struct Client *client_p, struct Client *source_p, const char *server)
 	static struct squit_parms found_squit;
 	struct Client *target_p = NULL;
 	struct Client *p;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 
 	/* must ALWAYS be reset */
 	found_squit.target_p = NULL;
@@ -186,7 +186,7 @@ find_squit(struct Client *client_p, struct Client *source_p, const char *server)
 	 ** when the command is issued by an oper.
 	 */
 
-	DLINK_FOREACH(ptr, global_serv_list.head)
+	RB_DLINK_FOREACH(ptr, global_serv_list.head)
 	{
 		p = ptr->data;
 		if(IsServer(p) || IsMe(p))

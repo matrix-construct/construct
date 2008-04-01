@@ -32,7 +32,7 @@
 #include "memory.h"
 
 struct Client;
-struct dlink_list;
+struct rb_dlink_list;
 
 struct SetOptions
 {
@@ -79,7 +79,7 @@ extern int opers_see_all_users; /* sno_farconnect.so loaded, operspy without
 				   accountability, etc */
 
 extern struct Client me;
-extern dlink_list global_client_list;
+extern rb_dlink_list global_client_list;
 extern struct Client *local[];
 extern struct Counter Count;
 #if 0
@@ -97,13 +97,13 @@ extern int split_users;
 extern int split_servers;
 int eob_count;
 
-extern dlink_list unknown_list;
-extern dlink_list lclient_list;
-extern dlink_list serv_list;
-extern dlink_list global_serv_list;
-extern dlink_list local_oper_list;
-extern dlink_list oper_list;
-extern dlink_list dead_list;
+extern rb_dlink_list unknown_list;
+extern rb_dlink_list lclient_list;
+extern rb_dlink_list serv_list;
+extern rb_dlink_list global_serv_list;
+extern rb_dlink_list local_oper_list;
+extern rb_dlink_list oper_list;
+extern rb_dlink_list dead_list;
 
 extern void get_current_bandwidth(struct Client *source_p, struct Client *target_p);
 

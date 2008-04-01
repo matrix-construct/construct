@@ -214,7 +214,7 @@ ms_bmask(struct Client *client_p, struct Client *source_p, int parc, const char 
 	static char modebuf[BUFSIZE];
 	static char parabuf[BUFSIZE];
 	struct Channel *chptr;
-	dlink_list *banlist;
+	rb_dlink_list *banlist;
 	const char *s;
 	char *t;
 	char *mbuf;

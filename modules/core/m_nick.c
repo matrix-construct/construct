@@ -758,7 +758,7 @@ change_local_nick(struct Client *client_p, struct Client *source_p,
 		char *nick, int dosend)
 {
 	struct Client *target_p;
-	dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *next_ptr;
 	struct Channel *chptr;
 	int samenick;
 
@@ -841,7 +841,7 @@ change_local_nick(struct Client *client_p, struct Client *source_p,
 	 * to clear a clients own list of accepted clients.  So just remove
 	 * them from everyone elses list --anfl
 	 */
-	DLINK_FOREACH_SAFE(ptr, next_ptr, source_p->on_allow_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, source_p->on_allow_list.head)
 	{
 		target_p = ptr->data;
 
@@ -1240,9 +1240,9 @@ register_client(struct Client *client_p, struct Client *server,
 		if(flag & UMODE_SERVICE)
 		{
 			int hit = 0;
-			dlink_node *ptr;
+			rb_dlink_node *ptr;
 
-			DLINK_FOREACH(ptr, service_list.head)
+			RB_DLINK_FOREACH(ptr, service_list.head)
 			{
 				if(!irccmp((const char *) ptr->data, server->name))
 				{

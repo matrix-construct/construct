@@ -254,10 +254,10 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 			flags = CHFL_CHANOP;
 		}
 
-		if((dlink_list_length(&source_p->user->channel) >=
+		if((rb_dlink_list_length(&source_p->user->channel) >=
 		    (unsigned long) ConfigChannel.max_chans_per_user) &&
 		   (!IsOper(source_p) ||
-		    (dlink_list_length(&source_p->user->channel) >=
+		    (rb_dlink_list_length(&source_p->user->channel) >=
 		     (unsigned long) ConfigChannel.max_chans_per_user * 3)))
 		{
 			sendto_one(source_p, form_str(ERR_TOOMANYCHANNELS),
@@ -400,7 +400,7 @@ ms_join(struct Client *client_p, struct Client *source_p, int parc, const char *
 	int isnew;
 	int keep_our_modes = YES;
 	int keep_new_modes = YES;
-	dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *next_ptr;
 
 	/* special case for join 0 */
 	if((parv[1][0] == '0') && (parv[1][1] == '\0') && parc == 2)
@@ -470,7 +470,7 @@ ms_join(struct Client *client_p, struct Client *source_p, int parc, const char *
 		set_final_mode(&mode, &chptr->mode);
 		chptr->mode = mode;
 		remove_our_modes(chptr, source_p);
-		DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->invites.head)
+		RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->invites.head)
 		{
 			del_invite(chptr, ptr->data);
 		}
@@ -532,7 +532,7 @@ do_join_0(struct Client *client_p, struct Client *source_p)
 {
 	struct membership *msptr;
 	struct Channel *chptr = NULL;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 
 	/* Finish the flood grace period... */
 	if(MyClient(source_p) && !IsFloodDone(source_p))
@@ -716,7 +716,7 @@ static void
 remove_our_modes(struct Channel *chptr, struct Client *source_p)
 {
 	struct membership *msptr;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	char lmodebuf[MODEBUFLEN];
 	char *lpara[MAXMODEPARAMS];
 	int count = 0;
@@ -728,7 +728,7 @@ remove_our_modes(struct Channel *chptr, struct Client *source_p)
 	for(i = 0; i < MAXMODEPARAMS; i++)
 		lpara[i] = NULL;
 
-	DLINK_FOREACH(ptr, chptr->members.head)
+	RB_DLINK_FOREACH(ptr, chptr->members.head)
 	{
 		msptr = ptr->data;
 

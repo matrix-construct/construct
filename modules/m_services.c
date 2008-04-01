@@ -279,9 +279,9 @@ me_nickdelay(struct Client *client_p, struct Client *source_p, int parc, const c
 static void
 h_svc_server_introduced(hook_data_client *hdata)
 {
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 
-	DLINK_FOREACH(ptr, service_list.head)
+	RB_DLINK_FOREACH(ptr, service_list.head)
 	{
 		if(!irccmp((const char *) ptr->data, hdata->target->name))
 		{
@@ -317,11 +317,11 @@ static void
 h_svc_stats(hook_data_int *data)
 {
 	char statchar = (char) data->arg2;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 
 	if (statchar == 'U' && IsOper(data->client))
 	{
-		DLINK_FOREACH(ptr, service_list.head)
+		RB_DLINK_FOREACH(ptr, service_list.head)
 		{
 			sendto_one_numeric(data->client, RPL_STATSULINE,
 						form_str(RPL_STATSULINE),

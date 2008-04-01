@@ -230,7 +230,7 @@ static void
 single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 {
 	char buf[BUFSIZE];
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	struct membership *msptr;
 	struct Channel *chptr;
 	int cur_len = 0;
@@ -279,7 +279,7 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 
 	if (!IsService(target_p))
 	{
-		DLINK_FOREACH(ptr, target_p->user->channel.head)
+		RB_DLINK_FOREACH(ptr, target_p->user->channel.head)
 		{
 			msptr = ptr->data;
 			chptr = msptr->chptr;

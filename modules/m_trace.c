@@ -77,7 +77,7 @@ m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *
 	const char *tname;
 	int doall = 0;
 	int cnt = 0, wilds, dow;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 
 	if(parc > 1)
 	{
@@ -111,7 +111,7 @@ m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *
 
 			if(ac2ptr == NULL)
 			{
-				DLINK_FOREACH(ptr, global_client_list.head)
+				RB_DLINK_FOREACH(ptr, global_client_list.head)
 				{
 					ac2ptr = ptr->data;
 
@@ -197,7 +197,7 @@ m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *
 				report_this_status(source_p, source_p, 0);
 		}
 
-		DLINK_FOREACH(ptr, local_oper_list.head)
+		RB_DLINK_FOREACH(ptr, local_oper_list.head)
 		{
 			target_p = ptr->data;
 
@@ -209,7 +209,7 @@ m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *
 
 		if (IsExemptShide(source_p) || !ConfigServerHide.flatten_links)
 		{
-			DLINK_FOREACH(ptr, serv_list.head)
+			RB_DLINK_FOREACH(ptr, serv_list.head)
 			{
 				target_p = ptr->data;
 
@@ -228,7 +228,7 @@ m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *
 	/* source_p is opered */
 
 	/* report all direct connections */
-	DLINK_FOREACH(ptr, lclient_list.head)
+	RB_DLINK_FOREACH(ptr, lclient_list.head)
 	{
 		target_p = ptr->data;
 
@@ -242,7 +242,7 @@ m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *
 		cnt = report_this_status(source_p, target_p, dow);
 	}
 
-	DLINK_FOREACH(ptr, serv_list.head)
+	RB_DLINK_FOREACH(ptr, serv_list.head)
 	{
 		target_p = ptr->data;
 
@@ -254,7 +254,7 @@ m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *
 
 	if(MyConnect(source_p))
 	{
-		DLINK_FOREACH(ptr, unknown_list.head)
+		RB_DLINK_FOREACH(ptr, unknown_list.head)
 		{
 			target_p = ptr->data;
 
@@ -280,7 +280,7 @@ m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *
 
 	if(doall)
 	{
-		DLINK_FOREACH(ptr, class_list.head)
+		RB_DLINK_FOREACH(ptr, class_list.head)
 		{
 			cltmp = ptr->data;
 
@@ -307,11 +307,11 @@ m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *
 static void
 count_downlinks(struct Client *server_p, int *pservcount, int *pusercount)
 {
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 
 	(*pservcount)++;
-	*pusercount += dlink_list_length(&server_p->serv->users);
-	DLINK_FOREACH(ptr, server_p->serv->servers.head)
+	*pusercount += rb_dlink_list_length(&server_p->serv->users);
+	RB_DLINK_FOREACH(ptr, server_p->serv->servers.head)
 	{
 		count_downlinks(ptr->data, pservcount, pusercount);
 	}

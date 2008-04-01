@@ -24,8 +24,8 @@
  *  $Id: tools.h 3201 2007-02-04 01:59:38Z jilles $
  */
 
-#ifndef __TOOLS_H__
-#define __TOOLS_H__
+#ifndef __LIBCHARYBDIS_TOOLS_H__
+#define __LIBCHARYBDIS_TOOLS_H__
 
 
 /*

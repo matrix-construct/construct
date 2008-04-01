@@ -49,7 +49,7 @@
 #include "modules.h"
 #include "event.h"
 
-static dlink_list safelisting_clients = { NULL, NULL, 0 };
+static rb_dlink_list safelisting_clients = { NULL, NULL, 0 };
 
 static int _modinit(void);
 static void _moddeinit(void);
@@ -326,7 +326,7 @@ static void safelist_channel_named(struct Client *source_p, const char *name)
 
 	if (ShowChannel(source_p, chptr))
 		sendto_one(source_p, form_str(RPL_LIST), me.name, source_p->name, chptr->chname,
-			   dlink_list_length(&chptr->members),
+			   rb_dlink_list_length(&chptr->members),
 			   chptr->topic == NULL ? "" : chptr->topic);
 
 	sendto_one(source_p, form_str(RPL_LISTEND), me.name, source_p->name);
@@ -365,7 +365,7 @@ static void safelist_one_channel(struct Client *source_p, struct Channel *chptr)
  */
 static void safelist_iterate_client(struct Client *source_p)
 {
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	int iter;
 
 	for (iter = source_p->localClient->safelist_data->hash_indice; iter < CH_MAX; iter++)
@@ -376,7 +376,7 @@ static void safelist_iterate_client(struct Client *source_p)
 			return;
 		}
 
-		DLINK_FOREACH(ptr, channelTable[iter].head) 
+		RB_DLINK_FOREACH(ptr, channelTable[iter].head) 
 			safelist_one_channel(source_p, (struct Channel *) ptr->data);
 	}
 
@@ -385,8 +385,8 @@ static void safelist_iterate_client(struct Client *source_p)
 
 static void safelist_iterate_clients(void *unused)
 {
-	dlink_node *n, *n2;
+	rb_dlink_node *n, *n2;
 
-	DLINK_FOREACH_SAFE(n, n2, safelisting_clients.head) 
+	RB_DLINK_FOREACH_SAFE(n, n2, safelisting_clients.head) 
 		safelist_iterate_client((struct Client *)n->data);
 }

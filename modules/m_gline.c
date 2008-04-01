@@ -589,7 +589,7 @@ static int
 majority_gline(struct Client *source_p, const char *user,
 	       const char *host, const char *reason)
 {
-	dlink_node *pending_node;
+	rb_dlink_node *pending_node;
 	struct gline_pending *pending;
 
 	/* to avoid desync.. --fl */
@@ -599,7 +599,7 @@ majority_gline(struct Client *source_p, const char *user,
 	if(find_is_glined(host, user))
 		return NO;
 
-	DLINK_FOREACH(pending_node, pending_glines.head)
+	RB_DLINK_FOREACH(pending_node, pending_glines.head)
 	{
 		pending = pending_node->data;
 
@@ -696,14 +696,14 @@ static int
 remove_temp_gline(const char *user, const char *host)
 {
 	struct ConfItem *aconf;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	struct irc_sockaddr_storage addr, caddr;
 	int bits, cbits;
 	int mtype, gtype;
 
 	mtype = parse_netmask(host, (struct sockaddr *)&addr, &bits);
 
-	DLINK_FOREACH(ptr, glines.head)
+	RB_DLINK_FOREACH(ptr, glines.head)
 	{
 		aconf = ptr->data;
 

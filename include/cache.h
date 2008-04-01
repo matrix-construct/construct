@@ -18,14 +18,14 @@ struct Client;
 struct cachefile
 {
 	char name[CACHEFILELEN];
-	dlink_list contents;
+	rb_dlink_list contents;
 	int flags;
 };
 
 struct cacheline
 {
 	char data[CACHELINELEN];
-	dlink_node linenode;
+	rb_dlink_node linenode;
 };
 
 extern struct cachefile *user_motd;

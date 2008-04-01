@@ -163,7 +163,7 @@ mo_kline(struct Client *client_p, struct Client *source_p,
 			return 0;
 	}
 	/* if we have cluster servers, send it to them.. */
-	else if(dlink_list_length(&cluster_conf_list) > 0)
+	else if(rb_dlink_list_length(&cluster_conf_list) > 0)
 		cluster_generic(source_p, "KLINE", 
 				(tkline_time > 0) ? SHARED_TKLINE : SHARED_PKLINE, CAP_KLN,
 				"%lu %s %s :%s",
@@ -409,7 +409,7 @@ mo_unkline(struct Client *client_p, struct Client *source_p, int parc, const cha
 		if(match(parv[3], me.name) == 0)
 			return 0;
 	}
-	else if(dlink_list_length(&cluster_conf_list) > 0)
+	else if(rb_dlink_list_length(&cluster_conf_list) > 0)
 		cluster_generic(source_p, "UNKLINE", SHARED_UNKLINE, CAP_UNKLN,
 				"%s %s", user, host);
 
@@ -912,12 +912,12 @@ flush_write(struct Client *source_p, FILE * out, const char *buf, const char *te
 static int
 remove_temp_kline(struct Client *source_p, struct ConfItem *aconf)
 {
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	int i;
 
 	for (i = 0; i < LAST_TEMP_TYPE; i++)
 	{
-		DLINK_FOREACH(ptr, temp_klines[i].head)
+		RB_DLINK_FOREACH(ptr, temp_klines[i].head)
 		{
 			if (aconf == ptr->data)
 			{

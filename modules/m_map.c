@@ -89,7 +89,7 @@ dump_map(struct Client *client_p, struct Client *root_p, char *pbuf)
 {
 	int cnt = 0, i = 0, len;
 	struct Client *server_p;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	*pbuf = '\0';
 
 	strlcat(pbuf, root_p->name, BUFSIZE);
@@ -111,14 +111,14 @@ dump_map(struct Client *client_p, struct Client *root_p, char *pbuf)
 	}
 
 	ircsnprintf(buf + USER_COL, BUFSIZE - USER_COL,
-		 " | Users: %5lu (%4.1f%%)", dlink_list_length(&root_p->serv->users),
-		 100 * (float) dlink_list_length(&root_p->serv->users) / (float) Count.total);
+		 " | Users: %5lu (%4.1f%%)", rb_dlink_list_length(&root_p->serv->users),
+		 100 * (float) rb_dlink_list_length(&root_p->serv->users) / (float) Count.total);
 
 	sendto_one_numeric(client_p, RPL_MAP, form_str(RPL_MAP), buf);
 
 	if(root_p->serv->servers.head != NULL)
 	{
-		cnt += dlink_list_length(&root_p->serv->servers);
+		cnt += rb_dlink_list_length(&root_p->serv->servers);
 
 		if(cnt)
 		{
@@ -131,7 +131,7 @@ dump_map(struct Client *client_p, struct Client *root_p, char *pbuf)
 		}
 	}
 	i = 1;
-	DLINK_FOREACH(ptr, root_p->serv->servers.head)
+	RB_DLINK_FOREACH(ptr, root_p->serv->servers.head)
 	{
 		server_p = ptr->data;
 		*pbuf = ' ';

@@ -51,7 +51,7 @@ struct Class
 
 };
 
-extern dlink_list class_list;
+extern rb_dlink_list class_list;
 extern struct Class *default_class;
 
 #define ClassName(x)	((x)->class_name)

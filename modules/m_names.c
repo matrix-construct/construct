@@ -127,7 +127,7 @@ names_global(struct Client *source_p)
 	int tlen;
 	int cur_len;
 	int dont_show = NO;
-	dlink_node *lp, *ptr;
+	rb_dlink_node *lp, *ptr;
 	struct Client *target_p;
 	struct Channel *chptr = NULL;
 	struct membership *msptr;
@@ -135,7 +135,7 @@ names_global(struct Client *source_p)
 	char *t;
 
 	/* first do all visible channels */
-	DLINK_FOREACH(ptr, global_channel_list.head)
+	RB_DLINK_FOREACH(ptr, global_channel_list.head)
 	{
 		chptr = ptr->data;
 		channel_member_names(chptr, source_p, 0);
@@ -145,7 +145,7 @@ names_global(struct Client *source_p)
 	t = buf + mlen;
 
 	/* Second, do all clients in one big sweep */
-	DLINK_FOREACH(ptr, global_client_list.head)
+	RB_DLINK_FOREACH(ptr, global_client_list.head)
 	{
 		target_p = ptr->data;
 		dont_show = NO;
@@ -160,7 +160,7 @@ names_global(struct Client *source_p)
 		 * both were missed out above.  if the target is on a
 		 * common channel with source, its already been shown.
 		 */
-		DLINK_FOREACH(lp, target_p->user->channel.head)
+		RB_DLINK_FOREACH(lp, target_p->user->channel.head)
 		{
 			msptr = lp->data;
 			chptr = msptr->chptr;

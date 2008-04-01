@@ -53,11 +53,11 @@ static int
 mo_close(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
-	dlink_node *ptr;
-	dlink_node *ptr_next;
+	rb_dlink_node *ptr;
+	rb_dlink_node *ptr_next;
 	int closed = 0;
 
-	DLINK_FOREACH_SAFE(ptr, ptr_next, unknown_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, ptr_next, unknown_list.head)
 	{
 		target_p = ptr->data;
 

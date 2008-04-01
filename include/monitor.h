@@ -14,7 +14,7 @@ struct monitor
 {
 	struct monitor *hnext;
 	char name[NICKLEN];
-	dlink_list users;
+	rb_dlink_list users;
 };
 
 extern BlockHeap *monitor_heap;

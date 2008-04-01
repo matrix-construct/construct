@@ -27,7 +27,7 @@ struct TopConf
 	const char *tc_name;
 	int (*tc_sfunc) (struct TopConf *);
 	int (*tc_efunc) (struct TopConf *);
-	dlink_list tc_items;
+	rb_dlink_list tc_items;
 	struct ConfEntry *tc_entries;
 };
 

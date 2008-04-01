@@ -100,7 +100,7 @@ m_accept(struct Client *client_p, struct Client *source_p, int parc, const char 
 	}
 
 	/* get the number of accepts they have */
-	accept_num = dlink_list_length(&source_p->localClient->allow_list);
+	accept_num = rb_dlink_list_length(&source_p->localClient->allow_list);
 
 	/* parse the add list */
 	for (nick = strtoken(&p, addbuf, ","); nick; nick = strtoken(&p, NULL, ","))
@@ -223,7 +223,7 @@ add_accept(struct Client *source_p, struct Client *target_p)
 static void
 list_accepts(struct Client *source_p)
 {
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	struct Client *target_p;
 	char nicks[BUFSIZE];
 	int len = 0;
@@ -233,7 +233,7 @@ list_accepts(struct Client *source_p)
 	*nicks = '\0';
 	len2 = strlen(source_p->name) + 10;
 
-	DLINK_FOREACH(ptr, source_p->localClient->allow_list.head)
+	RB_DLINK_FOREACH(ptr, source_p->localClient->allow_list.head)
 	{
 		target_p = ptr->data;
 

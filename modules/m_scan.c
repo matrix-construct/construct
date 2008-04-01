@@ -121,8 +121,8 @@ scan_umodes(struct Client *client_p, struct Client *source_p, int parc,
 	const char *mask = NULL;
 	const char *c;
 	struct Client *target_p;
-	dlink_list *target_list = &lclient_list;	/* local clients only by default */
-	dlink_node *tn;
+	rb_dlink_list *target_list = &lclient_list;	/* local clients only by default */
+	rb_dlink_node *tn;
 	int i;
 	const char *sockhost;
 	char buf[512];
@@ -196,7 +196,7 @@ scan_umodes(struct Client *client_p, struct Client *source_p, int parc,
 		}
 	}
 
-	DLINK_FOREACH(tn, target_list->head)
+	RB_DLINK_FOREACH(tn, target_list->head)
 	{
 		unsigned int working_umodes = 0;
 		char maskbuf[BUFSIZE];

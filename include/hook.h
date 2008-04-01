@@ -10,7 +10,7 @@
 typedef struct
 {
 	char *name;
-	dlink_list hooks;
+	rb_dlink_list hooks;
 } hook;
 
 typedef void (*hookfn) (void *data);

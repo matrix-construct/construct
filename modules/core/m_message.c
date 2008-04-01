@@ -546,9 +546,9 @@ static void
 expire_tgchange(void *unused)
 {
 	tgchange *target;
-	dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *next_ptr;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, tgchange_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, tgchange_list.head)
 	{
 		target = ptr->data;
 
@@ -1024,11 +1024,11 @@ find_userhost(const char *user, const char *host, int *count)
 	struct Client *c2ptr;
 	struct Client *res = NULL;
 	char *u = LOCAL_COPY(user);
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	*count = 0;
 	if(collapse(u) != NULL)
 	{
-		DLINK_FOREACH(ptr, global_client_list.head)
+		RB_DLINK_FOREACH(ptr, global_client_list.head)
 		{
 			c2ptr = ptr->data;
 			if(!MyClient(c2ptr))	/* implies mine and an user */

@@ -61,12 +61,12 @@ DECLARE_MODULE_AV1(networknotice, NULL, NULL, NULL, NULL, nn_hfnlist, "$Revision
 static void
 count_mark_downlinks(struct Client *server_p, int *pservcount, int *pusercount)
 {
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 
 	SetFloodDone(server_p);
 	(*pservcount)++;
-	*pusercount += dlink_list_length(&server_p->serv->users);
-	DLINK_FOREACH(ptr, server_p->serv->servers.head)
+	*pusercount += rb_dlink_list_length(&server_p->serv->users);
+	RB_DLINK_FOREACH(ptr, server_p->serv->servers.head)
 	{
 		count_mark_downlinks(ptr->data, pservcount, pusercount);
 	}

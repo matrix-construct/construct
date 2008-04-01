@@ -57,7 +57,7 @@ static int
 mo_die(struct Client *client_p __unused, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 
 	if(!IsOperDie(source_p))
 	{
@@ -76,14 +76,14 @@ mo_die(struct Client *client_p __unused, struct Client *source_p, int parc, cons
 		return 0;
 	}
 
-	DLINK_FOREACH(ptr, lclient_list.head)
+	RB_DLINK_FOREACH(ptr, lclient_list.head)
 	{
 		target_p = ptr->data;
 
 		sendto_one_notice(target_p, ":Server Terminating. %s", get_client_name(source_p, HIDE_IP));
 	}
 
-	DLINK_FOREACH(ptr, serv_list.head)
+	RB_DLINK_FOREACH(ptr, serv_list.head)
 	{
 		target_p = ptr->data;
 

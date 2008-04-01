@@ -238,14 +238,14 @@ quote_max(struct Client *source_p, int newval)
 				     "%s!%s@%s set new MAXCLIENTS to %d (%lu current)",
 				     source_p->name, source_p->username, source_p->host,
 				     GlobalSetOptions.maxclients, 
-				     dlink_list_length(&lclient_list));
+				     rb_dlink_list_length(&lclient_list));
 
 		return;
 	}
 	else
 	{
 		sendto_one_notice(source_p, ":Current Maxclients = %d (%lu)",
-			   GlobalSetOptions.maxclients, dlink_list_length(&lclient_list));
+			   GlobalSetOptions.maxclients, rb_dlink_list_length(&lclient_list));
 	}
 }
 

@@ -284,7 +284,7 @@ relay_kill(struct Client *one, struct Client *source_p,
 	   struct Client *target_p, const char *inpath, const char *reason)
 {
 	struct Client *client_p;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	char buffer[BUFSIZE];
 
 	if(MyClient(source_p))
@@ -294,7 +294,7 @@ relay_kill(struct Client *one, struct Client *source_p,
 	else
 		ircsnprintf(buffer, sizeof(buffer), "%s %s", inpath, reason);
 
-	DLINK_FOREACH(ptr, serv_list.head)
+	RB_DLINK_FOREACH(ptr, serv_list.head)
 	{
 		client_p = ptr->data;
 

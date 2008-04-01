@@ -75,7 +75,7 @@ static int pargs;
 static void set_final_mode(struct Mode *mode, struct Mode *oldmode);
 static void remove_our_modes(struct Channel *chptr, struct Client *source_p);
 static void remove_ban_list(struct Channel *chptr, struct Client *source_p,
-			    dlink_list * list, char c, int cap, int mems);
+			    rb_dlink_list * list, char c, int cap, int mems);
 
 static int
 ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
@@ -105,7 +105,7 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 	char *p;
 	int i, joinc = 0, timeslice = 0;
 	static char empty[] = "";
-	dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *next_ptr;
 
 	if(!IsChannelName(parv[2]) || !check_channel_name(parv[2]))
 		return 0;
@@ -263,13 +263,13 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 		{
 			struct membership *msptr;
 			struct Client *who;
-			int l = dlink_list_length(&chptr->members);
-			int b = dlink_list_length(&chptr->banlist) +
-				dlink_list_length(&chptr->exceptlist) +
-				dlink_list_length(&chptr->invexlist) +
-				dlink_list_length(&chptr->quietlist);
+			int l = rb_dlink_list_length(&chptr->members);
+			int b = rb_dlink_list_length(&chptr->banlist) +
+				rb_dlink_list_length(&chptr->exceptlist) +
+				rb_dlink_list_length(&chptr->invexlist) +
+				rb_dlink_list_length(&chptr->quietlist);
 
-			DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->locmembers.head)
+			RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->locmembers.head)
 			{
 				msptr = ptr->data;
 				who = msptr->client_p;
@@ -343,7 +343,7 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 	if(!keep_our_modes)
 	{
 		remove_our_modes(chptr, fakesource_p);
-		DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->invites.head)
+		RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->invites.head)
 		{
 			del_invite(chptr, ptr->data);
 		}
@@ -577,18 +577,18 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 	 */
 	if(!keep_our_modes && source_p->id[0] != '\0')
 	{
-		if(dlink_list_length(&chptr->banlist) > 0)
+		if(rb_dlink_list_length(&chptr->banlist) > 0)
 			remove_ban_list(chptr, fakesource_p, &chptr->banlist, 'b', NOCAPS, ALL_MEMBERS);
 
-		if(dlink_list_length(&chptr->exceptlist) > 0)
+		if(rb_dlink_list_length(&chptr->exceptlist) > 0)
 			remove_ban_list(chptr, fakesource_p, &chptr->exceptlist,
 					'e', CAP_EX, ONLY_CHANOPS);
 
-		if(dlink_list_length(&chptr->invexlist) > 0)
+		if(rb_dlink_list_length(&chptr->invexlist) > 0)
 			remove_ban_list(chptr, fakesource_p, &chptr->invexlist,
 					'I', CAP_IE, ONLY_CHANOPS);
 
-		if(dlink_list_length(&chptr->quietlist) > 0)
+		if(rb_dlink_list_length(&chptr->quietlist) > 0)
 			remove_ban_list(chptr, fakesource_p, &chptr->quietlist,
 					'q', NOCAPS, ALL_MEMBERS);
 
@@ -735,7 +735,7 @@ static void
 remove_our_modes(struct Channel *chptr, struct Client *source_p)
 {
 	struct membership *msptr;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	char lmodebuf[MODEBUFLEN];
 	char *lpara[MAXMODEPARAMS];
 	int count = 0;
@@ -747,7 +747,7 @@ remove_our_modes(struct Channel *chptr, struct Client *source_p)
 	for (i = 0; i < MAXMODEPARAMS; i++)
 		lpara[i] = NULL;
 
-	DLINK_FOREACH(ptr, chptr->members.head)
+	RB_DLINK_FOREACH(ptr, chptr->members.head)
 	{
 		msptr = ptr->data;
 
@@ -831,13 +831,13 @@ remove_our_modes(struct Channel *chptr, struct Client *source_p)
  */
 static void
 remove_ban_list(struct Channel *chptr, struct Client *source_p,
-		dlink_list * list, char c, int cap, int mems)
+		rb_dlink_list * list, char c, int cap, int mems)
 {
 	static char lmodebuf[BUFSIZE];
 	static char lparabuf[BUFSIZE];
 	struct Ban *banptr;
-	dlink_node *ptr;
-	dlink_node *next_ptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
 	char *pbuf;
 	int count = 0;
 	int cur_len, mlen, plen;
@@ -847,7 +847,7 @@ remove_ban_list(struct Channel *chptr, struct Client *source_p,
 	cur_len = mlen = ircsprintf(lmodebuf, ":%s MODE %s -", source_p->name, chptr->chname);
 	mbuf = lmodebuf + mlen;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, list->head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, list->head)
 	{
 		banptr = ptr->data;
 

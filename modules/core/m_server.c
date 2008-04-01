@@ -250,7 +250,7 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 	int hop;
 	int hlined = 0;
 	int llined = 0;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 
 	name = parv[1];
 	hop = atoi(parv[2]);
@@ -333,7 +333,7 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 	 * leaf. If so, close the link.
 	 *
 	 */
-	DLINK_FOREACH(ptr, hubleaf_conf_list.head)
+	RB_DLINK_FOREACH(ptr, hubleaf_conf_list.head)
 	{
 		hub_p = ptr->data;
 
@@ -453,7 +453,7 @@ ms_sid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	struct Client *target_p;
 	struct remote_conf *hub_p;
 	hook_data_client hdata;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	int hop;
 	int hlined = 0;
 	int llined = 0;
@@ -519,7 +519,7 @@ ms_sid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	 * H: allows it to introduce a server matching that mask
 	 * L: disallows it introducing a server matching that mask
 	 */
-	DLINK_FOREACH(ptr, hubleaf_conf_list.head)
+	RB_DLINK_FOREACH(ptr, hubleaf_conf_list.head)
 	{
 		hub_p = ptr->data;
 

@@ -51,7 +51,7 @@ struct Mode
 /* channel structure */
 struct Channel
 {
-	dlink_node node;
+	rb_dlink_node node;
 	struct Mode mode;
 	char *topic;
 	char *topic_info;
@@ -59,14 +59,14 @@ struct Channel
 	time_t users_last;	/* when last user was in channel */
 	time_t last_knock;	/* don't allow knock to flood */
 
-	dlink_list members;	/* channel members */
-	dlink_list locmembers;	/* local channel members */
+	rb_dlink_list members;	/* channel members */
+	rb_dlink_list locmembers;	/* local channel members */
 
-	dlink_list invites;
-	dlink_list banlist;
-	dlink_list exceptlist;
-	dlink_list invexlist;
-	dlink_list quietlist;
+	rb_dlink_list invites;
+	rb_dlink_list banlist;
+	rb_dlink_list exceptlist;
+	rb_dlink_list invexlist;
+	rb_dlink_list quietlist;
 
 	time_t first_received_message_time;	/* channel flood control */
 	int received_number_of_privmsgs;
@@ -82,9 +82,9 @@ struct Channel
 
 struct membership
 {
-	dlink_node channode;
-	dlink_node locchannode;
-	dlink_node usernode;
+	rb_dlink_node channode;
+	rb_dlink_node locchannode;
+	rb_dlink_node usernode;
 
 	struct Channel *chptr;
 	struct Client *client_p;
@@ -99,7 +99,7 @@ struct Ban
 	char *banstr;
 	char *who;
 	time_t when;
-	dlink_node node;
+	rb_dlink_node node;
 };
 
 struct mode_letter
@@ -203,7 +203,7 @@ typedef int (*ExtbanFunc)(const char *data, struct Client *client_p,
 #define EXTBAN_NOMATCH  0  /* valid mask, no match */
 #define EXTBAN_MATCH    1  /* matches */
 
-extern dlink_list global_channel_list;
+extern rb_dlink_list global_channel_list;
 void init_channels(void);
 
 struct Channel *allocate_channel(const char *chname);
@@ -229,7 +229,7 @@ extern void remove_user_from_channel(struct membership *);
 extern void remove_user_from_channels(struct Client *);
 extern void invalidate_bancache_user(struct Client *);
 
-extern void free_channel_list(dlink_list *);
+extern void free_channel_list(rb_dlink_list *);
 
 extern int check_channel_name(const char *name);
 
@@ -263,9 +263,9 @@ extern const struct mode_letter chmode_flags[];
 extern struct ChannelMode chmode_table[256];
 
 extern int add_id(struct Client *source_p, struct Channel *chptr, const char *banid,
-       dlink_list * list, long mode_type);
+       rb_dlink_list * list, long mode_type);
 
-extern int del_id(struct Channel *chptr, const char *banid, dlink_list * list, long mode_type);
+extern int del_id(struct Channel *chptr, const char *banid, rb_dlink_list * list, long mode_type);
 
 extern ExtbanFunc extban_table[256];
 

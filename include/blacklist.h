@@ -40,7 +40,7 @@ struct BlacklistClient {
 	struct Blacklist *blacklist;
 	struct Client *client_p;
 	struct DNSQuery dns_query;
-	dlink_node node;
+	rb_dlink_node node;
 };
 
 /* public interfaces */
@@ -50,6 +50,6 @@ void abort_blacklist_queries(struct Client *client_p);
 void unref_blacklist(struct Blacklist *blptr);
 void destroy_blacklists(void);
 
-extern dlink_list blacklist_list;
+extern rb_dlink_list blacklist_list;
 
 #endif

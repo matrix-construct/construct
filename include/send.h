@@ -27,12 +27,12 @@
 #ifndef INCLUDED_send_h
 #define INCLUDED_send_h
 
+#include "ratbox_lib.h"
 #include "ircd_defs.h"
 #include "config.h"		/* HAVE_STDARG_H */
 
 struct Client;
 struct Channel;
-struct dlink_list;
 struct monitor;
 
 /* The nasty global also used in s_serv.c for server bursts */
