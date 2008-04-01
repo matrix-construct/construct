@@ -41,11 +41,11 @@
 #include "cache.h"
 #include "s_newconf.h"
 
-dlink_list *clientTable;
-dlink_list *channelTable;
-dlink_list *idTable;
-dlink_list *resvTable;
-dlink_list *hostTable; 
+rb_dlink_list *clientTable;
+rb_dlink_list *channelTable;
+rb_dlink_list *idTable;
+rb_dlink_list *resvTable;
+rb_dlink_list *hostTable; 
 
 /*
  * look in whowas.c for the missing ...[WW_MAX]; entry
@@ -91,11 +91,11 @@ dlink_list *hostTable;
 void
 init_hash(void)
 {
-	clientTable = MyMalloc(sizeof(dlink_list) * U_MAX);
-	idTable = MyMalloc(sizeof(dlink_list) * U_MAX);
-	channelTable = MyMalloc(sizeof(dlink_list) * CH_MAX);
-	hostTable = MyMalloc(sizeof(dlink_list) * HOST_MAX);
-	resvTable = MyMalloc(sizeof(dlink_list) * R_MAX);
+	clientTable = MyMalloc(sizeof(rb_dlink_list) * U_MAX);
+	idTable = MyMalloc(sizeof(rb_dlink_list) * U_MAX);
+	channelTable = MyMalloc(sizeof(rb_dlink_list) * CH_MAX);
+	hostTable = MyMalloc(sizeof(rb_dlink_list) * HOST_MAX);
+	resvTable = MyMalloc(sizeof(rb_dlink_list) * R_MAX);
 }
 
 #ifndef RICER_HASHING
@@ -224,7 +224,7 @@ add_to_id_hash(const char *name, struct Client *client_p)
 		return;
 
 	hashv = hash_id(name);
-	dlinkAddAlloc(client_p, &idTable[hashv]);
+	rb_dlinkAddAlloc(client_p, &idTable[hashv]);
 }
 
 /* add_to_client_hash()
@@ -242,7 +242,7 @@ add_to_client_hash(const char *name, struct Client *client_p)
 		return;
 
 	hashv = hash_nick(name);
-	dlinkAddAlloc(client_p, &clientTable[hashv]);
+	rb_dlinkAddAlloc(client_p, &clientTable[hashv]);
 }
 
 /* add_to_hostname_hash()
@@ -260,7 +260,7 @@ add_to_hostname_hash(const char *hostname, struct Client *client_p)
 		return;
 
 	hashv = hash_hostname(hostname);
-	dlinkAddAlloc(client_p, &hostTable[hashv]);
+	rb_dlinkAddAlloc(client_p, &hostTable[hashv]);
 }
 
 /* add_to_resv_hash()
@@ -278,7 +278,7 @@ add_to_resv_hash(const char *name, struct ConfItem *aconf)
 		return;
 
 	hashv = hash_resv(name);
-	dlinkAddAlloc(aconf, &resvTable[hashv]);
+	rb_dlinkAddAlloc(aconf, &resvTable[hashv]);
 }
 
 /* del_from_id_hash()
@@ -296,7 +296,7 @@ del_from_id_hash(const char *id, struct Client *client_p)
 		return;
 
 	hashv = hash_id(id);
-	dlinkFindDestroy(client_p, &idTable[hashv]);
+	rb_dlinkFindDestroy(client_p, &idTable[hashv]);
 }
 
 /* del_from_client_hash()
@@ -315,7 +315,7 @@ del_from_client_hash(const char *name, struct Client *client_p)
 		return;
 
 	hashv = hash_nick(name);
-	dlinkFindDestroy(client_p, &clientTable[hashv]);
+	rb_dlinkFindDestroy(client_p, &clientTable[hashv]);
 }
 
 /* del_from_channel_hash()
@@ -334,7 +334,7 @@ del_from_channel_hash(const char *name, struct Channel *chptr)
 		return;
 
 	hashv = hash_channel(name);
-	dlinkFindDestroy(chptr, &channelTable[hashv]);
+	rb_dlinkFindDestroy(chptr, &channelTable[hashv]);
 }
 
 /* del_from_hostname_hash()
@@ -351,7 +351,7 @@ del_from_hostname_hash(const char *hostname, struct Client *client_p)
 
 	hashv = hash_hostname(hostname);
 
-	dlinkFindDestroy(client_p, &hostTable[hashv]);
+	rb_dlinkFindDestroy(client_p, &hostTable[hashv]);
 }
 
 /* del_from_resv_hash()
@@ -370,7 +370,7 @@ del_from_resv_hash(const char *name, struct ConfItem *aconf)
 
 	hashv = hash_resv(name);
 
-	dlinkFindDestroy(aconf, &resvTable[hashv]);
+	rb_dlinkFindDestroy(aconf, &resvTable[hashv]);
 }
 
 /* find_id()
@@ -381,7 +381,7 @@ struct Client *
 find_id(const char *name)
 {
 	struct Client *target_p;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	unsigned int hashv;
 
 	if(EmptyString(name))
@@ -408,7 +408,7 @@ struct Client *
 find_client(const char *name)
 {
 	struct Client *target_p;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	unsigned int hashv;
 
 	s_assert(name != NULL);
@@ -440,7 +440,7 @@ struct Client *
 find_named_client(const char *name)
 {
 	struct Client *target_p;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	unsigned int hashv;
 
 	s_assert(name != NULL);
@@ -468,7 +468,7 @@ struct Client *
 find_server(struct Client *source_p, const char *name)
 {
 	struct Client *target_p;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	unsigned int hashv;
   
 	if(EmptyString(name))
@@ -497,11 +497,11 @@ find_server(struct Client *source_p, const char *name)
 
 /* find_hostname()
  *
- * finds a hostname dlink list from the hostname hash table.
- * we return the full dlink list, because you can have multiple
+ * finds a hostname rb_dlink list from the hostname hash table.
+ * we return the full rb_dlink list, because you can have multiple
  * entries with the same hostname
  */
-dlink_node *
+rb_dlink_node *
 find_hostname(const char *hostname)
 {
 	unsigned int hashv;
@@ -522,7 +522,7 @@ struct Channel *
 find_channel(const char *name)
 {
 	struct Channel *chptr;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	unsigned int hashv;
 
 	s_assert(name != NULL);
@@ -557,7 +557,7 @@ struct Channel *
 get_or_create_channel(struct Client *client_p, const char *chname, int *isnew)
 {
 	struct Channel *chptr;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	unsigned int hashv;
 	int len;
 	const char *s = chname;
@@ -600,11 +600,11 @@ get_or_create_channel(struct Client *client_p, const char *chname, int *isnew)
 
 	chptr = allocate_channel(s);
 
-	dlinkAdd(chptr, &chptr->node, &global_channel_list);
+	rb_dlinkAdd(chptr, &chptr->node, &global_channel_list);
 
 	chptr->channelts = CurrentTime;	/* doesn't hurt to set it here */
 
-	dlinkAddAlloc(chptr, &channelTable[hashv]);
+	rb_dlinkAddAlloc(chptr, &channelTable[hashv]);
 
 	return chptr;
 }
@@ -617,7 +617,7 @@ struct ConfItem *
 hash_find_resv(const char *name)
 {
 	struct ConfItem *aconf;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	unsigned int hashv;
 
 	s_assert(name != NULL);
@@ -644,8 +644,8 @@ void
 clear_resv_hash(void)
 {
 	struct ConfItem *aconf;
-	dlink_node *ptr;
-	dlink_node *next_ptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
 	int i;
 
 	HASH_WALK_SAFE(i, R_MAX, ptr, next_ptr, resvTable)
@@ -657,7 +657,7 @@ clear_resv_hash(void)
 			continue;
 
 		free_conf(ptr->data);
-		dlinkDestroy(ptr, &resvTable[i]);
+		rb_dlinkDestroy(ptr, &resvTable[i]);
 	}
 	HASH_WALK_END
 }
@@ -698,7 +698,7 @@ output_hash(struct Client *source_p, const char *name, int length, int *counts, 
 	
 
 static void
-count_hash(struct Client *source_p, dlink_list *table, int length, const char *name)
+count_hash(struct Client *source_p, rb_dlink_list *table, int length, const char *name)
 {
 	int counts[11];
 	int deepest = 0;
@@ -708,13 +708,13 @@ count_hash(struct Client *source_p, dlink_list *table, int length, const char *n
 	
 	for(i = 0; i < length; i++)
 	{
-		if(dlink_list_length(&table[i]) >= 10)
+		if(rb_dlink_list_length(&table[i]) >= 10)
 			counts[10]++;
 		else
-			counts[dlink_list_length(&table[i])]++;
+			counts[rb_dlink_list_length(&table[i])]++;
 
-		if(dlink_list_length(&table[i]) > deepest)
-			deepest = dlink_list_length(&table[i]);
+		if(rb_dlink_list_length(&table[i]) > deepest)
+			deepest = rb_dlink_list_length(&table[i]);
 	}
 
 	output_hash(source_p, name, length, counts, deepest);

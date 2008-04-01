@@ -65,7 +65,7 @@ tstats(struct Client *source_p)
 	struct Client *target_p;
 	struct ServerStatistics *sp;
 	struct ServerStatistics tmp;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 
 	sp = &tmp;
 	memcpy(sp, ServerStats, sizeof(struct ServerStatistics));
@@ -124,7 +124,7 @@ tstats(struct Client *source_p)
 			   "T :accepts %u refused %u", sp->is_ac, sp->is_ref);
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			"T :rejected %u delaying %lu", 
-			sp->is_rej, dlink_list_length(&delay_exit));
+			sp->is_rej, rb_dlink_list_length(&delay_exit));
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			"T :nicks being delayed %lu",
 			get_nd_count());
@@ -141,7 +141,7 @@ tstats(struct Client *source_p)
 			   "T :numerics seen %u", sp->is_num);
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			   "T :tgchange blocked msgs %u restricted addrs %lu",
-			   sp->is_tgch, dlink_list_length(&tgchange_list));
+			   sp->is_tgch, rb_dlink_list_length(&tgchange_list));
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			   "T :auth successes %u fails %u",
 			   sp->is_asuc, sp->is_abad);
@@ -170,8 +170,8 @@ count_memory(struct Client *source_p)
 	struct Client *target_p;
 	struct Channel *chptr;
 	struct Ban *actualBan;
-	dlink_node *dlink;
-	dlink_node *ptr;
+	rb_dlink_node *rb_dlink;
+	rb_dlink_node *ptr;
 	int channel_count = 0;
 	int local_client_conf_count = 0;	/* local client conf links */
 	int users_counted = 0;	/* user structs */
@@ -229,8 +229,8 @@ count_memory(struct Client *source_p)
 		if(target_p->user)
 		{
 			users_counted++;
-			users_invited_count += dlink_list_length(&target_p->user->invited);
-			user_channels += dlink_list_length(&target_p->user->channel);
+			users_invited_count += rb_dlink_list_length(&target_p->user->invited);
+			user_channels += rb_dlink_list_length(&target_p->user->channel);
 			if(target_p->user->away)
 			{
 				aways_counted++;
@@ -246,45 +246,45 @@ count_memory(struct Client *source_p)
 		channel_count++;
 		channel_memory += (strlen(chptr->chname) + sizeof(struct Channel));
 
-		channel_users += dlink_list_length(&chptr->members);
-		channel_invites += dlink_list_length(&chptr->invites);
+		channel_users += rb_dlink_list_length(&chptr->members);
+		channel_invites += rb_dlink_list_length(&chptr->invites);
 
-		DLINK_FOREACH(dlink, chptr->banlist.head)
+		DLINK_FOREACH(rb_dlink, chptr->banlist.head)
 		{
-			actualBan = dlink->data;
+			actualBan = rb_dlink->data;
 			channel_bans++;
 
-			channel_ban_memory += sizeof(dlink_node) + sizeof(struct Ban);
+			channel_ban_memory += sizeof(rb_dlink_node) + sizeof(struct Ban);
 		}
 
-		DLINK_FOREACH(dlink, chptr->exceptlist.head)
+		DLINK_FOREACH(rb_dlink, chptr->exceptlist.head)
 		{
-			actualBan = dlink->data;
+			actualBan = rb_dlink->data;
 			channel_except++;
 
-			channel_except_memory += (sizeof(dlink_node) + sizeof(struct Ban));
+			channel_except_memory += (sizeof(rb_dlink_node) + sizeof(struct Ban));
 		}
 
-		DLINK_FOREACH(dlink, chptr->invexlist.head)
+		DLINK_FOREACH(rb_dlink, chptr->invexlist.head)
 		{
-			actualBan = dlink->data;
+			actualBan = rb_dlink->data;
 			channel_invex++;
 
-			channel_invex_memory += (sizeof(dlink_node) + sizeof(struct Ban));
+			channel_invex_memory += (sizeof(rb_dlink_node) + sizeof(struct Ban));
 		}
 
-		DLINK_FOREACH(dlink, chptr->quietlist.head)
+		DLINK_FOREACH(rb_dlink, chptr->quietlist.head)
 		{
-			actualBan = dlink->data;
+			actualBan = rb_dlink->data;
 			channel_quiets++;
 
-			channel_quiet_memory += (sizeof(dlink_node) + sizeof(struct Ban));
+			channel_quiet_memory += (sizeof(rb_dlink_node) + sizeof(struct Ban));
 		}
 	}
 
 	/* count up all classes */
 
-	class_count = dlink_list_length(&class_list) + 1;
+	class_count = rb_dlink_list_length(&class_list) + 1;
 
 	count_linebuf_memory(&linebuf_count, &linebuf_memory_used);
 
@@ -293,18 +293,18 @@ count_memory(struct Client *source_p)
 			   users_counted,
 			   (unsigned long) users_counted * sizeof(struct User),
 			   users_invited_count, 
-			   (unsigned long) users_invited_count * sizeof(dlink_node));
+			   (unsigned long) users_invited_count * sizeof(rb_dlink_node));
 
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			   "z :User channels %u(%lu) Aways %u(%d)",
 			   user_channels,
-			   (unsigned long) user_channels * sizeof(dlink_node),
+			   (unsigned long) user_channels * sizeof(rb_dlink_node),
 			   aways_counted, (int) away_memory);
 
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			   "z :Attached confs %u(%lu)",
 			   local_client_conf_count,
-			   (unsigned long) local_client_conf_count * sizeof(dlink_node));
+			   (unsigned long) local_client_conf_count * sizeof(rb_dlink_node));
 
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			   "z :Conflines %u(%d)", conf_count, (int) conf_memory);
@@ -328,13 +328,13 @@ count_memory(struct Client *source_p)
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			   "z :Channel members %u(%lu) invite %u(%lu)",
 			   channel_users,
-			   (unsigned long) channel_users * sizeof(dlink_node),
+			   (unsigned long) channel_users * sizeof(rb_dlink_node),
 			   channel_invites, 
-			   (unsigned long) channel_invites * sizeof(dlink_node));
+			   (unsigned long) channel_invites * sizeof(rb_dlink_node));
 
 	total_channel_memory = channel_memory +
 		channel_ban_memory +
-		channel_users * sizeof(dlink_node) + channel_invites * sizeof(dlink_node);
+		channel_users * sizeof(rb_dlink_node) + channel_invites * sizeof(rb_dlink_node);
 
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			   "z :Whowas array %ld(%ld)",
@@ -344,8 +344,8 @@ count_memory(struct Client *source_p)
 
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			   "z :Hash: client %u(%ld) chan %u(%ld)",
-			   U_MAX, (long)(U_MAX * sizeof(dlink_list)), 
-			   CH_MAX, (long)(CH_MAX * sizeof(dlink_list)));
+			   U_MAX, (long)(U_MAX * sizeof(rb_dlink_list)), 
+			   CH_MAX, (long)(CH_MAX * sizeof(rb_dlink_list)));
 
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			   "z :linebuf %ld(%ld)",
@@ -359,7 +359,7 @@ count_memory(struct Client *source_p)
 
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			   "z :hostname hash %d(%ld)",
-			   HOST_MAX, (long)HOST_MAX * sizeof(dlink_list));
+			   HOST_MAX, (long)HOST_MAX * sizeof(rb_dlink_list));
 
 	total_memory = totww + total_channel_memory + conf_memory +
 		class_count * sizeof(struct Class);

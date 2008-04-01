@@ -45,7 +45,7 @@
 #include "event.h"
 #include "memory.h"
 
-dlink_list glines;
+rb_dlink_list glines;
 
 static void expire_glines(void);
 static void expire_pending_glines(void);
@@ -59,7 +59,7 @@ static void expire_pending_glines(void);
 void
 add_gline(struct ConfItem *aconf)
 {
-	dlinkAddTailAlloc(aconf, &glines);
+	rb_dlinkAddTailAlloc(aconf, &glines);
 	add_conf_by_address(aconf->host, CONF_GLINE, aconf->user, aconf);
 }
 
@@ -73,7 +73,7 @@ add_gline(struct ConfItem *aconf)
 struct ConfItem *
 find_is_glined(const char *host, const char *user)
 {
-	dlink_node *gline_node;
+	rb_dlink_node *gline_node;
 	struct ConfItem *kill_ptr;
 
 	DLINK_FOREACH(gline_node, glines.head)
@@ -116,8 +116,8 @@ cleanup_glines(void *unused)
 static void
 expire_glines()
 {
-	dlink_node *gline_node;
-	dlink_node *next_node;
+	rb_dlink_node *gline_node;
+	rb_dlink_node *next_node;
 	struct ConfItem *kill_ptr;
 
 	DLINK_FOREACH_SAFE(gline_node, next_node, glines.head)
@@ -128,7 +128,7 @@ expire_glines()
 		if(kill_ptr->hold > CurrentTime)
 			break;
 
-		dlinkDestroy(gline_node, &glines);
+		rb_dlinkDestroy(gline_node, &glines);
 		delete_one_address_conf(kill_ptr->host, kill_ptr);
 	}
 }
@@ -146,8 +146,8 @@ expire_glines()
 static void
 expire_pending_glines()
 {
-	dlink_node *pending_node;
-	dlink_node *next_node;
+	rb_dlink_node *pending_node;
+	rb_dlink_node *next_node;
 	struct gline_pending *glp_ptr;
 
 	DLINK_FOREACH_SAFE(pending_node, next_node, pending_glines.head)
@@ -161,7 +161,7 @@ expire_pending_glines()
 			MyFree(glp_ptr->reason1);
 			MyFree(glp_ptr->reason2);
 			MyFree(glp_ptr);
-			dlinkDestroy(pending_node, &pending_glines);
+			rb_dlinkDestroy(pending_node, &pending_glines);
 		}
 	}
 }

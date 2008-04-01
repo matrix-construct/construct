@@ -80,7 +80,7 @@ static const char *core_module_table[] = {
 int num_mods = 0;
 int max_mods = MODS_INCREMENT;
 
-static dlink_list mod_paths;
+static rb_dlink_list mod_paths;
 
 static int mo_modload(struct Client *, struct Client *, int, const char **);
 static int mo_modlist(struct Client *, struct Client *, int, const char **);
@@ -138,7 +138,7 @@ modules_init(void)
 static struct module_path *
 mod_find_path(const char *path)
 {
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	struct module_path *mpath;
 
 	DLINK_FOREACH(ptr, mod_paths.head)
@@ -169,7 +169,7 @@ mod_add_path(const char *path)
 	pathst = MyMalloc(sizeof(struct module_path));
 
 	strcpy(pathst->path, path);
-	dlinkAddAlloc(pathst, &mod_paths);
+	rb_dlinkAddAlloc(pathst, &mod_paths);
 }
 
 /* mod_clear_paths()
@@ -181,12 +181,12 @@ mod_add_path(const char *path)
 void
 mod_clear_paths(void)
 {
-	dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *next_ptr;
 
 	DLINK_FOREACH_SAFE(ptr, next_ptr, mod_paths.head)
 	{
 		MyFree(ptr->data);
-		free_dlink_node(ptr);
+		free_rb_dlink_node(ptr);
 	}
 
 	mod_paths.head = mod_paths.tail = NULL;
@@ -313,7 +313,7 @@ int
 load_one_module(const char *path, int coremodule)
 {
 	char modpath[MAXPATHLEN];
-	dlink_node *pathst;
+	rb_dlink_node *pathst;
 	struct module_path *mpath;
 
 	struct stat statbuf;

@@ -89,14 +89,14 @@
 #include "s_conf.h"
 #include "supported.h"
 
-dlink_list isupportlist;
+rb_dlink_list isupportlist;
 
 struct isupportitem
 {
 	const char *name;
 	const char *(*func)(const void *);
 	const void *param;
-	dlink_node node;
+	rb_dlink_node node;
 };
 
 void
@@ -108,13 +108,13 @@ add_isupport(const char *name, const char *(*func)(const void *), const void *pa
 	item->name = name;
 	item->func = func;
 	item->param = param;
-	dlinkAddTail(item, &item->node, &isupportlist);
+	rb_dlinkAddTail(item, &item->node, &isupportlist);
 }
 
 void
 delete_isupport(const char *name)
 {
-	dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *next_ptr;
 	struct isupportitem *item;
 
 	DLINK_FOREACH_SAFE(ptr, next_ptr, isupportlist.head)
@@ -123,7 +123,7 @@ delete_isupport(const char *name)
 
 		if (!strcmp(item->name, name))
 		{
-			dlinkDelete(ptr, &isupportlist);
+			rb_dlinkDelete(ptr, &isupportlist);
 			MyFree(item);
 		}
 	}
@@ -133,7 +133,7 @@ delete_isupport(const char *name)
 void
 show_isupport(struct Client *client_p)
 {
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	struct isupportitem *item;
 	const char *value;
 	char buf[512];
@@ -214,7 +214,7 @@ isupport_chanmodes(const void *ptr)
 			ConfigChannel.use_except ? "e" : "",
 			ConfigChannel.use_invex ? "I" : "",
 			ConfigChannel.use_forward ? "f" : "",
-			dlink_list_length(&service_list) ? "r" : "",
+			rb_dlink_list_length(&service_list) ? "r" : "",
 			ConfigChannel.use_forward ? "QF" : "");
 	return result;
 }

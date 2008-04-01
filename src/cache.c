@@ -45,6 +45,7 @@
 #include "cache.h"
 #include "sprintf_irc.h"
 #include "irc_dictionary.h"
+#include "numeric.h"
 
 static BlockHeap *cachefile_heap = NULL;
 static BlockHeap *cacheline_heap = NULL;
@@ -129,7 +130,7 @@ cache_file(const char *filename, const char *shortname, int flags)
 			strlcpy(lineptr->data, " ", sizeof(lineptr->data));
 		else
 			strlcpy(lineptr->data, line, sizeof(lineptr->data));
-		dlinkAddTail(lineptr, &lineptr->linenode, &cacheptr->contents);
+		rb_dlinkAddTail(lineptr, &lineptr->linenode, &cacheptr->contents);
 	}
 
 	fclose(in);
@@ -145,13 +146,13 @@ cache_file(const char *filename, const char *shortname, int flags)
 void
 free_cachefile(struct cachefile *cacheptr)
 {
-	dlink_node *ptr;
-	dlink_node *next_ptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
 
 	if(cacheptr == NULL)
 		return;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, cacheptr->contents.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, cacheptr->contents.head)
 	{
 		BlockHeapFree(cacheline_heap, ptr->data);
 	}
@@ -225,11 +226,11 @@ void
 send_user_motd(struct Client *source_p)
 {
 	struct cacheline *lineptr;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	const char *myname = get_id(&me, source_p);
 	const char *nick = get_id(source_p, source_p);
 
-	if(user_motd == NULL || dlink_list_length(&user_motd->contents) == 0)
+	if(user_motd == NULL || rb_dlink_list_length(&user_motd->contents) == 0)
 	{
 		sendto_one(source_p, form_str(ERR_NOMOTD), myname, nick);
 		return;
@@ -237,7 +238,7 @@ send_user_motd(struct Client *source_p)
 
 	sendto_one(source_p, form_str(RPL_MOTDSTART), myname, nick, me.name);
 
-	DLINK_FOREACH(ptr, user_motd->contents.head)
+	RB_DLINK_FOREACH(ptr, user_motd->contents.head)
 	{
 		lineptr = ptr->data;
 		sendto_one(source_p, form_str(RPL_MOTD), myname, nick, lineptr->data);
@@ -256,15 +257,15 @@ void
 send_oper_motd(struct Client *source_p)
 {
 	struct cacheline *lineptr;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 
-	if(oper_motd == NULL || dlink_list_length(&oper_motd->contents) == 0)
+	if(oper_motd == NULL || rb_dlink_list_length(&oper_motd->contents) == 0)
 		return;
 
 	sendto_one(source_p, form_str(RPL_OMOTDSTART), 
 		   me.name, source_p->name);
 
-	DLINK_FOREACH(ptr, oper_motd->contents.head)
+	RB_DLINK_FOREACH(ptr, oper_motd->contents.head)
 	{
 		lineptr = ptr->data;
 		sendto_one(source_p, form_str(RPL_OMOTD),

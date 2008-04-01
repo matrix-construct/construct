@@ -89,7 +89,7 @@ ReportType;
 
 #define sendheader(c, r) sendto_one_notice(c, HeaderMessages[(r)]) 
 
-static dlink_list auth_poll_list;
+static rb_dlink_list auth_poll_list;
 static BlockHeap *auth_heap;
 static EVH timeout_auth_queries_event;
 
@@ -147,7 +147,7 @@ release_auth_client(struct AuthRequest *auth)
 		return;
 
 	client->localClient->auth_request = NULL;
-	dlinkDelete(&auth->node, &auth_poll_list);
+	rb_dlinkDelete(&auth->node, &auth_poll_list);
 	free_auth_request(auth);	
 	if(client->localClient->F->fd > highest_fd)
 		highest_fd = client->localClient->F->fd;
@@ -159,7 +159,7 @@ release_auth_client(struct AuthRequest *auth)
 	 */
 	client->localClient->allow_read = MAX_FLOOD;
 	rb_setflush(client->localClient->F->fd, 1000, flood_recalc, client);
-	dlinkAddTail(client, &client->node, &global_client_list);
+	rb_dlinkAddTail(client, &client->node, &global_client_list);
 	read_packet(client->localClient->F->fd, client);
 }
 
@@ -182,7 +182,7 @@ auth_dns_callback(void *vptr, struct DNSReply *reply)
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			"auth_dns_callback(): auth->client->localClient (%s) is NULL", get_client_name(auth->client, HIDE_IP));
 
-		dlinkDelete(&auth->node, &auth_poll_list);
+		rb_dlinkDelete(&auth->node, &auth_poll_list);
 		free_auth_request(auth);
 
 		/* and they will silently drop through and all will hopefully be ok... -nenolod */
@@ -419,7 +419,7 @@ start_auth(struct Client *client)
 	if(ConfigFileEntry.disable_auth == 0)
 		start_auth_query(auth);
 
-	dlinkAdd(auth, &auth->node, &auth_poll_list);
+	rb_dlinkAdd(auth, &auth->node, &auth_poll_list);
 }
 
 /*
@@ -429,8 +429,8 @@ start_auth(struct Client *client)
 static void
 timeout_auth_queries_event(void *notused)
 {
-	dlink_node *ptr;
-	dlink_node *next_ptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
 	struct AuthRequest *auth;
 
 	DLINK_FOREACH_SAFE(ptr, next_ptr, auth_poll_list.head)
@@ -613,6 +613,6 @@ delete_auth_queries(struct Client *target_p)
 	if(auth->fd >= 0)
 		rb_close(auth->fd);
 		
-	dlinkDelete(&auth->node, &auth_poll_list);
+	rb_dlinkDelete(&auth->node, &auth_poll_list);
 	free_auth_request(auth);
 }

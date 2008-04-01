@@ -53,36 +53,36 @@ struct substitution_variable
 /*
  * substitution_append_var
  *
- * Inputs       - A variable list (dlink_list), name -> value for mapping to make
+ * Inputs       - A variable list (rb_dlink_list), name -> value for mapping to make
  * Output       - none
  * Side Effects - Adds a name->value mapping to a list.
  */
-void substitution_append_var(dlink_list *varlist, const char *name, const char *value)
+void substitution_append_var(rb_dlink_list *varlist, const char *name, const char *value)
 {
 	struct substitution_variable *tmp = MyMalloc(sizeof(struct substitution_variable));
 
 	DupString(tmp->name, name);
 	DupString(tmp->value, value);
 
-	dlinkAddAlloc(tmp, varlist);
+	rb_dlinkAddAlloc(tmp, varlist);
 }
 
 /*
  * substitution_free
  *
- * Inputs       - A dlink_list of markup variables to free.
+ * Inputs       - A rb_dlink_list of markup variables to free.
  * Outputs      - none
  * Side Effects - Empties a list of markup variables.
  */
-void substitution_free(dlink_list *varlist)
+void substitution_free(rb_dlink_list *varlist)
 {
-	dlink_node *nptr, *nptr2;
+	rb_dlink_node *nptr, *nptr2;
 
 	DLINK_FOREACH_SAFE(nptr, nptr2, varlist->head)
 	{
 		struct substitution_variable *tmp = (struct substitution_variable *) nptr->data;
 
-		dlinkDelete(nptr, varlist);
+		rb_dlinkDelete(nptr, varlist);
 		MyFree(tmp->name);
 		MyFree(tmp->value);
 		MyFree(tmp);
@@ -92,11 +92,11 @@ void substitution_free(dlink_list *varlist)
 /*
  * substitution_parse
  *
- * Inputs       - A markup string, dlink-list of markup values
+ * Inputs       - A markup string, rb_dlink-list of markup values
  * Output       - A string which has been markup-replaced.
  * Side Effects - Strings larger than BUFSIZE are terminated.
  */
-char *substitution_parse(const char *fmt, dlink_list *varlist)
+char *substitution_parse(const char *fmt, rb_dlink_list *varlist)
 {
 	static char buf[BUFSIZE];
 	const char *ptr;
@@ -110,7 +110,7 @@ char *substitution_parse(const char *fmt, dlink_list *varlist)
 			static char varname[BUFSIZE];
 			char *vptr = varname;
 			const char *pptr;
-			dlink_node *nptr;
+			rb_dlink_node *nptr;
 
 			*vptr = '\0';
 

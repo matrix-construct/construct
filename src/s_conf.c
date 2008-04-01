@@ -66,9 +66,9 @@ extern char linebuf[];
 
 static BlockHeap *confitem_heap = NULL;
 
-dlink_list temp_klines[LAST_TEMP_TYPE];
-dlink_list temp_dlines[LAST_TEMP_TYPE];
-dlink_list service_list;
+rb_dlink_list temp_klines[LAST_TEMP_TYPE];
+rb_dlink_list temp_dlines[LAST_TEMP_TYPE];
+rb_dlink_list service_list;
 
 /* internally defined functions */
 static void set_default_conf(void);
@@ -477,7 +477,7 @@ static int
 attach_iline(struct Client *client_p, struct ConfItem *aconf)
 {
 	struct Client *target_p;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	int local_count = 0;
 	int global_count = 0;
 	int ident_count = 0;
@@ -942,22 +942,22 @@ add_temp_kline(struct ConfItem *aconf)
 {
 	if(aconf->hold >= CurrentTime + (10080 * 60))
 	{
-		dlinkAddAlloc(aconf, &temp_klines[TEMP_WEEK]);
+		rb_dlinkAddAlloc(aconf, &temp_klines[TEMP_WEEK]);
 		aconf->port = TEMP_WEEK;
 	}
 	else if(aconf->hold >= CurrentTime + (1440 * 60))
 	{
-		dlinkAddAlloc(aconf, &temp_klines[TEMP_DAY]);
+		rb_dlinkAddAlloc(aconf, &temp_klines[TEMP_DAY]);
 		aconf->port = TEMP_DAY;
 	}
 	else if(aconf->hold >= CurrentTime + (60 * 60))
 	{
-		dlinkAddAlloc(aconf, &temp_klines[TEMP_HOUR]);
+		rb_dlinkAddAlloc(aconf, &temp_klines[TEMP_HOUR]);
 		aconf->port = TEMP_HOUR;
 	}
 	else
 	{
-		dlinkAddAlloc(aconf, &temp_klines[TEMP_MIN]);
+		rb_dlinkAddAlloc(aconf, &temp_klines[TEMP_MIN]);
 		aconf->port = TEMP_MIN;
 	}
 
@@ -976,22 +976,22 @@ add_temp_dline(struct ConfItem *aconf)
 {
 	if(aconf->hold >= CurrentTime + (10080 * 60))
 	{
-		dlinkAddAlloc(aconf, &temp_dlines[TEMP_WEEK]);
+		rb_dlinkAddAlloc(aconf, &temp_dlines[TEMP_WEEK]);
 		aconf->port = TEMP_WEEK;
 	}
 	else if(aconf->hold >= CurrentTime + (1440 * 60))
 	{
-		dlinkAddAlloc(aconf, &temp_dlines[TEMP_DAY]);
+		rb_dlinkAddAlloc(aconf, &temp_dlines[TEMP_DAY]);
 		aconf->port = TEMP_DAY;
 	}
 	else if(aconf->hold >= CurrentTime + (60 * 60))
 	{
-		dlinkAddAlloc(aconf, &temp_dlines[TEMP_HOUR]);
+		rb_dlinkAddAlloc(aconf, &temp_dlines[TEMP_HOUR]);
 		aconf->port = TEMP_HOUR;
 	}
 	else
 	{
-		dlinkAddAlloc(aconf, &temp_dlines[TEMP_MIN]);
+		rb_dlinkAddAlloc(aconf, &temp_dlines[TEMP_MIN]);
 		aconf->port = TEMP_MIN;
 	}
 
@@ -1009,11 +1009,11 @@ add_temp_dline(struct ConfItem *aconf)
 static void
 expire_temp_kd(void *list)
 {
-	dlink_node *ptr;
-	dlink_node *next_ptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
 	struct ConfItem *aconf;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, ((dlink_list *) list)->head)
+	DLINK_FOREACH_SAFE(ptr, next_ptr, ((rb_dlink_list *) list)->head)
 	{
 		aconf = ptr->data;
 
@@ -1027,7 +1027,7 @@ expire_temp_kd(void *list)
 						     user : "*", (aconf->host) ? aconf->host : "*");
 
 			delete_one_address_conf(aconf->host, aconf);
-			dlinkDestroy(ptr, list);
+			rb_dlinkDestroy(ptr, list);
 		}
 	}
 }
@@ -1036,15 +1036,15 @@ static void
 reorganise_temp_kd(void *list)
 {
 	struct ConfItem *aconf;
-	dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *next_ptr;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, ((dlink_list *) list)->head)
+	DLINK_FOREACH_SAFE(ptr, next_ptr, ((rb_dlink_list *) list)->head)
 	{
 		aconf = ptr->data;
 
 		if(aconf->hold < (CurrentTime + (60 * 60)))
 		{
-			dlinkMoveNode(ptr, list, (aconf->status == CONF_KILL) ? 
+			rb_dlinkMoveNode(ptr, list, (aconf->status == CONF_KILL) ? 
 					&temp_klines[TEMP_MIN] : &temp_dlines[TEMP_MIN]);
 			aconf->port = TEMP_MIN;
 		}
@@ -1052,14 +1052,14 @@ reorganise_temp_kd(void *list)
 		{
 			if(aconf->hold < (CurrentTime + (1440 * 60)))
 			{
-				dlinkMoveNode(ptr, list, (aconf->status == CONF_KILL) ? 
+				rb_dlinkMoveNode(ptr, list, (aconf->status == CONF_KILL) ? 
 						&temp_klines[TEMP_HOUR] : &temp_dlines[TEMP_HOUR]);
 				aconf->port = TEMP_HOUR;
 			}
 			else if(aconf->port > TEMP_DAY && 
 				(aconf->hold < (CurrentTime + (10080 * 60))))
 			{
-				dlinkMoveNode(ptr, list, (aconf->status == CONF_KILL) ? 
+				rb_dlinkMoveNode(ptr, list, (aconf->status == CONF_KILL) ? 
 						&temp_klines[TEMP_DAY] : &temp_dlines[TEMP_DAY]);
 				aconf->port = TEMP_DAY;
 			}
@@ -1214,8 +1214,8 @@ static void
 clear_out_old_conf(void)
 {
 	struct Class *cltmp;
-	dlink_node *ptr;
-	dlink_node *next_ptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
 
 	/*
 	 * don't delete the class table, rather mark all entries
@@ -1268,7 +1268,7 @@ clear_out_old_conf(void)
 	DLINK_FOREACH_SAFE(ptr, next_ptr, service_list.head)
 	{
 		MyFree(ptr->data);
-		dlinkDestroy(ptr, &service_list);
+		rb_dlinkDestroy(ptr, &service_list);
 	}
 
 	/* remove any aliases... -- nenolod */

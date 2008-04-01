@@ -70,7 +70,7 @@ typedef enum
 
 struct reslist
 {
-	dlink_node node;
+	rb_dlink_node node;
 	int id;
 	int sent;		/* number of requests sent */
 	request_state state;	/* State the resolver machine is in */
@@ -88,7 +88,7 @@ struct reslist
 };
 
 static int res_fd;
-static dlink_list request_list = { NULL, NULL, 0 };
+static rb_dlink_list request_list = { NULL, NULL, 0 };
 
 static void rem_request(struct reslist *request);
 static struct reslist *make_request(struct DNSQuery *query);
@@ -174,8 +174,8 @@ static int res_ourserver(const struct irc_sockaddr_storage *inp)
  */
 static time_t timeout_query_list(time_t now)
 {
-	dlink_node *ptr;
-	dlink_node *next_ptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
 	struct reslist *request;
 	time_t next_time = 0;
 	time_t timeout = 0;
@@ -289,7 +289,7 @@ void add_local_domain(char *hname, size_t size)
  */
 static void rem_request(struct reslist *request)
 {
-	dlinkDelete(&request->node, &request_list);
+	rb_dlinkDelete(&request->node, &request_list);
 	MyFree(request->name);
 	MyFree(request);
 }
@@ -308,7 +308,7 @@ static struct reslist *make_request(struct DNSQuery *query)
 	request->query = query;
 	request->state = REQ_IDLE;
 
-	dlinkAdd(request, &request->node, &request_list);
+	rb_dlinkAdd(request, &request->node, &request_list);
 
 	return request;
 }
@@ -319,8 +319,8 @@ static struct reslist *make_request(struct DNSQuery *query)
  */
 void delete_resolver_queries(const struct DNSQuery *query)
 {
-	dlink_node *ptr;
-	dlink_node *next_ptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
 	struct reslist *request;
 
 	DLINK_FOREACH_SAFE(ptr, next_ptr, request_list.head)
@@ -368,7 +368,7 @@ static int send_res_msg(const char *msg, int len, int rcount)
  */
 static struct reslist *find_id(int id)
 {
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	struct reslist *request;
 
 	DLINK_FOREACH(ptr, request_list.head)

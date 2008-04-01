@@ -65,7 +65,7 @@ void set_channel_mode(struct Client *, struct Client *,
 		     struct Channel *, struct membership *, int, const char **);
 
 int add_id(struct Client *source_p, struct Channel *chptr,
-		  const char *banid, dlink_list * list, long mode_type);
+		  const char *banid, rb_dlink_list * list, long mode_type);
 
 static struct ChModeChange mode_changes[BUFSIZE];
 static int mode_count;
@@ -89,19 +89,19 @@ get_channel_access(struct Client *source_p, struct membership *msptr)
  */
 int
 add_id(struct Client *source_p, struct Channel *chptr, const char *banid,
-       dlink_list * list, long mode_type)
+       rb_dlink_list * list, long mode_type)
 {
 	struct Ban *actualBan;
 	static char who[USERHOST_REPLYLEN];
 	char *realban = LOCAL_COPY(banid);
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 
 	/* dont let local clients overflow the banlist, or set redundant
 	 * bans
 	 */
 	if(MyClient(source_p))
 	{
-		if((dlink_list_length(&chptr->banlist) + dlink_list_length(&chptr->exceptlist) + dlink_list_length(&chptr->invexlist) + dlink_list_length(&chptr->quietlist)) >= (chptr->mode.mode & MODE_EXLIMIT ? ConfigChannel.max_bans_large : ConfigChannel.max_bans))
+		if((rb_dlink_list_length(&chptr->banlist) + rb_dlink_list_length(&chptr->exceptlist) + rb_dlink_list_length(&chptr->invexlist) + rb_dlink_list_length(&chptr->quietlist)) >= (chptr->mode.mode & MODE_EXLIMIT ? ConfigChannel.max_bans_large : ConfigChannel.max_bans))
 		{
 			sendto_one(source_p, form_str(ERR_BANLISTFULL),
 				   me.name, source_p->name, chptr->chname, realban);
@@ -135,7 +135,7 @@ add_id(struct Client *source_p, struct Channel *chptr, const char *banid,
 	actualBan = allocate_ban(realban, who);
 	actualBan->when = CurrentTime;
 
-	dlinkAdd(actualBan, &actualBan->node, list);
+	rb_dlinkAdd(actualBan, &actualBan->node, list);
 
 	/* invalidate the can_send() cache */
 	if(mode_type == CHFL_BAN || mode_type == CHFL_QUIET || mode_type == CHFL_EXCEPTION)
@@ -151,9 +151,9 @@ add_id(struct Client *source_p, struct Channel *chptr, const char *banid,
  * side effects - given id is removed from the appropriate list
  */
 int
-del_id(struct Channel *chptr, const char *banid, dlink_list * list, long mode_type)
+del_id(struct Channel *chptr, const char *banid, rb_dlink_list * list, long mode_type)
 {
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	struct Ban *banptr;
 
 	if(EmptyString(banid))
@@ -165,7 +165,7 @@ del_id(struct Channel *chptr, const char *banid, dlink_list * list, long mode_ty
 
 		if(irccmp(banid, banptr->banstr) == 0)
 		{
-			dlinkDelete(&banptr->node, list);
+			rb_dlinkDelete(&banptr->node, list);
 			free_ban(banptr);
 
 			/* invalidate the can_send() cache */
@@ -492,8 +492,8 @@ chm_ban(struct Client *source_p, struct Channel *chptr,
 {
 	const char *mask;
 	const char *raw_mask;
-	dlink_list *list;
-	dlink_node *ptr;
+	rb_dlink_list *list;
+	rb_dlink_node *ptr;
 	struct Ban *banptr;
 	int errorval;
 	int rpl_list;
@@ -1596,6 +1596,6 @@ set_channel_mode(struct Client *client_p, struct Client *source_p,
 	}
 
 	/* only propagate modes originating locally, or if we're hubbing */
-	if(MyClient(source_p) || dlink_list_length(&serv_list) > 1)
+	if(MyClient(source_p) || rb_dlink_list_length(&serv_list) > 1)
 		send_cap_mode_changes(client_p, source_p, chptr, mode_changes, mode_count);
 }

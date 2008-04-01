@@ -207,7 +207,7 @@ slink_zipstats(unsigned int rpl, unsigned int len, unsigned char *data, struct C
 void
 collect_zipstats(void *unused)
 {
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	struct Client *target_p;
 
 	DLINK_FOREACH(ptr, serv_list.head)
@@ -253,7 +253,7 @@ hunt_server(struct Client *client_p, struct Client *source_p,
 {
 	struct Client *target_p;
 	int wilds;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	const char *old;
 	char *new;
 
@@ -353,7 +353,7 @@ try_connections(void *unused)
 	struct server_conf *server_p = NULL;
 	struct server_conf *tmp_p;
 	struct Class *cltmp;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	int connecting = FALSE;
 	int confrq = 0;
 	time_t next = 0;
@@ -410,8 +410,8 @@ try_connections(void *unused)
 		return;
 
 	/* move this connect entry to end.. */
-	dlinkDelete(&server_p->node, &server_conf_list);
-	dlinkAddTail(server_p, &server_p->node, &server_conf_list);
+	rb_dlinkDelete(&server_p->node, &server_conf_list);
+	rb_dlinkAddTail(server_p, &server_p->node, &server_conf_list);
 
 	/*
 	 * We used to only print this if serv_connect() actually
@@ -440,7 +440,7 @@ check_server(const char *name, struct Client *client_p)
 {
 	struct server_conf *server_p = NULL;
 	struct server_conf *tmp_p;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	int error = -1;
 
 	s_assert(NULL != client_p);
@@ -547,9 +547,9 @@ send_capabilities(struct Client *client_p, int cap_can_send)
  * side effects - client is sent a list of +b, or +e, or +I modes
  */
 static void
-burst_modes_TS5(struct Client *client_p, char *chname, dlink_list *list, char flag)
+burst_modes_TS5(struct Client *client_p, char *chname, rb_dlink_list *list, char flag)
 {
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	struct Ban *banptr;
 	char mbuf[MODEBUFLEN];
 	char pbuf[BUFSIZE];
@@ -604,9 +604,9 @@ burst_modes_TS5(struct Client *client_p, char *chname, dlink_list *list, char fl
  */
 static void
 burst_modes_TS6(struct Client *client_p, struct Channel *chptr, 
-		dlink_list *list, char flag)
+		rb_dlink_list *list, char flag)
 {
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	struct Ban *banptr;
 	char *t;
 	int tlen;
@@ -669,8 +669,8 @@ burst_TS5(struct Client *client_p)
 	struct membership *msptr;
 	hook_data_client hclientinfo;
 	hook_data_channel hchaninfo;
-	dlink_node *ptr;
-	dlink_node *uptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *uptr;
 	char *t;
 	int tlen, mlen;
 	int cur_len = 0;
@@ -751,7 +751,7 @@ burst_TS5(struct Client *client_p)
 			t += tlen;
 		}
 
-		if (dlink_list_length(&chptr->members) > 0)
+		if (rb_dlink_list_length(&chptr->members) > 0)
 		{
 			/* remove trailing space */
 			t--;
@@ -801,8 +801,8 @@ burst_TS6(struct Client *client_p)
 	struct membership *msptr;
 	hook_data_client hclientinfo;
 	hook_data_channel hchaninfo;
-	dlink_node *ptr;
-	dlink_node *uptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *uptr;
 	char *t;
 	int tlen, mlen;
 	int cur_len = 0;
@@ -908,25 +908,25 @@ burst_TS6(struct Client *client_p)
 			t += tlen;
 		}
 
-		if (dlink_list_length(&chptr->members) > 0)
+		if (rb_dlink_list_length(&chptr->members) > 0)
 		{
 			/* remove trailing space */
 			*(t-1) = '\0';
 		}
 		sendto_one(client_p, "%s", buf);
 
-		if(dlink_list_length(&chptr->banlist) > 0)
+		if(rb_dlink_list_length(&chptr->banlist) > 0)
 			burst_modes_TS6(client_p, chptr, &chptr->banlist, 'b');
 
 		if(IsCapable(client_p, CAP_EX) &&
-		   dlink_list_length(&chptr->exceptlist) > 0)
+		   rb_dlink_list_length(&chptr->exceptlist) > 0)
 			burst_modes_TS6(client_p, chptr, &chptr->exceptlist, 'e');
 
 		if(IsCapable(client_p, CAP_IE) &&
-		   dlink_list_length(&chptr->invexlist) > 0)
+		   rb_dlink_list_length(&chptr->invexlist) > 0)
 			burst_modes_TS6(client_p, chptr, &chptr->invexlist, 'I');
 
-		if(dlink_list_length(&chptr->quietlist) > 0)
+		if(rb_dlink_list_length(&chptr->quietlist) > 0)
 			burst_modes_TS6(client_p, chptr, &chptr->quietlist, 'q');
 
 		if(IsCapable(client_p, CAP_TB) && chptr->topic != NULL)
@@ -998,7 +998,7 @@ server_estab(struct Client *client_p)
 	struct server_conf *server_p;
 	hook_data_client hdata;
 	char *host;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 
 	s_assert(NULL != client_p);
 	if(client_p == NULL)
@@ -1095,10 +1095,10 @@ server_estab(struct Client *client_p)
 	/* Update the capability combination usage counts */
 	set_chcap_usage_counts(client_p);
 
-	dlinkAdd(client_p, &client_p->lnode, &me.serv->servers);
+	rb_dlinkAdd(client_p, &client_p->lnode, &me.serv->servers);
 	del_unknown_ip(client_p);
-	dlinkMoveNode(&client_p->localClient->tnode, &unknown_list, &serv_list);
-	dlinkAddTailAlloc(client_p, &global_serv_list);
+	rb_dlinkMoveNode(&client_p->localClient->tnode, &unknown_list, &serv_list);
+	rb_dlinkAddTailAlloc(client_p, &global_serv_list);
 
 	if(has_id(client_p))
 		add_to_id_hash(client_p->id, client_p);
@@ -1120,10 +1120,10 @@ server_estab(struct Client *client_p)
 	client_p->localClient->firsttime = CurrentTime;
 	/* fixing eob timings.. -gnp */
 
-	if((dlink_list_length(&lclient_list) + dlink_list_length(&serv_list)) >
+	if((rb_dlink_list_length(&lclient_list) + rb_dlink_list_length(&serv_list)) >
 	   (unsigned long)MaxConnectionCount)
-		MaxConnectionCount = dlink_list_length(&lclient_list) + 
-					dlink_list_length(&serv_list);
+		MaxConnectionCount = rb_dlink_list_length(&lclient_list) + 
+					rb_dlink_list_length(&serv_list);
 
 	/* Show the real host/IP to admins */
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
@@ -1563,7 +1563,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 		client_p->serv->user = NULL;
 	}
 	SetConnecting(client_p);
-	dlinkAddTail(client_p, &client_p->node, &global_client_list);
+	rb_dlinkAddTail(client_p, &client_p->node, &global_client_list);
 
 	if(ServerConfVhosted(server_p))
 	{

@@ -83,15 +83,15 @@
 #include "patchlevel.h"
 #include "serno.h"
 
-dlink_list lclient_list = { NULL, NULL, 0 };
-dlink_list global_client_list = { NULL, NULL, 0 };
-dlink_list global_channel_list = { NULL, NULL, 0 };
+rb_dlink_list lclient_list = { NULL, NULL, 0 };
+rb_dlink_list global_client_list = { NULL, NULL, 0 };
+rb_dlink_list global_channel_list = { NULL, NULL, 0 };
 
-dlink_list unknown_list;        /* unknown clients ON this server only */
-dlink_list serv_list;           /* local servers to this server ONLY */
-dlink_list global_serv_list;    /* global servers on the network */
-dlink_list local_oper_list;     /* our opers, duplicated in lclient_list */
-dlink_list oper_list;           /* network opers */
+rb_dlink_list unknown_list;        /* unknown clients ON this server only */
+rb_dlink_list serv_list;           /* local servers to this server ONLY */
+rb_dlink_list global_serv_list;    /* global servers on the network */
+rb_dlink_list local_oper_list;     /* our opers, duplicated in lclient_list */
+rb_dlink_list oper_list;           /* network opers */
 
 /* /quote set variables */
 struct SetOptions GlobalSetOptions;

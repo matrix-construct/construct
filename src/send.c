@@ -446,12 +446,12 @@ sendto_server(struct Client *one, struct Channel *chptr, unsigned long caps,
 {
 	va_list args;
 	struct Client *target_p;
-	dlink_node *ptr;
-	dlink_node *next_ptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
 	buf_head_t linebuf;
 
 	/* noone to send to.. */
-	if(dlink_list_length(&serv_list) == 0)
+	if(rb_dlink_list_length(&serv_list) == 0)
 		return;
 
 	if(chptr != NULL && *chptr->chname != '#')
@@ -502,8 +502,8 @@ sendto_channel_flags(struct Client *one, int type, struct Client *source_p,
 	buf_head_t linebuf_id;
 	struct Client *target_p;
 	struct membership *msptr;
-	dlink_node *ptr;
-	dlink_node *next_ptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
 
 	linebuf_newbuf(&linebuf_local);
 	linebuf_newbuf(&linebuf_name);
@@ -582,8 +582,8 @@ sendto_channel_local(int type, struct Channel *chptr, const char *pattern, ...)
 	buf_head_t linebuf;
 	struct membership *msptr;
 	struct Client *target_p;
-	dlink_node *ptr;
-	dlink_node *next_ptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
 	
 	linebuf_newbuf(&linebuf); 
 	
@@ -622,8 +622,8 @@ sendto_channel_local_butone(struct Client *one, int type, struct Channel *chptr,
 	buf_head_t linebuf;
 	struct membership *msptr;
 	struct Client *target_p;
-	dlink_node *ptr;
-	dlink_node *next_ptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
 	
 	linebuf_newbuf(&linebuf); 
 	
@@ -665,10 +665,10 @@ void
 sendto_common_channels_local(struct Client *user, const char *pattern, ...)
 {
 	va_list args;
-	dlink_node *ptr;
-	dlink_node *next_ptr;
-	dlink_node *uptr;
-	dlink_node *next_uptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
+	rb_dlink_node *uptr;
+	rb_dlink_node *next_uptr;
 	struct Channel *chptr;
 	struct Client *target_p;
 	struct membership *msptr;
@@ -723,10 +723,10 @@ void
 sendto_common_channels_local_butone(struct Client *user, const char *pattern, ...)
 {
 	va_list args;
-	dlink_node *ptr;
-	dlink_node *next_ptr;
-	dlink_node *uptr;
-	dlink_node *next_uptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
+	rb_dlink_node *uptr;
+	rb_dlink_node *next_uptr;
 	struct Channel *chptr;
 	struct Client *target_p;
 	struct membership *msptr;
@@ -777,8 +777,8 @@ sendto_match_butone(struct Client *one, struct Client *source_p,
 	static char buf[BUFSIZE];
 	va_list args;
 	struct Client *target_p;
-	dlink_node *ptr;
-	dlink_node *next_ptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
 	buf_head_t linebuf_local;
 	buf_head_t linebuf_name;
 	buf_head_t linebuf_id;
@@ -853,7 +853,7 @@ sendto_match_servs(struct Client *source_p, const char *mask, int cap,
 {
 	static char buf[BUFSIZE];
 	va_list args;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	struct Client *target_p;
 	buf_head_t linebuf_id;
 	buf_head_t linebuf_name;
@@ -922,8 +922,8 @@ sendto_monitor(struct monitor *monptr, const char *pattern, ...)
 	va_list args;
 	buf_head_t linebuf;
 	struct Client *target_p;
-	dlink_node *ptr;
-	dlink_node *next_ptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
 	
 	linebuf_newbuf(&linebuf); 
 	
@@ -998,8 +998,8 @@ void
 sendto_realops_flags(int flags, int level, const char *pattern, ...)
 {
 	struct Client *client_p;
-	dlink_node *ptr;
-	dlink_node *next_ptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
 	va_list args;
 	buf_head_t linebuf;
 
@@ -1040,8 +1040,8 @@ sendto_realops_snomask(int flags, int level, const char *pattern, ...)
 	static char buf[BUFSIZE];
 	char *snobuf;
 	struct Client *client_p;
-	dlink_node *ptr;
-	dlink_node *next_ptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
 	va_list args;
 	buf_head_t linebuf;
 
@@ -1105,8 +1105,8 @@ sendto_realops_snomask_from(int flags, int level, struct Client *source_p,
 		const char *pattern, ...)
 {
 	struct Client *client_p;
-	dlink_node *ptr;
-	dlink_node *next_ptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
 	va_list args;
 	buf_head_t linebuf;
 
@@ -1148,8 +1148,8 @@ void
 sendto_wallops_flags(int flags, struct Client *source_p, const char *pattern, ...)
 {
 	struct Client *client_p;
-	dlink_node *ptr;
-	dlink_node *next_ptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
 	va_list args;
 	buf_head_t linebuf;
 
@@ -1218,8 +1218,8 @@ kill_client_serv_butone(struct Client *one, struct Client *target_p, const char 
 	static char buf[BUFSIZE];
 	va_list args;
 	struct Client *client_p;
-	dlink_node *ptr;
-	dlink_node *next_ptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
 	buf_head_t linebuf_id;
 	buf_head_t linebuf_name;
 

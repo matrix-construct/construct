@@ -44,7 +44,7 @@
 #define BAD_PING                -2
 #define BAD_CLIENT_CLASS        -3
 
-dlink_list class_list;
+rb_dlink_list class_list;
 struct Class *default_class;
 
 struct Class *
@@ -190,7 +190,7 @@ add_class(struct Class *classptr)
 
 	if(tmpptr == default_class)
 	{
-		dlinkAddAlloc(classptr, &class_list);
+		rb_dlinkAddAlloc(classptr, &class_list);
 		CurrUsers(classptr) = 0;
 	}
 	else
@@ -221,7 +221,7 @@ struct Class *
 find_class(const char *classname)
 {
 	struct Class *cltmp;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 
 	if(classname == NULL)
 		return default_class;
@@ -248,8 +248,8 @@ void
 check_class()
 {
 	struct Class *cltmp;
-	dlink_node *ptr;
-	dlink_node *next_ptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
 
 	DLINK_FOREACH_SAFE(ptr, next_ptr, class_list.head)
 	{
@@ -257,7 +257,7 @@ check_class()
 
 		if(MaxUsers(cltmp) < 0)
 		{
-			dlinkDestroy(ptr, &class_list);
+			rb_dlinkDestroy(ptr, &class_list);
 			if(CurrUsers(cltmp) <= 0)
 				free_class(cltmp);
 		}
@@ -289,7 +289,7 @@ void
 report_classes(struct Client *source_p)
 {
 	struct Class *cltmp;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 
 	DLINK_FOREACH(ptr, class_list.head)
 	{

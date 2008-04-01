@@ -176,7 +176,7 @@ add_hook(const char *name, hookfn fn)
 
 	i = register_hook(name);
 
-	dlinkAddAlloc(fn, &hooks[i].hooks);
+	rb_dlinkAddAlloc(fn, &hooks[i].hooks);
 }
 
 /* remove_hook()
@@ -190,7 +190,7 @@ remove_hook(const char *name, hookfn fn)
 	if((i = find_hook(name)) < 0)
 		return;
 
-	dlinkFindDestroy(fn, &hooks[i].hooks);
+	rb_dlinkFindDestroy(fn, &hooks[i].hooks);
 }
 
 /* call_hook()
@@ -200,7 +200,7 @@ void
 call_hook(int id, void *arg)
 {
 	hookfn fn;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 
 	/* The ID we were passed is the position in the hook table of this
 	 * hook

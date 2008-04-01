@@ -147,41 +147,41 @@ int user_modes[256] = {
 int
 show_lusers(struct Client *source_p)
 {
-	if(dlink_list_length(&lclient_list) > (unsigned long)MaxClientCount)
-		MaxClientCount = dlink_list_length(&lclient_list);
+	if(rb_dlink_list_length(&lclient_list) > (unsigned long)MaxClientCount)
+		MaxClientCount = rb_dlink_list_length(&lclient_list);
 
-	if((dlink_list_length(&lclient_list) + dlink_list_length(&serv_list)) >
+	if((rb_dlink_list_length(&lclient_list) + rb_dlink_list_length(&serv_list)) >
 	   (unsigned long)MaxConnectionCount)
-		MaxConnectionCount = dlink_list_length(&lclient_list) + 
-					dlink_list_length(&serv_list);
+		MaxConnectionCount = rb_dlink_list_length(&lclient_list) + 
+					rb_dlink_list_length(&serv_list);
 
 	sendto_one_numeric(source_p, RPL_LUSERCLIENT, form_str(RPL_LUSERCLIENT),
 			   (Count.total - Count.invisi),
-			   Count.invisi, dlink_list_length(&global_serv_list));
+			   Count.invisi, rb_dlink_list_length(&global_serv_list));
 
-	if(dlink_list_length(&oper_list) > 0)
+	if(rb_dlink_list_length(&oper_list) > 0)
 		sendto_one_numeric(source_p, RPL_LUSEROP, 
-				   form_str(RPL_LUSEROP), dlink_list_length(&oper_list));
+				   form_str(RPL_LUSEROP), rb_dlink_list_length(&oper_list));
 
-	if(dlink_list_length(&unknown_list) > 0)
+	if(rb_dlink_list_length(&unknown_list) > 0)
 		sendto_one_numeric(source_p, RPL_LUSERUNKNOWN, 
 				   form_str(RPL_LUSERUNKNOWN),
-				   dlink_list_length(&unknown_list));
+				   rb_dlink_list_length(&unknown_list));
 
-	if(dlink_list_length(&global_channel_list) > 0)
+	if(rb_dlink_list_length(&global_channel_list) > 0)
 		sendto_one_numeric(source_p, RPL_LUSERCHANNELS, 
 				   form_str(RPL_LUSERCHANNELS),
-				   dlink_list_length(&global_channel_list));
+				   rb_dlink_list_length(&global_channel_list));
 
 	sendto_one_numeric(source_p, RPL_LUSERME, form_str(RPL_LUSERME),
-			   dlink_list_length(&lclient_list),
-			   dlink_list_length(&serv_list));
+			   rb_dlink_list_length(&lclient_list),
+			   rb_dlink_list_length(&serv_list));
 
 	sendto_one_numeric(source_p, RPL_LOCALUSERS, 
 			   form_str(RPL_LOCALUSERS),
-			   dlink_list_length(&lclient_list),
+			   rb_dlink_list_length(&lclient_list),
 			   Count.max_loc,
-			   dlink_list_length(&lclient_list),
+			   rb_dlink_list_length(&lclient_list),
 			   Count.max_loc);
 
 	sendto_one_numeric(source_p, RPL_GLOBALUSERS, form_str(RPL_GLOBALUSERS),
@@ -261,7 +261,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 		return -1;
 
 	/* still has DNSbls to validate against */
-	if(dlink_list_length(&source_p->preClient->dnsbl_queries) > 0)
+	if(rb_dlink_list_length(&source_p->preClient->dnsbl_queries) > 0)
 		return -1;
 
 	client_p->localClient->last = CurrentTime;
@@ -397,7 +397,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 	 *   -Taner
 	 */
 	/* Except "F:" clients */
-	if(dlink_list_length(&lclient_list) >=
+	if(rb_dlink_list_length(&lclient_list) >=
 	    (unsigned long)GlobalSetOptions.maxclients && !IsConfExemptLimits(aconf))
 	{
 		sendto_realops_snomask(SNO_FULL, L_ALL,
@@ -426,7 +426,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 					source_p->sockhost, source_p->preClient->dnsbl_listed->host);
 		else
 		{
-			dlink_list varlist = { NULL, NULL, 0 };
+			rb_dlink_list varlist = { NULL, NULL, 0 };
 
 			substitution_append_var(&varlist, "nick", source_p->name);
 			substitution_append_var(&varlist, "ip", source_p->sockhost);
@@ -526,11 +526,11 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 
 	s_assert(!IsClient(source_p));
 	del_unknown_ip(source_p);
-	dlinkMoveNode(&source_p->localClient->tnode, &unknown_list, &lclient_list);
+	rb_dlinkMoveNode(&source_p->localClient->tnode, &unknown_list, &lclient_list);
 	SetClient(source_p);
 
 	source_p->servptr = &me;
-	dlinkAdd(source_p, &source_p->lnode, &source_p->servptr->serv->users);
+	rb_dlinkAdd(source_p, &source_p->lnode, &source_p->servptr->serv->users);
 
 	/* Increment our total user count here */
 	if(++Count.total > Count.max_tot)
@@ -542,9 +542,9 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 
 	s_assert(source_p->localClient != NULL);
 
-	if(dlink_list_length(&lclient_list) > (unsigned long)Count.max_loc)
+	if(rb_dlink_list_length(&lclient_list) > (unsigned long)Count.max_loc)
 	{
-		Count.max_loc = dlink_list_length(&lclient_list);
+		Count.max_loc = rb_dlink_list_length(&lclient_list);
 		if(!(Count.max_loc % 10))
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					     "New Max Local Clients: %d", Count.max_loc);
@@ -964,7 +964,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 				{
 					++Count.oper;
 					SetOper(source_p);
-					dlinkAddAlloc(source_p, &oper_list);
+					rb_dlinkAddAlloc(source_p, &oper_list);
 				}
 			}
 			else
@@ -993,10 +993,10 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 					MyFree(source_p->localClient->opername);
 					source_p->localClient->opername = NULL;
 
-					dlinkFindDestroy(source_p, &local_oper_list);
+					rb_dlinkFindDestroy(source_p, &local_oper_list);
 				}
 
-				dlinkFindDestroy(source_p, &oper_list);
+				rb_dlinkFindDestroy(source_p, &oper_list);
 			}
 			break;
 
@@ -1179,7 +1179,7 @@ send_umode_out(struct Client *client_p, struct Client *source_p, int old)
 {
 	struct Client *target_p;
 	char buf[BUFSIZE];
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 
 	send_umode(NULL, source_p, old, 0, buf);
 
@@ -1279,8 +1279,8 @@ oper_up(struct Client *source_p, struct oper_conf *oper_p)
 	source_p->flags2 |= oper_p->flags;
 	DupString(source_p->localClient->opername, oper_p->name);
 
-	dlinkAddAlloc(source_p, &local_oper_list);
-	dlinkAddAlloc(source_p, &oper_list);
+	rb_dlinkAddAlloc(source_p, &local_oper_list);
+	rb_dlinkAddAlloc(source_p, &oper_list);
 
 	if(IsOperAdmin(source_p) && !IsOperHiddenAdmin(source_p))
 		source_p->umodes |= UMODE_ADMIN;
@@ -1370,7 +1370,7 @@ void
 change_nick_user_host(struct Client *target_p,	const char *nick, const char *user,
 		      const char *host, int newts, char *format, ...)
 {
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	struct Channel *chptr;
 	struct membership *mscptr;
 	int changed = irccmp(target_p->name, nick);

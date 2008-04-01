@@ -37,7 +37,7 @@
 struct TopConf *conf_cur_block;
 static char *conf_cur_block_name;
 
-static dlink_list conf_items;
+static rb_dlink_list conf_items;
 
 static struct ConfItem *yy_aconf = NULL;
 
@@ -46,10 +46,10 @@ static struct Class *yy_class = NULL;
 static struct remote_conf *yy_shared = NULL;
 static struct server_conf *yy_server = NULL;
 
-static dlink_list yy_aconf_list;
-static dlink_list yy_oper_list;
-static dlink_list yy_shared_list;
-static dlink_list yy_cluster_list;
+static rb_dlink_list yy_aconf_list;
+static rb_dlink_list yy_oper_list;
+static rb_dlink_list yy_shared_list;
+static rb_dlink_list yy_cluster_list;
 static struct oper_conf *yy_oper = NULL;
 
 static struct alias_entry *yy_alias = NULL;
@@ -90,14 +90,14 @@ add_top_conf(const char *name, int (*sfunc) (struct TopConf *),
 	tc->tc_efunc = efunc;
 	tc->tc_entries = items;
 
-	dlinkAddAlloc(tc, &conf_items);
+	rb_dlinkAddAlloc(tc, &conf_items);
 	return 0;
 }
 
 struct TopConf *
 find_top_conf(const char *name)
 {
-	dlink_node *d;
+	rb_dlink_node *d;
 	struct TopConf *tc;
 
 	DLINK_FOREACH(d, conf_items.head)
@@ -115,7 +115,7 @@ struct ConfEntry *
 find_conf_item(const struct TopConf *top, const char *name)
 {
 	struct ConfEntry *cf;
-	dlink_node *d;
+	rb_dlink_node *d;
 
 	if(top->tc_entries)
 	{
@@ -144,15 +144,15 @@ int
 remove_top_conf(char *name)
 {
 	struct TopConf *tc;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 
 	if((tc = find_top_conf(name)) == NULL)
 		return -1;
 
-	if((ptr = dlinkFind(tc, &conf_items)) == NULL)
+	if((ptr = rb_dlinkFind(tc, &conf_items)) == NULL)
 		return -1;
 
-	dlinkDestroy(ptr, &conf_items);
+	rb_dlinkDestroy(ptr, &conf_items);
 	MyFree(tc);
 
 	return 0;
@@ -451,8 +451,8 @@ set_modes_from_table(int *modes, const char *whatis, struct mode_table *tab, con
 static int
 conf_begin_oper(struct TopConf *tc)
 {
-	dlink_node *ptr;
-	dlink_node *next_ptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
 
 	if(yy_oper != NULL)
 	{
@@ -463,7 +463,7 @@ conf_begin_oper(struct TopConf *tc)
 	DLINK_FOREACH_SAFE(ptr, next_ptr, yy_oper_list.head)
 	{
 		free_oper_conf(ptr->data);
-		dlinkDestroy(ptr, &yy_oper_list);
+		rb_dlinkDestroy(ptr, &yy_oper_list);
 	}
 
 	yy_oper = make_oper_conf();
@@ -476,8 +476,8 @@ static int
 conf_end_oper(struct TopConf *tc)
 {
 	struct oper_conf *yy_tmpoper;
-	dlink_node *ptr;
-	dlink_node *next_ptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
 
 	if(conf_cur_block_name != NULL)
 	{
@@ -552,7 +552,7 @@ conf_end_oper(struct TopConf *tc)
 #endif
 
 		/* all is ok, put it on oper_conf_list */
-		dlinkMoveNode(ptr, &yy_oper_list, &oper_conf_list);
+		rb_dlinkMoveNode(ptr, &yy_oper_list, &oper_conf_list);
 	}
 
 	free_oper_conf(yy_oper);
@@ -599,7 +599,7 @@ conf_set_oper_user(void *data)
 		return;
 	}
 
-	dlinkAddAlloc(yy_tmpoper, &yy_oper_list);
+	rb_dlinkAddAlloc(yy_tmpoper, &yy_oper_list);
 }
 
 static void
@@ -793,8 +793,8 @@ conf_set_listen_address(void *data)
 static int
 conf_begin_auth(struct TopConf *tc)
 {
-	dlink_node *ptr;
-	dlink_node *next_ptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
 
 	if(yy_aconf)
 		free_conf(yy_aconf);
@@ -802,7 +802,7 @@ conf_begin_auth(struct TopConf *tc)
 	DLINK_FOREACH_SAFE(ptr, next_ptr, yy_aconf_list.head)
 	{
 		free_conf(ptr->data);
-		dlinkDestroy(ptr, &yy_aconf_list);
+		rb_dlinkDestroy(ptr, &yy_aconf_list);
 	}
 
 	yy_aconf = make_conf();
@@ -815,8 +815,8 @@ static int
 conf_end_auth(struct TopConf *tc)
 {
 	struct ConfItem *yy_tmp;
-	dlink_node *ptr;
-	dlink_node *next_ptr;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
 
 	if(EmptyString(yy_aconf->name))
 		DupString(yy_aconf->name, "NOMATCH");
@@ -856,7 +856,7 @@ conf_end_auth(struct TopConf *tc)
 		conf_add_class_to_conf(yy_tmp);
 
 		add_conf_by_address(yy_tmp->host, CONF_CLIENT, yy_tmp->user, yy_tmp);
-		dlinkDestroy(ptr, &yy_aconf_list);
+		rb_dlinkDestroy(ptr, &yy_aconf_list);
 	}
 
 	yy_aconf = NULL;
@@ -892,7 +892,7 @@ conf_set_auth_user(void *data)
 	}
 
 	if(yy_aconf != yy_tmp)
-		dlinkAddAlloc(yy_tmp, &yy_aconf_list);
+		rb_dlinkAddAlloc(yy_tmp, &yy_aconf_list);
 }
 
 static void
@@ -1004,12 +1004,12 @@ conf_set_auth_class(void *data)
 static int
 conf_cleanup_shared(struct TopConf *tc)
 {
-	dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *next_ptr;
 
 	DLINK_FOREACH_SAFE(ptr, next_ptr, yy_shared_list.head)
 	{
 		free_remote_conf(ptr->data);
-		dlinkDestroy(ptr, &yy_shared_list);
+		rb_dlinkDestroy(ptr, &yy_shared_list);
 	}
 
 	if(yy_shared != NULL)
@@ -1072,7 +1072,7 @@ conf_set_shared_oper(void *data)
 	else
 		DupString(yy_shared->username, username);
 
-	dlinkAddAlloc(yy_shared, &yy_shared_list);
+	rb_dlinkAddAlloc(yy_shared, &yy_shared_list);
 	yy_shared = NULL;
 }
 
@@ -1081,7 +1081,7 @@ conf_set_shared_flags(void *data)
 {
 	conf_parm_t *args = data;
 	int flags = 0;
-	dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *next_ptr;
 
 	if(yy_shared != NULL)
 		free_remote_conf(yy_shared);
@@ -1093,8 +1093,8 @@ conf_set_shared_flags(void *data)
 		yy_shared = ptr->data;
 
 		yy_shared->flags = flags;
-		dlinkDestroy(ptr, &yy_shared_list);
-		dlinkAddTail(yy_shared, &yy_shared->node, &shared_conf_list);
+		rb_dlinkDestroy(ptr, &yy_shared_list);
+		rb_dlinkAddTail(yy_shared, &yy_shared->node, &shared_conf_list);
 	}
 
 	yy_shared = NULL;
@@ -1155,7 +1155,7 @@ conf_end_connect(struct TopConf *tc)
 #endif
 
 	add_server_conf(yy_server);
-	dlinkAdd(yy_server, &yy_server->node, &server_conf_list);
+	rb_dlinkAdd(yy_server, &yy_server->node, &server_conf_list);
 
 	yy_server = NULL;
 	return 0;
@@ -1256,7 +1256,7 @@ conf_set_connect_hub_mask(void *data)
 
 	DupString(yy_hub->host, data);
 	DupString(yy_hub->server, yy_server->name);
-	dlinkAdd(yy_hub, &yy_hub->node, &hubleaf_conf_list);
+	rb_dlinkAdd(yy_hub, &yy_hub->node, &hubleaf_conf_list);
 }
 
 static void
@@ -1272,7 +1272,7 @@ conf_set_connect_leaf_mask(void *data)
 
 	DupString(yy_leaf->host, data);
 	DupString(yy_leaf->server, yy_server->name);
-	dlinkAdd(yy_leaf, &yy_leaf->node, &hubleaf_conf_list);
+	rb_dlinkAdd(yy_leaf, &yy_leaf->node, &hubleaf_conf_list);
 }
 
 static void
@@ -1303,12 +1303,12 @@ conf_set_exempt_ip(void *data)
 static int
 conf_cleanup_cluster(struct TopConf *tc)
 {
-	dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *next_ptr;
 
 	DLINK_FOREACH_SAFE(ptr, next_ptr, yy_cluster_list.head)
 	{
 		free_remote_conf(ptr->data);
-		dlinkDestroy(ptr, &yy_cluster_list);
+		rb_dlinkDestroy(ptr, &yy_cluster_list);
 	}
 
 	if(yy_shared != NULL)
@@ -1328,7 +1328,7 @@ conf_set_cluster_name(void *data)
 
 	yy_shared = make_remote_conf();
 	DupString(yy_shared->server, data);
-	dlinkAddAlloc(yy_shared, &yy_cluster_list);
+	rb_dlinkAddAlloc(yy_shared, &yy_cluster_list);
 
 	yy_shared = NULL;
 }
@@ -1338,7 +1338,7 @@ conf_set_cluster_flags(void *data)
 {
 	conf_parm_t *args = data;
 	int flags = 0;
-	dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *next_ptr;
 
 	if(yy_shared != NULL)
 		free_remote_conf(yy_shared);
@@ -1349,8 +1349,8 @@ conf_set_cluster_flags(void *data)
 	{
 		yy_shared = ptr->data;
 		yy_shared->flags = flags;
-		dlinkAddTail(yy_shared, &yy_shared->node, &cluster_conf_list);
-		dlinkDestroy(ptr, &yy_cluster_list);
+		rb_dlinkAddTail(yy_shared, &yy_shared->node, &cluster_conf_list);
+		rb_dlinkDestroy(ptr, &yy_cluster_list);
 	}
 
 	yy_shared = NULL;
@@ -1537,7 +1537,7 @@ static int
 conf_begin_service(struct TopConf *tc)
 {
 	struct Client *target_p;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 
 	DLINK_FOREACH(ptr, global_serv_list.head)
 	{
@@ -1576,7 +1576,7 @@ conf_set_service_name(void *data)
 	}
 
 	DupString(tmp, data);
-	dlinkAddAlloc(tmp, &service_list);
+	rb_dlinkAddAlloc(tmp, &service_list);
 
 	if((target_p = find_server(NULL, tmp)))
 		target_p->flags |= FLAGS_SERVICE;
@@ -1856,7 +1856,7 @@ add_conf_item(const char *topconf, const char *name, int type, void (*func) (voi
 	cf->cf_func = func;
 	cf->cf_arg = NULL;
 
-	dlinkAddAlloc(cf, &tc->tc_items);
+	rb_dlinkAddAlloc(cf, &tc->tc_items);
 
 	return 0;
 }
@@ -1866,7 +1866,7 @@ remove_conf_item(const char *topconf, const char *name)
 {
 	struct TopConf *tc;
 	struct ConfEntry *cf;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 
 	if((tc = find_top_conf(topconf)) == NULL)
 		return -1;
@@ -1874,10 +1874,10 @@ remove_conf_item(const char *topconf, const char *name)
 	if((cf = find_conf_item(tc, name)) == NULL)
 		return -1;
 
-	if((ptr = dlinkFind(cf, &tc->tc_items)) == NULL)
+	if((ptr = rb_dlinkFind(cf, &tc->tc_items)) == NULL)
 		return -1;
 
-	dlinkDestroy(ptr, &tc->tc_items);
+	rb_dlinkDestroy(ptr, &tc->tc_items);
 	MyFree(cf);
 
 	return 0;

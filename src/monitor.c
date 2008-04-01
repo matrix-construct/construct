@@ -133,7 +133,7 @@ void
 clear_monitor(struct Client *client_p)
 {
 	struct monitor *monptr;
-	dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *next_ptr;
 
 	DLINK_FOREACH_SAFE(ptr, next_ptr, client_p->localClient->monitor_list.head)
 	{
@@ -142,8 +142,8 @@ clear_monitor(struct Client *client_p)
 		/* we leave the actual entry around with no users, itll be
 		 * cleaned up periodically by cleanup_monitor() --anfl
 		 */
-		dlinkFindDestroy(client_p, &monptr->users);
-		free_dlink_node(ptr);
+		rb_dlinkFindDestroy(client_p, &monptr->users);
+		free_rb_dlink_node(ptr);
 	}
 
 	client_p->localClient->monitor_list.head = client_p->localClient->monitor_list.tail = NULL;
@@ -164,7 +164,7 @@ cleanup_monitor(void *unused)
 		{
 			next_ptr = ptr->hnext;
 
-			if(!dlink_list_length(&ptr->users))
+			if(!rb_dlink_list_length(&ptr->users))
 			{
 				if(last_ptr)
 					last_ptr->hnext = next_ptr;

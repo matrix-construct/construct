@@ -497,7 +497,7 @@ main(int argc, char *argv[])
 	memset(&local_oper_list, 0, sizeof(local_oper_list));
 	memset(&oper_list, 0, sizeof(oper_list));
 
-	dlinkAddTail(&me, &me.node, &global_client_list);
+	rb_dlinkAddTail(&me, &me.node, &global_client_list);
 
 	memset((void *) &Count, 0, sizeof(Count));
 	memset((void *) &ServerInfo, 0, sizeof(ServerInfo));
@@ -649,7 +649,7 @@ main(int argc, char *argv[])
 	add_to_id_hash(me.id, &me);
 	me.serv->nameinfo = scache_connect(me.name, me.info, 0);
 
-	dlinkAddAlloc(&me, &global_serv_list);
+	rb_dlinkAddAlloc(&me, &global_serv_list);
 
 	construct_umodebuf();
 
