@@ -111,6 +111,12 @@ ircd_log_cb(const char *str)
 	ilog(L_MAIN, "%s", str);
 }
 
+static void
+ircd_restart_cb(const char *str)
+{
+	ilog(L_MAIN, "%s", str);
+}
+
 /*
  * Why EXIT_FAILURE here?
  * Because if ircd_die_cb() is called it's because of a fatal
@@ -554,6 +560,7 @@ main(int argc, char *argv[])
 	/* Init the event subsystem */
 	init_sys();
 	libcharybdis_init(ircd_log_cb, restart, ircd_die_cb);
+	rb_lib_init(ircd_log_cb, restart, ircd_die_cb);
 
 	fdlist_init();
 	if(!server_state_foreground)
