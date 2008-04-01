@@ -300,7 +300,7 @@ check_pings_list(rb_dlink_list * list)
 	int ping = 0;		/* ping time value from client */
 	rb_dlink_node *ptr, *next_ptr;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, list->head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, list->head)
 	{
 		client_p = ptr->data;
 
@@ -366,7 +366,7 @@ check_unknowns_list(rb_dlink_list * list)
 	struct Client *client_p;
 	int timeout;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, list->head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, list->head)
 	{
 		client_p = ptr->data;
 
@@ -451,7 +451,7 @@ check_banned_lines(void)
 	struct ConfItem *aconf = NULL;
 	rb_dlink_node *ptr, *next_ptr;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, lclient_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, lclient_list.head)
 	{
 		client_p = ptr->data;
 
@@ -539,7 +539,7 @@ check_banned_lines(void)
 	}
 
 	/* also check the unknowns list for new dlines */
-	DLINK_FOREACH_SAFE(ptr, next_ptr, unknown_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, unknown_list.head)
 	{
 		client_p = ptr->data;
 
@@ -581,7 +581,7 @@ check_klines(void)
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, lclient_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, lclient_list.head)
 	{
 		client_p = ptr->data;
 
@@ -622,7 +622,7 @@ check_glines(void)
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, lclient_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, lclient_list.head)
 	{
 		client_p = ptr->data;
 
@@ -671,7 +671,7 @@ check_dlines(void)
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, lclient_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, lclient_list.head)
 	{
 		client_p = ptr->data;
 
@@ -693,7 +693,7 @@ check_dlines(void)
 	}
 
 	/* dlines need to be checked against unknowns too */
-	DLINK_FOREACH_SAFE(ptr, next_ptr, unknown_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, unknown_list.head)
 	{
 		client_p = ptr->data;
 
@@ -721,7 +721,7 @@ check_xlines(void)
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, lclient_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, lclient_list.head)
 	{
 		client_p = ptr->data;
 
@@ -1064,7 +1064,7 @@ free_exited_clients(void *unused)
 	rb_dlink_node *ptr, *next;
 	struct Client *target_p;
 
-	DLINK_FOREACH_SAFE(ptr, next, dead_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next, dead_list.head)
 	{
 		target_p = ptr->data;
 
@@ -1074,7 +1074,7 @@ free_exited_clients(void *unused)
 			rb_dlink_node *aptr;
 			int found = 0;
 
-			DLINK_FOREACH(aptr, abort_list.head)
+			RB_DLINK_FOREACH(aptr, abort_list.head)
 			{
 				abt = aptr->data;
 				if(abt->client == target_p)
@@ -1111,7 +1111,7 @@ free_exited_clients(void *unused)
 	}
 
 #ifdef DEBUG_EXITED_CLIENTS
-	DLINK_FOREACH_SAFE(ptr, next, dead_remote_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next, dead_remote_list.head)
 	{
 		target_p = ptr->data;
 
@@ -1156,12 +1156,12 @@ recurse_send_quits(struct Client *client_p, struct Client *source_p,
 	}
 	else
 	{
-		DLINK_FOREACH_SAFE(ptr, ptr_next, source_p->serv->users.head)
+		RB_DLINK_FOREACH_SAFE(ptr, ptr_next, source_p->serv->users.head)
 		{
 			target_p = ptr->data;
 			sendto_one(to, ":%s QUIT :%s", target_p->name, comment1);
 		}
-		DLINK_FOREACH_SAFE(ptr, ptr_next, source_p->serv->servers.head)
+		RB_DLINK_FOREACH_SAFE(ptr, ptr_next, source_p->serv->servers.head)
 		{
 			target_p = ptr->data;
 			recurse_send_quits(client_p, target_p, to, comment1, comment);
@@ -1194,7 +1194,7 @@ recurse_remove_clients(struct Client *source_p, const char *comment)
 	/* this is very ugly, but it saves cpu :P */
 	if(ConfigFileEntry.nick_delay > 0)
 	{
-		DLINK_FOREACH_SAFE(ptr, ptr_next, source_p->serv->users.head)
+		RB_DLINK_FOREACH_SAFE(ptr, ptr_next, source_p->serv->users.head)
 		{
 			target_p = ptr->data;
 			target_p->flags |= FLAGS_KILLED;
@@ -1206,7 +1206,7 @@ recurse_remove_clients(struct Client *source_p, const char *comment)
 	}
 	else
 	{
-		DLINK_FOREACH_SAFE(ptr, ptr_next, source_p->serv->users.head)
+		RB_DLINK_FOREACH_SAFE(ptr, ptr_next, source_p->serv->users.head)
 		{
 			target_p = ptr->data;
 			target_p->flags |= FLAGS_KILLED;
@@ -1216,7 +1216,7 @@ recurse_remove_clients(struct Client *source_p, const char *comment)
 		}
 	}	
 
-	DLINK_FOREACH_SAFE(ptr, ptr_next, source_p->serv->servers.head)
+	RB_DLINK_FOREACH_SAFE(ptr, ptr_next, source_p->serv->servers.head)
 	{
 		target_p = ptr->data;
 		recurse_remove_clients(target_p, comment);
@@ -1237,7 +1237,7 @@ remove_dependents(struct Client *client_p,
 	struct Client *to;
 	rb_dlink_node *ptr, *next;
 
-	DLINK_FOREACH_SAFE(ptr, next, serv_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next, serv_list.head)
 	{
 		to = ptr->data;
 
@@ -1256,7 +1256,7 @@ exit_aborted_clients(void *unused)
 {
 	struct abort_client *abt;
  	rb_dlink_node *ptr, *next;
- 	DLINK_FOREACH_SAFE(ptr, next, abort_list.head)
+ 	RB_DLINK_FOREACH_SAFE(ptr, next, abort_list.head)
  	{
  	 	abt = ptr->data;
 
@@ -1342,7 +1342,7 @@ exit_generic_client(struct Client *client_p, struct Client *source_p, struct Cli
 	s_assert(source_p->user->channel.head == NULL);
 
 	/* Clean up invitefield */
-	DLINK_FOREACH_SAFE(ptr, next_ptr, source_p->user->invited.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, source_p->user->invited.head)
 	{
 		del_invite(ptr->data, source_p);
 	}
@@ -1772,7 +1772,7 @@ del_all_accepts(struct Client *client_p)
 		/* clear this clients accept list, and remove them from
 		 * everyones on_accept_list
 		 */
-		DLINK_FOREACH_SAFE(ptr, next_ptr, client_p->localClient->allow_list.head)
+		RB_DLINK_FOREACH_SAFE(ptr, next_ptr, client_p->localClient->allow_list.head)
 		{
 			target_p = ptr->data;
 			rb_dlinkFindDestroy(client_p, &target_p->on_allow_list);
@@ -1781,7 +1781,7 @@ del_all_accepts(struct Client *client_p)
 	}
 
 	/* remove this client from everyones accept list */
-	DLINK_FOREACH_SAFE(ptr, next_ptr, client_p->on_allow_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, client_p->on_allow_list.head)
 	{
 		target_p = ptr->data;
 		rb_dlinkFindDestroy(client_p, &target_p->localClient->allow_list);

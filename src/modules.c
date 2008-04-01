@@ -141,7 +141,7 @@ mod_find_path(const char *path)
 	rb_dlink_node *ptr;
 	struct module_path *mpath;
 
-	DLINK_FOREACH(ptr, mod_paths.head)
+	RB_DLINK_FOREACH(ptr, mod_paths.head)
 	{
 		mpath = ptr->data;
 
@@ -183,7 +183,7 @@ mod_clear_paths(void)
 {
 	rb_dlink_node *ptr, *next_ptr;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, mod_paths.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, mod_paths.head)
 	{
 		MyFree(ptr->data);
 		free_rb_dlink_node(ptr);
@@ -321,7 +321,7 @@ load_one_module(const char *path, int coremodule)
 	if (server_state_foreground == 1)
 		inotice("loading module %s ...", path);	
 
-	DLINK_FOREACH(pathst, mod_paths.head)
+	RB_DLINK_FOREACH(pathst, mod_paths.head)
 	{
 		mpath = pathst->data;
 

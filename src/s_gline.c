@@ -76,7 +76,7 @@ find_is_glined(const char *host, const char *user)
 	rb_dlink_node *gline_node;
 	struct ConfItem *kill_ptr;
 
-	DLINK_FOREACH(gline_node, glines.head)
+	RB_DLINK_FOREACH(gline_node, glines.head)
 	{
 		kill_ptr = gline_node->data;
 		if((kill_ptr->user && (!user || match(kill_ptr->user, user)))
@@ -120,7 +120,7 @@ expire_glines()
 	rb_dlink_node *next_node;
 	struct ConfItem *kill_ptr;
 
-	DLINK_FOREACH_SAFE(gline_node, next_node, glines.head)
+	RB_DLINK_FOREACH_SAFE(gline_node, next_node, glines.head)
 	{
 		kill_ptr = gline_node->data;
 
@@ -150,7 +150,7 @@ expire_pending_glines()
 	rb_dlink_node *next_node;
 	struct gline_pending *glp_ptr;
 
-	DLINK_FOREACH_SAFE(pending_node, next_node, pending_glines.head)
+	RB_DLINK_FOREACH_SAFE(pending_node, next_node, pending_glines.head)
 	{
 		glp_ptr = pending_node->data;
 

@@ -57,7 +57,7 @@ reject_exit(void *unused)
 	struct Client *client_p;
 	rb_dlink_node *ptr, *ptr_next;
 
-	DLINK_FOREACH_SAFE(ptr, ptr_next, delay_exit.head)
+	RB_DLINK_FOREACH_SAFE(ptr, ptr_next, delay_exit.head)
 	{
 		client_p = ptr->data;
 	  	if(IsDead(client_p))
@@ -95,7 +95,7 @@ reject_expires(void *unused)
 	patricia_node_t *pnode;
 	struct reject_data *rdata;
 	
-	DLINK_FOREACH_SAFE(ptr, next, reject_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next, reject_list.head)
 	{
 		pnode = ptr->data;
 		rdata = pnode->data;		
@@ -196,7 +196,7 @@ flush_reject(void)
 	patricia_node_t *pnode;
 	struct reject_data *rdata;
 	
-	DLINK_FOREACH_SAFE(ptr, next, reject_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next, reject_list.head)
 	{
 		pnode = ptr->data;
 		rdata = pnode->data;
@@ -241,7 +241,7 @@ remove_reject_mask(const char *mask1, const char *mask2)
 		hashv ^= fnv_hash_upper(mask1, 32);
 	if (mask2 != NULL)
 		hashv ^= fnv_hash_upper(mask2, 32);
-	DLINK_FOREACH_SAFE(ptr, next, reject_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next, reject_list.head)
 	{
 		pnode = ptr->data;
 		rdata = pnode->data;

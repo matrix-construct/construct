@@ -471,7 +471,7 @@ void irc_dictionary_destroy(struct Dictionary *dtree,
 
 	s_assert(dtree != NULL);
 
-	DLINK_FOREACH_SAFE(n, tn, dtree->head)
+	RB_DLINK_FOREACH_SAFE(n, tn, dtree->head)
 	{
 		if (destroy_cb != NULL)
 			(*destroy_cb)(n, privdata);
@@ -508,7 +508,7 @@ void irc_dictionary_foreach(struct Dictionary *dtree,
 
 	s_assert(dtree != NULL);
 
-	DLINK_FOREACH_SAFE(n, tn, dtree->head)
+	RB_DLINK_FOREACH_SAFE(n, tn, dtree->head)
 	{
 		/* delem_t is a subclass of node_t. */
 		struct DictionaryElement *delem = (struct DictionaryElement *) n;
@@ -546,7 +546,7 @@ void *irc_dictionary_search(struct Dictionary *dtree,
 
 	s_assert(dtree != NULL);
 
-	DLINK_FOREACH_SAFE(n, tn, dtree->head)
+	RB_DLINK_FOREACH_SAFE(n, tn, dtree->head)
 	{
 		/* delem_t is a subclass of node_t. */
 		struct DictionaryElement *delem = (struct DictionaryElement *) n;

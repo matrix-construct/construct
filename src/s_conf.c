@@ -491,7 +491,7 @@ attach_iline(struct Client *client_p, struct ConfItem *aconf)
 
 
 	/* find_hostname() returns the head of the list to search */
-	DLINK_FOREACH(ptr, find_hostname(client_p->host))
+	RB_DLINK_FOREACH(ptr, find_hostname(client_p->host))
 	{
 		target_p = ptr->data;
 
@@ -1013,7 +1013,7 @@ expire_temp_kd(void *list)
 	rb_dlink_node *next_ptr;
 	struct ConfItem *aconf;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, ((rb_dlink_list *) list)->head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, ((rb_dlink_list *) list)->head)
 	{
 		aconf = ptr->data;
 
@@ -1038,7 +1038,7 @@ reorganise_temp_kd(void *list)
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr, *next_ptr;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, ((rb_dlink_list *) list)->head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, ((rb_dlink_list *) list)->head)
 	{
 		aconf = ptr->data;
 
@@ -1221,7 +1221,7 @@ clear_out_old_conf(void)
 	 * don't delete the class table, rather mark all entries
 	 * for deletion. The table is cleaned up by check_class. - avalon
 	 */
-	DLINK_FOREACH(ptr, class_list.head)
+	RB_DLINK_FOREACH(ptr, class_list.head)
 	{
 		cltmp = ptr->data;
 		MaxUsers(cltmp) = -1;
@@ -1265,7 +1265,7 @@ clear_out_old_conf(void)
 	MyFree(ConfigFileEntry.servlink_path);
 	ConfigFileEntry.servlink_path = NULL;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, service_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, service_list.head)
 	{
 		MyFree(ptr->data);
 		rb_dlinkDestroy(ptr, &service_list);

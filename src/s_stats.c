@@ -70,7 +70,7 @@ tstats(struct Client *source_p)
 	sp = &tmp;
 	memcpy(sp, ServerStats, sizeof(struct ServerStatistics));
 
-	DLINK_FOREACH(ptr, serv_list.head)
+	RB_DLINK_FOREACH(ptr, serv_list.head)
 	{
 		target_p = ptr->data;
 
@@ -92,7 +92,7 @@ tstats(struct Client *source_p)
 		}
 	}
 
-	DLINK_FOREACH(ptr, lclient_list.head)
+	RB_DLINK_FOREACH(ptr, lclient_list.head)
 	{
 		target_p = ptr->data;
 
@@ -115,7 +115,7 @@ tstats(struct Client *source_p)
 
 	}
 
-	DLINK_FOREACH(ptr, unknown_list.head)
+	RB_DLINK_FOREACH(ptr, unknown_list.head)
 	{
 		sp->is_ni++;
 	}
@@ -218,7 +218,7 @@ count_memory(struct Client *source_p)
 
 	count_whowas_memory(&ww, &wwm);
 
-	DLINK_FOREACH(ptr, global_client_list.head)
+	RB_DLINK_FOREACH(ptr, global_client_list.head)
 	{
 		target_p = ptr->data;
 		if(MyConnect(target_p))
@@ -240,7 +240,7 @@ count_memory(struct Client *source_p)
 	}
 
 	/* Count up all channels, ban lists, except lists, Invex lists */
-	DLINK_FOREACH(ptr, global_channel_list.head)
+	RB_DLINK_FOREACH(ptr, global_channel_list.head)
 	{
 		chptr = ptr->data;
 		channel_count++;
@@ -249,7 +249,7 @@ count_memory(struct Client *source_p)
 		channel_users += rb_dlink_list_length(&chptr->members);
 		channel_invites += rb_dlink_list_length(&chptr->invites);
 
-		DLINK_FOREACH(rb_dlink, chptr->banlist.head)
+		RB_DLINK_FOREACH(rb_dlink, chptr->banlist.head)
 		{
 			actualBan = rb_dlink->data;
 			channel_bans++;
@@ -257,7 +257,7 @@ count_memory(struct Client *source_p)
 			channel_ban_memory += sizeof(rb_dlink_node) + sizeof(struct Ban);
 		}
 
-		DLINK_FOREACH(rb_dlink, chptr->exceptlist.head)
+		RB_DLINK_FOREACH(rb_dlink, chptr->exceptlist.head)
 		{
 			actualBan = rb_dlink->data;
 			channel_except++;
@@ -265,7 +265,7 @@ count_memory(struct Client *source_p)
 			channel_except_memory += (sizeof(rb_dlink_node) + sizeof(struct Ban));
 		}
 
-		DLINK_FOREACH(rb_dlink, chptr->invexlist.head)
+		RB_DLINK_FOREACH(rb_dlink, chptr->invexlist.head)
 		{
 			actualBan = rb_dlink->data;
 			channel_invex++;
@@ -273,7 +273,7 @@ count_memory(struct Client *source_p)
 			channel_invex_memory += (sizeof(rb_dlink_node) + sizeof(struct Ban));
 		}
 
-		DLINK_FOREACH(rb_dlink, chptr->quietlist.head)
+		RB_DLINK_FOREACH(rb_dlink, chptr->quietlist.head)
 		{
 			actualBan = rb_dlink->data;
 			channel_quiets++;

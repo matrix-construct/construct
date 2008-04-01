@@ -135,7 +135,7 @@ clear_monitor(struct Client *client_p)
 	struct monitor *monptr;
 	rb_dlink_node *ptr, *next_ptr;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, client_p->localClient->monitor_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, client_p->localClient->monitor_list.head)
 	{
 		monptr = ptr->data;
 

@@ -117,7 +117,7 @@ delete_isupport(const char *name)
 	rb_dlink_node *ptr, *next_ptr;
 	struct isupportitem *item;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, isupportlist.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, isupportlist.head)
 	{
 		item = ptr->data;
 
@@ -150,7 +150,7 @@ show_isupport(struct Client *client_p)
 	extra_space += strlen(me.name) + 1 + strlen(form_str(RPL_ISUPPORT));
 
 	nchars = extra_space, nparams = 0, buf[0] = '\0';
-	DLINK_FOREACH(ptr, isupportlist.head)
+	RB_DLINK_FOREACH(ptr, isupportlist.head)
 	{
 		item = ptr->data;
 		value = (*item->func)(item->param);

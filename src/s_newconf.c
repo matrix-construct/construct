@@ -83,32 +83,32 @@ clear_s_newconf(void)
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, shared_conf_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, shared_conf_list.head)
 	{
 		/* ptr here is ptr->data->node */
 		rb_dlinkDelete(ptr, &shared_conf_list);
 		free_remote_conf(ptr->data);
 	}
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, cluster_conf_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, cluster_conf_list.head)
 	{
 		rb_dlinkDelete(ptr, &cluster_conf_list);
 		free_remote_conf(ptr->data);
 	}
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, hubleaf_conf_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, hubleaf_conf_list.head)
 	{
 		rb_dlinkDelete(ptr, &hubleaf_conf_list);
 		free_remote_conf(ptr->data);
 	}
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, oper_conf_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, oper_conf_list.head)
 	{
 		free_oper_conf(ptr->data);
 		rb_dlinkDestroy(ptr, &oper_conf_list);
 	}
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, server_conf_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, server_conf_list.head)
 	{
 		server_p = ptr->data;
 
@@ -128,7 +128,7 @@ clear_s_newconf_bans(void)
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr, *next_ptr;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, xline_conf_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, xline_conf_list.head)
 	{
 		aconf = ptr->data;
 
@@ -139,7 +139,7 @@ clear_s_newconf_bans(void)
 		rb_dlinkDestroy(ptr, &xline_conf_list);
 	}
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, resv_conf_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, resv_conf_list.head)
 	{
 		aconf = ptr->data;
 
@@ -181,7 +181,7 @@ find_shared_conf(const char *username, const char *host,
 	struct remote_conf *shared_p;
 	rb_dlink_node *ptr;
 
-	DLINK_FOREACH(ptr, shared_conf_list.head)
+	RB_DLINK_FOREACH(ptr, shared_conf_list.head)
 	{
 		shared_p = ptr->data;
 
@@ -231,7 +231,7 @@ cluster_generic(struct Client *source_p, const char *command,
 	ircvsnprintf(buffer, sizeof(buffer), format, args);
 	va_end(args);
 
-	DLINK_FOREACH(ptr, cluster_conf_list.head)
+	RB_DLINK_FOREACH(ptr, cluster_conf_list.head)
 	{
 		shared_p = ptr->data;
 
@@ -292,7 +292,7 @@ find_oper_conf(const char *username, const char *host, const char *locip, const 
 
 	parse_netmask(locip, (struct sockaddr *)&cip, &cbits);
 
-	DLINK_FOREACH(ptr, oper_conf_list.head)
+	RB_DLINK_FOREACH(ptr, oper_conf_list.head)
 	{
 		oper_p = ptr->data;
 
@@ -434,7 +434,7 @@ find_server_conf(const char *name)
 	struct server_conf *server_p;
 	rb_dlink_node *ptr;
 
-	DLINK_FOREACH(ptr, server_conf_list.head)
+	RB_DLINK_FOREACH(ptr, server_conf_list.head)
 	{
 		server_p = ptr->data;
 
@@ -516,7 +516,7 @@ find_xline(const char *gecos, int counter)
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
 
-	DLINK_FOREACH(ptr, xline_conf_list.head)
+	RB_DLINK_FOREACH(ptr, xline_conf_list.head)
 	{
 		aconf = ptr->data;
 
@@ -537,7 +537,7 @@ find_xline_mask(const char *gecos)
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
 
-	DLINK_FOREACH(ptr, xline_conf_list.head)
+	RB_DLINK_FOREACH(ptr, xline_conf_list.head)
 	{
 		aconf = ptr->data;
 
@@ -554,7 +554,7 @@ find_nick_resv(const char *name)
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
 
-	DLINK_FOREACH(ptr, resv_conf_list.head)
+	RB_DLINK_FOREACH(ptr, resv_conf_list.head)
 	{
 		aconf = ptr->data;
 
@@ -574,7 +574,7 @@ find_nick_resv_mask(const char *name)
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
 
-	DLINK_FOREACH(ptr, resv_conf_list.head)
+	RB_DLINK_FOREACH(ptr, resv_conf_list.head)
 	{
 		aconf = ptr->data;
 
@@ -710,7 +710,7 @@ expire_temp_rxlines(void *unused)
 	}
 	HASH_WALK_END
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, resv_conf_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, resv_conf_list.head)
 	{
 		aconf = ptr->data;
 
@@ -725,7 +725,7 @@ expire_temp_rxlines(void *unused)
 		}
 	}
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, xline_conf_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, xline_conf_list.head)
 	{
 		aconf = ptr->data;
 
@@ -782,7 +782,7 @@ expire_nd_entries(void *unused)
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, nd_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, nd_list.head)
 	{
 		nd = ptr->data;
 

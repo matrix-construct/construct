@@ -108,7 +108,7 @@ add_id(struct Client *source_p, struct Channel *chptr, const char *banid,
 			return 0;
 		}
 
-		DLINK_FOREACH(ptr, list->head)
+		RB_DLINK_FOREACH(ptr, list->head)
 		{
 			actualBan = ptr->data;
 			if(mask_match(actualBan->banstr, realban))
@@ -118,7 +118,7 @@ add_id(struct Client *source_p, struct Channel *chptr, const char *banid,
 	/* dont let remotes set duplicates */
 	else
 	{
-		DLINK_FOREACH(ptr, list->head)
+		RB_DLINK_FOREACH(ptr, list->head)
 		{
 			actualBan = ptr->data;
 			if(!irccmp(actualBan->banstr, realban))
@@ -159,7 +159,7 @@ del_id(struct Channel *chptr, const char *banid, rb_dlink_list * list, long mode
 	if(EmptyString(banid))
 		return 0;
 
-	DLINK_FOREACH(ptr, list->head)
+	RB_DLINK_FOREACH(ptr, list->head)
 	{
 		banptr = ptr->data;
 
@@ -580,7 +580,7 @@ chm_ban(struct Client *source_p, struct Channel *chptr,
 			return;
 		}
 
-		DLINK_FOREACH(ptr, list->head)
+		RB_DLINK_FOREACH(ptr, list->head)
 		{
 			banptr = ptr->data;
 			sendto_one(source_p, form_str(rpl_list),

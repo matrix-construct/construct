@@ -78,7 +78,7 @@ void substitution_free(rb_dlink_list *varlist)
 {
 	rb_dlink_node *nptr, *nptr2;
 
-	DLINK_FOREACH_SAFE(nptr, nptr2, varlist->head)
+	RB_DLINK_FOREACH_SAFE(nptr, nptr2, varlist->head)
 	{
 		struct substitution_variable *tmp = (struct substitution_variable *) nptr->data;
 
@@ -132,7 +132,7 @@ char *substitution_parse(const char *fmt, rb_dlink_list *varlist)
 			/* advance ptr by length of variable */
 			ptr += (pptr - ptr);
 
-			DLINK_FOREACH(nptr, varlist->head)
+			RB_DLINK_FOREACH(nptr, varlist->head)
 			{
 				struct substitution_variable *val = (struct substitution_variable *) nptr->data;
 

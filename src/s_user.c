@@ -1183,7 +1183,7 @@ send_umode_out(struct Client *client_p, struct Client *source_p, int old)
 
 	send_umode(NULL, source_p, old, 0, buf);
 
-	DLINK_FOREACH(ptr, serv_list.head)
+	RB_DLINK_FOREACH(ptr, serv_list.head)
 	{
 		target_p = ptr->data;
 
@@ -1398,7 +1398,7 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 				target_p->name, target_p->username, target_p->host,
 				reason);
 
-		DLINK_FOREACH(ptr, target_p->user->channel.head)
+		RB_DLINK_FOREACH(ptr, target_p->user->channel.head)
 		{
 			mscptr = ptr->data;
 			chptr = mscptr->chptr;

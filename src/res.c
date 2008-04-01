@@ -180,7 +180,7 @@ static time_t timeout_query_list(time_t now)
 	time_t next_time = 0;
 	time_t timeout = 0;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, request_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, request_list.head)
 	{
 		request = ptr->data;
 		timeout = request->sentat + request->timeout;
@@ -323,7 +323,7 @@ void delete_resolver_queries(const struct DNSQuery *query)
 	rb_dlink_node *next_ptr;
 	struct reslist *request;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, request_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, request_list.head)
 	{
 		if ((request = ptr->data) != NULL)
 		{
@@ -371,7 +371,7 @@ static struct reslist *find_id(int id)
 	rb_dlink_node *ptr;
 	struct reslist *request;
 
-	DLINK_FOREACH(ptr, request_list.head)
+	RB_DLINK_FOREACH(ptr, request_list.head)
 	{
 		request = ptr->data;
 

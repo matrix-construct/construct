@@ -389,7 +389,7 @@ find_id(const char *name)
 
 	hashv = hash_id(name);
 
-	DLINK_FOREACH(ptr, idTable[hashv].head)
+	RB_DLINK_FOREACH(ptr, idTable[hashv].head)
 	{
 		target_p = ptr->data;
 
@@ -421,7 +421,7 @@ find_client(const char *name)
 
 	hashv = hash_nick(name);
 
-	DLINK_FOREACH(ptr, clientTable[hashv].head)
+	RB_DLINK_FOREACH(ptr, clientTable[hashv].head)
 	{
 		target_p = ptr->data;
 
@@ -449,7 +449,7 @@ find_named_client(const char *name)
 
 	hashv = hash_nick(name);
 
-	DLINK_FOREACH(ptr, clientTable[hashv].head)
+	RB_DLINK_FOREACH(ptr, clientTable[hashv].head)
 	{
 		target_p = ptr->data;
 
@@ -483,7 +483,7 @@ find_server(struct Client *source_p, const char *name)
 
 	hashv = hash_nick(name);
 
-	DLINK_FOREACH(ptr, clientTable[hashv].head)
+	RB_DLINK_FOREACH(ptr, clientTable[hashv].head)
 	{
 		target_p = ptr->data;
 
@@ -531,7 +531,7 @@ find_channel(const char *name)
 
 	hashv = hash_channel(name);
 
-	DLINK_FOREACH(ptr, channelTable[hashv].head)
+	RB_DLINK_FOREACH(ptr, channelTable[hashv].head)
 	{
 		chptr = ptr->data;
 
@@ -583,7 +583,7 @@ get_or_create_channel(struct Client *client_p, const char *chname, int *isnew)
 
 	hashv = hash_channel(s);
 
-	DLINK_FOREACH(ptr, channelTable[hashv].head)
+	RB_DLINK_FOREACH(ptr, channelTable[hashv].head)
 	{
 		chptr = ptr->data;
 
@@ -626,7 +626,7 @@ hash_find_resv(const char *name)
 
 	hashv = hash_resv(name);
 
-	DLINK_FOREACH(ptr, resvTable[hashv].head)
+	RB_DLINK_FOREACH(ptr, resvTable[hashv].head)
 	{
 		aconf = ptr->data;
 

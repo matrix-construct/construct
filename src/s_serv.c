@@ -210,7 +210,7 @@ collect_zipstats(void *unused)
 	rb_dlink_node *ptr;
 	struct Client *target_p;
 
-	DLINK_FOREACH(ptr, serv_list.head)
+	RB_DLINK_FOREACH(ptr, serv_list.head)
 	{
 		target_p = ptr->data;
 		if(IsCapable(target_p, CAP_ZIP))
@@ -301,7 +301,7 @@ hunt_server(struct Client *client_p, struct Client *source_p,
 		{
 			target_p = NULL;
 
-			DLINK_FOREACH(ptr, global_client_list.head)
+			RB_DLINK_FOREACH(ptr, global_client_list.head)
 			{
 				if(match(new, ((struct Client *) (ptr->data))->name))
 				{
@@ -358,7 +358,7 @@ try_connections(void *unused)
 	int confrq = 0;
 	time_t next = 0;
 
-	DLINK_FOREACH(ptr, server_conf_list.head)
+	RB_DLINK_FOREACH(ptr, server_conf_list.head)
 	{
 		tmp_p = ptr->data;
 
@@ -453,7 +453,7 @@ check_server(const char *name, struct Client *client_p)
 	if(strlen(name) > HOSTLEN)
 		return -4;
 
-	DLINK_FOREACH(ptr, server_conf_list.head)
+	RB_DLINK_FOREACH(ptr, server_conf_list.head)
 	{
 		tmp_p = ptr->data;
 
@@ -566,7 +566,7 @@ burst_modes_TS5(struct Client *client_p, char *chname, rb_dlink_list *list, char
 	mp = mbuf;
 	pp = pbuf;
 
-	DLINK_FOREACH(ptr, list->head)
+	RB_DLINK_FOREACH(ptr, list->head)
 	{
 		banptr = ptr->data;
 		tlen = strlen(banptr->banstr) + 3;
@@ -617,7 +617,7 @@ burst_modes_TS6(struct Client *client_p, struct Channel *chptr,
 				    me.id, (long) chptr->channelts, chptr->chname, flag);
 	t = buf + mlen;
 
-	DLINK_FOREACH(ptr, list->head)
+	RB_DLINK_FOREACH(ptr, list->head)
 	{
 		banptr = ptr->data;
 
@@ -677,7 +677,7 @@ burst_TS5(struct Client *client_p)
 
 	hclientinfo.client = hchaninfo.client = client_p;
 
-	DLINK_FOREACH(ptr, global_client_list.head)
+	RB_DLINK_FOREACH(ptr, global_client_list.head)
 	{
 		target_p = ptr->data;
 
@@ -712,7 +712,7 @@ burst_TS5(struct Client *client_p)
 		call_hook(h_burst_client, &hclientinfo);
 	}
 
-	DLINK_FOREACH(ptr, global_channel_list.head)
+	RB_DLINK_FOREACH(ptr, global_channel_list.head)
 	{
 		chptr = ptr->data;
 
@@ -725,7 +725,7 @@ burst_TS5(struct Client *client_p)
 
 		t = buf + mlen;
 
-		DLINK_FOREACH(uptr, chptr->members.head)
+		RB_DLINK_FOREACH(uptr, chptr->members.head)
 		{
 			msptr = uptr->data;
 
@@ -809,7 +809,7 @@ burst_TS6(struct Client *client_p)
 
 	hclientinfo.client = hchaninfo.client = client_p;
 
-	DLINK_FOREACH(ptr, global_client_list.head)
+	RB_DLINK_FOREACH(ptr, global_client_list.head)
 	{
 		target_p = ptr->data;
 
@@ -870,7 +870,7 @@ burst_TS6(struct Client *client_p)
 		call_hook(h_burst_client, &hclientinfo);
 	}
 
-	DLINK_FOREACH(ptr, global_channel_list.head)
+	RB_DLINK_FOREACH(ptr, global_channel_list.head)
 	{
 		chptr = ptr->data;
 
@@ -883,7 +883,7 @@ burst_TS6(struct Client *client_p)
 
 		t = buf + mlen;
 
-		DLINK_FOREACH(uptr, chptr->members.head)
+		RB_DLINK_FOREACH(uptr, chptr->members.head)
 		{
 			msptr = uptr->data;
 
@@ -1154,7 +1154,7 @@ server_estab(struct Client *client_p)
 	 ** need to send different names to different servers
 	 ** (domain name matching) Send new server to other servers.
 	 */
-	DLINK_FOREACH(ptr, serv_list.head)
+	RB_DLINK_FOREACH(ptr, serv_list.head)
 	{
 		target_p = ptr->data;
 
@@ -1203,7 +1203,7 @@ server_estab(struct Client *client_p)
 	 **    see previous *WARNING*!!! (Also, original inpath
 	 **    is destroyed...)
 	 */
-	DLINK_FOREACH(ptr, global_serv_list.head)
+	RB_DLINK_FOREACH(ptr, global_serv_list.head)
 	{
 		target_p = ptr->data;
 

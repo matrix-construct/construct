@@ -144,7 +144,7 @@ find_channel_membership(struct Channel *chptr, struct Client *client_p)
 	 */
 	if(rb_dlink_list_length(&chptr->members) < rb_dlink_list_length(&client_p->user->channel))
 	{
-		DLINK_FOREACH(ptr, chptr->members.head)
+		RB_DLINK_FOREACH(ptr, chptr->members.head)
 		{
 			msptr = ptr->data;
 
@@ -154,7 +154,7 @@ find_channel_membership(struct Channel *chptr, struct Client *client_p)
 	}
 	else
 	{
-		DLINK_FOREACH(ptr, client_p->user->channel.head)
+		RB_DLINK_FOREACH(ptr, client_p->user->channel.head)
 		{
 			msptr = ptr->data;
 
@@ -273,7 +273,7 @@ remove_user_from_channels(struct Client *client_p)
 	if(client_p == NULL)
 		return;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, client_p->user->channel.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, client_p->user->channel.head)
 	{
 		msptr = ptr->data;
 		chptr = msptr->chptr;
@@ -311,7 +311,7 @@ invalidate_bancache_user(struct Client *client_p)
 	if(client_p == NULL)
 		return;
 
-	DLINK_FOREACH(ptr, client_p->user->channel.head)
+	RB_DLINK_FOREACH(ptr, client_p->user->channel.head)
 	{
 		msptr = ptr->data;
 		msptr->bants = 0;
@@ -354,7 +354,7 @@ free_channel_list(rb_dlink_list * list)
 	rb_dlink_node *next_ptr;
 	struct Ban *actualBan;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, list->head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, list->head)
 	{
 		actualBan = ptr->data;
 		free_ban(actualBan);
@@ -375,7 +375,7 @@ destroy_channel(struct Channel *chptr)
 {
 	rb_dlink_node *ptr, *next_ptr;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->invites.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->invites.head)
 	{
 		del_invite(chptr, ptr->data);
 	}
@@ -440,7 +440,7 @@ channel_member_names(struct Channel *chptr, struct Client *client_p, int show_eo
 
 		t = lbuf + cur_len;
 
-		DLINK_FOREACH(ptr, chptr->members.head)
+		RB_DLINK_FOREACH(ptr, chptr->members.head)
 		{
 			msptr = ptr->data;
 			target_p = msptr->client_p;
@@ -544,7 +544,7 @@ is_banned(struct Channel *chptr, struct Client *who, struct membership *msptr,
 		}
 	}
 
-	DLINK_FOREACH(ptr, chptr->banlist.head)
+	RB_DLINK_FOREACH(ptr, chptr->banlist.head)
 	{
 		actualBan = ptr->data;
 		if(match(actualBan->banstr, s) ||
@@ -559,7 +559,7 @@ is_banned(struct Channel *chptr, struct Client *who, struct membership *msptr,
 
 	if((actualBan != NULL) && ConfigChannel.use_except)
 	{
-		DLINK_FOREACH(ptr, chptr->exceptlist.head)
+		RB_DLINK_FOREACH(ptr, chptr->exceptlist.head)
 		{
 			actualExcept = ptr->data;
 
@@ -650,7 +650,7 @@ is_quieted(struct Channel *chptr, struct Client *who, struct membership *msptr,
 		}
 	}
 
-	DLINK_FOREACH(ptr, chptr->quietlist.head)
+	RB_DLINK_FOREACH(ptr, chptr->quietlist.head)
 	{
 		actualBan = ptr->data;
 		if(match(actualBan->banstr, s) ||
@@ -665,7 +665,7 @@ is_quieted(struct Channel *chptr, struct Client *who, struct membership *msptr,
 
 	if((actualBan != NULL) && ConfigChannel.use_except)
 	{
-		DLINK_FOREACH(ptr, chptr->exceptlist.head)
+		RB_DLINK_FOREACH(ptr, chptr->exceptlist.head)
 		{
 			actualExcept = ptr->data;
 
@@ -753,7 +753,7 @@ can_join(struct Client *source_p, struct Channel *chptr, char *key)
 
 	if(chptr->mode.mode & MODE_INVITEONLY)
 	{
-		DLINK_FOREACH(invite, source_p->user->invited.head)
+		RB_DLINK_FOREACH(invite, source_p->user->invited.head)
 		{
 			if(invite->data == chptr)
 				break;
@@ -762,7 +762,7 @@ can_join(struct Client *source_p, struct Channel *chptr, char *key)
 		{
 			if(!ConfigChannel.use_invex)
 				return (ERR_INVITEONLYCHAN);
-			DLINK_FOREACH(ptr, chptr->invexlist.head)
+			RB_DLINK_FOREACH(ptr, chptr->invexlist.head)
 			{
 				invex = ptr->data;
 				if(match(invex->banstr, src_host)
@@ -797,7 +797,7 @@ can_join(struct Client *source_p, struct Channel *chptr, char *key)
 	/* allow /invite to override +l/+r/+j also -- jilles */
 	if (i != 0 && invite == NULL)
 	{
-		DLINK_FOREACH(invite, source_p->user->invited.head)
+		RB_DLINK_FOREACH(invite, source_p->user->invited.head)
 		{
 			if(invite->data == chptr)
 				break;
@@ -889,7 +889,7 @@ find_bannickchange_channel(struct Client *client_p)
 	rb_sprintf(src_host, "%s!%s@%s", client_p->name, client_p->username, client_p->host);
 	rb_sprintf(src_iphost, "%s!%s@%s", client_p->name, client_p->username, client_p->sockhost);
 
-	DLINK_FOREACH(ptr, client_p->user->channel.head)
+	RB_DLINK_FOREACH(ptr, client_p->user->channel.head)
 	{
 		msptr = ptr->data;
 		chptr = msptr->chptr;

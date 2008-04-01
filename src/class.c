@@ -226,7 +226,7 @@ find_class(const char *classname)
 	if(classname == NULL)
 		return default_class;
 
-	DLINK_FOREACH(ptr, class_list.head)
+	RB_DLINK_FOREACH(ptr, class_list.head)
 	{
 		cltmp = ptr->data;
 
@@ -251,7 +251,7 @@ check_class()
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, class_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, class_list.head)
 	{
 		cltmp = ptr->data;
 
@@ -291,7 +291,7 @@ report_classes(struct Client *source_p)
 	struct Class *cltmp;
 	rb_dlink_node *ptr;
 
-	DLINK_FOREACH(ptr, class_list.head)
+	RB_DLINK_FOREACH(ptr, class_list.head)
 	{
 		cltmp = ptr->data;
 
