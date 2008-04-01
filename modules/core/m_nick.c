@@ -731,6 +731,7 @@ static void
 set_initial_nick(struct Client *client_p, struct Client *source_p, char *nick)
 {
 	char buf[USERLEN + 1];
+	char note[NICKLEN + 10];
 
 	/* This had to be copied here to avoid problems.. */
 	source_p->tsinfo = CurrentTime;
@@ -740,8 +741,8 @@ set_initial_nick(struct Client *client_p, struct Client *source_p, char *nick)
 	strcpy(source_p->name, nick);
 	add_to_client_hash(nick, source_p);
 
-	/* fd_desc is long enough */
-	rb_note(client_p->localClient->F->fd, "Nick: %s", nick);
+	rb_snprintf(note, sizeof(note), "Nick: %s", nick);
+	rb_note(client_p->localClient->F, note);
 
 	if(source_p->flags & FLAGS_SENTUSER)
 	{
@@ -760,6 +761,7 @@ change_local_nick(struct Client *client_p, struct Client *source_p,
 	struct Client *target_p;
 	rb_dlink_node *ptr, *next_ptr;
 	struct Channel *chptr;
+	char note[NICKLEN + 10];
 	int samenick;
 
 	if (dosend)
@@ -849,8 +851,8 @@ change_local_nick(struct Client *client_p, struct Client *source_p,
 		rb_dlinkDestroy(ptr, &source_p->on_allow_list);
 	}
 
-	/* fd_desc is long enough */
-	rb_note(client_p->localClient->F->fd, "Nick: %s", nick);
+	rb_snprintf(note, sizeof(note), "Nick: %s", nick);
+	rb_note(client_p->localClient->F, note);
 
 	return;
 }
@@ -1187,7 +1189,7 @@ register_client(struct Client *client_p, struct Client *server,
 
 	source_p = make_client(client_p);
 	user = make_user(source_p);
-	dlinkAddTail(source_p, &source_p->node, &global_client_list);
+	rb_dlinkAddTail(source_p, &source_p->node, &global_client_list);
 
 	source_p->hopcount = atoi(parv[2]);
 	source_p->tsinfo = newts;
@@ -1271,7 +1273,7 @@ register_client(struct Client *client_p, struct Client *server,
 	}
 
 	if(IsOper(source_p) && !IsService(source_p))
-		dlinkAddAlloc(source_p, &oper_list);
+		rb_dlinkAddAlloc(source_p, &oper_list);
 
 	SetRemoteClient(source_p);
 
@@ -1280,7 +1282,7 @@ register_client(struct Client *client_p, struct Client *server,
 
 	source_p->servptr = server;
 
-	dlinkAdd(source_p, &source_p->lnode, &source_p->servptr->serv->users);
+	rb_dlinkAdd(source_p, &source_p->lnode, &source_p->servptr->serv->users);
 
 	/* fake direction */
 	if(source_p->servptr->from != source_p->from)

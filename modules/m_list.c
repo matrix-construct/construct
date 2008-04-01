@@ -81,14 +81,14 @@ DECLARE_MODULE_AV1(list, _modinit, _moddeinit, list_clist, NULL, list_hfnlist, "
 
 static int _modinit(void)
 {
-	eventAdd("safelist_iterate_clients", safelist_iterate_clients, NULL, 3);
+	rb_event_add("safelist_iterate_clients", safelist_iterate_clients, NULL, 3);
 
 	return 0;
 }
 
 static void _moddeinit(void)
 {
-	eventDelete(safelist_iterate_clients, NULL);
+	rb_event_delete(safelist_iterate_clients, NULL);
 }
 
 static void safelist_check_cliexit(hook_data_client_exit * hdata)

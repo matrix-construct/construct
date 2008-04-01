@@ -596,7 +596,7 @@ extern client_t *find_person(const char *);
 extern client_t *find_named_person(const char *);
 extern client_t *next_client(struct Client *, const char *);
 
-#define accept_message(s, t) ((s) == (t) || (dlinkFind((s), &((t)->localClient->allow_list))))
+#define accept_message(s, t) ((s) == (t) || (rb_dlinkFind((s), &((t)->localClient->allow_list))))
 extern void del_all_accepts(struct Client *client_p);
 
 extern void dead_link(struct Client *client_p);

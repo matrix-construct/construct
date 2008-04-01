@@ -422,10 +422,10 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 
 	SetServer(target_p);
 
-	dlinkAddTail(target_p, &target_p->node, &global_client_list);
-	dlinkAddTailAlloc(target_p, &global_serv_list);
+	rb_dlinkAddTail(target_p, &target_p->node, &global_client_list);
+	rb_dlinkAddTailAlloc(target_p, &global_serv_list);
 	add_to_client_hash(target_p->name, target_p);
-	dlinkAdd(target_p, &target_p->lnode, &target_p->servptr->serv->servers);
+	rb_dlinkAdd(target_p, &target_p->lnode, &target_p->servptr->serv->servers);
 
 	target_p->serv->nameinfo = scache_connect(target_p->name, target_p->info, IsHidden(target_p));
 
@@ -570,11 +570,11 @@ ms_sid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	target_p->servptr = source_p;
 	SetServer(target_p);
 
-	dlinkAddTail(target_p, &target_p->node, &global_client_list);
-	dlinkAddTailAlloc(target_p, &global_serv_list);
+	rb_dlinkAddTail(target_p, &target_p->node, &global_client_list);
+	rb_dlinkAddTailAlloc(target_p, &global_serv_list);
 	add_to_client_hash(target_p->name, target_p);
 	add_to_id_hash(target_p->id, target_p);
-	dlinkAdd(target_p, &target_p->lnode, &target_p->servptr->serv->servers);
+	rb_dlinkAdd(target_p, &target_p->lnode, &target_p->servptr->serv->servers);
 
 	target_p->serv->nameinfo = scache_connect(target_p->name, target_p->info, IsHidden(target_p));
 

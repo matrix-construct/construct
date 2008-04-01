@@ -214,7 +214,7 @@ mo_kline(struct Client *client_p, struct Client *source_p,
 	{
 		if(kline_queued == 0)
 		{
-			eventAddOnce("check_klines", check_klines_event, NULL,
+			rb_event_addonce("check_klines", check_klines_event, NULL,
 				     ConfigFileEntry.kline_delay);
 			kline_queued = 1;
 		}
@@ -330,7 +330,7 @@ handle_remote_kline(struct Client *source_p, int tkline_time,
 	{
 		if(kline_queued == 0)
 		{
-			eventAddOnce("check_klines", check_klines_event, NULL,
+			rb_event_addonce("check_klines", check_klines_event, NULL,
 				     ConfigFileEntry.kline_delay);
 			kline_queued = 1;
 		}
