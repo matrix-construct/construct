@@ -95,8 +95,8 @@ m_accept(struct Client *client_p, struct Client *source_p, int parc, const char 
 			continue;
 		}
 
-		dlinkFindDestroy(target_p, &source_p->localClient->allow_list);
-		dlinkFindDestroy(source_p, &target_p->on_allow_list);
+		rb_dlinkFindDestroy(target_p, &source_p->localClient->allow_list);
+		rb_dlinkFindDestroy(source_p, &target_p->on_allow_list);
 	}
 
 	/* get the number of accepts they have */

@@ -931,7 +931,7 @@ remove_temp_kline(struct Client *source_p, struct ConfItem *aconf)
 				ilog(L_KLINE, "UK %s %s %s",
 					get_oper_name(source_p),
 					aconf->user, aconf->host);
-				dlinkDestroy(ptr, &temp_klines[i]);
+				rb_dlinkDestroy(ptr, &temp_klines[i]);
 				remove_reject_mask(aconf->user, aconf->host);
 				delete_one_address_conf(aconf->host, aconf);
 				return YES;

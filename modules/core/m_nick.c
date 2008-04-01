@@ -845,8 +845,8 @@ change_local_nick(struct Client *client_p, struct Client *source_p,
 	{
 		target_p = ptr->data;
 
-		dlinkFindDestroy(source_p, &target_p->localClient->allow_list);
-		dlinkDestroy(ptr, &source_p->on_allow_list);
+		rb_dlinkFindDestroy(source_p, &target_p->localClient->allow_list);
+		rb_dlinkDestroy(ptr, &source_p->on_allow_list);
 	}
 
 	/* fd_desc is long enough */

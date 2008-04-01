@@ -516,7 +516,7 @@ remove_resv(struct Client *source_p, const char *name)
 			ilog(L_KLINE, "UR %s %s", get_oper_name(source_p), name);
 		}
 		/* already have ptr from the loop above.. */
-		dlinkDestroy(ptr, &resv_conf_list);
+		rb_dlinkDestroy(ptr, &resv_conf_list);
 	}
 	free_conf(aconf);
 

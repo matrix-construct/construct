@@ -460,7 +460,7 @@ remove_temp_dline(struct ConfItem *aconf)
 		{
 			if (aconf == ptr->data)
 			{
-				dlinkDestroy(ptr, &temp_dlines[i]);
+				rb_dlinkDestroy(ptr, &temp_dlines[i]);
 				delete_one_address_conf(aconf->host, aconf);
 				return YES;
 			}

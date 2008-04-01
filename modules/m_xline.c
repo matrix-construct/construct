@@ -561,7 +561,7 @@ remove_xline(struct Client *source_p, const char *name)
 			
 			remove_reject_mask(aconf->name, NULL);
 			free_conf(aconf);
-			dlinkDestroy(ptr, &xline_conf_list);
+			rb_dlinkDestroy(ptr, &xline_conf_list);
 			return;
 		}
 	}

@@ -180,8 +180,8 @@ del_monitor(struct Client *client_p, const char *nicks)
 		if((monptr = find_monitor(name, 0)) == NULL)
 			continue;
 
-		dlinkFindDestroy(client_p, &monptr->users);
-		dlinkFindDestroy(monptr, &client_p->localClient->monitor_list);
+		rb_dlinkFindDestroy(client_p, &monptr->users);
+		rb_dlinkFindDestroy(monptr, &client_p->localClient->monitor_list);
 	}
 }
 

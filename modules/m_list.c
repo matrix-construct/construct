@@ -281,7 +281,7 @@ static void safelist_client_release(struct Client *client_p)
 {
 	s_assert(MyClient(client_p));
 
-	dlinkFindDestroy(client_p, &safelisting_clients);
+	rb_dlinkFindDestroy(client_p, &safelisting_clients);
 
 	MyFree(client_p->localClient->safelist_data);
 

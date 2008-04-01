@@ -722,7 +722,7 @@ remove_temp_gline(const char *user, const char *host)
 						(struct sockaddr *)&caddr, bits))
 			continue;
 
-		dlinkDestroy(ptr, &glines);
+		rb_dlinkDestroy(ptr, &glines);
 		remove_reject_mask(aconf->user, aconf->host);
 		delete_one_address_conf(aconf->host, aconf);
 		return YES;
