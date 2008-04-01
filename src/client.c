@@ -126,9 +126,9 @@ init_client(void)
 	client_heap = BlockHeapCreate(sizeof(struct Client), CLIENT_HEAP_SIZE);
 	lclient_heap = BlockHeapCreate(sizeof(struct LocalUser), LCLIENT_HEAP_SIZE);
 	pclient_heap = BlockHeapCreate(sizeof(struct PreClient), PCLIENT_HEAP_SIZE);
-	eventAddIsh("check_pings", check_pings, NULL, 30);
-	eventAddIsh("free_exited_clients", &free_exited_clients, NULL, 4);
-	eventAddIsh("exit_aborted_clients", exit_aborted_clients, NULL, 1);
+	rb_event_addish("check_pings", check_pings, NULL, 30);
+	rb_event_addish("free_exited_clients", &free_exited_clients, NULL, 4);
+	rb_event_addish("exit_aborted_clients", exit_aborted_clients, NULL, 1);
 
 	nd_dict = irc_dictionary_create(irccmp);
 }
@@ -223,7 +223,7 @@ free_local_client(struct Client *client_p)
 	}
 
 	if(client_p->localClient->F)
-		rb_close(client_p->localClient->F->fd);
+		rb_close(client_p->localClient->F);
 
 	if(client_p->localClient->passwd)
 	{
@@ -1404,7 +1404,6 @@ exit_unknown_client(struct Client *client_p, struct Client *source_p, struct Cli
 		  const char *comment)
 {
 	delete_auth_queries(source_p);
-	client_flush_input(source_p);
 	del_unknown_ip(source_p);
 	rb_dlinkDelete(&source_p->localClient->tnode, &unknown_list);
 
@@ -1592,7 +1591,6 @@ exit_local_client(struct Client *client_p, struct Client *source_p, struct Clien
 	clear_monitor(source_p);
 
 	s_assert(IsPerson(source_p));
-	client_flush_input(source_p);
 	rb_dlinkDelete(&source_p->localClient->tnode, &lclient_list);
 	rb_dlinkDelete(&source_p->lnode, &me.serv->users);
 
