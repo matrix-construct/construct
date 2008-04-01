@@ -119,7 +119,7 @@ me_gcap(struct Client *client_p, struct Client *source_p,
 		rb_free(source_p->serv->fullcaps);
 	}
 
-	DupString(source_p->serv->fullcaps, parv[1]);
+	source_p->serv->fullcaps = rb_strdup(parv[1]);
 
 	for (s = strtoken(&p, t, " "); s; s = strtoken(&p, NULL, " "))
 	{

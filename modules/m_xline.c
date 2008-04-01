@@ -311,12 +311,12 @@ apply_xline(struct Client *source_p, const char *name, const char *reason,
 		}
 
 		*new = '\0';
-		DupString(aconf->name, tmp);
+		aconf->name = rb_strdup(tmp);
 	}
 	else
-		DupString(aconf->name, name);
+		aconf->name = rb_strdup(name);
 
-	DupString(aconf->passwd, reason);
+	aconf->passwd = rb_strdup(reason);
 	collapse(aconf->name);
 
 	if(temp_time > 0)

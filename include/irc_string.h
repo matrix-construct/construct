@@ -99,12 +99,6 @@ size_t strlcpy(char *dst, const char *src, size_t siz);
 size_t strlcat(char *dst, const char *src, size_t siz);
 #endif
 
-#ifdef HAVE_STRDUP
-#define DupString(x,y) do { x = strdup(y); if(x == NULL) outofmemory(); } while(0)
-#else
-#define DupString(x,y) do { x = malloc(strlen(y) + 1); if(x == NULL) outofmemory(); strcpy(x, y); } while(0)
-#endif
-
 #ifdef HAVE_STRNDUP
 #define DupNString(x, y, len) do { x = strndup(y, len); if(x == NULL) outofmemory(); } while (0)
 #else

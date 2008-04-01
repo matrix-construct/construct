@@ -224,8 +224,8 @@ parse_resv(struct Client *source_p, const char *name,
 		aconf = make_conf();
 		aconf->status = CONF_RESV_CHANNEL;
 		aconf->port = 0;
-		DupString(aconf->name, name);
-		DupString(aconf->passwd, reason);
+		aconf->name = rb_strdup(name);
+		aconf->passwd = rb_strdup(reason);
 		add_to_resv_hash(aconf->name, aconf);
 
 		if(temp_time > 0)
@@ -282,8 +282,8 @@ parse_resv(struct Client *source_p, const char *name,
 		aconf = make_conf();
 		aconf->status = CONF_RESV_NICK;
 		aconf->port = 0;
-		DupString(aconf->name, name);
-		DupString(aconf->passwd, reason);
+		aconf->name = rb_strdup(name);
+		aconf->passwd = rb_strdup(reason);
 		rb_dlinkAddAlloc(aconf, &resv_conf_list);
 
 		if(temp_time > 0)

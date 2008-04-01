@@ -717,8 +717,8 @@ set_default_conf(void)
 	/* ServerInfo.name is not rehashable */
 	/* ServerInfo.name = ServerInfo.name; */
 	ServerInfo.description = NULL;
-	DupString(ServerInfo.network_name, NETWORK_NAME_DEFAULT);
-	DupString(ServerInfo.network_desc, NETWORK_DESC_DEFAULT);
+	ServerInfo.network_name = rb_strdup(NETWORK_NAME_DEFAULT);
+	ServerInfo.network_desc = rb_strdup(NETWORK_DESC_DEFAULT);
 
 	memset(&ServerInfo.ip, 0, sizeof(ServerInfo.ip));
 	ServerInfo.specific_ipv4_vhost = 0;
@@ -733,9 +733,9 @@ set_default_conf(void)
 	AdminInfo.email = NULL;
 	AdminInfo.description = NULL;
 
-	DupString(ConfigFileEntry.default_operstring, "is an IRC operator");
-	DupString(ConfigFileEntry.default_adminstring, "is a Server Administrator");
-	DupString(ConfigFileEntry.servicestring, "is a Network Service");
+	ConfigFileEntry.default_operstring = rb_strdup("is an IRC operator");
+	ConfigFileEntry.default_adminstring = rb_strdup("is a Server Administrator");
+	ConfigFileEntry.servicestring = rb_strdup("is a Network Service");
 
 	ConfigFileEntry.default_umodes = UMODE_INVISIBLE;	
 	ConfigFileEntry.failed_oper_notice = YES;
@@ -789,7 +789,7 @@ set_default_conf(void)
 	ConfigFileEntry.hide_error_messages = 1;
 	ConfigFileEntry.dots_in_ident = 0;
 	ConfigFileEntry.max_targets = MAX_TARGETS_DEFAULT;
-	DupString(ConfigFileEntry.servlink_path, SLPATH);
+	ConfigFileEntry.servlink_path = rb_strdup(SLPATH);
 	ConfigFileEntry.egdpool_path = NULL;
 	ConfigFileEntry.use_whois_actually = YES;
 	ConfigFileEntry.burst_away = NO;
@@ -875,13 +875,13 @@ validate_conf(void)
 		ConfigFileEntry.ts_max_delta = TS_MAX_DELTA_DEFAULT;
 
 	if(ConfigFileEntry.servlink_path == NULL)
-		DupString(ConfigFileEntry.servlink_path, SLPATH);
+		ConfigFileEntry.servlink_path = rb_strdup(SLPATH);
 
 	if(ServerInfo.network_name == NULL)
-		DupString(ServerInfo.network_name, NETWORK_NAME_DEFAULT);
+		ServerInfo.network_name = rb_strdup(NETWORK_NAME_DEFAULT);
 
 	if(ServerInfo.network_desc == NULL)
-		DupString(ServerInfo.network_desc, NETWORK_DESC_DEFAULT);
+		ServerInfo.network_desc = rb_strdup(NETWORK_DESC_DEFAULT);
 
 	if((ConfigFileEntry.client_flood < CLIENT_FLOOD_MIN) ||
 	   (ConfigFileEntry.client_flood > CLIENT_FLOOD_MAX))
@@ -1444,7 +1444,7 @@ conf_add_class_to_conf(struct ConfItem *aconf)
 {
 	if(aconf->className == NULL)
 	{
-		DupString(aconf->className, "default");
+		aconf->className = rb_strdup("default");
 		ClassPtr(aconf) = default_class;
 		return;
 	}
@@ -1461,7 +1461,7 @@ conf_add_class_to_conf(struct ConfItem *aconf)
 		}
 
 		rb_free(aconf->className);
-		DupString(aconf->className, "default");
+		aconf->className = rb_strdup("default");
 		return;
 	}
 
@@ -1469,7 +1469,7 @@ conf_add_class_to_conf(struct ConfItem *aconf)
 	{
 		ClassPtr(aconf) = default_class;
 		rb_free(aconf->className);
-		DupString(aconf->className, "default");
+		aconf->className = rb_strdup("default");
 		return;
 	}
 }

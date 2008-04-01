@@ -1274,7 +1274,7 @@ oper_up(struct Client *source_p, struct oper_conf *oper_p)
 	SetExemptKline(source_p);
 
 	source_p->flags2 |= oper_p->flags;
-	DupString(source_p->localClient->opername, oper_p->name);
+	source_p->localClient->opername = rb_strdup(oper_p->name);
 
 	rb_dlinkAddAlloc(source_p, &local_oper_list);
 	rb_dlinkAddAlloc(source_p, &oper_list);

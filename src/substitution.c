@@ -59,8 +59,8 @@ void substitution_append_var(rb_dlink_list *varlist, const char *name, const cha
 {
 	struct substitution_variable *tmp = rb_malloc(sizeof(struct substitution_variable));
 
-	DupString(tmp->name, name);
-	DupString(tmp->value, value);
+	tmp->name = rb_strdup(name);
+	tmp->value = rb_strdup(value);
 
 	rb_dlinkAddAlloc(tmp, varlist);
 }

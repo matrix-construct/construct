@@ -404,7 +404,7 @@ add_server_conf(struct server_conf *server_p)
 {
 	if(EmptyString(server_p->class_name))
 	{
-		DupString(server_p->class_name, "default");
+		server_p->class_name = rb_strdup("default");
 		server_p->class = default_class;
 		return;
 	}
@@ -417,7 +417,7 @@ add_server_conf(struct server_conf *server_p)
 				server_p->name);
 
 		rb_free(server_p->class_name);
-		DupString(server_p->class_name, "default");
+		server_p->class_name = rb_strdup("default");
 	}
 
 	if(strchr(server_p->host, '*') || strchr(server_p->host, '?'))
@@ -807,7 +807,7 @@ add_tgchange(const char *host)
 	pnode->data = target;
 	target->pnode = pnode;
 
-	DupString(target->ip, host);
+	target->ip = rb_strdup(host);
 	target->expiry = CurrentTime + (60*60*12);
 
 	rb_dlinkAdd(target, &target->node, &tgchange_list);

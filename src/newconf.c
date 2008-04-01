@@ -191,7 +191,7 @@ conf_set_serverinfo_name(void *data)
 
 		/* the ircd will exit() in main() if we dont set one */
 		if(strlen(s) <= HOSTLEN)
-			DupString(ServerInfo.name, (char *) data);
+			ServerInfo.name = rb_strdup((char *) data);
 	}
 }
 
@@ -223,7 +223,7 @@ conf_set_serverinfo_network_name(void *data)
 		*p = '\0';
 
 	rb_free(ServerInfo.network_name);
-	DupString(ServerInfo.network_name, (char *) data);
+	ServerInfo.network_name = rb_strdup((char *) data);
 }
 
 static void
@@ -481,7 +481,7 @@ conf_end_oper(struct TopConf *tc)
 		if(strlen(conf_cur_block_name) > OPERNICKLEN)
 			conf_cur_block_name[OPERNICKLEN] = '\0';
 
-		DupString(yy_oper->name, conf_cur_block_name);
+		yy_oper->name = rb_strdup(conf_cur_block_name);
 	}
 
 	if(EmptyString(yy_oper->name))
@@ -509,11 +509,11 @@ conf_end_oper(struct TopConf *tc)
 	{
 		yy_tmpoper = ptr->data;
 
-		DupString(yy_tmpoper->name, yy_oper->name);
+		yy_tmpoper->name = rb_strdup(yy_oper->name);
 
 		/* could be an rsa key instead.. */
 		if(!EmptyString(yy_oper->passwd))
-			DupString(yy_tmpoper->passwd, yy_oper->passwd);
+			yy_tmpoper->passwd = rb_strdup(yy_oper->passwd);
 
 		yy_tmpoper->flags = yy_oper->flags;
 		yy_tmpoper->umodes = yy_oper->umodes;
@@ -579,14 +579,14 @@ conf_set_oper_user(void *data)
 	{
 		*p++ = '\0';
 
-		DupString(yy_tmpoper->username, host);
-		DupString(yy_tmpoper->host, p);
+		yy_tmpoper->username = rb_strdup(host);
+		yy_tmpoper->host = rb_strdup(p);
 	}
 	else
 	{
 
-		DupString(yy_tmpoper->username, "*");
-		DupString(yy_tmpoper->host, host);
+		yy_tmpoper->username = rb_strdup("*");
+		yy_tmpoper->host = rb_strdup(host);
 	}
 
 	if(EmptyString(yy_tmpoper->username) || EmptyString(yy_tmpoper->host))
@@ -608,7 +608,7 @@ conf_set_oper_password(void *data)
 		rb_free(yy_oper->passwd);
 	}
 
-	DupString(yy_oper->passwd, (char *) data);
+	yy_oper->passwd = rb_strdup((char *) data);
 }
 
 static void
@@ -616,7 +616,7 @@ conf_set_oper_rsa_public_key_file(void *data)
 {
 #ifdef HAVE_LIBCRYPTO
 	rb_free(yy_oper->rsa_pubkey_file);
-	DupString(yy_oper->rsa_pubkey_file, (char *) data);
+	yy_oper->rsa_pubkey_file = rb_strdup((char *) data);
 #else
 	conf_report_error("Warning -- ignoring rsa_public_key_file (OpenSSL support not available");
 #endif
@@ -648,7 +648,7 @@ static int
 conf_end_class(struct TopConf *tc)
 {
 	if(conf_cur_block_name != NULL)
-		DupString(yy_class->class_name, conf_cur_block_name);
+		yy_class->class_name = rb_strdup(conf_cur_block_name);
 
 	if(EmptyString(yy_class->class_name))
 	{
@@ -784,7 +784,7 @@ static void
 conf_set_listen_address(void *data)
 {
 	rb_free(listener_address);
-	DupString(listener_address, data);
+	listener_address = rb_strdup(data);
 }
 
 static int
@@ -816,7 +816,7 @@ conf_end_auth(struct TopConf *tc)
 	rb_dlink_node *next_ptr;
 
 	if(EmptyString(yy_aconf->name))
-		DupString(yy_aconf->name, "NOMATCH");
+		yy_aconf->name = rb_strdup("NOMATCH");
 
 	/* didnt even get one ->host? */
 	if(EmptyString(yy_aconf->host))
@@ -836,13 +836,13 @@ conf_end_auth(struct TopConf *tc)
 		yy_tmp = ptr->data;
 
 		if(yy_aconf->passwd)
-			DupString(yy_tmp->passwd, yy_aconf->passwd);
+			yy_tmp->passwd = rb_strdup(yy_aconf->passwd);
 
 		/* this will always exist.. */
-		DupString(yy_tmp->name, yy_aconf->name);
+		yy_tmp->name = rb_strdup(yy_aconf->name);
 
 		if(yy_aconf->className)
-			DupString(yy_tmp->className, yy_aconf->className);
+			yy_tmp->className = rb_strdup(yy_aconf->className);
 
 		yy_tmp->flags = yy_aconf->flags;
 		yy_tmp->port = yy_aconf->port;
@@ -879,13 +879,13 @@ conf_set_auth_user(void *data)
 	{
 		*p++ = '\0';
 
-		DupString(yy_tmp->user, data);
-		DupString(yy_tmp->host, p);
+		yy_tmp->user = rb_strdup(data);
+		yy_tmp->host = rb_strdup(p);
 	}
 	else
 	{
-		DupString(yy_tmp->user, "*");
-		DupString(yy_tmp->host, data);
+		yy_tmp->user = rb_strdup("*");
+		yy_tmp->host = rb_strdup(data);
 	}
 
 	if(yy_aconf != yy_tmp)
@@ -898,7 +898,7 @@ conf_set_auth_passwd(void *data)
 	if(yy_aconf->passwd)
 		memset(yy_aconf->passwd, 0, strlen(yy_aconf->passwd));
 	rb_free(yy_aconf->passwd);
-	DupString(yy_aconf->passwd, data);
+	yy_aconf->passwd = rb_strdup(data);
 }
 
 static void
@@ -958,7 +958,7 @@ conf_set_auth_spoof(void *data)
 	}
 
 	rb_free(yy_aconf->name);
-	DupString(yy_aconf->name, data);
+	yy_aconf->name = rb_strdup(data);
 	yy_aconf->flags |= CONF_FLAGS_SPOOF_IP;
 }
 
@@ -975,7 +975,7 @@ conf_set_auth_redir_serv(void *data)
 {
 	yy_aconf->flags |= CONF_FLAGS_REDIR;
 	rb_free(yy_aconf->name);
-	DupString(yy_aconf->name, data);
+	yy_aconf->name = rb_strdup(data);
 }
 
 static void
@@ -991,7 +991,7 @@ static void
 conf_set_auth_class(void *data)
 {
 	rb_free(yy_aconf->className);
-	DupString(yy_aconf->className, data);
+	yy_aconf->className = rb_strdup(data);
 }
 
 /* ok, shared_oper handles the stacking, shared_flags handles adding
@@ -1038,11 +1038,11 @@ conf_set_shared_oper(void *data)
 			return;
 		}
 
-		DupString(yy_shared->server, args->v.string);
+		yy_shared->server = rb_strdup(args->v.string);
 		args = args->next;
 	}
 	else
-		DupString(yy_shared->server, "*");
+		yy_shared->server = rb_strdup("*");
 
 	if((args->type & CF_MTYPE) != CF_QSTRING)
 	{
@@ -1060,14 +1060,14 @@ conf_set_shared_oper(void *data)
 	*p++ = '\0';
 
 	if(EmptyString(p))
-		DupString(yy_shared->host, "*");
+		yy_shared->host = rb_strdup("*");
 	else
-		DupString(yy_shared->host, p);
+		yy_shared->host = rb_strdup(p);
 
 	if(EmptyString(username))
-		DupString(yy_shared->username, "*");
+		yy_shared->username = rb_strdup("*");
 	else
-		DupString(yy_shared->username, username);
+		yy_shared->username = rb_strdup(username);
 
 	rb_dlinkAddAlloc(yy_shared, &yy_shared_list);
 	yy_shared = NULL;
@@ -1108,7 +1108,7 @@ conf_begin_connect(struct TopConf *tc)
 	yy_server->flags |= SERVER_TB;
 
 	if(conf_cur_block_name != NULL)
-		DupString(yy_server->name, conf_cur_block_name);
+		yy_server->name = rb_strdup(conf_cur_block_name);
 
 	return 0;
 }
@@ -1162,7 +1162,7 @@ static void
 conf_set_connect_host(void *data)
 {
 	rb_free(yy_server->host);
-	DupString(yy_server->host, data);
+	yy_server->host = rb_strdup(data);
 	if (strchr(yy_server->host, ':'))
 		yy_server->aftype = AF_INET6;
 }
@@ -1189,7 +1189,7 @@ conf_set_connect_send_password(void *data)
 		rb_free(yy_server->spasswd);
 	}
 
-	DupString(yy_server->spasswd, data);
+	yy_server->spasswd = rb_strdup(data);
 }
 
 static void
@@ -1200,7 +1200,7 @@ conf_set_connect_accept_password(void *data)
 		memset(yy_server->passwd, 0, strlen(yy_server->passwd));
 		rb_free(yy_server->passwd);
 	}
-	DupString(yy_server->passwd, data);
+	yy_server->passwd = rb_strdup(data);
 }
 
 static void
@@ -1251,8 +1251,8 @@ conf_set_connect_hub_mask(void *data)
 	yy_hub = make_remote_conf();
 	yy_hub->flags = CONF_HUB;
 
-	DupString(yy_hub->host, data);
-	DupString(yy_hub->server, yy_server->name);
+	yy_hub->host = rb_strdup(data);
+	yy_hub->server = rb_strdup(yy_server->name);
 	rb_dlinkAdd(yy_hub, &yy_hub->node, &hubleaf_conf_list);
 }
 
@@ -1267,8 +1267,8 @@ conf_set_connect_leaf_mask(void *data)
 	yy_leaf = make_remote_conf();
 	yy_leaf->flags = CONF_LEAF;
 
-	DupString(yy_leaf->host, data);
-	DupString(yy_leaf->server, yy_server->name);
+	yy_leaf->host = rb_strdup(data);
+	yy_leaf->server = rb_strdup(yy_server->name);
 	rb_dlinkAdd(yy_leaf, &yy_leaf->node, &hubleaf_conf_list);
 }
 
@@ -1276,7 +1276,7 @@ static void
 conf_set_connect_class(void *data)
 {
 	rb_free(yy_server->class_name);
-	DupString(yy_server->class_name, data);
+	yy_server->class_name = rb_strdup(data);
 }
 
 static void
@@ -1291,8 +1291,8 @@ conf_set_exempt_ip(void *data)
 	}
 
 	yy_tmp = make_conf();
-	DupString(yy_tmp->passwd, "*");
-	DupString(yy_tmp->host, data);
+	yy_tmp->passwd = rb_strdup("*");
+	yy_tmp->host = rb_strdup(data);
 	yy_tmp->status = CONF_EXEMPTDLINE;
 	add_conf_by_address(yy_tmp->host, CONF_EXEMPTDLINE, NULL, yy_tmp);
 }
@@ -1324,7 +1324,7 @@ conf_set_cluster_name(void *data)
 		free_remote_conf(yy_shared);
 
 	yy_shared = make_remote_conf();
-	DupString(yy_shared->server, data);
+	yy_shared->server = rb_strdup(data);
 	rb_dlinkAddAlloc(yy_shared, &yy_cluster_list);
 
 	yy_shared = NULL;
@@ -1572,7 +1572,7 @@ conf_set_service_name(void *data)
 		return;
 	}
 
-	DupString(tmp, data);
+	tmp = rb_strdup(data);
 	rb_dlinkAddAlloc(tmp, &service_list);
 
 	if((target_p = find_server(NULL, tmp)))
@@ -1585,7 +1585,7 @@ conf_begin_alias(struct TopConf *tc)
 	yy_alias = rb_malloc(sizeof(struct alias_entry));
 
 	if (conf_cur_block_name != NULL)
-		DupString(yy_alias->name, conf_cur_block_name);
+		yy_alias->name = rb_strdup(conf_cur_block_name);
 
 	yy_alias->flags = 0;
 	yy_alias->hits = 0;
@@ -1631,7 +1631,7 @@ conf_set_alias_name(void *data)
 	if (data == NULL || yy_alias == NULL)	/* this shouldn't ever happen */
 		return;
 
-	DupString(yy_alias->name, data);
+	yy_alias->name = rb_strdup(data);
 }
 
 static void
@@ -1640,19 +1640,19 @@ conf_set_alias_target(void *data)
 	if (data == NULL || yy_alias == NULL)	/* this shouldn't ever happen */
 		return;
 
-	DupString(yy_alias->target, data);
+	yy_alias->target = rb_strdup(data);
 }
 
 static void
 conf_set_blacklist_host(void *data)
 {
-	DupString(yy_blacklist_host, data);
+	yy_blacklist_host = rb_strdup(data);
 }
 
 static void
 conf_set_blacklist_reason(void *data)
 {
-	DupString(yy_blacklist_reason, data);
+	yy_blacklist_reason = rb_strdup(data);
 
 	if (yy_blacklist_host && yy_blacklist_reason)
 	{
@@ -1697,7 +1697,7 @@ conf_start_block(char *block, char *name)
 	}
 
 	if(name)
-		DupString(conf_cur_block_name, name);
+		conf_cur_block_name = rb_strdup(name);
 	else
 		conf_cur_block_name = NULL;
 
@@ -1734,7 +1734,7 @@ conf_set_generic_string(void *data, int len, void *location)
 		input[len] = '\0';
 
 	rb_free(*loc);
-	DupString(*loc, input);
+	*loc = rb_strdup(input);
 }
 
 int
@@ -1776,9 +1776,9 @@ conf_call_set(struct TopConf *tc, char *item, conf_parm_t * value, int type)
 			value->v.list->type = CF_STRING;
 
 			if(cp->v.number == 1)
-				DupString(cp->v.string, "yes");
+				cp->v.string = rb_strdup("yes");
 			else
-				DupString(cp->v.string, "no");
+				cp->v.string = rb_strdup("no");
 		}
 
 		/* maybe it's a CF_TIME and they passed CF_INT --

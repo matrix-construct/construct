@@ -45,7 +45,7 @@ conf_add_fields(struct ConfItem *aconf,	const char *host_field,
 		const char *operreason_field, const char *date_field)
 {
 	if(host_field != NULL)
-		DupString(aconf->host, host_field);
+		aconf->host = rb_strdup(host_field);
 	if(pass_field != NULL)
 	{
 		if(!EmptyString(date_field))
@@ -54,12 +54,12 @@ conf_add_fields(struct ConfItem *aconf,	const char *host_field,
 			rb_sprintf(aconf->passwd, "%s (%s)", pass_field, date_field);
 		}
 		else
-			DupString(aconf->passwd, pass_field);
+			aconf->passwd = rb_strdup(pass_field);
 	}
 	if(user_field != NULL)
-		DupString(aconf->user, user_field);
+		aconf->user = rb_strdup(user_field);
 	if(operreason_field != NULL)
-		DupString(aconf->spasswd, operreason_field);
+		aconf->spasswd = rb_strdup(operreason_field);
 }
 
 /*
@@ -194,8 +194,8 @@ parse_x_file(FILE * file)
 		aconf = make_conf();
 		aconf->status = CONF_XLINE;
 
-		DupString(aconf->name, gecos_field);
-		DupString(aconf->passwd, reason_field);
+		aconf->name = rb_strdup(gecos_field);
+		aconf->passwd = rb_strdup(reason_field);
 
 		rb_dlinkAddAlloc(aconf, &xline_conf_list);
 	}
@@ -235,8 +235,8 @@ parse_resv_file(FILE * file)
 			aconf->status = CONF_RESV_CHANNEL;
 			aconf->port = 0;
 
-			DupString(aconf->name, host_field);
-			DupString(aconf->passwd, reason_field);
+			aconf->name = rb_strdup(host_field);
+			aconf->passwd = rb_strdup(reason_field);
 			add_to_resv_hash(aconf->name, aconf);
 		}
 		else if(clean_resv_nick(host_field))
@@ -248,8 +248,8 @@ parse_resv_file(FILE * file)
 			aconf->status = CONF_RESV_NICK;
 			aconf->port = 0;
 
-			DupString(aconf->name, host_field);
-			DupString(aconf->passwd, reason_field);
+			aconf->name = rb_strdup(host_field);
+			aconf->passwd = rb_strdup(reason_field);
 			rb_dlinkAddAlloc(aconf, &resv_conf_list);
 		}
 	}

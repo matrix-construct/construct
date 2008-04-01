@@ -554,14 +554,14 @@ set_local_gline(struct Client *source_p, const char *user,
 		oper_reason++;
 
 		if(!EmptyString(oper_reason))
-			DupString(aconf->spasswd, oper_reason);
+			aconf->spasswd = rb_strdup(oper_reason);
 	}
 
 	rb_snprintf(buffer, sizeof(buffer), "%s (%s)", reason, current_date);
 
-	DupString(aconf->passwd, buffer);
-	DupString(aconf->user, user);
-	DupString(aconf->host, host);
+	aconf->passwd = rb_strdup(buffer);
+	aconf->user = rb_strdup(user);
+	aconf->host = rb_strdup(host);
 	aconf->hold = CurrentTime + ConfigFileEntry.gline_time;
 	add_gline(aconf);
 
@@ -649,7 +649,7 @@ majority_gline(struct Client *source_p, const char *user,
 					sizeof(pending->oper_user2));
 				strlcpy(pending->oper_host2, source_p->host,
 					sizeof(pending->oper_host2));
-				DupString(pending->reason2, reason);
+				pending->reason2 = rb_strdup(reason);
 				pending->oper_server2 = scache_get_name(source_p->servptr->serv->nameinfo);
 				pending->last_gline_time = CurrentTime;
 				pending->time_request2 = CurrentTime;
@@ -673,7 +673,7 @@ majority_gline(struct Client *source_p, const char *user,
 
 	strlcpy(pending->user, user, sizeof(pending->user));
 	strlcpy(pending->host, host, sizeof(pending->host));
-	DupString(pending->reason1, reason);
+	pending->reason1 = rb_strdup(reason);
 	pending->reason2 = NULL;
 
 	pending->last_gline_time = CurrentTime;

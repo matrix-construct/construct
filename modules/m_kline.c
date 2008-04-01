@@ -178,8 +178,8 @@ mo_kline(struct Client *client_p, struct Client *source_p,
 	current_date = smalldate();
 	aconf = make_conf();
 	aconf->status = CONF_KILL;
-	DupString(aconf->host, host);
-	DupString(aconf->user, user);
+	aconf->host = rb_strdup(host);
+	aconf->user = rb_strdup(user);
 	aconf->port = 0;
 
 	/* Look for an oper reason */
@@ -189,7 +189,7 @@ mo_kline(struct Client *client_p, struct Client *source_p,
 		oper_reason++;
 
 		if(!EmptyString(oper_reason))
-			DupString(aconf->spasswd, oper_reason);
+			aconf->spasswd = rb_strdup(oper_reason);
 	}
 
 	if(tkline_time > 0)
@@ -197,13 +197,13 @@ mo_kline(struct Client *client_p, struct Client *source_p,
 		rb_snprintf(buffer, sizeof(buffer),
 			   "Temporary K-line %d min. - %s (%s)",
 			   (int) (tkline_time / 60), reason, current_date);
-		DupString(aconf->passwd, buffer);
+		aconf->passwd = rb_strdup(buffer);
 		apply_tkline(source_p, aconf, reason, oper_reason, current_date, tkline_time);
 	}
 	else
 	{
 		rb_snprintf(buffer, sizeof(buffer), "%s (%s)", reason, current_date);
-		DupString(aconf->passwd, buffer);
+		aconf->passwd = rb_strdup(buffer);
 		apply_kline(source_p, aconf, reason, oper_reason, current_date);
 	}
 
@@ -293,8 +293,8 @@ handle_remote_kline(struct Client *source_p, int tkline_time,
 	aconf = make_conf();
 
 	aconf->status = CONF_KILL;
-	DupString(aconf->user, user);
-	DupString(aconf->host, host);
+	aconf->user = rb_strdup(user);
+	aconf->host = rb_strdup(host);
 
 	/* Look for an oper reason */
 	if((oper_reason = strchr(reason, '|')) != NULL)
@@ -303,7 +303,7 @@ handle_remote_kline(struct Client *source_p, int tkline_time,
 		oper_reason++;
 
 		if(!EmptyString(oper_reason))
-			DupString(aconf->spasswd, oper_reason);
+			aconf->spasswd = rb_strdup(oper_reason);
 	}
 
 	current_date = smalldate();
@@ -313,13 +313,13 @@ handle_remote_kline(struct Client *source_p, int tkline_time,
 		rb_snprintf(buffer, sizeof(buffer),
 			   "Temporary K-line %d min. - %s (%s)",
 			   (int) (tkline_time / 60), reason, current_date);
-		DupString(aconf->passwd, buffer);
+		aconf->passwd = rb_strdup(buffer);
 		apply_tkline(source_p, aconf, reason, oper_reason, current_date, tkline_time);
 	}
 	else
 	{
 		rb_snprintf(buffer, sizeof(buffer), "%s (%s)", reason, current_date);
-		DupString(aconf->passwd, buffer);
+		aconf->passwd = rb_strdup(buffer);
 		apply_kline(source_p, aconf, reason, oper_reason, current_date);
 	}
 
