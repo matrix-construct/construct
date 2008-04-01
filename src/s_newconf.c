@@ -153,7 +153,7 @@ clear_s_newconf_bans(void)
 struct remote_conf *
 make_remote_conf(void)
 {
-	struct remote_conf *remote_p = MyMalloc(sizeof(struct remote_conf));
+	struct remote_conf *remote_p = rb_malloc(sizeof(struct remote_conf));
 	return remote_p;
 }
 
@@ -246,7 +246,7 @@ cluster_generic(struct Client *source_p, const char *command,
 struct oper_conf *
 make_oper_conf(void)
 {
-	struct oper_conf *oper_p = MyMalloc(sizeof(struct oper_conf));
+	struct oper_conf *oper_p = rb_malloc(sizeof(struct oper_conf));
 	return oper_p;
 }
 
@@ -369,7 +369,7 @@ get_oper_privs(int flags)
 struct server_conf *
 make_server_conf(void)
 {
-	struct server_conf *server_p = MyMalloc(sizeof(struct server_conf));
+	struct server_conf *server_p = rb_malloc(sizeof(struct server_conf));
 	server_p->aftype = AF_INET;
 	return server_p;
 }
@@ -801,7 +801,7 @@ add_tgchange(const char *host)
 	if(find_tgchange(host))
 		return;
 
-	target = MyMalloc(sizeof(tgchange));
+	target = rb_malloc(sizeof(tgchange));
 	pnode = make_and_lookup(tgchange_tree, host);
 
 	pnode->data = target;

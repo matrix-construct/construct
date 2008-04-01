@@ -57,7 +57,7 @@ struct Dictionary
  */
 struct Dictionary *irc_dictionary_create(DCF compare_cb)
 {
-	struct Dictionary *dtree = (struct Dictionary *) MyMalloc(sizeof(struct Dictionary));
+	struct Dictionary *dtree = (struct Dictionary *) rb_malloc(sizeof(struct Dictionary));
 
 	dtree->compare_cb = compare_cb;
 
@@ -87,7 +87,7 @@ struct Dictionary *irc_dictionary_create(DCF compare_cb)
 struct Dictionary *irc_dictionary_create_named(const char *name,
 	DCF compare_cb)
 {
-	struct Dictionary *dtree = (struct Dictionary *) MyMalloc(sizeof(struct Dictionary));
+	struct Dictionary *dtree = (struct Dictionary *) rb_malloc(sizeof(struct Dictionary));
 
 	dtree->compare_cb = compare_cb;
 	DupString(dtree->id, name);

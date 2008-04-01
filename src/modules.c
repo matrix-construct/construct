@@ -164,7 +164,7 @@ mod_add_path(const char *path)
 	if(mod_find_path(path))
 		return;
 
-	pathst = MyMalloc(sizeof(struct module_path));
+	pathst = rb_malloc(sizeof(struct module_path));
 
 	strcpy(pathst->path, path);
 	rb_dlinkAddAlloc(pathst, &mod_paths);
@@ -200,7 +200,7 @@ mod_clear_paths(void)
 char *
 irc_basename(const char *path)
 {
-	char *mod_basename = MyMalloc(strlen(path) + 1);
+	char *mod_basename = rb_malloc(strlen(path) + 1);
 	const char *s;
 
 	if(!(s = strrchr(path, '/')))
@@ -248,7 +248,7 @@ load_all_modules(int warn)
 
 	modules_init();
 
-	modlist = (struct module **) MyMalloc(sizeof(struct module) * (MODS_INCREMENT));
+	modlist = (struct module **) rb_malloc(sizeof(struct module) * (MODS_INCREMENT));
 
 	max_mods = MODS_INCREMENT;
 
@@ -888,7 +888,7 @@ load_a_module(const char *path, int warn, int core)
 
 	increase_modlist();
 
-	modlist[num_mods] = MyMalloc(sizeof(struct module));
+	modlist[num_mods] = rb_malloc(sizeof(struct module));
 	modlist[num_mods]->address = tmpptr;
 	modlist[num_mods]->version = ver;
 	modlist[num_mods]->core = core;
@@ -925,7 +925,7 @@ increase_modlist(void)
 	if((num_mods + 1) < max_mods)
 		return;
 
-	new_modlist = (struct module **) MyMalloc(sizeof(struct module) *
+	new_modlist = (struct module **) rb_malloc(sizeof(struct module) *
 						  (max_mods + MODS_INCREMENT));
 	memcpy((void *) new_modlist, (void *) modlist, sizeof(struct module) * num_mods);
 

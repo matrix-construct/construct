@@ -89,11 +89,11 @@ rb_dlink_list *hostTable;
 void
 init_hash(void)
 {
-	clientTable = MyMalloc(sizeof(rb_dlink_list) * U_MAX);
-	idTable = MyMalloc(sizeof(rb_dlink_list) * U_MAX);
-	channelTable = MyMalloc(sizeof(rb_dlink_list) * CH_MAX);
-	hostTable = MyMalloc(sizeof(rb_dlink_list) * HOST_MAX);
-	resvTable = MyMalloc(sizeof(rb_dlink_list) * R_MAX);
+	clientTable = rb_malloc(sizeof(rb_dlink_list) * U_MAX);
+	idTable = rb_malloc(sizeof(rb_dlink_list) * U_MAX);
+	channelTable = rb_malloc(sizeof(rb_dlink_list) * CH_MAX);
+	hostTable = rb_malloc(sizeof(rb_dlink_list) * HOST_MAX);
+	resvTable = rb_malloc(sizeof(rb_dlink_list) * R_MAX);
 }
 
 #ifndef RICER_HASHING

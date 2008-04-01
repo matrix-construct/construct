@@ -103,7 +103,7 @@ add_isupport(const char *name, const char *(*func)(const void *), const void *pa
 {
 	struct isupportitem *item;
 
-	item = MyMalloc(sizeof(struct isupportitem));
+	item = rb_malloc(sizeof(struct isupportitem));
 	item->name = name;
 	item->func = func;
 	item->param = param;

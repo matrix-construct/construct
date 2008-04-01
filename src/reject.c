@@ -148,7 +148,7 @@ add_reject(struct Client *client_p, const char *mask1, const char *mask2)
 			bitlen = 128;
 #endif
 		pnode = make_and_lookup_ip(reject_tree, (struct sockaddr *)&client_p->localClient->ip, bitlen);
-		pnode->data = rdata = MyMalloc(sizeof(struct reject_data));
+		pnode->data = rdata = rb_malloc(sizeof(struct reject_data));
 		rb_dlinkAddTail(pnode, &rdata->rnode, &reject_list);
 		rdata->time = CurrentTime;
 		rdata->count = 1;

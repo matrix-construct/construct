@@ -214,7 +214,7 @@ collect_zipstats(void *unused)
 			/* only bother if we haven't already got something queued... */
 			if(!target_p->localClient->slinkq)
 			{
-				target_p->localClient->slinkq = MyMalloc(1);	/* sigh.. */
+				target_p->localClient->slinkq = rb_malloc(1);	/* sigh.. */
 				target_p->localClient->slinkq[0] = SLINKCMD_ZIPSTATS;
 				target_p->localClient->slinkq_ofs = 0;
 				target_p->localClient->slinkq_len = 1;
@@ -1247,7 +1247,7 @@ start_io(struct Client *server)
 	int linecount = 0;
 	int linelen;
 
-	iobuf = MyMalloc(256);	/* XXX: This seems arbitrary. Perhaps make it IRCD_BUFSIZE? --nenolod */
+	iobuf = rb_malloc(256);	/* XXX: This seems arbitrary. Perhaps make it IRCD_BUFSIZE? --nenolod */
 
 	if(IsCapable(server, CAP_ZIP))
 	{

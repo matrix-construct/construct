@@ -296,7 +296,7 @@ static void rem_request(struct reslist *request)
  */
 static struct reslist *make_request(struct DNSQuery *query)
 {
-	struct reslist *request = MyMalloc(sizeof(struct reslist));
+	struct reslist *request = rb_malloc(sizeof(struct reslist));
 
 	request->sentat = CurrentTime;
 	request->retries = 3;
@@ -411,7 +411,7 @@ static void do_query_name(struct DNSQuery *query, const char *name, struct resli
 	if (request == NULL)
 	{
 		request = make_request(query);
-		request->name = (char *)MyMalloc(strlen(host_name) + 1);
+		request->name = (char *)rb_malloc(strlen(host_name) + 1);
 		strcpy(request->name, host_name);
 		request->state = REQ_A;
 	}
@@ -433,7 +433,7 @@ static void do_query_number(struct DNSQuery *query, const struct irc_sockaddr_st
 	{
 		request = make_request(query);
 		memcpy(&request->addr, addr, sizeof(struct irc_sockaddr_storage));
-		request->name = (char *)MyMalloc(HOSTLEN + 1);
+		request->name = (char *)rb_malloc(HOSTLEN + 1);
 	}
 
 	if (addr->ss_family == AF_INET)
@@ -848,7 +848,7 @@ static struct DNSReply *make_dnsreply(struct reslist *request)
 	struct DNSReply *cp;
 	s_assert(request != 0);
 
-	cp = (struct DNSReply *)MyMalloc(sizeof(struct DNSReply));
+	cp = (struct DNSReply *)rb_malloc(sizeof(struct DNSReply));
 
 	cp->h_name = request->name;
 	memcpy(&cp->addr, &request->addr, sizeof(cp->addr));

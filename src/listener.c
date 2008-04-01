@@ -58,7 +58,7 @@ static listener_t *ListenerPollList = NULL;
 static listener_t *
 make_listener(struct irc_sockaddr_storage *addr)
 {
-	listener_t *listener = (listener_t *) MyMalloc(sizeof(listener_t));
+	listener_t *listener = (listener_t *) rb_malloc(sizeof(listener_t));
 	s_assert(0 != listener);
 
 	listener->name = me.name;

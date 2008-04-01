@@ -116,7 +116,7 @@ static void blacklist_dns_callback(void *vptr, struct DNSReply *reply)
 /* XXX: no IPv6 implementation, not to concerned right now though. */
 static void initiate_blacklist_dnsquery(struct Blacklist *blptr, struct Client *client_p)
 {
-	struct BlacklistClient *blcptr = MyMalloc(sizeof(struct BlacklistClient));
+	struct BlacklistClient *blcptr = rb_malloc(sizeof(struct BlacklistClient));
 	char buf[IRCD_BUFSIZE];
 	int ip[4];
 
@@ -149,7 +149,7 @@ struct Blacklist *new_blacklist(char *name, char *reject_reason)
 	blptr = find_blacklist(name);
 	if (blptr == NULL)
 	{
-		blptr = MyMalloc(sizeof(struct Blacklist));
+		blptr = rb_malloc(sizeof(struct Blacklist));
 		rb_dlinkAddAlloc(blptr, &blacklist_list);
 	}
 	else

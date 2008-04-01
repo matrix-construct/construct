@@ -80,7 +80,7 @@ add_top_conf(const char *name, int (*sfunc) (struct TopConf *),
 {
 	struct TopConf *tc;
 
-	tc = MyMalloc(sizeof(struct TopConf));
+	tc = rb_malloc(sizeof(struct TopConf));
 
 	tc->tc_name = name;
 	tc->tc_sfunc = sfunc;
@@ -1582,7 +1582,7 @@ conf_set_service_name(void *data)
 static int
 conf_begin_alias(struct TopConf *tc)
 {
-	yy_alias = MyMalloc(sizeof(struct alias_entry));
+	yy_alias = rb_malloc(sizeof(struct alias_entry));
 
 	if (conf_cur_block_name != NULL)
 		DupString(yy_alias->name, conf_cur_block_name);
@@ -1846,7 +1846,7 @@ add_conf_item(const char *topconf, const char *name, int type, void (*func) (voi
 	if((cf = find_conf_item(tc, name)) != NULL)
 		return -1;
 
-	cf = MyMalloc(sizeof(struct ConfEntry));
+	cf = rb_malloc(sizeof(struct ConfEntry));
 
 	cf->cf_name = name;
 	cf->cf_type = type;

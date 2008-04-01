@@ -660,7 +660,7 @@ majority_gline(struct Client *source_p, const char *user,
 
 	/* no pending gline, create a new one */
 	pending = (struct gline_pending *) 
-			    MyMalloc(sizeof(struct gline_pending));
+			    rb_malloc(sizeof(struct gline_pending));
 
 	strlcpy(pending->oper_nick1, source_p->name,
 		sizeof(pending->oper_nick1));

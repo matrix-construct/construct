@@ -1301,7 +1301,7 @@ dead_link(struct Client *client_p)
 	if(IsDead(client_p) || IsClosing(client_p) || IsMe(client_p))
 		return;
 
-	abt = (struct abort_client *) MyMalloc(sizeof(struct abort_client));
+	abt = (struct abort_client *) rb_malloc(sizeof(struct abort_client));
 
 	if(client_p->flags & FLAGS_SENDQEX)
 		strlcpy(abt->notice, "Max SendQ exceeded", sizeof(abt->notice));
@@ -1888,7 +1888,7 @@ make_server(struct Client *client_p)
 
 	if(!serv)
 	{
-		serv = (server_t *) MyMalloc(sizeof(server_t));
+		serv = (server_t *) rb_malloc(sizeof(server_t));
 		client_p->serv = serv;
 	}
 	return client_p->serv;

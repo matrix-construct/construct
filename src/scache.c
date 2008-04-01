@@ -99,7 +99,7 @@ find_or_add(const char *name)
 			return ptr;
 	}
 
-	ptr = (struct scache_entry *) MyMalloc(sizeof(struct scache_entry));
+	ptr = (struct scache_entry *) rb_malloc(sizeof(struct scache_entry));
 	s_assert(0 != ptr);
 
 	strlcpy(ptr->name, name, sizeof(ptr->name));

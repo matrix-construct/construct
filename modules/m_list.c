@@ -249,7 +249,7 @@ static void safelist_client_instantiate(struct Client *client_p, struct ListClie
 	s_assert(MyClient(client_p));
 	s_assert(params != NULL);
 
-	self = MyMalloc(sizeof(struct ListClient));
+	self = rb_malloc(sizeof(struct ListClient));
 
 	self->hash_indice = 0;
 	self->users_min = params->users_min;

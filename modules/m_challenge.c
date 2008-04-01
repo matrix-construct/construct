@@ -240,7 +240,7 @@ m_challenge(struct Client *client_p, struct Client *source_p, int parc, const ch
 		sendto_one(source_p, form_str(RPL_ENDOFRSACHALLENGE2), 
 			   me.name, source_p->name);
 		rb_free(challenge);
-		DupString(source_p->localClient->opername, oper_p->name);
+		source_p->localClient->opername = rb_strdup(oper_p->name);
 	}
 	else
 		sendto_one_notice(source_p, ":Failed to generate challenge.");
@@ -286,11 +286,11 @@ generate_challenge(char **r_challenge, char **r_response, RSA * rsa)
 	{
 		SHA1_Init(&ctx);
 		SHA1_Update(&ctx, (u_int8_t *)secret, CHALLENGE_SECRET_LENGTH);
-		*r_response = MyMalloc(SHA_DIGEST_LENGTH);
+		*r_response = rb_malloc(SHA_DIGEST_LENGTH);
 		SHA1_Final((u_int8_t *)*r_response, &ctx);
 
 		length = RSA_size(rsa);
-		tmp = MyMalloc(length);
+		tmp = rb_malloc(length);
 		ret = RSA_public_encrypt(CHALLENGE_SECRET_LENGTH, secret, tmp, rsa, RSA_PKCS1_OAEP_PADDING);
 
 		if (ret >= 0)

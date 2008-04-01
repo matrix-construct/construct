@@ -282,7 +282,7 @@ read_ctrl_packet(int fd, void *data)
 			reply->datalen |= *len;
 			reply->gotdatalen++;
 			if(reply->datalen > 0)
-				reply->data = MyMalloc(reply->datalen);
+				reply->data = rb_malloc(reply->datalen);
 		}
 
 		if(reply->gotdatalen < 2)

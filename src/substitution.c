@@ -57,7 +57,7 @@ struct substitution_variable
  */
 void substitution_append_var(rb_dlink_list *varlist, const char *name, const char *value)
 {
-	struct substitution_variable *tmp = MyMalloc(sizeof(struct substitution_variable));
+	struct substitution_variable *tmp = rb_malloc(sizeof(struct substitution_variable));
 
 	DupString(tmp->name, name);
 	DupString(tmp->value, value);

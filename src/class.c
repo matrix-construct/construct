@@ -49,7 +49,7 @@ make_class(void)
 {
 	struct Class *tmp;
 
-	tmp = (struct Class *) MyMalloc(sizeof(struct Class));
+	tmp = (struct Class *) rb_malloc(sizeof(struct Class));
 
 	ConFreq(tmp) = DEFAULT_CONNECTFREQUENCY;
 	PingFreq(tmp) = DEFAULT_PINGFREQUENCY;

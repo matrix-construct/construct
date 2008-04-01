@@ -446,7 +446,7 @@ find_exact_conf_by_address(const char *address, int type, const char *username)
 
 	if(address == NULL)
 		address = "/NOMATCH!/";
-	arec = MyMalloc(sizeof(struct AddressRec));
+	arec = rb_malloc(sizeof(struct AddressRec));
 	masktype = parse_netmask(address, (struct sockaddr *)&addr, &bits);
 #ifdef IPV6
 	if(masktype == HM_IPV6)
@@ -503,7 +503,7 @@ add_conf_by_address(const char *address, int type, const char *username, struct 
 
 	if(address == NULL)
 		address = "/NOMATCH!/";
-	arec = MyMalloc(sizeof(struct AddressRec));
+	arec = rb_malloc(sizeof(struct AddressRec));
 	masktype = parse_netmask(address, (struct sockaddr *)&arec->Mask.ipa.addr, &bits);
 	arec->Mask.ipa.bits = bits;
 	arec->masktype = masktype;

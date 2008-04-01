@@ -218,7 +218,7 @@ ircd_base64_encode(const unsigned char *str, int length)
 		return NULL;
 	}
 
-	result = MyMalloc(((length + 2) / 3) * 5);
+	result = rb_malloc(((length + 2) / 3) * 5);
 	p = result;
 
 	while (length > 2) 
@@ -255,7 +255,7 @@ ircd_base64_decode(const unsigned char *str, int length, int *ret)
 	int ch, i = 0, j = 0, k;
 	unsigned char *result;
 	
-	result = MyMalloc(length + 1);
+	result = rb_malloc(length + 1);
 
 	while ((ch = *current++) != '\0' && length-- > 0) {
 		if (ch == base64_pad) break;
