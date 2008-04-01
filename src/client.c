@@ -1937,6 +1937,23 @@ free_user(struct User *user, struct Client *client_p)
 }
 
 void
+allocate_away(struct Client *client_p)
+{
+	if(client_p->user->away == NULL)
+		client_p->user->away = rb_bh_alloc(away_heap);	
+}
+
+
+void
+free_away(struct Client *client_p)
+{
+	if(client_p->user->away != NULL) {
+		rb_bh_free(away_heap, client_p->user->away);
+		client_p->user->away = NULL;
+	}
+}
+
+void
 init_uid(void)
 {
 	int i;
