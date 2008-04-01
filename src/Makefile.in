@@ -79,7 +79,6 @@ SRCS =                          \
   numeric.c                     \
   packet.c                      \
   parse.c                       \
-  patricia.c			\
   res.c				\
   reslib.c			\
   reject.c			\
