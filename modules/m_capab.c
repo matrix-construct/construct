@@ -114,7 +114,10 @@ me_gcap(struct Client *client_p, struct Client *source_p,
 
 	/* already had GCAPAB?! */
 	if(!EmptyString(source_p->serv->fullcaps))
-		return 0;
+	{
+		source_p->serv->caps = 0;
+		MyFree(source_p->serv->fullcaps);
+	}
 
 	DupString(source_p->serv->fullcaps, parv[1]);
 
