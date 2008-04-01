@@ -102,5 +102,24 @@ rb_ssl_shutdown(rb_fde_t * F)
 {  
 	return;
 }        
+
+void
+rb_ssl_accept_setup(rb_fde_t * F, int new_fd, struct sockaddr *st, int addrlen)
+{
+	return;
+}
+
+ssize_t
+rb_ssl_read(rb_fde_t * F, void *buf, size_t count)
+{
+	return 0;
+}
+
+ssize_t
+rb_ssl_write(rb_fde_t * F, const void *buf, size_t count)
+{
+	return 0;
+}
+
 #endif /* !HAVE_OPENSSL */
 
