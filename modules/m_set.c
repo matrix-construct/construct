@@ -227,8 +227,8 @@ quote_max(struct Client *source_p, int newval)
 
 		if(newval < 32)
 		{
-			sendto_one_notice(source_p, ":You cannot set MAXCLIENTS to < 32 (%d:%d)",
-				   GlobalSetOptions.maxclients, highest_fd);
+			sendto_one_notice(source_p, ":You cannot set MAXCLIENTS to < 32 (%d)",
+				   GlobalSetOptions.maxclients);
 			return;
 		}
 
