@@ -42,7 +42,6 @@
 #include "packet.h"
 #include "send.h"
 #include "event.h"
-#include "patricia.h"
 #include "s_newconf.h"
 #include "s_stats.h"
 
@@ -554,8 +553,8 @@ expire_tgchange(void *unused)
 
 		if(target->expiry < CurrentTime)
 		{
-			dlinkDelete(ptr, &tgchange_list);
-			patricia_remove(tgchange_tree, target->pnode);
+			rb_dlinkDelete(ptr, &tgchange_list);
+			rb_patricia_remove(tgchange_tree, target->pnode);
 			MyFree(target->ip);
 			MyFree(target);
 		}
