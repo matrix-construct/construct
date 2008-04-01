@@ -23,7 +23,7 @@ SSL_INCLUDES	= @SSL_INCLUDES@
 
 IRCDLIBS	= @LIBS@ $(SSL_LIBS)
 
-INCLUDES	= -I. -I../include -I../libcharybdis -I../libratbox/include $(SSL_INCLUDES)
+INCLUDES	= -I. -I../include -I../libratbox/include $(SSL_INCLUDES)
 CPPFLAGS	= ${INCLUDES} @CPPFLAGS@
 
 SRCS =                          \
