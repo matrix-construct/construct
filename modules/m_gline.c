@@ -559,7 +559,7 @@ set_local_gline(struct Client *source_p, const char *user,
 			DupString(aconf->spasswd, oper_reason);
 	}
 
-	ircsnprintf(buffer, sizeof(buffer), "%s (%s)", reason, current_date);
+	rb_snprintf(buffer, sizeof(buffer), "%s (%s)", reason, current_date);
 
 	DupString(aconf->passwd, buffer);
 	DupString(aconf->user, user);

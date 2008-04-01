@@ -111,7 +111,7 @@ date(void)
 	if(minswest < 0)
 		minswest = -minswest;
 
-	ircsprintf(buf, "%s %s %d %d -- %02u:%02u:%02u %c%02u:%02u",
+	rb_sprintf(buf, "%s %s %d %d -- %02u:%02u:%02u %c%02u:%02u",
 		   weekdays[lt->tm_wday], months[lt->tm_mon], lt->tm_mday,
 		   lt->tm_year + 1900, lt->tm_hour, lt->tm_min, lt->tm_sec,
 		   plus, minswest / 60, minswest % 60);

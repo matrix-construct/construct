@@ -202,7 +202,7 @@ mo_dline(struct Client *client_p, struct Client *source_p,
 
 	if(tdline_time > 0)
 	{
-		ircsnprintf(dlbuffer, sizeof(dlbuffer), 
+		rb_snprintf(dlbuffer, sizeof(dlbuffer), 
 			 "Temporary D-line %d min. - %s (%s)",
 			 (int) (tdline_time / 60), reason, current_date);
 		DupString(aconf->passwd, dlbuffer);
@@ -235,7 +235,7 @@ mo_dline(struct Client *client_p, struct Client *source_p,
 	}
 	else
 	{
-		ircsnprintf(dlbuffer, sizeof(dlbuffer), "%s (%s)", reason, current_date);
+		rb_snprintf(dlbuffer, sizeof(dlbuffer), "%s (%s)", reason, current_date);
 		DupString(aconf->passwd, dlbuffer);
 		add_conf_by_address(aconf->host, CONF_DLINE, NULL, aconf);
 		write_confitem(DLINE_TYPE, source_p, NULL, aconf->host, reason,
@@ -262,7 +262,7 @@ mo_undline(struct Client *client_p, struct Client *source_p, int parc, const cha
 	int pairme = NO, error_on_write = NO;
 	mode_t oldumask;
 
-	ircsnprintf(temppath, sizeof(temppath), "%s.tmp", ConfigFileEntry.dlinefile);
+	rb_snprintf(temppath, sizeof(temppath), "%s.tmp", ConfigFileEntry.dlinefile);
 
 	if(!IsOperUnkline(source_p))
 	{

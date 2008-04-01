@@ -197,7 +197,7 @@ mo_kline(struct Client *client_p, struct Client *source_p,
 
 	if(tkline_time > 0)
 	{
-		ircsnprintf(buffer, sizeof(buffer),
+		rb_snprintf(buffer, sizeof(buffer),
 			   "Temporary K-line %d min. - %s (%s)",
 			   (int) (tkline_time / 60), reason, current_date);
 		DupString(aconf->passwd, buffer);
@@ -205,7 +205,7 @@ mo_kline(struct Client *client_p, struct Client *source_p,
 	}
 	else
 	{
-		ircsnprintf(buffer, sizeof(buffer), "%s (%s)", reason, current_date);
+		rb_snprintf(buffer, sizeof(buffer), "%s (%s)", reason, current_date);
 		DupString(aconf->passwd, buffer);
 		apply_kline(source_p, aconf, reason, oper_reason, current_date);
 	}
@@ -313,7 +313,7 @@ handle_remote_kline(struct Client *source_p, int tkline_time,
 
 	if(tkline_time > 0)
 	{
-		ircsnprintf(buffer, sizeof(buffer),
+		rb_snprintf(buffer, sizeof(buffer),
 			   "Temporary K-line %d min. - %s (%s)",
 			   (int) (tkline_time / 60), reason, current_date);
 		DupString(aconf->passwd, buffer);
@@ -321,7 +321,7 @@ handle_remote_kline(struct Client *source_p, int tkline_time,
 	}
 	else
 	{
-		ircsnprintf(buffer, sizeof(buffer), "%s (%s)", reason, current_date);
+		rb_snprintf(buffer, sizeof(buffer), "%s (%s)", reason, current_date);
 		DupString(aconf->passwd, buffer);
 		apply_kline(source_p, aconf, reason, oper_reason, current_date);
 	}
@@ -768,7 +768,7 @@ remove_permkline_match(struct Client *source_p, struct ConfItem *aconf)
 	host = aconf->host;
 	user = aconf->user;
 
-	ircsnprintf(temppath, sizeof(temppath),
+	rb_snprintf(temppath, sizeof(temppath),
 		 "%s.tmp", ConfigFileEntry.klinefile);
 
 	filename = get_conf_name(KLINE_TYPE);

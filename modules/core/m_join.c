@@ -637,7 +637,7 @@ set_final_mode(struct Mode *mode, struct Mode *oldmode)
 			dir = MODE_DEL;
 		}
 		*mbuf++ = 'k';
-		len = ircsprintf(pbuf, "%s ", oldmode->key);
+		len = rb_sprintf(pbuf, "%s ", oldmode->key);
 		pbuf += len;
 	}
 	if(oldmode->join_num && !mode->join_num)
@@ -666,7 +666,7 @@ set_final_mode(struct Mode *mode, struct Mode *oldmode)
 			dir = MODE_ADD;
 		}
 		*mbuf++ = 'l';
-		len = ircsprintf(pbuf, "%d ", mode->limit);
+		len = rb_sprintf(pbuf, "%d ", mode->limit);
 		pbuf += len;
 	}
 	if(mode->key[0] && strcmp(oldmode->key, mode->key))
@@ -677,7 +677,7 @@ set_final_mode(struct Mode *mode, struct Mode *oldmode)
 			dir = MODE_ADD;
 		}
 		*mbuf++ = 'k';
-		len = ircsprintf(pbuf, "%s ", mode->key);
+		len = rb_sprintf(pbuf, "%s ", mode->key);
 		pbuf += len;
 	}
 	if(mode->join_num && (oldmode->join_num != mode->join_num || oldmode->join_time != mode->join_time))
@@ -688,7 +688,7 @@ set_final_mode(struct Mode *mode, struct Mode *oldmode)
 			dir = MODE_ADD;
 		}
 		*mbuf++ = 'j';
-		len = ircsprintf(pbuf, "%d:%d ", mode->join_num, mode->join_time);
+		len = rb_sprintf(pbuf, "%d:%d ", mode->join_num, mode->join_time);
 		pbuf += len;
 	}
 	if(mode->forward[0] && strcmp(oldmode->forward, mode->forward) && ConfigChannel.use_forward)
@@ -699,7 +699,7 @@ set_final_mode(struct Mode *mode, struct Mode *oldmode)
 			dir = MODE_ADD;
 		}
 		*mbuf++ = 'f';
-		len = ircsprintf(pbuf, "%s ", mode->forward);
+		len = rb_sprintf(pbuf, "%s ", mode->forward);
 		pbuf += len;
 	}
 	*mbuf = '\0';

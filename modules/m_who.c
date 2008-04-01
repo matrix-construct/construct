@@ -379,7 +379,7 @@ do_who(struct Client *source_p, struct Client *target_p, const char *chname, con
 {
 	char status[5];
 
-	ircsprintf(status, "%c%s%s",
+	rb_sprintf(status, "%c%s%s",
 		   target_p->user->away ? 'G' : 'H', IsOper(target_p) ? "*" : "", op_flags);
 
 	sendto_one(source_p, form_str(RPL_WHOREPLY), me.name, source_p->name,

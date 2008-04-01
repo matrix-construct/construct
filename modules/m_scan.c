@@ -225,7 +225,7 @@ scan_umodes(struct Client *client_p, struct Client *source_p, int parc,
 
 		if (mask != NULL)
 		{
-			ircsnprintf(maskbuf, BUFSIZE, "%s!%s@%s",
+			rb_snprintf(maskbuf, BUFSIZE, "%s!%s@%s",
 				target_p->name, target_p->username, target_p->host);
 
 			if (!match(mask, maskbuf))

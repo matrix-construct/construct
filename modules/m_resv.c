@@ -544,7 +544,7 @@ remove_resv_from_file(struct Client *source_p, const char *name)
 	int error_on_write = 0;
 	int found_resv = 0;
 
-	ircsprintf(temppath, "%s.tmp", ConfigFileEntry.resvfile);
+	rb_sprintf(temppath, "%s.tmp", ConfigFileEntry.resvfile);
 	filename = get_conf_name(RESV_TYPE);
 
 	if((in = fopen(filename, "r")) == NULL)

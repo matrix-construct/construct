@@ -258,7 +258,7 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 			   target_p->name, target_p->username, 
 			   target_p->host, target_p->info);
 
-	cur_len = mlen = ircsprintf(buf, form_str(RPL_WHOISCHANNELS), 
+	cur_len = mlen = rb_sprintf(buf, form_str(RPL_WHOISCHANNELS), 
 				    get_id(&me, source_p), get_id(source_p, source_p), 
 				    target_p->name);
 
@@ -295,7 +295,7 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 					t = buf + mlen;
 				}
 
-				tlen = ircsprintf(t, "%s%s%s ",
+				tlen = rb_sprintf(t, "%s%s%s ",
 						visible ? "" : "!",
 						find_channel_status(msptr, 1),
 						chptr->chname);

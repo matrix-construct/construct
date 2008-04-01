@@ -163,7 +163,7 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 
 		if(aconf->status & CONF_KILL)
 		{
-			ircsnprintf(buf, sizeof(buf), "%s@%s", 
+			rb_snprintf(buf, sizeof(buf), "%s@%s", 
 					aconf->user, aconf->host);
 			sendto_one(source_p, form_str(RPL_TESTLINE),
 				me.name, source_p->name,
@@ -175,7 +175,7 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 		}
 		else if(aconf->status & CONF_GLINE)
 		{
-			ircsnprintf(buf, sizeof(buf), "%s@%s",
+			rb_snprintf(buf, sizeof(buf), "%s@%s",
 					aconf->user, aconf->host);
 			sendto_one(source_p, form_str(RPL_TESTLINE),
 				me.name, source_p->name,

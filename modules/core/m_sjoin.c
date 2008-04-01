@@ -367,14 +367,14 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 	else
 		modes = empty_modes;
 
-	mlen_nick = ircsprintf(buf_nick, ":%s SJOIN %ld %s %s :",
+	mlen_nick = rb_sprintf(buf_nick, ":%s SJOIN %ld %s %s :",
 			       source_p->name, (long) chptr->channelts, parv[2], modes);
 	ptr_nick = buf_nick + mlen_nick;
 
 	/* working on the presumption eventually itll be more efficient to
 	 * build a TS6 buffer without checking its needed..
 	 */
-	mlen_uid = ircsprintf(buf_uid, ":%s SJOIN %ld %s %s :",
+	mlen_uid = rb_sprintf(buf_uid, ":%s SJOIN %ld %s %s :",
 			      use_id(source_p), (long) chptr->channelts, parv[2], modes);
 	ptr_uid = buf_uid + mlen_uid;
 
@@ -455,10 +455,10 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 		}
 
 		/* copy the nick to the two buffers */
-		len = ircsprintf(ptr_nick, "%s ", target_p->name);
+		len = rb_sprintf(ptr_nick, "%s ", target_p->name);
 		ptr_nick += len;
 		len_nick += len;
-		len = ircsprintf(ptr_uid, "%s ", use_id(target_p));
+		len = rb_sprintf(ptr_uid, "%s ", use_id(target_p));
 		ptr_uid += len;
 		len_uid += len;
 
@@ -651,7 +651,7 @@ set_final_mode(struct Mode *mode, struct Mode *oldmode)
 			dir = MODE_DEL;
 		}
 		*mbuf++ = 'k';
-		len = ircsprintf(pbuf, "%s ", oldmode->key);
+		len = rb_sprintf(pbuf, "%s ", oldmode->key);
 		pbuf += len;
 		pargs++;
 	}
@@ -681,7 +681,7 @@ set_final_mode(struct Mode *mode, struct Mode *oldmode)
 			dir = MODE_ADD;
 		}
 		*mbuf++ = 'l';
-		len = ircsprintf(pbuf, "%d ", mode->limit);
+		len = rb_sprintf(pbuf, "%d ", mode->limit);
 		pbuf += len;
 		pargs++;
 	}
@@ -693,7 +693,7 @@ set_final_mode(struct Mode *mode, struct Mode *oldmode)
 			dir = MODE_ADD;
 		}
 		*mbuf++ = 'k';
-		len = ircsprintf(pbuf, "%s ", mode->key);
+		len = rb_sprintf(pbuf, "%s ", mode->key);
 		pbuf += len;
 		pargs++;
 	}
@@ -705,7 +705,7 @@ set_final_mode(struct Mode *mode, struct Mode *oldmode)
 			dir = MODE_ADD;
 		}
 		*mbuf++ = 'j';
-		len = ircsprintf(pbuf, "%d:%d ", mode->join_num, mode->join_time);
+		len = rb_sprintf(pbuf, "%d:%d ", mode->join_num, mode->join_time);
 		pbuf += len;
 		pargs++;
 	}
@@ -717,7 +717,7 @@ set_final_mode(struct Mode *mode, struct Mode *oldmode)
 			dir = MODE_ADD;
 		}
 		*mbuf++ = 'f';
-		len = ircsprintf(pbuf, "%s ", mode->forward);
+		len = rb_sprintf(pbuf, "%s ", mode->forward);
 		pbuf += len;
 		pargs++;
 	}
@@ -844,7 +844,7 @@ remove_ban_list(struct Channel *chptr, struct Client *source_p,
 
 	pbuf = lparabuf;
 
-	cur_len = mlen = ircsprintf(lmodebuf, ":%s MODE %s -", source_p->name, chptr->chname);
+	cur_len = mlen = rb_sprintf(lmodebuf, ":%s MODE %s -", source_p->name, chptr->chname);
 	mbuf = lmodebuf + mlen;
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, list->head)
@@ -875,7 +875,7 @@ remove_ban_list(struct Channel *chptr, struct Client *source_p,
 
 		*mbuf++ = c;
 		cur_len += plen;
-		pbuf += ircsprintf(pbuf, "%s ", banptr->banstr);
+		pbuf += rb_sprintf(pbuf, "%s ", banptr->banstr);
 		count++;
 
 		free_ban(banptr);
