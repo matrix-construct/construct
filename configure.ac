@@ -1233,7 +1233,6 @@ fi
 
 AC_CONFIG_FILES(			\
 	Makefile			\
-	libcharybdis/Makefile		\
 	servlink/Makefile		\
 	extensions/Makefile		\
 	unsupported/Makefile		\
