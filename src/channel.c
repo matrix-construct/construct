@@ -434,7 +434,7 @@ channel_member_names(struct Channel *chptr, struct Client *client_p, int show_eo
 	{
 		is_member = IsMember(client_p, chptr);
 
-		cur_len = mlen = ircsprintf(lbuf, form_str(RPL_NAMREPLY),
+		cur_len = mlen = rb_sprintf(lbuf, form_str(RPL_NAMREPLY),
 					    me.name, client_p->name,
 					    channel_pub_or_secret(chptr), chptr->chname);
 
@@ -457,7 +457,7 @@ channel_member_names(struct Channel *chptr, struct Client *client_p, int show_eo
 				t = lbuf + mlen;
 			}
 
-			tlen = ircsprintf(t, "%s%s ", find_channel_status(msptr, stack),
+			tlen = rb_sprintf(t, "%s%s ", find_channel_status(msptr, stack),
 					  target_p->name);
 
 			cur_len += tlen;
@@ -521,8 +521,8 @@ is_banned(struct Channel *chptr, struct Client *who, struct membership *msptr,
 	/* if the buffers havent been built, do it here */
 	if(s == NULL)
 	{
-		ircsprintf(src_host, "%s!%s@%s", who->name, who->username, who->host);
-		ircsprintf(src_iphost, "%s!%s@%s", who->name, who->username, who->sockhost);
+		rb_sprintf(src_host, "%s!%s@%s", who->name, who->username, who->host);
+		rb_sprintf(src_iphost, "%s!%s@%s", who->name, who->username, who->sockhost);
 
 		s = src_host;
 		s2 = src_iphost;
@@ -532,14 +532,14 @@ is_banned(struct Channel *chptr, struct Client *who, struct membership *msptr,
 		/* if host mangling mode enabled, also check their real host */
 		if(!strcmp(who->host, who->localClient->mangledhost))
 		{
-			ircsprintf(src_althost, "%s!%s@%s", who->name, who->username, who->orighost);
+			rb_sprintf(src_althost, "%s!%s@%s", who->name, who->username, who->orighost);
 			s3 = src_althost;
 		}
 		/* if host mangling mode not enabled and no other spoof,
 		 * also check the mangled form of their host */
 		else if (!IsDynSpoof(who))
 		{
-			ircsprintf(src_althost, "%s!%s@%s", who->name, who->username, who->localClient->mangledhost);
+			rb_sprintf(src_althost, "%s!%s@%s", who->name, who->username, who->localClient->mangledhost);
 			s3 = src_althost;
 		}
 	}
@@ -627,8 +627,8 @@ is_quieted(struct Channel *chptr, struct Client *who, struct membership *msptr,
 	/* if the buffers havent been built, do it here */
 	if(s == NULL)
 	{
-		ircsprintf(src_host, "%s!%s@%s", who->name, who->username, who->host);
-		ircsprintf(src_iphost, "%s!%s@%s", who->name, who->username, who->sockhost);
+		rb_sprintf(src_host, "%s!%s@%s", who->name, who->username, who->host);
+		rb_sprintf(src_iphost, "%s!%s@%s", who->name, who->username, who->sockhost);
 
 		s = src_host;
 		s2 = src_iphost;
@@ -638,14 +638,14 @@ is_quieted(struct Channel *chptr, struct Client *who, struct membership *msptr,
 		/* if host mangling mode enabled, also check their real host */
 		if(!strcmp(who->host, who->localClient->mangledhost))
 		{
-			ircsprintf(src_althost, "%s!%s@%s", who->name, who->username, who->orighost);
+			rb_sprintf(src_althost, "%s!%s@%s", who->name, who->username, who->orighost);
 			s3 = src_althost;
 		}
 		/* if host mangling mode not enabled and no other spoof,
 		 * also check the mangled form of their host */
 		else if (!IsDynSpoof(who))
 		{
-			ircsprintf(src_althost, "%s!%s@%s", who->name, who->username, who->localClient->mangledhost);
+			rb_sprintf(src_althost, "%s!%s@%s", who->name, who->username, who->localClient->mangledhost);
 			s3 = src_althost;
 		}
 	}
@@ -729,21 +729,21 @@ can_join(struct Client *source_p, struct Channel *chptr, char *key)
 
 	s_assert(source_p->localClient != NULL);
 
-	ircsprintf(src_host, "%s!%s@%s", source_p->name, source_p->username, source_p->host);
-	ircsprintf(src_iphost, "%s!%s@%s", source_p->name, source_p->username, source_p->sockhost);
+	rb_sprintf(src_host, "%s!%s@%s", source_p->name, source_p->username, source_p->host);
+	rb_sprintf(src_iphost, "%s!%s@%s", source_p->name, source_p->username, source_p->sockhost);
 	if(source_p->localClient->mangledhost != NULL)
 	{
 		/* if host mangling mode enabled, also check their real host */
 		if(!strcmp(source_p->host, source_p->localClient->mangledhost))
 		{
-			ircsprintf(src_althost, "%s!%s@%s", source_p->name, source_p->username, source_p->orighost);
+			rb_sprintf(src_althost, "%s!%s@%s", source_p->name, source_p->username, source_p->orighost);
 			use_althost = 1;
 		}
 		/* if host mangling mode not enabled and no other spoof,
 		 * also check the mangled form of their host */
 		else if (!IsDynSpoof(source_p))
 		{
-			ircsprintf(src_althost, "%s!%s@%s", source_p->name, source_p->username, source_p->localClient->mangledhost);
+			rb_sprintf(src_althost, "%s!%s@%s", source_p->name, source_p->username, source_p->localClient->mangledhost);
 			use_althost = 1;
 		}
 	}
@@ -886,8 +886,8 @@ find_bannickchange_channel(struct Client *client_p)
 	if (!MyClient(client_p))
 		return NULL;
 
-	ircsprintf(src_host, "%s!%s@%s", client_p->name, client_p->username, client_p->host);
-	ircsprintf(src_iphost, "%s!%s@%s", client_p->name, client_p->username, client_p->sockhost);
+	rb_sprintf(src_host, "%s!%s@%s", client_p->name, client_p->username, client_p->host);
+	rb_sprintf(src_iphost, "%s!%s@%s", client_p->name, client_p->username, client_p->sockhost);
 
 	DLINK_FOREACH(ptr, client_p->user->channel.head)
 	{
@@ -1134,7 +1134,7 @@ channel_modes(struct Channel *chptr, struct Client *client_p)
 		*mbuf++ = 'l';
 
 		if(!IsClient(client_p) || IsMember(client_p, chptr))
-			pbuf += ircsprintf(pbuf, " %d", chptr->mode.limit);
+			pbuf += rb_sprintf(pbuf, " %d", chptr->mode.limit);
 	}
 
 	if(*chptr->mode.key)
@@ -1142,7 +1142,7 @@ channel_modes(struct Channel *chptr, struct Client *client_p)
 		*mbuf++ = 'k';
 
 		if(pbuf > buf2 || !IsClient(client_p) || IsMember(client_p, chptr))
-			pbuf += ircsprintf(pbuf, " %s", chptr->mode.key);
+			pbuf += rb_sprintf(pbuf, " %s", chptr->mode.key);
 	}
 
 	if(chptr->mode.join_num)
@@ -1150,7 +1150,7 @@ channel_modes(struct Channel *chptr, struct Client *client_p)
 		*mbuf++ = 'j';
 
 		if(pbuf > buf2 || !IsClient(client_p) || IsMember(client_p, chptr))
-			pbuf += ircsprintf(pbuf, " %d:%d", chptr->mode.join_num,
+			pbuf += rb_sprintf(pbuf, " %d:%d", chptr->mode.join_num,
 					   chptr->mode.join_time);
 	}
 
@@ -1159,7 +1159,7 @@ channel_modes(struct Channel *chptr, struct Client *client_p)
 		*mbuf++ = 'f';
 
 		if(pbuf > buf2 || !IsClient(client_p) || IsMember(client_p, chptr))
-			pbuf += ircsprintf(pbuf, " %s", chptr->mode.forward);
+			pbuf += rb_sprintf(pbuf, " %s", chptr->mode.forward);
 	}
 
 	*mbuf = '\0';
@@ -1309,11 +1309,11 @@ send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
 		nocap = chcap_combos[j].cap_no;
 
 		if(cap & CAP_TS6)
-			mbl = preflen = ircsprintf(modebuf, ":%s TMODE %ld %s ",
+			mbl = preflen = rb_sprintf(modebuf, ":%s TMODE %ld %s ",
 						   use_id(source_p), (long) chptr->channelts,
 						   chptr->chname);
 		else
-			mbl = preflen = ircsprintf(modebuf, ":%s MODE %s ",
+			mbl = preflen = rb_sprintf(modebuf, ":%s MODE %s ",
 						   source_p->name, chptr->chname);
 
 		/* loop the list of - modes we have */
@@ -1377,7 +1377,7 @@ send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
 
 			if(arg != NULL)
 			{
-				len = ircsprintf(pbuf, "%s ", arg);
+				len = rb_sprintf(pbuf, "%s ", arg);
 				pbuf += len;
 				pbl += len;
 				mc++;

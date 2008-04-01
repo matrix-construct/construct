@@ -158,7 +158,7 @@ release_auth_client(struct AuthRequest *auth)
 	 *     -- adrian
 	 */
 	client->localClient->allow_read = MAX_FLOOD;
-	comm_setflush(client->localClient->F->fd, 1000, flood_recalc, client);
+	rb_setflush(client->localClient->F->fd, 1000, flood_recalc, client);
 	dlinkAddTail(client, &client->node, &global_client_list);
 	read_packet(client->localClient->F->fd, client);
 }
@@ -249,7 +249,7 @@ auth_error(struct AuthRequest *auth)
 {
 	++ServerStats->is_abad;
 
-	comm_close(auth->fd);
+	rb_close(auth->fd);
 	auth->fd = -1;
 
 	ClearAuth(auth);
@@ -278,7 +278,7 @@ start_auth_query(struct AuthRequest *auth)
 		return 0;
 	
 	family = auth->client->localClient->ip.ss_family;
-	if((fd = comm_socket(family, SOCK_STREAM, 0, "ident")) == -1)
+	if((fd = rb_socket(family, SOCK_STREAM, 0, "ident")) == -1)
 	{
 		report_error("creating auth stream socket %s:%s",
 			     get_client_name(auth->client, SHOW_IP), 
@@ -290,12 +290,12 @@ start_auth_query(struct AuthRequest *auth)
 	/*
 	 * TBD: this is a pointless arbitrary limit .. we either have a socket or not. -nenolod
 	 */
-	if((comm_get_maxconnections() - 10) < fd)
+	if((rb_get_maxconnections() - 10) < fd)
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Can't allocate fd for auth on %s",
 				     get_client_name(auth->client, SHOW_IP));
-		comm_close(fd);
+		rb_close(fd);
 		return 0;
 	}
 
@@ -324,7 +324,7 @@ start_auth_query(struct AuthRequest *auth)
 	auth->fd = fd;
 	SetAuthConnect(auth);
 
-	comm_connect_tcp(fd, auth->client->sockhost, 113,
+	rb_connect_tcp(fd, auth->client->sockhost, 113,
 			 (struct sockaddr *) &localaddr, GET_SS_LEN(localaddr),
 			 auth_connect_callback, auth, 
 			 localaddr.ss_family, GlobalSetOptions.ident_timeout);
@@ -440,7 +440,7 @@ timeout_auth_queries_event(void *notused)
 		if(auth->timeout < CurrentTime)
 		{
 			if(auth->fd >= 0)
-				comm_close(auth->fd);
+				rb_close(auth->fd);
 
 			if(IsDoingAuth(auth))
 			{
@@ -463,7 +463,7 @@ timeout_auth_queries_event(void *notused)
 }
 
 /*
- * auth_connect_callback() - deal with the result of comm_connect_tcp()
+ * auth_connect_callback() - deal with the result of rb_connect_tcp()
  *
  * If the connection failed, we simply close the auth fd and report
  * a failure. If the connection suceeded send the ident server a query
@@ -502,7 +502,7 @@ auth_connect_callback(int fd, int error, void *data)
 		auth_error(auth);
 		return;
 	}
-	ircsnprintf(authbuf, sizeof(authbuf), "%u , %u\r\n",
+	rb_snprintf(authbuf, sizeof(authbuf), "%u , %u\r\n",
 		   (unsigned int) ntohs(them.sin_port), (unsigned int) ntohs(us.sin_port));
 
 	if(write(auth->fd, authbuf, strlen(authbuf)) == -1)
@@ -538,7 +538,7 @@ read_auth_reply(int fd, void *data)
 
 	if(len < 0 && ignoreErrno(errno))
 	{
-		comm_setselect(fd, FDLIST_IDLECLIENT, COMM_SELECT_READ, read_auth_reply, auth, 0);
+		rb_setselect(fd, FDLIST_IDLECLIENT, COMM_SELECT_READ, read_auth_reply, auth, 0);
 		return;
 	}
 
@@ -569,7 +569,7 @@ read_auth_reply(int fd, void *data)
 		}
 	}
 
-	comm_close(auth->fd);
+	rb_close(auth->fd);
 	auth->fd = -1;
 	ClearAuth(auth);
 
@@ -611,7 +611,7 @@ delete_auth_queries(struct Client *target_p)
 		delete_resolver_queries(&auth->dns_query);
 
 	if(auth->fd >= 0)
-		comm_close(auth->fd);
+		rb_close(auth->fd);
 		
 	dlinkDelete(&auth->node, &auth_poll_list);
 	free_auth_request(auth);

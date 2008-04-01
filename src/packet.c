@@ -204,7 +204,7 @@ flood_recalc(int fd, void *data)
 		return;
 
 	/* and finally, reset the flood check */
-	comm_setflush(fd, 1000, flood_recalc, client_p);
+	rb_setflush(fd, 1000, flood_recalc, client_p);
 }
 
 /*
@@ -330,7 +330,7 @@ read_ctrl_packet(int fd, void *data)
 
       nodata:
 	/* If we get here, we need to register for another COMM_SELECT_READ */
-	comm_setselect(fd, FDLIST_SERVER, COMM_SELECT_READ, read_ctrl_packet, server, 0);
+	rb_setselect(fd, FDLIST_SERVER, COMM_SELECT_READ, read_ctrl_packet, server, 0);
 }
 
 /*
@@ -362,7 +362,7 @@ read_packet(int fd, void *data)
 	{
 		if((length == -1) && ignoreErrno(errno))
 		{
-			comm_setselect(client_p->localClient->F->fd, FDLIST_IDLECLIENT,
+			rb_setselect(client_p->localClient->F->fd, FDLIST_IDLECLIENT,
 				       COMM_SELECT_READ, read_packet, client_p, 0);
 			return;
 		}
@@ -416,12 +416,12 @@ read_packet(int fd, void *data)
 	/* If we get here, we need to register for another COMM_SELECT_READ */
 	if(PARSE_AS_SERVER(client_p))
 	{
-		comm_setselect(client_p->localClient->F->fd, FDLIST_SERVER, COMM_SELECT_READ,
+		rb_setselect(client_p->localClient->F->fd, FDLIST_SERVER, COMM_SELECT_READ,
 			      read_packet, client_p, 0);
 	}
 	else
 	{
-		comm_setselect(client_p->localClient->F->fd, FDLIST_IDLECLIENT,
+		rb_setselect(client_p->localClient->F->fd, FDLIST_IDLECLIENT,
 			       COMM_SELECT_READ, read_packet, client_p, 0);
 	}
 }

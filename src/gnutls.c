@@ -87,7 +87,7 @@ irc_tls_handshake(int fd, gnutls_session_t session)
 	ret = gnutls_handshake(session);
 	if (ret < 0)
 	{
-		comm_close(fd);
+		rb_close(fd);
 		gnutls_deinit(session);
 		return -1;
 	}

@@ -237,7 +237,7 @@ me_rsfnc(struct Client *client_p, struct Client *source_p,
 
 	del_all_accepts(target_p);
 
-	comm_note(target_p->localClient->F->fd, "Nick: %s", target_p->name);
+	rb_note(target_p->localClient->F->fd, "Nick: %s", target_p->name);
 	return 0;
 }
 

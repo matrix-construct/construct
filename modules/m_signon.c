@@ -258,7 +258,7 @@ me_svslogin(struct Client *client_p, struct Client *source_p,
 	else
 	{
 		send_signon(NULL, target_p, nick, user, host, CurrentTime, login);
-		comm_note(target_p->localClient->F->fd, "Nick: %s", target_p->name);
+		rb_note(target_p->localClient->F->fd, "Nick: %s", target_p->name);
 	}
 
 	return 0;

@@ -300,7 +300,7 @@ charybdis_io_loop(void)
 			eventRun();
 
 
-		comm_select(250);
+		rb_select(250);
 	}
 }
 
@@ -382,7 +382,7 @@ write_pidfile(const char *filename)
 	{
 		unsigned int pid = (unsigned int) getpid();
 
-		ircsnprintf(buff, sizeof(buff), "%u\n", pid);
+		rb_snprintf(buff, sizeof(buff), "%u\n", pid);
 		if((fputs(buff, fb) == -1))
 		{
 			ilog(L_MAIN, "Error writing %u to pid file %s (%s)",
@@ -567,7 +567,7 @@ main(int argc, char *argv[])
 	fdlist_init();
 	if(!server_state_foreground)
 	{
-		comm_close_all();
+		rb_close_all();
 	}
 
 	init_main_logfile();
@@ -673,7 +673,7 @@ main(int argc, char *argv[])
 	eventAddIsh("collect_zipstats", collect_zipstats, NULL, ZIPSTATS_TIME);
 
 	/* Setup the timeout check. I'll shift it later :)  -- adrian */
-	eventAddIsh("comm_checktimeouts", comm_checktimeouts, NULL, 1);
+	eventAddIsh("rb_checktimeouts", rb_checktimeouts, NULL, 1);
 
 	eventAdd("check_rehash", check_rehash, NULL, 1);
 

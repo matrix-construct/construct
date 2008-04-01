@@ -228,12 +228,12 @@ static void start_resolver(void)
 
 	if (res_fd <= 0)	/* there isn't any such thing as fd 0, that's just a myth. */
 	{
-		if ((res_fd = comm_socket(irc_nsaddr_list[0].ss_family, SOCK_DGRAM, 0,
+		if ((res_fd = rb_socket(irc_nsaddr_list[0].ss_family, SOCK_DGRAM, 0,
 			       "UDP resolver socket")) == -1)
 			return;
 
 		/* At the moment, the resolver FD data is global .. */
-		comm_setselect(res_fd, FDLIST_NONE, COMM_SELECT_READ, res_readreply, NULL, 0);
+		rb_setselect(res_fd, FDLIST_NONE, COMM_SELECT_READ, res_readreply, NULL, 0);
 		eventAdd("timeout_resolver", timeout_resolver, NULL, 1);
 	}
 }
@@ -254,7 +254,7 @@ void init_resolver(void)
  */
 void restart_resolver(void)
 {
-	comm_close(res_fd);
+	rb_close(res_fd);
 	res_fd = -1;
 	eventDelete(timeout_resolver, NULL);	/* -ddosen */
 	start_resolver();
@@ -444,7 +444,7 @@ static void do_query_number(struct DNSQuery *query, const struct irc_sockaddr_st
 		struct sockaddr_in *v4 = (struct sockaddr_in *)addr;
 		cp = (const unsigned char *)&v4->sin_addr.s_addr;
 
-		ircsprintf(request->queryname, "%u.%u.%u.%u.in-addr.arpa", (unsigned int)(cp[3]),
+		rb_sprintf(request->queryname, "%u.%u.%u.%u.in-addr.arpa", (unsigned int)(cp[3]),
 			   (unsigned int)(cp[2]), (unsigned int)(cp[1]), (unsigned int)(cp[0]));
 	}
 #ifdef IPV6
@@ -745,7 +745,7 @@ static void res_readreply(int fd, void *data)
 	/* Re-schedule a read *after* recvfrom, or we'll be registering
 	 * interest where it'll instantly be ready for read :-) -- adrian
 	 */
-	comm_setselect(fd, FDLIST_NONE, COMM_SELECT_READ, res_readreply, NULL, 0);
+	rb_setselect(fd, FDLIST_NONE, COMM_SELECT_READ, res_readreply, NULL, 0);
 	/* Better to cast the sizeof instead of rc */
 	if (rc <= (int)(sizeof(HEADER)))
 		return;

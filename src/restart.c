@@ -55,7 +55,7 @@ void
 server_reboot(void)
 {
 	int i;
-	int maxconn = comm_get_maxconnections();
+	int maxconn = rb_get_maxconnections();
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "Restarting server...");
 
@@ -63,7 +63,7 @@ server_reboot(void)
 	/*
 	 * XXX we used to call flush_connections() here. But since this routine
 	 * doesn't exist anymore, we won't be flushing. This is ok, since 
-	 * when close handlers come into existance, comm_close() will be called
+	 * when close handlers come into existance, rb_close() will be called
 	 * below, and the data flushing will be implicit.
 	 *    -- adrian
 	 *

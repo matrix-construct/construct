@@ -53,7 +53,7 @@ conf_add_fields(struct ConfItem *aconf,	const char *host_field,
 		if(!EmptyString(date_field))
 		{
 			aconf->passwd = MyMalloc(strlen(pass_field) + strlen(date_field) + 4);
-			ircsprintf(aconf->passwd, "%s (%s)", pass_field, date_field);
+			rb_sprintf(aconf->passwd, "%s (%s)", pass_field, date_field);
 		}
 		else
 			DupString(aconf->passwd, pass_field);

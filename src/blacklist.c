@@ -44,14 +44,14 @@
 #include "s_user.h"
 #include "blacklist.h"
 
-dlink_list blacklist_list = { NULL, NULL, 0 };
+rb_dlink_list blacklist_list = { NULL, NULL, 0 };
 
 /* private interfaces */
 static struct Blacklist *find_blacklist(char *name)
 {
-	dlink_node *nptr;
+	rb_dlink_node *nptr;
 
-	DLINK_FOREACH(nptr, blacklist_list.head)
+	RB_DLINK_FOREACH(nptr, blacklist_list.head)
 	{
 		struct Blacklist *blptr = (struct Blacklist *) nptr->data;
 
@@ -102,10 +102,10 @@ static void blacklist_dns_callback(void *vptr, struct DNSReply *reply)
 	else
 		unref_blacklist(blcptr->blacklist);
 
-	dlinkDelete(&blcptr->node, &blcptr->client_p->preClient->dnsbl_queries);
+	rb_dlinkDelete(&blcptr->node, &blcptr->client_p->preClient->dnsbl_queries);
 
 	/* yes, it can probably happen... */
-	if (dlink_list_length(&blcptr->client_p->preClient->dnsbl_queries) == 0 && blcptr->client_p->flags & FLAGS_SENTUSER && !EmptyString(blcptr->client_p->name))
+	if (rb_dlink_list_length(&blcptr->client_p->preClient->dnsbl_queries) == 0 && blcptr->client_p->flags & FLAGS_SENTUSER && !EmptyString(blcptr->client_p->name))
 	{
 		char buf[USERLEN + 1];
 		strlcpy(buf, blcptr->client_p->username, sizeof buf);
@@ -132,11 +132,11 @@ static void initiate_blacklist_dnsquery(struct Blacklist *blptr, struct Client *
 	sscanf(client_p->sockhost, "%d.%d.%d.%d", &ip[3], &ip[2], &ip[1], &ip[0]);
 
 	/* becomes 2.0.0.127.torbl.ahbl.org or whatever */
-	ircsnprintf(buf, IRCD_BUFSIZE, "%d.%d.%d.%d.%s", ip[0], ip[1], ip[2], ip[3], blptr->host);
+	rb_snprintf(buf, IRCD_BUFSIZE, "%d.%d.%d.%d.%s", ip[0], ip[1], ip[2], ip[3], blptr->host);
 
 	gethost_byname_type(buf, &blcptr->dns_query, T_A);
 
-	dlinkAdd(blcptr, &blcptr->node, &client_p->preClient->dnsbl_queries);
+	rb_dlinkAdd(blcptr, &blcptr->node, &client_p->preClient->dnsbl_queries);
 	blptr->refcount++;
 }
 
@@ -152,7 +152,7 @@ struct Blacklist *new_blacklist(char *name, char *reject_reason)
 	if (blptr == NULL)
 	{
 		blptr = MyMalloc(sizeof(struct Blacklist));
-		dlinkAddAlloc(blptr, &blacklist_list);
+		rb_dlinkAddAlloc(blptr, &blacklist_list);
 	}
 	else
 		blptr->status &= ~CONF_ILLEGAL;
@@ -168,20 +168,20 @@ void unref_blacklist(struct Blacklist *blptr)
 	blptr->refcount--;
 	if (blptr->status & CONF_ILLEGAL && blptr->refcount <= 0)
 	{
-		dlinkFindDestroy(blptr, &blacklist_list);
+		rb_dlinkFindDestroy(blptr, &blacklist_list);
 		MyFree(blptr);
 	}
 }
 
 void lookup_blacklists(struct Client *client_p)
 {
-	dlink_node *nptr;
+	rb_dlink_node *nptr;
 
 	/* We don't do IPv6 right now, sorry! */
 	if (client_p->localClient->ip.ss_family == AF_INET6)
 		return;
 
-	DLINK_FOREACH(nptr, blacklist_list.head)
+	RB_DLINK_FOREACH(nptr, blacklist_list.head)
 	{
 		struct Blacklist *blptr = (struct Blacklist *) nptr->data;
 
@@ -192,15 +192,15 @@ void lookup_blacklists(struct Client *client_p)
 
 void abort_blacklist_queries(struct Client *client_p)
 {
-	dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *next_ptr;
 	struct BlacklistClient *blcptr;
 
 	if (client_p->preClient == NULL)
 		return;
-	DLINK_FOREACH_SAFE(ptr, next_ptr, client_p->preClient->dnsbl_queries.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, client_p->preClient->dnsbl_queries.head)
 	{
 		blcptr = ptr->data;
-		dlinkDelete(&blcptr->node, &client_p->preClient->dnsbl_queries);
+		rb_dlinkDelete(&blcptr->node, &client_p->preClient->dnsbl_queries);
 		unref_blacklist(blcptr->blacklist);
 		delete_resolver_queries(&blcptr->dns_query);
 		MyFree(blcptr);
@@ -209,10 +209,10 @@ void abort_blacklist_queries(struct Client *client_p)
 
 void destroy_blacklists(void)
 {
-	dlink_node *ptr, *next_ptr;
+	rb_dlink_node *ptr, *next_ptr;
 	struct Blacklist *blptr;
 
-	DLINK_FOREACH_SAFE(ptr, next_ptr, blacklist_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, blacklist_list.head)
 	{
 		blptr = ptr->data;
 		blptr->hits = 0; /* keep it simple and consistent */
@@ -221,7 +221,7 @@ void destroy_blacklists(void)
 		else
 		{
 			MyFree(ptr->data);
-			dlinkDestroy(ptr, &blacklist_list);
+			rb_dlinkDestroy(ptr, &blacklist_list);
 		}
 	}
 }

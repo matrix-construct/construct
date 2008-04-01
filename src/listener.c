@@ -121,7 +121,7 @@ get_listener_name(const listener_t *listener)
 #endif
 		port = ntohs(((const struct sockaddr_in *)&listener->addr)->sin_port);	
 
-	ircsnprintf(buf, sizeof(buf), "%s[%s/%u]", me.name, listener->name, port);
+	rb_snprintf(buf, sizeof(buf), "%s[%s/%u]", me.name, listener->name, port);
 	return buf;
 }
 
@@ -174,7 +174,7 @@ inetport(listener_t *listener)
 	 * At first, open a new socket
 	 */
 	
-	fd = comm_socket(listener->addr.ss_family, SOCK_STREAM, 0, "Listener socket");
+	fd = rb_socket(listener->addr.ss_family, SOCK_STREAM, 0, "Listener socket");
 
 #ifdef IPV6
 	if(listener->addr.ss_family == AF_INET6)
@@ -218,7 +218,7 @@ inetport(listener_t *listener)
 		report_error("setting SO_REUSEADDR for listener %s:%s",
 			     get_listener_name(listener), 
 			     get_listener_name(listener), errno);
-		comm_close(fd);
+		rb_close(fd);
 		return 0;
 	}
 
@@ -232,7 +232,7 @@ inetport(listener_t *listener)
 		report_error("binding listener socket %s:%s",
 			     get_listener_name(listener), 
 			     get_listener_name(listener), errno);
-		comm_close(fd);
+		rb_close(fd);
 		return 0;
 	}
 
@@ -241,7 +241,7 @@ inetport(listener_t *listener)
 		report_error("listen failed for %s:%s", 
 			     get_listener_name(listener), 
 			     get_listener_name(listener), errno);
-		comm_close(fd);
+		rb_close(fd);
 		return 0;
 	}
 
@@ -403,7 +403,7 @@ close_listener(listener_t *listener)
 		return;
 	if(listener->fd >= 0)
 	{
-		comm_close(listener->fd);
+		rb_close(listener->fd);
 		listener->fd = -1;
 	}
 
@@ -465,7 +465,7 @@ add_connection(listener_t *listener, int fd, struct sockaddr *sai, int exempt)
 
 	strlcpy(new_client->host, new_client->sockhost, sizeof(new_client->host));
 
-	new_client->localClient->F = comm_add_fd(fd);
+	new_client->localClient->F = rb_add_fd(fd);
 
 	new_client->localClient->listener = listener;
 	++listener->ref_count;
@@ -508,11 +508,11 @@ accept_connection(int pfd, void *data)
 	 * be accepted until some old is closed first.
 	 */
 
-	fd = comm_accept(listener->fd, (struct sockaddr *)&sai, &addrlen);
+	fd = rb_accept(listener->fd, (struct sockaddr *)&sai, &addrlen);
 	if(fd < 0)
 	{
 		/* Re-register a new IO request for the next accept .. */
-		comm_setselect(listener->fd, FDLIST_SERVICE,
+		rb_setselect(listener->fd, FDLIST_SERVICE,
 			       COMM_SELECT_READ, accept_connection, listener, 0);
 		return;
 	}
@@ -524,7 +524,7 @@ accept_connection(int pfd, void *data)
 	 * check for connection limit
 	 * TBD: this is stupid... either we have a socket or we don't. -nenolod
 	 */
-	if((comm_get_maxconnections() - 10) < fd)
+	if((rb_get_maxconnections() - 10) < fd)
 	{
 		++ServerStats->is_ref;
 		/*
@@ -539,9 +539,9 @@ accept_connection(int pfd, void *data)
 		}
 
 		write(fd, "ERROR :All connections in use\r\n", 32);
-		comm_close(fd);
+		rb_close(fd);
 		/* Re-register a new IO request for the next accept .. */
-		comm_setselect(listener->fd, FDLIST_SERVICE,
+		rb_setselect(listener->fd, FDLIST_SERVICE,
 			       COMM_SELECT_READ, accept_connection, listener, 0);
 		return;
 	}
@@ -556,7 +556,7 @@ accept_connection(int pfd, void *data)
 
 		if(ConfigFileEntry.dline_with_reason)
 		{
-			if (ircsnprintf(buf, sizeof(buf), "ERROR :*** Banned: %s\r\n", aconf->passwd) >= (sizeof(buf)-1))
+			if (rb_snprintf(buf, sizeof(buf), "ERROR :*** Banned: %s\r\n", aconf->passwd) >= (sizeof(buf)-1))
 			{
 				buf[sizeof(buf) - 3] = '\r';
 				buf[sizeof(buf) - 2] = '\n';
@@ -564,13 +564,13 @@ accept_connection(int pfd, void *data)
 			}
 		}
 		else
-			ircsprintf(buf, "ERROR :You have been D-lined.\r\n");
+			rb_sprintf(buf, "ERROR :You have been D-lined.\r\n");
         
 		write(fd, buf, strlen(buf));
-		comm_close(fd);
+		rb_close(fd);
 
 		/* Re-register a new IO request for the next accept .. */
-		comm_setselect(listener->fd, FDLIST_SERVICE,
+		rb_setselect(listener->fd, FDLIST_SERVICE,
 			       COMM_SELECT_READ, accept_connection, listener, 0);
 		return;
 	}
@@ -579,6 +579,6 @@ accept_connection(int pfd, void *data)
 	add_connection(listener, fd, (struct sockaddr *)&sai, aconf ? 1 : 0);
 
 	/* Re-register a new IO request for the next accept .. */
-	comm_setselect(listener->fd, FDLIST_SERVICE, COMM_SELECT_READ,
+	rb_setselect(listener->fd, FDLIST_SERVICE, COMM_SELECT_READ,
 		       accept_connection, listener, 0);
 }

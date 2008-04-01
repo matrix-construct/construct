@@ -415,7 +415,7 @@ try_connections(void *unused)
 
 	/*
 	 * We used to only print this if serv_connect() actually
-	 * suceeded, but since comm_tcp_connect() can call the callback
+	 * suceeded, but since rb_tcp_connect() can call the callback
 	 * immediately if there is an error, we were getting error messages
 	 * in the wrong order. SO, we just print out the activated line,
 	 * and let serv_connect() / serv_connect_callback() print an
@@ -529,7 +529,7 @@ send_capabilities(struct Client *client_p, int cap_can_send)
 	{
 		if(cap->cap & cap_can_send)
 		{
-			tl = ircsprintf(t, "%s ", cap->name);
+			tl = rb_sprintf(t, "%s ", cap->name);
 			t += tl;
 		}
 	}
@@ -560,7 +560,7 @@ burst_modes_TS5(struct Client *client_p, char *chname, dlink_list *list, char fl
 	char *pp;
 	int count = 0;
 
-	mlen = ircsprintf(buf, ":%s MODE %s +", me.name, chname);
+	mlen = rb_sprintf(buf, ":%s MODE %s +", me.name, chname);
 	cur_len = mlen;
 
 	mp = mbuf;
@@ -587,7 +587,7 @@ burst_modes_TS5(struct Client *client_p, char *chname, dlink_list *list, char fl
 
 		*mp++ = flag;
 		*mp = '\0';
-		pp += ircsprintf(pp, "%s ", banptr->banstr);
+		pp += rb_sprintf(pp, "%s ", banptr->banstr);
 		cur_len += tlen;
 		count++;
 	}
@@ -613,7 +613,7 @@ burst_modes_TS6(struct Client *client_p, struct Channel *chptr,
 	int mlen;
 	int cur_len;
 
-	cur_len = mlen = ircsprintf(buf, ":%s BMASK %ld %s %c :",
+	cur_len = mlen = rb_sprintf(buf, ":%s BMASK %ld %s %c :",
 				    me.id, (long) chptr->channelts, chptr->chname, flag);
 	t = buf + mlen;
 
@@ -640,7 +640,7 @@ burst_modes_TS6(struct Client *client_p, struct Channel *chptr,
 			t = buf + mlen;
 		}
 
-		ircsprintf(t, "%s ", banptr->banstr);
+		rb_sprintf(t, "%s ", banptr->banstr);
 		t += tlen;
 		cur_len += tlen;
 	}
@@ -719,7 +719,7 @@ burst_TS5(struct Client *client_p)
 		if(*chptr->chname != '#')
 			continue;
 
-		cur_len = mlen = ircsprintf(buf, ":%s SJOIN %ld %s %s :", me.name,
+		cur_len = mlen = rb_sprintf(buf, ":%s SJOIN %ld %s %s :", me.name,
 				(long) chptr->channelts, chptr->chname, 
 				channel_modes(chptr, client_p));
 
@@ -744,7 +744,7 @@ burst_TS5(struct Client *client_p)
 				t = buf + mlen;
 			}
 
-			ircsprintf(t, "%s%s ", find_channel_status(msptr, 1), 
+			rb_sprintf(t, "%s%s ", find_channel_status(msptr, 1), 
 				   msptr->client_p->name);
 
 			cur_len += tlen;
@@ -877,7 +877,7 @@ burst_TS6(struct Client *client_p)
 		if(*chptr->chname != '#')
 			continue;
 
-		cur_len = mlen = ircsprintf(buf, ":%s SJOIN %ld %s %s :", me.id,
+		cur_len = mlen = rb_sprintf(buf, ":%s SJOIN %ld %s %s :", me.id,
 				(long) chptr->channelts, chptr->chname,
 				channel_modes(chptr, client_p));
 
@@ -901,7 +901,7 @@ burst_TS6(struct Client *client_p)
 				t = buf + mlen;
 			}
 
-			ircsprintf(t, "%s%s ", find_channel_status(msptr, 1), 
+			rb_sprintf(t, "%s%s ", find_channel_status(msptr, 1), 
 				   use_id(msptr->client_p));
 
 			cur_len += tlen;
@@ -960,7 +960,7 @@ show_capabilities(struct Client *target_p)
 	int tl;
 
 	t = msgbuf;
-	tl = ircsprintf(msgbuf, "TS ");
+	tl = rb_sprintf(msgbuf, "TS ");
 	t += tl;
 
 	if(!IsServer(target_p) || !target_p->serv->caps)	/* short circuit if no caps */
@@ -973,7 +973,7 @@ show_capabilities(struct Client *target_p)
 	{
 		if(cap->cap & target_p->serv->caps)
 		{
-			tl = ircsprintf(t, "%s ", cap->name);
+			tl = rb_sprintf(t, "%s ", cap->name);
 			t += tl;
 		}
 	}
@@ -1063,7 +1063,7 @@ server_estab(struct Client *client_p)
 			   (me.info[0]) ? (me.info) : "IRCers United");
 	}
 
-	if(!comm_set_buffers(client_p->localClient->F->fd, READBUF_SIZE))
+	if(!rb_set_buffers(client_p->localClient->F->fd, READBUF_SIZE))
 		report_error(SETBUF_ERROR_MSG, 
 			     get_server_name(client_p, SHOW_IP), 
 			     log_client_name(client_p, SHOW_IP), errno);
@@ -1143,11 +1143,11 @@ server_estab(struct Client *client_p)
 		/* we won't overflow FD_DESC_SZ here, as it can hold
 		 * client_p->name + 64
 		 */
-		comm_note(client_p->localClient->F->fd, "slink data: %s", client_p->name);
-		comm_note(client_p->localClient->ctrlfd, "slink ctrl: %s", client_p->name);
+		rb_note(client_p->localClient->F->fd, "slink data: %s", client_p->name);
+		rb_note(client_p->localClient->ctrlfd, "slink ctrl: %s", client_p->name);
 	}
 	else
-		comm_note(client_p->localClient->F->fd, "Server: %s", client_p->name);
+		rb_note(client_p->localClient->F->fd, "Server: %s", client_p->name);
 
 	/*
 	 ** Old sendto_serv_but_one() call removed because we now
@@ -1364,7 +1364,7 @@ fork_server(struct Client *server)
 		goto fork_error;
 	else if(ret == 0)
 	{
-		int maxconn = comm_get_maxconnections();
+		int maxconn = rb_get_maxconnections();
 
 		/* set our fds as non blocking and close everything else */
 		for (i = 0; i < maxconn; i++)
@@ -1373,7 +1373,7 @@ fork_server(struct Client *server)
 
 			if((i == ctrl_fds[1]) || (i == data_fds[1]) || (i == server->localClient->F->fd)) 
 			{
-				comm_set_nb(i);
+				rb_set_nb(i);
 			}
 			else
 			{
@@ -1384,9 +1384,9 @@ fork_server(struct Client *server)
 			}
 		}
 
-		ircsnprintf(fd_str[0], sizeof(fd_str[0]), "%d", ctrl_fds[1]);
-		ircsnprintf(fd_str[1], sizeof(fd_str[1]), "%d", data_fds[1]);
-		ircsnprintf(fd_str[2], sizeof(fd_str[2]), "%d", server->localClient->F->fd);
+		rb_snprintf(fd_str[0], sizeof(fd_str[0]), "%d", ctrl_fds[1]);
+		rb_snprintf(fd_str[1], sizeof(fd_str[1]), "%d", data_fds[1]);
+		rb_snprintf(fd_str[2], sizeof(fd_str[2]), "%d", server->localClient->F->fd);
 		kid_argv[0] = slink;
 		kid_argv[1] = fd_str[0];
 		kid_argv[2] = fd_str[1];
@@ -1401,7 +1401,7 @@ fork_server(struct Client *server)
 	}
 	else
 	{
-		comm_close(server->localClient->F->fd);
+		rb_close(server->localClient->F->fd);
 
 		/* close the childs end of the pipes */
 		close(ctrl_fds[1]);
@@ -1409,9 +1409,9 @@ fork_server(struct Client *server)
 		
 		s_assert(server->localClient);
 		server->localClient->ctrlfd = ctrl_fds[0];
-		server->localClient->F = comm_add_fd(data_fds[0]);
+		server->localClient->F = rb_add_fd(data_fds[0]);
 
-		if(!comm_set_nb(server->localClient->F->fd))
+		if(!rb_set_nb(server->localClient->F->fd))
 		{
 			report_error(NONB_ERROR_MSG,
 					get_server_name(server, SHOW_IP),
@@ -1419,7 +1419,7 @@ fork_server(struct Client *server)
 					errno);
 		}
 
-		if(!comm_set_nb(server->localClient->ctrlfd))
+		if(!rb_set_nb(server->localClient->ctrlfd))
 		{
 			report_error(NONB_ERROR_MSG,
 					get_server_name(server, SHOW_IP),
@@ -1427,8 +1427,8 @@ fork_server(struct Client *server)
 					errno);
 		}
 
-		comm_open(server->localClient->ctrlfd, FD_SOCKET, NULL);
-		comm_open(server->localClient->F->fd, FD_SOCKET, NULL);
+		rb_open(server->localClient->ctrlfd, FD_SOCKET, NULL);
+		rb_open(server->localClient->F->fd, FD_SOCKET, NULL);
 
 		read_ctrl_packet(server->localClient->ctrlfd, server);
 		read_packet(server->localClient->F->fd, server);
@@ -1463,7 +1463,7 @@ fork_server(struct Client *server)
  * This code initiates a connection to a server. It first checks to make
  * sure the given server exists. If this is the case, it creates a socket,
  * creates a client, saves the socket information in the client, and
- * initiates a connection to the server through comm_connect_tcp(). The
+ * initiates a connection to the server through rb_connect_tcp(). The
  * completion of this goes through serv_completed_connection().
  *
  * We return 1 if the connection is attempted, since we don't know whether
@@ -1496,7 +1496,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	}
 
 	/* create a socket for the server connection */
-	if((fd = comm_socket(server_p->aftype, SOCK_STREAM, 0, NULL)) < 0)
+	if((fd = rb_socket(server_p->aftype, SOCK_STREAM, 0, NULL)) < 0)
 	{
 		/* Eek, failure to create the socket */
 		report_error("opening stream socket to %s: %s", 
@@ -1505,7 +1505,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	}
 
 	/* servernames are always guaranteed under HOSTLEN chars */
-	comm_note(fd, "Server: %s", server_p->name);
+	rb_note(fd, "Server: %s", server_p->name);
 
 	/* Create a local client */
 	client_p = make_client(NULL);
@@ -1517,7 +1517,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	strlcpy(client_p->name, server_p->name, sizeof(client_p->name));
 	strlcpy(client_p->host, server_p->host, sizeof(client_p->host));
 	strlcpy(client_p->sockhost, server_p->host, sizeof(client_p->sockhost));
-	client_p->localClient->F = comm_add_fd(fd);
+	client_p->localClient->F = rb_add_fd(fd);
 
 	/*
 	 * Set up the initial server evilness, ripped straight from
@@ -1525,7 +1525,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	 *   -- adrian
 	 */
 
-	if(!comm_set_buffers(client_p->localClient->F->fd, READBUF_SIZE))
+	if(!rb_set_buffers(client_p->localClient->F->fd, READBUF_SIZE))
 	{
 		report_error(SETBUF_ERROR_MSG,
 				get_server_name(client_p, SHOW_IP),
@@ -1598,7 +1598,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 #endif
 				(server_p->aftype == AF_INET ? "IPv4" : "?"));
 
-		comm_connect_tcp(client_p->localClient->F->fd, server_p->host,
+		rb_connect_tcp(client_p->localClient->F->fd, server_p->host,
 				 server_p->port, NULL, 0, serv_connect_callback, 
 				 client_p, server_p->aftype, 
 				 ConfigFileEntry.connect_timeout);
@@ -1614,7 +1614,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 			(server_p->aftype == AF_INET ? "IPv4" : "?"), vhoststr);
 
 
-	comm_connect_tcp(client_p->localClient->F->fd, server_p->host,
+	rb_connect_tcp(client_p->localClient->F->fd, server_p->host,
 			 server_p->port, (struct sockaddr *) &myipnum,
 			 GET_SS_LEN(myipnum), serv_connect_callback, client_p,
 			 myipnum.ss_family, ConfigFileEntry.connect_timeout);
@@ -1637,7 +1637,7 @@ serv_connect_callback(int fd, int status, void *data)
 	struct Client *client_p = data;
 	struct server_conf *server_p;
 	char *errstr;
-	fde_t *F = comm_locate_fd(fd);
+	fde_t *F = rb_locate_fd(fd);
 
 	/* First, make sure its a real client! */
 	s_assert(client_p != NULL);
@@ -1677,14 +1677,14 @@ serv_connect_callback(int fd, int status, void *data)
 #else
 					client_p->host,
 #endif
-					comm_errstr(status));
+					rb_errstr(status));
 			ilog(L_SERVER, "Error connecting to %s[%s]: %s",
 				client_p->name, client_p->sockhost,
-				comm_errstr(status));
+				rb_errstr(status));
 		}
 		else
 		{
-			errstr = strerror(comm_get_sockerr(fd));
+			errstr = strerror(rb_get_sockerr(fd));
 			sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 					"Error connecting to %s[%s]: %s (%s)",
 					client_p->name,
@@ -1693,13 +1693,13 @@ serv_connect_callback(int fd, int status, void *data)
 #else
 					client_p->host,
 #endif
-					comm_errstr(status), errstr);
+					rb_errstr(status), errstr);
 			ilog(L_SERVER, "Error connecting to %s[%s]: %s (%s)",
 				client_p->name, client_p->sockhost,
-				comm_errstr(status), errstr);
+				rb_errstr(status), errstr);
 		}
 
-		exit_client(client_p, client_p, &me, comm_errstr(status));
+		exit_client(client_p, client_p, &me, rb_errstr(status));
 		return;
 	}
 

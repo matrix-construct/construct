@@ -145,7 +145,7 @@ send_queued_write(int fd, void *data)
 #ifdef USE_IODEBUG_HOOKS
 	hook_data_int hd;
 #endif
-	fde_t *F = comm_locate_fd(to->localClient->F->fd);
+	fde_t *F = rb_locate_fd(to->localClient->F->fd);
 	if (!F)
 		return;
 
@@ -202,7 +202,7 @@ send_queued_write(int fd, void *data)
 	else
 		flags = COMM_SELECT_WRITE;
 	if(linebuf_len(&to->localClient->buf_sendq))
-	comm_setselect(fd, FDLIST_IDLECLIENT, flags,
+	rb_setselect(fd, FDLIST_IDLECLIENT, flags,
 			       send_queued_write, to, 0);
 }
 
@@ -265,7 +265,7 @@ send_queued_slink_write(int fd, void *data)
 
 	/* if we have any more data, reschedule a write */
 	if(to->localClient->slinkq_len)
-		comm_setselect(to->localClient->ctrlfd, FDLIST_IDLECLIENT,
+		rb_setselect(to->localClient->ctrlfd, FDLIST_IDLECLIENT,
 			       COMM_SELECT_WRITE|COMM_SELECT_RETRY, send_queued_slink_write, to, 0);
 }
 

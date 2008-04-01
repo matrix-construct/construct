@@ -392,7 +392,7 @@ inetntoa(const char *in)
  * SOFTWARE.
  */
 
-#define SPRINTF(x) ((size_t)ircsprintf x)
+#define SPRINTF(x) ((size_t)rb_sprintf x)
 
 /*
  * WARNING: Don't even consider trying to compile this on a system where
@@ -811,7 +811,7 @@ inetpton(af, src, dst)
 		if(inet_pton4(src, dst))
 		{
 			char tmp[HOSTIPLEN];
-			ircsprintf(tmp, "::ffff:%s", src);
+			rb_sprintf(tmp, "::ffff:%s", src);
 			return (inet_pton6(tmp, dst));
 		}
 		else

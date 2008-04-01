@@ -121,7 +121,7 @@ ilog(ilogfile dest, const char *format, ...)
 	ircvsnprintf(buf, sizeof(buf), format, args);
 	va_end(args);
 
-	ircsnprintf(buf2, sizeof(buf2), "%s %s\n", smalldate(), buf);
+	rb_snprintf(buf2, sizeof(buf2), "%s %s\n", smalldate(), buf);
 
 	if(fputs(buf2, logfile) < 0)
 	{
@@ -214,7 +214,7 @@ smalldate(void)
 
 	lt = localtime(&ltime);
 
-	ircsnprintf(buf, sizeof(buf), "%d/%d/%d %02d.%02d",
+	rb_snprintf(buf, sizeof(buf), "%d/%d/%d %02d.%02d",
 		    lt->tm_year + 1900, lt->tm_mon + 1,
 		    lt->tm_mday, lt->tm_hour, lt->tm_min);
 

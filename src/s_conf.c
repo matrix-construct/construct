@@ -844,7 +844,7 @@ set_default_conf(void)
 	ConfigFileEntry.reject_duration = 120;
 	ConfigFileEntry.max_unknown_ip = 2;
 
-	ServerInfo.max_clients = comm_get_maxconnections() - MAX_BUFFER;
+	ServerInfo.max_clients = rb_get_maxconnections() - MAX_BUFFER;
 }
 
 #undef YES
@@ -1082,13 +1082,13 @@ get_oper_name(struct Client *client_p)
 
 	if(MyOper(client_p))
 	{
-		ircsnprintf(buffer, sizeof(buffer), "%s!%s@%s{%s}",
+		rb_snprintf(buffer, sizeof(buffer), "%s!%s@%s{%s}",
 				client_p->name, client_p->username,
 				client_p->host, client_p->localClient->opername);
 		return buffer;
 	}
 
-	ircsnprintf(buffer, sizeof(buffer), "%s!%s@%s{%s}",
+	rb_snprintf(buffer, sizeof(buffer), "%s!%s@%s{%s}",
 		   client_p->name, client_p->username, 
 		   client_p->host, client_p->servptr->name);
 	return buffer;
@@ -1379,20 +1379,20 @@ write_confitem(KlineType type, struct Client *source_p, char *user,
 
 	if(type == KLINE_TYPE)
 	{
-		ircsnprintf(buffer, sizeof(buffer),
+		rb_snprintf(buffer, sizeof(buffer),
 			   "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",%ld\n",
 			   user, host, reason, oper_reason, current_date,
 			   get_oper_name(source_p), CurrentTime);
 	}
 	else if(type == DLINE_TYPE)
 	{
-		ircsnprintf(buffer, sizeof(buffer),
+		rb_snprintf(buffer, sizeof(buffer),
 			   "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",%ld\n", host,
 			   reason, oper_reason, current_date, get_oper_name(source_p), CurrentTime);
 	}
 	else if(type == RESV_TYPE)
 	{
-		ircsnprintf(buffer, sizeof(buffer), "\"%s\",\"%s\",\"%s\",%ld\n",
+		rb_snprintf(buffer, sizeof(buffer), "\"%s\",\"%s\",\"%s\",%ld\n",
 			   host, reason, get_oper_name(source_p), CurrentTime);
 	}
 

@@ -223,7 +223,7 @@ free_local_client(struct Client *client_p)
 	}
 
 	if(client_p->localClient->F)
-		comm_close(client_p->localClient->F->fd);
+		rb_close(client_p->localClient->F->fd);
 
 	if(client_p->localClient->passwd)
 	{
@@ -327,7 +327,7 @@ check_pings_list(dlink_list * list)
 					     "No response from %s, closing link",
 					     log_client_name(client_p, HIDE_IP));
 				}
-				(void) ircsnprintf(scratch, sizeof(scratch),
+				(void) rb_snprintf(scratch, sizeof(scratch),
 						  "Ping timeout: %d seconds",
 						  (int) (CurrentTime - client_p->localClient->lasttime));
 
@@ -941,16 +941,16 @@ get_client_name(struct Client *client, int showip)
 		switch (showip)
 		{
 		case SHOW_IP:
-			ircsnprintf(nbuf, sizeof(nbuf), "%s[%s@%s]", 
+			rb_snprintf(nbuf, sizeof(nbuf), "%s[%s@%s]", 
 				   client->name, client->username, 
 				   client->sockhost);
 			break;
 		case MASK_IP:
-			ircsnprintf(nbuf, sizeof(nbuf), "%s[%s@255.255.255.255]",
+			rb_snprintf(nbuf, sizeof(nbuf), "%s[%s@255.255.255.255]",
 				   client->name, client->username);
 			break;
 		default:
-			ircsnprintf(nbuf, sizeof(nbuf), "%s[%s@%s]",
+			rb_snprintf(nbuf, sizeof(nbuf), "%s[%s@%s]",
 				   client->name, client->username, client->host);
 		}
 		return nbuf;
@@ -976,7 +976,7 @@ get_server_name(struct Client *target_p, int showip)
 #ifdef HIDE_SERVERS_IPS
 	if(EmptyString(target_p->name))
 	{
-		ircsnprintf(nbuf, sizeof(nbuf), "[%s@255.255.255.255]",
+		rb_snprintf(nbuf, sizeof(nbuf), "[%s@255.255.255.255]",
 				target_p->username);
 		return nbuf;
 	}
@@ -987,17 +987,17 @@ get_server_name(struct Client *target_p, int showip)
 	switch (showip)
 	{
 		case SHOW_IP:
-			ircsnprintf(nbuf, sizeof(nbuf), "%s[%s@%s]",
+			rb_snprintf(nbuf, sizeof(nbuf), "%s[%s@%s]",
 				target_p->name, target_p->username, 
 				target_p->sockhost);
 			break;
 
 		case MASK_IP:
-			ircsnprintf(nbuf, sizeof(nbuf), "%s[%s@255.255.255.255]",
+			rb_snprintf(nbuf, sizeof(nbuf), "%s[%s@255.255.255.255]",
 				target_p->name, target_p->username);
 
 		default:
-			ircsnprintf(nbuf, sizeof(nbuf), "%s[%s@%s]",
+			rb_snprintf(nbuf, sizeof(nbuf), "%s[%s@%s]",
 				target_p->name, target_p->username,
 				target_p->host);
 	}
@@ -1026,16 +1026,16 @@ log_client_name(struct Client *target_p, int showip)
 		switch (showip)
 		{
 		case SHOW_IP:
-			ircsnprintf(nbuf, sizeof(nbuf), "%s[%s@%s]", target_p->name,
+			rb_snprintf(nbuf, sizeof(nbuf), "%s[%s@%s]", target_p->name,
 				   target_p->username, target_p->sockhost);
 			break;
 
 		case MASK_IP:
-			ircsnprintf(nbuf, sizeof(nbuf), "%s[%s@255.255.255.255]",
+			rb_snprintf(nbuf, sizeof(nbuf), "%s[%s@255.255.255.255]",
 				   target_p->name, target_p->username);
 
 		default:
-			ircsnprintf(nbuf, sizeof(nbuf), "%s[%s@%s]", target_p->name,
+			rb_snprintf(nbuf, sizeof(nbuf), "%s[%s@%s]", target_p->name,
 				   target_p->username, target_p->host);
 		}
 
@@ -1312,7 +1312,7 @@ dead_link(struct Client *client_p)
 	if(client_p->flags & FLAGS_SENDQEX)
 		strlcpy(abt->notice, "Max SendQ exceeded", sizeof(abt->notice));
 	else
-		ircsnprintf(abt->notice, sizeof(abt->notice), "Write error: %s", strerror(errno));
+		rb_snprintf(abt->notice, sizeof(abt->notice), "Write error: %s", strerror(errno));
 
     	abt->client = client_p;
 	SetIOError(client_p);
@@ -1445,7 +1445,7 @@ exit_remote_server(struct Client *client_p, struct Client *source_p, struct Clie
 		strcat(comment1, source_p->name);
 	}
 	if (IsPerson(from))
-		ircsnprintf(newcomment, sizeof(newcomment), "by %s: %s",
+		rb_snprintf(newcomment, sizeof(newcomment), "by %s: %s",
 				from->name, comment);
 
 	if(source_p->serv != NULL)
@@ -1527,7 +1527,7 @@ exit_local_server(struct Client *client_p, struct Client *source_p, struct Clien
 	/* Always show source here, so the server notices show
 	 * which side initiated the split -- jilles
 	 */
-	ircsnprintf(newcomment, sizeof(newcomment), "by %s: %s",
+	rb_snprintf(newcomment, sizeof(newcomment), "by %s: %s",
 			from == source_p ? me.name : from->name, comment);
 	if (!IsIOError(source_p))
 		sendto_one(source_p, "SQUIT %s :%s", use_id(source_p),
@@ -2076,13 +2076,13 @@ close_connection(struct Client *client_p)
 		if(!IsIOError(client_p))
 			send_queued_write(client_p->localClient->F->fd, client_p);
 
-		comm_close(client_p->localClient->F->fd);
+		rb_close(client_p->localClient->F->fd);
 		client_p->localClient->F = NULL;
 	}
 
 	if(-1 < client_p->localClient->ctrlfd)
 	{
-		comm_close(client_p->localClient->ctrlfd);
+		rb_close(client_p->localClient->ctrlfd);
 		client_p->localClient->ctrlfd = -1;
 	}
 
@@ -2113,7 +2113,7 @@ error_exit_client(struct Client *client_p, int error)
 	 * for reading even though it ends up being an EOF. -avalon
 	 */
 	char errmsg[255];
-	int current_error = comm_get_sockerr(client_p->localClient->F->fd);
+	int current_error = rb_get_sockerr(client_p->localClient->F->fd);
 
 	SetIOError(client_p);
 
@@ -2141,7 +2141,7 @@ error_exit_client(struct Client *client_p, int error)
 	if(error == 0)
 		strlcpy(errmsg, "Remote host closed the connection", sizeof(errmsg));
 	else
-		ircsnprintf(errmsg, sizeof(errmsg), "Read error: %s", strerror(current_error));
+		rb_snprintf(errmsg, sizeof(errmsg), "Read error: %s", strerror(current_error));
 
 	exit_client(client_p, client_p, &me, errmsg);
 }

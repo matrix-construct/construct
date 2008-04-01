@@ -128,7 +128,7 @@ add_id(struct Client *source_p, struct Channel *chptr, const char *banid,
 
 
 	if(IsPerson(source_p))
-		ircsprintf(who, "%s!%s@%s", source_p->name, source_p->username, source_p->host);
+		rb_sprintf(who, "%s!%s@%s", source_p->name, source_p->username, source_p->host);
 	else
 		strlcpy(who, source_p->name, sizeof(who));
 
@@ -239,7 +239,7 @@ pretty_mask(const char *idmask)
 
 	if (*mask == '$')
 	{
-		mask_pos += ircsprintf(mask_buf + mask_pos, "%s", mask) + 1;
+		mask_pos += rb_sprintf(mask_buf + mask_pos, "%s", mask) + 1;
 		t = mask_buf + old_mask_pos + 1;
 		if (*t == '!')
 			*t = '~';
@@ -309,7 +309,7 @@ pretty_mask(const char *idmask)
 		host[HOSTLEN] = '\0';
 	}
 
-	mask_pos += ircsprintf(mask_buf + mask_pos, "%s!%s@%s", nick, user, host) + 1;
+	mask_pos += rb_sprintf(mask_buf + mask_pos, "%s!%s@%s", nick, user, host) + 1;
 
 	/* restore mask, since we may need to use it again later */
 	if(at)
@@ -868,7 +868,7 @@ chm_limit(struct Client *source_p, struct Channel *chptr,
 		if(EmptyString(lstr) || (limit = atoi(lstr)) <= 0)
 			return;
 
-		ircsprintf(limitstr, "%d", limit);
+		rb_sprintf(limitstr, "%d", limit);
 
 		mode_changes[mode_count].letter = c;
 		mode_changes[mode_count].dir = MODE_ADD;
@@ -1515,9 +1515,9 @@ set_channel_mode(struct Client *client_p, struct Client *source_p,
 		return;
 
 	if(IsServer(source_p))
-		mlen = ircsprintf(modebuf, ":%s MODE %s ", fakesource_p->name, chptr->chname);
+		mlen = rb_sprintf(modebuf, ":%s MODE %s ", fakesource_p->name, chptr->chname);
 	else
-		mlen = ircsprintf(modebuf, ":%s!%s@%s MODE %s ",
+		mlen = rb_sprintf(modebuf, ":%s!%s@%s MODE %s ",
 				  source_p->name, source_p->username,
 				  source_p->host, chptr->chname);
 
@@ -1581,7 +1581,7 @@ set_channel_mode(struct Client *client_p, struct Client *source_p,
 			if(mode_changes[i].arg != NULL)
 			{
 				paracount++;
-				len = ircsprintf(pbuf, "%s ", mode_changes[i].arg);
+				len = rb_sprintf(pbuf, "%s ", mode_changes[i].arg);
 				pbuf += len;
 				paralen += len;
 			}

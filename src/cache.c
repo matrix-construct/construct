@@ -106,7 +106,7 @@ cache_file(const char *filename, const char *shortname, int flags)
 		local_tm = localtime(&sb.st_mtime);
 
 		if(local_tm != NULL)
-			ircsnprintf(user_motd_changed, sizeof(user_motd_changed),
+			rb_snprintf(user_motd_changed, sizeof(user_motd_changed),
 				 "%d/%d/%d %d:%d",
 				 local_tm->tm_mday, local_tm->tm_mon + 1,
 				 1900 + local_tm->tm_year, local_tm->tm_hour,
@@ -193,7 +193,7 @@ load_help(void)
 
 	while((ldirent = readdir(helpfile_dir)) != NULL)
 	{
-		ircsnprintf(filename, sizeof(filename), "%s/%s", HPATH, ldirent->d_name);
+		rb_snprintf(filename, sizeof(filename), "%s/%s", HPATH, ldirent->d_name);
 		cacheptr = cache_file(filename, ldirent->d_name, HELP_OPER);
 		irc_dictionary_add(help_dict_oper, cacheptr->name, cacheptr);
 	}
@@ -206,7 +206,7 @@ load_help(void)
 
 	while((ldirent = readdir(helpfile_dir)) != NULL)
 	{
-		ircsnprintf(filename, sizeof(filename), "%s/%s", UHPATH, ldirent->d_name);
+		rb_snprintf(filename, sizeof(filename), "%s/%s", UHPATH, ldirent->d_name);
 
 		cacheptr = cache_file(filename, ldirent->d_name, HELP_USER);
 		irc_dictionary_add(help_dict_user, cacheptr->name, cacheptr);
