@@ -14,7 +14,6 @@
 #include "send.h"
 #include "numeric.h"
 #include "hostmask.h"
-#include "event.h"
 #include "s_conf.h"
 #include "s_newconf.h"
 #include "hash.h"
@@ -543,10 +542,10 @@ hurt_new(time_t expire, const char *ip, const char *reason)
 {
 	hurt_t *hurt;
 
-	hurt = MyMalloc(sizeof(hurt_t));
+	hurt = rb_malloc(sizeof(hurt_t));
 
-	DupString(hurt->ip, ip);
-	DupString(hurt->reason, reason);
+	hurt->ip = rb_strdup(ip);
+	hurt->reason = rb_strdup(reason);
 	hurt->expire = CurrentTime + expire;
 
 	return hurt;
@@ -563,9 +562,9 @@ hurt_destroy(void *hurt)
 		return;
 
 	h = (hurt_t *) hurt;
-	MyFree(h->ip);
-	MyFree(h->reason);
-	MyFree(h);
+	rb_free(h->ip);
+	rb_free(h->reason);
+	rb_free(h);
 }
 /* }}} */
 
