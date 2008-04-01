@@ -94,7 +94,7 @@ do_host_cloak(const char *inbuf, char *outbuf, int ipmask)
 
 	if (ipmask == 0)
 	{
-		ircsnprintf(outbuf, HOSTLEN, "%s-%X%X",
+		rb_snprintf(outbuf, HOSTLEN, "%s-%X%X",
 			ServerInfo.network_name, hosthash2, hosthash);
 		len1 = strlen(outbuf);
 		rest = strchr(inbuf, '.');
@@ -106,7 +106,7 @@ do_host_cloak(const char *inbuf, char *outbuf, int ipmask)
 		strlcat(outbuf, rest, HOSTLEN);
 	}
 	else
-		ircsnprintf(outbuf, HOSTLEN, "%X%X.%s",
+		rb_snprintf(outbuf, HOSTLEN, "%X%X.%s",
 			hosthash2, hosthash, ServerInfo.network_name);
 }
 

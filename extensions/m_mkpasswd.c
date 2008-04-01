@@ -16,7 +16,6 @@
 #include "ircd.h"
 #include "irc_string.h"
 #include "numeric.h"
-#include "patricia.h"
 #include "s_newconf.h"
 #include "s_conf.h"
 #include "s_log.h"

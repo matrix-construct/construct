@@ -20,7 +20,6 @@
  */
 #include "stdinc.h"
 #include "tools.h"
-#include "patricia.h"
 #include "channel.h"
 #include "client.h"
 #include "ircd.h"
@@ -59,7 +58,7 @@ mo_opme(struct Client *client_p, struct Client *source_p, int parc, const char *
 {
 	struct Channel *chptr;
 	struct membership *msptr;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 
 	/* admins only */
 	if(!IsOperAdmin(source_p))
@@ -75,7 +74,7 @@ mo_opme(struct Client *client_p, struct Client *source_p, int parc, const char *
 		return 0;
 	}
 
-	DLINK_FOREACH(ptr, chptr->members.head)
+	RB_DLINK_FOREACH(ptr, chptr->members.head)
 	{
 		msptr = ptr->data;
 

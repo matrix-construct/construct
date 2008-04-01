@@ -130,6 +130,10 @@ hurt_state_t hurt_state = {
  */
 
 /* {{{ static int modinit() */
+
+struct ev_entry *hurt_expire_ev = NULL;
+struct ev_entry *hurt_check_ev = NULL;
+
 static int
 modinit(void)
 {
@@ -137,8 +141,8 @@ modinit(void)
 	hurt_state.start_time = CurrentTime;
 
 	/* add our event handlers. */
-	eventAdd("hurt_expire", hurt_expire_event, NULL, 60);
-	eventAdd("hurt_check", hurt_check_event, NULL, 5);
+	hurt_expire_ev = rb_event_add("hurt_expire", hurt_expire_event, NULL, 60);
+	hurt_check_ev = rb_event_add("hurt_check", hurt_check_event, NULL, 5);
 
 	return 0;
 }
@@ -151,8 +155,8 @@ modfini(void)
 	dlink_node	*ptr, *next_ptr;
 
 	/* and delete our events. */
-	eventDelete(hurt_expire_event, NULL);
-	eventDelete(hurt_check_event, NULL);
+	rb_event_delete(hurt_expire_ev);
+	rb_event_delete(hurt_check_ev);
 
 	DLINK_FOREACH_SAFE (ptr, next_ptr, hurt_state.hurt_clients.head)
 	{

@@ -42,14 +42,14 @@ static int eb_extended(const char *data, struct Client *client_p,
 	if (data == NULL)
 		return EXTBAN_INVALID;
 
-	ircsnprintf(buf, BUFSIZE, "%s!%s@%s#%s",
+	rb_snprintf(buf, BUFSIZE, "%s!%s@%s#%s",
 		client_p->name, client_p->username, client_p->host, client_p->info);
 
 	ret = match(data, buf) ? EXTBAN_MATCH : EXTBAN_NOMATCH;
 
 	if (ret == EXTBAN_NOMATCH && IsDynSpoof(client_p))
 	{
-		ircsnprintf(buf, BUFSIZE, "%s!%s@%s#%s",
+		rb_snprintf(buf, BUFSIZE, "%s!%s@%s#%s",
 			client_p->name, client_p->username, client_p->orighost, client_p->info);
 
 		ret = match(data, buf) ? EXTBAN_MATCH : EXTBAN_NOMATCH;

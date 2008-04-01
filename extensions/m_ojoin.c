@@ -21,23 +21,21 @@
 
 #include "stdinc.h"
 #include "tools.h"
-#include "patricia.h"
 #include "channel.h"
-#include "client.h"
+#include "client.h" 
 #include "ircd.h"
 #include "numeric.h"
 #include "s_log.h"
 #include "s_serv.h"
 #include "s_conf.h"
-#include "s_newconf.h"
+#include "s_newconf.h" 
 #include "send.h"
 #include "whowas.h"
 #include "irc_string.h"
-#include "hash.h"
+#include "hash.h" 
 #include "msg.h"
 #include "parse.h"
 #include "modules.h"
-
 
 static int mo_ojoin(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 

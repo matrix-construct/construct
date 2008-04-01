@@ -28,7 +28,6 @@
 
 #include "stdinc.h"
 #include "tools.h"
-#include "patricia.h"
 #include "channel.h"
 #include "client.h"
 #include "ircd.h"
@@ -101,10 +100,10 @@ static void
 list_all_channels(struct Client *source_p)
 {
 	struct Channel *chptr;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	sendto_one(source_p, form_str(RPL_LISTSTART), me.name, source_p->name);
 
-	DLINK_FOREACH(ptr, global_channel_list.head)
+	RB_DLINK_FOREACH(ptr, global_channel_list.head)
 	{
 		chptr = ptr->data;
 

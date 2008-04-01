@@ -59,7 +59,7 @@ m_findforwards(struct Client *client_p, struct Client *source_p, int parc, const
 	static time_t last_used = 0;
 	struct Channel *chptr;
 	struct membership *msptr;
-	dlink_node *ptr;
+	rb_dlink_node *ptr;
 	char buf[414];
 	char *p = buf, *end = buf + sizeof buf - 1;
 	*p = '\0';
@@ -91,7 +91,7 @@ m_findforwards(struct Client *client_p, struct Client *source_p, int parc, const
 			last_used = CurrentTime;
 	}
 	
-	DLINK_FOREACH(ptr, global_channel_list.head)
+	RB_DLINK_FOREACH(ptr, global_channel_list.head)
 	{
 		chptr = ptr->data;
 		if(chptr->mode.forward && !irccmp(chptr->mode.forward, parv[1]))
