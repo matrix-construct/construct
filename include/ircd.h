@@ -113,4 +113,6 @@ extern void charybdis_io_loop(void);
 
 extern int testing_conf;
 
+extern struct ev_entry *check_splitmode_ev;
+
 #endif

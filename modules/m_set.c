@@ -380,7 +380,7 @@ quote_splitmode(struct Client *source_p, char *charval)
 			splitmode = 0;
 			splitchecking = 0;
 
-			rb_event_delete(check_splitmode, NULL);
+			rb_event_delete(check_splitmode_ev);
 		}
 		/* ON */
 		else if(newval == 1)
@@ -393,7 +393,7 @@ quote_splitmode(struct Client *source_p, char *charval)
 			splitchecking = 0;
 
 			/* we might be deactivating an automatic splitmode, so pull the event */
-			rb_event_delete(check_splitmode, NULL);
+			rb_event_delete(check_splitmode_ev);
 		}
 		/* AUTO */
 		else if(newval == 2)

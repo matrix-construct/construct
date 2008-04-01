@@ -452,6 +452,8 @@ setup_corefile(void)
 #endif
 }
 
+struct ev_entry *check_splitmode_ev = NULL;
+
 /*
  * main
  *
@@ -678,7 +680,7 @@ main(int argc, char *argv[])
 	eventAdd("check_rehash", check_rehash, NULL, 1);
 
 	if(splitmode)
-		eventAdd("check_splitmode", check_splitmode, NULL, 2);
+		check_splitmode_ev = eventAdd("check_splitmode", check_splitmode, NULL, 2);
 
 	ServerRunning = 1;
 
