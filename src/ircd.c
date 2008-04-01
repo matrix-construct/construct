@@ -244,8 +244,8 @@ set_time(void)
 	newtime.tv_sec = time(NULL);
 	
 #endif
-	if(newtime.tv_sec < CurrentTime)
-		rb_set_back_events(CurrentTime - newtime.tv_sec);
+	if(newtime.tv_sec < rb_current_time())
+		rb_set_back_events(rb_current_time() - newtime.tv_sec);
 
 	SystemTime.tv_sec = newtime.tv_sec;
 	SystemTime.tv_usec = newtime.tv_usec;
@@ -291,7 +291,7 @@ charybdis_io_loop(void)
 		 */
 
 		delay = rb_event_next();
-		if(delay <= CurrentTime)
+		if(delay <= rb_current_time())
 			rb_event_run();
 
 
@@ -634,7 +634,7 @@ main(int argc, char *argv[])
 	me.servptr = &me;
 	SetMe(&me);
 	make_server(&me);
-	startup_time = CurrentTime;
+	startup_time = rb_current_time();
 	add_to_client_hash(me.name, &me);
 	add_to_id_hash(me.id, &me);
 	me.serv->nameinfo = scache_connect(me.name, me.info, 0);

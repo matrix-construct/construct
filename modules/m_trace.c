@@ -369,7 +369,7 @@ report_this_status(struct Client *source_p, struct Client *target_p,
 		sendto_one_numeric(source_p, RPL_TRACEUNKNOWN,
 				   form_str(RPL_TRACEUNKNOWN),
 				   class_name, name, ip,
-				   CurrentTime - target_p->localClient->firsttime);
+				   rb_current_time() - target_p->localClient->firsttime);
 		cnt++;
 		break;
 
@@ -386,16 +386,16 @@ report_this_status(struct Client *source_p, struct Client *target_p,
 						   form_str(RPL_TRACEOPERATOR),
 						   class_name, name,
 						   show_ip(source_p, target_p) ? ip : "255.255.255.255",
-						   CurrentTime - target_p->localClient->lasttime,
-						   CurrentTime - target_p->localClient->last);
+						   rb_current_time() - target_p->localClient->lasttime,
+						   rb_current_time() - target_p->localClient->last);
 
 			else
 				sendto_one_numeric(source_p, RPL_TRACEUSER, 
 						   form_str(RPL_TRACEUSER),
 						   class_name, name,
 						   show_ip(source_p, target_p) ? ip : "255.255.255.255",
-						   CurrentTime - target_p->localClient->lasttime,
-						   CurrentTime - target_p->localClient->last);
+						   rb_current_time() - target_p->localClient->lasttime,
+						   rb_current_time() - target_p->localClient->last);
 			cnt++;
 		}
 		break;
@@ -410,7 +410,7 @@ report_this_status(struct Client *source_p, struct Client *target_p,
 			sendto_one_numeric(source_p, RPL_TRACESERVER, form_str(RPL_TRACESERVER),
 				   class_name, servcount, usercount, name,
 				   *(target_p->serv->by) ? target_p->serv->by : "*", "*",
-				   me.name, CurrentTime - target_p->localClient->lasttime);
+				   me.name, rb_current_time() - target_p->localClient->lasttime);
 			cnt++;
 
 		}

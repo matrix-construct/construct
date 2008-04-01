@@ -124,14 +124,14 @@ static int m_list(struct Client *client_p, struct Client *source_p, int parc, co
 	if (parc < 2 || !IsChannelName(parv[1]))
 	{
 		/* pace this due to the sheer traffic involved */
-		if (((last_used + ConfigFileEntry.pace_wait) > CurrentTime))
+		if (((last_used + ConfigFileEntry.pace_wait) > rb_current_time()))
 		{
 			sendto_one(source_p, form_str(RPL_LOAD2HI), me.name, source_p->name, "LIST");
 			sendto_one(source_p, form_str(RPL_LISTEND), me.name, source_p->name);
 			return 0;
 		}
 		else
-			last_used = CurrentTime;
+			last_used = rb_current_time();
 	}
 
 	return mo_list(client_p, source_p, parc, parv);

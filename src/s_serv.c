@@ -370,7 +370,7 @@ try_connections(void *unused)
 		 * made one successfull connection... [this algorithm is
 		 * a bit fuzzy... -- msa >;) ]
 		 */
-		if(tmp_p->hold > CurrentTime)
+		if(tmp_p->hold > rb_current_time())
 		{
 			if(next > tmp_p->hold || next == 0)
 				next = tmp_p->hold;
@@ -378,7 +378,7 @@ try_connections(void *unused)
 		}
 
 		confrq = get_con_freq(cltmp);
-		tmp_p->hold = CurrentTime + confrq;
+		tmp_p->hold = rb_current_time() + confrq;
 
 		/*
 		 * Found a CONNECT config with port specified, scan clients
@@ -1079,7 +1079,7 @@ server_estab(struct Client *client_p)
 		SetServlink(client_p);
 	}
 
-	sendto_one(client_p, "SVINFO %d %d 0 :%ld", TS_CURRENT, TS_MIN, CurrentTime);
+	sendto_one(client_p, "SVINFO %d %d 0 :%ld", TS_CURRENT, TS_MIN, rb_current_time());
 
 	client_p->servptr = &me;
 
@@ -1113,7 +1113,7 @@ server_estab(struct Client *client_p)
 	}
 
 	client_p->serv->nameinfo = scache_connect(client_p->name, client_p->info, IsHidden(client_p));
-	client_p->localClient->firsttime = CurrentTime;
+	client_p->localClient->firsttime = rb_current_time();
 	/* fixing eob timings.. -gnp */
 
 	if((rb_dlink_list_length(&lclient_list) + rb_dlink_list_length(&serv_list)) >

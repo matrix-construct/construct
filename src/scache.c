@@ -105,7 +105,7 @@ find_or_add(const char *name)
 	strlcpy(ptr->name, name, sizeof(ptr->name));
 	ptr->info[0] = '\0';
 	ptr->flags = 0;
-	ptr->known_since = CurrentTime;
+	ptr->known_since = rb_current_time();
 	ptr->last_connect = 0;
 	ptr->last_split = 0;
 
@@ -126,7 +126,7 @@ scache_connect(const char *name, const char *info, int hidden)
 		ptr->flags |= SC_HIDDEN;
 	else
 		ptr->flags &= ~SC_HIDDEN;
-	ptr->last_connect = CurrentTime;
+	ptr->last_connect = rb_current_time();
 	return ptr;
 }
 
@@ -136,7 +136,7 @@ scache_split(struct scache_entry *ptr)
 	if (ptr == NULL)
 		return;
 	ptr->flags &= ~SC_ONLINE;
-	ptr->last_split = CurrentTime;
+	ptr->last_split = rb_current_time();
 }
 
 const char *scache_get_name(struct scache_entry *ptr)
@@ -168,9 +168,9 @@ scache_send_flattened_links(struct Client *source_p)
 					!ConfigServerHide.disable_hidden)
 				show = FALSE;
 			else if (scache_ptr->flags & SC_ONLINE)
-				show = scache_ptr->known_since < CurrentTime - ConfigServerHide.links_delay;
+				show = scache_ptr->known_since < rb_current_time() - ConfigServerHide.links_delay;
 			else
-				show = scache_ptr->last_split > CurrentTime - ConfigServerHide.links_delay && scache_ptr->last_split - scache_ptr->known_since > ConfigServerHide.links_delay;
+				show = scache_ptr->last_split > rb_current_time() - ConfigServerHide.links_delay && scache_ptr->last_split - scache_ptr->known_since > ConfigServerHide.links_delay;
 			if (show)
 				sendto_one_numeric(source_p, RPL_LINKS, form_str(RPL_LINKS), 
 						   scache_ptr->name, me.name, 1, scache_ptr->info);
@@ -203,7 +203,7 @@ scache_send_missing(struct Client *source_p)
 		scache_ptr = scache_hash[i];
 		while (scache_ptr)
 		{
-			if (!(scache_ptr->flags & SC_ONLINE) && scache_ptr->last_split > CurrentTime - MISSING_TIMEOUT)
+			if (!(scache_ptr->flags & SC_ONLINE) && scache_ptr->last_split > rb_current_time() - MISSING_TIMEOUT)
 				sendto_one_numeric(source_p, RPL_MAP, "** %s (recently split)", 
 						   scache_ptr->name);
 

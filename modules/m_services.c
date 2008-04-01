@@ -204,8 +204,8 @@ me_rsfnc(struct Client *client_p, struct Client *source_p,
 	newts = atol(parv[3]);
 
 	/* timestamp is older than 15mins, ignore it */
-	if(newts < (CurrentTime - 900))
-		newts = CurrentTime - 900;
+	if(newts < (rb_current_time() - 900))
+		newts = rb_current_time() - 900;
 
 	target_p->tsinfo = newts;
 
@@ -270,7 +270,7 @@ me_nickdelay(struct Client *client_p, struct Client *source_p, int parc, const c
 		add_nd_entry(parv[2]);
 		nd = irc_dictionary_retrieve(nd_dict, parv[2]);
 		if (nd != NULL)
-			nd->expire = CurrentTime + duration;
+			nd->expire = rb_current_time() + duration;
 	}
 
 	return 0;

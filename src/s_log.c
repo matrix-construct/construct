@@ -210,7 +210,7 @@ smalldate(void)
 {
 	static char buf[MAX_DATE_STRING];
 	struct tm *lt;
-	time_t ltime = CurrentTime;
+	time_t ltime = rb_current_time();
 
 	lt = localtime(&ltime);
 

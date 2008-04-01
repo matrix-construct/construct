@@ -92,7 +92,7 @@ m_names(struct Client *client_p, struct Client *source_p, int parc, const char *
 	{
 		if(!IsOper(source_p))
 		{
-			if((last_used + ConfigFileEntry.pace_wait) > CurrentTime)
+			if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
 			{
 				sendto_one(source_p, form_str(RPL_LOAD2HI),
 					   me.name, source_p->name, "NAMES");
@@ -101,7 +101,7 @@ m_names(struct Client *client_p, struct Client *source_p, int parc, const char *
 				return 0;
 			}
 			else
-				last_used = CurrentTime;
+				last_used = rb_current_time();
 		}
 
 		names_global(source_p);

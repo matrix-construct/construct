@@ -242,7 +242,7 @@ remove_user_from_channel(struct membership *msptr)
 	if(client_p->servptr == &me)
 		rb_dlinkDelete(&msptr->locchannode, &chptr->locmembers);
 
-	chptr->users_last = CurrentTime;
+	chptr->users_last = rb_current_time();
 
 	if(!(chptr->mode.mode & MODE_PERMANENT) && rb_dlink_list_length(&chptr->members) <= 0)
 		destroy_channel(chptr);
@@ -279,7 +279,7 @@ remove_user_from_channels(struct Client *client_p)
 		if(client_p->servptr == &me)
 			rb_dlinkDelete(&msptr->locchannode, &chptr->locmembers);
 
-		chptr->users_last = CurrentTime;
+		chptr->users_last = rb_current_time();
 
 		if(!(chptr->mode.mode & MODE_PERMANENT) && rb_dlink_list_length(&chptr->members) <= 0)
 			destroy_channel(chptr);
@@ -784,7 +784,7 @@ can_join(struct Client *source_p, struct Channel *chptr, char *key)
 	/* join throttling stuff --nenolod */
 	else if(chptr->mode.join_num > 0 && chptr->mode.join_time > 0)
 	{
-		if ((CurrentTime - chptr->join_delta <= 
+		if ((rb_current_time() - chptr->join_delta <= 
 			chptr->mode.join_time) && (chptr->join_count >=
 			chptr->mode.join_num))
 			i = ERR_THROTTLE;
@@ -942,7 +942,7 @@ check_spambot_warning(struct Client *source_p, const char *name)
 	else
 	{
 		if((t_delta =
-		    (CurrentTime - source_p->localClient->last_leave_time)) >
+		    (rb_current_time() - source_p->localClient->last_leave_time)) >
 		   JOIN_LEAVE_COUNT_EXPIRE_TIME)
 		{
 			decrement_count = (t_delta / JOIN_LEAVE_COUNT_EXPIRE_TIME);
@@ -953,7 +953,7 @@ check_spambot_warning(struct Client *source_p, const char *name)
 		}
 		else
 		{
-			if((CurrentTime -
+			if((rb_current_time() -
 			    (source_p->localClient->last_join_time)) < GlobalSetOptions.spam_time)
 			{
 				/* oh, its a possible spambot */
@@ -961,9 +961,9 @@ check_spambot_warning(struct Client *source_p, const char *name)
 			}
 		}
 		if(name != NULL)
-			source_p->localClient->last_join_time = CurrentTime;
+			source_p->localClient->last_join_time = rb_current_time();
 		else
-			source_p->localClient->last_leave_time = CurrentTime;
+			source_p->localClient->last_leave_time = rb_current_time();
 	}
 }
 

@@ -89,7 +89,7 @@ ms_pong(struct Client *client_p, struct Client *source_p, int parc, const char *
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					     "End of burst (emulated) from %s (%d seconds)",
 					     source_p->name,
-					     (signed int) (CurrentTime - source_p->localClient->firsttime));
+					     (signed int) (rb_current_time() - source_p->localClient->firsttime));
 		SetEob(source_p);
 		eob_count++;
 		call_hook(h_server_eob, source_p);

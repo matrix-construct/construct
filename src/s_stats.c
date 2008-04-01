@@ -76,7 +76,7 @@ tstats(struct Client *source_p)
 		sp->is_sbr += target_p->localClient->receiveB;
 		sp->is_sks += target_p->localClient->sendK;
 		sp->is_skr += target_p->localClient->receiveK;
-		sp->is_sti += CurrentTime - target_p->localClient->firsttime;
+		sp->is_sti += rb_current_time() - target_p->localClient->firsttime;
 		sp->is_sv++;
 		if(sp->is_sbs > 1023)
 		{
@@ -98,7 +98,7 @@ tstats(struct Client *source_p)
 		sp->is_cbr += target_p->localClient->receiveB;
 		sp->is_cks += target_p->localClient->sendK;
 		sp->is_ckr += target_p->localClient->receiveK;
-		sp->is_cti += CurrentTime - target_p->localClient->firsttime;
+		sp->is_cti += rb_current_time() - target_p->localClient->firsttime;
 		sp->is_cl++;
 		if(sp->is_cbs > 1023)
 		{

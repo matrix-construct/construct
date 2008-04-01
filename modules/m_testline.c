@@ -81,7 +81,7 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 			sendto_one(source_p, form_str(RPL_TESTLINE),
 					me.name, source_p->name,
 					resv_p->hold ? 'q' : 'Q',
-					resv_p->hold ? (long) ((resv_p->hold - CurrentTime) / 60) : 0L,
+					resv_p->hold ? (long) ((resv_p->hold - rb_current_time()) / 60) : 0L,
 					resv_p->name, resv_p->passwd);
 			/* this is a false positive, so make sure it isn't counted in stats q
 			 * --nenolod
@@ -132,7 +132,7 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 				me.name, source_p->name,
 				(aconf->flags & CONF_FLAGS_TEMPORARY) ? 'd' : 'D',
 				(aconf->flags & CONF_FLAGS_TEMPORARY) ? 
-				 (long) ((aconf->hold - CurrentTime) / 60) : 0L, 
+				 (long) ((aconf->hold - rb_current_time()) / 60) : 0L, 
 				aconf->host, aconf->passwd);
 
 			return 0;
@@ -168,7 +168,7 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 				me.name, source_p->name,
 				(aconf->flags & CONF_FLAGS_TEMPORARY) ? 'k' : 'K',
 				(aconf->flags & CONF_FLAGS_TEMPORARY) ? 
-				 (long) ((aconf->hold - CurrentTime) / 60) : 0L,
+				 (long) ((aconf->hold - rb_current_time()) / 60) : 0L,
 				buf, aconf->passwd);
 			return 0;
 		}
@@ -178,7 +178,7 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 					aconf->user, aconf->host);
 			sendto_one(source_p, form_str(RPL_TESTLINE),
 				me.name, source_p->name,
-				'G', (long) ((aconf->hold - CurrentTime) / 60),
+				'G', (long) ((aconf->hold - rb_current_time()) / 60),
 				buf, aconf->passwd);
 			return 0;
 		}
@@ -190,7 +190,7 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 		sendto_one(source_p, form_str(RPL_TESTLINE),
 				me.name, source_p->name,
 				resv_p->hold ? 'q' : 'Q',
-				resv_p->hold ? (long) ((resv_p->hold - CurrentTime) / 60) : 0L,
+				resv_p->hold ? (long) ((resv_p->hold - rb_current_time()) / 60) : 0L,
 				resv_p->name, resv_p->passwd);
 
 		/* this is a false positive, so make sure it isn't counted in stats q
@@ -230,7 +230,7 @@ mo_testgecos(struct Client *client_p, struct Client *source_p, int parc, const c
 	sendto_one(source_p, form_str(RPL_TESTLINE),
 			me.name, source_p->name,
 			aconf->hold ? 'x' : 'X',
-			aconf->hold ? (long) ((aconf->hold - CurrentTime) / 60) : 0L,
+			aconf->hold ? (long) ((aconf->hold - rb_current_time()) / 60) : 0L,
 			aconf->name, aconf->passwd);
 	return 0;
 }

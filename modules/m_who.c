@@ -176,7 +176,7 @@ m_who(struct Client *client_p, struct Client *source_p, int parc, const char *pa
 	/* it has to be a global who at this point, limit it */
 	if(!IsOper(source_p))
 	{
-		if((last_used + ConfigFileEntry.pace_wait) > CurrentTime)
+		if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
 		{
 			sendto_one(source_p, form_str(RPL_LOAD2HI),
 					me.name, source_p->name, "WHO");
@@ -185,7 +185,7 @@ m_who(struct Client *client_p, struct Client *source_p, int parc, const char *pa
 			return 0;
 		}
 		else
-			last_used = CurrentTime;
+			last_used = rb_current_time();
 	}
 
 	/* Note: operspy_dont_care_user_info does not apply to

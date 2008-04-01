@@ -508,7 +508,7 @@ static void
 apply_tkline(struct Client *source_p, struct ConfItem *aconf,
 	     const char *reason, const char *oper_reason, const char *current_date, int tkline_time)
 {
-	aconf->hold = CurrentTime + tkline_time;
+	aconf->hold = rb_current_time() + tkline_time;
 	add_temp_kline(aconf);
 
 	/* no oper reason.. */

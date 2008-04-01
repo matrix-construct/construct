@@ -78,11 +78,11 @@ ms_svinfo(struct Client *client_p, struct Client *source_p, int parc, const char
 	}
 
 	/*
-	 * since we're here, might as well set CurrentTime while we're at it
+	 * since we're here, might as well set rb_current_time() while we're at it
 	 */
 	set_time();
 	theirtime = atol(parv[4]);
-	deltat = abs(theirtime - CurrentTime);
+	deltat = abs(theirtime - rb_current_time());
 
 	if(deltat > ConfigFileEntry.ts_max_delta)
 	{
@@ -90,13 +90,13 @@ ms_svinfo(struct Client *client_p, struct Client *source_p, int parc, const char
 				     "Link %s dropped, excessive TS delta"
 				     " (my TS=%ld, their TS=%ld, delta=%d)",
 				     get_server_name(source_p, SHOW_IP),
-				     (long) CurrentTime, (long) theirtime, deltat);
+				     (long) rb_current_time(), (long) theirtime, deltat);
 		ilog(L_SERVER,
 		     "Link %s dropped, excessive TS delta"
 		     " (my TS=%ld, their TS=%ld, delta=%d)",
-		     log_client_name(source_p, SHOW_IP), (long) CurrentTime, (long) theirtime, deltat);
+		     log_client_name(source_p, SHOW_IP), (long) rb_current_time(), (long) theirtime, deltat);
 		snprintf(squitreason, sizeof squitreason, "Excessive TS delta (my TS=%ld, their TS=%ld, delta=%d)",
-				(long) CurrentTime, (long) theirtime, deltat);
+				(long) rb_current_time(), (long) theirtime, deltat);
 		exit_client(source_p, source_p, source_p, squitreason);
 		return 0;
 	}
@@ -106,7 +106,7 @@ ms_svinfo(struct Client *client_p, struct Client *source_p, int parc, const char
 		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
 				     "Link %s notable TS delta"
 				     " (my TS=%ld, their TS=%ld, delta=%d)",
-				     source_p->name, (long) CurrentTime, (long) theirtime, deltat);
+				     source_p->name, (long) rb_current_time(), (long) theirtime, deltat);
 	}
 
 	return 0;

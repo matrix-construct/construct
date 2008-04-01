@@ -154,7 +154,7 @@ make_client(struct Client *from)
 		SetMyConnect(client_p);
 		client_p->localClient = localClient;
 
-		client_p->localClient->lasttime = client_p->localClient->firsttime = CurrentTime;
+		client_p->localClient->lasttime = client_p->localClient->firsttime = rb_current_time();
 
 		client_p->localClient->F = NULL;
 		client_p->localClient->ctrlfd = -1;
@@ -303,13 +303,13 @@ check_pings_list(rb_dlink_list * list)
 
 		ping = get_client_ping(client_p);
 
-		if(ping < (CurrentTime - client_p->localClient->lasttime))
+		if(ping < (rb_current_time() - client_p->localClient->lasttime))
 		{
 			/*
 			 * If the client/server hasnt talked to us in 2*ping seconds
 			 * and it has a ping time, then close its connection.
 			 */
-			if(((CurrentTime - client_p->localClient->lasttime) >= (2 * ping)
+			if(((rb_current_time() - client_p->localClient->lasttime) >= (2 * ping)
 			    && (client_p->flags & FLAGS_PINGSENT)))
 			{
 				if(IsServer(client_p))
@@ -323,7 +323,7 @@ check_pings_list(rb_dlink_list * list)
 				}
 				(void) rb_snprintf(scratch, sizeof(scratch),
 						  "Ping timeout: %d seconds",
-						  (int) (CurrentTime - client_p->localClient->lasttime));
+						  (int) (rb_current_time() - client_p->localClient->lasttime));
 
 				exit_client(client_p, client_p, &me, scratch);
 				continue;
@@ -337,7 +337,7 @@ check_pings_list(rb_dlink_list * list)
 				 */
 				client_p->flags |= FLAGS_PINGSENT;
 				/* not nice but does the job */
-				client_p->localClient->lasttime = CurrentTime - ping;
+				client_p->localClient->lasttime = rb_current_time() - ping;
 				sendto_one(client_p, "PING :%s", me.name);
 			}
 		}
@@ -373,7 +373,7 @@ check_unknowns_list(rb_dlink_list * list)
 		 */
 
 		timeout = IsAnyServer(client_p) ? ConfigFileEntry.connect_timeout : 30;
-		if((CurrentTime - client_p->localClient->firsttime) > timeout)
+		if((rb_current_time() - client_p->localClient->firsttime) > timeout)
 		{
 			if(IsAnyServer(client_p))
 			{
@@ -1553,10 +1553,10 @@ exit_local_server(struct Client *client_p, struct Client *source_p, struct Clien
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s was connected"
 			     " for %ld seconds.  %d/%d sendK/recvK.",
-			     source_p->name, CurrentTime - source_p->localClient->firsttime, sendk, recvk);
+			     source_p->name, rb_current_time() - source_p->localClient->firsttime, sendk, recvk);
 
 	ilog(L_SERVER, "%s was connected for %ld seconds.  %d/%d sendK/recvK.",
-	     source_p->name, CurrentTime - source_p->localClient->firsttime, sendk, recvk);
+	     source_p->name, rb_current_time() - source_p->localClient->firsttime, sendk, recvk);
         
 	if(has_id(source_p))
 		del_from_id_hash(source_p->id, source_p);
@@ -1603,10 +1603,10 @@ exit_local_client(struct Client *client_p, struct Client *source_p, struct Clien
                         show_ip(NULL, source_p) ? source_p->sockhost : "255.255.255.255",
 			comment);
 
-	on_for = CurrentTime - source_p->localClient->firsttime;
+	on_for = rb_current_time() - source_p->localClient->firsttime;
 
 	ilog(L_USER, "%s (%3lu:%02lu:%02lu): %s!%s@%s %d/%d",
-		myctime(CurrentTime), on_for / 3600,
+		myctime(rb_current_time()), on_for / 3600,
 		(on_for % 3600) / 60, on_for % 60,
 		source_p->name, source_p->username, source_p->host,
 		source_p->localClient->sendK, source_p->localClient->receiveK);
@@ -2026,7 +2026,7 @@ close_connection(struct Client *client_p)
 		ServerStats->is_sbr += client_p->localClient->receiveB;
 		ServerStats->is_sks += client_p->localClient->sendK;
 		ServerStats->is_skr += client_p->localClient->receiveK;
-		ServerStats->is_sti += CurrentTime - client_p->localClient->firsttime;
+		ServerStats->is_sti += rb_current_time() - client_p->localClient->firsttime;
 		if(ServerStats->is_sbs > 2047)
 		{
 			ServerStats->is_sks += (ServerStats->is_sbs >> 10);
@@ -2064,7 +2064,7 @@ close_connection(struct Client *client_p)
 		ServerStats->is_cbr += client_p->localClient->receiveB;
 		ServerStats->is_cks += client_p->localClient->sendK;
 		ServerStats->is_ckr += client_p->localClient->receiveK;
-		ServerStats->is_cti += CurrentTime - client_p->localClient->firsttime;
+		ServerStats->is_cti += rb_current_time() - client_p->localClient->firsttime;
 		if(ServerStats->is_cbs > 2047)
 		{
 			ServerStats->is_cks += (ServerStats->is_cbs >> 10);

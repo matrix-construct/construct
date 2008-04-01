@@ -693,7 +693,7 @@ expire_temp_rxlines(void *unused)
 	{
 		aconf = ptr->data;
 
-		if(aconf->hold && aconf->hold <= CurrentTime)
+		if(aconf->hold && aconf->hold <= rb_current_time())
 		{
 			if(ConfigFileEntry.tkline_expire_notices)
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
@@ -710,7 +710,7 @@ expire_temp_rxlines(void *unused)
 	{
 		aconf = ptr->data;
 
-		if(aconf->hold && aconf->hold <= CurrentTime)
+		if(aconf->hold && aconf->hold <= rb_current_time())
 		{
 			if(ConfigFileEntry.tkline_expire_notices)
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
@@ -725,7 +725,7 @@ expire_temp_rxlines(void *unused)
 	{
 		aconf = ptr->data;
 
-		if(aconf->hold && aconf->hold <= CurrentTime)
+		if(aconf->hold && aconf->hold <= rb_current_time())
 		{
 			if(ConfigFileEntry.tkline_expire_notices)
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
@@ -754,7 +754,7 @@ add_nd_entry(const char *name)
 	nd = BlockHeapAlloc(nd_heap);
 	
 	strlcpy(nd->name, name, sizeof(nd->name));
-	nd->expire = CurrentTime + ConfigFileEntry.nick_delay;
+	nd->expire = rb_current_time() + ConfigFileEntry.nick_delay;
 
 	/* this list is ordered */
 	rb_dlinkAddTail(nd, &nd->lnode, &nd_list);
@@ -785,7 +785,7 @@ expire_nd_entries(void *unused)
 		/* this list is ordered - we can stop when we hit the first
 		 * entry that doesnt expire..
 		 */
-		if(nd->expire > CurrentTime)
+		if(nd->expire > rb_current_time())
 			return;
 
 		free_nd_entry(nd);
@@ -808,7 +808,7 @@ add_tgchange(const char *host)
 	target->pnode = pnode;
 
 	target->ip = rb_strdup(host);
-	target->expiry = CurrentTime + (60*60*12);
+	target->expiry = rb_current_time() + (60*60*12);
 
 	rb_dlinkAdd(target, &target->node, &tgchange_list);
 }

@@ -69,7 +69,7 @@ m_whowas(struct Client *client_p, struct Client *source_p, int parc, const char 
 
 	if(!IsOper(source_p))
 	{
-		if((last_used + ConfigFileEntry.pace_wait_simple) > CurrentTime)
+		if((last_used + ConfigFileEntry.pace_wait_simple) > rb_current_time())
 		{
 			sendto_one(source_p, form_str(RPL_LOAD2HI),
 				   me.name, source_p->name, "WHOWAS");
@@ -78,7 +78,7 @@ m_whowas(struct Client *client_p, struct Client *source_p, int parc, const char 
 			return 0;
 		}
 		else
-			last_used = CurrentTime;
+			last_used = rb_current_time();
 	}
 
 

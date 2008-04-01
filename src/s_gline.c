@@ -121,7 +121,7 @@ expire_glines()
 		kill_ptr = gline_node->data;
 
 		/* these are in chronological order */
-		if(kill_ptr->hold > CurrentTime)
+		if(kill_ptr->hold > rb_current_time())
 			break;
 
 		rb_dlinkDestroy(gline_node, &glines);
@@ -151,7 +151,7 @@ expire_pending_glines()
 		glp_ptr = pending_node->data;
 
 		if(((glp_ptr->last_gline_time + GLINE_PENDING_EXPIRE) <=
-		    CurrentTime) || find_is_glined(glp_ptr->host, glp_ptr->user))
+		    rb_current_time()) || find_is_glined(glp_ptr->host, glp_ptr->user))
 
 		{
 			rb_free(glp_ptr->reason1);

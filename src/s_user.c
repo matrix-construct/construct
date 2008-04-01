@@ -261,7 +261,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 	if(rb_dlink_list_length(&source_p->preClient->dnsbl_queries) > 0)
 		return -1;
 
-	client_p->localClient->last = CurrentTime;
+	client_p->localClient->last = rb_current_time();
 	/* Straight up the maximum rate of flooding... */
 	source_p->localClient->allow_read = MAX_FLOOD_BURST;
 

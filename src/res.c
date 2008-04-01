@@ -212,7 +212,7 @@ static time_t timeout_query_list(time_t now)
  */
 static void timeout_resolver(void *notused)
 {
-	timeout_query_list(CurrentTime);
+	timeout_query_list(rb_current_time());
 }
 
 /*
@@ -241,7 +241,7 @@ static void start_resolver(void)
 void init_resolver(void)
 {
 #ifdef HAVE_SRAND48
-	srand48(CurrentTime);
+	srand48(rb_current_time());
 #endif
 	start_resolver();
 }
@@ -298,7 +298,7 @@ static struct reslist *make_request(struct DNSQuery *query)
 {
 	struct reslist *request = rb_malloc(sizeof(struct reslist));
 
-	request->sentat = CurrentTime;
+	request->sentat = rb_current_time();
 	request->retries = 3;
 	request->resend = 1;
 	request->timeout = 4;	/* start at 4 and exponential inc. */

@@ -562,7 +562,7 @@ set_local_gline(struct Client *source_p, const char *user,
 	aconf->passwd = rb_strdup(buffer);
 	aconf->user = rb_strdup(user);
 	aconf->host = rb_strdup(host);
-	aconf->hold = CurrentTime + ConfigFileEntry.gline_time;
+	aconf->hold = rb_current_time() + ConfigFileEntry.gline_time;
 	add_gline(aconf);
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
@@ -651,8 +651,8 @@ majority_gline(struct Client *source_p, const char *user,
 					sizeof(pending->oper_host2));
 				pending->reason2 = rb_strdup(reason);
 				pending->oper_server2 = scache_get_name(source_p->servptr->serv->nameinfo);
-				pending->last_gline_time = CurrentTime;
-				pending->time_request2 = CurrentTime;
+				pending->last_gline_time = rb_current_time();
+				pending->time_request2 = rb_current_time();
 				return NO;
 			}
 		}
@@ -676,8 +676,8 @@ majority_gline(struct Client *source_p, const char *user,
 	pending->reason1 = rb_strdup(reason);
 	pending->reason2 = NULL;
 
-	pending->last_gline_time = CurrentTime;
-	pending->time_request1 = CurrentTime;
+	pending->last_gline_time = rb_current_time();
+	pending->time_request1 = rb_current_time();
 
 	rb_dlinkAddAlloc(pending, &pending_glines);
 

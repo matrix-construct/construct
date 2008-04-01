@@ -82,12 +82,12 @@ static void blacklist_dns_callback(void *vptr, struct DNSReply *reply)
 		if (reply->addr.ss_family == AF_INET &&
 				!memcmp(&((struct sockaddr_in *)&reply->addr)->sin_addr, "\177\0\0", 3))
 			listed = TRUE;
-		else if (blcptr->blacklist->lastwarning + 3600 < CurrentTime)
+		else if (blcptr->blacklist->lastwarning + 3600 < rb_current_time())
 		{
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					"Garbage reply from blacklist %s",
 					blcptr->blacklist->host);
-			blcptr->blacklist->lastwarning = CurrentTime;
+			blcptr->blacklist->lastwarning = rb_current_time();
 		}
 	}
 

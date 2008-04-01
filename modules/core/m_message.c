@@ -446,7 +446,7 @@ msg_channel(int p_or_n, const char *command,
 	{
 		/* idle time shouldnt be reset by notices --fl */
 		if(p_or_n != NOTICE)
-			source_p->localClient->last = CurrentTime;
+			source_p->localClient->last = rb_current_time();
 	}
 
 	if(chptr->mode.mode & MODE_NOCOLOR)
@@ -530,7 +530,7 @@ msg_channel_flags(int p_or_n, const char *command, struct Client *client_p,
 	{
 		/* idletime shouldnt be reset by notice --fl */
 		if(p_or_n != NOTICE)
-			source_p->localClient->last = CurrentTime;
+			source_p->localClient->last = rb_current_time();
 	}
 
 	sendto_channel_flags(client_p, type, source_p, chptr, "%s %c%s :%s",
@@ -551,7 +551,7 @@ expire_tgchange(void *unused)
 	{
 		target = ptr->data;
 
-		if(target->expiry < CurrentTime)
+		if(target->expiry < rb_current_time())
 		{
 			rb_dlinkDelete(ptr, &tgchange_list);
 			rb_patricia_remove(tgchange_tree, target->pnode);
@@ -576,7 +576,7 @@ add_target(struct Client *source_p, struct Client *target_p)
 	 *
 	 * XXX: is this controversial?
 	 */
-	if(source_p->localClient->target_last > CurrentTime && IsOper(target_p))
+	if(source_p->localClient->target_last > rb_current_time() && IsOper(target_p))
 		return 1;
 
 	hashv = fnv_hash_upper((const unsigned char *)use_id(target_p), 32);
@@ -597,17 +597,17 @@ add_target(struct Client *source_p, struct Client *target_p)
 		if(!IsTGChange(source_p))
 		{
 			SetTGChange(source_p);
-			source_p->localClient->target_last = CurrentTime;
+			source_p->localClient->target_last = rb_current_time();
 		}
 		/* clear as many targets as we can */
-		else if((i = (CurrentTime - source_p->localClient->target_last) / 60))
+		else if((i = (rb_current_time() - source_p->localClient->target_last) / 60))
 		{
 			if(i > USED_TARGETS(source_p))
 				USED_TARGETS(source_p) = 0;
 			else
 				USED_TARGETS(source_p) -= i;
 
-			source_p->localClient->target_last = CurrentTime;
+			source_p->localClient->target_last = rb_current_time();
 		}
 		/* cant clear any, full target list */
 		else if(USED_TARGETS(source_p) == 10)
@@ -622,7 +622,7 @@ add_target(struct Client *source_p, struct Client *target_p)
 	 */
 	else
 	{
-		source_p->localClient->target_last = CurrentTime;
+		source_p->localClient->target_last = rb_current_time();
 		SetTGChange(source_p);
 	}
 
@@ -653,7 +653,7 @@ msg_client(int p_or_n, const char *command,
 		/* reset idle time for message only if its not to self 
 		 * and its not a notice */
 		if(p_or_n != NOTICE)
-			source_p->localClient->last = CurrentTime;
+			source_p->localClient->last = rb_current_time();
 
 		/* target change stuff, dont limit ctcp replies as that
 		 * would allow people to start filling up random users
@@ -716,7 +716,7 @@ msg_client(int p_or_n, const char *command,
 				}
 
 				if((target_p->localClient->last_caller_id_time +
-				    ConfigFileEntry.caller_id_wait) < CurrentTime)
+				    ConfigFileEntry.caller_id_wait) < rb_current_time())
 				{
 					if(p_or_n != NOTICE)
 						sendto_one_numeric(source_p, RPL_TARGNOTIFY,
@@ -727,7 +727,7 @@ msg_client(int p_or_n, const char *command,
 						   me.name, target_p->name, source_p->name,
 						   source_p->username, source_p->host);
 
-					target_p->localClient->last_caller_id_time = CurrentTime;
+					target_p->localClient->last_caller_id_time = rb_current_time();
 				}
 				/* Only so opers can watch for floods */
 				(void) flood_attack_client(p_or_n, source_p, target_p);
@@ -768,11 +768,11 @@ flood_attack_client(int p_or_n, struct Client *source_p, struct Client *target_p
 
 	if(GlobalSetOptions.floodcount && MyConnect(target_p) && IsClient(source_p))
 	{
-		if((target_p->localClient->first_received_message_time + 1) < CurrentTime)
+		if((target_p->localClient->first_received_message_time + 1) < rb_current_time())
 		{
-			delta = CurrentTime - target_p->localClient->first_received_message_time;
+			delta = rb_current_time() - target_p->localClient->first_received_message_time;
 			target_p->localClient->received_number_of_privmsgs -= delta;
-			target_p->localClient->first_received_message_time = CurrentTime;
+			target_p->localClient->first_received_message_time = rb_current_time();
 			if(target_p->localClient->received_number_of_privmsgs <= 0)
 			{
 				target_p->localClient->received_number_of_privmsgs = 0;
@@ -823,11 +823,11 @@ flood_attack_channel(int p_or_n, struct Client *source_p, struct Channel *chptr,
 
 	if(GlobalSetOptions.floodcount && MyClient(source_p))
 	{
-		if((chptr->first_received_message_time + 1) < CurrentTime)
+		if((chptr->first_received_message_time + 1) < rb_current_time())
 		{
-			delta = CurrentTime - chptr->first_received_message_time;
+			delta = rb_current_time() - chptr->first_received_message_time;
 			chptr->received_number_of_privmsgs -= delta;
-			chptr->first_received_message_time = CurrentTime;
+			chptr->first_received_message_time = rb_current_time();
 			if(chptr->received_number_of_privmsgs <= 0)
 			{
 				chptr->received_number_of_privmsgs = 0;

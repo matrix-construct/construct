@@ -262,7 +262,7 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 			sendto_one(source_p, form_str(ERR_TOOMANYCHANNELS),
 				   me.name, source_p->name, name);
 			if(successful_join_count)
-				source_p->localClient->last_join_time = CurrentTime;
+				source_p->localClient->last_join_time = rb_current_time();
 			return 0;
 		}
 
@@ -303,10 +303,10 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		/* add the user to the channel */
 		add_user_to_channel(chptr, source_p, flags);
 		if (chptr->mode.join_num &&
-			CurrentTime - chptr->join_delta >= chptr->mode.join_time)
+			rb_current_time() - chptr->join_delta >= chptr->mode.join_time)
 		{
 			chptr->join_count = 0;
-			chptr->join_delta = CurrentTime;
+			chptr->join_delta = rb_current_time();
 		}
 		chptr->join_count++;
 
@@ -320,7 +320,7 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		/* its a new channel, set +nt and burst. */
 		if(flags & CHFL_CHANOP)
 		{
-			chptr->channelts = CurrentTime;
+			chptr->channelts = rb_current_time();
 			chptr->mode.mode |= MODE_TOPICLIMIT;
 			chptr->mode.mode |= MODE_NOPRIVMSGS;
 
@@ -367,7 +367,7 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		channel_member_names(chptr, source_p, 1);
 
 		if(successful_join_count)
-			source_p->localClient->last_join_time = CurrentTime;
+			source_p->localClient->last_join_time = rb_current_time();
 
 		hook_info.client = source_p;
 		hook_info.chptr = chptr;
@@ -494,10 +494,10 @@ ms_join(struct Client *client_p, struct Client *source_p, int parc, const char *
 	{
 		add_user_to_channel(chptr, source_p, CHFL_PEON);
 		if (chptr->mode.join_num &&
-			CurrentTime - chptr->join_delta >= chptr->mode.join_time)
+			rb_current_time() - chptr->join_delta >= chptr->mode.join_time)
 		{
 			chptr->join_count = 0;
-			chptr->join_delta = CurrentTime;
+			chptr->join_delta = rb_current_time();
 		}
 		chptr->join_count++;
 		sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@%s JOIN :%s",

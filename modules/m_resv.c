@@ -230,7 +230,7 @@ parse_resv(struct Client *source_p, const char *name,
 
 		if(temp_time > 0)
 		{
-			aconf->hold = CurrentTime + temp_time;
+			aconf->hold = rb_current_time() + temp_time;
 
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "%s added temporary %d min. RESV for [%s] [%s]",
@@ -288,7 +288,7 @@ parse_resv(struct Client *source_p, const char *name,
 
 		if(temp_time > 0)
 		{
-			aconf->hold = CurrentTime + temp_time;
+			aconf->hold = rb_current_time() + temp_time;
 
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "%s added temporary %d min. RESV for [%s] [%s]",

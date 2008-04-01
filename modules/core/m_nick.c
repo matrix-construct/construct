@@ -734,7 +734,7 @@ set_initial_nick(struct Client *client_p, struct Client *source_p, char *nick)
 	char note[NICKLEN + 10];
 
 	/* This had to be copied here to avoid problems.. */
-	source_p->tsinfo = CurrentTime;
+	source_p->tsinfo = rb_current_time();
 	if(source_p->name[0])
 		del_from_client_hash(source_p->name, source_p);
 
@@ -774,10 +774,10 @@ change_local_nick(struct Client *client_p, struct Client *source_p,
 					nick, chptr->chname);
 			return;
 		}
-		if((source_p->localClient->last_nick_change + ConfigFileEntry.max_nick_time) < CurrentTime)
+		if((source_p->localClient->last_nick_change + ConfigFileEntry.max_nick_time) < rb_current_time())
 			source_p->localClient->number_of_nick_changes = 0;
 
-		source_p->localClient->last_nick_change = CurrentTime;
+		source_p->localClient->last_nick_change = rb_current_time();
 		source_p->localClient->number_of_nick_changes++;
 
 		if(ConfigFileEntry.anti_nick_flood && !IsOper(source_p) &&
@@ -796,10 +796,10 @@ change_local_nick(struct Client *client_p, struct Client *source_p,
 	if(!samenick)
 	{
 		/* force the TS to increase -- jilles */
-		if (source_p->tsinfo >= CurrentTime)
+		if (source_p->tsinfo >= rb_current_time())
 			source_p->tsinfo++;
 		else
-			source_p->tsinfo = CurrentTime;
+			source_p->tsinfo = rb_current_time();
 		monitor_signoff(source_p);
 		/* we only do bancache for local users -- jilles */
 		if(source_p->user)
@@ -870,7 +870,7 @@ change_remote_nick(struct Client *client_p, struct Client *source_p,
 	/* client changing their nick - dont reset ts if its same */
 	if(!samenick)
 	{
-		source_p->tsinfo = newts ? newts : CurrentTime;
+		source_p->tsinfo = newts ? newts : rb_current_time();
 		monitor_signoff(source_p);
 	}
 

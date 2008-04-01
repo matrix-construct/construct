@@ -128,7 +128,7 @@ m_challenge(struct Client *client_p, struct Client *source_p, int parc, const ch
 		if(!source_p->localClient->challenge)
 			return 0;
 
-		if((CurrentTime - source_p->localClient->chal_time) > CHALLENGE_EXPIRES)
+		if((rb_current_time() - source_p->localClient->chal_time) > CHALLENGE_EXPIRES)
 		{
 			sendto_one(source_p, form_str(ERR_PASSWDMISMATCH), me.name, source_p->name);
 			ilog(L_FOPER, "EXPIRED CHALLENGE (%s) by (%s!%s@%s) (%s)",
@@ -226,7 +226,7 @@ m_challenge(struct Client *client_p, struct Client *source_p, int parc, const ch
 	if(!generate_challenge(&challenge, &(source_p->localClient->challenge), oper_p->rsa_pubkey))
 	{
 		char *chal = challenge;
-		source_p->localClient->chal_time = CurrentTime;
+		source_p->localClient->chal_time = rb_current_time();
 		for(;;)
 		{
 			cnt = strlcpy(chal_line, chal, CHALLENGE_WIDTH);

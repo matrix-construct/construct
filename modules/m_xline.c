@@ -321,7 +321,7 @@ apply_xline(struct Client *source_p, const char *name, const char *reason,
 
 	if(temp_time > 0)
 	{
-		aconf->hold = CurrentTime + temp_time;
+		aconf->hold = rb_current_time() + temp_time;
 
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "%s added temporary %d min. X-Line for [%s] [%s]",
@@ -373,7 +373,7 @@ write_xline(struct Client *source_p, struct ConfItem *aconf)
 
 	rb_sprintf(buffer, "\"%s\",\"0\",\"%s\",\"%s\",%ld\n",
 		   aconf->name, aconf->passwd,
-		   get_oper_name(source_p), CurrentTime);
+		   get_oper_name(source_p), rb_current_time());
 
 	if(fputs(buffer, out) == -1)
 	{
