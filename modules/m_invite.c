@@ -214,10 +214,10 @@ add_invite(struct Channel *chptr, struct Client *who)
 	}
 
 	/* add user to channel invite list */
-	dlinkAddAlloc(who, &chptr->invites);
+	rb_dlinkAddAlloc(who, &chptr->invites);
 
 	/* add channel to user invite list */
-	dlinkAddAlloc(chptr, &who->user->invited);
+	rb_dlinkAddAlloc(chptr, &who->user->invited);
 }
 
 

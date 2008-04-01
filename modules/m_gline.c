@@ -681,7 +681,7 @@ majority_gline(struct Client *source_p, const char *user,
 	pending->last_gline_time = CurrentTime;
 	pending->time_request1 = CurrentTime;
 
-	dlinkAddAlloc(pending, &pending_glines);
+	rb_dlinkAddAlloc(pending, &pending_glines);
 
 	return NO;
 }

@@ -60,7 +60,7 @@ rb_dlink_list resv_conf_list;	/* nicks only! */
 rb_dlink_list nd_list;		/* nick delay */
 rb_dlink_list tgchange_list;
 
-patricia_tree_t *tgchange_tree;
+rb_patricia_tree_t *tgchange_tree;
 
 static BlockHeap *nd_heap = NULL;
 

@@ -284,7 +284,7 @@ parse_resv(struct Client *source_p, const char *name,
 		aconf->port = 0;
 		DupString(aconf->name, name);
 		DupString(aconf->passwd, reason);
-		dlinkAddAlloc(aconf, &resv_conf_list);
+		rb_dlinkAddAlloc(aconf, &resv_conf_list);
 
 		if(temp_time > 0)
 		{

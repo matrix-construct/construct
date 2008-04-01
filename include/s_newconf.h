@@ -54,7 +54,7 @@ extern rb_dlink_list resv_conf_list;
 extern rb_dlink_list nd_list;
 extern rb_dlink_list tgchange_list;
 
-struct _patricia_tree_t *tgchange_tree;
+struct _rb_patricia_tree_t *tgchange_tree;
 
 extern void init_s_newconf(void);
 extern void clear_s_newconf(void);

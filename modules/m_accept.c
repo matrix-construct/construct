@@ -208,8 +208,8 @@ build_nicklist(struct Client *source_p, char *addbuf, char *delbuf, const char *
 static void
 add_accept(struct Client *source_p, struct Client *target_p)
 {
-	dlinkAddAlloc(target_p, &source_p->localClient->allow_list);
-	dlinkAddAlloc(source_p, &target_p->on_allow_list);
+	rb_dlinkAddAlloc(target_p, &source_p->localClient->allow_list);
+	rb_dlinkAddAlloc(source_p, &target_p->on_allow_list);
 }
 
 
