@@ -559,6 +559,7 @@ main(int argc, char *argv[])
 	/* Init the event subsystem */
 	init_sys();
 	rb_lib_init(ircd_log_cb, ircd_restart_cb, ircd_die_cb, !server_state_foreground, maxconnections, DNODE_HEAP_SIZE, FD_HEAP_SIZE);
+	rb_linebuf_init(LINEBUF_HEAP_SIZE);
 
 	init_main_logfile();
 	newconf_init();
