@@ -103,7 +103,7 @@ init_auth(void)
 	/* This hook takes a struct Client for its argument */
 	memset(&auth_poll_list, 0, sizeof(auth_poll_list));
 	rb_event_addish("timeout_auth_queries_event", timeout_auth_queries_event, NULL, 1);
-	auth_heap = rb_bh_create(sizeof(struct AuthRequest), LCLIENT_HEAP_SIZE);
+	auth_heap = rb_bh_create(sizeof(struct AuthRequest), LCLIENT_HEAP_SIZE, "auth_heap");
 }
 
 /*
@@ -114,7 +114,7 @@ make_auth_request(struct Client *client)
 {
 	struct AuthRequest *request = rb_bh_alloc(auth_heap);
 	client->localClient->auth_request = request;
-	request->fd = -1;
+	request->F = NULL;
 	request->client = client;
 	request->timeout = rb_current_time() + ConfigFileEntry.connect_timeout;
 	return request;
@@ -145,8 +145,6 @@ release_auth_client(struct AuthRequest *auth)
 	client->localClient->auth_request = NULL;
 	rb_dlinkDelete(&auth->node, &auth_poll_list);
 	free_auth_request(auth);	
-	if(client->localClient->F->fd > highest_fd)
-		highest_fd = client->localClient->F->fd;
 
 	/*
 	 * When a client has auth'ed, we want to start reading what it sends
@@ -154,9 +152,8 @@ release_auth_client(struct AuthRequest *auth)
 	 *     -- adrian
 	 */
 	client->localClient->allow_read = MAX_FLOOD;
-	rb_setflush(client->localClient->F->fd, 1000, flood_recalc, client);
 	rb_dlinkAddTail(client, &client->node, &global_client_list);
-	read_packet(client->localClient->F->fd, client);
+	read_packet(client->localClient->F, client);
 }
 
 /*
@@ -245,8 +242,8 @@ auth_error(struct AuthRequest *auth)
 {
 	++ServerStats->is_abad;
 
-	rb_close(auth->fd);
-	auth->fd = -1;
+	rb_close(auth->F);
+	auth->F = NULL;
 
 	ClearAuth(auth);
 	sendheader(auth->client, REPORT_FAIL_ID);
@@ -265,16 +262,16 @@ auth_error(struct AuthRequest *auth)
 static int
 start_auth_query(struct AuthRequest *auth)
 {
-	struct rb_sockaddr_storage localaddr;
+	struct rb_sockaddr_storage localaddr, destaddr;
 	socklen_t locallen = sizeof(struct rb_sockaddr_storage);
-	int fd;
+	rb_fde_t *F;
 	int family;
 	
 	if(IsAnyDead(auth->client))
 		return 0;
 	
 	family = auth->client->localClient->ip.ss_family;
-	if((fd = rb_socket(family, SOCK_STREAM, 0, "ident")) == -1)
+	if((F = rb_socket(family, SOCK_STREAM, 0, "ident")) == NULL)
 	{
 		report_error("creating auth stream socket %s:%s",
 			     get_client_name(auth->client, SHOW_IP), 
@@ -286,12 +283,12 @@ start_auth_query(struct AuthRequest *auth)
 	/*
 	 * TBD: this is a pointless arbitrary limit .. we either have a socket or not. -nenolod
 	 */
-	if((rb_get_maxconnections() - 10) < fd)
+	if((maxconnections - 10) < rb_get_fd(F))
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Can't allocate fd for auth on %s",
 				     get_client_name(auth->client, SHOW_IP));
-		rb_close(fd);
+		rb_close(F);
 		return 0;
 	}
 
@@ -305,10 +302,10 @@ start_auth_query(struct AuthRequest *auth)
 	 * and machines with multiple IP addresses are common now
 	 */
 	memset(&localaddr, 0, locallen);
-	getsockname(auth->client->localClient->F->fd,
+	getsockname(rb_get_fd(auth->client->localClient->F),
 		    (struct sockaddr *) &localaddr, &locallen);
 	
-	mangle_mapped_sockaddr((struct sockaddr *)&localaddr);
+	/* XXX mangle_mapped_sockaddr((struct sockaddr *)&localaddr); */
 #ifdef IPV6
 	if(localaddr.ss_family == AF_INET6)
 	{
@@ -316,14 +313,23 @@ start_auth_query(struct AuthRequest *auth)
 	} else
 #endif
 	((struct sockaddr_in *)&localaddr)->sin_port = 0;
+
+	destaddr = auth->client->localClient->ip;
+#ifdef IPV6
+	if(localaddr.ss_family == AF_INET6)
+	{
+		((struct sockaddr_in6 *)&localaddr)->sin6_port = 113;
+	} else
+#endif
+	((struct sockaddr_in *)&localaddr)->sin_port = 113;
 	
-	auth->fd = fd;
+	auth->F = F;
 	SetAuthConnect(auth);
 
-	rb_connect_tcp(fd, auth->client->sockhost, 113,
-			 (struct sockaddr *) &localaddr, GET_SS_LEN(localaddr),
+	rb_connect_tcp(F, (struct sockaddr *)&destaddr,
+			 (struct sockaddr *) &localaddr, GET_SS_LEN(&localaddr),
 			 auth_connect_callback, auth, 
-			 localaddr.ss_family, GlobalSetOptions.ident_timeout);
+			 GlobalSetOptions.ident_timeout);
 	return 1;		/* We suceed here for now */
 }
 
@@ -435,8 +441,8 @@ timeout_auth_queries_event(void *notused)
 
 		if(auth->timeout < rb_current_time())
 		{
-			if(auth->fd >= 0)
-				rb_close(auth->fd);
+			if(auth->F != NULL)
+				rb_close(auth->F);
 
 			if(IsDoingAuth(auth))
 			{
@@ -470,7 +476,7 @@ timeout_auth_queries_event(void *notused)
  * problems arise. -avalon
  */
 static void
-auth_connect_callback(int fd, int error, void *data)
+auth_connect_callback(rb_fde_t *F, int error, void *data)
 {
 	struct AuthRequest *auth = data;
 	struct sockaddr_in us;
@@ -480,7 +486,7 @@ auth_connect_callback(int fd, int error, void *data)
 	socklen_t tlen = sizeof(struct sockaddr_in);
 
 	/* Check the error */
-	if(error != COMM_OK)
+	if(error != RB_OK)
 	{
 		/* We had an error during connection :( */
 		auth_error(auth);
@@ -488,9 +494,9 @@ auth_connect_callback(int fd, int error, void *data)
 	}
 
 	if(getsockname
-	   (auth->client->localClient->F->fd, (struct sockaddr *) &us,
+	   (rb_get_fd(auth->client->localClient->F), (struct sockaddr *) &us,
 	    (socklen_t *) & ulen)
-	   || getpeername(auth->client->localClient->F->fd,
+	   || getpeername(rb_get_fd(auth->client->localClient->F),
 			  (struct sockaddr *) &them, (socklen_t *) & tlen))
 	{
 		ilog(L_IOERROR, "auth get{sock,peer}name error for %s:%m",
@@ -501,14 +507,14 @@ auth_connect_callback(int fd, int error, void *data)
 	rb_snprintf(authbuf, sizeof(authbuf), "%u , %u\r\n",
 		   (unsigned int) ntohs(them.sin_port), (unsigned int) ntohs(us.sin_port));
 
-	if(write(auth->fd, authbuf, strlen(authbuf)) == -1)
+	if(write(rb_get_fd(auth->F), authbuf, strlen(authbuf)) == -1)
 	{
 		auth_error(auth);
 		return;
 	}
 	ClearAuthConnect(auth);
 	SetAuthPending(auth);
-	read_auth_reply(auth->fd, auth);
+	read_auth_reply(auth->F, auth);
 }
 
 
@@ -521,7 +527,7 @@ auth_connect_callback(int fd, int error, void *data)
 #define AUTH_BUFSIZ 128
 
 static void
-read_auth_reply(int fd, void *data)
+read_auth_reply(rb_fde_t *F, void *data)
 {
 	struct AuthRequest *auth = data;
 	char *s = NULL;
@@ -530,11 +536,11 @@ read_auth_reply(int fd, void *data)
 	int count;
 	char buf[AUTH_BUFSIZ + 1];	/* buffer to read auth reply into */
 
-	len = read(auth->fd, buf, AUTH_BUFSIZ);
+	len = read(rb_get_fd(F), buf, AUTH_BUFSIZ);
 
-	if(len < 0 && ignoreErrno(errno))
+	if(len < 0 && rb_ignore_errno(errno))
 	{
-		rb_setselect(fd, FDLIST_IDLECLIENT, COMM_SELECT_READ, read_auth_reply, auth, 0);
+		rb_setselect(F, RB_SELECT_READ, read_auth_reply, auth);
 		return;
 	}
 
@@ -565,8 +571,8 @@ read_auth_reply(int fd, void *data)
 		}
 	}
 
-	rb_close(auth->fd);
-	auth->fd = -1;
+	rb_close(auth->F);
+	auth->F = NULL;
 	ClearAuth(auth);
 
 	if(s == NULL)
@@ -606,8 +612,8 @@ delete_auth_queries(struct Client *target_p)
 	if(IsDNSPending(auth))
 		delete_resolver_queries(&auth->dns_query);
 
-	if(auth->fd >= 0)
-		rb_close(auth->fd);
+	if(auth->F != NULL)
+		rb_close(auth->F);
 		
 	rb_dlinkDelete(&auth->node, &auth_poll_list);
 	free_auth_request(auth);

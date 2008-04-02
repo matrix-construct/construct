@@ -45,7 +45,7 @@ struct AuthRequest
 	struct Client *client;	/* pointer to client struct for request */
 	struct DNSQuery dns_query; /* DNS Query */
 	unsigned int flags;	/* current state of request */
-	int fd;			/* file descriptor for auth queries */
+	rb_fde_t *F;		/* file descriptor for auth queries */
 	time_t timeout;		/* time when query expires */
 #ifdef IPV6
 	int ip6_int;
