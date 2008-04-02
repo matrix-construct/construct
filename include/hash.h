@@ -27,6 +27,8 @@
 #ifndef INCLUDED_hash_h
 #define INCLUDED_hash_h
 
+extern struct Dictionary *nd_dict;
+
 extern rb_dlink_list resvTable[];
 extern rb_dlink_list ndTable[];
 
