@@ -44,6 +44,7 @@ rb_dlink_list *channelTable;
 rb_dlink_list *idTable;
 rb_dlink_list *resvTable;
 rb_dlink_list *hostTable; 
+static rb_dlink_list clientbyfdTable[U_MAX];
 
 /*
  * look in whowas.c for the missing ...[WW_MAX]; entry
