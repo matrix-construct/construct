@@ -45,10 +45,10 @@
 extern rb_dlink_list global_channel_list;
 
 extern struct config_channel_entry ConfigChannel;
-extern BlockHeap *channel_heap;
-extern BlockHeap *ban_heap;
-extern BlockHeap *topic_heap;
-extern BlockHeap *member_heap;
+static rb_bh *channel_heap;
+static rb_bh *ban_heap;
+static rb_bh *topic_heap;
+static rb_bh *member_heap;
 
 static int channel_capabs[] = { CAP_EX, CAP_IE,
 	CAP_SERVICE,
