@@ -224,9 +224,9 @@ parse_resv(struct Client *source_p, const char *name,
 		aconf = make_conf();
 		aconf->status = CONF_RESV_CHANNEL;
 		aconf->port = 0;
-		aconf->info.name = rb_strdup(name);
+		aconf->name = rb_strdup(name);
 		aconf->passwd = rb_strdup(reason);
-		add_to_resv_hash(aconf->info.name, aconf);
+		add_to_resv_hash(aconf->name, aconf);
 
 		if(temp_time > 0)
 		{
@@ -243,7 +243,7 @@ parse_resv(struct Client *source_p, const char *name,
 					temp_time / 60, name);
 		}
 		else
-			write_confitem(RESV_TYPE, source_p, NULL, aconf->info.name, 
+			write_confitem(RESV_TYPE, source_p, NULL, aconf->name, 
 					aconf->passwd, NULL, NULL, 0);
 	}
 	else if(clean_resv_nick(name))
@@ -282,7 +282,7 @@ parse_resv(struct Client *source_p, const char *name,
 		aconf = make_conf();
 		aconf->status = CONF_RESV_NICK;
 		aconf->port = 0;
-		aconf->info.name = rb_strdup(name);
+		aconf->name = rb_strdup(name);
 		aconf->passwd = rb_strdup(reason);
 		rb_dlinkAddAlloc(aconf, &resv_conf_list);
 
@@ -301,7 +301,7 @@ parse_resv(struct Client *source_p, const char *name,
 					temp_time / 60, name);
 		}
 		else
-			write_confitem(RESV_TYPE, source_p, NULL, aconf->info.name, 
+			write_confitem(RESV_TYPE, source_p, NULL, aconf->name, 
 					aconf->passwd, NULL, NULL, 0);
 	}
 	else
@@ -490,7 +490,7 @@ remove_resv(struct Client *source_p, const char *name)
 		{
 			aconf = ptr->data;
 
-			if(irccmp(aconf->info.name, name))
+			if(irccmp(aconf->name, name))
 				aconf = NULL;
 			else
 				break;
