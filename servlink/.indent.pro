@@ -1,1 +1,0 @@
--i8 -bli0 -ut -nsai -l100 -npcs

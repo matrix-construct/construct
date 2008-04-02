@@ -56,20 +56,24 @@ extern char conf_line_in[256];
 
 struct ConfItem
 {
-	struct ConfItem *next;	/* list node pointer */
 	unsigned int status;	/* If CONF_ILLEGAL, delete when no clients */
 	unsigned int flags;
 	int clients;		/* Number of *LOCAL* clients using this */
-	char *name;		/* IRC name, nick, server name, or original u@h */
+
+	union
+	{
+		char *name;		/* IRC name, nick, server name, or original u@h */
+		const char *oper;
+	} info;
+
 	char *host;		/* host part of user@host */
 	char *passwd;		/* doubles as kline reason *ugh* */
 	char *spasswd;		/* Password to send. */
 	char *user;		/* user part of user@host */
 	int port;
 	time_t hold;		/* Hold action until this time (calendar time) */
-	char *className;	/* Name of class */
 	struct Class *c_class;	/* Class of connection */
-	rb_patricia_node_t *pnode;	/* Our patricia node */
+	rb_patricia_node_t *pnode;
 };
 
 #define CONF_ILLEGAL            0x80000000
