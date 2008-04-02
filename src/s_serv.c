@@ -218,7 +218,7 @@ collect_zipstats(void *unused)
 				target_p->localClient->slinkq[0] = SLINKCMD_ZIPSTATS;
 				target_p->localClient->slinkq_ofs = 0;
 				target_p->localClient->slinkq_len = 1;
-				send_queued_slink_write(target_p->localClient->ctrlfd, target_p);
+				// send_queued_slink_write(target_p->localClient->ctrlfd, target_p);
 			}
 		}
 	}
@@ -1140,7 +1140,7 @@ server_estab(struct Client *client_p)
 		 * client_p->name + 64
 		 */
 		rb_note(client_p->localClient->F->fd, "slink data: %s", client_p->name);
-		rb_note(client_p->localClient->ctrlfd, "slink ctrl: %s", client_p->name);
+		// rb_note(client_p->localClient->ctrlfd, "slink ctrl: %s", client_p->name);
 	}
 	else
 		rb_note(client_p->localClient->F->fd, "Server: %s", client_p->name);
@@ -1310,7 +1310,7 @@ start_io(struct Client *server)
 	server->localClient->slinkq_len = c;
 
 	/* schedule a write */
-	send_queued_slink_write(server->localClient->ctrlfd, server);
+	// send_queued_slink_write(server->localClient->ctrlfd, server);
 }
 
 /*
@@ -1404,7 +1404,7 @@ fork_server(struct Client *server)
 		close(data_fds[1]);
 		
 		s_assert(server->localClient);
-		server->localClient->ctrlfd = ctrl_fds[0];
+		// server->localClient->ctrlfd = ctrl_fds[0];
 		server->localClient->F = rb_add_fd(data_fds[0]);
 
 		if(!rb_set_nb(server->localClient->F->fd))
@@ -1415,7 +1415,7 @@ fork_server(struct Client *server)
 					errno);
 		}
 
-		if(!rb_set_nb(server->localClient->ctrlfd))
+		/* if(!rb_set_nb(server->localClient->ctrlfd))
 		{
 			report_error(NONB_ERROR_MSG,
 					get_server_name(server, SHOW_IP),
@@ -1424,9 +1424,10 @@ fork_server(struct Client *server)
 		}
 
 		rb_open(server->localClient->ctrlfd, FD_SOCKET, NULL);
+		*/
+
 		rb_open(server->localClient->F->fd, FD_SOCKET, NULL);
 
-		read_ctrl_packet(server->localClient->ctrlfd, server);
 		read_packet(server->localClient->F->fd, server);
 	}
 
