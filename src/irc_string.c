@@ -539,7 +539,7 @@ inetpton_sock(const char *src, struct sockaddr *dst)
 	{
 		((struct sockaddr_in *) dst)->sin_port = 0;
 		((struct sockaddr_in *) dst)->sin_family = AF_INET;
-		SET_SS_LEN((struct irc_sockaddr_storage *) dst, sizeof(struct sockaddr_in));
+		SET_SS_LEN((struct rb_sockaddr_storage *) dst, sizeof(struct sockaddr_in));
 		return 1;
 	}
 #ifdef IPV6
@@ -547,7 +547,7 @@ inetpton_sock(const char *src, struct sockaddr *dst)
 	{
 		((struct sockaddr_in6 *) dst)->sin6_port = 0;
 		((struct sockaddr_in6 *) dst)->sin6_family = AF_INET6;
-		SET_SS_LEN((struct irc_sockaddr_storage *) dst, sizeof(struct sockaddr_in6));
+		SET_SS_LEN((struct rb_sockaddr_storage *) dst, sizeof(struct sockaddr_in6));
 		return 1;
 	}
 #endif

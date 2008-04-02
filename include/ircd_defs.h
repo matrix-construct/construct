@@ -154,9 +154,9 @@
 
 
 #ifdef IPV6
-#define irc_sockaddr_storage sockaddr_storage
+#define rb_sockaddr_storage sockaddr_storage
 #else
-#define irc_sockaddr_storage sockaddr
+#define rb_sockaddr_storage sockaddr
 #define ss_family sa_family
 #ifdef SOCKADDR_IN_HAS_LEN
 #define ss_len sa_len

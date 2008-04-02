@@ -203,7 +203,7 @@ struct server_conf
 	time_t hold;
 
 	int aftype;
-	struct irc_sockaddr_storage my_ipnum;
+	struct rb_sockaddr_storage my_ipnum;
 
 	char *class_name;
 	struct Class *class;

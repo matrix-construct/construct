@@ -79,7 +79,7 @@ struct reslist
 	char resend;		/* send flag. 0 == dont resend */
 	time_t sentat;
 	time_t timeout;
-	struct irc_sockaddr_storage addr;
+	struct rb_sockaddr_storage addr;
 	char *name;
 	struct DNSQuery *query;	/* query callback for this request */
 };
@@ -90,7 +90,7 @@ static rb_dlink_list request_list = { NULL, NULL, 0 };
 static void rem_request(struct reslist *request);
 static struct reslist *make_request(struct DNSQuery *query);
 static void do_query_name(struct DNSQuery *query, const char *name, struct reslist *request, int);
-static void do_query_number(struct DNSQuery *query, const struct irc_sockaddr_storage *,
+static void do_query_number(struct DNSQuery *query, const struct rb_sockaddr_storage *,
 			    struct reslist *request);
 static void query_name(struct reslist *request);
 static int send_res_msg(const char *buf, int len, int count);
@@ -100,7 +100,7 @@ static int proc_answer(struct reslist *request, HEADER * header, char *, char *)
 static struct reslist *find_id(int id);
 static struct DNSReply *make_dnsreply(struct reslist *request);
 
-extern struct irc_sockaddr_storage irc_nsaddr_list[IRCD_MAXNS];
+extern struct rb_sockaddr_storage irc_nsaddr_list[IRCD_MAXNS];
 extern int irc_nscount;
 extern char irc_domain[HOSTLEN + 1];
 
@@ -116,7 +116,7 @@ extern char irc_domain[HOSTLEN + 1];
  *      paul vixie, 29may94
  *      revised for ircd, cryogen(stu) may03
  */
-static int res_ourserver(const struct irc_sockaddr_storage *inp)
+static int res_ourserver(const struct rb_sockaddr_storage *inp)
 {
 #ifdef IPV6
 	struct sockaddr_in6 *v6;
@@ -128,7 +128,7 @@ static int res_ourserver(const struct irc_sockaddr_storage *inp)
 
 	for (ns = 0; ns < irc_nscount; ns++)
 	{
-		const struct irc_sockaddr_storage *srv = &irc_nsaddr_list[ns];
+		const struct rb_sockaddr_storage *srv = &irc_nsaddr_list[ns];
 #ifdef IPV6
 		v6 = (struct sockaddr_in6 *)srv;
 #endif
@@ -392,7 +392,7 @@ void gethost_byname_type(const char *name, struct DNSQuery *query, int type)
 /*
  * gethost_byaddr - get host name from address
  */
-void gethost_byaddr(const struct irc_sockaddr_storage *addr, struct DNSQuery *query)
+void gethost_byaddr(const struct rb_sockaddr_storage *addr, struct DNSQuery *query)
 {
 	do_query_number(query, addr, NULL);
 }
@@ -424,7 +424,7 @@ static void do_query_name(struct DNSQuery *query, const char *name, struct resli
 /*
  * do_query_number - Use this to do reverse IP# lookups.
  */
-static void do_query_number(struct DNSQuery *query, const struct irc_sockaddr_storage *addr,
+static void do_query_number(struct DNSQuery *query, const struct rb_sockaddr_storage *addr,
 			    struct reslist *request)
 {
 	const unsigned char *cp;
@@ -432,7 +432,7 @@ static void do_query_number(struct DNSQuery *query, const struct irc_sockaddr_st
 	if (request == NULL)
 	{
 		request = make_request(query);
-		memcpy(&request->addr, addr, sizeof(struct irc_sockaddr_storage));
+		memcpy(&request->addr, addr, sizeof(struct rb_sockaddr_storage));
 		request->name = (char *)rb_malloc(HOSTLEN + 1);
 	}
 
@@ -734,8 +734,8 @@ static void res_readreply(int fd, void *data)
 	struct DNSReply *reply = NULL;
 	int rc;
 	int answer_count;
-	socklen_t len = sizeof(struct irc_sockaddr_storage);
-	struct irc_sockaddr_storage lsin;
+	socklen_t len = sizeof(struct rb_sockaddr_storage);
+	struct rb_sockaddr_storage lsin;
 
 	rc = recvfrom(fd, buf, sizeof(buf), 0, (struct sockaddr *)&lsin, &len);
 

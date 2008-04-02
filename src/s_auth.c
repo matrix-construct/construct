@@ -265,8 +265,8 @@ auth_error(struct AuthRequest *auth)
 static int
 start_auth_query(struct AuthRequest *auth)
 {
-	struct irc_sockaddr_storage localaddr;
-	socklen_t locallen = sizeof(struct irc_sockaddr_storage);
+	struct rb_sockaddr_storage localaddr;
+	socklen_t locallen = sizeof(struct rb_sockaddr_storage);
 	int fd;
 	int family;
 	

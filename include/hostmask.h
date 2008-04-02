@@ -85,7 +85,7 @@ struct AddressRec
 		struct
 		{
 			/* Pointer into ConfItem... -A1kmm */
-			struct irc_sockaddr_storage addr;
+			struct rb_sockaddr_storage addr;
 			int bits;
 		}
 		ipa;

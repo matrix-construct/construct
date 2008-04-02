@@ -1469,7 +1469,7 @@ int
 serv_connect(struct server_conf *server_p, struct Client *by)
 {
 	struct Client *client_p;
-	struct irc_sockaddr_storage myipnum; 
+	struct rb_sockaddr_storage myipnum; 
 	int fd;
 	char vhoststr[HOSTIPLEN];
 
