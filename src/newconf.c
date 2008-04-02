@@ -758,9 +758,9 @@ conf_set_listen_port(void *data)
 		}
                 if(listener_address == NULL)
                 {
-			add_listener(args->v.number, listener_address, AF_INET);
+			add_listener(args->v.number, listener_address, AF_INET, 0);
 #ifdef IPV6
-			add_listener(args->v.number, listener_address, AF_INET6);
+			add_listener(args->v.number, listener_address, AF_INET6, 0);
 #endif
                 }
 		else
@@ -773,7 +773,7 @@ conf_set_listen_port(void *data)
 #endif
 				family = AF_INET;
 		
-			add_listener(args->v.number, listener_address, family);
+			add_listener(args->v.number, listener_address, family, 0);
                 
                 }
 
