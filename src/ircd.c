@@ -578,7 +578,6 @@ main(int argc, char *argv[])
 	init_channels();
 	initclass();
 	initwhowas();
-	init_stats();
 	init_reject();
 	init_cache();
 	init_monitor();
