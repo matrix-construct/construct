@@ -29,25 +29,25 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: cache.c 3436 2007-05-02 19:56:40Z jilles $
+ * $Id: cache.c 25119 2008-03-13 16:57:05Z androsyn $
  */
 
 #include "stdinc.h"
-#include "ircd_defs.h"
-#include "common.h"
+#include "ratbox_lib.h"
+#include "struct.h"
 #include "s_conf.h"
 #include "client.h"
 #include "hash.h"
 #include "cache.h"
-#include "sprintf_irc.h"
-#include "irc_dictionary.h"
+#include "match.h"
+#include "ircd.h"
 #include "numeric.h"
-
-static BlockHeap *cachefile_heap = NULL;
-static BlockHeap *cacheline_heap = NULL;
+#include "send.h"
 
 struct cachefile *user_motd = NULL;
 struct cachefile *oper_motd = NULL;
+struct cacheline *emptyline = NULL;
+rb_dlink_list links_cache_list;
 char user_motd_changed[MAX_DATE_STRING];
 
 struct Dictionary *help_dict_oper = NULL;
@@ -62,13 +62,15 @@ struct Dictionary *help_dict_user = NULL;
 void
 init_cache(void)
 {
-	cachefile_heap = BlockHeapCreate(sizeof(struct cachefile), CACHEFILE_HEAP_SIZE);
-	cacheline_heap = BlockHeapCreate(sizeof(struct cacheline), CACHELINE_HEAP_SIZE);
-
+	/* allocate the emptyline */
+	emptyline = rb_malloc(sizeof(struct cacheline));
+	emptyline->data[0] = ' ';
+	emptyline->data[1] = '\0';
 	user_motd_changed[0] = '\0';
 
 	user_motd = cache_file(MPATH, "ircd.motd", 0);
 	oper_motd = cache_file(OPATH, "opers.motd", 0);
+	memset(&links_cache_list, 0, sizeof(links_cache_list));
 
 	help_dict_oper = irc_dictionary_create(strcasecmp);
 	help_dict_user = irc_dictionary_create(strcasecmp);
@@ -92,45 +94,67 @@ cache_file(const char *filename, const char *shortname, int flags)
 	if((in = fopen(filename, "r")) == NULL)
 		return NULL;
 
-	if(strcmp(shortname, "ircd.motd") == 0)
-	{
-		struct stat sb;
-		struct tm *local_tm;
 
-		if(fstat(fileno(in), &sb) < 0)
-			return NULL;
+	cacheptr = rb_malloc(sizeof(struct cachefile));
 
-		local_tm = localtime(&sb.st_mtime);
-
-		if(local_tm != NULL)
-			rb_snprintf(user_motd_changed, sizeof(user_motd_changed),
-				 "%d/%d/%d %d:%d",
-				 local_tm->tm_mday, local_tm->tm_mon + 1,
-				 1900 + local_tm->tm_year, local_tm->tm_hour,
-				 local_tm->tm_min);
-	}
-
-	cacheptr = BlockHeapAlloc(cachefile_heap);
-
-	strlcpy(cacheptr->name, shortname, sizeof(cacheptr->name));
+	rb_strlcpy(cacheptr->name, shortname, sizeof(cacheptr->name));
 	cacheptr->flags = flags;
 
 	/* cache the file... */
 	while(fgets(line, sizeof(line), in) != NULL)
 	{
-		if((p = strchr(line, '\n')) != NULL)
+		if((p = strpbrk(line, "\r\n")) != NULL)
 			*p = '\0';
 
-		lineptr = BlockHeapAlloc(cacheline_heap);
-		if(EmptyString(line))
-			strlcpy(lineptr->data, " ", sizeof(lineptr->data));
+		if(!EmptyString(line))
+		{
+			lineptr = rb_malloc(sizeof(struct cacheline));
+			rb_strlcpy(lineptr->data, line, sizeof(lineptr->data));
+			rb_dlinkAddTail(lineptr, &lineptr->linenode, &cacheptr->contents);
+		}
 		else
-			strlcpy(lineptr->data, line, sizeof(lineptr->data));
-		rb_dlinkAddTail(lineptr, &lineptr->linenode, &cacheptr->contents);
+			rb_dlinkAddTailAlloc(emptyline, &cacheptr->contents);
 	}
 
 	fclose(in);
 	return cacheptr;
+}
+
+void
+cache_links(void *unused)
+{
+	struct Client *target_p;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
+	char *links_line;
+
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, links_cache_list.head)
+	{
+		rb_free(ptr->data);
+		rb_free_rb_dlink_node(ptr);
+	}
+
+	links_cache_list.head = links_cache_list.tail = NULL;
+	links_cache_list.length = 0;
+
+	RB_DLINK_FOREACH(ptr, global_serv_list.head)
+	{
+		target_p = ptr->data;
+
+		/* skip ourselves (done in /links) and hidden servers */
+		if(IsMe(target_p) ||
+		   (IsHidden(target_p) && !ConfigServerHide.disable_hidden))
+			continue;
+
+		/* if the below is ever modified, change LINKSLINELEN */
+		links_line = rb_malloc(LINKSLINELEN);
+		rb_snprintf(links_line, LINKSLINELEN, "%s %s :1 %s",
+			   target_p->name, me.name, 
+			   target_p->info[0] ? target_p->info : 
+			    "(Unknown Location)");
+
+		rb_dlinkAddTailAlloc(links_line, &links_cache_list);
+	}
 }
 
 /* free_cachefile()
@@ -150,10 +174,11 @@ free_cachefile(struct cachefile *cacheptr)
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, cacheptr->contents.head)
 	{
-		BlockHeapFree(cacheline_heap, ptr->data);
+		if(ptr->data != emptyline)
+			rb_free(ptr->data);
 	}
 
-	BlockHeapFree(cachefile_heap, cacheptr);
+	rb_free(cacheptr);
 }
 
 /* load_help()
@@ -225,13 +250,12 @@ send_user_motd(struct Client *source_p)
 	rb_dlink_node *ptr;
 	const char *myname = get_id(&me, source_p);
 	const char *nick = get_id(source_p, source_p);
-
 	if(user_motd == NULL || rb_dlink_list_length(&user_motd->contents) == 0)
 	{
 		sendto_one(source_p, form_str(ERR_NOMOTD), myname, nick);
 		return;
 	}
-
+	SetCork(source_p);
 	sendto_one(source_p, form_str(RPL_MOTDSTART), myname, nick, me.name);
 
 	RB_DLINK_FOREACH(ptr, user_motd->contents.head)
@@ -239,36 +263,29 @@ send_user_motd(struct Client *source_p)
 		lineptr = ptr->data;
 		sendto_one(source_p, form_str(RPL_MOTD), myname, nick, lineptr->data);
 	}
-
+	ClearCork(source_p);
 	sendto_one(source_p, form_str(RPL_ENDOFMOTD), myname, nick);
 }
 
-/* send_oper_motd()
- *
- * inputs	- client to send motd to
- * outputs	- client is sent oper motd if exists
- * side effects -
- */
 void
-send_oper_motd(struct Client *source_p)
+cache_user_motd(void)
 {
-	struct cacheline *lineptr;
-	rb_dlink_node *ptr;
-
-	if(oper_motd == NULL || rb_dlink_list_length(&oper_motd->contents) == 0)
-		return;
-
-	sendto_one(source_p, form_str(RPL_OMOTDSTART), 
-		   me.name, source_p->name);
-
-	RB_DLINK_FOREACH(ptr, oper_motd->contents.head)
+	struct stat sb;
+	struct tm *local_tm;
+	
+	if(stat(MPATH, &sb) == 0) 
 	{
-		lineptr = ptr->data;
-		sendto_one(source_p, form_str(RPL_OMOTD),
-			   me.name, source_p->name, lineptr->data);
-	}
+		local_tm = localtime(&sb.st_mtime);
 
-	sendto_one(source_p, form_str(RPL_ENDOFOMOTD), 
-		   me.name, source_p->name);
+		if(local_tm != NULL) 
+		{
+			rb_snprintf(user_motd_changed, sizeof(user_motd_changed),
+				 "%d/%d/%d %d:%d",
+				 local_tm->tm_mday, local_tm->tm_mon + 1,
+				 1900 + local_tm->tm_year, local_tm->tm_hour,
+				 local_tm->tm_min);
+		}
+	} 
+	free_cachefile(user_motd);
+	user_motd = cache_file(MPATH, "ircd.motd", 0);
 }
-
