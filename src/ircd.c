@@ -111,7 +111,7 @@ ircd_log_cb(const char *str)
 static void
 ircd_restart_cb(const char *str)
 {
-	restart(buf);
+	restart(str);
 }
 
 /*
