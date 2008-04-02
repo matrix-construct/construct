@@ -40,6 +40,7 @@
 #include "s_conf.h"
 #include "s_newconf.h"
 #include "sprintf_irc.h"
+#include "reject.h"
 
 static int mo_testline(struct Client *, struct Client *, int, const char **);
 static int mo_testgecos(struct Client *, struct Client *, int, const char **);
