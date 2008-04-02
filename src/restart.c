@@ -18,22 +18,25 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: restart.c 3354 2007-04-03 09:21:31Z nenolod $
+ *  $Id: restart.c 24244 2007-08-22 19:04:55Z androsyn $
  */
 
 #include "stdinc.h"
 #include "restart.h"
-#include "common.h"
 #include "ircd.h"
 #include "send.h"
 #include "s_log.h"
-#include "client.h"		/* for FLAGS_ALL */
+#include "s_conf.h"
+#include "client.h"		
+#include "ircd_signal.h"
 
 /* external var */
 extern char **myargv;
+
+extern int maxconnections; /* XXX */
 
 void
 restart(const char *mesg)
@@ -44,7 +47,7 @@ restart(const char *mesg)
 		abort();
 	was_here = YES;
 
-	ilog(L_MAIN, "Restarting Server because: %s", mesg);
+	ilog(L_MAIN, "Restarting Server because: %s, memory data limit: %ld", mesg, get_maxrss());
 
 	server_reboot();
 }
@@ -53,11 +56,12 @@ void
 server_reboot(void)
 {
 	int i;
-	int maxconn = rb_get_maxconnections();
+	char path[PATH_MAX+1];
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "Restarting server...");
 
 	ilog(L_MAIN, "Restarting server...");
+	
 	/*
 	 * XXX we used to call flush_connections() here. But since this routine
 	 * doesn't exist anymore, we won't be flushing. This is ok, since 
@@ -68,11 +72,15 @@ server_reboot(void)
 	 * bah, for now, the program ain't coming back to here, so forcibly
 	 * close everything the "wrong" way for now, and just LEAVE...
 	 */
-	for (i = 0; i < maxconn; ++i)
+	for (i = 0; i < maxconnections; ++i)
 		close(i);
 
 	unlink(pidFileName);
-	execv(SPATH, myargv);
+	execv(SPATH, (void *)myargv);
 
+	/* use this if execv of SPATH fails */
+	rb_snprintf(path, sizeof(path), "%s/bin/ircd", ConfigFileEntry.dpath);
+
+	execv(path, (void *)myargv);
 	exit(-1);
 }
