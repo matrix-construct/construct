@@ -99,12 +99,6 @@ size_t strlcpy(char *dst, const char *src, size_t siz);
 size_t strlcat(char *dst, const char *src, size_t siz);
 #endif
 
-#ifdef HAVE_STRNDUP
-#define DupNString(x, y, len) do { x = strndup(y, len); if(x == NULL) outofmemory(); } while (0)
-#else
-#define DupNString(x, y, len) do { x = malloc(len+1); if(x == NULL) outofmemory(); strlcpy(x, y, len+1); } while(0)
-#endif
-
 /*
  * clean_string - cleanup control and high ascii characters
  * -Dianora

@@ -67,7 +67,7 @@ mr_pass(struct Client *client_p, struct Client *source_p, int parc, const char *
 		rb_free(client_p->localClient->passwd);
 	}
 
-	DupNString(client_p->localClient->passwd, parv[1], PASSWDLEN);
+	client_p->localClient->passwd = rb_strndup(parv[1], PASSWDLEN);
 
 	/* These are for servers only */
 	if(parc > 2 && client_p->user == NULL)
