@@ -86,7 +86,7 @@ ReportType;
 #define sendheader(c, r) sendto_one_notice(c, HeaderMessages[(r)]) 
 
 static rb_dlink_list auth_poll_list;
-static BlockHeap *auth_heap;
+static rb_bh *auth_heap;
 static EVH timeout_auth_queries_event;
 
 static PF read_auth_reply;
@@ -103,7 +103,7 @@ init_auth(void)
 	/* This hook takes a struct Client for its argument */
 	memset(&auth_poll_list, 0, sizeof(auth_poll_list));
 	eventAddIsh("timeout_auth_queries_event", timeout_auth_queries_event, NULL, 1);
-	auth_heap = BlockHeapCreate(sizeof(struct AuthRequest), LCLIENT_HEAP_SIZE);
+	auth_heap = rb_bh_create(sizeof(struct AuthRequest), LCLIENT_HEAP_SIZE);
 }
 
 /*
@@ -112,7 +112,7 @@ init_auth(void)
 static struct AuthRequest *
 make_auth_request(struct Client *client)
 {
-	struct AuthRequest *request = BlockHeapAlloc(auth_heap);
+	struct AuthRequest *request = rb_bh_alloc(auth_heap);
 	client->localClient->auth_request = request;
 	request->fd = -1;
 	request->client = client;
@@ -126,7 +126,7 @@ make_auth_request(struct Client *client)
 static void
 free_auth_request(struct AuthRequest *request)
 {
-	BlockHeapFree(auth_heap, request);
+	rb_bh_free(auth_heap, request);
 }
 
 /*

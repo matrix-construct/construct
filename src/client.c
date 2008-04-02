@@ -73,9 +73,9 @@ static int qs_server(struct Client *, struct Client *, struct Client *, const ch
 
 static EVH check_pings;
 
-extern BlockHeap *client_heap;
-extern BlockHeap *lclient_heap;
-extern BlockHeap *pclient_heap;
+extern rb_bh *client_heap;
+extern rb_bh *lclient_heap;
+extern rb_bh *pclient_heap;
 
 extern char current_uid[IDLEN];
 
@@ -117,9 +117,9 @@ init_client(void)
 	 * start off the check ping event ..  -- adrian
 	 * Every 30 seconds is plenty -- db
 	 */
-	client_heap = BlockHeapCreate(sizeof(struct Client), CLIENT_HEAP_SIZE);
-	lclient_heap = BlockHeapCreate(sizeof(struct LocalUser), LCLIENT_HEAP_SIZE);
-	pclient_heap = BlockHeapCreate(sizeof(struct PreClient), PCLIENT_HEAP_SIZE);
+	client_heap = rb_bh_create(sizeof(struct Client), CLIENT_HEAP_SIZE);
+	lclient_heap = rb_bh_create(sizeof(struct LocalUser), LCLIENT_HEAP_SIZE);
+	pclient_heap = rb_bh_create(sizeof(struct PreClient), PCLIENT_HEAP_SIZE);
 	rb_event_addish("check_pings", check_pings, NULL, 30);
 	rb_event_addish("free_exited_clients", &free_exited_clients, NULL, 4);
 	rb_event_addish("exit_aborted_clients", exit_aborted_clients, NULL, 1);
@@ -144,13 +144,13 @@ make_client(struct Client *from)
 	struct Client *client_p = NULL;
 	struct LocalUser *localClient;
 
-	client_p = BlockHeapAlloc(client_heap);
+	client_p = rb_bh_alloc(client_heap);
 
 	if(from == NULL)
 	{
 		client_p->from = client_p;	/* 'from' of local client is self! */
 
-		localClient = (struct LocalUser *) BlockHeapAlloc(lclient_heap);
+		localClient = (struct LocalUser *) rb_bh_alloc(lclient_heap);
 		SetMyConnect(client_p);
 		client_p->localClient = localClient;
 
@@ -159,7 +159,7 @@ make_client(struct Client *from)
 		client_p->localClient->F = NULL;
 		client_p->localClient->ctrlfd = -1;
 
-		client_p->preClient = (struct PreClient *) BlockHeapAlloc(pclient_heap);
+		client_p->preClient = (struct PreClient *) rb_bh_alloc(pclient_heap);
 
 		/* as good a place as any... */
 		rb_dlinkAdd(client_p, &client_p->localClient->tnode, &unknown_list);
@@ -191,7 +191,7 @@ free_pre_client(struct Client *client_p)
 	if (blptr != NULL)
 		unref_blacklist(blptr);
 	abort_blacklist_queries(client_p);
-	BlockHeapFree(pclient_heap, client_p->preClient);
+	rb_bh_free(pclient_heap, client_p->preClient);
 	client_p->preClient = NULL;
 }
 
@@ -231,7 +231,7 @@ free_local_client(struct Client *client_p)
 	rb_free(client_p->localClient->opername);
 	rb_free(client_p->localClient->mangledhost);
 
-	BlockHeapFree(lclient_heap, client_p->localClient);
+	rb_bh_free(lclient_heap, client_p->localClient);
 	client_p->localClient = NULL;
 }
 
@@ -242,7 +242,7 @@ free_client(struct Client *client_p)
 	s_assert(&me != client_p);
 	free_local_client(client_p);
 	free_pre_client(client_p);
-	BlockHeapFree(client_heap, client_p);
+	rb_bh_free(client_heap, client_p);
 }
 
 /*
@@ -1709,7 +1709,7 @@ void
 count_local_client_memory(size_t * count, size_t * local_client_memory_used)
 {
 	size_t lusage;
-	BlockHeapUsage(lclient_heap, count, NULL, &lusage);
+	rb_bh_usage(lclient_heap, count, NULL, &lusage);
 	*local_client_memory_used = lusage + (*count * (sizeof(MemBlock) + sizeof(struct Client)));
 }
 
@@ -1720,8 +1720,8 @@ void
 count_remote_client_memory(size_t * count, size_t * remote_client_memory_used)
 {
 	size_t lcount, rcount;
-	BlockHeapUsage(lclient_heap, &lcount, NULL, NULL);
-	BlockHeapUsage(client_heap, &rcount, NULL, NULL);
+	rb_bh_usage(lclient_heap, &lcount, NULL, NULL);
+	rb_bh_usage(client_heap, &rcount, NULL, NULL);
 	*count = rcount - lcount;
 	*remote_client_memory_used = *count * (sizeof(MemBlock) + sizeof(struct Client));
 }
@@ -1841,11 +1841,11 @@ show_ip_conf(struct ConfItem *aconf, struct Client *source_p)
  * side effects - Creates a block heap for struct Users
  *
  */
-static BlockHeap *user_heap;
+static rb_bh *user_heap;
 void
 initUser(void)
 {
-	user_heap = BlockHeapCreate(sizeof(struct User), USER_HEAP_SIZE);
+	user_heap = rb_bh_create(sizeof(struct User), USER_HEAP_SIZE);
 	if(!user_heap)
 		outofmemory();
 }
@@ -1866,7 +1866,7 @@ make_user(struct Client *client_p)
 	user = client_p->user;
 	if(!user)
 	{
-		user = (struct User *) BlockHeapAlloc(user_heap);
+		user = (struct User *) rb_bh_alloc(user_heap);
 		user->refcnt = 1;
 		client_p->user = user;
 	}
@@ -1932,7 +1932,7 @@ free_user(struct User *user, struct Client *client_p)
 			s_assert(!user->channel.head);
 		}
 
-		BlockHeapFree(user_heap, user);
+		rb_bh_free(user_heap, user);
 	}
 }
 

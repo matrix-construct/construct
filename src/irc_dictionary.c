@@ -29,7 +29,7 @@
 #include "setup.h"
 #include "irc_dictionary.h"
 
-static BlockHeap *elem_heap = NULL;
+static rb_bh *elem_heap = NULL;
 
 struct Dictionary
 {
@@ -62,7 +62,7 @@ struct Dictionary *irc_dictionary_create(DCF compare_cb)
 	dtree->compare_cb = compare_cb;
 
 	if (!elem_heap)
-		elem_heap = BlockHeapCreate(sizeof(struct DictionaryElement), 1024);
+		elem_heap = rb_bh_create(sizeof(struct DictionaryElement), 1024);
 
 	return dtree;
 }
@@ -93,7 +93,7 @@ struct Dictionary *irc_dictionary_create_named(const char *name,
 	dtree->id = rb_strdup(name);
 
 	if (!elem_heap)
-		elem_heap = BlockHeapCreate(sizeof(struct DictionaryElement), 1024);
+		elem_heap = rb_bh_create(sizeof(struct DictionaryElement), 1024);
 
 	return dtree;
 }
@@ -364,7 +364,7 @@ irc_dictionary_link(struct Dictionary *dict,
 			dict->root->data = delem->data;
 			dict->count--;
 
-			BlockHeapFree(elem_heap, delem);
+			rb_bh_free(elem_heap, delem);
 		}
 	}
 }
@@ -473,7 +473,7 @@ void irc_dictionary_destroy(struct Dictionary *dtree,
 		if (destroy_cb != NULL)
 			(*destroy_cb)(n, privdata);
 
-		BlockHeapFree(elem_heap, n);
+		rb_bh_free(elem_heap, n);
 	}
 
 	rb_free(dtree);
@@ -713,14 +713,14 @@ struct DictionaryElement *irc_dictionary_add(struct Dictionary *dict, char *key,
 	s_assert(data != NULL);
 	s_assert(irc_dictionary_find(dict, key) == NULL);
 
-	delem = BlockHeapAlloc(elem_heap);
+	delem = rb_bh_alloc(elem_heap);
 	delem->key = key;
 	delem->data = data;
 
 	/* TBD: is this needed? --nenolod */
 	if (delem->key == NULL)
 	{
-		BlockHeapFree(elem_heap, delem);
+		rb_bh_free(elem_heap, delem);
 		return NULL;
 	}
 
@@ -759,7 +759,7 @@ void *irc_dictionary_delete(struct Dictionary *dtree, const char *key)
 	data = delem->data;
 
 	irc_dictionary_unlink_root(dtree);
-	BlockHeapFree(elem_heap, delem);	
+	rb_bh_free(elem_heap, delem);	
 
 	return data;
 }

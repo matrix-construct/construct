@@ -394,13 +394,13 @@ rb_bh_free(rb_bh * bh, void *ptr)
 
 	if(unlikely(bh == NULL))
 	{
-		rb_lib_log("balloc.c:rb_bhFree() bh == NULL");
+		rb_lib_log("balloc.c:rb_bh_free() bh == NULL");
 		return (1);
 	}
 
 	if(unlikely(ptr == NULL))
 	{
-		rb_lib_log("balloc.rb_bhFree() ptr == NULL");
+		rb_lib_log("balloc.rb_bh_free() ptr == NULL");
 		return (1);
 	}
 

@@ -128,25 +128,25 @@ int opers_see_all_users = 0;
 int testing_conf = 0;
 
 struct config_channel_entry ConfigChannel;
-BlockHeap *channel_heap;
-BlockHeap *ban_heap;
-BlockHeap *topic_heap;
-BlockHeap *member_heap;
+rb_bh *channel_heap;
+rb_bh *ban_heap;
+rb_bh *topic_heap;
+rb_bh *member_heap;
 
-BlockHeap *client_heap = NULL;
-BlockHeap *lclient_heap = NULL;
-BlockHeap *pclient_heap = NULL;
+rb_bh *client_heap = NULL;
+rb_bh *lclient_heap = NULL;
+rb_bh *pclient_heap = NULL;
 
 char current_uid[IDLEN];
 
 /* patricia */
-BlockHeap *prefix_heap;
-BlockHeap *node_heap;
-BlockHeap *patricia_heap;
+rb_bh *prefix_heap;
+rb_bh *node_heap;
+rb_bh *patricia_heap;
 
-BlockHeap *linebuf_heap;
+rb_bh *linebuf_heap;
 
-BlockHeap *dnode_heap;
+rb_bh *dnode_heap;
 
 #ifdef NOTYET
 

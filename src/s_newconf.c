@@ -58,7 +58,7 @@ rb_dlink_list tgchange_list;
 
 rb_patricia_tree_t *tgchange_tree;
 
-static BlockHeap *nd_heap = NULL;
+static rb_bh *nd_heap = NULL;
 
 static void expire_temp_rxlines(void *unused);
 static void expire_nd_entries(void *unused);
@@ -67,7 +67,7 @@ void
 init_s_newconf(void)
 {
 	tgchange_tree = New_Patricia(PATRICIA_BITS);
-	nd_heap = BlockHeapCreate(sizeof(struct nd_entry), ND_HEAP_SIZE);
+	nd_heap = rb_bh_create(sizeof(struct nd_entry), ND_HEAP_SIZE);
 	eventAddIsh("expire_nd_entries", expire_nd_entries, NULL, 30);
 	eventAddIsh("expire_temp_rxlines", expire_temp_rxlines, NULL, 60);
 }
@@ -751,7 +751,7 @@ add_nd_entry(const char *name)
 	if(irc_dictionary_find(nd_dict, name) != NULL)
 		return;
 
-	nd = BlockHeapAlloc(nd_heap);
+	nd = rb_bh_alloc(nd_heap);
 	
 	strlcpy(nd->name, name, sizeof(nd->name));
 	nd->expire = rb_current_time() + ConfigFileEntry.nick_delay;
@@ -768,7 +768,7 @@ free_nd_entry(struct nd_entry *nd)
 	irc_dictionary_delete(nd_dict, nd->name);
 
 	rb_dlinkDelete(&nd->lnode, &nd_list);
-	BlockHeapFree(nd_heap, nd);
+	rb_bh_free(nd_heap, nd);
 }
 
 void

@@ -59,7 +59,7 @@ extern char linebuf[];
 #define INADDR_NONE ((unsigned int) 0xffffffff)
 #endif
 
-static BlockHeap *confitem_heap = NULL;
+static rb_bh *confitem_heap = NULL;
 
 rb_dlink_list temp_klines[LAST_TEMP_TYPE];
 rb_dlink_list temp_dlines[LAST_TEMP_TYPE];
@@ -83,7 +83,7 @@ static int attach_iline(struct Client *, struct ConfItem *);
 void
 init_s_conf(void)
 {
-	confitem_heap = BlockHeapCreate(sizeof(struct ConfItem), CONFITEM_HEAP_SIZE);
+	confitem_heap = rb_bh_create(sizeof(struct ConfItem), CONFITEM_HEAP_SIZE);
 
 	eventAddIsh("expire_temp_klines", expire_temp_kd, &temp_klines[TEMP_MIN], 60);
 	eventAddIsh("expire_temp_dlines", expire_temp_kd, &temp_dlines[TEMP_MIN], 60);
@@ -114,7 +114,7 @@ make_conf()
 {
 	struct ConfItem *aconf;
 
-	aconf = BlockHeapAlloc(confitem_heap);
+	aconf = rb_bh_alloc(confitem_heap);
 	aconf->status = CONF_ILLEGAL;
 	return (aconf);
 }
@@ -146,7 +146,7 @@ free_conf(struct ConfItem *aconf)
 	rb_free(aconf->user);
 	rb_free(aconf->host);
 
-	BlockHeapFree(confitem_heap, aconf);
+	rb_bh_free(confitem_heap, aconf);
 }
 
 /*
