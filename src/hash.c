@@ -39,6 +39,8 @@
 #include "cache.h"
 #include "s_newconf.h"
 
+#define hash_cli_fd(x)	(x % CLI_FD_MAX)
+
 rb_dlink_list *clientTable;
 rb_dlink_list *channelTable;
 rb_dlink_list *idTable;
