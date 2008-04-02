@@ -47,6 +47,7 @@
 #include "hook.h"
 #include "s_newconf.h"
 #include "hash.h"
+#include "reject.h"
 
 static int m_stats (struct Client *, struct Client *, int, const char **);
 
