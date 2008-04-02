@@ -929,7 +929,7 @@ remove_temp_kline(struct Client *source_p, struct ConfItem *aconf)
 					get_oper_name(source_p),
 					aconf->user, aconf->host);
 				rb_dlinkDestroy(ptr, &temp_klines[i]);
-				remove_reject_mask(aconf->user, aconf->host);
+				/* remove_reject_mask(aconf->user, aconf->host); XXX */
 				delete_one_address_conf(aconf->host, aconf);
 				return YES;
 			}
