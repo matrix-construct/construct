@@ -109,4 +109,6 @@ extern int testing_conf;
 
 extern struct ev_entry *check_splitmode_ev;
 
+extern int maxconnections;
+
 #endif

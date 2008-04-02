@@ -51,8 +51,6 @@ static const struct in6_addr in6addr_any =
 { { { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 } } };
 #endif 
 
-static PF accept_connection;
-
 static listener_t *ListenerPollList = NULL;
 
 static listener_t *
@@ -60,9 +58,9 @@ make_listener(struct rb_sockaddr_storage *addr)
 {
 	listener_t *listener = (listener_t *) rb_malloc(sizeof(listener_t));
 	s_assert(0 != listener);
-
 	listener->name = me.name;
-	listener->fd = -1;
+	listener->F = NULL;
+
 	memcpy(&listener->addr, addr, sizeof(struct rb_sockaddr_storage));
 	listener->next = NULL;
 	return listener;
@@ -165,14 +163,14 @@ show_ports(struct Client *source_p)
 static int
 inetport(listener_t *listener)
 {
-	int fd;
+	rb_fde_t *F;
 	int opt = 1;
 
 	/*
 	 * At first, open a new socket
 	 */
 	
-	fd = rb_socket(listener->addr.ss_family, SOCK_STREAM, 0, "Listener socket");
+	F = rb_socket(GET_SS_FAMILY(&listener->addr), SOCK_STREAM, 0, "Listener socket");
 
 #ifdef IPV6
 	if(listener->addr.ss_family == AF_INET6)
@@ -194,16 +192,19 @@ inetport(listener_t *listener)
 		}	
 	}
 
-	/*
-	 * At one point, we enforced a strange arbitrary limit here.
-	 * We no longer do this, and just check if the fd is valid or not.
-	 *    -nenolod
-	 */
-	if(fd == -1)
+	if(F == NULL)
 	{
 		report_error("opening listener socket %s:%s",
 			     get_listener_name(listener), 
 			     get_listener_name(listener), errno);
+		return 0;
+	}
+	else if((maxconnections - 10) < rb_get_fd(F)) /* XXX this is kinda bogus*/
+	{
+		report_error("no more connections left for listener %s:%s",
+			     get_listener_name(listener), 
+			     get_listener_name(listener), errno);
+		rb_close(F);
 		return 0;
 	}
 
@@ -211,12 +212,12 @@ inetport(listener_t *listener)
 	 * XXX - we don't want to do all this crap for a listener
 	 * set_sock_opts(listener);
 	 */
-	if(setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &opt, sizeof(opt)))
+	if(setsockopt(rb_get_fd(F), SOL_SOCKET, SO_REUSEADDR, (char *) &opt, sizeof(opt)))
 	{
 		report_error("setting SO_REUSEADDR for listener %s:%s",
 			     get_listener_name(listener), 
 			     get_listener_name(listener), errno);
-		rb_close(fd);
+		rb_close(F);
 		return 0;
 	}
 
@@ -225,29 +226,27 @@ inetport(listener_t *listener)
 	 * else assume it is already open and try get something from it.
 	 */
 
-	if(bind(fd, (struct sockaddr *) &listener->addr, GET_SS_LEN(listener->addr)))
+	if(bind(rb_get_fd(F), (struct sockaddr *) &listener->addr, GET_SS_LEN(&listener->addr)))
 	{
 		report_error("binding listener socket %s:%s",
 			     get_listener_name(listener), 
 			     get_listener_name(listener), errno);
-		rb_close(fd);
+		rb_close(F);
 		return 0;
 	}
 
-	if(listen(fd, RATBOX_SOMAXCONN))
+	if((ret = rb_listen(F, RATBOX_SOMAXCONN)))
 	{
 		report_error("listen failed for %s:%s", 
 			     get_listener_name(listener), 
 			     get_listener_name(listener), errno);
-		rb_close(fd);
+		rb_close(F);
 		return 0;
 	}
 
-	listener->fd = fd;
+	listener->F = F;
 
-	/* Listen completion events are READ events .. */
-
-	accept_connection(fd, listener);
+	rb_accept_tcp(listener->F, accept_precallback, accept_callback, listener);
 	return 1;
 }
 
@@ -271,7 +270,7 @@ find_listener(struct rb_sockaddr_storage *addr)
 				if(in4->sin_addr.s_addr == lin4->sin_addr.s_addr && 
 					in4->sin_port == lin4->sin_port )
 				{
-					if(listener->fd == -1)
+					if(listener->F == NULL)
 						last_closed = listener;
 					else
 						return(listener);
@@ -286,7 +285,7 @@ find_listener(struct rb_sockaddr_storage *addr)
 				if(IN6_ARE_ADDR_EQUAL(&in6->sin6_addr, &lin6->sin6_addr) &&
 				  in6->sin6_port == lin6->sin6_port)
 				{
-					if(listener->fd == -1)
+					if(listener->F == NULL)
 						last_closed = listener;
 					else
 						return(listener);
@@ -372,7 +371,7 @@ add_listener(int port, const char *vhost_ip, int family)
 	}
 	if((listener = find_listener(&vaddr)))
 	{
-		if(listener->fd > -1)
+		if(listener->F != NULL)
 			return;
 	}
 	else
@@ -382,7 +381,7 @@ add_listener(int port, const char *vhost_ip, int family)
 		ListenerPollList = listener;
 	}
 
-	listener->fd = -1;
+	listener->F = NULL;
 
 	if(inetport(listener))
 		listener->active = 1;
@@ -399,10 +398,10 @@ close_listener(listener_t *listener)
 	s_assert(listener != NULL);
 	if(listener == NULL)
 		return;
-	if(listener->fd >= 0)
+	if(listener->F != NULL)
 	{
-		rb_close(listener->fd);
-		listener->fd = -1;
+		rb_close(listener->F);
+		listener->F = NULL;
 	}
 
 	listener->active = 0;
@@ -477,106 +476,4 @@ add_connection(listener_t *listener, int fd, struct sockaddr *sai, int exempt)
 	}
 
 	start_auth(new_client);
-}
-
-
-static void
-accept_connection(int pfd, void *data)
-{
-	static time_t last_oper_notice = 0;
-	struct rb_sockaddr_storage sai;
-	socklen_t addrlen = sizeof(sai);
-	int fd;
-	listener_t *listener = data;
-	struct ConfItem *aconf;
-	char buf[BUFSIZE];
-
-	s_assert(listener != NULL);
-	if(listener == NULL)
-		return;
-	/*
-	 * There may be many reasons for error return, but
-	 * in otherwise correctly working environment the
-	 * probable cause is running out of file descriptors
-	 * (EMFILE, ENFILE or others?). The man pages for
-	 * accept don't seem to list these as possible,
-	 * although it's obvious that it may happen here.
-	 * Thus no specific errors are tested at this
-	 * point, just assume that connections cannot
-	 * be accepted until some old is closed first.
-	 */
-
-	fd = rb_accept(listener->fd, (struct sockaddr *)&sai, &addrlen);
-	if(fd < 0)
-	{
-		/* Re-register a new IO request for the next accept .. */
-		rb_setselect(listener->fd, FDLIST_SERVICE,
-			       COMM_SELECT_READ, accept_connection, listener, 0);
-		return;
-	}
-
-	/* This needs to be done here, otherwise we break dlines */
-	mangle_mapped_sockaddr((struct sockaddr *)&sai);
-
-	/*
-	 * check for connection limit
-	 * TBD: this is stupid... either we have a socket or we don't. -nenolod
-	 */
-	if((rb_get_maxconnections() - 10) < fd)
-	{
-		++ServerStats->is_ref;
-		/*
-		 * slow down the whining to opers bit
-		 */
-		if((last_oper_notice + 20) <= rb_current_time())
-		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
-					     "All connections in use. (%s)",
-					     get_listener_name(listener));
-			last_oper_notice = rb_current_time();
-		}
-
-		write(fd, "ERROR :All connections in use\r\n", 32);
-		rb_close(fd);
-		/* Re-register a new IO request for the next accept .. */
-		rb_setselect(listener->fd, FDLIST_SERVICE,
-			       COMM_SELECT_READ, accept_connection, listener, 0);
-		return;
-	}
-
-	/* Do an initial check we aren't connecting too fast or with too many
-	 * from this IP... */
-	aconf = find_dline((struct sockaddr *) &sai, sai.ss_family);
-	/* check it wasn't an exempt */
-	if (aconf != NULL && (aconf->status & CONF_EXEMPTDLINE) == 0)
-	{
-		ServerStats->is_ref++;
-
-		if(ConfigFileEntry.dline_with_reason)
-		{
-			if (rb_snprintf(buf, sizeof(buf), "ERROR :*** Banned: %s\r\n", aconf->passwd) >= (sizeof(buf)-1))
-			{
-				buf[sizeof(buf) - 3] = '\r';
-				buf[sizeof(buf) - 2] = '\n';
-				buf[sizeof(buf) - 1] = '\0';
-			}
-		}
-		else
-			rb_sprintf(buf, "ERROR :You have been D-lined.\r\n");
-        
-		write(fd, buf, strlen(buf));
-		rb_close(fd);
-
-		/* Re-register a new IO request for the next accept .. */
-		rb_setselect(listener->fd, FDLIST_SERVICE,
-			       COMM_SELECT_READ, accept_connection, listener, 0);
-		return;
-	}
-
-	ServerStats->is_ac++;
-	add_connection(listener, fd, (struct sockaddr *)&sai, aconf ? 1 : 0);
-
-	/* Re-register a new IO request for the next accept .. */
-	rb_setselect(listener->fd, FDLIST_SERVICE, COMM_SELECT_READ,
-		       accept_connection, listener, 0);
 }

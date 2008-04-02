@@ -78,7 +78,7 @@ extern int ServerRunning;
 extern struct LocalUser meLocalUser;
 extern char **myargv;
 
-extern int maxconnections; /* XXX */
+int maxconnections; /* XXX */
 
 /*
  * print_startup - print startup information
