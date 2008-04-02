@@ -164,6 +164,7 @@ static int
 inetport(listener_t *listener)
 {
 	rb_fde_t *F;
+	int ret;
 	int opt = 1;
 
 	/*
@@ -476,4 +477,80 @@ add_connection(listener_t *listener, int fd, struct sockaddr *sai, int exempt)
 	}
 
 	start_auth(new_client);
+}
+
+static int
+accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, void *data)
+{
+	struct Listener *listener = (struct Listener *)data;
+	char buf[BUFSIZE];
+	struct ConfItem *aconf;
+
+	if((maxconnections - 10) < rb_get_fd(F)) /* XXX this is kinda bogus */
+	{
+		++ServerStats->is_ref;
+		/*
+		 * slow down the whining to opers bit
+		 */
+		if((last_oper_notice + 20) <= rb_current_time())
+		{
+			sendto_realops_flags(SNO_GENERAL, L_ALL,
+					     "All connections in use. (%s)",
+					     get_listener_name(listener));
+			last_oper_notice = rb_current_time();
+		}
+			
+		rb_write(F, "ERROR :All connections in use\r\n", 32);
+		rb_close(F);
+		/* Re-register a new IO request for the next accept .. */
+		return 0;
+	}
+
+	aconf = find_dline(addr);
+	if(aconf != NULL && (aconf->status & CONF_EXEMPTDLINE))
+		return 1;
+	
+	/* Do an initial check we aren't connecting too fast or with too many
+	 * from this IP... */
+	if(aconf != NULL)
+	{
+		ServerStats->is_ref++;
+			
+		if(ConfigFileEntry.dline_with_reason)
+		{
+			if (rb_snprintf(buf, sizeof(buf), "ERROR :*** Banned: %s\r\n", aconf->passwd) >= (int)(sizeof(buf)-1))
+			{
+				buf[sizeof(buf) - 3] = '\r';
+				buf[sizeof(buf) - 2] = '\n';
+				buf[sizeof(buf) - 1] = '\0';
+			}
+		}
+		else
+			strcpy(buf, "ERROR :You have been D-lined.\r\n");
+	
+		rb_write(F, buf, strlen(buf));
+		rb_close(F);
+		return 0;
+	}
+
+	return 1;
+}
+
+static void
+accept_callback(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t addrlen, void *data)
+{
+	struct Listener *listener = data;
+	struct rb_sockaddr_storage lip;
+	unsigned int locallen = sizeof(struct rb_sockaddr_storage);
+	
+	ServerStats->is_ac++;
+
+	if(getsockname(rb_get_fd(F), (struct sockaddr *) &lip, &locallen) < 0)
+	{
+		/* this shouldn't fail so... */
+		/* XXX add logging of this */
+		rb_close(F);
+	}
+	
+	add_connection(listener, F, addr, (struct sockaddr *)&lip, NULL);
 }
