@@ -60,105 +60,69 @@ void
 tstats(struct Client *source_p)
 {
 	struct Client *target_p;
-	struct ServerStatistics *sp;
-	struct ServerStatistics tmp;
+	struct ServerStatistics sp;
 	rb_dlink_node *ptr;
 
-	sp = &tmp;
-	memcpy(sp, ServerStats, sizeof(struct ServerStatistics));
+	memcpy(&sp, &ServerStats, sizeof(struct ServerStatistics));
 
 	RB_DLINK_FOREACH(ptr, serv_list.head)
 	{
 		target_p = ptr->data;
 
-		sp->is_sbs += target_p->localClient->sendB;
-		sp->is_sbr += target_p->localClient->receiveB;
-		sp->is_sks += target_p->localClient->sendK;
-		sp->is_skr += target_p->localClient->receiveK;
-		sp->is_sti += rb_current_time() - target_p->localClient->firsttime;
-		sp->is_sv++;
-		if(sp->is_sbs > 1023)
-		{
-			sp->is_sks += (sp->is_sbs >> 10);
-			sp->is_sbs &= 0x3ff;
-		}
-		if(sp->is_sbr > 1023)
-		{
-			sp->is_skr += (sp->is_sbr >> 10);
-			sp->is_sbr &= 0x3ff;
-		}
+		sp.is_sbs += target_p->localClient->sendB;
+		sp.is_sbr += target_p->localClient->receiveB;
+		sp.is_sti += rb_current_time() - target_p->localClient->firsttime;
+		sp.is_sv++;
 	}
 
 	RB_DLINK_FOREACH(ptr, lclient_list.head)
 	{
 		target_p = ptr->data;
 
-		sp->is_cbs += target_p->localClient->sendB;
-		sp->is_cbr += target_p->localClient->receiveB;
-		sp->is_cks += target_p->localClient->sendK;
-		sp->is_ckr += target_p->localClient->receiveK;
-		sp->is_cti += rb_current_time() - target_p->localClient->firsttime;
-		sp->is_cl++;
-		if(sp->is_cbs > 1023)
-		{
-			sp->is_cks += (sp->is_cbs >> 10);
-			sp->is_cbs &= 0x3ff;
-		}
-		if(sp->is_cbr > 1023)
-		{
-			sp->is_ckr += (sp->is_cbr >> 10);
-			sp->is_cbr &= 0x3ff;
-		}
-
-	}
-
-	RB_DLINK_FOREACH(ptr, unknown_list.head)
-	{
-		sp->is_ni++;
+		sp.is_cbs += target_p->localClient->sendB;
+		sp.is_cbr += target_p->localClient->receiveB;
+		sp.is_cti += rb_current_time() - target_p->localClient->firsttime;
+		sp.is_cl++;
 	}
 
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			   "T :accepts %u refused %u", sp->is_ac, sp->is_ref);
+				"T :accepts %u refused %u", 
+				sp.is_ac, sp.is_ref);
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			"T :rejected %u delaying %lu", 
-			sp->is_rej, rb_dlink_list_length(&delay_exit));
+				"T :rejected %u delaying %lu", 
+				sp.is_rej, delay_exit_length());
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			"T :nicks being delayed %lu",
-			get_nd_count());
+				"T :nicks being delayed %lu", get_nd_count());
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			   "T :unknown commands %u prefixes %u",
-			   sp->is_unco, sp->is_unpf);
+				"T :unknown commands %u prefixes %u",
+				sp.is_unco, sp.is_unpf);
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			   "T :nick collisions %u saves %u unknown closes %u",
-			   sp->is_kill, sp->is_save, sp->is_ni);
+				"T :nick collisions %u saves %u unknown closes %u",
+				sp.is_kill, sp.is_save, sp.is_ni);
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			   "T :wrong direction %u empty %u", 
-			   sp->is_wrdi, sp->is_empt);
+				"T :wrong direction %u empty %u", 
+				sp.is_wrdi, sp.is_empt);
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			   "T :numerics seen %u", sp->is_num);
+				"T :numerics seen %u", 
+				sp.is_num);
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			   "T :tgchange blocked msgs %u restricted addrs %lu",
-			   sp->is_tgch, rb_dlink_list_length(&tgchange_list));
-	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			   "T :auth successes %u fails %u",
-			   sp->is_asuc, sp->is_abad);
-	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			   "T :sasl successes %u fails %u",
-			   sp->is_ssuc, sp->is_sbad);
+				"T :auth successes %u fails %u",
+				sp.is_asuc, sp.is_abad);
 	sendto_one_numeric(source_p, RPL_STATSDEBUG, "T :Client Server");
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			   "T :connected %u %u", sp->is_cl, sp->is_sv);
+				"T :connected %u %u",
+				sp.is_cl, sp.is_sv);
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			   "T :bytes sent %d.%uK %d.%uK",
-			   (int) sp->is_cks, sp->is_cbs, 
-			   (int) sp->is_sks, sp->is_sbs);
+				"T :bytes sent %lluK %lluK",
+				sp.is_cbs / 1024, 
+				sp.is_sbs / 1024);
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			   "T :bytes recv %d.%uK %d.%uK",
-			   (int) sp->is_ckr, sp->is_cbr, 
-			   (int) sp->is_skr, sp->is_sbr);
+				"T :bytes recv %lluK %lluK",
+				sp.is_cbr / 1024, 
+				sp.is_sbr / 1024);
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			   "T :time connected %d %d",
-			   (int) sp->is_cti, (int) sp->is_sti);
+				"T :time connected %lu %lu",
+				sp.is_cti, sp.is_sti);
 }
 
 void
