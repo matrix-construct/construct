@@ -27,7 +27,6 @@
  */
 
 #include "stdinc.h"
-#include "tools.h"
 #include "channel.h"
 #include "client.h"
 #include "ircd.h"
@@ -109,7 +108,7 @@ list_all_channels(struct Client *source_p)
 
 		sendto_one(source_p, form_str(RPL_LIST),
 				me.name, source_p->name, chptr->chname,
-				dlink_list_length(&chptr->members),
+				rb_dlink_list_length(&chptr->members),
 				chptr->topic == NULL ? "" : chptr->topic);
 	}
 
@@ -146,6 +145,6 @@ list_named_channel(struct Client *source_p, const char *name)
 				form_str(ERR_NOSUCHCHANNEL), n);
 	else
 		sendto_one(source_p, form_str(RPL_LIST), me.name, source_p->name,
-			chptr->chname, dlink_list_length(&chptr->members),
+			chptr->chname, rb_dlink_list_length(&chptr->members),
 			chptr->topic ? chptr->topic : "");
 }

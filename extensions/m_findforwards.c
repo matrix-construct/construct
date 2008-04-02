@@ -20,7 +20,6 @@
  *   $Id: m_findforwards.c 986 2006-03-08 00:10:46Z jilles $
  */
 #include "stdinc.h"
-#include "tools.h"
 #include "channel.h"
 #include "client.h"
 #include "hash.h"
@@ -81,14 +80,14 @@ m_findforwards(struct Client *client_p, struct Client *source_p, int parc, const
 			return 0;
 		}
 
-		if((last_used + ConfigFileEntry.pace_wait) > CurrentTime)
+		if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
 		{
 			sendto_one(source_p, form_str(RPL_LOAD2HI),
 					me.name, source_p->name, "FINDFORWARDS");
 			return 0;
 		}
 		else
-			last_used = CurrentTime;
+			last_used = rb_current_time();
 	}
 	
 	RB_DLINK_FOREACH(ptr, global_channel_list.head)

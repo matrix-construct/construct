@@ -19,7 +19,6 @@
  *   $Id: m_opme.c 3554 2007-08-10 22:31:14Z jilles $
  */
 #include "stdinc.h"
-#include "tools.h"
 #include "channel.h"
 #include "client.h"
 #include "ircd.h"

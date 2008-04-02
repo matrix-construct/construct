@@ -9,7 +9,6 @@
 #include "s_conf.h"
 #include "s_user.h"
 #include "s_serv.h"
-#include "tools.h"
 #include "numeric.h"
 
 /* if you're modifying this module, you'll probably to change this */
@@ -160,7 +159,7 @@ check_new_user(void *vdata)
 		source_p->umodes &= ~user_modes['h'];
 		return;
 	}
-	source_p->localClient->mangledhost = MyMalloc(HOSTLEN);
+	source_p->localClient->mangledhost = rb_malloc(HOSTLEN);
 	if (!irccmp(source_p->orighost, source_p->sockhost))
 		do_host_cloak(source_p->orighost, source_p->localClient->mangledhost, 1);
 	else
