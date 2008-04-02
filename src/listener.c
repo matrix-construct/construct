@@ -39,6 +39,7 @@
 #include "s_log.h"
 #include "hash.h"
 #include "sslproc.h"
+#include "hostmask.h"
 
 static rb_dlink_list listener_list;
 static int accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, void *data);
