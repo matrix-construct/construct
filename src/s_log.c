@@ -118,7 +118,7 @@ ilog(ilogfile dest, const char *format, ...)
 		return;
 
 	va_start(args, format);
-	ircvsnprintf(buf, sizeof(buf), format, args);
+	rb_vsnprintf(buf, sizeof(buf), format, args);
 	va_end(args);
 
 	rb_snprintf(buf2, sizeof(buf2), "%s %s\n", smalldate(), buf);
