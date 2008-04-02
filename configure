@@ -11019,6 +11019,11 @@ _ACEOF
 
 
 cat >>confdefs.h <<\_ACEOF
+#define FD_HEAP_SIZE 128
+_ACEOF
+
+
+cat >>confdefs.h <<\_ACEOF
 #define AWAY_HEAP_SIZE 128
 _ACEOF
 
@@ -11091,6 +11096,11 @@ _ACEOF
 
 cat >>confdefs.h <<\_ACEOF
 #define MONITOR_HEAP_SIZE 1024
+_ACEOF
+
+
+cat >>confdefs.h <<\_ACEOF
+#define FD_HEAP_SIZE 1024
 _ACEOF
 
 
