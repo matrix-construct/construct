@@ -360,12 +360,12 @@ add_listener(int port, const char *vhost_ip, int family)
 	switch(family)
 	{
 		case AF_INET:
-			SET_SS_LEN(vaddr, sizeof(struct sockaddr_in));
+			SET_SS_LEN(&vaddr, sizeof(struct sockaddr_in));
 			((struct sockaddr_in *)&vaddr)->sin_port = htons(port);
 			break;
 #ifdef IPV6
 		case AF_INET6:
-			SET_SS_LEN(vaddr, sizeof(struct sockaddr_in6));
+			SET_SS_LEN(&vaddr, sizeof(struct sockaddr_in6));
 			((struct sockaddr_in6 *)&vaddr)->sin6_port = htons(port);
 			break;
 #endif
@@ -442,7 +442,7 @@ close_listeners()
  * any client list yet.
  */
 static void
-add_connection(listener_t *listener, int fd, struct sockaddr *sai, int exempt)
+add_connection(struct Listener *listener, rb_fde_t *F, struct sockaddr *sai, int exempt)
 {
 	struct Client *new_client;
 	s_assert(NULL != listener);
@@ -465,7 +465,7 @@ add_connection(listener_t *listener, int fd, struct sockaddr *sai, int exempt)
 
 	strlcpy(new_client->host, new_client->sockhost, sizeof(new_client->host));
 
-	new_client->localClient->F = rb_add_fd(fd);
+	new_client->localClient->F = F;
 
 	new_client->localClient->listener = listener;
 	++listener->ref_count;
