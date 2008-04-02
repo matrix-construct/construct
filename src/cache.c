@@ -38,6 +38,7 @@
 #include "s_conf.h"
 #include "client.h"
 #include "hash.h"
+#include "irc_dictionary.h"
 #include "cache.h"
 #include "match.h"
 #include "ircd.h"
