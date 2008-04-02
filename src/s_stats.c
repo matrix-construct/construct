@@ -284,7 +284,7 @@ count_memory(struct Client *source_p)
 
 	class_count = rb_dlink_list_length(&class_list) + 1;
 
-	count_linebuf_memory(&linebuf_count, &linebuf_memory_used);
+	rb_count_rb_linebuf_memory(&linebuf_count, &linebuf_memory_used);
 
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			   "z :Users %u(%lu) Invites %u(%lu)",
