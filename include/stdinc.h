@@ -140,8 +140,7 @@ extern int errno;
 # define __noreturn
 #endif
 
-
-
+/* XXX must be removed in future!!! -- dwr */
 #ifdef strdupa
 #define LOCAL_COPY(s) strdupa(s) 
 #else
@@ -150,4 +149,28 @@ extern int errno;
 #else
 # define LOCAL_COPY(s) strcpy(alloca(strlen(s) + 1), s) /* XXX Is that allowed? */
 #endif /* defined(__INTEL_COMPILER) || defined(__GNUC__) */
+
+/* LOCAL_COPY_N copies n part of string and adds one to terminate the string */
+#ifdef strndupa 
+#define LOCAL_COPY_N(s, n) strndupa(s, n)
+#else
+#if defined(__INTEL_COMPILER) || defined(__GNUC__)
+#define LOCAL_COPY_N(s, n) __extension__({ size_t _l = strlen(s); _l = n > _l ? _l : n; char *_s = alloca(_l+1); memcpy(_s, s, _l); _s[_l] = '\0' ; _s; })
+#else
+#define LOCAL_COPY_N(s, n) xc_strlcpy(alloca(strlen(s)+1), s, n)
+INLINE_FUNC size_t
+xc_strlcpy(char *dest, const char *src, size_t size)
+{ 
+        size_t ret = strlen(src);
+   
+        if (size) {
+                size_t len = (ret >= size) ? size-1 : ret;
+                memcpy(dest, src, len);
+                dest[len] = '\0';
+        }
+        return dest;
+}
+#endif /* defined(__INTEL_COMPILER) || defined(__GNUC__) */
+#endif /* strndupa */
+
 #endif /* strdupa */
