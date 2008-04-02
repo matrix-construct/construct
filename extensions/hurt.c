@@ -137,7 +137,7 @@ static int
 modinit(void)
 {
 	/* set-up hurt_state. */
-	hurt_state.start_time = CurrentTime;
+	hurt_state.start_time = rb_current_time();
 
 	/* add our event handlers. */
 	hurt_expire_ev = rb_event_add("hurt_expire", hurt_expire_event, NULL, 60);
@@ -401,7 +401,7 @@ hurt_check_event(void *arg)
 			rb_dlinkDestroy(ptr, &hurt_state.hurt_clients);
 			sendto_one_notice(client_p, ":HURT restriction removed for this session");
 			USED_TARGETS(client_p) = 0;
-			client_p->localClient->target_last = CurrentTime;		/* don't ask --nenolod */
+			client_p->localClient->target_last = rb_current_time();		/* don't ask --nenolod */
 		}
 		else if (client_p->localClient->receiveM > hurt_state.cutoff)
 			exit_client(NULL, client_p, &me, hurt_state.exit_reason);
@@ -420,7 +420,7 @@ hurt_expire_event(void *unused)
 	{
 		hurt = (hurt_t *) ptr->data;
 
-		if (hurt->expire <= CurrentTime)
+		if (hurt->expire <= rb_current_time())
 		{
 			rb_dlinkFindDestroy(hurt, &hurt_confs);
 			hurt_destroy(hurt);
@@ -455,7 +455,7 @@ new_local_user_hook(struct Client *source_p)
 	if (hurt_find(source_p->sockhost) || hurt_find(source_p->orighost))
 	{
 		USED_TARGETS(source_p) = 10;
-		source_p->localClient->target_last = CurrentTime + 600;		/* don't ask --nenolod */
+		source_p->localClient->target_last = rb_current_time() + 600;		/* don't ask --nenolod */
 		SetTGChange(source_p);
 		rb_dlinkAddAlloc(source_p, &hurt_state.hurt_clients);
 		sendto_one_notice(source_p, ":You are hurt. Please identify to services immediately, or use /stats p for assistance.");
@@ -525,13 +525,13 @@ hurt_propagate(struct Client *client_p, struct Client *source_p, hurt_t *hurt)
 		sendto_one(client_p,
 				":%s ENCAP %s HURT %ld %s :%s",
 				source_p->name, client_p->name,
-				(long)(hurt->expire - CurrentTime),
+				(long)(hurt->expire - rb_current_time()),
 				hurt->ip, hurt->reason);
 	else
 		sendto_server(&me, NULL, NOCAPS, NOCAPS,
 				":%s ENCAP * HURT %ld %s :%s",
 				source_p->name,
-				(long)(hurt->expire - CurrentTime),
+				(long)(hurt->expire - rb_current_time()),
 				hurt->ip, hurt->reason);
 }
 /* }}} */
@@ -546,7 +546,7 @@ hurt_new(time_t expire, const char *ip, const char *reason)
 
 	hurt->ip = rb_strdup(ip);
 	hurt->reason = rb_strdup(reason);
-	hurt->expire = CurrentTime + expire;
+	hurt->expire = rb_current_time() + expire;
 
 	return hurt;
 }
@@ -628,7 +628,7 @@ heal_nick(struct Client *source_p, struct Client *target_p)
 		sendto_one_notice(target_p, ":HURT restriction temporarily removed by operator");
 		sendto_one_notice(source_p, ":HURT restriction on %s temporarily removed", target_p->name);
 		USED_TARGETS(target_p) = 0;
-		target_p->localClient->target_last = CurrentTime;		/* don't ask --nenolod */
+		target_p->localClient->target_last = rb_current_time();		/* don't ask --nenolod */
 		return 1;
 	}
 	else
