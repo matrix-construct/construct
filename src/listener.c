@@ -555,5 +555,5 @@ accept_callback(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t add
 		rb_close(F);
 	}
 	
-	add_connection(listener, F, addr, (struct sockaddr *)&lip, 1);
+	add_connection(listener, F, addr, 1);
 }
