@@ -24,14 +24,12 @@
  *  $Id: packet.c 25179 2008-03-30 16:34:57Z androsyn $
  */
 #include "stdinc.h"
-#include "struct.h"
 #include "s_conf.h"
 #include "s_serv.h"
 #include "client.h"
 #include "ircd.h"
 #include "parse.h"
 #include "packet.h"
-#include "match.h"
 #include "hook.h"
 #include "send.h"
 #include "common.h"
