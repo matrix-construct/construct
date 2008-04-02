@@ -126,6 +126,7 @@ init_client(void)
 	rb_event_addish("check_pings", check_pings, NULL, 30);
 	rb_event_addish("free_exited_clients", &free_exited_clients, NULL, 4);
 	rb_event_addish("exit_aborted_clients", exit_aborted_clients, NULL, 1);
+	rb_event_add("flood_recalc", flood_recalc, NULL, 1);
 
 	nd_dict = irc_dictionary_create(irccmp);
 }
