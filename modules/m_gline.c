@@ -721,7 +721,6 @@ remove_temp_gline(const char *user, const char *host)
 			continue;
 
 		rb_dlinkDestroy(ptr, &glines);
-		remove_reject_mask(aconf->user, aconf->host);
 		delete_one_address_conf(aconf->host, aconf);
 		return YES;
 	}
