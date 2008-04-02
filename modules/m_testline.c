@@ -122,10 +122,10 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 	{
 #ifdef IPV6
 		if(type == HM_IPV6)
-			aconf = find_dline((struct sockaddr *)&ip, AF_INET6);
+			aconf = find_dline((struct sockaddr *)&ip);
 		else
 #endif
-			aconf = find_dline((struct sockaddr *)&ip, AF_INET);
+			aconf = find_dline((struct sockaddr *)&ip);
 
 		if(aconf && aconf->status & CONF_DLINE)
 		{
