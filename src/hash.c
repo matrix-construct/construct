@@ -660,6 +660,37 @@ clear_resv_hash(void)
 	HASH_WALK_END
 }
 
+void
+add_to_cli_fd_hash(struct Client *client_p)
+{
+	rb_dlinkAddAlloc(client_p, &clientbyfdTable[hash_cli_fd(rb_get_fd(client_p->localClient->F))]);
+}
+
+
+void
+del_from_cli_fd_hash(struct Client *client_p)
+{
+	unsigned int hashv;
+	hashv = hash_cli_fd(rb_get_fd(client_p->localClient->F));
+	rb_dlinkFindDestroy(client_p, &clientbyfdTable[hashv]);
+}
+
+struct Client *
+find_cli_fd_hash(int fd)
+{
+	struct Client *target_p;
+	rb_dlink_node *ptr;
+	unsigned int hashv;
+	hashv = hash_cli_fd(fd);
+	RB_DLINK_FOREACH(ptr, clientbyfdTable[hashv].head)
+	{
+		target_p = ptr->data;
+		if(rb_get_fd(target_p->localClient->F) == fd)
+			return target_p;
+	}
+	return  NULL;	
+}
+
 static void
 output_hash(struct Client *source_p, const char *name, int length, int *counts, int deepest)
 {

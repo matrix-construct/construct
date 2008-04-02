@@ -98,6 +98,10 @@ extern void del_from_resv_hash(const char *name, struct ConfItem *aconf);
 extern struct ConfItem *hash_find_resv(const char *name);
 extern void clear_resv_hash(void);
 
+void add_to_cli_fd_hash(struct Client *client_p);
+void del_from_cli_fd_hash(struct Client *client_p);
+struct Client *find_cli_fd_hash(int fd);
+
 extern void hash_stats(struct Client *);
 
 #endif /* INCLUDED_hash_h */
