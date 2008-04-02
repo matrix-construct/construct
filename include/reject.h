@@ -31,6 +31,9 @@
 
 extern rb_dlink_list delay_exit;
 
+struct ConfItem *find_dline(struct sockaddr *addr);
+struct ConfItem *find_dline_exact(struct sockaddr *addr, unsigned int bitlen);
+
 void init_reject(void);
 int check_reject(struct Client *);
 void add_reject(struct Client *, const char *mask1, const char *mask2);

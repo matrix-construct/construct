@@ -416,21 +416,6 @@ find_address_conf(const char *host, const char *sockhost, const char *user,
 	return iconf;
 }
 
-/* struct ConfItem* find_dline(struct rb_sockaddr_storage*, int)
- * Input: An address, an address family.
- * Output: The best matching D-line or exempt line.
- * Side effects: None.
- */
-struct ConfItem *
-find_dline(struct sockaddr *addr, int aftype)
-{
-	struct ConfItem *eline;
-	eline = find_conf_by_address(NULL, NULL, NULL, addr, CONF_EXEMPTDLINE | 1, aftype, NULL);
-	if(eline)
-		return eline;
-	return find_conf_by_address(NULL, NULL, NULL, addr, CONF_DLINE | 1, aftype, NULL);
-}
-
 /* void find_exact_conf_by_address(const char*, int, const char *)
  * Input: 
  * Output: ConfItem if found
