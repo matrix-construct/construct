@@ -67,7 +67,6 @@
 #include "hook.h"
 #include "ircd_getopt.h"
 #include "newconf.h"
-#include "patricia.h"
 #include "reject.h"
 #include "s_conf.h"
 #include "s_newconf.h"
