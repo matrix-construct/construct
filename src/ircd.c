@@ -649,22 +649,22 @@ main(int argc, char *argv[])
 
 	ilog(L_MAIN, "Server Ready");
 
-	eventAddIsh("cleanup_glines", cleanup_glines, NULL, CLEANUP_GLINES_TIME);
+	rb_event_addish("cleanup_glines", cleanup_glines, NULL, CLEANUP_GLINES_TIME);
 
 	/* We want try_connections to be called as soon as possible now! -- adrian */
 	/* No, 'cause after a restart it would cause all sorts of nick collides */
 	/* um.  by waiting even longer, that just means we have even *more*
 	 * nick collisions.  what a stupid idea. set an event for the IO loop --fl
 	 */
-	eventAddIsh("try_connections", try_connections, NULL, STARTUP_CONNECTIONS_TIME);
-	eventAddOnce("try_connections_startup", try_connections, NULL, 0);
+	rb_event_addish("try_connections", try_connections, NULL, STARTUP_CONNECTIONS_TIME);
+	rb_event_addonce("try_connections_startup", try_connections, NULL, 0);
 
-	eventAddIsh("collect_zipstats", collect_zipstats, NULL, ZIPSTATS_TIME);
+	rb_event_addish("collect_zipstats", collect_zipstats, NULL, ZIPSTATS_TIME);
 
 	/* Setup the timeout check. I'll shift it later :)  -- adrian */
-	eventAddIsh("rb_checktimeouts", rb_checktimeouts, NULL, 1);
+	rb_event_addish("rb_checktimeouts", rb_checktimeouts, NULL, 1);
 
-	eventAdd("check_rehash", check_rehash, NULL, 1);
+	rb_event_add("check_rehash", check_rehash, NULL, 1);
 
 	if(splitmode)
 		check_splitmode_ev = rb_event_add("check_splitmode", check_splitmode, NULL, 2);

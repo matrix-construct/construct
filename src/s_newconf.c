@@ -68,8 +68,8 @@ init_s_newconf(void)
 {
 	tgchange_tree = New_Patricia(PATRICIA_BITS);
 	nd_heap = rb_bh_create(sizeof(struct nd_entry), ND_HEAP_SIZE);
-	eventAddIsh("expire_nd_entries", expire_nd_entries, NULL, 30);
-	eventAddIsh("expire_temp_rxlines", expire_temp_rxlines, NULL, 60);
+	rb_event_addish("expire_nd_entries", expire_nd_entries, NULL, 30);
+	rb_event_addish("expire_temp_rxlines", expire_temp_rxlines, NULL, 60);
 }
 
 void

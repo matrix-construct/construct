@@ -112,8 +112,8 @@ init_reject(void)
 {
 	reject_tree = New_Patricia(PATRICIA_BITS);
 	unknown_tree = New_Patricia(PATRICIA_BITS);
-	eventAdd("reject_exit", reject_exit, NULL, DELAYED_EXIT_TIME);
-	eventAdd("reject_expires", reject_expires, NULL, 60);
+	rb_event_add("reject_exit", reject_exit, NULL, DELAYED_EXIT_TIME);
+	rb_event_add("reject_expires", reject_expires, NULL, 60);
 }
 
 

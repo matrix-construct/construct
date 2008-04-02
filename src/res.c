@@ -231,7 +231,7 @@ static void start_resolver(void)
 
 		/* At the moment, the resolver FD data is global .. */
 		rb_setselect(res_fd, FDLIST_NONE, COMM_SELECT_READ, res_readreply, NULL, 0);
-		eventAdd("timeout_resolver", timeout_resolver, NULL, 1);
+		rb_event_add("timeout_resolver", timeout_resolver, NULL, 1);
 	}
 }
 

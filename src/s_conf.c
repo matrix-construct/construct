@@ -85,20 +85,20 @@ init_s_conf(void)
 {
 	confitem_heap = rb_bh_create(sizeof(struct ConfItem), CONFITEM_HEAP_SIZE);
 
-	eventAddIsh("expire_temp_klines", expire_temp_kd, &temp_klines[TEMP_MIN], 60);
-	eventAddIsh("expire_temp_dlines", expire_temp_kd, &temp_dlines[TEMP_MIN], 60);
+	rb_event_addish("expire_temp_klines", expire_temp_kd, &temp_klines[TEMP_MIN], 60);
+	rb_event_addish("expire_temp_dlines", expire_temp_kd, &temp_dlines[TEMP_MIN], 60);
 
-	eventAddIsh("expire_temp_klines_hour", reorganise_temp_kd,
+	rb_event_addish("expire_temp_klines_hour", reorganise_temp_kd,
 			&temp_klines[TEMP_HOUR], 3600);
-	eventAddIsh("expire_temp_dlines_hour", reorganise_temp_kd,
+	rb_event_addish("expire_temp_dlines_hour", reorganise_temp_kd,
 			&temp_dlines[TEMP_HOUR], 3600);
-	eventAddIsh("expire_temp_klines_day", reorganise_temp_kd,
+	rb_event_addish("expire_temp_klines_day", reorganise_temp_kd,
 			&temp_klines[TEMP_DAY], 86400);
-	eventAddIsh("expire_temp_dlines_day", reorganise_temp_kd,
+	rb_event_addish("expire_temp_dlines_day", reorganise_temp_kd,
 			&temp_dlines[TEMP_DAY], 86400);
-	eventAddIsh("expire_temp_klines_week", reorganise_temp_kd,
+	rb_event_addish("expire_temp_klines_week", reorganise_temp_kd,
 			&temp_klines[TEMP_WEEK], 604800);
-	eventAddIsh("expire_temp_dlines_week", reorganise_temp_kd,
+	rb_event_addish("expire_temp_dlines_week", reorganise_temp_kd,
 			&temp_dlines[TEMP_WEEK], 604800);
 }
 
