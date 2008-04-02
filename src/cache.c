@@ -33,17 +33,15 @@
  */
 
 #include "stdinc.h"
-#include "ratbox_lib.h"
-#include "struct.h"
+#include "ircd_defs.h"
+#include "common.h"
 #include "s_conf.h"
 #include "client.h"
 #include "hash.h"
-#include "irc_dictionary.h"
 #include "cache.h"
-#include "match.h"
-#include "ircd.h"
+#include "sprintf_irc.h"
+#include "irc_dictionary.h"
 #include "numeric.h"
-#include "send.h"
 
 struct cachefile *user_motd = NULL;
 struct cachefile *oper_motd = NULL;
@@ -256,7 +254,7 @@ send_user_motd(struct Client *source_p)
 		sendto_one(source_p, form_str(ERR_NOMOTD), myname, nick);
 		return;
 	}
-	SetCork(source_p);
+
 	sendto_one(source_p, form_str(RPL_MOTDSTART), myname, nick, me.name);
 
 	RB_DLINK_FOREACH(ptr, user_motd->contents.head)
@@ -264,7 +262,7 @@ send_user_motd(struct Client *source_p)
 		lineptr = ptr->data;
 		sendto_one(source_p, form_str(RPL_MOTD), myname, nick, lineptr->data);
 	}
-	ClearCork(source_p);
+
 	sendto_one(source_p, form_str(RPL_ENDOFMOTD), myname, nick);
 }
 
