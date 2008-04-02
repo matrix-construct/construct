@@ -79,6 +79,7 @@ extern struct LocalUser meLocalUser;
 extern char **myargv;
 
 int maxconnections; /* XXX */
+int ssl_ok = 0;
 
 /*
  * print_startup - print startup information
