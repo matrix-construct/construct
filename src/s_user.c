@@ -414,7 +414,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 	   (xconf = find_xline(source_p->info, 1)) != NULL)
 	{
 		ServerStats.is_ref++;
-		add_reject(source_p, xconf->name, NULL);
+		add_reject(source_p);
 		exit_client(client_p, source_p, &me, "Bad user info");
 		return CLIENT_EXITED;
 	}
@@ -446,7 +446,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 			sendto_one_notice(source_p, ":*** Your IP address %s is listed in %s",
 					source_p->sockhost, source_p->preClient->dnsbl_listed->host);
 			source_p->preClient->dnsbl_listed->hits++;
-			add_reject(source_p, NULL, NULL);
+			add_reject(source_p);
 			exit_client(client_p, source_p, &me, "*** Banned (DNS blacklist)");
 			return CLIENT_EXITED;
 		}
@@ -526,7 +526,6 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 		Count.invisi++;
 
 	s_assert(!IsClient(source_p));
-	del_unknown_ip(source_p);
 	rb_dlinkMoveNode(&source_p->localClient->tnode, &unknown_list, &lclient_list);
 	SetClient(source_p);
 
