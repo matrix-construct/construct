@@ -20,7 +20,6 @@
  *   $Id: m_clearchan.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 #include "stdinc.h"
-#include "tools.h"
 #include "channel.h"
 #include "client.h"
 #include "hash.h"
