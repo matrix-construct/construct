@@ -65,4 +65,7 @@
 /* Right out of the RFC */
 #define IRCD_BUFSIZE 512
 
+/* readbuf size */
+#define READBUF_SIZE 16384
+
 #endif /* INCLUDED_common_h */
