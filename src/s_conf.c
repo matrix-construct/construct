@@ -45,7 +45,6 @@
 #include "s_log.h"
 #include "send.h"
 #include "s_gline.h"
-#include "patricia.h"
 #include "reject.h"
 #include "cache.h"
 #include "blacklist.h"
@@ -83,7 +82,7 @@ static int attach_iline(struct Client *, struct ConfItem *);
 void
 init_s_conf(void)
 {
-	confitem_heap = rb_bh_create(sizeof(struct ConfItem), CONFITEM_HEAP_SIZE);
+	confitem_heap = rb_bh_create(sizeof(struct ConfItem), CONFITEM_HEAP_SIZE, "confitem_heap");
 
 	rb_event_addish("expire_temp_klines", expire_temp_kd, &temp_klines[TEMP_MIN], 60);
 	rb_event_addish("expire_temp_dlines", expire_temp_kd, &temp_dlines[TEMP_MIN], 60);
@@ -408,13 +407,13 @@ verify_access(struct Client *client_p, const char *username)
 static int
 add_ip_limit(struct Client *client_p, struct ConfItem *aconf)
 {
-	patricia_node_t *pnode;
+	rb_patricia_node_t *pnode;
 
 	/* If the limits are 0 don't do anything.. */
 	if(ConfCidrAmount(aconf) == 0 || ConfCidrBitlen(aconf) == 0)
 		return -1;
 
-	pnode = match_ip(ConfIpLimits(aconf), (struct sockaddr *)&client_p->localClient->ip);
+	pnode = rb_match_ip(ConfIpLimits(aconf), (struct sockaddr *)&client_p->localClient->ip);
 
 	if(pnode == NULL)
 		pnode = make_and_lookup_ip(ConfIpLimits(aconf), (struct sockaddr *)&client_p->localClient->ip, ConfCidrBitlen(aconf));
@@ -429,7 +428,7 @@ add_ip_limit(struct Client *client_p, struct ConfItem *aconf)
 			/* This should only happen if the limits are set to 0 */
 			if((unsigned long) pnode->data == 0)
 			{
-				patricia_remove(ConfIpLimits(aconf), pnode);
+				rb_patricia_remove(ConfIpLimits(aconf), pnode);
 			}
 			return (0);
 		}
@@ -442,20 +441,20 @@ add_ip_limit(struct Client *client_p, struct ConfItem *aconf)
 static void
 remove_ip_limit(struct Client *client_p, struct ConfItem *aconf)
 {
-	patricia_node_t *pnode;
+	rb_patricia_node_t *pnode;
 
 	/* If the limits are 0 don't do anything.. */
 	if(ConfCidrAmount(aconf) == 0 || ConfCidrBitlen(aconf) == 0)
 		return;
 
-	pnode = match_ip(ConfIpLimits(aconf), (struct sockaddr *)&client_p->localClient->ip);
+	pnode = rb_match_ip(ConfIpLimits(aconf), (struct sockaddr *)&client_p->localClient->ip);
 	if(pnode == NULL)
 		return;
 
 	pnode->data--;
 	if(((unsigned long) pnode->data) == 0)
 	{
-		patricia_remove(ConfIpLimits(aconf), pnode);
+		rb_patricia_remove(ConfIpLimits(aconf), pnode);
 	}
 
 }
@@ -839,7 +838,7 @@ set_default_conf(void)
 	ConfigFileEntry.reject_duration = 120;
 	ConfigFileEntry.max_unknown_ip = 2;
 
-	ServerInfo.max_clients = rb_get_maxconnections() - MAX_BUFFER;
+	ServerInfo.max_clients = maxconnections - MAX_BUFFER;
 }
 
 #undef YES
@@ -890,7 +889,8 @@ validate_conf(void)
 	if(!split_users || !split_servers ||
 	   (!ConfigChannel.no_create_on_split && !ConfigChannel.no_join_on_split))
 	{
-		eventDelete(check_splitmode, NULL);
+		rb_event_delete(check_splitmode_ev);
+		check_splitmode_ev = NULL;
 		splitmode = 0;
 		splitchecking = 0;
 	}
