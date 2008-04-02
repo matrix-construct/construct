@@ -184,7 +184,7 @@ mod_clear_paths(void)
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, mod_paths.head)
 	{
 		rb_free(ptr->data);
-		free_rb_dlink_node(ptr);
+		rb_free_rb_dlink_node(ptr);
 	}
 
 	mod_paths.head = mod_paths.tail = NULL;
