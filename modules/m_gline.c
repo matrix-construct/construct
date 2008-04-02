@@ -695,7 +695,7 @@ remove_temp_gline(const char *user, const char *host)
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
-	struct irc_sockaddr_storage addr, caddr;
+	struct rb_sockaddr_storage addr, caddr;
 	int bits, cbits;
 	int mtype, gtype;
 

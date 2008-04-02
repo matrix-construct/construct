@@ -56,14 +56,14 @@ static PF accept_connection;
 static listener_t *ListenerPollList = NULL;
 
 static listener_t *
-make_listener(struct irc_sockaddr_storage *addr)
+make_listener(struct rb_sockaddr_storage *addr)
 {
 	listener_t *listener = (listener_t *) rb_malloc(sizeof(listener_t));
 	s_assert(0 != listener);
 
 	listener->name = me.name;
 	listener->fd = -1;
-	memcpy(&listener->addr, addr, sizeof(struct irc_sockaddr_storage));
+	memcpy(&listener->addr, addr, sizeof(struct rb_sockaddr_storage));
 	listener->next = NULL;
 	return listener;
 }
@@ -252,7 +252,7 @@ inetport(listener_t *listener)
 }
 
 static listener_t *
-find_listener(struct irc_sockaddr_storage *addr)
+find_listener(struct rb_sockaddr_storage *addr)
 {
 	listener_t *listener = NULL;
 	listener_t *last_closed = NULL;
@@ -314,7 +314,7 @@ void
 add_listener(int port, const char *vhost_ip, int family)
 {
 	listener_t *listener;
-	struct irc_sockaddr_storage vaddr;
+	struct rb_sockaddr_storage vaddr;
 
 	/*
 	 * if no port in conf line, don't bother
@@ -451,7 +451,7 @@ add_connection(listener_t *listener, int fd, struct sockaddr *sai, int exempt)
 	 */
 	new_client = make_client(NULL);
 
-	memcpy(&new_client->localClient->ip, sai, sizeof(struct irc_sockaddr_storage));
+	memcpy(&new_client->localClient->ip, sai, sizeof(struct rb_sockaddr_storage));
 
 	/* 
 	 * copy address to 'sockhost' as a string, copy it to host too
@@ -484,7 +484,7 @@ static void
 accept_connection(int pfd, void *data)
 {
 	static time_t last_oper_notice = 0;
-	struct irc_sockaddr_storage sai;
+	struct rb_sockaddr_storage sai;
 	socklen_t addrlen = sizeof(sai);
 	int fd;
 	listener_t *listener = data;

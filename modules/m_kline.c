@@ -691,7 +691,7 @@ static int
 already_placed_kline(struct Client *source_p, const char *luser, const char *lhost, int tkline)
 {
 	const char *reason, *p;
-	struct irc_sockaddr_storage iphost, *piphost;
+	struct rb_sockaddr_storage iphost, *piphost;
 	struct ConfItem *aconf;
         int t, bits;
 

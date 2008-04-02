@@ -46,7 +46,7 @@ struct hostent;
 
 struct ip_value
 {
-	struct irc_sockaddr_storage ip;
+	struct rb_sockaddr_storage ip;
 	int ip_mask;
 	int type;
 };
