@@ -288,8 +288,8 @@ struct LocalUser
 	auth_request_t	*auth_request;
 
 	/* target change stuff */
-	uint32_t targets[10];		/* targets were aware of (fnv32(use_id(target_p))) */
-	unsigned int targinfo[2];	/* cyclic array, no in use */
+	void *targets[10];		/* targets were aware of */
+	rb_uint8_t targinfo[2];	/* cyclic array, no in use */
 	time_t target_last;		/* last time we cleared a slot */
 
 	list_client_t *safelist_data;
