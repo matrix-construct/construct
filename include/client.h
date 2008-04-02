@@ -298,6 +298,7 @@ struct LocalUser
 			      applicable to this client */
 
 	struct rb_sockaddr_storage *lip;	/* alloc before auth/freed after auth */
+	struct _ssl_ctl *ssl_ctl;		/* which ssl daemon we're associate with */
 };
 
 struct PreClient
