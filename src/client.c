@@ -76,6 +76,7 @@ static EVH check_pings;
 extern rb_bh *client_heap;
 extern rb_bh *lclient_heap;
 extern rb_bh *pclient_heap;
+static rb_bh *away_heap = NULL;
 
 extern char current_uid[IDLEN];
 
@@ -117,9 +118,11 @@ init_client(void)
 	 * start off the check ping event ..  -- adrian
 	 * Every 30 seconds is plenty -- db
 	 */
-	client_heap = rb_bh_create(sizeof(struct Client), CLIENT_HEAP_SIZE);
-	lclient_heap = rb_bh_create(sizeof(struct LocalUser), LCLIENT_HEAP_SIZE);
-	pclient_heap = rb_bh_create(sizeof(struct PreClient), PCLIENT_HEAP_SIZE);
+	client_heap = rb_bh_create(sizeof(struct Client), CLIENT_HEAP_SIZE, "client_heap");
+	lclient_heap = rb_bh_create(sizeof(struct LocalUser), LCLIENT_HEAP_SIZE, "lclient_heap");
+	pclient_heap = rb_bh_create(sizeof(struct PreClient), PCLIENT_HEAP_SIZE, "pclient_heap");
+	away_heap = rb_bh_create(AWAYLEN, AWAY_HEAP_SIZE, "away_heap");
+
 	rb_event_addish("check_pings", check_pings, NULL, 30);
 	rb_event_addish("free_exited_clients", &free_exited_clients, NULL, 4);
 	rb_event_addish("exit_aborted_clients", exit_aborted_clients, NULL, 1);
@@ -1553,10 +1556,10 @@ exit_local_server(struct Client *client_p, struct Client *source_p, struct Clien
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s was connected"
 			     " for %ld seconds.  %d/%d sendK/recvK.",
-			     source_p->name, rb_current_time() - source_p->localClient->firsttime, sendk, recvk);
+			     source_p->name, (long) rb_current_time() - source_p->localClient->firsttime, sendk, recvk);
 
 	ilog(L_SERVER, "%s was connected for %ld seconds.  %d/%d sendK/recvK.",
-	     source_p->name, rb_current_time() - source_p->localClient->firsttime, sendk, recvk);
+	     source_p->name, (long) rb_current_time() - source_p->localClient->firsttime, sendk, recvk);
         
 	if(has_id(source_p))
 		del_from_id_hash(source_p->id, source_p);
@@ -1709,8 +1712,8 @@ void
 count_local_client_memory(size_t * count, size_t * local_client_memory_used)
 {
 	size_t lusage;
-	rb_bh_usage(lclient_heap, count, NULL, &lusage);
-	*local_client_memory_used = lusage + (*count * (sizeof(MemBlock) + sizeof(struct Client)));
+	rb_bh_usage(lclient_heap, count, NULL, &lusage, NULL);
+	*local_client_memory_used = lusage + (*count * (sizeof(void *) + sizeof(struct Client)));
 }
 
 /*
@@ -1720,10 +1723,10 @@ void
 count_remote_client_memory(size_t * count, size_t * remote_client_memory_used)
 {
 	size_t lcount, rcount;
-	rb_bh_usage(lclient_heap, &lcount, NULL, NULL);
-	rb_bh_usage(client_heap, &rcount, NULL, NULL);
+	rb_bh_usage(lclient_heap, &lcount, NULL, NULL, NULL);
+	rb_bh_usage(client_heap, &rcount, NULL, NULL, NULL);
 	*count = rcount - lcount;
-	*remote_client_memory_used = *count * (sizeof(MemBlock) + sizeof(struct Client));
+	*remote_client_memory_used = *count * (sizeof(void *) + sizeof(struct Client));
 }
 
 
@@ -1845,9 +1848,9 @@ static rb_bh *user_heap;
 void
 initUser(void)
 {
-	user_heap = rb_bh_create(sizeof(struct User), USER_HEAP_SIZE);
+	user_heap = rb_bh_create(sizeof(struct User), USER_HEAP_SIZE, "user_heap");
 	if(!user_heap)
-		outofmemory();
+		rb_outofmemory();
 }
 
 /*
@@ -1906,6 +1909,8 @@ make_server(struct Client *client_p)
 void
 free_user(struct User *user, struct Client *client_p)
 {
+	free_away(client_p);
+
 	if(--user->refcnt <= 0)
 	{
 		if(user->away)
