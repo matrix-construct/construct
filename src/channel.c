@@ -73,10 +73,10 @@ static int h_can_join;
 void
 init_channels(void)
 {
-	channel_heap = rb_bh_create(sizeof(struct Channel), CHANNEL_HEAP_SIZE);
-	ban_heap = rb_bh_create(sizeof(struct Ban), BAN_HEAP_SIZE);
-	topic_heap = rb_bh_create(TOPICLEN + 1 + USERHOST_REPLYLEN, TOPIC_HEAP_SIZE);
-	member_heap = rb_bh_create(sizeof(struct membership), MEMBER_HEAP_SIZE);
+	channel_heap = rb_bh_create(sizeof(struct Channel), CHANNEL_HEAP_SIZE, "channel_heap");
+	ban_heap = rb_bh_create(sizeof(struct Ban), BAN_HEAP_SIZE, "ban_heap");
+	topic_heap = rb_bh_create(TOPICLEN + 1 + USERHOST_REPLYLEN, TOPIC_HEAP_SIZE, "topic_heap");
+	member_heap = rb_bh_create(sizeof(struct membership), MEMBER_HEAP_SIZE, "member_heap");
 
 	h_can_join = register_hook("can_join");
 }
@@ -989,7 +989,7 @@ check_splitmode(void *unused)
 				splitmode = 1;
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						     "Network split, activating splitmode");
-				eventAddIsh("check_splitmode", check_splitmode, NULL, 2);
+				check_splitmode_ev = rb_event_addish("check_splitmode", check_splitmode, NULL, 2);
 			}
 		}
 		/* in splitmode, check whether its finished */
@@ -1000,7 +1000,7 @@ check_splitmode(void *unused)
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					     "Network rejoined, deactivating splitmode");
 
-			eventDelete(check_splitmode, NULL);
+			rb_event_delete(check_splitmode_ev);
 		}
 	}
 }
