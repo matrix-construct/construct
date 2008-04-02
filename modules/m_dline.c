@@ -77,7 +77,6 @@ mo_dline(struct Client *client_p, struct Client *source_p,
 	const char *dlhost;
 	char *oper_reason;
 	char *reason = def;
-	struct rb_sockaddr_storage daddr;
 	char cidr_form_host[HOSTLEN + 1];
 	struct ConfItem *aconf;
 	int bits;
