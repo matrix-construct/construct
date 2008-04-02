@@ -373,7 +373,7 @@ write_xline(struct Client *source_p, struct ConfItem *aconf)
 
 	rb_sprintf(buffer, "\"%s\",\"0\",\"%s\",\"%s\",%ld\n",
 		   aconf->name, aconf->passwd,
-		   get_oper_name(source_p), rb_current_time());
+		   get_oper_name(source_p), (long) rb_current_time());
 
 	if(fputs(buffer, out) == -1)
 	{
