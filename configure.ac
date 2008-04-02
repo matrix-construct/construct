@@ -929,6 +929,7 @@ dnl	AC_DEFINE([HASHSIZE], 4096, [Max number of buckets in hash tables.])
 	AC_DEFINE([ND_HEAP_SIZE], 128, [Size of the nick delay heap.])
 	AC_DEFINE([CONFITEM_HEAP_SIZE], 128, [Size of the confitem heap.])
 	AC_DEFINE([MONITOR_HEAP_SIZE], 128, [Size of the monitor heap.])
+	AC_DEFINE([AWAY_HEAP_SIZE], 128, [Size of away heap.])
 else
 dnl These settings are for a large network like efnet..they will use lots of memory
 dnl so enable small net unless you really need this much support
@@ -946,6 +947,7 @@ dnl so enable small net unless you really need this much support
         AC_DEFINE([ND_HEAP_SIZE], 512, [Size of the nick delay heap.])
         AC_DEFINE([CONFITEM_HEAP_SIZE], 256, [Size of the confitem heap.])
 	AC_DEFINE([MONITOR_HEAP_SIZE], 1024, [Size of the monitor heap.])
+	AC_DEFINE([AWAY_HEAP_SIZE], 512, [Size of away heap.])
 fi
 
 AC_ARG_WITH(nicklen,
