@@ -520,7 +520,7 @@ get_or_create_channel(struct Client *client_p, const char *chname, int *isnew)
 	{
 		if(IsServer(client_p))
 		{
-			sendto_realops_flags(UMODE_DEBUG, L_ALL,
+			sendto_realops_snomask(SNO_DEBUG, L_ALL,
 					     "*** Long channel name from %s (%d > %d): %s",
 					     client_p->name, len, CHANNELLEN, s);
 		}
