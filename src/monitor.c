@@ -49,7 +49,7 @@ init_monitor(void)
 static inline unsigned int
 hash_monitor_nick(const char *name)
 {
-	return fnv_hash_upper((const unsigned char *)name, MONITOR_HASH_BITS, 0);
+	return fnv_hash_upper((const unsigned char *)name, MONITOR_HASH_BITS);
 }
 
 struct monitor *
