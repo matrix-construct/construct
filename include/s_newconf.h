@@ -250,9 +250,6 @@ struct nd_entry
 {
 	char name[NICKLEN+1];
 	time_t expire;
-	unsigned int hashv;
-
-	rb_dlink_node hnode;	/* node in hash */
 	rb_dlink_node lnode;	/* node in ll */
 };
 
