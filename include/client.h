@@ -296,6 +296,8 @@ struct LocalUser
 
 	char *mangledhost; /* non-NULL if host mangling module loaded and
 			      applicable to this client */
+
+	struct rb_sockaddr_storage *lip;	/* alloc before auth/freed after auth */
 };
 
 struct PreClient
