@@ -558,7 +558,6 @@ main(int argc, char *argv[])
 
 	/* Init the event subsystem */
 	init_sys();
-	libcharybdis_init(ircd_log_cb, restart, ircd_die_cb);
 	rb_lib_init(ircd_log_cb, restart, ircd_die_cb, !server_state_foreground, maxconnections, DNODE_HEAP_SIZE, FD_HEAP_SIZE);
 
 	init_main_logfile();

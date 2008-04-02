@@ -62,7 +62,7 @@ struct Dictionary *irc_dictionary_create(DCF compare_cb)
 	dtree->compare_cb = compare_cb;
 
 	if (!elem_heap)
-		elem_heap = rb_bh_create(sizeof(struct DictionaryElement), 1024);
+		elem_heap = rb_bh_create(sizeof(struct DictionaryElement), 1024, "dictionary_elem_heap");
 
 	return dtree;
 }
@@ -93,7 +93,7 @@ struct Dictionary *irc_dictionary_create_named(const char *name,
 	dtree->id = rb_strdup(name);
 
 	if (!elem_heap)
-		elem_heap = rb_bh_create(sizeof(struct DictionaryElement), 1024);
+		elem_heap = rb_bh_create(sizeof(struct DictionaryElement), 1024, "dictionary_elem_heap");
 
 	return dtree;
 }
