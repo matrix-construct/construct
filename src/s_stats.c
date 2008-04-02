@@ -41,8 +41,7 @@
 /*
  * stats stuff
  */
-static struct ServerStatistics ircst;
-struct ServerStatistics *ServerStats = &ircst;
+struct ServerStatistics ServerStats;
 
 void
 init_stats()
