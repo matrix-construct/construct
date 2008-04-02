@@ -456,7 +456,7 @@ check_banned_lines(void)
 			continue;
 
 		/* if there is a returned struct ConfItem then kill it */
-		if((aconf = find_dline((struct sockaddr *)&client_p->localClient->ip, client_p->localClient->ip.ss_family)))
+		if((aconf = find_dline((struct sockaddr *)&client_p->localClient->ip)))
 		{
 			if(aconf->status & CONF_EXEMPTDLINE)
 				continue;
@@ -540,7 +540,7 @@ check_banned_lines(void)
 	{
 		client_p = ptr->data;
 
-		if((aconf = find_dline((struct sockaddr *)&client_p->localClient->ip,client_p->localClient->ip.ss_family)))
+		if((aconf = find_dline((struct sockaddr *)&client_p->localClient->ip)))
 		{
 			if(aconf->status & CONF_EXEMPTDLINE)
 				continue;
@@ -675,7 +675,7 @@ check_dlines(void)
 		if(IsMe(client_p))
 			continue;
 
-		if((aconf = find_dline((struct sockaddr *)&client_p->localClient->ip,client_p->localClient->ip.ss_family)) != NULL)
+		if((aconf = find_dline((struct sockaddr *)&client_p->localClient->ip) != NULL)
 		{
 			if(aconf->status & CONF_EXEMPTDLINE)
 				continue;
@@ -694,7 +694,7 @@ check_dlines(void)
 	{
 		client_p = ptr->data;
 
-		if((aconf = find_dline((struct sockaddr *)&client_p->localClient->ip,client_p->localClient->ip.ss_family)) != NULL)
+		if((aconf = find_dline((struct sockaddr *)&client_p->localClient->ip)) != NULL)
 		{
 			if(aconf->status & CONF_EXEMPTDLINE)
 				continue;
@@ -1401,7 +1401,6 @@ exit_unknown_client(struct Client *client_p, struct Client *source_p, struct Cli
 		  const char *comment)
 {
 	delete_auth_queries(source_p);
-	del_unknown_ip(source_p);
 	rb_dlinkDelete(&source_p->localClient->tnode, &unknown_list);
 
 	if(!IsIOError(source_p))
@@ -2084,20 +2083,15 @@ close_connection(struct Client *client_p)
 	else
 		ServerStats.is_ni++;
 
-	if(client_p->localClient->F)
+	/* XXX ctrlFd was here!!! */
+	if(client_p->localClient->F != NULL)
 	{
-		/* attempt to flush any pending dbufs. Evil, but .. -- adrian */
+		/* attempt to flush any pending linebufs. Evil, but .. -- adrian */
 		if(!IsIOError(client_p))
-			send_queued(client_p);
-
+			send_pop_queue(client_p);
+		del_from_cli_fd_hash(client_p);			
 		rb_close(client_p->localClient->F);
 		client_p->localClient->F = NULL;
-	}
-
-	if(-1 < client_p->localClient->ctrlfd)
-	{
-		rb_close(client_p->localClient->ctrlfd);
-		client_p->localClient->ctrlfd = -1;
 	}
 
 	rb_linebuf_donebuf(&client_p->localClient->buf_sendq);
