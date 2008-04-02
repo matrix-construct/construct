@@ -148,7 +148,7 @@ inotice(const char *format, ...)
 	va_list args;
 
 	va_start(args, format);
-	ircvsnprintf(buf, sizeof(buf), format, args);
+	rb_vsnprintf(buf, sizeof(buf), format, args);
 	va_end(args);
 
 	_iprint("notice", buf);
