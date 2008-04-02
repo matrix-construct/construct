@@ -288,3 +288,33 @@ cache_user_motd(void)
 	free_cachefile(user_motd);
 	user_motd = cache_file(MPATH, "ircd.motd", 0);
 }
+
+
+/* send_oper_motd()
+ *
+ * inputs	- client to send motd to
+ * outputs	- client is sent oper motd if exists
+ * side effects -
+ */
+void
+send_oper_motd(struct Client *source_p)
+{
+	struct cacheline *lineptr;
+	rb_dlink_node *ptr;
+
+	if(oper_motd == NULL || rb_dlink_list_length(&oper_motd->contents) == 0)
+		return;
+
+	sendto_one(source_p, form_str(RPL_OMOTDSTART), 
+		   me.name, source_p->name);
+
+	RB_DLINK_FOREACH(ptr, oper_motd->contents.head)
+	{
+		lineptr = ptr->data;
+		sendto_one(source_p, form_str(RPL_OMOTD),
+			   me.name, source_p->name, lineptr->data);
+	}
+
+	sendto_one(source_p, form_str(RPL_ENDOFOMOTD), 
+		   me.name, source_p->name);
+}
