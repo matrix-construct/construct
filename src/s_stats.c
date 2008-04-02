@@ -46,7 +46,7 @@ struct ServerStatistics ServerStats;
 void
 init_stats()
 {
-	memset(&ircst, 0, sizeof(ircst));
+	/* XXX nothing to do - was ServerStats init -- dwr */
 }
 
 /*
