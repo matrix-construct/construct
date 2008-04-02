@@ -23,7 +23,7 @@
 struct DNSReply
 {
   char *h_name;
-  struct rb_sockaddr_storage addr;
+  struct irc_sockaddr_storage addr;
 };
 
 struct DNSQuery
@@ -32,14 +32,14 @@ struct DNSQuery
   void (*callback)(void* vptr, struct DNSReply *reply); /* callback to call */
 };
 
-extern struct rb_sockaddr_storage irc_nsaddr_list[];
+extern struct irc_sockaddr_storage irc_nsaddr_list[];
 extern int irc_nscount;
 
 extern void init_resolver(void);
 extern void restart_resolver(void);
 extern void delete_resolver_queries(const struct DNSQuery *);
 extern void gethost_byname_type(const char *, struct DNSQuery *, int);
-extern void gethost_byaddr(const struct rb_sockaddr_storage *, struct DNSQuery *);
+extern void gethost_byaddr(const struct irc_sockaddr_storage *, struct DNSQuery *);
 extern void add_local_domain(char *, size_t);
 extern void report_dns_servers(struct Client *);
 

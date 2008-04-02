@@ -43,7 +43,7 @@ struct Class
 	int con_freq;
 	int ping_freq;
 	int total;
-	rb_patricia_tree_t *ip_limits;
+	struct _patricia_tree_t *ip_limits;
 	int cidr_bitlen;
 	int cidr_amount;
 

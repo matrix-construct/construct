@@ -276,7 +276,7 @@ ms_signon(struct Client *client_p, struct Client *source_p,
 
 	if(!clean_nick(parv[1]))
 	{
-		ServerStats.is_kill++;
+		ServerStats->is_kill++;
 		sendto_realops_snomask(SNO_DEBUG, L_ALL,
 				"Bad Nick from SIGNON: %s From: %s(via %s)",
 				parv[1], source_p->servptr->name, client_p->name);
@@ -294,7 +294,7 @@ ms_signon(struct Client *client_p, struct Client *source_p,
 
 	if(!clean_username(parv[2]) || !clean_host(parv[3]))
 	{
-		ServerStats.is_kill++;
+		ServerStats->is_kill++;
 		sendto_realops_snomask(SNO_DEBUG, L_ALL,
 				"Bad user@host from SIGNON: %s@%s From: %s(via %s)",
 				parv[2], parv[3], source_p->servptr->name, client_p->name);
@@ -338,13 +338,13 @@ ms_signon(struct Client *client_p, struct Client *source_p,
 						     source_p->name, target_p->name, target_p->from->name,
 						     client_p->name);
 		
-				ServerStats.is_kill++;
+				ServerStats->is_kill++;
 				sendto_one_numeric(target_p, ERR_NICKCOLLISION,
 						   form_str(ERR_NICKCOLLISION), target_p->name);
 		
 				kill_client_serv_butone(NULL, source_p, "%s (Nick change collision)", me.name);
 		
-				ServerStats.is_kill++;
+				ServerStats->is_kill++;
 		
 				kill_client_serv_butone(NULL, target_p, "%s (Nick change collision)", me.name);
 		
@@ -373,7 +373,7 @@ ms_signon(struct Client *client_p, struct Client *source_p,
 								     source_p->name, target_p->name,
 								     target_p->from->name, client_p->name);
 		
-					ServerStats.is_kill++;
+					ServerStats->is_kill++;
 		
 					sendto_one_numeric(target_p, ERR_NICKCOLLISION,
 							   form_str(ERR_NICKCOLLISION), target_p->name);
@@ -410,7 +410,7 @@ ms_signon(struct Client *client_p, struct Client *source_p,
 					kill_client_serv_butone(client_p, target_p, 
 							"%s (Nick collision)", me.name);
 		
-					ServerStats.is_kill++;
+					ServerStats->is_kill++;
 		
 					target_p->flags |= FLAGS_KILLED;
 					(void) exit_client(client_p, target_p, &me, "Nick collision");

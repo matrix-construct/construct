@@ -40,7 +40,6 @@
 #include "s_conf.h"
 #include "s_newconf.h"
 #include "sprintf_irc.h"
-#include "reject.h"
 
 static int mo_testline(struct Client *, struct Client *, int, const char **);
 static int mo_testgecos(struct Client *, struct Client *, int, const char **);
@@ -62,7 +61,7 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 {
 	struct ConfItem *aconf;
 	struct ConfItem *resv_p;
-	struct rb_sockaddr_storage ip;
+	struct irc_sockaddr_storage ip;
 	char user_trunc[USERLEN + 1], notildeuser_trunc[USERLEN + 1];
 	const char *name = NULL;
 	const char *username = NULL;
@@ -122,10 +121,10 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 	{
 #ifdef IPV6
 		if(type == HM_IPV6)
-			aconf = find_dline((struct sockaddr *)&ip);
+			aconf = find_dline((struct sockaddr *)&ip, AF_INET6);
 		else
 #endif
-			aconf = find_dline((struct sockaddr *)&ip);
+			aconf = find_dline((struct sockaddr *)&ip, AF_INET);
 
 		if(aconf && aconf->status & CONF_DLINE)
 		{

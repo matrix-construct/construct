@@ -691,7 +691,7 @@ static int
 already_placed_kline(struct Client *source_p, const char *luser, const char *lhost, int tkline)
 {
 	const char *reason, *p;
-	struct rb_sockaddr_storage iphost, *piphost;
+	struct irc_sockaddr_storage iphost, *piphost;
 	struct ConfItem *aconf;
         int t, bits;
 
@@ -859,7 +859,7 @@ remove_permkline_match(struct Client *source_p, struct ConfItem *aconf)
 	ilog(L_KLINE, "UK %s %s %s",
 		get_oper_name(source_p), user, host);
 
-	/* remove_reject_mask(aconf->user, aconf->host); XXX <- gonna go on bandb */
+	remove_reject_mask(aconf->user, aconf->host);
 	delete_one_address_conf(aconf->host, aconf);
 
 	return;
@@ -929,7 +929,7 @@ remove_temp_kline(struct Client *source_p, struct ConfItem *aconf)
 					get_oper_name(source_p),
 					aconf->user, aconf->host);
 				rb_dlinkDestroy(ptr, &temp_klines[i]);
-				/* remove_reject_mask(aconf->user, aconf->host); XXX */
+				remove_reject_mask(aconf->user, aconf->host);
 				delete_one_address_conf(aconf->host, aconf);
 				return YES;
 			}

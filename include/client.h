@@ -233,7 +233,7 @@ struct LocalUser
 	conf_item_t *att_conf;		/* attached conf */
 	struct server_conf *att_sconf;
 
-	struct rb_sockaddr_storage ip;
+	struct irc_sockaddr_storage ip;
 	time_t last_nick_change;
 	int number_of_nick_changes;
 
@@ -296,10 +296,6 @@ struct LocalUser
 
 	char *mangledhost; /* non-NULL if host mangling module loaded and
 			      applicable to this client */
-
-	struct rb_sockaddr_storage *lip;	/* alloc before auth/freed after auth */
-	struct _ssl_ctl *ssl_ctl;		/* which ssl daemon we're associate with */
-	rb_uint32_t localflags;
 };
 
 struct PreClient
@@ -465,10 +461,6 @@ struct exit_client_hook
 #define FLAGS2_EXEMPTSHIDE	0x40000000
 #define FLAGS2_EXEMPTJUPE	0x80000000
 
-/* flags for local clients, this needs stuff moved from above to here at some point */
-#define LFLAGS_SSL		0x00000001
-#define LFLAGS_FLUSH		0x00000002
-
 #define DEFAULT_OPER_UMODES (UMODE_SERVNOTICE | UMODE_OPERWALL | \
                              UMODE_WALLOP | UMODE_LOCOPS)
 #define DEFAULT_OPER_SNOMASK SNO_GENERAL
@@ -511,16 +503,6 @@ struct exit_client_hook
 #define ClearDynSpoof(x)	((x)->flags &= ~FLAGS_DYNSPOOF)
 #define IsExUnknown(x)		((x)->flags & FLAGS_EXUNKNOWN)
 #define SetExUnknown(x)		((x)->flags |= FLAGS_EXUNKNOWN)
-
-/* local flags */
-
-#define IsSSL(x)		((x)->localClient->localflags & LFLAGS_SSL)
-#define SetSSL(x)		((x)->localClient->localflags |= LFLAGS_SSL)
-#define ClearSSL(x)		((x)->localClient->localflags &= ~LFLAGS_SSL)
-
-#define IsFlush(x)		((x)->localClient->localflags & LFLAGS_FLUSH)
-#define SetFlush(x)		((x)->localClient->localflags |= LFLAGS_FLUSH)
-#define ClearFlush(x)		((x)->localClient->localflags &= ~LFLAGS_FLUSH)
 
 /* oper flags */
 #define MyOper(x)               (MyConnect(x) && IsOper(x))
@@ -627,7 +609,6 @@ extern void close_connection(struct Client *);
 extern void init_uid(void);
 extern char *generate_uid(void);
 
-void flood_endgrace(struct Client *);
 void allocate_away(struct Client *);
 void free_away(struct Client *);
 

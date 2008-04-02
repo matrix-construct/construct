@@ -326,7 +326,7 @@ int comp_with_mask_sock(struct sockaddr *addr, struct sockaddr *dest, u_int mask
  */
 int match_ips(const char *s1, const char *s2)
 {
-	struct rb_sockaddr_storage ipaddr, maskaddr;
+	struct irc_sockaddr_storage ipaddr, maskaddr;
 	char mask[BUFSIZE];
 	char address[HOSTLEN + 1];
 	char *len;
@@ -380,7 +380,7 @@ int match_ips(const char *s1, const char *s2)
 
 int match_cidr(const char *s1, const char *s2)
 {
-	struct rb_sockaddr_storage ipaddr, maskaddr;
+	struct irc_sockaddr_storage ipaddr, maskaddr;
 	char mask[BUFSIZE];
 	char address[NICKLEN + USERLEN + HOSTLEN + 6];
 	char *ipmask;

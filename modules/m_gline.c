@@ -695,7 +695,7 @@ remove_temp_gline(const char *user, const char *host)
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
-	struct rb_sockaddr_storage addr, caddr;
+	struct irc_sockaddr_storage addr, caddr;
 	int bits, cbits;
 	int mtype, gtype;
 
@@ -721,6 +721,7 @@ remove_temp_gline(const char *user, const char *host)
 			continue;
 
 		rb_dlinkDestroy(ptr, &glines);
+		remove_reject_mask(aconf->user, aconf->host);
 		delete_one_address_conf(aconf->host, aconf);
 		return YES;
 	}

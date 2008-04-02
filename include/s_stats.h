@@ -47,10 +47,10 @@ struct ServerStatistics
 	unsigned int is_cl;	/* number of client connections */
 	unsigned int is_sv;	/* number of server connections */
 	unsigned int is_ni;	/* connection but no idea who it was */
-	unsigned long long int is_cbs;	/* bytes sent to clients */
-	unsigned long long int is_cbr;	/* bytes received to clients */
-	unsigned long long int is_sbs;	/* bytes sent to servers */
-	unsigned long long int is_sbr;	/* bytes received to servers */
+	unsigned short is_cbs;	/* bytes sent to clients */
+	unsigned short is_cbr;	/* bytes received to clients */
+	unsigned short is_sbs;	/* bytes sent to servers */
+	unsigned short is_sbr;	/* bytes received to servers */
 	unsigned long is_cks;	/* k-bytes sent to clients */
 	unsigned long is_ckr;	/* k-bytes received to clients */
 	unsigned long is_sks;	/* k-bytes sent to servers */
@@ -74,7 +74,10 @@ struct ServerStatistics
 	unsigned int is_tgch;	/* messages blocked due to target change */
 };
 
-extern struct ServerStatistics ServerStats;
+extern struct ServerStatistics *ServerStats;
+
+extern void init_stats(void);
+extern void tstats(struct Client *client);
 
 extern void count_memory(struct Client *);
 

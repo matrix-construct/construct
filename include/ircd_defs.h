@@ -152,6 +152,17 @@
 #endif
 #endif /* #ifdef IPV6 */
 
+
+#ifdef IPV6
+#define irc_sockaddr_storage sockaddr_storage
+#else
+#define irc_sockaddr_storage sockaddr
+#define ss_family sa_family
+#ifdef SOCKADDR_IN_HAS_LEN
+#define ss_len sa_len
+#endif
+#endif
+
 #ifdef IPV6
 #define PATRICIA_BITS	128
 #else

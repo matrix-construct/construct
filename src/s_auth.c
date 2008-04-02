@@ -243,7 +243,7 @@ auth_dns_callback(void *vptr, struct DNSReply *reply)
 static void
 auth_error(struct AuthRequest *auth)
 {
-	++ServerStats.is_abad;
+	++ServerStats->is_abad;
 
 	rb_close(auth->fd);
 	auth->fd = -1;
@@ -265,8 +265,8 @@ auth_error(struct AuthRequest *auth)
 static int
 start_auth_query(struct AuthRequest *auth)
 {
-	struct rb_sockaddr_storage localaddr;
-	socklen_t locallen = sizeof(struct rb_sockaddr_storage);
+	struct irc_sockaddr_storage localaddr;
+	socklen_t locallen = sizeof(struct irc_sockaddr_storage);
 	int fd;
 	int family;
 	
@@ -279,7 +279,7 @@ start_auth_query(struct AuthRequest *auth)
 		report_error("creating auth stream socket %s:%s",
 			     get_client_name(auth->client, SHOW_IP), 
 			     log_client_name(auth->client, SHOW_IP), errno);
-		++ServerStats.is_abad;
+		++ServerStats->is_abad;
 		return 0;
 	}
 
@@ -441,7 +441,7 @@ timeout_auth_queries_event(void *notused)
 			if(IsDoingAuth(auth))
 			{
 				ClearAuth(auth);
-				++ServerStats.is_abad;
+				++ServerStats->is_abad;
 				sendheader(auth->client, REPORT_FAIL_ID);
 				auth->client->localClient->auth_request = NULL;
 			}
@@ -571,14 +571,14 @@ read_auth_reply(int fd, void *data)
 
 	if(s == NULL)
 	{
-		++ServerStats.is_abad;
+		++ServerStats->is_abad;
 		strcpy(auth->client->username, "unknown");
 		sendheader(auth->client, REPORT_FAIL_ID);
 	}
 	else
 	{
 		sendheader(auth->client, REPORT_FIN_ID);
-		++ServerStats.is_asuc;
+		++ServerStats->is_asuc;
 		SetGotId(auth->client);
 	}
 

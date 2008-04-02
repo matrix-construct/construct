@@ -126,10 +126,12 @@ mr_webirc(struct Client *client_p, struct Client *source_p, int parc, const char
 	else
 		strlcpy(source_p->host, source_p->sockhost, sizeof(source_p->host));
 	
-	rb_inet_pton_sock(parv[4], (struct sockaddr *)&source_p->localClient->ip);
+	del_unknown_ip(source_p);
+	inetpton_sock(parv[4], (struct sockaddr *)&source_p->localClient->ip);
 
 	/* Check dlines now, k/glines will be checked on registration */
-	if((aconf = find_dline((struct sockaddr *)&source_p->localClient->ip)))
+	if((aconf = find_dline((struct sockaddr *)&source_p->localClient->ip, 
+			       source_p->localClient->ip.ss_family)))
 	{
 		if(!(aconf->status & CONF_EXEMPTDLINE))
 		{

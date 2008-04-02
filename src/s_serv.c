@@ -1030,7 +1030,7 @@ server_estab(struct Client *client_p)
 	{
 		if(client_p != serv_list.head->data || serv_list.head->next)
 		{
-			ServerStats.is_ref++;
+			ServerStats->is_ref++;
 			sendto_one(client_p, "ERROR :I'm a leaf not a hub");
 			return exit_client(client_p, client_p, client_p, "I'm a leaf");
 		}
@@ -1469,7 +1469,7 @@ int
 serv_connect(struct server_conf *server_p, struct Client *by)
 {
 	struct Client *client_p;
-	struct rb_sockaddr_storage myipnum; 
+	struct irc_sockaddr_storage myipnum; 
 	int fd;
 	char vhoststr[HOSTIPLEN];
 

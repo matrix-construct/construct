@@ -109,7 +109,4 @@ extern int testing_conf;
 
 extern struct ev_entry *check_splitmode_ev;
 
-extern int maxconnections;
-extern int ssl_ok;
-
 #endif

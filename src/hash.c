@@ -39,14 +39,11 @@
 #include "cache.h"
 #include "s_newconf.h"
 
-#define hash_cli_fd(x)	(x % CLI_FD_MAX)
-
 rb_dlink_list *clientTable;
 rb_dlink_list *channelTable;
 rb_dlink_list *idTable;
 rb_dlink_list *resvTable;
 rb_dlink_list *hostTable; 
-static rb_dlink_list clientbyfdTable[U_MAX];
 
 /*
  * look in whowas.c for the missing ...[WW_MAX]; entry
@@ -661,37 +658,6 @@ clear_resv_hash(void)
 		rb_dlinkDestroy(ptr, &resvTable[i]);
 	}
 	HASH_WALK_END
-}
-
-void
-add_to_cli_fd_hash(struct Client *client_p)
-{
-	rb_dlinkAddAlloc(client_p, &clientbyfdTable[hash_cli_fd(rb_get_fd(client_p->localClient->F))]);
-}
-
-
-void
-del_from_cli_fd_hash(struct Client *client_p)
-{
-	unsigned int hashv;
-	hashv = hash_cli_fd(rb_get_fd(client_p->localClient->F));
-	rb_dlinkFindDestroy(client_p, &clientbyfdTable[hashv]);
-}
-
-struct Client *
-find_cli_fd_hash(int fd)
-{
-	struct Client *target_p;
-	rb_dlink_node *ptr;
-	unsigned int hashv;
-	hashv = hash_cli_fd(fd);
-	RB_DLINK_FOREACH(ptr, clientbyfdTable[hashv].head)
-	{
-		target_p = ptr->data;
-		if(rb_get_fd(target_p->localClient->F) == fd)
-			return target_p;
-	}
-	return  NULL;	
 }
 
 static void

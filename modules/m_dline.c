@@ -43,7 +43,6 @@
 #include "msg.h"
 #include "parse.h"
 #include "modules.h"
-#include "reject.h"
 
 static int mo_dline(struct Client *, struct Client *, int, const char **);
 static int mo_undline(struct Client *, struct Client *, int, const char **);
@@ -77,6 +76,7 @@ mo_dline(struct Client *client_p, struct Client *source_p,
 	const char *dlhost;
 	char *oper_reason;
 	char *reason = def;
+	struct irc_sockaddr_storage daddr;
 	char cidr_form_host[HOSTLEN + 1];
 	struct ConfItem *aconf;
 	int bits;
@@ -151,18 +151,17 @@ mo_dline(struct Client *client_p, struct Client *source_p,
 
 	if(ConfigFileEntry.non_redundant_klines)
 	{
-		struct rb_sockaddr_storage daddr;
 		const char *creason;
 		int t = AF_INET, ty, b;
 		ty = parse_netmask(dlhost, (struct sockaddr *)&daddr, &b);
 #ifdef IPV6
-		if(ty == HM_IPV6)
-			t = AF_INET6;
-		else
+        	if(ty == HM_IPV6)
+                	t = AF_INET6;
+                else
 #endif
 			t = AF_INET;
-						
-		if((aconf = find_dline((struct sockaddr *)&daddr)) != NULL)
+                                  		
+		if((aconf = find_dline((struct sockaddr *)&daddr, t)) != NULL)
 		{
 			int bx;
 			parse_netmask(aconf->host, NULL, &bx);
@@ -170,13 +169,13 @@ mo_dline(struct Client *client_p, struct Client *source_p,
 			{
 				creason = aconf->passwd ? aconf->passwd : "<No Reason>";
 				if(IsConfExemptKline(aconf))
-					sendto_one_notice(source_p, 
-							  ":[%s] is (E)d-lined by [%s] - %s",
-							  dlhost, aconf->host, creason);
+					sendto_one(source_p,
+						   ":%s NOTICE %s :[%s] is (E)d-lined by [%s] - %s",
+						   me.name, parv[0], dlhost, aconf->host, creason);
 				else
-					sendto_one_notice(source_p, 
-							  ":[%s] already D-lined by [%s] - %s",
-							  dlhost, aconf->host, creason);
+					sendto_one(source_p,
+						   ":%s NOTICE %s :[%s] already D-lined by [%s] - %s",
+						   me.name, parv[0], dlhost, aconf->host, creason);
 				return 0;
 			}
 		}

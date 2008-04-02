@@ -18,17 +18,20 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: listener.c 25169 2008-03-29 21:41:31Z jilles $
+ *  $Id: listener.c 3460 2007-05-18 20:31:33Z jilles $
  */
 
 #include "stdinc.h"
-#include "ratbox_lib.h"
+#include "setup.h"
 #include "listener.h"
 #include "client.h"
+#include "irc_string.h"
+#include "sprintf_irc.h"
 #include "ircd.h"
+#include "ircd_defs.h"
 #include "numeric.h"
 #include "s_conf.h"
 #include "s_newconf.h"
@@ -36,36 +39,60 @@
 #include "send.h"
 #include "s_auth.h"
 #include "reject.h"
-#include "s_log.h"
-#include "hash.h"
-#include "sslproc.h"
+#include "s_conf.h"
 #include "hostmask.h"
 
-static rb_dlink_list listener_list;
-static int accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, void *data);
-static void accept_callback(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t addrlen, void *data);
+#ifndef INADDR_NONE
+#define INADDR_NONE ((unsigned int) 0xffffffff)
+#endif
 
+#if defined(NO_IN6ADDR_ANY) && defined(IPV6)
+static const struct in6_addr in6addr_any =
+{ { { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 } } };
+#endif 
 
+static PF accept_connection;
 
-static struct Listener *
-make_listener(struct rb_sockaddr_storage *addr)
+static listener_t *ListenerPollList = NULL;
+
+static listener_t *
+make_listener(struct irc_sockaddr_storage *addr)
 {
-	struct Listener *listener = rb_malloc(sizeof(struct Listener));
+	listener_t *listener = (listener_t *) rb_malloc(sizeof(listener_t));
 	s_assert(0 != listener);
-	listener->name = ServerInfo.name; /* me.name may not be valid yet -- jilles */
-	listener->F = NULL;
-	memcpy(&listener->addr, addr, sizeof(struct rb_sockaddr_storage));
+
+	listener->name = me.name;
+	listener->fd = -1;
+	memcpy(&listener->addr, addr, sizeof(struct irc_sockaddr_storage));
+	listener->next = NULL;
 	return listener;
 }
 
 void
-free_listener(struct Listener *listener)
+free_listener(listener_t *listener)
 {
 	s_assert(NULL != listener);
 	if(listener == NULL)
 		return;
-	
-	rb_dlinkDelete(&listener->node, &listener_list);
+	/*
+	 * remove from listener list
+	 */
+	if(listener == ListenerPollList)
+		ListenerPollList = listener->next;
+	else
+	{
+		listener_t *prev = ListenerPollList;
+		for (; prev; prev = prev->next)
+		{
+			if(listener == prev->next)
+			{
+				prev->next = listener->next;
+				break;
+			}
+		}
+	}
+
+	/* free */
 	rb_free(listener);
 }
 
@@ -76,7 +103,7 @@ free_listener(struct Listener *listener)
  * returns "host.foo.org:6667" for a given listener
  */
 const char *
-get_listener_name(struct Listener *listener)
+get_listener_name(const listener_t *listener)
 {
 	static char buf[HOSTLEN + HOSTLEN + PORTNAMELEN + 4];
 	int port = 0;
@@ -86,7 +113,7 @@ get_listener_name(struct Listener *listener)
 		return NULL;
 
 #ifdef IPV6
-	if(GET_SS_FAMILY(&listener->addr) == AF_INET6)
+	if(listener->addr.ss_family == AF_INET6)
 		port = ntohs(((const struct sockaddr_in6 *)&listener->addr)->sin6_port);
 	else
 #endif
@@ -105,23 +132,20 @@ get_listener_name(struct Listener *listener)
 void
 show_ports(struct Client *source_p)
 {
-	struct Listener *listener;
-	rb_dlink_node *ptr;
-	
-	RB_DLINK_FOREACH(ptr, listener_list.head)
+	listener_t *listener = 0;
+
+	for (listener = ListenerPollList; listener; listener = listener->next)
 	{
-		listener = ptr->data;
 		sendto_one_numeric(source_p, RPL_STATSPLINE, 
 				   form_str(RPL_STATSPLINE), 'P',
 #ifdef IPV6
-			   ntohs(GET_SS_FAMILY(&listener->addr) == AF_INET ? ((struct sockaddr_in *)&listener->addr)->sin_port :
-				 ((struct sockaddr_in6 *)&listener->addr)->sin6_port),
+			   ntohs(listener->addr.ss_family == AF_INET ? ((struct sockaddr_in *)&listener->addr)->sin_port :
+			   	 ((struct sockaddr_in6 *)&listener->addr)->sin6_port),
 #else
 			   ntohs(((struct sockaddr_in *)&listener->addr)->sin_port),
 #endif
 			   IsOperAdmin(source_p) ? listener->name : me.name,
-			   listener->ref_count, (listener->active) ? "active" : "disabled",
-			   listener->ssl ? " ssl" : "");
+			   listener->ref_count, (listener->active) ? "active" : "disabled");
 	}
 }
 
@@ -139,25 +163,24 @@ show_ports(struct Client *source_p)
 #endif
 
 static int
-inetport(struct Listener *listener)
+inetport(listener_t *listener)
 {
-	rb_fde_t *F;
-	int ret;
+	int fd;
 	int opt = 1;
 
 	/*
 	 * At first, open a new socket
 	 */
 	
-	F = rb_socket(GET_SS_FAMILY(&listener->addr), SOCK_STREAM, 0, "Listener socket");
+	fd = rb_socket(listener->addr.ss_family, SOCK_STREAM, 0, "Listener socket");
 
 #ifdef IPV6
-	if(GET_SS_FAMILY(&listener->addr) == AF_INET6)
+	if(listener->addr.ss_family == AF_INET6)
 	{
 		struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)&listener->addr;
 		if(!IN6_ARE_ADDR_EQUAL(&in6->sin6_addr, &in6addr_any))
 		{
-			rb_inet_ntop(AF_INET6, &in6->sin6_addr, listener->vhost, sizeof(listener->vhost));
+			inetntop(AF_INET6, &in6->sin6_addr, listener->vhost, sizeof(listener->vhost));
 			listener->name = listener->vhost;
 		}
 	} else
@@ -166,37 +189,34 @@ inetport(struct Listener *listener)
 		struct sockaddr_in *in = (struct sockaddr_in *)&listener->addr;
 		if(in->sin_addr.s_addr != INADDR_ANY)
 		{
-			rb_inet_ntop(AF_INET, &in->sin_addr, listener->vhost, sizeof(listener->vhost));
+			inetntop(AF_INET, &in->sin_addr, listener->vhost, sizeof(listener->vhost));
 			listener->name = listener->vhost;
 		}	
 	}
 
-
-	if(F == NULL)
+	/*
+	 * At one point, we enforced a strange arbitrary limit here.
+	 * We no longer do this, and just check if the fd is valid or not.
+	 *    -nenolod
+	 */
+	if(fd == -1)
 	{
 		report_error("opening listener socket %s:%s",
 			     get_listener_name(listener), 
 			     get_listener_name(listener), errno);
 		return 0;
 	}
-	else if((maxconnections - 10) < rb_get_fd(F)) /* XXX this is kinda bogus*/
-	{
-		report_error("no more connections left for listener %s:%s",
-			     get_listener_name(listener), 
-			     get_listener_name(listener), errno);
-		rb_close(F);
-		return 0;
-	}
+
 	/*
 	 * XXX - we don't want to do all this crap for a listener
 	 * set_sock_opts(listener);
 	 */
-	if(setsockopt(rb_get_fd(F), SOL_SOCKET, SO_REUSEADDR, (char *) &opt, sizeof(opt)))
+	if(setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &opt, sizeof(opt)))
 	{
 		report_error("setting SO_REUSEADDR for listener %s:%s",
 			     get_listener_name(listener), 
 			     get_listener_name(listener), errno);
-		rb_close(F);
+		rb_close(fd);
 		return 0;
 	}
 
@@ -205,44 +225,44 @@ inetport(struct Listener *listener)
 	 * else assume it is already open and try get something from it.
 	 */
 
-	if(bind(rb_get_fd(F), (struct sockaddr *) &listener->addr, GET_SS_LEN(&listener->addr)))
+	if(bind(fd, (struct sockaddr *) &listener->addr, GET_SS_LEN(listener->addr)))
 	{
 		report_error("binding listener socket %s:%s",
 			     get_listener_name(listener), 
 			     get_listener_name(listener), errno);
-		rb_close(F);
+		rb_close(fd);
 		return 0;
 	}
 
-	if((ret = rb_listen(F, RATBOX_SOMAXCONN)))
+	if(listen(fd, RATBOX_SOMAXCONN))
 	{
 		report_error("listen failed for %s:%s", 
 			     get_listener_name(listener), 
 			     get_listener_name(listener), errno);
-		rb_close(F);
+		rb_close(fd);
 		return 0;
 	}
 
-	listener->F = F;
+	listener->fd = fd;
 
-	rb_accept_tcp(listener->F, accept_precallback, accept_callback, listener);
+	/* Listen completion events are READ events .. */
+
+	accept_connection(fd, listener);
 	return 1;
 }
 
-static struct Listener *
-find_listener(struct rb_sockaddr_storage *addr)
+static listener_t *
+find_listener(struct irc_sockaddr_storage *addr)
 {
-	struct Listener *listener = NULL;
-	struct Listener *last_closed = NULL;
-	rb_dlink_node *ptr;
+	listener_t *listener = NULL;
+	listener_t *last_closed = NULL;
 
-	RB_DLINK_FOREACH(ptr, listener_list.head)
+	for (listener = ListenerPollList; listener; listener = listener->next)
 	{
-		listener = ptr->data;
-		if(GET_SS_FAMILY(addr) != GET_SS_FAMILY(&listener->addr))
+		if(addr->ss_family != listener->addr.ss_family)
 			continue;
 		
-		switch(GET_SS_FAMILY(addr))
+		switch(addr->ss_family)
 		{
 			case AF_INET:
 			{
@@ -251,7 +271,7 @@ find_listener(struct rb_sockaddr_storage *addr)
 				if(in4->sin_addr.s_addr == lin4->sin_addr.s_addr && 
 					in4->sin_port == lin4->sin_port )
 				{
-					if(listener->F == NULL)
+					if(listener->fd == -1)
 						last_closed = listener;
 					else
 						return(listener);
@@ -266,7 +286,7 @@ find_listener(struct rb_sockaddr_storage *addr)
 				if(IN6_ARE_ADDR_EQUAL(&in6->sin6_addr, &lin6->sin6_addr) &&
 				  in6->sin6_port == lin6->sin6_port)
 				{
-					if(listener->F == NULL)
+					if(listener->fd == -1)
 						last_closed = listener;
 					else
 						return(listener);
@@ -283,6 +303,7 @@ find_listener(struct rb_sockaddr_storage *addr)
 	return last_closed;
 }
 
+
 /*
  * add_listener- create a new listener
  * port - the port number to listen on
@@ -290,24 +311,34 @@ find_listener(struct rb_sockaddr_storage *addr)
  * the format "255.255.255.255"
  */
 void
-add_listener(int port, const char *vhost_ip, int family, int ssl)
+add_listener(int port, const char *vhost_ip, int family)
 {
-	struct Listener *listener;
-	struct rb_sockaddr_storage vaddr;
+	listener_t *listener;
+	struct irc_sockaddr_storage vaddr;
 
 	/*
 	 * if no port in conf line, don't bother
 	 */
 	if(port == 0)
 		return;
-		
 	memset(&vaddr, 0, sizeof(vaddr));
-	GET_SS_FAMILY(&vaddr) = family;
+	vaddr.ss_family = family;
 
 	if(vhost_ip != NULL)
 	{
-		if(rb_inet_pton_sock(vhost_ip, (struct sockaddr *)&vaddr) <= 0)
-			return;
+		if(family == AF_INET)
+		{
+			if(inetpton(family, vhost_ip, &((struct sockaddr_in *)&vaddr)->sin_addr) <= 0)
+				return;
+		} 
+#ifdef IPV6
+		else
+		{
+			if(inetpton(family, vhost_ip, &((struct sockaddr_in6 *)&vaddr)->sin6_addr) <= 0)
+				return;
+		
+		}
+#endif
 	} else
 	{
 		switch(family)
@@ -319,20 +350,20 @@ add_listener(int port, const char *vhost_ip, int family, int ssl)
 			case AF_INET6:
 				memcpy(&((struct sockaddr_in6 *)&vaddr)->sin6_addr, &in6addr_any, sizeof(struct in6_addr));
 				break;
-#endif
 			default:
 				return;
+#endif
 		} 
 	}
 	switch(family)
 	{
 		case AF_INET:
-			SET_SS_LEN(&vaddr, sizeof(struct sockaddr_in));
+			SET_SS_LEN(vaddr, sizeof(struct sockaddr_in));
 			((struct sockaddr_in *)&vaddr)->sin_port = htons(port);
 			break;
 #ifdef IPV6
 		case AF_INET6:
-			SET_SS_LEN(&vaddr, sizeof(struct sockaddr_in6));
+			SET_SS_LEN(vaddr, sizeof(struct sockaddr_in6));
 			((struct sockaddr_in6 *)&vaddr)->sin6_port = htons(port);
 			break;
 #endif
@@ -341,17 +372,18 @@ add_listener(int port, const char *vhost_ip, int family, int ssl)
 	}
 	if((listener = find_listener(&vaddr)))
 	{
-		if(listener->F != NULL)
+		if(listener->fd > -1)
 			return;
 	}
 	else
 	{
 		listener = make_listener(&vaddr);
-		rb_dlinkAdd(listener, &listener->node, &listener_list);
+		listener->next = ListenerPollList;
+		ListenerPollList = listener;
 	}
 
-	listener->F = NULL;
-	listener->ssl = ssl;
+	listener->fd = -1;
+
 	if(inetport(listener))
 		listener->active = 1;
 	else
@@ -362,15 +394,15 @@ add_listener(int port, const char *vhost_ip, int family, int ssl)
  * close_listener - close a single listener
  */
 void
-close_listener(struct Listener *listener)
+close_listener(listener_t *listener)
 {
 	s_assert(listener != NULL);
 	if(listener == NULL)
 		return;
-	if(listener->F != NULL)
+	if(listener->fd >= 0)
 	{
-		rb_close(listener->F);
-		listener->F = NULL;
+		rb_close(listener->fd);
+		listener->fd = -1;
 	}
 
 	listener->active = 0;
@@ -387,15 +419,19 @@ close_listener(struct Listener *listener)
 void
 close_listeners()
 {
-	struct Listener *listener;
-	rb_dlink_node *ptr, *next;
-
-	RB_DLINK_FOREACH_SAFE(ptr, next, listener_list.head)
+	listener_t *listener;
+	listener_t *listener_next = 0;
+	/*
+	 * close all 'extra' listening ports we have
+	 */
+	for (listener = ListenerPollList; listener; listener = listener_next)
 	{
-		listener = ptr->data;
+		listener_next = listener->next;
 		close_listener(listener);
 	}
 }
+
+#define DLINE_WARNING "ERROR :You have been D-lined.\r\n"
 
 /*
  * add_connection - creates a client which has just connected to us on 
@@ -404,100 +440,121 @@ close_listeners()
  * any client list yet.
  */
 static void
-add_connection(struct Listener *listener, rb_fde_t *F, struct sockaddr *sai, struct sockaddr *lai, void *ssl_ctl)
+add_connection(listener_t *listener, int fd, struct sockaddr *sai, int exempt)
 {
 	struct Client *new_client;
 	s_assert(NULL != listener);
+
 	/* 
 	 * get the client socket name from the socket
 	 * the client has already been checked out in accept_connection
 	 */
 	new_client = make_client(NULL);
 
-	memcpy(&new_client->localClient->ip, sai, sizeof(struct rb_sockaddr_storage));
-	new_client->localClient->lip = rb_malloc(sizeof(struct rb_sockaddr_storage));
-	memcpy(new_client->localClient->lip, lai, sizeof(struct rb_sockaddr_storage));
+	memcpy(&new_client->localClient->ip, sai, sizeof(struct irc_sockaddr_storage));
 
 	/* 
 	 * copy address to 'sockhost' as a string, copy it to host too
 	 * so we have something valid to put into error messages...
 	 */
-	rb_inet_ntop_sock((struct sockaddr *)&new_client->localClient->ip, new_client->sockhost, 
+	inetntop_sock((struct sockaddr *)&new_client->localClient->ip, new_client->sockhost, 
 		sizeof(new_client->sockhost));
 
 
-	rb_strlcpy(new_client->host, new_client->sockhost, sizeof(new_client->host));
+	strlcpy(new_client->host, new_client->sockhost, sizeof(new_client->host));
 
-#ifdef IPV6
-	if(GET_SS_FAMILY(&new_client->localClient->ip) == AF_INET6 && ConfigFileEntry.dot_in_ip6_addr == 1)
-	{
-		rb_strlcat(new_client->host, ".", sizeof(new_client->host));
-	}
-#endif
+	new_client->localClient->F = rb_add_fd(fd);
 
-	new_client->localClient->F = F;
-	add_to_cli_fd_hash(new_client);
 	new_client->localClient->listener = listener;
-	new_client->localClient->ssl_ctl = ssl_ctl;
-	if(ssl_ctl != NULL || rb_fd_ssl(F))
-		SetSSL(new_client);
-
 	++listener->ref_count;
+
+	if(!exempt)
+	{
+		if(check_reject(new_client))
+			return; 
+		if(add_unknown_ip(new_client))
+			return;
+	}
 
 	start_auth(new_client);
 }
 
-static time_t last_oper_notice = 0;
 
-static const char *toofast = "ERROR :Reconnecting too fast, throttled.\r\n";
-
-static int
-accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, void *data)
+static void
+accept_connection(int pfd, void *data)
 {
-	struct Listener *listener = (struct Listener *)data;
-	char buf[BUFSIZE];
+	static time_t last_oper_notice = 0;
+	struct irc_sockaddr_storage sai;
+	socklen_t addrlen = sizeof(sai);
+	int fd;
+	listener_t *listener = data;
 	struct ConfItem *aconf;
+	char buf[BUFSIZE];
 
-	if(listener->ssl && (!ssl_ok || !get_ssld_count()))
+	s_assert(listener != NULL);
+	if(listener == NULL)
+		return;
+	/*
+	 * There may be many reasons for error return, but
+	 * in otherwise correctly working environment the
+	 * probable cause is running out of file descriptors
+	 * (EMFILE, ENFILE or others?). The man pages for
+	 * accept don't seem to list these as possible,
+	 * although it's obvious that it may happen here.
+	 * Thus no specific errors are tested at this
+	 * point, just assume that connections cannot
+	 * be accepted until some old is closed first.
+	 */
+
+	fd = rb_accept(listener->fd, (struct sockaddr *)&sai, &addrlen);
+	if(fd < 0)
 	{
-		fprintf(stderr, "closed socket\n");
-		rb_close(F);
-		return 0;
+		/* Re-register a new IO request for the next accept .. */
+		rb_setselect(listener->fd, FDLIST_SERVICE,
+			       COMM_SELECT_READ, accept_connection, listener, 0);
+		return;
 	}
-	
-	if((maxconnections - 10) < rb_get_fd(F)) /* XXX this is kinda bogus */
+
+	/* This needs to be done here, otherwise we break dlines */
+	mangle_mapped_sockaddr((struct sockaddr *)&sai);
+
+	/*
+	 * check for connection limit
+	 * TBD: this is stupid... either we have a socket or we don't. -nenolod
+	 */
+	if((rb_get_maxconnections() - 10) < fd)
 	{
-		++ServerStats.is_ref;
+		++ServerStats->is_ref;
 		/*
 		 * slow down the whining to opers bit
 		 */
 		if((last_oper_notice + 20) <= rb_current_time())
 		{
-			sendto_realops_flags(UMODE_ALL, L_ALL,
+			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					     "All connections in use. (%s)",
 					     get_listener_name(listener));
 			last_oper_notice = rb_current_time();
 		}
-			
-		rb_write(F, "ERROR :All connections in use\r\n", 32);
-		rb_close(F);
+
+		write(fd, "ERROR :All connections in use\r\n", 32);
+		rb_close(fd);
 		/* Re-register a new IO request for the next accept .. */
-		return 0;
+		rb_setselect(listener->fd, FDLIST_SERVICE,
+			       COMM_SELECT_READ, accept_connection, listener, 0);
+		return;
 	}
 
-	aconf = find_dline(addr);
-	if(aconf != NULL && (aconf->status & CONF_EXEMPTDLINE))
-		return 1;
-	
 	/* Do an initial check we aren't connecting too fast or with too many
 	 * from this IP... */
-	if(aconf != NULL)
+	aconf = find_dline((struct sockaddr *) &sai, sai.ss_family);
+	/* check it wasn't an exempt */
+	if (aconf != NULL && (aconf->status & CONF_EXEMPTDLINE) == 0)
 	{
-		ServerStats.is_ref++;
-			
+		ServerStats->is_ref++;
+
 		if(ConfigFileEntry.dline_with_reason)
 		{
-			if (rb_snprintf(buf, sizeof(buf), "ERROR :*** Banned: %s\r\n", aconf->passwd) >= (int)(sizeof(buf)-1))
+			if (rb_snprintf(buf, sizeof(buf), "ERROR :*** Banned: %s\r\n", aconf->passwd) >= (sizeof(buf)-1))
 			{
 				buf[sizeof(buf) - 3] = '\r';
 				buf[sizeof(buf) - 2] = '\n';
@@ -505,52 +562,21 @@ accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, voi
 			}
 		}
 		else
-			strcpy(buf, "ERROR :You have been D-lined.\r\n");
-	
-		rb_write(F, buf, strlen(buf));
-		rb_close(F);
-		return 0;
+			rb_sprintf(buf, "ERROR :You have been D-lined.\r\n");
+        
+		write(fd, buf, strlen(buf));
+		rb_close(fd);
+
+		/* Re-register a new IO request for the next accept .. */
+		rb_setselect(listener->fd, FDLIST_SERVICE,
+			       COMM_SELECT_READ, accept_connection, listener, 0);
+		return;
 	}
 
-	if(check_reject(F, addr))
-		return 0;
-		
-	if(throttle_add(addr))
-	{
-		rb_write(F, toofast, strlen(toofast));
-		rb_close(F);
-		return 0;
-	}
+	ServerStats->is_ac++;
+	add_connection(listener, fd, (struct sockaddr *)&sai, aconf ? 1 : 0);
 
-	return 1;
-}
-
-static void
-accept_ssld(rb_fde_t *F, struct sockaddr *addr, struct sockaddr *laddr, struct Listener *listener)
-{
-	ssl_ctl_t *ctl;
-	rb_fde_t *xF[2];
-	rb_socketpair(AF_UNIX, SOCK_STREAM, 0, &xF[0], &xF[1], "Incoming ssld Connection");
-	ctl = start_ssld_accept(F, xF[1], rb_get_fd(xF[0])); /* this will close F for us */
-	add_connection(listener, xF[0], addr, laddr, ctl);
-}
-
-static void
-accept_callback(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t addrlen, void *data)
-{
-	struct Listener *listener = data;
-	struct rb_sockaddr_storage lip;
-	unsigned int locallen = sizeof(struct rb_sockaddr_storage);
-	
-	ServerStats.is_ac++;
-	if(getsockname(rb_get_fd(F), (struct sockaddr *) &lip, &locallen) < 0)
-	{
-		/* this shouldn't fail so... */
-		/* XXX add logging of this */
-		rb_close(F);
-	}
-	if(listener->ssl)
-		accept_ssld(F, addr, (struct sockaddr *)&lip, listener);
-	else
-		add_connection(listener, F, addr, (struct sockaddr *)&lip, NULL);
+	/* Re-register a new IO request for the next accept .. */
+	rb_setselect(listener->fd, FDLIST_SERVICE, COMM_SELECT_READ,
+		       accept_connection, listener, 0);
 }

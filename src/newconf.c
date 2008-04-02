@@ -758,10 +758,9 @@ conf_set_listen_port(void *data)
 		}
                 if(listener_address == NULL)
                 {
-			/* XXX put ssl here -- dwr */
-			add_listener(args->v.number, listener_address, AF_INET, 0);
+			add_listener(args->v.number, listener_address, AF_INET);
 #ifdef IPV6
-			add_listener(args->v.number, listener_address, AF_INET6, 0);
+			add_listener(args->v.number, listener_address, AF_INET6);
 #endif
                 }
 		else
@@ -774,7 +773,7 @@ conf_set_listen_port(void *data)
 #endif
 				family = AF_INET;
 		
-			add_listener(args->v.number, listener_address, family, 0);
+			add_listener(args->v.number, listener_address, family);
                 
                 }
 

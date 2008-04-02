@@ -284,7 +284,7 @@ struct oper_conf *
 find_oper_conf(const char *username, const char *host, const char *locip, const char *name)
 {
 	struct oper_conf *oper_p;
-	struct rb_sockaddr_storage ip, cip;
+	struct irc_sockaddr_storage ip, cip;
 	char addr[HOSTLEN+1];
 	int bits, cbits;
 	rb_dlink_node *ptr;

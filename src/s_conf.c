@@ -195,7 +195,7 @@ check_client(struct Client *client_p, struct Client *source_p, const char *usern
 			source_p->name, IsGotId(source_p) ? "" : "~",
 			source_p->username, source_p->sockhost);	
 
-		ServerStats.is_ref++;
+		ServerStats->is_ref++;
 		exit_client(client_p, source_p, &me, "Too many host connections (local)");
 		break;
 
@@ -209,7 +209,7 @@ check_client(struct Client *client_p, struct Client *source_p, const char *usern
 			source_p->name, IsGotId(source_p) ? "" : "~",
 			source_p->username, source_p->sockhost);
 
-		ServerStats.is_ref++;
+		ServerStats->is_ref++;
 		exit_client(client_p, source_p, &me, "Too many host connections (global)");
 		break;
 
@@ -223,7 +223,7 @@ check_client(struct Client *client_p, struct Client *source_p, const char *usern
 			source_p->name, IsGotId(source_p) ? "" : "~",
 			source_p->username, source_p->sockhost);
 
-		ServerStats.is_ref++;
+		ServerStats->is_ref++;
 		exit_client(client_p, source_p, &me, "Too many user connections (global)");
 		break;
 
@@ -238,7 +238,7 @@ check_client(struct Client *client_p, struct Client *source_p, const char *usern
 			source_p->name, IsGotId(source_p) ? "" : "~",
 			source_p->username, source_p->sockhost);
 
-		ServerStats.is_ref++;
+		ServerStats->is_ref++;
 		exit_client(client_p, source_p, &me,
 			    "No more connections allowed in your connection class");
 		break;
@@ -253,7 +253,7 @@ check_client(struct Client *client_p, struct Client *source_p, const char *usern
 #endif
 				port = ntohs(((struct sockaddr_in *)&source_p->localClient->listener->addr)->sin_port);
 			
-			ServerStats.is_ref++;
+			ServerStats->is_ref++;
 			/* jdc - lists server name & port connections are on */
 			/*       a purely cosmetical change */
 			/* why ipaddr, and not just source_p->sockhost? --fl */
@@ -281,7 +281,7 @@ check_client(struct Client *client_p, struct Client *source_p, const char *usern
 		}
 	case BANNED_CLIENT:
 		exit_client(client_p, client_p, &me, "*** Banned ");
-		ServerStats.is_ref++;
+		ServerStats->is_ref++;
 		break;
 
 	case 0:
@@ -1122,10 +1122,10 @@ get_printable_conf(struct ConfItem *aconf, char **name, char **host,
 
 void
 get_printable_kline(struct Client *source_p, struct ConfItem *aconf, 
-		    const char **host, const char **reason,
-		    const char **user, const char **oper_reason)
+		    char **host, char **reason,
+		    char **user, char **oper_reason)
 {
-	static const char *null = "<NULL>";
+	static char null[] = "<NULL>";
 
 	*host = EmptyString(aconf->host) ? null : aconf->host;
 	*reason = EmptyString(aconf->passwd) ? null : aconf->passwd;

@@ -46,7 +46,7 @@ struct hostent;
 
 struct ip_value
 {
-	struct rb_sockaddr_storage ip;
+	struct irc_sockaddr_storage ip;
 	int ip_mask;
 	int type;
 };
@@ -56,24 +56,20 @@ extern char conf_line_in[256];
 
 struct ConfItem
 {
+	struct ConfItem *next;	/* list node pointer */
 	unsigned int status;	/* If CONF_ILLEGAL, delete when no clients */
 	unsigned int flags;
 	int clients;		/* Number of *LOCAL* clients using this */
-
-	union
-	{
-		char *name;		/* IRC name, nick, server name, or original u@h */
-		const char *oper;
-	} info;
-
+	char *name;		/* IRC name, nick, server name, or original u@h */
 	char *host;		/* host part of user@host */
 	char *passwd;		/* doubles as kline reason *ugh* */
 	char *spasswd;		/* Password to send. */
 	char *user;		/* user part of user@host */
 	int port;
 	time_t hold;		/* Hold action until this time (calendar time) */
+	char *className;	/* Name of class */
 	struct Class *c_class;	/* Class of connection */
-	rb_patricia_node_t *pnode;
+	rb_patricia_node_t *pnode;	/* Our patricia node */
 };
 
 #define CONF_ILLEGAL            0x80000000
@@ -341,8 +337,8 @@ extern struct ConfItem *find_tkline(const char *, const char *, struct sockaddr 
 extern char *show_iline_prefix(struct Client *, struct ConfItem *, char *);
 extern void get_printable_conf(struct ConfItem *,
 			       char **, char **, char **, char **, int *, char **);
-void get_printable_kline(struct Client *, struct ConfItem *,
-				const char **, const char **, const char **, const char **);
+extern void get_printable_kline(struct Client *, struct ConfItem *,
+				char **, char **, char **, char **);
 
 extern void yyerror(const char *);
 extern int conf_yy_fatal_error(const char *);

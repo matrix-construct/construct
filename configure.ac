@@ -1237,7 +1237,7 @@ fi
 
 AC_CONFIG_FILES(			\
 	Makefile			\
-	ssld/Makefile		\
+	servlink/Makefile		\
 	extensions/Makefile		\
 	unsupported/Makefile		\
 	src/Makefile			\
