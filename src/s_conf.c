@@ -1122,10 +1122,10 @@ get_printable_conf(struct ConfItem *aconf, char **name, char **host,
 
 void
 get_printable_kline(struct Client *source_p, struct ConfItem *aconf, 
-		    char **host, char **reason,
-		    char **user, char **oper_reason)
+		    const char **host, const char **reason,
+		    const char **user, const char **oper_reason)
 {
-	static char null[] = "<NULL>";
+	static const char *null = "<NULL>";
 
 	*host = EmptyString(aconf->host) ? null : aconf->host;
 	*reason = EmptyString(aconf->passwd) ? null : aconf->passwd;
