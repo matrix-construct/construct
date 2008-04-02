@@ -177,7 +177,7 @@ inetport(struct Listener *listener)
 			     get_listener_name(listener), errno);
 		return 0;
 	}
-	else if((rb_get_maxconnections() - 10) < rb_get_fd(F)) /* XXX this is kinda bogus*/
+	else if((maxconnections - 10) < rb_get_fd(F)) /* XXX this is kinda bogus*/
 	{
 		report_error("no more connections left for listener %s:%s",
 			     get_listener_name(listener), 
@@ -463,7 +463,7 @@ accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, voi
 		return 0;
 	}
 	
-	if((rb_get_maxconnections() - 10) < rb_get_fd(F)) /* XXX this is kinda bogus */
+	if((maxconnections - 10) < rb_get_fd(F)) /* XXX this is kinda bogus */
 	{
 		++ServerStats.is_ref;
 		/*
