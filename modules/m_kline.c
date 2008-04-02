@@ -859,7 +859,7 @@ remove_permkline_match(struct Client *source_p, struct ConfItem *aconf)
 	ilog(L_KLINE, "UK %s %s %s",
 		get_oper_name(source_p), user, host);
 
-	remove_reject_mask(aconf->user, aconf->host);
+	/* remove_reject_mask(aconf->user, aconf->host); XXX <- gonna go on bandb */
 	delete_one_address_conf(aconf->host, aconf);
 
 	return;
