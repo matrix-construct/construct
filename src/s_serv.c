@@ -995,6 +995,7 @@ server_estab(struct Client *client_p)
 	hook_data_client hdata;
 	char *host;
 	rb_dlink_node *ptr;
+	char note[HOSTLEN + 15];
 
 	s_assert(NULL != client_p);
 	if(client_p == NULL)
@@ -1059,8 +1060,8 @@ server_estab(struct Client *client_p)
 			   (me.info[0]) ? (me.info) : "IRCers United");
 	}
 
-	if(!rb_set_buffers(client_p->localClient->F->fd, READBUF_SIZE))
-		report_error(SETBUF_ERROR_MSG, 
+	if(!rb_set_buffers(client_p->localClient->F, READBUF_SIZE))
+		report_error("rb_set_buffers failed for server %s:%s",
 			     get_server_name(client_p, SHOW_IP), 
 			     log_client_name(client_p, SHOW_IP), errno);
 
@@ -1139,11 +1140,15 @@ server_estab(struct Client *client_p)
 		/* we won't overflow FD_DESC_SZ here, as it can hold
 		 * client_p->name + 64
 		 */
-		rb_note(client_p->localClient->F->fd, "slink data: %s", client_p->name);
+		rb_snprintf(note, sizeof note, "slink data: %s", client_p->name);
+		rb_note(client_p->localClient->F, note);
 		// rb_note(client_p->localClient->ctrlfd, "slink ctrl: %s", client_p->name);
 	}
 	else
-		rb_note(client_p->localClient->F->fd, "Server: %s", client_p->name);
+	{
+		rb_snprintf(note, sizeof note, "Server: %s", client_p->name);
+		rb_note(client_p->localClient->F, note);
+	}
 
 	/*
 	 ** Old sendto_serv_but_one() call removed because we now
@@ -1264,10 +1269,10 @@ start_io(struct Client *server)
 	{
 		linecount++;
 
-		iobuf = MyRealloc(iobuf, (c + READBUF_SIZE + 64));
+		iobuf = rb_realloc(iobuf, (c + READBUF_SIZE + 64));
 
 		/* store data in c+3 to allow for SLINKCMD_INJECT_RECVQ and len u16 */
-		linelen = linebuf_get(&server->localClient->buf_recvq, (char *) (iobuf + c + 3), READBUF_SIZE, LINEBUF_PARTIAL, LINEBUF_RAW);	/* include partial lines */
+		linelen = rb_linebuf_get(&server->localClient->buf_recvq, (char *) (iobuf + c + 3), READBUF_SIZE, LINEBUF_PARTIAL, LINEBUF_RAW);	/* include partial lines */
 
 		if(linelen)
 		{
@@ -1284,10 +1289,10 @@ start_io(struct Client *server)
 	{
 		linecount++;
 
-		iobuf = MyRealloc(iobuf, (c + BUF_DATA_SIZE + 64));
+		iobuf = rb_realloc(iobuf, (c + BUF_DATA_SIZE + 64));
 
 		/* store data in c+3 to allow for SLINKCMD_INJECT_RECVQ and len u16 */
-		linelen = linebuf_get(&server->localClient->buf_sendq, 
+		linelen = rb_linebuf_get(&server->localClient->buf_sendq, 
 				      (char *) (iobuf + c + 3), READBUF_SIZE, 
 				      LINEBUF_PARTIAL, LINEBUF_PARSED);	/* include partial lines */
 
@@ -1310,7 +1315,7 @@ start_io(struct Client *server)
 	server->localClient->slinkq_len = c;
 
 	/* schedule a write */
-	// send_queued_slink_write(server->localClient->ctrlfd, server);
+	//XXX send_queued_slink_write(server->localClient->ctrlF, server);
 }
 
 /*
@@ -1360,16 +1365,16 @@ fork_server(struct Client *server)
 		goto fork_error;
 	else if(ret == 0)
 	{
-		int maxconn = rb_get_maxconnections();
+		int maxconn = maxconnections;
 
 		/* set our fds as non blocking and close everything else */
 		for (i = 0; i < maxconn; i++)
 		{
 				
 
-			if((i == ctrl_fds[1]) || (i == data_fds[1]) || (i == server->localClient->F->fd)) 
+			if((i == ctrl_fds[1]) || (i == data_fds[1]) || (i == rb_get_fd(server->localClient->F))) 
 			{
-				rb_set_nb(i);
+				// XXX rb_set_nb(i);
 			}
 			else
 			{
@@ -1382,7 +1387,7 @@ fork_server(struct Client *server)
 
 		rb_snprintf(fd_str[0], sizeof(fd_str[0]), "%d", ctrl_fds[1]);
 		rb_snprintf(fd_str[1], sizeof(fd_str[1]), "%d", data_fds[1]);
-		rb_snprintf(fd_str[2], sizeof(fd_str[2]), "%d", server->localClient->F->fd);
+		rb_snprintf(fd_str[2], sizeof(fd_str[2]), "%d", rb_get_fd(server->localClient->F));
 		kid_argv[0] = slink;
 		kid_argv[1] = fd_str[0];
 		kid_argv[2] = fd_str[1];
@@ -1397,7 +1402,7 @@ fork_server(struct Client *server)
 	}
 	else
 	{
-		rb_close(server->localClient->F->fd);
+		rb_close(server->localClient->F);
 
 		/* close the childs end of the pipes */
 		close(ctrl_fds[1]);
@@ -1405,11 +1410,11 @@ fork_server(struct Client *server)
 		
 		s_assert(server->localClient);
 		// server->localClient->ctrlfd = ctrl_fds[0];
-		server->localClient->F = rb_add_fd(data_fds[0]);
+		server->localClient->F = rb_open(data_fds[0], RB_FD_PIPE, "servlink data");
 
-		if(!rb_set_nb(server->localClient->F->fd))
+		if(!rb_set_nb(server->localClient->F))
 		{
-			report_error(NONB_ERROR_MSG,
+			report_error("Cannot set slink fd nonblocking for server %s:%s",
 					get_server_name(server, SHOW_IP),
 					log_client_name(server, SHOW_IP),
 					errno);
@@ -1417,7 +1422,7 @@ fork_server(struct Client *server)
 
 		/* if(!rb_set_nb(server->localClient->ctrlfd))
 		{
-			report_error(NONB_ERROR_MSG,
+			report_error("Cannot set slink fd nonblocking for server %s:%s",
 					get_server_name(server, SHOW_IP),
 					log_client_name(server, SHOW_IP),
 					errno);
@@ -1426,9 +1431,7 @@ fork_server(struct Client *server)
 		rb_open(server->localClient->ctrlfd, FD_SOCKET, NULL);
 		*/
 
-		rb_open(server->localClient->F->fd, FD_SOCKET, NULL);
-
-		read_packet(server->localClient->F->fd, server);
+		read_packet(server->localClient->F, server);
 	}
 
 	return 0;
@@ -1470,9 +1473,10 @@ int
 serv_connect(struct server_conf *server_p, struct Client *by)
 {
 	struct Client *client_p;
-	struct rb_sockaddr_storage myipnum; 
-	int fd;
+	struct rb_sockaddr_storage myipnum, theiripnum;
+	rb_fde_t *F;
 	char vhoststr[HOSTIPLEN];
+	char note[HOSTLEN + 10];
 
 	s_assert(server_p != NULL);
 	if(server_p == NULL)
@@ -1492,8 +1496,26 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 		return 0;
 	}
 
+	if (rb_inet_pton_sock(server_p->host, (struct sockaddr *)&theiripnum) <= 0)
+	{
+		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				     "Server %s host is a DNS name which is currently not implemented",
+				     server_p->name);
+		if(by && IsPerson(by) && !MyClient(by))
+			sendto_one_notice(by, ":Server %s host is a DNS name which is currently not implemented",
+					  server_p->name);
+		return 0;
+	}
+
+#ifdef IPV6
+	if(theiripnum.ss_family == AF_INET6)
+		((struct sockaddr_in6 *)&theiripnum)->sin6_port = htons(server_p->port);
+	else
+#endif
+		((struct sockaddr_in *)&theiripnum)->sin_port = htons(server_p->port);
+
 	/* create a socket for the server connection */
-	if((fd = rb_socket(server_p->aftype, SOCK_STREAM, 0, NULL)) < 0)
+	if((F = rb_socket(server_p->aftype, SOCK_STREAM, 0, NULL)) != NULL)
 	{
 		/* Eek, failure to create the socket */
 		report_error("opening stream socket to %s: %s", 
@@ -1501,8 +1523,8 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 		return 0;
 	}
 
-	/* servernames are always guaranteed under HOSTLEN chars */
-	rb_note(fd, "Server: %s", server_p->name);
+	rb_snprintf(note, sizeof note, "Server: %s", server_p->name);
+	rb_note(F, note);
 
 	/* Create a local client */
 	client_p = make_client(NULL);
@@ -1514,7 +1536,8 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	strlcpy(client_p->name, server_p->name, sizeof(client_p->name));
 	strlcpy(client_p->host, server_p->host, sizeof(client_p->host));
 	strlcpy(client_p->sockhost, server_p->host, sizeof(client_p->sockhost));
-	client_p->localClient->F = rb_add_fd(fd);
+	memcpy(&client_p->localClient->ip, &theiripnum, sizeof(client_p->localClient->ip));
+	client_p->localClient->F = F;
 
 	/*
 	 * Set up the initial server evilness, ripped straight from
@@ -1522,9 +1545,9 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	 *   -- adrian
 	 */
 
-	if(!rb_set_buffers(client_p->localClient->F->fd, READBUF_SIZE))
+	if(!rb_set_buffers(client_p->localClient->F, READBUF_SIZE))
 	{
-		report_error(SETBUF_ERROR_MSG,
+		report_error("rb_set_buffers failed for server %s:%s",
 				get_server_name(client_p, SHOW_IP),
 				log_client_name(client_p, SHOW_IP),
 				errno);
@@ -1574,7 +1597,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 		memcpy(&myipnum, &ServerInfo.ip, sizeof(myipnum));
 		((struct sockaddr_in *)&myipnum)->sin_port = 0;
 		myipnum.ss_family = AF_INET;
-		SET_SS_LEN(myipnum, sizeof(struct sockaddr_in));
+		SET_SS_LEN(&myipnum, sizeof(struct sockaddr_in));
 	}
 	
 #ifdef IPV6
@@ -1583,7 +1606,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 		memcpy(&myipnum, &ServerInfo.ip6, sizeof(myipnum));
 		((struct sockaddr_in6 *)&myipnum)->sin6_port = 0;
 		myipnum.ss_family = AF_INET6;
-		SET_SS_LEN(myipnum, sizeof(struct sockaddr_in6));
+		SET_SS_LEN(&myipnum, sizeof(struct sockaddr_in6));
 	}
 #endif
 	else
@@ -1595,10 +1618,11 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 #endif
 				(server_p->aftype == AF_INET ? "IPv4" : "?"));
 
-		rb_connect_tcp(client_p->localClient->F->fd, server_p->host,
-				 server_p->port, NULL, 0, serv_connect_callback, 
-				 client_p, server_p->aftype, 
-				 ConfigFileEntry.connect_timeout);
+		rb_connect_tcp(client_p->localClient->F,
+				(struct sockaddr *) &theiripnum,
+				NULL, 0,
+				serv_connect_callback, client_p,
+				ConfigFileEntry.connect_timeout);
 		 return 1;
 	}
 
@@ -1611,10 +1635,11 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 			(server_p->aftype == AF_INET ? "IPv4" : "?"), vhoststr);
 
 
-	rb_connect_tcp(client_p->localClient->F->fd, server_p->host,
-			 server_p->port, (struct sockaddr *) &myipnum,
-			 GET_SS_LEN(myipnum), serv_connect_callback, client_p,
-			 myipnum.ss_family, ConfigFileEntry.connect_timeout);
+	rb_connect_tcp(client_p->localClient->F,
+			(struct sockaddr *) &theiripnum,
+			(struct sockaddr *) &myipnum, GET_SS_LEN(&myipnum),
+			serv_connect_callback, client_p,
+			ConfigFileEntry.connect_timeout);
 
 	return 1;
 }
@@ -1629,16 +1654,15 @@ serv_connect(struct server_conf *server_p, struct Client *by)
  * marked for reading.
  */
 static void
-serv_connect_callback(int fd, int status, void *data)
+serv_connect_callback(rb_fde_t *F, int status, void *data)
 {
 	struct Client *client_p = data;
 	struct server_conf *server_p;
 	char *errstr;
-	fde_t *F = rb_locate_fd(fd);
 
 	/* First, make sure its a real client! */
 	s_assert(client_p != NULL);
-	s_assert(client_p->localClient->F->fd == fd);
+	s_assert(client_p->localClient->F == F);
 
 	if(client_p == NULL)
 		return;
@@ -1652,19 +1676,21 @@ serv_connect_callback(int fd, int status, void *data)
 		return;
 	}
 
+#if 0
 	/* Next, for backward purposes, record the ip of the server */
 	memcpy(&client_p->localClient->ip, &F->connect.hostaddr, sizeof client_p->localClient->ip);
 	/* Set sockhost properly now -- jilles */
 	inetntop_sock((struct sockaddr *)&F->connect.hostaddr,
 			client_p->sockhost, sizeof client_p->sockhost);
+#endif
 	
 	/* Check the status */
-	if(status != COMM_OK)
+	if(status != RB_OK)
 	{
 		/* COMM_ERR_TIMEOUT wont have an errno associated with it,
 		 * the others will.. --fl
 		 */
-		if(status == COMM_ERR_TIMEOUT)
+		if(status == RB_ERR_TIMEOUT)
 		{
 			sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 					"Error connecting to %s[%s]: %s",
@@ -1681,7 +1707,7 @@ serv_connect_callback(int fd, int status, void *data)
 		}
 		else
 		{
-			errstr = strerror(rb_get_sockerr(fd));
+			errstr = strerror(rb_get_sockerr(F));
 			sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 					"Error connecting to %s[%s]: %s (%s)",
 					client_p->name,
@@ -1746,7 +1772,7 @@ serv_connect_callback(int fd, int status, void *data)
 	/* don't move to serv_list yet -- we haven't sent a burst! */
 
 	/* If we get here, we're ok, so lets start reading some data */
-	read_packet(fd, client_p);
+	read_packet(F, client_p);
 }
 
 #ifndef HAVE_SOCKETPAIR
