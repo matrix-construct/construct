@@ -487,6 +487,7 @@ accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, voi
 	struct Listener *listener = (struct Listener *)data;
 	char buf[BUFSIZE];
 	struct ConfItem *aconf;
+	static time_t last_oper_notice = 0;
 
 	if((maxconnections - 10) < rb_get_fd(F)) /* XXX this is kinda bogus */
 	{
@@ -508,7 +509,7 @@ accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, voi
 		return 0;
 	}
 
-	aconf = find_dline(addr);
+	aconf = find_dline(addr, addr.ss_family);
 	if(aconf != NULL && (aconf->status & CONF_EXEMPTDLINE))
 		return 1;
 	
@@ -554,5 +555,5 @@ accept_callback(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t add
 		rb_close(F);
 	}
 	
-	add_connection(listener, F, addr, (struct sockaddr *)&lip, NULL);
+	add_connection(listener, F, addr, (struct sockaddr *)&lip, 1);
 }
