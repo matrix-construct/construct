@@ -2095,11 +2095,13 @@ close_connection(struct Client *client_p)
 		client_p->localClient->F = NULL;
 	}
 
+	/* XXX servlink -- dwr
 	if(-1 < client_p->localClient->ctrlfd)
 	{
 		rb_close(client_p->localClient->ctrlfd);
 		client_p->localClient->ctrlfd = -1;
 	}
+	*/
 
 	rb_linebuf_donebuf(&client_p->localClient->buf_sendq);
 	rb_linebuf_donebuf(&client_p->localClient->buf_recvq);
