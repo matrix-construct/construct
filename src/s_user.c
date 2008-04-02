@@ -323,7 +323,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 
 		if(IsNeedIdentd(aconf))
 		{
-			ServerStats->is_ref++;
+			ServerStats.is_ref++;
 			sendto_one_notice(source_p, ":*** Notice -- You need to install identd to use this server");
 			exit_client(client_p, source_p, &me, "Install identd");
 			return (CLIENT_EXITED);
@@ -350,7 +350,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 
 	if(IsNeedSasl(aconf) && !*user->suser)
 	{
-		ServerStats->is_ref++;
+		ServerStats.is_ref++;
 		sendto_one_notice(source_p, ":*** Notice -- You need to identify via SASL to use this server");
 		exit_client(client_p, source_p, &me, "SASL access only");
 		return (CLIENT_EXITED);
@@ -370,7 +370,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 
 		if(strcmp(encr, aconf->passwd))
 		{
-			ServerStats->is_ref++;
+			ServerStats.is_ref++;
 			sendto_one(source_p, form_str(ERR_PASSWDMISMATCH), me.name, source_p->name);
 			exit_client(client_p, source_p, &me, "Bad Password");
 			return (CLIENT_EXITED);
@@ -404,7 +404,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 		sendto_realops_snomask(SNO_FULL, L_ALL,
 				     "Too many clients, rejecting %s[%s].", source_p->name, source_p->host);
 
-		ServerStats->is_ref++;
+		ServerStats.is_ref++;
 		exit_client(client_p, source_p, &me, "Sorry, server is full - try later");
 		return (CLIENT_EXITED);
 	}
@@ -413,7 +413,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 	if(!IsExemptKline(source_p) &&
 	   (xconf = find_xline(source_p->info, 1)) != NULL)
 	{
-		ServerStats->is_ref++;
+		ServerStats.is_ref++;
 		add_reject(source_p, xconf->name, NULL);
 		exit_client(client_p, source_p, &me, "Bad user info");
 		return CLIENT_EXITED;
@@ -435,7 +435,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 			substitution_append_var(&varlist, "dnsbl-host", source_p->preClient->dnsbl_listed->host);
 			substitution_append_var(&varlist, "network-name", ServerInfo.network_name);
 
-			ServerStats->is_ref++;
+			ServerStats.is_ref++;
 
 			sendto_one(source_p, form_str(ERR_YOUREBANNEDCREEP),
 					me.name, source_p->name,
@@ -459,7 +459,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 		sendto_realops_snomask(SNO_REJ, L_ALL,
 				     "Invalid username: %s (%s@%s)",
 				     source_p->name, source_p->username, source_p->host);
-		ServerStats->is_ref++;
+		ServerStats.is_ref++;
 		sendto_one_notice(source_p, ":*** Your username is invalid. Please make sure that your username contains "
 					    "only alphanumeric characters.");
 		rb_sprintf(tmpstr2, "Invalid username [%s]", source_p->username);
