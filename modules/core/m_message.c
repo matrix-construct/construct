@@ -564,30 +564,19 @@ expire_tgchange(void *unused)
 static int
 add_target(struct Client *source_p, struct Client *target_p)
 {
-	int i, j;
-	uint32_t hashv;
-
-	/* can msg themselves or services without using any target slots */
-	if(source_p == target_p || IsService(target_p))
+	unsigned int i, j;
+	/* messaging themselves, doesnt incur any penalties */
+	if(source_p == target_p)
 		return 1;
-
-	/* special condition for those who have had PRIVMSG crippled to allow them
-	 * to talk to IRCops still.
-	 *
-	 * XXX: is this controversial?
-	 */
-	if(source_p->localClient->target_last > rb_current_time() && IsOper(target_p))
-		return 1;
-
-	hashv = fnv_hash_upper((const unsigned char *)use_id(target_p), 32);
 
 	if(USED_TARGETS(source_p))
 	{
 		/* hunt for an existing target */
 		for(i = PREV_FREE_TARGET(source_p), j = USED_TARGETS(source_p);
-		    j; --j, PREV_TARGET(i))
+			j;
+			--j, PREV_TARGET(i))
 		{
-			if(source_p->localClient->targets[i] == hashv)
+			if(source_p->localClient->targets[i] == target_p)
 				return 1;
 		}
 
@@ -612,7 +601,6 @@ add_target(struct Client *source_p, struct Client *target_p)
 		/* cant clear any, full target list */
 		else if(USED_TARGETS(source_p) == 10)
 		{
-			ServerStats->is_tgch++;
 			add_tgchange(source_p->sockhost);
 			return 0;
 		}
@@ -626,7 +614,7 @@ add_target(struct Client *source_p, struct Client *target_p)
 		SetTGChange(source_p);
 	}
 
-	source_p->localClient->targets[FREE_TARGET(source_p)] = hashv;
+	source_p->localClient->targets[FREE_TARGET(source_p)] = target_p;
 	NEXT_TARGET(FREE_TARGET(source_p));
 	++USED_TARGETS(source_p);
 	return 1;
