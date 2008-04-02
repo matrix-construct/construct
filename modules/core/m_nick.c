@@ -281,7 +281,7 @@ mc_nick(struct Client *client_p, struct Client *source_p, int parc, const char *
 	/* if nicks erroneous, or too long, kill */
 	if(!clean_nick(parv[1], 0))
 	{
-		ServerStats->is_kill++;
+		ServerStats.is_kill++;
 		sendto_realops_snomask(SNO_DEBUG, L_ALL,
 				     "Bad Nick: %s From: %s(via %s)",
 				     parv[1], source_p->servptr->name, client_p->name);
@@ -343,7 +343,7 @@ ms_nick(struct Client *client_p, struct Client *source_p, int parc, const char *
 	/* if nicks empty, erroneous, or too long, kill */
 	if(!clean_nick(parv[1], 0))
 	{
-		ServerStats->is_kill++;
+		ServerStats.is_kill++;
 		sendto_realops_snomask(SNO_DEBUG, L_ALL,
 				     "Bad Nick: %s From: %s(via %s)",
 				     parv[1], parv[7], client_p->name);
@@ -354,7 +354,7 @@ ms_nick(struct Client *client_p, struct Client *source_p, int parc, const char *
 	/* invalid username or host? */
 	if(!clean_username(parv[5]) || !clean_host(parv[6]))
 	{
-		ServerStats->is_kill++;
+		ServerStats.is_kill++;
 		sendto_realops_snomask(SNO_DEBUG, L_ALL,
 				     "Bad user@host: %s@%s From: %s(via %s)",
 				     parv[5], parv[6], parv[7], client_p->name);
@@ -435,7 +435,7 @@ ms_uid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	/* if nicks erroneous, or too long, kill */
 	if(!clean_nick(parv[1], 0))
 	{
-		ServerStats->is_kill++;
+		ServerStats.is_kill++;
 		sendto_realops_snomask(SNO_DEBUG, L_ALL,
 				     "Bad Nick: %s From: %s(via %s)",
 				     parv[1], source_p->name, client_p->name);
@@ -445,7 +445,7 @@ ms_uid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 
 	if(!clean_username(parv[5]) || !clean_host(parv[6]))
 	{
-		ServerStats->is_kill++;
+		ServerStats.is_kill++;
 		sendto_realops_snomask(SNO_DEBUG, L_ALL,
 				     "Bad user@host: %s@%s From: %s(via %s)",
 				     parv[5], parv[6], source_p->name, client_p->name);
@@ -455,7 +455,7 @@ ms_uid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 
 	if(!clean_uid(parv[8]))
 	{
-		ServerStats->is_kill++;
+		ServerStats.is_kill++;
 		sendto_realops_snomask(SNO_DEBUG, L_ALL,
 				     "Bad UID: %s From: %s(via %s)",
 				     parv[8], source_p->name, client_p->name);
@@ -527,7 +527,7 @@ ms_euid(struct Client *client_p, struct Client *source_p, int parc, const char *
 	/* if nicks erroneous, or too long, kill */
 	if(!clean_nick(parv[1], 0))
 	{
-		ServerStats->is_kill++;
+		ServerStats.is_kill++;
 		sendto_realops_snomask(SNO_DEBUG, L_ALL,
 				     "Bad Nick: %s From: %s(via %s)",
 				     parv[1], source_p->name, client_p->name);
@@ -537,7 +537,7 @@ ms_euid(struct Client *client_p, struct Client *source_p, int parc, const char *
 
 	if(!clean_username(parv[5]) || !clean_host(parv[6]))
 	{
-		ServerStats->is_kill++;
+		ServerStats.is_kill++;
 		sendto_realops_snomask(SNO_DEBUG, L_ALL,
 				     "Bad user@host: %s@%s From: %s(via %s)",
 				     parv[5], parv[6], source_p->name, client_p->name);
@@ -547,7 +547,7 @@ ms_euid(struct Client *client_p, struct Client *source_p, int parc, const char *
 
 	if(!clean_uid(parv[8]))
 	{
-		ServerStats->is_kill++;
+		ServerStats.is_kill++;
 		sendto_realops_snomask(SNO_DEBUG, L_ALL,
 				     "Bad UID: %s From: %s(via %s)",
 				     parv[8], source_p->name, client_p->name);
@@ -557,7 +557,7 @@ ms_euid(struct Client *client_p, struct Client *source_p, int parc, const char *
 
 	if(strcmp(parv[9], "*") && !clean_host(parv[9]))
 	{
-		ServerStats->is_kill++;
+		ServerStats.is_kill++;
 		sendto_realops_snomask(SNO_DEBUG, L_ALL,
 				     "Bad realhost: %s From: %s(via %s)",
 				     parv[9], source_p->name, client_p->name);
@@ -930,7 +930,7 @@ perform_nick_collides(struct Client *source_p, struct Client *client_p,
 		if (use_save)
 		{
 			save_user(&me, &me, target_p);
-			ServerStats->is_save++;
+			ServerStats.is_save++;
 			sendto_one(client_p, ":%s SAVE %s %ld", me.id,
 					uid, (long)newts);
 			register_client(client_p, source_p,
@@ -950,7 +950,7 @@ perform_nick_collides(struct Client *source_p, struct Client *client_p,
 
 			/* we then need to KILL the old client everywhere */
 			kill_client_serv_butone(NULL, target_p, "%s (Nick collision (new))", me.name);
-			ServerStats->is_kill++;
+			ServerStats.is_kill++;
 
 			target_p->flags |= FLAGS_KILLED;
 			exit_client(client_p, target_p, &me, "Nick collision (new)");
@@ -998,12 +998,12 @@ perform_nick_collides(struct Client *source_p, struct Client *client_p,
 
 			if (use_save)
 			{
-				ServerStats->is_save++;
+				ServerStats.is_save++;
 				save_user(&me, &me, target_p);
 			}
 			else
 			{
-				ServerStats->is_kill++;
+				ServerStats.is_kill++;
 				sendto_one_numeric(target_p, ERR_NICKCOLLISION,
 						form_str(ERR_NICKCOLLISION), target_p->name);
 
@@ -1047,7 +1047,7 @@ perform_nickchange_collides(struct Client *source_p, struct Client *client_p,
 
 		if (use_save)
 		{
-			ServerStats->is_save += 2;
+			ServerStats.is_save += 2;
 			save_user(&me, &me, target_p);
 			sendto_one(client_p, ":%s SAVE %s %ld", me.id,
 					source_p->id, (long)newts);
@@ -1057,13 +1057,13 @@ perform_nickchange_collides(struct Client *source_p, struct Client *client_p,
 		}
 		else
 		{
-			ServerStats->is_kill++;
+			ServerStats.is_kill++;
 			sendto_one_numeric(target_p, ERR_NICKCOLLISION,
 					form_str(ERR_NICKCOLLISION), target_p->name);
 
 			kill_client_serv_butone(NULL, source_p, "%s (Nick change collision)", me.name);
 
-			ServerStats->is_kill++;
+			ServerStats.is_kill++;
 
 			kill_client_serv_butone(NULL, target_p, "%s (Nick change collision)", me.name);
 
@@ -1095,7 +1095,7 @@ perform_nickchange_collides(struct Client *source_p, struct Client *client_p,
 
 			if (use_save)
 			{
-				ServerStats->is_save++;
+				ServerStats.is_save++;
 				/* can't broadcast a SAVE because the
 				 * nickchange has happened at client_p
 				 * but not in other directions -- jilles */
@@ -1107,7 +1107,7 @@ perform_nickchange_collides(struct Client *source_p, struct Client *client_p,
 			}
 			else
 			{
-				ServerStats->is_kill++;
+				ServerStats.is_kill++;
 
 				sendto_one_numeric(target_p, ERR_NICKCOLLISION,
 						form_str(ERR_NICKCOLLISION), target_p->name);
@@ -1140,7 +1140,7 @@ perform_nickchange_collides(struct Client *source_p, struct Client *client_p,
 
 			if (use_save)
 			{
-				ServerStats->is_save++;
+				ServerStats.is_save++;
 				save_user(&me, &me, target_p);
 			}
 			else
@@ -1151,7 +1151,7 @@ perform_nickchange_collides(struct Client *source_p, struct Client *client_p,
 				/* kill the client who existed before hand */
 				kill_client_serv_butone(client_p, target_p, "%s (Nick collision)", me.name);
 
-				ServerStats->is_kill++;
+				ServerStats.is_kill++;
 
 				target_p->flags |= FLAGS_KILLED;
 				(void) exit_client(client_p, target_p, &me, "Nick collision");
@@ -1339,7 +1339,7 @@ save_user(struct Client *client_p, struct Client *source_p,
 				"Killed %s!%s@%s for nick collision detected by %s (%s does not support SAVE)",
 				target_p->name, target_p->username, target_p->host, source_p->name, target_p->from->name);
 		kill_client_serv_butone(NULL, target_p, "%s (Nick collision (no SAVE support))", me.name);
-		ServerStats->is_kill++;
+		ServerStats.is_kill++;
 
 		target_p->flags |= FLAGS_KILLED;
 		(void) exit_client(NULL, target_p, &me, "Nick collision (no SAVE support)");

@@ -161,7 +161,7 @@ me_sasl(struct Client *client_p, struct Client *source_p,
 		else if(*parv[4] == 'S') {
 			sendto_one(target_p, form_str(RPL_SASLSUCCESS), me.name, EmptyString(target_p->name) ? "*" : target_p->name);
 			target_p->preClient->sasl_complete = 1;
-			ServerStats->is_ssuc++;
+			ServerStats.is_ssuc++;
 		}
 		*target_p->preClient->sasl_agent = '\0'; /* Blank the stored agent so someone else can answer */
 	}
@@ -179,7 +179,7 @@ abort_sasl(struct Client *data)
 		return;
 
 	data->preClient->sasl_out = data->preClient->sasl_complete = 0;
-	ServerStats->is_sbad++;
+	ServerStats.is_sbad++;
 
 	if(!IsClosing(data))
 		sendto_one(data, form_str(ERR_SASLABORTED), me.name, EmptyString(data->name) ? "*" : data->name);
