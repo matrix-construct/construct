@@ -11017,6 +11017,11 @@ cat >>confdefs.h <<\_ACEOF
 #define MONITOR_HEAP_SIZE 128
 _ACEOF
 
+
+cat >>confdefs.h <<\_ACEOF
+#define AWAY_HEAP_SIZE 128
+_ACEOF
+
 else
 
 cat >>confdefs.h <<\_ACEOF
@@ -11086,6 +11091,11 @@ _ACEOF
 
 cat >>confdefs.h <<\_ACEOF
 #define MONITOR_HEAP_SIZE 1024
+_ACEOF
+
+
+cat >>confdefs.h <<\_ACEOF
+#define AWAY_HEAP_SIZE 512
 _ACEOF
 
 fi

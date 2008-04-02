@@ -1,5 +1,8 @@
 /* include/setup.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Size of away heap. */
+#undef AWAY_HEAP_SIZE
+
 /* Size of the ban heap. */
 #undef BAN_HEAP_SIZE
 
