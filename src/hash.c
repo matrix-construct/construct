@@ -18,36 +18,39 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: hash.c 3177 2007-02-01 00:19:14Z jilles $
+ *  $Id: hash.c 25119 2008-03-13 16:57:05Z androsyn $
  */
 
 #include "stdinc.h"
-#include "ircd_defs.h"
 #include "s_conf.h"
 #include "channel.h"
 #include "client.h"
-#include "common.h"
 #include "hash.h"
-#include "irc_string.h"
 #include "ircd.h"
 #include "numeric.h"
 #include "send.h"
-#include "msg.h"
 #include "cache.h"
 #include "s_newconf.h"
 
-rb_dlink_list *clientTable;
-rb_dlink_list *channelTable;
-rb_dlink_list *idTable;
-rb_dlink_list *resvTable;
-rb_dlink_list *hostTable; 
+#define hash_nick(x) (fnv_hash_upper((const unsigned char *)(x), U_MAX_BITS, 0))
+#define hash_id(x) (fnv_hash((const unsigned char *)(x), U_MAX_BITS, 0))
+#define hash_channel(x) (fnv_hash_upper_len((const unsigned char *)(x), CH_MAX_BITS, 30))
+#define hash_hostname(x) (fnv_hash_upper_len((const unsigned char *)(x), HOST_MAX_BITS, 30))
+#define hash_resv(x) (fnv_hash_upper_len((const unsigned char *)(x), R_MAX_BITS, 30))
+#define hash_cli_fd(x)	(x % CLI_FD_MAX)
 
-/*
- * look in whowas.c for the missing ...[WW_MAX]; entry
- */
+
+static rb_dlink_list clientbyfdTable[U_MAX];
+static rb_dlink_list clientTable[U_MAX];
+static rb_dlink_list channelTable[CH_MAX];
+static rb_dlink_list idTable[U_MAX];
+rb_dlink_list resvTable[R_MAX];
+static rb_dlink_list hostTable[HOST_MAX];
+static rb_dlink_list helpTable[HELP_MAX];
+rb_dlink_list ndTable[U_MAX];
 
 /*
  * Hashing.
@@ -89,287 +92,162 @@ rb_dlink_list *hostTable;
 void
 init_hash(void)
 {
-	clientTable = rb_malloc(sizeof(rb_dlink_list) * U_MAX);
-	idTable = rb_malloc(sizeof(rb_dlink_list) * U_MAX);
-	channelTable = rb_malloc(sizeof(rb_dlink_list) * CH_MAX);
-	hostTable = rb_malloc(sizeof(rb_dlink_list) * HOST_MAX);
-	resvTable = rb_malloc(sizeof(rb_dlink_list) * R_MAX);
+	/* nothing to do here */
 }
 
-#ifndef RICER_HASHING
-u_int32_t
-fnv_hash_upper(const unsigned char *s, int bits)
-{
- 	u_int32_t h = FNV1_32_INIT;
 
+uint32_t
+fnv_hash_upper(const unsigned char *s, unsigned int bits, unsigned int unused)
+{
+	uint32_t h = FNV1_32_INIT;
+	bits = 32 - bits;
 	while (*s)
 	{
-         	h ^= ToUpper(*s++);
+		h ^= ToUpper(*s++);
 		h += (h<<1) + (h<<4) + (h<<7) + (h << 8) + (h << 24);
 	}
-	if (bits < 32)
-		h = ((h >> bits) ^ h) & ((1<<bits)-1);
+	h = (h >> bits) ^ (h & ((2^bits)-1));
 	return h;
 }
 
-u_int32_t
-fnv_hash(const unsigned char *s, int bits)
+uint32_t
+fnv_hash(const unsigned char *s, unsigned int bits, unsigned int unused)
 {
- 	u_int32_t h = FNV1_32_INIT;
-
+	uint32_t h = FNV1_32_INIT;
+	bits = 32 - bits;
 	while (*s)
 	{
 		h ^= *s++;
 		h += (h<<1) + (h<<4) + (h<<7) + (h << 8) + (h << 24);
 	}
-	if (bits < 32)
-		h = ((h >> bits) ^ h) & ((1<<bits)-1);
+	h = (h >> bits) ^ (h & ((2^bits)-1));
 	return h;
 }
 
-u_int32_t
-fnv_hash_len(const unsigned char *s, int bits, int len)
+uint32_t
+fnv_hash_len(const unsigned char *s, unsigned int bits, unsigned int len)
 {
- 	u_int32_t h = FNV1_32_INIT;
+	uint32_t h = FNV1_32_INIT;
+	bits = 32 - bits;
 	const unsigned char *x = s + len;
 	while (*s && s < x)
 	{
 		h ^= *s++;
 		h += (h<<1) + (h<<4) + (h<<7) + (h << 8) + (h << 24);
 	}
-	if (bits < 32)
-		h = ((h >> bits) ^ h) & ((1<<bits)-1);
+	h = (h >> bits) ^ (h & ((2^bits)-1));
 	return h;
 }
 
-u_int32_t
-fnv_hash_upper_len(const unsigned char *s, int bits, int len)
+uint32_t
+fnv_hash_upper_len(const unsigned char *s, unsigned int bits, unsigned int len)
 {
- 	u_int32_t h = FNV1_32_INIT;
+	uint32_t h = FNV1_32_INIT;
+	bits = 32 - bits;
 	const unsigned char *x = s + len;
 	while (*s && s < x)
 	{
-         	h ^= ToUpper(*s++);
+		h ^= ToUpper(*s++);
 		h += (h<<1) + (h<<4) + (h<<7) + (h << 8) + (h << 24);
 	}
-	if (bits < 32)
-		h = ((h >> bits) ^ h) & ((1<<bits)-1);
+	h = (h >> bits) ^ (h & ((2^bits)-1));
 	return h;
 }
-#endif
 
-/* hash_nick()
- *
- * hashes a nickname, first converting to lowercase
- */
-static u_int32_t
-hash_nick(const char *name)
+static unsigned int
+hash_help(const char *name)
 {
-	return fnv_hash_upper((const unsigned char *) name, U_MAX_BITS);
+	unsigned int h = 0;
+
+	while(*name)
+	{
+		h += (unsigned int) (ToLower(*name++) & 0xDF);
+	}
+
+	return (h % HELP_MAX);
 }
 
-/* hash_id()
- *
- * hashes an id, case is kept
- */
-static u_int32_t
-hash_id(const char *name)
+static struct _hash_function
 {
-	return fnv_hash((const unsigned char *) name, U_MAX_BITS);
-}
+	uint32_t (*func) (unsigned const char *, unsigned int, unsigned int);
+	rb_dlink_list *table;
+	unsigned int hashbits;
+	unsigned int hashlen;
+} hash_function[] = {
+	{ fnv_hash_upper,	clientTable,	U_MAX_BITS,	0	},
+	{ fnv_hash,		idTable,	U_MAX_BITS,	0	},
+	{ fnv_hash_upper_len,	channelTable,	CH_MAX_BITS,	30	},
+	{ fnv_hash_upper_len,	hostTable,	HOST_MAX_BITS,	30	},
+	{ fnv_hash_upper_len,	resvTable,	R_MAX_BITS,	30	}
+};
 
-/* hash_channel()
- *
- * hashes a channel name, based on first 30 chars only for efficiency
- */
-static u_int32_t
-hash_channel(const char *name)
-{
-	return fnv_hash_upper_len((const unsigned char *) name, CH_MAX_BITS, 30);
-}
-
-/* hash_hostname()
- *
- * hashes a hostname, based on first 30 chars only, as thats likely to
- * be more dynamic than rest.
- */
-static u_int32_t
-hash_hostname(const char *name)
-{
-	return fnv_hash_upper_len((const unsigned char *) name, HOST_MAX_BITS, 30);
-}
-
-/* hash_resv()
- *
- * hashes a resv channel name, based on first 30 chars only
- */
-static u_int32_t
-hash_resv(const char *name)
-{
-	return fnv_hash_upper_len((const unsigned char *) name, R_MAX_BITS, 30);
-}
-
-/* add_to_id_hash()
- *
- * adds an entry to the id hash table
- */
 void
-add_to_id_hash(const char *name, struct Client *client_p)
+add_to_hash(hash_type type, const char *hashindex, void *pointer)
+{
+	rb_dlink_list *table = hash_function[type].table;
+	unsigned int hashv;
+
+	if(EmptyString(hashindex) || (pointer == NULL))
+		return;
+
+	hashv = (hash_function[type].func)((const unsigned char *) hashindex, 
+					hash_function[type].hashbits, 
+					hash_function[type].hashlen);
+//	rb_dlinkAddAlloc(pointer, &hash_function[type].table[hashv]);
+	rb_dlinkAddAlloc(pointer, &table[hashv]);
+}
+
+void
+del_from_hash(hash_type type, const char *hashindex, void *pointer)
+{
+	rb_dlink_list *table = hash_function[type].table;
+	unsigned int hashv;
+
+	if(EmptyString(hashindex) || (pointer == NULL))
+		return;
+
+	hashv = (hash_function[type].func)((const unsigned char *) hashindex,
+					hash_function[type].hashbits,
+					hash_function[type].hashlen);
+	rb_dlinkFindDestroy(pointer, &table[hashv]);
+}
+
+void
+add_to_help_hash(const char *name, struct cachefile *hptr)
 {
 	unsigned int hashv;
 
-	if(EmptyString(name) || (client_p == NULL))
+	if(EmptyString(name) || hptr == NULL)
 		return;
 
-	hashv = hash_id(name);
-	rb_dlinkAddAlloc(client_p, &idTable[hashv]);
+	hashv = hash_help(name);
+	rb_dlinkAddAlloc(hptr, &helpTable[hashv]);
 }
 
-/* add_to_client_hash()
- *
- * adds an entry (client/server) to the client hash table
- */
 void
-add_to_client_hash(const char *name, struct Client *client_p)
+add_to_nd_hash(const char *name, struct nd_entry *nd)
 {
-	unsigned int hashv;
-
-	s_assert(name != NULL);
-	s_assert(client_p != NULL);
-	if(EmptyString(name) || (client_p == NULL))
-		return;
-
-	hashv = hash_nick(name);
-	rb_dlinkAddAlloc(client_p, &clientTable[hashv]);
+	nd->hashv = hash_nick(name);
+	rb_dlinkAdd(nd, &nd->hnode, &ndTable[nd->hashv]);
 }
 
-/* add_to_hostname_hash()
- *
- * adds a client entry to the hostname hash table
- */
 void
-add_to_hostname_hash(const char *hostname, struct Client *client_p)
+clear_help_hash(void)
 {
-	unsigned int hashv;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
+	int i;
 
-	s_assert(hostname != NULL);
-	s_assert(client_p != NULL);
-	if(EmptyString(hostname) || (client_p == NULL))
-		return;
-
-	hashv = hash_hostname(hostname);
-	rb_dlinkAddAlloc(client_p, &hostTable[hashv]);
+	HASH_WALK_SAFE(i, HELP_MAX, ptr, next_ptr, helpTable)
+	{
+		free_cachefile(ptr->data);
+		rb_dlinkDestroy(ptr, &helpTable[i]);
+	}
+	HASH_WALK_END
 }
 
-/* add_to_resv_hash()
- *
- * adds a resv channel entry to the resv hash table
- */
-void
-add_to_resv_hash(const char *name, struct ConfItem *aconf)
-{
-	unsigned int hashv;
 
-	s_assert(!EmptyString(name));
-	s_assert(aconf != NULL);
-	if(EmptyString(name) || aconf == NULL)
-		return;
 
-	hashv = hash_resv(name);
-	rb_dlinkAddAlloc(aconf, &resvTable[hashv]);
-}
-
-/* del_from_id_hash()
- *
- * removes an id from the id hash table
- */
-void
-del_from_id_hash(const char *id, struct Client *client_p)
-{
-	unsigned int hashv;
-
-	s_assert(id != NULL);
-	s_assert(client_p != NULL);
-	if(EmptyString(id) || client_p == NULL)
-		return;
-
-	hashv = hash_id(id);
-	rb_dlinkFindDestroy(client_p, &idTable[hashv]);
-}
-
-/* del_from_client_hash()
- *
- * removes a client/server from the client hash table
- */
-void
-del_from_client_hash(const char *name, struct Client *client_p)
-{
-	unsigned int hashv;
-
-	/* no s_asserts, this can happen when removing a client that
-	 * is unregistered.
-	 */
-	if(EmptyString(name) || client_p == NULL)
-		return;
-
-	hashv = hash_nick(name);
-	rb_dlinkFindDestroy(client_p, &clientTable[hashv]);
-}
-
-/* del_from_channel_hash()
- * 
- * removes a channel from the channel hash table
- */
-void
-del_from_channel_hash(const char *name, struct Channel *chptr)
-{
-	unsigned int hashv;
-
-	s_assert(name != NULL);
-	s_assert(chptr != NULL);
-
-	if(EmptyString(name) || chptr == NULL)
-		return;
-
-	hashv = hash_channel(name);
-	rb_dlinkFindDestroy(chptr, &channelTable[hashv]);
-}
-
-/* del_from_hostname_hash()
- *
- * removes a client entry from the hostname hash table
- */
-void
-del_from_hostname_hash(const char *hostname, struct Client *client_p)
-{
-	unsigned int hashv;
-
-	if(hostname == NULL || client_p == NULL)
-		return;
-
-	hashv = hash_hostname(hostname);
-
-	rb_dlinkFindDestroy(client_p, &hostTable[hashv]);
-}
-
-/* del_from_resv_hash()
- *
- * removes a resv entry from the resv hash table
- */
-void
-del_from_resv_hash(const char *name, struct ConfItem *aconf)
-{
-	unsigned int hashv;
-
-	s_assert(name != NULL);
-	s_assert(aconf != NULL);
-	if(EmptyString(name) || aconf == NULL)
-		return;
-
-	hashv = hash_resv(name);
-
-	rb_dlinkFindDestroy(aconf, &resvTable[hashv]);
-}
 
 /* find_id()
  *
@@ -396,6 +274,79 @@ find_id(const char *name)
 	}
 
 	return NULL;
+}
+
+/* hash_find_masked_server()
+ * 
+ * Whats happening in this next loop ? Well, it takes a name like
+ * foo.bar.edu and proceeds to earch for *.edu and then *.bar.edu.
+ * This is for checking full server names against masks although
+ * it isnt often done this way in lieu of using matches().
+ *
+ * Rewrote to do *.bar.edu first, which is the most likely case,
+ * also made const correct
+ * --Bleep
+ */
+static struct Client *
+hash_find_masked_server(struct Client *source_p, const char *name)
+{
+	char buf[HOSTLEN + 1];
+	char *p = buf;
+	char *s;
+	struct Client *server;
+
+	if('*' == *name || '.' == *name)
+		return NULL;
+
+	/* copy it across to give us a buffer to work on */
+	rb_strlcpy(buf, name, sizeof(buf));
+
+	while ((s = strchr(p, '.')) != 0)
+	{
+		*--s = '*';
+		/*
+		 * Dont need to check IsServer() here since nicknames cant
+		 * have *'s in them anyway.
+		 */
+		if((server = find_server(source_p, s)))
+			return server;
+		p = s + 2;
+	}
+
+	return NULL;
+}
+
+/* find_any_client()
+ *
+ * finds a client/server/masked server entry from the hash
+ */
+struct Client *
+find_any_client(const char *name)
+{
+	struct Client *target_p;
+	rb_dlink_node *ptr;
+	unsigned int hashv;
+
+	s_assert(name != NULL);
+	if(EmptyString(name))
+		return NULL;
+
+	/* hunting for an id, not a nick */
+	if(IsDigit(*name))
+		return (find_id(name));
+
+	hashv = hash_nick(name);
+
+	RB_DLINK_FOREACH(ptr, clientTable[hashv].head)
+	{
+		target_p = ptr->data;
+
+		if(irccmp(name, target_p->name) == 0)
+			return target_p;
+	}
+
+	/* wasnt found, look for a masked server */
+	return hash_find_masked_server(NULL, name);
 }
 
 /* find_client()
@@ -476,7 +427,7 @@ find_server(struct Client *source_p, const char *name)
 	   IsDigit(*name) && strlen(name) == 3)
 	{
 		target_p = find_id(name);
-      		return(target_p);
+		return(target_p);
 	}
 
 	hashv = hash_nick(name);
@@ -490,13 +441,14 @@ find_server(struct Client *source_p, const char *name)
 				return target_p;
 	}
 
-	return NULL;
+	/* wasnt found, look for a masked server */
+	return hash_find_masked_server(source_p, name);
 }
 
 /* find_hostname()
  *
- * finds a hostname rb_dlink list from the hostname hash table.
- * we return the full rb_dlink list, because you can have multiple
+ * finds a hostname dlink list from the hostname hash table.
+ * we return the full dlink list, because you can have multiple
  * entries with the same hostname
  */
 rb_dlink_node *
@@ -566,17 +518,14 @@ get_or_create_channel(struct Client *client_p, const char *chname, int *isnew)
 	len = strlen(s);
 	if(len > CHANNELLEN)
 	{
-		char *t;
 		if(IsServer(client_p))
 		{
-			sendto_realops_snomask(SNO_DEBUG, L_ALL,
+			sendto_realops_flags(UMODE_DEBUG, L_ALL,
 					     "*** Long channel name from %s (%d > %d): %s",
 					     client_p->name, len, CHANNELLEN, s);
 		}
 		len = CHANNELLEN;
-		t = LOCAL_COPY(s);
-		*(t + CHANNELLEN) = '\0';
-		s = t;
+		s = LOCAL_COPY_N(s, CHANNELLEN);
 	}
 
 	hashv = hash_channel(s);
@@ -628,11 +577,35 @@ hash_find_resv(const char *name)
 	{
 		aconf = ptr->data;
 
-		if(!irccmp(name, aconf->name))
+		if(!irccmp(name, aconf->host))
 		{
 			aconf->port++;
 			return aconf;
 		}
+	}
+
+	return NULL;
+}
+
+struct cachefile *
+hash_find_help(const char *name, int flags)
+{
+	struct cachefile *hptr;
+	rb_dlink_node *ptr;
+	unsigned int hashv;
+
+	if(EmptyString(name))
+		return NULL;
+
+	hashv = hash_help(name);
+
+	RB_DLINK_FOREACH(ptr, helpTable[hashv].head)
+	{
+		hptr = ptr->data;
+
+		if((irccmp(name, hptr->name) == 0) &&
+		   (hptr->flags & flags))
+			return hptr;
 	}
 
 	return NULL;
@@ -651,7 +624,7 @@ clear_resv_hash(void)
 		aconf = ptr->data;
 
 		/* skip temp resvs */
-		if(aconf->hold)
+		if(aconf->flags & CONF_FLAGS_TEMPORARY)
 			continue;
 
 		free_conf(ptr->data);
@@ -660,19 +633,78 @@ clear_resv_hash(void)
 	HASH_WALK_END
 }
 
+struct nd_entry *
+hash_find_nd(const char *name)
+{
+	struct nd_entry *nd;
+	rb_dlink_node *ptr;
+	unsigned int hashv;
+
+	if(EmptyString(name))
+		return NULL;
+
+	hashv = hash_nick(name);
+
+	RB_DLINK_FOREACH(ptr, ndTable[hashv].head)
+	{
+		nd = ptr->data;
+
+		if(!irccmp(name, nd->name))
+			return nd;
+	}
+
+	return NULL;
+}
+
+void
+add_to_cli_fd_hash(struct Client *client_p)
+{
+	rb_dlinkAddAlloc(client_p, &clientbyfdTable[hash_cli_fd(rb_get_fd(client_p->localClient->F))]);
+}
+
+
+void
+del_from_cli_fd_hash(struct Client *client_p)
+{
+	unsigned int hashv;
+	hashv = hash_cli_fd(rb_get_fd(client_p->localClient->F));
+	rb_dlinkFindDestroy(client_p, &clientbyfdTable[hashv]);
+}
+
+struct Client *
+find_cli_fd_hash(int fd)
+{
+	struct Client *target_p;
+	rb_dlink_node *ptr;
+	unsigned int hashv;
+	hashv = hash_cli_fd(fd);
+	RB_DLINK_FOREACH(ptr, clientbyfdTable[hashv].head)
+	{
+		target_p = ptr->data;
+		if(rb_get_fd(target_p->localClient->F) == fd)
+			return target_p;
+	}
+	return  NULL;	
+}
+
 static void
 output_hash(struct Client *source_p, const char *name, int length, int *counts, int deepest)
 {
 	unsigned long total = 0;
+	char buf[128];
 	int i;
 
-	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			"B :%s Hash Statistics", name);
+	sendto_one_numeric(source_p, RPL_STATSDEBUG, "B :%s Hash Statistics", name);
 
-	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			"B :Size: %d Empty: %d (%.3f%%)",
-			length, counts[0], 
-			(float) ((counts[0]*100) / (float) length));
+	/* rb_snprintf which sendto_one_* uses doesn't support float formats */
+#ifdef HAVE_SNPRINTF
+	snprintf(buf, sizeof(buf), 
+#else
+	sprintf(buf, 
+#endif
+		"%.3f%%", (float) ((counts[0]*100) / (float) length));
+	sendto_one_numeric(source_p, RPL_STATSDEBUG, "B :Size: %d Empty: %d (%s)",
+			length, counts[0], buf);
 
 	for(i = 1; i < 11; i++)
 	{
@@ -680,12 +712,19 @@ output_hash(struct Client *source_p, const char *name, int length, int *counts, 
 	}
 
 	/* dont want to divide by 0! --fl */
-	if(counts[0] != length)
+	if(counts[0] != length) 
+	{
+#ifdef HAVE_SNPRINTF
+		snprintf(buf, sizeof(buf),
+#else
+		sprintf(buf,
+#endif
+			"%.3f%%/%.3f%%", (float) (total / (length - counts[0])), 
+			(float) (total / length));
 		sendto_one_numeric(source_p, RPL_STATSDEBUG,
-				"B :Average depth: %.3f/%.3f Highest depth: %d",
-				(float) (total / (length - counts[0])),
-				(float) (total / length), deepest);
-
+				"B :Average depth: %s Highest depth: %d",
+				buf, deepest);
+	}
 	for(i = 0; i < 11; i++)
 	{
 		sendto_one_numeric(source_p, RPL_STATSDEBUG,
@@ -699,7 +738,7 @@ static void
 count_hash(struct Client *source_p, rb_dlink_list *table, int length, const char *name)
 {
 	int counts[11];
-	int deepest = 0;
+	unsigned long deepest = 0;
 	int i;
 
 	memset(counts, 0, sizeof(counts));
@@ -728,4 +767,6 @@ hash_stats(struct Client *source_p)
 	count_hash(source_p, idTable, U_MAX, "ID");
 	sendto_one_numeric(source_p, RPL_STATSDEBUG, "B :--");
 	count_hash(source_p, hostTable, HOST_MAX, "Hostname");
+	sendto_one_numeric(source_p, RPL_STATSDEBUG, "B :--");
+	count_hash(source_p, clientbyfdTable, CLI_FD_MAX, "Client by FD");
 }	
