@@ -52,6 +52,8 @@ static const struct in6_addr in6addr_any =
 #endif 
 
 static listener_t *ListenerPollList = NULL;
+static int accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, void *data);
+static void accept_callback(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t addrlen, void *data);
 
 static listener_t *
 make_listener(struct rb_sockaddr_storage *addr)
