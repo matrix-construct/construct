@@ -14190,7 +14190,7 @@ _ACEOF
 
 fi
 
-ac_config_files="$ac_config_files Makefile ssld/Makefile extensions/Makefile unsupported/Makefile src/Makefile modules/Makefile tools/Makefile doc/Makefile help/Makefile"
+ac_config_files="$ac_config_files Makefile servlink/Makefile extensions/Makefile unsupported/Makefile src/Makefile modules/Makefile tools/Makefile doc/Makefile help/Makefile"
 
 
 cat >confcache <<\_ACEOF
@@ -14748,7 +14748,7 @@ do
   case $ac_config_target in
     "include/setup.h") CONFIG_HEADERS="$CONFIG_HEADERS include/setup.h" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
-    "ssld/Makefile") CONFIG_FILES="$CONFIG_FILES ssld/Makefile" ;;
+    "servlink/Makefile") CONFIG_FILES="$CONFIG_FILES servlink/Makefile" ;;
     "extensions/Makefile") CONFIG_FILES="$CONFIG_FILES extensions/Makefile" ;;
     "unsupported/Makefile") CONFIG_FILES="$CONFIG_FILES unsupported/Makefile" ;;
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
