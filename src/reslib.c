@@ -91,7 +91,7 @@
 
 #define NS_TYPE_ELT             0x40 /* EDNS0 extended label type */
 #define DNS_LABELTYPE_BITSTRING 0x41
-#define MAXLINE 128
+#define DNS_MAXLINE 128
 
 /* $Id: reslib.c 1695 2006-06-27 15:11:23Z jilles $ */
 /* from Hybrid Id: reslib.c 177 2005-10-22 09:05:05Z michael $ */
@@ -164,7 +164,7 @@ parse_resvconf(void)
   char *p;
   char *opt;
   char *arg;
-  char input[MAXLINE];
+  char input[DNS_MAXLINE];
   FILE *file;
 
   /* XXX "/etc/resolv.conf" should be from a define in setup.h perhaps
@@ -249,7 +249,7 @@ add_nameserver(const char *arg)
     return;
 
   memcpy(&irc_nsaddr_list[irc_nscount], res->ai_addr, res->ai_addrlen);
-  SET_SS_LEN(irc_nsaddr_list[irc_nscount], res->ai_addrlen);
+  SET_SS_LEN(&irc_nsaddr_list[irc_nscount], res->ai_addrlen);
   irc_nscount++;
   freeaddrinfo(res);
 }
