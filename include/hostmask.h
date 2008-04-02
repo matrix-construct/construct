@@ -51,8 +51,6 @@ struct ConfItem *find_address_conf(const char *host, const char *sockhost,
 				const char *, const char *, struct sockaddr *,
 				int);
 
-struct ConfItem *find_dline(struct sockaddr *, int);
-
 #define find_kline(x)	(find_conf_by_address((x)->host, (x)->sockhost, \
 			 (x)->orighost, \
 			 (struct sockaddr *)&(x)->localClient->ip, CONF_KILL,\
