@@ -25,11 +25,9 @@
  */
 
 #include "stdinc.h"
-#include "struct.h"
 #include "ratbox_lib.h"
 #include "listener.h"
 #include "client.h"
-#include "match.h"
 #include "ircd.h"
 #include "numeric.h"
 #include "s_conf.h"
@@ -39,7 +37,6 @@
 #include "s_auth.h"
 #include "reject.h"
 #include "s_log.h"
-#include "sslproc.h"
 #include "hash.h"
 
 static rb_dlink_list listener_list;

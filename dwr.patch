@@ -1,0 +1,5823 @@
+diff -r a44630997728 Makefile.in
+--- a/Makefile.in	Wed Apr 02 00:10:51 2008 +0200
++++ b/Makefile.in	Wed Apr 02 04:03:16 2008 +0400
+@@ -46,7 +46,7 @@
+ # the system one.
+ #CFLAGS= -DNDEBUG -g -O2 -D"FD_SETSIZE=1024"
+ SHELL=/bin/sh
+-SUBDIRS=libratbox modules extensions libcharybdis src tools servlink doc help
++SUBDIRS=libratbox modules extensions src tools servlink doc help
+ CLEANDIRS = ${SUBDIRS}
+ RSA_FILES=rsa_respond/README rsa_respond/respond.c rsa_respond/Makefile
+ 
+diff -r a44630997728 configure.ac
+--- a/configure.ac	Wed Apr 02 00:10:51 2008 +0200
++++ b/configure.ac	Wed Apr 02 04:03:16 2008 +0400
+@@ -1233,7 +1233,6 @@
+ 
+ AC_CONFIG_FILES(			\
+ 	Makefile			\
+-	libcharybdis/Makefile		\
+ 	servlink/Makefile		\
+ 	extensions/Makefile		\
+ 	unsupported/Makefile		\
+diff -r a44630997728 extensions/Makefile.in
+--- a/extensions/Makefile.in	Wed Apr 02 00:10:51 2008 +0200
++++ b/extensions/Makefile.in	Wed Apr 02 04:03:16 2008 +0400
+@@ -23,7 +23,7 @@
+ 
+ IRCDLIBS	= @LIBS@ $(SSL_LIBS)
+ 
+-INCLUDES	= -I. -I../include -I../libcharybdis -I../libratbox/include $(SSL_INCLUDES)
++INCLUDES	= -I. -I../include -I../libratbox/include $(SSL_INCLUDES)
+ CPPFLAGS	= ${INCLUDES} @CPPFLAGS@
+ 
+ SRCS =                          \
+diff -r a44630997728 extensions/hurt.c
+--- a/extensions/hurt.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/extensions/hurt.c	Wed Apr 02 04:03:16 2008 +0400
+@@ -14,7 +14,6 @@
+ #include "send.h"
+ #include "numeric.h"
+ #include "hostmask.h"
+-#include "event.h"
+ #include "s_conf.h"
+ #include "s_newconf.h"
+ #include "hash.h"
+@@ -32,7 +31,7 @@
+ typedef struct _hurt_state {
+         time_t start_time;
+         uint32_t n_hurts;
+-        dlink_list hurt_clients;
++        rb_dlink_list hurt_clients;
+         uint16_t cutoff;
+         time_t default_expire;
+         const char *exit_reason;
+@@ -78,7 +77,7 @@
+ 
+ /* {{{ State containers */
+ 
+-dlink_list hurt_confs = { NULL, NULL, 0 };
++rb_dlink_list hurt_confs = { NULL, NULL, 0 };
+ 
+ /* }}} */
+ 
+@@ -152,15 +151,15 @@
+ static void
+ modfini(void)
+ {
+-	dlink_node	*ptr, *next_ptr;
++	rb_dlink_node	*ptr, *next_ptr;
+ 
+ 	/* and delete our events. */
+ 	rb_event_delete(hurt_expire_ev);
+ 	rb_event_delete(hurt_check_ev);
+ 
+-	DLINK_FOREACH_SAFE (ptr, next_ptr, hurt_state.hurt_clients.head)
++	RB_DLINK_FOREACH_SAFE (ptr, next_ptr, hurt_state.hurt_clients.head)
+ 	{
+-		dlinkDestroy(ptr, &hurt_state.hurt_clients);
++		rb_dlinkDestroy(ptr, &hurt_state.hurt_clients);
+ 	}
+ }
+ /* }}} */
+@@ -392,14 +391,14 @@
+ static void
+ hurt_check_event(void *arg)
+ {
+-	dlink_node	*ptr, *next_ptr;
++	rb_dlink_node	*ptr, *next_ptr;
+ 	struct Client	*client_p;
+ 
+-	DLINK_FOREACH_SAFE (ptr, next_ptr, hurt_state.hurt_clients.head) {
++	RB_DLINK_FOREACH_SAFE (ptr, next_ptr, hurt_state.hurt_clients.head) {
+ 		client_p = ptr->data;
+ 		if (!EmptyString(client_p->user->suser))
+ 		{
+-			dlinkDestroy(ptr, &hurt_state.hurt_clients);
++			rb_dlinkDestroy(ptr, &hurt_state.hurt_clients);
+ 			sendto_one_notice(client_p, ":HURT restriction removed for this session");
+ 			USED_TARGETS(client_p) = 0;
+ 			client_p->localClient->target_last = CurrentTime;		/* don't ask --nenolod */
+@@ -414,16 +413,16 @@
+ static void
+ hurt_expire_event(void *unused)
+ {
+-	dlink_node	*ptr, *next_ptr;
++	rb_dlink_node	*ptr, *next_ptr;
+ 	hurt_t		*hurt;
+ 
+-	DLINK_FOREACH_SAFE (ptr, next_ptr, hurt_confs.head)
++	RB_DLINK_FOREACH_SAFE (ptr, next_ptr, hurt_confs.head)
+ 	{
+ 		hurt = (hurt_t *) ptr->data;
+ 
+ 		if (hurt->expire <= CurrentTime)
+ 		{
+-			dlinkFindDestroy(hurt, &hurt_confs);
++			rb_dlinkFindDestroy(hurt, &hurt_confs);
+ 			hurt_destroy(hurt);
+ 		}
+ 	}
+@@ -441,7 +440,7 @@
+ 	s_assert(data != NULL);
+ 	s_assert(data->target != NULL);
+ 
+-	dlinkFindDestroy(data->target, &hurt_state.hurt_clients);
++	rb_dlinkFindDestroy(data->target, &hurt_state.hurt_clients);
+ }
+ /* }}} */
+ 
+@@ -458,7 +457,7 @@
+ 		USED_TARGETS(source_p) = 10;
+ 		source_p->localClient->target_last = CurrentTime + 600;		/* don't ask --nenolod */
+ 		SetTGChange(source_p);
+-		dlinkAddAlloc(source_p, &hurt_state.hurt_clients);
++		rb_dlinkAddAlloc(source_p, &hurt_state.hurt_clients);
+ 		sendto_one_notice(source_p, ":You are hurt. Please identify to services immediately, or use /stats p for assistance.");
+ 	}	
+ }
+@@ -468,7 +467,7 @@
+ static void
+ doing_stats_hook(hook_data_int *hdata)
+ {
+-	dlink_node	*ptr;
++	rb_dlink_node	*ptr;
+ 	hurt_t		*hurt;
+ 	struct Client	*source_p;
+ 
+@@ -502,7 +501,7 @@
+ 		return;
+ 	}
+ 
+-	DLINK_FOREACH(ptr, hurt_confs.head)
++	RB_DLINK_FOREACH(ptr, hurt_confs.head)
+ 	{
+ 		hurt = (hurt_t *) ptr->data;
+ 		sendto_one_numeric(source_p, RPL_STATSKLINE,
+@@ -543,10 +542,10 @@
+ {
+ 	hurt_t *hurt;
+ 
+-	hurt = MyMalloc(sizeof(hurt_t));
++	hurt = rb_malloc(sizeof(hurt_t));
+ 
+-	DupString(hurt->ip, ip);
+-	DupString(hurt->reason, reason);
++	hurt->ip = rb_strdup(ip);
++	hurt->reason = rb_strdup(reason);
+ 	hurt->expire = CurrentTime + expire;
+ 
+ 	return hurt;
+@@ -563,25 +562,25 @@
+ 		return;
+ 
+ 	h = (hurt_t *) hurt;
+-	MyFree(h->ip);
+-	MyFree(h->reason);
+-	MyFree(h);
++	rb_free(h->ip);
++	rb_free(h->reason);
++	rb_free(h);
+ }
+ /* }}} */
+ 
+ static void
+ hurt_add(hurt_t *hurt)
+ {
+-	dlinkAddAlloc(hurt, &hurt_confs);
++	rb_dlinkAddAlloc(hurt, &hurt_confs);
+ }
+ 
+ static hurt_t *
+ hurt_find_exact(const char *ip)
+ {
+-	dlink_node *ptr;
++	rb_dlink_node *ptr;
+ 	hurt_t *hurt;
+ 
+-	DLINK_FOREACH(ptr, hurt_confs.head)
++	RB_DLINK_FOREACH(ptr, hurt_confs.head)
+ 	{
+ 		hurt = (hurt_t *) ptr->data;
+ 
+@@ -595,10 +594,10 @@
+ static hurt_t *
+ hurt_find(const char *ip)
+ {
+-	dlink_node *ptr;
++	rb_dlink_node *ptr;
+ 	hurt_t *hurt;
+ 
+-	DLINK_FOREACH(ptr, hurt_confs.head)
++	RB_DLINK_FOREACH(ptr, hurt_confs.head)
+ 	{
+ 		hurt = (hurt_t *) ptr->data;
+ 
+@@ -614,7 +613,7 @@
+ {
+ 	hurt_t *hurt = hurt_find_exact(ip);
+ 
+-	dlinkFindDestroy(hurt, &hurt_confs);
++	rb_dlinkFindDestroy(hurt, &hurt_confs);
+ 	hurt_destroy(hurt);
+ }
+ 
+@@ -622,7 +621,7 @@
+ static int
+ heal_nick(struct Client *source_p, struct Client *target_p)
+ {
+-	if (dlinkFindDestroy(target_p, &hurt_state.hurt_clients))
++	if (rb_dlinkFindDestroy(target_p, &hurt_state.hurt_clients))
+ 	{
+ 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s used HEAL on %s",
+ 				get_oper_name(source_p), get_client_name(target_p, HIDE_IP));
+diff -r a44630997728 include/cache.h
+--- a/include/cache.h	Wed Apr 02 00:10:51 2008 +0200
++++ b/include/cache.h	Wed Apr 02 04:03:16 2008 +0400
+@@ -3,7 +3,6 @@
+ #define INCLUDED_CACHE_H
+ 
+ #include "client.h"
+-#include "tools.h"
+ 
+ #define HELP_MAX	100
+ 
+diff -r a44630997728 include/class.h
+--- a/include/class.h	Wed Apr 02 00:10:51 2008 +0200
++++ b/include/class.h	Wed Apr 02 04:03:16 2008 +0400
+@@ -26,8 +26,6 @@
+ 
+ #ifndef INCLUDED_class_h
+ #define INCLUDED_class_h
+-
+-#include "tools.h"
+ 
+ struct ConfItem;
+ struct Client;
+diff -r a44630997728 include/client.h
+--- a/include/client.h	Wed Apr 02 00:10:51 2008 +0200
++++ b/include/client.h	Wed Apr 02 04:03:16 2008 +0400
+@@ -35,14 +35,12 @@
+ #endif
+ 
+ #include "ircd_defs.h"
+-#include "linebuf.h"
+ #include "channel.h"
+ #include "res.h"
+ #include "snomask.h"
+ #include "irc_string.h"
+ #include "sprintf_irc.h"
+ #include "ircd.h"
+-#include "commio.h"
+ 
+ /* other structs */
+ struct Blacklist;
+@@ -611,4 +609,7 @@
+ extern void init_uid(void);
+ extern char *generate_uid(void);
+ 
++void allocate_away(struct Client *);
++void free_away(struct Client *);
++
+ #endif /* INCLUDED_client_h */
+diff -r a44630997728 include/hash.h
+--- a/include/hash.h	Wed Apr 02 00:10:51 2008 +0200
++++ b/include/hash.h	Wed Apr 02 04:03:16 2008 +0400
+@@ -26,8 +26,6 @@
+ 
+ #ifndef INCLUDED_hash_h
+ #define INCLUDED_hash_h
+-
+-#include "tools.h"
+ 
+ struct Dictionary;
+ 
+diff -r a44630997728 include/irc_string.h
+--- a/include/irc_string.h	Wed Apr 02 00:10:51 2008 +0200
++++ b/include/irc_string.h	Wed Apr 02 04:03:16 2008 +0400
+@@ -99,12 +99,6 @@
+ size_t strlcat(char *dst, const char *src, size_t siz);
+ #endif
+ 
+-#ifdef HAVE_STRDUP
+-#define DupString(x,y) do { x = strdup(y); if(x == NULL) outofmemory(); } while(0)
+-#else
+-#define DupString(x,y) do { x = malloc(strlen(y) + 1); if(x == NULL) outofmemory(); strcpy(x, y); } while(0)
+-#endif
+-
+ #ifdef HAVE_STRNDUP
+ #define DupNString(x, y, len) do { x = strndup(y, len); if(x == NULL) outofmemory(); } while (0)
+ #else
+diff -r a44630997728 include/ircd.h
+--- a/include/ircd.h	Wed Apr 02 00:10:51 2008 +0200
++++ b/include/ircd.h	Wed Apr 02 04:03:16 2008 +0400
+@@ -28,8 +28,6 @@
+ #define INCLUDED_ircd_h
+ 
+ #include "config.h"
+-#include "tools.h"
+-#include "memory.h"
+ 
+ struct Client;
+ struct rb_dlink_list;
+@@ -82,11 +80,7 @@
+ extern rb_dlink_list global_client_list;
+ extern struct Client *local[];
+ extern struct Counter Count;
+-#if 0
+-extern time_t CurrentTime;
+-#endif
+ extern struct timeval SystemTime;
+-#define CurrentTime SystemTime.tv_sec
+ extern int default_server_capabs;
+ 
+ extern time_t startup_time;
+diff -r a44630997728 include/modules.h
+--- a/include/modules.h	Wed Apr 02 00:10:51 2008 +0200
++++ b/include/modules.h	Wed Apr 02 04:03:16 2008 +0400
+@@ -40,7 +40,6 @@
+ #endif
+ 
+ #include "msg.h"
+-#include "memory.h"
+ #include "hook.h"
+ 
+ struct module
+diff -r a44630997728 include/monitor.h
+--- a/include/monitor.h	Wed Apr 02 00:10:51 2008 +0200
++++ b/include/monitor.h	Wed Apr 02 04:03:16 2008 +0400
+@@ -10,6 +10,8 @@
+ #ifndef INCLUDED_monitor_h
+ #define INCLUDED_monitor_h
+ 
++struct BlockHeap;
++
+ struct monitor
+ {
+ 	struct monitor *hnext;
+@@ -17,10 +19,12 @@
+ 	rb_dlink_list users;
+ };
+ 
+-extern BlockHeap *monitor_heap;
++extern struct monitor *monitorTable[];
++
++#define MONITOR_HASH_BITS 16
++#define MONITOR_HASH_SIZE (1<<MONITOR_HASH_BITS)
+ 
+-#define MONITOR_HASH_SIZE 65536
+-#define MONITOR_HASH_BITS 16
++void free_monitor(struct monitor *);
+ 
+ void init_monitor(void);
+ struct monitor *find_monitor(const char *name, int add);
+diff -r a44630997728 include/newconf.h
+--- a/include/newconf.h	Wed Apr 02 00:10:51 2008 +0200
++++ b/include/newconf.h	Wed Apr 02 04:03:16 2008 +0400
+@@ -10,7 +10,6 @@
+ 
+ #include <stdio.h>
+ 
+-#include "tools.h"
+ #include "client.h"
+ 
+ struct ConfEntry
+diff -r a44630997728 include/packet.h
+--- a/include/packet.h	Wed Apr 02 00:10:51 2008 +0200
++++ b/include/packet.h	Wed Apr 02 04:03:16 2008 +0400
+@@ -27,8 +27,6 @@
+ #ifndef INCLUDED_packet_h
+ #define INCLUDED_packet_h
+ 
+-#include "commio.h"
+-
+ /*
+  * this hides in here rather than a config.h because it really shouldn't
+  * be tweaked unless you *REALLY REALLY* know what you're doing!
+diff -r a44630997728 include/parse.h
+--- a/include/parse.h	Wed Apr 02 00:10:51 2008 +0200
++++ b/include/parse.h	Wed Apr 02 04:03:16 2008 +0400
+@@ -28,7 +28,6 @@
+ #define INCLUDED_parse_h_h
+ 
+ #include "irc_dictionary.h"
+-#include "tools.h"
+ 
+ struct Message;
+ struct Client;
+diff -r a44630997728 include/res.h
+--- a/include/res.h	Wed Apr 02 00:10:51 2008 +0200
++++ b/include/res.h	Wed Apr 02 04:03:16 2008 +0400
+@@ -9,7 +9,6 @@
+ 
+ #include "ircd_defs.h"
+ #include "common.h"
+-#include "commio.h"
+ #include "reslib.h"
+ #include "irc_string.h"
+ #include "sprintf_irc.h"
+diff -r a44630997728 include/s_newconf.h
+--- a/include/s_newconf.h	Wed Apr 02 00:10:51 2008 +0200
++++ b/include/s_newconf.h	Wed Apr 02 04:03:16 2008 +0400
+@@ -36,7 +36,6 @@
+ #define INCLUDED_s_newconf_h
+ 
+ #include "setup.h"
+-#include "tools.h"
+ 
+ #ifdef HAVE_LIBCRYPTO
+ #include <openssl/rsa.h>
+diff -r a44630997728 include/send.h
+--- a/include/send.h	Wed Apr 02 00:10:51 2008 +0200
++++ b/include/send.h	Wed Apr 02 04:03:16 2008 +0400
+@@ -38,6 +38,8 @@
+ /* The nasty global also used in s_serv.c for server bursts */
+ extern unsigned long current_serial;
+ 
++extern void send_pop_queue(struct Client *);
++
+ extern void send_queued(struct Client *to);
+ 
+ extern void send_queued_slink_write(int fd, void *data);
+diff -r a44630997728 include/stdinc.h
+--- a/include/stdinc.h	Wed Apr 02 00:10:51 2008 +0200
++++ b/include/stdinc.h	Wed Apr 02 04:03:16 2008 +0400
+@@ -25,6 +25,7 @@
+ 
+ #include "ratbox_lib.h"
+ #include "config.h"		/* Gotta pull in the autoconf stuff */
++#include "ircd_defs.h"  /* Needed for some reasons here -- dwr */
+ 
+ /* AIX requires this to be the first thing in the file.  */
+ #ifdef __GNUC__
+diff -r a44630997728 include/substitution.h
+--- a/include/substitution.h	Wed Apr 02 00:10:51 2008 +0200
++++ b/include/substitution.h	Wed Apr 02 04:03:16 2008 +0400
+@@ -34,7 +34,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ 
+ #ifndef SUBSTITUTION_H
+ #define SUBSTITUTION_H
+diff -r a44630997728 modules/Makefile.in
+--- a/modules/Makefile.in	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/Makefile.in	Wed Apr 02 04:03:16 2008 +0400
+@@ -32,7 +32,7 @@
+ # Change this later! -- adrian
+ automoduledir   = @moduledir@/autoload
+ 
+-INCLUDES	= -I../include -I../libcharybdis -I../libratbox/include $(SSL_INCLUDES)
++INCLUDES	= -I../include -I../libratbox/include $(SSL_INCLUDES)
+ CPPFLAGS	= ${INCLUDES} @CPPFLAGS@
+ 
+ CORE_SRCS = \
+diff -r a44630997728 modules/core/m_die.c
+--- a/modules/core/m_die.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/core/m_die.c	Wed Apr 02 04:03:16 2008 +0400
+@@ -25,12 +25,10 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "client.h"
+ #include "ircd.h"
+ #include "irc_string.h"
+ #include "numeric.h"
+-#include "commio.h"
+ #include "s_log.h"
+ #include "s_conf.h"
+ #include "send.h"
+diff -r a44630997728 modules/core/m_error.c
+--- a/modules/core/m_error.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/core/m_error.c	Wed Apr 02 04:03:16 2008 +0400
+@@ -31,7 +31,6 @@
+ #include "numeric.h"
+ #include "send.h"
+ #include "msg.h"
+-#include "memory.h"
+ #include "modules.h"
+ #include "s_log.h"
+ #include "s_conf.h"
+diff -r a44630997728 modules/core/m_join.c
+--- a/modules/core/m_join.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/core/m_join.c	Wed Apr 02 04:03:16 2008 +0400
+@@ -25,7 +25,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "channel.h"
+ #include "client.h"
+ #include "common.h"
+@@ -263,7 +262,7 @@
+ 			sendto_one(source_p, form_str(ERR_TOOMANYCHANNELS),
+ 				   me.name, source_p->name, name);
+ 			if(successful_join_count)
+-				source_p->localClient->last_join_time = CurrentTime;
++				source_p->localClient->last_join_time = rb_current_time();
+ 			return 0;
+ 		}
+ 
+@@ -304,10 +303,10 @@
+ 		/* add the user to the channel */
+ 		add_user_to_channel(chptr, source_p, flags);
+ 		if (chptr->mode.join_num &&
+-			CurrentTime - chptr->join_delta >= chptr->mode.join_time)
++			rb_current_time() - chptr->join_delta >= chptr->mode.join_time)
+ 		{
+ 			chptr->join_count = 0;
+-			chptr->join_delta = CurrentTime;
++			chptr->join_delta = rb_current_time();
+ 		}
+ 		chptr->join_count++;
+ 
+@@ -321,7 +320,7 @@
+ 		/* its a new channel, set +nt and burst. */
+ 		if(flags & CHFL_CHANOP)
+ 		{
+-			chptr->channelts = CurrentTime;
++			chptr->channelts = rb_current_time();
+ 			chptr->mode.mode |= MODE_TOPICLIMIT;
+ 			chptr->mode.mode |= MODE_NOPRIVMSGS;
+ 
+@@ -368,7 +367,7 @@
+ 		channel_member_names(chptr, source_p, 1);
+ 
+ 		if(successful_join_count)
+-			source_p->localClient->last_join_time = CurrentTime;
++			source_p->localClient->last_join_time = rb_current_time();
+ 
+ 		hook_info.client = source_p;
+ 		hook_info.chptr = chptr;
+@@ -495,10 +494,10 @@
+ 	{
+ 		add_user_to_channel(chptr, source_p, CHFL_PEON);
+ 		if (chptr->mode.join_num &&
+-			CurrentTime - chptr->join_delta >= chptr->mode.join_time)
++			rb_current_time() - chptr->join_delta >= chptr->mode.join_time)
+ 		{
+ 			chptr->join_count = 0;
+-			chptr->join_delta = CurrentTime;
++			chptr->join_delta = rb_current_time();
+ 		}
+ 		chptr->join_count++;
+ 		sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@%s JOIN :%s",
+diff -r a44630997728 modules/core/m_kick.c
+--- a/modules/core/m_kick.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/core/m_kick.c	Wed Apr 02 04:03:16 2008 +0400
+@@ -25,7 +25,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "channel.h"
+ #include "client.h"
+ #include "irc_string.h"
+diff -r a44630997728 modules/core/m_message.c
+--- a/modules/core/m_message.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/core/m_message.c	Wed Apr 02 04:03:16 2008 +0400
+@@ -41,7 +41,6 @@
+ #include "msg.h"
+ #include "packet.h"
+ #include "send.h"
+-#include "event.h"
+ #include "s_newconf.h"
+ #include "s_stats.h"
+ 
+@@ -447,7 +446,7 @@
+ 	{
+ 		/* idle time shouldnt be reset by notices --fl */
+ 		if(p_or_n != NOTICE)
+-			source_p->localClient->last = CurrentTime;
++			source_p->localClient->last = rb_current_time();
+ 	}
+ 
+ 	if(chptr->mode.mode & MODE_NOCOLOR)
+@@ -531,7 +530,7 @@
+ 	{
+ 		/* idletime shouldnt be reset by notice --fl */
+ 		if(p_or_n != NOTICE)
+-			source_p->localClient->last = CurrentTime;
++			source_p->localClient->last = rb_current_time();
+ 	}
+ 
+ 	sendto_channel_flags(client_p, type, source_p, chptr, "%s %c%s :%s",
+@@ -552,12 +551,12 @@
+ 	{
+ 		target = ptr->data;
+ 
+-		if(target->expiry < CurrentTime)
++		if(target->expiry < rb_current_time())
+ 		{
+ 			rb_dlinkDelete(ptr, &tgchange_list);
+ 			rb_patricia_remove(tgchange_tree, target->pnode);
+-			MyFree(target->ip);
+-			MyFree(target);
++			rb_free(target->ip);
++			rb_free(target);
+ 		}
+ 	}
+ }
+@@ -577,7 +576,7 @@
+ 	 *
+ 	 * XXX: is this controversial?
+ 	 */
+-	if(source_p->localClient->target_last > CurrentTime && IsOper(target_p))
++	if(source_p->localClient->target_last > rb_current_time() && IsOper(target_p))
+ 		return 1;
+ 
+ 	hashv = fnv_hash_upper((const unsigned char *)use_id(target_p), 32);
+@@ -598,17 +597,17 @@
+ 		if(!IsTGChange(source_p))
+ 		{
+ 			SetTGChange(source_p);
+-			source_p->localClient->target_last = CurrentTime;
++			source_p->localClient->target_last = rb_current_time();
+ 		}
+ 		/* clear as many targets as we can */
+-		else if((i = (CurrentTime - source_p->localClient->target_last) / 60))
++		else if((i = (rb_current_time() - source_p->localClient->target_last) / 60))
+ 		{
+ 			if(i > USED_TARGETS(source_p))
+ 				USED_TARGETS(source_p) = 0;
+ 			else
+ 				USED_TARGETS(source_p) -= i;
+ 
+-			source_p->localClient->target_last = CurrentTime;
++			source_p->localClient->target_last = rb_current_time();
+ 		}
+ 		/* cant clear any, full target list */
+ 		else if(USED_TARGETS(source_p) == 10)
+@@ -623,7 +622,7 @@
+ 	 */
+ 	else
+ 	{
+-		source_p->localClient->target_last = CurrentTime;
++		source_p->localClient->target_last = rb_current_time();
+ 		SetTGChange(source_p);
+ 	}
+ 
+@@ -654,7 +653,7 @@
+ 		/* reset idle time for message only if its not to self 
+ 		 * and its not a notice */
+ 		if(p_or_n != NOTICE)
+-			source_p->localClient->last = CurrentTime;
++			source_p->localClient->last = rb_current_time();
+ 
+ 		/* target change stuff, dont limit ctcp replies as that
+ 		 * would allow people to start filling up random users
+@@ -717,7 +716,7 @@
+ 				}
+ 
+ 				if((target_p->localClient->last_caller_id_time +
+-				    ConfigFileEntry.caller_id_wait) < CurrentTime)
++				    ConfigFileEntry.caller_id_wait) < rb_current_time())
+ 				{
+ 					if(p_or_n != NOTICE)
+ 						sendto_one_numeric(source_p, RPL_TARGNOTIFY,
+@@ -728,7 +727,7 @@
+ 						   me.name, target_p->name, source_p->name,
+ 						   source_p->username, source_p->host);
+ 
+-					target_p->localClient->last_caller_id_time = CurrentTime;
++					target_p->localClient->last_caller_id_time = rb_current_time();
+ 				}
+ 				/* Only so opers can watch for floods */
+ 				(void) flood_attack_client(p_or_n, source_p, target_p);
+@@ -769,11 +768,11 @@
+ 
+ 	if(GlobalSetOptions.floodcount && MyConnect(target_p) && IsClient(source_p))
+ 	{
+-		if((target_p->localClient->first_received_message_time + 1) < CurrentTime)
++		if((target_p->localClient->first_received_message_time + 1) < rb_current_time())
+ 		{
+-			delta = CurrentTime - target_p->localClient->first_received_message_time;
++			delta = rb_current_time() - target_p->localClient->first_received_message_time;
+ 			target_p->localClient->received_number_of_privmsgs -= delta;
+-			target_p->localClient->first_received_message_time = CurrentTime;
++			target_p->localClient->first_received_message_time = rb_current_time();
+ 			if(target_p->localClient->received_number_of_privmsgs <= 0)
+ 			{
+ 				target_p->localClient->received_number_of_privmsgs = 0;
+@@ -824,11 +823,11 @@
+ 
+ 	if(GlobalSetOptions.floodcount && MyClient(source_p))
+ 	{
+-		if((chptr->first_received_message_time + 1) < CurrentTime)
++		if((chptr->first_received_message_time + 1) < rb_current_time())
+ 		{
+-			delta = CurrentTime - chptr->first_received_message_time;
++			delta = rb_current_time() - chptr->first_received_message_time;
+ 			chptr->received_number_of_privmsgs -= delta;
+-			chptr->first_received_message_time = CurrentTime;
++			chptr->first_received_message_time = rb_current_time();
+ 			if(chptr->received_number_of_privmsgs <= 0)
+ 			{
+ 				chptr->received_number_of_privmsgs = 0;
+diff -r a44630997728 modules/core/m_mode.c
+--- a/modules/core/m_mode.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/core/m_mode.c	Wed Apr 02 04:03:16 2008 +0400
+@@ -25,8 +25,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+-#include "balloc.h"
+ #include "channel.h"
+ #include "client.h"
+ #include "hash.h"
+diff -r a44630997728 modules/core/m_nick.c
+--- a/modules/core/m_nick.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/core/m_nick.c	Wed Apr 02 04:03:16 2008 +0400
+@@ -734,7 +734,7 @@
+ 	char note[NICKLEN + 10];
+ 
+ 	/* This had to be copied here to avoid problems.. */
+-	source_p->tsinfo = CurrentTime;
++	source_p->tsinfo = rb_current_time();
+ 	if(source_p->name[0])
+ 		del_from_client_hash(source_p->name, source_p);
+ 
+@@ -774,10 +774,10 @@
+ 					nick, chptr->chname);
+ 			return;
+ 		}
+-		if((source_p->localClient->last_nick_change + ConfigFileEntry.max_nick_time) < CurrentTime)
++		if((source_p->localClient->last_nick_change + ConfigFileEntry.max_nick_time) < rb_current_time())
+ 			source_p->localClient->number_of_nick_changes = 0;
+ 
+-		source_p->localClient->last_nick_change = CurrentTime;
++		source_p->localClient->last_nick_change = rb_current_time();
+ 		source_p->localClient->number_of_nick_changes++;
+ 
+ 		if(ConfigFileEntry.anti_nick_flood && !IsOper(source_p) &&
+@@ -796,10 +796,10 @@
+ 	if(!samenick)
+ 	{
+ 		/* force the TS to increase -- jilles */
+-		if (source_p->tsinfo >= CurrentTime)
++		if (source_p->tsinfo >= rb_current_time())
+ 			source_p->tsinfo++;
+ 		else
+-			source_p->tsinfo = CurrentTime;
++			source_p->tsinfo = rb_current_time();
+ 		monitor_signoff(source_p);
+ 		/* we only do bancache for local users -- jilles */
+ 		if(source_p->user)
+@@ -870,7 +870,7 @@
+ 	/* client changing their nick - dont reset ts if its same */
+ 	if(!samenick)
+ 	{
+-		source_p->tsinfo = newts ? newts : CurrentTime;
++		source_p->tsinfo = newts ? newts : rb_current_time();
+ 		monitor_signoff(source_p);
+ 	}
+ 
+diff -r a44630997728 modules/core/m_part.c
+--- a/modules/core/m_part.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/core/m_part.c	Wed Apr 02 04:03:16 2008 +0400
+@@ -25,7 +25,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "channel.h"
+ #include "client.h"
+ #include "common.h"
+@@ -128,7 +127,7 @@
+ 	if(reason[0] && (is_chanop(msptr) || !MyConnect(source_p) ||
+ 			 ((can_send(chptr, source_p, msptr) > 0 &&
+ 			   (source_p->localClient->firsttime +
+-			    ConfigFileEntry.anti_spam_exit_message_time) < CurrentTime))))
++			    ConfigFileEntry.anti_spam_exit_message_time) < rb_current_time()))))
+ 	{
+ 		sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
+ 			      ":%s PART %s :%s", use_id(source_p), chptr->chname, reason);
+diff -r a44630997728 modules/core/m_quit.c
+--- a/modules/core/m_quit.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/core/m_quit.c	Wed Apr 02 04:03:16 2008 +0400
+@@ -74,7 +74,7 @@
+ 
+ 	if(!IsOper(source_p) &&
+ 	   (source_p->localClient->firsttime + ConfigFileEntry.anti_spam_exit_message_time) >
+-	   CurrentTime)
++	   rb_current_time())
+ 	{
+ 		exit_client(client_p, source_p, source_p, "Client Quit");
+ 		return 0;
+diff -r a44630997728 modules/core/m_server.c
+--- a/modules/core/m_server.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/core/m_server.c	Wed Apr 02 04:03:16 2008 +0400
+@@ -25,10 +25,8 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "client.h"		/* client struct */
+ #include "common.h"		/* TRUE bleah */
+-#include "event.h"
+ #include "hash.h"		/* add_to_client_hash */
+ #include "irc_string.h"
+ #include "ircd.h"		/* me */
+diff -r a44630997728 modules/core/m_sjoin.c
+--- a/modules/core/m_sjoin.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/core/m_sjoin.c	Wed Apr 02 04:03:16 2008 +0400
+@@ -25,7 +25,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "channel.h"
+ #include "client.h"
+ #include "hash.h"
+diff -r a44630997728 modules/m_admin.c
+--- a/modules/m_admin.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_admin.c	Wed Apr 02 04:03:16 2008 +0400
+@@ -68,7 +68,7 @@
+ {
+ 	static time_t last_used = 0L;
+ 
+-	if((last_used + ConfigFileEntry.pace_wait) > CurrentTime)
++	if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
+ 	{
+ 		sendto_one(source_p, form_str(RPL_LOAD2HI), 
+ 			   me.name, 
+@@ -77,7 +77,7 @@
+ 		return 0;
+ 	}
+ 	else
+-		last_used = CurrentTime;
++		last_used = rb_current_time();
+ 
+ 	do_admin(source_p);
+ 
+@@ -96,14 +96,14 @@
+ 
+ 	if(parc > 1)
+ 	{
+-		if((last_used + ConfigFileEntry.pace_wait) > CurrentTime)
++		if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
+ 		{
+ 			sendto_one(source_p, form_str(RPL_LOAD2HI),
+ 				   me.name, source_p->name, "ADMIN");
+ 			return 0;
+ 		}
+ 		else
+-			last_used = CurrentTime;
++			last_used = rb_current_time();
+ 		
+ 		if(hunt_server(client_p, source_p, ":%s ADMIN :%s", 1, parc, parv) != HUNTED_ISME)
+ 			return 0;
+diff -r a44630997728 modules/m_away.c
+--- a/modules/m_away.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_away.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -70,71 +70,46 @@
+ static int
+ m_away(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ {
+-	char *away;
+-	char *awy2;
+-
+-	if(MyClient(source_p) && !IsFloodDone(source_p))
+-		flood_endgrace(source_p);
+-
+-	if(!IsClient(source_p))
+-		return 0;
+-
+-	away = source_p->user->away;
+-
+-	if(parc < 2 || EmptyString(parv[1]))
+-	{
+-		/* Marking as not away */
+-		if(away)
+-		{
+-			/* we now send this only if they were away before --is */
+-			sendto_server(client_p, NULL, CAP_TS6, NOCAPS,
+-				      ":%s AWAY", use_id(source_p));
+-			sendto_server(client_p, NULL, NOCAPS, CAP_TS6, 
+-				      ":%s AWAY", source_p->name);
+-			MyFree(away);
+-			source_p->user->away = NULL;
+-		}
+-		if(MyConnect(source_p))
+-			sendto_one_numeric(source_p, RPL_UNAWAY, form_str(RPL_UNAWAY));
+-		return 0;
+-	}
+-
+-	/* Marking as away */
+-
+-	if(MyConnect(source_p))
+-	{
+-		if(!IsOper(source_p) &&
+-		   (CurrentTime - source_p->localClient->last_away) < ConfigFileEntry.pace_wait)
+-		{
+-			sendto_one(source_p, form_str(RPL_LOAD2HI), 
+-				   me.name, source_p->name, "AWAY");
+-			return 0;
+-		}
+-
+-		source_p->localClient->last_away = CurrentTime;
+-	}
+-
+-	awy2 = LOCAL_COPY(parv[1]);
+-	if(strlen(awy2) > AWAYLEN)
+-		awy2[AWAYLEN] = '\0';
+-
+-	/* we now send this only if they weren't away already --is */
+-	if(!away)
+-	{
+-		sendto_server(client_p, NULL, CAP_TS6, NOCAPS, 
+-			      ":%s AWAY :%s", use_id(source_p), awy2);
+-		sendto_server(client_p, NULL, NOCAPS, CAP_TS6,
+-			      ":%s AWAY :%s", source_p->name, awy2);
+-	}
+-	else
+-		MyFree(away);
+-
+-	DupString(away, awy2);
+-
+-	source_p->user->away = away;
+-
+-	if(MyConnect(source_p))
+-		sendto_one_numeric(source_p, RPL_NOWAWAY, form_str(RPL_NOWAWAY));
+-
++	if(MyClient(source_p) && !IsFloodDone(source_p))
++		flood_endgrace(source_p);
++
++	if(!IsClient(source_p))
++		return 0;
++
++	if(parc < 2 || EmptyString(parv[1]))
++	{
++		/* Marking as not away */
++		if(source_p->user->away != NULL)
++		{
++			/* we now send this only if they were away before --is */
++			sendto_server(client_p, NULL, CAP_TS6, NOCAPS,
++				      ":%s AWAY", use_id(source_p));
++			sendto_server(client_p, NULL, NOCAPS, CAP_TS6, 
++				      ":%s AWAY", source_p->name);
++			free_away(source_p);
++		}
++		if(MyConnect(source_p))
++			sendto_one(source_p, form_str(RPL_UNAWAY),
++				   me.name, source_p->name);
++		return 0;
++	}
++
++
++	if(source_p->user->away == NULL)
++	{
++		allocate_away(source_p);
++		rb_strlcpy(source_p->user->away, parv[1], AWAYLEN);
++		sendto_server(client_p, NULL, CAP_TS6, NOCAPS, 
++			      ":%s AWAY :%s", use_id(source_p), source_p->user->away);
++		sendto_server(client_p, NULL, NOCAPS, CAP_TS6,
++			      ":%s AWAY :%s", source_p->name, source_p->user->away);
++			
++	} else {
++		rb_strlcpy(source_p->user->away, parv[1], AWAYLEN);
++	}
++	
++	if(MyConnect(source_p))
++		sendto_one(source_p, form_str(RPL_NOWAWAY), me.name, source_p->name);
++
+ 	return 0;
+ }
+diff -r a44630997728 modules/m_cap.c
+--- a/modules/m_cap.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_cap.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -31,7 +31,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "class.h"
+ #include "client.h"
+ #include "irc_string.h"
+diff -r a44630997728 modules/m_capab.c
+--- a/modules/m_capab.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_capab.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -78,8 +78,8 @@
+ 	else
+ 		client_p->localClient->caps |= CAP_CAP;
+ 
+-	MyFree(client_p->localClient->fullcaps);
+-	DupString(client_p->localClient->fullcaps, parv[1]);
++	rb_free(client_p->localClient->fullcaps);
++	client_p->localClient->fullcaps = rb_strdup(parv[1]);
+ 
+ 	for (i = 1; i < parc; i++)
+ 	{
+@@ -116,10 +116,10 @@
+ 	if(!EmptyString(source_p->serv->fullcaps))
+ 	{
+ 		source_p->serv->caps = 0;
+-		MyFree(source_p->serv->fullcaps);
++		rb_free(source_p->serv->fullcaps);
+ 	}
+ 
+-	DupString(source_p->serv->fullcaps, parv[1]);
++	source_p->serv->fullcaps = rb_strdup(parv[1]);
+ 
+ 	for (s = strtoken(&p, t, " "); s; s = strtoken(&p, NULL, " "))
+ 	{
+diff -r a44630997728 modules/m_challenge.c
+--- a/modules/m_challenge.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_challenge.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -36,7 +36,6 @@
+ #include <openssl/err.h>
+ #endif
+ 
+-#include "memory.h"
+ #include "client.h"
+ #include "ircd.h"
+ #include "modules.h"
+@@ -92,8 +91,8 @@
+ 	if(target_p->localClient == NULL)
+ 		return;
+ 	
+-	MyFree(target_p->localClient->challenge);
+-	MyFree(target_p->localClient->opername);
++	rb_free(target_p->localClient->challenge);
++	rb_free(target_p->localClient->opername);
+ 	target_p->localClient->challenge = NULL;
+ 	target_p->localClient->opername = NULL;
+ 	target_p->localClient->chal_time = 0;
+@@ -129,7 +128,7 @@
+ 		if(!source_p->localClient->challenge)
+ 			return 0;
+ 
+-		if((CurrentTime - source_p->localClient->chal_time) > CHALLENGE_EXPIRES)
++		if((rb_current_time() - source_p->localClient->chal_time) > CHALLENGE_EXPIRES)
+ 		{
+ 			sendto_one(source_p, form_str(ERR_PASSWDMISMATCH), me.name, source_p->name);
+ 			ilog(L_FOPER, "EXPIRED CHALLENGE (%s) by (%s!%s@%s) (%s)",
+@@ -161,12 +160,12 @@
+ 						     source_p->name, source_p->username,
+ 						     source_p->host);
+ 
+-			MyFree(b_response);
++			rb_free(b_response);
+ 			cleanup_challenge(source_p);
+ 			return 0;
+ 		}
+ 
+-		MyFree(b_response);
++		rb_free(b_response);
+ 
+ 		oper_p = find_oper_conf(source_p->username, source_p->orighost, 
+ 					source_p->sockhost, 
+@@ -227,7 +226,7 @@
+ 	if(!generate_challenge(&challenge, &(source_p->localClient->challenge), oper_p->rsa_pubkey))
+ 	{
+ 		char *chal = challenge;
+-		source_p->localClient->chal_time = CurrentTime;
++		source_p->localClient->chal_time = rb_current_time();
+ 		for(;;)
+ 		{
+ 			cnt = strlcpy(chal_line, chal, CHALLENGE_WIDTH);
+@@ -240,8 +239,8 @@
+ 		}
+ 		sendto_one(source_p, form_str(RPL_ENDOFRSACHALLENGE2), 
+ 			   me.name, source_p->name);
+-		MyFree(challenge);
+-		DupString(source_p->localClient->opername, oper_p->name);
++		rb_free(challenge);
++		source_p->localClient->opername = rb_strdup(oper_p->name);
+ 	}
+ 	else
+ 		sendto_one_notice(source_p, ":Failed to generate challenge.");
+@@ -287,21 +286,21 @@
+ 	{
+ 		SHA1_Init(&ctx);
+ 		SHA1_Update(&ctx, (u_int8_t *)secret, CHALLENGE_SECRET_LENGTH);
+-		*r_response = MyMalloc(SHA_DIGEST_LENGTH);
++		*r_response = rb_malloc(SHA_DIGEST_LENGTH);
+ 		SHA1_Final((u_int8_t *)*r_response, &ctx);
+ 
+ 		length = RSA_size(rsa);
+-		tmp = MyMalloc(length);
++		tmp = rb_malloc(length);
+ 		ret = RSA_public_encrypt(CHALLENGE_SECRET_LENGTH, secret, tmp, rsa, RSA_PKCS1_OAEP_PADDING);
+ 
+ 		if (ret >= 0)
+ 		{
+ 			*r_challenge = (char *)ircd_base64_encode(tmp, ret);
+-			MyFree(tmp);
++			rb_free(tmp);
+ 			return 0;
+ 		}
+-		MyFree(tmp);
+-		MyFree(*r_response);
++		rb_free(tmp);
++		rb_free(*r_response);
+ 		*r_response = NULL;
+ 	}
+ 
+diff -r a44630997728 modules/m_chghost.c
+--- a/modules/m_chghost.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_chghost.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -10,7 +10,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "send.h"
+ #include "channel.h"
+ #include "client.h"
+@@ -18,7 +17,6 @@
+ #include "config.h"
+ #include "ircd.h"
+ #include "numeric.h"
+-#include "memory.h"
+ #include "s_conf.h"
+ #include "s_newconf.h"
+ #include "s_serv.h"
+diff -r a44630997728 modules/m_close.c
+--- a/modules/m_close.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_close.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -25,11 +25,9 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "client.h"
+ #include "ircd.h"
+ #include "numeric.h"
+-#include "commio.h"
+ #include "send.h"
+ #include "msg.h"
+ #include "parse.h"
+diff -r a44630997728 modules/m_cmessage.c
+--- a/modules/m_cmessage.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_cmessage.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -143,7 +143,7 @@
+ 					form_str(ERR_TARGUMODEG), target_p->name);
+ 
+ 		if((target_p->localClient->last_caller_id_time +
+-		    ConfigFileEntry.caller_id_wait) < CurrentTime)
++		    ConfigFileEntry.caller_id_wait) < rb_current_time())
+ 		{
+ 			if(p_or_n != NOTICE)
+ 				sendto_one_numeric(source_p, RPL_TARGNOTIFY,
+@@ -154,14 +154,14 @@
+ 				me.name, target_p->name, source_p->name,
+ 				source_p->username, source_p->host);
+ 
+-			target_p->localClient->last_caller_id_time = CurrentTime;
++			target_p->localClient->last_caller_id_time = rb_current_time();
+ 		}
+ 
+ 		return 0;
+ 	}
+ 
+ 	if(p_or_n != NOTICE)
+-		source_p->localClient->last = CurrentTime;
++		source_p->localClient->last = rb_current_time();
+ 
+ 	sendto_anywhere(target_p, source_p, command, ":%s", parv[3]);
+ 	return 0;
+diff -r a44630997728 modules/m_connect.c
+--- a/modules/m_connect.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_connect.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -29,7 +29,6 @@
+ #include "ircd.h"
+ #include "irc_string.h"
+ #include "numeric.h"
+-#include "commio.h"
+ #include "s_conf.h"
+ #include "s_newconf.h"
+ #include "s_log.h"
+diff -r a44630997728 modules/m_dline.c
+--- a/modules/m_dline.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_dline.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -25,7 +25,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "channel.h"
+ #include "class.h"
+ #include "client.h"
+@@ -35,7 +34,6 @@
+ #include "ircd.h"
+ #include "hostmask.h"
+ #include "numeric.h"
+-#include "commio.h"
+ #include "s_conf.h"
+ #include "s_newconf.h"
+ #include "s_log.h"
+@@ -188,7 +186,7 @@
+ 
+ 	aconf = make_conf();
+ 	aconf->status = CONF_DLINE;
+-	DupString(aconf->host, dlhost);
++	aconf->host = rb_strdup(dlhost);
+ 
+ 	/* Look for an oper reason */
+ 	if((oper_reason = strchr(reason, '|')) != NULL)
+@@ -197,7 +195,7 @@
+ 		oper_reason++;
+ 
+ 		if(!EmptyString(oper_reason))
+-			DupString(aconf->spasswd, oper_reason);
++			aconf->spasswd = rb_strdup(oper_reason);
+ 	}
+ 
+ 	if(tdline_time > 0)
+@@ -205,8 +203,8 @@
+ 		rb_snprintf(dlbuffer, sizeof(dlbuffer), 
+ 			 "Temporary D-line %d min. - %s (%s)",
+ 			 (int) (tdline_time / 60), reason, current_date);
+-		DupString(aconf->passwd, dlbuffer);
+-		aconf->hold = CurrentTime + tdline_time;
++		aconf->passwd = rb_strdup(dlbuffer);
++		aconf->hold = rb_current_time() + tdline_time;
+ 		add_temp_dline(aconf);
+ 
+ 		if(EmptyString(oper_reason))
+@@ -236,7 +234,7 @@
+ 	else
+ 	{
+ 		rb_snprintf(dlbuffer, sizeof(dlbuffer), "%s (%s)", reason, current_date);
+-		DupString(aconf->passwd, dlbuffer);
++		aconf->passwd = rb_strdup(dlbuffer);
+ 		add_conf_by_address(aconf->host, CONF_DLINE, NULL, aconf);
+ 		write_confitem(DLINE_TYPE, source_p, NULL, aconf->host, reason,
+ 			       oper_reason, current_date, 0);
+diff -r a44630997728 modules/m_encap.c
+--- a/modules/m_encap.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_encap.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -30,7 +30,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "send.h"
+ #include "channel.h"
+ #include "client.h"
+@@ -38,7 +37,6 @@
+ #include "config.h"
+ #include "ircd.h"
+ #include "numeric.h"
+-#include "memory.h"
+ #include "s_serv.h"
+ #include "hash.h"
+ #include "msg.h"
+diff -r a44630997728 modules/m_etrace.c
+--- a/modules/m_etrace.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_etrace.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -42,7 +42,6 @@
+ #include "irc_string.h"
+ #include "ircd.h"
+ #include "numeric.h"
+-#include "commio.h"
+ #include "s_serv.h"
+ #include "s_conf.h"
+ #include "s_newconf.h"
+diff -r a44630997728 modules/m_gline.c
+--- a/modules/m_gline.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_gline.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -25,7 +25,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "s_gline.h"
+ #include "channel.h"
+ #include "client.h"
+@@ -36,7 +35,6 @@
+ #include "ircd.h"
+ #include "hostmask.h"
+ #include "numeric.h"
+-#include "commio.h"
+ #include "s_conf.h"
+ #include "s_newconf.h"
+ #include "scache.h"
+@@ -556,15 +554,15 @@
+ 		oper_reason++;
+ 
+ 		if(!EmptyString(oper_reason))
+-			DupString(aconf->spasswd, oper_reason);
++			aconf->spasswd = rb_strdup(oper_reason);
+ 	}
+ 
+ 	rb_snprintf(buffer, sizeof(buffer), "%s (%s)", reason, current_date);
+ 
+-	DupString(aconf->passwd, buffer);
+-	DupString(aconf->user, user);
+-	DupString(aconf->host, host);
+-	aconf->hold = CurrentTime + ConfigFileEntry.gline_time;
++	aconf->passwd = rb_strdup(buffer);
++	aconf->user = rb_strdup(user);
++	aconf->host = rb_strdup(host);
++	aconf->hold = rb_current_time() + ConfigFileEntry.gline_time;
+ 	add_gline(aconf);
+ 
+ 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
+@@ -651,10 +649,10 @@
+ 					sizeof(pending->oper_user2));
+ 				strlcpy(pending->oper_host2, source_p->host,
+ 					sizeof(pending->oper_host2));
+-				DupString(pending->reason2, reason);
++				pending->reason2 = rb_strdup(reason);
+ 				pending->oper_server2 = scache_get_name(source_p->servptr->serv->nameinfo);
+-				pending->last_gline_time = CurrentTime;
+-				pending->time_request2 = CurrentTime;
++				pending->last_gline_time = rb_current_time();
++				pending->time_request2 = rb_current_time();
+ 				return NO;
+ 			}
+ 		}
+@@ -662,7 +660,7 @@
+ 
+ 	/* no pending gline, create a new one */
+ 	pending = (struct gline_pending *) 
+-			    MyMalloc(sizeof(struct gline_pending));
++			    rb_malloc(sizeof(struct gline_pending));
+ 
+ 	strlcpy(pending->oper_nick1, source_p->name,
+ 		sizeof(pending->oper_nick1));
+@@ -675,11 +673,11 @@
+ 
+ 	strlcpy(pending->user, user, sizeof(pending->user));
+ 	strlcpy(pending->host, host, sizeof(pending->host));
+-	DupString(pending->reason1, reason);
++	pending->reason1 = rb_strdup(reason);
+ 	pending->reason2 = NULL;
+ 
+-	pending->last_gline_time = CurrentTime;
+-	pending->time_request1 = CurrentTime;
++	pending->last_gline_time = rb_current_time();
++	pending->time_request1 = rb_current_time();
+ 
+ 	rb_dlinkAddAlloc(pending, &pending_glines);
+ 
+diff -r a44630997728 modules/m_info.c
+--- a/modules/m_info.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_info.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -25,7 +25,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "m_info.h"
+ #include "channel.h"
+ #include "client.h"
+@@ -624,7 +623,7 @@
+ {
+ 	static time_t last_used = 0L;
+ 
+-	if((last_used + ConfigFileEntry.pace_wait) > CurrentTime)
++	if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
+ 	{
+ 		/* safe enough to give this on a local connect only */
+ 		sendto_one(source_p, form_str(RPL_LOAD2HI),
+@@ -633,7 +632,7 @@
+ 		return 0;
+ 	}
+ 	else
+-		last_used = CurrentTime;
++		last_used = rb_current_time();
+ 
+ 	if(hunt_server(client_p, source_p, ":%s INFO :%s", 1, parc, parv) != HUNTED_ISME)
+ 		return 0;
+diff -r a44630997728 modules/m_invite.c
+--- a/modules/m_invite.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_invite.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -25,7 +25,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "common.h"
+ #include "channel.h"
+ #include "client.h"
+diff -r a44630997728 modules/m_kline.c
+--- a/modules/m_kline.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_kline.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -25,7 +25,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "channel.h"
+ #include "class.h"
+ #include "client.h"
+@@ -35,7 +34,6 @@
+ #include "ircd.h"
+ #include "hostmask.h"
+ #include "numeric.h"
+-#include "commio.h"
+ #include "s_conf.h"
+ #include "s_newconf.h"
+ #include "s_log.h"
+@@ -45,7 +43,6 @@
+ #include "msg.h"
+ #include "parse.h"
+ #include "modules.h"
+-#include "event.h"
+ #include "reject.h"
+ 
+ static int mo_kline(struct Client *, struct Client *, int, const char **);
+@@ -181,8 +178,8 @@
+ 	current_date = smalldate();
+ 	aconf = make_conf();
+ 	aconf->status = CONF_KILL;
+-	DupString(aconf->host, host);
+-	DupString(aconf->user, user);
++	aconf->host = rb_strdup(host);
++	aconf->user = rb_strdup(user);
+ 	aconf->port = 0;
+ 
+ 	/* Look for an oper reason */
+@@ -192,7 +189,7 @@
+ 		oper_reason++;
+ 
+ 		if(!EmptyString(oper_reason))
+-			DupString(aconf->spasswd, oper_reason);
++			aconf->spasswd = rb_strdup(oper_reason);
+ 	}
+ 
+ 	if(tkline_time > 0)
+@@ -200,13 +197,13 @@
+ 		rb_snprintf(buffer, sizeof(buffer),
+ 			   "Temporary K-line %d min. - %s (%s)",
+ 			   (int) (tkline_time / 60), reason, current_date);
+-		DupString(aconf->passwd, buffer);
++		aconf->passwd = rb_strdup(buffer);
+ 		apply_tkline(source_p, aconf, reason, oper_reason, current_date, tkline_time);
+ 	}
+ 	else
+ 	{
+ 		rb_snprintf(buffer, sizeof(buffer), "%s (%s)", reason, current_date);
+-		DupString(aconf->passwd, buffer);
++		aconf->passwd = rb_strdup(buffer);
+ 		apply_kline(source_p, aconf, reason, oper_reason, current_date);
+ 	}
+ 
+@@ -296,8 +293,8 @@
+ 	aconf = make_conf();
+ 
+ 	aconf->status = CONF_KILL;
+-	DupString(aconf->user, user);
+-	DupString(aconf->host, host);
++	aconf->user = rb_strdup(user);
++	aconf->host = rb_strdup(host);
+ 
+ 	/* Look for an oper reason */
+ 	if((oper_reason = strchr(reason, '|')) != NULL)
+@@ -306,7 +303,7 @@
+ 		oper_reason++;
+ 
+ 		if(!EmptyString(oper_reason))
+-			DupString(aconf->spasswd, oper_reason);
++			aconf->spasswd = rb_strdup(oper_reason);
+ 	}
+ 
+ 	current_date = smalldate();
+@@ -316,13 +313,13 @@
+ 		rb_snprintf(buffer, sizeof(buffer),
+ 			   "Temporary K-line %d min. - %s (%s)",
+ 			   (int) (tkline_time / 60), reason, current_date);
+-		DupString(aconf->passwd, buffer);
++		aconf->passwd = rb_strdup(buffer);
+ 		apply_tkline(source_p, aconf, reason, oper_reason, current_date, tkline_time);
+ 	}
+ 	else
+ 	{
+ 		rb_snprintf(buffer, sizeof(buffer), "%s (%s)", reason, current_date);
+-		DupString(aconf->passwd, buffer);
++		aconf->passwd = rb_strdup(buffer);
+ 		apply_kline(source_p, aconf, reason, oper_reason, current_date);
+ 	}
+ 
+@@ -511,7 +508,7 @@
+ apply_tkline(struct Client *source_p, struct ConfItem *aconf,
+ 	     const char *reason, const char *oper_reason, const char *current_date, int tkline_time)
+ {
+-	aconf->hold = CurrentTime + tkline_time;
++	aconf->hold = rb_current_time() + tkline_time;
+ 	add_temp_kline(aconf);
+ 
+ 	/* no oper reason.. */
+diff -r a44630997728 modules/m_knock.c
+--- a/modules/m_knock.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_knock.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -25,7 +25,6 @@
+ 
+ #include "stdinc.h"
+ #include "sprintf_irc.h"
+-#include "tools.h"
+ #include "channel.h"
+ #include "client.h"
+ #include "hash.h"
+@@ -138,13 +137,13 @@
+ 		 * allow one knock per channel per knock_delay_channel
+ 		 */
+ 		if(!IsOper(source_p) && 
+-		   (source_p->localClient->last_knock + ConfigChannel.knock_delay) > CurrentTime)
++		   (source_p->localClient->last_knock + ConfigChannel.knock_delay) > rb_current_time())
+ 		{
+ 			sendto_one(source_p, form_str(ERR_TOOMANYKNOCK),
+ 					me.name, source_p->name, name, "user");
+ 			return 0;
+ 		}
+-		else if((chptr->last_knock + ConfigChannel.knock_delay_channel) > CurrentTime)
++		else if((chptr->last_knock + ConfigChannel.knock_delay_channel) > rb_current_time())
+ 		{
+ 			sendto_one(source_p, form_str(ERR_TOOMANYKNOCK),
+ 					me.name, source_p->name, name, "channel");
+@@ -152,13 +151,13 @@
+ 		}
+ 
+ 		/* ok, we actually can send the knock, tell client */
+-		source_p->localClient->last_knock = CurrentTime;
++		source_p->localClient->last_knock = rb_current_time();
+ 
+ 		sendto_one(source_p, form_str(RPL_KNOCKDLVR),
+ 			   me.name, source_p->name, name);
+ 	}
+ 
+-	chptr->last_knock = CurrentTime;
++	chptr->last_knock = rb_current_time();
+ 
+ 	if(ConfigChannel.use_knock)
+ 		sendto_channel_local(chptr->mode.mode & MODE_FREEINVITE ? ALL_MEMBERS : ONLY_CHANOPS,
+diff -r a44630997728 modules/m_list.c
+--- a/modules/m_list.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_list.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -34,7 +34,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "channel.h"
+ #include "client.h"
+ #include "hash.h"
+@@ -47,7 +46,6 @@
+ #include "msg.h"
+ #include "parse.h"
+ #include "modules.h"
+-#include "event.h"
+ 
+ static rb_dlink_list safelisting_clients = { NULL, NULL, 0 };
+ 
+@@ -126,14 +124,14 @@
+ 	if (parc < 2 || !IsChannelName(parv[1]))
+ 	{
+ 		/* pace this due to the sheer traffic involved */
+-		if (((last_used + ConfigFileEntry.pace_wait) > CurrentTime))
++		if (((last_used + ConfigFileEntry.pace_wait) > rb_current_time()))
+ 		{
+ 			sendto_one(source_p, form_str(RPL_LOAD2HI), me.name, source_p->name, "LIST");
+ 			sendto_one(source_p, form_str(RPL_LISTEND), me.name, source_p->name);
+ 			return 0;
+ 		}
+ 		else
+-			last_used = CurrentTime;
++			last_used = rb_current_time();
+ 	}
+ 
+ 	return mo_list(client_p, source_p, parc, parv);
+@@ -251,7 +249,7 @@
+ 	s_assert(MyClient(client_p));
+ 	s_assert(params != NULL);
+ 
+-	self = MyMalloc(sizeof(struct ListClient));
++	self = rb_malloc(sizeof(struct ListClient));
+ 
+ 	self->hash_indice = 0;
+ 	self->users_min = params->users_min;
+@@ -285,7 +283,7 @@
+ 
+ 	rb_dlinkFindDestroy(client_p, &safelisting_clients);
+ 
+-	MyFree(client_p->localClient->safelist_data);
++	rb_free(client_p->localClient->safelist_data);
+ 
+ 	client_p->localClient->safelist_data = NULL;
+ 
+diff -r a44630997728 modules/m_lusers.c
+--- a/modules/m_lusers.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_lusers.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -63,7 +63,7 @@
+ 
+ 	if (parc > 2)
+ 	{
+-		if((last_used + ConfigFileEntry.pace_wait) > CurrentTime)
++		if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
+ 		{
+ 			/* safe enough to give this on a local connect only */
+ 			sendto_one(source_p, form_str(RPL_LOAD2HI),
+@@ -71,7 +71,7 @@
+ 			return 0;
+ 		}
+ 		else
+-			last_used = CurrentTime;
++			last_used = rb_current_time();
+ 
+ 		if(hunt_server(client_p, source_p, ":%s LUSERS %s :%s", 2, parc, parv) !=
+ 			   HUNTED_ISME)
+diff -r a44630997728 modules/m_monitor.c
+--- a/modules/m_monitor.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_monitor.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -31,7 +31,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "client.h"
+ #include "msg.h"
+ #include "parse.h"
+diff -r a44630997728 modules/m_motd.c
+--- a/modules/m_motd.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_motd.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -26,7 +26,6 @@
+ 
+ #include "stdinc.h"
+ #include "client.h"
+-#include "tools.h"
+ #include "ircd.h"
+ #include "send.h"
+ #include "numeric.h"
+@@ -68,7 +67,7 @@
+ {
+ 	static time_t last_used = 0;
+ 
+-	if((last_used + ConfigFileEntry.pace_wait) > CurrentTime)
++	if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
+ 	{
+ 		/* safe enough to give this on a local connect only */
+ 		sendto_one(source_p, form_str(RPL_LOAD2HI),
+@@ -78,7 +77,7 @@
+ 		return 0;
+ 	}
+ 	else
+-		last_used = CurrentTime;
++		last_used = rb_current_time();
+ 
+ 	if(hunt_server(client_p, source_p, ":%s MOTD :%s", 1, parc, parv) != HUNTED_ISME)
+ 		return 0;
+diff -r a44630997728 modules/m_names.c
+--- a/modules/m_names.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_names.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -26,7 +26,6 @@
+ 
+ #include "stdinc.h"
+ #include "sprintf_irc.h"
+-#include "tools.h"
+ #include "channel.h"
+ #include "client.h"
+ #include "common.h"
+@@ -93,7 +92,7 @@
+ 	{
+ 		if(!IsOper(source_p))
+ 		{
+-			if((last_used + ConfigFileEntry.pace_wait) > CurrentTime)
++			if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
+ 			{
+ 				sendto_one(source_p, form_str(RPL_LOAD2HI),
+ 					   me.name, source_p->name, "NAMES");
+@@ -102,7 +101,7 @@
+ 				return 0;
+ 			}
+ 			else
+-				last_used = CurrentTime;
++				last_used = rb_current_time();
+ 		}
+ 
+ 		names_global(source_p);
+diff -r a44630997728 modules/m_oper.c
+--- a/modules/m_oper.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_oper.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -25,13 +25,11 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "client.h"
+ #include "common.h"
+ #include "irc_string.h"
+ #include "ircd.h"
+ #include "numeric.h"
+-#include "commio.h"
+ #include "s_conf.h"
+ #include "s_newconf.h"
+ #include "s_log.h"
+diff -r a44630997728 modules/m_operspy.c
+--- a/modules/m_operspy.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_operspy.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -30,7 +30,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "send.h"
+ #include "channel.h"
+ #include "client.h"
+@@ -38,7 +37,6 @@
+ #include "config.h"
+ #include "ircd.h"
+ #include "numeric.h"
+-#include "memory.h"
+ #include "s_serv.h"
+ #include "hash.h"
+ #include "msg.h"
+diff -r a44630997728 modules/m_pass.c
+--- a/modules/m_pass.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_pass.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -64,7 +64,7 @@
+ 	{
+ 		memset(client_p->localClient->passwd, 0,
+ 			strlen(client_p->localClient->passwd));
+-		MyFree(client_p->localClient->passwd);
++		rb_free(client_p->localClient->passwd);
+ 	}
+ 
+ 	DupNString(client_p->localClient->passwd, parv[1], PASSWDLEN);
+diff -r a44630997728 modules/m_pong.c
+--- a/modules/m_pong.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_pong.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -89,7 +89,7 @@
+ 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+ 					     "End of burst (emulated) from %s (%d seconds)",
+ 					     source_p->name,
+-					     (signed int) (CurrentTime - source_p->localClient->firsttime));
++					     (signed int) (rb_current_time() - source_p->localClient->firsttime));
+ 		SetEob(source_p);
+ 		eob_count++;
+ 		call_hook(h_server_eob, source_p);
+diff -r a44630997728 modules/m_rehash.c
+--- a/modules/m_rehash.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_rehash.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -136,9 +136,9 @@
+ 	{
+ 		glp_ptr = ptr->data;
+ 
+-		MyFree(glp_ptr->reason1);
+-		MyFree(glp_ptr->reason2);
+-		MyFree(glp_ptr);
++		rb_free(glp_ptr->reason1);
++		rb_free(glp_ptr->reason2);
++		rb_free(glp_ptr);
+ 		rb_dlinkDestroy(ptr, &pending_glines);
+ 	}
+ }
+diff -r a44630997728 modules/m_resv.c
+--- a/modules/m_resv.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_resv.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -224,13 +224,13 @@
+ 		aconf = make_conf();
+ 		aconf->status = CONF_RESV_CHANNEL;
+ 		aconf->port = 0;
+-		DupString(aconf->name, name);
+-		DupString(aconf->passwd, reason);
++		aconf->name = rb_strdup(name);
++		aconf->passwd = rb_strdup(reason);
+ 		add_to_resv_hash(aconf->name, aconf);
+ 
+ 		if(temp_time > 0)
+ 		{
+-			aconf->hold = CurrentTime + temp_time;
++			aconf->hold = rb_current_time() + temp_time;
+ 
+ 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+ 				     "%s added temporary %d min. RESV for [%s] [%s]",
+@@ -282,13 +282,13 @@
+ 		aconf = make_conf();
+ 		aconf->status = CONF_RESV_NICK;
+ 		aconf->port = 0;
+-		DupString(aconf->name, name);
+-		DupString(aconf->passwd, reason);
++		aconf->name = rb_strdup(name);
++		aconf->passwd = rb_strdup(reason);
+ 		rb_dlinkAddAlloc(aconf, &resv_conf_list);
+ 
+ 		if(temp_time > 0)
+ 		{
+-			aconf->hold = CurrentTime + temp_time;
++			aconf->hold = rb_current_time() + temp_time;
+ 
+ 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+ 				     "%s added temporary %d min. RESV for [%s] [%s]",
+diff -r a44630997728 modules/m_scan.c
+--- a/modules/m_scan.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_scan.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -41,7 +41,6 @@
+ #include "irc_string.h"
+ #include "ircd.h"
+ #include "numeric.h"
+-#include "commio.h"
+ #include "s_serv.h"
+ #include "s_conf.h"
+ #include "s_newconf.h"
+diff -r a44630997728 modules/m_services.c
+--- a/modules/m_services.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_services.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -31,7 +31,6 @@
+ 
+ #include "stdinc.h"
+ 
+-#include "tools.h"
+ #include "send.h"
+ #include "channel.h"
+ #include "client.h"
+@@ -39,7 +38,6 @@
+ #include "config.h"
+ #include "ircd.h"
+ #include "numeric.h"
+-#include "memory.h"
+ #include "s_conf.h"
+ #include "s_newconf.h"
+ #include "s_serv.h"
+@@ -206,8 +204,8 @@
+ 	newts = atol(parv[3]);
+ 
+ 	/* timestamp is older than 15mins, ignore it */
+-	if(newts < (CurrentTime - 900))
+-		newts = CurrentTime - 900;
++	if(newts < (rb_current_time() - 900))
++		newts = rb_current_time() - 900;
+ 
+ 	target_p->tsinfo = newts;
+ 
+@@ -272,7 +270,7 @@
+ 		add_nd_entry(parv[2]);
+ 		nd = irc_dictionary_retrieve(nd_dict, parv[2]);
+ 		if (nd != NULL)
+-			nd->expire = CurrentTime + duration;
++			nd->expire = rb_current_time() + duration;
+ 	}
+ 
+ 	return 0;
+diff -r a44630997728 modules/m_set.c
+--- a/modules/m_set.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_set.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -28,12 +28,10 @@
+ 
+ #include "stdinc.h"
+ #include "client.h"
+-#include "event.h"
+ #include "irc_string.h"
+ #include "sprintf_irc.h"
+ #include "ircd.h"
+ #include "numeric.h"
+-#include "commio.h"
+ #include "s_serv.h"
+ #include "send.h"
+ #include "common.h"
+diff -r a44630997728 modules/m_signon.c
+--- a/modules/m_signon.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_signon.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -31,7 +31,6 @@
+ 
+ #include "stdinc.h"
+ 
+-#include "tools.h"
+ #include "send.h"
+ #include "channel.h"
+ #include "client.h"
+@@ -39,7 +38,6 @@
+ #include "config.h"
+ #include "ircd.h"
+ #include "numeric.h"
+-#include "memory.h"
+ #include "s_conf.h"
+ #include "s_serv.h"
+ #include "hash.h"
+@@ -259,7 +257,7 @@
+ 	{
+ 		char note[NICKLEN + 10];
+ 
+-		send_signon(NULL, target_p, nick, user, host, CurrentTime, login);
++		send_signon(NULL, target_p, nick, user, host, rb_current_time(), login);
+ 
+ 		rb_snprintf(note, NICKLEN + 10, "Nick: %s", target_p->name);
+ 		rb_note(target_p->localClient->F, note);
+diff -r a44630997728 modules/m_snote.c
+--- a/modules/m_snote.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_snote.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -41,7 +41,6 @@
+ #include "irc_string.h"
+ #include "ircd.h"
+ #include "numeric.h"
+-#include "commio.h"
+ #include "s_serv.h"
+ #include "s_conf.h"
+ #include "s_newconf.h"
+diff -r a44630997728 modules/m_stats.c
+--- a/modules/m_stats.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_stats.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -25,7 +25,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"		/* rb_dlink_node/rb_dlink_list */
+ #include "class.h"		/* report_classes */
+ #include "client.h"		/* Client */
+ #include "common.h"		/* TRUE/FALSE */
+@@ -38,14 +37,11 @@
+ #include "numeric.h"		/* ERR_xxx */
+ #include "scache.h"		/* list_scache */
+ #include "send.h"		/* sendto_one */
+-#include "commio.h"		/* highest_fd */
+ #include "s_conf.h"		/* ConfItem */
+ #include "s_serv.h"		/* hunt_server */
+ #include "s_stats.h"		/* tstats */
+ #include "s_user.h"		/* show_opers */
+-#include "event.h"		/* events */
+ #include "blacklist.h"		/* dnsbl stuff */
+-#include "linebuf.h"
+ #include "parse.h"
+ #include "modules.h"
+ #include "hook.h"
+@@ -122,7 +118,7 @@
+ static void stats_servlinks(struct Client *);
+ static void stats_ltrace(struct Client *, int, const char **);
+ static void stats_ziplinks(struct Client *);
+-
++static void stats_comm(struct Client *);
+ /* This table contains the possible stats items, in order:
+  * stats letter,  function to call, operonly? adminonly?
+  * case only matters in the stats letter column.. -- fl_
+@@ -139,8 +135,8 @@
+ 	{'D', stats_deny,		1, 0, },
+ 	{'e', stats_exempt,		1, 0, },
+ 	{'E', stats_events,		1, 1, },
+-	{'f', rb_dump,		1, 1, },
+-	{'F', rb_dump,		1, 1, },
++	{'f', stats_comm,		1, 1, },
++	{'F', stats_comm,		1, 1, },
+ 	{'g', stats_pending_glines,	1, 0, },
+ 	{'G', stats_glines,		1, 0, },
+ 	{'h', stats_hubleaf,		0, 0, },
+@@ -199,7 +195,7 @@
+ 	if(MyClient(source_p) && !IsOper(source_p))
+ 	{
+ 		/* Check the user is actually allowed to do /stats, and isnt flooding */
+-		if((last_used + ConfigFileEntry.pace_wait) > CurrentTime)
++		if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
+ 		{
+ 			/* safe enough to give this on a local connect only */
+ 			sendto_one(source_p, form_str(RPL_LOAD2HI),
+@@ -209,7 +205,7 @@
+ 			return 0;
+ 		}
+ 		else
+-			last_used = CurrentTime;
++			last_used = rb_current_time();
+ 	}
+ 
+ 	if(hunt_server (client_p, source_p, ":%s STATS %s :%s", 2, parc, parv) != HUNTED_ISME)
+@@ -447,10 +443,17 @@
+ 	}}
+ 
+ 
+-static void
+-stats_events (struct Client *source_p)
+-{
+-	show_events (source_p);
++static void
++stats_events_cb(char *str, void *ptr)
++{
++	sendto_one_numeric(ptr, RPL_STATSDEBUG, "E :%s", str);
++}
++
++static void
++stats_events (struct Client *source_p)
++{
++	rb_dump_events(stats_events_cb, source_p);
++	send_pop_queue(source_p);
+ }
+ 
+ /* stats_pending_glines()
+@@ -891,7 +894,7 @@
+ 	if(0 == secs)
+ 		secs = 1;
+ 
+-	rup = (CurrentTime - startup_time) * hzz;
++	rup = (rb_current_time() - startup_time) * hzz;
+ 	if(0 == rup)
+ 		rup = 1;
+   
+@@ -932,7 +935,7 @@
+ {
+ 	time_t now;
+ 
+-	now = CurrentTime - startup_time;
++	now = rb_current_time() - startup_time;
+ 	sendto_one_numeric(source_p, RPL_STATSUPTIME, 
+ 			   form_str (RPL_STATSUPTIME),
+ 			   now / 86400, (now / 3600) % 24, 
+@@ -1046,7 +1049,7 @@
+ 		target_p = ptr->data;
+ 
+ 		j++;
+-		seconds = CurrentTime - target_p->localClient->firsttime;
++		seconds = rb_current_time() - target_p->localClient->firsttime;
+ 
+ 		days = (int) (seconds / 86400);
+ 		seconds %= 86400;
+@@ -1060,8 +1063,8 @@
+ 				   "Connected: %d day%s, %d:%02d:%02d",
+ 				   target_p->name,
+ 				   (target_p->serv->by[0] ? target_p->serv->by : "Remote."),
+-				   (int) (CurrentTime - target_p->localClient->lasttime),
+-				   (int) linebuf_len (&target_p->localClient->buf_sendq),
++				   (int) (rb_current_time() - target_p->localClient->lasttime),
++				   (int) rb_linebuf_len (&target_p->localClient->buf_sendq),
+ 				   days, (days == 1) ? "" : "s", hours, minutes, 
+ 				   (int) seconds);
+ 	}
+@@ -1186,14 +1189,14 @@
+ 		sendto_one(source_p, Sformat,
+ 			get_id(&me, source_p), RPL_STATSLINKINFO, get_id(source_p, source_p),
+ 			get_server_name(target_p, SHOW_IP),
+-			(int) linebuf_len (&target_p->localClient->buf_sendq),
++			(int) rb_linebuf_len (&target_p->localClient->buf_sendq),
+ 			(int) target_p->localClient->sendM,
+ 			(int) target_p->localClient->sendK,
+ 			(int) target_p->localClient->receiveM,
+ 			(int) target_p->localClient->receiveK,
+-			CurrentTime - target_p->localClient->firsttime,
+-			(CurrentTime > target_p->localClient->lasttime) ? 
+-			 (CurrentTime - target_p->localClient->lasttime) : 0,
++			rb_current_time() - target_p->localClient->firsttime,
++			(rb_current_time() > target_p->localClient->lasttime) ? 
++			 (rb_current_time() - target_p->localClient->lasttime) : 0,
+ 			IsOper (source_p) ? show_capabilities (target_p) : "TS");
+ 	}
+ 
+@@ -1207,7 +1210,7 @@
+ 			   "? :Recv total : %7.2f %s",
+ 			   _GMKv (receiveK), _GMKs (receiveK));
+ 
+-	uptime = (CurrentTime - startup_time);
++	uptime = (rb_current_time() - startup_time);
+ 
+ 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
+ 			   "? :Server send: %7.2f %s (%4.1f K/s)",
+@@ -1339,14 +1342,14 @@
+ 	{
+ 		sendto_one_numeric(source_p, RPL_STATSLINKINFO, Lformat,
+ 				get_server_name(target_p, SHOW_IP),
+-				(int) linebuf_len(&target_p->localClient->buf_sendq),
++				(int) rb_linebuf_len(&target_p->localClient->buf_sendq),
+ 				(int) target_p->localClient->sendM,
+ 				(int) target_p->localClient->sendK,
+ 				(int) target_p->localClient->receiveM,
+ 				(int) target_p->localClient->receiveK,
+-				CurrentTime - target_p->localClient->firsttime,
+-				(CurrentTime > target_p->localClient->lasttime) ? 
+-				 (CurrentTime - target_p->localClient->lasttime) : 0,
++				rb_current_time() - target_p->localClient->firsttime,
++				(rb_current_time() > target_p->localClient->lasttime) ? 
++				 (rb_current_time() - target_p->localClient->lasttime) : 0,
+ 				IsOper(source_p) ? show_capabilities(target_p) : "-");
+ 	}
+ 
+@@ -1358,16 +1361,30 @@
+ 				     get_client_name(target_p, SHOW_IP) :
+ 				     get_client_name(target_p, HIDE_IP)) :
+ 				    get_client_name(target_p, MASK_IP),
+-				    (int) linebuf_len(&target_p->localClient->buf_sendq),
++				    (int) rb_linebuf_len(&target_p->localClient->buf_sendq),
+ 				    (int) target_p->localClient->sendM,
+ 				    (int) target_p->localClient->sendK,
+ 				    (int) target_p->localClient->receiveM,
+ 				    (int) target_p->localClient->receiveK,
+-				    CurrentTime - target_p->localClient->firsttime,
+-				    (CurrentTime > target_p->localClient->lasttime) ? 
+-				     (CurrentTime - target_p->localClient->lasttime) : 0,
++				    rb_current_time() - target_p->localClient->firsttime,
++				    (rb_current_time() > target_p->localClient->lasttime) ? 
++				     (rb_current_time() - target_p->localClient->lasttime) : 0,
+ 				    "-");
+ 	}
++}
++
++static void
++rb_dump_fd_callback(int fd, const char *desc, void *data)
++{
++	struct Client *source_p = data;
++	sendto_one_numeric(source_p, RPL_STATSDEBUG, "F :fd %-3d desc '%s'", fd, desc);
++}
++
++static void
++stats_comm(struct Client *source_p)
++{
++	rb_dump_fd(rb_dump_fd_callback, source_p);
++	send_pop_queue(source_p);
+ }
+ 
+ /*
+diff -r a44630997728 modules/m_svinfo.c
+--- a/modules/m_svinfo.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_svinfo.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -78,11 +78,11 @@
+ 	}
+ 
+ 	/*
+-	 * since we're here, might as well set CurrentTime while we're at it
++	 * since we're here, might as well set rb_current_time() while we're at it
+ 	 */
+ 	set_time();
+ 	theirtime = atol(parv[4]);
+-	deltat = abs(theirtime - CurrentTime);
++	deltat = abs(theirtime - rb_current_time());
+ 
+ 	if(deltat > ConfigFileEntry.ts_max_delta)
+ 	{
+@@ -90,13 +90,13 @@
+ 				     "Link %s dropped, excessive TS delta"
+ 				     " (my TS=%ld, their TS=%ld, delta=%d)",
+ 				     get_server_name(source_p, SHOW_IP),
+-				     (long) CurrentTime, (long) theirtime, deltat);
++				     (long) rb_current_time(), (long) theirtime, deltat);
+ 		ilog(L_SERVER,
+ 		     "Link %s dropped, excessive TS delta"
+ 		     " (my TS=%ld, their TS=%ld, delta=%d)",
+-		     log_client_name(source_p, SHOW_IP), (long) CurrentTime, (long) theirtime, deltat);
++		     log_client_name(source_p, SHOW_IP), (long) rb_current_time(), (long) theirtime, deltat);
+ 		snprintf(squitreason, sizeof squitreason, "Excessive TS delta (my TS=%ld, their TS=%ld, delta=%d)",
+-				(long) CurrentTime, (long) theirtime, deltat);
++				(long) rb_current_time(), (long) theirtime, deltat);
+ 		exit_client(source_p, source_p, source_p, squitreason);
+ 		return 0;
+ 	}
+@@ -106,7 +106,7 @@
+ 		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
+ 				     "Link %s notable TS delta"
+ 				     " (my TS=%ld, their TS=%ld, delta=%d)",
+-				     source_p->name, (long) CurrentTime, (long) theirtime, deltat);
++				     source_p->name, (long) rb_current_time(), (long) theirtime, deltat);
+ 	}
+ 
+ 	return 0;
+diff -r a44630997728 modules/m_tb.c
+--- a/modules/m_tb.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_tb.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -31,7 +31,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "send.h"
+ #include "channel.h"
+ #include "client.h"
+diff -r a44630997728 modules/m_testline.c
+--- a/modules/m_testline.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_testline.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -30,7 +30,6 @@
+  * $Id: m_testline.c 3303 2007-03-28 15:22:49Z jilles $
+  */
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "send.h"
+ #include "client.h"
+ #include "modules.h"
+@@ -82,7 +81,7 @@
+ 			sendto_one(source_p, form_str(RPL_TESTLINE),
+ 					me.name, source_p->name,
+ 					resv_p->hold ? 'q' : 'Q',
+-					resv_p->hold ? (long) ((resv_p->hold - CurrentTime) / 60) : 0L,
++					resv_p->hold ? (long) ((resv_p->hold - rb_current_time()) / 60) : 0L,
+ 					resv_p->name, resv_p->passwd);
+ 			/* this is a false positive, so make sure it isn't counted in stats q
+ 			 * --nenolod
+@@ -133,7 +132,7 @@
+ 				me.name, source_p->name,
+ 				(aconf->flags & CONF_FLAGS_TEMPORARY) ? 'd' : 'D',
+ 				(aconf->flags & CONF_FLAGS_TEMPORARY) ? 
+-				 (long) ((aconf->hold - CurrentTime) / 60) : 0L, 
++				 (long) ((aconf->hold - rb_current_time()) / 60) : 0L, 
+ 				aconf->host, aconf->passwd);
+ 
+ 			return 0;
+@@ -169,7 +168,7 @@
+ 				me.name, source_p->name,
+ 				(aconf->flags & CONF_FLAGS_TEMPORARY) ? 'k' : 'K',
+ 				(aconf->flags & CONF_FLAGS_TEMPORARY) ? 
+-				 (long) ((aconf->hold - CurrentTime) / 60) : 0L,
++				 (long) ((aconf->hold - rb_current_time()) / 60) : 0L,
+ 				buf, aconf->passwd);
+ 			return 0;
+ 		}
+@@ -179,7 +178,7 @@
+ 					aconf->user, aconf->host);
+ 			sendto_one(source_p, form_str(RPL_TESTLINE),
+ 				me.name, source_p->name,
+-				'G', (long) ((aconf->hold - CurrentTime) / 60),
++				'G', (long) ((aconf->hold - rb_current_time()) / 60),
+ 				buf, aconf->passwd);
+ 			return 0;
+ 		}
+@@ -191,7 +190,7 @@
+ 		sendto_one(source_p, form_str(RPL_TESTLINE),
+ 				me.name, source_p->name,
+ 				resv_p->hold ? 'q' : 'Q',
+-				resv_p->hold ? (long) ((resv_p->hold - CurrentTime) / 60) : 0L,
++				resv_p->hold ? (long) ((resv_p->hold - rb_current_time()) / 60) : 0L,
+ 				resv_p->name, resv_p->passwd);
+ 
+ 		/* this is a false positive, so make sure it isn't counted in stats q
+@@ -231,7 +230,7 @@
+ 	sendto_one(source_p, form_str(RPL_TESTLINE),
+ 			me.name, source_p->name,
+ 			aconf->hold ? 'x' : 'X',
+-			aconf->hold ? (long) ((aconf->hold - CurrentTime) / 60) : 0L,
++			aconf->hold ? (long) ((aconf->hold - rb_current_time()) / 60) : 0L,
+ 			aconf->name, aconf->passwd);
+ 	return 0;
+ }
+diff -r a44630997728 modules/m_time.c
+--- a/modules/m_time.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_time.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -93,7 +93,7 @@
+ 	time_t lclock;
+ 	int minswest;
+ 
+-	lclock = CurrentTime;
++	lclock = rb_current_time();
+ 	gm = gmtime(&lclock);
+ 	memcpy((void *) &gmbuf, (void *) gm, sizeof(gmbuf));
+ 	gm = &gmbuf;
+diff -r a44630997728 modules/m_topic.c
+--- a/modules/m_topic.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_topic.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -25,7 +25,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "channel.h"
+ #include "client.h"
+ #include "hash.h"
+@@ -104,7 +103,7 @@
+ 			char topic_info[USERHOST_REPLYLEN];
+ 			rb_sprintf(topic_info, "%s!%s@%s",
+ 					source_p->name, source_p->username, source_p->host);
+-			set_channel_topic(chptr, parv[2], topic_info, CurrentTime);
++			set_channel_topic(chptr, parv[2], topic_info, rb_current_time());
+ 
+ 			sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
+ 					":%s TOPIC %s :%s",
+diff -r a44630997728 modules/m_trace.c
+--- a/modules/m_trace.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_trace.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -34,7 +34,6 @@
+ #include "irc_string.h"
+ #include "ircd.h"
+ #include "numeric.h"
+-#include "commio.h"
+ #include "s_serv.h"
+ #include "s_conf.h"
+ #include "s_newconf.h"
+@@ -370,7 +369,7 @@
+ 		sendto_one_numeric(source_p, RPL_TRACEUNKNOWN,
+ 				   form_str(RPL_TRACEUNKNOWN),
+ 				   class_name, name, ip,
+-				   CurrentTime - target_p->localClient->firsttime);
++				   rb_current_time() - target_p->localClient->firsttime);
+ 		cnt++;
+ 		break;
+ 
+@@ -387,16 +386,16 @@
+ 						   form_str(RPL_TRACEOPERATOR),
+ 						   class_name, name,
+ 						   show_ip(source_p, target_p) ? ip : "255.255.255.255",
+-						   CurrentTime - target_p->localClient->lasttime,
+-						   CurrentTime - target_p->localClient->last);
++						   rb_current_time() - target_p->localClient->lasttime,
++						   rb_current_time() - target_p->localClient->last);
+ 
+ 			else
+ 				sendto_one_numeric(source_p, RPL_TRACEUSER, 
+ 						   form_str(RPL_TRACEUSER),
+ 						   class_name, name,
+ 						   show_ip(source_p, target_p) ? ip : "255.255.255.255",
+-						   CurrentTime - target_p->localClient->lasttime,
+-						   CurrentTime - target_p->localClient->last);
++						   rb_current_time() - target_p->localClient->lasttime,
++						   rb_current_time() - target_p->localClient->last);
+ 			cnt++;
+ 		}
+ 		break;
+@@ -411,7 +410,7 @@
+ 			sendto_one_numeric(source_p, RPL_TRACESERVER, form_str(RPL_TRACESERVER),
+ 				   class_name, servcount, usercount, name,
+ 				   *(target_p->serv->by) ? target_p->serv->by : "*", "*",
+-				   me.name, CurrentTime - target_p->localClient->lasttime);
++				   me.name, rb_current_time() - target_p->localClient->lasttime);
+ 			cnt++;
+ 
+ 		}
+diff -r a44630997728 modules/m_user.c
+--- a/modules/m_user.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_user.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -73,8 +73,8 @@
+ 		*p = '\0';
+ 
+ 	rb_snprintf(buf, sizeof(buf), "%s %s", parv[2], parv[3]);
+-	MyFree(source_p->localClient->fullcaps);
+-	DupString(source_p->localClient->fullcaps, buf);
++	rb_free(source_p->localClient->fullcaps);
++	source_p->localClient->fullcaps = rb_strdup(buf);
+ 
+ 	do_local_user(client_p, source_p, parv[1], parv[4]);
+ 	return 0;
+diff -r a44630997728 modules/m_version.c
+--- a/modules/m_version.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_version.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -61,7 +61,7 @@
+ 
+ 	if(parc > 1)
+ 	{
+-		if((last_used + ConfigFileEntry.pace_wait) > CurrentTime)
++		if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
+ 		{
+ 			/* safe enough to give this on a local connect only */
+ 			sendto_one(source_p, form_str(RPL_LOAD2HI),
+@@ -69,7 +69,7 @@
+ 			return 0;
+ 		}
+ 		else
+-			last_used = CurrentTime;
++			last_used = rb_current_time();
+ 
+ 		if(hunt_server(client_p, source_p, ":%s VERSION :%s", 1, parc, parv) != HUNTED_ISME)
+ 			return 0;
+diff -r a44630997728 modules/m_who.c
+--- a/modules/m_who.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_who.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -24,7 +24,6 @@
+  *  $Id: m_who.c 3350 2007-04-02 22:03:08Z jilles $
+  */
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "common.h"
+ #include "client.h"
+ #include "channel.h"
+@@ -177,7 +176,7 @@
+ 	/* it has to be a global who at this point, limit it */
+ 	if(!IsOper(source_p))
+ 	{
+-		if((last_used + ConfigFileEntry.pace_wait) > CurrentTime)
++		if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
+ 		{
+ 			sendto_one(source_p, form_str(RPL_LOAD2HI),
+ 					me.name, source_p->name, "WHO");
+@@ -186,7 +185,7 @@
+ 			return 0;
+ 		}
+ 		else
+-			last_used = CurrentTime;
++			last_used = rb_current_time();
+ 	}
+ 
+ 	/* Note: operspy_dont_care_user_info does not apply to
+diff -r a44630997728 modules/m_whois.c
+--- a/modules/m_whois.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_whois.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -25,7 +25,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "common.h"
+ #include "client.h"
+ #include "hash.h"
+@@ -91,7 +90,7 @@
+ 		if(!IsOper(source_p))
+ 		{
+ 			/* seeing as this is going across servers, we should limit it */
+-			if((last_used + ConfigFileEntry.pace_wait_simple) > CurrentTime)
++			if((last_used + ConfigFileEntry.pace_wait_simple) > rb_current_time())
+ 			{
+ 				sendto_one(source_p, form_str(RPL_LOAD2HI),
+ 					   me.name, source_p->name, "WHOIS");
+@@ -100,7 +99,7 @@
+ 				return 0;
+ 			}
+ 			else
+-				last_used = CurrentTime;
++				last_used = rb_current_time();
+ 		}
+ 
+ 		if(hunt_server(client_p, source_p, ":%s WHOIS %s :%s", 1, parc, parv) !=
+@@ -346,7 +345,7 @@
+ 
+ 		sendto_one_numeric(source_p, RPL_WHOISIDLE, form_str(RPL_WHOISIDLE),
+ 				   target_p->name, 
+-				   CurrentTime - target_p->localClient->last, 
++				   rb_current_time() - target_p->localClient->last, 
+ 				   target_p->localClient->firsttime);
+ 	}
+ 	else
+diff -r a44630997728 modules/m_whowas.c
+--- a/modules/m_whowas.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_whowas.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -69,7 +69,7 @@
+ 
+ 	if(!IsOper(source_p))
+ 	{
+-		if((last_used + ConfigFileEntry.pace_wait_simple) > CurrentTime)
++		if((last_used + ConfigFileEntry.pace_wait_simple) > rb_current_time())
+ 		{
+ 			sendto_one(source_p, form_str(RPL_LOAD2HI),
+ 				   me.name, source_p->name, "WHOWAS");
+@@ -78,7 +78,7 @@
+ 			return 0;
+ 		}
+ 		else
+-			last_used = CurrentTime;
++			last_used = rb_current_time();
+ 	}
+ 
+ 
+diff -r a44630997728 modules/m_xline.c
+--- a/modules/m_xline.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/modules/m_xline.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -31,7 +31,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "send.h"
+ #include "channel.h"
+ #include "client.h"
+@@ -40,7 +39,6 @@
+ #include "class.h"
+ #include "ircd.h"
+ #include "numeric.h"
+-#include "memory.h"
+ #include "s_log.h"
+ #include "s_serv.h"
+ #include "whowas.h"
+@@ -313,17 +311,17 @@
+ 		}
+ 
+ 		*new = '\0';
+-		DupString(aconf->name, tmp);
++		aconf->name = rb_strdup(tmp);
+ 	}
+ 	else
+-		DupString(aconf->name, name);
++		aconf->name = rb_strdup(name);
+ 
+-	DupString(aconf->passwd, reason);
++	aconf->passwd = rb_strdup(reason);
+ 	collapse(aconf->name);
+ 
+ 	if(temp_time > 0)
+ 	{
+-		aconf->hold = CurrentTime + temp_time;
++		aconf->hold = rb_current_time() + temp_time;
+ 
+ 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+ 			     "%s added temporary %d min. X-Line for [%s] [%s]",
+@@ -347,7 +345,7 @@
+ 			get_oper_name(source_p), name, reason);
+ 	}
+ 
+-	dlinkAddAlloc(aconf, &xline_conf_list);
++	rb_dlinkAddAlloc(aconf, &xline_conf_list);
+ 	check_xlines();
+ }
+ 
+@@ -375,7 +373,7 @@
+ 
+ 	rb_sprintf(buffer, "\"%s\",\"0\",\"%s\",\"%s\",%ld\n",
+ 		   aconf->name, aconf->passwd,
+-		   get_oper_name(source_p), CurrentTime);
++		   get_oper_name(source_p), rb_current_time());
+ 
+ 	if(fputs(buffer, out) == -1)
+ 	{
+diff -r a44630997728 src/Makefile.in
+--- a/src/Makefile.in	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/Makefile.in	Wed Apr 02 04:03:17 2008 +0400
+@@ -33,9 +33,9 @@
+ SSL_LIBS	= @SSL_LIBS@
+ SSL_INCLUDES	= @SSL_INCLUDES@
+ 
+-IRCDLIBS	= @MODULES_LIBS@ -L../libcharybdis -lcharybdis -L../libratbox/src/.libs -lratbox @LIBS@ $(SSL_LIBS)
++IRCDLIBS	= @MODULES_LIBS@ -L../libratbox/src/.libs -lratbox @LIBS@ $(SSL_LIBS)
+ 
+-INCLUDES	= -I../include -I../libcharybdis -I../libratbox/include $(SSL_INCLUDES)
++INCLUDES	= -I../include -I../libratbox/include $(SSL_INCLUDES)
+ CPPFLAGS	= ${INCLUDES} @CPPFLAGS@
+  
+ default:	all
+diff -r a44630997728 src/blacklist.c
+--- a/src/blacklist.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/blacklist.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -36,8 +36,6 @@
+ #include "stdinc.h"
+ #include "client.h"
+ #include "res.h"
+-#include "tools.h"
+-#include "memory.h"
+ #include "numeric.h"
+ #include "reject.h"
+ #include "s_conf.h"
+@@ -74,7 +72,7 @@
+ 	{
+ 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+ 				"blacklist_dns_callback(): blcptr->client_p->preClient (%s) is NULL", get_client_name(blcptr->client_p, HIDE_IP));
+-		MyFree(blcptr);
++		rb_free(blcptr);
+ 		return;
+ 	}
+ 
+@@ -84,12 +82,12 @@
+ 		if (reply->addr.ss_family == AF_INET &&
+ 				!memcmp(&((struct sockaddr_in *)&reply->addr)->sin_addr, "\177\0\0", 3))
+ 			listed = TRUE;
+-		else if (blcptr->blacklist->lastwarning + 3600 < CurrentTime)
++		else if (blcptr->blacklist->lastwarning + 3600 < rb_current_time())
+ 		{
+ 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+ 					"Garbage reply from blacklist %s",
+ 					blcptr->blacklist->host);
+-			blcptr->blacklist->lastwarning = CurrentTime;
++			blcptr->blacklist->lastwarning = rb_current_time();
+ 		}
+ 	}
+ 
+@@ -112,13 +110,13 @@
+ 		register_local_user(blcptr->client_p, blcptr->client_p, buf);
+ 	}
+ 
+-	MyFree(blcptr);
++	rb_free(blcptr);
+ }
+ 
+ /* XXX: no IPv6 implementation, not to concerned right now though. */
+ static void initiate_blacklist_dnsquery(struct Blacklist *blptr, struct Client *client_p)
+ {
+-	struct BlacklistClient *blcptr = MyMalloc(sizeof(struct BlacklistClient));
++	struct BlacklistClient *blcptr = rb_malloc(sizeof(struct BlacklistClient));
+ 	char buf[IRCD_BUFSIZE];
+ 	int ip[4];
+ 
+@@ -151,7 +149,7 @@
+ 	blptr = find_blacklist(name);
+ 	if (blptr == NULL)
+ 	{
+-		blptr = MyMalloc(sizeof(struct Blacklist));
++		blptr = rb_malloc(sizeof(struct Blacklist));
+ 		rb_dlinkAddAlloc(blptr, &blacklist_list);
+ 	}
+ 	else
+@@ -169,7 +167,7 @@
+ 	if (blptr->status & CONF_ILLEGAL && blptr->refcount <= 0)
+ 	{
+ 		rb_dlinkFindDestroy(blptr, &blacklist_list);
+-		MyFree(blptr);
++		rb_free(blptr);
+ 	}
+ }
+ 
+@@ -203,7 +201,7 @@
+ 		rb_dlinkDelete(&blcptr->node, &client_p->preClient->dnsbl_queries);
+ 		unref_blacklist(blcptr->blacklist);
+ 		delete_resolver_queries(&blcptr->dns_query);
+-		MyFree(blcptr);
++		rb_free(blcptr);
+ 	}
+ }
+ 
+@@ -220,7 +218,7 @@
+ 			blptr->status |= CONF_ILLEGAL;
+ 		else
+ 		{
+-			MyFree(ptr->data);
++			rb_free(ptr->data);
+ 			rb_dlinkDestroy(ptr, &blacklist_list);
+ 		}
+ 	}
+diff -r a44630997728 src/cache.c
+--- a/src/cache.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/cache.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -36,11 +36,7 @@
+ #include "ircd_defs.h"
+ #include "common.h"
+ #include "s_conf.h"
+-#include "tools.h"
+ #include "client.h"
+-#include "memory.h"
+-#include "balloc.h"
+-#include "event.h"
+ #include "hash.h"
+ #include "cache.h"
+ #include "sprintf_irc.h"
+diff -r a44630997728 src/channel.c
+--- a/src/channel.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/channel.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -25,7 +25,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "channel.h"
+ #include "client.h"
+ #include "common.h"
+@@ -41,9 +40,6 @@
+ #include "whowas.h"
+ #include "s_conf.h"		/* ConfigFileEntry, ConfigChannel */
+ #include "s_newconf.h"
+-#include "event.h"
+-#include "memory.h"
+-#include "balloc.h"
+ #include "s_log.h"
+ 
+ extern rb_dlink_list global_channel_list;
+@@ -93,14 +89,14 @@
+ {
+ 	struct Channel *chptr;
+ 	chptr = BlockHeapAlloc(channel_heap);
+-	DupString(chptr->chname, chname);
++	chptr->chname = rb_strdup(chname);
+ 	return (chptr);
+ }
+ 
+ void
+ free_channel(struct Channel *chptr)
+ {
+-	MyFree(chptr->chname);
++	rb_free(chptr->chname);
+ 	BlockHeapFree(channel_heap, chptr);
+ }
+ 
+@@ -109,8 +105,8 @@
+ {
+ 	struct Ban *bptr;
+ 	bptr = BlockHeapAlloc(ban_heap);
+-	DupString(bptr->banstr, banstr);
+-	DupString(bptr->who, who);
++	bptr->banstr = rb_strdup(banstr);
++	bptr->who = rb_strdup(who);
+ 
+ 	return (bptr);
+ }
+@@ -118,8 +114,8 @@
+ void
+ free_ban(struct Ban *bptr)
+ {
+-	MyFree(bptr->banstr);
+-	MyFree(bptr->who);
++	rb_free(bptr->banstr);
++	rb_free(bptr->who);
+ 	BlockHeapFree(ban_heap, bptr);
+ }
+ 
+@@ -246,7 +242,7 @@
+ 	if(client_p->servptr == &me)
+ 		rb_dlinkDelete(&msptr->locchannode, &chptr->locmembers);
+ 
+-	chptr->users_last = CurrentTime;
++	chptr->users_last = rb_current_time();
+ 
+ 	if(!(chptr->mode.mode & MODE_PERMANENT) && rb_dlink_list_length(&chptr->members) <= 0)
+ 		destroy_channel(chptr);
+@@ -283,7 +279,7 @@
+ 		if(client_p->servptr == &me)
+ 			rb_dlinkDelete(&msptr->locchannode, &chptr->locmembers);
+ 
+-		chptr->users_last = CurrentTime;
++		chptr->users_last = rb_current_time();
+ 
+ 		if(!(chptr->mode.mode & MODE_PERMANENT) && rb_dlink_list_length(&chptr->members) <= 0)
+ 			destroy_channel(chptr);
+@@ -788,7 +784,7 @@
+ 	/* join throttling stuff --nenolod */
+ 	else if(chptr->mode.join_num > 0 && chptr->mode.join_time > 0)
+ 	{
+-		if ((CurrentTime - chptr->join_delta <= 
++		if ((rb_current_time() - chptr->join_delta <= 
+ 			chptr->mode.join_time) && (chptr->join_count >=
+ 			chptr->mode.join_num))
+ 			i = ERR_THROTTLE;
+@@ -946,7 +942,7 @@
+ 	else
+ 	{
+ 		if((t_delta =
+-		    (CurrentTime - source_p->localClient->last_leave_time)) >
++		    (rb_current_time() - source_p->localClient->last_leave_time)) >
+ 		   JOIN_LEAVE_COUNT_EXPIRE_TIME)
+ 		{
+ 			decrement_count = (t_delta / JOIN_LEAVE_COUNT_EXPIRE_TIME);
+@@ -957,7 +953,7 @@
+ 		}
+ 		else
+ 		{
+-			if((CurrentTime -
++			if((rb_current_time() -
+ 			    (source_p->localClient->last_join_time)) < GlobalSetOptions.spam_time)
+ 			{
+ 				/* oh, its a possible spambot */
+@@ -965,9 +961,9 @@
+ 			}
+ 		}
+ 		if(name != NULL)
+-			source_p->localClient->last_join_time = CurrentTime;
++			source_p->localClient->last_join_time = rb_current_time();
+ 		else
+-			source_p->localClient->last_leave_time = CurrentTime;
++			source_p->localClient->last_leave_time = rb_current_time();
+ 	}
+ }
+ 
+diff -r a44630997728 src/chmode.c
+--- a/src/chmode.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/chmode.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -26,7 +26,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "channel.h"
+ #include "client.h"
+ #include "common.h"
+@@ -42,9 +41,6 @@
+ #include "whowas.h"
+ #include "s_conf.h"		/* ConfigFileEntry, ConfigChannel */
+ #include "s_newconf.h"
+-#include "event.h"
+-#include "memory.h"
+-#include "balloc.h"
+ #include "s_log.h"
+ 
+ /* bitmasks for error returns, so we send once per call */
+@@ -133,7 +129,7 @@
+ 		strlcpy(who, source_p->name, sizeof(who));
+ 
+ 	actualBan = allocate_ban(realban, who);
+-	actualBan->when = CurrentTime;
++	actualBan->when = rb_current_time();
+ 
+ 	rb_dlinkAdd(actualBan, &actualBan->node, list);
+ 
+diff -r a44630997728 src/class.c
+--- a/src/class.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/class.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -27,7 +27,6 @@
+ #include "stdinc.h"
+ #include "config.h"
+ 
+-#include "tools.h"
+ #include "class.h"
+ #include "client.h"
+ #include "common.h"
+@@ -37,7 +36,6 @@
+ #include "s_newconf.h"
+ #include "send.h"
+ #include "irc_string.h"
+-#include "memory.h"
+ 
+ #define BAD_CONF_CLASS          -1
+ #define BAD_PING                -2
+@@ -51,7 +49,7 @@
+ {
+ 	struct Class *tmp;
+ 
+-	tmp = (struct Class *) MyMalloc(sizeof(struct Class));
++	tmp = (struct Class *) rb_malloc(sizeof(struct Class));
+ 
+ 	ConFreq(tmp) = DEFAULT_CONNECTFREQUENCY;
+ 	PingFreq(tmp) = DEFAULT_PINGFREQUENCY;
+@@ -68,8 +66,8 @@
+ 	if(tmp->ip_limits)
+ 		rb_destroy_patricia(tmp->ip_limits, NULL);
+ 
+-	MyFree(tmp->class_name);
+-	MyFree(tmp);
++	rb_free(tmp->class_name);
++	rb_free(tmp);
+ 
+ }
+ 
+@@ -274,7 +272,7 @@
+ initclass()
+ {
+ 	default_class = make_class();
+-	DupString(ClassName(default_class), "default");
++	ClassName(default_class) = rb_strdup("default");
+ }
+ 
+ /*
+diff -r a44630997728 src/client.c
+--- a/src/client.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/client.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -27,11 +27,9 @@
+ #include "stdinc.h"
+ #include "config.h"
+ 
+-#include "tools.h"
+ #include "client.h"
+ #include "class.h"
+ #include "common.h"
+-#include "event.h"
+ #include "hash.h"
+ #include "irc_string.h"
+ #include "sprintf_irc.h"
+@@ -40,7 +38,6 @@
+ #include "numeric.h"
+ #include "packet.h"
+ #include "s_auth.h"
+-#include "commio.h"
+ #include "s_conf.h"
+ #include "s_newconf.h"
+ #include "s_log.h"
+@@ -49,11 +46,8 @@
+ #include "send.h"
+ #include "whowas.h"
+ #include "s_user.h"
+-#include "linebuf.h"
+ #include "hash.h"
+-#include "memory.h"
+ #include "hostmask.h"
+-#include "balloc.h"
+ #include "listener.h"
+ #include "hook.h"
+ #include "msg.h"
+@@ -160,7 +154,7 @@
+ 		SetMyConnect(client_p);
+ 		client_p->localClient = localClient;
+ 
+-		client_p->localClient->lasttime = client_p->localClient->firsttime = CurrentTime;
++		client_p->localClient->lasttime = client_p->localClient->firsttime = rb_current_time();
+ 
+ 		client_p->localClient->F = NULL;
+ 		client_p->localClient->ctrlfd = -1;
+@@ -229,13 +223,13 @@
+ 	{
+ 		memset(client_p->localClient->passwd, 0,
+ 			strlen(client_p->localClient->passwd));
+-		MyFree(client_p->localClient->passwd);
++		rb_free(client_p->localClient->passwd);
+ 	}
+ 
+-	MyFree(client_p->localClient->challenge);
+-	MyFree(client_p->localClient->fullcaps);
+-	MyFree(client_p->localClient->opername);
+-	MyFree(client_p->localClient->mangledhost);
++	rb_free(client_p->localClient->challenge);
++	rb_free(client_p->localClient->fullcaps);
++	rb_free(client_p->localClient->opername);
++	rb_free(client_p->localClient->mangledhost);
+ 
+ 	BlockHeapFree(lclient_heap, client_p->localClient);
+ 	client_p->localClient = NULL;
+@@ -309,13 +303,13 @@
+ 
+ 		ping = get_client_ping(client_p);
+ 
+-		if(ping < (CurrentTime - client_p->localClient->lasttime))
++		if(ping < (rb_current_time() - client_p->localClient->lasttime))
+ 		{
+ 			/*
+ 			 * If the client/server hasnt talked to us in 2*ping seconds
+ 			 * and it has a ping time, then close its connection.
+ 			 */
+-			if(((CurrentTime - client_p->localClient->lasttime) >= (2 * ping)
++			if(((rb_current_time() - client_p->localClient->lasttime) >= (2 * ping)
+ 			    && (client_p->flags & FLAGS_PINGSENT)))
+ 			{
+ 				if(IsServer(client_p))
+@@ -329,7 +323,7 @@
+ 				}
+ 				(void) rb_snprintf(scratch, sizeof(scratch),
+ 						  "Ping timeout: %d seconds",
+-						  (int) (CurrentTime - client_p->localClient->lasttime));
++						  (int) (rb_current_time() - client_p->localClient->lasttime));
+ 
+ 				exit_client(client_p, client_p, &me, scratch);
+ 				continue;
+@@ -343,7 +337,7 @@
+ 				 */
+ 				client_p->flags |= FLAGS_PINGSENT;
+ 				/* not nice but does the job */
+-				client_p->localClient->lasttime = CurrentTime - ping;
++				client_p->localClient->lasttime = rb_current_time() - ping;
+ 				sendto_one(client_p, "PING :%s", me.name);
+ 			}
+ 		}
+@@ -379,7 +373,7 @@
+ 		 */
+ 
+ 		timeout = IsAnyServer(client_p) ? ConfigFileEntry.connect_timeout : 30;
+-		if((CurrentTime - client_p->localClient->firsttime) > timeout)
++		if((rb_current_time() - client_p->localClient->firsttime) > timeout)
+ 		{
+ 			if(IsAnyServer(client_p))
+ 			{
+@@ -797,8 +791,8 @@
+ 		if(client_p->serv->user != NULL)
+ 			free_user(client_p->serv->user, client_p);
+ 		if(client_p->serv->fullcaps)
+-			MyFree(client_p->serv->fullcaps);
+-		MyFree(client_p->serv);
++			rb_free(client_p->serv->fullcaps);
++		rb_free(client_p->serv);
+ 	}
+ }
+ 
+@@ -1289,7 +1283,7 @@
+ 		 */
+ 		abt->client->flags &= ~FLAGS_CLOSING;
+  	 	exit_client(abt->client, abt->client, &me, abt->notice);
+- 	 	MyFree(abt);
++ 	 	rb_free(abt);
+  	}
+ }
+ 
+@@ -1307,7 +1301,7 @@
+ 	if(IsDead(client_p) || IsClosing(client_p) || IsMe(client_p))
+ 		return;
+ 
+-	abt = (struct abort_client *) MyMalloc(sizeof(struct abort_client));
++	abt = (struct abort_client *) rb_malloc(sizeof(struct abort_client));
+ 
+ 	if(client_p->flags & FLAGS_SENDQEX)
+ 		strlcpy(abt->notice, "Max SendQ exceeded", sizeof(abt->notice));
+@@ -1559,10 +1553,10 @@
+ 
+ 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s was connected"
+ 			     " for %ld seconds.  %d/%d sendK/recvK.",
+-			     source_p->name, CurrentTime - source_p->localClient->firsttime, sendk, recvk);
++			     source_p->name, rb_current_time() - source_p->localClient->firsttime, sendk, recvk);
+ 
+ 	ilog(L_SERVER, "%s was connected for %ld seconds.  %d/%d sendK/recvK.",
+-	     source_p->name, CurrentTime - source_p->localClient->firsttime, sendk, recvk);
++	     source_p->name, rb_current_time() - source_p->localClient->firsttime, sendk, recvk);
+         
+ 	if(has_id(source_p))
+ 		del_from_id_hash(source_p->id, source_p);
+@@ -1609,10 +1603,10 @@
+                         show_ip(NULL, source_p) ? source_p->sockhost : "255.255.255.255",
+ 			comment);
+ 
+-	on_for = CurrentTime - source_p->localClient->firsttime;
++	on_for = rb_current_time() - source_p->localClient->firsttime;
+ 
+ 	ilog(L_USER, "%s (%3lu:%02lu:%02lu): %s!%s@%s %d/%d",
+-		myctime(CurrentTime), on_for / 3600,
++		myctime(rb_current_time()), on_for / 3600,
+ 		(on_for % 3600) / 60, on_for % 60,
+ 		source_p->name, source_p->username, source_p->host,
+ 		source_p->localClient->sendK, source_p->localClient->receiveK);
+@@ -1894,7 +1888,7 @@
+ 
+ 	if(!serv)
+ 	{
+-		serv = (server_t *) MyMalloc(sizeof(server_t));
++		serv = (server_t *) rb_malloc(sizeof(server_t));
+ 		client_p->serv = serv;
+ 	}
+ 	return client_p->serv;
+@@ -1915,7 +1909,7 @@
+ 	if(--user->refcnt <= 0)
+ 	{
+ 		if(user->away)
+-			MyFree((char *) user->away);
++			rb_free((char *) user->away);
+ 		/*
+ 		 * sanity check
+ 		 */
+@@ -1940,6 +1934,23 @@
+ 
+ 		BlockHeapFree(user_heap, user);
+ 	}
++}
++
++void
++allocate_away(struct Client *client_p)
++{
++	if(client_p->user->away == NULL)
++		client_p->user->away = rb_bh_alloc(away_heap);	
++}
++
++
++void
++free_away(struct Client *client_p)
++{
++	if(client_p->user->away != NULL) {
++		rb_bh_free(away_heap, client_p->user->away);
++		client_p->user->away = NULL;
++	}
+ }
+ 
+ void
+@@ -2015,7 +2026,7 @@
+ 		ServerStats->is_sbr += client_p->localClient->receiveB;
+ 		ServerStats->is_sks += client_p->localClient->sendK;
+ 		ServerStats->is_skr += client_p->localClient->receiveK;
+-		ServerStats->is_sti += CurrentTime - client_p->localClient->firsttime;
++		ServerStats->is_sti += rb_current_time() - client_p->localClient->firsttime;
+ 		if(ServerStats->is_sbs > 2047)
+ 		{
+ 			ServerStats->is_sks += (ServerStats->is_sbs >> 10);
+@@ -2053,7 +2064,7 @@
+ 		ServerStats->is_cbr += client_p->localClient->receiveB;
+ 		ServerStats->is_cks += client_p->localClient->sendK;
+ 		ServerStats->is_ckr += client_p->localClient->receiveK;
+-		ServerStats->is_cti += CurrentTime - client_p->localClient->firsttime;
++		ServerStats->is_cti += rb_current_time() - client_p->localClient->firsttime;
+ 		if(ServerStats->is_cbs > 2047)
+ 		{
+ 			ServerStats->is_cks += (ServerStats->is_cbs >> 10);
+diff -r a44630997728 src/extban.c
+--- a/src/extban.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/extban.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -23,7 +23,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "channel.h"
+ #include "client.h"
+ #include "common.h"
+diff -r a44630997728 src/hash.c
+--- a/src/hash.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/hash.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -26,7 +26,6 @@
+ 
+ #include "stdinc.h"
+ #include "ircd_defs.h"
+-#include "tools.h"
+ #include "s_conf.h"
+ #include "channel.h"
+ #include "client.h"
+@@ -36,7 +35,6 @@
+ #include "ircd.h"
+ #include "numeric.h"
+ #include "send.h"
+-#include "memory.h"
+ #include "msg.h"
+ #include "cache.h"
+ #include "s_newconf.h"
+@@ -91,11 +89,11 @@
+ void
+ init_hash(void)
+ {
+-	clientTable = MyMalloc(sizeof(rb_dlink_list) * U_MAX);
+-	idTable = MyMalloc(sizeof(rb_dlink_list) * U_MAX);
+-	channelTable = MyMalloc(sizeof(rb_dlink_list) * CH_MAX);
+-	hostTable = MyMalloc(sizeof(rb_dlink_list) * HOST_MAX);
+-	resvTable = MyMalloc(sizeof(rb_dlink_list) * R_MAX);
++	clientTable = rb_malloc(sizeof(rb_dlink_list) * U_MAX);
++	idTable = rb_malloc(sizeof(rb_dlink_list) * U_MAX);
++	channelTable = rb_malloc(sizeof(rb_dlink_list) * CH_MAX);
++	hostTable = rb_malloc(sizeof(rb_dlink_list) * HOST_MAX);
++	resvTable = rb_malloc(sizeof(rb_dlink_list) * R_MAX);
+ }
+ 
+ #ifndef RICER_HASHING
+@@ -602,7 +600,7 @@
+ 
+ 	rb_dlinkAdd(chptr, &chptr->node, &global_channel_list);
+ 
+-	chptr->channelts = CurrentTime;	/* doesn't hurt to set it here */
++	chptr->channelts = rb_current_time();	/* doesn't hurt to set it here */
+ 
+ 	rb_dlinkAddAlloc(chptr, &channelTable[hashv]);
+ 
+diff -r a44630997728 src/hook.c
+--- a/src/hook.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/hook.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -37,8 +37,6 @@
+  * $Id: hook.c 712 2006-02-06 04:42:14Z gxti $
+  */
+ #include "stdinc.h"
+-#include "memory.h"
+-#include "tools.h"
+ #include "hook.h"
+ #include "irc_string.h"
+ 
+@@ -68,7 +66,7 @@
+ void
+ init_hook(void)
+ {
+-	hooks = MyMalloc(sizeof(hook) * HOOK_INCREMENT);
++	hooks = rb_malloc(sizeof(hook) * HOOK_INCREMENT);
+ 
+ #ifdef USE_IODEBUG_HOOKS
+ 	h_iosend_id = register_hook("iosend");
+@@ -96,10 +94,10 @@
+ {
+ 	hook *newhooks;
+ 
+-	newhooks = MyMalloc(sizeof(hook) * (max_hooks + HOOK_INCREMENT));
++	newhooks = rb_malloc(sizeof(hook) * (max_hooks + HOOK_INCREMENT));
+ 	memcpy(newhooks, hooks, sizeof(hook) * num_hooks);
+ 
+-	MyFree(hooks);
++	rb_free(hooks);
+ 	hooks = newhooks;
+ 	max_hooks += HOOK_INCREMENT;
+ }
+@@ -158,7 +156,7 @@
+ 	if((i = find_hook(name)) < 0)
+ 	{
+ 		i = find_freehookslot();
+-		DupString(hooks[i].name, name);
++		hooks[i].name = rb_strdup(name);
+ 		num_hooks++;
+ 	}
+ 
+diff -r a44630997728 src/hostmask.c
+--- a/src/hostmask.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/hostmask.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -26,7 +26,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "memory.h"
+ #include "ircd_defs.h"
+ #include "s_conf.h"
+ #include "hostmask.h"
+@@ -447,7 +446,7 @@
+ 
+ 	if(address == NULL)
+ 		address = "/NOMATCH!/";
+-	arec = MyMalloc(sizeof(struct AddressRec));
++	arec = rb_malloc(sizeof(struct AddressRec));
+ 	masktype = parse_netmask(address, (struct sockaddr *)&addr, &bits);
+ #ifdef IPV6
+ 	if(masktype == HM_IPV6)
+@@ -504,7 +503,7 @@
+ 
+ 	if(address == NULL)
+ 		address = "/NOMATCH!/";
+-	arec = MyMalloc(sizeof(struct AddressRec));
++	arec = rb_malloc(sizeof(struct AddressRec));
+ 	masktype = parse_netmask(address, (struct sockaddr *)&arec->Mask.ipa.addr, &bits);
+ 	arec->Mask.ipa.bits = bits;
+ 	arec->masktype = masktype;
+@@ -579,7 +578,7 @@
+ 			aconf->status |= CONF_ILLEGAL;
+ 			if(!aconf->clients)
+ 				free_conf(aconf);
+-			MyFree(arec);
++			rb_free(arec);
+ 			return;
+ 		}
+ 		arecl = arec;
+@@ -619,7 +618,7 @@
+ 				arec->aconf->status |= CONF_ILLEGAL;
+ 				if(!arec->aconf->clients)
+ 					free_conf(arec->aconf);
+-				MyFree(arec);
++				rb_free(arec);
+ 			}
+ 		}
+ 		*store_next = NULL;
+@@ -652,7 +651,7 @@
+ 				arec->aconf->status |= CONF_ILLEGAL;
+ 				if(!arec->aconf->clients)
+ 					free_conf(arec->aconf);
+-				MyFree(arec);
++				rb_free(arec);
+ 			}
+ 		}
+ 		*store_next = NULL;
+diff -r a44630997728 src/irc_dictionary.c
+--- a/src/irc_dictionary.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/irc_dictionary.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -24,12 +24,9 @@
+ 
+ #include "stdinc.h"
+ #include "sprintf_irc.h"
+-#include "tools.h"
+ #include "irc_string.h"
+ #include "client.h"
+-#include "memory.h"
+ #include "setup.h"
+-#include "balloc.h"
+ #include "irc_dictionary.h"
+ 
+ static BlockHeap *elem_heap = NULL;
+@@ -60,7 +57,7 @@
+  */
+ struct Dictionary *irc_dictionary_create(DCF compare_cb)
+ {
+-	struct Dictionary *dtree = (struct Dictionary *) MyMalloc(sizeof(struct Dictionary));
++	struct Dictionary *dtree = (struct Dictionary *) rb_malloc(sizeof(struct Dictionary));
+ 
+ 	dtree->compare_cb = compare_cb;
+ 
+@@ -90,10 +87,10 @@
+ struct Dictionary *irc_dictionary_create_named(const char *name,
+ 	DCF compare_cb)
+ {
+-	struct Dictionary *dtree = (struct Dictionary *) MyMalloc(sizeof(struct Dictionary));
++	struct Dictionary *dtree = (struct Dictionary *) rb_malloc(sizeof(struct Dictionary));
+ 
+ 	dtree->compare_cb = compare_cb;
+-	DupString(dtree->id, name);
++	dtree->id = rb_strdup(name);
+ 
+ 	if (!elem_heap)
+ 		elem_heap = BlockHeapCreate(sizeof(struct DictionaryElement), 1024);
+@@ -479,7 +476,7 @@
+ 		BlockHeapFree(elem_heap, n);
+ 	}
+ 
+-	MyFree(dtree);
++	rb_free(dtree);
+ }
+ 
+ /*
+diff -r a44630997728 src/irc_string.c
+--- a/src/irc_string.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/irc_string.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -26,10 +26,8 @@
+ 
+ #include "stdinc.h"
+ #include "sprintf_irc.h"
+-#include "tools.h"
+ #include "irc_string.h"
+ #include "client.h"
+-#include "memory.h"
+ #include "setup.h"
+ 
+ #ifndef INADDRSZ
+@@ -220,7 +218,7 @@
+ 		return NULL;
+ 	}
+ 
+-	result = MyMalloc(((length + 2) / 3) * 5);
++	result = rb_malloc(((length + 2) / 3) * 5);
+ 	p = result;
+ 
+ 	while (length > 2) 
+@@ -257,7 +255,7 @@
+ 	int ch, i = 0, j = 0, k;
+ 	unsigned char *result;
+ 	
+-	result = MyMalloc(length + 1);
++	result = rb_malloc(length + 1);
+ 
+ 	while ((ch = *current++) != '\0' && length-- > 0) {
+ 		if (ch == base64_pad) break;
+diff -r a44630997728 src/ircd.c
+--- a/src/ircd.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/ircd.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -28,13 +28,11 @@
+ #include "setup.h"
+ #include "config.h"
+ 
+-#include "tools.h"
+ #include "ircd.h"
+ #include "channel.h"
+ #include "class.h"
+ #include "client.h"
+ #include "common.h"
+-#include "event.h"
+ #include "hash.h"
+ #include "irc_string.h"
+ #include "ircd_signal.h"
+@@ -47,7 +45,6 @@
+ #include "res.h"
+ #include "restart.h"
+ #include "s_auth.h"
+-#include "commio.h"
+ #include "s_conf.h"
+ #include "s_log.h"
+ #include "s_serv.h"		/* try_connections */
+@@ -58,17 +55,14 @@
+ #include "supported.h"
+ #include "whowas.h"
+ #include "modules.h"
+-#include "memory.h"
+ #include "hook.h"
+ #include "ircd_getopt.h"
+-#include "balloc.h"
+ #include "newconf.h"
+ #include "reject.h"
+ #include "s_conf.h"
+ #include "s_newconf.h"
+ #include "cache.h"
+ #include "monitor.h"
+-#include "libcharybdis.h"
+ #include "patchlevel.h"
+ #include "serno.h"
+ 
+@@ -250,8 +244,8 @@
+ 	newtime.tv_sec = time(NULL);
+ 	
+ #endif
+-	if(newtime.tv_sec < CurrentTime)
+-		rb_set_back_events(CurrentTime - newtime.tv_sec);
++	if(newtime.tv_sec < rb_current_time())
++		rb_set_back_events(rb_current_time() - newtime.tv_sec);
+ 
+ 	SystemTime.tv_sec = newtime.tv_sec;
+ 	SystemTime.tv_usec = newtime.tv_usec;
+@@ -297,7 +291,7 @@
+ 		 */
+ 
+ 		delay = rb_event_next();
+-		if(delay <= CurrentTime)
++		if(delay <= rb_current_time())
+ 			rb_event_run();
+ 
+ 
+@@ -640,7 +634,7 @@
+ 	me.servptr = &me;
+ 	SetMe(&me);
+ 	make_server(&me);
+-	startup_time = CurrentTime;
++	startup_time = rb_current_time();
+ 	add_to_client_hash(me.name, &me);
+ 	add_to_id_hash(me.id, &me);
+ 	me.serv->nameinfo = scache_connect(me.name, me.info, 0);
+diff -r a44630997728 src/ircd_parser.y
+--- a/src/ircd_parser.y	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/ircd_parser.y	Wed Apr 02 04:03:17 2008 +0400
+@@ -105,7 +105,7 @@
+ 	{
+ 		case CF_STRING:
+ 		case CF_QSTRING:
+-			MyFree(list->v.string);
++			rb_free(list->v.string);
+ 			break;
+ 		case CF_LIST:
+ 			free_cur_list(list->v.list);
+@@ -124,7 +124,7 @@
+ {
+ 	if (cur_list == NULL)
+ 	{
+-		cur_list = MyMalloc(sizeof(conf_parm_t));
++		cur_list = rb_malloc(sizeof(conf_parm_t));
+ 		cur_list->type |= CF_FLIST;
+ 		cur_list->v.list = new;
+ 	}
+@@ -139,7 +139,7 @@
+ {
+ 	conf_parm_t *new;
+ 
+-	new = MyMalloc(sizeof(conf_parm_t));
++	new = rb_malloc(sizeof(conf_parm_t));
+ 	new->next = NULL;
+ 	new->type = type;
+ 
+@@ -152,7 +152,7 @@
+ 		break;
+ 	case CF_STRING:
+ 	case CF_QSTRING:
+-		DupString(new->v.string, str);
++		new->v.string = rb_strdup(str);
+ 		break;
+ 	}
+ 
+@@ -253,19 +253,19 @@
+ 
+ oneitem: qstring
+             {
+-		$$ = MyMalloc(sizeof(conf_parm_t));
++		$$ = rb_malloc(sizeof(conf_parm_t));
+ 		$$->type = CF_QSTRING;
+-		DupString($$->v.string, $1);
++		$$->v.string = rb_strdup($1);
+ 	    }
+           | timespec
+             {
+-		$$ = MyMalloc(sizeof(conf_parm_t));
++		$$ = rb_malloc(sizeof(conf_parm_t));
+ 		$$->type = CF_TIME;
+ 		$$->v.number = $1;
+ 	    }
+           | number
+             {
+-		$$ = MyMalloc(sizeof(conf_parm_t));
++		$$ = rb_malloc(sizeof(conf_parm_t));
+ 		$$->type = CF_INT;
+ 		$$->v.number = $1;
+ 	    }
+@@ -275,7 +275,7 @@
+ 		   so pass it as that, if so */
+ 		int val = conf_get_yesno_value($1);
+ 
+-		$$ = MyMalloc(sizeof(conf_parm_t));
++		$$ = rb_malloc(sizeof(conf_parm_t));
+ 
+ 		if (val != -1)
+ 		{
+@@ -285,7 +285,7 @@
+ 		else
+ 		{
+ 			$$->type = CF_STRING;
+-			DupString($$->v.string, $1);
++			$$->v.string = rb_strdup($1);
+ 		}
+             }
+           ;
+diff -r a44630997728 src/ircd_signal.c
+--- a/src/ircd_signal.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/ircd_signal.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -25,8 +25,6 @@
+ #include "ircd.h"		/* dorehash */
+ #include "restart.h"		/* server_reboot */
+ #include "s_log.h"
+-#include "memory.h"
+-#include "commio.h"
+ #include "s_conf.h"
+ #include "client.h"
+ #include "send.h"
+diff -r a44630997728 src/ircd_state.c
+--- a/src/ircd_state.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/ircd_state.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -38,14 +38,11 @@
+ #include "config.h"
+ 
+ #include "client.h"
+-#include "tools.h"
+-#include "tools.h"
+ #include "ircd.h"
+ #include "channel.h"
+ #include "class.h"
+ #include "client.h"
+ #include "common.h"
+-#include "event.h"
+ #include "hash.h"
+ #include "irc_string.h"
+ #include "ircd_signal.h"
+@@ -58,7 +55,6 @@
+ #include "res.h"
+ #include "restart.h"
+ #include "s_auth.h"
+-#include "commio.h"
+ #include "s_conf.h"
+ #include "s_log.h"
+ #include "s_serv.h"             /* try_connections */
+@@ -68,10 +64,8 @@
+ #include "send.h"
+ #include "whowas.h"
+ #include "modules.h"
+-#include "memory.h"
+ #include "hook.h"
+ #include "ircd_getopt.h"
+-#include "balloc.h"
+ #include "newconf.h"
+ #include "patricia.h"
+ #include "reject.h"
+@@ -79,7 +73,6 @@
+ #include "s_newconf.h"
+ #include "cache.h"
+ #include "monitor.h"
+-#include "libcharybdis.h"
+ #include "patchlevel.h"
+ #include "serno.h"
+ 
+diff -r a44630997728 src/kdparse.c
+--- a/src/kdparse.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/kdparse.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -25,14 +25,12 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "s_log.h"
+ #include "s_conf.h"
+ #include "s_newconf.h"
+ #include "hostmask.h"
+ #include "client.h"
+ #include "irc_string.h"
+-#include "memory.h"
+ #include "hash.h"
+ 
+ /* conf_add_fields()
+@@ -47,21 +45,21 @@
+ 		const char *operreason_field, const char *date_field)
+ {
+ 	if(host_field != NULL)
+-		DupString(aconf->host, host_field);
++		aconf->host = rb_strdup(host_field);
+ 	if(pass_field != NULL)
+ 	{
+ 		if(!EmptyString(date_field))
+ 		{
+-			aconf->passwd = MyMalloc(strlen(pass_field) + strlen(date_field) + 4);
++			aconf->passwd = rb_malloc(strlen(pass_field) + strlen(date_field) + 4);
+ 			rb_sprintf(aconf->passwd, "%s (%s)", pass_field, date_field);
+ 		}
+ 		else
+-			DupString(aconf->passwd, pass_field);
++			aconf->passwd = rb_strdup(pass_field);
+ 	}
+ 	if(user_field != NULL)
+-		DupString(aconf->user, user_field);
++		aconf->user = rb_strdup(user_field);
+ 	if(operreason_field != NULL)
+-		DupString(aconf->spasswd, operreason_field);
++		aconf->spasswd = rb_strdup(operreason_field);
+ }
+ 
+ /*
+@@ -196,8 +194,8 @@
+ 		aconf = make_conf();
+ 		aconf->status = CONF_XLINE;
+ 
+-		DupString(aconf->name, gecos_field);
+-		DupString(aconf->passwd, reason_field);
++		aconf->name = rb_strdup(gecos_field);
++		aconf->passwd = rb_strdup(reason_field);
+ 
+ 		rb_dlinkAddAlloc(aconf, &xline_conf_list);
+ 	}
+@@ -237,8 +235,8 @@
+ 			aconf->status = CONF_RESV_CHANNEL;
+ 			aconf->port = 0;
+ 
+-			DupString(aconf->name, host_field);
+-			DupString(aconf->passwd, reason_field);
++			aconf->name = rb_strdup(host_field);
++			aconf->passwd = rb_strdup(reason_field);
+ 			add_to_resv_hash(aconf->name, aconf);
+ 		}
+ 		else if(clean_resv_nick(host_field))
+@@ -250,8 +248,8 @@
+ 			aconf->status = CONF_RESV_NICK;
+ 			aconf->port = 0;
+ 
+-			DupString(aconf->name, host_field);
+-			DupString(aconf->passwd, reason_field);
++			aconf->name = rb_strdup(host_field);
++			aconf->passwd = rb_strdup(reason_field);
+ 			rb_dlinkAddAlloc(aconf, &resv_conf_list);
+ 		}
+ 	}
+diff -r a44630997728 src/listener.c
+--- a/src/listener.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/listener.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -33,12 +33,10 @@
+ #include "ircd.h"
+ #include "ircd_defs.h"
+ #include "numeric.h"
+-#include "commio.h"
+ #include "s_conf.h"
+ #include "s_newconf.h"
+ #include "s_stats.h"
+ #include "send.h"
+-#include "memory.h"
+ #include "s_auth.h"
+ #include "reject.h"
+ #include "s_conf.h"
+@@ -60,7 +58,7 @@
+ static listener_t *
+ make_listener(struct irc_sockaddr_storage *addr)
+ {
+-	listener_t *listener = (listener_t *) MyMalloc(sizeof(listener_t));
++	listener_t *listener = (listener_t *) rb_malloc(sizeof(listener_t));
+ 	s_assert(0 != listener);
+ 
+ 	listener->name = me.name;
+@@ -95,7 +93,7 @@
+ 	}
+ 
+ 	/* free */
+-	MyFree(listener);
++	rb_free(listener);
+ }
+ 
+ #define PORTNAMELEN 6		/* ":31337" */
+@@ -530,12 +528,12 @@
+ 		/*
+ 		 * slow down the whining to opers bit
+ 		 */
+-		if((last_oper_notice + 20) <= CurrentTime)
++		if((last_oper_notice + 20) <= rb_current_time())
+ 		{
+ 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+ 					     "All connections in use. (%s)",
+ 					     get_listener_name(listener));
+-			last_oper_notice = CurrentTime;
++			last_oper_notice = rb_current_time();
+ 		}
+ 
+ 		write(fd, "ERROR :All connections in use\r\n", 32);
+diff -r a44630997728 src/modules.c
+--- a/src/modules.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/modules.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -38,8 +38,6 @@
+ #include "parse.h"
+ #include "ircd_defs.h"
+ #include "irc_string.h"
+-#include "memory.h"
+-#include "tools.h"
+ #include "sprintf_irc.h"
+ 
+ 
+@@ -166,7 +164,7 @@
+ 	if(mod_find_path(path))
+ 		return;
+ 
+-	pathst = MyMalloc(sizeof(struct module_path));
++	pathst = rb_malloc(sizeof(struct module_path));
+ 
+ 	strcpy(pathst->path, path);
+ 	rb_dlinkAddAlloc(pathst, &mod_paths);
+@@ -185,7 +183,7 @@
+ 
+ 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, mod_paths.head)
+ 	{
+-		MyFree(ptr->data);
++		rb_free(ptr->data);
+ 		free_rb_dlink_node(ptr);
+ 	}
+ 
+@@ -202,7 +200,7 @@
+ char *
+ irc_basename(const char *path)
+ {
+-	char *mod_basename = MyMalloc(strlen(path) + 1);
++	char *mod_basename = rb_malloc(strlen(path) + 1);
+ 	const char *s;
+ 
+ 	if(!(s = strrchr(path, '/')))
+@@ -250,7 +248,7 @@
+ 
+ 	modules_init();
+ 
+-	modlist = (struct module **) MyMalloc(sizeof(struct module) * (MODS_INCREMENT));
++	modlist = (struct module **) rb_malloc(sizeof(struct module) * (MODS_INCREMENT));
+ 
+ 	max_mods = MODS_INCREMENT;
+ 
+@@ -366,13 +364,13 @@
+ 	if(findmodule_byname(m_bn) != -1)
+ 	{
+ 		sendto_one_notice(source_p, ":Module %s is already loaded", m_bn);
+-		MyFree(m_bn);
++		rb_free(m_bn);
+ 		return 0;
+ 	}
+ 
+ 	load_one_module(parv[1], 0);
+ 
+-	MyFree(m_bn);
++	rb_free(m_bn);
+ 
+ 	return 0;
+ }
+@@ -397,14 +395,14 @@
+ 	if((modindex = findmodule_byname(m_bn)) == -1)
+ 	{
+ 		sendto_one_notice(source_p, ":Module %s is not loaded", m_bn);
+-		MyFree(m_bn);
++		rb_free(m_bn);
+ 		return 0;
+ 	}
+ 
+ 	if(modlist[modindex]->core == 1)
+ 	{
+ 		sendto_one_notice(source_p, ":Module %s is a core module and may not be unloaded", m_bn);
+-		MyFree(m_bn);
++		rb_free(m_bn);
+ 		return 0;
+ 	}
+ 
+@@ -413,7 +411,7 @@
+ 		sendto_one_notice(source_p, ":Module %s is not loaded", m_bn);
+ 	}
+ 
+-	MyFree(m_bn);
++	rb_free(m_bn);
+ 	return 0;
+ }
+ 
+@@ -437,7 +435,7 @@
+ 	if((modindex = findmodule_byname(m_bn)) == -1)
+ 	{
+ 		sendto_one_notice(source_p, ":Module %s is not loaded", m_bn);
+-		MyFree(m_bn);
++		rb_free(m_bn);
+ 		return 0;
+ 	}
+ 
+@@ -446,7 +444,7 @@
+ 	if(unload_one_module(m_bn, 1) == -1)
+ 	{
+ 		sendto_one_notice(source_p, ":Module %s is not loaded", m_bn);
+-		MyFree(m_bn);
++		rb_free(m_bn);
+ 		return 0;
+ 	}
+ 
+@@ -458,7 +456,7 @@
+ 		exit(0);
+ 	}
+ 
+-	MyFree(m_bn);
++	rb_free(m_bn);
+ 	return 0;
+ }
+ 
+@@ -759,7 +757,7 @@
+ 
+ 	dlclose(modlist[modindex]->address);
+ 
+-	MyFree(modlist[modindex]->name);
++	rb_free(modlist[modindex]->name);
+ 	memcpy(&modlist[modindex], &modlist[modindex + 1],
+ 	       sizeof(struct module) * ((num_mods - 1) - modindex));
+ 
+@@ -808,7 +806,7 @@
+ 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+ 				     "Error loading module %s: %s", mod_basename, err);
+ 		ilog(L_MAIN, "Error loading module %s: %s", mod_basename, err);
+-		MyFree(mod_basename);
++		rb_free(mod_basename);
+ 		return -1;
+ 	}
+ 
+@@ -829,7 +827,7 @@
+ 				     mod_basename);
+ 		ilog(L_MAIN, "Data format error: module %s has no MAPI header.", mod_basename);
+ 		(void) dlclose(tmpptr);
+-		MyFree(mod_basename);
++		rb_free(mod_basename);
+ 		return -1;
+ 	}
+ 
+@@ -846,7 +844,7 @@
+ 						     "Module %s indicated failure during load.",
+ 						     mod_basename);
+ 				dlclose(tmpptr);
+-				MyFree(mod_basename);
++				rb_free(mod_basename);
+ 				return -1;
+ 			}
+ 			if(mheader->mapi_command_list)
+@@ -881,7 +879,7 @@
+ 				     "Module %s has unknown/unsupported MAPI version %d.",
+ 				     mod_basename, *mapi_version);
+ 		dlclose(tmpptr);
+-		MyFree(mod_basename);
++		rb_free(mod_basename);
+ 		return -1;
+ 	}
+ 
+@@ -890,11 +888,11 @@
+ 
+ 	increase_modlist();
+ 
+-	modlist[num_mods] = MyMalloc(sizeof(struct module));
++	modlist[num_mods] = rb_malloc(sizeof(struct module));
+ 	modlist[num_mods]->address = tmpptr;
+ 	modlist[num_mods]->version = ver;
+ 	modlist[num_mods]->core = core;
+-	DupString(modlist[num_mods]->name, mod_basename);
++	modlist[num_mods]->name = rb_strdup(mod_basename);
+ 	modlist[num_mods]->mapi_header = mapi_version;
+ 	modlist[num_mods]->mapi_version = MAPI_VERSION(*mapi_version);
+ 	num_mods++;
+@@ -908,7 +906,7 @@
+ 		ilog(L_MAIN, "Module %s [version: %s; MAPI version: %d] loaded at 0x%lx",
+ 		     mod_basename, ver, MAPI_VERSION(*mapi_version), (unsigned long) tmpptr);
+ 	}
+-	MyFree(mod_basename);
++	rb_free(mod_basename);
+ 	return 0;
+ }
+ 
+@@ -927,11 +925,11 @@
+ 	if((num_mods + 1) < max_mods)
+ 		return;
+ 
+-	new_modlist = (struct module **) MyMalloc(sizeof(struct module) *
++	new_modlist = (struct module **) rb_malloc(sizeof(struct module) *
+ 						  (max_mods + MODS_INCREMENT));
+ 	memcpy((void *) new_modlist, (void *) modlist, sizeof(struct module) * num_mods);
+ 
+-	MyFree(modlist);
++	rb_free(modlist);
+ 	modlist = new_modlist;
+ 	max_mods += MODS_INCREMENT;
+ }
+diff -r a44630997728 src/monitor.c
+--- a/src/monitor.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/monitor.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -32,58 +32,57 @@
+  * $Id: monitor.c 3520 2007-06-30 22:15:35Z jilles $
+  */
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "client.h"
+-#include "memory.h"
+-#include "balloc.h"
+ #include "monitor.h"
+ #include "hash.h"
+-#include "event.h"
+ #include "numeric.h"
+ 
+-static struct monitor *monitorTable[MONITOR_HASH_SIZE];
+-BlockHeap *monitor_heap;
+-
+-static void cleanup_monitor(void *unused);
++struct monitor *monitorTable[MONITOR_HASH_SIZE];
++static rb_bh *monitor_heap;
+ 
+ void
+ init_monitor(void)
+ {
+-	monitor_heap = BlockHeapCreate(sizeof(struct monitor), MONITOR_HEAP_SIZE);
+-	eventAddIsh("cleanup_monitor", cleanup_monitor, NULL, 3600);
++	monitor_heap = rb_bh_create(sizeof(struct monitor), MONITOR_HEAP_SIZE, "monitor_heap");
+ }
+ 
+ static inline unsigned int
+ hash_monitor_nick(const char *name)
+ {
+-	return fnv_hash_upper((const unsigned char *) name, MONITOR_HASH_BITS);
++	return fnv_hash_upper((const unsigned char *)name, MONITOR_HASH_BITS, 0);
+ }
+ 
+ struct monitor *
+ find_monitor(const char *name, int add)
+ {
+-	struct monitor *monptr;
++	struct monitor *monptr;
++
++	unsigned int hashv = hash_monitor_nick(name);
++
++	for(monptr = monitorTable[hashv]; monptr; monptr = monptr->hnext)
++	{
++		if(!irccmp(monptr->name, name))
++			return monptr;
++	}
++
++	if(add)
++	{
++		monptr = rb_bh_alloc(monitor_heap);
++		rb_strlcpy(monptr->name, name, sizeof(monptr->name));
++
++		monptr->hnext = monitorTable[hashv];
++		monitorTable[hashv] = monptr;
++
++		return monptr;
++	}
++
++	return NULL;
++}
+ 
+-	unsigned int hashv = hash_monitor_nick(name);
+-
+-	for(monptr = monitorTable[hashv]; monptr; monptr = monptr->hnext)
+-	{
+-		if(!irccmp(monptr->name, name))
+-			return monptr;
+-	}
+-
+-	if(add)
+-	{
+-		monptr = BlockHeapAlloc(monitor_heap);
+-		strlcpy(monptr->name, name, sizeof(monptr->name));
+-
+-		monptr->hnext = monitorTable[hashv];
+-		monitorTable[hashv] = monptr;
+-
+-		return monptr;
+-	}
+-
+-	return NULL;
++void
++free_monitor(struct monitor *monptr)
++{
++	rb_bh_free(monitor_heap, monptr);
+ }
+ 
+ /* monitor_signon()
+@@ -96,16 +95,15 @@
+ void
+ monitor_signon(struct Client *client_p)
+ {
+-	char buf[USERHOST_REPLYLEN];
+-	struct monitor *monptr = find_monitor(client_p->name, 0);
+-
+-	/* noones watching this nick */
+-	if(monptr == NULL)
+-		return;
+-
+-	rb_snprintf(buf, sizeof(buf), "%s!%s@%s",
+-		    client_p->name, client_p->username, client_p->host);
+-
++	char buf[USERHOST_REPLYLEN];
++	struct monitor *monptr = find_monitor(client_p->name, 0);
++
++	/* noones watching this nick */
++	if(monptr == NULL)
++		return;
++
++	rb_snprintf(buf, sizeof(buf), "%s!%s@%s", client_p->name, client_p->username, client_p->host);
++
+ 	sendto_monitor(monptr, form_str(RPL_MONONLINE), me.name, "*", buf);
+ }
+ 
+@@ -119,62 +117,30 @@
+ void
+ monitor_signoff(struct Client *client_p)
+ {
+-	struct monitor *monptr = find_monitor(client_p->name, 0);
+-
+-	/* noones watching this nick */
+-	if(monptr == NULL)
+-		return;
+-
+-	sendto_monitor(monptr, form_str(RPL_MONOFFLINE), me.name, "*",
++	struct monitor *monptr = find_monitor(client_p->name, 0);
++
++	/* noones watching this nick */
++	if(monptr == NULL)
++		return;
++
++	sendto_monitor(monptr, form_str(RPL_MONOFFLINE), me.name, "*",
+ 			client_p->name);
+ }
+ 
+ void
+ clear_monitor(struct Client *client_p)
+ {
+-	struct monitor *monptr;
+-	rb_dlink_node *ptr, *next_ptr;
+-
+-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, client_p->localClient->monitor_list.head)
+-	{
+-		monptr = ptr->data;
+-
+-		/* we leave the actual entry around with no users, itll be
+-		 * cleaned up periodically by cleanup_monitor() --anfl
+-		 */
+-		rb_dlinkFindDestroy(client_p, &monptr->users);
+-		free_rb_dlink_node(ptr);
+-	}
+-
+-	client_p->localClient->monitor_list.head = client_p->localClient->monitor_list.tail = NULL;
++	struct monitor *monptr;
++	rb_dlink_node *ptr, *next_ptr;
++
++	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, client_p->localClient->monitor_list.head)
++	{
++		monptr = ptr->data;
++
++		rb_dlinkFindDestroy(client_p, &monptr->users);
++		rb_free_rb_dlink_node(ptr);
++	}
++
++	client_p->localClient->monitor_list.head = client_p->localClient->monitor_list.tail = NULL;
+ 	client_p->localClient->monitor_list.length = 0;
+ }
+-
+-static void
+-cleanup_monitor(void *unused)
+-{
+-	struct monitor *last_ptr = NULL;
+-	struct monitor *next_ptr, *ptr;
+-	int i;
+-
+-	for(i = 0; i < MONITOR_HASH_SIZE; i++)
+-	{
+-		last_ptr = NULL;
+-		for(ptr = monitorTable[i]; ptr; ptr = next_ptr)
+-		{
+-			next_ptr = ptr->hnext;
+-
+-			if(!rb_dlink_list_length(&ptr->users))
+-			{
+-				if(last_ptr)
+-					last_ptr->hnext = next_ptr;
+-				else
+-					monitorTable[i] = next_ptr;
+-
+-				BlockHeapFree(monitor_heap, ptr);
+-			}
+-			else
+-				last_ptr = ptr;
+-		}
+-	}
+-}
+diff -r a44630997728 src/newconf.c
+--- a/src/newconf.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/newconf.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -9,9 +9,7 @@
+ #include <openssl/rsa.h>
+ #endif
+ 
+-#include "memory.h"
+ #include "newconf.h"
+-#include "tools.h"
+ #include "ircd_defs.h"
+ #include "sprintf_irc.h"
+ #include "common.h"
+@@ -25,7 +23,6 @@
+ #include "listener.h"
+ #include "hostmask.h"
+ #include "s_serv.h"
+-#include "event.h"
+ #include "hash.h"
+ #include "cache.h"
+ #include "ircd.h"
+@@ -83,7 +80,7 @@
+ {
+ 	struct TopConf *tc;
+ 
+-	tc = MyMalloc(sizeof(struct TopConf));
++	tc = rb_malloc(sizeof(struct TopConf));
+ 
+ 	tc->tc_name = name;
+ 	tc->tc_sfunc = sfunc;
+@@ -153,7 +150,7 @@
+ 		return -1;
+ 
+ 	rb_dlinkDestroy(ptr, &conf_items);
+-	MyFree(tc);
++	rb_free(tc);
+ 
+ 	return 0;
+ }
+@@ -194,7 +191,7 @@
+ 
+ 		/* the ircd will exit() in main() if we dont set one */
+ 		if(strlen(s) <= HOSTLEN)
+-			DupString(ServerInfo.name, (char *) data);
++			ServerInfo.name = rb_strdup((char *) data);
+ 	}
+ }
+ 
+@@ -225,8 +222,8 @@
+ 	if((p = strchr((char *) data, ' ')))
+ 		*p = '\0';
+ 
+-	MyFree(ServerInfo.network_name);
+-	DupString(ServerInfo.network_name, (char *) data);
++	rb_free(ServerInfo.network_name);
++	ServerInfo.network_name = rb_strdup((char *) data);
+ }
+ 
+ static void
+@@ -271,7 +268,7 @@
+ 
+ 	load_one_module((char *) data, 0);
+ 
+-	MyFree(m_bn);
++	rb_free(m_bn);
+ #else
+ 	conf_report_error("Ignoring modules::module -- loadable module support not present.");
+ #endif
+@@ -484,7 +481,7 @@
+ 		if(strlen(conf_cur_block_name) > OPERNICKLEN)
+ 			conf_cur_block_name[OPERNICKLEN] = '\0';
+ 
+-		DupString(yy_oper->name, conf_cur_block_name);
++		yy_oper->name = rb_strdup(conf_cur_block_name);
+ 	}
+ 
+ 	if(EmptyString(yy_oper->name))
+@@ -512,11 +509,11 @@
+ 	{
+ 		yy_tmpoper = ptr->data;
+ 
+-		DupString(yy_tmpoper->name, yy_oper->name);
++		yy_tmpoper->name = rb_strdup(yy_oper->name);
+ 
+ 		/* could be an rsa key instead.. */
+ 		if(!EmptyString(yy_oper->passwd))
+-			DupString(yy_tmpoper->passwd, yy_oper->passwd);
++			yy_tmpoper->passwd = rb_strdup(yy_oper->passwd);
+ 
+ 		yy_tmpoper->flags = yy_oper->flags;
+ 		yy_tmpoper->umodes = yy_oper->umodes;
+@@ -582,14 +579,14 @@
+ 	{
+ 		*p++ = '\0';
+ 
+-		DupString(yy_tmpoper->username, host);
+-		DupString(yy_tmpoper->host, p);
++		yy_tmpoper->username = rb_strdup(host);
++		yy_tmpoper->host = rb_strdup(p);
+ 	}
+ 	else
+ 	{
+ 
+-		DupString(yy_tmpoper->username, "*");
+-		DupString(yy_tmpoper->host, host);
++		yy_tmpoper->username = rb_strdup("*");
++		yy_tmpoper->host = rb_strdup(host);
+ 	}
+ 
+ 	if(EmptyString(yy_tmpoper->username) || EmptyString(yy_tmpoper->host))
+@@ -608,18 +605,18 @@
+ 	if(yy_oper->passwd)
+ 	{
+ 		memset(yy_oper->passwd, 0, strlen(yy_oper->passwd));
+-		MyFree(yy_oper->passwd);
++		rb_free(yy_oper->passwd);
+ 	}
+ 
+-	DupString(yy_oper->passwd, (char *) data);
++	yy_oper->passwd = rb_strdup((char *) data);
+ }
+ 
+ static void
+ conf_set_oper_rsa_public_key_file(void *data)
+ {
+ #ifdef HAVE_LIBCRYPTO
+-	MyFree(yy_oper->rsa_pubkey_file);
+-	DupString(yy_oper->rsa_pubkey_file, (char *) data);
++	rb_free(yy_oper->rsa_pubkey_file);
++	yy_oper->rsa_pubkey_file = rb_strdup((char *) data);
+ #else
+ 	conf_report_error("Warning -- ignoring rsa_public_key_file (OpenSSL support not available");
+ #endif
+@@ -651,7 +648,7 @@
+ conf_end_class(struct TopConf *tc)
+ {
+ 	if(conf_cur_block_name != NULL)
+-		DupString(yy_class->class_name, conf_cur_block_name);
++		yy_class->class_name = rb_strdup(conf_cur_block_name);
+ 
+ 	if(EmptyString(yy_class->class_name))
+ 	{
+@@ -734,7 +731,7 @@
+ static int
+ conf_begin_listen(struct TopConf *tc)
+ {
+-	MyFree(listener_address);
++	rb_free(listener_address);
+ 	listener_address = NULL;
+ 	return 0;
+ }
+@@ -742,7 +739,7 @@
+ static int
+ conf_end_listen(struct TopConf *tc)
+ {
+-	MyFree(listener_address);
++	rb_free(listener_address);
+ 	listener_address = NULL;
+ 	return 0;
+ }
+@@ -786,8 +783,8 @@
+ static void
+ conf_set_listen_address(void *data)
+ {
+-	MyFree(listener_address);
+-	DupString(listener_address, data);
++	rb_free(listener_address);
++	listener_address = rb_strdup(data);
+ }
+ 
+ static int
+@@ -819,7 +816,7 @@
+ 	rb_dlink_node *next_ptr;
+ 
+ 	if(EmptyString(yy_aconf->name))
+-		DupString(yy_aconf->name, "NOMATCH");
++		yy_aconf->name = rb_strdup("NOMATCH");
+ 
+ 	/* didnt even get one ->host? */
+ 	if(EmptyString(yy_aconf->host))
+@@ -839,13 +836,13 @@
+ 		yy_tmp = ptr->data;
+ 
+ 		if(yy_aconf->passwd)
+-			DupString(yy_tmp->passwd, yy_aconf->passwd);
++			yy_tmp->passwd = rb_strdup(yy_aconf->passwd);
+ 
+ 		/* this will always exist.. */
+-		DupString(yy_tmp->name, yy_aconf->name);
++		yy_tmp->name = rb_strdup(yy_aconf->name);
+ 
+ 		if(yy_aconf->className)
+-			DupString(yy_tmp->className, yy_aconf->className);
++			yy_tmp->className = rb_strdup(yy_aconf->className);
+ 
+ 		yy_tmp->flags = yy_aconf->flags;
+ 		yy_tmp->port = yy_aconf->port;
+@@ -882,13 +879,13 @@
+ 	{
+ 		*p++ = '\0';
+ 
+-		DupString(yy_tmp->user, data);
+-		DupString(yy_tmp->host, p);
++		yy_tmp->user = rb_strdup(data);
++		yy_tmp->host = rb_strdup(p);
+ 	}
+ 	else
+ 	{
+-		DupString(yy_tmp->user, "*");
+-		DupString(yy_tmp->host, data);
++		yy_tmp->user = rb_strdup("*");
++		yy_tmp->host = rb_strdup(data);
+ 	}
+ 
+ 	if(yy_aconf != yy_tmp)
+@@ -900,8 +897,8 @@
+ {
+ 	if(yy_aconf->passwd)
+ 		memset(yy_aconf->passwd, 0, strlen(yy_aconf->passwd));
+-	MyFree(yy_aconf->passwd);
+-	DupString(yy_aconf->passwd, data);
++	rb_free(yy_aconf->passwd);
++	yy_aconf->passwd = rb_strdup(data);
+ }
+ 
+ static void
+@@ -960,8 +957,8 @@
+ 		return;
+ 	}
+ 
+-	MyFree(yy_aconf->name);
+-	DupString(yy_aconf->name, data);
++	rb_free(yy_aconf->name);
++	yy_aconf->name = rb_strdup(data);
+ 	yy_aconf->flags |= CONF_FLAGS_SPOOF_IP;
+ }
+ 
+@@ -977,8 +974,8 @@
+ conf_set_auth_redir_serv(void *data)
+ {
+ 	yy_aconf->flags |= CONF_FLAGS_REDIR;
+-	MyFree(yy_aconf->name);
+-	DupString(yy_aconf->name, data);
++	rb_free(yy_aconf->name);
++	yy_aconf->name = rb_strdup(data);
+ }
+ 
+ static void
+@@ -993,8 +990,8 @@
+ static void
+ conf_set_auth_class(void *data)
+ {
+-	MyFree(yy_aconf->className);
+-	DupString(yy_aconf->className, data);
++	rb_free(yy_aconf->className);
++	yy_aconf->className = rb_strdup(data);
+ }
+ 
+ /* ok, shared_oper handles the stacking, shared_flags handles adding
+@@ -1041,11 +1038,11 @@
+ 			return;
+ 		}
+ 
+-		DupString(yy_shared->server, args->v.string);
++		yy_shared->server = rb_strdup(args->v.string);
+ 		args = args->next;
+ 	}
+ 	else
+-		DupString(yy_shared->server, "*");
++		yy_shared->server = rb_strdup("*");
+ 
+ 	if((args->type & CF_MTYPE) != CF_QSTRING)
+ 	{
+@@ -1063,14 +1060,14 @@
+ 	*p++ = '\0';
+ 
+ 	if(EmptyString(p))
+-		DupString(yy_shared->host, "*");
++		yy_shared->host = rb_strdup("*");
+ 	else
+-		DupString(yy_shared->host, p);
++		yy_shared->host = rb_strdup(p);
+ 
+ 	if(EmptyString(username))
+-		DupString(yy_shared->username, "*");
++		yy_shared->username = rb_strdup("*");
+ 	else
+-		DupString(yy_shared->username, username);
++		yy_shared->username = rb_strdup(username);
+ 
+ 	rb_dlinkAddAlloc(yy_shared, &yy_shared_list);
+ 	yy_shared = NULL;
+@@ -1111,7 +1108,7 @@
+ 	yy_server->flags |= SERVER_TB;
+ 
+ 	if(conf_cur_block_name != NULL)
+-		DupString(yy_server->name, conf_cur_block_name);
++		yy_server->name = rb_strdup(conf_cur_block_name);
+ 
+ 	return 0;
+ }
+@@ -1164,8 +1161,8 @@
+ static void
+ conf_set_connect_host(void *data)
+ {
+-	MyFree(yy_server->host);
+-	DupString(yy_server->host, data);
++	rb_free(yy_server->host);
++	yy_server->host = rb_strdup(data);
+ 	if (strchr(yy_server->host, ':'))
+ 		yy_server->aftype = AF_INET6;
+ }
+@@ -1189,10 +1186,10 @@
+ 	if(yy_server->spasswd)
+ 	{
+ 		memset(yy_server->spasswd, 0, strlen(yy_server->spasswd));
+-		MyFree(yy_server->spasswd);
++		rb_free(yy_server->spasswd);
+ 	}
+ 
+-	DupString(yy_server->spasswd, data);
++	yy_server->spasswd = rb_strdup(data);
+ }
+ 
+ static void
+@@ -1201,9 +1198,9 @@
+ 	if(yy_server->passwd)
+ 	{
+ 		memset(yy_server->passwd, 0, strlen(yy_server->passwd));
+-		MyFree(yy_server->passwd);
++		rb_free(yy_server->passwd);
+ 	}
+-	DupString(yy_server->passwd, data);
++	yy_server->passwd = rb_strdup(data);
+ }
+ 
+ static void
+@@ -1254,8 +1251,8 @@
+ 	yy_hub = make_remote_conf();
+ 	yy_hub->flags = CONF_HUB;
+ 
+-	DupString(yy_hub->host, data);
+-	DupString(yy_hub->server, yy_server->name);
++	yy_hub->host = rb_strdup(data);
++	yy_hub->server = rb_strdup(yy_server->name);
+ 	rb_dlinkAdd(yy_hub, &yy_hub->node, &hubleaf_conf_list);
+ }
+ 
+@@ -1270,16 +1267,16 @@
+ 	yy_leaf = make_remote_conf();
+ 	yy_leaf->flags = CONF_LEAF;
+ 
+-	DupString(yy_leaf->host, data);
+-	DupString(yy_leaf->server, yy_server->name);
++	yy_leaf->host = rb_strdup(data);
++	yy_leaf->server = rb_strdup(yy_server->name);
+ 	rb_dlinkAdd(yy_leaf, &yy_leaf->node, &hubleaf_conf_list);
+ }
+ 
+ static void
+ conf_set_connect_class(void *data)
+ {
+-	MyFree(yy_server->class_name);
+-	DupString(yy_server->class_name, data);
++	rb_free(yy_server->class_name);
++	yy_server->class_name = rb_strdup(data);
+ }
+ 
+ static void
+@@ -1294,8 +1291,8 @@
+ 	}
+ 
+ 	yy_tmp = make_conf();
+-	DupString(yy_tmp->passwd, "*");
+-	DupString(yy_tmp->host, data);
++	yy_tmp->passwd = rb_strdup("*");
++	yy_tmp->host = rb_strdup(data);
+ 	yy_tmp->status = CONF_EXEMPTDLINE;
+ 	add_conf_by_address(yy_tmp->host, CONF_EXEMPTDLINE, NULL, yy_tmp);
+ }
+@@ -1327,7 +1324,7 @@
+ 		free_remote_conf(yy_shared);
+ 
+ 	yy_shared = make_remote_conf();
+-	DupString(yy_shared->server, data);
++	yy_shared->server = rb_strdup(data);
+ 	rb_dlinkAddAlloc(yy_shared, &yy_cluster_list);
+ 
+ 	yy_shared = NULL;
+@@ -1575,7 +1572,7 @@
+ 		return;
+ 	}
+ 
+-	DupString(tmp, data);
++	tmp = rb_strdup(data);
+ 	rb_dlinkAddAlloc(tmp, &service_list);
+ 
+ 	if((target_p = find_server(NULL, tmp)))
+@@ -1585,10 +1582,10 @@
+ static int
+ conf_begin_alias(struct TopConf *tc)
+ {
+-	yy_alias = MyMalloc(sizeof(struct alias_entry));
++	yy_alias = rb_malloc(sizeof(struct alias_entry));
+ 
+ 	if (conf_cur_block_name != NULL)
+-		DupString(yy_alias->name, conf_cur_block_name);
++		yy_alias->name = rb_strdup(conf_cur_block_name);
+ 
+ 	yy_alias->flags = 0;
+ 	yy_alias->hits = 0;
+@@ -1606,7 +1603,7 @@
+ 	{
+ 		conf_report_error("Ignoring alias -- must have a name.");
+ 
+-		MyFree(yy_alias);
++		rb_free(yy_alias);
+ 
+ 		return -1;
+ 	}
+@@ -1615,7 +1612,7 @@
+ 	{
+ 		conf_report_error("Ignoring alias -- must have a target.");
+ 
+-		MyFree(yy_alias);
++		rb_free(yy_alias);
+ 
+ 		return -1;
+ 	}
+@@ -1634,7 +1631,7 @@
+ 	if (data == NULL || yy_alias == NULL)	/* this shouldn't ever happen */
+ 		return;
+ 
+-	DupString(yy_alias->name, data);
++	yy_alias->name = rb_strdup(data);
+ }
+ 
+ static void
+@@ -1643,25 +1640,25 @@
+ 	if (data == NULL || yy_alias == NULL)	/* this shouldn't ever happen */
+ 		return;
+ 
+-	DupString(yy_alias->target, data);
++	yy_alias->target = rb_strdup(data);
+ }
+ 
+ static void
+ conf_set_blacklist_host(void *data)
+ {
+-	DupString(yy_blacklist_host, data);
++	yy_blacklist_host = rb_strdup(data);
+ }
+ 
+ static void
+ conf_set_blacklist_reason(void *data)
+ {
+-	DupString(yy_blacklist_reason, data);
++	yy_blacklist_reason = rb_strdup(data);
+ 
+ 	if (yy_blacklist_host && yy_blacklist_reason)
+ 	{
+ 		new_blacklist(yy_blacklist_host, yy_blacklist_reason);
+-		MyFree(yy_blacklist_host);
+-		MyFree(yy_blacklist_reason);
++		rb_free(yy_blacklist_host);
++		rb_free(yy_blacklist_reason);
+ 		yy_blacklist_host = NULL;
+ 		yy_blacklist_reason = NULL;
+ 	}
+@@ -1700,7 +1697,7 @@
+ 	}
+ 
+ 	if(name)
+-		DupString(conf_cur_block_name, name);
++		conf_cur_block_name = rb_strdup(name);
+ 	else
+ 		conf_cur_block_name = NULL;
+ 
+@@ -1717,7 +1714,7 @@
+ 	if(tc->tc_efunc)
+ 		return tc->tc_efunc(tc);
+ 
+-	MyFree(conf_cur_block_name);
++	rb_free(conf_cur_block_name);
+ 	return 0;
+ }
+ 
+@@ -1736,8 +1733,8 @@
+ 	if(len && strlen(input) > len)
+ 		input[len] = '\0';
+ 
+-	MyFree(*loc);
+-	DupString(*loc, input);
++	rb_free(*loc);
++	*loc = rb_strdup(input);
+ }
+ 
+ int
+@@ -1779,9 +1776,9 @@
+ 			value->v.list->type = CF_STRING;
+ 
+ 			if(cp->v.number == 1)
+-				DupString(cp->v.string, "yes");
++				cp->v.string = rb_strdup("yes");
+ 			else
+-				DupString(cp->v.string, "no");
++				cp->v.string = rb_strdup("no");
+ 		}
+ 
+ 		/* maybe it's a CF_TIME and they passed CF_INT --
+@@ -1849,7 +1846,7 @@
+ 	if((cf = find_conf_item(tc, name)) != NULL)
+ 		return -1;
+ 
+-	cf = MyMalloc(sizeof(struct ConfEntry));
++	cf = rb_malloc(sizeof(struct ConfEntry));
+ 
+ 	cf->cf_name = name;
+ 	cf->cf_type = type;
+@@ -1878,7 +1875,7 @@
+ 		return -1;
+ 
+ 	rb_dlinkDestroy(ptr, &tc->tc_items);
+-	MyFree(cf);
++	rb_free(cf);
+ 
+ 	return 0;
+ }
+diff -r a44630997728 src/numeric.c
+--- a/src/numeric.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/numeric.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -31,7 +31,6 @@
+ #include "numeric.h"
+ #include "irc_string.h"
+ #include "common.h"		/* NULL cripes */
+-#include "memory.h"
+ 
+ #include "messages.tab"
+ 
+diff -r a44630997728 src/packet.c
+--- a/src/packet.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/packet.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -24,8 +24,6 @@
+  *  $Id: packet.c 3446 2007-05-14 22:21:16Z jilles $
+  */
+ #include "stdinc.h"
+-#include "tools.h"
+-#include "commio.h"
+ #include "s_conf.h"
+ #include "s_serv.h"
+ #include "client.h"
+@@ -34,7 +32,6 @@
+ #include "parse.h"
+ #include "packet.h"
+ #include "irc_string.h"
+-#include "memory.h"
+ #include "hook.h"
+ #include "send.h"
+ 
+@@ -285,7 +282,7 @@
+ 			reply->datalen |= *len;
+ 			reply->gotdatalen++;
+ 			if(reply->datalen > 0)
+-				reply->data = MyMalloc(reply->datalen);
++				reply->data = rb_malloc(reply->datalen);
+ 		}
+ 
+ 		if(reply->gotdatalen < 2)
+@@ -322,7 +319,7 @@
+ 
+ 	/* reset SlinkRpl */
+ 	if(reply->datalen > 0)
+-		MyFree(reply->data);
++		rb_free(reply->data);
+ 	reply->command = 0;
+ 
+ 	if(IsAnyDead(server))
+@@ -377,8 +374,8 @@
+ 	call_hook(h_iorecv_id, &hdata);
+ #endif
+ 
+-	if(client_p->localClient->lasttime < CurrentTime)
+-		client_p->localClient->lasttime = CurrentTime;
++	if(client_p->localClient->lasttime < rb_current_time())
++		client_p->localClient->lasttime = rb_current_time();
+ 	client_p->flags &= ~FLAGS_PINGSENT;
+ 
+ 	/*
+diff -r a44630997728 src/parse.c
+--- a/src/parse.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/parse.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -40,7 +40,6 @@
+ #include "send.h"
+ #include "msg.h"
+ #include "s_conf.h"
+-#include "memory.h"
+ #include "s_serv.h"
+ #include "packet.h"
+ 
+diff -r a44630997728 src/reject.c
+--- a/src/reject.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/reject.c	Wed Apr 02 04:03:17 2008 +0400
+@@ -28,8 +28,6 @@
+ #include "patricia.h"
+ #include "client.h"
+ #include "s_conf.h"
+-#include "event.h"
+-#include "tools.h"
+ #include "reject.h"
+ #include "s_stats.h"
+ #include "msg.h"
+@@ -100,11 +98,11 @@
+ 		pnode = ptr->data;
+ 		rdata = pnode->data;		
+ 
+-		if(rdata->time + ConfigFileEntry.reject_duration > CurrentTime)
++		if(rdata->time + ConfigFileEntry.reject_duration > rb_current_time())
+ 			continue;
+ 
+ 		rb_dlinkDelete(ptr, &reject_list);
+-		MyFree(rdata);
++		rb_free(rdata);
+ 		patricia_remove(reject_tree, pnode);
+ 	}
+ }
+@@ -139,7 +137,7 @@
+ 	if((pnode = match_ip(reject_tree, (struct sockaddr *)&client_p->localClient->ip)) != NULL)
+ 	{
+ 		rdata = pnode->data;
+-		rdata->time = CurrentTime;
++		rdata->time = rb_current_time();
+ 		rdata->count++;
+ 	}
+ 	else
+@@ -150,9 +148,9 @@
+ 			bitlen = 128;
+ #endif
+ 		pnode = make_and_lookup_ip(reject_tree, (struct sockaddr *)&client_p->localClient->ip, bitlen);
+-		pnode->data = rdata = MyMalloc(sizeof(struct reject_data));
++		pnode->data = rdata = rb_malloc(sizeof(struct reject_data));
+ 		rb_dlinkAddTail(pnode, &rdata->rnode, &reject_list);
+-		rdata->time = CurrentTime;
++		rdata->time = rb_current_time();
+ 		rdata->count = 1;
+ 	}
+ 	rdata->mask_hashv = hashv;
+@@ -174,7 +172,7 @@
+ 	{
+ 		rdata = pnode->data;
+ 
+-		rdata->time = CurrentTime;
++		rdata->time = rb_current_time();
+ 		if(rdata->count > ConfigFileEntry.reject_after_count)
+ 		{
+ 			ServerStats->is_rej++;
+@@ -201,7 +199,7 @@
+ 		pnode = ptr->data;
+ 		rdata = pnode->data;
+ 		rb_dlinkDelete(ptr, &reject_list);
+-		MyFree(rdata);
++		rb_free(rdata);
+ 		patricia_remove(reject_tree, pnode);
+ 	}
+ }
+@@ -220,7 +218,7 @@
+ 	{
+ 		struct reject_data *rdata = pnode->data;
+ 		rb_dlinkDelete(&rdata->rnode, &reject_list);
+-		MyFree(rdata);
++		rb_free(rdata);
+ 		patricia_remove(reject_tree, pnode);
+ 		return 1;
+ 	}
+@@ -248,7 +246,7 @@
+ 		if (rdata->mask_hashv == hashv)
+ 		{
+ 			rb_dlinkDelete(ptr, &reject_list);
+-			MyFree(rdata);
++			rb_free(rdata);
+ 			patricia_remove(reject_tree, pnode);
+ 			n++;
+ 		}
+diff -r a44630997728 src/res.c
+--- a/src/res.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/res.c	Wed Apr 02 04:03:18 2008 +0400
+@@ -29,11 +29,8 @@
+ #include "ircd_defs.h"
+ #include "common.h"
+ #include "ircd.h"
+-#include "commio.h"
+ #include "res.h"
+ #include "reslib.h"
+-#include "tools.h"
+-#include "event.h"
+ #include "irc_string.h"
+ #include "sprintf_irc.h"
+ #include "numeric.h"
+@@ -215,7 +212,7 @@
+  */
+ static void timeout_resolver(void *notused)
+ {
+-	timeout_query_list(CurrentTime);
++	timeout_query_list(rb_current_time());
+ }
+ 
+ /*
+@@ -244,7 +241,7 @@
+ void init_resolver(void)
+ {
+ #ifdef HAVE_SRAND48
+-	srand48(CurrentTime);
++	srand48(rb_current_time());
+ #endif
+ 	start_resolver();
+ }
+@@ -290,8 +287,8 @@
+ static void rem_request(struct reslist *request)
+ {
+ 	rb_dlinkDelete(&request->node, &request_list);
+-	MyFree(request->name);
+-	MyFree(request);
++	rb_free(request->name);
++	rb_free(request);
+ }
+ 
+ /*
+@@ -299,9 +296,9 @@
+  */
+ static struct reslist *make_request(struct DNSQuery *query)
+ {
+-	struct reslist *request = MyMalloc(sizeof(struct reslist));
++	struct reslist *request = rb_malloc(sizeof(struct reslist));
+ 
+-	request->sentat = CurrentTime;
++	request->sentat = rb_current_time();
+ 	request->retries = 3;
+ 	request->resend = 1;
+ 	request->timeout = 4;	/* start at 4 and exponential inc. */
+@@ -414,7 +411,7 @@
+ 	if (request == NULL)
+ 	{
+ 		request = make_request(query);
+-		request->name = (char *)MyMalloc(strlen(host_name) + 1);
++		request->name = (char *)rb_malloc(strlen(host_name) + 1);
+ 		strcpy(request->name, host_name);
+ 		request->state = REQ_A;
+ 	}
+@@ -436,7 +433,7 @@
+ 	{
+ 		request = make_request(query);
+ 		memcpy(&request->addr, addr, sizeof(struct irc_sockaddr_storage));
+-		request->name = (char *)MyMalloc(HOSTLEN + 1);
++		request->name = (char *)rb_malloc(HOSTLEN + 1);
+ 	}
+ 
+ 	if (addr->ss_family == AF_INET)
+@@ -834,7 +831,7 @@
+ 			 */
+ 			reply = make_dnsreply(request);
+ 			(*request->query->callback) (request->query->ptr, reply);
+-			MyFree(reply);
++			rb_free(reply);
+ 			rem_request(request);
+ 		}
+ 	}
+@@ -851,7 +848,7 @@
+ 	struct DNSReply *cp;
+ 	s_assert(request != 0);
+ 
+-	cp = (struct DNSReply *)MyMalloc(sizeof(struct DNSReply));
++	cp = (struct DNSReply *)rb_malloc(sizeof(struct DNSReply));
+ 
+ 	cp->h_name = request->name;
+ 	memcpy(&cp->addr, &request->addr, sizeof(cp->addr));
+diff -r a44630997728 src/reslib.c
+--- a/src/reslib.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/reslib.c	Wed Apr 02 04:03:18 2008 +0400
+@@ -84,11 +84,8 @@
+ #include "ircd_defs.h"
+ #include "common.h"
+ #include "ircd.h"
+-#include "commio.h"
+ #include "res.h"
+ #include "reslib.h"
+-#include "tools.h"
+-#include "event.h"
+ #include "irc_string.h"
+ #include "sprintf_irc.h"
+ 
+diff -r a44630997728 src/restart.c
+--- a/src/restart.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/restart.c	Wed Apr 02 04:03:18 2008 +0400
+@@ -25,14 +25,12 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "restart.h"
+ #include "common.h"
+ #include "ircd.h"
+ #include "send.h"
+ #include "s_log.h"
+ #include "client.h"		/* for FLAGS_ALL */
+-#include "memory.h"
+ 
+ /* external var */
+ extern char **myargv;
+diff -r a44630997728 src/s_auth.c
+--- a/src/s_auth.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/s_auth.c	Wed Apr 02 04:03:18 2008 +0400
+@@ -35,23 +35,19 @@
+  */
+ #include "stdinc.h"
+ #include "config.h"
+-#include "tools.h"
+ #include "s_auth.h"
+ #include "s_conf.h"
+ #include "client.h"
+ #include "common.h"
+-#include "event.h"
+ #include "irc_string.h"
+ #include "sprintf_irc.h"
+ #include "ircd.h"
+ #include "numeric.h"
+ #include "packet.h"
+ #include "res.h"
+-#include "commio.h"
+ #include "s_log.h"
+ #include "s_stats.h"
+ #include "send.h"
+-#include "memory.h"
+ #include "hook.h"
+ #include "blacklist.h"
+ 
+@@ -120,7 +116,7 @@
+ 	client->localClient->auth_request = request;
+ 	request->fd = -1;
+ 	request->client = client;
+-	request->timeout = CurrentTime + ConfigFileEntry.connect_timeout;
++	request->timeout = rb_current_time() + ConfigFileEntry.connect_timeout;
+ 	return request;
+ }
+ 
+@@ -437,7 +433,7 @@
+ 	{
+ 		auth = ptr->data;
+ 
+-		if(auth->timeout < CurrentTime)
++		if(auth->timeout < rb_current_time())
+ 		{
+ 			if(auth->fd >= 0)
+ 				rb_close(auth->fd);
+@@ -456,7 +452,7 @@
+ 				sendheader(auth->client, REPORT_FAIL_DNS);
+ 			}
+ 
+-			auth->client->localClient->lasttime = CurrentTime;
++			auth->client->localClient->lasttime = rb_current_time();
+ 			release_auth_client(auth);
+ 		}
+ 	}
+diff -r a44630997728 src/s_conf.c
+--- a/src/s_conf.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/s_conf.c	Wed Apr 02 04:03:18 2008 +0400
+@@ -26,7 +26,6 @@
+ 
+ #include "stdinc.h"
+ #include "ircd_defs.h"
+-#include "tools.h"
+ #include "s_conf.h"
+ #include "s_newconf.h"
+ #include "s_serv.h"
+@@ -35,7 +34,6 @@
+ #include "class.h"
+ #include "client.h"
+ #include "common.h"
+-#include "event.h"
+ #include "hash.h"
+ #include "irc_string.h"
+ #include "sprintf_irc.h"
+@@ -44,12 +42,9 @@
+ #include "hostmask.h"
+ #include "modules.h"
+ #include "numeric.h"
+-#include "commio.h"
+ #include "s_log.h"
+ #include "send.h"
+ #include "s_gline.h"
+-#include "memory.h"
+-#include "balloc.h"
+ #include "patricia.h"
+ #include "reject.h"
+ #include "cache.h"
+@@ -144,12 +139,12 @@
+ 	if(aconf->spasswd)
+ 		memset(aconf->spasswd, 0, strlen(aconf->spasswd));
+ 
+-	MyFree(aconf->passwd);
+-	MyFree(aconf->spasswd);
+-	MyFree(aconf->name);
+-	MyFree(aconf->className);
+-	MyFree(aconf->user);
+-	MyFree(aconf->host);
++	rb_free(aconf->passwd);
++	rb_free(aconf->spasswd);
++	rb_free(aconf->name);
++	rb_free(aconf->className);
++	rb_free(aconf->user);
++	rb_free(aconf->host);
+ 
+ 	BlockHeapFree(confitem_heap, aconf);
+ }
+@@ -722,8 +717,8 @@
+ 	/* ServerInfo.name is not rehashable */
+ 	/* ServerInfo.name = ServerInfo.name; */
+ 	ServerInfo.description = NULL;
+-	DupString(ServerInfo.network_name, NETWORK_NAME_DEFAULT);
+-	DupString(ServerInfo.network_desc, NETWORK_DESC_DEFAULT);
++	ServerInfo.network_name = rb_strdup(NETWORK_NAME_DEFAULT);
++	ServerInfo.network_desc = rb_strdup(NETWORK_DESC_DEFAULT);
+ 
+ 	memset(&ServerInfo.ip, 0, sizeof(ServerInfo.ip));
+ 	ServerInfo.specific_ipv4_vhost = 0;
+@@ -738,9 +733,9 @@
+ 	AdminInfo.email = NULL;
+ 	AdminInfo.description = NULL;
+ 
+-	DupString(ConfigFileEntry.default_operstring, "is an IRC operator");
+-	DupString(ConfigFileEntry.default_adminstring, "is a Server Administrator");
+-	DupString(ConfigFileEntry.servicestring, "is a Network Service");
++	ConfigFileEntry.default_operstring = rb_strdup("is an IRC operator");
++	ConfigFileEntry.default_adminstring = rb_strdup("is a Server Administrator");
++	ConfigFileEntry.servicestring = rb_strdup("is a Network Service");
+ 
+ 	ConfigFileEntry.default_umodes = UMODE_INVISIBLE;	
+ 	ConfigFileEntry.failed_oper_notice = YES;
+@@ -794,7 +789,7 @@
+ 	ConfigFileEntry.hide_error_messages = 1;
+ 	ConfigFileEntry.dots_in_ident = 0;
+ 	ConfigFileEntry.max_targets = MAX_TARGETS_DEFAULT;
+-	DupString(ConfigFileEntry.servlink_path, SLPATH);
++	ConfigFileEntry.servlink_path = rb_strdup(SLPATH);
+ 	ConfigFileEntry.egdpool_path = NULL;
+ 	ConfigFileEntry.use_whois_actually = YES;
+ 	ConfigFileEntry.burst_away = NO;
+@@ -880,13 +875,13 @@
+ 		ConfigFileEntry.ts_max_delta = TS_MAX_DELTA_DEFAULT;
+ 
+ 	if(ConfigFileEntry.servlink_path == NULL)
+-		DupString(ConfigFileEntry.servlink_path, SLPATH);
++		ConfigFileEntry.servlink_path = rb_strdup(SLPATH);
+ 
+ 	if(ServerInfo.network_name == NULL)
+-		DupString(ServerInfo.network_name, NETWORK_NAME_DEFAULT);
++		ServerInfo.network_name = rb_strdup(NETWORK_NAME_DEFAULT);
+ 
+ 	if(ServerInfo.network_desc == NULL)
+-		DupString(ServerInfo.network_desc, NETWORK_DESC_DEFAULT);
++		ServerInfo.network_desc = rb_strdup(NETWORK_DESC_DEFAULT);
+ 
+ 	if((ConfigFileEntry.client_flood < CLIENT_FLOOD_MIN) ||
+ 	   (ConfigFileEntry.client_flood > CLIENT_FLOOD_MAX))
+@@ -940,17 +935,17 @@
+ void
+ add_temp_kline(struct ConfItem *aconf)
+ {
+-	if(aconf->hold >= CurrentTime + (10080 * 60))
++	if(aconf->hold >= rb_current_time() + (10080 * 60))
+ 	{
+ 		rb_dlinkAddAlloc(aconf, &temp_klines[TEMP_WEEK]);
+ 		aconf->port = TEMP_WEEK;
+ 	}
+-	else if(aconf->hold >= CurrentTime + (1440 * 60))
++	else if(aconf->hold >= rb_current_time() + (1440 * 60))
+ 	{
+ 		rb_dlinkAddAlloc(aconf, &temp_klines[TEMP_DAY]);
+ 		aconf->port = TEMP_DAY;
+ 	}
+-	else if(aconf->hold >= CurrentTime + (60 * 60))
++	else if(aconf->hold >= rb_current_time() + (60 * 60))
+ 	{
+ 		rb_dlinkAddAlloc(aconf, &temp_klines[TEMP_HOUR]);
+ 		aconf->port = TEMP_HOUR;
+@@ -974,17 +969,17 @@
+ void
+ add_temp_dline(struct ConfItem *aconf)
+ {
+-	if(aconf->hold >= CurrentTime + (10080 * 60))
++	if(aconf->hold >= rb_current_time() + (10080 * 60))
+ 	{
+ 		rb_dlinkAddAlloc(aconf, &temp_dlines[TEMP_WEEK]);
+ 		aconf->port = TEMP_WEEK;
+ 	}
+-	else if(aconf->hold >= CurrentTime + (1440 * 60))
++	else if(aconf->hold >= rb_current_time() + (1440 * 60))
+ 	{
+ 		rb_dlinkAddAlloc(aconf, &temp_dlines[TEMP_DAY]);
+ 		aconf->port = TEMP_DAY;
+ 	}
+-	else if(aconf->hold >= CurrentTime + (60 * 60))
++	else if(aconf->hold >= rb_current_time() + (60 * 60))
+ 	{
+ 		rb_dlinkAddAlloc(aconf, &temp_dlines[TEMP_HOUR]);
+ 		aconf->port = TEMP_HOUR;
+@@ -1017,7 +1012,7 @@
+ 	{
+ 		aconf = ptr->data;
+ 
+-		if(aconf->hold <= CurrentTime)
++		if(aconf->hold <= rb_current_time())
+ 		{
+ 			/* Alert opers that a TKline expired - Hwy */
+ 			if(ConfigFileEntry.tkline_expire_notices)
+@@ -1042,7 +1037,7 @@
+ 	{
+ 		aconf = ptr->data;
+ 
+-		if(aconf->hold < (CurrentTime + (60 * 60)))
++		if(aconf->hold < (rb_current_time() + (60 * 60)))
+ 		{
+ 			rb_dlinkMoveNode(ptr, list, (aconf->status == CONF_KILL) ? 
+ 					&temp_klines[TEMP_MIN] : &temp_dlines[TEMP_MIN]);
+@@ -1050,14 +1045,14 @@
+ 		}
+ 		else if(aconf->port > TEMP_HOUR)
+ 		{
+-			if(aconf->hold < (CurrentTime + (1440 * 60)))
++			if(aconf->hold < (rb_current_time() + (1440 * 60)))
+ 			{
+ 				rb_dlinkMoveNode(ptr, list, (aconf->status == CONF_KILL) ? 
+ 						&temp_klines[TEMP_HOUR] : &temp_dlines[TEMP_HOUR]);
+ 				aconf->port = TEMP_HOUR;
+ 			}
+ 			else if(aconf->port > TEMP_DAY && 
+-				(aconf->hold < (CurrentTime + (10080 * 60))))
++				(aconf->hold < (rb_current_time() + (10080 * 60))))
+ 			{
+ 				rb_dlinkMoveNode(ptr, list, (aconf->status == CONF_KILL) ? 
+ 						&temp_klines[TEMP_DAY] : &temp_dlines[TEMP_DAY]);
+@@ -1198,9 +1193,9 @@
+ {
+ 	struct alias_entry *aptr = ptr->data;
+ 
+-	MyFree(aptr->name);
+-	MyFree(aptr->target);
+-	MyFree(aptr);
++	rb_free(aptr->name);
++	rb_free(aptr->target);
++	rb_free(aptr);
+ }
+ 
+ /*
+@@ -1238,19 +1233,19 @@
+ #endif
+ 
+ 	/* clean out ServerInfo */
+-	MyFree(ServerInfo.description);
++	rb_free(ServerInfo.description);
+ 	ServerInfo.description = NULL;
+-	MyFree(ServerInfo.network_name);
++	rb_free(ServerInfo.network_name);
+ 	ServerInfo.network_name = NULL;
+-	MyFree(ServerInfo.network_desc);
++	rb_free(ServerInfo.network_desc);
+ 	ServerInfo.network_desc = NULL;
+ 
+ 	/* clean out AdminInfo */
+-	MyFree(AdminInfo.name);
++	rb_free(AdminInfo.name);
+ 	AdminInfo.name = NULL;
+-	MyFree(AdminInfo.email);
++	rb_free(AdminInfo.email);
+ 	AdminInfo.email = NULL;
+-	MyFree(AdminInfo.description);
++	rb_free(AdminInfo.description);
+ 	AdminInfo.description = NULL;
+ 
+ 	/* operator{} and class{} blocks are freed above */
+@@ -1262,12 +1257,12 @@
+ 	 */
+ 
+ 	/* clean out general */
+-	MyFree(ConfigFileEntry.servlink_path);
++	rb_free(ConfigFileEntry.servlink_path);
+ 	ConfigFileEntry.servlink_path = NULL;
+ 
+ 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, service_list.head)
+ 	{
+-		MyFree(ptr->data);
++		rb_free(ptr->data);
+ 		rb_dlinkDestroy(ptr, &service_list);
+ 	}
+ 
+@@ -1382,18 +1377,18 @@
+ 		rb_snprintf(buffer, sizeof(buffer),
+ 			   "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",%ld\n",
+ 			   user, host, reason, oper_reason, current_date,
+-			   get_oper_name(source_p), CurrentTime);
++			   get_oper_name(source_p), rb_current_time());
+ 	}
+ 	else if(type == DLINE_TYPE)
+ 	{
+ 		rb_snprintf(buffer, sizeof(buffer),
+ 			   "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",%ld\n", host,
+-			   reason, oper_reason, current_date, get_oper_name(source_p), CurrentTime);
++			   reason, oper_reason, current_date, get_oper_name(source_p), rb_current_time());
+ 	}
+ 	else if(type == RESV_TYPE)
+ 	{
+ 		rb_snprintf(buffer, sizeof(buffer), "\"%s\",\"%s\",\"%s\",%ld\n",
+-			   host, reason, get_oper_name(source_p), CurrentTime);
++			   host, reason, get_oper_name(source_p), rb_current_time());
+ 	}
+ 
+ 	if(fputs(buffer, out) == -1)
+@@ -1449,7 +1444,7 @@
+ {
+ 	if(aconf->className == NULL)
+ 	{
+-		DupString(aconf->className, "default");
++		aconf->className = rb_strdup("default");
+ 		ClassPtr(aconf) = default_class;
+ 		return;
+ 	}
+@@ -1465,16 +1460,16 @@
+ 					     aconf->className, aconf->user, aconf->host);
+ 		}
+ 
+-		MyFree(aconf->className);
+-		DupString(aconf->className, "default");
++		rb_free(aconf->className);
++		aconf->className = rb_strdup("default");
+ 		return;
+ 	}
+ 
+ 	if(ConfMaxUsers(aconf) < 0)
+ 	{
+ 		ClassPtr(aconf) = default_class;
+-		MyFree(aconf->className);
+-		DupString(aconf->className, "default");
++		rb_free(aconf->className);
++		aconf->className = rb_strdup("default");
+ 		return;
+ 	}
+ }
+diff -r a44630997728 src/s_gline.c
+--- a/src/s_gline.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/s_gline.c	Wed Apr 02 04:03:18 2008 +0400
+@@ -25,7 +25,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "channel.h"
+ #include "client.h"
+ #include "common.h"
+@@ -34,7 +33,6 @@
+ #include "ircd.h"
+ #include "hostmask.h"
+ #include "numeric.h"
+-#include "commio.h"
+ #include "s_conf.h"
+ #include "scache.h"
+ #include "send.h"
+@@ -42,8 +40,6 @@
+ #include "s_serv.h"
+ #include "s_gline.h"
+ #include "hash.h"
+-#include "event.h"
+-#include "memory.h"
+ 
+ rb_dlink_list glines;
+ 
+@@ -125,7 +121,7 @@
+ 		kill_ptr = gline_node->data;
+ 
+ 		/* these are in chronological order */
+-		if(kill_ptr->hold > CurrentTime)
++		if(kill_ptr->hold > rb_current_time())
+ 			break;
+ 
+ 		rb_dlinkDestroy(gline_node, &glines);
+@@ -155,12 +151,12 @@
+ 		glp_ptr = pending_node->data;
+ 
+ 		if(((glp_ptr->last_gline_time + GLINE_PENDING_EXPIRE) <=
+-		    CurrentTime) || find_is_glined(glp_ptr->host, glp_ptr->user))
++		    rb_current_time()) || find_is_glined(glp_ptr->host, glp_ptr->user))
+ 
+ 		{
+-			MyFree(glp_ptr->reason1);
+-			MyFree(glp_ptr->reason2);
+-			MyFree(glp_ptr);
++			rb_free(glp_ptr->reason1);
++			rb_free(glp_ptr->reason2);
++			rb_free(glp_ptr);
+ 			rb_dlinkDestroy(pending_node, &pending_glines);
+ 		}
+ 	}
+diff -r a44630997728 src/s_log.c
+--- a/src/s_log.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/s_log.c	Wed Apr 02 04:03:18 2008 +0400
+@@ -210,7 +210,7 @@
+ {
+ 	static char buf[MAX_DATE_STRING];
+ 	struct tm *lt;
+-	time_t ltime = CurrentTime;
++	time_t ltime = rb_current_time();
+ 
+ 	lt = localtime(&ltime);
+ 
+diff -r a44630997728 src/s_newconf.c
+--- a/src/s_newconf.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/s_newconf.c	Wed Apr 02 04:03:18 2008 +0400
+@@ -37,16 +37,12 @@
+ #include "common.h"
+ #include "s_conf.h"
+ #include "s_newconf.h"
+-#include "tools.h"
+ #include "client.h"
+-#include "memory.h"
+ #include "s_serv.h"
+ #include "send.h"
+ #include "hostmask.h"
+ #include "newconf.h"
+ #include "hash.h"
+-#include "balloc.h"
+-#include "event.h"
+ #include "sprintf_irc.h"
+ #include "irc_dictionary.h"
+ 
+@@ -157,7 +153,7 @@
+ struct remote_conf *
+ make_remote_conf(void)
+ {
+-	struct remote_conf *remote_p = MyMalloc(sizeof(struct remote_conf));
++	struct remote_conf *remote_p = rb_malloc(sizeof(struct remote_conf));
+ 	return remote_p;
+ }
+ 
+@@ -168,10 +164,10 @@
+ 	if(remote_p == NULL)
+ 		return;
+ 
+-	MyFree(remote_p->username);
+-	MyFree(remote_p->host);
+-	MyFree(remote_p->server);
+-	MyFree(remote_p);
++	rb_free(remote_p->username);
++	rb_free(remote_p->host);
++	rb_free(remote_p->server);
++	rb_free(remote_p);
+ }
+ 
+ int
+@@ -250,7 +246,7 @@
+ struct oper_conf *
+ make_oper_conf(void)
+ {
+-	struct oper_conf *oper_p = MyMalloc(sizeof(struct oper_conf));
++	struct oper_conf *oper_p = rb_malloc(sizeof(struct oper_conf));
+ 	return oper_p;
+ }
+ 
+@@ -261,24 +257,24 @@
+ 	if(oper_p == NULL)
+ 		return;
+ 
+-	MyFree(oper_p->username);
+-	MyFree(oper_p->host);
+-	MyFree(oper_p->name);
++	rb_free(oper_p->username);
++	rb_free(oper_p->host);
++	rb_free(oper_p->name);
+ 
+ 	if(oper_p->passwd)
+ 	{
+ 		memset(oper_p->passwd, 0, strlen(oper_p->passwd));
+-		MyFree(oper_p->passwd);
++		rb_free(oper_p->passwd);
+ 	}
+ 
+ #ifdef HAVE_LIBCRYPTO
+-	MyFree(oper_p->rsa_pubkey_file);
++	rb_free(oper_p->rsa_pubkey_file);
+ 
+ 	if(oper_p->rsa_pubkey)
+ 		RSA_free(oper_p->rsa_pubkey);
+ #endif
+ 
+-	MyFree(oper_p);
++	rb_free(oper_p);
+ }
+ 
+ struct oper_conf *
+@@ -373,7 +369,7 @@
+ struct server_conf *
+ make_server_conf(void)
+ {
+-	struct server_conf *server_p = MyMalloc(sizeof(struct server_conf));
++	struct server_conf *server_p = rb_malloc(sizeof(struct server_conf));
+ 	server_p->aftype = AF_INET;
+ 	return server_p;
+ }
+@@ -388,19 +384,19 @@
+ 	if(!EmptyString(server_p->passwd))
+ 	{
+ 		memset(server_p->passwd, 0, strlen(server_p->passwd));
+-		MyFree(server_p->passwd);
++		rb_free(server_p->passwd);
+ 	}
+ 
+ 	if(!EmptyString(server_p->spasswd))
+ 	{
+ 		memset(server_p->spasswd, 0, strlen(server_p->spasswd));
+-		MyFree(server_p->spasswd);
++		rb_free(server_p->spasswd);
+ 	}
+ 
+-	MyFree(server_p->name);
+-	MyFree(server_p->host);
+-	MyFree(server_p->class_name);
+-	MyFree(server_p);
++	rb_free(server_p->name);
++	rb_free(server_p->host);
++	rb_free(server_p->class_name);
++	rb_free(server_p);
+ }
+ 
+ void
+@@ -408,7 +404,7 @@
+ {
+ 	if(EmptyString(server_p->class_name))
+ 	{
+-		DupString(server_p->class_name, "default");
++		server_p->class_name = rb_strdup("default");
+ 		server_p->class = default_class;
+ 		return;
+ 	}
+@@ -420,8 +416,8 @@
+ 		conf_report_error("Warning connect::class invalid for %s",
+ 				server_p->name);
+ 
+-		MyFree(server_p->class_name);
+-		DupString(server_p->class_name, "default");
++		rb_free(server_p->class_name);
++		server_p->class_name = rb_strdup("default");
+ 	}
+ 
+ 	if(strchr(server_p->host, '*') || strchr(server_p->host, '?'))
+@@ -697,7 +693,7 @@
+ 	{
+ 		aconf = ptr->data;
+ 
+-		if(aconf->hold && aconf->hold <= CurrentTime)
++		if(aconf->hold && aconf->hold <= rb_current_time())
+ 		{
+ 			if(ConfigFileEntry.tkline_expire_notices)
+ 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+@@ -714,7 +710,7 @@
+ 	{
+ 		aconf = ptr->data;
+ 
+-		if(aconf->hold && aconf->hold <= CurrentTime)
++		if(aconf->hold && aconf->hold <= rb_current_time())
+ 		{
+ 			if(ConfigFileEntry.tkline_expire_notices)
+ 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+@@ -729,7 +725,7 @@
+ 	{
+ 		aconf = ptr->data;
+ 
+-		if(aconf->hold && aconf->hold <= CurrentTime)
++		if(aconf->hold && aconf->hold <= rb_current_time())
+ 		{
+ 			if(ConfigFileEntry.tkline_expire_notices)
+ 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+@@ -758,7 +754,7 @@
+ 	nd = BlockHeapAlloc(nd_heap);
+ 	
+ 	strlcpy(nd->name, name, sizeof(nd->name));
+-	nd->expire = CurrentTime + ConfigFileEntry.nick_delay;
++	nd->expire = rb_current_time() + ConfigFileEntry.nick_delay;
+ 
+ 	/* this list is ordered */
+ 	rb_dlinkAddTail(nd, &nd->lnode, &nd_list);
+@@ -789,7 +785,7 @@
+ 		/* this list is ordered - we can stop when we hit the first
+ 		 * entry that doesnt expire..
+ 		 */
+-		if(nd->expire > CurrentTime)
++		if(nd->expire > rb_current_time())
+ 			return;
+ 
+ 		free_nd_entry(nd);
+@@ -805,14 +801,14 @@
+ 	if(find_tgchange(host))
+ 		return;
+ 
+-	target = MyMalloc(sizeof(tgchange));
++	target = rb_malloc(sizeof(tgchange));
+ 	pnode = make_and_lookup(tgchange_tree, host);
+ 
+ 	pnode->data = target;
+ 	target->pnode = pnode;
+ 
+-	DupString(target->ip, host);
+-	target->expiry = CurrentTime + (60*60*12);
++	target->ip = rb_strdup(host);
++	target->expiry = rb_current_time() + (60*60*12);
+ 
+ 	rb_dlinkAdd(target, &target->node, &tgchange_list);
+ }
+diff -r a44630997728 src/s_serv.c
+--- a/src/s_serv.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/s_serv.c	Wed Apr 02 04:03:18 2008 +0400
+@@ -30,12 +30,10 @@
+ #include <openssl/rsa.h>
+ #endif
+ 
+-#include "tools.h"
+ #include "s_serv.h"
+ #include "class.h"
+ #include "client.h"
+ #include "common.h"
+-#include "event.h"
+ #include "hash.h"
+ #include "irc_string.h"
+ #include "sprintf_irc.h"
+@@ -44,7 +42,6 @@
+ #include "numeric.h"
+ #include "packet.h"
+ #include "res.h"
+-#include "commio.h"
+ #include "s_conf.h"
+ #include "s_newconf.h"
+ #include "s_log.h"
+@@ -53,7 +50,6 @@
+ #include "scache.h"
+ #include "send.h"
+ #include "client.h"
+-#include "memory.h"
+ #include "channel.h"		/* chcap_usage_counts stuff... */
+ #include "hook.h"
+ #include "msg.h"
+@@ -218,7 +214,7 @@
+ 			/* only bother if we haven't already got something queued... */
+ 			if(!target_p->localClient->slinkq)
+ 			{
+-				target_p->localClient->slinkq = MyMalloc(1);	/* sigh.. */
++				target_p->localClient->slinkq = rb_malloc(1);	/* sigh.. */
+ 				target_p->localClient->slinkq[0] = SLINKCMD_ZIPSTATS;
+ 				target_p->localClient->slinkq_ofs = 0;
+ 				target_p->localClient->slinkq_len = 1;
+@@ -374,7 +370,7 @@
+ 		 * made one successfull connection... [this algorithm is
+ 		 * a bit fuzzy... -- msa >;) ]
+ 		 */
+-		if(tmp_p->hold > CurrentTime)
++		if(tmp_p->hold > rb_current_time())
+ 		{
+ 			if(next > tmp_p->hold || next == 0)
+ 				next = tmp_p->hold;
+@@ -382,7 +378,7 @@
+ 		}
+ 
+ 		confrq = get_con_freq(cltmp);
+-		tmp_p->hold = CurrentTime + confrq;
++		tmp_p->hold = rb_current_time() + confrq;
+ 
+ 		/*
+ 		 * Found a CONNECT config with port specified, scan clients
+@@ -1020,7 +1016,7 @@
+ 	if(client_p->localClient->passwd)
+ 	{
+ 		memset(client_p->localClient->passwd, 0, strlen(client_p->localClient->passwd));
+-		MyFree(client_p->localClient->passwd);
++		rb_free(client_p->localClient->passwd);
+ 		client_p->localClient->passwd = NULL;
+ 	}
+ 
+@@ -1083,7 +1079,7 @@
+ 		SetServlink(client_p);
+ 	}
+ 
+-	sendto_one(client_p, "SVINFO %d %d 0 :%ld", TS_CURRENT, TS_MIN, CurrentTime);
++	sendto_one(client_p, "SVINFO %d %d 0 :%ld", TS_CURRENT, TS_MIN, rb_current_time());
+ 
+ 	client_p->servptr = &me;
+ 
+@@ -1111,13 +1107,13 @@
+ 
+ 	if(client_p->localClient->fullcaps)
+ 	{
+-		DupString(client_p->serv->fullcaps, client_p->localClient->fullcaps);
+-		MyFree(client_p->localClient->fullcaps);
++		client_p->serv->fullcaps = rb_strdup(client_p->localClient->fullcaps);
++		rb_free(client_p->localClient->fullcaps);
+ 		client_p->localClient->fullcaps = NULL;
+ 	}
+ 
+ 	client_p->serv->nameinfo = scache_connect(client_p->name, client_p->info, IsHidden(client_p));
+-	client_p->localClient->firsttime = CurrentTime;
++	client_p->localClient->firsttime = rb_current_time();
+ 	/* fixing eob timings.. -gnp */
+ 
+ 	if((rb_dlink_list_length(&lclient_list) + rb_dlink_list_length(&serv_list)) >
+@@ -1251,7 +1247,7 @@
+ 	int linecount = 0;
+ 	int linelen;
+ 
+-	iobuf = MyMalloc(256);	/* XXX: This seems arbitrary. Perhaps make it IRCD_BUFSIZE? --nenolod */
++	iobuf = rb_malloc(256);	/* XXX: This seems arbitrary. Perhaps make it IRCD_BUFSIZE? --nenolod */
+ 
+ 	if(IsCapable(server, CAP_ZIP))
+ 	{
+diff -r a44630997728 src/s_stats.c
+--- a/src/s_stats.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/s_stats.c	Wed Apr 02 04:03:18 2008 +0400
+@@ -30,9 +30,7 @@
+ #include "irc_string.h"
+ #include "ircd.h"
+ #include "numeric.h"
+-#include "commio.h"
+ #include "send.h"
+-#include "memory.h"
+ #include "s_conf.h"
+ #include "s_newconf.h"
+ #include "whowas.h"
+@@ -78,7 +76,7 @@
+ 		sp->is_sbr += target_p->localClient->receiveB;
+ 		sp->is_sks += target_p->localClient->sendK;
+ 		sp->is_skr += target_p->localClient->receiveK;
+-		sp->is_sti += CurrentTime - target_p->localClient->firsttime;
++		sp->is_sti += rb_current_time() - target_p->localClient->firsttime;
+ 		sp->is_sv++;
+ 		if(sp->is_sbs > 1023)
+ 		{
+@@ -100,7 +98,7 @@
+ 		sp->is_cbr += target_p->localClient->receiveB;
+ 		sp->is_cks += target_p->localClient->sendK;
+ 		sp->is_ckr += target_p->localClient->receiveK;
+-		sp->is_cti += CurrentTime - target_p->localClient->firsttime;
++		sp->is_cti += rb_current_time() - target_p->localClient->firsttime;
+ 		sp->is_cl++;
+ 		if(sp->is_cbs > 1023)
+ 		{
+diff -r a44630997728 src/s_user.c
+--- a/src/s_user.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/s_user.c	Wed Apr 02 04:03:18 2008 +0400
+@@ -25,7 +25,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "s_user.h"
+ #include "channel.h"
+ #include "class.h"
+@@ -38,7 +37,6 @@
+ #include "listener.h"
+ #include "msg.h"
+ #include "numeric.h"
+-#include "commio.h"
+ #include "s_conf.h"
+ #include "s_newconf.h"
+ #include "s_log.h"
+@@ -48,7 +46,6 @@
+ #include "send.h"
+ #include "supported.h"
+ #include "whowas.h"
+-#include "memory.h"
+ #include "packet.h"
+ #include "reject.h"
+ #include "cache.h"
+@@ -264,7 +261,7 @@
+ 	if(rb_dlink_list_length(&source_p->preClient->dnsbl_queries) > 0)
+ 		return -1;
+ 
+-	client_p->localClient->last = CurrentTime;
++	client_p->localClient->last = rb_current_time();
+ 	/* Straight up the maximum rate of flooding... */
+ 	source_p->localClient->allow_read = MAX_FLOOD_BURST;
+ 
+@@ -380,7 +377,7 @@
+ 		if(source_p->localClient->passwd)
+ 		{
+ 			memset(source_p->localClient->passwd, 0, strlen(source_p->localClient->passwd));
+-			MyFree(source_p->localClient->passwd);
++			rb_free(source_p->localClient->passwd);
+ 			source_p->localClient->passwd = NULL;
+ 		}
+ 	}
+@@ -676,7 +673,7 @@
+ 						source_p->localClient->passwd);
+ 		}
+ 		memset(source_p->localClient->passwd, 0, strlen(source_p->localClient->passwd));
+-		MyFree(source_p->localClient->passwd);
++		rb_free(source_p->localClient->passwd);
+ 		source_p->localClient->passwd = NULL;
+ 	}
+ 
+@@ -990,7 +987,7 @@
+ 					}
+ 					source_p->flags2 &= ~OPER_FLAGS;
+ 
+-					MyFree(source_p->localClient->opername);
++					rb_free(source_p->localClient->opername);
+ 					source_p->localClient->opername = NULL;
+ 
+ 					rb_dlinkFindDestroy(source_p, &local_oper_list);
+@@ -1277,7 +1274,7 @@
+ 	SetExemptKline(source_p);
+ 
+ 	source_p->flags2 |= oper_p->flags;
+-	DupString(source_p->localClient->opername, oper_p->name);
++	source_p->localClient->opername = rb_strdup(oper_p->name);
+ 
+ 	rb_dlinkAddAlloc(source_p, &local_oper_list);
+ 	rb_dlinkAddAlloc(source_p, &oper_list);
+diff -r a44630997728 src/scache.c
+--- a/src/scache.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/scache.c	Wed Apr 02 04:03:18 2008 +0400
+@@ -32,7 +32,6 @@
+ #include "numeric.h"
+ #include "send.h"
+ #include "scache.h"
+-#include "memory.h"
+ #include "s_conf.h"
+ 
+ 
+@@ -100,13 +99,13 @@
+ 			return ptr;
+ 	}
+ 
+-	ptr = (struct scache_entry *) MyMalloc(sizeof(struct scache_entry));
++	ptr = (struct scache_entry *) rb_malloc(sizeof(struct scache_entry));
+ 	s_assert(0 != ptr);
+ 
+ 	strlcpy(ptr->name, name, sizeof(ptr->name));
+ 	ptr->info[0] = '\0';
+ 	ptr->flags = 0;
+-	ptr->known_since = CurrentTime;
++	ptr->known_since = rb_current_time();
+ 	ptr->last_connect = 0;
+ 	ptr->last_split = 0;
+ 
+@@ -127,7 +126,7 @@
+ 		ptr->flags |= SC_HIDDEN;
+ 	else
+ 		ptr->flags &= ~SC_HIDDEN;
+-	ptr->last_connect = CurrentTime;
++	ptr->last_connect = rb_current_time();
+ 	return ptr;
+ }
+ 
+@@ -137,7 +136,7 @@
+ 	if (ptr == NULL)
+ 		return;
+ 	ptr->flags &= ~SC_ONLINE;
+-	ptr->last_split = CurrentTime;
++	ptr->last_split = rb_current_time();
+ }
+ 
+ const char *scache_get_name(struct scache_entry *ptr)
+@@ -169,9 +168,9 @@
+ 					!ConfigServerHide.disable_hidden)
+ 				show = FALSE;
+ 			else if (scache_ptr->flags & SC_ONLINE)
+-				show = scache_ptr->known_since < CurrentTime - ConfigServerHide.links_delay;
++				show = scache_ptr->known_since < rb_current_time() - ConfigServerHide.links_delay;
+ 			else
+-				show = scache_ptr->last_split > CurrentTime - ConfigServerHide.links_delay && scache_ptr->last_split - scache_ptr->known_since > ConfigServerHide.links_delay;
++				show = scache_ptr->last_split > rb_current_time() - ConfigServerHide.links_delay && scache_ptr->last_split - scache_ptr->known_since > ConfigServerHide.links_delay;
+ 			if (show)
+ 				sendto_one_numeric(source_p, RPL_LINKS, form_str(RPL_LINKS), 
+ 						   scache_ptr->name, me.name, 1, scache_ptr->info);
+@@ -204,7 +203,7 @@
+ 		scache_ptr = scache_hash[i];
+ 		while (scache_ptr)
+ 		{
+-			if (!(scache_ptr->flags & SC_ONLINE) && scache_ptr->last_split > CurrentTime - MISSING_TIMEOUT)
++			if (!(scache_ptr->flags & SC_ONLINE) && scache_ptr->last_split > rb_current_time() - MISSING_TIMEOUT)
+ 				sendto_one_numeric(source_p, RPL_MAP, "** %s (recently split)", 
+ 						   scache_ptr->name);
+ 
+diff -r a44630997728 src/send.c
+--- a/src/send.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/send.c	Wed Apr 02 04:03:18 2008 +0400
+@@ -25,7 +25,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "send.h"
+ #include "channel.h"
+ #include "class.h"
+@@ -34,14 +33,11 @@
+ #include "irc_string.h"
+ #include "ircd.h"
+ #include "numeric.h"
+-#include "commio.h"
+ #include "s_serv.h"
+ #include "sprintf_irc.h"
+ #include "s_conf.h"
+ #include "s_newconf.h"
+-#include "linebuf.h"
+ #include "s_log.h"
+-#include "memory.h"
+ #include "hook.h"
+ #include "monitor.h"
+ 
+@@ -267,7 +263,7 @@
+ 			else
+ 			{
+ 				to->localClient->slinkq_ofs = 0;
+-				MyFree(to->localClient->slinkq);
++				rb_free(to->localClient->slinkq);
+ 				to->localClient->slinkq = NULL;
+ 			}
+ 		}
+diff -r a44630997728 src/substitution.c
+--- a/src/substitution.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/substitution.c	Wed Apr 02 04:03:18 2008 +0400
+@@ -34,8 +34,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+-#include "balloc.h"
+ #include "s_user.h"
+ #include "irc_string.h"
+ 
+@@ -59,10 +57,10 @@
+  */
+ void substitution_append_var(rb_dlink_list *varlist, const char *name, const char *value)
+ {
+-	struct substitution_variable *tmp = MyMalloc(sizeof(struct substitution_variable));
++	struct substitution_variable *tmp = rb_malloc(sizeof(struct substitution_variable));
+ 
+-	DupString(tmp->name, name);
+-	DupString(tmp->value, value);
++	tmp->name = rb_strdup(name);
++	tmp->value = rb_strdup(value);
+ 
+ 	rb_dlinkAddAlloc(tmp, varlist);
+ }
+@@ -83,9 +81,9 @@
+ 		struct substitution_variable *tmp = (struct substitution_variable *) nptr->data;
+ 
+ 		rb_dlinkDelete(nptr, varlist);
+-		MyFree(tmp->name);
+-		MyFree(tmp->value);
+-		MyFree(tmp);
++		rb_free(tmp->name);
++		rb_free(tmp->value);
++		rb_free(tmp);
+ 	}
+ }
+ 
+diff -r a44630997728 src/supported.c
+--- a/src/supported.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/supported.c	Wed Apr 02 04:03:18 2008 +0400
+@@ -81,7 +81,6 @@
+  */
+ 
+ #include "stdinc.h"
+-#include "tools.h"
+ #include "client.h"
+ #include "common.h"
+ #include "numeric.h"
+@@ -104,7 +103,7 @@
+ {
+ 	struct isupportitem *item;
+ 
+-	item = MyMalloc(sizeof(struct isupportitem));
++	item = rb_malloc(sizeof(struct isupportitem));
+ 	item->name = name;
+ 	item->func = func;
+ 	item->param = param;
+@@ -124,7 +123,7 @@
+ 		if (!strcmp(item->name, name))
+ 		{
+ 			rb_dlinkDelete(ptr, &isupportlist);
+-			MyFree(item);
++			rb_free(item);
+ 		}
+ 	}
+ }
+diff -r a44630997728 src/whowas.c
+--- a/src/whowas.c	Wed Apr 02 00:10:51 2008 +0200
++++ b/src/whowas.c	Wed Apr 02 04:03:18 2008 +0400
+@@ -38,7 +38,6 @@
+ #include "s_user.h"
+ #include "send.h"
+ #include "s_conf.h"
+-#include "memory.h"
+ #include "scache.h"
+ 
+ /* internally defined function */
+@@ -73,7 +72,7 @@
+ 		del_whowas_from_list(&WHOWASHASH[who->hashv], who);
+ 	}
+ 	who->hashv = hash_whowas_name(client_p->name);
+-	who->logoff = CurrentTime;
++	who->logoff = rb_current_time();
+ 	/*
+ 	 * NOTE: strcpy ok here, the sizes in the client struct MUST
+ 	 * match the sizes in the whowas struct
+@@ -119,7 +118,7 @@
+ 	struct Whowas *temp;
+ 	int blah;
+ 
+-	timelimit = CurrentTime - timelimit;
++	timelimit = rb_current_time() - timelimit;
+ 	blah = hash_whowas_name(nick);
+ 	temp = WHOWASHASH[blah];
+ 	for (; temp; temp = temp->next)
