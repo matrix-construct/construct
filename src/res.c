@@ -84,7 +84,7 @@ struct reslist
 	struct DNSQuery *query;	/* query callback for this request */
 };
 
-static int res_fd;
+static rb_fde_t *res_fd;
 static rb_dlink_list request_list = { NULL, NULL, 0 };
 
 static void rem_request(struct reslist *request);
@@ -215,6 +215,8 @@ static void timeout_resolver(void *notused)
 	timeout_query_list(rb_current_time());
 }
 
+static struct ev_entry *timeout_resolver_ev = NULL;
+
 /*
  * start_resolver - do everything we need to read the resolv.conf file
  * and initialize the resolver file descriptor if needed
@@ -226,12 +228,12 @@ static void start_resolver(void)
 	if (res_fd <= 0)	/* there isn't any such thing as fd 0, that's just a myth. */
 	{
 		if ((res_fd = rb_socket(irc_nsaddr_list[0].ss_family, SOCK_DGRAM, 0,
-			       "UDP resolver socket")) == -1)
+			       "UDP resolver socket")) == NULL)
 			return;
 
 		/* At the moment, the resolver FD data is global .. */
-		rb_setselect(res_fd, FDLIST_NONE, COMM_SELECT_READ, res_readreply, NULL, 0);
-		rb_event_add("timeout_resolver", timeout_resolver, NULL, 1);
+		rb_setselect(res_fd, RB_SELECT_READ, res_readreply, NULL);
+		timeout_resolver_ev = rb_event_add("timeout_resolver", timeout_resolver, NULL, 1);
 	}
 }
 
@@ -252,8 +254,8 @@ void init_resolver(void)
 void restart_resolver(void)
 {
 	rb_close(res_fd);
-	res_fd = -1;
-	eventDelete(timeout_resolver, NULL);	/* -ddosen */
+	res_fd = NULL;
+	rb_event_delete(timeout_resolver_ev);	/* -ddosen */
 	start_resolver();
 }
 
@@ -351,9 +353,9 @@ static int send_res_msg(const char *msg, int len, int rcount)
 
 	for (i = 0; sent < max_queries && i < irc_nscount; i++)
 	{
-		if (sendto(res_fd, msg, len, 0,
+		if (sendto(rb_get_fd(res_fd), msg, len, 0,
 		     (struct sockaddr *)&(irc_nsaddr_list[i]), 
-				GET_SS_LEN(irc_nsaddr_list[i])) == len)
+				GET_SS_LEN(&irc_nsaddr_list[i])) == len)
 			++sent;
 	}
 
@@ -651,7 +653,7 @@ static int proc_answer(struct reslist *request, HEADER * header, char *buf, char
 			  if (rd_length != sizeof(struct in_addr))
 				  return (0);
 			  v4 = (struct sockaddr_in *)&request->addr;
-			  SET_SS_LEN(request->addr, sizeof(struct sockaddr_in));
+			  SET_SS_LEN(&request->addr, sizeof(struct sockaddr_in));
 			  v4->sin_family = AF_INET;
 			  memcpy(&v4->sin_addr, current, sizeof(struct in_addr));
 			  return (1);
@@ -662,7 +664,7 @@ static int proc_answer(struct reslist *request, HEADER * header, char *buf, char
 				  return (0);
 			  if (rd_length != sizeof(struct in6_addr))
 				  return (0);
-			  SET_SS_LEN(request->addr, sizeof(struct sockaddr_in6));
+			  SET_SS_LEN(&request->addr, sizeof(struct sockaddr_in6));
 			  v6 = (struct sockaddr_in6 *)&request->addr;
 			  v6->sin6_family = AF_INET6;
 			  memcpy(&v6->sin6_addr, current, sizeof(struct in6_addr));
@@ -718,7 +720,7 @@ static int proc_answer(struct reslist *request, HEADER * header, char *buf, char
 /*
  * res_readreply - read a dns reply from the nameserver and process it.
  */
-static void res_readreply(int fd, void *data)
+static void res_readreply(rb_fde_t *F, void *data)
 {
 	char buf[sizeof(HEADER) + MAXPACKET]
 		/* Sparc and alpha need 16bit-alignment for accessing header->id 
@@ -737,12 +739,12 @@ static void res_readreply(int fd, void *data)
 	socklen_t len = sizeof(struct rb_sockaddr_storage);
 	struct rb_sockaddr_storage lsin;
 
-	rc = recvfrom(fd, buf, sizeof(buf), 0, (struct sockaddr *)&lsin, &len);
+	rc = recvfrom(rb_get_fd(F), buf, sizeof(buf), 0, (struct sockaddr *)&lsin, &len);
 
 	/* Re-schedule a read *after* recvfrom, or we'll be registering
 	 * interest where it'll instantly be ready for read :-) -- adrian
 	 */
-	rb_setselect(fd, FDLIST_NONE, COMM_SELECT_READ, res_readreply, NULL, 0);
+	rb_setselect(F, RB_SELECT_READ, res_readreply, NULL);
 	/* Better to cast the sizeof instead of rc */
 	if (rc <= (int)(sizeof(HEADER)))
 		return;
