@@ -34,6 +34,7 @@
 #include "match.h"
 #include "hook.h"
 #include "send.h"
+#include "common.h"
 
 static char readBuf[READBUF_SIZE];
 static void client_dopacket(struct Client *client_p, char *buffer, size_t length);
