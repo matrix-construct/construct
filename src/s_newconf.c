@@ -63,13 +63,16 @@ static rb_bh *nd_heap = NULL;
 static void expire_temp_rxlines(void *unused);
 static void expire_nd_entries(void *unused);
 
+struct ev_entry *expire_nd_entries_ev = NULL;
+struct ev_entry *expire_temp_rxlines_ev = NULL;
+
 void
 init_s_newconf(void)
 {
-	tgchange_tree = New_Patricia(PATRICIA_BITS);
-	nd_heap = rb_bh_create(sizeof(struct nd_entry), ND_HEAP_SIZE);
-	eventAddIsh("expire_nd_entries", expire_nd_entries, NULL, 30);
-	eventAddIsh("expire_temp_rxlines", expire_temp_rxlines, NULL, 60);
+	tgchange_tree = rb_new_patricia(PATRICIA_BITS);
+	nd_heap = rb_bh_create(sizeof(struct nd_entry), ND_HEAP_SIZE, "nd_heap");
+	expire_nd_entries_ev = rb_event_addish("expire_nd_entries", expire_nd_entries, NULL, 30);
+	expire_temp_rxlines_ev = rb_event_addish("expire_temp_rxlines", expire_temp_rxlines, NULL, 60);
 }
 
 void
@@ -203,7 +206,7 @@ propagate_generic(struct Client *source_p, const char *command,
 	va_list args;
 
 	va_start(args, format);
-	ircvsnprintf(buffer, sizeof(buffer), format, args);
+	rb_vsnprintf(buffer, sizeof(buffer), format, args);
 	va_end(args);
 
 	sendto_match_servs(source_p, target, cap, NOCAPS,
@@ -224,7 +227,7 @@ cluster_generic(struct Client *source_p, const char *command,
 	rb_dlink_node *ptr;
 
 	va_start(args, format);
-	ircvsnprintf(buffer, sizeof(buffer), format, args);
+	rb_vsnprintf(buffer, sizeof(buffer), format, args);
 	va_end(args);
 
 	RB_DLINK_FOREACH(ptr, cluster_conf_list.head)
@@ -796,7 +799,7 @@ void
 add_tgchange(const char *host)
 {
 	tgchange *target;
-	patricia_node_t *pnode;
+	rb_patricia_node_t *pnode;
 
 	if(find_tgchange(host))
 		return;
@@ -816,9 +819,9 @@ add_tgchange(const char *host)
 tgchange *
 find_tgchange(const char *host)
 {
-	patricia_node_t *pnode;
+	rb_patricia_node_t *pnode;
 
-	if((pnode = match_exact_string(tgchange_tree, host)))
+	if((pnode = rb_match_exact_string(tgchange_tree, host)))
 		return pnode->data;
 
 	return NULL;
