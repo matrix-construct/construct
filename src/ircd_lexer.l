@@ -38,7 +38,7 @@
 #include "ircd_defs.h"
 #include "common.h"
 #include "config.h"
-#include "s_log.h"
+#include "logger.h"
 #include "s_conf.h"
 #include "newconf.h"
 
