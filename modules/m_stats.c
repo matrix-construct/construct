@@ -1130,6 +1130,7 @@ stats_ziplinks (struct Client *source_p)
 	rb_dlink_node *ptr;
 	struct Client *target_p;
 	int sent_data = 0;
+	char buf[128], buf1[128];
 
 	RB_DLINK_FOREACH (ptr, serv_list.head)
 	{
@@ -1143,13 +1144,16 @@ stats_ziplinks (struct Client *source_p)
 			struct ZipStats zipstats;
 			memcpy (&zipstats, &target_p->localClient->zipstats,
 				sizeof (struct ZipStats)); 
+			snprintf(buf, sizeof buf, "%.2f%%", zipstats.out_ratio);
+			snprintf(buf1, sizeof buf1, "%.2f%%", zipstats.in_ratio);
+
 			sendto_one_numeric(source_p, RPL_STATSDEBUG,
-					    "Z :ZipLinks stats for %s send[%.2f%% compression "
-					    "(%lu kB data/%lu kB wire)] recv[%.2f%% compression "
+					    "Z :ZipLinks stats for %s send[%s compression "
+					    "(%lu kB data/%lu kB wire)] recv[%s compression "
 					    "(%lu kB data/%lu kB wire)]",
 					    target_p->name,
-					    zipstats.out_ratio, zipstats.outK, zipstats.outK_wire,
-					    zipstats.in_ratio, zipstats.inK, zipstats.inK_wire);
+					    buf, zipstats.outK, zipstats.outK_wire,
+					    buf1, zipstats.inK, zipstats.inK_wire);
 			sent_data++;
 		}
 	}
@@ -1166,6 +1170,7 @@ stats_servlinks (struct Client *source_p)
 	struct Client *target_p;
 	rb_dlink_node *ptr;
 	int j = 0;
+	char buf[128];
 
 	if(ConfigServerHide.flatten_links && !IsOper (source_p) &&
 	   !IsExemptShide(source_p))
@@ -1202,25 +1207,26 @@ stats_servlinks (struct Client *source_p)
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			   "? :%u total server(s)", j);
 
+	snprintf(buf, sizeof buf, "%7.2f", _GMKv ((sendK)));
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			   "? :Sent total : %7.2f %s",
-			   _GMKv (sendK), _GMKs (sendK));
+			   "? :Sent total : %s %s",
+			   buf, _GMKs (sendK));
+	snprintf(buf, sizeof buf, "%7.2f", _GMKv ((receiveK)));
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			   "? :Recv total : %7.2f %s",
-			   _GMKv (receiveK), _GMKs (receiveK));
+			   "? :Recv total : %s %s",
+			   buf, _GMKs (receiveK));
 
 	uptime = (rb_current_time() - startup_time);
-
-	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			   "? :Server send: %7.2f %s (%4.1f K/s)",
+	snprintf(buf, sizeof buf, "%7.2f %s (%4.1f K/s)",
 			   _GMKv (me.localClient->sendK), 
 			   _GMKs (me.localClient->sendK),
 			   (float) ((float) me.localClient->sendK / (float) uptime));
-	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			   "? :Server recv: %7.2f %s (%4.1f K/s)",
+	sendto_one_numeric(source_p, RPL_STATSDEBUG, "? :Server send: %s", buf);
+	snprintf(buf, sizeof buf, "%7.2f %s (%4.1f K/s)",
 			   _GMKv (me.localClient->receiveK),
 			   _GMKs (me.localClient->receiveK),
 			   (float) ((float) me.localClient->receiveK / (float) uptime));
+	sendto_one_numeric(source_p, RPL_STATSDEBUG, "? :Server recv: %s", buf);
 }
 
 static void
