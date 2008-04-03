@@ -1952,7 +1952,7 @@ allocate_away(struct Client *client_p)
 void
 free_away(struct Client *client_p)
 {
-	if(client_p->user->away != NULL) {
+	if(client_p->user != NULL && client_p->user->away != NULL) {
 		rb_bh_free(away_heap, client_p->user->away);
 		client_p->user->away = NULL;
 	}
