@@ -227,33 +227,6 @@ struct lgetopt myopts[] = {
 	{NULL, NULL, STRING, NULL},
 };
 
-void
-set_time(void)
-{
-	struct timeval newtime;
-
-	newtime.tv_sec = 0;
-	newtime.tv_usec = 0;
-#ifdef HAVE_GETTIMEOFDAY
-	if(gettimeofday(&newtime, NULL) == -1)
-	{
-		ilog(L_MAIN, "Clock Failure (%d)", errno);
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "Clock Failure (%d), TS can be corrupted", errno);
-
-		restart("Clock Failure");
-	}
-#else
-	newtime.tv_sec = time(NULL);
-	
-#endif
-
-	SystemTime.tv_sec = newtime.tv_sec;
-	SystemTime.tv_usec = newtime.tv_usec;
-
-	rb_set_time();
-}
-
 static void
 check_rehash(void *unused)
 {
@@ -453,10 +426,6 @@ main(int argc, char *argv[])
 		return -1;
 	}
 
-	/*
-	 * save server boot time right away, so getrusage works correctly
-	 */
-	set_time();
 	/*
 	 * Setup corefile size immediately after boot -kre
 	 */
