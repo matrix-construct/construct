@@ -80,7 +80,7 @@ ms_svinfo(struct Client *client_p, struct Client *source_p, int parc, const char
 	/*
 	 * since we're here, might as well set rb_current_time() while we're at it
 	 */
-	set_time();
+	rb_set_time();
 	theirtime = atol(parv[4]);
 	deltat = abs(theirtime - rb_current_time());
 

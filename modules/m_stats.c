@@ -453,7 +453,6 @@ static void
 stats_events (struct Client *source_p)
 {
 	rb_dump_events(stats_events_cb, source_p);
-	send_pop_queue(source_p);
 }
 
 /* stats_pending_glines()
@@ -1384,7 +1383,6 @@ static void
 stats_comm(struct Client *source_p)
 {
 	rb_dump_fd(rb_dump_fd_callback, source_p);
-	send_pop_queue(source_p);
 }
 
 /*
