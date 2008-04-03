@@ -218,7 +218,7 @@ collect_zipstats(void *unused)
 				target_p->localClient->slinkq[0] = SLINKCMD_ZIPSTATS;
 				target_p->localClient->slinkq_ofs = 0;
 				target_p->localClient->slinkq_len = 1;
-				// send_queued_slink_write(target_p->localClient->ctrlfd, target_p);
+				send_queued_slink_write(target_p->localClient->ctrlF, target_p);
 			}
 		}
 	}
@@ -1140,7 +1140,8 @@ server_estab(struct Client *client_p)
 		 */
 		rb_snprintf(note, sizeof note, "slink data: %s", client_p->name);
 		rb_note(client_p->localClient->F, note);
-		// rb_note(client_p->localClient->ctrlfd, "slink ctrl: %s", client_p->name);
+		rb_snprintf(note, sizeof note, "slink ctrl: %s", client_p->name);
+		rb_note(client_p->localClient->ctrlF, note);
 	}
 	else
 	{
@@ -1313,7 +1314,7 @@ start_io(struct Client *server)
 	server->localClient->slinkq_len = c;
 
 	/* schedule a write */
-	//XXX send_queued_slink_write(server->localClient->ctrlF, server);
+	send_queued_slink_write(server->localClient->ctrlF, server);
 }
 
 /*
@@ -1407,21 +1408,18 @@ fork_server(struct Client *server)
 		close(data_fds[1]);
 		
 		s_assert(server->localClient);
-		// server->localClient->ctrlfd = ctrl_fds[0];
+		server->localClient->ctrlF = rb_open(ctrl_fds[0], RB_FD_PIPE, "servlink ctrl");
 		server->localClient->F = rb_open(data_fds[0], RB_FD_PIPE, "servlink data");
+
+		if(!rb_set_nb(server->localClient->ctrlF))
+		{
+			ilog_error("setting a slink fd nonblocking");
+		}
 
 		if(!rb_set_nb(server->localClient->F))
 		{
 			ilog_error("setting a slink fd nonblocking");
 		}
-
-		/* if(!rb_set_nb(server->localClient->ctrlfd))
-		{
-			ilog_error("setting a slink fd nonblocking");
-		}
-
-		rb_open(server->localClient->ctrlfd, FD_SOCKET, NULL);
-		*/
 
 		read_packet(server->localClient->F, server);
 	}

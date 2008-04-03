@@ -161,6 +161,7 @@ make_client(struct Client *from)
 		client_p->localClient->lasttime = client_p->localClient->firsttime = rb_current_time();
 
 		client_p->localClient->F = NULL;
+		client_p->localClient->ctrlF = NULL;
 
 		client_p->preClient = (struct PreClient *) rb_bh_alloc(pclient_heap);
 
@@ -2092,6 +2093,12 @@ close_connection(struct Client *client_p)
 
 		rb_close(client_p->localClient->F);
 		client_p->localClient->F = NULL;
+	}
+
+	if(client_p->localClient->ctrlF)
+	{
+		rb_close(client_p->localClient->ctrlF);
+		client_p->localClient->ctrlF = NULL;
 	}
 
 	rb_linebuf_donebuf(&client_p->localClient->buf_sendq);

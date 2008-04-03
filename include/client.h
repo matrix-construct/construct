@@ -254,6 +254,10 @@ struct LocalUser
 	/* time challenge response is valid for */
 	time_t chal_time;
 
+	rb_fde_t *ctrlF;	/* For servers:
+				   control fd used for sending commands
+				   to servlink */
+
 	struct SlinkRpl slinkrpl;	/* slink reply being parsed */
 	unsigned char *slinkq;	/* sendq for control data */
 	int slinkq_ofs;		/* ofset into slinkq */

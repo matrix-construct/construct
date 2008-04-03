@@ -219,7 +219,7 @@ send_queued_write(rb_fde_t *F, void *data)
  * side effects - write is rescheduled if queue isnt emptied
  */
 void
-send_queued_slink_write(int fd, void *data)
+send_queued_slink_write(rb_fde_t *F, void *data)
 {
 	struct Client *to = data;
 	int retlen;
@@ -234,9 +234,9 @@ send_queued_slink_write(int fd, void *data)
 	/* Next, lets try to write some data */
 	if(to->localClient->slinkq)
 	{
-		/* retlen = write(to->localClient->ctrlfd,
+		retlen = rb_write(to->localClient->ctrlF,
 			      to->localClient->slinkq + to->localClient->slinkq_ofs,
-			      to->localClient->slinkq_len); */
+			      to->localClient->slinkq_len);
 
 		if(retlen < 0)
 		{
@@ -270,9 +270,9 @@ send_queued_slink_write(int fd, void *data)
 	}
 
 	/* if we have any more data, reschedule a write */
-	/* if(to->localClient->slinkq_len)
-		rb_setselect(to->localClient->ctrlfd,
-			       RB_SELECT_WRITE, send_queued_slink_write, to); */
+	if(to->localClient->slinkq_len)
+		rb_setselect(to->localClient->ctrlF,
+			       RB_SELECT_WRITE, send_queued_slink_write, to);
 }
 
 /* sendto_one()
