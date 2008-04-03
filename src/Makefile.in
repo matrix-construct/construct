@@ -33,7 +33,7 @@ PROGS		= $(IRCD_EXE)
 SSL_LIBS	= @SSL_LIBS@
 SSL_INCLUDES	= @SSL_INCLUDES@
 
-IRCDLIBS	= @MODULES_LIBS@ -L../libratbox/src/.libs -lratbox @LIBS@ $(SSL_LIBS)
+IRCDLIBS	= @MODULES_LIBS@ -Wl,-rpath=@libdir@ -L../libratbox/src/.libs -lratbox @LIBS@ $(SSL_LIBS)
 
 INCLUDES	= -I../include -I../libratbox/include $(SSL_INCLUDES)
 CPPFLAGS	= ${INCLUDES} @CPPFLAGS@
