@@ -252,17 +252,16 @@ read_packet(rb_fde_t * F, void *data)
 		 */
 		length = rb_read(client_p->localClient->F, readBuf, READBUF_SIZE);
 
-		if(length <= 0)
+		if(length < 0)
 		{
-			if(length < 0 && rb_ignore_errno(errno))
-			{
+			if(rb_ignore_errno(errno))
 				rb_setselect(client_p->localClient->F, 
 						RB_SELECT_READ, read_packet, client_p);
-			} else
+			else
 				error_exit_client(client_p, length);
 			return;
 		}
-		if(length == 0)
+		else if(length == 0)
 		{
 			error_exit_client(client_p, length);
 			return;
