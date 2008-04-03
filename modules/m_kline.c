@@ -174,7 +174,7 @@ mo_kline(struct Client *client_p, struct Client *source_p,
 	if(already_placed_kline(source_p, user, host, tkline_time))
 		return 0;
 
-	set_time();
+	rb_set_time();
 	current_date = smalldate();
 	aconf = make_conf();
 	aconf->status = CONF_KILL;

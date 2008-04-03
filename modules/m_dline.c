@@ -181,7 +181,7 @@ mo_dline(struct Client *client_p, struct Client *source_p,
 		}
 	}
 
-	set_time();
+	rb_set_time();
 	current_date = smalldate();
 
 	aconf = make_conf();
