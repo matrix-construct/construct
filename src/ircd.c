@@ -229,6 +229,7 @@ void
 set_time(void)
 {
 	struct timeval newtime;
+
 	newtime.tv_sec = 0;
 	newtime.tv_usec = 0;
 #ifdef HAVE_GETTIMEOFDAY
@@ -244,11 +245,11 @@ set_time(void)
 	newtime.tv_sec = time(NULL);
 	
 #endif
-	if(newtime.tv_sec < rb_current_time())
-		rb_set_back_events(rb_current_time() - newtime.tv_sec);
 
 	SystemTime.tv_sec = newtime.tv_sec;
 	SystemTime.tv_usec = newtime.tv_usec;
+
+	rb_set_time();
 }
 
 static void
@@ -276,26 +277,6 @@ check_rehash(void *unused)
 		free_cachefile(user_motd);
 		user_motd = cache_file(MPATH, "ircd.motd", 0);
 		doremotd = 0;
-	}
-}
-
-void
-charybdis_io_loop(void)
-{
-	time_t delay;
-
-	while (ServerRunning)
-	{
-		/* Run pending events, then get the number of seconds to the next
-		 * event
-		 */
-
-		delay = rb_event_next();
-		if(delay <= rb_current_time())
-			rb_event_run();
-
-
-		rb_select(250);
 	}
 }
 
@@ -674,7 +655,7 @@ main(int argc, char *argv[])
 
 	print_startup(getpid());
 
-	charybdis_io_loop();
+	rb_lib_loop(250);
 
 	return 0;
 }
