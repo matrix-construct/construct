@@ -665,14 +665,16 @@ output_hash(struct Client *source_p, const char *name, int length, int *counts, 
 {
 	unsigned long total = 0;
 	int i;
+	char buf[128];
 
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			"B :%s Hash Statistics", name);
 
-	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			"B :Size: %d Empty: %d (%.3f%%)",
-			length, counts[0], 
+	snprintf(buf, sizeof buf, "%.3f%%",
 			(float) ((counts[0]*100) / (float) length));
+	sendto_one_numeric(source_p, RPL_STATSDEBUG,
+			"B :Size: %d Empty: %d (%s)",
+			length, counts[0], buf);
 
 	for(i = 1; i < 11; i++)
 	{
@@ -681,10 +683,14 @@ output_hash(struct Client *source_p, const char *name, int length, int *counts, 
 
 	/* dont want to divide by 0! --fl */
 	if(counts[0] != length)
-		sendto_one_numeric(source_p, RPL_STATSDEBUG,
-				"B :Average depth: %.3f/%.3f Highest depth: %d",
+	{
+		snprintf(buf, sizeof buf, "%.3f/%.3f",
 				(float) (total / (length - counts[0])),
-				(float) (total / length), deepest);
+				(float) (total / length));
+		sendto_one_numeric(source_p, RPL_STATSDEBUG,
+				"B :Average depth: %s Highest depth: %d",
+				buf, deepest);
+	}
 
 	for(i = 0; i < 11; i++)
 	{
