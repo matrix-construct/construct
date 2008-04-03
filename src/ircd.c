@@ -154,6 +154,8 @@ init_sys(void)
 			exit(EXIT_FAILURE);
 		}
 	}
+
+	maxconnections = limit.rlim_cur;
 #endif /* RLIMIT_NOFILE */
 }
 
