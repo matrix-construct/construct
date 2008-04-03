@@ -99,12 +99,6 @@ extern rb_dlink_list local_oper_list;
 extern rb_dlink_list oper_list;
 extern rb_dlink_list dead_list;
 
-extern void get_current_bandwidth(struct Client *source_p, struct Client *target_p);
-
-extern unsigned long get_maxrss(void);
-extern void set_time(void);
-extern void charybdis_io_loop(void);
-
 extern int testing_conf;
 
 extern struct ev_entry *check_splitmode_ev;
