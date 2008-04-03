@@ -1507,7 +1507,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 		((struct sockaddr_in *)&theiripnum)->sin_port = htons(server_p->port);
 
 	/* create a socket for the server connection */
-	if((F = rb_socket(server_p->aftype, SOCK_STREAM, 0, NULL)) != NULL)
+	if((F = rb_socket(server_p->aftype, SOCK_STREAM, 0, NULL)) == NULL)
 	{
 		ilog_error("opening a stream socket");
 		return 0;
