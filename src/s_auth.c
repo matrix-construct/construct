@@ -487,6 +487,7 @@ auth_connect_callback(rb_fde_t *F, int error, void *data)
 	if(error != RB_OK)
 	{
 		/* We had an error during connection :( */
+		ilog_error("identd check");
 		auth_error(auth);
 		return;
 	}
