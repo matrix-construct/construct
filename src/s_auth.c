@@ -273,9 +273,7 @@ start_auth_query(struct AuthRequest *auth)
 	family = auth->client->localClient->ip.ss_family;
 	if((F = rb_socket(family, SOCK_STREAM, 0, "ident")) == NULL)
 	{
-		report_error("creating auth stream socket %s:%s",
-			     get_client_name(auth->client, SHOW_IP), 
-			     log_client_name(auth->client, SHOW_IP), errno);
+		ilog_error("creating auth stream socket");
 		++ServerStats->is_abad;
 		return 0;
 	}

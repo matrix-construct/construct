@@ -197,16 +197,12 @@ inetport(listener_t *listener)
 
 	if(F == NULL)
 	{
-		report_error("opening listener socket %s:%s",
-			     get_listener_name(listener), 
-			     get_listener_name(listener), errno);
+		ilog_error("opening listener socket");
 		return 0;
 	}
 	else if((maxconnections - 10) < rb_get_fd(F)) /* XXX this is kinda bogus*/
 	{
-		report_error("no more connections left for listener %s:%s",
-			     get_listener_name(listener), 
-			     get_listener_name(listener), errno);
+		ilog_error("no more connections left for listener");
 		rb_close(F);
 		return 0;
 	}
@@ -217,9 +213,7 @@ inetport(listener_t *listener)
 	 */
 	if(setsockopt(rb_get_fd(F), SOL_SOCKET, SO_REUSEADDR, (char *) &opt, sizeof(opt)))
 	{
-		report_error("setting SO_REUSEADDR for listener %s:%s",
-			     get_listener_name(listener), 
-			     get_listener_name(listener), errno);
+		ilog_error("setting SO_REUSEADDR for listener");
 		rb_close(F);
 		return 0;
 	}
@@ -231,18 +225,14 @@ inetport(listener_t *listener)
 
 	if(bind(rb_get_fd(F), (struct sockaddr *) &listener->addr, GET_SS_LEN(&listener->addr)))
 	{
-		report_error("binding listener socket %s:%s",
-			     get_listener_name(listener), 
-			     get_listener_name(listener), errno);
+		ilog_error("binding listener socket");
 		rb_close(F);
 		return 0;
 	}
 
 	if((ret = rb_listen(F, RATBOX_SOMAXCONN)))
 	{
-		report_error("listen failed for %s:%s", 
-			     get_listener_name(listener), 
-			     get_listener_name(listener), errno);
+		ilog_error("listen()");
 		rb_close(F);
 		return 0;
 	}

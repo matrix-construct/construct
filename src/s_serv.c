@@ -1061,9 +1061,7 @@ server_estab(struct Client *client_p)
 	}
 
 	if(!rb_set_buffers(client_p->localClient->F, READBUF_SIZE))
-		report_error("rb_set_buffers failed for server %s:%s",
-			     get_server_name(client_p, SHOW_IP), 
-			     log_client_name(client_p, SHOW_IP), errno);
+		ilog_error("rb_set_buffers failed for server");
 
 	/* Hand the server off to servlink now */
 	if(IsCapable(client_p, CAP_ZIP))
@@ -1414,18 +1412,12 @@ fork_server(struct Client *server)
 
 		if(!rb_set_nb(server->localClient->F))
 		{
-			report_error("Cannot set slink fd nonblocking for server %s:%s",
-					get_server_name(server, SHOW_IP),
-					log_client_name(server, SHOW_IP),
-					errno);
+			ilog_error("setting a slink fd nonblocking");
 		}
 
 		/* if(!rb_set_nb(server->localClient->ctrlfd))
 		{
-			report_error("Cannot set slink fd nonblocking for server %s:%s",
-					get_server_name(server, SHOW_IP),
-					log_client_name(server, SHOW_IP),
-					errno);
+			ilog_error("setting a slink fd nonblocking");
 		}
 
 		rb_open(server->localClient->ctrlfd, FD_SOCKET, NULL);
@@ -1517,9 +1509,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	/* create a socket for the server connection */
 	if((F = rb_socket(server_p->aftype, SOCK_STREAM, 0, NULL)) != NULL)
 	{
-		/* Eek, failure to create the socket */
-		report_error("opening stream socket to %s: %s", 
-			     server_p->name, server_p->name, errno);
+		ilog_error("opening a stream socket");
 		return 0;
 	}
 
@@ -1547,10 +1537,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 
 	if(!rb_set_buffers(client_p->localClient->F, READBUF_SIZE))
 	{
-		report_error("rb_set_buffers failed for server %s:%s",
-				get_server_name(client_p, SHOW_IP),
-				log_client_name(client_p, SHOW_IP),
-				errno);
+		ilog_error("setting the buffer size for a server connection");
 	}
 
 	/*

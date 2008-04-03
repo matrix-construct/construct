@@ -227,7 +227,7 @@ smalldate(void)
 void
 ilog_error(const char *error)
 {
-	ilog(L_IOERROR, "%s: %d (%s)", buf, errno, strerror(errno));
+	ilog(L_IOERROR, "%s: %d (%s)", error, errno, strerror(errno));
 
-	sendto_opers_snomask(SNO_DEBUG, L_ALL, "%s: %d (%s)", buf, errno, strerror(errno));
+	sendto_realops_snomask(SNO_DEBUG, L_ALL, "%s: %d (%s)", error, errno, strerror(errno));
 }
