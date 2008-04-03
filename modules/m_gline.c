@@ -44,7 +44,7 @@
 #include "hash.h"
 #include "parse.h"
 #include "modules.h"
-#include "s_log.h"
+#include "logger.h"
 #include "reject.h"
 
 static int mo_gline(struct Client *, struct Client *, int, const char **);

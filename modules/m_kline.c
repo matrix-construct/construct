@@ -36,7 +36,7 @@
 #include "numeric.h"
 #include "s_conf.h"
 #include "s_newconf.h"
-#include "s_log.h"
+#include "logger.h"
 #include "send.h"
 #include "hash.h"
 #include "s_serv.h"

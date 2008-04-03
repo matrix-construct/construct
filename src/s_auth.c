@@ -45,7 +45,7 @@
 #include "numeric.h"
 #include "packet.h"
 #include "res.h"
-#include "s_log.h"
+#include "logger.h"
 #include "s_stats.h"
 #include "send.h"
 #include "hook.h"

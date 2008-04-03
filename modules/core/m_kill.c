@@ -30,7 +30,7 @@
 #include "ircd.h"
 #include "numeric.h"
 #include "sprintf_irc.h"
-#include "s_log.h"
+#include "logger.h"
 #include "s_serv.h"
 #include "s_conf.h"
 #include "send.h"

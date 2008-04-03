@@ -31,7 +31,7 @@
 #include "numeric.h"
 #include "send.h"
 #include "s_conf.h"
-#include "s_log.h"
+#include "logger.h"
 #include "parse.h"
 #include "modules.h"
 #include "hash.h"

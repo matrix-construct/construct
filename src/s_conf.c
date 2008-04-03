@@ -42,7 +42,7 @@
 #include "hostmask.h"
 #include "modules.h"
 #include "numeric.h"
-#include "s_log.h"
+#include "logger.h"
 #include "send.h"
 #include "s_gline.h"
 #include "reject.h"

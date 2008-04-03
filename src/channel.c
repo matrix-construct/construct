@@ -40,7 +40,7 @@
 #include "whowas.h"
 #include "s_conf.h"		/* ConfigFileEntry, ConfigChannel */
 #include "s_newconf.h"
-#include "s_log.h"
+#include "logger.h"
 
 extern rb_dlink_list global_channel_list;
 

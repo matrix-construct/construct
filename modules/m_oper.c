@@ -32,7 +32,7 @@
 #include "numeric.h"
 #include "s_conf.h"
 #include "s_newconf.h"
-#include "s_log.h"
+#include "logger.h"
 #include "s_user.h"
 #include "send.h"
 #include "msg.h"

@@ -44,7 +44,7 @@
 #include "res.h"
 #include "s_conf.h"
 #include "s_newconf.h"
-#include "s_log.h"
+#include "logger.h"
 #include "s_stats.h"
 #include "s_user.h"
 #include "scache.h"

@@ -36,7 +36,7 @@
 #include "s_conf.h"
 #include "s_newconf.h"
 #include "hash.h"
-#include "s_log.h"
+#include "logger.h"
 #include "sprintf_irc.h"
 
 static int mo_resv(struct Client *, struct Client *, int, const char **);

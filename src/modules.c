@@ -28,7 +28,7 @@
 
 
 #include "modules.h"
-#include "s_log.h"
+#include "logger.h"
 #include "ircd.h"
 #include "client.h"
 #include "send.h"

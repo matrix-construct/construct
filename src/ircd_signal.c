@@ -24,7 +24,7 @@
 #include "ircd_signal.h"
 #include "ircd.h"		/* dorehash */
 #include "restart.h"		/* server_reboot */
-#include "s_log.h"
+#include "logger.h"
 #include "s_conf.h"
 #include "client.h"
 #include "send.h"

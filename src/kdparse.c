@@ -25,7 +25,7 @@
  */
 
 #include "stdinc.h"
-#include "s_log.h"
+#include "logger.h"
 #include "s_conf.h"
 #include "s_newconf.h"
 #include "hostmask.h"

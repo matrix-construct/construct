@@ -33,7 +33,7 @@
 #include "numeric.h"		/* ERR_xxx */
 #include "s_conf.h"		/* struct ConfItem */
 #include "s_newconf.h"
-#include "s_log.h"		/* log level defines */
+#include "logger.h"		/* log level defines */
 #include "s_serv.h"		/* server_estab, check_server */
 #include "s_stats.h"		/* ServerStats */
 #include "scache.h"

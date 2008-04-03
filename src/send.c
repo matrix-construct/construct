@@ -37,7 +37,7 @@
 #include "sprintf_irc.h"
 #include "s_conf.h"
 #include "s_newconf.h"
-#include "s_log.h"
+#include "logger.h"
 #include "hook.h"
 #include "monitor.h"
 

@@ -40,7 +40,7 @@
 #include "s_auth.h"
 #include "s_conf.h"
 #include "s_newconf.h"
-#include "s_log.h"
+#include "logger.h"
 #include "s_serv.h"
 #include "s_stats.h"
 #include "send.h"

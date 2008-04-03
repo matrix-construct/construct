@@ -59,7 +59,7 @@
 #define IRC_DEPRECATED
 #endif
 
-#include "s_log.h"
+#include "logger.h"
 #include "send.h"
 
 #ifdef SOFT_ASSERT

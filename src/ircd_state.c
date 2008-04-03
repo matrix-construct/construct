@@ -56,7 +56,7 @@
 #include "restart.h"
 #include "s_auth.h"
 #include "s_conf.h"
-#include "s_log.h"
+#include "logger.h"
 #include "s_serv.h"             /* try_connections */
 #include "s_user.h"
 #include "s_stats.h"

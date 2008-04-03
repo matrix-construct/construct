@@ -28,7 +28,7 @@
 #include "restart.h"
 #include "ircd.h"
 #include "send.h"
-#include "s_log.h"
+#include "logger.h"
 #include "s_conf.h"
 #include "client.h"		
 #include "ircd_signal.h"

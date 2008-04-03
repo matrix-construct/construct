@@ -34,7 +34,7 @@
 #include "s_conf.h"
 #include "s_newconf.h"
 #include "restart.h"
-#include "s_log.h"
+#include "logger.h"
 #include "send.h"
 #include "msg.h"
 #include "parse.h"

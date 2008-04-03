@@ -29,7 +29,7 @@
 #include "ircd.h"
 #include "irc_string.h"
 #include "numeric.h"
-#include "s_log.h"
+#include "logger.h"
 #include "s_conf.h"
 #include "send.h"
 #include "msg.h"

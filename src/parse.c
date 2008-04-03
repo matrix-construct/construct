@@ -35,7 +35,7 @@
 #include "sprintf_irc.h"
 #include "ircd.h"
 #include "numeric.h"
-#include "s_log.h"
+#include "logger.h"
 #include "s_stats.h"
 #include "send.h"
 #include "msg.h"

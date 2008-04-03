@@ -72,6 +72,7 @@ SRCS =                          \
   ircd_state.c			\
   kdparse.c			\
   listener.c                    \
+  logger.c                      \
   match.c                       \
   modules.c                     \
   monitor.c			\
@@ -87,7 +88,6 @@ SRCS =                          \
   s_conf.c                      \
   s_newconf.c			\
   s_gline.c                     \
-  s_log.c                       \
   s_serv.c                      \
   s_stats.c                     \
   s_user.c                      \

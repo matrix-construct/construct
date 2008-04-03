@@ -39,7 +39,7 @@
 #include "class.h"
 #include "ircd.h"
 #include "numeric.h"
-#include "s_log.h"
+#include "logger.h"
 #include "s_serv.h"
 #include "whowas.h"
 #include "irc_string.h"

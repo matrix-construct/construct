@@ -35,7 +35,7 @@
 #include "irc_string.h"
 #include "sprintf_irc.h"
 #include "s_conf.h"
-#include "s_log.h"
+#include "logger.h"
 #include "msg.h"
 #include "parse.h"
 #include "modules.h"

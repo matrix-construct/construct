@@ -32,7 +32,7 @@
 #include "send.h"
 #include "msg.h"
 #include "modules.h"
-#include "s_log.h"
+#include "logger.h"
 #include "s_conf.h"
 
 static int m_error(struct Client *, struct Client *, int, const char **);
