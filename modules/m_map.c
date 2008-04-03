@@ -87,7 +87,7 @@ mo_map(struct Client *client_p, struct Client *source_p, int parc, const char *p
 static void
 dump_map(struct Client *client_p, struct Client *root_p, char *pbuf)
 {
-	int cnt = 0, i = 0, len;
+	int cnt = 0, i = 0, len, frac;
 	struct Client *server_p;
 	rb_dlink_node *ptr;
 	*pbuf = '\0';
@@ -110,9 +110,10 @@ dump_map(struct Client *client_p, struct Client *root_p, char *pbuf)
 		}
 	}
 
+	frac = (1000 * rb_dlink_list_length(&root_p->serv->users) + Count.total / 2) / Count.total;
 	rb_snprintf(buf + USER_COL, BUFSIZE - USER_COL,
-		 " | Users: %5lu (%4.1f%%)", rb_dlink_list_length(&root_p->serv->users),
-		 100 * (float) rb_dlink_list_length(&root_p->serv->users) / (float) Count.total);
+		 " | Users: %5lu (%2d.%1d%%)", rb_dlink_list_length(&root_p->serv->users),
+		 frac / 10, frac % 10);
 
 	sendto_one_numeric(client_p, RPL_MAP, form_str(RPL_MAP), buf);
 
