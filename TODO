@@ -17,3 +17,4 @@
 [ ] merge some stuff from ircd-seven directly (to be determined what)
   [?] remote d:lines support?
 [ ] gk:line/akill syncing
+[ ] drop non-TS6 (legacy protocol) support
