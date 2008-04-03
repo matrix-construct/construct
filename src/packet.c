@@ -254,7 +254,7 @@ read_packet(rb_fde_t * F, void *data)
 
 		if(length <= 0)
 		{
-			if(rb_ignore_errno(errno))
+			if(length < 0 && rb_ignore_errno(errno))
 			{
 				rb_setselect(client_p->localClient->F, 
 						RB_SELECT_READ, read_packet, client_p);
