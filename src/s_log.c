@@ -1,8 +1,9 @@
 /*
- * ircd-ratbox: an advanced Internet Relay Chat Daemon(ircd).
+ * charybdis: an advanced Internet Relay Chat Daemon(ircd).
  *
  * Copyright (C) 2003 Lee H <lee@leeh.co.uk>
  * Copyright (C) 2003-2005 ircd-ratbox development team
+ * Copyright (C) 2008 William Pitcock <nenolod@sacredspiral.co.uk>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -10,9 +11,11 @@
  *
  * 1.Redistributions of source code must retain the above copyright notice,
  *   this list of conditions and the following disclaimer.
+ *
  * 2.Redistributions in binary form must reproduce the above copyright
  *   notice, this list of conditions and the following disclaimer in the
  *   documentation and/or other materials provided with the distribution.
+ *
  * 3.The name of the author may not be used to endorse or promote products
  *   derived from this software without specific prior written permission.
  *
@@ -133,7 +136,7 @@ ilog(ilogfile dest, const char *format, ...)
 }
 
 static void
-_iprint(const char *domain, char *buf)
+_iprint(const char *domain, const char *buf)
 {
 	if (domain == NULL || buf == NULL)
 		return;
@@ -221,32 +224,10 @@ smalldate(void)
 	return buf;
 }
 
-/*
- * report_error - report an error from an errno. 
- * Record error to log and also send a copy to all *LOCAL* opers online.
- *
- *        text        is a *format* string for outputing error. It must
- *                contain only two '%s', the first will be replaced
- *                by the sockhost from the client_p, and the latter will
- *                be taken from sys_errlist[errno].
- *
- *        client_p        if not NULL, is the *LOCAL* client associated with
- *                the error.
- *
- * Cannot use perror() within daemon. stderr is closed in
- * ircd and cannot be used. And, worse yet, it might have
- * been reassigned to a normal connection...
- * 
- * Actually stderr is still there IFF ircd was run with -s --Rodder
- */
-
 void
-report_error(const char *text, const char *who, const char *wholog, int error)
+ilog_error(const char *error)
 {
-	who = (who) ? who : "";
-	wholog = (wholog) ? wholog : "";
+	ilog(L_IOERROR, "%s: %d (%s)", buf, errno, strerror(errno));
 
-	sendto_realops_snomask(SNO_DEBUG, L_ALL, text, who, strerror(error));
-
-	ilog(L_IOERROR, text, wholog, strerror(error));
+	sendto_opers_snomask(SNO_DEBUG, L_ALL, "%s: %d (%s)", buf, errno, strerror(errno));
 }
