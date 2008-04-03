@@ -316,10 +316,10 @@ start_auth_query(struct AuthRequest *auth)
 #ifdef IPV6
 	if(localaddr.ss_family == AF_INET6)
 	{
-		((struct sockaddr_in6 *)&localaddr)->sin6_port = 113;
+		((struct sockaddr_in6 *)&destaddr)->sin6_port = 113;
 	} else
 #endif
-	((struct sockaddr_in *)&localaddr)->sin_port = 113;
+	((struct sockaddr_in *)&destaddr)->sin_port = 113;
 	
 	auth->F = F;
 	SetAuthConnect(auth);
