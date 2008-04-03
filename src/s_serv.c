@@ -1421,6 +1421,7 @@ fork_server(struct Client *server)
 			ilog_error("setting a slink fd nonblocking");
 		}
 
+		read_ctrl_packet(server->localClient->ctrlF, server);
 		read_packet(server->localClient->F, server);
 	}
 
