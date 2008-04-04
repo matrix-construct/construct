@@ -174,7 +174,7 @@ check_reject(struct Client *client_p)
 		rdata->time = rb_current_time();
 		if(rdata->count > ConfigFileEntry.reject_after_count)
 		{
-			ServerStats->is_rej++;
+			ServerStats.is_rej++;
 			SetReject(client_p);
 			rb_setselect(client_p->localClient->F, RB_SELECT_WRITE | RB_SELECT_READ, NULL, NULL);
 			SetClosing(client_p);

@@ -612,7 +612,7 @@ add_target(struct Client *source_p, struct Client *target_p)
 		/* cant clear any, full target list */
 		else if(USED_TARGETS(source_p) == 10)
 		{
-			ServerStats->is_tgch++;
+			ServerStats.is_tgch++;
 			add_tgchange(source_p->sockhost);
 			return 0;
 		}

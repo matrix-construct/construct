@@ -80,6 +80,8 @@ extern char **myargv;
 
 int maxconnections; /* XXX */
 
+struct ServerStatistics ServerStats;
+
 /*
  * print_startup - print startup information
  */
@@ -451,6 +453,7 @@ main(int argc, char *argv[])
 	memset((void *) &Count, 0, sizeof(Count));
 	memset((void *) &ServerInfo, 0, sizeof(ServerInfo));
 	memset((void *) &AdminInfo, 0, sizeof(AdminInfo));
+	memset((void *) &ServerStats, 0, sizeof(struct ServerStatistics));
 
 	/* Initialise the channel capability usage counts... */
 	init_chcap_usage_counts();
@@ -527,7 +530,6 @@ main(int argc, char *argv[])
 	init_channels();
 	initclass();
 	initwhowas();
-	init_stats();
 	init_reject();
 	init_cache();
 	init_monitor();

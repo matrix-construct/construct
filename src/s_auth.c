@@ -240,7 +240,7 @@ auth_dns_callback(void *vptr, struct DNSReply *reply)
 static void
 auth_error(struct AuthRequest *auth)
 {
-	++ServerStats->is_abad;
+	++ServerStats.is_abad;
 
 	rb_close(auth->F);
 	auth->F = NULL;
@@ -274,7 +274,7 @@ start_auth_query(struct AuthRequest *auth)
 	if((F = rb_socket(family, SOCK_STREAM, 0, "ident")) == NULL)
 	{
 		ilog_error("creating auth stream socket");
-		++ServerStats->is_abad;
+		++ServerStats.is_abad;
 		return 0;
 	}
 
@@ -445,7 +445,7 @@ timeout_auth_queries_event(void *notused)
 			if(IsDoingAuth(auth))
 			{
 				ClearAuth(auth);
-				++ServerStats->is_abad;
+				++ServerStats.is_abad;
 				sendheader(auth->client, REPORT_FAIL_ID);
 				auth->client->localClient->auth_request = NULL;
 			}
@@ -575,14 +575,14 @@ read_auth_reply(rb_fde_t *F, void *data)
 
 	if(s == NULL)
 	{
-		++ServerStats->is_abad;
+		++ServerStats.is_abad;
 		strcpy(auth->client->username, "unknown");
 		sendheader(auth->client, REPORT_FAIL_ID);
 	}
 	else
 	{
 		sendheader(auth->client, REPORT_FIN_ID);
-		++ServerStats->is_asuc;
+		++ServerStats.is_asuc;
 		SetGotId(auth->client);
 	}
 

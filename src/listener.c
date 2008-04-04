@@ -481,7 +481,7 @@ accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, voi
 
 	if((maxconnections - 10) < rb_get_fd(F)) /* XXX this is kinda bogus */
 	{
-		++ServerStats->is_ref;
+		++ServerStats.is_ref;
 		/*
 		 * slow down the whining to opers bit
 		 */
@@ -507,7 +507,7 @@ accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, voi
 	 * from this IP... */
 	if(aconf != NULL)
 	{
-		ServerStats->is_ref++;
+		ServerStats.is_ref++;
 			
 		if(ConfigFileEntry.dline_with_reason)
 		{
@@ -536,7 +536,7 @@ accept_callback(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t add
 	struct rb_sockaddr_storage lip;
 	unsigned int locallen = sizeof(struct rb_sockaddr_storage);
 	
-	ServerStats->is_ac++;
+	ServerStats.is_ac++;
 
 	if(getsockname(rb_get_fd(F), (struct sockaddr *) &lip, &locallen) < 0)
 	{

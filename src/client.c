@@ -2027,21 +2027,21 @@ close_connection(struct Client *client_p)
 	{
 		struct server_conf *server_p;
 
-		ServerStats->is_sv++;
-		ServerStats->is_sbs += client_p->localClient->sendB;
-		ServerStats->is_sbr += client_p->localClient->receiveB;
-		ServerStats->is_sks += client_p->localClient->sendK;
-		ServerStats->is_skr += client_p->localClient->receiveK;
-		ServerStats->is_sti += rb_current_time() - client_p->localClient->firsttime;
-		if(ServerStats->is_sbs > 2047)
+		ServerStats.is_sv++;
+		ServerStats.is_sbs += client_p->localClient->sendB;
+		ServerStats.is_sbr += client_p->localClient->receiveB;
+		ServerStats.is_sks += client_p->localClient->sendK;
+		ServerStats.is_skr += client_p->localClient->receiveK;
+		ServerStats.is_sti += rb_current_time() - client_p->localClient->firsttime;
+		if(ServerStats.is_sbs > 2047)
 		{
-			ServerStats->is_sks += (ServerStats->is_sbs >> 10);
-			ServerStats->is_sbs &= 0x3ff;
+			ServerStats.is_sks += (ServerStats.is_sbs >> 10);
+			ServerStats.is_sbs &= 0x3ff;
 		}
-		if(ServerStats->is_sbr > 2047)
+		if(ServerStats.is_sbr > 2047)
 		{
-			ServerStats->is_skr += (ServerStats->is_sbr >> 10);
-			ServerStats->is_sbr &= 0x3ff;
+			ServerStats.is_skr += (ServerStats.is_sbr >> 10);
+			ServerStats.is_sbr &= 0x3ff;
 		}
 
 		/*
@@ -2065,25 +2065,25 @@ close_connection(struct Client *client_p)
 	}
 	else if(IsClient(client_p))
 	{
-		ServerStats->is_cl++;
-		ServerStats->is_cbs += client_p->localClient->sendB;
-		ServerStats->is_cbr += client_p->localClient->receiveB;
-		ServerStats->is_cks += client_p->localClient->sendK;
-		ServerStats->is_ckr += client_p->localClient->receiveK;
-		ServerStats->is_cti += rb_current_time() - client_p->localClient->firsttime;
-		if(ServerStats->is_cbs > 2047)
+		ServerStats.is_cl++;
+		ServerStats.is_cbs += client_p->localClient->sendB;
+		ServerStats.is_cbr += client_p->localClient->receiveB;
+		ServerStats.is_cks += client_p->localClient->sendK;
+		ServerStats.is_ckr += client_p->localClient->receiveK;
+		ServerStats.is_cti += rb_current_time() - client_p->localClient->firsttime;
+		if(ServerStats.is_cbs > 2047)
 		{
-			ServerStats->is_cks += (ServerStats->is_cbs >> 10);
-			ServerStats->is_cbs &= 0x3ff;
+			ServerStats.is_cks += (ServerStats.is_cbs >> 10);
+			ServerStats.is_cbs &= 0x3ff;
 		}
-		if(ServerStats->is_cbr > 2047)
+		if(ServerStats.is_cbr > 2047)
 		{
-			ServerStats->is_ckr += (ServerStats->is_cbr >> 10);
-			ServerStats->is_cbr &= 0x3ff;
+			ServerStats.is_ckr += (ServerStats.is_cbr >> 10);
+			ServerStats.is_cbr &= 0x3ff;
 		}
 	}
 	else
-		ServerStats->is_ni++;
+		ServerStats.is_ni++;
 
 	if(client_p->localClient->F)
 	{

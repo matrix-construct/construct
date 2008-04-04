@@ -27,8 +27,6 @@
 #ifndef INCLUDED_s_stats_h
 #define INCLUDED_s_stats_h
 
-#include "config.h"
-
 #define _1MEG     (1024.0)
 #define _1GIG     (1024.0*1024.0)
 #define _1TER     (1024.0*1024.0*1024.0)
@@ -74,11 +72,6 @@ struct ServerStatistics
 	unsigned int is_tgch;	/* messages blocked due to target change */
 };
 
-extern struct ServerStatistics *ServerStats;
-
-extern void init_stats(void);
-extern void tstats(struct Client *client);
-
-extern void count_memory(struct Client *);
+extern struct ServerStatistics ServerStats;
 
 #endif /* INCLUDED_s_stats_h */
