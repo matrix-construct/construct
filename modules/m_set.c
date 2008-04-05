@@ -215,18 +215,18 @@ quote_max(struct Client *source_p, int newval)
 {
 	if(newval > 0)
 	{
-		if(newval > ServerInfo.max_clients)
+		if(newval > maxconnections - MAX_BUFFER)
 		{
 			sendto_one_notice(source_p,
-				   ":You cannot set MAXCLIENTS to > max_clients (%d)",
-				   ServerInfo.max_clients);
+					  ":You cannot set MAXCLIENTS to > %d",
+					  maxconnections - MAX_BUFFER);
 			return;
 		}
 
 		if(newval < 32)
 		{
-			sendto_one_notice(source_p, ":You cannot set MAXCLIENTS to < 32 (%d)",
-				   GlobalSetOptions.maxclients);
+			sendto_one_notice(source_p, ":You cannot set MAXCLIENTS to < 32 (%d:%d)",
+				   GlobalSetOptions.maxclients, rb_getmaxconnect());
 			return;
 		}
 

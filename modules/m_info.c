@@ -92,10 +92,10 @@ static struct InfoStruct info_table[] = {
 		"Farconnect notices available or operspy accountability limited"
 	},
 	{
-		"max_clients",
+		"max_connections",
 		OUTPUT_DECIMAL,
-		&ServerInfo.max_clients,
-		"Maximum clients allowed (configured)",
+		&maxconnections,
+		"Max number connections"
 	},
 	{
 		"anti_nick_flood",

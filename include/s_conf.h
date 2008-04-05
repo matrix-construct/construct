@@ -279,7 +279,7 @@ struct server_info
 	int specific_ipv6_vhost;
 #endif
 
-	int max_clients;
+	int default_max_clients;
 };
 
 struct admin_info

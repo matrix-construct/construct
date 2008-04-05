@@ -36,8 +36,6 @@
 /* external var */
 extern char **myargv;
 
-extern int maxconnections; /* XXX */
-
 void
 restart(const char *mesg)
 {

@@ -34,6 +34,9 @@
 /*
  * First, set other fd limits based on values from user
  */
+
+
+#define MAXCONNECTIONS 65535 /* default max connections if getrlimit doesn't work */
 /* class {} default values */
 #define DEFAULT_SENDQ 20000000	/* default max SendQ */
 #define PORTNUM 6667		/* default outgoing portnum */

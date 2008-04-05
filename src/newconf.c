@@ -1893,7 +1893,7 @@ static struct ConfEntry conf_serverinfo_table[] =
 	{ "vhost", 		CF_QSTRING, conf_set_serverinfo_vhost,	0, NULL },
 	{ "vhost6", 		CF_QSTRING, conf_set_serverinfo_vhost6,	0, NULL },
 
-	{ "max_clients",	CF_INT,	    NULL, 0, &ServerInfo.max_clients    },
+	{ "default_max_clients",CF_INT,     NULL, 0, &ServerInfo.default_max_clients },
 
 	{ "\0",	0, NULL, 0, NULL }
 };
