@@ -838,7 +838,7 @@ set_default_conf(void)
 	ConfigFileEntry.reject_duration = 120;
 	ConfigFileEntry.max_unknown_ip = 2;
 
-	ServerInfo.max_clients = maxconnections - MAX_BUFFER;
+	ServerInfo.default_max_clients = MAXCONNECTIONS;
 }
 
 #undef YES

@@ -76,7 +76,7 @@ extern int ServerRunning;
 extern struct LocalUser meLocalUser;
 extern char **myargv;
 
-int maxconnections; /* XXX */
+int maxconnections;
 
 /* /quote set variables */
 struct SetOptions GlobalSetOptions;
@@ -158,16 +158,17 @@ init_sys(void)
 
 	if(!getrlimit(RLIMIT_NOFILE, &limit))
 	{
-		limit.rlim_cur = limit.rlim_max;	/* make soft limit the max */
-		if(setrlimit(RLIMIT_NOFILE, &limit) == -1)
+		maxconnections = limit.rlim_cur;
+		if(maxconnections <= MAX_BUFFER)
 		{
-			fprintf(stderr, "error setting max fd's to %ld\n", (long) limit.rlim_cur);
+			fprintf(stderr, "ERROR: Shell FD limits are too low.\n");
+			fprintf(stderr, "ERROR: ircd-ratbox reserves %d FDs, shell limits must be above this\n", MAX_BUFFER);
 			exit(EXIT_FAILURE);
 		}
+		return;
 	}
-
-	maxconnections = limit.rlim_cur;
-#endif /* RLIMIT_NOFILE */
+#endif /* RLIMIT_FD_MAX */
+	maxconnections = MAXCONNECTIONS;
 }
 
 static int
@@ -279,7 +280,11 @@ initialize_global_set_options(void)
 	memset(&GlobalSetOptions, 0, sizeof(GlobalSetOptions));
 	/* memset( &ConfigFileEntry, 0, sizeof(ConfigFileEntry)); */
 
-	GlobalSetOptions.maxclients = ServerInfo.max_clients;
+	GlobalSetOptions.maxclients = ServerInfo.default_max_clients;
+
+	if(GlobalSetOptions.maxclients > (maxconnections - MAX_BUFFER))
+		GlobalSetOptions.maxclients = maxconnections - MAX_BUFFER;
+
 	GlobalSetOptions.autoconn = 1;
 
 	GlobalSetOptions.spam_time = MIN_JOIN_LEAVE_TIME;
