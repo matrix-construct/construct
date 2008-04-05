@@ -143,20 +143,20 @@ unsigned int geteuid(void);
 #define lrb_assert(expr)	assert(expr)
 #endif
 
-#ifdef SOCKADDR_IN_HAS_LEN
+#ifdef RB_SOCKADDR_HAS_SA_LEN
 #define ss_len sa_len
 #endif
 
 #define GET_SS_FAMILY(x) (((struct sockaddr *)(x))->sa_family)
 
-#ifdef SOCKADDR_IN_HAS_LEN
+#ifdef RB_SOCKADDR_HAS_SA_LEN
 #define SET_SS_LEN(x, y)	do {							\
 					struct sockaddr *storage;		\
 					storage = ((struct sockaddr *)(x));\
 					storage->sa_len = (y);				\
 				} while (0)
 #define GET_SS_LEN(x) (((struct sockaddr *)(x))->sa_len)
-#else /* !SOCKADDR_IN_HAS_LEN */
+#else /* !RB_SOCKADDR_HAS_SA_LEN */
 #define SET_SS_LEN(x, y) (((struct sockaddr *)(x))->sa_family = ((struct sockaddr *)(x))->sa_family)
 #ifdef RB_IPV6
 #define GET_SS_LEN(x) (((struct sockaddr *)(x))->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6))
