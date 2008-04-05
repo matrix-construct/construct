@@ -245,7 +245,7 @@ check_client(struct Client *client_p, struct Client *source_p, const char *usern
 	case NOT_AUTHORISED:
 		{
 			int port = -1;
-#ifdef IPV6
+#ifdef RB_IPV6
 			if(source_p->localClient->ip.ss_family == AF_INET6)
 				port = ntohs(((struct sockaddr_in6 *)&source_p->localClient->listener->addr)->sin6_port);
 			else
@@ -721,7 +721,7 @@ set_default_conf(void)
 
 	memset(&ServerInfo.ip, 0, sizeof(ServerInfo.ip));
 	ServerInfo.specific_ipv4_vhost = 0;
-#ifdef IPV6
+#ifdef RB_IPV6
 	memset(&ServerInfo.ip6, 0, sizeof(ServerInfo.ip6));
 	ServerInfo.specific_ipv6_vhost = 0;
 #endif

@@ -91,7 +91,7 @@ mo_etrace(struct Client *client_p, struct Client *source_p, int parc, const char
 	{
 		if(!irccmp(parv[1], "-full"))
 			do_etrace_full(source_p);
-#ifdef IPV6
+#ifdef RB_IPV6
 		else if(!irccmp(parv[1], "-v6"))
 			do_etrace(source_p, 0, 1);
 		else if(!irccmp(parv[1], "-v4"))
@@ -151,7 +151,7 @@ do_etrace(struct Client *source_p, int ipv4, int ipv6)
 	{
 		target_p = ptr->data;
 
-#ifdef IPV6
+#ifdef RB_IPV6
 		if((!ipv4 && target_p->localClient->ip.ss_family == AF_INET) ||
 		   (!ipv6 && target_p->localClient->ip.ss_family == AF_INET6))
 			continue;

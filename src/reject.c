@@ -142,7 +142,7 @@ add_reject(struct Client *client_p, const char *mask1, const char *mask2)
 	else
 	{
 		int bitlen = 32;
-#ifdef IPV6
+#ifdef RB_IPV6
 		if(client_p->localClient->ip.ss_family == AF_INET6)
 			bitlen = 128;
 #endif
@@ -262,7 +262,7 @@ add_unknown_ip(struct Client *client_p)
 	if((pnode = rb_match_ip(unknown_tree, (struct sockaddr *)&client_p->localClient->ip)) == NULL)
 	{
 		int bitlen = 32;
-#ifdef IPV6
+#ifdef RB_IPV6
 		if(client_p->localClient->ip.ss_family == AF_INET6)
 			bitlen = 128;
 #endif

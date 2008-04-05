@@ -1498,7 +1498,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 		return 0;
 	}
 
-#ifdef IPV6
+#ifdef RB_IPV6
 	if(theiripnum.ss_family == AF_INET6)
 		((struct sockaddr_in6 *)&theiripnum)->sin6_port = htons(server_p->port);
 	else
@@ -1586,7 +1586,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 		SET_SS_LEN(&myipnum, sizeof(struct sockaddr_in));
 	}
 	
-#ifdef IPV6
+#ifdef RB_IPV6
 	else if((server_p->aftype == AF_INET6) && ServerInfo.specific_ipv6_vhost)
 	{
 		memcpy(&myipnum, &ServerInfo.ip6, sizeof(myipnum));
@@ -1599,7 +1599,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	{
 		/* log */
 		ilog(L_SERVER, "Connecting to %s[%s] port %d (%s)", server_p->name, server_p->host, server_p->port,
-#ifdef IPV6
+#ifdef RB_IPV6
 				server_p->aftype == AF_INET6 ? "IPv6" :
 #endif
 				(server_p->aftype == AF_INET ? "IPv4" : "?"));
@@ -1615,7 +1615,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	/* log */
 	inetntop_sock((struct sockaddr *)&myipnum, vhoststr, sizeof vhoststr);
 	ilog(L_SERVER, "Connecting to %s[%s] port %d (%s) (vhost %s)", server_p->name, server_p->host, server_p->port,
-#ifdef IPV6
+#ifdef RB_IPV6
 			server_p->aftype == AF_INET6 ? "IPv6" :
 #endif
 			(server_p->aftype == AF_INET ? "IPv4" : "?"), vhoststr);

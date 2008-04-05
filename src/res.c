@@ -118,7 +118,7 @@ extern char irc_domain[HOSTLEN + 1];
  */
 static int res_ourserver(const struct rb_sockaddr_storage *inp)
 {
-#ifdef IPV6
+#ifdef RB_IPV6
 	struct sockaddr_in6 *v6;
 	struct sockaddr_in6 *v6in = (struct sockaddr_in6 *)inp;
 #endif
@@ -129,7 +129,7 @@ static int res_ourserver(const struct rb_sockaddr_storage *inp)
 	for (ns = 0; ns < irc_nscount; ns++)
 	{
 		const struct rb_sockaddr_storage *srv = &irc_nsaddr_list[ns];
-#ifdef IPV6
+#ifdef RB_IPV6
 		v6 = (struct sockaddr_in6 *)srv;
 #endif
 		v4 = (struct sockaddr_in *)srv;
@@ -139,7 +139,7 @@ static int res_ourserver(const struct rb_sockaddr_storage *inp)
 		 */
 		switch (srv->ss_family)
 		{
-#ifdef IPV6
+#ifdef RB_IPV6
 		  case AF_INET6:
 			  if (srv->ss_family == inp->ss_family)
 				  if (v6->sin6_port == v6in->sin6_port)
@@ -446,7 +446,7 @@ static void do_query_number(struct DNSQuery *query, const struct rb_sockaddr_sto
 		rb_sprintf(request->queryname, "%u.%u.%u.%u.in-addr.arpa", (unsigned int)(cp[3]),
 			   (unsigned int)(cp[2]), (unsigned int)(cp[1]), (unsigned int)(cp[0]));
 	}
-#ifdef IPV6
+#ifdef RB_IPV6
 	else if (addr->ss_family == AF_INET6)
 	{
 		struct sockaddr_in6 *v6 = (struct sockaddr_in6 *)addr;
@@ -532,7 +532,7 @@ static void resend_query(struct reslist *request)
 		  do_query_number(NULL, &request->addr, request);
 		  break;
 	  case T_A:
-#ifdef IPV6
+#ifdef RB_IPV6
 	  case T_AAAA:
 #endif
 		  do_query_name(NULL, request->name, request, request->type);
@@ -577,7 +577,7 @@ static int proc_answer(struct reslist *request, HEADER * header, char *buf, char
 	int n;			/* temp count */
 	int rd_length;
 	struct sockaddr_in *v4;	/* conversion */
-#ifdef IPV6
+#ifdef RB_IPV6
 	struct sockaddr_in6 *v6;
 #endif
 	current = (unsigned char *)buf + sizeof(HEADER);
@@ -658,7 +658,7 @@ static int proc_answer(struct reslist *request, HEADER * header, char *buf, char
 			  memcpy(&v4->sin_addr, current, sizeof(struct in_addr));
 			  return (1);
 			  break;
-#ifdef IPV6
+#ifdef RB_IPV6
 		  case T_AAAA:
 			  if (request->type != T_AAAA)
 				  return (0);
@@ -818,7 +818,7 @@ static void res_readreply(rb_fde_t *F, void *data)
 			 * ip#. 
 			 *
 			 */
-#ifdef IPV6
+#ifdef RB_IPV6
 			if (request->addr.ss_family == AF_INET6)
 				gethost_byname_type(request->name, request->query, T_AAAA);
 			else

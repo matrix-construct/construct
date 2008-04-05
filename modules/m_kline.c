@@ -701,7 +701,7 @@ already_placed_kline(struct Client *source_p, const char *luser, const char *lho
 		bits = 0;
 		if((t = parse_netmask(lhost, (struct sockaddr *)&iphost, &bits)) != HM_HOST)
 		{
-#ifdef IPV6
+#ifdef RB_IPV6
 			if(t == HM_IPV6)
 				t = AF_INET6;
 			else
