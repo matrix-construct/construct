@@ -46,7 +46,7 @@
 #define INADDR_NONE ((unsigned int) 0xffffffff)
 #endif
 
-#if defined(NO_IN6ADDR_ANY) && defined(IPV6)
+#if defined(NO_IN6ADDR_ANY) && defined(RB_IPV6)
 static const struct in6_addr in6addr_any =
 { { { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 } } };
 #endif 
@@ -112,7 +112,7 @@ get_listener_name(const listener_t *listener)
 	if(listener == NULL)
 		return NULL;
 
-#ifdef IPV6
+#ifdef RB_IPV6
 	if(listener->addr.ss_family == AF_INET6)
 		port = ntohs(((const struct sockaddr_in6 *)&listener->addr)->sin6_port);
 	else
@@ -138,7 +138,7 @@ show_ports(struct Client *source_p)
 	{
 		sendto_one_numeric(source_p, RPL_STATSPLINE, 
 				   form_str(RPL_STATSPLINE), 'P',
-#ifdef IPV6
+#ifdef RB_IPV6
 			   ntohs(listener->addr.ss_family == AF_INET ? ((struct sockaddr_in *)&listener->addr)->sin_port :
 			   	 ((struct sockaddr_in6 *)&listener->addr)->sin6_port),
 #else
@@ -175,7 +175,7 @@ inetport(listener_t *listener)
 	
 	F = rb_socket(GET_SS_FAMILY(&listener->addr), SOCK_STREAM, 0, "Listener socket");
 
-#ifdef IPV6
+#ifdef RB_IPV6
 	if(listener->addr.ss_family == AF_INET6)
 	{
 		struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)&listener->addr;
@@ -270,7 +270,7 @@ find_listener(struct rb_sockaddr_storage *addr)
 				}
 				break;
 			}
-#ifdef IPV6
+#ifdef RB_IPV6
 			case AF_INET6:
 			{
 				struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)addr;
@@ -323,7 +323,7 @@ add_listener(int port, const char *vhost_ip, int family)
 			if(inetpton(family, vhost_ip, &((struct sockaddr_in *)&vaddr)->sin_addr) <= 0)
 				return;
 		} 
-#ifdef IPV6
+#ifdef RB_IPV6
 		else
 		{
 			if(inetpton(family, vhost_ip, &((struct sockaddr_in6 *)&vaddr)->sin6_addr) <= 0)
@@ -338,7 +338,7 @@ add_listener(int port, const char *vhost_ip, int family)
 			case AF_INET:
 				((struct sockaddr_in *)&vaddr)->sin_addr.s_addr = INADDR_ANY;
 				break;
-#ifdef IPV6
+#ifdef RB_IPV6
 			case AF_INET6:
 				memcpy(&((struct sockaddr_in6 *)&vaddr)->sin6_addr, &in6addr_any, sizeof(struct in6_addr));
 				break;
@@ -353,7 +353,7 @@ add_listener(int port, const char *vhost_ip, int family)
 			SET_SS_LEN(&vaddr, sizeof(struct sockaddr_in));
 			((struct sockaddr_in *)&vaddr)->sin_port = htons(port);
 			break;
-#ifdef IPV6
+#ifdef RB_IPV6
 		case AF_INET6:
 			SET_SS_LEN(&vaddr, sizeof(struct sockaddr_in6));
 			((struct sockaddr_in6 *)&vaddr)->sin6_port = htons(port);

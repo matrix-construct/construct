@@ -31,7 +31,7 @@ enum
 {
 	HM_HOST,
 	HM_IPV4
-#ifdef IPV6
+#ifdef RB_IPV6
 		, HM_IPV6
 #endif
 };
@@ -64,7 +64,7 @@ struct ConfItem *find_dline(struct sockaddr *, int);
 
 void report_Klines(struct Client *);
 void report_auth(struct Client *);
-#ifdef IPV6
+#ifdef RB_IPV6
 int match_ipv6(struct sockaddr *, struct sockaddr *, int);
 #endif
 int match_ipv4(struct sockaddr *, struct sockaddr *, int);

@@ -271,11 +271,11 @@ struct server_info
 	char *network_desc;
 	int hub;
 	struct sockaddr_in ip;
-#ifdef IPV6
+#ifdef RB_IPV6
 	struct sockaddr_in6 ip6;
 #endif
 	int specific_ipv4_vhost;
-#ifdef IPV6
+#ifdef RB_IPV6
 	int specific_ipv6_vhost;
 #endif
 
