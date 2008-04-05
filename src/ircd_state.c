@@ -85,18 +85,6 @@ rb_dlink_list global_serv_list;    /* global servers on the network */
 rb_dlink_list local_oper_list;     /* our opers, duplicated in lclient_list */
 rb_dlink_list oper_list;           /* network opers */
 
-/* /quote set variables */
-struct SetOptions GlobalSetOptions;
-
-/* configuration set from ircd.conf */
-struct config_file_entry ConfigFileEntry;
-/* server info set from ircd.conf */
-struct server_info ServerInfo;
-/* admin info set from ircd.conf */
-struct admin_info AdminInfo;
-
-struct Counter Count;
-
 struct timeval SystemTime;
 int ServerRunning;              /* GLOBAL - server execution state */
 struct Client me;               /* That's me */
