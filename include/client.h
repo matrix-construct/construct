@@ -265,6 +265,8 @@ struct LocalUser
 
 	struct ZipStats zipstats;
 
+	struct DNSQuery *dnsquery; /* for outgoing server's name lookup */
+
 	time_t last_away;	/* Away since... */
 	time_t last;
 

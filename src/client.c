@@ -1402,6 +1402,11 @@ exit_unknown_client(struct Client *client_p, struct Client *source_p, struct Cli
 		  const char *comment)
 {
 	delete_auth_queries(source_p);
+	if (source_p->localClient->dnsquery)
+	{
+		delete_resolver_queries(source_p->localClient->dnsquery);
+		rb_free(source_p->localClient->dnsquery);
+	}
 	del_unknown_ip(source_p);
 	rb_dlinkDelete(&source_p->localClient->tnode, &unknown_list);
 
