@@ -33,7 +33,7 @@
 #include "send.h"
 #include "irc_string.h"
 
-#ifdef IPV6
+#ifdef RB_IPV6
 static unsigned long hash_ipv6(struct sockaddr *, int);
 #endif
 static unsigned long hash_ipv4(struct sockaddr *, int);
@@ -63,7 +63,7 @@ parse_netmask(const char *text, struct sockaddr  *naddr, int *nb)
 	else
 		addr = (struct rb_sockaddr_storage *)naddr;
 	
-#ifdef IPV6
+#ifdef RB_IPV6
 	if(strchr(ip, ':'))
 	{	
 		if((ptr = strchr(ip, '/')))
@@ -133,7 +133,7 @@ hash_ipv4(struct sockaddr *saddr, int bits)
  * Output: A hash value of the IP address.
  * Side effects: None
  */
-#ifdef IPV6
+#ifdef RB_IPV6
 static unsigned long
 hash_ipv6(struct sockaddr *saddr, int bits)
 {
@@ -221,7 +221,7 @@ find_conf_by_address(const char *name, const char *sockhost,
 	if(addr)
 	{
 		/* Check for IPV6 matches... */
-#ifdef IPV6
+#ifdef RB_IPV6
 		if(fam == AF_INET6)
 		{
 
@@ -448,7 +448,7 @@ find_exact_conf_by_address(const char *address, int type, const char *username)
 		address = "/NOMATCH!/";
 	arec = rb_malloc(sizeof(struct AddressRec));
 	masktype = parse_netmask(address, (struct sockaddr *)&addr, &bits);
-#ifdef IPV6
+#ifdef RB_IPV6
 	if(masktype == HM_IPV6)
 	{
 		/* We have to do this, since we do not re-hash for every bit -A1kmm. */
@@ -507,7 +507,7 @@ add_conf_by_address(const char *address, int type, const char *username, struct 
 	masktype = parse_netmask(address, (struct sockaddr *)&arec->Mask.ipa.addr, &bits);
 	arec->Mask.ipa.bits = bits;
 	arec->masktype = masktype;
-#ifdef IPV6
+#ifdef RB_IPV6
 	if(masktype == HM_IPV6)
 	{
 		/* We have to do this, since we do not re-hash for every bit -A1kmm. */
@@ -550,7 +550,7 @@ delete_one_address_conf(const char *address, struct ConfItem *aconf)
 	struct AddressRec *arec, *arecl = NULL;
 	struct rb_sockaddr_storage addr;
 	masktype = parse_netmask(address, (struct sockaddr *)&addr, &bits);
-#ifdef IPV6
+#ifdef RB_IPV6
 	if(masktype == HM_IPV6)
 	{
 		/* We have to do this, since we do not re-hash for every bit -A1kmm. */

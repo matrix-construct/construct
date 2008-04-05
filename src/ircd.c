@@ -24,10 +24,10 @@
  *  $Id: ircd.c 3380 2007-04-03 22:25:11Z jilles $
  */
 
+#include "ratbox_lib.h"
 #include "stdinc.h"
 #include "setup.h"
 #include "config.h"
-
 #include "ircd.h"
 #include "channel.h"
 #include "class.h"
@@ -66,8 +66,6 @@
 #include "patchlevel.h"
 #include "serno.h"
 
-#include "ratbox_lib.h"
-
 /*
  * Try and find the correct name to use with getrlimit() for setting the max.
  * number of files allowed to be open by this process.
@@ -80,6 +78,17 @@ extern char **myargv;
 
 int maxconnections; /* XXX */
 
+/* /quote set variables */
+struct SetOptions GlobalSetOptions;
+
+/* configuration set from ircd.conf */
+struct config_file_entry ConfigFileEntry;
+/* server info set from ircd.conf */
+struct server_info ServerInfo;
+/* admin info set from ircd.conf */
+struct admin_info AdminInfo;
+
+struct Counter Count;
 struct ServerStatistics ServerStats;
 
 /*
@@ -450,10 +459,10 @@ main(int argc, char *argv[])
 
 	rb_dlinkAddTail(&me, &me.node, &global_client_list);
 
-	memset((void *) &Count, 0, sizeof(Count));
-	memset((void *) &ServerInfo, 0, sizeof(ServerInfo));
-	memset((void *) &AdminInfo, 0, sizeof(AdminInfo));
-	memset((void *) &ServerStats, 0, sizeof(struct ServerStatistics));
+	memset(&Count, 0, sizeof(Count));
+	memset(&ServerInfo, 0, sizeof(ServerInfo));
+	memset(&AdminInfo, 0, sizeof(AdminInfo));
+	memset(&ServerStats, 0, sizeof(struct ServerStatistics));
 
 	/* Initialise the channel capability usage counts... */
 	init_chcap_usage_counts();

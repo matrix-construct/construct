@@ -154,7 +154,7 @@ mo_dline(struct Client *client_p, struct Client *source_p,
 		const char *creason;
 		int t = AF_INET, ty, b;
 		ty = parse_netmask(dlhost, (struct sockaddr *)&daddr, &b);
-#ifdef IPV6
+#ifdef RB_IPV6
         	if(ty == HM_IPV6)
                 	t = AF_INET6;
                 else

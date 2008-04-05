@@ -199,7 +199,7 @@ auth_dns_callback(void *vptr, struct DNSReply *reply)
 				good = 0;
 			}
 		}
-#ifdef IPV6
+#ifdef RB_IPV6
 		else if(auth->client->localClient->ip.ss_family == AF_INET6)
 		{
 			struct sockaddr_in6 *ip, *ip_fwd;
@@ -304,7 +304,7 @@ start_auth_query(struct AuthRequest *auth)
 		    (struct sockaddr *) &localaddr, &locallen);
 	
 	/* XXX mangle_mapped_sockaddr((struct sockaddr *)&localaddr); */
-#ifdef IPV6
+#ifdef RB_IPV6
 	if(localaddr.ss_family == AF_INET6)
 	{
 		((struct sockaddr_in6 *)&localaddr)->sin6_port = 0;
@@ -313,7 +313,7 @@ start_auth_query(struct AuthRequest *auth)
 	((struct sockaddr_in *)&localaddr)->sin_port = 0;
 
 	destaddr = auth->client->localClient->ip;
-#ifdef IPV6
+#ifdef RB_IPV6
 	if(localaddr.ss_family == AF_INET6)
 	{
 		((struct sockaddr_in6 *)&destaddr)->sin6_port = htons(113);

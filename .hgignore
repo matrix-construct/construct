@@ -1,0 +1,27 @@
+syntax: glob
+Makefile
+*.o
+*.so
+*.lo
+*.la
+.deps
+.libs
+autom4te.cache
+config.log
+config.status
+include/setup.h
+include/serno.h
+libratbox/include/libratbox_config.h
+libratbox/include/librb-config.h
+libratbox/include/stamp-h1
+libratbox/libtool
+servlink/servlink
+src/ircd
+src/lex.yy.c
+src/version.c.last
+src/y.tab.h
+src/y.tab.c
+tools/convertilines
+tools/convertklines
+tools/mkpasswd
+tools/viconf

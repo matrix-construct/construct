@@ -241,7 +241,7 @@ conf_set_serverinfo_vhost(void *data)
 static void
 conf_set_serverinfo_vhost6(void *data)
 {
-#ifdef IPV6
+#ifdef RB_IPV6
 	if(inetpton(AF_INET6, (char *) data, &ServerInfo.ip6.sin6_addr) <= 0)
 	{
 		conf_report_error("Invalid netmask for server IPv6 vhost (%s)", (char *) data);
@@ -670,7 +670,7 @@ conf_set_class_ping_time(void *data)
 static void
 conf_set_class_cidr_bitlen(void *data)
 {
-#ifdef IPV6
+#ifdef RB_IPV6
 	unsigned int maxsize = 128;
 #else
 	unsigned int maxsize = 32;
@@ -759,14 +759,14 @@ conf_set_listen_port(void *data)
                 if(listener_address == NULL)
                 {
 			add_listener(args->v.number, listener_address, AF_INET);
-#ifdef IPV6
+#ifdef RB_IPV6
 			add_listener(args->v.number, listener_address, AF_INET6);
 #endif
                 }
 		else
                 {
 			int family;
-#ifdef IPV6
+#ifdef RB_IPV6
 			if(strchr(listener_address, ':') != NULL)
 				family = AF_INET6;
 			else 
@@ -1221,7 +1221,7 @@ conf_set_connect_aftype(void *data)
 
 	if(strcasecmp(aft, "ipv4") == 0)
 		yy_server->aftype = AF_INET;
-#ifdef IPV6
+#ifdef RB_IPV6
 	else if(strcasecmp(aft, "ipv6") == 0)
 		yy_server->aftype = AF_INET6;
 #endif

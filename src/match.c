@@ -307,7 +307,7 @@ int comp_with_mask_sock(struct sockaddr *addr, struct sockaddr *dest, u_int mask
 		iaddr = &((struct sockaddr_in *)addr)->sin_addr;
 		idest = &((struct sockaddr_in *)dest)->sin_addr;
 	}
-#ifdef IPV6
+#ifdef RB_IPV6
 	else
 	{
 		iaddr = &((struct sockaddr_in6 *)addr)->sin6_addr;
@@ -346,7 +346,7 @@ int match_ips(const char *s1, const char *s2)
 	if (cidrlen == 0)
 		return 0;
 
-#ifdef IPV6
+#ifdef RB_IPV6
 	if (strchr(mask, ':') && strchr(address, ':'))
 	{
 		aftype = AF_INET6;
@@ -414,7 +414,7 @@ int match_cidr(const char *s1, const char *s2)
 	if (cidrlen == 0)
 		return 0;
 
-#ifdef IPV6
+#ifdef RB_IPV6
 	if (strchr(ip, ':') && strchr(ipmask, ':'))
 	{
 		aftype = AF_INET6;

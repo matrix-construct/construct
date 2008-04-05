@@ -34,7 +34,7 @@
 #define INADDRSZ 4
 #endif
 
-#ifdef IPV6
+#ifdef RB_IPV6
 #ifndef IN6ADDRSZ
 #define IN6ADDRSZ 16
 #endif
@@ -398,7 +398,7 @@ inetntoa(const char *in)
  */
 
 static const char *inet_ntop4(const u_char * src, char *dst, unsigned int size);
-#ifdef IPV6
+#ifdef RB_IPV6
 static const char *inet_ntop6(const u_char * src, char *dst, unsigned int size);
 #endif
 
@@ -427,7 +427,7 @@ inet_ntop4(const unsigned char *src, char *dst, unsigned int size)
  * author:
  *	Paul Vixie, 1996.
  */
-#ifdef IPV6
+#ifdef RB_IPV6
 static const char *
 inet_ntop6(const unsigned char *src, char *dst, unsigned int size)
 {
@@ -542,7 +542,7 @@ inetpton_sock(const char *src, struct sockaddr *dst)
 		SET_SS_LEN((struct rb_sockaddr_storage *) dst, sizeof(struct sockaddr_in));
 		return 1;
 	}
-#ifdef IPV6
+#ifdef RB_IPV6
 	else if(inetpton(AF_INET6, src, &((struct sockaddr_in6 *) dst)->sin6_addr))
 	{
 		((struct sockaddr_in6 *) dst)->sin6_port = 0;
@@ -562,7 +562,7 @@ inetntop_sock(struct sockaddr *src, char *dst, unsigned int size)
 	case AF_INET:
 		return (inetntop(AF_INET, &((struct sockaddr_in *) src)->sin_addr, dst, size));
 		break;
-#ifdef IPV6
+#ifdef RB_IPV6
 	case AF_INET6:
 		return (inetntop(AF_INET6, &((struct sockaddr_in6 *) src)->sin6_addr, dst, size));
 		break;
@@ -588,7 +588,7 @@ inetntop(int af, const void *src, char *dst, unsigned int size)
 	{
 	case AF_INET:
 		return (inet_ntop4(src, dst, size));
-#ifdef IPV6
+#ifdef RB_IPV6
 	case AF_INET6:
 		if(IN6_IS_ADDR_V4MAPPED((const struct in6_addr *) src) ||
 		   IN6_IS_ADDR_V4COMPAT((const struct in6_addr *) src))
@@ -677,7 +677,7 @@ inet_pton4(src, dst)
 	return (1);
 }
 
-#ifdef IPV6
+#ifdef RB_IPV6
 /* int
  * inet_pton6(src, dst)
  *	convert presentation level address to network order binary form.
@@ -803,7 +803,7 @@ inetpton(af, src, dst)
 	{
 	case AF_INET:
 		return (inet_pton4(src, dst));
-#ifdef IPV6
+#ifdef RB_IPV6
 	case AF_INET6:
 		/* Somebody might have passed as an IPv4 address this is sick but it works */
 		if(inet_pton4(src, dst))

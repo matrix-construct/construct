@@ -149,7 +149,7 @@ confopts(struct Client *source_p)
 	*p++ = 'Z';
 #endif
 
-#ifdef IPV6
+#ifdef RB_IPV6
 	*p++ = '6';
 #endif
 

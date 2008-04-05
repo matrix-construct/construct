@@ -317,50 +317,6 @@ AC_CHECK_TYPE(socklen_t, ,
 AC_ARG_ENABLE(ipv6,
 AC_HELP_STRING([--enable-ipv6],[Enable IPv6 support]),[ipv6=$enableval],[ipv6=no])
 
-if test $ipv6 != yes; then
-	have_v6="no"
-else
-AC_MSG_CHECKING([for core IPv6 support])
-
-AC_COMPILE_IFELSE(
-[AC_LANG_PROGRAM(
-	[[#define IN_AUTOCONF
-	#include <sys/types.h>
-	#include <sys/socket.h>
-	#include <netinet/in.h>]],
-	[[struct sockaddr_in6 s; 
-	  s.sin6_family = 0;]]
-	)],
-[
-	if test "$CYGWIN" = "yes"; then
-		AC_MSG_RESULT([no, Cygwin's IPv6 is incomplete])
-		have_v6=no
-	else
-		have_v6=yes
-		AC_DEFINE(IPV6, 1, [Define if IPv6 support is present and available.])
-		AC_MSG_RESULT(yes)
-		AC_MSG_CHECKING([for struct in6addr_any])
-		AC_COMPILE_IFELSE(
-			[AC_LANG_PROGRAM(
-				[[#define IN_AUTOCONF
-				#include <sys/types.h>
-				#include <sys/socket.h>
-				#include <netinet/in.h>]],
-				[[struct in6_addr a = in6addr_any;]]
-			)],
-			[AC_MSG_RESULT(yes)],
-			[
-				AC_MSG_RESULT(no)
-				AC_DEFINE(NO_IN6ADDR_ANY, 1, [Define to 1 if your system has no in6addr_any.])
-				inet_misc=1
-			]
-		)
-	fi
-],
-[AC_MSG_RESULT(no)
-have_v6="no"])
-fi
-
 AC_SEARCH_LIBS(crypt, [crypt descrypt],,)
 
 CRYPT_LIB=$ac_cv_search_crypt
@@ -1267,7 +1223,6 @@ Configuration:
 
 	Ziplinks           : $zlib
 	OpenSSL            : $openssl
-	IPv6 support       : $have_v6
 	Socket Engine      : $SELECT_TYPE
 	Small network      : $small_net
 	Block allocator    : $balloc
