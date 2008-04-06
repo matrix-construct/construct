@@ -80,6 +80,7 @@ rb_ssl_tryaccept(rb_fde_t * F, void *data)
 {
 	int ssl_err;
 	lrb_assert(F->accept != NULL);
+	int flags = RB_SELECT_READ;
 
 	if(!SSL_is_init_finished((SSL *) F->ssl))
 	{
@@ -92,8 +93,10 @@ rb_ssl_tryaccept(rb_fde_t * F, void *data)
 			case SSL_ERROR_WANT_READ:
 			case SSL_ERROR_WANT_WRITE:
 					{
+						if(ssl_err == SSL_ERROR_WANT_WRITE)
+							flags |= RB_SELECT_WRITE;
 						F->ssl_errno = get_last_err();
-						rb_setselect(F, RB_SELECT_READ | RB_SELECT_WRITE,
+						rb_setselect(F, flags,
 							     rb_ssl_tryaccept, NULL);
 						return;
 					}
