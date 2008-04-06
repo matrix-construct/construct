@@ -350,9 +350,6 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 				   target_p->name, 
 				   rb_current_time() - target_p->localClient->last, 
 				   target_p->localClient->firsttime);
-
-		sendto_one_notice(source_p, ":%ld %ld", target_p->localClient->last, 
-				   target_p->localClient->firsttime);
 	}
 	else
 	{
@@ -373,7 +370,6 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 					   target_p->name, target_p->sockhost);
 			
 		}
-	
 	}
 
 	hdata.client = source_p;
