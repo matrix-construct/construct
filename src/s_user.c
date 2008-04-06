@@ -94,7 +94,7 @@ int user_modes[256] = {
 	0,			/* W */
 	0,			/* X */
 	0,			/* Y */
-	0,			/* Z */
+	UMODE_SSLCLIENT,	/* Z */
 	/* 0x5B */ 0, 0, 0, 0, 0, 0, /* 0x60 */
 	UMODE_ADMIN,		/* a */
 	0,			/* b */
@@ -521,6 +521,9 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 		strcpy(source_p->id, generate_uid());
 		add_to_id_hash(source_p->id, source_p);
 	}
+
+	if (IsSSL(source_p))
+		source_p->umodes |= UMODE_SSLCLIENT;
 
 	if (source_p->umodes & UMODE_INVISIBLE)
 		Count.invisi++;
@@ -1007,6 +1010,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 
 		/* can only be set on burst */
 		case 'S':
+		case 'Z':
 		case ' ':
 		case '\n':
 		case '\r':
