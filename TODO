@@ -9,11 +9,11 @@
     ### this should be a nice framework to let modules hook the
     ### auth state imo. it'd also be cool to make the DNS checker and
     ### auth checker modules (loaded by default, of course). --nenolod
-[/] port to libratbox
+[x] port to libratbox
   [x] get it running
-  [ ] clean up maxconnections kludges &c
-  [ ] in-process SSL
-  [?] port and use ratbox ssld for server links
+  [x] clean up maxconnections kludges &c
+  [x] in-process SSL
+  [x] port and use ratbox ssld for server links
 [ ] merge some stuff from ircd-seven directly (to be determined what)
   [?] remote d:lines support?
 [ ] gk:line/akill syncing
