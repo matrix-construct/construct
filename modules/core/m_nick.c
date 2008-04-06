@@ -64,6 +64,7 @@ static int ms_euid(struct Client *, struct Client *, int, const char **);
 static int ms_save(struct Client *, struct Client *, int, const char **);
 static int can_save(struct Client *);
 static void save_user(struct Client *, struct Client *, struct Client *);
+static void bad_nickname(struct Client *, const char *);
 
 struct Message nick_msgtab = {
 	"NICK", 0, 0, 0, MFLG_SLOW,
@@ -281,18 +282,7 @@ mc_nick(struct Client *client_p, struct Client *source_p, int parc, const char *
 	/* if nicks erroneous, or too long, kill */
 	if(!clean_nick(parv[1], 0))
 	{
-		ServerStats.is_kill++;
-		sendto_realops_snomask(SNO_DEBUG, L_ALL,
-				     "Bad Nick: %s From: %s(via %s)",
-				     parv[1], source_p->servptr->name, client_p->name);
-		sendto_one(client_p, ":%s KILL %s :%s (Bad Nickname)", me.name, parv[1], me.name);
-
-		/* bad nick change, issue kill for the old nick to the rest
-		 * of the network.
-		 */
-		kill_client_serv_butone(client_p, source_p, "%s (Bad Nickname)", me.name);
-		source_p->flags |= FLAGS_KILLED;
-		exit_client(client_p, source_p, &me, "Bad Nickname");
+		bad_nickname(client_p, parv[1]);
 		return 0;
 	}
 
@@ -343,11 +333,7 @@ ms_nick(struct Client *client_p, struct Client *source_p, int parc, const char *
 	/* if nicks empty, erroneous, or too long, kill */
 	if(!clean_nick(parv[1], 0))
 	{
-		ServerStats.is_kill++;
-		sendto_realops_snomask(SNO_DEBUG, L_ALL,
-				     "Bad Nick: %s From: %s(via %s)",
-				     parv[1], parv[7], client_p->name);
-		sendto_one(client_p, ":%s KILL %s :%s (Bad Nickname)", me.name, parv[1], me.name);
+		bad_nickname(client_p, parv[1]);
 		return 0;
 	}
 
@@ -435,11 +421,7 @@ ms_uid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	/* if nicks erroneous, or too long, kill */
 	if(!clean_nick(parv[1], 0))
 	{
-		ServerStats.is_kill++;
-		sendto_realops_snomask(SNO_DEBUG, L_ALL,
-				     "Bad Nick: %s From: %s(via %s)",
-				     parv[1], source_p->name, client_p->name);
-		sendto_one(client_p, ":%s KILL %s :%s (Bad Nickname)", me.id, parv[8], me.name);
+		bad_nickname(client_p, parv[1]);
 		return 0;
 	}
 
@@ -527,11 +509,7 @@ ms_euid(struct Client *client_p, struct Client *source_p, int parc, const char *
 	/* if nicks erroneous, or too long, kill */
 	if(!clean_nick(parv[1], 0))
 	{
-		ServerStats.is_kill++;
-		sendto_realops_snomask(SNO_DEBUG, L_ALL,
-				     "Bad Nick: %s From: %s(via %s)",
-				     parv[1], source_p->name, client_p->name);
-		sendto_one(client_p, ":%s KILL %s :%s (Bad Nickname)", me.id, parv[8], me.name);
+		bad_nickname(client_p, parv[1]);
 		return 0;
 	}
 
@@ -1364,4 +1342,23 @@ save_user(struct Client *client_p, struct Client *source_p,
 	}
 	else
 		change_remote_nick(target_p, target_p, SAVE_NICKTS, target_p->id, 0);
+}
+
+static void bad_nickname(struct Client *client_p, const char *nick)
+{
+	char squitreason[100];
+
+	sendto_wallops_flags(UMODE_WALLOP, &me,
+			"Squitting %s because of bad nickname %s (NICKLEN mismatch?)",
+			client_p->name, nick);
+	sendto_server(NULL, NULL, CAP_TS6, NOCAPS,
+			":%s WALLOPS :Squitting %s because of bad nickname %s (NICKLEN mismatch?)",
+			me.id, client_p->name, nick);
+	sendto_server(NULL, NULL, NOCAPS, CAP_TS6,
+			":%s WALLOPS :Squitting %s because of bad nickname %s (NICKLEN mismatch?)",
+			me.name, client_p->name, nick);
+
+	rb_snprintf(squitreason, sizeof squitreason,
+			"Bad nickname introduced [%s]", nick);
+	exit_client(client_p, client_p, &me, squitreason);
 }
