@@ -93,6 +93,7 @@ SRCS =                          \
   scache.c                      \
   send.c                        \
   snomask.c			\
+  sslproc.c			\
   substitution.c		\
   supported.c			\
   whowas.c

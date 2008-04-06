@@ -216,6 +216,7 @@ struct server_conf
 #define SERVER_COMPRESSED	0x0008
 #define SERVER_TB		0x0010
 #define SERVER_AUTOCONN		0x0020
+#define SERVER_SSL		0x0040
 
 #define ServerConfIllegal(x)	((x)->flags & SERVER_ILLEGAL)
 #define ServerConfVhosted(x)	((x)->flags & SERVER_VHOSTED)
@@ -223,6 +224,7 @@ struct server_conf
 #define ServerConfCompressed(x)	((x)->flags & SERVER_COMPRESSED)
 #define ServerConfTb(x)		((x)->flags & SERVER_TB)
 #define ServerConfAutoconn(x)	((x)->flags & SERVER_AUTOCONN)
+#define ServerConfSSL(x)	((x)->flags & SERVER_SSL)
 
 extern struct server_conf *make_server_conf(void);
 extern void free_server_conf(struct server_conf *);

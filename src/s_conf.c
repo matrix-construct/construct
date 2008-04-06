@@ -48,6 +48,7 @@
 #include "reject.h"
 #include "cache.h"
 #include "blacklist.h"
+#include "sslproc.h"
 
 struct config_server_hide ConfigServerHide;
 
@@ -882,6 +883,26 @@ validate_conf(void)
 	if(ServerInfo.network_desc == NULL)
 		ServerInfo.network_desc = rb_strdup(NETWORK_DESC_DEFAULT);
 
+	if(ServerInfo.ssld_count < 1)
+		ServerInfo.ssld_count = 1;
+
+	if(!rb_setup_ssl_server(ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params))
+	{
+		ilog(L_MAIN, "WARNING: Unable to setup SSL.");
+		ssl_ok = 0;
+	} else {
+		ssl_ok = 1;
+		send_new_ssl_certs(ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params);
+	}
+
+	if(ServerInfo.ssld_count > get_ssld_count())
+	{
+		int start = ServerInfo.ssld_count - get_ssld_count();
+		/* start up additional ssld if needed */
+		start_ssldaemon(start, ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params);
+				
+	}
+
 	if((ConfigFileEntry.client_flood < CLIENT_FLOOD_MIN) ||
 	   (ConfigFileEntry.client_flood > CLIENT_FLOOD_MAX))
 		ConfigFileEntry.client_flood = CLIENT_FLOOD_MAX;
@@ -1239,6 +1260,8 @@ clear_out_old_conf(void)
 	ServerInfo.network_name = NULL;
 	rb_free(ServerInfo.network_desc);
 	ServerInfo.network_desc = NULL;
+
+	ServerInfo.ssld_count = 1;
 
 	/* clean out AdminInfo */
 	rb_free(AdminInfo.name);

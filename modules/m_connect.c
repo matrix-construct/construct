@@ -97,6 +97,14 @@ mo_connect(struct Client *client_p, struct Client *source_p, int parc, const cha
 		return 0;
 	}
 
+	if(ServerConfSSL(server_p) && (!ssl_ok || !get_ssld_count()))
+	{
+		sendto_one_notice(source_p,
+				  ":Connect: Server %s is set to use SSL/TLS but SSL/TLS is not configured.",
+				  parv[1]);
+		return 0;
+	}
+
 	/*
 	 * Get port number from user, if given. If not specified,
 	 * use the default form configuration structure. If missing
@@ -187,6 +195,14 @@ ms_connect(struct Client *client_p, struct Client *source_p, int parc, const cha
 	if((server_p = find_server_conf(parv[1])) == NULL)
 	{
 		sendto_one_notice(source_p, ":Connect: Host %s not listed in ircd.conf",
+				  parv[1]);
+		return 0;
+	}
+
+	if(ServerConfSSL(server_p) && (!ssl_ok || !get_ssld_count()))
+	{
+		sendto_one_notice(source_p,
+				  ":Connect: Server %s is set to use SSL/TLS but SSL/TLS is not configured.",
 				  parv[1]);
 		return 0;
 	}

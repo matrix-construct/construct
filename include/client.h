@@ -254,17 +254,6 @@ struct LocalUser
 	/* time challenge response is valid for */
 	time_t chal_time;
 
-	rb_fde_t *ctrlF;	/* For servers:
-				   control fd used for sending commands
-				   to servlink */
-
-	struct SlinkRpl slinkrpl;	/* slink reply being parsed */
-	unsigned char *slinkq;	/* sendq for control data */
-	int slinkq_ofs;		/* ofset into slinkq */
-	int slinkq_len;		/* length remaining after slinkq_ofs */
-
-	struct ZipStats zipstats;
-
 	struct DNSQuery *dnsquery; /* for outgoing server's name lookup */
 
 	time_t last_away;	/* Away since... */
@@ -298,6 +287,12 @@ struct LocalUser
 
 	char *mangledhost; /* non-NULL if host mangling module loaded and
 			      applicable to this client */
+
+	struct _ssl_ctl *ssl_ctl;		/* which ssl daemon we're associate with */
+	rb_uint32_t localflags;
+	struct ZipStats *zipstats;		/* zipstats */
+	rb_uint16_t cork_count;			/* used for corking/uncorking connections */
+	struct ev_entry *event;			/* used for associated events */
 };
 
 struct PreClient
@@ -433,6 +428,11 @@ struct exit_client_hook
 #define FLAGS_DYNSPOOF     0x1000000	/* dynamic spoof, only opers see ip */
 #define FLAGS_EXUNKNOWN	   0x2000000	/* too many unknowns exit.. */
 
+/* flags for local clients, this needs stuff moved from above to here at some point */
+#define LFLAGS_SSL		0x00000001
+#define LFLAGS_FLUSH		0x00000002
+#define LFLAGS_CORK		0x00000004
+
 /* umodes, settable flags */
 /* lots of this moved to snomask -- jilles */
 #define UMODE_SERVNOTICE   0x0001	/* server notices */
@@ -506,6 +506,16 @@ struct exit_client_hook
 #define IsExUnknown(x)		((x)->flags & FLAGS_EXUNKNOWN)
 #define SetExUnknown(x)		((x)->flags |= FLAGS_EXUNKNOWN)
 
+/* local flags */
+
+#define IsSSL(x)		((x)->localClient->localflags & LFLAGS_SSL)
+#define SetSSL(x)		((x)->localClient->localflags |= LFLAGS_SSL)
+#define ClearSSL(x)		((x)->localClient->localflags &= ~LFLAGS_SSL)
+
+#define IsFlush(x)		((x)->localClient->localflags & LFLAGS_FLUSH)
+#define SetFlush(x)		((x)->localClient->localflags |= LFLAGS_FLUSH)
+#define ClearFlush(x)		((x)->localClient->localflags &= ~LFLAGS_FLUSH)
+
 /* oper flags */
 #define MyOper(x)               (MyConnect(x) && IsOper(x))
 
@@ -558,6 +568,11 @@ struct exit_client_hook
  */
 #define IsFloodDone(x)          ((x)->flags & FLAGS_FLOODDONE)
 #define SetFloodDone(x)         ((x)->flags |= FLAGS_FLOODDONE)
+
+/* These also operate on the uplink from which it came */
+#define IsCork(x)		(MyConnect(x) ? (x)->localClient->cork_count : (x)->from->localClient->cork_count)
+#define SetCork(x)		(MyConnect(x) ? (x)->localClient->cork_count++ : (x)->from->localClient->cork_count++ )
+#define ClearCork(x)		(MyConnect(x) ? (x)->localClient->cork_count-- : (x)->from->localClient->cork_count--)
 
 /*
  * definitions for get_client_name

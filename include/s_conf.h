@@ -271,6 +271,7 @@ struct server_info
 	char *network_desc;
 	int hub;
 	struct sockaddr_in ip;
+	int default_max_clients;
 #ifdef RB_IPV6
 	struct sockaddr_in6 ip6;
 #endif
@@ -278,8 +279,11 @@ struct server_info
 #ifdef RB_IPV6
 	int specific_ipv6_vhost;
 #endif
-
-	int default_max_clients;
+	char *ssl_private_key;
+	char *ssl_ca_cert;
+	char *ssl_cert;
+	char *ssl_dh_params;
+	int ssld_count;
 };
 
 struct admin_info

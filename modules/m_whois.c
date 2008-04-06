@@ -190,7 +190,10 @@ do_whois(struct Client *client_p, struct Client *source_p, int parc, const char 
 		nick++;
 	}
 
-	target_p = find_named_person(nick);
+	if(MyClient(source_p))
+		target_p = find_named_person(nick);
+	else
+		target_p = find_person(nick);
 
 	if(target_p != NULL)
 	{
@@ -346,6 +349,9 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 		sendto_one_numeric(source_p, RPL_WHOISIDLE, form_str(RPL_WHOISIDLE),
 				   target_p->name, 
 				   rb_current_time() - target_p->localClient->last, 
+				   target_p->localClient->firsttime);
+
+		sendto_one_notice(source_p, ":%ld %ld", target_p->localClient->last, 
 				   target_p->localClient->firsttime);
 	}
 	else

@@ -44,7 +44,7 @@ struct Listener
 	char vhost[HOSTLEN + 1];	/* virtual name of listener */
 };
 
-extern void add_listener(int port, const char *vaddr_ip, int family);
+extern void add_listener(int port, const char *vaddr_ip, int family, int ssl);
 extern void close_listener(struct Listener *listener);
 extern void close_listeners(void);
 extern const char *get_listener_name(const struct Listener *listener);

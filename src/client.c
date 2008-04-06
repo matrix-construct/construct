@@ -56,6 +56,7 @@
 #include "reject.h"
 #include "scache.h"
 #include "irc_dictionary.h"
+#include "sslproc.h"
 
 #define DEBUG_EXITED_CLIENTS
 
@@ -161,7 +162,6 @@ make_client(struct Client *from)
 		client_p->localClient->lasttime = client_p->localClient->firsttime = rb_current_time();
 
 		client_p->localClient->F = NULL;
-		client_p->localClient->ctrlF = NULL;
 
 		client_p->preClient = (struct PreClient *) rb_bh_alloc(pclient_heap);
 
@@ -220,8 +220,11 @@ free_local_client(struct Client *client_p)
 		client_p->localClient->listener = 0;
 	}
 
-	if(client_p->localClient->F)
+	if(client_p->localClient->F != NULL)
+	{
+		del_from_cli_fd_hash(client_p);
 		rb_close(client_p->localClient->F);
+	}
 
 	if(client_p->localClient->passwd)
 	{
@@ -234,6 +237,8 @@ free_local_client(struct Client *client_p)
 	rb_free(client_p->localClient->fullcaps);
 	rb_free(client_p->localClient->opername);
 	rb_free(client_p->localClient->mangledhost);
+
+	ssld_decrement_clicount(client_p->localClient->ssl_ctl);
 
 	rb_bh_free(lclient_heap, client_p->localClient);
 	client_p->localClient = NULL;
@@ -2090,20 +2095,15 @@ close_connection(struct Client *client_p)
 	else
 		ServerStats.is_ni++;
 
-	if(client_p->localClient->F)
+	if(client_p->localClient->F != NULL)
 	{
 		/* attempt to flush any pending dbufs. Evil, but .. -- adrian */
 		if(!IsIOError(client_p))
 			send_queued(client_p);
 
+		del_from_cli_fd_hash(client_p);
 		rb_close(client_p->localClient->F);
 		client_p->localClient->F = NULL;
-	}
-
-	if(client_p->localClient->ctrlF)
-	{
-		rb_close(client_p->localClient->ctrlF);
-		client_p->localClient->ctrlF = NULL;
 	}
 
 	rb_linebuf_donebuf(&client_p->localClient->buf_sendq);

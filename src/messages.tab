@@ -240,7 +240,7 @@ static  const char *  replies[] = {
 /* 217 RPL_STATSQLINE, */       "%c %d %s :%s",
 /* 218 RPL_STATSYLINE, */       "Y %s %d %d %d %u %d.%d %d.%d %u",
 /* 219 RPL_ENDOFSTATS, */       "%c :End of /STATS report",
-/* 220 RPL_STATSPLINE, */       "%c %d %s %d :%s",
+/* 220 RPL_STATSPLINE, */       "%c %d %s %d :%s%s",
 /* 221 RPL_UMODEIS, */          "%s",
 /* 222 */	NULL,
 /* 223 */       NULL,

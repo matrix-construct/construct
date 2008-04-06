@@ -123,8 +123,6 @@ struct SlinkRplDef
 	unsigned int flags;
 };
 
-extern struct SlinkRplDef slinkrpltab[];
-
 /*
  * Globals
  *
@@ -154,8 +152,6 @@ extern int hunt_server(struct Client *client_pt,
 extern void send_capabilities(struct Client *, int);
 extern const char *show_capabilities(struct Client *client);
 extern void try_connections(void *unused);
-extern void start_collect_zipstats(void);
-extern void collect_zipstats(void *unused);
 
 extern int check_server(const char *name, struct Client *server);
 extern int server_estab(struct Client *client_p);

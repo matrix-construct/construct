@@ -54,6 +54,7 @@
 #include "hook.h"
 #include "msg.h"
 #include "reject.h"
+#include "sslproc.h"
 
 extern char *crypt();
 
@@ -71,10 +72,6 @@ int refresh_user_links = 0;
 
 static char buf[BUFSIZE];
 
-static void start_io(struct Client *server);
-
-static SlinkRplHnd slink_error;
-static SlinkRplHnd slink_zipstats;
 /*
  * list of recognized server capabilities.  "TS" is not on the list
  * because all servers that we talk to already do TS, and the kludged
@@ -101,128 +98,8 @@ struct Capability captab[] = {
 	{0, 0}
 };
 
-struct SlinkRplDef slinkrpltab[] = {
-	{SLINKRPL_ERROR, slink_error, SLINKRPL_FLAG_DATA},
-	{SLINKRPL_ZIPSTATS, slink_zipstats, SLINKRPL_FLAG_DATA},
-	{0, 0, 0},
-};
-
-static int fork_server(struct Client *client_p);
-
 static CNCB serv_connect_callback;
-
-void
-slink_error(unsigned int rpl, unsigned int len, unsigned char *data, struct Client *server_p)
-{
-	char squitreason[256];
-
-	s_assert(rpl == SLINKRPL_ERROR);
-
-	s_assert(len < 256);
-	data[len - 1] = '\0';
-
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, "SlinkError for %s: %s", server_p->name, data);
-	snprintf(squitreason, sizeof squitreason, "servlink error: %s", data);
-	exit_client(server_p, server_p, &me, squitreason);
-}
-
-void
-slink_zipstats(unsigned int rpl, unsigned int len, unsigned char *data, struct Client *server_p)
-{
-	struct ZipStats zipstats;
-	u_int32_t in = 0, in_wire = 0, out = 0, out_wire = 0;
-	int i = 0;
-
-	s_assert(rpl == SLINKRPL_ZIPSTATS);
-	s_assert(len == 16);
-	s_assert(IsCapable(server_p, CAP_ZIP));
-
-	/* Yes, it needs to be done this way, no we cannot let the compiler
-	 * work with the pointer to the structure.  This works around a GCC
-	 * bug on SPARC that affects all versions at the time of this writing.
-	 * I will feed you to the creatures living in RMS's beard if you do
-	 * not leave this as is, without being sure that you are not causing
-	 * regression for most of our installed SPARC base.
-	 * -jmallett, 04/27/2002
-	 */
-	memcpy(&zipstats, &server_p->localClient->zipstats, sizeof(struct ZipStats));
-
-	in |= (data[i++] << 24);
-	in |= (data[i++] << 16);
-	in |= (data[i++] << 8);
-	in |= (data[i++]);
-
-	in_wire |= (data[i++] << 24);
-	in_wire |= (data[i++] << 16);
-	in_wire |= (data[i++] << 8);
-	in_wire |= (data[i++]);
-
-	out |= (data[i++] << 24);
-	out |= (data[i++] << 16);
-	out |= (data[i++] << 8);
-	out |= (data[i++]);
-
-	out_wire |= (data[i++] << 24);
-	out_wire |= (data[i++] << 16);
-	out_wire |= (data[i++] << 8);
-	out_wire |= (data[i++]);
-
-	zipstats.in += in;
-	zipstats.inK += zipstats.in >> 10;
-	zipstats.in &= 0x03ff;
-
-	zipstats.in_wire += in_wire;
-	zipstats.inK_wire += zipstats.in_wire >> 10;
-	zipstats.in_wire &= 0x03ff;
-
-	zipstats.out += out;
-	zipstats.outK += zipstats.out >> 10;
-	zipstats.out &= 0x03ff;
-
-	zipstats.out_wire += out_wire;
-	zipstats.outK_wire += zipstats.out_wire >> 10;
-	zipstats.out_wire &= 0x03ff;
-
-	if(zipstats.inK > 0)
-		zipstats.in_ratio =
-			(((double) (zipstats.inK - zipstats.inK_wire) /
-			  (double) zipstats.inK) * 100.00);
-	else
-		zipstats.in_ratio = 0;
-
-	if(zipstats.outK > 0)
-		zipstats.out_ratio =
-			(((double) (zipstats.outK - zipstats.outK_wire) /
-			  (double) zipstats.outK) * 100.00);
-	else
-		zipstats.out_ratio = 0;
-
-	memcpy(&server_p->localClient->zipstats, &zipstats, sizeof(struct ZipStats));
-}
-
-void
-collect_zipstats(void *unused)
-{
-	rb_dlink_node *ptr;
-	struct Client *target_p;
-
-	RB_DLINK_FOREACH(ptr, serv_list.head)
-	{
-		target_p = ptr->data;
-		if(IsCapable(target_p, CAP_ZIP))
-		{
-			/* only bother if we haven't already got something queued... */
-			if(!target_p->localClient->slinkq)
-			{
-				target_p->localClient->slinkq = rb_malloc(1);	/* sigh.. */
-				target_p->localClient->slinkq[0] = SLINKCMD_ZIPSTATS;
-				target_p->localClient->slinkq_ofs = 0;
-				target_p->localClient->slinkq_len = 1;
-				send_queued_slink_write(target_p->localClient->ctrlF, target_p);
-			}
-		}
-	}
-}
+static CNCB serv_connect_ssl_callback;
 
 /*
  * hunt_server - Do the basic thing in delivering the message (command)
@@ -361,6 +238,10 @@ try_connections(void *unused)
 		if(ServerConfIllegal(tmp_p) || !ServerConfAutoconn(tmp_p))
 			continue;
 
+		/* don't allow ssl connections if ssl isn't setup */
+		if(ServerConfSSL(tmp_p) && (!ssl_ok || !get_ssld_count()))
+			continue;
+
 		cltmp = tmp_p->class;
 
 		/*
@@ -487,6 +368,11 @@ check_server(const char *name, struct Client *client_p)
 
 	if(server_p == NULL)
 		return error;
+
+	if(ServerConfSSL(server_p) && client_p->localClient->ssl_ctl == NULL)
+	{
+		return -5;
+	}
 
 	attach_server_conf(client_p, server_p);
 
@@ -1063,21 +949,11 @@ server_estab(struct Client *client_p)
 	if(!rb_set_buffers(client_p->localClient->F, READBUF_SIZE))
 		ilog_error("rb_set_buffers failed for server");
 
-	/* Hand the server off to servlink now */
+	/* Enable compression now */
 	if(IsCapable(client_p, CAP_ZIP))
 	{
-		if(fork_server(client_p) < 0)
-		{
-			sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
-					     "Warning: fork failed for server %s -- check servlink_path (%s)",
-					     get_server_name(client_p, HIDE_IP),
-					     ConfigFileEntry.servlink_path);
-			return exit_client(client_p, client_p, client_p, "Fork failed");
-		}
-		start_io(client_p);
-		SetServlink(client_p);
+		start_zlib_session(client_p);
 	}
-
 	sendto_one(client_p, "SVINFO %d %d 0 :%ld", TS_CURRENT, TS_MIN, rb_current_time());
 
 	client_p->servptr = &me;
@@ -1133,21 +1009,8 @@ server_estab(struct Client *client_p)
 	hdata.target = client_p;
 	call_hook(h_server_introduced, &hdata);
 
-	if(HasServlink(client_p))
-	{
-		/* we won't overflow FD_DESC_SZ here, as it can hold
-		 * client_p->name + 64
-		 */
-		rb_snprintf(note, sizeof note, "slink data: %s", client_p->name);
-		rb_note(client_p->localClient->F, note);
-		rb_snprintf(note, sizeof note, "slink ctrl: %s", client_p->name);
-		rb_note(client_p->localClient->ctrlF, note);
-	}
-	else
-	{
-		rb_snprintf(note, sizeof note, "Server: %s", client_p->name);
-		rb_note(client_p->localClient->F, note);
-	}
+	rb_snprintf(note, sizeof(note), "Server: %s", client_p->name);
+	rb_note(client_p->localClient->F, note);
 
 	/*
 	 ** Old sendto_serv_but_one() call removed because we now
@@ -1240,201 +1103,10 @@ server_estab(struct Client *client_p)
 
 	free_pre_client(client_p);
 
-	return 0;
-}
-
-static void
-start_io(struct Client *server)
-{
-	unsigned char *iobuf;
-	int c = 0;
-	int linecount = 0;
-	int linelen;
-
-	iobuf = rb_malloc(256);	/* XXX: This seems arbitrary. Perhaps make it IRCD_BUFSIZE? --nenolod */
-
-	if(IsCapable(server, CAP_ZIP))
-	{
-		/* ziplink */
-		iobuf[c++] = SLINKCMD_SET_ZIP_OUT_LEVEL;
-		iobuf[c++] = 0;	/* |          */
-		iobuf[c++] = 1;	/* \ len is 1 */
-		iobuf[c++] = ConfigFileEntry.compression_level;
-		iobuf[c++] = SLINKCMD_START_ZIP_IN;
-		iobuf[c++] = SLINKCMD_START_ZIP_OUT;
-	}
-
-	while (MyConnect(server))
-	{
-		linecount++;
-
-		iobuf = rb_realloc(iobuf, (c + READBUF_SIZE + 64));
-
-		/* store data in c+3 to allow for SLINKCMD_INJECT_RECVQ and len u16 */
-		linelen = rb_linebuf_get(&server->localClient->buf_recvq, (char *) (iobuf + c + 3), READBUF_SIZE, LINEBUF_PARTIAL, LINEBUF_RAW);	/* include partial lines */
-
-		if(linelen)
-		{
-			iobuf[c++] = SLINKCMD_INJECT_RECVQ;
-			iobuf[c++] = (linelen >> 8);
-			iobuf[c++] = (linelen & 0xff);
-			c += linelen;
-		}
-		else
-			break;
-	}
-
-	while (MyConnect(server))
-	{
-		linecount++;
-
-		iobuf = rb_realloc(iobuf, (c + BUF_DATA_SIZE + 64));
-
-		/* store data in c+3 to allow for SLINKCMD_INJECT_RECVQ and len u16 */
-		linelen = rb_linebuf_get(&server->localClient->buf_sendq, 
-				      (char *) (iobuf + c + 3), READBUF_SIZE, 
-				      LINEBUF_PARTIAL, LINEBUF_PARSED);	/* include partial lines */
-
-		if(linelen)
-		{
-			iobuf[c++] = SLINKCMD_INJECT_SENDQ;
-			iobuf[c++] = (linelen >> 8);
-			iobuf[c++] = (linelen & 0xff);
-			c += linelen;
-		}
-		else
-			break;
-	}
-
-	/* start io */
-	iobuf[c++] = SLINKCMD_INIT;
-
-	server->localClient->slinkq = iobuf;
-	server->localClient->slinkq_ofs = 0;
-	server->localClient->slinkq_len = c;
-
-	/* schedule a write */
-	send_queued_slink_write(server->localClient->ctrlF, server);
-}
-
-/*
- * fork_server
- *
- * inputs       - struct Client *server
- * output       - success: 0 / failure: -1
- * side effect  - fork, and exec SERVLINK to handle this connection
- */
-static int
-fork_server(struct Client *server)
-{
-	int ret;
-	int i;
-	int ctrl_fds[2];
-	int data_fds[2];
-
-	char fd_str[4][6];
-	char *kid_argv[7];
-	char slink[] = "-slink";
-
-
-	/* ctrl */
-#ifdef HAVE_SOCKETPAIR
-	if(socketpair(AF_UNIX, SOCK_STREAM, 0, ctrl_fds) < 0)
-#else
-	if(inet_socketpair(AF_INET,SOCK_STREAM, 0, ctrl_fds) < 0)
-#endif
-		goto fork_error;
-
-	
-
-	/* data */
-#ifdef HAVE_SOCKETPAIR
-	if(socketpair(AF_UNIX, SOCK_STREAM, 0, data_fds) < 0)
-#else
-	if(inet_socketpair(AF_INET,SOCK_STREAM, 0, data_fds) < 0)
-#endif
-		goto fork_error;
-
-
-#ifdef __CYGWIN__
-	if((ret = vfork()) < 0)
-#else
-	if((ret = fork()) < 0)
-#endif
-		goto fork_error;
-	else if(ret == 0)
-	{
-		int maxconn = maxconnections;
-
-		/* set our fds as non blocking and close everything else */
-		for (i = 0; i < maxconn; i++)
-		{
-				
-
-			if((i == ctrl_fds[1]) || (i == data_fds[1]) || (i == rb_get_fd(server->localClient->F))) 
-			{
-				// XXX rb_set_nb(i);
-			}
-			else
-			{
-#ifdef __CYGWIN__
-				if(i > 2)	/* don't close std* */
-#endif
-					close(i);
-			}
-		}
-
-		rb_snprintf(fd_str[0], sizeof(fd_str[0]), "%d", ctrl_fds[1]);
-		rb_snprintf(fd_str[1], sizeof(fd_str[1]), "%d", data_fds[1]);
-		rb_snprintf(fd_str[2], sizeof(fd_str[2]), "%d", rb_get_fd(server->localClient->F));
-		kid_argv[0] = slink;
-		kid_argv[1] = fd_str[0];
-		kid_argv[2] = fd_str[1];
-		kid_argv[3] = fd_str[2];
-		kid_argv[4] = NULL;
-
-		/* exec servlink program */
-		execv(ConfigFileEntry.servlink_path, kid_argv);
-
-		/* We're still here, abort. */
-		_exit(1);
-	}
-	else
-	{
-		rb_close(server->localClient->F);
-
-		/* close the childs end of the pipes */
-		close(ctrl_fds[1]);
-		close(data_fds[1]);
-		
-		s_assert(server->localClient);
-		server->localClient->ctrlF = rb_open(ctrl_fds[0], RB_FD_PIPE, "servlink ctrl");
-		server->localClient->F = rb_open(data_fds[0], RB_FD_PIPE, "servlink data");
-
-		if(!rb_set_nb(server->localClient->ctrlF))
-		{
-			ilog_error("setting a slink fd nonblocking");
-		}
-
-		if(!rb_set_nb(server->localClient->F))
-		{
-			ilog_error("setting a slink fd nonblocking");
-		}
-
-		read_ctrl_packet(server->localClient->ctrlF, server);
-		read_packet(server->localClient->F, server);
-	}
+	if (!IsCapable(client_p, CAP_ZIP))
+		send_pop_queue(client_p);
 
 	return 0;
-
-      fork_error:
-	/* this is ugly, but nicer than repeating
-	 * about 50 close() statements everywhre... */
-	close(data_fds[0]);
-	close(data_fds[1]);
-	close(ctrl_fds[0]);
-	close(ctrl_fds[1]);
-	return -1;
 }
 
 /*
@@ -1499,11 +1171,16 @@ serv_connect_resolved(struct Client *client_p)
 #endif
 				(server_p->aftype == AF_INET ? "IPv4" : "?"));
 
-		rb_connect_tcp(client_p->localClient->F,
-				(struct sockaddr *) &client_p->localClient->ip,
-				NULL, 0,
-				serv_connect_callback, client_p,
-				ConfigFileEntry.connect_timeout);
+		if(ServerConfSSL(server_p))
+		{
+			rb_connect_tcp(client_p->localClient->F, (struct sockaddr *)&client_p->localClient->ip,
+					 NULL, 0, serv_connect_ssl_callback, 
+					 client_p, ConfigFileEntry.connect_timeout);
+		}
+		else
+			rb_connect_tcp(client_p->localClient->F, (struct sockaddr *)&client_p->localClient->ip,
+					 NULL, 0, serv_connect_callback, 
+					 client_p, ConfigFileEntry.connect_timeout);
 		 return 1;
 	}
 
@@ -1516,11 +1193,16 @@ serv_connect_resolved(struct Client *client_p)
 			(server_p->aftype == AF_INET ? "IPv4" : "?"), vhoststr);
 
 
-	rb_connect_tcp(client_p->localClient->F,
-			(struct sockaddr *) &client_p->localClient->ip,
-			(struct sockaddr *) &myipnum, GET_SS_LEN(&myipnum),
-			serv_connect_callback, client_p,
-			ConfigFileEntry.connect_timeout);
+	if(ServerConfSSL(server_p))
+		rb_connect_tcp(client_p->localClient->F, (struct sockaddr *)&client_p->localClient->ip,
+				 (struct sockaddr *) &myipnum,
+				 GET_SS_LEN(&myipnum), serv_connect_ssl_callback, client_p,
+				 ConfigFileEntry.connect_timeout);
+	else
+		rb_connect_tcp(client_p->localClient->F, (struct sockaddr *)&client_p->localClient->ip,
+				 (struct sockaddr *) &myipnum,
+				 GET_SS_LEN(&myipnum), serv_connect_callback, client_p,
+				 ConfigFileEntry.connect_timeout);
 
 	return 1;
 }
@@ -1626,6 +1308,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	strlcpy(client_p->host, server_p->host, sizeof(client_p->host));
 	strlcpy(client_p->sockhost, server_p->host, sizeof(client_p->sockhost));
 	client_p->localClient->F = F;
+	add_to_cli_fd_hash(client_p);
 
 	/*
 	 * Set up the initial server evilness, ripped straight from
@@ -1703,6 +1386,34 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	}
 }
 
+static void
+serv_connect_ev(void *data)
+{
+	struct Client *client_p = data;
+	serv_connect_callback(client_p->localClient->F, RB_OK, client_p);
+}
+
+static void
+serv_connect_ssl_callback(rb_fde_t *F, int status, void *data)
+{
+	struct Client *client_p = data;
+	rb_fde_t *xF[2];
+	if(status != RB_OK)
+	{
+		/* XXX deal with failure */
+		return;
+	}
+	rb_connect_sockaddr(F, (struct sockaddr *)&client_p->localClient->ip, sizeof(client_p->localClient->ip));
+	rb_socketpair(AF_UNIX, SOCK_STREAM, 0, &xF[0], &xF[1], "Outgoing ssld connection");
+	del_from_cli_fd_hash(client_p);
+	client_p->localClient->F = xF[0];
+	add_to_cli_fd_hash(client_p);
+
+	client_p->localClient->ssl_ctl = start_ssld_connect(F, xF[1], rb_get_fd(xF[0]));
+	SetSSL(client_p);
+	rb_event_addonce("serv_connect_ev", serv_connect_ev, client_p, 1);		
+}
+
 /*
  * serv_connect_callback() - complete a server connection.
  * 
@@ -1734,6 +1445,9 @@ serv_connect_callback(rb_fde_t *F, int status, void *data)
 		exit_client(client_p, client_p, &me, "Server Exists");
 		return;
 	}
+
+	if(client_p->localClient->ssl_ctl == NULL)
+		rb_connect_sockaddr(F, (struct sockaddr *)&client_p->localClient->ip, sizeof(client_p->localClient->ip));
 
 	/* Check the status */
 	if(status != RB_OK)

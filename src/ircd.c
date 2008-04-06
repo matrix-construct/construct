@@ -65,6 +65,7 @@
 #include "monitor.h"
 #include "patchlevel.h"
 #include "serno.h"
+#include "sslproc.h"
 
 /*
  * Try and find the correct name to use with getrlimit() for setting the max.
@@ -90,6 +91,9 @@ struct admin_info AdminInfo;
 
 struct Counter Count;
 struct ServerStatistics ServerStats;
+
+int ssl_ok = 0;
+int zlib_ok = 1;
 
 /*
  * print_startup - print startup information
@@ -565,6 +569,8 @@ main(int argc, char *argv[])
 	mod_add_path(MODULE_DIR "/autoload"); 
 #endif
 
+	init_ssld();
+
 	initialize_server_capabs();	/* Set up default_server_capabs */
 	initialize_global_set_options();
 
@@ -590,6 +596,18 @@ main(int argc, char *argv[])
 		return -3;
 	}
 	strlcpy(me.info, ServerInfo.description, sizeof(me.info));
+
+	if(ServerInfo.ssl_cert != NULL && ServerInfo.ssl_private_key != NULL)
+	{
+		/* just do the rb_setup_ssl_server to validate the config */
+		if(!rb_setup_ssl_server(ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params))
+		{
+			ilog(L_MAIN, "WARNING: Unable to setup SSL.");
+			ssl_ok = 0;
+		}
+		else
+			ssl_ok = 1;
+	}
 
 	if (testing_conf)
 	{
@@ -627,8 +645,6 @@ main(int argc, char *argv[])
 	 */
 	rb_event_addish("try_connections", try_connections, NULL, STARTUP_CONNECTIONS_TIME);
 	rb_event_addonce("try_connections_startup", try_connections, NULL, 0);
-
-	rb_event_addish("collect_zipstats", collect_zipstats, NULL, ZIPSTATS_TIME);
 
 	/* Setup the timeout check. I'll shift it later :)  -- adrian */
 	rb_event_addish("rb_checktimeouts", rb_checktimeouts, NULL, 1);

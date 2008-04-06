@@ -42,8 +42,6 @@ extern void send_pop_queue(struct Client *);
 
 extern void send_queued(struct Client *to);
 
-extern void send_queued_slink_write(rb_fde_t *F, void *data);
-
 extern void sendto_one(struct Client *target_p, const char *, ...) AFP(2, 3);
 extern void sendto_one_notice(struct Client *target_p,const char *, ...) AFP(2, 3);
 extern void sendto_one_prefix(struct Client *target_p, struct Client *source_p,

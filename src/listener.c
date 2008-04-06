@@ -41,6 +41,8 @@
 #include "reject.h"
 #include "s_conf.h"
 #include "hostmask.h"
+#include "sslproc.h"
+#include "hash.h"
 
 #ifndef INADDR_NONE
 #define INADDR_NONE ((unsigned int) 0xffffffff)
@@ -145,7 +147,8 @@ show_ports(struct Client *source_p)
 			   ntohs(((struct sockaddr_in *)&listener->addr)->sin_port),
 #endif
 			   IsOperAdmin(source_p) ? listener->name : me.name,
-			   listener->ref_count, (listener->active) ? "active" : "disabled");
+			   listener->ref_count, (listener->active) ? "active" : "disabled",
+			   listener->ssl ? " ssl" : "");
 	}
 }
 
@@ -303,7 +306,7 @@ find_listener(struct rb_sockaddr_storage *addr)
  * the format "255.255.255.255"
  */
 void
-add_listener(int port, const char *vhost_ip, int family)
+add_listener(int port, const char *vhost_ip, int family, int ssl)
 {
 	listener_t *listener;
 	struct rb_sockaddr_storage vaddr;
@@ -375,6 +378,7 @@ add_listener(int port, const char *vhost_ip, int family)
 	}
 
 	listener->F = NULL;
+	listener->ssl = ssl;
 
 	if(inetport(listener))
 		listener->active = 1;
@@ -432,7 +436,7 @@ close_listeners()
  * any client list yet.
  */
 static void
-add_connection(struct Listener *listener, rb_fde_t *F, struct sockaddr *sai, int exempt)
+add_connection(struct Listener *listener, rb_fde_t *F, struct sockaddr *sai, void *ssl_ctl, int exempt)
 {
 	struct Client *new_client;
 	s_assert(NULL != listener);
@@ -456,8 +460,12 @@ add_connection(struct Listener *listener, rb_fde_t *F, struct sockaddr *sai, int
 	strlcpy(new_client->host, new_client->sockhost, sizeof(new_client->host));
 
 	new_client->localClient->F = F;
-
+	add_to_cli_fd_hash(new_client);
 	new_client->localClient->listener = listener;
+	new_client->localClient->ssl_ctl = ssl_ctl;
+	if(ssl_ctl != NULL || rb_fd_ssl(F))
+		SetSSL(new_client);
+
 	++listener->ref_count;
 
 	if(!exempt)
@@ -478,6 +486,12 @@ accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, voi
 	char buf[BUFSIZE];
 	struct ConfItem *aconf;
 	static time_t last_oper_notice = 0;
+
+	if(listener->ssl && (!ssl_ok || !get_ssld_count()))
+	{
+		rb_close(F);
+		return 0;
+	}
 
 	if((maxconnections - 10) < rb_get_fd(F)) /* XXX this is kinda bogus */
 	{
@@ -530,6 +544,16 @@ accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, voi
 }
 
 static void
+accept_ssld(rb_fde_t *F, struct sockaddr *addr, struct sockaddr *laddr, struct Listener *listener)
+{
+	ssl_ctl_t *ctl;
+	rb_fde_t *xF[2];
+	rb_socketpair(AF_UNIX, SOCK_STREAM, 0, &xF[0], &xF[1], "Incoming ssld Connection");
+	ctl = start_ssld_accept(F, xF[1], rb_get_fd(xF[0])); /* this will close F for us */
+	add_connection(listener, xF[0], addr, ctl, 1);
+}
+
+static void
 accept_callback(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t addrlen, void *data)
 {
 	struct Listener *listener = data;
@@ -545,5 +569,8 @@ accept_callback(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t add
 		rb_close(F);
 	}
 	
-	add_connection(listener, F, addr, 1);
+	if(listener->ssl)
+		accept_ssld(F, addr, (struct sockaddr *)&lip, listener);
+	else
+		add_connection(listener, F, addr, NULL, 1);
 }

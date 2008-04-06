@@ -173,6 +173,15 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 		return 0;
 		/* NOT REACHED */
 		break;
+	case -5:
+		sendto_realops_flags(SNO_GENERAL, L_ALL,
+		     "Connection from servername %s requires SSL/TLS but is plaintext",
+		     name);
+		ilog(L_SERVER, "Access denied, requires SSL/TLS but is plaintext from %s", 
+		     log_client_name(client_p, SHOW_IP));
+
+		exit_client(client_p, client_p, client_p, "Access denied, requires SSL/TLS but is plaintext");
+		return 0;
 	}
 
 	if((target_p = find_server(NULL, name)))

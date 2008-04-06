@@ -28,6 +28,7 @@
 #include "ircd.h"
 #include "snomask.h"
 #include "blacklist.h"
+#include "sslproc.h"
 
 #define CF_TYPE(x) ((x) & CF_MTYPE)
 
@@ -351,6 +352,7 @@ static struct mode_table connect_table[] = {
 	{ "compressed",	SERVER_COMPRESSED	},
 	{ "encrypted",	SERVER_ENCRYPTED	},
 	{ "topicburst",	SERVER_TB		},
+	{ "ssl",	SERVER_SSL		},
 	{ NULL,		0			},
 };
 
@@ -744,8 +746,10 @@ conf_end_listen(struct TopConf *tc)
 	return 0;
 }
 
+
+
 static void
-conf_set_listen_port(void *data)
+conf_set_listen_port_both(void *data, int ssl)
 {
 	conf_parm_t *args = data;
 	for (; args; args = args->next)
@@ -758,9 +762,9 @@ conf_set_listen_port(void *data)
 		}
                 if(listener_address == NULL)
                 {
-			add_listener(args->v.number, listener_address, AF_INET);
+			add_listener(args->v.number, listener_address, AF_INET, ssl);
 #ifdef RB_IPV6
-			add_listener(args->v.number, listener_address, AF_INET6);
+			add_listener(args->v.number, listener_address, AF_INET6, ssl);
 #endif
                 }
 		else
@@ -773,11 +777,23 @@ conf_set_listen_port(void *data)
 #endif
 				family = AF_INET;
 		
-			add_listener(args->v.number, listener_address, family);
+			add_listener(args->v.number, listener_address, family, ssl);
                 
                 }
 
 	}
+}
+
+static void
+conf_set_listen_port(void *data)
+{
+	conf_set_listen_port_both(data, 0);
+}
+
+static void
+conf_set_listen_sslport(void *data)
+{
+	conf_set_listen_port_both(data, 1);
 }
 
 static void
@@ -1150,6 +1166,13 @@ conf_end_connect(struct TopConf *tc)
 		yy_server->flags &= ~SERVER_COMPRESSED;
 	}
 #endif
+	if(ServerConfCompressed(yy_server) && ServerConfSSL(yy_server))
+	{
+		conf_report_error("Ignoring compressed for connect block %s -- "
+				       "ssl and compressed are mutually exclusive (OpenSSL does its own compression)", 
+				       yy_server->name);
+		yy_server->flags &= ~SERVER_COMPRESSED;
+	}
 
 	add_server_conf(yy_server);
 	rb_dlinkAdd(yy_server, &yy_server->node, &server_conf_list);
@@ -1893,6 +1916,12 @@ static struct ConfEntry conf_serverinfo_table[] =
 	{ "vhost", 		CF_QSTRING, conf_set_serverinfo_vhost,	0, NULL },
 	{ "vhost6", 		CF_QSTRING, conf_set_serverinfo_vhost6,	0, NULL },
 
+	{ "ssl_private_key",    CF_QSTRING, NULL, 0, &ServerInfo.ssl_private_key },
+	{ "ssl_ca_cert",        CF_QSTRING, NULL, 0, &ServerInfo.ssl_ca_cert },
+	{ "ssl_cert",           CF_QSTRING, NULL, 0, &ServerInfo.ssl_cert },   
+	{ "ssl_dh_params",      CF_QSTRING, NULL, 0, &ServerInfo.ssl_dh_params },
+	{ "ssld_count",		CF_INT,	    NULL, 0, &ServerInfo.ssld_count },
+
 	{ "default_max_clients",CF_INT,     NULL, 0, &ServerInfo.default_max_clients },
 
 	{ "\0",	0, NULL, 0, NULL }
@@ -2099,6 +2128,7 @@ newconf_init()
 
 	add_top_conf("listen", conf_begin_listen, conf_end_listen, NULL);
 	add_conf_item("listen", "port", CF_INT | CF_FLIST, conf_set_listen_port);
+	add_conf_item("listen", "sslport", CF_INT | CF_FLIST, conf_set_listen_sslport);
 	add_conf_item("listen", "ip", CF_QSTRING, conf_set_listen_address);
 	add_conf_item("listen", "host", CF_QSTRING, conf_set_listen_address);
 

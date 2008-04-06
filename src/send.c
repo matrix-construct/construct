@@ -149,6 +149,14 @@ send_queued(struct Client *to)
 	if(IsIOError(to))
 		return;
 
+	/* Something wants us to not send anything currently */
+	/* if(IsCork(to))
+		return; */
+
+	/* try to flush later when the write event resets this */
+	if(IsFlush(to))
+		return;
+
 #ifdef USE_IODEBUG_HOOKS
 	hd.client = to;
 	if(to->localClient->buf_sendq.list.head)
@@ -173,6 +181,8 @@ send_queued(struct Client *to)
 #endif
      
 
+			ClearFlush(to);
+
 			to->localClient->sendB += retlen;
 			me.localClient->sendB += retlen;
 			if(to->localClient->sendB > 1023)
@@ -193,9 +203,26 @@ send_queued(struct Client *to)
 			return;
 		}
 	}
+
 	if(rb_linebuf_len(&to->localClient->buf_sendq))
-	rb_setselect(to->localClient->F, RB_SELECT_WRITE,
+	{
+		SetFlush(to);
+		rb_setselect(to->localClient->F, RB_SELECT_WRITE,
 			       send_queued_write, to);
+	}
+	else
+		ClearFlush(to);
+}
+
+void
+send_pop_queue(struct Client *to)
+{
+	if(to->from != NULL)
+		to = to->from;
+	if(!MyConnect(to) || IsIOError(to))
+		return;
+	if(rb_linebuf_len(&to->localClient->buf_sendq) > 0)
+		send_queued(to);
 }
 
 /* send_queued_write()
@@ -208,71 +235,8 @@ static void
 send_queued_write(rb_fde_t *F, void *data)
 {
 	struct Client *to = data;
-	/*ClearFlush(to);*/
+	ClearFlush(to);
 	send_queued(to);
-}
-
-/* send_queued_slink_write()
- *
- * inputs	- fd to have queue sent, client we're sending to
- * outputs	- contents of queue
- * side effects - write is rescheduled if queue isnt emptied
- */
-void
-send_queued_slink_write(rb_fde_t *F, void *data)
-{
-	struct Client *to = data;
-	int retlen;
-
-	/*
-	 ** Once socket is marked dead, we cannot start writing to it,
-	 ** even if the error is removed...
-	 */
-	if(IsIOError(to))
-		return;
-
-	/* Next, lets try to write some data */
-	if(to->localClient->slinkq)
-	{
-		retlen = rb_write(to->localClient->ctrlF,
-			      to->localClient->slinkq + to->localClient->slinkq_ofs,
-			      to->localClient->slinkq_len);
-
-		if(retlen < 0)
-		{
-			/* If we have a fatal error */
-			if(!rb_ignore_errno(errno))
-			{
-				dead_link(to);
-				return;
-			}
-		}
-		/* 0 bytes is an EOF .. */
-		else if(retlen == 0)
-		{
-			dead_link(to);
-			return;
-		}
-		else
-		{
-			to->localClient->slinkq_len -= retlen;
-
-			s_assert(to->localClient->slinkq_len >= 0);
-			if(to->localClient->slinkq_len)
-				to->localClient->slinkq_ofs += retlen;
-			else
-			{
-				to->localClient->slinkq_ofs = 0;
-				rb_free(to->localClient->slinkq);
-				to->localClient->slinkq = NULL;
-			}
-		}
-	}
-
-	/* if we have any more data, reschedule a write */
-	if(to->localClient->slinkq_len)
-		rb_setselect(to->localClient->ctrlF,
-			       RB_SELECT_WRITE, send_queued_slink_write, to);
 }
 
 /* sendto_one()
