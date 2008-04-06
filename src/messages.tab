@@ -692,7 +692,7 @@ static  const char *  replies[] = {
 /* 668 */	NULL,
 /* 669 */	NULL,
 /* 670 */	NULL,
-/* 671 */	NULL,
+/* 671 RPL_WHOISSECURE, */	"%s :is using a secure connection",
 /* 672 */	NULL,
 /* 673 */	NULL,
 /* 674 */	NULL,

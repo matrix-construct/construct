@@ -449,7 +449,7 @@ struct exit_client_hook
 /* user information flags, only settable by remote mode or local oper */
 #define UMODE_OPER         0x100000	/* Operator */
 #define UMODE_ADMIN        0x200000	/* Admin on server */
-#define UMODE_SSLCLIENT    0x400000	/* using SSL */
+#define UMODE_SSLCLIENT    0x1000000	/* using SSL */
 
 #define UMODE_ALL	   UMODE_SERVNOTICE
 
@@ -531,6 +531,9 @@ struct exit_client_hook
 #define IsInvisible(x)          ((x)->umodes & UMODE_INVISIBLE)
 #define SetInvisible(x)         ((x)->umodes |= UMODE_INVISIBLE)
 #define ClearInvisible(x)       ((x)->umodes &= ~UMODE_INVISIBLE)
+#define IsSSLClient(x)		((x)->umodes & UMODE_SSLCLIENT)
+#define SetSSLClient(x)		((x)->umodes |= UMODE_SSLCLIENT)
+#define ClearSSLClient(x)	((x)->umodes &= ~UMODE_SSLCLIENT)
 #define SendWallops(x)          ((x)->umodes & UMODE_WALLOP)
 #define SendLocops(x)           ((x)->umodes & UMODE_LOCOPS)
 #define SendServNotice(x)       ((x)->umodes & UMODE_SERVNOTICE)
