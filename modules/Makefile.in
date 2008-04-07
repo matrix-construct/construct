@@ -47,7 +47,6 @@ CORE_SRCS = \
   core/m_part.c \
   core/m_quit.c \
   core/m_server.c \
-  core/m_sjoin.c \
   core/m_squit.c
 
 TSRCS =                          \

@@ -14,7 +14,18 @@
   [x] clean up maxconnections kludges &c
   [x] in-process SSL
   [x] port and use ratbox ssld for server links
+[x] ssl stuff
+  [x] client-to-client ssl
+  [x] server-to-server ssl
+  [x] ssl usermode (+Z)
+  [ ] ssl channelmode (by module?)
 [ ] merge some stuff from ircd-seven directly (to be determined what)
   [?] remote d:lines support?
+  [?] +C (noctcp) channel/usermode
 [ ] gk:line/akill syncing
 [ ] drop non-TS6 (legacy protocol) support
+[ ] module engine rework
+  [ ] more beautiful way of adding new channel modes by module
+[ ] other stuff
+  [ ] merge m_join.c and m_sjoin.c in one module (same functions, done in ratbox3)
+  [ ] merge s_gline.c and m_gline.c in one module (for pretty look, done in ratbox3)
