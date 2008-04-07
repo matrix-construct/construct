@@ -38,6 +38,7 @@
 #include "parse.h"
 #include "hash.h"
 #include "modules.h"
+#include "sslproc.h"
 
 static int mo_connect(struct Client *, struct Client *, int, const char **);
 static int ms_connect(struct Client *, struct Client *, int, const char **);
