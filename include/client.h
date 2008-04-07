@@ -109,15 +109,6 @@ struct Server
 	struct scache_entry *nameinfo;
 };
 
-struct SlinkRpl
-{
-	int command;
-	int datalen;
-	int gotdatalen;
-	int readdata;
-	unsigned char *data;
-};
-
 struct ZipStats
 {
 	unsigned long in;
