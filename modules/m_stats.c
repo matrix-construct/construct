@@ -940,20 +940,8 @@ stats_tstats (struct Client *source_p)
 
 		sp.is_sbs += target_p->localClient->sendB;
 		sp.is_sbr += target_p->localClient->receiveB;
-		sp.is_sks += target_p->localClient->sendK;
-		sp.is_skr += target_p->localClient->receiveK;
 		sp.is_sti += rb_current_time() - target_p->localClient->firsttime;
 		sp.is_sv++;
-		if(sp.is_sbs > 1023)
-		{
-			sp.is_sks += (sp.is_sbs >> 10);
-			sp.is_sbs &= 0x3ff;
-		}
-		if(sp.is_sbr > 1023)
-		{
-			sp.is_skr += (sp.is_sbr >> 10);
-			sp.is_sbr &= 0x3ff;
-		}
 	}
 
 	RB_DLINK_FOREACH(ptr, lclient_list.head)
@@ -962,21 +950,8 @@ stats_tstats (struct Client *source_p)
 
 		sp.is_cbs += target_p->localClient->sendB;
 		sp.is_cbr += target_p->localClient->receiveB;
-		sp.is_cks += target_p->localClient->sendK;
-		sp.is_ckr += target_p->localClient->receiveK;
 		sp.is_cti += rb_current_time() - target_p->localClient->firsttime;
 		sp.is_cl++;
-		if(sp.is_cbs > 1023)
-		{
-			sp.is_cks += (sp.is_cbs >> 10);
-			sp.is_cbs &= 0x3ff;
-		}
-		if(sp.is_cbr > 1023)
-		{
-			sp.is_ckr += (sp.is_cbr >> 10);
-			sp.is_cbr &= 0x3ff;
-		}
-
 	}
 
 	RB_DLINK_FOREACH(ptr, unknown_list.head)
@@ -1016,16 +991,16 @@ stats_tstats (struct Client *source_p)
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			   "T :connected %u %u", sp.is_cl, sp.is_sv);
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			   "T :bytes sent %d.%uK %d.%uK",
-			   (int) sp.is_cks, sp.is_cbs, 
-			   (int) sp.is_sks, sp.is_sbs);
+				"T :bytes sent %lluK %lluK",
+				sp.is_cbs / 1024, 
+				sp.is_sbs / 1024);
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			   "T :bytes recv %d.%uK %d.%uK",
-			   (int) sp.is_ckr, sp.is_cbr, 
-			   (int) sp.is_skr, sp.is_sbr);
+				"T :bytes recv %lluK %lluK",
+				sp.is_cbr / 1024, 
+				sp.is_sbr / 1024);
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			   "T :time connected %d %d",
-			   (int) sp.is_cti, (int) sp.is_sti);
+				"T :time connected %lu %lu",
+				sp.is_cti, sp.is_sti);
 }
 
 static void
