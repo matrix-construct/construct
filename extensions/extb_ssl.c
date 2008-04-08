@@ -1,4 +1,4 @@
-/* Oper extban type: matches ssl users */
+/* SSL extban type: matches ssl users */
 
 #include "stdinc.h"
 #include "modules.h"
@@ -31,8 +31,6 @@ static int eb_ssl(const char *data, struct Client *client_p,
 
 	(void)chptr;
 	(void)mode_type;
-	/* perhaps use data somehow? (opernick/flags?) */
-	/* so deny any bans with data for now */
 	if (data != NULL)
 		return EXTBAN_INVALID;
 	return IsSSLClient(client_p) ? EXTBAN_MATCH : EXTBAN_NOMATCH;
