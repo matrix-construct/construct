@@ -705,7 +705,7 @@ main(int argc, char *argv[])
 
 	print_startup(getpid());
 
-	rb_lib_loop(250);
+	rb_lib_loop(0);
 
 	return 0;
 }
