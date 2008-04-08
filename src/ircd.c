@@ -67,11 +67,6 @@
 #include "serno.h"
 #include "sslproc.h"
 
-extern struct LocalUser meLocalUser;
-extern char **myargv;
-
-int maxconnections;
-
 /* /quote set variables */
 struct SetOptions GlobalSetOptions;
 
@@ -85,6 +80,11 @@ struct admin_info AdminInfo;
 struct Counter Count;
 struct ServerStatistics ServerStats;
 
+int maxconnections;
+struct Client me;		/* That's me */
+struct LocalUser meLocalUser;	/* That's also part of me */
+
+char **myargv;
 int ssl_ok = 0;
 int zlib_ok = 1;
 
@@ -132,9 +132,12 @@ ircd_restart_cb(const char *str)
 static void
 ircd_die_cb(const char *str)
 {
-	/* Try to get the message out to currently logged in operators. */
-	sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "Server panic! %s", str);
-	inotice("server panic: %s", str);
+	if(str != NULL)
+	{
+		/* Try to get the message out to currently logged in operators. */
+		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "Server panic! %s", str);
+		inotice("server panic: %s", str);
+	}
 
 	unlink(pidFileName);
 	exit(EXIT_FAILURE);
