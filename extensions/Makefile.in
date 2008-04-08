@@ -27,6 +27,7 @@ INCLUDES	= -I. -I../include -I../libratbox/include $(SSL_INCLUDES)
 CPPFLAGS	= ${INCLUDES} @CPPFLAGS@
 
 SRCS =                          \
+  chm_operonly_compat.c		\
   chm_quietunreg_compat.c	\
   chm_sslonly_compat.c		\
   createauthonly.c		\
