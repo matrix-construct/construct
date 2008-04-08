@@ -119,20 +119,20 @@ extern char irc_domain[HOSTLEN + 1];
 static int res_ourserver(const struct rb_sockaddr_storage *inp)
 {
 #ifdef RB_IPV6
-	struct sockaddr_in6 *v6;
-	struct sockaddr_in6 *v6in = (struct sockaddr_in6 *)inp;
+	const struct sockaddr_in6 *v6;
+	const struct sockaddr_in6 *v6in = (const struct sockaddr_in6 *)inp;
 #endif
-	struct sockaddr_in *v4;
-	struct sockaddr_in *v4in = (struct sockaddr_in *)inp;
+	const struct sockaddr_in *v4;
+	const struct sockaddr_in *v4in = (const struct sockaddr_in *)inp;
 	int ns;
 
 	for (ns = 0; ns < irc_nscount; ns++)
 	{
 		const struct rb_sockaddr_storage *srv = &irc_nsaddr_list[ns];
 #ifdef RB_IPV6
-		v6 = (struct sockaddr_in6 *)srv;
+		v6 = (const struct sockaddr_in6 *)srv;
 #endif
-		v4 = (struct sockaddr_in *)srv;
+		v4 = (const struct sockaddr_in *)srv;
 
 		/* could probably just memcmp(srv, inp, srv.ss_len) here
 		 * but we'll air on the side of caution - stu
@@ -225,7 +225,7 @@ static void start_resolver(void)
 {
 	irc_res_init();
 
-	if (res_fd <= 0)	/* there isn't any such thing as fd 0, that's just a myth. */
+	if (res_fd == NULL)
 	{
 		if ((res_fd = rb_socket(irc_nsaddr_list[0].ss_family, SOCK_DGRAM, 0,
 			       "UDP resolver socket")) == NULL)
@@ -440,7 +440,7 @@ static void do_query_number(struct DNSQuery *query, const struct rb_sockaddr_sto
 
 	if (addr->ss_family == AF_INET)
 	{
-		struct sockaddr_in *v4 = (struct sockaddr_in *)addr;
+		const struct sockaddr_in *v4 = (const struct sockaddr_in *)addr;
 		cp = (const unsigned char *)&v4->sin_addr.s_addr;
 
 		rb_sprintf(request->queryname, "%u.%u.%u.%u.in-addr.arpa", (unsigned int)(cp[3]),
@@ -449,7 +449,7 @@ static void do_query_number(struct DNSQuery *query, const struct rb_sockaddr_sto
 #ifdef RB_IPV6
 	else if (addr->ss_family == AF_INET6)
 	{
-		struct sockaddr_in6 *v6 = (struct sockaddr_in6 *)addr;
+		const struct sockaddr_in6 *v6 = (const struct sockaddr_in6 *)addr;
 		cp = (const unsigned char *)&v6->sin6_addr.s6_addr;
 
 		(void)sprintf(request->queryname, "%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x."

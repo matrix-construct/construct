@@ -409,7 +409,7 @@ irc_ns_name_ntop(const char *src, char *dst, size_t dstsiz)
 			}
 			*dn++ = '.';
 		}
-		if ((l = labellen((unsigned char*)(cp - 1))) < 0) {
+		if ((l = labellen((const unsigned char*)(cp - 1))) < 0) {
 			errno = EMSGSIZE; /* XXX */
 			return(-1);
 		}
