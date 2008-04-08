@@ -423,20 +423,20 @@ struct exit_client_hook
 /* umodes, settable flags */
 /* lots of this moved to snomask -- jilles */
 #define UMODE_SERVNOTICE   0x0001	/* server notices */
-#define UMODE_WALLOP       0x0100	/* send wallops to them */
-#define UMODE_OPERWALL     0x0200	/* Operwalls */
-#define UMODE_INVISIBLE    0x0400	/* makes user invisible */
-#define UMODE_CALLERID     0x2000	/* block unless caller id's */
-#define UMODE_LOCOPS       0x8000	/* show locops */
-#define UMODE_SERVICE      0x40000
-#define UMODE_DEAF	   0x80000
-#define UMODE_NOFORWARD    0x400000	/* don't forward */
-#define UMODE_REGONLYMSG   0x800000	/* only allow logged in users to msg */
+#define UMODE_WALLOP       0x0002	/* send wallops to them */
+#define UMODE_OPERWALL     0x0004	/* Operwalls */
+#define UMODE_INVISIBLE    0x0008	/* makes user invisible */
+#define UMODE_CALLERID     0x0010	/* block unless caller id's */
+#define UMODE_LOCOPS       0x0020	/* show locops */
+#define UMODE_SERVICE      0x0040
+#define UMODE_DEAF	   0x0080
+#define UMODE_NOFORWARD    0x0100	/* don't forward */
+#define UMODE_REGONLYMSG   0x0200	/* only allow logged in users to msg */
 
 /* user information flags, only settable by remote mode or local oper */
-#define UMODE_OPER         0x100000	/* Operator */
-#define UMODE_ADMIN        0x200000	/* Admin on server */
-#define UMODE_SSLCLIENT    0x1000000	/* using SSL */
+#define UMODE_OPER         0x1000	/* Operator */
+#define UMODE_ADMIN        0x2000	/* Admin on server */
+#define UMODE_SSLCLIENT    0x4000	/* using SSL */
 
 #define UMODE_ALL	   UMODE_SERVNOTICE
 
