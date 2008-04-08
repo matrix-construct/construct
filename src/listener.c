@@ -501,7 +501,7 @@ accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, voi
 		 */
 		if((last_oper_notice + 20) <= rb_current_time())
 		{
-			sendto_realops_flags(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					     "All connections in use. (%s)",
 					     get_listener_name(listener));
 			last_oper_notice = rb_current_time();

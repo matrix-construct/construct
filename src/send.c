@@ -958,46 +958,6 @@ sendto_anywhere(struct Client *target_p, struct Client *source_p,
 	rb_linebuf_donebuf(&linebuf);
 }
 
-/* sendto_realops_flags()
- *
- * inputs	- umode needed, level (opers/admin), va_args
- * output	-
- * side effects - message is sent to opers with matching umodes
- */
-void
-sendto_realops_flags(int flags, int level, const char *pattern, ...)
-{
-	struct Client *client_p;
-	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
-	va_list args;
-	buf_head_t linebuf;
-
-	rb_linebuf_newbuf(&linebuf);
-
-	va_start(args, pattern);
-	rb_linebuf_putmsg(&linebuf, pattern, &args, 
-		       ":%s NOTICE * :*** Notice -- ", me.name);
-	va_end(args);
-
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, local_oper_list.head)
-	{
-		client_p = ptr->data;
-
-		/* If we're sending it to opers and theyre an admin, skip.
-		 * If we're sending it to admins, and theyre not, skip.
-		 */
-		if(((level == L_ADMIN) && !IsOperAdmin(client_p)) ||
-		   ((level == L_OPER) && IsOperAdmin(client_p)))
-			continue;
-
-		if(client_p->umodes & flags)
-			_send_linebuf(client_p, &linebuf);
-	}
-
-	rb_linebuf_donebuf(&linebuf);
-}
-
 /* sendto_realops_snomask()
  *
  * inputs	- snomask needed, level (opers/admin), va_args
