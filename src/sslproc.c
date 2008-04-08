@@ -192,7 +192,7 @@ ssl_dead(ssl_ctl_t *ctl)
 	ssld_count--;
 	kill(ctl->pid, SIGKILL); /* make sure the process is really gone */
 	ilog(L_MAIN, "ssld helper died - attempting to restart");
-	sendto_realops_flags(UMODE_ALL, L_ALL, "ssld helper died - attempting to restart");
+	sendto_realops_snomask(SNO_GENERAL, L_ALL, "ssld helper died - attempting to restart");
 	start_ssldaemon(1, ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params);
 }
 
@@ -220,7 +220,7 @@ restart_ssld_event(void *unused)
 	{
 		int start = ServerInfo.ssld_count - get_ssld_count();
 		ilog(L_MAIN, "Attempting to restart ssld processes");
-		sendto_realops_flags(UMODE_ALL, L_ALL, "Attempt to restart ssld processes");
+		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Attempt to restart ssld processes");
 		start_ssldaemon(start, ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params);
 	}
 }
@@ -243,7 +243,7 @@ start_ssldaemon(int count, const char *ssl_cert, const char *ssl_private_key, co
 	if(ssld_spin_count > 20 && (rb_current_time() - last_spin < 5))
 	{
 		ilog(L_MAIN, "ssld helper is spinning - will attempt to restart in 5 minutes");
-		sendto_realops_flags(UMODE_ALL, L_ALL, "ssld helper is spinning - will attempt to restart in 1 minute");
+		sendto_realops_snomask(SNO_GENERAL, L_ALL, "ssld helper is spinning - will attempt to restart in 1 minute");
 		rb_event_add("restart_ssld_event", restart_ssld_event, NULL, 60);
 		ssld_wait = 1;
 		return 0;
@@ -360,7 +360,7 @@ ssl_process_dead_fd(ssl_ctl_t *ctl, ssl_ctl_buf_t *ctl_buf)
 	if(client_p == NULL)
 		return;
 	if(IsAnyServer(client_p))
-		sendto_realops_flags(UMODE_ALL, L_ALL, "ssld error for %s: %s", client_p->name, reason);
+		sendto_realops_snomask(SNO_GENERAL, L_ALL, "ssld error for %s: %s", client_p->name, reason);
 	exit_client(client_p, client_p, &me, reason);
 }
 
@@ -413,12 +413,12 @@ ssl_process_cmd_recv(ssl_ctl_t *ctl)
 			case 'I':
 				ssl_ok = 0;
 				ilog(L_MAIN, cannot_setup_ssl);				
-				sendto_realops_flags(UMODE_ALL, L_ALL, cannot_setup_ssl);
+				sendto_realops_snomask(SNO_GENERAL, L_ALL, cannot_setup_ssl);
 			case 'U':
 				zlib_ok = 0;
 				ssl_ok = 0;
 				ilog(L_MAIN, no_ssl_or_zlib);
-				sendto_realops_flags(UMODE_ALL, L_ALL, no_ssl_or_zlib);
+				sendto_realops_snomask(SNO_GENERAL, L_ALL, no_ssl_or_zlib);
 				ssl_killall();
 				break;
 			case 'R':
@@ -429,7 +429,7 @@ ssl_process_cmd_recv(ssl_ctl_t *ctl)
 				break;
 			default:
 				ilog(L_MAIN, "Received invalid command from ssld: %s", ctl_buf->buf);
-				sendto_realops_flags(UMODE_ALL, L_ALL, "Received invalid command from ssld");
+				sendto_realops_snomask(SNO_GENERAL, L_ALL, "Received invalid command from ssld");
 				break;
 		}
 		rb_dlinkDelete(ptr, &ctl->readq);
@@ -561,7 +561,7 @@ send_new_ssl_certs_one(ssl_ctl_t *ctl, const char *ssl_cert, const char *ssl_pri
 	len = strlen(ssl_cert) + strlen(ssl_private_key) + strlen(ssl_dh_params) + 5; 
 	if(len > sizeof(tmpbuf))
 	{
-		sendto_realops_flags(UMODE_ALL, L_ALL, 
+		sendto_realops_snomask(SNO_GENERAL, L_ALL, 
 			"Parameters for send_new_ssl_certs_one too long (%zu > %zu) to pass to ssld, not sending...",
 			len, sizeof(tmpbuf));
 		ilog(L_MAIN, "Parameters for send_new_ssl_certs_one too long (%zu > %zu) to pass to ssld, not sending...",
@@ -587,7 +587,7 @@ send_init_prng(ssl_ctl_t *ctl, prng_seed_t seedtype, const char *path)
 	len = strlen(s) + 3;
 	if(len > sizeof(tmpbuf))
 	{
-		sendto_realops_flags(UMODE_ALL, L_ALL, 
+		sendto_realops_snomask(SNO_GENERAL, L_ALL, 
 			"Parameters for send_init_prng too long (%zd > %zd) to pass to ssld, not sending...",
 			len, sizeof(tmpbuf));
 		ilog(L_MAIN, "Parameters for send_init_prng too long (%zd > %zd) to pass to ssld, not sending...",
@@ -699,7 +699,7 @@ start_zlib_session(void *data)
 	if(len > READBUF_SIZE)
 	{
 		rb_free(buf);
-		sendto_realops_flags(UMODE_ALL, L_ALL, "ssld - attempted to pass message of %zd len, max len %d, giving up", len, READBUF_SIZE);
+		sendto_realops_snomask(SNO_GENERAL, L_ALL, "ssld - attempted to pass message of %zd len, max len %d, giving up", len, READBUF_SIZE);
 		ilog(L_MAIN, "ssld - attempted to pass message of %zd len, max len %d, giving up", len, READBUF_SIZE);
 		exit_client(server, server, server, "ssld readbuf exceeded");
 		return;

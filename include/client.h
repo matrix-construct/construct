@@ -438,8 +438,6 @@ struct exit_client_hook
 #define UMODE_ADMIN        0x2000	/* Admin on server */
 #define UMODE_SSLCLIENT    0x4000	/* using SSL */
 
-#define UMODE_ALL	   UMODE_SERVNOTICE
-
 /* overflow flags */
 /* EARLIER FLAGS ARE IN s_newconf.h */
 #define FLAGS2_EXEMPTRESV	0x00400000
