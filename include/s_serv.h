@@ -35,9 +35,6 @@
  */
 #define TRY_CONNECTIONS_TIME	60
 
-/* collect ziplinks compression ratios/etc every minute */
-#define ZIPSTATS_TIME           60
-
 /*
  * number of seconds to wait after server starts up, before
  * starting try_connections()
