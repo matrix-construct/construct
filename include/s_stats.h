@@ -45,14 +45,10 @@ struct ServerStatistics
 	unsigned int is_cl;	/* number of client connections */
 	unsigned int is_sv;	/* number of server connections */
 	unsigned int is_ni;	/* connection but no idea who it was */
-	unsigned short is_cbs;	/* bytes sent to clients */
-	unsigned short is_cbr;	/* bytes received to clients */
-	unsigned short is_sbs;	/* bytes sent to servers */
-	unsigned short is_sbr;	/* bytes received to servers */
-	unsigned long is_cks;	/* k-bytes sent to clients */
-	unsigned long is_ckr;	/* k-bytes received to clients */
-	unsigned long is_sks;	/* k-bytes sent to servers */
-	unsigned long is_skr;	/* k-bytes received to servers */
+	unsigned long long int is_cbs;	/* bytes sent to clients */
+	unsigned long long int is_cbr;	/* bytes received to clients */
+	unsigned long long int is_sbs;	/* bytes sent to servers */
+	unsigned long long int is_sbr;	/* bytes received to servers */
 	time_t is_cti;		/* time spent connected by clients */
 	time_t is_sti;		/* time spent connected by servers */
 	unsigned int is_ac;	/* connections accepted */

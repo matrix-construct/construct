@@ -111,14 +111,10 @@ struct Server
 
 struct ZipStats
 {
-	unsigned long in;
-	unsigned long in_wire;
-	unsigned long out;
-	unsigned long out_wire;
-	unsigned long inK;
-	unsigned long inK_wire;
-	unsigned long outK;
-	unsigned long outK_wire;
+	unsigned long long in;
+	unsigned long long in_wire;
+	unsigned long long out;
+	unsigned long long out_wire;
 	double in_ratio;
 	double out_ratio;
 };

@@ -1445,31 +1445,25 @@ stats_ziplinks (struct Client *source_p)
 {
 	rb_dlink_node *ptr;
 	struct Client *target_p;
+	struct ZipStats *zipstats;
 	int sent_data = 0;
 	char buf[128], buf1[128];
-
 	RB_DLINK_FOREACH (ptr, serv_list.head)
 	{
 		target_p = ptr->data;
 		if(IsCapable (target_p, CAP_ZIP))
 		{
-			/* we use memcpy(3) and a local copy of the structure to
-			 * work around a register use bug on GCC on the SPARC.
-			 * -jmallett, 04/27/2002
-			 */
-			struct ZipStats zipstats;
-			memcpy (&zipstats, &target_p->localClient->zipstats,
-				sizeof (struct ZipStats)); 
-			snprintf(buf, sizeof buf, "%.2f%%", zipstats.out_ratio);
-			snprintf(buf1, sizeof buf1, "%.2f%%", zipstats.in_ratio);
-
+			zipstats = target_p->localClient->zipstats;				
+			sprintf(buf, "%.2f%%", zipstats->out_ratio);
+			sprintf(buf1, "%.2f%%", zipstats->in_ratio);
 			sendto_one_numeric(source_p, RPL_STATSDEBUG,
 					    "Z :ZipLinks stats for %s send[%s compression "
-					    "(%lu kB data/%lu kB wire)] recv[%s compression "
-					    "(%lu kB data/%lu kB wire)]",
+					    "(%llu kB data/%llu kB wire)] recv[%s compression "
+					    "(%llu kB data/%llu kB wire)]",
 					    target_p->name,
-					    buf, zipstats.outK, zipstats.outK_wire,
-					    buf1, zipstats.inK, zipstats.inK_wire);
+					    buf, zipstats->out >> 10, 
+					    zipstats->out_wire >> 10, buf1, 
+					    zipstats->in >> 10, zipstats->in_wire >> 10);
 			sent_data++;
 		}
 	}
