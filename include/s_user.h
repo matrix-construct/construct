@@ -47,7 +47,7 @@ extern int introduce_client(struct Client *client_p, struct Client *source_p,
 			    struct User *user, const char *nick, int use_euid);
 
 extern void change_nick_user_host(struct Client *target_p, const char *nick, const char *user,
-				  const char *host, int newts, char *format, ...);
+				  const char *host, int newts, const char *format, ...);
 
 extern int user_modes[256];
 extern unsigned int find_umode_slot(void);

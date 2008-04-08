@@ -1373,7 +1373,7 @@ construct_umodebuf(void)
 
 void
 change_nick_user_host(struct Client *target_p,	const char *nick, const char *user,
-		      const char *host, int newts, char *format, ...)
+		      const char *host, int newts, const char *format, ...)
 {
 	rb_dlink_node *ptr;
 	struct Channel *chptr;
