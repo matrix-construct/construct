@@ -60,7 +60,7 @@ struct MessageEntry
 /* Message table structure */
 struct Message
 {
-	char *cmd;
+	const char *cmd;
 	unsigned int count;	/* number of times command used */
 	unsigned int rcount;	/* number of times command used by server */
 	unsigned long bytes;	/* bytes received for this message */
