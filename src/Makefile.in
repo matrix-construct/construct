@@ -69,7 +69,6 @@ SRCS =                          \
   irc_dictionary.c		\
   ircd.c                        \
   ircd_signal.c                 \
-  ircd_state.c			\
   kdparse.c			\
   listener.c                    \
   logger.c                      \
