@@ -33,7 +33,7 @@ struct DictionaryElement
 {
 	struct DictionaryElement *left, *right, *prev, *next;
 	void *data;
-	char *key;
+	const char *key;
 	int position;
 };
 
@@ -133,7 +133,7 @@ extern void irc_dictionary_foreach_next(struct Dictionary *dtree,
 /*
  * irc_dictionary_add() adds a key->value entry to the dictionary tree.
  */
-extern struct DictionaryElement *irc_dictionary_add(struct Dictionary *dtree, char *key, void *data);
+extern struct DictionaryElement *irc_dictionary_add(struct Dictionary *dtree, const char *key, void *data);
 
 /*
  * irc_dictionary_find() returns a struct DictionaryElement container from a dtree for key 'key'.

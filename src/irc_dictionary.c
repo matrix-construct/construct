@@ -704,7 +704,7 @@ struct DictionaryElement *irc_dictionary_find(struct Dictionary *dict, const cha
  * Side Effects:
  *     - data is inserted into the DTree.
  */
-struct DictionaryElement *irc_dictionary_add(struct Dictionary *dict, char *key, void *data)
+struct DictionaryElement *irc_dictionary_add(struct Dictionary *dict, const char *key, void *data)
 {
 	struct DictionaryElement *delem;
 
