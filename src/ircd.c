@@ -67,12 +67,6 @@
 #include "serno.h"
 #include "sslproc.h"
 
-/*
- * Try and find the correct name to use with getrlimit() for setting the max.
- * number of files allowed to be open by this process.
- */
-int _charybdis_data_version = CHARYBDIS_DV;
-
 extern int ServerRunning;
 extern struct LocalUser meLocalUser;
 extern char **myargv;
