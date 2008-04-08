@@ -94,14 +94,6 @@
 #  error Incorrect config.h for this revision of ircd.
 #endif
 
-/*
- * This defines the version of the data structures used in the ircd.
- * In the event of a mismatch (i.e. this is incremented due to a major
- * change that cannot be accomidated for in the ircd), then a hard
- * restart occurs.
- */
-#define CHARYBDIS_DV	0x00010200	/* 1.2.0 */
-
 #define HOSTLEN         63	/* Length of hostname.  Updated to         */
 				/* comply with RFC1123                     */
 
