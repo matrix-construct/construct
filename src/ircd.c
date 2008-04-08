@@ -81,12 +81,66 @@ struct Counter Count;
 struct ServerStatistics ServerStats;
 
 int maxconnections;
+struct timeval SystemTime;
 struct Client me;		/* That's me */
 struct LocalUser meLocalUser;	/* That's also part of me */
 
+rb_dlink_list lclient_list = { NULL, NULL, 0 };
+rb_dlink_list global_client_list = { NULL, NULL, 0 };
+rb_dlink_list global_channel_list = { NULL, NULL, 0 };
+
+rb_dlink_list unknown_list;        /* unknown clients ON this server only */
+rb_dlink_list serv_list;           /* local servers to this server ONLY */
+rb_dlink_list global_serv_list;    /* global servers on the network */
+rb_dlink_list local_oper_list;     /* our opers, duplicated in lclient_list */
+rb_dlink_list oper_list;           /* network opers */
+
+time_t startup_time;
+
+int default_server_capabs = CAP_MASK;
+
+int splitmode;
+int splitchecking;
+int split_users;
+int split_servers;
+int eob_count;
+
+unsigned long initialVMTop = 0;  /* top of virtual memory at init */
+const char *logFileName = LPATH;
+const char *pidFileName = PPATH;
+
 char **myargv;
+int dorehash = 0;
+int dorehashbans = 0;
+int doremotd = 0;
+int kline_queued = 0;
+int server_state_foreground = 0;
+int opers_see_all_users = 0;
 int ssl_ok = 0;
 int zlib_ok = 1;
+
+int testing_conf = 0;
+
+struct config_channel_entry ConfigChannel;
+rb_bh *channel_heap;
+rb_bh *ban_heap;
+rb_bh *topic_heap;
+rb_bh *member_heap;
+
+rb_bh *client_heap = NULL;
+rb_bh *lclient_heap = NULL;
+rb_bh *pclient_heap = NULL;
+
+char current_uid[IDLEN];
+
+/* patricia */
+rb_bh *prefix_heap;
+rb_bh *node_heap;
+rb_bh *patricia_heap;
+
+rb_bh *linebuf_heap;
+
+rb_bh *dnode_heap;
 
 /*
  * print_startup - print startup information
