@@ -18,7 +18,7 @@
   [x] client-to-client ssl
   [x] server-to-server ssl
   [x] ssl usermode (+Z)
-  [ ] ssl channelmode (by module?)
+  [x] ssl channelmode (done by extban and chm_compat)
 [ ] merge some stuff from ircd-seven directly (to be determined what)
   [?] remote d:lines support?
   [?] +C (noctcp) channel/usermode
@@ -27,5 +27,6 @@
 [ ] module engine rework
   [ ] more beautiful way of adding new channel modes by module
 [ ] other stuff
-  [ ] merge m_join.c and m_sjoin.c in one module (same functions, done in ratbox3)
+  [x] merge m_join.c and m_sjoin.c in one module (same functions, done in ratbox3)
   [ ] merge s_gline.c and m_gline.c in one module (for pretty look, done in ratbox3)
+  [x] create chmode.h and put there all declarations of chm_* - this will make some modules clean
