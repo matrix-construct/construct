@@ -28,6 +28,7 @@ CPPFLAGS	= ${INCLUDES} @CPPFLAGS@
 
 SRCS =                          \
   chm_quietunreg_compat.c	\
+  chm_sslonly_compat.c		\
   createauthonly.c		\
   createoperonly.c		\
   extb_account.c		\
