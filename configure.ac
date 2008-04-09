@@ -128,7 +128,7 @@ if test "$ac_cv_c_compiler_gnu" = yes; then
 	;;
 	esac
 
-	IRC_CFLAGS="$IRC_CFLAGS -O0 -Wall"
+	IRC_CFLAGS="$IRC_CFLAGS -O0 -Wall -std=gnu99"
 fi
 
 dnl If we support -g, use it!
@@ -1066,6 +1066,7 @@ fi
 # This must be down here, or it will mess up checks like the ones
 # for -Wl,-export-dynamic
 # -- jilles
+CWARNS=""
 AC_ARG_ENABLE(warnings,
 AC_HELP_STRING([--enable-warnings],[Enable all sorts of warnings for debugging.]),
 [
@@ -1077,6 +1078,7 @@ CHARYBDIS_C_GCC_TRY_FLAGS([-Wpointer-arith], charybdis_cv_c_gcc_w_pointer_arith)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wimplicit -Wnested-externs], charybdis_cv_c_gcc_w_implicit)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wcast-align], charybdis_cv_c_gcc_w_cast_align)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wcast-qual], charybdis_cv_c_gcc_w_cast_qual)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wwrite-strings], charybdis_cv_c_gcc_w_float_equal)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations], charybdis_cv_c_gcc_prototypes)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wparenthesis], charybdis_cv_c_gcc_parenthesis)
 CHARYBDIS_C_GCC_TRY_FLAGS([-W -Wno-unused], charybdis_cv_c_gcc_w)
@@ -1090,7 +1092,7 @@ CHARYBDIS_C_GCC_TRY_FLAGS([-Wbad-function-cast], charybdis_cv_c_gcc_w_bad_functi
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wunused-function -Wunused-label -Wunused-value -Wunused-variable], charybdis_cv_c_gcc_w_unused)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wredundant-decls], charybdis_cv_c_gcc_w_redundant_decls)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wfloat-equal], charybdis_cv_c_gcc_w_float_equal)
-CHARYBDIS_C_GCC_TRY_FLAGS([-Wformat=2], charybdis_cv_c_gcc_w_format)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wformat -Wformat-y2k -Wformat-security], charybdis_cv_c_gcc_w_format)
 CHARYBDIS_C_GCC_TRY_FLAGS([-pedantic], charybdis_cv_c_gcc_pedantic)
 
 IRC_CFLAGS="$CFLAGS"
@@ -1164,6 +1166,8 @@ EOF
 		AC_DEFINE_UNQUOTED(SYMBOL_PREFIX, "${symbol_underscores}", [String containing extra underscores prepended to symbols loaded from modules.])
 	fi
 fi
+
+IRC_CFLAGS="$IRC_CFLAGS $CWARNS"
 
 AC_SUBST(MODULES_LIBS)
 AC_SUBST(MOD_TARGET)
