@@ -2861,7 +2861,7 @@ echo "${ECHO_T}no" >&6; }
 	;;
 	esac
 
-	IRC_CFLAGS="$IRC_CFLAGS -O0 -Wall"
+	IRC_CFLAGS="$IRC_CFLAGS -O0 -Wall -std=gnu99"
 fi
 
 if test "$ac_cv_prog_cc_g" = yes; then
@@ -11832,6 +11832,7 @@ fi
 # This must be down here, or it will mess up checks like the ones
 # for -Wl,-export-dynamic
 # -- jilles
+CWARNS=""
 # Check whether --enable-warnings was given.
 if test "${enable_warnings+set}" = set; then
   enableval=$enable_warnings;
@@ -12205,6 +12206,81 @@ fi
 echo "${ECHO_T}ok" >&6; }
   else
    charybdis_cv_c_gcc_w_cast_qual=''
+   { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+  fi
+ else
+  { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+ fi
+
+
+ { echo "$as_me:$LINENO: checking GCC flag(s) -Wwrite-strings" >&5
+echo $ECHO_N "checking GCC flag(s) -Wwrite-strings... $ECHO_C" >&6; }
+ if test "${GCC-no}" = yes
+ then
+  if test "${charybdis_cv_c_gcc_w_float_equal+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+
+   oldcflags="${CFLAGS-}"
+   CFLAGS="${CFLAGS-} ${CWARNS} -Wwrite-strings -Werror"
+   cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+#include <string.h>
+#include <stdio.h>
+int main(void);
+
+int
+main ()
+{
+
+    (void)strcmp("a","b"); fprintf(stdout,"test ok\n");
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+  charybdis_cv_c_gcc_w_float_equal=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	charybdis_cv_c_gcc_w_float_equal=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+   CFLAGS="${oldcflags}"
+fi
+
+  if test "x$charybdis_cv_c_gcc_w_float_equal" = xyes; then
+   CWARNS="${CWARNS}-Wwrite-strings "
+   { echo "$as_me:$LINENO: result: ok" >&5
+echo "${ECHO_T}ok" >&6; }
+  else
+   charybdis_cv_c_gcc_w_float_equal=''
    { echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
   fi
@@ -13189,8 +13265,8 @@ echo "${ECHO_T}no" >&6; }
  fi
 
 
- { echo "$as_me:$LINENO: checking GCC flag(s) -Wformat=2" >&5
-echo $ECHO_N "checking GCC flag(s) -Wformat=2... $ECHO_C" >&6; }
+ { echo "$as_me:$LINENO: checking GCC flag(s) -Wformat -Wformat-y2k -Wformat-security" >&5
+echo $ECHO_N "checking GCC flag(s) -Wformat -Wformat-y2k -Wformat-security... $ECHO_C" >&6; }
  if test "${GCC-no}" = yes
  then
   if test "${charybdis_cv_c_gcc_w_format+set}" = set; then
@@ -13198,7 +13274,7 @@ echo $ECHO_N "checking GCC flag(s) -Wformat=2... $ECHO_C" >&6; }
 else
 
    oldcflags="${CFLAGS-}"
-   CFLAGS="${CFLAGS-} ${CWARNS} -Wformat=2 -Werror"
+   CFLAGS="${CFLAGS-} ${CWARNS} -Wformat -Wformat-y2k -Wformat-security -Werror"
    cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -13250,7 +13326,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 
   if test "x$charybdis_cv_c_gcc_w_format" = xyes; then
-   CWARNS="${CWARNS}-Wformat=2 "
+   CWARNS="${CWARNS}-Wformat -Wformat-y2k -Wformat-security "
    { echo "$as_me:$LINENO: result: ok" >&5
 echo "${ECHO_T}ok" >&6; }
   else
@@ -14028,6 +14104,8 @@ _ACEOF
 
 	fi
 fi
+
+IRC_CFLAGS="$IRC_CFLAGS $CWARNS"
 
 
 
