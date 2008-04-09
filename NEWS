@@ -1,5 +1,16 @@
-This is charybdis 2.2.0, Copyright (c) 2005-2007 Charybdis team.
+This is charybdis 3.0.0, Copyright (c) 2005-2008 Charybdis team.
 See LICENSE for licensing details (GPL v2).
+
+-- charybdis-3.0.0
+
+- Port to libratbox
+- Allow server-to-server SSL links
+- Allow client SSL
+- New extended ban $z for ssl users
+- New compatiability channel mode +R (quite unreg, sets +-b $~a)
+- New compatiability channel mode +S (ssl only, sets +-b $~z)
+- New compatiability channel mode +O (oper only, sets +-iI $o)
+- New /privs command allowing to watch operator privileges online
 
 -- charybdis-2.2.0
 
