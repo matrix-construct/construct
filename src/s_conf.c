@@ -1400,18 +1400,18 @@ write_confitem(KlineType type, struct Client *source_p, char *user,
 		rb_snprintf(buffer, sizeof(buffer),
 			   "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",%ld\n",
 			   user, host, reason, oper_reason, current_date,
-			   get_oper_name(source_p), rb_current_time());
+			   get_oper_name(source_p), (long int)rb_current_time());
 	}
 	else if(type == DLINE_TYPE)
 	{
 		rb_snprintf(buffer, sizeof(buffer),
 			   "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",%ld\n", host,
-			   reason, oper_reason, current_date, get_oper_name(source_p), rb_current_time());
+			   reason, oper_reason, current_date, get_oper_name(source_p), (long int)rb_current_time());
 	}
 	else if(type == RESV_TYPE)
 	{
 		rb_snprintf(buffer, sizeof(buffer), "\"%s\",\"%s\",\"%s\",%ld\n",
-			   host, reason, get_oper_name(source_p), rb_current_time());
+			   host, reason, get_oper_name(source_p), (long int)rb_current_time());
 	}
 
 	if(fputs(buffer, out) == -1)

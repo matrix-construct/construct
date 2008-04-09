@@ -1002,7 +1002,7 @@ stats_tstats (struct Client *source_p)
 				sp.is_sbr / 1024);
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 				"T :time connected %lu %lu",
-				sp.is_cti, sp.is_sti);
+				(long int)sp.is_cti, (long int)sp.is_sti);
 }
 
 static void

@@ -947,7 +947,7 @@ server_estab(struct Client *client_p)
 	{
 		start_zlib_session(client_p);
 	}
-	sendto_one(client_p, "SVINFO %d %d 0 :%ld", TS_CURRENT, TS_MIN, rb_current_time());
+	sendto_one(client_p, "SVINFO %d %d 0 :%ld", TS_CURRENT, TS_MIN, (long int)rb_current_time());
 
 	client_p->servptr = &me;
 
