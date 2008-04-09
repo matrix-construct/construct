@@ -1,6 +1,0 @@
-Makefile
-y.tab.*
-lex.yy.c
-ircd
-version.c.last
-version.c

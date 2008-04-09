@@ -1,8 +1,0 @@
-config.log
-config.cache
-config.status
-autom4te.cache
-Makefile
-lint.out
-rsa_respond.tar.gz
-.depend
