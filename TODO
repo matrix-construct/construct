@@ -1,16 +1,14 @@
-/ = in progress, x = done, ? = to be discussed, F = for future releases
+/ = in progress, x = done, ? = to be discussed, F = charybdis3.1 or next releases
 
 [/] finish legacy code removal
   [x] remove 2.8 report_error() in ratbox imported stuff
   [F] client.c, channel.c is very 2.8 style still. it'd be nice to pack them into their own 
       namespace and such. moreover, the other 2.8 code needs similar rewriting/reworking too...
-  [ ] rewrite s_auth.c -> split into three distinct parts
-    [ ] authentication state/lock manager
-    [ ] identd check
-    [ ] dns check
-    ### this should be a nice framework to let modules hook the
-    ### auth state imo. it'd also be cool to make the DNS checker and
-    ### auth checker modules (loaded by default, of course). --nenolod
+  ### well, I suggest working on it in 3.1 if you're not against ;)
+  [F] rewrite s_auth.c
+    [F] authentication state/lock manager
+    [F] move resolver/auth checker code into separated modules 
+        (or maybe give user ability to run them as ratbox3-style helpers (./configure option)?)
 [x] port to libratbox
   [x] get it running
   [x] clean up maxconnections kludges &c
@@ -27,8 +25,15 @@
   [?] +C (noctcp) channel/usermode
 [ ] gk:line/akill syncing
 [ ] drop non-TS6 (legacy protocol) support
-[ ] module engine rework
-  [ ] more beautiful way of adding new channel modes by module
+[F] module engine rework
+  [F] more beautiful way of adding new channel modes by module
+  [F] make nick/user/host validation functions/match tables able to work in separated modules,
+      this will help us making support for native characters sets/slashes in host etc
+  [F] auth checker module
+  [F] resolver module
+[?] g:lines
+    maybe remove them completely or rework them a bit - ircu-style glines?
+    I don't think if anybody use them in the networks different from EFNet
 [ ] other stuff
   [?] internally split out +o/+v "ranks" into a series of permissions. this could allow for configure-defined 
       special access levels, halfops, etc. (would need to match globally, somehow. extra SVINFO param?)
