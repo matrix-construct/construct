@@ -20,10 +20,11 @@
   [x] ssl usermode (+Z)
   [x] ssl channelmode (done by extban and chm_compat)
   [ ] acknowledgement message for SSL users like '* *** You are connected using SSL cipher "DHE RSA-AES 128 CBC-SHA"'
-[ ] merge some stuff from ircd-seven directly (to be determined what)
+[?] merge some stuff from ircd-seven directly (to be determined what)
   [?] remote d:lines support?
   [?] +C (noctcp) channel/usermode
-[ ] gk:line/akill syncing
+[F] kline/xline/resv sync
+[F] make an ability of using bandb instead of .conf files as bans storage
 [ ] drop non-TS6 (legacy protocol) support
 [F] module engine rework
   [F] more beautiful way of adding new channel modes by module
@@ -31,9 +32,7 @@
       this will help us making support for native characters sets/slashes in host etc
   [F] auth checker module
   [F] resolver module
-[?] g:lines
-    maybe remove them completely or rework them a bit - ircu-style glines?
-    I don't think if anybody use them in the networks different from EFNet
+[ ] Remove glines entirely
 [ ] other stuff
   [?] internally split out +o/+v "ranks" into a series of permissions. this could allow for configure-defined 
       special access levels, halfops, etc. (would need to match globally, somehow. extra SVINFO param?)
