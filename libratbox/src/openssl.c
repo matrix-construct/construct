@@ -69,9 +69,10 @@ rb_ssl_shutdown(rb_fde_t * F)
 }
 
 static void
-rb_ssl_timeout(rb_fde_t * fd, void *notused)
+rb_ssl_timeout(rb_fde_t * F, void *notused)
 {
-	rb_close(fd);
+	lrb_assert(F->accept != NULL);
+	F->accept->callback(F, RB_ERR_TIMEOUT, NULL, 0, F->accept->data);
 }
 
 
@@ -80,7 +81,7 @@ rb_ssl_tryaccept(rb_fde_t * F, void *data)
 {
 	int ssl_err;
 	lrb_assert(F->accept != NULL);
-	int flags = RB_SELECT_READ;
+	int flags;
 
 	if(!SSL_is_init_finished((SSL *) F->ssl))
 	{
@@ -88,18 +89,18 @@ rb_ssl_tryaccept(rb_fde_t * F, void *data)
 		{
 			switch (ssl_err = SSL_get_error((SSL *) F->ssl, ssl_err))
 			{
-			case SSL_ERROR_SYSCALL:
-				if(rb_ignore_errno(errno))
 			case SSL_ERROR_WANT_READ:
 			case SSL_ERROR_WANT_WRITE:
-					{
-						if(ssl_err == SSL_ERROR_WANT_WRITE)
-							flags |= RB_SELECT_WRITE;
-						F->ssl_errno = get_last_err();
-						rb_setselect(F, flags,
-							     rb_ssl_tryaccept, NULL);
-						return;
-					}
+				if(ssl_err == SSL_ERROR_WANT_WRITE)
+					flags = RB_SELECT_WRITE;
+				else
+					flags = RB_SELECT_READ;
+				F->ssl_errno = get_last_err();
+				rb_setselect(F, flags, rb_ssl_tryaccept, NULL);
+				break;
+			case SSL_ERROR_SYSCALL:
+				F->accept->callback(F, RB_ERROR, NULL, 0, F->accept->data);
+				break;
 			default:
 				F->ssl_errno = get_last_err();
 				F->accept->callback(F, RB_ERROR_SSL, NULL, 0, F->accept->data);

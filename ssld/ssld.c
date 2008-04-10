@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: ssld.c 25179 2008-03-30 16:34:57Z androsyn $
+ *  $Id: ssld.c 25221 2008-04-09 22:12:16Z jilles $
  */
 
 
@@ -127,22 +127,29 @@ typedef struct _conn
 #define FLAG_ZIP	0x02
 #define FLAG_CORK	0x04
 #define FLAG_DEAD	0x08
-
+#define FLAG_SSL_W_WANTS_R 0x10 /* output needs to wait until input possible */
+#define FLAG_SSL_R_WANTS_W 0x20 /* input needs to wait until output possible */
 
 #define IsSSL(x) ((x)->flags & FLAG_SSL)
 #define IsZip(x) ((x)->flags & FLAG_ZIP)
 #define IsCork(x) ((x)->flags & FLAG_CORK)
 #define IsDead(x) ((x)->flags & FLAG_DEAD)
+#define IsSSLWWantsR(x) ((x)->flags & FLAG_SSL_W_WANTS_R)
+#define IsSSLRWantsW(x) ((x)->flags & FLAG_SSL_R_WANTS_W)
 
 #define SetSSL(x) ((x)->flags |= FLAG_SSL)
 #define SetZip(x) ((x)->flags |= FLAG_ZIP)
 #define SetCork(x) ((x)->flags |= FLAG_CORK)
 #define SetDead(x) ((x)->flags |= FLAG_DEAD)
+#define SetSSLWWantsR(x) ((x)->flags |= FLAG_SSL_W_WANTS_R)
+#define SetSSLRWantsW(x) ((x)->flags |= FLAG_SSL_R_WANTS_W)
 
 #define ClearSSL(x) ((x)->flags &= ~FLAG_SSL)
 #define ClearZip(x) ((x)->flags &= ~FLAG_ZIP)
 #define ClearCork(x) ((x)->flags &= ~FLAG_CORK)
 #define ClearDead(x) ((x)->flags &= ~FLAG_DEAD)
+#define ClearSSLWWantsR(x) ((x)->flags &= ~FLAG_SSL_W_WANTS_R)
+#define ClearSSLRWantsW(x) ((x)->flags &= ~FLAG_SSL_R_WANTS_W)
 
 #define NO_WAIT 0x0
 #define WAIT_PLAIN 0x1
@@ -153,6 +160,7 @@ typedef struct _conn
 static rb_dlink_list connid_hash_table[CONN_HASH_SIZE];
 static rb_dlink_list dead_list;
 
+static void conn_mod_read_cb(rb_fde_t * fd, void *data);
 static void conn_mod_write_sendq(rb_fde_t *, void *data);
 static void conn_plain_write_sendq(rb_fde_t *, void *data);
 static void mod_write_ctl(rb_fde_t *, void *data);
@@ -288,6 +296,14 @@ conn_mod_write_sendq(rb_fde_t * fd, void *data)
 	if(IsDead(conn))
 		return;
 
+	if(IsSSLWWantsR(conn))
+	{
+		ClearSSLWWantsR(conn);
+		conn_mod_read_cb(conn->mod_fd, conn);
+		if(IsDead(conn))
+			return;
+	}
+
 	while ((retlen = rb_rawbuf_flush(conn->modbuf_out, fd)) > 0)
 		conn->mod_out += retlen;
 
@@ -304,11 +320,14 @@ conn_mod_write_sendq(rb_fde_t * fd, void *data)
 	}
 	if(rb_rawbuf_length(conn->modbuf_out) > 0)
 	{
-		int flags = RB_SELECT_WRITE;
-		if(retlen == RB_RW_SSL_NEED_READ)
-			flags |= RB_SELECT_READ;
-
-		rb_setselect(conn->mod_fd, flags, conn_mod_write_sendq, conn);
+		if(retlen != RB_RW_SSL_NEED_READ)
+			rb_setselect(conn->mod_fd, RB_SELECT_WRITE, conn_mod_write_sendq, conn);
+		else
+		{
+			rb_setselect(conn->mod_fd, RB_SELECT_READ, conn_mod_write_sendq, conn);
+			rb_setselect(conn->mod_fd, RB_SELECT_WRITE, NULL, NULL);
+			SetSSLWWantsR(conn);
+		}
 	}
 	else
 		rb_setselect(conn->mod_fd, RB_SELECT_WRITE, NULL, NULL);
@@ -499,6 +518,14 @@ conn_mod_read_cb(rb_fde_t * fd, void *data)
 	if(IsDead(conn))
 		return;
 
+	if(IsSSLRWantsW(conn))
+	{
+		ClearSSLRWantsW(conn);
+		conn_mod_write_sendq(conn->mod_fd, conn);
+		if(IsDead(conn))
+			return;
+	}
+
 	while (1)
 	{
 		if(IsDead(conn))
@@ -522,11 +549,14 @@ conn_mod_read_cb(rb_fde_t * fd, void *data)
 		}
 		if(length < 0)
 		{
-			int flags = RB_SELECT_READ;
-			if(length == RB_RW_SSL_NEED_WRITE)
-				flags |= RB_SELECT_WRITE;
-				
-			rb_setselect(conn->mod_fd, flags, conn_mod_read_cb, conn);
+			if(length != RB_RW_SSL_NEED_WRITE)
+				rb_setselect(conn->mod_fd, RB_SELECT_READ, conn_mod_read_cb, conn);
+			else
+			{
+				rb_setselect(conn->mod_fd, RB_SELECT_READ, NULL, NULL);
+				rb_setselect(conn->mod_fd, RB_SELECT_WRITE, conn_mod_read_cb, conn);
+				SetSSLRWantsW(conn);
+			}
 			conn_plain_write_sendq(conn->plain_fd, conn);
 			return;
 		}	
@@ -1001,7 +1031,7 @@ main(int argc, char **argv)
 	if(s_ctlfd == NULL || s_pipe == NULL)
 	{
 		fprintf(stderr, "This is ircd-ratbox ssld.  You know you aren't supposed to run me directly?\n");
-		fprintf(stderr, "You get an Id tag for this: $Id: ssld.c 25179 2008-03-30 16:34:57Z androsyn $\n");
+		fprintf(stderr, "You get an Id tag for this: $Id: ssld.c 25221 2008-04-09 22:12:16Z jilles $\n");
 		fprintf(stderr, "Have a nice life\n");
 		exit(1);
 	}
