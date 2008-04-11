@@ -42,8 +42,6 @@
 	    <arg>DNS</arg>
 	    <arg>MOTD</arg>
 	    <arg>OMOTD</arg>
-	    <arg>GLINES</arg>
-	    <arg>PGLINES</arg>
 	    <arg>TKLINES</arg>
 	    <arg>TDLINES</arg>
 	    <arg>TXLINES</arg>
@@ -81,18 +79,6 @@
 	    <term>OMOTD</term>
 	    <listitem>
 	      <para>Reload the operator MOTD file</para>
-	    </listitem>
-	  </varlistentry>
-	  <varlistentry>
-	    <term>GLINES</term>
-	    <listitem>
-	      <para>Clears G:lines.</para>
-	    </listitem>
-	  </varlistentry>
-	  <varlistentry>
-	    <term>PGLINES</term>
-	    <listitem>
-	      <para>Clears pending G:lines.</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
@@ -455,46 +441,6 @@
 	<para>
 	  Will attempt to remove a D:line from <filename>dline.conf</filename>, and will flush
 	  a temporary D:line.
-	</para>
-      </sect2>
-      <sect2>
-	<title>GLINE</title>
-	<cmdsynopsis>
-	  <command>GLINE</command>
-	  <group>
-	    <arg choice=plain><replaceable>user</replaceable>@<replaceable>host</replaceable></arg>
-	    <arg choice=plain><replaceable>user</replaceable>@<replaceable>a</replaceable>.<replaceable>b</replaceable>.<replaceable>c</replaceable>.<replaceable>d</replaceable></arg>
-	  </group>
-	  <arg choice=plain>:<replaceable>reason</replaceable></arg>
-	</cmdsynopsis>
-	<para>
-	  Attempts to add a network-wide ban for the given mask.
-	  It takes three different opers on three different servers
-	  requesting the same G:line to have it triggered for a configured
-	  time.
-	</para>
-	<para>
-	  Once triggered, a G:line is similar to a temporary K:line on
-	  each server. No further propagation or on-disk storage is done.
-	</para>
-	<note><para>
-	  This command can be enabled or disabled in the configuration file.
-	  If it is disabled, no oper on the server can issue a G:line and no
-	  G:lined user is banned, but G:lines are still propagated to other
-	  servers which may have G:lines enabled.
-	</para></note>
-      </sect2>
-      <sect2>
-	<title>UNGLINE</title>
-	<cmdsynopsis>
-	  <command>UNGLINE</command>
-	  <group>
-	    <arg choice=plain><replaceable>user</replaceable>@<replaceable>host</replaceable></arg>
-	    <arg choice=plain><replaceable>user</replaceable>@<replaceable>a</replaceable>.<replaceable>b</replaceable>.<replaceable>c</replaceable>.<replaceable>d</replaceable></arg>
-	  </group>
-	</cmdsynopsis>
-	<para>
-	  Removes the given G:line on this server.
 	</para>
       </sect2>
       <sect2>
@@ -896,18 +842,6 @@
 	    <term>f</term>
 	    <listitem>
 	      <para>Show file descriptors</para>
-	    </listitem>
-	  </varlistentry>
-	  <varlistentry>
-	    <term>g</term>
-	    <listitem>
-	      <para>Show pending glines</para>
-	    </listitem>
-	  </varlistentry>
-	  <varlistentry>
-	    <term>G</term>
-	    <listitem>
-	      <para>Show active glines</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>

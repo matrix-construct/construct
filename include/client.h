@@ -441,9 +441,8 @@ struct exit_client_hook
 /* overflow flags */
 /* EARLIER FLAGS ARE IN s_newconf.h */
 #define FLAGS2_EXEMPTRESV	0x00400000
-#define FLAGS2_EXEMPTGLINE      0x00800000
-#define FLAGS2_EXEMPTKLINE      0x01000000
-#define FLAGS2_EXEMPTFLOOD      0x02000000
+#define FLAGS2_EXEMPTKLINE      0x00800000
+#define FLAGS2_EXEMPTFLOOD      0x01000000
 #define FLAGS2_IP_SPOOFING      0x10000000
 #define FLAGS2_EXEMPTSPAMBOT	0x20000000
 #define FLAGS2_EXEMPTSHIDE	0x40000000
@@ -537,8 +536,6 @@ struct exit_client_hook
  */
 #define IsExemptKline(x)        ((x)->flags2 & FLAGS2_EXEMPTKLINE)
 #define SetExemptKline(x)       ((x)->flags2 |= FLAGS2_EXEMPTKLINE)
-#define IsExemptGline(x)        ((x)->flags2 & FLAGS2_EXEMPTGLINE)
-#define SetExemptGline(x)       ((x)->flags2 |= FLAGS2_EXEMPTGLINE)
 #define IsExemptFlood(x)        ((x)->flags2 & FLAGS2_EXEMPTFLOOD)
 #define SetExemptFlood(x)       ((x)->flags2 |= FLAGS2_EXEMPTFLOOD)
 #define IsExemptSpambot(x)	((x)->flags2 & FLAGS2_EXEMPTSPAMBOT)
@@ -573,7 +570,6 @@ struct exit_client_hook
 extern void check_banned_lines(void);
 extern void check_klines_event(void *unused);
 extern void check_klines(void);
-extern void check_glines(void);
 extern void check_dlines(void);
 extern void check_xlines(void);
 

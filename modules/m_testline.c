@@ -172,16 +172,6 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 				buf, aconf->passwd);
 			return 0;
 		}
-		else if(aconf->status & CONF_GLINE)
-		{
-			rb_snprintf(buf, sizeof(buf), "%s@%s",
-					aconf->user, aconf->host);
-			sendto_one(source_p, form_str(RPL_TESTLINE),
-				me.name, source_p->name,
-				'G', (long) ((aconf->hold - rb_current_time()) / 60),
-				buf, aconf->passwd);
-			return 0;
-		}
 	}
 
 	/* they asked us to check a nick, so hunt for resvs.. */

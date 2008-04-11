@@ -108,7 +108,7 @@
  * takes at most 246 bytes (including CRLF and '\0') and together with the
  * quit reason should fit in 512 */
 #define REASONLEN	260	/* kick/part/quit */
-#define BANREASONLEN	390	/* kline/dline/gline */
+#define BANREASONLEN	390	/* kline/dline */
 #define AWAYLEN		TOPICLEN
 #define KILLLEN         200	/* with Killed (nick ()) added this should fit in quit */
 

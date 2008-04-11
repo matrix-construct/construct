@@ -818,15 +818,6 @@ report_and_set_user_flags(struct Client *source_p, struct ConfItem *aconf)
 		sendto_one_notice(source_p, ":*** You are exempt from K/G/X lines. congrats.");
 	}
 
-	if(IsConfExemptGline(aconf))
-	{
-		SetExemptGline(source_p);
-
-		/* dont send both a kline and gline exempt notice */
-		if(!IsConfExemptKline(aconf))
-			sendto_one_notice(source_p, ":*** You are exempt from G lines.");
-	}
-
 	if(IsConfExemptDNSBL(aconf))
 		/* kline exempt implies this, don't send both */
 		if(!IsConfExemptKline(aconf))

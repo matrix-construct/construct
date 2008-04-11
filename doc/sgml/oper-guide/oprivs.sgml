@@ -44,14 +44,6 @@
 	</para>
       </sect2>
       <sect2>
-	<title>gline (G), gline</title>
-	<para>
-	  This allows using GLINE (network wide temp bans if 3 opers agree).
-	  If unkline privilege is also possessed, allow UNGLINE (remove gline
-	  locally).
-	</para>
-      </sect2>
-      <sect2>
 	<title>rehash (H), rehash</title>
 	<para>
 	  Allows using the REHASH command, to rehash various configuration
@@ -143,8 +135,7 @@
       <sect2>
 	<title>unkline (U), unkline</title>
 	<para>
-	  Allows using UNKLINE and UNDLINE, and if gline privilege is also
-	  possessed, UNGLINE.
+	  Allows using UNKLINE and UNDLINE.
 	</para>
       </sect2>
       <sect2>

@@ -45,7 +45,7 @@ h_gla_client_exit(hook_data_client_exit *hdata)
 			!strcmp(hdata->comment, ConfigFileEntry.kline_reason))
 	{
 		sendto_realops_snomask_from(SNO_GENERAL, L_ALL, source_p->servptr,
-				"K/D/GLINE active for %s[%s@%s]",
+				"K/DLINE active for %s[%s@%s]",
 				source_p->name, source_p->username, source_p->host);
 	}
 }

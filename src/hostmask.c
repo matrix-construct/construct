@@ -404,15 +404,6 @@ find_address_conf(const char *host, const char *sockhost, const char *user,
 			return kconf;
 	}
 
-	/* hunt for a gline */
-	if(ConfigFileEntry.glines)
-	{
-		kconf = find_conf_by_address(host, sockhost, NULL, ip, CONF_GLINE, aftype, user);
-
-		if((kconf != NULL) && !IsConfExemptGline(iconf))
-			return kconf;
-	}
-
 	return iconf;
 }
 
@@ -683,8 +674,6 @@ show_iline_prefix(struct Client *sptr, struct ConfItem *aconf, char *name)
 		*prefix_ptr++ = '=';
 	if(IsOper(sptr) && IsConfExemptFlood(aconf))
 		*prefix_ptr++ = '|';
-	if(IsOper(sptr) && IsConfExemptGline(aconf) && !IsConfExemptKline(aconf))
-		*prefix_ptr++ = '_';
 	if(IsOper(sptr) && IsConfExemptDNSBL(aconf) && !IsConfExemptKline(aconf))
 		*prefix_ptr++ = '$';
 	if(IsOper(sptr) && IsConfExemptKline(aconf))

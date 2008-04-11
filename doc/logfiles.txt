@@ -13,14 +13,6 @@ Where token is one of:
   O = remote oper, local target
   S = server
 
-fname_glinelog
---------------
-<date> <time> <token> <src nick> <src username> <src host> <src server> <user> <host> <reason>
-
-Where token is one of:
-  R = gline request
-  T = gline trigger, always by previous three requests
-
 fname_klinelog
 --------------
 <date> <time> [U]<token> <source> <time> <info> <reason>[|<oper_reason>]

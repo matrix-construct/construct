@@ -38,7 +38,6 @@
 #define FLAGS_RESTRICTED	0x001
 #define FLAGS_EXCEEDLIMIT	0x002
 #define FLAGS_KLINEEXEMPT	0x004
-#define FLAGS_GLINEEXEMPT	0x008
 #define FLAGS_NEEDIDENT		0x010
 #define FLAGS_NOTILDE		0x020
 
@@ -52,7 +51,6 @@ static struct flag_table_struct flag_table[] =
 	{ "restricted",		FLAGS_RESTRICTED	},
 	{ "exceed_limit",	FLAGS_EXCEEDLIMIT	},
 	{ "kline_exempt",	FLAGS_KLINEEXEMPT	},
-	{ "gline_exempt",	FLAGS_GLINEEXEMPT	},
 	{ "need_ident",		FLAGS_NEEDIDENT		},
 	{ "no_tilde",		FLAGS_NOTILDE		},
 	{ NULL, 0 }
@@ -589,11 +587,6 @@ void set_flags(struct AuthBlock *ptr, const char *user_field, const char *host_f
 
 	  case '>':
 	      ptr->flags |= FLAGS_EXCEEDLIMIT;
-	      ptr->special = 1;
-	      break;
-
-	  case '_':
-	      ptr->flags |= FLAGS_GLINEEXEMPT;
 	      ptr->special = 1;
 	      break;
 

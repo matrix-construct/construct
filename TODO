@@ -33,11 +33,10 @@
       this will help us making support for native characters sets/slashes in host etc
   [F] auth checker module
   [F] resolver module
-[ ] Remove glines entirely
+[x] Remove glines entirely
 [ ] other stuff
   [?] internally split out +o/+v "ranks" into a series of permissions. this could allow for configure-defined 
       special access levels, halfops, etc. (would need to match globally, somehow. extra SVINFO param?)
   [?] somehow hide channel operators like ircnet can do?
   [x] merge m_join.c and m_sjoin.c in one module (same functions, done in ratbox3)
-  [ ] merge s_gline.c and m_gline.c in one module (for pretty look, done in ratbox3)
   [x] create chmode.h and put there all declarations of chm_* - this will make some modules clean

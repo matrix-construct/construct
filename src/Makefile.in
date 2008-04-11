@@ -86,7 +86,6 @@ SRCS =                          \
   s_auth.c                      \
   s_conf.c                      \
   s_newconf.c			\
-  s_gline.c                     \
   s_serv.c                      \
   s_user.c                      \
   scache.c                      \

@@ -1,6 +1,6 @@
 /*
  *  m_testmask.c: Shows the number of matching local and global clients
- *                for a user@host mask, helpful when setting GLINE's
+ *                for a user@host mask
  *
  *  Copyright (C) 2003 by W. Campbell
  *  Coypright (C) 2004 ircd-ratbox development team

@@ -44,7 +44,6 @@
 #include "numeric.h"
 #include "logger.h"
 #include "send.h"
-#include "s_gline.h"
 #include "reject.h"
 #include "cache.h"
 #include "blacklist.h"
@@ -376,18 +375,6 @@ verify_access(struct Client *client_p, const char *username)
 					form_str(ERR_YOUREBANNEDCREEP),
 					me.name, client_p->name, aconf->passwd);
 		}
-		add_reject(client_p, aconf->user, aconf->host);
-		return (BANNED_CLIENT);
-	}
-	else if(aconf->status & CONF_GLINE)
-	{
-		sendto_one_notice(client_p, ":*** G-lined");
-
-		if(ConfigFileEntry.kline_with_reason)
-			sendto_one(client_p,
-					form_str(ERR_YOUREBANNEDCREEP),
-					me.name, client_p->name, aconf->passwd);
-
 		add_reject(client_p, aconf->user, aconf->host);
 		return (BANNED_CLIENT);
 	}
@@ -776,15 +763,10 @@ set_default_conf(void)
 	ConfigFileEntry.fname_operlog = NULL;
 	ConfigFileEntry.fname_foperlog = NULL;
 	ConfigFileEntry.fname_serverlog = NULL;
-	ConfigFileEntry.fname_glinelog = NULL;
 	ConfigFileEntry.fname_klinelog = NULL;
 	ConfigFileEntry.fname_operspylog = NULL;
 	ConfigFileEntry.fname_ioerrorlog = NULL;
-	ConfigFileEntry.glines = NO;
 	ConfigFileEntry.use_egd = NO;
-	ConfigFileEntry.gline_time = 12 * 3600;
-	ConfigFileEntry.gline_min_cidr = 16;
-	ConfigFileEntry.gline_min_cidr6 = 48;
 	ConfigFileEntry.hide_spoof_ips = YES;
 	ConfigFileEntry.hide_error_messages = 1;
 	ConfigFileEntry.dots_in_ident = 0;

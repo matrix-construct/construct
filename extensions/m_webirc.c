@@ -33,9 +33,8 @@
  * Possible flags:
  *   encrypted - password is encrypted (recommended)
  *   kline_exempt - k/g lines on the cgiirc ip are ignored
- *   gline_exempt - glines on the cgiirc ip are ignored
  * dlines are checked on the cgiirc ip (of course).
- * k/d/g/x lines, auth blocks, user limits, etc are checked using the
+ * k/d/x lines, auth blocks, user limits, etc are checked using the
  * real host/ip.
  * The password should be specified unencrypted in webirc_password in
  * cgiirc.config
@@ -129,7 +128,7 @@ mr_webirc(struct Client *client_p, struct Client *source_p, int parc, const char
 	del_unknown_ip(source_p);
 	inetpton_sock(parv[4], (struct sockaddr *)&source_p->localClient->ip);
 
-	/* Check dlines now, k/glines will be checked on registration */
+	/* Check dlines now, klines will be checked on registration */
 	if((aconf = find_dline((struct sockaddr *)&source_p->localClient->ip, 
 			       source_p->localClient->ip.ss_family)))
 	{

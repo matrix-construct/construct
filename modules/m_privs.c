@@ -67,7 +67,6 @@ static struct mode_table oper_table[] = {
 	{"remote",		OPER_REMOTE		},
 	{"kline",		OPER_KLINE		},
 	{"unkline",		OPER_UNKLINE		},
-	{"gline",		OPER_GLINE		},
 	{"nick_changes",	OPER_NICKS		},
 	{"rehash",		OPER_REHASH		},
 	{"die",			OPER_DIE		},
@@ -86,7 +85,6 @@ static struct mode_table oper_table[] = {
 /* there is no such table like this anywhere else */
 static struct mode_table auth_client_table[] = {
 	{"resv_exempt",		FLAGS2_EXEMPTRESV	},
-	{"gline_exempt",	FLAGS2_EXEMPTGLINE	},
 	{"kline_exempt",	FLAGS2_EXEMPTKLINE	},
 	{"flood_exempt",	FLAGS2_EXEMPTFLOOD	},
 	{"spambot_exempt",	FLAGS2_EXEMPTSPAMBOT	},

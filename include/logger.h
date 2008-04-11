@@ -46,7 +46,6 @@ typedef enum ilogfile
 	L_SERVER,
 	L_KILL,
 	L_KLINE,
-	L_GLINE,
 	L_OPERSPY,
 	L_IOERROR,
 	LAST_LOGFILE
