@@ -359,7 +359,7 @@ auth {
 	  <varlistentry>
 	    <term>kline_exempt (^)</term>
 	    <listitem>
-	      <para>Users in this auth{} block are exempted from DNS blacklists, k:lines, g:lines and x:lines.</para>
+	      <para>Users in this auth{} block are exempted from DNS blacklists, k:lines and x:lines.</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
