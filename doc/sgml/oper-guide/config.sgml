@@ -22,6 +22,12 @@
 	Anything from a # to the end of a line is a comment. Blank lines are ignored. C-style comments are also supported.
       </para>
     </sect1>
+    <sect1 id="configlines">
+      <title>Specific blocks and directives</title>
+      <para>
+       Not all configuration blocks and directives are listed here, only the most common ones. More blocks and directives will
+       be documented in later revisions of this manual.
+      </para>
       <sect2>
 	<title>loadmodule directive</title>
 	<synopsis>
@@ -353,7 +359,7 @@ auth {
 	  <varlistentry>
 	    <term>kline_exempt (^)</term>
 	    <listitem>
-	      <para>Users in this auth{} block are exempted from DNS blacklists, k:lines, g:lines and x:lines.</para>
+	      <para>Users in this auth{} block are exempted from DNS blacklists, k:lines and x:lines.</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>

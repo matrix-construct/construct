@@ -16,8 +16,6 @@ X B - Shows hash statistics
 * e - Shows exemptions to D lines
 X E - Shows Events
 X f - Shows File Descriptors
-* g - Shows pending G lines
-* G - Shows active G lines
 ^ h - Shows hub_mask/leaf_mask (Old H:/L: lines)
 ^ i - Shows auth blocks (Old I: lines)
 ^ K - Shows K lines (or matched klines)
