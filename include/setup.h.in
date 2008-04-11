@@ -174,9 +174,6 @@
 /* Prefix where help file are installed. */
 #undef HELP_DIR
 
-/* Define if IPv6 support is present and available. */
-#undef IPV6
-
 /* Prefix where the ircd is installed. */
 #undef IRCD_PREFIX
 
@@ -188,9 +185,6 @@
 
 /* Prefix where to write logfiles. */
 #undef LOG_DIR
-
-/* the system's memory page size */
-#undef MALLOC_PAGESIZE
 
 /* Sizeof member heap. */
 #undef MEMBER_HEAP_SIZE
@@ -215,9 +209,6 @@
 
 /* Define to 1 if you wish to disable the block allocator. */
 #undef NOBALLOC
-
-/* Define to 1 if your system has no in6addr_any. */
-#undef NO_IN6ADDR_ANY
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
@@ -257,9 +248,6 @@
 
 /* The size of `short', as computed by sizeof. */
 #undef SIZEOF_SHORT
-
-/* Define to 1 if sockaddr has a 'sa_len' member. */
-#undef SOCKADDR_IN_HAS_LEN
 
 /* Define this to enable soft asserts. */
 #undef SOFT_ASSERT
