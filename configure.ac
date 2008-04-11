@@ -303,11 +303,6 @@ if test x"$SUN" = xyes; then
 	AC_SEARCH_LIBS(inet_ntoa, nsl,, [AC_MSG_ERROR([libnsl not found! Aborting.])])
 fi
 
-AC_CHECK_MEMBER([struct sockaddr.sa_len], [AC_DEFINE(SOCKADDR_IN_HAS_LEN, 1, [Define to 1 if sockaddr has a 'sa_len'
-member.])],,[[#include <sys/types.h>
-#include <sys/socket.h>
-]])
-
 AC_CHECK_TYPE(socklen_t, ,
 [AC_DEFINE([socklen_t], [unsigned int],
 [If we don't have a real socklen_t, unsigned int is good enough.])],
