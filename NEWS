@@ -8,7 +8,7 @@ See LICENSE for licensing details (GPL v2).
   for setup.
 - A new extban, $z, has been added for ssl users.
 - A new compatibility channel mode, +R, has been added, it sets
-  +b/-b $~a. This is equivilant to the +R seen in ircd-seven.
+  +q/-q $~a. This is similar to the +R seen in ircd-seven.
 - A new compatibility channel mode, +S, has been added, it sets
   +b/-b $~z.
 - A new compatibility channel mode, +O, has been added, it sets
