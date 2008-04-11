@@ -3,14 +3,18 @@ See LICENSE for licensing details (GPL v2).
 
 -- charybdis-3.0.0
 
-- Port to libratbox
-- Allow server-to-server SSL links
-- Allow client SSL
-- New extended ban $z for ssl users
-- New compatiability channel mode +R (quite unreg, sets +-b $~a)
-- New compatiability channel mode +S (ssl only, sets +-b $~z)
-- New compatiability channel mode +O (oper only, sets +-iI $o)
-- New /privs command allowing to watch operator privileges online
+- The IRCd has been ported to libratbox, which has improved our portability.
+- Client SSL and Server-to-Server SSL are now available, read the example.conf
+  for setup.
+- A new extban, $z, has been added for ssl users.
+- A new compatibility channel mode, +R, has been added, it sets
+  +b/-b $~a. This is equivilant to the +R seen in ircd-seven.
+- A new compatibility channel mode, +R, has been added, it sets
+  +b/-b $~z.
+- A new compatibility channel mode, +O, has been added, it sets
+  +iI/-iI $o.
+- The /privs command has been added which shows you your privileges and
+  access level.
 
 -- charybdis-2.2.0
 
@@ -79,7 +83,7 @@ See LICENSE for licensing details (GPL v2).
 
 -- charybdis-2.1.0
 
-- Our official website is now http;//www.ircd-charybdis.org/.
+- Our official website is now http://www.ircd-charybdis.org/.
 - Make RPL_ISUPPORT (005 numeric) modularizable.
 - Also do forwarding if the channel limit (+l) is exceeded.
 - Don't count opers on service{} servers in /lusers.
