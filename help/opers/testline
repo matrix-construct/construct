@@ -1,6 +1,6 @@
 TESTLINE [[nick!]user@]host
 
-Looks up given mask, looking for any matching I/K/D/G lines.
+Looks up given mask, looking for any matching I/K/D lines.
 If username is not specified, it will look up "dummy@host".
 If nickname is specified it will also search for RESVs.
 
