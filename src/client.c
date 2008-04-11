@@ -85,8 +85,7 @@ struct Dictionary *nd_dict = NULL;
 enum
 {
 	D_LINED,
-	K_LINED,
-	G_LINED
+	K_LINED
 };
 
 rb_dlink_list dead_list;
@@ -403,7 +402,6 @@ notify_banned_client(struct Client *client_p, struct ConfItem *aconf, int ban)
 	static const char conn_closed[] = "Connection closed";
 	static const char d_lined[] = "D-lined";
 	static const char k_lined[] = "K-lined";
-	static const char g_lined[] = "G-lined";
 	const char *reason = NULL;
 	const char *exit_reason = conn_closed;
 
@@ -418,9 +416,6 @@ notify_banned_client(struct Client *client_p, struct ConfItem *aconf, int ban)
 		{
 		case D_LINED:
 			reason = d_lined;
-			break;
-		case G_LINED:
-			reason = g_lined;
 			break;
 		default:
 			reason = k_lined;

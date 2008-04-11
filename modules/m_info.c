@@ -306,7 +306,7 @@ static struct InfoStruct info_table[] = {
 		"min_nonwildcard",
 		OUTPUT_DECIMAL,
 		&ConfigFileEntry.min_nonwildcard,
-		"Minimum non-wildcard chars in K/G lines",
+		"Minimum non-wildcard chars in K lines",
 	},
 	{
 		"min_nonwildcard_simple",

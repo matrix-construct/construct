@@ -32,7 +32,7 @@
  * };
  * Possible flags:
  *   encrypted - password is encrypted (recommended)
- *   kline_exempt - k/g lines on the cgiirc ip are ignored
+ *   kline_exempt - klines on the cgiirc ip are ignored
  * dlines are checked on the cgiirc ip (of course).
  * k/d/x lines, auth blocks, user limits, etc are checked using the
  * real host/ip.
