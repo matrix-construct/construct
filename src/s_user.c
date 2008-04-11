@@ -815,7 +815,7 @@ report_and_set_user_flags(struct Client *source_p, struct ConfItem *aconf)
 	if(IsConfExemptKline(aconf))
 	{
 		SetExemptKline(source_p);
-		sendto_one_notice(source_p, ":*** You are exempt from K/G/X lines. congrats.");
+		sendto_one_notice(source_p, ":*** You are exempt from K/X lines. congrats.");
 	}
 
 	if(IsConfExemptDNSBL(aconf))
