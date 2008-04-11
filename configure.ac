@@ -255,44 +255,6 @@ AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(long long)
 
-dnl Memory manager
-dnl ==============
-
-AC_MSG_CHECKING([the system's memory page size])
-pagesize="no"
-AC_TRY_RUN([
-#include <stdio.h>
-#if HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
-int main(void) {
-    FILE *fp = fopen("conftest.malloc", "w");
-
-    if (fp != NULL) {
-        fprintf(fp, "%d\n", getpagesize());
-        fclose(fp);
-    } else
-        exit(1);
-    exit(0);
-}],[
-if test -f "conftest.malloc" ; then
-    pagesize=`cat conftest.malloc`
-fi
-])
-if test "$pagesize" != "no" ; then
-    AC_MSG_RESULT($pagesize)
-else
-    if test "$ac_cv_sizeof_int" = "4" ; then
-        pagesize=4096
-    else
-        pagesize=8192
-    fi
-    AC_MSG_RESULT([$pagesize (guessing)])
-fi
-AC_DEFINE_UNQUOTED(MALLOC_PAGESIZE, $pagesize,
-    [the system's memory page size])
-
 dnl Networking Functions
 dnl ====================
 
