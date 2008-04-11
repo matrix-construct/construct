@@ -97,10 +97,7 @@ kq_update_events(rb_fde_t * F, short filter, PF * handler)
 
 		if(handler != NULL)
 		{
-			if(filter == EVFILT_WRITE)
-				kep_flags = (EV_ADD | EV_ONESHOT);
-			else
-				kep_flags = EV_ADD;
+			kep_flags = EV_ADD | EV_ONESHOT;
 		}
 		else
 		{
