@@ -88,14 +88,6 @@
  */
 #define  HIDE_SERVERS_IPS
 
-/* TS6_ONLY
- *
- * If this is defined only TS6 servers may link to the network.  See
- * doc/TS6.txt for more information.  If your network has old servers
- * (hyb7.0, ircd-ratbox-1.x, +CSr) or hybserv you should NOT define this.
- */
-#undef TS6_ONLY
-
 /* HANGONGOODLINK and HANGONRETRYDELAY
  * Often net breaks for a short time and it's useful to try to
  * establishing the same connection again faster than CONNECTFREQUENCY

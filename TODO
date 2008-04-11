@@ -19,12 +19,12 @@
   [x] ssl channelmode (done by extban and chm_compat)
   [ ] acknowledgement message for SSL users like '* *** You are connected using SSL cipher "DHE RSA-AES 128 CBC-SHA"'
   [ ] ssl stuff files generator in ./configure time
-[x] merge some stuff from ircd-seven directly (to be determined what)
-  [x] remote d:lines support
+[?] merge some stuff from ircd-seven directly (to be determined what)
+  [?] remote d:lines support?
+  [?] +C (noctcp) channel/usermode
 [F] kline/xline/resv sync
 [F] make an ability of using bandb instead of .conf files as bans storage
-[F] drop non-TS6 (legacy protocol) support
-[F] Doxygen code documentation
+[/] drop non-TS6 (legacy protocol) support
 [F] module engine rework
   [F] more beautiful way of adding new channel modes by module
   [F] make nick/user/host validation functions/match tables able to work in separated modules,
@@ -32,13 +32,9 @@
   [F] auth checker module
   [F] resolver module
 [x] Remove glines entirely
---- other stuff
-  [?] PASS selector:password for auth{} from ircd-seven? (useful for dynamic IPs)
-  [?] +C (noctcp) channel/usermode from ircd-seven?
+[ ] other stuff
   [?] internally split out +o/+v "ranks" into a series of permissions. this could allow for configure-defined 
       special access levels, halfops, etc. (would need to match globally, somehow. extra SVINFO param?)
   [?] somehow hide channel operators like ircnet can do?
   [x] merge m_join.c and m_sjoin.c in one module (same functions, done in ratbox3)
   [x] create chmode.h and put there all declarations of chm_* - this will make some modules clean
-[?] Move oper override server WALLOPS to global server notices?
-
