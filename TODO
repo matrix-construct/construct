@@ -4,11 +4,9 @@
   [x] remove 2.8 report_error() in ratbox imported stuff
   [F] client.c, channel.c is very 2.8 style still. it'd be nice to pack them into their own 
       namespace and such. moreover, the other 2.8 code needs similar rewriting/reworking too...
-  ### well, I suggest working on it in 3.1 if you're not against ;)
-  [F] rewrite s_auth.c
-    [F] authentication state/lock manager
-    [F] move resolver/auth checker code into separated modules 
-        (or maybe give user ability to run them as ratbox3-style helpers (./configure option)?)
+  [ ] rewrite s_auth.c
+    [ ] authentication state/lock manager
+    [ ] move resolver/auth checker code into separated modules 
 [x] port to libratbox
   [x] get it running
   [x] clean up maxconnections kludges &c
