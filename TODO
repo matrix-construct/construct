@@ -20,6 +20,7 @@
   [x] ssl usermode (+Z)
   [x] ssl channelmode (done by extban and chm_compat)
   [ ] acknowledgement message for SSL users like '* *** You are connected using SSL cipher "DHE RSA-AES 128 CBC-SHA"'
+  [ ] ssl stuff files generator in ./configure time
 [?] merge some stuff from ircd-seven directly (to be determined what)
   [?] remote d:lines support?
   [?] +C (noctcp) channel/usermode
