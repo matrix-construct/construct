@@ -11,6 +11,7 @@ IE          - supports invite exceptions (+I)
 EOB         - supports end of burst notification (EOB token)
 KLN         - supports remote KLINE
 UNKLN       - supports remote UNKLINE
+GLN         - supports hybrid7-style GLINE (:oper GLINE user host :reason)
 HOPS        - supports halfops (+h -- %<nick>)
 HUB         - denotes that the target server is a HUB
 AOPS        - supports anonymous ops (+a, op hiding/op status hiding)
