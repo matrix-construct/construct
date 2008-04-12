@@ -950,7 +950,7 @@ rb_get_fde(int fd)
 ssize_t
 rb_read(rb_fde_t *F, void *buf, int count)
 {
-	int ret;
+	ssize_t ret;
 	if(F == NULL)
 		return 0;
 		
@@ -982,7 +982,7 @@ rb_read(rb_fde_t *F, void *buf, int count)
 ssize_t
 rb_write(rb_fde_t *F, const void *buf, int count)
 {
-	int ret;
+	ssize_t ret;
 	if(F == NULL)
 		return 0;
 
@@ -1008,11 +1008,11 @@ rb_write(rb_fde_t *F, const void *buf, int count)
 static ssize_t
 rb_fake_writev(rb_fde_t *F, const struct rb_iovec *vp, size_t vpcount)
 {
-	size_t count = 0;
+	ssize_t count = 0;
 
 	while (vpcount-- > 0) 
 	{
-		size_t written = rb_write(F, vp->iov_base, vp->iov_len);
+		ssize_t written = rb_write(F, vp->iov_base, vp->iov_len);
 
 		if (written <= 0)
 		{
