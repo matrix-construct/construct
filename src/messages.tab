@@ -402,7 +402,7 @@ static  const char *  replies[] = {
 /* 378 RPL_WHOISHOST, */        "%s :is connecting from *@%s %s",
 /* 379 */       NULL,
 /* 380 */       NULL,
-/* 381 RPL_YOUREOPER, */        ":%s 381 %s :Congrats! You passed Internet Memes 101.",
+/* 381 RPL_YOUREOPER, */        ":%s 381 %s :Congratulations! You are now an mIRC warrior.",
 /* 382 RPL_REHASHING, */        ":%s 382 %s %s :Rehashing",
 /* 383 */       NULL,
 /* 384 RPL_MYPORTIS, */		NULL,
