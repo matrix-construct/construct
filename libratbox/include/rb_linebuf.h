@@ -46,7 +46,6 @@ typedef struct _buf_line
 {
 	char buf[BUF_DATA_SIZE + 2];
 	rb_uint8_t terminated;	/* Whether we've terminated the buffer */
-	rb_uint8_t flushing;	/* Whether we're flushing .. */
 	rb_uint8_t raw;	/* Whether this linebuf may hold 8-bit data */
 	int len;		/* How much data we've got */
 	int refcount;		/* how many linked lists are we in? */

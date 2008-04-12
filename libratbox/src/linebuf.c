@@ -368,7 +368,6 @@ rb_linebuf_parse(buf_head_t * bufhead, char *data, int len, int raw)
 	{
 		/* Check we're doing the partial buffer thing */
 		bufline = bufhead->list.tail->data;
-		lrb_assert(!bufline->flushing);
 		/* just try, the worst it could do is *reject* us .. */
 		if(!raw)
 			cpylen = rb_linebuf_copy_line(bufhead, bufline, data, len);
@@ -739,12 +738,9 @@ rb_linebuf_flush(rb_fde_t *F, buf_head_t * bufhead)
 
 		}
 
-		if(bufline->flushing)
-		{
-			vec[x].iov_base = bufline->buf + bufhead->writeofs;
-			vec[x++].iov_len = bufline->len - bufhead->writeofs;
-			ptr = ptr->next;
-		}
+		vec[x].iov_base = bufline->buf + bufhead->writeofs;
+		vec[x++].iov_len = bufline->len - bufhead->writeofs;
+		ptr = ptr->next;
 
 		do
 		{
@@ -777,29 +773,18 @@ rb_linebuf_flush(rb_fde_t *F, buf_head_t * bufhead)
 		{
 			bufline = ptr->data;
 
-			if(bufline->flushing)
+			if(xret >= bufline->len - bufhead->writeofs)
 			{
-				if(xret >= bufline->len - bufhead->writeofs)
-				{
-					xret = xret - (bufline->len - bufhead->writeofs);
-					ptr = ptr->next;
-					rb_linebuf_done_line(bufhead, bufline, bufhead->list.head);
-					continue;
-				}	
-			}
-			if(xret >= bufline->len) 
-			{
-				xret = xret - bufline->len;
+				xret -= bufline->len - bufhead->writeofs;
 				ptr = ptr->next;
 				rb_linebuf_done_line(bufhead, bufline, bufhead->list.head);
+				bufhead->writeofs = 0;
 			}
 			else 
 			{
-				bufline->flushing = 1;
-				bufhead->writeofs = xret;
+				bufhead->writeofs += xret;
 				break;
 			}
-			
 		}
 
 		return retval;
@@ -823,13 +808,6 @@ rb_linebuf_flush(rb_fde_t *F, buf_head_t * bufhead)
 	{
 		errno = EWOULDBLOCK;
 		return -1;
-	}
-
-	/* Check we're flushing the first buffer */
-	if(!bufline->flushing)
-	{
-		bufline->flushing = 1;
-		bufhead->writeofs = 0;
 	}
 
 	/* Now, try writing data */
