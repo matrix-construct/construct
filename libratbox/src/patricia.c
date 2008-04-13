@@ -287,7 +287,7 @@ rb_new_patricia(int maxbits)
  */
 
 void
-rb_clear_patricia(rb_patricia_tree_t * patricia, void_fn_t func)
+rb_clear_patricia(rb_patricia_tree_t * patricia, void (*func)(void *))
 {
 	assert(patricia);
 	if(patricia->head)
@@ -343,7 +343,7 @@ rb_clear_patricia(rb_patricia_tree_t * patricia, void_fn_t func)
 
 
 void
-rb_destroy_patricia(rb_patricia_tree_t * patricia, void_fn_t func)
+rb_destroy_patricia(rb_patricia_tree_t * patricia, void (*func)(void *))
 {
 	rb_clear_patricia(patricia, func);
 	num_active_patricia--;
@@ -355,7 +355,7 @@ rb_destroy_patricia(rb_patricia_tree_t * patricia, void_fn_t func)
  */
 
 void
-rb_patricia_process(rb_patricia_tree_t * patricia, void_fn_t func)
+rb_patricia_process(rb_patricia_tree_t * patricia, void (*func)(rb_prefix_t *, void *))
 {
 	rb_patricia_node_t *node;
 	assert(func);

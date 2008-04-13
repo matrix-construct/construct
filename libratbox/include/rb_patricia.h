@@ -26,7 +26,6 @@
 #endif
 
 /* typedef unsigned int u_int; */
-typedef void (*void_fn_t) ();
 #define rb_prefix_touchar(prefix) ((unsigned char *)&(prefix)->add.sin)
 #define MAXLINE 1024
 #define BIT_TEST(f, b)  ((f) & (b))
@@ -79,9 +78,9 @@ rb_patricia_node_t *rb_patricia_lookup(rb_patricia_tree_t * patricia, rb_prefix_
 
 void rb_patricia_remove(rb_patricia_tree_t * patricia, rb_patricia_node_t * node);
 rb_patricia_tree_t *rb_new_patricia(int maxbits);
-void rb_clear_patricia(rb_patricia_tree_t * patricia, void_fn_t func);
-void rb_destroy_patricia(rb_patricia_tree_t * patricia, void_fn_t func);
-void rb_patricia_process(rb_patricia_tree_t * patricia, void_fn_t func);
+void rb_clear_patricia(rb_patricia_tree_t * patricia, void (*func)(void *));
+void rb_destroy_patricia(rb_patricia_tree_t * patricia, void (*func)(void *));
+void rb_patricia_process(rb_patricia_tree_t * patricia, void (*func)(rb_prefix_t *, void *));
 void rb_init_patricia(void);
 
 
