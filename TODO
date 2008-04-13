@@ -21,10 +21,11 @@
   [ ] ssl stuff files generator in ./configure time
 [?] merge some stuff from ircd-seven directly (to be determined what)
   [?] remote d:lines support?
+  [?] PASS selector:password for auth{}? (useful for dynamic IPs)
   [?] +C (noctcp) channel/usermode
 [F] kline/xline/resv sync
 [F] make an ability of using bandb instead of .conf files as bans storage
-[ ] drop non-TS6 (legacy protocol) support
+[F] drop non-TS6 (legacy protocol) support
 [F] module engine rework
   [F] more beautiful way of adding new channel modes by module
   [F] make nick/user/host validation functions/match tables able to work in separated modules,
