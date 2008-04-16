@@ -609,7 +609,6 @@ m_info(struct Client *client_p, struct Client *source_p, int parc, const char *p
 
 	info_spy(source_p);
 
-	SetCork(source_p);
 	send_info_text(source_p);
 	send_birthdate_online_time(source_p);
 
