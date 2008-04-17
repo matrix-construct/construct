@@ -43,9 +43,14 @@ dummy_handler(int sig)
 static void
 sigchld_handler(int sig)
 {
-	int status;
-	waitpid(-1, &status, WNOHANG);
+	int status, olderrno;
+
+	olderrno = errno;
+	while (waitpid(-1, &status, WNOHANG) > 0)
+		;
+	errno = olderrno;
 }
+
 /*
  * sigterm_handler - exit the server
  */
