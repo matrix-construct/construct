@@ -175,6 +175,13 @@
 	  restricted. Opers with +z set will receive OPERWALL messages.
 	</para>
       </sect2>
+      <sect2>
+	<title>+Z, SSL user</title>
+	<para>
+	  This umode is set on clients connected via SSL/TLS.
+	  It cannot be set or unset after initial connection.
+	</para>
+      </sect2>
     </sect1>
     <sect1 id="snomaskusage">
       <title>Snomask usage</title>
