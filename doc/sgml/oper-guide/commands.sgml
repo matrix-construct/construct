@@ -464,7 +464,7 @@
 	  </group>
 	</cmdsynopsis>
 	<para>
-	  Looks up the given hostmask or IP address and reports back on any auth{} blocks, D:, G:, or K: lines found.
+	  Looks up the given hostmask or IP address and reports back on any auth{} blocks, D: or K: lines found.
 	  If <replaceable>nick</replaceable> is given, also searches for
 	  nick resvs.
 	</para>
