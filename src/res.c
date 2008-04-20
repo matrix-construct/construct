@@ -99,9 +99,6 @@ static int proc_answer(struct reslist *request, HEADER * header, char *, char *)
 static struct reslist *find_id(int id);
 static struct DNSReply *make_dnsreply(struct reslist *request);
 
-extern char irc_domain[HOSTLEN + 1];
-
-
 /*
  * int
  * res_ourserver(inp)

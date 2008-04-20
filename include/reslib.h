@@ -115,4 +115,6 @@ extern void irc_ns_put16(unsigned int src, unsigned char *dst);
 extern void irc_ns_put32(unsigned long src, unsigned char *dst);
 extern int irc_res_mkquery(const char *dname, int class, int type, unsigned char *buf, int buflen);
 
+extern char irc_domain[HOSTLEN + 1];
+
 #endif
