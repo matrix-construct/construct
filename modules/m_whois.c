@@ -36,7 +36,6 @@
 #include "s_serv.h"
 #include "send.h"
 #include "irc_string.h"
-#include "sprintf_irc.h"
 #include "s_conf.h"
 #include "logger.h"
 #include "msg.h"

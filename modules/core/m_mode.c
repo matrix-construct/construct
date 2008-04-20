@@ -40,7 +40,6 @@
 #include "parse.h"
 #include "modules.h"
 #include "packet.h"
-#include "sprintf_irc.h"
 #include "s_newconf.h"
 
 static int m_mode(struct Client *, struct Client *, int, const char **);

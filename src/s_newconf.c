@@ -43,7 +43,6 @@
 #include "hostmask.h"
 #include "newconf.h"
 #include "hash.h"
-#include "sprintf_irc.h"
 #include "irc_dictionary.h"
 
 rb_dlink_list shared_conf_list;

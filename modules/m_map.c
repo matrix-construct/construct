@@ -28,7 +28,6 @@
 #include "numeric.h"
 #include "send.h"
 #include "s_conf.h"
-#include "sprintf_irc.h"
 #include "scache.h"
 
 #define USER_COL       50	/* display | Users: %d at col 50 */

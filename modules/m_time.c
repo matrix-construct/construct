@@ -35,7 +35,6 @@
 #include "parse.h"
 #include "modules.h"
 #include "packet.h"
-#include "sprintf_irc.h"
 
 static int m_time(struct Client *, struct Client *, int, const char **);
 static char *date(void);

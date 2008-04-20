@@ -32,7 +32,6 @@
 #include "res.h"
 #include "reslib.h"
 #include "irc_string.h"
-#include "sprintf_irc.h"
 #include "numeric.h"
 #include "client.h" /* SNO_* */
 

@@ -11,7 +11,6 @@
 
 #include "newconf.h"
 #include "ircd_defs.h"
-#include "sprintf_irc.h"
 #include "common.h"
 #include "logger.h"
 #include "s_conf.h"

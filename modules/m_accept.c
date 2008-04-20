@@ -34,7 +34,6 @@
 #include "send.h"
 #include "msg.h"
 #include "parse.h"
-#include "sprintf_irc.h"
 #include "modules.h"
 
 static int m_accept(struct Client *, struct Client *, int, const char **);

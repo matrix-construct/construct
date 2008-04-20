@@ -39,7 +39,6 @@
 #include "client.h"
 #include "hash.h"
 #include "cache.h"
-#include "sprintf_irc.h"
 #include "irc_dictionary.h"
 #include "numeric.h"
 

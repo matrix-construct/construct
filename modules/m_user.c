@@ -35,7 +35,6 @@
 #include "msg.h"
 #include "parse.h"
 #include "modules.h"
-#include "sprintf_irc.h"
 #include "blacklist.h"
 
 static int mr_user(struct Client *, struct Client *, int, const char **);

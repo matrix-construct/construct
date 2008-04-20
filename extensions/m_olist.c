@@ -41,7 +41,6 @@
 #include "parse.h"
 #include "modules.h"
 #include "s_newconf.h"
-#include "sprintf_irc.h"
 
 static int mo_olist(struct Client *, struct Client *, int parc, const char *parv[]);
 

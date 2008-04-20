@@ -44,7 +44,6 @@
 #include "msg.h"
 #include "parse.h"
 #include "modules.h"
-#include "sprintf_irc.h"
 #include "whowas.h"
 #include "monitor.h"
 #include "s_stats.h"

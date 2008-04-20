@@ -23,7 +23,6 @@
  */
 
 #include "stdinc.h"
-#include "sprintf_irc.h"
 #include "irc_string.h"
 #include "client.h"
 #include "setup.h"

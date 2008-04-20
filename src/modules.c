@@ -38,7 +38,6 @@
 #include "parse.h"
 #include "ircd_defs.h"
 #include "irc_string.h"
-#include "sprintf_irc.h"
 
 
 

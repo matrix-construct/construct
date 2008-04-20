@@ -11,7 +11,6 @@
 #include "common.h"
 #include "reslib.h"
 #include "irc_string.h"
-#include "sprintf_irc.h"
 #include "ircd.h"
 
 /* Maximum number of nameservers in /etc/resolv.conf we care about 

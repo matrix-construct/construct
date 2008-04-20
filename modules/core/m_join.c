@@ -39,7 +39,6 @@
 #include "msg.h"
 #include "parse.h"
 #include "modules.h"
-#include "sprintf_irc.h"
 #include "packet.h"
 
 static int m_join(struct Client *, struct Client *, int, const char **);
