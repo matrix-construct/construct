@@ -205,7 +205,7 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 
 		if(*jbuf)
 			(void) strcat(jbuf, ",");
-		(void) strlcat(jbuf, name, sizeof(jbuf));
+		(void) rb_strlcat(jbuf, name, sizeof(jbuf));
 	}
 
 	if(parc > 2)

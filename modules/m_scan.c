@@ -181,8 +181,8 @@ scan_umodes(struct Client *client_p, struct Client *source_p, int parc,
 				rb_strlcpy(buf, "UMODES", sizeof buf);
 				for (i = 2; i < parc; i++)
 				{
-					strlcat(buf, " ", sizeof buf);
-					strlcat(buf, parv[i], sizeof buf);
+					rb_strlcat(buf, " ", sizeof buf);
+					rb_strlcat(buf, parv[i], sizeof buf);
 				}
 				report_operspy(source_p, "SCAN", buf);
 			}

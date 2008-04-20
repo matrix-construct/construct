@@ -162,12 +162,12 @@ show_isupport(struct Client *client_p)
 			nchars = extra_space, nparams = 0, buf[0] = '\0';
 		}
 		if (nparams > 0)
-			strlcat(buf, " ", sizeof buf), nchars++;
-		strlcat(buf, item->name, sizeof buf);
+			rb_strlcat(buf, " ", sizeof buf), nchars++;
+		rb_strlcat(buf, item->name, sizeof buf);
 		if (!EmptyString(value))
 		{
-			strlcat(buf, "=", sizeof buf);
-			strlcat(buf, value, sizeof buf);
+			rb_strlcat(buf, "=", sizeof buf);
+			rb_strlcat(buf, value, sizeof buf);
 		}
 		nchars += l;
 		nparams++;

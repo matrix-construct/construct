@@ -107,17 +107,17 @@ static void show_privs(struct Client *source_p, struct Client *target_p)
 		if (target_p->flags2 & p->mode)
 		{
 			if (buf[0] != '\0')
-				strlcat(buf, " ", sizeof buf);
-			strlcat(buf, p->name, sizeof buf);
+				rb_strlcat(buf, " ", sizeof buf);
+			rb_strlcat(buf, p->name, sizeof buf);
 		}
 		p++;
 	}
 	if (IsOper(target_p))
 	{
 		if (buf[0] != '\0')
-			strlcat(buf, " ", sizeof buf);
-		strlcat(buf, "operator:", sizeof buf);
-		strlcat(buf, target_p->localClient->opername, sizeof buf);
+			rb_strlcat(buf, " ", sizeof buf);
+		rb_strlcat(buf, "operator:", sizeof buf);
+		rb_strlcat(buf, target_p->localClient->opername, sizeof buf);
 	}
 	p = &auth_client_table[0];
 	while (p->name != NULL)
@@ -125,8 +125,8 @@ static void show_privs(struct Client *source_p, struct Client *target_p)
 		if (target_p->flags2 & p->mode)
 		{
 			if (buf[0] != '\0')
-				strlcat(buf, " ", sizeof buf);
-			strlcat(buf, p->name, sizeof buf);
+				rb_strlcat(buf, " ", sizeof buf);
+			rb_strlcat(buf, p->name, sizeof buf);
 		}
 		p++;
 	}

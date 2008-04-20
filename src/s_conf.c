@@ -314,7 +314,7 @@ verify_access(struct Client *client_p, const char *username)
 	else
 	{
 		rb_strlcpy(non_ident, "~", sizeof(non_ident));
-		strlcat(non_ident, username, sizeof(non_ident));
+		rb_strlcat(non_ident, username, sizeof(non_ident));
 		aconf = find_address_conf(client_p->host, client_p->sockhost,
 					non_ident, client_p->username,
 					(struct sockaddr *) &client_p->localClient->ip,

@@ -417,8 +417,8 @@ mo_masktrace(struct Client *client_p, struct Client *source_p, int parc,
 			char buf[512];
 			rb_strlcpy(buf, mask, sizeof(buf));
 			if(!EmptyString(gecos)) {
-				strlcat(buf, " ", sizeof(buf));
-				strlcat(buf, gecos, sizeof(buf));
+				rb_strlcat(buf, " ", sizeof(buf));
+				rb_strlcat(buf, gecos, sizeof(buf));
 			}		
 
 			report_operspy(source_p, "MASKTRACE", buf);	

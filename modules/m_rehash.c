@@ -285,8 +285,8 @@ do_rehash(struct Client *source_p, const char *type)
 		for (x = 0; rehash_commands[x].cmd != NULL && rehash_commands[x].handler != NULL;
 		     x++)
 		{
-			strlcat(cmdbuf, " ", sizeof(cmdbuf));
-			strlcat(cmdbuf, rehash_commands[x].cmd, sizeof(cmdbuf));
+			rb_strlcat(cmdbuf, " ", sizeof(cmdbuf));
+			rb_strlcat(cmdbuf, rehash_commands[x].cmd, sizeof(cmdbuf));
 		}
 		sendto_one_notice(source_p, ":rehash one of:%s", cmdbuf);
 	}

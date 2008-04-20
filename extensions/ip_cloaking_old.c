@@ -102,7 +102,7 @@ do_host_cloak(const char *inbuf, char *outbuf, int ipmask)
 		/* try to avoid truncation -- jilles */
 		while (len1 + strlen(rest) >= HOSTLEN && (next = strchr(rest + 1, '.')) != NULL)
 			rest = next;
-		strlcat(outbuf, rest, HOSTLEN);
+		rb_strlcat(outbuf, rest, HOSTLEN);
 	}
 	else
 		rb_snprintf(outbuf, HOSTLEN, "%X%X.%s",

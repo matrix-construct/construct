@@ -91,10 +91,6 @@ int inetpton(int af, const char *src, void *dst);
 const char *inetntop_sock(struct sockaddr *src, char *dst, unsigned int size);
 int inetpton_sock(const char *src, struct sockaddr *dst);
 
-#ifndef HAVE_STRLCAT
-size_t strlcat(char *dst, const char *src, size_t siz);
-#endif
-
 /*
  * clean_string - cleanup control and high ascii characters
  * -Dianora

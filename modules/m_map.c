@@ -92,12 +92,12 @@ dump_map(struct Client *client_p, struct Client *root_p, char *pbuf)
 	rb_dlink_node *ptr;
 	*pbuf = '\0';
 
-	strlcat(pbuf, root_p->name, BUFSIZE);
+	rb_strlcat(pbuf, root_p->name, BUFSIZE);
 	if (has_id(root_p))
 	{
-		strlcat(pbuf, "[", BUFSIZE);
-		strlcat(pbuf, root_p->id, BUFSIZE);
-		strlcat(pbuf, "]", BUFSIZE);
+		rb_strlcat(pbuf, "[", BUFSIZE);
+		rb_strlcat(pbuf, root_p->id, BUFSIZE);
+		rb_strlcat(pbuf, "]", BUFSIZE);
 	}
 	len = strlen(buf);
 	buf[len] = ' ';

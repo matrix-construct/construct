@@ -1161,7 +1161,7 @@ channel_modes(struct Channel *chptr, struct Client *client_p)
 	*mbuf = '\0';
 
 	rb_strlcpy(final, buf1, sizeof final);
-	strlcat(final, buf2, sizeof final);
+	rb_strlcat(final, buf2, sizeof final);
 	return final;
 }
 

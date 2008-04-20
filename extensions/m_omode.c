@@ -105,8 +105,8 @@ mo_omode(struct Client *client_p, struct Client *source_p, int parc, const char 
 	for (i = 2; i < parc; i++)
 	{
 		if (i != 2)
-			strlcat(params, " ", sizeof params);
-		strlcat(params, parv[i], sizeof params);
+			rb_strlcat(params, " ", sizeof params);
+		rb_strlcat(params, parv[i], sizeof params);
 	}
 
 	sendto_wallops_flags(UMODE_WALLOP, &me, 

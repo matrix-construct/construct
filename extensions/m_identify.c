@@ -71,8 +71,8 @@ char *reconstruct_parv(int parc, const char *parv[])
 	rb_strlcpy(tmpbuf, parv[0], BUFSIZE);
 	for (i = 1; i < parc; i++)
 	{
-		strlcat(tmpbuf, " ", BUFSIZE);
-		strlcat(tmpbuf, parv[i], BUFSIZE);
+		rb_strlcat(tmpbuf, " ", BUFSIZE);
+		rb_strlcat(tmpbuf, parv[i], BUFSIZE);
 	}
 	return tmpbuf;
 }
