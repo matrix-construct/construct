@@ -1018,7 +1018,7 @@ shared {
 	  <varlistentry>
 	    <term>all</term>
 	    <listitem>
-	      <para>All of the above; this does not include locops or rehash</para>
+	      <para>All of the above; this does not include locops, rehash, dline, tdline or undline.</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
@@ -1034,6 +1034,24 @@ shared {
 	    <term>rehash (H)</term>
 	    <listitem>
 	      <para>REHASH commands; all options can be used</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>dline (D)</term>
+	    <listitem>
+	      <para>Permanent and temporary D:lines</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>tdline (d)</term>
+	    <listitem>
+	      <para>Temporary D:lines</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>undline (E)</term>
+	    <listitem>
+	      <para>D:line removals</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>

@@ -398,6 +398,7 @@
 	  <command>DLINE</command>
 	  <arg><replaceable>length</replaceable></arg>
 	  <arg choice=plain><replaceable>a</replaceable>.<replaceable>b</replaceable>.<replaceable>c</replaceable>.<replaceable>d</replaceable></arg>
+	  <arg>ON <replaceable>servername</replaceable></arg>
 	  <arg>:<replaceable>reason</replaceable></arg>
 	</cmdsynopsis>
 	<para>
@@ -424,7 +425,10 @@
 	  connections.
 	</para>
 	<para>
-	  D:lines cannot be set remotely on other servers.
+	  If the ON part is specified, the D:line is set on servers matching
+	  the given mask (provided a matching shared{} block exists there,
+	  which is not the case by default).
+	  Otherwise, the D:Line will be set on the local server only.
 	</para>
 	<para>
 	  Only exempt{} blocks exempt from D:lines.
@@ -437,6 +441,7 @@
 	<cmdsynopsis>
 	  <command>UNDLINE</command>
 	  <arg choice=plain><replaceable>a.b.c.d</replaceable></arg>
+	  <arg>ON <replaceable>servername</replaceable></arg>
 	</cmdsynopsis>
 	<para>
 	  Will attempt to remove a D:line from <filename>dline.conf</filename>, and will flush
