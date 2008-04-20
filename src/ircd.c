@@ -720,9 +720,6 @@ main(int argc, char *argv[])
 	rb_event_addish("try_connections", try_connections, NULL, STARTUP_CONNECTIONS_TIME);
 	rb_event_addonce("try_connections_startup", try_connections, NULL, 0);
 
-	/* Setup the timeout check. I'll shift it later :)  -- adrian */
-	rb_event_addish("rb_checktimeouts", rb_checktimeouts, NULL, 1);
-
 	rb_event_add("check_rehash", check_rehash, NULL, 1);
 
 	if(splitmode)
