@@ -249,28 +249,6 @@ m_challenge(struct Client *client_p, struct Client *source_p, int parc, const ch
 }
 
 static int
-get_randomness(unsigned char *buf, int length)
-{
-	/* Seed OpenSSL PRNG with EGD enthropy pool -kre */
-	if(ConfigFileEntry.use_egd && (ConfigFileEntry.egdpool_path != NULL))
-	{
-		if(RAND_egd(ConfigFileEntry.egdpool_path) == -1)
-			return -1;
-	}
-
-	if(RAND_status())
-	{
-	 	if(RAND_bytes(buf, length) > 0)
-	 	        return 1;
-	}
-	else {
-	        if(RAND_pseudo_bytes(buf, length) >= 0)
-	                return 1;
-	}
-	return 0;
-}
-
-static int
 generate_challenge(char **r_challenge, char **r_response, RSA * rsa)
 {
 	SHA_CTX ctx;
@@ -282,23 +260,24 @@ generate_challenge(char **r_challenge, char **r_response, RSA * rsa)
 
 	if(!rsa)
 		return -1;
-	if(get_randomness(secret, CHALLENGE_SECRET_LENGTH))
+	if(rb_get_random(secret, CHALLENGE_SECRET_LENGTH))
 	{
 		SHA1_Init(&ctx);
-		SHA1_Update(&ctx, (u_int8_t *)secret, CHALLENGE_SECRET_LENGTH);
-		*r_response = rb_malloc(SHA_DIGEST_LENGTH);
-		SHA1_Final((u_int8_t *)*r_response, &ctx);
+		SHA1_Update(&ctx, (uint8_t *)secret, CHALLENGE_SECRET_LENGTH);
+		*r_response = malloc(SHA_DIGEST_LENGTH);
+		SHA1_Final((uint8_t *)*r_response, &ctx);
 
 		length = RSA_size(rsa);
 		tmp = rb_malloc(length);
 		ret = RSA_public_encrypt(CHALLENGE_SECRET_LENGTH, secret, tmp, rsa, RSA_PKCS1_OAEP_PADDING);
 
-		if (ret >= 0)
+		if(ret >= 0)
 		{
-			*r_challenge = (char *)ircd_base64_encode(tmp, ret);
+			*r_challenge = (char *)rb_base64_encode(tmp, ret);
 			rb_free(tmp);
 			return 0;
 		}
+
 		rb_free(tmp);
 		rb_free(*r_response);
 		*r_response = NULL;
