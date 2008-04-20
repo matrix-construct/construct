@@ -502,6 +502,47 @@ setup_corefile(void)
 
 struct ev_entry *check_splitmode_ev = NULL;
 
+static int
+seed_with_urandom(void)
+{
+	unsigned int seed;
+	int fd;
+
+	fd = open("/dev/urandom", O_RDONLY);
+	if(fd >= 0)
+	{
+		if(read(fd, &seed, sizeof(seed)) == sizeof(seed))
+		{
+			close(fd);
+			srand(seed);
+			return 1;
+		}
+	}
+	return 0;
+}
+
+static void
+seed_with_clock(void)
+{
+ 	const struct timeval *tv;	
+	rb_set_time();
+	tv = rb_current_time_tv();
+	srand(tv->tv_sec ^ (tv->tv_usec | (getpid() << 20)));
+}
+
+static void
+seed_random(void *unused)
+{
+	unsigned int seed;
+	if(rb_get_random(&seed, sizeof(seed)) == -1)
+	{
+		if(!seed_with_urandom())
+			seed_with_clock();
+		return;
+	}
+	srand(seed);
+}
+
 /*
  * main
  *
@@ -719,8 +760,8 @@ main(int argc, char *argv[])
 	 */
 	rb_event_addish("try_connections", try_connections, NULL, STARTUP_CONNECTIONS_TIME);
 	rb_event_addonce("try_connections_startup", try_connections, NULL, 0);
-
 	rb_event_add("check_rehash", check_rehash, NULL, 1);
+	rb_event_addish("reseed_srand", seed_random, NULL, 300); /* reseed every 10 minutes */
 
 	if(splitmode)
 		check_splitmode_ev = rb_event_add("check_splitmode", check_splitmode, NULL, 2);
