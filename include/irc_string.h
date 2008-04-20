@@ -76,20 +76,6 @@ extern int ircncmp(const char *s1, const char *s2, int n);
 #ifdef NO_DUPE_MULTI_MESSAGES
 extern char *canonize(char *);
 #endif
-/*
- * inetntoa - optimized inet_ntoa
- */
-const char *inetntoa(const char *in_addr);
-
-/* 
- * inetntop() 
- * inetpton()
- * portable interfaces for inet_ntop() and inet_pton()
- */
-const char *inetntop(int af, const void *src, char *dst, unsigned int size);
-int inetpton(int af, const char *src, void *dst);
-const char *inetntop_sock(struct sockaddr *src, char *dst, unsigned int size);
-int inetpton_sock(const char *src, struct sockaddr *dst);
 
 /*
  * clean_string - cleanup control and high ascii characters

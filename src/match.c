@@ -364,8 +364,8 @@ int match_ips(const char *s1, const char *s2)
 	else
 		return 0;
 
-	inetpton(aftype, address, ipptr);
-	inetpton(aftype, mask, maskptr);
+	rb_inet_pton(aftype, address, ipptr);
+	rb_inet_pton(aftype, mask, maskptr);
 	if (comp_with_mask(ipptr, maskptr, cidrlen))
 		return 1;
 	else
@@ -432,8 +432,8 @@ int match_cidr(const char *s1, const char *s2)
 	else
 		return 0;
 
-	inetpton(aftype, ip, ipptr);
-	inetpton(aftype, ipmask, maskptr);
+	rb_inet_pton(aftype, ip, ipptr);
+	rb_inet_pton(aftype, ipmask, maskptr);
 	if (comp_with_mask(ipptr, maskptr, cidrlen) && match(mask, address))
 		return 1;
 	else

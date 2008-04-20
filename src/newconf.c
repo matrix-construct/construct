@@ -230,7 +230,7 @@ conf_set_serverinfo_network_name(void *data)
 static void
 conf_set_serverinfo_vhost(void *data)
 {
-	if(inetpton(AF_INET, (char *) data, &ServerInfo.ip.sin_addr) <= 0)
+	if(rb_inet_pton(AF_INET, (char *) data, &ServerInfo.ip.sin_addr) <= 0)
 	{
 		conf_report_error("Invalid netmask for server IPv4 vhost (%s)", (char *) data);
 		return;
@@ -243,7 +243,7 @@ static void
 conf_set_serverinfo_vhost6(void *data)
 {
 #ifdef RB_IPV6
-	if(inetpton(AF_INET6, (char *) data, &ServerInfo.ip6.sin6_addr) <= 0)
+	if(rb_inet_pton(AF_INET6, (char *) data, &ServerInfo.ip6.sin6_addr) <= 0)
 	{
 		conf_report_error("Invalid netmask for server IPv6 vhost (%s)", (char *) data);
 		return;
@@ -1191,7 +1191,7 @@ conf_set_connect_host(void *data)
 static void
 conf_set_connect_vhost(void *data)
 {
-	if(inetpton_sock(data, (struct sockaddr *)&yy_server->my_ipnum) <= 0)
+	if(rb_inet_pton_sock(data, (struct sockaddr *)&yy_server->my_ipnum) <= 0)
 	{
 		conf_report_error("Invalid netmask for server vhost (%s)",
 		    		  (char *) data);

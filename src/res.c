@@ -864,7 +864,7 @@ void report_dns_servers(struct Client *source_p)
 
 	for (i = 0; i < irc_nscount; i++)
 	{
-		if (!inetntop_sock((struct sockaddr *)&(irc_nsaddr_list[i]),
+		if (!rb_inet_ntop_sock((struct sockaddr *)&(irc_nsaddr_list[i]),
 				ipaddr, sizeof ipaddr))
 			rb_strlcpy(ipaddr, "?", sizeof ipaddr);
 		sendto_one_numeric(source_p, RPL_STATSDEBUG,

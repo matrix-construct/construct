@@ -337,7 +337,7 @@ report_this_status(struct Client *source_p, struct Client *target_p,
 	if(!MyConnect(target_p))
 		return 0;
 
-	inetntop_sock((struct sockaddr *)&target_p->localClient->ip, ip, sizeof(ip));
+	rb_inet_ntop_sock((struct sockaddr *)&target_p->localClient->ip, ip, sizeof(ip));
 	class_name = get_client_class(target_p);
 
 	if(IsAnyServer(target_p))

@@ -1177,7 +1177,7 @@ serv_connect_resolved(struct Client *client_p)
 	}
 
 	/* log */
-	inetntop_sock((struct sockaddr *)&myipnum, vhoststr, sizeof vhoststr);
+	rb_inet_ntop_sock((struct sockaddr *)&myipnum, vhoststr, sizeof vhoststr);
 	ilog(L_SERVER, "Connecting to %s[%s] port %d (%s) (vhost %s)", client_p->name, client_p->sockhost, port,
 #ifdef RB_IPV6
 			server_p->aftype == AF_INET6 ? "IPv6" :
@@ -1231,7 +1231,7 @@ serv_connect_dns_callback(void *vptr, struct DNSReply *reply)
 #endif
 		((struct sockaddr_in *)&client_p->localClient->ip)->sin_port = port;
 	/* Set sockhost properly now -- jilles */
-	inetntop_sock((struct sockaddr *)&client_p->localClient->ip,
+	rb_inet_ntop_sock((struct sockaddr *)&client_p->localClient->ip,
 			client_p->sockhost, sizeof client_p->sockhost);
 	serv_connect_resolved(client_p);
 }

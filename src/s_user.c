@@ -494,7 +494,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 	/* To avoid inconsistencies, do not abort the registration
 	 * starting from this point -- jilles
 	 */
-	inetntop_sock((struct sockaddr *)&source_p->localClient->ip, ipaddr, sizeof(ipaddr));
+	rb_inet_ntop_sock((struct sockaddr *)&source_p->localClient->ip, ipaddr, sizeof(ipaddr));
 
 	sendto_realops_snomask(SNO_CCONN, L_ALL,
 			     "Client connecting: %s (%s@%s) [%s] {%s} [%s]",
