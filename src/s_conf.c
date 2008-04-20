@@ -1538,7 +1538,7 @@ yyerror(const char *msg)
 {
 	char newlinebuf[BUFSIZE];
 
-	strip_tabs(newlinebuf, (const unsigned char *) linebuf, strlen(linebuf));
+	strip_tabs(newlinebuf, linebuf, strlen(linebuf));
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "\"%s\", line %d: %s at '%s'",
 			     conffilebuf, lineno + 1, msg, newlinebuf);
