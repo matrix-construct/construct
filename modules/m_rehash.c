@@ -88,8 +88,7 @@ rehash_motd(struct Client *source_p)
 			     "%s is forcing re-reading of MOTD file",
 			     get_oper_name(source_p));
 
-	free_cachefile(user_motd);
-	user_motd = cache_file(MPATH, "ircd.motd", 0);
+	cache_user_motd();
 }
 
 static void
