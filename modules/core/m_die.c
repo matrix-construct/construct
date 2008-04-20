@@ -54,9 +54,6 @@ DECLARE_MODULE_AV1(die, NULL, NULL, die_clist, NULL, NULL, "$Revision: 3295 $");
 static int
 mo_die(struct Client *client_p __unused, struct Client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
-	rb_dlink_node *ptr;
-
 	if(!IsOperDie(source_p))
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "die");
