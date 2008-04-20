@@ -35,7 +35,7 @@
 #include "client.h"
 #include "common.h"
 #include "hash.h"
-#include "irc_string.h"
+#include "match.h"
 #include "ircd.h"
 #include "listener.h"
 #include "hostmask.h"

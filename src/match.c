@@ -23,7 +23,7 @@
 #include "config.h"
 #include "client.h"
 #include "ircd.h"
-#include "irc_string.h"
+#include "match.h"
 
 /*
  * Compare if a given string (name) matches the given

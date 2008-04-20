@@ -28,7 +28,7 @@
 #include "class.h"		/* report_classes */
 #include "client.h"		/* Client */
 #include "common.h"		/* TRUE/FALSE */
-#include "irc_string.h"
+#include "match.h"
 #include "ircd.h"		/* me */
 #include "listener.h"		/* show_ports */
 #include "msg.h"		/* Message */

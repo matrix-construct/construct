@@ -28,7 +28,7 @@
 #include "client.h"
 #include "channel.h"
 #include "common.h"
-#include "irc_string.h"
+#include "match.h"
 #include "ircd.h"
 #include "s_serv.h"
 #include "numeric.h"

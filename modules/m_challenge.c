@@ -44,7 +44,7 @@
 #include "s_conf.h"
 #include "msg.h"
 #include "parse.h"
-#include "irc_string.h"
+#include "match.h"
 #include "logger.h"
 #include "s_user.h"
 #include "cache.h"

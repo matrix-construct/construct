@@ -48,7 +48,7 @@
 #include "monitor.h"
 #include "s_stats.h"
 #include "snomask.h"
-#include "irc_string.h"
+#include "match.h"
 #include "s_user.h"
 
 static int me_svslogin(struct Client *, struct Client *, int, const char **);

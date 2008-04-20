@@ -35,7 +35,7 @@
 #include "s_conf.h"
 #include "s_newconf.h"
 #include "send.h"
-#include "irc_string.h"
+#include "match.h"
 
 #define BAD_CONF_CLASS          -1
 #define BAD_PING                -2

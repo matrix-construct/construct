@@ -32,7 +32,7 @@
 #include "numeric.h"
 #include "s_serv.h"
 #include "send.h"
-#include "irc_string.h"
+#include "match.h"
 #include "s_conf.h"
 #include "logger.h"
 #include "msg.h"

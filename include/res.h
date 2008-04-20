@@ -10,7 +10,7 @@
 #include "ircd_defs.h"
 #include "common.h"
 #include "reslib.h"
-#include "irc_string.h"
+#include "match.h"
 #include "ircd.h"
 
 /* Maximum number of nameservers in /etc/resolv.conf we care about 

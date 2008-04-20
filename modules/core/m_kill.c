@@ -34,7 +34,7 @@
 #include "s_conf.h"
 #include "send.h"
 #include "whowas.h"
-#include "irc_string.h"
+#include "match.h"
 #include "msg.h"
 #include "parse.h"
 #include "modules.h"

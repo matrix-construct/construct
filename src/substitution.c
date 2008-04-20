@@ -35,7 +35,7 @@
 
 #include "stdinc.h"
 #include "s_user.h"
-#include "irc_string.h"
+#include "match.h"
 
 /*
  * Simple mappings for $foo -> 'bar'.

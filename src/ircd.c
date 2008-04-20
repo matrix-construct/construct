@@ -34,7 +34,7 @@
 #include "client.h"
 #include "common.h"
 #include "hash.h"
-#include "irc_string.h"
+#include "match.h"
 #include "ircd_signal.h"
 #include "msg.h"		/* msgtab */
 #include "hostmask.h"

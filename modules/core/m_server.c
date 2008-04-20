@@ -28,7 +28,7 @@
 #include "client.h"		/* client struct */
 #include "common.h"		/* TRUE bleah */
 #include "hash.h"		/* add_to_client_hash */
-#include "irc_string.h"
+#include "match.h"
 #include "ircd.h"		/* me */
 #include "numeric.h"		/* ERR_xxx */
 #include "s_conf.h"		/* struct ConfItem */

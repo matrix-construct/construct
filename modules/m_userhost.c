@@ -30,7 +30,7 @@
 #include "numeric.h"
 #include "s_serv.h"
 #include "send.h"
-#include "irc_string.h"
+#include "match.h"
 #include "msg.h"
 #include "parse.h"
 #include "modules.h"

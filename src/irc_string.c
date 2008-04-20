@@ -24,10 +24,7 @@
  *  $Id: irc_string.c 678 2006-02-03 20:25:01Z jilles $
  */
 
-#include "stdinc.h"
 #include "irc_string.h"
-#include "client.h"
-#include "setup.h"
 
 char *
 strip_colour(char *string)

@@ -26,7 +26,7 @@
 #include "stdinc.h"
 #include "client.h"
 #include "common.h"		/* TRUE bleah */
-#include "irc_string.h"
+#include "match.h"
 #include "ircd.h"
 #include "numeric.h"
 #include "send.h"

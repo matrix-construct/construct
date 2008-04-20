@@ -30,7 +30,7 @@
 #include "common.h"
 #include "hash.h"
 #include "hook.h"
-#include "irc_string.h"
+#include "match.h"
 #include "ircd.h"
 #include "numeric.h"
 #include "s_serv.h"		/* captab */

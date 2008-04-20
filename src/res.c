@@ -31,7 +31,7 @@
 #include "ircd.h"
 #include "res.h"
 #include "reslib.h"
-#include "irc_string.h"
+#include "match.h"
 #include "numeric.h"
 #include "client.h" /* SNO_* */
 

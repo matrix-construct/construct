@@ -34,6 +34,7 @@
 #include "parse.h"
 #include "modules.h"
 #include "s_conf.h"
+#include "irc_string.h"
 
 static int m_quit(struct Client *, struct Client *, int, const char **);
 static int ms_quit(struct Client *, struct Client *, int, const char **);

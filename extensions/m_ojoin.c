@@ -30,7 +30,7 @@
 #include "s_newconf.h" 
 #include "send.h"
 #include "whowas.h"
-#include "irc_string.h"
+#include "match.h"
 #include "hash.h" 
 #include "msg.h"
 #include "parse.h"

@@ -29,7 +29,7 @@
 #include "client.h"
 #include "common.h"
 #include "hash.h"
-#include "irc_string.h"
+#include "match.h"
 #include "ircd.h"
 #include "numeric.h"
 #include "send.h"
@@ -39,6 +39,7 @@
 #include "modules.h"
 #include "s_conf.h"
 #include "packet.h"
+#include "irc_string.h"
 
 static int m_part(struct Client *, struct Client *, int, const char **);
 

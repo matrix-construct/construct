@@ -14,7 +14,7 @@
 #include "client.h"
 #include "common.h"		/* FALSE bleah */
 #include "ircd.h"
-#include "irc_string.h"
+#include "match.h"
 #include "numeric.h"
 #include "s_newconf.h"
 #include "s_conf.h"

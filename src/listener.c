@@ -28,7 +28,7 @@
 #include "setup.h"
 #include "listener.h"
 #include "client.h"
-#include "irc_string.h"
+#include "match.h"
 #include "ircd.h"
 #include "ircd_defs.h"
 #include "numeric.h"

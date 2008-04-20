@@ -37,7 +37,7 @@
 #include "numeric.h"
 #include "parse.h"
 #include "ircd_defs.h"
-#include "irc_string.h"
+#include "match.h"
 
 
 

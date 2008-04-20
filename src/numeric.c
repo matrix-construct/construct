@@ -29,7 +29,7 @@
 #include "config.h"
 #include "s_conf.h"
 #include "numeric.h"
-#include "irc_string.h"
+#include "match.h"
 #include "common.h"		/* NULL cripes */
 
 #include "messages.tab"

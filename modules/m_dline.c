@@ -29,7 +29,7 @@
 #include "class.h"
 #include "client.h"
 #include "common.h"
-#include "irc_string.h"
+#include "match.h"
 #include "ircd.h"
 #include "hostmask.h"
 #include "numeric.h"

@@ -23,7 +23,7 @@
  */
 
 #include "stdinc.h"
-#include "irc_string.h"
+#include "match.h"
 #include "client.h"
 #include "setup.h"
 #include "irc_dictionary.h"
