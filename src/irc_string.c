@@ -25,6 +25,7 @@
  */
 
 #include "irc_string.h"
+#include "ircd_defs.h"
 
 char *
 strip_colour(char *string)
