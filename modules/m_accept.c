@@ -76,7 +76,7 @@ m_accept(struct Client *client_p, struct Client *source_p, int parc, const char 
 	build_nicklist(source_p, addbuf, delbuf, parv[1]);
 
 	/* parse the delete list */
-	for (nick = strtoken(&p, delbuf, ","); nick != NULL; nick = strtoken(&p, NULL, ","))
+	for (nick = rb_strtok_r(delbuf, ",", &p); nick != NULL; nick = rb_strtok_r(NULL, ",", &p))
 	{
 		/* shouldnt happen, but lets be paranoid */
 		if((target_p = find_named_person(nick)) == NULL)
@@ -102,7 +102,7 @@ m_accept(struct Client *client_p, struct Client *source_p, int parc, const char 
 	accept_num = rb_dlink_list_length(&source_p->localClient->allow_list);
 
 	/* parse the add list */
-	for (nick = strtoken(&p, addbuf, ","); nick; nick = strtoken(&p, NULL, ","))
+	for (nick = rb_strtok_r(addbuf, ",", &p); nick; nick = rb_strtok_r(NULL, ",", &p), accept_num++)
 	{
 		/* shouldnt happen, but lets be paranoid */
 		if((target_p = find_named_person(nick)) == NULL)
@@ -129,7 +129,6 @@ m_accept(struct Client *client_p, struct Client *source_p, int parc, const char 
 		/* why is this here? */
 		/* del_from accept(target_p, source_p); */
 		add_accept(source_p, target_p);
-		accept_num++;
 	}
 
 	return 0;
@@ -160,7 +159,7 @@ build_nicklist(struct Client *source_p, char *addbuf, char *delbuf, const char *
 	del = lenadd = lendel = 0;
 
 	/* build list of clients to add into addbuf, clients to remove in delbuf */
-	for (name = strtoken(&p, n, ","); name; name = strtoken(&p, NULL, ","), del = 0)
+	for (name = rb_strtok_r(n, ",", &p); name; name = rb_strtok_r(NULL, ",", &p), del = 0)
 	{
 		if(*name == '-')
 		{

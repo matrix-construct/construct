@@ -86,7 +86,7 @@ m_ison(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	for (i = 1; i < parc; i++)
 	{
 		char *cs = LOCAL_COPY(parv[i]);
-		for (nick = strtoken(&p, cs, " "); nick; nick = strtoken(&p, NULL, " "))
+		for (nick = rb_strtok_r(cs, " ", &p); nick; nick = rb_strtok_r(NULL, " ", &p))
 		{
 			target_p = find_named_client(nick);
 

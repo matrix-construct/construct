@@ -84,7 +84,7 @@ mr_capab(struct Client *client_p, struct Client *source_p, int parc, const char 
 	for (i = 1; i < parc; i++)
 	{
 		char *t = LOCAL_COPY(parv[i]);
-		for (s = strtoken(&p, t, " "); s; s = strtoken(&p, NULL, " "))
+		for (s = rb_strtok_r(t, " ", &p); s; s = rb_strtok_r(NULL, " ", &p))
 		{
 			for (cap = captab; cap->name; cap++)
 			{
@@ -121,7 +121,7 @@ me_gcap(struct Client *client_p, struct Client *source_p,
 
 	source_p->serv->fullcaps = rb_strdup(parv[1]);
 
-	for (s = strtoken(&p, t, " "); s; s = strtoken(&p, NULL, " "))
+	for (s = rb_strtok_r(t, " ", &p); s; s = rb_strtok_r(NULL, " ", &p))
 	{
 		for (cap = captab; cap->name; cap++)
 		{

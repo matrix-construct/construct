@@ -73,7 +73,7 @@ m_part(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	if(parc > 2)
 		rb_strlcpy(reason, parv[2], sizeof(reason));
 
-	name = strtoken(&p, s, ",");
+	name = rb_strtok_r(s, ",", &p);
 
 	/* Finish the flood grace period... */
 	if(MyClient(source_p) && !IsFloodDone(source_p))
@@ -84,7 +84,7 @@ m_part(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	while(name)
 	{
 		part_one_client(client_p, source_p, name, reason);
-		name = strtoken(&p, NULL, ",");
+		name = rb_strtok_r(NULL, ",", &p);
 	}
 	return 0;
 }

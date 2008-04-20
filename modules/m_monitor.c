@@ -73,7 +73,7 @@ add_monitor(struct Client *client_p, const char *nicks)
 
 	tmp = LOCAL_COPY(nicks);
 
-	for(name = strtoken(&p, tmp, ","); name; name = strtoken(&p, NULL, ","))
+	for(name = rb_strtok_r(tmp, ",", &p); name; name = rb_strtok_r(NULL, ",", &p))
 	{
 		if(EmptyString(name) || strlen(name) > NICKLEN-1)
 			continue;
@@ -170,7 +170,7 @@ del_monitor(struct Client *client_p, const char *nicks)
 
 	tmp = LOCAL_COPY(nicks);
 
-	for(name = strtoken(&p, tmp, ","); name; name = strtoken(&p, NULL, ","))
+	for(name = rb_strtok_r(tmp, ",", &p); name; name = rb_strtok_r(NULL, ",", &p))
 	{
 		if(EmptyString(name))
 			continue;
