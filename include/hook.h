@@ -15,20 +15,20 @@ typedef struct
 
 typedef void (*hookfn) (void *data);
 
-int h_iosend_id;
-int h_iorecv_id;
-int h_iorecvctrl_id;
+extern int h_iosend_id;
+extern int h_iorecv_id;
+extern int h_iorecvctrl_id;
 
-int h_burst_client;
-int h_burst_channel;
-int h_burst_finished;
-int h_server_introduced;
-int h_server_eob;
-int h_client_exit;
-int h_umode_changed;
-int h_new_local_user;
-int h_new_remote_user;
-int h_introduce_client;
+extern int h_burst_client;
+extern int h_burst_channel;
+extern int h_burst_finished;
+extern int h_server_introduced;
+extern int h_server_eob;
+extern int h_client_exit;
+extern int h_umode_changed;
+extern int h_new_local_user;
+extern int h_new_remote_user;
+extern int h_introduce_client;
 
 void init_hook(void);
 int register_hook(const char *name);

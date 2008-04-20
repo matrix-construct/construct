@@ -99,8 +99,6 @@ static int proc_answer(struct reslist *request, HEADER * header, char *, char *)
 static struct reslist *find_id(int id);
 static struct DNSReply *make_dnsreply(struct reslist *request);
 
-extern struct rb_sockaddr_storage irc_nsaddr_list[IRCD_MAXNS];
-extern int irc_nscount;
 extern char irc_domain[HOSTLEN + 1];
 
 

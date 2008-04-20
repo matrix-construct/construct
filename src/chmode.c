@@ -57,18 +57,12 @@
 #define SM_ERR_RPL_Q            0x00000800
 #define SM_ERR_RPL_F            0x00001000
 
-void set_channel_mode(struct Client *, struct Client *,
-		     struct Channel *, struct membership *, int, const char **);
-
-int add_id(struct Client *source_p, struct Channel *chptr,
-		  const char *banid, rb_dlink_list * list, long mode_type);
-
 static struct ChModeChange mode_changes[BUFSIZE];
 static int mode_count;
 static int mode_limit;
 static int mask_pos;
 
-int
+static int
 get_channel_access(struct Client *source_p, struct membership *msptr)
 {
 	if(!MyClient(source_p) || is_chanop(msptr))

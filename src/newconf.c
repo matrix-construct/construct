@@ -1754,7 +1754,7 @@ conf_set_generic_string(void *data, int len, void *location)
 	char **loc = location;
 	char *input = data;
 
-	if(len && strlen(input) > len)
+	if(len && strlen(input) > (unsigned int)len)
 		input[len] = '\0';
 
 	rb_free(*loc);

@@ -46,8 +46,6 @@ struct reject_data
 	uint32_t mask_hashv;
 };
 
-static rb_patricia_tree_t *unknown_tree;
-
 static void
 reject_exit(void *unused)
 {
