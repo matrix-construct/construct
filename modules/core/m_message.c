@@ -451,7 +451,7 @@ msg_channel(int p_or_n, const char *command,
 
 	if(chptr->mode.mode & MODE_NOCOLOR)
 	{
-		strlcpy(text2, text, BUFSIZE);
+		rb_strlcpy(text2, text, BUFSIZE);
 		strip_colour(text2);
 		text = text2;
 		if (EmptyString(text))

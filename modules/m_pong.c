@@ -111,7 +111,7 @@ mr_pong(struct Client *client_p, struct Client *source_p, int parc, const char *
 				if(source_p->localClient->random_ping == incoming_ping)
 				{
 					char buf[USERLEN + 1];
-					strlcpy(buf, source_p->username, sizeof(buf));
+					rb_strlcpy(buf, source_p->username, sizeof(buf));
 					source_p->flags |= FLAGS_PING_COOKIE;
 					register_local_user(client_p, source_p, buf);
 				}

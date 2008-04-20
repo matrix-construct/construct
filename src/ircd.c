@@ -388,10 +388,10 @@ initialize_global_set_options(void)
 
 	GlobalSetOptions.ident_timeout = IDENT_TIMEOUT;
 
-	strlcpy(GlobalSetOptions.operstring,
+	rb_strlcpy(GlobalSetOptions.operstring,
 		ConfigFileEntry.default_operstring,
 		sizeof(GlobalSetOptions.operstring));
-	strlcpy(GlobalSetOptions.adminstring,
+	rb_strlcpy(GlobalSetOptions.adminstring,
 		ConfigFileEntry.default_adminstring,
 		sizeof(GlobalSetOptions.adminstring));
 
@@ -696,7 +696,7 @@ main(int argc, char *argv[])
 		ierror("no server name specified in serverinfo block.");
 		return -1;
 	}
-	strlcpy(me.name, ServerInfo.name, sizeof(me.name));
+	rb_strlcpy(me.name, ServerInfo.name, sizeof(me.name));
 
 	if(ServerInfo.sid[0] == '\0')
 	{
@@ -712,7 +712,7 @@ main(int argc, char *argv[])
 		ierror("no server description specified in serverinfo block.");
 		return -3;
 	}
-	strlcpy(me.info, ServerInfo.description, sizeof(me.info));
+	rb_strlcpy(me.info, ServerInfo.description, sizeof(me.info));
 
 	if(ServerInfo.ssl_cert != NULL && ServerInfo.ssl_private_key != NULL)
 	{

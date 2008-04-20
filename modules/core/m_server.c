@@ -79,7 +79,7 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 
 	name = parv[1];
 	hop = atoi(parv[2]);
-	strlcpy(info, parv[3], sizeof(info));
+	rb_strlcpy(info, parv[3], sizeof(info));
 
 	if (IsHandshake(client_p) && irccmp(client_p->name, name))
 	{
@@ -230,7 +230,7 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 	 * C:line in client_p->name
 	 */
 
-	strlcpy(client_p->name, name, sizeof(client_p->name));
+	rb_strlcpy(client_p->name, name, sizeof(client_p->name));
 	set_server_gecos(client_p, info);
 	client_p->hopcount = hop;
 	server_estab(client_p);
@@ -261,7 +261,7 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 
 	name = parv[1];
 	hop = atoi(parv[2]);
-	strlcpy(info, parv[3], sizeof(info));
+	rb_strlcpy(info, parv[3], sizeof(info));
 
 	if((target_p = find_server(NULL, name)))
 	{
@@ -421,7 +421,7 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 	make_server(target_p);
 	target_p->hopcount = hop;
 
-	strlcpy(target_p->name, name, sizeof(target_p->name));
+	rb_strlcpy(target_p->name, name, sizeof(target_p->name));
 
 	set_server_gecos(target_p, info);
 
@@ -569,7 +569,7 @@ ms_sid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	target_p = make_client(client_p);
 	make_server(target_p);
 
-	strlcpy(target_p->name, parv[1], sizeof(target_p->name));
+	rb_strlcpy(target_p->name, parv[1], sizeof(target_p->name));
 	target_p->hopcount = atoi(parv[2]);
 	strcpy(target_p->id, parv[3]);
 	set_server_gecos(target_p, parv[4]);
@@ -668,13 +668,13 @@ set_server_gecos(struct Client *client_p, const char *info)
 			/* if there was a trailing space, s could point to \0, so check */
 			if(s && (*s != '\0'))
 			{
-				strlcpy(client_p->info, s, sizeof(client_p->info));
+				rb_strlcpy(client_p->info, s, sizeof(client_p->info));
 				return 1;
 			}
 		}
 	}
 
-	strlcpy(client_p->info, "(Unknown Location)", sizeof(client_p->info));
+	rb_strlcpy(client_p->info, "(Unknown Location)", sizeof(client_p->info));
 
 	return 1;
 }

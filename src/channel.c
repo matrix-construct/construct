@@ -1068,8 +1068,8 @@ set_channel_topic(struct Channel *chptr, const char *topic, const char *topic_in
 	{
 		if(chptr->topic == NULL)
 			allocate_topic(chptr);
-		strlcpy(chptr->topic, topic, TOPICLEN + 1);
-		strlcpy(chptr->topic_info, topic_info, USERHOST_REPLYLEN);
+		rb_strlcpy(chptr->topic, topic, TOPICLEN + 1);
+		rb_strlcpy(chptr->topic_info, topic_info, USERHOST_REPLYLEN);
 		chptr->topic_time = topicts;
 	}
 	else
@@ -1160,7 +1160,7 @@ channel_modes(struct Channel *chptr, struct Client *client_p)
 
 	*mbuf = '\0';
 
-	strlcpy(final, buf1, sizeof final);
+	rb_strlcpy(final, buf1, sizeof final);
 	strlcat(final, buf2, sizeof final);
 	return final;
 }

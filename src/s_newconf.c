@@ -299,7 +299,7 @@ find_oper_conf(const char *username, const char *host, const char *locip, const 
 		if(irccmp(oper_p->name, name) || !match(oper_p->username, username))
 			continue;
 
-		strlcpy(addr, oper_p->host, sizeof(addr));
+		rb_strlcpy(addr, oper_p->host, sizeof(addr));
 
 		if(parse_netmask(addr, (struct sockaddr *)&ip, &bits) != HM_HOST)
 		{
@@ -755,7 +755,7 @@ add_nd_entry(const char *name)
 
 	nd = rb_bh_alloc(nd_heap);
 	
-	strlcpy(nd->name, name, sizeof(nd->name));
+	rb_strlcpy(nd->name, name, sizeof(nd->name));
 	nd->expire = rb_current_time() + ConfigFileEntry.nick_delay;
 
 	/* this list is ordered */

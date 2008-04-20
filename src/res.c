@@ -407,7 +407,7 @@ static void do_query_name(struct DNSQuery *query, const char *name, struct resli
 {
 	char host_name[HOSTLEN + 1];
 
-	strlcpy(host_name, name, HOSTLEN + 1);
+	rb_strlcpy(host_name, name, HOSTLEN + 1);
 	add_local_domain(host_name, HOSTLEN);
 
 	if (request == NULL)
@@ -418,7 +418,7 @@ static void do_query_name(struct DNSQuery *query, const char *name, struct resli
 		request->state = REQ_A;
 	}
 
-	strlcpy(request->queryname, host_name, sizeof(request->queryname));
+	rb_strlcpy(request->queryname, host_name, sizeof(request->queryname));
 	request->type = type;
 	query_name(request);
 }
@@ -681,7 +681,7 @@ static int proc_answer(struct reslist *request, HEADER * header, char *buf, char
 			  else if (n == 0)
 				  return (0);	/* no more answers left */
 
-			  strlcpy(request->name, hostbuf, HOSTLEN + 1);
+			  rb_strlcpy(request->name, hostbuf, HOSTLEN + 1);
 
 			  return (1);
 			  break;
@@ -866,7 +866,7 @@ void report_dns_servers(struct Client *source_p)
 	{
 		if (!inetntop_sock((struct sockaddr *)&(irc_nsaddr_list[i]),
 				ipaddr, sizeof ipaddr))
-			strlcpy(ipaddr, "?", sizeof ipaddr);
+			rb_strlcpy(ipaddr, "?", sizeof ipaddr);
 		sendto_one_numeric(source_p, RPL_STATSDEBUG,
 				"A %s", ipaddr);
 	}

@@ -178,7 +178,7 @@ scan_umodes(struct Client *client_p, struct Client *source_p, int parc,
 		{
 			if (!ConfigFileEntry.operspy_dont_care_user_info)
 			{
-				strlcpy(buf, "UMODES", sizeof buf);
+				rb_strlcpy(buf, "UMODES", sizeof buf);
 				for (i = 2; i < parc; i++)
 				{
 					strlcat(buf, " ", sizeof buf);

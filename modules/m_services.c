@@ -106,7 +106,7 @@ me_su(struct Client *client_p, struct Client *source_p,
 	if(EmptyString(parv[2]))
 		target_p->user->suser[0] = '\0';
 	else
-		strlcpy(target_p->user->suser, parv[2], sizeof(target_p->user->suser));
+		rb_strlcpy(target_p->user->suser, parv[2], sizeof(target_p->user->suser));
 
 	invalidate_bancache_user(target_p);
 
@@ -120,7 +120,7 @@ me_login(struct Client *client_p, struct Client *source_p,
 	if(!IsPerson(source_p))
 		return 0;
 
-	strlcpy(source_p->user->suser, parv[1], sizeof(source_p->user->suser));
+	rb_strlcpy(source_p->user->suser, parv[1], sizeof(source_p->user->suser));
 	return 0;
 }
 

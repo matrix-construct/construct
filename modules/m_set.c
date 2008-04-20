@@ -257,7 +257,7 @@ quote_operstring(struct Client *source_p, const char *arg)
 	}
 	else
 	{
-		strlcpy(GlobalSetOptions.operstring, arg,
+		rb_strlcpy(GlobalSetOptions.operstring, arg,
 			sizeof(GlobalSetOptions.operstring));
 		
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
@@ -276,7 +276,7 @@ quote_adminstring(struct Client *source_p, const char *arg)
 	}
 	else
 	{
-		strlcpy(GlobalSetOptions.adminstring, arg,
+		rb_strlcpy(GlobalSetOptions.adminstring, arg,
 			sizeof(GlobalSetOptions.adminstring));
 		
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,

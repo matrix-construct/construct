@@ -163,41 +163,41 @@ me_svslogin(struct Client *client_p, struct Client *source_p,
 
 	if(clean_nick(parv[2]))
 	{
-		strlcpy(nick, parv[2], NICKLEN + 1);
+		rb_strlcpy(nick, parv[2], NICKLEN + 1);
 		valid |= NICK_VALID;
 	}
 	else if(*target_p->name)
-		strlcpy(nick, target_p->name, NICKLEN + 1);
+		rb_strlcpy(nick, target_p->name, NICKLEN + 1);
 	else
 		strcpy(nick, "*");
 
 	if(clean_username(parv[3]))
 	{
-		strlcpy(user, parv[3], USERLEN + 1);
+		rb_strlcpy(user, parv[3], USERLEN + 1);
 		valid |= USER_VALID;
 	}
 	else
-		strlcpy(user, target_p->username, USERLEN + 1);
+		rb_strlcpy(user, target_p->username, USERLEN + 1);
 
 	if(clean_host(parv[4]))
 	{
-		strlcpy(host, parv[4], HOSTLEN + 1);
+		rb_strlcpy(host, parv[4], HOSTLEN + 1);
 		valid |= HOST_VALID;
 	}
 	else
-		strlcpy(host, target_p->host, HOSTLEN + 1);
+		rb_strlcpy(host, target_p->host, HOSTLEN + 1);
 
 	if(*parv[5] == '*')
 	{
 		if(target_p->user)
-			strlcpy(login, target_p->user->suser, NICKLEN + 1);
+			rb_strlcpy(login, target_p->user->suser, NICKLEN + 1);
 		else
 			login[0] = '\0';
 	}
 	else if(!strcmp(parv[5], "0"))
 		login[0] = '\0';
 	else
-		strlcpy(login, parv[5], NICKLEN + 1);
+		rb_strlcpy(login, parv[5], NICKLEN + 1);
 
 	/* Login (mostly) follows nick rules. */
 	if(*login && !clean_nick(login))
@@ -251,7 +251,7 @@ me_svslogin(struct Client *client_p, struct Client *source_p,
 		if(valid & HOST_VALID)
 			strcpy(target_p->preClient->spoofhost, host);
 
-		strlcpy(user_p->suser, login, NICKLEN + 1);
+		rb_strlcpy(user_p->suser, login, NICKLEN + 1);
 	}
 	else
 	{
@@ -317,7 +317,7 @@ ms_signon(struct Client *client_p, struct Client *source_p,
 	else if(*parv[5] != '*')
 	{
 		if (clean_nick(parv[5]))
-			strlcpy(login, parv[5], NICKLEN + 1);
+			rb_strlcpy(login, parv[5], NICKLEN + 1);
 		else
 			return 0;
 	}

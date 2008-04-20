@@ -415,7 +415,7 @@ mo_masktrace(struct Client *client_p, struct Client *source_p, int parc,
 		if (!ConfigFileEntry.operspy_dont_care_user_info)
 		{
 			char buf[512];
-			strlcpy(buf, mask, sizeof(buf));
+			rb_strlcpy(buf, mask, sizeof(buf));
 			if(!EmptyString(gecos)) {
 				strlcat(buf, " ", sizeof(buf));
 				strlcat(buf, gecos, sizeof(buf));

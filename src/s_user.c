@@ -293,7 +293,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 		char note[NICKLEN + 10];
 
 		del_from_client_hash(source_p->name, source_p);
-		strlcpy(source_p->name, source_p->preClient->spoofnick, NICKLEN + 1);
+		rb_strlcpy(source_p->name, source_p->preClient->spoofnick, NICKLEN + 1);
 		add_to_client_hash(source_p->name, source_p);
 
 		rb_snprintf(note, NICKLEN + 10, "Nick: %s", source_p->name);
@@ -304,7 +304,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 	{
 		sendto_one_notice(source_p, ":*** Notice -- You have an illegal character in your hostname");
 
-		strlcpy(source_p->host, source_p->sockhost, sizeof(source_p->host));
+		rb_strlcpy(source_p->host, source_p->sockhost, sizeof(source_p->host));
  	}
  
 
@@ -470,14 +470,14 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 	/* end of valid user name check */
 
 	/* Store original hostname -- jilles */
-	strlcpy(source_p->orighost, source_p->host, HOSTLEN + 1);
+	rb_strlcpy(source_p->orighost, source_p->host, HOSTLEN + 1);
 
 	/* Spoof user@host */
 	if(*source_p->preClient->spoofuser)
-		strlcpy(source_p->username, source_p->preClient->spoofuser, USERLEN + 1);
+		rb_strlcpy(source_p->username, source_p->preClient->spoofuser, USERLEN + 1);
 	if(*source_p->preClient->spoofhost)
 	{
-		strlcpy(source_p->host, source_p->preClient->spoofhost, HOSTLEN + 1);
+		rb_strlcpy(source_p->host, source_p->preClient->spoofhost, HOSTLEN + 1);
 		if (irccmp(source_p->host, source_p->orighost))
 			SetDynSpoof(source_p);
 	}
@@ -1437,14 +1437,14 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 				target_p->host, nick);
 	}
 
-	strlcpy(target_p->username, user, sizeof target_p->username);
-	strlcpy(target_p->host, host, sizeof target_p->host);
+	rb_strlcpy(target_p->username, user, sizeof target_p->username);
+	rb_strlcpy(target_p->host, host, sizeof target_p->host);
 
 	if (changed)
 		add_history(target_p, 1);
 
 	del_from_client_hash(target_p->name, target_p);
-	strlcpy(target_p->name, nick, NICKLEN);
+	rb_strlcpy(target_p->name, nick, NICKLEN);
 	add_to_client_hash(target_p->name, target_p);
 
 	if(changed)

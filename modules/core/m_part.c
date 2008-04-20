@@ -71,7 +71,7 @@ m_part(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	reason[0] = '\0';
 
 	if(parc > 2)
-		strlcpy(reason, parv[2], sizeof(reason));
+		rb_strlcpy(reason, parv[2], sizeof(reason));
 
 	name = strtoken(&p, s, ",");
 

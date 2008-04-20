@@ -106,7 +106,7 @@ static void blacklist_dns_callback(void *vptr, struct DNSReply *reply)
 	if (rb_dlink_list_length(&blcptr->client_p->preClient->dnsbl_queries) == 0 && blcptr->client_p->flags & FLAGS_SENTUSER && !EmptyString(blcptr->client_p->name))
 	{
 		char buf[USERLEN + 1];
-		strlcpy(buf, blcptr->client_p->username, sizeof buf);
+		rb_strlcpy(buf, blcptr->client_p->username, sizeof buf);
 		register_local_user(blcptr->client_p, blcptr->client_p, buf);
 	}
 
@@ -154,8 +154,8 @@ struct Blacklist *new_blacklist(char *name, char *reject_reason)
 	}
 	else
 		blptr->status &= ~CONF_ILLEGAL;
-	strlcpy(blptr->host, name, HOSTLEN);
-	strlcpy(blptr->reject_reason, reject_reason, IRCD_BUFSIZE);
+	rb_strlcpy(blptr->host, name, HOSTLEN);
+	rb_strlcpy(blptr->reject_reason, reject_reason, IRCD_BUFSIZE);
 	blptr->lastwarning = 0;
 
 	return blptr;

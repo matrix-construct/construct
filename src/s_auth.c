@@ -222,7 +222,7 @@ auth_dns_callback(void *vptr, struct DNSReply *reply)
 
                 if(good && strlen(reply->h_name) <= HOSTLEN)
                 {
-                        strlcpy(auth->client->host, reply->h_name, sizeof(auth->client->host));
+                        rb_strlcpy(auth->client->host, reply->h_name, sizeof(auth->client->host));
                         sendheader(auth->client, REPORT_FIN_DNS);
                 }
                 else if (strlen(reply->h_name) > HOSTLEN)

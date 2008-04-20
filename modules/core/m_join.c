@@ -624,7 +624,7 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 			mode.mode |= MODE_DISFORWARD;
 			break;
 		case 'f':
-			strlcpy(mode.forward, parv[4 + args], sizeof(mode.forward));
+			rb_strlcpy(mode.forward, parv[4 + args], sizeof(mode.forward));
 			args++;
 			if(parc < 5 + args)
 				return 0;
@@ -638,7 +638,7 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 				return 0;
 			break;
 		case 'k':
-			strlcpy(mode.key, parv[4 + args], sizeof(mode.key));
+			rb_strlcpy(mode.key, parv[4 + args], sizeof(mode.key));
 			args++;
 			if(parc < 5 + args)
 				return 0;

@@ -209,7 +209,7 @@ parse_resvconf(void)
       *p = '\0';  /* take the first word */
 
     if (irccmp(opt, "domain") == 0)
-      strlcpy(irc_domain, arg, sizeof(irc_domain));
+      rb_strlcpy(irc_domain, arg, sizeof(irc_domain));
     else if (irccmp(opt, "nameserver") == 0)
       add_nameserver(arg);
   }

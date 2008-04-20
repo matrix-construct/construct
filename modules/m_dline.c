@@ -103,7 +103,7 @@ mo_dline(struct Client *client_p, struct Client *source_p,
 	}
 
 	dlhost = parv[loc];
-	strlcpy(cidr_form_host, dlhost, sizeof(cidr_form_host));
+	rb_strlcpy(cidr_form_host, dlhost, sizeof(cidr_form_host));
 
 	if(!parse_netmask(dlhost, NULL, &bits))
 	{
@@ -284,7 +284,7 @@ mo_undline(struct Client *client_p, struct Client *source_p, int parc, const cha
 		return 0;
 	}
 
-	strlcpy(buf, aconf->host, sizeof buf);
+	rb_strlcpy(buf, aconf->host, sizeof buf);
 	if(remove_temp_dline(aconf))
 	{
 		sendto_one(source_p,
@@ -318,7 +318,7 @@ mo_undline(struct Client *client_p, struct Client *source_p, int parc, const cha
 
 	while (fgets(buf, sizeof(buf), in))
 	{
-		strlcpy(buff, buf, sizeof(buff));
+		rb_strlcpy(buff, buf, sizeof(buff));
 
 		if((p = strchr(buff, '\n')) != NULL)
 			*p = '\0';

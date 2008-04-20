@@ -139,7 +139,7 @@ mr_nick(struct Client *client_p, struct Client *source_p, int parc, const char *
 		*s = '\0';
 
 	/* copy the nick and terminate it */
-	strlcpy(nick, parv[1], sizeof(nick));
+	rb_strlcpy(nick, parv[1], sizeof(nick));
 
 	/* check the nickname is ok */
 	if(!clean_nick(nick, 1))
@@ -203,7 +203,7 @@ m_nick(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		flood_endgrace(source_p);
 
 	/* terminate nick to NICKLEN, we dont want clean_nick() to error! */
-	strlcpy(nick, parv[1], sizeof(nick));
+	rb_strlcpy(nick, parv[1], sizeof(nick));
 
 	/* check the nickname is ok */
 	if(!clean_nick(nick, 1))
@@ -724,7 +724,7 @@ set_initial_nick(struct Client *client_p, struct Client *source_p, char *nick)
 
 	if(source_p->flags & FLAGS_SENTUSER)
 	{
-		strlcpy(buf, source_p->username, sizeof(buf));
+		rb_strlcpy(buf, source_p->username, sizeof(buf));
 
 		/* got user, heres nick. */
 		register_local_user(client_p, source_p, buf);
@@ -1173,35 +1173,35 @@ register_client(struct Client *client_p, struct Client *server,
 	source_p->tsinfo = newts;
 
 	strcpy(source_p->name, nick);
-	strlcpy(source_p->username, parv[5], sizeof(source_p->username));
-	strlcpy(source_p->host, parv[6], sizeof(source_p->host));
-	strlcpy(source_p->orighost, source_p->host, sizeof(source_p->orighost));
+	rb_strlcpy(source_p->username, parv[5], sizeof(source_p->username));
+	rb_strlcpy(source_p->host, parv[6], sizeof(source_p->host));
+	rb_strlcpy(source_p->orighost, source_p->host, sizeof(source_p->orighost));
 
 	if(parc == 12)
 	{
-		strlcpy(source_p->info, parv[11], sizeof(source_p->info));
-		strlcpy(source_p->sockhost, parv[7], sizeof(source_p->sockhost));
-		strlcpy(source_p->id, parv[8], sizeof(source_p->id));
+		rb_strlcpy(source_p->info, parv[11], sizeof(source_p->info));
+		rb_strlcpy(source_p->sockhost, parv[7], sizeof(source_p->sockhost));
+		rb_strlcpy(source_p->id, parv[8], sizeof(source_p->id));
 		add_to_id_hash(source_p->id, source_p);
 		if (strcmp(parv[9], "*"))
 		{
-			strlcpy(source_p->orighost, parv[9], sizeof(source_p->orighost));
+			rb_strlcpy(source_p->orighost, parv[9], sizeof(source_p->orighost));
 			if (irccmp(source_p->host, source_p->orighost))
 				SetDynSpoof(source_p);
 		}
 		if (strcmp(parv[10], "*"))
-			strlcpy(source_p->user->suser, parv[10], sizeof(source_p->user->suser));
+			rb_strlcpy(source_p->user->suser, parv[10], sizeof(source_p->user->suser));
 	}
 	else if(parc == 10)
 	{
-		strlcpy(source_p->info, parv[9], sizeof(source_p->info));
-		strlcpy(source_p->sockhost, parv[7], sizeof(source_p->sockhost));
-		strlcpy(source_p->id, parv[8], sizeof(source_p->id));
+		rb_strlcpy(source_p->info, parv[9], sizeof(source_p->info));
+		rb_strlcpy(source_p->sockhost, parv[7], sizeof(source_p->sockhost));
+		rb_strlcpy(source_p->id, parv[8], sizeof(source_p->id));
 		add_to_id_hash(source_p->id, source_p);
 	}
 	else
 	{
-		strlcpy(source_p->info, parv[8], sizeof(source_p->info));
+		rb_strlcpy(source_p->info, parv[8], sizeof(source_p->info));
 	}
 
 	/* remove any nd entries for this nick */

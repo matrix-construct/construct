@@ -136,7 +136,7 @@ char *substitution_parse(const char *fmt, rb_dlink_list *varlist)
 
 				if (!strcasecmp(varname, val->name))
 				{
-					strlcpy(bptr, val->value, BUFSIZE - (bptr - buf));
+					rb_strlcpy(bptr, val->value, BUFSIZE - (bptr - buf));
 					bptr += strlen(val->value);
 					break;
 				}

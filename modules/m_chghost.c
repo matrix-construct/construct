@@ -94,7 +94,7 @@ me_realhost(struct Client *client_p, struct Client *source_p,
 		return 0;
 
 	del_from_hostname_hash(source_p->orighost, source_p);
-	strlcpy(source_p->orighost, parv[1], sizeof source_p->orighost);
+	rb_strlcpy(source_p->orighost, parv[1], sizeof source_p->orighost);
 	if (irccmp(source_p->host, source_p->orighost))
 		SetDynSpoof(source_p);
 	else

@@ -131,7 +131,7 @@ check_umode_change(void *vdata)
 		}
 		if (strcmp(source_p->host, source_p->localClient->mangledhost))
 		{
-			strlcpy(source_p->host, source_p->localClient->mangledhost, HOSTLEN);
+			rb_strlcpy(source_p->host, source_p->localClient->mangledhost, HOSTLEN);
 			distribute_hostchange(source_p);
 		}
 		else /* not really nice, but we need to send this numeric here */
@@ -143,7 +143,7 @@ check_umode_change(void *vdata)
 		if (source_p->localClient->mangledhost != NULL &&
 				!strcmp(source_p->host, source_p->localClient->mangledhost))
 		{
-			strlcpy(source_p->host, source_p->orighost, HOSTLEN);
+			rb_strlcpy(source_p->host, source_p->orighost, HOSTLEN);
 			distribute_hostchange(source_p);
 		}
 	}
@@ -168,7 +168,7 @@ check_new_user(void *vdata)
 		source_p->umodes &= ~user_modes['h'];
 	if (source_p->umodes & user_modes['h'])
 	{
-		strlcpy(source_p->host, source_p->localClient->mangledhost, sizeof(source_p->host));
+		rb_strlcpy(source_p->host, source_p->localClient->mangledhost, sizeof(source_p->host));
 		if (irccmp(source_p->host, source_p->orighost))
 			SetDynSpoof(source_p);
 	}

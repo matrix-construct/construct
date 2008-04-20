@@ -554,11 +554,11 @@ find_user_host(struct Client *source_p, const char *userhost, char *luser, char 
 	{
 		*(hostp++) = '\0';	/* short and squat */
 		if(*userhost)
-			strlcpy(luser, userhost, USERLEN + 1);	/* here is my user */
+			rb_strlcpy(luser, userhost, USERLEN + 1);	/* here is my user */
 		else
 			strcpy(luser, "*");
 		if(*hostp)
-			strlcpy(lhost, hostp, HOSTLEN + 1);	/* here is my host */
+			rb_strlcpy(lhost, hostp, HOSTLEN + 1);	/* here is my host */
 		else
 			strcpy(lhost, "*");
 		}
@@ -572,7 +572,7 @@ find_user_host(struct Client *source_p, const char *userhost, char *luser, char 
 
 		luser[0] = '*';	/* no @ found, assume its *@somehost */
 		luser[1] = '\0';
-		strlcpy(lhost, userhost, HOSTLEN + 1);
+		rb_strlcpy(lhost, userhost, HOSTLEN + 1);
 	}
 
 	return 1;

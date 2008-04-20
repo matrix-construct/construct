@@ -127,7 +127,7 @@ add_id(struct Client *source_p, struct Channel *chptr, const char *banid,
 	if(IsPerson(source_p))
 		rb_sprintf(who, "%s!%s@%s", source_p->name, source_p->username, source_p->host);
 	else
-		strlcpy(who, source_p->name, sizeof(who));
+		rb_strlcpy(who, source_p->name, sizeof(who));
 
 	actualBan = allocate_ban(realban, who);
 	actualBan->when = rb_current_time();
@@ -1036,7 +1036,7 @@ chm_forward(struct Client *source_p, struct Channel *chptr,
 			}
 		}
 
-		strlcpy(chptr->mode.forward, forward, sizeof(chptr->mode.forward));
+		rb_strlcpy(chptr->mode.forward, forward, sizeof(chptr->mode.forward));
 
 		mode_changes[mode_count].letter = c;
 		mode_changes[mode_count].dir = MODE_ADD;
@@ -1096,7 +1096,7 @@ chm_key(struct Client *source_p, struct Channel *chptr,
 			return;
 
 		s_assert(key[0] != ' ');
-		strlcpy(chptr->mode.key, key, sizeof(chptr->mode.key));
+		rb_strlcpy(chptr->mode.key, key, sizeof(chptr->mode.key));
 
 		mode_changes[mode_count].letter = c;
 		mode_changes[mode_count].dir = MODE_ADD;

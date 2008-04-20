@@ -457,7 +457,7 @@ add_connection(struct Listener *listener, rb_fde_t *F, struct sockaddr *sai, voi
 		sizeof(new_client->sockhost));
 
 
-	strlcpy(new_client->host, new_client->sockhost, sizeof(new_client->host));
+	rb_strlcpy(new_client->host, new_client->sockhost, sizeof(new_client->host));
 
 	new_client->localClient->F = F;
 	add_to_cli_fd_hash(new_client);

@@ -622,7 +622,7 @@ remove_xline_from_file(struct Client *source_p, const char *huntgecos)
 			break;
 		}
 
-		strlcpy(buff, buf, sizeof(buff));
+		rb_strlcpy(buff, buf, sizeof(buff));
 
 		if((p = strchr(buff, '\n')) != NULL)
 			*p = '\0';

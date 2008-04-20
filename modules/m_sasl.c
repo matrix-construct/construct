@@ -150,7 +150,7 @@ me_sasl(struct Client *client_p, struct Client *source_p,
 	if(*target_p->preClient->sasl_agent && strncmp(parv[1], target_p->preClient->sasl_agent, IDLEN))
 		return 0;
 	else if(!*target_p->preClient->sasl_agent)
-		strlcpy(target_p->preClient->sasl_agent, parv[1], IDLEN);
+		rb_strlcpy(target_p->preClient->sasl_agent, parv[1], IDLEN);
 
 	if(*parv[3] == 'C')
 		sendto_one(target_p, "AUTHENTICATE %s", parv[4]);

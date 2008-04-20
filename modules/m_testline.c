@@ -141,13 +141,13 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 
 	if (username != NULL)
 	{
-		strlcpy(user_trunc, username, sizeof user_trunc);
-		strlcpy(notildeuser_trunc, *username == '~' ? username + 1 : username, sizeof notildeuser_trunc);
+		rb_strlcpy(user_trunc, username, sizeof user_trunc);
+		rb_strlcpy(notildeuser_trunc, *username == '~' ? username + 1 : username, sizeof notildeuser_trunc);
 	}
 	else
 	{
-		strlcpy(user_trunc, "dummy", sizeof user_trunc);
-		strlcpy(notildeuser_trunc, "dummy", sizeof notildeuser_trunc);
+		rb_strlcpy(user_trunc, "dummy", sizeof user_trunc);
+		rb_strlcpy(notildeuser_trunc, "dummy", sizeof notildeuser_trunc);
 	}
 	/* now look for a matching I/K/G */
 	if((aconf = find_address_conf(host, NULL, user_trunc, notildeuser_trunc,

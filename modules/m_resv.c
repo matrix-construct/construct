@@ -577,7 +577,7 @@ remove_resv_from_file(struct Client *source_p, const char *name)
 			break;
 		}
 
-		strlcpy(buff, buf, sizeof(buff));
+		rb_strlcpy(buff, buf, sizeof(buff));
 
 		if((p = strchr(buff, '\n')) != NULL)
 			*p = '\0';

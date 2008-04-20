@@ -1296,9 +1296,9 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	 * The sockhost may be a hostname, this will be corrected later
 	 * -- jilles
 	 */
-	strlcpy(client_p->name, server_p->name, sizeof(client_p->name));
-	strlcpy(client_p->host, server_p->host, sizeof(client_p->host));
-	strlcpy(client_p->sockhost, server_p->host, sizeof(client_p->sockhost));
+	rb_strlcpy(client_p->name, server_p->name, sizeof(client_p->name));
+	rb_strlcpy(client_p->host, server_p->host, sizeof(client_p->host));
+	rb_strlcpy(client_p->sockhost, server_p->host, sizeof(client_p->sockhost));
 	client_p->localClient->F = F;
 	add_to_cli_fd_hash(client_p);
 

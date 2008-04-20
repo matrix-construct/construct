@@ -102,7 +102,7 @@ find_or_add(const char *name)
 	ptr = (struct scache_entry *) rb_malloc(sizeof(struct scache_entry));
 	s_assert(0 != ptr);
 
-	strlcpy(ptr->name, name, sizeof(ptr->name));
+	rb_strlcpy(ptr->name, name, sizeof(ptr->name));
 	ptr->info[0] = '\0';
 	ptr->flags = 0;
 	ptr->known_since = rb_current_time();
@@ -120,7 +120,7 @@ scache_connect(const char *name, const char *info, int hidden)
 	struct scache_entry *ptr;
 
 	ptr = find_or_add(name);
-	strlcpy(ptr->info, info, sizeof(ptr->info));
+	rb_strlcpy(ptr->info, info, sizeof(ptr->info));
 	ptr->flags |= SC_ONLINE;
 	if (hidden)
 		ptr->flags |= SC_HIDDEN;

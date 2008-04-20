@@ -97,14 +97,14 @@ do_local_user(struct Client *client_p, struct Client *source_p,
 		source_p->flags |= FLAGS_SENTUSER;
 	}
 
-	strlcpy(source_p->info, realname, sizeof(source_p->info));
+	rb_strlcpy(source_p->info, realname, sizeof(source_p->info));
 
 	if(!IsGotId(source_p))
 	{
 		/* This is in this location for a reason..If there is no identd
 		 * and ping cookies are enabled..we need to have a copy of this
 		 */
-		strlcpy(source_p->username, username, sizeof(source_p->username));
+		rb_strlcpy(source_p->username, username, sizeof(source_p->username));
 	}
 
 	if(source_p->name[0])
