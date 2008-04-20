@@ -78,12 +78,6 @@ extern char *canonize(char *);
 #endif
 
 /*
- * clean_string - cleanup control and high ascii characters
- * -Dianora
- */
-char *clean_string(char *dest, const unsigned char *src, size_t len);
-
-/*
  * strip_colour - remove colour codes from a string
  * -asuffield (?)
  */
