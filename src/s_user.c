@@ -605,7 +605,7 @@ introduce_client(struct Client *client_p, struct Client *source_p, struct User *
 		{
 			sockhost[0] = '0';
 			sockhost[1] = '\0';
-			strlcat(sockhost, source_p->sockhost, sizeof(sockhost));
+			rb_strlcat(sockhost, source_p->sockhost, sizeof(sockhost));
 		} else
 			strcpy(sockhost, source_p->sockhost);
 		
