@@ -173,11 +173,7 @@ me_dline(struct Client *client_p, struct Client *source_p, int parc, const char 
 
 	if(!find_shared_conf(source_p->username, source_p->host,
 				source_p->servptr->name, tdline_time > 0 ? SHARED_TDLINE : SHARED_PDLINE))
-	{
-		sendto_realops_snomask(SNO_DEBUG, L_NETWIDE, "undline failed %s %s %s",
-				source_p->name, parv[1], parv[2]);
 		return 0;
-	}
 
 	apply_dline(source_p, parv[2], tdline_time, LOCAL_COPY(parv[3]));
 
@@ -303,7 +299,7 @@ apply_dline(struct Client *source_p, const char *dlhost, int tdline_time, char *
 
 		if(EmptyString(oper_reason))
 		{
-			sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
+			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					     "%s added temporary %d min. D-Line for [%s] [%s]",
 					     get_oper_name(source_p), tdline_time / 60,
 					     aconf->host, reason);
@@ -313,7 +309,7 @@ apply_dline(struct Client *source_p, const char *dlhost, int tdline_time, char *
 		}
 		else
 		{
-			sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
+			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					     "%s added temporary %d min. D-Line for [%s] [%s|%s]",
 					     get_oper_name(source_p), tdline_time / 60,
 					     aconf->host, reason, oper_reason);
@@ -457,7 +453,7 @@ apply_undline(struct Client *source_p, const char *cidr)
 	}
 
 	sendto_one(source_p, ":%s NOTICE %s :D-Line for [%s] is removed", me.name, source_p->name, aconf->host);
-	sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
+	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "%s has removed the D-Line for: [%s]", get_oper_name(source_p), aconf->host);
 	ilog(L_KLINE, "UD %s %s", get_oper_name(source_p), aconf->host);
 	delete_one_address_conf(aconf->host, aconf);
