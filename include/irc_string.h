@@ -124,9 +124,6 @@ const char *myctime(time_t);
 
 char *strtoken(char **save, char *str, const char *fs);
 
-unsigned char *ircd_base64_encode(const unsigned char *str, int length);
-unsigned char *ircd_base64_decode(const unsigned char *str, int length, int *ret);
-
 /*
  * character macros
  */
