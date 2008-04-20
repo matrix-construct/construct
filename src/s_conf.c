@@ -898,12 +898,6 @@ validate_conf(void)
 	}
 }
 
-/*
- * lookup_confhost - start DNS lookups of all hostnames in the conf
- * line and convert an IP addresses in a.b.c.d number for to IP#s.
- *
- */
-
 /* add_temp_kline()
  *
  * inputs        - pointer to struct ConfItem
