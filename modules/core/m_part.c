@@ -39,7 +39,7 @@
 #include "modules.h"
 #include "s_conf.h"
 #include "packet.h"
-#include "irc_string.h"
+#include "inline/stringops.h"
 
 static int m_part(struct Client *, struct Client *, int, const char **);
 

@@ -43,7 +43,7 @@
 #include "send.h"
 #include "s_newconf.h"
 #include "s_stats.h"
-#include "irc_string.h"
+#include "inline/stringops.h"
 
 static int m_message(int, const char *, struct Client *, struct Client *, int, const char **);
 static int m_privmsg(struct Client *, struct Client *, int, const char **);

@@ -1,10 +1,8 @@
 /*
- *  ircd-ratbox: A slightly useful ircd.
- *  irc_string.c: IRC string functions.
+ *  charybdis: an advanced ircd.
+ *  inline/stringops.h: inlined string operations used in a few places
  *
- *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center
- *  Copyright (C) 1996-2002 Hybrid Development Team
- *  Copyright (C) 2002-2005 ircd-ratbox development team
+ *  Copyright (c) 2005-2008 charybdis development team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,18 +18,22 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
- *
- *  $Id: irc_string.c 678 2006-02-03 20:25:01Z jilles $
  */
 
-#include "irc_string.h"
+#ifndef __INLINE_STRINGOPS_H
+#define __INLINE_STRINGOPS_H
 
-char *
+/*
+ * strip_colour - remove colour codes from a string
+ * -asuffield (?)
+ */
+static inline char *
 strip_colour(char *string)
 {
 	char *c = string;
 	char *c2 = string;
 	char *last_non_space = NULL;
+
 	/* c is source, c2 is target */
 	for(; c && *c; c++)
 		switch (*c)
@@ -66,8 +68,13 @@ strip_colour(char *string)
 			last_non_space = c2;
 			break;
 		}
+
 	*c2 = '\0';
+
 	if(last_non_space)
 		*last_non_space = '\0';
+
 	return string;
 }
+
+#endif
