@@ -904,29 +904,6 @@ validate_conf(void)
  *
  */
 
-/*
- * conf_connect_allowed
- *
- * inputs	- pointer to inaddr
- *		- int type ipv4 or ipv6
- * output	- ban info or NULL
- * side effects	- none
- */
-struct ConfItem *
-conf_connect_allowed(struct sockaddr *addr, int aftype)
-{
-	struct ConfItem *aconf = find_dline(addr, aftype);
-
-	/* DLINE exempt also gets you out of static limits/pacing... */
-	if(aconf && (aconf->status & CONF_EXEMPTDLINE))
-		return NULL;
-
-	if(aconf != NULL)
-		return aconf;
-
-	return NULL;
-}
-
 /* add_temp_kline()
  *
  * inputs        - pointer to struct ConfItem
