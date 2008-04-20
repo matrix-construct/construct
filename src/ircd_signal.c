@@ -57,12 +57,7 @@ sigchld_handler(int sig)
 static void
 sigterm_handler(int sig)
 {
-	/* XXX we had a flush_connections() here - we should close all the
-	 * connections and flush data. read server_reboot() for my explanation.
-	 *     -- adrian
-	 */
-	ilog(L_MAIN, "Server killed By SIGTERM");
-	exit(-1);
+	ircd_shutdown("Received SIGTERM");
 }
 
 /* 

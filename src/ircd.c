@@ -141,6 +141,34 @@ rb_bh *linebuf_heap;
 
 rb_bh *dnode_heap;
 
+void
+ircd_shutdown(const char *reason)
+{
+	struct Client *target_p;
+	rb_dlink_node *ptr;
+
+	RB_DLINK_FOREACH(ptr, lclient_list.head)
+	{
+		target_p = ptr->data;
+
+		sendto_one(target_p, ":%s NOTICE %s :Server Terminating. %s",
+			me.name, target_p->name, reason);
+	}
+
+	RB_DLINK_FOREACH(ptr, serv_list.head)
+	{
+		target_p = ptr->data;
+
+		sendto_one(target_p, ":%s ERROR :Terminated by %s",
+			me.name, reason);
+	}
+
+	ilog(L_MAIN, "Server Terminating. %s", reason);
+
+	unlink(pidFileName);
+	exit(0);
+}
+
 /*
  * print_startup - print startup information
  */

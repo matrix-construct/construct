@@ -107,4 +107,6 @@ extern int ssl_ok;
 extern int zlib_ok;
 extern int maxconnections;
 
+void ircd_shutdown(const char *reason);
+
 #endif
