@@ -164,6 +164,7 @@ ircd_shutdown(const char *reason)
 	}
 
 	ilog(L_MAIN, "Server Terminating. %s", reason);
+	close_logfiles();
 
 	unlink(pidFileName);
 	exit(0);

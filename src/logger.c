@@ -86,26 +86,37 @@ open_logfiles(void)
 {
 	int i;
 
-	if(log_main != NULL)
-		fclose(log_main);
+	close_logfiles();
 
 	log_main = fopen(logFileName, "a");
 
 	/* log_main is handled above, so just do the rest */
 	for(i = 1; i < LAST_LOGFILE; i++)
 	{
-		/* close open logfiles */
-		if(*log_table[i].logfile != NULL)
-		{
-			fclose(*log_table[i].logfile);
-			*log_table[i].logfile = NULL;
-		}
-
 		/* reopen those with paths */
 		if(!EmptyString(*log_table[i].name))
 			*log_table[i].logfile = fopen(*log_table[i].name, "a");
 	}
 }			
+
+void
+close_logfiles(void)
+{
+	int i;
+
+	if(log_main != NULL)
+		fclose(log_main);
+
+	/* log_main is handled above, so just do the rest */
+	for(i = 1; i < LAST_LOGFILE; i++)
+	{
+		if(*log_table[i].logfile != NULL)
+		{
+			fclose(*log_table[i].logfile);
+			*log_table[i].logfile = NULL;
+		}
+	}
+}
 
 void
 ilog(ilogfile dest, const char *format, ...)
