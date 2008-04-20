@@ -416,7 +416,7 @@ apply_undline(struct Client *source_p, const char *cidr)
 			continue;
 		}
 
-		if(irccmp(found_cidr, cidr) == 0)
+		if(irccmp(found_cidr, aconf->host) == 0)
 		{
 			pairme++;
 		}
@@ -441,8 +441,8 @@ apply_undline(struct Client *source_p, const char *cidr)
 	}
 	else if(!pairme)
 	{
-		sendto_one(source_p, ":%s NOTICE %s :No D-Line for %s",
-			   me.name, source_p->name, cidr);
+		sendto_one_notice(source_p, ":Cannot find D-Line for %s in file",
+				aconf->host);
 
 		if(temppath != NULL)
 			(void) unlink(temppath);
@@ -455,13 +455,12 @@ apply_undline(struct Client *source_p, const char *cidr)
 		sendto_one_notice(source_p, ":Couldn't rename temp file, aborted");
 		return 0;
 	}
-	rehash_bans(0);
 
-
-	sendto_one(source_p, ":%s NOTICE %s :D-Line for [%s] is removed", me.name, source_p->name, cidr);
+	sendto_one(source_p, ":%s NOTICE %s :D-Line for [%s] is removed", me.name, source_p->name, aconf->host);
 	sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
-			     "%s has removed the D-Line for: [%s]", get_oper_name(source_p), cidr);
-	ilog(L_KLINE, "UD %s %s", get_oper_name(source_p), cidr);
+			     "%s has removed the D-Line for: [%s]", get_oper_name(source_p), aconf->host);
+	ilog(L_KLINE, "UD %s %s", get_oper_name(source_p), aconf->host);
+	delete_one_address_conf(aconf->host, aconf);
 
 	return 0;
 }
