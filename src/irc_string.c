@@ -30,43 +30,9 @@
 #include "client.h"
 #include "setup.h"
 
-#ifndef INADDRSZ
-#define INADDRSZ 4
-#endif
-
-#ifdef RB_IPV6
-#ifndef IN6ADDRSZ
-#define IN6ADDRSZ 16
-#endif
-#endif
-
 #ifndef INT16SZ
 #define INT16SZ 2
 #endif
-/*
- * myctime - This is like standard ctime()-function, but it zaps away
- *   the newline from the end of that string. Also, it takes
- *   the time value as parameter, instead of pointer to it.
- *   Note that it is necessary to copy the string to alternate
- *   buffer (who knows how ctime() implements it, maybe it statically
- *   has newline there and never 'refreshes' it -- zapping that
- *   might break things in other places...)
- *
- *
- * Thu Nov 24 18:22:48 1986 
- */
-const char *
-myctime(time_t value)
-{
-	static char buf[32];
-	char *p;
-
-	strcpy(buf, ctime(&value));
-	if((p = strchr(buf, '\n')) != NULL)
-		*p = '\0';
-	return buf;
-}
-
 
 /*
  * clean_string - clean up a string possibly containing garbage

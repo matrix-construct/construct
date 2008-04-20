@@ -64,6 +64,7 @@ m_whowas(struct Client *client_p, struct Client *source_p, int parc, const char 
 	int max = -1, found = 0;
 	char *p;
 	const char *nick;
+	char tbuf[26];
 
 	static time_t last_used = 0L;
 
@@ -118,7 +119,7 @@ m_whowas(struct Client *client_p, struct Client *source_p, int parc, const char 
 			sendto_one_numeric(source_p, RPL_WHOISSERVER,
 					   form_str(RPL_WHOISSERVER),
 					   temp->name, temp->servername,
-					   myctime(temp->logoff));
+					   rb_ctime(temp->logoff, tbuf, sizeof(tbuf)));
 			cur++;
 			found++;
 		}
