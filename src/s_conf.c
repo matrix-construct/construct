@@ -1507,6 +1507,24 @@ conf_add_d_conf(struct ConfItem *aconf)
 	}
 }
 
+static char *
+strip_tabs(char *dest, const char *src, size_t len)
+{
+	char *d = dest;
+
+	if(dest == NULL || src == NULL)
+		return NULL;
+
+	rb_strlcpy(dest, src, len);
+
+	while(*d)
+	{
+		if(*d == '\t')
+			*d = ' ';
+		d++;
+	}
+	return dest;
+}
 
 /*
  * yyerror

@@ -83,12 +83,6 @@ extern char *canonize(char *);
  */
 char *strip_colour(char *string);
 
-/*
- * strip_tabs - convert tabs to spaces
- * - jdc
- */
-char *strip_tabs(char *dest, const unsigned char *src, size_t len);
-
 #define EmptyString(x) ((x) == NULL || *(x) == '\0')
 #define CheckEmpty(x) EmptyString(x) ? "" : x
 

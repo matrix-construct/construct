@@ -29,45 +29,6 @@
 #include "client.h"
 #include "setup.h"
 
-#ifndef INT16SZ
-#define INT16SZ 2
-#endif
-
-/*
- * strip_tabs(dst, src, length)
- *
- *   Copies src to dst, while converting all \t (tabs) into spaces.
- *
- * NOTE: jdc: I have a gut feeling there's a faster way to do this.
- */
-char *
-strip_tabs(char *dest, const unsigned char *src, size_t len)
-{
-	char *d = dest;
-	/* Sanity check; we don't want anything nasty... */
-	s_assert(0 != dest);
-	s_assert(0 != src);
-
-	if(dest == NULL || src == NULL)
-		return NULL;
-
-	while(*src && (len > 0))
-	{
-		if(*src == '\t')
-		{
-			*d++ = ' ';	/* Translate the tab into a space */
-		}
-		else
-		{
-			*d++ = *src;	/* Copy src to dst */
-		}
-		++src;
-		--len;
-	}
-	*d = '\0';		/* Null terminate, thanks and goodbye */
-	return dest;
-}
-
 char *
 strip_colour(char *string)
 {
