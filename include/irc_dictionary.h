@@ -150,6 +150,11 @@ extern void *irc_dictionary_retrieve(struct Dictionary *dtree, const char *key);
  */
 extern void *irc_dictionary_delete(struct Dictionary *dtree, const char *key);
 
+/*
+ * irc_dictionary_size() returns the number of elements in a dictionary tree.
+ */
+extern unsigned int irc_dictionary_size(struct Dictionary *dtree);
+
 void irc_dictionary_stats(struct Dictionary *dict, void (*cb)(const char *line, void *privdata), void *privdata);
 
 #endif

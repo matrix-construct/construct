@@ -373,6 +373,10 @@ static struct mode_table shared_table[] =
 	{ "kline",	SHARED_PKLINE|SHARED_TKLINE	},
 	{ "xline",	SHARED_PXLINE|SHARED_TXLINE	},
 	{ "resv",	SHARED_PRESV|SHARED_TRESV	},
+	{ "dline",  SHARED_PDLINE|SHARED_TDLINE },
+	{ "tdline", SHARED_TDLINE	},
+	{ "pdline", SHARED_PDLINE   },
+	{ "undline",    SHARED_UNDLINE  },
 	{ "tkline",	SHARED_TKLINE	},
 	{ "unkline",	SHARED_UNKLINE	},
 	{ "txline",	SHARED_TXLINE	},
@@ -1750,7 +1754,7 @@ conf_set_generic_string(void *data, int len, void *location)
 	char **loc = location;
 	char *input = data;
 
-	if(len && strlen(input) > len)
+	if(len && strlen(input) > (unsigned int)len)
 		input[len] = '\0';
 
 	rb_free(*loc);

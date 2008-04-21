@@ -203,7 +203,7 @@ irc_dictionary_get_linear_index(struct Dictionary *dict, const char *key)
  * Side Effects:
  *     - a new root node is nominated.
  */
-void
+static void
 irc_dictionary_retune(struct Dictionary *dict, const char *key)
 {
 	struct DictionaryElement n, *tn, *left, *right, *node;
@@ -302,7 +302,7 @@ irc_dictionary_retune(struct Dictionary *dict, const char *key)
  * Side Effects:
  *     - a node is linked to the dictionary tree
  */
-void
+static void
 irc_dictionary_link(struct Dictionary *dict,
 	struct DictionaryElement *delem)
 {
@@ -382,7 +382,7 @@ irc_dictionary_link(struct Dictionary *dict,
  * Side Effects:
  *     - the root node is unlinked from the dictionary tree
  */
-void
+static void
 irc_dictionary_unlink_root(struct Dictionary *dict)
 {
 	struct DictionaryElement *delem, *nextnode, *parentofnext;
@@ -644,7 +644,7 @@ void irc_dictionary_foreach_next(struct Dictionary *dtree,
 
 	if (state->cur == NULL)
 	{
-		ilog(L_MAIN, "irc_dictionary_foreach_next(): called again after iteration finished on dtree<%p>", dtree);
+		ilog(L_MAIN, "irc_dictionary_foreach_next(): called again after iteration finished on dtree<%p>", (void *)dtree);
 		return;
 	}
 
@@ -854,7 +854,7 @@ void irc_dictionary_stats(struct Dictionary *dict, void (*cb)(const char *line, 
 				dict->id, dict->count);
 	else
 		snprintf(str, sizeof str, "Dictionary stats for <%p> (%d)",
-				dict, dict->count);
+				(void *)dict, dict->count);
 	cb(str, privdata);
 	maxdepth = 0;
 	sum = stats_recurse(dict->root, 0, &maxdepth);

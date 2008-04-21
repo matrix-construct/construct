@@ -898,35 +898,6 @@ validate_conf(void)
 	}
 }
 
-/*
- * lookup_confhost - start DNS lookups of all hostnames in the conf
- * line and convert an IP addresses in a.b.c.d number for to IP#s.
- *
- */
-
-/*
- * conf_connect_allowed
- *
- * inputs	- pointer to inaddr
- *		- int type ipv4 or ipv6
- * output	- ban info or NULL
- * side effects	- none
- */
-struct ConfItem *
-conf_connect_allowed(struct sockaddr *addr, int aftype)
-{
-	struct ConfItem *aconf = find_dline(addr, aftype);
-
-	/* DLINE exempt also gets you out of static limits/pacing... */
-	if(aconf && (aconf->status & CONF_EXEMPTDLINE))
-		return NULL;
-
-	if(aconf != NULL)
-		return aconf;
-
-	return NULL;
-}
-
 /* add_temp_kline()
  *
  * inputs        - pointer to struct ConfItem
@@ -1538,7 +1509,7 @@ yyerror(const char *msg)
 {
 	char newlinebuf[BUFSIZE];
 
-	strip_tabs(newlinebuf, (const unsigned char *) linebuf, strlen(linebuf));
+	strip_tabs(newlinebuf, linebuf, strlen(linebuf));
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "\"%s\", line %d: %s at '%s'",
 			     conffilebuf, lineno + 1, msg, newlinebuf);

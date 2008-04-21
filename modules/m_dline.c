@@ -44,15 +44,17 @@
 #include "modules.h"
 
 static int mo_dline(struct Client *, struct Client *, int, const char **);
+static int me_dline(struct Client *, struct Client *, int, const char **);
 static int mo_undline(struct Client *, struct Client *, int, const char **);
+static int me_undline(struct Client *, struct Client *, int, const char **);
 
 struct Message dline_msgtab = {
 	"DLINE", 0, 0, 0, MFLG_SLOW,
-	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, mg_ignore, {mo_dline, 2}}
+	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, {me_dline, 3}, {mo_dline, 2}}
 };
 struct Message undline_msgtab = {
 	"UNDLINE", 0, 0, 0, MFLG_SLOW,
-	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, mg_ignore, {mo_undline, 2}}
+	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, {me_undline, 1}, {mo_undline, 2}}
 };
 
 mapi_clist_av1 dline_clist[] = { &dline_msgtab, &undline_msgtab, NULL };
@@ -61,6 +63,8 @@ DECLARE_MODULE_AV1(dline, NULL, NULL, dline_clist, NULL, NULL, "$Revision: 3225 
 static int valid_comment(char *comment);
 static int flush_write(struct Client *, FILE *, char *, char *);
 static int remove_temp_dline(struct ConfItem *);
+static int apply_dline(struct Client *, const char *, int, char *);
+static int apply_undline(struct Client *, const char *);
 
 /* mo_dline()
  * 
@@ -73,15 +77,10 @@ mo_dline(struct Client *client_p, struct Client *source_p,
 {
 	char def[] = "No Reason";
 	const char *dlhost;
-	char *oper_reason;
 	char *reason = def;
-	struct rb_sockaddr_storage daddr;
 	char cidr_form_host[HOSTLEN + 1];
-	struct ConfItem *aconf;
-	int bits;
-	char dlbuffer[IRCD_BUFSIZE];
-	const char *current_date;
 	int tdline_time = 0;
+	const char *target_server = NULL;
 	int loc = 1;
 
 	if(!IsOperK(source_p))
@@ -94,72 +93,174 @@ mo_dline(struct Client *client_p, struct Client *source_p,
 	if((tdline_time = valid_temp_time(parv[loc])) >= 0)
 		loc++;
 
-	if(parc < loc + 1)
-	{
-		sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS),
-			   me.name, source_p->name, "DLINE");
-		return 0;
-	}
-
 	dlhost = parv[loc];
 	rb_strlcpy(cidr_form_host, dlhost, sizeof(cidr_form_host));
 
-	if(!parse_netmask(dlhost, NULL, &bits))
+	loc++;
+
+	if(parc >= loc+2 && !irccmp(parv[loc], "ON"))
+ 	{
+		target_server = parv[loc+1];
+		loc += 2;
+	}
+
+	if(parc >= loc + 1 && !EmptyString(parv[loc]))
+		reason = LOCAL_COPY(parv[loc]);
+
+	if(target_server != NULL)
+	{
+		sendto_match_servs(source_p, target_server,
+				CAP_ENCAP, NOCAPS,
+				"ENCAP %s DLINE %d %s :%s",
+				target_server, tdline_time, dlhost, reason);
+
+		if(!match(target_server, me.name))
+			return 0;
+	}
+
+	apply_dline(source_p, dlhost, tdline_time, reason);
+
+	check_dlines();
+	return 0;
+}
+
+/* mo_undline()
+ *
+ *      parv[1] = dline to remove
+ */
+static int
+mo_undline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+{
+	const char *cidr;
+	const char *target_server = NULL;
+
+	if(!IsOperK(source_p))
+	{
+		sendto_one(source_p, form_str(ERR_NOPRIVS),
+			   me.name, source_p->name, "unkline");
+ 		return 0;
+ 	}
+ 
+	cidr = parv[1];
+
+	if(parc >= 4 && !irccmp(parv[2], "ON"))
+	{
+		target_server = parv[3];
+		sendto_match_servs(source_p, target_server,
+				CAP_ENCAP, NOCAPS,
+				"ENCAP %s UNDLINE %s",
+				target_server, cidr);
+
+		if(!match(target_server, me.name))
+			return 0;
+	}
+
+	apply_undline(source_p, cidr);
+
+	return 0;
+}
+
+static int
+me_dline(struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+{
+	int tdline_time = atoi(parv[1]);
+	/* Since this is coming over a server link, assume that the originating
+	 * server did the relevant permission/sanity checks...
+	 */
+
+	if(!IsPerson(source_p))
+		return 0;
+
+	if(!find_shared_conf(source_p->username, source_p->host,
+				source_p->servptr->name, tdline_time > 0 ? SHARED_TDLINE : SHARED_PDLINE))
+		return 0;
+
+	apply_dline(source_p, parv[2], tdline_time, LOCAL_COPY(parv[3]));
+
+	check_dlines();
+	return 0;
+}
+
+static int
+me_undline(struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+{
+	if(!IsPerson(source_p))
+		return 0;
+
+	if(!find_shared_conf(source_p->username, source_p->host,
+				source_p->servptr->name, SHARED_UNDLINE))
+		return 0;
+
+	apply_undline(source_p, parv[1]);
+
+	return 0;
+}
+
+static int
+apply_dline(struct Client *source_p, const char *dlhost, int tdline_time, char *reason)
+{
+	struct ConfItem *aconf;
+	char *oper_reason;
+	char dlbuffer[IRCD_BUFSIZE];
+	const char *current_date;
+	struct rb_sockaddr_storage daddr;
+	int t = AF_INET, ty, b;
+	const char *creason;
+
+	ty = parse_netmask(dlhost, (struct sockaddr *)&daddr, &b);
+	if(ty == HM_HOST)
 	{
 		sendto_one(source_p, ":%s NOTICE %s :Invalid D-Line",
 			   me.name, source_p->name);
 		return 0;
 	}
+#ifdef RB_IPV6
+	if(ty == HM_IPV6)
+		t = AF_INET6;
+	else
+#endif
+		t = AF_INET;
 
-	loc++;
-
-	if(parc >= loc + 1)	/* host :reason */
-	{
-		if(!EmptyString(parv[loc]))
-			reason = LOCAL_COPY(parv[loc]);
-
-		if(!valid_comment(reason))
-		{
-			sendto_one(source_p,
-				   ":%s NOTICE %s :Invalid character '\"' in comment",
-				   me.name, source_p->name);
-			return 0;
-		}
-	}
-
+	/* This means dlines wider than /16 cannot be set remotely */
 	if(IsOperAdmin(source_p))
 	{
-		if(bits < 8)
+		if(b < 8)
 		{
-			sendto_one(source_p,
-				   ":%s NOTICE %s :For safety, bitmasks less than 8 require conf access.",
-				   me.name, parv[0]);
+			sendto_one_notice(source_p,
+				   ":For safety, bitmasks less than 8 require conf access.");
 			return 0;
 		}
 	}
 	else
 	{
-		if(bits < 16)
+		if(b < 16)
 		{
-			sendto_one(source_p,
-				   ":%s NOTICE %s :Dline bitmasks less than 16 are for admins only.",
-				   me.name, parv[0]);
+			sendto_one_notice(source_p,
+				   ":Dline bitmasks less than 16 are for admins only.");
 			return 0;
 		}
 	}
 
+	if(!valid_comment(reason))
+	{
+		sendto_one(source_p,
+			   ":%s NOTICE %s :Invalid character '\"' in comment",
+			   me.name, source_p->name);
+		return 0;
+	}
+
+	/* Look for an oper reason */
+	if((oper_reason = strchr(reason, '|')) != NULL)
+	{
+		*oper_reason = '\0';
+		oper_reason++;
+
+		if(!EmptyString(oper_reason))
+			aconf->spasswd = rb_strdup(oper_reason);
+	}
+
 	if(ConfigFileEntry.non_redundant_klines)
 	{
-		const char *creason;
-		int t = AF_INET, ty, b;
-		ty = parse_netmask(dlhost, (struct sockaddr *)&daddr, &b);
-#ifdef RB_IPV6
-        	if(ty == HM_IPV6)
-                	t = AF_INET6;
-                else
-#endif
-			t = AF_INET;
-                                  		
 		if((aconf = find_dline((struct sockaddr *)&daddr, t)) != NULL)
 		{
 			int bx;
@@ -170,11 +271,11 @@ mo_dline(struct Client *client_p, struct Client *source_p,
 				if(IsConfExemptKline(aconf))
 					sendto_one(source_p,
 						   ":%s NOTICE %s :[%s] is (E)d-lined by [%s] - %s",
-						   me.name, parv[0], dlhost, aconf->host, creason);
+						   me.name, source_p->name, dlhost, aconf->host, creason);
 				else
 					sendto_one(source_p,
 						   ":%s NOTICE %s :[%s] already D-lined by [%s] - %s",
-						   me.name, parv[0], dlhost, aconf->host, creason);
+						   me.name, source_p->name, dlhost, aconf->host, creason);
 				return 0;
 			}
 		}
@@ -186,16 +287,6 @@ mo_dline(struct Client *client_p, struct Client *source_p,
 	aconf = make_conf();
 	aconf->status = CONF_DLINE;
 	aconf->host = rb_strdup(dlhost);
-
-	/* Look for an oper reason */
-	if((oper_reason = strchr(reason, '|')) != NULL)
-	{
-		*oper_reason = '\0';
-		oper_reason++;
-
-		if(!EmptyString(oper_reason))
-			aconf->spasswd = rb_strdup(oper_reason);
-	}
 
 	if(tdline_time > 0)
 	{
@@ -239,42 +330,27 @@ mo_dline(struct Client *client_p, struct Client *source_p,
 			       oper_reason, current_date, 0);
 	}
 
-	check_dlines();
 	return 0;
 }
 
-/* mo_undline()
- *
- *      parv[1] = dline to remove
- */
 static int
-mo_undline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+apply_undline(struct Client *source_p, const char *cidr)
 {
 	FILE *in;
 	FILE *out;
 	char buf[BUFSIZE], buff[BUFSIZE], temppath[BUFSIZE], *p;
 	const char *filename, *found_cidr;
-	const char *cidr;
-	struct ConfItem *aconf;
 	int pairme = NO, error_on_write = NO;
 	mode_t oldumask;
-
-	rb_snprintf(temppath, sizeof(temppath), "%s.tmp", ConfigFileEntry.dlinefile);
-
-	if(!IsOperUnkline(source_p))
-	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS),
-			   me.name, source_p->name, "unkline");
-		return 0;
-	}
-
-	cidr = parv[1];
+	struct ConfItem *aconf;
 
 	if(parse_netmask(cidr, NULL, NULL) == HM_HOST)
 	{
 		sendto_one_notice(source_p, ":Invalid D-Line");
 		return 0;
 	}
+
+	rb_snprintf(temppath, sizeof(temppath), "%s.tmp", ConfigFileEntry.dlinefile);
 
 	aconf = find_exact_conf_by_address(cidr, CONF_DLINE, NULL);
 	if(aconf == NULL)
@@ -288,7 +364,7 @@ mo_undline(struct Client *client_p, struct Client *source_p, int parc, const cha
 	{
 		sendto_one(source_p,
 			   ":%s NOTICE %s :Un-dlined [%s] from temporary D-lines",
-			   me.name, parv[0], buf);
+			   me.name, source_p->name, buf);
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "%s has removed the temporary D-Line for: [%s]",
 				     get_oper_name(source_p), buf);
@@ -300,14 +376,14 @@ mo_undline(struct Client *client_p, struct Client *source_p, int parc, const cha
 
 	if((in = fopen(filename, "r")) == 0)
 	{
-		sendto_one(source_p, ":%s NOTICE %s :Cannot open %s", me.name, parv[0], filename);
+		sendto_one(source_p, ":%s NOTICE %s :Cannot open %s", me.name, source_p->name, filename);
 		return 0;
 	}
 
 	oldumask = umask(0);
 	if((out = fopen(temppath, "w")) == 0)
 	{
-		sendto_one(source_p, ":%s NOTICE %s :Cannot open %s", me.name, parv[0], temppath);
+		sendto_one(source_p, ":%s NOTICE %s :Cannot open %s", me.name, source_p->name, temppath);
 		fclose(in);
 		umask(oldumask);
 		return 0;
@@ -356,13 +432,13 @@ mo_undline(struct Client *client_p, struct Client *source_p, int parc, const cha
 	{
 		sendto_one(source_p,
 			   ":%s NOTICE %s :Couldn't write D-line file, aborted", 
-			   me.name, parv[0]);
+			   me.name, source_p->name);
 		return 0;
 	}
 	else if(!pairme)
 	{
 		sendto_one_notice(source_p, ":Cannot find D-Line for %s in file",
-			   aconf->host);
+				aconf->host);
 
 		if(temppath != NULL)
 			(void) unlink(temppath);
@@ -376,11 +452,10 @@ mo_undline(struct Client *client_p, struct Client *source_p, int parc, const cha
 		return 0;
 	}
 
-	sendto_one(source_p, ":%s NOTICE %s :D-Line for [%s] is removed", me.name, parv[0], aconf->host);
+	sendto_one(source_p, ":%s NOTICE %s :D-Line for [%s] is removed", me.name, source_p->name, aconf->host);
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "%s has removed the D-Line for: [%s]", get_oper_name(source_p), aconf->host);
 	ilog(L_KLINE, "UD %s %s", get_oper_name(source_p), aconf->host);
-
 	delete_one_address_conf(aconf->host, aconf);
 
 	return 0;

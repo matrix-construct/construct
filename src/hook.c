@@ -59,6 +59,7 @@ int h_burst_finished;
 int h_server_introduced;
 int h_server_eob;
 int h_client_exit;
+int h_umode_changed;
 int h_new_local_user;
 int h_new_remote_user;
 int h_introduce_client;

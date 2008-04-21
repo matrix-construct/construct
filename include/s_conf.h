@@ -303,7 +303,7 @@ extern struct server_info ServerInfo;	/* defined in ircd.c */
 extern struct admin_info AdminInfo;	/* defined in ircd.c */
 /* End GLOBAL section */
 
-rb_dlink_list service_list;
+extern rb_dlink_list service_list;
 
 typedef enum temp_list
 {
@@ -314,8 +314,8 @@ typedef enum temp_list
 	LAST_TEMP_TYPE
 } temp_list;
 
-rb_dlink_list temp_klines[LAST_TEMP_TYPE];
-rb_dlink_list temp_dlines[LAST_TEMP_TYPE];
+extern rb_dlink_list temp_klines[LAST_TEMP_TYPE];
+extern rb_dlink_list temp_dlines[LAST_TEMP_TYPE];
 
 extern void init_s_conf(void);
 

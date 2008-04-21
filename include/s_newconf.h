@@ -53,7 +53,7 @@ extern rb_dlink_list resv_conf_list;
 extern rb_dlink_list nd_list;
 extern rb_dlink_list tgchange_list;
 
-struct _rb_patricia_tree_t *tgchange_tree;
+extern struct _rb_patricia_tree_t *tgchange_tree;
 
 extern void init_s_newconf(void);
 extern void clear_s_newconf(void);
@@ -95,6 +95,9 @@ struct remote_conf
 #define SHARED_PRESV	0x0100
 #define SHARED_UNRESV	0x0200
 #define SHARED_REHASH	0x0400
+#define SHARED_TDLINE	0x0800
+#define SHARED_PDLINE	0x1000
+#define SHARED_UNDLINE	0x2000
 
 #define SHARED_ALL	(SHARED_TKLINE | SHARED_PKLINE | SHARED_UNKLINE |\
 			SHARED_PXLINE | SHARED_TXLINE | SHARED_UNXLINE |\

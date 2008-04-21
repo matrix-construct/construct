@@ -36,6 +36,7 @@
 #include "stdinc.h"
 #include "s_user.h"
 #include "match.h"
+#include "substitution.h"
 
 /*
  * Simple mappings for $foo -> 'bar'.
