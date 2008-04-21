@@ -15,6 +15,7 @@ See LICENSE for licensing details (GPL v2).
   +iI/-iI $o.
 - The /privs command has been added which shows you your privileges and
   access level.
+- Many error messages have been clarified to enhance usability.
 
 -- charybdis-2.2.0
 
