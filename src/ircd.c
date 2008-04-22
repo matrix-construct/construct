@@ -606,7 +606,7 @@ main(int argc, char *argv[])
 
 	if(printVersion)
 	{
-		printf("ircd: version %s\n", ircd_version);
+		printf("ircd: version %s(%s)\n", ircd_version, serno);
 		exit(EXIT_SUCCESS);
 	}
 
