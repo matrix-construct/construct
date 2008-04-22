@@ -3,19 +3,45 @@ See LICENSE for licensing details (GPL v2).
 
 -- charybdis-3.0.0
 
-- The IRCd has been ported to libratbox, which has improved our portability.
-- Client SSL and Server-to-Server SSL are now available, read the example.conf
-  for setup.
-- A new extban, $z, has been added for ssl users.
+- Port the IRCd to libratbox, which has improved our portability and allows
+  us to reuse low-level code instead of maintaining our own.
+- Change configuration of maximum number of clients to ircd-ratbox 3 way.
+- Add adminwall from ircd-ratbox, as an extension.
+- Add client and server-to-server SSL, read example.conf for setup.
+- Replace servlink with ssld (also for ziplinks).
+- A new extban, $z, has been added for ssl users (extensions/extb_ssl.so).
 - A new compatibility channel mode, +R, has been added, it sets
-  +q/-q $~a. This is similar to the +R seen in ircd-seven.
+  +q/-q $~a (extensions/chm_operonly_compat.so). This is similar to
+  the +R seen in ircd-seven.
 - A new compatibility channel mode, +S, has been added, it sets
-  +b/-b $~z.
+  +b/-b $~z (extensions/chm_sslonly_compat.so).
 - A new compatibility channel mode, +O, has been added, it sets
-  +iI/-iI $o.
-- The /privs command has been added which shows you your privileges and
-  access level.
-- Many error messages have been clarified to enhance usability.
+  +iI/-iI $o (extensions/chm_operonly_compat.so).
+- Add remote D:lines. Note that these are not enabled by default.
+- Remove EFnet-style G:lines. Noone appears to use these.
+- Remove idle time checking (auto disconnecting users idle too long).
+- Display a notice to clients when the IRCd is shut down using SIGTERM.
+- Some error messages have been clarified to enhance usability.
+- Close the link to servers that send invalid nicks (e.g. nicklen mismatches).
+  Formerly the users were killed from the network.
+- Enable topicburst by default in connect{}.
+- Fix a potential desync which can happen with oper override.
+- Remove "deopped" flag (TS5 legacy).
+- Use 127.0.0.1 as nameserver if none can be found in /etc/resolv.conf.
+- Only accept 127.0.0.x as a dnsbl listing.
+- Change cloaking module (same as 2.2.1, different from 2.2.0).
+- Make some more server notices about failed remote connect attempts
+  network wide.
+- Make some server notices about flooders and TS delta network wide.
+- Remove redundant "<server> had been connected for <time>" server notice.
+- Add resv oper privilege to control /resv, /unresv and cmode +L and +P,
+  enabled by default.
+- Add mass_notice oper privilege to control global notices and /wallops,
+  enabled by default.
+- Rework unkline/undline/unxline/unresv so they show the exact item removed
+  and do not rehash bans.
+- Show opers a list of recently (<24hrs) split servers in /map.
+- Add /privs command, shows effective privileges of a client.
 
 -- charybdis-2.2.0
 
