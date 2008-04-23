@@ -100,6 +100,13 @@ mo_dline(struct Client *client_p, struct Client *source_p,
 
 	if(parc >= loc+2 && !irccmp(parv[loc], "ON"))
  	{
+		if(!IsOperRemoteBan(source_p))
+		{
+			sendto_one(source_p, form_str(ERR_NOPRIVS),
+				me.name, source_p->name, "remoteban");
+			return 0;
+		}
+
 		target_server = parv[loc+1];
 		loc += 2;
 	}
@@ -145,6 +152,13 @@ mo_undline(struct Client *client_p, struct Client *source_p, int parc, const cha
 
 	if(parc >= 4 && !irccmp(parv[2], "ON"))
 	{
+		if(!IsOperRemoteBan(source_p))
+		{
+			sendto_one(source_p, form_str(ERR_NOPRIVS),
+				me.name, source_p->name, "remoteban");
+			return 0;
+		}
+
 		target_server = parv[3];
 		sendto_match_servs(source_p, target_server,
 				CAP_ENCAP, NOCAPS,
