@@ -7,5 +7,6 @@ block, the name of the operator block and those
 privileges from the auth block that have an effect
 after the initial connection.
 
-If the server the nick is on does not support this
-extension, you will not receive a reply.
+The exact format depends on the server the nick is on;
+if it does not support this extension, you will not
+receive a reply.
