@@ -26,7 +26,7 @@ libexecdir	= @libexecdir@
 confdir		= @confdir@
 localstatedir	= @localstatedir@
 
-PROGS		= viconf mkpasswd convertilines convertklines 
+PROGS		= viconf mkpasswd convertilines convertklines genssl.sh
 
 all: $(PROGS)
 
@@ -43,6 +43,8 @@ convertilines: convertilines.c
 
 convertklines: convertklines.c
 	$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) convertklines.c -o convertklines $(IRCDLIBS)
+
+genssl.sh:
 
 clean:
 	$(RM) -f encspeed viconf chkconf mkpasswd *~ core *.exe convertklines convertilines
