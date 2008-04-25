@@ -18,9 +18,9 @@
       <sect2>
 	<title>remoteban (B), set remote bans</title>
 	<para>
-	  This grants the ability to use the ON argument on KLINE/XLINE/RESV
-	  and UNKLINE/UNXLINE/UNRESV to set and unset bans on other servers,
-	  and the server argument on REHASH.
+	  This grants the ability to use the ON argument on
+	  DLINE/KLINE/XLINE/RESV and UNDLINE/UNKLINE/UNXLINE/UNRESV to set
+	  and unset bans on other servers, and the server argument on REHASH.
 	  This is only allowed if the oper may perform the action locally,
 	  and if the remote server has a shared{} block.
 	</para>
@@ -133,7 +133,7 @@
 	</para>
       </sect2>
       <sect2>
-	<title>unkline (U), unkline</title>
+	<title>unkline (U), unkline and undline</title>
 	<para>
 	  Allows using UNKLINE and UNDLINE.
 	</para>

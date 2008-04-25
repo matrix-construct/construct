@@ -40,8 +40,5 @@
   [?] somehow hide channel operators like ircnet can do?
   [x] merge m_join.c and m_sjoin.c in one module (same functions, done in ratbox3)
   [x] create chmode.h and put there all declarations of chm_* - this will make some modules clean
-[F] Move most use of server WALLOPS to a global mechanism.
-  [F] Add SNONOTICE protocol command (like in InspIRCd) to broadcast to a specific SNOMASK.
-      (Using ENCAP?)
-  [F] Adopt commands to this framework.
+[?] Move oper override server WALLOPS to global server notices?
 
