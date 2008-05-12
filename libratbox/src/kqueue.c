@@ -34,8 +34,6 @@
 
 #include <sys/event.h>
 
-#define KE_LENGTH	128
-
 /* jlemon goofed up and didn't add EV_SET until fbsd 4.3 */
 
 #ifndef EV_SET
@@ -59,6 +57,7 @@ static int kq;
 static struct timespec zero_timespec;
 
 static struct kevent *kqlst;	/* kevent buffer */
+static struct kevent *kqout;	/* kevent output buffer */
 static int kqmax;		/* max structs to buffer */
 static int kqoff;		/* offset into the buffer */
 
@@ -108,14 +107,26 @@ kq_update_events(rb_fde_t * F, short filter, PF * handler)
 
 		if(++kqoff == kqmax)
 		{
-			int ret;
+			int ret, i;
 
-			ret = kevent(kq, kqlst, kqoff, NULL, 0, &zero_timespec);
-			/* jdc -- someone needs to do error checking... */
-			if(ret == -1)
+			/* Add them one at a time, because there may be
+			 * already closed fds in it. The kernel will try
+			 * to report invalid fds in the output; if there
+			 * is no space, it silently stops processing the
+			 * array at that point. We cannot give output space
+			 * because that would also return events we cannot
+			 * process at this point.
+			 */
+			for (i = 0; i < kqoff; i++)
 			{
-				rb_lib_log("kq_update_events(): kevent(): %s", strerror(errno));
-				return;
+				ret = kevent(kq, kqlst + i, 1, NULL, 0, &zero_timespec);
+				/* jdc -- someone needs to do error checking... */
+				if(ret == -1)
+				{
+					rb_lib_log("kq_update_events(): kevent(): %s", strerror(errno));
+					kqoff = 0;
+					return;
+				}
 			}
 			kqoff = 0;
 		}
@@ -144,6 +155,7 @@ rb_init_netio_kqueue(void)
 	}
 	kqmax = getdtablesize();
 	kqlst = rb_malloc(sizeof(struct kevent) * kqmax);
+	kqout = rb_malloc(sizeof(struct kevent) * kqmax);
 	rb_open(kq, RB_FD_UNKNOWN, "kqueue fd");
 	zero_timespec.tv_sec = 0;
 	zero_timespec.tv_nsec = 0;
@@ -195,7 +207,6 @@ int
 rb_select_kqueue(long delay)
 {
 	int num, i;
-	static struct kevent ke[KE_LENGTH];
 	struct timespec poll_time;
 	struct timespec *pt;
 	rb_fde_t *F;
@@ -212,7 +223,7 @@ rb_select_kqueue(long delay)
 
 	for (;;)
 	{
-		num = kevent(kq, kqlst, kqoff, ke, KE_LENGTH, pt);
+		num = kevent(kq, kqlst, kqoff, kqout, kqmax, pt);
 		kqoff = 0;
 
 		if(num >= 0)
@@ -237,18 +248,18 @@ rb_select_kqueue(long delay)
 	{
 		PF *hdl = NULL;
 
-		if(ke[i].flags & EV_ERROR)
+		if(kqout[i].flags & EV_ERROR)
 		{
-			errno = ke[i].data;
+			errno = kqout[i].data;
 			/* XXX error == bad! -- adrian */
 			continue;	/* XXX! */
 		}
 
-		switch (ke[i].filter)
+		switch (kqout[i].filter)
 		{
 
 		case EVFILT_READ:
-			F = ke[i].udata;
+			F = kqout[i].udata;
 			if((hdl = F->read_handler) != NULL)
 			{
 				F->read_handler = NULL;
@@ -258,7 +269,7 @@ rb_select_kqueue(long delay)
 			break;
 
 		case EVFILT_WRITE:
-			F = ke[i].udata;
+			F = kqout[i].udata;
 			if((hdl = F->write_handler) != NULL)
 			{
 				F->write_handler = NULL;
@@ -267,7 +278,7 @@ rb_select_kqueue(long delay)
 			break;
 #if defined(EVFILT_TIMER)
 		case EVFILT_TIMER:
-			rb_run_event(ke[i].udata);
+			rb_run_event(kqout[i].udata);
 			break;
 #endif
 		default:
