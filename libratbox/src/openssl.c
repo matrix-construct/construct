@@ -82,6 +82,7 @@ rb_ssl_tryaccept(rb_fde_t * F, void *data)
 	int ssl_err;
 	lrb_assert(F->accept != NULL);
 	int flags;
+	struct acceptdata *ad;
 
 	if(!SSL_is_init_finished((SSL *) F->ssl))
 	{
@@ -111,11 +112,12 @@ rb_ssl_tryaccept(rb_fde_t * F, void *data)
 	}
 	rb_settimeout(F, 0, NULL, NULL);
 	rb_setselect(F, RB_SELECT_READ | RB_SELECT_WRITE, NULL, NULL);
-                                                                
-	F->accept->callback(F, RB_OK, (struct sockaddr *) &F->accept->S, F->accept->addrlen,
-			    F->accept->data);
-	rb_free(F->accept);
+	
+	ad = F->accept;
 	F->accept = NULL;
+	ad->callback(F, RB_OK, (struct sockaddr *) &ad->S, ad->addrlen,
+			    ad->data);
+	rb_free(ad);
 
 }
 
