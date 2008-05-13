@@ -1,5 +1,12 @@
-This is charybdis 3.0.0, Copyright (c) 2005-2008 Charybdis team.
+This is charybdis 3.0.1, Copyright (c) 2005-2008 Charybdis team.
 See LICENSE for licensing details (GPL v2).
+
+-- charybdis-3.0.1
+
+- Fix occasional hung clients with kqueue.
+- Fix a rare ssld crash.
+- Fix a bug that could cause incorrect connect failure reasons to be
+  reported.
 
 -- charybdis-3.0.0
 
