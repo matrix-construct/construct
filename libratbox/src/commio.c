@@ -21,7 +21,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: commio.c 25038 2008-01-23 16:03:08Z androsyn $
+ *  $Id: commio.c 25358 2008-05-13 14:48:46Z androsyn $
  */
 #include <libratbox_config.h>
 #include <ratbox_lib.h>
@@ -470,6 +470,7 @@ rb_connect_callback(rb_fde_t *F, int status)
 {
 	CNCB *hdl;
 	void *data;
+	int errtmp = errno; /* save errno as rb_settimeout clobbers it sometimes */
 
 	/* This check is gross..but probably necessary */
 	if(F == NULL || F->connect == NULL || F->connect->callback == NULL)
@@ -479,8 +480,10 @@ rb_connect_callback(rb_fde_t *F, int status)
 	data = F->connect->data;
 	F->connect->callback = NULL;
 
+
 	/* Clear the timeout handler */
 	rb_settimeout(F, 0, NULL, NULL);
+	errno = errtmp; 
 	/* Call the handler */
 	hdl(F, status, data);
 }
