@@ -121,12 +121,9 @@ kq_update_events(rb_fde_t * F, short filter, PF * handler)
 			{
 				ret = kevent(kq, kqlst + i, 1, NULL, 0, &zero_timespec);
 				/* jdc -- someone needs to do error checking... */
-				if(ret == -1)
-				{
+				/* EBADF is normal here -- jilles */
+				if(ret == -1 && errno != EBADF)
 					rb_lib_log("kq_update_events(): kevent(): %s", strerror(errno));
-					kqoff = 0;
-					return;
-				}
 			}
 			kqoff = 0;
 		}
