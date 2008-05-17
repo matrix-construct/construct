@@ -123,12 +123,7 @@ rb_rawbuf_append
 rb_rawbuf_flush
 rb_rawbuf_get
 rb_rawbuf_length
-rb_free
-rb_malloc
 rb_outofmemory
-rb_realloc
-rb_strdup
-rb_strndup
 rb_snprintf
 rb_snprintf_append
 rb_sprintf
