@@ -7,6 +7,7 @@ See LICENSE for licensing details (GPL v2).
 - Fix a rare ssld crash.
 - Fix a bug that could cause incorrect connect failure reasons to be
   reported.
+- Make the IRCd work on MacOS X again.
 
 -- charybdis-3.0.0
 
