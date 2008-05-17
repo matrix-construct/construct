@@ -20,13 +20,14 @@ RM              = @RM@
 prefix          = @prefix@
 exec_prefix     = @exec_prefix@
 bindir          = @bindir@
+libdir		= @libdir@
 libexecdir      = @libexecdir@
 confdir         = @confdir@
 localstatedir   = @localstatedir@
 
 ZIP_LIB		= @ZLIB_LD@
 
-IRCDLIBS	= @MODULES_LIBS@ -Wl,-rpath=@libdir@ -L../libratbox/src/.libs -lratbox @LIBS@ $(SSL_LIBS) $(ZIP_LIB)
+IRCDLIBS	= @MODULES_LIBS@ -L../libratbox/src/.libs -lratbox @LIBS@ $(SSL_LIBS) $(ZIP_LIB)
 
 INCLUDES        = -I. -I../include -I../libratbox/include $(SSL_INCLUDES)
 CPPFLAGS        = ${INCLUDES} @CPPFLAGS@

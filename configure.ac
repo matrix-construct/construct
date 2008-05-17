@@ -1020,6 +1020,17 @@ if test "$shared_modules" = yes; then
 	fi
 fi
 
+# rpath, for finding libratbox.so at run time
+hold_ldflags=$LDFLAGS
+AC_MSG_CHECKING(for the ld -rpath flag)
+LDFLAGS="${LDFLAGS} -Wl,-rpath=${libdir}"
+AC_LINK_IFELSE(AC_LANG_PROGRAM([],[int i;]), found=yes, found=no)
+LDFLAGS=$hold_ldflags
+AC_MSG_RESULT($found)
+if test "$found" = yes; then
+	LDFLAGS="${LDFLAGS} -Wl,-rpath=\${libdir}"
+fi
+
 # This must be down here, or it will mess up checks like the ones
 # for -Wl,-export-dynamic
 # -- jilles
