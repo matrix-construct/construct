@@ -68,19 +68,25 @@ static void list_named_channel(struct Client *source_p, const char *name);
 static int
 mo_olist(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	if(IsOperSpy(source_p))
+	if(!IsOperSpy(source_p))
 	{
-		/* If no arg, do all channels *whee*, else just one channel */
-		if(parc < 2 || EmptyString(parv[1]))
-		{
-			report_operspy(source_p, "LIST", NULL);
-			list_all_channels(source_p);
-		}
-		else
-		{
-			report_operspy(source_p, "LIST", parv[1]);
-			list_named_channel(source_p, parv[1]);
-		}
+		sendto_one(source_p, form_str(ERR_NOPRIVS),
+				me.name, source_p->name, "oper_spy");
+		sendto_one(source_p, form_str(RPL_LISTEND),
+				me.name, source_p->name);
+		return 0;
+	}
+
+	/* If no arg, do all channels *whee*, else just one channel */
+	if(parc < 2 || EmptyString(parv[1]))
+	{
+		report_operspy(source_p, "LIST", NULL);
+		list_all_channels(source_p);
+	}
+	else
+	{
+		report_operspy(source_p, "LIST", parv[1]);
+		list_named_channel(source_p, parv[1]);
 	}
 
 	sendto_one(source_p, form_str(RPL_LISTEND), me.name, source_p->name);
