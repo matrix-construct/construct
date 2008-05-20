@@ -79,15 +79,9 @@ mo_olist(struct Client *client_p, struct Client *source_p, int parc, const char 
 
 	/* If no arg, do all channels *whee*, else just one channel */
 	if(parc < 2 || EmptyString(parv[1]))
-	{
-		report_operspy(source_p, "LIST", NULL);
 		list_all_channels(source_p);
-	}
 	else
-	{
-		report_operspy(source_p, "LIST", parv[1]);
 		list_named_channel(source_p, parv[1]);
-	}
 
 	sendto_one(source_p, form_str(RPL_LISTEND), me.name, source_p->name);
 	return 0;
@@ -105,6 +99,8 @@ list_all_channels(struct Client *source_p)
 {
 	struct Channel *chptr;
 	rb_dlink_node *ptr;
+
+	report_operspy(source_p, "LIST", NULL);
 	sendto_one(source_p, form_str(RPL_LISTSTART), me.name, source_p->name);
 
 	RB_DLINK_FOREACH(ptr, global_channel_list.head)
@@ -133,19 +129,20 @@ list_named_channel(struct Client *source_p, const char *name)
 	char *p;
 	char *n = LOCAL_COPY(name);
 
-	sendto_one(source_p, form_str(RPL_LISTSTART), me.name, source_p->name);
-
 	if((p = strchr(n, ',')))
 		*p = '\0';
 
-	if(EmptyString(n))
-	{
-		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL, 
-				form_str(ERR_NOSUCHCHANNEL), n);
-		return;
-	}
+	/* Put operspy notice before any output, but only if channel exists */
+	chptr = EmptyString(n) ? NULL : find_channel(n);
+	if(chptr != NULL)
+		report_operspy(source_p, "LIST", chptr->chname);
 
-	if((chptr = find_channel(n)) == NULL)
+	sendto_one(source_p, form_str(RPL_LISTSTART), me.name, source_p->name);
+
+	if(EmptyString(n))
+		return;
+
+	if(chptr == NULL)
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
 				form_str(ERR_NOSUCHCHANNEL), n);
 	else
