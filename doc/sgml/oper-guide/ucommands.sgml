@@ -80,6 +80,25 @@
 	</para>
       </sect2>
       <sect2>
+	<title>FINDFORWARDS</title>
+	<cmdsynopsis><command>FINDFORWARDS</command>
+	  <arg choice=plain><replaceable>channel</replaceable></arg>
+	</cmdsynopsis>
+	<para>
+	  <note>
+	    <para>
+	      This command is only available if the <filename>m_findforwards.so</filename> extension is loaded.
+	    </para>
+	  </note>
+	  Displays which channels forward to the given channel (via cmode +f).
+	  If there are very many channels the list will be truncated.
+	</para>
+	<para>
+	  You must be a channel operator on the channel or an IRC operator
+	  to use this command.
+	</para>
+      </sect2>
+      <sect2>
 	<title>HELP</title>
 	<cmdsynopsis><command>HELP</command>
 	  <arg><replaceable>topic</replaceable></arg>
@@ -91,6 +110,30 @@
 	<para>
 	  There are separate help files for users and opers. Opers can use
 	  UHELP to query the user help files.
+	</para>
+      </sect2>
+      <sect2>
+	<title>IDENTIFY</title>
+	<cmdsynopsis><command>IDENTIFY</command>
+	  <arg choice=plain><replaceable>parameters...</replaceable></arg>
+	</cmdsynopsis>
+	<para>
+	  <note>
+	    <para>
+	      This command is only available if the <filename>m_identify.so</filename> extension is loaded.
+	    </para>
+	  </note>
+	  Sends an identify command to either NickServ or ChanServ.
+	  If the first parameter starts with #, the command is sent to
+	  ChanServ, otherwise to NickServ.
+	  The word IDENTIFY, a space and all parameters are concatenated
+	  and sent as a PRIVMSG to the service.
+	  If the service is not online or does not have umode +S set, 
+	  no message will be sent.
+	</para>
+	<para>
+	  The exact syntax for this command depends on the services package
+	  in use.
 	</para>
       </sect2>
       <sect2>
