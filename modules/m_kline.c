@@ -589,8 +589,9 @@ find_user_host(struct Client *source_p, const char *userhost, char *luser, char 
 static int
 valid_user_host(struct Client *source_p, const char *luser, const char *lhost)
 {
-	/* # is invalid, as is '!' (n!u@h kline) */
-	if(strchr(lhost, '#') || strchr(luser, '#') || strchr(luser, '!'))
+	/* # is invalid, as are '!' (n!u@h kline) and '@' (u@@h kline) */
+	if(strchr(lhost, '#') || strchr(luser, '#') || strchr(luser, '!') ||
+			strchr(lhost, '@'))
 	{
 		sendto_one_notice(source_p, ":Invalid K-Line");
 		return 0;
