@@ -254,6 +254,28 @@
 	</para>
       </sect2>
       <sect2>
+	<title>+F, far client connection notices</title>
+	<para>
+	  <note>
+	    <para>
+	      This snomask is only available if the <filename>sno_farconnect.so</filename> extension is loaded.
+	    </para>
+	  </note>
+	  Opers with +F receive server notices when clients connect or
+	  disconnect on other servers. The notices have the same format
+	  as those from the +c snomask, except that the class is ? and
+	  the source server of the notice is the server the user is/was on.
+	</para>
+	<para>
+	  No notices are generated for netsplits and netjoins.
+	  Hence, these notices cannot be used to keep track of all
+	  clients on the network.
+	</para>
+	<para>
+	  There is no far equivalent of the +C snomask.
+	</para>
+      </sect2>
+      <sect2>
 	<title>+k, server kill notices</title>
 	<para>
 	  Opers with the +k snomask set will receive server notices when
@@ -292,6 +314,18 @@
 	</para>
       </sect2>
       <sect2>
+	<title>+W, whois notifications</title>
+	<para>
+	  <note>
+	    <para>
+	      This snomask is only available if the <filename>sno_whois.so</filename> extension is loaded.
+	    </para>
+	  </note>
+	  Opers with +W receive notices when a WHOIS is executed on them
+	  on their server (showing idle time).
+	</para>
+      </sect2>
+      <sect2>
 	<title>+x, extra routing notices</title>
 	<para>
 	  Opers who have the +x snomask set will get notices about servers
@@ -306,8 +340,7 @@
 	<para>
 	  Opers with +y receive notices when users try to join RESV'ed (<quote>juped</quote>) channels. 
 	  Additionally, if certain extension modules are loaded, they will
-	  receive notices when special commands are used and/or when they
-	  are whoised.
+	  receive notices when special commands are used.
 	</para>
       </sect2>
       <sect2>
