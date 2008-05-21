@@ -567,7 +567,10 @@ find_user_host(struct Client *source_p, const char *userhost, char *luser, char 
 		 * its a nick, which support was removed for.
 		 */
 		if(strchr(userhost, '.') == NULL && strchr(userhost, ':') == NULL)
+		{
+			sendto_one_notice(source_p, ":K-Line must be a user@host or host");
 			return 0;
+		}
 
 		luser[0] = '*';	/* no @ found, assume its *@somehost */
 		luser[1] = '\0';
