@@ -61,7 +61,7 @@ mapi_hlist_av1 trace_hlist[] = {
 DECLARE_MODULE_AV1(trace, NULL, NULL, trace_clist, trace_hlist, NULL, "$Revision: 3183 $");
 
 static void count_downlinks(struct Client *server_p, int *pservcount, int *pusercount);
-static int report_this_status(struct Client *source_p, struct Client *target_p, int dow);
+static int report_this_status(struct Client *source_p, struct Client *target_p);
 
 /*
  * m_trace
@@ -172,7 +172,7 @@ m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *
 		 */
 		if(target_p != NULL)
 		{
-			report_this_status(source_p, target_p, 0);
+			report_this_status(source_p, target_p);
 			tname = target_p->name;
 		}
 
@@ -193,7 +193,7 @@ m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *
 		if(MyClient(source_p))
 		{
 			if(doall || (wilds && match(tname, source_p->name)))
-				report_this_status(source_p, source_p, 0);
+				report_this_status(source_p, source_p);
 		}
 
 		RB_DLINK_FOREACH(ptr, local_oper_list.head)
@@ -203,7 +203,7 @@ m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *
 			if(!doall && wilds && (match(tname, target_p->name) == 0))
 				continue;
 
-			report_this_status(source_p, target_p, 0);
+			report_this_status(source_p, target_p);
 		}
 
 		if (IsExemptShide(source_p) || !ConfigServerHide.flatten_links)
@@ -215,7 +215,7 @@ m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *
 				if(!doall && wilds && !match(tname, target_p->name))
 					continue;
 
-				report_this_status(source_p, target_p, 0);
+				report_this_status(source_p, target_p);
 			}
 		}
 
@@ -238,7 +238,12 @@ m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *
 		if(!doall && wilds && !match(tname, target_p->name))
 			continue;
 
-		cnt = report_this_status(source_p, target_p, dow);
+		/* remote opers may not see invisible normal users */
+		if(dow && !MyConnect(source_p) && !IsOper(target_p) &&
+				IsInvisible(target_p))
+			continue;
+
+		cnt = report_this_status(source_p, target_p);
 	}
 
 	RB_DLINK_FOREACH(ptr, serv_list.head)
@@ -248,7 +253,7 @@ m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *
 		if(!doall && wilds && !match(tname, target_p->name))
 			continue;
 
-		cnt = report_this_status(source_p, target_p, dow);
+		cnt = report_this_status(source_p, target_p);
 	}
 
 	if(MyConnect(source_p))
@@ -260,7 +265,7 @@ m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *
 			if(!doall && wilds && !match(tname, target_p->name))
 				continue;
 
-			cnt = report_this_status(source_p, target_p, dow);
+			cnt = report_this_status(source_p, target_p);
 		}
 	}
 
@@ -325,8 +330,7 @@ count_downlinks(struct Client *server_p, int *pservcount, int *pusercount)
  * side effects - NONE
  */
 static int
-report_this_status(struct Client *source_p, struct Client *target_p,
-		   int dow)
+report_this_status(struct Client *source_p, struct Client *target_p)
 {
 	const char *name;
 	const char *class_name;
@@ -374,12 +378,6 @@ report_this_status(struct Client *source_p, struct Client *target_p,
 		break;
 
 	case STAT_CLIENT:
-		/* Only opers see users if there is a wildcard
-		 * but anyone can see all the opers.
-		 */
-		if((IsOper(source_p) &&
-		    (MyClient(source_p) || !(dow && IsInvisible(target_p))))
-		   || !dow || IsOper(target_p) || (source_p == target_p))
 		{
 			if(IsOper(target_p))
 				sendto_one_numeric(source_p, RPL_TRACEOPERATOR,
