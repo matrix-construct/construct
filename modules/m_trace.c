@@ -378,24 +378,22 @@ report_this_status(struct Client *source_p, struct Client *target_p)
 		break;
 
 	case STAT_CLIENT:
-		{
-			if(IsOper(target_p))
-				sendto_one_numeric(source_p, RPL_TRACEOPERATOR,
-						   form_str(RPL_TRACEOPERATOR),
-						   class_name, name,
-						   show_ip(source_p, target_p) ? ip : "255.255.255.255",
-						   rb_current_time() - target_p->localClient->lasttime,
-						   rb_current_time() - target_p->localClient->last);
+		if(IsOper(target_p))
+			sendto_one_numeric(source_p, RPL_TRACEOPERATOR,
+					   form_str(RPL_TRACEOPERATOR),
+					   class_name, name,
+					   show_ip(source_p, target_p) ? ip : "255.255.255.255",
+					   rb_current_time() - target_p->localClient->lasttime,
+					   rb_current_time() - target_p->localClient->last);
 
-			else
-				sendto_one_numeric(source_p, RPL_TRACEUSER, 
-						   form_str(RPL_TRACEUSER),
-						   class_name, name,
-						   show_ip(source_p, target_p) ? ip : "255.255.255.255",
-						   rb_current_time() - target_p->localClient->lasttime,
-						   rb_current_time() - target_p->localClient->last);
-			cnt++;
-		}
+		else
+			sendto_one_numeric(source_p, RPL_TRACEUSER, 
+					   form_str(RPL_TRACEUSER),
+					   class_name, name,
+					   show_ip(source_p, target_p) ? ip : "255.255.255.255",
+					   rb_current_time() - target_p->localClient->lasttime,
+					   rb_current_time() - target_p->localClient->last);
+		cnt++;
 		break;
 
 	case STAT_SERVER:
