@@ -23,12 +23,8 @@
   [x] remote d:lines support
 [F] kline/xline/resv sync
 [F] make an ability of using bandb instead of .conf files as bans storage
-<<<<<<< local
 [/] drop non-TS6 (legacy protocol) support
-=======
-[F] drop non-TS6 (legacy protocol) support
 [F] Doxygen code documentation
->>>>>>> other
 [F] module engine rework
   [F] more beautiful way of adding new channel modes by module
   [F] make nick/user/host validation functions/match tables able to work in separated modules,
