@@ -528,7 +528,7 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 	int keep_new_modes = 1;
 	int fl;
 	int isnew;
-	int mlen_nick, mlen_uid;
+	int mlen_uid;
 	int len_nick;
 	int len_uid;
 	int len;
