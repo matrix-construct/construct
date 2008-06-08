@@ -1295,13 +1295,9 @@ send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
 		cap = chcap_combos[j].cap_yes;
 		nocap = chcap_combos[j].cap_no;
 
-		if(cap & CAP_TS6)
-			mbl = preflen = rb_sprintf(modebuf, ":%s TMODE %ld %s ",
-						   use_id(source_p), (long) chptr->channelts,
-						   chptr->chname);
-		else
-			mbl = preflen = rb_sprintf(modebuf, ":%s MODE %s ",
-						   source_p->name, chptr->chname);
+		mbl = preflen = rb_sprintf(modebuf, ":%s TMODE %ld %s ",
+					   use_id(source_p), (long) chptr->channelts,
+					   chptr->chname);
 
 		/* loop the list of - modes we have */
 		for (i = 0; i < mode_count; i++)
@@ -1315,10 +1311,7 @@ send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
 			   || ((nocap & mode_changes[i].nocaps) != mode_changes[i].nocaps))
 				continue;
 
-			if((cap & CAP_TS6) && !EmptyString(mode_changes[i].id))
-				arg = mode_changes[i].id;
-			else
-				arg = mode_changes[i].arg;
+			arg = mode_changes[i].id;
 
 			if(arg)
 			{
