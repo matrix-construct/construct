@@ -18,19 +18,19 @@
   [x] ssl usermode (+Z)
   [x] ssl channelmode (done by extban and chm_compat)
   [ ] acknowledgement message for SSL users like '* *** You are connected using SSL cipher "DHE RSA-AES 128 CBC-SHA"'
-  [ ] ssl stuff files generator in ./configure time
+  [x] tool for generating ssl certificates and other stuff
 [x] merge some stuff from ircd-seven directly (to be determined what)
   [x] remote d:lines support
 [F] kline/xline/resv sync
 [F] make an ability of using bandb instead of .conf files as bans storage
 [/] drop non-TS6 (legacy protocol) support
 [F] Doxygen code documentation
-[F] module engine rework
-  [F] more beautiful way of adding new channel modes by module
-  [F] make nick/user/host validation functions/match tables able to work in separated modules,
+[ ] module engine rework
+  [ ] more beautiful way of adding new channel modes by module
+  [ ] make nick/user/host validation functions/match tables able to work in separated modules,
       this will help us making support for native characters sets/slashes in host etc
-  [F] auth checker module
-  [F] resolver module
+  [ ] auth checker module
+  [ ] resolver module
 [x] Remove glines entirely
 --- other stuff
   [?] PASS selector:password for auth{} from ircd-seven? (useful for dynamic IPs)
