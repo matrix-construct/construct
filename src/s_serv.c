@@ -651,8 +651,6 @@ show_capabilities(struct Client *target_p)
 
 	if(has_id(target_p))
 		rb_strlcpy(msgbuf, " TS6", sizeof(msgbuf));
-	else
-		rb_strlcpy(msgbuf, " TS", sizeof(msgbuf));
 
 	if(IsSSL(target_p))
 		rb_strlcat(msgbuf, " SSL", sizeof(msgbuf));
