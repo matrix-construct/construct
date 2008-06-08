@@ -321,48 +321,47 @@ find_oper_conf(const char *username, const char *host, const char *locip, const 
 struct oper_flags
 {
 	int flag;
-	char has;
-	char hasnt;
+	const char *name;
 };
 static struct oper_flags oper_flagtable[] =
 {
-	{ OPER_KLINE,		'K', 'k' },
-	{ OPER_XLINE,		'X', 'x' },
-	{ OPER_RESV,		'Q', 'q' },
-	{ OPER_GLOBKILL,	'O', 'o' },
-	{ OPER_LOCKILL,		'C', 'c' },
-	{ OPER_REMOTE,		'R', 'r' },
-	{ OPER_UNKLINE,		'U', 'u' },
-	{ OPER_REHASH,		'H', 'h' },
-	{ OPER_DIE,		'D', 'd' },
-	{ OPER_ADMIN,		'A', 'a' },
-	{ OPER_NICKS,		'N', 'n' },
-	{ OPER_OPERWALL,	'L', 'l' },
-	{ OPER_SPY,		'S', 's' },
-	{ OPER_INVIS,		'P', 'p' },
-	{ OPER_REMOTEBAN,	'B', 'b' },
-	{ OPER_MASSNOTICE,	'M', 'm' },
-	{ 0,			'\0', '\0' }
+	{ OPER_KLINE,		"kline"        },
+	{ OPER_XLINE,		"xline"        },
+	{ OPER_RESV,		"resv"         },
+	{ OPER_GLOBKILL,	"global_kill"  },
+	{ OPER_LOCKILL,		"local_kill"   },
+	{ OPER_REMOTE,		"remote"       },
+	{ OPER_UNKLINE,		"unkline"      },
+	{ OPER_REHASH,		"rehash"       },
+	{ OPER_DIE,		"die"          },
+	{ OPER_ADMIN,		"admin"        },
+        { OPER_HADMIN,          "hidden_admin" },
+	{ OPER_NICKS,		"nick_changes" },
+	{ OPER_OPERWALL,	"operwall"     },
+	{ OPER_SPY,		"spy"          },
+	{ OPER_INVIS,		"hidden_oper"  },
+	{ OPER_REMOTEBAN,	"remoteban"    },
+	{ OPER_MASSNOTICE,	"mass_notice"  },
+	{ 0,			NULL }
 };
 
 const char *
 get_oper_privs(int flags)
 {
-	static char buf[20];
+	static char buf[BUFSIZE];
 	char *p;
 	int i;
 
 	p = buf;
+	*p = '\0';
 
 	for(i = 0; oper_flagtable[i].flag; i++)
 	{
-		if(flags & oper_flagtable[i].flag)
-			*p++ = oper_flagtable[i].has;
-		else
-			*p++ = oper_flagtable[i].hasnt;
-	}
+		if(i)
+			rb_strlcat(buf, ", ", sizeof(buf));
 
-	*p = '\0';
+		rb_strlcat(buf, oper_flagtable[i].name, sizeof(buf));
+	}
 
 	return buf;
 }
