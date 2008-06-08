@@ -181,9 +181,6 @@ m_kick(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
 			      ":%s KICK %s %s :%s",
 			      use_id(source_p), chptr->chname, use_id(who), comment);
-		sendto_server(client_p, chptr, NOCAPS, CAP_TS6,
-			      ":%s KICK %s %s :%s",
-			      source_p->name, chptr->chname, who->name, comment);
 		remove_user_from_channel(msptr);
 	}
 	else if (MyClient(source_p))

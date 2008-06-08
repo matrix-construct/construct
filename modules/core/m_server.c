@@ -589,10 +589,6 @@ ms_sid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		      ":%s SID %s %d %s :%s%s",
 		      source_p->id, target_p->name, target_p->hopcount + 1,
 		      target_p->id, IsHidden(target_p) ? "(H) " : "", target_p->info);
-	sendto_server(client_p, NULL, NOCAPS, CAP_TS6,
-		      ":%s SERVER %s %d :%s%s",
-		      source_p->name, target_p->name, target_p->hopcount + 1,
-		      IsHidden(target_p) ? "(H) " : "", target_p->info);
 
 	sendto_realops_snomask(SNO_EXTERNAL, L_ALL,
 			     "Server %s being introduced by %s", target_p->name, source_p->name);

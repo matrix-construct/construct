@@ -343,10 +343,6 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 					      ":%s SJOIN %ld %s +nt :@%s",
 					      me.id, (long) chptr->channelts,
 					      chptr->chname, source_p->id);
-				sendto_server(client_p, chptr, NOCAPS, CAP_TS6,
-					      ":%s SJOIN %ld %s +nt :@%s",
-					      me.name, (long) chptr->channelts,
-					      chptr->chname, source_p->name);
 			}
 		}
 		else
@@ -355,11 +351,6 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 				      ":%s JOIN %ld %s +",
 				      use_id(source_p), (long) chptr->channelts,
 				      chptr->chname);
-
-			sendto_server(client_p, chptr, NOCAPS, CAP_TS6,
-				      ":%s SJOIN %ld %s + :%s",
-				      me.name, (long) chptr->channelts,
-				      chptr->chname, source_p->name);
 		}
 
 		del_invite(chptr, source_p);
@@ -518,18 +509,12 @@ ms_join(struct Client *client_p, struct Client *source_p, int parc, const char *
 	sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
 		      ":%s JOIN %ld %s +",
 		      source_p->id, (long) chptr->channelts, chptr->chname);
-	sendto_server(client_p, chptr, NOCAPS, CAP_TS6,
-		      ":%s SJOIN %ld %s %s :%s",
-		      source_p->servptr->name, (long) chptr->channelts,
-		      chptr->chname, keep_new_modes ? "+" : "0",
-		      source_p->name);
 	return 0;
 }
 
 static int
 ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	static char buf_nick[BUFSIZE];
 	static char buf_uid[BUFSIZE];
 	static const char empty_modes[] = "0";
 	struct Channel *chptr;
@@ -549,7 +534,6 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 	int len;
 	int joins = 0;
 	const char *s;
-	char *ptr_nick;
 	char *ptr_uid;
 	char *p;
 	int i, joinc = 0, timeslice = 0;
@@ -729,9 +713,6 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 					      ":%s KICK %s %s :Net Rider",
 					      me.id, chptr->chname,
 					      who->id);
-				sendto_server(NULL, chptr, NOCAPS, CAP_TS6,
-					      ":%s KICK %s %s :Net Rider",
-					      me.name, chptr->chname, who->name);
 				remove_user_from_channel(msptr);
 				if (--l == 0)
 					break;
@@ -816,10 +797,6 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 	else
 		modes = empty_modes;
 
-	mlen_nick = rb_sprintf(buf_nick, ":%s SJOIN %ld %s %s :",
-			       source_p->name, (long) chptr->channelts, parv[2], modes);
-	ptr_nick = buf_nick + mlen_nick;
-
 	/* working on the presumption eventually itll be more efficient to
 	 * build a TS6 buffer without checking its needed..
 	 */
@@ -869,14 +846,6 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 		/* we assume for these we can fit at least one nick/uid in.. */
 
 		/* check we can fit another status+nick+space into a buffer */
-		if((mlen_nick + len_nick + NICKLEN + 3) > (BUFSIZE - 3))
-		{
-			*(ptr_nick - 1) = '\0';
-			sendto_server(client_p->from, NULL, NOCAPS, CAP_TS6, "%s", buf_nick);
-			ptr_nick = buf_nick + mlen_nick;
-			len_nick = 0;
-		}
-
 		if((mlen_uid + len_uid + IDLEN + 3) > (BUFSIZE - 3))
 		{
 			*(ptr_uid - 1) = '\0';
@@ -889,14 +858,12 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 		{
 			if(fl & CHFL_CHANOP)
 			{
-				*ptr_nick++ = '@';
 				*ptr_uid++ = '@';
 				len_nick++;
 				len_uid++;
 			}
 			if(fl & CHFL_VOICE)
 			{
-				*ptr_nick++ = '+';
 				*ptr_uid++ = '+';
 				len_nick++;
 				len_uid++;
@@ -904,9 +871,6 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 		}
 
 		/* copy the nick to the two buffers */
-		len = rb_sprintf(ptr_nick, "%s ", target_p->name);
-		ptr_nick += len;
-		len_nick += len;
 		len = rb_sprintf(ptr_uid, "%s ", use_id(target_p));
 		ptr_uid += len;
 		len_uid += len;
@@ -1013,12 +977,10 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 	/* Keep the colon if we're sending an SJOIN without nicks -- jilles */
 	if (joins)
 	{
-		*(ptr_nick - 1) = '\0';
 		*(ptr_uid - 1) = '\0';
 	}
 
 	sendto_server(client_p->from, NULL, CAP_TS6, NOCAPS, "%s", buf_uid);
-	sendto_server(client_p->from, NULL, NOCAPS, CAP_TS6, "%s", buf_nick);
 
 	/* if the source does TS6 we have to remove our bans.  Its now safe
 	 * to issue -b's to the non-ts6 servers, as the sjoin we've just
@@ -1068,9 +1030,7 @@ do_join_0(struct Client *client_p, struct Client *source_p)
 	if(MyClient(source_p) && !IsFloodDone(source_p))
 		flood_endgrace(source_p);
 
-
 	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s JOIN 0", use_id(source_p));
-	sendto_server(client_p, NULL, NOCAPS, CAP_TS6, ":%s JOIN 0", source_p->name);
 
 	if(source_p->user->channel.head && MyConnect(source_p) &&
 	   !IsOper(source_p) && !IsExemptSpambot(source_p))

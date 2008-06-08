@@ -801,8 +801,6 @@ change_local_nick(struct Client *client_p, struct Client *source_p,
 		{
 			sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s NICK %s :%ld",
 					use_id(source_p), nick, (long) source_p->tsinfo);
-			sendto_server(client_p, NULL, NOCAPS, CAP_TS6, ":%s NICK %s :%ld",
-					source_p->name, nick, (long) source_p->tsinfo);
 		}
 	}
 
@@ -862,8 +860,6 @@ change_remote_nick(struct Client *client_p, struct Client *source_p,
 		{
 			sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s NICK %s :%ld",
 					use_id(source_p), nick, (long) source_p->tsinfo);
-			sendto_server(client_p, NULL, NOCAPS, CAP_TS6, ":%s NICK %s :%ld",
-					source_p->name, nick, (long) source_p->tsinfo);
 		}
 	}
 
@@ -1327,8 +1323,6 @@ save_user(struct Client *client_p, struct Client *source_p,
 			source_p->id, target_p->id, (long)target_p->tsinfo);
 	sendto_server(client_p, NULL, CAP_TS6, CAP_SAVE, ":%s NICK %s :%ld",
 			target_p->id, target_p->id, (long)SAVE_NICKTS);
-	sendto_server(client_p, NULL, NOCAPS, CAP_TS6, ":%s NICK %s :%ld",
-			target_p->name, target_p->id, (long)SAVE_NICKTS);
 	if (!IsMe(client_p))
 		sendto_realops_snomask(SNO_SKILL, L_ALL,
 				"Received SAVE message for %s from %s",
@@ -1354,9 +1348,6 @@ static void bad_nickname(struct Client *client_p, const char *nick)
 	sendto_server(NULL, NULL, CAP_TS6, NOCAPS,
 			":%s WALLOPS :Squitting %s because of bad nickname %s (NICKLEN mismatch?)",
 			me.id, client_p->name, nick);
-	sendto_server(NULL, NULL, NOCAPS, CAP_TS6,
-			":%s WALLOPS :Squitting %s because of bad nickname %s (NICKLEN mismatch?)",
-			me.name, client_p->name, nick);
 
 	rb_snprintf(squitreason, sizeof squitreason,
 			"Bad nickname introduced [%s]", nick);
