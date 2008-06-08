@@ -356,12 +356,13 @@ get_oper_privs(int flags)
 	*p = '\0';
 
 	for(i = 0; oper_flagtable[i].flag; i++)
-	{
-		if(i)
-			rb_strlcat(buf, ", ", sizeof(buf));
+		if (flags & oper_flagtable[i].flag)
+		{
+			if(i)
+				rb_strlcat(buf, ", ", sizeof(buf));
 
-		rb_strlcat(buf, oper_flagtable[i].name, sizeof(buf));
-	}
+			rb_strlcat(buf, oper_flagtable[i].name, sizeof(buf));
+		}
 
 	return buf;
 }
