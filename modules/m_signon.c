@@ -431,9 +431,6 @@ send_signon(struct Client *client_p, struct Client *target_p,
 	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s SIGNON %s %s %s %ld %s",
 			use_id(target_p), nick, user, host,
 			(long) target_p->tsinfo, *login ? login : "0");
-	sendto_server(client_p, NULL, NOCAPS, CAP_TS6, ":%s SIGNON %s %s %s %ld %s",
-			target_p->name, nick, user, host,
-			(long) target_p->tsinfo, *login ? login : "0");
 
 	strcpy(target_p->user->suser, login);
 

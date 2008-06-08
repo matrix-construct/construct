@@ -84,8 +84,6 @@ m_away(struct Client *client_p, struct Client *source_p, int parc, const char *p
 			/* we now send this only if they were away before --is */
 			sendto_server(client_p, NULL, CAP_TS6, NOCAPS,
 				      ":%s AWAY", use_id(source_p));
-			sendto_server(client_p, NULL, NOCAPS, CAP_TS6, 
-				      ":%s AWAY", source_p->name);
 			free_away(source_p);
 		}
 		if(MyConnect(source_p))
@@ -100,8 +98,6 @@ m_away(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		rb_strlcpy(source_p->user->away, parv[1], AWAYLEN);
 		sendto_server(client_p, NULL, CAP_TS6, NOCAPS, 
 			      ":%s AWAY :%s", use_id(source_p), source_p->user->away);
-		sendto_server(client_p, NULL, NOCAPS, CAP_TS6,
-			      ":%s AWAY :%s", source_p->name, source_p->user->away);
 			
 	} else {
 		rb_strlcpy(source_p->user->away, parv[1], AWAYLEN);

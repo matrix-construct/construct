@@ -161,9 +161,6 @@ ms_chghost(struct Client *client_p, struct Client *source_p,
 		sendto_server(client_p, NULL,
 			CAP_TS6, CAP_EUID, ":%s ENCAP * CHGHOST %s :%s",
 			use_id(source_p), use_id(target_p), parv[2]);
-		sendto_server(client_p, NULL,
-			NOCAPS, CAP_TS6, ":%s ENCAP * CHGHOST %s :%s",
-			source_p->name, target_p->name, parv[2]);
 	}
 
 	return 0;
@@ -233,9 +230,6 @@ mo_chghost(struct Client *client_p, struct Client *source_p,
 	sendto_server(NULL, NULL,
 		CAP_TS6, CAP_EUID, ":%s ENCAP * CHGHOST %s :%s",
 		use_id(source_p), use_id(target_p), parv[2]);
-	sendto_server(NULL, NULL,
-		NOCAPS, CAP_TS6, ":%s ENCAP * CHGHOST %s :%s",
-		source_p->name, target_p->name, parv[2]);
 #else
 	sendto_one_numeric(source_p, ERR_DISABLED, form_str(ERR_DISABLED),
 			"CHGHOST");
