@@ -38,8 +38,7 @@
 #include "channel.h"
 #include "res.h"
 #include "snomask.h"
-#include "irc_string.h"
-#include "sprintf_irc.h"
+#include "match.h"
 #include "ircd.h"
 
 /* other structs */
