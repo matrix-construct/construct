@@ -59,9 +59,6 @@ distribute_hostchange(struct Client *client)
 	sendto_server(NULL, NULL,
 		CAP_TS6, CAP_EUID, ":%s ENCAP * CHGHOST %s :%s",
 		use_id(&me), use_id(client), client->host);
-	sendto_server(NULL, NULL,
-		NOCAPS, CAP_TS6, ":%s ENCAP * CHGHOST %s :%s",
-		me.name, client->name, client->host);
 	if (irccmp(client->host, client->orighost))
 		SetDynSpoof(client);
 	else

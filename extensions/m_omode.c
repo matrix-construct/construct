@@ -140,9 +140,6 @@ mo_omode(struct Client *client_p, struct Client *source_p, int parc, const char 
 				":%s TMODE %ld %s +o %s",
 				me.id, (long) chptr->channelts, parv[1],
 				source_p->id);
-		sendto_server(NULL, chptr, NOCAPS, CAP_TS6,
-				":%s MODE %s +o %s",
-				me.name, parv[1], source_p->name);
 		msptr->flags |= CHFL_CHANOP;
 	}
 	else

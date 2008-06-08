@@ -136,8 +136,6 @@ mo_okick(struct Client *client_p, struct Client *source_p, int parc, const char 
 			     me.name, chptr->chname, who->name, comment);
 	sendto_server(&me, chptr, CAP_TS6, NOCAPS,
 		      ":%s KICK %s %s :%s", me.id, chptr->chname, who->id, comment);
-	sendto_server(&me, chptr, NOCAPS, CAP_TS6,
-		      ":%s KICK %s %s :%s", me.name, chptr->chname, who->name, comment);
 	remove_user_from_channel(msptr);
 	return 0;
 }
