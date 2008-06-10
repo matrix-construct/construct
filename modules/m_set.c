@@ -65,7 +65,7 @@ struct SetStruct
 
 
 static void quote_adminstring(struct Client *, const char *);
-static void quote_autoconn(struct Client *, char *, int);
+static void quote_autoconn(struct Client *, const char *, int);
 static void quote_autoconnall(struct Client *, int);
 static void quote_floodcount(struct Client *, int);
 static void quote_identtimeout(struct Client *, int);
@@ -73,7 +73,7 @@ static void quote_max(struct Client *, int);
 static void quote_operstring(struct Client *, const char *);
 static void quote_spamnum(struct Client *, int);
 static void quote_spamtime(struct Client *, int);
-static void quote_splitmode(struct Client *, char *);
+static void quote_splitmode(struct Client *, const char *);
 static void quote_splitnum(struct Client *, int);
 static void quote_splitusers(struct Client *, int);
 static void list_quote_commands(struct Client *);
@@ -143,7 +143,7 @@ list_quote_commands(struct Client *source_p)
 
 /* SET AUTOCONN */
 static void
-quote_autoconn(struct Client *source_p, char *arg, int newval)
+quote_autoconn(struct Client *source_p, const char *arg, int newval)
 {
 	set_server_conf_autoconn(source_p, arg, newval);
 }
@@ -356,7 +356,7 @@ static const char *splitmode_status[] = {
 
 /* SET SPLITMODE */
 static void
-quote_splitmode(struct Client *source_p, char *charval)
+quote_splitmode(struct Client *source_p, const char *charval)
 {
 	if(charval)
 	{
