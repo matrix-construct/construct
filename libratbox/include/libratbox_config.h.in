@@ -51,6 +51,9 @@
 /* Define to 1 if you have the `gmtime_r' function. */
 #undef HAVE_GMTIME_R
 
+/* Has GNUTLS */
+#undef HAVE_GNUTLS
+
 /* Define to 1 if the system has the type `intmax_t'. */
 #undef HAVE_INTMAX_T
 
