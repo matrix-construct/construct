@@ -50,7 +50,7 @@
 
 struct config_server_hide ConfigServerHide;
 
-extern int yyparse();		/* defined in y.tab.c */
+extern int yyparse(void);		/* defined in y.tab.c */
 extern char linebuf[];
 
 #ifndef INADDR_NONE
