@@ -241,6 +241,25 @@ if test "$is_mingw" = "yes"; then
 	AC_DEFINE(HAVE_WIN32, [1], [Define to 1 if you are on windows])
 fi
 
+dnl GnuTLS support
+AC_MSG_CHECKING(for GnuTLS)
+AC_ARG_ENABLE(gnutls,
+[AC_HELP_STRING([--enable-gnutls],[Enable GnuTLS support.])
+AC_HELP_STRING([--disable-gnutls],[Disable GnuTLS support.])],
+[cf_enable_gnutls=$enableval],
+[cf_enable_gnutls="auto"])
+
+if test "$cf_enable_gnutls" != no; then
+	PKG_CHECK_MODULES(GNUTLS, [gnutls], [
+		CPPFLAGS="$CPPFLAGS $GNUTLS_CFLAGS"
+		LIBS="$LIBS $GNUTLS_LIBS"
+		cf_enable_gnutls="yes"
+	], [cf_enable_gnutls="no"])
+fi
+
+if test "$cf_enable_gnutls" != no; then
+	AC_DEFINE(HAVE_GNUTLS, 1, [Has GNUTLS])
+fi
 
 dnl OpenSSL support
 AC_MSG_CHECKING(for OpenSSL)
@@ -250,6 +269,11 @@ AC_HELP_STRING([--disable-openssl],[Disable OpenSSL support.])],
 [cf_enable_openssl=$enableval],
 [cf_enable_openssl="auto"])
 
+dnl Prefer GnuTLS over OpenSSL due to licensing issues, this could use improvement
+if test "$cf_enable_gnutls" = "yes" -a "$cf_enable_openssl" = "auto"; then
+	cf_enable_openssl="no"
+fi
+	
 if test "$cf_enable_openssl" != "no" ; then
 	cf_openssl_basedir=""
 	if test "$cf_enable_openssl" != "auto" &&
@@ -671,5 +695,6 @@ echo "IPv6 support ................... $have_v6"
 echo "Assert debugging ............... $assert"
 echo "Block allocator ................ $balloc"
 echo "OpenSSL ........................ $cf_enable_openssl"
+echo "GnuTLS ......................... $cf_enable_gnutls"
 echo
 
