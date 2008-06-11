@@ -31,7 +31,7 @@ libratbox_la_SOURCES =			\
 	patricia.c
 	
 
-libratbox_la_LDFLAGS = -avoid-version -no-undefined -export-symbols export-syms.txt
+libratbox_la_LDFLAGS = -version-info 3:0:0 -no-undefined -export-symbols export-syms.txt
 libratbox_la_LIBADD = @CRYPT_LIB@ @SSL_LIBS@ 
 lib_LTLIBRARIES = libratbox.la
 
