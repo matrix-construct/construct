@@ -675,11 +675,11 @@ fi
 
 )
 
-
-AC_CONFIG_FILES(		\
-	src/Makefile		\
-	Makefile		\
-)
+AC_CONFIG_FILES([
+	src/Makefile
+	Makefile
+	libratbox.pc
+])
 
 AC_OUTPUT
 

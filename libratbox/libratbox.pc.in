@@ -1,0 +1,14 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+datarootdir=@datarootdir@
+data_dir=@datadir@/@PACKAGE_NAME@
+
+version=@PACKAGE_VERSION@
+include_dir=@includedir@/libratbox
+lib_dir=@libdir@
+
+Name: libratbox
+Description: Portable runtime for ircd-ratbox and other things
+Version: @PACKAGE_VERSION@
+Libs: -L${lib_dir} -lratbox
+Cflags: -I${include_dir}
