@@ -488,7 +488,7 @@ detach_server_conf(struct Client *client_p)
 }
 
 void
-set_server_conf_autoconn(struct Client *source_p, char *name, int newval)
+set_server_conf_autoconn(struct Client *source_p, const char *name, int newval)
 {
 	struct server_conf *server_p;
 

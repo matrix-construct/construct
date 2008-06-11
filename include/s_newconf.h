@@ -236,7 +236,7 @@ extern struct server_conf *find_server_conf(const char *name);
 
 extern void attach_server_conf(struct Client *, struct server_conf *);
 extern void detach_server_conf(struct Client *);
-extern void set_server_conf_autoconn(struct Client *source_p, char *name, 
+extern void set_server_conf_autoconn(struct Client *source_p, const char *name, 
 					int newval);
 
 

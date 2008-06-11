@@ -25,9 +25,9 @@
 
 #define YY_NO_UNPUT
 
-int yyparse();
+int yyparse(void);
 int yyerror(const char *);
-int yylex();
+int yylex(void);
 
 static time_t conf_find_time(char*);
 
