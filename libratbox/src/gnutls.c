@@ -293,6 +293,9 @@ rb_init_ssl(void)
 
 	gnutls_global_init();
 
+	gnutls_certificate_allocate_credentials(&x509_cred);
+	gnutls_dh_params_init(&dh_params);
+
 	if((g_ret = gnutls_dh_params_generate2(dh_params, 1024)) < 0)
 	{
 		rb_lib_log("rb_init_gnutls: Failed to generate GNUTLS DH params: %s", gnutls_strerror(g_ret));
