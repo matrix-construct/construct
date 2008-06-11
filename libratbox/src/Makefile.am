@@ -11,6 +11,7 @@ libratbox_la_SOURCES =			\
 	balloc.c			\
 	commio.c			\
 	openssl.c			\
+	gnutls.c			\
 	nossl.c				\
 	event.c				\
 	ratbox_lib.c			\

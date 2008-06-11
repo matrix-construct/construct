@@ -19,6 +19,7 @@
   [x] ssl channelmode (done by extban and chm_compat)
   [ ] acknowledgement message for SSL users like '* *** You are connected using SSL cipher "DHE RSA-AES 128 CBC-SHA"'
   [ ] ssl stuff files generator in ./configure time
+  [ ] gnutls backend for at least SSL connections (replacing libcrypto use in m_challenge would be nice too)
 [x] merge some stuff from ircd-seven directly (to be determined what)
   [x] remote d:lines support
 [F] kline/xline/resv sync
@@ -41,4 +42,3 @@
   [x] merge m_join.c and m_sjoin.c in one module (same functions, done in ratbox3)
   [x] create chmode.h and put there all declarations of chm_* - this will make some modules clean
 [?] Move oper override server WALLOPS to global server notices?
-
