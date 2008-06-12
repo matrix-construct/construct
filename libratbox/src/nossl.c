@@ -27,7 +27,7 @@
 #include <libratbox_config.h>
 #include <ratbox_lib.h>
 
-#ifndef HAVE_OPENSSL
+#if !defined(HAVE_OPENSSL) && !defined(HAVE_GNUTLS)
 
 #include <commio-int.h>
 #include <commio-ssl.h>

@@ -55,7 +55,7 @@ libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libratbox_la_DEPENDENCIES =
 am_libratbox_la_OBJECTS = unix.lo win32.lo crypt.lo balloc.lo \
-	commio.lo openssl.lo nossl.lo event.lo ratbox_lib.lo \
+	commio.lo openssl.lo gnutls.lo nossl.lo event.lo ratbox_lib.lo \
 	rb_memory.lo linebuf.lo snprintf.lo tools.lo helper.lo \
 	devpoll.lo epoll.lo poll.lo ports.lo sigio.lo select.lo \
 	kqueue.lo rawbuf.lo patricia.lo
@@ -112,6 +112,8 @@ EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 F77 = @F77@
 FFLAGS = @FFLAGS@
+GNUTLS_CFLAGS = @GNUTLS_CFLAGS@
+GNUTLS_LIBS = @GNUTLS_LIBS@
 GREP = @GREP@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -140,6 +142,7 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PICFLAGS = @PICFLAGS@
+PKG_CONFIG = @PKG_CONFIG@
 RANLIB = @RANLIB@
 RB_PREFIX = @RB_PREFIX@
 RM = @RM@
@@ -213,6 +216,7 @@ libratbox_la_SOURCES = \
 	balloc.c			\
 	commio.c			\
 	openssl.c			\
+	gnutls.c			\
 	nossl.c				\
 	event.c				\
 	ratbox_lib.c			\
@@ -309,6 +313,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/devpoll.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/epoll.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/event.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gnutls.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/helper.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kqueue.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/linebuf.Plo@am__quote@
