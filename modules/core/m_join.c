@@ -765,6 +765,20 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 		{
 			del_invite(chptr, ptr->data);
 		}
+
+		if(rb_dlink_list_length(&chptr->banlist) > 0)
+			remove_ban_list(chptr, fakesource_p, &chptr->banlist, 'b', ALL_MEMBERS);
+		if(rb_dlink_list_length(&chptr->exceptlist) > 0)
+			remove_ban_list(chptr, fakesource_p, &chptr->exceptlist,
+					'e', ONLY_CHANOPS);
+		if(rb_dlink_list_length(&chptr->invexlist) > 0)
+			remove_ban_list(chptr, fakesource_p, &chptr->invexlist,
+					'I', ONLY_CHANOPS);
+		if(rb_dlink_list_length(&chptr->quietlist) > 0)
+			remove_ban_list(chptr, fakesource_p, &chptr->quietlist,
+					'q', ALL_MEMBERS);
+		chptr->bants++;
+
 		sendto_channel_local(ALL_MEMBERS, chptr,
 				     ":%s NOTICE %s :*** Notice -- TS for %s changed from %ld to %ld",
 				     me.name, chptr->chname, chptr->chname,
@@ -969,27 +983,6 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 	}
 
 	sendto_server(client_p->from, NULL, CAP_TS6, NOCAPS, "%s", buf_uid);
-
-	/* if the source does TS6 we have to remove our bans. */
-	if(!keep_our_modes)
-	{
-		if(rb_dlink_list_length(&chptr->banlist) > 0)
-			remove_ban_list(chptr, fakesource_p, &chptr->banlist, 'b', ALL_MEMBERS);
-
-		if(rb_dlink_list_length(&chptr->exceptlist) > 0)
-			remove_ban_list(chptr, fakesource_p, &chptr->exceptlist,
-					'e', ONLY_CHANOPS);
-
-		if(rb_dlink_list_length(&chptr->invexlist) > 0)
-			remove_ban_list(chptr, fakesource_p, &chptr->invexlist,
-					'I', ONLY_CHANOPS);
-
-		if(rb_dlink_list_length(&chptr->quietlist) > 0)
-			remove_ban_list(chptr, fakesource_p, &chptr->quietlist,
-					'q', ALL_MEMBERS);
-
-		chptr->bants++;
-	}
 
 	return 0;
 }
