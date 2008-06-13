@@ -75,7 +75,7 @@ static void set_final_mode(struct Mode *mode, struct Mode *oldmode);
 static void remove_our_modes(struct Channel *chptr, struct Client *source_p);
 
 static void remove_ban_list(struct Channel *chptr, struct Client *source_p,
-			    rb_dlink_list * list, char c, int cap, int mems);
+			    rb_dlink_list * list, char c, int mems);
 
 static char modebuf[MODEBUFLEN];
 static char parabuf[MODEBUFLEN];
@@ -697,10 +697,6 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 			struct membership *msptr;
 			struct Client *who;
 			int l = rb_dlink_list_length(&chptr->members);
-			int b = rb_dlink_list_length(&chptr->banlist) +
-				rb_dlink_list_length(&chptr->exceptlist) +
-				rb_dlink_list_length(&chptr->invexlist) +
-				rb_dlink_list_length(&chptr->quietlist);
 
 			RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->locmembers.head)
 			{
@@ -723,14 +719,6 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 				if((chptr = get_or_create_channel(source_p, parv[2], &isnew)) == NULL)
 					return 0;		/* oops! */
 
-				/* If the source does not do TS6,
-				 * nontimestamped bans have been sent to it,
-				 * but we have just lost those here. Let's
-				 * warn the channel about this. Because
-				 * of the kicks, any users on the channel
-				 * will be at client_p. -- jilles */
-				if (!has_id(source_p) && b > 0)
-					sendto_one(client_p, ":%s NOTICE %s :*** Notice -- possible ban desync on %s, please remove any bans just added by servers", get_id(&me, client_p), parv[2], parv[2]);
 				oldmode = &chptr->mode;
 			}
 		}
@@ -982,26 +970,23 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 
 	sendto_server(client_p->from, NULL, CAP_TS6, NOCAPS, "%s", buf_uid);
 
-	/* if the source does TS6 we have to remove our bans.  Its now safe
-	 * to issue -b's to the non-ts6 servers, as the sjoin we've just
-	 * sent will kill any ops they have.
-	 */
-	if(!keep_our_modes && source_p->id[0] != '\0')
+	/* if the source does TS6 we have to remove our bans. */
+	if(!keep_our_modes)
 	{
 		if(rb_dlink_list_length(&chptr->banlist) > 0)
-			remove_ban_list(chptr, fakesource_p, &chptr->banlist, 'b', NOCAPS, ALL_MEMBERS);
+			remove_ban_list(chptr, fakesource_p, &chptr->banlist, 'b', ALL_MEMBERS);
 
 		if(rb_dlink_list_length(&chptr->exceptlist) > 0)
 			remove_ban_list(chptr, fakesource_p, &chptr->exceptlist,
-					'e', CAP_EX, ONLY_CHANOPS);
+					'e', ONLY_CHANOPS);
 
 		if(rb_dlink_list_length(&chptr->invexlist) > 0)
 			remove_ban_list(chptr, fakesource_p, &chptr->invexlist,
-					'I', CAP_IE, ONLY_CHANOPS);
+					'I', ONLY_CHANOPS);
 
 		if(rb_dlink_list_length(&chptr->quietlist) > 0)
 			remove_ban_list(chptr, fakesource_p, &chptr->quietlist,
-					'q', NOCAPS, ALL_MEMBERS);
+					'q', ALL_MEMBERS);
 
 		chptr->bants++;
 	}
@@ -1298,11 +1283,10 @@ remove_our_modes(struct Channel *chptr, struct Client *source_p)
  * inputs	- channel, source, list to remove, char of mode, caps needed
  * outputs	-
  * side effects - given list is removed, with modes issued to local clients
- * 		  and non-TS6 servers.
  */
 static void
 remove_ban_list(struct Channel *chptr, struct Client *source_p,
-		rb_dlink_list * list, char c, int cap, int mems)
+		rb_dlink_list * list, char c, int mems)
 {
 	static char lmodebuf[BUFSIZE];
 	static char lparabuf[BUFSIZE];
@@ -1332,11 +1316,6 @@ remove_ban_list(struct Channel *chptr, struct Client *source_p,
 			*(pbuf - 1) = '\0';
 
 			sendto_channel_local(mems, chptr, "%s %s", lmodebuf, lparabuf);
-			/* Tricky tricky. If we changed source_p to &me
-			 * in ms_sjoin(), this still won't send stuff
-			 * where it should not be sent, because the
-			 * real source_p does TS6 -- jilles */
-			sendto_server(source_p, chptr, cap, CAP_TS6, "%s %s", lmodebuf, lparabuf);
 
 			cur_len = mlen;
 			mbuf = lmodebuf + mlen;
@@ -1355,7 +1334,6 @@ remove_ban_list(struct Channel *chptr, struct Client *source_p,
 	*mbuf = '\0';
 	*(pbuf - 1) = '\0';
 	sendto_channel_local(mems, chptr, "%s %s", lmodebuf, lparabuf);
-	sendto_server(source_p, chptr, cap, CAP_TS6, "%s %s", lmodebuf, lparabuf);
 
 	list->head = list->tail = NULL;
 	list->length = 0;
