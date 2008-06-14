@@ -988,14 +988,9 @@ sendto_realops_snomask(int flags, int level, const char *pattern, ...)
 				":%s NOTICE * :*** Notice -- %s", me.name, buf);
 		snobuf = construct_snobuf(flags);
 		if (snobuf[1] != '\0')
-		{
 			sendto_server(NULL, NULL, CAP_ENCAP|CAP_TS6, NOCAPS,
 					":%s ENCAP * SNOTE %c :%s",
 					me.id, snobuf[1], buf);
-			sendto_server(NULL, NULL, CAP_ENCAP, CAP_TS6,
-					":%s ENCAP * SNOTE %c :%s",
-					me.name, snobuf[1], buf);
-		}
 	}
 	else
 	{

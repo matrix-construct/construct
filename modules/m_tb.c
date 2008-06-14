@@ -114,11 +114,6 @@ ms_tb(struct Client *client_p, struct Client *source_p, int parc, const char *pa
 			      use_id(source_p), chptr->chname, (long) chptr->topic_time,
 			      ConfigChannel.burst_topicwho ? chptr->topic_info : "",
 			      ConfigChannel.burst_topicwho ? " " : "", chptr->topic);
-		sendto_server(client_p, chptr, CAP_TB, CAP_TS6,
-			      ":%s TB %s %ld %s%s:%s",
-			      source_p->name, chptr->chname, (long) chptr->topic_time,
-			      ConfigChannel.burst_topicwho ? chptr->topic_info : "",
-			      ConfigChannel.burst_topicwho ? " " : "", chptr->topic);
 	}
 
 	return 0;
