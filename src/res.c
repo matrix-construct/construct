@@ -679,22 +679,8 @@ static int proc_answer(struct reslist *request, HEADER * header, char *buf, char
 
 			  return (1);
 			  break;
-		  case T_CNAME:	/* first check we already havent started looking 
-					   into a cname */
-			  if (request->type != T_PTR)
-				  return (0);
-
-			  if (request->state == REQ_CNAME)
-			  {
-				  n = irc_dn_expand((unsigned char *)buf, (unsigned char *)eob,
-						    current, hostbuf, sizeof(hostbuf));
-
-				  if (n < 0)
-					  return (0);
-				  return (1);
-			  }
-
-			  request->state = REQ_CNAME;
+		  case T_CNAME:
+			  /* real answer will follow */
 			  current += rd_length;
 			  break;
 
