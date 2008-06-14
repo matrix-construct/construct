@@ -56,20 +56,11 @@ static PF res_readreply;
 #define RDLENGTH_SIZE     (size_t)2
 #define ANSWER_FIXED_SIZE (TYPE_SIZE + CLASS_SIZE + TTL_SIZE + RDLENGTH_SIZE)
 
-typedef enum
-{
-	REQ_IDLE,		/* We're doing not much at all */
-	REQ_PTR,		/* Looking up a PTR */
-	REQ_A,			/* Looking up an A or AAAA */
-	REQ_CNAME		/* We got a CNAME in response, we better get a real answer next */
-} request_state;
-
 struct reslist
 {
 	rb_dlink_node node;
 	int id;
 	int sent;		/* number of requests sent */
-	request_state state;	/* State the resolver machine is in */
 	time_t ttl;
 	char type;
 	char queryname[128];	/* name currently being queried */
@@ -299,7 +290,6 @@ static struct reslist *make_request(struct DNSQuery *query)
 	request->resend = 1;
 	request->timeout = 4;	/* start at 4 and exponential inc. */
 	request->query = query;
-	request->state = REQ_IDLE;
 
 	rb_dlinkAdd(request, &request->node, &request_list);
 
@@ -409,7 +399,6 @@ static void do_query_name(struct DNSQuery *query, const char *name, struct resli
 		request = make_request(query);
 		request->name = (char *)rb_malloc(strlen(host_name) + 1);
 		strcpy(request->name, host_name);
-		request->state = REQ_A;
 	}
 
 	rb_strlcpy(request->queryname, host_name, sizeof(request->queryname));
