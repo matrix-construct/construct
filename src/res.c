@@ -66,7 +66,6 @@ struct reslist
 	char queryname[128];	/* name currently being queried */
 	char retries;		/* retry counter */
 	char sends;		/* number of sends (>1 means resent) */
-	char resend;		/* send flag. 0 == dont resend */
 	time_t sentat;
 	time_t timeout;
 	struct rb_sockaddr_storage addr;
@@ -287,7 +286,6 @@ static struct reslist *make_request(struct DNSQuery *query)
 
 	request->sentat = rb_current_time();
 	request->retries = 3;
-	request->resend = 1;
 	request->timeout = 4;	/* start at 4 and exponential inc. */
 	request->query = query;
 
@@ -506,9 +504,6 @@ static void query_name(struct reslist *request)
 
 static void resend_query(struct reslist *request)
 {
-	if (request->resend == 0)
-		return;
-
 	switch (request->type)
 	{
 	  case T_PTR:
