@@ -358,7 +358,7 @@ get_oper_privs(int flags)
 	for(i = 0; oper_flagtable[i].flag; i++)
 		if (flags & oper_flagtable[i].flag)
 		{
-			if(i)
+			if(*buf != '\0')
 				rb_strlcat(buf, ", ", sizeof(buf));
 
 			rb_strlcat(buf, oper_flagtable[i].name, sizeof(buf));
