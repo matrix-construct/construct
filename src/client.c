@@ -373,6 +373,11 @@ check_unknowns_list(rb_dlink_list * list)
 		if(IsDead(client_p) || IsClosing(client_p))
 			continue;
 
+		/* still has DNSbls to validate against */
+		if(client_p->preClient != NULL &&
+				rb_dlink_list_length(&client_p->preClient->dnsbl_queries) > 0)
+			continue;
+
 		/*
 		 * Check UNKNOWN connections - if they have been in this state
 		 * for > 30s, close them.
