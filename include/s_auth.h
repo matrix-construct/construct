@@ -47,9 +47,6 @@ struct AuthRequest
 	unsigned int flags;	/* current state of request */
 	rb_fde_t *F;		/* file descriptor for auth queries */
 	time_t timeout;		/* time when query expires */
-#ifdef RB_IPV6
-	int ip6_int;
-#endif
 };
 
 /*
