@@ -58,6 +58,8 @@ struct AuthRequest
 	unsigned int flags;	/* current state of request */
 	rb_fde_t *F;		/* file descriptor for auth queries */
 	time_t timeout;		/* time when query expires */
+	uint16_t lport;
+	uint16_t rport;
 };
 
 /*
@@ -344,19 +346,29 @@ start_auth_query(struct AuthRequest *auth)
 #ifdef RB_IPV6
 	if(localaddr.ss_family == AF_INET6)
 	{
+		auth->lport = ntohs(((struct sockaddr_in6 *)&localaddr)->sin6_port);
 		((struct sockaddr_in6 *)&localaddr)->sin6_port = 0;
-	} else
+	}
+	else
 #endif
-	((struct sockaddr_in *)&localaddr)->sin_port = 0;
+	{
+		auth->lport = ntohs(((struct sockaddr_in *)&localaddr)->sin_port);
+		((struct sockaddr_in *)&localaddr)->sin_port = 0;
+	}
 
 	destaddr = auth->client->localClient->ip;
 #ifdef RB_IPV6
 	if(localaddr.ss_family == AF_INET6)
 	{
+		auth->rport = ntohs(((struct sockaddr_in6 *)&destaddr)->sin6_port);
 		((struct sockaddr_in6 *)&destaddr)->sin6_port = htons(113);
-	} else
+	}
+	else
 #endif
-	((struct sockaddr_in *)&destaddr)->sin_port = htons(113);
+	{
+		auth->rport = ntohs(((struct sockaddr_in *)&destaddr)->sin_port);
+		((struct sockaddr_in *)&destaddr)->sin_port = htons(113);
+	}
 	
 	auth->F = F;
 	SetAuthConnect(auth);
@@ -514,11 +526,7 @@ static void
 auth_connect_callback(rb_fde_t *F, int error, void *data)
 {
 	struct AuthRequest *auth = data;
-	struct sockaddr_in us;
-	struct sockaddr_in them;
 	char authbuf[32];
-	socklen_t ulen = sizeof(struct sockaddr_in);
-	socklen_t tlen = sizeof(struct sockaddr_in);
 
 	/* Check the error */
 	if(error != RB_OK)
@@ -528,19 +536,8 @@ auth_connect_callback(rb_fde_t *F, int error, void *data)
 		return;
 	}
 
-	if(getsockname
-	   (rb_get_fd(auth->client->localClient->F), (struct sockaddr *) &us,
-	    (socklen_t *) & ulen)
-	   || getpeername(rb_get_fd(auth->client->localClient->F),
-			  (struct sockaddr *) &them, (socklen_t *) & tlen))
-	{
-		ilog(L_IOERROR, "auth get{sock,peer}name error for %s:%m",
-		     log_client_name(auth->client, SHOW_IP));
-		auth_error(auth);
-		return;
-	}
 	rb_snprintf(authbuf, sizeof(authbuf), "%u , %u\r\n",
-		   (unsigned int) ntohs(them.sin_port), (unsigned int) ntohs(us.sin_port));
+		   auth->rport, auth->lport);
 
 	if(write(rb_get_fd(auth->F), authbuf, strlen(authbuf)) == -1)
 	{
