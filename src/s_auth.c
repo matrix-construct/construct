@@ -332,8 +332,13 @@ start_auth_query(struct AuthRequest *auth)
 	 * and machines with multiple IP addresses are common now
 	 */
 	memset(&localaddr, 0, locallen);
-	getsockname(rb_get_fd(auth->client->localClient->F),
-		    (struct sockaddr *) &localaddr, &locallen);
+	if(getsockname(rb_get_fd(auth->client->localClient->F),
+		    (struct sockaddr *) &localaddr, &locallen) == -1)
+	{
+		/* can happen if connection was just closed */
+		rb_close(F);
+		return 0;
+	}
 	
 	/* XXX mangle_mapped_sockaddr((struct sockaddr *)&localaddr); */
 #ifdef RB_IPV6
