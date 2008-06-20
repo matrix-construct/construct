@@ -203,7 +203,7 @@ elif test "$CRYPT_LIB" = no; then
 	unset CRYPT_LIB
 fi
 
-AM_CONDITIONAL([NEED_CRYPT], [test x"$need_crypt" == "xyes"])
+AM_CONDITIONAL([NEED_CRYPT], [test x"$need_crypt" = "xyes"])
 
 
 AC_SUBST(CRYPT_LIB)
