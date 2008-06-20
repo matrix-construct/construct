@@ -24004,7 +24004,7 @@ _ACEOF
 	unset CRYPT_LIB
 fi
 
- if test x"$need_crypt" == "xyes"; then
+ if test x"$need_crypt" = "xyes"; then
   NEED_CRYPT_TRUE=
   NEED_CRYPT_FALSE='#'
 else
@@ -26514,8 +26514,7 @@ done
 ac_config_commands="$ac_config_commands include/librb-config.h"
 
 
-
-ac_config_files="$ac_config_files src/Makefile Makefile"
+ac_config_files="$ac_config_files src/Makefile Makefile libratbox.pc"
 
 
 cat >confcache <<\_ACEOF
@@ -27222,6 +27221,7 @@ do
     "include/librb-config.h") CONFIG_COMMANDS="$CONFIG_COMMANDS include/librb-config.h" ;;
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
+    "libratbox.pc") CONFIG_FILES="$CONFIG_FILES libratbox.pc" ;;
 
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
