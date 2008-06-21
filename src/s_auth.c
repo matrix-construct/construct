@@ -539,7 +539,7 @@ auth_connect_callback(rb_fde_t *F, int error, void *data)
 	rb_snprintf(authbuf, sizeof(authbuf), "%u , %u\r\n",
 		   auth->rport, auth->lport);
 
-	if(write(rb_get_fd(auth->F), authbuf, strlen(authbuf)) == -1)
+	if(rb_write(auth->F, authbuf, strlen(authbuf)) != strlen(authbuf))
 	{
 		auth_error(auth);
 		return;
@@ -568,7 +568,7 @@ read_auth_reply(rb_fde_t *F, void *data)
 	int count;
 	char buf[AUTH_BUFSIZ + 1];	/* buffer to read auth reply into */
 
-	len = read(rb_get_fd(F), buf, AUTH_BUFSIZ);
+	len = rb_read(F, buf, AUTH_BUFSIZ);
 
 	if(len < 0 && rb_ignore_errno(errno))
 	{
