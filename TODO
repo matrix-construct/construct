@@ -33,6 +33,9 @@
   [ ] auth checker module
   [ ] resolver module
 [x] Remove glines entirely
+[ ] Bug fixes
+  [ ] Compilation without zlib headers fails
+  [ ] Compilation date and time in server welcome message is in OS locale - looks ugly 'cause often it's not match user's codepage
 --- other stuff
   [?] PASS selector:password for auth{} from ircd-seven? (useful for dynamic IPs)
   [?] +C (noctcp) channel/usermode from ircd-seven?
