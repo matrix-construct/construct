@@ -2,7 +2,7 @@ The Charybdis Mercurial repository can be checked out using the following comman
 	hg clone http://hg.atheme.org/charybdis charybdis-devel
 
 The stable version can be checked out using the following command:
-	hg clone http://hg.atheme.org/release/charybdis-2.2 charybdis-stable
+	hg clone http://hg.atheme.org/release/charybdis-3.0 charybdis-stable
 
 Charybdis's Mercurial repository depot can be browsed over the internet at 
 the following address:
