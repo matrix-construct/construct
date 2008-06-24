@@ -99,9 +99,13 @@ construct_noparam_modes(void)
 
 	for(i = 0; i < 256; i++)
 	{
-		if( (chmode_table[i].set_func == chm_simple) ||
-			(chmode_table[i].set_func == chm_staff) ||
-			(chmode_table[i].set_func == chm_regonly))
+		if( !(chmode_table[i].set_func == chm_ban) && 
+			!(chmode_table[i].set_func == chm_forward) &&
+			!(chmode_table[i].set_func == chm_throttle) &&
+                        !(chmode_table[i].set_func == chm_key) &&
+                        !(chmode_table[i].set_func == chm_limit) &&
+                        !(chmode_table[i].set_func == chm_op) &&
+                        !(chmode_table[i].set_func == chm_voice))
 		{
 			chmode_flags[i] = chmode_table[i].mode_type;
 		}
