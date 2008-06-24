@@ -65,8 +65,6 @@ static int mode_limit;
 static int mode_limit_simple;
 static int mask_pos;
 
-static int orphaned_cflags = 0;
-
 int chmode_flags[256];
 void
 find_orphaned_cflags(void)
@@ -80,12 +78,11 @@ find_orphaned_cflags(void)
 		{
 			if (chmode_flags[i] == 0)
 			{
-				orphaned_cflags |= prev_chmode_flags[i];
+                                chmode_table[i].set_func = chm_orphaned;
 				sendto_realops_snomask(SNO_DEBUG, L_ALL, "Cmode +%c is now orphaned", i);
 			}
 			else
 			{
-				orphaned_cflags &= ~prev_chmode_flags[i];
 				sendto_realops_snomask(SNO_DEBUG, L_ALL, "Orphaned cmode +%c is picked up by module", i);
 			}
 			chmode_flags[i] = prev_chmode_flags[i];
@@ -480,6 +477,40 @@ chm_simple(struct Client *source_p, struct Channel *chptr,
 		   (c == 'Q' || c == 'F'))
 			return;
 
+		chptr->mode.mode |= mode_type;
+
+		mode_changes[mode_count].letter = c;
+		mode_changes[mode_count].dir = MODE_ADD;
+		mode_changes[mode_count].caps = 0;
+		mode_changes[mode_count].nocaps = 0;
+		mode_changes[mode_count].id = NULL;
+		mode_changes[mode_count].mems = ALL_MEMBERS;
+		mode_changes[mode_count++].arg = NULL;
+	}
+	else if((dir == MODE_DEL) && (chptr->mode.mode & mode_type))
+	{
+		chptr->mode.mode &= ~mode_type;
+
+		mode_changes[mode_count].letter = c;
+		mode_changes[mode_count].dir = MODE_DEL;
+		mode_changes[mode_count].caps = 0;
+		mode_changes[mode_count].nocaps = 0;
+		mode_changes[mode_count].mems = ALL_MEMBERS;
+		mode_changes[mode_count].id = NULL;
+		mode_changes[mode_count++].arg = NULL;
+	}
+}
+
+void
+chm_orphaned(struct Client *source_p, struct Channel *chptr,
+	   int alevel, int parc, int *parn,
+	   const char **parv, int *errors, int dir, char c, long mode_type)
+{
+	if(MyClient(source_p))
+		return;
+        
+	if((dir == MODE_ADD) && !(chptr->mode.mode & mode_type))
+	{
 		chptr->mode.mode |= mode_type;
 
 		mode_changes[mode_count].letter = c;
