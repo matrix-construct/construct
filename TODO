@@ -26,8 +26,8 @@
 [F] make an ability of using bandb instead of .conf files as bans storage
 [/] drop non-TS6 (legacy protocol) support
 [F] Doxygen code documentation
-[ ] module engine rework
-  [ ] more beautiful way of adding new channel modes by module
+[/] module engine rework
+  [/] more beautiful way of adding new channel modes by module
   [ ] make nick/user/host validation functions/match tables able to work in separated modules,
       this will help us making support for native characters sets/slashes in host etc
   [ ] auth checker module
