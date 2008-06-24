@@ -62,7 +62,36 @@ static int mode_count;
 static int mode_limit;
 static int mask_pos;
 
+static int orphaned_cflags = 0;
+
 int chmode_flags[256];
+void
+find_orphaned_cflags(void)
+{
+	int i;
+	static int prev_chmode_flags[256];
+
+	for (i = 0; i < 256; i++)
+	{
+		if (prev_chmode_flags[i] != 0 && prev_chmode_flags[i] != chmode_flags[i])
+		{
+			if (chmode_flags[i] == 0)
+			{
+				orphaned_cflags |= prev_chmode_flags[i];
+				sendto_realops_snomask(SNO_DEBUG, L_ALL, "Cmode +%c is now orphaned", i);
+			}
+			else
+			{
+				orphaned_cflags &= ~prev_chmode_flags[i];
+				sendto_realops_snomask(SNO_DEBUG, L_ALL, "Orphaned cmode +%c is picked up by module", i);
+			}
+			chmode_flags[i] = prev_chmode_flags[i];
+		}
+		else
+			prev_chmode_flags[i] = chmode_flags[i];
+	}
+}
+
 void
 construct_noparam_modes(void)
 {
@@ -81,6 +110,30 @@ construct_noparam_modes(void)
 			chmode_flags[i] = 0;
 		}
 	}
+        
+        find_orphaned_cflags();
+}
+
+/*
+ * find_umode_slot
+ *
+ * inputs       - NONE
+ * outputs      - an available cflag bitmask or
+ *                0 if no cflags are available
+ * side effects - NONE
+ */
+unsigned int
+find_cflag_slot(void)
+{
+	unsigned int all_cflags = 0, my_cflag = 0, i;
+
+	for (i = 0; i < 256; i++)
+		all_cflags |= chmode_flags[i];
+
+	for (my_cflag = 1; my_cflag && (all_cflags & my_cflag);
+		my_cflag <<= 1);
+
+	return my_cflag;
 }
 
 static int
