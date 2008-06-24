@@ -564,48 +564,6 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 	{
 		switch (*(s++))
 		{
-		case 'i':
-			mode.mode |= MODE_INVITEONLY;
-			break;
-		case 'n':
-			mode.mode |= MODE_NOPRIVMSGS;
-			break;
-		case 'p':
-			mode.mode |= MODE_PRIVATE;
-			break;
-		case 's':
-			mode.mode |= MODE_SECRET;
-			break;
-		case 'm':
-			mode.mode |= MODE_MODERATED;
-			break;
-		case 't':
-			mode.mode |= MODE_TOPICLIMIT;
-			break;
-		case 'r':
-			mode.mode |= MODE_REGONLY;
-			break;
-		case 'L':
-			mode.mode |= MODE_EXLIMIT;
-			break;
-		case 'P':
-			mode.mode |= MODE_PERMANENT;
-			break;
-		case 'c':
-			mode.mode |= MODE_NOCOLOR;
-			break;
-		case 'g':
-			mode.mode |= MODE_FREEINVITE;
-			break;
-		case 'z':
-			mode.mode |= MODE_OPMODERATE;
-			break;
-		case 'F':
-			mode.mode |= MODE_FREETARGET;
-			break;
-		case 'Q':
-			mode.mode |= MODE_DISFORWARD;
-			break;
 		case 'f':
 			rb_strlcpy(mode.forward, parv[4 + args], sizeof(mode.forward));
 			args++;
@@ -632,6 +590,11 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 			if(parc < 5 + args)
 				return 0;
 			break;
+		default:
+			if(chmode_flags[(int) *s] != 0)
+			{
+				mode.mode |= chmode_flags[(int) *s];
+			}
 		}
 	}
 
@@ -1061,30 +1024,30 @@ set_final_mode(struct Mode *mode, struct Mode *oldmode)
 	int i;
 
 	/* ok, first get a list of modes we need to add */
-	for (i = 0; chmode_flags[i].letter; i++)
+	for (i = 0; i < 256; i++)
 	{
-		if((mode->mode & chmode_flags[i].mode) && !(oldmode->mode & chmode_flags[i].mode))
+		if((mode->mode & chmode_flags[i]) && !(oldmode->mode & chmode_flags[i]))
 		{
 			if(dir != MODE_ADD)
 			{
 				*mbuf++ = '+';
 				dir = MODE_ADD;
 			}
-			*mbuf++ = chmode_flags[i].letter;
+			*mbuf++ = i;
 		}
 	}
 
 	/* now the ones we need to remove. */
-	for (i = 0; chmode_flags[i].letter; i++)
+	for (i = 0; i < 256; i++)
 	{
-		if((oldmode->mode & chmode_flags[i].mode) && !(mode->mode & chmode_flags[i].mode))
+		if((oldmode->mode & chmode_flags[i]) && !(mode->mode & chmode_flags[i]))
 		{
 			if(dir != MODE_DEL)
 			{
 				*mbuf++ = '-';
 				dir = MODE_DEL;
 			}
-			*mbuf++ = chmode_flags[i].letter;
+			*mbuf++ = i;
 		}
 	}
 

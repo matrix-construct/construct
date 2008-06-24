@@ -1071,25 +1071,6 @@ set_channel_topic(struct Channel *chptr, const char *topic, const char *topic_in
 	}
 }
 
-const struct mode_letter chmode_flags[] =
-{
-	{MODE_INVITEONLY, 'i'},
-	{MODE_MODERATED, 'm'},
-	{MODE_NOPRIVMSGS, 'n'},
-	{MODE_PRIVATE, 'p'},
-	{MODE_SECRET, 's'},
-	{MODE_TOPICLIMIT, 't'},
-	{MODE_NOCOLOR, 'c'},
-	{MODE_FREEINVITE, 'g'},
-	{MODE_OPMODERATE, 'z'},
-	{MODE_EXLIMIT, 'L'},
-	{MODE_PERMANENT, 'P'},
-	{MODE_FREETARGET, 'F'},
-	{MODE_DISFORWARD, 'Q'},
-	{MODE_REGONLY, 'r'},
-	{0, '\0'}
-};
-
 /* channel_modes()
  *
  * inputs       - pointer to channel
@@ -1112,9 +1093,9 @@ channel_modes(struct Channel *chptr, struct Client *client_p)
 	*mbuf++ = '+';
 	*pbuf = '\0';
 
-	for (i = 0; chmode_flags[i].mode; ++i)
-		if(chptr->mode.mode & chmode_flags[i].mode)
-			*mbuf++ = chmode_flags[i].letter;
+	for (i = 0; i < 256; i++)
+		if(chptr->mode.mode & chmode_flags[i])
+			*mbuf++ = i;
 
 	if(chptr->mode.limit)
 	{

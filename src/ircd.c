@@ -64,6 +64,7 @@
 #include "patchlevel.h"
 #include "serno.h"
 #include "sslproc.h"
+#include "chmode.h"
 
 /* /quote set variables */
 struct SetOptions GlobalSetOptions;
@@ -744,6 +745,7 @@ main(int argc, char *argv[])
 	rb_dlinkAddAlloc(&me, &global_serv_list);
 
 	construct_umodebuf();
+        construct_noparam_modes();
 
 	check_class();
 	write_pidfile(pidFileName);

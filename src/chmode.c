@@ -62,6 +62,27 @@ static int mode_count;
 static int mode_limit;
 static int mask_pos;
 
+int chmode_flags[256];
+void
+construct_noparam_modes(void)
+{
+	int i;
+
+	for(i = 0; i < 256; i++)
+	{
+		if( (chmode_table[i].set_func == chm_simple) ||
+			(chmode_table[i].set_func == chm_staff) ||
+			(chmode_table[i].set_func == chm_regonly))
+		{
+			chmode_flags[i] = chmode_table[i].mode_type;
+		}
+		else
+		{
+			chmode_flags[i] = 0;
+		}
+	}
+}
+
 static int
 get_channel_access(struct Client *source_p, struct membership *msptr)
 {

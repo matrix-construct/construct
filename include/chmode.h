@@ -62,4 +62,6 @@ extern void chm_voice(struct Client *source_p, struct Channel *chptr,
 	   int alevel, int parc, int *parn,
 	   const char **parv, int *errors, int dir, char c, long mode_type);
 
+extern void construct_noparam_modes(void);
+
 #endif
