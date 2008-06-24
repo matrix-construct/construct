@@ -31,6 +31,9 @@
 extern void chm_nosuch(struct Client *source_p, struct Channel *chptr,
 	   int alevel, int parc, int *parn,
 	   const char **parv, int *errors, int dir, char c, long mode_type);
+extern void chm_orphaned(struct Client *source_p, struct Channel *chptr,
+	   int alevel, int parc, int *parn,
+	   const char **parv, int *errors, int dir, char c, long mode_type);
 extern void chm_simple(struct Client *source_p, struct Channel *chptr,
 	   int alevel, int parc, int *parn,
 	   const char **parv, int *errors, int dir, char c, long mode_type);
