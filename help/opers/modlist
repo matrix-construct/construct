@@ -4,4 +4,5 @@ MODLIST [match string]
 ircd, along with their address and version.
 When a match string is provided, modlist only prints
 modules with names matching the match string.
-NOTE:  Restricted to admins only
+
+- Requires Oper Priv: A
