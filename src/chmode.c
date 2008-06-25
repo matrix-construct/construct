@@ -57,9 +57,12 @@
 #define SM_ERR_RPL_Q            0x00000800
 #define SM_ERR_RPL_F            0x00001000
 
+#define MAXMODES_SIMPLE 46 /* a-zA-Z except bqeIov */
+
 static struct ChModeChange mode_changes[BUFSIZE];
 static int mode_count;
 static int mode_limit;
+static int mode_limit_simple;
 static int mask_pos;
 
 static int orphaned_cflags = 0;
@@ -465,8 +468,8 @@ chm_simple(struct Client *source_p, struct Channel *chptr,
 		return;
 	}
 
-	/* +ntspmaikl == 9 + MAXMODEPARAMS (4 * +o) */
-	if(MyClient(source_p) && (++mode_limit > (9 + MAXMODEPARAMS)))
+	/* flags (possibly upto 32) + 4 with param */
+	if(MyClient(source_p) && (++mode_limit_simple > MAXMODES_SIMPLE))
 		return;
 
 	/* setting + */
@@ -521,6 +524,9 @@ chm_staff(struct Client *source_p, struct Channel *chptr,
 		*errors |= SM_ERR_NOPRIVS;
 		return;
 	}
+
+	if(MyClient(source_p) && (++mode_limit_simple > MAXMODES_SIMPLE))
+		return;
 
 	/* setting + */
 	if((dir == MODE_ADD) && !(chptr->mode.mode & mode_type))
@@ -924,6 +930,9 @@ chm_limit(struct Client *source_p, struct Channel *chptr,
 	if(dir == MODE_QUERY)
 		return;
 
+	if(MyClient(source_p) && (++mode_limit_simple > MAXMODES_SIMPLE))
+		return;
+
 	if((dir == MODE_ADD) && parc > *parn)
 	{
 		lstr = parv[(*parn)];
@@ -978,6 +987,9 @@ chm_throttle(struct Client *source_p, struct Channel *chptr,
 	}
 
 	if(dir == MODE_QUERY)
+		return;
+
+	if(MyClient(source_p) && (++mode_limit_simple > MAXMODES_SIMPLE))
 		return;
 
 	if((dir == MODE_ADD) && parc > *parn)
@@ -1066,6 +1078,9 @@ chm_forward(struct Client *source_p, struct Channel *chptr,
 	}
 #endif
 
+	if(MyClient(source_p) && (++mode_limit_simple > MAXMODES_SIMPLE))
+		return;
+
 	if(dir == MODE_ADD && parc > *parn)
 	{
 		forward = parv[(*parn)];
@@ -1149,6 +1164,9 @@ chm_key(struct Client *source_p, struct Channel *chptr,
 	if(dir == MODE_QUERY)
 		return;
 
+	if(MyClient(source_p) && (++mode_limit_simple > MAXMODES_SIMPLE))
+		return;
+
 	if((dir == MODE_ADD) && parc > *parn)
 	{
 		key = LOCAL_COPY(parv[(*parn)]);
@@ -1225,6 +1243,9 @@ chm_regonly(struct Client *source_p, struct Channel *chptr,
 
 	if(((dir == MODE_ADD) && (chptr->mode.mode & MODE_REGONLY)) ||
 	   ((dir == MODE_DEL) && !(chptr->mode.mode & MODE_REGONLY)))
+		return;
+
+	if(MyClient(source_p) && (++mode_limit_simple > MAXMODES_SIMPLE))
 		return;
 
 	if(dir == MODE_ADD)
@@ -1543,6 +1564,7 @@ set_channel_mode(struct Client *client_p, struct Client *source_p,
 	mask_pos = 0;
 	mode_count = 0;
 	mode_limit = 0;
+	mode_limit_simple = 0;
 
 	alevel = get_channel_access(source_p, msptr);
 
