@@ -4,4 +4,5 @@ MODLOAD <[path/]module.so>
 the optional path can be an absolute path
 from / or from the IRCD_PREFIX
 (ie modules/autoload/m_users.so)
-NOTE:  Restricted to admins only
+
+- Requires Oper Priv: A

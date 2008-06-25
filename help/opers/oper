@@ -5,4 +5,4 @@ argument is the name of the operator as specified in the
 configuration file. The second argument is the password for
 the operator matching the name and host.
 
-The operator privileges are shown on a sucessful OPER.
+The operator privileges are shown on a successful OPER.
