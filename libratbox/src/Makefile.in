@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-# $Id: Makefile.am 24820 2008-01-02 19:47:32Z androsyn $
+# $Id: Makefile.am 25532 2008-06-11 14:40:44Z androsyn $
 
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
@@ -150,7 +150,7 @@ SED = @SED@
 SEDOBJ = @SEDOBJ@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
-SSL_INCLUDES = @SSL_INCLUDES@
+SSL_CFLAGS = @SSL_CFLAGS@
 SSL_LIBS = @SSL_LIBS@
 STRIP = @STRIP@
 TOUCH = @TOUCH@
@@ -208,7 +208,7 @@ target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign
-INCLUDES = -I. -I../include @SSL_INCLUDES@
+INCLUDES = -I. -I../include @SSL_CFLAGS@ @GNUTLS_CFLAGS@
 libratbox_la_SOURCES = \
 	unix.c				\
 	win32.c				\
@@ -235,8 +235,8 @@ libratbox_la_SOURCES = \
 	rawbuf.c			\
 	patricia.c
 
-libratbox_la_LDFLAGS = -avoid-version -no-undefined -export-symbols export-syms.txt
-libratbox_la_LIBADD = @CRYPT_LIB@ @SSL_LIBS@ 
+libratbox_la_LDFLAGS = -version-info 3:0:0 -no-undefined -export-symbols export-syms.txt
+libratbox_la_LIBADD = @CRYPT_LIB@ @SSL_LIBS@ @GNUTLS_LIBS@
 lib_LTLIBRARIES = libratbox.la
 all: all-am
 

@@ -143,3 +143,5 @@ rb_gettimeofday
 rb_sleep
 rb_spawn_process
 rb_supports_ssl
+rb_ssl_handshake_count
+rb_ssl_clear_handshake_count

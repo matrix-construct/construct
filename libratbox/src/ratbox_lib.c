@@ -20,7 +20,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: ratbox_lib.c 25038 2008-01-23 16:03:08Z androsyn $
+ *  $Id: ratbox_lib.c 25375 2008-05-16 15:19:51Z androsyn $
  */
 
 #include <libratbox_config.h>
@@ -69,7 +69,7 @@ rb_ctime(const time_t t, char *buf, size_t len)
 #else
 	tp = gmtime(&t);
 #endif
-	if(unlikely(tp == NULL))
+	if(rb_unlikely(tp == NULL))
 	{
 		strcpy(buf, "");
 		return(buf);
@@ -104,7 +104,7 @@ rb_date(const time_t t, char *buf, size_t len)
 	gm = gmtime(&t);
 #endif
 
-	if(unlikely(gm == NULL))
+	if(rb_unlikely(gm == NULL))
 	{
 		rb_strlcpy(buf, "", len);	
 		return(buf);
@@ -169,7 +169,7 @@ rb_set_time(void)
 {
 	struct timeval newtime;
 
-	if(unlikely(rb_gettimeofday(&newtime, NULL) == -1))
+	if(rb_unlikely(rb_gettimeofday(&newtime, NULL) == -1))
 	{
 		rb_lib_log("Clock Failure (%s)", strerror(errno));
 		rb_lib_restart("Clock Failure");
@@ -184,7 +184,7 @@ rb_set_time(void)
 const char *
 rb_lib_version(void)
 {
-	static const char *id = "$Rev: 25038 $";
+	static const char *id = "$Rev: 25375 $";
 	return id;
 }
 

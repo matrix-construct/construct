@@ -112,14 +112,28 @@ rb_ssl_accept_setup(rb_fde_t * F, int new_fd, struct sockaddr *st, int addrlen)
 ssize_t
 rb_ssl_read(rb_fde_t * F, void *buf, size_t count)
 {
-	return 0;
+	errno = ENOSYS;
+	return -1;
 }
 
 ssize_t
 rb_ssl_write(rb_fde_t * F, const void *buf, size_t count)
 {
-	return 0;
+	errno = ENOSYS;
+	return -1;
 }
 
+unsigned int
+rb_ssl_handshake_count(rb_fde_t *F)
+{
+	return 0;
+}
+  
+void  
+rb_ssl_clear_handshake_count(rb_fde_t *F)
+{
+	return;
+}
+        
 #endif /* !HAVE_OPENSSL */
 

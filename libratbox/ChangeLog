@@ -1,3 +1,344 @@
+androsyn    2008/06/24 14:04:50 UTC	(25588)
+  Log:
+  move some of the common accept code into a function
+
+  Modified:
+	libratbox/trunk/src/openssl.c (File Modified) 
+
+
+androsyn    2008/06/20 21:49:53 UTC	(25576)
+  Log:
+  rerun autoconf again
+
+  Modified:
+	libratbox/trunk/configure (File Modified) 
+
+
+androsyn    2008/06/20 21:49:06 UTC	(25574)
+  Log:
+  enable Id tags on configure.ac
+
+  Modified:
+	libratbox/trunk/configure.ac (File Modified) (Property Modified)
+
+
+jilles      2008/06/20 21:42:48 UTC	(25572)
+  Log:
+  Rerun autoconf.
+  
+
+  Modified:
+	libratbox/trunk/configure (File Modified) 
+
+
+jilles      2008/06/20 21:42:29 UTC	(25570)
+  Log:
+  Change == in test to =.
+  
+
+  Modified:
+	libratbox/trunk/configure.ac (File Modified) 
+
+
+androsyn    2008/06/20 18:46:08 UTC	(25568)
+  Log:
+  add a missing commio-ssl.h include in gnutls.c
+
+  Modified:
+	libratbox/trunk/src/gnutls.c (File Modified) 
+
+
+androsyn    2008/06/19 19:05:46 UTC	(25556)
+  Log:
+  don't load the certificate twice and remember to close the file after opening it
+
+  Modified:
+	libratbox/trunk/src/gnutls.c (File Modified) 
+
+
+androsyn    2008/06/11 14:40:44 UTC	(25532)
+  Log:
+  All sorts of autotools goo for GNUTLS.  Partially based on nenolod's patch.
+  
+
+  Modified:
+	libratbox/trunk/Makefile.in (File Modified) 
+	libratbox/trunk/aclocal.m4 (File Modified) 
+	libratbox/trunk/configure (File Modified) 
+	libratbox/trunk/configure.ac (File Modified) 
+	libratbox/trunk/include/libratbox_config.h.in (File Modified) 
+	libratbox/trunk/src/Makefile.am (File Modified) 
+	libratbox/trunk/src/Makefile.in (File Modified) 
+	libratbox/trunk/src/nossl.c (File Modified) 
+
+
+androsyn    2008/06/11 06:12:55 UTC	(25530)
+  Log:
+  first pass at gnutls code..
+
+  Modified:
+	libratbox/trunk/src/gnutls.c (File Added) 
+
+
+jilles      2008/05/17 13:36:55 UTC	(25387)
+  Log:
+  Remove static inline symbols from export-syms.txt.
+  These do not exist in the library and some platforms
+  such as MacOS X don't like that.
+  
+
+  Modified:
+	libratbox/trunk/src/export-syms.txt (File Modified) 
+
+
+androsyn    2008/05/16 16:06:02 UTC	(25377)
+  Log:
+  fix a compile warning
+
+  Modified:
+	libratbox/trunk/src/openssl.c (File Modified) 
+
+
+androsyn    2008/05/16 15:19:51 UTC	(25375)
+  Log:
+  fix up the soft assert stuff for libratbox and rename likely/unlikely to rb_likely/rb_unlikely
+
+  Modified:
+	libratbox/trunk/include/commio-int.h (File Modified) 
+	libratbox/trunk/include/ratbox_lib.h (File Modified) 
+	libratbox/trunk/include/rb_memory.h (File Modified) 
+	libratbox/trunk/src/balloc.c (File Modified) 
+	libratbox/trunk/src/commio.c (File Modified) 
+	libratbox/trunk/src/linebuf.c (File Modified) 
+	libratbox/trunk/src/poll.c (File Modified) 
+	libratbox/trunk/src/ratbox_lib.c (File Modified) 
+	libratbox/trunk/src/sigio.c (File Modified) 
+	libratbox/trunk/src/snprintf.c (File Modified) 
+
+
+jilles      2008/05/14 17:55:22 UTC	(25364)
+  Log:
+  Fix a mistake in kqueue 'overflow' handling.
+  If there is no space in the output buffer to report an
+  error adding to the kqueue, kevent(2) will abort and
+  return the error in errno (I was correct that it does
+  not tell you where it failed). So do not abort the loop
+  if kevent(2) fails and do not log (expected) EBADF.
+  
+
+  Modified:
+	libratbox/trunk/src/kqueue.c (File Modified) 
+
+
+androsyn    2008/05/13 14:48:46 UTC	(25358)
+  Log:
+  save connect errno so that we get a correct connect failure reason
+
+  Modified:
+	libratbox/trunk/src/commio.c (File Modified) 
+
+
+jilles      2008/05/12 17:52:22 UTC	(25356)
+  Log:
+  Fix a possible crash with SSL connections closing early.
+  
+
+  Modified:
+	libratbox/trunk/src/openssl.c (File Modified) 
+
+
+jilles      2008/05/12 16:51:54 UTC	(25354)
+  Log:
+  Fix kqueue sometimes dropping updates.
+  (ircd wouldn't read or write anymore to certain clients)
+  This happens because kqueue.c will often try to add
+  already closed file descriptors to the kqueue. The kernel
+  tries to report bad file descriptors in the eventlist; if
+  the eventlist has no space, processing of the changelist
+  is silently halted.
+  The fix:
+  1. allocate two kqlst things, one for what kqlst currently does 
+  and one as output buffer
+  this ensures the kevent(2) call in rb_select_kqueue() never 
+  drops updates
+  2. replace the kevent(2) call in kq_update_events() by a loop 
+  that processes the updates one at a time
+  that doesn't happen much, and it's the only way to be sure 
+  without also getting events out of the queue we cannot process 
+  at that time
+  
+
+  Modified:
+	libratbox/trunk/src/kqueue.c (File Modified) 
+
+
+androsyn    2008/05/08 19:32:13 UTC	(25327)
+  Log:
+  forgot prototypes and nossl versions of rb_ssl handshake stuff
+
+  Modified:
+	libratbox/trunk/include/rb_commio.h (File Modified) 
+	libratbox/trunk/src/nossl.c (File Modified) 
+
+
+androsyn    2008/05/08 19:09:42 UTC	(25325)
+  Log:
+  keep track of the number of openssl handshakes and export rb_ssl_handshake_count and rb_ssl_clear_handshake_count
+
+  Modified:
+	libratbox/trunk/include/commio-int.h (File Modified) 
+	libratbox/trunk/src/export-syms.txt (File Modified) 
+	libratbox/trunk/src/openssl.c (File Modified) 
+
+
+androsyn    2008/05/02 12:41:05 UTC	(25291)
+  Log:
+  fix build for bsd platforms with lack EVFILT_TIMER
+
+  Modified:
+	libratbox/trunk/src/kqueue.c (File Modified) 
+
+
+androsyn    2008/04/21 18:38:23 UTC	(25245)
+  Log:
+  kill a process with SIGKILL when calling helper_close to be certain the process goes away
+
+  Modified:
+	libratbox/trunk/src/helper.c (File Modified) 
+
+
+river       2008/04/16 20:33:35 UTC	(25235)
+  Log:
+  support for compiling on OpenVMS (untested)
+  
+
+  Modified:
+	libratbox/trunk/include/libratbox_config.h_vms (File Added) 
+	libratbox/trunk/src/descrip.mms (File Added) 
+	libratbox/trunk/src/rawbuf.c (File Modified) 
+
+
+androsyn    2008/04/16 20:11:37 UTC	(25233)
+  Log:
+  less than zero doesn't make sense for size_t
+
+  Modified:
+	libratbox/trunk/src/balloc.c (File Modified) 
+
+
+jilles      2008/04/13 16:19:04 UTC	(25229)
+  Log:
+  patricia: remove ugly abuse of K&R style function declaration
+  It left the argument types unspecified in a function
+  pointer, then called it using different numbers of
+  arguments.
+  
+
+  Modified:
+	libratbox/trunk/include/rb_patricia.h (File Modified) 
+	libratbox/trunk/src/patricia.c (File Modified) 
+
+
+jilles      2008/04/12 22:20:43 UTC	(25227)
+  Log:
+  Remove linebuf's per-line flushing flag, as it's per-head state.
+  In rare cases, this sharing caused the ircd to skip
+  part of outgoing traffic, e.g. appearing as "not enough
+  parameters" errors on the other side.
+  The purpose of this flag can be fulfilled by the writeofs
+  in the bufhead.
+  
+
+  Modified:
+	libratbox/trunk/include/rb_linebuf.h (File Modified) 
+	libratbox/trunk/src/linebuf.c (File Modified) 
+
+
+jilles      2008/04/12 14:30:19 UTC	(25225)
+  Log:
+  read/write return type should be ssize_t, not int or size_t.
+  The writev emulation used size_t, which is unsigned,
+  preventing negative values to be seen.
+  
+
+  Modified:
+	libratbox/trunk/src/commio.c (File Modified) 
+
+
+jilles      2008/04/11 08:48:21 UTC	(25223)
+  Log:
+  kqueue: also use EV_ONESHOT for read events
+  This makes the kernel's state agree with our handler pointer.
+  SSL may need to suspend selecting for reading to write
+  something, e.g. with renegotiation.
+  
+
+  Modified:
+	libratbox/trunk/src/kqueue.c (File Modified) 
+
+
+jilles      2008/04/09 19:43:08 UTC	(25219)
+  Log:
+  Call the accept callback when timing out an SSL accept.
+  The callback will close the F.
+  
+
+  Modified:
+	libratbox/trunk/src/openssl.c (File Modified) 
+
+
+jilles      2008/04/09 19:26:04 UTC	(25217)
+  Log:
+  Fix up ssl_accept WANT_READ/WANT_WRITE a bit.
+  Only select for the exact thing asked, and if
+  SSL_ERROR_SYSCALL happens abort it even if the
+  errno is "ignorable".
+  
+
+  Modified:
+	libratbox/trunk/src/openssl.c (File Modified) 
+
+
+jilles      2008/04/05 19:09:32 UTC	(25205)
+  Log:
+  Fix SET_SS_LEN so that it also works correctly outside libratbox.
+  Use RB_SOCKADDR_HAS_SA_LEN instead of SOCKADDR_IN_HAS_LEN
+  which is only defined inside libratbox.
+  This fixes creating own sockaddr structs in other programs
+  using SET_SS_LEN, then passing them to libratbox, on
+  4.4BSD based systems.
+  
+
+  Modified:
+	libratbox/trunk/include/ratbox_lib.h (File Modified) 
+
+
+androsyn    2008/04/04 18:43:29 UTC	(25203)
+  Log:
+  don't spin on accept when you don't get any data
+
+  Modified:
+	libratbox/trunk/src/openssl.c (File Modified) 
+
+
+androsyn    2008/04/01 22:05:38 UTC	(25197)
+  Log:
+  return useful errno values here
+
+  Modified:
+	libratbox/trunk/src/nossl.c (File Modified) 
+
+
+jilles      2008/04/01 20:38:54 UTC	(25195)
+  Log:
+  Make this link without OpenSSL.
+  Patch from nenolod.
+  
+
+  Modified:
+	libratbox/trunk/src/nossl.c (File Modified) 
+
+
 androsyn    2008/03/30 16:34:18 UTC	(25177)
   Log:
   Remove DISABLE_SSL_COMP stuff completely.  Force our outbound connections to use TLSv1

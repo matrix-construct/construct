@@ -22,7 +22,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: kqueue.c 25038 2008-01-23 16:03:08Z androsyn $
+ *  $Id: kqueue.c 25364 2008-05-14 17:55:22Z jilles $
  */
 
 #include <libratbox_config.h>
@@ -285,6 +285,8 @@ rb_select_kqueue(long delay)
 	}
 	return RB_OK;
 }
+
+#if defined(KQUEUE_SCHED_EVENT)
 static int can_do_event = 0;
 int
 rb_kqueue_supports_event(void)
@@ -343,6 +345,7 @@ rb_kqueue_init_event(void)
 {
 	return;
 }
+#endif /* KQUEUE_SCHED_EVENT */
 
 #else /* kqueue not supported */
 int

@@ -115,6 +115,7 @@ struct _fde
 	struct conndata *connect;
 	struct acceptdata *accept;
 	void *ssl;
+	unsigned int handshake_count;
 	unsigned long ssl_errno;
 };
 
@@ -137,7 +138,7 @@ rb_find_fd(int fd)
 	rb_dlink_list *hlist;
 	rb_dlink_node *ptr;
 		
-	if(unlikely(fd < 0))
+	if(rb_unlikely(fd < 0))
 		return NULL;
 
 	hlist = &rb_fd_table[rb_hash_fd(fd)];

@@ -4,7 +4,7 @@
  * The original headers are below..
  * Note that this implementation does not process floating point numbers so
  * you will likely need to fall back to using sprintf yourself to do those...
- * $Id: snprintf.c 25038 2008-01-23 16:03:08Z androsyn $
+ * $Id: snprintf.c 25375 2008-05-16 15:19:51Z androsyn $
  */
 
 /*
@@ -295,7 +295,7 @@ int rb_vsnprintf(char *buf, size_t size, const char *fmt, va_list args)
 
 	/* Reject out-of-range values early.  Large positive sizes are
 	   used for unknown buffer sizes. */
-	if (unlikely((int) size < 0)) {
+	if (rb_unlikely((int) size < 0)) {
 		return 0;
 	}
 

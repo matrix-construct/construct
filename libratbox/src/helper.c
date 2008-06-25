@@ -19,7 +19,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: helper.c 25038 2008-01-23 16:03:08Z androsyn $
+ *  $Id: helper.c 25245 2008-04-21 18:38:23Z androsyn $
  */
 #include <libratbox_config.h>
 #include <ratbox_lib.h>
@@ -271,7 +271,7 @@ rb_helper_close(rb_helper *helper)
 {
 	if(helper == NULL)
 		return;
-		
+	kill(helper->pid, SIGKILL);
 	rb_close(helper->ifd);
 	rb_close(helper->ofd);
 	rb_free(helper);	

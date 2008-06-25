@@ -28,7 +28,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: balloc.c 25048 2008-01-23 18:34:02Z androsyn $
+ *  $Id: balloc.c 25375 2008-05-16 15:19:51Z androsyn $
  */
 
 /* 
@@ -233,7 +233,7 @@ newblock(rb_bh * bh)
 	b->alloc_size = bh->elemsPerBlock * (bh->elemSize + sizeof(rb_heap_block *));
 
 	b->elems = get_block(b->alloc_size);
-	if(unlikely(b->elems == NULL))
+	if(rb_unlikely(b->elems == NULL))
 	{
 		return (1);
 	}
@@ -273,7 +273,7 @@ rb_bh_create(size_t elemsize, int elemsperblock, const char *desc)
 	lrb_assert(elemsize > 0 && elemsperblock > 0);
 	lrb_assert(elemsize >= sizeof(rb_dlink_node));
 	/* Catch idiotic requests up front */
-	if((elemsize <= 0) || (elemsperblock <= 0))
+	if((elemsize == 0) || (elemsperblock <= 0))
 	{
 		rb_bh_fail("Attempting to rb_bh_create idiotic sizes");
 	}
@@ -337,7 +337,7 @@ rb_bh_alloc(rb_bh * bh)
 	rb_heap_memblock *memblock;
 #endif	
 	lrb_assert(bh != NULL);
-	if(unlikely(bh == NULL))
+	if(rb_unlikely(bh == NULL))
 	{
 		rb_bh_fail("Cannot allocate if bh == NULL");
 	}
@@ -350,7 +350,7 @@ rb_bh_alloc(rb_bh * bh)
 		/* Allocate new block and assign */
 		/* newblock returns 1 if unsuccessful, 0 if not */
 
-		if(unlikely(newblock(bh)))
+		if(rb_unlikely(newblock(bh)))
 		{
 			rb_lib_log("newblock() failed");
 			rb_outofmemory();	/* Well that didn't work either...bail */
@@ -392,15 +392,15 @@ rb_bh_free(rb_bh * bh, void *ptr)
 	lrb_assert(bh != NULL);
 	lrb_assert(ptr != NULL);
 
-	if(unlikely(bh == NULL))
+	if(rb_unlikely(bh == NULL))
 	{
-		rb_lib_log("balloc.c:rb_bh_free() bh == NULL");
+		rb_lib_log("balloc.c:rb_bhFree() bh == NULL");
 		return (1);
 	}
 
-	if(unlikely(ptr == NULL))
+	if(rb_unlikely(ptr == NULL))
 	{
-		rb_lib_log("balloc.rb_bh_free() ptr == NULL");
+		rb_lib_log("balloc.rb_bhFree() ptr == NULL");
 		return (1);
 	}
 
@@ -409,7 +409,7 @@ rb_bh_free(rb_bh * bh, void *ptr)
 #else
 	memblock = (rb_heap_memblock *) ((uintptr_t)ptr - sizeof(rb_heap_block *));
 	/* XXX */
-	if(unlikely(!((uintptr_t)ptr >= (uintptr_t)memblock->block->elems && (uintptr_t)ptr < (uintptr_t)memblock->block->elems + (uintptr_t)memblock->block->alloc_size)))
+	if(rb_unlikely(!((uintptr_t)ptr >= (uintptr_t)memblock->block->elems && (uintptr_t)ptr < (uintptr_t)memblock->block->elems + (uintptr_t)memblock->block->alloc_size)))
 	{
 		rb_bh_fail("rb_bh_free() bogus pointer");
 	}

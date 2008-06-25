@@ -21,7 +21,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: commio.c 25358 2008-05-13 14:48:46Z androsyn $
+ *  $Id: commio.c 25375 2008-05-16 15:19:51Z androsyn $
  */
 #include <libratbox_config.h>
 #include <ratbox_lib.h>
@@ -368,7 +368,7 @@ rb_accept_tryaccept(rb_fde_t *F, void *data)
 
 		new_F = rb_open(new_fd, RB_FD_SOCKET, "Incoming Connection");
 
-		if(unlikely(!rb_set_nb(new_F)))
+		if(rb_unlikely(!rb_set_nb(new_F)))
 		{
 			rb_get_errno();
 			rb_lib_log("rb_accept: Couldn't set FD %d non blocking!", new_F->fd);
@@ -603,7 +603,7 @@ rb_socketpair(int family, int sock_type, int proto, rb_fde_t **F1, rb_fde_t **F2
 	}
 
 	/* Set the socket non-blocking, and other wonderful bits */
-	if(unlikely(!rb_set_nb(*F1)))
+	if(rb_unlikely(!rb_set_nb(*F1)))
 	{
 		rb_lib_log("rb_open: Couldn't set FD %d non blocking: %s", nfd[0], strerror(errno));
 		rb_close(*F1);
@@ -611,7 +611,7 @@ rb_socketpair(int family, int sock_type, int proto, rb_fde_t **F1, rb_fde_t **F2
 		return -1;
 	}
 
-	if(unlikely(!rb_set_nb(*F2)))
+	if(rb_unlikely(!rb_set_nb(*F2)))
 	{
 		rb_lib_log("rb_open: Couldn't set FD %d non blocking: %s", nfd[1], strerror(errno));
 		rb_close(*F1);
@@ -640,7 +640,7 @@ rb_pipe(rb_fde_t **F1, rb_fde_t **F2, const char *desc)
 	*F1 = rb_open(fd[0], RB_FD_PIPE, desc);
 	*F2 = rb_open(fd[1], RB_FD_PIPE, desc);
 
-	if(unlikely(!rb_set_nb(*F1)))
+	if(rb_unlikely(!rb_set_nb(*F1)))
 	{
 		rb_lib_log("rb_open: Couldn't set FD %d non blocking: %s", fd[0], strerror(errno));
 		rb_close(*F1);
@@ -648,7 +648,7 @@ rb_pipe(rb_fde_t **F1, rb_fde_t **F2, const char *desc)
 		return -1;
 	}
 
-	if(unlikely(!rb_set_nb(*F2)))
+	if(rb_unlikely(!rb_set_nb(*F2)))
 	{
 		rb_lib_log("rb_open: Couldn't set FD %d non blocking: %s", fd[1], strerror(errno));
 		rb_close(*F1);
@@ -679,7 +679,7 @@ rb_socket(int family, int sock_type, int proto, const char *note)
 	rb_fde_t *F;
 	int fd;
 	/* First, make sure we aren't going to run out of file descriptors */
-	if(unlikely(number_fd >= rb_maxconnections))
+	if(rb_unlikely(number_fd >= rb_maxconnections))
 	{
 		errno = ENFILE;
 		return NULL;
@@ -692,7 +692,7 @@ rb_socket(int family, int sock_type, int proto, const char *note)
 	 */
 	fd = socket(family, sock_type, proto);
 	rb_fd_hack(&fd);
-	if(unlikely(fd < 0))
+	if(rb_unlikely(fd < 0))
 		return NULL;	/* errno will be passed through, yay.. */
 
 #if defined(RB_IPV6) && defined(IPV6_V6ONLY)
@@ -718,7 +718,7 @@ rb_socket(int family, int sock_type, int proto, const char *note)
 		return NULL;
 
 	/* Set the socket non-blocking, and other wonderful bits */
-	if(unlikely(!rb_set_nb(F)))
+	if(rb_unlikely(!rb_set_nb(F)))
 	{
 		rb_lib_log("rb_open: Couldn't set FD %d non blocking: %s", fd, strerror(errno));
 		rb_close(F);
@@ -801,7 +801,7 @@ rb_open(int fd, rb_uint8_t type, const char *desc)
 	rb_fde_t *F = add_fd(fd);
 	lrb_assert(fd >= 0);
 
-	if(unlikely(IsFDOpen(F)))
+	if(rb_unlikely(IsFDOpen(F)))
 	{
 		return NULL;
 	}
@@ -831,7 +831,7 @@ rb_close(rb_fde_t *F)
 	lrb_assert(IsFDOpen(F));
 
 	lrb_assert(!(type & RB_FD_FILE));
-	if(unlikely(type & RB_FD_FILE))
+	if(rb_unlikely(type & RB_FD_FILE))
 	{
 		lrb_assert(F->read_handler == NULL);
 		lrb_assert(F->write_handler == NULL);

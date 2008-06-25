@@ -21,7 +21,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: rb_commio.h 25038 2008-01-23 16:03:08Z androsyn $
+ *  $Id: rb_commio.h 25327 2008-05-08 19:32:13Z androsyn $
  */
  
 #ifndef RB_LIB_H
@@ -168,5 +168,7 @@ void  rb_ssl_start_accepted(rb_fde_t *new_F, ACCB *cb, void *data, int timeout);
 void rb_ssl_start_connected(rb_fde_t *F, CNCB *callback, void *data, int timeout);
 int rb_supports_ssl(void);
 
-
+unsigned int rb_ssl_handshake_count(rb_fde_t *F);
+void rb_ssl_clear_handshake_count(rb_fde_t *F);
+         
 #endif /* INCLUDED_commio_h */

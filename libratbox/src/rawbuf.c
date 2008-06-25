@@ -207,7 +207,7 @@ rb_rawbuf_append(rawbuf_head_t * rb, void *data, int len)
 		len -= clen;
 		if(len == 0)
 			return;
-		data += clen;
+		data = (char *)data + clen;
 
 	}
 
@@ -223,7 +223,7 @@ rb_rawbuf_append(rawbuf_head_t * rb, void *data, int len)
 		memcpy(buf->data, data, clen);
 		buf->len += clen;
 		len -= clen;
-		data += clen;
+		data = (char *)data + clen;
 		rb->len += clen;
 	}
 }

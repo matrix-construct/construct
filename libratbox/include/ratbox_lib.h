@@ -1,5 +1,5 @@
 /*
- * $Id: ratbox_lib.h 24866 2008-01-10 16:33:54Z androsyn $
+ * $Id: ratbox_lib.h 25375 2008-05-16 15:19:51Z androsyn $
  */
 
 #ifndef RB_LIB_H
@@ -38,32 +38,32 @@ char *alloca();
 
 #ifdef __GNUC__
 
-#ifdef likely
-#undef likely
+#ifdef rb_likely
+#undef rb_likely
 #endif
-#ifdef unlikely
-#undef unlikely
+#ifdef rb_unlikely
+#undef rb_unlikely
 #endif
 
 #if __GNUC__ == 2 && __GNUC_MINOR__ < 96
 # define __builtin_expect(x, expected_value) (x)
 #endif
 
-#define likely(x)       __builtin_expect(!!(x), 1)
-#define unlikely(x)     __builtin_expect(!!(x), 0)
+#define rb_likely(x)       __builtin_expect(!!(x), 1)
+#define rb_unlikely(x)     __builtin_expect(!!(x), 0)
 
 #else /* !__GNUC__ */
 
 #define UNUSED(x) x
 
-#ifdef likely
-#undef likely
+#ifdef rb_likely
+#undef rb_likely
 #endif
-#ifdef unlikely
-#undef unlikely
+#ifdef rb_unlikely
+#undef rb_unlikely
 #endif
-#define likely(x)	(x)
-#define unlikely(x)	(x)
+#define rb_likely(x)	(x)
+#define rb_unlikely(x)	(x)
 #endif
 
 
@@ -118,24 +118,18 @@ unsigned int geteuid(void);
 #ifdef SOFT_ASSERT
 #ifdef __GNUC__
 #define lrb_assert(expr)	do								\
-			if(unlikely(!(expr))) {							\
-				lib_ilog(L_MAIN, 						\
+			if(rb_unlikely(!(expr))) {							\
+				rb_lib_log( 						\
 				"file: %s line: %d (%s): Assertion failed: (%s)",	\
 				__FILE__, __LINE__, __PRETTY_FUNCTION__, #expr); 	\
-				sendto_realops_flags(UMODE_ALL, L_ALL, 			\
-				"file: %s line: %d (%s): Assertion failed: (%s)",	\
-				__FILE__, __LINE__, __PRETTY_FUNCTION__, #expr);	\
 			}								\
 			while(0)
 #else
 #define lrb_assert(expr)	do								\
-			if(unlikely(!(expr))) {							\
-				lib_ilog(L_MAIN, 						\
+			if(rb_unlikely(!(expr))) {							\
+				rb_lib_log(L_MAIN, 						\
 				"file: %s line: %d: Assertion failed: (%s)",		\
 				__FILE__, __LINE__, #expr); 				\
-				sendto_realops_flags(UMODE_ALL, L_ALL,			\
-				"file: %s line: %d: Assertion failed: (%s)"		\
-				__FILE__, __LINE__, #expr);				\
 			}								\
 			while(0)
 #endif
