@@ -53,6 +53,7 @@
 #include "snomask.h"
 #include "blacklist.h"
 #include "substitution.h"
+#include "chmode.h"
 
 static void report_and_set_user_flags(struct Client *, struct ConfItem *);
 void user_welcome(struct Client *source_p);
@@ -1187,7 +1188,7 @@ user_welcome(struct Client *source_p)
 	sendto_one_numeric(source_p, RPL_YOURHOST, form_str(RPL_YOURHOST),
 		   get_listener_name(source_p->localClient->listener), ircd_version);
 	sendto_one_numeric(source_p, RPL_CREATED, form_str(RPL_CREATED), creation);
-	sendto_one_numeric(source_p, RPL_MYINFO, form_str(RPL_MYINFO), me.name, ircd_version, umodebuf);
+	sendto_one_numeric(source_p, RPL_MYINFO, form_str(RPL_MYINFO), me.name, ircd_version, umodebuf, cflagsmyinfo);
 
 	show_isupport(source_p);
 

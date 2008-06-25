@@ -87,6 +87,7 @@
 #include "ircd.h"
 #include "s_conf.h"
 #include "supported.h"
+#include "chmode.h"
 
 rb_dlink_list isupportlist;
 
@@ -209,12 +210,11 @@ isupport_chanmodes(const void *ptr)
 {
 	static char result[80];
 
-	rb_snprintf(result, sizeof result, "%s%sbq,k,%slj,imnpst%scgzLP%s",
+	rb_snprintf(result, sizeof result, "%s%sbq,k,%slj,%s",
 			ConfigChannel.use_except ? "e" : "",
 			ConfigChannel.use_invex ? "I" : "",
 			ConfigChannel.use_forward ? "f" : "",
-			rb_dlink_list_length(&service_list) ? "r" : "",
-			ConfigChannel.use_forward ? "QF" : "");
+			cflagsbuf);
 	return result;
 }
 
