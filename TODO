@@ -4,6 +4,7 @@
   [x] remove 2.8 report_error() in ratbox imported stuff
   [F] client.c, channel.c is very 2.8 style still. it'd be nice to pack them into their own 
       namespace and such. moreover, the other 2.8 code needs similar rewriting/reworking too...
+  [x] merge m_join.c and m_sjoin.c in one module (same functions, done in ratbox3)
   [ ] rewrite s_auth.c
     [ ] authentication state/lock manager
     [ ] move resolver/auth checker code into separated modules 
@@ -21,8 +22,10 @@
   [ ] acknowledgement message for SSL users like '* *** You are connected using SSL cipher "DHE RSA-AES 128 CBC-SHA"'
   [x] tool for generating ssl certificates and other stuff
   [x] gnutls backend for at least SSL connections (replacing libcrypto use in m_challenge would be nice too)
-[x] merge some stuff from ircd-seven directly (to be determined what)
+[/] merge some stuff from ircd-seven directly (to be determined what)
   [x] remote d:lines support
+  [x] PASS selector:password for auth{} (useful for dynamic IPs)
+  [ ] +C (noctcp) channel/usermode
 [F] kline/xline/resv sync
 [F] make an ability of using bandb instead of .conf files as bans storage
 [x] drop non-TS6 (legacy protocol) support
@@ -38,12 +41,9 @@
   [ ] Compilation without zlib headers fails
   [ ] Compilation date and time in server welcome message is in OS locale - looks ugly 'cause often it's not match user's codepage
 --- other stuff
-  [?] allow to set up configfiles path (etc/) instead of separated configfiles names (kline.conf, ircd.conf etc) like it is in ratbox3?
-  [ ] PASS selector:password for auth{} from ircd-seven? (useful for dynamic IPs)
-  [ ] +C (noctcp) channel/usermode from ircd-seven?
+  [ ] allow to set up configfiles path (etc/) instead of separated configfiles names (kline.conf, ircd.conf etc) like it is in ratbox3?
   [?] internally split out +o/+v "ranks" into a series of permissions. this could allow for configure-defined 
       special access levels, halfops, etc. (would need to match globally, somehow. extra SVINFO param?)
   [?] somehow hide channel operators like ircnet can do?
-  [x] merge m_join.c and m_sjoin.c in one module (same functions, done in ratbox3)
   [x] create chmode.h and put there all declarations of chm_* - this will make some modules clean
 [?] Move oper override server WALLOPS to global server notices?
