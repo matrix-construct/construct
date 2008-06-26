@@ -181,10 +181,10 @@ flood_recalc(void *unused)
 	{
 		client_p = ptr->data;
 
-		if(unlikely(IsMe(client_p)))
+		if(rb_unlikely(IsMe(client_p)))
 			continue;
 			
-		if(unlikely(client_p->localClient == NULL))
+		if(rb_unlikely(client_p->localClient == NULL))
 			continue;
 		
 		if(IsFloodDone(client_p))
@@ -200,7 +200,7 @@ flood_recalc(void *unused)
 
 		parse_client_queued(client_p);
 		
-		if(unlikely(IsAnyDead(client_p)))
+		if(rb_unlikely(IsAnyDead(client_p)))
 			continue;
 
 	}
