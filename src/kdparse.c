@@ -110,7 +110,7 @@ parse_k_file(FILE * file)
 				user_field, operreason_field, date_field);
 
 		if(aconf->host != NULL)
-			add_conf_by_address(aconf->host, CONF_KILL, aconf->user, aconf);
+			add_conf_by_address(aconf->host, CONF_KILL, aconf->user, NULL, aconf);
 	}
 }
 

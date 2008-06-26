@@ -492,7 +492,7 @@ static void
 apply_kline(struct Client *source_p, struct ConfItem *aconf,
 	    const char *reason, const char *oper_reason, const char *current_date)
 {
-	add_conf_by_address(aconf->host, CONF_KILL, aconf->user, aconf);
+	add_conf_by_address(aconf->host, CONF_KILL, aconf->user, NULL, aconf);
 	write_confitem(KLINE_TYPE, source_p, aconf->user, aconf->host,
 		       reason, oper_reason, current_date, 0);
 }
@@ -716,7 +716,7 @@ already_placed_kline(struct Client *source_p, const char *luser, const char *lho
 		else
 			piphost = NULL;
 
-		aconf = find_conf_by_address(lhost, NULL, NULL, (struct sockaddr *)piphost, CONF_KILL, t, luser);
+		aconf = find_conf_by_address(lhost, NULL, NULL, (struct sockaddr *)piphost, CONF_KILL, t, luser, NULL);
 		if (aconf != NULL)
 		{
 			/* The above was really a lookup of a single IP,

@@ -497,7 +497,7 @@ stats_auth (struct Client *source_p)
 	else if((ConfigFileEntry.stats_i_oper_only == 1) && !IsOper (source_p))
 	{
 		struct ConfItem *aconf;
-		char *name, *host, *pass, *user, *classname;
+		char *name, *host, *pass = "*", *user, *classname;
 		int port;
 
 		if(MyConnect (source_p))
@@ -505,18 +505,20 @@ stats_auth (struct Client *source_p)
 						      (struct sockaddr *)&source_p->localClient->ip,
 						      CONF_CLIENT,
 						      source_p->localClient->ip.ss_family,
-						      source_p->username);
+						      source_p->username, NULL);
 		else
 			aconf = find_conf_by_address (source_p->host, NULL, NULL, NULL, CONF_CLIENT,
-						      0, source_p->username);
+						      0, source_p->username, NULL);
 
 		if(aconf == NULL)
 			return;
 
 		get_printable_conf (aconf, &name, &host, &pass, &user, &port, &classname);
+		if(!EmptyString(aconf->spasswd))
+			pass = aconf->spasswd;
 
 		sendto_one_numeric(source_p, RPL_STATSILINE, form_str(RPL_STATSILINE),
-				   name, show_iline_prefix(source_p, aconf, user),
+				   name, pass, show_iline_prefix(source_p, aconf, user),
 				   host, port, classname);
 	}
 
@@ -545,10 +547,10 @@ stats_tklines(struct Client *source_p)
 						      (struct sockaddr *)&source_p->localClient->ip,
 						      CONF_KILL,
 						      source_p->localClient->ip.ss_family,
-						      source_p->username);
+						      source_p->username, NULL);
 		else
 			aconf = find_conf_by_address (source_p->host, NULL, NULL, NULL, CONF_KILL,
-						      0, source_p->username);
+						      0, source_p->username, NULL);
 
 		if(aconf == NULL)
 			return;
@@ -611,10 +613,10 @@ stats_klines(struct Client *source_p)
 						      (struct sockaddr *)&source_p->localClient->ip,
 						      CONF_KILL,
 						      source_p->localClient->ip.ss_family,
-						      source_p->username);
+						      source_p->username, NULL);
 		else
 			aconf = find_conf_by_address (source_p->host, NULL, NULL, NULL, CONF_KILL,
-						      0, source_p->username);
+						      0, source_p->username, NULL);
 
 		if(aconf == NULL)
 			return;

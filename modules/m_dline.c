@@ -339,7 +339,7 @@ apply_dline(struct Client *source_p, const char *dlhost, int tdline_time, char *
 	{
 		rb_snprintf(dlbuffer, sizeof(dlbuffer), "%s (%s)", reason, current_date);
 		aconf->passwd = rb_strdup(dlbuffer);
-		add_conf_by_address(aconf->host, CONF_DLINE, NULL, aconf);
+		add_conf_by_address(aconf->host, CONF_DLINE, NULL, NULL, aconf);
 		write_confitem(DLINE_TYPE, source_p, NULL, aconf->host, reason,
 			       oper_reason, current_date, 0);
 	}

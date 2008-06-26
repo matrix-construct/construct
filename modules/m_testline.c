@@ -155,7 +155,7 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 #ifdef RB_IPV6
 				 (type == HM_IPV6) ? AF_INET6 : 
 #endif
-				  AF_INET) : 0)))
+				  AF_INET) : 0, NULL)))
 	{
 		static char buf[HOSTLEN+USERLEN+2];
 

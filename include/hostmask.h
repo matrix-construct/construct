@@ -39,24 +39,24 @@ enum
 int parse_netmask(const char *, struct sockaddr *, int *);
 struct ConfItem *find_conf_by_address(const char *host, const char *sockhost,
 				      const char *orighost, struct sockaddr *,
-				      int, int, const char *);
+				      int, int, const char *, const char *);
 struct ConfItem *find_exact_conf_by_address(const char *address, int type,
 					    const char *username);
-void add_conf_by_address(const char *, int, const char *, struct ConfItem *);
+void add_conf_by_address(const char *, int, const char *, const char *, struct ConfItem *);
 void delete_one_address_conf(const char *, struct ConfItem *);
 void clear_out_address_conf(void);
 void clear_out_address_conf_bans(void);
 void init_host_hash(void);
 struct ConfItem *find_address_conf(const char *host, const char *sockhost, 
 				const char *, const char *, struct sockaddr *,
-				int);
+				int, char *);
 
 struct ConfItem *find_dline(struct sockaddr *, int);
 
 #define find_kline(x)	(find_conf_by_address((x)->host, (x)->sockhost, \
 			 (x)->orighost, \
 			 (struct sockaddr *)&(x)->localClient->ip, CONF_KILL,\
-			 (x)->localClient->ip.ss_family, (x)->username))
+			 (x)->localClient->ip.ss_family, (x)->username, NULL))
 
 void report_Klines(struct Client *);
 void report_auth(struct Client *);
@@ -99,6 +99,8 @@ struct AddressRec
 
 	/* Only checked if !(type & 1)... */
 	const char *username;
+	/* Only checked if type == CONF_CLIENT */
+	const char *auth_user;
 	struct ConfItem *aconf;
 
 	/* The next record in this hash bucket. */

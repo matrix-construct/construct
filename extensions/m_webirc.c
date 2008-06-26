@@ -89,7 +89,7 @@ mr_webirc(struct Client *client_p, struct Client *source_p, int parc, const char
 				IsGotId(client_p) ? client_p->username : "webirc",
 				IsGotId(client_p) ? client_p->username : "webirc",
 				(struct sockaddr *) &client_p->localClient->ip,
-				client_p->localClient->ip.ss_family);
+				client_p->localClient->ip.ss_family, NULL);
 	if (aconf == NULL || !(aconf->status & CONF_CLIENT))
 		return 0;
 	if (!IsConfDoSpoofIp(aconf) || irccmp(aconf->name, "webirc."))

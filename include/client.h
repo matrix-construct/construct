@@ -230,6 +230,7 @@ struct LocalUser
 	 * agreed. lets get rid of it someday! --nenolod
 	 */
 	char *passwd;
+	char *auth_user;
 	char *opername; /* name of operator{} block being used or tried (challenge) */
 	char *challenge;
 	char *fullcaps;
