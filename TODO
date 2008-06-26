@@ -37,8 +37,8 @@
   [ ] auth checker module
   [ ] resolver module
 [x] Remove glines entirely
-[ ] Bug fixes
-  [ ] Compilation without zlib headers fails
+[/] Bug fixes
+  [x] Compilation without zlib headers fails - fixed
   [ ] Compilation date and time in server welcome message is in OS locale - looks ugly 'cause often it's not match user's codepage
 --- other stuff
   [ ] allow to set up configfiles path (etc/) instead of separated configfiles names (kline.conf, ircd.conf etc) like it is in ratbox3?
