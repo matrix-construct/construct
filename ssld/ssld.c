@@ -924,7 +924,7 @@ mod_process_cmd_recv(mod_ctl_t * ctl)
 #else
 		case 'Y':
 		case 'Z':
-			send_nozlib_support(ctl);
+			send_nozlib_support(ctl, ctl_buf);
 			break;
 			
 #endif
