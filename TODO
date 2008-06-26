@@ -12,7 +12,7 @@
   [x] clean up maxconnections kludges &c
   [x] in-process SSL
   [x] port and use ratbox ssld for server links
-  [ ] merge with libratbox SVN
+  [x] merge with libratbox SVN
 [/] ssl stuff
   [x] client-to-client ssl
   [x] server-to-server ssl
