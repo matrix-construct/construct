@@ -61,7 +61,7 @@ mapi_hlist_av1 trace_hlist[] = {
 DECLARE_MODULE_AV1(trace, NULL, NULL, trace_clist, trace_hlist, NULL, "$Revision: 3183 $");
 
 static void count_downlinks(struct Client *server_p, int *pservcount, int *pusercount);
-static int report_this_status(struct Client *source_p, struct Client *target_p);
+static int report_this_status(struct Client *source_p, struct Client *target_p, int dow);
 
 /*
  * m_trace
