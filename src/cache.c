@@ -136,7 +136,7 @@ cache_file(const char *filename, const char *shortname, int flags)
 		if(!EmptyString(line))
 		{
 			lineptr = rb_malloc(sizeof(struct cacheline));
-			rb_strlcpy(lineptr->data, line, sizeof(lineptr->data));
+			untabify(lineptr->data, line, sizeof(lineptr->data));
 			rb_dlinkAddTail(lineptr, &lineptr->linenode, &cacheptr->contents);
 		}
 		else
@@ -224,6 +224,10 @@ load_help(void)
 	struct cachefile *cacheptr;
 	struct DictionaryIter iter;
 
+#if defined(S_ISLNK) && defined(HAVE_LSTAT)
+	struct stat sb;
+#endif
+
 	DICTIONARY_FOREACH(cacheptr, &iter, help_dict_oper)
 	{
 		irc_dictionary_delete(help_dict_oper, cacheptr->name);
@@ -256,6 +260,25 @@ load_help(void)
 	while((ldirent = readdir(helpfile_dir)) != NULL)
 	{
 		rb_snprintf(filename, sizeof(filename), "%s/%s", UHPATH, ldirent->d_name);
+
+#if defined(S_ISLNK) && defined(HAVE_LSTAT)
+		if(lstat(filename, &sb) < 0)
+			continue;
+
+		/* ok, if its a symlink, we work on the presumption if an
+		 * oper help exists of that name, its a symlink to that --fl
+		 */
+		if(S_ISLNK(sb.st_mode))
+		{
+			cacheptr = irc_dictionary_retrieve(help_dict_oper, ldirent->d_name);
+
+			if(cacheptr != NULL)
+			{
+				cacheptr->flags |= HELP_USER;
+				continue;
+			}
+		}
+#endif
 
 		cacheptr = cache_file(filename, ldirent->d_name, HELP_USER);
 		irc_dictionary_add(help_dict_user, cacheptr->name, cacheptr);
