@@ -121,10 +121,6 @@ int zlib_ok = 1;
 int testing_conf = 0;
 
 struct config_channel_entry ConfigChannel;
-rb_bh *channel_heap;
-rb_bh *ban_heap;
-rb_bh *topic_heap;
-rb_bh *member_heap;
 
 rb_bh *client_heap = NULL;
 rb_bh *lclient_heap = NULL;

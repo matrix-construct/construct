@@ -41,6 +41,11 @@
 #include "s_newconf.h"
 #include "logger.h"
 
+static rb_bh *channel_heap;
+static rb_bh *ban_heap;
+static rb_bh *topic_heap;
+static rb_bh *member_heap;
+
 static int channel_capabs[] = { CAP_EX, CAP_IE,
 	CAP_SERVICE,
 	CAP_TS6

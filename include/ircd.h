@@ -99,11 +99,6 @@ extern rb_dlink_list local_oper_list;
 extern rb_dlink_list oper_list;
 extern rb_dlink_list dead_list;
 
-extern rb_bh *channel_heap;
-extern rb_bh *ban_heap;
-extern rb_bh *topic_heap;
-extern rb_bh *member_heap;
-
 extern int testing_conf;
 
 extern struct ev_entry *check_splitmode_ev;
