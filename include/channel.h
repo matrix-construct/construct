@@ -56,7 +56,6 @@ struct Channel
 	char *topic;
 	char *topic_info;
 	time_t topic_time;
-	time_t users_last;	/* when last user was in channel */
 	time_t last_knock;	/* don't allow knock to flood */
 
 	rb_dlink_list members;	/* channel members */

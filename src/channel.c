@@ -240,8 +240,6 @@ remove_user_from_channel(struct membership *msptr)
 	if(client_p->servptr == &me)
 		rb_dlinkDelete(&msptr->locchannode, &chptr->locmembers);
 
-	chptr->users_last = rb_current_time();
-
 	if(!(chptr->mode.mode & MODE_PERMANENT) && rb_dlink_list_length(&chptr->members) <= 0)
 		destroy_channel(chptr);
 
@@ -276,8 +274,6 @@ remove_user_from_channels(struct Client *client_p)
 
 		if(client_p->servptr == &me)
 			rb_dlinkDelete(&msptr->locchannode, &chptr->locmembers);
-
-		chptr->users_last = rb_current_time();
 
 		if(!(chptr->mode.mode & MODE_PERMANENT) && rb_dlink_list_length(&chptr->members) <= 0)
 			destroy_channel(chptr);
