@@ -417,15 +417,7 @@ notify_banned_client(struct Client *client_p, struct ConfItem *aconf, int ban)
 	}
 	else
 	{
-		switch (aconf->status)
-		{
-		case D_LINED:
-			reason = d_lined;
-			break;
-		default:
-			reason = k_lined;
-			break;
-		}
+		reason = aconf->status == D_LINED ? d_lined : k_lined;
 	}
 
 	if(ban == D_LINED && !IsPerson(client_p))
