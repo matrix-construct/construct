@@ -80,7 +80,6 @@ extern struct Client me;
 extern rb_dlink_list global_client_list;
 extern struct Client *local[];
 extern struct Counter Count;
-extern struct timeval SystemTime;
 extern int default_server_capabs;
 
 extern time_t startup_time;

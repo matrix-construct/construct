@@ -80,7 +80,6 @@ struct Counter Count;
 struct ServerStatistics ServerStats;
 
 int maxconnections;
-struct timeval SystemTime;
 struct Client me;		/* That's me */
 struct LocalUser meLocalUser;	/* That's also part of me */
 
