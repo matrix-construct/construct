@@ -74,6 +74,7 @@ static EVH check_pings;
 
 static rb_bh *client_heap = NULL;
 static rb_bh *lclient_heap = NULL;
+static rb_bh *pclient_heap = NULL;
 static rb_bh *user_heap = NULL;
 static rb_bh *away_heap = NULL;
 static char current_uid[IDLEN];
@@ -118,6 +119,7 @@ init_client(void)
 	client_heap = rb_bh_create(sizeof(struct Client), CLIENT_HEAP_SIZE, "client_heap");
 	lclient_heap = rb_bh_create(sizeof(struct LocalUser), LCLIENT_HEAP_SIZE, "lclient_heap");
 	pclient_heap = rb_bh_create(sizeof(struct PreClient), PCLIENT_HEAP_SIZE, "pclient_heap");
+	user_heap = rb_bh_create(sizeof(struct User), USER_HEAP_SIZE, "user_heap");
 	away_heap = rb_bh_create(AWAYLEN, AWAY_HEAP_SIZE, "away_heap");
 
 	rb_event_addish("check_pings", check_pings, NULL, 30);
@@ -151,7 +153,7 @@ make_client(struct Client *from)
 	{
 		client_p->from = client_p;	/* 'from' of local client is self! */
 
-		localClient = (struct LocalUser *) rb_bh_alloc(lclient_heap);
+		localClient = rb_bh_alloc(lclient_heap);
 		SetMyConnect(client_p);
 		client_p->localClient = localClient;
 
@@ -159,7 +161,7 @@ make_client(struct Client *from)
 
 		client_p->localClient->F = NULL;
 
-		client_p->preClient = (struct PreClient *) rb_bh_alloc(pclient_heap);
+		client_p->preClient = rb_bh_alloc(pclient_heap);;
 
 		/* as good a place as any... */
 		rb_dlinkAdd(client_p, &client_p->localClient->tnode, &unknown_list);
@@ -1762,24 +1764,6 @@ show_ip_conf(struct ConfItem *aconf, struct Client *source_p)
 	}
 	else
 		return 1;
-}
-
-/*
- * initUser
- *
- * inputs	- none
- * outputs	- none
- *
- * side effects - Creates a block heap for struct Users
- *
- */
-static rb_bh *user_heap;
-void
-initUser(void)
-{
-	user_heap = rb_bh_create(sizeof(struct User), USER_HEAP_SIZE, "user_heap");
-	if(!user_heap)
-		rb_outofmemory();
 }
 
 /*

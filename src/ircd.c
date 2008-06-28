@@ -647,7 +647,6 @@ main(int argc, char *argv[])
 	init_host_hash();
 	clear_hash_parse();
 	init_client();
-	initUser();
 	init_hook();
 	init_channels();
 	initclass();
