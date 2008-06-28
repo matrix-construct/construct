@@ -606,10 +606,6 @@ main(int argc, char *argv[])
 
 	setup_signals();
 
-#ifdef __CYGWIN__
-	server_state_foreground = 1;
-#endif
-
 	if (testing_conf)
 		server_state_foreground = 1;
 
