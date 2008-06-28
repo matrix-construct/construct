@@ -119,8 +119,6 @@ int zlib_ok = 1;
 
 int testing_conf = 0;
 
-struct config_channel_entry ConfigChannel;
-
 rb_bh *client_heap = NULL;
 rb_bh *lclient_heap = NULL;
 rb_bh *pclient_heap = NULL;

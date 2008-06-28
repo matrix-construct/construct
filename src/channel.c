@@ -41,6 +41,7 @@
 #include "s_newconf.h"
 #include "logger.h"
 
+struct config_channel_entry ConfigChannel;
 rb_dlink_list global_channel_list;
 static rb_bh *channel_heap;
 static rb_bh *ban_heap;
