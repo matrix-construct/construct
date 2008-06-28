@@ -63,6 +63,8 @@ DECLARE_MODULE_AV1(trace, NULL, NULL, trace_clist, trace_hlist, NULL, "$Revision
 static void count_downlinks(struct Client *server_p, int *pservcount, int *pusercount);
 static int report_this_status(struct Client *source_p, struct Client *target_p, int dow);
 
+static const char *empty_sockhost = "255.255.255.255";
+
 /*
  * m_trace
  *      parv[0] = sender prefix
