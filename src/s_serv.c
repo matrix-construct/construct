@@ -297,15 +297,9 @@ try_connections(void *unused)
 	 * error afterwards if it fails.
 	 *   -- adrian
 	 */
-#ifndef HIDE_SERVERS_IPS
-	sendto_realops_snomask(SNO_GENERAL, L_ALL,
-			"Connection to %s[%s] activated.",
-			server_p->name, server_p->host);
-#else
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			"Connection to %s activated",
 			server_p->name);
-#endif
 
 	serv_connect(server_p, 0);
 }
@@ -800,7 +794,7 @@ server_estab(struct Client *client_p)
 	/* Show the real host/IP to admins */
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			"Link with %s established: (%s) link",
-			get_server_name(client_p, SHOW_IP),
+			client_p->name,
 			show_capabilities(client_p));
 
 	ilog(L_SERVER, "Link with %s established: (%s) link",
@@ -924,7 +918,7 @@ serv_connect_resolved(struct Client *client_p)
 	if((server_p = client_p->localClient->att_sconf) == NULL)
 	{
 		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL, "Lost connect{} block for %s",
-				get_server_name(client_p, HIDE_IP));
+				client_p->name);
 		exit_client(client_p, client_p, &me, "Lost connect{} block");
 		return 0;
 	}
@@ -1017,7 +1011,7 @@ serv_connect_dns_callback(void *vptr, struct DNSReply *reply)
 	if (reply == NULL)
 	{
 		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL, "Cannot resolve hostname for %s",
-				get_server_name(client_p, HIDE_IP));
+				client_p->name);
 		ilog(L_SERVER, "Cannot resolve hostname for %s",
 				log_client_name(client_p, HIDE_IP));
 		exit_client(client_p, client_p, &me, "Cannot resolve hostname");
@@ -1078,10 +1072,10 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Server %s already present from %s",
-				     server_p->name, get_server_name(client_p, SHOW_IP));
+				     server_p->name, client_p->name);
 		if(by && IsPerson(by) && !MyClient(by))
 			sendto_one_notice(by, ":Server %s already present from %s",
-					  server_p->name, get_server_name(client_p, SHOW_IP));
+					  server_p->name, client_p->name);
 		return 0;
 	}
 
@@ -1258,11 +1252,7 @@ serv_connect_callback(rb_fde_t *F, int status, void *data)
 			sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 					"Error connecting to %s[%s]: %s",
 					client_p->name, 
-#ifdef HIDE_SERVERS_IPS
 					"255.255.255.255",
-#else
-					client_p->host,
-#endif
 					rb_errstr(status));
 			ilog(L_SERVER, "Error connecting to %s[%s]: %s",
 				client_p->name, client_p->sockhost,
@@ -1274,11 +1264,7 @@ serv_connect_callback(rb_fde_t *F, int status, void *data)
 			sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 					"Error connecting to %s[%s]: %s (%s)",
 					client_p->name,
-#ifdef HIDE_SERVERS_IPS
 					"255.255.255.255",
-#else
-					client_p->host,
-#endif
 					rb_errstr(status), errstr);
 			ilog(L_SERVER, "Error connecting to %s[%s]: %s (%s)",
 				client_p->name, client_p->sockhost,
@@ -1294,7 +1280,7 @@ serv_connect_callback(rb_fde_t *F, int status, void *data)
 	if((server_p = client_p->localClient->att_sconf) == NULL)
 	{
 		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL, "Lost connect{} block for %s",
-				get_server_name(client_p, HIDE_IP));
+				client_p->name);
 		exit_client(client_p, client_p, &me, "Lost connect{} block");
 		return;
 	}

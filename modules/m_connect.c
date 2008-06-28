@@ -138,14 +138,8 @@ mo_connect(struct Client *client_p, struct Client *source_p, int parc, const cha
 	 */
 	if(serv_connect(server_p, source_p))
 	{
-#ifndef HIDE_SERVERS_IPS
-			sendto_one_notice(source_p, ":*** Connecting to %s[%s].%d",
-				server_p->host, server_p->name, server_p->port);
-#else
 			sendto_one_notice(source_p, ":*** Connecting to %s.%d",
 				server_p->name, server_p->port);
-#endif
-
 	}
 	else
 	{

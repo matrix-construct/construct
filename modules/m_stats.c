@@ -318,11 +318,7 @@ stats_connect(struct Client *source_p)
 
 		sendto_one_numeric(source_p, RPL_STATSCLINE, 
 				form_str(RPL_STATSCLINE),
-#ifndef HIDE_SERVERS_IPS
-				server_p->host,
-#else
 				"*@127.0.0.1", 
-#endif
 				buf, server_p->name,
 				server_p->port, server_p->class_name);
 	}
@@ -1396,7 +1392,7 @@ stats_servlinks (struct Client *source_p)
 
 		sendto_one(source_p, Sformat,
 			get_id(&me, source_p), RPL_STATSLINKINFO, get_id(source_p, source_p),
-			get_server_name(target_p, SHOW_IP),
+			target_p->name,
 			(int) rb_linebuf_len (&target_p->localClient->buf_sendq),
 			(int) target_p->localClient->sendM,
 			(int) target_p->localClient->sendK,
@@ -1550,7 +1546,7 @@ stats_l_client(struct Client *source_p, struct Client *target_p,
 	if(IsAnyServer(target_p))
 	{
 		sendto_one_numeric(source_p, RPL_STATSLINKINFO, Lformat,
-				get_server_name(target_p, SHOW_IP),
+				target_p->name,
 				(int) rb_linebuf_len(&target_p->localClient->buf_sendq),
 				(int) target_p->localClient->sendM,
 				(int) target_p->localClient->sendK,

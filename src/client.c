@@ -323,7 +323,7 @@ check_pings_list(rb_dlink_list * list)
 				{
 					sendto_realops_snomask(SNO_GENERAL, L_ALL,
 							     "No response from %s, closing link",
-							     get_server_name(client_p, HIDE_IP));
+							     client_p->name);
 					ilog(L_SERVER,
 					     "No response from %s, closing link",
 					     log_client_name(client_p, HIDE_IP));
@@ -391,7 +391,7 @@ check_unknowns_list(rb_dlink_list * list)
 			{
 				sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 						     "No response from %s, closing link",
-						     get_server_name(client_p, HIDE_IP));
+						     client_p->name);
 				ilog(L_SERVER,
 				     "No response from %s, closing link",
 				     log_client_name(client_p, HIDE_IP));
@@ -850,10 +850,8 @@ get_client_name(struct Client *client, int showip)
 		if(ConfigFileEntry.hide_spoof_ips && 
 		   showip == SHOW_IP && IsIPSpoof(client))
 			showip = MASK_IP;
-#ifdef HIDE_SERVERS_IPS
 		if(IsAnyServer(client))
 			showip = MASK_IP;
-#endif
 
 		/* And finally, let's get the host information, ip or name */
 		switch (showip)
@@ -878,49 +876,6 @@ get_client_name(struct Client *client, int showip)
 	 * Neph|l|m@EFnet. Was missing a return here.
 	 */
 	return client->name;
-}
-
-const char *
-get_server_name(struct Client *target_p, int showip)
-{
-	static char nbuf[HOSTLEN * 2 + USERLEN + 5];
-
-	if(target_p == NULL)
-		return NULL;
-
-	if(!MyConnect(target_p) || !irccmp(target_p->name, target_p->host))
-		return target_p->name;
-
-#ifdef HIDE_SERVERS_IPS
-	if(EmptyString(target_p->name))
-	{
-		rb_snprintf(nbuf, sizeof(nbuf), "[%s@255.255.255.255]",
-				target_p->username);
-		return nbuf;
-	}
-	else
-		return target_p->name;
-#endif
-
-	switch (showip)
-	{
-		case SHOW_IP:
-			rb_snprintf(nbuf, sizeof(nbuf), "%s[%s@%s]",
-				target_p->name, target_p->username, 
-				target_p->sockhost);
-			break;
-
-		case MASK_IP:
-			rb_snprintf(nbuf, sizeof(nbuf), "%s[%s@255.255.255.255]",
-				target_p->name, target_p->username);
-
-		default:
-			rb_snprintf(nbuf, sizeof(nbuf), "%s[%s@%s]",
-				target_p->name, target_p->username,
-				target_p->host);
-	}
-
-	return nbuf;
 }
 	
 /* log_client_name()
@@ -1200,7 +1155,7 @@ exit_aborted_clients(void *unused)
  	 	if(IsAnyServer(abt->client))
  	 	 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
   	 	 	                     "Closing link to %s: %s",
-   	 	 	                     get_server_name(abt->client, HIDE_IP), abt->notice);
+   	 	 	                      abt->client->name, abt->notice);
 
 		/* its no longer on abort list - we *must* remove
 		 * FLAGS_CLOSING otherwise exit_client() will not run --fl
@@ -1722,10 +1677,6 @@ show_ip(struct Client *source_p, struct Client *target_p)
 {
 	if(IsAnyServer(target_p))
 	{
-#ifndef HIDE_SERVERS_IPS
-		if(source_p == NULL || IsOper(source_p))
-			return 1;
-#endif
 		return 0;
 	}
 	else if(IsIPSpoof(target_p))
@@ -2013,7 +1964,7 @@ error_exit_client(struct Client *client_p, int error)
 		{
 			sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) && !IsServer(client_p) ? L_NETWIDE : L_ALL,
 					     "Server %s closed the connection",
-					     get_server_name(client_p, SHOW_IP));
+					     client_p->name);
 
 			ilog(L_SERVER, "Server %s closed the connection",
 			     log_client_name(client_p, SHOW_IP));
