@@ -172,7 +172,7 @@ m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *
 		 */
 		if(target_p != NULL)
 		{
-			report_this_status(source_p, target_p);
+			report_this_status(source_p, target_p, 0);
 			tname = target_p->name;
 		}
 
@@ -193,7 +193,7 @@ m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *
 		if(MyClient(source_p))
 		{
 			if(doall || (wilds && match(tname, source_p->name)))
-				report_this_status(source_p, source_p);
+				report_this_status(source_p, source_p, 0);
 		}
 
 		RB_DLINK_FOREACH(ptr, local_oper_list.head)
@@ -203,7 +203,7 @@ m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *
 			if(!doall && wilds && (match(tname, target_p->name) == 0))
 				continue;
 
-			report_this_status(source_p, target_p);
+			report_this_status(source_p, target_p, 0);
 		}
 
 		if (IsExemptShide(source_p) || !ConfigServerHide.flatten_links)
@@ -215,7 +215,7 @@ m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *
 				if(!doall && wilds && !match(tname, target_p->name))
 					continue;
 
-				report_this_status(source_p, target_p);
+				report_this_status(source_p, target_p, 0);
 			}
 		}
 
@@ -243,7 +243,7 @@ m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *
 				IsInvisible(target_p))
 			continue;
 
-		cnt = report_this_status(source_p, target_p);
+		cnt = report_this_status(source_p, target_p, dow);
 	}
 
 	RB_DLINK_FOREACH(ptr, serv_list.head)
@@ -253,7 +253,7 @@ m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *
 		if(!doall && wilds && !match(tname, target_p->name))
 			continue;
 
-		cnt = report_this_status(source_p, target_p);
+		cnt = report_this_status(source_p, target_p, dow);
 	}
 
 	if(MyConnect(source_p))
@@ -265,7 +265,7 @@ m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *
 			if(!doall && wilds && !match(tname, target_p->name))
 				continue;
 
-			cnt = report_this_status(source_p, target_p);
+			cnt = report_this_status(source_p, target_p, dow);
 		}
 	}
 
@@ -330,7 +330,7 @@ count_downlinks(struct Client *server_p, int *pservcount, int *pusercount)
  * side effects - NONE
  */
 static int
-report_this_status(struct Client *source_p, struct Client *target_p)
+report_this_status(struct Client *source_p, struct Client *target_p, int dow)
 {
 	const char *name;
 	const char *class_name;
