@@ -72,12 +72,11 @@ static int qs_server(struct Client *, struct Client *, struct Client *, const ch
 
 static EVH check_pings;
 
-extern rb_bh *client_heap;
-extern rb_bh *lclient_heap;
-extern rb_bh *pclient_heap;
+static rb_bh *client_heap = NULL;
+static rb_bh *lclient_heap = NULL;
+static rb_bh *user_heap = NULL;
 static rb_bh *away_heap = NULL;
-
-extern char current_uid[IDLEN];
+static char current_uid[IDLEN];
 
 struct Dictionary *nd_dict = NULL;
 

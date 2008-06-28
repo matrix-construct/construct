@@ -119,12 +119,6 @@ int zlib_ok = 1;
 
 int testing_conf = 0;
 
-rb_bh *client_heap = NULL;
-rb_bh *lclient_heap = NULL;
-rb_bh *pclient_heap = NULL;
-
-char current_uid[IDLEN];
-
 /* patricia */
 rb_bh *prefix_heap;
 rb_bh *node_heap;
