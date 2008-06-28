@@ -86,7 +86,6 @@ struct LocalUser meLocalUser;	/* That's also part of me */
 
 rb_dlink_list lclient_list = { NULL, NULL, 0 };
 rb_dlink_list global_client_list = { NULL, NULL, 0 };
-rb_dlink_list global_channel_list = { NULL, NULL, 0 };
 
 rb_dlink_list unknown_list;        /* unknown clients ON this server only */
 rb_dlink_list serv_list;           /* local servers to this server ONLY */
