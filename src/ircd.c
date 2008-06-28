@@ -742,12 +742,12 @@ main(int argc, char *argv[])
 	 * nick collisions.  what a stupid idea. set an event for the IO loop --fl
 	 */
 	rb_event_addish("try_connections", try_connections, NULL, STARTUP_CONNECTIONS_TIME);
-	rb_event_addonce("try_connections_startup", try_connections, NULL, 0);
-	rb_event_add("check_rehash", check_rehash, NULL, 1);
+	rb_event_addonce("try_connections_startup", try_connections, NULL, 2);
+	rb_event_add("check_rehash", check_rehash, NULL, 3);
 	rb_event_addish("reseed_srand", seed_random, NULL, 300); /* reseed every 10 minutes */
 
 	if(splitmode)
-		check_splitmode_ev = rb_event_add("check_splitmode", check_splitmode, NULL, 2);
+		check_splitmode_ev = rb_event_add("check_splitmode", check_splitmode, NULL, 5);
 
 	print_startup(getpid());
 
