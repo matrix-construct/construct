@@ -84,10 +84,11 @@ struct timeval SystemTime;
 struct Client me;		/* That's me */
 struct LocalUser meLocalUser;	/* That's also part of me */
 
-rb_dlink_list lclient_list = { NULL, NULL, 0 };
-rb_dlink_list global_client_list = { NULL, NULL, 0 };
+rb_dlink_list global_client_list;
 
+/* unknown/client pointer lists */
 rb_dlink_list unknown_list;        /* unknown clients ON this server only */
+rb_dlink_list lclient_list;	/* local clients only ON this server */
 rb_dlink_list serv_list;           /* local servers to this server ONLY */
 rb_dlink_list global_serv_list;    /* global servers on the network */
 rb_dlink_list local_oper_list;     /* our opers, duplicated in lclient_list */
@@ -551,13 +552,13 @@ main(int argc, char *argv[])
 		return -1;
 	}
 
+	rb_set_time();
+
 	/*
 	 * Setup corefile size immediately after boot -kre
 	 */
 	setup_corefile();
 
-	/* It ain't random, but it ought to be a little harder to guess */
-	srand(SystemTime.tv_sec ^ (SystemTime.tv_usec | (getpid() << 20)));
 	memset(&me, 0, sizeof(me));
 	memset(&meLocalUser, 0, sizeof(meLocalUser));
 	me.localClient = &meLocalUser;
