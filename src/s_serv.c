@@ -1190,12 +1190,13 @@ serv_connect_ssl_callback(rb_fde_t *F, int status, void *data)
 {
 	struct Client *client_p = data;
 	rb_fde_t *xF[2];
+	rb_connect_sockaddr(F, (struct sockaddr *)&client_p->localClient->ip, sizeof(client_p->localClient->ip));
 	if(status != RB_OK)
 	{
-		/* XXX deal with failure */
+		/* Print error message, just like non-SSL. */
+		serv_connect_callback(F, status, data);
 		return;
 	}
-	rb_connect_sockaddr(F, (struct sockaddr *)&client_p->localClient->ip, sizeof(client_p->localClient->ip));
 	rb_socketpair(AF_UNIX, SOCK_STREAM, 0, &xF[0], &xF[1], "Outgoing ssld connection");
 	del_from_cli_fd_hash(client_p);
 	client_p->localClient->F = xF[0];
