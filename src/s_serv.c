@@ -1179,13 +1179,6 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 }
 
 static void
-serv_connect_ev(void *data)
-{
-	struct Client *client_p = data;
-	serv_connect_callback(client_p->localClient->F, RB_OK, client_p);
-}
-
-static void
 serv_connect_ssl_callback(rb_fde_t *F, int status, void *data)
 {
 	struct Client *client_p = data;
@@ -1204,7 +1197,7 @@ serv_connect_ssl_callback(rb_fde_t *F, int status, void *data)
 
 	client_p->localClient->ssl_ctl = start_ssld_connect(F, xF[1], rb_get_fd(xF[0]));
 	SetSSL(client_p);
-	rb_event_addonce("serv_connect_ev", serv_connect_ev, client_p, 1);		
+	serv_connect_callback(client_p->localClient->F, RB_OK, client_p);
 }
 
 /*
