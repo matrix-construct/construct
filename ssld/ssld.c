@@ -647,6 +647,7 @@ ssl_process_accept_cb(rb_fde_t * F, int status, struct sockaddr *addr, rb_sockle
 		conn_plain_read_cb(conn->plain_fd, conn);
 		return;
 	}
+	/* ircd doesn't care about the reason for this */
 	close_conn(conn, NO_WAIT, 0);
 	return;
 }
@@ -659,10 +660,13 @@ ssl_process_connect_cb(rb_fde_t * F, int status, void *data)
 	{
 		conn_mod_read_cb(conn->mod_fd, conn);
 		conn_plain_read_cb(conn->plain_fd, conn);
-		return;
 	}
-	close_conn(conn, NO_WAIT, 0);
-	return;
+	else if(status == RB_ERR_TIMEOUT)
+		close_conn(conn, WAIT_PLAIN, "SSL handshake timed out");
+	else if(status == RB_ERROR_SSL)
+		close_conn(conn, WAIT_PLAIN, "%s", rb_get_ssl_strerror(conn->mod_fd));
+	else
+		close_conn(conn, WAIT_PLAIN, "SSL handshake failed");
 }
 
 
