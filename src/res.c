@@ -60,7 +60,6 @@ struct reslist
 {
 	rb_dlink_node node;
 	int id;
-	int sent;		/* number of requests sent */
 	time_t ttl;
 	char type;
 	char queryname[128];	/* name currently being queried */
@@ -68,6 +67,7 @@ struct reslist
 	char sends;		/* number of sends (>1 means resent) */
 	time_t sentat;
 	time_t timeout;
+	unsigned int lastns;	/* index of last server sent to */
 	struct rb_sockaddr_storage addr;
 	char *name;
 	struct DNSQuery *query;	/* query callback for this request */
@@ -75,6 +75,7 @@ struct reslist
 
 static rb_fde_t *res_fd;
 static rb_dlink_list request_list = { NULL, NULL, 0 };
+static int ns_timeout_count[IRCD_MAXNS];
 
 static void rem_request(struct reslist *request);
 static struct reslist *make_request(struct DNSQuery *query);
@@ -131,7 +132,10 @@ static int res_ourserver(const struct rb_sockaddr_storage *inp)
 						sizeof(struct in6_addr)) == 0) ||
 					      (memcmp(&v6->sin6_addr.s6_addr, &in6addr_any,
 						sizeof(struct in6_addr)) == 0))
+					  {
+						  ns_timeout_count[ns] = 0;
 						  return 1;
+					  }
 			  break;
 #endif
 		  case AF_INET:
@@ -139,7 +143,10 @@ static int res_ourserver(const struct rb_sockaddr_storage *inp)
 				  if (v4->sin_port == v4in->sin_port)
 					  if ((v4->sin_addr.s_addr == INADDR_ANY)
 					      || (v4->sin_addr.s_addr == v4in->sin_addr.s_addr))
+					  {
+						  ns_timeout_count[ns] = 0;
 						  return 1;
+					  }
 			  break;
 		  default:
 			  break;
@@ -176,6 +183,7 @@ static time_t timeout_query_list(time_t now)
 			}
 			else
 			{
+				ns_timeout_count[request->lastns]++;
 				request->sentat = now;
 				request->timeout += request->timeout;
 				resend_query(request);
@@ -207,7 +215,11 @@ static struct ev_entry *timeout_resolver_ev = NULL;
  */
 static void start_resolver(void)
 {
+	int i;
+
 	irc_res_init();
+	for (i = 0; i < irc_nscount; i++)
+		ns_timeout_count[i] = 0;
 
 	if (res_fd == NULL)
 	{
@@ -315,33 +327,67 @@ void delete_resolver_queries(const struct DNSQuery *query)
 }
 
 /*
- * send_res_msg - sends msg to all nameservers found in the "_res" structure.
- * This should reflect /etc/resolv.conf. We will get responses
- * which arent needed but is easier than checking to see if nameserver
- * isnt present. Returns number of messages successfully sent to 
- * nameservers or -1 if no successful sends.
+ * retryfreq - determine how many queries to wait before resending
+ * if there have been that many consecutive timeouts
+ */
+static int retryfreq(int timeouts)
+{
+	switch (timeouts)
+	{
+		case 1:
+			return 3;
+		case 2:
+			return 9;
+		case 3:
+			return 27;
+		case 4:
+			return 81;
+		default:
+			return 243;
+	}
+}
+
+/*
+ * send_res_msg - sends msg to a nameserver.
+ * This should reflect /etc/resolv.conf.
+ * Returns number of nameserver successfully sent to 
+ * or -1 if no successful sends.
  */
 static int send_res_msg(const char *msg, int len, int rcount)
 {
 	int i;
-	int sent = 0;
-	int max_queries = IRCD_MIN(irc_nscount, rcount);
+	int ns;
+	static int retrycnt;
 
-	/* RES_PRIMARY option is not implemented
-	 * if (res.options & RES_PRIMARY || 0 == max_queries)
+	retrycnt++;
+	/* First try a nameserver that seems to work.
+	 * Every once in a while, try a possibly broken one to check
+	 * if it is working again.
 	 */
-	if (max_queries == 0)
-		max_queries = 1;
-
-	for (i = 0; sent < max_queries && i < irc_nscount; i++)
+	for (i = 0; i < irc_nscount; i++)
 	{
+		ns = (i + rcount - 1) % irc_nscount;
+		if (ns_timeout_count[ns] && retrycnt % retryfreq(ns_timeout_count[ns]))
+			continue;
 		if (sendto(rb_get_fd(res_fd), msg, len, 0,
-		     (struct sockaddr *)&(irc_nsaddr_list[i]), 
-				GET_SS_LEN(&irc_nsaddr_list[i])) == len)
-			++sent;
+		     (struct sockaddr *)&(irc_nsaddr_list[ns]), 
+				GET_SS_LEN(&irc_nsaddr_list[ns])) == len)
+			return ns;
 	}
 
-	return (sent);
+	/* No known working nameservers, try some broken one. */
+	for (i = 0; i < irc_nscount; i++)
+	{
+		ns = (i + rcount - 1) % irc_nscount;
+		if (!ns_timeout_count[ns])
+			continue;
+		if (sendto(rb_get_fd(res_fd), msg, len, 0,
+		     (struct sockaddr *)&(irc_nsaddr_list[ns]), 
+				GET_SS_LEN(&irc_nsaddr_list[ns])) == len)
+			return ns;
+	}
+
+	return -1;
 }
 
 /*
@@ -465,6 +511,7 @@ static void query_name(struct reslist *request)
 {
 	char buf[MAXPACKET];
 	int request_len = 0;
+	int ns;
 
 	memset(buf, 0, sizeof(buf));
 
@@ -498,7 +545,9 @@ static void query_name(struct reslist *request)
 		request->id = header->id;
 		++request->sends;
 
-		request->sent += send_res_msg(buf, request_len, request->sends);
+		ns = send_res_msg(buf, request_len, request->sends);
+		if (ns != -1)
+			request->lastns = ns;
 	}
 }
 
@@ -832,6 +881,6 @@ void report_dns_servers(struct Client *source_p)
 				ipaddr, sizeof ipaddr))
 			rb_strlcpy(ipaddr, "?", sizeof ipaddr);
 		sendto_one_numeric(source_p, RPL_STATSDEBUG,
-				"A %s", ipaddr);
+				"A %s %d", ipaddr, ns_timeout_count[i]);
 	}
 }
