@@ -533,7 +533,7 @@ remove_unknown(struct Client *client_p, char *lsender, char *lbuffer)
 {
 	int slen = strlen(lsender);
 
-	/* meepfoo	is a nickname (KILL)
+	/* meepfoo	is a nickname (ignore)
 	 * #XXXXXXXX	is a UID (KILL)
 	 * #XX		is a SID (SQUIT)
 	 * meep.foo	is a server (SQUIT)
@@ -550,7 +550,7 @@ remove_unknown(struct Client *client_p, char *lsender, char *lbuffer)
 			   get_id(&me, client_p), lsender, 
 			   lbuffer, client_p->name);
 	}
-	else
+	else if(IsDigit(lsender[0]))
 		sendto_one(client_p, ":%s KILL %s :%s (Unknown Client)", 
 			   get_id(&me, client_p), lsender, me.name);
 }
