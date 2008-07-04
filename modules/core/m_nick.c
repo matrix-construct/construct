@@ -897,7 +897,7 @@ perform_nick_collides(struct Client *source_p, struct Client *client_p,
 	/* if we dont have a ts, or their TS's are the same, kill both */
 	if(!newts || !target_p->tsinfo || (newts == target_p->tsinfo))
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(SNO_SKILL, L_ALL,
 				     "Nick collision on %s(%s <- %s)(both %s)",
 				     target_p->name, target_p->from->name, client_p->name, action);
 
@@ -960,12 +960,12 @@ perform_nick_collides(struct Client *source_p, struct Client *client_p,
 		else
 		{
 			if(sameuser)
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				sendto_realops_snomask(SNO_SKILL, L_ALL,
 						     "Nick collision on %s(%s <- %s)(older %s)",
 						     target_p->name, target_p->from->name,
 						     client_p->name, action);
 			else
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				sendto_realops_snomask(SNO_SKILL, L_ALL,
 						     "Nick collision on %s(%s <- %s)(newer %s)",
 						     target_p->name, target_p->from->name,
 						     client_p->name, action);
@@ -1014,7 +1014,7 @@ perform_nickchange_collides(struct Client *source_p, struct Client *client_p,
 	/* its a client changing nick and causing a collide */
 	if(!newts || !target_p->tsinfo || (newts == target_p->tsinfo) || !source_p->user)
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(SNO_SKILL, L_ALL,
 				     "Nick change collision from %s to %s(%s <- %s)(both %s)",
 				     source_p->name, target_p->name, target_p->from->name,
 				     client_p->name, action);
@@ -1057,12 +1057,12 @@ perform_nickchange_collides(struct Client *source_p, struct Client *client_p,
 		   (!sameuser && newts > target_p->tsinfo))
 		{
 			if(sameuser)
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				sendto_realops_snomask(SNO_SKILL, L_ALL,
 						     "Nick change collision from %s to %s(%s <- %s)(older %s)",
 						     source_p->name, target_p->name,
 						     target_p->from->name, client_p->name, action);
 			else
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				sendto_realops_snomask(SNO_SKILL, L_ALL,
 						     "Nick change collision from %s to %s(%s <- %s)(newer %s)",
 						     source_p->name, target_p->name,
 						     target_p->from->name, client_p->name, action);
@@ -1102,12 +1102,12 @@ perform_nickchange_collides(struct Client *source_p, struct Client *client_p,
 		else
 		{
 			if(sameuser)
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				sendto_realops_snomask(SNO_SKILL, L_ALL,
 						     "Nick collision on %s(%s <- %s)(older %s)",
 						     target_p->name, target_p->from->name,
 						     client_p->name, action);
 			else
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				sendto_realops_snomask(SNO_SKILL, L_ALL,
 						     "Nick collision on %s(%s <- %s)(newer %s)",
 						     target_p->name, target_p->from->name,
 						     client_p->name, action);
