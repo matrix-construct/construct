@@ -1,4 +1,4 @@
-m_die.o: core/m_die.c ../include/stdinc.h \
+core/m_die.so: core/m_die.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -6,64 +6,16 @@ m_die.o: core/m_die.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../libcharybdis/tools.h ../include/client.h ../include/ircd_defs.h \
-  ../include/s_log.h ../include/send.h ../libcharybdis/linebuf.h \
-  ../include/channel.h ../include/res.h ../include/common.h \
-  ../libcharybdis/commio.h ../include/reslib.h ../include/irc_string.h \
-  ../include/sprintf_irc.h ../include/ircd.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/ircd_defs.h ../include/setup.h \
-  ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/ircd.h ../include/irc_string.h ../include/numeric.h \
-  ../libcharybdis/commio.h ../include/s_log.h ../include/s_conf.h \
-  ../include/class.h ../include/send.h ../include/msg.h \
-  ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
-  ../include/parse.h ../include/msg.h ../include/hook.h \
-  ../include/s_newconf.h
-m_error.o: core/m_error.c ../include/stdinc.h \
-  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
-  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
-  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
-  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
-  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
-  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
-  ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/common.h ../include/ircd.h \
-  ../include/numeric.h ../include/send.h ../include/msg.h \
-  ../libcharybdis/memory.h ../include/modules.h ../include/parse.h \
-  ../include/irc_dictionary.h ../include/msg.h ../include/hook.h \
-  ../include/s_log.h ../include/s_conf.h ../include/class.h
-m_join.o: core/m_join.c ../include/stdinc.h \
-  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
-  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
-  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
-  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
-  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
-  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
-  ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../libcharybdis/tools.h ../include/channel.h ../include/ircd_defs.h \
-  ../include/s_log.h ../include/send.h ../include/client.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/common.h ../include/hash.h ../include/irc_string.h \
-  ../include/ircd.h ../include/numeric.h ../include/send.h \
-  ../include/s_serv.h ../include/s_conf.h ../include/class.h \
-  ../include/s_newconf.h ../include/msg.h ../include/parse.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/ircd.h ../include/match.h ../include/numeric.h \
+  ../include/logger.h ../include/s_conf.h ../include/class.h \
+  ../include/send.h ../include/msg.h ../include/parse.h \
   ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
-  ../include/msg.h ../include/hook.h ../include/sprintf_irc.h \
-  ../include/packet.h
-m_kick.o: core/m_kick.c ../include/stdinc.h \
+  ../include/msg.h ../include/hook.h ../include/s_newconf.h
+core/m_error.so: core/m_error.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -71,20 +23,16 @@ m_kick.o: core/m_kick.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../libcharybdis/tools.h ../include/channel.h ../include/ircd_defs.h \
-  ../include/s_log.h ../include/send.h ../include/client.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/irc_string.h ../include/ircd.h ../include/numeric.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/common.h ../include/ircd.h ../include/numeric.h \
   ../include/send.h ../include/msg.h ../include/modules.h \
   ../include/parse.h ../include/irc_dictionary.h ../include/msg.h \
-  ../include/hook.h ../include/parse.h ../include/hash.h \
-  ../include/packet.h ../include/s_serv.h
-m_kill.o: core/m_kill.c ../include/stdinc.h \
+  ../include/hook.h ../include/logger.h ../include/s_conf.h \
+  ../include/class.h
+core/m_join.so: core/m_join.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -92,21 +40,73 @@ m_kill.o: core/m_kill.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/hash.h ../include/ircd.h \
-  ../include/numeric.h ../include/sprintf_irc.h ../include/s_log.h \
-  ../include/s_serv.h ../include/s_conf.h ../include/class.h \
-  ../include/send.h ../include/whowas.h ../include/irc_string.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/channel.h ../include/client.h ../include/channel.h \
+  ../include/res.h ../include/common.h ../include/reslib.h \
+  ../include/match.h ../include/ircd.h ../include/snomask.h \
+  ../include/client.h ../include/common.h ../include/hash.h \
+  ../include/match.h ../include/ircd.h ../include/numeric.h \
+  ../include/send.h ../include/s_serv.h ../include/s_conf.h \
+  ../include/class.h ../include/s_newconf.h ../include/msg.h \
+  ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
+  ../include/parse.h ../include/msg.h ../include/hook.h \
+  ../include/packet.h
+core/m_kick.so: core/m_kick.c ../include/stdinc.h \
+  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
+  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
+  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
+  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
+  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
+  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
+  ../include/config.h ../include/setup.h ../include/defaults.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/channel.h ../include/client.h ../include/channel.h \
+  ../include/res.h ../include/common.h ../include/reslib.h \
+  ../include/match.h ../include/ircd.h ../include/snomask.h \
+  ../include/client.h ../include/match.h ../include/ircd.h \
+  ../include/numeric.h ../include/send.h ../include/msg.h \
+  ../include/modules.h ../include/parse.h ../include/irc_dictionary.h \
+  ../include/msg.h ../include/hook.h ../include/parse.h ../include/hash.h \
+  ../include/packet.h ../include/s_serv.h
+core/m_kill.so: core/m_kill.c ../include/stdinc.h \
+  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
+  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
+  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
+  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
+  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
+  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
+  ../include/config.h ../include/setup.h ../include/defaults.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/hash.h ../include/ircd.h ../include/numeric.h \
+  ../include/logger.h ../include/s_serv.h ../include/s_conf.h \
+  ../include/class.h ../include/send.h ../include/whowas.h \
+  ../include/match.h ../include/msg.h ../include/parse.h \
+  ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
+  ../include/msg.h ../include/hook.h ../include/s_newconf.h
+core/m_message.so: core/m_message.c ../include/stdinc.h \
+  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
+  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
+  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
+  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
+  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
+  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
+  ../include/config.h ../include/setup.h ../include/defaults.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/ircd.h ../include/numeric.h ../include/common.h \
+  ../include/s_conf.h ../include/class.h ../include/s_serv.h \
   ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
   ../include/modules.h ../include/parse.h ../include/msg.h \
-  ../include/hook.h ../include/s_newconf.h
-m_mode.o: core/m_mode.c ../include/stdinc.h \
+  ../include/hook.h ../include/channel.h ../include/match.h \
+  ../include/hash.h ../include/class.h ../include/packet.h \
+  ../include/send.h ../include/s_newconf.h ../include/s_stats.h \
+  ../include/inline/stringops.h
+core/m_mode.so: core/m_mode.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -114,22 +114,18 @@ m_mode.o: core/m_mode.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../libcharybdis/tools.h ../libcharybdis/balloc.h ../include/setup.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/s_log.h ../include/ircd_defs.h ../include/send.h \
-  ../libcharybdis/balloc.h ../include/channel.h ../include/client.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/hash.h ../include/irc_string.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/channel.h ../include/client.h ../include/channel.h \
+  ../include/res.h ../include/common.h ../include/reslib.h \
+  ../include/match.h ../include/ircd.h ../include/snomask.h \
+  ../include/client.h ../include/hash.h ../include/match.h \
   ../include/ircd.h ../include/numeric.h ../include/s_user.h \
   ../include/s_conf.h ../include/class.h ../include/s_serv.h \
-  ../include/s_log.h ../include/send.h ../include/msg.h \
+  ../include/logger.h ../include/send.h ../include/msg.h \
   ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
   ../include/parse.h ../include/msg.h ../include/hook.h \
-  ../include/packet.h ../include/sprintf_irc.h ../include/s_newconf.h
-m_nick.o: core/m_nick.c ../include/stdinc.h \
+  ../include/packet.h ../include/s_newconf.h
+core/m_nick.so: core/m_nick.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -137,45 +133,20 @@ m_nick.o: core/m_nick.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/hash.h ../include/irc_string.h \
-  ../include/ircd.h ../include/numeric.h ../include/s_conf.h \
-  ../include/class.h ../include/s_stats.h ../include/s_user.h \
-  ../include/whowas.h ../include/s_serv.h ../include/send.h \
-  ../include/channel.h ../include/s_log.h ../include/msg.h \
-  ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
-  ../include/parse.h ../include/msg.h ../include/hook.h \
-  ../include/common.h ../include/packet.h ../include/scache.h \
-  ../include/s_newconf.h ../include/monitor.h
-m_part.o: core/m_part.c ../include/stdinc.h \
-  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
-  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
-  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
-  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
-  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
-  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
-  ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../libcharybdis/tools.h ../include/channel.h ../include/ircd_defs.h \
-  ../include/s_log.h ../include/send.h ../include/client.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/common.h ../include/hash.h ../include/irc_string.h \
-  ../include/ircd.h ../include/numeric.h ../include/send.h \
-  ../include/s_serv.h ../include/msg.h ../include/parse.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/hash.h ../include/match.h ../include/ircd.h \
+  ../include/numeric.h ../include/s_conf.h ../include/class.h \
+  ../include/s_stats.h ../include/s_user.h ../include/whowas.h \
+  ../include/s_serv.h ../include/send.h ../include/channel.h \
+  ../include/logger.h ../include/msg.h ../include/parse.h \
   ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
-  ../include/msg.h ../include/hook.h ../include/s_conf.h \
-  ../include/class.h ../include/packet.h
-m_quit.o: core/m_quit.c ../include/stdinc.h \
+  ../include/msg.h ../include/hook.h ../include/common.h \
+  ../include/packet.h ../include/scache.h ../include/s_newconf.h \
+  ../include/monitor.h
+core/m_part.so: core/m_part.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -183,19 +154,18 @@ m_quit.o: core/m_quit.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/ircd.h ../include/numeric.h \
-  ../include/s_serv.h ../include/send.h ../include/msg.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/channel.h ../include/client.h ../include/channel.h \
+  ../include/res.h ../include/common.h ../include/reslib.h \
+  ../include/match.h ../include/ircd.h ../include/snomask.h \
+  ../include/client.h ../include/common.h ../include/hash.h \
+  ../include/match.h ../include/ircd.h ../include/numeric.h \
+  ../include/send.h ../include/s_serv.h ../include/msg.h \
   ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
   ../include/parse.h ../include/msg.h ../include/hook.h \
-  ../include/s_conf.h ../include/class.h ../include/sprintf_irc.h
-m_server.o: core/m_server.c ../include/stdinc.h \
+  ../include/s_conf.h ../include/class.h ../include/packet.h \
+  ../include/inline/stringops.h
+core/m_quit.so: core/m_quit.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -203,66 +173,16 @@ m_server.o: core/m_server.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../libcharybdis/tools.h ../include/client.h ../include/ircd_defs.h \
-  ../include/s_log.h ../include/send.h ../libcharybdis/linebuf.h \
-  ../include/channel.h ../include/res.h ../include/common.h \
-  ../libcharybdis/commio.h ../include/reslib.h ../include/irc_string.h \
-  ../include/sprintf_irc.h ../include/ircd.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/ircd_defs.h ../include/setup.h \
-  ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/common.h ../libcharybdis/event.h ../include/hash.h \
-  ../include/irc_string.h ../include/ircd.h ../include/numeric.h \
-  ../include/s_conf.h ../include/class.h ../include/s_newconf.h \
-  ../include/s_log.h ../include/s_serv.h ../include/s_stats.h \
-  ../include/scache.h ../include/send.h ../include/msg.h \
-  ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
-  ../include/parse.h ../include/msg.h ../include/hook.h
-m_sjoin.o: core/m_sjoin.c ../include/stdinc.h \
-  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
-  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
-  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
-  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
-  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
-  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
-  ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../libcharybdis/tools.h ../include/channel.h ../include/ircd_defs.h \
-  ../include/s_log.h ../include/send.h ../include/client.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/hash.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../include/numeric.h ../include/send.h \
-  ../include/common.h ../include/msg.h ../include/parse.h \
-  ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
-  ../include/msg.h ../include/hook.h ../include/s_serv.h \
-  ../include/s_conf.h ../include/class.h
-m_squit.o: core/m_squit.c ../include/stdinc.h \
-  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
-  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
-  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
-  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
-  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
-  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
-  ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/common.h ../include/irc_string.h \
-  ../include/ircd.h ../include/numeric.h ../include/s_conf.h \
-  ../include/class.h ../include/s_log.h ../include/s_serv.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/ircd.h ../include/numeric.h ../include/s_serv.h \
   ../include/send.h ../include/msg.h ../include/parse.h \
   ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
-  ../include/msg.h ../include/hook.h ../include/hash.h \
-  ../include/s_newconf.h
-m_accept.o: m_accept.c ../include/stdinc.h \
+  ../include/msg.h ../include/hook.h ../include/s_conf.h \
+  ../include/class.h ../include/inline/stringops.h
+core/m_server.so: core/m_server.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -270,20 +190,36 @@ m_accept.o: m_accept.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/hash.h ../include/ircd.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/common.h ../include/hash.h ../include/match.h \
+  ../include/ircd.h ../include/numeric.h ../include/s_conf.h \
+  ../include/class.h ../include/s_newconf.h ../include/logger.h \
+  ../include/s_serv.h ../include/s_stats.h ../include/scache.h \
+  ../include/send.h ../include/msg.h ../include/parse.h \
+  ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
+  ../include/msg.h ../include/hook.h
+core/m_squit.so: core/m_squit.c ../include/stdinc.h \
+  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
+  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
+  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
+  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
+  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
+  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
+  ../include/config.h ../include/setup.h ../include/defaults.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/common.h ../include/match.h ../include/ircd.h \
   ../include/numeric.h ../include/s_conf.h ../include/class.h \
-  ../include/s_serv.h ../include/send.h ../include/msg.h \
-  ../include/parse.h ../include/irc_dictionary.h ../include/sprintf_irc.h \
+  ../include/logger.h ../include/s_serv.h ../include/send.h \
+  ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
   ../include/modules.h ../include/parse.h ../include/msg.h \
-  ../include/hook.h
-m_admin.o: m_admin.c ../include/stdinc.h \
+  ../include/hook.h ../include/hash.h ../include/s_newconf.h
+m_accept.so: m_accept.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -291,59 +227,66 @@ m_admin.o: m_admin.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/ircd.h ../include/numeric.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/hash.h ../include/ircd.h ../include/numeric.h \
   ../include/s_conf.h ../include/class.h ../include/s_serv.h \
   ../include/send.h ../include/msg.h ../include/parse.h \
-  ../include/irc_dictionary.h ../include/hook.h ../include/modules.h \
-  ../include/parse.h ../include/msg.h ../include/hook.h
-m_away.o: m_away.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
-  ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
-  ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
-  ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
-  ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
-  ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
-  ../libratbox/include/rb_patricia.h ../include/config.h \
-  ../include/setup.h ../include/defaults.h ../include/client.h \
-  ../include/ircd_defs.h ../include/s_log.h ../include/send.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/irc_string.h ../include/ircd.h ../include/numeric.h \
-  ../include/send.h ../include/msg.h ../include/parse.h \
   ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
-  ../include/msg.h ../include/hook.h ../include/s_conf.h \
-  ../include/class.h ../include/s_serv.h ../include/packet.h
-m_cap.o: m_cap.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
+  ../include/msg.h ../include/hook.h
+m_admin.so: m_admin.c ../include/stdinc.h \
+  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
+  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
+  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
+  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
+  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
+  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
+  ../include/config.h ../include/setup.h ../include/defaults.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/ircd.h ../include/numeric.h ../include/s_conf.h \
+  ../include/class.h ../include/s_serv.h ../include/send.h \
+  ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
+  ../include/hook.h ../include/modules.h ../include/parse.h \
+  ../include/msg.h ../include/hook.h
+m_away.so: m_away.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
   ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
   ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
   ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
   ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
   ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
   ../libratbox/include/rb_patricia.h ../include/config.h \
-  ../include/setup.h ../include/defaults.h ../libcharybdis/tools.h \
-  ../include/class.h ../libcharybdis/tools.h ../include/client.h \
-  ../include/ircd_defs.h ../include/s_log.h ../include/send.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../libcharybdis/memory.h ../include/ircd_defs.h ../include/setup.h \
-  ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/irc_string.h ../include/ircd.h ../include/numeric.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/logger.h ../include/send.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/match.h \
+  ../include/ircd.h ../include/numeric.h ../include/send.h \
+  ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
+  ../include/modules.h ../include/parse.h ../include/msg.h \
+  ../include/hook.h ../include/s_conf.h ../include/class.h \
+  ../include/s_serv.h ../include/packet.h
+m_cap.so: m_cap.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
+  ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
+  ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
+  ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
+  ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
+  ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
+  ../libratbox/include/rb_patricia.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/logger.h ../include/send.h ../include/class.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/match.h ../include/ircd.h ../include/numeric.h \
   ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
   ../include/modules.h ../include/parse.h ../include/msg.h \
   ../include/hook.h ../include/s_serv.h ../include/s_user.h
-m_capab.o: m_capab.c ../include/stdinc.h \
+m_capab.so: m_capab.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -351,18 +294,15 @@ m_capab.o: m_capab.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/irc_string.h ../include/s_serv.h \
-  ../include/s_conf.h ../include/class.h ../include/msg.h \
-  ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
-  ../include/parse.h ../include/msg.h ../include/hook.h
-m_challenge.o: m_challenge.c ../include/stdinc.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/match.h ../include/s_serv.h ../include/s_conf.h \
+  ../include/class.h ../include/msg.h ../include/parse.h \
+  ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
+  ../include/msg.h ../include/hook.h
+m_challenge.so: m_challenge.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -370,21 +310,17 @@ m_challenge.o: m_challenge.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../libcharybdis/memory.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/ircd_defs.h ../include/send.h ../include/setup.h \
-  ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/client.h ../libcharybdis/linebuf.h \
-  ../include/channel.h ../include/res.h ../include/common.h \
-  ../libcharybdis/commio.h ../include/reslib.h ../include/irc_string.h \
-  ../include/sprintf_irc.h ../include/ircd.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
   ../include/ircd.h ../include/modules.h ../include/parse.h \
   ../include/irc_dictionary.h ../include/msg.h ../include/hook.h \
   ../include/numeric.h ../include/send.h ../include/s_conf.h \
   ../include/class.h ../include/msg.h ../include/parse.h \
-  ../include/irc_string.h ../include/s_log.h ../include/s_user.h \
+  ../include/match.h ../include/logger.h ../include/s_user.h \
   ../include/cache.h ../include/s_newconf.h
-m_chghost.o: m_chghost.c ../include/stdinc.h \
+m_chghost.so: m_chghost.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -392,23 +328,18 @@ m_chghost.o: m_chghost.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../libcharybdis/tools.h ../include/send.h ../include/ircd_defs.h \
-  ../include/s_log.h ../include/send.h ../include/channel.h \
-  ../include/client.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/common.h ../include/config.h \
-  ../include/ircd.h ../include/numeric.h ../libcharybdis/memory.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/send.h ../include/channel.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/common.h \
+  ../include/config.h ../include/ircd.h ../include/numeric.h \
   ../include/s_conf.h ../include/class.h ../include/s_newconf.h \
   ../include/s_serv.h ../include/s_user.h ../include/hash.h \
   ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
   ../include/modules.h ../include/parse.h ../include/msg.h \
-  ../include/hook.h ../include/sprintf_irc.h ../include/whowas.h \
-  ../include/monitor.h
-m_close.o: m_close.c ../include/stdinc.h \
+  ../include/hook.h ../include/whowas.h ../include/monitor.h
+m_close.so: m_close.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -416,85 +347,15 @@ m_close.o: m_close.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../libcharybdis/tools.h ../include/client.h ../include/ircd_defs.h \
-  ../include/s_log.h ../include/send.h ../libcharybdis/linebuf.h \
-  ../include/channel.h ../include/res.h ../include/common.h \
-  ../libcharybdis/commio.h ../include/reslib.h ../include/irc_string.h \
-  ../include/sprintf_irc.h ../include/ircd.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/ircd_defs.h ../include/setup.h \
-  ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/ircd.h ../include/numeric.h ../libcharybdis/commio.h \
-  ../include/send.h ../include/msg.h ../include/parse.h \
-  ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
-  ../include/msg.h ../include/hook.h
-m_cmessage.o: m_cmessage.c ../include/stdinc.h \
-  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
-  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
-  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
-  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
-  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
-  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
-  ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/channel.h ../include/numeric.h \
-  ../include/msg.h ../include/modules.h ../include/parse.h \
-  ../include/irc_dictionary.h ../include/msg.h ../include/hook.h \
-  ../include/hash.h ../include/send.h ../include/s_conf.h \
-  ../include/class.h ../include/packet.h
-m_connect.o: m_connect.c ../include/stdinc.h \
-  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
-  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
-  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
-  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
-  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
-  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
-  ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/ircd.h ../include/irc_string.h \
-  ../include/numeric.h ../libcharybdis/commio.h ../include/s_conf.h \
-  ../include/class.h ../include/s_newconf.h ../include/s_log.h \
-  ../include/s_serv.h ../include/send.h ../include/msg.h \
-  ../include/parse.h ../include/irc_dictionary.h ../include/hash.h \
-  ../include/modules.h ../include/parse.h ../include/msg.h \
-  ../include/hook.h
-m_dline.o: m_dline.c ../include/stdinc.h \
-  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
-  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
-  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
-  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
-  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
-  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
-  ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../libcharybdis/tools.h ../include/channel.h ../include/ircd_defs.h \
-  ../include/s_log.h ../include/send.h ../include/class.h \
-  ../libcharybdis/tools.h ../include/client.h ../libcharybdis/linebuf.h \
-  ../include/channel.h ../include/res.h ../include/common.h \
-  ../libcharybdis/commio.h ../include/reslib.h ../include/irc_string.h \
-  ../include/sprintf_irc.h ../include/ircd.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/common.h ../include/irc_string.h \
-  ../include/sprintf_irc.h ../include/ircd.h ../include/hostmask.h \
-  ../include/numeric.h ../libcharybdis/commio.h ../include/s_conf.h \
-  ../include/class.h ../include/s_newconf.h ../include/s_log.h \
-  ../include/send.h ../include/hash.h ../include/s_serv.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/ircd.h ../include/numeric.h ../include/send.h \
   ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
   ../include/modules.h ../include/parse.h ../include/msg.h \
   ../include/hook.h
-m_encap.o: m_encap.c ../include/stdinc.h \
+m_cmessage.so: m_cmessage.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -502,21 +363,15 @@ m_encap.o: m_encap.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../libcharybdis/tools.h ../include/send.h ../include/ircd_defs.h \
-  ../include/s_log.h ../include/send.h ../include/channel.h \
-  ../include/client.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/common.h ../include/config.h \
-  ../include/ircd.h ../include/numeric.h ../libcharybdis/memory.h \
-  ../include/s_serv.h ../include/hash.h ../include/msg.h \
-  ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
-  ../include/parse.h ../include/msg.h ../include/hook.h \
-  ../include/sprintf_irc.h
-m_etrace.o: m_etrace.c ../include/stdinc.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/channel.h ../include/numeric.h ../include/msg.h \
+  ../include/modules.h ../include/parse.h ../include/irc_dictionary.h \
+  ../include/msg.h ../include/hook.h ../include/hash.h ../include/send.h \
+  ../include/s_conf.h ../include/class.h ../include/packet.h
+m_connect.so: m_connect.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -524,21 +379,36 @@ m_etrace.o: m_etrace.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/class.h ../libcharybdis/tools.h ../include/hook.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/hash.h ../include/common.h ../include/irc_string.h \
-  ../include/ircd.h ../include/numeric.h ../libcharybdis/commio.h \
-  ../include/s_serv.h ../include/s_conf.h ../include/class.h \
-  ../include/s_newconf.h ../include/send.h ../include/msg.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/ircd.h ../include/match.h ../include/numeric.h \
+  ../include/s_conf.h ../include/class.h ../include/s_newconf.h \
+  ../include/logger.h ../include/s_serv.h ../include/send.h \
+  ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
+  ../include/hash.h ../include/modules.h ../include/parse.h \
+  ../include/msg.h ../include/hook.h ../include/sslproc.h
+m_dline.so: m_dline.c ../include/stdinc.h \
+  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
+  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
+  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
+  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
+  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
+  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
+  ../include/config.h ../include/setup.h ../include/defaults.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/channel.h ../include/class.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/common.h \
+  ../include/match.h ../include/ircd.h ../include/hostmask.h \
+  ../include/numeric.h ../include/s_conf.h ../include/class.h \
+  ../include/s_newconf.h ../include/logger.h ../include/send.h \
+  ../include/hash.h ../include/s_serv.h ../include/msg.h \
   ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
   ../include/parse.h ../include/msg.h ../include/hook.h
-m_gline.o: m_gline.c ../include/stdinc.h \
+m_encap.so: m_encap.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -546,67 +416,16 @@ m_gline.o: m_gline.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../libcharybdis/tools.h ../include/s_gline.h ../include/ircd_defs.h \
-  ../include/s_log.h ../include/send.h ../include/channel.h \
-  ../include/client.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/common.h ../include/config.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../include/hostmask.h ../include/numeric.h ../libcharybdis/commio.h \
-  ../include/s_conf.h ../include/class.h ../include/s_newconf.h \
-  ../include/scache.h ../include/send.h ../include/msg.h \
-  ../include/s_serv.h ../include/hash.h ../include/parse.h \
-  ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
-  ../include/msg.h ../include/hook.h ../include/s_log.h \
-  ../include/reject.h
-m_help.o: m_help.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
-  ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
-  ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
-  ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
-  ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
-  ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
-  ../libratbox/include/rb_patricia.h ../include/config.h \
-  ../include/setup.h ../include/defaults.h ../include/client.h \
-  ../include/ircd_defs.h ../include/s_log.h ../include/send.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/ircd.h ../include/msg.h ../include/numeric.h \
-  ../include/send.h ../include/s_conf.h ../include/class.h \
-  ../include/s_log.h ../include/parse.h ../include/irc_dictionary.h \
-  ../include/modules.h ../include/parse.h ../include/msg.h \
-  ../include/hook.h ../include/hash.h ../include/cache.h \
-  ../include/irc_dictionary.h
-m_info.o: m_info.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
-  ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
-  ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
-  ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
-  ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
-  ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
-  ../libratbox/include/rb_patricia.h ../include/config.h \
-  ../include/setup.h ../include/defaults.h ../libcharybdis/tools.h \
-  ../include/m_info.h ../include/channel.h ../include/ircd_defs.h \
-  ../include/s_log.h ../include/send.h ../include/client.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/common.h ../include/irc_string.h ../include/ircd.h \
-  ../include/hook.h ../include/numeric.h ../include/s_serv.h \
-  ../include/s_user.h ../include/send.h ../include/s_conf.h \
-  ../include/class.h ../include/msg.h ../include/parse.h \
-  ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
-  ../include/msg.h ../include/hook.h
-m_invite.o: m_invite.c ../include/stdinc.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/send.h ../include/channel.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/common.h \
+  ../include/config.h ../include/ircd.h ../include/numeric.h \
+  ../include/s_serv.h ../include/hash.h ../include/msg.h \
+  ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
+  ../include/parse.h ../include/msg.h ../include/hook.h
+m_etrace.so: m_etrace.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -614,42 +433,108 @@ m_invite.o: m_invite.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../libcharybdis/tools.h ../include/common.h ../include/channel.h \
-  ../include/ircd_defs.h ../include/s_log.h ../include/send.h \
-  ../include/client.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/hash.h ../include/irc_string.h \
-  ../include/ircd.h ../include/numeric.h ../include/send.h \
-  ../include/s_conf.h ../include/class.h ../include/s_serv.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/class.h ../include/hook.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/hash.h \
+  ../include/common.h ../include/match.h ../include/ircd.h \
+  ../include/numeric.h ../include/s_serv.h ../include/s_conf.h \
+  ../include/class.h ../include/s_newconf.h ../include/send.h \
   ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
   ../include/modules.h ../include/parse.h ../include/msg.h \
-  ../include/hook.h ../include/packet.h
-m_ison.o: m_ison.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
+  ../include/hook.h
+m_help.so: m_help.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
   ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
   ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
   ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
   ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
   ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
   ../libratbox/include/rb_patricia.h ../include/config.h \
-  ../include/setup.h ../include/defaults.h ../include/client.h \
-  ../include/ircd_defs.h ../include/s_log.h ../include/send.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../include/numeric.h ../include/send.h ../include/msg.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/logger.h ../include/send.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/ircd.h \
+  ../include/msg.h ../include/numeric.h ../include/send.h \
+  ../include/s_conf.h ../include/class.h ../include/logger.h \
+  ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
+  ../include/parse.h ../include/msg.h ../include/hook.h ../include/hash.h \
+  ../include/cache.h ../include/irc_dictionary.h
+m_info.so: m_info.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
+  ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
+  ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
+  ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
+  ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
+  ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
+  ../libratbox/include/rb_patricia.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/logger.h ../include/send.h ../include/m_info.h \
+  ../include/channel.h ../include/client.h ../include/channel.h \
+  ../include/res.h ../include/common.h ../include/reslib.h \
+  ../include/match.h ../include/ircd.h ../include/snomask.h \
+  ../include/client.h ../include/common.h ../include/match.h \
+  ../include/ircd.h ../include/hook.h ../include/numeric.h \
+  ../include/s_serv.h ../include/s_user.h ../include/send.h \
+  ../include/s_conf.h ../include/class.h ../include/msg.h \
+  ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
+  ../include/parse.h ../include/msg.h ../include/hook.h
+m_invite.so: m_invite.c ../include/stdinc.h \
+  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
+  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
+  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
+  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
+  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
+  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
+  ../include/config.h ../include/setup.h ../include/defaults.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/common.h ../include/channel.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/hash.h \
+  ../include/match.h ../include/ircd.h ../include/numeric.h \
+  ../include/send.h ../include/s_conf.h ../include/class.h \
+  ../include/s_serv.h ../include/msg.h ../include/parse.h \
+  ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
+  ../include/msg.h ../include/hook.h ../include/packet.h
+m_ison.so: m_ison.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
+  ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
+  ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
+  ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
+  ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
+  ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
+  ../libratbox/include/rb_patricia.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/logger.h ../include/send.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/match.h \
+  ../include/ircd.h ../include/numeric.h ../include/send.h \
+  ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
+  ../include/modules.h ../include/parse.h ../include/msg.h \
+  ../include/hook.h ../include/s_conf.h ../include/class.h \
+  ../include/s_serv.h ../include/hash.h
+m_kline.so: m_kline.c ../include/stdinc.h \
+  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
+  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
+  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
+  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
+  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
+  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
+  ../include/config.h ../include/setup.h ../include/defaults.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/channel.h ../include/class.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/common.h \
+  ../include/match.h ../include/ircd.h ../include/hostmask.h \
+  ../include/numeric.h ../include/s_conf.h ../include/class.h \
+  ../include/s_newconf.h ../include/logger.h ../include/send.h \
+  ../include/hash.h ../include/s_serv.h ../include/msg.h \
   ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
   ../include/parse.h ../include/msg.h ../include/hook.h \
-  ../include/s_conf.h ../include/class.h ../include/s_serv.h \
-  ../include/hash.h
-m_kline.o: m_kline.c ../include/stdinc.h \
+  ../include/reject.h
+m_knock.so: m_knock.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -657,45 +542,17 @@ m_kline.o: m_kline.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../libcharybdis/tools.h ../include/channel.h ../include/ircd_defs.h \
-  ../include/s_log.h ../include/send.h ../include/class.h \
-  ../libcharybdis/tools.h ../include/client.h ../libcharybdis/linebuf.h \
-  ../include/channel.h ../include/res.h ../include/common.h \
-  ../libcharybdis/commio.h ../include/reslib.h ../include/irc_string.h \
-  ../include/sprintf_irc.h ../include/ircd.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/common.h ../include/irc_string.h \
-  ../include/sprintf_irc.h ../include/ircd.h ../include/hostmask.h \
-  ../include/numeric.h ../libcharybdis/commio.h ../include/s_conf.h \
-  ../include/class.h ../include/s_newconf.h ../include/s_log.h \
-  ../include/send.h ../include/hash.h ../include/s_serv.h \
-  ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
-  ../include/modules.h ../include/parse.h ../include/msg.h \
-  ../include/hook.h ../libcharybdis/event.h ../include/reject.h
-m_knock.o: m_knock.c ../include/stdinc.h \
-  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
-  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
-  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
-  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
-  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
-  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
-  ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/sprintf_irc.h ../libcharybdis/tools.h ../include/channel.h \
-  ../include/ircd_defs.h ../include/s_log.h ../include/send.h \
-  ../include/client.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/hash.h ../include/irc_string.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/channel.h ../include/client.h ../include/channel.h \
+  ../include/res.h ../include/common.h ../include/reslib.h \
+  ../include/match.h ../include/ircd.h ../include/snomask.h \
+  ../include/client.h ../include/hash.h ../include/match.h \
   ../include/ircd.h ../include/numeric.h ../include/send.h \
   ../include/s_conf.h ../include/class.h ../include/msg.h \
   ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
   ../include/parse.h ../include/msg.h ../include/hook.h \
   ../include/s_serv.h
-m_links.o: m_links.c ../include/stdinc.h \
+m_links.so: m_links.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -703,102 +560,84 @@ m_links.o: m_links.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/irc_string.h ../include/ircd.h \
-  ../include/numeric.h ../include/s_serv.h ../include/send.h \
-  ../include/s_conf.h ../include/class.h ../include/msg.h \
-  ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
-  ../include/parse.h ../include/msg.h ../include/hook.h ../include/hook.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/match.h ../include/ircd.h ../include/numeric.h \
+  ../include/s_serv.h ../include/send.h ../include/s_conf.h \
+  ../include/class.h ../include/msg.h ../include/parse.h \
+  ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
+  ../include/msg.h ../include/hook.h ../include/hook.h \
   ../include/scache.h
-m_list.o: m_list.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
+m_list.so: m_list.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
   ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
   ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
   ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
   ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
   ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
   ../libratbox/include/rb_patricia.h ../include/config.h \
-  ../include/setup.h ../include/defaults.h ../libcharybdis/tools.h \
-  ../include/channel.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../include/client.h ../libcharybdis/linebuf.h \
-  ../include/channel.h ../include/res.h ../include/common.h \
-  ../libcharybdis/commio.h ../include/reslib.h ../include/irc_string.h \
-  ../include/sprintf_irc.h ../include/ircd.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/ircd_defs.h ../include/setup.h \
-  ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/hash.h ../include/irc_string.h ../include/ircd.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/logger.h ../include/send.h ../include/channel.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/hash.h ../include/match.h ../include/ircd.h \
   ../include/numeric.h ../include/s_conf.h ../include/class.h \
   ../include/s_serv.h ../include/send.h ../include/msg.h \
   ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
-  ../include/parse.h ../include/msg.h ../include/hook.h \
-  ../libcharybdis/event.h
-m_locops.o: m_locops.c ../include/stdinc.h \
-  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
-  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
-  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
-  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
-  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
-  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
-  ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/ircd.h ../include/irc_string.h \
-  ../include/numeric.h ../include/send.h ../include/s_user.h \
-  ../include/s_conf.h ../include/class.h ../include/s_newconf.h \
-  ../include/hash.h ../include/msg.h ../include/parse.h \
-  ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
-  ../include/msg.h ../include/hook.h ../include/s_serv.h
-m_lusers.o: m_lusers.c ../include/stdinc.h \
-  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
-  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
-  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
-  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
-  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
-  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
-  ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/ircd.h ../include/numeric.h \
-  ../include/s_serv.h ../include/s_user.h ../include/send.h \
-  ../include/s_conf.h ../include/class.h ../include/msg.h \
-  ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
   ../include/parse.h ../include/msg.h ../include/hook.h
-m_map.o: m_map.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
+m_locops.so: m_locops.c ../include/stdinc.h \
+  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
+  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
+  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
+  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
+  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
+  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
+  ../include/config.h ../include/setup.h ../include/defaults.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/ircd.h ../include/match.h ../include/numeric.h \
+  ../include/send.h ../include/s_user.h ../include/s_conf.h \
+  ../include/class.h ../include/s_newconf.h ../include/hash.h \
+  ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
+  ../include/modules.h ../include/parse.h ../include/msg.h \
+  ../include/hook.h ../include/s_serv.h
+m_lusers.so: m_lusers.c ../include/stdinc.h \
+  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
+  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
+  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
+  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
+  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
+  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
+  ../include/config.h ../include/setup.h ../include/defaults.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/ircd.h ../include/numeric.h ../include/s_serv.h \
+  ../include/s_user.h ../include/send.h ../include/s_conf.h \
+  ../include/class.h ../include/msg.h ../include/parse.h \
+  ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
+  ../include/msg.h ../include/hook.h
+m_map.so: m_map.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
   ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
   ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
   ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
   ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
   ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
   ../libratbox/include/rb_patricia.h ../include/config.h \
-  ../include/setup.h ../include/defaults.h ../include/client.h \
-  ../include/ircd_defs.h ../include/s_log.h ../include/send.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/modules.h ../include/parse.h ../include/irc_dictionary.h \
-  ../include/msg.h ../include/hook.h ../include/numeric.h \
-  ../include/send.h ../include/s_conf.h ../include/class.h \
-  ../include/sprintf_irc.h ../include/scache.h
-m_monitor.o: m_monitor.c ../include/stdinc.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/logger.h ../include/send.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/modules.h \
+  ../include/parse.h ../include/irc_dictionary.h ../include/msg.h \
+  ../include/hook.h ../include/numeric.h ../include/send.h \
+  ../include/s_conf.h ../include/class.h ../include/scache.h
+m_monitor.so: m_monitor.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -806,40 +645,32 @@ m_monitor.o: m_monitor.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../libcharybdis/tools.h ../include/client.h ../include/ircd_defs.h \
-  ../include/s_log.h ../include/send.h ../libcharybdis/linebuf.h \
-  ../include/channel.h ../include/res.h ../include/common.h \
-  ../libcharybdis/commio.h ../include/reslib.h ../include/irc_string.h \
-  ../include/sprintf_irc.h ../include/ircd.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/ircd_defs.h ../include/setup.h \
-  ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
   ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
   ../include/modules.h ../include/parse.h ../include/msg.h \
   ../include/hook.h ../include/monitor.h ../include/numeric.h \
   ../include/s_conf.h ../include/class.h
-m_motd.o: m_motd.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
+m_motd.so: m_motd.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
   ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
   ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
   ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
   ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
   ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
   ../libratbox/include/rb_patricia.h ../include/config.h \
-  ../include/setup.h ../include/defaults.h ../include/client.h \
-  ../include/ircd_defs.h ../include/s_log.h ../include/send.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../libcharybdis/tools.h ../include/ircd.h ../include/send.h \
-  ../include/numeric.h ../include/hook.h ../include/msg.h \
-  ../include/s_serv.h ../include/parse.h ../include/irc_dictionary.h \
-  ../include/modules.h ../include/parse.h ../include/msg.h \
-  ../include/hook.h ../include/s_conf.h ../include/class.h \
-  ../include/cache.h
-m_names.o: m_names.c ../include/stdinc.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/logger.h ../include/send.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/ircd.h \
+  ../include/send.h ../include/numeric.h ../include/hook.h \
+  ../include/msg.h ../include/s_serv.h ../include/parse.h \
+  ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
+  ../include/msg.h ../include/hook.h ../include/s_conf.h \
+  ../include/class.h ../include/cache.h
+m_names.so: m_names.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -847,43 +678,35 @@ m_names.o: m_names.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/sprintf_irc.h ../libcharybdis/tools.h ../include/channel.h \
-  ../include/ircd_defs.h ../include/s_log.h ../include/send.h \
-  ../include/client.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/channel.h ../include/client.h ../include/channel.h \
+  ../include/res.h ../include/common.h ../include/reslib.h \
+  ../include/match.h ../include/ircd.h ../include/snomask.h \
   ../include/client.h ../include/common.h ../include/hash.h \
-  ../include/irc_string.h ../include/ircd.h ../include/numeric.h \
+  ../include/match.h ../include/ircd.h ../include/numeric.h \
   ../include/send.h ../include/s_serv.h ../include/s_conf.h \
   ../include/class.h ../include/msg.h ../include/parse.h \
   ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
   ../include/msg.h ../include/hook.h
-m_oper.o: m_oper.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
+m_oper.so: m_oper.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
   ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
   ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
   ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
   ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
   ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
   ../libratbox/include/rb_patricia.h ../include/config.h \
-  ../include/setup.h ../include/defaults.h ../libcharybdis/tools.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/common.h ../include/irc_string.h \
-  ../include/ircd.h ../include/numeric.h ../libcharybdis/commio.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/logger.h ../include/send.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/common.h \
+  ../include/match.h ../include/ircd.h ../include/numeric.h \
   ../include/s_conf.h ../include/class.h ../include/s_newconf.h \
-  ../include/s_log.h ../include/s_user.h ../include/send.h \
+  ../include/logger.h ../include/s_user.h ../include/send.h \
   ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
   ../include/modules.h ../include/parse.h ../include/msg.h \
   ../include/hook.h ../include/packet.h ../include/cache.h
-m_operspy.o: m_operspy.c ../include/stdinc.h \
+m_operspy.so: m_operspy.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -891,231 +714,192 @@ m_operspy.o: m_operspy.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../libcharybdis/tools.h ../include/send.h ../include/ircd_defs.h \
-  ../include/s_log.h ../include/send.h ../include/channel.h \
-  ../include/client.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/common.h ../include/config.h \
-  ../include/ircd.h ../include/numeric.h ../libcharybdis/memory.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/send.h ../include/channel.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/common.h \
+  ../include/config.h ../include/ircd.h ../include/numeric.h \
   ../include/s_serv.h ../include/hash.h ../include/msg.h \
   ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
-  ../include/parse.h ../include/msg.h ../include/hook.h \
-  ../include/sprintf_irc.h
-m_pass.o: m_pass.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
+  ../include/parse.h ../include/msg.h ../include/hook.h
+m_pass.so: m_pass.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
   ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
   ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
   ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
   ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
   ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
   ../libratbox/include/rb_patricia.h ../include/config.h \
-  ../include/setup.h ../include/defaults.h ../include/client.h \
-  ../include/ircd_defs.h ../include/s_log.h ../include/send.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/irc_string.h ../include/send.h ../include/numeric.h \
-  ../include/ircd.h ../include/msg.h ../include/parse.h \
-  ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
-  ../include/msg.h ../include/hook.h ../include/s_serv.h \
-  ../include/hash.h ../include/s_conf.h ../include/class.h
-m_ping.o: m_ping.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/logger.h ../include/send.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/match.h \
+  ../include/send.h ../include/numeric.h ../include/ircd.h \
+  ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
+  ../include/modules.h ../include/parse.h ../include/msg.h \
+  ../include/hook.h ../include/s_serv.h ../include/hash.h \
+  ../include/s_conf.h ../include/class.h
+m_ping.so: m_ping.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
   ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
   ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
   ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
   ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
   ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
   ../libratbox/include/rb_patricia.h ../include/config.h \
-  ../include/setup.h ../include/defaults.h ../include/client.h \
-  ../include/ircd_defs.h ../include/s_log.h ../include/send.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/ircd.h ../include/numeric.h ../include/send.h \
-  ../include/irc_string.h ../include/msg.h ../include/parse.h \
-  ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
-  ../include/msg.h ../include/hook.h ../include/hash.h \
-  ../include/s_conf.h ../include/class.h ../include/s_serv.h
-m_pong.o: m_pong.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/logger.h ../include/send.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/ircd.h \
+  ../include/numeric.h ../include/send.h ../include/match.h \
+  ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
+  ../include/modules.h ../include/parse.h ../include/msg.h \
+  ../include/hook.h ../include/hash.h ../include/s_conf.h \
+  ../include/class.h ../include/s_serv.h
+m_pong.so: m_pong.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
   ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
   ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
   ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
   ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
   ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
   ../libratbox/include/rb_patricia.h ../include/config.h \
-  ../include/setup.h ../include/defaults.h ../include/ircd.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/s_log.h ../include/ircd_defs.h ../include/send.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/s_user.h ../include/client.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../include/snomask.h ../include/client.h ../include/hash.h \
-  ../include/hook.h ../include/numeric.h ../include/s_conf.h \
-  ../include/class.h ../include/send.h ../include/channel.h \
-  ../include/irc_string.h ../include/msg.h ../include/parse.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/logger.h ../include/send.h ../include/ircd.h \
+  ../include/s_user.h ../include/client.h ../include/channel.h \
+  ../include/res.h ../include/common.h ../include/reslib.h \
+  ../include/match.h ../include/ircd.h ../include/snomask.h \
+  ../include/client.h ../include/hash.h ../include/hook.h \
+  ../include/numeric.h ../include/s_conf.h ../include/class.h \
+  ../include/send.h ../include/channel.h ../include/match.h \
+  ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
+  ../include/modules.h ../include/parse.h ../include/msg.h \
+  ../include/hook.h
+m_post.so: m_post.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
+  ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
+  ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
+  ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
+  ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
+  ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
+  ../libratbox/include/rb_patricia.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/logger.h ../include/send.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/ircd.h \
+  ../include/numeric.h ../include/s_serv.h ../include/send.h \
+  ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
+  ../include/modules.h ../include/parse.h ../include/msg.h \
+  ../include/hook.h ../include/s_conf.h ../include/class.h
+m_privs.so: m_privs.c ../include/stdinc.h \
+  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
+  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
+  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
+  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
+  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
+  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
+  ../include/config.h ../include/setup.h ../include/defaults.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/common.h ../include/numeric.h ../include/send.h \
+  ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
+  ../include/modules.h ../include/parse.h ../include/msg.h \
+  ../include/hook.h ../include/s_conf.h ../include/class.h \
+  ../include/s_newconf.h
+m_rehash.so: m_rehash.c ../include/stdinc.h \
+  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
+  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
+  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
+  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
+  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
+  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
+  ../include/config.h ../include/setup.h ../include/defaults.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/channel.h ../include/common.h ../include/match.h \
+  ../include/ircd.h ../include/s_serv.h ../include/numeric.h \
+  ../include/res.h ../include/s_conf.h ../include/class.h \
+  ../include/s_newconf.h ../include/logger.h ../include/send.h \
+  ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
+  ../include/modules.h ../include/parse.h ../include/msg.h \
+  ../include/hook.h ../include/hostmask.h ../include/reject.h \
+  ../include/hash.h ../include/cache.h
+m_restart.so: m_restart.c ../include/stdinc.h \
+  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
+  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
+  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
+  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
+  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
+  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
+  ../include/config.h ../include/setup.h ../include/defaults.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/common.h ../include/match.h ../include/ircd.h \
+  ../include/numeric.h ../include/s_conf.h ../include/class.h \
+  ../include/s_newconf.h ../include/restart.h ../include/logger.h \
+  ../include/send.h ../include/msg.h ../include/parse.h \
   ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
   ../include/msg.h ../include/hook.h
-m_post.o: m_post.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
+m_resv.so: m_resv.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
   ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
   ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
   ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
   ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
   ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
   ../libratbox/include/rb_patricia.h ../include/config.h \
-  ../include/setup.h ../include/defaults.h ../include/client.h \
-  ../include/ircd_defs.h ../include/s_log.h ../include/send.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/logger.h ../include/send.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/channel.h \
   ../include/ircd.h ../include/numeric.h ../include/s_serv.h \
   ../include/send.h ../include/msg.h ../include/parse.h \
   ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
   ../include/msg.h ../include/hook.h ../include/s_conf.h \
-  ../include/class.h
-m_privs.o: m_privs.c ../include/stdinc.h \
-  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
-  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
-  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
-  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
-  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
-  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
-  ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/common.h ../include/numeric.h \
-  ../include/send.h ../include/msg.h ../include/parse.h \
-  ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
-  ../include/msg.h ../include/hook.h ../include/s_conf.h \
-  ../include/class.h ../include/s_newconf.h
-m_rehash.o: m_rehash.c ../include/stdinc.h \
-  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
-  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
-  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
-  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
-  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
-  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
-  ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/channel.h ../include/common.h \
-  ../include/irc_string.h ../include/ircd.h ../include/s_gline.h \
-  ../include/s_serv.h ../include/numeric.h ../include/res.h \
-  ../include/s_conf.h ../include/class.h ../include/s_newconf.h \
-  ../include/s_log.h ../include/send.h ../include/msg.h \
-  ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
-  ../include/parse.h ../include/msg.h ../include/hook.h \
-  ../include/hostmask.h ../include/reject.h ../include/hash.h \
-  ../include/cache.h
-m_restart.o: m_restart.c ../include/stdinc.h \
-  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
-  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
-  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
-  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
-  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
-  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
-  ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/common.h ../include/irc_string.h \
-  ../include/sprintf_irc.h ../include/ircd.h ../include/numeric.h \
-  ../include/s_conf.h ../include/class.h ../include/s_newconf.h \
-  ../include/restart.h ../include/s_log.h ../include/send.h \
-  ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
-  ../include/modules.h ../include/parse.h ../include/msg.h \
-  ../include/hook.h
-m_resv.o: m_resv.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
+  ../include/class.h ../include/s_newconf.h ../include/hash.h \
+  ../include/logger.h
+m_sasl.so: m_sasl.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
   ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
   ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
   ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
   ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
   ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
   ../libratbox/include/rb_patricia.h ../include/config.h \
-  ../include/setup.h ../include/defaults.h ../include/client.h \
-  ../include/ircd_defs.h ../include/s_log.h ../include/send.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/channel.h ../include/ircd.h ../include/numeric.h \
-  ../include/s_serv.h ../include/send.h ../include/msg.h \
-  ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
-  ../include/parse.h ../include/msg.h ../include/hook.h \
-  ../include/s_conf.h ../include/class.h ../include/s_newconf.h \
-  ../include/hash.h ../include/s_log.h ../include/sprintf_irc.h
-m_sasl.o: m_sasl.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/logger.h ../include/send.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/hash.h \
+  ../include/send.h ../include/msg.h ../include/modules.h \
+  ../include/parse.h ../include/irc_dictionary.h ../include/msg.h \
+  ../include/hook.h ../include/numeric.h ../include/s_serv.h \
+  ../include/s_stats.h
+m_scan.so: m_scan.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
   ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
   ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
   ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
   ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
   ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
   ../libratbox/include/rb_patricia.h ../include/config.h \
-  ../include/setup.h ../include/defaults.h ../include/client.h \
-  ../include/ircd_defs.h ../include/s_log.h ../include/send.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/hash.h ../include/send.h ../include/msg.h \
-  ../include/modules.h ../include/parse.h ../include/irc_dictionary.h \
-  ../include/msg.h ../include/hook.h ../include/numeric.h \
-  ../include/s_serv.h ../include/s_stats.h
-m_scan.o: m_scan.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
-  ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
-  ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
-  ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
-  ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
-  ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
-  ../libratbox/include/rb_patricia.h ../include/config.h \
-  ../include/setup.h ../include/defaults.h ../include/class.h \
-  ../libcharybdis/tools.h ../include/hook.h ../include/client.h \
-  ../include/ircd_defs.h ../include/s_log.h ../include/send.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../libcharybdis/memory.h ../include/ircd_defs.h ../include/setup.h \
-  ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/hash.h ../include/common.h ../include/irc_string.h \
-  ../include/ircd.h ../include/numeric.h ../libcharybdis/commio.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/logger.h ../include/send.h ../include/class.h \
+  ../include/hook.h ../include/client.h ../include/channel.h \
+  ../include/res.h ../include/common.h ../include/reslib.h \
+  ../include/match.h ../include/ircd.h ../include/snomask.h \
+  ../include/client.h ../include/hash.h ../include/common.h \
+  ../include/match.h ../include/ircd.h ../include/numeric.h \
   ../include/s_serv.h ../include/s_conf.h ../include/class.h \
   ../include/s_newconf.h ../include/s_user.h ../include/send.h \
   ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
   ../include/modules.h ../include/parse.h ../include/msg.h \
   ../include/hook.h
-m_services.o: m_services.c ../include/stdinc.h \
+m_services.so: m_services.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -1123,44 +907,36 @@ m_services.o: m_services.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../libcharybdis/tools.h ../include/send.h ../include/ircd_defs.h \
-  ../include/s_log.h ../include/send.h ../include/channel.h \
-  ../include/client.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/common.h ../include/config.h \
-  ../include/ircd.h ../include/numeric.h ../libcharybdis/memory.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/send.h ../include/channel.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/common.h \
+  ../include/config.h ../include/ircd.h ../include/numeric.h \
   ../include/s_conf.h ../include/class.h ../include/s_newconf.h \
   ../include/s_serv.h ../include/hash.h ../include/msg.h \
   ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
   ../include/parse.h ../include/msg.h ../include/hook.h \
-  ../include/sprintf_irc.h ../include/whowas.h ../include/monitor.h
-m_set.o: m_set.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
+  ../include/whowas.h ../include/monitor.h
+m_set.so: m_set.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
   ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
   ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
   ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
   ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
   ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
   ../libratbox/include/rb_patricia.h ../include/config.h \
-  ../include/setup.h ../include/defaults.h ../include/client.h \
-  ../include/ircd_defs.h ../include/s_log.h ../include/send.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../libcharybdis/event.h ../include/irc_string.h \
-  ../include/sprintf_irc.h ../include/ircd.h ../include/numeric.h \
-  ../libcharybdis/commio.h ../include/s_serv.h ../include/send.h \
-  ../include/common.h ../include/channel.h ../include/s_conf.h \
-  ../include/class.h ../include/s_newconf.h ../include/msg.h \
-  ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
-  ../include/parse.h ../include/msg.h ../include/hook.h
-m_signon.o: m_signon.c ../include/stdinc.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/logger.h ../include/send.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/match.h \
+  ../include/ircd.h ../include/numeric.h ../include/s_serv.h \
+  ../include/send.h ../include/common.h ../include/channel.h \
+  ../include/s_conf.h ../include/class.h ../include/s_newconf.h \
+  ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
+  ../include/modules.h ../include/parse.h ../include/msg.h \
+  ../include/hook.h
+m_signon.so: m_signon.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -1168,23 +944,19 @@ m_signon.o: m_signon.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../libcharybdis/tools.h ../include/send.h ../include/ircd_defs.h \
-  ../include/s_log.h ../include/send.h ../include/channel.h \
-  ../include/client.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/common.h ../include/config.h \
-  ../include/ircd.h ../include/numeric.h ../libcharybdis/memory.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/send.h ../include/channel.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/common.h \
+  ../include/config.h ../include/ircd.h ../include/numeric.h \
   ../include/s_conf.h ../include/class.h ../include/s_serv.h \
   ../include/hash.h ../include/msg.h ../include/parse.h \
   ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
-  ../include/msg.h ../include/hook.h ../include/sprintf_irc.h \
-  ../include/whowas.h ../include/monitor.h ../include/s_stats.h \
-  ../include/snomask.h ../include/irc_string.h ../include/s_user.h
-m_snote.o: m_snote.c ../include/stdinc.h \
+  ../include/msg.h ../include/hook.h ../include/whowas.h \
+  ../include/monitor.h ../include/s_stats.h ../include/snomask.h \
+  ../include/match.h ../include/s_user.h
+m_snote.so: m_snote.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -1192,151 +964,18 @@ m_snote.o: m_snote.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/class.h ../libcharybdis/tools.h ../include/hook.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/hash.h ../include/common.h ../include/irc_string.h \
-  ../include/ircd.h ../include/numeric.h ../libcharybdis/commio.h \
-  ../include/s_serv.h ../include/s_conf.h ../include/class.h \
-  ../include/s_newconf.h ../include/s_user.h ../include/send.h \
-  ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
-  ../include/modules.h ../include/parse.h ../include/msg.h \
-  ../include/hook.h
-m_stats.o: m_stats.c ../include/stdinc.h \
-  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
-  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
-  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
-  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
-  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
-  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
-  ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../libcharybdis/tools.h ../include/class.h ../libcharybdis/tools.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/common.h ../include/irc_string.h ../include/ircd.h \
-  ../include/listener.h ../include/s_gline.h ../include/msg.h \
-  ../include/hostmask.h ../include/numeric.h ../include/scache.h \
-  ../include/send.h ../libcharybdis/commio.h ../include/s_conf.h \
-  ../include/class.h ../include/s_serv.h ../include/s_stats.h \
-  ../include/s_user.h ../libcharybdis/event.h ../include/blacklist.h \
-  ../libcharybdis/linebuf.h ../include/parse.h \
-  ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
-  ../include/msg.h ../include/hook.h ../include/hook.h \
-  ../include/s_newconf.h ../include/hash.h
-m_svinfo.o: m_svinfo.c ../include/stdinc.h \
-  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
-  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
-  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
-  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
-  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
-  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
-  ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/common.h ../include/irc_string.h \
-  ../include/ircd.h ../include/numeric.h ../include/send.h \
-  ../include/s_conf.h ../include/class.h ../include/s_log.h \
-  ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
-  ../include/modules.h ../include/parse.h ../include/msg.h \
-  ../include/hook.h
-m_tb.o: m_tb.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
-  ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
-  ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
-  ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
-  ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
-  ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
-  ../libratbox/include/rb_patricia.h ../include/config.h \
-  ../include/setup.h ../include/defaults.h ../libcharybdis/tools.h \
-  ../include/send.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../include/channel.h ../include/client.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/common.h ../include/config.h ../include/ircd.h \
-  ../include/irc_string.h ../include/s_conf.h ../include/class.h \
-  ../include/msg.h ../include/modules.h ../include/parse.h \
-  ../include/irc_dictionary.h ../include/msg.h ../include/hook.h \
-  ../include/hash.h ../include/s_serv.h
-m_testline.o: m_testline.c ../include/stdinc.h \
-  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
-  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
-  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
-  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
-  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
-  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
-  ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../libcharybdis/tools.h ../include/send.h ../include/ircd_defs.h \
-  ../include/s_log.h ../include/send.h ../include/client.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/modules.h ../include/parse.h ../include/irc_dictionary.h \
-  ../include/msg.h ../include/hook.h ../include/msg.h ../include/hash.h \
-  ../include/hostmask.h ../include/numeric.h ../include/s_conf.h \
-  ../include/class.h ../include/s_newconf.h ../include/sprintf_irc.h
-m_testmask.o: m_testmask.c ../include/stdinc.h \
-  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
-  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
-  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
-  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
-  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
-  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
-  ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/common.h ../include/ircd.h \
-  ../include/irc_string.h ../include/numeric.h ../include/s_conf.h \
-  ../include/class.h ../include/s_log.h ../include/s_serv.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/class.h ../include/hook.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/hash.h \
+  ../include/common.h ../include/match.h ../include/ircd.h \
+  ../include/numeric.h ../include/s_serv.h ../include/s_conf.h \
+  ../include/class.h ../include/s_newconf.h ../include/s_user.h \
   ../include/send.h ../include/msg.h ../include/parse.h \
   ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
   ../include/msg.h ../include/hook.h
-m_time.o: m_time.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
-  ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
-  ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
-  ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
-  ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
-  ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
-  ../libratbox/include/rb_patricia.h ../include/config.h \
-  ../include/setup.h ../include/defaults.h ../include/client.h \
-  ../include/ircd_defs.h ../include/s_log.h ../include/send.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/ircd.h ../include/numeric.h ../include/s_conf.h \
-  ../include/class.h ../include/s_serv.h ../include/send.h \
-  ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
-  ../include/modules.h ../include/parse.h ../include/msg.h \
-  ../include/hook.h ../include/packet.h ../include/sprintf_irc.h
-m_topic.o: m_topic.c ../include/stdinc.h \
+m_stats.so: m_stats.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -1344,21 +983,124 @@ m_topic.o: m_topic.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../libcharybdis/tools.h ../include/channel.h ../include/ircd_defs.h \
-  ../include/s_log.h ../include/send.h ../include/client.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/hash.h ../include/irc_string.h ../include/sprintf_irc.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/class.h ../include/client.h ../include/channel.h \
+  ../include/res.h ../include/common.h ../include/reslib.h \
+  ../include/match.h ../include/ircd.h ../include/snomask.h \
+  ../include/client.h ../include/common.h ../include/match.h \
+  ../include/ircd.h ../include/listener.h ../include/msg.h \
+  ../include/hostmask.h ../include/numeric.h ../include/scache.h \
+  ../include/send.h ../include/s_conf.h ../include/class.h \
+  ../include/s_serv.h ../include/s_stats.h ../include/s_user.h \
+  ../include/blacklist.h ../include/parse.h ../include/irc_dictionary.h \
+  ../include/modules.h ../include/parse.h ../include/msg.h \
+  ../include/hook.h ../include/hook.h ../include/s_newconf.h \
+  ../include/hash.h ../include/reject.h ../include/whowas.h
+m_svinfo.so: m_svinfo.c ../include/stdinc.h \
+  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
+  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
+  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
+  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
+  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
+  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
+  ../include/config.h ../include/setup.h ../include/defaults.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/common.h ../include/match.h ../include/ircd.h \
+  ../include/numeric.h ../include/send.h ../include/s_conf.h \
+  ../include/class.h ../include/logger.h ../include/msg.h \
+  ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
+  ../include/parse.h ../include/msg.h ../include/hook.h
+m_tb.so: m_tb.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
+  ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
+  ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
+  ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
+  ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
+  ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
+  ../libratbox/include/rb_patricia.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/logger.h ../include/send.h ../include/send.h \
+  ../include/channel.h ../include/client.h ../include/channel.h \
+  ../include/res.h ../include/common.h ../include/reslib.h \
+  ../include/match.h ../include/ircd.h ../include/snomask.h \
+  ../include/client.h ../include/common.h ../include/config.h \
+  ../include/ircd.h ../include/match.h ../include/s_conf.h \
+  ../include/class.h ../include/msg.h ../include/modules.h \
+  ../include/parse.h ../include/irc_dictionary.h ../include/msg.h \
+  ../include/hook.h ../include/hash.h ../include/s_serv.h
+m_testline.so: m_testline.c ../include/stdinc.h \
+  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
+  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
+  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
+  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
+  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
+  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
+  ../include/config.h ../include/setup.h ../include/defaults.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/send.h ../include/client.h ../include/channel.h \
+  ../include/res.h ../include/common.h ../include/reslib.h \
+  ../include/match.h ../include/ircd.h ../include/snomask.h \
+  ../include/client.h ../include/modules.h ../include/parse.h \
+  ../include/irc_dictionary.h ../include/msg.h ../include/hook.h \
+  ../include/msg.h ../include/hash.h ../include/hostmask.h \
+  ../include/numeric.h ../include/s_conf.h ../include/class.h \
+  ../include/s_newconf.h
+m_testmask.so: m_testmask.c ../include/stdinc.h \
+  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
+  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
+  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
+  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
+  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
+  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
+  ../include/config.h ../include/setup.h ../include/defaults.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/common.h ../include/ircd.h ../include/match.h \
+  ../include/numeric.h ../include/s_conf.h ../include/class.h \
+  ../include/logger.h ../include/s_serv.h ../include/send.h \
+  ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
+  ../include/modules.h ../include/parse.h ../include/msg.h \
+  ../include/hook.h
+m_time.so: m_time.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
+  ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
+  ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
+  ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
+  ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
+  ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
+  ../libratbox/include/rb_patricia.h ../include/config.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/logger.h ../include/send.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/ircd.h \
+  ../include/numeric.h ../include/s_conf.h ../include/class.h \
+  ../include/s_serv.h ../include/send.h ../include/msg.h \
+  ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
+  ../include/parse.h ../include/msg.h ../include/hook.h \
+  ../include/packet.h
+m_topic.so: m_topic.c ../include/stdinc.h \
+  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
+  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
+  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
+  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
+  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
+  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
+  ../include/config.h ../include/setup.h ../include/defaults.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/channel.h ../include/client.h ../include/channel.h \
+  ../include/res.h ../include/common.h ../include/reslib.h \
+  ../include/match.h ../include/ircd.h ../include/snomask.h \
+  ../include/client.h ../include/hash.h ../include/match.h \
   ../include/ircd.h ../include/numeric.h ../include/send.h \
   ../include/s_conf.h ../include/class.h ../include/s_serv.h \
   ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
   ../include/modules.h ../include/parse.h ../include/msg.h \
   ../include/hook.h ../include/packet.h
-m_trace.o: m_trace.c ../include/stdinc.h \
+m_trace.so: m_trace.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -1366,42 +1108,35 @@ m_trace.o: m_trace.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/class.h ../libcharybdis/tools.h ../include/hook.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/hash.h ../include/common.h ../include/irc_string.h \
-  ../include/ircd.h ../include/numeric.h ../libcharybdis/commio.h \
-  ../include/s_serv.h ../include/s_conf.h ../include/class.h \
-  ../include/s_newconf.h ../include/send.h ../include/msg.h \
-  ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
-  ../include/parse.h ../include/msg.h ../include/hook.h
-m_user.o: m_user.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/class.h ../include/hook.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/hash.h \
+  ../include/common.h ../include/match.h ../include/ircd.h \
+  ../include/numeric.h ../include/s_serv.h ../include/s_conf.h \
+  ../include/class.h ../include/s_newconf.h ../include/send.h \
+  ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
+  ../include/modules.h ../include/parse.h ../include/msg.h \
+  ../include/hook.h
+m_user.so: m_user.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
   ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
   ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
   ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
   ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
   ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
   ../libratbox/include/rb_patricia.h ../include/config.h \
-  ../include/setup.h ../include/defaults.h ../include/client.h \
-  ../include/ircd_defs.h ../include/s_log.h ../include/send.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/irc_string.h ../include/ircd.h ../include/numeric.h \
-  ../include/s_user.h ../include/send.h ../include/s_conf.h \
-  ../include/class.h ../include/msg.h ../include/parse.h \
-  ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
-  ../include/msg.h ../include/hook.h ../include/sprintf_irc.h \
-  ../include/blacklist.h
-m_userhost.o: m_userhost.c ../include/stdinc.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/logger.h ../include/send.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/match.h \
+  ../include/ircd.h ../include/numeric.h ../include/s_user.h \
+  ../include/send.h ../include/s_conf.h ../include/class.h \
+  ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
+  ../include/modules.h ../include/parse.h ../include/msg.h \
+  ../include/hook.h ../include/blacklist.h
+m_userhost.so: m_userhost.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -1409,20 +1144,16 @@ m_userhost.o: m_userhost.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/ircd.h ../include/numeric.h \
-  ../include/s_serv.h ../include/send.h ../include/irc_string.h \
-  ../include/sprintf_irc.h ../include/msg.h ../include/parse.h \
-  ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
-  ../include/msg.h ../include/hook.h ../include/s_conf.h \
-  ../include/class.h
-m_users.o: m_users.c ../include/stdinc.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/ircd.h ../include/numeric.h ../include/s_serv.h \
+  ../include/send.h ../include/match.h ../include/msg.h \
+  ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
+  ../include/parse.h ../include/msg.h ../include/hook.h \
+  ../include/s_conf.h ../include/class.h
+m_users.so: m_users.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -1430,19 +1161,33 @@ m_users.o: m_users.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/ircd.h ../include/numeric.h \
-  ../include/s_serv.h ../include/s_conf.h ../include/class.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/ircd.h ../include/numeric.h ../include/s_serv.h \
+  ../include/s_conf.h ../include/class.h ../include/send.h \
+  ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
+  ../include/modules.h ../include/parse.h ../include/msg.h \
+  ../include/hook.h
+m_version.so: m_version.c ../include/stdinc.h \
+  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
+  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
+  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
+  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
+  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
+  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
+  ../include/config.h ../include/setup.h ../include/defaults.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/ircd.h ../include/numeric.h ../include/s_conf.h \
+  ../include/class.h ../include/s_serv.h ../include/supported.h \
   ../include/send.h ../include/msg.h ../include/parse.h \
   ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
   ../include/msg.h ../include/hook.h
-m_version.o: m_version.c ../include/stdinc.h \
+m_wallops.so: m_wallops.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -1450,63 +1195,36 @@ m_version.o: m_version.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/ircd.h ../include/numeric.h \
-  ../include/s_conf.h ../include/class.h ../include/s_serv.h \
-  ../include/supported.h ../include/send.h ../include/msg.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
+  ../include/ircd.h ../include/match.h ../include/numeric.h \
+  ../include/send.h ../include/s_user.h ../include/s_conf.h \
+  ../include/class.h ../include/s_newconf.h ../include/msg.h \
   ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
-  ../include/parse.h ../include/msg.h ../include/hook.h
-m_wallops.o: m_wallops.c ../include/stdinc.h \
-  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
-  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
-  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
-  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
-  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
-  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
-  ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/ircd.h ../include/irc_string.h \
-  ../include/numeric.h ../include/send.h ../include/s_user.h \
-  ../include/s_conf.h ../include/class.h ../include/s_newconf.h \
-  ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
-  ../include/modules.h ../include/parse.h ../include/msg.h \
-  ../include/hook.h ../include/s_serv.h
-m_who.o: m_who.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
+  ../include/parse.h ../include/msg.h ../include/hook.h \
+  ../include/s_serv.h
+m_who.so: m_who.c ../include/stdinc.h ../libratbox/include/ratbox_lib.h \
   ../libratbox/include/librb-config.h ../libratbox/include/rb_tools.h \
   ../libratbox/include/rb_memory.h ../libratbox/include/rb_commio.h \
   ../libratbox/include/rb_balloc.h ../libratbox/include/rb_linebuf.h \
   ../libratbox/include/rb_snprintf.h ../libratbox/include/rb_event.h \
   ../libratbox/include/rb_helper.h ../libratbox/include/rb_rawbuf.h \
   ../libratbox/include/rb_patricia.h ../include/config.h \
-  ../include/setup.h ../include/defaults.h ../libcharybdis/tools.h \
-  ../include/common.h ../include/client.h ../include/ircd_defs.h \
-  ../include/s_log.h ../include/send.h ../libcharybdis/linebuf.h \
-  ../include/channel.h ../include/res.h ../include/common.h \
-  ../libcharybdis/commio.h ../include/reslib.h ../include/irc_string.h \
-  ../include/sprintf_irc.h ../include/ircd.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/ircd_defs.h ../include/setup.h \
-  ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
+  ../include/setup.h ../include/defaults.h ../include/ircd_defs.h \
+  ../include/logger.h ../include/send.h ../include/common.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
+  ../include/ircd.h ../include/snomask.h ../include/client.h \
   ../include/channel.h ../include/hash.h ../include/ircd.h \
   ../include/numeric.h ../include/s_serv.h ../include/send.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/s_conf.h \
-  ../include/class.h ../include/s_log.h ../include/msg.h \
-  ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
-  ../include/parse.h ../include/msg.h ../include/hook.h \
-  ../include/packet.h ../include/s_newconf.h
-m_whois.o: m_whois.c ../include/stdinc.h \
+  ../include/match.h ../include/s_conf.h ../include/class.h \
+  ../include/logger.h ../include/msg.h ../include/parse.h \
+  ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
+  ../include/msg.h ../include/hook.h ../include/packet.h \
+  ../include/s_newconf.h
+m_whois.so: m_whois.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -1514,22 +1232,18 @@ m_whois.o: m_whois.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../libcharybdis/tools.h ../include/common.h ../include/client.h \
-  ../include/ircd_defs.h ../include/s_log.h ../include/send.h \
-  ../libcharybdis/linebuf.h ../include/channel.h ../include/res.h \
-  ../include/common.h ../libcharybdis/commio.h ../include/reslib.h \
-  ../include/irc_string.h ../include/sprintf_irc.h ../include/ircd.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/ircd_defs.h \
-  ../include/setup.h ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/hash.h ../include/channel.h ../include/ircd.h \
-  ../include/numeric.h ../include/s_conf.h ../include/class.h \
-  ../include/s_serv.h ../include/send.h ../include/irc_string.h \
-  ../include/sprintf_irc.h ../include/s_log.h ../include/msg.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/common.h ../include/client.h ../include/channel.h \
+  ../include/res.h ../include/common.h ../include/reslib.h \
+  ../include/match.h ../include/ircd.h ../include/snomask.h \
+  ../include/client.h ../include/hash.h ../include/channel.h \
+  ../include/ircd.h ../include/numeric.h ../include/s_conf.h \
+  ../include/class.h ../include/s_serv.h ../include/send.h \
+  ../include/match.h ../include/logger.h ../include/msg.h \
   ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
   ../include/parse.h ../include/msg.h ../include/hook.h ../include/hook.h \
   ../include/s_newconf.h
-m_whowas.o: m_whowas.c ../include/stdinc.h \
+m_whowas.so: m_whowas.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -1537,21 +1251,18 @@ m_whowas.o: m_whowas.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/whowas.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../include/client.h ../libcharybdis/linebuf.h \
-  ../include/channel.h ../include/res.h ../include/common.h \
-  ../libcharybdis/commio.h ../include/reslib.h ../include/irc_string.h \
-  ../include/sprintf_irc.h ../include/ircd.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/ircd_defs.h ../include/setup.h \
-  ../libcharybdis/balloc.h ../libcharybdis/tools.h \
-  ../libcharybdis/memory.h ../include/snomask.h ../include/client.h \
-  ../include/common.h ../include/hash.h ../include/irc_string.h \
-  ../include/ircd.h ../include/ircd_defs.h ../include/numeric.h \
-  ../include/s_serv.h ../include/s_user.h ../include/send.h \
-  ../include/s_conf.h ../include/class.h ../include/msg.h \
-  ../include/parse.h ../include/irc_dictionary.h ../include/modules.h \
-  ../include/parse.h ../include/msg.h ../include/hook.h
-m_unreject.o: m_unreject.c ../include/stdinc.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/whowas.h ../include/client.h ../include/channel.h \
+  ../include/res.h ../include/common.h ../include/reslib.h \
+  ../include/match.h ../include/ircd.h ../include/snomask.h \
+  ../include/client.h ../include/common.h ../include/hash.h \
+  ../include/match.h ../include/ircd.h ../include/ircd_defs.h \
+  ../include/numeric.h ../include/s_serv.h ../include/s_user.h \
+  ../include/send.h ../include/s_conf.h ../include/class.h \
+  ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
+  ../include/modules.h ../include/parse.h ../include/msg.h \
+  ../include/hook.h
+m_unreject.so: m_unreject.c ../include/stdinc.h \
   ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
   ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
   ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
@@ -1559,56 +1270,46 @@ m_unreject.o: m_unreject.c ../include/stdinc.h \
   ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
   ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
   ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/client.h ../include/ircd_defs.h ../include/s_log.h \
-  ../include/send.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/s_conf.h ../include/class.h \
-  ../include/hostmask.h ../include/reject.h ../include/msg.h \
-  ../include/modules.h ../include/parse.h ../include/irc_dictionary.h \
-  ../include/msg.h ../include/hook.h ../include/send.h
-m_xline.o: m_xline.c ../include/stdinc.h \
-  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
-  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
-  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
-  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
-  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
-  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
-  ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../libcharybdis/tools.h ../include/send.h ../include/ircd_defs.h \
-  ../include/s_log.h ../include/send.h ../include/channel.h \
-  ../include/client.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/ircd.h ../libcharybdis/tools.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/snomask.h \
-  ../include/client.h ../include/common.h ../include/config.h \
-  ../include/class.h ../include/ircd.h ../include/numeric.h \
-  ../libcharybdis/memory.h ../include/s_log.h ../include/s_serv.h \
-  ../include/whowas.h ../include/irc_string.h ../include/sprintf_irc.h \
-  ../include/hash.h ../include/msg.h ../include/parse.h \
-  ../include/irc_dictionary.h ../include/modules.h ../include/parse.h \
-  ../include/msg.h ../include/hook.h ../include/s_conf.h \
-  ../include/class.h ../include/s_newconf.h ../include/reject.h
-sno_routing.o: sno_routing.c ../include/stdinc.h \
-  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
-  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
-  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
-  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
-  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
-  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
-  ../include/config.h ../include/setup.h ../include/defaults.h \
-  ../include/modules.h ../include/parse.h ../include/irc_dictionary.h \
-  ../libcharybdis/tools.h ../include/msg.h ../libcharybdis/memory.h \
-  ../include/ircd_defs.h ../include/s_log.h ../include/ircd_defs.h \
-  ../include/send.h ../include/setup.h ../libcharybdis/balloc.h \
-  ../libcharybdis/tools.h ../libcharybdis/memory.h ../include/hook.h \
-  ../include/client.h ../libcharybdis/linebuf.h ../include/channel.h \
-  ../include/res.h ../include/common.h ../libcharybdis/commio.h \
-  ../include/reslib.h ../include/irc_string.h ../include/sprintf_irc.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/client.h ../include/channel.h ../include/res.h \
+  ../include/common.h ../include/reslib.h ../include/match.h \
   ../include/ircd.h ../include/snomask.h ../include/client.h \
-  ../include/hook.h ../include/ircd.h ../include/send.h
+  ../include/s_conf.h ../include/class.h ../include/hostmask.h \
+  ../include/reject.h ../include/msg.h ../include/modules.h \
+  ../include/parse.h ../include/irc_dictionary.h ../include/msg.h \
+  ../include/hook.h ../include/send.h
+m_xline.so: m_xline.c ../include/stdinc.h \
+  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
+  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
+  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
+  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
+  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
+  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
+  ../include/config.h ../include/setup.h ../include/defaults.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/send.h ../include/channel.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/common.h \
+  ../include/config.h ../include/class.h ../include/ircd.h \
+  ../include/numeric.h ../include/logger.h ../include/s_serv.h \
+  ../include/whowas.h ../include/match.h ../include/hash.h \
+  ../include/msg.h ../include/parse.h ../include/irc_dictionary.h \
+  ../include/modules.h ../include/parse.h ../include/msg.h \
+  ../include/hook.h ../include/s_conf.h ../include/class.h \
+  ../include/s_newconf.h ../include/reject.h
+sno_routing.so: sno_routing.c ../include/stdinc.h \
+  ../libratbox/include/ratbox_lib.h ../libratbox/include/librb-config.h \
+  ../libratbox/include/rb_tools.h ../libratbox/include/rb_memory.h \
+  ../libratbox/include/rb_commio.h ../libratbox/include/rb_balloc.h \
+  ../libratbox/include/rb_linebuf.h ../libratbox/include/rb_snprintf.h \
+  ../libratbox/include/rb_event.h ../libratbox/include/rb_helper.h \
+  ../libratbox/include/rb_rawbuf.h ../libratbox/include/rb_patricia.h \
+  ../include/config.h ../include/setup.h ../include/defaults.h \
+  ../include/ircd_defs.h ../include/logger.h ../include/send.h \
+  ../include/modules.h ../include/parse.h ../include/irc_dictionary.h \
+  ../include/msg.h ../include/hook.h ../include/client.h \
+  ../include/channel.h ../include/res.h ../include/common.h \
+  ../include/reslib.h ../include/match.h ../include/ircd.h \
+  ../include/snomask.h ../include/client.h ../include/hook.h \
+  ../include/ircd.h ../include/send.h
