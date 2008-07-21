@@ -704,7 +704,8 @@ msg_client(int p_or_n, const char *command,
 							form_str(ERR_NONONREG),
 							target_p->name);
 				/* Only so opers can watch for floods */
-				(void) flood_attack_client(p_or_n, source_p, target_p);
+				if (MyClient(source_p))
+					(void) flood_attack_client(p_or_n, source_p, target_p);
 			}
 			else
 			{
@@ -731,7 +732,8 @@ msg_client(int p_or_n, const char *command,
 					target_p->localClient->last_caller_id_time = rb_current_time();
 				}
 				/* Only so opers can watch for floods */
-				(void) flood_attack_client(p_or_n, source_p, target_p);
+				if (MyClient(source_p))
+					(void) flood_attack_client(p_or_n, source_p, target_p);
 			}
 		}
 		else
@@ -767,33 +769,38 @@ flood_attack_client(int p_or_n, struct Client *source_p, struct Client *target_p
 {
 	int delta;
 
-	if(GlobalSetOptions.floodcount && MyConnect(target_p) && IsClient(source_p) && source_p != target_p)
+	/* Services could get many messages legitimately and
+	 * can be messaged without rate limiting via aliases
+	 * and msg user@server.
+	 * -- jilles
+	 */
+	if(GlobalSetOptions.floodcount && IsClient(source_p) && source_p != target_p && !IsService(target_p))
 	{
-		if((target_p->localClient->first_received_message_time + 1) < rb_current_time())
+		if((target_p->first_received_message_time + 1) < rb_current_time())
 		{
-			delta = rb_current_time() - target_p->localClient->first_received_message_time;
-			target_p->localClient->received_number_of_privmsgs -= delta;
-			target_p->localClient->first_received_message_time = rb_current_time();
-			if(target_p->localClient->received_number_of_privmsgs <= 0)
+			delta = rb_current_time() - target_p->first_received_message_time;
+			target_p->received_number_of_privmsgs -= delta;
+			target_p->first_received_message_time = rb_current_time();
+			if(target_p->received_number_of_privmsgs <= 0)
 			{
-				target_p->localClient->received_number_of_privmsgs = 0;
-				target_p->localClient->flood_noticed = 0;
+				target_p->received_number_of_privmsgs = 0;
+				target_p->flood_noticed = 0;
 			}
 		}
 
-		if((target_p->localClient->received_number_of_privmsgs >=
-		    GlobalSetOptions.floodcount) || target_p->localClient->flood_noticed)
+		if((target_p->received_number_of_privmsgs >=
+		    GlobalSetOptions.floodcount) || target_p->flood_noticed)
 		{
-			if(target_p->localClient->flood_noticed == 0)
+			if(target_p->flood_noticed == 0)
 			{
 				sendto_realops_snomask(SNO_BOTS, L_NETWIDE,
 						     "Possible Flooder %s[%s@%s] on %s target: %s",
 						     source_p->name, source_p->username,
 						     source_p->orighost,
 						     source_p->servptr->name, target_p->name);
-				target_p->localClient->flood_noticed = 1;
+				target_p->flood_noticed = 1;
 				/* add a bit of penalty */
-				target_p->localClient->received_number_of_privmsgs += 2;
+				target_p->received_number_of_privmsgs += 2;
 			}
 			if(MyClient(source_p) && (p_or_n != NOTICE))
 				sendto_one(source_p,
@@ -802,7 +809,7 @@ flood_attack_client(int p_or_n, struct Client *source_p, struct Client *target_p
 			return 1;
 		}
 		else
-			target_p->localClient->received_number_of_privmsgs++;
+			target_p->received_number_of_privmsgs++;
 	}
 
 	return 0;

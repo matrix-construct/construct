@@ -168,6 +168,10 @@ struct Client
 	 */
 	rb_dlink_list on_allow_list;
 
+	time_t first_received_message_time;
+	int received_number_of_privmsgs;
+	int flood_noticed;
+
 	local_user_t *localClient;
 	pre_client_t *preClient;
 };
@@ -189,9 +193,6 @@ struct LocalUser
 	int oper_warn_count_down;	/* warn opers of this possible 
 					   spambot every time this gets to 0 */
 	time_t last_caller_id_time;
-	time_t first_received_message_time;
-	int received_number_of_privmsgs;
-	int flood_noticed;
 
 	time_t lasttime;	/* last time we parsed something */
 	time_t firsttime;	/* time client was created */
