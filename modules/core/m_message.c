@@ -90,6 +90,7 @@ static int build_target_list(int p_or_n, const char *command,
 			     struct Client *client_p,
 			     struct Client *source_p, const char *nicks_channels, const char *text);
 
+static struct Channel *find_allowing_channel(struct Client *source_p, struct Client *target_p);
 static int flood_attack_client(int p_or_n, struct Client *source_p, struct Client *target_p);
 static int flood_attack_channel(int p_or_n, struct Client *source_p,
 				struct Channel *chptr, char *chname);
@@ -648,6 +649,8 @@ static void
 msg_client(int p_or_n, const char *command,
 	   struct Client *source_p, struct Client *target_p, const char *text)
 {
+	int do_floodcount = 0;
+
 	if(MyClient(source_p))
 	{
 		/* reset idle time for message only if its not to self 
@@ -655,12 +658,16 @@ msg_client(int p_or_n, const char *command,
 		if(p_or_n != NOTICE)
 			source_p->localClient->last = rb_current_time();
 
+		/* auto cprivmsg/cnotice */
+		do_floodcount = !IsOper(source_p) &&
+			!find_allowing_channel(source_p, target_p);
+
 		/* target change stuff, dont limit ctcp replies as that
 		 * would allow people to start filling up random users
 		 * targets just by ctcping them
 		 */
 		if((p_or_n != NOTICE || *text != '\001') &&
-		   ConfigFileEntry.target_change && !IsOper(source_p))
+		   ConfigFileEntry.target_change && do_floodcount)
 		{
 			if(!add_target(source_p, target_p))
 			{
@@ -703,7 +710,7 @@ msg_client(int p_or_n, const char *command,
 							form_str(ERR_NONONREG),
 							target_p->name);
 				/* Only so opers can watch for floods */
-				if (MyClient(source_p))
+				if (do_floodcount)
 					(void) flood_attack_client(p_or_n, source_p, target_p);
 			}
 			else
@@ -731,7 +738,7 @@ msg_client(int p_or_n, const char *command,
 					target_p->localClient->last_caller_id_time = rb_current_time();
 				}
 				/* Only so opers can watch for floods */
-				if (MyClient(source_p))
+				if (do_floodcount)
 					(void) flood_attack_client(p_or_n, source_p, target_p);
 			}
 		}
@@ -742,16 +749,31 @@ msg_client(int p_or_n, const char *command,
 			 * we dont give warnings.. we then check if theyre opered 
 			 * (to avoid flood warnings), lastly if theyre our client
 			 * and flooding    -- fl */
-			if(!MyClient(source_p) || IsOper(source_p) ||
+			if(!do_floodcount ||
 			   !flood_attack_client(p_or_n, source_p, target_p))
 				sendto_anywhere(target_p, source_p, command, ":%s", text);
 		}
 	}
-	else if(!MyClient(source_p) || IsOper(source_p) ||
+	else if(!do_floodcount ||
 		!flood_attack_client(p_or_n, source_p, target_p))
 		sendto_anywhere(target_p, source_p, command, ":%s", text);
 
 	return;
+}
+
+static struct Channel *
+find_allowing_channel(struct Client *source_p, struct Client *target_p)
+{
+	rb_dlink_node *ptr;
+	struct membership *msptr;
+
+	RB_DLINK_FOREACH(ptr, source_p->user->channel.head)
+	{
+		msptr = ptr->data;
+		if (is_chanop_voiced(msptr) && IsMember(target_p, msptr->chptr))
+			return msptr->chptr;
+	}
+	return NULL;
 }
 
 /*
