@@ -58,8 +58,6 @@
 static void report_and_set_user_flags(struct Client *, struct ConfItem *);
 void user_welcome(struct Client *source_p);
 
-extern char *crypt();
-
 char umodebuf[128];
 
 static int orphaned_umodes = 0;
@@ -364,7 +362,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 		if(EmptyString(source_p->localClient->passwd))
 			encr = "";
 		else if(IsConfEncrypted(aconf))
-			encr = crypt(source_p->localClient->passwd, aconf->passwd);
+			encr = rb_crypt(source_p->localClient->passwd, aconf->passwd);
 		else
 			encr = source_p->localClient->passwd;
 

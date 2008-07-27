@@ -55,8 +55,6 @@
 #include "reject.h"
 #include "sslproc.h"
 
-extern char *crypt();
-
 #ifndef INADDR_NONE
 #define INADDR_NONE ((unsigned int) 0xffffffff)
 #endif
@@ -343,7 +341,7 @@ check_server(const char *name, struct Client *client_p)
 
 			if(ServerConfEncrypted(tmp_p))
 			{
-				if(!strcmp(tmp_p->passwd, crypt(client_p->localClient->passwd,
+				if(!strcmp(tmp_p->passwd, rb_crypt(client_p->localClient->passwd,
 								tmp_p->passwd)))
 				{
 					server_p = tmp_p;
