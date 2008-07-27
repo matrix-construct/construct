@@ -10,8 +10,6 @@
 #include "numeric.h"
 #include "chmode.h"
 
-/* gcc -fPIC -DPIC -shared  -I. -I../include -I../libratbox/include   -O0 -Wall -std=gnu99 -g  -DIRCD_PREFIX=\"/home/dwr/build/charybdis\" chm_operonly.c -o chm_operonly.so */
-
 static void h_can_join(hook_data_channel *);
 
 mapi_hfn_list_av1 operonly_hfnlist[] = {
