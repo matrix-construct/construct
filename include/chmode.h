@@ -28,6 +28,12 @@
 #ifndef INCLUDED_chmode_h
 #define INCLUDED_chmode_h
 
+/* something not included in messages.tab
+ * to change some hooks behaviour when needed
+ * -- dwr
+ */
+#define ERR_CUSTOM 1000
+
 extern void chm_nosuch(struct Client *source_p, struct Channel *chptr,
 	   int alevel, int parc, int *parn,
 	   const char **parv, int *errors, int dir, char c, long mode_type);

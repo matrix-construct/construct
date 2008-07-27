@@ -69,6 +69,7 @@ char cflagsbuf[256];
 char cflagsmyinfo[256];
 
 int chmode_flags[256];
+
 /* OPTIMIZE ME! -- dwr */
 void
 construct_noparam_modes(void)

@@ -40,6 +40,7 @@
 #include "parse.h"
 #include "modules.h"
 #include "packet.h"
+#include "chmode.h"
 
 static int m_join(struct Client *, struct Client *, int, const char **);
 static int ms_join(struct Client *, struct Client *, int, const char **);
@@ -302,11 +303,18 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 			if ((i != ERR_NEEDREGGEDNICK && i != ERR_THROTTLE && i != ERR_INVITEONLYCHAN && i != ERR_CHANNELISFULL) ||
 			    (!ConfigChannel.use_forward || (chptr = check_forward(source_p, chptr, key)) == NULL))
 			{
-				sendto_one(source_p, form_str(i), me.name, source_p->name, name);
+				/* might be wrong, but is there any other better location for such?
+				 * see extensions/chm_operonly.c for other comments on this
+				 * -- dwr
+				 */
+				if(i != ERR_CUSTOM)
+					sendto_one(source_p, form_str(i), me.name, source_p->name, name);
+
 				if(successful_join_count > 0)
 					successful_join_count--;
 				continue;
 			}
+
 			sendto_one_numeric(source_p, ERR_LINKCHANNEL, form_str(ERR_LINKCHANNEL), name, chptr->chname);
 		}
 
