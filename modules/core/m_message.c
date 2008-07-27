@@ -93,7 +93,6 @@ static int build_target_list(int p_or_n, const char *command,
 static int flood_attack_client(int p_or_n, struct Client *source_p, struct Client *target_p);
 static int flood_attack_channel(int p_or_n, struct Client *source_p,
 				struct Channel *chptr, char *chname);
-static struct Client *find_userhost(const char *, const char *, int *);
 
 #define ENTITY_NONE    0
 #define ENTITY_CHANNEL 1
@@ -893,7 +892,6 @@ handle_special(int p_or_n, const char *command, struct Client *client_p,
 	       struct Client *source_p, const char *nick, const char *text)
 {
 	struct Client *target_p;
-	char *host;
 	char *server;
 	char *s;
 	int count;
@@ -931,39 +929,23 @@ handle_special(int p_or_n, const char *command, struct Client *client_p,
 			return;
 		}
 
-		*server = '\0';
-
-		if((host = strchr(nick, '%')) != NULL)
-			*host++ = '\0';
-
 		/* Check if someones msg'ing opers@our.server */
-		if(strcmp(nick, "opers") == 0)
+		if(strncmp(nick, "opers@", 6) == 0)
 		{
 			sendto_realops_snomask(SNO_GENERAL, L_ALL, "To opers: From: %s: %s",
 					     source_p->name, text);
 			return;
 		}
 
-		/*
-		 * Look for users which match the destination host
-		 * (no host == wildcard) and if one and one only is
-		 * found connected to me, deliver message!
+		/* This was not very useful except for bypassing certain
+		 * restrictions. Note that we still allow sending to
+		 * remote servers this way, for messaging pseudoservers
+		 * securely whether they have a service{} block or not.
+		 * -- jilles
 		 */
-		target_p = find_userhost(nick, host, &count);
-
-		if(target_p != NULL)
-		{
-			if(server != NULL)
-				*server = '@';
-			if(host != NULL)
-				*--host = '%';
-
-			if(count == 1)
-				sendto_anywhere(target_p, source_p, command, ":%s", text);
-			else
-				sendto_one(source_p, form_str(ERR_TOOMANYTARGETS),
-					   get_id(&me, source_p), get_id(source_p, source_p), nick);
-		}
+		sendto_one_numeric(source_p, ERR_NOSUCHNICK,
+				   form_str(ERR_NOSUCHNICK), nick);
+		return;
 	}
 
 	/*
@@ -1013,39 +995,4 @@ handle_special(int p_or_n, const char *command, struct Client *client_p,
 				    "%s $%s :%s", command, nick, text);
 		return;
 	}
-}
-
-/*
- * find_userhost - find a user@host (server or user).
- * inputs       - user name to look for
- *              - host name to look for
- *		- pointer to count of number of matches found
- * outputs	- pointer to client if found
- *		- count is updated
- * side effects	- none
- *
- */
-static struct Client *
-find_userhost(const char *user, const char *host, int *count)
-{
-	struct Client *c2ptr;
-	struct Client *res = NULL;
-	char *u = LOCAL_COPY(user);
-	rb_dlink_node *ptr;
-	*count = 0;
-	if(collapse(u) != NULL)
-	{
-		RB_DLINK_FOREACH(ptr, global_client_list.head)
-		{
-			c2ptr = ptr->data;
-			if(!MyClient(c2ptr))	/* implies mine and an user */
-				continue;
-			if((!host || match(host, c2ptr->host)) && irccmp(u, c2ptr->username) == 0)
-			{
-				(*count)++;
-				res = c2ptr;
-			}
-		}
-	}
-	return (res);
 }
