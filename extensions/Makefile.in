@@ -30,6 +30,7 @@ SRCS =                          \
   chm_operonly.c		\
   chm_operonly_compat.c		\
   chm_quietunreg_compat.c	\
+  chm_sslonly.c			\
   chm_sslonly_compat.c		\
   createauthonly.c		\
   createoperonly.c		\
