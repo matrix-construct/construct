@@ -93,16 +93,6 @@ rb_dlink_list global_serv_list;    /* global servers on the network */
 rb_dlink_list local_oper_list;     /* our opers, duplicated in lclient_list */
 rb_dlink_list oper_list;           /* network opers */
 
-time_t startup_time;
-
-int default_server_capabs = CAP_MASK;
-
-int splitmode;
-int splitchecking;
-int split_users;
-int split_servers;
-int eob_count;
-
 const char *logFileName = LPATH;
 const char *pidFileName = PPATH;
 
@@ -117,15 +107,15 @@ int ssl_ok = 0;
 int zlib_ok = 1;
 
 int testing_conf = 0;
+time_t startup_time;
 
-/* patricia */
-rb_bh *prefix_heap;
-rb_bh *node_heap;
-rb_bh *patricia_heap;
+int default_server_capabs = CAP_MASK;
 
-rb_bh *linebuf_heap;
-
-rb_bh *dnode_heap;
+int splitmode;
+int splitchecking;
+int split_users;
+int split_servers;
+int eob_count;
 
 void
 ircd_shutdown(const char *reason)
