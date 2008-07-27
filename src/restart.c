@@ -45,9 +45,6 @@ restart(const char *mesg)
 		abort();
 	was_here = YES;
 
-#if 0
-	ilog(L_MAIN, "Restarting Server because: %s, memory data limit: %ld", mesg, get_maxrss());
-#endif
 	ilog(L_MAIN, "Restarting Server because: %s", mesg);
 
 	server_reboot();

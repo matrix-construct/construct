@@ -103,7 +103,6 @@ int split_users;
 int split_servers;
 int eob_count;
 
-unsigned long initialVMTop = 0;  /* top of virtual memory at init */
 const char *logFileName = LPATH;
 const char *pidFileName = PPATH;
 
