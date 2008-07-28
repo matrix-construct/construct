@@ -6,12 +6,6 @@
 #ifndef _NEWCONF_H_INCLUDED
 #define _NEWCONF_H_INCLUDED
 
-#include <sys/types.h>
-
-#include <stdio.h>
-
-#include "client.h"
-
 struct ConfEntry
 {
 	const char *cf_name;

@@ -541,6 +541,19 @@ main(int argc, char *argv[])
 		return -1;
 	}
 
+	init_sys();
+
+
+
+	myargv = argv;
+	parseargs(&argc, &argv, myopts);
+
+	if(chdir(ConfigFileEntry.dpath))
+	{
+		fprintf(stderr, "Unable to chdir to %s: %s\n", ConfigFileEntry.dpath, strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+
 	rb_set_time();
 
 	/*
@@ -577,10 +590,10 @@ main(int argc, char *argv[])
 	ConfigFileEntry.xlinefile = XPATH;
 	ConfigFileEntry.resvfile = RESVPATH;
 	ConfigFileEntry.connect_timeout = 30;	/* Default to 30 */
-	myargv = argv;
+	
 	umask(077);		/* better safe than sorry --SRB */
 
-	parseargs(&argc, &argv, myopts);
+
 
 	if(printVersion)
 	{
@@ -588,11 +601,7 @@ main(int argc, char *argv[])
 		exit(EXIT_SUCCESS);
 	}
 
-	if(chdir(ConfigFileEntry.dpath))
-	{
-		fprintf(stderr, "Unable to chdir to %s: %s\n", ConfigFileEntry.dpath, strerror(errno));
-		exit(EXIT_FAILURE);
-	}
+
 
 	setup_signals();
 
@@ -620,7 +629,6 @@ main(int argc, char *argv[])
 	}
 
 	/* Init the event subsystem */
-	init_sys();
 	rb_lib_init(ircd_log_cb, ircd_restart_cb, ircd_die_cb, !server_state_foreground, maxconnections, DNODE_HEAP_SIZE, FD_HEAP_SIZE);
 	rb_linebuf_init(LINEBUF_HEAP_SIZE);
 
