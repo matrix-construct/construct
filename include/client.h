@@ -277,9 +277,9 @@ struct LocalUser
 			      applicable to this client */
 
 	struct _ssl_ctl *ssl_ctl;		/* which ssl daemon we're associate with */
-	rb_uint32_t localflags;
+	uint32_t localflags;
 	struct ZipStats *zipstats;		/* zipstats */
-	rb_uint16_t cork_count;			/* used for corking/uncorking connections */
+	uint16_t cork_count;			/* used for corking/uncorking connections */
 	struct ev_entry *event;			/* used for associated events */
 };
 
