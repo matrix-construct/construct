@@ -28,7 +28,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: balloc.c 25375 2008-05-16 15:19:51Z androsyn $
+ *  $Id: balloc.c 25675 2008-07-06 04:13:05Z androsyn $
  */
 
 /* 
@@ -225,7 +225,7 @@ newblock(rb_bh * bh)
 {
 	rb_heap_block *b;
 	unsigned long i;
-	rb_uintptr_t offset;
+	uintptr_t offset;
 
 	/* Setup the initial data structure. */
 	b = rb_malloc(sizeof(rb_heap_block));
@@ -237,7 +237,7 @@ newblock(rb_bh * bh)
 	{
 		return (1);
 	}
-	offset = (rb_uintptr_t)b->elems;
+	offset = (uintptr_t)b->elems;
 	/* Setup our blocks now */
 	for (i = 0; i < bh->elemsPerBlock; i++, offset += (bh->elemSize + sizeof(rb_heap_block *)))
 	{

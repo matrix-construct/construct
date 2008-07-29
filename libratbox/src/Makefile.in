@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-# $Id: Makefile.am 25532 2008-06-11 14:40:44Z androsyn $
+# $Id: Makefile.am 25689 2008-07-10 17:13:27Z androsyn $
 
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
@@ -58,7 +58,7 @@ am_libratbox_la_OBJECTS = unix.lo win32.lo crypt.lo balloc.lo \
 	commio.lo openssl.lo gnutls.lo nossl.lo event.lo ratbox_lib.lo \
 	rb_memory.lo linebuf.lo snprintf.lo tools.lo helper.lo \
 	devpoll.lo epoll.lo poll.lo ports.lo sigio.lo select.lo \
-	kqueue.lo rawbuf.lo patricia.lo
+	kqueue.lo rawbuf.lo patricia.lo arc4random.lo
 libratbox_la_OBJECTS = $(am_libratbox_la_OBJECTS)
 libratbox_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -233,9 +233,10 @@ libratbox_la_SOURCES = \
 	select.c			\
 	kqueue.c			\
 	rawbuf.c			\
-	patricia.c
+	patricia.c			\
+	arc4random.c			
 
-libratbox_la_LDFLAGS = -version-info 3:0:0 -no-undefined -export-symbols export-syms.txt
+libratbox_la_LDFLAGS = -avoid-version -no-undefined -export-symbols export-syms.txt
 libratbox_la_LIBADD = @CRYPT_LIB@ @SSL_LIBS@ @GNUTLS_LIBS@
 lib_LTLIBRARIES = libratbox.la
 all: all-am
@@ -307,6 +308,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arc4random.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/balloc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/commio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crypt.Plo@am__quote@

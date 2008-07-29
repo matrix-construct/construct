@@ -21,7 +21,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: rb_commio.h 25327 2008-05-08 19:32:13Z androsyn $
+ *  $Id: rb_commio.h 25693 2008-07-10 18:27:23Z androsyn $
  */
  
 #ifndef RB_LIB_H
@@ -88,7 +88,7 @@ struct rb_iovec
 
 void rb_fdlist_init(int closeall, int maxfds, size_t heapsize);
 
-rb_fde_t * rb_open(int, rb_uint8_t, const char *);
+rb_fde_t * rb_open(int, uint8_t, const char *);
 void rb_close(rb_fde_t *);
 void rb_dump_fd(DUMPCB *, void *xdata);
 void rb_note(rb_fde_t *, const char *);
@@ -148,8 +148,8 @@ rb_fde_t *rb_get_fde(int fd);
 int rb_send_fd_buf(rb_fde_t *xF, rb_fde_t **F, int count, void *data, size_t datasize);
 int rb_recv_fd_buf(rb_fde_t *F, void *data, size_t datasize, rb_fde_t **xF, int count);
 
-void rb_set_type(rb_fde_t *F, rb_uint8_t type);
-rb_uint8_t rb_get_type(rb_fde_t *F);
+void rb_set_type(rb_fde_t *F, uint8_t type);
+uint8_t rb_get_type(rb_fde_t *F);
 
 const char *rb_get_iotype(void);
 
@@ -164,6 +164,7 @@ typedef enum {
 
 int rb_init_prng(const char *path, prng_seed_t seed_type);
 int rb_get_random(void *buf, size_t len);
+int rb_get_pseudo_random(void *buf, size_t len);
 void  rb_ssl_start_accepted(rb_fde_t *new_F, ACCB *cb, void *data, int timeout);
 void rb_ssl_start_connected(rb_fde_t *F, CNCB *callback, void *data, int timeout);
 int rb_supports_ssl(void);

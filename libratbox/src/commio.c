@@ -21,7 +21,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: commio.c 25375 2008-05-16 15:19:51Z androsyn $
+ *  $Id: commio.c 25795 2008-07-29 15:26:55Z androsyn $
  */
 #include <libratbox_config.h>
 #include <ratbox_lib.h>
@@ -80,7 +80,6 @@ static inline rb_fde_t *
 add_fd(int fd)
 {
 	rb_fde_t *F = rb_find_fd(fd);
-	rb_dlink_list *list;
 
 	/* look up to see if we have it already */
 	if(F != NULL)
@@ -88,21 +87,17 @@ add_fd(int fd)
 	
 	F = rb_bh_alloc(fd_heap);
 	F->fd = fd;
-	list = &rb_fd_table[rb_hash_fd(fd)];
-	rb_dlinkAdd(F, &F->node, list);
+	rb_dlinkAdd(F, &F->node, &rb_fd_table[rb_hash_fd(fd)]);
 	return(F);
 }
 
 static inline void
 remove_fd(rb_fde_t *F)
 {
-	rb_dlink_list *list;
-	
 	if(F == NULL || !IsFDOpen(F))
 		return;
 	
-	list = &rb_fd_table[rb_hash_fd(F->fd)];
-	rb_dlinkMoveNode(&F->node, list, &closed_list);
+	rb_dlinkMoveNode(&F->node, &rb_fd_table[rb_hash_fd(F->fd)], &closed_list);
 }
 
 static void 
@@ -368,6 +363,13 @@ rb_accept_tryaccept(rb_fde_t *F, void *data)
 
 		new_F = rb_open(new_fd, RB_FD_SOCKET, "Incoming Connection");
 
+		if(new_F == NULL)
+		{
+			rb_lib_log("rb_accept: new_F == NULL on incoming connection. Closing new_fd == %d\n", new_fd);
+			close(new_fd);
+			continue;
+		}
+
 		if(rb_unlikely(!rb_set_nb(new_F)))
 		{
 			rb_get_errno();
@@ -387,7 +389,7 @@ rb_accept_tryaccept(rb_fde_t *F, void *data)
 #ifdef HAVE_SSL
 		if(F->type & RB_FD_SSL)
 		{
-			rb_ssl_accept_setup(F, new_fd, (struct sockaddr *)&st, addrlen);		
+			rb_ssl_accept_setup(F, new_F, (struct sockaddr *)&st, addrlen);
 		} 
 		else
 #endif	/* HAVE_SSL */
@@ -715,8 +717,11 @@ rb_socket(int family, int sock_type, int proto, const char *note)
 
 	F = rb_open(fd, RB_FD_SOCKET, note);
 	if(F == NULL)
+	{
+		rb_lib_log("rb_socket: rb_open returns NULL on FD %d: %s, closing fd", fd, strerror(errno));
+		close(fd);
 		return NULL;
-
+	}
 	/* Set the socket non-blocking, and other wonderful bits */
 	if(rb_unlikely(!rb_set_nb(F)))
 	{
@@ -747,7 +752,7 @@ mangle_mapped_sockaddr(struct sockaddr *in)
 		memset(&in4, 0, sizeof(struct sockaddr_in));
 		in4.sin_family = AF_INET;
 		in4.sin_port = in6->sin6_port;
-		in4.sin_addr.s_addr = ((rb_uint32_t *) & in6->sin6_addr)[3];
+		in4.sin_addr.s_addr = ((uint32_t *) & in6->sin6_addr)[3];
 		memcpy(in, &in4, sizeof(struct sockaddr_in));
 	}
 	return;
@@ -796,16 +801,24 @@ rb_fdlist_init(int closeall, int maxfds, size_t heapsize)
 
 /* Called to open a given filedescriptor */
 rb_fde_t *
-rb_open(int fd, rb_uint8_t type, const char *desc)
+rb_open(int fd, uint8_t type, const char *desc)
 {
-	rb_fde_t *F = add_fd(fd);
+	rb_fde_t *F;
 	lrb_assert(fd >= 0);
 
+	F = add_fd(fd);
+
+	lrb_assert(!IsFDOpen(F));
 	if(rb_unlikely(IsFDOpen(F)))
 	{
+		const char *fdesc;
+		if(F != NULL && F->desc != NULL)
+			fdesc = F->desc;
+		else
+			fdesc = "NULL";
+		rb_lib_log("Trying to rb_open an already open FD: %d desc: %d", fd, fdesc);
 		return NULL;
 	}
-	lrb_assert(!IsFDOpen(F));
 	F->fd = fd;
 	F->type = type;
 	SetFDOpen(F);
@@ -913,14 +926,14 @@ rb_note(rb_fde_t *F, const char *string)
 }
 
 void
-rb_set_type(rb_fde_t *F, rb_uint8_t type)
+rb_set_type(rb_fde_t *F, uint8_t type)
 {
 	/* if the caller is calling this, lets assume they have a clue */
 	F->type = type;
 	return;
 }
 
-rb_uint8_t
+uint8_t
 rb_get_type(rb_fde_t *F)
 {
 	return F->type;
@@ -2002,7 +2015,7 @@ rb_recv_fd_buf(rb_fde_t *F, void *data, size_t datasize, rb_fde_t **xF, int nfds
 	struct cmsghdr *cmsg;
 	struct iovec iov[1];
 	struct stat st;
-	rb_uint8_t stype = RB_FD_UNKNOWN;
+	uint8_t stype = RB_FD_UNKNOWN;
 	const char *desc;
 	int fd, len, x, rfds;
 

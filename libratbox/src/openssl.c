@@ -204,13 +204,8 @@ rb_ssl_start_accepted(rb_fde_t * new_F, ACCB * cb, void *data, int timeout)
 
 
 void
-rb_ssl_accept_setup(rb_fde_t * F, int new_fd, struct sockaddr *st, int addrlen)
+rb_ssl_accept_setup(rb_fde_t * F, rb_fde_t *new_F, struct sockaddr *st, int addrlen)
 {
-	rb_fde_t *new_F;
-
-	new_F = rb_find_fd(new_fd);
-	if(new_F == NULL)
-		return;
 	new_F->type |= RB_FD_SSL;
 	new_F->ssl = SSL_new(ssl_server_ctx);
 	new_F->accept = rb_malloc(sizeof(struct acceptdata));
@@ -221,7 +216,7 @@ rb_ssl_accept_setup(rb_fde_t * F, int new_fd, struct sockaddr *st, int addrlen)
 	memcpy(&new_F->accept->S, st, addrlen);
 	new_F->accept->addrlen = addrlen;
 
-	SSL_set_fd((SSL *) new_F->ssl, new_fd);
+	SSL_set_fd((SSL *) new_F->ssl, rb_get_fd(new_F));
 	rb_setup_ssl_cb(new_F);
 	rb_ssl_accept_common(new_F);
 }
@@ -578,19 +573,25 @@ rb_init_prng(const char *path, prng_seed_t seed_type)
 int
 rb_get_random(void *buf, size_t length)
 {
-	if(RAND_status())
+	int ret;
+	
+	if((ret = RAND_bytes(buf, length)) == 0)
 	{
-		if(RAND_bytes(buf, length) > 0)
-			return 1;
+		/* remove the error from the queue */
+		ERR_get_error();			
 	}
-	else
-	{
-		if(RAND_pseudo_bytes(buf, length) >= 0)
-			return 1;
-	}
-	return 0;
+	return ret;
 }
 
+int
+rb_get_pseudo_random(void *buf, size_t length)
+{
+	int ret;
+	ret = RAND_pseudo_bytes(buf, length);
+	if(ret < 0)
+		return 0;
+	return 1;
+}
 
 const char *
 rb_get_ssl_strerror(rb_fde_t * F)

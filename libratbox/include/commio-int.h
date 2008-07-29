@@ -103,8 +103,8 @@ struct _fde
 	 */
 	rb_dlink_node node;
 	int fd;			/* So we can use the rb_fde_t as a callback ptr */
-	rb_uint8_t flags;
-	rb_uint8_t type;
+	uint8_t flags;
+	uint8_t type;
 	int pflags;
 	char *desc;
 	PF *read_handler;

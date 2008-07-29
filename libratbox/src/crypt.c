@@ -110,7 +110,7 @@ rb_crypt(const char *key, const char *salt)
  *
  * ARCHITECTURE ASSUMPTIONS:
  *	It is assumed that the 8-byte arrays passed by reference can be
- *	addressed as arrays of rb_uint32_t's (ie. the CPU is not picky about
+ *	addressed as arrays of uint32_t's (ie. the CPU is not picky about
  *	alignment).
  */
 
@@ -121,15 +121,15 @@ static u_char	inv_key_perm[64];
 static u_char	inv_comp_perm[56];
 static u_char	u_sbox[8][64];
 static u_char	un_pbox[32];
-static rb_uint32_t en_keysl[16], en_keysr[16];
-static rb_uint32_t de_keysl[16], de_keysr[16];
-static rb_uint32_t ip_maskl[8][256], ip_maskr[8][256];
-static rb_uint32_t fp_maskl[8][256], fp_maskr[8][256];
-static rb_uint32_t key_perm_maskl[8][128], key_perm_maskr[8][128];
-static rb_uint32_t comp_maskl[8][128], comp_maskr[8][128];
-static rb_uint32_t saltbits;
-static rb_uint32_t old_salt;
-static rb_uint32_t old_rawkey0, old_rawkey1;
+static uint32_t en_keysl[16], en_keysr[16];
+static uint32_t de_keysl[16], de_keysr[16];
+static uint32_t ip_maskl[8][256], ip_maskr[8][256];
+static uint32_t fp_maskl[8][256], fp_maskr[8][256];
+static uint32_t key_perm_maskl[8][128], key_perm_maskr[8][128];
+static uint32_t comp_maskl[8][128], comp_maskr[8][128];
+static uint32_t saltbits;
+static uint32_t old_salt;
+static uint32_t old_rawkey0, old_rawkey1;
 
 
 /* Static stuff that stays resident and doesn't change after 
@@ -137,7 +137,7 @@ static rb_uint32_t old_rawkey0, old_rawkey1;
  * reentrant. */
 static u_char	init_perm[64], final_perm[64];
 static u_char	m_sbox[4][4096];
-static rb_uint32_t psbox[4][256];
+static uint32_t psbox[4][256];
 
 
 
@@ -230,7 +230,7 @@ static const u_char	pbox[32] = {
 	 2,  8, 24, 14, 32, 27,  3,  9, 19, 13, 30,  6, 22, 11,  4, 25
 };
 
-static const rb_uint32_t bits32[32] =
+static const uint32_t bits32[32] =
 {
 	0x80000000, 0x40000000, 0x20000000, 0x10000000,
 	0x08000000, 0x04000000, 0x02000000, 0x01000000,
@@ -243,7 +243,7 @@ static const rb_uint32_t bits32[32] =
 };
 
 static const u_char	bits8[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
-static const rb_uint32_t *bits28, *bits24;
+static const uint32_t *bits28, *bits24;
 
 
 static int 
@@ -268,7 +268,7 @@ static void
 des_init(void)
 {
 	int	i, j, b, k, inbit, obit;
-	rb_uint32_t	*p, *il, *ir, *fl, *fr;
+	uint32_t	*p, *il, *ir, *fl, *fr;
 	static int des_initialised = 0;
 
 	if (des_initialised==1)
@@ -401,7 +401,7 @@ des_init(void)
 static void
 setup_salt(long salt)
 {
-	rb_uint32_t	obit, saltbit;
+	uint32_t	obit, saltbit;
 	int	i;
 
 	if (salt == (long)old_salt)
@@ -423,13 +423,13 @@ setup_salt(long salt)
 static int
 des_setkey(const char *key)
 {
-	rb_uint32_t	k0, k1, rawkey0, rawkey1;
+	uint32_t	k0, k1, rawkey0, rawkey1;
 	int		shifts, round;
 
 	des_init();
 
-	rawkey0 = ntohl(*(const rb_uint32_t *) key);
-	rawkey1 = ntohl(*(const rb_uint32_t *) (key + 4));
+	rawkey0 = ntohl(*(const uint32_t *) key);
+	rawkey1 = ntohl(*(const uint32_t *) (key + 4));
 
 	if ((rawkey0 | rawkey1)
 	    && rawkey0 == old_rawkey0
@@ -469,7 +469,7 @@ des_setkey(const char *key)
 	 */
 	shifts = 0;
 	for (round = 0; round < 16; round++) {
-		rb_uint32_t	t0, t1;
+		uint32_t	t0, t1;
 
 		shifts += key_shifts[round];
 
@@ -501,13 +501,13 @@ des_setkey(const char *key)
 
 
 static int
-do_des(	rb_uint32_t l_in, rb_uint32_t r_in, rb_uint32_t *l_out, rb_uint32_t *r_out, int count)
+do_des(	uint32_t l_in, uint32_t r_in, uint32_t *l_out, uint32_t *r_out, int count)
 {
 	/*
 	 *	l_in, r_in, l_out, and r_out are in pseudo-"big-endian" format.
 	 */
-	rb_uint32_t	l, r, *kl, *kr, *kl1, *kr1;
-	rb_uint32_t	f, r48l, r48r;
+	uint32_t	l, r, *kl, *kr, *kl1, *kr1;
+	uint32_t	f, r48l, r48r;
 	int		round;
 
 	if (count == 0) {
@@ -619,12 +619,12 @@ do_des(	rb_uint32_t l_in, rb_uint32_t r_in, rb_uint32_t *l_out, rb_uint32_t *r_o
 
 #if 0
 static int
-des_cipher(const char *in, char *out, rb_uint32_t salt, int count)
+des_cipher(const char *in, char *out, uint32_t salt, int count)
 {
-	rb_uint32_t	l_out, r_out, rawl, rawr;
+	uint32_t	l_out, r_out, rawl, rawr;
 	int		retval;
 	union {
-		rb_uint32_t	*ui32;
+		uint32_t	*ui32;
 		const char	*c;
 	} trans;
 
@@ -650,7 +650,7 @@ void
 setkey(const char *key)
 {
 	int	i, j;
-	rb_uint32_t	packed_keys[2];
+	uint32_t	packed_keys[2];
 	u_char	*p;
 
 	p = (u_char *) packed_keys;
@@ -668,7 +668,7 @@ setkey(const char *key)
 void
 encrypt(char *block, int flag)
 {
-	rb_uint32_t	io[2];
+	uint32_t	io[2];
 	u_char	*p;
 	int	i, j;
 
@@ -692,7 +692,7 @@ encrypt(char *block, int flag)
 static char *
 __des_crypt(const char *key, const char *setting)
 {
-	rb_uint32_t	count, salt, l, r0, r1, keybuf[2];
+	uint32_t	count, salt, l, r0, r1, keybuf[2];
 	u_char		*p, *q;
 	static char	output[21];
 
@@ -885,8 +885,8 @@ __des_crypt(const char *key, const char *setting)
 
 /* MD5 context. */
 struct MD5Context {
-  rb_uint32_t state[4];	/* state (ABCD) */
-  rb_uint32_t count[2];	/* number of bits, modulo 2^64 (lsb first) */
+  uint32_t state[4];	/* state (ABCD) */
+  uint32_t count[2];	/* number of bits, modulo 2^64 (lsb first) */
   unsigned char buffer[64];	/* input buffer */
 };
 
@@ -894,7 +894,7 @@ static void   __md5_Init (struct MD5Context *);
 static void   __md5_Update (struct MD5Context *, const char *, unsigned int);
 static void   __md5_Pad (struct MD5Context *);
 static void   __md5_Final (char [16], struct MD5Context *);
-static void __md5_Transform (rb_uint32_t [4], const unsigned char [64]);
+static void __md5_Transform (uint32_t [4], const unsigned char [64]);
 
 
 static const char __md5__magic[] = "$1$";	/* This string is magic for this algorithm.  Having 
@@ -910,12 +910,12 @@ static const unsigned char __md5_itoa64[] =		/* 0 ... 63 => ascii - 64 */
 #else /* i386 */
 
 /*
- * __md5_Encodes input (rb_uint32_t) into output (unsigned char). Assumes len is
+ * __md5_Encodes input (uint32_t) into output (unsigned char). Assumes len is
  * a multiple of 4.
  */
 
 static void
-__md5_Encode (unsigned char *output, rb_uint32_t *input, unsigned int len)
+__md5_Encode (unsigned char *output, uint32_t *input, unsigned int len)
 {
 	unsigned int i, j;
 
@@ -928,18 +928,18 @@ __md5_Encode (unsigned char *output, rb_uint32_t *input, unsigned int len)
 }
 
 /*
- * __md5_Decodes input (unsigned char) into output (rb_uint32_t). Assumes len is
+ * __md5_Decodes input (unsigned char) into output (uint32_t). Assumes len is
  * a multiple of 4.
  */
 
 static void
-__md5_Decode (rb_uint32_t *output, const unsigned char *input, unsigned int len)
+__md5_Decode (uint32_t *output, const unsigned char *input, unsigned int len)
 {
 	unsigned int i, j;
 
 	for (i = 0, j = 0; j < len; i++, j += 4)
-		output[i] = ((rb_uint32_t)input[j]) | (((rb_uint32_t)input[j+1]) << 8) |
-		    (((rb_uint32_t)input[j+2]) << 16) | (((rb_uint32_t)input[j+3]) << 24);
+		output[i] = ((uint32_t)input[j]) | (((uint32_t)input[j+1]) << 8) |
+		    (((uint32_t)input[j+2]) << 16) | (((uint32_t)input[j+3]) << 24);
 }
 #endif /* i386 */
 
@@ -957,22 +957,22 @@ __md5_Decode (rb_uint32_t *output, const unsigned char *input, unsigned int len)
  * Rotation is separate from addition to prevent recomputation.
  */
 #define FF(a, b, c, d, x, s, ac) { \
-	(a) += F ((b), (c), (d)) + (x) + (rb_uint32_t)(ac); \
+	(a) += F ((b), (c), (d)) + (x) + (uint32_t)(ac); \
 	(a) = ROTATE_LEFT ((a), (s)); \
 	(a) += (b); \
 	}
 #define GG(a, b, c, d, x, s, ac) { \
-	(a) += G ((b), (c), (d)) + (x) + (rb_uint32_t)(ac); \
+	(a) += G ((b), (c), (d)) + (x) + (uint32_t)(ac); \
 	(a) = ROTATE_LEFT ((a), (s)); \
 	(a) += (b); \
 	}
 #define HH(a, b, c, d, x, s, ac) { \
-	(a) += H ((b), (c), (d)) + (x) + (rb_uint32_t)(ac); \
+	(a) += H ((b), (c), (d)) + (x) + (uint32_t)(ac); \
 	(a) = ROTATE_LEFT ((a), (s)); \
 	(a) += (b); \
 	}
 #define II(a, b, c, d, x, s, ac) { \
-	(a) += I ((b), (c), (d)) + (x) + (rb_uint32_t)(ac); \
+	(a) += I ((b), (c), (d)) + (x) + (uint32_t)(ac); \
 	(a) = ROTATE_LEFT ((a), (s)); \
 	(a) += (b); \
 	}
@@ -1004,10 +1004,10 @@ static void __md5_Update ( struct MD5Context *context, const char *xinput, unsig
 	lindex = (unsigned int)((context->count[0] >> 3) & 0x3F);
 
 	/* Update number of bits */
-	if ((context->count[0] += ((rb_uint32_t)inputLen << 3))
-	    < ((rb_uint32_t)inputLen << 3))
+	if ((context->count[0] += ((uint32_t)inputLen << 3))
+	    < ((uint32_t)inputLen << 3))
 		context->count[1]++;
-	context->count[1] += ((rb_uint32_t)inputLen >> 29);
+	context->count[1] += ((uint32_t)inputLen >> 29);
 
 	partLen = 64 - lindex;
 
@@ -1077,13 +1077,13 @@ static void __md5_Final ( char xdigest[16], struct MD5Context *context)
 
 static void
 __md5_Transform (state, block)
-	rb_uint32_t state[4];
+	uint32_t state[4];
 	const unsigned char block[64];
 {
-	rb_uint32_t a, b, c, d, x[16];
+	uint32_t a, b, c, d, x[16];
 
 #if MD5_SIZE_OVER_SPEED > 1
-	rb_uint32_t temp;
+	uint32_t temp;
 	const char *ps;
 
 	static const char S[] = {
@@ -1095,11 +1095,11 @@ __md5_Transform (state, block)
 #endif /* MD5_SIZE_OVER_SPEED > 1 */
 
 #if MD5_SIZE_OVER_SPEED > 0
-	const rb_uint32_t *pc;
+	const uint32_t *pc;
 	const char *pp;
 	int i;
 
-	static const rb_uint32_t C[] = {
+	static const uint32_t C[] = {
 								/* round 1 */
 		0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
 		0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,

@@ -30,9 +30,9 @@
 struct _rawbuf
 {
 	rb_dlink_node node;
-	rb_uint8_t data[RAWBUF_SIZE];
+	uint8_t data[RAWBUF_SIZE];
 	int len;
-	rb_uint8_t flushing;
+	uint8_t flushing;
 };
 
 struct _rawbuf_head

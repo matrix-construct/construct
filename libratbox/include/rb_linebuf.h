@@ -21,7 +21,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: rb_linebuf.h 25227 2008-04-12 22:20:43Z jilles $
+ *  $Id: rb_linebuf.h 25675 2008-07-06 04:13:05Z androsyn $
  */
 
 #ifndef RB_LIB_H
@@ -45,8 +45,8 @@ struct _buf_head;
 typedef struct _buf_line
 {
 	char buf[BUF_DATA_SIZE + 2];
-	rb_uint8_t terminated;	/* Whether we've terminated the buffer */
-	rb_uint8_t raw;	/* Whether this linebuf may hold 8-bit data */
+	uint8_t terminated;	/* Whether we've terminated the buffer */
+	uint8_t raw;	/* Whether this linebuf may hold 8-bit data */
 	int len;		/* How much data we've got */
 	int refcount;		/* how many linked lists are we in? */
 } buf_line_t;

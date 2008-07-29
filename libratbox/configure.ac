@@ -1,4 +1,4 @@
-dnl $Id: configure.ac 25574 2008-06-20 21:49:06Z androsyn $
+dnl $Id: configure.ac 25689 2008-07-10 17:13:27Z androsyn $
 dnl Process this file with autoconf to produce a configure script.
 
 dnl TODO: clean up all the OpenSSL and shared module checking stuff;
@@ -8,7 +8,7 @@ dnl said functions need to be just about as complex as they already are.
 AC_PREREQ(2.60)
 AUTOMAKE_OPTIONS = 1.10
 dnl Sneaky way to get an Id tag into the configure script
-AC_COPYRIGHT([$Id: configure.ac 25574 2008-06-20 21:49:06Z androsyn $])
+AC_COPYRIGHT([$Id: configure.ac 25689 2008-07-10 17:13:27Z androsyn $])
 AC_INIT([libratbox],[devel])
 AM_INIT_AUTOMAKE(AC_PACKAGE_TARNAME, AC_PACKAGE_VERSION, -)
 
@@ -99,20 +99,6 @@ if test "$libexecdir" = '${exec_prefix}/libexec' &&
 	localstatedir='${prefix}'
 fi
 
-AC_TYPE_INT8_T
-AC_TYPE_INT16_T
-AC_TYPE_INT32_T
-AC_TYPE_INT64_T
-AC_TYPE_UINT8_T
-AC_TYPE_UINT16_T
-AC_TYPE_UINT32_T
-AC_TYPE_UINT64_T
-
-RB_TYPE_INTPTR_T
-RB_TYPE_INTMAX_T
-RB_TYPE_UINTMAX_T
-RB_TYPE_UINTPTR_T
-
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 AC_TYPE_SSIZE_T
@@ -144,21 +130,41 @@ member.])],,[[
 #endif
 ]])
 
-AC_CHECK_TYPE(socklen_t, ,
-[AC_DEFINE([socklen_t], [unsigned int],
-[If we don't have a real socklen_t, unsigned int is good enough.])],
-[
-#ifdef HAVE_SYS_TYPES_H
+AC_CHECK_TYPE([socklen_t], rb_socklen_t=socklen_t,[
+	AC_MSG_CHECKING([for socklen_t equivalent])
+	AC_CACHE_VAL([rb_socklen_t],
+	[
+	# Systems have either "struct sockaddr *" or
+	# "void *" as the second argument to getpeername
+	rb_socklen_t=
+	for arg2 in "struct sockaddr" void; do
+		for t in int size_t unsigned long "unsigned long"; do
+			AC_TRY_COMPILE([
 #include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
-#endif
-#ifdef HAVE_WINSOCK2_H
-#include <winsock2.h>
-#endif
 
+int getpeername (int, $arg2 *, $t *);
+],[
+$t len;
+getpeername(0,0,&len);
+],[
+	rb_socklen_t="$t"
+	break
 ])
+		done
+	done
+
+	if test "x$rb_socklen_t" = x; then
+		AC_MSG_ERROR([Cannot find a type to use in place of socklen_t])
+	fi
+	])
+	AC_MSG_RESULT($rb_socklen_t)],
+	[#include <sys/types.h>
+#include <sys/socket.h>])
+
+
+
+
 
 AC_ARG_ENABLE(ipv6,AC_HELP_STRING([--disable-ipv6],[Disable IPv6 support]),[ipv6=$enableval],[ipv6=yes])
 
@@ -218,7 +224,7 @@ AC_CHECK_TYPE([sa_family_t], [],
 
 
 dnl check for various functions...
-AC_CHECK_FUNCS([socketpair gettimeofday writev sendmsg gmtime_r strtok_r usleep posix_spawn strlcpy strlcat strnlen fstat signalfd select poll kevent port_create epoll_ctl])	
+AC_CHECK_FUNCS([socketpair gettimeofday writev sendmsg gmtime_r strtok_r usleep posix_spawn strlcpy strlcat strnlen fstat signalfd select poll kevent port_create epoll_ctl arc4random getrusage])	
 
 AC_SEARCH_LIBS(nanosleep, rt posix4, AC_DEFINE(HAVE_NANOSLEEP, 1, [Define if you have nanosleep]))
 AC_SEARCH_LIBS(timer_create, rt, AC_DEFINE(HAVE_TIMER_CREATE, 1, [Define if you have timer_create]))
@@ -457,17 +463,6 @@ fi
 
 AC_SUBST(RB_PREFIX)
 
-for dtype in uint64_t uint32_t uint16_t uint8_t int64_t int32_t int16_t int8_t intmax_t intptr_t uintmax_t uintptr_t
-do
-	var="\$ac_cv_c_${dtype}"
-	t_type=$(eval echo $var);
-	if test "x$t_type" = "xyes"; then
-		eval rb_$dtype="\"$dtype\""
-	else
-		eval rb_$dtype="\"$t_type\""
-	fi
-done
-
 AC_CONFIG_COMMANDS([include/librb-config.h],
 [
 	outfile=include/librb-config.h.tmp
@@ -552,28 +547,17 @@ if test "x$rb_errno_h" = "xyes"; then
 	echo '#include <errno.h>' >> $outfile
 fi
 
+echo "typedef $rb_socklen_t rb_socklen_t;" >> $outfile
+
+
 if test "x$rb_sockaddr_sa_len" = "xyes"; then
 	echo '#define RB_SOCKADDR_HAS_SA_LEN 1' >> $outfile
 fi
 
-echo "typedef $rb_uint64_t rb_uint64_t;"  >> $outfile
-echo "typedef $rb_uint32_t rb_uint32_t;"  >> $outfile
-echo "typedef $rb_uint16_t rb_uint16_t;"  >> $outfile
-echo "typedef $rb_uint8_t rb_uint8_t;"  >> $outfile
-echo "typedef $rb_int64_t rb_int64_t;"  >> $outfile
-echo "typedef $rb_int32_t rb_int32_t;"  >> $outfile
-echo "typedef $rb_int16_t rb_int16_t;"  >> $outfile
-echo "typedef $rb_int8_t rb_int8_t;"  >> $outfile
-echo "typedef $rb_intmax_t rb_intmax_t;"  >> $outfile
-echo "typedef $rb_intptr_t rb_intptr_t;"  >> $outfile
-echo "typedef $rb_uintmax_t rb_uintmax_t;"  >> $outfile
-echo "typedef $rb_uintptr_t rb_uintptr_t;"  >> $outfile
-echo "typedef $rb_socklen_t rb_socklen_t;" >> $outfile
-
 if test "x$rb_sockaddr_storage" = "xyes"; then
 	echo '#define rb_sockaddr_storage sockaddr_storage' >> $outfile
 else
-	echo 'struct rb_sockaddr_storage { rb_uint8_t _padding[128]; };' >> $outfile
+	echo 'struct rb_sockaddr_storage { uint8_t _padding[128]; };' >> $outfile
 fi
 
 cat >> $outfile <<\_______EOF
@@ -588,18 +572,6 @@ else
 fi
 
 ],[
-	rb_uint64_t="$rb_uint64_t"
-	rb_uint32_t="$rb_uint32_t"
-	rb_uint16_t="$rb_uint16_t"
-	rb_uint8_t="$rb_uint8_t"
-	rb_int64_t="$rb_int64_t"
-	rb_int32_t="$rb_int32_t"
-	rb_int16_t="$rb_int16_t"
-	rb_int8_t="$rb_int8_t"
-	rb_intmax_t="$rb_intmax_t"
-	rb_intptr_t="$rb_intptr_t"
-	rb_uintmax_t="$rb_uintmax_t"
-	rb_uintptr_t="$rb_uintptr_t"
 	if test x$ac_cv_header_stdc = xyes; then
 		rb_header_stdc=yes
 	fi
@@ -661,11 +633,9 @@ fi
 	if test x$ac_cv_header_winsock2_h = xyes; then
 		rb_winsock2_h=yes
 	fi
-	if test x$ac_cv_type_socklen_t = xyes; then
-		rb_socklen_t="socklen_t"
-	else
-		rb_socklen_t="unsigned int"
-	fi
+
+	rb_socklen_t=$rb_socklen_t
+
 	if test "x$rb_have_sockaddr_storage" = "xyes"; then
 		rb_sockaddr_storage="yes" 
 	else

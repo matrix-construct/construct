@@ -1,4 +1,4 @@
-# $Id: Makefile.am 25532 2008-06-11 14:40:44Z androsyn $
+# $Id: Makefile.am 25689 2008-07-10 17:13:27Z androsyn $
 
 AUTOMAKE_OPTIONS = foreign
 
@@ -28,10 +28,11 @@ libratbox_la_SOURCES =			\
 	select.c			\
 	kqueue.c			\
 	rawbuf.c			\
-	patricia.c
+	patricia.c			\
+	arc4random.c			
 	
 
-libratbox_la_LDFLAGS = -version-info 3:0:0 -no-undefined -export-symbols export-syms.txt
+libratbox_la_LDFLAGS = -avoid-version -no-undefined -export-symbols export-syms.txt
 libratbox_la_LIBADD = @CRYPT_LIB@ @SSL_LIBS@ @GNUTLS_LIBS@
 lib_LTLIBRARIES = libratbox.la
 

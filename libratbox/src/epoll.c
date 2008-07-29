@@ -23,7 +23,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: epoll.c 25038 2008-01-23 16:03:08Z androsyn $
+ *  $Id: epoll.c 25675 2008-07-06 04:13:05Z androsyn $
  */
 #define _GNU_SOURCE 1
 
@@ -282,23 +282,23 @@ rb_epoll_supports_event(void)
 
 /* bleh..work around a glibc header bug on 32bit systems */
 struct our_signalfd_siginfo {
-        rb_uint32_t signo;
-        rb_int32_t err;
-        rb_int32_t code;
-        rb_uint32_t pid;
-        rb_uint32_t uid;
-        rb_int32_t fd;
-        rb_uint32_t tid;
-        rb_uint32_t band;
-        rb_uint32_t overrun;
-        rb_uint32_t trapno;
-        rb_int32_t status;
-        rb_int32_t svint;
-        rb_uint64_t svptr;
-        rb_uint64_t utime;
-        rb_uint64_t stime;
-        rb_uint64_t addr;
-        rb_uint8_t pad[48];
+        uint32_t signo;
+        int32_t err;
+        int32_t code;
+        uint32_t pid;
+        uint32_t uid;
+        int32_t fd;
+        uint32_t tid;
+        uint32_t band;
+        uint32_t overrun;
+        uint32_t trapno;
+        int32_t status;
+        int32_t svint;
+        uint64_t svptr;
+        uint64_t utime;
+        uint64_t stime;
+        uint64_t addr;
+        uint8_t pad[48];
 };
 
 

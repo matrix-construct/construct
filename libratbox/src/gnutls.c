@@ -20,7 +20,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: gnutls.c 25568 2008-06-20 18:46:08Z androsyn $
+ *  $Id: gnutls.c 25793 2008-07-29 14:47:48Z androsyn $
  */
 
 #include <libratbox_config.h>
@@ -164,11 +164,8 @@ rb_ssl_start_accepted(rb_fde_t * new_F, ACCB * cb, void *data, int timeout)
 
 
 void
-rb_ssl_accept_setup(rb_fde_t * F, int new_fd, struct sockaddr *st, int addrlen)
+rb_ssl_accept_setup(rb_fde_t * F, rb_fde_t *new_F, struct sockaddr *st, int addrlen)
 {
-	rb_fde_t *new_F;
-
-	new_F = rb_find_fd(new_fd);
 	new_F->type |= RB_FD_SSL;
 	new_F->ssl = rb_malloc(sizeof(gnutls_session_t));
 	new_F->accept = rb_malloc(sizeof(struct acceptdata));
@@ -183,7 +180,7 @@ rb_ssl_accept_setup(rb_fde_t * F, int new_fd, struct sockaddr *st, int addrlen)
 	gnutls_set_default_priority(SSL_P(new_F));
 	gnutls_credentials_set(SSL_P(new_F), GNUTLS_CRD_CERTIFICATE, x509);
 	gnutls_dh_set_prime_bits(SSL_P(new_F), 1024);
-	gnutls_transport_set_ptr(SSL_P(new_F), (gnutls_transport_ptr_t) (long int)new_fd);
+	gnutls_transport_set_ptr(SSL_P(new_F), (gnutls_transport_ptr_t) (long int)rb_get_fd(new_F));
 	if(do_ssl_handshake(F, rb_ssl_tryaccept))
 	{
 		struct acceptdata *ad = F->accept;
@@ -485,6 +482,12 @@ rb_get_random(void *buf, size_t length)
 	return 1;
 }
 
+int
+rb_get_pseudo_random(void *buf, size_t length)
+{
+	gcry_randomize(buf, length, GCRY_WEAK_RANDOM);
+	return 1;
+}
 
 const char *
 rb_get_ssl_strerror(rb_fde_t * F)

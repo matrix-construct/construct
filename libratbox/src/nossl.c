@@ -26,8 +26,9 @@
 
 #include <libratbox_config.h>
 #include <ratbox_lib.h>
-
 #if !defined(HAVE_OPENSSL) && !defined(HAVE_GNUTLS)
+
+#include "arc4random.h"
 
 #include <commio-int.h>
 #include <commio-ssl.h>
@@ -54,16 +55,42 @@ rb_ssl_listen(rb_fde_t *F, int backlog)
 	return -1;
 }
 
+static void
+rb_stir_arc4random(void *unused)
+{
+	arc4random_stir();
+}
+        
+
 int rb_init_prng(const char *path, prng_seed_t seed_type)
 {
-	return -1;
+	/* xxx this ignores the parameters above */
+	arc4random_stir();
+	rb_event_addish("rb_stir_arc4random", rb_stir_arc4random, NULL, 300);
+	return 1;
 }
 
 int
 rb_get_random(void *buf, size_t length)
 {
-	return -1;
+	uint32_t rnd = 0, i;
+	uint8_t *xbuf = buf;	
+	for (i = 0; i < sizeof(length); i++) 
+	{
+		if(i % 4 == 0)
+			rnd = arc4random();
+		xbuf[i] = rnd;
+		rnd >>= 8;
+	}
+	return 1;
 }
+
+int
+rb_get_pseudo_random(void *buf, size_t length)
+{
+	return rb_get_random(buf, length);  
+}
+
 
 const char *
 rb_get_ssl_strerror(rb_fde_t *F)
@@ -104,7 +131,7 @@ rb_ssl_shutdown(rb_fde_t * F)
 }        
 
 void
-rb_ssl_accept_setup(rb_fde_t * F, int new_fd, struct sockaddr *st, int addrlen)
+rb_ssl_accept_setup(rb_fde_t * F, rb_fde_t *new_F, struct sockaddr *st, int addrlen)
 {
 	return;
 }

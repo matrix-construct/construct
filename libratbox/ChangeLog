@@ -1,3 +1,157 @@
+androsyn    2008/07/29 15:26:55 UTC	(25795)
+  Log:
+  some sanity checks in the rb_open path
+
+  Modified:
+	libratbox/trunk/src/commio.c (File Modified) 
+
+
+androsyn    2008/07/29 14:47:48 UTC	(25793)
+  Log:
+  pass new_F along to rb_ssl_accept_setup instead of the fd itself
+
+  Modified:
+	libratbox/trunk/include/commio-ssl.h (File Modified) 
+	libratbox/trunk/src/commio.c (File Modified) 
+	libratbox/trunk/src/gnutls.c (File Modified) 
+	libratbox/trunk/src/nossl.c (File Modified) 
+	libratbox/trunk/src/openssl.c (File Modified) 
+
+
+androsyn    2008/07/28 23:14:29 UTC	(25791)
+  Log:
+  log if rb_open returns NULL on accept and close the fd..this shouldn't happen and the real cause needs to be found
+
+  Modified:
+	libratbox/trunk/src/commio.c (File Modified) 
+
+
+androsyn    2008/07/11 18:21:57 UTC	(25705)
+  Log:
+  add a newline at the end of arc4random.c
+
+  Modified:
+	libratbox/trunk/src/arc4random.c (File Modified) 
+
+
+androsyn    2008/07/10 18:34:03 UTC	(25699)
+  Log:
+  i'm doing good today..move the ifdefs down
+
+  Modified:
+	libratbox/trunk/src/arc4random.c (File Modified) 
+
+
+androsyn    2008/07/10 18:32:34 UTC	(25697)
+  Log:
+  remove some debugging code
+
+  Modified:
+	libratbox/trunk/src/arc4random.c (File Modified) 
+	libratbox/trunk/src/nossl.c (File Modified) 
+
+
+androsyn    2008/07/10 18:30:19 UTC	(25695)
+  Log:
+  add a missing ; and add arc4random.h too
+
+  Modified:
+	libratbox/trunk/include/arc4random.h (File Added) 
+	libratbox/trunk/src/openssl.c (File Modified) 
+
+
+androsyn    2008/07/10 18:27:23 UTC	(25693)
+  Log:
+  forgot a prototype for rb_get_pseudo_random
+
+  Modified:
+	libratbox/trunk/include/rb_commio.h (File Modified) 
+
+
+androsyn    2008/07/10 18:05:43 UTC	(25691)
+  Log:
+  fix a typo
+
+  Modified:
+	libratbox/trunk/src/nossl.c (File Modified) 
+
+
+androsyn    2008/07/10 17:13:27 UTC	(25689)
+  Log:
+  - Add arc4random as a source for random bytes in the nossl.c case.
+  - Add in a pseudo random source function as well. This is really only different on OpenSSL.
+  
+  
+
+  Modified:
+	libratbox/trunk/configure (File Modified) 
+	libratbox/trunk/configure.ac (File Modified) 
+	libratbox/trunk/include/libratbox_config.h.in (File Modified) 
+	libratbox/trunk/src/Makefile.am (File Modified) 
+	libratbox/trunk/src/Makefile.in (File Modified) 
+	libratbox/trunk/src/arc4random.c (File Added) 
+	libratbox/trunk/src/export-syms.txt (File Modified) 
+	libratbox/trunk/src/gnutls.c (File Modified) 
+	libratbox/trunk/src/nossl.c (File Modified) 
+	libratbox/trunk/src/openssl.c (File Modified) 
+
+
+androsyn    2008/07/06 18:57:15 UTC	(25683)
+  Log:
+  change a rb_uint8_t to uint8_t
+
+  Modified:
+	libratbox/trunk/configure (File Modified) 
+	libratbox/trunk/configure.ac (File Modified) 
+
+
+androsyn    2008/07/06 05:15:22 UTC	(25681)
+  Log:
+  fix the socklen_t stuff
+
+  Modified:
+	libratbox/trunk/configure (File Modified) 
+	libratbox/trunk/configure.ac (File Modified) 
+	libratbox/trunk/include/libratbox_config.h.in (File Modified) 
+
+
+androsyn    2008/07/06 04:33:03 UTC	(25679)
+  Log:
+  get rid of some testing code that snuck into the last commit
+
+  Modified:
+	libratbox/trunk/configure (File Modified) 
+	libratbox/trunk/configure.ac (File Modified) 
+
+
+androsyn    2008/07/06 04:13:05 UTC	(25675)
+  Log:
+  remove the rb_uint/rb_int stuff as we require a C99 compiler and this is standard now.  Also add a better check for socklen_t
+
+  Modified:
+	libratbox/trunk/acinclude.m4 (File Modified) 
+	libratbox/trunk/configure (File Modified) 
+	libratbox/trunk/configure.ac (File Modified) 
+	libratbox/trunk/include/commio-int.h (File Modified) 
+	libratbox/trunk/include/libratbox_config.h.in (File Modified) 
+	libratbox/trunk/include/rb_commio.h (File Modified) 
+	libratbox/trunk/include/rb_linebuf.h (File Modified) 
+	libratbox/trunk/src/Makefile.in (File Modified) 
+	libratbox/trunk/src/balloc.c (File Modified) 
+	libratbox/trunk/src/commio.c (File Modified) 
+	libratbox/trunk/src/crypt.c (File Modified) 
+	libratbox/trunk/src/epoll.c (File Modified) 
+	libratbox/trunk/src/rawbuf.c (File Modified) 
+
+
+androsyn    2008/07/06 03:10:23 UTC	(25673)
+  Log:
+  a few minor cleanups
+
+  Modified:
+	libratbox/trunk/src/commio.c (File Modified) 
+
+
 androsyn    2008/06/24 14:04:50 UTC	(25588)
   Log:
   move some of the common accept code into a function
