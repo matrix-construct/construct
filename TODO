@@ -31,7 +31,11 @@
 [x] drop non-TS6 (legacy protocol) support
 [F] Doxygen code documentation
 [/] module engine rework
-  [x] more beautiful way of adding new channel modes by module
+  [/] more beautiful way of adding new channel modes by module
+   [x] basic functionality
+   [x] some example modules
+   [ ] think on how could we append privilege checking for simple chmode - like chm_staff, but additionaly limited (e. g. IsOperResv etc);
+       possibly move the same code for all functions into separated one and make it extern?
   [ ] make nick/user/host validation functions/match tables able to work in separated modules,
       this will help us making support for native characters sets/slashes in host etc
   [ ] auth checker module
