@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: ssld.c 25594 2008-06-25 14:58:47Z androsyn $
+ *  $Id: ssld.c 25677 2008-07-06 04:21:42Z androsyn $
  */
 
 
@@ -35,27 +35,27 @@
 
 static void setup_signals(void);
 
-static inline rb_int32_t buf_to_int32(char *buf)
+static inline int32_t buf_to_int32(char *buf)
 {
-	rb_int32_t x;
+	int32_t x;
 	memcpy(&x, buf, sizeof(x));
 	return x;
 }
 
-static inline void int32_to_buf(char *buf, rb_int32_t x)
+static inline void int32_to_buf(char *buf, int32_t x)
 {
 	memcpy(buf, &x, sizeof(x));
 	return;
 }
 
-static inline rb_uint16_t buf_to_uint16(char *buf)
+static inline uint16_t buf_to_uint16(char *buf)
 {
-	rb_uint16_t x;
+	uint16_t x;
 	memcpy(&x, buf, sizeof(x));
 	return x;
 }
 
-static inline void uint16_to_buf(char *buf, rb_uint16_t x)
+static inline void uint16_to_buf(char *buf, uint16_t x)
 {
 	memcpy(buf, &x, sizeof(x));
 	return;
@@ -104,7 +104,7 @@ typedef struct _conn
 	rawbuf_head_t *modbuf_out;
 	rawbuf_head_t *plainbuf_out;
 
-	rb_int32_t id;
+	int32_t id;
 
 	rb_fde_t *mod_fd;
 	rb_fde_t *plain_fd;
@@ -112,7 +112,7 @@ typedef struct _conn
 	unsigned long long mod_in;
 	unsigned long long plain_in;
 	unsigned long long plain_out;
-	rb_uint8_t flags;
+	uint8_t flags;
 	void *stream;
 } conn_t;
 
@@ -187,7 +187,7 @@ ssld_free(void *unused, void *ptr)
 #endif
 
 static conn_t *
-conn_find_by_id(rb_int32_t id)
+conn_find_by_id(int32_t id)
 {
 	rb_dlink_node *ptr;
 	conn_t *conn;
@@ -202,7 +202,7 @@ conn_find_by_id(rb_int32_t id)
 }
 
 static void
-conn_add_id_hash(conn_t * conn, rb_int32_t id)
+conn_add_id_hash(conn_t * conn, int32_t id)
 {
 	conn->id = id;
 	rb_dlinkAdd(conn, &conn->node, connid_hash(id));
@@ -674,7 +674,7 @@ static void
 ssl_process_accept(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 {
 	conn_t *conn;
-	rb_int32_t id;
+	int32_t id;
 
 	conn = make_conn(ctl, ctlb->F[0], ctlb->F[1]);
 
@@ -699,7 +699,7 @@ static void
 ssl_process_connect(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 {
 	conn_t *conn;
-	rb_int32_t id;
+	int32_t id;
 	conn = make_conn(ctl, ctlb->F[0], ctlb->F[1]);
 
 	id = buf_to_int32(&ctlb->buf[1]);
@@ -724,7 +724,7 @@ process_stats(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 	char outstat[512];
 	conn_t *conn;
 	const char *odata;
-	rb_int32_t id;
+	int32_t id;
 
 	id = buf_to_int32(&ctlb->buf[1]);
 
@@ -760,13 +760,13 @@ zlib_send_zip_ready(mod_ctl_t *ctl, conn_t *conn)
 static void
 zlib_process(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 {
-	rb_uint8_t level;
+	uint8_t level;
 	size_t recvqlen;
-	size_t hdr = (sizeof(rb_uint8_t) * 2) + sizeof(rb_int32_t);
+	size_t hdr = (sizeof(uint8_t) * 2) + sizeof(int32_t);
 	void *recvq_start;
 	z_stream *instream, *outstream;
 	conn_t *conn;
-	rb_int32_t id;
+	int32_t id;
 
 	conn = make_conn(ctl, ctlb->F[0], ctlb->F[1]);
 	if(rb_get_type(conn->mod_fd) == RB_FD_UNKNOWN)
@@ -778,7 +778,7 @@ zlib_process(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 	id = buf_to_int32(&ctlb->buf[1]);
 	conn_add_id_hash(conn, id);
 
-	level = (rb_uint8_t) ctlb->buf[5];
+	level = (uint8_t) ctlb->buf[5];
 
 	recvqlen = ctlb->buflen - hdr;
 	recvq_start = &ctlb->buf[6];
@@ -855,7 +855,7 @@ send_nossl_support(mod_ctl_t *ctl, mod_ctl_buf_t *ctlb)
 {
 	static const char *nossl_cmd = "N";
 	conn_t *conn;
-	rb_int32_t id;
+	int32_t id;
 
 	if(ctlb != NULL)
 	{	
@@ -881,7 +881,7 @@ send_nozlib_support(mod_ctl_t *ctl, mod_ctl_buf_t *ctlb)
 {
 	static const char *nozlib_cmd = "z";
 	conn_t *conn;
-	rb_int32_t id;
+	int32_t id;
 	if(ctlb != NULL)
 	{
 		conn = make_conn(ctl, ctlb->F[0], ctlb->F[1]);
@@ -1062,7 +1062,7 @@ main(int argc, char **argv)
 	if(s_ctlfd == NULL || s_pipe == NULL)
 	{
 		fprintf(stderr, "This is ircd-ratbox ssld.  You know you aren't supposed to run me directly?\n");
-		fprintf(stderr, "You get an Id tag for this: $Id: ssld.c 25594 2008-06-25 14:58:47Z androsyn $\n");
+		fprintf(stderr, "You get an Id tag for this: $Id: ssld.c 25677 2008-07-06 04:21:42Z androsyn $\n");
 		fprintf(stderr, "Have a nice life\n");
 		exit(1);
 	}
