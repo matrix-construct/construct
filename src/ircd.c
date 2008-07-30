@@ -543,7 +543,15 @@ main(int argc, char *argv[])
 
 	init_sys();
 
-
+	ConfigFileEntry.dpath = DPATH;
+	ConfigFileEntry.configfile = CPATH;	/* Server configuration file */
+	ConfigFileEntry.klinefile = KPATH;	/* Server kline file */
+	ConfigFileEntry.dlinefile = DLPATH;	/* dline file */
+	ConfigFileEntry.xlinefile = XPATH;
+	ConfigFileEntry.resvfile = RESVPATH;
+	ConfigFileEntry.connect_timeout = 30;	/* Default to 30 */
+	
+	umask(077);		/* better safe than sorry --SRB */
 
 	myargv = argv;
 	parseargs(&argc, &argv, myopts);
@@ -582,18 +590,6 @@ main(int argc, char *argv[])
 
 	/* Initialise the channel capability usage counts... */
 	init_chcap_usage_counts();
-
-	ConfigFileEntry.dpath = DPATH;
-	ConfigFileEntry.configfile = CPATH;	/* Server configuration file */
-	ConfigFileEntry.klinefile = KPATH;	/* Server kline file */
-	ConfigFileEntry.dlinefile = DLPATH;	/* dline file */
-	ConfigFileEntry.xlinefile = XPATH;
-	ConfigFileEntry.resvfile = RESVPATH;
-	ConfigFileEntry.connect_timeout = 30;	/* Default to 30 */
-	
-	umask(077);		/* better safe than sorry --SRB */
-
-
 
 	if(printVersion)
 	{
