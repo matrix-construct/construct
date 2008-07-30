@@ -731,9 +731,10 @@ static int proc_answer(struct reslist *request, HEADER * header, char *buf, char
 }
 
 /*
- * res_readreply - read a dns reply from the nameserver and process it.
+ * res_read_single_reply - read a dns reply from the nameserver and process it.
+ * Return value: 1 if a packet was read, 0 otherwise
  */
-static void res_readreply(rb_fde_t *F, void *data)
+static int res_read_single_reply(rb_fde_t *F, void *data)
 {
 	char buf[sizeof(HEADER) + MAXPACKET]
 		/* Sparc and alpha need 16bit-alignment for accessing header->id 
@@ -754,13 +755,13 @@ static void res_readreply(rb_fde_t *F, void *data)
 
 	rc = recvfrom(rb_get_fd(F), buf, sizeof(buf), 0, (struct sockaddr *)&lsin, &len);
 
-	/* Re-schedule a read *after* recvfrom, or we'll be registering
-	 * interest where it'll instantly be ready for read :-) -- adrian
-	 */
-	rb_setselect(F, RB_SELECT_READ, res_readreply, NULL);
-	/* Better to cast the sizeof instead of rc */
+	/* No packet */
+	if (rc == 0 || rc == -1)
+		return 0;
+
+	/* Too small */
 	if (rc <= (int)(sizeof(HEADER)))
-		return;
+		return 1;
 
 	/*
 	 * convert DNS reply reader from Network byte order to CPU byte order.
@@ -776,16 +777,16 @@ static void res_readreply(rb_fde_t *F, void *data)
 	 * just ignore this response.
 	 */
 	if (0 == (request = find_id(header->id)))
-		return;
+		return 1;
 
 	/*
 	 * check against possibly fake replies
 	 */
 	if (!res_ourserver(&lsin))
-		return;
+		return 1;
 
 	if (!check_question(request, header, buf, buf + rc))
-		return;
+		return 1;
 
 	if ((header->rcode != NO_ERRORS) || (header->ancount == 0))
 	{
@@ -803,7 +804,7 @@ static void res_readreply(rb_fde_t *F, void *data)
 			(*request->query->callback) (request->query->ptr, NULL);
 			rem_request(request);
 		}
-		return;
+		return 1;
 	}
 	/*
 	 * If this fails there was an error decoding the received packet, 
@@ -823,7 +824,7 @@ static void res_readreply(rb_fde_t *F, void *data)
 				 */
 				(*request->query->callback) (request->query->ptr, reply);
 				rem_request(request);
-				return;
+				return 1;
 			}
 
 			/*
@@ -856,6 +857,14 @@ static void res_readreply(rb_fde_t *F, void *data)
 		(*request->query->callback) (request->query->ptr, NULL);
 		rem_request(request);
 	}
+	return 1;
+}
+
+static void res_readreply(rb_fde_t *F, void *data)
+{
+	while (res_read_single_reply(F, data))
+		;
+	rb_setselect(F, RB_SELECT_READ, res_readreply, NULL);
 }
 
 static struct DNSReply *make_dnsreply(struct reslist *request)
