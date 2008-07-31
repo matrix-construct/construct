@@ -347,14 +347,10 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 			sendto_channel_local(ONLY_CHANOPS, chptr, ":%s MODE %s %s",
 					     me.name, chptr->chname, modes);
 
-			if(*chptr->chname == '#')
-			{
-				sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
-					      ":%s SJOIN %ld %s %s :@%s",
-					      me.id, (long) chptr->channelts,
-					      chptr->chname, modes,
-					      source_p->id);
-			}
+			sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
+				      ":%s SJOIN %ld %s %s :@%s",
+				      me.id, (long) chptr->channelts,
+				      chptr->chname, modes, source_p->id);
 		}
 		else
 		{
