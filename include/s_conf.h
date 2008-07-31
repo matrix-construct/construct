@@ -210,12 +210,13 @@ struct config_file_entry
 	int reject_ban_time;
 	int reject_after_count;
 	int reject_duration;
+	int throttle_count;
+	int throttle_duration;
 	int target_change;
 	int collision_fnc;
 	int default_umodes;
 	int global_snotices;
 	int operspy_dont_care_user_info;
-	int max_unknown_ip;
 };
 
 struct config_channel_entry

@@ -438,7 +438,6 @@ static void
 add_connection(struct Listener *listener, rb_fde_t *F, struct sockaddr *sai, void *ssl_ctl)
 {
 	struct Client *new_client;
-	struct ConfItem *aconf;
 	s_assert(NULL != listener);
 
 	/* 
@@ -468,18 +467,10 @@ add_connection(struct Listener *listener, rb_fde_t *F, struct sockaddr *sai, voi
 
 	++listener->ref_count;
 
-	/* XXX these should be done in accept_precallback */
-	aconf = find_dline(sai, sai->sa_family);
-	if(aconf == NULL || aconf->status & CONF_EXEMPTDLINE)
-	{
-		if(check_reject(new_client))
-			return; 
-		if(add_unknown_ip(new_client))
-			return;
-	}
-
 	start_auth(new_client);
 }
+
+static const char *toofast = "ERROR :Reconnecting too fast, throttled.\r\n";
 
 static int
 accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, void *data)
@@ -538,6 +529,16 @@ accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, voi
 			strcpy(buf, "ERROR :You have been D-lined.\r\n");
 	
 		rb_write(F, buf, strlen(buf));
+		rb_close(F);
+		return 0;
+	}
+
+	if(check_reject(F, addr))
+		return 0;
+		
+	if(throttle_add(addr))
+	{
+		rb_write(F, toofast, strlen(toofast));
 		rb_close(F);
 		return 0;
 	}

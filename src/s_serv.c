@@ -760,7 +760,6 @@ server_estab(struct Client *client_p)
 	set_chcap_usage_counts(client_p);
 
 	rb_dlinkAdd(client_p, &client_p->lnode, &me.serv->servers);
-	del_unknown_ip(client_p);
 	rb_dlinkMoveNode(&client_p->localClient->tnode, &unknown_list, &serv_list);
 	rb_dlinkAddTailAlloc(client_p, &global_serv_list);
 
