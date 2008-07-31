@@ -512,7 +512,7 @@ accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, voi
 		return 0;
 	}
 
-	aconf = find_dline(addr, AF_INET);
+	aconf = find_dline(addr, addr->sa_family);
 	if(aconf != NULL && (aconf->status & CONF_EXEMPTDLINE))
 		return 1;
 	
