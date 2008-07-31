@@ -58,7 +58,7 @@ h_can_join(hook_data_channel *data)
 	struct Channel *chptr = data->chptr;
 
 	if((chptr->mode.mode & chmode_flags['O']) && !IsOper(source_p)) {
-		sendto_one_notice(source_p, ":Only IRC Operators could join this channel!");
+		sendto_one_numeric(source_p, 520, "%s :Cannot join channel (+O) - you are not an IRC operator", chptr->chname);
 		data->approved = ERR_CUSTOM;
 	}
 }
