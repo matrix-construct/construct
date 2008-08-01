@@ -45,7 +45,7 @@ static port_event_t *pelst;	/* port buffer */
 static int pemax;		/* max structs to buffer */
 
 int 
-rb_setup_fd_ports(int fd)
+rb_setup_fd_ports(rb_fde_t *F)
 {
         return 0;
 }
