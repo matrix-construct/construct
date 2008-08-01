@@ -55,8 +55,6 @@
 #include "reject.h"
 #include "sslproc.h"
 
-extern char *crypt();
-
 #ifndef INADDR_NONE
 #define INADDR_NONE ((unsigned int) 0xffffffff)
 #endif
@@ -297,15 +295,9 @@ try_connections(void *unused)
 	 * error afterwards if it fails.
 	 *   -- adrian
 	 */
-#ifndef HIDE_SERVERS_IPS
-	sendto_realops_snomask(SNO_GENERAL, L_ALL,
-			"Connection to %s[%s] activated.",
-			server_p->name, server_p->host);
-#else
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			"Connection to %s activated",
 			server_p->name);
-#endif
 
 	serv_connect(server_p, 0);
 }
@@ -349,7 +341,7 @@ check_server(const char *name, struct Client *client_p)
 
 			if(ServerConfEncrypted(tmp_p))
 			{
-				if(!strcmp(tmp_p->passwd, crypt(client_p->localClient->passwd,
+				if(!strcmp(tmp_p->passwd, rb_crypt(client_p->localClient->passwd,
 								tmp_p->passwd)))
 				{
 					server_p = tmp_p;
@@ -768,7 +760,6 @@ server_estab(struct Client *client_p)
 	set_chcap_usage_counts(client_p);
 
 	rb_dlinkAdd(client_p, &client_p->lnode, &me.serv->servers);
-	del_unknown_ip(client_p);
 	rb_dlinkMoveNode(&client_p->localClient->tnode, &unknown_list, &serv_list);
 	rb_dlinkAddTailAlloc(client_p, &global_serv_list);
 
@@ -800,7 +791,7 @@ server_estab(struct Client *client_p)
 	/* Show the real host/IP to admins */
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			"Link with %s established: (%s) link",
-			get_server_name(client_p, SHOW_IP),
+			client_p->name,
 			show_capabilities(client_p));
 
 	ilog(L_SERVER, "Link with %s established: (%s) link",
@@ -924,7 +915,7 @@ serv_connect_resolved(struct Client *client_p)
 	if((server_p = client_p->localClient->att_sconf) == NULL)
 	{
 		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL, "Lost connect{} block for %s",
-				get_server_name(client_p, HIDE_IP));
+				client_p->name);
 		exit_client(client_p, client_p, &me, "Lost connect{} block");
 		return 0;
 	}
@@ -1017,7 +1008,7 @@ serv_connect_dns_callback(void *vptr, struct DNSReply *reply)
 	if (reply == NULL)
 	{
 		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL, "Cannot resolve hostname for %s",
-				get_server_name(client_p, HIDE_IP));
+				client_p->name);
 		ilog(L_SERVER, "Cannot resolve hostname for %s",
 				log_client_name(client_p, HIDE_IP));
 		exit_client(client_p, client_p, &me, "Cannot resolve hostname");
@@ -1078,10 +1069,10 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Server %s already present from %s",
-				     server_p->name, get_server_name(client_p, SHOW_IP));
+				     server_p->name, client_p->name);
 		if(by && IsPerson(by) && !MyClient(by))
 			sendto_one_notice(by, ":Server %s already present from %s",
-					  server_p->name, get_server_name(client_p, SHOW_IP));
+					  server_p->name, client_p->name);
 		return 0;
 	}
 
@@ -1185,23 +1176,17 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 }
 
 static void
-serv_connect_ev(void *data)
-{
-	struct Client *client_p = data;
-	serv_connect_callback(client_p->localClient->F, RB_OK, client_p);
-}
-
-static void
 serv_connect_ssl_callback(rb_fde_t *F, int status, void *data)
 {
 	struct Client *client_p = data;
 	rb_fde_t *xF[2];
+	rb_connect_sockaddr(F, (struct sockaddr *)&client_p->localClient->ip, sizeof(client_p->localClient->ip));
 	if(status != RB_OK)
 	{
-		/* XXX deal with failure */
+		/* Print error message, just like non-SSL. */
+		serv_connect_callback(F, status, data);
 		return;
 	}
-	rb_connect_sockaddr(F, (struct sockaddr *)&client_p->localClient->ip, sizeof(client_p->localClient->ip));
 	rb_socketpair(AF_UNIX, SOCK_STREAM, 0, &xF[0], &xF[1], "Outgoing ssld connection");
 	del_from_cli_fd_hash(client_p);
 	client_p->localClient->F = xF[0];
@@ -1209,7 +1194,7 @@ serv_connect_ssl_callback(rb_fde_t *F, int status, void *data)
 
 	client_p->localClient->ssl_ctl = start_ssld_connect(F, xF[1], rb_get_fd(xF[0]));
 	SetSSL(client_p);
-	rb_event_addonce("serv_connect_ev", serv_connect_ev, client_p, 1);		
+	serv_connect_callback(client_p->localClient->F, RB_OK, client_p);
 }
 
 /*
@@ -1258,11 +1243,7 @@ serv_connect_callback(rb_fde_t *F, int status, void *data)
 			sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 					"Error connecting to %s[%s]: %s",
 					client_p->name, 
-#ifdef HIDE_SERVERS_IPS
 					"255.255.255.255",
-#else
-					client_p->host,
-#endif
 					rb_errstr(status));
 			ilog(L_SERVER, "Error connecting to %s[%s]: %s",
 				client_p->name, client_p->sockhost,
@@ -1274,11 +1255,7 @@ serv_connect_callback(rb_fde_t *F, int status, void *data)
 			sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 					"Error connecting to %s[%s]: %s (%s)",
 					client_p->name,
-#ifdef HIDE_SERVERS_IPS
 					"255.255.255.255",
-#else
-					client_p->host,
-#endif
 					rb_errstr(status), errstr);
 			ilog(L_SERVER, "Error connecting to %s[%s]: %s (%s)",
 				client_p->name, client_p->sockhost,
@@ -1294,7 +1271,7 @@ serv_connect_callback(rb_fde_t *F, int status, void *data)
 	if((server_p = client_p->localClient->att_sconf) == NULL)
 	{
 		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL, "Lost connect{} block for %s",
-				get_server_name(client_p, HIDE_IP));
+				client_p->name);
 		exit_client(client_p, client_p, &me, "Lost connect{} block");
 		return;
 	}

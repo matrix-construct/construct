@@ -65,37 +65,22 @@ static int mode_limit;
 static int mode_limit_simple;
 static int mask_pos;
 
+char cflagsbuf[256];
+char cflagsmyinfo[256];
+
 int chmode_flags[256];
-void
-find_orphaned_cflags(void)
-{
-	int i;
-	static int prev_chmode_flags[256];
 
-	for (i = 0; i < 256; i++)
-	{
-		if (prev_chmode_flags[i] != 0 && prev_chmode_flags[i] != chmode_flags[i])
-		{
-			if (chmode_flags[i] == 0)
-			{
-                                chmode_table[i].set_func = chm_orphaned;
-				sendto_realops_snomask(SNO_DEBUG, L_ALL, "Cmode +%c is now orphaned", i);
-			}
-			else
-			{
-				sendto_realops_snomask(SNO_DEBUG, L_ALL, "Orphaned cmode +%c is picked up by module", i);
-			}
-			chmode_flags[i] = prev_chmode_flags[i];
-		}
-		else
-			prev_chmode_flags[i] = chmode_flags[i];
-	}
-}
-
+/* OPTIMIZE ME! -- dwr */
 void
 construct_noparam_modes(void)
 {
 	int i;
+        char *ptr = cflagsbuf;
+	char *ptr2 = cflagsmyinfo;
+        static int prev_chmode_flags[256];
+        
+        *ptr = '\0';
+	*ptr2 = '\0';
 
 	for(i = 0; i < 256; i++)
 	{
@@ -113,9 +98,56 @@ construct_noparam_modes(void)
 		{
 			chmode_flags[i] = 0;
 		}
+                
+		if (prev_chmode_flags[i] != 0 && prev_chmode_flags[i] != chmode_flags[i])
+		{
+			if (chmode_flags[i] == 0)
+			{
+                                chmode_table[i].set_func = chm_orphaned;
+				sendto_realops_snomask(SNO_DEBUG, L_ALL, "Cmode +%c is now orphaned", i);
+			}
+			else
+			{
+				sendto_realops_snomask(SNO_DEBUG, L_ALL, "Orphaned cmode +%c is picked up by module", i);
+			}
+			chmode_flags[i] = prev_chmode_flags[i];
+		}
+		else
+			prev_chmode_flags[i] = chmode_flags[i];
+                
+		switch (chmode_flags[i])
+		{
+		    case MODE_EXLIMIT:
+		    case MODE_DISFORWARD:
+			if(ConfigChannel.use_forward)
+			{
+			    *ptr++ = (char) i;
+			}
+			
+			break;
+		    case MODE_REGONLY:
+			if(rb_dlink_list_length(&service_list))
+			{
+			    *ptr++ = (char) i;
+			}
+
+			break;
+		    default:
+			if(chmode_flags[i] != 0)
+			{
+			    *ptr++ = (char) i;
+			}
+		}
+		
+		/* Should we leave orphaned check here? -- dwr */
+		if(!(chmode_table[i].set_func == chm_nosuch) && !(chmode_table[i].set_func == chm_orphaned))
+		{
+		    *ptr2++ = (char) i;
+		}
 	}
         
-        find_orphaned_cflags();
+        *ptr++ = '\0';
+	*ptr2++ = '\0';
 }
 
 /*

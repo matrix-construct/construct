@@ -74,6 +74,35 @@ init_cache(void)
 	help_dict_user = irc_dictionary_create(strcasecmp);
 }
 
+/* 
+ * removes tabs from src, replaces with 8 spaces, and returns the length
+ * of the new string.  if the new string would be greater than destlen,
+ * it is truncated to destlen - 1
+ */
+static size_t
+untabify(char *dest, const char *src, size_t destlen)
+{
+	size_t x = 0, i;
+	const char *s = src;
+	char *d = dest;
+
+	while(*s != '\0' && x < destlen - 1)
+	{
+		if(*s == '\t')
+		{
+			for(i = 0; i < 8 && x < destlen - 1; i++, x++, d++)
+				*d = ' ';
+			s++;
+		} else 
+		{
+			*d++ = *s++;
+			x++;
+		}
+	}
+	*d = '\0';
+	return x;
+}
+
 /* cache_file()
  *
  * inputs	- file to cache, files "shortname", flags to set
@@ -107,7 +136,7 @@ cache_file(const char *filename, const char *shortname, int flags)
 		if(!EmptyString(line))
 		{
 			lineptr = rb_malloc(sizeof(struct cacheline));
-			rb_strlcpy(lineptr->data, line, sizeof(lineptr->data));
+			untabify(lineptr->data, line, sizeof(lineptr->data));
 			rb_dlinkAddTail(lineptr, &lineptr->linenode, &cacheptr->contents);
 		}
 		else
@@ -195,6 +224,10 @@ load_help(void)
 	struct cachefile *cacheptr;
 	struct DictionaryIter iter;
 
+#if defined(S_ISLNK) && defined(HAVE_LSTAT)
+	struct stat sb;
+#endif
+
 	DICTIONARY_FOREACH(cacheptr, &iter, help_dict_oper)
 	{
 		irc_dictionary_delete(help_dict_oper, cacheptr->name);
@@ -227,6 +260,25 @@ load_help(void)
 	while((ldirent = readdir(helpfile_dir)) != NULL)
 	{
 		rb_snprintf(filename, sizeof(filename), "%s/%s", UHPATH, ldirent->d_name);
+
+#if defined(S_ISLNK) && defined(HAVE_LSTAT)
+		if(lstat(filename, &sb) < 0)
+			continue;
+
+		/* ok, if its a symlink, we work on the presumption if an
+		 * oper help exists of that name, its a symlink to that --fl
+		 */
+		if(S_ISLNK(sb.st_mode))
+		{
+			cacheptr = irc_dictionary_retrieve(help_dict_oper, ldirent->d_name);
+
+			if(cacheptr != NULL)
+			{
+				cacheptr->flags |= HELP_USER;
+				continue;
+			}
+		}
+#endif
 
 		cacheptr = cache_file(filename, ldirent->d_name, HELP_USER);
 		irc_dictionary_add(help_dict_user, cacheptr->name, cacheptr);

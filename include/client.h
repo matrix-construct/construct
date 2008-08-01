@@ -168,6 +168,10 @@ struct Client
 	 */
 	rb_dlink_list on_allow_list;
 
+	time_t first_received_message_time;
+	int received_number_of_privmsgs;
+	int flood_noticed;
+
 	local_user_t *localClient;
 	pre_client_t *preClient;
 };
@@ -189,9 +193,6 @@ struct LocalUser
 	int oper_warn_count_down;	/* warn opers of this possible 
 					   spambot every time this gets to 0 */
 	time_t last_caller_id_time;
-	time_t first_received_message_time;
-	int received_number_of_privmsgs;
-	int flood_noticed;
 
 	time_t lasttime;	/* last time we parsed something */
 	time_t firsttime;	/* time client was created */
@@ -230,6 +231,7 @@ struct LocalUser
 	 * agreed. lets get rid of it someday! --nenolod
 	 */
 	char *passwd;
+	char *auth_user;
 	char *opername; /* name of operator{} block being used or tried (challenge) */
 	char *challenge;
 	char *fullcaps;
@@ -275,9 +277,9 @@ struct LocalUser
 			      applicable to this client */
 
 	struct _ssl_ctl *ssl_ctl;		/* which ssl daemon we're associate with */
-	rb_uint32_t localflags;
+	uint32_t localflags;
 	struct ZipStats *zipstats;		/* zipstats */
-	rb_uint16_t cork_count;			/* used for corking/uncorking connections */
+	uint16_t cork_count;			/* used for corking/uncorking connections */
 	struct ev_entry *event;			/* used for associated events */
 };
 
@@ -568,7 +570,6 @@ extern void check_dlines(void);
 extern void check_xlines(void);
 
 extern const char *get_client_name(struct Client *client, int show_ip);
-extern const char *get_server_name(struct Client *client, int show_ip);
 extern const char *log_client_name(struct Client *, int);
 extern int is_remote_connect(struct Client *);
 extern void init_client(void);

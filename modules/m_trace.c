@@ -63,6 +63,8 @@ DECLARE_MODULE_AV1(trace, NULL, NULL, trace_clist, trace_hlist, NULL, "$Revision
 static void count_downlinks(struct Client *server_p, int *pservcount, int *pusercount);
 static int report_this_status(struct Client *source_p, struct Client *target_p);
 
+static const char *empty_sockhost = "255.255.255.255";
+
 /*
  * m_trace
  *      parv[0] = sender prefix
@@ -345,7 +347,7 @@ report_this_status(struct Client *source_p, struct Client *target_p)
 	class_name = get_client_class(target_p);
 
 	if(IsAnyServer(target_p))
-		name = get_server_name(target_p, HIDE_IP);
+		name = target_p->name;
 	else
 		name = get_client_name(target_p, HIDE_IP);
 
@@ -378,22 +380,18 @@ report_this_status(struct Client *source_p, struct Client *target_p)
 		break;
 
 	case STAT_CLIENT:
-		if(IsOper(target_p))
-			sendto_one_numeric(source_p, RPL_TRACEOPERATOR,
-					   form_str(RPL_TRACEOPERATOR),
-					   class_name, name,
-					   show_ip(source_p, target_p) ? ip : "255.255.255.255",
-					   rb_current_time() - target_p->localClient->lasttime,
-					   rb_current_time() - target_p->localClient->last);
+		{
+			int tnumeric;
 
-		else
-			sendto_one_numeric(source_p, RPL_TRACEUSER, 
-					   form_str(RPL_TRACEUSER),
-					   class_name, name,
-					   show_ip(source_p, target_p) ? ip : "255.255.255.255",
-					   rb_current_time() - target_p->localClient->lasttime,
-					   rb_current_time() - target_p->localClient->last);
-		cnt++;
+			tnumeric = IsOper(target_p) ? RPL_TRACEOPERATOR : RPL_TRACEUSER;
+			sendto_one_numeric(source_p, tnumeric, form_str(tnumeric),
+					class_name, name,
+					show_ip(source_p, target_p) ? ip : empty_sockhost,
+					rb_current_time() - target_p->localClient->lasttime,
+					rb_current_time() - target_p->localClient->last);
+
+			cnt++;
+		}
 		break;
 
 	case STAT_SERVER:

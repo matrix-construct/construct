@@ -88,7 +88,8 @@ struct ConfItem
 /* aConfItem->flags */
 
 /* Generic flags... */
-/* access flags... */
+#define CONF_FLAGS_TEMPORARY            0x00800000
+/* auth{} flags... */
 #define CONF_FLAGS_NO_TILDE             0x00000004
 #define CONF_FLAGS_NEED_IDENTD          0x00000008
 #define CONF_FLAGS_EXEMPTKLINE          0x00000040
@@ -102,14 +103,7 @@ struct ConfItem
 #define CONF_FLAGS_EXEMPTSHIDE		0x00010000
 #define CONF_FLAGS_EXEMPTJUPE		0x00020000	/* exempt from resv generating warnings */
 #define CONF_FLAGS_NEED_SASL		0x00040000
-/* server flags */
-#define CONF_FLAGS_ALLOW_AUTO_CONN      0x00080000
-#define CONF_FLAGS_LAZY_LINK            0x00100000
 #define CONF_FLAGS_ENCRYPTED            0x00200000
-#define CONF_FLAGS_COMPRESSED           0x00400000
-#define CONF_FLAGS_TEMPORARY            0x00800000
-#define CONF_FLAGS_TB			0x01000000
-#define CONF_FLAGS_VHOSTED		0x02000000
 #define CONF_FLAGS_EXEMPTDNSBL		0x04000000
 
 
@@ -126,9 +120,6 @@ struct ConfItem
 #define IsConfDoSpoofIp(x)      ((x)->flags & CONF_FLAGS_SPOOF_IP)
 #define IsConfSpoofNotice(x)    ((x)->flags & CONF_FLAGS_SPOOF_NOTICE)
 #define IsConfEncrypted(x)      ((x)->flags & CONF_FLAGS_ENCRYPTED)
-#define IsConfCompressed(x)     ((x)->flags & CONF_FLAGS_COMPRESSED)
-#define IsConfVhosted(x)	((x)->flags & CONF_FLAGS_VHOSTED)
-#define IsConfTburst(x)		((x)->flags & CONF_FLAGS_TB)
 #define IsNeedSasl(x)		((x)->flags & CONF_FLAGS_NEED_SASL)
 #define IsConfExemptDNSBL(x)	((x)->flags & CONF_FLAGS_EXEMPTDNSBL)
 
@@ -219,12 +210,13 @@ struct config_file_entry
 	int reject_ban_time;
 	int reject_after_count;
 	int reject_duration;
+	int throttle_count;
+	int throttle_duration;
 	int target_change;
 	int collision_fnc;
 	int default_umodes;
 	int global_snotices;
 	int operspy_dont_care_user_info;
-	int max_unknown_ip;
 };
 
 struct config_channel_entry

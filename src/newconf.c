@@ -846,7 +846,7 @@ conf_end_auth(struct TopConf *tc)
 	collapse(yy_aconf->user);
 	collapse(yy_aconf->host);
 	conf_add_class_to_conf(yy_aconf);
-	add_conf_by_address(yy_aconf->host, CONF_CLIENT, yy_aconf->user, yy_aconf);
+	add_conf_by_address(yy_aconf->host, CONF_CLIENT, yy_aconf->user, yy_aconf->spasswd, yy_aconf);
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, yy_aconf_list.head)
 	{
@@ -855,6 +855,9 @@ conf_end_auth(struct TopConf *tc)
 		if(yy_aconf->passwd)
 			yy_tmp->passwd = rb_strdup(yy_aconf->passwd);
 
+		if(yy_aconf->spasswd)
+			yy_tmp->spasswd = rb_strdup(yy_aconf->spasswd);
+		
 		/* this will always exist.. */
 		yy_tmp->name = rb_strdup(yy_aconf->name);
 
@@ -869,7 +872,7 @@ conf_end_auth(struct TopConf *tc)
 
 		conf_add_class_to_conf(yy_tmp);
 
-		add_conf_by_address(yy_tmp->host, CONF_CLIENT, yy_tmp->user, yy_tmp);
+		add_conf_by_address(yy_tmp->host, CONF_CLIENT, yy_tmp->user, yy_tmp->spasswd, yy_tmp);
 		rb_dlinkDestroy(ptr, &yy_aconf_list);
 	}
 
@@ -907,6 +910,15 @@ conf_set_auth_user(void *data)
 
 	if(yy_aconf != yy_tmp)
 		rb_dlinkAddAlloc(yy_tmp, &yy_aconf_list);
+}
+
+static void
+conf_set_auth_auth_user(void *data)
+{
+	if(yy_aconf->spasswd)
+		memset(yy_aconf->spasswd, 0, strlen(yy_aconf->spasswd));
+	rb_free(yy_aconf->spasswd);
+	yy_aconf->spasswd = rb_strdup(data);
 }
 
 static void
@@ -1318,7 +1330,7 @@ conf_set_exempt_ip(void *data)
 	yy_tmp->passwd = rb_strdup("*");
 	yy_tmp->host = rb_strdup(data);
 	yy_tmp->status = CONF_EXEMPTDLINE;
-	add_conf_by_address(yy_tmp->host, CONF_EXEMPTDLINE, NULL, yy_tmp);
+	add_conf_by_address(yy_tmp->host, CONF_EXEMPTDLINE, NULL, NULL, yy_tmp);
 }
 
 static int
@@ -1978,6 +1990,7 @@ static struct ConfEntry conf_class_table[] =
 static struct ConfEntry conf_auth_table[] =
 {
 	{ "user",	CF_QSTRING, conf_set_auth_user,		0, NULL },
+	{ "auth_user",  CF_QSTRING, conf_set_auth_auth_user,    0, NULL },
 	{ "password",	CF_QSTRING, conf_set_auth_passwd,	0, NULL },
 	{ "class",	CF_QSTRING, conf_set_auth_class,	0, NULL },
 	{ "spoof",	CF_QSTRING, conf_set_auth_spoof,	0, NULL },
@@ -2051,7 +2064,6 @@ static struct ConfEntry conf_general_table[] =
 	{ "max_nick_time",	CF_TIME,  NULL, 0, &ConfigFileEntry.max_nick_time	},
 	{ "max_nick_changes",	CF_INT,   NULL, 0, &ConfigFileEntry.max_nick_changes	},
 	{ "max_targets",	CF_INT,   NULL, 0, &ConfigFileEntry.max_targets		},
-	{ "max_unknown_ip",	CF_INT,   NULL, 0, &ConfigFileEntry.max_unknown_ip	},
 	{ "min_nonwildcard",	CF_INT,   NULL, 0, &ConfigFileEntry.min_nonwildcard	},
 	{ "nick_delay",		CF_TIME,  NULL, 0, &ConfigFileEntry.nick_delay		},
 	{ "no_oper_flood",	CF_YESNO, NULL, 0, &ConfigFileEntry.no_oper_flood	},
@@ -2063,6 +2075,8 @@ static struct ConfEntry conf_general_table[] =
 	{ "reject_after_count",	CF_INT,   NULL, 0, &ConfigFileEntry.reject_after_count	},
 	{ "reject_ban_time",	CF_TIME,  NULL, 0, &ConfigFileEntry.reject_ban_time	},
 	{ "reject_duration",	CF_TIME,  NULL, 0, &ConfigFileEntry.reject_duration	},
+	{ "throttle_count",	CF_INT,   NULL, 0, &ConfigFileEntry.throttle_count	},
+	{ "throttle_duration",	CF_TIME,  NULL, 0, &ConfigFileEntry.throttle_duration	},
 	{ "short_motd",		CF_YESNO, NULL, 0, &ConfigFileEntry.short_motd		},
 	{ "stats_c_oper_only",	CF_YESNO, NULL, 0, &ConfigFileEntry.stats_c_oper_only	},
 	{ "stats_e_disabled",	CF_YESNO, NULL, 0, &ConfigFileEntry.stats_e_disabled	},

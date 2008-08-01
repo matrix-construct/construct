@@ -41,6 +41,13 @@
 #include "s_newconf.h"
 #include "logger.h"
 
+struct config_channel_entry ConfigChannel;
+rb_dlink_list global_channel_list;
+static rb_bh *channel_heap;
+static rb_bh *ban_heap;
+static rb_bh *topic_heap;
+static rb_bh *member_heap;
+
 static int channel_capabs[] = { CAP_EX, CAP_IE,
 	CAP_SERVICE,
 	CAP_TS6
@@ -233,8 +240,6 @@ remove_user_from_channel(struct membership *msptr)
 	if(client_p->servptr == &me)
 		rb_dlinkDelete(&msptr->locchannode, &chptr->locmembers);
 
-	chptr->users_last = rb_current_time();
-
 	if(!(chptr->mode.mode & MODE_PERMANENT) && rb_dlink_list_length(&chptr->members) <= 0)
 		destroy_channel(chptr);
 
@@ -269,8 +274,6 @@ remove_user_from_channels(struct Client *client_p)
 
 		if(client_p->servptr == &me)
 			rb_dlinkDelete(&msptr->locchannode, &chptr->locmembers);
-
-		chptr->users_last = rb_current_time();
 
 		if(!(chptr->mode.mode & MODE_PERMANENT) && rb_dlink_list_length(&chptr->members) <= 0)
 			destroy_channel(chptr);
@@ -992,6 +995,7 @@ check_splitmode(void *unused)
 					     "Network rejoined, deactivating splitmode");
 
 			rb_event_delete(check_splitmode_ev);
+			check_splitmode_ev = NULL;
 		}
 	}
 }

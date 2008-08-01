@@ -203,7 +203,7 @@ depend:
 	@$(RM) -f .depend
 	${MKDEP} ${CPPFLAGS} ${ALL_SRCS} > .depend
 	@$(SED) -e '${SEDOBJ}' < .depend > .depend.tmp-1
-	@$(SED) -e 's/^m_\(die\|kick\|kill\|message\|mode\|nick\|part\|quit\|server\|sjoin\|squit\)/core\/m_\1/' .depend.tmp-1 > .depend.tmp
+	@$(SED) -e 's#^m_die\.#core/&#' -e 's#^m_error\.#core/&#' -e 's#^m_join\.#core/&#' -e 's#^m_kick\.#core/&#' -e 's#^m_kill\.#core/&#' -e 's#^m_message\.#core/&#' -e 's#^m_mode\.#core/&#' -e 's#^m_nick\.#core/&#' -e 's#^m_part\.#core/&#' -e 's#^m_quit\.#core/&#' -e 's#^m_server\.#core/&#' -e 's#^m_squit\.#core/&#'  .depend.tmp-1 > .depend.tmp
 	@$(MV) -f .depend.tmp .depend
 	@$(RM) -f .depend.tmp-1
 

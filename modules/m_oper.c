@@ -52,7 +52,6 @@ mapi_clist_av1 oper_clist[] = { &oper_msgtab, NULL };
 DECLARE_MODULE_AV1(oper, NULL, NULL, oper_clist, NULL, NULL, "$Revision: 1483 $");
 
 static int match_oper_password(const char *password, struct oper_conf *oper_p);
-extern char *crypt();
 
 /*
  * m_oper
@@ -156,7 +155,7 @@ match_oper_password(const char *password, struct oper_conf *oper_p)
 		 * the proper encrypted hash for comparison.
 		 */
 		if(!EmptyString(password))
-			encr = crypt(password, oper_p->passwd);
+			encr = rb_crypt(password, oper_p->passwd);
 		else
 			encr = "";
 	}

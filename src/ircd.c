@@ -1,10 +1,11 @@
 /*
- *  ircd-ratbox: A slightly useful ircd.
+ *  charybdis: A slightly useful ircd.
  *  ircd.c: Starts up and runs the ircd.
  *
  *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center
  *  Copyright (C) 1996-2002 Hybrid Development Team
- *  Copyright (C) 2002-2005 ircd-ratbox development team
+ *  Copyright (C) 2002-2008 ircd-ratbox development team
+ *  Copyright (C) 2005-2008 charybdis development team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: ircd.c 3380 2007-04-03 22:25:11Z jilles $
+ *  $Id$
  */
 
 #include "ratbox_lib.h"
@@ -80,31 +81,19 @@ struct Counter Count;
 struct ServerStatistics ServerStats;
 
 int maxconnections;
-struct timeval SystemTime;
 struct Client me;		/* That's me */
 struct LocalUser meLocalUser;	/* That's also part of me */
 
-rb_dlink_list lclient_list = { NULL, NULL, 0 };
-rb_dlink_list global_client_list = { NULL, NULL, 0 };
-rb_dlink_list global_channel_list = { NULL, NULL, 0 };
+rb_dlink_list global_client_list;
 
+/* unknown/client pointer lists */
 rb_dlink_list unknown_list;        /* unknown clients ON this server only */
+rb_dlink_list lclient_list;	/* local clients only ON this server */
 rb_dlink_list serv_list;           /* local servers to this server ONLY */
 rb_dlink_list global_serv_list;    /* global servers on the network */
 rb_dlink_list local_oper_list;     /* our opers, duplicated in lclient_list */
 rb_dlink_list oper_list;           /* network opers */
 
-time_t startup_time;
-
-int default_server_capabs = CAP_MASK;
-
-int splitmode;
-int splitchecking;
-int split_users;
-int split_servers;
-int eob_count;
-
-unsigned long initialVMTop = 0;  /* top of virtual memory at init */
 const char *logFileName = LPATH;
 const char *pidFileName = PPATH;
 
@@ -119,27 +108,15 @@ int ssl_ok = 0;
 int zlib_ok = 1;
 
 int testing_conf = 0;
+time_t startup_time;
 
-struct config_channel_entry ConfigChannel;
-rb_bh *channel_heap;
-rb_bh *ban_heap;
-rb_bh *topic_heap;
-rb_bh *member_heap;
+int default_server_capabs = CAP_MASK;
 
-rb_bh *client_heap = NULL;
-rb_bh *lclient_heap = NULL;
-rb_bh *pclient_heap = NULL;
-
-char current_uid[IDLEN];
-
-/* patricia */
-rb_bh *prefix_heap;
-rb_bh *node_heap;
-rb_bh *patricia_heap;
-
-rb_bh *linebuf_heap;
-
-rb_bh *dnode_heap;
+int splitmode;
+int splitchecking;
+int split_users;
+int split_servers;
+int eob_count;
 
 void
 ircd_shutdown(const char *reason)
@@ -190,39 +167,6 @@ print_startup(int pid)
 	open("/dev/null", O_RDWR);
 	dup2(0, 1);
 	dup2(0, 2);
-}
-
-static void
-ircd_log_cb(const char *str)
-{
-	ilog(L_MAIN, "%s", str);
-}
-
-static void
-ircd_restart_cb(const char *str)
-{
-	restart(str);
-}
-
-/*
- * Why EXIT_FAILURE here?
- * Because if ircd_die_cb() is called it's because of a fatal
- * error inside libcharybdis, and we don't know how to handle the
- * exception, so it is logical to return a FAILURE exit code here.
- *    --nenolod
- */
-static void
-ircd_die_cb(const char *str)
-{
-	if(str != NULL)
-	{
-		/* Try to get the message out to currently logged in operators. */
-		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "Server panic! %s", str);
-		inotice("server panic: %s", str);
-	}
-
-	unlink(pidFileName);
-	exit(EXIT_FAILURE);
 }
 
 /*
@@ -500,6 +444,39 @@ setup_corefile(void)
 #endif
 }
 
+static void
+ircd_log_cb(const char *str)
+{
+	ilog(L_MAIN, "%s", str);
+}
+
+static void
+ircd_restart_cb(const char *str)
+{
+	restart(str);
+}
+
+/*
+ * Why EXIT_FAILURE here?
+ * Because if ircd_die_cb() is called it's because of a fatal
+ * error inside libcharybdis, and we don't know how to handle the
+ * exception, so it is logical to return a FAILURE exit code here.
+ *    --nenolod
+ */
+static void
+ircd_die_cb(const char *str)
+{
+	if(str != NULL)
+	{
+		/* Try to get the message out to currently logged in operators. */
+		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "Server panic! %s", str);
+		inotice("server panic: %s", str);
+	}
+
+	unlink(pidFileName);
+	exit(EXIT_FAILURE);
+}
+
 struct ev_entry *check_splitmode_ev = NULL;
 
 static int
@@ -564,13 +541,34 @@ main(int argc, char *argv[])
 		return -1;
 	}
 
+	init_sys();
+
+	ConfigFileEntry.dpath = DPATH;
+	ConfigFileEntry.configfile = CPATH;	/* Server configuration file */
+	ConfigFileEntry.klinefile = KPATH;	/* Server kline file */
+	ConfigFileEntry.dlinefile = DLPATH;	/* dline file */
+	ConfigFileEntry.xlinefile = XPATH;
+	ConfigFileEntry.resvfile = RESVPATH;
+	ConfigFileEntry.connect_timeout = 30;	/* Default to 30 */
+	
+	umask(077);		/* better safe than sorry --SRB */
+
+	myargv = argv;
+	parseargs(&argc, &argv, myopts);
+
+	if(chdir(ConfigFileEntry.dpath))
+	{
+		fprintf(stderr, "Unable to chdir to %s: %s\n", ConfigFileEntry.dpath, strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+
+	rb_set_time();
+
 	/*
 	 * Setup corefile size immediately after boot -kre
 	 */
 	setup_corefile();
 
-	/* It ain't random, but it ought to be a little harder to guess */
-	srand(SystemTime.tv_sec ^ (SystemTime.tv_usec | (getpid() << 20)));
 	memset(&me, 0, sizeof(me));
 	memset(&meLocalUser, 0, sizeof(meLocalUser));
 	me.localClient = &meLocalUser;
@@ -593,35 +591,15 @@ main(int argc, char *argv[])
 	/* Initialise the channel capability usage counts... */
 	init_chcap_usage_counts();
 
-	ConfigFileEntry.dpath = DPATH;
-	ConfigFileEntry.configfile = CPATH;	/* Server configuration file */
-	ConfigFileEntry.klinefile = KPATH;	/* Server kline file */
-	ConfigFileEntry.dlinefile = DLPATH;	/* dline file */
-	ConfigFileEntry.xlinefile = XPATH;
-	ConfigFileEntry.resvfile = RESVPATH;
-	ConfigFileEntry.connect_timeout = 30;	/* Default to 30 */
-	myargv = argv;
-	umask(077);		/* better safe than sorry --SRB */
-
-	parseargs(&argc, &argv, myopts);
-
 	if(printVersion)
 	{
 		printf("ircd: version %s(%s)\n", ircd_version, serno);
 		exit(EXIT_SUCCESS);
 	}
 
-	if(chdir(ConfigFileEntry.dpath))
-	{
-		fprintf(stderr, "Unable to chdir to %s: %s\n", ConfigFileEntry.dpath, strerror(errno));
-		exit(EXIT_FAILURE);
-	}
+
 
 	setup_signals();
-
-#ifdef __CYGWIN__
-	server_state_foreground = 1;
-#endif
 
 	if (testing_conf)
 		server_state_foreground = 1;
@@ -647,7 +625,6 @@ main(int argc, char *argv[])
 	}
 
 	/* Init the event subsystem */
-	init_sys();
 	rb_lib_init(ircd_log_cb, ircd_restart_cb, ircd_die_cb, !server_state_foreground, maxconnections, DNODE_HEAP_SIZE, FD_HEAP_SIZE);
 	rb_linebuf_init(LINEBUF_HEAP_SIZE);
 
@@ -660,7 +637,6 @@ main(int argc, char *argv[])
 	init_host_hash();
 	clear_hash_parse();
 	init_client();
-	initUser();
 	init_hook();
 	init_channels();
 	initclass();
@@ -760,12 +736,12 @@ main(int argc, char *argv[])
 	 * nick collisions.  what a stupid idea. set an event for the IO loop --fl
 	 */
 	rb_event_addish("try_connections", try_connections, NULL, STARTUP_CONNECTIONS_TIME);
-	rb_event_addonce("try_connections_startup", try_connections, NULL, 0);
-	rb_event_add("check_rehash", check_rehash, NULL, 1);
+	rb_event_addonce("try_connections_startup", try_connections, NULL, 2);
+	rb_event_add("check_rehash", check_rehash, NULL, 3);
 	rb_event_addish("reseed_srand", seed_random, NULL, 300); /* reseed every 10 minutes */
 
 	if(splitmode)
-		check_splitmode_ev = rb_event_add("check_splitmode", check_splitmode, NULL, 2);
+		check_splitmode_ev = rb_event_add("check_splitmode", check_splitmode, NULL, 5);
 
 	print_startup(getpid());
 

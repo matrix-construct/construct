@@ -155,7 +155,7 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 #ifdef RB_IPV6
 				 (type == HM_IPV6) ? AF_INET6 : 
 #endif
-				  AF_INET) : 0)))
+				  AF_INET) : 0, NULL)))
 	{
 		static char buf[HOSTLEN+USERLEN+2];
 
@@ -193,7 +193,8 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 	if(aconf && aconf->status & CONF_CLIENT)
 	{
 		sendto_one_numeric(source_p, RPL_STATSILINE, form_str(RPL_STATSILINE),
-				aconf->name, show_iline_prefix(source_p, aconf, aconf->user),
+				aconf->name, EmptyString(aconf->spasswd) ? "<NULL>" : aconf->spasswd,
+				show_iline_prefix(source_p, aconf, aconf->user),
 				aconf->host, aconf->port, aconf->className);
 		return 0;
 	}

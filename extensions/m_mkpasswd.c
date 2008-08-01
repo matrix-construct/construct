@@ -27,8 +27,6 @@
 
 #include <string.h>
 
-extern char *crypt();
-
 static int m_mkpasswd(struct Client *client_p, struct Client *source_p,
 		      int parc, const char *parv[]);
 static int mo_mkpasswd(struct Client *client_p, struct Client *source_p,
@@ -90,7 +88,7 @@ m_mkpasswd(struct Client *client_p, struct Client *source_p, int parc, const cha
 		sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS), me.name, parv[0], "MKPASSWD");
 	else
 		sendto_one_notice(source_p, ":Encryption for [%s]:  %s",
-			   parv[1], crypt(parv[1],
+			   parv[1], rb_crypt(parv[1],
 							    is_md5 ? make_md5_salt() :
 							    make_salt()));
 
@@ -132,7 +130,7 @@ mo_mkpasswd(struct Client *client_p, struct Client *source_p, int parc, const ch
 		sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS), me.name, parv[0], "MKPASSWD");
 	else
 		sendto_one_notice(source_p, ":Encryption for [%s]:  %s",
-			   parv[1], crypt(parv[1], is_md5 ? make_md5_salt() : make_salt()));
+			   parv[1], rb_crypt(parv[1], is_md5 ? make_md5_salt() : make_salt()));
 
 	return 0;
 }

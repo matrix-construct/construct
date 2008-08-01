@@ -1,9 +1,12 @@
 syntax: glob
 Makefile
+*~
 *.o
 *.so
 *.lo
 *.la
+*.orig
+*.log
 .deps
 .libs
 autom4te.cache
@@ -14,13 +17,17 @@ include/serno.h
 libratbox/include/libratbox_config.h
 libratbox/include/librb-config.h
 libratbox/include/stamp-h1
+libratbox/libratbox.pc
 libratbox/libtool
+scripts/*.tbz2
+scripts/*.tgz
 servlink/servlink
 src/ircd
 src/lex.yy.c
 src/version.c.last
 src/y.tab.h
 src/y.tab.c
+ssld/ssld
 tools/convertilines
 tools/convertklines
 tools/mkpasswd

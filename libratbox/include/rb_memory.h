@@ -21,7 +21,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: rb_memory.h 25022 2008-01-23 03:54:00Z androsyn $
+ *  $Id: rb_memory.h 25375 2008-05-16 15:19:51Z androsyn $
  */
 
 #ifndef RB_LIB_H
@@ -40,7 +40,7 @@ static inline void *
 rb_malloc(size_t size)
 {
 	void *ret = calloc(1, size);
-	if(unlikely(ret == NULL))
+	if(rb_unlikely(ret == NULL))
 		rb_outofmemory();
 	return (ret);
 }
@@ -50,7 +50,7 @@ rb_realloc(void *x, size_t y)
 {
 	void *ret = realloc(x, y);
 
-	if(unlikely(ret == NULL))
+	if(rb_unlikely(ret == NULL))
 		rb_outofmemory();
 	return (ret);
 }
@@ -59,7 +59,7 @@ static inline char *
 rb_strndup(const char *x, size_t y)
 {
 	char *ret = malloc(y);
-	if(unlikely(ret == NULL))
+	if(rb_unlikely(ret == NULL))
 		rb_outofmemory();
 	rb_strlcpy(ret, x, y);
 	return(ret);
@@ -69,7 +69,7 @@ static inline char *
 rb_strdup(const char *x)
 {
 	char *ret = malloc(strlen(x) + 1);
-	if(unlikely(ret == NULL))
+	if(rb_unlikely(ret == NULL))
 		rb_outofmemory();
 	strcpy(ret, x);
 	return(ret);
@@ -79,8 +79,9 @@ rb_strdup(const char *x)
 static inline void
 rb_free(void *ptr)
 {
-        if(likely(ptr != NULL))
+        if(rb_likely(ptr != NULL))
         	free(ptr);
 }
 
 #endif /* _I_MEMORY_H */
+

@@ -318,11 +318,7 @@ stats_connect(struct Client *source_p)
 
 		sendto_one_numeric(source_p, RPL_STATSCLINE, 
 				form_str(RPL_STATSCLINE),
-#ifndef HIDE_SERVERS_IPS
-				server_p->host,
-#else
 				"*@127.0.0.1", 
-#endif
 				buf, server_p->name,
 				server_p->port, server_p->class_name);
 	}
@@ -497,7 +493,7 @@ stats_auth (struct Client *source_p)
 	else if((ConfigFileEntry.stats_i_oper_only == 1) && !IsOper (source_p))
 	{
 		struct ConfItem *aconf;
-		char *name, *host, *pass, *user, *classname;
+		char *name, *host, *pass = "*", *user, *classname;
 		int port;
 
 		if(MyConnect (source_p))
@@ -505,18 +501,20 @@ stats_auth (struct Client *source_p)
 						      (struct sockaddr *)&source_p->localClient->ip,
 						      CONF_CLIENT,
 						      source_p->localClient->ip.ss_family,
-						      source_p->username);
+						      source_p->username, NULL);
 		else
 			aconf = find_conf_by_address (source_p->host, NULL, NULL, NULL, CONF_CLIENT,
-						      0, source_p->username);
+						      0, source_p->username, NULL);
 
 		if(aconf == NULL)
 			return;
 
 		get_printable_conf (aconf, &name, &host, &pass, &user, &port, &classname);
+		if(!EmptyString(aconf->spasswd))
+			pass = aconf->spasswd;
 
 		sendto_one_numeric(source_p, RPL_STATSILINE, form_str(RPL_STATSILINE),
-				   name, show_iline_prefix(source_p, aconf, user),
+				   name, pass, show_iline_prefix(source_p, aconf, user),
 				   host, port, classname);
 	}
 
@@ -545,10 +543,10 @@ stats_tklines(struct Client *source_p)
 						      (struct sockaddr *)&source_p->localClient->ip,
 						      CONF_KILL,
 						      source_p->localClient->ip.ss_family,
-						      source_p->username);
+						      source_p->username, NULL);
 		else
 			aconf = find_conf_by_address (source_p->host, NULL, NULL, NULL, CONF_KILL,
-						      0, source_p->username);
+						      0, source_p->username, NULL);
 
 		if(aconf == NULL)
 			return;
@@ -611,10 +609,10 @@ stats_klines(struct Client *source_p)
 						      (struct sockaddr *)&source_p->localClient->ip,
 						      CONF_KILL,
 						      source_p->localClient->ip.ss_family,
-						      source_p->username);
+						      source_p->username, NULL);
 		else
 			aconf = find_conf_by_address (source_p->host, NULL, NULL, NULL, CONF_KILL,
-						      0, source_p->username);
+						      0, source_p->username, NULL);
 
 		if(aconf == NULL)
 			return;
@@ -877,7 +875,7 @@ stats_tstats (struct Client *source_p)
 			   "T :accepts %u refused %u", sp.is_ac, sp.is_ref);
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			"T :rejected %u delaying %lu", 
-			sp.is_rej, rb_dlink_list_length(&delay_exit));
+			sp.is_rej, delay_exit_length());
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			"T :nicks being delayed %lu",
 			get_nd_count());
@@ -1394,7 +1392,7 @@ stats_servlinks (struct Client *source_p)
 
 		sendto_one(source_p, Sformat,
 			get_id(&me, source_p), RPL_STATSLINKINFO, get_id(source_p, source_p),
-			get_server_name(target_p, SHOW_IP),
+			target_p->name,
 			(int) rb_linebuf_len (&target_p->localClient->buf_sendq),
 			(int) target_p->localClient->sendM,
 			(int) target_p->localClient->sendK,
@@ -1548,7 +1546,7 @@ stats_l_client(struct Client *source_p, struct Client *target_p,
 	if(IsAnyServer(target_p))
 	{
 		sendto_one_numeric(source_p, RPL_STATSLINKINFO, Lformat,
-				get_server_name(target_p, SHOW_IP),
+				target_p->name,
 				(int) rb_linebuf_len(&target_p->localClient->buf_sendq),
 				(int) target_p->localClient->sendM,
 				(int) target_p->localClient->sendK,

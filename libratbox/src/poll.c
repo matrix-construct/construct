@@ -22,7 +22,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: poll.c 25038 2008-01-23 16:03:08Z androsyn $
+ *  $Id: poll.c 25375 2008-05-16 15:19:51Z androsyn $
  */
 #include <libratbox_config.h>
 #include <ratbox_lib.h>
@@ -81,7 +81,7 @@ rb_init_netio_poll(void)
 static void
 resize_pollarray(int fd)
 {
-	if(unlikely(fd >= pollfd_list.allocated))
+	if(rb_unlikely(fd >= pollfd_list.allocated))
 	{
 		int x, old_value = pollfd_list.allocated;
 		pollfd_list.allocated += 1024;

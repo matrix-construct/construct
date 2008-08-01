@@ -100,9 +100,16 @@ do_host_cloak_ip(const char *inbuf, char *outbuf)
 	char *tptr;
 	unsigned int accum = get_string_weighted_entropy(inbuf);
 	char buf[HOSTLEN];
+	int ipv6 = 0;
 
 	strncpy(buf, inbuf, HOSTLEN);
 	tptr = strrchr(buf, '.');
+
+	if (tptr == NULL)
+	{
+		tptr = strrchr(buf, ':');
+		ipv6 = 1;
+	}
 
 	if (tptr == NULL)
 	{
@@ -112,7 +119,14 @@ do_host_cloak_ip(const char *inbuf, char *outbuf)
 
 	*tptr++ = '\0';
 
-	snprintf(outbuf, HOSTLEN, "%s.%x", buf, accum);
+	if(ipv6)
+	{
+	    snprintf(outbuf, HOSTLEN, "%s:%x", buf, accum);
+	}
+	else
+	{
+	    snprintf(outbuf, HOSTLEN, "%s.%x", buf, accum);
+	}
 }
 
 static void

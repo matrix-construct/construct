@@ -263,16 +263,6 @@ apply_dline(struct Client *source_p, const char *dlhost, int tdline_time, char *
 		return 0;
 	}
 
-	/* Look for an oper reason */
-	if((oper_reason = strchr(reason, '|')) != NULL)
-	{
-		*oper_reason = '\0';
-		oper_reason++;
-
-		if(!EmptyString(oper_reason))
-			aconf->spasswd = rb_strdup(oper_reason);
-	}
-
 	if(ConfigFileEntry.non_redundant_klines)
 	{
 		if((aconf = find_dline((struct sockaddr *)&daddr, t)) != NULL)
@@ -301,6 +291,16 @@ apply_dline(struct Client *source_p, const char *dlhost, int tdline_time, char *
 	aconf = make_conf();
 	aconf->status = CONF_DLINE;
 	aconf->host = rb_strdup(dlhost);
+
+	/* Look for an oper reason */
+	if((oper_reason = strchr(reason, '|')) != NULL)
+	{
+		*oper_reason = '\0';
+		oper_reason++;
+
+		if(!EmptyString(oper_reason))
+			aconf->spasswd = rb_strdup(oper_reason);
+	}
 
 	if(tdline_time > 0)
 	{
@@ -339,7 +339,7 @@ apply_dline(struct Client *source_p, const char *dlhost, int tdline_time, char *
 	{
 		rb_snprintf(dlbuffer, sizeof(dlbuffer), "%s (%s)", reason, current_date);
 		aconf->passwd = rb_strdup(dlbuffer);
-		add_conf_by_address(aconf->host, CONF_DLINE, NULL, aconf);
+		add_conf_by_address(aconf->host, CONF_DLINE, NULL, NULL, aconf);
 		write_confitem(DLINE_TYPE, source_p, NULL, aconf->host, reason,
 			       oper_reason, current_date, 0);
 	}

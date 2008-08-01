@@ -106,11 +106,11 @@ m_error(struct Client *client_p, struct Client *source_p, int parc, const char *
 		if (hideit < 2)
 			sendto_realops_snomask(SNO_GENERAL, hideit ? L_ADMIN : (is_remote_connect(client_p) ? L_NETWIDE : L_ALL),
 					"ERROR :from %s -- %s",
-					get_server_name(client_p, HIDE_IP), para);
+					client_p->name, para);
 		if (hideit > 0)
 			sendto_realops_snomask(SNO_GENERAL, (hideit == 1 ? L_OPER : L_ALL) | (is_remote_connect(client_p) ? L_NETWIDE : L_ALL),
 					"ERROR :from %s -- <hidden>",
-					get_server_name(client_p, HIDE_IP));
+					client_p->name);
 	}
 
 	exit_client(client_p, source_p, source_p, "ERROR");
@@ -137,12 +137,12 @@ ms_error(struct Client *client_p, struct Client *source_p, int parc, const char 
 	if(client_p == source_p)
 	{
 		sendto_realops_snomask(SNO_GENERAL, hideit ? L_ADMIN : L_ALL, "ERROR :from %s -- %s",
-				     get_server_name(client_p, HIDE_IP), para);
+				     client_p->name, para);
 	}
 	else
 	{
 		sendto_realops_snomask(SNO_GENERAL, hideit ? L_ADMIN : L_ALL, "ERROR :from %s via %s -- %s",
-				     source_p->name, get_server_name(client_p, HIDE_IP), para);
+				     source_p->name, client_p->name, para);
 	}
 
 	return 0;

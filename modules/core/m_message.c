@@ -90,10 +90,10 @@ static int build_target_list(int p_or_n, const char *command,
 			     struct Client *client_p,
 			     struct Client *source_p, const char *nicks_channels, const char *text);
 
+static struct Channel *find_allowing_channel(struct Client *source_p, struct Client *target_p);
 static int flood_attack_client(int p_or_n, struct Client *source_p, struct Client *target_p);
 static int flood_attack_channel(int p_or_n, struct Client *source_p,
 				struct Channel *chptr, char *chname);
-static struct Client *find_userhost(const char *, const char *, int *);
 
 #define ENTITY_NONE    0
 #define ENTITY_CHANNEL 1
@@ -649,6 +649,8 @@ static void
 msg_client(int p_or_n, const char *command,
 	   struct Client *source_p, struct Client *target_p, const char *text)
 {
+	int do_floodcount = 0;
+
 	if(MyClient(source_p))
 	{
 		/* reset idle time for message only if its not to self 
@@ -656,12 +658,16 @@ msg_client(int p_or_n, const char *command,
 		if(p_or_n != NOTICE)
 			source_p->localClient->last = rb_current_time();
 
+		/* auto cprivmsg/cnotice */
+		do_floodcount = !IsOper(source_p) &&
+			!find_allowing_channel(source_p, target_p);
+
 		/* target change stuff, dont limit ctcp replies as that
 		 * would allow people to start filling up random users
 		 * targets just by ctcping them
 		 */
 		if((p_or_n != NOTICE || *text != '\001') &&
-		   ConfigFileEntry.target_change && !IsOper(source_p))
+		   ConfigFileEntry.target_change && do_floodcount)
 		{
 			if(!add_target(source_p, target_p))
 			{
@@ -704,7 +710,8 @@ msg_client(int p_or_n, const char *command,
 							form_str(ERR_NONONREG),
 							target_p->name);
 				/* Only so opers can watch for floods */
-				(void) flood_attack_client(p_or_n, source_p, target_p);
+				if (do_floodcount)
+					(void) flood_attack_client(p_or_n, source_p, target_p);
 			}
 			else
 			{
@@ -731,7 +738,8 @@ msg_client(int p_or_n, const char *command,
 					target_p->localClient->last_caller_id_time = rb_current_time();
 				}
 				/* Only so opers can watch for floods */
-				(void) flood_attack_client(p_or_n, source_p, target_p);
+				if (do_floodcount)
+					(void) flood_attack_client(p_or_n, source_p, target_p);
 			}
 		}
 		else
@@ -741,16 +749,31 @@ msg_client(int p_or_n, const char *command,
 			 * we dont give warnings.. we then check if theyre opered 
 			 * (to avoid flood warnings), lastly if theyre our client
 			 * and flooding    -- fl */
-			if(!MyClient(source_p) || IsOper(source_p) ||
+			if(!do_floodcount ||
 			   !flood_attack_client(p_or_n, source_p, target_p))
 				sendto_anywhere(target_p, source_p, command, ":%s", text);
 		}
 	}
-	else if(!MyClient(source_p) || IsOper(source_p) ||
+	else if(!do_floodcount ||
 		!flood_attack_client(p_or_n, source_p, target_p))
 		sendto_anywhere(target_p, source_p, command, ":%s", text);
 
 	return;
+}
+
+static struct Channel *
+find_allowing_channel(struct Client *source_p, struct Client *target_p)
+{
+	rb_dlink_node *ptr;
+	struct membership *msptr;
+
+	RB_DLINK_FOREACH(ptr, source_p->user->channel.head)
+	{
+		msptr = ptr->data;
+		if (is_chanop_voiced(msptr) && IsMember(target_p, msptr->chptr))
+			return msptr->chptr;
+	}
+	return NULL;
 }
 
 /*
@@ -767,33 +790,38 @@ flood_attack_client(int p_or_n, struct Client *source_p, struct Client *target_p
 {
 	int delta;
 
-	if(GlobalSetOptions.floodcount && MyConnect(target_p) && IsClient(source_p))
+	/* Services could get many messages legitimately and
+	 * can be messaged without rate limiting via aliases
+	 * and msg user@server.
+	 * -- jilles
+	 */
+	if(GlobalSetOptions.floodcount && IsClient(source_p) && source_p != target_p && !IsService(target_p))
 	{
-		if((target_p->localClient->first_received_message_time + 1) < rb_current_time())
+		if((target_p->first_received_message_time + 1) < rb_current_time())
 		{
-			delta = rb_current_time() - target_p->localClient->first_received_message_time;
-			target_p->localClient->received_number_of_privmsgs -= delta;
-			target_p->localClient->first_received_message_time = rb_current_time();
-			if(target_p->localClient->received_number_of_privmsgs <= 0)
+			delta = rb_current_time() - target_p->first_received_message_time;
+			target_p->received_number_of_privmsgs -= delta;
+			target_p->first_received_message_time = rb_current_time();
+			if(target_p->received_number_of_privmsgs <= 0)
 			{
-				target_p->localClient->received_number_of_privmsgs = 0;
-				target_p->localClient->flood_noticed = 0;
+				target_p->received_number_of_privmsgs = 0;
+				target_p->flood_noticed = 0;
 			}
 		}
 
-		if((target_p->localClient->received_number_of_privmsgs >=
-		    GlobalSetOptions.floodcount) || target_p->localClient->flood_noticed)
+		if((target_p->received_number_of_privmsgs >=
+		    GlobalSetOptions.floodcount) || target_p->flood_noticed)
 		{
-			if(target_p->localClient->flood_noticed == 0)
+			if(target_p->flood_noticed == 0)
 			{
 				sendto_realops_snomask(SNO_BOTS, L_NETWIDE,
 						     "Possible Flooder %s[%s@%s] on %s target: %s",
 						     source_p->name, source_p->username,
 						     source_p->orighost,
 						     source_p->servptr->name, target_p->name);
-				target_p->localClient->flood_noticed = 1;
+				target_p->flood_noticed = 1;
 				/* add a bit of penalty */
-				target_p->localClient->received_number_of_privmsgs += 2;
+				target_p->received_number_of_privmsgs += 2;
 			}
 			if(MyClient(source_p) && (p_or_n != NOTICE))
 				sendto_one(source_p,
@@ -802,7 +830,7 @@ flood_attack_client(int p_or_n, struct Client *source_p, struct Client *target_p
 			return 1;
 		}
 		else
-			target_p->localClient->received_number_of_privmsgs++;
+			target_p->received_number_of_privmsgs++;
 	}
 
 	return 0;
@@ -886,7 +914,6 @@ handle_special(int p_or_n, const char *command, struct Client *client_p,
 	       struct Client *source_p, const char *nick, const char *text)
 {
 	struct Client *target_p;
-	char *host;
 	char *server;
 	char *s;
 	int count;
@@ -924,39 +951,23 @@ handle_special(int p_or_n, const char *command, struct Client *client_p,
 			return;
 		}
 
-		*server = '\0';
-
-		if((host = strchr(nick, '%')) != NULL)
-			*host++ = '\0';
-
 		/* Check if someones msg'ing opers@our.server */
-		if(strcmp(nick, "opers") == 0)
+		if(strncmp(nick, "opers@", 6) == 0)
 		{
 			sendto_realops_snomask(SNO_GENERAL, L_ALL, "To opers: From: %s: %s",
 					     source_p->name, text);
 			return;
 		}
 
-		/*
-		 * Look for users which match the destination host
-		 * (no host == wildcard) and if one and one only is
-		 * found connected to me, deliver message!
+		/* This was not very useful except for bypassing certain
+		 * restrictions. Note that we still allow sending to
+		 * remote servers this way, for messaging pseudoservers
+		 * securely whether they have a service{} block or not.
+		 * -- jilles
 		 */
-		target_p = find_userhost(nick, host, &count);
-
-		if(target_p != NULL)
-		{
-			if(server != NULL)
-				*server = '@';
-			if(host != NULL)
-				*--host = '%';
-
-			if(count == 1)
-				sendto_anywhere(target_p, source_p, command, ":%s", text);
-			else
-				sendto_one(source_p, form_str(ERR_TOOMANYTARGETS),
-					   get_id(&me, source_p), get_id(source_p, source_p), nick);
-		}
+		sendto_one_numeric(source_p, ERR_NOSUCHNICK,
+				   form_str(ERR_NOSUCHNICK), nick);
+		return;
 	}
 
 	/*
@@ -1006,39 +1017,4 @@ handle_special(int p_or_n, const char *command, struct Client *client_p,
 				    "%s $%s :%s", command, nick, text);
 		return;
 	}
-}
-
-/*
- * find_userhost - find a user@host (server or user).
- * inputs       - user name to look for
- *              - host name to look for
- *		- pointer to count of number of matches found
- * outputs	- pointer to client if found
- *		- count is updated
- * side effects	- none
- *
- */
-static struct Client *
-find_userhost(const char *user, const char *host, int *count)
-{
-	struct Client *c2ptr;
-	struct Client *res = NULL;
-	char *u = LOCAL_COPY(user);
-	rb_dlink_node *ptr;
-	*count = 0;
-	if(collapse(u) != NULL)
-	{
-		RB_DLINK_FOREACH(ptr, global_client_list.head)
-		{
-			c2ptr = ptr->data;
-			if(!MyClient(c2ptr))	/* implies mine and an user */
-				continue;
-			if((!host || match(host, c2ptr->host)) && irccmp(u, c2ptr->username) == 0)
-			{
-				(*count)++;
-				res = c2ptr;
-			}
-		}
-	}
-	return (res);
 }

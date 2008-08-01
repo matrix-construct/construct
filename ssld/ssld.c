@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: ssld.c 25221 2008-04-09 22:12:16Z jilles $
+ *  $Id: ssld.c 25677 2008-07-06 04:21:42Z androsyn $
  */
 
 
@@ -35,44 +35,37 @@
 
 static void setup_signals(void);
 
-static inline rb_int32_t buf_to_int32(char *buf)
+static inline int32_t buf_to_int32(char *buf)
 {
-	rb_int32_t x;
-	x = *buf << 24;
-	x |= *(++buf) << 16;
-	x |= *(++buf) << 8;
-	x |= *(++buf);
+	int32_t x;
+	memcpy(&x, buf, sizeof(x));
 	return x;
 }
 
-static inline void int32_to_buf(char *buf, rb_int32_t x)
+static inline void int32_to_buf(char *buf, int32_t x)
 {
-	*(buf)   = x >> 24 & 0xFF;
-	*(++buf) = x >> 16 & 0xFF; 
-	*(++buf) = x >> 8 & 0xFF;
-	*(++buf) = x & 0xFF;
+	memcpy(buf, &x, sizeof(x));
 	return;
 }
 
-static inline rb_uint16_t buf_to_uint16(char *buf)
+static inline uint16_t buf_to_uint16(char *buf)
 {
-	rb_uint16_t x;
-	x = *(buf) << 8;
-	x |= *(++buf);
+	uint16_t x;
+	memcpy(&x, buf, sizeof(x));
 	return x;
 }
 
-static inline void uint16_to_buf(char *buf, rb_uint16_t x)
+static inline void uint16_to_buf(char *buf, uint16_t x)
 {
-	*(buf) = x >> 8 & 0xFF;
-	*(++buf) = x & 0xFF;
+	memcpy(buf, &x, sizeof(x));
 	return;
 }
  
 
-
 static char inbuf[READBUF_SIZE];
+#ifdef HAVE_LIBZ
 static char outbuf[READBUF_SIZE];
+#endif
 
 typedef struct _mod_ctl_buf
 {
@@ -111,7 +104,7 @@ typedef struct _conn
 	rawbuf_head_t *modbuf_out;
 	rawbuf_head_t *plainbuf_out;
 
-	rb_int32_t id;
+	int32_t id;
 
 	rb_fde_t *mod_fd;
 	rb_fde_t *plain_fd;
@@ -119,7 +112,7 @@ typedef struct _conn
 	unsigned long long mod_in;
 	unsigned long long plain_in;
 	unsigned long long plain_out;
-	rb_uint8_t flags;
+	uint8_t flags;
 	void *stream;
 } conn_t;
 
@@ -154,8 +147,12 @@ typedef struct _conn
 #define NO_WAIT 0x0
 #define WAIT_PLAIN 0x1
 
+#define HASH_WALK_SAFE(i, max, ptr, next, table) for(i = 0; i < max; i++) { RB_DLINK_FOREACH_SAFE(ptr, next, table[i].head)
+#define HASH_WALK_END }
 #define CONN_HASH_SIZE 2000
 #define connid_hash(x)	(&connid_hash_table[(x % CONN_HASH_SIZE)])
+
+
 
 static rb_dlink_list connid_hash_table[CONN_HASH_SIZE];
 static rb_dlink_list dead_list;
@@ -173,6 +170,9 @@ static int zlib_ok = 1;
 #else
 static int zlib_ok = 0;
 #endif
+
+
+#ifdef HAVE_LIBZ
 static void *
 ssld_alloc(void *unused, size_t count, size_t size)
 {
@@ -184,9 +184,10 @@ ssld_free(void *unused, void *ptr)
 {
 	rb_free(ptr);	
 }
+#endif
 
 static conn_t *
-conn_find_by_id(rb_int32_t id)
+conn_find_by_id(int32_t id)
 {
 	rb_dlink_node *ptr;
 	conn_t *conn;
@@ -201,7 +202,7 @@ conn_find_by_id(rb_int32_t id)
 }
 
 static void
-conn_add_id_hash(conn_t * conn, rb_int32_t id)
+conn_add_id_hash(conn_t * conn, int32_t id)
 {
 	conn->id = id;
 	rb_dlinkAdd(conn, &conn->node, connid_hash(id));
@@ -212,12 +213,14 @@ free_conn(conn_t * conn)
 {
 	rb_free_rawbuffer(conn->modbuf_out);
 	rb_free_rawbuffer(conn->plainbuf_out);
+#ifdef HAVE_LIBZ
 	if(IsZip(conn))
 	{
 		zlib_stream_t *stream = conn->stream;
 		inflateEnd(&stream->instream);
 		deflateEnd(&stream->outstream);		
 	}
+#endif
 	rb_free(conn);
 }
 
@@ -285,6 +288,30 @@ make_conn(mod_ctl_t *ctl, rb_fde_t * mod_fd, rb_fde_t * plain_fd)
 	rb_set_nb(mod_fd);
 	rb_set_nb(plain_fd);
 	return conn;
+}
+
+static void
+check_handshake_flood(void *unused)
+{
+	conn_t *conn;
+	rb_dlink_node *ptr, *next;
+	unsigned int count;
+	int i;
+	HASH_WALK_SAFE(i, CONN_HASH_SIZE, ptr, next, connid_hash_table)
+	{
+		conn = ptr->data;
+		if(!IsSSL(conn))
+			continue;
+				
+		count = rb_ssl_handshake_count(conn->mod_fd);
+		/* nothing needs to do this more than twice in ten seconds i don't think */
+		if(count > 2)
+			close_conn(conn, WAIT_PLAIN, "Handshake flooding");
+		else
+			rb_ssl_clear_handshake_count(conn->mod_fd);
+	} 
+	HASH_WALK_END
+
 }
 
 static void
@@ -620,6 +647,7 @@ ssl_process_accept_cb(rb_fde_t * F, int status, struct sockaddr *addr, rb_sockle
 		conn_plain_read_cb(conn->plain_fd, conn);
 		return;
 	}
+	/* ircd doesn't care about the reason for this */
 	close_conn(conn, NO_WAIT, 0);
 	return;
 }
@@ -632,10 +660,13 @@ ssl_process_connect_cb(rb_fde_t * F, int status, void *data)
 	{
 		conn_mod_read_cb(conn->mod_fd, conn);
 		conn_plain_read_cb(conn->plain_fd, conn);
-		return;
 	}
-	close_conn(conn, NO_WAIT, 0);
-	return;
+	else if(status == RB_ERR_TIMEOUT)
+		close_conn(conn, WAIT_PLAIN, "SSL handshake timed out");
+	else if(status == RB_ERROR_SSL)
+		close_conn(conn, WAIT_PLAIN, "%s", rb_get_ssl_strerror(conn->mod_fd));
+	else
+		close_conn(conn, WAIT_PLAIN, "SSL handshake failed");
 }
 
 
@@ -643,7 +674,7 @@ static void
 ssl_process_accept(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 {
 	conn_t *conn;
-	rb_int32_t id;
+	int32_t id;
 
 	conn = make_conn(ctl, ctlb->F[0], ctlb->F[1]);
 
@@ -668,7 +699,7 @@ static void
 ssl_process_connect(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 {
 	conn_t *conn;
-	rb_int32_t id;
+	int32_t id;
 	conn = make_conn(ctl, ctlb->F[0], ctlb->F[1]);
 
 	id = buf_to_int32(&ctlb->buf[1]);
@@ -693,7 +724,7 @@ process_stats(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 	char outstat[512];
 	conn_t *conn;
 	const char *odata;
-	rb_int32_t id;
+	int32_t id;
 
 	id = buf_to_int32(&ctlb->buf[1]);
 
@@ -729,13 +760,13 @@ zlib_send_zip_ready(mod_ctl_t *ctl, conn_t *conn)
 static void
 zlib_process(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 {
-	rb_uint8_t level;
+	uint8_t level;
 	size_t recvqlen;
-	size_t hdr = (sizeof(rb_uint8_t) * 2) + sizeof(rb_int32_t);
+	size_t hdr = (sizeof(uint8_t) * 2) + sizeof(int32_t);
 	void *recvq_start;
 	z_stream *instream, *outstream;
 	conn_t *conn;
-	rb_int32_t id;
+	int32_t id;
 
 	conn = make_conn(ctl, ctlb->F[0], ctlb->F[1]);
 	if(rb_get_type(conn->mod_fd) == RB_FD_UNKNOWN)
@@ -747,7 +778,7 @@ zlib_process(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 	id = buf_to_int32(&ctlb->buf[1]);
 	conn_add_id_hash(conn, id);
 
-	level = (rb_uint8_t) ctlb->buf[5];
+	level = (uint8_t) ctlb->buf[5];
 
 	recvqlen = ctlb->buflen - hdr;
 	recvq_start = &ctlb->buf[6];
@@ -824,7 +855,7 @@ send_nossl_support(mod_ctl_t *ctl, mod_ctl_buf_t *ctlb)
 {
 	static const char *nossl_cmd = "N";
 	conn_t *conn;
-	rb_int32_t id;
+	int32_t id;
 
 	if(ctlb != NULL)
 	{	
@@ -850,7 +881,7 @@ send_nozlib_support(mod_ctl_t *ctl, mod_ctl_buf_t *ctlb)
 {
 	static const char *nozlib_cmd = "z";
 	conn_t *conn;
-	rb_int32_t id;
+	int32_t id;
 	if(ctlb != NULL)
 	{
 		conn = make_conn(ctl, ctlb->F[0], ctlb->F[1]);
@@ -924,7 +955,7 @@ mod_process_cmd_recv(mod_ctl_t * ctl)
 #else
 		case 'Y':
 		case 'Z':
-			send_nozlib_support(ctl);
+			send_nozlib_support(ctl, ctl_buf);
 			break;
 			
 #endif
@@ -1031,7 +1062,7 @@ main(int argc, char **argv)
 	if(s_ctlfd == NULL || s_pipe == NULL)
 	{
 		fprintf(stderr, "This is ircd-ratbox ssld.  You know you aren't supposed to run me directly?\n");
-		fprintf(stderr, "You get an Id tag for this: $Id: ssld.c 25221 2008-04-09 22:12:16Z jilles $\n");
+		fprintf(stderr, "You get an Id tag for this: $Id: ssld.c 25677 2008-07-06 04:21:42Z androsyn $\n");
 		fprintf(stderr, "Have a nice life\n");
 		exit(1);
 	}
@@ -1070,6 +1101,7 @@ main(int argc, char **argv)
 	rb_set_nb(mod_ctl->F);
 	rb_set_nb(mod_ctl->F_pipe);
 	rb_event_addish("clean_dead_conns", clean_dead_conns, NULL, 10);
+	rb_event_add("check_handshake_flood", check_handshake_flood, NULL, 10);
 	read_pipe_ctl(mod_ctl->F_pipe, NULL);
 	mod_read_ctl(mod_ctl->F, mod_ctl);
 	if(!zlib_ok && !ssl_ok)

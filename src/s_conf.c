@@ -308,7 +308,8 @@ verify_access(struct Client *client_p, const char *username)
 		aconf = find_address_conf(client_p->host, client_p->sockhost, 
 					client_p->username, client_p->username,
 					(struct sockaddr *) &client_p->localClient->ip,
-					client_p->localClient->ip.ss_family);
+					client_p->localClient->ip.ss_family,
+					client_p->localClient->auth_user);
 	}
 	else
 	{
@@ -317,7 +318,8 @@ verify_access(struct Client *client_p, const char *username)
 		aconf = find_address_conf(client_p->host, client_p->sockhost,
 					non_ident, client_p->username,
 					(struct sockaddr *) &client_p->localClient->ip,
-					client_p->localClient->ip.ss_family);
+					client_p->localClient->ip.ss_family,
+					client_p->localClient->auth_user);
 	}
 
 	if(aconf == NULL)
@@ -818,7 +820,8 @@ set_default_conf(void)
         ConfigFileEntry.reject_after_count = 5;
 	ConfigFileEntry.reject_ban_time = 300;  
 	ConfigFileEntry.reject_duration = 120;
-	ConfigFileEntry.max_unknown_ip = 2;
+	ConfigFileEntry.throttle_count = 4;
+	ConfigFileEntry.throttle_duration = 60;
 
 	ServerInfo.default_max_clients = MAXCONNECTIONS;
 }
@@ -930,7 +933,7 @@ add_temp_kline(struct ConfItem *aconf)
 	}
 
 	aconf->flags |= CONF_FLAGS_TEMPORARY;
-	add_conf_by_address(aconf->host, CONF_KILL, aconf->user, aconf);
+	add_conf_by_address(aconf->host, CONF_KILL, aconf->user, NULL, aconf);
 }
 
 /* add_temp_dline()
@@ -964,7 +967,7 @@ add_temp_dline(struct ConfItem *aconf)
 	}
 
 	aconf->flags |= CONF_FLAGS_TEMPORARY;
-	add_conf_by_address(aconf->host, CONF_DLINE, aconf->user, aconf);
+	add_conf_by_address(aconf->host, CONF_DLINE, aconf->user, NULL, aconf);
 }
 
 /* expire_tkline()
@@ -1474,7 +1477,7 @@ conf_add_d_conf(struct ConfItem *aconf)
 	}
 	else
 	{
-		add_conf_by_address(aconf->host, CONF_DLINE, NULL, aconf);
+		add_conf_by_address(aconf->host, CONF_DLINE, NULL, NULL, aconf);
 	}
 }
 

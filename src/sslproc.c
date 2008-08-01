@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: sslproc.c 25179 2008-03-30 16:34:57Z androsyn $
+ *  $Id: sslproc.c 25677 2008-07-06 04:21:42Z androsyn $
  */
 
 #include <ratbox_lib.h>
@@ -64,7 +64,7 @@ struct _ssl_ctl
 	pid_t pid;
 	rb_dlink_list readq;
 	rb_dlink_list writeq;
-	rb_uint8_t dead;
+	uint8_t dead;
 };
 
 static void send_new_ssl_certs_one(ssl_ctl_t *ctl, const char *ssl_cert, const char *ssl_private_key, const char *ssl_dh_params);
@@ -73,38 +73,30 @@ static void send_init_prng(ssl_ctl_t *ctl, prng_seed_t seedtype, const char *pat
 
 static rb_dlink_list ssl_daemons;
 
-static inline rb_int32_t buf_to_int32(char *buf)
+static inline int32_t buf_to_int32(char *buf)
 {
-	rb_int32_t x;
-	x = *buf << 24;
-	x |= *(++buf) << 16;
-	x |= *(++buf) << 8;
-	x |= *(++buf);
+	int32_t x;
+	memcpy(&x, buf, sizeof(x));
 	return x;
 }
 
-static inline void int32_to_buf(char *buf, rb_int32_t x)
+static inline void int32_to_buf(char *buf, int32_t x)
 {
-	*(buf)   = x >> 24 & 0xFF;
-	*(++buf) = x >> 16 & 0xFF; 
-	*(++buf) = x >> 8 & 0xFF;
-	*(++buf) = x & 0xFF;
+	memcpy(buf, &x, sizeof(x));
 	return;
 }
 
 
-static inline rb_uint16_t buf_to_uint16(char *buf)
+static inline uint16_t buf_to_uint16(char *buf)
 {
-	rb_uint16_t x;
-	x = *(buf) << 8;
-	x |= *(++buf);
+	uint16_t x;
+	memcpy(&x, buf, sizeof(x));
 	return x;
 }
 
-static inline void uint16_to_buf(char *buf, rb_uint16_t x)
+static inline void uint16_to_buf(char *buf, uint16_t x)
 {
-	*(buf) = x >> 8 & 0xFF;
-	*(++buf) = x & 0xFF;
+	memcpy(buf, &x, sizeof(x));
 	return;
 }
 
@@ -349,7 +341,7 @@ ssl_process_dead_fd(ssl_ctl_t *ctl, ssl_ctl_buf_t *ctl_buf)
 {
 	struct Client *client_p;
 	char reason[256];
-	rb_int32_t fd;
+	int32_t fd;
 
 	if(ctl_buf->buflen < 6)
 		return; /* bogus message..drop it.. XXX should warn here */
@@ -360,7 +352,10 @@ ssl_process_dead_fd(ssl_ctl_t *ctl, ssl_ctl_buf_t *ctl_buf)
 	if(client_p == NULL)
 		return;
 	if(IsAnyServer(client_p))
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "ssld error for %s: %s", client_p->name, reason);
+	{
+		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) && !IsServer(client_p) ? L_NETWIDE : L_ALL, "ssld error for %s: %s", client_p->name, reason);
+		ilog(L_SERVER, "ssld error for %s: %s", log_client_name(client_p, SHOW_IP), reason);
+	}
 	exit_client(client_p, client_p, &me, reason);
 }
 
@@ -369,7 +364,7 @@ static void
 ssl_process_zip_ready(ssl_ctl_t *ctl, ssl_ctl_buf_t *ctl_buf)
 {
 	struct Client *client_p;
-	rb_int32_t fd;
+	int32_t fd;
 
 	if(ctl_buf->buflen < 5)
 		return; /* bogus message..drop it.. XXX should warn here */
@@ -577,7 +572,7 @@ send_init_prng(ssl_ctl_t *ctl, prng_seed_t seedtype, const char *path)
 {
 	size_t len;
 	const char *s;
-	rb_uint8_t seed = (rb_uint8_t) seedtype;
+	uint8_t seed = (uint8_t) seedtype;
 
 	if(path == NULL)
 		s = "";
@@ -617,7 +612,7 @@ send_new_ssl_certs(const char *ssl_cert, const char *ssl_private_key, const char
 
 
 ssl_ctl_t * 
-start_ssld_accept(rb_fde_t *sslF, rb_fde_t *plainF, rb_int32_t id)
+start_ssld_accept(rb_fde_t *sslF, rb_fde_t *plainF, int32_t id)
 {
 	rb_fde_t *F[2];
 	ssl_ctl_t *ctl;
@@ -634,7 +629,7 @@ start_ssld_accept(rb_fde_t *sslF, rb_fde_t *plainF, rb_int32_t id)
 }
 
 ssl_ctl_t *
-start_ssld_connect(rb_fde_t *sslF, rb_fde_t *plainF, rb_int32_t id)
+start_ssld_connect(rb_fde_t *sslF, rb_fde_t *plainF, int32_t id)
 {
 	rb_fde_t *F[2];
 	ssl_ctl_t *ctl;
@@ -677,8 +672,8 @@ void
 start_zlib_session(void *data)
 {
 	struct Client *server = (struct Client *)data;
-	rb_uint16_t recvqlen;
-	rb_uint8_t level;
+	uint16_t recvqlen;
+	uint8_t level;
 	void *xbuf;
 
 	rb_fde_t *F[2];
@@ -686,7 +681,7 @@ start_zlib_session(void *data)
 	char *buf;
 	void *recvq_start;
 
-	size_t hdr = (sizeof(rb_uint8_t) * 2) + sizeof(rb_int32_t);
+	size_t hdr = (sizeof(uint8_t) * 2) + sizeof(int32_t);
 	size_t len;
 	int cpylen, left;
 
@@ -746,20 +741,20 @@ collect_zipstats(void *unused)
 {
 	rb_dlink_node *ptr;
 	struct Client *target_p;
-	char buf[sizeof(rb_uint8_t) + sizeof(rb_int32_t) + HOSTLEN];
+	char buf[sizeof(uint8_t) + sizeof(int32_t) + HOSTLEN];
 	void *odata;
 	size_t len;
-	rb_int32_t id;
+	int32_t id;
 
 	buf[0] = 'S';
-	odata = buf + sizeof(rb_uint8_t) + sizeof(rb_int32_t);
+	odata = buf + sizeof(uint8_t) + sizeof(int32_t);
 
 	RB_DLINK_FOREACH(ptr, serv_list.head)
 	{
 		target_p = ptr->data;
 		if(IsCapable(target_p, CAP_ZIP))
 		{
-			len = sizeof(rb_uint8_t) + sizeof(rb_uint32_t);
+			len = sizeof(uint8_t) + sizeof(uint32_t);
 
 			id = rb_get_fd(target_p->localClient->F);
 			int32_to_buf(&buf[1], rb_get_fd(target_p->localClient->F));

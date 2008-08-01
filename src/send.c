@@ -73,7 +73,7 @@ _send_linebuf(struct Client *to, buf_head_t *linebuf)
 		{
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					     "Max SendQ limit exceeded for %s: %u > %lu",
-					     get_server_name(to, HIDE_IP),
+					     to->name,
 					     rb_linebuf_len(&to->localClient->buf_sendq), 
 					     get_sendq(to));
 

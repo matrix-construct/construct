@@ -549,8 +549,6 @@ connect "<replaceable>name</replaceable>" {
 	    <listitem>
 	      <para>The hostname or IP to connect to.</para>
 	      <note><para>
-		Charybdis uses solely DNS for all hostname/address lookups
-		(no <filename>/etc/hosts</filename> or anything else).
 		Furthermore, if a hostname is used, it must have an A or AAAA
 		record (no CNAME) and it must be the primary
 		hostname for inbound connections to work.
@@ -1093,6 +1091,28 @@ service {
 	  </varlistentry>
 	</variablelist>
       </sect2>
+    </sect1>
+    <sect1>
+      <title>Hostname resolution (DNS)</title>
+      <para>
+	Charybdis uses solely DNS for all hostname/address lookups
+	(no <filename>/etc/hosts</filename> or anything else).
+	The DNS servers are taken from <filename>/etc/resolv.conf</filename>.
+	If this file does not exist or no valid IP addresses are listed in it,
+	the local host (127.0.0.1) is used. (Note that the latter part
+	did not work in older versions of Charybdis.)
+      </para>
+      <para>
+	IPv4 as well as IPv6 DNS servers are supported, but it is not
+	possible to use both IPv4 and IPv6 in
+	<filename>/etc/resolv.conf</filename>.
+      </para>
+      <para>
+	For both security and performance reasons, it is recommended
+	that a caching nameserver such as BIND be run on the same machine
+	as Charybdis and that <filename>/etc/resolv.conf</filename> only
+	list 127.0.0.1.
+      </para>
     </sect1>
   </chapter>
 <!-- Keep this comment at the end of the file

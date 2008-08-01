@@ -81,13 +81,6 @@
  */
 #undef  IGNORE_BOGUS_TS
 
-/* HIDE_SERVERS_IPS
- *
- * If this is undefined, anyone can see a servers ip.  If it is defined,
- * noone can.
- */
-#define  HIDE_SERVERS_IPS
-
 /* HANGONGOODLINK and HANGONRETRYDELAY
  * Often net breaks for a short time and it's useful to try to
  * establishing the same connection again faster than CONNECTFREQUENCY

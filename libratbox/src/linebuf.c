@@ -21,7 +21,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: linebuf.c 25038 2008-01-23 16:03:08Z androsyn $
+ *  $Id: linebuf.c 25375 2008-05-16 15:19:51Z androsyn $
  */
 
 #include <libratbox_config.h>
@@ -547,13 +547,13 @@ rb_linebuf_putmsg(buf_head_t * bufhead, const char *format, va_list * va_args, c
 	bufline->terminated = 1;
 
 	/* Truncate the data if required */
-	if(unlikely(len > 510))
+	if(rb_unlikely(len > 510))
 	{
 		len = 510;
 		bufline->buf[len++] = '\r';
 		bufline->buf[len++] = '\n';
 	}
-	else if(unlikely(len == 0))
+	else if(rb_unlikely(len == 0))
 	{
 		bufline->buf[len++] = '\r';
 		bufline->buf[len++] = '\n';
@@ -593,19 +593,19 @@ rb_linebuf_putbuf(buf_head_t *bufhead, const char *buffer)
 	/* Create a new line */
 	bufline = rb_linebuf_new_line(bufhead);
 
-	if(unlikely(buffer != NULL))
+	if(rb_unlikely(buffer != NULL))
 		len = rb_strlcpy(bufline->buf, buffer, BUF_DATA_SIZE);
 
 	bufline->terminated = 1;
 
 	/* Truncate the data if required */
-	if(unlikely(len > 510))
+	if(rb_unlikely(len > 510))
 	{
 		len = 510;
 		bufline->buf[len++] = '\r';
 		bufline->buf[len++] = '\n';
 	}
-	else if(unlikely(len == 0))
+	else if(rb_unlikely(len == 0))
 	{
 		bufline->buf[len++] = '\r';
 		bufline->buf[len++] = '\n';
@@ -648,7 +648,7 @@ rb_linebuf_put(buf_head_t * bufhead, const char *format, ...)
 	/* Create a new line */
 	bufline = rb_linebuf_new_line(bufhead);
 
-	if(unlikely(format != NULL))
+	if(rb_unlikely(format != NULL))
 	{
 		va_start(args, format);
 		len = rb_vsnprintf(bufline->buf, BUF_DATA_SIZE, format, args);
@@ -658,13 +658,13 @@ rb_linebuf_put(buf_head_t * bufhead, const char *format, ...)
 	bufline->terminated = 1;
 
 	/* Truncate the data if required */
-	if(unlikely(len > 510))
+	if(rb_unlikely(len > 510))
 	{
 		len = 510;
 		bufline->buf[len++] = '\r';
 		bufline->buf[len++] = '\n';
 	}
-	else if(unlikely(len == 0))
+	else if(rb_unlikely(len == 0))
 	{
 		bufline->buf[len++] = '\r';
 		bufline->buf[len++] = '\n';

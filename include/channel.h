@@ -26,8 +26,6 @@
 
 #ifndef INCLUDED_channel_h
 #define INCLUDED_channel_h
-#include "config.h"		/* config settings */
-#include "ircd_defs.h"		/* buffer sizes */
 
 #define MODEBUFLEN      200
 
@@ -56,7 +54,6 @@ struct Channel
 	char *topic;
 	char *topic_info;
 	time_t topic_time;
-	time_t users_last;	/* when last user was in channel */
 	time_t last_knock;	/* don't allow knock to flood */
 
 	rb_dlink_list members;	/* channel members */
