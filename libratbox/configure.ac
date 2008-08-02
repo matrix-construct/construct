@@ -79,8 +79,7 @@ case "$host_os" in
 *interix*)
      CPPFLAGS="$CFLAGS -D_ALL_SOURCE -D_XOPEN_SOURCE=500"
      ;;
-*solaris*)
-*sunos*)
+*solaris*|*sunos*)
      CPPFLAGS="$CFLAGS -D_POSIX_PTHREAD_SEMANTICS -D_XPG4_2 -D__EXTENSIONS__"
      ;;
 *)
