@@ -49,7 +49,7 @@
      [?] +C (ctcp)
   [ ] privilege system for privilege groups, something like
      in .conf: helper { kill_global, rehash, kline_local }
-     in modules: privilege_add("kill_global"), has_privilege("kill_global") etc, should work the way dynamic cflags/umodes done
+     in modules: privilege_add("kill_global"), has_privilege(source_p, "kill_global") etc, should work the way dynamic cflags/umodes done
 [x] Remove glines entirely
 [/] Bug fixes
   [x] Compilation without zlib headers fails - fixed
