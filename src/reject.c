@@ -36,7 +36,6 @@
 #include "match.h"
 #include "hash.h"
 
-static rb_patricia_tree_t *global_tree;
 static rb_patricia_tree_t *reject_tree;
 static rb_dlink_list delay_exit;
 static rb_dlink_list reject_list;
