@@ -22,10 +22,9 @@
   [ ] acknowledgement message for SSL users like '* *** You are connected using SSL cipher "DHE RSA-AES 128 CBC-SHA"'
   [x] tool for generating ssl certificates and other stuff
   [x] gnutls backend for at least SSL connections (replacing libcrypto use in m_challenge would be nice too)
-[/] merge some stuff from ircd-seven directly (to be determined what)
+[x] merge some stuff from ircd-seven directly (to be determined what)
   [x] remote d:lines support
   [x] PASS selector:password for auth{} (useful for dynamic IPs)
-  [ ] +C (noctcp) channel/usermode
 [F] kline/xline/resv sync
 [F] make an ability of using bandb instead of .conf files as bans storage
 [x] drop non-TS6 (legacy protocol) support
@@ -36,10 +35,21 @@
    [x] some example modules
    [ ] think on how could we append privilege checking for simple chmode - like chm_staff, but additionaly limited (e. g. IsOperResv etc);
        possibly move the same code for all functions into separated one and make it extern?
+       another idea is too make that work with privilege groups, like "serveradmins" or "ircops"
   [ ] make nick/user/host validation functions/match tables able to work in separated modules,
       this will help us making support for native characters sets/slashes in host etc
   [ ] auth checker module
   [ ] resolver module
+  [ ] hooks
+   [ ] can_kick
+     which modules could we add in charybdis distro?
+   [ ] can_send_channel
+     [?] +C (ctcp)
+   [ ] can_send_user
+     [?] +C (ctcp)
+  [ ] privilege system for privilege groups, something like
+     in .conf: helper { kill_global, rehash, kline_local }
+     in modules: privilege_add("kill_global"), has_privilege(source_p, "kill_global") etc, should work the way dynamic cflags/umodes done
 [x] Remove glines entirely
 [/] Bug fixes
   [x] Compilation without zlib headers fails - fixed
