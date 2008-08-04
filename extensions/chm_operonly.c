@@ -28,7 +28,7 @@ _modinit(void)
 {
 	/* add the channel mode to the available slot */
 	chmode_table['O'].mode_type = find_cflag_slot();
-	chmode_table['O'].set_func = chm_simple;
+	chmode_table['O'].set_func = chm_staff;
 
 	construct_noparam_modes();
 
