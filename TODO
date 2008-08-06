@@ -29,6 +29,7 @@
 [F] make an ability of using bandb instead of .conf files as bans storage
 [x] drop non-TS6 (legacy protocol) support
 [F] Doxygen code documentation
+[?] Patch or core-feature - libguess on-fly any-charset-to-utf8 translation
 [/] module engine rework
   [/] more beautiful way of adding new channel modes by module
    [x] basic functionality

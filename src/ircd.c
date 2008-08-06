@@ -453,7 +453,7 @@ ircd_log_cb(const char *str)
 static void
 ircd_restart_cb(const char *str)
 {
-	ilog(L_MAIN, "libratbox has called the restart callback: %s", str);
+	inotice(L_MAIN, "libratbox has called the restart callback: %s", str);
 	restart(str);
 }
 
@@ -474,7 +474,7 @@ ircd_die_cb(const char *str)
 		inotice("libratbox has called the die callback..aborting: %s", str);
 	}
 	else
-		ilog(L_MAIN, "libratbox has called the die callback..aborting");
+		inotice(L_MAIN, "libratbox has called the die callback..aborting");
 
 	unlink(pidFileName);
 	exit(EXIT_FAILURE);
