@@ -447,12 +447,13 @@ setup_corefile(void)
 static void
 ircd_log_cb(const char *str)
 {
-	ilog(L_MAIN, "%s", str);
+	ilog(L_MAIN, "libratbox reports: %s", str);
 }
 
 static void
 ircd_restart_cb(const char *str)
 {
+	ilog(L_MAIN, "libratbox has called the restart callback: %s", str);
 	restart(str);
 }
 
@@ -469,9 +470,11 @@ ircd_die_cb(const char *str)
 	if(str != NULL)
 	{
 		/* Try to get the message out to currently logged in operators. */
-		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "Server panic! %s", str);
-		inotice("server panic: %s", str);
+		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "libratbox has called the die callback..aborting: %s", str);
+		inotice("libratbox has called the die callback..aborting: %s", str);
 	}
+	else
+		ilog(L_MAIN, "libratbox has called the die callback..aborting");
 
 	unlink(pidFileName);
 	exit(EXIT_FAILURE);
