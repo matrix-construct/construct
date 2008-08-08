@@ -234,7 +234,7 @@ start_ssldaemon(int count, const char *ssl_cert, const char *ssl_private_key, co
 
 	if(ssld_spin_count > 20 && (rb_current_time() - last_spin < 5))
 	{
-		ilog(L_MAIN, "ssld helper is spinning - will attempt to restart in 5 minutes");
+		ilog(L_MAIN, "ssld helper is spinning - will attempt to restart in 1 minute");
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "ssld helper is spinning - will attempt to restart in 1 minute");
 		rb_event_add("restart_ssld_event", restart_ssld_event, NULL, 60);
 		ssld_wait = 1;
