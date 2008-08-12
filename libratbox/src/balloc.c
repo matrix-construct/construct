@@ -567,7 +567,7 @@ rb_bh_gc(rb_bh * bh)
 			offset = (uintptr_t)b->elems;
 			for (i = 0; i < bh->elemsPerBlock; i++, offset += (uintptr_t)bh->elemSize)
 			{
-				rb_dlinkDelete(((rb_dlink_node *)(offset + offset_pad)), &bh->free_list);
+				rb_dlinkDelete(((rb_dlink_node *)offset), &bh->free_list);
 			}
 			rb_dlinkDelete(&b->node, &bh->block_list);
 			free_block(b->elems, b->alloc_size);
