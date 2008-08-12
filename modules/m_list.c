@@ -324,7 +324,7 @@ static void safelist_channel_named(struct Client *source_p, const char *name)
 		return;
 	}
 
-	if (ShowChannel(source_p, chptr))
+	if (!SecretChannel(chptr) || IsMember(source_p, chptr))
 		sendto_one(source_p, form_str(RPL_LIST), me.name, source_p->name, chptr->chname,
 			   rb_dlink_list_length(&chptr->members),
 			   chptr->topic == NULL ? "" : chptr->topic);
