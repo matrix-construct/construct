@@ -93,8 +93,7 @@ Feature Specific Requirements:
   Solaris 2.6/7/8
   OpenBSD 2.8
   NetBSD 1.4
-  Cygwin 1.3+ (static modules, no servlink)
-  OpenVMS/Alpha 7.2 (static modules, no servlink)
+  OpenVMS/Alpha 7.2 (static modules, no ssld)
 
 - Please read NEWS for information about what is in this release
 
