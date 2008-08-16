@@ -889,12 +889,6 @@ AC_DEFINE_UNQUOTED(NICKLEN, (${NICKLEN}+1), [Nickname length])
 shared_modules="yes"
 dnl Some first-stage sanity checks.
 if test "$shared_modules" = yes; then
-  	
-	if test "$CYGWIN" = yes; then
-		AC_MSG_WARN([disabling shared modules; Cygwin is at present unable to build them.])
-		shared_modules="no"
-	fi
-
 	dnl TenDRA's cc is called tcc too.
 	if test "$CC" = tcc -a "$TenDRA" = "no"; then
 		AC_MSG_WARN([disabling shared modules: Tiny C Compiler can't create PIC])
