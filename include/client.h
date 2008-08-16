@@ -400,16 +400,15 @@ struct exit_client_hook
 #define FLAGS_FLOODDONE    0x0100	/* flood grace period over / reported */
 #define FLAGS_NORMALEX     0x0400	/* Client exited normally */
 #define FLAGS_SENDQEX      0x0800	/* Sendq exceeded */
-#define FLAGS_SERVLINK     0x10000	/* servlink has servlink process */
-#define FLAGS_MARK	   0x20000	/* marked client */
-#define FLAGS_HIDDEN       0x40000	/* hidden server */
-#define FLAGS_EOB          0x80000	/* EOB */
-#define FLAGS_MYCONNECT	   0x100000	/* MyConnect */
-#define FLAGS_IOERROR      0x200000	/* IO error */
-#define FLAGS_SERVICE	   0x400000	/* network service */
-#define FLAGS_TGCHANGE     0x800000	/* we're allowed to clear something */
-#define FLAGS_DYNSPOOF     0x1000000	/* dynamic spoof, only opers see ip */
-#define FLAGS_EXUNKNOWN	   0x2000000	/* too many unknowns exit.. */
+#define FLAGS_MARK	   0x10000	/* marked client */
+#define FLAGS_HIDDEN       0x20000	/* hidden server */
+#define FLAGS_EOB          0x40000	/* EOB */
+#define FLAGS_MYCONNECT	   0x80000	/* MyConnect */
+#define FLAGS_IOERROR      0x100000	/* IO error */
+#define FLAGS_SERVICE	   0x200000	/* network service */
+#define FLAGS_TGCHANGE     0x400000	/* we're allowed to clear something */
+#define FLAGS_DYNSPOOF     0x800000	/* dynamic spoof, only opers see ip */
+#define FLAGS_EXUNKNOWN	   0x1000000	/* too many unknowns exit.. */
 
 /* flags for local clients, this needs stuff moved from above to here at some point */
 #define LFLAGS_SSL		0x00000001
