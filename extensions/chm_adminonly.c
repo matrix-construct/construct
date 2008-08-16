@@ -44,7 +44,7 @@ h_can_join(hook_data_channel *data)
 	struct Client *source_p = data->client;
 	struct Channel *chptr = data->chptr;
 
-	if((chptr->mode.mode & chmode_flags['A']) && !IsOperAdmin(source_p)) {
+	if((chptr->mode.mode & chmode_flags['A']) && !IsAdmin(source_p)) {
 		sendto_one_numeric(source_p, 519, "%s :Cannot join channel (+A) - you are not an IRC server administrator", chptr->chname);
 		data->approved = ERR_CUSTOM;
 	}
