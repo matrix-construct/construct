@@ -637,6 +637,8 @@ main(int argc, char *argv[])
 	} else
 		rb_init_prng(NULL, RB_PRNG_DEFAULT);
 
+	seed_random(NULL);
+
 	init_main_logfile();
 	newconf_init();
 	init_s_conf();
