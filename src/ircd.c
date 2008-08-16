@@ -67,8 +67,6 @@
 #include "sslproc.h"
 #include "chmode.h"
 
-/* XXX fix egd!!! */
-
 /* /quote set variables */
 struct SetOptions GlobalSetOptions;
 
@@ -632,6 +630,12 @@ main(int argc, char *argv[])
 	/* Init the event subsystem */
 	rb_lib_init(ircd_log_cb, ircd_restart_cb, ircd_die_cb, !server_state_foreground, maxconnections, DNODE_HEAP_SIZE, FD_HEAP_SIZE);
 	rb_linebuf_init(LINEBUF_HEAP_SIZE);
+
+	if(ConfigFileEntry.use_egd && (ConfigFileEntry.egdpool_path != NULL))
+	{
+		rb_init_prng(ConfigFileEntry.egdpool_path, RB_PRNG_EGD);
+	} else
+		rb_init_prng(NULL, RB_PRNG_DEFAULT);
 
 	init_main_logfile();
 	newconf_init();
