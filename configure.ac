@@ -81,7 +81,7 @@ esac
 
 fi
 
-AC_MSG_CHECKING([uname -s for Cygwin, Solaris, AIX or HPUX])
+AC_MSG_CHECKING([uname -s for Solaris, AIX or HPUX])
 OSNAME=`uname -s`
 case "$OSNAME" in
         HP-UX*)
@@ -95,10 +95,6 @@ case "$OSNAME" in
 		else
 			AC_MSG_RESULT(already using newer HPUX)
 		fi
-	;;
-	CYGWIN*)
-		AC_MSG_RESULT(Cygwin)
-		CYGWIN=yes
 	;;
 	SunOS*)
 		AC_MSG_RESULT(SunOS or Solaris)
