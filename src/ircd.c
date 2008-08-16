@@ -188,7 +188,7 @@ init_sys(void)
 		if(maxconnections <= MAX_BUFFER)
 		{
 			fprintf(stderr, "ERROR: Shell FD limits are too low.\n");
-			fprintf(stderr, "ERROR: ircd-ratbox reserves %d FDs, shell limits must be above this\n", MAX_BUFFER);
+			fprintf(stderr, "ERROR: charybdis reserves %d FDs, shell limits must be above this\n", MAX_BUFFER);
 			exit(EXIT_FAILURE);
 		}
 		return;
