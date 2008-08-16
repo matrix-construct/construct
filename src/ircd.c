@@ -67,6 +67,8 @@
 #include "sslproc.h"
 #include "chmode.h"
 
+/* XXX fix egd!!! */
+
 /* /quote set variables */
 struct SetOptions GlobalSetOptions;
 
