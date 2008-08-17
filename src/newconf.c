@@ -487,13 +487,9 @@ conf_set_privset_privs(void *data)
 
 			if (!set)
 			{
-				conf_report_error("Warning -- unknown parent privilege set %s for %s; ignored.", yy_privset_extends, conf_cur_block_name);
+				conf_report_error("Warning -- unknown parent privilege set %s for %s; assuming defaults", yy_privset_extends, conf_cur_block_name);
 
-				rb_free(yy_privset_extends);
-				rb_free(privs);
-
-				yy_privset_extends = NULL;
-				return;
+				set = privilegeset_get("default");
 			}
 
 			privilegeset_extend(set, conf_cur_block_name != NULL ? conf_cur_block_name : "<unknown>", privs, 0);
@@ -634,6 +630,9 @@ static void
 conf_set_oper_privset(void *data)
 {
 	yy_oper->privset = privilegeset_get((char *) data);
+
+	if (!yy_oper->privset)
+		yy_oper->privset = privilegeset_get("default");
 }
 
 static void
