@@ -1250,6 +1250,7 @@ oper_up(struct Client *source_p, struct oper_conf *oper_p)
 
 	source_p->flags2 |= oper_p->flags;
 	source_p->localClient->opername = rb_strdup(oper_p->name);
+	source_p->localClient->privset = privilegeset_ref(oper_p->privset);
 
 	rb_dlinkAddAlloc(source_p, &local_oper_list);
 	rb_dlinkAddAlloc(source_p, &oper_list);

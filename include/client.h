@@ -40,6 +40,7 @@
 #include "snomask.h"
 #include "match.h"
 #include "ircd.h"
+#include "privilege.h"
 
 /* other structs */
 struct Blacklist;
@@ -281,6 +282,8 @@ struct LocalUser
 	struct ZipStats *zipstats;		/* zipstats */
 	uint16_t cork_count;			/* used for corking/uncorking connections */
 	struct ev_entry *event;			/* used for associated events */
+
+	struct PrivilegeSet *privset;		/* privset... */
 };
 
 struct PreClient
