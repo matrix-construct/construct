@@ -581,6 +581,7 @@ conf_end_oper(struct TopConf *tc)
 		yy_tmpoper->flags = yy_oper->flags;
 		yy_tmpoper->umodes = yy_oper->umodes;
 		yy_tmpoper->snomask = yy_oper->snomask;
+		yy_tmpoper->privset = yy_oper->privset;
 
 #ifdef HAVE_LIBCRYPTO
 		if(yy_oper->rsa_pubkey_file)
@@ -627,6 +628,12 @@ conf_set_oper_flags(void *data)
 	conf_parm_t *args = data;
 
 	set_modes_from_table(&yy_oper->flags, "flag", oper_table, args);
+}
+
+static void
+conf_set_oper_privset(void *data)
+{
+	yy_oper->privset = privilegeset_get((char *) data);
 }
 
 static void
@@ -2027,6 +2034,7 @@ static struct ConfEntry conf_operator_table[] =
 	{ "rsa_public_key_file",  CF_QSTRING, conf_set_oper_rsa_public_key_file, 0, NULL },
 	{ "flags",	CF_STRING | CF_FLIST, conf_set_oper_flags,	0, NULL },
 	{ "umodes",	CF_STRING | CF_FLIST, conf_set_oper_umodes,	0, NULL },
+	{ "privset",	CF_QSTRING, conf_set_oper_privset,	0, NULL },
 	{ "snomask",    CF_QSTRING, conf_set_oper_snomask,      0, NULL },
 	{ "user",	CF_QSTRING, conf_set_oper_user,		0, NULL },
 	{ "password",	CF_QSTRING, conf_set_oper_password,	0, NULL },

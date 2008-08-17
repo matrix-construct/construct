@@ -1276,7 +1276,8 @@ oper_up(struct Client *source_p, struct oper_conf *oper_p)
 	sendto_one_numeric(source_p, RPL_SNOMASK, form_str(RPL_SNOMASK),
 		   construct_snobuf(source_p->snomask));
 	sendto_one(source_p, form_str(RPL_YOUREOPER), me.name, source_p->name);
-	sendto_one_notice(source_p, ":*** Oper privs are %s", get_oper_privs(oper_p->flags));
+	sendto_one_notice(source_p, ":*** Oper privilege set is %s", oper_p->privset->name);
+	sendto_one_notice(source_p, ":*** Oper privs are %s", oper_p->privset->privs);
 	send_oper_motd(source_p);
 
 	return (1);
