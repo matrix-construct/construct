@@ -68,7 +68,7 @@ privilegeset_extend(struct PrivilegeSet *parent, const char *name, const char *p
 	set->name = rb_strdup(name);
 	set->flags = flags;
 	set->privs = rb_malloc(strlen(parent->privs) + 1 + strlen(privs) + 1);
-	strcpy(parent->privs, set->privs);
+	strcpy(set->privs, parent->privs);
 	strcat(set->privs, " ");
 	strcat(set->privs, privs);
 
