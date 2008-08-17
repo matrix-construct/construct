@@ -19,7 +19,7 @@ generation=`expr $generation + 1`
 
 uname=`uname -a`
 
-creation=`date | \
+creation=`LC_ALL=C date | \
 awk '{if (NF == 6) \
          { print $1 " "  $2 " " $3 " "  $6 " at " $4 " " $5 } \
 else \
