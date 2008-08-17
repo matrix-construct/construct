@@ -167,24 +167,25 @@ extern void cluster_generic(struct Client *, const char *, int cltype,
 
 #define IsOperConfEncrypted(x)	((x)->flags & OPER_ENCRYPTED)
 
-#define IsOperGlobalKill(x)     ((x)->flags2 & OPER_GLOBKILL)
-#define IsOperLocalKill(x)      ((x)->flags2 & OPER_LOCKILL)
-#define IsOperRemote(x)         ((x)->flags2 & OPER_REMOTE)
-#define IsOperUnkline(x)        ((x)->flags2 & OPER_UNKLINE)
-#define IsOperN(x)              ((x)->flags2 & OPER_NICKS)
-#define IsOperK(x)              ((x)->flags2 & OPER_KLINE)
-#define IsOperXline(x)          ((x)->flags2 & OPER_XLINE)
-#define IsOperResv(x)           ((x)->flags2 & OPER_RESV)
-#define IsOperDie(x)            ((x)->flags2 & OPER_DIE)
-#define IsOperRehash(x)         ((x)->flags2 & OPER_REHASH)
-#define IsOperHiddenAdmin(x)    ((x)->flags2 & OPER_HADMIN)
-#define IsOperAdmin(x)          (((x)->flags2 & OPER_ADMIN) || \
-					((x)->flags2 & OPER_HADMIN))
-#define IsOperOperwall(x)       ((x)->flags2 & OPER_OPERWALL)
-#define IsOperSpy(x)            ((x)->flags2 & OPER_SPY)
-#define IsOperInvis(x)          ((x)->flags2 & OPER_INVIS)
-#define IsOperRemoteBan(x)	((x)->flags2 & OPER_REMOTEBAN)
-#define IsOperMassNotice(x)	((x)->flags2 & OPER_MASSNOTICE)
+#define HasPrivilege(x, y)	(privilegeset_in_set((x)->localClient->privset, (y)))
+
+#define IsOperGlobalKill(x)     (HasPrivilege((x), "oper:global_kill"))
+#define IsOperLocalKill(x)      (HasPrivilege((x), "oper:local_kill"))
+#define IsOperRemote(x)         (HasPrivilege((x), "oper:routing"))
+#define IsOperUnkline(x)        (HasPrivilege((x), "oper:unkline"))
+#define IsOperN(x)              (HasPrivilege((x), "snomask:nick_changes"))
+#define IsOperK(x)              (HasPrivilege((x), "oper:kline"))
+#define IsOperXline(x)          (HasPrivilege((x), "oper:xline"))
+#define IsOperResv(x)           (HasPrivilege((x), "oper:resv"))
+#define IsOperDie(x)            (HasPrivilege((x), "oper:die"))
+#define IsOperRehash(x)         (HasPrivilege((x), "oper:rehash"))
+#define IsOperHiddenAdmin(x)    (HasPrivilege((x), "oper:hidden_admin"))
+#define IsOperAdmin(x)          (HasPrivilege((x), "oper:admin") || HasPrivilege((x), "oper:hidden_admin"))
+#define IsOperOperwall(x)       (HasPrivilege((x), "oper:operwall"))
+#define IsOperSpy(x)            (HasPrivilege((x), "oper:spy"))
+#define IsOperInvis(x)          (HasPrivilege((x), "oper:hidden"))
+#define IsOperRemoteBan(x)	(HasPrivilege((x), "oper:remoteban"))
+#define IsOperMassNotice(x)	(HasPrivilege((x), "oper:mass_notice"))
 
 extern struct oper_conf *make_oper_conf(void);
 extern void free_oper_conf(struct oper_conf *);
