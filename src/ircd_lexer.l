@@ -91,7 +91,7 @@ ws        [ \t]*
 digit     [0-9]
 comment   #.*
 qstring   \"[^\"\n]*[\"\n]
-string    [a-zA-Z_\~][a-zA-Z0-9_]*
+string    [a-zA-Z_\~\:][a-zA-Z0-9_\:]*
 include   \.include{ws}(\<.*\>|\".*\")
 
 %%
