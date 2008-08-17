@@ -36,6 +36,7 @@
 #define INCLUDED_s_newconf_h
 
 #include "setup.h"
+#include "privilege.h"
 
 #ifdef HAVE_LIBCRYPTO
 #include <openssl/rsa.h>
@@ -119,6 +120,8 @@ struct oper_conf
 	int umodes;
 
 	unsigned int snomask;
+
+	struct PrivilegeSet *privset;
 
 #ifdef HAVE_LIBCRYPTO
 	char *rsa_pubkey_file;
