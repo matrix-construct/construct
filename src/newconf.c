@@ -28,6 +28,7 @@
 #include "snomask.h"
 #include "blacklist.h"
 #include "sslproc.h"
+#include "privilege.h"
 
 #define CF_TYPE(x) ((x) & CF_MTYPE)
 
@@ -53,6 +54,7 @@ static struct alias_entry *yy_alias = NULL;
 
 static char *yy_blacklist_host = NULL;
 static char *yy_blacklist_reason = NULL;
+static char *yy_privset_extends = NULL;
 
 static const char *
 conf_strtype(int type)
@@ -445,6 +447,64 @@ set_modes_from_table(int *modes, const char *whatis, struct mode_table *tab, con
 		}
 		else
 			*modes = 0;
+	}
+}
+
+static void
+conf_set_privset_extends(void *data)
+{
+	yy_privset_extends = rb_strdup((char *) data);
+}
+
+static void
+conf_set_privset_privs(void *data)
+{
+	char *privs = NULL;
+	conf_parm_t *args = data;
+
+	for (; args; args = args->next)
+	{
+		if (privs == NULL)
+			privs = rb_strdup(args->v.string);
+		else
+		{
+			char *privs_old = privs;
+
+			privs = rb_malloc(strlen(privs_old) + 1 + strlen(args->v.string) + 1);
+			strcpy(privs_old, privs);
+			strcat(privs, " ");
+			strcat(privs, args->v.string);
+
+			rb_free(privs_old);
+		}
+	}
+
+	if (privs)
+	{
+		if (yy_privset_extends)
+		{
+			struct PrivilegeSet *set = privilegeset_get(yy_privset_extends);
+
+			if (!set)
+			{
+				conf_report_error("Warning -- unknown parent privilege set %s for %s; ignored.", yy_privset_extends, conf_cur_block_name);
+
+				rb_free(yy_privset_extends);
+				rb_free(privs);
+
+				yy_privset_extends = NULL;
+				return;
+			}
+
+			privilegeset_extend(set, conf_cur_block_name != NULL ? conf_cur_block_name : "<unknown>", privs, 0);
+
+			rb_free(yy_privset_extends);
+			yy_privset_extends = NULL;
+		}
+		else
+			privilegeset_set_new(conf_cur_block_name != NULL ? conf_cur_block_name : "<unknown>", privs, 0);
+
+		rb_free(privs);
 	}
 }
 
@@ -1973,6 +2033,13 @@ static struct ConfEntry conf_operator_table[] =
 	{ "\0",	0, NULL, 0, NULL }
 };
 
+static struct ConfEntry conf_privset_table[] =
+{
+	{ "extends",	CF_QSTRING,		conf_set_privset_extends,	0, NULL },
+	{ "privs",	CF_STRING | CF_FLIST,	conf_set_privset_privs,		0, NULL },
+	{ "\0", 0, NULL, 0, NULL }
+};
+
 static struct ConfEntry conf_class_table[] =
 {
 	{ "ping_time", 		CF_TIME, conf_set_class_ping_time,		0, NULL },
@@ -2134,6 +2201,7 @@ newconf_init()
 	add_top_conf("log", NULL, NULL, conf_log_table);
 	add_top_conf("operator", conf_begin_oper, conf_end_oper, conf_operator_table);
 	add_top_conf("class", conf_begin_class, conf_end_class, conf_class_table);
+	add_top_conf("privset", NULL, NULL, conf_privset_table);
 
 	add_top_conf("listen", conf_begin_listen, conf_end_listen, NULL);
 	add_conf_item("listen", "port", CF_INT | CF_FLIST, conf_set_listen_port);
