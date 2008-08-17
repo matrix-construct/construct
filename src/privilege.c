@@ -72,6 +72,8 @@ privilegeset_extend(struct PrivilegeSet *parent, const char *name, const char *p
 	strcat(set->privs, " ");
 	strcat(set->privs, privs);
 
+	rb_dlinkAdd(set, &set->node, &privilegeset_list);
+
 	return set;
 }
 
