@@ -674,7 +674,7 @@ stats_oper(struct Client *source_p)
 		sendto_one_numeric(source_p, RPL_STATSOLINE, 
 				form_str(RPL_STATSOLINE),
 				oper_p->username, oper_p->host, oper_p->name,
-				IsOper(source_p) ? get_oper_privs(oper_p->flags) : "0", "-1");
+				IsOper(source_p) ? oper_p->privset->name : "0", "-1");
 	}
 }
 
