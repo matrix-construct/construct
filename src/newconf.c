@@ -471,7 +471,7 @@ conf_set_privset_privs(void *data)
 			char *privs_old = privs;
 
 			privs = rb_malloc(strlen(privs_old) + 1 + strlen(args->v.string) + 1);
-			strcpy(privs_old, privs);
+			strcpy(privs, privs_old);
 			strcat(privs, " ");
 			strcat(privs, args->v.string);
 
