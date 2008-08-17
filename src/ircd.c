@@ -66,6 +66,7 @@
 #include "serno.h"
 #include "sslproc.h"
 #include "chmode.h"
+#include "privilege.h"
 
 /* /quote set variables */
 struct SetOptions GlobalSetOptions;
@@ -662,6 +663,7 @@ main(int argc, char *argv[])
 #endif
 	init_auth();		/* Initialise the auth code */
 	init_resolver();	/* Needs to be setup before the io loop */
+	privilegeset_set_new("default", "", 0);
 
 	if (testing_conf)
 		fprintf(stderr, "\nBeginning config test\n");
