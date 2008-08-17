@@ -134,7 +134,6 @@ struct config_file_entry
 	const char *xlinefile;
 	const char *resvfile;
 
-	char *servlink_path;
 	char *egdpool_path;
 
 	char *default_operstring;
