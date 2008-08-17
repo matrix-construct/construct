@@ -95,12 +95,14 @@ privilegeset_get(const char *name)
 	return NULL;
 }
 
-void
+struct PrivilegeSet *
 privilegeset_ref(struct PrivilegeSet *set)
 {
 	s_assert(set != NULL);
 
 	set->refs++;
+
+	return set;
 }
 
 void
