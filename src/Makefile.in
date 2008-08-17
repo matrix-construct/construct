@@ -78,6 +78,7 @@ SRCS =                          \
   numeric.c                     \
   packet.c                      \
   parse.c                       \
+  privilege.c			\
   res.c				\
   reslib.c			\
   reject.c			\
