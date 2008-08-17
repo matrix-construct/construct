@@ -40,6 +40,7 @@ struct PrivilegeSet {
 
 int privilegeset_in_set(struct PrivilegeSet *set, const char *priv);
 struct PrivilegeSet *privilegeset_set_new(const char *name, const char *privs, PrivilegeFlags flags);
+struct PrivilegeSet *privilegeset_extend(struct PrivilegeSet *parent, const char *name, const char *privs, PrivilegeFlags flags);
 struct PrivilegeSet *privilegeset_get(const char *name);
 void privilegeset_ref(struct PrivilegeSet *set);
 void privilegeset_unref(struct PrivilegeSet *set);

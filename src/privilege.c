@@ -40,6 +40,8 @@ privilegeset_set_new(const char *name, const char *privs, PrivilegeFlags flags)
 {
 	struct PrivilegeSet *set;
 
+	s_assert(privilegeset_get(name) == NULL);
+
 	set = rb_malloc(sizeof(struct PrivilegeSet));
 	set->refs = 1;
 	set->name = rb_strdup(name);
@@ -47,6 +49,28 @@ privilegeset_set_new(const char *name, const char *privs, PrivilegeFlags flags)
 	set->flags = flags;
 
 	rb_dlinkAdd(set, &set->node, &privilegeset_list);
+
+	return set;
+}
+
+struct PrivilegeSet *
+privilegeset_extend(struct PrivilegeSet *parent, const char *name, const char *privs, PrivilegeFlags flags)
+{
+	struct PrivilegeSet *set;
+
+	s_assert(parent != NULL);
+	s_assert(name != NULL);
+	s_assert(privs != NULL);
+	s_assert(privilegeset_get(name) == NULL);
+
+	set = rb_malloc(sizeof(struct PrivilegeSet));
+	set->refs = 1;
+	set->name = rb_strdup(name);
+	set->flags = flags;
+	set->privs = rb_malloc(strlen(parent->privs) + 1 + strlen(privs) + 1);
+	strcpy(parent->privs, set->privs);
+	strcat(set->privs, " ");
+	strcat(set->privs, privs);
 
 	return set;
 }
