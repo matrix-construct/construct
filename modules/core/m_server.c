@@ -292,12 +292,6 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 		 * doesnt exist, although ircd can handle it, its not a realistic
 		 * solution.. --fl_ 
 		 */
-		/* It is behind a host-masked server. Completely ignore the
-		 * server message(don't propagate or we will delink from whoever
-		 * we propagate to). -A1kmm */
-		if(irccmp(target_p->name, name) && target_p->from == client_p)
-			return 0;
-
 		sendto_one(client_p, "ERROR :Server %s already exists", name);
 
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
