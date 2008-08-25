@@ -1076,7 +1076,6 @@ main(int argc, char **argv)
 			close(x);
 	}
 
-#if 0
 	x = open("/dev/null", O_RDWR);
 	if(x >= 0)
 	{
@@ -1089,7 +1088,7 @@ main(int argc, char **argv)
 		if(x > 2)
 			close(x);
 	}
-#endif
+
 	setup_signals();
 	rb_lib_init(NULL, NULL, NULL, 0, maxfd, 1024, 4096);
 	rb_init_rawbuffers(1024);
