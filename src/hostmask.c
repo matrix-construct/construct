@@ -446,7 +446,6 @@ find_exact_conf_by_address(const char *address, int type, const char *username)
 
 	if(address == NULL)
 		address = "/NOMATCH!/";
-	arec = rb_malloc(sizeof(struct AddressRec));
 	masktype = parse_netmask(address, (struct sockaddr *)&addr, &bits);
 #ifdef RB_IPV6
 	if(masktype == HM_IPV6)
