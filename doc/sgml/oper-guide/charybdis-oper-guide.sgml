@@ -5,6 +5,7 @@
 <!ENTITY cmodes SYSTEM "cmodes.sgml">
 <!ENTITY ucommands SYSTEM "ucommands.sgml">
 <!ENTITY commands SYSTEM "commands.sgml">
+<!ENTITY extensions SYSTEM "extensions.sgml">
 <!ENTITY config SYSTEM "config.sgml">
 ]>
 <book id="charybdis-oper-guide">
@@ -37,6 +38,7 @@
   &cmodes;
   &ucommands;
   &commands;
+  &extensions;
   &oprivs;
   &config;
 </book>
