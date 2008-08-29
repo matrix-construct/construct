@@ -36,6 +36,7 @@
 #define INCLUDED_supported_h
 
 extern void add_isupport(const char *, const char *(*)(const void *), const void *);
+extern void change_isupport(const char *, const char *(*)(const void *), const void *);
 extern void delete_isupport(const char *);
 extern void show_isupport(struct Client *);
 extern void init_isupport(void);
