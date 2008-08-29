@@ -649,11 +649,21 @@ introduce_client(struct Client *client_p, struct Client *source_p, struct User *
 			else
 				identifyservice_p = NULL;
 			if (identifyservice_p != NULL)
-				sendto_one(identifyservice_p, ":%s PRIVMSG %s :%s %s",
-						get_id(source_p, identifyservice_p),
-						ConfigFileEntry.identifyservice,
-						ConfigFileEntry.identifycommand,
-						source_p->localClient->passwd);
+			{
+				if (!EmptyString(source_p->localClient->auth_user))
+					sendto_one(identifyservice_p, ":%s PRIVMSG %s :%s %s %s",
+							get_id(source_p, identifyservice_p),
+							ConfigFileEntry.identifyservice,
+							ConfigFileEntry.identifycommand,
+							source_p->localClient->auth_user,
+							source_p->localClient->passwd);
+				else
+					sendto_one(identifyservice_p, ":%s PRIVMSG %s :%s %s",
+							get_id(source_p, identifyservice_p),
+							ConfigFileEntry.identifyservice,
+							ConfigFileEntry.identifycommand,
+							source_p->localClient->passwd);
+			}
 		}
 		memset(source_p->localClient->passwd, 0, strlen(source_p->localClient->passwd));
 		rb_free(source_p->localClient->passwd);
