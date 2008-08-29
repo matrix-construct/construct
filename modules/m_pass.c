@@ -83,9 +83,9 @@ mr_pass(struct Client *client_p, struct Client *source_p, int parc, const char *
 		auth_user = NULL;
 	}
 	
-	client_p->localClient->passwd = rb_strndup(pass, PASSWDLEN);
+	client_p->localClient->passwd = *pass ? rb_strndup(pass, PASSWDLEN) : NULL;
 	
-	if(auth_user)
+	if(auth_user && *auth_user)
 		client_p->localClient->auth_user = rb_strndup(auth_user, PASSWDLEN);
 
 	/* These are for servers only */
