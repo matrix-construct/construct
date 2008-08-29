@@ -111,11 +111,12 @@ add_isupport(const char *name, const char *(*func)(const void *), const void *pa
 	rb_dlinkAddTail(item, &item->node, &isupportlist);
 }
 
-void
+const void *
 change_isupport(const char *name, const char *(*func)(const void *), const void *param)
 {
 	rb_dlink_node *ptr;
 	struct isupportitem *item;
+	void *oldvalue;
 
 	RB_DLINK_FOREACH(ptr, isupportlist.head)
 	{
@@ -123,6 +124,8 @@ change_isupport(const char *name, const char *(*func)(const void *), const void 
 
 		if (!strcmp(item->name, name))
 		{
+			oldvalue = item->param;
+
 			item->name = name;
 			item->func = func;
 			item->param = param;
@@ -130,6 +133,8 @@ change_isupport(const char *name, const char *(*func)(const void *), const void 
 			break;
 		}
 	}
+
+	return oldvalue;
 }
 
 void
