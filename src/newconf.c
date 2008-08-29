@@ -560,6 +560,10 @@ conf_end_oper(struct TopConf *tc)
 		return 0;
 	}
 
+
+	if (!yy_oper->privset)
+		yy_oper->privset = privilegeset_get("default");
+
 	/* now, yy_oper_list contains a stack of oper_conf's with just user
 	 * and host in, yy_oper contains the rest of the information which
 	 * we need to copy into each element in yy_oper_list
@@ -630,9 +634,6 @@ static void
 conf_set_oper_privset(void *data)
 {
 	yy_oper->privset = privilegeset_get((char *) data);
-
-	if (!yy_oper->privset)
-		yy_oper->privset = privilegeset_get("default");
 }
 
 static void

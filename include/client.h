@@ -298,6 +298,8 @@ struct PreClient
 
 	rb_dlink_list dnsbl_queries; /* list of struct BlacklistClient * */
 	struct Blacklist *dnsbl_listed; /* first dnsbl where it's listed */
+
+	struct rb_sockaddr_storage lip; /* address of our side of the connection */
 };
 
 struct ListClient

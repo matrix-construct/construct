@@ -435,7 +435,7 @@ close_listeners()
  * any client list yet.
  */
 static void
-add_connection(struct Listener *listener, rb_fde_t *F, struct sockaddr *sai, void *ssl_ctl)
+add_connection(struct Listener *listener, rb_fde_t *F, struct sockaddr *sai, struct sockaddr *lai, void *ssl_ctl)
 {
 	struct Client *new_client;
 	s_assert(NULL != listener);
@@ -447,6 +447,7 @@ add_connection(struct Listener *listener, rb_fde_t *F, struct sockaddr *sai, voi
 	new_client = make_client(NULL);
 
 	memcpy(&new_client->localClient->ip, sai, sizeof(struct rb_sockaddr_storage));
+	memcpy(&new_client->preClient->lip, lai, sizeof(struct rb_sockaddr_storage));
 
 	/* 
 	 * copy address to 'sockhost' as a string, copy it to host too
@@ -553,7 +554,7 @@ accept_ssld(rb_fde_t *F, struct sockaddr *addr, struct sockaddr *laddr, struct L
 	rb_fde_t *xF[2];
 	rb_socketpair(AF_UNIX, SOCK_STREAM, 0, &xF[0], &xF[1], "Incoming ssld Connection");
 	ctl = start_ssld_accept(F, xF[1], rb_get_fd(xF[0])); /* this will close F for us */
-	add_connection(listener, xF[0], addr, ctl);
+	add_connection(listener, xF[0], addr, laddr, ctl);
 }
 
 static void
@@ -567,13 +568,13 @@ accept_callback(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t add
 
 	if(getsockname(rb_get_fd(F), (struct sockaddr *) &lip, &locallen) < 0)
 	{
-		/* this shouldn't fail so... */
-		/* XXX add logging of this */
+		/* this can fail if the connection disappeared in the meantime */
 		rb_close(F);
+		return;
 	}
 	
 	if(listener->ssl)
 		accept_ssld(F, addr, (struct sockaddr *)&lip, listener);
 	else
-		add_connection(listener, F, addr, NULL);
+		add_connection(listener, F, addr, (struct sockaddr *)&lip, NULL);
 }

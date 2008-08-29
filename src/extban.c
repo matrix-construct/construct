@@ -68,17 +68,14 @@ int
 valid_extban(const char *banstr, struct Client *client_p, struct Channel *chptr, long mode_type)
 {
 	const char *p;
-	int invert = 0, result = EXTBAN_INVALID;
+	int result = EXTBAN_INVALID;
 	ExtbanFunc f;
 
 	if (*banstr != '$')
 		return 0;
 	p = banstr + 1;
 	if (*p == '~')
-	{
-		invert = 1;
 		p++;
-	}
 	f = extban_table[(unsigned char) ToLower(*p)];
 	if (*p != '\0')
 	{

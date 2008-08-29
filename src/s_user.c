@@ -975,6 +975,8 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 					source_p->localClient->opername = NULL;
 
 					rb_dlinkFindDestroy(source_p, &local_oper_list);
+					privilegeset_unref(source_p->localClient->privset);
+					source_p->localClient->privset = NULL;
 				}
 
 				rb_dlinkFindDestroy(source_p, &oper_list);

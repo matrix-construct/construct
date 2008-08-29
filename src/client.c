@@ -1361,15 +1361,12 @@ static int
 qs_server(struct Client *client_p, struct Client *source_p, struct Client *from, 
 		  const char *comment)
 {
-	struct Client *target_p;
-
 	if(source_p->servptr && source_p->servptr->serv)
 		rb_dlinkDelete(&source_p->lnode, &source_p->servptr->serv->servers);
 	else
 		s_assert(0);
 
 	rb_dlinkFindDestroy(source_p, &global_serv_list);
-	target_p = source_p->from;
 	
 	if(has_id(source_p))
 		del_from_id_hash(source_p->id, source_p);

@@ -297,7 +297,6 @@ static int
 start_auth_query(struct AuthRequest *auth)
 {
 	struct rb_sockaddr_storage localaddr, destaddr;
-	socklen_t locallen = sizeof(struct rb_sockaddr_storage);
 	rb_fde_t *F;
 	int family;
 	
@@ -333,14 +332,7 @@ start_auth_query(struct AuthRequest *auth)
 	 * since the ident request must originate from that same address--
 	 * and machines with multiple IP addresses are common now
 	 */
-	memset(&localaddr, 0, locallen);
-	if(getsockname(rb_get_fd(auth->client->localClient->F),
-		    (struct sockaddr *) &localaddr, &locallen) == -1)
-	{
-		/* can happen if connection was just closed */
-		rb_close(F);
-		return 0;
-	}
+	localaddr = auth->client->preClient->lip;
 	
 	/* XXX mangle_mapped_sockaddr((struct sockaddr *)&localaddr); */
 #ifdef RB_IPV6

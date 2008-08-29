@@ -59,7 +59,7 @@
  [?] native win32 (VS2005/VS2008)
 [/] Bug fixes
   [x] Compilation without zlib headers fails - fixed
-  [ ] Compilation date and time in server welcome message is in OS locale - looks ugly 'cause often it's not match user's codepage
+  [x] Compilation date and time in server welcome message is in OS locale - looks ugly 'cause often it's not match user's codepage
 [ ] Improvments
   [ ] ircd shouldn't need bison/byacc/yacc or flex for compilation
 --- other stuff
