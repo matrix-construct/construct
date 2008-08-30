@@ -126,7 +126,7 @@ change_isupport(const char *name, const char *(*func)(const void *), const void 
 		{
 			oldvalue = item->param;
 
-			item->name = name;
+			// item->name = name;
 			item->func = func;
 			item->param = param;
 
