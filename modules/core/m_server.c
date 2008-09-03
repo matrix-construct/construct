@@ -220,14 +220,15 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 	if(has_id(client_p) && (target_p = find_id(client_p->id)) != NULL)
 	{
 		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
-				     "Attempt to re-introduce SID %s from %s%s",
+				     "Attempt to re-introduce SID %s from %s%s (already in use by %s)",
 				     client_p->id,
 				     EmptyString(client_p->name) ? name : "",
-				     client_p->name);
-		ilog(L_SERVER, "Attempt to re-introduce SID %s from %s%s",
+				     client_p->name, target_p->name);
+		ilog(L_SERVER, "Attempt to re-introduce SID %s from %s%s (already in use by %s)",
 				client_p->id,
 				EmptyString(client_p->name) ? name : "",
-				log_client_name(client_p, SHOW_IP));
+				log_client_name(client_p, SHOW_IP),
+				target_p->name);
 
 		sendto_one(client_p, "ERROR :SID already exists.");
 		exit_client(client_p, client_p, client_p, "SID Exists");
@@ -467,6 +468,7 @@ ms_sid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	int hop;
 	int hlined = 0;
 	int llined = 0;
+	char squitreason[160];
 
 	hop = atoi(parv[2]);
 
@@ -487,14 +489,19 @@ ms_sid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	/* collision on the SID? */
 	if((target_p = find_id(parv[3])) != NULL)
 	{
-		sendto_one(client_p, "ERROR :SID %s already exists", parv[3]);
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "Link %s cancelled, SID %s already exists",
-				     client_p->name, parv[3]);
-		ilog(L_SERVER, "Link %s cancelled, SID %s already exists",
-			client_p->name, parv[3]);
+		sendto_wallops_flags(UMODE_WALLOP, &me,
+				     "Link %s cancelled, SID %s for server %s already in use by %s",
+				     client_p->name, parv[3], parv[1], target_p->name);
+		sendto_server(NULL, NULL, CAP_TS6, NOCAPS,
+				     ":%s WALLOPS :Link %s cancelled, SID %s for server %s already in use by %s",
+				     me.id, client_p->name, parv[3], parv[1], target_p->name);
+		ilog(L_SERVER, "Link %s cancelled, SID %s for server %s already in use by %s",
+			client_p->name, parv[3], parv[1], target_p->name);
 
-		exit_client(NULL, client_p, &me, "SID Exists");
+		snprintf(squitreason, sizeof squitreason,
+				"SID %s for %s already in use by %s",
+				parv[3], parv[1], target_p->name);
+		exit_client(NULL, client_p, &me, squitreason);
 		return 0;
 	}
 
