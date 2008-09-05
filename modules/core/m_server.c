@@ -268,6 +268,7 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 	int hlined = 0;
 	int llined = 0;
 	rb_dlink_node *ptr;
+	char squitreason[160];
 
 	name = parv[1];
 	hop = atoi(parv[2]);
@@ -293,15 +294,13 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 		 * doesnt exist, although ircd can handle it, its not a realistic
 		 * solution.. --fl_ 
 		 */
-		sendto_one(client_p, "ERROR :Server %s already exists", name);
-
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "Link %s cancelled, server %s already exists",
-				     client_p->name, name);
 		ilog(L_SERVER, "Link %s cancelled, server %s already exists",
 			client_p->name, name);
 
-		exit_client(client_p, client_p, &me, "Server Exists");
+		snprintf(squitreason, sizeof squitreason,
+				"Server %s already exists",
+				name);
+		exit_client(client_p, client_p, &me, squitreason);
 		return 0;
 	}
 
@@ -475,14 +474,13 @@ ms_sid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	/* collision on the name? */
 	if((target_p = find_server(NULL, parv[1])) != NULL)
 	{
-		sendto_one(client_p, "ERROR :Server %s already exists", parv[1]);
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "Link %s cancelled, server %s already exists",
-				     client_p->name, parv[1]);
 		ilog(L_SERVER, "Link %s cancelled, server %s already exists",
 			client_p->name, parv[1]);
 
-		exit_client(NULL, client_p, &me, "Server Exists");
+		snprintf(squitreason, sizeof squitreason,
+				"Server %s already exists",
+				parv[1]);
+		exit_client(NULL, client_p, &me, squitreason);
 		return 0;
 	}
 
