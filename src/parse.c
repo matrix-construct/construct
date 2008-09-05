@@ -364,7 +364,7 @@ handle_command(struct Message *mptr, struct Client *client_p,
 		ilog(L_SERVER,
 		     "Insufficient parameters (%d < %d) for command '%s' from %s.",
 		     i, ehandler.min_para, mptr->cmd, client_p->name);
-		snprintf(squitreason, sizeof squitreason,
+		rb_snprintf(squitreason, sizeof squitreason,
 				"Insufficient parameters (%d < %d) for command '%s'",
 				i, ehandler.min_para, mptr->cmd);
 		exit_client(client_p, client_p, client_p, squitreason);

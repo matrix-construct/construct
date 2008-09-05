@@ -71,7 +71,7 @@ ms_svinfo(struct Client *client_p, struct Client *source_p, int parc, const char
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Link %s dropped, wrong TS protocol version (%s,%s)",
 				     source_p->name, parv[1], parv[2]);
-		snprintf(squitreason, sizeof squitreason, "Incompatible TS version (%s,%s)",
+		rb_snprintf(squitreason, sizeof squitreason, "Incompatible TS version (%s,%s)",
 				parv[1], parv[2]);
 		exit_client(source_p, source_p, source_p, squitreason);
 		return 0;
@@ -95,7 +95,7 @@ ms_svinfo(struct Client *client_p, struct Client *source_p, int parc, const char
 		     "Link %s dropped, excessive TS delta"
 		     " (my TS=%ld, their TS=%ld, delta=%d)",
 		     log_client_name(source_p, SHOW_IP), (long) rb_current_time(), (long) theirtime, deltat);
-		snprintf(squitreason, sizeof squitreason, "Excessive TS delta (my TS=%ld, their TS=%ld, delta=%d)",
+		rb_snprintf(squitreason, sizeof squitreason, "Excessive TS delta (my TS=%ld, their TS=%ld, delta=%d)",
 				(long) rb_current_time(), (long) theirtime, deltat);
 		exit_client(source_p, source_p, source_p, squitreason);
 		return 0;

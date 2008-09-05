@@ -195,7 +195,7 @@ me_rsfnc(struct Client *client_p, struct Client *source_p,
 			kill_client_serv_butone(NULL, exist_p, "%s (Nickname regained by services)",
 						me.name);
 
-		snprintf(buf, sizeof(buf), "Killed (%s (Nickname regained by services))",
+		rb_snprintf(buf, sizeof(buf), "Killed (%s (Nickname regained by services))",
 			me.name);
 		exit_client(NULL, exist_p, &me, buf);
 	}
