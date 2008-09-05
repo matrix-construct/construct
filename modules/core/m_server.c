@@ -388,7 +388,10 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 		ilog(L_SERVER, "Non-Hub link %s introduced %s.",
 			client_p->name, name);
 
-		exit_client(NULL, client_p, &me, "No matching hub_mask.");
+		rb_snprintf(squitreason, sizeof squitreason,
+				"No matching hub_mask for %s",
+				name);
+		exit_client(NULL, client_p, &me, squitreason);
 		return 0;
 	}
 
@@ -402,7 +405,10 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 		ilog(L_SERVER, "Link %s introduced leafed server %s.",
 			client_p->name, name);	
 
-		exit_client(NULL, client_p, &me, "Leafed Server.");
+		rb_snprintf(squitreason, sizeof squitreason,
+				"Matching leaf_mask for %s",
+				name);
+		exit_client(NULL, client_p, &me, squitreason);
 		return 0;
 	}
 
@@ -550,26 +556,32 @@ ms_sid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	/* no matching hub_mask */
 	if(!hlined)
 	{
-		sendto_one(client_p, "ERROR :No matching hub_mask");
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Non-Hub link %s introduced %s.",
 				     client_p->name, parv[1]);
 		ilog(L_SERVER, "Non-Hub link %s introduced %s.",
 			client_p->name, parv[1]);
-		exit_client(NULL, client_p, &me, "No matching hub_mask.");
+
+		rb_snprintf(squitreason, sizeof squitreason,
+				"No matching hub_mask for %s",
+				parv[1]);
+		exit_client(NULL, client_p, &me, squitreason);
 		return 0;
 	}
 
 	/* matching leaf_mask */
 	if(llined)
 	{
-		sendto_one(client_p, "ERROR :Matching leaf_mask");
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Link %s introduced leafed server %s.",
 				     client_p->name, parv[1]);
 		ilog(L_SERVER, "Link %s introduced leafed server %s.",
 			client_p->name, parv[1]);	
-		exit_client(NULL, client_p, &me, "Leafed Server.");
+
+		rb_snprintf(squitreason, sizeof squitreason,
+				"Matching leaf_mask for %s",
+				parv[1]);
+		exit_client(NULL, client_p, &me, squitreason);
 		return 0;
 	}
 
