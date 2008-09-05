@@ -379,7 +379,7 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 	 * .edu's
 	 */
 
-	/* Ok, check client_p can hub the new server, and make sure it's not a LL */
+	/* Ok, check client_p can hub the new server */
 	if(!hlined)
 	{
 		/* OOOPs nope can't HUB */
