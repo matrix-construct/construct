@@ -325,6 +325,7 @@ static struct mode_table oper_table[] = {
 	{"hidden_oper",		OPER_INVIS		},
 	{"remoteban",		OPER_REMOTEBAN		},
 	{"mass_notice",		OPER_MASSNOTICE		},
+	{"need_ssl",		OPER_NEEDSSL		},
 	{NULL, 0}
 };
 
@@ -342,6 +343,7 @@ static struct mode_table auth_table[] = {
 	{"no_tilde",		CONF_FLAGS_NO_TILDE	},
 	{"need_ident",		CONF_FLAGS_NEED_IDENTD	},
 	{"have_ident",		CONF_FLAGS_NEED_IDENTD	},
+	{"need_ssl", 		CONF_FLAGS_NEED_SSL	},
 	{"need_sasl",		CONF_FLAGS_NEED_SASL	},
 	{NULL, 0}
 };

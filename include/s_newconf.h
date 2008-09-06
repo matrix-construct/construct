@@ -157,6 +157,7 @@ extern void cluster_generic(struct Client *, const char *, int cltype,
 #define OPER_SPY	0x10000
 #define OPER_REMOTEBAN	0x20000
 #define OPER_MASSNOTICE 0x40000
+#define OPER_NEEDSSL    0x80000
 /* 0x400000 and above are in client.h */
 
 #define OPER_FLAGS	(OPER_KLINE|OPER_UNKLINE|OPER_LOCKILL|OPER_GLOBKILL|\
@@ -166,6 +167,7 @@ extern void cluster_generic(struct Client *, const char *, int cltype,
 			 OPER_REMOTEBAN|OPER_MASSNOTICE)
 
 #define IsOperConfEncrypted(x)	((x)->flags & OPER_ENCRYPTED)
+#define IsOperConfNeedSSL(x)	((x)->flags & OPER_NEEDSSL)
 
 #define HasPrivilege(x, y)	((x)->localClient != NULL && (x)->localClient->privset != NULL && privilegeset_in_set((x)->localClient->privset, (y)))
 

@@ -89,6 +89,7 @@ struct ConfItem
 
 /* Generic flags... */
 #define CONF_FLAGS_TEMPORARY            0x00800000
+#define CONF_FLAGS_NEED_SSL		0x00000002
 /* auth{} flags... */
 #define CONF_FLAGS_NO_TILDE             0x00000004
 #define CONF_FLAGS_NEED_IDENTD          0x00000008
@@ -122,6 +123,7 @@ struct ConfItem
 #define IsConfEncrypted(x)      ((x)->flags & CONF_FLAGS_ENCRYPTED)
 #define IsNeedSasl(x)		((x)->flags & CONF_FLAGS_NEED_SASL)
 #define IsConfExemptDNSBL(x)	((x)->flags & CONF_FLAGS_EXEMPTDNSBL)
+#define IsConfSSLNeeded(x)	((x)->flags & CONF_FLAGS_NEED_SSL)
 
 /* flag definitions for opers now in client.h */
 

@@ -223,6 +223,22 @@ m_challenge(struct Client *client_p, struct Client *source_p, int parc, const ch
 		return 0;
 	}
 
+	if(IsOperConfNeedSSL(oper_p) && !IsSSLClient(source_p))
+	{
+		sendto_one(source_p, form_str(ERR_NOOPERHOST), me.name, source_p->name);
+		ilog(L_FOPER, "FAILED CHALLENGE (%s) by (%s!%s@%s) (%s) -- requires SSL/TLS",
+		     parv[1], source_p->name, source_p->username, source_p->host,
+		     source_p->sockhost);
+
+		if(ConfigFileEntry.failed_oper_notice)
+		{
+			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+					     "Failed CHALLENGE attempt - missing SSL/TLS by %s (%s@%s)",
+					     source_p->name, source_p->username, source_p->host);
+		}
+		return 0;
+	}
+
 	if(!generate_challenge(&challenge, &(source_p->localClient->challenge), oper_p->rsa_pubkey))
 	{
 		char *chal = challenge;
