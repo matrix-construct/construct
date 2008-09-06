@@ -404,6 +404,7 @@ ms_uid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 {
 	struct Client *target_p;
 	time_t newts = 0;
+	char squitreason[120];
 
 	newts = atol(parv[3]);
 
@@ -425,6 +426,15 @@ ms_uid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		return 0;
 	}
 
+	if(!clean_uid(parv[8]))
+	{
+		rb_snprintf(squitreason, sizeof squitreason,
+				"Invalid UID %s for nick %s on %s",
+				parv[8], parv[1], source_p->name);
+		exit_client(client_p, client_p, client_p, squitreason);
+		return 0;
+	}
+
 	if(!clean_username(parv[5]) || !clean_host(parv[6]))
 	{
 		ServerStats.is_kill++;
@@ -432,16 +442,6 @@ ms_uid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 				     "Bad user@host: %s@%s From: %s(via %s)",
 				     parv[5], parv[6], source_p->name, client_p->name);
 		sendto_one(client_p, ":%s KILL %s :%s (Bad user@host)", me.id, parv[8], me.name);
-		return 0;
-	}
-
-	if(!clean_uid(parv[8]))
-	{
-		ServerStats.is_kill++;
-		sendto_realops_snomask(SNO_DEBUG, L_ALL,
-				     "Bad UID: %s From: %s(via %s)",
-				     parv[8], source_p->name, client_p->name);
-		sendto_one(client_p, ":%s KILL %s :%s (Bad UID)", me.id, parv[8], me.name);
 		return 0;
 	}
 
@@ -492,6 +492,7 @@ ms_euid(struct Client *client_p, struct Client *source_p, int parc, const char *
 {
 	struct Client *target_p;
 	time_t newts = 0;
+	char squitreason[120];
 
 	newts = atol(parv[3]);
 
@@ -513,6 +514,15 @@ ms_euid(struct Client *client_p, struct Client *source_p, int parc, const char *
 		return 0;
 	}
 
+	if(!clean_uid(parv[8]))
+	{
+		rb_snprintf(squitreason, sizeof squitreason,
+				"Invalid UID %s for nick %s on %s",
+				parv[8], parv[1], source_p->name);
+		exit_client(client_p, client_p, client_p, squitreason);
+		return 0;
+	}
+
 	if(!clean_username(parv[5]) || !clean_host(parv[6]))
 	{
 		ServerStats.is_kill++;
@@ -520,16 +530,6 @@ ms_euid(struct Client *client_p, struct Client *source_p, int parc, const char *
 				     "Bad user@host: %s@%s From: %s(via %s)",
 				     parv[5], parv[6], source_p->name, client_p->name);
 		sendto_one(client_p, ":%s KILL %s :%s (Bad user@host)", me.id, parv[8], me.name);
-		return 0;
-	}
-
-	if(!clean_uid(parv[8]))
-	{
-		ServerStats.is_kill++;
-		sendto_realops_snomask(SNO_DEBUG, L_ALL,
-				     "Bad UID: %s From: %s(via %s)",
-				     parv[8], source_p->name, client_p->name);
-		sendto_one(client_p, ":%s KILL %s :%s (Bad UID)", me.id, parv[8], me.name);
 		return 0;
 	}
 
