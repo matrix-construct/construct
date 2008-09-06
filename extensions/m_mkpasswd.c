@@ -56,7 +56,7 @@ m_mkpasswd(struct Client *client_p, struct Client *source_p, int parc, const cha
 	if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
 	{
 		/* safe enough to give this on a local connect only */
-		sendto_one(source_p, form_str(RPL_LOAD2HI), me.name, parv[0]);
+		sendto_one(source_p, form_str(RPL_LOAD2HI), me.name, parv[0], "MKPASSWD");
 		return 0;
 	}
 	else
