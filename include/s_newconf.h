@@ -140,31 +140,10 @@ extern void cluster_generic(struct Client *, const char *, int cltype,
 			int cap, const char *format, ...);
 
 #define OPER_ENCRYPTED	0x00001
-#define OPER_KLINE	0x00002
-#define OPER_UNKLINE	0x00004
-#define OPER_LOCKILL	0x00008
-#define OPER_GLOBKILL	0x00010
-#define OPER_REMOTE	0x00020
-#define OPER_XLINE	0x00080
-#define OPER_RESV	0x00100
-#define OPER_NICKS	0x00200
-#define OPER_REHASH	0x00400
-#define OPER_DIE	0x00800
-#define OPER_ADMIN	0x01000
-#define OPER_HADMIN	0x02000
-#define OPER_OPERWALL	0x04000
-#define OPER_INVIS	0x08000
-#define OPER_SPY	0x10000
-#define OPER_REMOTEBAN	0x20000
-#define OPER_MASSNOTICE 0x40000
 #define OPER_NEEDSSL    0x80000
 /* 0x400000 and above are in client.h */
 
-#define OPER_FLAGS	(OPER_KLINE|OPER_UNKLINE|OPER_LOCKILL|OPER_GLOBKILL|\
-			 OPER_REMOTE|OPER_XLINE|OPER_RESV|\
-			 OPER_NICKS|OPER_REHASH|OPER_DIE|OPER_ADMIN|\
-			 OPER_HADMIN|OPER_OPERWALL|OPER_INVIS|OPER_SPY|\
-			 OPER_REMOTEBAN|OPER_MASSNOTICE)
+#define OPER_FLAGS	0 /* no oper privs in Client.flags2/oper_conf.flags currently */
 
 #define IsOperConfEncrypted(x)	((x)->flags & OPER_ENCRYPTED)
 #define IsOperConfNeedSSL(x)	((x)->flags & OPER_NEEDSSL)

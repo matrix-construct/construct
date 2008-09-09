@@ -308,23 +308,6 @@ static struct mode_table umode_table[] = {
 
 static struct mode_table oper_table[] = {
 	{"encrypted",		OPER_ENCRYPTED		},
-	{"local_kill",		OPER_LOCKILL		},
-	{"global_kill",		OPER_GLOBKILL|OPER_LOCKILL	},
-	{"remote",		OPER_REMOTE		},
-	{"kline",		OPER_KLINE		},
-	{"unkline",		OPER_UNKLINE		},
-	{"nick_changes",	OPER_NICKS		},
-	{"rehash",		OPER_REHASH		},
-	{"die",			OPER_DIE		},
-	{"admin",		OPER_ADMIN		},
-	{"hidden_admin",	OPER_HADMIN		},
-	{"xline",		OPER_XLINE		},
-	{"resv",		OPER_RESV		},
-	{"operwall",		OPER_OPERWALL		},
-	{"oper_spy",		OPER_SPY		},
-	{"hidden_oper",		OPER_INVIS		},
-	{"remoteban",		OPER_REMOTEBAN		},
-	{"mass_notice",		OPER_MASSNOTICE		},
 	{"need_ssl",		OPER_NEEDSSL		},
 	{NULL, 0}
 };
@@ -525,7 +508,7 @@ conf_begin_oper(struct TopConf *tc)
 	}
 
 	yy_oper = make_oper_conf();
-	yy_oper->flags |= OPER_ENCRYPTED|OPER_RESV|OPER_OPERWALL|OPER_REMOTEBAN|OPER_MASSNOTICE;
+	yy_oper->flags |= OPER_ENCRYPTED;
 
 	return 0;
 }
