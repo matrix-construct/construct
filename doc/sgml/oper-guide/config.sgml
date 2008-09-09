@@ -411,6 +411,12 @@ auth {
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
+	    <term>need_ssl</term>
+	    <listitem>
+	      <para>Users in this auth{} block must be connected via SSL/TLS, otherwise they will be rejected.</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
 	    <term>need_sasl</term>
 	    <listitem>
 	      <para>Users in this auth{} block must identify via SASL, otherwise they will be rejected.</para>
@@ -438,6 +444,33 @@ exempt {
 	    <term>ip</term>
 	    <listitem>
 	      <para>The IP address or CIDR range to exempt.</para>
+	    </listitem>
+	  </varlistentry>
+	</variablelist>
+      </sect2>
+      <sect2>
+	<title>privset {} block</title>
+	<synopsis>
+privset {
+	extends = "<replaceable>name</replaceable>";
+	privs = <replaceable>list</replaceable>;
+};</synopsis>
+	<para>
+	  A privset (privilege set) block specifies a set of
+	  operator privileges.
+	</para>
+	<variablelist>
+	  <title>privset {} variables</title>
+	  <varlistentry>
+	    <term>extends</term>
+	    <listitem>
+	      <para>An optional privset to inherit. The new privset will have all privileges that the given privset has.</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>privs</term>
+	    <listitem>
+	      <para>Privileges to grant to this privset. These are described in the operator privileges section.</para>
 	    </listitem>
 	  </varlistentry>
 	</variablelist>
@@ -510,17 +543,33 @@ operator "<replaceable>name</replaceable>" {
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>flags</term>
+	    <term>privset</term>
 	    <listitem>
               <para>
-		A listing of privileges granted to operators using this block.
-		By default, the mass_notice, operwall, remoteban and resv privileges are granted;
-		use ~mass_notice, ~operwall, ~remoteban and ~resv to disable them if necessary.
+		The privilege set granted to successfully opered clients.
+		This must be defined before this operator{} block.
 	      </para>
-	      <para>
-		In addition, a flag designating if the password is encrypted is here.
-		Privileges are documented elsewhere in this guide.
-	      </para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>flags</term>
+	    <listitem>
+              <para>A list of flags to apply to this operator{} block. They are listed below.</para>
+	    </listitem>
+	  </varlistentry>
+	</variablelist>
+	<variablelist>
+	  <title>operator {} flags</title>
+	  <varlistentry>
+	    <term>encrypted</term>
+	    <listitem>
+	      <para>The password used has been encrypted. This is enabled by default, use ~encrypted to disable it.</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>need_ssl</term>
+	    <listitem>
+	      <para>Restricts use of this operator{} block to SSL/TLS connections only.</para>
 	    </listitem>
 	  </varlistentry>
 	</variablelist>
