@@ -949,9 +949,9 @@ static struct shared_flags shared_flagtable[] =
 	{ SHARED_UNRESV,	'R' },
 	{ SHARED_LOCOPS,	'L' },
 	{ SHARED_REHASH,	'H' },
-	{ SHARED_TDLINE,    'd' },
-	{ SHARED_PDLINE,    'D' },
-	{ SHARED_UNDLINE,   'E' },
+	{ SHARED_TDLINE,	'd' },
+	{ SHARED_PDLINE,	'D' },
+	{ SHARED_UNDLINE,	'E' },
 	{ 0,			'\0'}
 };
 
