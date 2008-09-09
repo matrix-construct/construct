@@ -961,7 +961,7 @@ stats_shared (struct Client *source_p)
 {
 	struct remote_conf *shared_p;
 	rb_dlink_node *ptr;
-	char buf[15];
+	char buf[sizeof(shared_flagtable)/sizeof(shared_flagtable[0])];
 	char *p;
 	int i;
 
