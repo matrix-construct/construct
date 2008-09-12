@@ -100,7 +100,7 @@
 	</para>
       </sect2>
       <sect2>
-	<title>oper:remote, remote routing</title>
+	<title>oper:routing, remote routing</title>
 	<para>
 	  This allows using the third argument of the CONNECT command, to
 	  instruct another server to connect somewhere, and using SQUIT
