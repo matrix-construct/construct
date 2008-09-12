@@ -14,68 +14,10 @@
 	</para>
       </sect2>
       <sect2>
-	<title>oper:remoteban, set remote bans</title>
-	<para>
-	  This grants the ability to use the ON argument on
-	  DLINE/KLINE/XLINE/RESV and UNDLINE/UNKLINE/UNXLINE/UNRESV to set
-	  and unset bans on other servers, and the server argument on REHASH.
-	  This is only allowed if the oper may perform the action locally,
-	  and if the remote server has a shared{} block.
-	</para>
-	<note><para>
-	  If a cluster{} block is present, bans are sent remotely even
-	  if the oper does not have oper:remoteban privilege.
-	</para></note>
-      </sect2>
-      <sect2>
-	<title>oper:local_kill, kill local users</title>
-	<para>
-	  This grants permission to use KILL on users on the same server,
-	  disconnecting them from the network.
-	</para>
-      </sect2>
-      <sect2>
 	<title>oper:die, die and restart</title>
 	<para>
 	  This grants permission to use DIE and RESTART, shutting down
 	  or restarting the server.
-	</para>
-      </sect2>
-      <sect2>
-	<title>oper:rehash, rehash</title>
-	<para>
-	  Allows using the REHASH command, to rehash various configuration
-	  files or clear certain lists.
-	</para>
-      </sect2>
-      <sect2>
-	<title>oper:kline, kline and dline</title>
-	<para>
-	  Allows using KLINE and DLINE, to ban users by user@host mask
-	  or IP address.
-	</para>
-      </sect2>
-      <sect2>
-	<title>oper:operwall, send/receive operwall</title>
-	<para>
-	  Allows using the OPERWALL command and umode +z to send and
-	  receive operwalls.
-	</para>
-      </sect2>
-      <sect2>
-	<title>oper:mass_notice, global notices and wallops</title>
-	<para>
-	  Allows using server name ($$mask) and hostname ($#mask) masks in
-	  NOTICE and PRIVMSG to send a message to all matching users, and
-	  allows using the WALLOPS command to send a message to all users
-	  with umode +w set.
-	</para>
-      </sect2>
-      <sect2>
-	<title>snomask:nick_changes, see nick changes</title>
-	<para>
-	  Allows using snomask +n to see local client nick changes.
-	  This is designed for monitor bots.
 	</para>
       </sect2>
       <sect2>
@@ -91,6 +33,65 @@
 	  to hide bots from /stats p so users will not message them
 	  for help.
 	</para>
+      </sect2>
+      <sect2>
+	<title>oper:hidden_admin, hidden administrator</title>
+	<para>
+	  This grants everything granted to the oper:admin privilege,
+	  except the ability to set umode +a. If both oper:admin and oper:hidden_admin
+	  are possessed, umode +a can still not be used.
+	</para>
+      </sect2>
+      <sect2>
+	<title>oper:kline, kline and dline</title>
+	<para>
+	  Allows using KLINE and DLINE, to ban users by user@host mask
+	  or IP address.
+	</para>
+      </sect2>
+      <sect2>
+	<title>oper:local_kill, kill local users</title>
+	<para>
+	  This grants permission to use KILL on users on the same server,
+	  disconnecting them from the network.
+	</para>
+      </sect2>
+      <sect2>
+	<title>oper:mass_notice, global notices and wallops</title>
+	<para>
+	  Allows using server name ($$mask) and hostname ($#mask) masks in
+	  NOTICE and PRIVMSG to send a message to all matching users, and
+	  allows using the WALLOPS command to send a message to all users
+	  with umode +w set.
+	</para>
+      </sect2>
+      <sect2>
+	<title>oper:operwall, send/receive operwall</title>
+	<para>
+	  Allows using the OPERWALL command and umode +z to send and
+	  receive operwalls.
+	</para>
+      </sect2>
+      <sect2>
+	<title>oper:rehash, rehash</title>
+	<para>
+	  Allows using the REHASH command, to rehash various configuration
+	  files or clear certain lists.
+	</para>
+      </sect2>
+      <sect2>
+	<title>oper:remoteban, set remote bans</title>
+	<para>
+	  This grants the ability to use the ON argument on
+	  DLINE/KLINE/XLINE/RESV and UNDLINE/UNKLINE/UNXLINE/UNRESV to set
+	  and unset bans on other servers, and the server argument on REHASH.
+	  This is only allowed if the oper may perform the action locally,
+	  and if the remote server has a shared{} block.
+	</para>
+	<note><para>
+	  If a cluster{} block is present, bans are sent remotely even
+	  if the oper does not have oper:remoteban privilege.
+	</para></note>
       </sect2>
       <sect2>
 	<title>oper:resv, channel control</title>
@@ -143,11 +144,10 @@
 	</para>
       </sect2>
       <sect2>
-	<title>oper:hidden_admin, hidden administrator</title>
+	<title>snomask:nick_changes, see nick changes</title>
 	<para>
-	  This grants everything granted to the admin privilege,
-	  except the ability to set umode +a. If both oper:admin and oper:hidden_admin
-	  are possessed, umode +a can still not be used.
+	  Allows using snomask +n to see local client nick changes.
+	  This is designed for monitor bots.
 	</para>
       </sect2>
     </sect1>
