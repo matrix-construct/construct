@@ -165,7 +165,8 @@
 	  </note>
 	  Users with the +w umode set will receive WALLOPS messages sent by opers.
 	  Opers with +w additionally receive WALLOPS sent by servers (e.g.
-	  remote CONNECT, remote SQUIT, many services packages).
+	  remote CONNECT, remote SQUIT, various severe misconfigurations,
+	  many services packages).
 	</para>
       </sect2>
       <sect2>
