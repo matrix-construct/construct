@@ -1231,6 +1231,9 @@ clear_out_old_conf(void)
 	 */
 
 	/* clean out general */
+	rb_free(ConfigFileEntry.kline_reason);
+	ConfigFileEntry.kline_reason = NULL;
+
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, service_list.head)
 	{
 		rb_free(ptr->data);
