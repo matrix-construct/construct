@@ -318,6 +318,7 @@ ms_nick(struct Client *client_p, struct Client *source_p, int parc, const char *
 {
 	struct Client *target_p;
 	time_t newts = 0;
+	char squitreason[100];
 
 	if(parc != 9)
 	{
@@ -326,7 +327,10 @@ ms_nick(struct Client *client_p, struct Client *source_p, int parc, const char *
 				     "with %d arguments (expecting 9)", client_p->name, parc);
 		ilog(L_SERVER, "Excess parameters (%d) for command 'NICK' from %s.",
 		     parc, client_p->name);
-		exit_client(client_p, client_p, client_p, "Excess parameters to NICK command");
+		rb_snprintf(squitreason, sizeof squitreason,
+				"Excess parameters (%d) to %s command, expecting %d",
+				parc, "NICK", 9);
+		exit_client(client_p, client_p, client_p, squitreason);
 		return 0;
 	}
 
@@ -415,7 +419,10 @@ ms_uid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 				     "with %d arguments (expecting 10)", client_p->name, parc);
 		ilog(L_SERVER, "Excess parameters (%d) for command 'UID' from %s.",
 		     parc, client_p->name);
-		exit_client(client_p, client_p, client_p, "Excess parameters to UID command");
+		rb_snprintf(squitreason, sizeof squitreason,
+				"Excess parameters (%d) to %s command, expecting %d",
+				parc, "UID", 10);
+		exit_client(client_p, client_p, client_p, squitreason);
 		return 0;
 	}
 
@@ -503,7 +510,10 @@ ms_euid(struct Client *client_p, struct Client *source_p, int parc, const char *
 				     "with %d arguments (expecting 12)", client_p->name, parc);
 		ilog(L_SERVER, "Excess parameters (%d) for command 'EUID' from %s.",
 		     parc, client_p->name);
-		exit_client(client_p, client_p, client_p, "Excess parameters to EUID command");
+		rb_snprintf(squitreason, sizeof squitreason,
+				"Excess parameters (%d) to %s command, expecting %d",
+				parc, "EUID", 12);
+		exit_client(client_p, client_p, client_p, squitreason);
 		return 0;
 	}
 
