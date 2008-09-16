@@ -48,4 +48,16 @@ h_gla_client_exit(hook_data_client_exit *hdata)
 				"K/DLINE active for %s[%s@%s]",
 				source_p->name, source_p->username, source_p->host);
 	}
+	else if (!strncmp(hdata->comment, "Temporary K-line ", 17))
+	{
+		sendto_realops_snomask_from(SNO_GENERAL, L_ALL, source_p->servptr,
+				"K/DLINE active for %s[%s@%s]",
+				source_p->name, source_p->username, source_p->host);
+	}
+	else if (!strncmp(hdata->comment, "Temporary D-line ", 17))
+	{
+		sendto_realops_snomask_from(SNO_GENERAL, L_ALL, source_p->servptr,
+				"K/DLINE active for %s[%s@%s]",
+				source_p->name, source_p->username, source_p->host);
+	}
 }
