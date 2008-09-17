@@ -65,40 +65,13 @@ distribute_hostchange(struct Client *client)
 		ClearDynSpoof(client);
 }
 
-#define Nval 0x8c3a48ac
 #define HOSTLEN 63
-#define INITDATA "98fwqefnoiqefv03f423t34gbv3vb89tg432t3b8" /* change this */
-
-static inline unsigned int
-get_string_entropy(const char *inbuf)
-{
-	unsigned int accum = 1;
-
-	while(*inbuf != '\0')
-		accum += *inbuf++;
-
-	return accum;
-}
-
-/* calls get_string_entropy() and toasts it against INITDATA */
-static inline unsigned int
-get_string_weighted_entropy(const char *inbuf)
-{
-	static int base_entropy = 0;
-        unsigned int accum = get_string_entropy(inbuf);
-
-	/* initialize the algorithm if it is not yet ready */
-	if (base_entropy == 0)
-		base_entropy = get_string_entropy(INITDATA);
-
-        return (Nval * accum) ^ base_entropy;
-}
 
 static void
 do_host_cloak_ip(const char *inbuf, char *outbuf)
 {
 	char *tptr;
-	unsigned int accum = get_string_weighted_entropy(inbuf);
+	unsigned int accum = fnv_hash(inbuf, 32);
 	char buf[HOSTLEN];
 	int ipv6 = 0;
 
@@ -134,7 +107,7 @@ do_host_cloak_host(const char *inbuf, char *outbuf)
 {
 	char b26_alphabet[] = "abcdefghijklmnopqrstuvwxyz";
 	char *tptr;
-	unsigned int accum = get_string_weighted_entropy(inbuf);
+	unsigned int accum = fnv_hash(inbuf, 32);
 
 	strncpy(outbuf, inbuf, HOSTLEN);
 
