@@ -125,7 +125,6 @@ mr_webirc(struct Client *client_p, struct Client *source_p, int parc, const char
 	else
 		rb_strlcpy(source_p->host, source_p->sockhost, sizeof(source_p->host));
 	
-	del_unknown_ip(source_p);
 	rb_inet_pton_sock(parv[4], (struct sockaddr *)&source_p->localClient->ip);
 
 	/* Check dlines now, klines will be checked on registration */

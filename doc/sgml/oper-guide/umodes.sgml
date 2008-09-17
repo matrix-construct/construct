@@ -147,8 +147,10 @@
 	  </note>
 	  This umode grants various features useful for services. For example,
 	  clients with this umode cannot be kicked or deopped on channels,
-	  do not show channels the querying user is not on in WHOIS,
-	  and do not appear in /stats p.
+	  can send to any channel, do not show channels in WHOIS,
+	  can be the target of services aliases and do not appear in /stats p.
+	  No server notices are sent for hostname changes by services clients;
+	  server notices about kills are sent to snomask +k instead of +s.
 	</para>
 	<para>
 	  The exact effects of this umode are variable; no user or oper on
@@ -165,7 +167,8 @@
 	  </note>
 	  Users with the +w umode set will receive WALLOPS messages sent by opers.
 	  Opers with +w additionally receive WALLOPS sent by servers (e.g.
-	  remote CONNECT, remote SQUIT, many services packages).
+	  remote CONNECT, remote SQUIT, various severe misconfigurations,
+	  many services packages).
 	</para>
       </sect2>
       <sect2>

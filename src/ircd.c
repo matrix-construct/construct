@@ -66,6 +66,7 @@
 #include "serno.h"
 #include "sslproc.h"
 #include "chmode.h"
+#include "privilege.h"
 
 /* /quote set variables */
 struct SetOptions GlobalSetOptions;
@@ -188,7 +189,7 @@ init_sys(void)
 		if(maxconnections <= MAX_BUFFER)
 		{
 			fprintf(stderr, "ERROR: Shell FD limits are too low.\n");
-			fprintf(stderr, "ERROR: ircd-ratbox reserves %d FDs, shell limits must be above this\n", MAX_BUFFER);
+			fprintf(stderr, "ERROR: charybdis reserves %d FDs, shell limits must be above this\n", MAX_BUFFER);
 			exit(EXIT_FAILURE);
 		}
 		return;
@@ -447,12 +448,13 @@ setup_corefile(void)
 static void
 ircd_log_cb(const char *str)
 {
-	ilog(L_MAIN, "%s", str);
+	ilog(L_MAIN, "libratbox reports: %s", str);
 }
 
 static void
 ircd_restart_cb(const char *str)
 {
+	inotice("libratbox has called the restart callback: %s", str);
 	restart(str);
 }
 
@@ -469,9 +471,11 @@ ircd_die_cb(const char *str)
 	if(str != NULL)
 	{
 		/* Try to get the message out to currently logged in operators. */
-		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "Server panic! %s", str);
-		inotice("server panic: %s", str);
+		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "libratbox has called the die callback..aborting: %s", str);
+		inotice("libratbox has called the die callback..aborting: %s", str);
 	}
+	else
+		inotice("libratbox has called the die callback..aborting");
 
 	unlink(pidFileName);
 	exit(EXIT_FAILURE);
@@ -628,6 +632,14 @@ main(int argc, char *argv[])
 	rb_lib_init(ircd_log_cb, ircd_restart_cb, ircd_die_cb, !server_state_foreground, maxconnections, DNODE_HEAP_SIZE, FD_HEAP_SIZE);
 	rb_linebuf_init(LINEBUF_HEAP_SIZE);
 
+	if(ConfigFileEntry.use_egd && (ConfigFileEntry.egdpool_path != NULL))
+	{
+		rb_init_prng(ConfigFileEntry.egdpool_path, RB_PRNG_EGD);
+	} else
+		rb_init_prng(NULL, RB_PRNG_DEFAULT);
+
+	seed_random(NULL);
+
 	init_main_logfile();
 	newconf_init();
 	init_s_conf();
@@ -651,6 +663,7 @@ main(int argc, char *argv[])
 #endif
 	init_auth();		/* Initialise the auth code */
 	init_resolver();	/* Needs to be setup before the io loop */
+	privilegeset_set_new("default", "", 0);
 
 	if (testing_conf)
 		fprintf(stderr, "\nBeginning config test\n");

@@ -34,6 +34,8 @@
  */
 #define ERR_CUSTOM 1000
 
+extern int chmode_flags[256];
+
 extern void chm_nosuch(struct Client *source_p, struct Channel *chptr,
 	   int alevel, int parc, int *parn,
 	   const char **parv, int *errors, int dir, char c, long mode_type);

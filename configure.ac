@@ -81,7 +81,7 @@ esac
 
 fi
 
-AC_MSG_CHECKING([uname -s for Cygwin, Solaris, AIX or HPUX])
+AC_MSG_CHECKING([uname -s for Solaris, AIX or HPUX])
 OSNAME=`uname -s`
 case "$OSNAME" in
         HP-UX*)
@@ -95,10 +95,6 @@ case "$OSNAME" in
 		else
 			AC_MSG_RESULT(already using newer HPUX)
 		fi
-	;;
-	CYGWIN*)
-		AC_MSG_RESULT(Cygwin)
-		CYGWIN=yes
 	;;
 	SunOS*)
 		AC_MSG_RESULT(SunOS or Solaris)
@@ -315,7 +311,7 @@ fi
 AC_C_BIGENDIAN
 
 dnl Check for stdarg.h - if we can't find it, halt configure
-AC_CHECK_HEADER(stdarg.h, , [AC_MSG_ERROR([** stdarg.h could not be found - ircd-ratbox will not compile without it **])])
+AC_CHECK_HEADER(stdarg.h, , [AC_MSG_ERROR([** stdarg.h could not be found - charybdis will not compile without it **])])
 
 dnl Checks for the existence of strlcat, strlcpy, basename...
 dnl This more reliable test only works with gcc though.
@@ -893,12 +889,6 @@ AC_DEFINE_UNQUOTED(NICKLEN, (${NICKLEN}+1), [Nickname length])
 shared_modules="yes"
 dnl Some first-stage sanity checks.
 if test "$shared_modules" = yes; then
-  	
-	if test "$CYGWIN" = yes; then
-		AC_MSG_WARN([disabling shared modules; Cygwin is at present unable to build them.])
-		shared_modules="no"
-	fi
-
 	dnl TenDRA's cc is called tcc too.
 	if test "$CC" = tcc -a "$TenDRA" = "no"; then
 		AC_MSG_WARN([disabling shared modules: Tiny C Compiler can't create PIC])

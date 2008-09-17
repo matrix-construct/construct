@@ -674,7 +674,7 @@ stats_oper(struct Client *source_p)
 		sendto_one_numeric(source_p, RPL_STATSOLINE, 
 				form_str(RPL_STATSOLINE),
 				oper_p->username, oper_p->host, oper_p->name,
-				IsOper(source_p) ? get_oper_privs(oper_p->flags) : "0", "-1");
+				IsOper(source_p) ? oper_p->privset->name : "0", "-1");
 	}
 }
 
@@ -875,7 +875,7 @@ stats_tstats (struct Client *source_p)
 			   "T :accepts %u refused %u", sp.is_ac, sp.is_ref);
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			"T :rejected %u delaying %lu", 
-			sp.is_rej, rb_dlink_list_length(&delay_exit));
+			sp.is_rej, delay_exit_length());
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			"T :nicks being delayed %lu",
 			get_nd_count());
@@ -949,9 +949,9 @@ static struct shared_flags shared_flagtable[] =
 	{ SHARED_UNRESV,	'R' },
 	{ SHARED_LOCOPS,	'L' },
 	{ SHARED_REHASH,	'H' },
-	{ SHARED_TDLINE,    'd' },
-	{ SHARED_PDLINE,    'D' },
-	{ SHARED_UNDLINE,   'E' },
+	{ SHARED_TDLINE,	'd' },
+	{ SHARED_PDLINE,	'D' },
+	{ SHARED_UNDLINE,	'E' },
 	{ 0,			'\0'}
 };
 
@@ -961,7 +961,7 @@ stats_shared (struct Client *source_p)
 {
 	struct remote_conf *shared_p;
 	rb_dlink_node *ptr;
-	char buf[15];
+	char buf[sizeof(shared_flagtable)/sizeof(shared_flagtable[0])];
 	char *p;
 	int i;
 

@@ -58,7 +58,7 @@ is_safe_error(const char *message)
 
 	if (!strncmp(message, "Closing Link: 127.0.0.1 (", 25))
 		return 1;
-	snprintf(prefix2, sizeof prefix2,
+	rb_snprintf(prefix2, sizeof prefix2,
 			"Closing Link: 127.0.0.1 %s (", me.name);
 	if (!strncmp(message, prefix2, strlen(prefix2)))
 		return 1;

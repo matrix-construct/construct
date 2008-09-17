@@ -89,6 +89,7 @@ struct ConfItem
 
 /* Generic flags... */
 #define CONF_FLAGS_TEMPORARY            0x00800000
+#define CONF_FLAGS_NEED_SSL		0x00000002
 /* auth{} flags... */
 #define CONF_FLAGS_NO_TILDE             0x00000004
 #define CONF_FLAGS_NEED_IDENTD          0x00000008
@@ -122,6 +123,7 @@ struct ConfItem
 #define IsConfEncrypted(x)      ((x)->flags & CONF_FLAGS_ENCRYPTED)
 #define IsNeedSasl(x)		((x)->flags & CONF_FLAGS_NEED_SASL)
 #define IsConfExemptDNSBL(x)	((x)->flags & CONF_FLAGS_EXEMPTDNSBL)
+#define IsConfSSLNeeded(x)	((x)->flags & CONF_FLAGS_NEED_SSL)
 
 /* flag definitions for opers now in client.h */
 
@@ -134,7 +136,6 @@ struct config_file_entry
 	const char *xlinefile;
 	const char *resvfile;
 
-	char *servlink_path;
 	char *egdpool_path;
 
 	char *default_operstring;
@@ -210,12 +211,13 @@ struct config_file_entry
 	int reject_ban_time;
 	int reject_after_count;
 	int reject_duration;
+	int throttle_count;
+	int throttle_duration;
 	int target_change;
 	int collision_fnc;
 	int default_umodes;
 	int global_snotices;
 	int operspy_dont_care_user_info;
-	int max_unknown_ip;
 };
 
 struct config_channel_entry

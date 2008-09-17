@@ -28,6 +28,7 @@
 #include "snomask.h"
 #include "blacklist.h"
 #include "sslproc.h"
+#include "privilege.h"
 
 #define CF_TYPE(x) ((x) & CF_MTYPE)
 
@@ -53,6 +54,7 @@ static struct alias_entry *yy_alias = NULL;
 
 static char *yy_blacklist_host = NULL;
 static char *yy_blacklist_reason = NULL;
+static char *yy_privset_extends = NULL;
 
 static const char *
 conf_strtype(int type)
@@ -306,23 +308,7 @@ static struct mode_table umode_table[] = {
 
 static struct mode_table oper_table[] = {
 	{"encrypted",		OPER_ENCRYPTED		},
-	{"local_kill",		OPER_LOCKILL		},
-	{"global_kill",		OPER_GLOBKILL|OPER_LOCKILL	},
-	{"remote",		OPER_REMOTE		},
-	{"kline",		OPER_KLINE		},
-	{"unkline",		OPER_UNKLINE		},
-	{"nick_changes",	OPER_NICKS		},
-	{"rehash",		OPER_REHASH		},
-	{"die",			OPER_DIE		},
-	{"admin",		OPER_ADMIN		},
-	{"hidden_admin",	OPER_HADMIN		},
-	{"xline",		OPER_XLINE		},
-	{"resv",		OPER_RESV		},
-	{"operwall",		OPER_OPERWALL		},
-	{"oper_spy",		OPER_SPY		},
-	{"hidden_oper",		OPER_INVIS		},
-	{"remoteban",		OPER_REMOTEBAN		},
-	{"mass_notice",		OPER_MASSNOTICE		},
+	{"need_ssl",		OPER_NEEDSSL		},
 	{NULL, 0}
 };
 
@@ -340,6 +326,7 @@ static struct mode_table auth_table[] = {
 	{"no_tilde",		CONF_FLAGS_NO_TILDE	},
 	{"need_ident",		CONF_FLAGS_NEED_IDENTD	},
 	{"have_ident",		CONF_FLAGS_NEED_IDENTD	},
+	{"need_ssl", 		CONF_FLAGS_NEED_SSL	},
 	{"need_sasl",		CONF_FLAGS_NEED_SASL	},
 	{NULL, 0}
 };
@@ -448,6 +435,60 @@ set_modes_from_table(int *modes, const char *whatis, struct mode_table *tab, con
 	}
 }
 
+static void
+conf_set_privset_extends(void *data)
+{
+	yy_privset_extends = rb_strdup((char *) data);
+}
+
+static void
+conf_set_privset_privs(void *data)
+{
+	char *privs = NULL;
+	conf_parm_t *args = data;
+
+	for (; args; args = args->next)
+	{
+		if (privs == NULL)
+			privs = rb_strdup(args->v.string);
+		else
+		{
+			char *privs_old = privs;
+
+			privs = rb_malloc(strlen(privs_old) + 1 + strlen(args->v.string) + 1);
+			strcpy(privs, privs_old);
+			strcat(privs, " ");
+			strcat(privs, args->v.string);
+
+			rb_free(privs_old);
+		}
+	}
+
+	if (privs)
+	{
+		if (yy_privset_extends)
+		{
+			struct PrivilegeSet *set = privilegeset_get(yy_privset_extends);
+
+			if (!set)
+			{
+				conf_report_error("Warning -- unknown parent privilege set %s for %s; assuming defaults", yy_privset_extends, conf_cur_block_name);
+
+				set = privilegeset_get("default");
+			}
+
+			privilegeset_extend(set, conf_cur_block_name != NULL ? conf_cur_block_name : "<unknown>", privs, 0);
+
+			rb_free(yy_privset_extends);
+			yy_privset_extends = NULL;
+		}
+		else
+			privilegeset_set_new(conf_cur_block_name != NULL ? conf_cur_block_name : "<unknown>", privs, 0);
+
+		rb_free(privs);
+	}
+}
+
 static int
 conf_begin_oper(struct TopConf *tc)
 {
@@ -467,7 +508,7 @@ conf_begin_oper(struct TopConf *tc)
 	}
 
 	yy_oper = make_oper_conf();
-	yy_oper->flags |= OPER_ENCRYPTED|OPER_RESV|OPER_OPERWALL|OPER_REMOTEBAN|OPER_MASSNOTICE;
+	yy_oper->flags |= OPER_ENCRYPTED;
 
 	return 0;
 }
@@ -504,6 +545,10 @@ conf_end_oper(struct TopConf *tc)
 		return 0;
 	}
 
+
+	if (!yy_oper->privset)
+		yy_oper->privset = privilegeset_get("default");
+
 	/* now, yy_oper_list contains a stack of oper_conf's with just user
 	 * and host in, yy_oper contains the rest of the information which
 	 * we need to copy into each element in yy_oper_list
@@ -521,6 +566,7 @@ conf_end_oper(struct TopConf *tc)
 		yy_tmpoper->flags = yy_oper->flags;
 		yy_tmpoper->umodes = yy_oper->umodes;
 		yy_tmpoper->snomask = yy_oper->snomask;
+		yy_tmpoper->privset = yy_oper->privset;
 
 #ifdef HAVE_LIBCRYPTO
 		if(yy_oper->rsa_pubkey_file)
@@ -567,6 +613,12 @@ conf_set_oper_flags(void *data)
 	conf_parm_t *args = data;
 
 	set_modes_from_table(&yy_oper->flags, "flag", oper_table, args);
+}
+
+static void
+conf_set_oper_privset(void *data)
+{
+	yy_oper->privset = privilegeset_get((char *) data);
 }
 
 static void
@@ -1967,10 +2019,18 @@ static struct ConfEntry conf_operator_table[] =
 	{ "rsa_public_key_file",  CF_QSTRING, conf_set_oper_rsa_public_key_file, 0, NULL },
 	{ "flags",	CF_STRING | CF_FLIST, conf_set_oper_flags,	0, NULL },
 	{ "umodes",	CF_STRING | CF_FLIST, conf_set_oper_umodes,	0, NULL },
+	{ "privset",	CF_QSTRING, conf_set_oper_privset,	0, NULL },
 	{ "snomask",    CF_QSTRING, conf_set_oper_snomask,      0, NULL },
 	{ "user",	CF_QSTRING, conf_set_oper_user,		0, NULL },
 	{ "password",	CF_QSTRING, conf_set_oper_password,	0, NULL },
 	{ "\0",	0, NULL, 0, NULL }
+};
+
+static struct ConfEntry conf_privset_table[] =
+{
+	{ "extends",	CF_QSTRING,		conf_set_privset_extends,	0, NULL },
+	{ "privs",	CF_STRING | CF_FLIST,	conf_set_privset_privs,		0, NULL },
+	{ "\0", 0, NULL, 0, NULL }
 };
 
 static struct ConfEntry conf_class_table[] =
@@ -2035,7 +2095,6 @@ static struct ConfEntry conf_general_table[] =
 	{ "kline_reason",	CF_QSTRING, NULL, REALLEN, &ConfigFileEntry.kline_reason },
 	{ "identify_service",	CF_QSTRING, NULL, REALLEN, &ConfigFileEntry.identifyservice },
 	{ "identify_command",	CF_QSTRING, NULL, REALLEN, &ConfigFileEntry.identifycommand },
-	{ "servlink_path",	CF_QSTRING, NULL, MAXPATHLEN, &ConfigFileEntry.servlink_path },
 
 	{ "anti_spam_exit_message_time", CF_TIME,  NULL, 0, &ConfigFileEntry.anti_spam_exit_message_time },
 	{ "disable_fake_channels",	 CF_YESNO, NULL, 0, &ConfigFileEntry.disable_fake_channels },
@@ -2064,7 +2123,6 @@ static struct ConfEntry conf_general_table[] =
 	{ "max_nick_time",	CF_TIME,  NULL, 0, &ConfigFileEntry.max_nick_time	},
 	{ "max_nick_changes",	CF_INT,   NULL, 0, &ConfigFileEntry.max_nick_changes	},
 	{ "max_targets",	CF_INT,   NULL, 0, &ConfigFileEntry.max_targets		},
-	{ "max_unknown_ip",	CF_INT,   NULL, 0, &ConfigFileEntry.max_unknown_ip	},
 	{ "min_nonwildcard",	CF_INT,   NULL, 0, &ConfigFileEntry.min_nonwildcard	},
 	{ "nick_delay",		CF_TIME,  NULL, 0, &ConfigFileEntry.nick_delay		},
 	{ "no_oper_flood",	CF_YESNO, NULL, 0, &ConfigFileEntry.no_oper_flood	},
@@ -2076,6 +2134,8 @@ static struct ConfEntry conf_general_table[] =
 	{ "reject_after_count",	CF_INT,   NULL, 0, &ConfigFileEntry.reject_after_count	},
 	{ "reject_ban_time",	CF_TIME,  NULL, 0, &ConfigFileEntry.reject_ban_time	},
 	{ "reject_duration",	CF_TIME,  NULL, 0, &ConfigFileEntry.reject_duration	},
+	{ "throttle_count",	CF_INT,   NULL, 0, &ConfigFileEntry.throttle_count	},
+	{ "throttle_duration",	CF_TIME,  NULL, 0, &ConfigFileEntry.throttle_duration	},
 	{ "short_motd",		CF_YESNO, NULL, 0, &ConfigFileEntry.short_motd		},
 	{ "stats_c_oper_only",	CF_YESNO, NULL, 0, &ConfigFileEntry.stats_c_oper_only	},
 	{ "stats_e_disabled",	CF_YESNO, NULL, 0, &ConfigFileEntry.stats_e_disabled	},
@@ -2134,6 +2194,7 @@ newconf_init()
 	add_top_conf("log", NULL, NULL, conf_log_table);
 	add_top_conf("operator", conf_begin_oper, conf_end_oper, conf_operator_table);
 	add_top_conf("class", conf_begin_class, conf_end_class, conf_class_table);
+	add_top_conf("privset", NULL, NULL, conf_privset_table);
 
 	add_top_conf("listen", conf_begin_listen, conf_end_listen, NULL);
 	add_conf_item("listen", "port", CF_INT | CF_FLIST, conf_set_listen_port);

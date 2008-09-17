@@ -154,6 +154,8 @@ extern const char *form_str(int);
 #define RPL_LISTEND          323
 #define RPL_CHANNELMODEIS    324
 
+#define RPL_CHANNELURL       328 /* to be sent by services */
+
 #define RPL_CREATIONTIME     329
 #define RPL_WHOISLOGGEDIN    330
 

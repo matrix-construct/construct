@@ -137,6 +137,7 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	struct ConfItem *aconf;
 	char *name;
 	char *key = NULL;
+	const char *modes;
 	int i, flags = 0;
 	char *p = NULL, *p2 = NULL;
 	char *chanlist;
@@ -341,17 +342,15 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 			chptr->channelts = rb_current_time();
 			chptr->mode.mode |= MODE_TOPICLIMIT;
 			chptr->mode.mode |= MODE_NOPRIVMSGS;
+			modes = channel_modes(chptr, &me);
 
-			sendto_channel_local(ONLY_CHANOPS, chptr, ":%s MODE %s +nt",
-					     me.name, chptr->chname);
+			sendto_channel_local(ONLY_CHANOPS, chptr, ":%s MODE %s %s",
+					     me.name, chptr->chname, modes);
 
-			if(*chptr->chname == '#')
-			{
-				sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
-					      ":%s SJOIN %ld %s +nt :@%s",
-					      me.id, (long) chptr->channelts,
-					      chptr->chname, source_p->id);
-			}
+			sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
+				      ":%s SJOIN %ld %s %s :@%s",
+				      me.id, (long) chptr->channelts,
+				      chptr->chname, modes, source_p->id);
 		}
 		else
 		{

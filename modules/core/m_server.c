@@ -119,7 +119,7 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					     "Unauthorised server connection attempt from %s: "
 					     "No entry for servername %s",
-					     client_p->name, name);
+					     "[@255.255.255.255]", name);
 
 			ilog(L_SERVER, "Access denied, no connect block for server %s%s",
 			     EmptyString(client_p->name) ? name : "",
@@ -135,7 +135,7 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 				     "Unauthorised server connection attempt from %s: "
 				     "Bad password for server %s",
-				     client_p->name, name);
+				     "[@255.255.255.255]", name);
 
 		ilog(L_SERVER, "Access denied, invalid password for server %s%s",
 		     EmptyString(client_p->name) ? name : "",
@@ -150,7 +150,7 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Unauthorised server connection attempt from %s: "
 				     "Invalid host for server %s",
-				     client_p->name, name);
+				     "[@255.255.255.255]", name);
 
 		ilog(L_SERVER, "Access denied, invalid host for server %s%s",
 		     EmptyString(client_p->name) ? name : "",
@@ -165,7 +165,7 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 	case -4:
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Invalid servername %s from %s",
-				     name, client_p->name);
+				     name, "[@255.255.255.255]");
 		ilog(L_SERVER, "Access denied, invalid servername from %s",
 		     log_client_name(client_p, SHOW_IP));
 
@@ -208,7 +208,7 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 		 */
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Attempt to re-introduce server %s from %s",
-				     name, client_p->name);
+				     name, "[@255.255.255.255]");
 		ilog(L_SERVER, "Attempt to re-introduce server %s from %s",
 				name, log_client_name(client_p, SHOW_IP));
 
@@ -220,14 +220,15 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 	if(has_id(client_p) && (target_p = find_id(client_p->id)) != NULL)
 	{
 		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
-				     "Attempt to re-introduce SID %s from %s%s",
+				     "Attempt to re-introduce SID %s from %s%s (already in use by %s)",
 				     client_p->id,
 				     EmptyString(client_p->name) ? name : "",
-				     client_p->name);
-		ilog(L_SERVER, "Attempt to re-introduce SID %s from %s%s",
+				     client_p->name, target_p->name);
+		ilog(L_SERVER, "Attempt to re-introduce SID %s from %s%s (already in use by %s)",
 				client_p->id,
 				EmptyString(client_p->name) ? name : "",
-				log_client_name(client_p, SHOW_IP));
+				log_client_name(client_p, SHOW_IP),
+				target_p->name);
 
 		sendto_one(client_p, "ERROR :SID already exists.");
 		exit_client(client_p, client_p, client_p, "SID Exists");
@@ -267,6 +268,7 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 	int hlined = 0;
 	int llined = 0;
 	rb_dlink_node *ptr;
+	char squitreason[160];
 
 	name = parv[1];
 	hop = atoi(parv[2]);
@@ -292,21 +294,13 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 		 * doesnt exist, although ircd can handle it, its not a realistic
 		 * solution.. --fl_ 
 		 */
-		/* It is behind a host-masked server. Completely ignore the
-		 * server message(don't propagate or we will delink from whoever
-		 * we propagate to). -A1kmm */
-		if(irccmp(target_p->name, name) && target_p->from == client_p)
-			return 0;
-
-		sendto_one(client_p, "ERROR :Server %s already exists", name);
-
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "Link %s cancelled, server %s already exists",
-				     client_p->name, name);
 		ilog(L_SERVER, "Link %s cancelled, server %s already exists",
 			client_p->name, name);
 
-		exit_client(client_p, client_p, &me, "Server Exists");
+		rb_snprintf(squitreason, sizeof squitreason,
+				"Server %s already exists",
+				name);
+		exit_client(client_p, client_p, &me, squitreason);
 		return 0;
 	}
 
@@ -338,11 +332,6 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 	 * add it to list and propagate word to my other
 	 * server links...
 	 */
-	if(parc == 1 || EmptyString(info))
-	{
-		sendto_one(client_p, "ERROR :No server info specified for %s", name);
-		return 0;
-	}
 
 	/*
 	 * See if the newly found server is behind a guaranteed
@@ -385,7 +374,7 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 	 * .edu's
 	 */
 
-	/* Ok, check client_p can hub the new server, and make sure it's not a LL */
+	/* Ok, check client_p can hub the new server */
 	if(!hlined)
 	{
 		/* OOOPs nope can't HUB */
@@ -394,7 +383,10 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 		ilog(L_SERVER, "Non-Hub link %s introduced %s.",
 			client_p->name, name);
 
-		exit_client(NULL, client_p, &me, "No matching hub_mask.");
+		rb_snprintf(squitreason, sizeof squitreason,
+				"No matching hub_mask for %s",
+				name);
+		exit_client(NULL, client_p, &me, squitreason);
 		return 0;
 	}
 
@@ -408,7 +400,10 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 		ilog(L_SERVER, "Link %s introduced leafed server %s.",
 			client_p->name, name);	
 
-		exit_client(NULL, client_p, &me, "Leafed Server.");
+		rb_snprintf(squitreason, sizeof squitreason,
+				"Matching leaf_mask for %s",
+				name);
+		exit_client(NULL, client_p, &me, squitreason);
 		return 0;
 	}
 
@@ -473,34 +468,39 @@ ms_sid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	int hop;
 	int hlined = 0;
 	int llined = 0;
+	char squitreason[160];
 
 	hop = atoi(parv[2]);
 
 	/* collision on the name? */
 	if((target_p = find_server(NULL, parv[1])) != NULL)
 	{
-		sendto_one(client_p, "ERROR :Server %s already exists", parv[1]);
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "Link %s cancelled, server %s already exists",
-				     client_p->name, parv[1]);
 		ilog(L_SERVER, "Link %s cancelled, server %s already exists",
 			client_p->name, parv[1]);
 
-		exit_client(NULL, client_p, &me, "Server Exists");
+		rb_snprintf(squitreason, sizeof squitreason,
+				"Server %s already exists",
+				parv[1]);
+		exit_client(NULL, client_p, &me, squitreason);
 		return 0;
 	}
 
 	/* collision on the SID? */
 	if((target_p = find_id(parv[3])) != NULL)
 	{
-		sendto_one(client_p, "ERROR :SID %s already exists", parv[3]);
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "Link %s cancelled, SID %s already exists",
-				     client_p->name, parv[3]);
-		ilog(L_SERVER, "Link %s cancelled, SID %s already exists",
-			client_p->name, parv[3]);
+		sendto_wallops_flags(UMODE_WALLOP, &me,
+				     "Link %s cancelled, SID %s for server %s already in use by %s",
+				     client_p->name, parv[3], parv[1], target_p->name);
+		sendto_server(NULL, NULL, CAP_TS6, NOCAPS,
+				     ":%s WALLOPS :Link %s cancelled, SID %s for server %s already in use by %s",
+				     me.id, client_p->name, parv[3], parv[1], target_p->name);
+		ilog(L_SERVER, "Link %s cancelled, SID %s for server %s already in use by %s",
+			client_p->name, parv[3], parv[1], target_p->name);
 
-		exit_client(NULL, client_p, &me, "SID Exists");
+		rb_snprintf(squitreason, sizeof squitreason,
+				"SID %s for %s already in use by %s",
+				parv[3], parv[1], target_p->name);
+		exit_client(NULL, client_p, &me, squitreason);
 		return 0;
 	}
 
@@ -551,26 +551,32 @@ ms_sid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	/* no matching hub_mask */
 	if(!hlined)
 	{
-		sendto_one(client_p, "ERROR :No matching hub_mask");
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Non-Hub link %s introduced %s.",
 				     client_p->name, parv[1]);
 		ilog(L_SERVER, "Non-Hub link %s introduced %s.",
 			client_p->name, parv[1]);
-		exit_client(NULL, client_p, &me, "No matching hub_mask.");
+
+		rb_snprintf(squitreason, sizeof squitreason,
+				"No matching hub_mask for %s",
+				parv[1]);
+		exit_client(NULL, client_p, &me, squitreason);
 		return 0;
 	}
 
 	/* matching leaf_mask */
 	if(llined)
 	{
-		sendto_one(client_p, "ERROR :Matching leaf_mask");
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Link %s introduced leafed server %s.",
 				     client_p->name, parv[1]);
 		ilog(L_SERVER, "Link %s introduced leafed server %s.",
 			client_p->name, parv[1]);	
-		exit_client(NULL, client_p, &me, "Leafed Server.");
+
+		rb_snprintf(squitreason, sizeof squitreason,
+				"Matching leaf_mask for %s",
+				parv[1]);
+		exit_client(NULL, client_p, &me, squitreason);
 		return 0;
 	}
 

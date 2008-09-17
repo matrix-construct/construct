@@ -1,3 +1,48 @@
+androsyn    2008/08/06 19:51:44 UTC	(25861)
+  Log:
+  put back in the pad to even pointer boundaries stuff
+
+  Modified:
+	libratbox/trunk/src/balloc.c (File Modified) 
+
+
+androsyn    2008/08/06 19:30:25 UTC	(25859)
+  Log:
+  fix the block heap free code
+
+  Modified:
+	libratbox/trunk/src/balloc.c (File Modified) 
+
+
+androsyn    2008/08/06 19:14:38 UTC	(25857)
+  Log:
+  Fix a bug where we would get SIGBUS crashes when trying to use a long long.
+  The problem was we were only aligning pointers to 4 bytes, which isn't good 
+  enough for long long on sparc when using gcc 4.x.  Apparently gcc 3.x was more 
+  tolerant of this.  This fixes it correctly.  
+  
+  
+
+  Modified:
+	libratbox/trunk/src/balloc.c (File Modified) 
+
+
+androsyn    2008/08/05 04:12:26 UTC	(25853)
+  Log:
+  fix a buffer overrun in the nossl case
+
+  Modified:
+	libratbox/trunk/src/nossl.c (File Modified) 
+
+
+androsyn    2008/08/04 22:04:38 UTC	(25833)
+  Log:
+  make GET_SS_FAMILY use const and add a SET_SS_FAMILY macro. ircd fixes coming shortly
+
+  Modified:
+	libratbox/trunk/include/ratbox_lib.h (File Modified) 
+
+
 androsyn    2008/07/29 15:26:55 UTC	(25795)
   Log:
   some sanity checks in the rb_open path

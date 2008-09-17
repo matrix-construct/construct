@@ -2802,8 +2802,8 @@ esac
 
 fi
 
-{ echo "$as_me:$LINENO: checking uname -s for Cygwin, Solaris, AIX or HPUX" >&5
-echo $ECHO_N "checking uname -s for Cygwin, Solaris, AIX or HPUX... $ECHO_C" >&6; }
+{ echo "$as_me:$LINENO: checking uname -s for Solaris, AIX or HPUX" >&5
+echo $ECHO_N "checking uname -s for Solaris, AIX or HPUX... $ECHO_C" >&6; }
 OSNAME=`uname -s`
 case "$OSNAME" in
         HP-UX*)
@@ -2817,11 +2817,6 @@ echo "${ECHO_T}assuming old HPUX with its own cc" >&6; }
 			{ echo "$as_me:$LINENO: result: already using newer HPUX" >&5
 echo "${ECHO_T}already using newer HPUX" >&6; }
 		fi
-	;;
-	CYGWIN*)
-		{ echo "$as_me:$LINENO: result: Cygwin" >&5
-echo "${ECHO_T}Cygwin" >&6; }
-		CYGWIN=yes
 	;;
 	SunOS*)
 		{ echo "$as_me:$LINENO: result: SunOS or Solaris" >&5
@@ -7613,8 +7608,8 @@ fi
 if test $ac_cv_header_stdarg_h = yes; then
   :
 else
-  { { echo "$as_me:$LINENO: error: ** stdarg.h could not be found - ircd-ratbox will not compile without it **" >&5
-echo "$as_me: error: ** stdarg.h could not be found - ircd-ratbox will not compile without it **" >&2;}
+  { { echo "$as_me:$LINENO: error: ** stdarg.h could not be found - charybdis will not compile without it **" >&5
+echo "$as_me: error: ** stdarg.h could not be found - charybdis will not compile without it **" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -10833,13 +10828,6 @@ _ACEOF
 
 shared_modules="yes"
 if test "$shared_modules" = yes; then
-
-	if test "$CYGWIN" = yes; then
-		{ echo "$as_me:$LINENO: WARNING: disabling shared modules; Cygwin is at present unable to build them." >&5
-echo "$as_me: WARNING: disabling shared modules; Cygwin is at present unable to build them." >&2;}
-		shared_modules="no"
-	fi
-
 		if test "$CC" = tcc -a "$TenDRA" = "no"; then
 		{ echo "$as_me:$LINENO: WARNING: disabling shared modules: Tiny C Compiler can't create PIC" >&5
 echo "$as_me: WARNING: disabling shared modules: Tiny C Compiler can't create PIC" >&2;}
@@ -12079,7 +12067,7 @@ echo "${ECHO_T}no" >&6; }
 echo $ECHO_N "checking GCC flag(s) -Wwrite-strings... $ECHO_C" >&6; }
  if test "${GCC-no}" = yes
  then
-  if test "${charybdis_cv_c_gcc_w_float_equal+set}" = set; then
+  if test "${charybdis_cv_c_gcc_w_write_strings+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
 
@@ -12123,24 +12111,99 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
 	 test -z "$ac_c_werror_flag" ||
 	 test ! -s conftest.err
        } && test -s conftest.$ac_objext; then
-  charybdis_cv_c_gcc_w_float_equal=yes
+  charybdis_cv_c_gcc_w_write_strings=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	charybdis_cv_c_gcc_w_float_equal=no
+	charybdis_cv_c_gcc_w_write_strings=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
    CFLAGS="${oldcflags}"
 fi
 
-  if test "x$charybdis_cv_c_gcc_w_float_equal" = xyes; then
+  if test "x$charybdis_cv_c_gcc_w_write_strings" = xyes; then
    CWARNS="${CWARNS}-Wwrite-strings "
    { echo "$as_me:$LINENO: result: ok" >&5
 echo "${ECHO_T}ok" >&6; }
   else
-   charybdis_cv_c_gcc_w_float_equal=''
+   charybdis_cv_c_gcc_w_write_strings=''
+   { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+  fi
+ else
+  { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+ fi
+
+
+ { echo "$as_me:$LINENO: checking GCC flag(s) -Werror-implicit-function-declaration" >&5
+echo $ECHO_N "checking GCC flag(s) -Werror-implicit-function-declaration... $ECHO_C" >&6; }
+ if test "${GCC-no}" = yes
+ then
+  if test "${charybdis_cv_c_gcc_w_error_implicit_function_declaration+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+
+   oldcflags="${CFLAGS-}"
+   CFLAGS="${CFLAGS-} ${CWARNS} -Werror-implicit-function-declaration -Werror"
+   cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+#include <string.h>
+#include <stdio.h>
+int main(void);
+
+int
+main ()
+{
+
+    (void)strcmp("a","b"); fprintf(stdout,"test ok\n");
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+  charybdis_cv_c_gcc_w_error_implicit_function_declaration=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	charybdis_cv_c_gcc_w_error_implicit_function_declaration=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+   CFLAGS="${oldcflags}"
+fi
+
+  if test "x$charybdis_cv_c_gcc_w_error_implicit_function_declaration" = xyes; then
+   CWARNS="${CWARNS}-Werror-implicit-function-declaration "
+   { echo "$as_me:$LINENO: result: ok" >&5
+echo "${ECHO_T}ok" >&6; }
+  else
+   charybdis_cv_c_gcc_w_error_implicit_function_declaration=''
    { echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
   fi

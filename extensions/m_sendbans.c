@@ -126,8 +126,9 @@ static int mo_sendbans(struct Client *client_p, struct Client *source_p, int par
 	}
 
 	sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
-			"%s is sending resvs and xlines to %s",
-			get_oper_name(source_p), target);
+			"%s!%s@%s is sending resvs and xlines to %s",
+			source_p->name, source_p->username, source_p->host,
+			target);
 
 	RB_DLINK_FOREACH(ptr, resv_conf_list.head)
 	{

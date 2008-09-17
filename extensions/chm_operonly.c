@@ -28,7 +28,7 @@ _modinit(void)
 {
 	/* add the channel mode to the available slot */
 	chmode_table['O'].mode_type = find_cflag_slot();
-	chmode_table['O'].set_func = chm_simple;
+	chmode_table['O'].set_func = chm_staff;
 
 	construct_noparam_modes();
 
@@ -58,7 +58,7 @@ h_can_join(hook_data_channel *data)
 	struct Channel *chptr = data->chptr;
 
 	if((chptr->mode.mode & chmode_flags['O']) && !IsOper(source_p)) {
-		sendto_one_notice(source_p, ":Only IRC Operators could join this channel!");
+		sendto_one_numeric(source_p, 520, "%s :Cannot join channel (+O) - you are not an IRC operator", chptr->chname);
 		data->approved = ERR_CUSTOM;
 	}
 }

@@ -14,36 +14,54 @@
   [x] in-process SSL
   [x] port and use ratbox ssld for server links
   [x] merge with libratbox SVN
-[/] ssl stuff
+[x] ssl stuff
   [x] client-to-client ssl
   [x] server-to-server ssl
   [x] ssl usermode (+Z)
   [x] ssl channelmode (done by extban and chm_compat)
-  [ ] acknowledgement message for SSL users like '* *** You are connected using SSL cipher "DHE RSA-AES 128 CBC-SHA"'
   [x] tool for generating ssl certificates and other stuff
   [x] gnutls backend for at least SSL connections (replacing libcrypto use in m_challenge would be nice too)
-[/] merge some stuff from ircd-seven directly (to be determined what)
+[x] merge some stuff from ircd-seven directly (to be determined what)
   [x] remote d:lines support
   [x] PASS selector:password for auth{} (useful for dynamic IPs)
-  [ ] +C (noctcp) channel/usermode
 [F] kline/xline/resv sync
 [F] make an ability of using bandb instead of .conf files as bans storage
 [x] drop non-TS6 (legacy protocol) support
 [F] Doxygen code documentation
+[?] Patch or core-feature - libguess on-fly any-charset-to-utf8 translation
 [/] module engine rework
   [/] more beautiful way of adding new channel modes by module
-   [x] basic functionality
-   [x] some example modules
-   [ ] think on how could we append privilege checking for simple chmode - like chm_staff, but additionaly limited (e. g. IsOperResv etc);
-       possibly move the same code for all functions into separated one and make it extern?
+    [x] basic functionality
+    [x] some example modules
+    [ ] think on how could we append privilege checking for simple chmode - like chm_staff, but additionaly limited (e. g. IsOperResv etc);
+        possibly move the same code for all functions into separated one and make it extern?
+    [x] another idea is too make that work with privilege groups, like "serveradmins" or "ircops"
   [ ] make nick/user/host validation functions/match tables able to work in separated modules,
       this will help us making support for native characters sets/slashes in host etc
   [ ] auth checker module
   [ ] resolver module
+  [ ] hooks
+    [ ] can_kick
+        which modules could we add in charybdis distro?
+    [ ] can_send_channel
+      [?] +C (ctcp)
+    [ ] can_send_user
+      [?] +C (ctcp)
+  [x] privilege system for privilege groups, something like
+     in .conf: helper { kill_global, rehash, kline_local }
+     in modules: privilege_add("kill_global"), has_privilege(source_p, "kill_global") etc, should work the way dynamic cflags/umodes done
+     -- this is done kinda like this, but not really. See HasPrivilege() calls. privilege_add() was not needed ~nenolod
 [x] Remove glines entirely
+[/] test suite as in ircu
+[?] win32
+ [?] cygwin support
+ [?] mingw support
+ [?] native win32 (VS2005/VS2008)
 [/] Bug fixes
   [x] Compilation without zlib headers fails - fixed
-  [ ] Compilation date and time in server welcome message is in OS locale - looks ugly 'cause often it's not match user's codepage
+  [x] Compilation date and time in server welcome message is in OS locale - looks ugly 'cause often it's not match user's codepage
+[ ] Improvments
+  [ ] ircd shouldn't need bison/byacc/yacc or flex for compilation
 --- other stuff
   [ ] allow to set up configfiles path (etc/) instead of separated configfiles names (kline.conf, ircd.conf etc) like it is in ratbox3?
   [?] internally split out +o/+v "ranks" into a series of permissions. this could allow for configure-defined 

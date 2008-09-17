@@ -7,8 +7,6 @@ If you don't read this first, we won't help you.
   * - Reading INSTALL is now a must, as the old DPATH is now specified    *
   *   when configure is run.                                              *
   *   You now need to ./configure --prefix="/path/to/install/it"          *
-  * - The old config format WILL NOT WORK.  Please see doc/example.conf ! *
-  * - The old kline format WILL NOT WORK.  Please use convertklines which *
   *   will be installed with your ircd!					  *
   *************************************************************************
 
@@ -17,6 +15,15 @@ If you don't read this first, we won't help you.
   RECOMMENDED THAT YOU RUN 'make distclean' AND THEN RERUN './configure'!
 
 ******************************* REQUIREMENTS **********************************
+
+New Features - A short introduction:
+- charybdis-3.x now has several major changes over previous version that you
+  will notice right away.
+  o SSL Client support.
+  o Connection Throttling. 
+
+- Please see NEWS for more detailed changes.
+
 
 Necessary Requirements:
 
@@ -33,40 +40,26 @@ Necessary Requirements:
 
 Feature Specific Requirements:
 
-- For the SSL Challenge controlled OPER feature and encrypted server links,
+- For SSL Clients, SSL Challenge controlled OPER feature, and encrypted server links,
   a working OpenSSL library
 
-- For encrypted oper and (optional) server passwords, a working DES and/or
-  MD5 library
+- For encrypted oper and (optional) server passwords, a working DES, MD5, or SHA library.
 
 *******************************************************************************
 
-- To report bugs in ircd-ratbox, send the bug report to ircd-ratbox@lists.ratbox.org
+- To report bugs in charybdis, visit us at irc.atheme.org #charybdis
 
 - Known bugs are listed in the BUGS file
 
 - See the INSTALL document for info on configuring and compiling
-  ircd-ratbox.
+  charybdis.
 
 - Please read doc/index.txt to get an overview of the current documentation.
-
-- Old Hybrid 5/6 configuration files are no longer supported.  All conf
-  files will have to be converted to the new format.  A convertconf
-  utility is provided and installed into bin/.
-
-- If you are wondering why config.h is practically empty, its because many 
-  things that were once in config.h are now specified in the 'general'
-  block of ircd.conf.  Look at example.conf for more information about
-  these options.
 
 - The files, /etc/services, /etc/protocols, and /etc/resolv.conf, MUST be
   readable by the user running the server in order for ircd to start.
   Errors from adns causing the ircd to refuse to start up are often related
   to permission problems on these files.
-
-- There is a mailing list for ircd-ratbox.  To subscribe to this list
-  visit http://lists.ratbox.org/cgi-bin/mailman/listinfo/ircd-ratbox
-  Note that this list also gets the commit emails from the CVS server.
 
 - FREEBSD USERS: if you are compiling with ipv6 you may experience
   problems with ipv4 due to the way the socket code is written.  To
@@ -77,26 +70,34 @@ Feature Specific Requirements:
   work fine, and any gcc or SunPro compiled on 32bit.
 
 - DARWIN AND MACOS X USERS: You must be using at least the December 2001
-  Development Tools from Apple to build ircd-ratbox with shared modules.
+  Development Tools from Apple to build charybdis with shared modules.
   Before then you MUST disable shared modules, as we do not have the proper
   flags for cc(1) prior to that point to produce shared modules.
 
-- SUPPORTED PLATFORMS: this code should compile without any warnings
-  on FreeBSD 3.x/4.x, RedHat 6.2, Debian Potato and Solaris 7/8 sparc.  
+- SUPPORTED PLATFORMS: this code should compile without any warnings on:
+    FreeBSD 6.x/7.x,
+    Gentoo & Gentoo Hardened ~x86/~amd64/~fbsd
+    Fedora 8/9 / CentOS 4/5 / Redhat Enterprise 5
+    Debian Etch, 
+    OpenSuSE 10/11,
+    OpenSolaris 2008.x?
+    Solaris 10 sparc.
+  
   Please let us know if you find otherwise.  
   It probably does not compile on AIX, IRIX or libc5 Linux.
 
 - TESTED PLATFORMS:  The code has been tested on the following platforms, and
   is known to run properly.
-  FreeBSD 3.x/4.x
-  Linux glibc
+  FreeBSD 6.x/7.x
+  Linux glibc-2.6, glibc-2.7
   Solaris 2.6/7/8
   OpenBSD 2.8
   NetBSD 1.4
+  OpenVMS/Alpha 7.2 (static modules, no ssld)
 
-- Please read doc/whats-new.txt for information about what is in this release
+- Please read NEWS for information about what is in this release
 
 - Other files recommended for reading: BUGS, INSTALL
 
 --------------------------------------------------------------------------------
-$Id: README.FIRST 1837 2006-08-22 14:05:58Z nenolod $
+$Id$

@@ -255,8 +255,6 @@ extern void send_cap_mode_changes(struct Client *client_p, struct Client *source
 extern void set_channel_mode(struct Client *client_p, struct Client *source_p,
             	struct Channel *chptr, struct membership *msptr, int parc, const char *parv[]);
 
-extern int chmode_flags[256];
-
 extern struct ChannelMode chmode_table[256];
 
 extern int add_id(struct Client *source_p, struct Channel *chptr, const char *banid,

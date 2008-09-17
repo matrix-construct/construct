@@ -3,7 +3,7 @@
  *  reject.h: header to a file which rejects users with prejudice
  *
  *  Copyright (C) 2003 Aaron Sethman <androsyn@ratbox.org>
- *  Copyright (C) 2003-2004 ircd-ratbox development team
+ *  Copyright (C) 2003-2005 ircd-ratbox development team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,11 +17,11 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
  *
- *  $Id: reject.h 3446 2007-05-14 22:21:16Z jilles $
+ *  $Id: reject.h 25056 2008-02-06 20:47:40Z androsyn $
  */
 #ifndef INCLUDED_reject_h
 #define INCLUDED_reject_h
@@ -29,17 +29,16 @@
 /* amount of time to delay a rejected clients exit */
 #define DELAYED_EXIT_TIME	10
 
-extern rb_dlink_list delay_exit;
-
 void init_reject(void);
-int check_reject(struct Client *);
+int check_reject(rb_fde_t *F, struct sockaddr *addr);
 void add_reject(struct Client *, const char *mask1, const char *mask2);
 void flush_reject(void);
 int remove_reject_ip(const char *ip);
 int remove_reject_mask(const char *mask1, const char *mask2);
+unsigned long delay_exit_length(void);
 
-int add_unknown_ip(struct Client *client_p);
-void del_unknown_ip(struct Client *client_p);
+int throttle_add(struct sockaddr *addr);
+
 
 #endif
 

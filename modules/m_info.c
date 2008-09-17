@@ -447,6 +447,18 @@ static struct InfoStruct info_table[] = {
 		"STATS Y is only shown to operators",
 	},
 	{
+		"throttle_count",
+		OUTPUT_DECIMAL,
+		&ConfigFileEntry.throttle_count, 
+		"Connection throttle threshold",
+	},
+	{
+		"throttle_duration",
+		OUTPUT_DECIMAL,
+		&ConfigFileEntry.throttle_duration, 
+		"Connection throttle duration",
+	},
+	{
 		"tkline_expire_notices",
 		OUTPUT_BOOLEAN,
 		&ConfigFileEntry.tkline_expire_notices,

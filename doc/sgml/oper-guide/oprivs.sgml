@@ -3,12 +3,10 @@
     <sect1 id="oprivlist">
       <title>Meanings of oper privileges</title>
       <para>
-        These are flags in operator{}.
-        The letter appears after opering up and in /stats o; an uppercase
-        letter means the privilege is possessed, lowercase means it is not.
+        These are specified in privset{}.
       </para>
       <sect2>
-	<title>admin (A), server administrator</title>
+	<title>oper:admin, server administrator</title>
 	<para>
 	  Various privileges intended for server administrators.
 	  Among other things, this automatically sets umode +a and allows
@@ -16,7 +14,73 @@
 	</para>
       </sect2>
       <sect2>
-	<title>remoteban (B), set remote bans</title>
+	<title>oper:die, die and restart</title>
+	<para>
+	  This grants permission to use DIE and RESTART, shutting down
+	  or restarting the server.
+	</para>
+      </sect2>
+      <sect2>
+	<title>oper:global_kill, global kill</title>
+	<para>
+	  Allows using KILL on users on any server.
+	</para>
+      </sect2>
+      <sect2>
+	<title>oper:hidden, hide from /stats p</title>
+	<para>
+	  This privilege currently does nothing, but was designed
+	  to hide bots from /stats p so users will not message them
+	  for help.
+	</para>
+      </sect2>
+      <sect2>
+	<title>oper:hidden_admin, hidden administrator</title>
+	<para>
+	  This grants everything granted to the oper:admin privilege,
+	  except the ability to set umode +a. If both oper:admin and oper:hidden_admin
+	  are possessed, umode +a can still not be used.
+	</para>
+      </sect2>
+      <sect2>
+	<title>oper:kline, kline and dline</title>
+	<para>
+	  Allows using KLINE and DLINE, to ban users by user@host mask
+	  or IP address.
+	</para>
+      </sect2>
+      <sect2>
+	<title>oper:local_kill, kill local users</title>
+	<para>
+	  This grants permission to use KILL on users on the same server,
+	  disconnecting them from the network.
+	</para>
+      </sect2>
+      <sect2>
+	<title>oper:mass_notice, global notices and wallops</title>
+	<para>
+	  Allows using server name ($$mask) and hostname ($#mask) masks in
+	  NOTICE and PRIVMSG to send a message to all matching users, and
+	  allows using the WALLOPS command to send a message to all users
+	  with umode +w set.
+	</para>
+      </sect2>
+      <sect2>
+	<title>oper:operwall, send/receive operwall</title>
+	<para>
+	  Allows using the OPERWALL command and umode +z to send and
+	  receive operwalls.
+	</para>
+      </sect2>
+      <sect2>
+	<title>oper:rehash, rehash</title>
+	<para>
+	  Allows using the REHASH command, to rehash various configuration
+	  files or clear certain lists.
+	</para>
+      </sect2>
+      <sect2>
+	<title>oper:remoteban, set remote bans</title>
 	<para>
 	  This grants the ability to use the ON argument on
 	  DLINE/KLINE/XLINE/RESV and UNDLINE/UNKLINE/UNXLINE/UNRESV to set
@@ -26,83 +90,18 @@
 	</para>
 	<note><para>
 	  If a cluster{} block is present, bans are sent remotely even
-	  if the oper does not have remoteban privilege.
+	  if the oper does not have oper:remoteban privilege.
 	</para></note>
       </sect2>
       <sect2>
-	<title>local_kill (C), kill local users</title>
-	<para>
-	  This grants permission to use KILL on users on the same server,
-	  disconnecting them from the network.
-	</para>
-      </sect2>
-      <sect2>
-	<title>die (D), die and restart</title>
-	<para>
-	  This grants permission to use DIE and RESTART, shutting down
-	  or restarting the server.
-	</para>
-      </sect2>
-      <sect2>
-	<title>rehash (H), rehash</title>
-	<para>
-	  Allows using the REHASH command, to rehash various configuration
-	  files or clear certain lists.
-	</para>
-      </sect2>
-      <sect2>
-	<title>kline (K), kline and dline</title>
-	<para>
-	  Allows using KLINE and DLINE, to ban users by user@host mask
-	  or IP address.
-	</para>
-      </sect2>
-      <sect2>
-	<title>operwall (L), send/receive operwall</title>
-	<para>
-	  Allows using the OPERWALL command and umode +z to send and
-	  receive operwalls.
-	</para>
-      </sect2>
-      <sect2>
-	<title>mass_notice (M), global notices and wallops</title>
-	<para>
-	  Allows using server name ($$mask) and hostname ($#mask) masks in
-	  NOTICE and PRIVMSG to send a message to all matching users, and
-	  allows using the WALLOPS command to send a message to all users
-	  with umode +w set.
-	</para>
-      </sect2>
-      <sect2>
-	<title>nick_changes (N), see nick changes</title>
-	<para>
-	  Allows using snomask +n to see local client nick changes.
-	  This is designed for monitor bots.
-	</para>
-      </sect2>
-      <sect2>
-	<title>global_kill (O), global kill</title>
-	<para>
-	  Allows using KILL on users on any server.
-	</para>
-      </sect2>
-      <sect2>
-	<title>hidden_oper (P), hide from /stats p</title>
-	<para>
-	  This privilege currently does nothing, but was designed
-	  to hide bots from /stats p so users will not message them
-	  for help.
-	</para>
-      </sect2>
-      <sect2>
-	<title>resv (Q), channel control</title>
+	<title>oper:resv, channel control</title>
 	<para>
 	  This allows using /resv, /unresv and changing the channel
 	  modes +L and +P.
 	</para>
       </sect2>
       <sect2>
-	<title>remote (R), remote routing</title>
+	<title>oper:routing, remote routing</title>
 	<para>
 	  This allows using the third argument of the CONNECT command, to
 	  instruct another server to connect somewhere, and using SQUIT
@@ -111,7 +110,7 @@
 	</para>
       </sect2>
       <sect2>
-	<title>oper_spy (S), use operspy</title>
+	<title>oper:spy, use operspy</title>
 	<para>
 	  This allows using /mode !#channel, /whois !nick, /who !#channel,
 	  /chantrace !#channel, /who !mask, /masktrace !user@host :gecos
@@ -133,27 +132,23 @@
 	</para>
       </sect2>
       <sect2>
-	<title>unkline (U), unkline and undline</title>
+	<title>oper:unkline, unkline and undline</title>
 	<para>
 	  Allows using UNKLINE and UNDLINE.
 	</para>
       </sect2>
       <sect2>
-	<title>xline (X), xline and unxline</title>
+	<title>oper:xline, xline and unxline</title>
 	<para>
 	  Allows using XLINE and UNXLINE, to ban/unban users by realname.
 	</para>
       </sect2>
       <sect2>
-	<title>hidden_admin, hidden administrator</title>
+	<title>snomask:nick_changes, see nick changes</title>
 	<para>
-	  This grants everything granted to the admin privilege,
-	  except the ability to set umode +a. If both admin and hidden_admin
-	  are possessed, umode +a can still not be used.
+	  Allows using snomask +n to see local client nick changes.
+	  This is designed for monitor bots.
 	</para>
-	<note><para>
-	  This privilege does not appear in /stats o or oper up notices.
-	</para></note>
       </sect2>
     </sect1>
   </chapter>

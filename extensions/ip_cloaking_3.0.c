@@ -121,11 +121,11 @@ do_host_cloak_ip(const char *inbuf, char *outbuf)
 
 	if(ipv6)
 	{
-	    snprintf(outbuf, HOSTLEN, "%s:%x", buf, accum);
+	    rb_snprintf(outbuf, HOSTLEN, "%s:%x", buf, accum);
 	}
 	else
 	{
-	    snprintf(outbuf, HOSTLEN, "%s.%x", buf, accum);
+	    rb_snprintf(outbuf, HOSTLEN, "%s.%x", buf, accum);
 	}
 }
 
