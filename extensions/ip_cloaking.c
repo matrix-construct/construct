@@ -106,19 +106,13 @@ do_host_cloak_ip(const char *inbuf, char *outbuf)
 			continue;
 		}
 
-		switch (ipv6)
-		{
-		case 1:
-			if (sepcount < totalcount / 2)
-				break;
-		case 0:
-			if (sepcount < 2)
-				break;
-		default:
-			*tptr = chartable[(*tptr + accum) % 20];
+		if (ipv6 && sepcount < totalcount / 2)
+			continue;
 
-		}
+		if (!ipv6 && sepcount < 2)
+			continue;
 
+		*tptr = chartable[(*tptr + accum) % 20];
 		accum = (accum << 1) | (accum >> 31);
 	}
 }
