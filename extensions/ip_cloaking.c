@@ -161,7 +161,7 @@ do_host_cloak_host(const char *inbuf, char *outbuf)
 	{
 		if (isdigit(*tptr))
 		{
-			*tptr = (*tptr + accum) % 10;
+			*tptr = '0' + (*tptr + accum) % 10;
 		}
 
 		accum = (accum << 1) | (accum >> 31);
