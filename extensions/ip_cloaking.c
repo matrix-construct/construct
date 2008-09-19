@@ -6,6 +6,7 @@
 #include "client.h"
 #include "ircd.h"
 #include "send.h"
+#include "hash.h"
 #include "s_conf.h"
 #include "s_user.h"
 #include "s_serv.h"
@@ -70,35 +71,62 @@ distribute_hostchange(struct Client *client)
 static void
 do_host_cloak_ip(const char *inbuf, char *outbuf)
 {
+	/* None of the characters in this table can be valid in an IP */
+	char chartable[] = "ghijklmnopqrstuvwxyz";
 	char *tptr;
-	unsigned int accum = fnv_hash(inbuf, 32);
-	char buf[HOSTLEN];
+	uint32_t accum = fnv_hash((const unsigned char*) inbuf, 32);
+	int sepcount = 0;
+	int totalcount = 0;
 	int ipv6 = 0;
 
-	strncpy(buf, inbuf, HOSTLEN);
-	tptr = strrchr(buf, '.');
+	strncpy(outbuf, inbuf, HOSTLEN);
 
-	if (tptr == NULL)
+	if (strchr(outbuf, ':'))
 	{
-		tptr = strrchr(buf, ':');
 		ipv6 = 1;
-	}
 
-	if (tptr == NULL)
+		/* Damn you IPv6... 
+		 * We count the number of colons so we can calculate how much
+		 * of the host to cloak. This is because some hostmasks may not
+		 * have as many octets as we'd like.
+		 *
+		 * We have to do this ahead of time because doing this during
+		 * the actual cloaking would get ugly
+		 */
+		for (tptr = outbuf; *tptr != '\0'; tptr++)
+		{
+			if (*tptr == ':') {
+				totalcount++;
+			}
+		}
+	}
+	else if (!strchr(outbuf, '.'))
 	{
-		strncpy(outbuf, inbuf, HOSTLEN);
 		return;
 	}
 
-	*tptr++ = '\0';
+	for (tptr = outbuf; *tptr != '\0'; tptr++) 
+	{
+		if (*tptr == ':' || *tptr == '.')
+		{
+			sepcount++;
+			continue;
+		}
 
-	if(ipv6)
-	{
-	    rb_snprintf(outbuf, HOSTLEN, "%s:%x", buf, accum);
-	}
-	else
-	{
-	    rb_snprintf(outbuf, HOSTLEN, "%s.%x", buf, accum);
+		switch (ipv6)
+		{
+		case 1:
+			if (sepcount < totalcount / 2)
+				break;
+		case 0:
+			if (sepcount < 2)
+				break;
+		default:
+			*tptr = chartable[(*tptr + accum) % 20];
+
+		}
+
+		accum = (accum << 1) | (accum >> 31);
 	}
 }
 
@@ -107,12 +135,12 @@ do_host_cloak_host(const char *inbuf, char *outbuf)
 {
 	char b26_alphabet[] = "abcdefghijklmnopqrstuvwxyz";
 	char *tptr;
-	unsigned int accum = fnv_hash(inbuf, 32);
+	uint32_t accum = fnv_hash((const unsigned char*) inbuf, 32);
 
 	strncpy(outbuf, inbuf, HOSTLEN);
 
 	/* pass 1: scramble first section of hostname using base26 
-	 * alphabet toasted against the weighted entropy of the string.
+	 * alphabet toasted against the FNV hash of the string.
 	 *
 	 * numbers are not changed at this time, only letters.
 	 */
@@ -124,7 +152,10 @@ do_host_cloak_host(const char *inbuf, char *outbuf)
 		if (isdigit(*tptr) || *tptr == '-')
 			continue;
 
-		*tptr = b26_alphabet[(*tptr * accum) % 26];
+		*tptr = b26_alphabet[(*tptr + accum) % 26];
+
+		/* Rotate one bit to avoid all digits being turned odd or even */
+		accum = (accum << 1) | (accum >> 31);
 	}
 
 	/* pass 2: scramble each number in the address */
@@ -132,8 +163,10 @@ do_host_cloak_host(const char *inbuf, char *outbuf)
 	{
 		if (isdigit(*tptr))
 		{
-			*tptr = 48 + ((*tptr * accum) % 10);
+			*tptr = (*tptr + accum) % 10;
 		}
+
+		accum = (accum << 1) | (accum >> 31);
 	}	
 }
 
