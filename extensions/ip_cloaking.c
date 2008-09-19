@@ -92,16 +92,11 @@ do_host_cloak_ip(const char *inbuf, char *outbuf)
 		 * the actual cloaking would get ugly
 		 */
 		for (tptr = outbuf; *tptr != '\0'; tptr++)
-		{
-			if (*tptr == ':') {
+			if (*tptr == ':')
 				totalcount++;
-			}
-		}
 	}
 	else if (!strchr(outbuf, '.'))
-	{
 		return;
-	}
 
 	for (tptr = outbuf; *tptr != '\0'; tptr++) 
 	{
@@ -160,9 +155,7 @@ do_host_cloak_host(const char *inbuf, char *outbuf)
 	for (tptr = outbuf; *tptr != '\0'; tptr++)
 	{
 		if (isdigit(*tptr))
-		{
 			*tptr = '0' + (*tptr + accum) % 10;
-		}
 
 		accum = (accum << 1) | (accum >> 31);
 	}	
