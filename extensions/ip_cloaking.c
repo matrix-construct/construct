@@ -66,8 +66,6 @@ distribute_hostchange(struct Client *client)
 		ClearDynSpoof(client);
 }
 
-#define HOSTLEN 63
-
 static void
 do_host_cloak_ip(const char *inbuf, char *outbuf)
 {
@@ -79,7 +77,7 @@ do_host_cloak_ip(const char *inbuf, char *outbuf)
 	int totalcount = 0;
 	int ipv6 = 0;
 
-	strncpy(outbuf, inbuf, HOSTLEN);
+	rb_strlcpy(outbuf, inbuf, HOSTLEN + 1);
 
 	if (strchr(outbuf, ':'))
 	{
@@ -137,7 +135,7 @@ do_host_cloak_host(const char *inbuf, char *outbuf)
 	char *tptr;
 	uint32_t accum = fnv_hash((const unsigned char*) inbuf, 32);
 
-	strncpy(outbuf, inbuf, HOSTLEN);
+	rb_strlcpy(outbuf, inbuf, HOSTLEN + 1);
 
 	/* pass 1: scramble first section of hostname using base26 
 	 * alphabet toasted against the FNV hash of the string.
@@ -192,7 +190,7 @@ check_umode_change(void *vdata)
 		}
 		if (strcmp(source_p->host, source_p->localClient->mangledhost))
 		{
-			rb_strlcpy(source_p->host, source_p->localClient->mangledhost, HOSTLEN);
+			rb_strlcpy(source_p->host, source_p->localClient->mangledhost, HOSTLEN + 1);
 			distribute_hostchange(source_p);
 		}
 		else /* not really nice, but we need to send this numeric here */
@@ -204,7 +202,7 @@ check_umode_change(void *vdata)
 		if (source_p->localClient->mangledhost != NULL &&
 				!strcmp(source_p->host, source_p->localClient->mangledhost))
 		{
-			rb_strlcpy(source_p->host, source_p->orighost, HOSTLEN);
+			rb_strlcpy(source_p->host, source_p->orighost, HOSTLEN + 1);
 			distribute_hostchange(source_p);
 		}
 	}
@@ -220,7 +218,7 @@ check_new_user(void *vdata)
 		source_p->umodes &= ~user_modes['h'];
 		return;
 	}
-	source_p->localClient->mangledhost = rb_malloc(HOSTLEN);
+	source_p->localClient->mangledhost = rb_malloc(HOSTLEN + 1);
 	if (!irccmp(source_p->orighost, source_p->sockhost))
 		do_host_cloak_ip(source_p->orighost, source_p->localClient->mangledhost);
 	else
