@@ -1184,7 +1184,7 @@ remove_our_modes(struct Channel *chptr, struct Client *source_p)
 					*mbuf = '\0';
 					sendto_channel_local(ALL_MEMBERS, chptr,
 							     ":%s MODE %s %s %s %s %s %s",
-							     me.name, chptr->chname,
+							     source_p->name, chptr->chname,
 							     lmodebuf, lpara[0], lpara[1],
 							     lpara[2], lpara[3]);
 
@@ -1216,7 +1216,7 @@ remove_our_modes(struct Channel *chptr, struct Client *source_p)
 			*mbuf = '\0';
 			sendto_channel_local(ALL_MEMBERS, chptr,
 					     ":%s MODE %s %s %s %s %s %s",
-					     me.name, chptr->chname, lmodebuf,
+					     source_p->name, chptr->chname, lmodebuf,
 					     lpara[0], lpara[1], lpara[2], lpara[3]);
 			mbuf = lmodebuf;
 			*mbuf++ = '-';
@@ -1232,7 +1232,7 @@ remove_our_modes(struct Channel *chptr, struct Client *source_p)
 		*mbuf = '\0';
 		sendto_channel_local(ALL_MEMBERS, chptr,
 				     ":%s MODE %s %s %s %s %s %s",
-				     me.name, chptr->chname, lmodebuf,
+				     source_p->name, chptr->chname, lmodebuf,
 				     EmptyString(lpara[0]) ? "" : lpara[0],
 				     EmptyString(lpara[1]) ? "" : lpara[1],
 				     EmptyString(lpara[2]) ? "" : lpara[2],
