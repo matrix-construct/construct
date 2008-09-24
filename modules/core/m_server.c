@@ -206,13 +206,24 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 		 * Definitely don't do that here. This is from an unregistered
 		 * connect - A1kmm.
 		 */
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "Attempt to re-introduce server %s from %s",
-				     name, "[@255.255.255.255]");
-		ilog(L_SERVER, "Attempt to re-introduce server %s from %s",
-				name, log_client_name(client_p, SHOW_IP));
+		if (target_p->servptr->flags & FLAGS_SERVICE)
+		{
+			/* Assume any servers introduced by services
+			 * are jupes.
+			 * -- jilles
+			 */
+			sendto_one(client_p, "ERROR :Server juped.");
+		}
+		else
+		{
+			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+					     "Attempt to re-introduce server %s from %s",
+					     name, "[@255.255.255.255]");
+			ilog(L_SERVER, "Attempt to re-introduce server %s from %s",
+					name, log_client_name(client_p, SHOW_IP));
 
-		sendto_one(client_p, "ERROR :Server already exists.");
+			sendto_one(client_p, "ERROR :Server already exists.");
+		}
 		exit_client(client_p, client_p, client_p, "Server Exists");
 		return 0;
 	}
