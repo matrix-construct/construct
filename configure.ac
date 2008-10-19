@@ -864,6 +864,9 @@ fi
 AC_ARG_WITH(nicklen,
 AC_HELP_STRING([--with-nicklen=LENGTH],[Set the nick length to LENGTH (default 15, max 50)]),
 [
+  if ! expr "$withval" + 0 >/dev/null 2>&1; then 
+	AC_ERROR([NICKLEN must be a numeric value])
+  fi 
   if test $withval -ge 50; then
 	NICKLEN=50
 	AC_MSG_WARN([NICKLEN has a hard limit of 50. Setting NICKLEN=50])
