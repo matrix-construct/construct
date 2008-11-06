@@ -40,11 +40,12 @@ WITH PARAMETERS:
               PARAMS: /mode #channel +v nick
      +o     - Op.  Allows a user full control over the channel.
               PARAMS: /mode #channel +o nick
-     +b     - Ban.  Prevents a user from entering the channel, based on a 
+     +b     - Ban.  Prevents a user from entering the channel, and from
+              sending or changing nick if they are on it, based on a 
               nick!ident@host match.
               PARAMS: /mode #channel +b nick!user@host
-     +q     - Quiet.  Prevents a user from sending to the channel, based on a
-              nick!ident@host match.
+     +q     - Quiet.  Prevents a user from sending to the channel or changing
+              nick, based on a nick!ident@host match.
               PARAMS: /mode #channel +q nick!user@host
      +e     - Exempt.  Allows a user to join a channel and send to it even if
               they are banned (+b) or quieted (+q), based on a nick!ident@host
