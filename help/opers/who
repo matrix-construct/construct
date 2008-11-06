@@ -1,4 +1,4 @@
-WHO <#channel|user>
+WHO <#channel|nick|mask> [o]
 
 The WHO command displays information about a user, 
 such as their GECOS information, their user@host, 
@@ -6,13 +6,18 @@ whether they are an IRC operator or not, etc.  A
 sample WHO result from a command issued like 
 "WHO pokey" may look something like this:
 
-#lamers pokey H pokey@ppp.newbies.net :0 Jim Jones
+#lamers ~pokey ppp.example.net irc.example.com pokey H :0 Jim Jones
+
+Clients often reorder the fields; the order in the
+IRC protocol is described here.
 
 The first field indicates the last channel the user
-has joined.  The second is the user's nickname.  
-The third field describes the status information about 
-the user.  The possible combinations for this field 
-are listed below:
+has joined.  The second is the username and the third
+is the host.  The fourth field is the server the user
+is on.  The fifth is the user's nickname.  The sixth
+field describes status information about the user.
+The possible combinations for this field are listed
+below:
 
 H       -       The user is not away.
 G       -       The user is set away.
@@ -21,15 +26,22 @@ G       -       The user is set away.
                 in the first field.
 +       -       The user is voiced in the channel listed.
 
-The next field contains the username@host of the user.  
 The final field displays the number of server hops and 
 the user's GECOS information.
 
 This command may be executed on a channel, such as
-"WHO #lamers"  The output will consist of WHO 
-listings for each user on the channel.
+"WHO #lamers".  The output will consist of WHO 
+listings for each user on the channel.  If you are
+not on the channel, it must not have cmode +s set
+and users with umode +i are not shown.
 
-This command may also be used in conjunction with wildcards 
-such as * and ?.
+If the parameter is not a nickname or a channel, users
+with matching nickname, username, host, server or
+GECOS information are shown.  The wildcards * and ?
+can be used.  Users with umode +i set that are not
+on the same channel as you are not shown.
 
-See also: whois, userhost
+A second parameter of a lowercase letter o ensures
+only IRC operators are displayed.
+
+See also: whois, userhost, cmode, umode
