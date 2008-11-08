@@ -1,4 +1,4 @@
-WHO <#channel|nick|mask> [o]
+WHO <#channel|nick|mask> [o][%format]
 
 The WHO command displays information about a user, 
 such as their GECOS information, their user@host, 
@@ -43,5 +43,27 @@ on the same channel as you are not shown.
 
 A second parameter of a lowercase letter o ensures
 only IRC operators are displayed.
+
+The second parameter may also contain a format
+specification starting with a percent sign.
+This causes the output to use numeric 354,
+with the selected fields:
+
+t       -       Query type. Outputs the given number in each reply.
+c       -       Channel.
+u       -       Username.
+i       -       IP address.
+h       -       Host.
+s       -       Server.
+n       -       Nickname.
+f       -       Status.
+d       -       Hop count.
+l       -       Idle time or 0 for users on other servers.
+a       -       Services account name or 0 if none.
+r       -       GECOS information.
+
+"WHO #lamers %tuhnf,42" would generate a brief listing
+of channel members and include the number 42 in each
+line.
 
 See also: whois, userhost, cmode, umode
