@@ -388,14 +388,11 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 
 /*
  * ms_join
- *
- * inputs	-
- * output	- none
- * side effects	- handles remote JOIN's sent by servers. In TSora
- *		  remote clients are joined using SJOIN, hence a 
- *		  JOIN sent by a server on behalf of a client is an error.
- *		  here, the initial code is in to take an extra parameter
- *		  and use it for the TimeStamp on a new channel.
+ *      parv[0] = sender prefix
+ *      parv[1] = channel TS
+ *      parv[2] = channel
+ *      parv[3] = "+", formerly channel modes but now unused
+ * alternatively, a single "0" parameter parts all channels
  */
 static int
 ms_join(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
