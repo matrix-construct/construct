@@ -52,7 +52,7 @@
 
 static int mo_etrace(struct Client *, struct Client *, int, const char **);
 static int me_etrace(struct Client *, struct Client *, int, const char **);
-static int mo_chantrace(struct Client *, struct Client *, int, const char **);
+static int m_chantrace(struct Client *, struct Client *, int, const char **);
 static int mo_masktrace(struct Client *, struct Client *, int, const char **);
 
 struct Message etrace_msgtab = {
@@ -61,7 +61,7 @@ struct Message etrace_msgtab = {
 };
 struct Message chantrace_msgtab = {
 	"CHANTRACE", 0, 0, 0, MFLG_SLOW,
-	{mg_ignore, mg_not_oper, mg_ignore, mg_ignore, mg_ignore, {mo_chantrace, 2}}
+	{mg_ignore, {m_chantrace, 2}, mg_ignore, mg_ignore, mg_ignore, {m_chantrace, 2}}
 };
 struct Message masktrace_msgtab = {
 	"MASKTRACE", 0, 0, 0, MFLG_SLOW,
@@ -213,7 +213,7 @@ do_single_etrace(struct Client *source_p, struct Client *target_p)
 }
 
 static int
-mo_chantrace(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_chantrace(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 	struct Channel *chptr;
