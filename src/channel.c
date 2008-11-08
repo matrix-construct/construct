@@ -918,19 +918,14 @@ check_spambot_warning(struct Client *source_p, const char *name)
 			source_p->localClient->oper_warn_count_down--;
 		else
 			source_p->localClient->oper_warn_count_down = 0;
-		if(source_p->localClient->oper_warn_count_down == 0)
+		if(source_p->localClient->oper_warn_count_down == 0 &&
+				name != NULL)
 		{
 			/* Its already known as a possible spambot */
-			if(name != NULL)
-				sendto_realops_snomask(SNO_BOTS, L_NETWIDE,
-						     "User %s (%s@%s) trying to join %s is a possible spambot",
-						     source_p->name,
-						     source_p->username, source_p->orighost, name);
-			else
-				sendto_realops_snomask(SNO_BOTS, L_NETWIDE,
-						     "User %s (%s@%s) is a possible spambot",
-						     source_p->name,
-						     source_p->username, source_p->orighost);
+			sendto_realops_snomask(SNO_BOTS, L_NETWIDE,
+					     "User %s (%s@%s) trying to join %s is a possible spambot",
+					     source_p->name,
+					     source_p->username, source_p->orighost, name);
 			source_p->localClient->oper_warn_count_down = OPER_SPAM_COUNTDOWN;
 		}
 	}
