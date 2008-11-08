@@ -78,7 +78,8 @@ static void do_who_on_channel(struct Client *source_p, struct Channel *chptr,
 static void who_global(struct Client *source_p, const char *mask, int server_oper, int operspy, struct who_format *fmt);
 
 static void do_who(struct Client *source_p,
-		   struct Client *target_p, const char *chname, const char *op_flags, struct who_format *fmt);
+		   struct Client *target_p, struct membership *msptr,
+		   struct who_format *fmt);
 
 
 /*
@@ -216,10 +217,9 @@ m_who(struct Client *client_p, struct Client *source_p, int parc, const char *pa
 		 * target_p of chptr
 		 */
 		if(lp != NULL)
-			do_who(source_p, target_p, chptr->chname,
-			       find_channel_status(lp->data, IsCapable(source_p, CLICAP_MULTI_PREFIX)), &fmt);
+			do_who(source_p, target_p, lp->data, &fmt);
 		else
-			do_who(source_p, target_p, NULL, "", &fmt);
+			do_who(source_p, target_p, NULL, &fmt);
 
 		sendto_one(source_p, form_str(RPL_ENDOFWHO), 
 			   me.name, source_p->name, mask);
@@ -305,7 +305,7 @@ who_common_channel(struct Client *source_p, struct Channel *chptr,
 					(IsOper(source_p) && match(mask, target_p->orighost)) ||
 					match(mask, target_p->info))
 			{
-				do_who(source_p, target_p, NULL, "", fmt);
+				do_who(source_p, target_p, NULL, fmt);
 				--(*maxmatches);
 			}
 		}
@@ -376,7 +376,7 @@ who_global(struct Client *source_p, const char *mask, int server_oper, int opers
 					(IsOper(source_p) && match(mask, target_p->orighost)) ||
 					match(mask, target_p->info))
 			{
-				do_who(source_p, target_p, NULL, "", fmt);
+				do_who(source_p, target_p, NULL, fmt);
 				--maxmatches;
 			}
 		}
@@ -407,7 +407,6 @@ do_who_on_channel(struct Client *source_p, struct Channel *chptr,
 	struct Client *target_p;
 	struct membership *msptr;
 	rb_dlink_node *ptr;
-	int combine = IsCapable(source_p, CLICAP_MULTI_PREFIX);
 
 	RB_DLINK_FOREACH(ptr, chptr->members.head)
 	{
@@ -418,8 +417,7 @@ do_who_on_channel(struct Client *source_p, struct Channel *chptr,
 			continue;
 
 		if(member || !IsInvisible(target_p))
-			do_who(source_p, target_p, chptr->chname,
-			       find_channel_status(msptr, combine), fmt);
+			do_who(source_p, target_p, msptr, fmt);
 	}
 }
 
@@ -428,26 +426,25 @@ do_who_on_channel(struct Client *source_p, struct Channel *chptr,
  *
  * inputs	- pointer to client requesting who
  *		- pointer to client to do who on
- *		- The reported name
- *		- channel flags
+ *		- channel membership or NULL
  *		- format options
  * output	- NONE
  * side effects - do a who on given person
  */
 
 static void
-do_who(struct Client *source_p, struct Client *target_p, const char *chname, const char *op_flags, struct who_format *fmt)
+do_who(struct Client *source_p, struct Client *target_p, struct membership *msptr, struct who_format *fmt)
 {
 	char status[5];
 	char str[512], *p, *end;
 	const char *q;
 
 	rb_sprintf(status, "%c%s%s",
-		   target_p->user->away ? 'G' : 'H', IsOper(target_p) ? "*" : "", op_flags);
+		   target_p->user->away ? 'G' : 'H', IsOper(target_p) ? "*" : "", msptr ? find_channel_status(msptr, fmt->fields || IsCapable(source_p, CLICAP_MULTI_PREFIX)) : "");
 
 	if (fmt->fields == 0)
 		sendto_one(source_p, form_str(RPL_WHOREPLY), me.name,
-			   source_p->name, (chname) ? (chname) : "*",
+			   source_p->name, msptr ? msptr->chptr->chname : "*",
 			   target_p->username, target_p->host,
 			   target_p->servptr->name, target_p->name, status,
 			   ConfigServerHide.flatten_links ? 0 : target_p->hopcount, 
@@ -460,7 +457,7 @@ do_who(struct Client *source_p, struct Client *target_p, const char *chname, con
 		if (fmt->fields & FIELD_QUERYTYPE)
 			p += rb_snprintf(p, end - p, " %s", fmt->querytype);
 		if (fmt->fields & FIELD_CHANNEL)
-			p += rb_snprintf(p, end - p, " %s", (chname) ? (chname) : "*");
+			p += rb_snprintf(p, end - p, " %s", msptr ? msptr->chptr->chname : "*");
 		if (fmt->fields & FIELD_USER)
 			p += rb_snprintf(p, end - p, " %s", target_p->username);
 		if (fmt->fields & FIELD_IP)
@@ -498,7 +495,7 @@ do_who(struct Client *source_p, struct Client *target_p, const char *chname, con
 			p += rb_snprintf(p, end - p, " %s", q);
 		}
 		if (fmt->fields & FIELD_OPLEVEL)
-			p += rb_snprintf(p, end - p, " %s", *op_flags == '@' ? "999" : "n/a");
+			p += rb_snprintf(p, end - p, " %s", is_chanop(msptr) ? "999" : "n/a");
 		if (fmt->fields & FIELD_INFO)
 			p += rb_snprintf(p, end - p, " :%s", target_p->info);
 		sendto_one_numeric(source_p, RPL_WHOSPCRPL, "%s", str + 1);
