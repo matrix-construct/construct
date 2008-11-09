@@ -138,7 +138,7 @@ m_who(struct Client *client_p, struct Client *source_p, int parc, const char *pa
 			fmt.querytype = "0";
 	}
 
-	strlcpy(maskcopy, parv[1], sizeof maskcopy);
+	rb_strlcpy(maskcopy, parv[1], sizeof maskcopy);
 	mask = maskcopy;
 
 	collapse(mask);
