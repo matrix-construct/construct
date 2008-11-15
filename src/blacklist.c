@@ -78,9 +78,9 @@ static void blacklist_dns_callback(void *vptr, struct DNSReply *reply)
 
 	if (reply != NULL)
 	{
-		/* only accept 127.0.0.x as a listing */
+		/* only accept 127.x.y.z as a listing */
 		if (reply->addr.ss_family == AF_INET &&
-				!memcmp(&((struct sockaddr_in *)&reply->addr)->sin_addr, "\177\0\0", 3))
+				!memcmp(&((struct sockaddr_in *)&reply->addr)->sin_addr, "\177", 1))
 			listed = TRUE;
 		else if (blcptr->blacklist->lastwarning + 3600 < rb_current_time())
 		{
