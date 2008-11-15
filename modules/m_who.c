@@ -480,7 +480,7 @@ do_who(struct Client *source_p, struct Client *target_p, struct membership *mspt
 		if (fmt->fields & FIELD_HOP)
 			p += rb_snprintf(p, end - p, " %d", ConfigServerHide.flatten_links ? 0 : target_p->hopcount);
 		if (fmt->fields & FIELD_IDLE)
-			p += rb_snprintf(p, end - p, " %d", MyClient(target_p) ? rb_current_time() - target_p->localClient->last : 0);
+			p += rb_snprintf(p, end - p, " %d", (int)(MyClient(target_p) ? rb_current_time() - target_p->localClient->last : 0));
 		if (fmt->fields & FIELD_ACCOUNT)
 		{
 			/* display as in whois */
