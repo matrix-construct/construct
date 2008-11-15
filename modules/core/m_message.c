@@ -477,7 +477,8 @@ msg_channel(int p_or_n, const char *command,
 	}
 	else if(chptr->mode.mode & MODE_OPMODERATE &&
 			chptr->mode.mode & MODE_MODERATED &&
-			IsMember(source_p, chptr))
+			(!(chptr->mode.mode & MODE_NOPRIVMSGS) ||
+			 IsMember(source_p, chptr)))
 	{
 		/* only do +z for +m channels for now, as bans/quiets
 		 * aren't tested for remote clients -- jilles */
