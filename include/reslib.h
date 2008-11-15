@@ -7,6 +7,11 @@
 #ifndef _CHARYBDIS_RESLIB_H
 #define _CHARYBDIS_RESLIB_H
 
+/* Longest hostname we're willing to work with.
+ * Due to DNSBLs this is more than HOSTLEN.
+ */
+#define IRCD_RES_HOSTLEN 255
+
 /* Here we define some values lifted from nameser.h */
 #define NS_NOTIFY_OP 4
 #define NS_INT16SZ 2
@@ -115,6 +120,6 @@ extern void irc_ns_put16(unsigned int src, unsigned char *dst);
 extern void irc_ns_put32(unsigned long src, unsigned char *dst);
 extern int irc_res_mkquery(const char *dname, int class, int type, unsigned char *buf, int buflen);
 
-extern char irc_domain[HOSTLEN + 1];
+extern char irc_domain[IRCD_RES_HOSTLEN + 1];
 
 #endif

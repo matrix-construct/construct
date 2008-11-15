@@ -117,7 +117,7 @@ static void blacklist_dns_callback(void *vptr, struct DNSReply *reply)
 static void initiate_blacklist_dnsquery(struct Blacklist *blptr, struct Client *client_p)
 {
 	struct BlacklistClient *blcptr = rb_malloc(sizeof(struct BlacklistClient));
-	char buf[IRCD_BUFSIZE];
+	char buf[IRCD_RES_HOSTLEN + 1];
 	int ip[4];
 
 	blcptr->blacklist = blptr;
@@ -130,7 +130,7 @@ static void initiate_blacklist_dnsquery(struct Blacklist *blptr, struct Client *
 	sscanf(client_p->sockhost, "%d.%d.%d.%d", &ip[3], &ip[2], &ip[1], &ip[0]);
 
 	/* becomes 2.0.0.127.torbl.ahbl.org or whatever */
-	rb_snprintf(buf, IRCD_BUFSIZE, "%d.%d.%d.%d.%s", ip[0], ip[1], ip[2], ip[3], blptr->host);
+	rb_snprintf(buf, sizeof buf, "%d.%d.%d.%d.%s", ip[0], ip[1], ip[2], ip[3], blptr->host);
 
 	gethost_byname_type(buf, &blcptr->dns_query, T_A);
 
@@ -154,7 +154,7 @@ struct Blacklist *new_blacklist(char *name, char *reject_reason)
 	}
 	else
 		blptr->status &= ~CONF_ILLEGAL;
-	rb_strlcpy(blptr->host, name, HOSTLEN);
+	rb_strlcpy(blptr->host, name, IRCD_RES_HOSTLEN + 1);
 	rb_strlcpy(blptr->reject_reason, reject_reason, IRCD_BUFSIZE);
 	blptr->lastwarning = 0;
 

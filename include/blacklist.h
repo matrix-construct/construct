@@ -29,7 +29,7 @@
 struct Blacklist {
 	unsigned int status;	/* If CONF_ILLEGAL, delete when no clients */
 	int refcount;
-	char host[HOSTLEN];
+	char host[IRCD_RES_HOSTLEN + 1];
 	char reject_reason[IRCD_BUFSIZE];
 	unsigned int hits;
 	time_t lastwarning;
