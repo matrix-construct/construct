@@ -852,7 +852,7 @@ stats_tstats (struct Client *source_p)
 
 		sp.is_sbs += target_p->localClient->sendB;
 		sp.is_sbr += target_p->localClient->receiveB;
-		sp.is_sti += rb_current_time() - target_p->localClient->firsttime;
+		sp.is_sti += (unsigned long long)(rb_current_time() - target_p->localClient->firsttime);
 		sp.is_sv++;
 	}
 
@@ -862,7 +862,7 @@ stats_tstats (struct Client *source_p)
 
 		sp.is_cbs += target_p->localClient->sendB;
 		sp.is_cbr += target_p->localClient->receiveB;
-		sp.is_cti += rb_current_time() - target_p->localClient->firsttime;
+		sp.is_cti += (unsigned long long)(rb_current_time() - target_p->localClient->firsttime);
 		sp.is_cl++;
 	}
 
@@ -911,8 +911,8 @@ stats_tstats (struct Client *source_p)
 				sp.is_cbr / 1024, 
 				sp.is_sbr / 1024);
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-				"T :time connected %lu %lu",
-				(long int)sp.is_cti, (long int)sp.is_sti);
+				"T :time connected %llu %llu",
+				sp.is_cti, sp.is_sti);
 }
 
 static void

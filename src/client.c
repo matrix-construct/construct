@@ -1882,7 +1882,7 @@ close_connection(struct Client *client_p)
 		ServerStats.is_sv++;
 		ServerStats.is_sbs += client_p->localClient->sendB;
 		ServerStats.is_sbr += client_p->localClient->receiveB;
-		ServerStats.is_sti += rb_current_time() - client_p->localClient->firsttime;
+		ServerStats.is_sti += (unsigned long long)(rb_current_time() - client_p->localClient->firsttime);
 
 		/*
 		 * If the connection has been up for a long amount of time, schedule
@@ -1908,7 +1908,7 @@ close_connection(struct Client *client_p)
 		ServerStats.is_cl++;
 		ServerStats.is_cbs += client_p->localClient->sendB;
 		ServerStats.is_cbr += client_p->localClient->receiveB;
-		ServerStats.is_cti += rb_current_time() - client_p->localClient->firsttime;
+		ServerStats.is_cti += (unsigned long long)(rb_current_time() - client_p->localClient->firsttime);
 	}
 	else
 		ServerStats.is_ni++;
