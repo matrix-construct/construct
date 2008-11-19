@@ -802,55 +802,55 @@ report_and_set_user_flags(struct Client *source_p, struct ConfItem *aconf)
 	/* If this user is being spoofed, tell them so */
 	if(IsConfDoSpoofIp(aconf))
 	{
-		sendto_one_notice(source_p, ":*** Spoofing your IP. congrats.");
+		sendto_one_notice(source_p, ":*** Spoofing your IP");
 	}
 
 	/* If this user is in the exception class, Set it "E lined" */
 	if(IsConfExemptKline(aconf))
 	{
 		SetExemptKline(source_p);
-		sendto_one_notice(source_p, ":*** You are exempt from K/X lines. congrats.");
+		sendto_one_notice(source_p, ":*** You are exempt from K/X");
 	}
 
 	if(IsConfExemptDNSBL(aconf))
 		/* kline exempt implies this, don't send both */
 		if(!IsConfExemptKline(aconf))
-			sendto_one_notice(source_p, ":*** You are exempt from DNS blacklists.");
+			sendto_one_notice(source_p, ":*** You are exempt from DNS blacklists");
 
 	/* If this user is exempt from user limits set it F lined" */
 	if(IsConfExemptLimits(aconf))
 	{
-		sendto_one_notice(source_p, ":*** You are exempt from user limits. congrats.");
+		sendto_one_notice(source_p, ":*** You are exempt from user limits");
 	}
 
 	if(IsConfExemptFlood(aconf))
 	{
 		SetExemptFlood(source_p);
-		sendto_one_notice(source_p, ":*** You are exempt from flood limits.");
+		sendto_one_notice(source_p, ":*** You are exempt from flood limits");
 	}
 
 	if(IsConfExemptSpambot(aconf))
 	{
 		SetExemptSpambot(source_p);
-		sendto_one_notice(source_p, ":*** You are exempt from spambot checks.");
+		sendto_one_notice(source_p, ":*** You are exempt from spambot checks");
 	}
 
 	if(IsConfExemptJupe(aconf))
 	{
 		SetExemptJupe(source_p);
-		sendto_one_notice(source_p, ":*** You are exempt from juped channel warnings.");
+		sendto_one_notice(source_p, ":*** You are exempt from juped channel warnings");
 	}
 
 	if(IsConfExemptResv(aconf))
 	{
 		SetExemptResv(source_p);
-		sendto_one_notice(source_p, ":*** You are exempt from resvs.");
+		sendto_one_notice(source_p, ":*** You are exempt from resvs");
 	}
 
 	if(IsConfExemptShide(aconf))
 	{
 		SetExemptShide(source_p);
-		sendto_one_notice(source_p, ":*** You are exempt from serverhiding.");
+		sendto_one_notice(source_p, ":*** You are exempt from serverhiding");
 	}
 }
 
