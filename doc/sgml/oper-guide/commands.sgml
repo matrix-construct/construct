@@ -20,6 +20,10 @@
 	  <replaceable class=parameter>source</replaceable> is given, tell that server to initiate the connection
 	  attempt, otherwise it will be made from the server you are attached to.
 	</para>
+	<para>
+	  To use the default port with <replaceable class=parameter>source</replaceable>,
+	  specify 0 for <replaceable class=parameter>port</replaceable>.
+	</para>
       </sect2>
       <sect2>
 	<title>SQUIT</title>
