@@ -4,7 +4,9 @@
       <title>Network management commands</title>
       <note>
 	<para>
-	  Except STATS letters, all commands and names are case insensitive.
+	  All commands and names are case insensitive.
+	  Parameters consisting of one or more separate letters,
+	  such as in MODE, STATS and WHO, are case sensitive.
 	</para>
       </note>
       <sect2>
