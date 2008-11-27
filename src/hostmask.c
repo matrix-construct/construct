@@ -703,7 +703,7 @@ show_iline_prefix(struct Client *sptr, struct ConfItem *aconf, char *name)
 void
 report_auth(struct Client *client_p)
 {
-	char *name, *host, *pass = "*", *user, *classname;
+	char *name, *host, *pass, *user, *classname;
 	struct AddressRec *arec;
 	struct ConfItem *aconf;
 	int i, port;
