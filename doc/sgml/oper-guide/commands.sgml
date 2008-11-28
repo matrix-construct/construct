@@ -158,66 +158,144 @@
 	<cmdsynopsis>
 	  <command>SET</command>
 	  <group>
-	    <arg>LOG</arg>
+	    <arg>ADMINSTRING</arg>
+	    <arg>AUTOCONN</arg>
+	    <arg>AUTOCONNALL</arg>
+	    <arg>FLOODCOUNT</arg>
+	    <arg>IDENTTIMEOUT</arg>
 	    <arg>MAX</arg>
-	    <arg>SPLITDELAY</arg>
-	    <arg>SMALLNET</arg>
+	    <arg>OPERSTRING</arg>
 	    <arg>SPAMNUM</arg>
 	    <arg>SPAMTIME</arg>
+	    <arg>SPLITMODE</arg>
+	    <arg>SPLITNUM</arg>
+	    <arg>SPLITUSERS</arg>
 	  </group>
 	  <arg choice=plain><replaceable>value</replaceable></arg>
 	</cmdsynopsis>
-	<para>The SET command sets a runtime-configurable value</para>
+	<para>The SET command sets a runtime-configurable value.</para>
+	<para>
+	  Most of the <filename>ircd.conf</filename> equivalents have
+	  a default_ prefix and are only read on startup. SET is the only
+	  way to change these at run time.
+	</para>
+	<para>
+	  Most of the values can be queried by omitting
+	  <replaceable>value</replaceable>.
+	</para>
 	<variablelist>
 	  <varlistentry>
-	    <term>LOG</term>
-	    <listitem>
-	      <para>Logging level for ircd.log and syslog</para>
-	    </listitem>
+	    <term>ADMINSTRING</term>
+	    <listitem><para>
+	      Sets string shown in WHOIS for admins.
+	      (umodes +o and +a set, umode +S not set).
+	    </para></listitem>
 	  </varlistentry>
-	</variablelist>
-	<variablelist>
+	  <varlistentry>
+	    <term>AUTOCONN</term>
+	    <listitem><para>
+	      Sets auto-connect on or off for a particular server.
+	      Takes two parameters, server name and new state.
+	    </para><para>
+	      To see these values, use /stats c.
+	      Changes to this are lost on a rehash.
+	    </para></listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>AUTOCONNALL</term>
+	    <listitem><para>
+	      Globally sets auto-connect on or off. If disabled, no automatic
+	      connections are done; if enabled, automatic connections are done
+	      following the rules for them.
+	    </para></listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>FLOODCOUNT</term>
+	    <listitem><para>
+	      The number of lines allowed to be sent to a connection before
+	      throttling it due to flooding.
+	      Note that this variable is used for both
+	      channels and clients.
+	    </para><para>
+	      For channels, op or voice overrides this; for users, IRC
+	      operator status or op or voice on a common channel overrides
+	      this.
+	    </para></listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>IDENTTIMEOUT</term>
+	    <listitem><para>
+	      Timeout for requesting ident from a client.
+	    </para></listitem>
+	  </varlistentry>
 	  <varlistentry>
 	    <term>MAX</term>
-	    <listitem>
-	      <para>Set the maximum connections allowed (may not exceed the compiled-in value HARD_FDLIMIT)</para>
-	    </listitem>
+	    <listitem><para>
+	      Sets the maximum number of connections
+	      to <replaceable>value</replaceable>.
+	    </para><para>
+	      This number cannot exceed maxconnections - MAX_BUFFER.
+	      maxconnections is the rlimit for number of open files.
+	      MAX_BUFFER is defined in config.h, normally 60.
+	    </para><para>
+	      MAXCLIENTS is an alias for this.
+	    </para></listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>DRONETIME</term>
-	    <listitem>
-	      <para>Number of seconds in which DRONECOUNT messages must occur to trip the drone alarm</para>
-	    </listitem>
-	  </varlistentry>
-	  <varlistentry>
-	    <term>DRONECOUNT</term>
-	    <listitem>
-	      <para>Number of messages which constitutes a drone flood. 0 disables drone flood checking.</para>
-	    </listitem>
-	  </varlistentry>
-	  <varlistentry>
-	    <term>SPLITDELAY</term>
-	    <listitem>
-	      <para>Number of minutes after a connect burst begins until joining an empty channel will give you ops</para>
-	    </listitem>
-	  </varlistentry>
-	  <varlistentry>
-	    <term>SMALLNET</term>
-	    <listitem>
-	      <para>Sets the number of servers which are needed to constitute <quote>attached to the network</quote>, as opposed to <quote>split</quote></para>
-	    </listitem>
+	    <term>OPERSTRING</term>
+	    <listitem><para>
+	      Sets string shown in WHOIS for opers
+	      (umode +o set, umodes +a and +S not set).
+	    </para></listitem>
 	  </varlistentry>
 	  <varlistentry>
 	    <term>SPAMNUM</term>
-	    <listitem>
-	      <para>Sets the number of JOINs/PARTs which constitutes a possible spambot</para>
-	    </listitem>
+	    <listitem><para>
+	      Sets how many join/parts to channels
+	      constitutes a possible spambot.
+	    </para></listitem>
 	  </varlistentry>
 	  <varlistentry>
 	    <term>SPAMTIME</term>
-	    <listitem>
-	      <para>Staying on a channel for less than this length of time adds to the SPAMNUM count</para>
-	    </listitem>
+	    <listitem><para>
+	      Below this time on a channel
+	      counts as a join/part as above.
+	    </para></listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>SPLITMODE</term>
+	    <listitem><para>
+	      Sets splitmode to <replaceable>value</replaceable>:
+	      <variablelist>
+	        <varlistentry>
+                  <term>ON</term>
+		  <listitem><para>splitmode is permanently on</para></listitem>
+		</varlistentry>
+	        <varlistentry>
+                  <term>OFF</term>
+		  <listitem><para>splitmode is permanently off (default if no_create_on_split and no_join_on_split are disabled)</para></listitem>
+		</varlistentry>
+	        <varlistentry>
+                  <term>AUTO</term>
+		  <listitem><para>ircd chooses splitmode based on SPLITUSERS and SPLITNUM (default if no_create_on_split or no_join_on_split are enabled)</para></listitem>
+		</varlistentry>
+	      </variablelist>
+	    </para></listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>SPLITUSERS</term>
+	    <listitem><para>
+	      Sets the minimum amount of users needed to
+	      deactivate automatic splitmode.
+	    </para></listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>SPLITNUM</term>
+	    <listitem><para>
+	      Sets the minimum amount of servers needed to
+	      deactivate automatic splitmode.
+	      Only servers that have finished bursting count for this.
+	    </para></listitem>
 	  </varlistentry>
 	</variablelist>
       </sect2>
