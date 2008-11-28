@@ -11,8 +11,7 @@ SET <option> <value>
                 channels and clients
   IDENTTIMEOUT- Timeout for requesting ident from a client
   MAX         - Sets the number of max connections
-                to <value>.  (This number cannot exceed
-                HARD_FDLIMIT in config.h)
+                to <value>.
   OPERSTRING  - Sets string shown in WHOIS for opers
   SPAMNUM     - Sets how many join/parts to channels
                 constitutes a possible spambot.
