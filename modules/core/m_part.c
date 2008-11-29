@@ -80,8 +80,6 @@ m_part(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	if(MyClient(source_p) && !IsFloodDone(source_p))
 		flood_endgrace(source_p);
 
-	strip_colour(reason);
-
 	while(name)
 	{
 		part_one_client(client_p, source_p, name, reason);
@@ -104,6 +102,7 @@ part_one_client(struct Client *client_p, struct Client *source_p, char *name, ch
 {
 	struct Channel *chptr;
 	struct membership *msptr;
+	char reason2[BUFSIZE];
 
 	if((chptr = find_channel(name)) == NULL)
 	{
@@ -130,6 +129,12 @@ part_one_client(struct Client *client_p, struct Client *source_p, char *name, ch
 			   (source_p->localClient->firsttime +
 			    ConfigFileEntry.anti_spam_exit_message_time) < rb_current_time()))))
 	{
+		if(chptr->mode.mode & MODE_NOCOLOR)
+		{
+			rb_strlcpy(reason2, reason, BUFSIZE);
+			strip_colour(reason2);
+			reason = reason2;
+		}
 		sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
 			      ":%s PART %s :%s", use_id(source_p), chptr->chname, reason);
 		sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@%s PART %s :%s",
