@@ -397,32 +397,38 @@ static int
 add_ip_limit(struct Client *client_p, struct ConfItem *aconf)
 {
 	rb_patricia_node_t *pnode;
+	int bitlen;
 
 	/* If the limits are 0 don't do anything.. */
-	if(ConfCidrAmount(aconf) == 0 || ConfCidrBitlen(aconf) == 0)
+	if(ConfCidrAmount(aconf) == 0
+	   || (ConfCidrIpv4Bitlen(aconf) == 0 && ConfCidrIpv6Bitlen(aconf) == 0))
 		return -1;
 
 	pnode = rb_match_ip(ConfIpLimits(aconf), (struct sockaddr *)&client_p->localClient->ip);
 
+	if(GET_SS_FAMILY(&client_p->localClient->ip) == AF_INET)
+		bitlen = ConfCidrIpv4Bitlen(aconf);
+	else
+		bitlen = ConfCidrIpv6Bitlen(aconf);
+
 	if(pnode == NULL)
-		pnode = make_and_lookup_ip(ConfIpLimits(aconf), (struct sockaddr *)&client_p->localClient->ip, ConfCidrBitlen(aconf));
+		pnode = make_and_lookup_ip(ConfIpLimits(aconf), (struct sockaddr *)&client_p->localClient->ip, bitlen);
 
 	s_assert(pnode != NULL);
 
 	if(pnode != NULL)
 	{
-		if(((long) pnode->data) >= ConfCidrAmount(aconf)
-		   && !IsConfExemptLimits(aconf))
+		if(((intptr_t)pnode->data) >= ConfCidrAmount(aconf) && !IsConfExemptLimits(aconf))
 		{
 			/* This should only happen if the limits are set to 0 */
-			if((unsigned long) pnode->data == 0)
+			if((intptr_t)pnode->data == 0)
 			{
 				rb_patricia_remove(ConfIpLimits(aconf), pnode);
 			}
 			return (0);
 		}
 
-		pnode->data++;
+		pnode->data = (void *)(((intptr_t)pnode->data) + 1);
 	}
 	return 1;
 }
@@ -433,15 +439,16 @@ remove_ip_limit(struct Client *client_p, struct ConfItem *aconf)
 	rb_patricia_node_t *pnode;
 
 	/* If the limits are 0 don't do anything.. */
-	if(ConfCidrAmount(aconf) == 0 || ConfCidrBitlen(aconf) == 0)
+	if(ConfCidrAmount(aconf) == 0
+	   || (ConfCidrIpv4Bitlen(aconf) == 0 && ConfCidrIpv6Bitlen(aconf) == 0))
 		return;
 
 	pnode = rb_match_ip(ConfIpLimits(aconf), (struct sockaddr *)&client_p->localClient->ip);
 	if(pnode == NULL)
 		return;
 
-	pnode->data--;
-	if(((unsigned long) pnode->data) == 0)
+	pnode->data = (void *)(((intptr_t)pnode->data) - 1);
+	if(((intptr_t)pnode->data) == 0)
 	{
 		rb_patricia_remove(ConfIpLimits(aconf), pnode);
 	}

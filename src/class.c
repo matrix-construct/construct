@@ -199,7 +199,8 @@ add_class(struct Class *classptr)
 		PingFreq(tmpptr) = PingFreq(classptr);
 		MaxSendq(tmpptr) = MaxSendq(classptr);
 		ConFreq(tmpptr) = ConFreq(classptr);
-		CidrBitlen(tmpptr) = CidrBitlen(classptr);
+		CidrIpv4Bitlen(tmpptr) = CidrIpv4Bitlen(classptr);
+		CidrIpv6Bitlen(tmpptr) = CidrIpv6Bitlen(classptr);
 		CidrAmount(tmpptr) = CidrAmount(classptr);
 
 		free_class(classptr);

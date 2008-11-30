@@ -44,7 +44,8 @@ struct Class
 	int ping_freq;
 	int total;
 	rb_patricia_tree_t *ip_limits;
-	int cidr_bitlen;
+	int cidr_ipv4_bitlen;
+	int cidr_ipv6_bitlen;
 	int cidr_amount;
 
 };
@@ -62,7 +63,8 @@ extern struct Class *default_class;
 #define MaxSendq(x)     ((x)->max_sendq)
 #define CurrUsers(x)    ((x)->total)
 #define IpLimits(x)     ((x)->ip_limits)
-#define CidrBitlen(x)   ((x)->cidr_bitlen)
+#define CidrIpv4Bitlen(x)   ((x)->cidr_ipv4_bitlen)
+#define CidrIpv6Bitlen(x)   ((x)->cidr_ipv6_bitlen)
 #define CidrAmount(x)	((x)->cidr_amount)
 #define ClassPtr(x)      ((x)->c_class)
 
@@ -77,7 +79,8 @@ extern struct Class *default_class;
 #define ConfCurrUsers(x) (ClassPtr(x)->total)
 #define ConfIpLimits(x) (ClassPtr(x)->ip_limits)
 #define ConfCidrAmount(x) (ClassPtr(x)->cidr_amount)
-#define ConfCidrBitlen(x) (ClassPtr(x)->cidr_bitlen)
+#define ConfCidrIpv4Bitlen(x) (ClassPtr(x)->cidr_ipv4_bitlen)
+#define ConfCidrIpv6Bitlen(x) (ClassPtr(x)->cidr_ipv6_bitlen)
 
 void add_class(struct Class *);
 

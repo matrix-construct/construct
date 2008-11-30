@@ -723,21 +723,33 @@ conf_set_class_ping_time(void *data)
 }
 
 static void
-conf_set_class_cidr_bitlen(void *data)
+conf_set_class_cidr_ipv4_bitlen(void *data)
 {
-#ifdef RB_IPV6
-	unsigned int maxsize = 128;
-#else
 	unsigned int maxsize = 32;
-#endif
 	if(*(unsigned int *) data > maxsize)
 		conf_report_error
-			("class::cidr_bitlen argument exceeds maxsize (%d > %d) - ignoring.",
+			("class::cidr_ipv4_bitlen argument exceeds maxsize (%d > %d) - ignoring.",
 			 *(unsigned int *) data, maxsize);
 	else
-		yy_class->cidr_bitlen = *(unsigned int *) data;
+		yy_class->cidr_ipv4_bitlen = *(unsigned int *) data;
 
 }
+
+#ifdef RB_IPV6
+static void
+conf_set_class_cidr_ipv6_bitlen(void *data)
+{
+	unsigned int maxsize = 128;
+	if(*(unsigned int *) data > maxsize)
+		conf_report_error
+			("class::cidr_ipv6_bitlen argument exceeds maxsize (%d > %d) - ignoring.",
+			 *(unsigned int *) data, maxsize);
+	else
+		yy_class->cidr_ipv6_bitlen = *(unsigned int *) data;
+
+}
+#endif
+
 static void
 conf_set_class_number_per_cidr(void *data)
 {
@@ -2036,7 +2048,10 @@ static struct ConfEntry conf_privset_table[] =
 static struct ConfEntry conf_class_table[] =
 {
 	{ "ping_time", 		CF_TIME, conf_set_class_ping_time,		0, NULL },
-	{ "cidr_bitlen",	CF_INT,  conf_set_class_cidr_bitlen,		0, NULL },
+	{ "cidr_ipv4_bitlen",	CF_INT,  conf_set_class_cidr_ipv4_bitlen,		0, NULL },
+#ifdef RB_IPV6
+	{ "cidr_ipv6_bitlen",	CF_INT,  conf_set_class_cidr_ipv6_bitlen,		0, NULL },
+#endif
 	{ "number_per_cidr",	CF_INT,  conf_set_class_number_per_cidr,	0, NULL },
 	{ "number_per_ip",	CF_INT,  conf_set_class_number_per_ip,		0, NULL },
 	{ "number_per_ip_global", CF_INT,conf_set_class_number_per_ip_global,	0, NULL },
