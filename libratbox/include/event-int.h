@@ -20,16 +20,15 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: event-int.h 24840 2008-01-03 19:42:17Z androsyn $
+ *  $Id: event-int.h 25992 2008-09-03 00:20:22Z androsyn $
  */
-
 
 struct ev_entry
 {
 	rb_dlink_node node;
 	EVH *func;
 	void *arg;
-	const char *name;
+	char *name;
 	time_t frequency;
 	time_t when;
 	void *data;

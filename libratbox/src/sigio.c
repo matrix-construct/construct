@@ -23,7 +23,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: sigio.c 25375 2008-05-16 15:19:51Z androsyn $
+ *  $Id: sigio.c 26092 2008-09-19 15:13:52Z androsyn $
  */
 
 #ifndef _GNU_SOURCE
@@ -81,7 +81,7 @@ rb_init_netio_sigio(void)
 	int fd;
 	pollfd_list.pollfds = rb_malloc(rb_getmaxconnect() * (sizeof(struct pollfd)));
 	pollfd_list.allocated = rb_getmaxconnect();
-	for (fd = 0; fd < rb_getmaxconnect(); fd++)
+	for(fd = 0; fd < rb_getmaxconnect(); fd++)
 	{
 		pollfd_list.pollfds[fd].fd = -1;
 	}
@@ -111,7 +111,7 @@ resize_pollarray(int fd)
 			rb_realloc(pollfd_list.pollfds,
 				   pollfd_list.allocated * (sizeof(struct pollfd)));
 		memset(&pollfd_list.pollfds[old_value + 1], 0, sizeof(struct pollfd) * 1024);
-		for (x = old_value + 1; x < pollfd_list.allocated; x++)
+		for(x = old_value + 1; x < pollfd_list.allocated; x++)
 		{
 			pollfd_list.pollfds[x].fd = -1;
 		}
@@ -128,7 +128,7 @@ resize_pollarray(int fd)
  */
 
 int
-rb_setup_fd_sigio(rb_fde_t * F)
+rb_setup_fd_sigio(rb_fde_t *F)
 {
 	int flags = 0;
 	int fd = F->fd;
@@ -162,7 +162,7 @@ rb_setup_fd_sigio(rb_fde_t * F)
  * and deregister interest in a pending IO state for a given FD.
  */
 void
-rb_setselect_sigio(rb_fde_t * F, unsigned int type, PF * handler, void *client_data)
+rb_setselect_sigio(rb_fde_t *F, unsigned int type, PF * handler, void *client_data)
 {
 	if(F == NULL)
 		return;
@@ -194,8 +194,8 @@ rb_setselect_sigio(rb_fde_t * F, unsigned int type, PF * handler, void *client_d
 		pollfd_list.pollfds[F->fd].fd = -1;
 		if(F->fd == pollfd_list.maxindex)
 		{
-			while (pollfd_list.maxindex >= 0
-			       && pollfd_list.pollfds[pollfd_list.maxindex].fd == -1)
+			while(pollfd_list.maxindex >= 0
+			      && pollfd_list.pollfds[pollfd_list.maxindex].fd == -1)
 				pollfd_list.maxindex--;
 		}
 	}
@@ -244,7 +244,7 @@ rb_select_sigio(long delay)
 		timeout.tv_nsec = (delay % 1000) * 1000000;
 	}
 
-	for (;;)
+	for(;;)
 	{
 		if(!sigio_is_screwed)
 		{
@@ -268,7 +268,7 @@ rb_select_sigio(long delay)
 #ifdef SIGIO_SCHED_EVENT
 				if(sig == RTSIGTIM && can_do_event)
 				{
-					struct ev_entry *ev = (struct ev_entry *) si.si_ptr;
+					struct ev_entry *ev = (struct ev_entry *)si.si_ptr;
 					if(ev == NULL)
 						continue;
 					rb_run_event(ev);
@@ -335,7 +335,7 @@ rb_select_sigio(long delay)
 		return RB_OK;
 
 	/* XXX we *could* optimise by falling out after doing num fds ... */
-	for (ci = 0; ci < pollfd_list.maxindex + 1; ci++)
+	for(ci = 0; ci < pollfd_list.maxindex + 1; ci++)
 	{
 		if(((revents = pollfd_list.pollfds[ci].revents) == 0)
 		   || (pollfd_list.pollfds[ci].fd) == -1)
@@ -458,7 +458,7 @@ rb_init_netio_sigio(void)
 }
 
 void
-rb_setselect_sigio(rb_fde_t * F, unsigned int type, PF * handler, void *client_data)
+rb_setselect_sigio(rb_fde_t *F, unsigned int type, PF * handler, void *client_data)
 {
 	errno = ENOSYS;
 	return;
@@ -472,7 +472,7 @@ rb_select_sigio(long delay)
 }
 
 int
-rb_setup_fd_sigio(rb_fde_t * F)
+rb_setup_fd_sigio(rb_fde_t *F)
 {
 	errno = ENOSYS;
 	return -1;

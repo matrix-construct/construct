@@ -23,14 +23,14 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: win32.c 25038 2008-01-23 16:03:08Z androsyn $
+ *  $Id: win32.c 26092 2008-09-19 15:13:52Z androsyn $
  */
 
 #include <libratbox_config.h>
 #include <ratbox_lib.h>
 #include <commio-int.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 
 static HWND hwnd;
 
@@ -54,7 +54,7 @@ typedef union
 #define EPOCH_BIAS  Const64(116444736000000000)
 
 pid_t
-getpid()
+rb_getpid()
 {
 	return GetCurrentProcessId();
 }
@@ -69,10 +69,10 @@ rb_gettimeofday(struct timeval *tp, void *not_used)
 	GetSystemTimeAsFileTime(&ft.ft_val);
 
 	/* seconds since epoch */
-	tp->tv_sec = (long) ((ft.ft_i64 - EPOCH_BIAS) / Const64(10000000));
+	tp->tv_sec = (long)((ft.ft_i64 - EPOCH_BIAS) / Const64(10000000));
 
 	/* microseconds remaining */
-	tp->tv_usec = (long) ((ft.ft_i64 / Const64(10)) % Const64(1000000));
+	tp->tv_usec = (long)((ft.ft_i64 / Const64(10)) % Const64(1000000));
 
 	return 0;
 }
@@ -94,7 +94,7 @@ rb_spawn_process(const char *path, const char **argv)
 }
 
 pid_t
-waitpid(int pid, int *status, int flags)
+rb_waitpid(int pid, int *status, int flags)
 {
 	DWORD timeout = (flags & WNOHANG) ? 0 : INFINITE;
 	HANDLE hProcess;
@@ -113,7 +113,7 @@ waitpid(int pid, int *status, int flags)
 		{
 			if(GetExitCodeProcess(hProcess, &waitcode))
 			{
-				*status = (int) ((waitcode & 0xff) << 8);
+				*status = (int)((waitcode & 0xff) << 8);
 				CloseHandle(hProcess);
 				return pid;
 			}
@@ -127,7 +127,7 @@ waitpid(int pid, int *status, int flags)
 }
 
 int
-setenv(const char *name, const char *value, int overwrite)
+rb_setenv(const char *name, const char *value, int overwrite)
 {
 	char *buf;
 	int len;
@@ -152,7 +152,7 @@ setenv(const char *name, const char *value, int overwrite)
 }
 
 int
-kill(int pid, int sig)
+rb_kill(int pid, int sig)
 {
 	HANDLE hProcess;
 	hProcess = OpenProcess(PROCESS_ALL_ACCESS, TRUE, pid);
@@ -180,15 +180,134 @@ kill(int pid, int sig)
 
 }
 
-int
-rb_pass_fd_to_process(int fd, pid_t process, rb_fde_t *F)
+/*
+ * packet format is
+ uint32_t magic
+ uint8_t protocol count
+ WSAPROTOCOL_INFO * count
+ size_t datasize
+ data
+ 
+ */
+
+static int
+make_wsaprotocol_info(pid_t process, rb_fde_t *F, WSAPROTOCOL_INFO * inf)
 {
 	WSAPROTOCOL_INFO info;
-	WSADuplicateSocket((SOCKET)fd, process, &info);
-	rb_write(F, &info, sizeof(info));	
+	if(!WSADuplicateSocket((SOCKET) rb_get_fd(F), process, &info))
+	{
+		memcpy(inf, &info, sizeof(WSAPROTOCOL_INFO));
+		return 1;
+	}
 	return 0;
 }
 
+static rb_fde_t *
+make_fde_from_wsaprotocol_info(void *data)
+{
+	WSAPROTOCOL_INFO *info = data;
+	SOCKET t;
+	t = WSASocket(FROM_PROTOCOL_INFO, FROM_PROTOCOL_INFO, FROM_PROTOCOL_INFO, info, 0, 0);
+	if(t == INVALID_SOCKET)
+	{
+		rb_get_errno();
+		return NULL;
+	}
+	return rb_open(t, RB_FD_SOCKET, "remote_socket");
+}
+
+static uint8_t fd_buf[16384];
+#define MAGIC_CONTROL 0xFF0ACAFE
+
+int
+rb_send_fd_buf(rb_fde_t *xF, rb_fde_t **F, int count, void *data, size_t datasize, pid_t pid)
+{
+	size_t bufsize =
+		sizeof(uint32_t) + sizeof(uint8_t) + (sizeof(WSAPROTOCOL_INFO) * (size_t)count) +
+		sizeof(size_t) + datasize;
+	int i;
+	uint32_t magic = MAGIC_CONTROL;
+	void *ptr;
+	if(count > 4)
+	{
+		errno = EINVAL;
+		return -1;
+	}
+	if(bufsize > sizeof(fd_buf))
+	{
+		errno = EINVAL;
+		return -1;
+	}
+	memset(fd_buf, 0, sizeof(fd_buf));
+
+	ptr = fd_buf;
+	memcpy(ptr, &magic, sizeof(magic));
+	ptr = (void *)((uintptr_t)ptr + (uintptr_t)sizeof(magic));
+	*((uint8_t *)ptr) = count;
+	ptr = (void *)((uintptr_t)ptr + (uintptr_t)sizeof(uint8_t));
+
+	for(i = 0; i < count; i++)
+	{
+		make_wsaprotocol_info(pid, F[i], (WSAPROTOCOL_INFO *) ptr);
+		ptr = (void *)((uintptr_t)ptr + (uintptr_t)sizeof(WSAPROTOCOL_INFO));
+	}
+	memcpy(ptr, &datasize, sizeof(size_t));
+	ptr = (void *)((uintptr_t)ptr + (uintptr_t)sizeof(size_t));
+	memcpy(ptr, data, datasize);
+	return rb_write(xF, fd_buf, bufsize);
+}
+
+#ifdef MYMIN
+#undef MYMIN
+#endif
+#define MYMIN(a, b)  ((a) < (b) ? (a) : (b))
+
+int
+rb_recv_fd_buf(rb_fde_t *F, void *data, size_t datasize, rb_fde_t **xF, int nfds)
+{
+	size_t minsize = sizeof(uint32_t) + sizeof(uint8_t) + sizeof(size_t);
+	size_t datalen;
+	ssize_t retlen;
+	uint32_t magic;
+	uint8_t count;
+	unsigned int i;
+	void *ptr;
+	ssize_t ret;
+	memset(fd_buf, 0, sizeof(fd_buf));	/* some paranoia here... */
+	ret = rb_read(F, fd_buf, sizeof(fd_buf));
+	if(ret <= 0)
+	{
+		return ret;
+	}
+	if(ret < (ssize_t) minsize)
+	{
+		errno = EINVAL;
+		return -1;
+	}
+	ptr = fd_buf;
+	memcpy(&magic, ptr, sizeof(uint32_t));
+	if(magic != MAGIC_CONTROL)
+	{
+		errno = EAGAIN;
+		return -1;
+	}
+	ptr = (void *)((uintptr_t)ptr + (uintptr_t)sizeof(uint32_t));
+	memcpy(&count, ptr, sizeof(uint8_t));
+	ptr = (void *)((uintptr_t)ptr + (uintptr_t)sizeof(uint8_t));
+	for(i = 0; i < count && i < (unsigned int)nfds; i++)
+	{
+		rb_fde_t *tF = make_fde_from_wsaprotocol_info(ptr);
+		if(tF == NULL)
+			return -1;
+		xF[i] = tF;
+		ptr = (void *)((uintptr_t)ptr + (uintptr_t)sizeof(WSAPROTOCOL_INFO));
+	}
+	memcpy(&datalen, ptr, sizeof(size_t));
+	ptr = (void *)((uintptr_t)ptr + (uintptr_t)sizeof(size_t));
+	retlen = MYMIN(datalen, datasize);
+	memcpy(data, ptr, datalen);
+	return retlen;
+}
 
 static LRESULT CALLBACK
 rb_process_events(HWND nhwnd, UINT umsg, WPARAM wparam, LPARAM lparam)
@@ -280,14 +399,12 @@ rb_init_netio_win32(void)
 void
 rb_sleep(unsigned int seconds, unsigned int useconds)
 {
-	struct timeval tv;
-	tv.tv_sec = seconds;
-	tv.tv_usec = useconds;
-	select(0, NULL, NULL, NULL, &tv);
+	DWORD msec = seconds * 1000;;
+	Sleep(msec);
 }
 
 int
-rb_setup_fd_win32(rb_fde_t * F)
+rb_setup_fd_win32(rb_fde_t *F)
 {
 	if(F == NULL)
 		return 0;
@@ -312,7 +429,7 @@ rb_setup_fd_win32(rb_fde_t * F)
 }
 
 void
-rb_setselect_win32(rb_fde_t * F, unsigned int type, PF * handler, void *client_data)
+rb_setselect_win32(rb_fde_t *F, unsigned int type, PF * handler, void *client_data)
 {
 	int old_flags = F->pflags;
 
@@ -379,8 +496,8 @@ rb_select_win32(long delay)
 #undef strerror
 #endif
 
-const char *
-wsock_strerror(int error)
+static const char *
+_rb_strerror(int error)
 {
 	switch (error)
 	{
@@ -488,6 +605,14 @@ wsock_strerror(int error)
 		return strerror(error);
 	}
 };
+
+char *
+rb_strerror(int error)
+{
+	static char buf[128];
+	rb_strlcpy(buf, _rb_strerror(error), sizeof(buf));
+	return buf;
+}
 #else /* win32 not supported */
 int
 rb_init_netio_win32(void)
@@ -497,7 +622,7 @@ rb_init_netio_win32(void)
 }
 
 void
-rb_setselect_win32(rb_fde_t * F, unsigned int type, PF * handler, void *client_data)
+rb_setselect_win32(rb_fde_t *F, unsigned int type, PF * handler, void *client_data)
 {
 	errno = ENOSYS;
 	return;
@@ -511,9 +636,9 @@ rb_select_win32(long delay)
 }
 
 int
-rb_setup_fd_win32(rb_fde_t * F)
+rb_setup_fd_win32(rb_fde_t *F)
 {
 	errno = ENOSYS;
 	return -1;
 }
-#endif /* WIN32 */
+#endif /* _WIN32 */

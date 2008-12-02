@@ -1,14 +1,14 @@
-dnl $Id: configure.ac 25689 2008-07-10 17:13:27Z androsyn $
+dnl $Id: configure.ac 26168 2008-10-26 20:58:40Z androsyn $
 dnl Process this file with autoconf to produce a configure script.
 
 dnl TODO: clean up all the OpenSSL and shared module checking stuff;
 dnl the most major changes have already been made and it looks like
 dnl said functions need to be just about as complex as they already are.
 
-AC_PREREQ(2.60)
+AC_PREREQ(2.61)
 AUTOMAKE_OPTIONS = 1.10
 dnl Sneaky way to get an Id tag into the configure script
-AC_COPYRIGHT([$Id: configure.ac 25689 2008-07-10 17:13:27Z androsyn $])
+AC_COPYRIGHT([$Id: configure.ac 26168 2008-10-26 20:58:40Z androsyn $])
 AC_INIT([libratbox],[devel])
 AM_INIT_AUTOMAKE(AC_PACKAGE_TARNAME, AC_PACKAGE_VERSION, -)
 
@@ -50,18 +50,12 @@ AC_PATH_PROG(RM, rm)
 AC_PATH_PROG(CP, cp)
 AC_PATH_PROG(MV, mv)
 AC_PATH_PROG(LN, ln)
-AC_PATH_PROG(AR, ar)
-AC_PATH_PROG(LD, ld)
-AC_PATH_PROG(RANLIB, ranlib)
 AC_PATH_PROG(TOUCH, touch)
 AC_LANG(C)
 
 AC_PROG_LIBTOOL
 
 LIBTOOL="$LIBTOOL --silent"
-
-AC_CONFIG_SUBDIRS(libltdl)
-
 
 case "$host_os" in
 *cygwin*)
@@ -73,6 +67,8 @@ case "$host_os" in
      AC_DEFINE_UNQUOTED(WINDOWS,1,[This is a Windows system])
      AC_CHECK_HEADER(windows.h, , [AC_MSG_ERROR([** MinGW and no windows.h.  I give up.])])
      AC_CHECK_HEADER(winsock2.h, , [AC_MSG_ERROR([** MinGW and no winsock2.h.  I give up.])])
+     AC_DEFINE_UNQUOTED(HAVE_WINSOCK2_H, 1, [Have WINSOCK2_H])
+     AC_DEFINE_UNQUOTED(HAVE_WINSOCK_H, 1, [Have WINSOCK_H])
      LIBS="$LIBS -lws2_32 -liphlpapi"
      is_mingw="yes"
      ;;
@@ -90,7 +86,7 @@ AM_CONDITIONAL([MINGW], [test "$is_mingw" = "yes"])
 
 
 # backwards support for IRC_CFLAGS
-CFLAGS="$IRC_CFLAGS $CFLAGS -O0 -Wall"
+CFLAGS="$IRC_CFLAGS $CFLAGS -Wall"
 
 dnl use directory structure of cached as default (hack)
 if test "$libexecdir" = '${exec_prefix}/libexec' &&
@@ -108,7 +104,7 @@ AC_TYPE_UID_T
 dnl Checks for header files.
 AC_HEADER_STDC
 
-AC_CHECK_HEADERS([crypt.h unistd.h sys/socket.h sys/stat.h sys/time.h time.h netinet/in.h arpa/inet.h errno.h sys/uio.h spawn.h sys/poll.h sys/epoll.h sys/select.h sys/devpoll.h sys/event.h port.h signal.h sys/signalfd.h])
+AC_CHECK_HEADERS([crypt.h unistd.h sys/socket.h sys/stat.h sys/time.h time.h netinet/in.h arpa/inet.h errno.h sys/uio.h spawn.h sys/poll.h sys/epoll.h sys/select.h sys/devpoll.h sys/event.h port.h signal.h sys/signalfd.h sys/timerfd.h])
 AC_HEADER_TIME
 
 dnl Networking Functions
@@ -140,9 +136,15 @@ AC_CHECK_TYPE([socklen_t], rb_socklen_t=socklen_t,[
 	for arg2 in "struct sockaddr" void; do
 		for t in int size_t unsigned long "unsigned long"; do
 			AC_TRY_COMPILE([
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
-
+#endif
+#ifdef HAVE_WINSOCK2_H
+#include <winsock2.h>
+#endif
 int getpeername (int, $arg2 *, $t *);
 ],[
 $t len;
@@ -155,7 +157,8 @@ getpeername(0,0,&len);
 	done
 
 	if test "x$rb_socklen_t" = x; then
-		AC_MSG_ERROR([Cannot find a type to use in place of socklen_t])
+		AC_MSG_WARN([Cannot find a type to use in place of socklen_t using int])
+		rb_socklen_t=int
 	fi
 	])
 	AC_MSG_RESULT($rb_socklen_t)],
@@ -224,11 +227,12 @@ AC_CHECK_TYPE([sa_family_t], [],
 
 
 dnl check for various functions...
-AC_CHECK_FUNCS([socketpair gettimeofday writev sendmsg gmtime_r strtok_r usleep posix_spawn strlcpy strlcat strnlen fstat signalfd select poll kevent port_create epoll_ctl arc4random getrusage])	
+AC_CHECK_FUNCS([socketpair gettimeofday writev sendmsg gmtime_r strtok_r usleep posix_spawn strlcpy strlcat strnlen fstat signalfd select poll kevent port_create epoll_ctl arc4random getrusage timerfd_create])	
 
 AC_SEARCH_LIBS(nanosleep, rt posix4, AC_DEFINE(HAVE_NANOSLEEP, 1, [Define if you have nanosleep]))
 AC_SEARCH_LIBS(timer_create, rt, AC_DEFINE(HAVE_TIMER_CREATE, 1, [Define if you have timer_create]))
 RB_CHECK_TIMER_CREATE
+RB_CHECK_TIMERFD_CREATE
 
 AC_FUNC_ALLOCA
 AC_FUNC_VFORK
@@ -343,11 +347,10 @@ if test "$cf_enable_openssl" != no; then
 		[cf_enable_openssl=no])
 fi
 
-
 if test "$cf_enable_openssl" != no; then
 	CPPFLAGS="$CPPFLAGS $SSL_LIBS"
 	AC_CHECK_LIB(ssl, SSL_read, 
-		[SSL_LIBS="-lssl -lcrypto"],
+		[SSL_LIBS="$SSL_LIBS -lssl -lcrypto"],
 		[cf_enable_openssl=no], [-lcrypto])
 fi
 
@@ -557,7 +560,7 @@ fi
 if test "x$rb_sockaddr_storage" = "xyes"; then
 	echo '#define rb_sockaddr_storage sockaddr_storage' >> $outfile
 else
-	echo 'struct rb_sockaddr_storage { uint8_t _padding[128]; };' >> $outfile
+	echo 'struct rb_sockaddr_storage { uint8_t _padding[[128]]; };' >> $outfile
 fi
 
 cat >> $outfile <<\_______EOF
@@ -656,7 +659,7 @@ fi
 AC_CONFIG_FILES(		\
 	src/Makefile		\
 	Makefile		\
-	libratbox.pc		\
+	libratbox.pc	\
 )
 
 AC_OUTPUT

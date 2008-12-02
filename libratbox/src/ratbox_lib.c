@@ -20,7 +20,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: ratbox_lib.c 25375 2008-05-16 15:19:51Z androsyn $
+ *  $Id: ratbox_lib.c 26092 2008-09-19 15:13:52Z androsyn $
  */
 
 #include <libratbox_config.h>
@@ -37,20 +37,20 @@ static char errbuf[512];
 /* this doesn't do locales...oh well i guess */
 
 static const char *months[] = {
-        "January", "February", "March", "April",
-        "May", "June", "July", "August",
-        "September", "October", "November", "December"
+	"January", "February", "March", "April",
+	"May", "June", "July", "August",
+	"September", "October", "November", "December"
 };
 
 static const char *weekdays[] = {
-        "Sunday", "Monday", "Tuesday", "Wednesday",
-        "Thursday", "Friday", "Saturday"
+	"Sunday", "Monday", "Tuesday", "Wednesday",
+	"Thursday", "Friday", "Saturday"
 };
 
 static const char *s_month[] = {
 	"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
 	"Aug", "Sep", "Oct", "Nov", "Dec"
-}; 
+};
 
 static const char *s_weekdays[] = {
 	"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
@@ -72,23 +72,24 @@ rb_ctime(const time_t t, char *buf, size_t len)
 	if(rb_unlikely(tp == NULL))
 	{
 		strcpy(buf, "");
-		return(buf);
+		return (buf);
 	}
 
 	if(buf == NULL)
 	{
 		p = timex;
 		tlen = sizeof(timex);
-	} else {
+	}
+	else
+	{
 		p = buf;
 		tlen = len;
 	}
 
 	rb_snprintf(p, tlen, "%s %s %d %02u:%02u:%02u %d",
-			s_weekdays[tp->tm_wday], s_month[tp->tm_mon], 
-			tp->tm_mday, tp->tm_hour, tp->tm_min, tp->tm_sec,
-			tp->tm_year + 1900);
-	return(p);
+		    s_weekdays[tp->tm_wday], s_month[tp->tm_mon],
+		    tp->tm_mday, tp->tm_hour, tp->tm_min, tp->tm_sec, tp->tm_year + 1900);
+	return (p);
 }
 
 
@@ -106,14 +107,14 @@ rb_date(const time_t t, char *buf, size_t len)
 
 	if(rb_unlikely(gm == NULL))
 	{
-		rb_strlcpy(buf, "", len);	
-		return(buf);
+		rb_strlcpy(buf, "", len);
+		return (buf);
 	}
-	
-	rb_snprintf(buf, len, "%s %s %d %d -- %02u:%02u:%02u +00:00", 
-		      weekdays[gm->tm_wday], months[gm->tm_mon], gm->tm_mday,  
-		      gm->tm_year + 1900, gm->tm_hour, gm->tm_min, gm->tm_sec);
-	return(buf);
+
+	rb_snprintf(buf, len, "%s %s %d %d -- %02u:%02u:%02u +00:00",
+		    weekdays[gm->tm_wday], months[gm->tm_mon], gm->tm_mday,
+		    gm->tm_year + 1900, gm->tm_hour, gm->tm_min, gm->tm_sec);
+	return (buf);
 }
 
 time_t
@@ -135,7 +136,7 @@ rb_lib_log(const char *format, ...)
 	if(rb_log == NULL)
 		return;
 	va_start(args, format);
-	rb_vsnprintf(errbuf, sizeof(errbuf), format,  args);
+	rb_vsnprintf(errbuf, sizeof(errbuf), format, args);
 	va_end(args);
 	rb_log(errbuf);
 }
@@ -147,7 +148,7 @@ rb_lib_die(const char *format, ...)
 	if(rb_die == NULL)
 		abort();
 	va_start(args, format);
-	rb_vsnprintf(errbuf, sizeof(errbuf), format,  args);
+	rb_vsnprintf(errbuf, sizeof(errbuf), format, args);
 	va_end(args);
 	rb_die(errbuf);
 }
@@ -159,7 +160,7 @@ rb_lib_restart(const char *format, ...)
 	if(rb_restart == NULL)
 		abort();
 	va_start(args, format);
-	rb_vsnprintf(errbuf, sizeof(errbuf), format,  args);
+	rb_vsnprintf(errbuf, sizeof(errbuf), format, args);
 	va_end(args);
 	rb_restart(errbuf);
 }
@@ -181,15 +182,17 @@ rb_set_time(void)
 	memcpy(&rb_time, &newtime, sizeof(struct timeval));
 }
 
+extern const char *libratbox_serno;
+
 const char *
 rb_lib_version(void)
 {
-	static const char *id = "$Rev: 25375 $";
-	return id;
+	return libratbox_serno;
 }
 
 void
-rb_lib_init(log_cb *ilog, restart_cb *irestart, die_cb *idie, int closeall, int maxcon, size_t dh_size, size_t fd_heap_size)
+rb_lib_init(log_cb * ilog, restart_cb * irestart, die_cb * idie, int closeall, int maxcon,
+	    size_t dh_size, size_t fd_heap_size)
 {
 	rb_set_time();
 	rb_log = ilog;
@@ -219,24 +222,25 @@ rb_lib_loop(long delay)
 		while(1)
 			rb_select(-1);
 	}
-	
+
 
 	while(1)
 	{
 		if(delay == 0)
 		{
-			if((next = rb_event_next()) > 0) 
+			if((next = rb_event_next()) > 0)
 			{
 				next -= rb_current_time();
 				if(next <= 0)
 					next = 1000;
-				else 	
+				else
 					next *= 1000;
 			}
 			else
 				next = -1;
 			rb_select(next);
-		} else 
+		}
+		else
 			rb_select(delay);
 		rb_event_run();
 	}
@@ -244,17 +248,17 @@ rb_lib_loop(long delay)
 
 #ifndef HAVE_STRTOK_R
 char *
-rb_strtok_r (char *s, const char *delim, char **save)
+rb_strtok_r(char *s, const char *delim, char **save)
 {
 	char *token;
 
-	if (s == NULL)
+	if(s == NULL)
 		s = *save;
 
 	/* Scan leading delimiters.  */
 	s += strspn(s, delim);
 
-	if (*s == '\0')
+	if(*s == '\0')
 	{
 		*save = s;
 		return NULL;
@@ -262,19 +266,19 @@ rb_strtok_r (char *s, const char *delim, char **save)
 
 	token = s;
 	s = strpbrk(token, delim);
-	
-	if (s == NULL)  
+
+	if(s == NULL)
 		*save = (token + strlen(token));
 	else
 	{
-		*s = '\0'; 
+		*s = '\0';
 		*save = s + 1;
 	}
 	return token;
 }
 #else
-char 
-*rb_strtok_r(char *s, const char *delim, char **save)
+char *
+rb_strtok_r(char *s, const char *delim, char **save)
 {
 	return strtok_r(s, delim, save);
 }
@@ -283,11 +287,11 @@ char
 
 static const char base64_table[] =
 	{ 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-	  'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-	  'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-	  'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-	  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/', '\0'
-	};
+	'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+	'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+	'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/', '\0'
+};
 
 static const char base64_pad = '=';
 
@@ -296,7 +300,7 @@ static const short base64_reverse_table[256] = {
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63,
 	52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1,
-	-1,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
+	-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
 	15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1,
 	-1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
 	41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1,
@@ -317,31 +321,36 @@ rb_base64_encode(const unsigned char *str, int length)
 	unsigned char *p;
 	unsigned char *result;
 
-	if ((length + 2) < 0 || ((length + 2) / 3) >= (1 << (sizeof(int) * 8 - 2))) {
+	if((length + 2) < 0 || ((length + 2) / 3) >= (1 << (sizeof(int) * 8 - 2)))
+	{
 		return NULL;
 	}
 
 	result = rb_malloc(((length + 2) / 3) * 5);
 	p = result;
 
-	while (length > 2) 
-	{ 
+	while(length > 2)
+	{
 		*p++ = base64_table[current[0] >> 2];
 		*p++ = base64_table[((current[0] & 0x03) << 4) + (current[1] >> 4)];
 		*p++ = base64_table[((current[1] & 0x0f) << 2) + (current[2] >> 6)];
 		*p++ = base64_table[current[2] & 0x3f];
 
 		current += 3;
-		length -= 3; 
+		length -= 3;
 	}
 
-	if (length != 0) {
+	if(length != 0)
+	{
 		*p++ = base64_table[current[0] >> 2];
-		if (length > 1) {
+		if(length > 1)
+		{
 			*p++ = base64_table[((current[0] & 0x03) << 4) + (current[1] >> 4)];
 			*p++ = base64_table[(current[1] & 0x0f) << 2];
 			*p++ = base64_pad;
-		} else {
+		}
+		else
+		{
 			*p++ = base64_table[(current[0] & 0x03) << 4];
 			*p++ = base64_pad;
 			*p++ = base64_pad;
@@ -357,16 +366,20 @@ rb_base64_decode(const unsigned char *str, int length, int *ret)
 	const unsigned char *current = str;
 	int ch, i = 0, j = 0, k;
 	unsigned char *result;
-	
+
 	result = rb_malloc(length + 1);
 
-	while ((ch = *current++) != '\0' && length-- > 0) {
-		if (ch == base64_pad) break;
+	while((ch = *current++) != '\0' && length-- > 0)
+	{
+		if(ch == base64_pad)
+			break;
 
 		ch = base64_reverse_table[ch];
-		if (ch < 0) continue;
+		if(ch < 0)
+			continue;
 
-		switch(i % 4) {
+		switch (i % 4)
+		{
 		case 0:
 			result[j] = ch << 2;
 			break;
@@ -375,7 +388,7 @@ rb_base64_decode(const unsigned char *str, int length, int *ret)
 			result[j] = (ch & 0x0f) << 4;
 			break;
 		case 2:
-			result[j++] |= ch >>2;
+			result[j++] |= ch >> 2;
 			result[j] = (ch & 0x03) << 6;
 			break;
 		case 3:
@@ -387,8 +400,10 @@ rb_base64_decode(const unsigned char *str, int length, int *ret)
 
 	k = j;
 
-	if (ch == base64_pad) {
-		switch(i % 4) {
+	if(ch == base64_pad)
+	{
+		switch (i % 4)
+		{
 		case 1:
 			free(result);
 			return NULL;
@@ -402,5 +417,3 @@ rb_base64_decode(const unsigned char *str, int length, int *ret)
 	*ret = j;
 	return result;
 }
-
-

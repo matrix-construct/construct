@@ -1,5 +1,5 @@
 /*
- * $Id: ratbox_lib.h 25375 2008-05-16 15:19:51Z androsyn $
+ * $Id: ratbox_lib.h 26052 2008-09-09 16:47:03Z androsyn $
  */
 
 #ifndef RB_LIB_H
@@ -68,20 +68,19 @@ char *alloca();
 
 
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <process.h>
 
 #ifndef MAXPATHLEN
 #define MAXPATHLEN 128
 #endif
 
-
 #ifdef strerror
 #undef strerror
 #endif
 
-#define strerror(x) wsock_strerror(x)
-const char *wsock_strerror(int error);
+#define strerror(x) rb_strerror(x)
+char *rb_strerror(int error);
 
 
 #define ENOBUFS	    WSAENOBUFS
@@ -96,18 +95,13 @@ const char *wsock_strerror(int error);
 #define pipe(x)  _pipe(x, 1024, O_BINARY)
 #define ioctl(x,y,z)  ioctlsocket(x,y, (u_long *)z)
 
-int setenv(const char *, const char *, int);
-int kill(int pid, int sig);
 #define WNOHANG 1
-pid_t waitpid(pid_t pid, int *status, int options);
-pid_t getpid(void);
-unsigned int geteuid(void);
 
 #ifndef SIGKILL
 #define SIGKILL SIGTERM
 #endif
 
-#endif /* WIN32 */
+#endif /* _WIN32 */
 
 
 
@@ -115,9 +109,8 @@ unsigned int geteuid(void);
 #define HOSTIPLEN	53
 #endif
 
-#ifdef SOFT_ASSERT
 #ifdef __GNUC__
-#define lrb_assert(expr)	do								\
+#define slrb_assert(expr)	do								\
 			if(rb_unlikely(!(expr))) {							\
 				rb_lib_log( 						\
 				"file: %s line: %d (%s): Assertion failed: (%s)",	\
@@ -125,7 +118,7 @@ unsigned int geteuid(void);
 			}								\
 			while(0)
 #else
-#define lrb_assert(expr)	do								\
+#define slrb_assert(expr)	do								\
 			if(rb_unlikely(!(expr))) {							\
 				rb_lib_log(L_MAIN, 						\
 				"file: %s line: %d: Assertion failed: (%s)",		\
@@ -133,16 +126,19 @@ unsigned int geteuid(void);
 			}								\
 			while(0)
 #endif
+
+#ifdef SOFT_ASSERT
+#define lrb_assert(expr) 	slrb_assert(expr)
 #else
-#define lrb_assert(expr)	assert(expr)
+#define lrb_assert(expr)	do { slrb_assert(expr); assert(expr); } while(0)
 #endif
 
 #ifdef RB_SOCKADDR_HAS_SA_LEN
 #define ss_len sa_len
 #endif
 
-#define GET_SS_FAMILY(x) (((struct sockaddr *)(x))->sa_family)
-
+#define GET_SS_FAMILY(x) (((const struct sockaddr *)(x))->sa_family)
+#define SET_SS_FAMILY(x, y) ((((struct sockaddr *)(x))->sa_family) = y)
 #ifdef RB_SOCKADDR_HAS_SA_LEN
 #define SET_SS_LEN(x, y)	do {							\
 					struct sockaddr *storage;		\
@@ -201,8 +197,15 @@ char *rb_crypt(const char *, const char *);
 
 unsigned char *rb_base64_encode(const unsigned char *str, int length);
 unsigned char *rb_base64_decode(const unsigned char *str, int length, int *ret);
+int rb_kill(pid_t, int);
+char *rb_strerror(int);
 
+int rb_setenv(const char *, const char *, int);
+int rb_kill(int pid, int sig);
 
+pid_t rb_waitpid(pid_t pid, int *status, int options);
+pid_t rb_getpid(void);
+//unsigned int rb_geteuid(void);
 
 #include <rb_tools.h>
 #include <rb_memory.h>

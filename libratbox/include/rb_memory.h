@@ -21,7 +21,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: rb_memory.h 25375 2008-05-16 15:19:51Z androsyn $
+ *  $Id: rb_memory.h 26092 2008-09-19 15:13:52Z androsyn $
  */
 
 #ifndef RB_LIB_H
@@ -62,7 +62,7 @@ rb_strndup(const char *x, size_t y)
 	if(rb_unlikely(ret == NULL))
 		rb_outofmemory();
 	rb_strlcpy(ret, x, y);
-	return(ret);
+	return (ret);
 }
 
 static inline char *
@@ -72,16 +72,15 @@ rb_strdup(const char *x)
 	if(rb_unlikely(ret == NULL))
 		rb_outofmemory();
 	strcpy(ret, x);
-	return(ret);
+	return (ret);
 }
 
 
 static inline void
 rb_free(void *ptr)
 {
-        if(rb_likely(ptr != NULL))
-        	free(ptr);
+	if(rb_likely(ptr != NULL))
+		free(ptr);
 }
 
 #endif /* _I_MEMORY_H */
-

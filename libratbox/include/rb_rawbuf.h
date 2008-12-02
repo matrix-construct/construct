@@ -24,7 +24,7 @@
  */
 
 #ifndef RB_LIB_H
-# error "Do not use rawbuf.h directly"                                   
+# error "Do not use rawbuf.h directly"
 #endif
 
 #ifndef INCLUDED_RAWBUF_H__
@@ -41,6 +41,6 @@ rawbuf_head_t *rb_new_rawbuffer(void);
 int rb_rawbuf_get(rawbuf_head_t *, void *data, int len);
 void rb_rawbuf_append(rawbuf_head_t *, void *data, int len);
 int rb_rawbuf_flush(rawbuf_head_t *, rb_fde_t *F);
-int rb_rawbuf_length(rawbuf_head_t *rb);
+int rb_rawbuf_length(rawbuf_head_t * rb);
 
 #endif

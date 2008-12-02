@@ -1,3 +1,488 @@
+androsyn    2008/11/11 00:00:12 UTC	(20081111_0-26180)
+  Log:
+  fix build errors on os x leopard
+
+  Modified:
+	libratbox/trunk/src/unix.c (File Modified) 
+
+
+androsyn    2008/11/07 02:10:19 UTC	(20081107_0-26178)
+  Log:
+  untested fix for building on os x -- environ is not accessible to shared libraries...
+
+  Modified:
+	libratbox/trunk/src/unix.c (File Modified) 
+
+
+androsyn    2008/10/26 20:59:07 UTC	(20081026_2-26170)
+  Log:
+  add rb_basename and rb_dirname
+
+  Modified:
+	libratbox/trunk/include/rb_tools.h (File Modified) 
+	libratbox/trunk/src/export-syms.txt (File Modified) 
+	libratbox/trunk/src/tools.c (File Modified) 
+
+
+androsyn    2008/10/26 20:58:40 UTC	(20081026_1-26168)
+  Log:
+  remove -O0 from configure.ac and configure
+
+  Modified:
+	libratbox/trunk/configure (File Modified) 
+	libratbox/trunk/configure.ac (File Modified) 
+
+
+androsyn    2008/10/26 20:48:56 UTC	(20081026_0-26166)
+  Log:
+  do an ERR_get_error() if opening the dhparams file fails
+
+  Modified:
+	libratbox/trunk/src/openssl.c (File Modified) 
+
+
+androsyn    2008/10/03 18:02:13 UTC	(20081003_0-26126)
+  Log:
+  fix up the timerfd autoconf stuff a bit better
+
+  Modified:
+	libratbox/trunk/acinclude.m4 (File Modified) 
+	libratbox/trunk/configure (File Modified) 
+
+
+androsyn    2008/09/29 22:58:42 UTC	(20080929_0-26122)
+  Log:
+  fix the timerfd_create check
+
+  Modified:
+	libratbox/trunk/acinclude.m4 (File Modified) 
+	libratbox/trunk/configure (File Modified) 
+
+
+androsyn    2008/09/20 01:27:19 UTC	(20080920_1-26100)
+  Log:
+  properly cast a few things when doing pointer math and the like
+
+  Modified:
+	libratbox/trunk/src/balloc.c (File Modified) 
+	libratbox/trunk/src/openssl.c (File Modified) 
+
+
+androsyn    2008/09/20 01:05:42 UTC	(20080920_0-26096)
+  Log:
+  make rb_close_all be a no-op on win32, its not too useful there either as windows doesn't inherit sockets/files by default
+
+  Modified:
+	libratbox/trunk/src/commio.c (File Modified) 
+
+
+androsyn    2008/09/19 15:13:52 UTC	(20080919_0-26092)
+  Log:
+  update indent.pro and rerun through indent
+
+  Modified:
+	libratbox/trunk/.indent.pro (File Modified) 
+	libratbox/trunk/include/arc4random.h (File Modified) 
+	libratbox/trunk/include/commio-int.h (File Modified) 
+	libratbox/trunk/include/commio-ssl.h (File Modified) 
+	libratbox/trunk/include/rb_balloc.h (File Modified) 
+	libratbox/trunk/include/rb_commio.h (File Modified) 
+	libratbox/trunk/include/rb_event.h (File Modified) 
+	libratbox/trunk/include/rb_helper.h (File Modified) 
+	libratbox/trunk/include/rb_linebuf.h (File Modified) 
+	libratbox/trunk/include/rb_memory.h (File Modified) 
+	libratbox/trunk/include/rb_patricia.h (File Modified) 
+	libratbox/trunk/include/rb_rawbuf.h (File Modified) 
+	libratbox/trunk/include/rb_snprintf.h (File Modified) 
+	libratbox/trunk/include/rb_tools.h (File Modified) 
+	libratbox/trunk/src/arc4random.c (File Modified) 
+	libratbox/trunk/src/balloc.c (File Modified) 
+	libratbox/trunk/src/commio.c (File Modified) 
+	libratbox/trunk/src/crypt.c (File Modified) 
+	libratbox/trunk/src/devpoll.c (File Modified) 
+	libratbox/trunk/src/epoll.c (File Modified) 
+	libratbox/trunk/src/event.c (File Modified) 
+	libratbox/trunk/src/gnutls.c (File Modified) 
+	libratbox/trunk/src/helper.c (File Modified) 
+	libratbox/trunk/src/kqueue.c (File Modified) 
+	libratbox/trunk/src/linebuf.c (File Modified) 
+	libratbox/trunk/src/nossl.c (File Modified) 
+	libratbox/trunk/src/openssl.c (File Modified) 
+	libratbox/trunk/src/patricia.c (File Modified) 
+	libratbox/trunk/src/poll.c (File Modified) 
+	libratbox/trunk/src/ports.c (File Modified) 
+	libratbox/trunk/src/ratbox_lib.c (File Modified) 
+	libratbox/trunk/src/rawbuf.c (File Modified) 
+	libratbox/trunk/src/rb_memory.c (File Modified) 
+	libratbox/trunk/src/select.c (File Modified) 
+	libratbox/trunk/src/sigio.c (File Modified) 
+	libratbox/trunk/src/snprintf.c (File Modified) 
+	libratbox/trunk/src/tools.c (File Modified) 
+	libratbox/trunk/src/unix.c (File Modified) 
+	libratbox/trunk/src/win32.c (File Modified) 
+
+
+androsyn    2008/09/18 18:56:55 UTC	(20080918_1-26088)
+  Log:
+  on win32 add randomness from RtlGenRandom if its available
+
+  Modified:
+	libratbox/trunk/src/arc4random.c (File Modified) 
+
+
+androsyn    2008/09/18 18:41:19 UTC	(20080918_0-26086)
+  Log:
+  add timerfd_create support on linux with glibc 2.8
+
+  Modified:
+	libratbox/trunk/acinclude.m4 (File Modified) 
+	libratbox/trunk/configure (File Modified) 
+	libratbox/trunk/configure.ac (File Modified) 
+	libratbox/trunk/include/libratbox_config.h.in (File Modified) 
+	libratbox/trunk/src/Makefile.in (File Modified) 
+	libratbox/trunk/src/epoll.c (File Modified) 
+	libratbox/trunk/src/version.c.SH (File Modified) 
+
+
+androsyn    2008/09/15 15:47:42 UTC	(20080915_0-26082)
+  Log:
+  cast svptr a bit harder to deal with 32bit systems.  Also use sizeof our_signalfd_siginfo.
+
+  Modified:
+	libratbox/trunk/src/epoll.c (File Modified) 
+
+
+jilles      2008/09/14 22:24:27 UTC	(20080914_0-26078)
+  Log:
+  Fix infinite recursion crash on non-win32.
+  
+
+  Modified:
+	libratbox/trunk/src/unix.c (File Modified) 
+
+
+androsyn    2008/09/10 01:45:22 UTC	(20080910_1-26072)
+  Log:
+  fix a typo
+
+  Modified:
+	libratbox/trunk/src/select.c (File Modified) 
+
+
+androsyn    2008/09/10 00:23:41 UTC	(20080910_0-26068)
+  Log:
+  attempt to override FD_SETSIZE for select and if rb_maxconnections is greater than FD_SETSIZE, lower rb_maxconnections.  Also prefer select to win32
+
+  Modified:
+	libratbox/trunk/src/commio.c (File Modified) 
+	libratbox/trunk/src/select.c (File Modified) 
+
+
+androsyn    2008/09/09 22:58:11 UTC	(20080909_8-26066)
+  Log:
+  actually make that use BIO_new_file
+
+  Modified:
+	libratbox/trunk/src/openssl.c (File Modified) 
+
+
+androsyn    2008/09/09 22:19:14 UTC	(20080909_7-26064)
+  Log:
+  avoid using FILE with openssl as this causes openssl to need OPENSSL_applink on some platforms which is annoying
+
+  Modified:
+	libratbox/trunk/src/openssl.c (File Modified) 
+
+
+androsyn    2008/09/09 17:08:10 UTC	(20080909_6-26060)
+  Log:
+  those symbols don't exist..oops
+
+  Modified:
+	libratbox/trunk/src/export-syms.txt (File Modified) 
+
+
+androsyn    2008/09/09 17:05:19 UTC	(20080909_5-26058)
+  Log:
+  move that down a little
+
+  Modified:
+	libratbox/trunk/src/unix.c (File Modified) 
+
+
+androsyn    2008/09/09 16:47:03 UTC	(20080909_4-26052)
+  Log:
+  change ifdef WIN32 to _WIN32
+
+  Modified:
+	libratbox/trunk/include/commio-int.h (File Modified) 
+	libratbox/trunk/include/ratbox_lib.h (File Modified) 
+	libratbox/trunk/include/rb_commio.h (File Modified) 
+	libratbox/trunk/src/balloc.c (File Modified) 
+	libratbox/trunk/src/commio.c (File Modified) 
+	libratbox/trunk/src/helper.c (File Modified) 
+	libratbox/trunk/src/openssl.c (File Modified) 
+	libratbox/trunk/src/unix.c (File Modified) 
+	libratbox/trunk/src/win32.c (File Modified) 
+
+
+androsyn    2008/09/09 16:40:19 UTC	(20080909_3-26048)
+  Log:
+  - Implement fd passing for win32 so that ssld will work on there.
+  - Add a few symbols to the library for portability issues
+  Note that this commit changes the API for rb_send_fd_buf as it now
+  also takes a pid option as this is needed on windows. This process
+  id should be the target process.  Note that unix will just ignore
+  this.
+  
+  
+
+  Modified:
+	libratbox/trunk/Makefile.in (File Modified) 
+	libratbox/trunk/include/ratbox_lib.h (File Modified) 
+	libratbox/trunk/include/rb_commio.h (File Modified) 
+	libratbox/trunk/src/commio.c (File Modified) 
+	libratbox/trunk/src/export-syms.txt (File Modified) 
+	libratbox/trunk/src/helper.c (File Modified) 
+	libratbox/trunk/src/unix.c (File Modified) 
+	libratbox/trunk/src/win32.c (File Modified) 
+
+
+androsyn    2008/09/09 16:37:30 UTC	(20080909_2-26046)
+  Log:
+  pass libraries to LDFLAGS as well
+
+  Modified:
+	libratbox/trunk/src/Makefile.am (File Modified) 
+	libratbox/trunk/src/Makefile.in (File Modified) 
+
+
+androsyn    2008/09/09 16:36:15 UTC	(20080909_1-26044)
+  Log:
+  make SSL_LIBS actually pass the path to the openssl libraries
+
+  Modified:
+	libratbox/trunk/configure (File Modified) 
+	libratbox/trunk/configure.ac (File Modified) 
+
+
+androsyn    2008/09/09 14:40:41 UTC	(20080909_0-26036)
+  Log:
+  make that an ifdef
+
+  Modified:
+	libratbox/trunk/src/commio.c (File Modified) 
+
+
+androsyn    2008/09/08 16:54:58 UTC	(20080908_1-26034)
+  Log:
+  add a datagram socketpair for platforms that don't have it..mostly based on what is in perl for this
+
+  Modified:
+	libratbox/trunk/src/commio.c (File Modified) 
+
+
+androsyn    2008/09/08 16:53:53 UTC	(20080908_0-26032)
+  Log:
+  make rb_strerror be char instead of const char
+
+  Modified:
+	libratbox/trunk/include/ratbox_lib.h (File Modified) 
+
+
+androsyn    2008/09/05 23:44:06 UTC	(20080905_1-26022)
+  Log:
+  fix the define of the fake rb_sockaddr_storage so that m4 does not eat up our [ ]
+
+  Modified:
+	libratbox/trunk/configure (File Modified) 
+	libratbox/trunk/configure.ac (File Modified) 
+
+
+androsyn    2008/09/05 18:19:25 UTC	(20080905_0-26012)
+  Log:
+  revert part of r25994
+
+  Modified:
+	libratbox/trunk/configure (File Modified) 
+	libratbox/trunk/configure.ac (File Modified) 
+
+
+androsyn    2008/09/04 21:43:03 UTC	(20080904_3-26008)
+  Log:
+  change hard asserts to call both the soft assert code and the C library assert so that it gets in the ircd log files as well
+
+  Modified:
+	libratbox/trunk/include/ratbox_lib.h (File Modified) 
+
+
+androsyn    2008/09/04 19:32:55 UTC	(20080904_2-26000)
+  Log:
+  If somebody really wants to do profiling work..they can change rb_close_all the hard way. Also stop doing the weird stderr.log hack in libratbox let callers deal with stderr on their own
+
+  Modified:
+	libratbox/trunk/src/commio.c (File Modified) 
+
+
+androsyn    2008/09/04 16:08:27 UTC	(20080904_1-25998)
+  Log:
+  add missing rb_strerror prototypes
+
+  Modified:
+	libratbox/trunk/include/ratbox_lib.h (File Modified) 
+	libratbox/trunk/src/unix.c (File Modified) 
+	libratbox/trunk/src/win32.c (File Modified) 
+
+
+androsyn    2008/09/04 15:06:21 UTC	(20080904_0-25994)
+  Log:
+  some portability cleanups
+
+  Modified:
+	libratbox/trunk/aclocal.m4 (File Modified) 
+	libratbox/trunk/config.guess (File Modified) 
+	libratbox/trunk/config.sub (File Modified) 
+	libratbox/trunk/configure (File Modified) 
+	libratbox/trunk/configure.ac (File Modified) 
+	libratbox/trunk/include/arc4random.h (File Modified) 
+	libratbox/trunk/include/libratbox_config.h.in (File Modified) 
+	libratbox/trunk/include/ratbox_lib.h (File Modified) 
+	libratbox/trunk/ltmain.sh (File Modified) 
+	libratbox/trunk/src/Makefile.in (File Modified) 
+	libratbox/trunk/src/commio.c (File Modified) 
+	libratbox/trunk/src/export-syms.txt (File Modified) 
+	libratbox/trunk/src/helper.c (File Modified) 
+	libratbox/trunk/src/nossl.c (File Modified) 
+	libratbox/trunk/src/unix.c (File Modified) 
+	libratbox/trunk/src/win32.c (File Modified) 
+
+
+androsyn    2008/09/03 00:20:22 UTC	(20080903_0-25992)
+  Log:
+  change the event stuff to just strndup the event name
+
+  Modified:
+	libratbox/trunk/include/event-int.h (File Modified) 
+	libratbox/trunk/src/event.c (File Modified) 
+
+
+androsyn    2008/09/02 21:40:49 UTC	(20080902_0-25990)
+  Log:
+  fix makefile on bsd make
+
+  Modified:
+	libratbox/trunk/src/Makefile.am (File Modified) 
+	libratbox/trunk/src/Makefile.in (File Modified) 
+
+
+androsyn    2008/09/01 05:00:31 UTC	(20080901_3-25984)
+  Log:
+  make extern not nested
+
+  Modified:
+	libratbox/trunk/src/ratbox_lib.c (File Modified) 
+
+
+androsyn    2008/09/01 04:59:19 UTC	(20080901_2-25982)
+  Log:
+  and add version.c.SH too
+
+  Modified:
+	libratbox/trunk/src/version.c.SH (File Added) 
+
+
+androsyn    2008/09/01 04:58:51 UTC	(20080901_1-25980)
+  Log:
+  fix up version output stuff
+
+  Modified:
+	libratbox/trunk/src/Makefile.am (File Modified) 
+	libratbox/trunk/src/Makefile.in (File Modified) 
+	libratbox/trunk/src/ratbox_lib.c (File Modified) 
+
+
+androsyn    2008/09/01 04:50:17 UTC	(20080901_0-25978)
+  Log:
+  test commit
+
+  Modified:
+	libratbox/trunk/README (File Modified) 
+
+
+androsyn    2008/09/01 03:18:34 UTC	(25975)
+  Log:
+  remove NOBALLOC code from linebuf.c and fill in the rb_bh_usage stuff for NOBALLOC
+
+  Modified:
+	libratbox/trunk/src/balloc.c (File Modified) 
+	libratbox/trunk/src/linebuf.c (File Modified) 
+
+
+androsyn    2008/09/01 03:12:32 UTC	(25973)
+  Log:
+  remove an #if 0
+
+  Modified:
+	libratbox/trunk/src/event.c (File Modified) 
+
+
+androsyn    2008/09/01 03:07:46 UTC	(25971)
+  Log:
+  change u_char to uint8_t
+
+  Modified:
+	libratbox/trunk/src/crypt.c (File Modified) 
+
+
+androsyn    2008/08/27 19:28:26 UTC	(25963)
+  Log:
+  deal with rb_vsnprintf_append having a string passed to it that is longer than len, in such case we truncate the string..
+
+  Modified:
+	libratbox/trunk/src/snprintf.c (File Modified) 
+
+
+androsyn    2008/08/27 14:59:09 UTC	(25961)
+  Log:
+  the way ev->name was assigned was pretty bogus and pretty much only worked because we always used strings that always were statically allocated in the executable.  fix this and do it correctly
+
+  Modified:
+	libratbox/trunk/include/event-int.h (File Modified) 
+	libratbox/trunk/src/event.c (File Modified) 
+
+
+androsyn    2008/08/25 19:19:35 UTC	(25955)
+  Log:
+  make that a %s instead of a %d
+
+  Modified:
+	libratbox/trunk/src/commio.c (File Modified) 
+
+
+androsyn    2008/08/15 16:29:35 UTC	(25897)
+  Log:
+  order of operations in C can be a real bitch sometimes
+
+  Modified:
+	libratbox/trunk/src/balloc.c (File Modified) 
+
+
+androsyn    2008/08/14 18:23:23 UTC	(25885)
+  Log:
+  fix block heap garbage collection properly
+
+  Modified:
+	libratbox/trunk/src/balloc.c (File Modified) 
+
+
+androsyn    2008/08/12 15:43:58 UTC	(25871)
+  Log:
+  fix a crash in the rb_bh_gc code
+
+  Modified:
+	libratbox/trunk/src/balloc.c (File Modified) 
+
+
 androsyn    2008/08/06 19:51:44 UTC	(25861)
   Log:
   put back in the pad to even pointer boundaries stuff

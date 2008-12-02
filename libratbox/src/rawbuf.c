@@ -125,9 +125,9 @@ rb_rawbuf_flush_writev(rawbuf_head_t * rb, rb_fde_t *F)
 				rb->len -= buf->len - rb->written;
 				rb_rawbuf_done(rb, buf);
 				continue;
-			} 
+			}
 		}
-		
+
 		if(xret >= buf->len)
 		{
 			xret -= buf->len;
@@ -179,7 +179,7 @@ rb_rawbuf_flush(rawbuf_head_t * rb, rb_fde_t *F)
 		rb_bh_free(rawbuf_heap, buf);
 	}
 	rb->len -= retval;
-	lrb_assert(rb->len >= 0);	
+	lrb_assert(rb->len >= 0);
 	return retval;
 }
 
@@ -197,7 +197,7 @@ rb_rawbuf_append(rawbuf_head_t * rb, void *data, int len)
 	{
 		buf = (rawbuf_t *) rb->list.tail->data;
 		clen = RAWBUF_SIZE - buf->len;
-		ptr = (void *) (buf->data + buf->len);
+		ptr = (void *)(buf->data + buf->len);
 		if(len < clen)
 			clen = len;
 
@@ -211,7 +211,7 @@ rb_rawbuf_append(rawbuf_head_t * rb, void *data, int len)
 
 	}
 
-	while (len > 0)
+	while(len > 0)
 	{
 		buf = rb_rawbuf_newbuf(rb);
 
@@ -241,7 +241,7 @@ rb_rawbuf_get(rawbuf_head_t * rb, void *data, int len)
 	buf = rb->list.head->data;
 
 	if(buf->flushing)
-		ptr = (void *) (buf->data + rb->written);
+		ptr = (void *)(buf->data + rb->written);
 	else
 		ptr = buf->data;
 

@@ -146,3 +146,10 @@ rb_supports_ssl
 rb_ssl_handshake_count
 rb_ssl_clear_handshake_count
 rb_get_pseudo_random
+rb_strerror
+rb_kill
+rb_setenv
+rb_getpid
+rb_waitpid
+rb_basename
+rb_dirname

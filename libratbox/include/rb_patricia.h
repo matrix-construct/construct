@@ -32,8 +32,8 @@
 
 typedef struct _rb_prefix_t
 {
-	unsigned short family;		/* AF_INET | AF_INET6 */
-	unsigned short bitlen;		/* same as mask? */
+	unsigned short family;	/* AF_INET | AF_INET6 */
+	unsigned short bitlen;	/* same as mask? */
 	int ref_count;		/* reference count */
 	union
 	{
@@ -49,7 +49,7 @@ rb_prefix_t;
 
 typedef struct _rb_patricia_node_t
 {
-	unsigned int bit;		/* flag if this node used */
+	unsigned int bit;	/* flag if this node used */
 	rb_prefix_t *prefix;	/* who we are in patricia tree */
 	struct _rb_patricia_node_t *l, *r;	/* left and right children */
 	struct _rb_patricia_node_t *parent;	/* may be used */
@@ -60,35 +60,36 @@ rb_patricia_node_t;
 typedef struct _rb_patricia_tree_t
 {
 	rb_patricia_node_t *head;
-	unsigned int maxbits;		/* for IP, 32 bit addresses */
+	unsigned int maxbits;	/* for IP, 32 bit addresses */
 	int num_active_node;	/* for debug purpose */
 }
 rb_patricia_tree_t;
 
 
-rb_patricia_node_t *rb_match_ip(rb_patricia_tree_t * tree, struct sockaddr  *ip);
-rb_patricia_node_t *rb_match_ip_exact(rb_patricia_tree_t * tree, struct sockaddr *ip, unsigned int len);
-rb_patricia_node_t *rb_match_string(rb_patricia_tree_t * tree, const char *string);
-rb_patricia_node_t *rb_match_exact_string(rb_patricia_tree_t * tree, const char *string);
-rb_patricia_node_t *rb_patricia_search_exact(rb_patricia_tree_t * patricia, rb_prefix_t * prefix);
-rb_patricia_node_t *rb_patricia_search_best(rb_patricia_tree_t * patricia, rb_prefix_t * prefix);
-rb_patricia_node_t *rb_patricia_search_best2(rb_patricia_tree_t * patricia,
-				       rb_prefix_t * prefix, int inclusive);
-rb_patricia_node_t *rb_patricia_lookup(rb_patricia_tree_t * patricia, rb_prefix_t * prefix);
+rb_patricia_node_t *rb_match_ip(rb_patricia_tree_t *tree, struct sockaddr *ip);
+rb_patricia_node_t *rb_match_ip_exact(rb_patricia_tree_t *tree, struct sockaddr *ip,
+				      unsigned int len);
+rb_patricia_node_t *rb_match_string(rb_patricia_tree_t *tree, const char *string);
+rb_patricia_node_t *rb_match_exact_string(rb_patricia_tree_t *tree, const char *string);
+rb_patricia_node_t *rb_patricia_search_exact(rb_patricia_tree_t *patricia, rb_prefix_t *prefix);
+rb_patricia_node_t *rb_patricia_search_best(rb_patricia_tree_t *patricia, rb_prefix_t *prefix);
+rb_patricia_node_t *rb_patricia_search_best2(rb_patricia_tree_t *patricia,
+					     rb_prefix_t *prefix, int inclusive);
+rb_patricia_node_t *rb_patricia_lookup(rb_patricia_tree_t *patricia, rb_prefix_t *prefix);
 
-void rb_patricia_remove(rb_patricia_tree_t * patricia, rb_patricia_node_t * node);
+void rb_patricia_remove(rb_patricia_tree_t *patricia, rb_patricia_node_t *node);
 rb_patricia_tree_t *rb_new_patricia(int maxbits);
-void rb_clear_patricia(rb_patricia_tree_t * patricia, void (*func)(void *));
-void rb_destroy_patricia(rb_patricia_tree_t * patricia, void (*func)(void *));
-void rb_patricia_process(rb_patricia_tree_t * patricia, void (*func)(rb_prefix_t *, void *));
+void rb_clear_patricia(rb_patricia_tree_t *patricia, void (*func) (void *));
+void rb_destroy_patricia(rb_patricia_tree_t *patricia, void (*func) (void *));
+void rb_patricia_process(rb_patricia_tree_t *patricia, void (*func) (rb_prefix_t *, void *));
 void rb_init_patricia(void);
 
 
 #if 0
 rb_prefix_t *ascii2prefix(int family, char *string);
 #endif
-rb_patricia_node_t *make_and_lookup(rb_patricia_tree_t * tree, const char *string);
-rb_patricia_node_t *make_and_lookup_ip(rb_patricia_tree_t * tree, struct sockaddr *, int bitlen);
+rb_patricia_node_t *make_and_lookup(rb_patricia_tree_t *tree, const char *string);
+rb_patricia_node_t *make_and_lookup_ip(rb_patricia_tree_t *tree, struct sockaddr *, int bitlen);
 
 
 #define RB_PATRICIA_MAXBITS 128

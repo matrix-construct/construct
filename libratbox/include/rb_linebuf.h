@@ -21,11 +21,11 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: rb_linebuf.h 25675 2008-07-06 04:13:05Z androsyn $
+ *  $Id: rb_linebuf.h 26092 2008-09-19 15:13:52Z androsyn $
  */
 
 #ifndef RB_LIB_H
-# error "Do not use linebuf.h directly"                                   
+# error "Do not use linebuf.h directly"
 #endif
 
 #ifndef __LINEBUF_H__
@@ -46,7 +46,7 @@ typedef struct _buf_line
 {
 	char buf[BUF_DATA_SIZE + 2];
 	uint8_t terminated;	/* Whether we've terminated the buffer */
-	uint8_t raw;	/* Whether this linebuf may hold 8-bit data */
+	uint8_t raw;		/* Whether this linebuf may hold 8-bit data */
 	int len;		/* How much data we've got */
 	int refcount;		/* how many linked lists are we in? */
 } buf_line_t;
@@ -74,7 +74,7 @@ int rb_linebuf_parse(buf_head_t *, char *, int, int);
 int rb_linebuf_get(buf_head_t *, char *, int, int, int);
 void rb_linebuf_putmsg(buf_head_t *, const char *, va_list *, const char *, ...);
 void rb_linebuf_put(buf_head_t *, const char *, ...);
-void rb_linebuf_putbuf(buf_head_t *bufhead, const char *buffer);
+void rb_linebuf_putbuf(buf_head_t * bufhead, const char *buffer);
 void rb_linebuf_attach(buf_head_t *, buf_head_t *);
 void rb_count_rb_linebuf_memory(size_t *, size_t *);
 int rb_linebuf_flush(rb_fde_t *F, buf_head_t *);

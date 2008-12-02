@@ -21,11 +21,11 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: rb_tools.h 25042 2008-01-23 16:14:08Z androsyn $
+ *  $Id: rb_tools.h 26170 2008-10-26 20:59:07Z androsyn $
  */
 
 #ifndef RB_LIB_H
-# error "Do not use tools.h directly"                                   
+# error "Do not use tools.h directly"
 #endif
 
 #ifndef __TOOLS_H__
@@ -34,6 +34,8 @@
 size_t rb_strlcpy(char *dst, const char *src, size_t siz);
 size_t rb_strlcat(char *dst, const char *src, size_t siz);
 size_t rb_strnlen(const char *s, size_t count);
+char *rb_basename(const char *);
+char *rb_dirname(const char *);
 
 int rb_string_to_array(char *string, char **parv, int maxpara);
 
@@ -59,7 +61,7 @@ struct _rb_dlink_list
 };
 
 rb_dlink_node *rb_make_rb_dlink_node(void);
-void rb_free_rb_dlink_node(rb_dlink_node * lp);
+void rb_free_rb_dlink_node(rb_dlink_node *lp);
 void rb_init_rb_dlink_nodes(size_t dh_size);
 
 /* This macros are basically swiped from the linux kernel
@@ -99,7 +101,7 @@ void rb_init_rb_dlink_nodes(size_t dh_size);
  */
 
 static inline void
-rb_dlinkMoveNode(rb_dlink_node * m, rb_dlink_list * oldlist, rb_dlink_list * newlist)
+rb_dlinkMoveNode(rb_dlink_node *m, rb_dlink_list *oldlist, rb_dlink_list *newlist)
 {
 	/* Assumption: If m->next == NULL, then list->tail == m
 	 *      and:   If m->prev == NULL, then list->head == m
@@ -131,7 +133,7 @@ rb_dlinkMoveNode(rb_dlink_node * m, rb_dlink_list * oldlist, rb_dlink_list * new
 }
 
 static inline void
-rb_dlinkAdd(void *data, rb_dlink_node * m, rb_dlink_list * list)
+rb_dlinkAdd(void *data, rb_dlink_node *m, rb_dlink_list *list)
 {
 	assert(data != NULL);
 	assert(m != NULL);
@@ -152,7 +154,7 @@ rb_dlinkAdd(void *data, rb_dlink_node * m, rb_dlink_list * list)
 }
 
 static inline void
-rb_dlinkAddBefore(rb_dlink_node * b, void *data, rb_dlink_node * m, rb_dlink_list * list)
+rb_dlinkAddBefore(rb_dlink_node *b, void *data, rb_dlink_node *m, rb_dlink_list *list)
 {
 	assert(b != NULL);
 	assert(data != NULL);
@@ -180,11 +182,11 @@ rb_dlinkMoveTail(rb_dlink_node *m, rb_dlink_list *list)
 {
 	if(list->tail == m)
 		return;
-	
+
 	/* From here assume that m->next != NULL as that can only 
 	 * be at the tail and assume that the node is on the list
 	 */
-	
+
 	m->next->prev = m->prev;
 
 	if(m->prev != NULL)
@@ -199,7 +201,7 @@ rb_dlinkMoveTail(rb_dlink_node *m, rb_dlink_list *list)
 }
 
 static inline void
-rb_dlinkAddTail(void *data, rb_dlink_node * m, rb_dlink_list * list)
+rb_dlinkAddTail(void *data, rb_dlink_node *m, rb_dlink_list *list)
 {
 	assert(m != NULL);
 	assert(list != NULL);
@@ -223,7 +225,7 @@ rb_dlinkAddTail(void *data, rb_dlink_node * m, rb_dlink_list * list)
  * often of all non-spontaneous functions. So it had better be
  * efficient. */
 static inline void
-rb_dlinkDelete(rb_dlink_node * m, rb_dlink_list * list)
+rb_dlinkDelete(rb_dlink_node *m, rb_dlink_list *list)
 {
 	assert(m != NULL);
 	assert(list != NULL);
@@ -302,7 +304,7 @@ rb_dlinkFind(void *data, rb_dlink_list *list)
 	rb_dlink_node *ptr;
 	assert(list != NULL);
 	assert(data != NULL);
-	
+
 	RB_DLINK_FOREACH(ptr, list->head)
 	{
 		if(ptr->data == data)
@@ -312,7 +314,7 @@ rb_dlinkFind(void *data, rb_dlink_list *list)
 }
 
 static inline void
-rb_dlinkMoveList(rb_dlink_list * from, rb_dlink_list * to)
+rb_dlinkMoveList(rb_dlink_list *from, rb_dlink_list *to)
 {
 	assert(from != NULL);
 	assert(to != NULL);

@@ -22,7 +22,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: kqueue.c 25364 2008-05-14 17:55:22Z jilles $
+ *  $Id: kqueue.c 26092 2008-09-19 15:13:52Z androsyn $
  */
 
 #include <libratbox_config.h>
@@ -63,13 +63,13 @@ static int kqoff;		/* offset into the buffer */
 
 
 int
-rb_setup_fd_kqueue(rb_fde_t * F)
+rb_setup_fd_kqueue(rb_fde_t *F)
 {
 	return 0;
 }
 
 static void
-kq_update_events(rb_fde_t * F, short filter, PF * handler)
+kq_update_events(rb_fde_t *F, short filter, PF * handler)
 {
 	PF *cur_handler;
 	int kep_flags;
@@ -103,7 +103,7 @@ kq_update_events(rb_fde_t * F, short filter, PF * handler)
 			kep_flags = EV_DELETE;
 		}
 
-		EV_SET(kep, (uintptr_t) F->fd, filter, kep_flags, 0, 0, (void *) F);
+		EV_SET(kep, (uintptr_t)F->fd, filter, kep_flags, 0, 0, (void *)F);
 
 		if(++kqoff == kqmax)
 		{
@@ -117,13 +117,14 @@ kq_update_events(rb_fde_t * F, short filter, PF * handler)
 			 * because that would also return events we cannot
 			 * process at this point.
 			 */
-			for (i = 0; i < kqoff; i++)
+			for(i = 0; i < kqoff; i++)
 			{
 				ret = kevent(kq, kqlst + i, 1, NULL, 0, &zero_timespec);
 				/* jdc -- someone needs to do error checking... */
 				/* EBADF is normal here -- jilles */
 				if(ret == -1 && errno != EBADF)
-					rb_lib_log("kq_update_events(): kevent(): %s", strerror(errno));
+					rb_lib_log("kq_update_events(): kevent(): %s",
+						   strerror(errno));
 			}
 			kqoff = 0;
 		}
@@ -167,7 +168,7 @@ rb_init_netio_kqueue(void)
  * and deregister interest in a pending IO state for a given FD.
  */
 void
-rb_setselect_kqueue(rb_fde_t * F, unsigned int type, PF * handler, void *client_data)
+rb_setselect_kqueue(rb_fde_t *F, unsigned int type, PF * handler, void *client_data)
 {
 	lrb_assert(IsFDOpen(F));
 
@@ -209,16 +210,18 @@ rb_select_kqueue(long delay)
 	rb_fde_t *F;
 
 
-	if(delay < 0) {
+	if(delay < 0)
+	{
 		pt = NULL;
 	}
-	else {
+	else
+	{
 		pt = &poll_time;
 		poll_time.tv_sec = delay / 1000;
 		poll_time.tv_nsec = (delay % 1000) * 1000000;
 	}
 
-	for (;;)
+	for(;;)
 	{
 		num = kevent(kq, kqlst, kqoff, kqout, kqmax, pt);
 		kqoff = 0;
@@ -241,7 +244,7 @@ rb_select_kqueue(long delay)
 	if(num == 0)
 		return RB_OK;	/* No error.. */
 
-	for (i = 0; i < num; i++)
+	for(i = 0; i < num; i++)
 	{
 		PF *hdl = NULL;
 
@@ -305,7 +308,7 @@ rb_kqueue_supports_event(void)
 	ts.tv_nsec = 1000;
 
 
-	EV_SET(&kv, (uintptr_t) 0x0, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 0, 1, 0);
+	EV_SET(&kv, (uintptr_t)0x0, EVFILT_TIMER, EV_ADD | EV_ONESHOT, 0, 1, 0);
 	if(kevent(xkq, &kv, 1, NULL, 0, NULL) < 0)
 	{
 		can_do_event = -1;
@@ -326,9 +329,9 @@ rb_kqueue_sched_event(struct ev_entry *event, int when)
 	kep_flags = EV_ADD;
 	if(event->frequency == 0)
 		kep_flags |= EV_ONESHOT;
-	EV_SET(&kev, (uintptr_t) event, EVFILT_TIMER, kep_flags, 0, when * 1000, event);
+	EV_SET(&kev, (uintptr_t)event, EVFILT_TIMER, kep_flags, 0, when * 1000, event);
 	if(kevent(kq, &kev, 1, NULL, 0, NULL) < 0)
-		return 0; 
+		return 0;
 	return 1;
 }
 
@@ -336,7 +339,7 @@ void
 rb_kqueue_unsched_event(struct ev_entry *event)
 {
 	struct kevent kev;
-	EV_SET(&kev, (uintptr_t) event, EVFILT_TIMER, EV_DELETE, 0, 0, event);
+	EV_SET(&kev, (uintptr_t)event, EVFILT_TIMER, EV_DELETE, 0, 0, event);
 	kevent(kq, &kev, 1, NULL, 0, NULL);
 }
 
@@ -356,7 +359,7 @@ rb_init_netio_kqueue(void)
 }
 
 void
-rb_setselect_kqueue(rb_fde_t * F, unsigned int type, PF * handler, void *client_data)
+rb_setselect_kqueue(rb_fde_t *F, unsigned int type, PF * handler, void *client_data)
 {
 	errno = ENOSYS;
 	return;
@@ -370,7 +373,7 @@ rb_select_kqueue(long delay)
 }
 
 int
-rb_setup_fd_kqueue(rb_fde_t * F)
+rb_setup_fd_kqueue(rb_fde_t *F)
 {
 	errno = ENOSYS;
 	return -1;

@@ -27,7 +27,7 @@
  * #define NOTYET 1
  * #define PATRICIA_DEBUG 1
  */
- 
+
 #define PREFIX_HEAP_COUNT	1024
 #define NODE_HEAP_COUNT		1024
 #define PATRICIA_HEAP_COUNT	128
@@ -42,12 +42,12 @@ rb_init_patricia(void)
  * convert prefix information to bytes
  */
 static uint8_t *
-prefix_tochar(rb_prefix_t * prefix)
+prefix_tochar(rb_prefix_t *prefix)
 {
 	if(prefix == NULL)
 		return (NULL);
 
-	return ((uint8_t *) & prefix->add.sin);
+	return ((uint8_t *)&prefix->add.sin);
 }
 
 static int
@@ -59,14 +59,15 @@ comp_with_mask(void *addr, void *dest, unsigned int mask)
 		int n = mask / 8;
 		int m = ((-1) << (8 - (mask % 8)));
 
-		if(mask % 8 == 0 || (((uint8_t *) addr)[n] & m) == (((uint8_t *) dest)[n] & m))
+		if(mask % 8 == 0 || (((uint8_t *)addr)[n] & m) == (((uint8_t *)dest)[n] & m))
 			return (1);
 	}
 	return (0);
 }
+
 #ifdef NOTYET
 static char *
-prefix_toa2x(rb_prefix_t * prefix, char *buf, int buf_len, int with_len)
+prefix_toa2x(rb_prefix_t *prefix, char *buf, int buf_len, int with_len)
 {
 	static char tmp[6];
 	if(prefix == NULL)
@@ -88,12 +89,13 @@ prefix_toa2x(rb_prefix_t * prefix, char *buf, int buf_len, int with_len)
  */
 
 static char *
-prefix_toa2(rb_prefix_t * prefix, char *buff, int buf_len)
+prefix_toa2(rb_prefix_t *prefix, char *buff, int buf_len)
 {
 	return (prefix_toa2x(prefix, buff, buf_len, 0));
 }
+
 static char *
-prefix_toa(rb_prefix_t * prefix)
+prefix_toa(rb_prefix_t *prefix)
 {
 #ifdef RB_IPV6
 	static char buf[INET6_ADDRSTRLEN + 6];
@@ -104,7 +106,7 @@ prefix_toa(rb_prefix_t * prefix)
 }
 #endif
 static rb_prefix_t *
-New_Prefix2(int family, void *dest, int bitlen, rb_prefix_t * prefix)
+New_Prefix2(int family, void *dest, int bitlen, rb_prefix_t *prefix)
 {
 	int dynamic_allocated = 0;
 #ifdef RB_IPV6
@@ -130,7 +132,7 @@ New_Prefix2(int family, void *dest, int bitlen, rb_prefix_t * prefix)
 	{
 		if(prefix == NULL)
 		{
-			prefix = rb_malloc(sizeof(rb_prefix_t));			
+			prefix = rb_malloc(sizeof(rb_prefix_t));
 			dynamic_allocated++;
 		}
 		memcpy(&prefix->add.sin, dest, 4);
@@ -229,7 +231,7 @@ ascii2prefix(int family, const char *string)
 }
 
 static rb_prefix_t *
-Ref_Prefix(rb_prefix_t * prefix)
+Ref_Prefix(rb_prefix_t *prefix)
 {
 	if(prefix == NULL)
 		return (NULL);
@@ -243,7 +245,7 @@ Ref_Prefix(rb_prefix_t * prefix)
 }
 
 static void
-Deref_Prefix(rb_prefix_t * prefix)
+Deref_Prefix(rb_prefix_t *prefix)
 {
 	if(prefix == NULL)
 		return;
@@ -287,7 +289,7 @@ rb_new_patricia(int maxbits)
  */
 
 void
-rb_clear_patricia(rb_patricia_tree_t * patricia, void (*func)(void *))
+rb_clear_patricia(rb_patricia_tree_t *patricia, void (*func) (void *))
 {
 	assert(patricia);
 	if(patricia->head)
@@ -297,7 +299,7 @@ rb_clear_patricia(rb_patricia_tree_t * patricia, void (*func)(void *))
 		rb_patricia_node_t **Xsp = Xstack;
 		rb_patricia_node_t *Xrn = patricia->head;
 
-		while (Xrn)
+		while(Xrn)
 		{
 			rb_patricia_node_t *l = Xrn->l;
 			rb_patricia_node_t *r = Xrn->r;
@@ -333,7 +335,7 @@ rb_clear_patricia(rb_patricia_tree_t * patricia, void (*func)(void *))
 			}
 			else
 			{
-				Xrn = (rb_patricia_node_t *) 0;
+				Xrn = (rb_patricia_node_t *)0;
 			}
 		}
 	}
@@ -343,7 +345,7 @@ rb_clear_patricia(rb_patricia_tree_t * patricia, void (*func)(void *))
 
 
 void
-rb_destroy_patricia(rb_patricia_tree_t * patricia, void (*func)(void *))
+rb_destroy_patricia(rb_patricia_tree_t *patricia, void (*func) (void *))
 {
 	rb_clear_patricia(patricia, func);
 	num_active_patricia--;
@@ -355,7 +357,7 @@ rb_destroy_patricia(rb_patricia_tree_t * patricia, void (*func)(void *))
  */
 
 void
-rb_patricia_process(rb_patricia_tree_t * patricia, void (*func)(rb_prefix_t *, void *))
+rb_patricia_process(rb_patricia_tree_t *patricia, void (*func) (rb_prefix_t *, void *))
 {
 	rb_patricia_node_t *node;
 	assert(func);
@@ -368,7 +370,7 @@ rb_patricia_process(rb_patricia_tree_t * patricia, void (*func)(rb_prefix_t *, v
 }
 
 rb_patricia_node_t *
-rb_patricia_search_exact(rb_patricia_tree_t * patricia, rb_prefix_t * prefix)
+rb_patricia_search_exact(rb_patricia_tree_t *patricia, rb_prefix_t *prefix)
 {
 	rb_patricia_node_t *node;
 	uint8_t *addr;
@@ -385,7 +387,7 @@ rb_patricia_search_exact(rb_patricia_tree_t * patricia, rb_prefix_t * prefix)
 	addr = rb_prefix_touchar(prefix);
 	bitlen = prefix->bitlen;
 
-	while (node->bit < bitlen)
+	while(node->bit < bitlen)
 	{
 
 		if(BIT_TEST(addr[node->bit >> 3], 0x80 >> (node->bit & 0x07)))
@@ -443,7 +445,7 @@ rb_patricia_search_exact(rb_patricia_tree_t * patricia, rb_prefix_t * prefix)
 
 /* if inclusive != 0, "best" may be the given prefix itself */
 rb_patricia_node_t *
-rb_patricia_search_best2(rb_patricia_tree_t * patricia, rb_prefix_t * prefix, int inclusive)
+rb_patricia_search_best2(rb_patricia_tree_t *patricia, rb_prefix_t *prefix, int inclusive)
 {
 	rb_patricia_node_t *node;
 	rb_patricia_node_t *stack[RB_PATRICIA_MAXBITS + 1];
@@ -462,7 +464,7 @@ rb_patricia_search_best2(rb_patricia_tree_t * patricia, rb_prefix_t * prefix, in
 	addr = rb_prefix_touchar(prefix);
 	bitlen = prefix->bitlen;
 
-	while (node->bit < bitlen)
+	while(node->bit < bitlen)
 	{
 
 		if(node->prefix)
@@ -522,7 +524,7 @@ rb_patricia_search_best2(rb_patricia_tree_t * patricia, rb_prefix_t * prefix, in
 	if(cnt <= 0)
 		return (NULL);
 
-	while (--cnt >= 0)
+	while(--cnt >= 0)
 	{
 		node = stack[cnt];
 #ifdef PATRICIA_DEBUG
@@ -545,14 +547,14 @@ rb_patricia_search_best2(rb_patricia_tree_t * patricia, rb_prefix_t * prefix, in
 
 
 rb_patricia_node_t *
-rb_patricia_search_best(rb_patricia_tree_t * patricia, rb_prefix_t * prefix)
+rb_patricia_search_best(rb_patricia_tree_t *patricia, rb_prefix_t *prefix)
 {
 	return (rb_patricia_search_best2(patricia, prefix, 1));
 }
 
 
 rb_patricia_node_t *
-rb_patricia_lookup(rb_patricia_tree_t * patricia, rb_prefix_t * prefix)
+rb_patricia_lookup(rb_patricia_tree_t *patricia, rb_prefix_t *prefix)
 {
 	rb_patricia_node_t *node, *new_node, *parent, *glue;
 	uint8_t *addr, *test_addr;
@@ -565,7 +567,7 @@ rb_patricia_lookup(rb_patricia_tree_t * patricia, rb_prefix_t * prefix)
 
 	if(patricia->head == NULL)
 	{
-		node = rb_malloc(sizeof(rb_patricia_node_t)); 
+		node = rb_malloc(sizeof(rb_patricia_node_t));
 		node->bit = prefix->bitlen;
 		node->prefix = Ref_Prefix(prefix);
 		node->parent = NULL;
@@ -585,7 +587,7 @@ rb_patricia_lookup(rb_patricia_tree_t * patricia, rb_prefix_t * prefix)
 	bitlen = prefix->bitlen;
 	node = patricia->head;
 
-	while (node->bit < bitlen || node->prefix == NULL)
+	while(node->bit < bitlen || node->prefix == NULL)
 	{
 
 		if(node->bit < patricia->maxbits &&
@@ -631,7 +633,7 @@ rb_patricia_lookup(rb_patricia_tree_t * patricia, rb_prefix_t * prefix)
 	/* find the first bit different */
 	check_bit = (node->bit < bitlen) ? node->bit : bitlen;
 	differ_bit = 0;
-	for (i = 0; i * 8 < check_bit; i++)
+	for(i = 0; i * 8 < check_bit; i++)
 	{
 		if((r = (addr[i] ^ test_addr[i])) == 0)
 		{
@@ -639,7 +641,7 @@ rb_patricia_lookup(rb_patricia_tree_t * patricia, rb_prefix_t * prefix)
 			continue;
 		}
 		/* I know the better way, but for now */
-		for (j = 0; j < 8; j++)
+		for(j = 0; j < 8; j++)
 		{
 			if(BIT_TEST(r, (0x80 >> j)))
 				break;
@@ -656,7 +658,7 @@ rb_patricia_lookup(rb_patricia_tree_t * patricia, rb_prefix_t * prefix)
 #endif /* PATRICIA_DEBUG */
 
 	parent = node->parent;
-	while (parent && parent->bit >= differ_bit)
+	while(parent && parent->bit >= differ_bit)
 	{
 		node = parent;
 		parent = node->parent;
@@ -689,7 +691,7 @@ rb_patricia_lookup(rb_patricia_tree_t * patricia, rb_prefix_t * prefix)
 		return (node);
 	}
 
-	new_node = rb_malloc(sizeof(rb_patricia_node_t)); 
+	new_node = rb_malloc(sizeof(rb_patricia_node_t));
 	new_node->bit = prefix->bitlen;
 	new_node->prefix = Ref_Prefix(prefix);
 	new_node->parent = NULL;
@@ -797,7 +799,7 @@ rb_patricia_lookup(rb_patricia_tree_t * patricia, rb_prefix_t * prefix)
 
 
 void
-rb_patricia_remove(rb_patricia_tree_t * patricia, rb_patricia_node_t * node)
+rb_patricia_remove(rb_patricia_tree_t *patricia, rb_patricia_node_t *node)
 {
 	rb_patricia_node_t *parent, *child;
 
@@ -914,18 +916,18 @@ rb_patricia_remove(rb_patricia_tree_t * patricia, rb_patricia_node_t * node)
 }
 
 rb_patricia_node_t *
-make_and_lookup_ip(rb_patricia_tree_t * tree, struct sockaddr *in, int bitlen)
+make_and_lookup_ip(rb_patricia_tree_t *tree, struct sockaddr *in, int bitlen)
 {
 	rb_prefix_t *prefix;
 	rb_patricia_node_t *node;
 	void *ipptr = NULL;
 #ifdef RB_IPV6
 	if(in->sa_family == AF_INET6)
-		ipptr = &((struct sockaddr_in6 *)in)->sin6_addr;	
-	 else
+		ipptr = &((struct sockaddr_in6 *)in)->sin6_addr;
+	else
 #endif
 		ipptr = &((struct sockaddr_in *)in)->sin_addr;
-	
+
 	prefix = New_Prefix(in->sa_family, ipptr, bitlen);
 
 	if(prefix == NULL)
@@ -941,7 +943,7 @@ make_and_lookup_ip(rb_patricia_tree_t * tree, struct sockaddr *in, int bitlen)
 
 
 rb_patricia_node_t *
-make_and_lookup(rb_patricia_tree_t * tree, const char *string)
+make_and_lookup(rb_patricia_tree_t *tree, const char *string)
 {
 	rb_prefix_t *prefix;
 	rb_patricia_node_t *node;
@@ -968,7 +970,7 @@ make_and_lookup(rb_patricia_tree_t * tree, const char *string)
 
 #ifdef NOTYET
 static rb_patricia_node_t *
-try_search_exact(rb_patricia_tree_t * tree, char *string)
+try_search_exact(rb_patricia_tree_t *tree, char *string)
 {
 	rb_prefix_t *prefix;
 	rb_patricia_node_t *node;
@@ -991,7 +993,7 @@ try_search_exact(rb_patricia_tree_t * tree, char *string)
 }
 
 void
-lookup_then_remove(rb_patricia_tree_t * tree, char *string)
+lookup_then_remove(rb_patricia_tree_t *tree, char *string)
 {
 	rb_patricia_node_t *node;
 
@@ -1001,7 +1003,7 @@ lookup_then_remove(rb_patricia_tree_t * tree, char *string)
 #endif
 
 rb_patricia_node_t *
-rb_match_ip(rb_patricia_tree_t * tree, struct sockaddr *ip)
+rb_match_ip(rb_patricia_tree_t *tree, struct sockaddr *ip)
 {
 	rb_prefix_t *prefix;
 	rb_patricia_node_t *node;
@@ -1018,13 +1020,15 @@ rb_match_ip(rb_patricia_tree_t * tree, struct sockaddr *ip)
 		len = 128;
 		family = AF_INET6;
 		ipptr = &((struct sockaddr_in6 *)ip)->sin6_addr;
-	} else {
+	}
+	else
+	{
 		len = 32;
 		family = AF_INET;
 		ipptr = &((struct sockaddr_in *)ip)->sin_addr;
 	}
 #endif
-	
+
 	if((prefix = New_Prefix(family, ipptr, len)) != NULL)
 	{
 		node = rb_patricia_search_best(tree, prefix);
@@ -1035,7 +1039,7 @@ rb_match_ip(rb_patricia_tree_t * tree, struct sockaddr *ip)
 }
 
 rb_patricia_node_t *
-rb_match_ip_exact(rb_patricia_tree_t * tree, struct sockaddr *ip, unsigned int len)
+rb_match_ip_exact(rb_patricia_tree_t *tree, struct sockaddr *ip, unsigned int len)
 {
 	rb_prefix_t *prefix;
 	rb_patricia_node_t *node;
@@ -1054,14 +1058,16 @@ rb_match_ip_exact(rb_patricia_tree_t * tree, struct sockaddr *ip, unsigned int l
 			len = 128;
 		family = AF_INET6;
 		ipptr = &((struct sockaddr_in6 *)ip)->sin6_addr;
-	} else {
+	}
+	else
+	{
 		if(len > 32)
 			len = 32;
 		family = AF_INET;
 		ipptr = &((struct sockaddr_in *)ip)->sin_addr;
 	}
 #endif
-	
+
 	if((prefix = New_Prefix(family, ipptr, len)) != NULL)
 	{
 		node = rb_patricia_search_exact(tree, prefix);
@@ -1074,7 +1080,7 @@ rb_match_ip_exact(rb_patricia_tree_t * tree, struct sockaddr *ip, unsigned int l
 
 
 rb_patricia_node_t *
-rb_match_string(rb_patricia_tree_t * tree, const char *string)
+rb_match_string(rb_patricia_tree_t *tree, const char *string)
 {
 	rb_patricia_node_t *node;
 	rb_prefix_t *prefix;
@@ -1098,7 +1104,7 @@ rb_match_string(rb_patricia_tree_t * tree, const char *string)
 }
 
 rb_patricia_node_t *
-rb_match_exact_string(rb_patricia_tree_t * tree, const char *string)
+rb_match_exact_string(rb_patricia_tree_t *tree, const char *string)
 {
 	rb_prefix_t *prefix;
 	rb_patricia_node_t *node;

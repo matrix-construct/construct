@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-# $Id: Makefile.am 25689 2008-07-10 17:13:27Z androsyn $
+# $Id: Makefile.am 26046 2008-09-09 16:37:30Z androsyn $
 
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
@@ -58,7 +58,7 @@ am_libratbox_la_OBJECTS = unix.lo win32.lo crypt.lo balloc.lo \
 	commio.lo openssl.lo gnutls.lo nossl.lo event.lo ratbox_lib.lo \
 	rb_memory.lo linebuf.lo snprintf.lo tools.lo helper.lo \
 	devpoll.lo epoll.lo poll.lo ports.lo sigio.lo select.lo \
-	kqueue.lo rawbuf.lo patricia.lo arc4random.lo
+	kqueue.lo rawbuf.lo patricia.lo arc4random.lo version.lo
 libratbox_la_OBJECTS = $(am_libratbox_la_OBJECTS)
 libratbox_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -120,7 +120,6 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
-LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
@@ -202,13 +201,13 @@ psdir = @psdir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
-subdirs = @subdirs@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign
 INCLUDES = -I. -I../include @SSL_CFLAGS@ @GNUTLS_CFLAGS@
+BUILT_SOURCES = version.c
 libratbox_la_SOURCES = \
 	unix.c				\
 	win32.c				\
@@ -234,12 +233,14 @@ libratbox_la_SOURCES = \
 	kqueue.c			\
 	rawbuf.c			\
 	patricia.c			\
-	arc4random.c			
+	arc4random.c			\
+	version.c
 
-libratbox_la_LDFLAGS = -avoid-version -no-undefined -export-symbols export-syms.txt
+libratbox_la_LDFLAGS = @CRYPT_LIB@ @SSL_LIBS@ @GNUTLS_LIBS@  -avoid-version -no-undefined -export-symbols export-syms.txt
 libratbox_la_LIBADD = @CRYPT_LIB@ @SSL_LIBS@ @GNUTLS_LIBS@
 lib_LTLIBRARIES = libratbox.la
-all: all-am
+all: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
 .SUFFIXES: .c .lo .o .obj
@@ -332,6 +333,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/snprintf.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tools.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/unix.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/version.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/win32.Plo@am__quote@
 
 .c.o:
@@ -435,13 +437,15 @@ distdir: $(DISTFILES)
 	  fi; \
 	done
 check-am: all-am
-check: check-am
+check: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) check-am
 all-am: Makefile $(LTLIBRARIES)
 installdirs:
 	for dir in "$(DESTDIR)$(libdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
-install: install-am
+install: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) install-am
 install-exec: install-exec-am
 install-data: install-data-am
 uninstall: uninstall-am
@@ -465,6 +469,7 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 clean: clean-am
 
 clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
@@ -540,6 +545,13 @@ uninstall-am: uninstall-libLTLIBRARIES
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
 	tags uninstall uninstall-am uninstall-libLTLIBRARIES
 
+
+version.c: version.c.SH ../CREDITS
+	$(SHELL) ./version.c.SH
+	$(CP) version.c version.c.last
+
+version.lo: version.c ../include/serno.h
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

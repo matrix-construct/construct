@@ -19,7 +19,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: rb_helper.h 24936 2008-01-14 20:43:23Z androsyn $
+ *  $Id: rb_helper.h 26092 2008-09-19 15:13:52Z androsyn $
  */
 
 #ifndef RB_LIB_H
@@ -36,25 +36,28 @@ typedef void rb_helper_cb(rb_helper *);
 
 
 
-rb_helper *rb_helper_start(const char *name, const char *fullpath, rb_helper_cb *read_cb, rb_helper_cb *error_cb);
+rb_helper *rb_helper_start(const char *name, const char *fullpath, rb_helper_cb * read_cb,
+			   rb_helper_cb * error_cb);
 
-rb_helper *rb_helper_child(rb_helper_cb *read_cb, rb_helper_cb *error_cb,
-			       log_cb *ilog, restart_cb *irestart, die_cb *idie,
-                               int maxcon, size_t lb_heap_size, size_t dh_size, size_t fd_heap_size);
+rb_helper *rb_helper_child(rb_helper_cb * read_cb, rb_helper_cb * error_cb,
+			   log_cb * ilog, restart_cb * irestart, die_cb * idie,
+			   int maxcon, size_t lb_heap_size, size_t dh_size, size_t fd_heap_size);
 
 void rb_helper_restart(rb_helper *helper);
 #ifdef __GNUC__
-void rb_helper_write(rb_helper *helper, const char *format, ...) __attribute((format(printf, 2, 3)));
-void rb_helper_write_queue(rb_helper *helper, const char *format, ...) __attribute((format(printf, 2, 3)));
+void
+rb_helper_write(rb_helper *helper, const char *format, ...)
+__attribute((format(printf, 2, 3)));
+     void rb_helper_write_queue(rb_helper *helper, const char *format, ...)
+	__attribute((format(printf, 2, 3)));
 #else
 void rb_helper_write(rb_helper *helper, const char *format, ...);
 void rb_helper_write_queue(rb_helper *helper, const char *format, ...);
 #endif
 void rb_helper_write_flush(rb_helper *helper);
-                                           
+
 void rb_helper_run(rb_helper *helper);
 void rb_helper_close(rb_helper *helper);
 int rb_helper_read(rb_helper *helper, void *buf, size_t bufsize);
 void rb_helper_loop(rb_helper *helper, long delay);
 #endif
-

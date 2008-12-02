@@ -22,13 +22,22 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: select.c 25038 2008-01-23 16:03:08Z androsyn $
+ *  $Id: select.c 26092 2008-09-19 15:13:52Z androsyn $
  */
+#define FD_SETSIZE 65535
 #include <libratbox_config.h>
 #include <ratbox_lib.h>
 #include <commio-int.h>
 
-#if defined(HAVE_SELECT)
+#if defined(HAVE_SELECT) || defined(_WIN32)
+
+#ifdef _WIN32
+#define MY_FD_SET(x, y) FD_SET((SOCKET)x, y)
+#define MY_FD_CLR(x, y) FD_CLR((SOCKET)x, y)
+#else
+#define MY_FD_SET(x, y) FD_SET(x, y)
+#define MY_FD_CLR(x, y) FD_CLR(x, y)
+#endif
 
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
@@ -65,43 +74,44 @@ select_update_selectfds(rb_fde_t *F, short event, PF * handler)
 	/* Update the read / write set */
 	if(event & RB_SELECT_READ)
 	{
-		if(handler) 
+		if(handler)
 		{
-			FD_SET(F->fd, &select_readfds);
-			F->pflags |= RB_SELECT_READ;		
-		} 
-		else 
+			MY_FD_SET(F->fd, &select_readfds);
+			F->pflags |= RB_SELECT_READ;
+		}
+		else
 		{
-			FD_CLR(F->fd, &select_readfds);
+			MY_FD_CLR(F->fd, &select_readfds);
 			F->pflags &= ~RB_SELECT_READ;
 		}
 	}
 
 	if(event & RB_SELECT_WRITE)
 	{
-		if(handler) 
+		if(handler)
 		{
-			FD_SET(F->fd, &select_writefds);
+			MY_FD_SET(F->fd, &select_writefds);
 			F->pflags |= RB_SELECT_WRITE;
 		}
-		else 
+		else
 		{
-			FD_CLR(F->fd, &select_writefds);
+			MY_FD_CLR(F->fd, &select_writefds);
 			F->pflags &= ~RB_SELECT_WRITE;
 		}
 	}
 
-	if(F->pflags & (RB_SELECT_READ|RB_SELECT_WRITE))
+	if(F->pflags & (RB_SELECT_READ | RB_SELECT_WRITE))
 	{
 		if(F->fd > rb_maxfd)
 		{
-			rb_maxfd = F->fd;		
+			rb_maxfd = F->fd;
 		}
-	} 
+	}
 	else if(F->fd <= rb_maxfd)
 	{
-		while(rb_maxfd >= 0 && !FD_ISSET(rb_maxfd, &select_readfds) && !FD_ISSET(rb_maxfd, &select_writefds))
-			rb_maxfd--;		
+		while(rb_maxfd >= 0 && !FD_ISSET(rb_maxfd, &select_readfds)
+		      && !FD_ISSET(rb_maxfd, &select_writefds))
+			rb_maxfd--;
 	}
 }
 
@@ -112,7 +122,7 @@ select_update_selectfds(rb_fde_t *F, short event, PF * handler)
 int
 rb_setup_fd_select(rb_fde_t *F)
 {
-	return 0;	
+	return 0;
 }
 
 
@@ -122,9 +132,12 @@ rb_setup_fd_select(rb_fde_t *F)
  * This is a needed exported function which will be called to initialise
  * the network loop code.
  */
+extern int rb_maxconnections;
 int
 rb_init_netio_select(void)
 {
+	if(rb_maxconnections > FD_SETSIZE)
+		rb_maxconnections = FD_SETSIZE;	/* override this */
 	FD_ZERO(&select_readfds);
 	FD_ZERO(&select_writefds);
 	return 0;
@@ -137,8 +150,7 @@ rb_init_netio_select(void)
  * and deregister interest in a pending IO state for a given FD.
  */
 void
-rb_setselect_select(rb_fde_t *F, unsigned int type, PF * handler,
-	       void *client_data)
+rb_setselect_select(rb_fde_t *F, unsigned int type, PF * handler, void *client_data)
 {
 	lrb_assert(IsFDOpen(F));
 
@@ -181,7 +193,7 @@ rb_select_select(long delay)
 	memcpy(&tmpreadfds, &select_readfds, sizeof(fd_set));
 	memcpy(&tmpwritefds, &select_writefds, sizeof(fd_set));
 
-	for (;;)
+	for(;;)
 	{
 		to.tv_sec = 0;
 		to.tv_usec = delay * 1000;
@@ -201,7 +213,7 @@ rb_select_select(long delay)
 		return 0;
 
 	/* XXX we *could* optimise by falling out after doing num fds ... */
-	for (fd = 0; fd < rb_maxfd + 1; fd++)
+	for(fd = 0; fd < rb_maxfd + 1; fd++)
 	{
 		F = rb_find_fd(fd);
 		if(F == NULL)
@@ -234,7 +246,7 @@ rb_select_select(long delay)
 }
 
 #else /* select not supported..what sort of garbage is this? */
-int 
+int
 rb_init_netio_select(void)
 {
 	return ENOSYS;
@@ -243,22 +255,22 @@ rb_init_netio_select(void)
 void
 rb_setselect_select(rb_fde_t *F, unsigned int type, PF * handler, void *client_data)
 {
-        errno = ENOSYS;
-        return;
+	errno = ENOSYS;
+	return;
 }
- 
+
 int
 rb_select_select(long delay)
 {
-        errno = ENOSYS;
-        return -1;
+	errno = ENOSYS;
+	return -1;
 }
- 
+
 int
 rb_setup_fd_select(rb_fde_t *F)
 {
-        errno = ENOSYS;
-        return -1;
+	errno = ENOSYS;
+	return -1;
 }
 
 #endif

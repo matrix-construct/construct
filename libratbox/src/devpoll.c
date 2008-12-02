@@ -22,7 +22,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: devpoll.c 25038 2008-01-23 16:03:08Z androsyn $
+ *  $Id: devpoll.c 26092 2008-09-19 15:13:52Z androsyn $
  */
 #include <libratbox_config.h>
 #include <ratbox_lib.h>
@@ -41,13 +41,13 @@ static void devpoll_update_events(int, short, PF *);
 static void devpoll_write_update(int, int);
 
 
-int 
+int
 rb_setup_fd_devpoll(rb_fde_t *F)
 {
-        return 0;
+	return 0;
 }
-        
-        
+
+
 /*
  * Write an update to the devpoll filter.
  * See, we end up having to do a seperate (?) remove before we do an
@@ -68,7 +68,8 @@ devpoll_write_update(int fd, int events)
 	/* Write the thing to our poll fd */
 	retval = write(dpfd, &pollfds[0], sizeof(struct pollfd));
 	if(retval != sizeof(struct pollfd))
-		rb_lib_log("devpoll_write_update: dpfd write failed %d: %s", errno, strerror(errno));
+		rb_lib_log("devpoll_write_update: dpfd write failed %d: %s", errno,
+			   strerror(errno));
 	/* Done! */
 }
 
@@ -150,7 +151,7 @@ rb_init_netio_devpoll(void)
 	{
 		return errno;
 	}
-	maxfd = getdtablesize() - 2; /* This makes more sense than HARD_FDLIMIT */
+	maxfd = getdtablesize() - 2;	/* This makes more sense than HARD_FDLIMIT */
 	fdmask = rb_malloc(sizeof(fdmask) * maxfd + 1);
 	rb_open(dpfd, RB_FD_UNKNOWN, "/dev/poll file descriptor");
 }
@@ -162,8 +163,7 @@ rb_init_netio_devpoll(void)
  * and deregister interest in a pending IO state for a given FD.
  */
 void
-rb_setselect_devpoll(rb_fde_t *F, unsigned int type, PF * handler,
-	       void *client_data)
+rb_setselect_devpoll(rb_fde_t *F, unsigned int type, PF * handler, void *client_data)
 {
 	lrb_assert(IsFDOpen(F));
 
@@ -205,7 +205,7 @@ rb_select_devpoll(long delay)
 
 	do
 	{
-		for (;;)
+		for(;;)
 		{
 			dopoll.dp_timeout = delay;
 			dopoll.dp_nfds = maxfd;
@@ -223,14 +223,13 @@ rb_select_devpoll(long delay)
 		if(num == 0)
 			continue;
 
-		for (i = 0; i < num; i++)
+		for(i = 0; i < num; i++)
 		{
 			int fd = dopoll.dp_fds[i].fd;
 			PF *hdl = NULL;
 			rb_fde_t *F = rb_find_fd(fd);
-			if((dopoll.dp_fds[i].
-			    revents & (POLLRDNORM | POLLIN | POLLHUP |
-				       POLLERR))
+			if((dopoll.dp_fds[i].revents & (POLLRDNORM | POLLIN | POLLHUP |
+							POLLERR))
 			   && (dopoll.dp_fds[i].events & (POLLRDNORM | POLLIN)))
 			{
 				if((hdl = F->read_handler) != NULL)
@@ -243,16 +242,14 @@ rb_select_devpoll(long delay)
 					 * poll set *if* the handler changes state (active ->
 					 * NULL or vice versa.)
 					 */
-					devpoll_update_events(fd,
-							      RB_SELECT_READ, F->read_handler);
+					devpoll_update_events(fd, RB_SELECT_READ, F->read_handler);
 				}
 			}
 
 			if(!IsFDOpen(F))
 				continue;	/* Read handler closed us..go on to do something more useful */
-			if((dopoll.dp_fds[i].
-			    revents & (POLLWRNORM | POLLOUT | POLLHUP |
-				       POLLERR))
+			if((dopoll.dp_fds[i].revents & (POLLWRNORM | POLLOUT | POLLHUP |
+							POLLERR))
 			   && (dopoll.dp_fds[i].events & (POLLWRNORM | POLLOUT)))
 			{
 				if((hdl = F->write_handler) != NULL)
@@ -268,13 +265,13 @@ rb_select_devpoll(long delay)
 		}
 		return RB_OK;
 	}
-	while (0);
+	while(0);
 	/* XXX Get here, we broke! */
 	return 0;
 }
 
 #else /* /dev/poll not supported */
-int 
+int
 rb_init_netio_devpoll(void)
 {
 	return ENOSYS;
@@ -301,4 +298,3 @@ rb_setup_fd_devpoll(rb_fde_t *F)
 	return -1;
 }
 #endif
-

@@ -20,7 +20,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: tools.c 25040 2008-01-23 16:11:34Z androsyn $
+ *  $Id: tools.c 26170 2008-10-26 20:59:07Z androsyn $
  *
  *  Here is the original header:
  *
@@ -62,7 +62,7 @@ rb_init_rb_dlink_nodes(size_t dh_size)
 rb_dlink_node *
 rb_make_rb_dlink_node(void)
 {
-	return(rb_bh_alloc(dnode_heap));
+	return (rb_bh_alloc(dnode_heap));
 }
 
 /*
@@ -73,7 +73,7 @@ rb_make_rb_dlink_node(void)
  * side effects	- free given rb_dlink_node 
  */
 void
-rb_free_rb_dlink_node(rb_dlink_node * ptr)
+rb_free_rb_dlink_node(rb_dlink_node *ptr)
 {
 	assert(ptr != NULL);
 	rb_bh_free(dnode_heap, ptr);
@@ -97,7 +97,7 @@ rb_string_to_array(char *string, char **parv, int maxpara)
 	if(string == NULL || string[0] == '\0')
 		return x;
 
-	while (*xbuf == ' ')	/* skip leading spaces */
+	while(*xbuf == ' ')	/* skip leading spaces */
 		xbuf++;
 	if(*xbuf == '\0')	/* ignore all-space args */
 		return x;
@@ -123,12 +123,12 @@ rb_string_to_array(char *string, char **parv, int maxpara)
 			else
 				return x;
 		}
-		while (*xbuf == ' ')
+		while(*xbuf == ' ')
 			xbuf++;
 		if(*xbuf == '\0')
 			return x;
 	}
-	while (x < maxpara - 1);
+	while(x < maxpara - 1);
 
 	if(*p == ':')
 		p++;
@@ -139,20 +139,20 @@ rb_string_to_array(char *string, char **parv, int maxpara)
 }
 
 #ifndef HAVE_STRLCAT
-size_t 
+size_t
 rb_strlcat(char *dest, const char *src, size_t count)
 {
-        size_t dsize = strlen(dest);  
-        size_t len = strlen(src);
-        size_t res = dsize + len;
+	size_t dsize = strlen(dest);
+	size_t len = strlen(src);
+	size_t res = dsize + len;
 
-        dest += dsize; 
-        count -= dsize;
-        if (len >= count)
-                len = count-1;
-        memcpy(dest, src, len);
-        dest[len] = 0;
-        return res;
+	dest += dsize;
+	count -= dsize;
+	if(len >= count)
+		len = count - 1;
+	memcpy(dest, src, len);
+	dest[len] = 0;
+	return res;
 }
 #else
 size_t
@@ -161,19 +161,20 @@ rb_strlcat(char *dest, const char *src, size_t count)
 	return strlcat(dest, src, count);
 }
 #endif
- 
+
 #ifndef HAVE_STRLCPY
-size_t 
+size_t
 rb_strlcpy(char *dest, const char *src, size_t size)
 {
-        size_t ret = strlen(src);
+	size_t ret = strlen(src);
 
-        if (size) {
-                size_t len = (ret >= size) ? size-1 : ret;
-                memcpy(dest, src, len);
-                dest[len] = '\0';
-        }
-        return ret;
+	if(size)
+	{
+		size_t len = (ret >= size) ? size - 1 : ret;
+		memcpy(dest, src, len);
+		dest[len] = '\0';
+	}
+	return ret;
 }
 #else
 size_t
@@ -185,14 +186,14 @@ rb_strlcpy(char *dest, const char *src, size_t size)
 
 
 #ifndef HAVE_STRNLEN
-size_t 
+size_t
 rb_strnlen(const char *s, size_t count)
-{  
+{
 	const char *sc;
-	for (sc = s; count-- && *sc != '\0'; ++sc)
+	for(sc = s; count-- && *sc != '\0'; ++sc)
 		;;
 	return sc - s;
-}                                        
+}
 #else
 size_t
 rb_strnlen(const char *s, size_t count)
@@ -201,3 +202,42 @@ rb_strnlen(const char *s, size_t count)
 }
 #endif
 
+/* rb_basename
+ *
+ * input        -
+ * output       -
+ * side effects -  
+ */
+char *
+rb_basename(const char *path)
+{
+        const char *s;
+
+        if(!(s = strrchr(path, '/')))
+                s = path;
+        else
+                s++;
+	return rb_strdup(s);
+}
+
+/*
+ * rb_dirname
+ */
+
+char *
+rb_dirname (const char *path)
+{
+	char *s;
+
+	s = strrchr(path, '/');
+	if(s == NULL)
+	{
+		return rb_strdup(".");
+	}	
+
+	/* remove extra slashes */
+	while(s > path && *s == '/')
+		--s;
+
+	return rb_strndup(path, ((uintptr_t)s - (uintptr_t)path) + 2); 
+}

@@ -21,7 +21,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: commio.c 25795 2008-07-29 15:26:55Z androsyn $
+ *  $Id: commio.c 26096 2008-09-20 01:05:42Z androsyn $
  */
 #include <libratbox_config.h>
 #include <ratbox_lib.h>
@@ -64,7 +64,7 @@ static const char *rb_err_str[] = { "Comm OK", "Error during bind()",
 
 /* Highest FD and number of open FDs .. */
 static int number_fd = 0;
-static int rb_maxconnections = 0;
+int rb_maxconnections = 0;
 
 static PF rb_connect_timeout;
 static PF rb_connect_tryconnect;
@@ -74,6 +74,7 @@ static void mangle_mapped_sockaddr(struct sockaddr *in);
 
 #ifndef HAVE_SOCKETPAIR
 static int rb_inet_socketpair(int d, int type, int protocol, int sv[2]);
+static int rb_inet_socketpair_udp(rb_fde_t **newF1, rb_fde_t **newF2);
 #endif
 
 static inline rb_fde_t *
@@ -83,12 +84,12 @@ add_fd(int fd)
 
 	/* look up to see if we have it already */
 	if(F != NULL)
-		return F; 
-	
+		return F;
+
 	F = rb_bh_alloc(fd_heap);
 	F->fd = fd;
 	rb_dlinkAdd(F, &F->node, &rb_fd_table[rb_hash_fd(fd)]);
-	return(F);
+	return (F);
 }
 
 static inline void
@@ -96,11 +97,11 @@ remove_fd(rb_fde_t *F)
 {
 	if(F == NULL || !IsFDOpen(F))
 		return;
-	
+
 	rb_dlinkMoveNode(&F->node, &rb_fd_table[rb_hash_fd(F->fd)], &closed_list);
 }
 
-static void 
+static void
 free_fds(void)
 {
 	rb_fde_t *F;
@@ -142,27 +143,14 @@ rb_fd_hack(int *fd)
 static void
 rb_close_all(void)
 {
+#ifndef _WIN32
 	int i;
-#ifndef NDEBUG
-	int fd;
-#endif
 
 	/* XXX someone tell me why we care about 4 fd's ? */
 	/* XXX btw, fd 3 is used for profiler ! */
-	for (i = 4; i < rb_maxconnections; ++i)
+	for(i = 3; i < rb_maxconnections; ++i)
 	{
 		close(i);
-	}
-
-	/* XXX should his hack be done in all cases? */
-#ifndef NDEBUG
-	/* fugly hack to reserve fd == 2 */
-	(void) close(2);
-	fd = open("stderr.log", O_WRONLY | O_CREAT | O_APPEND, 0644);
-	if(fd >= 0)
-	{
-		dup2(fd, 2);
-		close(fd);
 	}
 #endif
 }
@@ -188,7 +176,8 @@ rb_get_sockerr(rb_fde_t *F)
 	errtmp = errno;
 
 #ifdef SO_ERROR
-	if(F != NULL && !getsockopt(rb_get_fd(F), SOL_SOCKET, SO_ERROR, (char *) &err, (rb_socklen_t *) & len))
+	if(F != NULL
+	   && !getsockopt(rb_get_fd(F), SOL_SOCKET, SO_ERROR, (char *)&err, (rb_socklen_t *) & len))
 	{
 		if(err)
 			errtmp = err;
@@ -204,7 +193,7 @@ rb_get_sockerr(rb_fde_t *F)
 int
 rb_getmaxconnect(void)
 {
-	return(rb_maxconnections);
+	return (rb_maxconnections);
 }
 
 /*
@@ -221,8 +210,8 @@ rb_set_buffers(rb_fde_t *F, int size)
 	if(F == NULL)
 		return 0;
 	if(setsockopt
-	   (F->fd, SOL_SOCKET, SO_RCVBUF, (char *) &size, sizeof(size))
-	   || setsockopt(F->fd, SOL_SOCKET, SO_SNDBUF, (char *) &size, sizeof(size)))
+	   (F->fd, SOL_SOCKET, SO_RCVBUF, (char *)&size, sizeof(size))
+	   || setsockopt(F->fd, SOL_SOCKET, SO_SNDBUF, (char *)&size, sizeof(size)))
 		return 0;
 	return 1;
 }
@@ -244,7 +233,7 @@ rb_set_nb(rb_fde_t *F)
 	if(F == NULL)
 		return 0;
 	fd = F->fd;
-	
+
 	if((res = rb_setup_fd(F)))
 		return res;
 #ifdef O_NONBLOCK
@@ -277,14 +266,14 @@ rb_settimeout(rb_fde_t *F, time_t timeout, PF * callback, void *cbdata)
 
 	lrb_assert(IsFDOpen(F));
 	td = F->timeout;
-	if(callback == NULL) /* user wants to remove */
+	if(callback == NULL)	/* user wants to remove */
 	{
 		if(td == NULL)
 			return;
 		rb_dlinkDelete(&td->node, &timeout_list);
 		rb_free(td);
 		F->timeout = NULL;
-		if(rb_dlink_list_length(&timeout_list) == 0) 
+		if(rb_dlink_list_length(&timeout_list) == 0)
 		{
 			rb_event_delete(rb_timeout_ev);
 			rb_timeout_ev = NULL;
@@ -293,8 +282,8 @@ rb_settimeout(rb_fde_t *F, time_t timeout, PF * callback, void *cbdata)
 	}
 
 	if(F->timeout == NULL)
-		td = F->timeout = rb_malloc(sizeof(struct timeout_data));	
-		
+		td = F->timeout = rb_malloc(sizeof(struct timeout_data));
+
 	td->F = F;
 	td->timeout = rb_current_time() + timeout;
 	td->timeout_handler = callback;
@@ -302,7 +291,7 @@ rb_settimeout(rb_fde_t *F, time_t timeout, PF * callback, void *cbdata)
 	rb_dlinkAdd(td, &td->node, &timeout_list);
 	if(rb_timeout_ev == NULL)
 	{
-		rb_timeout_ev = rb_event_add("rb_checktimeouts", rb_checktimeouts, NULL, 5); 
+		rb_timeout_ev = rb_event_add("rb_checktimeouts", rb_checktimeouts, NULL, 5);
 	}
 }
 
@@ -337,7 +326,7 @@ rb_checktimeouts(void *notused)
 			F->timeout = NULL;
 			rb_free(td);
 			hdl(F, data);
-		}		
+		}
 	}
 }
 
@@ -365,7 +354,9 @@ rb_accept_tryaccept(rb_fde_t *F, void *data)
 
 		if(new_F == NULL)
 		{
-			rb_lib_log("rb_accept: new_F == NULL on incoming connection. Closing new_fd == %d\n", new_fd);
+			rb_lib_log
+				("rb_accept: new_F == NULL on incoming connection. Closing new_fd == %d\n",
+				 new_fd);
 			close(new_fd);
 			continue;
 		}
@@ -380,21 +371,22 @@ rb_accept_tryaccept(rb_fde_t *F, void *data)
 #ifdef RB_IPV6
 		mangle_mapped_sockaddr((struct sockaddr *)&st);
 #endif
-		
+
 		if(F->accept->precb != NULL)
 		{
-			if(!F->accept->precb(new_F, (struct sockaddr *)&st, addrlen, F->accept->data)) /* pre-callback decided to drop it */
+			if(!F->accept->precb(new_F, (struct sockaddr *)&st, addrlen, F->accept->data))	/* pre-callback decided to drop it */
 				continue;
 		}
 #ifdef HAVE_SSL
 		if(F->type & RB_FD_SSL)
 		{
 			rb_ssl_accept_setup(F, new_F, (struct sockaddr *)&st, addrlen);
-		} 
+		}
 		else
-#endif	/* HAVE_SSL */
+#endif /* HAVE_SSL */
 		{
-		 	F->accept->callback(new_F, RB_OK, (struct sockaddr *)&st, addrlen, F->accept->data);
+			F->accept->callback(new_F, RB_OK, (struct sockaddr *)&st, addrlen,
+					    F->accept->data);
 		}
 	}
 
@@ -402,7 +394,7 @@ rb_accept_tryaccept(rb_fde_t *F, void *data)
 
 /* try to accept a TCP connection */
 void
-rb_accept_tcp(rb_fde_t *F, ACPRE *precb, ACCB *callback, void *data)
+rb_accept_tcp(rb_fde_t *F, ACPRE * precb, ACCB * callback, void *data)
 {
 	if(F == NULL)
 		return;
@@ -430,11 +422,11 @@ rb_accept_tcp(rb_fde_t *F, ACPRE *precb, ACCB *callback, void *data)
  */
 void
 rb_connect_tcp(rb_fde_t *F, struct sockaddr *dest,
-		 struct sockaddr *clocal, int socklen, CNCB * callback, void *data, int timeout)
+	       struct sockaddr *clocal, int socklen, CNCB * callback, void *data, int timeout)
 {
 	if(F == NULL)
 		return;
-		
+
 	lrb_assert(callback);
 	F->connect = rb_malloc(sizeof(struct conndata));
 	F->connect->callback = callback;
@@ -472,7 +464,7 @@ rb_connect_callback(rb_fde_t *F, int status)
 {
 	CNCB *hdl;
 	void *data;
-	int errtmp = errno; /* save errno as rb_settimeout clobbers it sometimes */
+	int errtmp = errno;	/* save errno as rb_settimeout clobbers it sometimes */
 
 	/* This check is gross..but probably necessary */
 	if(F == NULL || F->connect == NULL || F->connect->callback == NULL)
@@ -485,7 +477,7 @@ rb_connect_callback(rb_fde_t *F, int status)
 
 	/* Clear the timeout handler */
 	rb_settimeout(F, 0, NULL, NULL);
-	errno = errtmp; 
+	errno = errtmp;
 	/* Call the handler */
 	hdl(F, status, data);
 }
@@ -520,7 +512,8 @@ rb_connect_tryconnect(rb_fde_t *F, void *notused)
 		return;
 	/* Try the connect() */
 	retval = connect(F->fd,
-			 (struct sockaddr *) &F->connect->hostaddr, GET_SS_LEN(&F->connect->hostaddr));
+			 (struct sockaddr *)&F->connect->hostaddr,
+			 GET_SS_LEN(&F->connect->hostaddr));
 	/* Error? */
 	if(retval < 0)
 	{
@@ -534,8 +527,7 @@ rb_connect_tryconnect(rb_fde_t *F, void *notused)
 			rb_connect_callback(F, RB_OK);
 		else if(rb_ignore_errno(errno))
 			/* Ignore error? Reschedule */
-			rb_setselect(F, RB_SELECT_CONNECT,
-				       rb_connect_tryconnect, NULL);
+			rb_setselect(F, RB_SELECT_CONNECT, rb_connect_tryconnect, NULL);
 		else
 			/* Error? Fail with RB_ERR_CONNECT */
 			rb_connect_callback(F, RB_ERR_CONNECT);
@@ -578,10 +570,15 @@ rb_socketpair(int family, int sock_type, int proto, rb_fde_t **F1, rb_fde_t **F2
 		return -1;
 	}
 
-#ifndef WIN32
+#ifdef HAVE_SOCKETPAIR
 	if(socketpair(family, sock_type, proto, nfd))
 #else
-	if(rb_inet_socketpair(AF_INET, SOCK_STREAM, proto, nfd))
+	if(sock_type == SOCK_DGRAM)
+	{
+		return rb_inet_socketpair_udp(F1, F2);
+	}
+
+	if(rb_inet_socketpair(AF_INET, sock_type, proto, nfd))
 #endif
 		return -1;
 
@@ -628,7 +625,7 @@ rb_socketpair(int family, int sock_type, int proto, rb_fde_t **F1, rb_fde_t **F2
 int
 rb_pipe(rb_fde_t **F1, rb_fde_t **F2, const char *desc)
 {
-#ifndef WIN32
+#ifndef _WIN32
 	int fd[2];
 	if(number_fd >= rb_maxconnections)
 	{
@@ -664,7 +661,7 @@ rb_pipe(rb_fde_t **F1, rb_fde_t **F2, const char *desc)
 	/* Its not a pipe..but its selectable.  I'll take dirty hacks
 	 * for $500 Alex.
 	 */
-	return rb_socketpair(AF_INET, SOCK_STREAM, 0, F1, F2, desc); 
+	return rb_socketpair(AF_INET, SOCK_STREAM, 0, F1, F2, desc);
 #endif
 }
 
@@ -708,7 +705,7 @@ rb_socket(int family, int sock_type, int proto, const char *note)
 		if(setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &off, sizeof(off)) == -1)
 		{
 			rb_lib_log("rb_socket: Could not set IPV6_V6ONLY option to 1 on FD %d: %s",
-				 fd, strerror(errno));
+				   fd, strerror(errno));
 			close(fd);
 			return NULL;
 		}
@@ -718,7 +715,8 @@ rb_socket(int family, int sock_type, int proto, const char *note)
 	F = rb_open(fd, RB_FD_SOCKET, note);
 	if(F == NULL)
 	{
-		rb_lib_log("rb_socket: rb_open returns NULL on FD %d: %s, closing fd", fd, strerror(errno));
+		rb_lib_log("rb_socket: rb_open returns NULL on FD %d: %s, closing fd", fd,
+			   strerror(errno));
 		close(fd);
 		return NULL;
 	}
@@ -741,7 +739,7 @@ rb_socket(int family, int sock_type, int proto, const char *note)
 static void
 mangle_mapped_sockaddr(struct sockaddr *in)
 {
-	struct sockaddr_in6 *in6 = (struct sockaddr_in6 *) in;
+	struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)in;
 
 	if(in->sa_family == AF_INET)
 		return;
@@ -752,7 +750,7 @@ mangle_mapped_sockaddr(struct sockaddr *in)
 		memset(&in4, 0, sizeof(struct sockaddr_in));
 		in4.sin_family = AF_INET;
 		in4.sin_port = in6->sin6_port;
-		in4.sin_addr.s_addr = ((uint32_t *) & in6->sin6_addr)[3];
+		in4.sin_addr.s_addr = ((uint32_t *)&in6->sin6_addr)[3];
 		memcpy(in, &in4, sizeof(struct sockaddr_in));
 	}
 	return;
@@ -765,7 +763,7 @@ mangle_mapped_sockaddr(struct sockaddr *in)
 int
 rb_listen(rb_fde_t *F, int backlog)
 {
-	F->type = RB_FD_SOCKET|RB_FD_LISTEN;
+	F->type = RB_FD_SOCKET | RB_FD_LISTEN;
 	/* Currently just a simple wrapper for the sake of being complete */
 	return listen(F->fd, backlog);
 }
@@ -774,11 +772,11 @@ void
 rb_fdlist_init(int closeall, int maxfds, size_t heapsize)
 {
 	static int initialized = 0;
-#ifdef WIN32
+#ifdef _WIN32
 	WSADATA wsaData;
 	int err;
 	int vers = MAKEWORD(2, 0);
-	
+
 	err = WSAStartup(vers, &wsaData);
 	if(err != 0)
 	{
@@ -816,7 +814,7 @@ rb_open(int fd, uint8_t type, const char *desc)
 			fdesc = F->desc;
 		else
 			fdesc = "NULL";
-		rb_lib_log("Trying to rb_open an already open FD: %d desc: %d", fd, fdesc);
+		rb_lib_log("Trying to rb_open an already open FD: %d desc: %s", fd, fdesc);
 		return NULL;
 	}
 	F->fd = fd;
@@ -835,12 +833,12 @@ void
 rb_close(rb_fde_t *F)
 {
 	int type, fd;
-	
+
 	if(F == NULL)
 		return;
 
 	fd = F->fd;
-	type = F->type;		
+	type = F->type;
 	lrb_assert(IsFDOpen(F));
 
 	lrb_assert(!(type & RB_FD_FILE));
@@ -868,14 +866,15 @@ rb_close(rb_fde_t *F)
 
 	number_fd--;
 
-#ifdef WIN32
-	if(type & (RB_FD_SOCKET|RB_FD_PIPE))
+#ifdef _WIN32
+	if(type & (RB_FD_SOCKET | RB_FD_PIPE))
 	{
 		closesocket(fd);
 		return;
-	} else
+	}
+	else
 #endif
-	close(fd);
+		close(fd);
 }
 
 
@@ -939,7 +938,7 @@ rb_get_type(rb_fde_t *F)
 	return F->type;
 }
 
-int 
+int
 rb_fd_ssl(rb_fde_t *F)
 {
 	if(F == NULL)
@@ -949,12 +948,12 @@ rb_fd_ssl(rb_fde_t *F)
 	return 0;
 }
 
-int 
+int
 rb_get_fd(rb_fde_t *F)
 {
 	if(F == NULL)
 		return -1;
-	return(F->fd);
+	return (F->fd);
 }
 
 rb_fde_t *
@@ -969,7 +968,7 @@ rb_read(rb_fde_t *F, void *buf, int count)
 	ssize_t ret;
 	if(F == NULL)
 		return 0;
-		
+
 	/* This needs to be *before* RB_FD_SOCKET otherwise you'll process 
 	 * an SSL socket as a regular socket 
 	 */
@@ -977,7 +976,7 @@ rb_read(rb_fde_t *F, void *buf, int count)
 	if(F->type & RB_FD_SSL)
 	{
 		return rb_ssl_read(F, buf, count);
-	} 
+	}
 #endif
 	if(F->type & RB_FD_SOCKET)
 	{
@@ -1006,12 +1005,13 @@ rb_write(rb_fde_t *F, const void *buf, int count)
 	if(F->type & RB_FD_SSL)
 	{
 		return rb_ssl_write(F, buf, count);
-	} 
+	}
 #endif
 	if(F->type & RB_FD_SOCKET)
 	{
 		ret = send(F->fd, buf, count, MSG_NOSIGNAL);
-		if(ret < 0) {
+		if(ret < 0)
+		{
 			rb_get_errno();
 		}
 		return ret;
@@ -1026,11 +1026,11 @@ rb_fake_writev(rb_fde_t *F, const struct rb_iovec *vp, size_t vpcount)
 {
 	ssize_t count = 0;
 
-	while (vpcount-- > 0) 
+	while(vpcount-- > 0)
 	{
 		ssize_t written = rb_write(F, vp->iov_base, vp->iov_len);
 
-		if (written <= 0)
+		if(written <= 0)
 		{
 			if(count > 0)
 				return count;
@@ -1046,23 +1046,24 @@ rb_fake_writev(rb_fde_t *F, const struct rb_iovec *vp, size_t vpcount)
 
 #if defined(WIN32) || !defined(HAVE_WRITEV)
 ssize_t
-rb_writev(rb_fde_t *F, struct rb_iovec *vecount, int count)
+rb_writev(rb_fde_t *F, struct rb_iovec * vecount, int count)
 {
 	return rb_fake_writev(F, vecount, count);
 }
 
 #else
 ssize_t
-rb_writev(rb_fde_t *F, struct rb_iovec *vector, int count)
+rb_writev(rb_fde_t *F, struct rb_iovec * vector, int count)
 {
-	if(F == NULL) {
+	if(F == NULL)
+	{
 		errno = EBADF;
 		return -1;
 	}
 #ifdef HAVE_SSL
 	if(F->type & RB_FD_SSL)
 	{
-		return rb_fake_writev(F, vector, count);	
+		return rb_fake_writev(F, vector, count);
 	}
 #endif /* HAVE_SSL */
 #ifdef HAVE_SENDMSG
@@ -1073,12 +1074,12 @@ rb_writev(rb_fde_t *F, struct rb_iovec *vector, int count)
 		msg.msg_iov = (struct iovec *)vector;
 		msg.msg_iovlen = count;
 		return sendmsg(F->fd, &msg, MSG_NOSIGNAL);
-	} 
+	}
 #endif /* HAVE_SENDMSG */
 	return writev(F->fd, (struct iovec *)vector, count);
 
 }
-#endif 
+#endif
 
 
 /* 
@@ -1129,23 +1130,23 @@ inetntoa(const char *in)
 {
 	static char buf[16];
 	char *bufptr = buf;
-	const unsigned char *a = (const unsigned char *) in;
+	const unsigned char *a = (const unsigned char *)in;
 	const char *n;
 
 	n = IpQuadTab[*a++];
-	while (*n)
+	while(*n)
 		*bufptr++ = *n++;
 	*bufptr++ = '.';
 	n = IpQuadTab[*a++];
-	while (*n)
+	while(*n)
 		*bufptr++ = *n++;
 	*bufptr++ = '.';
 	n = IpQuadTab[*a++];
-	while (*n)
+	while(*n)
 		*bufptr++ = *n++;
 	*bufptr++ = '.';
 	n = IpQuadTab[*a];
-	while (*n)
+	while(*n)
 		*bufptr++ = *n++;
 	*bufptr = '\0';
 	return buf;
@@ -1176,9 +1177,9 @@ inetntoa(const char *in)
  * sizeof(int) < 4.  sizeof(int) > 4 is fine; all the world's not a VAX.
  */
 
-static const char *inet_ntop4(const unsigned char * src, char *dst, unsigned int size);
+static const char *inet_ntop4(const unsigned char *src, char *dst, unsigned int size);
 #ifdef RB_IPV6
-static const char *inet_ntop6(const unsigned char * src, char *dst, unsigned int size);
+static const char *inet_ntop6(const unsigned char *src, char *dst, unsigned int size);
 #endif
 
 /* const char *
@@ -1197,7 +1198,7 @@ inet_ntop4(const unsigned char *src, char *dst, unsigned int size)
 {
 	if(size < 16)
 		return NULL;
-	return strcpy(dst, inetntoa((const char *) src));
+	return strcpy(dst, inetntoa((const char *)src));
 }
 
 /* const char *
@@ -1232,13 +1233,13 @@ inet_ntop6(const unsigned char *src, char *dst, unsigned int size)
 	 *      Find the longest run of 0x00's in src[] for :: shorthanding.
 	 */
 	memset(words, '\0', sizeof words);
-	for (i = 0; i < IN6ADDRSZ; i += 2)
+	for(i = 0; i < IN6ADDRSZ; i += 2)
 		words[i / 2] = (src[i] << 8) | src[i + 1];
 	best.base = -1;
 	best.len = 0;
 	cur.base = -1;
 	cur.len = 0;
-	for (i = 0; i < (IN6ADDRSZ / INT16SZ); i++)
+	for(i = 0; i < (IN6ADDRSZ / INT16SZ); i++)
 	{
 		if(words[i] == 0)
 		{
@@ -1269,7 +1270,7 @@ inet_ntop6(const unsigned char *src, char *dst, unsigned int size)
 	 * Format the result.
 	 */
 	tp = tmp;
-	for (i = 0; i < (IN6ADDRSZ / INT16SZ); i++)
+	for(i = 0; i < (IN6ADDRSZ / INT16SZ); i++)
 	{
 		/* Are we inside the best run of 0x00's? */
 		if(best.base != -1 && i >= best.base && i < (best.base + best.len))
@@ -1305,7 +1306,7 @@ inet_ntop6(const unsigned char *src, char *dst, unsigned int size)
 	 * Check for overflow, copy, and we're done.
 	 */
 
-	if((unsigned int) (tp - tmp) > size)
+	if((unsigned int)(tp - tmp) > size)
 	{
 		return (NULL);
 	}
@@ -1316,18 +1317,18 @@ inet_ntop6(const unsigned char *src, char *dst, unsigned int size)
 int
 rb_inet_pton_sock(const char *src, struct sockaddr *dst)
 {
-	if(rb_inet_pton(AF_INET, src, &((struct sockaddr_in *) dst)->sin_addr))
+	if(rb_inet_pton(AF_INET, src, &((struct sockaddr_in *)dst)->sin_addr))
 	{
-		((struct sockaddr_in *) dst)->sin_port = 0;
-		((struct sockaddr_in *) dst)->sin_family = AF_INET;
+		((struct sockaddr_in *)dst)->sin_port = 0;
+		((struct sockaddr_in *)dst)->sin_family = AF_INET;
 		SET_SS_LEN(dst, sizeof(struct sockaddr_in));
 		return 1;
 	}
 #ifdef RB_IPV6
-	else if(rb_inet_pton(AF_INET6, src, &((struct sockaddr_in6 *) dst)->sin6_addr))
+	else if(rb_inet_pton(AF_INET6, src, &((struct sockaddr_in6 *)dst)->sin6_addr))
 	{
-		((struct sockaddr_in6 *) dst)->sin6_port = 0;
-		((struct sockaddr_in6 *) dst)->sin6_family = AF_INET6;
+		((struct sockaddr_in6 *)dst)->sin6_port = 0;
+		((struct sockaddr_in6 *)dst)->sin6_family = AF_INET6;
 		SET_SS_LEN(dst, sizeof(struct sockaddr_in6));
 		return 1;
 	}
@@ -1341,11 +1342,12 @@ rb_inet_ntop_sock(struct sockaddr *src, char *dst, unsigned int size)
 	switch (src->sa_family)
 	{
 	case AF_INET:
-		return (rb_inet_ntop(AF_INET, &((struct sockaddr_in *) src)->sin_addr, dst, size));
+		return (rb_inet_ntop(AF_INET, &((struct sockaddr_in *)src)->sin_addr, dst, size));
 		break;
 #ifdef RB_IPV6
 	case AF_INET6:
-		return (rb_inet_ntop(AF_INET6, &((struct sockaddr_in6 *) src)->sin6_addr, dst, size));
+		return (rb_inet_ntop
+			(AF_INET6, &((struct sockaddr_in6 *)src)->sin6_addr, dst, size));
 		break;
 #endif
 	default:
@@ -1371,11 +1373,11 @@ rb_inet_ntop(int af, const void *src, char *dst, unsigned int size)
 		return (inet_ntop4(src, dst, size));
 #ifdef RB_IPV6
 	case AF_INET6:
-		if(IN6_IS_ADDR_V4MAPPED((const struct in6_addr *) src) ||
-		   IN6_IS_ADDR_V4COMPAT((const struct in6_addr *) src))
+		if(IN6_IS_ADDR_V4MAPPED((const struct in6_addr *)src) ||
+		   IN6_IS_ADDR_V4COMPAT((const struct in6_addr *)src))
 			return (inet_ntop4
-				((const unsigned char *)
-				 &((const struct in6_addr *) src)->s6_addr[12], dst, size));
+				((const unsigned char *)&((const struct in6_addr *)src)->
+				 s6_addr[12], dst, size));
 		else
 			return (inet_ntop6(src, dst, size));
 
@@ -1423,7 +1425,7 @@ inet_pton4(const char *src, unsigned char *dst)
 	saw_digit = 0;
 	octets = 0;
 	*(tp = tmp) = 0;
-	while ((ch = *src++) != '\0')
+	while((ch = *src++) != '\0')
 	{
 
 		if(ch >= '0' && ch <= '9')
@@ -1490,7 +1492,7 @@ inet_pton6(const char *src, unsigned char *dst)
 	curtok = src;
 	saw_xdigit = 0;
 	val = 0;
-	while ((ch = tolower(*src++)) != '\0')
+	while((ch = tolower(*src++)) != '\0')
 	{
 		const char *pch;
 
@@ -1520,8 +1522,8 @@ inet_pton6(const char *src, unsigned char *dst)
 			}
 			if(tp + INT16SZ > endp)
 				return (0);
-			*tp++ = (unsigned char) (val >> 8) & 0xff;
-			*tp++ = (unsigned char) val & 0xff;
+			*tp++ = (unsigned char)(val >> 8) & 0xff;
+			*tp++ = (unsigned char)val & 0xff;
 			saw_xdigit = 0;
 			val = 0;
 			continue;
@@ -1543,8 +1545,8 @@ inet_pton6(const char *src, unsigned char *dst)
 	{
 		if(tp + INT16SZ > endp)
 			return (0);
-		*tp++ = (unsigned char) (val >> 8) & 0xff;
-		*tp++ = (unsigned char) val & 0xff;
+		*tp++ = (unsigned char)(val >> 8) & 0xff;
+		*tp++ = (unsigned char)val & 0xff;
 	}
 	if(colonp != NULL)
 	{
@@ -1557,7 +1559,7 @@ inet_pton6(const char *src, unsigned char *dst)
 
 		if(tp == endp)
 			return (0);
-		for (i = 1; i <= n; i++)
+		for(i = 1; i <= n; i++)
 		{
 			endp[-i] = colonp[n - i];
 			colonp[n - i] = 0;
@@ -1597,6 +1599,117 @@ rb_inet_pton(int af, const char *src, void *dst)
 
 
 #ifndef HAVE_SOCKETPAIR
+
+/* mostly based on perl's emulation of socketpair udp */
+static int
+rb_inet_socketpair_udp(rb_fde_t **newF1, rb_fde_t **newF2)
+{
+	struct sockaddr_in addr[2];
+	rb_socklen_t size = sizeof(struct sockaddr_in);
+	rb_fde_t *F[2];
+	unsigned int fd[2];
+	int i, got;
+	unsigned short port;
+
+	memset(&addr, 0, sizeof(addr));
+
+	for(i = 0; i < 2; i++)
+	{
+		F[i] = rb_socket(AF_INET, SOCK_DGRAM, 0, "udp socketpair");
+		if(F[i] == NULL)
+			goto failed;
+		addr[i].sin_family = AF_INET;
+		addr[i].sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+		addr[i].sin_port = 0;
+		if(bind(rb_get_fd(F[i]), (struct sockaddr *)&addr[i], sizeof(struct sockaddr_in)))
+			goto failed;
+		fd[i] = rb_get_fd(F[i]);
+	}
+
+	for(i = 0; i < 2; i++)
+	{
+		if(getsockname(fd[i], (struct sockaddr *)&addr[i], &size))
+			goto failed;
+		if(size != sizeof(struct sockaddr_in))
+			goto failed;
+		if(connect(fd[!i], (struct sockaddr *)&addr[i], sizeof(struct sockaddr_in)) == -1)
+			goto failed;
+	}
+
+	for(i = 0; i < 2; i++)
+	{
+		port = addr[i].sin_port;
+		got = rb_write(F[i], &port, sizeof(port));
+		if(got != sizeof(port))
+		{
+			if(got == -1)
+				goto failed;
+			goto abort_failed;
+		}
+	}
+
+
+	struct timeval wait = { 0, 100000 };
+
+	int max = fd[1] > fd[0] ? fd[1] : fd[0];
+	fd_set rset;
+	FD_ZERO(&rset);
+	FD_SET(fd[0], &rset);
+	FD_SET(fd[1], &rset);
+	got = select(max + 1, &rset, NULL, NULL, &wait);
+	if(got != 2 || !FD_ISSET(fd[0], &rset) || !FD_ISSET(fd[1], &rset))
+	{
+		if(got == -1)
+			goto failed;
+		goto abort_failed;
+	}
+
+	struct sockaddr_in readfrom;
+	unsigned short buf[2];
+	for(i = 0; i < 2; i++)
+	{
+#ifdef MSG_DONTWAIT
+		int flag = MSG_DONTWAIT
+#else
+		int flag = 0;
+#endif
+		got = recvfrom(rb_get_fd(F[i]), (char *)&buf, sizeof(buf), flag,
+			       (struct sockaddr *)&readfrom, &size);
+		if(got == -1)
+			goto failed;
+		if(got != sizeof(port)
+		   || size != sizeof(struct sockaddr_in)
+		   || buf[0] != (unsigned short)addr[!i].sin_port
+		   || readfrom.sin_family != addr[!i].sin_family
+		   || readfrom.sin_addr.s_addr != addr[!i].sin_addr.s_addr
+		   || readfrom.sin_port != addr[!i].sin_port)
+			goto abort_failed;
+	}
+
+	*newF1 = F[0];
+	*newF2 = F[1];
+	return 0;
+
+#ifdef _WIN32
+#define	ECONNABORTED WSAECONNABORTED
+#endif
+
+      abort_failed:
+	rb_get_errno();
+	errno = ECONNABORTED;
+      failed:
+	if(errno != ECONNABORTED)
+		rb_get_errno();
+	int o_errno = errno;
+	if(F[0] != NULL)
+		rb_close(F[0]);
+	if(F[1] != NULL)
+		rb_close(F[1]);
+	errno = o_errno;
+	return -1;
+}
+
+
 int
 rb_inet_socketpair(int family, int type, int protocol, int fd[2])
 {
@@ -1605,7 +1718,7 @@ rb_inet_socketpair(int family, int type, int protocol, int fd[2])
 	int acceptor = -1;
 	struct sockaddr_in listen_addr;
 	struct sockaddr_in connect_addr;
-	size_t size;
+	rb_socklen_t size;
 
 	if(protocol || family != AF_INET)
 	{
@@ -1625,7 +1738,7 @@ rb_inet_socketpair(int family, int type, int protocol, int fd[2])
 	listen_addr.sin_family = AF_INET;
 	listen_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	listen_addr.sin_port = 0;	/* kernel choses port.  */
-	if(bind(listener, (struct sockaddr *) &listen_addr, sizeof(listen_addr)) == -1)
+	if(bind(listener, (struct sockaddr *)&listen_addr, sizeof(listen_addr)) == -1)
 		goto tidy_up_and_fail;
 	if(listen(listener, 1) == -1)
 		goto tidy_up_and_fail;
@@ -1635,15 +1748,15 @@ rb_inet_socketpair(int family, int type, int protocol, int fd[2])
 		goto tidy_up_and_fail;
 	/* We want to find out the port number to connect to.  */
 	size = sizeof(connect_addr);
-	if(getsockname(listener, (struct sockaddr *) &connect_addr, &size) == -1)
+	if(getsockname(listener, (struct sockaddr *)&connect_addr, &size) == -1)
 		goto tidy_up_and_fail;
 	if(size != sizeof(connect_addr))
 		goto abort_tidy_up_and_fail;
-	if(connect(connector, (struct sockaddr *) &connect_addr, sizeof(connect_addr)) == -1)
+	if(connect(connector, (struct sockaddr *)&connect_addr, sizeof(connect_addr)) == -1)
 		goto tidy_up_and_fail;
 
 	size = sizeof(listen_addr);
-	acceptor = accept(listener, (struct sockaddr *) &listen_addr, &size);
+	acceptor = accept(listener, (struct sockaddr *)&listen_addr, &size);
 	if(acceptor == -1)
 		goto tidy_up_and_fail;
 	if(size != sizeof(listen_addr))
@@ -1651,7 +1764,7 @@ rb_inet_socketpair(int family, int type, int protocol, int fd[2])
 	close(listener);
 	/* Now check we are talking to ourself by matching port and host on the
 	   two sockets.  */
-	if(getsockname(connector, (struct sockaddr *) &connect_addr, &size) == -1)
+	if(getsockname(connector, (struct sockaddr *)&connect_addr, &size) == -1)
 		goto tidy_up_and_fail;
 	if(size != sizeof(connect_addr)
 	   || listen_addr.sin_family != connect_addr.sin_family
@@ -1720,7 +1833,7 @@ try_kqueue(void)
 		rb_strlcpy(iotype, "kqueue", sizeof(iotype));
 		return 0;
 	}
-	return -1;	
+	return -1;
 }
 
 static int
@@ -1748,7 +1861,7 @@ try_ports(void)
 	{
 		setselect_handler = rb_setselect_ports;
 		select_handler = rb_select_ports;
-		setup_fd_handler = rb_setup_fd_ports;		
+		setup_fd_handler = rb_setup_fd_ports;
 		io_sched_event = NULL;
 		io_unsched_event = NULL;
 		io_init_event = NULL;
@@ -1766,7 +1879,7 @@ try_devpoll(void)
 	{
 		setselect_handler = rb_setselect_devpoll;
 		select_handler = rb_select_devpoll;
-		setup_fd_handler = rb_setup_fd_devpoll;		
+		setup_fd_handler = rb_setup_fd_devpoll;
 		io_sched_event = NULL;
 		io_unsched_event = NULL;
 		io_init_event = NULL;
@@ -1784,26 +1897,26 @@ try_sigio(void)
 	{
 		setselect_handler = rb_setselect_sigio;
 		select_handler = rb_select_sigio;
-		setup_fd_handler = rb_setup_fd_sigio;		
+		setup_fd_handler = rb_setup_fd_sigio;
 		io_sched_event = rb_sigio_sched_event;
-                io_unsched_event = rb_sigio_unsched_event;
-                io_supports_event = rb_sigio_supports_event;
-                io_init_event = rb_sigio_init_event;
-                                                                
+		io_unsched_event = rb_sigio_unsched_event;
+		io_supports_event = rb_sigio_supports_event;
+		io_init_event = rb_sigio_init_event;
+
 		rb_strlcpy(iotype, "sigio", sizeof(iotype));
 		return 0;
 	}
 	return -1;
 }
 
-static int 
+static int
 try_poll(void)
 {
 	if(!rb_init_netio_poll())
 	{
 		setselect_handler = rb_setselect_poll;
 		select_handler = rb_select_poll;
-		setup_fd_handler = rb_setup_fd_poll;		
+		setup_fd_handler = rb_setup_fd_poll;
 		io_sched_event = NULL;
 		io_unsched_event = NULL;
 		io_init_event = NULL;
@@ -1821,7 +1934,7 @@ try_win32(void)
 	{
 		setselect_handler = rb_setselect_win32;
 		select_handler = rb_select_win32;
-		setup_fd_handler = rb_setup_fd_win32;		
+		setup_fd_handler = rb_setup_fd_win32;
 		io_sched_event = NULL;
 		io_unsched_event = NULL;
 		io_init_event = NULL;
@@ -1834,12 +1947,12 @@ try_win32(void)
 
 static int
 try_select(void)
-{	
+{
 	if(!rb_init_netio_select())
 	{
 		setselect_handler = rb_setselect_select;
 		select_handler = rb_select_select;
-		setup_fd_handler = rb_setup_fd_select;		
+		setup_fd_handler = rb_setup_fd_select;
 		io_sched_event = NULL;
 		io_unsched_event = NULL;
 		io_init_event = NULL;
@@ -1854,7 +1967,8 @@ try_select(void)
 int
 rb_io_sched_event(struct ev_entry *ev, int when)
 {
-	if(ev == NULL || io_supports_event == NULL || io_sched_event == NULL || !io_supports_event())
+	if(ev == NULL || io_supports_event == NULL || io_sched_event == NULL
+	   || !io_supports_event())
 		return 0;
 	return io_sched_event(ev, when);
 }
@@ -1862,10 +1976,12 @@ rb_io_sched_event(struct ev_entry *ev, int when)
 void
 rb_io_unsched_event(struct ev_entry *ev)
 {
-	if(ev == NULL || io_supports_event == NULL || io_unsched_event == NULL || !io_supports_event())
+	if(ev == NULL || io_supports_event == NULL || io_unsched_event == NULL
+	   || !io_supports_event())
 		return;
-	io_unsched_event(ev);	
+	io_unsched_event(ev);
 }
+
 int
 rb_io_supports_event(void)
 {
@@ -1887,50 +2003,50 @@ rb_init_netio(void)
 	char *ioenv = getenv("LIBRB_USE_IOTYPE");
 	rb_fd_table = rb_malloc(RB_FD_HASH_SIZE * sizeof(rb_dlink_list));
 	rb_init_ssl();
-	
+
 	if(ioenv != NULL)
 	{
 		if(!strcmp("epoll", ioenv))
 		{
 			if(!try_epoll())
 				return;
-		} else
-		if(!strcmp("kqueue", ioenv))
+		}
+		else if(!strcmp("kqueue", ioenv))
 		{
 			if(!try_kqueue())
 				return;
-		} else
-		if(!strcmp("ports", ioenv))
+		}
+		else if(!strcmp("ports", ioenv))
 		{
 			if(!try_ports())
 				return;
-		} else
-		if(!strcmp("poll", ioenv))
+		}
+		else if(!strcmp("poll", ioenv))
 		{
 			if(!try_poll())
 				return;
-		} else
-		if(!strcmp("devpoll", ioenv))
+		}
+		else if(!strcmp("devpoll", ioenv))
 		{
 			if(!try_devpoll())
 				return;
-		} else
-		if(!strcmp("sigio", ioenv))
+		}
+		else if(!strcmp("sigio", ioenv))
 		{
 			if(!try_sigio())
 				return;
-		} else
+		}
+		else if(!strcmp("select", ioenv))
+		{
+			if(!try_select())
+				return;
+		}
 		if(!strcmp("win32", ioenv))
 		{
 			if(!try_win32())
 				return;
 		}
-		if(!strcmp("select", ioenv))
-		{
-			if(!try_select())
-				return;
-		}
-		
+
 	}
 
 	if(!try_kqueue())
@@ -1955,13 +2071,13 @@ rb_init_netio(void)
 	abort();
 }
 
-void 
+void
 rb_setselect(rb_fde_t *F, unsigned int type, PF * handler, void *client_data)
 {
 	setselect_handler(F, type, handler, client_data);
 }
 
-int 
+int
 rb_select(unsigned long timeout)
 {
 	int ret = select_handler(timeout);
@@ -1969,7 +2085,7 @@ rb_select(unsigned long timeout)
 	return ret;
 }
 
-int 
+int
 rb_setup_fd(rb_fde_t *F)
 {
 	return setup_fd_handler(F);
@@ -1980,34 +2096,35 @@ rb_setup_fd(rb_fde_t *F)
 int
 rb_ignore_errno(int error)
 {
-	switch(error)
+	switch (error)
 	{
 #ifdef EINPROGRESS
-		case EINPROGRESS:
+	case EINPROGRESS:
 #endif
 #if defined EWOULDBLOCK
-		case EWOULDBLOCK:
+	case EWOULDBLOCK:
 #endif
 #if defined(EAGAIN) && (EWOULDBLOCK != EAGAIN)
-		case EAGAIN:
+	case EAGAIN:
 #endif
 #ifdef EINTR
-		case EINTR:
+	case EINTR:
 #endif
 #ifdef ERESTART
-		case ERESTART:
+	case ERESTART:
 #endif
 #ifdef ENOBUFS
-		case ENOBUFS:
-#endif		
-			return 1;
-		default:
-			break;	
-	}	
+	case ENOBUFS:
+#endif
+		return 1;
+	default:
+		break;
+	}
 	return 0;
 }
 
 
+#if defined(HAVE_SENDMSG) && !defined(WIN32)
 int
 rb_recv_fd_buf(rb_fde_t *F, void *data, size_t datasize, rb_fde_t **xF, int nfds)
 {
@@ -2023,7 +2140,7 @@ rb_recv_fd_buf(rb_fde_t *F, void *data, size_t datasize, rb_fde_t **xF, int nfds
 
 	iov[0].iov_base = data;
 	iov[0].iov_len = datasize;
-	
+
 	msg.msg_name = NULL;
 	msg.msg_namelen = 0;
 	msg.msg_iov = iov;
@@ -2036,7 +2153,8 @@ rb_recv_fd_buf(rb_fde_t *F, void *data, size_t datasize, rb_fde_t **xF, int nfds
 	if((len = recvmsg(rb_get_fd(F), &msg, 0)) <= 0)
 		return len;
 
-	if(msg.msg_controllen > 0 && msg.msg_control != NULL && (cmsg = CMSG_FIRSTHDR(&msg)) != NULL)
+	if(msg.msg_controllen > 0 && msg.msg_control != NULL
+	   && (cmsg = CMSG_FIRSTHDR(&msg)) != NULL)
 	{
 		rfds = (msg.msg_controllen - sizeof(struct cmsghdr)) / sizeof(int);
 
@@ -2065,14 +2183,15 @@ rb_recv_fd_buf(rb_fde_t *F, void *data, size_t datasize, rb_fde_t **xF, int nfds
 			}
 			xF[x] = rb_open(fd, stype, desc);
 		}
-	} else 
+	}
+	else
 		*xF = NULL;
-	return len;	
+	return len;
 }
 
 
 int
-rb_send_fd_buf(rb_fde_t *xF, rb_fde_t **F, int count, void *data, size_t datasize)
+rb_send_fd_buf(rb_fde_t *xF, rb_fde_t **F, int count, void *data, size_t datasize, pid_t pid)
 {
 	int n;
 	struct msghdr msg;
@@ -2085,8 +2204,10 @@ rb_send_fd_buf(rb_fde_t *xF, rb_fde_t **F, int count, void *data, size_t datasiz
 	if(datasize == 0)
 	{
 		iov[0].iov_base = &empty;
-		iov[0].iov_len = 1;	
-	} else {
+		iov[0].iov_len = 1;
+	}
+	else
+	{
 		iov[0].iov_base = data;
 		iov[0].iov_len = datasize;
 	}
@@ -2112,12 +2233,28 @@ rb_send_fd_buf(rb_fde_t *xF, rb_fde_t **F, int count, void *data, size_t datasiz
 		cmsg->cmsg_len = CMSG_LEN(sizeof(int) * count);
 
 		for(i = 0; i < count; i++)
-		{		
-			((int *)CMSG_DATA(cmsg))[i] = rb_get_fd(F[i]);	
+		{
+			((int *)CMSG_DATA(cmsg))[i] = rb_get_fd(F[i]);
 		}
 		msg.msg_controllen = cmsg->cmsg_len;
 	}
 	n = sendmsg(rb_get_fd(xF), &msg, MSG_NOSIGNAL);
 	return n;
 }
+#else
+#ifndef _WIN32
+int
+rb_recv_fd_buf(rb_fde_t *F, void *data, size_t datasize, rb_fde_t **xF, int nfds)
+{
+	errno = ENOSYS;
+	return -1;
+}
 
+int
+rb_send_fd_buf(rb_fde_t *xF, rb_fde_t **F, int count, void *data, size_t datasize, pid_t pid)
+{
+	errno = ENOSYS;
+	return -1;
+}
+#endif
+#endif

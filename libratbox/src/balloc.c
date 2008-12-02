@@ -28,7 +28,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: balloc.c 25861 2008-08-06 19:51:44Z androsyn $
+ *  $Id: balloc.c 26100 2008-09-20 01:27:19Z androsyn $
  */
 
 /* 
@@ -59,12 +59,14 @@
 #include <libratbox_config.h>
 #include <ratbox_lib.h>
 
+#ifndef NOBALLOC
 #ifdef HAVE_MMAP		/* We've got mmap() that is good */
 #include <sys/mman.h>
 /* HP-UX sucks */
 #ifdef MAP_ANONYMOUS
 #ifndef MAP_ANON
 #define MAP_ANON MAP_ANONYMOUS
+#endif
 #endif
 #endif
 #endif
@@ -93,7 +95,7 @@ struct rb_bh
 };
 
 #ifndef NOBALLOC
-static int newblock(rb_bh * bh);
+static int newblock(rb_bh *bh);
 static void rb_bh_gc_event(void *unused);
 #endif /* !NOBALLOC */
 static rb_dlink_list *heap_lists;
@@ -110,7 +112,7 @@ _rb_bh_fail(const char *reason, const char *file, int line)
 	rb_lib_log("rb_heap_blockheap failure: %s (%s:%d)", reason, file, line);
 	abort();
 }
-                
+
 #ifndef NOBALLOC
 /*
  * static inline void free_block(void *ptr, size_t size)
@@ -125,7 +127,7 @@ free_block(void *ptr, size_t size)
 #ifdef HAVE_MMAP
 	munmap(ptr, size);
 #else
-#ifdef WIN32
+#ifdef _WIN32
 	HeapFree(block_heap, 0, ptr);
 #else
 	free(ptr);
@@ -156,11 +158,11 @@ rb_init_bh(void)
 		offset_pad += __alignof__(long long);
 		offset_pad &= ~(__alignof__(long long) - 1);
 	}
-#endif	
-	
+#endif
+
 #ifndef NOBALLOC
-#ifdef WIN32
- 	block_heap = HeapCreate(HEAP_NO_SERIALIZE, 0, 0);	
+#ifdef _WIN32
+	block_heap = HeapCreate(HEAP_NO_SERIALIZE, 0, 0);
 #endif
 	rb_event_addish("rb_bh_gc_event", rb_bh_gc_event, NULL, 300);
 #endif /* !NOBALLOC */
@@ -190,15 +192,15 @@ get_block(size_t size)
 	close(zero_fd);
 #endif /* MAP_ANON */
 	if(ptr == MAP_FAILED)
-		ptr = NULL;		
+		ptr = NULL;
 #else
-#ifdef WIN32
+#ifdef _WIN32
 	ptr = HeapAlloc(block_heap, 0, size);
-#else 
+#else
 	ptr = malloc(size);
 #endif
 #endif
-	return(ptr);
+	return (ptr);
 }
 
 
@@ -224,7 +226,7 @@ rb_bh_gc_event(void *unused)
 /* ************************************************************************ */
 
 static int
-newblock(rb_bh * bh)
+newblock(rb_bh *bh)
 {
 	rb_heap_block *b;
 	unsigned long i;
@@ -242,14 +244,14 @@ newblock(rb_bh * bh)
 	}
 	offset = (uintptr_t)b->elems;
 	/* Setup our blocks now */
-	for (i = 0; i < bh->elemsPerBlock; i++, offset += bh->elemSize)
+	for(i = 0; i < bh->elemsPerBlock; i++, offset += bh->elemSize)
 	{
 		*((void **)offset) = b;
 		node = (void *)(offset + offset_pad);
 		rb_dlinkAdd((void *)offset, node, &bh->free_list);
 	}
 	rb_dlinkAdd(b, &b->node, &bh->block_list);
-	b->free_count = bh->elemsPerBlock;	
+	b->free_count = bh->elemsPerBlock;
 	return (0);
 }
 #endif /* !NOBALLOC */
@@ -281,10 +283,10 @@ rb_bh_create(size_t elemsize, int elemsperblock, const char *desc)
 	{
 		rb_bh_fail("Attempting to rb_bh_create idiotic sizes");
 	}
-	
+
 	if(elemsize < sizeof(rb_dlink_node))
 		rb_bh_fail("Attempt to rb_bh_create smaller than sizeof(rb_dlink_node)");
-	
+
 	/* Allocate our new rb_bh */
 	bh = rb_malloc(sizeof(rb_bh));
 #ifndef NOBALLOC
@@ -334,13 +336,13 @@ rb_bh_create(size_t elemsize, int elemsperblock, const char *desc)
 /* ************************************************************************ */
 
 void *
-rb_bh_alloc(rb_bh * bh)
+rb_bh_alloc(rb_bh *bh)
 {
 #ifndef NOBALLOC
 	rb_dlink_node *new_node;
-	rb_heap_block *block;
+	rb_heap_block **block;
 	void *ptr;
-#endif	
+#endif
 	lrb_assert(bh != NULL);
 	if(rb_unlikely(bh == NULL))
 	{
@@ -348,7 +350,7 @@ rb_bh_alloc(rb_bh * bh)
 	}
 
 #ifdef NOBALLOC
-	return(rb_malloc(bh->elemSize));
+	return (rb_malloc(bh->elemSize));
 #else
 	if(bh->free_list.head == NULL)
 	{
@@ -368,11 +370,12 @@ rb_bh_alloc(rb_bh * bh)
 	}
 
 	new_node = bh->free_list.head;
-	block = new_node->data;
-	ptr = new_node->data + offset_pad;
+	block = (rb_heap_block **) new_node->data;
+	ptr = (void *)((uintptr_t)new_node->data + (uintptr_t)offset_pad);
 	rb_dlinkDelete(new_node, &bh->free_list);
+	(*block)->free_count--;
 	memset(ptr, 0, bh->elemSize - offset_pad);
-	return(ptr);	
+	return (ptr);
 #endif
 }
 
@@ -389,7 +392,7 @@ rb_bh_alloc(rb_bh * bh)
 /*    0 if successful, 1 if element not contained within rb_bh.           */
 /* ************************************************************************ */
 int
-rb_bh_free(rb_bh * bh, void *ptr)
+rb_bh_free(rb_bh *bh, void *ptr)
 {
 #ifndef NOBALLOC
 	rb_heap_block *block;
@@ -413,14 +416,17 @@ rb_bh_free(rb_bh * bh, void *ptr)
 #ifdef NOBALLOC
 	rb_free(ptr);
 #else
-	data = (void *)(ptr - offset_pad);
-	block = *(rb_heap_block **)data;
+	data = (void *)((uintptr_t)ptr - (uintptr_t)offset_pad);
+	block = *(rb_heap_block **) data;
 	/* XXX */
-	if(rb_unlikely(!((uintptr_t)ptr >= (uintptr_t)block->elems && (uintptr_t)ptr < (uintptr_t)block->elems + (uintptr_t)block->alloc_size)))
+	if(rb_unlikely
+	   (!((uintptr_t)ptr >= (uintptr_t)block->elems
+	      && (uintptr_t)ptr < (uintptr_t)block->elems + (uintptr_t)block->alloc_size)))
 	{
 		rb_bh_fail("rb_bh_free() bogus pointer");
 	}
 	block->free_count++;
+
 	rb_dlinkAdd(data, (rb_dlink_node *)ptr, &bh->free_list);
 #endif /* !NOBALLOC */
 	return (0);
@@ -438,7 +444,7 @@ rb_bh_free(rb_bh * bh, void *ptr)
 /*   0 if successful, 1 if bh == NULL                                       */
 /* ************************************************************************ */
 int
-rb_bh_destroy(rb_bh * bh)
+rb_bh_destroy(rb_bh *bh)
 {
 #ifndef NOBALLOC
 	rb_dlink_node *ptr, *next;
@@ -455,7 +461,7 @@ rb_bh_destroy(rb_bh * bh)
 		rb_free(b);
 	}
 #endif /* !NOBALLOC */
-	
+
 	rb_dlinkDelete(&bh->hlist, heap_lists);
 	rb_free(bh->desc);
 	rb_free(bh);
@@ -464,8 +470,9 @@ rb_bh_destroy(rb_bh * bh)
 }
 
 void
-rb_bh_usage(rb_bh * bh, size_t * bused, size_t * bfree, size_t * bmemusage, const char **desc)
+rb_bh_usage(rb_bh *bh, size_t *bused, size_t *bfree, size_t *bmemusage, const char **desc)
 {
+#ifndef NOBALLOC
 	size_t used, freem, memusage;
 
 	if(bh == NULL)
@@ -484,9 +491,17 @@ rb_bh_usage(rb_bh * bh, size_t * bused, size_t * bfree, size_t * bmemusage, cons
 		*bmemusage = memusage;
 	if(desc != NULL)
 		*desc = bh->desc;
+#else
+	static char *noballoc = "no blockheap";
+	*bused = 0;
+	*bfree = 0;
+	*bmemusage = 0;
+	*desc = noballoc;
+#endif
 }
 
-void rb_bh_usage_all(rb_bh_usage_cb *cb, void *data)
+void
+rb_bh_usage_all(rb_bh_usage_cb *cb, void *data)
 {
 	rb_dlink_node *ptr;
 	rb_bh *bh;
@@ -499,14 +514,14 @@ void rb_bh_usage_all(rb_bh_usage_cb *cb, void *data)
 
 	RB_DLINK_FOREACH(ptr, heap_lists->head)
 	{
-		bh = (rb_bh *)ptr->data;			
+		bh = (rb_bh *)ptr->data;
 		freem = rb_dlink_list_length(&bh->free_list);
 		used = (rb_dlink_list_length(&bh->block_list) * bh->elemsPerBlock) - freem;
 		memusage = used * bh->elemSize;
 		heapalloc = (freem + used) * bh->elemSize;
 		if(bh->desc != NULL)
 			desc = bh->desc;
-		cb(used, freem, memusage, heapalloc, desc, data);			
+		cb(used, freem, memusage, heapalloc, desc, data);
 	}
 	return;
 }
@@ -517,7 +532,7 @@ rb_bh_total_usage(size_t *total_alloc, size_t *total_used)
 	rb_dlink_node *ptr;
 	size_t total_memory = 0, used_memory = 0, used, freem;
 	rb_bh *bh;
-	
+
 	RB_DLINK_FOREACH(ptr, heap_lists->head)
 	{
 		bh = (rb_bh *)ptr->data;
@@ -526,7 +541,7 @@ rb_bh_total_usage(size_t *total_alloc, size_t *total_used)
 		used_memory += used * bh->elemSize;
 		total_memory += (freem + used) * bh->elemSize;
 	}
-	
+
 	if(total_alloc != NULL)
 		*total_alloc = total_memory;
 	if(total_used != NULL)
@@ -535,20 +550,21 @@ rb_bh_total_usage(size_t *total_alloc, size_t *total_used)
 
 #ifndef NOBALLOC
 int
-rb_bh_gc(rb_bh * bh)
+rb_bh_gc(rb_bh *bh)
 {
 	rb_heap_block *b;
 	rb_dlink_node *ptr, *next;
 	unsigned long i;
 	uintptr_t offset;
-	
+
 	if(bh == NULL)
 	{
 		/* somebody is smoking some craq..(probably lee, but don't tell him that) */
 		return (1);
 	}
 
-	if((rb_dlink_list_length(&bh->free_list) < bh->elemsPerBlock) || rb_dlink_list_length(&bh->block_list) == 1)
+	if((rb_dlink_list_length(&bh->free_list) < bh->elemsPerBlock)
+	   || rb_dlink_list_length(&bh->block_list) == 1)
 	{
 		/* There couldn't possibly be an entire free block.  Return. */
 		return (0);
@@ -559,21 +575,22 @@ rb_bh_gc(rb_bh * bh)
 		b = ptr->data;
 		if(rb_dlink_list_length(&bh->block_list) == 1)
 			return (0);
-		
+
 		if(b->free_count == bh->elemsPerBlock)
 		{
 			/* i'm seriously going to hell for this.. */
 
 			offset = (uintptr_t)b->elems;
-			for (i = 0; i < bh->elemsPerBlock; i++, offset += (uintptr_t)bh->elemSize)
+			for(i = 0; i < bh->elemsPerBlock; i++, offset += (uintptr_t)bh->elemSize)
 			{
-				rb_dlinkDelete(((rb_dlink_node *)offset), &bh->free_list);
+				rb_dlinkDelete((rb_dlink_node *)(offset + offset_pad),
+					       &bh->free_list);
 			}
 			rb_dlinkDelete(&b->node, &bh->block_list);
 			free_block(b->elems, b->alloc_size);
 			rb_free(b);
 		}
-		
+
 	}
 	return (0);
 }

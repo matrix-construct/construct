@@ -39,7 +39,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: event.c 25147 2008-03-28 17:15:47Z androsyn $
+ *  $Id: event.c 26092 2008-09-19 15:13:52Z androsyn $
  */
 
 #include <libratbox_config.h>
@@ -47,24 +47,11 @@
 #include <commio-int.h>
 #include <event-int.h>
 
-static const char *last_event_ran = NULL;
+#define EV_NAME_LEN 33
+static char last_event_ran[EV_NAME_LEN];
 static rb_dlink_list event_list;
 
 static time_t event_time_min = -1;
-/* The list of event processes */
-
-#if 0
-struct ev_entry
-{
-	rb_dlink_node node;
-	EVH *func;
-	void *arg;
-	const char *name;
-	time_t frequency;
-	time_t when;
-	void *data;
-};
-#endif
 
 /*
  * struct ev_entry * 
@@ -104,7 +91,7 @@ rb_event_add(const char *name, EVH * func, void *arg, time_t when)
 	struct ev_entry *ev;
 	ev = rb_malloc(sizeof(struct ev_entry));
 	ev->func = func;
-	ev->name = name;
+	ev->name = rb_strndup(name, EV_NAME_LEN);
 	ev->arg = arg;
 	ev->when = rb_current_time() + when;
 	ev->frequency = when;
@@ -117,13 +104,14 @@ rb_event_add(const char *name, EVH * func, void *arg, time_t when)
 	rb_io_sched_event(ev, when);
 	return ev;
 }
+
 struct ev_entry *
 rb_event_addonce(const char *name, EVH * func, void *arg, time_t when)
 {
 	struct ev_entry *ev;
 	ev = rb_malloc(sizeof(struct ev_entry));
 	ev->func = func;
-	ev->name = name;
+	ev->name = rb_strndup(name, EV_NAME_LEN);
 	ev->arg = arg;
 	ev->when = rb_current_time() + when;
 	ev->frequency = 0;
@@ -151,6 +139,7 @@ rb_event_delete(struct ev_entry *ev)
 
 	rb_dlinkDelete(&ev->node, &event_list);
 	rb_io_unsched_event(ev);
+	rb_free(ev->name);
 	rb_free(ev);
 }
 
@@ -162,7 +151,7 @@ rb_event_delete(struct ev_entry *ev)
  * Side Effects: Removes the event from the event list
  */
 void
-rb_event_find_delete(EVH *func, void *arg)
+rb_event_find_delete(EVH * func, void *arg)
 {
 	rb_event_delete(rb_event_find(func, arg));
 }
@@ -196,7 +185,7 @@ rb_event_addish(const char *name, EVH * func, void *arg, time_t delta_ish)
 void
 rb_run_event(struct ev_entry *ev)
 {
-	last_event_ran = ev->name;
+	rb_strlcpy(last_event_ran, ev->name, sizeof(last_event_ran));
 	ev->func(ev->arg);
 	if(!ev->frequency)
 	{
@@ -222,7 +211,7 @@ rb_event_run(void)
 {
 	rb_dlink_node *ptr, *next;
 	struct ev_entry *ev;
-	
+
 	if(rb_io_supports_event())
 		return;
 
@@ -232,11 +221,11 @@ rb_event_run(void)
 		ev = ptr->data;
 		if(ev->when <= rb_current_time())
 		{
-			last_event_ran = ev->name;
+			rb_strlcpy(last_event_ran, ev->name, sizeof(last_event_ran));
 			ev->func(ev->arg);
 
 			/* event is scheduled more than once */
-			if(ev->frequency) 
+			if(ev->frequency)
 			{
 				ev->when = rb_current_time() + ev->frequency;
 				if((ev->when < event_time_min) || (event_time_min == -1))
@@ -247,7 +236,9 @@ rb_event_run(void)
 				rb_dlinkDelete(&ev->node, &event_list);
 				rb_free(ev);
 			}
-		} else {
+		}
+		else
+		{
 			if((ev->when < event_time_min) || (event_time_min == -1))
 				event_time_min = ev->when;
 		}
@@ -262,14 +253,15 @@ rb_event_io_register_all(void)
 	int when;
 	if(!rb_io_supports_event())
 		return;
-	
+
 	RB_DLINK_FOREACH(ptr, event_list.head)
-	{	
+	{
 		ev = ptr->data;
 		when = ev->when - rb_current_time();
 		rb_io_sched_event(ev, when);
 	}
 }
+
 /*
  * void rb_event_init(void)
  *
@@ -280,7 +272,7 @@ rb_event_io_register_all(void)
 void
 rb_event_init(void)
 {
-	last_event_ran = NULL;
+	rb_strlcpy(last_event_ran, "NONE", sizeof(last_event_ran));
 }
 
 void
@@ -291,11 +283,10 @@ rb_dump_events(void (*func) (char *, void *), void *ptr)
 	rb_dlink_node *dptr;
 	struct ev_entry *ev;
 	len = sizeof(buf);
-	if(last_event_ran)
-	{
-		rb_snprintf(buf, len, "Last event to run: %s", last_event_ran);
-		func(buf, ptr);
-	}
+
+	rb_snprintf(buf, len, "Last event to run: %s", last_event_ran);
+	func(buf, ptr);
+
 	rb_strlcpy(buf, "Operation                    Next Execution", len);
 	func(buf, ptr);
 
@@ -303,7 +294,7 @@ rb_dump_events(void (*func) (char *, void *), void *ptr)
 	{
 		ev = dptr->data;
 		rb_snprintf(buf, len, "%-28s %-4ld seconds", ev->name,
-			    ev->when - (long) rb_current_time());
+			    ev->when - (long)rb_current_time());
 		func(buf, ptr);
 	}
 }

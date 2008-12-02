@@ -111,3 +111,42 @@ case $rb__cv_timer_create_works in
 esac
 ])
 
+
+
+AC_DEFUN([RB_CHECK_TIMERFD_CREATE],
+  [AC_CACHE_CHECK([for a working timerfd_create(CLOCK_REALTIME)], 
+    [rb__cv_timerfd_create_works],
+    [AC_TRY_RUN([
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
+#ifdef HAVE_SIGNAL_H
+#include <signal.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_SYS_TIMERFD_H
+#include <sys/timerfd.h>
+#endif
+int main(int argc, char *argv[])
+{
+#if defined(HAVE_TIMERFD_CREATE) && defined(HAVE_SYS_TIMERFD_H)
+    if (timerfd_create(CLOCK_REALTIME, 0) < 0) {
+       return 1;
+    }
+#else
+    return 1;
+#endif
+    return 0;
+}
+     ],
+     [rb__cv_timerfd_create_works=yes],
+     [rb__cv_timerfd_create_works=no])
+  ])
+case $rb__cv_timerfd_create_works in
+    yes) AC_DEFINE([USE_TIMERFD_CREATE], 1, 
+                   [Define to 1 if we can use timerfd_create(CLOCK_REALTIME,...)]);;
+esac
+])
+

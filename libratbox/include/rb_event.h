@@ -21,11 +21,11 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: rb_event.h 25151 2008-03-28 17:19:12Z androsyn $
+ *  $Id: rb_event.h 26092 2008-09-19 15:13:52Z androsyn $
  */
 
 #ifndef RB_LIB_H
-# error "Do not use event.h directly"                                   
+# error "Do not use event.h directly"
 #endif
 
 #ifndef INCLUDED_event_h
@@ -43,7 +43,7 @@ void rb_event_delete(struct ev_entry *);
 void rb_event_find_delete(EVH * func, void *);
 void rb_event_update(struct ev_entry *, time_t freq);
 void rb_set_back_events(time_t);
-void rb_dump_events(void (*func)(char *, void *), void *ptr);
+void rb_dump_events(void (*func) (char *, void *), void *ptr);
 void rb_run_event(struct ev_entry *);
 time_t rb_event_next(void);
 

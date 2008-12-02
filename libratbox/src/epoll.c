@@ -23,7 +23,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: epoll.c 25675 2008-07-06 04:13:05Z androsyn $
+ *  $Id: epoll.c 26092 2008-09-19 15:13:52Z androsyn $
  */
 #define _GNU_SOURCE 1
 
@@ -31,7 +31,6 @@
 #include <ratbox_lib.h>
 #include <commio-int.h>
 #include <event-int.h>
-
 #if defined(HAVE_EPOLL_CTL) && (HAVE_SYS_EPOLL_H)
 #define USING_EPOLL
 #include <fcntl.h>
@@ -44,6 +43,10 @@
 #define EPOLL_SCHED_EVENT 1
 #endif
 
+#if defined(USE_TIMERFD_CREATE)
+#include <sys/timerfd.h>
+#endif
+
 #define RTSIGNAL SIGRTMIN
 struct epoll_info
 {
@@ -54,8 +57,7 @@ struct epoll_info
 
 static struct epoll_info *ep_info;
 static int can_do_event;
-
-//static void setup_signalfd(void);
+static int can_do_timerfd;
 
 /*
  * rb_init_netio
@@ -66,7 +68,7 @@ static int can_do_event;
 int
 rb_init_netio_epoll(void)
 {
-	can_do_event = 0; /* shut up gcc */
+	can_do_event = 0;	/* shut up gcc */
 	ep_info = rb_malloc(sizeof(struct epoll_info));
 	ep_info->pfd_size = getdtablesize();
 	ep_info->ep = epoll_create(ep_info->pfd_size);
@@ -81,7 +83,7 @@ rb_init_netio_epoll(void)
 }
 
 int
-rb_setup_fd_epoll(rb_fde_t * F)
+rb_setup_fd_epoll(rb_fde_t *F)
 {
 	return 0;
 }
@@ -94,7 +96,7 @@ rb_setup_fd_epoll(rb_fde_t * F)
  * and deregister interest in a pending IO state for a given FD.
  */
 void
-rb_setselect_epoll(rb_fde_t * F, unsigned int type, PF * handler, void *client_data)
+rb_setselect_epoll(rb_fde_t *F, unsigned int type, PF * handler, void *client_data)
 {
 	struct epoll_event ep_event;
 	int old_flags = F->pflags;
@@ -180,7 +182,7 @@ rb_select_epoll(long delay)
 	if(num <= 0)
 		return RB_OK;
 
-	for (i = 0; i < num; i++)
+	for(i = 0; i < num; i++)
 	{
 		PF *hdl;
 		rb_fde_t *F = ep_info->pfd[i].data.ptr;
@@ -244,7 +246,7 @@ rb_select_epoll(long delay)
 	return RB_OK;
 }
 
-#ifdef EPOLL_SCHED_EVENT 
+#ifdef EPOLL_SCHED_EVENT
 int
 rb_epoll_supports_event(void)
 {
@@ -253,12 +255,22 @@ rb_epoll_supports_event(void)
 	struct sigevent ev;
 	int fd;
 	sigset_t set;
-	
+
 	if(can_do_event == 1)
 		return 1;
 	if(can_do_event == -1)
 		return 0;
-		
+
+#ifdef USE_TIMERFD_CREATE
+	if((fd = timerfd_create(CLOCK_REALTIME, 0)) >= 0)
+	{
+		close(fd);
+		can_do_event = 1;
+		can_do_timerfd = 1;
+		return 0;
+	}
+#endif
+
 	ev.sigev_signo = SIGVTALRM;
 	ev.sigev_notify = SIGEV_SIGNAL;
 	if(timer_create(CLOCK_REALTIME, &ev, &timer) != 0)
@@ -269,7 +281,7 @@ rb_epoll_supports_event(void)
 	timer_delete(timer);
 	sigemptyset(&set);
 	fd = signalfd(-1, &set, 0);
-	if(fd < 0)  
+	if(fd < 0)
 	{
 		can_do_event = -1;
 		return 0;
@@ -281,36 +293,37 @@ rb_epoll_supports_event(void)
 
 
 /* bleh..work around a glibc header bug on 32bit systems */
-struct our_signalfd_siginfo {
-        uint32_t signo;
-        int32_t err;
-        int32_t code;
-        uint32_t pid;
-        uint32_t uid;
-        int32_t fd;
-        uint32_t tid;
-        uint32_t band;
-        uint32_t overrun;
-        uint32_t trapno;
-        int32_t status;
-        int32_t svint;
-        uint64_t svptr;
-        uint64_t utime;
-        uint64_t stime;
-        uint64_t addr;
-        uint8_t pad[48];
+struct our_signalfd_siginfo
+{
+	uint32_t signo;
+	int32_t err;
+	int32_t code;
+	uint32_t pid;
+	uint32_t uid;
+	int32_t fd;
+	uint32_t tid;
+	uint32_t band;
+	uint32_t overrun;
+	uint32_t trapno;
+	int32_t status;
+	int32_t svint;
+	uint64_t svptr;
+	uint64_t utime;
+	uint64_t stime;
+	uint64_t addr;
+	uint8_t pad[48];
 };
 
 
 #define SIGFDIOV_COUNT 16
-static void 
+static void
 signalfd_handler(rb_fde_t *F, void *data)
 {
 	static struct our_signalfd_siginfo fdsig[SIGFDIOV_COUNT];
 	static struct iovec iov[SIGFDIOV_COUNT];
 	struct ev_entry *ev;
 	int ret, x;
-	
+
 	for(x = 0; x < SIGFDIOV_COUNT; x++)
 	{
 		iov[x].iov_base = &fdsig[x];
@@ -326,15 +339,15 @@ signalfd_handler(rb_fde_t *F, void *data)
 			rb_epoll_init_event();
 			return;
 		}
-		
-		if(ret < 0) 
+
+		if(ret < 0)
 		{
 			rb_setselect(F, RB_SELECT_READ, signalfd_handler, NULL);
 			return;
 		}
-		for(x = 0; x < ret / (int)sizeof(struct signalfd_siginfo); x++)
+		for(x = 0; x < ret / (int)sizeof(struct our_signalfd_siginfo); x++)
 		{
-			ev = (struct ev_entry *)fdsig[x].svptr;
+			ev = (struct ev_entry *)((uintptr_t)fdsig[x].svptr);
 			if(ev == NULL)
 				continue;
 			rb_run_event(ev);
@@ -345,26 +358,32 @@ signalfd_handler(rb_fde_t *F, void *data)
 void
 rb_epoll_init_event(void)
 {
+
 	sigset_t ss;
 	rb_fde_t *F;
 	int sfd;
-	sigemptyset(&ss);
-	sigaddset(&ss, RTSIGNAL);
-	sigprocmask(SIG_BLOCK, &ss, 0);
-	sigemptyset(&ss);
-	sigaddset(&ss, RTSIGNAL);
-	sfd = signalfd(-1, &ss, 0);
-	if(sfd == -1) {
-		can_do_event = -1;
-		return;
+	rb_epoll_supports_event();
+	if(!can_do_timerfd)
+	{
+		sigemptyset(&ss);
+		sigaddset(&ss, RTSIGNAL);
+		sigprocmask(SIG_BLOCK, &ss, 0);
+		sigemptyset(&ss);
+		sigaddset(&ss, RTSIGNAL);
+		sfd = signalfd(-1, &ss, 0);
+		if(sfd == -1)
+		{
+			can_do_event = -1;
+			return;
+		}
+		F = rb_open(sfd, RB_FD_UNKNOWN, "signalfd");
+		rb_set_nb(F);
+		signalfd_handler(F, NULL);
 	}
-	F = rb_open(sfd, RB_FD_UNKNOWN, "signalfd");
-	rb_set_nb(F);
-	signalfd_handler(F, NULL);
 }
 
-int
-rb_epoll_sched_event(struct ev_entry *event, int when)
+static int
+rb_epoll_sched_event_signalfd(struct ev_entry *event, int when)
 {
 	timer_t *id;
 	struct sigevent ev;
@@ -377,7 +396,7 @@ rb_epoll_sched_event(struct ev_entry *event, int when)
 	ev.sigev_signo = RTSIGNAL;
 	ev.sigev_value.sival_ptr = event;
 
-	if (timer_create(CLOCK_REALTIME, &ev, id) < 0) 
+	if(timer_create(CLOCK_REALTIME, &ev, id) < 0)
 	{
 		rb_lib_log("timer_create: %s\n", strerror(errno));
 		return 0;
@@ -387,8 +406,8 @@ rb_epoll_sched_event(struct ev_entry *event, int when)
 	ts.it_value.tv_nsec = 0;
 	if(event->frequency != 0)
 		ts.it_interval = ts.it_value;
-	 	
-	if(timer_settime(*id, 0, &ts, NULL) < 0) 
+
+	if(timer_settime(*id, 0, &ts, NULL) < 0)
 	{
 		rb_lib_log("timer_settime: %s\n", strerror(errno));
 		return 0;
@@ -396,10 +415,94 @@ rb_epoll_sched_event(struct ev_entry *event, int when)
 	return 1;
 }
 
+#ifdef USE_TIMERFD_CREATE
+static void
+rb_read_timerfd(rb_fde_t *F, void *data)
+{
+	struct ev_entry *event = (struct ev_entry *)data;
+	int retlen;
+	uint64_t count;
+
+	if(event == NULL)
+	{
+		rb_close(F);
+		return;
+	}
+
+	retlen = rb_read(F, &count, sizeof(count));
+	if(retlen == 0 || (retlen < 0 && !rb_ignore_errno(errno)))
+	{
+		rb_close(F);
+		rb_lib_log("rb_read_timerfd: timerfd[%s] closed on error: %s", event->name,
+			   strerror(errno));
+		return;
+	}
+	rb_setselect(F, RB_SELECT_READ, rb_read_timerfd, event);
+	rb_run_event(event);
+}
+
+
+static int
+rb_epoll_sched_event_timerfd(struct ev_entry *event, int when)
+{
+	struct itimerspec ts;
+	static char buf[FD_DESC_SZ + 8];
+	int fd;
+	rb_fde_t *F;
+
+	if((fd = timerfd_create(CLOCK_REALTIME, 0)) < 0)
+	{
+		rb_lib_log("timerfd_create: %s\n", strerror(errno));
+		return 0;
+	}
+
+	memset(&ts, 0, sizeof(ts));
+	ts.it_value.tv_sec = when;
+	ts.it_value.tv_nsec = 0;
+	if(event->frequency != 0)
+		ts.it_interval = ts.it_value;
+
+	if(timerfd_settime(fd, 0, &ts, NULL) < 0)
+	{
+		rb_lib_log("timerfd_settime: %s\n", strerror(errno));
+		close(fd);
+		return 0;
+	}
+	rb_snprintf(buf, sizeof(buf), "timerfd: %s", event->name);
+	F = rb_open(fd, RB_FD_UNKNOWN, buf);
+	rb_set_nb(F);
+	event->comm_ptr = F;
+	rb_setselect(F, RB_SELECT_READ, rb_read_timerfd, event);
+	return 1;
+}
+#endif
+
+
+
+int
+rb_epoll_sched_event(struct ev_entry *event, int when)
+{
+#ifdef USE_TIMERFD_CREATE
+	if(can_do_timerfd)
+	{
+		return rb_epoll_sched_event_timerfd(event, when);
+	}
+#endif
+	return rb_epoll_sched_event_signalfd(event, when);
+}
+
 void
 rb_epoll_unsched_event(struct ev_entry *event)
 {
-	timer_delete(*((timer_t *)event->comm_ptr));
+#ifdef USE_TIMERFD_CREATE
+	if(can_do_timerfd)
+	{
+		rb_close((rb_fde_t *)event->comm_ptr);
+		event->comm_ptr = NULL;
+		return;
+	}
+#endif
+	timer_delete(*((timer_t *) event->comm_ptr));
 	rb_free(event->comm_ptr);
 	event->comm_ptr = NULL;
 }
@@ -413,7 +516,7 @@ rb_init_netio_epoll(void)
 }
 
 void
-rb_setselect_epoll(rb_fde_t * F, unsigned int type, PF * handler, void *client_data)
+rb_setselect_epoll(rb_fde_t *F, unsigned int type, PF * handler, void *client_data)
 {
 	errno = ENOSYS;
 	return;
@@ -427,7 +530,7 @@ rb_select_epoll(long delay)
 }
 
 int
-rb_setup_fd_epoll(rb_fde_t * F)
+rb_setup_fd_epoll(rb_fde_t *F)
 {
 	errno = ENOSYS;
 	return -1;
@@ -437,7 +540,8 @@ rb_setup_fd_epoll(rb_fde_t * F)
 #endif
 
 #if !defined(USING_EPOLL) || !defined(EPOLL_SCHED_EVENT)
-void rb_epoll_init_event(void)
+void
+rb_epoll_init_event(void)
 {
 	return;
 }

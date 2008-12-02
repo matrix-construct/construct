@@ -21,18 +21,18 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: rb_commio.h 25693 2008-07-10 18:27:23Z androsyn $
+ *  $Id: rb_commio.h 26092 2008-09-19 15:13:52Z androsyn $
  */
- 
+
 #ifndef RB_LIB_H
-# error "Do not use commio.h directly"                                   
+# error "Do not use commio.h directly"
 #endif
 
 #ifndef INCLUDED_commio_h
 #define INCLUDED_commio_h
 
 
-struct sockaddr; 
+struct sockaddr;
 struct _fde;
 typedef struct _fde rb_fde_t;
 
@@ -64,7 +64,7 @@ enum
 #define RB_FD_NONE		0x01
 #define RB_FD_FILE		0x02
 #define RB_FD_SOCKET		0x04
-#ifndef WIN32
+#ifndef _WIN32
 #define RB_FD_PIPE		0x08
 #else
 #define RB_FD_PIPE		RB_FD_SOCKET
@@ -88,7 +88,7 @@ struct rb_iovec
 
 void rb_fdlist_init(int closeall, int maxfds, size_t heapsize);
 
-rb_fde_t * rb_open(int, uint8_t, const char *);
+rb_fde_t *rb_open(int, uint8_t, const char *);
 void rb_close(rb_fde_t *);
 void rb_dump_fd(DUMPCB *, void *xdata);
 void rb_note(rb_fde_t *, const char *);
@@ -107,17 +107,16 @@ int rb_get_sockerr(rb_fde_t *);
 
 void rb_settimeout(rb_fde_t *, time_t, PF *, void *);
 void rb_checktimeouts(void *);
-void rb_connect_tcp(rb_fde_t *, struct sockaddr *,
-			     struct sockaddr *, int, CNCB *, void *, int);
-void rb_connect_tcp_ssl(rb_fde_t *, struct sockaddr *,
-			     struct sockaddr *, int, CNCB *, void *, int);
+void rb_connect_tcp(rb_fde_t *, struct sockaddr *, struct sockaddr *, int, CNCB *, void *, int);
+void rb_connect_tcp_ssl(rb_fde_t *, struct sockaddr *, struct sockaddr *, int, CNCB *, void *, int);
 int rb_connect_sockaddr(rb_fde_t *, struct sockaddr *addr, int len);
 
 const char *rb_errstr(int status);
 rb_fde_t *rb_socket(int family, int sock_type, int proto, const char *note);
-int rb_socketpair(int family, int sock_type, int proto, rb_fde_t **F1, rb_fde_t **F2, const char *note);
+int rb_socketpair(int family, int sock_type, int proto, rb_fde_t **F1, rb_fde_t **F2,
+		  const char *note);
 
-void rb_accept_tcp(rb_fde_t *, ACPRE *precb, ACCB *callback, void *data);
+void rb_accept_tcp(rb_fde_t *, ACPRE * precb, ACCB * callback, void *data);
 ssize_t rb_write(rb_fde_t *, const void *buf, int count);
 ssize_t rb_writev(rb_fde_t *, struct rb_iovec *vector, int count);
 
@@ -145,7 +144,7 @@ const char *rb_get_ssl_strerror(rb_fde_t *F);
 
 rb_fde_t *rb_get_fde(int fd);
 
-int rb_send_fd_buf(rb_fde_t *xF, rb_fde_t **F, int count, void *data, size_t datasize);
+int rb_send_fd_buf(rb_fde_t *xF, rb_fde_t **F, int count, void *data, size_t datasize, pid_t pid);
 int rb_recv_fd_buf(rb_fde_t *F, void *data, size_t datasize, rb_fde_t **xF, int count);
 
 void rb_set_type(rb_fde_t *F, uint8_t type);
@@ -153,10 +152,11 @@ uint8_t rb_get_type(rb_fde_t *F);
 
 const char *rb_get_iotype(void);
 
-typedef enum {
+typedef enum
+{
 	RB_PRNG_EGD,
 	RB_PRNG_FILE,
-#ifdef WIN32
+#ifdef _WIN32
 	RB_PRNGWIN32,
 #endif
 	RB_PRNG_DEFAULT,
@@ -165,11 +165,15 @@ typedef enum {
 int rb_init_prng(const char *path, prng_seed_t seed_type);
 int rb_get_random(void *buf, size_t len);
 int rb_get_pseudo_random(void *buf, size_t len);
-void  rb_ssl_start_accepted(rb_fde_t *new_F, ACCB *cb, void *data, int timeout);
-void rb_ssl_start_connected(rb_fde_t *F, CNCB *callback, void *data, int timeout);
+void rb_ssl_start_accepted(rb_fde_t *new_F, ACCB * cb, void *data, int timeout);
+void rb_ssl_start_connected(rb_fde_t *F, CNCB * callback, void *data, int timeout);
 int rb_supports_ssl(void);
 
 unsigned int rb_ssl_handshake_count(rb_fde_t *F);
 void rb_ssl_clear_handshake_count(rb_fde_t *F);
-         
+
+
+int rb_pass_fd_to_process(rb_fde_t *, pid_t, rb_fde_t *);
+rb_fde_t *rb_recv_fd(rb_fde_t *);
+
 #endif /* INCLUDED_commio_h */

@@ -32,7 +32,7 @@
 #define FD_DESC_SZ 128		/* hostlen + comment */
 
 
-#ifdef WIN32
+#ifdef _WIN32
 #define rb_get_errno() do { errno = WSAGetLastError(); WSASetLastError(errno); } while(0)
 #else
 #define rb_get_errno()
@@ -41,31 +41,31 @@
 #define rb_hash_fd(x) ((x ^ (x >> RB_FD_HASH_BITS) ^ (x >> (RB_FD_HASH_BITS * 2))) & RB_FD_HASH_MASK)
 
 #ifdef HAVE_WRITEV
-	#ifndef UIO_MAXIOV   
-		# if defined(__FreeBSD__) || defined(__APPLE__) || defined(__NetBSD__)
+#ifndef UIO_MAXIOV
+# if defined(__FreeBSD__) || defined(__APPLE__) || defined(__NetBSD__)
 			/* FreeBSD 4.7 defines it in sys/uio.h only if _KERNEL is specified */
-			#  define RB_UIO_MAXIOV 1024
-		# elif defined(__sgi)
+#  define RB_UIO_MAXIOV 1024
+# elif defined(__sgi)
 			/* IRIX 6.5 has sysconf(_SC_IOV_MAX) which might return 512 or bigger */
-			#  define RB_UIO_MAXIOV 512
-		# elif defined(__sun)
+#  define RB_UIO_MAXIOV 512
+# elif defined(__sun)
 			/* Solaris (and SunOS?) defines IOV_MAX instead */
-			#  ifndef IOV_MAX  
-				#   define RB_UIO_MAXIOV 16
-			#  else
-				#   define RB_UIO_MAXIOV IOV_MAX
-			#  endif
+#  ifndef IOV_MAX
+#   define RB_UIO_MAXIOV 16
+#  else
+#   define RB_UIO_MAXIOV IOV_MAX
+#  endif
 
-		# elif defined(IOV_MAX)
-			#  define RB_UIO_MAXIOV IOV_MAX
-		# else
-			#  define RB_UIO_MAXIOV 16
-		# endif
-	#else
-		#define RB_UIO_MAXIOV UIO_MAXIOV
-	#endif
+# elif defined(IOV_MAX)
+#  define RB_UIO_MAXIOV IOV_MAX
+# else
+#  define RB_UIO_MAXIOV 16
+# endif
 #else
-	#define RB_UIO_MAXIOV 16
+#define RB_UIO_MAXIOV UIO_MAXIOV
+#endif
+#else
+#define RB_UIO_MAXIOV 16
 #endif
 struct conndata
 {
@@ -83,7 +83,7 @@ struct acceptdata
 	struct rb_sockaddr_storage S;
 	rb_socklen_t addrlen;
 	ACCB *callback;
-	ACPRE *precb;		
+	ACPRE *precb;
 	void *data;
 };
 
@@ -119,12 +119,13 @@ struct _fde
 	unsigned long ssl_errno;
 };
 
-typedef void (*comm_event_cb_t)(void *);
+typedef void (*comm_event_cb_t) (void *);
 
 #ifdef USE_TIMER_CREATE
-typedef struct timer_data {
-	timer_t	td_timer_id;
-	comm_event_cb_t	 td_cb;
+typedef struct timer_data
+{
+	timer_t td_timer_id;
+	comm_event_cb_t td_cb;
 	void *td_udata;
 	int td_repeat;
 } *comm_event_id;
@@ -137,7 +138,7 @@ rb_find_fd(int fd)
 {
 	rb_dlink_list *hlist;
 	rb_dlink_node *ptr;
-		
+
 	if(rb_unlikely(fd < 0))
 		return NULL;
 
@@ -151,7 +152,7 @@ rb_find_fd(int fd)
 		rb_fde_t *F = ptr->data;
 		if(F->fd == fd)
 			return F;
-	}	
+	}
 	return NULL;
 }
 
@@ -161,7 +162,7 @@ void rb_connect_callback(rb_fde_t *F, int status);
 
 
 int rb_io_sched_event(struct ev_entry *ev, int when);
-void rb_io_unsched_event(struct ev_entry *ev);   
+void rb_io_unsched_event(struct ev_entry *ev);
 int rb_io_supports_event(void);
 void rb_io_init_event(void);
 
@@ -175,7 +176,7 @@ void rb_epoll_init_event(void);
 int rb_epoll_sched_event(struct ev_entry *event, int when);
 void rb_epoll_unsched_event(struct ev_entry *event);
 int rb_epoll_supports_event(void);
-                                
+
 
 /* poll versions */
 void rb_setselect_poll(rb_fde_t *F, unsigned int type, PF * handler, void *client_data);
@@ -230,4 +231,3 @@ void rb_setselect_win32(rb_fde_t *F, unsigned int type, PF * handler, void *clie
 int rb_init_netio_win32(void);
 int rb_select_win32(long);
 int rb_setup_fd_win32(rb_fde_t *F);
-

@@ -165,6 +165,9 @@
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
+/* Define to 1 if you have the <sys/timerfd.h> header file. */
+#undef HAVE_SYS_TIMERFD_H
+
 /* Define to 1 if you have the <sys/time.h> header file. */
 #undef HAVE_SYS_TIME_H
 
@@ -173,6 +176,9 @@
 
 /* Define to 1 if you have the <sys/uio.h> header file. */
 #undef HAVE_SYS_UIO_H
+
+/* Define to 1 if you have the `timerfd_create' function. */
+#undef HAVE_TIMERFD_CREATE
 
 /* Define if you have timer_create */
 #undef HAVE_TIMER_CREATE
@@ -194,6 +200,12 @@
 
 /* Define to 1 if you are on windows */
 #undef HAVE_WIN32
+
+/* Have WINSOCK2_H */
+#undef HAVE_WINSOCK2_H
+
+/* Have WINSOCK_H */
+#undef HAVE_WINSOCK_H
 
 /* Define to 1 if `fork' works. */
 #undef HAVE_WORKING_FORK
@@ -256,6 +268,9 @@
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #undef TIME_WITH_SYS_TIME
+
+/* Define to 1 if we can use timerfd_create(CLOCK_REALTIME,...) */
+#undef USE_TIMERFD_CREATE
 
 /* Define to 1 if we can use timer_create(CLOCK_REALTIME,...) */
 #undef USE_TIMER_CREATE

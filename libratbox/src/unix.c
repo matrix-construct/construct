@@ -21,26 +21,44 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: unix.c 25038 2008-01-23 16:03:08Z androsyn $
+ *  $Id: unix.c 26180 2008-11-11 00:00:12Z androsyn $
  */
 #include <libratbox_config.h>
 #include <ratbox_lib.h>
 
-#ifndef WINDOWS
+
+#ifndef _WIN32
+
+#include <sys/wait.h>
+
+
 #if defined(HAVE_SPAWN_H) && defined(HAVE_POSIX_SPAWN)
 #include <spawn.h>
+
+#ifdef __APPLE__
+#include <crt_externs.h> 
+#endif
+
+#ifndef __APPLE__
 extern char **environ;
+#endif
 pid_t
 rb_spawn_process(const char *path, const char **argv)
 {
 	pid_t pid;
 	const void *arghack = argv;
+	char **myenviron;
 	posix_spawnattr_t spattr;
 	posix_spawnattr_init(&spattr);
 #ifdef POSIX_SPAWN_USEVFORK
 	posix_spawnattr_setflags(&spattr, POSIX_SPAWN_USEVFORK);
 #endif
-	if(posix_spawn(&pid, path, NULL, &spattr, arghack, environ))
+#ifdef __APPLE__
+ 	myenviron = *_NSGetEnviron(); /* apple needs to go fuck themselves for this */
+#else
+	myenviron = environ;
+#endif
+	if(posix_spawn(&pid, path, NULL, &spattr, arghack, myenviron))
 	{
 		return -1;
 	}
@@ -53,10 +71,10 @@ rb_spawn_process(const char *path, const char **argv)
 	pid_t pid;
 	if(!(pid = vfork()))
 	{
-		execv(path, (const void *)argv); /* make gcc shut up */
-		_exit(1); /* if we're still here, we're screwed */
+		execv(path, (const void *)argv);	/* make gcc shut up */
+		_exit(1);	/* if we're still here, we're screwed */
 	}
-	return(pid);
+	return (pid);
 }
 #endif
 
@@ -78,7 +96,7 @@ rb_gettimeofday(struct timeval *tv, void *tz)
 int
 rb_gettimeofday(struct timeval *tv, void *tz)
 {
-	return(gettimeofday(tv, tz));
+	return (gettimeofday(tv, tz));
 }
 #endif
 
@@ -90,13 +108,44 @@ rb_sleep(unsigned int seconds, unsigned int useconds)
 	tv.tv_nsec = (useconds * 1000);
 	tv.tv_sec = seconds;
 	nanosleep(&tv, NULL);
-#else 
+#else
 	struct timeval tv;
 	tv.tv_sec = seconds;
 	tv.tv_usec = useconds;
 	select(0, NULL, NULL, NULL, &tv);
 #endif
 }
-#endif /* !WINDOWS */
+
+/* this is to keep some linkers from bitching about exporting a non-existant symbol..bleh */
+char *
+rb_strerror(int error)
+{
+	return strerror(error);
+}
+
+int
+rb_kill(pid_t pid, int sig)
+{
+	return kill(pid, sig);
+}
+
+int
+rb_setenv(const char *name, const char *value, int overwrite)
+{
+	return setenv(name, value, overwrite);
+}
+
+pid_t
+rb_waitpid(pid_t pid, int *status, int options)
+{
+	return waitpid(pid, status, options);
+}
+
+pid_t
+rb_getpid(void)
+{
+	return getpid();
+}
 
 
+#endif /* !WIN32 */

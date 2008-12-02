@@ -22,7 +22,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: poll.c 25375 2008-05-16 15:19:51Z androsyn $
+ *  $Id: poll.c 26092 2008-09-19 15:13:52Z androsyn $
  */
 #include <libratbox_config.h>
 #include <ratbox_lib.h>
@@ -52,7 +52,7 @@ typedef struct _pollfd_list pollfd_list_t;
 static pollfd_list_t pollfd_list;
 
 int
-rb_setup_fd_poll(rb_fde_t * F)
+rb_setup_fd_poll(rb_fde_t *F)
 {
 	return 0;
 }
@@ -70,7 +70,7 @@ rb_init_netio_poll(void)
 	int fd;
 	pollfd_list.pollfds = rb_malloc(rb_getmaxconnect() * (sizeof(struct pollfd)));
 	pollfd_list.allocated = rb_getmaxconnect();
-	for (fd = 0; fd < rb_getmaxconnect(); fd++)
+	for(fd = 0; fd < rb_getmaxconnect(); fd++)
 	{
 		pollfd_list.pollfds[fd].fd = -1;
 	}
@@ -89,7 +89,7 @@ resize_pollarray(int fd)
 			rb_realloc(pollfd_list.pollfds,
 				   pollfd_list.allocated * (sizeof(struct pollfd)));
 		memset(&pollfd_list.pollfds[old_value + 1], 0, sizeof(struct pollfd) * 1024);
-		for (x = old_value + 1; x < pollfd_list.allocated; x++)
+		for(x = old_value + 1; x < pollfd_list.allocated; x++)
 		{
 			pollfd_list.pollfds[x].fd = -1;
 		}
@@ -103,7 +103,7 @@ resize_pollarray(int fd)
  * and deregister interest in a pending IO state for a given FD.
  */
 void
-rb_setselect_poll(rb_fde_t * F, unsigned int type, PF * handler, void *client_data)
+rb_setselect_poll(rb_fde_t *F, unsigned int type, PF * handler, void *client_data)
 {
 	if(F == NULL)
 		return;
@@ -134,8 +134,8 @@ rb_setselect_poll(rb_fde_t * F, unsigned int type, PF * handler, void *client_da
 		pollfd_list.pollfds[F->fd].fd = -1;
 		if(F->fd == pollfd_list.maxindex)
 		{
-			while (pollfd_list.maxindex >= 0
-			       && pollfd_list.pollfds[pollfd_list.maxindex].fd == -1)
+			while(pollfd_list.maxindex >= 0
+			      && pollfd_list.pollfds[pollfd_list.maxindex].fd == -1)
 				pollfd_list.maxindex--;
 		}
 	}
@@ -175,7 +175,7 @@ rb_select_poll(long delay)
 	int revents;
 
 	num = poll(pollfd_list.pollfds, pollfd_list.maxindex + 1, delay);
- 	rb_set_time();
+	rb_set_time();
 	if(num < 0)
 	{
 		if(!rb_ignore_errno(errno))
@@ -184,23 +184,23 @@ rb_select_poll(long delay)
 			return RB_ERROR;
 	}
 	if(num == 0)
-		return RB_OK;	
-	
+		return RB_OK;
+
 	/* XXX we *could* optimise by falling out after doing num fds ... */
-	for (ci = 0; ci < pollfd_list.maxindex + 1; ci++)
+	for(ci = 0; ci < pollfd_list.maxindex + 1; ci++)
 	{
 		rb_fde_t *F;
 		pfd = &pollfd_list.pollfds[ci];
 
 		revents = pfd->revents;
-		fd = pfd->fd;		
+		fd = pfd->fd;
 		if(revents == 0 || fd == -1)
 			continue;
 
 		F = rb_find_fd(fd);
 		if(F == NULL)
 			continue;
-		
+
 		if(revents & (POLLRDNORM | POLLIN | POLLHUP | POLLERR))
 		{
 			hdl = F->read_handler;
@@ -217,7 +217,7 @@ rb_select_poll(long delay)
 			data = F->write_data;
 			F->write_handler = NULL;
 			F->write_data = NULL;
-			if(hdl) 
+			if(hdl)
 				hdl(F, data);
 		}
 
@@ -225,7 +225,7 @@ rb_select_poll(long delay)
 			rb_setselect_poll(F, RB_SELECT_READ, NULL, NULL);
 		if(F->write_handler == NULL)
 			rb_setselect_poll(F, RB_SELECT_WRITE, NULL, NULL);
-			
+
 	}
 	return 0;
 }
@@ -239,7 +239,7 @@ rb_init_netio_poll(void)
 }
 
 void
-rb_setselect_poll(rb_fde_t * F, unsigned int type, PF * handler, void *client_data)
+rb_setselect_poll(rb_fde_t *F, unsigned int type, PF * handler, void *client_data)
 {
 	errno = ENOSYS;
 	return;
@@ -253,7 +253,7 @@ rb_select_poll(long delay)
 }
 
 int
-rb_setup_fd_poll(rb_fde_t * F)
+rb_setup_fd_poll(rb_fde_t *F)
 {
 	errno = ENOSYS;
 	return -1;

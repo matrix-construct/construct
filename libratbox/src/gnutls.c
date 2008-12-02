@@ -20,7 +20,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: gnutls.c 25793 2008-07-29 14:47:48Z androsyn $
+ *  $Id: gnutls.c 26092 2008-09-19 15:13:52Z androsyn $
  */
 
 #include <libratbox_config.h>
@@ -40,12 +40,12 @@ static gnutls_dh_params dh_params;
 #define SSL_P(x) *((gnutls_session_t *)F->ssl)
 
 void
-rb_ssl_shutdown(rb_fde_t * F)
+rb_ssl_shutdown(rb_fde_t *F)
 {
 	int i;
 	if(F == NULL || F->ssl == NULL)
 		return;
-	for (i = 0; i < 4; i++)
+	for(i = 0; i < 4; i++)
 	{
 		if(gnutls_bye(SSL_P(F), GNUTLS_SHUT_RDWR) == GNUTLS_E_SUCCESS)
 			break;
@@ -67,17 +67,18 @@ rb_ssl_clear_handshake_count(rb_fde_t *F)
 }
 
 static void
-rb_ssl_timeout(rb_fde_t * F, void *notused)
+rb_ssl_timeout(rb_fde_t *F, void *notused)
 {
 	lrb_assert(F->accept != NULL);
 	F->accept->callback(F, RB_ERR_TIMEOUT, NULL, 0, F->accept->data);
 }
 
 
-static int do_ssl_handshake(rb_fde_t *F, PF *callback)
+static int
+do_ssl_handshake(rb_fde_t *F, PF * callback)
 {
 	int ret;
-	int flags;	
+	int flags;
 
 	ret = gnutls_handshake(SSL_P(F));
 	if(ret < 0)
@@ -88,17 +89,17 @@ static int do_ssl_handshake(rb_fde_t *F, PF *callback)
 				flags = RB_SELECT_READ;
 			else
 				flags = RB_SELECT_WRITE;
-			rb_setselect(F, flags, callback, NULL);	
+			rb_setselect(F, flags, callback, NULL);
 			return 0;
 		}
 		F->ssl_errno = ret;
 		return -1;
-	} 
-	return 1; /* handshake is finished..go about life */
+	}
+	return 1;		/* handshake is finished..go about life */
 }
 
 static void
-rb_ssl_tryaccept(rb_fde_t * F, void *data)
+rb_ssl_tryaccept(rb_fde_t *F, void *data)
 {
 	int ret;
 	struct acceptdata *ad;
@@ -106,46 +107,45 @@ rb_ssl_tryaccept(rb_fde_t * F, void *data)
 	lrb_assert(F->accept != NULL);
 
 	ret = do_ssl_handshake(F, rb_ssl_tryaccept);
-	
-	switch(ret)
+
+	switch (ret)
 	{
-		case -1:
-			F->accept->callback(F, RB_ERROR_SSL, NULL, 0, F->accept->data);
-			break;
-		case 0:
-			/* do_ssl_handshake does the rb_setselect stuff */
-			return;
-		default:
-			break;			
-			
-	
+	case -1:
+		F->accept->callback(F, RB_ERROR_SSL, NULL, 0, F->accept->data);
+		break;
+	case 0:
+		/* do_ssl_handshake does the rb_setselect stuff */
+		return;
+	default:
+		break;
+
+
 	}
 	rb_settimeout(F, 0, NULL, NULL);
 	rb_setselect(F, RB_SELECT_READ | RB_SELECT_WRITE, NULL, NULL);
-	
+
 	ad = F->accept;
 	F->accept = NULL;
-	ad->callback(F, RB_OK, (struct sockaddr *) &ad->S, ad->addrlen,
-			    ad->data);
+	ad->callback(F, RB_OK, (struct sockaddr *)&ad->S, ad->addrlen, ad->data);
 	rb_free(ad);
 
 }
 
 void
-rb_ssl_start_accepted(rb_fde_t * new_F, ACCB * cb, void *data, int timeout)
+rb_ssl_start_accepted(rb_fde_t *new_F, ACCB * cb, void *data, int timeout)
 {
 	gnutls_session_t *ssl;
 	new_F->type |= RB_FD_SSL;
 	ssl = new_F->ssl = rb_malloc(sizeof(gnutls_session_t));
 	new_F->accept = rb_malloc(sizeof(struct acceptdata));
-	
+
 	new_F->accept->callback = cb;
 	new_F->accept->data = data;
 	rb_settimeout(new_F, timeout, rb_ssl_timeout, NULL);
 
 	new_F->accept->addrlen = 0;
 
-	gnutls_init(ssl, GNUTLS_SERVER);	
+	gnutls_init(ssl, GNUTLS_SERVER);
 	gnutls_set_default_priority(*ssl);
 	gnutls_credentials_set(*ssl, GNUTLS_CRD_CERTIFICATE, x509);
 	gnutls_dh_set_prime_bits(*ssl, 1024);
@@ -154,8 +154,8 @@ rb_ssl_start_accepted(rb_fde_t * new_F, ACCB * cb, void *data, int timeout)
 	{
 		struct acceptdata *ad = new_F->accept;
 		new_F->accept = NULL;
-		ad->callback(new_F, RB_OK, (struct sockaddr *) &ad->S, ad->addrlen, ad->data);
-		rb_free(ad);	
+		ad->callback(new_F, RB_OK, (struct sockaddr *)&ad->S, ad->addrlen, ad->data);
+		rb_free(ad);
 	}
 
 }
@@ -164,7 +164,7 @@ rb_ssl_start_accepted(rb_fde_t * new_F, ACCB * cb, void *data, int timeout)
 
 
 void
-rb_ssl_accept_setup(rb_fde_t * F, rb_fde_t *new_F, struct sockaddr *st, int addrlen)
+rb_ssl_accept_setup(rb_fde_t *F, rb_fde_t *new_F, struct sockaddr *st, int addrlen)
 {
 	new_F->type |= RB_FD_SSL;
 	new_F->ssl = rb_malloc(sizeof(gnutls_session_t));
@@ -176,7 +176,7 @@ rb_ssl_accept_setup(rb_fde_t * F, rb_fde_t *new_F, struct sockaddr *st, int addr
 	memcpy(&new_F->accept->S, st, addrlen);
 	new_F->accept->addrlen = addrlen;
 
-	gnutls_init((gnutls_session_t *)new_F->ssl, GNUTLS_SERVER);	
+	gnutls_init((gnutls_session_t *) new_F->ssl, GNUTLS_SERVER);
 	gnutls_set_default_priority(SSL_P(new_F));
 	gnutls_credentials_set(SSL_P(new_F), GNUTLS_CRD_CERTIFICATE, x509);
 	gnutls_dh_set_prime_bits(SSL_P(new_F), 1024);
@@ -185,8 +185,8 @@ rb_ssl_accept_setup(rb_fde_t * F, rb_fde_t *new_F, struct sockaddr *st, int addr
 	{
 		struct acceptdata *ad = F->accept;
 		F->accept = NULL;
-		ad->callback(F, RB_OK, (struct sockaddr *) &ad->S, ad->addrlen, ad->data);
-		rb_free(ad);	
+		ad->callback(F, RB_OK, (struct sockaddr *)&ad->S, ad->addrlen, ad->data);
+		rb_free(ad);
 	}
 }
 
@@ -194,7 +194,7 @@ rb_ssl_accept_setup(rb_fde_t * F, rb_fde_t *new_F, struct sockaddr *st, int addr
 
 
 static ssize_t
-rb_ssl_read_or_write(int r_or_w, rb_fde_t * F, void *rbuf, const void *wbuf, size_t count)
+rb_ssl_read_or_write(int r_or_w, rb_fde_t *F, void *rbuf, const void *wbuf, size_t count)
 {
 	ssize_t ret;
 	gnutls_session_t *ssl = F->ssl;
@@ -206,7 +206,7 @@ rb_ssl_read_or_write(int r_or_w, rb_fde_t * F, void *rbuf, const void *wbuf, siz
 
 	if(ret < 0)
 	{
-		switch(ret)
+		switch (ret)
 		{
 		case GNUTLS_E_AGAIN:
 		case GNUTLS_E_INTERRUPTED:
@@ -228,13 +228,13 @@ rb_ssl_read_or_write(int r_or_w, rb_fde_t * F, void *rbuf, const void *wbuf, siz
 }
 
 ssize_t
-rb_ssl_read(rb_fde_t * F, void *buf, size_t count)
+rb_ssl_read(rb_fde_t *F, void *buf, size_t count)
 {
 	return rb_ssl_read_or_write(0, F, buf, NULL, count);
 }
 
 ssize_t
-rb_ssl_write(rb_fde_t * F, const void *buf, size_t count)
+rb_ssl_write(rb_fde_t *F, const void *buf, size_t count)
 {
 	return rb_ssl_read_or_write(1, F, NULL, buf, count);
 }
@@ -249,7 +249,7 @@ int
 rb_init_ssl(void)
 {
 	gnutls_global_init();
-	
+
 	if(gnutls_certificate_allocate_credentials(&x509) != GNUTLS_E_SUCCESS)
 	{
 		rb_lib_log("rb_init_ssl: Unable to allocate SSL/TLS certificate credentials");
@@ -260,7 +260,7 @@ rb_init_ssl(void)
 }
 
 static void
-rb_free_datum_t(gnutls_datum_t *d)
+rb_free_datum_t(gnutls_datum_t * d)
 {
 	rb_free(d->data);
 	rb_free(d);
@@ -279,15 +279,15 @@ rb_load_file_into_datum_t(const char *file)
 
 	datum = rb_malloc(sizeof(gnutls_datum_t));
 
-	if(fileinfo.st_size > 131072) /* deal with retards */
+	if(fileinfo.st_size > 131072)	/* deal with retards */
 		datum->size = 131072;
 	else
-		datum->size = fileinfo.st_size;	
-	
+		datum->size = fileinfo.st_size;
+
 	datum->data = rb_malloc(datum->size + 1);
 	fread(datum->data, datum->size, 1, f);
 	fclose(f);
-	return datum;	
+	return datum;
 }
 
 int
@@ -312,16 +312,19 @@ rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile)
 		rb_lib_log("rb_setup_ssl_server: Error loading key: %s", strerror(errno));
 		return 0;
 	}
-	
-	
-	if((ret = gnutls_certificate_set_x509_key_mem(x509, d_cert, d_key, GNUTLS_X509_FMT_PEM)) != GNUTLS_E_SUCCESS)
+
+
+	if((ret =
+	    gnutls_certificate_set_x509_key_mem(x509, d_cert, d_key,
+						GNUTLS_X509_FMT_PEM)) != GNUTLS_E_SUCCESS)
 	{
-		rb_lib_log("rb_setup_ssl_server: Error loading certificate or key file: %s", gnutls_strerror(ret));
+		rb_lib_log("rb_setup_ssl_server: Error loading certificate or key file: %s",
+			   gnutls_strerror(ret));
 		return 0;
 	}
 	rb_free_datum_t(d_cert);
 	rb_free_datum_t(d_key);
-			
+
 	if(dhfile != NULL)
 	{
 		if(gnutls_dh_params_init(&dh_params) == GNUTLS_E_SUCCESS)
@@ -331,20 +334,24 @@ rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile)
 			data = rb_load_file_into_datum_t(dhfile);
 			if(data != NULL)
 			{
-				xret = gnutls_dh_params_import_pkcs3(dh_params, data, GNUTLS_X509_FMT_PEM);
+				xret = gnutls_dh_params_import_pkcs3(dh_params, data,
+								     GNUTLS_X509_FMT_PEM);
 				if(xret < 0)
-					rb_lib_log("rb_setup_ssl_server: Error parsing DH file: %s\n", gnutls_strerror(xret));
+					rb_lib_log
+						("rb_setup_ssl_server: Error parsing DH file: %s\n",
+						 gnutls_strerror(xret));
 				rb_free_datum_t(data);
 			}
 			gnutls_certificate_set_dh_params(x509, dh_params);
-		} else 
+		}
+		else
 			rb_lib_log("rb_setup_ssl_server: Unable to setup DH parameters");
 	}
 	return 1;
 }
 
 int
-rb_ssl_listen(rb_fde_t * F, int backlog)
+rb_ssl_listen(rb_fde_t *F, int backlog)
 {
 	F->type = RB_FD_SOCKET | RB_FD_LISTEN | RB_FD_SSL;
 	return listen(F->fd, backlog);
@@ -358,7 +365,7 @@ struct ssl_connect
 };
 
 static void
-rb_ssl_connect_realcb(rb_fde_t * F, int status, struct ssl_connect *sconn)
+rb_ssl_connect_realcb(rb_fde_t *F, int status, struct ssl_connect *sconn)
 {
 	F->connect->callback = sconn->callback;
 	F->connect->data = sconn->data;
@@ -367,37 +374,37 @@ rb_ssl_connect_realcb(rb_fde_t * F, int status, struct ssl_connect *sconn)
 }
 
 static void
-rb_ssl_tryconn_timeout_cb(rb_fde_t * F, void *data)
+rb_ssl_tryconn_timeout_cb(rb_fde_t *F, void *data)
 {
 	rb_ssl_connect_realcb(F, RB_ERR_TIMEOUT, data);
 }
 
 static void
-rb_ssl_tryconn_cb(rb_fde_t * F, void *data)
+rb_ssl_tryconn_cb(rb_fde_t *F, void *data)
 {
 	struct ssl_connect *sconn = data;
 	int ret;
 
-        ret = do_ssl_handshake(F, rb_ssl_tryconn_cb);
- 
-        switch(ret)
-        {
-                case -1:
-              		rb_ssl_connect_realcb(F, RB_ERROR_SSL, sconn); 
-                        break;
-                case 0:
-                        /* do_ssl_handshake does the rb_setselect stuff */
-                        return;
-                default:
-                        break;
-                        
-    
-        }
+	ret = do_ssl_handshake(F, rb_ssl_tryconn_cb);
+
+	switch (ret)
+	{
+	case -1:
+		rb_ssl_connect_realcb(F, RB_ERROR_SSL, sconn);
+		break;
+	case 0:
+		/* do_ssl_handshake does the rb_setselect stuff */
+		return;
+	default:
+		break;
+
+
+	}
 	rb_ssl_connect_realcb(F, RB_OK, sconn);
 }
 
 static void
-rb_ssl_tryconn(rb_fde_t * F, int status, void *data)
+rb_ssl_tryconn(rb_fde_t *F, int status, void *data)
 {
 	struct ssl_connect *sconn = data;
 	if(status != RB_OK)
@@ -408,11 +415,11 @@ rb_ssl_tryconn(rb_fde_t * F, int status, void *data)
 
 	F->type |= RB_FD_SSL;
 
-                                        
+
 	rb_settimeout(F, sconn->timeout, rb_ssl_tryconn_timeout_cb, sconn);
 	F->ssl = rb_malloc(sizeof(gnutls_session_t));
-        gnutls_init(F->ssl, GNUTLS_CLIENT);
-        gnutls_set_default_priority(SSL_P(F));
+	gnutls_init(F->ssl, GNUTLS_CLIENT);
+	gnutls_set_default_priority(SSL_P(F));
 	gnutls_dh_set_prime_bits(SSL_P(F), 1024);
 	gnutls_transport_set_ptr(SSL_P(F), (gnutls_transport_ptr_t) (long int)F->fd);
 
@@ -423,7 +430,7 @@ rb_ssl_tryconn(rb_fde_t * F, int status, void *data)
 }
 
 void
-rb_connect_tcp_ssl(rb_fde_t * F, struct sockaddr *dest,
+rb_connect_tcp_ssl(rb_fde_t *F, struct sockaddr *dest,
 		   struct sockaddr *clocal, int socklen, CNCB * callback, void *data, int timeout)
 {
 	struct ssl_connect *sconn;
@@ -439,7 +446,7 @@ rb_connect_tcp_ssl(rb_fde_t * F, struct sockaddr *dest,
 }
 
 void
-rb_ssl_start_connected(rb_fde_t * F, CNCB * callback, void *data, int timeout)
+rb_ssl_start_connected(rb_fde_t *F, CNCB * callback, void *data, int timeout)
 {
 	struct ssl_connect *sconn;
 	if(F == NULL)
@@ -454,12 +461,12 @@ rb_ssl_start_connected(rb_fde_t * F, CNCB * callback, void *data, int timeout)
 	F->connect->data = data;
 	F->type |= RB_FD_SSL;
 	F->ssl = rb_malloc(sizeof(gnutls_session_t));
-        
-        gnutls_init(F->ssl, GNUTLS_CLIENT);
-        gnutls_set_default_priority(SSL_P(F));
+
+	gnutls_init(F->ssl, GNUTLS_CLIENT);
+	gnutls_set_default_priority(SSL_P(F));
 	gnutls_dh_set_prime_bits(SSL_P(F), 1024);
 	gnutls_transport_set_ptr(SSL_P(F), (gnutls_transport_ptr_t) (long int)F->fd);
-	
+
 	rb_settimeout(F, sconn->timeout, rb_ssl_tryconn_timeout_cb, sconn);
 
 	if(do_ssl_handshake(F, rb_ssl_tryconn_cb))
@@ -490,7 +497,7 @@ rb_get_pseudo_random(void *buf, size_t length)
 }
 
 const char *
-rb_get_ssl_strerror(rb_fde_t * F)
+rb_get_ssl_strerror(rb_fde_t *F)
 {
 	return gnutls_strerror(F->ssl_errno);
 }

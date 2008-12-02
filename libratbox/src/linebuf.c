@@ -21,7 +21,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: linebuf.c 25375 2008-05-16 15:19:51Z androsyn $
+ *  $Id: linebuf.c 26092 2008-09-19 15:13:52Z androsyn $
  */
 
 #include <libratbox_config.h>
@@ -47,20 +47,14 @@ static int bufline_count = 0;
 void
 rb_linebuf_init(size_t heap_size)
 {
-#ifndef NOBALLOC
 	rb_linebuf_heap = rb_bh_create(sizeof(buf_line_t), heap_size, "librb_linebuf_heap");
-#endif
 }
 
 static buf_line_t *
 rb_linebuf_allocate(void)
 {
 	buf_line_t *t;
-#ifndef NOBALLOC
 	t = rb_bh_alloc(rb_linebuf_heap);
-#else
-	t = rb_malloc(sizeof(buf_line_t));
-#endif
 	return (t);
 
 }
@@ -68,11 +62,7 @@ rb_linebuf_allocate(void)
 static void
 rb_linebuf_free(buf_line_t * p)
 {
-#ifndef NOBALLOC
 	rb_bh_free(rb_linebuf_heap, p);
-#else
-	rb_free(p);
-#endif
 }
 
 /*
@@ -113,7 +103,7 @@ rb_linebuf_new_line(buf_head_t * bufhead)
  * We've finished with the given line, so deallocate it
  */
 static void
-rb_linebuf_done_line(buf_head_t * bufhead, buf_line_t * bufline, rb_dlink_node * node)
+rb_linebuf_done_line(buf_head_t * bufhead, buf_line_t * bufline, rb_dlink_node *node)
 {
 	/* Remove it from the linked list */
 	rb_dlinkDestroy(node, &bufhead->list);
@@ -188,7 +178,8 @@ rb_linebuf_donebuf(buf_head_t * bufhead)
 {
 	while(bufhead->list.head != NULL)
 	{
-		rb_linebuf_done_line(bufhead, (buf_line_t *) bufhead->list.head->data, bufhead->list.head);
+		rb_linebuf_done_line(bufhead, (buf_line_t *) bufhead->list.head->data,
+				     bufhead->list.head);
 	}
 }
 
@@ -515,7 +506,8 @@ rb_linebuf_attach(buf_head_t * bufhead, buf_head_t * new)
  * Then format/va_args is appended to the buffer.
  */
 void
-rb_linebuf_putmsg(buf_head_t * bufhead, const char *format, va_list * va_args, const char *prefixfmt, ...)
+rb_linebuf_putmsg(buf_head_t * bufhead, const char *format, va_list * va_args,
+		  const char *prefixfmt, ...)
 {
 	buf_line_t *bufline;
 	int len = 0;
@@ -562,7 +554,8 @@ rb_linebuf_putmsg(buf_head_t * bufhead, const char *format, va_list * va_args, c
 	else
 	{
 		/* Chop trailing CRLF's .. */
-		while((bufline->buf[len] == '\r') || (bufline->buf[len] == '\n') || (bufline->buf[len] == '\0'))
+		while((bufline->buf[len] == '\r') || (bufline->buf[len] == '\n')
+		      || (bufline->buf[len] == '\0'))
 		{
 			len--;
 		}
@@ -577,7 +570,7 @@ rb_linebuf_putmsg(buf_head_t * bufhead, const char *format, va_list * va_args, c
 }
 
 void
-rb_linebuf_putbuf(buf_head_t *bufhead, const char *buffer)
+rb_linebuf_putbuf(buf_head_t * bufhead, const char *buffer)
 {
 	buf_line_t *bufline;
 	int len = 0;
@@ -614,7 +607,8 @@ rb_linebuf_putbuf(buf_head_t *bufhead, const char *buffer)
 	else
 	{
 		/* Chop trailing CRLF's .. */
-		while((bufline->buf[len] == '\r') || (bufline->buf[len] == '\n') || (bufline->buf[len] == '\0'))
+		while((bufline->buf[len] == '\r') || (bufline->buf[len] == '\n')
+		      || (bufline->buf[len] == '\0'))
 		{
 			len--;
 		}
@@ -627,7 +621,7 @@ rb_linebuf_putbuf(buf_head_t *bufhead, const char *buffer)
 	bufline->len = len;
 	bufhead->len += len;
 
-	
+
 }
 
 void
@@ -673,7 +667,8 @@ rb_linebuf_put(buf_head_t * bufhead, const char *format, ...)
 	else
 	{
 		/* Chop trailing CRLF's .. */
-		while((bufline->buf[len] == '\r') || (bufline->buf[len] == '\n') || (bufline->buf[len] == '\0'))
+		while((bufline->buf[len] == '\r') || (bufline->buf[len] == '\n')
+		      || (bufline->buf[len] == '\0'))
 		{
 			len--;
 		}
@@ -729,7 +724,7 @@ rb_linebuf_flush(rb_fde_t *F, buf_head_t * bufhead)
 		}
 
 		ptr = bufhead->list.head;
-	
+
 		bufline = ptr->data;
 		if(!bufline->terminated)
 		{
@@ -750,12 +745,13 @@ rb_linebuf_flush(rb_fde_t *F, buf_head_t * bufhead)
 			bufline = ptr->data;
 			if(!bufline->terminated)
 				break;
-		
+
 			vec[x].iov_base = bufline->buf;
 			vec[x].iov_len = bufline->len;
 			ptr = ptr->next;
 
-		} while(++x < RB_UIO_MAXIOV);
+		}
+		while(++x < RB_UIO_MAXIOV);
 
 		if(x == 0)
 		{
@@ -780,7 +776,7 @@ rb_linebuf_flush(rb_fde_t *F, buf_head_t * bufhead)
 				rb_linebuf_done_line(bufhead, bufline, bufhead->list.head);
 				bufhead->writeofs = 0;
 			}
-			else 
+			else
 			{
 				bufhead->writeofs += xret;
 				break;
@@ -789,10 +785,10 @@ rb_linebuf_flush(rb_fde_t *F, buf_head_t * bufhead)
 
 		return retval;
 	}
-#endif	
+#endif
 
-	/* this is the non-writev case */	
-	
+	/* this is the non-writev case */
+
 	/* Check we actually have a first buffer */
 	if(bufhead->list.head == NULL)
 	{
@@ -839,12 +835,7 @@ rb_linebuf_flush(rb_fde_t *F, buf_head_t * bufhead)
  */
 
 void
-rb_count_rb_linebuf_memory(size_t * count, size_t * rb_linebuf_memory_used)
+rb_count_rb_linebuf_memory(size_t *count, size_t *rb_linebuf_memory_used)
 {
-#ifndef NOBALLOC
 	rb_bh_usage(rb_linebuf_heap, count, NULL, rb_linebuf_memory_used, NULL);
-#else
-	*count = 0;
-	*rb_linebuf_memory_used = 0;
-#endif
 }

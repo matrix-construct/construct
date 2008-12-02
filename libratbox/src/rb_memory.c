@@ -21,7 +21,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: rb_memory.c 25038 2008-01-23 16:03:08Z androsyn $
+ *  $Id: rb_memory.c 26092 2008-09-19 15:13:52Z androsyn $
  */
 #include <libratbox_config.h>
 #include <ratbox_lib.h>
@@ -39,4 +39,3 @@ rb_outofmemory(void)
 	rb_lib_log("Out of memory: restarting server...");
 	rb_lib_restart("Out of Memory");
 }
-
