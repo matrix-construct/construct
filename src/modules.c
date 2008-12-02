@@ -533,6 +533,10 @@ mo_modrestart(struct Client *client_p, struct Client *source_p, int parc, const 
 #define RTLD_NOW RTLD_LAZY	/* openbsd deficiency */
 #endif
 
+#ifndef RTLD_LOCAL
+#define RTLD_LOCAL 0
+#endif
+
 #ifdef CHARYBDIS_PROFILE
 # ifndef RTLD_PROFILE
 #  warning libdl may not support profiling, sucks. :(
@@ -792,9 +796,9 @@ load_a_module(const char *path, int warn, int core)
 	mod_basename = irc_basename(path);
 
 #ifdef CHARYBDIS_PROFILE
-	tmpptr = dlopen(path, RTLD_NOW | RTLD_PROFILE);
+	tmpptr = dlopen(path, RTLD_NOW | RTLD_LOCAL | RTLD_PROFILE);
 #else
-	tmpptr = dlopen(path, RTLD_NOW);
+	tmpptr = dlopen(path, RTLD_NOW | RTLD_LOCAL);
 #endif
 
 	if(tmpptr == NULL)
