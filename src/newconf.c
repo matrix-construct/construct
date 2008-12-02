@@ -263,7 +263,7 @@ conf_set_modules_module(void *data)
 #ifndef STATIC_MODULES
 	char *m_bn;
 
-	m_bn = irc_basename((char *) data);
+	m_bn = rb_basename((char *) data);
 
 	if(findmodule_byname(m_bn) != -1)
 		return;
