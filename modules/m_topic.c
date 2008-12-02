@@ -32,6 +32,7 @@
 #include "ircd.h"
 #include "numeric.h"
 #include "send.h"
+#include "s_newconf.h"
 #include "s_conf.h"
 #include "s_serv.h"
 #include "msg.h"
@@ -62,26 +63,43 @@ m_topic(struct Client *client_p, struct Client *source_p, int parc, const char *
 	struct Channel *chptr = NULL;
 	struct membership *msptr;
 	char *p = NULL;
+	const char *name;
+	int operspy = 0;
 
 	if((p = strchr(parv[1], ',')))
 		*p = '\0';
 
+	name = parv[1];
+
+	if(IsOperSpy(source_p) && parv[1][0] == '!')
+	{
+		name++;
+		operspy = 1;
+
+		if(EmptyString(name))
+		{
+			sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS),
+					me.name, source_p->name, "TOPIC");
+			return 0;
+		}
+	}
+
 	if(MyClient(source_p) && !IsFloodDone(source_p))
 		flood_endgrace(source_p);
 
-	if(!IsChannelName(parv[1]))
+	if(!IsChannelName(name))
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
-				   form_str(ERR_NOSUCHCHANNEL), parv[1]);
+				   form_str(ERR_NOSUCHCHANNEL), name);
 		return 0;
 	}
 
-	chptr = find_channel(parv[1]);
+	chptr = find_channel(name);
 
 	if(chptr == NULL)
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
-				form_str(ERR_NOSUCHCHANNEL), parv[1]);
+				form_str(ERR_NOSUCHCHANNEL), name);
 		return 0;
 	}
 
@@ -93,7 +111,7 @@ m_topic(struct Client *client_p, struct Client *source_p, int parc, const char *
 		if(msptr == NULL)
 		{
 			sendto_one_numeric(source_p, ERR_NOTONCHANNEL,
-					form_str(ERR_NOTONCHANNEL), parv[1]);
+					form_str(ERR_NOTONCHANNEL), name);
 			return 0;
 		}
 
@@ -116,19 +134,22 @@ m_topic(struct Client *client_p, struct Client *source_p, int parc, const char *
 		}
 		else
 			sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
-					me.name, source_p->name, parv[1]);
+					me.name, source_p->name, name);
 	}
 	else if(MyClient(source_p))
 	{
-		if(!IsMember(source_p, chptr) && SecretChannel(chptr))
+		if(operspy)
+			report_operspy(source_p, "TOPIC", chptr->chname);
+		if(!IsMember(source_p, chptr) && SecretChannel(chptr) &&
+				!operspy)
 		{
 			sendto_one_numeric(source_p, ERR_NOTONCHANNEL,
-					form_str(ERR_NOTONCHANNEL), parv[1]);
+					form_str(ERR_NOTONCHANNEL), name);
 			return 0;
 		}
 		if(chptr->topic == NULL)
 			sendto_one(source_p, form_str(RPL_NOTOPIC),
-					me.name, source_p->name, parv[1]);
+					me.name, source_p->name, name);
 		else
 		{
 			sendto_one(source_p, form_str(RPL_TOPIC),
