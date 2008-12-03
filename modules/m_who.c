@@ -437,7 +437,7 @@ do_who_on_channel(struct Client *source_p, struct Channel *chptr,
 static void
 do_who(struct Client *source_p, struct Client *target_p, struct membership *msptr, struct who_format *fmt)
 {
-	char status[5];
+	char status[16];
 	char str[512], *p, *end;
 	const char *q;
 
