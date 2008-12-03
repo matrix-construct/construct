@@ -201,7 +201,6 @@ int rb_kill(pid_t, int);
 char *rb_strerror(int);
 
 int rb_setenv(const char *, const char *, int);
-int rb_kill(int pid, int sig);
 
 pid_t rb_waitpid(pid_t pid, int *status, int options);
 pid_t rb_getpid(void);
