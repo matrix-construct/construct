@@ -52,6 +52,10 @@
 	  notice to every user joining a certain channel.
 	</para>
 	<para>
+	  As of charybdis 3.1, NOTICE automatically behaves as CNOTICE
+	  if you are in a channel fulfilling the conditions.
+	</para>
+	<para>
 	  Support of this command is indicated by the CNOTICE token in
 	  RPL_ISUPPORT (005).
 	</para>
@@ -73,6 +77,10 @@
 	  CPRIVMSG bypasses any anti-spam measures in place.
 	  If you get <quote>Targets changing too fast, message dropped</quote>,
 	  you should probably use this command.
+	</para>
+	<para>
+	  As of charybdis 3.1, PRIVMSG automatically behaves as CPRIVMSG
+	  if you are in a channel fulfilling the conditions.
 	</para>
 	<para>
 	  Support of this command is indicated by the CPRIVMSG token in
