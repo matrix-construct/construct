@@ -1,5 +1,65 @@
-This is charybdis 3.0.1, Copyright (c) 2005-2008 Charybdis team.
+This is charybdis 3.1, Copyright (c) 2005-2008 Charybdis team.
 See LICENSE for licensing details (GPL v2).
+
+-- charybdis-3.1.0
+
+- Remove TS5 support. No TS5 servers are permitted in a network with
+  charybdis 3.1.0 or newer, except jupes.
+- Replace oper flags by privilege sets (privsets).
+- Update libratbox and ssld from upstream and use it better.
+- Add auth_user to auth{}. This allows specifying a username:password instead
+  of just a password in PASS, so that a fixed user@host is not necessary
+  for a specific auth{} block.
+- Add need_ssl to auth{} and operator{}. This makes these blocks reject
+  the user if not connected via SSL.
+- Allow modules to provide simple channel modes without parameter.
+- Remove restrictions on CNAME in the resolver.
+- Make the resolver remember nonresponsive nameservers.
+- Move nick collision notices from +s to +k.
+- Add additional information to various server notices about server
+  connections.
+- Also apply floodcount to messages to remote clients (except services).
+- Remove user@server messages to local users. Sending such messages to
+  remote servers is still possible, for securely messaging pseudoservers
+  whether service{}'ed or not. The special oper-only syntax opers@server
+  remains as well.
+- Allow /list on a named +p channel. A full /list already included +p channels.
+- Add operspy /topic.
+- Make PRIVMSG/NOTICE behave as CPRIVMSG/CNOTICE automatically if possible.
+- Allow +z messages from outside if a channel is -n.
+- Allow coloured part reasons in -c channels.
+- Add ircu-like WHOX support. This allows requesting specific information
+  in /who and allows obtaining services login name for all users in a
+  channel. XChat/Conspire use WHOX to update away status more efficiently.
+- Rework ip_cloaking.
+- Add the IP address to userlog, as in ircd-ratbox 3.0.
+- Split cidr_bitlen into cidr_ipv4_bitlen and cidr_ipv6_bitlen.
+- Document some extensions in charybdis-oper-guide.
+- Various new extensions.
+- Various code cleanups.
+
+-- charybdis-3.0.4
+
+- Fix a crash on certain recent versions of Ubuntu.
+- Allow 127.x.y.z for DNSBL replies instead of just 127.0.0.x.
+- Various documentation improvements.
+
+-- charybdis-3.0.3
+
+- Fix IPv6 D:lines
+- Fix rejectcache and unknown_count.
+- Fix genssl.sh.
+- Fix ident for SSL/TLS connections.
+- Fix SSL/TLS bugs for servers with more than about 100 connections.
+- Small bugfixes.
+
+-- charybdis-3.0.2
+
+- Improve OLIST extension error messages.
+- Improve some kline error checking.
+- Avoid timing out clients if we are still waiting for a DNSBL lookup.
+- Fix resolver hangs with epoll.
+- Fix compilation without zlib.
 
 -- charybdis-3.0.1
 
