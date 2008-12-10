@@ -292,7 +292,7 @@ start_ssldaemon(int count, const char *ssl_cert, const char *ssl_private_key, co
 		rb_pipe(&P1, &P2, "SSL/TLS pipe");
 		rb_snprintf(fdarg, sizeof(fdarg), "%d", rb_get_fd(P1));
 		rb_setenv("CTL_PIPE", fdarg, 1);
-		rb_snprintf(s_pid, sizeof(s_pid), "%d", getpid());
+		rb_snprintf(s_pid, sizeof(s_pid), "%d", (int)getpid());
 		rb_setenv("CTL_PPID", s_pid, 1);
 #ifdef _WIN32
 		SetHandleInformation((HANDLE) rb_get_fd(F2), HANDLE_FLAG_INHERIT, 1);
