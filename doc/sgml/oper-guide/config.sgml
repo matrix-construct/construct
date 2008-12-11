@@ -170,7 +170,8 @@ class "<replaceable>name</replaceable>" {
         number_per_ident = <replaceable>number</replaceable>;
         number_per_ip = <replaceable>number</replaceable>;
         number_per_ip_global = <replaceable>number</replaceable>;
-        cidr_bitlen = <replaceable>number</replaceable>;
+        cidr_ipv4_bitlen = <replaceable>number</replaceable>;
+        cidr_ipv6_bitlen = <replaceable>number</replaceable>;
         number_per_cidr = <replaceable>number</replaceable>;
         max_number = <replaceable>number</replaceable>;
         sendq = <replaceable>size</replaceable>;
@@ -219,15 +220,22 @@ class "<replaceable>name</replaceable>" {
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
-	    <term>cidr_bitlen</term>
+	    <term>cidr_ipv4_bitlen</term>
 	    <listitem>
-	      <para>The netblock length to use with CIDR-based client limiting for this class.</para>
+	      <para>The netblock length to use with CIDR-based client limiting for IPv4 users in this class (between 0 and 32).</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>cidr_ipv6_bitlen</term>
+	    <listitem>
+	      <para>The netblock length to use with CIDR-based client limiting for IPv6 users in this class (between 0 and 128).</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
 	    <term>number_per_cidr</term>
 	    <listitem>
 	      <para>The amount of clients which may be connected from a single netblock.</para>
+	      <para>If this needs to differ between IPv4 and IPv6, make different classes for IPv4 and IPv6 users.</para>
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
