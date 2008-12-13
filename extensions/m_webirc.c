@@ -107,7 +107,7 @@ mr_webirc(struct Client *client_p, struct Client *source_p, int parc, const char
 	if (EmptyString(parv[1]))
 		encr = "";
 	else if (IsConfEncrypted(aconf))
-		encr = crypt(parv[1], aconf->passwd);
+		encr = rb_crypt(parv[1], aconf->passwd);
 	else
 		encr = parv[1];
 
