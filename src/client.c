@@ -238,7 +238,11 @@ free_local_client(struct Client *client_p)
 	if (client_p->localClient->privset)
 		privilegeset_unref(client_p->localClient->privset);
 
-	ssld_decrement_clicount(client_p->localClient->ssl_ctl);
+	if(IsSSL(client_p))
+	    ssld_decrement_clicount(client_p->localClient->ssl_ctl);
+	    
+	if(IsCapable(client_p, CAP_ZIP))
+	    ssld_decrement_clicount(client_p->localClient->z_ctl);
 
 	rb_bh_free(lclient_heap, client_p->localClient);
 	client_p->localClient = NULL;

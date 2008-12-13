@@ -766,9 +766,10 @@ start_zlib_session(void *data)
 	/* need to redo as what we did before isn't valid now */
 	int32_to_buf(&buf[1], rb_get_fd(server->localClient->F));
 	add_to_cli_fd_hash(server);
-	server->localClient->ssl_ctl = which_ssld();
-	server->localClient->ssl_ctl->cli_count++;
-	ssl_cmd_write_queue(server->localClient->ssl_ctl, F, 2, buf, len);
+
+	server->localClient->z_ctl = which_ssld();
+	server->localClient->z_ctl->cli_count++;
+	ssl_cmd_write_queue(server->localClient->z_ctl, F, 2, buf, len);
 	rb_free(buf);
 }
 
@@ -796,7 +797,7 @@ collect_zipstats(void *unused)
 			int32_to_buf(&buf[1], rb_get_fd(target_p->localClient->F));
 			rb_strlcpy(odata, target_p->name, (sizeof(buf) - len));
 			len += strlen(odata) + 1;	/* Get the \0 as well */
-			ssl_cmd_write_queue(target_p->localClient->ssl_ctl, NULL, 0, buf, len);
+			ssl_cmd_write_queue(target_p->localClient->z_ctl, NULL, 0, buf, len);
 		}
 	}
 }
