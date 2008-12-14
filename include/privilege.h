@@ -31,6 +31,7 @@ typedef enum {
 } PrivilegeFlags;
 
 struct PrivilegeSet {
+	unsigned int status;	/* If CONF_ILLEGAL, delete when no refs */
 	int refs;
 	char *name;
 	char *privs;
@@ -44,5 +45,7 @@ struct PrivilegeSet *privilegeset_extend(struct PrivilegeSet *parent, const char
 struct PrivilegeSet *privilegeset_get(const char *name);
 struct PrivilegeSet *privilegeset_ref(struct PrivilegeSet *set);
 void privilegeset_unref(struct PrivilegeSet *set);
+void privilegeset_mark_all_illegal(void);
+void privilegeset_delete_all_illegal(void);
 
 #endif

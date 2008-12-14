@@ -46,6 +46,7 @@
 #include "reject.h"
 #include "cache.h"
 #include "blacklist.h"
+#include "privilege.h"
 #include "sslproc.h"
 
 struct config_server_hide ConfigServerHide;
@@ -853,6 +854,7 @@ read_conf(FILE * file)
 	validate_conf();	/* Check to make sure some values are still okay. */
 	/* Some global values are also loaded here. */
 	check_class();		/* Make sure classes are valid */
+	privilegeset_delete_all_illegal();
 }
 
 static void
@@ -1252,6 +1254,8 @@ clear_out_old_conf(void)
 	alias_dict = NULL;
 
 	destroy_blacklists();
+
+	privilegeset_mark_all_illegal();
 
 	/* OK, that should be everything... */
 }
