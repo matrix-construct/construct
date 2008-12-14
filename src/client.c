@@ -235,6 +235,8 @@ free_local_client(struct Client *client_p)
 	rb_free(client_p->localClient->fullcaps);
 	rb_free(client_p->localClient->opername);
 	rb_free(client_p->localClient->mangledhost);
+	if (client_p->localClient->privset)
+		privilegeset_unref(client_p->localClient->privset);
 
 	ssld_decrement_clicount(client_p->localClient->ssl_ctl);
 
