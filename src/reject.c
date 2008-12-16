@@ -125,7 +125,21 @@ init_reject(void)
 unsigned long
 throttle_size(void)
 {
-	return rb_dlink_list_length(&throttle_list);
+	unsigned long count;
+	rb_dlink_node *ptr;
+	rb_patricia_node_t *pnode;
+	throttle_t *t;
+
+	count = 0;
+	RB_DLINK_FOREACH(ptr, throttle_list.head)
+	{
+		pnode = ptr->data;
+		t = pnode->data;
+		if (t->count > ConfigFileEntry.throttle_count)
+			count++;
+	}
+
+	return count;
 }
 
 void
