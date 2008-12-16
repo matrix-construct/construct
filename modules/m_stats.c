@@ -877,6 +877,8 @@ stats_tstats (struct Client *source_p)
 			"T :rejected %u delaying %lu", 
 			sp.is_rej, delay_exit_length());
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
+			   "T :throttled refused %u throttle list size %lu", sp.is_thr, throttle_size());
+	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			"T :nicks being delayed %lu",
 			get_nd_count());
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,

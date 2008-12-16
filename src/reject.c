@@ -122,6 +122,11 @@ init_reject(void)
 	rb_event_add("throttle_expires", throttle_expires, NULL, 10);
 }
 
+unsigned long
+throttle_size(void)
+{
+	return rb_dlink_list_length(&throttle_list);
+}
 
 void
 add_reject(struct Client *client_p, const char *mask1, const char *mask2)
@@ -269,8 +274,10 @@ throttle_add(struct sockaddr *addr)
 		t = pnode->data;
 
 		if(t->count > ConfigFileEntry.throttle_count)
-			return 1;			
-
+		{
+			ServerStats.is_thr++;
+			return 1;
+		}
 		/* Stop penalizing them after they've been throttled */
 		t->last = rb_current_time();
 		t->count++;

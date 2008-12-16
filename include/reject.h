@@ -38,6 +38,7 @@ int remove_reject_mask(const char *mask1, const char *mask2);
 unsigned long delay_exit_length(void);
 
 int throttle_add(struct sockaddr *addr);
+unsigned long throttle_size(void);
 
 
 #endif

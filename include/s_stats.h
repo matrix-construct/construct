@@ -63,6 +63,7 @@ struct ServerStatistics
 	unsigned int is_asuc;	/* successful auth requests */
 	unsigned int is_abad;	/* bad auth requests */
 	unsigned int is_rej;	/* rejected from cache */
+	unsigned int is_thr;	/* number of throttled connections */
 	unsigned int is_ssuc;	/* successful sasl authentications */
 	unsigned int is_sbad;	/* failed sasl authentications */
 	unsigned int is_tgch;	/* messages blocked due to target change */
