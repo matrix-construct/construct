@@ -39,6 +39,7 @@
 #include "numeric.h"
 #include "s_conf.h"
 #include "s_newconf.h"
+#include "reject.h"
 
 static int mo_testline(struct Client *, struct Client *, int, const char **);
 static int mo_testgecos(struct Client *, struct Client *, int, const char **);
@@ -69,6 +70,7 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 	char *p;
 	int host_mask;
 	int type;
+	int duration;
 
 	mask = LOCAL_COPY(parv[1]);
 
@@ -136,6 +138,21 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 
 			return 0;
 		}
+		/* Otherwise, aconf is an exempt{} */
+		if(aconf == NULL &&
+				(duration = is_reject_ip((struct sockaddr *)&ip)))
+			sendto_one(source_p, form_str(RPL_TESTLINE),
+					me.name, source_p->name,
+					'!',
+					duration / 60,
+					host, "Reject cache");
+		if(aconf == NULL &&
+				(duration = is_throttle_ip((struct sockaddr *)&ip)))
+			sendto_one(source_p, form_str(RPL_TESTLINE),
+					me.name, source_p->name,
+					'!',
+					duration / 60,
+					host, "Throttled");
 	}
 
 	if (username != NULL)

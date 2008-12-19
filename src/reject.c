@@ -211,6 +211,31 @@ check_reject(rb_fde_t *F, struct sockaddr *addr)
 	return 0;
 }
 
+int
+is_reject_ip(struct sockaddr *addr)
+{
+	rb_patricia_node_t *pnode;
+	reject_t *rdata;
+	int duration;
+
+	/* Reject is disabled */
+	if(ConfigFileEntry.reject_after_count == 0 || ConfigFileEntry.reject_duration == 0)
+		return 0;
+		
+	pnode = rb_match_ip(reject_tree, addr);
+	if(pnode != NULL)
+	{
+		rdata = pnode->data;
+
+		if(rdata->count > (unsigned long)ConfigFileEntry.reject_after_count)
+		{
+			duration = rdata->time + ConfigFileEntry.reject_duration - rb_current_time();
+			return duration > 0 ? duration : 1;
+		}
+	}	
+	return 0;
+}
+
 void 
 flush_reject(void)
 {
@@ -309,6 +334,25 @@ throttle_add(struct sockaddr *addr)
 		pnode->data = t;
 		rb_dlinkAdd(pnode, &t->node, &throttle_list); 
 	}	
+	return 0;
+}
+
+int
+is_throttle_ip(struct sockaddr *addr)
+{
+	throttle_t *t;
+	rb_patricia_node_t *pnode;
+	int duration;
+
+	if((pnode = rb_match_ip(throttle_tree, addr)) != NULL)
+	{
+		t = pnode->data;
+		if(t->count > ConfigFileEntry.throttle_count)
+		{
+			duration = t->last + ConfigFileEntry.throttle_duration - rb_current_time();
+			return duration > 0 ? duration : 1;
+		}
+	}
 	return 0;
 }
 
