@@ -424,6 +424,31 @@ do_who_on_channel(struct Client *source_p, struct Channel *chptr,
 }
 
 /*
+ * append_format
+ *
+ * inputs	- pointer to buffer
+ *		- size of buffer
+ *		- pointer to position
+ *		- format string
+ *		- arguments for format
+ * output	- NONE
+ * side effects - position incremented, possibly beyond size of buffer
+ *		  this allows detecting overflow
+ */
+static void
+append_format(char *buf, size_t bufsize, size_t *pos, const char *fmt, ...)
+{
+	size_t max, result;
+	va_list ap;
+
+	max = *pos >= bufsize ? 0 : bufsize - *pos;
+	va_start(ap, fmt);
+	result = rb_vsnprintf(buf + *pos, bufsize - *pos, fmt, ap);
+	va_end(ap);
+	*pos += result;
+}
+
+/*
  * do_who
  *
  * inputs	- pointer to client requesting who
@@ -438,7 +463,8 @@ static void
 do_who(struct Client *source_p, struct Client *target_p, struct membership *msptr, struct who_format *fmt)
 {
 	char status[16];
-	char str[512], *p, *end;
+	char str[510 + 1]; /* linebuf.c will add \r\n */
+	size_t pos;
 	const char *q;
 
 	rb_sprintf(status, "%c%s%s",
@@ -454,33 +480,34 @@ do_who(struct Client *source_p, struct Client *target_p, struct membership *mspt
 	else
 	{
 		str[0] = '\0';
-		p = str;
-		end = str + sizeof str;
+		pos = 0;
+		append_format(str, sizeof str, &pos, ":%s %d %s",
+				me.name, RPL_WHOSPCRPL, source_p->name);
 		if (fmt->fields & FIELD_QUERYTYPE)
-			p += rb_snprintf(p, end - p, " %s", fmt->querytype);
+			append_format(str, sizeof str, &pos, " %s", fmt->querytype);
 		if (fmt->fields & FIELD_CHANNEL)
-			p += rb_snprintf(p, end - p, " %s", msptr ? msptr->chptr->chname : "*");
+			append_format(str, sizeof str, &pos, " %s", msptr ? msptr->chptr->chname : "*");
 		if (fmt->fields & FIELD_USER)
-			p += rb_snprintf(p, end - p, " %s", target_p->username);
+			append_format(str, sizeof str, &pos, " %s", target_p->username);
 		if (fmt->fields & FIELD_IP)
 		{
 			if (show_ip(source_p, target_p) && !EmptyString(target_p->sockhost) && strcmp(target_p->sockhost, "0"))
-				p += rb_snprintf(p, end - p, " %s", target_p->sockhost);
+				append_format(str, sizeof str, &pos, " %s", target_p->sockhost);
 			else
-				p += rb_snprintf(p, end - p, " %s", "255.255.255.255");
+				append_format(str, sizeof str, &pos, " %s", "255.255.255.255");
 		}
 		if (fmt->fields & FIELD_HOST)
-			p += rb_snprintf(p, end - p, " %s", target_p->host);
+			append_format(str, sizeof str, &pos, " %s", target_p->host);
 		if (fmt->fields & FIELD_SERVER)
-			p += rb_snprintf(p, end - p, " %s", target_p->servptr->name);
+			append_format(str, sizeof str, &pos, " %s", target_p->servptr->name);
 		if (fmt->fields & FIELD_NICK)
-			p += rb_snprintf(p, end - p, " %s", target_p->name);
+			append_format(str, sizeof str, &pos, " %s", target_p->name);
 		if (fmt->fields & FIELD_FLAGS)
-			p += rb_snprintf(p, end - p, " %s", status);
+			append_format(str, sizeof str, &pos, " %s", status);
 		if (fmt->fields & FIELD_HOP)
-			p += rb_snprintf(p, end - p, " %d", ConfigServerHide.flatten_links ? 0 : target_p->hopcount);
+			append_format(str, sizeof str, &pos, " %d", ConfigServerHide.flatten_links ? 0 : target_p->hopcount);
 		if (fmt->fields & FIELD_IDLE)
-			p += rb_snprintf(p, end - p, " %d", (int)(MyClient(target_p) ? rb_current_time() - target_p->localClient->last : 0));
+			append_format(str, sizeof str, &pos, " %d", (int)(MyClient(target_p) ? rb_current_time() - target_p->localClient->last : 0));
 		if (fmt->fields & FIELD_ACCOUNT)
 		{
 			/* display as in whois */
@@ -494,12 +521,22 @@ do_who(struct Client *source_p, struct Client *target_p, struct membership *mspt
 			}
 			else
 				q = "0";
-			p += rb_snprintf(p, end - p, " %s", q);
+			append_format(str, sizeof str, &pos, " %s", q);
 		}
 		if (fmt->fields & FIELD_OPLEVEL)
-			p += rb_snprintf(p, end - p, " %s", is_chanop(msptr) ? "999" : "n/a");
+			append_format(str, sizeof str, &pos, " %s", is_chanop(msptr) ? "999" : "n/a");
 		if (fmt->fields & FIELD_INFO)
-			p += rb_snprintf(p, end - p, " :%s", target_p->info);
-		sendto_one_numeric(source_p, RPL_WHOSPCRPL, "%s", str + 1);
+			append_format(str, sizeof str, &pos, " :%s", target_p->info);
+
+		if (pos >= sizeof str)
+		{
+			static int warned = 0;
+			if (!warned)
+				sendto_realops_snomask(SNO_DEBUG, L_NETWIDE,
+						"WHOX overflow while sending information about %s to %s",
+						target_p->name, source_p->name);
+			warned = 1;
+		}
+		sendto_one(source_p, "%s", str);
 	}
 }
