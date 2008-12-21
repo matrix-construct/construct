@@ -13,7 +13,6 @@ autom4te.cache
 config.log
 config.status
 include/setup.h
-include/serno.h
 libratbox/include/libratbox_config.h
 libratbox/include/librb-config.h
 libratbox/include/stamp-h1
