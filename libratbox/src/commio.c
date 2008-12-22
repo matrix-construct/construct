@@ -21,7 +21,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: commio.c 26096 2008-09-20 01:05:42Z androsyn $
+ *  $Id: commio.c 26254 2008-12-10 04:04:38Z androsyn $
  */
 #include <libratbox_config.h>
 #include <ratbox_lib.h>
@@ -1610,6 +1610,12 @@ rb_inet_socketpair_udp(rb_fde_t **newF1, rb_fde_t **newF2)
 	unsigned int fd[2];
 	int i, got;
 	unsigned short port;
+	struct timeval wait = { 0, 100000 };
+	int max;
+	fd_set rset;
+	struct sockaddr_in readfrom;
+	unsigned short buf[2];
+	int o_errno;
 
 	memset(&addr, 0, sizeof(addr));
 
@@ -1648,11 +1654,7 @@ rb_inet_socketpair_udp(rb_fde_t **newF1, rb_fde_t **newF2)
 		}
 	}
 
-
-	struct timeval wait = { 0, 100000 };
-
-	int max = fd[1] > fd[0] ? fd[1] : fd[0];
-	fd_set rset;
+	max = fd[1] > fd[0] ? fd[1] : fd[0];
 	FD_ZERO(&rset);
 	FD_SET(fd[0], &rset);
 	FD_SET(fd[1], &rset);
@@ -1664,8 +1666,6 @@ rb_inet_socketpair_udp(rb_fde_t **newF1, rb_fde_t **newF2)
 		goto abort_failed;
 	}
 
-	struct sockaddr_in readfrom;
-	unsigned short buf[2];
 	for(i = 0; i < 2; i++)
 	{
 #ifdef MSG_DONTWAIT
@@ -1700,7 +1700,7 @@ rb_inet_socketpair_udp(rb_fde_t **newF1, rb_fde_t **newF2)
       failed:
 	if(errno != ECONNABORTED)
 		rb_get_errno();
-	int o_errno = errno;
+	o_errno = errno;
 	if(F[0] != NULL)
 		rb_close(F[0]);
 	if(F[1] != NULL)
@@ -1862,10 +1862,10 @@ try_ports(void)
 		setselect_handler = rb_setselect_ports;
 		select_handler = rb_select_ports;
 		setup_fd_handler = rb_setup_fd_ports;
-		io_sched_event = NULL;
-		io_unsched_event = NULL;
-		io_init_event = NULL;
-		io_supports_event = rb_unsupported_event;
+		io_sched_event = rb_ports_sched_event;
+		io_unsched_event = rb_ports_unsched_event;
+		io_init_event =  rb_ports_init_event;
+		io_supports_event = rb_ports_supports_event;
 		rb_strlcpy(iotype, "ports", sizeof(iotype));
 		return 0;
 	}

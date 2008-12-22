@@ -93,6 +93,9 @@ arc4_stir(struct arc4_stream *as)
 	struct timeval tv;
 	pid_t pid;
 	int n;
+#ifdef _WIN32
+	HMODULE lib;
+#endif
 	/* XXX this doesn't support egd sources or similiar */
 
 	pid = getpid();
@@ -133,7 +136,7 @@ arc4_stir(struct arc4_stream *as)
 		{
 			arc4_addrandom(as, (void *)&performanceCount, sizeof(performanceCount));
 		}
-		HMODULE lib = LoadLibrary("ADVAPI32.DLL");
+		lib = LoadLibrary("ADVAPI32.DLL");
 		if(lib)
 		{
 			uint8_t rnd[128];

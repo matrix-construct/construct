@@ -163,4 +163,10 @@ rb_ssl_clear_handshake_count(rb_fde_t *F)
 	return;
 }
 
+void
+rb_get_ssl_info(char *buf, size_t len)
+{
+        rb_snprintf(buf, len, "Not compiled with SSL support"); 
+}
+                                                
 #endif /* !HAVE_OPENSSL */

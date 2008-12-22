@@ -20,7 +20,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: gnutls.c 26092 2008-09-19 15:13:52Z androsyn $
+ *  $Id: gnutls.c 26296 2008-12-13 03:36:00Z androsyn $
  */
 
 #include <libratbox_config.h>
@@ -108,27 +108,21 @@ rb_ssl_tryaccept(rb_fde_t *F, void *data)
 
 	ret = do_ssl_handshake(F, rb_ssl_tryaccept);
 
-	switch (ret)
-	{
-	case -1:
-		F->accept->callback(F, RB_ERROR_SSL, NULL, 0, F->accept->data);
-		break;
-	case 0:
-		/* do_ssl_handshake does the rb_setselect stuff */
+	/* do_ssl_handshake does the rb_setselect */
+	if(ret == 0)
 		return;
-	default:
-		break;
-
-
-	}
-	rb_settimeout(F, 0, NULL, NULL);
-	rb_setselect(F, RB_SELECT_READ | RB_SELECT_WRITE, NULL, NULL);
 
 	ad = F->accept;
 	F->accept = NULL;
-	ad->callback(F, RB_OK, (struct sockaddr *)&ad->S, ad->addrlen, ad->data);
-	rb_free(ad);
+	rb_settimeout(F, 0, NULL, NULL);
+	rb_setselect(F, RB_SELECT_READ | RB_SELECT_WRITE, NULL, NULL);
+	
+	if(ret > 0)
+		ad->callback(F, RB_OK, (struct sockaddr *)&ad->S, ad->addrlen, ad->data);
+	else
+		ad->callback(F, RB_ERROR_SSL, NULL, 0, ad->data);
 
+	rb_free(ad);
 }
 
 void
@@ -508,4 +502,12 @@ rb_supports_ssl(void)
 	return 1;
 }
 
+void
+rb_get_ssl_info(char *buf, size_t len)
+{
+	rb_snprintf(buf, len, "GNUTLS: compiled (%s), library(%s)", 
+		    LIBGNUTLS_VERSION, gnutls_check_version(NULL));
+}
+  
+        
 #endif /* HAVE_GNUTLS */

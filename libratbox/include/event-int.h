@@ -20,7 +20,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: event-int.h 25992 2008-09-03 00:20:22Z androsyn $
+ *  $Id: event-int.h 26272 2008-12-10 05:55:10Z androsyn $
  */
 
 struct ev_entry
@@ -31,6 +31,7 @@ struct ev_entry
 	char *name;
 	time_t frequency;
 	time_t when;
+	time_t next;
 	void *data;
 	void *comm_ptr;
 };

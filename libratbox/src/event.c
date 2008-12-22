@@ -39,7 +39,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: event.c 26092 2008-09-19 15:13:52Z androsyn $
+ *  $Id: event.c 26272 2008-12-10 05:55:10Z androsyn $
  */
 
 #include <libratbox_config.h>
@@ -94,6 +94,7 @@ rb_event_add(const char *name, EVH * func, void *arg, time_t when)
 	ev->name = rb_strndup(name, EV_NAME_LEN);
 	ev->arg = arg;
 	ev->when = rb_current_time() + when;
+	ev->next = when;
 	ev->frequency = when;
 
 	if((ev->when < event_time_min) || (event_time_min == -1))
@@ -114,6 +115,7 @@ rb_event_addonce(const char *name, EVH * func, void *arg, time_t when)
 	ev->name = rb_strndup(name, EV_NAME_LEN);
 	ev->arg = arg;
 	ev->when = rb_current_time() + when;
+	ev->next = when;
 	ev->frequency = 0;
 
 	if((ev->when < event_time_min) || (event_time_min == -1))
@@ -250,15 +252,14 @@ rb_event_io_register_all(void)
 {
 	rb_dlink_node *ptr;
 	struct ev_entry *ev;
-	int when;
+
 	if(!rb_io_supports_event())
 		return;
 
 	RB_DLINK_FOREACH(ptr, event_list.head)
 	{
 		ev = ptr->data;
-		when = ev->when - rb_current_time();
-		rb_io_sched_event(ev, when);
+		rb_io_sched_event(ev, ev->next);
 	}
 }
 

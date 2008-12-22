@@ -1,14 +1,14 @@
-dnl $Id: configure.ac 26168 2008-10-26 20:58:40Z androsyn $
+dnl $Id: configure.ac 26260 2008-12-10 04:08:39Z androsyn $
 dnl Process this file with autoconf to produce a configure script.
 
 dnl TODO: clean up all the OpenSSL and shared module checking stuff;
 dnl the most major changes have already been made and it looks like
 dnl said functions need to be just about as complex as they already are.
 
-AC_PREREQ(2.61)
+AC_PREREQ(2.63)
 AUTOMAKE_OPTIONS = 1.10
 dnl Sneaky way to get an Id tag into the configure script
-AC_COPYRIGHT([$Id: configure.ac 26168 2008-10-26 20:58:40Z androsyn $])
+AC_COPYRIGHT([$Id: configure.ac 26260 2008-12-10 04:08:39Z androsyn $])
 AC_INIT([libratbox],[devel])
 AM_INIT_AUTOMAKE(AC_PACKAGE_TARNAME, AC_PACKAGE_VERSION, -)
 
@@ -75,8 +75,8 @@ case "$host_os" in
 *interix*)
      CPPFLAGS="$CFLAGS -D_ALL_SOURCE -D_XOPEN_SOURCE=500"
      ;;
-*solaris*|*sunos*)
-     CPPFLAGS="$CFLAGS -D_POSIX_PTHREAD_SEMANTICS -D_XPG4_2 -D__EXTENSIONS__"
+*solaris*)
+     CPPFLAGS="$CFLAGS -D_POSIX_PTHREAD_SEMANTICS -D_XPG4_2"
      ;;
 *)
      ;;
@@ -126,13 +126,13 @@ member.])],,[[
 #endif
 ]])
 
-AC_CHECK_TYPE([socklen_t], rb_socklen_t=socklen_t,[
+AC_CHECK_TYPE([socklen_t], rb_cv_socklen_t=socklen_t,[
 	AC_MSG_CHECKING([for socklen_t equivalent])
-	AC_CACHE_VAL([rb_socklen_t],
+	AC_CACHE_VAL([rb_cv_socklen_t],
 	[
 	# Systems have either "struct sockaddr *" or
 	# "void *" as the second argument to getpeername
-	rb_socklen_t=
+	rb_cv_socklen_t=
 	for arg2 in "struct sockaddr" void; do
 		for t in int size_t unsigned long "unsigned long"; do
 			AC_TRY_COMPILE([
@@ -150,20 +150,22 @@ int getpeername (int, $arg2 *, $t *);
 $t len;
 getpeername(0,0,&len);
 ],[
-	rb_socklen_t="$t"
+	rb_cv_socklen_t="$t"
 	break
 ])
 		done
 	done
 
-	if test "x$rb_socklen_t" = x; then
+	if test "x$rb_cv_socklen_t" = x; then
 		AC_MSG_WARN([Cannot find a type to use in place of socklen_t using int])
-		rb_socklen_t=int
+		rb_cv_socklen_t=int
 	fi
 	])
-	AC_MSG_RESULT($rb_socklen_t)],
+	AC_MSG_RESULT($rb_cv_socklen_t)],
 	[#include <sys/types.h>
 #include <sys/socket.h>])
+
+rb_socklen_t=$rb_cv_socklen_t
 
 
 
@@ -659,7 +661,7 @@ fi
 AC_CONFIG_FILES(		\
 	src/Makefile		\
 	Makefile		\
-	libratbox.pc	\
+	libratbox.pc
 )
 
 AC_OUTPUT

@@ -22,22 +22,20 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: devpoll.c 26092 2008-09-19 15:13:52Z androsyn $
+ *  $Id: devpoll.c 26254 2008-12-10 04:04:38Z androsyn $
  */
 #include <libratbox_config.h>
 #include <ratbox_lib.h>
 #include <commio-int.h>
 #include <fcntl.h>
 
-#if defined(HAVE_DEVPOLL) && (HAVE_DEVPOLL_H)
+#if defined(HAVE_DEVPOLL) && (HAVE_SYS_DEVPOLL_H)
 #include <sys/devpoll.h>
 
-
-static void devpoll_update_events(int, short, PF *);
 static int dpfd;
 static int maxfd;
 static short *fdmask;
-static void devpoll_update_events(int, short, PF *);
+static void devpoll_update_events(rb_fde_t *, short, PF *);
 static void devpoll_write_update(int, int);
 
 
@@ -74,12 +72,12 @@ devpoll_write_update(int fd, int events)
 }
 
 static void
-devpoll_update_events(int fd, short filter, PF * handler)
+devpoll_update_events(rb_fde_t *F, short filter, PF * handler)
 {
 	int update_required = 0;
+	int fd = rb_get_fd(F);
 	int cur_mask = fdmask[fd];
 	PF *cur_handler;
-
 	fdmask[fd] = 0;
 	switch (filter)
 	{
@@ -154,6 +152,7 @@ rb_init_netio_devpoll(void)
 	maxfd = getdtablesize() - 2;	/* This makes more sense than HARD_FDLIMIT */
 	fdmask = rb_malloc(sizeof(fdmask) * maxfd + 1);
 	rb_open(dpfd, RB_FD_UNKNOWN, "/dev/poll file descriptor");
+	return 0;
 }
 
 /*
@@ -169,13 +168,13 @@ rb_setselect_devpoll(rb_fde_t *F, unsigned int type, PF * handler, void *client_
 
 	if(type & RB_SELECT_READ)
 	{
-		devpoll_update_events(fd, RB_SELECT_READ, handler);
+		devpoll_update_events(F, RB_SELECT_READ, handler);
 		F->read_handler = handler;
 		F->read_data = client_data;
 	}
 	if(type & RB_SELECT_WRITE)
 	{
-		devpoll_update_events(fd, RB_SELECT_WRITE, handler);
+		devpoll_update_events(F, RB_SELECT_WRITE, handler);
 		F->write_handler = handler;
 		F->write_data = client_data;
 	}
@@ -242,7 +241,7 @@ rb_select_devpoll(long delay)
 					 * poll set *if* the handler changes state (active ->
 					 * NULL or vice versa.)
 					 */
-					devpoll_update_events(fd, RB_SELECT_READ, F->read_handler);
+					devpoll_update_events(F, RB_SELECT_READ, F->read_handler);
 				}
 			}
 
@@ -257,7 +256,7 @@ rb_select_devpoll(long delay)
 					F->write_handler = NULL;
 					hdl(F, F->write_data);
 					/* See above similar code in the read case */
-					devpoll_update_events(fd,
+					devpoll_update_events(F,
 							      RB_SELECT_WRITE, F->write_handler);
 				}
 

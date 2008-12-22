@@ -1,5 +1,5 @@
 /*
- * $Id: ratbox_lib.h 26052 2008-09-09 16:47:03Z androsyn $
+ * $Id: ratbox_lib.h 26256 2008-12-10 04:05:26Z androsyn $
  */
 
 #ifndef RB_LIB_H
@@ -205,6 +205,7 @@ int rb_setenv(const char *, const char *, int);
 pid_t rb_waitpid(pid_t pid, int *status, int options);
 pid_t rb_getpid(void);
 //unsigned int rb_geteuid(void);
+
 
 #include <rb_tools.h>
 #include <rb_memory.h>

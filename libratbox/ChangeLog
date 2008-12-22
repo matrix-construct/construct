@@ -1,3 +1,140 @@
+androsyn    2008/12/13 03:36:00 UTC	(20081213_1-26296)
+  Log:
+  fix a gnutls related double free
+
+  Modified:
+	libratbox/trunk/src/gnutls.c (File Modified) 
+
+
+androsyn    2008/12/13 03:01:19 UTC	(20081213_0-26294)
+  Log:
+  shut up gcc warnings regarding can_do_timerd
+
+  Modified:
+	libratbox/trunk/src/epoll.c (File Modified) 
+
+
+androsyn    2008/12/10 23:28:53 UTC	(20081210_10-26286)
+  Log:
+  make ports work properly
+
+  Modified:
+	libratbox/trunk/src/ports.c (File Modified) 
+
+
+androsyn    2008/12/10 20:33:21 UTC	(20081210_9-26282)
+  Log:
+  tweak the ssl info output a bit
+
+  Modified:
+	libratbox/trunk/src/gnutls.c (File Modified) 
+	libratbox/trunk/src/openssl.c (File Modified) 
+	libratbox/trunk/src/ratbox_lib.c (File Modified) 
+
+
+androsyn    2008/12/10 20:25:29 UTC	(20081210_8-26280)
+  Log:
+  report ssl info in the libratbox version
+
+  Modified:
+	libratbox/trunk/include/commio-ssl.h (File Modified) 
+	libratbox/trunk/src/gnutls.c (File Modified) 
+	libratbox/trunk/src/nossl.c (File Modified) 
+	libratbox/trunk/src/openssl.c (File Modified) 
+	libratbox/trunk/src/ratbox_lib.c (File Modified) 
+
+
+androsyn    2008/12/10 06:45:54 UTC	(20081210_7-26276)
+  Log:
+  these rb_set_time calls aren't needed i don't think
+
+  Modified:
+	libratbox/trunk/src/epoll.c (File Modified) 
+
+
+androsyn    2008/12/10 06:24:47 UTC	(20081210_6-26274)
+  Log:
+  fix signalfd stuff for ultrasparc linux....
+
+  Modified:
+	libratbox/trunk/src/epoll.c (File Modified) 
+
+
+androsyn    2008/12/10 05:55:10 UTC	(20081210_5-26272)
+  Log:
+  fix some epoll related timer stuff
+
+  Modified:
+	libratbox/trunk/include/event-int.h (File Modified) 
+	libratbox/trunk/src/epoll.c (File Modified) 
+	libratbox/trunk/src/event.c (File Modified) 
+
+
+androsyn    2008/12/10 04:08:39 UTC	(20081210_4-26260)
+  Log:
+  Rebuild configure and friends with autoconf 2.63
+  
+  
+
+  Modified:
+	libratbox/trunk/Makefile.in (File Modified) 
+	libratbox/trunk/aclocal.m4 (File Modified) 
+	libratbox/trunk/configure (File Modified) 
+	libratbox/trunk/configure.ac (File Modified) 
+	libratbox/trunk/include/libratbox_config.h.in (File Modified) 
+	libratbox/trunk/src/Makefile.in (File Modified) 
+
+
+androsyn    2008/12/10 04:06:12 UTC	(20081210_3-26258)
+  Log:
+  add a missing part of the ports timer commit
+
+  Modified:
+	libratbox/trunk/include/commio-int.h (File Modified) 
+
+
+androsyn    2008/12/10 04:05:26 UTC	(20081210_2-26256)
+  Log:
+  remove a duplicate prototype
+
+  Modified:
+	libratbox/trunk/include/ratbox_lib.h (File Modified) 
+
+
+androsyn    2008/12/10 04:04:38 UTC	(20081210_1-26254)
+  Log:
+  fix ports and devpoll and add timer support to ports
+
+  Modified:
+	libratbox/trunk/src/commio.c (File Modified) 
+	libratbox/trunk/src/devpoll.c (File Modified) 
+	libratbox/trunk/src/ports.c (File Modified) 
+
+
+androsyn    2008/12/10 04:03:09 UTC	(20081210_0-26252)
+  Log:
+  change SSL_CTX_use_certificate_file to SSL_CTX_use_certificate_chain_file
+
+  Modified:
+	libratbox/trunk/src/openssl.c (File Modified) 
+
+
+androsyn    2008/11/23 17:13:19 UTC	(20081123_1-26240)
+  Log:
+  revert that last change
+
+  Modified:
+	libratbox/trunk/src/epoll.c (File Modified) 
+
+
+androsyn    2008/11/23 17:04:29 UTC	(20081123_0-26238)
+  Log:
+  ifdef can_do_timerfd to avoid a compile time warning
+
+  Modified:
+	libratbox/trunk/src/epoll.c (File Modified) 
+
+
 androsyn    2008/11/11 00:00:12 UTC	(20081111_0-26180)
   Log:
   fix build errors on os x leopard

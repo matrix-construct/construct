@@ -155,8 +155,9 @@ int
 rb_kill(int pid, int sig)
 {
 	HANDLE hProcess;
-	hProcess = OpenProcess(PROCESS_ALL_ACCESS, TRUE, pid);
 	int ret = -1;
+	hProcess = OpenProcess(PROCESS_ALL_ACCESS, TRUE, pid);
+	
 	if(hProcess)
 	{
 		switch (sig)

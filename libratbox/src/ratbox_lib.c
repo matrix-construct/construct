@@ -20,12 +20,13 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: ratbox_lib.c 26092 2008-09-19 15:13:52Z androsyn $
+ *  $Id: ratbox_lib.c 26282 2008-12-10 20:33:21Z androsyn $
  */
 
 #include <libratbox_config.h>
 #include <ratbox_lib.h>
 #include <commio-int.h>
+#include <commio-ssl.h>
 
 static log_cb *rb_log;
 static restart_cb *rb_restart;
@@ -187,7 +188,11 @@ extern const char *libratbox_serno;
 const char *
 rb_lib_version(void)
 {
-	return libratbox_serno;
+	static char version_info[512];
+	char ssl_info[512];
+	rb_get_ssl_info(ssl_info, sizeof(ssl_info));
+	rb_snprintf(version_info, sizeof(version_info), "libratbox version: %s - %s", libratbox_serno, ssl_info);
+	return version_info;
 }
 
 void

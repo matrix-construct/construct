@@ -23,7 +23,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: epoll.c 26092 2008-09-19 15:13:52Z androsyn $
+ *  $Id: epoll.c 26294 2008-12-13 03:01:19Z androsyn $
  */
 #define _GNU_SOURCE 1
 
@@ -69,6 +69,7 @@ int
 rb_init_netio_epoll(void)
 {
 	can_do_event = 0;	/* shut up gcc */
+	can_do_timerfd = 0;
 	ep_info = rb_malloc(sizeof(struct epoll_info));
 	ep_info->pfd_size = getdtablesize();
 	ep_info->ep = epoll_create(ep_info->pfd_size);
@@ -267,7 +268,7 @@ rb_epoll_supports_event(void)
 		close(fd);
 		can_do_event = 1;
 		can_do_timerfd = 1;
-		return 0;
+		return 1;
 	}
 #endif
 
@@ -333,6 +334,7 @@ signalfd_handler(rb_fde_t *F, void *data)
 	while(1)
 	{
 		ret = readv(rb_get_fd(F), iov, SIGFDIOV_COUNT);
+
 		if(ret == 0 || (ret < 0 && !rb_ignore_errno(errno)))
 		{
 			rb_close(F);
@@ -347,7 +349,13 @@ signalfd_handler(rb_fde_t *F, void *data)
 		}
 		for(x = 0; x < ret / (int)sizeof(struct our_signalfd_siginfo); x++)
 		{
-			ev = (struct ev_entry *)((uintptr_t)fdsig[x].svptr);
+#if __WORDSIZE == 32 && defined(__sparc__)
+			uint32_t *q = (uint32_t *)&fdsig[x].svptr;
+			ev = (struct ev_entry *)q[0];
+#else
+			ev = (struct ev_entry *)(uintptr_t)(fdsig[x].svptr);
+
+#endif
 			if(ev == NULL)
 				continue;
 			rb_run_event(ev);
@@ -430,6 +438,7 @@ rb_read_timerfd(rb_fde_t *F, void *data)
 	}
 
 	retlen = rb_read(F, &count, sizeof(count));
+
 	if(retlen == 0 || (retlen < 0 && !rb_ignore_errno(errno)))
 	{
 		rb_close(F);

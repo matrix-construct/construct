@@ -321,7 +321,7 @@ rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile)
 		rb_lib_log("rb_setup_ssl_server: No certificate file");
 		return 0;
 	}
-	if(!SSL_CTX_use_certificate_file(ssl_server_ctx, cert, SSL_FILETYPE_PEM))
+	if(!SSL_CTX_use_certificate_chain_file(ssl_server_ctx, cert))
 	{
 		err = ERR_get_error();
 		rb_lib_log("rb_setup_ssl_server: Error loading certificate file [%s]: %s", cert,
@@ -610,5 +610,13 @@ rb_supports_ssl(void)
 {
 	return 1;
 }
+
+void
+rb_get_ssl_info(char *buf, size_t len)
+{
+	rb_snprintf(buf, len, "Using SSL: %s compiled: 0x%lx, library 0x%lx", 
+		    SSLeay_version(SSLEAY_VERSION), OPENSSL_VERSION_NUMBER, SSLeay());
+}
+
 
 #endif /* HAVE_OPESSL */

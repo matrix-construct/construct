@@ -24,6 +24,8 @@
  *  $Id: commio.h 24059 2007-07-24 17:25:41Z androsyn $
  */
 
+#ifndef _COMMIO_INT_H
+#define _COMMIO_INT_H 1
 
 #define RB_FD_HASH_BITS 12
 #define RB_FD_HASH_SIZE (1UL << RB_FD_HASH_BITS)
@@ -208,6 +210,12 @@ int rb_init_netio_ports(void);
 int rb_select_ports(long);
 int rb_setup_fd_ports(rb_fde_t *F);
 
+void rb_ports_init_event(void);
+int rb_ports_sched_event(struct ev_entry *event, int when);
+void rb_ports_unsched_event(struct ev_entry *event);
+int rb_ports_supports_event(void);
+
+
 /* kqueue versions */
 void rb_setselect_kqueue(rb_fde_t *F, unsigned int type, PF * handler, void *client_data);
 int rb_init_netio_kqueue(void);
@@ -231,3 +239,5 @@ void rb_setselect_win32(rb_fde_t *F, unsigned int type, PF * handler, void *clie
 int rb_init_netio_win32(void);
 int rb_select_win32(long);
 int rb_setup_fd_win32(rb_fde_t *F);
+#endif
+
