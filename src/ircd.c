@@ -157,7 +157,6 @@ print_startup(int pid)
 	inotice("now running in %s mode from %s as pid %d ...",
 	       !server_state_foreground ? "background" : "foreground",
         	ConfigFileEntry.dpath, pid);
-	inotice("%s", rb_lib_version());
 
 	/* let the parent process know the initialization was successful
 	 * -- jilles */
@@ -628,6 +627,7 @@ main(int argc, char *argv[])
 		if(!server_state_foreground)
 			make_daemon();
 		inotice("starting %s ...", ircd_version);
+		inotice("%s", rb_lib_version());
 	}
 
 	/* Init the event subsystem */
