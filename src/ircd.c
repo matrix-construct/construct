@@ -157,6 +157,7 @@ print_startup(int pid)
 	inotice("now running in %s mode from %s as pid %d ...",
 	       !server_state_foreground ? "background" : "foreground",
         	ConfigFileEntry.dpath, pid);
+	inotice("%s", rb_lib_version());
 
 	/* let the parent process know the initialization was successful
 	 * -- jilles */
@@ -598,6 +599,7 @@ main(int argc, char *argv[])
 	if(printVersion)
 	{
 		printf("ircd: version %s(%s)\n", ircd_version, serno);
+		printf("ircd: %s\n", rb_lib_version());
 		exit(EXIT_SUCCESS);
 	}
 
