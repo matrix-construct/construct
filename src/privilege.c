@@ -167,6 +167,10 @@ privilegeset_mark_all_illegal(void)
 	{
 		struct PrivilegeSet *set = (struct PrivilegeSet *) iter->data;
 
+		/* the "default" privset is special and must remain available */
+		if (!strcmp(set->name, "default"))
+			continue;
+
 		set->status |= CONF_ILLEGAL;
 		/* but do not free it yet */
 	}
