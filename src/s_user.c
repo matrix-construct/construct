@@ -904,7 +904,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 		return 0;
 	}
 
-	if(source_p != target_p || target_p->from != source_p->from)
+	if(source_p != target_p)
 	{
 		sendto_one(source_p, form_str(ERR_USERSDONTMATCH), me.name, source_p->name);
 		return 0;
