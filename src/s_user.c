@@ -854,6 +854,30 @@ report_and_set_user_flags(struct Client *source_p, struct ConfItem *aconf)
 	}
 }
 
+static void
+show_other_user_mode(struct Client *source_p, struct Client *target_p)
+{
+	int i;
+	char buf[BUFSIZE];
+	char *m;
+
+	m = buf;
+	*m++ = '+';
+
+	for (i = 0; i < 128; i++) /* >= 127 is extended ascii */
+		if (target_p->umodes & user_modes[i])
+			*m++ = (char) i;
+	*m = '\0';
+
+	if (MyConnect(target_p) && target_p->snomask != 0)
+		sendto_one_notice(source_p, ":Modes for %s are %s %s",
+				target_p->name, buf,
+				construct_snobuf(target_p->snomask));
+	else
+		sendto_one_notice(source_p, ":Modes for %s are %s",
+				target_p->name, buf);
+}
+
 /*
  * user_mode - set get current users mode
  *
@@ -906,7 +930,10 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 
 	if(source_p != target_p)
 	{
-		sendto_one(source_p, form_str(ERR_USERSDONTMATCH), me.name, source_p->name);
+		if (MyOper(source_p) && parc < 3)
+			show_other_user_mode(source_p, target_p);
+		else
+			sendto_one(source_p, form_str(ERR_USERSDONTMATCH), me.name, source_p->name);
 		return 0;
 	}
 
