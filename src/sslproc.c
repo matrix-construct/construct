@@ -385,29 +385,6 @@ ssl_process_dead_fd(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 	exit_client(client_p, client_p, &me, reason);
 }
 
-
-static void
-ssl_process_zip_ready(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
-{
-	struct Client *client_p;
-	int32_t fd;
-
-	if(ctl_buf->buflen < 5)
-		return;		/* bogus message..drop it.. XXX should warn here */
-
-	fd = buf_to_int32(&ctl_buf->buf[1]);
-	client_p = find_cli_fd_hash(fd);
-	if(client_p == NULL)
-		return;
-
-	/* Now start sending the data that should be compressed. */
-	// ClearCork(client_p);
-	send_pop_queue(client_p);
-	/* Start reading uncompressed data. */
-	read_packet(client_p->localClient->F, client_p);
-}
-
-
 static void
 ssl_process_cmd_recv(ssl_ctl_t * ctl)
 {
@@ -441,9 +418,6 @@ ssl_process_cmd_recv(ssl_ctl_t * ctl)
 			ilog(L_MAIN, no_ssl_or_zlib);
 			sendto_realops_snomask(SNO_GENERAL, L_ALL, no_ssl_or_zlib);
 			ssl_killall();
-			break;
-		case 'R':
-			ssl_process_zip_ready(ctl, ctl_buf);
 			break;
 		case 'z':
 			zlib_ok = 0;

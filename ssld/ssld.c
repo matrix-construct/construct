@@ -752,16 +752,6 @@ process_stats(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 
 #ifdef HAVE_LIBZ
 static void
-zlib_send_zip_ready(mod_ctl_t * ctl, conn_t * conn)
-{
-	char buf[5];
-
-	buf[0] = 'R';
-	int32_to_buf(&buf[1], conn->id);
-	mod_cmd_write_queue(conn->ctl, buf, sizeof(buf));
-}
-
-static void
 zlib_process(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 {
 	uint8_t level;
@@ -811,7 +801,7 @@ zlib_process(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 	deflateInit(&((zlib_stream_t *) conn->stream)->outstream, level);
 	if(recvqlen > 0)
 		common_zlib_inflate(conn, recvq_start, recvqlen);
-	zlib_send_zip_ready(ctl, conn);
+
 	conn_mod_read_cb(conn->mod_fd, conn);
 	conn_plain_read_cb(conn->plain_fd, conn);
 	return;

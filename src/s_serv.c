@@ -892,8 +892,7 @@ server_estab(struct Client *client_p)
 
 	free_pre_client(client_p);
 
-	if (!IsCapable(client_p, CAP_ZIP))
-		send_pop_queue(client_p);
+	send_pop_queue(client_p);
 
 	return 0;
 }
