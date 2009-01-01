@@ -172,7 +172,7 @@ scan_umodes(struct Client *client_p, struct Client *source_p, int parc,
 				mask = parv[++i];
 		}
 	}
-	if (target_list == &global_client_list && (list_users || mask))
+	if (target_list == &global_client_list && list_users)
 	{
 		if (IsOperSpy(source_p))
 		{

@@ -12,5 +12,5 @@ nick!user@host mask to be selected. Only the displayed host
 is considered, not the IP address or real host behind
 dynamic spoofs.
 
-Network searches where a listing is given or the MASK option
-is used are operspy commands.
+Network searches where a listing is given are operspy
+commands.
