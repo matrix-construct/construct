@@ -766,9 +766,6 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 	else
 		modes = empty_modes;
 
-	/* working on the presumption eventually itll be more efficient to
-	 * build a TS6 buffer without checking its needed..
-	 */
 	mlen_uid = rb_sprintf(buf_uid, ":%s SJOIN %ld %s %s :",
 			      use_id(source_p), (long) chptr->channelts, parv[2], modes);
 	ptr_uid = buf_uid + mlen_uid;
