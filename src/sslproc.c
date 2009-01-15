@@ -377,6 +377,14 @@ ssl_process_dead_fd(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 	client_p = find_cli_fd_hash(fd);
 	if(client_p == NULL)
 		return;
+	if(IsAnyServer(client_p) || IsRegistered(client_p))
+	{
+		/* read any last moment ERROR, QUIT or the like -- jilles */
+		if (!strcmp(reason, "Remote host closed the connection"))
+			read_packet(client_p->localClient->F, client_p);
+		if (IsAnyDead(client_p))
+			return;
+	}
 	if(IsAnyServer(client_p))
 	{
 		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) && !IsServer(client_p) ? L_NETWIDE : L_ALL, "ssld error for %s: %s", client_p->name, reason);
