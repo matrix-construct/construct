@@ -135,6 +135,12 @@ scan_umodes(struct Client *client_p, struct Client *source_p, int parc,
 		return -1;
 	}
 
+	if (parv[2][0] != '+' && parv[2][0] != '-')
+	{
+		sendto_one_notice(source_p, ":SCAN UMODES: umodes parameter must start with '+' or '-'");
+		return -1;
+	}
+
 	for (c = parv[2]; *c; c++)
 	{
 		switch(*c)
@@ -170,6 +176,16 @@ scan_umodes(struct Client *client_p, struct Client *source_p, int parc,
 				list_max = atoi(parv[++i]);
 			else if (!irccmp(parv[i], "mask"))
 				mask = parv[++i];
+			else
+			{
+				sendto_one_notice(source_p, ":SCAN UMODES: invalid parameters");
+				return -1;
+			}
+		}
+		else
+		{
+			sendto_one_notice(source_p, ":SCAN UMODES: invalid parameters");
+			return -1;
 		}
 	}
 	if (target_list == &global_client_list && list_users)
