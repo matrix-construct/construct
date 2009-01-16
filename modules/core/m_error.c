@@ -96,8 +96,11 @@ m_error(struct Client *client_p, struct Client *source_p, int parc, const char *
 
 	para = (parc > 1 && *parv[1] != '\0') ? parv[1] : "<>";
 
-	ilog(L_SERVER, "Received ERROR message from %s: %s",
-	     log_client_name(source_p, SHOW_IP), para);
+	if (IsAnyServer(client_p))
+	{
+		ilog(L_SERVER, "Received ERROR message from %s: %s",
+		     log_client_name(source_p, SHOW_IP), para);
+	}
 
 	if(is_safe_error(para))
 		hideit = 0;
