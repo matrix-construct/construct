@@ -931,7 +931,7 @@ perform_nick_collides(struct Client *source_p, struct Client *client_p,
 				(void) exit_client(client_p, target_p, &me, "Nick collision");
 			}
 
-			register_client(client_p, parc >= 10 ? source_p : NULL,
+			register_client(client_p, source_p,
 					nick, newts, parc, parv);
 
 			return 0;
@@ -1090,19 +1090,6 @@ register_client(struct Client *client_p, struct Client *server,
 	const char *m;
 	int flag;
 
-	if(server == NULL)
-	{
-		if((server = find_server(NULL, parv[7])) == NULL)
-		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
-					     "Ghost killed: %s on invalid server %s",
-					     nick, parv[7]);
-			sendto_one(client_p, ":%s KILL %s :%s (Server doesn't exist)",
-					get_id(&me, client_p), nick, me.name);
-			return 0;
-		}
-	}
-
 	source_p = make_client(client_p);
 	user = make_user(source_p);
 	rb_dlinkAddTail(source_p, &source_p->node, &global_client_list);
@@ -1139,7 +1126,7 @@ register_client(struct Client *client_p, struct Client *server,
 	}
 	else
 	{
-		rb_strlcpy(source_p->info, parv[8], sizeof(source_p->info));
+		s_assert(0);
 	}
 
 	/* remove any nd entries for this nick */
@@ -1199,23 +1186,6 @@ register_client(struct Client *client_p, struct Client *server,
 	source_p->servptr = server;
 
 	rb_dlinkAdd(source_p, &source_p->lnode, &source_p->servptr->serv->users);
-
-	/* fake direction */
-	if(source_p->servptr->from != source_p->from)
-	{
-		struct Client *target_p = source_p->servptr->from;
-
-		sendto_realops_snomask(SNO_DEBUG, L_ALL,
-				     "Bad User [%s] :%s USER %s@%s %s, != %s[%s]",
-				     client_p->name, source_p->name,
-				     source_p->username, source_p->host,
-				     server->name, target_p->name, target_p->from->name);
-		kill_client(client_p, source_p,
-			    "%s (NICK from wrong direction (%s != %s))",
-			    me.name, server->name, target_p->from->name);
-		source_p->flags |= FLAGS_KILLED;
-		return exit_client(source_p, source_p, &me, "USER server wrong direction");
-	}
 
 	call_hook(h_new_remote_user, source_p);
 
