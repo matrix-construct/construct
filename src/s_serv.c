@@ -507,7 +507,7 @@ burst_TS6(struct Client *client_p)
 			ubuf[1] = '\0';
 		}
 
-		if(has_id(target_p) && IsCapable(client_p, CAP_EUID))
+		if(IsCapable(client_p, CAP_EUID))
 			sendto_one(client_p, ":%s EUID %s %d %ld %s %s %s %s %s %s %s :%s",
 				   target_p->servptr->id, target_p->name,
 				   target_p->hopcount + 1, 
@@ -518,7 +518,7 @@ burst_TS6(struct Client *client_p)
 				   IsDynSpoof(target_p) ? target_p->orighost : "*",
 				   EmptyString(target_p->user->suser) ? "*" : target_p->user->suser,
 				   target_p->info);
-		else if(has_id(target_p))
+		else
 			sendto_one(client_p, ":%s UID %s %d %ld %s %s %s %s %s :%s",
 				   target_p->servptr->id, target_p->name,
 				   target_p->hopcount + 1, 
@@ -526,16 +526,8 @@ burst_TS6(struct Client *client_p)
 				   target_p->username, target_p->host,
 				   IsIPSpoof(target_p) ? "0" : target_p->sockhost,
 				   target_p->id, target_p->info);
-		else
-			sendto_one(client_p, "NICK %s %d %ld %s %s %s %s :%s",
-					target_p->name,
-					target_p->hopcount + 1,
-					(long) target_p->tsinfo,
-					ubuf,
-					target_p->username, target_p->host,
-					target_p->servptr->name, target_p->info);
 
-		if(!has_id(target_p) || !IsCapable(client_p, CAP_EUID))
+		if(!IsCapable(client_p, CAP_EUID))
 		{
 			if(IsDynSpoof(target_p))
 				sendto_one(client_p, ":%s ENCAP * REALHOST %s",
