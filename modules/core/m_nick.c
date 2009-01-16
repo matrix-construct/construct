@@ -1290,6 +1290,8 @@ static void bad_nickname(struct Client *client_p, const char *nick)
 	sendto_server(NULL, NULL, CAP_TS6, NOCAPS,
 			":%s WALLOPS :Squitting %s because of bad nickname %s (NICKLEN mismatch?)",
 			me.id, client_p->name, nick);
+	ilog(L_SERVER, "Link %s cancelled, bad nickname %s sent (NICKLEN mismatch?)",
+			client_p->name, nick);
 
 	rb_snprintf(squitreason, sizeof squitreason,
 			"Bad nickname introduced [%s]", nick);
