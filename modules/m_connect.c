@@ -129,7 +129,7 @@ mo_connect(struct Client *client_p, struct Client *source_p, int parc, const cha
 	 * Notify all operators about remote connect requests
 	 */
 
-	ilog(L_SERVER, "CONNECT From %s : %s %s", parv[0], parv[1], parc > 2 ? parv[2] : "");
+	ilog(L_SERVER, "CONNECT From %s : %s %s", source_p->name, parv[1], parc > 2 ? parv[2] : "");
 
 	server_p->port = port;
 	/*
