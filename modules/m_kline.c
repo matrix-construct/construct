@@ -433,8 +433,8 @@ mo_unkline(struct Client *client_p, struct Client *source_p, int parc, const cha
 static int
 ms_unkline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	/* parv[0]  parv[1]        parv[2]  parv[3]
-	 * oper     target server  user     host    */
+	/* source_p  parv[1]        parv[2]  parv[3]
+	 * oper      target server  user     host    */
 	propagate_generic(source_p, "UNKLINE", parv[1], CAP_UNKLN,
 			"%s %s", parv[2], parv[3]);
 

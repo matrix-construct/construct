@@ -176,8 +176,8 @@ mo_xline(struct Client *client_p, struct Client *source_p, int parc, const char 
 static int
 ms_xline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	/* parv[0]  parv[1]      parv[2]  parv[3]  parv[4]
-	 * oper     target serv  xline    type     reason
+	/* source_p  parv[1]      parv[2]  parv[3]  parv[4]
+	 * oper      target serv  xline    type     reason
 	 */
 	propagate_xline(source_p, parv[1], 0, parv[2], parv[3], parv[4]);
 
@@ -488,8 +488,8 @@ mo_unxline(struct Client *client_p, struct Client *source_p, int parc, const cha
 static int
 ms_unxline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	/* parv[0]  parv[1]        parv[2]
-	 * oper     target server  gecos
+	/* source_p  parv[1]        parv[2]
+	 * oper      target server  gecos
 	 */
 	propagate_generic(source_p, "UNXLINE", parv[1], CAP_CLUSTER,
 			"%s", parv[2]);

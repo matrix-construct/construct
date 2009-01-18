@@ -71,8 +71,8 @@ m_locops(struct Client *client_p, struct Client *source_p, int parc, const char 
 static int
 ms_locops(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	/* parv[0]  parv[1]      parv[2]
-	 * oper     target serv  message
+	/* source_p  parv[1]      parv[2]
+	 * oper      target serv  message
 	 */
 	propagate_generic(source_p, "LOCOPS", parv[1], CAP_CLUSTER, 
 				":%s", parv[2]);

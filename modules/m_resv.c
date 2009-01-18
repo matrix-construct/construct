@@ -147,8 +147,8 @@ static int
 ms_resv(struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
-	/* parv[0]  parv[1]        parv[2]  parv[3]
-	 * oper     target server  resv     reason
+	/* source_p  parv[1]        parv[2]  parv[3]
+	 * oper      target server  resv     reason
 	 */
 	propagate_resv(source_p, parv[1], 0, parv[2], parv[3]);
 
@@ -410,8 +410,8 @@ mo_unresv(struct Client *client_p, struct Client *source_p, int parc, const char
 static int
 ms_unresv(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	/* parv[0]  parv[1]        parv[2]
-	 * oper     target server  resv to remove
+	/* source_p  parv[1]        parv[2]
+	 * oper      target server  resv to remove
 	 */
 	propagate_generic(source_p, "UNRESV", parv[1], CAP_CLUSTER,
 			"%s", parv[2]);
