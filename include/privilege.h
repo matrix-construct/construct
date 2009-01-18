@@ -47,5 +47,6 @@ struct PrivilegeSet *privilegeset_ref(struct PrivilegeSet *set);
 void privilegeset_unref(struct PrivilegeSet *set);
 void privilegeset_mark_all_illegal(void);
 void privilegeset_delete_all_illegal(void);
+void privilegeset_report(struct Client *source_p);
 
 #endif

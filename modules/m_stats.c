@@ -101,6 +101,7 @@ static void stats_klines(struct Client *);
 static void stats_messages(struct Client *);
 static void stats_dnsbl(struct Client *);
 static void stats_oper(struct Client *);
+static void stats_privset(struct Client *);
 static void stats_operedup(struct Client *);
 static void stats_ports(struct Client *);
 static void stats_tresv(struct Client *);
@@ -148,7 +149,7 @@ static struct StatsStruct stats_cmd_table[] = {
 	{'M', stats_messages,		0, 0, },
 	{'n', stats_dnsbl,		0, 0, },
 	{'o', stats_oper,		0, 0, },
-	{'O', stats_oper,		0, 0, },
+	{'O', stats_privset,		1, 0, },
 	{'p', stats_operedup,		0, 0, },
 	{'P', stats_ports,		0, 0, },
 	{'q', stats_tresv,		1, 0, },
@@ -678,6 +679,11 @@ stats_oper(struct Client *source_p)
 	}
 }
 
+static void
+stats_privset(struct Client *source_p)
+{
+	privilegeset_report(source_p);
+}
 
 /* stats_operedup()
  *

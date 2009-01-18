@@ -24,6 +24,7 @@ X f - Shows File Descriptors
   l - Shows hostname and generic info about [nick]
   m - Shows commands and their usage
   n - Shows DNS blacklists
+* O - Shows privset blocks
 ^ o - Shows operator blocks (Old O: lines)
 ^ P - Shows configured ports
   p - Shows online opers

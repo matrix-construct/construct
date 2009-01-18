@@ -24,6 +24,7 @@
 #include <stdinc.h>
 #include "s_conf.h"
 #include "privilege.h"
+#include "numeric.h"
 
 static rb_dlink_list privilegeset_list = {};
 
@@ -187,5 +188,22 @@ privilegeset_delete_all_illegal(void)
 
 		privilegeset_ref(set);
 		privilegeset_unref(set);
+	}
+}
+
+void
+privilegeset_report(struct Client *source_p)
+{
+	rb_dlink_node *ptr;
+
+	RB_DLINK_FOREACH(ptr, privilegeset_list.head)
+	{
+		struct PrivilegeSet *set = ptr->data;
+
+		/* use RPL_STATSDEBUG for now -- jilles */
+		sendto_one_numeric(source_p, RPL_STATSDEBUG,
+				"O :%s %s",
+				set->name,
+				set->privs);
 	}
 }

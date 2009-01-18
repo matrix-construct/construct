@@ -1015,6 +1015,12 @@
 	    </listitem>
 	  </varlistentry>
 	  <varlistentry>
+	    <term>O</term>
+	    <listitem>
+	      <para>Show privset blocks</para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
 	    <term>p</term>
 	    <listitem>
 	      <para>Show logged on network operators which are not set AWAY.</para>
