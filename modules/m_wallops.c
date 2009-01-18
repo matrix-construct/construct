@@ -78,7 +78,6 @@ mo_operwall(struct Client *client_p, struct Client *source_p, int parc, const ch
 /*
  * ms_operwall - OPERWALL message handler
  *  (write to *all* local opers currently online)
- *      parv[0] = sender prefix
  *      parv[1] = message text
  */
 static int

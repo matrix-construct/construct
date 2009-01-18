@@ -60,7 +60,6 @@ static const char *weekdays[] = {
 
 /*
  * m_time
- *      parv[0] = sender prefix
  *      parv[1] = servername
  */
 static int

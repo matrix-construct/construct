@@ -58,7 +58,6 @@ DECLARE_MODULE_AV1(kill, NULL, NULL, kill_clist, NULL, NULL, "$Revision: 3408 $"
 
 /*
 ** mo_kill
-**      parv[0] = sender prefix
 **      parv[1] = kill victim
 **      parv[2] = kill path
 */
@@ -158,7 +157,6 @@ mo_kill(struct Client *client_p, struct Client *source_p, int parc, const char *
 
 /*
  * ms_kill
- *      parv[0] = sender prefix
  *      parv[1] = kill victim
  *      parv[2] = kill path and reason
  */

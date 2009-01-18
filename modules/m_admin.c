@@ -60,7 +60,6 @@ DECLARE_MODULE_AV1(admin, NULL, NULL, admin_clist, admin_hlist, NULL, "$Revision
 
 /*
  * mr_admin - ADMIN command handler
- *      parv[0] = sender prefix   
  *      parv[1] = servername   
  */
 static int
@@ -86,7 +85,6 @@ mr_admin(struct Client *client_p, struct Client *source_p, int parc, const char 
 
 /*
  * m_admin - ADMIN command handler
- *      parv[0] = sender prefix
  *      parv[1] = servername
  */
 static int
@@ -117,7 +115,6 @@ m_admin(struct Client *client_p, struct Client *source_p, int parc, const char *
 
 /*
  * ms_admin - ADMIN command handler, used for OPERS as well
- *      parv[0] = sender prefix
  *      parv[1] = servername
  */
 static int

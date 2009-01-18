@@ -50,7 +50,7 @@ struct Dictionary *alias_dict = NULL;
  */
 static char *sender;
 
-/* parv[0] == source, and parv[LAST] == NULL */
+/* parv[0] is not used, and parv[LAST] == NULL */
 static char *para[MAXPARA + 2];
 
 static void cancel_clients(struct Client *, struct Client *, char *);
@@ -104,7 +104,7 @@ string_to_array(char *string, char **parv)
 		if(*buf == '\0')
 			return x;
 	}
-	/* we can go upto parv[MAXPARA], as parv[0] is taken by source */
+	/* we can go upto parv[MAXPARA], as parv[0] is skipped */
 	while (x < MAXPARA);
 
 	if(*p == ':')
@@ -560,7 +560,6 @@ remove_unknown(struct Client *client_p, char *lsender, char *lbuffer)
 /*
  *
  *      parc    number of arguments ('sender' counted as one!)
- *      parv[0] pointer to 'sender' (may point to empty string) (not used)
  *      parv[1]..parv[parc-1]
  *              pointers to additional parameters, this is a NULL
  *              terminated list (parv[parc] == NULL).

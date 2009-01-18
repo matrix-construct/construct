@@ -50,7 +50,6 @@ DECLARE_MODULE_AV1(quit, NULL, NULL, quit_clist, NULL, NULL, "$Revision: 1333 $"
 
 /*
 ** m_quit
-**      parv[0] = sender prefix
 **      parv[1] = comment
 */
 static int
@@ -87,7 +86,6 @@ m_quit(struct Client *client_p, struct Client *source_p, int parc, const char *p
 
 /*
 ** ms_quit
-**      parv[0] = sender prefix
 **      parv[1] = comment
 */
 static int

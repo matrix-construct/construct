@@ -240,7 +240,6 @@ me_rsfnc(struct Client *client_p, struct Client *source_p,
 
 /*
 ** me_nickdelay
-**      parv[0] = sender prefix
 **      parv[1] = duration in seconds (0 to remove)
 **      parv[2] = nick
 */

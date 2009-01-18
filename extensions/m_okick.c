@@ -52,7 +52,6 @@ DECLARE_MODULE_AV1(okick, NULL, NULL, okick_clist, NULL, NULL, "$Revision: 3554 
 
 /*
 ** m_okick
-**      parv[0] = sender prefix
 **      parv[1] = channel
 **      parv[2] = client to kick
 **      parv[3] = kick comment

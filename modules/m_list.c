@@ -103,7 +103,6 @@ static void safelist_check_cliexit(hook_data_client_exit * hdata)
 }
 
 /* m_list()
- *      parv[0] = sender prefix
  *      parv[1] = channel
  *
  * XXX - With SAFELIST, do we really need to continue pacing?
@@ -138,7 +137,6 @@ static int m_list(struct Client *client_p, struct Client *source_p, int parc, co
 }
 
 /* mo_list()
- *      parv[0] = sender prefix
  *      parv[1] = channel
  */
 static int mo_list(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])

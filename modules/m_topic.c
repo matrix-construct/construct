@@ -53,7 +53,6 @@ DECLARE_MODULE_AV1(topic, NULL, NULL, topic_clist, NULL, NULL, "$Revision: 254 $
 
 /*
  * m_topic
- *      parv[0] = sender prefix
  *      parv[1] = channel name
  *	parv[2] = new topic, if setting topic
  */
@@ -166,7 +165,6 @@ m_topic(struct Client *client_p, struct Client *source_p, int parc, const char *
 
 /*
  * ms_topic
- *      parv[0] = sender prefix
  *      parv[1] = channel name
  *	parv[2] = topic_info
  *	parv[3] = topic_info time

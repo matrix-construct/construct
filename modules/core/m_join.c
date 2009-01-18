@@ -125,7 +125,6 @@ check_forward(struct Client *source_p, struct Channel *chptr,
 
 /*
  * m_join
- *      parv[0] = sender prefix
  *      parv[1] = channel
  *      parv[2] = channel password (key)
  */
@@ -388,7 +387,6 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 
 /*
  * ms_join
- *      parv[0] = sender prefix
  *      parv[1] = channel TS
  *      parv[2] = channel
  *      parv[3] = "+", formerly channel modes but now unused

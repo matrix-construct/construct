@@ -57,7 +57,6 @@ DECLARE_MODULE_AV1(connect, NULL, NULL, connect_clist, NULL, NULL, "$Revision: 3
  * Added by Jto 11 Feb 1989
  *
  * m_connect
- *      parv[0] = sender prefix
  *      parv[1] = servername
  *      parv[2] = port number
  *      parv[3] = remote server
@@ -161,7 +160,6 @@ mo_connect(struct Client *client_p, struct Client *source_p, int parc, const cha
  * Added by Jto 11 Feb 1989
  *
  * m_connect
- *      parv[0] = sender prefix
  *      parv[1] = servername
  *      parv[2] = port number
  *      parv[3] = remote server

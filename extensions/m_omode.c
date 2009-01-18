@@ -55,7 +55,6 @@ DECLARE_MODULE_AV1(omode, NULL, NULL, omode_clist, NULL, NULL, "$Revision: 3121 
 
 /*
  * mo_omode - MODE command handler
- * parv[0] - sender
  * parv[1] - channel
  */
 static int

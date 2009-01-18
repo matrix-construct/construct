@@ -67,7 +67,6 @@ static const char *empty_sockhost = "255.255.255.255";
 
 /*
  * m_trace
- *      parv[0] = sender prefix
  *      parv[1] = servername
  */
 static int

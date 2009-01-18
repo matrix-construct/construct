@@ -50,7 +50,6 @@ DECLARE_MODULE_AV1(ping, NULL, NULL, ping_clist, NULL, NULL, "$Revision: 254 $")
 
 /*
 ** m_ping
-**      parv[0] = sender prefix
 **      parv[1] = origin
 **      parv[2] = destination
 */

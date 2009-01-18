@@ -882,7 +882,6 @@ show_other_user_mode(struct Client *source_p, struct Client *target_p)
  * user_mode - set get current users mode
  *
  * m_umode() added 15/10/91 By Darren Reed.
- * parv[0] - sender
  * parv[1] - username to change mode for
  * parv[2] - modes to change
  */

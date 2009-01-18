@@ -84,7 +84,6 @@ static void do_who(struct Client *source_p,
 
 /*
 ** m_who
-**      parv[0] = sender prefix
 **      parv[1] = nickname mask list
 **      parv[2] = additional selection flag and format options
 */

@@ -59,7 +59,6 @@ static void motd_spy(struct Client *);
 
 /*
 ** m_motd
-**      parv[0] = sender prefix
 **      parv[1] = servername
 */
 static int
@@ -90,7 +89,6 @@ m_motd(struct Client *client_p, struct Client *source_p, int parc, const char *p
 
 /*
 ** mo_motd
-**      parv[0] = sender prefix
 **      parv[1] = servername
 */
 static int

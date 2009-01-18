@@ -55,7 +55,6 @@ static int match_oper_password(const char *password, struct oper_conf *oper_p);
 
 /*
  * m_oper
- *      parv[0] = sender prefix
  *      parv[1] = oper name
  *      parv[2] = oper password
  */

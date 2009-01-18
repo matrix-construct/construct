@@ -67,7 +67,6 @@ DECLARE_MODULE_AV1(webirc, NULL, NULL, webirc_clist, NULL, NULL, "$Revision: 207
 
 /*
  * mr_webirc - webirc message handler
- *      parv[0] = sender prefix
  *      parv[1] = password
  *      parv[2] = fake username (we ignore this)
  *	parv[3] = fake hostname 

@@ -47,7 +47,6 @@ DECLARE_MODULE_AV1(users, NULL, NULL, users_clist, NULL, NULL, "$Revision: 254 $
 
 /*
  * m_users
- *      parv[0] = sender prefix
  *      parv[1] = servername
  */
 static int

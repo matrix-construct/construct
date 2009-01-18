@@ -66,7 +66,6 @@ DECLARE_MODULE_AV1(mode, NULL, NULL, mode_clist, NULL, NULL, "$Revision: 1006 $"
 
 /*
  * m_mode - MODE command handler
- * parv[0] - sender
  * parv[1] - channel
  */
 static int

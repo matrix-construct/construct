@@ -100,7 +100,6 @@ cleanup_challenge(struct Client *target_p)
 
 /*
  * m_challenge - generate RSA challenge for wouldbe oper
- * parv[0] = sender prefix
  * parv[1] = operator to challenge for, or +response
  *
  */

@@ -53,7 +53,6 @@ DECLARE_MODULE_AV1(whowas, NULL, NULL, whowas_clist, NULL, NULL, "$Revision: 171
 
 /*
 ** m_whowas
-**      parv[0] = sender prefix
 **      parv[1] = nickname queried
 */
 static int

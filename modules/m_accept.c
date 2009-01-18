@@ -54,7 +54,6 @@ DECLARE_MODULE_AV1(accept, NULL, NULL, accept_clist, NULL, NULL, "$Revision: 254
 
 /*
  * m_accept - ACCEPT command handler
- *      parv[0] = sender prefix
  *      parv[1] = servername
  */
 static int

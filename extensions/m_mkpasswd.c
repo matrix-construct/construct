@@ -97,7 +97,6 @@ m_mkpasswd(struct Client *client_p, struct Client *source_p, int parc, const cha
 
 /*
 ** mo_test
-**      parv[0] = sender prefix
 **      parv[1] = parameter
 */
 static int

@@ -48,7 +48,6 @@ mapi_clist_av1 knock_clist[] = { &knock_msgtab, NULL };
 DECLARE_MODULE_AV1(knock, NULL, NULL, knock_clist, NULL, NULL, "$Revision: 3570 $");
 
 /* m_knock
- *    parv[0] = sender prefix
  *    parv[1] = channel
  *
  *  The KNOCK command has the following syntax:

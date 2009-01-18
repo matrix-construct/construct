@@ -174,7 +174,6 @@ static struct StatsStruct stats_cmd_table[] = {
 
 /*
  * m_stats by fl_
- *      parv[0] = sender prefix
  *      parv[1] = stat letter/command
  *      parv[2] = (if present) server/mask in stats L, or target
  *

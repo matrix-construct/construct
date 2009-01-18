@@ -52,7 +52,6 @@ DECLARE_MODULE_AV1(kick, NULL, NULL, kick_clist, NULL, NULL, "$Revision: 3317 $"
 
 /*
 ** m_kick
-**      parv[0] = sender prefix
 **      parv[1] = channel
 **      parv[2] = client to kick
 **      parv[3] = kick comment

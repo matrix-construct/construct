@@ -58,7 +58,6 @@ static void part_one_client(struct Client *client_p,
 
 /*
 ** m_part
-**      parv[0] = sender prefix
 **      parv[1] = channel
 **      parv[2] = reason
 */

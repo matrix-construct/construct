@@ -49,7 +49,6 @@ DECLARE_MODULE_AV1(lusers, NULL, NULL, lusers_clist, NULL, NULL, "$Revision: 254
 
 /*
  * m_lusers - LUSERS message handler
- * parv[0] = sender
  * parv[1] = host/server mask.
  * parv[2] = server to query
  * 
@@ -85,7 +84,6 @@ m_lusers(struct Client *client_p, struct Client *source_p, int parc, const char 
 
 /*
  * ms_lusers - LUSERS message handler for servers and opers
- * parv[0] = sender
  * parv[1] = host/server mask.
  * parv[2] = server to query
  * 

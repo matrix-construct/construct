@@ -59,10 +59,8 @@ DECLARE_MODULE_AV1(links, NULL, NULL, links_clist, links_hlist, NULL, "$Revision
 
 /*
  * m_links - LINKS message handler
- *      parv[0] = sender prefix
  *      parv[1] = servername mask
  * or
- *      parv[0] = sender prefix
  *      parv[1] = server to query 
  *      parv[2] = servername mask
  */

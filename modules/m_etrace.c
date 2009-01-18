@@ -80,7 +80,6 @@ static const char *spoofed_sockhost = "0";
 
 /*
  * m_etrace
- *      parv[0] = sender prefix
  *      parv[1] = options [or target]
  *	parv[2] = [target]
  */

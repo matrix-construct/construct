@@ -49,7 +49,6 @@ DECLARE_MODULE_AV1(findforwards, NULL, NULL, findforwards_clist, NULL, NULL, "$R
 
 /*
 ** mo_findforwards
-**      parv[0] = sender prefix
 **      parv[1] = channel
 */
 static int

@@ -57,7 +57,6 @@ DECLARE_MODULE_AV1(help, NULL, NULL, help_clist, NULL, NULL, "$Revision: 254 $")
 
 /*
  * m_help - HELP message handler
- *      parv[0] = sender prefix
  */
 static int
 m_help(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
@@ -69,7 +68,6 @@ m_help(struct Client *client_p, struct Client *source_p, int parc, const char *p
 
 /*
  * mo_help - HELP message handler
- *      parv[0] = sender prefix
  */
 static int
 mo_help(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
@@ -81,7 +79,6 @@ mo_help(struct Client *client_p, struct Client *source_p, int parc, const char *
 /*
  * mo_uhelp - HELP message handler
  * This is used so that opers can view the user help file without deopering
- *      parv[0] = sender prefix
  */
 static int
 mo_uhelp(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])

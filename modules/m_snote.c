@@ -62,7 +62,6 @@ DECLARE_MODULE_AV1(snote, NULL, NULL, snote_clist, NULL, NULL, "$Revision: 623 $
 
 /*
  * me_snote
- *      parv[0] = sender prefix
  *      parv[1] = snomask letter
  *	parv[2] = message
  */
