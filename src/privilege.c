@@ -173,6 +173,8 @@ privilegeset_mark_all_illegal(void)
 			continue;
 
 		set->status |= CONF_ILLEGAL;
+		rb_free(set->privs);
+		set->privs = rb_strdup("");
 		/* but do not free it yet */
 	}
 }
