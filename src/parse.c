@@ -532,6 +532,8 @@ static void
 remove_unknown(struct Client *client_p, char *lsender, char *lbuffer)
 {
 	int slen = strlen(lsender);
+	char sid[4];
+	struct Client *server;
 
 	/* meepfoo	is a nickname (ignore)
 	 * #XXXXXXXX	is a UID (KILL)
@@ -550,9 +552,21 @@ remove_unknown(struct Client *client_p, char *lsender, char *lbuffer)
 			   get_id(&me, client_p), lsender, 
 			   lbuffer, client_p->name);
 	}
-	else if(IsDigit(lsender[0]))
-		sendto_one(client_p, ":%s KILL %s :%s (Unknown Client)", 
-			   get_id(&me, client_p), lsender, me.name);
+	else if(!IsDigit(lsender[0]))
+		;
+	else if(slen != 9)
+		sendto_realops_snomask(SNO_DEBUG, L_ALL,
+				     "Invalid prefix (%s) from %s",
+				     lbuffer, client_p->name);
+	else
+	{
+		memcpy(sid, lsender, 3);
+		sid[3] = '\0';
+		server = find_server(NULL, sid);
+		if (server != NULL && server->from == client_p)
+			sendto_one(client_p, ":%s KILL %s :%s (Unknown Client)", 
+					get_id(&me, client_p), lsender, me.name);
+	}
 }
 
 
