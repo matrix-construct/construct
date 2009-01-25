@@ -42,9 +42,6 @@ following features to ircd:
    When users are logged in, WHOIS will also give numeric 330:
    :<server> 330 <yournick> <targetnick> <loginname> :is logged in as
 
-   Note this needs to be a remote whois to work when the target is
-   on a different server.
-
 6. Forced nick change
 
    When using nickname services and a client requests they regain a
