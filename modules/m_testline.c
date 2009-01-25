@@ -178,11 +178,11 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 
 		if(aconf->status & CONF_KILL)
 		{
-			char *user, *host, *reason, *operreason;
+			char *puser, *phost, *reason, *operreason;
 			char reasonbuf[BUFSIZE];
-			get_printable_kline(source_p, aconf, &host, &reason, &user, &operreason);
+			get_printable_kline(source_p, aconf, &phost, &reason, &puser, &operreason);
 			rb_snprintf(buf, sizeof(buf), "%s@%s", 
-					user, host);
+					puser, phost);
 			rb_snprintf(reasonbuf, sizeof(reasonbuf), "%s%s%s", reason,
 				operreason ? "|" : "", operreason ? operreason : "");
 			sendto_one(source_p, form_str(RPL_TESTLINE),
