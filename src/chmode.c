@@ -501,7 +501,6 @@ chm_simple(struct Client *source_p, struct Channel *chptr,
 		return;
 	}
 
-	/* flags (possibly upto 32) + 4 with param */
 	if(MyClient(source_p) && (++mode_limit_simple > MAXMODES_SIMPLE))
 		return;
 
