@@ -52,4 +52,15 @@ following features to ircd:
    This forcibly changes the clients nickname to the one they requested
    they regain, ensuring they can always regain their nickname.
 
+7. User mode +R
+
+   This user mode will require users are logged in with user services
+   before they may send private messages or notices to the user.
+
+   As with user mode +g, IRC operators and accepted users can send even
+   if they are not logged in.
+
+   Gives numeric 486 to users sending a PRIVMSG who are not logged in:
+   :<server> 486 <nick> <targetnick> :You must log in with services to message this user
+
 # $Id: services.txt 6 2005-09-10 01:02:21Z nenolod $
