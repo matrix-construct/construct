@@ -5,7 +5,9 @@ See LICENSE for licensing details (GPL v2).
 
 - Remove TS5 support. No TS5 servers are permitted in a network with
   charybdis 3.1.0 or newer, except jupes.
-- Replace oper flags by privilege sets (privsets).
+- Replace oper flags by privilege sets (privsets). This adds an extra
+  level of indirection between oper flags and operator blocks. /stats O
+  (capital O) shows the configured privsets.
 - Update libratbox and ssld from upstream and use it better.
 - Add auth_user to auth{}. This allows specifying a username:password instead
   of just a password in PASS, so that a fixed user@host is not necessary
@@ -18,6 +20,11 @@ See LICENSE for licensing details (GPL v2).
 - Move nick collision notices from +s to +k.
 - Add additional information to various server notices about server
   connections.
+- Show throttle information in /stats t.
+- Show rejectcache and throttle information in /testline.
+- Show oper reason in /testline.
+- Allow opers to see other users' umodes with /mode <nick>.
+- Make SCAN UMODES GLOBAL NO-LIST MASK <mask> no longer an operspy command.
 - Also apply floodcount to messages to remote clients (except services).
 - Remove user@server messages to local users. Sending such messages to
   remote servers is still possible, for securely messaging pseudoservers
@@ -31,10 +38,16 @@ See LICENSE for licensing details (GPL v2).
 - Add ircu-like WHOX support. This allows requesting specific information
   in /who and allows obtaining services login name for all users in a
   channel. XChat/Conspire use WHOX to update away status more efficiently.
+- Allow opers and shide_exempt users to see hopcounts even if flatten_links
+  is on.
 - Rework ip_cloaking.
 - Add the IP address to userlog, as in ircd-ratbox 3.0.
 - Split cidr_bitlen into cidr_ipv4_bitlen and cidr_ipv6_bitlen.
+- Allow using ziplinks with SSL connections. This is not as efficient as
+  using OpenSSL's built in compression, but also works with older versions
+  of OpenSSL.
 - Document some extensions in charybdis-oper-guide.
+- Add more server protocol documentation.
 - Various new extensions.
 - Various code cleanups.
 
