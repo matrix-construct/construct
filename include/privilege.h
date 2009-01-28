@@ -26,9 +26,10 @@
 
 #include "stdinc.h"
 
-typedef enum {
+enum {
 	PRIV_NEEDOPER = 1
-} PrivilegeFlags;
+};
+typedef unsigned int PrivilegeFlags;
 
 struct PrivilegeSet {
 	unsigned int status;	/* If CONF_ILLEGAL, delete when no refs */
