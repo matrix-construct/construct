@@ -361,7 +361,9 @@ me_rehash(struct Client *client_p, struct Client *source_p, int parc, const char
 				source_p->servptr->name, SHARED_REHASH))
 		return 0;
 
+	remote_rehash_oper_p = source_p;
 	do_rehash(source_p, parc > 1 ? parv[1] : NULL);
+	remote_rehash_oper_p = NULL;
 
 	return 0;
 }

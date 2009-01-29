@@ -54,6 +54,8 @@ struct ip_value
 extern FILE *conf_fbfile_in;
 extern char conf_line_in[256];
 
+extern struct Client *remote_rehash_oper_p;
+
 struct ConfItem
 {
 	struct ConfItem *next;	/* list node pointer */
