@@ -101,9 +101,6 @@ mr_pass(struct Client *client_p, struct Client *source_p, int parc, const char *
 		if(irccmp(parv[2], "TS") == 0 && client_p->tsinfo == 0)
 			client_p->tsinfo = TS_DOESTS;
 
-		/* kludge, if we're not using ts6, dont ever mark a server
-		 * as TS6 capable, that way we'll never send them TS6 data.
-		 */
 		if(parc == 5 && atoi(parv[3]) >= 6)
 		{
 			/* only mark as TS6 if the SID is valid.. */
