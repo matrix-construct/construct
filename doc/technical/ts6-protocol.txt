@@ -34,6 +34,18 @@ servers on EFnet.
 
 service: client with umode +S. This implies that it is on a services server.
 
+connection setup:
+The initiator sends the PASS, CAPAB and SERVER messages. Upon receiving the
+SERVER, the listener will check the information, and if it is valid, it will
+send its own PASS, CAPAB and SERVER messages, followed by SVINFO and the burst.
+Upon receiving the SERVER, the initiator will send SVINFO and the burst. If
+ziplinks are used, SVINFO is the first compressed message.
+
+The burst consists of SID and SERVER messages for all known servers, UID or
+EUID messages for all known users (possibly followed by ENCAP REALHOST, ENCAP
+LOGIN and/or AWAY) and SJOIN messages for all known channels (possibly followed
+by BMASK and/or TB).
+
 user modes:
 (all)
 +D (deaf: does not receive channel messages)
@@ -119,7 +131,13 @@ source: unregistered server
 propagation: none
 parameters: space separated capability list
 
-Sends capabilities of the server. This must include QS and ENCAP.
+Sends capabilities of the server. This must include QS and ENCAP. It is also
+strongly recommended to include EX, CHW, IE and KNOCK, and for charybdis TS6
+also SAVE and EUID. For use with services, SERVICES and RSFNC are strongly
+recommended.
+
+The capabilities may depend on the configuration for the server they are sent
+to.
 
 CHGHOST
 charybdis TS6
@@ -399,11 +417,14 @@ Sends the server link password, TS version and SID.
 
 PING
 source: any
-parameters: origin, destination server
+parameters: origin, opt. destination server
 
-Sends a PING to the destination server, which will reply with a PONG.
+Sends a PING to the destination server, which will reply with a PONG. If the
+destination server parameter is not present, the server receiving the message
+must reply.
 
-The origin field is not used in the server protocol.
+The origin field is not used in the server protocol. It is sent as the name
+(not UID/SID) of the source.
 
 Remote PINGs are used for end-of-burst detection, therefore all servers must
 implement them.
