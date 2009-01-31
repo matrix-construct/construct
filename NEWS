@@ -53,7 +53,7 @@ See LICENSE for licensing details (GPL v2).
 - Add m_sendbans extension, SENDBANS command to propagate xlines and resvs
   manually.
 - Add chm_sslonly extension, cmode +S for SSL/TLS only channels.
-- Add chm_operonly extension, cmode +O for server admin only channels.
+- Add chm_operonly extension, cmode +O for IRCop only channels.
 - Add chm_adminonly extension, cmode +A for server admin only channels.
 - Various code cleanups.
 
