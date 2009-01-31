@@ -24,7 +24,7 @@ See LICENSE for licensing details (GPL v2).
 - Show rejectcache and throttle information in /testline.
 - Show oper reason in /testline.
 - Allow opers to see other users' umodes with /mode <nick>.
-- SCAN UMODES GLOBAL NO-LIST MASK <mask> is longer an operspy command.
+- SCAN UMODES GLOBAL NO-LIST MASK <mask> is no longer an operspy command.
 - Also apply floodcount to messages to remote clients (except services).
 - Remove user@server messages to local users. Sending such messages to
   remote servers is still possible, for securely messaging pseudoservers
