@@ -24,7 +24,7 @@ See LICENSE for licensing details (GPL v2).
 - Show rejectcache and throttle information in /testline.
 - Show oper reason in /testline.
 - Allow opers to see other users' umodes with /mode <nick>.
-- Make SCAN UMODES GLOBAL NO-LIST MASK <mask> no longer an operspy command.
+- SCAN UMODES GLOBAL NO-LIST MASK <mask> is longer an operspy command.
 - Also apply floodcount to messages to remote clients (except services).
 - Remove user@server messages to local users. Sending such messages to
   remote servers is still possible, for securely messaging pseudoservers
@@ -32,6 +32,8 @@ See LICENSE for licensing details (GPL v2).
   remains as well.
 - Allow /list on a named +p channel. A full /list already included +p channels.
 - Add operspy /topic.
+- For remote rehashes, send error messages to the requesting oper as well.
+- Warn about certain duplicate and redundant auth blocks.
 - Make PRIVMSG/NOTICE behave as CPRIVMSG/CNOTICE automatically if possible.
 - Allow +z messages from outside if a channel is -n.
 - Allow coloured part reasons in -c channels.
@@ -48,7 +50,11 @@ See LICENSE for licensing details (GPL v2).
   of OpenSSL.
 - Document some extensions in charybdis-oper-guide.
 - Add more server protocol documentation.
-- Various new extensions.
+- Add m_sendbans extension, SENDBANS command to propagate xlines and resvs
+  manually.
+- Add chm_sslonly extension, cmode +S for SSL/TLS only channels.
+- Add chm_operonly extension, cmode +O for server admin only channels.
+- Add chm_adminonly extension, cmode +A for server admin only channels.
 - Various code cleanups.
 
 -- charybdis-3.0.4
