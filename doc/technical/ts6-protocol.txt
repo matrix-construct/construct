@@ -21,13 +21,27 @@ the function hunt_server(). Any rate limiting should be done locally.
 duration: a parameter type used for ban durations. It is a duration in seconds.
 A value of 0 means a permanent ban.
 
-propagation: to which other servers the command is sent. For all commands
-with a hunted parameter, the propagation is determined by that, and not
-otherwise specified. Propagation broadcast means the command is sent to all
-servers. Propagation one-to-one means the command is only sent to the target
-or the server the target is on. Propagation none means the command is never
-sent to another server if it is received. For some other commands, the
-propagation depends on the parameters and is described in text.
+propagation: to which other servers the command is sent
+
+For all commands with a hunted parameter, the propagation is determined by
+that, and not otherwise specified.
+
+For all commands with a target server mask parameter, the propagation is
+determined by that, and not otherwise specified. The command is sent to all
+servers with names matching the given mask (for example '*', '*.example.com',
+'irc.example.com'). Those servers do not have to be directly connected.
+Targets cannot be SIDs.
+
+Propagation broadcast means the command is sent to all servers.
+
+Propagation one-to-one means the command is only sent to the target or the
+server the target is on.
+
+Propagation none means the command is never sent to another server if it is
+received.
+
+For some other commands, the propagation depends on the parameters and is
+described in text.
 
 services server: server mentioned in a service{} block. There are no services
 servers on EFnet.
@@ -172,11 +186,10 @@ ENCAP
 source: any
 parameters: target server mask, subcommand, opt. parameters...
 
-Sends a command to all servers with names matching the given mask (for example
-'*', '*.example.com', 'irc.example.com'). Those servers do not have to be
-directly connected. Targets cannot be SIDs.
+Sends a command to matching servers. Propagation is independent of
+understanding the subcommand.
 
-Propagation is independent of understanding the subcommand.
+Subcommands are listed elsewhere with "encap only".
 
 ERROR
 source: server or unregistered server
