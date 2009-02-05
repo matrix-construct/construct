@@ -312,6 +312,22 @@ parameters: hunted, server mask
 
 Remote LINKS request. The server mask limits which servers are listed.
 
+LOCOPS
+1.
+encap only
+source: user
+parameters: text
+
+Sends a message to operators (with umode +l set). This is intended to be
+used for strict subsets of the network.
+
+2.
+capab: CLUSTER
+source: user
+parameters: target server mask, text
+
+As form 1, deprecated.
+
 LOGIN
 encap only
 source: user
@@ -883,7 +899,6 @@ GET
 HELP
 ISON
 LIST
-LOCOPS
 MAP
 MASKTRACE
 MODLIST
