@@ -223,6 +223,7 @@ extern void attach_server_conf(struct Client *, struct server_conf *);
 extern void detach_server_conf(struct Client *);
 extern void set_server_conf_autoconn(struct Client *source_p, const char *name, 
 					int newval);
+extern void disable_server_conf_autoconn(const char *name);
 
 
 extern struct ConfItem *find_xline(const char *, int);
