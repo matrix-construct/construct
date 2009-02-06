@@ -109,6 +109,16 @@ m_invite(struct Client *client_p, struct Client *source_p, int parc, const char 
 		return 0;
 	}
 
+	if(((MyConnect(source_p) && !IsExemptResv(source_p)) ||
+			(MyConnect(target_p) && !IsExemptResv(target_p))) &&
+		hash_find_resv(parv[2]))
+	{
+		sendto_one_numeric(source_p, ERR_BADCHANNAME,
+				   form_str(ERR_BADCHANNAME),
+				   parv[2]);
+		return 0;
+	}
+
 	if((chptr = find_channel(parv[2])) == NULL)
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
