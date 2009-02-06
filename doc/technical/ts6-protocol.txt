@@ -270,6 +270,8 @@ exists and has a greater (newer) TS, wipe all simple modes and statuses and
 change the TS, notifying local users of this but not servers (note that
 ban-like modes remain intact; invites may or may not be cleared).
 
+A JOIN is propagated with the new TS of the channel.
+
 KICK
 source: any
 parameters: channel, target user, opt. reason
@@ -647,6 +649,9 @@ is lower (older), wipe all modes and change the TS, notifying local users of
 this but not servers (invites may be cleared). In the latter case, kick on
 split riding may happen: if the key (+k) differs or the incoming simple modes
 include +i, kick all local users, sending KICK messages to servers.
+
+An SJOIN is propagated with the new TS and modes of the channel. The statuses
+are propagated if and only if they were accepted.
 
 SJOIN must be used to propagate channel creation and in netbursts. For regular
 users joining channels, JOIN must be used. Pseudoservers may use SJOIN to join
