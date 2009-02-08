@@ -442,6 +442,9 @@ parameters: msgtarget, message
 As PRIVMSG, except NOTICE messages are sent out, server sources are permitted
 and most error messages are suppressed.
 
+Servers may not send '$$', '$#' and opers@server notices. Older servers may
+not allow servers to send to specific statuses on a channel.
+
 OPERSPY
 encap only
 encap target: *
@@ -512,9 +515,14 @@ The target can be:
   propagation: one-to-one
 - a message to all users on server names matching a mask ('$$' followed by mask)
   propagation: broadcast
+  Only allowed to IRC operators.
 - a message to all users with hostnames matching a mask ('$#' followed by mask).
   Note that this is often implemented poorly.
   propagation: broadcast
+  Only allowed to IRC operators.
+
+In charybdis TS6, services may send to any channel and to statuses on any
+channel.
 
 PRIVS
 charybdis TS6
