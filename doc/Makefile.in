@@ -40,6 +40,8 @@ IRCDLIBS	= @LIBS@ $(SSL_LIBS)
 
 INCLUDES	= -I../include $(SSL_INCLUDES)
 CPPFLAGS	= ${INCLUDES} @CPPFLAGS@
+
+all: build
  
 install-mkdirs:
 	-@if test ! -d $(DESTDIR)$(confdir); then \
