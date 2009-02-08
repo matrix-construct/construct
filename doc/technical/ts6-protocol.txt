@@ -108,6 +108,29 @@ type D
 +g (allow any member to /invite)
 +z (send messages blocked by +m to chanops)
 
+<numeric>
+source: server
+parameters: target, any...
+
+The command name should be three decimal ASCII digits.
+
+Propagates a "numeric" command reply, such as from a remote WHOIS request.
+
+If the first digit is 0 (indicating a reply about the local connection), it
+should be changed to 1 before propagation or sending to a user.
+
+Numerics to the local server may be sent to opers.
+
+To avoid infinite loops, servers should not send any replies to numerics.
+
+The target can be:
+- a client
+  propagation: one-to-one
+- a channel name
+  propagation: all servers with -D users on the channel
+
+Numerics to channels are broken in some older servers.
+
 ADMIN
 source: user
 parameters: hunted
