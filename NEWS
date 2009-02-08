@@ -33,6 +33,8 @@ See LICENSE for licensing details (GPL v2).
 - Allow /list on a named +p channel. A full /list already included +p channels.
 - Add operspy /topic.
 - For remote rehashes, send error messages to the requesting oper as well.
+- Disable autoconnect for a server with excessive TS delta.
+- Disallow invites to juped channels.
 - Warn about certain duplicate and redundant auth blocks.
 - Make PRIVMSG/NOTICE behave as CPRIVMSG/CNOTICE automatically if possible.
 - Allow +z messages from outside if a channel is -n.
@@ -48,6 +50,8 @@ See LICENSE for licensing details (GPL v2).
 - Allow using ziplinks with SSL connections. This is not as efficient as
   using OpenSSL's built in compression, but also works with older versions
   of OpenSSL.
+- Fix an off by one error with zipstats processing, which could overwrite
+  a variable with NULL causing a crash on some systems.
 - Document some extensions in charybdis-oper-guide.
 - Add more server protocol documentation.
 - Add m_sendbans extension, SENDBANS command to propagate xlines and resvs
