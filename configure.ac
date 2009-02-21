@@ -1053,8 +1053,7 @@ CHARYBDIS_C_GCC_TRY_FLAGS([-Wnested-externs], charybdis_cv_c_gcc_w_nested_extern
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wunused-function -Wunused-label -Wunused-value -Wunused-variable], charybdis_cv_c_gcc_w_unused)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wredundant-decls], charybdis_cv_c_gcc_w_redundant_decls)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wfloat-equal], charybdis_cv_c_gcc_w_float_equal)
-CHARYBDIS_C_GCC_TRY_FLAGS([-Wformat -Wformat-y2k -Wformat-security], charybdis_cv_c_gcc_w_format)
-CHARYBDIS_C_GCC_TRY_FLAGS([-pedantic], charybdis_cv_c_gcc_pedantic)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wformat -Wformat-y2k -Wno-format-security], charybdis_cv_c_gcc_w_format)
 
 IRC_CFLAGS="$CFLAGS"
 ],[])
