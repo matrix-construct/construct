@@ -2187,6 +2187,7 @@ static struct ConfEntry conf_channel_table[] =
 	{ "max_chans_per_user", CF_INT,   NULL, 0, &ConfigChannel.max_chans_per_user 	},
 	{ "no_create_on_split", CF_YESNO, NULL, 0, &ConfigChannel.no_create_on_split 	},
 	{ "no_join_on_split",	CF_YESNO, NULL, 0, &ConfigChannel.no_join_on_split	},
+	{ "only_ascii_channels", CF_YESNO, NULL, 0, &ConfigChannel.only_ascii_channels },
 	{ "use_except",		CF_YESNO, NULL, 0, &ConfigChannel.use_except		},
 	{ "use_invex",		CF_YESNO, NULL, 0, &ConfigChannel.use_invex		},
 	{ "use_knock",		CF_YESNO, NULL, 0, &ConfigChannel.use_knock		},

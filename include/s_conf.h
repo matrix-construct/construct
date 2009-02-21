@@ -239,6 +239,7 @@ struct config_channel_entry
 	int default_split_user_count;
 	int burst_topicwho;
 	int kick_on_split_riding;
+	int only_ascii_channels;
 };
 
 struct config_server_hide

@@ -543,6 +543,12 @@ static struct InfoStruct info_table[] = {
 		"Disallow joining channels when split",
 	},
 	{
+		"only_ascii_channels",
+		OUTPUT_BOOLEAN_YN,
+		&ConfigChannel.only_ascii_channels,
+		"Controls whether non-ASCII is disabled for JOIN"
+	},
+	{
 		"use_except",
 		OUTPUT_BOOLEAN_YN,
 		&ConfigChannel.use_except,

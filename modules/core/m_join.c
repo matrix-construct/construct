@@ -990,25 +990,34 @@ do_join_0(struct Client *client_p, struct Client *source_p)
 static int
 check_channel_name_loc(struct Client *source_p, const char *name)
 {
+	const char *p;
+
 	s_assert(name != NULL);
 	if(EmptyString(name))
 		return 0;
 
 	if(ConfigFileEntry.disable_fake_channels && !IsOper(source_p))
 	{
-		for(; *name; ++name)
+		for(p = name; *p; ++p)
 		{
-			if(!IsChanChar(*name) || IsFakeChanChar(*name))
+			if(!IsChanChar(*p) || IsFakeChanChar(*p))
 				return 0;
 		}
 	}
 	else
 	{
-		for(; *name; ++name)
+		for(p = name; *p; ++p)
 		{
-			if(!IsChanChar(*name))
+			if(!IsChanChar(*p))
 				return 0;
 		}
+	}
+
+	if(ConfigChannel.only_ascii_channels)
+	{
+		for(p = name; *p; ++p)
+			if(*p < 33 || *p > 126)
+				return 0;
 	}
 
 	return 1;
