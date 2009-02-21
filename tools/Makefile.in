@@ -15,13 +15,14 @@ MV		= @MV@
 RM		= @RM@
 LN              = @LN@
 
-IRCDLIBS	= @LIBS@ 
-INCLUDES	= -I../include 
+IRCDLIBS	= -L../libratbox/src/.libs -lratbox @LIBS@ 
+INCLUDES	= -I../include -I../libratbox/include
 CPPFLAGS	= ${INCLUDES} @CPPFLAGS@
 
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 bindir		= @bindir@
+libdir		= @libdir@
 libexecdir	= @libexecdir@
 confdir		= @confdir@
 localstatedir	= @localstatedir@
