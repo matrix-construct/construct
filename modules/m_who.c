@@ -442,7 +442,7 @@ append_format(char *buf, size_t bufsize, size_t *pos, const char *fmt, ...)
 
 	max = *pos >= bufsize ? 0 : bufsize - *pos;
 	va_start(ap, fmt);
-	result = rb_vsnprintf(buf + *pos, bufsize - *pos, fmt, ap);
+	result = rb_vsnprintf(buf + *pos, max, fmt, ap);
 	va_end(ap);
 	*pos += result;
 }
