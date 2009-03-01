@@ -642,7 +642,6 @@ set_server_gecos(struct Client *client_p, const char *info)
 	{
 		char *p;
 		char *s;
-		char *t;
 
 		s = LOCAL_COPY(info);
 
@@ -651,7 +650,7 @@ set_server_gecos(struct Client *client_p, const char *info)
 			*p = '\0';
 
 		/* check for a ] which would symbolise an [IP] */
-		if((t = strchr(s, ']')))
+		if(strchr(s, ']'))
 		{
 			/* set s to after the first space */
 			if(p)

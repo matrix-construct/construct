@@ -151,7 +151,6 @@ build_nicklist(struct Client *source_p, char *addbuf, char *delbuf, const char *
 	int lenadd;
 	int lendel;
 	int del;
-	struct Client *target_p;
 	char *n = LOCAL_COPY(nicks);
 
 	*addbuf = *delbuf = '\0';
@@ -166,7 +165,7 @@ build_nicklist(struct Client *source_p, char *addbuf, char *delbuf, const char *
 			name++;
 		}
 
-		if((target_p = find_named_person(name)) == NULL)
+		if(find_named_person(name) == NULL)
 		{
 			sendto_one_numeric(source_p, ERR_NOSUCHNICK, 
 					   form_str(ERR_NOSUCHNICK), name);

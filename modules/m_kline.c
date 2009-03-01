@@ -96,11 +96,10 @@ static int
 mo_kline(struct Client *client_p, struct Client *source_p,
 	 int parc, const char **parv)
 {
-	char def[] = "No Reason";
 	char user[USERLEN + 2];
 	char host[HOSTLEN + 2];
 	char buffer[IRCD_BUFSIZE];
-	char *reason = def;
+	char *reason;
 	char *oper_reason;
 	const char *current_date;
 	const char *target_server = NULL;
