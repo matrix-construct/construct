@@ -256,6 +256,25 @@ parameters: space separated capability list
 
 Capability list of remote server.
 
+GLINE
+efnet TS6
+capab: GLN
+source: user
+parameters: user mask, host mask, reason
+propagation: broadcast
+
+Propagates a G:line vote. Once votes from three different opers (based on
+user@host mask) on three different servers have arrived, trigger the G:line.
+Pending G:lines expire after some time, usually ten minutes. Triggered G:lines
+expire after a configured time which may differ across servers.
+
+Requests from server connections must be propagated, unless they are found to
+be syntactically invalid (e.g. '!' in user mask). Therefore, disabling glines
+must not affect propagation, and too wide glines, double votes and glines that
+already exist locally must still be propagated.
+
+Of course, servers are free to reject gline requests from their own operators.
+
 INFO
 source: user
 parameters: hunted
