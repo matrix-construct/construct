@@ -109,8 +109,6 @@ struct Message modrestart_msgtab = {
 	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, mg_ignore, {mo_modrestart, 0}}
 };
 
-extern struct Message error_msgtab;
-
 void
 modules_init(void)
 {
