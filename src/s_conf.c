@@ -76,7 +76,6 @@ static void reorganise_temp_kd(void *list);
 
 FILE *conf_fbfile_in;
 extern char yytext[];
-struct Client *remote_rehash_oper_p;
 
 static int verify_access(struct Client *client_p, const char *username);
 static int attach_iline(struct Client *, struct ConfItem *);
@@ -683,10 +682,6 @@ rehash_bans(int sig)
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					"Can't open %s file bans could be missing!",
 					*banconfs[i].filename);
-			if (remote_rehash_oper_p)
-				sendto_one_notice(remote_rehash_oper_p,
-					":*** Notice -- Can't open %s file bans could be missing!",
-					*banconfs[i].filename);
 		}
 		else
 		{
@@ -1160,9 +1155,6 @@ read_conf_files(int cold)
 		{
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					     "Can't open file '%s' - aborting rehash!", filename);
-			if (remote_rehash_oper_p)
-				sendto_one_notice(remote_rehash_oper_p,
-					     ":*** Notice -- Can't open file '%s' - aborting rehash!", filename);
 			return;
 		}
 	}
@@ -1533,9 +1525,6 @@ yyerror(const char *msg)
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "\"%s\", line %d: %s at '%s'",
 			     conffilebuf, lineno + 1, msg, newlinebuf);
-	if (remote_rehash_oper_p)
-		sendto_one_notice(remote_rehash_oper_p, ":*** Notice -- \"%s\", line %d: %s at '%s'",
-				     conffilebuf, lineno + 1, msg, newlinebuf);
 
 	ilog(L_MAIN, "\"%s\", line %d: %s at '%s'", conffilebuf, lineno + 1, msg, newlinebuf);
 }

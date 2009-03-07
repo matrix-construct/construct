@@ -1790,8 +1790,6 @@ conf_report_error(const char *fmt, ...)
 
 	ierror("\"%s\", line %d: %s", current_file, lineno + 1, msg);
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "\"%s\", line %d: %s", current_file, lineno + 1, msg);
-	if (remote_rehash_oper_p)
-		sendto_one_notice(remote_rehash_oper_p, ":*** Notice -- \"%s\", line %d: %s", current_file, lineno + 1, msg);
 }
 
 int

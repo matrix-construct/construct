@@ -49,6 +49,8 @@ static void send_queued_write(rb_fde_t *F, void *data);
 
 unsigned long current_serial = 0L;
 
+struct Client *remote_rehash_oper_p;
+
 /* send_linebuf()
  *
  * inputs	- client to send to, linebuf to attach
@@ -968,6 +970,16 @@ sendto_realops_snomask(int flags, int level, const char *pattern, ...)
 			sendto_server(NULL, NULL, CAP_ENCAP|CAP_TS6, NOCAPS,
 					":%s ENCAP * SNOTE %c :%s",
 					me.id, snobuf[1], buf);
+	}
+	else if (remote_rehash_oper_p != NULL)
+	{
+		/* rather a lot of copying around, oh well -- jilles */
+		va_start(args, pattern);
+		rb_vsnprintf(buf, sizeof(buf), pattern, args);
+		va_end(args);
+		rb_linebuf_putmsg(&linebuf, pattern, NULL, 
+				":%s NOTICE * :*** Notice -- %s", me.name, buf);
+		sendto_one_notice(remote_rehash_oper_p, ":*** Notice -- %s", buf);
 	}
 	else
 	{
