@@ -356,6 +356,24 @@ is_throttle_ip(struct sockaddr *addr)
 	return 0;
 }
 
+void 
+flush_throttle(void)
+{
+	rb_dlink_node *ptr, *next;
+	rb_patricia_node_t *pnode;
+	throttle_t *t;
+	
+	RB_DLINK_FOREACH_SAFE(ptr, next, throttle_list.head)
+	{
+		pnode = ptr->data;
+		t = pnode->data;		
+
+		rb_dlinkDelete(ptr, &throttle_list);
+		rb_free(t);
+		rb_patricia_remove(throttle_tree, pnode);
+	}
+}
+
 static void
 throttle_expires(void *unused)
 {

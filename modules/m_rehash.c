@@ -213,6 +213,15 @@ rehash_rejectcache(struct Client *source_p)
 }
 
 static void
+rehash_throttles(struct Client *source_p)
+{
+	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing throttles",
+				get_oper_name(source_p));
+	flush_throttle();
+
+}
+
+static void
 rehash_help(struct Client *source_p)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
@@ -252,6 +261,7 @@ static struct hash_commands rehash_commands[] =
 	{"TXLINES",	rehash_txlines		},
 	{"TRESVS",	rehash_tresvs		},
 	{"REJECTCACHE",	rehash_rejectcache	},
+	{"THROTTLES",	rehash_throttles	},
 	{"HELP", 	rehash_help		},
 	{"NICKDELAY",	rehash_nickdelay        },
 	{NULL, 		NULL 			}

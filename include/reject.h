@@ -41,6 +41,7 @@ unsigned long delay_exit_length(void);
 int throttle_add(struct sockaddr *addr);
 int is_throttle_ip(struct sockaddr *addr);
 unsigned long throttle_size(void);
+void flush_throttle(void);
 
 
 #endif
