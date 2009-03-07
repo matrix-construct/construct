@@ -67,6 +67,8 @@ rehash_bans_loc(struct Client *source_p)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is rehashing bans",
 				get_oper_name(source_p));
+	if (!MyConnect(source_p))
+		remote_rehash_oper_p = source_p;
 
 	rehash_bans(0);
 }
@@ -76,6 +78,8 @@ rehash_dns(struct Client *source_p)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is rehashing DNS", 
 			     get_oper_name(source_p));
+	if (!MyConnect(source_p))
+		remote_rehash_oper_p = source_p;
 
 	/* reread /etc/resolv.conf and reopen res socket */
 	restart_resolver();
@@ -87,6 +91,8 @@ rehash_motd(struct Client *source_p)
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "%s is forcing re-reading of MOTD file",
 			     get_oper_name(source_p));
+	if (!MyConnect(source_p))
+		remote_rehash_oper_p = source_p;
 
 	cache_user_motd();
 }
@@ -97,6 +103,8 @@ rehash_omotd(struct Client *source_p)
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "%s is forcing re-reading of OPER MOTD file",
 			     get_oper_name(source_p));
+	if (!MyConnect(source_p))
+		remote_rehash_oper_p = source_p;
 
 	free_cachefile(oper_motd);
 	oper_motd = cache_file(OPATH, "opers.motd", 0);
@@ -111,6 +119,8 @@ rehash_tklines(struct Client *source_p)
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing temp klines",
 				get_oper_name(source_p));
+	if (!MyConnect(source_p))
+		remote_rehash_oper_p = source_p;
 
 	for(i = 0; i < LAST_TEMP_TYPE; i++)
 	{
@@ -133,6 +143,8 @@ rehash_tdlines(struct Client *source_p)
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing temp dlines",
 				get_oper_name(source_p));
+	if (!MyConnect(source_p))
+		remote_rehash_oper_p = source_p;
 
 	for(i = 0; i < LAST_TEMP_TYPE; i++)
 	{
@@ -155,6 +167,8 @@ rehash_txlines(struct Client *source_p)
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing temp xlines",
 				get_oper_name(source_p));
+	if (!MyConnect(source_p))
+		remote_rehash_oper_p = source_p;
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, xline_conf_list.head)
 	{
@@ -178,6 +192,8 @@ rehash_tresvs(struct Client *source_p)
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing temp resvs",
 				get_oper_name(source_p));
+	if (!MyConnect(source_p))
+		remote_rehash_oper_p = source_p;
 
 	HASH_WALK_SAFE(i, R_MAX, ptr, next_ptr, resvTable)
 	{
@@ -208,6 +224,8 @@ rehash_rejectcache(struct Client *source_p)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing reject cache",
 				get_oper_name(source_p));
+	if (!MyConnect(source_p))
+		remote_rehash_oper_p = source_p;
 	flush_reject();
 
 }
@@ -217,6 +235,8 @@ rehash_throttles(struct Client *source_p)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing throttles",
 				get_oper_name(source_p));
+	if (!MyConnect(source_p))
+		remote_rehash_oper_p = source_p;
 	flush_throttle();
 
 }
@@ -227,6 +247,8 @@ rehash_help(struct Client *source_p)
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "%s is forcing re-reading of HELP files", 
 			     get_oper_name(source_p));
+	if (!MyConnect(source_p))
+		remote_rehash_oper_p = source_p;
 	load_help();
 }
 
@@ -240,6 +262,8 @@ rehash_nickdelay(struct Client *source_p)
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "%s is clearing the nick delay table",
 			     get_oper_name(source_p));
+	if (!MyConnect(source_p))
+		remote_rehash_oper_p = source_p;
 
 	RB_DLINK_FOREACH_SAFE(ptr, safe_ptr, nd_list.head)
 	{
@@ -283,9 +307,10 @@ do_rehash(struct Client *source_p, const char *type)
 			{
 				sendto_one(source_p, form_str(RPL_REHASHING), me.name,
 					   source_p->name, rehash_commands[x].cmd);
-				rehash_commands[x].handler(source_p);
 				ilog(L_MAIN, "REHASH %s From %s[%s]", type,
 				     get_oper_name(source_p), source_p->sockhost);
+				rehash_commands[x].handler(source_p);
+				remote_rehash_oper_p = NULL;
 				return;
 			}
 		}
@@ -306,9 +331,12 @@ do_rehash(struct Client *source_p, const char *type)
 			   ConfigFileEntry.configfile);
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "%s is rehashing server config file", get_oper_name(source_p));
+		if (!MyConnect(source_p))
+			remote_rehash_oper_p = source_p;
 		ilog(L_MAIN, "REHASH From %s[%s]", get_oper_name(source_p),
 		     source_p->sockhost);
 		rehash(0);
+		remote_rehash_oper_p = NULL;
 	}
 }
 
@@ -371,9 +399,7 @@ me_rehash(struct Client *client_p, struct Client *source_p, int parc, const char
 				source_p->servptr->name, SHARED_REHASH))
 		return 0;
 
-	remote_rehash_oper_p = source_p;
 	do_rehash(source_p, parc > 1 ? parv[1] : NULL);
-	remote_rehash_oper_p = NULL;
 
 	return 0;
 }
