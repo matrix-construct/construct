@@ -459,11 +459,8 @@ check_banned_lines(void)
 			continue;
 
 		/* if there is a returned struct ConfItem then kill it */
-		if((aconf = find_dline((struct sockaddr *)&client_p->localClient->ip, client_p->localClient->ip.ss_family)))
+		if((aconf = find_dline((struct sockaddr *)&client_p->localClient->ip, client_p->localClient->ip.ss_family)) && !(aconf->status & CONF_EXEMPTDLINE))
 		{
-			if(aconf->status & CONF_EXEMPTDLINE)
-				continue;
-
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					     "DLINE active for %s",
 					     get_client_name(client_p, HIDE_IP));
