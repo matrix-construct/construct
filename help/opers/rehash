@@ -12,6 +12,7 @@ ircd.conf file.
   OMOTD    - Re-reads Oper MOTD file
   REJECTCACHE - Clears the reject cache
   TDLINES  - Clears temporary D Lines
+  THROTTLES - Clears throttled IP addresses
   TKLINES  - Clears temporary K Lines
   TRESVS   - Clears temporary nick and channel resvs
   TXLINES  - Clears temporary X Lines
