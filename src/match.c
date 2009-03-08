@@ -178,11 +178,14 @@ int mask_match(const char *mask, const char *name)
 }
 
 
+#define MATCH_MAX_CALLS 512	/* ACK! This dies when it's less that this
+				   and we have long lines to parse */
 /** Check a string against a mask.
- * This test checks using traditional IRC wildcards only: '*' means
- * match zero or more characters of any type; '?' means match exactly
- * one character of any type; '#' means match exactly one character
- * that is a number.
+ * This test checks using extended wildcards: '*' means match zero
+ * or more characters of any type; '?' means match exactly one
+ * character of any type; '#' means match exactly one character that
+ * is a number; '@' means match exactly one character that is a
+ * letter; '\s' means match a space.
  *
  * This function supports escaping, so that a wildcard may be matched 
  * exactly.
@@ -191,96 +194,118 @@ int mask_match(const char *mask, const char *name)
  * @param[in] name String to check against \a mask.
  * @return Zero if \a mask matches \a name, non-zero if no match.
  */
-int match_esc(const char *mask, const char *name)
+int
+match_esc(const char *mask, const char *name)
 {
-	const char *m = mask, *n = name;
-	const char *m_tmp = mask, *n_tmp = name;
-	int star_p;
+	const unsigned char *m = (const unsigned char *)mask;
+	const unsigned char *n = (const unsigned char *)name;
+	const unsigned char *ma = (const unsigned char *)mask;
+	const unsigned char *na = (const unsigned char *)name;
+	int wild = 0;
+	int calls = 0;
+	int quote = 0;
+	int match1 = 0;
 
 	s_assert(mask != NULL);
 	s_assert(name != NULL);
 
-	for (;;)
+	if(!mask || !name)
+		return 0;
+
+	/* if the mask is "*", it matches everything */
+	if((*m == '*') && (*(m + 1) == '\0'))
+		return 1;
+
+	while(calls++ < MATCH_MAX_CALLS)
 	{
-		switch (*m)
+		if(quote)
+			quote++;
+		if(quote == 3)
+			quote = 0;
+		if(*m == '\\' && !quote)
 		{
-		  case '\0':
-			  if (!*n)
-				  return 1;
-		  backtrack:
-			  if (m_tmp == mask)
-				  return 0;
-			  m = m_tmp;
-			  n = ++n_tmp;
-			  break;
-		  case '\\':
-			  m++;
-			  /* allow escaping to force capitalization */
-			  if (*m++ != *n++)
-				  goto backtrack;
-			  break;
-		  case '*':
-		  case '?':
-			  for (star_p = 0;; m++)
-			  {
-				  if (*m == '*')
-					  star_p = 1;
-				  else if (*m == '?')
-				  {
-					  if (!*n++)
-						  goto backtrack;
-				  }
-				  else
-					  break;
-			  }
-			  if (star_p)
-			  {
-				  if (!*m)
-					  return 1;
-				  else if (*m == '\\')
-				  {
-					  m_tmp = ++m;
-					  if (!*m)
-						  return 0;
-					  for (n_tmp = n; *n && *n != *m; n++);
-				  }
-				  else if (*m == '#')
-				  {
-					  m_tmp = m;
-					  for (n_tmp = n; *n && !IsDigit(*n); n++);
-				  }
-				  else if (*m == '@')
-				  {
-					  m_tmp = m;
-					  for (n_tmp = n; *n && !IsLetter(*n); n++);
-				  }
-				  else
-				  {
-					  m_tmp = m;
-					  for (n_tmp = n; *n && ToLower(*n) != ToLower(*m); n++);
-				  }
-			  }
-			  /* and fall through */
-		  default:
-			  if (!*n)
-				  return (*m != '\0' ? 0 : 1);
-			  if (*m == '#')
-			  {
-				  if (!IsDigit(*n))
-				  	goto backtrack;
-			  }
-			  else if (*m == '@')
-			  {
-				  if (!IsLetter(*n))
-				  	goto backtrack;
-			  }
-			  else if (ToLower(*m) != ToLower(*n))
-				  goto backtrack;
-			  m++;
-			  n++;
-			  break;
+			m++;
+			quote = 1;
+			continue;
+		}
+		if(!quote && *m == '*')
+		{
+			/*
+			 * XXX - shouldn't need to spin here, the mask should have been
+			 * collapsed before match is called
+			 */
+			while(*m == '*')
+				m++;
+
+			wild = 1;
+			ma = m;
+			na = n;
+
+			if(*m == '\\')
+			{
+				m++;
+				/* This means it is an invalid mask -A1kmm. */
+				if(!*m)
+					return 0;
+				quote++;
+				continue;
+			}
+		}
+
+		if(!*m)
+		{
+			if(!*n)
+				return 1;
+			if(quote)
+				return 0;
+			for(m--; (m > (const unsigned char *)mask) && (*m == '?'); m--);;
+
+			if(*m == '*' && (m > (const unsigned char *)mask))
+				return 1;
+			if(!wild)
+				return 0;
+			m = ma;
+			n = ++na;
+		}
+		else if(!*n)
+		{
+			/*
+			 * XXX - shouldn't need to spin here, the mask should have been
+			 * collapsed before match is called
+			 */
+			if(quote)
+				return 0;
+			while(*m == '*')
+				m++;
+			return (*m == 0);
+		}
+
+		if(quote)
+			match1 = *m == 's' ? *n == ' ' : ToLower(*m) == ToLower(*n);
+		else if(*m == '?')
+			match1 = 1;
+		else if(*m == '@')
+			match1 = IsLetter(*n);
+		else if(*m == '#')
+			match1 = IsDigit(*n);
+		else
+			match1 = ToLower(*m) == ToLower(*n);
+		if(match1)
+		{
+			if(*m)
+				m++;
+			if(*n)
+				n++;
+		}
+		else
+		{
+			if(!wild)
+				return 0;
+			m = ma;
+			n = ++na;
 		}
 	}
+	return 0;
 }
 
 int comp_with_mask(void *addr, void *dest, u_int mask)
