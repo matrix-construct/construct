@@ -402,7 +402,7 @@ static  const char *  replies[] = {
 /* 378 RPL_WHOISHOST, */        "%s :is connecting from *@%s %s",
 /* 379 */       NULL,
 /* 380 */       NULL,
-/* 381 RPL_YOUREOPER, */        ":%s 381 %s :I can't work under these conditions anymore! The charybdis developers' jokes are just too lame!!! I quit! Really!",
+/* 381 RPL_YOUREOPER, */        ":%s 381 %s :You're a badass motherfucking IRC operator! Did you know that? This message is FACTUAL.",
 /* 382 RPL_REHASHING, */        ":%s 382 %s %s :Rehashing",
 /* 383 */       NULL,
 /* 384 RPL_MYPORTIS, */		NULL,
