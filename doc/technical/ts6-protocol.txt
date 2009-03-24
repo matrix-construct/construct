@@ -275,6 +275,22 @@ already exist locally must still be propagated.
 
 Of course, servers are free to reject gline requests from their own operators.
 
+GUNGLINE
+efnet TS6
+encap only
+encap target: *
+source: user
+parameters: user mask, host mask, reason
+propagation: broadcast
+
+Propagates a G:line removal vote. Once three votes have arrived (as with
+G:lines), remove the G:line. Pending G:lines removals expire after some time,
+usually ten minutes.
+
+Pending G:line removals do not interact with pending G:lines. Triggering a
+G:line does not affect a pending G:line removal. Triggering a G:line removal
+does not affect a pending G:line.
+
 INFO
 source: user
 parameters: hunted
