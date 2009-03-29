@@ -296,11 +296,11 @@
       <sect2>
         <title>+z, reduced moderation</title>
         <para>
-          When +z is set, the effects of +m are relaxed. For each message, if that message
-          would normally be blocked by moderation, it is instead sent to all channel operators. This is intended for use in moderated debates.
+          When +z is set, the effects of +m, +b and +q are relaxed. For each message, if that message
+          would normally be blocked by one of these modes, it is instead sent to all channel operators. This is intended for use in moderated debates.
         </para>
         <para>
-          Note that +n and channel bans/quiets are unaffected by this. To silence a given user completely,
+          Note that +n is unaffected by this. To silence a given user completely,
 	  remove them from the channel.
         </para>
       </sect2>
