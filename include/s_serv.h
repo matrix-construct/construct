@@ -70,12 +70,13 @@ struct Capability
 #define CAP_RSFNC	0x20000 /* rserv FNC */
 #define CAP_SAVE	0x40000 /* supports SAVE (nick collision FNC) */
 #define CAP_EUID	0x80000 /* supports EUID (ext UID + nonencap CHGHOST) */
+#define CAP_EOPMOD	0x100000 /* supports EOPMOD (ext +z + ext topic) */
 
 #define CAP_MASK        (CAP_QS  | CAP_EX   | CAP_CHW  | \
                          CAP_IE  | CAP_KLN  | CAP_SERVICE |\
                          CAP_CLUSTER | CAP_ENCAP | \
                          CAP_ZIP  | CAP_KNOCK  | CAP_UNKLN | \
-			 CAP_RSFNC | CAP_SAVE | CAP_EUID)
+			 CAP_RSFNC | CAP_SAVE | CAP_EUID | CAP_EOPMOD)
 
 #ifdef HAVE_LIBZ
 #define CAP_ZIP_SUPPORTED       CAP_ZIP

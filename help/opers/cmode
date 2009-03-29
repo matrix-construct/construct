@@ -16,7 +16,8 @@ NO PARAMETERS:
      +c     - No color.  All color codes in messages are stripped.
      +g     - Free invite.  Everyone may invite users.  Significantly
               weakens +i control.
-     +z     - Op moderated.  Messages blocked by +m are instead sent to ops.
+     +z     - Op moderated.  Messages blocked by +m, +b and +q are instead
+              sent to ops.
      +L     - Large ban list.  Increase maximum number of +beIq entries.
               Only settable by opers.
      +P     - Permanent.  Channel does not disappear when empty.  Only

@@ -97,8 +97,9 @@ static int flood_attack_channel(int p_or_n, struct Client *source_p,
 
 #define ENTITY_NONE    0
 #define ENTITY_CHANNEL 1
-#define ENTITY_CHANOPS_ON_CHANNEL 2
-#define ENTITY_CLIENT  3
+#define ENTITY_CHANNEL_OPMOD 2
+#define ENTITY_CHANOPS_ON_CHANNEL 3
+#define ENTITY_CLIENT  4
 
 static struct entity targets[512];
 static int ntargets = 0;
@@ -108,6 +109,11 @@ static int duplicate_ptr(void *);
 static void msg_channel(int p_or_n, const char *command,
 			struct Client *client_p,
 			struct Client *source_p, struct Channel *chptr, const char *text);
+
+static void msg_channel_opmod(int p_or_n, const char *command,
+			      struct Client *client_p,
+			      struct Client *source_p, struct Channel *chptr,
+			      const char *text);
 
 static void msg_channel_flags(int p_or_n, const char *command,
 			      struct Client *client_p,
@@ -202,6 +208,11 @@ m_message(int p_or_n,
 		case ENTITY_CHANNEL:
 			msg_channel(p_or_n, command, client_p, source_p,
 				    (struct Channel *) targets[i].ptr, parv[2]);
+			break;
+
+		case ENTITY_CHANNEL_OPMOD:
+			msg_channel_opmod(p_or_n, command, client_p, source_p,
+				   (struct Channel *) targets[i].ptr, parv[2]);
 			break;
 
 		case ENTITY_CHANOPS_ON_CHANNEL:
@@ -382,6 +393,32 @@ build_target_list(int p_or_n, const char *command, struct Client *client_p,
 			continue;
 		}
 
+		if(IsServer(client_p) && *nick == '=' && nick[1] == '#')
+		{
+			nick++;
+			if((chptr = find_channel(nick)) != NULL)
+			{
+				if(!duplicate_ptr(chptr))
+				{
+					if(ntargets >= ConfigFileEntry.max_targets)
+					{
+						sendto_one(source_p, form_str(ERR_TOOMANYTARGETS),
+							   me.name, source_p->name, nick);
+						return (1);
+					}
+					targets[ntargets].ptr = (void *) chptr;
+					targets[ntargets++].type = ENTITY_CHANNEL_OPMOD;
+				}
+			}
+
+			/* non existant channel */
+			else if(p_or_n != NOTICE)
+				sendto_one_numeric(source_p, ERR_NOSUCHNICK,
+						   form_str(ERR_NOSUCHNICK), nick);
+
+			continue;
+		}
+
 		/* no matching anything found - error if not NOTICE */
 		if(p_or_n != NOTICE)
 		{
@@ -476,16 +513,65 @@ msg_channel(int p_or_n, const char *command,
 		}
 	}
 	else if(chptr->mode.mode & MODE_OPMODERATE &&
-			chptr->mode.mode & MODE_MODERATED &&
 			(!(chptr->mode.mode & MODE_NOPRIVMSGS) ||
 			 IsMember(source_p, chptr)))
 	{
-		/* only do +z for +m channels for now, as bans/quiets
-		 * aren't tested for remote clients -- jilles */
 		if(!flood_attack_channel(p_or_n, source_p, chptr, chptr->chname))
 		{
-			sendto_channel_flags(client_p, ONLY_CHANOPS, source_p, chptr,
-					     "%s %s :%s", command, chptr->chname, text);
+			sendto_channel_opmod(client_p, source_p, chptr,
+					     command, text);
+		}
+	}
+	else
+	{
+		if(p_or_n != NOTICE)
+			sendto_one_numeric(source_p, ERR_CANNOTSENDTOCHAN,
+					   form_str(ERR_CANNOTSENDTOCHAN), chptr->chname);
+	}
+}
+/*
+ * msg_channel_opmod
+ *
+ * inputs	- flag privmsg or notice
+ * 		- pointer to command "PRIVMSG" or "NOTICE"
+ *		- pointer to client_p
+ *		- pointer to source_p
+ *		- pointer to channel
+ * output	- NONE
+ * side effects	- message given channel ops
+ *
+ * XXX - We need to rework this a bit, it's a tad ugly. --nenolod
+ */
+static void
+msg_channel_opmod(int p_or_n, const char *command,
+		  struct Client *client_p, struct Client *source_p,
+		  struct Channel *chptr, const char *text)
+{
+	char text2[BUFSIZE];
+
+	if(chptr->mode.mode & MODE_NOCOLOR)
+	{
+		rb_strlcpy(text2, text, BUFSIZE);
+		strip_colour(text2);
+		text = text2;
+		if (EmptyString(text))
+		{
+			/* could be empty after colour stripping and
+			 * that would cause problems later */
+			if(p_or_n != NOTICE)
+				sendto_one(source_p, form_str(ERR_NOTEXTTOSEND), me.name, source_p->name);
+			return;
+		}
+	}
+
+	if(chptr->mode.mode & MODE_OPMODERATE &&
+			(!(chptr->mode.mode & MODE_NOPRIVMSGS) ||
+			 IsMember(source_p, chptr)))
+	{
+		if(!flood_attack_channel(p_or_n, source_p, chptr, chptr->chname))
+		{
+			sendto_channel_opmod(client_p, source_p, chptr,
+					     command, text);
 		}
 	}
 	else

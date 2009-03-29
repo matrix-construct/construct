@@ -544,6 +544,9 @@ The target can be:
   with that status or higher only.
   capab: CHW
   propagation: all servers with -D users with appropriate status
+- '=' followed by a channel name, to send to chanops only, for cmode +z.
+  capab: CHW and EOPMOD
+  propagation: all servers with -D chanops
 - a user@server message, to send to users on a specific server. The exact
   meaning of the part before the '@' is not prescribed, except that "opers"
   allows IRC operators to send to all IRC operators on the server in an
