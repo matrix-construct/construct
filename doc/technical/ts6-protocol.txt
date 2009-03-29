@@ -795,9 +795,19 @@ broadcast, otherwise the changes will be stored, to be used when registration
 completes.
 
 TB
+capab: TB
 source: server
 propagation: broadcast
-parameters:
+parameters: channel, topicTS, opt. topic setter, topic
+
+Propagates a channel topic as part of a burst.
+
+If the channel had no topic yet or the topicTS in the message is older than
+the topicTS of the current topic on the channel and the topics differ, set
+the topic with topicTS and topic setter, and propagate the message. Otherwise
+ignore the message and do not propagate it.
+
+If the topic setter is not present, use a server name instead.
 
 TIME
 source: user
@@ -828,9 +838,14 @@ multiple TMODE messages should be sent.
 TOPIC
 source: user
 propagation: broadcast
+parameters: channel, topic
 
 Propagates a channel topic change. The server may verify that the source has
 ops in the channel.
+
+The topicTS shall be set to the current time and the topic setter shall be
+set indicating the source user. Note that this means that the topicTS of a
+topic set with TOPIC is not necessarily consistent across the network.
 
 TRACE
 source: user
