@@ -35,6 +35,7 @@
 
 #include "stdinc.h"
 #include "s_user.h"
+#include "snomask.h"
 #include "match.h"
 #include "substitution.h"
 
