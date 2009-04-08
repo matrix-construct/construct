@@ -542,8 +542,6 @@ sendto_channel_opmod(struct Client *one, struct Client *source_p,
 		     struct Channel *chptr, const char *command,
 		     const char *text)
 {
-	static char buf[BUFSIZE];
-	va_list args;
 	buf_head_t rb_linebuf_local;
 	buf_head_t rb_linebuf_old;
 	buf_head_t rb_linebuf_new;
