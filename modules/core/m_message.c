@@ -361,7 +361,9 @@ build_target_list(int p_or_n, const char *command, struct Client *client_p,
 				if(!IsServer(source_p) && !IsService(source_p) && !is_chanop_voiced(msptr))
 				{
 					sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
-						   me.name, source_p->name, with_prefix);
+						   get_id(&me, source_p),
+						   get_id(source_p, source_p),
+						   with_prefix);
 					return (-1);
 				}
 
