@@ -765,6 +765,10 @@ msg_client(int p_or_n, const char *command,
 				return;
 			}
 		}
+
+		if (do_floodcount &&
+				flood_attack_client(p_or_n, source_p, target_p))
+			return;
 	}
 	else if(source_p->from == target_p->from)
 	{
@@ -798,9 +802,6 @@ msg_client(int p_or_n, const char *command,
 					sendto_one_numeric(source_p, ERR_NONONREG,
 							form_str(ERR_NONONREG),
 							target_p->name);
-				/* Only so opers can watch for floods */
-				if (do_floodcount)
-					(void) flood_attack_client(p_or_n, source_p, target_p);
 			}
 			else
 			{
@@ -826,25 +827,12 @@ msg_client(int p_or_n, const char *command,
 
 					target_p->localClient->last_caller_id_time = rb_current_time();
 				}
-				/* Only so opers can watch for floods */
-				if (do_floodcount)
-					(void) flood_attack_client(p_or_n, source_p, target_p);
 			}
 		}
 		else
-		{
-			/* If the client is remote, we dont perform a special check for
-			 * flooding.. as we wouldnt block their message anyway.. this means
-			 * we dont give warnings.. we then check if theyre opered 
-			 * (to avoid flood warnings), lastly if theyre our client
-			 * and flooding    -- fl */
-			if(!do_floodcount ||
-			   !flood_attack_client(p_or_n, source_p, target_p))
-				sendto_anywhere(target_p, source_p, command, ":%s", text);
-		}
+			sendto_anywhere(target_p, source_p, command, ":%s", text);
 	}
-	else if(!do_floodcount ||
-		!flood_attack_client(p_or_n, source_p, target_p))
+	else
 		sendto_anywhere(target_p, source_p, command, ":%s", text);
 
 	return;
