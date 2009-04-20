@@ -381,7 +381,7 @@ pretty_mask(const char *idmask)
 		if(*t != '\0')
 			user = t;
 	}
-	else if(strchr(mask, '.') != NULL || strchr(mask, ':') != NULL)
+	else if(strchr(mask, '.') != NULL || strchr(mask, ':') != NULL || strchr(mask, '/') != NULL)
 	{
 		if(*mask != '\0')
 			host = mask;
