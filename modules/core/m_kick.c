@@ -37,6 +37,7 @@
 #include "hash.h"
 #include "packet.h"
 #include "s_serv.h"
+#include "hook.h"
 
 static int m_kick(struct Client *, struct Client *, int, const char **);
 #define mg_kick { m_kick, 3 }
@@ -155,6 +156,21 @@ m_kick(struct Client *client_p, struct Client *source_p, int parc, const char *p
 			sendto_one(source_p, form_str(ERR_ISCHANSERVICE),
 				   me.name, source_p->name, who->name, chptr->chname);
 			return 0;
+		}
+
+		if(MyClient(source_p))
+		{
+			hook_data_channel_approval hookdata;
+
+			hookdata.client = source_p;
+			hookdata.chptr = chptr;
+			hookdata.target = who;
+			hookdata.approved = 1;
+
+			call_hook(h_can_kick, &hookdata);
+
+			if (!hookdata.approved)
+				return 0;
 		}
 
 		comment = LOCAL_COPY((EmptyString(parv[3])) ? who->name : parv[3]);

@@ -29,6 +29,7 @@ extern int h_umode_changed;
 extern int h_new_local_user;
 extern int h_new_remote_user;
 extern int h_introduce_client;
+extern int h_can_kick;
 
 void init_hook(void);
 int register_hook(const char *name);
@@ -69,6 +70,14 @@ typedef struct
 	struct Channel *chptr;
 	char *key;
 } hook_data_channel_activity;
+
+typedef struct
+{
+	struct Client *client;
+	struct Channel *chptr;
+	struct Client *target;
+	int approved;
+} hook_data_channel_approval;
 
 typedef struct
 {
