@@ -1,6 +1,6 @@
 /*
  *  ircd-ratbox: A slightly useful ircd.
- *  m_away.c: Negotiates capabilities with a remote server.
+ *  m_capab.c: Negotiates capabilities with a remote server.
  *
  *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center
  *  Copyright (C) 1996-2002 Hybrid Development Team
@@ -93,6 +93,23 @@ mr_capab(struct Client *client_p, struct Client *source_p, int parc, const char 
 					break;
 				}
 			}
+		}
+	}
+
+	/* check to ensure any "required" caps are set. --nenolod */
+	for (cap = captab; cap->name; cap++)
+	{
+		if (!cap->required)
+			continue;
+
+		if (!(client_p->localClient->caps & cap->cap))
+		{
+			char exitbuf[BUFSIZE];
+
+			rb_snprintf(exitbuf, BUFSIZE, "Missing required CAPAB [%s]", cap->cap);
+			exit_client(client_p, client_p, client_p, exitbuf);
+
+			return 0;
 		}
 	}
 

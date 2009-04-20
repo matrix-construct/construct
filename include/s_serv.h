@@ -51,6 +51,7 @@ struct Capability
 {
 	const char *name;	/* name of capability */
 	unsigned int cap;	/* mask value */
+	unsigned int required;  /* 1 if required, 0 if not */
 };
 
 #define CAP_CAP         0x00001	/* received a CAP to begin with */
