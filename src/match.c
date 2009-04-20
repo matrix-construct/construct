@@ -702,7 +702,7 @@ const unsigned int CharAttrs[] = {
 /* , */ PRINT_C | NONEOS_C,
 /* - */ PRINT_C | NICK_C | CHAN_C | NONEOS_C | USER_C | HOST_C,
 /* . */ PRINT_C | KWILD_C | CHAN_C | NONEOS_C | USER_C | HOST_C | SERV_C,
-/* / */ PRINT_C | CHAN_C | NONEOS_C,
+/* / */ PRINT_C | CHAN_C | NONEOS_C | HOST_C,
 /* 0 */ PRINT_C | DIGIT_C | NICK_C | CHAN_C | NONEOS_C | USER_C | HOST_C,
 /* 1 */ PRINT_C | DIGIT_C | NICK_C | CHAN_C | NONEOS_C | USER_C | HOST_C,
 /* 2 */ PRINT_C | DIGIT_C | NICK_C | CHAN_C | NONEOS_C | USER_C | HOST_C,

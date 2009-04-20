@@ -57,6 +57,7 @@ static int
 clean_host(const char *host)
 {
 	int len = 0;
+	const char *last_slash = 0;
 	
 	if (*host == '\0' || *host == ':')
 		return 0;
@@ -67,9 +68,14 @@ clean_host(const char *host)
 
 		if(!IsHostChar(*host))
 			return 0;
+		if(*host == '/')
+			last_slash = host;
 	}
 
 	if(len > HOSTLEN)
+		return 0;
+
+	if(last_slash && IsDigit(last_slash[1]))
 		return 0;
 
 	return 1;
