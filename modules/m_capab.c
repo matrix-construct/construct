@@ -96,23 +96,6 @@ mr_capab(struct Client *client_p, struct Client *source_p, int parc, const char 
 		}
 	}
 
-	/* check to ensure any "required" caps are set. --nenolod */
-	for (cap = captab; cap->name; cap++)
-	{
-		if (!cap->required)
-			continue;
-
-		if (!(client_p->localClient->caps & cap->cap))
-		{
-			char exitbuf[BUFSIZE];
-
-			rb_snprintf(exitbuf, BUFSIZE, "Missing required CAPAB [%s]", cap->cap);
-			exit_client(client_p, client_p, client_p, exitbuf);
-
-			return 0;
-		}
-	}
-
 	return 0;
 }
 

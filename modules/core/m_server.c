@@ -75,6 +75,7 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 	const char *name;
 	struct Client *target_p;
 	int hop;
+	struct Capability *cap;
 
 	name = parv[1];
 	hop = atoi(parv[2]);
@@ -106,6 +107,23 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 	{
 		exit_client(client_p, client_p, client_p, "Bogus server name");
 		return 0;
+	}
+
+	/* check to ensure any "required" caps are set. --nenolod */
+	for (cap = captab; cap->name; cap++)
+	{
+		if (!cap->required)
+			continue;
+
+		if (!(client_p->localClient->caps & cap->cap))
+		{
+			char exitbuf[BUFSIZE];
+
+			rb_snprintf(exitbuf, BUFSIZE, "Missing required CAPAB [%s]", cap->name);
+			exit_client(client_p, client_p, client_p, exitbuf);
+
+			return 0;
+		}
 	}
 
 	/* Now we just have to call check_server and everything should be
