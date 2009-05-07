@@ -71,7 +71,7 @@ mo_testmask(struct Client *client_p, struct Client *source_p,
 	int gcount = 0;
 	char *name, *username, *hostname;
 	const char *sockhost;
-	char *gecos = NULL, *mangle_gecos = NULL;
+	char *gecos = NULL;
 	rb_dlink_node *ptr;
 
 	name = LOCAL_COPY(parv[1]);
@@ -105,38 +105,6 @@ mo_testmask(struct Client *client_p, struct Client *source_p,
 	{
 		gecos = LOCAL_COPY(parv[2]);
 		collapse_esc(gecos);
-		if(strstr(gecos, "\\s"))
-		{
-			char *tmp = LOCAL_COPY(gecos);
-			char *orig = tmp;
-			char *new = tmp; 
-			while(*orig)
-			{
-				if(*orig == '\\' && *(orig + 1) != '\0')
-				{
-					if(*(orig + 1) == 's')
-					{
-						*new++ = ' ';
-						orig += 2;   
-					}
-					/* otherwise skip that and the escaped
-					 * character after it, so we dont mistake
-					 * \\s as \s --fl
-					 */
-					else
-					{   
-						*new++ = *orig++;
-						*new++ = *orig++;
-					}
-				}
-				else
-					*new++ = *orig++;
-			}
-
-			*new = '\0';
-			mangle_gecos = LOCAL_COPY(tmp);
-		} else
-			mangle_gecos = gecos;
 	}
 
 	RB_DLINK_FOREACH(ptr, global_client_list.head)
@@ -161,7 +129,7 @@ mo_testmask(struct Client *client_p, struct Client *source_p,
 			if(name && !match(name, target_p->name))
 				continue;
 
-			if(mangle_gecos && !match_esc(mangle_gecos, target_p->info))
+			if(gecos && !match_esc(gecos, target_p->info))
 				continue;
 
 			if(MyClient(target_p))
