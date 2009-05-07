@@ -211,6 +211,13 @@ parse_resv(struct Client *source_p, const char *name,
 			return;
 		}
 
+		if(strchr(name, ','))
+		{
+			sendto_one_notice(source_p,
+					":Invalid character ',' in channel RESV");
+			return;
+		}
+
 		if(strchr(reason, '"'))
 		{
 			sendto_one_notice(source_p,
