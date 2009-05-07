@@ -158,6 +158,37 @@ parse_d_file(FILE * file)
 	}
 }
 
+char *
+xline_encode_spaces(const char *mask)
+{
+	int i, j;
+	int spaces = 0;
+	int backslash = 0;
+	char *encoded;
+
+	for (i = 0; mask[i] != '\0'; i++)
+		if (mask[i] == ' ')
+			spaces++;
+	encoded = rb_malloc(i + spaces + 1);
+	for (i = 0, j = 0; mask[i] != '\0'; i++)
+	{
+		if (mask[i] == '\\')
+			backslash = !backslash;
+		else if (mask[i] == ' ')
+		{
+			if (!backslash)
+				encoded[j++] = '\\';
+			encoded[j++] = 's';
+			backslash = 0;
+			continue;
+		}
+		else
+			backslash = 0;
+		encoded[j++] = mask[i];
+	}
+	return encoded;
+}
+
 void
 parse_x_file(FILE * file)
 {
@@ -166,6 +197,7 @@ parse_x_file(FILE * file)
 	char *reason_field = NULL;
 	char line[BUFSIZE];
 	char *p;
+	char *encoded;
 
 	while (fgets(line, sizeof(line), file))
 	{
@@ -191,10 +223,17 @@ parse_x_file(FILE * file)
 		   (strchr(reason_field, ':') != NULL))
 			continue;
 
+		encoded = xline_encode_spaces(gecos_field);
+		if (find_xline_mask(encoded) != NULL)
+		{
+			rb_free(encoded);
+			continue;
+		}
+
 		aconf = make_conf();
 		aconf->status = CONF_XLINE;
 
-		aconf->name = rb_strdup(gecos_field);
+		aconf->name = encoded;
 		aconf->passwd = rb_strdup(reason_field);
 
 		rb_dlinkAddAlloc(aconf, &xline_conf_list);

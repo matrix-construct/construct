@@ -280,41 +280,7 @@ apply_xline(struct Client *source_p, const char *name, const char *reason,
 	aconf = make_conf();
 	aconf->status = CONF_XLINE;
 
-	if(strstr(name, "\\s"))
-	{
-		char *tmp = LOCAL_COPY(name);
-		char *orig = tmp;
-		char *new = tmp;
-
-		while(*orig)
-		{
-			if(*orig == '\\' && *(orig + 1) != '\0')
-			{
-				if(*(orig + 1) == 's')
-				{
-					*new++ = ' ';
-					orig += 2;
-				}
-				/* otherwise skip that and the escaped
-				 * character after it, so we dont mistake
-				 * \\s as \s --fl
-				 */
-				else
-				{
-					*new++ = *orig++;
-					*new++ = *orig++;
-				}
-			}
-			else
-				*new++ = *orig++;
-		}
-
-		*new = '\0';
-		aconf->name = rb_strdup(tmp);
-	}
-	else
-		aconf->name = rb_strdup(name);
-
+	aconf->name = rb_strdup(name);
 	aconf->passwd = rb_strdup(reason);
 	collapse(aconf->name);
 
@@ -532,38 +498,43 @@ remove_xline(struct Client *source_p, const char *name)
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
+	char *encoded;
+
+	encoded = xline_encode_spaces(name);
 
 	RB_DLINK_FOREACH(ptr, xline_conf_list.head)
 	{
 		aconf = ptr->data;
 
-		if(!irccmp(aconf->name, name))
+		if(!irccmp(aconf->name, encoded))
 		{
 			if (!aconf->hold)
 			{
-				if (!remove_xline_from_file(source_p, name))
+				if (!remove_xline_from_file(source_p, encoded))
 					return;
 			}
 			else
 			{
 				sendto_one_notice(source_p, 
 						":X-Line for [%s] is removed",
-						name);
+						encoded);
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						"%s has removed the temporary X-Line for: [%s]",
-						get_oper_name(source_p), name);
+						get_oper_name(source_p), encoded);
 				ilog(L_KLINE, "UX %s %s", 
-						get_oper_name(source_p), name);
+						get_oper_name(source_p), encoded);
 			}
 			
 			remove_reject_mask(aconf->name, NULL);
 			free_conf(aconf);
 			rb_dlinkDestroy(ptr, &xline_conf_list);
+			rb_free(encoded);
 			return;
 		}
 	}
 
-	sendto_one_notice(source_p, ":No X-Line for %s", name);
+	sendto_one_notice(source_p, ":No X-Line for %s", encoded);
+	rb_free(encoded);
 
 	return;
 }
@@ -586,6 +557,7 @@ remove_xline_from_file(struct Client *source_p, const char *huntgecos)
 	const char *gecos;
 	mode_t oldumask;
 	char *p;
+	char *encoded;
 	int error_on_write = 0;
 	int found_xline = 0;
 
@@ -639,10 +611,12 @@ remove_xline_from_file(struct Client *source_p, const char *huntgecos)
 		}
 
 		/* matching.. */
-		if(irccmp(gecos, huntgecos) == 0)
+		encoded = xline_encode_spaces(gecos);
+		if(irccmp(encoded, huntgecos) == 0)
 			found_xline++;
 		else
 			error_on_write = (fputs(buf, out) < 0) ? YES : NO;
+		rb_free(encoded);
 	}
 
 	fclose(in);

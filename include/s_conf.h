@@ -368,6 +368,7 @@ extern void parse_d_file(FILE * fb);
 extern void parse_x_file(FILE * fb);
 extern void parse_resv_file(FILE *);
 extern char *getfield(char *newline);
+extern char *xline_encode_spaces(const char *);
 
 extern char *get_oper_name(struct Client *client_p);
 
