@@ -388,11 +388,7 @@
 	  Works similarly to KLINE, but matches against the real name field.
 	  The wildcards are * (any sequence), ? (any character),
 	  # (a digit) and @ (a letter); wildcard characters can be
-	  escaped with a backslash.
-	</para>
-	<para>
-	  Use \s for a space; this currently interferes with the
-	  check whether the mask is already xlined and UNXLINE.
+	  escaped with a backslash. The sequence \s matches a space.
 	</para>
 	<para>
 	  All clients matching the X:line will be disconnected from the server immediately.
