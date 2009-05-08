@@ -326,6 +326,40 @@ write_xline(struct Client *source_p, struct ConfItem *aconf)
 	char buffer[BUFSIZE * 2];
 	FILE *out;
 	const char *filename;
+	char *mangle_gecos;
+
+	if(strstr(aconf->name, "\\s"))
+	{
+		char *tmp = LOCAL_COPY(aconf->name);
+		char *orig = tmp;
+		char *new = tmp; 
+		while(*orig)
+		{
+			if(*orig == '\\' && *(orig + 1) != '\0')
+			{
+				if(*(orig + 1) == 's')
+				{
+					*new++ = ' ';
+					orig += 2;   
+				}
+				/* otherwise skip that and the escaped
+				 * character after it, so we dont mistake
+				 * \\s as \s --fl
+				 */
+				else
+				{   
+					*new++ = *orig++;
+					*new++ = *orig++;
+				}
+			}
+			else
+				*new++ = *orig++;
+		}
+
+		*new = '\0';
+		mangle_gecos = tmp;
+	} else
+		mangle_gecos = aconf->name;
 
 	filename = ConfigFileEntry.xlinefile;
 
@@ -337,7 +371,7 @@ write_xline(struct Client *source_p, struct ConfItem *aconf)
 	}
 
 	rb_sprintf(buffer, "\"%s\",\"0\",\"%s\",\"%s\",%ld\n",
-		   aconf->name, aconf->passwd,
+		   mangle_gecos, aconf->passwd,
 		   get_oper_name(source_p), (long) rb_current_time());
 
 	if(fputs(buffer, out) == -1)
