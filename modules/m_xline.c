@@ -70,7 +70,7 @@ struct Message unxline_msgtab = {
 mapi_clist_av1 xline_clist[] =  { &xline_msgtab, &unxline_msgtab, NULL };
 DECLARE_MODULE_AV1(xline, NULL, NULL, xline_clist, NULL, NULL, "$Revision: 3161 $");
 
-static int valid_xline(struct Client *, const char *, const char *);
+static int valid_xline(struct Client *, const char *, const char *, int);
 static void apply_xline(struct Client *client_p, const char *name, 
 			const char *reason, int temp_time);
 static void write_xline(struct Client *source_p, struct ConfItem *aconf);
@@ -161,7 +161,7 @@ mo_xline(struct Client *client_p, struct Client *source_p, int parc, const char 
 		return 0;
 	}
 
-	if(!valid_xline(source_p, name, reason))
+	if(!valid_xline(source_p, name, reason, temp_time))
 		return 0;
 
 	apply_xline(source_p, name, reason, temp_time);
@@ -214,7 +214,7 @@ handle_remote_xline(struct Client *source_p, int temp_time,
 				(temp_time > 0) ? SHARED_TXLINE : SHARED_PXLINE))
 		return;
 
-	if(!valid_xline(source_p, name, reason))
+	if(!valid_xline(source_p, name, reason, temp_time))
 		return;
 
 	/* already xlined */
@@ -229,19 +229,26 @@ handle_remote_xline(struct Client *source_p, int temp_time,
 
 /* valid_xline()
  *
- * inputs	- client xlining, gecos, reason and whether to warn
+ * inputs	- client xlining, gecos, reason and temp time
  * outputs	-
  * side effects - checks the xline for validity, erroring if needed
  */
 static int
 valid_xline(struct Client *source_p, const char *gecos,
-	    const char *reason)
+	    const char *reason, int temp_time)
 {
 	if(EmptyString(reason))
 	{
 		sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS),
 			   get_id(&me, source_p), 
 			   get_id(source_p, source_p), "XLINE");
+		return 0;
+	}
+
+	if(temp_time == 0 && strstr(gecos, "\",") != NULL)
+	{
+		sendto_one_notice(source_p,
+				  ":Invalid character sequence '\",' in xline, please replace with '\"\\,'");
 		return 0;
 	}
 
