@@ -9,7 +9,7 @@
 ]>
 <book id="charybdis-oper-guide">
   <bookinfo>
-    <date>24 November 2005</date>
+    <date>2009</date>
     <title>Operators guide for the charybdis IRC server</title>
     <author>
       <firstname>William</firstname>
@@ -20,7 +20,7 @@
       <surname>Tjoelker</surname>
     </author>
     <copyright>
-      <year>2005-2008</year>
+      <year>2005-2009</year>
       <holder>William Pitcock and Jilles Tjoelker</holder>
     </copyright>
     <legalnotice>
