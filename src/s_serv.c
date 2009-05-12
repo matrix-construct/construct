@@ -59,10 +59,6 @@
 #define INADDR_NONE ((unsigned int) 0xffffffff)
 #endif
 
-#ifndef HAVE_SOCKETPAIR
-static int inet_socketpair(int d, int type, int protocol, int sv[2]);
-#endif
-
 int MaxConnectionCount = 1;
 int MaxClientCount = 1;
 int refresh_user_links = 0;
@@ -1291,60 +1287,3 @@ serv_connect_callback(rb_fde_t *F, int status, void *data)
 	/* If we get here, we're ok, so lets start reading some data */
 	read_packet(F, client_p);
 }
-
-#ifndef HAVE_SOCKETPAIR
-static int
-inet_socketpair(int d, int type, int protocol, int sv[2])
-{
-	struct sockaddr_in addr1, addr2, addr3;
-	int addr3_len = sizeof(addr3);
-	int fd, rc;
-	int port_no = 20000;
-	
-	if(d != AF_INET || type != SOCK_STREAM || protocol)
-	{
-		errno = EAFNOSUPPORT;
-		return -1;
-	}
-	if(((sv[0] = socket(AF_INET, SOCK_STREAM, 0)) < 0) || ((sv[1] = socket(AF_INET, SOCK_STREAM, 0)) < 0))
-		return -1;
-	
-	addr1.sin_port = htons(port_no);
-	addr1.sin_family = AF_INET;
-	addr1.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-	while ((rc = bind (sv[0], (struct sockaddr *) &addr1, sizeof (addr1))) < 0 && errno == EADDRINUSE)
-		addr1.sin_port = htons(++port_no);
-	
-	if(rc < 0)
-		return -1;
-	
-	if(listen(sv[0], 1) < 0)
-	{
-		close(sv[0]);
-		close(sv[1]);
-		return -1;
-	}
-	
-	addr2.sin_port = htons(port_no);
-	addr2.sin_family = AF_INET;
-	addr2.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-	if(connect (sv[1], (struct sockaddr *) &addr2, sizeof (addr2)) < 0) 
-	{
-		close(sv[0]);
-		close(sv[1]);
-		return -1;
-	}
-	
-	if((fd = accept(sv[1], (struct sockaddr *) &addr3, &addr3_len)) < 0)
-	{
-		close(sv[0]);
-		close(sv[1]);
-		return -1;
-	}
-	close(sv[0]);
-	sv[0] = fd;
-	
-	return(0);
-
-}
-#endif
