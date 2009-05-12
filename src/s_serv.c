@@ -1161,7 +1161,13 @@ serv_connect_ssl_callback(rb_fde_t *F, int status, void *data)
 		serv_connect_callback(F, status, data);
 		return;
 	}
-	rb_socketpair(AF_UNIX, SOCK_STREAM, 0, &xF[0], &xF[1], "Outgoing ssld connection");
+	if(rb_socketpair(AF_UNIX, SOCK_STREAM, 0, &xF[0], &xF[1], "Outgoing ssld connection") == -1)
+	{
+                ilog_error("rb_socketpair failed for server");
+		serv_connect_callback(F, RB_ERROR, data);
+		return;
+		
+	}
 	del_from_cli_fd_hash(client_p);
 	client_p->localClient->F = xF[0];
 	add_to_cli_fd_hash(client_p);

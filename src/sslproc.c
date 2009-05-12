@@ -284,7 +284,12 @@ start_ssldaemon(int count, const char *ssl_cert, const char *ssl_private_key, co
 	for(i = 0; i < count; i++)
 	{
 		ssl_ctl_t *ctl;
-		rb_socketpair(AF_UNIX, SOCK_DGRAM, 0, &F1, &F2, "SSL/TLS handle passing socket");
+		if(rb_socketpair(AF_UNIX, SOCK_DGRAM, 0, &F1, &F2, "SSL/TLS handle passing socket") == -1)
+		{
+			ilog(L_MAIN, "Unable to create ssld - rb_socketpair failed: %s", strerror(errno));
+			return started;
+		}
+		
 		rb_set_buffers(F1, READBUF_SIZE);
 		rb_set_buffers(F2, READBUF_SIZE);
 		rb_snprintf(fdarg, sizeof(fdarg), "%d", rb_get_fd(F2));
@@ -740,8 +745,14 @@ start_zlib_session(void *data)
 
 	/* Pass the socket to ssld. */
 	*buf = 'Z';
-	rb_socketpair(AF_UNIX, SOCK_STREAM, 0, &xF1, &xF2, "Initial zlib socketpairs");
-
+	if(rb_socketpair(AF_UNIX, SOCK_STREAM, 0, &xF1, &xF2, "Initial zlib socketpairs") == -1)
+	{
+		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Error creating zlib socketpair - %s", strerror(errno));
+		ilog(L_MAIN, "Error creating zlib socketpairs - %s", strerror(errno));
+		exit_client(server, server, server, "Error creating zlib socketpair");
+		return;
+	}
+	
 	if(IsSSL(server))
 	{
 		/* tell ssld the new connid for the ssl part*/
