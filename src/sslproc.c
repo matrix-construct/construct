@@ -294,7 +294,11 @@ start_ssldaemon(int count, const char *ssl_cert, const char *ssl_private_key, co
 		rb_set_buffers(F2, READBUF_SIZE);
 		rb_snprintf(fdarg, sizeof(fdarg), "%d", rb_get_fd(F2));
 		rb_setenv("CTL_FD", fdarg, 1);
-		rb_pipe(&P1, &P2, "SSL/TLS pipe");
+		if(rb_pipe(&P1, &P2, "SSL/TLS pipe") == -1)
+		{
+			ilog(L_MAIN, "Unable to create ssld - rb_pipe failed: %s", strerror(errno));
+			return started;
+		}
 		rb_snprintf(fdarg, sizeof(fdarg), "%d", rb_get_fd(P1));
 		rb_setenv("CTL_PIPE", fdarg, 1);
 		rb_snprintf(s_pid, sizeof(s_pid), "%d", (int)getpid());
