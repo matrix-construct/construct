@@ -95,6 +95,9 @@ static int flood_attack_client(int p_or_n, struct Client *source_p, struct Clien
 static int flood_attack_channel(int p_or_n, struct Client *source_p,
 				struct Channel *chptr, char *chname);
 
+/* Fifteen seconds should be plenty for a client to reply a ctcp */
+#define LARGE_CTCP_TIME 15
+
 #define ENTITY_NONE    0
 #define ENTITY_CHANNEL 1
 #define ENTITY_CHANNEL_OPMOD 2
@@ -512,6 +515,9 @@ msg_channel(int p_or_n, const char *command,
 		{
 			sendto_channel_flags(client_p, ALL_MEMBERS, source_p, chptr,
 					     "%s %s :%s", command, chptr->chname, text);
+			if (p_or_n != NOTICE && *text == '\001' &&
+					rb_dlink_list_length(&chptr->locmembers) > (unsigned)(GlobalSetOptions.floodcount / 2))
+				source_p->large_ctcp_sent = rb_current_time();
 		}
 	}
 	else if(chptr->mode.mode & MODE_OPMODERATE &&
@@ -765,6 +771,10 @@ msg_client(int p_or_n, const char *command,
 				return;
 			}
 		}
+
+		if (do_floodcount && p_or_n == NOTICE && *text == '\001' &&
+				target_p->large_ctcp_sent + LARGE_CTCP_TIME >= rb_current_time())
+			do_floodcount = 0;
 
 		if (do_floodcount &&
 				flood_attack_client(p_or_n, source_p, target_p))
@@ -1089,6 +1099,8 @@ handle_special(int p_or_n, const char *command, struct Client *client_p,
 				    nick + 1,
 				    (*nick == '#') ? MATCH_HOST : MATCH_SERVER,
 				    "%s $%s :%s", command, nick, text);
+		if (p_or_n != NOTICE && *text == '\001')
+			source_p->large_ctcp_sent = rb_current_time();
 		return;
 	}
 }

@@ -175,6 +175,8 @@ struct Client
 
 	local_user_t *localClient;
 	pre_client_t *preClient;
+
+	time_t large_ctcp_sent; /* ctcp to large group sent, relax flood checks */
 };
 
 struct LocalUser
