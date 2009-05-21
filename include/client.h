@@ -315,12 +315,6 @@ struct ListClient
 	 */
 };
 
-struct exit_client_hook
-{
-	struct Client *client_p;
-	char exit_message[TOPICLEN];
-};
-
 /*
  * status macros.
  */
@@ -416,7 +410,6 @@ struct exit_client_hook
 #define FLAGS_SERVICE	   0x200000	/* network service */
 #define FLAGS_TGCHANGE     0x400000	/* we're allowed to clear something */
 #define FLAGS_DYNSPOOF     0x800000	/* dynamic spoof, only opers see ip */
-#define FLAGS_EXUNKNOWN	   0x1000000	/* too many unknowns exit.. */
 
 /* flags for local clients, this needs stuff moved from above to here at some point */
 #define LFLAGS_SSL		0x00000001
@@ -491,8 +484,6 @@ struct exit_client_hook
 #define IsDynSpoof(x)		((x)->flags & FLAGS_DYNSPOOF)
 #define SetDynSpoof(x)		((x)->flags |= FLAGS_DYNSPOOF)
 #define ClearDynSpoof(x)	((x)->flags &= ~FLAGS_DYNSPOOF)
-#define IsExUnknown(x)		((x)->flags & FLAGS_EXUNKNOWN)
-#define SetExUnknown(x)		((x)->flags |= FLAGS_EXUNKNOWN)
 
 /* local flags */
 
