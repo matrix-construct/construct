@@ -447,81 +447,9 @@ notify_banned_client(struct Client *client_p, struct ConfItem *aconf, int ban)
 void
 check_banned_lines(void)
 {
-	struct Client *client_p;	/* current local client_p being examined */
-	struct ConfItem *aconf = NULL;
-	rb_dlink_node *ptr, *next_ptr;
-
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, lclient_list.head)
-	{
-		client_p = ptr->data;
-
-		if(IsMe(client_p))
-			continue;
-
-		/* if there is a returned struct ConfItem then kill it */
-		if((aconf = find_dline((struct sockaddr *)&client_p->localClient->ip, client_p->localClient->ip.ss_family)) && !(aconf->status & CONF_EXEMPTDLINE))
-		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
-					     "DLINE active for %s",
-					     get_client_name(client_p, HIDE_IP));
-
-			notify_banned_client(client_p, aconf, D_LINED);
-			continue;	/* and go examine next fd/client_p */
-		}
-
-		if(!IsPerson(client_p))
-			continue;
-
-		if((aconf = find_kline(client_p)) != NULL)
-		{
-			if(IsExemptKline(client_p))
-			{
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
-						"KLINE over-ruled for %s, client is kline_exempt [%s@%s]",
-						get_client_name(client_p, HIDE_IP),
-						aconf->user, aconf->host);
-				continue;
-			}
-
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
-					"KLINE active for %s",
-					get_client_name(client_p, HIDE_IP));
-			notify_banned_client(client_p, aconf, K_LINED);
-			continue;
-		}
-		else if((aconf = find_xline(client_p->info, 1)) != NULL)
-		{
-			if(IsExemptKline(client_p))
-			{
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
-						"XLINE over-ruled for %s, client is kline_exempt [%s]",
-						get_client_name(client_p, HIDE_IP),
-						aconf->name);
-				continue;
-			}
-
-			sendto_realops_snomask(SNO_GENERAL, L_ALL, "XLINE active for %s",
-					get_client_name(client_p, HIDE_IP));
-
-			(void) exit_client(client_p, client_p, &me, "Bad user info");
-			continue;
-		}
-	}
-
-	/* also check the unknowns list for new dlines */
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, unknown_list.head)
-	{
-		client_p = ptr->data;
-
-		if((aconf = find_dline((struct sockaddr *)&client_p->localClient->ip,client_p->localClient->ip.ss_family)))
-		{
-			if(aconf->status & CONF_EXEMPTDLINE)
-				continue;
-
-			notify_banned_client(client_p, aconf, D_LINED);
-		}
-	}
-
+	check_dlines();
+	check_klines();
+	check_xlines();
 }
 
 /* check_klines_event()
