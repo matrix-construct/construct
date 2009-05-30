@@ -26,6 +26,7 @@
 #include "ratbox_lib.h"
 #include "config.h"		/* Gotta pull in the autoconf stuff */
 #include "ircd_defs.h"  /* Needed for some reasons here -- dwr */
+#include "irc_dictionary.h"
 
 /* AIX requires this to be the first thing in the file.  */
 #ifdef __GNUC__
