@@ -1657,8 +1657,10 @@ make_user(struct Client *client_p)
 	{
 		user = (struct User *) rb_bh_alloc(user_heap);
 		user->refcnt = 1;
+		user->metadata = irc_dictionary_create(irccmp);
 		client_p->user = user;
 	}
+
 	return user;
 }
 

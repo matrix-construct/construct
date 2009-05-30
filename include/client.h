@@ -96,6 +96,7 @@ struct User
 	int refcnt;		/* Number of times this block is referenced */
 
 	char suser[NICKLEN+1];
+	struct Dictionary *metadata;
 };
 
 struct Server
@@ -177,8 +178,6 @@ struct Client
 	pre_client_t *preClient;
 
 	time_t large_ctcp_sent; /* ctcp to large group sent, relax flood checks */
-
-	struct Dictionary *metadata;
 };
 
 struct LocalUser
