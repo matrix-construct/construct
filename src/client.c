@@ -1771,7 +1771,7 @@ delete_metadata(struct Client *client_p, const char *key)
 		if (md == NULL)
 			return;
 
-		rb_free(md);
+		rb_bh_free(metadata_heap, md);
 	}
 
 	sendto_common_channels_local_with_capability(client_p, CLICAP_PRESENCE, form_str(RPL_METADATACHG), me.name, client_p->name, key, "");
