@@ -57,7 +57,7 @@ DECLARE_MODULE_AV1(presence, NULL, NULL, presence_clist, NULL, NULL, "$Revision$
 static int
 m_presence(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	char *val;
+	const char *val;
 
 	if(MyClient(source_p) && !IsFloodDone(source_p))
 		flood_endgrace(source_p);
@@ -67,7 +67,7 @@ m_presence(struct Client *client_p, struct Client *source_p, int parc, const cha
 
 	if((parc < 3 || EmptyString(parv[2])) && !EmptyString(parv[1]))
 	{
-		if ((val = irc_dictionary_retrieve(source_p->user->metadata, parv[1])) != NULL)
+		if ((val = get_metadata(source_p, parv[1])) != NULL)
 		{
 			delete_metadata(source_p, parv[1]);
 
@@ -79,12 +79,10 @@ m_presence(struct Client *client_p, struct Client *source_p, int parc, const cha
 		return 0;
 	}
 
-	if ((val = irc_dictionary_retrieve(source_p->user->metadata, parv[1])) != NULL)
+	if ((val = get_metadata(source_p, parv[1])) != NULL)
 	{
 		if (!strcmp(parv[2], val))
 			return 0;
-
-		delete_metadata(source_p, parv[1]);
 	}
 
 	set_metadata(source_p, parv[1], parv[2]);
@@ -105,7 +103,7 @@ m_presence(struct Client *client_p, struct Client *source_p, int parc, const cha
 static int
 me_presence(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	char *val;
+	const char *val;
 
 	if(MyClient(source_p) && !IsFloodDone(source_p))
 		flood_endgrace(source_p);
@@ -119,12 +117,10 @@ me_presence(struct Client *client_p, struct Client *source_p, int parc, const ch
 		return 0;
 	}
 
-	if ((val = irc_dictionary_retrieve(source_p->user->metadata, parv[1])) != NULL)
+	if ((val = get_metadata(source_p, parv[1])) != NULL)
 	{
 		if (!strcmp(parv[2], val))
 			return 0;
-
-		delete_metadata(source_p, parv[1]);
 	}
 
 	set_metadata(source_p, parv[1], parv[2]);
