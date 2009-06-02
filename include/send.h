@@ -66,6 +66,7 @@ extern void sendto_channel_local_butone(struct Client *, int type, struct Channe
 extern void sendto_common_channels_local(struct Client *, const char *, ...) AFP(2, 3);
 extern void sendto_common_channels_local_with_capability(struct Client *, int, const char *, ...) AFP(3, 4);
 extern void sendto_common_channels_local_butone(struct Client *, const char *, ...) AFP(2, 3);
+extern void sendto_common_channels_local_with_capability_butone(struct Client *, int, const char *, ...) AFP(3, 4);
 
 
 extern void sendto_match_butone(struct Client *, struct Client *,
