@@ -1699,8 +1699,6 @@ make_server(struct Client *client_p)
 void
 free_user(struct User *user, struct Client *client_p)
 {
-	free_away(client_p);
-
 	if(--user->refcnt <= 0)
 	{
 		if(user->away)
@@ -1731,21 +1729,21 @@ free_user(struct User *user, struct Client *client_p)
 	}
 }
 
-void
-allocate_away(struct Client *client_p)
+const char *
+get_metadata(struct Client *client_p, const char *key)
 {
-	if(client_p->user->away == NULL)
-		client_p->user->away = rb_bh_alloc(away_heap);	
-}
+	struct MetadataEntry *md;
 
+	if (client_p->user != NULL)
+	{
+		md = irc_dictionary_retrieve(client_p->user->metadata, key);
+		if (md == NULL)
+			return NULL;
 
-void
-free_away(struct Client *client_p)
-{
-	if(client_p->user != NULL && client_p->user->away != NULL) {
-		rb_bh_free(away_heap, client_p->user->away);
-		client_p->user->away = NULL;
+		return md->value;
 	}
+
+	return NULL;
 }
 
 void
