@@ -614,4 +614,7 @@ extern char *generate_uid(void);
 void allocate_away(struct Client *);
 void free_away(struct Client *);
 
+void set_metadata(struct Client *, const char *, const char *);
+void delete_metadata(struct Client *, const char *);
+
 #endif /* INCLUDED_client_h */

@@ -77,6 +77,7 @@ static rb_bh *lclient_heap = NULL;
 static rb_bh *pclient_heap = NULL;
 static rb_bh *user_heap = NULL;
 static rb_bh *away_heap = NULL;
+static rb_bh *metadata_heap = NULL;
 static char current_uid[IDLEN];
 
 struct Dictionary *nd_dict = NULL;
@@ -120,6 +121,7 @@ init_client(void)
 	lclient_heap = rb_bh_create(sizeof(struct LocalUser), LCLIENT_HEAP_SIZE, "lclient_heap");
 	pclient_heap = rb_bh_create(sizeof(struct PreClient), PCLIENT_HEAP_SIZE, "pclient_heap");
 	user_heap = rb_bh_create(sizeof(struct User), USER_HEAP_SIZE, "user_heap");
+	metadata_heap = rb_bh_create(sizeof(struct MetadataEntry), USER_HEAP_SIZE, "metadata_heap");
 	away_heap = rb_bh_create(AWAYLEN, AWAY_HEAP_SIZE, "away_heap");
 
 	rb_event_addish("check_pings", check_pings, NULL, 30);
@@ -1743,6 +1745,36 @@ free_away(struct Client *client_p)
 	if(client_p->user != NULL && client_p->user->away != NULL) {
 		rb_bh_free(away_heap, client_p->user->away);
 		client_p->user->away = NULL;
+	}
+}
+
+void
+set_metadata(struct Client *client_p, const char *key, const char *value)
+{
+	struct MetadataEntry *md;
+
+	if(client_p->user != NULL)
+	{
+		md = rb_bh_alloc(metadata_heap);
+		rb_strlcpy(md->key, key, NICKLEN);
+		rb_strlcpy(md->value, value, TOPICLEN);
+
+		irc_dictionary_add(client_p->user->metadata, key, md);
+	}
+}
+
+void
+delete_metadata(struct Client *client_p, const char *key)
+{
+	struct MetadataEntry *md;
+
+	if(client_p->user != NULL)
+	{
+		md = irc_dictionary_delete(client_p->user->metadata, key);
+		if (md == NULL)
+			return;
+
+		rb_free(md);
 	}
 }
 
