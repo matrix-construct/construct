@@ -813,7 +813,7 @@ static  const char *  replies[] = {
 /* 789 */	NULL,
 /* 790 RPL_METADATASET */	"%s :Metadata set",
 /* 791 RPL_METADATAREM */	"%s :Metadata removed",
-/* 792 */	NULL,
+/* 792 RPL_METADATACHG */	"%s %s :%s",
 /* 793 RPL_WHOISMETADATA */	"%s %s :%s",
 /* 794 */	NULL,
 /* 795 */	NULL,

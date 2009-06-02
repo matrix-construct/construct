@@ -361,6 +361,7 @@ extern const char *form_str(int);
 
 #define RPL_METADATASET		790
 #define RPL_METADATAREM		791
+#define RPL_METADATACHG		792
 #define RPL_WHOISMETADATA	793
 
 #define RPL_LOGGEDIN		900
