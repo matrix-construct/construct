@@ -761,6 +761,69 @@ sendto_common_channels_local(struct Client *user, const char *pattern, ...)
 }
 
 /*
+ * sendto_common_channels_local()
+ *
+ * inputs	- pointer to client
+ *              - capability
+ *		- pattern to send
+ * output	- NONE
+ * side effects	- Sends a message to all people on local server who are
+ * 		  in same channel with user. 
+ *		  used by m_nick.c and exit_one_client.
+ */
+void
+sendto_common_channels_local_with_capability(struct Client *user, int capability, const char *pattern, ...)
+{
+	va_list args;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
+	rb_dlink_node *uptr;
+	rb_dlink_node *next_uptr;
+	struct Channel *chptr;
+	struct Client *target_p;
+	struct membership *msptr;
+	struct membership *mscptr;
+	buf_head_t linebuf;
+
+	rb_linebuf_newbuf(&linebuf);
+	va_start(args, pattern);
+	rb_linebuf_putmsg(&linebuf, pattern, &args, NULL);
+	va_end(args);
+
+	++current_serial;
+
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, user->user->channel.head)
+	{
+		mscptr = ptr->data;
+		chptr = mscptr->chptr;
+
+		RB_DLINK_FOREACH_SAFE(uptr, next_uptr, chptr->locmembers.head)
+		{
+			msptr = uptr->data;
+			target_p = msptr->client_p;
+
+			if(!IsCapable(target_p, capability))
+				continue;
+
+			if(IsIOError(target_p) ||
+			   target_p->serial == current_serial)
+				continue;
+
+			target_p->serial = current_serial;
+			send_linebuf(target_p, &linebuf);
+		}
+	}
+
+	/* this can happen when the user isnt in any channels, but we still
+	 * need to send them the data, ie a nick change
+	 */
+	if(MyConnect(user) && (user->serial != current_serial))
+		send_linebuf(user, &linebuf);
+
+	rb_linebuf_donebuf(&linebuf);
+}
+
+/*
  * sendto_common_channels_local_butone()
  *
  * inputs	- pointer to client
