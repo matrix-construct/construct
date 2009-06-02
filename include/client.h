@@ -120,6 +120,12 @@ struct ZipStats
 	double out_ratio;
 };
 
+struct MetadataEntry
+{
+	char key[NICKLEN+1];
+	char value[TOPICLEN];
+};
+
 struct Client
 {
 	rb_dlink_node node;
