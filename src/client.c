@@ -1751,13 +1751,14 @@ set_metadata(struct Client *client_p, const char *key, const char *value)
 {
 	struct MetadataEntry *md;
 
+	delete_metadata(client_p, key);
 	if(client_p->user != NULL)
 	{
 		md = rb_bh_alloc(metadata_heap);
 		rb_strlcpy(md->key, key, NICKLEN);
 		rb_strlcpy(md->value, value, TOPICLEN);
 
-		irc_dictionary_add(client_p->user->metadata, key, md);
+		irc_dictionary_add(client_p->user->metadata, md->key, md);
 	}
 }
 
