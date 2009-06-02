@@ -83,7 +83,7 @@ m_away(struct Client *client_p, struct Client *source_p, int parc, const char *p
 			/* we now send this only if they were away before --is */
 			sendto_server(client_p, NULL, CAP_TS6, NOCAPS,
 				      ":%s AWAY", use_id(source_p));
-			free_away(source_p);
+			delete_metadata(source_p, "away");
 		}
 		if(MyConnect(source_p))
 			sendto_one_numeric(source_p, RPL_UNAWAY, form_str(RPL_UNAWAY));
