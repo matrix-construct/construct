@@ -76,7 +76,6 @@ static rb_bh *client_heap = NULL;
 static rb_bh *lclient_heap = NULL;
 static rb_bh *pclient_heap = NULL;
 static rb_bh *user_heap = NULL;
-static rb_bh *away_heap = NULL;
 static rb_bh *metadata_heap = NULL;
 static char current_uid[IDLEN];
 
@@ -122,7 +121,6 @@ init_client(void)
 	pclient_heap = rb_bh_create(sizeof(struct PreClient), PCLIENT_HEAP_SIZE, "pclient_heap");
 	user_heap = rb_bh_create(sizeof(struct User), USER_HEAP_SIZE, "user_heap");
 	metadata_heap = rb_bh_create(sizeof(struct MetadataEntry), USER_HEAP_SIZE, "metadata_heap");
-	away_heap = rb_bh_create(AWAYLEN, AWAY_HEAP_SIZE, "away_heap");
 
 	rb_event_addish("check_pings", check_pings, NULL, 30);
 	rb_event_addish("free_exited_clients", &free_exited_clients, NULL, 4);
