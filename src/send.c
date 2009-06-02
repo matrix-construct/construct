@@ -817,7 +817,7 @@ sendto_common_channels_local_with_capability(struct Client *user, int capability
 	/* this can happen when the user isnt in any channels, but we still
 	 * need to send them the data, ie a nick change
 	 */
-	if(MyConnect(user) && (user->serial != current_serial))
+	if(MyConnect(user) && (user->serial != current_serial) && IsCapable(user, capability))
 		send_linebuf(user, &linebuf);
 
 	rb_linebuf_donebuf(&linebuf);
@@ -936,7 +936,7 @@ sendto_common_channels_local_with_capability_butone(struct Client *user, int cap
 	/* this can happen when the user isnt in any channels, but we still
 	 * need to send them the data, ie a nick change
 	 */
-	if(MyConnect(user) && (user->serial != current_serial))
+	if(MyConnect(user) && (user->serial != current_serial) && IsCapable(user, capability))
 		send_linebuf(user, &linebuf);
 
 	rb_linebuf_donebuf(&linebuf);
