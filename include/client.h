@@ -92,7 +92,6 @@ struct User
 {
 	rb_dlink_list channel;	/* chain of channel pointer blocks */
 	rb_dlink_list invited;	/* chain of invite pointer blocks */
-	char *away;		/* pointer to away message */
 	int refcnt;		/* Number of times this block is referenced */
 
 	char suser[NICKLEN+1];

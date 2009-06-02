@@ -704,7 +704,7 @@ stats_operedup (struct Client *source_p)
 		if(IsOperInvis(target_p) && !IsOper(source_p))
 			continue;
 
-		if(target_p->user->away)
+		if(get_metadata(target_p, "away"))
 			continue;
 
 		count++;
@@ -1137,7 +1137,6 @@ stats_memory (struct Client *source_p)
 	int conf_count = 0;	/* conf lines */
 	int users_invited_count = 0;	/* users invited */
 	int user_channels = 0;	/* users in channels */
-	int aways_counted = 0;
 	size_t number_servers_cached;	/* number of servers cached by scache */
 
 	size_t channel_memory = 0;
@@ -1146,7 +1145,6 @@ stats_memory (struct Client *source_p)
 	size_t channel_invex_memory = 0;
 	size_t channel_quiet_memory = 0;
 
-	size_t away_memory = 0;	/* memory used by aways */
 	size_t ww = 0;		/* whowas array count */
 	size_t wwm = 0;		/* whowas array memory used */
 	size_t conf_memory = 0;	/* memory used by conf lines */
@@ -1181,11 +1179,6 @@ stats_memory (struct Client *source_p)
 			users_counted++;
 			users_invited_count += rb_dlink_list_length(&target_p->user->invited);
 			user_channels += rb_dlink_list_length(&target_p->user->channel);
-			if(target_p->user->away)
-			{
-				aways_counted++;
-				away_memory += (strlen(target_p->user->away) + 1);
-			}
 		}
 	}
 
@@ -1246,10 +1239,9 @@ stats_memory (struct Client *source_p)
 			   (unsigned long) users_invited_count * sizeof(rb_dlink_node));
 
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			   "z :User channels %u(%lu) Aways %u(%d)",
+			   "z :User channels %u(%lu)",
 			   user_channels,
-			   (unsigned long) user_channels * sizeof(rb_dlink_node),
-			   aways_counted, (int) away_memory);
+			   (unsigned long) user_channels * sizeof(rb_dlink_node));
 
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			   "z :Attached confs %u(%lu)",

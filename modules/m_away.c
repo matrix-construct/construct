@@ -78,7 +78,7 @@ m_away(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	if(parc < 2 || EmptyString(parv[1]))
 	{
 		/* Marking as not away */
-		if(source_p->user->away != NULL)
+		if(get_metadata(source_p, "away") != NULL)
 		{
 			/* we now send this only if they were away before --is */
 			sendto_server(client_p, NULL, CAP_TS6, NOCAPS,
@@ -90,18 +90,10 @@ m_away(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		return 0;
 	}
 
-
-	if(source_p->user->away == NULL)
-	{
-		allocate_away(source_p);
-		rb_strlcpy(source_p->user->away, parv[1], AWAYLEN);
-		sendto_server(client_p, NULL, CAP_TS6, NOCAPS, 
-			      ":%s AWAY :%s", use_id(source_p), source_p->user->away);
+	set_metadata(source_p, "away", parv[1]);
+	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, 
+		      ":%s AWAY :%s", use_id(source_p), parv[1]);
 			
-	} else {
-		rb_strlcpy(source_p->user->away, parv[1], AWAYLEN);
-	}
-	
 	if(MyConnect(source_p))
 		sendto_one_numeric(source_p, RPL_NOWAWAY, form_str(RPL_NOWAWAY));
 

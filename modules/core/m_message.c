@@ -744,6 +744,7 @@ static void
 msg_client(int p_or_n, const char *command,
 	   struct Client *source_p, struct Client *target_p, const char *text)
 {
+	const char *awaymsg;
 	int do_floodcount = 0;
 
 	if(MyClient(source_p))
@@ -788,9 +789,9 @@ msg_client(int p_or_n, const char *command,
 		return;
 	}
 
-	if(MyConnect(source_p) && (p_or_n != NOTICE) && target_p->user && target_p->user->away)
+	if(MyConnect(source_p) && (p_or_n != NOTICE) && target_p->user && (awaymsg = get_metadata(target_p, "away")) != NULL)
 		sendto_one_numeric(source_p, RPL_AWAY, form_str(RPL_AWAY),
-				   target_p->name, target_p->user->away);
+				   target_p->name, awaymsg);
 
 	if(MyClient(target_p))
 	{

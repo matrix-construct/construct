@@ -228,6 +228,7 @@ do_whois(struct Client *client_p, struct Client *source_p, int parc, const char 
 static void
 single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 {
+	const char *awaymsg;
 	char buf[BUFSIZE];
 	rb_dlink_node *ptr;
 	struct membership *msptr;
@@ -304,9 +305,9 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 			   target_p->name, target_p->servptr->name,
 			   target_p->servptr->info);
 
-	if(target_p->user->away)
+	if((awaymsg = get_metadata(target_p, "away")) != NULL)
 		sendto_one_numeric(source_p, RPL_AWAY, form_str(RPL_AWAY),
-				   target_p->name, target_p->user->away);
+				   target_p->name, awaymsg);
 
 	if(IsOper(target_p))
 	{

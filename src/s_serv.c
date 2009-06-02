@@ -474,6 +474,8 @@ burst_TS6(struct Client *client_p)
 
 	RB_DLINK_FOREACH(ptr, global_client_list.head)
 	{
+		const char *awaymsg = NULL;
+
 		target_p = ptr->data;
 
 		if(!IsPerson(target_p))
@@ -516,10 +518,10 @@ burst_TS6(struct Client *client_p)
 						use_id(target_p), target_p->user->suser);
 		}
 
-		if(ConfigFileEntry.burst_away && !EmptyString(target_p->user->away))
+		if(ConfigFileEntry.burst_away && (awaymsg = get_metadata(target_p, "away")) != NULL)
 			sendto_one(client_p, ":%s AWAY :%s",
 				   use_id(target_p),
-				   target_p->user->away);
+				   awaymsg);
 
 		hclientinfo.target = target_p;
 		call_hook(h_burst_client, &hclientinfo);

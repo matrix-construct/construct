@@ -1701,8 +1701,6 @@ free_user(struct User *user, struct Client *client_p)
 {
 	if(--user->refcnt <= 0)
 	{
-		if(user->away)
-			rb_free((char *) user->away);
 		/*
 		 * sanity check
 		 */
