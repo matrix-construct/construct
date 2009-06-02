@@ -1756,6 +1756,8 @@ set_metadata(struct Client *client_p, const char *key, const char *value)
 
 		irc_dictionary_add(client_p->user->metadata, md->key, md);
 	}
+
+	sendto_common_channels_local_with_capability(client_p, CLICAP_PRESENCE, form_str(RPL_METADATACHG), me.name, client_p->name, key, value);
 }
 
 void
@@ -1771,6 +1773,8 @@ delete_metadata(struct Client *client_p, const char *key)
 
 		rb_free(md);
 	}
+
+	sendto_common_channels_local_with_capability(client_p, CLICAP_PRESENCE, form_str(RPL_METADATACHG), me.name, client_p->name, key, "");
 }
 
 void
