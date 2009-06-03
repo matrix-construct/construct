@@ -43,7 +43,7 @@ static int me_presence(struct Client *, struct Client *, int, const char **);
 
 struct Message presence_msgtab = {
 	"PRESENCE", 0, 0, 0, MFLG_SLOW,
-	{mg_unreg, {m_presence, 1}, {m_presence, 1}, mg_ignore, {me_presence, 1}, {m_presence, 1}}
+	{mg_unreg, {m_presence, 2}, {m_presence, 2}, mg_ignore, {me_presence, 2}, {m_presence, 2}}
 };
 
 mapi_clist_av1 presence_clist[] = { &presence_msgtab, NULL };
