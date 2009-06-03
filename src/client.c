@@ -1747,14 +1747,21 @@ set_metadata(struct Client *client_p, const char *key, const char *value)
 {
 	struct MetadataEntry *md;
 
-	delete_metadata(client_p, key);
 	if(client_p->user != NULL)
 	{
-		md = rb_bh_alloc(metadata_heap);
-		rb_strlcpy(md->key, key, NICKLEN);
-		rb_strlcpy(md->value, value, TOPICLEN);
+		md = irc_dictionary_retrieve(client_p->user->metadata, key);
+		if (md == NULL)
+		{
+			md = rb_bh_alloc(metadata_heap);
+			rb_strlcpy(md->key, key, NICKLEN);
+			irc_dictionary_add(client_p->user->metadata, md->key, md);
+		}
+		else if (!strcmp(md->key, key) && !strcmp(md->value, value))
+			return;
+		else
+			rb_strlcpy(md->key, key, NICKLEN);
 
-		irc_dictionary_add(client_p->user->metadata, md->key, md);
+		rb_strlcpy(md->value, value, TOPICLEN);
 	}
 
 	sendto_common_channels_local_with_capability(client_p, CLICAP_PRESENCE, form_str(RPL_METADATACHG), me.name, client_p->name, key, value);
