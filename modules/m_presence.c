@@ -79,6 +79,12 @@ m_presence(struct Client *client_p, struct Client *source_p, int parc, const cha
 		return 0;
 	}
 
+	if (strlen(parv[1]) >= METADATAKEYLEN)
+	{
+		sendto_one_notice(source_p, ":Metadata key too long");
+		return 0;
+	}
+
 	if ((val = get_metadata(source_p, parv[1])) != NULL)
 	{
 		if (!strcmp(parv[2], val))
@@ -113,6 +119,9 @@ me_presence(struct Client *client_p, struct Client *source_p, int parc, const ch
 		delete_metadata(source_p, parv[1]);
 		return 0;
 	}
+
+	if (strlen(parv[1]) >= METADATAKEYLEN)
+		return 0;
 
 	if ((val = get_metadata(source_p, parv[1])) != NULL)
 	{
