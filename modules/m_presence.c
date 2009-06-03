@@ -105,9 +105,6 @@ me_presence(struct Client *client_p, struct Client *source_p, int parc, const ch
 {
 	const char *val;
 
-	if(MyClient(source_p) && !IsFloodDone(source_p))
-		flood_endgrace(source_p);
-
 	if(!IsClient(source_p))
 		return 0;
 
