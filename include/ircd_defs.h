@@ -115,9 +115,7 @@
 /* 23+1 for \0 */
 #define KEYLEN          24
 #define BUFSIZE         512	/* WARNING: *DONT* CHANGE THIS!!!! */
-#define MAXRECIPIENTS   20
-#define MAXBANLENGTH    1024
-#define OPERNICKLEN     NICKLEN*2	/* Length of OPERNICKs. */
+#define OPERNICKLEN     (NICKLEN*2)	/* Length of OPERNICKs. */
 
 #define USERHOST_REPLYLEN       (NICKLEN+HOSTLEN+USERLEN+5)
 #define MAX_DATE_STRING 32	/* maximum string length for a date string */
