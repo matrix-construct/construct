@@ -121,8 +121,8 @@ struct ZipStats
 
 struct MetadataEntry
 {
-	char key[NICKLEN+1];
-	char value[TOPICLEN];
+	char key[METADATAKEYLEN];
+	char value[METADATAVALUELEN];
 };
 
 struct Client
