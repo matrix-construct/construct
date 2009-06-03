@@ -307,7 +307,7 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 			   target_p->name, target_p->servptr->name,
 			   target_p->servptr->info);
 
-	if(!IsCapable(source_p, CLICAP_PRESENCE) && (awaymsg = get_metadata(target_p, "away")) != NULL)
+	if((awaymsg = get_metadata(target_p, "away")) != NULL)
 		sendto_one_numeric(source_p, RPL_AWAY, form_str(RPL_AWAY),
 				   target_p->name, awaymsg);
 
@@ -372,7 +372,7 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 	DICTIONARY_FOREACH(md, &iter, target_p->user->metadata)
 	{
 		/* XXX: hack around "away" for legacy clients. --nenolod */
-		if (!IsCapable(source_p, CLICAP_PRESENCE) && !irccmp(md->key, "away"))
+		if (!irccmp(md->key, "away"))
 			continue;
 
 		sendto_one_numeric(source_p, RPL_WHOISMETADATA,
