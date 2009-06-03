@@ -65,6 +65,12 @@ m_presence(struct Client *client_p, struct Client *source_p, int parc, const cha
 	if(!IsClient(source_p))
 		return 0;
 
+	if (!irccmp(parv[1], "away"))
+	{
+		sendto_one_notice(source_p, ":Please use /AWAY to change your away status");
+		return 0;
+	}
+
 	if((parc < 3 || EmptyString(parv[2])) && !EmptyString(parv[1]))
 	{
 		if ((val = get_metadata(source_p, parv[1])) != NULL)
