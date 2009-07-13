@@ -1321,7 +1321,7 @@ oper_up(struct Client *source_p, struct oper_conf *oper_p)
 	call_hook(h_umode_changed, &hdata);
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
-			     "%s (%s@%s) is now an operator", source_p->name,
+			     "%s (%s!%s@%s) is now an operator", oper_p->name, source_p->name,
 			     source_p->username, source_p->host);
 	if(!(old & UMODE_INVISIBLE) && IsInvisible(source_p))
 		++Count.invisi;
