@@ -177,9 +177,21 @@ ms_etb(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		 * but do propagate the new topicts/topicwho to servers.
 		 */
 		if(textchange)
-			sendto_channel_local(ALL_MEMBERS, chptr, ":%s TOPIC %s :%s",
-					fakesource_p->name, chptr->chname,
-					newtopic);
+		{
+			if (IsPerson(fakesource_p))
+				sendto_channel_local(ALL_MEMBERS, chptr,
+						":%s!%s@%s TOPIC %s :%s",
+						fakesource_p->name,
+						fakesource_p->username,
+						fakesource_p->host,
+						chptr->chname,
+						newtopic);
+			else
+				sendto_channel_local(ALL_MEMBERS, chptr,
+						":%s TOPIC %s :%s",
+						fakesource_p->name,
+						chptr->chname, newtopic);
+		}
 		/* Propagate channelts as given, because an older channelts
 		 * forces any change.
 		 */
