@@ -573,6 +573,12 @@ static struct InfoStruct info_table[] = {
 		"Enable /KNOCK",
 	},
 	{
+		"resv_forcepart",
+		OUTPUT_BOOLEAN_YN,
+		{ &ConfigChannel.resv_forcepart },
+		"Force-part local users on channel RESV"
+	},
+	{
 		"disable_hidden",
 		OUTPUT_BOOLEAN_YN,
 		&ConfigServerHide.disable_hidden,

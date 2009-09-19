@@ -814,6 +814,7 @@ set_default_conf(void)
 	ConfigChannel.default_split_server_count = 10;
 	ConfigChannel.no_join_on_split = NO;
 	ConfigChannel.no_create_on_split = YES;
+	ConfigChannel.resv_forcepart = YES;
 
 	ConfigServerHide.flatten_links = 0;
 	ConfigServerHide.links_delay = 300;

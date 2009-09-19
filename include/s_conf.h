@@ -238,6 +238,7 @@ struct config_channel_entry
 	int burst_topicwho;
 	int kick_on_split_riding;
 	int only_ascii_channels;
+	int resv_forcepart;
 };
 
 struct config_server_hide
