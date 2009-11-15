@@ -679,6 +679,16 @@ ssl_process_connect_cb(rb_fde_t *F, int status, void *data)
 
 
 static void
+cleanup_bad_message(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
+{
+	int i;
+
+	/* XXX should log this somehow */
+	for (i = 0; i < ctlb->nfds; i++)
+		rb_close(ctlb->F[i]);
+}
+
+static void
 ssl_process_accept(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 {
 	conn_t *conn;
@@ -918,6 +928,12 @@ mod_process_cmd_recv(mod_ctl_t * ctl)
 		{
 		case 'A':
 			{
+				if (ctl_buf->nfds != 2 || ctl_buf->buflen != 5)
+				{
+					cleanup_bad_message(ctl, ctl_buf);
+					break;
+				}
+
 				if(!ssl_ok)
 				{
 					send_nossl_support(ctl, ctl_buf);
@@ -928,6 +944,12 @@ mod_process_cmd_recv(mod_ctl_t * ctl)
 			}
 		case 'C':
 			{
+				if (ctl_buf->nfds != 2 || ctl_buf->buflen != 5)
+				{
+					cleanup_bad_message(ctl, ctl_buf);
+					break;
+				}
+
 				if(!ssl_ok)
 				{
 					send_nossl_support(ctl, ctl_buf);
@@ -964,6 +986,12 @@ mod_process_cmd_recv(mod_ctl_t * ctl)
 #ifdef HAVE_LIBZ
 		case 'Z':
 			{
+				if (ctl_buf->nfds != 2 || ctl_buf->buflen < 6)
+				{
+					cleanup_bad_message(ctl, ctl_buf);
+					break;
+				}
+
 				/* just zlib only */
 				zlib_process(ctl, ctl_buf);
 				break;
@@ -994,6 +1022,7 @@ mod_read_ctl(rb_fde_t *F, void *data)
 	mod_ctl_buf_t *ctl_buf;
 	mod_ctl_t *ctl = data;
 	int retlen;
+	int i;
 
 	do
 	{
@@ -1011,6 +1040,9 @@ mod_read_ctl(rb_fde_t *F, void *data)
 		{
 			ctl_buf->buflen = retlen;
 			rb_dlinkAddTail(ctl_buf, &ctl_buf->node, &ctl->readq);
+			for (i = 0; i < MAXPASSFD && ctl_buf->F[i] != NULL; i++)
+				;
+			ctl_buf->nfds = i;
 		}
 	}
 	while(retlen > 0);
