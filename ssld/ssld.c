@@ -171,6 +171,7 @@ static void conn_mod_write_sendq(rb_fde_t *, void *data);
 static void conn_plain_write_sendq(rb_fde_t *, void *data);
 static void mod_write_ctl(rb_fde_t *, void *data);
 static void conn_plain_read_cb(rb_fde_t *fd, void *data);
+static void conn_plain_read_shutdown_cb(rb_fde_t *fd, void *data);
 static void mod_cmd_write_queue(mod_ctl_t * ctl, const void *data, size_t len);
 static const char *remote_closed = "Remote host closed the connection";
 static int ssl_ok;
@@ -262,16 +263,17 @@ close_conn(conn_t * conn, int wait_plain, const char *fmt, ...)
 	rb_close(conn->mod_fd);
 	SetDead(conn);
 
+	if(conn->id >= 0 && !IsZipSSL(conn))
+		rb_dlinkDelete(&conn->node, connid_hash(conn->id));
+
 	if(!wait_plain || fmt == NULL)
 	{
 		rb_close(conn->plain_fd);
-
-		if(conn->id >= 0 && !IsZipSSL(conn))
-			rb_dlinkDelete(&conn->node, connid_hash(conn->id));
 		rb_dlinkAdd(conn, &conn->node, &dead_list);
 		return;
 	}
-	rb_setselect(conn->plain_fd, RB_SELECT_WRITE | RB_SELECT_READ, NULL, NULL);
+	rb_setselect(conn->plain_fd, RB_SELECT_READ, conn_plain_read_shutdown_cb, conn);
+	rb_setselect(conn->plain_fd, RB_SELECT_WRITE, NULL, NULL);
 	va_start(ap, fmt);
 	rb_vsnprintf(reason, sizeof(reason), fmt, ap);
 	va_end(ap);
@@ -538,6 +540,34 @@ conn_plain_read_cb(rb_fde_t *fd, void *data)
 			return;
 		if(plain_check_cork(conn))
 			return;
+	}
+}
+
+static void
+conn_plain_read_shutdown_cb(rb_fde_t *fd, void *data)
+{
+	conn_t *conn = data;
+	int length = 0;
+
+	if(conn == NULL)
+		return;
+
+	while(1)
+	{
+		length = rb_read(conn->plain_fd, inbuf, sizeof(inbuf));
+
+		if(length == 0 || (length < 0 && !rb_ignore_errno(errno)))
+		{
+			rb_close(conn->plain_fd);
+			rb_dlinkAdd(conn, &conn->node, &dead_list);
+			return;
+		}
+
+		if(length < 0)
+		{
+			rb_setselect(conn->plain_fd, RB_SELECT_READ, conn_plain_read_shutdown_cb, conn);
+			return;
+		}
 	}
 }
 
