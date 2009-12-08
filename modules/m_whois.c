@@ -228,7 +228,6 @@ do_whois(struct Client *client_p, struct Client *source_p, int parc, const char 
 static void
 single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 {
-	const char *awaymsg;
 	char buf[BUFSIZE];
 	rb_dlink_node *ptr;
 	struct membership *msptr;
@@ -240,8 +239,6 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 	hook_data_client hdata;
 	int visible;
 	int extra_space = 0;
-	struct DictionaryIter iter;
-	struct MetadataEntry *md;
 
 	if(target_p->user == NULL)
 	{
@@ -307,9 +304,9 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 			   target_p->name, target_p->servptr->name,
 			   target_p->servptr->info);
 
-	if((awaymsg = get_metadata(target_p, "away")) != NULL)
+	if(target_p->user->away)
 		sendto_one_numeric(source_p, RPL_AWAY, form_str(RPL_AWAY),
-				   target_p->name, awaymsg);
+				   target_p->name, target_p->user->away);
 
 	if(IsOper(target_p))
 	{
@@ -367,17 +364,6 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 					   target_p->name, target_p->sockhost);
 			
 		}
-	}
-
-	DICTIONARY_FOREACH(md, &iter, target_p->user->metadata)
-	{
-		/* XXX: hack around "away" for legacy clients. --nenolod */
-		if (!irccmp(md->key, "away"))
-			continue;
-
-		sendto_one_numeric(source_p, RPL_WHOISMETADATA,
-				   form_str(RPL_WHOISMETADATA),
-				   target_p->name, md->key, md->value);
 	}
 
 	hdata.client = source_p;
