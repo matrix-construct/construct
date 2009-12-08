@@ -58,7 +58,6 @@ static void add_invite(struct Channel *, struct Client *);
 static int
 m_invite(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	const char *awaymsg;
 	struct Client *target_p;
 	struct Channel *chptr;
 	struct membership *msptr;
@@ -166,9 +165,9 @@ m_invite(struct Client *client_p, struct Client *source_p, int parc, const char 
 		sendto_one(source_p, form_str(RPL_INVITING), 
 			   me.name, source_p->name,
 			   target_p->name, parv[2]);
-		if((awaymsg = get_metadata(target_p, "away")) != NULL)
+		if(target_p->user->away)
 			sendto_one_numeric(source_p, RPL_AWAY, form_str(RPL_AWAY),
-					   target_p->name, awaymsg);
+					   target_p->name, target_p->user->away);
 	}
 	/* invite timestamp */
 	else if(parc > 3 && !EmptyString(parv[3]))

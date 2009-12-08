@@ -92,10 +92,10 @@ struct User
 {
 	rb_dlink_list channel;	/* chain of channel pointer blocks */
 	rb_dlink_list invited;	/* chain of invite pointer blocks */
+	char *away;		/* pointer to away message */
 	int refcnt;		/* Number of times this block is referenced */
 
 	char suser[NICKLEN+1];
-	struct Dictionary *metadata;
 };
 
 struct Server
@@ -117,12 +117,6 @@ struct ZipStats
 	unsigned long long out_wire;
 	double in_ratio;
 	double out_ratio;
-};
-
-struct MetadataEntry
-{
-	char key[METADATAKEYLEN];
-	char value[METADATAVALUELEN];
 };
 
 struct Client
@@ -456,7 +450,6 @@ struct ListClient
 
 #define CLICAP_MULTI_PREFIX	0x0001
 #define CLICAP_SASL		0x0002
-#define CLICAP_PRESENCE		0x0004
 
 /*
  * flags macros.
@@ -613,9 +606,5 @@ extern char *generate_uid(void);
 
 void allocate_away(struct Client *);
 void free_away(struct Client *);
-
-const char *get_metadata(struct Client *, const char *);
-void set_metadata(struct Client *, const char *, const char *);
-void delete_metadata(struct Client *, const char *);
 
 #endif /* INCLUDED_client_h */

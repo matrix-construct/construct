@@ -111,18 +111,13 @@
 #define BANREASONLEN	390	/* kline/dline */
 #define AWAYLEN		TOPICLEN
 #define KILLLEN         200	/* with Killed (nick ()) added this should fit in quit */
-#define METADATAKEYLEN	31
-/* :012345678901234567890123456789012345678901234567890123456789123 792 * 012345678901234567890123456789 012345678901234567890123456789 :
- * takes at most 137 bytes
- * :123456789 ENCAP * PRESENCE 012345678901234567890123456789 :
- * takes at most 63 bytes
- * */
-#define METADATAVALUELEN 300
 
 /* 23+1 for \0 */
 #define KEYLEN          24
 #define BUFSIZE         512	/* WARNING: *DONT* CHANGE THIS!!!! */
-#define OPERNICKLEN     (NICKLEN*2)	/* Length of OPERNICKs. */
+#define MAXRECIPIENTS   20
+#define MAXBANLENGTH    1024
+#define OPERNICKLEN     NICKLEN*2	/* Length of OPERNICKs. */
 
 #define USERHOST_REPLYLEN       (NICKLEN+HOSTLEN+USERLEN+5)
 #define MAX_DATE_STRING 32	/* maximum string length for a date string */
