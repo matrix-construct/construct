@@ -401,7 +401,6 @@ struct ListClient
 #define FLAGS_GOTID        0x0080	/* successful ident lookup achieved */
 #define FLAGS_FLOODDONE    0x0100	/* flood grace period over / reported */
 #define FLAGS_NORMALEX     0x0400	/* Client exited normally */
-#define FLAGS_SENDQEX      0x0800	/* Sendq exceeded */
 #define FLAGS_MARK	   0x10000	/* marked client */
 #define FLAGS_HIDDEN       0x20000	/* hidden server */
 #define FLAGS_EOB          0x40000	/* EOB */
@@ -592,7 +591,7 @@ extern client_t *next_client(struct Client *, const char *);
 #define accept_message(s, t) ((s) == (t) || (rb_dlinkFind((s), &((t)->localClient->allow_list))))
 extern void del_all_accepts(struct Client *client_p);
 
-extern void dead_link(struct Client *client_p);
+extern void dead_link(struct Client *client_p, int sendqex);
 extern int show_ip(struct Client *source_p, struct Client *target_p);
 extern int show_ip_conf(struct ConfItem *aconf, struct Client *target_p);
 

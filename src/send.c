@@ -85,10 +85,7 @@ _send_linebuf(struct Client *to, buf_head_t *linebuf)
 			     get_sendq(to));
 		}
 
-		if(IsClient(to))
-			to->flags |= FLAGS_SENDQEX;
-
-		dead_link(to);
+		dead_link(to, 1);
 		return -1;
 	}
 	else
@@ -200,7 +197,7 @@ send_queued(struct Client *to)
 
 		if(retlen == 0 || (retlen < 0 && !rb_ignore_errno(errno)))
 		{
-			dead_link(to);
+			dead_link(to, 0);
 			return;
 		}
 	}

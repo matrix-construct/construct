@@ -1105,7 +1105,7 @@ exit_aborted_clients(void *unused)
  *
  */
 void
-dead_link(struct Client *client_p)
+dead_link(struct Client *client_p, int sendqex)
 {
 	struct abort_client *abt;
 
@@ -1115,7 +1115,7 @@ dead_link(struct Client *client_p)
 
 	abt = (struct abort_client *) rb_malloc(sizeof(struct abort_client));
 
-	if(client_p->flags & FLAGS_SENDQEX)
+	if(sendqex)
 		rb_strlcpy(abt->notice, "Max SendQ exceeded", sizeof(abt->notice));
 	else
 		rb_snprintf(abt->notice, sizeof(abt->notice), "Write error: %s", strerror(errno));
