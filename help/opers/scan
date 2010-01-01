@@ -7,10 +7,10 @@ NO-LIST disables the listing of matching users and only
 shows the count. LIST enables the listing (default). GLOBAL
 extends the search to the entire network instead of local
 users only. LIST-MAX limits the listing of matching users to
-the given amount. MASK causes only users matching the given
-nick!user@host mask to be selected. Only the displayed host
-is considered, not the IP address or real host behind
-dynamic spoofs.
+the given amount instead of the default 500. MASK causes
+only users matching the given nick!user@host mask to be
+selected. Only the displayed host is considered, not the
+IP address or real host behind dynamic spoofs.
 
 Network searches where a listing is given are operspy
 commands.

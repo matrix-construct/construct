@@ -114,7 +114,7 @@ scan_umodes(struct Client *client_p, struct Client *source_p, int parc,
 	int what = MODE_ADD;
 	int mode;
 	int list_users = YES;
-	int list_max = 0;
+	int list_max = 500;
 	int list_count = 0, count = 0;
 	const char *mask = NULL;
 	const char *c;
