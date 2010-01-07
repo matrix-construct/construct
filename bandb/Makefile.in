@@ -36,27 +36,29 @@ PROGS		= bandb bantool
 
 BANDB_SOURCES =     \
   bandb.c	\
-  rsdb_sprintf.c \
-  rsdb_sqlite3.c
+  rsdb_snprintf.c \
+  rsdb_sqlite3.c \
+  sqlite3.c
 
 BANDB_OBJECTS = ${BANDB_SOURCES:.c=.o}
 
 BANTOOL_SOURCES =     \
   bantool.c	\
-  rsdb_sprintf.c \
-  rsdb_sqlite3.c
+  rsdb_snprintf.c \
+  rsdb_sqlite3.c \
+  sqlite3.c
 
-BANTOOL_OBJECTS = ${BANDB_SOURCES:.c=.o}
+BANTOOL_OBJECTS = ${BANTOOL_SOURCES:.c=.o}
 
 all: bandb bantool
 
 build: all
 
 bandb: ${BANDB_OBJECTS}
-	${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${OBJECTS} ${IRCDLIBS}
+	${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${BANDB_OBJECTS} ${IRCDLIBS}
 
 bantool: ${BANTOOL_OBJECTS}
-	${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${OBJECTS} ${IRCDLIBS}
+	${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${BANTOOL_OBJECTS} ${IRCDLIBS}
 
 install: build
 	@echo "ircd: installing bandb ($(PROGS))"
