@@ -235,7 +235,7 @@ parse_resv(struct Client *source_p, const char *name, const char *reason, int te
 					  temp_time / 60, name);
 		}
 		else
-			bandb_add(BANDB_RESV, source_p, aconf->host, NULL, aconf->passwd, NULL, 0);
+			bandb_add(BANDB_RESV, source_p, aconf->name, NULL, aconf->passwd, NULL, 0);
 	}
 	else if(clean_resv_nick(name))
 	{
@@ -288,7 +288,7 @@ parse_resv(struct Client *source_p, const char *name, const char *reason, int te
 					  temp_time / 60, name);
 		}
 		else
-			bandb_add(BANDB_RESV, source_p, aconf->host, NULL, aconf->passwd, NULL, 0);
+			bandb_add(BANDB_RESV, source_p, aconf->name, NULL, aconf->passwd, NULL, 0);
 	}
 	else
 		sendto_one_notice(source_p, ":You have specified an invalid resv: [%s]", name);
