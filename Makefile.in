@@ -46,7 +46,7 @@ CFLAGS		= @CFLAGS@
 # the system one.
 #CFLAGS= -DNDEBUG -g -O2 -D"FD_SETSIZE=1024"
 SHELL=/bin/sh
-SUBDIRS=libratbox modules extensions src tools ssld doc help
+SUBDIRS=libratbox modules extensions src tools ssld bandb doc help
 CLEANDIRS = ${SUBDIRS}
 RSA_FILES=rsa_respond/README rsa_respond/respond.c rsa_respond/Makefile
 

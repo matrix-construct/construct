@@ -1157,6 +1157,7 @@ fi
 
 AC_CONFIG_FILES(			\
 	Makefile			\
+	bandb/Makefile			\
 	ssld/Makefile			\
 	extensions/Makefile		\
 	unsupported/Makefile		\
