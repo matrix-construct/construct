@@ -54,6 +54,7 @@ lex.yy.c:	ircd_lexer.l
 	${LEX} ircd_lexer.l
 
 SRCS =                          \
+  bandbi.c			\
   blacklist.c			\
   cache.c			\
   channel.c                     \
