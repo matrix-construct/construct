@@ -76,7 +76,7 @@ static rb_bh *client_heap = NULL;
 static rb_bh *lclient_heap = NULL;
 static rb_bh *pclient_heap = NULL;
 static rb_bh *user_heap = NULL;
-static rb_bh *metadata_heap = NULL;
+static rb_bh *away_heap = NULL;
 static char current_uid[IDLEN];
 
 struct Dictionary *nd_dict = NULL;
@@ -120,7 +120,7 @@ init_client(void)
 	lclient_heap = rb_bh_create(sizeof(struct LocalUser), LCLIENT_HEAP_SIZE, "lclient_heap");
 	pclient_heap = rb_bh_create(sizeof(struct PreClient), PCLIENT_HEAP_SIZE, "pclient_heap");
 	user_heap = rb_bh_create(sizeof(struct User), USER_HEAP_SIZE, "user_heap");
-	metadata_heap = rb_bh_create(sizeof(struct MetadataEntry), USER_HEAP_SIZE, "metadata_heap");
+	away_heap = rb_bh_create(AWAYLEN, AWAY_HEAP_SIZE, "away_heap");
 
 	rb_event_addish("check_pings", check_pings, NULL, 30);
 	rb_event_addish("free_exited_clients", &free_exited_clients, NULL, 4);
@@ -1105,7 +1105,7 @@ exit_aborted_clients(void *unused)
  *
  */
 void
-dead_link(struct Client *client_p)
+dead_link(struct Client *client_p, int sendqex)
 {
 	struct abort_client *abt;
 
@@ -1115,7 +1115,7 @@ dead_link(struct Client *client_p)
 
 	abt = (struct abort_client *) rb_malloc(sizeof(struct abort_client));
 
-	if(client_p->flags & FLAGS_SENDQEX)
+	if(sendqex)
 		rb_strlcpy(abt->notice, "Max SendQ exceeded", sizeof(abt->notice));
 	else
 		rb_snprintf(abt->notice, sizeof(abt->notice), "Write error: %s", strerror(errno));
@@ -1657,10 +1657,8 @@ make_user(struct Client *client_p)
 	{
 		user = (struct User *) rb_bh_alloc(user_heap);
 		user->refcnt = 1;
-		user->metadata = irc_dictionary_create(irccmp);
 		client_p->user = user;
 	}
-
 	return user;
 }
 
@@ -1697,8 +1695,12 @@ make_server(struct Client *client_p)
 void
 free_user(struct User *user, struct Client *client_p)
 {
+	free_away(client_p);
+
 	if(--user->refcnt <= 0)
 	{
+		if(user->away)
+			rb_free((char *) user->away);
 		/*
 		 * sanity check
 		 */
@@ -1725,63 +1727,21 @@ free_user(struct User *user, struct Client *client_p)
 	}
 }
 
-const char *
-get_metadata(struct Client *client_p, const char *key)
+void
+allocate_away(struct Client *client_p)
 {
-	struct MetadataEntry *md;
-
-	if (client_p->user != NULL)
-	{
-		md = irc_dictionary_retrieve(client_p->user->metadata, key);
-		if (md == NULL)
-			return NULL;
-
-		return md->value;
-	}
-
-	return NULL;
+	if(client_p->user->away == NULL)
+		client_p->user->away = rb_bh_alloc(away_heap);	
 }
 
-void
-set_metadata(struct Client *client_p, const char *key, const char *value)
-{
-	struct MetadataEntry *md;
-
-	if(client_p->user != NULL)
-	{
-		md = irc_dictionary_retrieve(client_p->user->metadata, key);
-		if (md == NULL)
-		{
-			md = rb_bh_alloc(metadata_heap);
-			rb_strlcpy(md->key, key, sizeof md->key);
-			irc_dictionary_add(client_p->user->metadata, md->key, md);
-		}
-		else if (!strcmp(md->key, key) && !strcmp(md->value, value))
-			return;
-		else
-			rb_strlcpy(md->key, key, sizeof md->key);
-
-		rb_strlcpy(md->value, value, sizeof md->value);
-	}
-
-	sendto_common_channels_local_with_capability(client_p, CLICAP_PRESENCE, form_str(RPL_METADATACHG), me.name, client_p->name, key, value);
-}
 
 void
-delete_metadata(struct Client *client_p, const char *key)
+free_away(struct Client *client_p)
 {
-	struct MetadataEntry *md;
-
-	if(client_p->user != NULL)
-	{
-		md = irc_dictionary_delete(client_p->user->metadata, key);
-		if (md == NULL)
-			return;
-
-		rb_bh_free(metadata_heap, md);
+	if(client_p->user != NULL && client_p->user->away != NULL) {
+		rb_bh_free(away_heap, client_p->user->away);
+		client_p->user->away = NULL;
 	}
-
-	sendto_common_channels_local_with_capability(client_p, CLICAP_PRESENCE, form_str(RPL_METADATACHG), me.name, client_p->name, key, "");
 }
 
 void

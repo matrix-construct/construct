@@ -83,7 +83,6 @@ TSRCS =                          \
   m_ping.c \
   m_pong.c \
   m_post.c \
-  m_presence.c \
   m_privs.c \
   m_rehash.c \
   m_restart.c \

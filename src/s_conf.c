@@ -834,6 +834,9 @@ set_default_conf(void)
 	ConfigFileEntry.throttle_duration = 60;
 
 	ServerInfo.default_max_clients = MAXCONNECTIONS;
+
+	if (!alias_dict)
+		alias_dict = irc_dictionary_create(strcasecmp);
 }
 
 #undef YES

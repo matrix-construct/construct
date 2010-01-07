@@ -1722,9 +1722,6 @@ conf_end_alias(struct TopConf *tc)
 		return -1;
 	}
 
-	if (!alias_dict)
-		alias_dict = irc_dictionary_create(strcasecmp);
-
 	irc_dictionary_add(alias_dict, yy_alias->name, yy_alias);
 
 	return 0;

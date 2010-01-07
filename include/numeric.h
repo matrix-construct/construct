@@ -359,11 +359,6 @@ extern const char *form_str(int);
 #define RPL_SCANMATCHED		750
 #define RPL_SCANUMODES		751
 
-#define RPL_METADATASET		790
-#define RPL_METADATAREM		791
-#define RPL_METADATACHG		792
-#define RPL_WHOISMETADATA	793
-
 #define RPL_LOGGEDIN		900
 #define RPL_LOGGEDOUT		901
 #define ERR_NICKLOCKED		902

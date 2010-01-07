@@ -80,8 +80,8 @@ statuses
 +v (prefix +) (voice)
 type A
 +b (ban)
-+e (ban exception)
-+I (invite exception)
++e (ban exception) (capab: EX)
++I (invite exception) (capab: IE)
 type B
 +k (key: password required to join, <= 23 ascii chars, no : or , or whitespace)
 type C
@@ -90,7 +90,7 @@ type D
 +m (moderated)
 +n (no external messages)
 +p (private: does not appear in /whois to non-members, no /knock allowed)
-+r (only registered users may join) (only if a services server exists)
++r (only registered users may join) (only if a services server exists) (capab: SERVICES)
 +s (secret)
 +t (only chanops may change topic)
 (charybdis TS6)
@@ -368,6 +368,7 @@ parameters: target server mask, duration, user mask, host mask, reason
 As form 1, deprecated.
 
 KNOCK
+capab: KNOCK
 source: user
 parameters: channel
 propagation: broadcast

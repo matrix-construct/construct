@@ -92,10 +92,10 @@ struct User
 {
 	rb_dlink_list channel;	/* chain of channel pointer blocks */
 	rb_dlink_list invited;	/* chain of invite pointer blocks */
+	char *away;		/* pointer to away message */
 	int refcnt;		/* Number of times this block is referenced */
 
 	char suser[NICKLEN+1];
-	struct Dictionary *metadata;
 };
 
 struct Server
@@ -117,12 +117,6 @@ struct ZipStats
 	unsigned long long out_wire;
 	double in_ratio;
 	double out_ratio;
-};
-
-struct MetadataEntry
-{
-	char key[METADATAKEYLEN];
-	char value[METADATAVALUELEN];
 };
 
 struct Client
@@ -407,7 +401,6 @@ struct ListClient
 #define FLAGS_GOTID        0x0080	/* successful ident lookup achieved */
 #define FLAGS_FLOODDONE    0x0100	/* flood grace period over / reported */
 #define FLAGS_NORMALEX     0x0400	/* Client exited normally */
-#define FLAGS_SENDQEX      0x0800	/* Sendq exceeded */
 #define FLAGS_MARK	   0x10000	/* marked client */
 #define FLAGS_HIDDEN       0x20000	/* hidden server */
 #define FLAGS_EOB          0x40000	/* EOB */
@@ -456,7 +449,6 @@ struct ListClient
 
 #define CLICAP_MULTI_PREFIX	0x0001
 #define CLICAP_SASL		0x0002
-#define CLICAP_PRESENCE		0x0004
 
 /*
  * flags macros.
@@ -599,7 +591,7 @@ extern client_t *next_client(struct Client *, const char *);
 #define accept_message(s, t) ((s) == (t) || (rb_dlinkFind((s), &((t)->localClient->allow_list))))
 extern void del_all_accepts(struct Client *client_p);
 
-extern void dead_link(struct Client *client_p);
+extern void dead_link(struct Client *client_p, int sendqex);
 extern int show_ip(struct Client *source_p, struct Client *target_p);
 extern int show_ip_conf(struct ConfItem *aconf, struct Client *target_p);
 
@@ -613,9 +605,5 @@ extern char *generate_uid(void);
 
 void allocate_away(struct Client *);
 void free_away(struct Client *);
-
-const char *get_metadata(struct Client *, const char *);
-void set_metadata(struct Client *, const char *, const char *);
-void delete_metadata(struct Client *, const char *);
 
 #endif /* INCLUDED_client_h */
