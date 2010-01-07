@@ -334,8 +334,8 @@ apply_xline(struct Client *source_p, const char *name, const char *reason, int t
 		sendto_one_notice(source_p, ":Added X-Line for [%s] [%s]",
 				  aconf->name, aconf->passwd);
 
-		bandb_add(BANDB_XLINE, source_p, aconf->host, NULL, reason, NULL, 0);
-		ilog(L_KLINE, "X %s 0 %s %s", get_oper_name(source_p), name, reason);
+		bandb_add(BANDB_XLINE, source_p, aconf->name, NULL, aconf->passwd, NULL, 0);
+		ilog(L_KLINE, "X %s 0 %s %s", get_oper_name(source_p), name, aconf->passwd);
 	}
 
 	rb_dlinkAddAlloc(aconf, &xline_conf_list);
