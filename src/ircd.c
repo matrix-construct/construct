@@ -67,6 +67,7 @@
 #include "sslproc.h"
 #include "chmode.h"
 #include "privilege.h"
+#include "bandbi.h"
 
 /* /quote set variables */
 struct SetOptions GlobalSetOptions;
@@ -677,6 +678,7 @@ main(int argc, char *argv[])
 	mod_add_path(MODULE_DIR "/autoload"); 
 #endif
 
+	init_bandb();
 	init_ssld();
 
 	initialize_server_capabs();	/* Set up default_server_capabs */
