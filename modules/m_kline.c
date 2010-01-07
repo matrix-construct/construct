@@ -485,6 +485,28 @@ apply_kline(struct Client *source_p, struct ConfItem *aconf,
 	add_conf_by_address(aconf->host, CONF_KILL, aconf->user, NULL, aconf);
 	bandb_add(BANDB_KLINE, source_p, aconf->user, aconf->host,
 		  reason, EmptyString(oper_reason) ? NULL : oper_reason, 0);
+
+	/* no oper reason.. */
+	if(EmptyString(oper_reason))
+	{
+		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				       "%s added K-Line for [%s@%s] [%s]",
+				       get_oper_name(source_p), aconf->user, aconf->host, reason);
+		ilog(L_KLINE, "K %s 0 %s %s %s",
+		     get_oper_name(source_p), aconf->user, aconf->host, reason);
+	}
+	else
+	{
+		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				       "%s added K-Line for [%s@%s] [%s|%s]",
+				       get_oper_name(source_p), aconf->user, aconf->host,
+				       reason, oper_reason);
+		ilog(L_KLINE, "K %s 0 %s %s %s|%s",
+		     get_oper_name(source_p), aconf->user, aconf->host, reason, oper_reason);
+	}
+
+	sendto_one_notice(source_p, ":Added K-Line [%s@%s]",
+			  aconf->user, aconf->host);
 }
 
 /* apply_tkline()

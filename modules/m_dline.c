@@ -341,6 +341,24 @@ apply_dline(struct Client *source_p, const char *dlhost, int tdline_time, char *
 
 		bandb_add(BANDB_DLINE, source_p, aconf->host, NULL,
 			  reason, EmptyString(aconf->spasswd) ? NULL : aconf->spasswd, 0);
+
+		if(EmptyString(oper_reason))
+		{
+			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+					       "%s added D-Line for [%s] [%s]",
+					       get_oper_name(source_p), aconf->host, reason);
+			ilog(L_KLINE, "D %s 0 %s %s",
+			     get_oper_name(source_p), aconf->host, reason);
+		}
+		else
+		{
+			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+					       "%s added D-Line for [%s] [%s|%s]",
+					       get_oper_name(source_p), aconf->host, reason, oper_reason);
+			ilog(L_KLINE, "D %s 0 %s %s|%s",
+			     get_oper_name(source_p),
+			     aconf->host, reason, oper_reason);
+		}
 	}
 
 	return 0;
