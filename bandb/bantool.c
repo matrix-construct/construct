@@ -390,12 +390,12 @@ import_config(const char *conf, int id)
 	int i = 0;
 
 	char f_perm = 0;
-	char *f_mask1 = NULL;
-	char *f_mask2 = NULL;
-	char *f_oper = NULL;
-	char *f_time = NULL;
-	char *f_reason = NULL;
-	char *f_oreason = NULL;
+	const char *f_mask1 = NULL;
+	const char *f_mask2 = NULL;
+	const char *f_oper = NULL;
+	const char *f_time = NULL;
+	const char *f_reason = NULL;
+	const char *f_oreason = NULL;
 	char newreason[REASONLEN];
 
 	if(flag.verbose)
@@ -480,6 +480,8 @@ import_config(const char *conf, int id)
 
 		f_oper = getfield(NULL);
 		f_time = strip_quotes(f_oper + strlen(f_oper) + 2);
+		if(EmptyString(f_oper))
+			f_oper = "unknown";
 
 		/* meh */
 		if(id == BANDB_KLINE || id == BANDB_KLINE_PERM)
