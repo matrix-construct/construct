@@ -138,7 +138,7 @@ static int mo_sendbans(struct Client *client_p, struct Client *source_p, int par
 		sendto_match_servs(source_p, target,
 				CAP_ENCAP, NOCAPS,
 				"ENCAP %s RESV 0 %s 0 :%s",
-				target, aconf->name, aconf->passwd);
+				target, aconf->host, aconf->passwd);
 	}
 
 	HASH_WALK(i, R_MAX, ptr, resvTable)
@@ -149,7 +149,7 @@ static int mo_sendbans(struct Client *client_p, struct Client *source_p, int par
 		sendto_match_servs(source_p, target,
 				CAP_ENCAP, NOCAPS,
 				"ENCAP %s RESV 0 %s 0 :%s",
-				target, aconf->name, aconf->passwd);
+				target, aconf->host, aconf->passwd);
 	}
 	HASH_WALK_END
 
@@ -158,11 +158,11 @@ static int mo_sendbans(struct Client *client_p, struct Client *source_p, int par
 		aconf = ptr->data;
 		if (aconf->hold)
 			continue;
-		mask2 = expand_xline(aconf->name);
+		mask2 = expand_xline(aconf->host);
 		if (mask2 == NULL)
 		{
 			sendto_one_notice(source_p, ":Skipping xline [%s]",
-					aconf->name);
+					aconf->host);
 			continue;
 		}
 		sendto_match_servs(source_p, target,

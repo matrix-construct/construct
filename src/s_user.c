@@ -420,7 +420,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 	   (xconf = find_xline(source_p->info, 1)) != NULL)
 	{
 		ServerStats.is_ref++;
-		add_reject(source_p, xconf->name, NULL);
+		add_reject(source_p, xconf->host, NULL);
 		exit_client(client_p, source_p, &me, "Bad user info");
 		return CLIENT_EXITED;
 	}

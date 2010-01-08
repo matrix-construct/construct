@@ -233,7 +233,7 @@ parse_x_file(FILE * file)
 		aconf = make_conf();
 		aconf->status = CONF_XLINE;
 
-		aconf->name = encoded;
+		aconf->host = encoded;
 		aconf->passwd = rb_strdup(reason_field);
 
 		rb_dlinkAddAlloc(aconf, &xline_conf_list);
@@ -274,9 +274,9 @@ parse_resv_file(FILE * file)
 			aconf->status = CONF_RESV_CHANNEL;
 			aconf->port = 0;
 
-			aconf->name = rb_strdup(host_field);
+			aconf->host = rb_strdup(host_field);
 			aconf->passwd = rb_strdup(reason_field);
-			add_to_resv_hash(aconf->name, aconf);
+			add_to_resv_hash(aconf->host, aconf);
 		}
 		else if(clean_resv_nick(host_field))
 		{
@@ -287,7 +287,7 @@ parse_resv_file(FILE * file)
 			aconf->status = CONF_RESV_NICK;
 			aconf->port = 0;
 
-			aconf->name = rb_strdup(host_field);
+			aconf->host = rb_strdup(host_field);
 			aconf->passwd = rb_strdup(reason_field);
 			rb_dlinkAddAlloc(aconf, &resv_conf_list);
 		}

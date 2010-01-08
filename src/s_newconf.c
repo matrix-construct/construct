@@ -486,7 +486,7 @@ find_xline(const char *gecos, int counter)
 	{
 		aconf = ptr->data;
 
-		if(match_esc(aconf->name, gecos))
+		if(match_esc(aconf->host, gecos))
 		{
 			if(counter)
 				aconf->port++;
@@ -507,7 +507,7 @@ find_xline_mask(const char *gecos)
 	{
 		aconf = ptr->data;
 
-		if(!irccmp(aconf->name, gecos))
+		if(!irccmp(aconf->host, gecos))
 			return aconf;
 	}
 
@@ -524,7 +524,7 @@ find_nick_resv(const char *name)
 	{
 		aconf = ptr->data;
 
-		if(match_esc(aconf->name, name))
+		if(match_esc(aconf->host, name))
 		{
 			aconf->port++;
 			return aconf;
@@ -544,7 +544,7 @@ find_nick_resv_mask(const char *name)
 	{
 		aconf = ptr->data;
 
-		if(!irccmp(aconf->name, name))
+		if(!irccmp(aconf->host, name))
 			return aconf;
 	}
 
@@ -668,7 +668,7 @@ expire_temp_rxlines(void *unused)
 			if(ConfigFileEntry.tkline_expire_notices)
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						"Temporary RESV for [%s] expired",
-						aconf->name);
+						aconf->host);
 
 			free_conf(aconf);
 			rb_dlinkDestroy(ptr, &resvTable[i]);
@@ -685,7 +685,7 @@ expire_temp_rxlines(void *unused)
 			if(ConfigFileEntry.tkline_expire_notices)
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						"Temporary RESV for [%s] expired",
-						aconf->name);
+						aconf->host);
 			free_conf(aconf);
 			rb_dlinkDestroy(ptr, &resv_conf_list);
 		}
@@ -700,7 +700,7 @@ expire_temp_rxlines(void *unused)
 			if(ConfigFileEntry.tkline_expire_notices)
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						"Temporary X-line for [%s] expired",
-						aconf->name);
+						aconf->host);
 			free_conf(aconf);
 			rb_dlinkDestroy(ptr, &xline_conf_list);
 		}

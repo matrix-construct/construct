@@ -585,7 +585,7 @@ check_xlines(void)
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						     "XLINE over-ruled for %s, client is kline_exempt [%s]",
 						     get_client_name(client_p, HIDE_IP),
-						     aconf->name);
+						     aconf->host);
 				continue;
 			}
 

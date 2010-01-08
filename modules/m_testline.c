@@ -85,7 +85,7 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 					me.name, source_p->name,
 					resv_p->hold ? 'q' : 'Q',
 					resv_p->hold ? (long) ((resv_p->hold - rb_current_time()) / 60) : 0L,
-					resv_p->name, resv_p->passwd);
+					resv_p->host, resv_p->passwd);
 			/* this is a false positive, so make sure it isn't counted in stats q
 			 * --nenolod
 			 */
@@ -205,7 +205,7 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 				me.name, source_p->name,
 				resv_p->hold ? 'q' : 'Q',
 				resv_p->hold ? (long) ((resv_p->hold - rb_current_time()) / 60) : 0L,
-				resv_p->name, resv_p->passwd);
+				resv_p->host, resv_p->passwd);
 
 		/* this is a false positive, so make sure it isn't counted in stats q
 		 * --nenolod
@@ -246,6 +246,6 @@ mo_testgecos(struct Client *client_p, struct Client *source_p, int parc, const c
 			me.name, source_p->name,
 			aconf->hold ? 'x' : 'X',
 			aconf->hold ? (long) ((aconf->hold - rb_current_time()) / 60) : 0L,
-			aconf->name, aconf->passwd);
+			aconf->host, aconf->passwd);
 	return 0;
 }
