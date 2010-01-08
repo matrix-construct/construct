@@ -235,7 +235,16 @@ parse_resv(struct Client *source_p, const char *name, const char *reason, int te
 					  temp_time / 60, name);
 		}
 		else
+		{
+			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+					       "%s added RESV for [%s] [%s]",
+					       get_oper_name(source_p), name, reason);
+			ilog(L_KLINE, "R %s 0 %s %s",
+			     get_oper_name(source_p), name, reason);
+			sendto_one_notice(source_p, ":Added RESV [%s]", name);
+
 			bandb_add(BANDB_RESV, source_p, aconf->host, NULL, aconf->passwd, NULL, 0);
+		}
 	}
 	else if(clean_resv_nick(name))
 	{
@@ -288,7 +297,16 @@ parse_resv(struct Client *source_p, const char *name, const char *reason, int te
 					  temp_time / 60, name);
 		}
 		else
+		{
+			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+					       "%s added RESV for [%s] [%s]",
+					       get_oper_name(source_p), name, reason);
+			ilog(L_KLINE, "R %s 0 %s %s",
+			     get_oper_name(source_p), name, reason);
+			sendto_one_notice(source_p, ":Added RESV [%s]", name);
+
 			bandb_add(BANDB_RESV, source_p, aconf->host, NULL, aconf->passwd, NULL, 0);
+		}
 	}
 	else
 		sendto_one_notice(source_p, ":You have specified an invalid resv: [%s]", name);
