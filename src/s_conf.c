@@ -49,6 +49,7 @@
 #include "blacklist.h"
 #include "privilege.h"
 #include "sslproc.h"
+#include "bandbi.h"
 
 struct config_server_hide ConfigServerHide;
 
@@ -654,43 +655,7 @@ static struct banconf_entry
 void
 rehash_bans(int sig)
 {
-	FILE *file;
-	char buf[MAXPATHLEN];
-	int i;
-
-	if(sig != 0)
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				"Got signal SIGUSR2, reloading ban confs");
-
-	clear_out_address_conf_bans();
-	clear_s_newconf_bans();
-
-	for(i = 0; banconfs[i].filename; i++)
-	{
-		if(banconfs[i].perm)
-			snprintf(buf, sizeof(buf), "%s.perm", *banconfs[i].filename);
-		else
-			snprintf(buf, sizeof(buf), "%s", *banconfs[i].filename);
-
-		if((file = fopen(buf, "r")) == NULL)
-		{
-			if(banconfs[i].perm)
-				continue;
-
-			ilog(L_MAIN, "Failed reading ban file %s",
-				*banconfs[i].filename);
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
-					"Can't open %s file bans could be missing!",
-					*banconfs[i].filename);
-		}
-		else
-		{
-			(banconfs[i].func)(file);
-			fclose(file);
-		}
-	}
-
-	check_banned_lines();
+	bandb_rehash_bans();
 }
 
 /*

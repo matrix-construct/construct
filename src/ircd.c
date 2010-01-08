@@ -671,7 +671,6 @@ main(int argc, char *argv[])
 	if (testing_conf)
 		fprintf(stderr, "\nBeginning config test\n");
 	read_conf_files(YES);	/* cold start init conf files */
-	rehash_bans(0);
 #ifndef STATIC_MODULES
 
 	mod_add_path(MODULE_DIR); 
@@ -680,6 +679,8 @@ main(int argc, char *argv[])
 
 	init_bandb();
 	init_ssld();
+
+	rehash_bans(0);
 
 	initialize_server_capabs();	/* Set up default_server_capabs */
 	initialize_global_set_options();
