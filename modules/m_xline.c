@@ -275,42 +275,7 @@ apply_xline(struct Client *source_p, const char *name, const char *reason, int t
 
 	aconf = make_conf();
 	aconf->status = CONF_XLINE;
-
-	if(strstr(name, "\\s"))
-	{
-		char *tmp = LOCAL_COPY(name);
-		char *orig = tmp;
-		char *new = tmp;
-
-		while(*orig)
-		{
-			if(*orig == '\\' && *(orig + 1) != '\0')
-			{
-				if(*(orig + 1) == 's')
-				{
-					*new++ = ' ';
-					orig += 2;
-				}
-				/* otherwise skip that and the escaped
-				 * character after it, so we dont mistake
-				 * \\s as \s --fl
-				 */
-				else
-				{
-					*new++ = *orig++;
-					*new++ = *orig++;
-				}
-			}
-			else
-				*new++ = *orig++;
-		}
-
-		*new = '\0';
-		aconf->host = rb_strdup(tmp);
-	}
-	else
-		aconf->host = rb_strdup(name);
-
+	aconf->host = rb_strdup(name);
 	aconf->passwd = rb_strdup(reason);
 	collapse(aconf->host);
 
