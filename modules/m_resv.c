@@ -217,9 +217,9 @@ parse_resv(struct Client *source_p, const char *name, const char *reason, int te
 		aconf = make_conf();
 		aconf->status = CONF_RESV_CHANNEL;
 		aconf->port = 0;
-		aconf->name = rb_strdup(name);
+		aconf->host = rb_strdup(name);
 		aconf->passwd = rb_strdup(reason);
-		add_to_resv_hash(aconf->name, aconf);
+		add_to_resv_hash(aconf->host, aconf);
 
 		if(temp_time > 0)
 		{
@@ -235,7 +235,7 @@ parse_resv(struct Client *source_p, const char *name, const char *reason, int te
 					  temp_time / 60, name);
 		}
 		else
-			bandb_add(BANDB_RESV, source_p, aconf->name, NULL, aconf->passwd, NULL, 0);
+			bandb_add(BANDB_RESV, source_p, aconf->host, NULL, aconf->passwd, NULL, 0);
 	}
 	else if(clean_resv_nick(name))
 	{
@@ -270,7 +270,7 @@ parse_resv(struct Client *source_p, const char *name, const char *reason, int te
 		aconf = make_conf();
 		aconf->status = CONF_RESV_NICK;
 		aconf->port = 0;
-		aconf->name = rb_strdup(name);
+		aconf->host = rb_strdup(name);
 		aconf->passwd = rb_strdup(reason);
 		rb_dlinkAddAlloc(aconf, &resv_conf_list);
 
@@ -288,7 +288,7 @@ parse_resv(struct Client *source_p, const char *name, const char *reason, int te
 					  temp_time / 60, name);
 		}
 		else
-			bandb_add(BANDB_RESV, source_p, aconf->name, NULL, aconf->passwd, NULL, 0);
+			bandb_add(BANDB_RESV, source_p, aconf->host, NULL, aconf->passwd, NULL, 0);
 	}
 	else
 		sendto_one_notice(source_p, ":You have specified an invalid resv: [%s]", name);
@@ -461,7 +461,7 @@ remove_resv(struct Client *source_p, const char *name)
 		{
 			aconf = ptr->data;
 
-			if(irccmp(aconf->name, name))
+			if(irccmp(aconf->host, name))
 				aconf = NULL;
 			else
 				break;

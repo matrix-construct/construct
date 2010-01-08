@@ -158,7 +158,7 @@ mo_xline(struct Client *client_p, struct Client *source_p, int parc, const char 
 	if((aconf = find_xline_mask(name)) != NULL)
 	{
 		sendto_one(source_p, ":%s NOTICE %s :[%s] already X-Lined by [%s] - %s",
-			   me.name, source_p->name, name, aconf->name, aconf->passwd);
+			   me.name, source_p->name, name, aconf->host, aconf->passwd);
 		return 0;
 	}
 
@@ -220,7 +220,7 @@ handle_remote_xline(struct Client *source_p, int temp_time, const char *name, co
 	/* already xlined */
 	if((aconf = find_xline_mask(name)) != NULL)
 	{
-		sendto_one_notice(source_p, ":[%s] already X-Lined by [%s] - %s", name, aconf->name,
+		sendto_one_notice(source_p, ":[%s] already X-Lined by [%s] - %s", name, aconf->host,
 				  aconf->passwd);
 		return;
 	}
@@ -306,13 +306,13 @@ apply_xline(struct Client *source_p, const char *name, const char *reason, int t
 		}
 
 		*new = '\0';
-		aconf->name = rb_strdup(tmp);
+		aconf->host = rb_strdup(tmp);
 	}
 	else
-		aconf->name = rb_strdup(name);
+		aconf->host = rb_strdup(name);
 
 	aconf->passwd = rb_strdup(reason);
-	collapse(aconf->name);
+	collapse(aconf->host);
 
 	if(temp_time > 0)
 	{
@@ -321,20 +321,20 @@ apply_xline(struct Client *source_p, const char *name, const char *reason, int t
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				       "%s added temporary %d min. X-Line for [%s] [%s]",
 				       get_oper_name(source_p), temp_time / 60,
-				       aconf->name, reason);
+				       aconf->host, reason);
 		ilog(L_KLINE, "X %s %d %s %s",
 		     get_oper_name(source_p), temp_time / 60, name, reason);
 		sendto_one_notice(source_p, ":Added temporary %d min. X-Line [%s]",
-				  temp_time / 60, aconf->name);
+				  temp_time / 60, aconf->host);
 	}
 	else
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s added X-Line for [%s] [%s]",
-				       get_oper_name(source_p), aconf->name, aconf->passwd);
+				       get_oper_name(source_p), aconf->host, aconf->passwd);
 		sendto_one_notice(source_p, ":Added X-Line for [%s] [%s]",
-				  aconf->name, aconf->passwd);
+				  aconf->host, aconf->passwd);
 
-		bandb_add(BANDB_XLINE, source_p, aconf->name, NULL, aconf->passwd, NULL, 0);
+		bandb_add(BANDB_XLINE, source_p, aconf->host, NULL, aconf->passwd, NULL, 0);
 		ilog(L_KLINE, "X %s 0 %s %s", get_oper_name(source_p), name, aconf->passwd);
 	}
 
@@ -480,7 +480,7 @@ remove_xline(struct Client *source_p, const char *name)
 	{
 		aconf = ptr->data;
 
-		if(!irccmp(aconf->name, name))
+		if(!irccmp(aconf->host, name))
 		{
 			if(!aconf->hold)
 			{
@@ -501,7 +501,7 @@ remove_xline(struct Client *source_p, const char *name)
 				ilog(L_KLINE, "UX %s %s", get_oper_name(source_p), name);
 			}
 
-			remove_reject_mask(aconf->name, NULL);
+			remove_reject_mask(aconf->host, NULL);
 			free_conf(aconf);
 			rb_dlinkDestroy(ptr, &xline_conf_list);
 			return;
