@@ -461,22 +461,20 @@ remove_resv(struct Client *source_p, const char *name)
 			return;
 		}
 
+		sendto_one_notice(source_p, ":RESV for [%s] is removed", name);
+		ilog(L_KLINE, "UR %s %s", get_oper_name(source_p), name);
 		if(!aconf->hold)
 		{
 			bandb_del(BANDB_RESV, aconf->host, NULL);
-			sendto_one_notice(source_p, ":RESV for [%s] is removed", name);
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					       "%s has removed the RESV for: [%s]",
 					       get_oper_name(source_p), name);
-			ilog(L_KLINE, "UR %s %s", get_oper_name(source_p), name);
 		}
 		else
 		{
-			sendto_one_notice(source_p, ":RESV for [%s] is removed", name);
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
-					       "%s has removed the RESV for: [%s]",
+					       "%s has removed the temporary RESV for: [%s]",
 					       get_oper_name(source_p), name);
-			ilog(L_KLINE, "UR %s %s", get_oper_name(source_p), name);
 		}
 		del_from_resv_hash(name, aconf);
 	}
