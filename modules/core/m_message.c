@@ -516,6 +516,7 @@ msg_channel(int p_or_n, const char *command,
 			sendto_channel_flags(client_p, ALL_MEMBERS, source_p, chptr,
 					     "%s %s :%s", command, chptr->chname, text);
 			if (p_or_n != NOTICE && *text == '\001' &&
+					strncasecmp(text + 1, "ACTION", 6) &&
 					rb_dlink_list_length(&chptr->locmembers) > (unsigned)(GlobalSetOptions.floodcount / 2))
 				source_p->large_ctcp_sent = rb_current_time();
 		}
