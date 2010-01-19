@@ -1399,7 +1399,7 @@ struct ChannelMode chmode_table[256] =
   {chm_nosuch,	0 },			/* @ */
   {chm_nosuch,	0 },			/* A */
   {chm_nosuch,	0 },			/* B */
-  {chm_nosuch,	0 },			/* C */
+  {chm_simple,	MODE_NOCTCP },		/* C */
   {chm_nosuch,	0 },			/* D */
   {chm_nosuch,	0 },			/* E */
   {chm_simple,	MODE_FREETARGET },	/* F */

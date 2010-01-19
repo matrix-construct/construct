@@ -26,6 +26,8 @@ NO PARAMETERS:
               ops are necessary).
      +Q     - Disable forward.  Users cannot be forwarded to the channel
               (however, new forwards can still be set subject to +F).
+     +C     - Disable CTCP. All CTCP messages to the channel, except ACTION,
+              are disallowed.
 
 WITH PARAMETERS:
      +f     - Forward.  Forwards users who cannot join because of +i,

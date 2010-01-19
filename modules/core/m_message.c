@@ -513,12 +513,19 @@ msg_channel(int p_or_n, const char *command,
 		if(result == CAN_SEND_OPV ||
 		   !flood_attack_channel(p_or_n, source_p, chptr, chptr->chname))
 		{
+			if (p_or_n != NOTICE && *text == '\001')
+			{
+				if (strncasecmp(text + 1, "ACTION", 6) && chptr->mode.mode & MODE_NOCTCP)
+				{
+					sendto_one_numeric(source_p, ERR_CANNOTSENDTOCHAN,
+							   form_str(ERR_CANNOTSENDTOCHAN), chptr->chname);
+					return;
+				}
+				else if (rb_dlink_list_length(&chptr->locmembers) > (unsigned)(GlobalSetOptions.floodcount / 2))
+					source_p->large_ctcp_sent = rb_current_time();
+			}
 			sendto_channel_flags(client_p, ALL_MEMBERS, source_p, chptr,
 					     "%s %s :%s", command, chptr->chname, text);
-			if (p_or_n != NOTICE && *text == '\001' &&
-					strncasecmp(text + 1, "ACTION", 6) &&
-					rb_dlink_list_length(&chptr->locmembers) > (unsigned)(GlobalSetOptions.floodcount / 2))
-				source_p->large_ctcp_sent = rb_current_time();
 		}
 	}
 	else if(chptr->mode.mode & MODE_OPMODERATE &&
