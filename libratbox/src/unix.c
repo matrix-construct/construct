@@ -48,6 +48,7 @@ rb_spawn_process(const char *path, const char **argv)
 	pid_t pid;
 	const void *arghack = argv;
 	char **myenviron;
+	int error;
 	posix_spawnattr_t spattr;
 	posix_spawnattr_init(&spattr);
 #ifdef POSIX_SPAWN_USEVFORK
@@ -58,9 +59,12 @@ rb_spawn_process(const char *path, const char **argv)
 #else
 	myenviron = environ;
 #endif
-	if(posix_spawn(&pid, path, NULL, &spattr, arghack, myenviron))
+	error = posix_spawn(&pid, path, NULL, &spattr, arghack, myenviron);
+	posix_spawnattr_destroy(&spattr);
+	if (error != 0)
 	{
-		return -1;
+		errno = error;
+		pid = -1;
 	}
 	return pid;
 }
