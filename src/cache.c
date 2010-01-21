@@ -143,6 +143,13 @@ cache_file(const char *filename, const char *shortname, int flags)
 			rb_dlinkAddTailAlloc(emptyline, &cacheptr->contents);
 	}
 
+	if (0 == rb_dlink_list_length(&cacheptr->contents))
+	{
+		/* No contents. Don't cache it after all. */
+		rb_free(cacheptr);
+		cacheptr = NULL;
+	}
+
 	fclose(in);
 	return cacheptr;
 }
