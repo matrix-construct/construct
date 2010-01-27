@@ -87,6 +87,8 @@ mo_links(struct Client *client_p, struct Client *source_p, int parc, const char 
 
 	if(parc > 2)
 	{
+		if(strlen(parv[2]) > HOSTLEN)
+			return 0;
 		if(hunt_server(client_p, source_p, ":%s LINKS %s :%s", 1, parc, parv)
 		   != HUNTED_ISME)
 			return 0;
@@ -138,19 +140,21 @@ clean_string(char *dest, const unsigned char *src, size_t len)
 	if(dest == NULL || src == NULL)
 		return NULL;
 
-	len -= 3;		/* allow for worst case, '^A\0' */
-
-	while (*src && (len > 0))
+	while (*src && (len > 1))
 	{
 		if(*src & 0x80)	/* if high bit is set */
 		{
 			*d++ = '.';
 			--len;
+			if(len <= 1)
+				break;
 		}
 		else if(!IsPrint(*src))	/* if NOT printable */
 		{
 			*d++ = '^';
 			--len;
+			if(len <= 1)
+				break;
 			*d++ = 0x40 + *src;	/* turn it into a printable */
 		}
 		else
