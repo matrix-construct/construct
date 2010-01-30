@@ -1670,14 +1670,14 @@ make_user(struct Client *client_p)
  * side effects - add's an Server information block to a client
  *                if it was not previously allocated.
  */
-server_t *
+struct Server *
 make_server(struct Client *client_p)
 {
-	server_t *serv = client_p->serv;
+	struct Server *serv = client_p->serv;
 
 	if(!serv)
 	{
-		serv = (server_t *) rb_malloc(sizeof(server_t));
+		serv = (struct Server *) rb_malloc(sizeof(struct Server));
 		client_p->serv = serv;
 	}
 	return client_p->serv;

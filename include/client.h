@@ -69,22 +69,6 @@ struct PreClient;
 struct ListClient;
 struct scache_entry;
 
-/* 
- * Atheme's coding standards require that we use BSD-style user-defined types
- * for stuff. Fun! --nenolod
- */
-typedef struct User user_t;
-typedef struct Server server_t;
-typedef struct Client client_t;
-typedef struct LocalUser local_user_t;
-typedef struct Listener listener_t;
-typedef struct DNSReply dns_reply_t;
-typedef struct Whowas whowas_entry_t;
-typedef struct ConfItem conf_item_t;
-typedef struct AuthRequest auth_request_t;
-typedef struct PreClient pre_client_t;
-typedef struct ListClient list_client_t;
-
 /*
  * Client structures
  */
@@ -100,7 +84,7 @@ struct User
 
 struct Server
 {
-	user_t *user;		/* who activated this connection */
+	struct User *user;	/* who activated this connection */
 	char by[NICKLEN];
 	rb_dlink_list servers;
 	rb_dlink_list users;
@@ -123,12 +107,12 @@ struct Client
 {
 	rb_dlink_node node;
 	rb_dlink_node lnode;
-	user_t *user;		/* ...defined, if this is a User */
-	server_t *serv;		/* ...defined, if this is a server */
-	client_t *servptr;	/* Points to server this Client is on */
-	client_t *from;		/* == self, if Local Client, *NEVER* NULL! */
+	struct User *user;	/* ...defined, if this is a User */
+	struct Server *serv;	/* ...defined, if this is a server */
+	struct Client *servptr;	/* Points to server this Client is on */
+	struct Client *from;	/* == self, if Local Client, *NEVER* NULL! */
 
-	whowas_entry_t *whowas;	/* Pointers to whowas structs */
+	struct Whowas *whowas;	/* Pointers to whowas structs */
 	time_t tsinfo;		/* TS on the nick, SVINFO on server */
 	unsigned int umodes;	/* opers, normal users subset */
 	unsigned int flags;	/* client flags */
@@ -173,8 +157,8 @@ struct Client
 	int received_number_of_privmsgs;
 	int flood_noticed;
 
-	local_user_t *localClient;
-	pre_client_t *preClient;
+	struct LocalUser *localClient;
+	struct PreClient *preClient;
 
 	time_t large_ctcp_sent; /* ctcp to large group sent, relax flood checks */
 };
@@ -219,8 +203,8 @@ struct LocalUser
 	unsigned int receiveK;	/* Statistics: total k-bytes received */
 	unsigned short sendB;	/* counters to count upto 1-k lots of bytes */
 	unsigned short receiveB;	/* sent and received. */
-	listener_t *listener;		/* listener accepted from */
-	conf_item_t *att_conf;		/* attached conf */
+	struct Listener *listener;	/* listener accepted from */
+	struct ConfItem *att_conf;	/* attached conf */
 	struct server_conf *att_sconf;
 
 	struct rb_sockaddr_storage ip;
@@ -267,14 +251,14 @@ struct LocalUser
 	int sent_parsed;	/* how many messages we've parsed in this second */
 	time_t last_knock;	/* time of last knock */
 	unsigned long random_ping;
-	auth_request_t	*auth_request;
+	struct AuthRequest *auth_request;
 
 	/* target change stuff */
 	uint32_t targets[10];		/* targets were aware of (fnv32(use_id(target_p))) */
 	unsigned int targinfo[2];	/* cyclic array, no in use */
 	time_t target_last;		/* last time we cleared a slot */
 
-	list_client_t *safelist_data;
+	struct ListClient *safelist_data;
 
 	char *mangledhost; /* non-NULL if host mangling module loaded and
 			      applicable to this client */
@@ -570,7 +554,7 @@ extern const char *get_client_name(struct Client *client, int show_ip);
 extern const char *log_client_name(struct Client *, int);
 extern int is_remote_connect(struct Client *);
 extern void init_client(void);
-extern client_t *make_client(struct Client *from);
+extern struct Client *make_client(struct Client *from);
 extern void free_pre_client(struct Client *client);
 extern void free_client(struct Client *client);
 
@@ -583,10 +567,10 @@ extern void error_exit_client(struct Client *, int);
 extern void count_local_client_memory(size_t * count, size_t * memory);
 extern void count_remote_client_memory(size_t * count, size_t * memory);
 
-extern client_t *find_chasing(struct Client *, const char *, int *);
-extern client_t *find_person(const char *);
-extern client_t *find_named_person(const char *);
-extern client_t *next_client(struct Client *, const char *);
+extern struct Client *find_chasing(struct Client *, const char *, int *);
+extern struct Client *find_person(const char *);
+extern struct Client *find_named_person(const char *);
+extern struct Client *next_client(struct Client *, const char *);
 
 #define accept_message(s, t) ((s) == (t) || (rb_dlinkFind((s), &((t)->localClient->allow_list))))
 extern void del_all_accepts(struct Client *client_p);
@@ -597,8 +581,8 @@ extern int show_ip_conf(struct ConfItem *aconf, struct Client *target_p);
 
 extern void initUser(void);
 extern void free_user(struct User *, struct Client *);
-extern user_t *make_user(struct Client *);
-extern server_t *make_server(struct Client *);
+extern struct User *make_user(struct Client *);
+extern struct Server *make_server(struct Client *);
 extern void close_connection(struct Client *);
 extern void init_uid(void);
 extern char *generate_uid(void);
