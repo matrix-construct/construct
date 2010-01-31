@@ -253,6 +253,8 @@ load_help(void)
 
 	while((ldirent = readdir(helpfile_dir)) != NULL)
 	{
+		if(ldirent->d_name[0] == '.')
+			continue;
 		rb_snprintf(filename, sizeof(filename), "%s/%s", HPATH, ldirent->d_name);
 		cacheptr = cache_file(filename, ldirent->d_name, HELP_OPER);
 		irc_dictionary_add(help_dict_oper, cacheptr->name, cacheptr);
@@ -266,6 +268,8 @@ load_help(void)
 
 	while((ldirent = readdir(helpfile_dir)) != NULL)
 	{
+		if(ldirent->d_name[0] == '.')
+			continue;
 		rb_snprintf(filename, sizeof(filename), "%s/%s", UHPATH, ldirent->d_name);
 
 #if defined(S_ISLNK) && defined(HAVE_LSTAT)

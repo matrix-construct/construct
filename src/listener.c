@@ -52,14 +52,14 @@ static const struct in6_addr in6addr_any =
 { { { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 } } };
 #endif 
 
-static listener_t *ListenerPollList = NULL;
+static struct Listener *ListenerPollList = NULL;
 static int accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, void *data);
 static void accept_callback(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t addrlen, void *data);
 
-static listener_t *
+static struct Listener *
 make_listener(struct rb_sockaddr_storage *addr)
 {
-	listener_t *listener = (listener_t *) rb_malloc(sizeof(listener_t));
+	struct Listener *listener = (struct Listener *) rb_malloc(sizeof(struct Listener));
 	s_assert(0 != listener);
 	listener->name = me.name;
 	listener->F = NULL;
@@ -70,7 +70,7 @@ make_listener(struct rb_sockaddr_storage *addr)
 }
 
 void
-free_listener(listener_t *listener)
+free_listener(struct Listener *listener)
 {
 	s_assert(NULL != listener);
 	if(listener == NULL)
@@ -82,7 +82,7 @@ free_listener(listener_t *listener)
 		ListenerPollList = listener->next;
 	else
 	{
-		listener_t *prev = ListenerPollList;
+		struct Listener *prev = ListenerPollList;
 		for (; prev; prev = prev->next)
 		{
 			if(listener == prev->next)
@@ -104,7 +104,7 @@ free_listener(listener_t *listener)
  * returns "host.foo.org:6667" for a given listener
  */
 const char *
-get_listener_name(const listener_t *listener)
+get_listener_name(const struct Listener *listener)
 {
 	static char buf[HOSTLEN + HOSTLEN + PORTNAMELEN + 4];
 	int port = 0;
@@ -133,7 +133,7 @@ get_listener_name(const listener_t *listener)
 void
 show_ports(struct Client *source_p)
 {
-	listener_t *listener = 0;
+	struct Listener *listener = 0;
 
 	for (listener = ListenerPollList; listener; listener = listener->next)
 	{
@@ -165,7 +165,7 @@ show_ports(struct Client *source_p)
 #endif
 
 static int
-inetport(listener_t *listener)
+inetport(struct Listener *listener)
 {
 	rb_fde_t *F;
 	int ret;
@@ -245,11 +245,11 @@ inetport(listener_t *listener)
 	return 1;
 }
 
-static listener_t *
+static struct Listener *
 find_listener(struct rb_sockaddr_storage *addr)
 {
-	listener_t *listener = NULL;
-	listener_t *last_closed = NULL;
+	struct Listener *listener = NULL;
+	struct Listener *last_closed = NULL;
 
 	for (listener = ListenerPollList; listener; listener = listener->next)
 	{
@@ -307,7 +307,7 @@ find_listener(struct rb_sockaddr_storage *addr)
 void
 add_listener(int port, const char *vhost_ip, int family, int ssl)
 {
-	listener_t *listener;
+	struct Listener *listener;
 	struct rb_sockaddr_storage vaddr;
 
 	/*
@@ -389,7 +389,7 @@ add_listener(int port, const char *vhost_ip, int family, int ssl)
  * close_listener - close a single listener
  */
 void
-close_listener(listener_t *listener)
+close_listener(struct Listener *listener)
 {
 	s_assert(listener != NULL);
 	if(listener == NULL)
@@ -414,8 +414,8 @@ close_listener(listener_t *listener)
 void
 close_listeners()
 {
-	listener_t *listener;
-	listener_t *listener_next = 0;
+	struct Listener *listener;
+	struct Listener *listener_next = 0;
 	/*
 	 * close all 'extra' listening ports we have
 	 */

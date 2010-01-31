@@ -392,12 +392,6 @@ build_target_list(int p_or_n, const char *command, struct Client *client_p,
 			continue;
 		}
 
-		if(strchr(nick, '@') || (IsOper(source_p) && (*nick == '$')))
-		{
-			handle_special(p_or_n, command, client_p, source_p, nick, text);
-			continue;
-		}
-
 		if(IsServer(client_p) && *nick == '=' && nick[1] == '#')
 		{
 			nick++;
@@ -421,6 +415,12 @@ build_target_list(int p_or_n, const char *command, struct Client *client_p,
 				sendto_one_numeric(source_p, ERR_NOSUCHNICK,
 						   form_str(ERR_NOSUCHNICK), nick);
 
+			continue;
+		}
+
+		if(strchr(nick, '@') || (IsOper(source_p) && (*nick == '$')))
+		{
+			handle_special(p_or_n, command, client_p, source_p, nick, text);
 			continue;
 		}
 

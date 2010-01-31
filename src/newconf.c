@@ -892,7 +892,7 @@ conf_begin_auth(struct TopConf *tc)
 static int
 conf_end_auth(struct TopConf *tc)
 {
-	struct ConfItem *yy_tmp;
+	struct ConfItem *yy_tmp, *found_conf;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 
@@ -910,9 +910,11 @@ conf_end_auth(struct TopConf *tc)
 	collapse(yy_aconf->user);
 	collapse(yy_aconf->host);
 	conf_add_class_to_conf(yy_aconf);
-	if (find_exact_conf_by_address("*", CONF_CLIENT, "*"))
+	if ((found_conf = find_exact_conf_by_address("*", CONF_CLIENT, "*")) && found_conf->spasswd == NULL)
 		conf_report_error("Ignoring redundant auth block (after *@*)");
-	else if (find_exact_conf_by_address(yy_aconf->host, CONF_CLIENT, yy_aconf->user))
+	else if ((found_conf = find_exact_conf_by_address(yy_aconf->host, CONF_CLIENT, yy_aconf->user)) &&
+			(!found_conf->spasswd || (yy_aconf->spasswd &&
+			    0 == irccmp(found_conf->spasswd, yy_aconf->spasswd))))
 		conf_report_error("Ignoring duplicate auth block for %s@%s",
 				yy_aconf->user, yy_aconf->host);
 	else
