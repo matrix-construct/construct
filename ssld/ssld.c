@@ -679,8 +679,16 @@ static void
 ssl_process_accept_cb(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t len, void *data)
 {
 	conn_t *conn = data;
+	char buf[5 + RB_SSL_CERTFP_LEN];
+
 	if(status == RB_OK)
 	{
+		if(rb_get_ssl_certfp(F, &buf[5]))
+		{
+			buf[0] = 'F';
+			int32_to_buf(&buf[1], conn->id);
+			mod_cmd_write_queue(conn->ctl, buf, sizeof buf);
+		}
 		conn_mod_read_cb(conn->mod_fd, conn);
 		conn_plain_read_cb(conn->plain_fd, conn);
 		return;

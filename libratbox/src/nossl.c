@@ -100,6 +100,12 @@ rb_get_ssl_strerror(rb_fde_t *F)
 	return nosupport;
 }
 
+int
+rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN])
+{
+	return 0;
+}
+
 void
 rb_ssl_start_accepted(rb_fde_t *new_F, ACCB * cb, void *data, int timeout)
 {

@@ -281,6 +281,12 @@ rb_ssl_write(rb_fde_t *F, const void *buf, size_t count)
 	return rb_ssl_read_or_write(1, F, NULL, buf, count);
 }
 
+static int
+verify_accept_all_cb(int preverify_ok, X509_STORE_CTX *x509_ctx)
+{
+	return 1;
+}
+
 int
 rb_init_ssl(void)
 {
@@ -298,6 +304,7 @@ rb_init_ssl(void)
 	}
 	/* Disable SSLv2, make the client use our settings */
 	SSL_CTX_set_options(ssl_server_ctx, SSL_OP_NO_SSLv2 | SSL_OP_CIPHER_SERVER_PREFERENCE);
+	SSL_CTX_set_verify(ssl_server_ctx, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, verify_accept_all_cb);
 
 	ssl_client_ctx = SSL_CTX_new(TLSv1_client_method());
 
@@ -603,6 +610,32 @@ const char *
 rb_get_ssl_strerror(rb_fde_t *F)
 {
 	return ERR_error_string(F->ssl_errno, NULL);
+}
+
+int
+rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN])
+{
+	X509 *cert;
+	int res;
+
+	if (F->ssl == NULL)
+		return 0;
+
+	cert = SSL_get_peer_certificate((SSL *) F->ssl);
+	if(cert != NULL)
+	{
+		res = SSL_get_verify_result((SSL *) F->ssl);
+		if(res == X509_V_OK ||
+				res == X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN ||
+				res == X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE ||
+				res == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT)
+		{
+			memcpy(certfp, cert->sha1_hash, RB_SSL_CERTFP_LEN);
+			return 1;
+		}
+	}
+
+	return 0;
 }
 
 int

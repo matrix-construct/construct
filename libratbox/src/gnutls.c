@@ -497,6 +497,13 @@ rb_get_ssl_strerror(rb_fde_t *F)
 }
 
 int
+rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN])
+{
+	/* XXX implement this for gnutls */
+	return 0;
+}
+
+int
 rb_supports_ssl(void)
 {
 	return 1;

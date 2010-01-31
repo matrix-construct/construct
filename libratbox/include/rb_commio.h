@@ -100,6 +100,8 @@ void rb_note(rb_fde_t *, const char *);
 #define RB_SELECT_ACCEPT		RB_SELECT_READ
 #define RB_SELECT_CONNECT		RB_SELECT_WRITE
 
+#define RB_SSL_CERTFP_LEN 20
+
 int rb_set_nb(rb_fde_t *);
 int rb_set_buffers(rb_fde_t *, int);
 
@@ -141,6 +143,7 @@ int rb_select(unsigned long);
 int rb_fd_ssl(rb_fde_t *F);
 int rb_get_fd(rb_fde_t *F);
 const char *rb_get_ssl_strerror(rb_fde_t *F);
+int rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN]);
 
 rb_fde_t *rb_get_fde(int fd);
 
