@@ -422,7 +422,7 @@ ssl_process_certfp(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 	for(i = 0; i < RB_SSL_CERTFP_LEN; i++)
 		rb_snprintf(certfp_string + 2 * i, 3, "%02x",
 				certfp[i]);
-	sendto_one_notice(client_p, ":*** CertFP is %s", certfp_string);
+	sendto_one_notice(client_p, ":*** Your client certificate fingerprint is: %s", certfp_string);
 }
 
 static void
