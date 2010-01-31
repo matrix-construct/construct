@@ -224,13 +224,6 @@ free_local_client(struct Client *client_p)
 		rb_close(client_p->localClient->F);
 	}
 
-	if (client_p->localClient->auth_user)
-	{
-		memset(client_p->localClient->auth_user, 0,
-			strlen(client_p->localClient->auth_user));
-		rb_free(client_p->localClient->auth_user);
-	}
-
 	if(client_p->localClient->passwd)
 	{
 		memset(client_p->localClient->passwd, 0,
@@ -238,6 +231,7 @@ free_local_client(struct Client *client_p)
 		rb_free(client_p->localClient->passwd);
 	}
 
+	rb_free(client_p->localClient->auth_user);
 	rb_free(client_p->localClient->challenge);
 	rb_free(client_p->localClient->fullcaps);
 	rb_free(client_p->localClient->opername);
