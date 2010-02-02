@@ -62,7 +62,11 @@ parse_netmask(const char *text, struct sockaddr  *naddr, int *nb)
 		addr = (struct rb_sockaddr_storage *)&xaddr;
 	else
 		addr = (struct rb_sockaddr_storage *)naddr;
-	
+
+	if(strpbrk(ip, "*?") != NULL)
+	{
+		return HM_HOST;
+	}
 #ifdef RB_IPV6
 	if(strchr(ip, ':'))
 	{	
