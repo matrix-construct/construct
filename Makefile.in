@@ -67,7 +67,7 @@ build:
 		sh configure; \
 	fi
 	@if [ -d .hg ] ; then \
-		revh=`hg parents --template '#date|shortdate#_#node|short#' 2>/dev/null | sed -e s/-//g -e s/_/-/`;\
+		revh=`hg parents --template '{date|shortdate}_{node|short}' 2>/dev/null | sed -e s/-//g -e s/_/-/`;\
 		[ -z "$$revh" ] || echo '#define SERNO "'$$revh'"' >include/serno.h ; \
 	fi
 	@[ -f include/serno.h ] || echo '#define SERNO "unknown"' >include/serno.h
