@@ -55,6 +55,7 @@ TSRCS =                          \
   m_away.c \
   m_cap.c \
   m_capab.c \
+  m_certfp.c \
   m_challenge.c \
   m_chghost.c \
   m_close.c \

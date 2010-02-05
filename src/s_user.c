@@ -633,6 +633,11 @@ introduce_client(struct Client *client_p, struct Client *source_p, struct User *
 		      IsIPSpoof(source_p) ? "0" : sockhost,
 		      source_p->id, source_p->info);
 
+	if(!EmptyString(source_p->certfp))
+		sendto_server(client_p, NULL, CAP_TS6, NOCAPS,
+				":%s ENCAP * CERTFP :%s",
+				use_id(source_p), source_p->certfp);
+
 	if (IsDynSpoof(source_p))
 	{
 		sendto_server(client_p, NULL, CAP_TS6, use_euid ? CAP_EUID : NOCAPS, ":%s ENCAP * REALHOST %s",

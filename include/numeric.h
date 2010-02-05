@@ -120,6 +120,8 @@ extern const char *form_str(int);
 
 #define RPL_PRIVS            270 /* from ircu */
 
+#define RPL_WHOISCERTFP      276 /* from oftc-hybrid */
+
 #define RPL_ACCEPTLIST	     281
 #define RPL_ENDOFACCEPT      282
 

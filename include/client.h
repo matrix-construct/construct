@@ -161,6 +161,7 @@ struct Client
 	struct PreClient *preClient;
 
 	time_t large_ctcp_sent; /* ctcp to large group sent, relax flood checks */
+	char *certfp; /* client certificate fingerprint */
 };
 
 struct LocalUser

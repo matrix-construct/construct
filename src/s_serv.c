@@ -506,6 +506,10 @@ burst_TS6(struct Client *client_p)
 				   IsIPSpoof(target_p) ? "0" : target_p->sockhost,
 				   target_p->id, target_p->info);
 
+		if(!EmptyString(target_p->certfp))
+			sendto_one(client_p, ":%s ENCAP * CERTFP :%s",
+					use_id(target_p), target_p->certfp);
+
 		if(!IsCapable(client_p, CAP_EUID))
 		{
 			if(IsDynSpoof(target_p))

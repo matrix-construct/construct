@@ -408,7 +408,7 @@ ssl_process_certfp(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 	struct Client *client_p;
 	int32_t fd;
 	uint8_t *certfp;
-	char certfp_string[RB_SSL_CERTFP_LEN * 2 + 1];
+	char *certfp_string;
 	int i;
 
 	if(ctl_buf->buflen != 5 + RB_SSL_CERTFP_LEN)
@@ -419,10 +419,12 @@ ssl_process_certfp(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 	client_p = find_cli_fd_hash(fd);
 	if(client_p == NULL)
 		return;
+	rb_free(client_p->certfp);
+	certfp_string = rb_malloc(RB_SSL_CERTFP_LEN * 2 + 1);
 	for(i = 0; i < RB_SSL_CERTFP_LEN; i++)
 		rb_snprintf(certfp_string + 2 * i, 3, "%02x",
 				certfp[i]);
-	sendto_one_notice(client_p, ":*** Your client certificate fingerprint is: %s", certfp_string);
+	client_p->certfp = certfp_string;
 }
 
 static void

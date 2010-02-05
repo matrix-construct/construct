@@ -256,6 +256,7 @@ free_client(struct Client *client_p)
 	s_assert(&me != client_p);
 	free_local_client(client_p);
 	free_pre_client(client_p);
+	rb_free(client_p->certfp);
 	rb_bh_free(client_heap, client_p);
 }
 
