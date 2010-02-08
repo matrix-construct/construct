@@ -493,7 +493,7 @@ static  const char *  replies[] = {
 /* 469 */       NULL,
 /* 470 ERR_LINKCHANNEL */       "%s %s :Forwarding to another channel",
 /* 471 ERR_CHANNELISFULL, */    ":%s 471 %s %s :Cannot join channel (+l) - channel is full, try again later",
-/* 472 ERR_UNKNOWNMODE  , */    ":%s 472 %s %c :is a unknown mode char to me",
+/* 472 ERR_UNKNOWNMODE  , */    ":%s 472 %s %c :is an unknown mode char to me",
 /* 473 ERR_INVITEONLYCHAN, */   ":%s 473 %s %s :Cannot join channel (+i) - you must be invited",
 /* 474 ERR_BANNEDFROMCHAN, */   ":%s 474 %s %s :Cannot join channel (+b) - you are banned",
 /* 475 ERR_BADCHANNELKEY, */    ":%s 475 %s %s :Cannot join channel (+k) - bad key",
