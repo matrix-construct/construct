@@ -642,9 +642,9 @@ msg_channel_flags(int p_or_n, const char *command, struct Client *client_p,
 			     command, c, chptr->chname, text);
 }
 
-#define PREV_FREE_TARGET(x) ((FREE_TARGET(x) == 0) ? 9 : FREE_TARGET(x) - 1)
-#define PREV_TARGET(i) ((i == 0) ? i = 9 : --i)
-#define NEXT_TARGET(i) ((i == 9) ? i = 0 : ++i)
+#define PREV_FREE_TARGET(x) ((FREE_TARGET(x) == 0) ? TGCHANGE_NUM - 1 : FREE_TARGET(x) - 1)
+#define PREV_TARGET(i) ((i == 0) ? i = TGCHANGE_NUM - 1 : --i)
+#define NEXT_TARGET(i) ((i == TGCHANGE_NUM - 1) ? i = 0 : ++i)
 
 static void
 expire_tgchange(void *unused)
@@ -715,7 +715,7 @@ add_target(struct Client *source_p, struct Client *target_p)
 			source_p->localClient->target_last = rb_current_time();
 		}
 		/* cant clear any, full target list */
-		else if(USED_TARGETS(source_p) == 10)
+		else if(USED_TARGETS(source_p) == TGCHANGE_NUM)
 		{
 			ServerStats.is_tgch++;
 			add_tgchange(source_p->sockhost);

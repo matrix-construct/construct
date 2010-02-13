@@ -53,6 +53,8 @@ struct Blacklist;
 
 #define IDLEN		10
 
+#define TGCHANGE_NUM	10	/* how many targets we keep track of */
+
 /*
  * pre declare structs
  */
@@ -255,7 +257,7 @@ struct LocalUser
 	struct AuthRequest *auth_request;
 
 	/* target change stuff */
-	uint32_t targets[10];		/* targets were aware of (fnv32(use_id(target_p))) */
+	uint32_t targets[TGCHANGE_NUM];	/* targets were aware of (fnv32(use_id(target_p))) */
 	unsigned int targinfo[2];	/* cyclic array, no in use */
 	time_t target_last;		/* last time we cleared a slot */
 
