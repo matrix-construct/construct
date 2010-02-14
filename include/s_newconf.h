@@ -60,9 +60,6 @@ extern void init_s_newconf(void);
 extern void clear_s_newconf(void);
 extern void clear_s_newconf_bans(void);
 
-#define FREE_TARGET(x) ((x)->localClient->targinfo[0])
-#define USED_TARGETS(x) ((x)->localClient->targinfo[1])
-
 typedef struct
 {
 	char *ip;

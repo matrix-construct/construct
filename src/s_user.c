@@ -561,7 +561,9 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 
 	/* they get a reduced limit */
 	if(find_tgchange(source_p->sockhost))
-		USED_TARGETS(source_p) = 6;
+		source_p->localClient->targets_free = TGCHANGE_INITIAL_LOW;
+	else
+		source_p->localClient->targets_free = TGCHANGE_INITIAL;
 
 	monitor_signon(source_p);
 	user_welcome(source_p);

@@ -642,10 +642,6 @@ msg_channel_flags(int p_or_n, const char *command, struct Client *client_p,
 			     command, c, chptr->chname, text);
 }
 
-#define PREV_FREE_TARGET(x) ((FREE_TARGET(x) == 0) ? TGCHANGE_NUM - 1 : FREE_TARGET(x) - 1)
-#define PREV_TARGET(i) ((i == 0) ? i = TGCHANGE_NUM - 1 : --i)
-#define NEXT_TARGET(i) ((i == TGCHANGE_NUM - 1) ? i = 0 : ++i)
-
 static void
 expire_tgchange(void *unused)
 {
@@ -671,6 +667,7 @@ add_target(struct Client *source_p, struct Client *target_p)
 {
 	int i, j;
 	uint32_t hashv;
+	uint32_t *targets;
 
 	/* can msg themselves or services without using any target slots */
 	if(source_p == target_p || IsService(target_p))
@@ -685,17 +682,22 @@ add_target(struct Client *source_p, struct Client *target_p)
 		return 1;
 
 	hashv = fnv_hash_upper((const unsigned char *)use_id(target_p), 32);
+	targets = source_p->localClient->targets;
 
-	if(USED_TARGETS(source_p))
+	/* check for existing target, and move it to the head */
+	for(i = 0; i < TGCHANGE_NUM; i++)
 	{
-		/* hunt for an existing target */
-		for(i = PREV_FREE_TARGET(source_p), j = USED_TARGETS(source_p);
-		    j; --j, PREV_TARGET(i))
+		if(targets[i] == hashv)
 		{
-			if(source_p->localClient->targets[i] == hashv)
-				return 1;
+			for(j = i; j > 0; j--)
+				targets[j] = targets[j - 1];
+			targets[0] = hashv;
+			return 1;
 		}
+	}
 
+	if(source_p->localClient->targets_free < TGCHANGE_NUM)
+	{
 		/* first message after connect, we may only start clearing
 		 * slots after this message --anfl
 		 */
@@ -707,15 +709,15 @@ add_target(struct Client *source_p, struct Client *target_p)
 		/* clear as many targets as we can */
 		else if((i = (rb_current_time() - source_p->localClient->target_last) / 60))
 		{
-			if(i > USED_TARGETS(source_p))
-				USED_TARGETS(source_p) = 0;
+			if(i + source_p->localClient->targets_free > TGCHANGE_NUM)
+				source_p->localClient->targets_free = TGCHANGE_NUM;
 			else
-				USED_TARGETS(source_p) -= i;
+				source_p->localClient->targets_free += i;
 
 			source_p->localClient->target_last = rb_current_time();
 		}
 		/* cant clear any, full target list */
-		else if(USED_TARGETS(source_p) == TGCHANGE_NUM)
+		else if(source_p->localClient->targets_free == 0)
 		{
 			ServerStats.is_tgch++;
 			add_tgchange(source_p->sockhost);
@@ -731,9 +733,10 @@ add_target(struct Client *source_p, struct Client *target_p)
 		SetTGChange(source_p);
 	}
 
-	source_p->localClient->targets[FREE_TARGET(source_p)] = hashv;
-	NEXT_TARGET(FREE_TARGET(source_p));
-	++USED_TARGETS(source_p);
+	for(i = TGCHANGE_NUM - 1; i > 0; i--)
+		targets[i] = targets[i - 1];
+	targets[0] = hashv;
+	source_p->localClient->targets_free--;
 	return 1;
 }
 

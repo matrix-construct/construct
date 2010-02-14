@@ -53,7 +53,9 @@ struct Blacklist;
 
 #define IDLEN		10
 
-#define TGCHANGE_NUM	10	/* how many targets we keep track of */
+#define TGCHANGE_NUM		10	/* how many targets we keep track of */
+#define TGCHANGE_INITIAL	10	/* initial free targets (normal) */
+#define TGCHANGE_INITIAL_LOW	4	/* initial free targets (possible spambot) */
 
 /*
  * pre declare structs
@@ -258,7 +260,7 @@ struct LocalUser
 
 	/* target change stuff */
 	uint32_t targets[TGCHANGE_NUM];	/* targets were aware of (fnv32(use_id(target_p))) */
-	unsigned int targinfo[2];	/* cyclic array, no in use */
+	unsigned int targets_free;	/* free targets */
 	time_t target_last;		/* last time we cleared a slot */
 
 	struct ListClient *safelist_data;
