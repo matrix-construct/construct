@@ -169,7 +169,7 @@ m_invite(struct Client *client_p, struct Client *source_p, int parc, const char 
 		{
 			sendto_one(source_p, form_str(ERR_TARGCHANGE),
 				   me.name, source_p->name, target_p->name);
-			return;
+			return 0;
 		}
 		sendto_one(source_p, form_str(RPL_INVITING), 
 			   me.name, source_p->name,
