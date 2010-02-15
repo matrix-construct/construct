@@ -95,6 +95,7 @@ SRCS =                          \
   sslproc.c			\
   substitution.c		\
   supported.c			\
+  tgchange.c			\
   whowas.c
 
 OBJS = ${SRCS:.c=.o}
