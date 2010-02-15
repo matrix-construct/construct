@@ -39,6 +39,7 @@
 #include "parse.h"
 #include "modules.h"
 #include "packet.h"
+#include "tgchange.h"
 
 static int m_invite(struct Client *, struct Client *, int, const char **);
 
@@ -162,6 +163,14 @@ m_invite(struct Client *client_p, struct Client *source_p, int parc, const char 
 
 	if(MyConnect(source_p))
 	{
+		if (ConfigFileEntry.target_change && !IsOper(source_p) &&
+				!find_allowing_channel(source_p, target_p) &&
+				!add_target(source_p, target_p))
+		{
+			sendto_one(source_p, form_str(ERR_TARGCHANGE),
+				   me.name, source_p->name, target_p->name);
+			return;
+		}
 		sendto_one(source_p, form_str(RPL_INVITING), 
 			   me.name, source_p->name,
 			   target_p->name, parv[2]);
@@ -179,6 +188,7 @@ m_invite(struct Client *client_p, struct Client *source_p, int parc, const char 
 
 	if(MyConnect(target_p))
 	{
+		add_reply_target(target_p, source_p);
 		sendto_one(target_p, ":%s!%s@%s INVITE %s :%s", 
 			   source_p->name, source_p->username, source_p->host, 
 			   target_p->name, chptr->chname);
