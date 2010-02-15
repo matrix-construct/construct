@@ -662,6 +662,7 @@ expire_tgchange(void *unused)
 	}
 }
 
+/* checks if source_p is allowed to send to target_p */
 static int
 add_target(struct Client *source_p, struct Client *target_p)
 {
@@ -685,7 +686,7 @@ add_target(struct Client *source_p, struct Client *target_p)
 	targets = source_p->localClient->targets;
 
 	/* check for existing target, and move it to the head */
-	for(i = 0; i < TGCHANGE_NUM; i++)
+	for(i = 0; i < TGCHANGE_NUM + TGCHANGE_REPLY; i++)
 	{
 		if(targets[i] == hashv)
 		{
@@ -733,11 +734,47 @@ add_target(struct Client *source_p, struct Client *target_p)
 		SetTGChange(source_p);
 	}
 
-	for(i = TGCHANGE_NUM - 1; i > 0; i--)
+	for(i = TGCHANGE_NUM + TGCHANGE_REPLY - 1; i > 0; i--)
 		targets[i] = targets[i - 1];
 	targets[0] = hashv;
 	source_p->localClient->targets_free--;
 	return 1;
+}
+
+/* allows source_p to send to target_p */
+static void
+add_reply_target(struct Client *source_p, struct Client *target_p)
+{
+	int i, j;
+	uint32_t hashv;
+	uint32_t *targets;
+
+	/* can msg themselves or services without using any target slots */
+	if(source_p == target_p || IsService(target_p))
+		return;
+
+	hashv = fnv_hash_upper((const unsigned char *)use_id(target_p), 32);
+	targets = source_p->localClient->targets;
+
+	/* check for existing target, and move it to the first reply slot
+	 * if it is in a reply slot
+	 */
+	for(i = 0; i < TGCHANGE_NUM + TGCHANGE_REPLY; i++)
+	{
+		if(targets[i] == hashv)
+		{
+			if(i > TGCHANGE_NUM)
+			{
+				for(j = i; j > TGCHANGE_NUM; j--)
+					targets[j] = targets[j - 1];
+				targets[TGCHANGE_NUM] = hashv;
+			}
+			return;
+		}
+	}
+	for(i = TGCHANGE_NUM + TGCHANGE_REPLY - 1; i > TGCHANGE_NUM; i--)
+		targets[i] = targets[i - 1];
+	targets[TGCHANGE_NUM] = hashv;
 }
 
 /*
@@ -813,6 +850,7 @@ msg_client(int p_or_n, const char *command,
 			/* Here is the anti-flood bot/spambot code -db */
 			if(accept_message(source_p, target_p) || IsOper(source_p))
 			{
+				add_reply_target(target_p, source_p);
 				sendto_one(target_p, ":%s!%s@%s %s %s :%s",
 					   source_p->name,
 					   source_p->username,
@@ -843,6 +881,7 @@ msg_client(int p_or_n, const char *command,
 								   form_str(RPL_TARGNOTIFY),
 								   target_p->name);
 
+					add_reply_target(target_p, source_p);
 					sendto_one(target_p, form_str(RPL_UMODEGMSG),
 						   me.name, target_p->name, source_p->name,
 						   source_p->username, source_p->host);
@@ -852,7 +891,10 @@ msg_client(int p_or_n, const char *command,
 			}
 		}
 		else
+		{
+			add_reply_target(target_p, source_p);
 			sendto_anywhere(target_p, source_p, command, ":%s", text);
+		}
 	}
 	else
 		sendto_anywhere(target_p, source_p, command, ":%s", text);
