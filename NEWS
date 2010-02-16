@@ -1,5 +1,57 @@
-This is charybdis 3.1, Copyright (c) 2005-2010 Charybdis team.
+This is charybdis 3.2, Copyright (c) 2005-2010 Charybdis team.
 See LICENSE for licensing details (GPL v2).
+
+-- charybdis-3.2.0
+
+server protocol
+- Apply +z to messages blocked by +b and +q as well. (new EOPMOD capab)
+- Add new topic command ETB, allowing services to set topic+setter+ts always.
+  (new EOPMOD capab)
+- The slash ('/') character is now allowed in spoofs.
+user
+- Add can_kick hook, based on the ircd-seven one.
+- Add cmode +C (no CTCP) from ircd-seven.
+- Flood checking has been reworked.
+- Fix op-moderate (cmode +z) for channel names with '@'.
+- Add CERTFP support, allowing users to connect with an SSL client
+  certificate and propagating the certificate fingerprint to other servers.
+  Services packages can use this to identify users based on client
+  certificates.
+- Maintain the list of recently used targets (for the target change
+  anti-spam system) in most-recently-used order, overwriting the least
+  recently used target with a new one. This should be friendlier to users
+  without giving spambots anything.
+- Do not require target change slots for replying to the last five users to
+  send a private message, notice or invite.
+- Apply target change restrictions to /invite.
+- Apply umode +g/+R restrictions to /invite, with the difference that
+  instead of sending "<user> is messaging you" the invite is let through
+  since that is just as noisy.
+oper
+- Add /rehash throttles to clear throttling.
+- Send all server notices resulting from a remote /rehash to the oper.
+- '\s' for space is now part of the matching, not a substitution at xline
+  time, fixing various issues with it.
+- Display o:line "nickname" in oper-up server notices.
+- Fix sendq exceeded snotes for servers.
+- SCAN UMODES: default list-max to 500, like a global WHO.
+- Ignore directory names in MODRELOAD to avoid crashing if it is a core
+  module and the path is incorrect.
+config
+- Add channel::only_ascii_channels config option to restrict channel names
+  to printable ascii only.
+- Add channel::resv_forcepart, forcibly parts local users on channel RESV,
+  default enabled.
+misc
+- New mkpasswd from ircd-ratbox.
+- Check more system calls for errors and handle the errors.
+- Various ssld/libratbox bugfixes from ircd-ratbox. [some MERGED]
+- Fix fd passing on FreeBSD/amd64 and possibly Solaris/sparc. [MERGED]
+- Various documentation improvements. [some MERGED]
+- Fix some crash issues. [MERGED]
+- Add bandb from ircd-ratbox, which stores permanent dlines/klines/xlines/resvs
+  in an sqlite database instead of a flatfile and does the storage in a
+  helper process.
 
 -- charybdis-3.1.0
 
