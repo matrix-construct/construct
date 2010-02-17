@@ -400,7 +400,6 @@ hurt_check_event(void *arg)
 		{
 			rb_dlinkDestroy(ptr, &hurt_state.hurt_clients);
 			sendto_one_notice(client_p, ":HURT restriction removed for this session");
-			USED_TARGETS(client_p) = 0;
 			client_p->localClient->target_last = rb_current_time();		/* don't ask --nenolod */
 		}
 		else if (client_p->localClient->receiveM > hurt_state.cutoff)
@@ -454,7 +453,6 @@ new_local_user_hook(struct Client *source_p)
 
 	if (hurt_find(source_p->sockhost) || hurt_find(source_p->orighost))
 	{
-		USED_TARGETS(source_p) = 10;
 		source_p->localClient->target_last = rb_current_time() + 600;		/* don't ask --nenolod */
 		SetTGChange(source_p);
 		rb_dlinkAddAlloc(source_p, &hurt_state.hurt_clients);
@@ -627,7 +625,6 @@ heal_nick(struct Client *source_p, struct Client *target_p)
 				get_oper_name(source_p), get_client_name(target_p, HIDE_IP));
 		sendto_one_notice(target_p, ":HURT restriction temporarily removed by operator");
 		sendto_one_notice(source_p, ":HURT restriction on %s temporarily removed", target_p->name);
-		USED_TARGETS(target_p) = 0;
 		target_p->localClient->target_last = rb_current_time();		/* don't ask --nenolod */
 		return 1;
 	}
