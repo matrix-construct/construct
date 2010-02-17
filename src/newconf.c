@@ -616,6 +616,12 @@ conf_set_oper_flags(void *data)
 }
 
 static void
+conf_set_oper_fingerprint(void *data)
+{
+	yy_oper->certfp = rb_strdup((char *) data);
+}
+
+static void
 conf_set_oper_privset(void *data)
 {
 	yy_oper->privset = privilegeset_get((char *) data);
@@ -2039,6 +2045,7 @@ static struct ConfEntry conf_operator_table[] =
 	{ "snomask",    CF_QSTRING, conf_set_oper_snomask,      0, NULL },
 	{ "user",	CF_QSTRING, conf_set_oper_user,		0, NULL },
 	{ "password",	CF_QSTRING, conf_set_oper_password,	0, NULL },
+	{ "fingerprint",	CF_QSTRING, conf_set_oper_fingerprint,	0, NULL },
 	{ "\0",	0, NULL, 0, NULL }
 };
 

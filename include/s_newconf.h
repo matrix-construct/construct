@@ -112,6 +112,7 @@ struct oper_conf
 	char *username;
 	char *host;
 	char *passwd;
+	char *certfp;
 
 	int flags;
 	int umodes;
