@@ -512,7 +512,7 @@ static  const char *  replies[] = {
 /* 488 */       NULL,
 /* 489 ERR_VOICENEEDED */	":%s 489 %s %s :You're neither voiced nor channel operator",
 /* 490 */       NULL,
-/* 491 ERR_NOOPERHOST, */       ":%s 491 %s :Only few of mere mortals may try to enter the twilight zone",
+/* 491 ERR_NOOPERHOST, */       ":No appropriate o:lines were found for your host",
 /* 492 */       NULL,
 /* 493 */       NULL,
 /* 494 */       NULL,

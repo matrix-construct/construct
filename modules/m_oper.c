@@ -84,7 +84,7 @@ m_oper(struct Client *client_p, struct Client *source_p, int parc, const char *p
 
 	if(oper_p == NULL)
 	{
-		sendto_one(source_p, form_str(ERR_NOOPERHOST), me.name, source_p->name);
+		sendto_one_numeric(source_p, ERR_NOOPERHOST, form_str(ERR_NOOPERHOST));
 		ilog(L_FOPER, "FAILED OPER (%s) by (%s!%s@%s) (%s)",
 		     name, source_p->name,
 		     source_p->username, source_p->host, source_p->sockhost);
@@ -101,7 +101,7 @@ m_oper(struct Client *client_p, struct Client *source_p, int parc, const char *p
 
 	if(IsOperConfNeedSSL(oper_p) && !IsSSLClient(source_p))
 	{
-		sendto_one(source_p, form_str(ERR_NOOPERHOST), me.name, source_p->name);
+		sendto_one_numeric(source_p, ERR_NOOPERHOST, form_str(ERR_NOOPERHOST));
 		ilog(L_FOPER, "FAILED OPER (%s) by (%s!%s@%s) (%s) -- requires SSL/TLS",
 		     name, source_p->name,
 		     source_p->username, source_p->host, source_p->sockhost);
@@ -119,7 +119,7 @@ m_oper(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	{
 		if (source_p->certfp == NULL || strcasecmp(source_p->certfp, oper_p->certfp))
 		{
-			sendto_one(source_p, form_str(ERR_NOOPERHOST), me.name, source_p->name);
+			sendto_one_numeric(source_p, ERR_NOOPERHOST, form_str(ERR_NOOPERHOST));
 			ilog(L_FOPER, "FAILED OPER (%s) by (%s!%s@%s) (%s) -- client certificate fingerprint mismatch",
 			     name, source_p->name,
 			     source_p->username, source_p->host, source_p->sockhost);
