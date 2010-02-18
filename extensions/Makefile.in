@@ -47,6 +47,8 @@ SRCS =                          \
   hurt.c			\
   ip_cloaking.c			\
   ip_cloaking_old.c		\
+  ip_cloaking_3.0.c		\
+  ip_cloaking_4.0.c		\
   sno_farconnect.c		\
   sno_globalkline.c		\
   sno_globaloper.c		\
