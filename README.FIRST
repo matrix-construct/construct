@@ -49,8 +49,6 @@ Feature Specific Requirements:
 
 - To report bugs in charybdis, visit us at irc.atheme.org #charybdis
 
-- Known bugs are listed in the BUGS file
-
 - See the INSTALL document for info on configuring and compiling
   charybdis.
 
