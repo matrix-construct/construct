@@ -1221,8 +1221,11 @@ clear_out_old_conf(void)
 	}
 
 	/* remove any aliases... -- nenolod */
-	irc_dictionary_destroy(alias_dict, free_alias_cb, NULL);
-	alias_dict = NULL;
+	if (alias_dict != NULL)
+	{
+		irc_dictionary_destroy(alias_dict, free_alias_cb, NULL);
+		alias_dict = NULL;
+	}
 
 	destroy_blacklists();
 
