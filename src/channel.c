@@ -936,7 +936,9 @@ check_spambot_warning(struct Client *source_p, const char *name)
 		   JOIN_LEAVE_COUNT_EXPIRE_TIME)
 		{
 			decrement_count = (t_delta / JOIN_LEAVE_COUNT_EXPIRE_TIME);
-			if(decrement_count > source_p->localClient->join_leave_count)
+			if(name != NULL)
+				;
+			else if(decrement_count > source_p->localClient->join_leave_count)
 				source_p->localClient->join_leave_count = 0;
 			else
 				source_p->localClient->join_leave_count -= decrement_count;
