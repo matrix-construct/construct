@@ -294,9 +294,6 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 			}
 		}
 
-		if(!IsOper(source_p) && !IsExemptSpambot(source_p))
-			check_spambot_warning(source_p, name);
-
 		/* can_join checks for +i key, bans etc */
 		if((i = can_join(source_p, chptr, key)))
 		{
@@ -317,6 +314,9 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 
 			sendto_one_numeric(source_p, ERR_LINKCHANNEL, form_str(ERR_LINKCHANNEL), name, chptr->chname);
 		}
+
+		if(!IsOper(source_p) && !IsExemptSpambot(source_p))
+			check_spambot_warning(source_p, name);
 
 		/* add the user to the channel */
 		add_user_to_channel(chptr, source_p, flags);
