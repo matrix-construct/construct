@@ -305,7 +305,8 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 			sendto_one_numeric(source_p, ERR_LINKCHANNEL, form_str(ERR_LINKCHANNEL), name, chptr->chname);
 		}
 
-		if(!IsOper(source_p) && !IsExemptSpambot(source_p))
+		if(flags == 0 &&
+				!IsOper(source_p) && !IsExemptSpambot(source_p))
 			check_spambot_warning(source_p, name);
 
 		/* add the user to the channel */
