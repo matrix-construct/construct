@@ -37,6 +37,7 @@ oper
 - SCAN UMODES: default list-max to 500, like a global WHO.
 - Ignore directory names in MODRELOAD to avoid crashing if it is a core
   module and the path is incorrect.
+- Tweaks to spambot checks.
 config
 - Add channel::only_ascii_channels config option to restrict channel names
   to printable ascii only.
