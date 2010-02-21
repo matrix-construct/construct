@@ -943,8 +943,6 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
  * output	- NONE
  * side effects	- Use has decided to join 0. This is legacy
  *		  from the days when channels were numbers not names. *sigh*
- *		  There is a bunch of evilness necessary here due to
- * 		  anti spambot code.
  */
 static void
 do_join_0(struct Client *client_p, struct Client *source_p)
@@ -959,12 +957,12 @@ do_join_0(struct Client *client_p, struct Client *source_p)
 
 	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s JOIN 0", use_id(source_p));
 
-	if(source_p->user->channel.head && MyConnect(source_p) &&
-	   !IsOper(source_p) && !IsExemptSpambot(source_p))
-		check_spambot_warning(source_p, NULL);
-
 	while((ptr = source_p->user->channel.head))
 	{
+		if(MyConnect(source_p) &&
+		   !IsOper(source_p) && !IsExemptSpambot(source_p))
+			check_spambot_warning(source_p, NULL);
+
 		msptr = ptr->data;
 		chptr = msptr->chptr;
 		sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@%s PART %s",
