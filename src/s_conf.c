@@ -635,23 +635,6 @@ rehash(int sig)
 	return (0);
 }
 
-static struct banconf_entry
-{
-	const char **filename;
-	void (*func) (FILE *);
-	int perm;
-} banconfs[] = {
-	{ &ConfigFileEntry.klinefile,	parse_k_file,	0 },
-	{ &ConfigFileEntry.klinefile,	parse_k_file,	1 },
-	{ &ConfigFileEntry.dlinefile,	parse_d_file,	0 },
-	{ &ConfigFileEntry.dlinefile,	parse_d_file,	1 },
-	{ &ConfigFileEntry.xlinefile,	parse_x_file,	0 },
-	{ &ConfigFileEntry.xlinefile,	parse_x_file,	1 },
-	{ &ConfigFileEntry.resvfile,	parse_resv_file,0 },
-	{ &ConfigFileEntry.resvfile,	parse_resv_file,1 },
-	{ NULL,				NULL,		0 }
-};
-
 void
 rehash_bans(int sig)
 {

@@ -243,16 +243,8 @@ make_daemon(void)
 static int printVersion = 0;
 
 struct lgetopt myopts[] = {
-	{"dlinefile", &ConfigFileEntry.dlinefile,
-	 STRING, "File to use for dlines.conf"},
 	{"configfile", &ConfigFileEntry.configfile,
 	 STRING, "File to use for ircd.conf"},
-	{"klinefile", &ConfigFileEntry.klinefile,
-	 STRING, "File to use for kline.conf"},
-	{"xlinefile", &ConfigFileEntry.xlinefile,
-	 STRING, "File to use for xline.conf"},
-	{"resvfile", &ConfigFileEntry.resvfile,
-	 STRING, "File to use for resv.conf"},
 	{"logfile", &logFileName,
 	 STRING, "File to use for ircd.log"},
 	{"pidfile", &pidFileName,
@@ -550,10 +542,6 @@ main(int argc, char *argv[])
 
 	ConfigFileEntry.dpath = DPATH;
 	ConfigFileEntry.configfile = CPATH;	/* Server configuration file */
-	ConfigFileEntry.klinefile = KPATH;	/* Server kline file */
-	ConfigFileEntry.dlinefile = DLPATH;	/* dline file */
-	ConfigFileEntry.xlinefile = XPATH;
-	ConfigFileEntry.resvfile = RESVPATH;
 	ConfigFileEntry.connect_timeout = 30;	/* Default to 30 */
 	
 	umask(077);		/* better safe than sorry --SRB */

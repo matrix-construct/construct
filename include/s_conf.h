@@ -131,10 +131,6 @@ struct config_file_entry
 {
 	const char *dpath;	/* DPATH if set from command line */
 	const char *configfile;
-	const char *klinefile;
-	const char *dlinefile;
-	const char *xlinefile;
-	const char *resvfile;
 
 	char *egdpool_path;
 
@@ -349,15 +345,6 @@ extern void conf_add_me(struct ConfItem *);
 extern void conf_add_class(struct ConfItem *, int);
 extern void conf_add_d_conf(struct ConfItem *);
 extern void flush_expired_ips(void *);
-
-
-/* XXX consider moving these into kdparse.h */
-extern void parse_k_file(FILE * fb);
-extern void parse_d_file(FILE * fb);
-extern void parse_x_file(FILE * fb);
-extern void parse_resv_file(FILE *);
-extern char *getfield(char *newline);
-extern char *xline_encode_spaces(const char *);
 
 extern char *get_oper_name(struct Client *client_p);
 
