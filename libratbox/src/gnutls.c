@@ -536,6 +536,7 @@ rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN])
 
 	memcpy(certfp, digest, RB_SSL_CERTFP_LEN);
 
+	gnutls_x509_crt_deinit(cert);
 	return 1;
 }
 
