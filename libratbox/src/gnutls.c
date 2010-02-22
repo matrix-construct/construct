@@ -30,6 +30,7 @@
 #ifdef HAVE_GNUTLS
 
 #include <gnutls/gnutls.h>
+#include <gnutls/x509.h>
 #include <gcrypt.h>
 
 static gnutls_certificate_credentials x509;
@@ -144,6 +145,7 @@ rb_ssl_start_accepted(rb_fde_t *new_F, ACCB * cb, void *data, int timeout)
 	gnutls_credentials_set(*ssl, GNUTLS_CRD_CERTIFICATE, x509);
 	gnutls_dh_set_prime_bits(*ssl, 1024);
 	gnutls_transport_set_ptr(*ssl, (gnutls_transport_ptr_t) (long int)new_F->fd);
+	gnutls_certificate_server_set_request(*ssl, GNUTLS_CERT_REQUEST);
 	if(do_ssl_handshake(new_F, rb_ssl_tryaccept))
 	{
 		struct acceptdata *ad = new_F->accept;
@@ -175,6 +177,7 @@ rb_ssl_accept_setup(rb_fde_t *F, rb_fde_t *new_F, struct sockaddr *st, int addrl
 	gnutls_credentials_set(SSL_P(new_F), GNUTLS_CRD_CERTIFICATE, x509);
 	gnutls_dh_set_prime_bits(SSL_P(new_F), 1024);
 	gnutls_transport_set_ptr(SSL_P(new_F), (gnutls_transport_ptr_t) (long int)rb_get_fd(new_F));
+	gnutls_certificate_server_set_request(SSL_P(new_F), GNUTLS_CERT_REQUEST);
 	if(do_ssl_handshake(F, rb_ssl_tryaccept))
 	{
 		struct acceptdata *ad = F->accept;
@@ -499,8 +502,41 @@ rb_get_ssl_strerror(rb_fde_t *F)
 int
 rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN])
 {
-	/* XXX implement this for gnutls */
-	return 0;
+	gnutls_x509_crt_t cert;
+	unsigned int cert_list_size;
+	const gnutls_datum_t *cert_list;
+	uint8_t digest[RB_SSL_CERTFP_LEN * 2];
+	size_t digest_size;
+
+	if (gnutls_certificate_type_get(SSL_P(F)) != GNUTLS_CRT_X509)
+		return 0;
+
+	if (gnutls_x509_crt_init(&cert) < 0)
+		return 0;
+
+	cert_list_size = 0;
+	cert_list = gnutls_certificate_get_peers(SSL_P(F), &cert_list_size);
+	if (cert_list == NULL)
+	{
+		gnutls_x509_crt_deinit(cert);
+		return 0;
+	}
+
+	if (gnutls_x509_crt_import(cert, &cert_list[0], GNUTLS_X509_FMT_DER) < 0)
+	{
+		gnutls_x509_crt_deinit(cert);
+		return 0;
+	}
+
+	if (gnutls_x509_crt_get_fingerprint(cert, GNUTLS_DIG_SHA1, digest, &digest_size) < 0)
+	{
+		gnutls_x509_crt_deinit(cert);
+		return 0;
+	}
+
+	memcpy(certfp, digest, RB_SSL_CERTFP_LEN);
+
+	return 1;
 }
 
 int
