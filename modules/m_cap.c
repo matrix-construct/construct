@@ -319,7 +319,7 @@ cap_end(struct Client *source_p, const char *arg)
 
 	source_p->flags &= ~FLAGS_CLICAP;
 
-	if(source_p->name[0] && source_p->user)
+	if(source_p->name[0] && source_p->flags & FLAGS_SENTUSER)
 	{
 		char buf[USERLEN+1];
 		rb_strlcpy(buf, source_p->username, sizeof(buf));
