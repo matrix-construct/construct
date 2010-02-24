@@ -1,7 +1,7 @@
 XLINE [time] <gecos> :<reason>
 
 Bans by gecos (aka 'real name') field.  If [time] is not specified
-this is added to xline.conf, otherwise is temporary for [time] 
+this is added to the database, otherwise is temporary for [time] 
 minutes.
 
 Eg. /quote xline eggdrop?bot :no bots

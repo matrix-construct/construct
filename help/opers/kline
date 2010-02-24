@@ -1,13 +1,13 @@
 KLINE <user@host> :[reason] [| oper reason]
 
-Adds a KLINE to the kline.conf file which will ban the
+Adds a KLINE to the database which will ban the
 specified user from using this server.  The banned
 client will receive a message saying he/she is banned
 with reason [reason].
 
 If an oper reason is added (the pipe must be specified
 to seperate the fields) this will be added into the
-kline.conf but will not be shown to the user when they
+database but will not be shown to the user when they
 are given the kline reason.
 
 KLINE <user@ip.ip.ip.ip> :[reason] [| oper reason]

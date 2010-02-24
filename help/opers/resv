@@ -1,7 +1,7 @@
 RESV [time] <channel|nick> :<reason>
 
 Reserves a channel or nickname from use.  If [time] is not specified this 
-is added to resv.conf, otherwise is temporary for [time] minutes.
+is added to the database, otherwise is temporary for [time] minutes.
 
 Nick resvs accept the same wildcard chars as xlines.
 Channel resvs only use exact string comparisons.
