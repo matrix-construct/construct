@@ -687,8 +687,8 @@ chm_ban(struct Client *source_p, struct Channel *chptr,
 	case CHFL_QUIET:
 		list = &chptr->quietlist;
 		errorval = SM_ERR_RPL_Q;
-		rpl_list = RPL_BANLIST;
-		rpl_endlist = RPL_ENDOFBANLIST;
+		rpl_list = RPL_QUIETLIST;
+		rpl_endlist = RPL_ENDOFQUIETLIST;
 		mems = ALL_MEMBERS;
 		caps = 0;
 		break;
@@ -723,10 +723,7 @@ chm_ban(struct Client *source_p, struct Channel *chptr,
 				   me.name, source_p->name, chptr->chname,
 				   banptr->banstr, banptr->who, banptr->when);
 		}
-		if (mode_type == CHFL_QUIET)
-			sendto_one(source_p, ":%s %d %s %s :End of Channel Quiet List", me.name, rpl_endlist, source_p->name, chptr->chname);
-		else
-			sendto_one(source_p, form_str(rpl_endlist), me.name, source_p->name, chptr->chname);
+		sendto_one(source_p, form_str(rpl_endlist), me.name, source_p->name, chptr->chname);
 		return;
 	}
 
