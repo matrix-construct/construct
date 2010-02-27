@@ -480,6 +480,7 @@ accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, voi
 	char buf[BUFSIZE];
 	struct ConfItem *aconf;
 	static time_t last_oper_notice = 0;
+	int len;
 
 	if(listener->ssl && (!ssl_ok || !get_ssld_count()))
 	{
@@ -519,7 +520,10 @@ accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, voi
 			
 		if(ConfigFileEntry.dline_with_reason)
 		{
-			if (rb_snprintf(buf, sizeof(buf), "ERROR :*** Banned: %s\r\n", aconf->passwd) >= (int)(sizeof(buf)-1))
+			len = aconf->created ?
+				rb_snprintf(buf, sizeof(buf), "ERROR :*** Banned: %s (%s)\r\n", aconf->passwd, smalldate(aconf->created)) :
+				rb_snprintf(buf, sizeof(buf), "ERROR :*** Banned: %s\r\n", aconf->passwd);
+			if (len >= (int)(sizeof(buf)-1))
 			{
 				buf[sizeof(buf) - 3] = '\r';
 				buf[sizeof(buf) - 2] = '\n';

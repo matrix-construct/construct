@@ -417,11 +417,20 @@ notify_banned_client(struct Client *client_p, struct ConfItem *aconf, int ban)
 	static const char k_lined[] = "K-lined";
 	const char *reason = NULL;
 	const char *exit_reason = conn_closed;
+	char reasonbuf[BUFSIZE];
 
 	if(ConfigFileEntry.kline_with_reason && !EmptyString(aconf->passwd))
 	{
-		reason = aconf->passwd;
-		exit_reason = aconf->passwd;
+		if(aconf->created)
+		{
+			rb_snprintf(reasonbuf, sizeof reasonbuf, "%s (%s)",
+					aconf->passwd,
+					smalldate(aconf->created));
+			reason = reasonbuf;
+		}
+		else
+			reason = aconf->passwd;
+		exit_reason = reason;
 	}
 	else
 	{

@@ -305,6 +305,8 @@ verify_access(struct Client *client_p, const char *username)
 {
 	struct ConfItem *aconf;
 	char non_ident[USERLEN + 1];
+	char reasonbuf[BUFSIZE];
+	char *reason;
 
 	if(IsGotId(client_p))
 	{
@@ -375,9 +377,18 @@ verify_access(struct Client *client_p, const char *username)
 	{
 		if(ConfigFileEntry.kline_with_reason)
 		{
+			if(aconf->created)
+			{
+				snprintf(reasonbuf, sizeof reasonbuf, "%s (%s)",
+						aconf->passwd,
+						smalldate(aconf->created));
+				reason = reasonbuf;
+			}
+			else
+				reason = aconf->passwd;
 			sendto_one(client_p,
 					form_str(ERR_YOUREBANNEDCREEP),
-					me.name, client_p->name, aconf->passwd);
+					me.name, client_p->name, reason);
 		}
 		add_reject(client_p, aconf->user, aconf->host);
 		return (BANNED_CLIENT);
@@ -1061,10 +1072,18 @@ get_printable_kline(struct Client *source_p, struct ConfItem *aconf,
 		    char **user, char **oper_reason)
 {
 	static char null[] = "<NULL>";
+	static char reasonbuf[BUFSIZE];
 
 	*host = EmptyString(aconf->host) ? null : aconf->host;
-	*reason = EmptyString(aconf->passwd) ? null : aconf->passwd;
 	*user = EmptyString(aconf->user) ? null : aconf->user;
+
+	*reason = EmptyString(aconf->passwd) ? null : aconf->passwd;
+	if(aconf->created)
+	{
+		rb_snprintf(reasonbuf, sizeof reasonbuf, "%s (%s)",
+				*reason, smalldate(aconf->created));
+		*reason = reasonbuf;
+	}
 
 	if(EmptyString(aconf->spasswd) || !IsOper(source_p))
 		*oper_reason = NULL;

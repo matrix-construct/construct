@@ -61,7 +61,7 @@ extern void inotice(const char *fmt, ...) AFP(1, 2);
 extern void iwarn(const char *fmt, ...) AFP(1, 2);
 extern void ierror(const char *fmt, ...) AFP(1, 2);
 extern void report_operspy(struct Client *, const char *, const char *);
-extern const char *smalldate(void);
+extern const char *smalldate(time_t);
 extern void ilog_error(const char *);
 
 #endif

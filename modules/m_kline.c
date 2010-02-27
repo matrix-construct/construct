@@ -75,9 +75,9 @@ static int valid_wild_card(struct Client *source_p, const char *user, const char
 static void handle_remote_kline(struct Client *source_p, int tkline_time,
 				const char *user, const char *host, const char *reason);
 static void apply_kline(struct Client *source_p, struct ConfItem *aconf,
-			const char *reason, const char *oper_reason, const char *current_date);
+			const char *reason, const char *oper_reason);
 static void apply_tkline(struct Client *source_p, struct ConfItem *aconf,
-			 const char *, const char *, const char *, int);
+			 const char *, const char *, int);
 static int already_placed_kline(struct Client *, const char *, const char *, int);
 
 static void handle_remote_unkline(struct Client *source_p, const char *user, const char *host);
@@ -101,7 +101,6 @@ mo_kline(struct Client *client_p, struct Client *source_p, int parc, const char 
 	char buffer[IRCD_BUFSIZE];
 	char *reason = def;
 	char *oper_reason;
-	const char *current_date;
 	const char *target_server = NULL;
 	struct ConfItem *aconf;
 	int tkline_time = 0;
@@ -169,9 +168,9 @@ mo_kline(struct Client *client_p, struct Client *source_p, int parc, const char 
 		return 0;
 
 	rb_set_time();
-	current_date = smalldate();
 	aconf = make_conf();
 	aconf->status = CONF_KILL;
+	aconf->created = rb_current_time();
 	aconf->host = rb_strdup(host);
 	aconf->user = rb_strdup(user);
 	aconf->port = 0;
@@ -189,16 +188,15 @@ mo_kline(struct Client *client_p, struct Client *source_p, int parc, const char 
 	if(tkline_time > 0)
 	{
 		rb_snprintf(buffer, sizeof(buffer),
-			    "Temporary K-line %d min. - %s (%s)",
-			    (int) (tkline_time / 60), reason, current_date);
+			    "Temporary K-line %d min. - %s",
+			    (int) (tkline_time / 60), reason);
 		aconf->passwd = rb_strdup(buffer);
-		apply_tkline(source_p, aconf, reason, oper_reason, current_date, tkline_time);
+		apply_tkline(source_p, aconf, reason, oper_reason, tkline_time);
 	}
 	else
 	{
-		rb_snprintf(buffer, sizeof(buffer), "%s (%s)", reason, current_date);
-		aconf->passwd = rb_strdup(buffer);
-		apply_kline(source_p, aconf, reason, oper_reason, current_date);
+		aconf->passwd = rb_strdup(reason);
+		apply_kline(source_p, aconf, reason, oper_reason);
 	}
 
 	if(ConfigFileEntry.kline_delay)
@@ -265,7 +263,6 @@ handle_remote_kline(struct Client *source_p, int tkline_time,
 		    const char *user, const char *host, const char *kreason)
 {
 	char buffer[BUFSIZE];
-	const char *current_date;
 	char *reason = LOCAL_COPY(kreason);
 	struct ConfItem *aconf = NULL;
 	char *oper_reason;
@@ -285,6 +282,7 @@ handle_remote_kline(struct Client *source_p, int tkline_time,
 	aconf = make_conf();
 
 	aconf->status = CONF_KILL;
+	aconf->created = rb_current_time();
 	aconf->user = rb_strdup(user);
 	aconf->host = rb_strdup(host);
 
@@ -298,21 +296,18 @@ handle_remote_kline(struct Client *source_p, int tkline_time,
 			aconf->spasswd = rb_strdup(oper_reason);
 	}
 
-	current_date = smalldate();
-
 	if(tkline_time > 0)
 	{
 		rb_snprintf(buffer, sizeof(buffer),
-			    "Temporary K-line %d min. - %s (%s)",
-			    (int) (tkline_time / 60), reason, current_date);
+			    "Temporary K-line %d min. - %s",
+			    (int) (tkline_time / 60), reason);
 		aconf->passwd = rb_strdup(buffer);
-		apply_tkline(source_p, aconf, reason, oper_reason, current_date, tkline_time);
+		apply_tkline(source_p, aconf, reason, oper_reason, tkline_time);
 	}
 	else
 	{
-		rb_snprintf(buffer, sizeof(buffer), "%s (%s)", reason, current_date);
-		aconf->passwd = rb_strdup(buffer);
-		apply_kline(source_p, aconf, reason, oper_reason, current_date);
+		aconf->passwd = rb_strdup(reason);
+		apply_kline(source_p, aconf, reason, oper_reason);
 	}
 
 	if(ConfigFileEntry.kline_delay)
@@ -480,7 +475,7 @@ handle_remote_unkline(struct Client *source_p, const char *user, const char *hos
  */
 static void
 apply_kline(struct Client *source_p, struct ConfItem *aconf,
-	    const char *reason, const char *oper_reason, const char *current_date)
+	    const char *reason, const char *oper_reason)
 {
 	add_conf_by_address(aconf->host, CONF_KILL, aconf->user, NULL, aconf);
 	bandb_add(BANDB_KLINE, source_p, aconf->user, aconf->host,
@@ -517,7 +512,7 @@ apply_kline(struct Client *source_p, struct ConfItem *aconf,
  */
 static void
 apply_tkline(struct Client *source_p, struct ConfItem *aconf,
-	     const char *reason, const char *oper_reason, const char *current_date, int tkline_time)
+	     const char *reason, const char *oper_reason, int tkline_time)
 {
 	aconf->hold = rb_current_time() + tkline_time;
 	add_temp_kline(aconf);
