@@ -170,7 +170,8 @@ bandb_handle_ban(char *parv[], int parc)
 		aconf->user = rb_strdup(parv[para++]);
 
 	aconf->host = rb_strdup(parv[para++]);
-	aconf->passwd = rb_strdup(parv[para++]);
+	/* We do not have the 'oper' field yet. */
+	para++;
 
 	switch (parv[0][0])
 	{
