@@ -98,7 +98,6 @@ mo_kline(struct Client *client_p, struct Client *source_p, int parc, const char 
 	char def[] = "No Reason";
 	char user[USERLEN + 2];
 	char host[HOSTLEN + 2];
-	char buffer[IRCD_BUFSIZE];
 	char *reason = def;
 	char *oper_reason;
 	const char *target_server = NULL;
@@ -174,6 +173,7 @@ mo_kline(struct Client *client_p, struct Client *source_p, int parc, const char 
 	aconf->host = rb_strdup(host);
 	aconf->user = rb_strdup(user);
 	aconf->port = 0;
+	aconf->passwd = rb_strdup(reason);
 
 	/* Look for an oper reason */
 	if((oper_reason = strchr(reason, '|')) != NULL)
@@ -186,18 +186,9 @@ mo_kline(struct Client *client_p, struct Client *source_p, int parc, const char 
 	}
 
 	if(tkline_time > 0)
-	{
-		rb_snprintf(buffer, sizeof(buffer),
-			    "Temporary K-line %d min. - %s",
-			    (int) (tkline_time / 60), reason);
-		aconf->passwd = rb_strdup(buffer);
 		apply_tkline(source_p, aconf, reason, oper_reason, tkline_time);
-	}
 	else
-	{
-		aconf->passwd = rb_strdup(reason);
 		apply_kline(source_p, aconf, reason, oper_reason);
-	}
 
 	if(ConfigFileEntry.kline_delay)
 	{
@@ -262,7 +253,6 @@ static void
 handle_remote_kline(struct Client *source_p, int tkline_time,
 		    const char *user, const char *host, const char *kreason)
 {
-	char buffer[BUFSIZE];
 	char *reason = LOCAL_COPY(kreason);
 	struct ConfItem *aconf = NULL;
 	char *oper_reason;
@@ -285,6 +275,7 @@ handle_remote_kline(struct Client *source_p, int tkline_time,
 	aconf->created = rb_current_time();
 	aconf->user = rb_strdup(user);
 	aconf->host = rb_strdup(host);
+	aconf->passwd = rb_strdup(reason);
 
 	/* Look for an oper reason */
 	if((oper_reason = strchr(reason, '|')) != NULL)
@@ -297,18 +288,9 @@ handle_remote_kline(struct Client *source_p, int tkline_time,
 	}
 
 	if(tkline_time > 0)
-	{
-		rb_snprintf(buffer, sizeof(buffer),
-			    "Temporary K-line %d min. - %s",
-			    (int) (tkline_time / 60), reason);
-		aconf->passwd = rb_strdup(buffer);
 		apply_tkline(source_p, aconf, reason, oper_reason, tkline_time);
-	}
 	else
-	{
-		aconf->passwd = rb_strdup(reason);
 		apply_kline(source_p, aconf, reason, oper_reason);
-	}
 
 	if(ConfigFileEntry.kline_delay)
 	{

@@ -520,9 +520,7 @@ accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, voi
 			
 		if(ConfigFileEntry.dline_with_reason)
 		{
-			len = aconf->created ?
-				rb_snprintf(buf, sizeof(buf), "ERROR :*** Banned: %s (%s)\r\n", aconf->passwd, smalldate(aconf->created)) :
-				rb_snprintf(buf, sizeof(buf), "ERROR :*** Banned: %s\r\n", aconf->passwd);
+			len = rb_snprintf(buf, sizeof(buf), "ERROR :*** Banned: %s\r\n", get_user_ban_reason(aconf));
 			if (len >= (int)(sizeof(buf)-1))
 			{
 				buf[sizeof(buf) - 3] = '\r';
