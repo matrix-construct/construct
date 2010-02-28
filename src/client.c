@@ -418,10 +418,10 @@ notify_banned_client(struct Client *client_p, struct ConfItem *aconf, int ban)
 	const char *reason = NULL;
 	const char *exit_reason = conn_closed;
 
-	if(ConfigFileEntry.kline_with_reason && !EmptyString(aconf->passwd))
+	if(ConfigFileEntry.kline_with_reason)
 	{
-		reason = aconf->passwd;
-		exit_reason = aconf->passwd;
+		reason = get_user_ban_reason(aconf);
+		exit_reason = reason;
 	}
 	else
 	{

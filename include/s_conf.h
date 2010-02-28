@@ -67,6 +67,7 @@ struct ConfItem
 	char *user;		/* user part of user@host */
 	int port;
 	time_t hold;		/* Hold action until this time (calendar time) */
+	time_t created;		/* Creation time (for klines etc) */
 	char *className;	/* Name of class */
 	struct Class *c_class;	/* Class of connection */
 	rb_patricia_node_t *pnode;	/* Our patricia node */
@@ -324,6 +325,7 @@ extern struct ConfItem *find_tkline(const char *, const char *, struct sockaddr 
 extern char *show_iline_prefix(struct Client *, struct ConfItem *, char *);
 extern void get_printable_conf(struct ConfItem *,
 			       char **, char **, char **, char **, int *, char **);
+extern char *get_user_ban_reason(struct ConfItem *aconf);
 extern void get_printable_kline(struct Client *, struct ConfItem *,
 				char **, char **, char **, char **);
 

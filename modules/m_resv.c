@@ -218,6 +218,7 @@ parse_resv(struct Client *source_p, const char *name, const char *reason, int te
 		aconf = make_conf();
 		aconf->status = CONF_RESV_CHANNEL;
 		aconf->port = 0;
+		aconf->created = rb_current_time();
 		aconf->host = rb_strdup(name);
 		aconf->passwd = rb_strdup(reason);
 		add_to_resv_hash(aconf->host, aconf);
@@ -281,6 +282,7 @@ parse_resv(struct Client *source_p, const char *name, const char *reason, int te
 		aconf = make_conf();
 		aconf->status = CONF_RESV_NICK;
 		aconf->port = 0;
+		aconf->created = rb_current_time();
 		aconf->host = rb_strdup(name);
 		aconf->passwd = rb_strdup(reason);
 		rb_dlinkAddAlloc(aconf, &resv_conf_list);

@@ -180,7 +180,8 @@ ilog(ilogfile dest, const char *format, ...)
 	rb_vsnprintf(buf, sizeof(buf), format, args);
 	va_end(args);
 
-	rb_snprintf(buf2, sizeof(buf2), "%s %s\n", smalldate(), buf);
+	rb_snprintf(buf2, sizeof(buf2), "%s %s\n",
+			smalldate(rb_current_time()), buf);
 
 	if(fputs(buf2, logfile) < 0)
 	{
@@ -266,11 +267,10 @@ report_operspy(struct Client *source_p, const char *token, const char *arg)
 }
 
 const char *
-smalldate(void)
+smalldate(time_t ltime)
 {
 	static char buf[MAX_DATE_STRING];
 	struct tm *lt;
-	time_t ltime = rb_current_time();
 
 	lt = localtime(&ltime);
 

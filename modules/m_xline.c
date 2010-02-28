@@ -275,6 +275,7 @@ apply_xline(struct Client *source_p, const char *name, const char *reason, int t
 
 	aconf = make_conf();
 	aconf->status = CONF_XLINE;
+	aconf->created = rb_current_time();
 	aconf->host = rb_strdup(name);
 	aconf->passwd = rb_strdup(reason);
 	collapse(aconf->host);
