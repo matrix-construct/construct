@@ -390,7 +390,7 @@ find_address_conf(const char *host, const char *sockhost, const char *user,
 	/* if theres a spoof, check it against klines.. */
 	if(IsConfDoSpoofIp(iconf))
 	{
-		char *p = strchr(iconf->name, '@');
+		char *p = strchr(iconf->info.name, '@');
 
 		/* note, we dont need to pass sockhost here, as its
 		 * guaranteed to not match by whats above.. --anfl
@@ -398,11 +398,11 @@ find_address_conf(const char *host, const char *sockhost, const char *user,
 		if(p)
 		{
 			*p = '\0';
-			kconf = find_conf_by_address(p+1, NULL, NULL, ip, CONF_KILL, aftype, iconf->name, NULL);
+			kconf = find_conf_by_address(p+1, NULL, NULL, ip, CONF_KILL, aftype, iconf->info.name, NULL);
 			*p = '@';
 		}
 		else
-			kconf = find_conf_by_address(iconf->name, NULL, NULL, ip, CONF_KILL, aftype, vuser, NULL);
+			kconf = find_conf_by_address(iconf->info.name, NULL, NULL, ip, CONF_KILL, aftype, vuser, NULL);
 
 		if(kconf)
 			return kconf;

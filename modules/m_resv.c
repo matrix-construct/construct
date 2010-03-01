@@ -38,6 +38,7 @@
 #include "hash.h"
 #include "logger.h"
 #include "bandbi.h"
+#include "operhash.h"
 
 static int mo_resv(struct Client *, struct Client *, int, const char **);
 static int ms_resv(struct Client *, struct Client *, int, const char **);
@@ -221,6 +222,7 @@ parse_resv(struct Client *source_p, const char *name, const char *reason, int te
 		aconf->created = rb_current_time();
 		aconf->host = rb_strdup(name);
 		aconf->passwd = rb_strdup(reason);
+		aconf->info.oper = operhash_add(get_oper_name(source_p));
 		add_to_resv_hash(aconf->host, aconf);
 		resv_chan_forcepart(aconf->host, aconf->passwd, temp_time);
 
@@ -285,6 +287,7 @@ parse_resv(struct Client *source_p, const char *name, const char *reason, int te
 		aconf->created = rb_current_time();
 		aconf->host = rb_strdup(name);
 		aconf->passwd = rb_strdup(reason);
+		aconf->info.oper = operhash_add(get_oper_name(source_p));
 		rb_dlinkAddAlloc(aconf, &resv_conf_list);
 
 		if(temp_time > 0)

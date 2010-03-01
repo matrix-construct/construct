@@ -51,6 +51,7 @@
 #include "s_newconf.h"
 #include "reject.h"
 #include "bandbi.h"
+#include "operhash.h"
 
 static int mo_xline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static int ms_xline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
@@ -279,6 +280,8 @@ apply_xline(struct Client *source_p, const char *name, const char *reason, int t
 	aconf->host = rb_strdup(name);
 	aconf->passwd = rb_strdup(reason);
 	collapse(aconf->host);
+
+	aconf->info.oper = operhash_add(get_oper_name(source_p));
 
 	if(temp_time > 0)
 	{

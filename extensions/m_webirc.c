@@ -91,7 +91,7 @@ mr_webirc(struct Client *client_p, struct Client *source_p, int parc, const char
 				client_p->localClient->ip.ss_family, NULL);
 	if (aconf == NULL || !(aconf->status & CONF_CLIENT))
 		return 0;
-	if (!IsConfDoSpoofIp(aconf) || irccmp(aconf->name, "webirc."))
+	if (!IsConfDoSpoofIp(aconf) || irccmp(aconf->info.name, "webirc."))
 	{
 		/* XXX */
 		sendto_one(source_p, "NOTICE * :Not a CGI:IRC auth block");

@@ -50,6 +50,7 @@
 #include "privilege.h"
 #include "sslproc.h"
 #include "bandbi.h"
+#include "operhash.h"
 
 struct config_server_hide ConfigServerHide;
 
@@ -142,10 +143,14 @@ free_conf(struct ConfItem *aconf)
 
 	rb_free(aconf->passwd);
 	rb_free(aconf->spasswd);
-	rb_free(aconf->name);
 	rb_free(aconf->className);
 	rb_free(aconf->user);
 	rb_free(aconf->host);
+
+	if(IsConfBan(aconf))
+		operhash_delete(aconf->info.oper);
+	else
+		rb_free(aconf->info.name);
 
 	rb_bh_free(confitem_heap, aconf);
 }
@@ -333,7 +338,7 @@ verify_access(struct Client *client_p, const char *username)
 		if(aconf->flags & CONF_FLAGS_REDIR)
 		{
 			sendto_one_numeric(client_p, RPL_REDIR, form_str(RPL_REDIR),
-					aconf->name ? aconf->name : "", aconf->port);
+					aconf->info.name ? aconf->info.name : "", aconf->port);
 			return (NOT_AUTHORISED);
 		}
 
@@ -350,24 +355,24 @@ verify_access(struct Client *client_p, const char *username)
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						"%s spoofing: %s as %s",
 						client_p->name,
-						show_ip(NULL, client_p) ? client_p->host : aconf->name,
-						aconf->name);
+						show_ip(NULL, client_p) ? client_p->host : aconf->info.name,
+						aconf->info.name);
 			}
 
 			/* user@host spoof */
-			if((p = strchr(aconf->name, '@')) != NULL)
+			if((p = strchr(aconf->info.name, '@')) != NULL)
 			{
 				char *host = p+1;
 				*p = '\0';
 
-				rb_strlcpy(client_p->username, aconf->name,
+				rb_strlcpy(client_p->username, aconf->info.name,
 					sizeof(client_p->username));
 				rb_strlcpy(client_p->host, host,
 					sizeof(client_p->host));
 				*p = '@';
 			}
 			else
-				rb_strlcpy(client_p->host, aconf->name, sizeof(client_p->host));
+				rb_strlcpy(client_p->host, aconf->info.name, sizeof(client_p->host));
 		}
 		return (attach_iline(client_p, aconf));
 	}
@@ -1046,7 +1051,7 @@ get_printable_conf(struct ConfItem *aconf, char **name, char **host,
 	static char null[] = "<NULL>";
 	static char zero[] = "default";
 
-	*name = EmptyString(aconf->name) ? null : aconf->name;
+	*name = EmptyString(aconf->info.name) ? null : aconf->info.name;
 	*host = EmptyString(aconf->host) ? null : aconf->host;
 	*pass = EmptyString(aconf->passwd) ? null : aconf->passwd;
 	*user = EmptyString(aconf->user) ? null : aconf->user;

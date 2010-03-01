@@ -60,7 +60,11 @@ struct ConfItem
 	unsigned int status;	/* If CONF_ILLEGAL, delete when no clients */
 	unsigned int flags;
 	int clients;		/* Number of *LOCAL* clients using this */
-	char *name;		/* IRC name, nick, server name, or original u@h */
+	union
+	{
+		char *name;	/* IRC name, nick, server name, or original u@h */
+		const char *oper;
+	} info;
 	char *host;		/* host part of user@host */
 	char *passwd;		/* doubles as kline reason *ugh* */
 	char *spasswd;		/* Password to send. */
@@ -110,6 +114,9 @@ struct ConfItem
 
 
 /* Macros for struct ConfItem */
+#define IsConfBan(x)		((x)->status & (CONF_KILL|CONF_XLINE|CONF_DLINE|\
+						CONF_RESV_CHANNEL|CONF_RESV_NICK))
+
 #define IsNoTilde(x)            ((x)->flags & CONF_FLAGS_NO_TILDE)
 #define IsNeedIdentd(x)         ((x)->flags & CONF_FLAGS_NEED_IDENTD)
 #define IsConfExemptKline(x)    ((x)->flags & CONF_FLAGS_EXEMPTKLINE)

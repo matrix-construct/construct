@@ -46,6 +46,7 @@
 #include "send.h"
 #include "ircd.h"
 #include "msg.h"	/* XXX: MAXPARA */
+#include "operhash.h"
 
 static char bandb_add_letter[LAST_BANDB_TYPE] = {
 	'K', 'D', 'X', 'R'
@@ -170,8 +171,7 @@ bandb_handle_ban(char *parv[], int parc)
 		aconf->user = rb_strdup(parv[para++]);
 
 	aconf->host = rb_strdup(parv[para++]);
-	/* We do not have the 'oper' field yet. */
-	para++;
+	aconf->info.oper = operhash_add(parv[para++]);
 
 	switch (parv[0][0])
 	{

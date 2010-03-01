@@ -44,6 +44,7 @@
 #include "modules.h"
 #include "reject.h"
 #include "bandbi.h"
+#include "operhash.h"
 
 static int mo_kline(struct Client *, struct Client *, int, const char **);
 static int ms_kline(struct Client *, struct Client *, int, const char **);
@@ -174,6 +175,7 @@ mo_kline(struct Client *client_p, struct Client *source_p, int parc, const char 
 	aconf->user = rb_strdup(user);
 	aconf->port = 0;
 	aconf->passwd = rb_strdup(reason);
+	aconf->info.oper = operhash_add(get_oper_name(source_p));
 
 	/* Look for an oper reason */
 	if((oper_reason = strchr(reason, '|')) != NULL)
@@ -276,6 +278,7 @@ handle_remote_kline(struct Client *source_p, int tkline_time,
 	aconf->user = rb_strdup(user);
 	aconf->host = rb_strdup(host);
 	aconf->passwd = rb_strdup(reason);
+	aconf->info.oper = operhash_add(get_oper_name(source_p));
 
 	/* Look for an oper reason */
 	if((oper_reason = strchr(reason, '|')) != NULL)

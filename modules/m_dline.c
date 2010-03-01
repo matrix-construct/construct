@@ -43,6 +43,7 @@
 #include "parse.h"
 #include "modules.h"
 #include "bandbi.h"
+#include "operhash.h"
 
 static int mo_dline(struct Client *, struct Client *, int, const char **);
 static int me_dline(struct Client *, struct Client *, int, const char **);
@@ -289,6 +290,7 @@ apply_dline(struct Client *source_p, const char *dlhost, int tdline_time, char *
 	aconf->created = rb_current_time();
 	aconf->host = rb_strdup(dlhost);
 	aconf->passwd = rb_strdup(reason);
+	aconf->info.oper = operhash_add(get_oper_name(source_p));
 
 	/* Look for an oper reason */
 	if((oper_reason = strchr(reason, '|')) != NULL)
