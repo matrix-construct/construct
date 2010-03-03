@@ -56,7 +56,6 @@ extern char conf_line_in[256];
 
 struct ConfItem
 {
-	struct ConfItem *next;	/* list node pointer */
 	unsigned int status;	/* If CONF_ILLEGAL, delete when no clients */
 	unsigned int flags;
 	int clients;		/* Number of *LOCAL* clients using this */
