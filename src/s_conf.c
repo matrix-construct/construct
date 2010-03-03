@@ -63,6 +63,8 @@ extern char linebuf[];
 
 static rb_bh *confitem_heap = NULL;
 
+rb_dlink_list prop_bans;
+
 rb_dlink_list temp_klines[LAST_TEMP_TYPE];
 rb_dlink_list temp_dlines[LAST_TEMP_TYPE];
 rb_dlink_list service_list;
@@ -73,6 +75,7 @@ static void validate_conf(void);
 static void read_conf(FILE *);
 static void clear_out_old_conf(void);
 
+static void expire_prop_bans(void *list);
 static void expire_temp_kd(void *list);
 static void reorganise_temp_kd(void *list);
 
@@ -86,6 +89,8 @@ void
 init_s_conf(void)
 {
 	confitem_heap = rb_bh_create(sizeof(struct ConfItem), CONFITEM_HEAP_SIZE, "confitem_heap");
+
+	rb_event_addish("expire_prop_bans", expire_prop_bans, &prop_bans, 60);
 
 	rb_event_addish("expire_temp_klines", expire_temp_kd, &temp_klines[TEMP_MIN], 60);
 	rb_event_addish("expire_temp_dlines", expire_temp_kd, &temp_dlines[TEMP_MIN], 60);
@@ -931,6 +936,87 @@ add_temp_dline(struct ConfItem *aconf)
 
 	aconf->flags |= CONF_FLAGS_TEMPORARY;
 	add_conf_by_address(aconf->host, CONF_DLINE, aconf->user, NULL, aconf);
+}
+
+void
+deactivate_conf(struct ConfItem *aconf, rb_dlink_node *ptr)
+{
+	int i;
+
+	s_assert(ptr->data == aconf);
+
+	switch (aconf->status)
+	{
+		case CONF_KILL:
+			if (aconf->lifetime == 0 &&
+					aconf->flags & CONF_FLAGS_TEMPORARY)
+				for (i = 0; i < LAST_TEMP_TYPE; i++)
+					rb_dlinkFindDestroy(aconf, &temp_klines[i]);
+			/* Make sure delete_one_address_conf() does not
+			 * free the aconf.
+			 */
+			aconf->clients++;
+			delete_one_address_conf(aconf->host, aconf);
+			aconf->clients--;
+			break;
+		case CONF_DLINE:
+			if (aconf->lifetime == 0 &&
+					aconf->flags & CONF_FLAGS_TEMPORARY)
+				for (i = 0; i < LAST_TEMP_TYPE; i++)
+					rb_dlinkFindDestroy(aconf, &temp_dlines[i]);
+			aconf->clients++;
+			delete_one_address_conf(aconf->host, aconf);
+			aconf->clients--;
+			break;
+		case CONF_XLINE:
+			rb_dlinkFindDestroy(aconf, &xline_conf_list);
+			break;
+		case CONF_RESV_NICK:
+			rb_dlinkFindDestroy(aconf, &resv_conf_list);
+			break;
+		case CONF_RESV_CHANNEL:
+			del_from_resv_hash(aconf->host, aconf);
+			break;
+	}
+	if (aconf->lifetime != 0 && rb_current_time() < aconf->lifetime)
+		aconf->status |= CONF_ILLEGAL;
+	else
+	{
+		if (aconf->lifetime != 0)
+			rb_dlinkDestroy(ptr, &prop_bans);
+		free_conf(aconf);
+	}
+}
+
+static void
+expire_prop_bans(void *list)
+{
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
+	struct ConfItem *aconf;
+
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, ((rb_dlink_list *) list)->head)
+	{
+		aconf = ptr->data;
+
+		if(aconf->lifetime <= rb_current_time() ||
+				(aconf->hold <= rb_current_time() &&
+				 !(aconf->status & CONF_ILLEGAL)))
+		{
+			/* Alert opers that a TKline expired - Hwy */
+			/* XXX show what type of ban it is */
+			if(ConfigFileEntry.tkline_expire_notices &&
+					!(aconf->status & CONF_ILLEGAL))
+				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+						     "Propagated ban for [%s%s%s] expired",
+						     aconf->user ? aconf->user : "",
+						     aconf->user ? "@" : "",
+						     aconf->host ? aconf->host : "*");
+
+			/* will destroy or mark illegal */
+			deactivate_conf(aconf, ptr);
+		}
+	}
 }
 
 /* expire_tkline()

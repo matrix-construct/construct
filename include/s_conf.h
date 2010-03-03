@@ -71,6 +71,7 @@ struct ConfItem
 	int port;
 	time_t hold;		/* Hold action until this time (calendar time) */
 	time_t created;		/* Creation time (for klines etc) */
+	time_t lifetime;	/* Propagated lines: remember until this time */
 	char *className;	/* Name of class */
 	struct Class *c_class;	/* Class of connection */
 	rb_patricia_node_t *pnode;	/* Our patricia node */
@@ -303,6 +304,8 @@ extern struct admin_info AdminInfo;	/* defined in ircd.c */
 
 extern rb_dlink_list service_list;
 
+extern rb_dlink_list prop_bans;
+
 typedef enum temp_list
 {
 	TEMP_MIN,
@@ -319,6 +322,8 @@ extern void init_s_conf(void);
 
 extern struct ConfItem *make_conf(void);
 extern void free_conf(struct ConfItem *);
+
+extern void deactivate_conf(struct ConfItem *, rb_dlink_node *);
 
 extern void read_conf_files(int cold);
 

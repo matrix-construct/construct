@@ -651,6 +651,7 @@ valid_temp_time(const char *p)
 	return(result * 60);
 }
 
+/* Propagated bans are expired elsewhere. */
 static void
 expire_temp_rxlines(void *unused)
 {
@@ -663,6 +664,8 @@ expire_temp_rxlines(void *unused)
 	{
 		aconf = ptr->data;
 
+		if(aconf->lifetime != 0)
+			continue;
 		if(aconf->hold && aconf->hold <= rb_current_time())
 		{
 			if(ConfigFileEntry.tkline_expire_notices)
@@ -680,6 +683,8 @@ expire_temp_rxlines(void *unused)
 	{
 		aconf = ptr->data;
 
+		if(aconf->lifetime != 0)
+			continue;
 		if(aconf->hold && aconf->hold <= rb_current_time())
 		{
 			if(ConfigFileEntry.tkline_expire_notices)
@@ -695,6 +700,8 @@ expire_temp_rxlines(void *unused)
 	{
 		aconf = ptr->data;
 
+		if(aconf->lifetime != 0)
+			continue;
 		if(aconf->hold && aconf->hold <= rb_current_time())
 		{
 			if(ConfigFileEntry.tkline_expire_notices)
