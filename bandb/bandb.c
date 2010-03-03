@@ -38,6 +38,8 @@
 
 #define MAXPARA 10
 
+#define COMMIT_INTERVAL 3 /* seconds */
+
 typedef enum
 {
 	BANDB_KLINE,
@@ -57,8 +59,16 @@ static const char *bandb_table[LAST_BANDB_TYPE] = {
 
 
 static rb_helper *bandb_helper;
+static int in_transaction;
 
 static void check_schema(void);
+
+static void
+bandb_commit(void *unused)
+{
+	rsdb_transaction(RSDB_TRANS_END);
+	in_transaction = 0;
+}
 
 static void
 parse_ban(bandb_type type, char *parv[], int parc)
@@ -89,6 +99,14 @@ parse_ban(bandb_type type, char *parv[], int parc)
 	perm = parv[para++];
 	reason = parv[para++];
 
+	if(!in_transaction)
+	{
+		rsdb_transaction(RSDB_TRANS_START);
+		in_transaction = 1;
+		rb_event_addonce("bandb_commit", bandb_commit, NULL,
+				COMMIT_INTERVAL);
+	}
+
 	rsdb_exec(NULL,
 		  "INSERT INTO %s (mask1, mask2, oper, time, perm, reason) VALUES('%Q', '%Q', '%Q', %s, %s, '%Q')",
 		  bandb_table[type], mask1, mask2 ? mask2 : "", oper, curtime, perm, reason);
@@ -112,6 +130,14 @@ parse_unban(bandb_type type, char *parv[], int parc)
 
 	if(type == BANDB_KLINE)
 		mask2 = parv[2];
+
+	if(!in_transaction)
+	{
+		rsdb_transaction(RSDB_TRANS_START);
+		in_transaction = 1;
+		rb_event_addonce("bandb_commit", bandb_commit, NULL,
+				COMMIT_INTERVAL);
+	}
 
 	rsdb_exec(NULL, "DELETE FROM %s WHERE mask1='%Q' AND mask2='%Q'",
 		  bandb_table[type], mask1, mask2 ? mask2 : "");
@@ -215,6 +241,8 @@ parse_request(rb_helper *helper)
 static void
 error_cb(rb_helper *helper)
 {
+	if(in_transaction)
+		rsdb_transaction(RSDB_TRANS_END);
 	exit(1);
 }
 
