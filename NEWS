@@ -52,7 +52,8 @@ misc
 - Fix some crash issues. [MERGED]
 - Add bandb from ircd-ratbox, which stores permanent dlines/klines/xlines/resvs
   in an sqlite database instead of a flatfile and does the storage in a
-  helper process.
+  helper process. Use bin/bantool -i to import your old bans into the
+  database.
 
 -- charybdis-3.1.0
 
