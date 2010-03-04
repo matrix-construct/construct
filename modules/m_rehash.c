@@ -174,7 +174,7 @@ rehash_txlines(struct Client *source_p)
 	{
 		aconf = ptr->data;
 
-		if(!aconf->hold)
+		if(!aconf->hold || aconf->lifetime)
 			continue;
 
 		free_conf(aconf);
@@ -199,7 +199,7 @@ rehash_tresvs(struct Client *source_p)
 	{
 		aconf = ptr->data;
 
-		if(!aconf->hold)
+		if(!aconf->hold || aconf->lifetime)
 			continue;
 
 		free_conf(aconf);
@@ -211,7 +211,7 @@ rehash_tresvs(struct Client *source_p)
 	{
 		aconf = ptr->data;
 
-		if(!aconf->hold)
+		if(!aconf->hold || aconf->lifetime)
 			continue;
 
 		free_conf(aconf);
