@@ -218,7 +218,7 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 			}
 			break;
 	}
-	sendto_server(NULL, NULL, CAP_BAN|CAP_TS6, NOCAPS,
+	sendto_server(client_p, NULL, CAP_BAN|CAP_TS6, NOCAPS,
 			":%s BAN %s %s %s %s %s %s %s :%s",
 			source_p->id,
 			parv[1],
