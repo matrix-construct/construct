@@ -174,7 +174,6 @@ mo_kline(struct Client *client_p, struct Client *source_p, int parc, const char 
 	aconf->host = rb_strdup(host);
 	aconf->user = rb_strdup(user);
 	aconf->port = 0;
-	aconf->passwd = rb_strdup(reason);
 	aconf->info.oper = operhash_add(get_oper_name(source_p));
 
 	/* Look for an oper reason */
@@ -186,6 +185,7 @@ mo_kline(struct Client *client_p, struct Client *source_p, int parc, const char 
 		if(!EmptyString(oper_reason))
 			aconf->spasswd = rb_strdup(oper_reason);
 	}
+	aconf->passwd = rb_strdup(reason);
 
 	if(tkline_time > 0)
 		apply_tkline(source_p, aconf, reason, oper_reason, tkline_time);
@@ -277,7 +277,6 @@ handle_remote_kline(struct Client *source_p, int tkline_time,
 	aconf->created = rb_current_time();
 	aconf->user = rb_strdup(user);
 	aconf->host = rb_strdup(host);
-	aconf->passwd = rb_strdup(reason);
 	aconf->info.oper = operhash_add(get_oper_name(source_p));
 
 	/* Look for an oper reason */
@@ -289,6 +288,7 @@ handle_remote_kline(struct Client *source_p, int tkline_time,
 		if(!EmptyString(oper_reason))
 			aconf->spasswd = rb_strdup(oper_reason);
 	}
+	aconf->passwd = rb_strdup(reason);
 
 	if(tkline_time > 0)
 		apply_tkline(source_p, aconf, reason, oper_reason, tkline_time);
