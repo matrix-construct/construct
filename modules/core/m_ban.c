@@ -47,7 +47,7 @@ static int ms_ban(struct Client *client_p, struct Client *source_p, int parc, co
 
 struct Message ban_msgtab = {
 	"BAN", 0, 0, 0, MFLG_SLOW,
-	{mg_unreg, mg_ignore, {ms_ban, 10}, {ms_ban, 10}, mg_ignore, mg_ignore}
+	{mg_unreg, mg_ignore, {ms_ban, 9}, {ms_ban, 9}, mg_ignore, mg_ignore}
 };
 
 mapi_clist_av1 ban_clist[] =  { &ban_msgtab, NULL };
@@ -55,15 +55,14 @@ DECLARE_MODULE_AV1(ban, NULL, NULL, ban_clist, NULL, NULL, "$Revision: 1349 $");
 
 /* ms_ban()
  *
- * parv[1] - +/-
- * parv[2] - type
- * parv[3] - username mask or *
- * parv[4] - hostname mask
- * parv[5] - creation TS
- * parv[6] - duration (relative to creation)
- * parv[7] - lifetime (relative to creation)
- * parv[8] - oper or *
- * parv[9] - reason (possibly with |operreason)
+ * parv[1] - type
+ * parv[2] - username mask or *
+ * parv[3] - hostname mask
+ * parv[4] - creation TS
+ * parv[5] - duration (relative to creation)
+ * parv[6] - lifetime (relative to creation)
+ * parv[7] - oper or *
+ * parv[8] - reason (possibly with |operreason)
  */
 static int
 ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
@@ -76,21 +75,14 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	char *p;
 	int act;
 
-	if (strcmp(parv[1], "+") && strcmp(parv[1], "-"))
-	{
-		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
-				"Unknown BAN operation %s from %s",
-				parv[1], source_p->name);
-		return 0;
-	}
-	if (strlen(parv[2]) != 1)
+	if (strlen(parv[1]) != 1)
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
 				"Unknown BAN type %s from %s",
-				parv[2], source_p->name);
+				parv[1], source_p->name);
 		return 0;
 	}
-	switch (parv[2][0])
+	switch (parv[1][0])
 	{
 		case 'K':
 			ntype = CONF_KILL;
@@ -99,17 +91,17 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		default:
 			sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
 					"Unknown BAN type %s from %s",
-					parv[2], source_p->name);
+					parv[1], source_p->name);
 			return 0;
 	}
-	created = atol(parv[5]);
-	hold = created + atoi(parv[6]);
-	lifetime = created + atoi(parv[7]);
-	if (!strcmp(parv[8], "*"))
+	created = atol(parv[4]);
+	hold = created + atoi(parv[5]);
+	lifetime = created + atoi(parv[6]);
+	if (!strcmp(parv[7], "*"))
 		oper = IsServer(source_p) ? source_p->name : get_oper_name(source_p);
 	else
-		oper = parv[8];
-	ptr = find_prop_ban(ntype, parv[3], parv[4]);
+		oper = parv[7];
+	ptr = find_prop_ban(ntype, parv[2], parv[3]);
 	if (ptr != NULL)
 	{
 		aconf = ptr->data;
@@ -124,7 +116,8 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 						aconf->host);
 			return 0;
 		}
-		act = !(aconf->status & CONF_ILLEGAL) || !strcmp(parv[1], "+");
+		act = !(aconf->status & CONF_ILLEGAL) || (hold != created &&
+				hold > rb_current_time());
 		if (lifetime > aconf->lifetime)
 			aconf->lifetime = lifetime;
 		/* already expired, hmm */
@@ -148,12 +141,12 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		aconf->status = CONF_ILLEGAL | ntype;
 		aconf->lifetime = lifetime;
 		rb_dlinkAddAlloc(aconf, &prop_bans);
-		act = !strcmp(parv[1], "+");
+		act = hold != created && hold > rb_current_time();
 	}
 	aconf->flags &= ~CONF_FLAGS_MYOPER;
 	aconf->flags |= CONF_FLAGS_TEMPORARY;
-	aconf->user = ntype == CONF_KILL ? rb_strdup(parv[3]) : NULL;
-	aconf->host = rb_strdup(parv[4]);
+	aconf->user = ntype == CONF_KILL ? rb_strdup(parv[2]) : NULL;
+	aconf->host = rb_strdup(parv[3]);
 	aconf->info.oper = operhash_add(oper);
 	aconf->created = created;
 	aconf->hold = hold;
@@ -165,7 +158,7 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		aconf->passwd = rb_strndup(parv[parc - 1], p - parv[parc - 1] + 1);
 		aconf->spasswd = rb_strdup(p + 1);
 	}
-	if (!strcmp(parv[1], "+"))
+	if (act && hold != created)
 	{
 		/* Keep the notices in sync with modules/m_kline.c etc. */
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
@@ -173,18 +166,18 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 				       IsServer(source_p) ? source_p->name : get_oper_name(source_p),
 				       (hold - rb_current_time()) / 60,
 				       stype,
-				       strcmp(parv[8], "*") ? " from " : "",
-				       strcmp(parv[8], "*") ? parv[8] : "",
+				       strcmp(parv[7], "*") ? " from " : "",
+				       strcmp(parv[7], "*") ? parv[7] : "",
 				       aconf->user ? aconf->user : "",
 				       aconf->user ? "@" : "",
 				       aconf->host,
 				       parv[parc - 1]);
-		aconf->status &= ~CONF_ILLEGAL;
-		ilog(L_KLINE, "%s %s %d %s %s %s", parv[2],
+		ilog(L_KLINE, "%s %s %d %s %s %s", parv[1],
 				IsServer(source_p) ? source_p->name : get_oper_name(source_p),
 				(hold - rb_current_time()) / 60,
 				aconf->user, aconf->host,
 				parv[parc - 1]);
+		aconf->status &= ~CONF_ILLEGAL;
 	}
 	else if (act)
 	{
@@ -195,9 +188,9 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 				aconf->user ? aconf->user : "",
 				aconf->user ? "@" : "",
 				aconf->host,
-				strcmp(parv[8], "*") ? " on behalf of " : "",
-				strcmp(parv[8], "*") ? parv[8] : "");
-		ilog(L_KLINE, "U%s %s %s %s", parv[2],
+				strcmp(parv[7], "*") ? " on behalf of " : "",
+				strcmp(parv[7], "*") ? parv[7] : "");
+		ilog(L_KLINE, "U%s %s %s %s", parv[1],
 				IsServer(source_p) ? source_p->name : get_oper_name(source_p),
 				aconf->user, aconf->host);
 	}
@@ -226,7 +219,7 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 			break;
 	}
 	sendto_server(NULL, NULL, CAP_BAN|CAP_TS6, NOCAPS,
-			":%s BAN %s %s %s %s %s %s %s %s :%s",
+			":%s BAN %s %s %s %s %s %s %s :%s",
 			source_p->id,
 			parv[1],
 			parv[2],
@@ -235,7 +228,6 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 			parv[5],
 			parv[6],
 			parv[7],
-			parv[8],
 			parv[parc - 1]);
 	return 0;
 }
