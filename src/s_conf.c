@@ -938,6 +938,25 @@ add_temp_dline(struct ConfItem *aconf)
 	add_conf_by_address(aconf->host, CONF_DLINE, aconf->user, NULL, aconf);
 }
 
+rb_dlink_node *
+find_prop_ban(unsigned int status, const char *user, const char *host)
+{
+	rb_dlink_node *ptr;
+	struct ConfItem *aconf;
+
+	RB_DLINK_FOREACH(ptr, prop_bans.head)
+	{
+		aconf = ptr->data;
+
+		if((aconf->status & ~CONF_ILLEGAL) == status &&
+				(!user || !aconf->user ||
+				 !irccmp(aconf->user, user)) &&
+				!irccmp(aconf->host, host))
+			return ptr;
+	}
+	return NULL;
+}
+
 void
 deactivate_conf(struct ConfItem *aconf, rb_dlink_node *ptr)
 {

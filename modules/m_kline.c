@@ -79,11 +79,14 @@ static void apply_kline(struct Client *source_p, struct ConfItem *aconf,
 			const char *reason, const char *oper_reason);
 static void apply_tkline(struct Client *source_p, struct ConfItem *aconf,
 			 const char *, const char *, int);
+static void apply_prop_kline(struct Client *source_p, struct ConfItem *aconf,
+			 const char *, const char *, int);
 static int already_placed_kline(struct Client *, const char *, const char *, int);
 
 static void handle_remote_unkline(struct Client *source_p, const char *user, const char *host);
 static void remove_permkline_match(struct Client *, struct ConfItem *);
 static int remove_temp_kline(struct Client *, struct ConfItem *);
+static void remove_prop_kline(struct Client *, struct ConfItem *);
 
 /* mo_kline()
  *
@@ -105,6 +108,7 @@ mo_kline(struct Client *client_p, struct Client *source_p, int parc, const char 
 	struct ConfItem *aconf;
 	int tkline_time = 0;
 	int loc = 1;
+	int propagated = 1;
 
 	if(!IsOperK(source_p))
 	{
@@ -153,9 +157,12 @@ mo_kline(struct Client *client_p, struct Client *source_p, int parc, const char 
 		/* If we are sending it somewhere that doesnt include us, stop */
 		if(!match(target_server, me.name))
 			return 0;
+
+		/* Set as local-only. */
+		propagated = 0;
 	}
 	/* if we have cluster servers, send it to them.. */
-	else if(rb_dlink_list_length(&cluster_conf_list) > 0)
+	else if(!propagated && rb_dlink_list_length(&cluster_conf_list) > 0)
 		cluster_generic(source_p, "KLINE",
 				(tkline_time > 0) ? SHARED_TKLINE : SHARED_PKLINE, CAP_KLN,
 				"%lu %s %s :%s", tkline_time, user, host, reason);
@@ -163,6 +170,12 @@ mo_kline(struct Client *client_p, struct Client *source_p, int parc, const char 
 	if(!valid_user_host(source_p, user, host) ||
 	   !valid_wild_card(source_p, user, host) || !valid_comment(source_p, reason))
 		return 0;
+
+	if(propagated && tkline_time == 0)
+	{
+		sendto_one_notice(source_p, ":Cannot set a permanent global ban");
+		return 0;
+	}
 
 	if(already_placed_kline(source_p, user, host, tkline_time))
 		return 0;
@@ -187,7 +200,9 @@ mo_kline(struct Client *client_p, struct Client *source_p, int parc, const char 
 	}
 	aconf->passwd = rb_strdup(reason);
 
-	if(tkline_time > 0)
+	if(propagated)
+		apply_prop_kline(source_p, aconf, reason, oper_reason, tkline_time);
+	else if(tkline_time > 0)
 		apply_tkline(source_p, aconf, reason, oper_reason, tkline_time);
 	else
 		apply_kline(source_p, aconf, reason, oper_reason);
@@ -324,6 +339,7 @@ mo_unkline(struct Client *client_p, struct Client *source_p, int parc, const cha
 	char splat[] = "*";
 	char *h = LOCAL_COPY(parv[1]);
 	struct ConfItem *aconf;
+	int propagated = 1;
 
 	if(!IsOperUnkline(source_p))
 	{
@@ -375,15 +391,30 @@ mo_unkline(struct Client *client_p, struct Client *source_p, int parc, const cha
 
 		if(match(parv[3], me.name) == 0)
 			return 0;
+
+		propagated = 0;
 	}
-	else if(rb_dlink_list_length(&cluster_conf_list) > 0)
+
+	aconf = find_exact_conf_by_address(host, CONF_KILL, user);
+
+	/* No clustering for removing a propagated kline */
+	if(propagated && (aconf == NULL || !aconf->lifetime) &&
+			rb_dlink_list_length(&cluster_conf_list) > 0)
 		cluster_generic(source_p, "UNKLINE", SHARED_UNKLINE, CAP_UNKLN,
 				"%s %s", user, host);
 
-	aconf = find_exact_conf_by_address(host, CONF_KILL, user);
 	if(aconf == NULL)
 	{
 		sendto_one_notice(source_p, ":No K-Line for %s@%s", user, host);
+		return 0;
+	}
+	
+	if(aconf->lifetime)
+	{
+		if(propagated)
+			remove_prop_kline(source_p, aconf);
+		else
+			sendto_one_notice(source_p, ":Cannot remove global K-Line %s@%s on specific servers", user, host);
 		return 0;
 	}
 
@@ -442,6 +473,11 @@ handle_remote_unkline(struct Client *source_p, const char *user, const char *hos
 	if(aconf == NULL)
 	{
 		sendto_one_notice(source_p, ":No K-Line for %s@%s", user, host);
+		return;
+	}
+	if(aconf->lifetime)
+	{
+		sendto_one_notice(source_p, ":Cannot remove global K-Line %s@%s on specific servers", user, host);
 		return;
 	}
 
@@ -525,6 +561,70 @@ apply_tkline(struct Client *source_p, struct ConfItem *aconf,
 
 	sendto_one_notice(source_p, ":Added temporary %d min. K-Line [%s@%s]",
 			  tkline_time / 60, aconf->user, aconf->host);
+}
+
+static void
+apply_prop_kline(struct Client *source_p, struct ConfItem *aconf,
+	     const char *reason, const char *oper_reason, int tkline_time)
+{
+	rb_dlink_node *ptr;
+	struct ConfItem *oldconf;
+
+	aconf->flags |= CONF_FLAGS_MYOPER | CONF_FLAGS_TEMPORARY;
+	aconf->hold = rb_current_time() + tkline_time;
+	aconf->lifetime = aconf->hold;
+
+	ptr = find_prop_ban(aconf->status, aconf->user, aconf->host);
+	if(ptr != NULL)
+	{
+		oldconf = ptr->data;
+		/* Remember at least as long as the old one. */
+		if(oldconf->lifetime > aconf->lifetime)
+			aconf->lifetime = oldconf->lifetime;
+		/* Force creation time to increase. */
+		if(oldconf->created >= aconf->created)
+			aconf->created = oldconf->created + 1;
+		/* Tell deactivate_conf() to destroy it. */
+		oldconf->lifetime = rb_current_time();
+		deactivate_conf(oldconf, ptr);
+	}
+
+	rb_dlinkAddAlloc(aconf, &prop_bans);
+	add_conf_by_address(aconf->host, CONF_KILL, aconf->user, NULL, aconf);
+
+	/* no oper reason.. */
+	if(EmptyString(oper_reason))
+	{
+		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				       "%s added global %d min. K-Line for [%s@%s] [%s]",
+				       get_oper_name(source_p), tkline_time / 60,
+				       aconf->user, aconf->host, reason);
+		ilog(L_KLINE, "K %s %d %s %s %s",
+		     get_oper_name(source_p), tkline_time / 60, aconf->user, aconf->host, reason);
+	}
+	else
+	{
+		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				       "%s added global %d min. K-Line for [%s@%s] [%s|%s]",
+				       get_oper_name(source_p), tkline_time / 60,
+				       aconf->user, aconf->host, reason, oper_reason);
+		ilog(L_KLINE, "K %s %d %s %s %s|%s",
+		     get_oper_name(source_p), tkline_time / 60,
+		     aconf->user, aconf->host, reason, oper_reason);
+	}
+
+	sendto_one_notice(source_p, ":Added global %d min. K-Line [%s@%s]",
+			  tkline_time / 60, aconf->user, aconf->host);
+
+	sendto_server(NULL, NULL, CAP_BAN|CAP_TS6, NOCAPS,
+			":%s BAN + K %s %s %lu %d %d * :%s%s%s",
+			source_p->id, aconf->user, aconf->host,
+			(unsigned long)aconf->created,
+			(int)(aconf->hold - aconf->created),
+			(int)(aconf->lifetime - aconf->created),
+			reason,
+			oper_reason ? "|" : "",
+			oper_reason ? oper_reason : "");
 }
 
 /* find_user_host()
@@ -798,4 +898,39 @@ remove_temp_kline(struct Client *source_p, struct ConfItem *aconf)
 	}
 
 	return NO;
+}
+
+static void
+remove_prop_kline(struct Client *source_p, struct ConfItem *aconf)
+{
+	rb_dlink_node *ptr;
+
+	ptr = rb_dlinkFind(aconf, &prop_bans);
+	if (!ptr)
+		return;
+	sendto_one_notice(source_p,
+			  ":Un-klined [%s@%s] from global k-lines",
+			  aconf->user, aconf->host);
+	sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			       "%s has removed the global K-Line for: [%s@%s]",
+			       get_oper_name(source_p), aconf->user,
+			       aconf->host);
+
+	ilog(L_KLINE, "UK %s %s %s",
+	     get_oper_name(source_p), aconf->user, aconf->host);
+	if(aconf->created < rb_current_time())
+		aconf->created = rb_current_time();
+	else
+		aconf->created++;
+	operhash_delete(aconf->info.oper);
+	aconf->info.oper = operhash_add(get_oper_name(source_p));
+	aconf->flags |= CONF_FLAGS_MYOPER | CONF_FLAGS_TEMPORARY;
+	sendto_server(NULL, NULL, CAP_BAN|CAP_TS6, NOCAPS,
+			":%s BAN - K %s %s %lu %d %d * :*",
+			source_p->id, aconf->user, aconf->host,
+			(unsigned long)aconf->created,
+			0,
+			(int)(aconf->lifetime - aconf->created));
+	remove_reject_mask(aconf->user, aconf->host);
+	deactivate_conf(aconf, ptr);
 }

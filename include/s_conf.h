@@ -95,6 +95,7 @@ struct ConfItem
 /* Generic flags... */
 #define CONF_FLAGS_TEMPORARY            0x00800000
 #define CONF_FLAGS_NEED_SSL		0x00000002
+#define CONF_FLAGS_MYOPER		0x00080000 /* need to rewrite info.oper on burst */
 /* auth{} flags... */
 #define CONF_FLAGS_NO_TILDE             0x00000004
 #define CONF_FLAGS_NEED_IDENTD          0x00000008
@@ -323,6 +324,7 @@ extern void init_s_conf(void);
 extern struct ConfItem *make_conf(void);
 extern void free_conf(struct ConfItem *);
 
+extern rb_dlink_node *find_prop_ban(unsigned int status, const char *user, const char *host);
 extern void deactivate_conf(struct ConfItem *, rb_dlink_node *);
 
 extern void read_conf_files(int cold);

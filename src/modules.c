@@ -57,6 +57,7 @@
 struct module **modlist = NULL;
 
 static const char *core_module_table[] = {
+	"m_ban",
 	"m_die",
 	"m_error",
 	"m_join",
