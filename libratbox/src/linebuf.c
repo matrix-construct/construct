@@ -28,9 +28,7 @@
 #include <ratbox_lib.h>
 #include <commio-int.h>
 
-#ifndef NOBALLOC
 static rb_bh *rb_linebuf_heap;
-#endif
 
 static int bufline_count = 0;
 

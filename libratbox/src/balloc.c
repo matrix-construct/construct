@@ -492,11 +492,14 @@ rb_bh_usage(rb_bh *bh, size_t *bused, size_t *bfree, size_t *bmemusage, const ch
 	if(desc != NULL)
 		*desc = bh->desc;
 #else
-	static char *noballoc = "no blockheap";
-	*bused = 0;
-	*bfree = 0;
-	*bmemusage = 0;
-	*desc = noballoc;
+	if(bused != NULL)
+		*bused = 0;
+	if(bfree != NULL)
+		*bfree = 0;
+	if(bmemusage != NULL)
+		*bmemusage = 0;
+	if(desc != NULL)
+		*desc = "no blockheap";
 #endif
 }
 
