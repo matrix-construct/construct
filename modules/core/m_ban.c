@@ -105,7 +105,9 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	if (ptr != NULL)
 	{
 		aconf = ptr->data;
-		if (aconf->created >= created)
+		if (aconf->created > created ||
+				(aconf->created == created &&
+				 aconf->lifetime >= lifetime))
 		{
 			if (IsPerson(source_p))
 				sendto_one_notice(source_p,
