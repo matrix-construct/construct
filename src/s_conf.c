@@ -938,6 +938,62 @@ add_temp_dline(struct ConfItem *aconf)
 	add_conf_by_address(aconf->host, CONF_DLINE, aconf->user, NULL, aconf);
 }
 
+/* valid_wild_card()
+ * 
+ * input        - user buffer, host buffer
+ * output       - 0 if invalid, 1 if valid
+ * side effects -
+ */
+int
+valid_wild_card(const char *luser, const char *lhost)
+{
+	const char *p;
+	char tmpch;
+	int nonwild = 0;
+	int bitlen;
+
+	/* user has no wildcards, always accept -- jilles */
+	if(!strchr(luser, '?') && !strchr(luser, '*'))
+		return 1;
+
+	/* check there are enough non wildcard chars */
+	p = luser;
+	while((tmpch = *p++))
+	{
+		if(!IsKWildChar(tmpch))
+		{
+			/* found enough chars, return */
+			if(++nonwild >= ConfigFileEntry.min_nonwildcard)
+				return 1;
+		}
+	}
+
+	/* try host, as user didnt contain enough */
+	/* special case for cidr masks -- jilles */
+	if((p = strrchr(lhost, '/')) != NULL && IsDigit(p[1]))
+	{
+		bitlen = atoi(p + 1);
+		/* much like non-cidr for ipv6, rather arbitrary for ipv4 */
+		if(bitlen > 0
+		   && bitlen >=
+		   (strchr(lhost, ':') ? 4 * (ConfigFileEntry.min_nonwildcard - nonwild) : 6 -
+		    2 * nonwild))
+			return 1;
+	}
+	else
+	{
+		p = lhost;
+		while((tmpch = *p++))
+		{
+			if(!IsKWildChar(tmpch))
+				if(++nonwild >= ConfigFileEntry.min_nonwildcard)
+					return 1;
+		}
+	}
+
+	return 0;
+}
+
 rb_dlink_node *
 find_prop_ban(unsigned int status, const char *user, const char *host)
 {

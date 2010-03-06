@@ -346,6 +346,7 @@ extern void yyerror(const char *);
 extern int conf_yy_fatal_error(const char *);
 extern int conf_fgets(char *, int, FILE *);
 
+extern int valid_wild_card(const char *, const char *);
 extern void add_temp_kline(struct ConfItem *);
 extern void add_temp_dline(struct ConfItem *);
 extern void report_temp_klines(struct Client *);

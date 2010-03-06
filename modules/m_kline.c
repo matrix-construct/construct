@@ -71,7 +71,6 @@ DECLARE_MODULE_AV1(kline, NULL, NULL, kline_clist, NULL, NULL, "$Revision$");
 static int find_user_host(struct Client *source_p, const char *userhost, char *user, char *host);
 static int valid_comment(struct Client *source_p, char *comment);
 static int valid_user_host(struct Client *source_p, const char *user, const char *host);
-static int valid_wild_card(struct Client *source_p, const char *user, const char *host);
 
 static void handle_remote_kline(struct Client *source_p, int tkline_time,
 				const char *user, const char *host, const char *reason);
@@ -168,8 +167,17 @@ mo_kline(struct Client *client_p, struct Client *source_p, int parc, const char 
 				"%lu %s %s :%s", tkline_time, user, host, reason);
 
 	if(!valid_user_host(source_p, user, host) ||
-	   !valid_wild_card(source_p, user, host) || !valid_comment(source_p, reason))
+	   !valid_comment(source_p, reason))
 		return 0;
+
+	if(!valid_wild_card(user, host))
+	{
+		sendto_one_notice(source_p,
+				  ":Please include at least %d non-wildcard "
+				  "characters with the user@host",
+				  ConfigFileEntry.min_nonwildcard);
+		return 0;
+	}
 
 	if(propagated && tkline_time == 0)
 	{
@@ -280,8 +288,17 @@ handle_remote_kline(struct Client *source_p, int tkline_time,
 		return;
 
 	if(!valid_user_host(source_p, user, host) ||
-	   !valid_wild_card(source_p, user, host) || !valid_comment(source_p, reason))
+	   !valid_comment(source_p, reason))
 		return;
+
+	if(!valid_wild_card(user, host))
+	{
+		sendto_one_notice(source_p,
+				  ":Please include at least %d non-wildcard "
+				  "characters with the user@host",
+				  ConfigFileEntry.min_nonwildcard);
+		return 0;
+	}
 
 	if(already_placed_kline(source_p, user, host, tkline_time))
 		return;
@@ -693,65 +710,6 @@ valid_user_host(struct Client *source_p, const char *luser, const char *lhost)
 	}
 
 	return 1;
-}
-
-/* valid_wild_card()
- * 
- * input        - user buffer, host buffer
- * output       - 0 if invalid, 1 if valid
- * side effects -
- */
-static int
-valid_wild_card(struct Client *source_p, const char *luser, const char *lhost)
-{
-	const char *p;
-	char tmpch;
-	int nonwild = 0;
-	int bitlen;
-
-	/* user has no wildcards, always accept -- jilles */
-	if(!strchr(luser, '?') && !strchr(luser, '*'))
-		return 1;
-
-	/* check there are enough non wildcard chars */
-	p = luser;
-	while((tmpch = *p++))
-	{
-		if(!IsKWildChar(tmpch))
-		{
-			/* found enough chars, return */
-			if(++nonwild >= ConfigFileEntry.min_nonwildcard)
-				return 1;
-		}
-	}
-
-	/* try host, as user didnt contain enough */
-	/* special case for cidr masks -- jilles */
-	if((p = strrchr(lhost, '/')) != NULL && IsDigit(p[1]))
-	{
-		bitlen = atoi(p + 1);
-		/* much like non-cidr for ipv6, rather arbitrary for ipv4 */
-		if(bitlen > 0
-		   && bitlen >=
-		   (strchr(lhost, ':') ? 4 * (ConfigFileEntry.min_nonwildcard - nonwild) : 6 -
-		    2 * nonwild))
-			return 1;
-	}
-	else
-	{
-		p = lhost;
-		while((tmpch = *p++))
-		{
-			if(!IsKWildChar(tmpch))
-				if(++nonwild >= ConfigFileEntry.min_nonwildcard)
-					return 1;
-		}
-	}
-
-	sendto_one_notice(source_p,
-			  ":Please include at least %d non-wildcard "
-			  "characters with the user@host", ConfigFileEntry.min_nonwildcard);
-	return 0;
 }
 
 /*
