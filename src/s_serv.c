@@ -430,7 +430,8 @@ burst_ban(struct Client *client_p)
 			 */
 			rb_strlcpy(operbuf, aconf->info.oper, sizeof buf);
 			p = strrchr(operbuf, '{');
-			if (operbuf + sizeof operbuf - p > (ptrdiff_t)(melen + 2))
+			if (p != NULL &&
+					operbuf + sizeof operbuf - p > (ptrdiff_t)(melen + 2))
 			{
 				memcpy(p + 1, me.name, melen);
 				p[melen + 1] = '}';
