@@ -1253,15 +1253,22 @@ get_printable_kline(struct Client *source_p, struct ConfItem *aconf,
 		    char **user, char **oper_reason)
 {
 	static char null[] = "<NULL>";
+	static char operreasonbuf[BUFSIZE];
 
 	*host = EmptyString(aconf->host) ? null : aconf->host;
 	*user = EmptyString(aconf->user) ? null : aconf->user;
 	*reason = get_user_ban_reason(aconf);
 
-	if(EmptyString(aconf->spasswd) || !IsOper(source_p))
+	if(!IsOper(source_p))
 		*oper_reason = NULL;
 	else
-		*oper_reason = aconf->spasswd;
+	{
+		rb_snprintf(operreasonbuf, sizeof operreasonbuf, "%s%s(%s)",
+				EmptyString(aconf->spasswd) ? "" : aconf->spasswd,
+				EmptyString(aconf->spasswd) ? "" : " ",
+				aconf->info.oper);
+		*oper_reason = operreasonbuf;
+	}
 }
 
 /*
