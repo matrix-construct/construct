@@ -10,6 +10,8 @@ Makefile
 .deps
 .libs
 autom4te.cache
+bandb/bandb
+bandb/bantool
 config.log
 config.status
 include/setup.h
@@ -18,6 +20,7 @@ libratbox/include/librb-config.h
 libratbox/include/stamp-h1
 libratbox/libratbox.pc
 libratbox/libtool
+libratbox/src/version.c
 scripts/*.tbz2
 scripts/*.tgz
 servlink/servlink
