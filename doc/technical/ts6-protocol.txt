@@ -55,10 +55,10 @@ send its own PASS, CAPAB and SERVER messages, followed by SVINFO and the burst.
 Upon receiving the SERVER, the initiator will send SVINFO and the burst. If
 ziplinks are used, SVINFO is the first compressed message.
 
-The burst consists of SID and SERVER messages for all known servers, UID or
-EUID messages for all known users (possibly followed by ENCAP REALHOST, ENCAP
-LOGIN and/or AWAY) and SJOIN messages for all known channels (possibly followed
-by BMASK and/or TB).
+The burst consists of SID and SERVER messages for all known servers, BAN
+messages for all propagated bans, UID or EUID messages for all known users
+(possibly followed by ENCAP REALHOST, ENCAP LOGIN and/or AWAY) and SJOIN
+messages for all known channels (possibly followed by BMASK and/or TB).
 
 user modes:
 (all)
@@ -147,6 +147,43 @@ Otherwise, mark the user as away.
 
 Changing away reason from one non-empty string to another non-empty string
 may not be propagated.
+
+BAN
+charybdis TS6
+capab: BAN
+source: any
+propagation: broadcast (restricted)
+parameters: type, user mask, host mask, creation TS, duration, lifetime, oper, reason
+
+Propagates a network wide ban.
+
+The type is K for K:lines; other types are reserved.
+
+The creation TS indicates when this ban was last modified. An incoming ban MUST
+be ignored and not propagated if the creation TS is older than the creation TS
+of the current ban. If the ban is identical, it SHOULD NOT be propagated to
+avoid unnecessary network traffic. (Two changes to bans that set the TS to the
+same value may cause desynchronization.)
+
+The duration is 0 for an unban and relative to the creation TS for a ban.
+When the duration has passed, the ban is no longer active but it may still
+be necessary to remember it.
+
+The lifetime is relative to the creation TS and indicates for how long this
+ban needs to be remembered and propagated. This MUST be at least the duration.
+Initially, it is usually set the same as the duration but when the ban is
+modified later, it SHOULD be set such that the modified ban is remembered at
+least as long as the original ban. This ensures that the original ban does not
+revive via split servers. This requirement is only a SHOULD to allow for
+implementations that only inject bans and do not remember any; implementations
+that remember and propagate bans MUST set the lifetime appropriately.
+
+The oper field indicates the oper that originally set the ban. If this message
+is the initial propagation of a change, it SHOULD be sent as * (an asterisk).
+
+The reason field indicates the reason for the ban. Any part after a | (vertical
+bar) MUST NOT be shown to normal users. The rest of the field and the creation
+TS and duration MAY be shown to normal users.
 
 BMASK
 source: server
