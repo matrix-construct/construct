@@ -648,6 +648,15 @@ main(int argc, char *argv[])
 	init_cache();
 	init_monitor();
 	init_isupport();
+
+	/* noparam core modes have to be initialized before the module
+	 * system is initialized, otherwise we have a table collision.
+	 *
+ 	 * modules call this after they are done initializing...
+	 *    --nenolod
+	 */
+        construct_noparam_modes();
+
 	load_all_modules(1);
 #ifndef STATIC_MODULES
 	load_core_modules(1);
@@ -727,7 +736,6 @@ main(int argc, char *argv[])
 	rb_dlinkAddAlloc(&me, &global_serv_list);
 
 	construct_umodebuf();
-        construct_noparam_modes();
 
 	check_class();
 	write_pidfile(pidFileName);
