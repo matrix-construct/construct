@@ -661,7 +661,7 @@ burst_TS6(struct Client *client_p)
 		if(IsCapable(client_p, CAP_MLOCK))
 			sendto_one(client_p, ":%s MLOCK %ld %s %s",
 				   me.id, (long) chptr->channelts, chptr->chname,
-				   channel_mlock(client_p, chptr));
+				   channel_mlock(chptr, client_p));
 
 		hchaninfo.chptr = chptr;
 		call_hook(h_burst_channel, &hchaninfo);
