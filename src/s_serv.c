@@ -89,6 +89,7 @@ struct Capability captab[] = {
 	{ "EUID",	CAP_EUID },
 	{ "EOPMOD",	CAP_EOPMOD },
 	{ "BAN",	CAP_BAN },
+	{ "MLOCK",	CAP_MLOCK },
 	{0, 0}
 };
 
