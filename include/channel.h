@@ -39,6 +39,7 @@ struct Client;
 struct Mode
 {
 	unsigned int mode;
+	unsigned int off_mode;
 	int limit;
 	char key[KEYLEN];
 	unsigned int join_num;
