@@ -52,6 +52,7 @@ struct Channel
 {
 	rb_dlink_node node;
 	struct Mode mode;
+	struct Mode mode_lock;
 	char *topic;
 	char *topic_info;
 	time_t topic_time;
