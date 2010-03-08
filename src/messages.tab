@@ -346,7 +346,7 @@ static  const char *  replies[] = {
 /* 322 RPL_LIST, */             ":%s 322 %s %s %d :%s",
 /* 323 RPL_LISTEND, */          ":%s 323 %s :End of /LIST",
 /* 324 RPL_CHANNELMODEIS, */    ":%s 324 %s %s %s",
-/* 325 RPL_CHANNELMLOCKIS, */   ":%s 325 %s %s :is the current channel mode-lock",
+/* 325 RPL_CHANNELMLOCKIS, */   ":%s 325 %s %s %s :is the current channel mode-lock",
 /* 326 */       NULL,
 /* 327 */       NULL,
 /* 328 RPL_CHANNELURL */	NULL,
