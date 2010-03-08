@@ -1122,7 +1122,7 @@ channel_modes_real(struct Channel *chptr, struct Mode *mode, struct Client *clie
 
 		if(pbuf > buf2 || !IsClient(client_p) || IsMember(client_p, chptr))
 			pbuf += rb_sprintf(pbuf, " %d:%d", mode->join_num,
-					   mode->oin_time);
+					   mode->join_time);
 	}
 
 	if(*mode->forward && (ConfigChannel.use_forward || !IsClient(client_p)))

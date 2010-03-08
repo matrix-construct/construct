@@ -45,6 +45,7 @@
 static int m_mode(struct Client *, struct Client *, int, const char **);
 static int ms_mode(struct Client *, struct Client *, int, const char **);
 static int ms_tmode(struct Client *, struct Client *, int, const char **);
+static int ms_mlock(struct Client *, struct Client *, int, const char **);
 static int ms_bmask(struct Client *, struct Client *, int, const char **);
 
 struct Message mode_msgtab = {
@@ -55,12 +56,16 @@ struct Message tmode_msgtab = {
 	"TMODE", 0, 0, 0, MFLG_SLOW,
 	{mg_ignore, mg_ignore, {ms_tmode, 4}, {ms_tmode, 4}, mg_ignore, mg_ignore}
 };
+struct Message mlock_msgtab = {
+	"MLOCK", 0, 0, 0, MFLG_SLOW,
+	{mg_ignore, mg_ignore, {ms_mlock, 4}, {ms_mlock, 4}, mg_ignore, mg_ignore}
+};
 struct Message bmask_msgtab = {
 	"BMASK", 0, 0, 0, MFLG_SLOW,
 	{mg_ignore, mg_ignore, mg_ignore, {ms_bmask, 5}, mg_ignore, mg_ignore}
 };
 
-mapi_clist_av1 mode_clist[] = { &mode_msgtab, &tmode_msgtab, &bmask_msgtab, NULL };
+mapi_clist_av1 mode_clist[] = { &mode_msgtab, &tmode_msgtab, &mlock_msgtab, &bmask_msgtab, NULL };
 
 DECLARE_MODULE_AV1(mode, NULL, NULL, mode_clist, NULL, NULL, "$Revision: 1006 $");
 
@@ -200,6 +205,37 @@ ms_tmode(struct Client *client_p, struct Client *source_p, int parc, const char 
 
 		set_channel_mode(client_p, source_p, chptr, msptr, parc - 3, parv + 3);
 	}
+
+	return 0;
+}
+
+static int
+ms_mlock(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+{
+	struct Channel *chptr = NULL;
+
+	/* Now, try to find the channel in question */
+	if(!IsChanPrefix(parv[2][0]) || !check_channel_name(parv[2]))
+	{
+		sendto_one_numeric(source_p, ERR_BADCHANNAME, form_str(ERR_BADCHANNAME), parv[2]);
+		return 0;
+	}
+
+	chptr = find_channel(parv[2]);
+
+	if(chptr == NULL)
+	{
+		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
+				   form_str(ERR_NOSUCHCHANNEL), parv[2]);
+		return 0;
+	}
+
+	/* TS is higher, drop it. */
+	if(atol(parv[1]) > chptr->channelts)
+		return 0;
+
+	if(IsServer(source_p))
+		set_channel_mlock(client_p, source_p, chptr, parc - 3, parv + 3);
 
 	return 0;
 }

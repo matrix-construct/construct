@@ -1748,3 +1748,50 @@ set_channel_mode(struct Client *client_p, struct Client *source_p,
 	if(MyClient(source_p) || rb_dlink_list_length(&serv_list) > 1)
 		send_cap_mode_changes(client_p, source_p, chptr, mode_changes, mode_count);
 }
+
+/* set_channel_mlock()
+ *
+ * inputs	- client, source, channel, params
+ * output	- 
+ * side effects - channel mlock is changed / MLOCK is propagated
+ */
+void
+set_channel_mlock(struct Client *client_p, struct Client *source_p,
+		  struct Channel *chptr, int parc, const char *parv[])
+{
+	int dir = MODE_ADD;
+	const char *ml = parv[0];
+	char c;
+
+	memset(&chptr->mode_lock, '\0', sizeof(struct Mode));
+
+	for(; (c = *ml) != 0; ml++)
+	{
+		switch (c)
+		{
+		case '+':
+			dir = MODE_ADD;
+			break;
+		case '-':
+			dir = MODE_DEL;
+			break;
+		default:
+			if (chmode_table[(unsigned char) c].set_func == chm_simple)
+				switch(dir)
+				{
+				case MODE_ADD:
+					chptr->mode_lock.mode |= chmode_table[(unsigned char) c].mode_type;
+					chptr->mode_lock.off_mode &= ~chmode_table[(unsigned char) c].mode_type;
+					break;
+				case MODE_DEL:
+					chptr->mode_lock.off_mode |= chmode_table[(unsigned char) c].mode_type;
+					chptr->mode_lock.mode &= ~chmode_table[(unsigned char) c].mode_type;
+					break;
+				}
+			break;
+		}
+	}
+
+	sendto_server(client_p, NULL, CAP_TS6 | CAP_MLOCK, NOCAPS, ":%s MLOCK %ld %s %s",
+		      source_p->id, (long) chptr->channelts, chptr->chname, channel_mlock(chptr, &me));
+}
