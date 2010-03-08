@@ -155,6 +155,7 @@ extern const char *form_str(int);
 #define RPL_LIST             322
 #define RPL_LISTEND          323
 #define RPL_CHANNELMODEIS    324
+#define RPL_CHANNELMLOCK     325 /* from sorircd 1.3 --nenolod */
 
 #define RPL_CHANNELURL       328 /* to be sent by services */
 
