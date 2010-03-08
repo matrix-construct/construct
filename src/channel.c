@@ -1073,9 +1073,10 @@ set_channel_topic(struct Channel *chptr, const char *topic, const char *topic_in
 	}
 }
 
-/* channel_modes()
+/* channel_modes_real()
  *
  * inputs       - pointer to channel
+ *              - pointer to channel Mode struct
  *              - pointer to client
  * output       - string with simple modes
  * side effects - result from previous calls overwritten
@@ -1083,7 +1084,7 @@ set_channel_topic(struct Channel *chptr, const char *topic, const char *topic_in
  * Stolen from ShadowIRCd 4 --nenolod
  */
 const char *
-channel_modes(struct Channel *chptr, struct Client *client_p)
+channel_modes_real(struct Channel *chptr, struct Mode *mode, struct Client *client_p)
 {
 	int i;
 	char buf1[BUFSIZE];
@@ -1096,40 +1097,40 @@ channel_modes(struct Channel *chptr, struct Client *client_p)
 	*pbuf = '\0';
 
 	for (i = 0; i < 256; i++)
-		if(chptr->mode.mode & chmode_flags[i])
+		if(mode->mode & chmode_flags[i])
 			*mbuf++ = i;
 
-	if(chptr->mode.limit)
+	if(mode->limit)
 	{
 		*mbuf++ = 'l';
 
 		if(!IsClient(client_p) || IsMember(client_p, chptr))
-			pbuf += rb_sprintf(pbuf, " %d", chptr->mode.limit);
+			pbuf += rb_sprintf(pbuf, " %d", mode->limit);
 	}
 
-	if(*chptr->mode.key)
+	if(*mode->key)
 	{
 		*mbuf++ = 'k';
 
 		if(pbuf > buf2 || !IsClient(client_p) || IsMember(client_p, chptr))
-			pbuf += rb_sprintf(pbuf, " %s", chptr->mode.key);
+			pbuf += rb_sprintf(pbuf, " %s", mode->key);
 	}
 
-	if(chptr->mode.join_num)
+	if(mode->join_num)
 	{
 		*mbuf++ = 'j';
 
 		if(pbuf > buf2 || !IsClient(client_p) || IsMember(client_p, chptr))
-			pbuf += rb_sprintf(pbuf, " %d:%d", chptr->mode.join_num,
-					   chptr->mode.join_time);
+			pbuf += rb_sprintf(pbuf, " %d:%d", mode->join_num,
+					   mode->oin_time);
 	}
 
-	if(*chptr->mode.forward && (ConfigChannel.use_forward || !IsClient(client_p)))
+	if(*mode->forward && (ConfigChannel.use_forward || !IsClient(client_p)))
 	{
 		*mbuf++ = 'f';
 
 		if(pbuf > buf2 || !IsClient(client_p) || IsMember(client_p, chptr))
-			pbuf += rb_sprintf(pbuf, " %s", chptr->mode.forward);
+			pbuf += rb_sprintf(pbuf, " %s", mode->forward);
 	}
 
 	*mbuf = '\0';
