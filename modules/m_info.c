@@ -483,6 +483,12 @@ static struct InfoStruct info_table[] = {
 		"Display warning if connecting server lacks N-line"
 	},
 	{
+		"use_propagated_bans",
+		OUTPUT_BOOLEAN,
+		&ConfigFileEntry.use_propagated_bans,
+		"KLINE sets fully propagated bans"
+	},
+	{
 		"default_split_server_count",
 		OUTPUT_DECIMAL,
 		&ConfigChannel.default_split_server_count,

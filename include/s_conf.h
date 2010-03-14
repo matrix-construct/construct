@@ -223,6 +223,7 @@ struct config_file_entry
 	int default_umodes;
 	int global_snotices;
 	int operspy_dont_care_user_info;
+	int use_propagated_bans;
 };
 
 struct config_channel_entry

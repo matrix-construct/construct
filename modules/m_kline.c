@@ -107,7 +107,7 @@ mo_kline(struct Client *client_p, struct Client *source_p, int parc, const char 
 	struct ConfItem *aconf;
 	int tkline_time = 0;
 	int loc = 1;
-	int propagated = 1;
+	int propagated = ConfigFileEntry.use_propagated_bans;
 
 	if(!IsOperK(source_p))
 	{
