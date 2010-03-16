@@ -174,7 +174,7 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags, int clea
 	char *p;
 	int buflen = 0;
 	int curlen, mlen;
-	int i;
+	size_t i;
 
 	mlen = rb_sprintf(buf, ":%s CAP %s %s",
 			me.name, 
