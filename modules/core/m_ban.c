@@ -89,6 +89,10 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 			ntype = CONF_KILL;
 			stype = "K-Line";
 			break;
+		case 'X':
+			ntype = CONF_XLINE;
+			stype = "X-Line";
+			break;
 		default:
 			sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
 					"Unknown BAN type %s from %s",
@@ -199,10 +203,12 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 				       aconf->user ? "@" : "",
 				       aconf->host,
 				       parv[parc - 1]);
-		ilog(L_KLINE, "%s %s %d %s %s %s", parv[1],
+		ilog(L_KLINE, "%s %s %d %s%s%s %s", parv[1],
 				IsServer(source_p) ? source_p->name : get_oper_name(source_p),
 				(hold - rb_current_time()) / 60,
-				aconf->user, aconf->host,
+				aconf->user ? aconf->user : "",
+				aconf->user ? " " : "",
+				aconf->host,
 				parv[parc - 1]);
 		aconf->status &= ~CONF_ILLEGAL;
 	}
@@ -217,9 +223,11 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 				aconf->host,
 				strcmp(parv[7], "*") ? " on behalf of " : "",
 				strcmp(parv[7], "*") ? parv[7] : "");
-		ilog(L_KLINE, "U%s %s %s %s", parv[1],
+		ilog(L_KLINE, "U%s %s %s%s %s", parv[1],
 				IsServer(source_p) ? source_p->name : get_oper_name(source_p),
-				aconf->user, aconf->host);
+				aconf->user ? aconf->user : "",
+				aconf->user ? " " : "",
+				aconf->host);
 	}
 	switch (ntype)
 	{
@@ -242,6 +250,15 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 				}
 				else
 					check_klines();
+			}
+			break;
+		case CONF_XLINE:
+			if (aconf->status & CONF_ILLEGAL)
+				remove_reject_mask(aconf->host, NULL);
+			else
+			{
+				rb_dlinkAddAlloc(aconf, &xline_conf_list);
+				check_xlines();
 			}
 			break;
 	}

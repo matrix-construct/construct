@@ -584,32 +584,11 @@ static void
 apply_prop_kline(struct Client *source_p, struct ConfItem *aconf,
 	     const char *reason, const char *oper_reason, int tkline_time)
 {
-	rb_dlink_node *ptr;
-	struct ConfItem *oldconf;
-
 	aconf->flags |= CONF_FLAGS_MYOPER | CONF_FLAGS_TEMPORARY;
 	aconf->hold = rb_current_time() + tkline_time;
 	aconf->lifetime = aconf->hold;
 
-	ptr = find_prop_ban(aconf->status, aconf->user, aconf->host);
-	if(ptr != NULL)
-	{
-		oldconf = ptr->data;
-		/* Remember at least as long as the old one. */
-		if(oldconf->lifetime > aconf->lifetime)
-			aconf->lifetime = oldconf->lifetime;
-		/* Force creation time to increase. */
-		if(oldconf->created >= aconf->created)
-			aconf->created = oldconf->created + 1;
-		/* Leave at least one second of validity. */
-		if(aconf->hold <= aconf->created)
-			aconf->hold = aconf->created + 1;
-		if(aconf->lifetime < aconf->hold)
-			aconf->lifetime = aconf->hold;
-		/* Tell deactivate_conf() to destroy it. */
-		oldconf->lifetime = rb_current_time();
-		deactivate_conf(oldconf, ptr);
-	}
+	replace_old_ban(aconf);
 
 	rb_dlinkAddAlloc(aconf, &prop_bans);
 	add_conf_by_address(aconf->host, CONF_KILL, aconf->user, NULL, aconf);

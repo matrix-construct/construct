@@ -36,7 +36,7 @@ X f - Shows File Descriptors
 * U - Shows shared blocks (Old U: lines)
   u - Shows server uptime
 ^ v - Shows connected servers and brief status information
-* x - Shows temporary gecos bans
+* x - Shows temporary and global gecos bans
 * X - Shows gecos bans (Old X: lines)
 ^ y - Shows connection classes (Old Y: lines)
 * z - Shows memory stats

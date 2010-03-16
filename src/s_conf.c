@@ -1064,6 +1064,36 @@ deactivate_conf(struct ConfItem *aconf, rb_dlink_node *ptr)
 	}
 }
 
+/* Given a new ban ConfItem, look for any matching ban, update the lifetime
+ * from it and delete it.
+ */
+void
+replace_old_ban(struct ConfItem *aconf)
+{
+	rb_dlink_node *ptr;
+	struct ConfItem *oldconf;
+
+	ptr = find_prop_ban(aconf->status, aconf->user, aconf->host);
+	if(ptr != NULL)
+	{
+		oldconf = ptr->data;
+		/* Remember at least as long as the old one. */
+		if(oldconf->lifetime > aconf->lifetime)
+			aconf->lifetime = oldconf->lifetime;
+		/* Force creation time to increase. */
+		if(oldconf->created >= aconf->created)
+			aconf->created = oldconf->created + 1;
+		/* Leave at least one second of validity. */
+		if(aconf->hold <= aconf->created)
+			aconf->hold = aconf->created + 1;
+		if(aconf->lifetime < aconf->hold)
+			aconf->lifetime = aconf->hold;
+		/* Tell deactivate_conf() to destroy it. */
+		oldconf->lifetime = rb_current_time();
+		deactivate_conf(oldconf, ptr);
+	}
+}
+
 static void
 expire_prop_bans(void *list)
 {

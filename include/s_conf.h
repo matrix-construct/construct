@@ -327,6 +327,7 @@ extern void free_conf(struct ConfItem *);
 
 extern rb_dlink_node *find_prop_ban(unsigned int status, const char *user, const char *host);
 extern void deactivate_conf(struct ConfItem *, rb_dlink_node *);
+extern void replace_old_ban(struct ConfItem *);
 
 extern void read_conf_files(int cold);
 

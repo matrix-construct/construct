@@ -79,7 +79,7 @@ DECLARE_MODULE_AV1(xline, NULL, NULL, xline_clist, NULL, NULL, "$Revision$");
 
 static int valid_xline(struct Client *, const char *, const char *);
 static void apply_xline(struct Client *client_p, const char *name,
-			const char *reason, int temp_time);
+			const char *reason, int temp_time, int propagated);
 static void propagate_xline(struct Client *source_p, const char *target,
 			    int temp_time, const char *name, const char *type, const char *reason);
 static void cluster_xline(struct Client *source_p, int temp_time,
@@ -89,7 +89,8 @@ static void handle_remote_xline(struct Client *source_p, int temp_time,
 				const char *name, const char *reason);
 static void handle_remote_unxline(struct Client *source_p, const char *name);
 
-static void remove_xline(struct Client *source_p, const char *name);
+static void remove_xline(struct Client *source_p, const char *name,
+			 int propagated);
 
 
 /* m_xline()
@@ -107,6 +108,7 @@ mo_xline(struct Client *client_p, struct Client *source_p, int parc, const char 
 	const char *target_server = NULL;
 	int temp_time;
 	int loc = 1;
+	int propagated = ConfigFileEntry.use_propagated_bans;
 
 	if(!IsOperXline(source_p))
 	{
@@ -152,8 +154,11 @@ mo_xline(struct Client *client_p, struct Client *source_p, int parc, const char 
 
 		if(!match(target_server, me.name))
 			return 0;
+
+		/* Set as local-only. */
+		propagated = 0;
 	}
-	else if(rb_dlink_list_length(&cluster_conf_list) > 0)
+	else if(!propagated && rb_dlink_list_length(&cluster_conf_list) > 0)
 		cluster_xline(source_p, temp_time, name, reason);
 
 	if((aconf = find_xline_mask(name)) != NULL)
@@ -166,7 +171,13 @@ mo_xline(struct Client *client_p, struct Client *source_p, int parc, const char 
 	if(!valid_xline(source_p, name, reason))
 		return 0;
 
-	apply_xline(source_p, name, reason, temp_time);
+	if(propagated && temp_time == 0)
+	{
+		sendto_one_notice(source_p, ":Cannot set a permanent global ban");
+		return 0;
+	}
+
+	apply_xline(source_p, name, reason, temp_time, propagated);
 
 	return 0;
 }
@@ -226,7 +237,7 @@ handle_remote_xline(struct Client *source_p, int temp_time, const char *name, co
 		return;
 	}
 
-	apply_xline(source_p, name, reason, temp_time);
+	apply_xline(source_p, name, reason, temp_time, 0);
 }
 
 /* valid_xline()
@@ -270,8 +281,9 @@ valid_xline(struct Client *source_p, const char *gecos, const char *reason)
 }
 
 void
-apply_xline(struct Client *source_p, const char *name, const char *reason, int temp_time)
+apply_xline(struct Client *source_p, const char *name, const char *reason, int temp_time, int propagated)
 {
+	rb_dlink_node *ptr;
 	struct ConfItem *aconf;
 
 	aconf = make_conf();
@@ -283,7 +295,32 @@ apply_xline(struct Client *source_p, const char *name, const char *reason, int t
 
 	aconf->info.oper = operhash_add(get_oper_name(source_p));
 
-	if(temp_time > 0)
+	if(propagated)
+	{
+		aconf->flags |= CONF_FLAGS_MYOPER | CONF_FLAGS_TEMPORARY;
+		aconf->hold = rb_current_time() + temp_time;
+		aconf->lifetime = aconf->hold;
+
+		replace_old_ban(aconf);
+		rb_dlinkAddAlloc(aconf, &prop_bans);
+
+		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				       "%s added global %d min. X-Line for [%s] [%s]",
+				       get_oper_name(source_p), temp_time / 60,
+				       aconf->host, reason);
+		ilog(L_KLINE, "X %s %d %s %s",
+		     get_oper_name(source_p), temp_time / 60, name, reason);
+		sendto_one_notice(source_p, ":Added global %d min. X-Line [%s]",
+				  temp_time / 60, aconf->host);
+		sendto_server(NULL, NULL, CAP_BAN|CAP_TS6, NOCAPS,
+				":%s BAN X * %s %lu %d %d * :%s",
+				source_p->id, aconf->host,
+				(unsigned long)aconf->created,
+				(int)(aconf->hold - aconf->created),
+				(int)(aconf->lifetime - aconf->created),
+				reason);
+	}
+	else if(temp_time > 0)
 	{
 		aconf->hold = rb_current_time() + temp_time;
 
@@ -366,6 +403,8 @@ cluster_xline(struct Client *source_p, int temp_time, const char *name, const ch
 static int
 mo_unxline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
+	int propagated = 1;
+
 	if(!IsOperXline(source_p))
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "xline");
@@ -385,11 +424,12 @@ mo_unxline(struct Client *client_p, struct Client *source_p, int parc, const cha
 
 		if(match(parv[3], me.name) == 0)
 			return 0;
-	}
-	else if(rb_dlink_list_length(&cluster_conf_list))
-		cluster_generic(source_p, "UNXLINE", SHARED_UNXLINE, CAP_CLUSTER, "%s", parv[1]);
 
-	remove_xline(source_p, parv[1]);
+		propagated = 0;
+	}
+	/* cluster{} moved to remove_xline */
+
+	remove_xline(source_p, parv[1], propagated);
 
 	return 0;
 }
@@ -434,13 +474,13 @@ handle_remote_unxline(struct Client *source_p, const char *name)
 			     source_p->servptr->name, SHARED_UNXLINE))
 		return;
 
-	remove_xline(source_p, name);
+	remove_xline(source_p, name, 0);
 
 	return;
 }
 
 static void
-remove_xline(struct Client *source_p, const char *name)
+remove_xline(struct Client *source_p, const char *name, int propagated)
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
@@ -451,6 +491,41 @@ remove_xline(struct Client *source_p, const char *name)
 
 		if(!irccmp(aconf->host, name))
 		{
+			if(aconf->lifetime)
+			{
+				if(!propagated)
+				{
+					sendto_one_notice(source_p, ":Cannot remove global X-Line %s on specific servers", name);
+					return;
+				}
+				ptr = rb_dlinkFind(aconf, &prop_bans);
+				if(ptr == NULL)
+					return;
+				sendto_one_notice(source_p, ":X-Line for [%s] is removed", name);
+				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+						       "%s has removed the global X-Line for: [%s]",
+						       get_oper_name(source_p), name);
+				ilog(L_KLINE, "UX %s %s", get_oper_name(source_p), name);
+				if(aconf->created < rb_current_time())
+					aconf->created = rb_current_time();
+				else
+					aconf->created++;
+				aconf->hold = aconf->created;
+				operhash_delete(aconf->info.oper);
+				aconf->info.oper = operhash_add(get_oper_name(source_p));
+				aconf->flags |= CONF_FLAGS_MYOPER | CONF_FLAGS_TEMPORARY;
+				sendto_server(NULL, NULL, CAP_BAN|CAP_TS6, NOCAPS,
+						":%s BAN X * %s %lu %d %d * :*",
+						source_p->id, aconf->host,
+						(unsigned long)aconf->created,
+						0,
+						(int)(aconf->lifetime - aconf->created));
+				remove_reject_mask(aconf->host, NULL);
+				deactivate_conf(aconf, ptr);
+				return;
+			}
+			else if(MyClient(source_p) && rb_dlink_list_length(&cluster_conf_list))
+				cluster_generic(source_p, "UNXLINE", SHARED_UNXLINE, CAP_CLUSTER, "%s", name);
 			if(!aconf->hold)
 			{
 				bandb_del(BANDB_XLINE, aconf->host, NULL);
@@ -476,6 +551,9 @@ remove_xline(struct Client *source_p, const char *name)
 			return;
 		}
 	}
+
+	if(MyClient(source_p) && rb_dlink_list_length(&cluster_conf_list))
+		cluster_generic(source_p, "UNXLINE", SHARED_UNXLINE, CAP_CLUSTER, "%s", name);
 
 	sendto_one_notice(source_p, ":No X-Line for %s", name);
 
