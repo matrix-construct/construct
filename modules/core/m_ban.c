@@ -157,8 +157,7 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	aconf->info.oper = operhash_add(oper);
 	aconf->created = created;
 	aconf->hold = hold;
-	p = strchr(parv[parc - 1], '|');
-	if (p == NULL)
+	if (ntype != CONF_KILL || (p = strchr(parv[parc - 1], '|')) == NULL)
 		aconf->passwd = rb_strdup(parv[parc - 1]);
 	else
 	{
