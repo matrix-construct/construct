@@ -523,7 +523,7 @@ remove_xline(struct Client *source_p, const char *name, int propagated)
 				deactivate_conf(aconf, ptr);
 				return;
 			}
-			else if(MyClient(source_p) && rb_dlink_list_length(&cluster_conf_list))
+			else if(propagated && rb_dlink_list_length(&cluster_conf_list))
 				cluster_generic(source_p, "UNXLINE", SHARED_UNXLINE, CAP_CLUSTER, "%s", name);
 			if(!aconf->hold)
 			{
@@ -551,7 +551,7 @@ remove_xline(struct Client *source_p, const char *name, int propagated)
 		}
 	}
 
-	if(MyClient(source_p) && rb_dlink_list_length(&cluster_conf_list))
+	if(propagated && rb_dlink_list_length(&cluster_conf_list))
 		cluster_generic(source_p, "UNXLINE", SHARED_UNXLINE, CAP_CLUSTER, "%s", name);
 
 	sendto_one_notice(source_p, ":No X-Line for %s", name);
