@@ -283,7 +283,6 @@ valid_xline(struct Client *source_p, const char *gecos, const char *reason)
 void
 apply_xline(struct Client *source_p, const char *name, const char *reason, int temp_time, int propagated)
 {
-	rb_dlink_node *ptr;
 	struct ConfItem *aconf;
 
 	aconf = make_conf();
