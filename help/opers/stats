@@ -29,7 +29,7 @@ X f - Shows File Descriptors
 ^ o - Shows operator blocks (Old O: lines)
 ^ P - Shows configured ports
   p - Shows online opers
-* q - Shows temporary resv'd nicks and channels
+* q - Shows temporary and global resv'd nicks and channels
 * Q - Shows resv'd nicks and channels
 * r - Shows resource usage by ircd
 * t - Shows generic server stats

@@ -29,6 +29,7 @@
 
 #include "stdinc.h"
 #include "send.h"
+#include "channel.h"
 #include "client.h"
 #include "common.h"
 #include "config.h"
@@ -75,6 +76,7 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	time_t created, hold, lifetime;
 	char *p;
 	int act;
+	int valid;
 
 	if (strlen(parv[1]) != 1)
 	{
@@ -92,6 +94,11 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		case 'X':
 			ntype = CONF_XLINE;
 			stype = "X-Line";
+			break;
+		case 'R':
+			ntype = IsChannelName(parv[3]) ? CONF_RESV_CHANNEL :
+				CONF_RESV_NICK;
+			stype = "RESV";
 			break;
 		default:
 			sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
@@ -164,10 +171,19 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		aconf->passwd = rb_strndup(parv[parc - 1], p - parv[parc - 1] + 1);
 		aconf->spasswd = rb_strdup(p + 1);
 	}
-	if (act && hold != created &&
-			!(ntype == CONF_KILL ?
-				valid_wild_card(aconf->user, aconf->host) :
-				valid_wild_card_simple(aconf->host)))
+	switch (ntype)
+	{
+		case CONF_KILL:
+			valid = valid_wild_card(aconf->user, aconf->host);
+			break;
+		case CONF_RESV_CHANNEL:
+			valid = 1;
+			break;
+		default:
+			valid = valid_wild_card_simple(aconf->host);
+			break;
+	}
+	if (act && hold != created && !valid)
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				       "Ignoring global %d min. %s from %s%s%s for [%s%s%s]: too few non-wildcard characters",
@@ -259,6 +275,17 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 				rb_dlinkAddAlloc(aconf, &xline_conf_list);
 				check_xlines();
 			}
+			break;
+		case CONF_RESV_CHANNEL:
+			if (!(aconf->status & CONF_ILLEGAL))
+			{
+				add_to_resv_hash(aconf->host, aconf);
+				resv_chan_forcepart(aconf->host, aconf->passwd, hold - rb_current_time());
+			}
+			break;
+		case CONF_RESV_NICK:
+			if (!(aconf->status & CONF_ILLEGAL))
+				rb_dlinkAddAlloc(aconf, &resv_conf_list);
 			break;
 	}
 	sendto_server(client_p, NULL, CAP_BAN|CAP_TS6, NOCAPS,

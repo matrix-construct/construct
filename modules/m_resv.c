@@ -62,15 +62,14 @@ mapi_clist_av1 resv_clist[] = { &resv_msgtab, &unresv_msgtab, NULL };
 DECLARE_MODULE_AV1(resv, NULL, NULL, resv_clist, NULL, NULL, "$Revision$");
 
 static void parse_resv(struct Client *source_p, const char *name,
-		       const char *reason, int temp_time);
+		       const char *reason, int temp_time, int propagated);
 static void propagate_resv(struct Client *source_p, const char *target,
 			   int temp_time, const char *name, const char *reason);
 static void cluster_resv(struct Client *source_p, int temp_time,
 			 const char *name, const char *reason);
 
 static void handle_remote_unresv(struct Client *source_p, const char *name);
-static void remove_resv(struct Client *source_p, const char *name);
-static void resv_chan_forcepart(const char *name, const char *reason, int temp_time);
+static void remove_resv(struct Client *source_p, const char *name, int propagated);
 
 /*
  * mo_resv()
@@ -86,6 +85,7 @@ mo_resv(struct Client *client_p, struct Client *source_p, int parc, const char *
 	const char *target_server = NULL;
 	int temp_time;
 	int loc = 1;
+	int propagated = ConfigFileEntry.use_propagated_bans;
 
 	if(!IsOperResv(source_p))
 	{
@@ -115,6 +115,9 @@ mo_resv(struct Client *client_p, struct Client *source_p, int parc, const char *
 
 		target_server = parv[loc + 1];
 		loc += 2;
+
+		/* Set as local-only. */
+		propagated = 0;
 	}
 
 	if(parc <= loc || EmptyString(parv[loc]))
@@ -133,10 +136,16 @@ mo_resv(struct Client *client_p, struct Client *source_p, int parc, const char *
 		if(match(target_server, me.name) == 0)
 			return 0;
 	}
-	else if(rb_dlink_list_length(&cluster_conf_list) > 0)
+	else if(!propagated && rb_dlink_list_length(&cluster_conf_list) > 0)
 		cluster_resv(source_p, temp_time, name, reason);
 
-	parse_resv(source_p, name, reason, temp_time);
+	if(propagated && temp_time == 0)
+	{
+		sendto_one_notice(source_p, ":Cannot set a permanent global ban");
+		return 0;
+	}
+
+	parse_resv(source_p, name, reason, temp_time, propagated);
 
 	return 0;
 }
@@ -161,7 +170,7 @@ ms_resv(struct Client *client_p, struct Client *source_p, int parc, const char *
 	if(!IsPerson(source_p))
 		return 0;
 
-	parse_resv(source_p, parv[2], parv[3], 0);
+	parse_resv(source_p, parv[2], parv[3], 0, 0);
 	return 0;
 }
 
@@ -172,7 +181,7 @@ me_resv(struct Client *client_p, struct Client *source_p, int parc, const char *
 	if(!IsPerson(source_p))
 		return 0;
 
-	parse_resv(source_p, parv[2], parv[4], atoi(parv[1]));
+	parse_resv(source_p, parv[2], parv[4], atoi(parv[1]), 0);
 	return 0;
 }
 
@@ -185,7 +194,7 @@ me_resv(struct Client *client_p, struct Client *source_p, int parc, const char *
  * side effects - will parse the resv and create it if valid
  */
 static void
-parse_resv(struct Client *source_p, const char *name, const char *reason, int temp_time)
+parse_resv(struct Client *source_p, const char *name, const char *reason, int temp_time, int propagated)
 {
 	struct ConfItem *aconf;
 
@@ -223,10 +232,32 @@ parse_resv(struct Client *source_p, const char *name, const char *reason, int te
 		aconf->host = rb_strdup(name);
 		aconf->passwd = rb_strdup(reason);
 		aconf->info.oper = operhash_add(get_oper_name(source_p));
-		add_to_resv_hash(aconf->host, aconf);
-		resv_chan_forcepart(aconf->host, aconf->passwd, temp_time);
 
-		if(temp_time > 0)
+		if(propagated)
+		{
+			aconf->flags |= CONF_FLAGS_MYOPER | CONF_FLAGS_TEMPORARY;
+			aconf->hold = rb_current_time() + temp_time;
+			aconf->lifetime = aconf->hold;
+			replace_old_ban(aconf);
+			rb_dlinkAddAlloc(aconf, &prop_bans);
+
+			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+					       "%s added global %d min. RESV for [%s] [%s]",
+					       get_oper_name(source_p), temp_time / 60,
+					       name, reason);
+			ilog(L_KLINE, "R %s %d %s %s",
+			     get_oper_name(source_p), temp_time / 60, name, reason);
+			sendto_one_notice(source_p, ":Added global %d min. RESV [%s]",
+					  temp_time / 60, name);
+			sendto_server(NULL, NULL, CAP_BAN|CAP_TS6, NOCAPS,
+					":%s BAN R * %s %lu %d %d * :%s",
+					source_p->id, aconf->host,
+					(unsigned long)aconf->created,
+					(int)(aconf->hold - aconf->created),
+					(int)(aconf->lifetime - aconf->created),
+					reason);
+		}
+		else if(temp_time > 0)
 		{
 			aconf->hold = rb_current_time() + temp_time;
 
@@ -250,6 +281,9 @@ parse_resv(struct Client *source_p, const char *name, const char *reason, int te
 
 			bandb_add(BANDB_RESV, source_p, aconf->host, NULL, aconf->passwd, NULL, 0);
 		}
+
+		add_to_resv_hash(aconf->host, aconf);
+		resv_chan_forcepart(aconf->host, aconf->passwd, temp_time);
 	}
 	else if(clean_resv_nick(name))
 	{
@@ -288,9 +322,32 @@ parse_resv(struct Client *source_p, const char *name, const char *reason, int te
 		aconf->host = rb_strdup(name);
 		aconf->passwd = rb_strdup(reason);
 		aconf->info.oper = operhash_add(get_oper_name(source_p));
-		rb_dlinkAddAlloc(aconf, &resv_conf_list);
 
-		if(temp_time > 0)
+		if(propagated)
+		{
+			aconf->flags |= CONF_FLAGS_MYOPER | CONF_FLAGS_TEMPORARY;
+			aconf->hold = rb_current_time() + temp_time;
+			aconf->lifetime = aconf->hold;
+			replace_old_ban(aconf);
+			rb_dlinkAddAlloc(aconf, &prop_bans);
+
+			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+					       "%s added global %d min. RESV for [%s] [%s]",
+					       get_oper_name(source_p), temp_time / 60,
+					       name, reason);
+			ilog(L_KLINE, "R %s %d %s %s",
+			     get_oper_name(source_p), temp_time / 60, name, reason);
+			sendto_one_notice(source_p, ":Added global %d min. RESV [%s]",
+					  temp_time / 60, name);
+			sendto_server(NULL, NULL, CAP_BAN|CAP_TS6, NOCAPS,
+					":%s BAN R * %s %lu %d %d * :%s",
+					source_p->id, aconf->host,
+					(unsigned long)aconf->created,
+					(int)(aconf->hold - aconf->created),
+					(int)(aconf->lifetime - aconf->created),
+					reason);
+		}
+		else if(temp_time > 0)
 		{
 			aconf->hold = rb_current_time() + temp_time;
 
@@ -314,6 +371,8 @@ parse_resv(struct Client *source_p, const char *name, const char *reason, int te
 
 			bandb_add(BANDB_RESV, source_p, aconf->host, NULL, aconf->passwd, NULL, 0);
 		}
+
+		rb_dlinkAddAlloc(aconf, &resv_conf_list);
 	}
 	else
 		sendto_one_notice(source_p, ":You have specified an invalid resv: [%s]", name);
@@ -380,6 +439,8 @@ cluster_resv(struct Client *source_p, int temp_time, const char *name, const cha
 static int
 mo_unresv(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
+	int propagated = 1;
+
 	if(!IsOperResv(source_p))
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "resv");
@@ -399,11 +460,16 @@ mo_unresv(struct Client *client_p, struct Client *source_p, int parc, const char
 
 		if(match(parv[3], me.name) == 0)
 			return 0;
+
+		propagated = 0;
 	}
+#if 0
 	else if(rb_dlink_list_length(&cluster_conf_list) > 0)
 		cluster_generic(source_p, "UNRESV", SHARED_UNRESV, CAP_CLUSTER, "%s", parv[1]);
+#endif
+	/* cluster{} moved to remove_resv */
 
-	remove_resv(source_p, parv[1]);
+	remove_resv(source_p, parv[1], propagated);
 	return 0;
 }
 
@@ -448,23 +514,62 @@ handle_remote_unresv(struct Client *source_p, const char *name)
 			     source_p->servptr->name, SHARED_UNRESV))
 		return;
 
-	remove_resv(source_p, name);
+	remove_resv(source_p, name, 0);
 
 	return;
 }
 
 static void
-remove_resv(struct Client *source_p, const char *name)
+remove_resv(struct Client *source_p, const char *name, int propagated)
 {
 	struct ConfItem *aconf = NULL;
+	rb_dlink_node *ptr;
 
 	if(IsChannelName(name))
 	{
 		if((aconf = hash_find_resv(name)) == NULL)
 		{
+			if(propagated && rb_dlink_list_length(&cluster_conf_list))
+				cluster_generic(source_p, "UNXLINE", SHARED_UNXLINE, CAP_CLUSTER, "%s", name);
+
 			sendto_one_notice(source_p, ":No RESV for %s", name);
 			return;
 		}
+
+		if(aconf->lifetime)
+		{
+			if(!propagated)
+			{
+				sendto_one_notice(source_p, ":Cannot remove global RESV %s on specific servers", name);
+				return;
+			}
+			ptr = rb_dlinkFind(aconf, &prop_bans);
+			if(ptr == NULL)
+				return;
+			sendto_one_notice(source_p, ":RESV for [%s] is removed", name);
+			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+					       "%s has removed the global RESV for: [%s]",
+					       get_oper_name(source_p), name);
+			ilog(L_KLINE, "UR %s %s", get_oper_name(source_p), name);
+			if(aconf->created < rb_current_time())
+				aconf->created = rb_current_time();
+			else
+				aconf->created++;
+			aconf->hold = aconf->created;
+			operhash_delete(aconf->info.oper);
+			aconf->info.oper = operhash_add(get_oper_name(source_p));
+			aconf->flags |= CONF_FLAGS_MYOPER | CONF_FLAGS_TEMPORARY;
+			sendto_server(NULL, NULL, CAP_BAN|CAP_TS6, NOCAPS,
+					":%s BAN R * %s %lu %d %d * :*",
+					source_p->id, aconf->host,
+					(unsigned long)aconf->created,
+					0,
+					(int)(aconf->lifetime - aconf->created));
+			deactivate_conf(aconf, ptr);
+			return;
+		}
+		else if(propagated && rb_dlink_list_length(&cluster_conf_list) > 0)
+			cluster_generic(source_p, "UNRESV", SHARED_UNRESV, CAP_CLUSTER, "%s", name);
 
 		sendto_one_notice(source_p, ":RESV for [%s] is removed", name);
 		ilog(L_KLINE, "UR %s %s", get_oper_name(source_p), name);
@@ -485,8 +590,6 @@ remove_resv(struct Client *source_p, const char *name)
 	}
 	else
 	{
-		rb_dlink_node *ptr;
-
 		RB_DLINK_FOREACH(ptr, resv_conf_list.head)
 		{
 			aconf = ptr->data;
@@ -499,9 +602,47 @@ remove_resv(struct Client *source_p, const char *name)
 
 		if(aconf == NULL)
 		{
+			if(propagated && rb_dlink_list_length(&cluster_conf_list))
+				cluster_generic(source_p, "UNXLINE", SHARED_UNXLINE, CAP_CLUSTER, "%s", name);
+
 			sendto_one_notice(source_p, ":No RESV for %s", name);
 			return;
 		}
+
+		if(aconf->lifetime)
+		{
+			if(!propagated)
+			{
+				sendto_one_notice(source_p, ":Cannot remove global RESV %s on specific servers", name);
+				return;
+			}
+			ptr = rb_dlinkFind(aconf, &prop_bans);
+			if(ptr == NULL)
+				return;
+			sendto_one_notice(source_p, ":RESV for [%s] is removed", name);
+			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+					       "%s has removed the global RESV for: [%s]",
+					       get_oper_name(source_p), name);
+			ilog(L_KLINE, "UR %s %s", get_oper_name(source_p), name);
+			if(aconf->created < rb_current_time())
+				aconf->created = rb_current_time();
+			else
+				aconf->created++;
+			aconf->hold = aconf->created;
+			operhash_delete(aconf->info.oper);
+			aconf->info.oper = operhash_add(get_oper_name(source_p));
+			aconf->flags |= CONF_FLAGS_MYOPER | CONF_FLAGS_TEMPORARY;
+			sendto_server(NULL, NULL, CAP_BAN|CAP_TS6, NOCAPS,
+					":%s BAN R * %s %lu %d %d * :*",
+					source_p->id, aconf->host,
+					(unsigned long)aconf->created,
+					0,
+					(int)(aconf->lifetime - aconf->created));
+			deactivate_conf(aconf, ptr);
+			return;
+		}
+		else if(propagated && rb_dlink_list_length(&cluster_conf_list) > 0)
+			cluster_generic(source_p, "UNRESV", SHARED_UNRESV, CAP_CLUSTER, "%s", name);
 
 		if(!aconf->hold)
 			bandb_del(BANDB_RESV, aconf->host, NULL);
@@ -519,55 +660,4 @@ remove_resv(struct Client *source_p, const char *name)
 	free_conf(aconf);
 
 	return;
-}
-
-static void 
-resv_chan_forcepart(const char *name, const char *reason, int temp_time)
-{
-	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
-	struct Channel *chptr;
-	struct membership *msptr;
-	struct Client *target_p;
-
-	if(!ConfigChannel.resv_forcepart)
-		return;
-
-	/* for each user on our server in the channel list
-	 * send them a PART, and notify opers.
-	 */
-	chptr = find_channel(name);
-	if(chptr != NULL)
-	{
-		RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->locmembers.head)
-		{
-			msptr = ptr->data;
-			target_p = msptr->client_p;
-
-			if(IsExemptResv(target_p))
-				continue;
-
-			sendto_server(target_p, chptr, CAP_TS6, NOCAPS,
-			              ":%s PART %s", target_p->id, chptr->chname);
-
-			sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@%s PART %s :%s",
-			                     target_p->name, target_p->username,
-			                     target_p->host, chptr->chname, target_p->name);
-
-			remove_user_from_channel(msptr);
-
-			/* notify opers & user they were removed from the channel */
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
-			                     "Forced PART for %s!%s@%s from %s (%s)",
-			                     target_p->name, target_p->username, 
-			                     target_p->host, name, reason);
-
-			if(temp_time > 0)
-				sendto_one_notice(target_p, ":*** Channel %s is temporarily unavailable on this server.",
-				           name);
-			else
-				sendto_one_notice(target_p, ":*** Channel %s is no longer available on this server.",
-				           name);
-		}
-	}
 }

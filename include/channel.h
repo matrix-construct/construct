@@ -257,6 +257,8 @@ extern void unset_chcap_usage_counts(struct Client *serv_p);
 extern void send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
 				  struct Channel *chptr, struct ChModeChange foo[], int);
 
+void resv_chan_forcepart(const char *name, const char *reason, int temp_time);
+
 extern void set_channel_mode(struct Client *client_p, struct Client *source_p,
             	struct Channel *chptr, struct membership *msptr, int parc, const char *parv[]);
 extern void set_channel_mlock(struct Client *client_p, struct Client *source_p,
