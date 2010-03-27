@@ -297,7 +297,7 @@ handle_remote_kline(struct Client *source_p, int tkline_time,
 				  ":Please include at least %d non-wildcard "
 				  "characters with the user@host",
 				  ConfigFileEntry.min_nonwildcard);
-		return 0;
+		return;
 	}
 
 	if(already_placed_kline(source_p, user, host, tkline_time))

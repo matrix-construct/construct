@@ -1261,7 +1261,7 @@ get_user_ban_reason(struct ConfItem *aconf)
 		rb_snprintf(reasonbuf, sizeof reasonbuf,
 				"Temporary %c-line %d min. - ",
 				aconf->status == CONF_DLINE ? 'D' : 'K',
-				(aconf->hold - aconf->created) / 60);
+				(int)((aconf->hold - aconf->created) / 60));
 	else
 		reasonbuf[0] = '\0';
 	if (aconf->passwd)

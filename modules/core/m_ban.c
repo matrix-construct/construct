@@ -187,7 +187,7 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				       "Ignoring global %d min. %s from %s%s%s for [%s%s%s]: too few non-wildcard characters",
-				       (hold - rb_current_time()) / 60,
+				       (int)((hold - rb_current_time()) / 60),
 				       stype,
 				       IsServer(source_p) ? source_p->name : get_oper_name(source_p),
 				       strcmp(parv[7], "*") ? " on behalf of " : "",
@@ -210,7 +210,7 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				       "%s added global %d min. %s%s%s for [%s%s%s] [%s]",
 				       IsServer(source_p) ? source_p->name : get_oper_name(source_p),
-				       (hold - rb_current_time()) / 60,
+				       (int)((hold - rb_current_time()) / 60),
 				       stype,
 				       strcmp(parv[7], "*") ? " from " : "",
 				       strcmp(parv[7], "*") ? parv[7] : "",
@@ -220,7 +220,7 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 				       parv[parc - 1]);
 		ilog(L_KLINE, "%s %s %d %s%s%s %s", parv[1],
 				IsServer(source_p) ? source_p->name : get_oper_name(source_p),
-				(hold - rb_current_time()) / 60,
+				(int)((hold - rb_current_time()) / 60),
 				aconf->user ? aconf->user : "",
 				aconf->user ? " " : "",
 				aconf->host,
