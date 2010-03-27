@@ -644,15 +644,20 @@ remove_resv(struct Client *source_p, const char *name, int propagated)
 		else if(propagated && rb_dlink_list_length(&cluster_conf_list) > 0)
 			cluster_generic(source_p, "UNRESV", SHARED_UNRESV, CAP_CLUSTER, "%s", name);
 
+		sendto_one_notice(source_p, ":RESV for [%s] is removed", name);
+		ilog(L_KLINE, "UR %s %s", get_oper_name(source_p), name);
 		if(!aconf->hold)
-			bandb_del(BANDB_RESV, aconf->host, NULL);
-		else
 		{
-			sendto_one_notice(source_p, ":RESV for [%s] is removed", name);
+			bandb_del(BANDB_RESV, aconf->host, NULL);
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					       "%s has removed the RESV for: [%s]",
 					       get_oper_name(source_p), name);
-			ilog(L_KLINE, "UR %s %s", get_oper_name(source_p), name);
+		}
+		else
+		{
+			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+					       "%s has removed the temporary RESV for: [%s]",
+					       get_oper_name(source_p), name);
 		}
 		/* already have ptr from the loop above.. */
 		rb_dlinkDestroy(ptr, &resv_conf_list);
