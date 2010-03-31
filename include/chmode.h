@@ -73,9 +73,9 @@ extern void chm_voice(struct Client *source_p, struct Channel *chptr,
 	   int alevel, int parc, int *parn,
 	   const char **parv, int *errors, int dir, char c, long mode_type);
 
-extern void construct_noparam_modes(void);
-extern void find_orphaned_cflags(void);
-extern unsigned int find_cflag_slot(void);
+extern unsigned int cflag_add(char c, ChannelModeFunc function);
+extern void cflag_orphan(char c);
+extern void construct_cflags_strings(void);
 extern char cflagsbuf[256];
 extern char cflagsmyinfo[256];
 

@@ -126,11 +126,13 @@ struct ChCapCombo
 	int cap_no;
 };
 
+typedef void (*ChannelModeFunc)(struct Client *source_p, struct Channel *chptr,
+		int alevel, int parc, int *parn,
+		const char **parv, int *errors, int dir, char c, long mode_type);
+
 struct ChannelMode
 {
-	void (*set_func) (struct Client * source_p, struct Channel * chptr,
-		      int alevel, int parc, int *parn,
-		      const char **parv, int *errors, int dir, char c, long mode_type);
+	ChannelModeFunc set_func;
 	long mode_type;
 };
 

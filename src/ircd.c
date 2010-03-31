@@ -649,13 +649,7 @@ main(int argc, char *argv[])
 	init_monitor();
 	init_isupport();
 
-	/* noparam core modes have to be initialized before the module
-	 * system is initialized, otherwise we have a table collision.
-	 *
- 	 * modules call this after they are done initializing...
-	 *    --nenolod
-	 */
-        construct_noparam_modes();
+        construct_cflags_strings();
 
 	load_all_modules(1);
 #ifndef STATIC_MODULES
