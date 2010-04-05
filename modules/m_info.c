@@ -134,9 +134,9 @@ static struct InfoStruct info_table[] = {
 		"Connect timeout for connections to servers"
 	},
 	{
-		"ident_timeout",
+		"default_ident_timeout",
 		OUTPUT_DECIMAL,
-		&ConfigFileEntry.ident_timeout,
+		&ConfigFileEntry.default_ident_timeout,
 		"Amount of time the server waits for ident responses from clients",
 	},
 	{

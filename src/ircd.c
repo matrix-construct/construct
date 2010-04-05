@@ -324,8 +324,8 @@ initialize_global_set_options(void)
 		splitchecking = 1;
 	}
 
-	if(ConfigFileEntry.ident_timeout)
-		GlobalSetOptions.ident_timeout = ConfigFileEntry.ident_timeout;
+	if(ConfigFileEntry.default_ident_timeout)
+		GlobalSetOptions.ident_timeout = ConfigFileEntry.default_ident_timeout;
 	else
 		GlobalSetOptions.ident_timeout = IDENT_TIMEOUT;
 
