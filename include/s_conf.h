@@ -206,6 +206,7 @@ struct config_file_entry
 	int min_nonwildcard_simple;
 	int default_floodcount;
 	int client_flood;
+	int default_ident_timeout;
 	int use_egd;
 	int ping_cookie;
 	int tkline_expire_notices;
@@ -223,6 +224,7 @@ struct config_file_entry
 	int default_umodes;
 	int global_snotices;
 	int operspy_dont_care_user_info;
+	int use_propagated_bans;
 };
 
 struct config_channel_entry
@@ -326,6 +328,7 @@ extern void free_conf(struct ConfItem *);
 
 extern rb_dlink_node *find_prop_ban(unsigned int status, const char *user, const char *host);
 extern void deactivate_conf(struct ConfItem *, rb_dlink_node *);
+extern void replace_old_ban(struct ConfItem *);
 
 extern void read_conf_files(int cold);
 

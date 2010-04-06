@@ -134,6 +134,12 @@ static struct InfoStruct info_table[] = {
 		"Connect timeout for connections to servers"
 	},
 	{
+		"default_ident_timeout",
+		OUTPUT_DECIMAL,
+		&ConfigFileEntry.default_ident_timeout,
+		"Amount of time the server waits for ident responses from clients",
+	},
+	{
 		"default_floodcount",
 		OUTPUT_DECIMAL,
 		&ConfigFileEntry.default_floodcount,
@@ -481,6 +487,12 @@ static struct InfoStruct info_table[] = {
 		OUTPUT_BOOLEAN,
 		&ConfigFileEntry.warn_no_nline,
 		"Display warning if connecting server lacks N-line"
+	},
+	{
+		"use_propagated_bans",
+		OUTPUT_BOOLEAN,
+		&ConfigFileEntry.use_propagated_bans,
+		"KLINE sets fully propagated bans"
 	},
 	{
 		"default_split_server_count",

@@ -324,7 +324,10 @@ initialize_global_set_options(void)
 		splitchecking = 1;
 	}
 
-	GlobalSetOptions.ident_timeout = IDENT_TIMEOUT;
+	if(ConfigFileEntry.default_ident_timeout)
+		GlobalSetOptions.ident_timeout = ConfigFileEntry.default_ident_timeout;
+	else
+		GlobalSetOptions.ident_timeout = IDENT_TIMEOUT;
 
 	rb_strlcpy(GlobalSetOptions.operstring,
 		ConfigFileEntry.default_operstring,
@@ -649,13 +652,7 @@ main(int argc, char *argv[])
 	init_monitor();
 	init_isupport();
 
-	/* noparam core modes have to be initialized before the module
-	 * system is initialized, otherwise we have a table collision.
-	 *
- 	 * modules call this after they are done initializing...
-	 *    --nenolod
-	 */
-        construct_noparam_modes();
+        construct_cflags_strings();
 
 	load_all_modules(1);
 #ifndef STATIC_MODULES

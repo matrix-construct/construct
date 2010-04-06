@@ -17,13 +17,14 @@ mapi_hfn_list_av1 sslonly_hfnlist[] = {
 	{ NULL, NULL }
 };
 
+static unsigned int mymode;
+
 static int
 _modinit(void)
 {
-	chmode_table['S'].mode_type = find_cflag_slot();
-	chmode_table['S'].set_func = chm_simple;
-
-	construct_noparam_modes();
+	mymode = cflag_add('S', chm_simple);
+	if (mymode == 0)
+		return -1;
 
 	return 0;
 }
@@ -32,9 +33,7 @@ _modinit(void)
 static void
 _moddeinit(void)
 {
-	chmode_table['S'].mode_type = 0;
-
-	construct_noparam_modes();
+	cflag_orphan('S');
 }
 
 DECLARE_MODULE_AV1(chm_sslonly, _modinit, _moddeinit, NULL, NULL, sslonly_hfnlist, "$Revision$");
@@ -45,7 +44,7 @@ h_can_join(hook_data_channel *data)
 	struct Client *source_p = data->client;
 	struct Channel *chptr = data->chptr;
 
-	if((chptr->mode.mode & chmode_flags['S']) && !IsSSLClient(source_p)) {
+	if((chptr->mode.mode & mymode) && !IsSSLClient(source_p)) {
 		sendto_one_notice(source_p, ":Only users using SSL could join this channel!");
 		data->approved = ERR_CUSTOM;
 	}

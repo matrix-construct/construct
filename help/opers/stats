@@ -29,14 +29,14 @@ X f - Shows File Descriptors
 ^ o - Shows operator blocks (Old O: lines)
 ^ P - Shows configured ports
   p - Shows online opers
-* q - Shows temporary resv'd nicks and channels
+* q - Shows temporary and global resv'd nicks and channels
 * Q - Shows resv'd nicks and channels
 * r - Shows resource usage by ircd
 * t - Shows generic server stats
 * U - Shows shared blocks (Old U: lines)
   u - Shows server uptime
 ^ v - Shows connected servers and brief status information
-* x - Shows temporary gecos bans
+* x - Shows temporary and global gecos bans
 * X - Shows gecos bans (Old X: lines)
 ^ y - Shows connection classes (Old Y: lines)
 * z - Shows memory stats

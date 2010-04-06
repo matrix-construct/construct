@@ -29,6 +29,7 @@
 
 #include "stdinc.h"
 #include "send.h"
+#include "channel.h"
 #include "client.h"
 #include "common.h"
 #include "config.h"
@@ -75,6 +76,7 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	time_t created, hold, lifetime;
 	char *p;
 	int act;
+	int valid;
 
 	if (strlen(parv[1]) != 1)
 	{
@@ -88,6 +90,15 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		case 'K':
 			ntype = CONF_KILL;
 			stype = "K-Line";
+			break;
+		case 'X':
+			ntype = CONF_XLINE;
+			stype = "X-Line";
+			break;
+		case 'R':
+			ntype = IsChannelName(parv[3]) ? CONF_RESV_CHANNEL :
+				CONF_RESV_NICK;
+			stype = "RESV";
 			break;
 		default:
 			sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
@@ -153,22 +164,30 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	aconf->info.oper = operhash_add(oper);
 	aconf->created = created;
 	aconf->hold = hold;
-	p = strchr(parv[parc - 1], '|');
-	if (p == NULL)
+	if (ntype != CONF_KILL || (p = strchr(parv[parc - 1], '|')) == NULL)
 		aconf->passwd = rb_strdup(parv[parc - 1]);
 	else
 	{
 		aconf->passwd = rb_strndup(parv[parc - 1], p - parv[parc - 1] + 1);
 		aconf->spasswd = rb_strdup(p + 1);
 	}
-	if (act && hold != created &&
-			!(ntype == CONF_KILL ?
-				valid_wild_card(aconf->user, aconf->host) :
-				valid_wild_card_simple(aconf->host)))
+	switch (ntype)
+	{
+		case CONF_KILL:
+			valid = valid_wild_card(aconf->user, aconf->host);
+			break;
+		case CONF_RESV_CHANNEL:
+			valid = 1;
+			break;
+		default:
+			valid = valid_wild_card_simple(aconf->host);
+			break;
+	}
+	if (act && hold != created && !valid)
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				       "Ignoring global %d min. %s from %s%s%s for [%s%s%s]: too few non-wildcard characters",
-				       (hold - rb_current_time()) / 60,
+				       (int)((hold - rb_current_time()) / 60),
 				       stype,
 				       IsServer(source_p) ? source_p->name : get_oper_name(source_p),
 				       strcmp(parv[7], "*") ? " on behalf of " : "",
@@ -191,7 +210,7 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				       "%s added global %d min. %s%s%s for [%s%s%s] [%s]",
 				       IsServer(source_p) ? source_p->name : get_oper_name(source_p),
-				       (hold - rb_current_time()) / 60,
+				       (int)((hold - rb_current_time()) / 60),
 				       stype,
 				       strcmp(parv[7], "*") ? " from " : "",
 				       strcmp(parv[7], "*") ? parv[7] : "",
@@ -199,10 +218,12 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 				       aconf->user ? "@" : "",
 				       aconf->host,
 				       parv[parc - 1]);
-		ilog(L_KLINE, "%s %s %d %s %s %s", parv[1],
+		ilog(L_KLINE, "%s %s %d %s%s%s %s", parv[1],
 				IsServer(source_p) ? source_p->name : get_oper_name(source_p),
-				(hold - rb_current_time()) / 60,
-				aconf->user, aconf->host,
+				(int)((hold - rb_current_time()) / 60),
+				aconf->user ? aconf->user : "",
+				aconf->user ? " " : "",
+				aconf->host,
 				parv[parc - 1]);
 		aconf->status &= ~CONF_ILLEGAL;
 	}
@@ -217,9 +238,11 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 				aconf->host,
 				strcmp(parv[7], "*") ? " on behalf of " : "",
 				strcmp(parv[7], "*") ? parv[7] : "");
-		ilog(L_KLINE, "U%s %s %s %s", parv[1],
+		ilog(L_KLINE, "U%s %s %s%s %s", parv[1],
 				IsServer(source_p) ? source_p->name : get_oper_name(source_p),
-				aconf->user, aconf->host);
+				aconf->user ? aconf->user : "",
+				aconf->user ? " " : "",
+				aconf->host);
 	}
 	switch (ntype)
 	{
@@ -243,6 +266,26 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 				else
 					check_klines();
 			}
+			break;
+		case CONF_XLINE:
+			if (aconf->status & CONF_ILLEGAL)
+				remove_reject_mask(aconf->host, NULL);
+			else
+			{
+				rb_dlinkAddAlloc(aconf, &xline_conf_list);
+				check_xlines();
+			}
+			break;
+		case CONF_RESV_CHANNEL:
+			if (!(aconf->status & CONF_ILLEGAL))
+			{
+				add_to_resv_hash(aconf->host, aconf);
+				resv_chan_forcepart(aconf->host, aconf->passwd, hold - rb_current_time());
+			}
+			break;
+		case CONF_RESV_NICK:
+			if (!(aconf->status & CONF_ILLEGAL))
+				rb_dlinkAddAlloc(aconf, &resv_conf_list);
 			break;
 	}
 	sendto_server(client_p, NULL, CAP_BAN|CAP_TS6, NOCAPS,

@@ -17,7 +17,7 @@ mapi_hfn_list_av1 operonly_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-
+static unsigned int mymode;
 
 /* This is a simple example of how to use dynamic channel modes.
  * Not tested enough yet, use at own risk.
@@ -26,27 +26,18 @@ mapi_hfn_list_av1 operonly_hfnlist[] = {
 static int
 _modinit(void)
 {
-	/* add the channel mode to the available slot */
-	chmode_table['O'].mode_type = find_cflag_slot();
-	chmode_table['O'].set_func = chm_staff;
-
-	construct_noparam_modes();
+	mymode = cflag_add('O', chm_staff);
+	if (mymode == 0)
+		return -1;
 
 	return 0;
 }
 
 
-/* Well, the first ugly thing is that we changle chmode_table in _modinit
- * and chmode_flags in _moddeinit (different arrays) - must be fixed.
- * -- dwr
- */
 static void
 _moddeinit(void)
 {
-	/* disable the channel mode and remove it from the available list */
-	chmode_table['O'].mode_type = 0;
-
-	construct_noparam_modes();
+	cflag_orphan('O');
 }
 
 DECLARE_MODULE_AV1(chm_operonly, _modinit, _moddeinit, NULL, NULL, operonly_hfnlist, "$Revision$");
@@ -57,7 +48,7 @@ h_can_join(hook_data_channel *data)
 	struct Client *source_p = data->client;
 	struct Channel *chptr = data->chptr;
 
-	if((chptr->mode.mode & chmode_flags['O']) && !IsOper(source_p)) {
+	if((chptr->mode.mode & mymode) && !IsOper(source_p)) {
 		sendto_one_numeric(source_p, 520, "%s :Cannot join channel (+O) - you are not an IRC operator", chptr->chname);
 		data->approved = ERR_CUSTOM;
 	}

@@ -744,6 +744,7 @@ set_default_conf(void)
 	ConfigFileEntry.collision_fnc = YES;
 	ConfigFileEntry.global_snotices = YES;
 	ConfigFileEntry.operspy_dont_care_user_info = NO;
+	ConfigFileEntry.use_propagated_bans = YES;
 
 #ifdef HAVE_LIBZ
 	ConfigFileEntry.compression_level = 4;
@@ -781,6 +782,7 @@ set_default_conf(void)
 	ConfigFileEntry.min_nonwildcard = 4;
 	ConfigFileEntry.min_nonwildcard_simple = 3;
 	ConfigFileEntry.default_floodcount = 8;
+	ConfigFileEntry.default_ident_timeout = 5;
 	ConfigFileEntry.client_flood = CLIENT_FLOOD_DEFAULT;
 	ConfigFileEntry.tkline_expire_notices = 0;
 
@@ -1063,6 +1065,36 @@ deactivate_conf(struct ConfItem *aconf, rb_dlink_node *ptr)
 	}
 }
 
+/* Given a new ban ConfItem, look for any matching ban, update the lifetime
+ * from it and delete it.
+ */
+void
+replace_old_ban(struct ConfItem *aconf)
+{
+	rb_dlink_node *ptr;
+	struct ConfItem *oldconf;
+
+	ptr = find_prop_ban(aconf->status, aconf->user, aconf->host);
+	if(ptr != NULL)
+	{
+		oldconf = ptr->data;
+		/* Remember at least as long as the old one. */
+		if(oldconf->lifetime > aconf->lifetime)
+			aconf->lifetime = oldconf->lifetime;
+		/* Force creation time to increase. */
+		if(oldconf->created >= aconf->created)
+			aconf->created = oldconf->created + 1;
+		/* Leave at least one second of validity. */
+		if(aconf->hold <= aconf->created)
+			aconf->hold = aconf->created + 1;
+		if(aconf->lifetime < aconf->hold)
+			aconf->lifetime = aconf->hold;
+		/* Tell deactivate_conf() to destroy it. */
+		oldconf->lifetime = rb_current_time();
+		deactivate_conf(oldconf, ptr);
+	}
+}
+
 static void
 expire_prop_bans(void *list)
 {
@@ -1230,7 +1262,7 @@ get_user_ban_reason(struct ConfItem *aconf)
 		rb_snprintf(reasonbuf, sizeof reasonbuf,
 				"Temporary %c-line %d min. - ",
 				aconf->status == CONF_DLINE ? 'D' : 'K',
-				(aconf->hold - aconf->created) / 60);
+				(int)((aconf->hold - aconf->created) / 60));
 	else
 		reasonbuf[0] = '\0';
 	if (aconf->passwd)

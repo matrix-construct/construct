@@ -72,12 +72,11 @@ int chmode_flags[256];
 
 /* OPTIMIZE ME! -- dwr */
 void
-construct_noparam_modes(void)
+construct_cflags_strings(void)
 {
 	int i;
         char *ptr = cflagsbuf;
 	char *ptr2 = cflagsmyinfo;
-        static int prev_chmode_flags[256];
         
         *ptr = '\0';
 	*ptr2 = '\0';
@@ -98,22 +97,6 @@ construct_noparam_modes(void)
 		{
 			chmode_flags[i] = 0;
 		}
-                
-		if (prev_chmode_flags[i] != 0 && prev_chmode_flags[i] != chmode_flags[i])
-		{
-			if (chmode_flags[i] == 0)
-			{
-                                chmode_table[i].set_func = chm_orphaned;
-				sendto_realops_snomask(SNO_DEBUG, L_ALL, "Cmode +%c is now orphaned", i);
-			}
-			else
-			{
-				sendto_realops_snomask(SNO_DEBUG, L_ALL, "Orphaned cmode +%c is picked up by module", i);
-			}
-			chmode_flags[i] = prev_chmode_flags[i];
-		}
-		else
-			prev_chmode_flags[i] = chmode_flags[i];
                 
 		switch (chmode_flags[i])
 		{
@@ -158,7 +141,7 @@ construct_noparam_modes(void)
  *                0 if no cflags are available
  * side effects - NONE
  */
-unsigned int
+static unsigned int
 find_cflag_slot(void)
 {
 	unsigned int all_cflags = 0, my_cflag = 0, i;
@@ -170,6 +153,34 @@ find_cflag_slot(void)
 		my_cflag <<= 1);
 
 	return my_cflag;
+}
+
+unsigned int
+cflag_add(char c_, ChannelModeFunc function)
+{
+	int c = (unsigned char)c_;
+
+	if (chmode_table[c].set_func != chm_nosuch &&
+			chmode_table[c].set_func != chm_orphaned)
+		return 0;
+
+	if (chmode_table[c].set_func == chm_nosuch)
+		chmode_table[c].mode_type = find_cflag_slot();
+	if (chmode_table[c].mode_type == 0)
+		return 0;
+	chmode_table[c].set_func = function;
+	construct_cflags_strings();
+	return chmode_table[c].mode_type;
+}
+
+void
+cflag_orphan(char c_)
+{
+	int c = (unsigned char)c_;
+
+	s_assert(chmode_flags[c] != 0);
+	chmode_table[c].set_func = chm_orphaned;
+	construct_cflags_strings();
 }
 
 static int

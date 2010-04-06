@@ -126,11 +126,13 @@ struct ChCapCombo
 	int cap_no;
 };
 
+typedef void (*ChannelModeFunc)(struct Client *source_p, struct Channel *chptr,
+		int alevel, int parc, int *parn,
+		const char **parv, int *errors, int dir, char c, long mode_type);
+
 struct ChannelMode
 {
-	void (*set_func) (struct Client * source_p, struct Channel * chptr,
-		      int alevel, int parc, int *parn,
-		      const char **parv, int *errors, int dir, char c, long mode_type);
+	ChannelModeFunc set_func;
 	long mode_type;
 };
 
@@ -256,6 +258,8 @@ extern void set_chcap_usage_counts(struct Client *serv_p);
 extern void unset_chcap_usage_counts(struct Client *serv_p);
 extern void send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
 				  struct Channel *chptr, struct ChModeChange foo[], int);
+
+void resv_chan_forcepart(const char *name, const char *reason, int temp_time);
 
 extern void set_channel_mode(struct Client *client_p, struct Client *source_p,
             	struct Channel *chptr, struct membership *msptr, int parc, const char *parv[]);
