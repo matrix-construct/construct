@@ -157,7 +157,9 @@ parameters: type, user mask, host mask, creation TS, duration, lifetime, oper, r
 
 Propagates a network wide ban.
 
-The type is K for K:lines; other types are reserved.
+The type is K for K:lines, R for resvs and X for X:lines; other types are
+reserved. The user mask field is only used for K:lines; for resvs and X:lines
+the field is ignored in input and sent as an asterisk.
 
 The creation TS indicates when this ban was last modified. An incoming ban MUST
 be ignored and not propagated if the creation TS is older than the creation TS
