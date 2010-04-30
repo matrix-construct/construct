@@ -116,6 +116,7 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	ptr = find_prop_ban(ntype, parv[2], parv[3]);
 	if (ptr != NULL)
 	{
+		/* We already know about this ban mask. */
 		aconf = ptr->data;
 		if (aconf->created > created ||
 				(aconf->created == created &&
@@ -130,6 +131,11 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 						aconf->host);
 			return 0;
 		}
+		/* act indicates if something happened (from the oper's
+		 * point of view). This is the case if the ban was
+		 * previously active (not deleted) or if the new ban
+		 * is not a removal and not already expired.
+		 */
 		act = !(aconf->status & CONF_ILLEGAL) || (hold != created &&
 				hold > rb_current_time());
 		if (lifetime > aconf->lifetime)
@@ -137,6 +143,7 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		/* already expired, hmm */
 		if (aconf->lifetime <= rb_current_time())
 			return 0;
+		/* Deactivate, it will be reactivated later if appropriate. */
 		deactivate_conf(aconf, ptr);
 		rb_free(aconf->user);
 		aconf->user = NULL;
@@ -151,6 +158,7 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	}
 	else
 	{
+		/* New ban mask. */
 		aconf = make_conf();
 		aconf->status = CONF_ILLEGAL | ntype;
 		aconf->lifetime = lifetime;
@@ -171,6 +179,13 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		aconf->passwd = rb_strndup(parv[parc - 1], p - parv[parc - 1] + 1);
 		aconf->spasswd = rb_strdup(p + 1);
 	}
+	/* The ban is fully filled in and in the prop_bans list
+	 * but still deactivated. Now determine if it should be activated
+	 * and send the server notices.
+	 */
+	/* We only reject *@* and the like here.
+	 * Otherwise malformed bans are fairly harmless and can be removed.
+	 */
 	switch (ntype)
 	{
 		case CONF_KILL:
@@ -244,6 +259,11 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 				aconf->user ? " " : "",
 				aconf->host);
 	}
+	/* If CONF_ILLEGAL is still set at this point, remove entries from the
+	 * reject cache (for klines and xlines).
+	 * If CONF_ILLEGAL is not set, add the ban to the type-specific data
+	 * structure and take action on matched clients/channels.
+	 */
 	switch (ntype)
 	{
 		case CONF_KILL:
