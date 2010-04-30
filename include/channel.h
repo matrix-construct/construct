@@ -39,7 +39,6 @@ struct Client;
 struct Mode
 {
 	unsigned int mode;
-	unsigned int off_mode;
 	int limit;
 	char key[KEYLEN];
 	unsigned int join_num;
@@ -52,7 +51,7 @@ struct Channel
 {
 	rb_dlink_node node;
 	struct Mode mode;
-	struct Mode mode_lock;
+	char *mode_lock;
 	char *topic;
 	char *topic_info;
 	time_t topic_time;
@@ -264,7 +263,7 @@ void resv_chan_forcepart(const char *name, const char *reason, int temp_time);
 extern void set_channel_mode(struct Client *client_p, struct Client *source_p,
             	struct Channel *chptr, struct membership *msptr, int parc, const char *parv[]);
 extern void set_channel_mlock(struct Client *client_p, struct Client *source_p,
-            	struct Channel *chptr, int parc, const char *parv[]);
+            	struct Channel *chptr, const char *newmlock);
 
 extern struct ChannelMode chmode_table[256];
 

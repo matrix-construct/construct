@@ -96,6 +96,7 @@ void
 free_channel(struct Channel *chptr)
 {
 	rb_free(chptr->chname);
+	rb_free(chptr->mode_lock);
 	rb_bh_free(channel_heap, chptr);
 }
 
