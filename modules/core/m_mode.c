@@ -58,7 +58,7 @@ struct Message tmode_msgtab = {
 };
 struct Message mlock_msgtab = {
 	"MLOCK", 0, 0, 0, MFLG_SLOW,
-	{mg_ignore, mg_ignore, {ms_mlock, 4}, {ms_mlock, 4}, mg_ignore, mg_ignore}
+	{mg_ignore, mg_ignore, {ms_mlock, 3}, {ms_mlock, 3}, mg_ignore, mg_ignore}
 };
 struct Message bmask_msgtab = {
 	"BMASK", 0, 0, 0, MFLG_SLOW,

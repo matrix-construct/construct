@@ -1774,8 +1774,9 @@ set_channel_mlock(struct Client *client_p, struct Client *source_p,
 		  struct Channel *chptr, const char *newmlock)
 {
 	rb_free(chptr->mode_lock);
-	chptr->mode_lock = rb_strdup(newmlock);
+	chptr->mode_lock = newmlock ? rb_strdup(newmlock) : NULL;
 
-	sendto_server(client_p, NULL, CAP_TS6 | CAP_MLOCK, NOCAPS, ":%s MLOCK %ld %s %s",
-		      source_p->id, (long) chptr->channelts, chptr->chname, chptr->mode_lock);
+	sendto_server(client_p, NULL, CAP_TS6 | CAP_MLOCK, NOCAPS, ":%s MLOCK %ld %s :%s",
+		      source_p->id, (long) chptr->channelts, chptr->chname,
+		      chptr->mode_lock ? chptr->mode_lock : "");
 }

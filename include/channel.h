@@ -241,7 +241,6 @@ extern void del_invite(struct Channel *chptr, struct Client *who);
 
 const char *channel_modes_real(struct Channel *chptr, struct Mode *mode, struct Client *who);
 #define channel_modes(chptr, who)	channel_modes_real(chptr, &(chptr)->mode, who)
-#define channel_mlock(chptr, who)	channel_modes_real(chptr, &(chptr)->mode_lock, who)
 
 extern struct Channel *find_bannickchange_channel(struct Client *client_p);
 
