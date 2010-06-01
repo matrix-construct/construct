@@ -67,10 +67,17 @@ mr_pass(struct Client *client_p, struct Client *source_p, int parc, const char *
 		memset(client_p->localClient->passwd, 0,
 			strlen(client_p->localClient->passwd));
 		rb_free(client_p->localClient->passwd);
+		client_p->localClient->passwd = NULL;
 	}
 
-	client_p->localClient->passwd = rb_strndup(parv[1], PASSWDLEN);
-	
+	if (client_p->localClient->auth_user)
+	{
+		memset(client_p->localClient->auth_user, 0,
+		       strlen(client_p->localClient->auth_user));
+		rb_free(client_p->localClient->auth_user);
+		client_p->localClient->auth_user = NULL;
+	}
+
 	if ((pass = strchr(buf, ':')) != NULL)
 	{
 		*pass++ = '\0'; 
