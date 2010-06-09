@@ -483,14 +483,13 @@ attach_iline(struct Client *client_p, struct ConfItem *aconf)
 	int local_count = 0;
 	int global_count = 0;
 	int ident_count = 0;
-	int unidented = 0;
+	int unidented;
 
 	if(IsConfExemptLimits(aconf))
 		return (attach_conf(client_p, aconf));
 
-	if(*client_p->username == '~')
-		unidented = 1;
-
+	unidented = !IsGotId(client_p) && !IsNoTilde(aconf) &&
+		(!IsConfDoSpoofIp(aconf) || !strchr(aconf->info.name, '@'));
 
 	/* find_hostname() returns the head of the list to search */
 	RB_DLINK_FOREACH(ptr, find_hostname(client_p->host))
