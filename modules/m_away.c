@@ -90,16 +90,13 @@ m_away(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		return 0;
 	}
 
-
 	if(source_p->user->away == NULL)
-	{
 		allocate_away(source_p);
+	if(strncmp(source_p->user->away, parv[1], AWAYLEN - 1))
+	{
 		rb_strlcpy(source_p->user->away, parv[1], AWAYLEN);
 		sendto_server(client_p, NULL, CAP_TS6, NOCAPS, 
 			      ":%s AWAY :%s", use_id(source_p), source_p->user->away);
-			
-	} else {
-		rb_strlcpy(source_p->user->away, parv[1], AWAYLEN);
 	}
 	
 	if(MyConnect(source_p))
