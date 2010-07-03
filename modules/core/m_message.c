@@ -726,6 +726,17 @@ msg_client(int p_or_n, const char *command,
 		sendto_one_numeric(source_p, RPL_AWAY, form_str(RPL_AWAY),
 				   target_p->name, target_p->user->away);
 
+	/*
+	 * XXX: Controversial? Allow target users to send replies through a +g.
+	 * Rationale is that people can presently use +g as a way to taunt users,
+	 * e.g. harass them and hide behind +g as a way of griefing.  --nenolod
+	 */
+	if(MyClient(source_p) && IsSetCallerId(source_p) && !accept_message(target_p, source_p))
+	{
+		rb_dlinkAddAlloc(target_p, &source_p->localClient->allow_list);
+		rb_dlinkAddAlloc(source_p, &target_p->on_allow_list);
+	}
+
 	if(MyClient(target_p))
 	{
 		/* XXX Controversial? allow opers always to send through a +g */
