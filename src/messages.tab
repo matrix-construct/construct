@@ -515,7 +515,7 @@ static  const char *  replies[] = {
 /* 491 ERR_NOOPERHOST, */       ":No appropriate operator blocks were found for your host",
 /* 492 */       NULL,
 /* 493 */       NULL,
-/* 494 */       NULL,
+/* 494 ERR_OWNMODE, */          "%s :cannot answer you while you are %s, your message was not sent",
 /* 495 */       NULL,
 /* 496 */       NULL,
 /* 497 */       NULL,
