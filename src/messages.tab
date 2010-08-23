@@ -756,7 +756,7 @@ static  const char *  replies[] = {
 /* 732 RPL_MONLIST */		":%s 732 %s :%s",
 /* 733 RPL_ENDOFMONLIST */	":%s 733 %s :End of MONITOR list",
 /* 734 ERR_MONLISTFULL */	":%s 734 %s %d %s :Monitor list is full",
-/* 735 */	NULL,
+/* 735 ERR_MLOCKRESTRICTED */	"%s %c :This mode cannot be set because it is restricted to Services only.",
 /* 736 */	NULL,
 /* 737 */	NULL,
 /* 738 */	NULL,

@@ -361,6 +361,8 @@ extern const char *form_str(int);
 #define RPL_ENDOFMONLIST	733
 #define ERR_MONLISTFULL		734
 
+#define ERR_MLOCKRESTRICTED	735
+
 #define RPL_RSACHALLENGE2       740
 #define RPL_ENDOFRSACHALLENGE2  741
 
