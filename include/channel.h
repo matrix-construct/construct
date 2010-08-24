@@ -261,7 +261,7 @@ void resv_chan_forcepart(const char *name, const char *reason, int temp_time);
 extern void set_channel_mode(struct Client *client_p, struct Client *source_p,
             	struct Channel *chptr, struct membership *msptr, int parc, const char *parv[]);
 extern void set_channel_mlock(struct Client *client_p, struct Client *source_p,
-            	struct Channel *chptr, const char *newmlock);
+            	struct Channel *chptr, const char *newmlock, int propagate);
 
 extern struct ChannelMode chmode_table[256];
 
