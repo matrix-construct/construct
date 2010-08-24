@@ -1,13 +1,10 @@
-If you don't read this first, we won't help you.
-:-)
-
 ******************************* IMPORTANT *************************************
 
   *********** Note for those who dont bother reading docs *****************
   * - Reading INSTALL is now a must, as the old DPATH is now specified    *
   *   when configure is run.                                              *
   *   You now need to ./configure --prefix="/path/to/install/it"          *
-  *   will be installed with your ircd!					  *
+  *   to specify the path that will be installed with your ircd!          *
   *************************************************************************
 
   ALSO, IF YOU ARE UPGRADING YOUR CURRENT SOURCE TREE, AND YOU TRY TO BUILD
@@ -16,22 +13,11 @@ If you don't read this first, we won't help you.
 
 ******************************* REQUIREMENTS **********************************
 
-New Features - A short introduction:
-- charybdis-3.x now has several major changes over previous version that you
-  will notice right away.
-  o SSL Client support.
-  o Connection Throttling. 
-
-- Please see NEWS for more detailed changes.
-
-
 Necessary Requirements:
 
 - A supported platform (look below)
 
-- A working dynamic load library, unless
-  compiling as static, without module
-  support.
+- A working dynamic load library.
 
 - A working lex.  Solaris /usr/ccs/bin/lex
   appears to be broken, on this system flex
@@ -41,9 +27,11 @@ Necessary Requirements:
 Feature Specific Requirements:
 
 - For SSL Clients, SSL Challenge controlled OPER feature, and encrypted server links,
-  a working OpenSSL library
+  a working OpenSSL library or GnuTLS library.  CHALLENGE is not supported on GnuTLS
+  yet.
 
-- For encrypted oper and (optional) server passwords, a working DES, MD5, or SHA library.
+- For encrypted oper and (optional) server passwords, a working DES, MD5, or SHA library
+  implementing crypt().
 
 *******************************************************************************
 
@@ -54,10 +42,10 @@ Feature Specific Requirements:
 
 - Please read doc/index.txt to get an overview of the current documentation.
 
-- The files, /etc/services, /etc/protocols, and /etc/resolv.conf, MUST be
-  readable by the user running the server in order for ircd to start.
-  Errors from adns causing the ircd to refuse to start up are often related
-  to permission problems on these files.
+- The files, /etc/services, /etc/protocols, and /etc/resolv.conf, SHOULD be
+  readable by the user running the server in order for ircd to start with
+  the correct settings.  If these files are wrong, charybdis will try to use
+  127.0.0.1 for a resolver as a last-ditch effort.
 
 - FREEBSD USERS: if you are compiling with ipv6 you may experience
   problems with ipv4 due to the way the socket code is written.  To
@@ -91,11 +79,7 @@ Feature Specific Requirements:
   Solaris 2.6/7/8
   OpenBSD 2.8
   NetBSD 1.4
-  OpenVMS/Alpha 7.2 (static modules, no ssld)
 
-- Please read NEWS for information about what is in this release
+- Please read NEWS for information about what is in this release.
 
 - Other files recommended for reading: BUGS, INSTALL
-
---------------------------------------------------------------------------------
-$Id$

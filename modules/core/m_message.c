@@ -682,6 +682,32 @@ msg_client(int p_or_n, const char *command,
 
 	if(MyClient(source_p))
 	{
+		/*
+		 * XXX: Controversial? Allow target users to send replies
+		 * through a +g.  Rationale is that people can presently use +g
+		 * as a way to taunt users, e.g. harass them and hide behind +g
+		 * as a way of griefing.  --nenolod
+		 */
+		if(p_or_n != NOTICE && MyClient(source_p) &&
+				IsSetCallerId(source_p) &&
+				!accept_message(target_p, source_p) &&
+				!IsOper(target_p))
+		{
+			if(rb_dlink_list_length(&source_p->localClient->allow_list) <
+					ConfigFileEntry.max_accept)
+			{
+				rb_dlinkAddAlloc(target_p, &source_p->localClient->allow_list);
+				rb_dlinkAddAlloc(source_p, &target_p->on_allow_list);
+			}
+			else
+			{
+				sendto_one_numeric(source_p, ERR_OWNMODE,
+						form_str(ERR_OWNMODE),
+						target_p->name, "+g");
+				return;
+			}
+		}
+
 		/* reset idle time for message only if its not to self 
 		 * and its not a notice */
 		if(p_or_n != NOTICE)

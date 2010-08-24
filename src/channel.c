@@ -96,6 +96,7 @@ void
 free_channel(struct Channel *chptr)
 {
 	rb_free(chptr->chname);
+	rb_free(chptr->mode_lock);
 	rb_bh_free(channel_heap, chptr);
 }
 
@@ -1073,10 +1074,9 @@ set_channel_topic(struct Channel *chptr, const char *topic, const char *topic_in
 	}
 }
 
-/* channel_modes_real()
+/* channel_modes()
  *
  * inputs       - pointer to channel
- *              - pointer to channel Mode struct
  *              - pointer to client
  * output       - string with simple modes
  * side effects - result from previous calls overwritten
@@ -1084,7 +1084,7 @@ set_channel_topic(struct Channel *chptr, const char *topic, const char *topic_in
  * Stolen from ShadowIRCd 4 --nenolod
  */
 const char *
-channel_modes_real(struct Channel *chptr, struct Mode *mode, struct Client *client_p)
+channel_modes(struct Channel *chptr, struct Client *client_p)
 {
 	int i;
 	char buf1[BUFSIZE];
@@ -1097,40 +1097,40 @@ channel_modes_real(struct Channel *chptr, struct Mode *mode, struct Client *clie
 	*pbuf = '\0';
 
 	for (i = 0; i < 256; i++)
-		if(mode->mode & chmode_flags[i])
+		if(chptr->mode.mode & chmode_flags[i])
 			*mbuf++ = i;
 
-	if(mode->limit)
+	if(chptr->mode.limit)
 	{
 		*mbuf++ = 'l';
 
 		if(!IsClient(client_p) || IsMember(client_p, chptr))
-			pbuf += rb_sprintf(pbuf, " %d", mode->limit);
+			pbuf += rb_sprintf(pbuf, " %d", chptr->mode.limit);
 	}
 
-	if(*mode->key)
+	if(*chptr->mode.key)
 	{
 		*mbuf++ = 'k';
 
 		if(pbuf > buf2 || !IsClient(client_p) || IsMember(client_p, chptr))
-			pbuf += rb_sprintf(pbuf, " %s", mode->key);
+			pbuf += rb_sprintf(pbuf, " %s", chptr->mode.key);
 	}
 
-	if(mode->join_num)
+	if(chptr->mode.join_num)
 	{
 		*mbuf++ = 'j';
 
 		if(pbuf > buf2 || !IsClient(client_p) || IsMember(client_p, chptr))
-			pbuf += rb_sprintf(pbuf, " %d:%d", mode->join_num,
-					   mode->join_time);
+			pbuf += rb_sprintf(pbuf, " %d:%d", chptr->mode.join_num,
+					   chptr->mode.join_time);
 	}
 
-	if(*mode->forward && (ConfigChannel.use_forward || !IsClient(client_p)))
+	if(*chptr->mode.forward && (ConfigChannel.use_forward || !IsClient(client_p)))
 	{
 		*mbuf++ = 'f';
 
 		if(pbuf > buf2 || !IsClient(client_p) || IsMember(client_p, chptr))
-			pbuf += rb_sprintf(pbuf, " %s", mode->forward);
+			pbuf += rb_sprintf(pbuf, " %s", chptr->mode.forward);
 	}
 
 	*mbuf = '\0';

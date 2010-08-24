@@ -297,6 +297,8 @@ extern const char *form_str(int);
 
 #define ERR_NOOPERHOST       491
 
+#define ERR_OWNMODE          494 /* from bahamut -- jilles */
+
 #define ERR_UMODEUNKNOWNFLAG 501
 #define ERR_USERSDONTMATCH   502
 
@@ -358,6 +360,8 @@ extern const char *form_str(int);
 #define RPL_MONLIST		732
 #define RPL_ENDOFMONLIST	733
 #define ERR_MONLISTFULL		734
+
+#define ERR_MLOCKRESTRICTED	735
 
 #define RPL_RSACHALLENGE2       740
 #define RPL_ENDOFRSACHALLENGE2  741

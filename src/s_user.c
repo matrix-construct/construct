@@ -654,8 +654,8 @@ introduce_client(struct Client *client_p, struct Client *source_p, struct User *
 
 	if(MyConnect(source_p) && source_p->localClient->passwd)
 	{
-		if (ConfigFileEntry.identifyservice[0] != '\0' &&
-				ConfigFileEntry.identifycommand[0] != '\0')
+		if (!EmptyString(ConfigFileEntry.identifyservice) &&
+				!EmptyString(ConfigFileEntry.identifycommand))
 		{
 			/* use user@server */
 			p = strchr(ConfigFileEntry.identifyservice, '@');

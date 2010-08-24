@@ -157,7 +157,9 @@ parameters: type, user mask, host mask, creation TS, duration, lifetime, oper, r
 
 Propagates a network wide ban.
 
-The type is K for K:lines; other types are reserved.
+The type is K for K:lines, R for resvs and X for X:lines; other types are
+reserved. The user mask field is only used for K:lines; for resvs and X:lines
+the field is ignored in input and sent as an asterisk.
 
 The creation TS indicates when this ban was last modified. An incoming ban MUST
 be ignored and not propagated if the creation TS is older than the creation TS
@@ -455,21 +457,17 @@ Remote LUSERS request. Most servers ignore the server mask, treating it as '*'.
 MLOCK
 charybdis TS6
 source: services server
-parameters: channelTS, channel, cmode changes, opt. cmode parameters...
+parameters: channelTS, channel, mode letters
 propagation: broadcast (restricted)
 
-Propagates a channel mode lock change.  
+Propagates a channel mode lock change.
 
 If the channelTS is greater (newer) than the current TS of the channel, drop
 the message.
 
-On input, only the limit on parameters per line restricts how many cmode
-parameters can be present. Apart from this, arbitrary modes shall be
-processed. Redundant modes may be dropped. For example, +n-n may be applied and
-propagated as +n-n, -n or (if the channel was already -n) nothing, but not as
-+n.
-
-The parameter for mode -k (removing a key) shall be ignored.
+The final parameter is a list of mode letters that may not be changed by local
+users. This applies to setting or unsetting simple modes, and changing or
+removing mode parameters.
 
 An MLOCK message with no modes disables the MLOCK, therefore the MLOCK message
 always contains the literal MLOCK for simplicity.

@@ -287,6 +287,15 @@ verify_accept_all_cb(int preverify_ok, X509_STORE_CTX *x509_ctx)
 	return 1;
 }
 
+static const char *
+get_ssl_error(unsigned long err)
+{
+	static char buf[512];
+
+	ERR_error_string_n(err, buf, sizeof buf);
+	return buf;
+}
+
 int
 rb_init_ssl(void)
 {
@@ -299,7 +308,7 @@ rb_init_ssl(void)
 	if(ssl_server_ctx == NULL)
 	{
 		rb_lib_log("rb_init_openssl: Unable to initialize OpenSSL server context: %s",
-			   ERR_error_string(ERR_get_error(), NULL));
+			   get_ssl_error(ERR_get_error()));
 		ret = 0;
 	}
 	/* Disable SSLv2, make the client use our settings */
@@ -311,7 +320,7 @@ rb_init_ssl(void)
 	if(ssl_client_ctx == NULL)
 	{
 		rb_lib_log("rb_init_openssl: Unable to initialize OpenSSL client context: %s",
-			   ERR_error_string(ERR_get_error(), NULL));
+			   get_ssl_error(ERR_get_error()));
 		ret = 0;
 	}
 	return ret;
@@ -332,7 +341,7 @@ rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile)
 	{
 		err = ERR_get_error();
 		rb_lib_log("rb_setup_ssl_server: Error loading certificate file [%s]: %s", cert,
-			   ERR_error_string(err, NULL));
+			   get_ssl_error(err));
 		return 0;
 	}
 
@@ -347,7 +356,7 @@ rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile)
 	{
 		err = ERR_get_error();
 		rb_lib_log("rb_setup_ssl_server: Error loading keyfile [%s]: %s", keyfile,
-			   ERR_error_string(err, NULL));
+			   get_ssl_error(err));
 		return 0;
 	}
 
@@ -363,7 +372,7 @@ rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile)
 				err = ERR_get_error();
 				rb_lib_log
 					("rb_setup_ssl_server: Error loading DH params file [%s]: %s",
-					 dhfile, ERR_error_string(err, NULL));
+					 dhfile, get_ssl_error(err));
 				BIO_free(bio);
 				return 0;
 			}
@@ -374,7 +383,7 @@ rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile)
 		{
 			err = ERR_get_error();
 			rb_lib_log("rb_setup_ssl_server: Error loading DH params file [%s]: %s",
-				   dhfile, ERR_error_string(err, NULL));
+				   dhfile, get_ssl_error(err));
 		}
 	}
 	return 1;
@@ -609,7 +618,7 @@ rb_get_pseudo_random(void *buf, size_t length)
 const char *
 rb_get_ssl_strerror(rb_fde_t *F)
 {
-	return ERR_error_string(F->ssl_errno, NULL);
+	return get_ssl_error(F->ssl_errno);
 }
 
 int

@@ -516,7 +516,7 @@ chm_simple(struct Client *source_p, struct Channel *chptr,
 		return;
 
 	/* setting + */
-	if((dir == MODE_ADD) && !(chptr->mode.mode & mode_type) && !(chptr->mode_lock.off_mode & mode_type))
+	if((dir == MODE_ADD) && !(chptr->mode.mode & mode_type))
 	{
 		/* if +f is disabled, ignore an attempt to set +QF locally */
 		if(!ConfigChannel.use_forward && MyClient(source_p) &&
@@ -533,7 +533,7 @@ chm_simple(struct Client *source_p, struct Channel *chptr,
 		mode_changes[mode_count].mems = ALL_MEMBERS;
 		mode_changes[mode_count++].arg = NULL;
 	}
-	else if((dir == MODE_DEL) && (chptr->mode.mode & mode_type) && !(chptr->mode_lock.mode & mode_type))
+	else if((dir == MODE_DEL) && (chptr->mode.mode & mode_type))
 	{
 		chptr->mode.mode &= ~mode_type;
 
@@ -1662,6 +1662,12 @@ set_channel_mode(struct Client *client_p, struct Client *source_p,
 			dir = MODE_QUERY;
 			break;
 		default:
+			/* If this mode char is locked, don't allow local users to change it. */
+			if (MyClient(source_p) && chptr->mode_lock && strchr(chptr->mode_lock, c))
+			{
+				sendto_one_numeric(source_p, ERR_MLOCKRESTRICTED, form_str(ERR_MLOCKRESTRICTED), chptr->chname, c, chptr->mode_lock);
+				continue;
+			}
 			chmode_table[(unsigned char) c].set_func(fakesource_p, chptr, alevel,
 				       parc, &parn, parv,
 				       &errors, dir, c,
@@ -1768,41 +1774,15 @@ set_channel_mode(struct Client *client_p, struct Client *source_p,
  */
 void
 set_channel_mlock(struct Client *client_p, struct Client *source_p,
-		  struct Channel *chptr, int parc, const char *parv[])
+		  struct Channel *chptr, const char *newmlock, int propagate)
 {
-	int dir = MODE_ADD;
-	const char *ml = parv[0];
-	char c;
+	rb_free(chptr->mode_lock);
+	chptr->mode_lock = newmlock ? rb_strdup(newmlock) : NULL;
 
-	memset(&chptr->mode_lock, '\0', sizeof(struct Mode));
-
-	for(; (c = *ml) != 0; ml++)
+	if (propagate)
 	{
-		switch (c)
-		{
-		case '+':
-			dir = MODE_ADD;
-			break;
-		case '-':
-			dir = MODE_DEL;
-			break;
-		default:
-			if (chmode_table[(unsigned char) c].set_func == chm_simple)
-				switch(dir)
-				{
-				case MODE_ADD:
-					chptr->mode_lock.mode |= chmode_table[(unsigned char) c].mode_type;
-					chptr->mode_lock.off_mode &= ~chmode_table[(unsigned char) c].mode_type;
-					break;
-				case MODE_DEL:
-					chptr->mode_lock.off_mode |= chmode_table[(unsigned char) c].mode_type;
-					chptr->mode_lock.mode &= ~chmode_table[(unsigned char) c].mode_type;
-					break;
-				}
-			break;
-		}
+		sendto_server(client_p, NULL, CAP_TS6 | CAP_MLOCK, NOCAPS, ":%s MLOCK %ld %s :%s",
+			      source_p->id, (long) chptr->channelts, chptr->chname,
+			      chptr->mode_lock ? chptr->mode_lock : "");
 	}
-
-	sendto_server(client_p, NULL, CAP_TS6 | CAP_MLOCK, NOCAPS, ":%s MLOCK %ld %s %s",
-		      source_p->id, (long) chptr->channelts, chptr->chname, channel_mlock(chptr, &me));
 }

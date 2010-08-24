@@ -587,7 +587,7 @@ static struct InfoStruct info_table[] = {
 	{
 		"resv_forcepart",
 		OUTPUT_BOOLEAN_YN,
-		{ &ConfigChannel.resv_forcepart },
+		&ConfigChannel.resv_forcepart,
 		"Force-part local users on channel RESV"
 	},
 	{

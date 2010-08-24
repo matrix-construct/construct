@@ -58,6 +58,7 @@ strip_colour(char *string)
 		case 22:
 		case 23:
 		case 27:
+		case 29:
 		case 31:
 			break;
 		case 32:

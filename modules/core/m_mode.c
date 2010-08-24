@@ -58,7 +58,7 @@ struct Message tmode_msgtab = {
 };
 struct Message mlock_msgtab = {
 	"MLOCK", 0, 0, 0, MFLG_SLOW,
-	{mg_ignore, mg_ignore, {ms_mlock, 4}, {ms_mlock, 4}, mg_ignore, mg_ignore}
+	{mg_ignore, mg_ignore, {ms_mlock, 3}, {ms_mlock, 3}, mg_ignore, mg_ignore}
 };
 struct Message bmask_msgtab = {
 	"BMASK", 0, 0, 0, MFLG_SLOW,
@@ -235,7 +235,7 @@ ms_mlock(struct Client *client_p, struct Client *source_p, int parc, const char 
 		return 0;
 
 	if(IsServer(source_p))
-		set_channel_mlock(client_p, source_p, chptr, parc - 3, parv + 3);
+		set_channel_mlock(client_p, source_p, chptr, parv[3], TRUE);
 
 	return 0;
 }
