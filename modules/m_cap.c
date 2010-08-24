@@ -69,8 +69,7 @@ static struct clicap
 	int namelen;
 } clicap_list[] = {
 	_CLICAP("multi-prefix",	CLICAP_MULTI_PREFIX, 0, 0),
-	_CLICAP("sasl", CLICAP_SASL, 0, 0),
-	_CLICAP("source-account-hostmask", CLICAP_ACCOUNT_HOSTMASK, 0, 0),
+	_CLICAP("sasl", CLICAP_SASL, 0, 0)
 };
 
 #define CLICAP_LIST_LEN (sizeof(clicap_list) / sizeof(struct clicap))
@@ -175,7 +174,7 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags, int clea
 	char *p;
 	int buflen = 0;
 	int curlen, mlen;
-	size_t i;
+	int i;
 
 	mlen = rb_sprintf(buf, ":%s CAP %s %s",
 			me.name, 
