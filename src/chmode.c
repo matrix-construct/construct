@@ -56,6 +56,7 @@
 #define SM_ERR_NOPRIVS          0x00000400
 #define SM_ERR_RPL_Q            0x00000800
 #define SM_ERR_RPL_F            0x00001000
+#define SM_ERR_MLOCK            0x00002000
 
 #define MAXMODES_SIMPLE 46 /* a-zA-Z except bqeIov */
 
@@ -1665,7 +1666,14 @@ set_channel_mode(struct Client *client_p, struct Client *source_p,
 			/* If this mode char is locked, don't allow local users to change it. */
 			if (MyClient(source_p) && chptr->mode_lock && strchr(chptr->mode_lock, c))
 			{
-				sendto_one_numeric(source_p, ERR_MLOCKRESTRICTED, form_str(ERR_MLOCKRESTRICTED), chptr->chname, c, chptr->mode_lock);
+				if (!(errors & SM_ERR_MLOCK))
+					sendto_one_numeric(source_p,
+							ERR_MLOCKRESTRICTED,
+							form_str(ERR_MLOCKRESTRICTED),
+							chptr->chname,
+							c,
+							chptr->mode_lock);
+				errors |= SM_ERR_MLOCK;
 				continue;
 			}
 			chmode_table[(unsigned char) c].set_func(fakesource_p, chptr, alevel,
