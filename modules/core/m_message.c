@@ -688,8 +688,7 @@ msg_client(int p_or_n, const char *command,
 		 * as a way to taunt users, e.g. harass them and hide behind +g
 		 * as a way of griefing.  --nenolod
 		 */
-		if(p_or_n != NOTICE && MyClient(source_p) &&
-				IsSetCallerId(source_p) &&
+		if(p_or_n != NOTICE && IsSetCallerId(source_p) &&
 				!accept_message(target_p, source_p) &&
 				!IsOper(target_p))
 		{
