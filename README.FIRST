@@ -7,7 +7,7 @@ If you don't read this first, we won't help you.
   * - Reading INSTALL is now a must, as the old DPATH is now specified    *
   *   when configure is run.                                              *
   *   You now need to ./configure --prefix="/path/to/install/it"          *
-  *   will be installed with your ircd!					  *
+  *   to specify the path that will be installed with your ircd!          *
   *************************************************************************
 
   ALSO, IF YOU ARE UPGRADING YOUR CURRENT SOURCE TREE, AND YOU TRY TO BUILD
@@ -15,15 +15,6 @@ If you don't read this first, we won't help you.
   RECOMMENDED THAT YOU RUN 'make distclean' AND THEN RERUN './configure'!
 
 ******************************* REQUIREMENTS **********************************
-
-New Features - A short introduction:
-- charybdis-3.x now has several major changes over previous version that you
-  will notice right away.
-  o SSL Client support.
-  o Connection Throttling. 
-
-- Please see NEWS for more detailed changes.
-
 
 Necessary Requirements:
 
