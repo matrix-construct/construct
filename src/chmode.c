@@ -1664,7 +1664,10 @@ set_channel_mode(struct Client *client_p, struct Client *source_p,
 		default:
 			/* If this mode char is locked, don't allow local users to change it. */
 			if (MyClient(source_p) && chptr->mode_lock && strchr(chptr->mode_lock, c))
+			{
+				sendto_one_numeric(source_p, ERR_MLOCKRESTRICTED, form_str(ERR_MLOCKRESTRICTED), chptr->name, c, chptr->mode_lock);
 				continue;
+			}
 			chmode_table[(unsigned char) c].set_func(fakesource_p, chptr, alevel,
 				       parc, &parn, parv,
 				       &errors, dir, c,
