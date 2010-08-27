@@ -1,6 +1,43 @@
 This is charybdis 3.2, Copyright (c) 2005-2010 Charybdis team.
 See LICENSE for licensing details (GPL v2).
 
+-- charybdis-3.3.0
+
+server protocol
+- Add new BAN command, for propagated network-wide bans (K/X:lines and RESVs).
+  These will burst to new servers as they are introduced, and will stay in sync
+  across the whole network (new BAN capab).
+- Add new MLOCK command, to implement ircd-side channel mode locks. This allows
+  services to send out a list of mode letters for a given channel which may not
+  be changed, preventing mode fights between services and client bots (new MLOCK
+  capab).
+user
+- New RPL_QUIETLIST(728) and RPL_ENDOFQUIETLIST(729) numerics are used for the
+  quiet (+q) list, instead of overloading the ban list numerics.
+- Users may no longer change the topic of a -t channel if they cannot send to
+  it.
+- Add help for EXTBAN, describing the syntax of extended bans in general, as
+  well as the most common types.
+- Changed AWAY messages are now propagated to other servers. Previously, AWAY
+  was only propagated when the user was not already away.
+- Channel mode +c (and other places that disallow colour codes) now also strip
+  ASCII 29 (mIRC 7 italics).
+- Add auto-accept for user mode +g (callerid): Messaging a user while set +g
+  will automatically add them to your accept list.
+oper
+config
+- Add general::use_propagated_bans to switch the new BAN system on or off.
+- Add general::default_ident_timeout, to control the timeout for identd (auth)
+  connections.
+- Fix class::number_per_ident so that it also applies to connections without
+  identd.
+misc
+- The custom channel mode API has been rewritten, allowing these modules to work
+  correctly when reloaded, or loaded from the config file.
+- The EFNet RBL is now recommended, instead of DroneBL.
+- Remove the unsupported modules directory.
+- Numerous bug fixes and code cleanups.
+
 -- charybdis-3.2.0
 
 server protocol
