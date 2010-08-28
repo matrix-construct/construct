@@ -30,6 +30,8 @@
 #include "hash.h"
 #include "s_newconf.h"
 
+static int add_hashed_target(struct Client *source_p, uint32_t hashv);
+
 struct Channel *
 find_allowing_channel(struct Client *source_p, struct Client *target_p)
 {
@@ -48,9 +50,7 @@ find_allowing_channel(struct Client *source_p, struct Client *target_p)
 int
 add_target(struct Client *source_p, struct Client *target_p)
 {
-	int i, j;
 	uint32_t hashv;
-	uint32_t *targets;
 
 	/* can msg themselves or services without using any target slots */
 	if(source_p == target_p || IsService(target_p))
@@ -65,6 +65,24 @@ add_target(struct Client *source_p, struct Client *target_p)
 		return 1;
 
 	hashv = fnv_hash_upper((const unsigned char *)use_id(target_p), 32);
+	return add_hashed_target(source_p, hashv);
+}
+
+int
+add_channel_target(struct Client *source_p, struct Channel *chptr)
+{
+	uint32_t hashv;
+
+	hashv = fnv_hash_upper((const unsigned char *)chptr->chname, 32);
+	return add_hashed_target(source_p, hashv);
+}
+
+static int
+add_hashed_target(struct Client *source_p, uint32_t hashv)
+{
+	int i, j;
+	uint32_t *targets;
+
 	targets = source_p->localClient->targets;
 
 	/* check for existing target, and move it to the head */

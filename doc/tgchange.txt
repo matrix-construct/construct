@@ -3,15 +3,17 @@ Lee H <lee -at- leeh.co.uk>
 ---------------------------
 
 Reworked by Jilles Tjoelker, February 2010.
+Channel target change added by Jilles Tjoelker, August 2010.
 
 If the server you are using uses the target change mechanism, then
-restrictions are placed on how many different users you can message in a set
-timeframe. This also applies to invites.
+restrictions are placed on how many different users and/or channels you can
+message in a set timeframe.  This also applies to invites (for the target
+user) and topic changes.
 
-Target change does not apply to channels, ctcp replies, messages to
-yourself or messages to services.
+Target change does not apply to ctcp replies, messages to yourself, messages
+to services and joins.
 
-You will have a set number of 'slots', each different client you message
+You will have a set number of 'slots', each different target you message
 will take up one slot.  A client doing a nick change will not use a new slot,
 however a client disconnecting from the server it is on and reconnecting
 will.  You will receive 1 new slot roughly every minute.
@@ -20,14 +22,14 @@ Additionally, clients that message or invite you are placed in one of a
 small number of special slots, in many cases allowing replies without using
 a slot.
 
-When all slots are filled, messages to new clients will not be accepted.
-Messages to clients already filling a slot will be accepted.  If all slots
+When all slots are filled, messages to new targets will not be accepted.
+Messages to targets already filling a slot will be accepted.  If all slots
 are full, you will receive the ERR_TARGCHANGE numeric, number 707 in the
 form:
-:<server> 707 <yournick> <targetnick> :Targets changing too fast, message dropped
+:<server> 707 <yournick> <target> :Targets changing too fast, message dropped
 
-The slots are operated in an LRU (least recently used), so the person you
-have talked to least recently will be replaced.
+The slots are operated in an LRU (least recently used), so the person or
+channel you have talked to least recently will be replaced.
 
 The number of slots in use will be kept through a reconnection, though the
 information in those slots will be dropped.  However, you will always
@@ -35,9 +37,10 @@ receive one free slot on a reconnection.  Other servers using this mechanism
 will also be made aware of details about slots.
 
 Target change does not apply if you are opped or voiced in a channel, and
-you are messaging a client within that channel.  This can be done explicitly
-using the CNOTICE and CPRIVMSG commands, see /quote help cnotice and /quote
-help cprivmsg, but is also implicit in a normal /msg, /notice or /invite.
+you are messaging that channel or a client within that channel.  The latter
+can be done explicitly using the CNOTICE and CPRIVMSG commands, see
+/quote help cnotice and /quote help cprivmsg, but is also implicit in a
+normal /msg, /notice or /invite.
 
 -- 
 $Id: tgchange.txt 6 2005-09-10 01:02:21Z nenolod $

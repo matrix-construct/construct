@@ -510,6 +510,14 @@ msg_channel(int p_or_n, const char *command,
 	/* chanops and voiced can flood their own channel with impunity */
 	if((result = can_send(chptr, source_p, NULL)))
 	{
+		if(result != CAN_SEND_OPV && MyClient(source_p) &&
+		   !IsOper(source_p) &&
+		   !add_channel_target(source_p, chptr))
+		{
+			sendto_one(source_p, form_str(ERR_TARGCHANGE),
+				   me.name, source_p->name, chptr->chname);
+			return;
+		}
 		if(result == CAN_SEND_OPV ||
 		   !flood_attack_channel(p_or_n, source_p, chptr, chptr->chname))
 		{
@@ -533,6 +541,13 @@ msg_channel(int p_or_n, const char *command,
 			(!(chptr->mode.mode & MODE_NOPRIVMSGS) ||
 			 IsMember(source_p, chptr)))
 	{
+		if(MyClient(source_p) && !IsOper(source_p) &&
+		   !add_channel_target(source_p, chptr))
+		{
+			sendto_one(source_p, form_str(ERR_TARGCHANGE),
+				   me.name, source_p->name, chptr->chname);
+			return;
+		}
 		if(!flood_attack_channel(p_or_n, source_p, chptr, chptr->chname))
 		{
 			sendto_channel_opmod(client_p, source_p, chptr,

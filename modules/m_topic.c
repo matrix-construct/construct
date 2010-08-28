@@ -39,6 +39,7 @@
 #include "parse.h"
 #include "modules.h"
 #include "packet.h"
+#include "tgchange.h"
 
 static int m_topic(struct Client *, struct Client *, int, const char **);
 static int ms_topic(struct Client *, struct Client *, int, const char **);
@@ -111,6 +112,15 @@ m_topic(struct Client *client_p, struct Client *source_p, int parc, const char *
 		{
 			sendto_one_numeric(source_p, ERR_NOTONCHANNEL,
 					form_str(ERR_NOTONCHANNEL), name);
+			return 0;
+		}
+
+		if(MyClient(source_p) && !is_chanop_voiced(msptr) &&
+				!IsOper(source_p) &&
+				!add_channel_target(source_p, chptr))
+		{
+			sendto_one(source_p, form_str(ERR_TARGCHANGE),
+				   me.name, source_p->name, chptr->chname);
 			return 0;
 		}
 
