@@ -115,6 +115,10 @@ m_whowas(struct Client *client_p, struct Client *source_p, int parc, const char 
 						   form_str(RPL_WHOISACTUALLY),
 						   temp->name, temp->sockhost);
 #endif
+			if (!EmptyString(temp->suser))
+				sendto_one_numeric(source_p, RPL_WHOISLOGGEDIN,
+						   "%s %s :was logged in as",
+						   temp->name, temp->suser);
 			sendto_one_numeric(source_p, RPL_WHOISSERVER,
 					   form_str(RPL_WHOISSERVER),
 					   temp->name, temp->servername,

@@ -81,6 +81,7 @@ void add_history(struct Client *client_p, int online)
 	strcpy(who->username, client_p->username);
 	strcpy(who->hostname, client_p->host);
 	strcpy(who->realname, client_p->info);
+	strcpy(who->suser, client_p->user->suser);
 	if (!EmptyString(client_p->sockhost) && strcmp(client_p->sockhost, "0") && show_ip(NULL, client_p))
 		strcpy(who->sockhost, client_p->sockhost);
 	else

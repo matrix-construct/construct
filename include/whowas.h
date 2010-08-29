@@ -53,8 +53,9 @@ struct Whowas
 	char username[USERLEN + 1];
 	char hostname[HOSTLEN + 1];
 	char sockhost[HOSTIPLEN + 1];
-	const char *servername;
 	char realname[REALLEN + 1];
+	char suser[NICKLEN + 1];
+	const char *servername;
 	time_t logoff;
 	struct Client *online;	/* Pointer to new nickname for chasing or NULL */
 	struct Whowas *next;	/* for hash table... */
