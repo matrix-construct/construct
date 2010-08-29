@@ -45,15 +45,26 @@
 #include "reject.h"
 #include "hostmask.h"
 
+static int m_ban(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static int ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message ban_msgtab = {
 	"BAN", 0, 0, 0, MFLG_SLOW,
-	{mg_unreg, mg_ignore, {ms_ban, 9}, {ms_ban, 9}, mg_ignore, mg_ignore}
+	{mg_unreg, {m_ban, 0}, {ms_ban, 9}, {ms_ban, 9}, mg_ignore, {m_ban, 0}}
 };
 
 mapi_clist_av1 ban_clist[] =  { &ban_msgtab, NULL };
 DECLARE_MODULE_AV1(ban, NULL, NULL, ban_clist, NULL, NULL, "$Revision: 1349 $");
+
+static int
+m_ban(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+{
+	sendto_one_notice(source_p, ":The BAN command is not user-accessible.");
+	sendto_one_notice(source_p, ":To ban a user from a channel, see /QUOTE HELP CMODE");
+	if (IsOper(source_p))
+		sendto_one_notice(source_p, ":To ban a user from a server or from the network, see /QUOTE HELP KLINE");
+	return 0;
+}
 
 /* ms_ban()
  *
