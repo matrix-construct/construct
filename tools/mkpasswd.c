@@ -190,15 +190,6 @@ main(int argc, char *argv[])
 		else
 			salt = make_sha256_salt(length);
 	}
-	else if(flag & FLAG_SHA512)
-	{
-		if(length == 0)
-			length = 16;
-		if(flag & FLAG_SALT)
-			salt = make_sha512_salt_para(saltpara);
-		else
-			salt = make_sha512_salt(length);
-	}
 	else if(flag & FLAG_EXT)
 	{
 		/* XXX - rounds needs to be done */
@@ -219,7 +210,7 @@ main(int argc, char *argv[])
 			salt = make_ext_salt(rounds);
 		}
 	}
-	else
+	else if (flag & FLAG_DES)
 	{
 		if(flag & FLAG_SALT)
 		{
@@ -237,6 +228,15 @@ main(int argc, char *argv[])
 		{
 			salt = make_des_salt();
 		}
+	}
+	else
+	{
+		if(length == 0)
+			length = 16;
+		if(flag & FLAG_SALT)
+			salt = make_sha512_salt_para(saltpara);
+		else
+			salt = make_sha512_salt(length);
 	}
 
 	if(flag & FLAG_PASS)
