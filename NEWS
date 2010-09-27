@@ -24,19 +24,28 @@ user
   ASCII 29 (mIRC 7 italics).
 - Add auto-accept for user mode +g (callerid): Messaging a user while set +g
   will automatically add them to your accept list.
+- Add target change for channels.  It applies to unopped, unvoiced and unopered
+  users.  This has the effect of stopping spambots which join, message and part
+  many channels at a time.
+- Show RPL_WHOISLOGGEDIN in /whowas as well as in /whois entries.  This adds at
+  most an additional 0.5MB of memory usage.
 oper
 config
 - Add general::use_propagated_bans to switch the new BAN system on or off.
 - Add general::default_ident_timeout, to control the timeout for identd (auth)
   connections.
+- Add channel::channel_target_change to switch the new channel target change limits
+  on or off.
 - Fix class::number_per_ident so that it also applies to connections without
   identd.
+- Change the example sslport option to 6697, which is more standard than 9999.
 misc
 - The custom channel mode API has been rewritten, allowing these modules to work
   correctly when reloaded, or loaded from the config file.
 - The EFNet RBL is now recommended, instead of DroneBL.
 - Remove the unsupported modules directory.
 - Numerous bug fixes and code cleanups.
+- In mkpasswd, default to MD5 crypt instead of insecure DES.
 
 -- charybdis-3.2.0
 
