@@ -45,11 +45,6 @@
 static struct Dictionary *cmd_dict = NULL;
 struct Dictionary *alias_dict = NULL;
 
-/*
- * NOTE: parse() should not be called recursively by other functions!
- */
-static char *sender;
-
 /* parv[0] is not used, and parv[LAST] == NULL */
 static char *para[MAXPARA + 2];
 
@@ -117,12 +112,13 @@ string_to_array(char *string, char **parv)
 
 /* parse()
  *
- * given a raw buffer, parses it and generates parv, parc and sender
+ * given a raw buffer, parses it and generates parv and parc
  */
 void
 parse(struct Client *client_p, char *pbuffer, char *bufend)
 {
 	struct Client *from = client_p;
+	char *sender;
 	char *ch;
 	char *s;
 	char *end;
