@@ -369,6 +369,21 @@ ban-like modes remain intact; invites may or may not be cleared).
 
 A JOIN is propagated with the new TS of the channel.
 
+JUPE
+capab: JUPE
+source: any
+propagation: broadcast (restricted)
+parameters: target server mask, add or delete, server name, oper, reason
+
+Adds or removes a jupe for a server.  If the server is presently connected,
+it MUST be SQUIT by the server's uplink when the jupe is applied.
+
+The oper field indicates the oper that originally set the jupe. If this message
+is the initial propagation of a removal, it SHOULD be sent as * (an asterisk).
+
+The reason field indicates the reason for the jupe.  It SHOULD be displayed
+as the linking error message to the juped server if it tries to reconnect.
+
 KICK
 source: any
 parameters: channel, target user, opt. reason
