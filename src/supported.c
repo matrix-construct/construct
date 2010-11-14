@@ -116,7 +116,7 @@ change_isupport(const char *name, const char *(*func)(const void *), const void 
 {
 	rb_dlink_node *ptr;
 	struct isupportitem *item;
-	const void *oldvalue;
+	const void *oldvalue = NULL;
 
 	RB_DLINK_FOREACH(ptr, isupportlist.head)
 	{
