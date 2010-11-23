@@ -72,7 +72,7 @@ prefix_toa2x(rb_prefix_t *prefix, char *buf, int buf_len, int with_len)
 	static char tmp[6];
 	if(prefix == NULL)
 	{
-		strcpy(buf, "(NULL)");
+		rb_strlcpy(buf, "(NULL)", buf_len);
 		return (buf);
 	}
 	inet_ntop(prefix->family, &prefix->add.sin, buf, buf_len);

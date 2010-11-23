@@ -70,12 +70,6 @@ rb_ctime(const time_t t, char *buf, size_t len)
 #else
 	tp = gmtime(&t);
 #endif
-	if(rb_unlikely(tp == NULL))
-	{
-		strcpy(buf, "");
-		return (buf);
-	}
-
 	if(buf == NULL)
 	{
 		p = timex;
@@ -85,6 +79,12 @@ rb_ctime(const time_t t, char *buf, size_t len)
 	{
 		p = buf;
 		tlen = len;
+	}
+
+	if(rb_unlikely(tp == NULL))
+	{
+		rb_strlcpy(p, "", tlen);
+		return (p);
 	}
 
 	rb_snprintf(p, tlen, "%s %s %d %02u:%02u:%02u %d",

@@ -1450,9 +1450,9 @@ __md5_crypt(const char *pw, const char *salt)
 	}
 
 	/* Now make the output string */
-	strcpy(passwd, __md5__magic);
+	rb_strlcpy(passwd, __md5__magic, sizeof(passwd));
 	strncat(passwd, sp, sl);
-	strcat(passwd, "$");
+	rb_strlcat(passwd, "$", sizeof(passwd));
 
 	__md5_Final(final, &ctx);
 
