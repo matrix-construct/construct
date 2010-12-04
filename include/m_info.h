@@ -52,18 +52,6 @@ Info MyInformation[] = {
 	{"DPATH", "NONE", 0, "Directory Containing Configuration Files"},
 #endif /* DPATH */
 
-#ifdef DLPATH
-	{"DLPATH", DLPATH, 0, "Path to D-line File"},
-#else
-	{"DLPATH", "NONE", 0, "Path to D-line File"},
-#endif /* DLPATH */
-
-#ifdef RESVPATH
-	{"RESVPATH", RESVPATH, 0, "Path to resv file"},
-#else
-	{"RESVPATH", "NONE", 0, "Path to resv file"},
-#endif
-
 #ifdef HPATH
 	{"HPATH", HPATH, 0, "Path to Operator Help Files"},
 #else
@@ -95,12 +83,6 @@ Info MyInformation[] = {
 
 	{"KILLCHASETIMELIMIT", "", KILLCHASETIMELIMIT,
 	 "Nick Change Tracker for KILL"},
-
-#ifdef KPATH
-	{"KPATH", KPATH, 0, "Path to K-line File"},
-#else
-	{"KPATH", "NONE", 0, "Path to K-line File"},
-#endif /* KPATH */
 
 #ifdef LPATH
 	{"LPATH", LPATH, 0, "Path to Log File"},
