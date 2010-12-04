@@ -31,7 +31,6 @@ mandir          = @mandir@/man8
 MANPAGES        = ircd.8
 
 CONFS		= example.conf reference.conf
-DEFAULTCONFS	= kline.conf dline.conf xline.conf resv.conf
 
 SSL_LIBS	= @SSL_LIBS@
 SSL_INCLUDES	= @SSL_INCLUDES@
@@ -61,13 +60,6 @@ install: install-mkdirs build
 			$(MV) $(DESTDIR)$(confdir)/$$i $(DESTDIR)$(confdir)/$$i.old; \
 		fi; \
 		$(INSTALL_DATA) $$i $(DESTDIR)$(confdir); \
-	done
-
-	@for i in $(DEFAULTCONFS); do \
-		if test ! -f $(DESTDIR)$(confdir)/$$i; then \
-			echo "ircd: creating config file ($$i)"; \
-			${TOUCH} $(DESTDIR)$(confdir)/$$i; \
-		fi; \
 	done
 
 	-@if test ! -f $(DESTDIR)$(confdir)/ircd.motd; then \
