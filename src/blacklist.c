@@ -118,7 +118,7 @@ static void initiate_blacklist_dnsquery(struct Blacklist *blptr, struct Client *
 {
 	struct BlacklistClient *blcptr = rb_malloc(sizeof(struct BlacklistClient));
 	char buf[IRCD_RES_HOSTLEN + 1];
-	int ip[4];
+	uint8_t *ip;
 
 	blcptr->blacklist = blptr;
 	blcptr->client_p = client_p;
@@ -126,11 +126,15 @@ static void initiate_blacklist_dnsquery(struct Blacklist *blptr, struct Client *
 	blcptr->dns_query.ptr = blcptr;
 	blcptr->dns_query.callback = blacklist_dns_callback;
 
-	/* XXX: yes I know this is bad, I don't really care right now */
-	sscanf(client_p->sockhost, "%d.%d.%d.%d", &ip[3], &ip[2], &ip[1], &ip[0]);
+	ip = (uint8_t *)&((struct sockaddr_in *)&client_p->localClient->ip)->sin_addr.s_addr;
 
 	/* becomes 2.0.0.127.torbl.ahbl.org or whatever */
-	rb_snprintf(buf, sizeof buf, "%d.%d.%d.%d.%s", ip[0], ip[1], ip[2], ip[3], blptr->host);
+	rb_snprintf(buf, sizeof buf, "%d.%d.%d.%d.%s",
+		    (unsigned int) ip[3],
+		    (unsigned int) ip[2],
+		    (unsigned int) ip[1],
+		    (unsigned int) ip[0],
+		    blptr->host);
 
 	gethost_byname_type(buf, &blcptr->dns_query, T_A);
 
