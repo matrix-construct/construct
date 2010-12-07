@@ -724,6 +724,10 @@ can_join(struct Client *source_p, struct Channel *chptr, char *key)
 
 	s_assert(source_p->localClient != NULL);
 
+	moduledata.client = source_p;
+	moduledata.chptr = chptr;
+	moduledata.approved = 0;
+
 	rb_sprintf(src_host, "%s!%s@%s", source_p->name, source_p->username, source_p->host);
 	rb_sprintf(src_iphost, "%s!%s@%s", source_p->name, source_p->username, source_p->sockhost);
 	if(source_p->localClient->mangledhost != NULL)
@@ -744,7 +748,10 @@ can_join(struct Client *source_p, struct Channel *chptr, char *key)
 	}
 
 	if((is_banned(chptr, source_p, NULL, src_host, src_iphost)) == CHFL_BAN)
-		return (ERR_BANNEDFROMCHAN);
+	{
+		moduledata.approved = ERR_BANNEDFROMCHAN;
+		goto finish_join_check;
+	}
 
 	if(chptr->mode.mode & MODE_INVITEONLY)
 	{
@@ -756,7 +763,7 @@ can_join(struct Client *source_p, struct Channel *chptr, char *key)
 		if(invite == NULL)
 		{
 			if(!ConfigChannel.use_invex)
-				return (ERR_INVITEONLYCHAN);
+				moduledata.approved = ERR_INVITEONLYCHAN;
 			RB_DLINK_FOREACH(ptr, chptr->invexlist.head)
 			{
 				invex = ptr->data;
@@ -768,12 +775,12 @@ can_join(struct Client *source_p, struct Channel *chptr, char *key)
 					break;
 			}
 			if(ptr == NULL)
-				return (ERR_INVITEONLYCHAN);
+				moduledata.approved = ERR_INVITEONLYCHAN;
 		}
 	}
 
 	if(*chptr->mode.key && (EmptyString(key) || irccmp(chptr->mode.key, key)))
-		return (ERR_BADCHANNELKEY);
+		moduledata.approved = ERR_BADCHANNELKEY;
 
 	if(chptr->mode.limit &&
 	   rb_dlink_list_length(&chptr->members) >= (unsigned long) chptr->mode.limit)
@@ -798,13 +805,10 @@ can_join(struct Client *source_p, struct Channel *chptr, char *key)
 				break;
 		}
 		if (invite == NULL)
-			return i;
+			moduledata.approved = i;
 	}
 
-	moduledata.client = source_p;
-	moduledata.chptr = chptr;
-	moduledata.approved = 0;
-
+finish_join_check:
 	call_hook(h_can_join, &moduledata);
 
 	return moduledata.approved;
