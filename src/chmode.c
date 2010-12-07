@@ -186,7 +186,7 @@ cflag_orphan(char c_)
 	construct_cflags_strings();
 }
 
-static int
+int
 get_channel_access(struct Client *source_p, struct membership *msptr)
 {
 	hook_data_channel_approval moduledata;
