@@ -1299,44 +1299,6 @@ chm_key(struct Client *source_p, struct Channel *chptr,
 	}
 }
 
-void
-chm_regonly(struct Client *source_p, struct Channel *chptr,
-	    int alevel, int parc, int *parn,
-	    const char **parv, int *errors, int dir, char c, long mode_type)
-{
-	if(alevel != CHFL_CHANOP)
-	{
-		if(!(*errors & SM_ERR_NOOPS))
-			sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
-				   me.name, source_p->name, chptr->chname);
-		*errors |= SM_ERR_NOOPS;
-		return;
-	}
-
-	if(dir == MODE_QUERY)
-		return;
-
-	if(((dir == MODE_ADD) && (chptr->mode.mode & mode_type)) ||
-	   ((dir == MODE_DEL) && !(chptr->mode.mode & mode_type)))
-		return;
-
-	if(MyClient(source_p) && (++mode_limit_simple > MAXMODES_SIMPLE))
-		return;
-
-	if(dir == MODE_ADD)
-		chptr->mode.mode |= mode_type;
-	else
-		chptr->mode.mode &= ~mode_type;
-
-	mode_changes[mode_count].letter = c;
-	mode_changes[mode_count].dir = dir;
-	mode_changes[mode_count].caps = CAP_SERVICE;
-	mode_changes[mode_count].nocaps = 0;
-	mode_changes[mode_count].mems = ALL_MEMBERS;
-	mode_changes[mode_count].id = NULL;
-	mode_changes[mode_count++].arg = NULL;
-}
-
 /* *INDENT-OFF* */
 struct ChannelMode chmode_table[256] =
 {
@@ -1455,7 +1417,7 @@ struct ChannelMode chmode_table[256] =
   {chm_op,	0 },			/* o */
   {chm_simple,	MODE_PRIVATE },		/* p */
   {chm_ban,	CHFL_QUIET },		/* q */
-  {chm_regonly, MODE_REGONLY },		/* r */
+  {chm_simple,  MODE_REGONLY },		/* r */
   {chm_simple,	MODE_SECRET },		/* s */
   {chm_simple,	MODE_TOPICLIMIT },	/* t */
   {chm_nosuch,	0 },			/* u */
