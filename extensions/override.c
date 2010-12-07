@@ -24,10 +24,12 @@
 
 static void check_umode_change(void *data);
 static void hack_channel_access(void *data);
+static void hack_can_join(void *data);
 
 mapi_hfn_list_av1 override_hfnlist[] = {
 	{ "umode_changed", (hookfn) check_umode_change },
 	{ "get_channel_access", (hookfn) hack_channel_access },
+	{ "can_join", (hookfn) hack_can_join },
 	{ NULL, NULL }
 };
 
@@ -152,6 +154,24 @@ hack_channel_access(void *vdata)
 		data->approved = CHFL_CHANOP;
 
 		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s is using oper-override on %s (modehacking)",
+				       get_oper_name(data->client), data->chptr->chname);
+	}
+}
+
+static void
+hack_can_join(void *vdata)
+{
+	hook_data_channel *data = (hook_data_channel *) vdata;
+
+	if (data->approved == 0)
+		return;
+
+	if (data->client->umodes & user_modes['p'])
+	{
+		update_session_deadline(data->client, NULL);
+		data->approved = 0;
+
+		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s is using oper-override on %s (banwalking)",
 				       get_oper_name(data->client), data->chptr->chname);
 	}
 }
