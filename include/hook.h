@@ -75,6 +75,7 @@ typedef struct
 {
 	struct Client *client;
 	struct Channel *chptr;
+	struct membership *msptr;
 	struct Client *target;
 	int approved;
 } hook_data_channel_approval;

@@ -164,6 +164,7 @@ m_kick(struct Client *client_p, struct Client *source_p, int parc, const char *p
 
 			hookdata.client = source_p;
 			hookdata.chptr = chptr;
+			hookdata.msptr = msptr;
 			hookdata.target = who;
 			hookdata.approved = 1;
 
