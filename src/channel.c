@@ -62,6 +62,7 @@ static struct ChCapCombo chcap_combos[NCHCAP_COMBOS];
 static void free_topic(struct Channel *chptr);
 
 static int h_can_join;
+static int h_can_send;
 int h_get_channel_access;
 
 /* init_channels()
@@ -79,6 +80,7 @@ init_channels(void)
 	member_heap = rb_bh_create(sizeof(struct membership), MEMBER_HEAP_SIZE, "member_heap");
 
 	h_can_join = register_hook("can_join");
+	h_can_send = register_hook("can_send");
 	h_get_channel_access = register_hook("get_channel_access");
 }
 
@@ -823,12 +825,16 @@ finish_join_check:
 int
 can_send(struct Channel *chptr, struct Client *source_p, struct membership *msptr)
 {
+	hook_data_channel_approval moduledata;
+
+	moduledata.approved = CAN_SEND_NONOP;
+
 	if(IsServer(source_p) || IsService(source_p))
 		return CAN_SEND_OPV;
 
 	if(MyClient(source_p) && hash_find_resv(chptr->chname) &&
 	   !IsOper(source_p) && !IsExemptResv(source_p))
-		return CAN_SEND_NO;
+		moduledata.approved = CAN_SEND_NO;
 
 	if(msptr == NULL)
 	{
@@ -841,17 +847,17 @@ can_send(struct Channel *chptr, struct Client *source_p, struct membership *mspt
 			 * theres no possibility of caching them --fl
 			 */
 			if(chptr->mode.mode & MODE_NOPRIVMSGS || chptr->mode.mode & MODE_MODERATED)
-				return CAN_SEND_NO;
+				moduledata.approved = CAN_SEND_NO;
 			else
-				return CAN_SEND_NONOP;
+				moduledata.approved = CAN_SEND_NONOP;
 		}
 	}
 
 	if(is_chanop_voiced(msptr))
-		return CAN_SEND_OPV;
+		moduledata.approved = CAN_SEND_OPV;
 
 	if(chptr->mode.mode & MODE_MODERATED)
-		return CAN_SEND_NO;
+		moduledata.approved = CAN_SEND_NO;
 
 	if(MyClient(source_p))
 	{
@@ -859,14 +865,16 @@ can_send(struct Channel *chptr, struct Client *source_p, struct membership *mspt
 		if(msptr->bants == chptr->bants)
 		{
 			if(can_send_banned(msptr))
-				return CAN_SEND_NO;
+				moduledata.approved = CAN_SEND_NO;
 		}
 		else if(is_banned(chptr, source_p, msptr, NULL, NULL) == CHFL_BAN
 			|| is_quieted(chptr, source_p, msptr, NULL, NULL) == CHFL_BAN)
-			return CAN_SEND_NO;
+			moduledata.approved = CAN_SEND_NO;
 	}
 
-	return CAN_SEND_NONOP;
+	call_hook(h_can_send, &moduledata);
+
+	return moduledata.approved;
 }
 
 /* find_bannickchange_channel()
