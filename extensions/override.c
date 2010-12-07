@@ -26,12 +26,14 @@ static void check_umode_change(void *data);
 static void hack_channel_access(void *data);
 static void hack_can_join(void *data);
 static void hack_can_send(void *data);
+static void handle_client_exit(void *data);
 
 mapi_hfn_list_av1 override_hfnlist[] = {
 	{ "umode_changed", (hookfn) check_umode_change },
 	{ "get_channel_access", (hookfn) hack_channel_access },
 	{ "can_join", (hookfn) hack_can_join },
 	{ "can_send", (hookfn) hack_can_send },
+	{ "client_exit", (hookfn) handle_client_exit },
 	{ NULL, NULL }
 };
 
@@ -196,6 +198,25 @@ hack_can_send(void *vdata)
 				       get_oper_name(data->client), data->chptr->chname);
 #endif
 	}
+}
+
+static void
+handle_client_exit(void *vdata)
+{
+	hook_data_client_exit *data = (hook_data_client_exit *) vdata;
+	rb_dlink_node *n, *tn;
+	struct Client *source_p = data->target;
+
+	RB_DLINK_FOREACH_SAFE(n, tn, overriding_opers.head)
+	{
+		struct OverrideSession *session_p = n->data;
+
+		if (session_p->client != source_p)
+			continue;
+
+		rb_dlinkDelete(n, &overriding_opers);
+		rb_free(session_p);
+	}	
 }
 
 struct ev_entry *expire_override_deadlines_ev = NULL;
