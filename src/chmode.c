@@ -71,6 +71,8 @@ char cflagsmyinfo[256];
 
 int chmode_flags[256];
 
+extern int h_get_channel_access;
+
 /* OPTIMIZE ME! -- dwr */
 void
 construct_cflags_strings(void)
@@ -187,10 +189,20 @@ cflag_orphan(char c_)
 static int
 get_channel_access(struct Client *source_p, struct membership *msptr)
 {
-	if(!MyClient(source_p) || is_chanop(msptr))
+	hook_data_channel_approval moduledata;
+
+	if(!MyClient(source_p))
 		return CHFL_CHANOP;
 
-	return CHFL_PEON;
+	moduledata.client = source_p;
+	moduledata.chptr = msptr->chptr;
+	moduledata.msptr = msptr;
+	moduledata.target = NULL;
+	moduledata.approved = is_chanop(msptr) ? CHFL_CHANOP : CHFL_PEON;
+
+	call_hook(h_get_channel_access, &moduledata);
+
+	return moduledata.approved;
 }
 
 /* add_id()

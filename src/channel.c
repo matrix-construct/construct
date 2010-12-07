@@ -62,6 +62,7 @@ static struct ChCapCombo chcap_combos[NCHCAP_COMBOS];
 static void free_topic(struct Channel *chptr);
 
 static int h_can_join;
+int h_get_channel_access;
 
 /* init_channels()
  *
@@ -78,6 +79,7 @@ init_channels(void)
 	member_heap = rb_bh_create(sizeof(struct membership), MEMBER_HEAP_SIZE, "member_heap");
 
 	h_can_join = register_hook("can_join");
+	h_get_channel_access = register_hook("get_channel_access");
 }
 
 /*
