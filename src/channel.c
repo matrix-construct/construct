@@ -877,6 +877,62 @@ can_send(struct Channel *chptr, struct Client *source_p, struct membership *mspt
 	return moduledata.approved;
 }
 
+/*
+ * flood_attack_channel
+ * inputs       - flag 0 if PRIVMSG 1 if NOTICE. RFC
+ *                says NOTICE must not auto reply
+ *              - pointer to source Client 
+ *		- pointer to target channel
+ * output	- 1 if target is under flood attack
+ * side effects	- check for flood attack on target chptr
+ */
+int
+flood_attack_channel(int p_or_n, struct Client *source_p, struct Channel *chptr, char *chname)
+{
+	int delta;
+
+	if(GlobalSetOptions.floodcount && MyClient(source_p))
+	{
+		if((chptr->first_received_message_time + 1) < rb_current_time())
+		{
+			delta = rb_current_time() - chptr->first_received_message_time;
+			chptr->received_number_of_privmsgs -= delta;
+			chptr->first_received_message_time = rb_current_time();
+			if(chptr->received_number_of_privmsgs <= 0)
+			{
+				chptr->received_number_of_privmsgs = 0;
+				chptr->flood_noticed = 0;
+			}
+		}
+
+		if((chptr->received_number_of_privmsgs >= GlobalSetOptions.floodcount)
+		   || chptr->flood_noticed)
+		{
+			if(chptr->flood_noticed == 0)
+			{
+				sendto_realops_snomask(SNO_BOTS, *chptr->chname == '&' ? L_ALL : L_NETWIDE,
+						     "Possible Flooder %s[%s@%s] on %s target: %s",
+						     source_p->name, source_p->username,
+						     source_p->orighost,
+						     source_p->servptr->name, chptr->chname);
+				chptr->flood_noticed = 1;
+
+				/* Add a bit of penalty */
+				chptr->received_number_of_privmsgs += 2;
+			}
+			if(MyClient(source_p) && (p_or_n != 1))
+				sendto_one(source_p,
+					   ":%s NOTICE %s :*** Message to %s throttled due to flooding",
+					   me.name, source_p->name, chptr->chname);
+			return 1;
+		}
+		else
+			chptr->received_number_of_privmsgs++;
+	}
+
+	return 0;
+}
+
 /* find_bannickchange_channel()
  * Input: client to check
  * Output: channel preventing nick change

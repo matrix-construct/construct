@@ -92,8 +92,6 @@ static int build_target_list(int p_or_n, const char *command,
 			     struct Client *source_p, const char *nicks_channels, const char *text);
 
 static int flood_attack_client(int p_or_n, struct Client *source_p, struct Client *target_p);
-static int flood_attack_channel(int p_or_n, struct Client *source_p,
-				struct Channel *chptr, char *chname);
 
 /* Fifteen seconds should be plenty for a client to reply a ctcp */
 #define LARGE_CTCP_TIME 15
@@ -886,63 +884,6 @@ flood_attack_client(int p_or_n, struct Client *source_p, struct Client *target_p
 
 	return 0;
 }
-
-/*
- * flood_attack_channel
- * inputs       - flag 0 if PRIVMSG 1 if NOTICE. RFC
- *                says NOTICE must not auto reply
- *              - pointer to source Client 
- *		- pointer to target channel
- * output	- 1 if target is under flood attack
- * side effects	- check for flood attack on target chptr
- */
-static int
-flood_attack_channel(int p_or_n, struct Client *source_p, struct Channel *chptr, char *chname)
-{
-	int delta;
-
-	if(GlobalSetOptions.floodcount && MyClient(source_p))
-	{
-		if((chptr->first_received_message_time + 1) < rb_current_time())
-		{
-			delta = rb_current_time() - chptr->first_received_message_time;
-			chptr->received_number_of_privmsgs -= delta;
-			chptr->first_received_message_time = rb_current_time();
-			if(chptr->received_number_of_privmsgs <= 0)
-			{
-				chptr->received_number_of_privmsgs = 0;
-				chptr->flood_noticed = 0;
-			}
-		}
-
-		if((chptr->received_number_of_privmsgs >= GlobalSetOptions.floodcount)
-		   || chptr->flood_noticed)
-		{
-			if(chptr->flood_noticed == 0)
-			{
-				sendto_realops_snomask(SNO_BOTS, *chptr->chname == '&' ? L_ALL : L_NETWIDE,
-						     "Possible Flooder %s[%s@%s] on %s target: %s",
-						     source_p->name, source_p->username,
-						     source_p->orighost,
-						     source_p->servptr->name, chptr->chname);
-				chptr->flood_noticed = 1;
-
-				/* Add a bit of penalty */
-				chptr->received_number_of_privmsgs += 2;
-			}
-			if(MyClient(source_p) && (p_or_n != NOTICE))
-				sendto_one(source_p,
-					   ":%s NOTICE %s :*** Message to %s throttled due to flooding",
-					   me.name, source_p->name, chptr->chname);
-			return 1;
-		}
-		else
-			chptr->received_number_of_privmsgs++;
-	}
-
-	return 0;
-}
-
 
 /*
  * handle_special
