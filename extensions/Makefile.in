@@ -66,6 +66,7 @@ SRCS =                          \
   m_opme.c			\
   m_sendbans.c			\
   m_webirc.c			\
+  m_roleplay.c			\
   no_locops.c			\
   no_oper_invis.c		\
   spy_admin_notice.c		\
