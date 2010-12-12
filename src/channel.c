@@ -853,9 +853,6 @@ can_send(struct Channel *chptr, struct Client *source_p, struct membership *mspt
 		}
 	}
 
-	if(is_chanop_voiced(msptr))
-		moduledata.approved = CAN_SEND_OPV;
-
 	if(chptr->mode.mode & MODE_MODERATED)
 		moduledata.approved = CAN_SEND_NO;
 
@@ -871,6 +868,9 @@ can_send(struct Channel *chptr, struct Client *source_p, struct membership *mspt
 			|| is_quieted(chptr, source_p, msptr, NULL, NULL) == CHFL_BAN)
 			moduledata.approved = CAN_SEND_NO;
 	}
+
+	if(is_chanop_voiced(msptr))
+		moduledata.approved = CAN_SEND_OPV;
 
 	call_hook(h_can_send, &moduledata);
 
