@@ -417,6 +417,7 @@ rb_ssl_tryconn(rb_fde_t *F, int status, void *data)
 	F->ssl = rb_malloc(sizeof(gnutls_session_t));
 	gnutls_init(F->ssl, GNUTLS_CLIENT);
 	gnutls_set_default_priority(SSL_P(F));
+	gnutls_credentials_set(SSL_P(F), GNUTLS_CRD_CERTIFICATE, x509);
 	gnutls_dh_set_prime_bits(SSL_P(F), 1024);
 	gnutls_transport_set_ptr(SSL_P(F), (gnutls_transport_ptr_t) (long int)F->fd);
 
@@ -461,6 +462,7 @@ rb_ssl_start_connected(rb_fde_t *F, CNCB * callback, void *data, int timeout)
 
 	gnutls_init(F->ssl, GNUTLS_CLIENT);
 	gnutls_set_default_priority(SSL_P(F));
+	gnutls_credentials_set(SSL_P(F), GNUTLS_CRD_CERTIFICATE, x509);
 	gnutls_dh_set_prime_bits(SSL_P(F), 1024);
 	gnutls_transport_set_ptr(SSL_P(F), (gnutls_transport_ptr_t) (long int)F->fd);
 

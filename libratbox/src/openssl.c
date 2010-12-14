@@ -337,7 +337,7 @@ rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile)
 		rb_lib_log("rb_setup_ssl_server: No certificate file");
 		return 0;
 	}
-	if(!SSL_CTX_use_certificate_chain_file(ssl_server_ctx, cert))
+	if(!SSL_CTX_use_certificate_chain_file(ssl_server_ctx, cert) || !SSL_CTX_use_certificate_chain_file(ssl_client_ctx, cert))
 	{
 		err = ERR_get_error();
 		rb_lib_log("rb_setup_ssl_server: Error loading certificate file [%s]: %s", cert,
@@ -352,7 +352,7 @@ rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile)
 	}
 
 
-	if(!SSL_CTX_use_PrivateKey_file(ssl_server_ctx, keyfile, SSL_FILETYPE_PEM))
+	if(!SSL_CTX_use_PrivateKey_file(ssl_server_ctx, keyfile, SSL_FILETYPE_PEM) || !SSL_CTX_use_PrivateKey_file(ssl_client_ctx, keyfile, SSL_FILETYPE_PEM))
 	{
 		err = ERR_get_error();
 		rb_lib_log("rb_setup_ssl_server: Error loading keyfile [%s]: %s", keyfile,
