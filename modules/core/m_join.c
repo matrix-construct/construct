@@ -271,7 +271,7 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		{
 			sendto_one(source_p, form_str(ERR_TOOMANYCHANNELS),
 				   me.name, source_p->name, name);
-			return 0;
+			continue;
 		}
 
 		if(chptr == NULL)	/* If I already have a chptr, no point doing this */
