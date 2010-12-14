@@ -181,6 +181,7 @@ struct server_conf
 	char *host;
 	char *passwd;
 	char *spasswd;
+	char *certfp;
 	int port;
 	int flags;
 	int servers;

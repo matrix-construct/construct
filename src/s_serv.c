@@ -320,20 +320,31 @@ check_server(const char *name, struct Client *client_p)
 		{
 			error = -2;
 
-			if(ServerConfEncrypted(tmp_p))
+			if(tmp_p->passwd)
 			{
-				if(!strcmp(tmp_p->passwd, rb_crypt(client_p->localClient->passwd,
-								tmp_p->passwd)))
+				if(ServerConfEncrypted(tmp_p))
 				{
-					server_p = tmp_p;
-					break;
+					if(!strcmp(tmp_p->passwd, rb_crypt(client_p->localClient->passwd,
+									tmp_p->passwd)))
+					{
+						server_p = tmp_p;
+						break;
+					}
+					else
+						continue;
 				}
+				else if(strcmp(tmp_p->passwd, client_p->localClient->passwd))
+					continue;
 			}
-			else if(!strcmp(tmp_p->passwd, client_p->localClient->passwd))
+
+			if(tmp_p->certfp)
 			{
-				server_p = tmp_p;
-				break;
+				if(!client_p->certfp || strcasecmp(tmp_p->certfp, client_p->certfp) != 0)
+					continue;
 			}
+
+			server_p = tmp_p;
+			break;
 		}
 	}
 
@@ -761,15 +772,9 @@ server_estab(struct Client *client_p)
 
 	if(IsUnknown(client_p))
 	{
-		/*
-		 * jdc -- 1.  Use EmptyString(), not [0] index reference.
-		 *        2.  Check ->spasswd, not ->passwd.
-		 */
-		if(!EmptyString(server_p->spasswd))
-		{
-			sendto_one(client_p, "PASS %s TS %d :%s", 
-				   server_p->spasswd, TS_CURRENT, me.id);
-		}
+		/* the server may be linking based on certificate fingerprint now. --nenolod */
+		sendto_one(client_p, "PASS %s TS %d :%s", 
+			   EmptyString(server_p->spasswd) ? "*" : server_p->spasswd, TS_CURRENT, me.id);
 
 		/* pass info to new server */
 		send_capabilities(client_p, default_server_capabs
@@ -1330,11 +1335,9 @@ serv_connect_callback(rb_fde_t *F, int status, void *data)
 	/* Next, send the initial handshake */
 	SetHandshake(client_p);
 
-	if(!EmptyString(server_p->spasswd))
-	{
-		sendto_one(client_p, "PASS %s TS %d :%s", 
-			   server_p->spasswd, TS_CURRENT, me.id);
-	}
+	/* the server may be linking based on certificate fingerprint now. --nenolod */
+	sendto_one(client_p, "PASS %s TS %d :%s", 
+		   EmptyString(server_p->spasswd) ? "*" : server_p->spasswd, TS_CURRENT, me.id);
 
 	/* pass my info to the new server */
 	send_capabilities(client_p, default_server_capabs

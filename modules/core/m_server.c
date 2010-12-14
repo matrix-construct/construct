@@ -151,14 +151,14 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 	case -2:
 		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 				     "Unauthorised server connection attempt from %s: "
-				     "Bad password for server %s",
+				     "Bad credentials for server %s",
 				     "[@255.255.255.255]", name);
 
-		ilog(L_SERVER, "Access denied, invalid password for server %s%s",
+		ilog(L_SERVER, "Access denied, invalid credentials for server %s%s",
 		     EmptyString(client_p->name) ? name : "",
 		     log_client_name(client_p, SHOW_IP));
 
-		exit_client(client_p, client_p, client_p, "Invalid password.");
+		exit_client(client_p, client_p, client_p, "Invalid credentials.");
 		return 0;
 		/* NOT REACHED */
 		break;

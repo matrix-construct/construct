@@ -1242,9 +1242,9 @@ conf_end_connect(struct TopConf *tc)
 		return 0;
 	}
 
-	if(EmptyString(yy_server->passwd) || EmptyString(yy_server->spasswd))
+	if((EmptyString(yy_server->passwd) || EmptyString(yy_server->spasswd)) && EmptyString(yy_server->certfp))
 	{
-		conf_report_error("Ignoring connect block for %s -- missing password.",
+		conf_report_error("Ignoring connect block for %s -- no certfp or password credentials provided.",
 					yy_server->name);
 		return 0;
 	}
@@ -1314,6 +1314,15 @@ conf_set_connect_accept_password(void *data)
 		rb_free(yy_server->passwd);
 	}
 	yy_server->passwd = rb_strdup(data);
+}
+
+static void
+conf_set_connect_fingerprint(void *data)
+{
+	yy_server->certfp = rb_strdup((char *) data);
+
+	/* force SSL to be enabled if fingerprint is enabled. */
+	yy_server->flags |= SERVER_SSL;
 }
 
 static void
@@ -2090,6 +2099,7 @@ static struct ConfEntry conf_connect_table[] =
 {
 	{ "send_password",	CF_QSTRING,   conf_set_connect_send_password,	0, NULL },
 	{ "accept_password",	CF_QSTRING,   conf_set_connect_accept_password,	0, NULL },
+	{ "fingerprint",	CF_QSTRING,   conf_set_connect_fingerprint,	0, NULL },
 	{ "flags",	CF_STRING | CF_FLIST, conf_set_connect_flags,	0, NULL },
 	{ "host",	CF_QSTRING, conf_set_connect_host,	0, NULL },
 	{ "vhost",	CF_QSTRING, conf_set_connect_vhost,	0, NULL },
