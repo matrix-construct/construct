@@ -1198,7 +1198,7 @@ inet_ntop4(const unsigned char *src, char *dst, unsigned int size)
 {
 	if(size < 16)
 		return NULL;
-	return rb_strlcpy(dst, inetntoa((const char *)src), size);
+	return strcpy(dst, inetntoa((const char *)src));
 }
 
 /* const char *
@@ -1310,7 +1310,7 @@ inet_ntop6(const unsigned char *src, char *dst, unsigned int size)
 	{
 		return (NULL);
 	}
-	return rb_strlcpy(dst, tmp, size);
+	return memcpy(dst, tmp, tp - tmp);
 }
 #endif
 
