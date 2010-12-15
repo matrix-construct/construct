@@ -1244,7 +1244,7 @@ conf_end_connect(struct TopConf *tc)
 
 	if((EmptyString(yy_server->passwd) || EmptyString(yy_server->spasswd)) && EmptyString(yy_server->certfp))
 	{
-		conf_report_error("Ignoring connect block for %s -- no certfp or password credentials provided.",
+		conf_report_error("Ignoring connect block for %s -- no fingerprint or password credentials provided.",
 					yy_server->name);
 		return 0;
 	}
