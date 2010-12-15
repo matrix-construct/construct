@@ -194,6 +194,9 @@ get_channel_access(struct Client *source_p, struct membership *msptr)
 	if(!MyClient(source_p))
 		return CHFL_CHANOP;
 
+	if (msptr == NULL)
+		return CHFL_PEON;
+
 	moduledata.client = source_p;
 	moduledata.chptr = msptr->chptr;
 	moduledata.msptr = msptr;
