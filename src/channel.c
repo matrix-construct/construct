@@ -850,6 +850,8 @@ can_send(struct Channel *chptr, struct Client *source_p, struct membership *mspt
 				moduledata.approved = CAN_SEND_NO;
 			else
 				moduledata.approved = CAN_SEND_NONOP;
+
+			return moduledata.approved;
 		}
 	}
 
