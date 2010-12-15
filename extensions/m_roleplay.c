@@ -190,7 +190,7 @@ m_displaymsg(struct Client *source_p, const char *channel, int underline, int ac
 	}
 
 	if(action)
-		rb_snprintf(text2, sizeof(text2), "\1ACTION %s", text);
+		rb_snprintf(text2, sizeof(text2), "\1ACTION %s\1", text);
 	else
 		rb_snprintf(text2, sizeof(text2), "%s", text);
 
