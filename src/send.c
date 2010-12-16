@@ -655,6 +655,47 @@ sendto_channel_local(int type, struct Channel *chptr, const char *pattern, ...)
 	rb_linebuf_donebuf(&linebuf);
 }
 
+/* sendto_channel_local_with_capability()
+ *
+ * inputs	- flags to send to, caps, negate caps, channel to send to, va_args
+ * outputs	- message to local channel members
+ * side effects -
+ */
+void
+sendto_channel_local_with_capability(int type, int caps, int negcaps, struct Channel *chptr, const char *pattern, ...)
+{
+	va_list args;
+	buf_head_t linebuf;
+	struct membership *msptr;
+	struct Client *target_p;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
+	
+	rb_linebuf_newbuf(&linebuf); 
+	
+	va_start(args, pattern);
+	rb_linebuf_putmsg(&linebuf, pattern, &args, NULL);
+	va_end(args);
+
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->locmembers.head)
+	{
+		msptr = ptr->data;
+		target_p = msptr->client_p;
+
+		if(IsIOError(target_p) ||
+		   !IsCapable(target_p, caps) ||
+ 		   IsCapable(target_p, negcaps))
+			continue;
+
+		if(type && ((msptr->flags & type) == 0))
+			continue;
+
+		_send_linebuf(target_p, &linebuf);
+	}
+
+	rb_linebuf_donebuf(&linebuf);
+}
+
 /* sendto_channel_local_butone()
  *
  * inputs	- flags to send to, channel to send to, va_args
