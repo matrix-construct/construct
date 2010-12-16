@@ -281,4 +281,6 @@ const char * get_extban_string(void);
 
 extern int get_channel_access(struct Client *source_p, struct membership *msptr);
 
+extern void send_channel_join(struct Channel *chptr, struct Client *client_p);
+
 #endif /* INCLUDED_channel_h */

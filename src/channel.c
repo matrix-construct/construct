@@ -123,6 +123,22 @@ free_ban(struct Ban *bptr)
 	rb_bh_free(ban_heap, bptr);
 }
 
+/*
+ * send_channel_join()
+ *
+ * input        - channel to join, client joining.
+ * output       - none
+ * side effects - none
+ */
+void
+send_channel_join(struct Channel *chptr, struct Client *client_p)
+{
+	if (!IsClient(client_p))
+		return;
+
+	sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@%s JOIN %s",
+			     client_p->name, client_p->username, client_p->host, chptr->chname);
+}
 
 /* find_channel_membership()
  *
