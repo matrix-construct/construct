@@ -444,6 +444,7 @@ struct ListClient
 #define CLICAP_MULTI_PREFIX	0x0001
 #define CLICAP_SASL		0x0002
 #define CLICAP_ACCOUNT_NOTIFY	0x0004
+#define CLICAP_EXTENDED_JOIN	0x0008
 
 /*
  * flags macros.
