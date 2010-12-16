@@ -107,6 +107,10 @@ me_su(struct Client *client_p, struct Client *source_p,
 	else
 		rb_strlcpy(target_p->user->suser, parv[2], sizeof(target_p->user->suser));
 
+	sendto_common_channels_local_butone(target_p, CLICAP_ACCOUNT_NOTIFY, ":%s!%s@%s ACCOUNT :%s",
+					    target_p->name, target_p->username, target_p->host,
+					    EmptyString(target_p->user->suser) ? "*" : target_p->user->suser);
+
 	invalidate_bancache_user(target_p);
 
 	return 0;
