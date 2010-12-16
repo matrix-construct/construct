@@ -322,9 +322,7 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		/* we send the user their join here, because we could have to
 		 * send a mode out next.
 		 */
-		sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@%s JOIN :%s",
-				     source_p->name,
-				     source_p->username, source_p->host, chptr->chname);
+		send_channel_join(chptr, source_p);
 
 		/* its a new channel, set +nt and burst. */
 		if(flags & CHFL_CHANOP)
@@ -494,9 +492,7 @@ ms_join(struct Client *client_p, struct Client *source_p, int parc, const char *
 			chptr->join_delta = rb_current_time();
 		}
 		chptr->join_count++;
-		sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@%s JOIN :%s",
-				     source_p->name, source_p->username,
-				     source_p->host, chptr->chname);
+		send_channel_join(chptr, source_p);
 	}
 
 	sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
@@ -839,9 +835,7 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 		if(!IsMember(target_p, chptr))
 		{
 			add_user_to_channel(chptr, target_p, fl);
-			sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@%s JOIN :%s",
-					     target_p->name,
-					     target_p->username, target_p->host, parv[2]);
+			send_channel_join(chptr, target_p);
 			joins++;
 		}
 
