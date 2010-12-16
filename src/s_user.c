@@ -1429,7 +1429,7 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 		vsnprintf(reason, 255, format, ap);
 		va_end(ap);
 
-		sendto_common_channels_local_butone(target_p, ":%s!%s@%s QUIT :%s",
+		sendto_common_channels_local_butone(target_p, NOCAPS, ":%s!%s@%s QUIT :%s",
 				target_p->name, target_p->username, target_p->host,
 				reason);
 
@@ -1471,7 +1471,7 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 	}
 	else if(changed_case)
 	{
-		sendto_common_channels_local(target_p, ":%s!%s@%s NICK :%s",
+		sendto_common_channels_local(target_p, NOCAPS, ":%s!%s@%s NICK :%s",
 				target_p->name, target_p->username,
 				target_p->host, nick);
 	}

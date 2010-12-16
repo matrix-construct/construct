@@ -217,7 +217,7 @@ me_rsfnc(struct Client *client_p, struct Client *source_p,
 			target_p->name, parv[2], target_p->username,
 			target_p->host);
 
-	sendto_common_channels_local(target_p, ":%s!%s@%s NICK :%s",
+	sendto_common_channels_local(target_p, NOCAPS, ":%s!%s@%s NICK :%s",
 				target_p->name, target_p->username,
 				target_p->host, parv[2]);
 
