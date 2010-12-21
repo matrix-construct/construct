@@ -773,6 +773,7 @@ set_default_conf(void)
 	ConfigChannel.no_create_on_split = YES;
 	ConfigChannel.resv_forcepart = YES;
 	ConfigChannel.channel_target_change = YES;
+	ConfigChannel.disable_local_channels = NO;
 
 	ConfigServerHide.flatten_links = 0;
 	ConfigServerHide.links_delay = 300;
