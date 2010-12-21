@@ -525,6 +525,12 @@ static struct InfoStruct info_table[] = {
 		"Kick users riding splits to join +i or +k channels"
 	},
 	{
+		"disable_local_channels",
+		OUTPUT_BOOLEAN_YN,
+		&ConfigChannel.disable_local_channels,
+		"Disable local channels (&channels)"
+	},
+	{
 		"max_bans",
 		OUTPUT_DECIMAL,
 		&ConfigChannel.max_bans,

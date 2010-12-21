@@ -245,11 +245,18 @@ isupport_chanmodes(const void *ptr)
 }
 
 static const char *
+isupport_chantypes(const void *ptr)
+{
+	return ConfigChannel.disable_local_channels ? "#" : "&#";
+}
+
+static const char *
 isupport_chanlimit(const void *ptr)
 {
 	static char result[30];
 
-	rb_snprintf(result, sizeof result, "&#:%i", ConfigChannel.max_chans_per_user);
+	rb_snprintf(result, sizeof result, "%s:%i",
+		ConfigChannel.disable_local_channels ? "#" : "&#", ConfigChannel.max_chans_per_user);
 	return result;
 }
 
@@ -297,7 +304,7 @@ init_isupport(void)
 	static int channellen = LOC_CHANNELLEN;
 	static int topiclen = TOPICLEN;
 
-	add_isupport("CHANTYPES", isupport_string, "&#");
+	add_isupport("CHANTYPES", isupport_chantypes, NULL);
 	add_isupport("EXCEPTS", isupport_boolean, &ConfigChannel.use_except);
 	add_isupport("INVEX", isupport_boolean, &ConfigChannel.use_invex);
 	add_isupport("CHANMODES", isupport_chanmodes, NULL);
