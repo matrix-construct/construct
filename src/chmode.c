@@ -885,6 +885,9 @@ chm_op(struct Client *source_p, struct Channel *chptr,
 
 	if(dir == MODE_ADD)
 	{
+		if(targ_p == source_p && mstptr->flags & CHFL_CHANOP)
+			return;
+
 		mode_changes[mode_count].letter = c;
 		mode_changes[mode_count].dir = MODE_ADD;
 		mode_changes[mode_count].caps = 0;
