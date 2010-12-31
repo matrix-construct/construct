@@ -113,6 +113,7 @@ check_umode_change(void *vdata)
 
 	if (!IsOperOverride(source_p))
 	{
+		sendto_one_notice(source_p, ":*** You need oper:override privilege for +p");
 		source_p->umodes &= ~user_modes['p'];
 		return;
 	}
