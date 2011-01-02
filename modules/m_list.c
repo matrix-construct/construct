@@ -115,7 +115,6 @@ static int m_list(struct Client *client_p, struct Client *source_p, int parc, co
 	if (source_p->localClient->safelist_data != NULL)
 	{
 		sendto_one_notice(source_p, ":/LIST aborted");
-		sendto_one(source_p, form_str(RPL_LISTEND), me.name, source_p->name);
 		safelist_client_release(source_p);
 		return 0;
 	}
@@ -148,7 +147,6 @@ static int mo_list(struct Client *client_p, struct Client *source_p, int parc, c
 	if (source_p->localClient->safelist_data != NULL)
 	{
 		sendto_one_notice(source_p, ":/LIST aborted");
-		sendto_one(source_p, form_str(RPL_LISTEND), me.name, source_p->name);
 		safelist_client_release(source_p);
 		return 0;
 	}
