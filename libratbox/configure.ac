@@ -200,25 +200,6 @@ AC_CHECK_TYPES([struct sockaddr_storage],[
 	])
                 
 
-save_LIBS=$LIBS
-AC_SEARCH_LIBS(crypt, [crypt descrypt],,)
-LIBS=$save_LIBS
-
-CRYPT_LIB=$ac_cv_search_crypt
-
-if test "$CRYPT_LIB" = "none required"; then
-	unset CRYPT_LIB
-elif test "$CRYPT_LIB" = no; then
-	need_crypt=yes;
-	AC_DEFINE(NEED_CRYPT, 1, [Define if your system needs crypt.])
-	unset CRYPT_LIB
-fi
-
-AM_CONDITIONAL([NEED_CRYPT], [test x"$need_crypt" = "xyes"])
-
-
-AC_SUBST(CRYPT_LIB)
-
 dnl Check for stdarg.h - if we cant find it, halt configure
 AC_CHECK_HEADER(stdarg.h, , [AC_MSG_ERROR([** stdarg.h could not be found - libratbox will not compile without it **])])
 
