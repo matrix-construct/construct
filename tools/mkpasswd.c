@@ -440,7 +440,7 @@ make_bf_salt(int rounds, int length)
 	char tbuf[3];
 	if(length > 22)
 	{
-		printf("BlowFish salt length too long\n");
+		printf("Blowfish salt length too long\n");
 		exit(0);
 	}
 	sprintf(tbuf, "%02d", rounds);
@@ -495,14 +495,14 @@ full_usage()
 	printf("-y Generate a SHA512 password\n");
 	printf("-m Generate an MD5 password\n");
 	printf("-d Generate a DES password\n");
-	printf("-b Generate a BlowFish password\n");
+	printf("-b Generate a Blowfish password\n");
 	printf("-e Generate an Extended DES password\n");
-	printf("-l Specify a length for a random MD5 or BlowFish salt\n");
-	printf("-r Specify a number of rounds for a BlowFish or Extended DES password\n");
-	printf("   BlowFish:  default 4, no more than 6 recommended\n");
+	printf("-l Specify a length for a random MD5 or Blowfish salt\n");
+	printf("-r Specify a number of rounds for a Blowfish or Extended DES password\n");
+	printf("   Blowfish:  default 4, no more than 6 recommended\n");
 	printf("   Extended DES:  default 25\n");
 	printf("-s Specify a salt, 2 alphanumeric characters for DES, up to 16 for MD5,\n");
-	printf("   up to 22 for BlowFish, and 4 for Extended DES\n");
+	printf("   up to 22 for Blowfish, and 4 for Extended DES\n");
 	printf("-p Specify a plaintext password to use\n");
 	printf("Example: mkpasswd -m -s 3dr -p test\n");
 	exit(0);
@@ -515,7 +515,7 @@ brief_usage()
 	printf("Standard DES:  mkpasswd [-d] [-s salt] [-p plaintext]\n");
 	printf("Extended DES:  mkpasswd -e [-r rounds] [-s salt] [-p plaintext]\n");
 	printf("         MD5:  mkpasswd -m [-l saltlength] [-s salt] [-p plaintext]\n");
-	printf("    BlowFish:  mkpasswd -b [-r rounds] [-l saltlength] [-s salt]\n");
+	printf("    Blowfish:  mkpasswd -b [-r rounds] [-l saltlength] [-s salt]\n");
 	printf("                           [-p plaintext]\n");
 	printf("Use -h for full usage\n");
 	exit(0);
