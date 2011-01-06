@@ -303,6 +303,7 @@ struct ListClient
 {
 	unsigned int hash_indice;
 	unsigned int users_min, users_max;
+	int operspy;
 
 	/* It would be nice to add other modifiers,
 	 * but not for 1.1 --nenolod

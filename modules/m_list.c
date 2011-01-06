@@ -41,6 +41,7 @@
 #include "ircd.h"
 #include "numeric.h"
 #include "s_conf.h"
+#include "s_newconf.h"
 #include "s_serv.h"
 #include "send.h"
 #include "msg.h"
@@ -154,13 +155,14 @@ static int mo_list(struct Client *client_p, struct Client *source_p, int parc, c
 	/* XXX rather arbitrary -- jilles */
 	params.users_min = 3;
 	params.users_max = INT_MAX;
+	params.operspy = 0;
 
 	if (parc > 1 && parv[1] != NULL && !IsChannelName(parv[1]))
 	{
 		args = LOCAL_COPY(parv[1]);
-		/* Make any specification cancel out defaults */
-		if (*args == '<')
-			params.users_min = 0;
+
+		/* Cancel out default minimum. */
+		params.users_min = 0;
 
 		for (i = 0; i < 2; i++)
 		{
@@ -188,6 +190,12 @@ static int mo_list(struct Client *client_p, struct Client *source_p, int parc, c
 					params.users_min = atoi(args) + 1;
 				else
 					params.users_min = 0;
+			}
+			/* Only accept operspy as the first option. */
+			else if (*args == '!' && IsOperSpy(source_p) && i == 0)
+			{
+				params.operspy = 1;
+				report_operspy(source_p, "LIST", p);
 			}
 
 			if (EmptyString(p))
@@ -250,6 +258,7 @@ static void safelist_client_instantiate(struct Client *client_p, struct ListClie
 	self->hash_indice = 0;
 	self->users_min = params->users_min;
 	self->users_max = params->users_max;
+	self->operspy = params->operspy;
 
 	client_p->localClient->safelist_data = self;
 
@@ -321,8 +330,8 @@ static void safelist_channel_named(struct Client *source_p, const char *name)
 	}
 
 	if (!SecretChannel(chptr) || IsMember(source_p, chptr))
-		sendto_one(source_p, form_str(RPL_LIST), me.name, source_p->name, chptr->chname,
-			   rb_dlink_list_length(&chptr->members),
+		sendto_one(source_p, form_str(RPL_LIST), me.name, source_p->name, "",
+			   chptr->chname, rb_dlink_list_length(&chptr->members),
 			   chptr->topic == NULL ? "" : chptr->topic);
 
 	sendto_one(source_p, form_str(RPL_LISTEND), me.name, source_p->name);
@@ -341,15 +350,17 @@ static void safelist_one_channel(struct Client *source_p, struct Channel *chptr)
 {
 	struct ListClient *safelist_data = source_p->localClient->safelist_data;
 
-	if (SecretChannel(chptr) && !IsMember(source_p, chptr))
+	if (SecretChannel(chptr) && !IsMember(source_p, chptr) && !safelist_data->operspy)
 		return;
 
 	if ((unsigned int)chptr->members.length < safelist_data->users_min
 	    || (unsigned int)chptr->members.length > safelist_data->users_max)
 		return;
 
-	sendto_one(source_p, form_str(RPL_LIST), me.name, source_p->name, chptr->chname,
-		   chptr->members.length, chptr->topic == NULL ? "" : chptr->topic);
+	sendto_one(source_p, form_str(RPL_LIST), me.name, source_p->name,
+		   (safelist_data->operspy && SecretChannel(chptr)) ? "!" : "",
+		   chptr->chname, rb_dlink_list_length(&chptr->members),
+		   chptr->topic == NULL ? "" : chptr->topic);
 }
 
 /*
