@@ -71,14 +71,6 @@
  *
  *  All unknown/unlisted modes are treated as type D.
  */
-/* ELIST=[tokens]:
- *
- * M = mask search
- * N = !mask search
- * U = user count search (< >)
- * C = creation time search (C> C<)
- * T = topic search (T> T<)
- */
 
 #include "stdinc.h"
 #include "client.h"
@@ -316,8 +308,6 @@ init_isupport(void)
 	add_isupport("KNOCK", isupport_boolean, &ConfigChannel.use_knock);
 	add_isupport("STATUSMSG", isupport_string, "@+");
 	add_isupport("CALLERID", isupport_string, "g");
-	add_isupport("SAFELIST", isupport_string, "");
-	add_isupport("ELIST", isupport_string, "CTU");
 	add_isupport("CASEMAPPING", isupport_string, "rfc1459");
 	add_isupport("CHARSET", isupport_string, "ascii");
 	add_isupport("NICKLEN", isupport_intptr, &nicklen);

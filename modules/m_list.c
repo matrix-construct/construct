@@ -43,6 +43,7 @@
 #include "s_conf.h"
 #include "s_newconf.h"
 #include "s_serv.h"
+#include "supported.h"
 #include "send.h"
 #include "msg.h"
 #include "parse.h"
@@ -84,12 +85,26 @@ static int _modinit(void)
 {
 	iterate_clients_ev = rb_event_add("safelist_iterate_clients", safelist_iterate_clients, NULL, 3);
 
+	/* ELIST=[tokens]:
+	 *
+	 * M = mask search
+	 * N = !mask search
+	 * U = user count search (< >)
+	 * C = creation time search (C> C<)
+	 * T = topic search (T> T<)
+	 */
+	add_isupport("SAFELIST", isupport_string, "");
+	add_isupport("ELIST", isupport_string, "CTU");
+
 	return 0;
 }
 
 static void _moddeinit(void)
 {
 	rb_event_delete(iterate_clients_ev);
+
+	delete_isupport("SAFELIST");
+	delete_isupport("ELIST");
 }
 
 static void safelist_check_cliexit(hook_data_client_exit * hdata)
