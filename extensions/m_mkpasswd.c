@@ -1,28 +1,14 @@
 /*
- *  m_mkpasswd.c: Encrypts a password online, DES or MD5.
+ * m_mkpasswd.c: Encrypts a password online.
  *
- *  Copyright 2002 W. Campbell and the ircd-ratbox development team
- *  Based on mkpasswd.c, originally by Nelson Minar (minar@reed.edu)
- *
- *  You can use this code in any way as long as these names remain.
- *
- *  $Id: m_mkpasswd.c 3161 2007-01-25 07:23:01Z nenolod $
+ * Based on mkpasswd.c, originally by Nelson Minar (minar@reed.edu)
+ * You can use this code in any way as long as these names remain.
  */
 
-/* List of ircd includes from ../include/ */
 #include "stdinc.h"
 #include "client.h"
-#include "common.h"		/* FALSE bleah */
-#include "ircd.h"
-#include "match.h"
 #include "numeric.h"
-#include "s_newconf.h"
 #include "s_conf.h"
-#include "logger.h"
-#include "s_serv.h"
-#include "send.h"
-#include "msg.h"
-#include "parse.h"
 #include "modules.h"
 
 #include <string.h>
@@ -31,11 +17,15 @@ static int m_mkpasswd(struct Client *client_p, struct Client *source_p,
 		      int parc, const char *parv[]);
 static int mo_mkpasswd(struct Client *client_p, struct Client *source_p,
 		       int parc, const char *parv[]);
-static char *make_salt(void);
-static char *make_md5_salt(void);
 
-static char saltChars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./";
+static char *make_md5_salt(int);
+static char *make_sha256_salt(int);
+static char *make_sha512_salt(int);
+static char *generate_random_salt(char *, int);
+static char *generate_poor_salt(char *, int);
 
+static char saltChars[] = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+	/* 0 .. 63, ascii - 64 */
 
 struct Message mkpasswd_msgtab = {
 	"MKPASSWD", 0, 0, 0, MFLG_SLOW,
@@ -44,14 +34,31 @@ struct Message mkpasswd_msgtab = {
 
 mapi_clist_av1 mkpasswd_clist[] = { &mkpasswd_msgtab, NULL };
 
-DECLARE_MODULE_AV1(mkpasswd, NULL, NULL, mkpasswd_clist, NULL, NULL, "$Revision: 3161 $");
+DECLARE_MODULE_AV1(mkpasswd, NULL, NULL, mkpasswd_clist, NULL, NULL, "$Revision$");
 
 
+/* m_mkpasswd - mkpasswd message handler
+ *	parv[1] = password
+ *	parv[2] = type
+ */
 static int
 m_mkpasswd(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
-	int is_md5 = 0;
+	char *salt;
+	const char *hashtype;
+	const char hashdefault[] = "SHA512";
+
+	if(EmptyString(parv[1]))
+	{
+		sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS), me.name, source_p->name, "MKPASSWD");
+		return 0;
+	}
+
+	if(parc < 3)
+		hashtype = hashdefault;
+	else
+		hashtype = parv[2];
 
 	if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
 	{
@@ -60,101 +67,150 @@ m_mkpasswd(struct Client *client_p, struct Client *source_p, int parc, const cha
 		return 0;
 	}
 	else
-	{
 		last_used = rb_current_time();
-	}
 
-	if(parc == 3)
-	{
-		if(!irccmp(parv[2], "MD5"))
-		{
-			is_md5 = 1;
-		}
-		else if(!irccmp(parv[2], "DES"))
-		{
-			/* Not really needed, but we may want to have a default encryption
-			 * setting somewhere down the road
-			 */
-			is_md5 = 0;
-		}
-		else
-		{
-			sendto_one_notice(source_p, ":MKPASSWD syntax error:  MKPASSWD pass [DES|MD5]");
-			return 0;
-		}
-	}
-
-	if(parc == 1)
-		sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS), me.name, source_p->name, "MKPASSWD");
+	if(!irccmp(hashtype, "SHA256"))
+		salt = make_sha256_salt(16);
+	else if(!irccmp(hashtype, "SHA512"))
+		salt = make_sha512_salt(16);
+	else if(!irccmp(hashtype, "MD5"))
+		salt = make_md5_salt(8);
 	else
-		sendto_one_notice(source_p, ":Encryption for [%s]:  %s",
-			   parv[1], rb_crypt(parv[1],
-							    is_md5 ? make_md5_salt() :
-							    make_salt()));
+	{
+		sendto_one_notice(source_p,
+				  ":MKPASSWD syntax error:  MKPASSWD pass [SHA256|SHA512|MD5]");
+		return 0;
+	}
 
+	sendto_one_notice(source_p, ":Hash [%s] for %s: %s", hashtype, parv[1], rb_crypt(parv[1], salt));
 	return 0;
 }
 
-/*
-** mo_test
-**      parv[1] = parameter
-*/
+/* mo_mkpasswd - mkpasswd message handler
+ *	parv[1] = password
+ *	parv[2] = type
+ */
 static int
 mo_mkpasswd(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	int is_md5 = 0;
+	char *salt;
+	const char *hashtype;
+	const char hashdefault[] = "SHA512";
 
-	if(parc == 3)
+	if(EmptyString(parv[1]))
 	{
-		if(!irccmp(parv[2], "MD5"))
-		{
-			is_md5 = 1;
-		}
-		else if(!irccmp(parv[2], "DES"))
-		{
-			/* Not really needed, but we may want to have a default encryption
-			 * setting somewhere down the road
-			 */
-			is_md5 = 0;
-		}
-		else
-		{
-			sendto_one_notice(source_p,
-				   ":MKPASSWD syntax error:  MKPASSWD pass [DES|MD5]");
-			return 0;
-		}
+		sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS), me.name, source_p->name, "MKPASSWD");
+		return 0;
 	}
 
-	if(parc == 1)
-		sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS), me.name, source_p->name, "MKPASSWD");
+	if(parc < 3)
+		hashtype = hashdefault;
 	else
-		sendto_one_notice(source_p, ":Encryption for [%s]:  %s",
-			   parv[1], rb_crypt(parv[1], is_md5 ? make_md5_salt() : make_salt()));
+		hashtype = parv[2];
 
+	if(!irccmp(hashtype, "SHA256"))
+		salt = make_sha256_salt(16);
+	else if(!irccmp(hashtype, "SHA512"))
+		salt = make_sha512_salt(16);
+	else if(!irccmp(hashtype, "MD5"))
+		salt = make_md5_salt(8);
+	else
+	{
+		sendto_one_notice(source_p,
+				  ":MKPASSWD syntax error:  MKPASSWD pass [SHA256|SHA512|MD5]");
+		return 0;
+	}
+
+	sendto_one_notice(source_p, ":Hash [%s] for %s: %s", hashtype, parv[1], rb_crypt(parv[1], salt));
 	return 0;
 }
 
-static char *
-make_salt(void)
+char *
+make_md5_salt(int length)
 {
-	static char salt[3];
-	salt[0] = saltChars[random() % 64];
-	salt[1] = saltChars[random() % 64];
-	salt[2] = '\0';
-	return salt;
-}
-
-static char *
-make_md5_salt(void)
-{
-	static char salt[13];
-	int i;
+	static char salt[21];
+	if(length > 16)
+	{
+		printf("MD5 salt length too long\n");
+		exit(0);
+	}
 	salt[0] = '$';
 	salt[1] = '1';
 	salt[2] = '$';
-	for(i = 3; i < 11; i++)
-		salt[i] = saltChars[random() % 64];
-	salt[11] = '$';
-	salt[12] = '\0';
+	generate_random_salt(&salt[3], length);
+	salt[length + 3] = '$';
+	salt[length + 4] = '\0';
 	return salt;
+}
+
+char *
+make_sha256_salt(int length)
+{
+	static char salt[21];
+	if(length > 16)
+	{
+		printf("SHA256 salt length too long\n");
+		exit(0);
+	}
+	salt[0] = '$';
+	salt[1] = '5';
+	salt[2] = '$';
+	generate_random_salt(&salt[3], length);
+	salt[length + 3] = '$';
+	salt[length + 4] = '\0';
+	return salt;
+}
+
+char *
+make_sha512_salt(int length)
+{
+	static char salt[21];
+	if(length > 16)
+	{
+		printf("SHA512 salt length too long\n");
+		exit(0);
+	}
+	salt[0] = '$';
+	salt[1] = '6';
+	salt[2] = '$';
+	generate_random_salt(&salt[3], length);
+	salt[length + 3] = '$';
+	salt[length + 4] = '\0';
+	return salt;
+}
+
+char *
+generate_poor_salt(char *salt, int length)
+{
+	int i;
+	srand(time(NULL));
+	for(i = 0; i < length; i++)
+	{
+		salt[i] = saltChars[rand() % 64];
+	}
+	return (salt);
+}
+
+char *
+generate_random_salt(char *salt, int length)
+{
+	char *buf;
+	int fd, i;
+	if((fd = open("/dev/random", O_RDONLY)) < 0)
+	{
+		return (generate_poor_salt(salt, length));
+	}
+	buf = calloc(1, length);
+	if(read(fd, buf, length) != length)
+	{
+		free(buf);
+		return (generate_poor_salt(salt, length));
+	}
+
+	for(i = 0; i < length; i++)
+	{
+		salt[i] = saltChars[abs(buf[i]) % 64];
+	}
+	free(buf);
+	return (salt);
 }
