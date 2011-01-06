@@ -12,5 +12,11 @@ the statistics for the given channel.
 Modifiers are also supported, seperated by a comma:
   <n - List channels with less than n users
   >n - List channels with more than n users
+  C<n - List channels created in the last n minutes
+  C>n - List channels older than n minutes
+  T<n - List channels whose topics have changed in the
+        last n minutes
+  T>n - List channels whose topics were last changed
+        more than n minutes ago
 
 eg LIST <100,>20

@@ -317,7 +317,7 @@ init_isupport(void)
 	add_isupport("STATUSMSG", isupport_string, "@+");
 	add_isupport("CALLERID", isupport_string, "g");
 	add_isupport("SAFELIST", isupport_string, "");
-	add_isupport("ELIST", isupport_string, "U");
+	add_isupport("ELIST", isupport_string, "CTU");
 	add_isupport("CASEMAPPING", isupport_string, "rfc1459");
 	add_isupport("CHARSET", isupport_string, "ascii");
 	add_isupport("NICKLEN", isupport_intptr, &nicklen);

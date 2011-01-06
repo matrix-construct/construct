@@ -141,7 +141,7 @@ static int m_list(struct Client *client_p, struct Client *source_p, int parc, co
  */
 static int mo_list(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	struct ListClient params;
+	struct ListClient *params;
 	char *p, *args;
 	int i;
 
@@ -152,19 +152,31 @@ static int mo_list(struct Client *client_p, struct Client *source_p, int parc, c
 		return 0;
 	}
 
-	/* XXX rather arbitrary -- jilles */
-	params.users_min = 3;
-	params.users_max = INT_MAX;
-	params.operspy = 0;
+	/* Single channel. */
+	if (parc > 1 && IsChannelName(parv[1]))
+	{
+		safelist_channel_named(source_p, parv[1]);
+		return 0;
+	}
 
-	if (parc > 1 && parv[1] != NULL && !IsChannelName(parv[1]))
+	/* Multiple channels, possibly with parameters. */
+	params = rb_malloc(sizeof(struct ListClient));
+
+	/* XXX rather arbitrary -- jilles */
+	params->users_min = 3;
+	params->users_max = INT_MAX;
+	params->operspy = 0;
+	params->created_min = params->topic_min = 
+		params->created_max = params->topic_max = 0;
+
+	if (parc > 1 && !EmptyString(parv[1]))
 	{
 		args = LOCAL_COPY(parv[1]);
 
 		/* Cancel out default minimum. */
-		params.users_min = 0;
+		params->users_min = 0;
 
-		for (i = 0; i < 2; i++)
+		for (i = 0; i < 7; i++)
 		{
 			if ((p = strchr(args, ',')) != NULL)
 				*p++ = '\0';
@@ -174,27 +186,69 @@ static int mo_list(struct Client *client_p, struct Client *source_p, int parc, c
 				args++;
 				if (IsDigit(*args))
 				{
-					params.users_max = atoi(args);
-					if (params.users_max == 0)
-						params.users_max = INT_MAX;
+					params->users_max = atoi(args);
+					if (params->users_max == 0)
+						params->users_max = INT_MAX;
 					else
-						params.users_max--;
+						params->users_max--;
 				}
-				else
-					params.users_max = INT_MAX;
 			}
 			else if (*args == '>')
 			{
 				args++;
 				if (IsDigit(*args))
-					params.users_min = atoi(args) + 1;
+					params->users_min = atoi(args) + 1;
 				else
-					params.users_min = 0;
+					params->users_min = 0;
+			}
+			else if (*args == 'C' || *args == 'c')
+			{
+				args++;
+				if (*args == '>')
+				{
+					/* Creation time earlier than last x minutes. */
+					args++;
+					if (IsDigit(*args))
+					{
+						params->created_max = rb_current_time() - (60 * atoi(args));
+					}
+				}
+				else if (*args == '<')
+				{
+					/* Creation time within last x minutes. */
+					args++;
+					if (IsDigit(*args))
+					{
+						params->created_min = rb_current_time() - (60 * atoi(args));
+					}
+				}
+			}
+			else if (*args == 'T' || *args == 't')
+			{
+				args++;
+				if (*args == '>')
+				{
+					/* Topic change time earlier than last x minutes. */
+					args++;
+					if (IsDigit(*args))
+					{
+						params->topic_max = rb_current_time() - (60 * atoi(args));
+					}
+				}
+				else if (*args == '<')
+				{
+					/* Topic change time within last x minutes. */
+					args++;
+					if (IsDigit(*args))
+					{
+						params->topic_min = rb_current_time() - (60 * atoi(args));
+					}
+				}
 			}
 			/* Only accept operspy as the first option. */
 			else if (*args == '!' && IsOperSpy(source_p) && i == 0)
 			{
-				params.operspy = 1;
+				params->operspy = 1;
 				report_operspy(source_p, "LIST", p);
 			}
 
@@ -204,13 +258,8 @@ static int mo_list(struct Client *client_p, struct Client *source_p, int parc, c
 				args = p;
 		}
 	}
-	else if (parc > 1 && IsChannelName(parv[1]))
-	{
-		safelist_channel_named(source_p, parv[1]);
-		return 0;
-	}
 
-	safelist_client_instantiate(source_p, &params);
+	safelist_client_instantiate(source_p, params);
 
 	return 0;
 }
@@ -238,7 +287,7 @@ static int safelist_sendq_exceeded(struct Client *client_p)
  * safelist_client_instantiate()
  *
  * inputs       - pointer to Client to be listed,
- *                struct ListClient to copy for params
+ *                pointer to ListClient for params
  * outputs      - none
  * side effects - the safelist process begins for a
  *                client.
@@ -248,19 +297,10 @@ static int safelist_sendq_exceeded(struct Client *client_p)
  */
 static void safelist_client_instantiate(struct Client *client_p, struct ListClient *params)
 {
-	struct ListClient *self;
-
 	s_assert(MyClient(client_p));
 	s_assert(params != NULL);
 
-	self = rb_malloc(sizeof(struct ListClient));
-
-	self->hash_indice = 0;
-	self->users_min = params->users_min;
-	self->users_max = params->users_max;
-	self->operspy = params->operspy;
-
-	client_p->localClient->safelist_data = self;
+	client_p->localClient->safelist_data = params;
 
 	sendto_one(client_p, form_str(RPL_LISTSTART), me.name, client_p->name);
 
@@ -355,6 +395,20 @@ static void safelist_one_channel(struct Client *source_p, struct Channel *chptr)
 
 	if ((unsigned int)chptr->members.length < safelist_data->users_min
 	    || (unsigned int)chptr->members.length > safelist_data->users_max)
+		return;
+
+	if (safelist_data->topic_min && chptr->topic_time < safelist_data->topic_min)
+		return;
+
+	/* If a topic TS is provided, don't show channels without a topic set. */
+	if (safelist_data->topic_max && (chptr->topic_time > safelist_data->topic_max
+		|| chptr->topic_time == 0))
+		return;
+
+	if (safelist_data->created_min && chptr->channelts < safelist_data->created_min)
+		return;
+
+	if (safelist_data->created_max && chptr->channelts > safelist_data->created_max)
 		return;
 
 	sendto_one(source_p, form_str(RPL_LIST), me.name, source_p->name,
