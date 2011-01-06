@@ -163,7 +163,16 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if(flag & FLAG_BLOWFISH)
+	if(flag & FLAG_MD5)
+	{
+		if(length == 0)
+			length = 8;
+		if(flag & FLAG_SALT)
+			salt = make_md5_salt_para(saltpara);
+		else
+			salt = make_md5_salt(length);
+	}
+	else if(flag & FLAG_BLOWFISH)
 	{
 		if(length == 0)
 			length = 22;
@@ -180,15 +189,6 @@ main(int argc, char *argv[])
 			salt = make_sha256_salt_para(saltpara);
 		else
 			salt = make_sha256_salt(length);
-	}
-	else if(flag & FLAG_SHA512)
-	{
-		if(length == 0)
-			length = 16;
-		if(flag & FLAG_SALT)
-			salt = make_sha512_salt_para(saltpara);
-		else
-			salt = make_sha512_salt(length);
 	}
 	else if(flag & FLAG_EXT)
 	{
@@ -232,11 +232,11 @@ main(int argc, char *argv[])
 	else
 	{
 		if(length == 0)
-			length = 8;
+			length = 16;
 		if(flag & FLAG_SALT)
-			salt = make_md5_salt_para(saltpara);
+			salt = make_sha512_salt_para(saltpara);
 		else
-			salt = make_md5_salt(length);
+			salt = make_sha512_salt(length);
 	}
 
 	if(flag & FLAG_PASS)
