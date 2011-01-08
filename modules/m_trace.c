@@ -111,7 +111,7 @@ m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *
 
 			if(ac2ptr == NULL)
 			{
-				RB_DLINK_FOREACH(ptr, global_client_list.head)
+				RB_DLINK_FOREACH(ptr, global_serv_list.head)
 				{
 					ac2ptr = ptr->data;
 

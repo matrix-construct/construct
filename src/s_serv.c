@@ -157,7 +157,7 @@ hunt_server(struct Client *client_p, struct Client *source_p,
 	 */
 	if(!target_p && wilds)
 	{
-		RB_DLINK_FOREACH(ptr, global_client_list.head)
+		RB_DLINK_FOREACH(ptr, global_serv_list.head)
 		{
 			if(match(new, ((struct Client *) (ptr->data))->name))
 			{
