@@ -684,7 +684,7 @@ sendto_channel_local_with_capability(int type, int caps, int negcaps, struct Cha
 
 		if(IsIOError(target_p) ||
 		   !IsCapable(target_p, caps) ||
- 		   IsCapable(target_p, negcaps))
+ 		   !NotCapable(target_p, negcaps))
 			continue;
 
 		if(type && ((msptr->flags & type) == 0))
