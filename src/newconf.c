@@ -595,6 +595,9 @@ conf_end_oper(struct TopConf *tc)
 				return 0;
 			}
 		}
+
+		if(!EmptyString(yy_oper->certfp))
+			yy_tmpoper->certfp = yy_oper->certfp;
 #endif
 
 		/* all is ok, put it on oper_conf_list */
