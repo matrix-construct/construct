@@ -597,7 +597,7 @@ conf_end_oper(struct TopConf *tc)
 		}
 
 		if(!EmptyString(yy_oper->certfp))
-			yy_tmpoper->certfp = yy_oper->certfp;
+			yy_tmpoper->certfp = rb_strdup(yy_oper->certfp);
 #endif
 
 		/* all is ok, put it on oper_conf_list */
@@ -621,6 +621,8 @@ conf_set_oper_flags(void *data)
 static void
 conf_set_oper_fingerprint(void *data)
 {
+	if (yy_oper->certfp)
+		rb_free(yy_oper->certfp);
 	yy_oper->certfp = rb_strdup((char *) data);
 }
 
@@ -1322,6 +1324,8 @@ conf_set_connect_accept_password(void *data)
 static void
 conf_set_connect_fingerprint(void *data)
 {
+	if (yy_server->certfp)
+		rb_free(yy_server->certfp);
 	yy_server->certfp = rb_strdup((char *) data);
 
 	/* force SSL to be enabled if fingerprint is enabled. */
