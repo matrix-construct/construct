@@ -779,7 +779,7 @@ static void   MD5Init (MD5_CTX *);
 static void   MD5Update (MD5_CTX *, const void *, unsigned int);
 static void   MD5Final (unsigned char [16], MD5_CTX *);
 
-#if (BYTE_ORDER == LITTLE_ENDIAN)
+#ifndef WORDS_BIGENDIAN
 #define Encode memcpy
 #define Decode memcpy
 #else 
@@ -1196,7 +1196,7 @@ struct sha256_ctx
 	char buffer[128];	/* NB: always correctly aligned for uint32_t.  */
 };
 
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 #	define SHA256_SWAP(n) \
 		(((n) << 24) | (((n) & 0xff00) << 8) | (((n) >> 8) & 0xff00) | ((n) >> 24))
 #else
@@ -1738,7 +1738,7 @@ struct sha512_ctx
 };
 
 
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 #	define SHA512_SWAP(n)			\
 		(((n) << 56)			\
 		| (((n) & 0xff00) << 40)	\
