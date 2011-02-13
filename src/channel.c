@@ -895,6 +895,11 @@ can_send(struct Channel *chptr, struct Client *source_p, struct membership *mspt
 	if(is_chanop_voiced(msptr))
 		moduledata.approved = CAN_SEND_OPV;
 
+	moduledata.client = source_p;
+	moduledata.chptr = msptr->chptr;
+	moduledata.msptr = msptr;
+	moduledata.target = NULL;
+
 	call_hook(h_can_send, &moduledata);
 
 	return moduledata.approved;
