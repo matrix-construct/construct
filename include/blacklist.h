@@ -19,7 +19,6 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: blacklist.h 2023 2006-09-02 23:47:27Z jilles $
  */
 
 #ifndef _BLACKLIST_H_
@@ -29,6 +28,8 @@
 struct Blacklist {
 	unsigned int status;	/* If CONF_ILLEGAL, delete when no clients */
 	int refcount;
+	int ipv4;	/* Does this blacklist support IPv4 lookups? */
+	int ipv6;	/* Does this blacklist support IPv6 lookups? */
 	char host[IRCD_RES_HOSTLEN + 1];
 	char reject_reason[IRCD_BUFSIZE];
 	unsigned int hits;
@@ -44,7 +45,7 @@ struct BlacklistClient {
 };
 
 /* public interfaces */
-struct Blacklist *new_blacklist(char *host, char *reject_entry);
+struct Blacklist *new_blacklist(char *host, char *reject_reason, int ipv4, int ipv6);
 void lookup_blacklists(struct Client *client_p);
 void abort_blacklist_queries(struct Client *client_p);
 void unref_blacklist(struct Blacklist *blptr);

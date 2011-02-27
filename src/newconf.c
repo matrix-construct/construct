@@ -54,6 +54,9 @@ static struct alias_entry *yy_alias = NULL;
 
 static char *yy_blacklist_host = NULL;
 static char *yy_blacklist_reason = NULL;
+static int yy_blacklist_ipv4 = 1;
+static int yy_blacklist_ipv6 = 0;
+
 static char *yy_privset_extends = NULL;
 
 static const char *
@@ -1776,17 +1779,71 @@ conf_set_blacklist_host(void *data)
 }
 
 static void
+conf_set_blacklist_type(void *data)
+{
+	conf_parm_t *args = data;
+
+	/* Don't assume we have either if we got here */
+	yy_blacklist_ipv4 = 0;
+	yy_blacklist_ipv6 = 0;
+
+	for (; args; args = args->next)
+	{
+		if (!strcasecmp(args->v.string, "ipv4"))
+			yy_blacklist_ipv4 = 1;
+		else if (!strcasecmp(args->v.string, "ipv6"))
+			yy_blacklist_ipv6 = 1;
+		else
+			conf_report_error("blacklist::type has unknown address family %s",
+					  args->v.string);
+	}
+
+	/* If we have neither, just default to IPv4 */
+	if (!yy_blacklist_ipv4 && !yy_blacklist_ipv6)
+	{
+		conf_report_error("blacklist::type has neither IPv4 nor IPv6 (defaulting to IPv4)");
+		yy_blacklist_ipv4 = 1;
+	}
+}
+
+static void
 conf_set_blacklist_reason(void *data)
 {
 	yy_blacklist_reason = rb_strdup(data);
 
 	if (yy_blacklist_host && yy_blacklist_reason)
 	{
-		new_blacklist(yy_blacklist_host, yy_blacklist_reason);
+		if (yy_blacklist_ipv6)
+		{
+			/* Make sure things fit (64 = alnum count + dots) */
+			if ((64 + strlen(yy_blacklist_host)) > IRCD_RES_HOSTLEN)
+			{
+				conf_report_error("blacklist::host %s results in IPv6 queries that are too long",
+						  yy_blacklist_host);
+				goto cleanup_bl;
+			}
+		}
+		/* Avoid doing redundant check, IPv6 is bigger than IPv4 --Elizabeth */
+		if (yy_blacklist_ipv4 && !yy_blacklist_ipv6)
+		{
+			/* Make sure things fit (16 = number of nums + dots) */
+			if ((16 + strlen(yy_blacklist_host)) > IRCD_RES_HOSTLEN)
+			{
+				conf_report_error("blacklist::host %s results in IPv4 queries that are too long",
+						  yy_blacklist_host);
+				goto cleanup_bl;
+			}
+		}
+
+		new_blacklist(yy_blacklist_host, yy_blacklist_reason, yy_blacklist_ipv4, yy_blacklist_ipv6);
+
+cleanup_bl:
 		rb_free(yy_blacklist_host);
 		rb_free(yy_blacklist_reason);
 		yy_blacklist_host = NULL;
 		yy_blacklist_reason = NULL;
+		yy_blacklist_ipv4 = 1;
+		yy_blacklist_ipv6 = 0;
 	}
 }
 
@@ -2279,5 +2336,6 @@ newconf_init()
 
 	add_top_conf("blacklist", NULL, NULL, NULL);
 	add_conf_item("blacklist", "host", CF_QSTRING, conf_set_blacklist_host);
+	add_conf_item("blacklist", "type", CF_STRING | CF_FLIST, conf_set_blacklist_type);
 	add_conf_item("blacklist", "reject_reason", CF_QSTRING, conf_set_blacklist_reason);
 }

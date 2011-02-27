@@ -2,7 +2,7 @@
  * charybdis: A slightly useful ircd.
  * blacklist.c: Manages DNS blacklist entries and lookups
  *
- * Copyright (C) 2006-2008 charybdis development team
+ * Copyright (C) 2006-2011 charybdis development team
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -30,7 +30,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: blacklist.c 2743 2006-11-10 15:15:00Z jilles $
  */
 
 #include "stdinc.h"
@@ -113,7 +112,6 @@ static void blacklist_dns_callback(void *vptr, struct DNSReply *reply)
 	rb_free(blcptr);
 }
 
-/* XXX: no IPv6 implementation, not to concerned right now though. */
 static void initiate_blacklist_dnsquery(struct Blacklist *blptr, struct Client *client_p)
 {
 	struct BlacklistClient *blcptr = rb_malloc(sizeof(struct BlacklistClient));
@@ -126,15 +124,54 @@ static void initiate_blacklist_dnsquery(struct Blacklist *blptr, struct Client *
 	blcptr->dns_query.ptr = blcptr;
 	blcptr->dns_query.callback = blacklist_dns_callback;
 
-	ip = (uint8_t *)&((struct sockaddr_in *)&client_p->localClient->ip)->sin_addr.s_addr;
+	if ((client_p->localClient->ip.ss_family == AF_INET) && blptr->ipv4)
+	{
+		ip = (uint8_t *)&((struct sockaddr_in *)&client_p->localClient->ip)->sin_addr.s_addr;
 
-	/* becomes 2.0.0.127.torbl.ahbl.org or whatever */
-	rb_snprintf(buf, sizeof buf, "%u.%u.%u.%u.%s",
-		    (unsigned int) ip[3],
-		    (unsigned int) ip[2],
-		    (unsigned int) ip[1],
-		    (unsigned int) ip[0],
-		    blptr->host);
+		/* becomes 2.0.0.127.torbl.ahbl.org or whatever */
+		rb_snprintf(buf, sizeof buf, "%d.%d.%d.%d.%s",
+			    (unsigned int) ip[3],
+			    (unsigned int) ip[2],
+			    (unsigned int) ip[1],
+			    (unsigned int) ip[0],
+			    blptr->host);
+	}
+	/* IPv6 is supported now. --Elizabeth */
+	else if ((client_p->localClient->ip.ss_family == AF_INET6) && blptr->ipv6)
+	{
+		/* Breaks it into ip[0] = 0x00, ip[1] = 0x00... ip[16] = 0x01 for localhost
+		 * I wish there was a uint4_t for C, this would make the below cleaner, but... */
+		ip = (uint8_t *)&((struct sockaddr_in6 *)&client_p->localClient->ip)->sin6_addr.s6_addr;
+		char *bufptr = buf;
+		int i;
+
+		/* The below will give us something like
+		 * 1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.foobl.invalid
+		 */
+
+		/* Going backwards */
+		for (i = 15; i >= 0; i--)
+		{
+			/* Get upper and lower nibbles (yes this works fine on
+			 * both big and little endian) */
+			uint8_t hi = (ip[i] >> 4) & 0x0F;
+			uint8_t lo = ip[i] & 0x0F;
+
+			/* One part... (why 5? rb_snprintf adds \0) */
+			rb_snprintf(bufptr, 5, "%1x.%1x.",
+				    (unsigned int) lo, /* Remember, backwards */
+				    (unsigned int) hi);
+
+			/* Lurch forward to next position */
+			bufptr += 4;
+		}
+
+		/* Tack host on */
+		strcpy(bufptr, blptr->host);
+	}
+	/* This shouldn't happen... */
+	else
+		return;
 
 	gethost_byname_type(buf, &blcptr->dns_query, T_A);
 
@@ -143,7 +180,7 @@ static void initiate_blacklist_dnsquery(struct Blacklist *blptr, struct Client *
 }
 
 /* public interfaces */
-struct Blacklist *new_blacklist(char *name, char *reject_reason)
+struct Blacklist *new_blacklist(char *name, char *reject_reason, int ipv4, int ipv6)
 {
 	struct Blacklist *blptr;
 
@@ -160,6 +197,8 @@ struct Blacklist *new_blacklist(char *name, char *reject_reason)
 		blptr->status &= ~CONF_ILLEGAL;
 	rb_strlcpy(blptr->host, name, IRCD_RES_HOSTLEN + 1);
 	rb_strlcpy(blptr->reject_reason, reject_reason, IRCD_BUFSIZE);
+	blptr->ipv4 = ipv4;
+	blptr->ipv6 = ipv6;
 	blptr->lastwarning = 0;
 
 	return blptr;
@@ -178,10 +217,6 @@ void unref_blacklist(struct Blacklist *blptr)
 void lookup_blacklists(struct Client *client_p)
 {
 	rb_dlink_node *nptr;
-
-	/* We don't do IPv6 right now, sorry! */
-	if (client_p->localClient->ip.ss_family == AF_INET6)
-		return;
 
 	RB_DLINK_FOREACH(nptr, blacklist_list.head)
 	{
