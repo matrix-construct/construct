@@ -2207,7 +2207,6 @@ static struct ConfEntry conf_general_table[] =
 	{ "burst_away",		CF_YESNO, NULL, 0, &ConfigFileEntry.burst_away		},
 	{ "caller_id_wait",	CF_TIME,  NULL, 0, &ConfigFileEntry.caller_id_wait	},
 	{ "client_exit",	CF_YESNO, NULL, 0, &ConfigFileEntry.client_exit		},
-	{ "client_flood",	CF_INT,   NULL, 0, &ConfigFileEntry.client_flood	},
 	{ "collision_fnc",	CF_YESNO, NULL, 0, &ConfigFileEntry.collision_fnc	},
 	{ "connect_timeout",	CF_TIME,  NULL, 0, &ConfigFileEntry.connect_timeout	},
 	{ "default_floodcount", CF_INT,   NULL, 0, &ConfigFileEntry.default_floodcount	},
@@ -2252,6 +2251,11 @@ static struct ConfEntry conf_general_table[] =
 	{ "use_whois_actually", CF_YESNO, NULL, 0, &ConfigFileEntry.use_whois_actually	},
 	{ "warn_no_nline",	CF_YESNO, NULL, 0, &ConfigFileEntry.warn_no_nline	},
 	{ "use_propagated_bans",CF_YESNO, NULL, 0, &ConfigFileEntry.use_propagated_bans	},
+	{ "client_flood_max_lines",	CF_INT,   NULL, 0, &ConfigFileEntry.client_flood_max_lines	},
+	{ "client_flood_burst_rate",	CF_INT,   NULL, 0, &ConfigFileEntry.client_flood_burst_rate	},
+	{ "client_flood_burst_max",	CF_INT,   NULL, 0, &ConfigFileEntry.client_flood_burst_max	},
+	{ "client_flood_message_num",	CF_INT,   NULL, 0, &ConfigFileEntry.client_flood_message_num	},
+	{ "client_flood_message_time",	CF_INT,   NULL, 0, &ConfigFileEntry.client_flood_message_time	},
 	{ "\0", 		0, 	  NULL, 0, NULL }
 };
 

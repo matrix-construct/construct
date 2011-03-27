@@ -784,7 +784,6 @@ set_default_conf(void)
 	ConfigFileEntry.min_nonwildcard_simple = 3;
 	ConfigFileEntry.default_floodcount = 8;
 	ConfigFileEntry.default_ident_timeout = 5;
-	ConfigFileEntry.client_flood = CLIENT_FLOOD_DEFAULT;
 	ConfigFileEntry.tkline_expire_notices = 0;
 
         ConfigFileEntry.reject_after_count = 5;
@@ -792,6 +791,12 @@ set_default_conf(void)
 	ConfigFileEntry.reject_duration = 120;
 	ConfigFileEntry.throttle_count = 4;
 	ConfigFileEntry.throttle_duration = 60;
+
+	ConfigFileEntry.client_flood_max_lines = CLIENT_FLOOD_DEFAULT;
+	ConfigFileEntry.client_flood_burst_rate = 5;
+	ConfigFileEntry.client_flood_burst_max = 5;
+	ConfigFileEntry.client_flood_message_time = 1;
+	ConfigFileEntry.client_flood_message_num = 2;
 
 	ServerInfo.default_max_clients = MAXCONNECTIONS;
 
@@ -858,9 +863,9 @@ validate_conf(void)
 				
 	}
 
-	if((ConfigFileEntry.client_flood < CLIENT_FLOOD_MIN) ||
-	   (ConfigFileEntry.client_flood > CLIENT_FLOOD_MAX))
-		ConfigFileEntry.client_flood = CLIENT_FLOOD_MAX;
+	if((ConfigFileEntry.client_flood_max_lines < CLIENT_FLOOD_MIN) ||
+	   (ConfigFileEntry.client_flood_max_lines > CLIENT_FLOOD_MAX))
+		ConfigFileEntry.client_flood_max_lines = CLIENT_FLOOD_MAX;
 
 	if(!split_users || !split_servers ||
 	   (!ConfigChannel.no_create_on_split && !ConfigChannel.no_join_on_split))

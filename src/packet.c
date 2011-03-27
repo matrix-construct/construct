@@ -38,7 +38,6 @@
 static char readBuf[READBUF_SIZE];
 static void client_dopacket(struct Client *client_p, char *buffer, size_t length);
 
-
 /*
  * parse_client_queued - parse client queued messages
  */
@@ -124,6 +123,9 @@ parse_client_queued(struct Client *client_p)
 			{
 				if(client_p->localClient->sent_parsed >= client_p->localClient->allow_read)
 					break;
+				/* spb: Add second layer of throttling to n lines per second, even during burst */
+				if(client_p->localClient->actually_read >= ConfigFileEntry.client_flood_burst_rate)
+					break;
 			}
 
 			/* allow opers 4 times the amount of messages as users. why 4?
@@ -142,7 +144,9 @@ parse_client_queued(struct Client *client_p)
 			client_dopacket(client_p, readBuf, dolen);
 			if(IsAnyDead(client_p))
 				return;
-			client_p->localClient->sent_parsed++;
+
+			client_p->localClient->sent_parsed += ConfigFileEntry.client_flood_message_time;
+			client_p->localClient->actually_read++;
 		}
 	}
 }
@@ -188,15 +192,14 @@ flood_recalc(void *unused)
 			continue;
 		
 		if(IsFloodDone(client_p))
-			client_p->localClient->sent_parsed -= 2;
+			client_p->localClient->sent_parsed -= ConfigFileEntry.client_flood_message_num;
 		else
 			client_p->localClient->sent_parsed = 0;
 			
 		if(client_p->localClient->sent_parsed < 0)
 			client_p->localClient->sent_parsed = 0;
 
-		if(--client_p->localClient->actually_read < 0)
-			client_p->localClient->actually_read = 0;
+		client_p->localClient->actually_read = 0;
 
 		parse_client_queued(client_p);
 		
@@ -217,8 +220,7 @@ flood_recalc(void *unused)
 		if(client_p->localClient->sent_parsed < 0)
 			client_p->localClient->sent_parsed = 0;
 
-		if(--client_p->localClient->actually_read < 0)
-			client_p->localClient->actually_read = 0;
+		client_p->localClient->actually_read = 0;
 
 		parse_client_queued(client_p);
 	}
@@ -231,7 +233,6 @@ void
 read_packet(rb_fde_t * F, void *data)
 {
 	struct Client *client_p = data;
-	struct LocalUser *lclient_p = client_p->localClient;
 	int length = 0;
 	int lbuf_len;
 
@@ -288,8 +289,6 @@ read_packet(rb_fde_t * F, void *data)
 
 		lbuf_len = rb_linebuf_parse(&client_p->localClient->buf_recvq, readBuf, length, binary);
 
-		lclient_p->actually_read += lbuf_len;
-
 		if(IsAnyDead(client_p))
 			return;
 			
@@ -301,7 +300,7 @@ read_packet(rb_fde_t * F, void *data)
 			
 		/* Check to make sure we're not flooding */
 		if(!IsAnyServer(client_p) &&
-		   (rb_linebuf_alloclen(&client_p->localClient->buf_recvq) > ConfigFileEntry.client_flood))
+		   (rb_linebuf_alloclen(&client_p->localClient->buf_recvq) > ConfigFileEntry.client_flood_max_lines))
 		{
 			if(!(ConfigFileEntry.no_oper_flood && IsOper(client_p)))
 			{

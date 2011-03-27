@@ -43,8 +43,12 @@
  * just connected.  this allows clients to rejoin multiple channels
  * without being so heavily penalised they excess flood.
  */
-#define MAX_FLOOD 5
+/*
+ * spb: Made these configurable
+ */
+#define MAX_FLOOD ConfigFileEntry.client_flood_burst_max
 #define MAX_FLOOD_BURST MAX_FLOOD * 8
+
 
 extern PF read_packet;
 extern EVH flood_recalc;

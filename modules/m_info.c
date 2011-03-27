@@ -122,10 +122,34 @@ static struct InfoStruct info_table[] = {
 		"Prepend 'Client Exit:' to user QUIT messages"
 	},
 	{
-		"client_flood",
+		"client_flood_max_lines",
 		OUTPUT_DECIMAL,
-		&ConfigFileEntry.client_flood,
+		&ConfigFileEntry.client_flood_max_lines,
 		"Number of lines before a client Excess Flood's",
+	},
+	{
+		"client_flood_burst_rate",
+		OUTPUT_DECIMAL,
+		&ConfigFileEntry.client_flood_burst_rate,
+		"Rate at which burst lines are processed",
+	},
+	{
+		"client_flood_burst_max",
+		OUTPUT_DECIMAL,
+		&ConfigFileEntry.client_flood_burst_max,
+		"Number of lines to permit at client_flood_burst_rate",
+	},
+	{
+		"client_flood_message_num",
+		OUTPUT_DECIMAL,
+		&ConfigFileEntry.client_flood_message_num,
+		"Number of messages to allow per client_flood_message_time outside of burst",
+	},
+	{
+		"client_flood_message_time",
+		OUTPUT_DECIMAL,
+		&ConfigFileEntry.client_flood_message_time,
+		"Time to allow per client_flood_message_num outside of burst",
 	},
 	{
 		"connect_timeout",
@@ -626,9 +650,9 @@ static struct InfoStruct info_table[] = {
 /* *INDENT-ON* */
 
 /*
-** m_info
-**  parv[1] = servername
-*/
+ ** m_info
+ **  parv[1] = servername
+ */
 static int
 m_info(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
@@ -638,7 +662,7 @@ m_info(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	{
 		/* safe enough to give this on a local connect only */
 		sendto_one(source_p, form_str(RPL_LOAD2HI),
-			   me.name, source_p->name, "INFO");
+				me.name, source_p->name, "INFO");
 		sendto_one_numeric(source_p, RPL_ENDOFINFO, form_str(RPL_ENDOFINFO));
 		return 0;
 	}
@@ -658,9 +682,9 @@ m_info(struct Client *client_p, struct Client *source_p, int parc, const char *p
 }
 
 /*
-** mo_info
-**  parv[1] = servername
-*/
+ ** mo_info
+ **  parv[1] = servername
+ */
 static int
 mo_info(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
@@ -716,12 +740,12 @@ send_birthdate_online_time(struct Client *source_p)
 {
 	char tbuf[26]; /* this needs to be 26 - see ctime_r manpage */
 	sendto_one(source_p, ":%s %d %s :Birth Date: %s, compile # %s",
-		   get_id(&me, source_p), RPL_INFO, 
-		   get_id(source_p, source_p), creation, generation);
+			get_id(&me, source_p), RPL_INFO, 
+			get_id(source_p, source_p), creation, generation);
 
 	sendto_one(source_p, ":%s %d %s :On-line since %s",
-		   get_id(&me, source_p), RPL_INFO, 
-		   get_id(source_p, source_p), rb_ctime(startup_time, tbuf, sizeof(tbuf)));
+			get_id(&me, source_p), RPL_INFO, 
+			get_id(source_p, source_p), rb_ctime(startup_time, tbuf, sizeof(tbuf)));
 }
 
 /*
@@ -746,18 +770,18 @@ send_conf_options(struct Client *source_p)
 		if(infoptr->intvalue)
 		{
 			sendto_one(source_p, ":%s %d %s :%-30s %-5d [%-30s]",
-				   get_id(&me, source_p), RPL_INFO,
-				   get_id(source_p, source_p),
-				   infoptr->name, infoptr->intvalue, 
-				   infoptr->desc);
+					get_id(&me, source_p), RPL_INFO,
+					get_id(source_p, source_p),
+					infoptr->name, infoptr->intvalue, 
+					infoptr->desc);
 		}
 		else
 		{
 			sendto_one(source_p, ":%s %d %s :%-30s %-5s [%-30s]",
-				   get_id(&me, source_p), RPL_INFO,
-				   get_id(source_p, source_p),
-				   infoptr->name, infoptr->strvalue, 
-				   infoptr->desc);
+					get_id(&me, source_p), RPL_INFO,
+					get_id(source_p, source_p),
+					infoptr->name, infoptr->strvalue, 
+					infoptr->desc);
 		}
 	}
 
@@ -771,95 +795,95 @@ send_conf_options(struct Client *source_p)
 			/*
 			 * For "char *" references
 			 */
-		case OUTPUT_STRING:
-			{
-				char *option = *((char **) info_table[i].option);
+			case OUTPUT_STRING:
+				{
+					char *option = *((char **) info_table[i].option);
 
-				sendto_one(source_p, ":%s %d %s :%-30s %-5s [%-30s]",
-					   get_id(&me, source_p), RPL_INFO,
-					   get_id(source_p, source_p),
-					   info_table[i].name,
-					   option ? option : "NONE",
-					   info_table[i].desc ? info_table[i].desc : "<none>");
+					sendto_one(source_p, ":%s %d %s :%-30s %-5s [%-30s]",
+							get_id(&me, source_p), RPL_INFO,
+							get_id(source_p, source_p),
+							info_table[i].name,
+							option ? option : "NONE",
+							info_table[i].desc ? info_table[i].desc : "<none>");
 
-				break;
-			}
-			/*
-			 * For "char foo[]" references
-			 */
-		case OUTPUT_STRING_PTR:
-			{
-				char *option = (char *) info_table[i].option;
+					break;
+				}
+				/*
+				 * For "char foo[]" references
+				 */
+			case OUTPUT_STRING_PTR:
+				{
+					char *option = (char *) info_table[i].option;
 
-				sendto_one(source_p, ":%s %d %s :%-30s %-5s [%-30s]",
-					   get_id(&me, source_p), RPL_INFO,
-					   get_id(source_p, source_p),
-					   info_table[i].name,
-					   EmptyString(option) ? "NONE" : option,
-					   info_table[i].desc ? info_table[i].desc : "<none>");
+					sendto_one(source_p, ":%s %d %s :%-30s %-5s [%-30s]",
+							get_id(&me, source_p), RPL_INFO,
+							get_id(source_p, source_p),
+							info_table[i].name,
+							EmptyString(option) ? "NONE" : option,
+							info_table[i].desc ? info_table[i].desc : "<none>");
 
-				break;
-			}
-			/*
-			 * Output info_table[i].option as a decimal value.
-			 */
-		case OUTPUT_DECIMAL:
-			{
-				int option = *((int *) info_table[i].option);
+					break;
+				}
+				/*
+				 * Output info_table[i].option as a decimal value.
+				 */
+			case OUTPUT_DECIMAL:
+				{
+					int option = *((int *) info_table[i].option);
 
-				sendto_one(source_p, ":%s %d %s :%-30s %-5d [%-30s]",
-					   get_id(&me, source_p), RPL_INFO,
-					   get_id(source_p, source_p),
-					   info_table[i].name,
-					   option,
-					   info_table[i].desc ? info_table[i].desc : "<none>");
+					sendto_one(source_p, ":%s %d %s :%-30s %-5d [%-30s]",
+							get_id(&me, source_p), RPL_INFO,
+							get_id(source_p, source_p),
+							info_table[i].name,
+							option,
+							info_table[i].desc ? info_table[i].desc : "<none>");
 
-				break;
-			}
+					break;
+				}
 
-			/*
-			 * Output info_table[i].option as "ON" or "OFF"
-			 */
-		case OUTPUT_BOOLEAN:
-			{
-				int option = *((int *) info_table[i].option);
+				/*
+				 * Output info_table[i].option as "ON" or "OFF"
+				 */
+			case OUTPUT_BOOLEAN:
+				{
+					int option = *((int *) info_table[i].option);
 
-				sendto_one(source_p, ":%s %d %s :%-30s %-5s [%-30s]",
-					   get_id(&me, source_p), RPL_INFO,
-					   get_id(source_p, source_p),
-					   info_table[i].name,
-					   option ? "ON" : "OFF",
-					   info_table[i].desc ? info_table[i].desc : "<none>");
+					sendto_one(source_p, ":%s %d %s :%-30s %-5s [%-30s]",
+							get_id(&me, source_p), RPL_INFO,
+							get_id(source_p, source_p),
+							info_table[i].name,
+							option ? "ON" : "OFF",
+							info_table[i].desc ? info_table[i].desc : "<none>");
 
-				break;
-			}
-			/*
-			 * Output info_table[i].option as "YES" or "NO"
-			 */
-		case OUTPUT_BOOLEAN_YN:
-			{
-				int option = *((int *) info_table[i].option);
+					break;
+				}
+				/*
+				 * Output info_table[i].option as "YES" or "NO"
+				 */
+			case OUTPUT_BOOLEAN_YN:
+				{
+					int option = *((int *) info_table[i].option);
 
-				sendto_one(source_p, ":%s %d %s :%-30s %-5s [%-30s]",
-					   get_id(&me, source_p), RPL_INFO,
-					   get_id(source_p, source_p),
-					   info_table[i].name,
-					   option ? "YES" : "NO",
-					   info_table[i].desc ? info_table[i].desc : "<none>");
+					sendto_one(source_p, ":%s %d %s :%-30s %-5s [%-30s]",
+							get_id(&me, source_p), RPL_INFO,
+							get_id(source_p, source_p),
+							info_table[i].name,
+							option ? "YES" : "NO",
+							info_table[i].desc ? info_table[i].desc : "<none>");
 
-				break;
-			}
+					break;
+				}
 
-		case OUTPUT_BOOLEAN2:
-		{
-			int option = *((int *) info_table[i].option);
+			case OUTPUT_BOOLEAN2:
+				{
+					int option = *((int *) info_table[i].option);
 
-			sendto_one(source_p, ":%s %d %s :%-30s %-5s [%-30s]",
-				   me.name, RPL_INFO, source_p->name,
-				   info_table[i].name,
-				   option ? ((option == 1) ? "MASK" : "YES") : "NO",
-				   info_table[i].desc ? info_table[i].desc : "<none>");
-		}		/* switch (info_table[i].output_type) */
+					sendto_one(source_p, ":%s %d %s :%-30s %-5s [%-30s]",
+							me.name, RPL_INFO, source_p->name,
+							info_table[i].name,
+							option ? ((option == 1) ? "MASK" : "YES") : "NO",
+							info_table[i].desc ? info_table[i].desc : "<none>");
+				}		/* switch (info_table[i].output_type) */
 		}
 	}			/* forloop */
 
