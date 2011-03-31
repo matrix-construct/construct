@@ -81,6 +81,12 @@ mr_authenticate(struct Client *client_p, struct Client *source_p,
 	if(!IsCapable(source_p, CLICAP_SASL))
 		return 0;
 
+	if (strlen(client_p->id) == 3)
+	{
+		exit_client(client_p, client_p, client_p, "Mixing client and server protocol");
+		return 0;
+	}
+
 	if(source_p->preClient->sasl_complete)
 	{
 		sendto_one(source_p, form_str(ERR_SASLALREADY), me.name, EmptyString(source_p->name) ? "*" : source_p->name);
@@ -117,7 +123,6 @@ mr_authenticate(struct Client *client_p, struct Client *source_p,
 	else
 		sendto_one(agent_p, ":%s ENCAP %s SASL %s %s C %s", me.id, agent_p->servptr->name,
 				source_p->id, agent_p->id, parv[1]);
-
 	source_p->preClient->sasl_out++;
 
 	return 0;
