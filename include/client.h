@@ -292,7 +292,6 @@ struct PreClient
 	char sasl_agent[IDLEN];
 	unsigned char sasl_out;
 	unsigned char sasl_complete;
-	unsigned char sasl_external;
 
 	rb_dlink_list dnsbl_queries; /* list of struct BlacklistClient * */
 	struct Blacklist *dnsbl_listed; /* first dnsbl where it's listed */

@@ -1,6 +1,6 @@
 /* modules/m_sasl.c
  *   Copyright (C) 2006 Michael Tharp <gxti@partiallystapled.com>
- *   Copyright (C) 2006, 2011 charybdis development team
+ *   Copyright (C) 2006 charybdis development team
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -67,10 +67,6 @@ mapi_hfn_list_av1 sasl_hfnlist[] = {
 
 DECLARE_MODULE_AV1(sasl, NULL, NULL, sasl_clist, NULL, sasl_hfnlist, "$Revision: 1409 $");
 
-/*
- * parv[1] = mechanism.
- *    in ircv3.1, if this is EXTERNAL, we just send the certificate fingerprint.
- */
 static int
 mr_authenticate(struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
@@ -110,16 +106,8 @@ mr_authenticate(struct Client *client_p, struct Client *source_p,
 		agent_p = find_id(source_p->preClient->sasl_agent);
 
 	if(agent_p == NULL)
-	{
-		if (!strcasecmp(parv[1], "EXTERNAL"))
-		{
-			if (source_p->certfp)
-				source_p->preClient->sasl_external++;
-		}
-
 		sendto_server(NULL, NULL, CAP_TS6|CAP_ENCAP, NOCAPS, ":%s ENCAP * SASL %s * S %s", me.id,
 				source_p->id, parv[1]);
-	}
 	else
 		sendto_one(agent_p, ":%s ENCAP %s SASL %s %s C %s", me.id, agent_p->servptr->name,
 				source_p->id, agent_p->id, parv[1]);
@@ -164,18 +152,8 @@ me_sasl(struct Client *client_p, struct Client *source_p,
 	else if(!*target_p->preClient->sasl_agent)
 		rb_strlcpy(target_p->preClient->sasl_agent, parv[1], IDLEN);
 
-	if(*parv[3] == 'C' && !target_p->preClient->sasl_external)
+	if(*parv[3] == 'C')
 		sendto_one(target_p, "AUTHENTICATE %s", parv[4]);
-	else if(*parv[3] == 'C' && *target_p->preClient->sasl_agent)
-	{
-		unsigned char *message;
-
-		message = rb_base64_encode((unsigned char *) target_p->certfp, strlen(target_p->certfp));
-		sendto_one(agent_p, ":%s ENCAP %s SASL %s %s C %s", me.id, agent_p->servptr->name,
-				source_p->id, agent_p->id, message);
-
-		rb_free(message);
-	}
 	else if(*parv[3] == 'D')
 	{
 		if(*parv[4] == 'F')
