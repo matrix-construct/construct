@@ -639,12 +639,15 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 	{
 		/* If configured, kick people trying to join +i/+k
 		 * channels by recreating them on split servers.
-		 * Don't kick if the source has sent EOB (services
-		 * deopping everyone by TS-1 SJOIN).
+		 * If the source has sent EOB, assume this is some
+		 * sort of hack by services. If cmode +i is set,
+		 * services can send kicks if needed; if the key
+		 * differs, services cannot kick in a race-free
+		 * manner so do so here.
 		 * -- jilles */
 		if (ConfigChannel.kick_on_split_riding &&
-				!HasSentEob(source_p) &&
-				((mode.mode & MODE_INVITEONLY) ||
+				((!HasSentEob(source_p) &&
+				mode.mode & MODE_INVITEONLY) ||
 		    (mode.key[0] != 0 && irccmp(mode.key, oldmode->key) != 0)))
 		{
 			struct membership *msptr;
