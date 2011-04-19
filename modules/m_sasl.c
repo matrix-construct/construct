@@ -106,8 +106,15 @@ mr_authenticate(struct Client *client_p, struct Client *source_p,
 		agent_p = find_id(source_p->preClient->sasl_agent);
 
 	if(agent_p == NULL)
-		sendto_server(NULL, NULL, CAP_TS6|CAP_ENCAP, NOCAPS, ":%s ENCAP * SASL %s * S %s", me.id,
-				source_p->id, parv[1]);
+	{
+		if (!strcmp(parv[1], "EXTERNAL") && source_p->certfp != NULL)
+			sendto_server(NULL, NULL, CAP_TS6|CAP_ENCAP, NOCAPS, ":%s ENCAP * SASL %s * S %s %s", me.id,
+					source_p->id, parv[1],
+					source_p->certfp);
+		else
+			sendto_server(NULL, NULL, CAP_TS6|CAP_ENCAP, NOCAPS, ":%s ENCAP * SASL %s * S %s", me.id,
+					source_p->id, parv[1]);
+	}
 	else
 		sendto_one(agent_p, ":%s ENCAP %s SASL %s %s C %s", me.id, agent_p->servptr->name,
 				source_p->id, agent_p->id, parv[1]);
