@@ -27,5 +27,5 @@
 #include "setup.h"
 
 #ifndef PATCHLEVEL
-#define PATCHLEVEL   PACKAGE_NAME "-" PACKAGE_VERSION
+#define PATCHLEVEL   BRANDING_NAME "-" BRANDING_VERSION
 #endif

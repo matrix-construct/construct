@@ -655,6 +655,33 @@ AC_HELP_STRING([--with-moduledir=DIR],
 	  	 AC_SUBST_DIR([moduledir])]
 )
 
+dnl **********************************************************************
+dnl Branding
+dnl **********************************************************************
+
+AC_MSG_CHECKING([whether custom branding is requested])
+AC_ARG_WITH(custom-branding,
+AC_HELP_STRING([--with-custom-branding=NAME],
+	       [Custom branding name.]),
+	       [BRANDING_NAME=$withval
+		AC_MSG_RESULT([yes])],
+	       [BRANDING_NAME=$PACKAGE_NAME
+		AC_MSG_RESULT([no])]
+)
+
+AC_MSG_CHECKING([whether a custom version is requested])
+AC_ARG_WITH(custom-version,
+AC_HELP_STRING([--with-custom-version=NAME],
+	       [Custom version branding.]),
+	       [BRANDING_VERSION=$withval
+		AC_MSG_RESULT([yes])],
+	       [BRANDING_VERSION=$PACKAGE_VERSION
+		AC_MSG_RESULT([no])]
+)
+
+AC_DEFINE_UNQUOTED(BRANDING_NAME, ["$BRANDING_NAME"], [Custom branding name.])
+AC_DEFINE_UNQUOTED(BRANDING_VERSION, ["$BRANDING_VERSION"], [Custom branding name.])
+
 if test ! -z "$SELECT_TYPE_EXPLICIT"; then
 	SELECT_TYPE="$SELECT_TYPE_EXPLICIT";
 	echo "Forcing $SELECT_TYPE to be enabled"
@@ -1182,7 +1209,7 @@ else
 fi
 
 echo "
-Configuration:
+Configuration of ${BRANDING_NAME}-${BRANDING_VERSION}:
 	Install directory  : $prefix
 
 	Ziplinks           : $zlib
@@ -1194,5 +1221,5 @@ Configuration:
 	Nickname length    : $NICKLEN
 	Topic length       : $TOPICLEN
 
-Use (g)make to compile Charybdis, then (g)make install to install it.
+Use (g)make to compile $BRANDING_NAME, then (g)make install to install it.
 "

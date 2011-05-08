@@ -9,6 +9,12 @@
 /* Size of the ban heap. */
 #undef BAN_HEAP_SIZE
 
+/* Custom branding name. */
+#undef BRANDING_NAME
+
+/* Custom branding name. */
+#undef BRANDING_VERSION
+
 /* Size of the channel heap. */
 #undef CHANNEL_HEAP_SIZE
 
