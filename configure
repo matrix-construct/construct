@@ -7490,6 +7490,12 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+if test "x$BRANDING_NAME" != "x$PACKAGE_NAME"; then
+
+$as_echo "#define CUSTOM_BRANDING 1" >>confdefs.h
+
+fi
+
 if test ! -z "$SELECT_TYPE_EXPLICIT"; then
 	SELECT_TYPE="$SELECT_TYPE_EXPLICIT";
 	echo "Forcing $SELECT_TYPE to be enabled"

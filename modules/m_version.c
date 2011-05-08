@@ -95,6 +95,9 @@ mo_version(struct Client *client_p, struct Client *source_p, int parc, const cha
 	{
 		sendto_one_numeric(source_p, RPL_VERSION, form_str(RPL_VERSION),
 				   ircd_version, serno, 
+#ifdef CUSTOM_BRANDING
+				   PACKAGE_NAME " " PACKAGE_VERSION,
+#endif
 				   me.name, confopts(source_p), TS_CURRENT,
 				   ServerInfo.sid);
 		show_isupport(source_p);

@@ -32,6 +32,9 @@
    */
 #undef CRAY_STACKSEG_END
 
+/* Define if custom branding is enabled. */
+#undef CUSTOM_BRANDING
+
 /* Define to 1 if using `alloca.c'. */
 #undef C_ALLOCA
 

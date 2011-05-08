@@ -682,6 +682,10 @@ AC_HELP_STRING([--with-custom-version=NAME],
 AC_DEFINE_UNQUOTED(BRANDING_NAME, ["$BRANDING_NAME"], [Custom branding name.])
 AC_DEFINE_UNQUOTED(BRANDING_VERSION, ["$BRANDING_VERSION"], [Custom branding name.])
 
+if test "x$BRANDING_NAME" != "x$PACKAGE_NAME"; then
+	AC_DEFINE(CUSTOM_BRANDING, 1, [Define if custom branding is enabled.])
+fi
+
 if test ! -z "$SELECT_TYPE_EXPLICIT"; then
 	SELECT_TYPE="$SELECT_TYPE_EXPLICIT";
 	echo "Forcing $SELECT_TYPE to be enabled"
