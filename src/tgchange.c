@@ -122,6 +122,16 @@ add_hashed_target(struct Client *source_p, uint32_t hashv)
 		{
 			ServerStats.is_tgch++;
 			add_tgchange(source_p->sockhost);
+
+			if (!IsTGExcessive(source_p))
+			{
+				SetTGExcessive(source_p);
+				sendto_realops_snomask(SNO_BOTS, L_NETWIDE,
+					"Excessive target change from %s (%s@%s)",
+					source_p->name, source_p->username,
+					source_p->orighost);
+			}
+
 			return 0;
 		}
 	}
