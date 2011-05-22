@@ -1,4 +1,3 @@
-syntax: glob
 Makefile
 *~
 *.o
@@ -34,5 +33,4 @@ tools/convertilines
 tools/convertklines
 tools/mkpasswd
 tools/viconf
-syntax: regexp
-^include/serno\.h
+include/serno.h
