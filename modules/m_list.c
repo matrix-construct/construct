@@ -367,6 +367,7 @@ static void safelist_channel_named(struct Client *source_p, const char *name, in
 {
 	struct Channel *chptr;
 	char *p;
+	int visible;
 
 	sendto_one(source_p, form_str(RPL_LISTSTART), me.name, source_p->name);
 
@@ -389,9 +390,10 @@ static void safelist_channel_named(struct Client *source_p, const char *name, in
 		return;
 	}
 
-	if (!SecretChannel(chptr) || IsMember(source_p, chptr) || operspy)
+	visible = !SecretChannel(chptr) || IsMember(source_p, chptr);
+	if (visible || operspy)
 		sendto_one(source_p, form_str(RPL_LIST), me.name, source_p->name,
-			   (operspy && SecretChannel(chptr)) ? "!" : "",
+			   visible ? "" : "!",
 			   chptr->chname, rb_dlink_list_length(&chptr->members),
 			   chptr->topic == NULL ? "" : chptr->topic);
 
@@ -410,8 +412,10 @@ static void safelist_channel_named(struct Client *source_p, const char *name, in
 static void safelist_one_channel(struct Client *source_p, struct Channel *chptr)
 {
 	struct ListClient *safelist_data = source_p->localClient->safelist_data;
+	int visible;
 
-	if (SecretChannel(chptr) && !IsMember(source_p, chptr) && !safelist_data->operspy)
+	visible = !SecretChannel(chptr) || IsMember(source_p, chptr);
+	if (!visible && !safelist_data->operspy)
 		return;
 
 	if ((unsigned int)chptr->members.length < safelist_data->users_min
@@ -433,7 +437,7 @@ static void safelist_one_channel(struct Client *source_p, struct Channel *chptr)
 		return;
 
 	sendto_one(source_p, form_str(RPL_LIST), me.name, source_p->name,
-		   (safelist_data->operspy && SecretChannel(chptr)) ? "!" : "",
+		   visible ? "" : "!",
 		   chptr->chname, rb_dlink_list_length(&chptr->members),
 		   chptr->topic == NULL ? "" : chptr->topic);
 }
