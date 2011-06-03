@@ -23,13 +23,7 @@ if [ "x$1" = "x" ]; then
 	echo "usage: $0 releasename [--automatic]"
 	exit
 else
-	PROGRAM=`pwd | sed "s:/scripts::" | awk -F/ '{print $NF}'`
 	RELEASENAME="$1"
-fi
-
-if [[ $1 != $PROGRAM* ]]; then
-	echo "example: $0 $PROGRAM-1.2.3"
-	exit
 fi
 
 if [ "x$2" = "x--automatic" ]; then
@@ -49,7 +43,10 @@ echo "Making release named $RELEASENAME (tip $TIP)"
 
 echo
 echo "Building root: $RELEASENAME/"
-git archive $RELEASENAME
+cd ..
+git archive --format=tar --prefix=$RELEASENAME/ HEAD | gzip >scripts/$RELEASENAME-working.tar.gz
+cd $WRKDIR
+tar -xzvf $RELEASENAME-working.tar.gz
 cd $RELEASENAME
 sh autogen.sh
 rm -rf autogen.sh autom4te.cache
@@ -63,10 +60,12 @@ fi
 cd ..
 
 echo "Building $RELEASENAME.tgz from $RELEASENAME/"
-tar zcf $RELEASENAME.tgz $RELEASENAME/
+tar zcf $RELEASENAME.tar.gz $RELEASENAME/
 
 echo "Building $RELEASENAME.tbz2 from $RELEASENAME/"
-tar jcf $RELEASENAME.tbz2 $RELEASENAME/
+tar jcf $RELEASENAME.tar.bz2 $RELEASENAME/
+
+rm $RELEASENAME-working.tar.gz
 
 PUBLISH="yes"
 
