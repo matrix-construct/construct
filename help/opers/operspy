@@ -12,4 +12,5 @@ mode !#channel  - Gives the full modes of a channel including any keys.
 chantrace !#channel - Gives full output despite not being on channel.
 masktrace !nick!user@host :gecos - Lists matching users on all servers.
 topic !#channel - Gives full output despite not being on channel.
-list ![,options...] - Lists all channels, including secret channels.
+list !#channel  - Gives full output despite not being on channel.
+list ![options...] - Lists all channels, including secret channels.
