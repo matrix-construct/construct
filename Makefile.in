@@ -50,8 +50,6 @@ SUBDIRS=libratbox modules extensions src tools ssld bandb doc help
 CLEANDIRS = ${SUBDIRS}
 RSA_FILES=rsa_respond/README rsa_respond/respond.c rsa_respond/Makefile
 
-MAKE = make ${MFLAGS} 
-
 all:	build
 
 
