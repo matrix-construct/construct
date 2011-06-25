@@ -92,14 +92,6 @@ m_invite(struct Client *client_p, struct Client *source_p, int parc, const char 
 		return 0;
 	}
 
-	if(!IsChannelName(parv[2]))
-	{
-		if(MyClient(source_p))
-			sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
-					   form_str(ERR_NOSUCHCHANNEL), parv[2]);
-		return 0;
-	}
-
 	/* Do not send local channel invites to users if they are not on the
 	 * same server as the person sending the INVITE message. 
 	 */
