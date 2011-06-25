@@ -196,8 +196,13 @@ me_rsfnc(struct Client *client_p, struct Client *source_p,
 		exist_p->flags |= FLAGS_KILLED;
 		/* Do not send kills to servers for unknowns -- jilles */
 		if(IsClient(exist_p))
+		{
 			kill_client_serv_butone(NULL, exist_p, "%s (Nickname regained by services)",
 						me.name);
+			sendto_realops_snomask(SNO_SKILL, L_ALL,
+					"Nick collision due to services forced nick change on %s",
+					parv[2]);
+		}
 
 		rb_snprintf(buf, sizeof(buf), "Killed (%s (Nickname regained by services))",
 			me.name);

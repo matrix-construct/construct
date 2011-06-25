@@ -213,6 +213,9 @@ me_svslogin(struct Client *client_p, struct Client *source_p,
 		exist_p->flags |= FLAGS_KILLED;
 		kill_client_serv_butone(NULL, exist_p, "%s (Nickname regained by services)",
 					me.name);
+		sendto_realops_snomask(SNO_SKILL, L_ALL,
+				"Nick collision due to SVSLOGIN on %s",
+				nick);
 
 		rb_snprintf(buf, sizeof(buf), "Killed (%s (Nickname regained by services))",
 			me.name);
