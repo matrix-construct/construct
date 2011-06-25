@@ -96,8 +96,14 @@ mo_dline(struct Client *client_p, struct Client *source_p, int parc, const char 
 
 	dlhost = parv[loc];
 	rb_strlcpy(cidr_form_host, dlhost, sizeof(cidr_form_host));
-
 	loc++;
+
+	/* would break the protocol */
+	if (*dlhost == ':')
+	{
+		sendto_one_notice(source_p, ":Invalid D-Line");
+		return 0;
+	}
 
 	if(parc >= loc + 2 && !irccmp(parv[loc], "ON"))
 	{

@@ -669,6 +669,13 @@ find_user_host(struct Client *source_p, const char *userhost, char *luser, char 
 		rb_strlcpy(lhost, userhost, HOSTLEN + 1);
 	}
 
+	/* would break the protocol */
+	if (*luser == ':' || *lhost == ':')
+	{
+		sendto_one_notice(source_p, ":Invalid K-Line");
+		return 0;
+	}
+
 	return 1;
 }
 
