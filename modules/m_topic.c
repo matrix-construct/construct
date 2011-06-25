@@ -87,13 +87,6 @@ m_topic(struct Client *client_p, struct Client *source_p, int parc, const char *
 	if(MyClient(source_p) && !IsFloodDone(source_p))
 		flood_endgrace(source_p);
 
-	if(!IsChannelName(name))
-	{
-		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
-				   form_str(ERR_NOSUCHCHANNEL), name);
-		return 0;
-	}
-
 	chptr = find_channel(name);
 
 	if(chptr == NULL)
@@ -191,17 +184,14 @@ ms_topic(struct Client *client_p, struct Client *source_p, int parc, const char 
 {
 	struct Channel *chptr = NULL;
 
-	if(IsChannelName(parv[1]))
-	{
-		if((chptr = find_channel(parv[1])) == NULL)
-			return 0;
+	if((chptr = find_channel(parv[1])) == NULL)
+		return 0;
 
-		set_channel_topic(chptr, parv[4], parv[2], atoi(parv[3]));
+	set_channel_topic(chptr, parv[4], parv[2], atoi(parv[3]));
 
-		sendto_channel_local(ALL_MEMBERS, chptr, ":%s TOPIC %s :%s",
-				     source_p->name, parv[1], 
-				     chptr->topic == NULL ? "" : chptr->topic);
-	}
+	sendto_channel_local(ALL_MEMBERS, chptr, ":%s TOPIC %s :%s",
+			     source_p->name, parv[1], 
+			     chptr->topic == NULL ? "" : chptr->topic);
 
 	return 0;
 }

@@ -79,13 +79,6 @@ m_knock(struct Client *client_p, struct Client *source_p, int parc, const char *
 	if((p = strchr(name, ',')))
 		*p = '\0';
 
-	if(!IsChannelName(name))
-	{
-		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
-				   form_str(ERR_NOSUCHCHANNEL), name);
-		return 0;
-	}
-
 	if((chptr = find_channel(name)) == NULL)
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
