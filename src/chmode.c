@@ -903,7 +903,7 @@ chm_op(struct Client *source_p, struct Channel *chptr,
 		mode_changes[mode_count++].client = targ_p;
 
 		mstptr->flags |= CHFL_CHANOP;
-		if (msptr->roles & CHANROLE_UNSET)
+		if (mstptr->roles & CHANROLE_UNSET)
 		{
 			mstptr->roles &= ~CHANROLE_UNSET;
 			mstptr->roles = CHANROLE_INITIAL | CHANROLE_INHERIT;
