@@ -197,6 +197,8 @@ typedef int (*ExtbanFunc)(const char *data, struct Client *client_p,
 #define CHANROLE_MODE	0x010	/* Can change modes */
 #define CHANROLE_TOPIC	0x020	/* Can change topic */
 
+#define CHANROLE_INITIAL	(CHANROLE_KICK | CHANROLE_STATUS | CHANROLE_GRANT | CHANROLE_MODE | CHANROLE_TOPIC)
+
 #define SecretChannel(x)        ((x) && ((x)->mode.mode & MODE_SECRET))
 #define HiddenChannel(x)        ((x) && ((x)->mode.mode & MODE_PRIVATE))
 #define PubChannel(x)           ((!x) || ((x)->mode.mode &\
