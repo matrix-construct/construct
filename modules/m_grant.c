@@ -30,12 +30,11 @@ static struct flag_list flaglist[] = {
 	{NULL,		0},
 };
 
-static int m_grant(struct Client *, struct Client *, int, const char **);
 static int me_grant(struct Client *, struct Client *, int, const char **);
 
 struct Message grant_msgtab = {
 	"GRANT", 0, 0, 0, MFLG_SLOW,
-	{mg_unreg, {m_grant, 4}, mg_ignore, mg_ignore, {me_grant, 4}, mg_ignore}
+	{mg_unreg, mg_ignore, mg_ignore, mg_ignore, {me_grant, 4}, mg_ignore}
 };
 
 mapi_clist_av1 grant_clist[] = { &grant_msgtab, NULL };
@@ -78,81 +77,6 @@ apply_flags(struct membership *msptr, const char *flagspec, unsigned int flagmas
 		else if (s[0] == '+')
 			SetChanRole(msptr, flag);
 	}
-}
-
-/*
- * m_grant
- *
- * parv[1] = channel
- * parv[2] = target nickname
- * parv[3] = flag spec
- */
-static int
-m_grant(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
-{
-	struct Channel *chptr;
-	struct Client *target_p;
-	struct membership *cmsptr, *tmsptr;
-	char flagspec[BUFSIZE];
-	const char *flagptr;
-
-	if(parc > 4)
-	{
-		int i;
-		char *buf = flagspec;
-
-		flagptr = flagspec;
-
-		for (i = 3; i < parc; i++)
-			/* Rest assured it can't overflow, parv contents will always be < BUFSIZE
-			 * --Elizabeth */
-			buf += rb_sprintf(buf, "%s ", parv[i]);
-
-		*buf = '\0';
-	}
-	else
-		flagptr = parv[3];
-
-	if (!(chptr = find_channel(parv[1])))
-	{
-		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL, form_str(ERR_NOSUCHCHANNEL), parv[1]);
-		return 0;
-	}
-
-	if(!(cmsptr = find_channel_membership(chptr, client_p)))
-		/* Can't happen */
-		return 0;
-
-	/* Check for grant privilege */
-	if(get_channel_access(source_p, cmsptr, CHANROLE_GRANT) < CHFL_CHANOP)
-	{
-		sendto_one_numeric(source_p, ERR_CHANOPRIVSNEEDED, form_str(ERR_CHANOPRIVSNEEDED),
-				me.name, source_p->name, parv[2]);
-		return 0;
-	}
-
-	if (!(target_p = find_named_person(parv[2])))
-	{
-		sendto_one_numeric(source_p, ERR_NOSUCHNICK, form_str(ERR_NOSUCHNICK), parv[2]);
-		return 0;
-	}
-
-	/* Send it to the server the user is on if not local */
-	if(!MyClient(target_p))
-	{
-		struct Client *cptr = target_p->servptr;
-		sendto_one(cptr, ":%s ENCAP %s GRANT %s %s :%s",
-			get_id(source_p, cptr), cptr->name, chptr->chname,
-			get_id(target_p, cptr), flagptr);
-		return 0;
-	}
-
-	if (!(tmsptr = find_channel_membership(chptr, target_p)))
-		return 0;
-		
-	apply_flags(tmsptr, flagptr, cmsptr->roles);
-
-	return 0;
 }
 
 /*
