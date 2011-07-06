@@ -68,8 +68,8 @@ me_grant(struct Client *client_p, struct Client *source_p, int parc, const char 
 	if (!(msptr = find_channel_membership(chptr, target_p)))
 		return 0;
 
-	/* Unset */
-	RemoveChanRole(msptr, CHANROLE_UNSET);
+	/* unset all chanroles as we're setting new ones */
+	msptr->roles = 0;
 
 	t = LOCAL_COPY(parv[3]);
 	for (s = rb_strtok_r(t, " ", &p); s; s = rb_strtok_r(NULL, " ", &p))
