@@ -202,23 +202,11 @@ get_channel_access(struct Client *source_p, struct membership *msptr, int role)
 	moduledata.msptr = msptr;
 	moduledata.target = NULL;
 
-	if (is_chanop(msptr))
-	{
-		/* Their chanrole is unset by GRANT, for backwards compat let them pass */
-		if(HasChanRole(msptr, CHANROLE_UNSET))
-		{
-			moduledata.approved = CHFL_CHANOP;
-			goto finish_access;
-		}
-	}
-
 	/* Check if they have the proper role */
 	if(HasChanRole(msptr, role))
 		moduledata.approved = CHFL_CHANOP;
 	else
 		moduledata.approved = CHFL_PEON;
-
-finish_access:
 
 	call_hook(h_get_channel_access, &moduledata);
 
@@ -915,6 +903,11 @@ chm_op(struct Client *source_p, struct Channel *chptr,
 		mode_changes[mode_count++].client = targ_p;
 
 		mstptr->flags |= CHFL_CHANOP;
+		if (msptr->roles & CHANROLE_UNSET)
+		{
+			mstptr->roles &= ~CHANROLE_UNSET;
+			mstptr->roles = CHANROLE_INITIAL | CHANROLE_INHERIT;
+		}
 	}
 	else
 	{
@@ -935,6 +928,8 @@ chm_op(struct Client *source_p, struct Channel *chptr,
 		mode_changes[mode_count++].client = targ_p;
 
 		mstptr->flags &= ~CHFL_CHANOP;
+		if (mstptr->roles & CHANROLE_INHERIT)
+			mstptr->roles = CHANROLE_UNSET;
 	}
 }
 

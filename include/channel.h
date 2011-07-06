@@ -196,6 +196,7 @@ typedef int (*ExtbanFunc)(const char *data, struct Client *client_p,
 #define CHANROLE_GRANT	0x008	/* Can grant (unused atm) */
 #define CHANROLE_MODE	0x010	/* Can change modes */
 #define CHANROLE_TOPIC	0x020	/* Can change topic */
+#define CHANROLE_INHERIT 0x040  /* Role is inherited (backwards compat) */
 
 #define CHANROLE_INITIAL	(CHANROLE_KICK | CHANROLE_STATUS | CHANROLE_GRANT | CHANROLE_MODE | CHANROLE_TOPIC)
 
