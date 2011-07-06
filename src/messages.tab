@@ -507,7 +507,7 @@ static  const char *  replies[] = {
 /* 479 ERR_BADCHANNAME */       "%s :Illegal channel name",
 /* 480 ERR_THROTTLE */          ":%s 480 %s %s :Cannot join channel (+j) - throttle exceeded, try again later",
 /* 481 ERR_NOPRIVILEGES, */	":Permission Denied - You're not an IRC operator",
-/* 482 ERR_CHANOPRIVSNEEDED, */ ":%s 482 %s %s :You're not a channel operator",
+/* 482 ERR_CHANOPRIVSNEEDED, */ ":%s 482 %s %s :You're not a channel operator or have no privilege",
 /* 483 ERR_CANTKILLSERVER, */   ":You can't kill a server!",
 /* 484 ERR_ISCHANSERVICE */     ":%s 484 %s %s %s :Cannot kick or deop a network service",
 /* 485 ERR_BANNEDNICK, */	NULL,

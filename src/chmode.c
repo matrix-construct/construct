@@ -187,7 +187,7 @@ cflag_orphan(char c_)
 }
 
 int
-get_channel_access(struct Client *source_p, struct membership *msptr)
+get_channel_access(struct Client *source_p, struct membership *msptr, int role)
 {
 	hook_data_channel_approval moduledata;
 
@@ -201,7 +201,24 @@ get_channel_access(struct Client *source_p, struct membership *msptr)
 	moduledata.chptr = msptr->chptr;
 	moduledata.msptr = msptr;
 	moduledata.target = NULL;
-	moduledata.approved = is_chanop(msptr) ? CHFL_CHANOP : CHFL_PEON;
+
+	if (is_chanop(msptr))
+	{
+		/* Their chanrole is unset by GRANT, for backwards compat let them pass */
+		if(HasChanRole(msptr, CHANROLE_UNSET))
+		{
+			moduledata.approved = CHFL_CHANOP;
+			goto finish_access;
+		}
+	}
+
+	/* Check if they have the proper role */
+	if(HasChanRole(msptr, role))
+		moduledata.approved = CHFL_CHANOP;
+	else
+		moduledata.approved = CHFL_PEON;
+
+finish_access:
 
 	call_hook(h_get_channel_access, &moduledata);
 
@@ -1200,7 +1217,7 @@ chm_forward(struct Client *source_p, struct Channel *chptr,
 		if(MyClient(source_p) && !(targptr->mode.mode & MODE_FREETARGET))
 		{
 			if((msptr = find_channel_membership(targptr, source_p)) == NULL ||
-				get_channel_access(source_p, msptr) != CHFL_CHANOP)
+				get_channel_access(source_p, msptr, CHANROLE_MODE) != CHFL_CHANOP)
 			{
 				sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
 					   me.name, source_p->name, targptr->chname);
@@ -1618,7 +1635,7 @@ set_channel_mode(struct Client *client_p, struct Client *source_p,
 	mode_limit = 0;
 	mode_limit_simple = 0;
 
-	alevel = get_channel_access(source_p, msptr);
+	alevel = get_channel_access(source_p, msptr, CHANROLE_MODE);
 
 	/* Hide connecting server on netburst -- jilles */
 	if (ConfigServerHide.flatten_links && IsServer(source_p) && !has_id(source_p) && !HasSentEob(source_p))
