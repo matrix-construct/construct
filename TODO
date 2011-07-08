@@ -51,11 +51,11 @@
   [x] Compilation date and time in server welcome message is in OS locale - looks ugly 'cause often it's not match user's codepage
 [ ] Improvments
   [ ] ircd shouldn't need bison/byacc/yacc or flex for compilation
-  [/] internally split out +o/+v "ranks" into a series of permissions. this could allow for configure-defined 
-      special access levels, halfops, etc. (would need to match globally, somehow. extra SVINFO param?)
-      this is mostly done, but is a work in progress.
-  [x] somehow hide channel operators like ircnet can do?
-      this is done now that chanroles is available
-  [x] create chmode.h and put there all declarations of chm_* - this will make some modules clean
 --- other stuff
+  [?] internally split out +o/+v "ranks" into a series of permissions. this could allow for configure-defined 
+      special access levels, halfops, etc. (would need to match globally, somehow. extra SVINFO param?)
+      might be backported from shadowircd in future (chanroles planned)
+  [?] somehow hide channel operators like ircnet can do?
+      couldn't be done via extension currently - compilation-time option acceptable?
+  [x] create chmode.h and put there all declarations of chm_* - this will make some modules clean
   [?] Move oper override server WALLOPS to global server notices?

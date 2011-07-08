@@ -236,12 +236,6 @@ add_user_to_channel(struct Channel *chptr, struct Client *client_p, int flags)
 	msptr->client_p = client_p;
 	msptr->flags = flags;
 
-	/* Default to no chanroles until services says we're something else */
-	if (flags == CHFL_CHANOP)
-		msptr->roles = CHANROLE_INITIAL;
-	else
-		msptr->roles = CHANROLE_UNSET;
-
 	rb_dlinkAdd(msptr, &msptr->usernode, &client_p->user->channel);
 	rb_dlinkAdd(msptr, &msptr->channode, &chptr->members);
 

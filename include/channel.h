@@ -87,7 +87,6 @@ struct membership
 	struct Channel *chptr;
 	struct Client *client_p;
 	unsigned int flags;
-	unsigned int roles;
 
 	unsigned long bants;
 };
@@ -188,28 +187,10 @@ typedef int (*ExtbanFunc)(const char *data, struct Client *client_p,
 #define MODE_ADD       1
 #define MODE_DEL       -1
 
-/* Channel roles */
-#define CHANROLE_NONE	0x000
-#define	CHANROLE_UNSET	0x001	/* Special value */
-#define CHANROLE_KICK	0x002	/* Can kick */
-#define CHANROLE_STATUS	0x004	/* Can change status modes */
-#define CHANROLE_GRANT	0x008	/* Can grant (unused atm) */
-#define CHANROLE_MODE	0x010	/* Can change modes */
-#define CHANROLE_TOPIC	0x020	/* Can change topic */
-#define CHANROLE_INHERIT 0x040  /* Role is inherited (backwards compat) */
-
-#define CHANROLE_INITIAL	(CHANROLE_KICK | CHANROLE_STATUS | CHANROLE_GRANT | CHANROLE_MODE | CHANROLE_TOPIC)
-
 #define SecretChannel(x)        ((x) && ((x)->mode.mode & MODE_SECRET))
 #define HiddenChannel(x)        ((x) && ((x)->mode.mode & MODE_PRIVATE))
 #define PubChannel(x)           ((!x) || ((x)->mode.mode &\
                                  (MODE_PRIVATE | MODE_SECRET)) == 0)
-
-#define HasChanRole(m, r)	(((m)->roles & r) != 0)
-#define SetChanRole(m, r)	((m)->roles |= r)
-#define RemoveChanRole(m, r)	((m)->roles &= ~r)
-
-#define IsChanRoleSet(m, r)	
 
 /* channel visible */
 #define ShowChannel(v,c)        (PubChannel(c) || IsMember((v),(c)))
@@ -298,7 +279,7 @@ extern int match_extban(const char *banstr, struct Client *client_p, struct Chan
 extern int valid_extban(const char *banstr, struct Client *client_p, struct Channel *chptr, long mode_type);
 const char * get_extban_string(void);
 
-extern int get_channel_access(struct Client *source_p, struct membership *msptr, int role);
+extern int get_channel_access(struct Client *source_p, struct membership *msptr);
 
 extern void send_channel_join(struct Channel *chptr, struct Client *client_p);
 

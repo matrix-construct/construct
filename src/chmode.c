@@ -187,7 +187,7 @@ cflag_orphan(char c_)
 }
 
 int
-get_channel_access(struct Client *source_p, struct membership *msptr, int role)
+get_channel_access(struct Client *source_p, struct membership *msptr)
 {
 	hook_data_channel_approval moduledata;
 
@@ -201,12 +201,7 @@ get_channel_access(struct Client *source_p, struct membership *msptr, int role)
 	moduledata.chptr = msptr->chptr;
 	moduledata.msptr = msptr;
 	moduledata.target = NULL;
-
-	/* Check if they have the proper role */
-	if(HasChanRole(msptr, role))
-		moduledata.approved = CHFL_CHANOP;
-	else
-		moduledata.approved = CHFL_PEON;
+	moduledata.approved = is_chanop(msptr) ? CHFL_CHANOP : CHFL_PEON;
 
 	call_hook(h_get_channel_access, &moduledata);
 
@@ -903,11 +898,6 @@ chm_op(struct Client *source_p, struct Channel *chptr,
 		mode_changes[mode_count++].client = targ_p;
 
 		mstptr->flags |= CHFL_CHANOP;
-		if (mstptr->roles & CHANROLE_UNSET)
-		{
-			mstptr->roles &= ~CHANROLE_UNSET;
-			mstptr->roles = CHANROLE_INITIAL | CHANROLE_INHERIT;
-		}
 	}
 	else
 	{
@@ -928,8 +918,6 @@ chm_op(struct Client *source_p, struct Channel *chptr,
 		mode_changes[mode_count++].client = targ_p;
 
 		mstptr->flags &= ~CHFL_CHANOP;
-		if (mstptr->roles & CHANROLE_INHERIT)
-			mstptr->roles = CHANROLE_UNSET;
 	}
 }
 
@@ -1212,7 +1200,7 @@ chm_forward(struct Client *source_p, struct Channel *chptr,
 		if(MyClient(source_p) && !(targptr->mode.mode & MODE_FREETARGET))
 		{
 			if((msptr = find_channel_membership(targptr, source_p)) == NULL ||
-				get_channel_access(source_p, msptr, CHANROLE_MODE) != CHFL_CHANOP)
+				get_channel_access(source_p, msptr) != CHFL_CHANOP)
 			{
 				sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
 					   me.name, source_p->name, targptr->chname);
@@ -1630,7 +1618,7 @@ set_channel_mode(struct Client *client_p, struct Client *source_p,
 	mode_limit = 0;
 	mode_limit_simple = 0;
 
-	alevel = get_channel_access(source_p, msptr, CHANROLE_MODE);
+	alevel = get_channel_access(source_p, msptr);
 
 	/* Hide connecting server on netburst -- jilles */
 	if (ConfigServerHide.flatten_links && IsServer(source_p) && !has_id(source_p) && !HasSentEob(source_p))
