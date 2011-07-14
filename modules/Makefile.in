@@ -195,7 +195,7 @@ install_hpux_shared: install-mkdirs
 	${CC} ${CPPFLAGS} ${CFLAGS} -DMODNAME=`basename $< .c`_mheader -c $< -o $@
 
 .c.so:
-	${CC} ${PICFLAGS} ${CPPFLAGS} ${CFLAGS} $< -o $@
+	${CC} ${PICFLAGS} ${CPPFLAGS} ${CFLAGS} ${LDFLAGS} $< -o $@
 
 .so.sl:
 	$(LD) -b $< -o $@
