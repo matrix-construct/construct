@@ -85,7 +85,7 @@ depend:
 	@rm -f .depend.tmp
 
 clean:
-	${RM} -f *.o *~ *.core core bandb
+	${RM} -f *.o *~ *.core core bandb bantool
 
 lint:
 	lint -aacgprxhH $(CPPFLAGS) -DIRCD_PREFIX=\"@prefix@\" $(SOURCES) >>../lint.out
