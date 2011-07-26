@@ -1,4 +1,9 @@
-/* $Id: ip_cloaking.c 3526 2007-07-06 07:56:14Z nenolod $ */
+/* 
+ * Charybdis: an advanced ircd
+ * ip_cloaking.c: provide user hostname cloaking
+ *
+ * Written originally by nenolod, altered to use FNV by Elizabeth in 2008
+ */
 
 #include "stdinc.h"
 #include "modules.h"
@@ -11,9 +16,6 @@
 #include "s_user.h"
 #include "s_serv.h"
 #include "numeric.h"
-
-/* if you're modifying this module, you'll probably to change this */
-#define KEY 0x13748cfa
 
 static int
 _modinit(void)
