@@ -503,7 +503,6 @@ accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, voi
 			
 		rb_write(F, "ERROR :All connections in use\r\n", 32);
 		rb_close(F);
-		/* Re-register a new IO request for the next accept .. */
 		return 0;
 	}
 
