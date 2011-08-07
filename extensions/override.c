@@ -191,13 +191,14 @@ hack_can_send(void *vdata)
 
 	if (data->client->umodes & user_modes['p'])
 	{
-		update_session_deadline(data->client, NULL);
 		data->approved = CAN_SEND_NONOP;
 
-#ifdef XXX_UNSURE_IF_WANT
-		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s is using oper-override on %s (banwalking)",
-				       get_oper_name(data->client), data->chptr->chname);
-#endif
+		if (MyClient(data->client))
+		{
+			update_session_deadline(data->client, NULL);
+			sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s is using oper-override on %s (forcing message)",
+					       get_oper_name(data->client), data->chptr->chname);
+		}
 	}
 }
 
