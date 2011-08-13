@@ -1,76 +1,4 @@
-/*
- *  charybdis: A slightly useful ircd.
- *  chmode.c: channel mode management
- *
- * Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center 
- * Copyright (C) 1996-2002 Hybrid Development Team 
- * Copyright (C) 2002-2005 ircd-ratbox development team 
- * Copyright (C) 2005-2006 charybdis development team
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
- *  USA
- *
- *  $Id: chmode.c 3580 2007-11-07 23:45:14Z jilles $
- */
-
-#include "stdinc.h"
-#include "channel.h"
-#include "client.h"
-#include "common.h"
-#include "hash.h"
-#include "hook.h"
-#include "match.h"
-#include "ircd.h"
-#include "numeric.h"
-#include "s_serv.h"		/* captab */
-#include "s_user.h"
-#include "send.h"
-#include "whowas.h"
-#include "s_conf.h"		/* ConfigFileEntry, ConfigChannel */
-#include "s_newconf.h"
-#include "logger.h"
-#include "chmode.h"
-
-/* bitmasks for error returns, so we send once per call */
-#define SM_ERR_NOTS             0x00000001	/* No TS on channel */
-#define SM_ERR_NOOPS            0x00000002	/* No chan ops */
-#define SM_ERR_UNKNOWN          0x00000004
-#define SM_ERR_RPL_C            0x00000008
-#define SM_ERR_RPL_B            0x00000010
-#define SM_ERR_RPL_E            0x00000020
-#define SM_ERR_NOTONCHANNEL     0x00000040	/* Not on channel */
-#define SM_ERR_RPL_I            0x00000100
-#define SM_ERR_RPL_D            0x00000200
-#define SM_ERR_NOPRIVS          0x00000400
-#define SM_ERR_RPL_Q            0x00000800
-#define SM_ERR_RPL_F            0x00001000
-#define SM_ERR_MLOCK            0x00002000
-
-#define MAXMODES_SIMPLE 46 /* a-zA-Z except bqeIov */
-
-static struct ChModeChange mode_changes[BUFSIZE];
-static int mode_count;
-static int mode_limit;
-static int mode_limit_simple;
-static int mask_pos;
-static int removed_mask_pos;
-
-char cflagsbuf[256];
-char cflagsmyinfo[256];
-
-int chmode_flags[256];
+chmode_flags[256];
 
 extern int h_get_channel_access;
 
@@ -104,6 +32,9 @@ construct_cflags_strings(void)
                 
 		switch (chmode_flags[i])
 		{
+		    case MODE_EXLIMIT:
+		    case MODE_DISFORWARD:
+		        *ptr++ = (char) i;
 		    case MODE_REGONLY:
 			if(rb_dlink_list_length(&service_list))
 			{
