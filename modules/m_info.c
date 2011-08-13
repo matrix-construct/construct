@@ -603,12 +603,6 @@ static struct InfoStruct info_table[] = {
 		"Enable chanmode +I (invite exceptions)",
 	},
 	{
-		"use_forward",
-		OUTPUT_BOOLEAN_YN,
-		&ConfigChannel.use_forward,
-		"Enable chanmode +f (channel forwarding)",
-	},
-	{
 		"use_knock",
 		OUTPUT_BOOLEAN_YN,
 		&ConfigChannel.use_knock,

@@ -89,9 +89,16 @@ static int pargs;
  */
 static struct Channel *
 check_forward(struct Client *source_p, struct Channel *chptr,
-		char *key)
+	     char *key, int *err)
 {
 	int depth = 0, i;
+	char *next = NULL;
+
+	/* The caller (m_join) is only interested in the reason
+	 * for the original channel.
+	 */
+	if ((*err = can_join(source_p, chptr, key, &next)) == 0)
+		return chptr;
 
 	/* User is +Q */
 	if (IsNoForward(source_p))
@@ -99,7 +106,7 @@ check_forward(struct Client *source_p, struct Channel *chptr,
 
 	while (depth < 16)
 	{
-		chptr = find_channel(chptr->mode.forward);
+		chptr = find_channel(next);
 		/* Can only forward to existing channels */
 		if (chptr == NULL)
 			return NULL;
@@ -112,10 +119,10 @@ check_forward(struct Client *source_p, struct Channel *chptr,
 		/* Don't forward to +Q channel */
 		if (chptr->mode.mode & MODE_DISFORWARD)
 			return NULL;
-		i = can_join(source_p, chptr, key);
+		i = can_join(source_p, chptr, key, &next);
 		if (i == 0)
 			return chptr;
-		if (i != ERR_INVITEONLYCHAN && i != ERR_NEEDREGGEDNICK && i != ERR_THROTTLE && i != ERR_CHANNELISFULL)
+		if (next == NULL)
 			return NULL;
 		depth++;
 	}
@@ -132,7 +139,7 @@ static int
 m_join(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static char jbuf[BUFSIZE];
-	struct Channel *chptr = NULL;
+	struct Channel *chptr = NULL, *chptr2 = NULL;
 	struct ConfItem *aconf;
 	char *name;
 	char *key = NULL;
@@ -287,24 +294,22 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 			}
 		}
 
-		/* can_join checks for +i key, bans etc */
-		if((i = can_join(source_p, chptr, key)))
+		/* If check_forward returns NULL, they couldn't join and there wasn't a usable forward channel. */
+		if(!(chptr2 = check_forward(source_p, chptr, key, &i)))
 		{
-			if ((i != ERR_NEEDREGGEDNICK && i != ERR_THROTTLE && i != ERR_INVITEONLYCHAN && i != ERR_CHANNELISFULL) ||
-			    (!ConfigChannel.use_forward || (chptr = check_forward(source_p, chptr, key)) == NULL))
-			{
-				/* might be wrong, but is there any other better location for such?
-				 * see extensions/chm_operonly.c for other comments on this
-				 * -- dwr
-				 */
-				if(i != ERR_CUSTOM)
-					sendto_one(source_p, form_str(i), me.name, source_p->name, name);
+			/* might be wrong, but is there any other better location for such?
+			 * see extensions/chm_operonly.c for other comments on this
+			 * -- dwr
+			 */
+			if(i != ERR_CUSTOM)
+				sendto_one(source_p, form_str(i), me.name, source_p->name, name);
 
-				continue;
-			}
-
-			sendto_one_numeric(source_p, ERR_LINKCHANNEL, form_str(ERR_LINKCHANNEL), name, chptr->chname);
+			continue;
 		}
+		else if(chptr != chptr2)
+			sendto_one_numeric(source_p, ERR_LINKCHANNEL, form_str(ERR_LINKCHANNEL), name, chptr2->chname);
+
+		chptr = chptr2;
 
 		if(flags == 0 &&
 				!IsOper(source_p) && !IsExemptSpambot(source_p))
@@ -1120,7 +1125,7 @@ set_final_mode(struct Mode *mode, struct Mode *oldmode)
 		len = rb_sprintf(pbuf, "%d:%d ", mode->join_num, mode->join_time);
 		pbuf += len;
 	}
-	if(mode->forward[0] && strcmp(oldmode->forward, mode->forward) && ConfigChannel.use_forward)
+	if(mode->forward[0] && strcmp(oldmode->forward, mode->forward))
 	{
 		if(dir != MODE_ADD)
 		{
