@@ -530,7 +530,7 @@ remove_resv(struct Client *source_p, const char *name, int propagated)
 		if((aconf = hash_find_resv(name)) == NULL)
 		{
 			if(propagated && rb_dlink_list_length(&cluster_conf_list))
-				cluster_generic(source_p, "UNXLINE", SHARED_UNXLINE, CAP_CLUSTER, "%s", name);
+				cluster_generic(source_p, "UNRESV", SHARED_UNRESV, CAP_CLUSTER, "%s", name);
 
 			sendto_one_notice(source_p, ":No RESV for %s", name);
 			return;
@@ -603,7 +603,7 @@ remove_resv(struct Client *source_p, const char *name, int propagated)
 		if(aconf == NULL)
 		{
 			if(propagated && rb_dlink_list_length(&cluster_conf_list))
-				cluster_generic(source_p, "UNXLINE", SHARED_UNXLINE, CAP_CLUSTER, "%s", name);
+				cluster_generic(source_p, "UNRESV", SHARED_UNRESV, CAP_CLUSTER, "%s", name);
 
 			sendto_one_notice(source_p, ":No RESV for %s", name);
 			return;
