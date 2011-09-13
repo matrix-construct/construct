@@ -290,7 +290,6 @@ del_id(struct Channel *chptr, const char *banid, rb_dlink_list * list, long mode
 		if(irccmp(banid, banptr->banstr) == 0)
 		{
 			rb_dlinkDelete(&banptr->node, list);
-			free_ban(banptr);
 
 			/* invalidate the can_send() cache */
 			if(mode_type == CHFL_BAN || mode_type == CHFL_QUIET || mode_type == CHFL_EXCEPTION)
