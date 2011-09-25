@@ -807,6 +807,13 @@ chm_ban(struct Client *source_p, struct Channel *chptr,
 	else
 		mask = pretty_mask(raw_mask);
 
+	/* we'd have problems parsing this, hyb6 does it too
+	 * also make sure it will always fit on a line with channel
+	 * name etc.
+	 */
+	if(strlen(mask) > IRCD_MIN(BANLEN, MODEBUFLEN - 5))
+		return;
+
 	/* Look for a $ after the first character.
 	 * As the first character, it marks an extban; afterwards
 	 * it delimits a forward channel.
@@ -817,13 +824,6 @@ chm_ban(struct Client *source_p, struct Channel *chptr,
 		if (*forward == '\0')
 			forward = NULL;
 	}
-
-	/* we'd have problems parsing this, hyb6 does it too
-	 * also make sure it will always fit on a line with channel
-	 * name etc.
-	 */
-	if(strlen(mask) > IRCD_MIN(BANLEN, MODEBUFLEN - 5))
-		return;
 
 	/* if we're adding a NEW id */
 	if(dir == MODE_ADD)
