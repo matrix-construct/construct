@@ -1073,6 +1073,12 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 			}
 			/* FALLTHROUGH */
 		default:
+			if (MyConnect(source_p) && *pm == 'Q' && !ConfigChannel.use_forward)
+			{
+				badflag = YES;
+				break;
+			}
+
 			if((flag = user_modes[(unsigned char) *pm]))
 			{
 				if(MyConnect(source_p)

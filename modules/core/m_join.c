@@ -1125,7 +1125,8 @@ set_final_mode(struct Mode *mode, struct Mode *oldmode)
 		len = rb_sprintf(pbuf, "%d:%d ", mode->join_num, mode->join_time);
 		pbuf += len;
 	}
-	if(mode->forward[0] && strcmp(oldmode->forward, mode->forward))
+	if(mode->forward[0] && strcmp(oldmode->forward, mode->forward) &&
+			ConfigChannel.use_forward)
 	{
 		if(dir != MODE_ADD)
 		{

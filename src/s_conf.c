@@ -756,6 +756,7 @@ set_default_conf(void)
 
 	ConfigChannel.use_except = YES;
 	ConfigChannel.use_invex = YES;
+	ConfigChannel.use_forward = YES;
 	ConfigChannel.use_knock = YES;
 	ConfigChannel.knock_delay = 300;
 	ConfigChannel.knock_delay_channel = 60;
