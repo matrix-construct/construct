@@ -84,6 +84,11 @@ parse_client_queued(struct Client *client_p)
 			}
 
 		}
+		/* If sent_parsed is impossibly high, drop it down.
+		 * This is useful if the configuration is changed.
+		 */
+		if(client_p->localClient->sent_parsed > allow_read)
+			client_p->localClient->sent_parsed = allow_read;
 	}
 
 	if(IsAnyServer(client_p) || IsExemptFlood(client_p))
@@ -143,6 +148,13 @@ parse_client_queued(struct Client *client_p)
 
 			client_p->localClient->sent_parsed += ConfigFileEntry.client_flood_message_time;
 		}
+		/* If sent_parsed is impossibly high, drop it down.
+		 * This is useful if the configuration is changed.
+		 */
+		if(client_p->localClient->sent_parsed > allow_read +
+				ConfigFileEntry.client_flood_message_time - 1)
+			client_p->localClient->sent_parsed = allow_read +
+				ConfigFileEntry.client_flood_message_time - 1;
 	}
 }
 
