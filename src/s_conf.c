@@ -863,6 +863,14 @@ validate_conf(void)
 				
 	}
 
+	/* RFC 1459 says 1 message per 2 seconds on average is acceptable,
+	 * so allow at least that.
+	 */
+	if(ConfigFileEntry.client_flood_message_time >
+			ConfigFileEntry.client_flood_message_num * 2)
+		ConfigFileEntry.client_flood_message_time =
+			ConfigFileEntry.client_flood_message_num * 2;
+
 	if((ConfigFileEntry.client_flood_max_lines < CLIENT_FLOOD_MIN) ||
 	   (ConfigFileEntry.client_flood_max_lines > CLIENT_FLOOD_MAX))
 		ConfigFileEntry.client_flood_max_lines = CLIENT_FLOOD_MAX;
