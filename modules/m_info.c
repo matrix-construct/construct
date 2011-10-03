@@ -131,13 +131,13 @@ static struct InfoStruct info_table[] = {
 		"client_flood_burst_rate",
 		OUTPUT_DECIMAL,
 		&ConfigFileEntry.client_flood_burst_rate,
-		"Maximum lines per second during flood grace period, times client_flood_message_time",
+		"Maximum lines per second during flood grace period",
 	},
 	{
 		"client_flood_burst_max",
 		OUTPUT_DECIMAL,
 		&ConfigFileEntry.client_flood_burst_max,
-		"Number of lines to process at once before delaying, times client_flood_message_time",
+		"Number of lines to process at once before delaying",
 	},
 	{
 		"client_flood_message_num",

@@ -101,6 +101,7 @@ parse_client_queued(struct Client *client_p)
 			allow_read = ConfigFileEntry.client_flood_burst_max;
 		else
 			allow_read = ConfigFileEntry.client_flood_burst_rate;
+		allow_read *= ConfigFileEntry.client_flood_message_time;
 		/* allow opers 4 times the amount of messages as users. why 4?
 		 * why not. :) --fl_
 		 */
