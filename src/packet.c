@@ -143,7 +143,6 @@ parse_client_queued(struct Client *client_p)
 				return;
 
 			client_p->localClient->sent_parsed += ConfigFileEntry.client_flood_message_time;
-			client_p->localClient->actually_read++;
 		}
 	}
 }
@@ -196,8 +195,6 @@ flood_recalc(void *unused)
 		if(client_p->localClient->sent_parsed < 0)
 			client_p->localClient->sent_parsed = 0;
 
-		client_p->localClient->actually_read = 0;
-
 		parse_client_queued(client_p);
 		
 		if(rb_unlikely(IsAnyDead(client_p)))
@@ -216,8 +213,6 @@ flood_recalc(void *unused)
 
 		if(client_p->localClient->sent_parsed < 0)
 			client_p->localClient->sent_parsed = 0;
-
-		client_p->localClient->actually_read = 0;
 
 		parse_client_queued(client_p);
 	}
