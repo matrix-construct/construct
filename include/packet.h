@@ -39,7 +39,7 @@
 /* MAX_FLOOD is the amount of lines in a 'burst' we allow from a client, 
  * anything beyond MAX_FLOOD is limited to about one line per second.
  *
- * MAX_FLOOD_CONN is the amount of lines we allow from a client who has
+ * MAX_FLOOD_BURST is the amount of lines we allow from a client who has
  * just connected.  this allows clients to rejoin multiple channels
  * without being so heavily penalised they excess flood.
  */
@@ -47,7 +47,7 @@
  * spb: Made these configurable
  */
 #define MAX_FLOOD ConfigFileEntry.client_flood_burst_max
-#define MAX_FLOOD_BURST MAX_FLOOD * 8
+#define MAX_FLOOD_BURST ConfigFileEntry.client_flood_burst_rate
 
 
 extern PF read_packet;

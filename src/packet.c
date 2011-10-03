@@ -123,9 +123,6 @@ parse_client_queued(struct Client *client_p)
 			{
 				if(client_p->localClient->sent_parsed >= client_p->localClient->allow_read)
 					break;
-				/* spb: Add second layer of throttling to n lines per second, even during burst */
-				if(client_p->localClient->actually_read >= ConfigFileEntry.client_flood_burst_rate)
-					break;
 			}
 
 			/* allow opers 4 times the amount of messages as users. why 4?
