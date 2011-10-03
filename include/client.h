@@ -252,7 +252,7 @@ struct LocalUser
 	 * to avoid flooding.
 	 *   -- adrian
 	 */
-	int allow_read;		/* how many we're allowed to read in this second */
+	int dummy1;
 	int dummy0;
 	int sent_parsed;	/* how many messages we've parsed in this second */
 	time_t last_knock;	/* time of last knock */

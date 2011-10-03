@@ -185,7 +185,6 @@ release_auth_client(struct AuthRequest *auth)
 	 * us. This is what read_packet() does.
 	 *     -- adrian
 	 */
-	client->localClient->allow_read = MAX_FLOOD;
 	rb_dlinkAddTail(client, &client->node, &global_client_list);
 	read_packet(client->localClient->F, client);
 }

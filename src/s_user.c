@@ -260,8 +260,6 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 		return -1;
 
 	client_p->localClient->last = rb_current_time();
-	/* Straight up the maximum rate of flooding... */
-	source_p->localClient->allow_read = MAX_FLOOD_BURST;
 
 	/* XXX - fixme. we shouldnt have to build a users buffer twice.. */
 	if(!IsGotId(source_p) && (strchr(username, '[') != NULL))
@@ -544,8 +542,6 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 	/* Increment our total user count here */
 	if(++Count.total > Count.max_tot)
 		Count.max_tot = Count.total;
-
-	source_p->localClient->allow_read = MAX_FLOOD_BURST;
 
 	Count.totalrestartcount++;
 

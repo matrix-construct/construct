@@ -45,16 +45,17 @@ static void
 parse_client_queued(struct Client *client_p)
 {
 	int dolen = 0;
-	int checkflood = 1;
+	int allow_read;
 
 	if(IsAnyDead(client_p))
 		return;
 
 	if(IsUnknown(client_p))
 	{
+		allow_read = ConfigFileEntry.client_flood_burst_max;
 		for (;;)
 		{
-			if(client_p->localClient->sent_parsed >= client_p->localClient->allow_read)
+			if(client_p->localClient->sent_parsed >= allow_read)
 				break;
 
 			dolen = rb_linebuf_get(&client_p->localClient->
@@ -96,9 +97,15 @@ parse_client_queued(struct Client *client_p)
 	}
 	else if(IsClient(client_p))
 	{
-
+		if(IsFloodDone(client_p))
+			allow_read = ConfigFileEntry.client_flood_burst_max;
+		else
+			allow_read = ConfigFileEntry.client_flood_burst_rate;
+		/* allow opers 4 times the amount of messages as users. why 4?
+		 * why not. :) --fl_
+		 */
 		if(IsOper(client_p) && ConfigFileEntry.no_oper_flood)
-			checkflood = 0;
+			allow_read *= 4;
 		/*
 		 * Handle flood protection here - if we exceed our flood limit on
 		 * messages in this loop, we simply drop out of the loop prematurely.
@@ -119,16 +126,7 @@ parse_client_queued(struct Client *client_p)
 			 * as sent_parsed will always hover around the allow_read limit
 			 * and no 'bursts' will be permitted.
 			 */
-			if(checkflood)
-			{
-				if(client_p->localClient->sent_parsed >= client_p->localClient->allow_read)
-					break;
-			}
-
-			/* allow opers 4 times the amount of messages as users. why 4?
-			 * why not. :) --fl_
-			 */
-			else if(client_p->localClient->sent_parsed >= (4 * client_p->localClient->allow_read))
+			if(client_p->localClient->sent_parsed >= allow_read)
 				break;
 
 			dolen = rb_linebuf_get(&client_p->localClient->
@@ -156,11 +154,8 @@ flood_endgrace(struct Client *client_p)
 {
 	SetFloodDone(client_p);
 
-	/* Drop their flood limit back down */
-	client_p->localClient->allow_read = MAX_FLOOD;
-
-	/* sent_parsed could be way over MAX_FLOOD but under MAX_FLOOD_BURST,
-	 * so reset it.
+	/* sent_parsed could be way over client_flood_burst_max but under
+	 * client_flood_burst_rate so reset it.
 	 */
 	client_p->localClient->sent_parsed = 0;
 }
