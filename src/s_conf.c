@@ -863,9 +863,13 @@ validate_conf(void)
 				
 	}
 
-	/* RFC 1459 says 1 message per 2 seconds on average is acceptable,
-	 * so allow at least that.
+	/* RFC 1459 says 1 message per 2 seconds on average and bursts of
+	 * 5 messages are acceptable, so allow at least that.
 	 */
+	if(ConfigFileEntry.client_flood_burst_rate < 5)
+		ConfigFileEntry.client_flood_burst_rate = 5;
+	if(ConfigFileEntry.client_flood_burst_max < 5)
+		ConfigFileEntry.client_flood_burst_max = 5;
 	if(ConfigFileEntry.client_flood_message_time >
 			ConfigFileEntry.client_flood_message_num * 2)
 		ConfigFileEntry.client_flood_message_time =
