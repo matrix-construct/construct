@@ -284,7 +284,13 @@ smalldate(time_t ltime)
 void
 ilog_error(const char *error)
 {
-	ilog(L_IOERROR, "%s: %d (%s)", error, errno, strerror(errno));
+	int e;
+	const char *errstr;
 
-	sendto_realops_snomask(SNO_DEBUG, L_ALL, "%s: %d (%s)", error, errno, strerror(errno));
+	e = errno;
+	errstr = strerror(e);
+
+	ilog(L_IOERROR, "%s: %d (%s)", error, e, errstr);
+	sendto_realops_snomask(SNO_DEBUG, L_ALL, "%s: %d (%s)",
+			error, e, errstr);
 }
