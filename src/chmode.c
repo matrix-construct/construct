@@ -109,13 +109,6 @@ construct_cflags_strings(void)
 			if(ConfigChannel.use_forward)
 				*ptr++ = (char) i;
 			break;
-		    case MODE_REGONLY:
-			if(rb_dlink_list_length(&service_list))
-			{
-			    *ptr++ = (char) i;
-			}
-
-			break;
 		    default:
 			if(chmode_flags[i] != 0)
 			{
