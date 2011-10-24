@@ -104,7 +104,7 @@ construct_cflags_strings(void)
                 
 		switch (chmode_flags[i])
 		{
-		    case MODE_EXLIMIT:
+		    case MODE_FREETARGET:
 		    case MODE_DISFORWARD:
 			if(ConfigChannel.use_forward)
 				*ptr++ = (char) i;

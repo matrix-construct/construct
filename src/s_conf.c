@@ -51,6 +51,7 @@
 #include "sslproc.h"
 #include "bandbi.h"
 #include "operhash.h"
+#include "chmode.h"
 
 struct config_server_hide ConfigServerHide;
 
@@ -826,6 +827,7 @@ read_conf(FILE * file)
 	/* Some global values are also loaded here. */
 	check_class();		/* Make sure classes are valid */
 	privilegeset_delete_all_illegal();
+	construct_cflags_strings();
 }
 
 static void
