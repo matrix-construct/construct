@@ -258,7 +258,7 @@ load_all_modules(int warn)
 void
 load_core_modules(int warn)
 {
-	char module_name[MAXPATHLEN];
+	char module_name[PATH_MAX];
 	int i;
 
 
@@ -286,7 +286,7 @@ load_core_modules(int warn)
 int
 load_one_module(const char *path, int coremodule)
 {
-	char modpath[MAXPATHLEN];
+	char modpath[PATH_MAX];
 	rb_dlink_node *pathst;
 	struct module_path *mpath;
 

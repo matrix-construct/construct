@@ -2098,15 +2098,15 @@ static struct ConfEntry conf_admin_table[] =
 
 static struct ConfEntry conf_log_table[] =
 {
-	{ "fname_userlog", 	CF_QSTRING, NULL, MAXPATHLEN, &ConfigFileEntry.fname_userlog	},
-	{ "fname_fuserlog", 	CF_QSTRING, NULL, MAXPATHLEN, &ConfigFileEntry.fname_fuserlog	},
-	{ "fname_operlog", 	CF_QSTRING, NULL, MAXPATHLEN, &ConfigFileEntry.fname_operlog	},
-	{ "fname_foperlog", 	CF_QSTRING, NULL, MAXPATHLEN, &ConfigFileEntry.fname_foperlog	},
-	{ "fname_serverlog", 	CF_QSTRING, NULL, MAXPATHLEN, &ConfigFileEntry.fname_serverlog	},
-	{ "fname_killlog", 	CF_QSTRING, NULL, MAXPATHLEN, &ConfigFileEntry.fname_killlog	},
-	{ "fname_klinelog", 	CF_QSTRING, NULL, MAXPATHLEN, &ConfigFileEntry.fname_klinelog	},
-	{ "fname_operspylog", 	CF_QSTRING, NULL, MAXPATHLEN, &ConfigFileEntry.fname_operspylog	},
-	{ "fname_ioerrorlog", 	CF_QSTRING, NULL, MAXPATHLEN, &ConfigFileEntry.fname_ioerrorlog },
+	{ "fname_userlog", 	CF_QSTRING, NULL, PATH_MAX, &ConfigFileEntry.fname_userlog	},
+	{ "fname_fuserlog", 	CF_QSTRING, NULL, PATH_MAX, &ConfigFileEntry.fname_fuserlog	},
+	{ "fname_operlog", 	CF_QSTRING, NULL, PATH_MAX, &ConfigFileEntry.fname_operlog	},
+	{ "fname_foperlog", 	CF_QSTRING, NULL, PATH_MAX, &ConfigFileEntry.fname_foperlog	},
+	{ "fname_serverlog", 	CF_QSTRING, NULL, PATH_MAX, &ConfigFileEntry.fname_serverlog	},
+	{ "fname_killlog", 	CF_QSTRING, NULL, PATH_MAX, &ConfigFileEntry.fname_killlog	},
+	{ "fname_klinelog", 	CF_QSTRING, NULL, PATH_MAX, &ConfigFileEntry.fname_klinelog	},
+	{ "fname_operspylog", 	CF_QSTRING, NULL, PATH_MAX, &ConfigFileEntry.fname_operspylog	},
+	{ "fname_ioerrorlog", 	CF_QSTRING, NULL, PATH_MAX, &ConfigFileEntry.fname_ioerrorlog },
 	{ "\0",			0,	    NULL, 0,          NULL }
 };
 
@@ -2192,7 +2192,7 @@ static struct ConfEntry conf_general_table[] =
 	{ "default_operstring",	CF_QSTRING, NULL, REALLEN,    &ConfigFileEntry.default_operstring },
 	{ "default_adminstring",CF_QSTRING, NULL, REALLEN,    &ConfigFileEntry.default_adminstring },
 	{ "servicestring",	CF_QSTRING, NULL, REALLEN,    &ConfigFileEntry.servicestring },
-	{ "egdpool_path",	CF_QSTRING, NULL, MAXPATHLEN, &ConfigFileEntry.egdpool_path },
+	{ "egdpool_path",	CF_QSTRING, NULL, PATH_MAX, &ConfigFileEntry.egdpool_path },
 	{ "kline_reason",	CF_QSTRING, NULL, REALLEN, &ConfigFileEntry.kline_reason },
 	{ "identify_service",	CF_QSTRING, NULL, REALLEN, &ConfigFileEntry.identifyservice },
 	{ "identify_command",	CF_QSTRING, NULL, REALLEN, &ConfigFileEntry.identifycommand },

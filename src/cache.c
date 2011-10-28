@@ -227,7 +227,7 @@ load_help(void)
 {
 	DIR *helpfile_dir = NULL;
 	struct dirent *ldirent= NULL;
-	char filename[MAXPATHLEN];
+	char filename[PATH_MAX];
 	struct cachefile *cacheptr;
 	struct DictionaryIter iter;
 

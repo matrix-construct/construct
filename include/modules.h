@@ -54,7 +54,7 @@ struct module
 
 struct module_path
 {
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 };
 
 #define MAPI_MAGIC_HDR	0x4D410000
