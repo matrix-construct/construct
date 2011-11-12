@@ -655,32 +655,31 @@ sendto_channel_local(int type, struct Channel *chptr, const char *pattern, ...)
 	rb_linebuf_donebuf(&linebuf);
 }
 
-/* sendto_channel_local_with_capability()
+/*
+ * _sendto_channel_local_with_capability_butone()
  *
- * inputs	- flags to send to, caps, negate caps, channel to send to, va_args
- * outputs	- message to local channel members
- * side effects -
+ * Shared implementation of sendto_channel_local_with_capability and sendto_channel_local_with_capability_butone
  */
-void
-sendto_channel_local_with_capability(int type, int caps, int negcaps, struct Channel *chptr, const char *pattern, ...)
+static void
+_sendto_channel_local_with_capability_butone(struct Client *one, int type, int caps, int negcaps, struct Channel *chptr,
+	const char *pattern, va_list * args)
 {
-	va_list args;
 	buf_head_t linebuf;
 	struct membership *msptr;
 	struct Client *target_p;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 	
-	rb_linebuf_newbuf(&linebuf); 
+	rb_linebuf_newbuf(&linebuf);
+	rb_linebuf_putmsg(&linebuf, pattern, args, NULL);
 	
-	va_start(args, pattern);
-	rb_linebuf_putmsg(&linebuf, pattern, &args, NULL);
-	va_end(args);
-
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->locmembers.head)
 	{
 		msptr = ptr->data;
 		target_p = msptr->client_p;
+
+		if (target_p == one)
+			continue;
 
 		if(IsIOError(target_p) ||
 		   !IsCapable(target_p, caps) ||
@@ -695,6 +694,41 @@ sendto_channel_local_with_capability(int type, int caps, int negcaps, struct Cha
 
 	rb_linebuf_donebuf(&linebuf);
 }
+
+/* sendto_channel_local_with_capability()
+ *
+ * inputs	- flags to send to, caps, negate caps, channel to send to, va_args
+ * outputs	- message to local channel members
+ * side effects -
+ */
+void
+sendto_channel_local_with_capability(int type, int caps, int negcaps, struct Channel *chptr, const char *pattern, ...)
+{
+	va_list args;
+
+	va_start(args, pattern);
+	_sendto_channel_local_with_capability_butone(NULL, type, caps, negcaps, chptr, pattern, &args);
+	va_end(args);
+}
+
+
+/* sendto_channel_local_with_capability()
+ *
+ * inputs	- flags to send to, caps, negate caps, channel to send to, va_args
+ * outputs	- message to local channel members
+ * side effects -
+ */
+void
+sendto_channel_local_with_capability_butone(struct Client *one, int type, int caps, int negcaps, struct Channel *chptr,
+		const char *pattern, ...)
+{
+	va_list args;
+
+	va_start(args, pattern);
+	_sendto_channel_local_with_capability_butone(one, type, caps, negcaps, chptr, pattern, &args);
+	va_end(args);
+}
+
 
 /* sendto_channel_local_butone()
  *
