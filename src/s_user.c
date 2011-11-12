@@ -152,7 +152,8 @@ show_lusers(struct Client *source_p)
 
 	sendto_one_numeric(source_p, RPL_LUSERCLIENT, form_str(RPL_LUSERCLIENT),
 			   (Count.total - Count.invisi),
-			   Count.invisi, rb_dlink_list_length(&global_serv_list));
+			   Count.invisi,
+			   (int)rb_dlink_list_length(&global_serv_list));
 
 	if(rb_dlink_list_length(&oper_list) > 0)
 		sendto_one_numeric(source_p, RPL_LUSEROP, 
@@ -161,7 +162,7 @@ show_lusers(struct Client *source_p)
 	if(rb_dlink_list_length(&unknown_list) > 0)
 		sendto_one_numeric(source_p, RPL_LUSERUNKNOWN, 
 				   form_str(RPL_LUSERUNKNOWN),
-				   rb_dlink_list_length(&unknown_list));
+				   (int)rb_dlink_list_length(&unknown_list));
 
 	if(rb_dlink_list_length(&global_channel_list) > 0)
 		sendto_one_numeric(source_p, RPL_LUSERCHANNELS, 
@@ -169,14 +170,14 @@ show_lusers(struct Client *source_p)
 				   rb_dlink_list_length(&global_channel_list));
 
 	sendto_one_numeric(source_p, RPL_LUSERME, form_str(RPL_LUSERME),
-			   rb_dlink_list_length(&lclient_list),
-			   rb_dlink_list_length(&serv_list));
+			   (int)rb_dlink_list_length(&lclient_list),
+			   (int)rb_dlink_list_length(&serv_list));
 
 	sendto_one_numeric(source_p, RPL_LOCALUSERS, 
 			   form_str(RPL_LOCALUSERS),
-			   rb_dlink_list_length(&lclient_list),
+			   (int)rb_dlink_list_length(&lclient_list),
 			   Count.max_loc,
-			   rb_dlink_list_length(&lclient_list),
+			   (int)rb_dlink_list_length(&lclient_list),
 			   Count.max_loc);
 
 	sendto_one_numeric(source_p, RPL_GLOBALUSERS, form_str(RPL_GLOBALUSERS),

@@ -330,7 +330,7 @@ h_svc_stats(hook_data_int *data)
 		{
 			sendto_one_numeric(data->client, RPL_STATSULINE,
 						form_str(RPL_STATSULINE),
-						ptr->data, "*", "*", "s");
+						(const char *)ptr->data, "*", "*", "s");
 		}
 	}
 }

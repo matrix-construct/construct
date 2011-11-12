@@ -149,14 +149,14 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 			sendto_one(source_p, form_str(RPL_TESTLINE),
 					me.name, source_p->name,
 					'!',
-					duration / 60,
+					duration / 60L,
 					host, "Reject cache");
 		if(aconf == NULL &&
 				(duration = is_throttle_ip((struct sockaddr *)&ip)))
 			sendto_one(source_p, form_str(RPL_TESTLINE),
 					me.name, source_p->name,
 					'!',
-					duration / 60,
+					duration / 60L,
 					host, "Throttled");
 	}
 
