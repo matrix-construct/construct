@@ -268,8 +268,14 @@ conf_set_serverinfo_nicklen(void *data)
 	if (ConfigFileEntry.nicklen > NICKLEN)
 	{
 		conf_report_error("Warning -- ignoring serverinfo::nicklen -- provided nicklen (%u) is greater than allowed nicklen (%u)",
-				  ConfigFileEntry.nicklen, NICKLEN);
+				  ConfigFileEntry.nicklen - 1, NICKLEN - 1);
 		ConfigFileEntry.nicklen = NICKLEN;
+	}
+	else if (ConfigFileEntry.nicklen < 9 + 1)
+	{
+		conf_report_error("Warning -- serverinfo::nicklen is too low (%u) -- forcing 9",
+				  ConfigFileEntry.nicklen);
+		ConfigFileEntry.nicklen = 9 + 1;
 	}
 }
 

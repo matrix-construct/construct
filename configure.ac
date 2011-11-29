@@ -898,9 +898,12 @@ AC_HELP_STRING([--with-nicklen=LENGTH],[Set the upper-bound nick length to LENGT
   if ! expr "$withval" + 0 >/dev/null 2>&1; then 
 	AC_ERROR([NICKLEN must be a numeric value])
   fi 
-  if test $withval -ge 50; then
+  if test $withval -gt 50; then
 	NICKLEN=50
 	AC_MSG_WARN([NICKLEN has a hard limit of 50. Setting NICKLEN=50])
+  elif test $withval -lt 9; then
+	NICKLEN=9
+	AC_MSG_WARN([NICKLEN has a lower limit of 9. Setting NICKLEN=9])
   else
 	NICKLEN="$withval"
   fi
