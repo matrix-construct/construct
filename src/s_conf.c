@@ -801,6 +801,8 @@ set_default_conf(void)
 
 	ServerInfo.default_max_clients = MAXCONNECTIONS;
 
+	ConfigFileEntry.nicklen = NICKLEN;
+
 	if (!alias_dict)
 		alias_dict = irc_dictionary_create(strcasecmp);
 }

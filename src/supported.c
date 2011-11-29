@@ -292,9 +292,12 @@ void
 init_isupport(void)
 {
 	static int maxmodes = MAXMODEPARAMS;
-	static int nicklen = NICKLEN-1;
 	static int channellen = LOC_CHANNELLEN;
 	static int topiclen = TOPICLEN;
+	static int nicklen = NICKLEN - 1;
+	static int nicklen_usable;
+
+	nicklen_usable = ConfigFileEntry.nicklen - 1;
 
 	add_isupport("CHANTYPES", isupport_chantypes, NULL);
 	add_isupport("EXCEPTS", isupport_boolean, &ConfigChannel.use_except);
@@ -311,6 +314,7 @@ init_isupport(void)
 	add_isupport("CASEMAPPING", isupport_string, "rfc1459");
 	add_isupport("CHARSET", isupport_string, "ascii");
 	add_isupport("NICKLEN", isupport_intptr, &nicklen);
+	add_isupport("NICKLEN_USABLE", isupport_intptr, &nicklen_usable);
 	add_isupport("CHANNELLEN", isupport_intptr, &channellen);
 	add_isupport("TOPICLEN", isupport_intptr, &topiclen);
 	add_isupport("ETRACE", isupport_string, "");

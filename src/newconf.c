@@ -261,6 +261,26 @@ conf_set_serverinfo_vhost6(void *data)
 }
 
 static void
+conf_set_serverinfo_nicklen(void *data)
+{
+	static int nicklen_set = 0;
+
+	if (nicklen_set)
+		return;
+
+	ConfigFileEntry.nicklen = *(unsigned int *) data;
+
+	if (ConfigFileEntry.nicklen > NICKLEN)
+	{
+		conf_report_error("Warning -- ignoring serverinfo::nicklen -- provided nicklen (%u) is greater than allowed nicklen (%u)",
+				  ConfigFileEntry.nicklen, NICKLEN);
+		ConfigFileEntry.nicklen = NICKLEN;
+	}
+
+	nicklen_set = 1;
+}
+
+static void
 conf_set_modules_module(void *data)
 {
 #ifndef STATIC_MODULES
@@ -2084,6 +2104,8 @@ static struct ConfEntry conf_serverinfo_table[] =
 	{ "ssld_count",		CF_INT,	    NULL, 0, &ServerInfo.ssld_count },
 
 	{ "default_max_clients",CF_INT,     NULL, 0, &ServerInfo.default_max_clients },
+
+	{ "nicklen",		CF_INT,     conf_set_serverinfo_nicklen, 0, NULL },
 
 	{ "\0",	0, NULL, 0, NULL }
 };

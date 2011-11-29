@@ -653,7 +653,6 @@ main(int argc, char *argv[])
 	init_reject();
 	init_cache();
 	init_monitor();
-	init_isupport();
 
         construct_cflags_strings();
 
@@ -673,6 +672,8 @@ main(int argc, char *argv[])
 	mod_add_path(MODULE_DIR); 
 	mod_add_path(MODULE_DIR "/autoload"); 
 #endif
+
+	init_isupport();
 
 	init_bandb();
 	init_ssld();

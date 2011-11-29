@@ -138,7 +138,7 @@ mr_nick(struct Client *client_p, struct Client *source_p, int parc, const char *
 		*s = '\0';
 
 	/* copy the nick and terminate it */
-	rb_strlcpy(nick, parv[1], sizeof(nick));
+	rb_strlcpy(nick, parv[1], ConfigFileEntry.nicklen);
 
 	/* check the nickname is ok */
 	if(!clean_nick(nick, 1))
@@ -201,7 +201,7 @@ m_nick(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		flood_endgrace(source_p);
 
 	/* terminate nick to NICKLEN, we dont want clean_nick() to error! */
-	rb_strlcpy(nick, parv[1], sizeof(nick));
+	rb_strlcpy(nick, parv[1], ConfigFileEntry.nicklen);
 
 	/* check the nickname is ok */
 	if(!clean_nick(nick, 1))
@@ -566,7 +566,7 @@ clean_nick(const char *nick, int loc_client)
 	}
 
 	/* nicklen is +1 */
-	if(len >= NICKLEN)
+	if(len >= NICKLEN && len >= ConfigFileEntry.nicklen)
 		return 0;
 
 	return 1;
