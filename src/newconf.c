@@ -263,11 +263,6 @@ conf_set_serverinfo_vhost6(void *data)
 static void
 conf_set_serverinfo_nicklen(void *data)
 {
-	static int nicklen_set = 0;
-
-	if (nicklen_set)
-		return;
-
 	ConfigFileEntry.nicklen = (*(unsigned int *) data) + 1;
 
 	if (ConfigFileEntry.nicklen > NICKLEN)
@@ -276,8 +271,6 @@ conf_set_serverinfo_nicklen(void *data)
 				  ConfigFileEntry.nicklen, NICKLEN);
 		ConfigFileEntry.nicklen = NICKLEN;
 	}
-
-	nicklen_set = 1;
 }
 
 static void
