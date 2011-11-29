@@ -236,7 +236,7 @@ doit:
 			use_id(target_p), parv[2], (long) target_p->tsinfo);
 
 	del_from_client_hash(target_p->name, target_p);
-	strcpy(target_p->name, parv[2]);
+	rb_strlcpy(target_p->name, parv[2], NICKLEN);
 	add_to_client_hash(target_p->name, target_p);
 
 	monitor_signon(target_p);
