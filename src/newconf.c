@@ -268,7 +268,7 @@ conf_set_serverinfo_nicklen(void *data)
 	if (nicklen_set)
 		return;
 
-	ConfigFileEntry.nicklen = *(unsigned int *) data;
+	ConfigFileEntry.nicklen = (*(unsigned int *) data) + 1;
 
 	if (ConfigFileEntry.nicklen > NICKLEN)
 	{
