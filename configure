@@ -1375,7 +1375,7 @@ Optional Packages:
   --with-custom-version=NAME
                           Custom version branding.
   --with-nicklen=LENGTH   Set the upper-bound nick length to LENGTH (default
-                          50, max 50)
+                          31, max 50)
   --with-topiclen=NUMBER  Set the max topic length to NUMBER (default 390, max
                           390)
 
@@ -7908,16 +7908,20 @@ if test "${with_nicklen+set}" = set; then :
   if ! expr "$withval" + 0 >/dev/null 2>&1; then
 	as_fn_error $? "NICKLEN must be a numeric value" "$LINENO" 5
   fi
-  if test $withval -ge 50; then
+  if test $withval -gt 50; then
 	NICKLEN=50
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: NICKLEN has a hard limit of 50. Setting NICKLEN=50" >&5
 $as_echo "$as_me: WARNING: NICKLEN has a hard limit of 50. Setting NICKLEN=50" >&2;}
+  elif test $withval -lt 9; then
+	NICKLEN=9
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: NICKLEN has a lower limit of 9. Setting NICKLEN=9" >&5
+$as_echo "$as_me: WARNING: NICKLEN has a lower limit of 9. Setting NICKLEN=9" >&2;}
   else
 	NICKLEN="$withval"
   fi
 
 else
-  NICKLEN=50
+  NICKLEN=31
 fi
 
 
