@@ -893,7 +893,7 @@ dnl so enable small net unless you really need this much support
 fi
 
 AC_ARG_WITH(nicklen,
-AC_HELP_STRING([--with-nicklen=LENGTH],[Set the upper-bound nick length to LENGTH (default 50, max 50)]),
+AC_HELP_STRING([--with-nicklen=LENGTH],[Set the upper-bound nick length to LENGTH (default 31, max 50)]),
 [
   if ! expr "$withval" + 0 >/dev/null 2>&1; then 
 	AC_ERROR([NICKLEN must be a numeric value])
@@ -904,7 +904,7 @@ AC_HELP_STRING([--with-nicklen=LENGTH],[Set the upper-bound nick length to LENGT
   else
 	NICKLEN="$withval"
   fi
-], [NICKLEN=50])
+], [NICKLEN=31])
 
 AC_ARG_WITH(topiclen,           
 AC_HELP_STRING([--with-topiclen=NUMBER],[Set the max topic length to NUMBER (default 390, max 390)]),
