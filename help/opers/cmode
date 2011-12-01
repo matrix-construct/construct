@@ -13,7 +13,8 @@ NO PARAMETERS:
               join the channel.
      +r     - Registered users only.  Only users identified to services
               may join.
-     +c     - No color.  All color codes in messages are stripped.
+     +c     - No color.  All markup (color, bold, underline, etc.) in
+              messages is stripped.
      +g     - Free invite.  Everyone may invite users.  Significantly
               weakens +i control.
      +z     - Op moderated.  Messages blocked by +m, +b and +q are instead
