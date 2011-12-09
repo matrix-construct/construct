@@ -465,6 +465,51 @@ pretty_mask(const char *idmask)
 	return mask_buf + old_mask_pos;
 }
 
+/* check_forward()
+ *
+ * input	- client, channel to set mode on, target channel name
+ * output	- true if forwarding should be allowed
+ * side effects - numeric sent if not allowed
+ */
+static int
+check_forward(struct Client *source_p, struct Channel *chptr,
+		const char *forward)
+{
+	struct Channel *targptr;
+	struct membership *msptr;
+
+	if(!check_channel_name(forward) ||
+			(MyClient(source_p) && (strlen(forward) > LOC_CHANNELLEN || hash_find_resv(forward))))
+	{
+		sendto_one_numeric(source_p, ERR_BADCHANNAME, form_str(ERR_BADCHANNAME), forward);
+		return 0;
+	}
+	/* don't forward to inconsistent target -- jilles */
+	if(chptr->chname[0] == '#' && forward[0] == '&')
+	{
+		sendto_one_numeric(source_p, ERR_BADCHANNAME,
+				   form_str(ERR_BADCHANNAME), forward);
+		return 0;
+	}
+	if(MyClient(source_p) && (targptr = find_channel(forward)) == NULL)
+	{
+		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
+				   form_str(ERR_NOSUCHCHANNEL), forward);
+		return 0;
+	}
+	if(MyClient(source_p) && !(targptr->mode.mode & MODE_FREETARGET))
+	{
+		if((msptr = find_channel_membership(targptr, source_p)) == NULL ||
+			get_channel_access(source_p, msptr) != CHFL_CHANOP)
+		{
+			sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
+				   me.name, source_p->name, targptr->chname);
+			return 0;
+		}
+	}
+	return 1;
+}
+
 /* fix_key()
  *
  * input	- key to fix
@@ -1175,8 +1220,6 @@ chm_forward(struct Client *source_p, struct Channel *chptr,
 	int alevel, int parc, int *parn,
 	const char **parv, int *errors, int dir, char c, long mode_type)
 {
-	struct Channel *targptr = NULL;
-	struct membership *msptr;
 	const char *forward;
 
 	/* if +f is disabled, ignore local attempts to set it */
@@ -1226,35 +1269,9 @@ chm_forward(struct Client *source_p, struct Channel *chptr,
 
 		if(EmptyString(forward))
 			return;
-		if(!check_channel_name(forward) ||
-				(MyClient(source_p) && (strlen(forward) > LOC_CHANNELLEN || hash_find_resv(forward))))
-		{
-			sendto_one_numeric(source_p, ERR_BADCHANNAME, form_str(ERR_BADCHANNAME), forward);
+
+		if(!check_forward(source_p, chptr, forward))
 			return;
-		}
-		/* don't forward to inconsistent target -- jilles */
-		if(chptr->chname[0] == '#' && forward[0] == '&')
-		{
-			sendto_one_numeric(source_p, ERR_BADCHANNAME,
-					   form_str(ERR_BADCHANNAME), forward);
-			return;
-		}
-		if(MyClient(source_p) && (targptr = find_channel(forward)) == NULL)
-		{
-			sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
-					   form_str(ERR_NOSUCHCHANNEL), forward);
-			return;
-		}
-		if(MyClient(source_p) && !(targptr->mode.mode & MODE_FREETARGET))
-		{
-			if((msptr = find_channel_membership(targptr, source_p)) == NULL ||
-				get_channel_access(source_p, msptr) != CHFL_CHANOP)
-			{
-				sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
-					   me.name, source_p->name, targptr->chname);
-				return;
-			}
-		}
 
 		rb_strlcpy(chptr->mode.forward, forward, sizeof(chptr->mode.forward));
 
