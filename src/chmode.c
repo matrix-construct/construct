@@ -873,9 +873,16 @@ chm_ban(struct Client *source_p, struct Channel *chptr,
 				return;
 		}
 
-		if(forward != NULL && !ConfigChannel.use_forward &&
-				MyClient(source_p))
-			forward = NULL;
+		/* For compatibility, only check the forward channel from
+		 * local clients. Accept any forward channel from servers.
+		 */
+		if(forward != NULL && MyClient(source_p))
+		{
+			if(!ConfigChannel.use_forward)
+				forward = NULL;
+			else if(!check_forward(source_p, chptr, forward))
+				return;
+		}
 
 		/* dont allow local clients to overflow the banlist, dont
 		 * let remote servers set duplicate bans
