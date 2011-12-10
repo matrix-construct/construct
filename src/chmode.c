@@ -879,8 +879,8 @@ chm_ban(struct Client *source_p, struct Channel *chptr,
 		if(forward != NULL && MyClient(source_p))
 		{
 			if(!ConfigChannel.use_forward)
-				forward = NULL;
-			else if(!check_forward(source_p, chptr, forward))
+				return;
+			if(!check_forward(source_p, chptr, forward))
 				return;
 			/* Forwards only make sense for bans. */
 			if(mode_type != CHFL_BAN)
