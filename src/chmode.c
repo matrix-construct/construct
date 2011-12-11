@@ -882,6 +882,11 @@ chm_ban(struct Client *source_p, struct Channel *chptr,
 				return;
 			if(!check_forward(source_p, chptr, forward))
 				return;
+			/* For simplicity and future flexibility, do not
+			 * allow '$' in forwarding targets.
+			 */
+			if(strchr(forward, '$') != NULL)
+				return;
 			/* Forwards only make sense for bans. */
 			if(mode_type != CHFL_BAN)
 				return;
