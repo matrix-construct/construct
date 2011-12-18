@@ -850,7 +850,12 @@ chm_ban(struct Client *source_p, struct Channel *chptr,
 	 * name etc.
 	 */
 	if(strlen(mask) > IRCD_MIN(BANLEN, MODEBUFLEN - 5))
+	{
+		sendto_one_numeric(source_p, ERR_INVALIDBAN,
+				form_str(ERR_INVALIDBAN),
+				chptr->chname, c, raw_mask);
 		return;
+	}
 
 	/* Look for a $ after the first character.
 	 * As the first character, it marks an extban; afterwards
@@ -869,8 +874,12 @@ chm_ban(struct Client *source_p, struct Channel *chptr,
 		if (*mask == '$' && MyClient(source_p))
 		{
 			if (!valid_extban(mask, source_p, chptr, mode_type))
-				/* XXX perhaps return an error message here */
+			{
+				sendto_one_numeric(source_p, ERR_INVALIDBAN,
+						form_str(ERR_INVALIDBAN),
+						chptr->chname, c, raw_mask);
 				return;
+			}
 		}
 
 		/* For compatibility, only check the forward channel from
@@ -878,18 +887,28 @@ chm_ban(struct Client *source_p, struct Channel *chptr,
 		 */
 		if(forward != NULL && MyClient(source_p))
 		{
-			if(!ConfigChannel.use_forward)
-				return;
-			if(!check_forward(source_p, chptr, forward))
-				return;
 			/* For simplicity and future flexibility, do not
 			 * allow '$' in forwarding targets.
 			 */
-			if(strchr(forward, '$') != NULL)
+			if(!ConfigChannel.use_forward ||
+					strchr(forward, '$') != NULL)
+			{
+				sendto_one_numeric(source_p, ERR_INVALIDBAN,
+						form_str(ERR_INVALIDBAN),
+						chptr->chname, c, raw_mask);
+				return;
+			}
+			/* check_forward() sends its own error message */
+			if(!check_forward(source_p, chptr, forward))
 				return;
 			/* Forwards only make sense for bans. */
 			if(mode_type != CHFL_BAN)
+			{
+				sendto_one_numeric(source_p, ERR_INVALIDBAN,
+						form_str(ERR_INVALIDBAN),
+						chptr->chname, c, raw_mask);
 				return;
+			}
 		}
 
 		/* dont allow local clients to overflow the banlist, dont

@@ -768,7 +768,7 @@ static  const char *  replies[] = {
 /* 740 RPL_RSACHALLENGE2*/	":%s 740 %s :%s",
 /* 741 RPL_ENDOFRSACHALLENGE2*/	":%s 741 %s :End of CHALLENGE",
 /* 742 ERR_MLOCKRESTRICTED */	"%s %c %s :MODE cannot be set due to channel having an active MLOCK restriction policy",
-/* 743 */	NULL,
+/* 743 ERR_INVALIDBAN */	"%s %c %s :Invalid ban mask",
 /* 744 */	NULL,
 /* 745 */	NULL,
 /* 746 */	NULL,

@@ -365,6 +365,7 @@ extern const char *form_str(int);
 #define RPL_ENDOFRSACHALLENGE2  741
 
 #define ERR_MLOCKRESTRICTED	742
+#define ERR_INVALIDBAN		743
 
 #define RPL_SCANMATCHED		750
 #define RPL_SCANUMODES		751
