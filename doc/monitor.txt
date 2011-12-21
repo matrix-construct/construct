@@ -62,7 +62,6 @@ MONITOR S
 Outputs for each nickname in the list being monitored, whether the client is
 online or offline.  All nicks that are online will be sent using 
 RPL_MONONLINE, all nicks that are offline will be sent using RPL_MONOFFLINE.
-The list will be terminated with RPL_ENDOFMONLIST.
 
 
 Numeric replies
