@@ -64,7 +64,6 @@ mapi_clist_av1 dline_clist[] = { &dline_msgtab, &undline_msgtab, NULL };
 
 DECLARE_MODULE_AV1(dline, NULL, NULL, dline_clist, NULL, NULL, "$Revision$");
 
-static int valid_comment(char *comment);
 static int remove_temp_dline(struct ConfItem *);
 static int apply_dline(struct Client *, const char *, int, char *);
 static int apply_undline(struct Client *, const char *);
@@ -257,14 +256,6 @@ apply_dline(struct Client *source_p, const char *dlhost, int tdline_time, char *
 		}
 	}
 
-	if(!valid_comment(reason))
-	{
-		sendto_one(source_p,
-			   ":%s NOTICE %s :Invalid character '\"' in comment",
-			   me.name, source_p->name);
-		return 0;
-	}
-
 	if(ConfigFileEntry.non_redundant_klines)
 	{
 		if((aconf = find_dline((struct sockaddr *) &daddr, t)) != NULL)
@@ -297,6 +288,9 @@ apply_dline(struct Client *source_p, const char *dlhost, int tdline_time, char *
 	aconf->host = rb_strdup(dlhost);
 	aconf->passwd = rb_strdup(reason);
 	aconf->info.oper = operhash_add(get_oper_name(source_p));
+
+	if(strlen(reason) > BANREASONLEN)
+		reason[BANREASONLEN] = '\0';
 
 	/* Look for an oper reason */
 	if((oper_reason = strchr(reason, '|')) != NULL)
@@ -407,25 +401,6 @@ apply_undline(struct Client *source_p, const char *cidr)
 	delete_one_address_conf(aconf->host, aconf);
 
 	return 0;
-}
-
-/*
- * valid_comment
- * inputs	- pointer to client
- *              - pointer to comment
- * output       - 0 if no valid comment, 1 if valid
- * side effects - NONE
- */
-static int
-valid_comment(char *comment)
-{
-	if(strchr(comment, '"'))
-		return 0;
-
-	if(strlen(comment) > BANREASONLEN)
-		comment[BANREASONLEN] = '\0';
-
-	return 1;
 }
 
 /* remove_temp_dline()

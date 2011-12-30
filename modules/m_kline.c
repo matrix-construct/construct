@@ -69,7 +69,6 @@ DECLARE_MODULE_AV1(kline, NULL, NULL, kline_clist, NULL, NULL, "$Revision$");
 
 /* Local function prototypes */
 static int find_user_host(struct Client *source_p, const char *userhost, char *user, char *host);
-static int valid_comment(struct Client *source_p, char *comment);
 static int valid_user_host(struct Client *source_p, const char *user, const char *host);
 
 static void handle_remote_kline(struct Client *source_p, int tkline_time,
@@ -166,8 +165,7 @@ mo_kline(struct Client *client_p, struct Client *source_p, int parc, const char 
 				(tkline_time > 0) ? SHARED_TKLINE : SHARED_PKLINE, CAP_KLN,
 				"%lu %s %s :%s", tkline_time, user, host, reason);
 
-	if(!valid_user_host(source_p, user, host) ||
-	   !valid_comment(source_p, reason))
+	if(!valid_user_host(source_p, user, host))
 		return 0;
 
 	if(!valid_wild_card(user, host))
@@ -196,6 +194,9 @@ mo_kline(struct Client *client_p, struct Client *source_p, int parc, const char 
 	aconf->user = rb_strdup(user);
 	aconf->port = 0;
 	aconf->info.oper = operhash_add(get_oper_name(source_p));
+
+	if(strlen(reason) > BANREASONLEN)
+		reason[BANREASONLEN] = '\0';
 
 	/* Look for an oper reason */
 	if((oper_reason = strchr(reason, '|')) != NULL)
@@ -287,8 +288,7 @@ handle_remote_kline(struct Client *source_p, int tkline_time,
 			     (tkline_time > 0) ? SHARED_TKLINE : SHARED_PKLINE))
 		return;
 
-	if(!valid_user_host(source_p, user, host) ||
-	   !valid_comment(source_p, reason))
+	if(!valid_user_host(source_p, user, host))
 		return;
 
 	if(!valid_wild_card(user, host))
@@ -310,6 +310,9 @@ handle_remote_kline(struct Client *source_p, int tkline_time,
 	aconf->user = rb_strdup(user);
 	aconf->host = rb_strdup(host);
 	aconf->info.oper = operhash_add(get_oper_name(source_p));
+
+	if(strlen(reason) > BANREASONLEN)
+		reason[BANREASONLEN] = '\0';
 
 	/* Look for an oper reason */
 	if((oper_reason = strchr(reason, '|')) != NULL)
@@ -694,28 +697,6 @@ valid_user_host(struct Client *source_p, const char *luser, const char *lhost)
 		sendto_one_notice(source_p, ":Invalid K-Line");
 		return 0;
 	}
-
-	return 1;
-}
-
-/*
- * valid_comment
- * inputs	- pointer to client
- *              - pointer to comment
- * output       - 0 if no valid comment, 1 if valid
- * side effects - NONE
- */
-static int
-valid_comment(struct Client *source_p, char *comment)
-{
-	if(strchr(comment, '"'))
-	{
-		sendto_one_notice(source_p, ":Invalid character '\"' in comment");
-		return 0;
-	}
-
-	if(strlen(comment) > BANREASONLEN)
-		comment[BANREASONLEN] = '\0';
 
 	return 1;
 }

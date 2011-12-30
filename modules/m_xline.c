@@ -256,18 +256,6 @@ valid_xline(struct Client *source_p, const char *gecos, const char *reason)
 		return 0;
 	}
 
-	if(strchr(reason, ':') != NULL)
-	{
-		sendto_one_notice(source_p, ":Invalid character ':' in comment");
-		return 0;
-	}
-
-	if(strchr(reason, '"'))
-	{
-		sendto_one_notice(source_p, ":Invalid character '\"' in comment");
-		return 0;
-	}
-
 	if(!valid_wild_card_simple(gecos))
 	{
 		sendto_one_notice(source_p,
