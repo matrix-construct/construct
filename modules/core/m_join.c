@@ -92,7 +92,7 @@ check_forward(struct Client *source_p, struct Channel *chptr,
 	     char *key, int *err)
 {
 	int depth = 0, i;
-	char *next = NULL;
+	const char *next = NULL;
 
 	/* The caller (m_join) is only interested in the reason
 	 * for the original channel.
