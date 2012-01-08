@@ -66,6 +66,7 @@ SRCS =                          \
   hash.c                        \
   hook.c                        \
   hostmask.c			\
+  ipv4_from_ipv6.c              \
   irc_dictionary.c		\
   ircd.c                        \
   ircd_signal.c                 \
