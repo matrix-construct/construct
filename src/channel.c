@@ -515,16 +515,18 @@ del_invite(struct Channel *chptr, struct Client *who)
 	rb_dlinkFindDestroy(chptr, &who->user->invited);
 }
 
-/* is_banned()
+/* is_banned_list()
  *
- * input	- channel to check bans for, user to check bans against
- *                optional prebuilt buffers
+ * input	- channel to check bans for, ban list (banlist or quietlist),
+ *                user to check bans against, optional prebuilt buffers,
+ *                optional forward channel pointer
  * output	- 1 if banned, else 0
  * side effects -
  */
-int
-is_banned(struct Channel *chptr, struct Client *who, struct membership *msptr,
-	  const char *s, const char *s2, const char **forward)
+static int
+is_banned_list(struct Channel *chptr, rb_dlink_list *list,
+	       struct Client *who, struct membership *msptr,
+	       const char *s, const char *s2, const char **forward)
 {
 	char src_host[NICKLEN + USERLEN + HOSTLEN + 6];
 	char src_iphost[NICKLEN + USERLEN + HOSTLEN + 6];
@@ -563,7 +565,7 @@ is_banned(struct Channel *chptr, struct Client *who, struct membership *msptr,
 		}
 	}
 
-	RB_DLINK_FOREACH(ptr, chptr->banlist.head)
+	RB_DLINK_FOREACH(ptr, list->head)
 	{
 		actualBan = ptr->data;
 		if(match(actualBan->banstr, s) ||
@@ -624,6 +626,21 @@ is_banned(struct Channel *chptr, struct Client *who, struct membership *msptr,
 	return ((actualBan ? CHFL_BAN : 0));
 }
 
+/* is_banned()
+ *
+ * input	- channel to check bans for, user to check bans against
+ *                optional prebuilt buffers, optional forward channel pointer
+ * output	- 1 if banned, else 0
+ * side effects -
+ */
+int
+is_banned(struct Channel *chptr, struct Client *who, struct membership *msptr,
+	  const char *s, const char *s2, const char **forward)
+{
+	return is_banned_list(chptr, &chptr->banlist, who, msptr, s, s2,
+			forward);
+}
+
 /* is_quieted()
  *
  * input	- channel to check bans for, user to check bans against
@@ -635,99 +652,8 @@ int
 is_quieted(struct Channel *chptr, struct Client *who, struct membership *msptr,
 	   const char *s, const char *s2)
 {
-	char src_host[NICKLEN + USERLEN + HOSTLEN + 6];
-	char src_iphost[NICKLEN + USERLEN + HOSTLEN + 6];
-	char src_althost[NICKLEN + USERLEN + HOSTLEN + 6];
-	char *s3 = NULL;
-	rb_dlink_node *ptr;
-	struct Ban *actualBan = NULL;
-	struct Ban *actualExcept = NULL;
-
-	if(!MyClient(who))
-		return 0;
-
-	/* if the buffers havent been built, do it here */
-	if(s == NULL)
-	{
-		rb_sprintf(src_host, "%s!%s@%s", who->name, who->username, who->host);
-		rb_sprintf(src_iphost, "%s!%s@%s", who->name, who->username, who->sockhost);
-
-		s = src_host;
-		s2 = src_iphost;
-	}
-	if(who->localClient->mangledhost != NULL)
-	{
-		/* if host mangling mode enabled, also check their real host */
-		if(!strcmp(who->host, who->localClient->mangledhost))
-		{
-			rb_sprintf(src_althost, "%s!%s@%s", who->name, who->username, who->orighost);
-			s3 = src_althost;
-		}
-		/* if host mangling mode not enabled and no other spoof,
-		 * also check the mangled form of their host */
-		else if (!IsDynSpoof(who))
-		{
-			rb_sprintf(src_althost, "%s!%s@%s", who->name, who->username, who->localClient->mangledhost);
-			s3 = src_althost;
-		}
-	}
-
-	RB_DLINK_FOREACH(ptr, chptr->quietlist.head)
-	{
-		actualBan = ptr->data;
-		if(match(actualBan->banstr, s) ||
-		   match(actualBan->banstr, s2) ||
-		   match_cidr(actualBan->banstr, s2) ||
-		   match_extban(actualBan->banstr, who, chptr, CHFL_QUIET) ||
-		   (s3 != NULL && match(actualBan->banstr, s3)))
-			break;
-		else
-			actualBan = NULL;
-	}
-
-	if((actualBan != NULL) && ConfigChannel.use_except)
-	{
-		RB_DLINK_FOREACH(ptr, chptr->exceptlist.head)
-		{
-			actualExcept = ptr->data;
-
-			/* theyre exempted.. */
-			if(match(actualExcept->banstr, s) ||
-			   match(actualExcept->banstr, s2) ||
-			   match_cidr(actualExcept->banstr, s2) ||
-			   match_extban(actualExcept->banstr, who, chptr, CHFL_EXCEPTION) ||
-			   (s3 != NULL && match(actualExcept->banstr, s3)))
-			{
-				/* cache the fact theyre not banned */
-				if(msptr != NULL)
-				{
-					msptr->bants = chptr->bants;
-					msptr->flags &= ~CHFL_BANNED;
-				}
-
-				return CHFL_EXCEPTION;
-			}
-		}
-	}
-
-	/* cache the banned/not banned status */
-	if(msptr != NULL)
-	{
-		msptr->bants = chptr->bants;
-
-		if(actualBan != NULL)
-		{
-			msptr->flags |= CHFL_BANNED;
-			return CHFL_BAN;
-		}
-		else
-		{
-			msptr->flags &= ~CHFL_BANNED;
-			return 0;
-		}
-	}
-
-	return ((actualBan ? CHFL_BAN : 0));
+	return is_banned_list(chptr, &chptr->quietlist, who, msptr, s, s2,
+			NULL);
 }
 
 /* can_join()
