@@ -106,6 +106,8 @@ check_forward(struct Client *source_p, struct Channel *chptr,
 
 	while (depth < 16)
 	{
+		if (next == NULL)
+			return NULL;
 		chptr = find_channel(next);
 		/* Can only forward to existing channels */
 		if (chptr == NULL)
@@ -122,8 +124,6 @@ check_forward(struct Client *source_p, struct Channel *chptr,
 		i = can_join(source_p, chptr, key, &next);
 		if (i == 0)
 			return chptr;
-		if (next == NULL)
-			return NULL;
 		depth++;
 	}
 
