@@ -43,6 +43,7 @@
 #include "modules.h"
 #include "hook.h"
 #include "s_newconf.h"
+#include "ipv4_from_ipv6.h"
 
 static void do_whois(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static void single_whois(struct Client *source_p, struct Client *target_p, int operspy);
@@ -239,6 +240,9 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 	hook_data_client hdata;
 	int visible;
 	int extra_space = 0;
+#ifdef RB_IPV6
+	struct sockaddr_in ip4;
+#endif
 
 	if(target_p->user == NULL)
 	{
@@ -344,6 +348,20 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 			sendto_one_numeric(source_p, RPL_WHOISACTUALLY,
 					   form_str(RPL_WHOISACTUALLY),
 					   target_p->name, target_p->sockhost);
+
+#ifdef RB_IPV6
+		if (target_p->localClient->ip.ss_family == AF_INET6 &&
+				(show_ip(source_p, target_p) ||
+				 (source_p == target_p && !IsIPSpoof(target_p))) &&
+				ipv4_from_ipv6((struct sockaddr_in6 *)&target_p->localClient->ip, &ip4))
+		{
+			rb_inet_ntop_sock((struct sockaddr *)&ip4,
+					buf, sizeof buf);
+			sendto_one_numeric(source_p, RPL_WHOISTEXT,
+					"%s :Underlying IPv4 is %s",
+					target_p->name, buf);
+		}
+#endif /* RB_IPV6 */
 
 		sendto_one_numeric(source_p, RPL_WHOISIDLE, form_str(RPL_WHOISIDLE),
 				   target_p->name, 
