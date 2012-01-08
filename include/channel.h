@@ -225,8 +225,8 @@ extern int is_banned(struct Channel *chptr, struct Client *who,
 		    struct membership *msptr, const char *, const char *, const char **);
 extern int is_quieted(struct Channel *chptr, struct Client *who,
 		     struct membership *msptr, const char *, const char *);
-extern int can_join(struct Client *source_p, struct Channel *chptr, char *key,
-		    const char **forward);
+extern int can_join(struct Client *source_p, struct Channel *chptr,
+		    const char *key, const char **forward);
 
 extern struct membership *find_channel_membership(struct Channel *, struct Client *);
 extern const char *find_channel_status(struct membership *msptr, int combine);

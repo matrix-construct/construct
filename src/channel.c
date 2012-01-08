@@ -664,7 +664,7 @@ is_quieted(struct Channel *chptr, struct Client *who, struct membership *msptr,
  * caveats      - this function should only be called on a local user.
  */
 int
-can_join(struct Client *source_p, struct Channel *chptr, char *key, const char **forward)
+can_join(struct Client *source_p, struct Channel *chptr, const char *key, const char **forward)
 {
 	rb_dlink_node *invite = NULL;
 	rb_dlink_node *ptr;
