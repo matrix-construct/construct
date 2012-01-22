@@ -46,7 +46,7 @@ static int eb_usermode(const char *data, struct Client *client_p,
 
 	/* $m must have a specified mode */
 	if (data == NULL)
-		return EXTBAN_NOMATCH;
+		return EXTBAN_INVALID;
 
 	for (p = data; *p != '\0'; p++)
 	{
