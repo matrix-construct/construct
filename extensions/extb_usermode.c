@@ -19,7 +19,7 @@ static int _modinit(void);
 static void _moddeinit(void);
 static int eb_usermode(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type);
 
-DECLARE_MODULE_AV1(extb_account, _modinit, _moddeinit, NULL, NULL, NULL, "$Revision: 1299 $");
+DECLARE_MODULE_AV1(extb_usermode, _modinit, _moddeinit, NULL, NULL, NULL, "$Revision: 1299 $");
 
 static int
 _modinit(void)
