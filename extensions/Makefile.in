@@ -42,6 +42,7 @@ SRCS =                          \
   extb_server.c			\
   extb_ssl.c			\
   extb_realname.c		\
+  extb_usermode.c		\
   extb_extgecos.c		\
   force_user_invis.c		\
   hurt.c			\
