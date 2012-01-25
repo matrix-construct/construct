@@ -117,7 +117,7 @@ typedef enum
 }
 ReportType;
 
-#define sendheader(c, r) sendto_one_notice(c, HeaderMessages[(r)]) 
+#define sendheader(c, r) sendto_one_notice(c, "%s", HeaderMessages[(r)]) 
 
 static rb_dlink_list auth_poll_list;
 static rb_bh *auth_heap;
