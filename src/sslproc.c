@@ -456,12 +456,12 @@ ssl_process_cmd_recv(ssl_ctl_t * ctl)
 		case 'I':
 			ssl_ok = 0;
 			ilog(L_MAIN, "%s", cannot_setup_ssl);
-			sendto_realops_snomask(SNO_GENERAL, L_ALL, cannot_setup_ssl);
+			sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s", cannot_setup_ssl);
 		case 'U':
 			zlib_ok = 0;
 			ssl_ok = 0;
 			ilog(L_MAIN, "%s", no_ssl_or_zlib);
-			sendto_realops_snomask(SNO_GENERAL, L_ALL, no_ssl_or_zlib);
+			sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s", no_ssl_or_zlib);
 			ssl_killall();
 			break;
 		case 'z':
