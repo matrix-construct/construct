@@ -27,9 +27,11 @@ struct CapabilityIndex {
 	unsigned int highest_bit;
 };
 
+#define CAP_ORPHANED	0x1
+
 struct CapabilityEntry {
-	unsigned int orphaned;
 	unsigned int value;
+	unsigned int flags;
 };
 
 unsigned int
@@ -40,7 +42,7 @@ capability_get(struct CapabilityIndex *index, const char *cap)
 	s_assert(index != NULL);
 
 	entry = irc_dictionary_retrieve(index->cap_dict, cap);
-	if (entry != NULL && !entry->orphaned)
+	if (entry != NULL && !(entry->flags & CAP_ORPHANED))
 		return entry->value;
 
 	return 0xFFFFFFFF;
@@ -55,12 +57,12 @@ capability_put(struct CapabilityIndex *index, const char *cap)
 
 	if ((entry = irc_dictionary_retrieve(index->cap_dict, cap)) != NULL)
 	{
-		entry->orphaned = 0;
+		entry->flags &= ~CAP_ORPHANED;
 		return entry->value;
 	}
 
 	entry = rb_malloc(sizeof(struct CapabilityEntry));
-	entry->orphaned = 0;
+	entry->flags = 0;
 	entry->value = index->highest_bit;
 
 	irc_dictionary_add(index->cap_dict, cap, entry);
@@ -83,7 +85,7 @@ capability_orphan(struct CapabilityIndex *index, const char *cap)
 
 	entry = irc_dictionary_retrieve(index->cap_dict, cap);
 	if (entry != NULL)
-		entry->orphaned = 1;
+		entry->flags |= CAP_ORPHANED;
 }
 
 static void
