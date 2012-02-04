@@ -41,6 +41,11 @@ m_opme.c       - OPME - Allows an admin to op themselves in an opless channel
 m_omode.c      - OMODE - Allows an admin to do all sorts of evil upon a
 			 channel, sets modes with extreme prejudice
 
+m_remove.c     - REMOVE - Implements /REMOVE, which allows a channel op to
+                          force-part a problematic user from a channel.  Most
+                          likely, you don't want this, because it is non-standard,
+                          and easily worked around for autojoin purposes.
+
 no_oper_invis.c - Disallow opers setting marking themselves as invisible
                   (+i) unless they have the hidden_oper flag.
 
