@@ -1326,7 +1326,6 @@ exit_local_server(struct Client *client_p, struct Client *source_p, struct Clien
 	rb_dlinkDelete(&source_p->localClient->tnode, &serv_list);
 	rb_dlinkFindDestroy(source_p, &global_serv_list);
 	
-	unset_chcap_usage_counts(source_p);
 	sendk = source_p->localClient->sendK;
 	recvk = source_p->localClient->receiveK;
 

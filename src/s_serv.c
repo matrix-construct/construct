@@ -54,6 +54,7 @@
 #include "msg.h"
 #include "reject.h"
 #include "sslproc.h"
+#include "capability.h"
 
 #ifndef INADDR_NONE
 #define INADDR_NONE ((unsigned int) 0xffffffff)
@@ -70,28 +71,56 @@ static char buf[BUFSIZE];
  * because all servers that we talk to already do TS, and the kludged
  * extra argument to "PASS" takes care of checking that.  -orabidoo
  */
-struct Capability captab[] = {
-/*  name     cap     */
-	{ "QS",		CAP_QS },
-	{ "EX",		CAP_EX },
-	{ "CHW",	CAP_CHW},
-	{ "IE", 	CAP_IE},
-	{ "KLN",	CAP_KLN},
-	{ "KNOCK",	CAP_KNOCK},
-	{ "ZIP",	CAP_ZIP},
-	{ "TB",		CAP_TB},
-	{ "UNKLN",	CAP_UNKLN},
-	{ "CLUSTER",	CAP_CLUSTER},
-	{ "ENCAP",	CAP_ENCAP },
-	{ "SERVICES",	CAP_SERVICE },
-	{ "RSFNC",	CAP_RSFNC },
-	{ "SAVE",	CAP_SAVE },
-	{ "EUID",	CAP_EUID },
-	{ "EOPMOD",	CAP_EOPMOD },
-	{ "BAN",	CAP_BAN },
-	{ "MLOCK",	CAP_MLOCK },
-	{0, 0}
-};
+struct CapabilityIndex *serv_capindex = NULL;
+
+unsigned int CAP_CAP;
+unsigned int CAP_QS;
+unsigned int CAP_EX;
+unsigned int CAP_CHW;
+unsigned int CAP_IE;
+unsigned int CAP_KLN;
+unsigned int CAP_ZIP;
+unsigned int CAP_KNOCK;
+unsigned int CAP_TB;
+unsigned int CAP_UNKLN;
+unsigned int CAP_CLUSTER;
+unsigned int CAP_ENCAP;
+unsigned int CAP_TS6;
+unsigned int CAP_SERVICE;
+unsigned int CAP_RSFNC;
+unsigned int CAP_SAVE;
+unsigned int CAP_EUID;
+unsigned int CAP_EOPMOD;
+unsigned int CAP_BAN;
+unsigned int CAP_MLOCK;
+
+/*
+ * initialize our builtin capability table. --nenolod
+ */
+void
+init_builtin_capabs(void)
+{
+	serv_capindex = capability_index_create();
+
+	CAP_QS = capability_put(serv_capindex, "QS");
+	CAP_EX = capability_put(serv_capindex, "EX");
+	CAP_CHW = capability_put(serv_capindex, "CHW");
+	CAP_IE = capability_put(serv_capindex, "IE");
+	CAP_KLN = capability_put(serv_capindex, "KLN");
+	CAP_KNOCK = capability_put(serv_capindex, "KNOCK");
+	CAP_ZIP = capability_put(serv_capindex, "ZIP");
+	CAP_TB = capability_put(serv_capindex, "TB");
+	CAP_UNKLN = capability_put(serv_capindex, "UNKLN");
+	CAP_CLUSTER = capability_put(serv_capindex, "CLUSTER");
+	CAP_ENCAP = capability_put(serv_capindex, "ENCAP");
+	CAP_SERVICE = capability_put(serv_capindex, "SERVICES");
+	CAP_RSFNC = capability_put(serv_capindex, "RSFNC");
+	CAP_SAVE = capability_put(serv_capindex, "SAVE");
+	CAP_EUID = capability_put(serv_capindex, "EUID");
+	CAP_EOPMOD = capability_put(serv_capindex, "EOPMOD");
+	CAP_BAN = capability_put(serv_capindex, "BAN");
+	CAP_MLOCK = capability_put(serv_capindex, "MLOCK");
+}
 
 static CNCB serv_connect_callback;
 static CNCB serv_connect_ssl_callback;
@@ -131,7 +160,7 @@ hunt_server(struct Client *client_p, struct Client *source_p,
 	if(parc <= server || EmptyString(parv[server]) ||
 	   match(parv[server], me.name) || (strcmp(parv[server], me.id) == 0))
 		return (HUNTED_ISME);
-	
+
 	new = LOCAL_COPY(parv[server]);
 
 	/*
@@ -380,28 +409,9 @@ check_server(const char *name, struct Client *client_p)
  *
  */
 void
-send_capabilities(struct Client *client_p, int cap_can_send)
+send_capabilities(struct Client *client_p, unsigned int cap_can_send)
 {
-	struct Capability *cap;
-	char msgbuf[BUFSIZE];
-	char *t;
-	int tl;
-
-	t = msgbuf;
-
-	for (cap = captab; cap->name; ++cap)
-	{
-		if(cap->cap & cap_can_send)
-		{
-			tl = rb_sprintf(t, "%s ", cap->name);
-			t += tl;
-		}
-	}
-
-	t--;
-	*t = '\0';
-
-	sendto_one(client_p, "CAPAB :%s", msgbuf);
+	sendto_one(client_p, "CAPAB :%s", capability_index_list(serv_capindex, cap_can_send));
 }
 
 static void
@@ -693,7 +703,8 @@ const char *
 show_capabilities(struct Client *target_p)
 {
 	static char msgbuf[BUFSIZE];
-	struct Capability *cap;
+
+	*msgbuf = '\0';
 
 	if(has_id(target_p))
 		rb_strlcpy(msgbuf, " TS6", sizeof(msgbuf));
@@ -704,11 +715,7 @@ show_capabilities(struct Client *target_p)
 	if(!IsServer(target_p) || !target_p->serv->caps)	/* short circuit if no caps */
 		return msgbuf + 1;
 
-	for (cap = captab; cap->cap; ++cap)
-	{
-		if(cap->cap & target_p->serv->caps)
-			rb_snprintf_append(msgbuf, sizeof(msgbuf), " %s", cap->name);
-	}
+	rb_strlcat(msgbuf, capability_index_list(serv_capindex, target_p->serv->caps), sizeof(msgbuf));
 
 	return msgbuf + 1;
 }
@@ -803,9 +810,6 @@ server_estab(struct Client *client_p)
 		return CLIENT_EXITED;
 
 	SetServer(client_p);
-
-	/* Update the capability combination usage counts */
-	set_chcap_usage_counts(client_p);
 
 	rb_dlinkAdd(client_p, &client_p->lnode, &me.serv->servers);
 	rb_dlinkMoveNode(&client_p->localClient->tnode, &unknown_list, &serv_list);

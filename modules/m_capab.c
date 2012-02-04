@@ -56,7 +56,6 @@ DECLARE_MODULE_AV1(capab, NULL, NULL, capab_clist, NULL, NULL, "$Revision: 1295 
 static int
 mr_capab(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	struct Capability *cap;
 	int i;
 	char *p;
 	char *s;
@@ -84,16 +83,7 @@ mr_capab(struct Client *client_p, struct Client *source_p, int parc, const char 
 	{
 		char *t = LOCAL_COPY(parv[i]);
 		for (s = rb_strtok_r(t, " ", &p); s; s = rb_strtok_r(NULL, " ", &p))
-		{
-			for (cap = captab; cap->name; cap++)
-			{
-				if(!irccmp(cap->name, s))
-				{
-					client_p->localClient->caps |= cap->cap;
-					break;
-				}
-			}
-		}
+			client_p->localClient->caps |= capability_get(serv_capindex, s);
 	}
 
 	return 0;
@@ -103,7 +93,6 @@ static int
 me_gcap(struct Client *client_p, struct Client *source_p,
 		int parc, const char *parv[])
 {
-	struct Capability *cap;
 	char *t = LOCAL_COPY(parv[1]);
 	char *s;
 	char *p;
@@ -121,16 +110,7 @@ me_gcap(struct Client *client_p, struct Client *source_p,
 	source_p->serv->fullcaps = rb_strdup(parv[1]);
 
 	for (s = rb_strtok_r(t, " ", &p); s; s = rb_strtok_r(NULL, " ", &p))
-	{
-		for (cap = captab; cap->name; cap++)
-		{
-			if(!irccmp(cap->name, s))
-			{
-				source_p->serv->caps |= cap->cap;
-				break;
-			}
-		}
-	}
+		source_p->serv->caps |= capability_get(serv_capindex, s);
 
 	return 0;
 }

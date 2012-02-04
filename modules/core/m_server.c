@@ -109,6 +109,7 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 		return 0;
 	}
 
+#ifdef NOTYET
 	/* check to ensure any "required" caps are set. --nenolod */
 	for (cap = captab; cap->name; cap++)
 	{
@@ -125,6 +126,7 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 			return 0;
 		}
 	}
+#endif
 
 	/* Now we just have to call check_server and everything should be
 	 * check for us... -A1kmm. */

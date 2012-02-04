@@ -112,7 +112,7 @@ int zlib_ok = 1;
 int testing_conf = 0;
 time_t startup_time;
 
-int default_server_capabs = CAP_MASK;
+int default_server_capabs;
 
 int splitmode;
 int splitchecking;
@@ -546,7 +546,7 @@ main(int argc, char *argv[])
 	ConfigFileEntry.dpath = DPATH;
 	ConfigFileEntry.configfile = CPATH;	/* Server configuration file */
 	ConfigFileEntry.connect_timeout = 30;	/* Default to 30 */
-	
+
 	umask(077);		/* better safe than sorry --SRB */
 
 	myargv = argv;
@@ -584,9 +584,6 @@ main(int argc, char *argv[])
 	memset(&AdminInfo, 0, sizeof(AdminInfo));
 	memset(&ServerStats, 0, sizeof(struct ServerStatistics));
 
-	/* Initialise the channel capability usage counts... */
-	init_chcap_usage_counts();
-
 	if(printVersion)
 	{
 		printf("ircd: version %s(%s)\n", ircd_version, serno);
@@ -596,8 +593,6 @@ main(int argc, char *argv[])
 		printf("ircd: %s\n", rb_lib_version());
 		exit(EXIT_SUCCESS);
 	}
-
-
 
 	setup_signals();
 
@@ -636,6 +631,9 @@ main(int argc, char *argv[])
 		rb_init_prng(NULL, RB_PRNG_DEFAULT);
 
 	seed_random(NULL);
+
+	init_builtin_capabs();
+	default_server_capabs = CAP_MASK;
 
 	init_main_logfile();
 	newconf_init();

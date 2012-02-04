@@ -28,6 +28,7 @@
 #define INCLUDED_serv_h
 
 #include "config.h"
+#include "capability.h"
 
 /*
  * The number of seconds between calls to try_connections(). Fiddle with
@@ -47,40 +48,35 @@ struct server_conf;
 struct Channel;
 
 /* Capabilities */
-struct Capability
-{
-	const char *name;	/* name of capability */
-	unsigned int cap;	/* mask value */
-	unsigned int required;  /* 1 if required, 0 if not */
-};
+extern struct CapabilityIndex *serv_capindex;
 
-#define CAP_CAP         0x00001	/* received a CAP to begin with */
-#define CAP_QS          0x00002	/* Can handle quit storm removal */
-#define CAP_EX          0x00004	/* Can do channel +e exemptions */
-#define CAP_CHW         0x00008	/* Can do channel wall @# */
-#define CAP_IE          0x00010	/* Can do invite exceptions */
-#define CAP_KLN	        0x00040	/* Can do KLINE message */
-#define CAP_ZIP         0x00100	/* Can do ZIPlinks */
-#define CAP_KNOCK	0x00400	/* supports KNOCK */
-#define CAP_TB		0x00800	/* supports TBURST */
-#define CAP_UNKLN       0x01000	/* supports remote unkline */
-#define CAP_CLUSTER     0x02000	/* supports cluster stuff */
-#define CAP_ENCAP	0x04000	/* supports ENCAP */
-#define CAP_TS6		0x08000 /* supports TS6 or above */
-#define CAP_SERVICE	0x10000
-#define CAP_RSFNC	0x20000 /* rserv FNC */
-#define CAP_SAVE	0x40000 /* supports SAVE (nick collision FNC) */
-#define CAP_EUID	0x80000 /* supports EUID (ext UID + nonencap CHGHOST) */
-#define CAP_EOPMOD	0x100000 /* supports EOPMOD (ext +z + ext topic) */
-#define CAP_BAN		0x200000 /* supports propagated bans */
-#define CAP_MLOCK	0x400000 /* supports MLOCK messages */
+/*
+ * XXX: this is kind of ugly, but this allows us to have backwards
+ * API-compatibility.
+ */
+extern unsigned int CAP_CAP;			/* received a CAP to begin with */
+extern unsigned int CAP_QS;			/* Can handle quit storm removal */
+extern unsigned int CAP_EX;			/* Can do channel +e exemptions */
+extern unsigned int CAP_CHW;			/* Can do channel wall @# */
+extern unsigned int CAP_IE;			/* Can do invite exceptions */
+extern unsigned int CAP_KLN;			/* Can do KLINE message */
+extern unsigned int CAP_ZIP;			/* Can do ZIPlinks */
+extern unsigned int CAP_KNOCK;			/* supports KNOCK */
+extern unsigned int CAP_TB;			/* supports TBURST */
+extern unsigned int CAP_UNKLN;			/* supports remote unkline */
+extern unsigned int CAP_CLUSTER;		/* supports cluster stuff */
+extern unsigned int CAP_ENCAP;			/* supports ENCAP */
+extern unsigned int CAP_TS6;			/* supports TS6 or above */
+extern unsigned int CAP_SERVICE;		/* supports services */
+extern unsigned int CAP_RSFNC;			/* rserv FNC */
+extern unsigned int CAP_SAVE;			/* supports SAVE (nick collision FNC) */
+extern unsigned int CAP_EUID;			/* supports EUID (ext UID + nonencap CHGHOST) */
+extern unsigned int CAP_EOPMOD;			/* supports EOPMOD (ext +z + ext topic) */
+extern unsigned int CAP_BAN;			/* supports propagated bans */
+extern unsigned int CAP_MLOCK;			/* supports MLOCK messages */
 
-#define CAP_MASK        (CAP_QS  | CAP_EX   | CAP_CHW  | \
-                         CAP_IE  | CAP_KLN  | CAP_SERVICE |\
-                         CAP_CLUSTER | CAP_ENCAP | \
-                         CAP_ZIP  | CAP_KNOCK  | CAP_UNKLN | \
-			 CAP_RSFNC | CAP_SAVE | CAP_EUID | CAP_EOPMOD | \
-			 CAP_BAN | CAP_MLOCK)
+/* XXX: added for backwards compatibility. --nenolod */
+#define CAP_MASK	(capability_index_mask(serv_capindex) & ~(CAP_TS6 | CAP_CAP))
 
 #ifdef HAVE_LIBZ
 #define CAP_ZIP_SUPPORTED       CAP_ZIP
@@ -103,8 +99,6 @@ struct Capability
  * because all servers that we talk to already do TS, and the kludged
  * extra argument to "PASS" takes care of checking that.  -orabidoo
  */
-extern struct Capability captab[];
-
 extern int MaxClientCount;	/* GLOBAL - highest number of clients */
 extern int MaxConnectionCount;	/* GLOBAL - highest number of connections */
 
@@ -117,11 +111,12 @@ extern int refresh_user_links;
 #define HUNTED_ISME     0	/* if this server should execute the command */
 #define HUNTED_PASS     1	/* if message passed onwards successfully */
 
+extern void init_builtin_capabs(void);
 
 extern int hunt_server(struct Client *client_pt,
 		       struct Client *source_pt,
 		       const char *command, int server, int parc, const char **parv);
-extern void send_capabilities(struct Client *, int);
+extern void send_capabilities(struct Client *, unsigned int);
 extern const char *show_capabilities(struct Client *client);
 extern void try_connections(void *unused);
 
