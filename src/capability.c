@@ -114,3 +114,31 @@ capability_index_destroy(struct CapabilityIndex *index)
 	irc_dictionary_destroy(index->cap_dict, capability_destroy, NULL);
 	rb_free(index);
 }
+
+const char *
+capability_index_list(struct CapabilityIndex *index, unsigned int cap_mask)
+{
+	struct DictionaryIter iter;
+	struct CapabilityEntry *entry;
+	static char buf[BUFSIZE];
+	char *t = buf;
+	int tl;
+
+	s_assert(index != NULL);
+
+	*t = '\0';
+
+	DICTIONARY_FOREACH(entry, &iter, index->cap_dict)
+	{
+		if (entry->value & cap_mask)
+		{
+			tl = rb_sprintf(t, "%s ", iter.cur->key);
+			t += tl;
+		}
+	}
+
+	t--;
+	*t = '\0';
+
+	return buf;
+}

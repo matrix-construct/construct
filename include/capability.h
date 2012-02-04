@@ -31,4 +31,6 @@ extern void capability_orphan(struct CapabilityIndex *index, const char *cap);
 extern struct CapabilityIndex *capability_index_create(void);
 extern void capability_index_destroy(struct CapabilityIndex *);
 
+extern const char *capability_index_list(struct CapabilityIndex *, unsigned int capability_mask);
+
 #endif
