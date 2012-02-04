@@ -152,7 +152,7 @@ capability_index_list(struct CapabilityIndex *index, unsigned int cap_mask)
 	{
 		if (entry->value & cap_mask)
 		{
-			tl = rb_sprintf(t, "%s ", iter.cur->key);
+			tl = rb_sprintf(t, "%s ", entry->cap);
 			t += tl;
 		}
 	}
