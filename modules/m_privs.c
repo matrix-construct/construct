@@ -40,12 +40,13 @@
 #include "s_conf.h"
 #include "s_newconf.h"
 
+static int m_privs(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static int me_privs(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static int mo_privs(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message privs_msgtab = {
 	"PRIVS", 0, 0, 0, MFLG_SLOW,
-	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, {me_privs, 0}, {mo_privs, 0}}
+	{mg_unreg, {m_privs, 0}, mg_ignore, mg_ignore, {me_privs, 0}, {mo_privs, 0}}
 };
 
 mapi_clist_av1 privs_clist[] = {
@@ -149,5 +150,18 @@ static int mo_privs(struct Client *client_p, struct Client *source_p, int parc, 
 				get_id(source_p, target_p),
 				target_p->servptr->name,
 				use_id(target_p));
+	return 0;
+}
+
+static int m_privs(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+{
+	if (parc >= 2 && !EmptyString(parv[1]) &&
+			irccmp(parv[1], source_p->name)) {
+		sendto_one_numeric(source_p, ERR_NOPRIVILEGES,
+				   form_str(ERR_NOPRIVILEGES));
+		return 0;
+	}
+
+	show_privs(source_p, source_p);
 	return 0;
 }
