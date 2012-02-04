@@ -75,7 +75,7 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 	const char *name;
 	struct Client *target_p;
 	int hop;
-	struct Capability *cap;
+	unsigned int required_mask;
 
 	name = parv[1];
 	hop = atoi(parv[2]);
@@ -109,24 +109,15 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 		return 0;
 	}
 
-#ifdef NOTYET
 	/* check to ensure any "required" caps are set. --nenolod */
-	for (cap = captab; cap->name; cap++)
+	/* XXX: show required CAPABs. */
+	required_mask = capability_index_get_required(serv_capindex);
+	if (!(client_p->localClient->caps & required_mask))
 	{
-		if (!cap->required)
-			continue;
+		exit_client(client_p, client_p, client_p, "Missing required CAPABs");
 
-		if (!(client_p->localClient->caps & cap->cap))
-		{
-			char exitbuf[BUFSIZE];
-
-			rb_snprintf(exitbuf, BUFSIZE, "Missing required CAPAB [%s]", cap->name);
-			exit_client(client_p, client_p, client_p, exitbuf);
-
-			return 0;
-		}
+		return 0;
 	}
-#endif
 
 	/* Now we just have to call check_server and everything should be
 	 * check for us... -A1kmm. */
