@@ -37,13 +37,13 @@ struct CapabilityEntry {
 };
 
 unsigned int
-capability_get(struct CapabilityIndex *index, const char *cap)
+capability_get(struct CapabilityIndex *idx, const char *cap)
 {
 	struct CapabilityEntry *entry;
 
-	s_assert(index != NULL);
+	s_assert(idx != NULL);
 
-	entry = irc_dictionary_retrieve(index->cap_dict, cap);
+	entry = irc_dictionary_retrieve(idx->cap_dict, cap);
 	if (entry != NULL && !(entry->flags & CAP_ORPHANED))
 		return (1 << entry->value);
 
@@ -51,15 +51,15 @@ capability_get(struct CapabilityIndex *index, const char *cap)
 }
 
 unsigned int
-capability_put(struct CapabilityIndex *index, const char *cap)
+capability_put(struct CapabilityIndex *idx, const char *cap)
 {
 	struct CapabilityEntry *entry;
 
-	s_assert(index != NULL);
-	if (!index->highest_bit)
+	s_assert(idx != NULL);
+	if (!idx->highest_bit)
 		return 0xFFFFFFFF;
 
-	if ((entry = irc_dictionary_retrieve(index->cap_dict, cap)) != NULL)
+	if ((entry = irc_dictionary_retrieve(idx->cap_dict, cap)) != NULL)
 	{
 		entry->flags &= ~CAP_ORPHANED;
 		return (1 << entry->value);
@@ -68,25 +68,25 @@ capability_put(struct CapabilityIndex *index, const char *cap)
 	entry = rb_malloc(sizeof(struct CapabilityEntry));
 	entry->cap = rb_strdup(cap);
 	entry->flags = 0;
-	entry->value = index->highest_bit;
+	entry->value = idx->highest_bit;
 
-	irc_dictionary_add(index->cap_dict, entry->cap, entry);
+	irc_dictionary_add(idx->cap_dict, entry->cap, entry);
 
-	index->highest_bit++;
-	if (index->highest_bit % (sizeof(unsigned int) * 8) == 0)
-		index->highest_bit = 0;
+	idx->highest_bit++;
+	if (idx->highest_bit % (sizeof(unsigned int) * 8) == 0)
+		idx->highest_bit = 0;
 
 	return (1 << entry->value);
 }
 
 void
-capability_orphan(struct CapabilityIndex *index, const char *cap)
+capability_orphan(struct CapabilityIndex *idx, const char *cap)
 {
 	struct CapabilityEntry *entry;
 
-	s_assert(index != NULL);
+	s_assert(idx != NULL);
 
-	entry = irc_dictionary_retrieve(index->cap_dict, cap);
+	entry = irc_dictionary_retrieve(idx->cap_dict, cap);
 	if (entry != NULL)
 	{
 		entry->flags &= ~CAP_REQUIRED;
@@ -95,13 +95,13 @@ capability_orphan(struct CapabilityIndex *index, const char *cap)
 }
 
 void
-capability_require(struct CapabilityIndex *index, const char *cap)
+capability_require(struct CapabilityIndex *idx, const char *cap)
 {
 	struct CapabilityEntry *entry;
 
-	s_assert(index != NULL);
+	s_assert(idx != NULL);
 
-	entry = irc_dictionary_retrieve(index->cap_dict, cap);
+	entry = irc_dictionary_retrieve(idx->cap_dict, cap);
 	if (entry != NULL)
 		entry->flags |= CAP_REQUIRED;
 }
@@ -117,26 +117,26 @@ capability_destroy(struct DictionaryElement *delem, void *privdata)
 struct CapabilityIndex *
 capability_index_create(void)
 {
-	struct CapabilityIndex *index;
+	struct CapabilityIndex *idx;
 
-	index = rb_malloc(sizeof(struct CapabilityIndex));
-	index->cap_dict = irc_dictionary_create(strcasecmp);
-	index->highest_bit = 1;
+	idx = rb_malloc(sizeof(struct CapabilityIndex));
+	idx->cap_dict = irc_dictionary_create(strcasecmp);
+	idx->highest_bit = 1;
 
-	return index;
+	return idx;
 }
 
 void
-capability_index_destroy(struct CapabilityIndex *index)
+capability_index_destroy(struct CapabilityIndex *idx)
 {
-	s_assert(index != NULL);
+	s_assert(idx != NULL);
 
-	irc_dictionary_destroy(index->cap_dict, capability_destroy, NULL);
-	rb_free(index);
+	irc_dictionary_destroy(idx->cap_dict, capability_destroy, NULL);
+	rb_free(idx);
 }
 
 const char *
-capability_index_list(struct CapabilityIndex *index, unsigned int cap_mask)
+capability_index_list(struct CapabilityIndex *idx, unsigned int cap_mask)
 {
 	struct DictionaryIter iter;
 	struct CapabilityEntry *entry;
@@ -144,11 +144,11 @@ capability_index_list(struct CapabilityIndex *index, unsigned int cap_mask)
 	char *t = buf;
 	int tl;
 
-	s_assert(index != NULL);
+	s_assert(idx != NULL);
 
 	*t = '\0';
 
-	DICTIONARY_FOREACH(entry, &iter, index->cap_dict)
+	DICTIONARY_FOREACH(entry, &iter, idx->cap_dict)
 	{
 		if (entry->value & cap_mask)
 		{
@@ -164,15 +164,15 @@ capability_index_list(struct CapabilityIndex *index, unsigned int cap_mask)
 }
 
 unsigned int
-capability_index_mask(struct CapabilityIndex *index)
+capability_index_mask(struct CapabilityIndex *idx)
 {
 	struct DictionaryIter iter;
 	struct CapabilityEntry *entry;
 	unsigned int mask = 0;
 
-	s_assert(index != NULL);
+	s_assert(idx != NULL);
 
-	DICTIONARY_FOREACH(entry, &iter, index->cap_dict)
+	DICTIONARY_FOREACH(entry, &iter, idx->cap_dict)
 	{
 		if (!(entry->flags & CAP_ORPHANED))
 			mask |= (1 << entry->value);
@@ -182,15 +182,15 @@ capability_index_mask(struct CapabilityIndex *index)
 }
 
 unsigned int
-capability_index_get_required(struct CapabilityIndex *index)
+capability_index_get_required(struct CapabilityIndex *idx)
 {
 	struct DictionaryIter iter;
 	struct CapabilityEntry *entry;
 	unsigned int mask = 0;
 
-	s_assert(index != NULL);
+	s_assert(idx != NULL);
 
-	DICTIONARY_FOREACH(entry, &iter, index->cap_dict)
+	DICTIONARY_FOREACH(entry, &iter, idx->cap_dict)
 	{
 		if (!(entry->flags & CAP_ORPHANED) && (entry->flags & CAP_REQUIRED))
 			mask |= (1 << entry->value);
