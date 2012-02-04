@@ -28,6 +28,7 @@ struct CapabilityIndex {
 };
 
 #define CAP_ORPHANED	0x1
+#define CAP_REQUIRED	0x2
 
 struct CapabilityEntry {
 	unsigned int value;
@@ -85,7 +86,22 @@ capability_orphan(struct CapabilityIndex *index, const char *cap)
 
 	entry = irc_dictionary_retrieve(index->cap_dict, cap);
 	if (entry != NULL)
+	{
+		entry->flags &= ~CAP_REQUIRED;
 		entry->flags |= CAP_ORPHANED;
+	}
+}
+
+void
+capability_require(struct CapabilityIndex *index, const char *cap)
+{
+	struct CapabilityEntry *entry;
+
+	s_assert(index != NULL);
+
+	entry = irc_dictionary_retrieve(index->cap_dict, cap);
+	if (entry != NULL)
+		entry->flags |= CAP_REQUIRED;
 }
 
 static void
@@ -157,6 +173,24 @@ capability_index_mask(struct CapabilityIndex *index)
 	DICTIONARY_FOREACH(entry, &iter, index->cap_dict)
 	{
 		if (!(entry->flags & CAP_ORPHANED))
+			mask |= entry->value;
+	}
+
+	return mask;
+}
+
+unsigned int
+capability_index_get_required(struct CapabilityIndex *index)
+{
+	struct DictionaryIter iter;
+	struct CapabilityEntry *entry;
+	unsigned int mask = 0;
+
+	s_assert(index != NULL);
+
+	DICTIONARY_FOREACH(entry, &iter, index->cap_dict)
+	{
+		if (!(entry->flags & CAP_ORPHANED) && (entry->flags & CAP_REQUIRED))
 			mask |= entry->value;
 	}
 
