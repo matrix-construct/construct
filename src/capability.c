@@ -156,7 +156,7 @@ capability_index_mask(struct CapabilityIndex *index)
 
 	DICTIONARY_FOREACH(entry, &iter, index->cap_dict)
 	{
-		if (!entry->orphaned)
+		if (!(entry->flags & CAP_ORPHANED))
 			mask |= entry->value;
 	}
 
