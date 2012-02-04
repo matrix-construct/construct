@@ -142,3 +142,21 @@ capability_index_list(struct CapabilityIndex *index, unsigned int cap_mask)
 
 	return buf;
 }
+
+unsigned int
+capability_index_mask(struct CapabilityIndex *index)
+{
+	struct DictionaryIter iter;
+	struct CapabilityEntry *entry;
+	unsigned int mask = 0;
+
+	s_assert(index != NULL);
+
+	DICTIONARY_FOREACH(entry, &iter, index->cap_dict)
+	{
+		if (!entry->orphaned)
+			mask |= entry->value;
+	}
+
+	return mask;
+}
