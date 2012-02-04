@@ -57,6 +57,7 @@ SRCS =                          \
   bandbi.c			\
   blacklist.c			\
   cache.c			\
+  capability.c			\
   channel.c                     \
   chmode.c			\
   class.c                       \
