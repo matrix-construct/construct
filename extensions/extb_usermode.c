@@ -73,5 +73,7 @@ static int eb_usermode(const char *data, struct Client *client_p,
 		}
 	}
 
-	return ((client_p->umodes & modes_ack) && !(client_p->umodes & modes_nak)) ? EXTBAN_MATCH : EXTBAN_NOMATCH;
+	return ((client_p->umodes & modes_ack) == modes_ack &&
+			!(client_p->umodes & modes_nak)) ?
+		EXTBAN_MATCH : EXTBAN_NOMATCH;
 }
