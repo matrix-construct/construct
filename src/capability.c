@@ -45,7 +45,7 @@ capability_get(struct CapabilityIndex *index, const char *cap)
 
 	entry = irc_dictionary_retrieve(index->cap_dict, cap);
 	if (entry != NULL && !(entry->flags & CAP_ORPHANED))
-		return entry->value;
+		return (1 << entry->value);
 
 	return 0xFFFFFFFF;
 }
@@ -56,11 +56,13 @@ capability_put(struct CapabilityIndex *index, const char *cap)
 	struct CapabilityEntry *entry;
 
 	s_assert(index != NULL);
+	if (!index->highest_bit)
+		return 0xFFFFFFFF;
 
 	if ((entry = irc_dictionary_retrieve(index->cap_dict, cap)) != NULL)
 	{
 		entry->flags &= ~CAP_ORPHANED;
-		return entry->value;
+		return (1 << entry->value);
 	}
 
 	entry = rb_malloc(sizeof(struct CapabilityEntry));
@@ -70,13 +72,11 @@ capability_put(struct CapabilityIndex *index, const char *cap)
 
 	irc_dictionary_add(index->cap_dict, entry->cap, entry);
 
-	index->highest_bit <<= 1;
+	index->highest_bit++;
+	if (index->highest_bit % (sizeof(unsigned int) * 8) == 0)
+		index->highest_bit = 0;
 
-	/* hmm... not sure what to do here, so i guess we will abort for now... --nenolod */
-	if (index->highest_bit == 0)
-		abort();
-
-	return entry->value;
+	return (1 << entry->value);
 }
 
 void
@@ -175,7 +175,7 @@ capability_index_mask(struct CapabilityIndex *index)
 	DICTIONARY_FOREACH(entry, &iter, index->cap_dict)
 	{
 		if (!(entry->flags & CAP_ORPHANED))
-			mask |= entry->value;
+			mask |= (1 << entry->value);
 	}
 
 	return mask;
@@ -193,7 +193,7 @@ capability_index_get_required(struct CapabilityIndex *index)
 	DICTIONARY_FOREACH(entry, &iter, index->cap_dict)
 	{
 		if (!(entry->flags & CAP_ORPHANED) && (entry->flags & CAP_REQUIRED))
-			mask |= entry->value;
+			mask |= (1 << entry->value);
 	}
 
 	return mask;
