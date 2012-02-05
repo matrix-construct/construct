@@ -120,6 +120,8 @@ static void stats_servlinks(struct Client *);
 static void stats_ltrace(struct Client *, int, const char **);
 static void stats_ziplinks(struct Client *);
 static void stats_comm(struct Client *);
+static void stats_capability(struct Client *);
+
 /* This table contains the possible stats items, in order:
  * stats letter,  function to call, operonly? adminonly?
  * case only matters in the stats letter column.. -- fl_
@@ -131,7 +133,7 @@ static struct StatsStruct stats_cmd_table[] = {
 	{'b', stats_delay,		1, 1, },
 	{'B', stats_hash,		1, 1, },
 	{'c', stats_connect,		0, 0, },
-	{'C', stats_connect,		0, 0, },
+	{'C', stats_capability,		1, 1, },
 	{'d', stats_tdeny,		1, 0, },
 	{'D', stats_deny,		1, 0, },
 	{'e', stats_exempt,		1, 0, },
@@ -704,6 +706,20 @@ stats_oper(struct Client *source_p)
 				oper_p->username, oper_p->host, oper_p->name,
 				IsOper(source_p) ? oper_p->privset->name : "0", "-1");
 	}
+}
+
+static void
+stats_capability_walk(const char *line, void *data)
+{
+	struct Client *client_p = data;
+
+	sendto_one_numeric(client_p, RPL_STATSDEBUG, "C :%s", line);
+}
+
+static void
+stats_capability(struct Client *client_p)
+{
+	capability_index_stats(stats_capability_walk, client_p);
 }
 
 static void
