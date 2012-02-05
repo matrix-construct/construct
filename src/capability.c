@@ -22,9 +22,13 @@
 #include "capability.h"
 #include "irc_dictionary.h"
 
+static rb_dlink_list capability_indexes = { NULL, NULL, 0 };
+
 struct CapabilityIndex {
+	char *name;
 	struct Dictionary *cap_dict;
 	unsigned int highest_bit;
+	rb_dlink_node node;
 };
 
 #define CAP_ORPHANED	0x1
@@ -115,13 +119,16 @@ capability_destroy(struct DictionaryElement *delem, void *privdata)
 }
 
 struct CapabilityIndex *
-capability_index_create(void)
+capability_index_create(const char *name)
 {
 	struct CapabilityIndex *idx;
 
 	idx = rb_malloc(sizeof(struct CapabilityIndex));
+	idx->name = rb_strdup(name);
 	idx->cap_dict = irc_dictionary_create(strcasecmp);
 	idx->highest_bit = 1;
+
+	rb_dlinkAdd(idx, &idx->node, &capability_indexes);
 
 	return idx;
 }
@@ -130,6 +137,8 @@ void
 capability_index_destroy(struct CapabilityIndex *idx)
 {
 	s_assert(idx != NULL);
+
+	rb_dlinkDelete(&idx->node, &capability_indexes);
 
 	irc_dictionary_destroy(idx->cap_dict, capability_destroy, NULL);
 	rb_free(idx);

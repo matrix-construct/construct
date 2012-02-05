@@ -100,7 +100,7 @@ unsigned int CAP_MLOCK;
 void
 init_builtin_capabs(void)
 {
-	serv_capindex = capability_index_create();
+	serv_capindex = capability_index_create("server capabilities");
 
 	CAP_QS = capability_put(serv_capindex, "QS");
 	CAP_EX = capability_put(serv_capindex, "EX");
