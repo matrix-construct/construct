@@ -198,8 +198,8 @@ m_remove(struct Client *client_p, struct Client *source_p, int parc, const char 
 		 */
 		sendto_channel_local(ALL_MEMBERS, chptr,
 				     ":%s!%s@%s PART %s :requested by %s (%s)",
-				     source_p->name, source_p->username,
-				     source_p->host, name, who->name, comment);
+				     who->name, who->username,
+				     who->host, name, source_p->name, comment);
 
 		sendto_server(client_p, chptr, CAP_REMOVE, NOCAPS,
 			      ":%s REMOVE %s %s :%s",
