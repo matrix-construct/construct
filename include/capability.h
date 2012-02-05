@@ -34,5 +34,6 @@ extern void capability_index_destroy(struct CapabilityIndex *);
 extern const char *capability_index_list(struct CapabilityIndex *, unsigned int capability_mask);
 extern unsigned int capability_index_mask(struct CapabilityIndex *);
 extern unsigned int capability_index_get_required(struct CapabilityIndex *);
+extern void capability_index_stats(void (*cb)(const char *line, void *privdata), void *privdata);
 
 #endif

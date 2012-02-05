@@ -207,3 +207,33 @@ capability_index_get_required(struct CapabilityIndex *idx)
 
 	return mask;
 }
+
+void
+capability_index_stats(void (*cb)(const char *line, void *privdata), void *privdata)
+{
+	rb_dlink_node *node;
+	char buf[BUFSIZE];
+
+	RB_DLINK_FOREACH(node, capability_indexes.head)
+	{
+		struct CapabilityIndex *idx = node->data;
+		struct DictionaryIter iter;
+		struct CapabilityEntry *entry;
+
+		rb_snprintf(buf, sizeof buf, "'%s': allocated bits - %d", idx->name, (idx->highest_bit - 1));
+		cb(buf, privdata);
+
+		DICTIONARY_FOREACH(entry, &iter, idx->cap_dict)
+		{
+			rb_snprintf(buf, sizeof buf, "bit %d: '%s'", entry->value, entry->cap);
+			cb(buf, privdata);
+		}
+
+		rb_snprintf(buf, sizeof buf, "'%s': remaining bits - %ld", idx->name,
+			    (sizeof(unsigned int) * 8) - (idx->highest_bit - 1));
+		cb(buf, privdata);
+	}
+
+	rb_snprintf(buf, sizeof buf, "%ld capability indexes", rb_dlink_list_length(&capability_indexes));
+	cb(buf, privdata);
+}
