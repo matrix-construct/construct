@@ -941,9 +941,9 @@ chm_ban(struct Client *source_p, struct Channel *chptr,
 		}
 
 		if(removed && removed->forward)
-			removed_mask_pos += rb_snprintf(buf, sizeof(buf), "%s$%s", removed->banstr, removed->forward);
+			removed_mask_pos += rb_snprintf(buf + old_removed_mask_pos, sizeof(buf), "%s$%s", removed->banstr, removed->forward) + 1;
 		else
-			removed_mask_pos += rb_strlcpy(buf, mask, sizeof(buf));
+			removed_mask_pos += rb_strlcpy(buf + old_removed_mask_pos, mask, sizeof(buf)) + 1;
 		if(removed)
 		{
 			free_ban(removed);
