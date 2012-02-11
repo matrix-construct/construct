@@ -133,7 +133,7 @@ static struct StatsStruct stats_cmd_table[] = {
 	{'b', stats_delay,		1, 1, },
 	{'B', stats_hash,		1, 1, },
 	{'c', stats_connect,		0, 0, },
-	{'C', stats_capability,		1, 1, },
+	{'C', stats_capability,		1, 0, },
 	{'d', stats_tdeny,		1, 0, },
 	{'D', stats_deny,		1, 0, },
 	{'e', stats_exempt,		1, 0, },
