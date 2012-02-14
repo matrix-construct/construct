@@ -72,6 +72,7 @@ static struct clicap
 	_CLICAP("sasl", CLICAP_SASL, 0, 0),
 	_CLICAP("account-notify", CLICAP_ACCOUNT_NOTIFY, 0, 0),
 	_CLICAP("extended-join", CLICAP_EXTENDED_JOIN, 0, 0),
+	_CLICAP("away-notify", CLICAP_AWAY_NOTIFY, 0, 0),
 };
 
 #define CLICAP_LIST_LEN (sizeof(clicap_list) / sizeof(struct clicap))
