@@ -346,7 +346,7 @@ ms_bmask(struct Client *client_p, struct Client *source_p, int parc, const char 
 		{
 			*forward++ = '\0';
 			if(*forward == '\0')
-				forward = NULL;
+				tlen--, forward = NULL;
 		}
 
 		if(add_id(fakesource_p, chptr, s, forward, banlist, mode_type))
@@ -365,6 +365,9 @@ ms_bmask(struct Client *client_p, struct Client *source_p, int parc, const char 
 				pbuf = parabuf;
 				plen = modecount = 0;
 			}
+
+			if (forward != NULL)
+				forward[-1] = '$';
 
 			*mbuf++ = parv[3][0];
 			arglen = rb_sprintf(pbuf, "%s ", s);

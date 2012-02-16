@@ -1268,7 +1268,8 @@ remove_ban_list(struct Channel *chptr, struct Client *source_p,
 		banptr = ptr->data;
 
 		/* trailing space, and the mode letter itself */
-		plen = strlen(banptr->banstr) + 2;
+		plen = strlen(banptr->banstr) +
+			(banptr->forward ? strlen(banptr->forward) + 1 : 0) + 2;
 
 		if(count >= MAXMODEPARAMS || (cur_len + plen) > BUFSIZE - 4)
 		{
@@ -1286,7 +1287,10 @@ remove_ban_list(struct Channel *chptr, struct Client *source_p,
 
 		*mbuf++ = c;
 		cur_len += plen;
-		pbuf += rb_sprintf(pbuf, "%s ", banptr->banstr);
+		if (banptr->forward)
+			pbuf += rb_sprintf(pbuf, "%s$%s ", banptr->banstr, banptr->forward);
+		else
+			pbuf += rb_sprintf(pbuf, "%s ", banptr->banstr);
 		count++;
 
 		free_ban(banptr);
