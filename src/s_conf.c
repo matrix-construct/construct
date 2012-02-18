@@ -745,6 +745,7 @@ set_default_conf(void)
 	ConfigFileEntry.global_snotices = YES;
 	ConfigFileEntry.operspy_dont_care_user_info = NO;
 	ConfigFileEntry.use_propagated_bans = YES;
+	ConfigFileEntry.max_ratelimit_tokens = 30;
 
 #ifdef HAVE_LIBZ
 	ConfigFileEntry.compression_level = 4;

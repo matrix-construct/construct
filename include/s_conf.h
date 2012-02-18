@@ -224,6 +224,7 @@ struct config_file_entry
 	int global_snotices;
 	int operspy_dont_care_user_info;
 	int use_propagated_bans;
+	int max_ratelimit_tokens;
 
 	int client_flood_max_lines;
 	int client_flood_burst_rate;

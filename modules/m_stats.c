@@ -945,6 +945,8 @@ stats_tstats (struct Client *source_p)
 			   "T :tgchange blocked msgs %u restricted addrs %lu",
 			   sp.is_tgch, rb_dlink_list_length(&tgchange_list));
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
+			   "T :ratelimit blocked commands %u", sp.is_rl);
+	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			   "T :auth successes %u fails %u",
 			   sp.is_asuc, sp.is_abad);
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,

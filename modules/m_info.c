@@ -519,6 +519,12 @@ static struct InfoStruct info_table[] = {
 		"KLINE sets fully propagated bans"
 	},
 	{
+		"max_ratelimit_tokens",
+		OUTPUT_DECIMAL,
+		&ConfigFileEntry.max_ratelimit_tokens,
+		"The maximum number of tokens that can be accumulated for executing rate-limited commands",
+	},
+	{
 		"default_split_server_count",
 		OUTPUT_DECIMAL,
 		&ConfigChannel.default_split_server_count,

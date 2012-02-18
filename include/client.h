@@ -268,6 +268,10 @@ struct LocalUser
 	unsigned int targets_free;	/* free targets */
 	time_t target_last;		/* last time we cleared a slot */
 
+	/* ratelimit items */
+	time_t ratelimit;
+	unsigned int join_who_credits;
+
 	struct ListClient *safelist_data;
 
 	char *mangledhost; /* non-NULL if host mangling module loaded and
