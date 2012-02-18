@@ -525,6 +525,12 @@ static struct InfoStruct info_table[] = {
 		"The maximum number of tokens that can be accumulated for executing rate-limited commands",
 	},
 	{
+		"away_interval",
+		OUTPUT_DECIMAL,
+		&ConfigFileEntry.away_interval,
+		"The minimum time between aways",
+	},
+	{
 		"default_split_server_count",
 		OUTPUT_DECIMAL,
 		&ConfigChannel.default_split_server_count,

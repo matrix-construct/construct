@@ -37,7 +37,6 @@
 #include "s_serv.h"
 #include "packet.h"
 
-
 static int m_away(struct Client *, struct Client *, int, const char **);
 
 struct Message away_msgtab = {
@@ -92,6 +91,21 @@ m_away(struct Client *client_p, struct Client *source_p, int parc, const char *p
 			sendto_one_numeric(source_p, RPL_UNAWAY, form_str(RPL_UNAWAY));
 		return 0;
 	}
+
+	/* Rate limit this because it is sent to common channels. */
+	if(!IsOper(source_p) &&
+			source_p->localClient->next_away > rb_current_time())
+	{
+		sendto_one(source_p, form_str(RPL_LOAD2HI),
+				me.name, source_p->name, "AWAY");
+		return;
+	}
+	if(source_p->localClient->next_away < rb_current_time() -
+			ConfigFileEntry.away_interval)
+		source_p->localClient->next_away = rb_current_time();
+	else
+		source_p->localClient->next_away = rb_current_time() +
+			ConfigFileEntry.away_interval;
 
 	if(source_p->user->away == NULL)
 		allocate_away(source_p);

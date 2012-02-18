@@ -237,7 +237,7 @@ struct LocalUser
 
 	struct DNSQuery *dnsquery; /* for outgoing server's name lookup */
 
-	time_t last_away;	/* Away since... */
+	time_t next_away;	/* Don't allow next away before... */
 	time_t last;
 
 	/* clients allowed to talk through +g */
