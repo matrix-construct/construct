@@ -68,7 +68,8 @@ DECLARE_MODULE_AV1(away, NULL, NULL, away_clist, NULL, NULL, "$Revision: 3370 $"
 static int
 m_away(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	if(MyClient(source_p) && !IsFloodDone(source_p))
+	if(MyClient(source_p) && source_p->localClient->next_away &&
+			!IsFloodDone(source_p))
 		flood_endgrace(source_p);
 
 	if(!IsClient(source_p))
