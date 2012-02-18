@@ -36,6 +36,7 @@
 #include "modules.h"
 #include "s_conf.h"
 #include "cache.h"
+#include "ratelimit.h"
 
 static int m_motd(struct Client *, struct Client *, int, const char **);
 static int mo_motd(struct Client *, struct Client *, int, const char **);
@@ -66,7 +67,7 @@ m_motd(struct Client *client_p, struct Client *source_p, int parc, const char *p
 {
 	static time_t last_used = 0;
 
-	if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
+	if((last_used + ConfigFileEntry.pace_wait) > rb_current_time() || !ratelimit_client(source_p, 6))
 	{
 		/* safe enough to give this on a local connect only */
 		sendto_one(source_p, form_str(RPL_LOAD2HI),

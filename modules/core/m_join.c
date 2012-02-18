@@ -41,6 +41,7 @@
 #include "modules.h"
 #include "packet.h"
 #include "chmode.h"
+#include "ratelimit.h"
 
 static int m_join(struct Client *, struct Client *, int, const char **);
 static int ms_join(struct Client *, struct Client *, int, const char **);
@@ -324,6 +325,9 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 			chptr->join_delta = rb_current_time();
 		}
 		chptr->join_count++;
+
+		/* credit user for join */
+		credit_client_join(source_p);
 
 		/* we send the user their join here, because we could have to
 		 * send a mode out next.
