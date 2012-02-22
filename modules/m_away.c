@@ -94,19 +94,22 @@ m_away(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	}
 
 	/* Rate limit this because it is sent to common channels. */
-	if(!IsOper(source_p) &&
-			source_p->localClient->next_away > rb_current_time())
+	if (MyClient(source_p))
 	{
-		sendto_one(source_p, form_str(RPL_LOAD2HI),
-				me.name, source_p->name, "AWAY");
-		return;
+		if(!IsOper(source_p) &&
+				source_p->localClient->next_away > rb_current_time())
+		{
+			sendto_one(source_p, form_str(RPL_LOAD2HI),
+					me.name, source_p->name, "AWAY");
+			return;
+		}
+		if(source_p->localClient->next_away < rb_current_time() -
+				ConfigFileEntry.away_interval)
+			source_p->localClient->next_away = rb_current_time();
+		else
+			source_p->localClient->next_away = rb_current_time() +
+				ConfigFileEntry.away_interval;
 	}
-	if(source_p->localClient->next_away < rb_current_time() -
-			ConfigFileEntry.away_interval)
-		source_p->localClient->next_away = rb_current_time();
-	else
-		source_p->localClient->next_away = rb_current_time() +
-			ConfigFileEntry.away_interval;
 
 	if(source_p->user->away == NULL)
 		allocate_away(source_p);
@@ -123,10 +126,9 @@ m_away(struct Client *client_p, struct Client *source_p, int parc, const char *p
 						    source_p->host,
 						    source_p->user->away);
 	}
-	
+
 	if(MyConnect(source_p))
 		sendto_one_numeric(source_p, RPL_NOWAWAY, form_str(RPL_NOWAWAY));
-
 
 	return 0;
 }
