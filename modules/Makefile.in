@@ -152,9 +152,6 @@ libmodules.a: $(S_OBJS) static_modules.o
 
 install-mkdirs:
 	@echo "ircd: setting up modular directory structure"
-	-@if test ! -d $(DESTDIR)$(moduledir); then \
-                mkdir $(DESTDIR)$(moduledir); \
-        fi
 	-@if test -d $(DESTDIR)$(moduledir)-old; then \
 		rm -rf $(DESTDIR)$(moduledir)-old; \
 	fi

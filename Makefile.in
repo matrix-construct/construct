@@ -46,6 +46,7 @@ CFLAGS		= @CFLAGS@
 # the system one.
 #CFLAGS= -DNDEBUG -g -O2 -D"FD_SETSIZE=1024"
 SHELL=/bin/sh
+# `extensions' must be after `modules' for proper creation of $(moduledir).
 SUBDIRS=libratbox modules extensions src tools ssld bandb doc help
 CLEANDIRS = ${SUBDIRS}
 RSA_FILES=rsa_respond/README rsa_respond/respond.c rsa_respond/Makefile
@@ -127,9 +128,6 @@ install-mkdirs:
 	fi
 	-@if test ! -d $(DESTDIR)$(mandir); then \
 		mkdir $(DESTDIR)$(mandir); \
-	fi
-	-@if test ! -d $(DESTDIR)$(moduledir); then \
-		mkdir $(DESTDIR)$(moduledir); \
 	fi
 	-@if test ! -d $(DESTDIR)$(helpdir); then \
 		mkdir $(DESTDIR)$(helpdir); \
