@@ -36,7 +36,7 @@ build: all
 mkpasswd: mkpasswd.c
 	$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) mkpasswd.c -o mkpasswd $(IRCDLIBS)
 
-viconf: viconf.c
+viconf: viconf.c ../include/setup.h ../include/config.h
 	$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) viconf.c -o viconf $(IRCDLIBS)
 
 convertilines: convertilines.c
@@ -62,10 +62,6 @@ depend:
 	$(CC) $(CFLAGS) $(INCLUDES) $(CPPFLAGS) -c $<
 
 # DO NOT DELETE
-
-viconf.o: ../include/config.h ../include/setup.h
-viconf.o:
-
 
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
