@@ -7,7 +7,9 @@ INSTALL_DATA=	@INSTALL_DATA@
 RM=		@RM@
 
 prefix=		@prefix@
-exec_prefix=	@execprefix@
+exec_prefix=	@exec_prefix@
+datarootdir     = @datarootdir@
+datadir         = @datadir@
 helpdir=	@helpdir@
 uhelpdir=	${helpdir}/users
 ohelpdir=	${helpdir}/opers

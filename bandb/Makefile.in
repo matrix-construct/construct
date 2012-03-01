@@ -22,8 +22,12 @@ exec_prefix     = @exec_prefix@
 bindir          = @bindir@
 libdir		= @libdir@
 libexecdir      = @libexecdir@
+pkglibexecdir   = @pkglibexecdir@
 confdir         = @confdir@
 localstatedir   = @localstatedir@
+PACKAGE_TARNAME = @PACKAGE_TARNAME@
+
+PROGRAM_PREFIX   = @PROGRAM_PREFIX@
 
 ZIP_LIB		= @ZLIB_LD@
 
@@ -34,7 +38,9 @@ CPPFLAGS        = ${INCLUDES} @CPPFLAGS@
 
 CFLAGS          += -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_LOAD_EXTENSION=1
 
-PROGS		= bandb bantool
+pkglibexec_PROGS = bandb
+bin_PROGS       = bantool
+PROGS		= $(pkglibexec_PROGS) $(bin_PROGS)
 
 BANDB_SOURCES =     \
   bandb.c	\
@@ -64,12 +70,18 @@ bantool: ${BANTOOL_OBJECTS}
 
 install: build
 	@echo "ircd: installing bandb ($(PROGS))"
-	@for i in $(PROGS); do \
-                if test -f $(DESTDIR)$(bindir)/$$i; then \
-                        $(MV) $(DESTDIR)$(bindir)/$$i $(DESTDIR)$(bindir)/$$i.old; \
+	@for i in $(bin_PROGS); do \
+                if test -f $(DESTDIR)$(bindir)/$(PROGRAM_PREFIX)$$i; then \
+                        $(MV) $(DESTDIR)$(bindir)/$(PROGRAM_PREFIX)$$i $(DESTDIR)$(bindir)/$(PROGRAM_PREFIX)$$i.old; \
                 fi; \
-                $(INSTALL_BIN) $$i $(DESTDIR)$(bindir); \
+                $(INSTALL_BIN) $$i $(DESTDIR)$(bindir)/$(PROGRAM_PREFIX)$$i; \
         done
+	@for i in $(pkglibexec_PROGS); do \
+		if test -f '$(DESTDIR)$(pkglibexecdir)/'$$i; then \
+			$(MV) '$(DESTDIR)$(pkglibexecdir)/'$$i '$(DESTDIR)$(pkglibexecdir)/'$$i.old; \
+		fi; \
+		$(INSTALL_BIN) $$i '$(DESTDIR)$(pkglibexecdir)/'$$i; \
+	done
 
 .c.o:
 	${CC} ${CPPFLAGS} ${CFLAGS} -c $<

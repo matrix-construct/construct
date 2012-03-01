@@ -15,6 +15,8 @@ RM		= @RM@
 CP		= @CP@
 TOUCH		= @TOUCH@
 
+PROGRAM_PREFIX  = @PROGRAM_PREFIX@
+
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 exec_suffix	= @exec_suffix@
@@ -73,8 +75,8 @@ install: install-mkdirs build
 
 	@echo "ircd: installing manpage"
 	@for i in $(MANPAGES); do \
-		if test ! -f $(DESTDIR)$(mandir)/$$i; then \
-			$(INSTALL_DATA) $$i $(DESTDIR)$(mandir); \
+		if test ! -f $(DESTDIR)$(mandir)/$(PROGRAM_PREFIX)$$i; then \
+			$(INSTALL_DATA) $$i $(DESTDIR)$(mandir)/$(PROGRAM_PREFIX)$$i; \
 		fi; \
 	done
 

@@ -28,7 +28,11 @@ SSL_INCLUDES	= @SSL_INCLUDES@
 IRCDLIBS        = @LIBS@ $(SSL_LIBS)
 
 prefix          = @prefix@
+exec_prefix     = @exec_prefix@
+libdir          = @libdir@
+pkglibdir       = @pkglibdir@
 moduledir       = @moduledir@
+PACKAGE_TARNAME = @PACKAGE_TARNAME@
 # Change this later! -- adrian
 automoduledir   = @moduledir@/autoload
 

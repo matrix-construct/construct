@@ -2,8 +2,12 @@
 AC_DEFUN([AC_DEFINE_DIR], [
   test "x$prefix" = xNONE && prefix="$ac_default_prefix"
   test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
-  ac_define_dir=`eval echo [$]$2`
-  ac_define_dir=`eval echo [$]ac_define_dir`
+  last_ac_define_dir=`eval echo [$]$2`
+  ac_define_dir=`eval echo [$]last_ac_define_dir`
+  while test "x[$]last_ac_define_dir" != "x[$]ac_define_dir"; do
+    last_ac_define_dir="[$]ac_define_dir"
+    ac_define_dir=`eval echo [$]last_ac_define_dir`
+  done
   $1="$ac_define_dir"
   AC_SUBST($1)
   ifelse($3, ,

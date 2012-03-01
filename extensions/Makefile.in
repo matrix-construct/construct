@@ -16,7 +16,14 @@ INSTALL_PROGRAM	= @INSTALL_PROGRAM@
 INSTALL_DATA	= @INSTALL_DATA@
 INSTALL_SUID    = @INSTALL_PROGRAM@ -o root -m 4755
 SHELL		= /bin/sh
-AUTOMODULEDIR	= @moduledir@/extensions
+
+prefix          = @prefix@
+exec_prefix     = @exec_prefix@
+libdir          = @libdir@
+pkglibdir       = @pkglibdir@
+moduledir       = @moduledir@
+PACKAGE_TARNAME = @PACKAGE_TARNAME@
+AUTOMODULEDIR	= $(moduledir)/extensions
 
 SSL_LIBS	= @SSL_LIBS@
 SSL_INCLUDES	= @SSL_INCLUDES@

@@ -85,7 +85,7 @@ start_bandb(void)
 	rb_setenv("BANDB_DPATH", ConfigFileEntry.dpath, 1);
 	if(bandb_path == NULL)
 	{
-		rb_snprintf(fullpath, sizeof(fullpath), "%s/bandb%s", BINPATH, suffix);
+		rb_snprintf(fullpath, sizeof(fullpath), "%s/bandb%s", PKGLIBEXECDIR, suffix);
 
 		if(access(fullpath, X_OK) == -1)
 		{
@@ -95,8 +95,8 @@ start_bandb(void)
 			if(access(fullpath, X_OK) == -1)
 			{
 				ilog(L_MAIN,
-				     "Unable to execute bandb in %s or %s/bin",
-				     BINPATH, ConfigFileEntry.dpath);
+				     "Unable to execute bandb%s in %s or %s/bin",
+				     suffix, PKGLIBEXECDIR, ConfigFileEntry.dpath);
 				return 0;
 			}
 		}
