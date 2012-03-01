@@ -613,6 +613,8 @@ SSL_SRCS_ENABLE
 MOD_TARGET
 MODULES_LIBS
 SELECT_TYPE
+PROGRAM_PREFIX
+PKGRUNDIR
 moduledir
 MODULE_DIR
 helpdir
@@ -626,6 +628,13 @@ ENCSPEED
 ALLOCA
 VICONF
 CRYPT_LIB
+PKGLIBEXECDIR
+pkglibexecdir
+PKGLOCALSTATEDIR
+pkglocalstatedir
+pkgrundir
+rundir
+pkglibdir
 LEXLIB
 LEX_OUTPUT_ROOT
 LEX
@@ -699,6 +708,7 @@ SHELL'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
+enable_fhs_paths
 enable_ipv6
 enable_openssl
 with_zlib_path
@@ -712,6 +722,8 @@ with_confdir
 with_logdir
 with_helpdir
 with_moduledir
+with_rundir
+with_program_prefix
 with_custom_branding
 with_custom_version
 enable_assert
@@ -1345,6 +1357,7 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --enable-fhs-paths      User more FHS-like pathnames (for packagers).
   --enable-ipv6           Enable IPv6 support
   --enable-openssl=DIR    Enable OpenSSL support (DIR optional).
   --disable-openssl       Disable OpenSSL support.
@@ -1370,6 +1383,9 @@ Optional Packages:
   --with-logdir=DIR       Directory where to write logfiles.
   --with-helpdir=DIR      Directory to install help files.
   --with-moduledir=DIR    Directory to install modules.
+  --with-rundir=DIR       Directory in which to store pidfile.
+  --with-program-prefix=  If set, programs installed into PATH will be
+                          installed with names prefixed by this prefix.
   --with-custom-branding=NAME
                           Custom branding name.
   --with-custom-version=NAME
@@ -5355,11 +5371,73 @@ if test "$LEX" = ":"; then
 	as_fn_error $? "could not locate a suitable lexical generator, install flex or lex." "$LINENO" 5
 fi
 
-if test "$libexecdir" = '${exec_prefix}/libexec' &&
-   test "$localstatedir" = '${prefix}/var'; then
-	libexecdir='${bindir}'
-	localstatedir='${prefix}'
+# Check whether --enable-fhs-paths was given.
+if test "${enable_fhs_paths+set}" = set; then :
+  enableval=$enable_fhs_paths;
+else
+  	if test "$libexecdir" = '${exec_prefix}/libexec' && \
+		test "$localstatedir" = '${prefix}/var' && \
+		test "$libdir" = '${exec_prefix}/lib'; then :
+  enable_fhs_paths=no
+else
+  enable_fhs_paths=yes
 fi
+
+fi
+
+if test "x$enable_fhs_paths" = "xyes"; then :
+  	pkglibexecdir='${libexecdir}/${PACKAGE_TARNAME}'
+	rundir=${rundir-'${prefix}/run'}
+	pkgrundir='${rundir}/${PACKAGE_TARNAME}'
+	pkglocalstatedir='${localstatedir}/${PACKAGE_TARNAME}'
+else
+  libexecdir='${bindir}'
+	pkglibexecdir='${libexecdir}'
+	rundir='${sysconfdir}'
+	pkgrundir='${rundir}'
+	localstatedir='${prefix}'
+	pkglocalstatedir='${sysconfdir}'
+fi
+pkglibdir='${libdir}/${PACKAGE_TARNAME}'
+
+
+
+
+
+  test "x$prefix" = xNONE && prefix="$ac_default_prefix"
+  test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
+  last_ac_define_dir=`eval echo $pkglocalstatedir`
+  ac_define_dir=`eval echo $last_ac_define_dir`
+  while test "x$last_ac_define_dir" != "x$ac_define_dir"; do
+    last_ac_define_dir="$ac_define_dir"
+    ac_define_dir=`eval echo $last_ac_define_dir`
+  done
+  PKGLOCALSTATEDIR="$ac_define_dir"
+
+
+cat >>confdefs.h <<_ACEOF
+#define PKGLOCALSTATEDIR "$ac_define_dir"
+_ACEOF
+
+
+
+
+  test "x$prefix" = xNONE && prefix="$ac_default_prefix"
+  test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
+  last_ac_define_dir=`eval echo $pkglibexecdir`
+  ac_define_dir=`eval echo $last_ac_define_dir`
+  while test "x$last_ac_define_dir" != "x$ac_define_dir"; do
+    last_ac_define_dir="$ac_define_dir"
+    ac_define_dir=`eval echo $last_ac_define_dir`
+  done
+  PKGLIBEXECDIR="$ac_define_dir"
+
+
+cat >>confdefs.h <<_ACEOF
+#define PKGLIBEXECDIR "$ac_define_dir"
+_ACEOF
+
+
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ANSI C header files" >&5
 $as_echo_n "checking for ANSI C header files... " >&6; }
@@ -7215,8 +7293,12 @@ $as_echo "yes" >&6; }
 
   test "x$prefix" = xNONE && prefix="$ac_default_prefix"
   test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
-  ac_define_dir=`eval echo $confdir`
-  ac_define_dir=`eval echo $ac_define_dir`
+  last_ac_define_dir=`eval echo $confdir`
+  ac_define_dir=`eval echo $last_ac_define_dir`
+  while test "x$last_ac_define_dir" != "x$ac_define_dir"; do
+    last_ac_define_dir="$ac_define_dir"
+    ac_define_dir=`eval echo $last_ac_define_dir`
+  done
   ETC_DIR="$ac_define_dir"
 
 
@@ -7235,14 +7317,18 @@ _ACEOF
 
 
 else
-   confdir='${prefix}/etc'
+   confdir='${sysconfdir}'
 		 { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
   test "x$prefix" = xNONE && prefix="$ac_default_prefix"
   test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
-  ac_define_dir=`eval echo $confdir`
-  ac_define_dir=`eval echo $ac_define_dir`
+  last_ac_define_dir=`eval echo $confdir`
+  ac_define_dir=`eval echo $last_ac_define_dir`
+  while test "x$last_ac_define_dir" != "x$ac_define_dir"; do
+    last_ac_define_dir="$ac_define_dir"
+    ac_define_dir=`eval echo $last_ac_define_dir`
+  done
   ETC_DIR="$ac_define_dir"
 
 
@@ -7273,37 +7359,25 @@ if test "${with_logdir+set}" = set; then :
   withval=$with_logdir;  logdir=`echo $withval | sed 's/\/$//'`
 		 { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-
-  test "x$prefix" = xNONE && prefix="$ac_default_prefix"
-  test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
-  ac_define_dir=`eval echo $logdir`
-  ac_define_dir=`eval echo $ac_define_dir`
-  LOG_DIR="$ac_define_dir"
-
-
-cat >>confdefs.h <<_ACEOF
-#define LOG_DIR "$ac_define_dir"
-_ACEOF
-
-
-
-
-        logdir=`(
-            test "x$prefix" = xNONE && prefix="$ac_default_prefix"
-            test "x$exec_prefix" = xNONE && exec_prefix="${prefix}"
-            eval echo \""$logdir"\"
-        )`
-
-
 else
-   logdir='${prefix}/logs'
+   if test "x$enable_fhs_paths" = "xyes"; then :
+  logdir='${localstatedir}/log/${PACKAGE_TARNAME}'
+else
+  logdir='${prefix}/logs'
+fi
 		 { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
+fi
+
 
   test "x$prefix" = xNONE && prefix="$ac_default_prefix"
   test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
-  ac_define_dir=`eval echo $logdir`
-  ac_define_dir=`eval echo $ac_define_dir`
+  last_ac_define_dir=`eval echo $logdir`
+  ac_define_dir=`eval echo $last_ac_define_dir`
+  while test "x$last_ac_define_dir" != "x$ac_define_dir"; do
+    last_ac_define_dir="$ac_define_dir"
+    ac_define_dir=`eval echo $last_ac_define_dir`
+  done
   LOG_DIR="$ac_define_dir"
 
 
@@ -7320,9 +7394,6 @@ _ACEOF
             eval echo \""$logdir"\"
         )`
 
-
-
-fi
 
 
 
@@ -7334,37 +7405,25 @@ if test "${with_helpdir+set}" = set; then :
   withval=$with_helpdir;  helpdir=`echo $withval | sed 's/\/$//'`
 		 { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-
-  test "x$prefix" = xNONE && prefix="$ac_default_prefix"
-  test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
-  ac_define_dir=`eval echo $helpdir`
-  ac_define_dir=`eval echo $ac_define_dir`
-  HELP_DIR="$ac_define_dir"
-
-
-cat >>confdefs.h <<_ACEOF
-#define HELP_DIR "$ac_define_dir"
-_ACEOF
-
-
-
-
-        helpdir=`(
-            test "x$prefix" = xNONE && prefix="$ac_default_prefix"
-            test "x$exec_prefix" = xNONE && exec_prefix="${prefix}"
-            eval echo \""$helpdir"\"
-        )`
-
-
 else
-   helpdir='${prefix}/help'
+   if test "x$enable_fhs_paths" = "xyes"; then :
+  helpdir='${datadir}/${PACKAGE_TARNAME}/help'
+else
+  helpdir='${prefix}/help'
+fi
 		 { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
+fi
+
 
   test "x$prefix" = xNONE && prefix="$ac_default_prefix"
   test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
-  ac_define_dir=`eval echo $helpdir`
-  ac_define_dir=`eval echo $ac_define_dir`
+  last_ac_define_dir=`eval echo $helpdir`
+  ac_define_dir=`eval echo $last_ac_define_dir`
+  while test "x$last_ac_define_dir" != "x$ac_define_dir"; do
+    last_ac_define_dir="$ac_define_dir"
+    ac_define_dir=`eval echo $last_ac_define_dir`
+  done
   HELP_DIR="$ac_define_dir"
 
 
@@ -7381,9 +7440,6 @@ _ACEOF
             eval echo \""$helpdir"\"
         )`
 
-
-
-fi
 
 
 
@@ -7395,37 +7451,26 @@ if test "${with_moduledir+set}" = set; then :
   withval=$with_moduledir;  moduledir=`echo $withval | sed 's/\/$//'`
 		 { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-
-  test "x$prefix" = xNONE && prefix="$ac_default_prefix"
-  test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
-  ac_define_dir=`eval echo $moduledir`
-  ac_define_dir=`eval echo $ac_define_dir`
-  MODULE_DIR="$ac_define_dir"
-
-
-cat >>confdefs.h <<_ACEOF
-#define MODULE_DIR "$ac_define_dir"
-_ACEOF
-
-
-
-
-        moduledir=`(
-            test "x$prefix" = xNONE && prefix="$ac_default_prefix"
-            test "x$exec_prefix" = xNONE && exec_prefix="${prefix}"
-            eval echo \""$moduledir"\"
-        )`
-
-
 else
-   moduledir='${prefix}/modules'
+   if test "x$enable_fhs_paths" = "xyes"; then :
+  moduledir='${pkglibdir}/modules'
+else
+  moduledir='${prefix}/modules'
+fi
 		 { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
+fi
+
+
   test "x$prefix" = xNONE && prefix="$ac_default_prefix"
   test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
-  ac_define_dir=`eval echo $moduledir`
-  ac_define_dir=`eval echo $ac_define_dir`
+  last_ac_define_dir=`eval echo $moduledir`
+  ac_define_dir=`eval echo $last_ac_define_dir`
+  while test "x$last_ac_define_dir" != "x$ac_define_dir"; do
+    last_ac_define_dir="$ac_define_dir"
+    ac_define_dir=`eval echo $last_ac_define_dir`
+  done
   MODULE_DIR="$ac_define_dir"
 
 
@@ -7444,7 +7489,62 @@ _ACEOF
 
 
 
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether or modify rundir" >&5
+$as_echo_n "checking whether or modify rundir... " >&6; }
+
+# Check whether --with-rundir was given.
+if test "${with_rundir+set}" = set; then :
+  withval=$with_rundir; { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	rundir=`echo $withval | sed 's/\/$//'`
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	if test "x$enable_fhs_paths" = "xyes"; then :
+  rundir='${prefix}/run'
+else
+  rundir='${sysconfdir}'
 fi
+fi
+
+
+
+  test "x$prefix" = xNONE && prefix="$ac_default_prefix"
+  test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
+  last_ac_define_dir=`eval echo $pkgrundir`
+  ac_define_dir=`eval echo $last_ac_define_dir`
+  while test "x$last_ac_define_dir" != "x$ac_define_dir"; do
+    last_ac_define_dir="$ac_define_dir"
+    ac_define_dir=`eval echo $last_ac_define_dir`
+  done
+  PKGRUNDIR="$ac_define_dir"
+
+
+cat >>confdefs.h <<_ACEOF
+#define PKGRUNDIR "$ac_define_dir"
+_ACEOF
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for program prefix" >&5
+$as_echo_n "checking for program prefix... " >&6; }
+
+# Check whether --with-program-prefix was given.
+if test "${with_program_prefix+set}" = set; then :
+  withval=$with_program_prefix; test "x$with_program_prefix" = "xno" && with_program_prefix=
+else
+  with_program_prefix=
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: \"$with_program_prefix\"" >&5
+$as_echo "\"$with_program_prefix\"" >&6; }
+PROGRAM_PREFIX="$with_program_prefix"
+
+
+cat >>confdefs.h <<_ACEOF
+#define PROGRAM_PREFIX "$with_program_prefix"
+_ACEOF
 
 
 
@@ -9528,7 +9628,9 @@ _ACEOF
 
 fi
 
-ac_config_files="$ac_config_files Makefile bandb/Makefile ssld/Makefile extensions/Makefile src/Makefile modules/Makefile tools/Makefile doc/Makefile help/Makefile"
+ac_config_files="$ac_config_files Makefile bandb/Makefile ssld/Makefile extensions/Makefile src/Makefile modules/Makefile tools/Makefile tools/genssl.sh doc/Makefile help/Makefile"
+
+ac_config_commands="$ac_config_commands tools/genssl.sh_chmod"
 
 
 cat >confcache <<\_ACEOF
@@ -10078,6 +10180,7 @@ cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
 # Files that config.status was made for.
 config_files="$ac_config_files"
 config_headers="$ac_config_headers"
+config_commands="$ac_config_commands"
 
 _ACEOF
 
@@ -10106,6 +10209,9 @@ $config_files
 
 Configuration headers:
 $config_headers
+
+Configuration commands:
+$config_commands
 
 Report bugs to the package provider."
 
@@ -10243,8 +10349,10 @@ do
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
     "modules/Makefile") CONFIG_FILES="$CONFIG_FILES modules/Makefile" ;;
     "tools/Makefile") CONFIG_FILES="$CONFIG_FILES tools/Makefile" ;;
+    "tools/genssl.sh") CONFIG_FILES="$CONFIG_FILES tools/genssl.sh" ;;
     "doc/Makefile") CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
     "help/Makefile") CONFIG_FILES="$CONFIG_FILES help/Makefile" ;;
+    "tools/genssl.sh_chmod") CONFIG_COMMANDS="$CONFIG_COMMANDS tools/genssl.sh_chmod" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
@@ -10258,6 +10366,7 @@ done
 if $ac_need_defaults; then
   test "${CONFIG_FILES+set}" = set || CONFIG_FILES=$config_files
   test "${CONFIG_HEADERS+set}" = set || CONFIG_HEADERS=$config_headers
+  test "${CONFIG_COMMANDS+set}" = set || CONFIG_COMMANDS=$config_commands
 fi
 
 # Have a temporary directory for convenience.  Make it in the build tree
@@ -10554,7 +10663,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
 fi # test -n "$CONFIG_HEADERS"
 
 
-eval set X "  :F $CONFIG_FILES  :H $CONFIG_HEADERS    "
+eval set X "  :F $CONFIG_FILES  :H $CONFIG_HEADERS    :C $CONFIG_COMMANDS"
 shift
 for ac_tag
 do
@@ -10792,9 +10901,16 @@ $as_echo "$as_me: $ac_file is unchanged" >&6;}
   fi
  ;;
 
-
+  :C)  { $as_echo "$as_me:${as_lineno-$LINENO}: executing $ac_file commands" >&5
+$as_echo "$as_me: executing $ac_file commands" >&6;}
+ ;;
   esac
 
+
+  case $ac_file$ac_mode in
+    "tools/genssl.sh_chmod":C) chmod 755 tools/genssl.sh ;;
+
+  esac
 done # for ac_tag
 
 
