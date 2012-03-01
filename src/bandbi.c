@@ -82,7 +82,7 @@ start_bandb(void)
 	const char *suffix = "";
 #endif
 
-	rb_setenv("BANDB_DPATH", ConfigFileEntry.dpath, 1);
+	rb_setenv("BANDB_DBPATH", PKGLOCALSTATEDIR "/ban.db", 1);
 	if(bandb_path == NULL)
 	{
 		rb_snprintf(fullpath, sizeof(fullpath), "%s/bandb%s", PKGLIBEXECDIR, suffix);
