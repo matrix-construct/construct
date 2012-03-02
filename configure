@@ -5408,9 +5408,15 @@ pkglibdir='${libdir}/${PACKAGE_TARNAME}'
   test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
   last_ac_define_dir=`eval echo $pkglocalstatedir`
   ac_define_dir=`eval echo $last_ac_define_dir`
+  ac_define_dir_counter=0
   while test "x$last_ac_define_dir" != "x$ac_define_dir"; do
     last_ac_define_dir="$ac_define_dir"
     ac_define_dir=`eval echo $last_ac_define_dir`
+    as_fn_arith $ac_define_dir_counter + 1 && ac_define_dir_counter=$as_val
+    if test "x$ac_define_dir_counter" = x128; then :
+  as_fn_error $? "detected recusive directory expansion when expanding PKGLOCALSTATEDIR=$pkglocalstatedir: $ac_define_dir" "$LINENO" 5
+	break
+fi
   done
   PKGLOCALSTATEDIR="$ac_define_dir"
 
@@ -5426,9 +5432,15 @@ _ACEOF
   test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
   last_ac_define_dir=`eval echo $pkglibexecdir`
   ac_define_dir=`eval echo $last_ac_define_dir`
+  ac_define_dir_counter=0
   while test "x$last_ac_define_dir" != "x$ac_define_dir"; do
     last_ac_define_dir="$ac_define_dir"
     ac_define_dir=`eval echo $last_ac_define_dir`
+    as_fn_arith $ac_define_dir_counter + 1 && ac_define_dir_counter=$as_val
+    if test "x$ac_define_dir_counter" = x128; then :
+  as_fn_error $? "detected recusive directory expansion when expanding PKGLIBEXECDIR=$pkglibexecdir: $ac_define_dir" "$LINENO" 5
+	break
+fi
   done
   PKGLIBEXECDIR="$ac_define_dir"
 
@@ -7295,9 +7307,15 @@ fi
   test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
   last_ac_define_dir=`eval echo $sysconfdir`
   ac_define_dir=`eval echo $last_ac_define_dir`
+  ac_define_dir_counter=0
   while test "x$last_ac_define_dir" != "x$ac_define_dir"; do
     last_ac_define_dir="$ac_define_dir"
     ac_define_dir=`eval echo $last_ac_define_dir`
+    as_fn_arith $ac_define_dir_counter + 1 && ac_define_dir_counter=$as_val
+    if test "x$ac_define_dir_counter" = x128; then :
+  as_fn_error $? "detected recusive directory expansion when expanding ETC_DIR=$sysconfdir: $ac_define_dir" "$LINENO" 5
+	break
+fi
   done
   ETC_DIR="$ac_define_dir"
 
@@ -7332,9 +7350,15 @@ fi
   test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
   last_ac_define_dir=`eval echo $logdir`
   ac_define_dir=`eval echo $last_ac_define_dir`
+  ac_define_dir_counter=0
   while test "x$last_ac_define_dir" != "x$ac_define_dir"; do
     last_ac_define_dir="$ac_define_dir"
     ac_define_dir=`eval echo $last_ac_define_dir`
+    as_fn_arith $ac_define_dir_counter + 1 && ac_define_dir_counter=$as_val
+    if test "x$ac_define_dir_counter" = x128; then :
+  as_fn_error $? "detected recusive directory expansion when expanding LOG_DIR=$logdir: $ac_define_dir" "$LINENO" 5
+	break
+fi
   done
   LOG_DIR="$ac_define_dir"
 
@@ -7378,9 +7402,15 @@ fi
   test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
   last_ac_define_dir=`eval echo $helpdir`
   ac_define_dir=`eval echo $last_ac_define_dir`
+  ac_define_dir_counter=0
   while test "x$last_ac_define_dir" != "x$ac_define_dir"; do
     last_ac_define_dir="$ac_define_dir"
     ac_define_dir=`eval echo $last_ac_define_dir`
+    as_fn_arith $ac_define_dir_counter + 1 && ac_define_dir_counter=$as_val
+    if test "x$ac_define_dir_counter" = x128; then :
+  as_fn_error $? "detected recusive directory expansion when expanding HELP_DIR=$helpdir: $ac_define_dir" "$LINENO" 5
+	break
+fi
   done
   HELP_DIR="$ac_define_dir"
 
@@ -7425,9 +7455,15 @@ fi
   test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
   last_ac_define_dir=`eval echo $moduledir`
   ac_define_dir=`eval echo $last_ac_define_dir`
+  ac_define_dir_counter=0
   while test "x$last_ac_define_dir" != "x$ac_define_dir"; do
     last_ac_define_dir="$ac_define_dir"
     ac_define_dir=`eval echo $last_ac_define_dir`
+    as_fn_arith $ac_define_dir_counter + 1 && ac_define_dir_counter=$as_val
+    if test "x$ac_define_dir_counter" = x128; then :
+  as_fn_error $? "detected recusive directory expansion when expanding MODULE_DIR=$moduledir: $ac_define_dir" "$LINENO" 5
+	break
+fi
   done
   MODULE_DIR="$ac_define_dir"
 
@@ -7472,9 +7508,15 @@ fi
   test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
   last_ac_define_dir=`eval echo $pkgrundir`
   ac_define_dir=`eval echo $last_ac_define_dir`
+  ac_define_dir_counter=0
   while test "x$last_ac_define_dir" != "x$ac_define_dir"; do
     last_ac_define_dir="$ac_define_dir"
     ac_define_dir=`eval echo $last_ac_define_dir`
+    as_fn_arith $ac_define_dir_counter + 1 && ac_define_dir_counter=$as_val
+    if test "x$ac_define_dir_counter" = x128; then :
+  as_fn_error $? "detected recusive directory expansion when expanding PKGRUNDIR=$pkgrundir: $ac_define_dir" "$LINENO" 5
+	break
+fi
   done
   PKGRUNDIR="$ac_define_dir"
 
