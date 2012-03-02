@@ -28,7 +28,7 @@ libdir          = @libdir@
 pkglibdir       = @pkglibdir@
 moduledir	= @moduledir@
 helpdir		= @helpdir@
-confdir		= @confdir@
+sysconfdir	= @sysconfdir@
 logdir		= @logdir@
 rundir		= @rundir@
 pkgrundir	= @pkgrundir@
@@ -130,8 +130,8 @@ install-mkdirs:
 	-@if test ! -d $(DESTDIR)$(bindir); then \
 		mkdir -p -m 755 $(DESTDIR)$(bindir); \
 	fi
-	-@if test ! -d $(DESTDIR)$(confdir); then \
-		mkdir -p -m 755 $(DESTDIR)$(confdir); \
+	-@if test ! -d $(DESTDIR)$(sysconfdir); then \
+		mkdir -p -m 755 $(DESTDIR)$(sysconfdir); \
 	fi
 	-@if test ! -d $(DESTDIR)$(mandir); then \
 		mkdir -p -m 755 $(DESTDIR)$(mandir); \

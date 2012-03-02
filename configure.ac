@@ -609,22 +609,15 @@ AC_ARG_ENABLE(epoll, AC_HELP_STRING([--enable-epoll],[Force sys_epoll usage (Lin
 ],)
 
 dnl **********************************************************************
-dnl Check for --with-confdir
+dnl Check for --with-confdir [deprecated, use --sysconfdir instead]
 dnl **********************************************************************
 
-AC_MSG_CHECKING([whether to modify confdir])
-AC_ARG_WITH(confdir, 
-AC_HELP_STRING([--with-confdir=DIR],
-	       [Directory to install config files.]),
-	       [ confdir=`echo $withval | sed 's/\/$//'`
-		 AC_MSG_RESULT(yes)
-		 AC_DEFINE_DIR(ETC_DIR, confdir, [Prefix where config files are installed.])
-		 AC_SUBST_DIR([confdir]) ],
-	       [ confdir='${sysconfdir}'
-		 AC_MSG_RESULT(no)
-	         AC_DEFINE_DIR(ETC_DIR, confdir, [Prefix where config files are installed.])
-	  	 AC_SUBST_DIR([confdir])]
-)
+AC_ARG_WITH([confdir],
+	[AC_HELP_STRING([--with-confdir=DIR],
+	       [Directory to install config files [deprecated, use --sysconfdir instead].])],
+	[ sysconfdir=`echo $withval | sed 's/\/$//'` ],
+	[ confdir='${sysconfdir}' ])
+AC_DEFINE_DIR([ETC_DIR], [sysconfdir], [Prefix where config files are installed.])
 
 dnl **********************************************************************
 dnl Check for --with-logdir

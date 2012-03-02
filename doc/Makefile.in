@@ -22,7 +22,7 @@ exec_prefix	= @exec_prefix@
 exec_suffix	= @exec_suffix@
 bindir		= @bindir@
 libexecdir	= @libexecdir@
-confdir		= @confdir@
+sysconfdir		= @sysconfdir@
 localstatedir	= @localstatedir@
 # Change this later! -- adrian
 moduledir	= @moduledir@
@@ -45,9 +45,9 @@ CPPFLAGS	= ${INCLUDES} @CPPFLAGS@
 all: build
  
 install-mkdirs:
-	-@if test ! -d $(DESTDIR)$(confdir); then \
-		echo "mkdir -p $(confdir)"; \
-		mkdir -p $(DESTDIR)$(confdir); \
+	-@if test ! -d $(DESTDIR)$(sysconfdir); then \
+		echo "mkdir -p $(sysconfdir)"; \
+		mkdir -p $(DESTDIR)$(sysconfdir); \
 	fi
 
 	-@if test ! -d $(DESTDIR)$(mandir); then \
@@ -58,19 +58,19 @@ install-mkdirs:
 install: install-mkdirs build
 	@echo "ircd: installing example config files ($(CONFS))"
 	@for i in $(CONFS); do \
-		if test -f $(DESTDIR)$(confdir)/$$i; then \
-			$(MV) $(DESTDIR)$(confdir)/$$i $(DESTDIR)$(confdir)/$$i.old; \
+		if test -f $(DESTDIR)$(sysconfdir)/$$i; then \
+			$(MV) $(DESTDIR)$(sysconfdir)/$$i $(DESTDIR)$(sysconfdir)/$$i.old; \
 		fi; \
-		$(INSTALL_DATA) $$i $(DESTDIR)$(confdir); \
+		$(INSTALL_DATA) $$i $(DESTDIR)$(sysconfdir); \
 	done
 
-	-@if test ! -f $(DESTDIR)$(confdir)/ircd.motd; then \
+	-@if test ! -f $(DESTDIR)$(sysconfdir)/ircd.motd; then \
 		echo "ircd: installing motd file (ircd.motd)"; \
-		$(INSTALL_DATA) ircd.motd $(DESTDIR)$(confdir); \
+		$(INSTALL_DATA) ircd.motd $(DESTDIR)$(sysconfdir); \
 	fi
 
-	-@if test -f $(DESTDIR)$(confdir)/links.txt; then \
-		$(RM) $(DESTDIR)$(confdir)/links.txt; \
+	-@if test -f $(DESTDIR)$(sysconfdir)/links.txt; then \
+		$(RM) $(DESTDIR)$(sysconfdir)/links.txt; \
 	fi
 
 	@echo "ircd: installing manpage"

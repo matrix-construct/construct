@@ -621,7 +621,6 @@ helpdir
 HELP_DIR
 logdir
 LOG_DIR
-confdir
 ETC_DIR
 ZLIB_LD
 ENCSPEED
@@ -1379,7 +1378,8 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-zlib-path=DIR    Path to libz.so for ziplinks support.
-  --with-confdir=DIR      Directory to install config files.
+  --with-confdir=DIR      Directory to install config files [deprecated, use
+                          --sysconfdir instead].
   --with-logdir=DIR       Directory where to write logfiles.
   --with-helpdir=DIR      Directory to install help files.
   --with-moduledir=DIR    Directory to install modules.
@@ -7282,48 +7282,18 @@ fi
 
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to modify confdir" >&5
-$as_echo_n "checking whether to modify confdir... " >&6; }
 
 # Check whether --with-confdir was given.
 if test "${with_confdir+set}" = set; then :
-  withval=$with_confdir;  confdir=`echo $withval | sed 's/\/$//'`
-		 { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-  test "x$prefix" = xNONE && prefix="$ac_default_prefix"
-  test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
-  last_ac_define_dir=`eval echo $confdir`
-  ac_define_dir=`eval echo $last_ac_define_dir`
-  while test "x$last_ac_define_dir" != "x$ac_define_dir"; do
-    last_ac_define_dir="$ac_define_dir"
-    ac_define_dir=`eval echo $last_ac_define_dir`
-  done
-  ETC_DIR="$ac_define_dir"
-
-
-cat >>confdefs.h <<_ACEOF
-#define ETC_DIR "$ac_define_dir"
-_ACEOF
-
-
-
-
-        confdir=`(
-            test "x$prefix" = xNONE && prefix="$ac_default_prefix"
-            test "x$exec_prefix" = xNONE && exec_prefix="${prefix}"
-            eval echo \""$confdir"\"
-        )`
-
-
+  withval=$with_confdir;  sysconfdir=`echo $withval | sed 's/\/$//'`
 else
    confdir='${sysconfdir}'
-		 { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
+fi
+
 
   test "x$prefix" = xNONE && prefix="$ac_default_prefix"
   test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
-  last_ac_define_dir=`eval echo $confdir`
+  last_ac_define_dir=`eval echo $sysconfdir`
   ac_define_dir=`eval echo $last_ac_define_dir`
   while test "x$last_ac_define_dir" != "x$ac_define_dir"; do
     last_ac_define_dir="$ac_define_dir"
@@ -7336,18 +7306,6 @@ cat >>confdefs.h <<_ACEOF
 #define ETC_DIR "$ac_define_dir"
 _ACEOF
 
-
-
-
-        confdir=`(
-            test "x$prefix" = xNONE && prefix="$ac_default_prefix"
-            test "x$exec_prefix" = xNONE && exec_prefix="${prefix}"
-            eval echo \""$confdir"\"
-        )`
-
-
-
-fi
 
 
 

@@ -23,7 +23,7 @@ bindir          = @bindir@
 libdir		= @libdir@
 libexecdir      = @libexecdir@
 pkglibexecdir   = @pkglibexecdir@
-confdir         = @confdir@
+sysconfdir	= @sysconfdir@
 localstatedir   = @localstatedir@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 
