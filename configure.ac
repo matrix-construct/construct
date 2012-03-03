@@ -226,7 +226,7 @@ if test "$LEX" = ":"; then
 fi
 
 AC_ARG_ENABLE([fhs-paths],
-	[AS_HELP_STRING([--enable-fhs-paths], [User more FHS-like pathnames (for packagers).])],
+	[AS_HELP_STRING([--enable-fhs-paths], [Use more FHS-like pathnames (for packagers).])],
 	[],
 	[dnl detect if the user appears to want --enable-fhs-paths
 	AS_IF([test "$libexecdir" = '${exec_prefix}/libexec' && \

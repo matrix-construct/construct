@@ -1356,7 +1356,7 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --enable-fhs-paths      User more FHS-like pathnames (for packagers).
+  --enable-fhs-paths      Use more FHS-like pathnames (for packagers).
   --enable-ipv6           Enable IPv6 support
   --enable-openssl=DIR    Enable OpenSSL support (DIR optional).
   --disable-openssl       Disable OpenSSL support.
