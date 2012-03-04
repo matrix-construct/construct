@@ -237,7 +237,7 @@ struct LocalUser
 
 	struct DNSQuery *dnsquery; /* for outgoing server's name lookup */
 
-	time_t last_away;	/* Away since... */
+	time_t next_away;	/* Don't allow next away before... */
 	time_t last;
 
 	/* clients allowed to talk through +g */
@@ -252,8 +252,6 @@ struct LocalUser
 	 * to avoid flooding.
 	 *   -- adrian
 	 */
-	int dummy1;
-	int dummy0;
 	int sent_parsed;	/* how many messages we've parsed in this second */
 	time_t last_knock;	/* time of last knock */
 	unsigned long random_ping;
@@ -267,6 +265,10 @@ struct LocalUser
 	uint32_t targets[TGCHANGE_NUM + TGCHANGE_REPLY];
 	unsigned int targets_free;	/* free targets */
 	time_t target_last;		/* last time we cleared a slot */
+
+	/* ratelimit items */
+	time_t ratelimit;
+	unsigned int join_who_credits;
 
 	struct ListClient *safelist_data;
 
@@ -444,6 +446,7 @@ struct ListClient
 #define CLICAP_SASL		0x0002
 #define CLICAP_ACCOUNT_NOTIFY	0x0004
 #define CLICAP_EXTENDED_JOIN	0x0008
+#define CLICAP_AWAY_NOTIFY	0x0010
 
 /*
  * flags macros.

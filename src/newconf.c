@@ -2277,6 +2277,8 @@ static struct ConfEntry conf_general_table[] =
 	{ "client_flood_burst_max",	CF_INT,   NULL, 0, &ConfigFileEntry.client_flood_burst_max	},
 	{ "client_flood_message_num",	CF_INT,   NULL, 0, &ConfigFileEntry.client_flood_message_num	},
 	{ "client_flood_message_time",	CF_INT,   NULL, 0, &ConfigFileEntry.client_flood_message_time	},
+	{ "max_ratelimit_tokens",	CF_INT,   NULL, 0, &ConfigFileEntry.max_ratelimit_tokens	},
+	{ "away_interval",		CF_INT,   NULL, 0, &ConfigFileEntry.away_interval		},
 	{ "\0", 		0, 	  NULL, 0, NULL }
 };
 

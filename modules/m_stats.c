@@ -133,7 +133,7 @@ static struct StatsStruct stats_cmd_table[] = {
 	{'b', stats_delay,		1, 1, },
 	{'B', stats_hash,		1, 1, },
 	{'c', stats_connect,		0, 0, },
-	{'C', stats_capability,		1, 1, },
+	{'C', stats_capability,		1, 0, },
 	{'d', stats_tdeny,		1, 0, },
 	{'D', stats_deny,		1, 0, },
 	{'e', stats_exempt,		1, 0, },
@@ -944,6 +944,8 @@ stats_tstats (struct Client *source_p)
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			   "T :tgchange blocked msgs %u restricted addrs %lu",
 			   sp.is_tgch, rb_dlink_list_length(&tgchange_list));
+	sendto_one_numeric(source_p, RPL_STATSDEBUG,
+			   "T :ratelimit blocked commands %u", sp.is_rl);
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			   "T :auth successes %u fails %u",
 			   sp.is_asuc, sp.is_abad);

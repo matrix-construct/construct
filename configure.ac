@@ -225,12 +225,37 @@ if test "$LEX" = ":"; then
 	AC_MSG_ERROR([could not locate a suitable lexical generator, install flex or lex.])
 fi
 
+AC_ARG_ENABLE([fhs-paths],
+	[AS_HELP_STRING([--enable-fhs-paths], [Use more FHS-like pathnames (for packagers).])],
+	[],
+	[dnl detect if the user appears to want --enable-fhs-paths
+	AS_IF([test "$libexecdir" = '${exec_prefix}/libexec' && \
+		test "$localstatedir" = '${prefix}/var' && \
+		test "$libdir" = '${exec_prefix}/lib'],
+		[enable_fhs_paths=no],
+		[enable_fhs_paths=yes])
+	])
 dnl use directory structure of cached as default (hack)
-if test "$libexecdir" = '${exec_prefix}/libexec' &&
-   test "$localstatedir" = '${prefix}/var'; then
-	libexecdir='${bindir}'
+AS_IF([test "x$enable_fhs_paths" = "xyes"],
+	[dnl Avoid name collisions.
+	pkglibexecdir='${libexecdir}/${PACKAGE_TARNAME}'
+	rundir=${rundir-'${prefix}/run'}
+	pkgrundir='${rundir}/${PACKAGE_TARNAME}'
+	pkglocalstatedir='${localstatedir}/${PACKAGE_TARNAME}'],
+	[libexecdir='${bindir}'
+	pkglibexecdir='${libexecdir}'
+	rundir='${sysconfdir}'
+	pkgrundir='${rundir}'
 	localstatedir='${prefix}'
-fi
+	pkglocalstatedir='${sysconfdir}'])
+pkglibdir='${libdir}/${PACKAGE_TARNAME}'
+AC_SUBST([pkglibdir])
+AC_SUBST([rundir])
+AC_SUBST([pkgrundir])
+AC_SUBST([pkglocalstatedir])
+AC_DEFINE_DIR([PKGLOCALSTATEDIR], [pkglocalstatedir], [[Directory in which to store state, such as band database]])
+AC_SUBST([pkglibexecdir])
+AC_DEFINE_DIR([PKGLIBEXECDIR], [pkglibexecdir], [Directory where binaries the IRCd itself spawns live])
 
 dnl Checks for header files.
 AC_HEADER_STDC
@@ -584,22 +609,15 @@ AC_ARG_ENABLE(epoll, AC_HELP_STRING([--enable-epoll],[Force sys_epoll usage (Lin
 ],)
 
 dnl **********************************************************************
-dnl Check for --with-confdir
+dnl Check for --with-confdir [deprecated, use --sysconfdir instead]
 dnl **********************************************************************
 
-AC_MSG_CHECKING([whether to modify confdir])
-AC_ARG_WITH(confdir, 
-AC_HELP_STRING([--with-confdir=DIR],
-	       [Directory to install config files.]),
-	       [ confdir=`echo $withval | sed 's/\/$//'`
-		 AC_MSG_RESULT(yes)
-		 AC_DEFINE_DIR(ETC_DIR, confdir, [Prefix where config files are installed.])
-		 AC_SUBST_DIR([confdir]) ],
-	       [ confdir='${prefix}/etc'
-		 AC_MSG_RESULT(no)
-	         AC_DEFINE_DIR(ETC_DIR, confdir, [Prefix where config files are installed.])
-	  	 AC_SUBST_DIR([confdir])]
-)
+AC_ARG_WITH([confdir],
+	[AC_HELP_STRING([--with-confdir=DIR],
+	       [Directory to install config files [deprecated, use --sysconfdir instead].])],
+	[ sysconfdir=`echo $withval | sed 's/\/$//'` ],
+	[ confdir='${sysconfdir}' ])
+AC_DEFINE_DIR([ETC_DIR], [sysconfdir], [Prefix where config files are installed.])
 
 dnl **********************************************************************
 dnl Check for --with-logdir
@@ -610,14 +628,13 @@ AC_ARG_WITH(logdir,
 AC_HELP_STRING([--with-logdir=DIR],
 	       [Directory where to write logfiles.]),
 	       [ logdir=`echo $withval | sed 's/\/$//'`
-		 AC_MSG_RESULT(yes)
-		 AC_DEFINE_DIR(LOG_DIR, logdir, [Prefix where to write logfiles.])
-		 AC_SUBST_DIR([logdir]) ],
-	       [ logdir='${prefix}/logs'
-		 AC_MSG_RESULT(no)
-	         AC_DEFINE_DIR(LOG_DIR, logdir, [Prefix where to write logfiles.])
-	  	 AC_SUBST_DIR([logdir])]
-)
+		 AC_MSG_RESULT(yes)],
+	       [ AS_IF([test "x$enable_fhs_paths" = "xyes"],
+			[logdir='${localstatedir}/log/${PACKAGE_TARNAME}'],
+			[logdir='${prefix}/logs'])
+		 AC_MSG_RESULT(no)])
+AC_DEFINE_DIR([LOG_DIR], [logdir], [Prefix where to write logfiles.])
+AC_SUBST_DIR([logdir])
 
 dnl **********************************************************************
 dnl Check for --with-helpdir
@@ -628,14 +645,13 @@ AC_ARG_WITH(helpdir,
 AC_HELP_STRING([--with-helpdir=DIR],
 	       [Directory to install help files.]),
 	       [ helpdir=`echo $withval | sed 's/\/$//'`
-		 AC_MSG_RESULT(yes)
-		 AC_DEFINE_DIR(HELP_DIR, helpdir, [Prefix where help files are installed.])
-		 AC_SUBST_DIR([helpdir]) ],
-	       [ helpdir='${prefix}/help'
-		 AC_MSG_RESULT(no)
-	         AC_DEFINE_DIR(HELP_DIR, helpdir, [Prefix where help file are installed.])
-	  	 AC_SUBST_DIR([helpdir])]
-)
+		 AC_MSG_RESULT(yes) ],
+	       [ AS_IF([test "x$enable_fhs_paths" = "xyes"],
+			[helpdir='${datadir}/${PACKAGE_TARNAME}/help'],
+			[helpdir='${prefix}/help'])
+		 AC_MSG_RESULT(no) ])
+AC_DEFINE_DIR([HELP_DIR], [helpdir], [Prefix where help files are installed.])
+AC_SUBST_DIR([helpdir])
 
 dnl **********************************************************************
 dnl Check for --with-moduledir
@@ -643,17 +659,44 @@ dnl **********************************************************************
 
 AC_MSG_CHECKING([whether to modify moduledir])
 AC_ARG_WITH(moduledir, 
-AC_HELP_STRING([--with-moduledir=DIR],
-	       [Directory to install modules.]),
+	[AC_HELP_STRING([--with-moduledir=DIR],
+	       [Directory to install modules.])],
 	       [ moduledir=`echo $withval | sed 's/\/$//'`
-		 AC_MSG_RESULT(yes)
-		 AC_DEFINE_DIR(MODULE_DIR, moduledir, [Prefix where modules are installed.])
-		 AC_SUBST_DIR([moduledir]) ],
-	       [ moduledir='${prefix}/modules'
+		 AC_MSG_RESULT(yes)],
+	       [ AS_IF([test "x$enable_fhs_paths" = "xyes"],
+			[moduledir='${pkglibdir}/modules'],
+			[moduledir='${prefix}/modules'])
 		 AC_MSG_RESULT(no)
-	         AC_DEFINE_DIR(MODULE_DIR, moduledir, [Prefix where modules are installed.])
-	  	 AC_SUBST_DIR([moduledir])]
-)
+		])
+AC_DEFINE_DIR(MODULE_DIR, moduledir, [Prefix where modules are installed.])
+AC_SUBST_DIR([moduledir])
+
+dnl Check for --with-rundir
+
+AC_MSG_CHECKING([whether or modify rundir])
+AC_ARG_WITH([rundir],
+	[AC_HELP_STRING([--with-rundir=DIR],
+		[Directory in which to store pidfile.])],
+	[AC_MSG_RESULT([yes])
+	rundir=`echo $withval | sed 's/\/$//'`],
+	[AC_MSG_RESULT([no])
+	AS_IF([test "x$enable_fhs_paths" = "xyes"],
+		[rundir='${prefix}/run'],
+		[rundir='${sysconfdir}'])])
+AC_SUBST([rundir])
+AC_DEFINE_DIR([PKGRUNDIR], [pkgrundir], [Directory to store pidfile in.])
+
+dnl Installed utility program prefixes (does not affect binaries
+dnl installed into pkglibexecdir)
+AC_MSG_CHECKING([for program prefix])
+AC_ARG_WITH([program-prefix],
+	[AS_HELP_STRING([--with-program-prefix=], [If set, programs installed into PATH will be installed with names prefixed by this prefix.])],
+	[test "x$with_program_prefix" = "xno" && with_program_prefix=],
+	[with_program_prefix=])
+AC_MSG_RESULT(["$with_program_prefix"])
+PROGRAM_PREFIX="$with_program_prefix"
+AC_SUBST([PROGRAM_PREFIX])
+AC_DEFINE_UNQUOTED([PROGRAM_PREFIX], ["$with_program_prefix"], [String with which all programs intended to be in PATH are prefixed.])
 
 dnl **********************************************************************
 dnl Branding
@@ -1197,9 +1240,11 @@ AC_CONFIG_FILES(			\
 	src/Makefile			\
 	modules/Makefile		\
 	tools/Makefile			\
+	tools/genssl.sh			\
 	doc/Makefile			\
 	help/Makefile			\
 )
+AC_CONFIG_COMMANDS([tools/genssl.sh_chmod], [chmod 755 tools/genssl.sh])
 
 AC_OUTPUT
 

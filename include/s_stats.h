@@ -67,6 +67,7 @@ struct ServerStatistics
 	unsigned int is_ssuc;	/* successful sasl authentications */
 	unsigned int is_sbad;	/* failed sasl authentications */
 	unsigned int is_tgch;	/* messages blocked due to target change */
+	unsigned int is_rl;     /* commands blocked due to ratelimit */
 };
 
 extern struct ServerStatistics ServerStats;

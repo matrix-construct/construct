@@ -240,6 +240,35 @@ ms_mlock(struct Client *client_p, struct Client *source_p, int parc, const char 
 	return 0;
 }
 
+static void
+possibly_remove_lower_forward(struct Client *fakesource_p, int mems,
+		struct Channel *chptr, rb_dlink_list *banlist, int mchar,
+		const char *mask, const char *forward)
+{
+	struct Ban *actualBan;
+	rb_dlink_node *ptr;
+
+	RB_DLINK_FOREACH(ptr, banlist->head)
+	{
+		actualBan = ptr->data;
+		if(!irccmp(actualBan->banstr, mask) &&
+				(actualBan->forward == NULL ||
+				 irccmp(actualBan->forward, forward) < 0))
+		{
+			sendto_channel_local(mems, chptr, ":%s MODE %s -%c %s%s%s",
+					fakesource_p->name,
+					chptr->chname,
+					mchar,
+					actualBan->banstr,
+					actualBan->forward ? "$" : "",
+					actualBan->forward ? actualBan->forward : "");
+			rb_dlinkDelete(&actualBan->node, banlist);
+			free_ban(actualBan);
+			return;
+		}
+	}
+}
+
 static int
 ms_bmask(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
@@ -346,7 +375,9 @@ ms_bmask(struct Client *client_p, struct Client *source_p, int parc, const char 
 		{
 			*forward++ = '\0';
 			if(*forward == '\0')
-				forward = NULL;
+				tlen--, forward = NULL;
+			possibly_remove_lower_forward(fakesource_p, mems,
+					chptr, banlist, parv[3][0], s, forward);
 		}
 
 		if(add_id(fakesource_p, chptr, s, forward, banlist, mode_type))
@@ -358,13 +389,14 @@ ms_bmask(struct Client *client_p, struct Client *source_p, int parc, const char 
 				*mbuf = '\0';
 				*(pbuf - 1) = '\0';
 				sendto_channel_local(mems, chptr, "%s %s", modebuf, parabuf);
-				sendto_server(client_p, chptr, needcap, CAP_TS6,
-					      "%s %s", modebuf, parabuf);
 
 				mbuf = modebuf + mlen;
 				pbuf = parabuf;
 				plen = modecount = 0;
 			}
+
+			if (forward != NULL)
+				forward[-1] = '$';
 
 			*mbuf++ = parv[3][0];
 			arglen = rb_sprintf(pbuf, "%s ", s);
@@ -393,7 +425,6 @@ ms_bmask(struct Client *client_p, struct Client *source_p, int parc, const char 
 		*mbuf = '\0';
 		*(pbuf - 1) = '\0';
 		sendto_channel_local(mems, chptr, "%s %s", modebuf, parabuf);
-		sendto_server(client_p, chptr, needcap, CAP_TS6, "%s %s", modebuf, parabuf);
 	}
 
 	sendto_server(client_p, chptr, CAP_TS6 | needcap, NOCAPS, ":%s BMASK %ld %s %s :%s",

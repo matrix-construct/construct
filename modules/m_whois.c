@@ -44,6 +44,7 @@
 #include "hook.h"
 #include "s_newconf.h"
 #include "ipv4_from_ipv6.h"
+#include "ratelimit.h"
 
 static void do_whois(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static void single_whois(struct Client *source_p, struct Client *target_p, int operspy);
@@ -89,7 +90,7 @@ m_whois(struct Client *client_p, struct Client *source_p, int parc, const char *
 		if(!IsOper(source_p))
 		{
 			/* seeing as this is going across servers, we should limit it */
-			if((last_used + ConfigFileEntry.pace_wait_simple) > rb_current_time())
+			if((last_used + ConfigFileEntry.pace_wait_simple) > rb_current_time() || !ratelimit_client(source_p, 2))
 			{
 				sendto_one(source_p, form_str(RPL_LOAD2HI),
 					   me.name, source_p->name, "WHOIS");

@@ -40,6 +40,7 @@
 #include "modules.h"
 #include "packet.h"
 #include "s_newconf.h"
+#include "ratelimit.h"
 
 #define FIELD_CHANNEL    0x0001
 #define FIELD_HOP        0x0002
@@ -177,8 +178,18 @@ m_who(struct Client *client_p, struct Client *source_p, int parc, const char *pa
 	{
 		/* List all users on a given channel */
 		chptr = find_channel(parv[1] + operspy);
+
 		if(chptr != NULL)
 		{
+			if (!IsOper(source_p) && !ratelimit_client_who(source_p, rb_dlink_list_length(&chptr->members)/50))
+			{
+				sendto_one(source_p, form_str(RPL_LOAD2HI),
+						me.name, source_p->name, "WHO");
+				sendto_one(source_p, form_str(RPL_ENDOFWHO),
+					   me.name, source_p->name, "*");
+				return 0;
+			}
+
 			if(operspy)
 				report_operspy(source_p, "WHO", chptr->chname);
 
@@ -187,6 +198,7 @@ m_who(struct Client *client_p, struct Client *source_p, int parc, const char *pa
 			else if(!SecretChannel(chptr))
 				do_who_on_channel(source_p, chptr, server_oper, NO, &fmt);
 		}
+
 		sendto_one(source_p, form_str(RPL_ENDOFWHO),
 			   me.name, source_p->name, parv[1] + operspy);
 		return 0;
@@ -233,7 +245,7 @@ m_who(struct Client *client_p, struct Client *source_p, int parc, const char *pa
 	/* it has to be a global who at this point, limit it */
 	if(!IsOper(source_p))
 	{
-		if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
+		if((last_used + ConfigFileEntry.pace_wait) > rb_current_time() || !ratelimit_client(source_p, 1))
 		{
 			sendto_one(source_p, form_str(RPL_LOAD2HI),
 					me.name, source_p->name, "WHO");

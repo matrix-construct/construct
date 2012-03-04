@@ -2,8 +2,17 @@
 AC_DEFUN([AC_DEFINE_DIR], [
   test "x$prefix" = xNONE && prefix="$ac_default_prefix"
   test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
-  ac_define_dir=`eval echo [$]$2`
-  ac_define_dir=`eval echo [$]ac_define_dir`
+  last_ac_define_dir=`eval echo [$]$2`
+  ac_define_dir=`eval echo [$]last_ac_define_dir`
+  ac_define_dir_counter=0
+  while test "x[$]last_ac_define_dir" != "x[$]ac_define_dir"; do
+    last_ac_define_dir="[$]ac_define_dir"
+    ac_define_dir=`eval echo [$]last_ac_define_dir`
+    AS_VAR_ARITH([ac_define_dir_counter], [$ac_define_dir_counter + 1])
+    AS_VAR_IF([ac_define_dir_counter], [128],
+	[AC_MSG_ERROR([detected recusive directory expansion when expanding $1=[$]$2: [$]ac_define_dir])
+	break])
+  done
   $1="$ac_define_dir"
   AC_SUBST($1)
   ifelse($3, ,

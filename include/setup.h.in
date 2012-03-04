@@ -183,7 +183,7 @@
 /* Define to 1 if you have the <wait.h> header file. */
 #undef HAVE_WAIT_H
 
-/* Prefix where help file are installed. */
+/* Prefix where help files are installed. */
 #undef HELP_DIR
 
 /* Prefix where the ircd is installed. */
@@ -245,6 +245,18 @@
 
 /* Size of the pre-client heap. */
 #undef PCLIENT_HEAP_SIZE
+
+/* Directory where binaries the IRCd itself spawns live */
+#undef PKGLIBEXECDIR
+
+/* Directory in which to store state, such as band database */
+#undef PKGLOCALSTATEDIR
+
+/* Directory to store pidfile in. */
+#undef PKGRUNDIR
+
+/* String with which all programs intended to be in PATH are prefixed. */
+#undef PROGRAM_PREFIX
 
 /* This is the type of IO loop we are using */
 #undef SELECT_TYPE

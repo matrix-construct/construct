@@ -44,25 +44,28 @@ DECLARE_MODULE_AV1(ip_cloaking, _modinit, _moddeinit, NULL, NULL,
 			ip_cloaking_hfnlist, "$Revision: 3522 $");
 
 static void
-distribute_hostchange(struct Client *client)
+distribute_hostchange(struct Client *client_p, char *newhost)
 {
-	if (irccmp(client->host, client->orighost))
-		sendto_one_numeric(client, RPL_HOSTHIDDEN, "%s :is now your hidden host",
-			client->host);
+	if (newhost != client_p->orighost)
+		sendto_one_numeric(client_p, RPL_HOSTHIDDEN, "%s :is now your hidden host",
+			client_p->host);
 	else
-		sendto_one_numeric(client, RPL_HOSTHIDDEN, "%s :hostname reset",
-			client->host);
+		sendto_one_numeric(client_p, RPL_HOSTHIDDEN, "%s :hostname reset",
+			client_p->host);
 
 	sendto_server(NULL, NULL,
 		CAP_EUID | CAP_TS6, NOCAPS, ":%s CHGHOST %s :%s",
-		use_id(&me), use_id(client), client->host);
+		use_id(&me), use_id(client_p), client_p->host);
 	sendto_server(NULL, NULL,
 		CAP_TS6, CAP_EUID, ":%s ENCAP * CHGHOST %s :%s",
-		use_id(&me), use_id(client), client->host);
-	if (irccmp(client->host, client->orighost))
-		SetDynSpoof(client);
+		use_id(&me), use_id(client_p), client_p->host);
+
+	change_nick_user_host(client_p, client_p->name, client_p->username, newhost, 0, "Changing host");
+
+	if (newhost != client_p->orighost)
+		SetDynSpoof(client_p);
 	else
-		ClearDynSpoof(client);
+		ClearDynSpoof(client_p);
 }
 
 static void
@@ -128,8 +131,7 @@ check_umode_change(void *vdata)
 		}
 		if (strcmp(source_p->host, source_p->localClient->mangledhost))
 		{
-			rb_strlcpy(source_p->host, source_p->localClient->mangledhost, HOSTLEN);
-			distribute_hostchange(source_p);
+			distribute_hostchange(source_p, source_p->localClient->mangledhost);
 		}
 		else /* not really nice, but we need to send this numeric here */
 			sendto_one_numeric(source_p, RPL_HOSTHIDDEN, "%s :is now your hidden host",
@@ -140,8 +142,7 @@ check_umode_change(void *vdata)
 		if (source_p->localClient->mangledhost != NULL &&
 				!strcmp(source_p->host, source_p->localClient->mangledhost))
 		{
-			rb_strlcpy(source_p->host, source_p->orighost, HOSTLEN);
-			distribute_hostchange(source_p);
+			distribute_hostchange(source_p, source_p->orighost);
 		}
 	}
 }
