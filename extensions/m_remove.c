@@ -55,7 +55,6 @@ static int
 modinit(void)
 {
 	CAP_REMOVE = capability_put(serv_capindex, "REMOVE");
-	capability_require(serv_capindex, "REMOVE");
 
 	return 0;
 }
