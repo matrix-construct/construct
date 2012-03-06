@@ -690,7 +690,7 @@ encap only
 capab: RSFNC
 encap target: single server
 source: services server
-parameters: target user, new nickname, old nickTS, new nickTS
+parameters: target user, new nickname, new nickTS, old nickTS
 
 Forces a nickname change and propagates it.
 
