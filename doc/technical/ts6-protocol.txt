@@ -21,6 +21,10 @@ the function hunt_server(). Any rate limiting should be done locally.
 duration: a parameter type used for ban durations. It is a duration in seconds.
 A value of 0 means a permanent ban.
 
+IP addresses: IP addresses are converted to text in the usual way, including
+'::' shortening in IPv6, with the exception that a zero is prepended to any
+IP address that starts with a colon.
+
 propagation: to which other servers the command is sent
 
 For all commands with a hunted parameter, the propagation is determined by
@@ -279,6 +283,11 @@ parameters: nickname, hopcount, nickTS, umodes, username, visible hostname, IP a
 propagation: broadcast
 
 Introduces a client. The client is on the source server of this command.
+
+The IP address MUST be '0' (a zero) if the true address is not sent such as
+because of a spoof. Otherwise, and if there is no dynamic spoof (i.e. the
+visible and real hostname are equal), the IP address MAY be shown to normal
+users.
 
 The account name is '0' if the user is not logged in with services.
 
@@ -946,6 +955,10 @@ parameters: nickname, hopcount, nickTS, umodes, username, visible hostname, IP a
 propagation: broadcast
 
 Introduces a client. The client is on the source server of this command.
+
+The IP address MUST be '0' (a zero) if the true address is not sent such as
+because of a spoof. Otherwise, and if there is no dynamic spoof (ENCAP
+REALHOST, charybdis TS6 only), the IP address MAY be shown to normal users.
 
 Nick TS rules apply.
 
