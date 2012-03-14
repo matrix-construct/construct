@@ -53,6 +53,7 @@ strip_colour(char *string)
 			}
 			break;
 		case 2:
+		case 4:
 		case 6:
 		case 7:
 		case 22:
