@@ -667,6 +667,25 @@ msg_channel_flags(int p_or_n, const char *command, struct Client *client_p,
 		}
 	}
 
+	if (p_or_n != NOTICE && *text == '\001' &&
+			strncasecmp(text + 1, "ACTION ", 7))
+	{
+		if (chptr->mode.mode & MODE_NOCTCP)
+		{
+			sendto_one_numeric(source_p, ERR_CANNOTSENDTOCHAN,
+					   form_str(ERR_CANNOTSENDTOCHAN), chptr->chname);
+			return;
+		}
+		else if (rb_dlink_list_length(&chptr->locmembers) > (unsigned)(GlobalSetOptions.floodcount / 2))
+		{
+			/* This overestimates the number of users the CTCP
+			 * is being sent to, so large_ctcp_sent might be
+			 * set inappropriately. This should not be a problem.
+			 */
+			source_p->large_ctcp_sent = rb_current_time();
+		}
+	}
+
 	sendto_channel_flags(client_p, type, source_p, chptr, "%s %c%s :%s",
 			     command, c, chptr->chname, text);
 }
