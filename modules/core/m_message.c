@@ -630,6 +630,7 @@ static void
 msg_channel_flags(int p_or_n, const char *command, struct Client *client_p,
 		  struct Client *source_p, struct Channel *chptr, int flags, const char *text)
 {
+	char text2[BUFSIZE];
 	int type;
 	char c;
 
@@ -649,6 +650,21 @@ msg_channel_flags(int p_or_n, const char *command, struct Client *client_p,
 		/* idletime shouldnt be reset by notice --fl */
 		if(p_or_n != NOTICE)
 			source_p->localClient->last = rb_current_time();
+	}
+
+	if(chptr->mode.mode & MODE_NOCOLOR)
+	{
+		rb_strlcpy(text2, text, BUFSIZE);
+		strip_colour(text2);
+		text = text2;
+		if (EmptyString(text))
+		{
+			/* could be empty after colour stripping and
+			 * that would cause problems later */
+			if(p_or_n != NOTICE)
+				sendto_one(source_p, form_str(ERR_NOTEXTTOSEND), me.name, source_p->name);
+			return;
+		}
 	}
 
 	sendto_channel_flags(client_p, type, source_p, chptr, "%s %c%s :%s",
