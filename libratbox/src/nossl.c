@@ -49,7 +49,7 @@ rb_init_ssl(void)
 }
 
 int
-rb_ssl_listen(rb_fde_t *F, int backlog)
+rb_ssl_listen(rb_fde_t *F, int backlog, int defer_accept)
 {
 	errno = ENOSYS;
 	return -1;

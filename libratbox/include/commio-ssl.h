@@ -28,7 +28,7 @@
 int rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile);
 int rb_init_ssl(void);
 
-int rb_ssl_listen(rb_fde_t *F, int backlog);
+int rb_ssl_listen(rb_fde_t *F, int backlog, int defer_accept);
 int rb_init_prng(const char *path, prng_seed_t seed_type);
 
 int rb_get_random(void *buf, size_t length);

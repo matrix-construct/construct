@@ -761,7 +761,7 @@ mangle_mapped_sockaddr(struct sockaddr *in)
  * rb_listen() - listen on a port
  */
 int
-rb_listen(rb_fde_t *F, int backlog)
+rb_listen(rb_fde_t *F, int backlog, int defer_accept)
 {
 	int result;
 
@@ -769,7 +769,7 @@ rb_listen(rb_fde_t *F, int backlog)
 	result = listen(F->fd, backlog);
 
 #ifdef TCP_DEFER_ACCEPT
-	if (!result)
+	if (defer_accept && !result)
 	{
 		setsockopt(F->fd, IPPROTO_TCP, TCP_DEFER_ACCEPT, &backlog, sizeof(int));
 	}

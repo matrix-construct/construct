@@ -348,10 +348,14 @@ rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile)
 }
 
 int
-rb_ssl_listen(rb_fde_t *F, int backlog)
+rb_ssl_listen(rb_fde_t *F, int backlog, int defer_accept)
 {
+	int result;
+
+	result = listen(F->fd, backlog, defer_accept);
 	F->type = RB_FD_SOCKET | RB_FD_LISTEN | RB_FD_SSL;
-	return listen(F->fd, backlog);
+
+	return result;
 }
 
 struct ssl_connect
