@@ -763,9 +763,19 @@ mangle_mapped_sockaddr(struct sockaddr *in)
 int
 rb_listen(rb_fde_t *F, int backlog)
 {
+	int result;
+
 	F->type = RB_FD_SOCKET | RB_FD_LISTEN;
-	/* Currently just a simple wrapper for the sake of being complete */
-	return listen(F->fd, backlog);
+	result = listen(F->fd, backlog);
+
+#ifdef TCP_DEFER_ACCEPT
+	if (!result)
+	{
+		setsockopt(F->fd, IPPROTO_TCP, TCP_DEFER_ACCEPT, &backlog, sizeof(int));
+	}
+#endif
+
+	return result;
 }
 
 void
