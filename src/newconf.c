@@ -32,6 +32,8 @@
 
 #define CF_TYPE(x) ((x) & CF_MTYPE)
 
+static int yy_defer_accept = 1;
+
 struct TopConf *conf_cur_block;
 static char *conf_cur_block_name;
 
@@ -844,7 +846,11 @@ conf_end_listen(struct TopConf *tc)
 	return 0;
 }
 
-
+static void
+conf_set_listen_defer_accept(void *data)
+{
+	yy_defer_accept = *(unsigned int *) data;
+}
 
 static void
 conf_set_listen_port_both(void *data, int ssl)
@@ -860,9 +866,9 @@ conf_set_listen_port_both(void *data, int ssl)
 		}
                 if(listener_address == NULL)
                 {
-			add_listener(args->v.number, listener_address, AF_INET, ssl);
+			add_listener(args->v.number, listener_address, AF_INET, ssl, yy_defer_accept);
 #ifdef RB_IPV6
-			add_listener(args->v.number, listener_address, AF_INET6, ssl);
+			add_listener(args->v.number, listener_address, AF_INET6, ssl, yy_defer_accept);
 #endif
                 }
 		else
@@ -875,7 +881,7 @@ conf_set_listen_port_both(void *data, int ssl)
 #endif
 				family = AF_INET;
 		
-			add_listener(args->v.number, listener_address, family, ssl);
+			add_listener(args->v.number, listener_address, family, ssl, yy_defer_accept);
                 
                 }
 
@@ -2331,6 +2337,7 @@ newconf_init()
 	add_top_conf("privset", NULL, NULL, conf_privset_table);
 
 	add_top_conf("listen", conf_begin_listen, conf_end_listen, NULL);
+	add_conf_item("listen", "defer_accept", CF_YESNO, conf_set_listen_defer_accept);
 	add_conf_item("listen", "port", CF_INT | CF_FLIST, conf_set_listen_port);
 	add_conf_item("listen", "sslport", CF_INT | CF_FLIST, conf_set_listen_sslport);
 	add_conf_item("listen", "ip", CF_QSTRING, conf_set_listen_address);

@@ -231,7 +231,7 @@ inetport(struct Listener *listener)
 		return 0;
 	}
 
-	if(rb_listen(F, RATBOX_SOMAXCONN))
+	if(rb_listen(F, RATBOX_SOMAXCONN, listener->defer_accept))
 	{
 		ilog_error("listen()");
 		rb_close(F);
@@ -304,7 +304,7 @@ find_listener(struct rb_sockaddr_storage *addr)
  * the format "255.255.255.255"
  */
 void
-add_listener(int port, const char *vhost_ip, int family, int ssl)
+add_listener(int port, const char *vhost_ip, int family, int ssl, int defer_accept)
 {
 	struct Listener *listener;
 	struct rb_sockaddr_storage vaddr;
@@ -377,6 +377,7 @@ add_listener(int port, const char *vhost_ip, int family, int ssl)
 
 	listener->F = NULL;
 	listener->ssl = ssl;
+	listener->defer_accept = defer_accept;
 
 	if(inetport(listener))
 		listener->active = 1;
