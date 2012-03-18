@@ -1594,12 +1594,12 @@ del_all_accepts(struct Client *client_p)
 }
 
 /*
- * show_ip() - asks if the true IP shoudl be shown when source is
- *             askin for info about target 
+ * show_ip() - asks if the true IP should be shown when source is
+ *             asking for info about target 
  *
  * Inputs	- source_p who is asking
  *		- target_p who do we want the info on
- * Output	- returns 1 if clear IP can be showed, otherwise 0
+ * Output	- returns 1 if clear IP can be shown, otherwise 0
  * Side Effects	- none
  */
 
