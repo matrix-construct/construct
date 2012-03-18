@@ -104,6 +104,7 @@ TSRCS =                          \
   m_tb.c \
   m_testline.c \
   m_testmask.c \
+  m_tginfo.c \
   m_time.c \
   m_topic.c \
   m_trace.c \
