@@ -774,6 +774,17 @@ rb_listen(rb_fde_t *F, int backlog, int defer_accept)
 		setsockopt(F->fd, IPPROTO_TCP, TCP_DEFER_ACCEPT, &backlog, sizeof(int));
 	}
 #endif
+#ifdef SO_ACCEPTFILTER
+	if (defer_accept && !result)
+	{
+		struct accept_filter_arg afa;
+
+		memset(&afa, '\0', sizeof afa);
+		rb_strlcpy(afa.af_name, "dataready", sizeof afa.af_name);
+		(void)setsockopt(F->fd, SOL_SOCKET, SO_ACCEPTFILTER, &afa,
+				sizeof afa);
+	}
+#endif
 
 	return result;
 }
