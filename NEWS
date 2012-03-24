@@ -1,5 +1,81 @@
-This is charybdis 3.2, Copyright (c) 2005-2010 Charybdis team.
+This is charybdis 3.4-devel, Copyright (c) 2005-2010 Charybdis team.
 See LICENSE for licensing details (GPL v2).
+
+-- charybdis-3.4-devel
+
+server protocol
+- Allow overriding opers (with the new extension) to op themselves on channels.
+- Allow RSFNC to change a nickname's capitalization only.
+- Add channel ban forwarding <mask>$<channel> much like ircd-seven. Local use
+  of this is controlled by the channel::use_forward config option.
+- Add ENCAP TGINFO to propagate IP addresses that exceeded target change
+  limits (these get a lower limit when they reconnect).
+user
+- Consider bogus CTCP ACTION messages (without action text) CTCP (for
+  cmode +C).
+- Send ERR_TOOMANYCHANNELS for each channel join that fails due to channel
+  limits.
+- Add account-notify client capability to notify clients about logins and
+  logouts of users in common channels. See doc/account-notify.txt.
+- Add extended-join client capability to add account name and ircname to JOIN.
+- Add topic TS and channel TS constraints for /LIST (T<, T>, C<, C>
+  parameters as in some other servers).
+- Disallow wildcarded nicknames in "hunted" parameters like /stats and /motd.
+- Disallow mIRC italics in channel names when disable_fake_channels.
+- Add AUTHENTICATE EXTERNAL support, allows SASL authentication using a
+  certificate fingerprint.
+- Allow channel::kick_on_split_riding to protect channels with mlocked keys.
+- The NICKLEN token in 005 now only specifies the maximum usable nick length.
+  The MAXNICKLEN token specifies the maximum nick length any user can have.
+- Disallow $ in usernames as this may cause problems with ban forwarding.
+- Add an error message (numeric 743) if a ban mask is invalid.
+- Extract the underlying IPv4 address from 6to4 and Teredo IPv6 addresses.
+  Show it in a remote /whois and check channel bans, quiets, D:lines and
+  K:lines against it. Note that ban exceptions and auth{} blocks are not
+  checked.
+- Allow normal users to perform /privs on themselves, showing some privileges
+  from the auth{} block.
+- Add away-notify client capability, see doc/away-notify.txt.
+- Add rate limit for high-bandwidth commands, in particular /who <channel>.
+- Rate limit /away to help avoid flooding via away-notify.
+- Apply colour stripping (cmode +c) and CTCP checking (cmode +C) to messages
+  to @/+ channel as well.
+- Channel mode +c (and other places that disallow colour codes) now also strip
+  ASCII 4 (a different kind of colour code).
+oper
+- Add operspy for /list.
+- Add a server notice to snomask +b if a user exceeds target change limits.
+- Add missing server notice for kills from RSFNC and SVSLOGIN.
+- Add /stats C to show information about dynamically loaded server
+  capabilities.
+config
+- Add support for linking using SSL certificate fingerprints as the link
+  credential rather than the traditional password pair.
+- Add m_roleplay extension, provides various roleplay commands.
+- Add override extension, umode +p oper override for opers with oper:override
+  permission, with accountability notices and timeout. Note that opers cannot
+  op themselves if there are older servers on the network.
+- Add channel::disable_local_channels config option.
+- Add support for IPv6 DNSBLs. A new "type" option specifies the IP version(s)
+  for which each DNSBL should be checked.
+- Make flood control settings configurable by those who know exactly what they
+  are doing.
+- Add serverinfo::nicklen config option to limit the nick length for local
+  users. Different values of this option do not break the server protocol.
+- Add extb_usermode extension, $m:+-<modes> extban matching against umodes.
+- Extend extb_oper extension to allow matching against oper privileges.
+- Add m_remove extension, /remove command as in ircd-seven.
+- Add general::away_interval to allow configuring /away rate limiting.
+- Add listener::defer_accept to delay accepting a connection until the client
+  sends data. This depends on kernel support. It may break BOPM checking.
+misc
+- In mkpasswd, default to SHA512-based crypt instead of MD5-based crypt.
+- Add --with-custom-branding and --with-custom-version configure options to
+  help forks/patchsets distinguish themselves.
+- Change version control from Mercurial to GIT.
+- Ensure SIGHUP and SIGINT keep working after a SIGINT restart.
+- Add --enable-fhs-paths configure option to allow installing into a more
+  FHS-like hierarchy.
 
 -- charybdis-3.3.0
 
