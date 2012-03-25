@@ -83,12 +83,10 @@ static int
 do_local_user(struct Client *client_p, struct Client *source_p,
 	      const char *username, const char *realname)
 {
-	struct User *user;
-
 	s_assert(NULL != source_p);
 	s_assert(source_p->username != username);
 
-	user = make_user(source_p);
+	make_user(source_p);
 
 	if (!(source_p->flags & FLAGS_SENTUSER))
 	{

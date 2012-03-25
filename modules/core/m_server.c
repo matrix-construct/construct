@@ -485,12 +485,9 @@ ms_sid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	struct remote_conf *hub_p;
 	hook_data_client hdata;
 	rb_dlink_node *ptr;
-	int hop;
 	int hlined = 0;
 	int llined = 0;
 	char squitreason[160];
-
-	hop = atoi(parv[2]);
 
 	/* collision on the name? */
 	if((target_p = find_server(NULL, parv[1])) != NULL)

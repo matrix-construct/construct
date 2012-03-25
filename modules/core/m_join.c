@@ -398,7 +398,6 @@ ms_join(struct Client *client_p, struct Client *source_p, int parc, const char *
 	time_t newts;
 	int isnew;
 	int keep_our_modes = YES;
-	int keep_new_modes = YES;
 	rb_dlink_node *ptr, *next_ptr;
 
 	/* special case for join 0 */
@@ -460,8 +459,6 @@ ms_join(struct Client *client_p, struct Client *source_p, int parc, const char *
 		keep_our_modes = NO;
 		chptr->channelts = newts;
 	}
-	else
-		keep_new_modes = NO;
 
 	/* Lost the TS, other side wins, so remove modes on this side */
 	if(!keep_our_modes)
