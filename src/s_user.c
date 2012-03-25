@@ -1477,12 +1477,19 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 		if(MyClient(target_p) && changed_case)
 			sendto_one(target_p, ":%s!%s@%s NICK %s",
 					target_p->name, target_p->username, target_p->host, nick);
+
+		/* TODO: send some snotes to SNO_NCHANGE/SNO_CCONN/SNO_CCONNEXT? */
 	}
 	else if(changed_case)
 	{
 		sendto_common_channels_local(target_p, NOCAPS, ":%s!%s@%s NICK :%s",
 				target_p->name, target_p->username,
 				target_p->host, nick);
+
+		sendto_realops_snomask(SNO_NCHANGE, L_ALL,
+				"Nick change: From %s to %s [%s@%s]",
+				target_p->name, nick,
+				target_p->username, target_p->host);
 	}
 
 	rb_strlcpy(target_p->username, user, sizeof target_p->username);
