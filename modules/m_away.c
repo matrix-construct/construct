@@ -101,7 +101,7 @@ m_away(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		{
 			sendto_one(source_p, form_str(RPL_LOAD2HI),
 					me.name, source_p->name, "AWAY");
-			return;
+			return 0;
 		}
 		if(source_p->localClient->next_away < rb_current_time() -
 				ConfigFileEntry.away_interval)
