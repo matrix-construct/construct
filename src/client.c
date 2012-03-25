@@ -625,6 +625,10 @@ resv_nick_fnc(const char *mask, const char *reason, int temp_time)
 		if(IsMe(client_p) || !IsPerson(client_p) || IsExemptResv(client_p))
 			continue;
 
+		/* Skip users that already have UID nicks. */
+		if(IsDigit(client_p->name[0]))
+			continue;
+
 		if(match_esc(mask, client_p->name))
 		{
 			nick = client_p->id;
@@ -656,6 +660,8 @@ resv_nick_fnc(const char *mask, const char *reason, int temp_time)
 			client_p->tsinfo = rb_current_time();
 			add_history(client_p, 1);
 
+			monitor_signoff(client_p);
+
 			invalidate_bancache_user(client_p);
 
 			sendto_common_channels_local(client_p, NOCAPS, ":%s!%s@%s NICK :%s",
@@ -666,6 +672,8 @@ resv_nick_fnc(const char *mask, const char *reason, int temp_time)
 			del_from_client_hash(client_p->name, client_p);
 			rb_strlcpy(client_p->name, nick, sizeof(client_p->name));
 			add_to_client_hash(nick, client_p);
+
+			monitor_signon(client_p);
 
 			RB_DLINK_FOREACH_SAFE(ptr, next_ptr, client_p->on_allow_list.head)
 			{
