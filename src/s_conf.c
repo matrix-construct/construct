@@ -742,6 +742,7 @@ set_default_conf(void)
 	ConfigFileEntry.use_whois_actually = YES;
 	ConfigFileEntry.burst_away = NO;
 	ConfigFileEntry.collision_fnc = YES;
+	ConfigFileEntry.resv_fnc = YES;
 	ConfigFileEntry.global_snotices = YES;
 	ConfigFileEntry.operspy_dont_care_user_info = NO;
 	ConfigFileEntry.use_propagated_bans = YES;

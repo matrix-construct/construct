@@ -600,6 +600,86 @@ check_xlines(void)
 	}
 }
 
+/* resv_nick_fnc
+ *
+ * inputs		- resv, reason, time
+ * outputs		- NONE
+ * side effects	- all local clients matching resv will be FNC'd
+ */
+void
+resv_nick_fnc(const char *mask, const char *reason, int temp_time)
+{
+	struct Client *client_p, *target_p;
+	rb_dlink_node *ptr;
+	rb_dlink_node *next_ptr;
+	char *nick;
+	char note[NICKLEN+10];
+
+	if (!ConfigFileEntry.resv_fnc)
+		return;
+
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, lclient_list.head)
+	{
+		client_p = ptr->data;
+
+		if(IsMe(client_p) || !IsPerson(client_p) || IsExemptResv(client_p))
+			continue;
+
+		if(match_esc(mask, client_p->name))
+		{
+			nick = client_p->id;
+
+			/* Tell opers. */
+			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				"RESV forced nick change for %s!%s@%s to %s; nick matched [%s] (%s)",
+				client_p->name, client_p->username, client_p->host, nick, mask, reason);
+
+			sendto_realops_snomask(SNO_NCHANGE, L_ALL,
+				"Nick change: From %s to %s [%s@%s]",
+				client_p->name, nick, client_p->username, client_p->host);
+
+			/* Tell the user. */
+			if (temp_time > 0)
+			{
+				sendto_one_notice(client_p,
+					":*** Nick %s is temporarily unavailable on this server.",
+					client_p->name);
+			}
+			else
+			{
+				sendto_one_notice(client_p,
+					":*** Nick %s is no longer available on this server.",
+					client_p->name);
+			}
+
+			/* Do all of the nick-changing gymnastics. */
+			client_p->tsinfo = rb_current_time();
+			add_history(client_p, 1);
+
+			invalidate_bancache_user(client_p);
+
+			sendto_common_channels_local(client_p, NOCAPS, ":%s!%s@%s NICK :%s",
+				client_p->name, client_p->username, client_p->host, nick);
+			sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s NICK %s :%ld",
+				use_id(client_p), nick, (long) client_p->tsinfo);
+
+			del_from_client_hash(client_p->name, client_p);
+			rb_strlcpy(client_p->name, nick, sizeof(client_p->name));
+			add_to_client_hash(nick, client_p);
+
+			RB_DLINK_FOREACH_SAFE(ptr, next_ptr, client_p->on_allow_list.head)
+			{
+				target_p = ptr->data;
+				rb_dlinkFindDestroy(client_p, &target_p->localClient->allow_list);
+				rb_dlinkDestroy(ptr, &client_p->on_allow_list);
+			}
+
+			rb_snprintf(note, sizeof(note), "Nick: %s", nick);
+			rb_note(client_p->localClient->F, note);
+		}
+	}
+}
+
 /*
  * update_client_exit_stats
  *

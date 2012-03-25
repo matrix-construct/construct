@@ -361,6 +361,7 @@ parse_resv(struct Client *source_p, const char *name, const char *reason, int te
 		}
 
 		rb_dlinkAddAlloc(aconf, &resv_conf_list);
+		resv_nick_fnc(aconf->host, aconf->passwd, temp_time);
 	}
 	else
 		sendto_one_notice(source_p, ":You have specified an invalid resv: [%s]", name);
