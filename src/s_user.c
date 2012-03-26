@@ -1486,10 +1486,11 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 				target_p->name, target_p->username,
 				target_p->host, nick);
 
-		sendto_realops_snomask(SNO_NCHANGE, L_ALL,
-				"Nick change: From %s to %s [%s@%s]",
-				target_p->name, nick,
-				target_p->username, target_p->host);
+		if(MyConnect(target_p))
+			sendto_realops_snomask(SNO_NCHANGE, L_ALL,
+					"Nick change: From %s to %s [%s@%s]",
+					target_p->name, nick,
+					target_p->username, target_p->host);
 	}
 
 	rb_strlcpy(target_p->username, user, sizeof target_p->username);
