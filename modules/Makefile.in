@@ -55,6 +55,7 @@ CORE_SRCS = \
   core/m_squit.c
 
 TSRCS =                          \
+  chm_nocolour.c \
   m_accept.c \
   m_admin.c \
   m_away.c \

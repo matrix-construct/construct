@@ -169,7 +169,6 @@ typedef int (*ExtbanFunc)(const char *data, struct Client *client_p,
 #define MODE_INVITEONLY 0x0010
 #define MODE_NOPRIVMSGS 0x0020
 #define MODE_REGONLY	0x0040
-#define MODE_NOCOLOR	0x0080
 #define MODE_EXLIMIT	0x0100  /* exempt from list limits, +b/+e/+I/+q */
 #define MODE_PERMANENT  0x0200  /* permanant channel, +P */
 #define MODE_OPMODERATE 0x0400  /* send rejected messages to ops */

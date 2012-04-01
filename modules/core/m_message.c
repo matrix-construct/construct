@@ -489,13 +489,6 @@ msg_channel(enum message_type msgtype,
 			source_p->localClient->last = rb_current_time();
 	}
 
-	if(chptr->mode.mode & MODE_NOCOLOR)
-	{
-		rb_strlcpy(text2, text, BUFSIZE);
-		strip_colour(text2);
-		text = text2;
-	}
-
 	hdata.msgtype = msgtype;
 	hdata.source_p = source_p;
 	hdata.chptr = chptr;
@@ -594,13 +587,6 @@ msg_channel_opmod(enum message_type msgtype,
 	char text2[BUFSIZE];
 	hook_data_privmsg_channel hdata;
 
-	if(chptr->mode.mode & MODE_NOCOLOR)
-	{
-		rb_strlcpy(text2, text, BUFSIZE);
-		strip_colour(text2);
-		text = text2;
-	}
-
 	hdata.msgtype = msgtype;
 	hdata.source_p = source_p;
 	hdata.chptr = chptr;
@@ -681,13 +667,6 @@ msg_channel_flags(enum message_type msgtype, struct Client *client_p,
 		/* idletime shouldnt be reset by notice --fl */
 		if(msgtype != MESSAGE_TYPE_NOTICE)
 			source_p->localClient->last = rb_current_time();
-	}
-
-	if(chptr->mode.mode & MODE_NOCOLOR)
-	{
-		rb_strlcpy(text2, text, BUFSIZE);
-		strip_colour(text2);
-		text = text2;
 	}
 
 	hdata.msgtype = msgtype;
