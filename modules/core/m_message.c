@@ -494,14 +494,6 @@ msg_channel(enum message_type msgtype,
 		rb_strlcpy(text2, text, BUFSIZE);
 		strip_colour(text2);
 		text = text2;
-		if (EmptyString(text))
-		{
-			/* could be empty after colour stripping and
-			 * that would cause problems later */
-			if(msgtype != MESSAGE_TYPE_NOTICE)
-				sendto_one(source_p, form_str(ERR_NOTEXTTOSEND), me.name, source_p->name);
-			return;
-		}
 	}
 
 	hdata.msgtype = msgtype;
@@ -517,6 +509,16 @@ msg_channel(enum message_type msgtype,
 
 	if (hdata.approved != 0)
 		return;
+
+	/* hook may have reduced the string to nothing. */
+	if (EmptyString(text))
+	{
+		/* could be empty after colour stripping and
+		 * that would cause problems later */
+		if(msgtype != MESSAGE_TYPE_NOTICE)
+			sendto_one(source_p, form_str(ERR_NOTEXTTOSEND), me.name, source_p->name);
+		return;
+	}
 
 	/* chanops and voiced can flood their own channel with impunity */
 	if((result = can_send(chptr, source_p, NULL)))
@@ -597,14 +599,6 @@ msg_channel_opmod(enum message_type msgtype,
 		rb_strlcpy(text2, text, BUFSIZE);
 		strip_colour(text2);
 		text = text2;
-		if (EmptyString(text))
-		{
-			/* could be empty after colour stripping and
-			 * that would cause problems later */
-			if(msgtype != MESSAGE_TYPE_NOTICE)
-				sendto_one(source_p, form_str(ERR_NOTEXTTOSEND), me.name, source_p->name);
-			return;
-		}
 	}
 
 	hdata.msgtype = msgtype;
@@ -620,6 +614,16 @@ msg_channel_opmod(enum message_type msgtype,
 
 	if (hdata.approved != 0)
 		return;
+
+	/* hook may have reduced the string to nothing. */
+	if (EmptyString(text))
+	{
+		/* could be empty after colour stripping and
+		 * that would cause problems later */
+		if(msgtype != MESSAGE_TYPE_NOTICE)
+			sendto_one(source_p, form_str(ERR_NOTEXTTOSEND), me.name, source_p->name);
+		return;
+	}
 
 	if(chptr->mode.mode & MODE_OPMODERATE &&
 			(!(chptr->mode.mode & MODE_NOPRIVMSGS) ||
@@ -684,14 +688,6 @@ msg_channel_flags(enum message_type msgtype, struct Client *client_p,
 		rb_strlcpy(text2, text, BUFSIZE);
 		strip_colour(text2);
 		text = text2;
-		if (EmptyString(text))
-		{
-			/* could be empty after colour stripping and
-			 * that would cause problems later */
-			if(msgtype != MESSAGE_TYPE_NOTICE)
-				sendto_one(source_p, form_str(ERR_NOTEXTTOSEND), me.name, source_p->name);
-			return;
-		}
 	}
 
 	hdata.msgtype = msgtype;
@@ -707,6 +703,15 @@ msg_channel_flags(enum message_type msgtype, struct Client *client_p,
 
 	if (hdata.approved != 0)
 		return;
+
+	if (EmptyString(text))
+	{
+		/* could be empty after colour stripping and
+		 * that would cause problems later */
+		if(msgtype != MESSAGE_TYPE_NOTICE)
+			sendto_one(source_p, form_str(ERR_NOTEXTTOSEND), me.name, source_p->name);
+		return;
+	}
 
 	if (msgtype != MESSAGE_TYPE_NOTICE && *text == '\001' &&
 			strncasecmp(text + 1, "ACTION ", 7))
@@ -855,6 +860,15 @@ msg_client(enum message_type msgtype,
 
 		if (hdata.approved != 0)
 			return;
+
+		if (EmptyString(text))
+		{
+			/* could be empty after colour stripping and
+			 * that would cause problems later */
+			if(msgtype != MESSAGE_TYPE_NOTICE)
+				sendto_one(source_p, form_str(ERR_NOTEXTTOSEND), me.name, source_p->name);
+			return;
+		}
 
 		/* XXX Controversial? allow opers always to send through a +g */
 		if(!IsServer(source_p) && (IsSetCallerId(target_p) ||
