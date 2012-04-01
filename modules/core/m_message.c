@@ -527,18 +527,6 @@ msg_channel(enum message_type msgtype,
 		if(result == CAN_SEND_OPV ||
 		   !flood_attack_channel(msgtype, source_p, chptr, chptr->chname))
 		{
-			if (msgtype != MESSAGE_TYPE_NOTICE && *text == '\001' &&
-					strncasecmp(text + 1, "ACTION ", 7))
-			{
-				if (chptr->mode.mode & MODE_NOCTCP)
-				{
-					sendto_one_numeric(source_p, ERR_CANNOTSENDTOCHAN,
-							   form_str(ERR_CANNOTSENDTOCHAN), chptr->chname);
-					return;
-				}
-				else if (rb_dlink_list_length(&chptr->locmembers) > (unsigned)(GlobalSetOptions.floodcount / 2))
-					source_p->large_ctcp_sent = rb_current_time();
-			}
 			sendto_channel_flags(client_p, ALL_MEMBERS, source_p, chptr,
 					     "%s %s :%s", cmdname[msgtype], chptr->chname, text);
 		}
@@ -690,25 +678,6 @@ msg_channel_flags(enum message_type msgtype, struct Client *client_p,
 		if(msgtype != MESSAGE_TYPE_NOTICE)
 			sendto_one(source_p, form_str(ERR_NOTEXTTOSEND), me.name, source_p->name);
 		return;
-	}
-
-	if (msgtype != MESSAGE_TYPE_NOTICE && *text == '\001' &&
-			strncasecmp(text + 1, "ACTION ", 7))
-	{
-		if (chptr->mode.mode & MODE_NOCTCP)
-		{
-			sendto_one_numeric(source_p, ERR_CANNOTSENDTOCHAN,
-					   form_str(ERR_CANNOTSENDTOCHAN), chptr->chname);
-			return;
-		}
-		else if (rb_dlink_list_length(&chptr->locmembers) > (unsigned)(GlobalSetOptions.floodcount / 2))
-		{
-			/* This overestimates the number of users the CTCP
-			 * is being sent to, so large_ctcp_sent might be
-			 * set inappropriately. This should not be a problem.
-			 */
-			source_p->large_ctcp_sent = rb_current_time();
-		}
 	}
 
 	sendto_channel_flags(client_p, type, source_p, chptr, "%s %c%s :%s",
