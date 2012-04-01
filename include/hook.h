@@ -30,6 +30,8 @@ extern int h_new_local_user;
 extern int h_new_remote_user;
 extern int h_introduce_client;
 extern int h_can_kick;
+extern int h_privmsg_channel;
+extern int h_privmsg_user;
 
 void init_hook(void);
 int register_hook(const char *name);
@@ -100,5 +102,29 @@ typedef struct
 	unsigned int oldumodes;
 	unsigned int oldsnomask;
 } hook_data_umode_changed;
+
+enum message_type {
+	MESSAGE_TYPE_NOTICE,
+	MESSAGE_TYPE_PRIVMSG,
+	MESSAGE_TYPE_COUNT
+};
+
+typedef struct
+{
+	enum message_type msgtype;
+	struct Client *source_p;
+	struct Channel *chptr;
+	const char *text;
+	int approved;
+} hook_data_privmsg_channel;
+
+typedef struct
+{
+	enum message_type msgtype;
+	struct Client *source_p;
+	struct Client *target_p;
+	const char *text;
+	int approved;
+} hook_data_privmsg_user;
 
 #endif
