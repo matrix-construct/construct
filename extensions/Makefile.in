@@ -37,6 +37,7 @@ SRCS =                          \
   chm_adminonly.c		\
   chm_operonly.c		\
   chm_operonly_compat.c		\
+  chm_nonotice.c		\
   chm_quietunreg_compat.c	\
   chm_sslonly.c			\
   chm_sslonly_compat.c		\
