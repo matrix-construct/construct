@@ -50,7 +50,7 @@ chm_nonotice_process(hook_data_privmsg_channel *data)
 	if (data->approved || data->msgtype != MESSAGE_TYPE_NOTICE)
 		return;
 
-	if (data->chptr.mode.mode & mode_nonotice)
+	if (data->chptr->mode.mode & mode_nonotice)
 	{
 		data->approved = ERR_CUSTOM;
 		return;
