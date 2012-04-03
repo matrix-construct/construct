@@ -479,7 +479,6 @@ msg_channel(enum message_type msgtype,
 	    const char *text)
 {
 	int result;
-	char text2[BUFSIZE];
 	hook_data_privmsg_channel hdata;
 
 	if(MyClient(source_p))
@@ -572,7 +571,6 @@ msg_channel_opmod(enum message_type msgtype,
 		  struct Client *client_p, struct Client *source_p,
 		  struct Channel *chptr, const char *text)
 {
-	char text2[BUFSIZE];
 	hook_data_privmsg_channel hdata;
 
 	hdata.msgtype = msgtype;
@@ -634,7 +632,6 @@ static void
 msg_channel_flags(enum message_type msgtype, struct Client *client_p,
 		  struct Client *source_p, struct Channel *chptr, int flags, const char *text)
 {
-	char text2[BUFSIZE];
 	int type;
 	char c;
 	hook_data_privmsg_channel hdata;
