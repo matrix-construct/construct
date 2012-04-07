@@ -40,6 +40,7 @@
 #include "s_conf.h"
 #include "packet.h"
 #include "inline/stringops.h"
+#include "hook.h"
 
 static int m_part(struct Client *, struct Client *, int, const char **);
 
@@ -54,6 +55,8 @@ DECLARE_MODULE_AV1(part, NULL, NULL, part_clist, NULL, NULL, "$Revision: 98 $");
 
 static void part_one_client(struct Client *client_p,
 			    struct Client *source_p, char *name, char *reason);
+static int can_send_part(struct Client *source_p, struct Channel *chptr, struct membership *msptr);
+static int do_message_hook(struct Client *source_p, struct Channel *chptr, char **reason);
 
 
 /*
@@ -101,7 +104,6 @@ part_one_client(struct Client *client_p, struct Client *source_p, char *name, ch
 {
 	struct Channel *chptr;
 	struct membership *msptr;
-	char reason2[BUFSIZE];
 
 	if((chptr = find_channel(name)) == NULL)
 	{
@@ -123,19 +125,13 @@ part_one_client(struct Client *client_p, struct Client *source_p, char *name, ch
 	 *  Remove user from the old channel (if any)
 	 *  only allow /part reasons in -m chans
 	 */
-	if(reason[0] && (is_chanop(msptr) || !MyConnect(source_p) ||
-			 ((can_send(chptr, source_p, msptr) > 0 &&
-			   (source_p->localClient->firsttime +
-			    ConfigFileEntry.anti_spam_exit_message_time) < rb_current_time()))))
+	if(!EmptyString(reason) &&
+		(!MyConnect(source_p) ||
+		 (can_send_part(source_p, chptr, msptr) && do_message_hook(source_p, chptr, &reason))
+		)
+	  )
 	{
-#if 0
-		if(chptr->mode.mode & MODE_NOCOLOR)
-		{
-			rb_strlcpy(reason2, reason, BUFSIZE);
-			strip_colour(reason2);
-			reason = reason2;
-		}
-#endif
+
 		sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
 			      ":%s PART %s :%s", use_id(source_p), chptr->chname, reason);
 		sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@%s PART %s :%s",
@@ -151,4 +147,60 @@ part_one_client(struct Client *client_p, struct Client *source_p, char *name, ch
 				     source_p->host, chptr->chname);
 	}
 	remove_user_from_channel(msptr);
+}
+
+/*
+ * can_send_part - whether a part message can be sent.
+ *
+ * inputs:
+ *    - client parting
+ *    - channel being parted
+ *    - membership pointer
+ * outputs:
+ *    - 1 if message allowed
+ *    - 0 if message denied
+ * side effects:
+ *    - none.
+ */
+static int
+can_send_part(struct Client *source_p, struct Channel *chptr, struct membership *msptr)
+{
+	if (!can_send(chptr, source_p, msptr))
+		return 0;
+	/* Allow chanops to bypass anti_spam_exit_message_time for part messages. */
+	if (is_chanop(msptr))
+		return 1;
+	return (source_p->localClient->firsttime + ConfigFileEntry.anti_spam_exit_message_time) < rb_current_time();
+}
+
+/*
+ * do_message_hook - execute the message hook on a part message reason.
+ *
+ * inputs:
+ *    - client parting
+ *    - channel being parted
+ *    - pointer to reason
+ * outputs:
+ *    - 1 if message is allowed
+ *    - 0 if message is denied or message is now empty
+ * side effects:
+ *    - reason may be modified.
+ */
+static int
+do_message_hook(struct Client *source_p, struct Channel *chptr, char **reason)
+{
+	hook_data_privmsg_channel hdata;
+
+	hdata.msgtype = MESSAGE_TYPE_PART;
+	hdata.source_p = source_p;
+	hdata.chptr = chptr;
+	hdata.text = *reason;
+	hdata.approved = 0;
+
+	call_hook(h_privmsg_channel, &hdata);
+
+	/* The reason may have been changed by a hook... */
+	*reason = hdata.text;
+
+	return (hdata.approved == 0 && !EmptyString(*reason));
 }

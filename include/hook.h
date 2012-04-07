@@ -106,6 +106,7 @@ typedef struct
 enum message_type {
 	MESSAGE_TYPE_NOTICE,
 	MESSAGE_TYPE_PRIVMSG,
+	MESSAGE_TYPE_PART,
 	MESSAGE_TYPE_COUNT
 };
 
