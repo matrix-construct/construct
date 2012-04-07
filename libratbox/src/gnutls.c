@@ -36,6 +36,13 @@
 static gnutls_certificate_credentials x509;
 static gnutls_dh_params dh_params;
 
+/* These are all used for getting GnuTLS to supply a client cert. */
+#define MAX_CERTS 6
+static unsigned int x509_cert_count;
+static gnutls_x509_crt_t x509_cert[MAX_CERTS];
+static gnutls_x509_privkey_t x509_key;
+static int cert_callback(gnutls_session_t session, const gnutls_datum_t *req_ca_rdn, int nreqs,
+	const gnutls_pk_algorithm_t *sign_algos, int sign_algos_len, gnutls_retr_st *st);
 
 
 #define SSL_P(x) *((gnutls_session_t *)F->ssl)
@@ -252,8 +259,34 @@ rb_init_ssl(void)
 		rb_lib_log("rb_init_ssl: Unable to allocate SSL/TLS certificate credentials");
 		return 0;
 	}
+
+	/* This should be changed to gnutls_certificate_set_retrieve_function2 once
+	 * everyone in the world has upgraded to GnuTLS 3.
+	 */
+	gnutls_certificate_client_set_retrieve_function(x509, cert_callback);
+
 	rb_event_addish("rb_gcry_random_seed", rb_gcry_random_seed, NULL, 300);
 	return 1;
+}
+
+/* We only have one certificate to authenticate with, as both client and server.  Unfortunately,
+ * GnuTLS tries to be clever, and as client, will attempt to use a certificate that the server
+ * will trust.  We usually use self-signed certs, though, so the result of this search is always
+ * nothing.  Therefore, it uses no certificate to authenticate as a client.  This is undesirable
+ * as it breaks fingerprint auth.  Thus, we use this callback to force GnuTLS to always
+ * authenticate with our certificate at all times.
+ */
+static int
+cert_callback(gnutls_session_t session, const gnutls_datum_t *req_ca_rdn, int nreqs,
+	const gnutls_pk_algorithm_t *sign_algos, int sign_algos_len, gnutls_retr_st *st)
+{
+	/* XXX - ugly hack. Tell GnuTLS to use the first (only) certificate we have for auth. */
+	st->type = GNUTLS_CRT_X509;
+	st->ncerts = x509_cert_count;
+	st->cert.x509 = x509_cert;
+	st->key.x509 = x509_key;
+
+	return 0;
 }
 
 static void
@@ -310,6 +343,24 @@ rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile)
 		return 0;
 	}
 
+	/* In addition to creating the certificate set, we also need to store our cert elsewhere
+	 * so we can force GnuTLS to identify with it when acting as a client.
+	 */
+	gnutls_x509_privkey_init(&x509_key);
+	if ((ret = gnutls_x509_privkey_import(x509_key, d_key, GNUTLS_X509_FMT_PEM)) != GNUTLS_E_SUCCESS)
+	{
+		rb_lib_log("rb_setup_ssl_server: Error loading key file: %s", gnutls_strerror(ret));
+		return 0;
+	}
+
+	x509_cert_count = MAX_CERTS;
+	if ((ret = gnutls_x509_crt_list_import(x509_cert, &x509_cert_count, d_cert, GNUTLS_X509_FMT_PEM,
+		GNUTLS_X509_CRT_LIST_IMPORT_FAIL_IF_EXCEED)) < 0)
+	{
+		rb_lib_log("rb_setup_ssl_server: Error loading certificate: %s", gnutls_strerror(ret));
+		return 0;
+	}
+	x509_cert_count = ret;
 
 	if((ret =
 	    gnutls_certificate_set_x509_key_mem(x509, d_cert, d_key,
@@ -319,6 +370,7 @@ rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile)
 			   gnutls_strerror(ret));
 		return 0;
 	}
+
 	rb_free_datum_t(d_cert);
 	rb_free_datum_t(d_key);
 
