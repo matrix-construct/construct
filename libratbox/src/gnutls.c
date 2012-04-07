@@ -76,7 +76,7 @@ rb_ssl_timeout(rb_fde_t *F, void *notused)
 
 
 static int
-do_ssl_handshake(rb_fde_t *F, PF * callback)
+do_ssl_handshake(rb_fde_t *F, PF * callback, void *data)
 {
 	int ret;
 	int flags;
@@ -90,7 +90,7 @@ do_ssl_handshake(rb_fde_t *F, PF * callback)
 				flags = RB_SELECT_READ;
 			else
 				flags = RB_SELECT_WRITE;
-			rb_setselect(F, flags, callback, NULL);
+			rb_setselect(F, flags, callback, data);
 			return 0;
 		}
 		F->ssl_errno = ret;
@@ -107,7 +107,7 @@ rb_ssl_tryaccept(rb_fde_t *F, void *data)
 
 	lrb_assert(F->accept != NULL);
 
-	ret = do_ssl_handshake(F, rb_ssl_tryaccept);
+	ret = do_ssl_handshake(F, rb_ssl_tryaccept, NULL);
 
 	/* do_ssl_handshake does the rb_setselect */
 	if(ret == 0)
@@ -146,7 +146,7 @@ rb_ssl_start_accepted(rb_fde_t *new_F, ACCB * cb, void *data, int timeout)
 	gnutls_dh_set_prime_bits(*ssl, 1024);
 	gnutls_transport_set_ptr(*ssl, (gnutls_transport_ptr_t) (long int)new_F->fd);
 	gnutls_certificate_server_set_request(*ssl, GNUTLS_CERT_REQUEST);
-	if(do_ssl_handshake(new_F, rb_ssl_tryaccept))
+	if(do_ssl_handshake(new_F, rb_ssl_tryaccept, NULL))
 	{
 		struct acceptdata *ad = new_F->accept;
 		new_F->accept = NULL;
@@ -178,7 +178,7 @@ rb_ssl_accept_setup(rb_fde_t *F, rb_fde_t *new_F, struct sockaddr *st, int addrl
 	gnutls_dh_set_prime_bits(SSL_P(new_F), 1024);
 	gnutls_transport_set_ptr(SSL_P(new_F), (gnutls_transport_ptr_t) (long int)rb_get_fd(new_F));
 	gnutls_certificate_server_set_request(SSL_P(new_F), GNUTLS_CERT_REQUEST);
-	if(do_ssl_handshake(F, rb_ssl_tryaccept))
+	if(do_ssl_handshake(F, rb_ssl_tryaccept, NULL))
 	{
 		struct acceptdata *ad = F->accept;
 		F->accept = NULL;
@@ -386,7 +386,7 @@ rb_ssl_tryconn_cb(rb_fde_t *F, void *data)
 	struct ssl_connect *sconn = data;
 	int ret;
 
-	ret = do_ssl_handshake(F, rb_ssl_tryconn_cb);
+	ret = do_ssl_handshake(F, rb_ssl_tryconn_cb, (void *)sconn);
 
 	switch (ret)
 	{
@@ -425,10 +425,7 @@ rb_ssl_tryconn(rb_fde_t *F, int status, void *data)
 	gnutls_dh_set_prime_bits(SSL_P(F), 1024);
 	gnutls_transport_set_ptr(SSL_P(F), (gnutls_transport_ptr_t) (long int)F->fd);
 
-	if(do_ssl_handshake(F, rb_ssl_tryconn_cb))
-	{
-		rb_ssl_connect_realcb(F, RB_OK, sconn);
-	}
+	do_ssl_handshake(F, rb_ssl_tryconn_cb, (void *)sconn);
 }
 
 void
@@ -472,10 +469,7 @@ rb_ssl_start_connected(rb_fde_t *F, CNCB * callback, void *data, int timeout)
 
 	rb_settimeout(F, sconn->timeout, rb_ssl_tryconn_timeout_cb, sconn);
 
-	if(do_ssl_handshake(F, rb_ssl_tryconn_cb))
-	{
-		rb_ssl_connect_realcb(F, RB_OK, sconn);
-	}
+	do_ssl_handshake(F, rb_ssl_tryconn_cb, (void *)sconn);
 }
 
 int
