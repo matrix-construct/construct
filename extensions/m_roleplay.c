@@ -145,7 +145,8 @@ m_displaymsg(struct Client *source_p, const char *channel, int underline, int ac
 
 	if((chptr = find_channel(channel)) == NULL)
 	{
-		sendto_one(source_p, form_str(ERR_NOSUCHCHANNEL), channel);
+		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
+				form_str(ERR_NOSUCHCHANNEL), channel);
 		return 0;
 	}
 
