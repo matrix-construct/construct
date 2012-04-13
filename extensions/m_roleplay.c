@@ -26,6 +26,7 @@
 #include "chmode.h"
 #include "tgchange.h"
 #include "channel.h"
+#include "packet.h"
 
 static int m_scene(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static int m_fsay(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
@@ -138,6 +139,9 @@ m_displaymsg(struct Client *source_p, const char *channel, int underline, int ac
 	char nick2[NICKLEN+1];
 	char *nick3 = rb_strdup(nick);
 	char text2[BUFSIZE];
+
+	if(!IsFloodDone(source_p))
+		flood_endgrace(source_p);
 
 	if((chptr = find_channel(channel)) == NULL)
 	{
