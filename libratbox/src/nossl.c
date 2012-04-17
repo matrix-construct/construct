@@ -26,7 +26,7 @@
 
 #include <libratbox_config.h>
 #include <ratbox_lib.h>
-#if !defined(HAVE_OPENSSL) && !defined(HAVE_GNUTLS)
+#if !defined(HAVE_OPENSSL)
 
 #include "arc4random.h"
 
