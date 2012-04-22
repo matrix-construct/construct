@@ -25,7 +25,7 @@ if [ "x$TIP" = "x" ]; then
 fi
 
 # Charybdis wants the hg tip to be in include/serno.h, in its own format.
-MYTIP=`hg parents --template '{date|shortdate}_{node|short}' 2>/dev/null | sed -e s/-//g -e s/_/-/`
+MYTIP=`git log -1 --date=short --pretty=format:%cd_%h 2>/dev/null | sed -e s/-//g -e s/_/-/`
 echo "[charybdis] Generating include/serno.h for tip $MYTIP."
 cat << _EOF_ > include/serno.h
 /* Generated automatically by makepackage. Any changes made here will be lost. */
