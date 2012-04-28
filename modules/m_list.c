@@ -48,6 +48,7 @@
 #include "msg.h"
 #include "parse.h"
 #include "modules.h"
+#include "inline/stringops.h"
 
 static rb_dlink_list safelisting_clients = { NULL, NULL, 0 };
 
@@ -56,6 +57,8 @@ static void _moddeinit(void);
 
 static int m_list(struct Client *, struct Client *, int, const char **);
 static int mo_list(struct Client *, struct Client *, int, const char **);
+
+static void list_one_channel(struct Client *source_p, struct Channel *chptr, int visible);
 
 static void safelist_check_cliexit(hook_data_client_exit * hdata);
 static void safelist_client_instantiate(struct Client *, struct ListClient *);
@@ -286,6 +289,29 @@ static int mo_list(struct Client *client_p, struct Client *source_p, int parc, c
 }
 
 /*
+ * list_one_channel()
+ *
+ * inputs       - client pointer, channel pointer, whether normally visible
+ * outputs      - none
+ * side effects - a channel is listed
+ */
+static void list_one_channel(struct Client *source_p, struct Channel *chptr,
+		int visible)
+{
+	char topic[TOPICLEN + 1];
+
+	if (chptr->topic != NULL)
+		rb_strlcpy(topic, chptr->topic, sizeof topic);
+	else
+		topic[0] = '\0';
+	strip_colour(topic);
+	sendto_one(source_p, form_str(RPL_LIST), me.name, source_p->name,
+		   visible ? "" : "!",
+		   chptr->chname, rb_dlink_list_length(&chptr->members),
+		   topic);
+}
+
+/*
  * safelist_sendq_exceeded()
  *
  * inputs       - pointer to client that needs checking
@@ -392,10 +418,7 @@ static void safelist_channel_named(struct Client *source_p, const char *name, in
 
 	visible = !SecretChannel(chptr) || IsMember(source_p, chptr);
 	if (visible || operspy)
-		sendto_one(source_p, form_str(RPL_LIST), me.name, source_p->name,
-			   visible ? "" : "!",
-			   chptr->chname, rb_dlink_list_length(&chptr->members),
-			   chptr->topic == NULL ? "" : chptr->topic);
+		list_one_channel(source_p, chptr, visible);
 
 	sendto_one(source_p, form_str(RPL_LISTEND), me.name, source_p->name);
 	return;
@@ -436,10 +459,7 @@ static void safelist_one_channel(struct Client *source_p, struct Channel *chptr)
 	if (safelist_data->created_max && chptr->channelts > safelist_data->created_max)
 		return;
 
-	sendto_one(source_p, form_str(RPL_LIST), me.name, source_p->name,
-		   visible ? "" : "!",
-		   chptr->chname, rb_dlink_list_length(&chptr->members),
-		   chptr->topic == NULL ? "" : chptr->topic);
+	list_one_channel(source_p, chptr, visible);
 }
 
 /*
