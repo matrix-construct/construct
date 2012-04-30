@@ -289,7 +289,7 @@ because of a spoof. Otherwise, and if there is no dynamic spoof (i.e. the
 visible and real hostname are equal), the IP address MAY be shown to normal
 users.
 
-The account name is '0' if the user is not logged in with services.
+The account name is '*' if the user is not logged in with services.
 
 Nick TS rules apply.
 
