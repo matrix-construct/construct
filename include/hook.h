@@ -32,6 +32,8 @@ extern int h_introduce_client;
 extern int h_can_kick;
 extern int h_privmsg_channel;
 extern int h_privmsg_user;
+extern int h_conf_read_start;
+extern int h_conf_read_end;
 
 void init_hook(void);
 int register_hook(const char *name);
