@@ -1688,22 +1688,6 @@ conf_set_serverhide_links_delay(void *data)
 	ConfigServerHide.links_delay = val;
 }
 
-static int
-conf_begin_service(struct TopConf *tc)
-{
-	struct Client *target_p;
-	rb_dlink_node *ptr;
-
-	RB_DLINK_FOREACH(ptr, global_serv_list.head)
-	{
-		target_p = ptr->data;
-
-		target_p->flags &= ~FLAGS_SERVICE;
-	}
-
-	return 0;
-}
-
 static void
 conf_set_service_name(void *data)
 {
@@ -1732,9 +1716,6 @@ conf_set_service_name(void *data)
 
 	tmp = rb_strdup(data);
 	rb_dlinkAddAlloc(tmp, &service_list);
-
-	if((target_p = find_server(NULL, tmp)))
-		target_p->flags |= FLAGS_SERVICE;
 }
 
 static int
@@ -2363,7 +2344,7 @@ newconf_init()
 	add_top_conf("channel", NULL, NULL, conf_channel_table);
 	add_top_conf("serverhide", NULL, NULL, conf_serverhide_table);
 
-	add_top_conf("service", conf_begin_service, NULL, NULL);
+	add_top_conf("service", NULL, NULL, NULL);
 	add_conf_item("service", "name", CF_QSTRING, conf_set_service_name);
 
 	add_top_conf("alias", conf_begin_alias, conf_end_alias, NULL);

@@ -48,6 +48,12 @@
 #include "whowas.h"
 #include "monitor.h"
 
+static int _modinit(void);
+static void _moddeinit(void);
+
+static void mark_services(void);
+static void unmark_services(void);
+
 static int me_su(struct Client *, struct Client *, int, const char **);
 static int me_login(struct Client *, struct Client *, int, const char **);
 static int me_rsfnc(struct Client *, struct Client *, int, const char **);
@@ -56,6 +62,8 @@ static int me_nickdelay(struct Client *, struct Client *, int, const char **);
 static void h_svc_server_introduced(hook_data_client *);
 static void h_svc_whois(hook_data_client *);
 static void h_svc_stats(hook_data_int *);
+static void h_svc_conf_read_start(void *);
+static void h_svc_conf_read_end(void *);
 
 struct Message su_msgtab = {
 	"SU", 0, 0, 0, MFLG_SLOW,
@@ -82,10 +90,24 @@ mapi_hfn_list_av1 services_hfnlist[] = {
 	{ "doing_whois",	(hookfn) h_svc_whois },
 	{ "doing_whois_global",	(hookfn) h_svc_whois },
 	{ "server_introduced",	(hookfn) h_svc_server_introduced },
+	{ "conf_read_start", (hookfn) h_svc_conf_read_start },
+	{ "conf_read_end", (hookfn) h_svc_conf_read_end },
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(services, NULL, NULL, services_clist, NULL, services_hfnlist, "$Revision: 1907 $");
+DECLARE_MODULE_AV1(services, _modinit, _moddeinit, services_clist, NULL, services_hfnlist, "$Revision: 1907 $");
+
+static int
+_modinit(void)
+{
+	mark_services();
+}
+
+static void
+_moddeinit(void)
+{
+	unmark_services();
+}
 
 static int
 me_su(struct Client *client_p, struct Client *source_p,
@@ -344,5 +366,46 @@ h_svc_stats(hook_data_int *data)
 						form_str(RPL_STATSULINE),
 						(const char *)ptr->data, "*", "*", "s");
 		}
+	}
+}
+
+static void
+h_svc_conf_read_start(void *dummy)
+{
+	unmark_services();
+}
+
+static void
+unmark_services(void)
+{
+	struct Client *target_p;
+	rb_dlink_node *ptr;
+
+	RB_DLINK_FOREACH(ptr, global_serv_list.head)
+	{
+		target_p = ptr->data;
+
+		target_p->flags &= ~FLAGS_SERVICE;
+	}
+}
+
+static void
+h_svc_conf_read_end(void *dummy)
+{
+	mark_services();
+}
+
+static void
+mark_services(void)
+{
+	struct Client *target_p;
+	rb_dlink_node *ptr;
+
+	RB_DLINK_FOREACH(ptr, service_list.head)
+	{
+		target_p = find_server(NULL, (const char *)ptr->data);
+
+		if (target_p)
+			target_p->flags |= FLAGS_SERVICE;
 	}
 }
