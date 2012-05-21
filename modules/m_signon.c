@@ -152,7 +152,11 @@ me_svslogin(struct Client *client_p, struct Client *source_p,
 	int valid = 0;
 
 	if(!(source_p->flags & FLAGS_SERVICE))
+	{
+		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			"Non-service server %s attempting to execute services-only command SVSLOGIN", source_p->name);
 		return 0;
+	}
 
 	if((target_p = find_client(parv[1])) == NULL)
 		return 0;
