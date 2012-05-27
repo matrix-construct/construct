@@ -78,6 +78,7 @@
 #include "numeric.h"
 #include "ircd.h"
 #include "s_conf.h"
+#include "s_user.h"
 #include "supported.h"
 #include "chmode.h"
 
@@ -224,6 +225,15 @@ isupport_stringptr(const void *ptr)
 }
 
 static const char *
+isupport_umode(const void *ptr)
+{
+	const char *str;
+
+	str = ptr;
+	return ConfigFileEntry.oper_only_umodes & user_modes[*str] ? NULL : str;
+}
+
+static const char *
 isupport_chanmodes(const void *ptr)
 {
 	static char result[80];
@@ -316,7 +326,7 @@ init_isupport(void)
 	add_isupport("NETWORK", isupport_stringptr, &ServerInfo.network_name);
 	add_isupport("KNOCK", isupport_boolean, &ConfigChannel.use_knock);
 	add_isupport("STATUSMSG", isupport_string, "@+");
-	add_isupport("CALLERID", isupport_string, "g");
+	add_isupport("CALLERID", isupport_umode, "g");
 	add_isupport("CASEMAPPING", isupport_string, "rfc1459");
 	add_isupport("CHARSET", isupport_string, "ascii");
 	add_isupport("NICKLEN", isupport_nicklen, NULL);
@@ -326,7 +336,7 @@ init_isupport(void)
 	add_isupport("ETRACE", isupport_string, "");
 	add_isupport("CPRIVMSG", isupport_string, "");
 	add_isupport("CNOTICE", isupport_string, "");
-	add_isupport("DEAF", isupport_string, "D");
+	add_isupport("DEAF", isupport_umode, "D");
 	add_isupport("MONITOR", isupport_intptr, &ConfigFileEntry.max_monitor);
 	add_isupport("FNC", isupport_string, "");
 	add_isupport("TARGMAX", isupport_targmax, NULL);
