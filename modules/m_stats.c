@@ -861,7 +861,7 @@ stats_usage (struct Client *source_p)
 		rup = 1;
   
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
-			   "R :CPU Secs %d:%d User %d:%d System %d:%d",
+			   "R :CPU Secs %d:%02d User %d:%02d System %d:%02d",
 			   (int) (secs / 60), (int) (secs % 60),
 			   (int) (rus.ru_utime.tv_sec / 60),
 			   (int) (rus.ru_utime.tv_sec % 60),
