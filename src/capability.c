@@ -159,7 +159,7 @@ capability_index_list(struct CapabilityIndex *idx, unsigned int cap_mask)
 
 	DICTIONARY_FOREACH(entry, &iter, idx->cap_dict)
 	{
-		if (entry->value & cap_mask)
+		if ((1 << entry->value) & cap_mask)
 		{
 			tl = rb_sprintf(t, "%s ", entry->cap);
 			t += tl;
