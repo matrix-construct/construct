@@ -718,6 +718,7 @@ show_capabilities(struct Client *target_p)
 	if(!IsServer(target_p) || !target_p->serv->caps)	/* short circuit if no caps */
 		return msgbuf + 1;
 
+	rb_strlcat(msgbuf, " ", sizeof(msgbuf));
 	rb_strlcat(msgbuf, capability_index_list(serv_capindex, target_p->serv->caps), sizeof(msgbuf));
 
 	return msgbuf + 1;
