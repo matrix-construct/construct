@@ -51,7 +51,7 @@ capability_get(struct CapabilityIndex *idx, const char *cap)
 	if (entry != NULL && !(entry->flags & CAP_ORPHANED))
 		return (1 << entry->value);
 
-	return 0xFFFFFFFF;
+	return 0;
 }
 
 unsigned int
