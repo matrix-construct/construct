@@ -235,7 +235,7 @@ rb_select_sigio(long delay)
 	PF *hdl;
 	rb_fde_t *F;
 	void *data;
-	struct siginfo si;
+	siginfo_t si;
 
 	struct timespec timeout;
 	if(rb_sigio_supports_event() || delay >= 0)
