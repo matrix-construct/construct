@@ -50,9 +50,11 @@ chm_nonotice_process(hook_data_privmsg_channel *data)
 	if (data->approved || data->msgtype != MESSAGE_TYPE_NOTICE)
 		return;
 
-	if (data->chptr->mode.mode & mode_nonotice)
+	/* block all notices except CTCPs; use chm_noctcp to block CTCPs. */
+	if (data->chptr->mode.mode & mode_nonotice && *data->text != '\001')
 	{
-		data->approved = ERR_CUSTOM;
+		sendto_one_numeric(data->source_p, ERR_CANNOTSENDTOCHAN, form_str(ERR_CANNOTSENDTOCHAN), data->chptr->chname);
+		data->approved = ERR_CANNOTSENDTOCHAN;
 		return;
 	}
 }
