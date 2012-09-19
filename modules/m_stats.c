@@ -1478,6 +1478,18 @@ stats_servlinks (struct Client *source_p)
 	sendto_one_numeric(source_p, RPL_STATSDEBUG, "? :Server recv: %s", buf);
 }
 
+static int
+stats_l_should_show_oper(struct Client *target_p)
+{
+	if (IsOperInvis(target_p))
+		return 0;
+
+	if(target_p->user->away)
+		return 0;
+
+	return 1;
+}
+
 static void
 stats_ltrace(struct Client *source_p, int parc, const char *parv[])
 {
@@ -1547,7 +1559,7 @@ stats_ltrace(struct Client *source_p, int parc, const char *parv[])
 			if(MyClient(source_p))
 				stats_l_client(source_p, source_p, statchar);
 
-			stats_l_list(source_p, name, doall, wilds, &local_oper_list, statchar, NULL);
+			stats_l_list(source_p, name, doall, wilds, &local_oper_list, statchar, stats_l_should_show_oper);
 		}
 
 		if (!ConfigServerHide.flatten_links || IsOper(source_p) ||
@@ -1564,7 +1576,6 @@ stats_ltrace(struct Client *source_p, int parc, const char *parv[])
 
 	return;
 }
-
 
 static void
 stats_l_list(struct Client *source_p, const char *name, int doall, int wilds,
