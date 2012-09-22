@@ -101,6 +101,7 @@ TSRCS =                          \
   m_set.c \
   m_signon.c \
   m_snote.c \
+  m_starttls.c \
   m_stats.c \
   m_svinfo.c \
   m_tb.c \
