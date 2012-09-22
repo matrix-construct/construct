@@ -695,7 +695,7 @@ static  const char *  replies[] = {
 /* 667 */	NULL,
 /* 668 */	NULL,
 /* 669 */	NULL,
-/* 670 */	NULL,
+/* 670 RPL_STARTTLS, */		":STARTTLS successful, proceed with TLS handshake",
 /* 671 RPL_WHOISSECURE, */	"%s :is using a secure connection",
 /* 672 */	NULL,
 /* 673 */	NULL,
