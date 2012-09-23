@@ -319,6 +319,8 @@ extern const char *form_str(int);
 #define RPL_STARTTLS         670 /* ircv3.atheme.org tls-3.1 */
 #define RPL_WHOISSECURE      671 /* Unreal3.2 --nenolod */
 
+#define ERR_STARTTLS         691 /* ircv3.atheme.org tls-3.2 */
+
 #define RPL_MODLIST          702
 #define RPL_ENDOFMODLIST     703
 

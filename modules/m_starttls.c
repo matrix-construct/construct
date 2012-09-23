@@ -54,6 +54,7 @@ mr_starttls(struct Client *client_p, struct Client *source_p, int parc, const ch
 	if (rb_socketpair(AF_UNIX, SOCK_STREAM, 0, &F[0], &F[1], "STARTTLS ssld session") == -1)
 	{
 		ilog_error("error creating SSL/TLS socketpair for ssld slave");
+		sendto_one_numeric(client_p, ERR_STARTTLS, form_str(ERR_STARTTLS), "Unable to create SSL/TLS socketpair for ssld offload slave");
 		return 1;
 	}
 
