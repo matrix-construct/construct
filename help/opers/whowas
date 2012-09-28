@@ -1,8 +1,11 @@
-WHOWAS <nick>
+WHOWAS <nick> [limit]
 
 WHOWAS will show you the last known host and whois
 information for the specified nick.  Depending on the
 number of times they have connected to the network, there
 may be more than one listing for a specific user.
+
+If a limit is specified, WHOWAS will not show more
+than that many listings.
 
 The WHOWAS data will expire after time.
