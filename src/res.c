@@ -23,6 +23,12 @@
  * removed, various robustness fixes
  *
  * 2006 --jilles and nenolod
+ *
+ * Resend queries to other servers if the DNS server replies with an error or
+ * an invalid response. Also, avoid servers that return errors or invalid
+ * responses.
+ *
+ * October 2012 --mr_flea
  */
 
 #include "stdinc.h"
@@ -75,7 +81,7 @@ struct reslist
 
 static rb_fde_t *res_fd;
 static rb_dlink_list request_list = { NULL, NULL, 0 };
-static int ns_timeout_count[IRCD_MAXNS];
+static int ns_failure_count[IRCD_MAXNS]; /* timeouts and invalid/failed replies */
 
 static void rem_request(struct reslist *request);
 static struct reslist *make_request(struct DNSQuery *query);
@@ -95,11 +101,11 @@ static struct DNSReply *make_dnsreply(struct reslist *request);
  * res_ourserver(inp)
  *      looks up "inp" in irc_nsaddr_list[]
  * returns:
- *      0  : not found
- *      >0 : found
+ *      server ID or -1 for not found
  * author:
  *      paul vixie, 29may94
  *      revised for ircd, cryogen(stu) may03
+ *      slightly modified for charybdis, mr_flea oct12
  */
 static int res_ourserver(const struct rb_sockaddr_storage *inp)
 {
@@ -114,46 +120,46 @@ static int res_ourserver(const struct rb_sockaddr_storage *inp)
 	for (ns = 0; ns < irc_nscount; ns++)
 	{
 		const struct rb_sockaddr_storage *srv = &irc_nsaddr_list[ns];
+
+	  	if (srv->ss_family != inp->ss_family)
+			continue;
+
 #ifdef RB_IPV6
 		v6 = (const struct sockaddr_in6 *)srv;
 #endif
 		v4 = (const struct sockaddr_in *)srv;
 
 		/* could probably just memcmp(srv, inp, srv.ss_len) here
-		 * but we'll air on the side of caution - stu
+		 * but we'll err on the side of caution - stu
 		 */
 		switch (srv->ss_family)
 		{
 #ifdef RB_IPV6
-		  case AF_INET6:
-			  if (srv->ss_family == inp->ss_family)
-				  if (v6->sin6_port == v6in->sin6_port)
-					  if ((memcmp(&v6->sin6_addr.s6_addr, &v6in->sin6_addr.s6_addr,
-						sizeof(struct in6_addr)) == 0) ||
-					      (memcmp(&v6->sin6_addr.s6_addr, &in6addr_any,
-						sizeof(struct in6_addr)) == 0))
-					  {
-						  ns_timeout_count[ns] = 0;
-						  return 1;
-					  }
-			  break;
+			case AF_INET6:
+				if (v6->sin6_port == v6in->sin6_port)
+					if ((memcmp(&v6->sin6_addr.s6_addr, &v6in->sin6_addr.s6_addr,
+									sizeof(struct in6_addr)) == 0) ||
+							(memcmp(&v6->sin6_addr.s6_addr, &in6addr_any,
+									sizeof(struct in6_addr)) == 0))
+					{
+						return ns;
+					}
+				break;
 #endif
-		  case AF_INET:
-			  if (srv->ss_family == inp->ss_family)
-				  if (v4->sin_port == v4in->sin_port)
-					  if ((v4->sin_addr.s_addr == INADDR_ANY)
-					      || (v4->sin_addr.s_addr == v4in->sin_addr.s_addr))
-					  {
-						  ns_timeout_count[ns] = 0;
-						  return 1;
-					  }
-			  break;
-		  default:
-			  break;
+			case AF_INET:
+				if (v4->sin_port == v4in->sin_port)
+					if ((v4->sin_addr.s_addr == INADDR_ANY)
+							|| (v4->sin_addr.s_addr == v4in->sin_addr.s_addr))
+					{
+						return ns;
+					}
+				break;
+			default:
+				break;
 		}
 	}
 
-	return 0;
+	return -1;
 }
 
 /*
@@ -175,19 +181,10 @@ static time_t timeout_query_list(time_t now)
 
 		if (now >= timeout)
 		{
-			if (--request->retries <= 0)
-			{
-				(*request->query->callback) (request->query->ptr, NULL);
-				rem_request(request);
-				continue;
-			}
-			else
-			{
-				ns_timeout_count[request->lastns]++;
-				request->sentat = now;
-				request->timeout += request->timeout;
-				resend_query(request);
-			}
+			ns_failure_count[request->lastns]++;
+			request->sentat = now;
+			request->timeout += request->timeout;
+			resend_query(request);
 		}
 
 		if ((next_time == 0) || timeout < next_time)
@@ -219,7 +216,7 @@ static void start_resolver(void)
 
 	irc_res_init();
 	for (i = 0; i < irc_nscount; i++)
-		ns_timeout_count[i] = 0;
+		ns_failure_count[i] = 0;
 
 	if (res_fd == NULL)
 	{
@@ -301,6 +298,31 @@ static struct reslist *make_request(struct DNSQuery *query)
 	request->timeout = 4;	/* start at 4 and exponential inc. */
 	request->query = query;
 
+	/*
+	 * generate a unique id
+	 * NOTE: we don't have to worry about converting this to and from
+	 * network byte order, the nameserver does not interpret this value
+	 * and returns it unchanged
+	 *
+	 * we generate an id per request now (instead of per send) to allow
+	 * late replies to be used.
+	 */
+#ifdef HAVE_LRAND48
+	do
+	{
+		request->id = (request->id + lrand48()) & 0xffff;
+	} while (find_id(request->id));
+#else
+	int k = 0;
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	do
+	{
+		request->id = (request->id + k + tv.tv_usec) & 0xffff;
+		k++;
+	} while (find_id(request->id));
+#endif /* HAVE_LRAND48 */
+
 	rb_dlinkAdd(request, &request->node, &request_list);
 
 	return request;
@@ -367,7 +389,7 @@ static int send_res_msg(const char *msg, int len, int rcount)
 	for (i = 0; i < irc_nscount; i++)
 	{
 		ns = (i + rcount - 1) % irc_nscount;
-		if (ns_timeout_count[ns] && retrycnt % retryfreq(ns_timeout_count[ns]))
+		if (ns_failure_count[ns] && retrycnt % retryfreq(ns_failure_count[ns]))
 			continue;
 		if (sendto(rb_get_fd(res_fd), msg, len, 0,
 		     (struct sockaddr *)&(irc_nsaddr_list[ns]), 
@@ -379,7 +401,7 @@ static int send_res_msg(const char *msg, int len, int rcount)
 	for (i = 0; i < irc_nscount; i++)
 	{
 		ns = (i + rcount - 1) % irc_nscount;
-		if (!ns_timeout_count[ns])
+		if (!ns_failure_count[ns])
 			continue;
 		if (sendto(rb_get_fd(res_fd), msg, len, 0,
 		     (struct sockaddr *)&(irc_nsaddr_list[ns]), 
@@ -519,30 +541,7 @@ static void query_name(struct reslist *request)
 	     irc_res_mkquery(request->queryname, C_IN, request->type, (unsigned char *)buf, sizeof(buf))) > 0)
 	{
 		HEADER *header = (HEADER *) buf;
-#ifndef HAVE_LRAND48
-		int k = 0;
-		struct timeval tv;
-#endif
-		/*
-		 * generate an unique id
-		 * NOTE: we don't have to worry about converting this to and from
-		 * network byte order, the nameserver does not interpret this value
-		 * and returns it unchanged
-		 */
-#ifdef HAVE_LRAND48
-		do
-		{
-			header->id = (header->id + lrand48()) & 0xffff;
-		} while (find_id(header->id));
-#else
-		gettimeofday(&tv, NULL);
-		do
-		{
-			header->id = (header->id + k + tv.tv_usec) & 0xffff;
-			k++;
-		} while (find_id(header->id));
-#endif /* HAVE_LRAND48 */
-		request->id = header->id;
+		header->id = request->id;
 		++request->sends;
 
 		ns = send_res_msg(buf, request_len, request->sends);
@@ -553,6 +552,13 @@ static void query_name(struct reslist *request)
 
 static void resend_query(struct reslist *request)
 {
+	if (--request->retries <= 0)
+	{
+		(*request->query->callback) (request->query->ptr, NULL);
+		rem_request(request);
+		return;
+	}
+
 	switch (request->type)
 	{
 	  case T_PTR:
@@ -752,6 +758,7 @@ static int res_read_single_reply(rb_fde_t *F, void *data)
 	int answer_count;
 	socklen_t len = sizeof(struct rb_sockaddr_storage);
 	struct rb_sockaddr_storage lsin;
+	int ns;
 
 	rc = recvfrom(rb_get_fd(F), buf, sizeof(buf), 0, (struct sockaddr *)&lsin, &len);
 
@@ -782,33 +789,56 @@ static int res_read_single_reply(rb_fde_t *F, void *data)
 	/*
 	 * check against possibly fake replies
 	 */
-	if (!res_ourserver(&lsin))
+	ns = res_ourserver(&lsin);
+	if (ns == -1)
 		return 1;
+
+	if (ns != request->lastns)
+	{
+		/*
+		 * We'll accept the late reply, but penalize it a little more to make
+		 * sure a laggy server doesn't end up favored.
+		 */
+		ns_failure_count[ns] += 3;
+	}
+
 
 	if (!check_question(request, header, buf, buf + rc))
 		return 1;
 
 	if ((header->rcode != NO_ERRORS) || (header->ancount == 0))
 	{
-		if (NXDOMAIN == header->rcode)
+		/*
+		 * RFC 2136 states that in the event of a server returning SERVFAIL
+		 * or NOTIMP, the request should be resent to the next server.
+		 * Additionally, if the server refuses our query, resend it as well.
+		 * -- mr_flea
+		 */
+		if (SERVFAIL == header->rcode || NOTIMP == header->rcode ||
+				REFUSED == header->rcode)
 		{
-			(*request->query->callback) (request->query->ptr, NULL);
-			rem_request(request);
+			ns_failure_count[ns]++;
+			resend_query(request);
 		}
 		else
 		{
 			/*
-			 * If a bad error was returned, we stop here and dont send
-			 * send any more (no retries granted).
+			 * Either a fatal error was returned or no answer. Cancel the
+			 * request.
 			 */
+			if (NXDOMAIN == header->rcode)
+			{
+				/* If the rcode is NXDOMAIN, treat it as a good response. */
+				ns_failure_count[ns] /= 4;
+			}
 			(*request->query->callback) (request->query->ptr, NULL);
 			rem_request(request);
 		}
 		return 1;
 	}
 	/*
-	 * If this fails there was an error decoding the received packet, 
-	 * give up. -- jilles
+	 * If this fails there was an error decoding the received packet.
+	 * -- jilles
 	 */
 	answer_count = proc_answer(request, header, buf, buf + rc);
 
@@ -819,18 +849,17 @@ static int res_read_single_reply(rb_fde_t *F, void *data)
 			if (request->name == NULL)
 			{
 				/*
-				 * got a PTR response with no name, something bogus is happening
-				 * don't bother trying again, the client address doesn't resolve
+				 * Got a PTR response with no name, something strange is
+				 * happening. Try another DNS server.
 				 */
-				(*request->query->callback) (request->query->ptr, reply);
-				rem_request(request);
+				ns_failure_count[ns]++;
+				resend_query(request);
 				return 1;
 			}
 
 			/*
 			 * Lookup the 'authoritative' name that we were given for the
 			 * ip#. 
-			 *
 			 */
 #ifdef RB_IPV6
 			if (request->addr.ss_family == AF_INET6)
@@ -850,12 +879,14 @@ static int res_read_single_reply(rb_fde_t *F, void *data)
 			rb_free(reply);
 			rem_request(request);
 		}
+
+		ns_failure_count[ns] /= 4;
 	}
 	else
 	{
-		/* couldn't decode, give up -- jilles */
-		(*request->query->callback) (request->query->ptr, NULL);
-		rem_request(request);
+		/* Invalid or corrupt reply - try another resolver. */
+		ns_failure_count[ns]++;
+		resend_query(request);
 	}
 	return 1;
 }
@@ -890,6 +921,6 @@ void report_dns_servers(struct Client *source_p)
 				ipaddr, sizeof ipaddr))
 			rb_strlcpy(ipaddr, "?", sizeof ipaddr);
 		sendto_one_numeric(source_p, RPL_STATSDEBUG,
-				"A %s %d", ipaddr, ns_timeout_count[i]);
+				"A %s %d", ipaddr, ns_failure_count[i]);
 	}
 }
