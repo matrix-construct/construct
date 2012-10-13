@@ -371,6 +371,8 @@ extern const char *form_str(int);
 #define ERR_MLOCKRESTRICTED	742
 #define ERR_INVALIDBAN		743
 
+#define ERR_TOPICLOCK		744 /* inspircd */
+
 #define RPL_SCANMATCHED		750
 #define RPL_SCANUMODES		751
 
