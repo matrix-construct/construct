@@ -422,7 +422,7 @@ find_address_conf(const char *host, const char *sockhost, const char *user,
 	}
 
 #ifdef RB_IPV6
-	if(ip->sa_family == AF_INET6 &&
+	if(ip != NULL && ip->sa_family == AF_INET6 &&
 			ipv4_from_ipv6((const struct sockaddr_in6 *)(const void *)ip, &ip4))
 	{
 		kconf = find_conf_by_address(NULL, NULL, NULL, (struct sockaddr *)&ip4, CONF_KILL, AF_INET, vuser, NULL);
