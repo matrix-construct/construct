@@ -69,7 +69,9 @@ mr_starttls(struct Client *client_p, struct Client *source_p, int parc, const ch
 	ctl = start_ssld_accept(client_p->localClient->F, F[1], rb_get_fd(F[0]));
 	if (ctl != NULL)
 	{
+		del_from_cli_fd_hash(client_p);
 		client_p->localClient->F = F[0];
+		add_to_cli_fd_hash(client_p);
 		client_p->localClient->ssl_ctl = ctl;
 		SetSSL(client_p);
 	}
