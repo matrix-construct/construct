@@ -51,6 +51,12 @@ mr_starttls(struct Client *client_p, struct Client *source_p, int parc, const ch
 	if (!MyConnect(client_p))
 		return 0;
 
+	if (!ssl_ok || !get_ssld_count())
+	{
+		sendto_one_numeric(client_p, ERR_STARTTLS, form_str(ERR_STARTTLS), "TLS is not configured");
+		return 1;
+	}
+
 	if (rb_socketpair(AF_UNIX, SOCK_STREAM, 0, &F[0], &F[1], "STARTTLS ssld session") == -1)
 	{
 		ilog_error("error creating SSL/TLS socketpair for ssld slave");
@@ -79,5 +85,6 @@ mr_starttls(struct Client *client_p, struct Client *source_p, int parc, const ch
 		return 1;
 
 #endif
+	sendto_one_numeric(client_p, ERR_STARTTLS, form_str(ERR_STARTTLS), "TLS is not configured");
 	return 0;
 }
