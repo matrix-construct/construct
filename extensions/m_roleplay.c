@@ -199,7 +199,7 @@ m_displaymsg(struct Client *source_p, const char *channel, int underline, int ac
 	else
 		rb_snprintf(text2, sizeof(text2), "%s", text);
 
-	sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@npc.fakeuser.invalid PRIVMSG %s :%s", nick2, source_p->name, channel, text2); 
+	sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@npc.fakeuser.invalid PRIVMSG %s :%s (%s)", nick2, source_p->name, channel, text2, source_p->name);
 	sendto_match_servs(source_p, "*", CAP_ENCAP, NOCAPS, "ENCAP * ROLEPLAY %s %s :%s",
 			channel, nick2, text2);
 	return 0;
