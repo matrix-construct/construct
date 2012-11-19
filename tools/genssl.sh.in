@@ -7,7 +7,7 @@ echo "Generating self-signed certificate .. "
 openssl req -x509 -nodes -newkey rsa:1024 -keyout "${sysconfdir}"/ssl.key -out "${sysconfdir}"/ssl.cert
 
 echo "Generating Diffie-Hellman file for secure SSL/TLS negotiation .. "
-openssl dhparam -out "${sysconfdir}"/dh.pem 1024
+openssl dhparam -out "${sysconfdir}"/dh.pem 2048
 
 # If sysconfdir is relative to prefix, make the path relative. I.e.,
 # prefix=/usr and sysconfdir=/etc -> relative_sysconfdir=/etc,
