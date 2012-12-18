@@ -112,7 +112,7 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 	/* check to ensure any "required" caps are set. --nenolod */
 	/* XXX: show required CAPABs. */
 	required_mask = capability_index_get_required(serv_capindex);
-	if (required_mask && !(client_p->localClient->caps & required_mask))
+	if (!IsCapable(client_p, required_mask))
 	{
 		exit_client(client_p, client_p, client_p, "Missing required CAPABs");
 
