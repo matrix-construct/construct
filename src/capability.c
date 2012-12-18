@@ -83,6 +83,21 @@ capability_put(struct CapabilityIndex *idx, const char *cap)
 	return (1 << entry->value);
 }
 
+unsigned int
+capability_put_anonymous(struct CapabilityIndex *idx)
+{
+	unsigned int value;
+
+	s_assert(idx != NULL);
+	if (!idx->highest_bit)
+		return 0xFFFFFFFF;
+	value = 1 << idx->highest_bit;
+	idx->highest_bit++;
+	if (idx->highest_bit % (sizeof(unsigned int) * 8) == 0)
+		idx->highest_bit = 0;
+	return value;
+}
+
 void
 capability_orphan(struct CapabilityIndex *idx, const char *cap)
 {

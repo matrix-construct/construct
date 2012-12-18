@@ -26,6 +26,7 @@ struct CapabilityEntry;
 
 extern unsigned int capability_get(struct CapabilityIndex *idx, const char *cap);
 extern unsigned int capability_put(struct CapabilityIndex *idx, const char *cap);
+extern unsigned int capability_put_anonymous(struct CapabilityIndex *idx);
 extern void capability_orphan(struct CapabilityIndex *idx, const char *cap);
 extern void capability_require(struct CapabilityIndex *idx, const char *cap);
 
