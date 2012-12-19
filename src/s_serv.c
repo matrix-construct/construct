@@ -124,6 +124,9 @@ init_builtin_capabs(void)
 	CAP_EOPMOD = capability_put(serv_capindex, "EOPMOD");
 	CAP_BAN = capability_put(serv_capindex, "BAN");
 	CAP_MLOCK = capability_put(serv_capindex, "MLOCK");
+
+	capability_require(serv_capindex, "QS");
+	capability_require(serv_capindex, "ENCAP");
 }
 
 static CNCB serv_connect_callback;
