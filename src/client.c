@@ -1026,46 +1026,6 @@ free_exited_clients(void *unused)
 	
 }
 
-/*
-** Recursively send QUITs and SQUITs for source_p and all its dependent clients
-** and servers to those servers that need them.  A server needs the client
-** QUITs if it can't figure them out from the SQUIT (ie pre-TS4) or if it
-** isn't getting the SQUIT because of @#(*&@)# hostmasking.  With TS4, once
-** a link gets a SQUIT, it doesn't need any QUIT/SQUITs for clients depending
-** on that one -orabidoo
-*/
-static void
-recurse_send_quits(struct Client *client_p, struct Client *source_p, 
-		   struct Client *to, const char *comment1,
-		   const char *comment)
-{
-	struct Client *target_p;
-	rb_dlink_node *ptr, *ptr_next;
-	/* If this server can handle quit storm (QS) removal
-	 * of dependents, just send the SQUIT
-	 */
-
-	if(IsCapable(to, CAP_QS))
-	{
-		sendto_one(to, "SQUIT %s :%s",
-			   get_id(source_p, to), comment);
-	}
-	else
-	{
-		RB_DLINK_FOREACH_SAFE(ptr, ptr_next, source_p->serv->users.head)
-		{
-			target_p = ptr->data;
-			sendto_one(to, ":%s QUIT :%s", target_p->name, comment1);
-		}
-		RB_DLINK_FOREACH_SAFE(ptr, ptr_next, source_p->serv->servers.head)
-		{
-			target_p = ptr->data;
-			recurse_send_quits(client_p, target_p, to, comment1, comment);
-		}
-		sendto_one(to, "SQUIT %s :%s", source_p->name, comment);
-	}
-}
-
 /* 
 ** Remove all clients that depend on source_p; assumes all (S)QUITs have
 ** already been sent.  we make sure to exit a server's dependent clients 
@@ -1122,7 +1082,7 @@ recurse_remove_clients(struct Client *source_p, const char *comment)
 
 /*
 ** Remove *everything* that depends on source_p, from all lists, and sending
-** all necessary QUITs and SQUITs.  source_p itself is still on the lists,
+** all necessary SQUITs.  source_p itself is still on the lists,
 ** and its SQUITs have been sent except for the upstream one  -orabidoo
 */
 static void
@@ -1137,11 +1097,10 @@ remove_dependents(struct Client *client_p,
 	{
 		to = ptr->data;
 
-		if(IsMe(to) || to == source_p->from || 
-		   (to == client_p && IsCapable(to, CAP_QS)))
+		if(IsMe(to) || to == source_p->from || to == client_p)
 			continue;
 
-		recurse_send_quits(client_p, source_p, to, comment1, comment);
+		sendto_one(to, "SQUIT %s :%s", get_id(source_p, to), comment);
 	}
 
 	recurse_remove_clients(source_p, comment1);
