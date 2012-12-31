@@ -46,6 +46,8 @@ capability_get(struct CapabilityIndex *idx, const char *cap)
 	struct CapabilityEntry *entry;
 
 	s_assert(idx != NULL);
+	if (cap == NULL)
+		return 0;
 
 	entry = irc_dictionary_retrieve(idx->cap_dict, cap);
 	if (entry != NULL && !(entry->flags & CAP_ORPHANED))
