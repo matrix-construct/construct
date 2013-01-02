@@ -109,16 +109,6 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 		return 0;
 	}
 
-	/* check to ensure any "required" caps are set. --nenolod */
-	/* XXX: show required CAPABs. */
-	required_mask = capability_index_get_required(serv_capindex);
-	if (!IsCapable(client_p, required_mask))
-	{
-		exit_client(client_p, client_p, client_p, "Missing required CAPABs");
-
-		return 0;
-	}
-
 	/* Now we just have to call check_server and everything should be
 	 * check for us... -A1kmm. */
 	switch (check_server(name, client_p))
@@ -200,6 +190,21 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 					"Link %s dropped, TS6 protocol is required", name);
 		exit_client(client_p, client_p, client_p, "Incompatible TS version");
+		return 0;
+	}
+
+	/* check to ensure any "required" caps are set. --nenolod */
+	/* XXX: show required CAPABs. */
+	required_mask = capability_index_get_required(serv_capindex);
+	if (!IsCapable(client_p, required_mask))
+	{
+		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
+					"Link %s dropped, required CAPABs are missing", name);
+		ilog(L_SERVER, "Link %s%s dropped, required CAPABs are missing",
+				EmptyString(client_p->name) ? name : "",
+				log_client_name(client_p, SHOW_IP));
+		exit_client(client_p, client_p, client_p, "Missing required CAPABs");
+
 		return 0;
 	}
 
