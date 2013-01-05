@@ -84,7 +84,8 @@ mr_starttls(struct Client *client_p, struct Client *source_p, int parc, const ch
 	else
 		return 1;
 
-#endif
+#else
 	sendto_one_numeric(client_p, ERR_STARTTLS, form_str(ERR_STARTTLS), "TLS is not configured");
+#endif
 	return 0;
 }
