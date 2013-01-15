@@ -62,8 +62,8 @@ init_cache(void)
 {
 	/* allocate the emptyline */
 	emptyline = rb_malloc(sizeof(struct cacheline));
-	emptyline->data[0] = ' ';
-	emptyline->data[1] = '\0';
+	emptyline->data = rb_strdup(" ");
+
 	user_motd_changed[0] = '\0';
 
 	user_motd = cache_file(MPATH, "ircd.motd", 0);
@@ -135,8 +135,13 @@ cache_file(const char *filename, const char *shortname, int flags)
 
 		if(!EmptyString(line))
 		{
+			char untabline[BUFSIZE];
+
 			lineptr = rb_malloc(sizeof(struct cacheline));
-			untabify(lineptr->data, line, sizeof(lineptr->data));
+
+			untabify(untabline, line, sizeof(untabline));
+			lineptr->data = rb_strdup(untabline);
+
 			rb_dlinkAddTail(lineptr, &lineptr->linenode, &cacheptr->contents);
 		}
 		else
@@ -209,7 +214,11 @@ free_cachefile(struct cachefile *cacheptr)
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, cacheptr->contents.head)
 	{
 		if(ptr->data != emptyline)
-			rb_free(ptr->data);
+		{
+			struct cacheline *line = ptr->data;
+			rb_free(line->data);
+			rb_free(line);
+		}
 	}
 
 	rb_free(cacheptr);
