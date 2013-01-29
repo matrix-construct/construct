@@ -78,6 +78,8 @@ parse_netmask(const char *text, struct sockaddr  *naddr, int *nb)
 			*b = atoi(ptr);
 			if(*b > 128)
 				*b = 128;
+			else if(*b < 0)
+				return HM_HOST;
 		} else
 			*b = 128;
 		if(rb_inet_pton_sock(ip, (struct sockaddr *)addr) > 0)
@@ -95,6 +97,8 @@ parse_netmask(const char *text, struct sockaddr  *naddr, int *nb)
 			*b = atoi(ptr);
 			if(*b > 32)
 				*b = 32;
+			else if(*b < 0)
+				return HM_HOST;
 		} else
 			*b = 32;
 		if(rb_inet_pton_sock(ip, (struct sockaddr *)addr) > 0)
