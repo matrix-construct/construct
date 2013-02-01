@@ -110,7 +110,7 @@ mr_webirc(struct Client *client_p, struct Client *source_p, int parc, const char
 	else
 		encr = parv[1];
 
-	if (strcmp(encr, aconf->passwd))
+	if (encr == NULL || strcmp(encr, aconf->passwd))
 	{
 		sendto_one(source_p, "NOTICE * :CGI:IRC password incorrect");
 		return 0;

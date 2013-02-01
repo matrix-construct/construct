@@ -196,7 +196,7 @@ match_oper_password(const char *password, struct oper_conf *oper_p)
 	else
 		encr = password;
 
-	if(strcmp(encr, oper_p->passwd) == 0)
+	if(encr != NULL && strcmp(encr, oper_p->passwd) == 0)
 		return YES;
 	else
 		return NO;

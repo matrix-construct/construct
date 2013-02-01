@@ -46,6 +46,7 @@ m_mkpasswd(struct Client *client_p, struct Client *source_p, int parc, const cha
 {
 	static time_t last_used = 0;
 	char *salt;
+	const char *crypted;
 	const char *hashtype;
 	const char hashdefault[] = "SHA512";
 
@@ -82,7 +83,8 @@ m_mkpasswd(struct Client *client_p, struct Client *source_p, int parc, const cha
 		return 0;
 	}
 
-	sendto_one_notice(source_p, ":Hash [%s] for %s: %s", hashtype, parv[1], rb_crypt(parv[1], salt));
+	crypted = rb_crypt(parv[1], salt);
+	sendto_one_notice(source_p, ":Hash [%s] for %s: %s", hashtype, parv[1], crypted ? crypted : "???");
 	return 0;
 }
 
@@ -94,6 +96,7 @@ static int
 mo_mkpasswd(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	char *salt;
+	const char *crypted;
 	const char *hashtype;
 	const char hashdefault[] = "SHA512";
 
@@ -121,7 +124,8 @@ mo_mkpasswd(struct Client *client_p, struct Client *source_p, int parc, const ch
 		return 0;
 	}
 
-	sendto_one_notice(source_p, ":Hash [%s] for %s: %s", hashtype, parv[1], rb_crypt(parv[1], salt));
+	crypted = rb_crypt(parv[1], salt);
+	sendto_one_notice(source_p, ":Hash [%s] for %s: %s", hashtype, parv[1], crypted ? crypted : "???");
 	return 0;
 }
 

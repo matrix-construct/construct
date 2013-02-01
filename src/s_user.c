@@ -373,7 +373,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 		else
 			encr = source_p->localClient->passwd;
 
-		if(strcmp(encr, aconf->passwd))
+		if(encr == NULL || strcmp(encr, aconf->passwd))
 		{
 			ServerStats.is_ref++;
 			sendto_one(source_p, form_str(ERR_PASSWDMISMATCH), me.name, source_p->name);

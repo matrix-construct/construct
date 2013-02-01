@@ -326,6 +326,7 @@ check_server(const char *name, struct Client *client_p)
 	struct server_conf *tmp_p;
 	rb_dlink_node *ptr;
 	int error = -1;
+	const char *encr;
 
 	s_assert(NULL != client_p);
 	if(client_p == NULL)
@@ -360,8 +361,9 @@ check_server(const char *name, struct Client *client_p)
 			{
 				if(ServerConfEncrypted(tmp_p))
 				{
-					if(!strcmp(tmp_p->passwd, rb_crypt(client_p->localClient->passwd,
-									tmp_p->passwd)))
+					encr = rb_crypt(client_p->localClient->passwd,
+									tmp_p->passwd);
+					if(encr != NULL && !strcmp(tmp_p->passwd, encr))
 					{
 						server_p = tmp_p;
 						break;
