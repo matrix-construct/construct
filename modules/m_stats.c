@@ -1484,9 +1484,6 @@ stats_l_should_show_oper(struct Client *target_p)
 	if (IsOperInvis(target_p))
 		return 0;
 
-	if(target_p->user->away)
-		return 0;
-
 	return 1;
 }
 
