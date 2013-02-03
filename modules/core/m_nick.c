@@ -365,8 +365,8 @@ ms_uid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	if(!clean_uid(parv[8], source_p->id))
 	{
 		rb_snprintf(squitreason, sizeof squitreason,
-				"Invalid UID %s for nick %s on %s",
-				parv[8], parv[1], source_p->name);
+				"Invalid UID %s for nick %s on %s/%s",
+				parv[8], parv[1], source_p->name, source_p->id);
 		exit_client(client_p, client_p, client_p, squitreason);
 		return 0;
 	}
@@ -456,8 +456,8 @@ ms_euid(struct Client *client_p, struct Client *source_p, int parc, const char *
 	if(!clean_uid(parv[8], source_p->id))
 	{
 		rb_snprintf(squitreason, sizeof squitreason,
-				"Invalid UID %s for nick %s on %s",
-				parv[8], parv[1], source_p->name);
+				"Invalid UID %s for nick %s on %s/%s",
+				parv[8], parv[1], source_p->name, source_p->id);
 		exit_client(client_p, client_p, client_p, squitreason);
 		return 0;
 	}
