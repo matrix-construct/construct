@@ -406,7 +406,7 @@ static  const char *  replies[] = {
 /* 378 RPL_WHOISHOST, */        "%s :is connecting from *@%s %s",
 /* 379 */       NULL,
 /* 380 */       NULL,
-/* 381 RPL_YOUREOPER, */        ":%s 381 %s :IRCOP FLAG TURN ON",
+/* 381 RPL_YOUREOPER, */        ":%s 381 %s :We would like to take this moment to remind you that we accept absolutely no liability for the insanity you're about to endure.",
 /* 382 RPL_REHASHING, */        ":%s 382 %s %s :Rehashing",
 /* 383 */       NULL,
 /* 384 RPL_MYPORTIS, */		NULL,
