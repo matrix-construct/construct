@@ -189,11 +189,7 @@ do_whois(struct Client *client_p, struct Client *source_p, int parc, const char 
 		nick++;
 	}
 
-	if(MyClient(source_p))
-		target_p = find_named_person(nick);
-	else
-		target_p = find_person(nick);
-
+	target_p = find_named_person(nick);
 	if(target_p != NULL)
 	{
 		if(operspy)
