@@ -256,8 +256,10 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 
 			if(moduledata.approved != 0)
 			{
+#ifdef XXX_NOTYET
 				sendto_one(source_p, form_str(moduledata.approved),
 					   me.name, source_p->name, name);
+#endif
 				continue;
 			}
 
@@ -302,9 +304,10 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 			 * see extensions/chm_operonly.c for other comments on this
 			 * -- dwr
 			 */
+#ifdef XXX_NOTYET
 			if(i != ERR_CUSTOM)
 				sendto_one(source_p, form_str(i), me.name, source_p->name, name);
-
+#endif
 			continue;
 		}
 		else if(chptr != chptr2)
