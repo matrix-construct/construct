@@ -1025,8 +1025,8 @@ perform_nickchange_collides(struct Client *source_p, struct Client *client_p,
 			{
 				ServerStats.is_kill++;
 
-				sendto_one_numeric(target_p, ERR_NICKCOLLISION,
-						form_str(ERR_NICKCOLLISION), target_p->name);
+				sendto_one_numeric(source_p, ERR_NICKCOLLISION,
+						form_str(ERR_NICKCOLLISION), source_p->name);
 
 				/* kill the client issuing the nickchange */
 				kill_client_serv_butone(client_p, source_p,
