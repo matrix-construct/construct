@@ -87,6 +87,7 @@ typedef struct
 typedef struct
 {
 	struct Client *client;
+	struct Client *target;
 	int approved;
 } hook_data_client_approval;
 

@@ -40,6 +40,7 @@
 #include "modules.h"
 #include "s_newconf.h"
 
+static int h_can_kill;
 static char buf[BUFSIZE];
 
 static int ms_kill(struct Client *, struct Client *, int, const char **);
@@ -54,7 +55,12 @@ struct Message kill_msgtab = {
 
 mapi_clist_av1 kill_clist[] = { &kill_msgtab, NULL };
 
-DECLARE_MODULE_AV1(kill, NULL, NULL, kill_clist, NULL, NULL, "$Revision: 3408 $");
+mapi_hlist_av1 kill_hlist[] = {
+	{ "can_kill", &h_can_kill },
+	{ NULL, NULL},
+};
+
+DECLARE_MODULE_AV1(kill, NULL, NULL, kill_clist, kill_hlist, NULL, "$Revision: 3408 $");
 
 /*
 ** mo_kill
@@ -68,6 +74,7 @@ mo_kill(struct Client *client_p, struct Client *source_p, int parc, const char *
 	const char *inpath = client_p->name;
 	const char *user;
 	const char *reason;
+	hook_data_client_approval moduledata;
 
 	user = parv[1];
 
@@ -114,6 +121,16 @@ mo_kill(struct Client *client_p, struct Client *source_p, int parc, const char *
 				target_p->name);
 		return 0;
 	}
+
+	/* Last chance to stop the kill */
+	moduledata.client = source_p;
+	moduledata.target = target_p;
+	moduledata.approved = 1;
+	call_hook(h_can_kill, &moduledata);
+
+	if (moduledata.approved == 0)
+		/* Let the calleee send a message */
+		return 0;
 
 	if(MyConnect(target_p))
 		sendto_one(target_p, ":%s!%s@%s KILL %s :%s",

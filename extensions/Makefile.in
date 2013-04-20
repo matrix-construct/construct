@@ -69,6 +69,7 @@ SRCS =                          \
   m_findforwards.c		\
   m_identify.c			\
   m_mkpasswd.c                  \
+  m_nokillservices.c		\
   m_ojoin.c			\
   m_olist.c			\
   m_okick.c			\
