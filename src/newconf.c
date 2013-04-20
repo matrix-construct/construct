@@ -58,6 +58,7 @@ static char *yy_blacklist_host = NULL;
 static char *yy_blacklist_reason = NULL;
 static int yy_blacklist_ipv4 = 1;
 static int yy_blacklist_ipv6 = 0;
+static rb_dlink_list yy_blacklist_filters;
 
 static char *yy_privset_extends = NULL;
 
@@ -1779,9 +1780,24 @@ conf_set_alias_target(void *data)
 	yy_alias->target = rb_strdup(data);
 }
 
+/* XXX for below */
+static void conf_set_blacklist_reason(void *data);
+
 static void
 conf_set_blacklist_host(void *data)
 {
+	if (yy_blacklist_host)
+	{
+		conf_report_error("blacklist::host %s overlaps existing host %s",
+			(char *)data, yy_blacklist_host);
+
+		/* Cleanup */
+		conf_set_blacklist_reason(NULL);
+		return;
+	}
+
+	yy_blacklist_ipv4 = 1;
+	yy_blacklist_ipv6 = 0;
 	yy_blacklist_host = rb_strdup(data);
 }
 
@@ -1814,9 +1830,89 @@ conf_set_blacklist_type(void *data)
 }
 
 static void
+conf_set_blacklist_matches(void *data)
+{
+	conf_parm_t *args = data;
+
+	for (; args; args = args->next)
+	{
+		struct BlacklistFilter *filter;
+		char *str = args->v.string;
+		char *p;
+		int type = BLACKLIST_FILTER_LAST;
+
+		if (CF_TYPE(args->type) != CF_QSTRING)
+		{
+			conf_report_error("blacklist::matches -- must be quoted string");
+			continue;
+		}
+
+		if (str == NULL)
+		{
+			conf_report_error("blacklist::matches -- invalid entry");
+			continue;
+		}
+
+		if (strlen(str) > HOSTIPLEN)
+		{
+			conf_report_error("blacklist::matches has an entry too long: %s",
+					str);
+			continue;
+		}
+
+		for (p = str; *p != '\0'; p++)
+		{
+			/* Check for validity */
+			if (*p == '.')
+				type = BLACKLIST_FILTER_ALL;
+			else if (!isalnum(*p))
+			{
+				conf_report_error("blacklist::matches has invalid IP match entry %s",
+						str);
+				type = 0;
+				break;
+			}
+		}
+
+		if (type == BLACKLIST_FILTER_ALL)
+		{
+			/* Basic IP sanity check */
+			struct rb_sockaddr_storage tmp;
+			if (rb_inet_pton(AF_INET, str, &tmp) <= 0)
+			{
+				conf_report_error("blacklist::matches has invalid IP match entry %s",
+						str);
+				continue;
+			}
+		}
+		else if (type == BLACKLIST_FILTER_LAST)
+		{
+			/* Verify it's the correct length */
+			if (strlen(str) > 3)
+			{
+				conf_report_error("blacklist::matches has invalid octet match entry %s",
+						str);
+				continue;
+			}
+		}
+		else
+		{
+			continue; /* Invalid entry */
+		}
+
+		filter = rb_malloc(sizeof(struct BlacklistFilter));
+		filter->type = type;
+		rb_strlcpy(filter->filterstr, str, sizeof(filter->filterstr));
+
+		rb_dlinkAdd(filter, &filter->node, &yy_blacklist_filters);
+	}
+}
+
+static void
 conf_set_blacklist_reason(void *data)
 {
 	yy_blacklist_reason = rb_strdup(data);
+	rb_dlink_node *ptr, *nptr;
 
 	if (yy_blacklist_host && yy_blacklist_reason)
 	{
@@ -1842,16 +1938,25 @@ conf_set_blacklist_reason(void *data)
 			}
 		}
 
-		new_blacklist(yy_blacklist_host, yy_blacklist_reason, yy_blacklist_ipv4, yy_blacklist_ipv6);
+		new_blacklist(yy_blacklist_host, yy_blacklist_reason, yy_blacklist_ipv4, yy_blacklist_ipv6,
+				&yy_blacklist_filters);
+	}
 
 cleanup_bl:
-		rb_free(yy_blacklist_host);
-		rb_free(yy_blacklist_reason);
-		yy_blacklist_host = NULL;
-		yy_blacklist_reason = NULL;
-		yy_blacklist_ipv4 = 1;
-		yy_blacklist_ipv6 = 0;
+	RB_DLINK_FOREACH_SAFE(ptr, nptr, yy_blacklist_filters.head)
+	{
+		if (data == NULL)
+			rb_free(ptr);
+
+		rb_dlinkDelete(ptr, &yy_blacklist_filters);
 	}
+
+	rb_free(yy_blacklist_host);
+	rb_free(yy_blacklist_reason);
+	yy_blacklist_host = NULL;
+	yy_blacklist_reason = NULL;
+	yy_blacklist_ipv4 = 1;
+	yy_blacklist_ipv6 = 0;
 }
 
 /* public functions */
@@ -2354,5 +2459,6 @@ newconf_init()
 	add_top_conf("blacklist", NULL, NULL, NULL);
 	add_conf_item("blacklist", "host", CF_QSTRING, conf_set_blacklist_host);
 	add_conf_item("blacklist", "type", CF_STRING | CF_FLIST, conf_set_blacklist_type);
+	add_conf_item("blacklist", "matches", CF_QSTRING | CF_FLIST, conf_set_blacklist_matches);
 	add_conf_item("blacklist", "reject_reason", CF_QSTRING, conf_set_blacklist_reason);
 }

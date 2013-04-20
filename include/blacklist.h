@@ -24,6 +24,11 @@
 #ifndef _BLACKLIST_H_
 #define _BLACKLIST_H_
 
+#include "stdinc.h"
+
+#define BLACKLIST_FILTER_ALL 1
+#define BLACKLIST_FILTER_LAST 2
+
 /* A configured DNSBL */
 struct Blacklist {
 	unsigned int status;	/* If CONF_ILLEGAL, delete when no clients */
@@ -31,6 +36,7 @@ struct Blacklist {
 	int ipv4;	/* Does this blacklist support IPv4 lookups? */
 	int ipv6;	/* Does this blacklist support IPv6 lookups? */
 	char host[IRCD_RES_HOSTLEN + 1];
+	rb_dlink_list filters;	/* Filters for queries */
 	char reject_reason[IRCD_BUFSIZE];
 	unsigned int hits;
 	time_t lastwarning;
@@ -44,8 +50,15 @@ struct BlacklistClient {
 	rb_dlink_node node;
 };
 
+/* A blacklist filter */
+struct BlacklistFilter {
+	int type;		/* Type of filter */
+	char filterstr[HOSTIPLEN]; /* The filter itself */
+	rb_dlink_node node;
+};
+
 /* public interfaces */
-struct Blacklist *new_blacklist(char *host, char *reject_reason, int ipv4, int ipv6);
+struct Blacklist *new_blacklist(char *host, char *reject_reason, int ipv4, int ipv6, rb_dlink_list *filters);
 void lookup_blacklists(struct Client *client_p);
 void abort_blacklist_queries(struct Client *client_p);
 void unref_blacklist(struct Blacklist *blptr);

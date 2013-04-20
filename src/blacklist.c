@@ -59,6 +59,64 @@ static struct Blacklist *find_blacklist(char *name)
 	return NULL;
 }
 
+static inline int blacklist_check_reply(struct BlacklistClient *blcptr, struct rb_sockaddr_storage *addr)
+{
+	struct Blacklist *blptr = blcptr->blacklist;
+	char ipaddr[HOSTIPLEN];
+	char *lastoctet;
+	rb_dlink_node *ptr;
+
+	/* XXX the below two checks might want to change at some point
+	 * e.g. if IPv6 blacklists don't use 127.x.y.z or A records anymore
+	 * --Elizabeth
+	 */
+	if (addr->ss_family != AF_INET ||
+			memcmp(&((struct sockaddr_in *)addr)->sin_addr, "\177", 1))
+		goto blwarn;
+
+	/* No filters and entry found - thus positive match */
+	if (!rb_dlink_list_length(&blptr->filters))
+		return 1;
+
+	rb_inet_ntop_sock((struct sockaddr *)addr, ipaddr, sizeof(ipaddr));
+
+	/* Below will prolly have to change too if the above changes */
+	if ((lastoctet = strrchr(ipaddr, '.')) == NULL || *(++lastoctet) == '\0')
+		goto blwarn;
+
+	RB_DLINK_FOREACH(ptr, blcptr->blacklist->filters.head)
+	{
+		struct BlacklistFilter *filter = ptr->data;
+		char *cmpstr;
+
+		if (filter->type == BLACKLIST_FILTER_ALL)
+			cmpstr = ipaddr;
+		else if (filter->type == BLACKLIST_FILTER_LAST)
+			cmpstr = lastoctet;
+		else
+		{
+			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+					"blacklist_check_reply(): Unknown filtertype (BUG!)");
+			continue;
+		}
+
+		if (strcmp(cmpstr, filter->filterstr) == 0)
+			/* Match! */
+			return 1;
+	}
+
+	return 0;
+blwarn:
+	if (blcptr->blacklist->lastwarning + 3600 < rb_current_time())
+	{
+		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				"Garbage reply from blacklist %s",
+				blcptr->blacklist->host);
+		blcptr->blacklist->lastwarning = rb_current_time();
+	}
+	return 0;
+}
+
 static void blacklist_dns_callback(void *vptr, struct DNSReply *reply)
 {
 	struct BlacklistClient *blcptr = (struct BlacklistClient *) vptr;
@@ -77,17 +135,8 @@ static void blacklist_dns_callback(void *vptr, struct DNSReply *reply)
 
 	if (reply != NULL)
 	{
-		/* only accept 127.x.y.z as a listing */
-		if (reply->addr.ss_family == AF_INET &&
-				!memcmp(&((struct sockaddr_in *)&reply->addr)->sin_addr, "\177", 1))
+		if (blacklist_check_reply(blcptr, &reply->addr))
 			listed = TRUE;
-		else if (blcptr->blacklist->lastwarning + 3600 < rb_current_time())
-		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
-					"Garbage reply from blacklist %s",
-					blcptr->blacklist->host);
-			blcptr->blacklist->lastwarning = rb_current_time();
-		}
 	}
 
 	/* they have a blacklist entry for this client */
@@ -180,7 +229,7 @@ static void initiate_blacklist_dnsquery(struct Blacklist *blptr, struct Client *
 }
 
 /* public interfaces */
-struct Blacklist *new_blacklist(char *name, char *reject_reason, int ipv4, int ipv6)
+struct Blacklist *new_blacklist(char *name, char *reject_reason, int ipv4, int ipv6, rb_dlink_list *filters)
 {
 	struct Blacklist *blptr;
 
@@ -195,10 +244,14 @@ struct Blacklist *new_blacklist(char *name, char *reject_reason, int ipv4, int i
 	}
 	else
 		blptr->status &= ~CONF_ILLEGAL;
+
 	rb_strlcpy(blptr->host, name, IRCD_RES_HOSTLEN + 1);
 	rb_strlcpy(blptr->reject_reason, reject_reason, IRCD_BUFSIZE);
 	blptr->ipv4 = ipv4;
 	blptr->ipv6 = ipv6;
+
+	rb_dlinkMoveList(filters, &blptr->filters);
+
 	blptr->lastwarning = 0;
 
 	return blptr;
@@ -206,9 +259,17 @@ struct Blacklist *new_blacklist(char *name, char *reject_reason, int ipv4, int i
 
 void unref_blacklist(struct Blacklist *blptr)
 {
+	rb_dlink_node *ptr, *next_ptr;
+
 	blptr->refcount--;
 	if (blptr->status & CONF_ILLEGAL && blptr->refcount <= 0)
 	{
+		RB_DLINK_FOREACH_SAFE(ptr, next_ptr, blptr->filters.head)
+		{
+			rb_free(ptr);
+			rb_dlinkDelete(ptr, &blptr->filters);
+		}
+
 		rb_dlinkFindDestroy(blptr, &blacklist_list);
 		rb_free(blptr);
 	}
