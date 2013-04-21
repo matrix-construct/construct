@@ -1943,12 +1943,17 @@ conf_set_blacklist_reason(void *data)
 	}
 
 cleanup_bl:
-	RB_DLINK_FOREACH_SAFE(ptr, nptr, yy_blacklist_filters.head)
+	if (data == NULL)
 	{
-		if (data == NULL)
+		RB_DLINK_FOREACH_SAFE(ptr, nptr, yy_blacklist_filters.head)
+		{
 			rb_free(ptr);
-
-		rb_dlinkDelete(ptr, &yy_blacklist_filters);
+			rb_dlinkDelete(ptr, &yy_blacklist_filters);
+		}
+	}
+	else
+	{
+		yy_blacklist_filters = (rb_dlink_list){ NULL, NULL, 0 };
 	}
 
 	rb_free(yy_blacklist_host);
