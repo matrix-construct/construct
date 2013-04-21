@@ -65,7 +65,7 @@ mo_ojoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 		return 0;
 	}
 
-	if(*parv[1] == '@' || *parv[1] == '%' || *parv[1] == '+')
+	if(*parv[1] == '@' || *parv[1] == '+')
 	{
 		parv[1]++;
 		move_me = 1;
