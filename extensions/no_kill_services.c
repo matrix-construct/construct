@@ -22,7 +22,7 @@
 
 static void block_services_kill(void *data);
 
-mapi_hfn_list_av1 m_nokillservices_hfnlist[] = {
+mapi_hfn_list_av1 no_kill_services_hfnlist[] = {
 	{ "can_kill", (hookfn) block_services_kill },
 	{ NULL, NULL }
 };
@@ -47,5 +47,5 @@ block_services_kill(void *vdata)
 	}
 }
 
-DECLARE_MODULE_AV1(m_nokillservices, NULL, NULL, NULL, NULL,
-			m_nokillservices_hfnlist, "Charybdis 3.4+");
+DECLARE_MODULE_AV1(no_kill_services, NULL, NULL, NULL, NULL,
+			no_kill_services_hfnlist, "Charybdis 3.4+");
