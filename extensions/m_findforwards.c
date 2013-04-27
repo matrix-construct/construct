@@ -34,6 +34,7 @@
 #include "parse.h"
 #include "modules.h"
 #include "packet.h"
+#include "messages.h"
 
 static int m_findforwards(struct Client *client_p, struct Client *source_p,
 			int parc, const char *parv[]);

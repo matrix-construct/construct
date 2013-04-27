@@ -44,6 +44,7 @@
 #include "msg.h"
 #include "parse.h"
 #include "modules.h"
+#include "messages.h"
 
 #define SVS_chanserv_NICK "ChanServ"
 #define SVS_nickserv_NICK "NickServ"

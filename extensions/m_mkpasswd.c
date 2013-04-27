@@ -10,6 +10,7 @@
 #include "numeric.h"
 #include "s_conf.h"
 #include "modules.h"
+#include "messages.h"
 
 #include <string.h>
 
@@ -37,7 +38,7 @@ mapi_clist_av1 mkpasswd_clist[] = { &mkpasswd_msgtab, NULL };
 DECLARE_MODULE_AV1(mkpasswd, NULL, NULL, mkpasswd_clist, NULL, NULL, "$Revision$");
 
 
-/* m_mkpasswd - mkpasswd message handler
+/* m_mkpasswd - mkpasswd messages.handler
  *	parv[1] = password
  *	parv[2] = type
  */
@@ -88,7 +89,7 @@ m_mkpasswd(struct Client *client_p, struct Client *source_p, int parc, const cha
 	return 0;
 }
 
-/* mo_mkpasswd - mkpasswd message handler
+/* mo_mkpasswd - mkpasswd messages.handler
  *	parv[1] = password
  *	parv[2] = type
  */

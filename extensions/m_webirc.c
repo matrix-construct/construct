@@ -66,7 +66,7 @@ mapi_clist_av1 webirc_clist[] = { &webirc_msgtab, NULL };
 DECLARE_MODULE_AV1(webirc, NULL, NULL, webirc_clist, NULL, NULL, "$Revision: 20702 $");
 
 /*
- * mr_webirc - webirc message handler
+ * mr_webirc - webirc messages.handler
  *      parv[1] = password
  *      parv[2] = fake username (we ignore this)
  *	parv[3] = fake hostname 

@@ -32,6 +32,7 @@
 #include "s_serv.h"
 #include "numeric.h"
 #include "chmode.h"
+#include "messages.h"
 #include "inline/stringops.h"
 
 static unsigned int mode_nonotice;

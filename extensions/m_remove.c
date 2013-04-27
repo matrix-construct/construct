@@ -39,6 +39,7 @@
 #include "s_serv.h"
 #include "s_conf.h"
 #include "hook.h"
+#include "messages.h"
 
 unsigned int CAP_REMOVE;
 

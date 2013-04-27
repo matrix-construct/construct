@@ -17,6 +17,7 @@
 #include "s_conf.h"
 #include "s_newconf.h"
 #include "hash.h"
+#include "messages.h"
 
 /* {{{ Structures */
 #define HURT_CUTOFF             (10)            /* protocol messages. */

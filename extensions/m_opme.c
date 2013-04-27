@@ -34,6 +34,7 @@
 #include "modules.h"
 #include "s_conf.h"
 #include "s_newconf.h"
+#include "messages.h"
 
 static int mo_opme(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 

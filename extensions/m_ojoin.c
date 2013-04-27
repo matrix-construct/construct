@@ -35,6 +35,7 @@
 #include "msg.h"
 #include "parse.h"
 #include "modules.h"
+#include "messages.h"
 
 static int mo_ojoin(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 

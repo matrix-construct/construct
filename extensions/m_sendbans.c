@@ -42,6 +42,7 @@
 #include "msg.h"
 #include "hash.h"
 #include "modules.h"
+#include "messages.h"
 
 static int mo_sendbans(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 

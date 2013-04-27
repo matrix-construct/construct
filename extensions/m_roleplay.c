@@ -27,6 +27,7 @@
 #include "tgchange.h"
 #include "channel.h"
 #include "packet.h"
+#include "messages.h"
 
 static int m_scene(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static int m_fsay(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);

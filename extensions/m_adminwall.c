@@ -37,6 +37,7 @@
 #include "parse.h"
 #include "modules.h"
 #include "s_serv.h"
+#include "messages.h"
 
 static int mo_adminwall(struct Client *, struct Client *, int, const char **);
 static int me_adminwall(struct Client *, struct Client *, int, const char **);
