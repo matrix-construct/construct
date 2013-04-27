@@ -129,7 +129,7 @@ mo_kill(struct Client *client_p, struct Client *source_p, int parc, const char *
 	call_hook(h_can_kill, &moduledata);
 
 	if (moduledata.approved == 0)
-		/* Let the calleee send a message */
+		/* The callee should have sent a message. */
 		return 0;
 
 	if(MyConnect(target_p))
