@@ -41,6 +41,7 @@
 #include "parse.h"
 #include "modules.h"
 #include "packet.h"
+#include "messages.h"
 
 static int mo_omode(struct Client *, struct Client *, int, const char **);
 
