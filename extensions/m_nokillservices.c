@@ -40,7 +40,8 @@ block_services_kill(void *vdata)
 
 	if (IsService(data->target))
 	{
-		sendto_one_notice(data->client, ":You may not kill network service %s",
+		sendto_one_numeric(data->client, ERR_ISCHANSERVICE,
+				"KILL %s :Cannot kill a network service",
 				data->target->name);
 		data->approved = 0;
 	}
