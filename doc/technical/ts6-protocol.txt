@@ -784,7 +784,7 @@ Currently only sent after an SVSLOGIN.
 SJOIN
 source: server
 propagation: broadcast
-parameters: channelTS, simple modes, opt. mode parameters..., nicklist
+parameters: channelTS, channel, simple modes, opt. mode parameters..., nicklist
 
 Broadcasts a channel creation or bursts a channel.
 
