@@ -34,7 +34,7 @@ src/y.tab.c
 ssld/ssld
 tools/convertilines
 tools/convertklines
-tools/genssl.sh
+tools/genssl
 tools/mkpasswd
 tools/viconf
 include/serno.h
