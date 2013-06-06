@@ -29,7 +29,7 @@ libexecdir	= @libexecdir@
 sysconfdir	= @sysconfdir@
 localstatedir	= @localstatedir@
 
-PROGS		= viconf mkpasswd convertilines convertklines genssl.sh
+PROGS		= viconf mkpasswd convertilines convertklines genssl
 
 all: $(PROGS)
 
@@ -47,14 +47,14 @@ convertilines: convertilines.c
 convertklines: convertklines.c
 	$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) convertklines.c -o convertklines $(IRCDLIBS)
 
-genssl.sh: genssl.sh.in
-	cd .. && ./config.status tools/genssl.sh && ./config.status tools/genssl.sh_chmod
+genssl: genssl.in
+	cd .. && ./config.status tools/genssl && ./config.status tools/genssl_chmod
 
 clean:
 	$(RM) -f encspeed viconf chkconf mkpasswd *~ core *.exe convertklines convertilines
 
 distclean: clean
-	$(RM) -f genssl.sh Makefile
+	$(RM) -f genssl Makefile
 
 lint:
 	lint -aacgprxhH $(CPPFLAGS) -DIRCD_PREFIX=\"@prefix@\" $(convertklines_SOURCES) $(mkpasswd_SOURCES) $(viconf_SOURCES) $(encspeed_SOURCES) >>../lint.out
