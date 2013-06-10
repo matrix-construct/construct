@@ -340,9 +340,34 @@ fi
 
 
 
+dnl GnuTLS support
+AC_MSG_CHECKING(for GnuTLS)
+AC_ARG_ENABLE(gnutls,
+[AC_HELP_STRING([--enable-gnutls],[Enable GnuTLS support.])
+AC_HELP_STRING([--disable-gnutls],[Disable GnuTLS support.])],
+[cf_enable_gnutls=$enableval],
+[cf_enable_gnutls="auto"])
+ 
+if test "$cf_enable_gnutls" != no; then
+       PKG_CHECK_MODULES(GNUTLS, [gnutls], [
+               cf_enable_gnutls="yes"   
+       ], [cf_enable_gnutls="no"])      
+fi
+
+if test "$cf_enable_gnutls" = "auto" -a "$cf_enable_openssl" = "yes"; then
+       cf_enable_gnutls="no"
+fi
+
 if test x"$cf_enable_openssl" != xno; then
 	AC_DEFINE(HAVE_OPENSSL,1,[Has OpenSSL])
+	GNUTLS_CFLAGS=""
+	GNUTLS_LIBS=""
 	SSL_TYPE="openssl"
+elif test x"$cf_enable_gnutls" != xno; then
+	AC_DEFINE(HAVE_GNUTLS, 1, [Has GnuTLS])
+	SSL_LIBS=""
+	SSL_CFLAGS=""	
+	SSL_TYPE="gnutls"
 fi
 
 
@@ -407,6 +432,8 @@ AC_SUBST(CFLAGS)
 AC_SUBST(SEDOBJ)
 AC_SUBST(SSL_CFLAGS)
 AC_SUBST(SSL_LIBS)
+AC_SUBST(GNUTLS_CFLAGS)
+AC_SUBST(GNUTLS_LIBS)
 
 if test "$prefix" = "NONE"; then 
 	AC_DEFINE_UNQUOTED(RB_PREFIX, "$ac_default_prefix", [Prefix where libratbox is installed.])
