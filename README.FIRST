@@ -27,7 +27,8 @@ Necessary Requirements:
 Feature Specific Requirements:
 
 - For SSL Clients, SSL Challenge controlled OPER feature, and encrypted server links,
-  a working OpenSSL library.
+  a working OpenSSL library or GnuTLS library.  CHALLENGE is not supported on GnuTLS
+  yet.
 
 - For encrypted oper and (optional) server passwords, a working DES, MD5, or SHA library
   implementing crypt().
