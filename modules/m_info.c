@@ -119,7 +119,7 @@ static struct InfoStruct info_table[] = {
 		"client_exit",
 		OUTPUT_BOOLEAN,
 		&ConfigFileEntry.client_exit,
-		"Prepend 'Client Exit:' to user QUIT messages"
+		"Prepend 'Quit:' to user QUIT messages"
 	},
 	{
 		"client_flood_max_lines",
