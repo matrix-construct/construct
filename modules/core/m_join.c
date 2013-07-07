@@ -72,6 +72,7 @@ DECLARE_MODULE_AV1(join, NULL, NULL, join_clist, join_hlist, NULL, "$Revision: 3
 
 static void do_join_0(struct Client *client_p, struct Client *source_p);
 static int check_channel_name_loc(struct Client *source_p, const char *name);
+static void send_join_error(struct Client *source_p, int numeric, const char *name);
 
 static void set_final_mode(struct Mode *mode, struct Mode *oldmode);
 static void remove_our_modes(struct Channel *chptr, struct Client *source_p);
@@ -256,10 +257,10 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 
 			if(moduledata.approved != 0)
 			{
-#ifdef XXX_NOTYET
-				sendto_one(source_p, form_str(moduledata.approved),
-					   me.name, source_p->name, name);
-#endif
+				if(moduledata.approved != ERR_CUSTOM)
+					send_join_error(source_p,
+							moduledata.approved,
+							name);
 				continue;
 			}
 
@@ -304,10 +305,8 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 			 * see extensions/chm_operonly.c for other comments on this
 			 * -- dwr
 			 */
-#ifdef XXX_NOTYET
 			if(i != ERR_CUSTOM)
-				sendto_one(source_p, form_str(i), me.name, source_p->name, name);
-#endif
+				send_join_error(source_p, i, name);
 			continue;
 		}
 		else if(chptr != chptr2)
@@ -1021,6 +1020,40 @@ check_channel_name_loc(struct Client *source_p, const char *name)
 	}
 
 	return 1;
+}
+
+/* send_join_error()
+ *
+ * input	- client to send to, reason, channel name
+ * output	- none
+ * side effects - error message sent to client
+ */
+static void
+send_join_error(struct Client *source_p, int numeric, const char *name)
+{
+	/* This stuff is necessary because the form_str macro only
+	 * accepts constants.
+	 */
+	switch (numeric)
+	{
+#define NORMAL_NUMERIC(i)						\
+		case i:							\
+			sendto_one(source_p, form_str(i),		\
+					me.name, source_p->name, name);	\
+			break
+
+		NORMAL_NUMERIC(ERR_BANNEDFROMCHAN);
+		NORMAL_NUMERIC(ERR_INVITEONLYCHAN);
+		NORMAL_NUMERIC(ERR_BADCHANNELKEY);
+		NORMAL_NUMERIC(ERR_CHANNELISFULL);
+		NORMAL_NUMERIC(ERR_NEEDREGGEDNICK);
+		NORMAL_NUMERIC(ERR_THROTTLE);
+
+		default:
+			sendto_one_numeric(source_p, numeric,
+					"%s :Cannot join channel", name);
+			break;
+	}
 }
 
 static void
