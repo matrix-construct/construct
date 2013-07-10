@@ -5,7 +5,7 @@
  *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center
  *  Copyright (C) 1996-2002 Hybrid Development Team
  *  Copyright (C) 2002-2008 ircd-ratbox development team
- *  Copyright (C) 2005-2008 charybdis development team
+ *  Copyright (C) 2005-2013 charybdis development team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -619,6 +619,12 @@ main(int argc, char *argv[])
 		inotice("starting %s ...", ircd_version);
 		inotice("%s", rb_lib_version());
 	}
+	
+	/* Make sure config file exists -- Quora */
+	if( access( CPATH, F_OK ) == -1 ) {
+		  inotice("FATAL: No config file found at %s, exiting", CPATH);
+		  exit(-1);
+	} 
 
 	/* Init the event subsystem */
 	rb_lib_init(ircd_log_cb, ircd_restart_cb, ircd_die_cb, !server_state_foreground, maxconnections, DNODE_HEAP_SIZE, FD_HEAP_SIZE);
