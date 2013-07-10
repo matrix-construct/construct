@@ -621,8 +621,9 @@ main(int argc, char *argv[])
 	}
 	
 	/* Make sure config file exists -- Quora */
-	if( access( CPATH, F_OK|R_OK ) == -1 ) {
-		  inotice("FATAL: No config file found at %s, exiting", CPATH);
+	if( access( ConfigFileEntry.configfile, F_OK|R_OK ) == -1 ) {
+		  inotice("FATAL: No config file found at %s, exiting", 
+			  ConfigFileEntry.configfile);
 		  exit(-1);
 	} 
 
