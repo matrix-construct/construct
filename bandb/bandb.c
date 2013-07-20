@@ -289,7 +289,7 @@ db_error_cb(const char *errstr)
 {
 	char buf[256];
 	rb_snprintf(buf, sizeof(buf), "! :%s", errstr);
-	rb_helper_write(bandb_helper, buf);
+	rb_helper_write(bandb_helper, "%s", buf);
 	rb_sleep(2 << 30, 0);
 	exit(1);
 }
