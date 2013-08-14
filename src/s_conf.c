@@ -1365,16 +1365,8 @@ read_conf_files(int cold)
 			int e;
 			e = errno;
 
-			if (access(filename, F_OK) == -1) 
-			{
-				inotice("FATAL: %s %s", strerror(e), filename);
-				ilog(L_MAIN, "FATAL: %s %s", strerror(e), filename);
-			} 
-			else if (access(filename, R_OK) == -1)
-			{
-				inotice("FATAL: %s %s", strerror(e), filename);
-				ilog(L_MAIN, "FATAL: %s %s", strerror(e), filename);	
-			}
+			inotice("FATAL: %s %s", strerror(e), filename);
+			ilog(L_MAIN, "FATAL: %s %s", strerror(e), filename);
 
 			exit(-1);
 		}
