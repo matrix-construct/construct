@@ -230,7 +230,8 @@ isupport_umode(const void *ptr)
 	const char *str;
 
 	str = ptr;
-	return ConfigFileEntry.oper_only_umodes & user_modes[*str] ? NULL : str;
+	return ConfigFileEntry.oper_only_umodes &
+		user_modes[(unsigned char)*str] ? NULL : str;
 }
 
 static const char *
