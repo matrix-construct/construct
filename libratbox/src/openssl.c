@@ -644,6 +644,7 @@ rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN])
 				res == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT)
 		{
 			memcpy(certfp, cert->sha1_hash, RB_SSL_CERTFP_LEN);
+			X509_free(cert);
 			return 1;
 		}
 		X509_free(cert);
