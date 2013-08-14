@@ -1358,6 +1358,7 @@ read_conf_files(int cold)
 		if(cold)
 		{
 			ilog(L_MAIN, "Failed in reading configuration file %s", filename);
+			inotice("Failed in reading configuration file %s, aborting", filename);
 			exit(-1);
 		}
 		else

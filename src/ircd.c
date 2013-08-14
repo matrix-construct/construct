@@ -619,13 +619,6 @@ main(int argc, char *argv[])
 		inotice("starting %s ...", ircd_version);
 		inotice("%s", rb_lib_version());
 	}
-	
-	/* Make sure config file exists -- Quora */
-	if( access( ConfigFileEntry.configfile, F_OK|R_OK ) == -1 ) {
-		  inotice("FATAL: No config file found at %s, exiting", 
-			  ConfigFileEntry.configfile);
-		  exit(-1);
-	} 
 
 	/* Init the event subsystem */
 	rb_lib_init(ircd_log_cb, ircd_restart_cb, ircd_die_cb, !server_state_foreground, maxconnections, DNODE_HEAP_SIZE, FD_HEAP_SIZE);
