@@ -1350,6 +1350,8 @@ read_conf_files(int cold)
 	   dont know anything else
 
 	   - Gozem 2002-07-21 
+
+
 	 */
 	rb_strlcpy(conffilebuf, filename, sizeof(conffilebuf));
 
@@ -1357,8 +1359,23 @@ read_conf_files(int cold)
 	{
 		if(cold)
 		{
-			ilog(L_MAIN, "Failed in reading configuration file %s", filename);
 			inotice("Failed in reading configuration file %s, aborting", filename);
+			ilog(L_MAIN, "Failed in reading configuration file %s", filename);
+
+			int e;
+			e = errno;
+
+			if (access(filename, F_OK) == -1) 
+			{
+				inotice("FATAL: %s %s", strerror(e), filename);
+				ilog(L_MAIN, "FATAL: %s %s", strerror(e), filename);
+			} 
+			else if (access(filename, R_OK) == -1)
+			{
+				inotice("FATAL: %s %s", strerror(e), filename);
+				ilog(L_MAIN, "FATAL: %s %s", strerror(e), filename);	
+			}
+
 			exit(-1);
 		}
 		else
