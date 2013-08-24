@@ -139,6 +139,7 @@ m_displaymsg(struct Client *source_p, const char *channel, int underline, int ac
 	struct membership *msptr;
 	char nick2[NICKLEN+1];
 	char *nick3 = rb_strdup(nick);
+	char text3[BUFSIZE];
 	char text2[BUFSIZE];
 
 	if(!IsFloodDone(source_p))
@@ -195,12 +196,14 @@ m_displaymsg(struct Client *source_p, const char *channel, int underline, int ac
 		return 0;
 	}
 
-	if(action)
-		rb_snprintf(text2, sizeof(text2), "\1ACTION %s\1", text);
-	else
-		rb_snprintf(text2, sizeof(text2), "%s", text);
+	rb_snprintf(text3, sizeof(text3), "%s (%s)", text, source_p->name);
 
-	sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@npc.fakeuser.invalid PRIVMSG %s :%s (%s)", nick2, source_p->name, channel, text2, source_p->name);
+	if(action)
+		rb_snprintf(text2, sizeof(text2), "\1ACTION %s\1", text3);
+	else
+		rb_snprintf(text2, sizeof(text2), "%s", text3);
+
+	sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@npc.fakeuser.invalid PRIVMSG %s :%s", nick2, source_p->name, channel, text2);
 	sendto_match_servs(source_p, "*", CAP_ENCAP, NOCAPS, "ENCAP * ROLEPLAY %s %s :%s",
 			channel, nick2, text2);
 	return 0;
