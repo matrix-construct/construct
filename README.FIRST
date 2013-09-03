@@ -32,6 +32,10 @@ Feature Specific Requirements:
 
 - For encrypted oper and (optional) server passwords, a working DES, MD5, or SHA library
   implementing crypt().
+  
+- For ECDHE, OpenSSL 1.0.0 or newer is required. RHEL/Fedora and derivatives like CentOS
+  will need to compile OpenSSL from source, as ECC/ECDHE-functionality is removed from
+  the OpenSSL package in these distributions.
 
 *******************************************************************************
 
