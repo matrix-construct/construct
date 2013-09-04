@@ -4,21 +4,21 @@ ACCEPT          ADMIN           AWAY            CAPAB
 CHALLENGE       CHANTRACE       CLOSE           CMODE
 CNOTICE         CONNECT         CPRIVMSG        CREDITS
 DIE             DLINE           ERROR           ETRACE
-HELP            INDEX           INFO            INVITE
-EXTBAN          ISON            JOIN            KICK
+EXTBAN          HELP            INDEX           INFO
+INVITE          ISON            JOIN            KICK
 KILL            KLINE           KNOCK           LINKS
 LIST            LOCOPS          LUSERS          MAP
 MASKTRACE       MODLIST         MODLOAD         MODRELOAD
-MODRESTART      MODUNLOAD       MOTD            NAMES
-NICK            NOTICE          OPER            OPERSPY
-OPERWALL        PART            PASS            PING
-PONG            POST            PRIVMSG         QUIT
-REHASH          RESTART         RESV            SCAN
-SERVER          SET             SJOIN           SNOMASK
-SQUIT           STATS           SVINFO          TESTGECOS
-TESTLINE        TESTMASK        TIME            TOPIC
-TRACE           UHELP           UMODE           UNDLINE
-UNKLINE         UNREJECT        UNRESV          UNXLINE
-USER            USERHOST        USERS           VERSION
-WALLOPS         WHO             WHOIS           WHOWAS
-XLINE
+MODRESTART      MODUNLOAD       MONITOR         MOTD
+NAMES           NICK            NOTICE          OPER
+OPERSPY         OPERWALL        PART            PASS
+PING            PONG            POST            PRIVMSG
+QUIT            REHASH          RESTART         RESV
+SCAN            SERVER          SET             SJOIN
+SNOMASK         SQUIT           STATS           SVINFO
+TESTGECOS       TESTLINE        TESTMASK        TIME
+TOPIC           TRACE           UHELP           UMODE
+UNDLINE         UNKLINE         UNREJECT        UNRESV
+UNXLINE         USER            USERHOST        USERS
+VERSION         WALLOPS         WHO             WHOIS
+WHOWAS          XLINE
