@@ -53,6 +53,7 @@
 #include "operhash.h"
 #include "chmode.h"
 #include "hook.h"
+#include "s_assert.h"
 
 struct config_server_hide ConfigServerHide;
 

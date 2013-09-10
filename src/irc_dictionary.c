@@ -27,6 +27,8 @@
 #include "client.h"
 #include "setup.h"
 #include "irc_dictionary.h"
+#include "s_assert.h"
+#include "logger.h"
 
 static rb_bh *elem_heap = NULL;
 

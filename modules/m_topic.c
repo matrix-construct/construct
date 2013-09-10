@@ -40,6 +40,7 @@
 #include "modules.h"
 #include "packet.h"
 #include "tgchange.h"
+#include "logger.h"
 
 static int m_topic(struct Client *, struct Client *, int, const char **);
 static int ms_topic(struct Client *, struct Client *, int, const char **);

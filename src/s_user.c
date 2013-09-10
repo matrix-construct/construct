@@ -54,6 +54,7 @@
 #include "blacklist.h"
 #include "substitution.h"
 #include "chmode.h"
+#include "s_assert.h"
 
 static void report_and_set_user_flags(struct Client *, struct ConfItem *);
 void user_welcome(struct Client *source_p);

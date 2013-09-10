@@ -44,6 +44,8 @@
 #include "newconf.h"
 #include "hash.h"
 #include "irc_dictionary.h"
+#include "s_assert.h"
+#include "logger.h"
 
 rb_dlink_list shared_conf_list;
 rb_dlink_list cluster_conf_list;

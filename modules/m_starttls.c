@@ -29,6 +29,8 @@
 #include "msg.h"
 #include "modules.h"
 #include "sslproc.h"
+#include "s_assert.h"
+#include "logger.h"
 
 static int mr_starttls(struct Client *, struct Client *, int, const char **);
 

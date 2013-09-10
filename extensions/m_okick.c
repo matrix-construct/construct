@@ -38,6 +38,7 @@
 #include "s_conf.h"
 #include "s_serv.h"
 #include "messages.h"
+#include "logger.h"
 
 static int mo_okick(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 

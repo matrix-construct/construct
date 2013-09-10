@@ -44,6 +44,7 @@
 #include "operhash.h"
 #include "reject.h"
 #include "hostmask.h"
+#include "logger.h"
 
 static int m_ban(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static int ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);

@@ -38,6 +38,7 @@
 #include "monitor.h"
 #include "numeric.h"
 #include "s_conf.h"
+#include "send.h"
 
 static int m_monitor(struct Client *, struct Client *, int, const char **);
 

@@ -49,6 +49,8 @@
 #include "parse.h"
 #include "modules.h"
 #include "inline/stringops.h"
+#include "s_assert.h"
+#include "logger.h"
 
 static rb_dlink_list safelisting_clients = { NULL, NULL, 0 };
 

@@ -39,6 +39,7 @@
 #include "send.h"
 #include "s_conf.h"
 #include "scache.h"
+#include "s_assert.h"
 
 /* internally defined function */
 static void add_whowas_to_clist(struct Whowas **, struct Whowas *);

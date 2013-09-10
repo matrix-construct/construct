@@ -36,6 +36,7 @@
 #include "monitor.h"
 #include "hash.h"
 #include "numeric.h"
+#include "send.h"
 
 struct monitor *monitorTable[MONITOR_HASH_SIZE];
 static rb_bh *monitor_heap;

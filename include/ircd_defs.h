@@ -59,37 +59,6 @@
 #define IRC_DEPRECATED
 #endif
 
-#include "logger.h"
-#include "send.h"
-
-#ifdef SOFT_ASSERT
-#ifdef __GNUC__
-#define s_assert(expr)	do								\
-			if(!(expr)) {							\
-				ilog(L_MAIN, 						\
-				"file: %s line: %d (%s): Assertion failed: (%s)",	\
-				__FILE__, __LINE__, __PRETTY_FUNCTION__, #expr); 	\
-				sendto_realops_snomask(SNO_GENERAL, L_ALL, 			\
-				"file: %s line: %d (%s): Assertion failed: (%s)",	\
-				__FILE__, __LINE__, __PRETTY_FUNCTION__, #expr);	\
-			}								\
-			while(0)
-#else
-#define s_assert(expr)	do								\
-			if(!(expr)) {							\
-				ilog(L_MAIN, 						\
-				"file: %s line: %d: Assertion failed: (%s)",		\
-				__FILE__, __LINE__, #expr); 				\
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,			\
-				"file: %s line: %d: Assertion failed: (%s)"		\
-				__FILE__, __LINE__, #expr);				\
-			}								\
-			while(0)
-#endif
-#else
-#define s_assert(expr)	assert(expr)
-#endif
-
 #if !defined(CONFIG_RATBOX_LEVEL_1)
 #  error Incorrect config.h for this revision of ircd.
 #endif

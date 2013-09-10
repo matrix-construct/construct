@@ -25,6 +25,9 @@
 #include "s_conf.h"
 #include "privilege.h"
 #include "numeric.h"
+#include "s_assert.h"
+#include "logger.h"
+#include "send.h"
 
 static rb_dlink_list privilegeset_list = {};
 

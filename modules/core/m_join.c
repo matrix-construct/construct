@@ -42,6 +42,7 @@
 #include "packet.h"
 #include "chmode.h"
 #include "ratelimit.h"
+#include "s_assert.h"
 
 static int m_join(struct Client *, struct Client *, int, const char **);
 static int ms_join(struct Client *, struct Client *, int, const char **);

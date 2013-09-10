@@ -40,6 +40,9 @@
 #include "match.h"
 #include "numeric.h"
 #include "client.h" /* SNO_* */
+#include "s_assert.h"
+#include "logger.h"
+#include "send.h"
 
 #if (CHAR_BIT != 8)
 #error this code needs to be able to address individual octets

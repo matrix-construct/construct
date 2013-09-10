@@ -42,6 +42,7 @@
 #include "modules.h"
 #include "packet.h"
 #include "messages.h"
+#include "logger.h"
 
 static int mo_omode(struct Client *, struct Client *, int, const char **);
 

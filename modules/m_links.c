@@ -37,6 +37,7 @@
 #include "modules.h"
 #include "hook.h"
 #include "scache.h"
+#include "s_assert.h"
 
 static int m_links(struct Client *, struct Client *, int, const char **);
 static int mo_links(struct Client *, struct Client *, int, const char **);

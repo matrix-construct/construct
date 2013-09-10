@@ -36,6 +36,7 @@
 #include "parse.h"
 #include "modules.h"
 #include "blacklist.h"
+#include "s_assert.h"
 
 static int mr_user(struct Client *, struct Client *, int, const char **);
 

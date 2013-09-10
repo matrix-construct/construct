@@ -33,6 +33,7 @@
 #include "send.h"
 #include "scache.h"
 #include "s_conf.h"
+#include "s_assert.h"
 
 
 /*

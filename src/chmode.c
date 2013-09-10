@@ -42,6 +42,7 @@
 #include "s_newconf.h"
 #include "logger.h"
 #include "chmode.h"
+#include "s_assert.h"
 
 /* bitmasks for error returns, so we send once per call */
 #define SM_ERR_NOTS             0x00000001	/* No TS on channel */

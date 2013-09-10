@@ -41,6 +41,7 @@
 #include "s_conf.h"
 #include "s_serv.h"
 #include "packet.h"
+#include "s_assert.h"
 
 static struct Dictionary *cmd_dict = NULL;
 struct Dictionary *alias_dict = NULL;

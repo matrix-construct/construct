@@ -55,6 +55,7 @@
 #include "reject.h"
 #include "sslproc.h"
 #include "capability.h"
+#include "s_assert.h"
 
 #ifndef INADDR_NONE
 #define INADDR_NONE ((unsigned int) 0xffffffff)

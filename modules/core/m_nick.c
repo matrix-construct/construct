@@ -47,6 +47,7 @@
 #include "scache.h"
 #include "s_newconf.h"
 #include "monitor.h"
+#include "s_assert.h"
 
 /* Give all UID nicks the same TS. This ensures nick TS is always the same on
  * all servers for each nick-user pair, also if a user with a UID nick changes

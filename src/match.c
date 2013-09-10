@@ -24,6 +24,7 @@
 #include "client.h"
 #include "ircd.h"
 #include "match.h"
+#include "s_assert.h"
 
 /*
  * Compare if a given string (name) matches the given

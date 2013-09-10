@@ -41,6 +41,7 @@
 #include "modules.h"
 #include "s_serv.h"
 #include "s_user.h"
+#include "send.h"
 
 typedef int (*bqcmp)(const void *, const void *);
 

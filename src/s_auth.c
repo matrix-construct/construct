@@ -49,6 +49,7 @@
 #include "send.h"
 #include "hook.h"
 #include "blacklist.h"
+#include "s_assert.h"
 
 struct AuthRequest
 {

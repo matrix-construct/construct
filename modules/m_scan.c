@@ -49,6 +49,7 @@
 #include "msg.h"
 #include "parse.h"
 #include "modules.h"
+#include "logger.h"
 
 static int mo_scan(struct Client *, struct Client *, int, const char **);
 static int scan_umodes(struct Client *, struct Client *, int, const char **);

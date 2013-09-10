@@ -25,6 +25,7 @@
 #include "s_conf.h"
 #include "s_stats.h"
 #include "ratelimit.h"
+#include "s_assert.h"
 
 /*
  * ratelimit_client(struct Client *client_p, int penalty)

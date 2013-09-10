@@ -40,6 +40,7 @@
 #include "s_conf.h"
 #include "s_user.h"
 #include "blacklist.h"
+#include "send.h"
 
 rb_dlink_list blacklist_list = { NULL, NULL, 0 };
 

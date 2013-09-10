@@ -30,6 +30,7 @@
 #include "hash.h"
 #include "s_newconf.h"
 #include "s_serv.h"
+#include "send.h"
 
 static int add_hashed_target(struct Client *source_p, uint32_t hashv);
 

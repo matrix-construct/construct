@@ -55,6 +55,7 @@
 #include "scache.h"
 #include "irc_dictionary.h"
 #include "sslproc.h"
+#include "s_assert.h"
 
 #define DEBUG_EXITED_CLIENTS
 

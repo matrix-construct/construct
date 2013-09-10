@@ -25,6 +25,8 @@
 #define INCLUDED_tgchange_h
 
 #include "ircd_defs.h"
+#include "client.h"
+#include "channel.h"
 
 /* finds a channel where source_p has op or voice and target_p is a member */
 struct Channel *find_allowing_channel(struct Client *source_p, struct Client *target_p);

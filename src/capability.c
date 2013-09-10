@@ -21,6 +21,7 @@
 #include "stdinc.h"
 #include "capability.h"
 #include "irc_dictionary.h"
+#include "s_assert.h"
 
 static rb_dlink_list capability_indexes = { NULL, NULL, 0 };
 

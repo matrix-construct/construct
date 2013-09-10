@@ -38,6 +38,7 @@
 #include "msg.h"
 #include "cache.h"
 #include "s_newconf.h"
+#include "s_assert.h"
 
 #define hash_cli_fd(x)	(x % CLI_FD_MAX)
 

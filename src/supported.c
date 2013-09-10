@@ -81,6 +81,7 @@
 #include "s_user.h"
 #include "supported.h"
 #include "chmode.h"
+#include "send.h"
 
 rb_dlink_list isupportlist;
 

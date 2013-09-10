@@ -49,6 +49,7 @@
 #include "msg.h"
 #include "parse.h"
 #include "modules.h"
+#include "logger.h"
 
 static int mo_etrace(struct Client *, struct Client *, int, const char **);
 static int me_etrace(struct Client *, struct Client *, int, const char **);

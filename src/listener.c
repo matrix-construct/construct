@@ -42,6 +42,8 @@
 #include "hostmask.h"
 #include "sslproc.h"
 #include "hash.h"
+#include "s_assert.h"
+#include "logger.h"
 
 #ifndef INADDR_NONE
 #define INADDR_NONE ((unsigned int) 0xffffffff)

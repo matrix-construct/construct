@@ -42,6 +42,7 @@
 #include "s_newconf.h"
 #include "logger.h"
 #include "ipv4_from_ipv6.h"
+#include "s_assert.h"
 
 struct config_channel_entry ConfigChannel;
 rb_dlink_list global_channel_list;

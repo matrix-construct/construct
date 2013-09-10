@@ -38,6 +38,7 @@
 #include "snomask.h"
 #include "match.h"
 #include "substitution.h"
+#include "s_assert.h"
 
 /*
  * Simple mappings for $foo -> 'bar'.

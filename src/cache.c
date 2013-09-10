@@ -41,6 +41,7 @@
 #include "cache.h"
 #include "irc_dictionary.h"
 #include "numeric.h"
+#include "send.h"
 
 struct cachefile *user_motd = NULL;
 struct cachefile *oper_motd = NULL;

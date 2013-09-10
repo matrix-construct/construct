@@ -11,6 +11,7 @@
 #include "s_conf.h"
 #include "modules.h"
 #include "messages.h"
+#include "send.h"
 
 #include <string.h>
 
