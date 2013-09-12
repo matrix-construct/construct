@@ -193,7 +193,8 @@ free_pre_client(struct Client *client_p)
 	blptr = client_p->preClient->dnsbl_listed;
 	if (blptr != NULL)
 		unref_blacklist(blptr);
-	abort_blacklist_queries(client_p);
+	s_assert(rb_dlink_list_length(&client_p->preClient->dnsbl_queries) == 0);
+
 	rb_bh_free(pclient_heap, client_p->preClient);
 	client_p->preClient = NULL;
 }
@@ -1258,6 +1259,7 @@ exit_unknown_client(struct Client *client_p, struct Client *source_p, struct Cli
 		  const char *comment)
 {
 	delete_auth_queries(source_p);
+	abort_blacklist_queries(source_p);
 	if (source_p->localClient->dnsquery)
 	{
 		delete_resolver_queries(source_p->localClient->dnsquery);
