@@ -45,7 +45,7 @@ static int m_whowas(struct Client *, struct Client *, int, const char **);
 
 struct Message whowas_msgtab = {
 	"WHOWAS", 0, 0, 0, MFLG_SLOW,
-	{mg_unreg, {m_whowas, 2}, mg_ignore, mg_ignore, mg_ignore, {m_whowas, 2}}
+	{mg_unreg, {m_whowas, 2}, {m_whowas, 4}, mg_ignore, mg_ignore, {m_whowas, 2}}
 };
 
 mapi_clist_av1 whowas_clist[] = { &whowas_msgtab, NULL };
@@ -68,9 +68,11 @@ m_whowas(struct Client *client_p, struct Client *source_p, int parc, const char 
 
 	static time_t last_used = 0L;
 
-	if(!IsOper(source_p))
+	if(MyClient(source_p) && !IsOper(source_p))
 	{
-		if((last_used + ConfigFileEntry.pace_wait_simple) > rb_current_time())
+		if(last_used + (parc > 3 ? ConfigFileEntry.pace_wait :
+						ConfigFileEntry.pace_wait_simple
+				) > rb_current_time())
 		{
 			sendto_one(source_p, form_str(RPL_LOAD2HI),
 				   me.name, source_p->name, "WHOWAS");
@@ -86,11 +88,12 @@ m_whowas(struct Client *client_p, struct Client *source_p, int parc, const char 
 	if(parc > 2)
 		max = atoi(parv[2]);
 
-#if 0
 	if(parc > 3)
 		if(hunt_server(client_p, source_p, ":%s WHOWAS %s %s :%s", 3, parc, parv))
 			return 0;
-#endif
+
+	if(!MyClient(source_p) && (max <= 0 || max > 20))
+		max = 20;
 
 	if((p = strchr(parv[1], ',')))
 		*p = '\0';

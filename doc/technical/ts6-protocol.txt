@@ -1058,6 +1058,15 @@ parameters: hunted, target nick
 
 Remote WHOIS request.
 
+WHOWAS
+source: user
+parameters: nickname, limit, hunted
+
+Remote WHOWAS request. Not implemented in all servers.
+
+Different from a local WHOWAS request, the limit is mandatory and servers should
+apply a maximum to it.
+
 XLINE
 1.
 encap only
