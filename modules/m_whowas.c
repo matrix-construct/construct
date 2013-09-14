@@ -117,7 +117,9 @@ m_whowas(struct Client *client_p, struct Client *source_p, int parc, const char 
 			sendto_one(source_p, form_str(RPL_WHOWASUSER),
 				   me.name, source_p->name, temp->name,
 				   temp->username, temp->hostname, temp->realname);
-			if (MyOper(source_p) && !EmptyString(temp->sockhost))
+			if (!EmptyString(temp->sockhost) &&
+					strcmp(temp->sockhost, "0") &&
+					show_ip_whowas(temp, source_p))
 #if 0
 				sendto_one(source_p, form_str(RPL_WHOWASREAL),
 					   me.name, source_p->name, temp->name,

@@ -1690,6 +1690,18 @@ show_ip_conf(struct ConfItem *aconf, struct Client *source_p)
 		return 1;
 }
 
+int
+show_ip_whowas(struct Whowas *whowas, struct Client *source_p)
+{
+	if(whowas->flags & WHOWAS_IP_SPOOFING)
+		if(ConfigFileEntry.hide_spoof_ips || !MyOper(source_p))
+			return 0;
+	if(whowas->flags & WHOWAS_DYNSPOOF)
+		if(!IsOper(source_p))
+			return 0;
+	return 1;
+}
+
 /*
  * make_user
  *

@@ -55,6 +55,7 @@ struct Whowas
 	char sockhost[HOSTIPLEN + 1];
 	char realname[REALLEN + 1];
 	char suser[NICKLEN + 1];
+	unsigned char flags;
 	const char *servername;
 	time_t logoff;
 	struct Client *online;	/* Pointer to new nickname for chasing or NULL */
@@ -63,6 +64,10 @@ struct Whowas
 	struct Whowas *cnext;	/* for client struct linked list */
 	struct Whowas *cprev;	/* for client struct linked list */
 };
+
+/* Flags */
+#define WHOWAS_IP_SPOOFING	0x1
+#define WHOWAS_DYNSPOOF		0x2
 
 /*
 ** initwhowas
