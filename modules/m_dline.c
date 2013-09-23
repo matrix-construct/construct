@@ -52,12 +52,12 @@ static int me_undline(struct Client *, struct Client *, int, const char **);
 
 struct Message dline_msgtab = {
 	"DLINE", 0, 0, 0, MFLG_SLOW,
-	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, {me_dline, 3}, {mo_dline, 2}}
+	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, {me_dline, 4}, {mo_dline, 2}}
 };
 
 struct Message undline_msgtab = {
 	"UNDLINE", 0, 0, 0, MFLG_SLOW,
-	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, {me_undline, 1}, {mo_undline, 2}}
+	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, {me_undline, 2}, {mo_undline, 2}}
 };
 
 mapi_clist_av1 dline_clist[] = { &dline_msgtab, &undline_msgtab, NULL };
