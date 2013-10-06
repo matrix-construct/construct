@@ -54,9 +54,9 @@ serverinfo {
 	/* On multi-homed hosts you may need the following. These define
 	 * the addresses we connect from to other servers. */
 	/* for IPv4 */
-	#vhost = "192.169.0.1";
+	#vhost = "192.0.2.6";
 	/* for IPv6 */
-	#vhost6 = "3ffe:80e8:546::2";
+	#vhost6 = "2001:db8:2::6";
 	
 	/* ssl_private_key: our ssl private key */
 	ssl_private_key = "etc/ssl.key";
@@ -146,12 +146,12 @@ listen {
 	/* If you want to listen on a specific IP only, specify host.
 	 * host definitions apply only to the following port line.
 	 */
-	#host = "192.169.0.1";
+	#host = "192.0.2.6";
 	port = 5000, 6665 .. 6669;
 	sslport = 6697;
 
 	/* Listen on IPv6 (if you used host= above). */
-	#host = "3ffe:1234:a:b:c::d";
+	#host = "2001:db8:2::6";
 	#port = 5000, 6665 .. 6669;
 	#sslport = 9999;
 };
@@ -168,8 +168,8 @@ auth {
 	 * prepending a 0 if it starts with a colon) and can also use CIDR
 	 * masks.
 	 */
-	user = "*@172.16.0.0/12";
-	user = "*test@123D:B567:*";
+	user = "*@198.51.100.0/24";
+	user = "*test@2001:db8:1:*";
 
 	/* password: an optional password that is required to use this block.
 	 * By default this is not encrypted, specify the flag "encrypted" in
@@ -291,7 +291,7 @@ operator "god" {
 };
 
 connect "irc.uplink.com" {
-	host = "192.168.0.1";
+	host = "203.0.113.3";
 	send_password = "password";
 	accept_password = "anotherpassword";
 	port = 6666;
@@ -307,7 +307,7 @@ connect "irc.uplink.com" {
 };
 
 connect "ssl.uplink.com" {
-	host = "192.168.0.1";
+	host = "203.0.113.129";
 	send_password = "password";
 	accept_password = "anotherpassword";
 	port = 9999;
