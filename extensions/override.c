@@ -107,19 +107,22 @@ check_umode_change(void *vdata)
 	if (!MyClient(source_p))
 		return;
 
+	if (data->oldumodes & UMODE_OPER && !IsOper(source_p))
+		source_p->umodes &= ~user_modes['p'];
+
 	/* didn't change +p umode, we don't need to do anything */
 	if (!((data->oldumodes ^ source_p->umodes) & user_modes['p']))
 		return;
 
-	if (!IsOperOverride(source_p))
-	{
-		sendto_one_notice(source_p, ":*** You need oper:override privilege for +p");
-		source_p->umodes &= ~user_modes['p'];
-		return;
-	}
-
 	if (source_p->umodes & user_modes['p'])
 	{
+		if (!IsOperOverride(source_p))
+		{
+			sendto_one_notice(source_p, ":*** You need oper:override privilege for +p");
+			source_p->umodes &= ~user_modes['p'];
+			return;
+		}
+
 		update_session_deadline(source_p, NULL);
 
 		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s has enabled oper-override (+p)",
