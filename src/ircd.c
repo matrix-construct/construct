@@ -309,10 +309,7 @@ initialize_global_set_options(void)
 	GlobalSetOptions.spam_time = MIN_JOIN_LEAVE_TIME;
 	GlobalSetOptions.spam_num = MAX_JOIN_LEAVE_COUNT;
 
-	if(ConfigFileEntry.default_floodcount)
-		GlobalSetOptions.floodcount = ConfigFileEntry.default_floodcount;
-	else
-		GlobalSetOptions.floodcount = 10;
+	GlobalSetOptions.floodcount = ConfigFileEntry.default_floodcount;
 
 	split_servers = ConfigChannel.default_split_server_count;
 	split_users = ConfigChannel.default_split_user_count;
@@ -324,10 +321,7 @@ initialize_global_set_options(void)
 		splitchecking = 1;
 	}
 
-	if(ConfigFileEntry.default_ident_timeout)
-		GlobalSetOptions.ident_timeout = ConfigFileEntry.default_ident_timeout;
-	else
-		GlobalSetOptions.ident_timeout = IDENT_TIMEOUT;
+	GlobalSetOptions.ident_timeout = ConfigFileEntry.default_ident_timeout;
 
 	rb_strlcpy(GlobalSetOptions.operstring,
 		ConfigFileEntry.default_operstring,
