@@ -1,7 +1,7 @@
 CONNECT <server_A> [port] [server_B]
 
 When [server_B] is used, CONNECT asks [server_B] to
-connect to <server_A>.  Requires Oper Priv: R
+connect to <server_A>.  Requires Oper Priv: oper:routing
 
 The [port] must be specified with [server_B], this is
 usually 6667.  To use the default port in the connect

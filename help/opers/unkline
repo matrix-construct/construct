@@ -7,4 +7,4 @@ UNKLINE <user@host> ON irc.server will unkline
 the user on irc.server if irc.server accepts
 remote unklines.
 
-- Requires Oper Priv: U
+- Requires Oper Priv: oper:unkline
