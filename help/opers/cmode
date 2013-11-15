@@ -9,7 +9,7 @@ NO PARAMETERS:
      +s     - Secret.  Channel will not be shown in /whois and /list etc.
      +p     - Private.  Disables /knock to the channel.
      +m     - Moderated.  Only opped/voiced users may talk in channel.
-     +i     - Invite only.  Users need to be /invite'd or match a +I to
+     +i     - Invite only.  Users need to be invited or match a +I to
               join the channel.
      +r     - Registered users only.  Only users identified to services
               may join.

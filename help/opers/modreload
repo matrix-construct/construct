@@ -1,6 +1,11 @@
-MODRELOAD <module.so>
+MODRELOAD <module.so> [server.name]
 
 -- Reload a module in the ircd
 Use just the module name, the path is not needed.
 
-- Requires Oper Priv: A
+A server name may also be provided to reload a module
+on a remote server if you have the modules shared priv
+on that server. Wildcards for server name may also be
+used to reload a module on multiple servers.
+
+- Requires Oper Priv: oper:admin

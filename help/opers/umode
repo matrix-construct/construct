@@ -1,12 +1,15 @@
 MODE <nick> <+|-><modes>
 
-Usermodes: (* designates that the umode is oper only)
+User modes: (* designates that the umode is oper only)
+            (? designates that the umode is provided by an extension
+	     and may not be present on this server)
 
      USERMODE     DESCRIPTION
 -----------------------------------------------------------------
          +i     - Designates this client 'invisible'.
          +g     - "caller id" mode only allow accept clients to message you
          +w     - Can see oper and server wallops.
+       ? +h     - Has a cloaked host. May be +x depending on cloaking module
          +o     - Designates this client is an IRC Operator.
                   Use the /oper command to attain this.
        * +a     - Is marked as a server admin in whois.

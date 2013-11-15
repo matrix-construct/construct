@@ -1,8 +1,13 @@
-MODLOAD <[path/]module.so>
+MODLOAD <[path/]module.so> [server.name]
 
 -- Load a module into the ircd
 the optional path can be an absolute path
 from / or from the IRCD_PREFIX
 (ie modules/autoload/m_users.so)
 
-- Requires Oper Priv: A
+A server name may also be provided to load a module
+on a remote server if you have the modules shared priv
+on that server. Wildcards for server name may also be
+used to load a module on multiple servers.
+
+- Requires Oper Priv: oper:admin

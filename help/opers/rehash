@@ -17,11 +17,11 @@ ircd.conf file.
   TRESVS   - Clears temporary nick and channel resvs
   TXLINES  - Clears temporary X Lines
 
-- Requires Oper Priv: H
+- Requires Oper Priv: oper:rehash
 
 REHASH [option] irc.server
 
 Rehashes [option], or the config file if none given, on irc.server if
 irc.server accepts remote rehashes.
 
-- Requires Oper Priv: HB
+- Requires Oper Privs: oper:rehash, oper:remoteban

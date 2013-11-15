@@ -1,5 +1,7 @@
-RESTART server.name
+RESTART server.name [server.name]
 
-Restarts the IRC server.
+Restarts the IRC server. If a second server name
+is provided, remotely restart that server. In this
+case, both server names must match.
 
-- Requires Oper Priv: D
+- Requires Oper Priv: oper:admin
