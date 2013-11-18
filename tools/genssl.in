@@ -4,7 +4,7 @@ exec_prefix="@exec_prefix@"
 sysconfdir="@sysconfdir@"
 
 echo "Generating private key and CSR... "
-openssl req -new -newkey rsa:2048 -nodes -sha512 -out "${sysconfdir}"/ssl.csr -keyout "${sysconfdir}"/ssl.key
+openssl req -new -newkey rsa:4096 -nodes -sha512 -out "${sysconfdir}"/ssl.csr -keyout "${sysconfdir}"/ssl.key
 
 echo "Self-signing certificate..."
 openssl x509 -req -sha512 -days 365 -in "${sysconfdir}"/ssl.csr -signkey "${sysconfdir}"/ssl.key -out "${sysconfdir}"/ssl.pem
