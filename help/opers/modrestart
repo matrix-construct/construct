@@ -1,12 +1,7 @@
-MODRESTART [server.name]
+MODRESTART
 
 -- Reload all modules into the ircd
 All modules are unloaded, then those in modules/autoload
 are loaded
-
-A server name may also be provided to reload all modules
-on a remote server if you have the modules shared priv
-on that server. Wildcards for server name may also be
-used to reload all modules on multiple servers.
 
 - Requires Oper Priv: oper:admin

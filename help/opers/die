@@ -1,7 +1,5 @@
-DIE server.name [server.name]
+DIE server.name
 
-Terminates the IRC server. If a second server name
-is provided, remotely terminate that server. In this
-case, both server names must match.
+Terminates the IRC server.
 
 - Requires Oper Priv: oper:die
