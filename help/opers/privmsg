@@ -16,7 +16,7 @@ $$servermask - Send a message to a server or set of
 $#hostmask   - Send a message to users matching the
                hostmask specified.
 
-These two are operator only.
+These two require Oper Priv: oper:mass_notice
 
 The nick can be extended to fit into the following
 syntax:

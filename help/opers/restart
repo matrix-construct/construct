@@ -2,4 +2,4 @@ RESTART server.name
 
 Restarts the IRC server.
 
-- Requires Oper Priv: oper:admin
+- Requires Oper Priv: oper:die
