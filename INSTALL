@@ -65,9 +65,11 @@
 
           * 
 
-            --disable-assert - Disable some of the debugging code. This
-            should be used on all production servers for maximum speed and to
-            prevent cores from things that shouldn't normally happen.
+            --enable-assert[=OPTION] - Enable some debugging code. OPTION is
+            either 'soft' or 'hard' (default: hard). 'hard' should never be
+            used on production servers as it may generate unnecessary cores.
+            'soft' prevents cores from being generated but still imposes some
+            additional load.
 
           * 
 
