@@ -45,7 +45,7 @@ h_can_join(hook_data_channel *data)
 	struct Channel *chptr = data->chptr;
 
 	if((chptr->mode.mode & mymode) && !IsSSLClient(source_p)) {
-		sendto_one_notice(source_p, ":Only users using SSL could join this channel!");
+		sendto_one_notice(source_p, ":Only users using SSL can join this channel!");
 		data->approved = ERR_CUSTOM;
 	}
 }
