@@ -172,6 +172,8 @@ me_sasl(struct Client *client_p, struct Client *source_p,
 		}
 		*target_p->preClient->sasl_agent = '\0'; /* Blank the stored agent so someone else can answer */
 	}
+	else if(*parv[3] == 'M')
+		sendto_one(target_p, form_str(RPL_SASLMECHS), me.name, EmptyString(target_p->name) ? "*" : target_p->name, parv[4]);
 	
 	return 0;
 }
