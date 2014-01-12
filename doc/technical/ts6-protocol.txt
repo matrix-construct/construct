@@ -725,7 +725,7 @@ source: server
 parameters: source uid, target uid, mode, data
 
 Part of a SASL authentication exchange. The mode is 'C' to send some data
-(base64 encoded), or 'S' to end the exchange (data indicates type of
+(base64 encoded), or 'D' to end the exchange (data indicates type of
 termination: 'A' for abort, 'F' for authentication failure, 'S' for
 authentication success).
 
