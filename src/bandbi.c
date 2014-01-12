@@ -122,6 +122,9 @@ void
 bandb_add(bandb_type type, struct Client *source_p, const char *mask1,
 	  const char *mask2, const char *reason, const char *oper_reason, int perm)
 {
+	if(bandb_helper == NULL)
+		return;
+
 	static char buf[BUFSIZE];
 
 	rb_snprintf(buf, sizeof(buf), "%c %s ", bandb_add_letter[type], mask1);
@@ -145,6 +148,9 @@ static char bandb_del_letter[LAST_BANDB_TYPE] = {
 void
 bandb_del(bandb_type type, const char *mask1, const char *mask2)
 {
+	if(bandb_helper == NULL)
+		return;
+
 	static char buf[BUFSIZE];
 
 	buf[0] = '\0';
