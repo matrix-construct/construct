@@ -316,6 +316,7 @@ rb_init_ssl(void)
 	SSL_CTX_set_verify(ssl_server_ctx, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, verify_accept_all_cb);
 	SSL_CTX_set_session_id_context(ssl_server_ctx,
 			(const unsigned char *)"libratbox", 9);
+	SSL_CTX_set_cipher_list(ssl_server_ctx, "EECDH+HIGH:EDH+HIGH:HIGH:!aNULL");
 
 	/* Set ECDHE on OpenSSL 1.00+, but make sure it's actually available because redhat are dicks
 	   and bastardise their OpenSSL for stupid reasons... */
