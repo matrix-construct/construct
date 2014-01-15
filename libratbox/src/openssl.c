@@ -314,6 +314,7 @@ rb_init_ssl(void)
 	/* Disable SSLv2, make the client use our settings */
 	SSL_CTX_set_options(ssl_server_ctx, SSL_OP_NO_SSLv2 | SSL_OP_CIPHER_SERVER_PREFERENCE);
 	SSL_CTX_set_verify(ssl_server_ctx, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, verify_accept_all_cb);
+	SSL_CTX_set_session_id_context(ssl_server_ctx, "libratbox", 9);
 
 	/* Set ECDHE on OpenSSL 1.00+, but make sure it's actually available because redhat are dicks
 	   and bastardise their OpenSSL for stupid reasons... */
