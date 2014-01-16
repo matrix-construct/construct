@@ -984,9 +984,11 @@ conf_end_auth(struct TopConf *tc)
 
 		conf_add_class_to_conf(yy_tmp);
 
-		if (find_exact_conf_by_address("*", CONF_CLIENT, "*"))
+		if ((found_conf = find_exact_conf_by_address("*", CONF_CLIENT, "*")) && found_conf->spasswd == NULL)
 			conf_report_error("Ignoring redundant auth block (after *@*)");
-		else if (find_exact_conf_by_address(yy_tmp->host, CONF_CLIENT, yy_tmp->user))
+		else if ((found_conf = find_exact_conf_by_address(yy_tmp->host, CONF_CLIENT, yy_tmp->user)) &&
+				(!found_conf->spasswd || (yy_tmp->spasswd &&
+				    0 == irccmp(found_conf->spasswd, yy_tmp->spasswd))))
 			conf_report_error("Ignoring duplicate auth block for %s@%s",
 					yy_tmp->user, yy_tmp->host);
 		else
