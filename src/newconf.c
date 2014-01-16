@@ -1694,7 +1694,6 @@ conf_set_serverhide_links_delay(void *data)
 static void
 conf_set_service_name(void *data)
 {
-	struct Client *target_p;
 	const char *s;
 	char *tmp;
 	int dots = 0;
