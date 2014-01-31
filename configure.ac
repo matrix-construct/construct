@@ -253,7 +253,7 @@ AC_SUBST([pkglibdir])
 AC_SUBST([rundir])
 AC_SUBST([pkgrundir])
 AC_SUBST([pkglocalstatedir])
-AC_DEFINE_DIR([PKGLOCALSTATEDIR], [pkglocalstatedir], [[Directory in which to store state, such as band database]])
+AC_DEFINE_DIR([PKGLOCALSTATEDIR], [pkglocalstatedir], [[Directory in which to store state, such as ban database]])
 AC_SUBST([pkglibexecdir])
 AC_DEFINE_DIR([PKGLIBEXECDIR], [pkglibexecdir], [Directory where binaries the IRCd itself spawns live])
 

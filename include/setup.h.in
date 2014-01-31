@@ -249,7 +249,7 @@
 /* Directory where binaries the IRCd itself spawns live */
 #undef PKGLIBEXECDIR
 
-/* Directory in which to store state, such as band database */
+/* Directory in which to store state, such as ban database */
 #undef PKGLOCALSTATEDIR
 
 /* Directory to store pidfile in. */
