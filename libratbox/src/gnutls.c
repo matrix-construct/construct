@@ -31,7 +31,11 @@
 
 #include <gnutls/gnutls.h>
 #include <gnutls/x509.h>
-#include <gcrypt.h>
+#include <gnutls/crypto.h>
+
+#if GNUTLS_VERSION_MAJOR < 3
+# include <gcrypt.h>
+#endif
 
 static gnutls_certificate_credentials x509;
 static gnutls_dh_params dh_params;
@@ -246,7 +250,9 @@ rb_ssl_write(rb_fde_t *F, const void *buf, size_t count)
 static void
 rb_gcry_random_seed(void *unused)
 {
+#if GNUTLS_VERSION_MAJOR < 3
 	gcry_fast_random_poll();
+#endif
 }
 
 int
@@ -527,21 +533,31 @@ rb_ssl_start_connected(rb_fde_t *F, CNCB * callback, void *data, int timeout)
 int
 rb_init_prng(const char *path, prng_seed_t seed_type)
 {
+#if GNUTLS_VERSION_MAJOR < 3
 	gcry_fast_random_poll();
+#endif
 	return 1;
 }
 
 int
 rb_get_random(void *buf, size_t length)
 {
+#if GNUTLS_VERSION_MAJOR < 3
 	gcry_randomize(buf, length, GCRY_STRONG_RANDOM);
+#else
+	gnutls_rnd(GNUTLS_RND_KEY, buf, length);
+#endif
 	return 1;
 }
 
 int
 rb_get_pseudo_random(void *buf, size_t length)
 {
+#if GNUTLS_VERSION_MAJOR < 3
 	gcry_randomize(buf, length, GCRY_WEAK_RANDOM);
+#else
+	gnutls_rnd(GNUTLS_RND_RANDOM, buf, length);
+#endif
 	return 1;
 }
 
