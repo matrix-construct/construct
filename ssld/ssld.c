@@ -37,7 +37,7 @@ static void setup_signals(void);
 static pid_t ppid;
 
 static inline int32_t
-buf_to_int32(char *buf)
+buf_to_int32(uint8_t *buf)
 {
 	int32_t x;
 	memcpy(&x, buf, sizeof(x));
@@ -45,14 +45,14 @@ buf_to_int32(char *buf)
 }
 
 static inline void
-int32_to_buf(char *buf, int32_t x)
+int32_to_buf(uint8_t *buf, int32_t x)
 {
 	memcpy(buf, &x, sizeof(x));
 	return;
 }
 
 static inline uint16_t
-buf_to_uint16(char *buf)
+buf_to_uint16(uint8_t *buf)
 {
 	uint16_t x;
 	memcpy(&x, buf, sizeof(x));
@@ -60,7 +60,7 @@ buf_to_uint16(char *buf)
 }
 
 static inline void
-uint16_to_buf(char *buf, uint16_t x)
+uint16_to_buf(uint8_t *buf, uint16_t x)
 {
 	memcpy(buf, &x, sizeof(x));
 	return;
@@ -75,7 +75,7 @@ static char outbuf[READBUF_SIZE];
 typedef struct _mod_ctl_buf
 {
 	rb_dlink_node node;
-	char *buf;
+	uint8_t *buf;
 	size_t buflen;
 	rb_fde_t *F[MAXPASSFD];
 	int nfds;
@@ -253,7 +253,7 @@ close_conn(conn_t * conn, int wait_plain, const char *fmt, ...)
 {
 	va_list ap;
 	char reason[128];	/* must always be under 250 bytes */
-	char buf[256];
+	uint8_t buf[256];
 	int len;
 	if(IsDead(conn))
 		return;
@@ -280,7 +280,7 @@ close_conn(conn_t * conn, int wait_plain, const char *fmt, ...)
 
 	buf[0] = 'D';
 	int32_to_buf(&buf[1], conn->id);
-	strcpy(&buf[5], reason);
+	rb_strlcpy((char *) &buf[5], reason, sizeof(buf) - 5);
 	len = (strlen(reason) + 1) + 5;
 	mod_cmd_write_queue(conn->ctl, buf, len);
 }
@@ -679,7 +679,7 @@ static void
 ssl_process_accept_cb(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t len, void *data)
 {
 	conn_t *conn = data;
-	char buf[5 + RB_SSL_CERTFP_LEN];
+	uint8_t buf[5 + RB_SSL_CERTFP_LEN];
 
 	if(status == RB_OK)
 	{
@@ -702,7 +702,7 @@ static void
 ssl_process_connect_cb(rb_fde_t *F, int status, void *data)
 {
 	conn_t *conn = data;
-	char buf[5 + RB_SSL_CERTFP_LEN];
+	uint8_t buf[5 + RB_SSL_CERTFP_LEN];
 
 	if(status == RB_OK)
 	{
@@ -787,7 +787,7 @@ process_stats(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 {
 	char outstat[512];
 	conn_t *conn;
-	const char *odata;
+	uint8_t *odata;
 	int32_t id;
 
 	id = buf_to_int32(&ctlb->buf[1]);
@@ -888,7 +888,7 @@ init_prng(mod_ctl_t * ctl, mod_ctl_buf_t * ctl_buf)
 	prng_seed_t seed_type;
 
 	seed_type = (prng_seed_t) ctl_buf->buf[1];
-	path = &ctl_buf->buf[2];
+	path = (char *) &ctl_buf->buf[2];
 	rb_init_prng(path, seed_type);
 }
 
@@ -899,7 +899,7 @@ ssl_new_keys(mod_ctl_t * ctl, mod_ctl_buf_t * ctl_buf)
 	char *buf;
 	char *cert, *key, *dhparam;
 
-	buf = &ctl_buf->buf[2];
+	buf = (char *) &ctl_buf->buf[2];
 	cert = buf;
 	buf += strlen(cert) + 1;
 	key = buf;
