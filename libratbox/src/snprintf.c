@@ -151,8 +151,8 @@ put_dec(char *buf, unsigned long long int num)
 #define SPECIAL	32		/* 0x */
 #define LARGE	64		/* use 'ABCDEF' instead of 'abcdef' */
 
-static char *
-number(char *buf, char *end, unsigned long long int num, int base, int size, int precision,
+static size_t
+number(char *const buf, const size_t size, size_t idx, unsigned long long int num, int base, int field_width, int precision,
        int type)
 {
 	char sign, tmp[66];
@@ -167,7 +167,7 @@ number(char *buf, char *end, unsigned long long int num, int base, int size, int
 	if(type & LEFT)
 		type &= ~ZEROPAD;
 	if(base < 2 || base > 36)
-		return NULL;
+		return idx;
 	sign = 0;
 	if(type & SIGN)
 	{
@@ -175,24 +175,24 @@ number(char *buf, char *end, unsigned long long int num, int base, int size, int
 		{
 			sign = '-';
 			num = -(signed long long int)num;
-			size--;
+			field_width--;
 		}
 		else if(type & PLUS)
 		{
 			sign = '+';
-			size--;
+			field_width--;
 		}
 		else if(type & SPACE)
 		{
 			sign = ' ';
-			size--;
+			field_width--;
 		}
 	}
 	if(need_pfx)
 	{
-		size--;
+		field_width--;
 		if(base == 16)
-			size--;
+			field_width--;
 	}
 
 	/* generate full string in tmp[], in reverse order */
@@ -226,69 +226,69 @@ number(char *buf, char *end, unsigned long long int num, int base, int size, int
 	if(i > precision)
 		precision = i;
 	/* leading space padding */
-	size -= precision;
+	field_width -= precision;
 	if(!(type & (ZEROPAD + LEFT)))
 	{
-		while(--size >= 0)
+		while(--field_width >= 0)
 		{
-			if(buf < end)
-				*buf = ' ';
-			++buf;
+			if(idx < size)
+				buf[idx] = ' ';
+			++idx;
 		}
 	}
 	/* sign */
 	if(sign)
 	{
-		if(buf < end)
-			*buf = sign;
-		++buf;
+		if(idx < size)
+			buf[idx] = sign;
+		++idx;
 	}
 	/* "0x" / "0" prefix */
 	if(need_pfx)
 	{
-		if(buf < end)
-			*buf = '0';
-		++buf;
+		if(idx < size)
+			buf[idx] = '0';
+		++idx;
 		if(base == 16)
 		{
-			if(buf < end)
-				*buf = digits[16];	/* for arbitrary base: digits[33]; */
-			++buf;
+			if(idx < size)
+				buf[idx] = digits[16];	/* for arbitrary base: digits[33]; */
+			++idx;
 		}
 	}
 	/* zero or space padding */
 	if(!(type & LEFT))
 	{
 		char c = (type & ZEROPAD) ? '0' : ' ';
-		while(--size >= 0)
+		while(--field_width >= 0)
 		{
-			if(buf < end)
-				*buf = c;
-			++buf;
+			if(idx < size)
+				buf[idx] = c;
+			++idx;
 		}
 	}
 	/* hmm even more zero padding? */
 	while(i <= --precision)
 	{
-		if(buf < end)
-			*buf = '0';
-		++buf;
+		if(idx < size)
+			buf[idx] = '0';
+		++idx;
 	}
 	/* actual digits of result */
 	while(--i >= 0)
 	{
-		if(buf < end)
-			*buf = tmp[i];
-		++buf;
+		if(idx < size)
+			buf[idx] = tmp[i];
+		++idx;
 	}
 	/* trailing space padding */
-	while(--size >= 0)
+	while(--field_width >= 0)
 	{
-		if(buf < end)
-			*buf = ' ';
-		++buf;
+		if(idx < size)
+			buf[idx] = ' ';
+		++idx;
 	}
-	return buf;
+	return idx;
 }
 
 /**
@@ -315,7 +315,8 @@ rb_vsnprintf(char *buf, size_t size, const char *fmt, va_list args)
 	int len;
 	unsigned long long int num;
 	int i, base;
-	char *str, *end, c;
+	char c;
+	size_t idx;
 	const char *s;
 
 	int flags;		/* flags to number() */
@@ -330,28 +331,20 @@ rb_vsnprintf(char *buf, size_t size, const char *fmt, va_list args)
 
 	/* Reject out-of-range values early.  Large positive sizes are
 	   used for unknown buffer sizes. */
-	if(rb_unlikely((int)size < 0))
+	if(rb_unlikely(size > INT_MAX))
 	{
 		return 0;
 	}
 
-	str = buf;
-	end = buf + size;
-
-	/* Make sure end is always >= buf */
-	if(end < buf)
-	{
-		end = ((void *)-1);
-		size = end - buf;
-	}
+	idx = 0;
 
 	for(; *fmt; ++fmt)
 	{
 		if(*fmt != '%')
 		{
-			if(str < end)
-				*str = *fmt;
-			++str;
+			if(idx < size)
+				buf[idx] = *fmt;
+			++idx;
 			continue;
 		}
 
@@ -435,20 +428,20 @@ rb_vsnprintf(char *buf, size_t size, const char *fmt, va_list args)
 			{
 				while(--field_width > 0)
 				{
-					if(str < end)
-						*str = ' ';
-					++str;
+					if(idx < size)
+						buf[idx] = ' ';
+					++idx;
 				}
 			}
 			c = (unsigned char)va_arg(args, int);
-			if(str < end)
-				*str = c;
-			++str;
+			if(idx < size)
+				buf[idx] = c;
+			++idx;
 			while(--field_width > 0)
 			{
-				if(str < end)
-					*str = ' ';
-				++str;
+				if(idx < size)
+					buf[idx] = ' ';
+				++idx;
 			}
 			continue;
 
@@ -464,23 +457,23 @@ rb_vsnprintf(char *buf, size_t size, const char *fmt, va_list args)
 			{
 				while(len < field_width--)
 				{
-					if(str < end)
-						*str = ' ';
-					++str;
+					if(idx < size)
+						buf[idx] = ' ';
+					++idx;
 				}
 			}
 			for(i = 0; i < len; ++i)
 			{
-				if(str < end)
-					*str = *s;
-				++str;
+				if(idx < size)
+					buf[idx] = *s;
+				++idx;
 				++s;
 			}
 			while(len < field_width--)
 			{
-				if(str < end)
-					*str = ' ';
-				++str;
+				if(idx < size)
+					buf[idx] = ' ';
+				++idx;
 			}
 			continue;
 
@@ -490,7 +483,7 @@ rb_vsnprintf(char *buf, size_t size, const char *fmt, va_list args)
 				field_width = 2 * sizeof(void *);
 				flags |= ZEROPAD;
 			}
-			str = number(str, end,
+			idx = number(buf, size, idx,
 				     (unsigned long)va_arg(args, void *),
 				     16, field_width, precision, flags);
 			continue;
@@ -502,24 +495,24 @@ rb_vsnprintf(char *buf, size_t size, const char *fmt, va_list args)
 			if(qualifier == 'l')
 			{
 				long *ip = va_arg(args, long *);
-				*ip = (str - buf);
+				*ip = idx;
 			}
 			else if(qualifier == 'Z' || qualifier == 'z')
 			{
 				size_t *ip = va_arg(args, size_t *);
-				*ip = (str - buf);
+				*ip = idx;
 			}
 			else
 			{
 				int *ip = va_arg(args, int *);
-				*ip = (str - buf);
+				*ip = idx;
 			}
 			continue;
 
 		case '%':
-			if(str < end)
-				*str = '%';
-			++str;
+			if(idx < size)
+				buf[idx] = '%';
+			++idx;
 			continue;
 
 			/* integer number formats - set up the flags and "break" */
@@ -540,14 +533,14 @@ rb_vsnprintf(char *buf, size_t size, const char *fmt, va_list args)
 			break;
 
 		default:
-			if(str < end)
-				*str = '%';
-			++str;
+			if(idx < size)
+				buf[idx] = '%';
+			++idx;
 			if(*fmt)
 			{
-				if(str < end)
-					*str = *fmt;
-				++str;
+				if(idx < size)
+					buf[idx] = *fmt;
+				++idx;
 			}
 			else
 			{
@@ -583,17 +576,17 @@ rb_vsnprintf(char *buf, size_t size, const char *fmt, va_list args)
 			if(flags & SIGN)
 				num = (signed int)num;
 		}
-		str = number(str, end, num, base, field_width, precision, flags);
+		idx = number(buf, size, idx, num, base, field_width, precision, flags);
 	}
 	if(size > 0)
 	{
-		if(str < end)
-			*str = '\0';
+		if(idx < size)
+			buf[idx] = '\0';
 		else
-			end[-1] = '\0';
+			buf[size - 1] = '\0';
 	}
 	/* the trailing null byte doesn't count towards the total */
-	return str - buf;
+	return idx;
 }
 
 /**
