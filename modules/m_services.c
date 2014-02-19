@@ -101,6 +101,7 @@ static int
 _modinit(void)
 {
 	mark_services();
+	return 0;
 }
 
 static void
