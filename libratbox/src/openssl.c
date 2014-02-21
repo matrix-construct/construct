@@ -313,9 +313,6 @@ rb_init_ssl(void)
 	}
 	/* Disable SSLv2, make the client use our settings */
 	SSL_CTX_set_options(ssl_server_ctx, SSL_OP_NO_SSLv2 | SSL_OP_CIPHER_SERVER_PREFERENCE
-#ifdef SSL_OP_NO_COMPRESSION
-			| SSL_OP_NO_COMPRESSION
-#endif
 #ifdef SSL_OP_SINGLE_DH_USE
 			| SSL_OP_SINGLE_DH_USE
 #endif
