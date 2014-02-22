@@ -267,6 +267,43 @@ Reports a (usually fatal) error with the connection.
 Error messages may contain IP addresses and have a negative effect on server
 IP hiding.
 
+ETB
+capab: EOPMOD
+source: any
+propagation: broadcast
+parameters: channelTS, channel, topicTS, topic setter, opt. extensions, topic
+
+Propagates a channel topic change or propagates a channel topic as part of a
+burst.
+
+If the channel had no topic yet, the channelTS in the message is lower (older)
+than the current TS of the channel, or the channelTSes are equal and the
+topicTS in the message is newer than the topicTS of the current topic on the
+channel, set the topic with topicTS and topic setter, and propagate the
+message. Otherwise ignore the message and do not propagate it.
+
+Unlike a TB message, an ETB message can change the topicTS without changing
+the topic text. In this case, the message should be propagated to servers but
+local users should not be notified.
+
+Services can send a channelTS of 0 to force restoring an older topic (unless
+the channel's TS is 0). Therefore, the channelTS should be propagated as given
+and should not be replaced by the current TS of the channel.
+
+An ETB message with a newer channelTS can still set a topic on a channel
+without topic. This corresponds to SJOIN not clearing the topic when lowering
+TS on a channel.
+
+If ETB comes from a user, it can be propagated to non-EOPMOD servers using
+TOPIC, TB or a combination of TOPIC to clear the topic and TB to set a new
+topic with topicTS. However, this can be somewhat noisy. On the other hand, if
+ETB comes from a server, there is no way to force setting a newer topicTS. It
+is possible to set the topic text but the incorrect topicTS may lead to desync
+later on.
+
+This document does not document the optional extensions between topic setter
+and topic.
+
 ETRACE
 encap only
 encap target: single server
