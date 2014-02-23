@@ -374,7 +374,7 @@ report_this_status(struct Client *source_p, struct Client *target_p)
 		sendto_one_numeric(source_p, RPL_TRACEUNKNOWN,
 				   form_str(RPL_TRACEUNKNOWN),
 				   class_name, name, ip,
-				   rb_current_time() - target_p->localClient->firsttime);
+				   (unsigned long)(rb_current_time() - target_p->localClient->firsttime));
 		cnt++;
 		break;
 

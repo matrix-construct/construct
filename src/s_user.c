@@ -158,7 +158,8 @@ show_lusers(struct Client *source_p)
 
 	if(rb_dlink_list_length(&oper_list) > 0)
 		sendto_one_numeric(source_p, RPL_LUSEROP, 
-				   form_str(RPL_LUSEROP), rb_dlink_list_length(&oper_list));
+				   form_str(RPL_LUSEROP),
+				   (int)rb_dlink_list_length(&oper_list));
 
 	if(rb_dlink_list_length(&unknown_list) > 0)
 		sendto_one_numeric(source_p, RPL_LUSERUNKNOWN, 

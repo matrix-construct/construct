@@ -977,8 +977,8 @@ stats_uptime (struct Client *source_p)
 	now = rb_current_time() - startup_time;
 	sendto_one_numeric(source_p, RPL_STATSUPTIME, 
 			   form_str (RPL_STATSUPTIME),
-			   now / 86400, (now / 3600) % 24, 
-			   (now / 60) % 60, now % 60);
+			   (int)(now / 86400), (int)((now / 3600) % 24),
+			   (int)((now / 60) % 60), (int)(now % 60));
 	sendto_one_numeric(source_p, RPL_STATSCONN,
 			   form_str (RPL_STATSCONN),
 			   MaxConnectionCount, MaxClientCount, 

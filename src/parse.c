@@ -482,7 +482,7 @@ report_messages(struct Client *source_p)
 		s_assert(amsg->name != NULL);
 		sendto_one_numeric(source_p, RPL_STATSCOMMANDS,
 				   form_str(RPL_STATSCOMMANDS),
-				   amsg->name, amsg->hits, 0, 0);
+				   amsg->name, amsg->hits, 0L, 0);
 	}
 }
 
