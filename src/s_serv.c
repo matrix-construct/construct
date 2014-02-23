@@ -1191,7 +1191,8 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	make_server(client_p);
 	if(by && IsPerson(by))
 	{
-		strcpy(client_p->serv->by, by->name);
+		rb_strlcpy(client_p->serv->by, by->name,
+				sizeof client_p->serv->by);
 		if(client_p->serv->user)
 			free_user(client_p->serv->user, NULL);
 		client_p->serv->user = by->user;
@@ -1199,7 +1200,8 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	}
 	else
 	{
-		strcpy(client_p->serv->by, "AutoConn.");
+		rb_strlcpy(client_p->serv->by, "AutoConn.",
+				sizeof client_p->serv->by);
 		if(client_p->serv->user)
 			free_user(client_p->serv->user, NULL);
 		client_p->serv->user = NULL;
