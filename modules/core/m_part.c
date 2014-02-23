@@ -54,9 +54,10 @@ mapi_clist_av1 part_clist[] = { &part_msgtab, NULL };
 DECLARE_MODULE_AV1(part, NULL, NULL, part_clist, NULL, NULL, "$Revision: 98 $");
 
 static void part_one_client(struct Client *client_p,
-			    struct Client *source_p, char *name, char *reason);
+			    struct Client *source_p, char *name,
+			    const char *reason);
 static int can_send_part(struct Client *source_p, struct Channel *chptr, struct membership *msptr);
-static int do_message_hook(struct Client *source_p, struct Channel *chptr, char **reason);
+static int do_message_hook(struct Client *source_p, struct Channel *chptr, const char **reason);
 
 
 /*
@@ -100,7 +101,7 @@ m_part(struct Client *client_p, struct Client *source_p, int parc, const char *p
  * side effects	- remove ONE client given the channel name 
  */
 static void
-part_one_client(struct Client *client_p, struct Client *source_p, char *name, char *reason)
+part_one_client(struct Client *client_p, struct Client *source_p, char *name, const char *reason)
 {
 	struct Channel *chptr;
 	struct membership *msptr;
@@ -187,7 +188,7 @@ can_send_part(struct Client *source_p, struct Channel *chptr, struct membership 
  *    - reason may be modified.
  */
 static int
-do_message_hook(struct Client *source_p, struct Channel *chptr, char **reason)
+do_message_hook(struct Client *source_p, struct Channel *chptr, const char **reason)
 {
 	hook_data_privmsg_channel hdata;
 
