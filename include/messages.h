@@ -202,7 +202,7 @@
 #define NUMERIC_STR_670      ":STARTTLS successful, proceed with TLS handshake"
 #define NUMERIC_STR_671      "%s :is using a secure connection"
 #define NUMERIC_STR_691      ":%s"
-#define NUMERIC_STR_702      ":%s 702 %s %s 0x%x %s %s"
+#define NUMERIC_STR_702      ":%s 702 %s %s 0x%lx %s %s"
 #define NUMERIC_STR_703      ":%s 703 %s :End of /MODLIST."
 #define NUMERIC_STR_704      ":%s 704 %s %s :%s"
 #define NUMERIC_STR_705      ":%s 705 %s %s :%s"

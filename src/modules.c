@@ -458,7 +458,7 @@ mo_modlist(struct Client *client_p, struct Client *source_p, int parc, const cha
 				sendto_one(source_p, form_str(RPL_MODLIST),
 					   me.name, source_p->name,
 					   modlist[i]->name,
-					   modlist[i]->address,
+					   (unsigned long)(uintptr_t)modlist[i]->address,
 					   modlist[i]->version, modlist[i]->core ? "(core)" : "");
 			}
 		}
@@ -466,7 +466,8 @@ mo_modlist(struct Client *client_p, struct Client *source_p, int parc, const cha
 		{
 			sendto_one(source_p, form_str(RPL_MODLIST),
 				   me.name, source_p->name, modlist[i]->name,
-				   modlist[i]->address, modlist[i]->version,
+				   (unsigned long)(uintptr_t)modlist[i]->address,
+				   modlist[i]->version,
 				   modlist[i]->core ? "(core)" : "");
 		}
 	}
