@@ -210,6 +210,7 @@ generate_random_salt(char *salt, int length)
 	if(read(fd, buf, length) != length)
 	{
 		free(buf);
+		close(fd);
 		return (generate_poor_salt(salt, length));
 	}
 
@@ -218,5 +219,6 @@ generate_random_salt(char *salt, int length)
 		salt[i] = saltChars[abs(buf[i]) % 64];
 	}
 	free(buf);
+	close(fd);
 	return (salt);
 }
