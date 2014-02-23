@@ -301,7 +301,6 @@ stats_connect(struct Client *source_p)
 		if(ServerConfIllegal(server_p))
 			continue;
 
-		buf[0] = '\0';
 		s = buf;
 
 		if(IsOper(source_p))
@@ -316,7 +315,7 @@ stats_connect(struct Client *source_p)
 				*s++ = 'Z';
 		}
 
-		if(!buf[0])
+		if(s == buf)
 			*s++ = '*';
 
 		*s = '\0';
