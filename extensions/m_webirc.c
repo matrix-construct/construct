@@ -77,8 +77,11 @@ mr_webirc(struct Client *client_p, struct Client *source_p, int parc, const char
 {
 	struct ConfItem *aconf;
 	const char *encr;
+	struct rb_sockaddr_storage addr;
 
-	if (!strchr(parv[4], '.') && !strchr(parv[4], ':'))
+	if ((!strchr(parv[4], '.') && !strchr(parv[4], ':')) ||
+			strlen(parv[4]) + (*parv[4] == ':') >=
+			sizeof(source_p->sockhost))
 	{
 		sendto_one(source_p, "NOTICE * :Invalid IP");
 		return 0;
@@ -116,15 +119,28 @@ mr_webirc(struct Client *client_p, struct Client *source_p, int parc, const char
 		return 0;
 	}
 
+	if (rb_inet_pton_sock(parv[4], (struct sockaddr *)&addr) <= 0)
+	{
+		sendto_one(source_p, "NOTICE * :Invalid IP");
+		return 0;
+	}
 
-	rb_strlcpy(source_p->sockhost, parv[4], sizeof(source_p->sockhost));
+	if (*parv[4] == ':')
+	{
+		source_p->sockhost[0] = '0';
+		rb_strlcpy(source_p->sockhost + 1, parv[4],
+				sizeof(source_p->sockhost) - 1);
+	}
+	else
+		rb_strlcpy(source_p->sockhost, parv[4],
+				sizeof(source_p->sockhost));
 
 	if(strlen(parv[3]) <= HOSTLEN)
 		rb_strlcpy(source_p->host, parv[3], sizeof(source_p->host));
 	else
 		rb_strlcpy(source_p->host, source_p->sockhost, sizeof(source_p->host));
-	
-	rb_inet_pton_sock(parv[4], (struct sockaddr *)&source_p->localClient->ip);
+
+	source_p->localClient->ip = addr;
 
 	/* Check dlines now, klines will be checked on registration */
 	if((aconf = find_dline((struct sockaddr *)&source_p->localClient->ip, 
