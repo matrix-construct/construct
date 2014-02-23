@@ -240,6 +240,7 @@ newblock(rb_bh *bh)
 	b->elems = get_block(b->alloc_size);
 	if(rb_unlikely(b->elems == NULL))
 	{
+		rb_free(b);
 		return (1);
 	}
 	offset = (uintptr_t)b->elems;
