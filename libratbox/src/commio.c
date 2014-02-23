@@ -59,7 +59,8 @@ static struct ev_entry *rb_timeout_ev;
 static const char *rb_err_str[] = { "Comm OK", "Error during bind()",
 	"Error during DNS lookup", "connect timeout",
 	"Error during connect()",
-	"Comm Error"
+	"Comm Error",
+	"Error with SSL"
 };
 
 /* Highest FD and number of open FDs .. */
