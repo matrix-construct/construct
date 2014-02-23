@@ -224,7 +224,7 @@ load_all_modules(int warn)
 
 	modules_init();
 
-	modlist = (struct module **) rb_malloc(sizeof(struct module) * (MODS_INCREMENT));
+	modlist = (struct module **) rb_malloc(sizeof(struct module *) * (MODS_INCREMENT));
 
 	max_mods = MODS_INCREMENT;
 
@@ -739,7 +739,7 @@ unload_one_module(const char *name, int warn)
 
 	rb_free(modlist[modindex]->name);
 	memmove(&modlist[modindex], &modlist[modindex + 1],
-	       sizeof(struct module) * ((num_mods - 1) - modindex));
+	       sizeof(struct module *) * ((num_mods - 1) - modindex));
 
 	if(num_mods != 0)
 		num_mods--;
@@ -905,9 +905,9 @@ increase_modlist(void)
 	if((num_mods + 1) < max_mods)
 		return;
 
-	new_modlist = (struct module **) rb_malloc(sizeof(struct module) *
+	new_modlist = (struct module **) rb_malloc(sizeof(struct module *) *
 						  (max_mods + MODS_INCREMENT));
-	memcpy((void *) new_modlist, (void *) modlist, sizeof(struct module) * num_mods);
+	memcpy((void *) new_modlist, (void *) modlist, sizeof(struct module *) * num_mods);
 
 	rb_free(modlist);
 	modlist = new_modlist;
