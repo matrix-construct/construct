@@ -542,6 +542,8 @@ import_config(const char *conf, int id)
 	if(flag.verbose)
 		fprintf(stdout, "%*s\n", strlen(bandb_suffix[id]) > 0 ? 10 : 15, "imported.");
 
+	fclose(fd);
+
 	return;
 }
 
