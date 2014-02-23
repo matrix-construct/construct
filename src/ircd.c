@@ -155,6 +155,19 @@ ircd_shutdown(const char *reason)
 static void
 print_startup(int pid)
 {
+	int fd;
+
+	close(1);
+	fd = open("/dev/null", O_RDWR);
+	if (fd == -1) {
+		perror("open /dev/null");
+		exit(EXIT_FAILURE);
+	}
+	if (fd == 0)
+		fd = dup(fd);
+	if (fd != 1)
+		abort();
+
 	inotice("now running in %s mode from %s as pid %d ...",
 	       !server_state_foreground ? "background" : "foreground",
         	ConfigFileEntry.dpath, pid);
@@ -163,12 +176,10 @@ print_startup(int pid)
 	 * -- jilles */
 	if (!server_state_foreground)
 		write(0, ".", 1);
-	fclose(stdin);
-	fclose(stdout);
-	fclose(stderr);
-	open("/dev/null", O_RDWR);
-	dup2(0, 1);
-	dup2(0, 2);
+	if (dup2(1, 0) == -1)
+		abort();
+	if (dup2(1, 2) == -1)
+		abort();
 }
 
 /*
