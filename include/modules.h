@@ -52,11 +52,6 @@ struct module
 	void * mapi_header; /* actually struct mapi_mheader_av<mapi_version>	*/
 };
 
-struct module_path
-{
-	char path[PATH_MAX];
-};
-
 #define MAPI_MAGIC_HDR	0x4D410000
 
 #define MAPI_V1		(MAPI_MAGIC_HDR | 0x1)

@@ -130,17 +130,17 @@ modules_init(void)
  * output	- none
  * side effects - returns a module path from path
  */
-static struct module_path *
+static char *
 mod_find_path(const char *path)
 {
 	rb_dlink_node *ptr;
-	struct module_path *mpath;
+	char *mpath;
 
 	RB_DLINK_FOREACH(ptr, mod_paths.head)
 	{
 		mpath = ptr->data;
 
-		if(!strcmp(path, mpath->path))
+		if(!strcmp(path, mpath))
 			return mpath;
 	}
 
@@ -156,14 +156,12 @@ mod_find_path(const char *path)
 void
 mod_add_path(const char *path)
 {
-	struct module_path *pathst;
+	char *pathst;
 
 	if(mod_find_path(path))
 		return;
 
-	pathst = rb_malloc(sizeof(struct module_path));
-
-	strcpy(pathst->path, path);
+	pathst = rb_strdup(path);
 	rb_dlinkAddAlloc(pathst, &mod_paths);
 }
 
@@ -288,7 +286,7 @@ load_one_module(const char *path, int coremodule)
 {
 	char modpath[PATH_MAX];
 	rb_dlink_node *pathst;
-	struct module_path *mpath;
+	const char *mpath;
 
 	struct stat statbuf;
 
@@ -299,7 +297,7 @@ load_one_module(const char *path, int coremodule)
 	{
 		mpath = pathst->data;
 
-		rb_snprintf(modpath, sizeof(modpath), "%s/%s", mpath->path, path);
+		rb_snprintf(modpath, sizeof(modpath), "%s/%s", mpath, path);
 		if((strstr(modpath, "../") == NULL) && (strstr(modpath, "/..") == NULL))
 		{
 			if(stat(modpath, &statbuf) == 0)
