@@ -267,8 +267,8 @@ void unref_blacklist(struct Blacklist *blptr)
 	{
 		RB_DLINK_FOREACH_SAFE(ptr, next_ptr, blptr->filters.head)
 		{
-			rb_free(ptr);
 			rb_dlinkDelete(ptr, &blptr->filters);
+			rb_free(ptr);
 		}
 
 		rb_dlinkFindDestroy(blptr, &blacklist_list);

@@ -1946,8 +1946,8 @@ cleanup_bl:
 	{
 		RB_DLINK_FOREACH_SAFE(ptr, nptr, yy_blacklist_filters.head)
 		{
-			rb_free(ptr);
 			rb_dlinkDelete(ptr, &yy_blacklist_filters);
+			rb_free(ptr);
 		}
 	}
 	else
