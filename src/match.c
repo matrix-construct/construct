@@ -259,7 +259,8 @@ match_esc(const char *mask, const char *name)
 				return 1;
 			if(quote)
 				return 0;
-			for(m--; (m > (const unsigned char *)mask) && (*m == '?'); m--);;
+			for(m--; (m > (const unsigned char *)mask) && (*m == '?'); m--)
+				;
 
 			if(*m == '*' && (m > (const unsigned char *)mask))
 				return 1;

@@ -191,7 +191,7 @@ rb_strnlen(const char *s, size_t count)
 {
 	const char *sc;
 	for(sc = s; count-- && *sc != '\0'; ++sc)
-		;;
+		;
 	return sc - s;
 }
 #else

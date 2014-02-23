@@ -162,7 +162,7 @@ make_client(struct Client *from)
 
 		client_p->localClient->F = NULL;
 
-		client_p->preClient = rb_bh_alloc(pclient_heap);;
+		client_p->preClient = rb_bh_alloc(pclient_heap);
 
 		/* as good a place as any... */
 		rb_dlinkAdd(client_p, &client_p->localClient->tnode, &unknown_list);
