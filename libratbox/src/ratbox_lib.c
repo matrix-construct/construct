@@ -164,6 +164,7 @@ rb_lib_restart(const char *format, ...)
 	rb_vsnprintf(errbuf, sizeof(errbuf), format, args);
 	va_end(args);
 	rb_restart(errbuf);
+	abort();
 }
 
 void
