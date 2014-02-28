@@ -34,7 +34,7 @@ static time_t conf_find_time(char*);
 static struct {
 	const char *	name;
 	const char *	plural;
-	time_t 	val;
+	time_t	val;
 } ircd_times[] = {
 	{"second",     "seconds",    1},
 	{"minute",     "minutes",    60},
@@ -44,7 +44,7 @@ static struct {
 	{"fortnight",  "fortnights", 60 * 60 * 24 * 14},
 	{"month",      "months",     60 * 60 * 24 * 7 * 4},
 	{"year",       "years",      60 * 60 * 24 * 365},
-	/* ok-- we now do sizes here too. they aren't times, but 
+	/* ok-- we now do sizes here too. they aren't times, but
 	   it's close enough */
 	{"byte",	"bytes",	1},
 	{"kb",		NULL,		1024},
@@ -117,7 +117,7 @@ static void	free_cur_list(conf_parm_t* list)
 		free_cur_list(list->next);
 }
 
-		
+
 conf_parm_t *	cur_list = NULL;
 
 static void	add_cur_list_cpt(conf_parm_t *new)
@@ -163,8 +163,8 @@ static void	add_cur_list(int type, char *str, int number)
 %}
 
 %union {
-	int 		number;
-	char 		string[IRCD_BUFSIZE + 1];
+	int		number;
+	char		string[IRCD_BUFSIZE + 1];
 	conf_parm_t *	conf_parm;
 }
 
@@ -174,15 +174,15 @@ static void	add_cur_list(int type, char *str, int number)
 %token <number> NUMBER
 
 %type <string> qstring string
-%type <number> number timespec 
+%type <number> number timespec
 %type <conf_parm> oneitem single itemlist
 
 %start conf
 
 %%
 
-conf: 
-	| conf conf_item 
+conf:
+	| conf conf_item
 	| error
 	;
 
@@ -190,28 +190,28 @@ conf_item: block
 	 | loadmodule
          ;
 
-block: string 
-         { 
+block: string
+         {
            conf_start_block($1, NULL);
          }
-       '{' block_items '}' ';' 
+       '{' block_items '}' ';'
          {
 	   if (conf_cur_block)
-           	conf_end_block(conf_cur_block);
+	           conf_end_block(conf_cur_block);
          }
-     | string qstring 
-         { 
+     | string qstring
+         {
            conf_start_block($1, $2);
          }
        '{' block_items '}' ';'
          {
 	   if (conf_cur_block)
-           	conf_end_block(conf_cur_block);
+	           conf_end_block(conf_cur_block);
          }
      ;
 
-block_items: block_items block_item 
-           | block_item 
+block_items: block_items block_item
+           | block_item
            ;
 
 block_item:	string '=' itemlist ';'
@@ -271,7 +271,7 @@ oneitem: qstring
 	    }
           | string
             {
-		/* a 'string' could also be a yes/no value .. 
+		/* a 'string' could also be a yes/no value ..
 		   so pass it as that, if so */
 		int val = conf_get_yesno_value($1);
 
@@ -310,7 +310,7 @@ string: STRING { strcpy($$, $1); } ;
 number: NUMBER { $$ = $1; } ;
 
 timespec:	number string
-         	{
+		{
 			time_t t;
 
 			if ((t = conf_find_time($2)) == 0)
@@ -318,7 +318,7 @@ timespec:	number string
 				conf_report_error("Unrecognised time type/size '%s'", $2);
 				t = 1;
 			}
-	    
+
 			$$ = $1 * t;
 		}
 		| timespec timespec
