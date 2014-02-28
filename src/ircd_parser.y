@@ -101,20 +101,20 @@ static int	conf_get_yesno_value(char *str)
 
 static void	free_cur_list(conf_parm_t* list)
 {
-	switch (list->type & CF_MTYPE)
-	{
-		case CF_STRING:
-		case CF_QSTRING:
-			rb_free(list->v.string);
-			break;
-		case CF_LIST:
-			free_cur_list(list->v.list);
-			break;
-		default: break;
+	if (list->type == CF_STRING || list->type == CF_QSTRING) {
+	        rb_free(list->v.string);
+	} else if (list->type == CF_FLIST) {
+		/* Even though CF_FLIST is a flag, comparing with == is valid
+		 * because conf_parm_t.type must be either a type or one flag.
+		 */
+		free_cur_list(list->v.list);
 	}
 
-	if (list->next)
+	if (list->next) {
 		free_cur_list(list->next);
+	}
+
+	rb_free(list);
 }
 
 
@@ -125,7 +125,7 @@ static void	add_cur_list_cpt(conf_parm_t *new)
 	if (cur_list == NULL)
 	{
 		cur_list = rb_malloc(sizeof(conf_parm_t));
-		cur_list->type |= CF_FLIST;
+		cur_list->type = CF_FLIST;
 		cur_list->v.list = new;
 	}
 	else
@@ -216,7 +216,7 @@ block_items: block_items block_item
 
 block_item:	string '=' itemlist ';'
 		{
-			conf_call_set(conf_cur_block, $1, cur_list, CF_LIST);
+			conf_call_set(conf_cur_block, $1, cur_list);
 			free_cur_list(cur_list);
 			cur_list = NULL;
 		}
@@ -233,8 +233,7 @@ single: oneitem
 	| oneitem TWODOTS oneitem
 	{
 		/* "1 .. 5" meaning 1,2,3,4,5 - only valid for integers */
-		if (($1->type & CF_MTYPE) != CF_INT ||
-		    ($3->type & CF_MTYPE) != CF_INT)
+		if ($1->type != CF_INT || $3->type != CF_INT)
 		{
 			conf_report_error("Both arguments in '..' notation must be integers.");
 			break;

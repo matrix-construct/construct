@@ -65,7 +65,7 @@ static char *yy_privset_extends = NULL;
 static const char *
 conf_strtype(int type)
 {
-	switch (type & CF_MTYPE)
+	switch (CF_TYPE(type))
 	{
 	case CF_INT:
 		return "integer value";
@@ -424,7 +424,7 @@ set_modes_from_table(int *modes, const char *whatis, struct mode_table *tab, con
 		int dir = 1;
 		int mode;
 
-		if((args->type & CF_MTYPE) != CF_STRING)
+		if(CF_TYPE(args->type) != CF_STRING)
 		{
 			conf_report_error("Warning -- %s is not a string; ignoring.", whatis);
 			continue;
@@ -857,7 +857,7 @@ conf_set_listen_port_both(void *data, int ssl)
 	conf_parm_t *args = data;
 	for (; args; args = args->next)
 	{
-		if((args->type & CF_MTYPE) != CF_INT)
+		if(CF_TYPE(args->type) != CF_INT)
 		{
 			conf_report_error
 				("listener::port argument is not an integer " "-- ignoring.");
@@ -1179,7 +1179,7 @@ conf_set_shared_oper(void *data)
 
 	if(args->next != NULL)
 	{
-		if((args->type & CF_MTYPE) != CF_QSTRING)
+		if(CF_TYPE(args->type) != CF_QSTRING)
 		{
 			conf_report_error("Ignoring shared::oper -- server is not a qstring");
 			return;
@@ -1191,7 +1191,7 @@ conf_set_shared_oper(void *data)
 	else
 		yy_shared->server = rb_strdup("*");
 
-	if((args->type & CF_MTYPE) != CF_QSTRING)
+	if(CF_TYPE(args->type) != CF_QSTRING)
 	{
 		conf_report_error("Ignoring shared::oper -- oper is not a qstring");
 		return;
@@ -2037,7 +2037,7 @@ conf_set_generic_string(void *data, int len, void *location)
 }
 
 int
-conf_call_set(struct TopConf *tc, char *item, conf_parm_t * value, int type)
+conf_call_set(struct TopConf *tc, char *item, conf_parm_t * value)
 {
 	struct ConfEntry *cf;
 	conf_parm_t *cp;
@@ -2437,7 +2437,7 @@ newconf_init()
 	add_top_conf("auth", conf_begin_auth, conf_end_auth, conf_auth_table);
 
 	add_top_conf("shared", conf_cleanup_shared, conf_cleanup_shared, NULL);
-	add_conf_item("shared", "oper", CF_QSTRING|CF_FLIST, conf_set_shared_oper);
+	add_conf_item("shared", "oper", CF_QSTRING | CF_FLIST, conf_set_shared_oper);
 	add_conf_item("shared", "flags", CF_STRING | CF_FLIST, conf_set_shared_flags);
 
 	add_top_conf("connect", conf_begin_connect, conf_end_connect, conf_connect_table);
