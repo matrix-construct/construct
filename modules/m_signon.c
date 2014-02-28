@@ -327,6 +327,8 @@ ms_signon(struct Client *client_p, struct Client *source_p,
 		else
 			return 0;
 	}
+	else
+		login[0] = '\0';
 
 	target_p = find_named_client(parv[1]);
 	if(target_p != NULL && target_p != source_p)
