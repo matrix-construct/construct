@@ -16,7 +16,7 @@ required or where <data> is otherwise invalid as noted below.
 Unless noted below, all types can be used with +b, +q, +e and +I.
 
 If any extended ban types are loaded, they are listed in 005 (RPL_ISUPPORT)
-as EXTBAN=$:<types>.
+as EXTBAN=$,<types>.
 
 Local users cannot add extended bans of an unknown type or invalid bans. If a
 remote user adds an extended ban of an unknown type, the mode change is
