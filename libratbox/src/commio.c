@@ -2222,7 +2222,7 @@ rb_send_fd_buf(rb_fde_t *xF, rb_fde_t **F, int count, void *data, size_t datasiz
 	char empty = '0';
 	char *buf;
 
-	memset(&msg, 0, sizeof(&msg));
+	memset(&msg, 0, sizeof msg);
 	if(datasize == 0)
 	{
 		iov[0].iov_base = &empty;
