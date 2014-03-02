@@ -191,9 +191,7 @@ rb_run_event(struct ev_entry *ev)
 	ev->func(ev->arg);
 	if(!ev->frequency)
 	{
-		rb_io_unsched_event(ev);
-		rb_dlinkDelete(&ev->node, &event_list);
-		rb_free(ev);
+		rb_event_delete(ev);
 		return;
 	}
 	ev->when = rb_current_time() + ev->frequency;

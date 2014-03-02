@@ -299,6 +299,8 @@ loadmodule:
 
               if (findmodule_byname(m_bn) == -1)
 	          load_one_module($2, 0);
+
+              rb_free(m_bn);
 #endif
 	    }
 	  ';'
