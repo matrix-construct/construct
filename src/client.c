@@ -928,10 +928,6 @@ log_client_name(struct Client *target_p, int showip)
 				   target_p->username, target_p->sockhost);
 			break;
 
-		case MASK_IP:
-			rb_snprintf(nbuf, sizeof(nbuf), "%s[%s@255.255.255.255]",
-				   target_p->name, target_p->username);
-
 		default:
 			rb_snprintf(nbuf, sizeof(nbuf), "%s[%s@%s]", target_p->name,
 				   target_p->username, target_p->host);
