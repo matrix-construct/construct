@@ -35,7 +35,7 @@
 static int yy_defer_accept = 1;
 
 struct TopConf *conf_cur_block;
-static char *conf_cur_block_name;
+static char *conf_cur_block_name = NULL;
 
 static rb_dlink_list conf_items;
 
@@ -2010,11 +2010,13 @@ conf_start_block(char *block, char *name)
 int
 conf_end_block(struct TopConf *tc)
 {
+	int ret = 0;
 	if(tc->tc_efunc)
-		return tc->tc_efunc(tc);
+		ret = tc->tc_efunc(tc);
 
 	rb_free(conf_cur_block_name);
-	return 0;
+	conf_cur_block_name = NULL;
+	return ret;
 }
 
 static void
