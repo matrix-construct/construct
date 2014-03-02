@@ -83,7 +83,7 @@ conf_strtype(int type)
 }
 
 int
-add_top_conf(const char *name, int (*sfunc) (struct TopConf *), 
+add_top_conf(const char *name, int (*sfunc) (struct TopConf *),
 		int (*efunc) (struct TopConf *), struct ConfEntry *items)
 {
 	struct TopConf *tc;
@@ -603,7 +603,7 @@ conf_end_oper(struct TopConf *tc)
 						yy_tmpoper->name);
 				return 0;
 			}
-				
+
 			yy_tmpoper->rsa_pubkey =
 				(RSA *) PEM_read_bio_RSA_PUBKEY(file, NULL, 0, NULL);
 
@@ -876,12 +876,12 @@ conf_set_listen_port_both(void *data, int ssl)
 #ifdef RB_IPV6
 			if(strchr(listener_address, ':') != NULL)
 				family = AF_INET6;
-			else 
+			else
 #endif
 				family = AF_INET;
-		
+
 			add_listener(args->v.number, listener_address, family, ssl, yy_defer_accept);
-                
+
                 }
 
 	}
@@ -967,7 +967,7 @@ conf_end_auth(struct TopConf *tc)
 
 		if(yy_aconf->spasswd)
 			yy_tmp->spasswd = rb_strdup(yy_aconf->spasswd);
-		
+
 		/* this will always exist.. */
 		yy_tmp->info.name = rb_strdup(yy_aconf->info.name);
 
@@ -1635,7 +1635,7 @@ conf_set_general_default_umodes(void *data)
 			}
 			break;
 		}
-	}			
+	}
 }
 
 static void
@@ -2068,7 +2068,7 @@ conf_call_set(struct TopConf *tc, char *item, conf_parm_t * value)
 
 	if(CF_TYPE(value->v.list->type) != CF_TYPE(cf->cf_type))
 	{
-		/* if it expects a string value, but we got a yesno, 
+		/* if it expects a string value, but we got a yesno,
 		 * convert it back
 		 */
 		if((CF_TYPE(value->v.list->type) == CF_YESNO) &&
@@ -2196,7 +2196,7 @@ static struct ConfEntry conf_serverinfo_table[] =
 
 	{ "ssl_private_key",    CF_QSTRING, NULL, 0, &ServerInfo.ssl_private_key },
 	{ "ssl_ca_cert",        CF_QSTRING, NULL, 0, &ServerInfo.ssl_ca_cert },
-	{ "ssl_cert",           CF_QSTRING, NULL, 0, &ServerInfo.ssl_cert },   
+	{ "ssl_cert",           CF_QSTRING, NULL, 0, &ServerInfo.ssl_cert },
 	{ "ssl_dh_params",      CF_QSTRING, NULL, 0, &ServerInfo.ssl_dh_params },
 	{ "ssld_count",		CF_INT,	    NULL, 0, &ServerInfo.ssld_count },
 
