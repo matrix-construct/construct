@@ -141,7 +141,7 @@ mo_kill(struct Client *client_p, struct Client *source_p, int parc, const char *
 	 * that have been around for ever, for no reason.. */
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "Received KILL message for %s!%s@%s. From %s Path: %s (%s)",
-			     target_p->name, target_p->username, target_p->orighost, 
+			     target_p->name, target_p->username, target_p->orighost,
 			     source_p->name, me.name, reason);
 
 	ilog(L_KILL, "%c %s %s!%s@%s %s %s",
@@ -217,7 +217,7 @@ ms_kill(struct Client *client_p, struct Client *source_p, int parc, const char *
 	if((target_p = find_person(user)) == NULL)
 	{
 		/*
-		 * If the user has recently changed nick, but only if its 
+		 * If the user has recently changed nick, but only if its
 		 * not an uid, automatically rewrite the KILL for this new nickname.
 		 * --this keeps servers in synch when nick change and kill collide
 		 */
@@ -258,7 +258,7 @@ ms_kill(struct Client *client_p, struct Client *source_p, int parc, const char *
 	{
 		sendto_realops_snomask(IsService(source_p) ? SNO_SKILL : SNO_GENERAL, L_ALL,
 				     "Received KILL message for %s!%s@%s. From %s Path: %s!%s!%s!%s %s",
-				     target_p->name, target_p->username, target_p->orighost, source_p->name, 
+				     target_p->name, target_p->username, target_p->orighost, source_p->name,
 				     source_p->servptr->name, source_p->host, source_p->username,
 				     source_p->name, reason);
 

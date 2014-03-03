@@ -101,7 +101,7 @@ mo_okick(struct Client *client_p, struct Client *source_p, int parc, const char 
 
 	if((p = strchr(parv[2], ',')))
 		*p = '\0';
-	user = LOCAL_COPY(parv[2]);	// strtoken(&p2, parv[2], ","); 
+	user = LOCAL_COPY(parv[2]);	// strtoken(&p2, parv[2], ",");
 	if(!(who = find_chasing(source_p, user, &chasing)))
 	{
 		return 0;

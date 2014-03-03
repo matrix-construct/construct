@@ -133,10 +133,10 @@ struct Client
 	/* client->name is the unique name for a client nick or host */
 	char name[HOSTLEN + 1];
 
-	/* 
-	 * client->username is the username from ident or the USER message, 
-	 * If the client is idented the USER message is ignored, otherwise 
-	 * the username part of the USER message is put here prefixed with a 
+	/*
+	 * client->username is the username from ident or the USER message,
+	 * If the client is idented the USER message is ignored, otherwise
+	 * the username part of the USER message is put here prefixed with a
 	 * tilde depending on the I:line, Once a client has registered, this
 	 * field should be considered read-only.
 	 */
@@ -177,13 +177,13 @@ struct LocalUser
 	 * (directly connected to *this* server with a socket.
 	 */
 	/* Anti flooding part, all because of lamers... */
-	time_t last_join_time;	/* when this client last 
+	time_t last_join_time;	/* when this client last
 				   joined a channel */
-	time_t last_leave_time;	/* when this client last 
+	time_t last_leave_time;	/* when this client last
 				 * left a channel */
-	int join_leave_count;	/* count of JOIN/LEAVE in less than 
+	int join_leave_count;	/* count of JOIN/LEAVE in less than
 				   MIN_JOIN_LEAVE_TIME seconds */
-	int oper_warn_count_down;	/* warn opers of this possible 
+	int oper_warn_count_down;	/* warn opers of this possible
 					   spambot every time this gets to 0 */
 	time_t last_caller_id_time;
 
@@ -197,10 +197,10 @@ struct LocalUser
 	 * we want to use unsigned int here so the sizes have a better chance of
 	 * staying the same on 64 bit machines. The current trend is to use
 	 * I32LP64, (32 bit ints, 64 bit longs and pointers) and since ircd
-	 * will NEVER run on an operating system where ints are less than 32 bits, 
+	 * will NEVER run on an operating system where ints are less than 32 bits,
 	 * it's a relatively safe bet to use ints. Since right shift operations are
-	 * performed on these, it's not safe to allow them to become negative, 
-	 * which is possible for long running server connections. Unsigned values 
+	 * performed on these, it's not safe to allow them to become negative,
+	 * which is possible for long running server connections. Unsigned values
 	 * generally overflow gracefully. --Bleep
 	 */
 	unsigned int sendM;	/* Statistics: protocol messages send */

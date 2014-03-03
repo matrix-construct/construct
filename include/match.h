@@ -52,9 +52,9 @@ int comp_with_mask(void *addr, void *dest, u_int mask);
 int comp_with_mask_sock(struct sockaddr *addr, struct sockaddr *dest, u_int mask);
 
 /*
- * collapse - collapse a string in place, converts multiple adjacent *'s 
+ * collapse - collapse a string in place, converts multiple adjacent *'s
  * into a single *.
- * collapse - modifies the contents of pattern 
+ * collapse - modifies the contents of pattern
  *
  * collapse_esc() - collapse with support for escaping chars
  */

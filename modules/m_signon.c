@@ -65,7 +65,7 @@ struct Message signon_msgtab = {
 	{mg_ignore, mg_ignore, {ms_signon, 6}, mg_ignore, mg_ignore, mg_ignore}
 };
 
-mapi_clist_av1 signon_clist[] = { 
+mapi_clist_av1 signon_clist[] = {
 	&svslogin_msgtab, &signon_msgtab, NULL
 };
 
@@ -345,17 +345,17 @@ ms_signon(struct Client *client_p, struct Client *source_p,
 						     "Nick change collision from SIGNON from %s to %s(%s <- %s)(both killed)",
 						     source_p->name, target_p->name, target_p->from->name,
 						     client_p->name);
-		
+
 				ServerStats.is_kill++;
 				sendto_one_numeric(target_p, ERR_NICKCOLLISION,
 						   form_str(ERR_NICKCOLLISION), target_p->name);
-		
+
 				kill_client_serv_butone(NULL, source_p, "%s (Nick change collision)", me.name);
-		
+
 				ServerStats.is_kill++;
-		
+
 				kill_client_serv_butone(NULL, target_p, "%s (Nick change collision)", me.name);
-		
+
 				target_p->flags |= FLAGS_KILLED;
 				exit_client(NULL, target_p, &me, "Nick collision(new)");
 				source_p->flags |= FLAGS_KILLED;
@@ -366,7 +366,7 @@ ms_signon(struct Client *client_p, struct Client *source_p,
 			{
 				sameuser = !irccmp(target_p->username, source_p->username) &&
 					!irccmp(target_p->host, source_p->host);
-		
+
 				if((sameuser && newts < target_p->tsinfo) ||
 				   (!sameuser && newts > target_p->tsinfo))
 				{
@@ -380,18 +380,18 @@ ms_signon(struct Client *client_p, struct Client *source_p,
 								     "Nick change collision from SIGNON from %s to %s(%s <- %s)(newer killed)",
 								     source_p->name, target_p->name,
 								     target_p->from->name, client_p->name);
-		
+
 					ServerStats.is_kill++;
-		
+
 					sendto_one_numeric(target_p, ERR_NICKCOLLISION,
 							   form_str(ERR_NICKCOLLISION), target_p->name);
-		
+
 					/* kill the client issuing the nickchange */
 					kill_client_serv_butone(client_p, source_p,
 								"%s (Nick change collision)", me.name);
-		
+
 					source_p->flags |= FLAGS_KILLED;
-		
+
 					if(sameuser)
 						exit_client(client_p, source_p, &me, "Nick collision(old)");
 					else
@@ -410,21 +410,21 @@ ms_signon(struct Client *client_p, struct Client *source_p,
 								     "Nick collision from SIGNON on %s(%s <- %s)(newer killed)",
 								     target_p->name, target_p->from->name,
 								     client_p->name);
-		
+
 					sendto_one_numeric(target_p, ERR_NICKCOLLISION,
 							   form_str(ERR_NICKCOLLISION), target_p->name);
-		
+
 					/* kill the client who existed before hand */
-					kill_client_serv_butone(client_p, target_p, 
+					kill_client_serv_butone(client_p, target_p,
 							"%s (Nick collision)", me.name);
-		
+
 					ServerStats.is_kill++;
-		
+
 					target_p->flags |= FLAGS_KILLED;
 					(void) exit_client(client_p, target_p, &me, "Nick collision");
 				}
 			}
-		
+
 		}
 	}
 

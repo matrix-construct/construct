@@ -640,7 +640,7 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 
 	if(isnew)
 		chptr->channelts = newts;
-	
+
 	else if(newts == 0 || oldts == 0)
 		chptr->channelts = 0;
 	else if(newts == oldts)
@@ -1183,8 +1183,8 @@ set_final_mode(struct Mode *mode, struct Mode *oldmode)
  * remove_our_modes
  *
  * inputs	-
- * output	- 
- * side effects	- 
+ * output	-
+ * side effects	-
  */
 static void
 remove_our_modes(struct Channel *chptr, struct Client *source_p)

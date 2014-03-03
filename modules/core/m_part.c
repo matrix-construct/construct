@@ -98,7 +98,7 @@ m_part(struct Client *client_p, struct Client *source_p, int parc, const char *p
  * 		- pointer to source client to remove
  *		- char pointer of name of channel to remove from
  * output	- none
- * side effects	- remove ONE client given the channel name 
+ * side effects	- remove ONE client given the channel name
  */
 static void
 part_one_client(struct Client *client_p, struct Client *source_p, char *name, const char *reason)

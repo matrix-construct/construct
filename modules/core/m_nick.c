@@ -239,7 +239,7 @@ m_nick(struct Client *client_p, struct Client *source_p, int parc, const char *p
 }
 
 /* mc_nick()
- *      
+ *
  * server -> server nick change
  *    parv[1] = nickname
  *    parv[2] = TS when nick change
@@ -529,7 +529,7 @@ ms_save(struct Client *client_p, struct Client *source_p, int parc, const char *
  *
  * input	- nickname to check
  * output	- 0 if erroneous, else 1
- * side effects - 
+ * side effects -
  */
 static int
 clean_nick(const char *nick, int loc_client)
@@ -740,7 +740,7 @@ change_local_nick(struct Client *client_p, struct Client *source_p,
 		monitor_signon(source_p);
 
 	/* Make sure everyone that has this client on its accept list
-	 * loses that reference. 
+	 * loses that reference.
 	 */
 	/* we used to call del_all_accepts() here, but theres no real reason
 	 * to clear a clients own list of accepted clients.  So just remove

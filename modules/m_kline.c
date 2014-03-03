@@ -428,7 +428,7 @@ mo_unkline(struct Client *client_p, struct Client *source_p, int parc, const cha
 		sendto_one_notice(source_p, ":No K-Line for %s@%s", user, host);
 		return 0;
 	}
-	
+
 	if(aconf->lifetime)
 	{
 		if(propagated)
@@ -509,7 +509,7 @@ handle_remote_unkline(struct Client *source_p, const char *user, const char *hos
 
 /* apply_kline()
  *
- * inputs	- 
+ * inputs	-
  * output	- NONE
  * side effects	- kline as given, is added to the hashtable
  *		  and conf file
@@ -632,7 +632,7 @@ apply_prop_kline(struct Client *source_p, struct ConfItem *aconf,
 }
 
 /* find_user_host()
- * 
+ *
  * inputs	- client placing kline, user@host, user buffer, host buffer
  * output	- 0 if not ok to kline, 1 to kline i.e. if valid user host
  * side effects -

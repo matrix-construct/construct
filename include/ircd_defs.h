@@ -27,7 +27,7 @@
 
 /*
  * NOTE: NICKLEN and TOPICLEN do not live here anymore. Set it with configure
- * Otherwise there are no user servicable part here. 
+ * Otherwise there are no user servicable part here.
  *
  */
 
@@ -91,8 +91,8 @@
 
 #define HELPLEN         400
 
-/* 
- * message return values 
+/*
+ * message return values
  */
 #define CLIENT_EXITED    -2
 #define CLIENT_PARSE_ERROR -1

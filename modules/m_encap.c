@@ -70,7 +70,7 @@ ms_encap(struct Client *client_p, struct Client *source_p, int parc, const char 
 	int i;
 
 	ptr = buffer;
-	
+
 	for(i = 1; i < parc - 1; i++)
 	{
 		len = strlen(parv[i]) + 1;

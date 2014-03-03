@@ -94,7 +94,7 @@ mapi_clist_av1 test_clist[] = { &test_msgtab, NULL };
  * terminated with NULLs.
  */
 int doing_example_hook;
-mapi_hlist_av1 test_hlist[] = { 
+mapi_hlist_av1 test_hlist[] = {
 	{ "doing_example_hook", &doing_example_hook, },
 	{ NULL, NULL }
 };

@@ -80,7 +80,7 @@ static void quote_splitusers(struct Client *, const char *, int);
 static void list_quote_commands(struct Client *);
 
 
-/* 
+/*
  * If this ever needs to be expanded to more than one arg of each
  * type, want_char/want_int could be the count of the arguments,
  * instead of just a boolean flag...
@@ -235,7 +235,7 @@ quote_max(struct Client *source_p, const char *arg, int newval)
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "%s!%s@%s set new MAXCLIENTS to %d (%lu current)",
 				     source_p->name, source_p->username, source_p->host,
-				     GlobalSetOptions.maxclients, 
+				     GlobalSetOptions.maxclients,
 				     rb_dlink_list_length(&lclient_list));
 
 		return;
@@ -259,7 +259,7 @@ quote_operstring(struct Client *source_p, const char *arg, int newval)
 	{
 		rb_strlcpy(GlobalSetOptions.operstring, arg,
 			sizeof(GlobalSetOptions.operstring));
-		
+
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "%s has changed OPERSTRING to '%s'",
 				     get_oper_name(source_p), arg);
@@ -278,7 +278,7 @@ quote_adminstring(struct Client *source_p, const char *arg, int newval)
 	{
 		rb_strlcpy(GlobalSetOptions.adminstring, arg,
 			sizeof(GlobalSetOptions.adminstring));
-		
+
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "%s has changed ADMINSTRING to '%s'",
 				     get_oper_name(source_p), arg);
@@ -407,7 +407,7 @@ quote_splitmode(struct Client *source_p, const char *charval, int intval)
 		}
 	}
 	else
-		/* if we add splitchecking to splitmode*2 we get a unique table to 
+		/* if we add splitchecking to splitmode*2 we get a unique table to
 		 * pull values back out of, splitmode can be four states - but you can
 		 * only set to three, which means we cant use the same table --fl_
 		 */

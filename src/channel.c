@@ -2,9 +2,9 @@
  *  ircd-ratbox: A slightly useful ircd.
  *  channel.c: Controls channels.
  *
- * Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center 
- * Copyright (C) 1996-2002 Hybrid Development Team 
- * Copyright (C) 2002-2005 ircd-ratbox development team 
+ * Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center
+ * Copyright (C) 1996-2002 Hybrid Development Team
+ * Copyright (C) 2002-2005 ircd-ratbox development team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -218,7 +218,7 @@ find_channel_status(struct membership *msptr, int combine)
 /* add_user_to_channel()
  *
  * input	- channel to add client to, client to add, channel flags
- * output	- 
+ * output	-
  * side effects - user is added to channel
  */
 void
@@ -768,7 +768,7 @@ can_join(struct Client *source_p, struct Channel *chptr, const char *key, const 
 	/* join throttling stuff --nenolod */
 	else if(chptr->mode.join_num > 0 && chptr->mode.join_time > 0)
 	{
-		if ((rb_current_time() - chptr->join_delta <= 
+		if ((rb_current_time() - chptr->join_delta <=
 			chptr->mode.join_time) && (chptr->join_count >=
 			chptr->mode.join_num))
 			i = ERR_THROTTLE;
@@ -864,7 +864,7 @@ can_send(struct Channel *chptr, struct Client *source_p, struct membership *mspt
  * flood_attack_channel
  * inputs       - flag 0 if PRIVMSG 1 if NOTICE. RFC
  *                says NOTICE must not auto reply
- *              - pointer to source Client 
+ *              - pointer to source Client
  *		- pointer to target channel
  * output	- 1 if target is under flood attack
  * side effects	- check for flood attack on target chptr
@@ -1072,7 +1072,7 @@ allocate_topic(struct Channel *chptr)
 
 	/* Basically we allocate one large block for the topic and
 	 * the topic info.  We then split it up into two and shove it
-	 * in the chptr 
+	 * in the chptr
 	 */
 	chptr->topic = ptr;
 	chptr->topic_info = (char *) ptr + TOPICLEN + 1;
@@ -1350,7 +1350,7 @@ resv_chan_forcepart(const char *name, const char *reason, int temp_time)
 			/* notify opers & user they were removed from the channel */
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			                     "Forced PART for %s!%s@%s from %s (%s)",
-			                     target_p->name, target_p->username, 
+			                     target_p->name, target_p->username,
 			                     target_p->host, name, reason);
 
 			if(temp_time > 0)

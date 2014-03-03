@@ -69,7 +69,7 @@ mo_operwall(struct Client *client_p, struct Client *source_p, int parc, const ch
 	}
 
 	sendto_wallops_flags(UMODE_OPERWALL, source_p, "OPERWALL - %s", parv[1]);
-	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s OPERWALL :%s", 
+	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s OPERWALL :%s",
 		      use_id(source_p), parv[1]);
 
 	return 0;
@@ -117,7 +117,7 @@ ms_wallops(struct Client *client_p, struct Client *source_p, int parc, const cha
 
 	sendto_wallops_flags(UMODE_WALLOP, source_p, "%s%s", prefix, parv[1]);
 
-	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s WALLOPS :%s", 
+	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s WALLOPS :%s",
 		      use_id(source_p), parv[1]);
 
 	return 0;

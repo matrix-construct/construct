@@ -74,7 +74,7 @@ extern void sendto_common_channels_local_butone(struct Client *, int cap, const 
 
 extern void sendto_match_butone(struct Client *, struct Client *,
 				const char *, int, const char *, ...) AFP(5, 6);
-extern void sendto_match_servs(struct Client *source_p, const char *mask, 
+extern void sendto_match_servs(struct Client *source_p, const char *mask,
 				int capab, int, const char *, ...) AFP(5, 6);
 
 extern void sendto_monitor(struct monitor *monptr, const char *, ...) AFP(2, 3);
@@ -89,7 +89,7 @@ extern void sendto_wallops_flags(int, struct Client *, const char *, ...) AFP(3,
 
 extern void kill_client(struct Client *client_p, struct Client *diedie,
 			 const char *pattern, ...) AFP(3, 4);
-extern void kill_client_serv_butone(struct Client *one, struct Client *source_p, 
+extern void kill_client_serv_butone(struct Client *one, struct Client *source_p,
 				    const char *pattern, ...) AFP(3, 4);
 
 #define L_ALL 	0

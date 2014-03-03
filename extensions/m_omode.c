@@ -110,20 +110,20 @@ mo_omode(struct Client *client_p, struct Client *source_p, int parc, const char 
 		rb_strlcat(params, parv[i], sizeof params);
 	}
 
-	sendto_wallops_flags(UMODE_WALLOP, &me, 
+	sendto_wallops_flags(UMODE_WALLOP, &me,
 			     "OMODE called for [%s] [%s] by %s!%s@%s",
 			     parv[1], params, source_p->name, source_p->username, source_p->host);
 	ilog(L_MAIN, "OMODE called for [%s] [%s] by %s",
 	     parv[1], params, get_oper_name(source_p));
 
 	if(*chptr->chname != '&')
-		sendto_server(NULL, NULL, NOCAPS, NOCAPS, 
+		sendto_server(NULL, NULL, NOCAPS, NOCAPS,
 			      ":%s WALLOPS :OMODE called for [%s] [%s] by %s!%s@%s",
 			      me.name, parv[1], params, source_p->name, source_p->username,
 			      source_p->host);
 
 #if 0
-	set_channel_mode(client_p, source_p->servptr, chptr, msptr, 
+	set_channel_mode(client_p, source_p->servptr, chptr, msptr,
 			 parc - 2, parv + 2);
 #else
 	if (parc == 4 && !strcmp(parv[2], "+o") && !irccmp(parv[3], source_p->name))
@@ -153,7 +153,7 @@ mo_omode(struct Client *client_p, struct Client *source_p, int parc, const char 
 			add_user_to_channel(chptr, source_p, CHFL_CHANOP);
 			msptr = find_channel_membership(chptr, source_p);
 		}
-		set_channel_mode(client_p, source_p, chptr, msptr, 
+		set_channel_mode(client_p, source_p, chptr, msptr,
 				parc - 2, parv + 2);
 		/* We know they were not opped before and they can't have opped
 		 * themselves as set_channel_mode() does not allow that

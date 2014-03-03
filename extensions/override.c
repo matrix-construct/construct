@@ -221,7 +221,7 @@ handle_client_exit(void *vdata)
 
 		rb_dlinkDelete(n, &overriding_opers);
 		rb_free(session_p);
-	}	
+	}
 }
 
 struct ev_entry *expire_override_deadlines_ev = NULL;

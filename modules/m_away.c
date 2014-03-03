@@ -48,7 +48,7 @@ mapi_clist_av1 away_clist[] = { &away_msgtab, NULL };
 DECLARE_MODULE_AV1(away, NULL, NULL, away_clist, NULL, NULL, "$Revision: 3370 $");
 
 /***********************************************************************
- * m_away() - Added 14 Dec 1988 by jto. 
+ * m_away() - Added 14 Dec 1988 by jto.
  *            Not currently really working, I don't like this
  *            call at all...
  *
@@ -56,7 +56,7 @@ DECLARE_MODULE_AV1(away, NULL, NULL, away_clist, NULL, NULL, "$Revision: 3370 $"
  *            but perhaps it's worth the load it causes to net.
  *            This requires flooding of the whole net like NICK,
  *            USER, MODE, etc messages...  --msa
- *		
+ *
  *            The above comments have long since irrelvant, but
  *            are kept for historical purposes now ;)
  ***********************************************************************/
@@ -116,7 +116,7 @@ m_away(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	if(strncmp(source_p->user->away, parv[1], AWAYLEN - 1))
 	{
 		rb_strlcpy(source_p->user->away, parv[1], AWAYLEN);
-		sendto_server(client_p, NULL, CAP_TS6, NOCAPS, 
+		sendto_server(client_p, NULL, CAP_TS6, NOCAPS,
 			      ":%s AWAY :%s", use_id(source_p), source_p->user->away);
 		sendto_common_channels_local_butone(source_p,
 					            CLICAP_AWAY_NOTIFY,

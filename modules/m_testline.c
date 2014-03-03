@@ -1,5 +1,5 @@
 /* modules/m_testline.c
- * 
+ *
  *  Copyright (C) 2004 Lee Hardy <lee@leeh.co.uk>
  *  Copyright (C) 2004-2005 ircd-ratbox development team
  *
@@ -137,8 +137,8 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 			sendto_one(source_p, form_str(RPL_TESTLINE),
 				me.name, source_p->name,
 				(aconf->flags & CONF_FLAGS_TEMPORARY) ? 'd' : 'D',
-				(aconf->flags & CONF_FLAGS_TEMPORARY) ? 
-				 (long) ((aconf->hold - rb_current_time()) / 60) : 0L, 
+				(aconf->flags & CONF_FLAGS_TEMPORARY) ?
+				 (long) ((aconf->hold - rb_current_time()) / 60) : 0L,
 				phost, reasonbuf);
 
 			return 0;
@@ -175,7 +175,7 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 				(type != HM_HOST) ? (struct sockaddr *)&ip : NULL,
 				(type != HM_HOST) ? (
 #ifdef RB_IPV6
-				 (type == HM_IPV6) ? AF_INET6 : 
+				 (type == HM_IPV6) ? AF_INET6 :
 #endif
 				  AF_INET) : 0, NULL)))
 	{
@@ -184,14 +184,14 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 		if(aconf->status & CONF_KILL)
 		{
 			get_printable_kline(source_p, aconf, &phost, &reason, &puser, &operreason);
-			rb_snprintf(buf, sizeof(buf), "%s@%s", 
+			rb_snprintf(buf, sizeof(buf), "%s@%s",
 					puser, phost);
 			rb_snprintf(reasonbuf, sizeof(reasonbuf), "%s%s%s", reason,
 				operreason ? "|" : "", operreason ? operreason : "");
 			sendto_one(source_p, form_str(RPL_TESTLINE),
 				me.name, source_p->name,
 				(aconf->flags & CONF_FLAGS_TEMPORARY) ? 'k' : 'K',
-				(aconf->flags & CONF_FLAGS_TEMPORARY) ? 
+				(aconf->flags & CONF_FLAGS_TEMPORARY) ?
 				 (long) ((aconf->hold - rb_current_time()) / 60) : 0L,
 				buf, reasonbuf);
 			return 0;

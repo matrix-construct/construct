@@ -150,7 +150,7 @@ struct config_file_entry
 
 	char *identifyservice;
 	char *identifycommand;
-	
+
 	char *fname_userlog;
 	char *fname_fuserlog;
 	char *fname_operlog;

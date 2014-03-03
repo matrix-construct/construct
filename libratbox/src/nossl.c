@@ -1,4 +1,4 @@
-/* 
+/*
  *  libratbox: a library used by ircd-ratbox and other things
  *  nossl.c: ssl stub code
  *
@@ -14,12 +14,12 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *    
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
- * 
+ *
  *  $Id: commio.c 24808 2008-01-02 08:17:05Z androsyn $
  */
 
@@ -172,7 +172,7 @@ rb_ssl_clear_handshake_count(rb_fde_t *F)
 void
 rb_get_ssl_info(char *buf, size_t len)
 {
-        rb_snprintf(buf, len, "Not compiled with SSL support"); 
+        rb_snprintf(buf, len, "Not compiled with SSL support");
 }
-                                                
+
 #endif /* !HAVE_OPENSSL */

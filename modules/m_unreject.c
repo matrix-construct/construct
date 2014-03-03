@@ -53,15 +53,15 @@ mo_unreject(struct Client *client_p, struct Client *source_p, int parc, const ch
 	   ConfigFileEntry.reject_duration == 0)
 	{
 		sendto_one_notice(source_p, ":Reject cache is disabled");
-		return 0;			
+		return 0;
 	}
 
 	if(!parse_netmask(parv[1], NULL, NULL))
 	{
 		sendto_one_notice(source_p, ":Unable to parse netmask %s", parv[1]);
 		return 0;
-	}	
-	
+	}
+
 	if(remove_reject_ip(parv[1]))
 		sendto_one_notice(source_p, ":Removed reject for %s", parv[1]);
 	else

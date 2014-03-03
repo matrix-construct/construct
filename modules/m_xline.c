@@ -1,5 +1,5 @@
 /* modules/m_xline.c
- * 
+ *
  *  Copyright (C) 2002-2003 Lee Hardy <lee@leeh.co.uk>
  *  Copyright (C) 2002-2005 ircd-ratbox development team
  *

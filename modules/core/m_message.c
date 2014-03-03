@@ -618,7 +618,7 @@ msg_channel_opmod(enum message_type msgtype,
 /*
  * msg_channel_flags
  *
- * inputs	- flag 0 if PRIVMSG 1 if NOTICE. RFC 
+ * inputs	- flag 0 if PRIVMSG 1 if NOTICE. RFC
  *		  say NOTICE must not auto reply
  *		- pointer to client_p
  *		- pointer to source_p
@@ -704,7 +704,7 @@ expire_tgchange(void *unused)
 /*
  * msg_client
  *
- * inputs	- flag 0 if PRIVMSG 1 if NOTICE. RFC 
+ * inputs	- flag 0 if PRIVMSG 1 if NOTICE. RFC
  *		  say NOTICE must not auto reply
  * 		- pointer to source_p source (struct Client *)
  *		- pointer to target_p target (struct Client *)
@@ -746,7 +746,7 @@ msg_client(enum message_type msgtype,
 			}
 		}
 
-		/* reset idle time for message only if its not to self 
+		/* reset idle time for message only if its not to self
 		 * and its not a notice */
 		if(msgtype != MESSAGE_TYPE_NOTICE)
 			source_p->localClient->last = rb_current_time();
@@ -878,7 +878,7 @@ msg_client(enum message_type msgtype,
  * flood_attack_client
  * inputs       - flag 0 if PRIVMSG 1 if NOTICE. RFC
  *                say NOTICE must not auto reply
- *              - pointer to source Client 
+ *              - pointer to source Client
  *		- pointer to target Client
  * output	- 1 if target is under flood attack
  * side effects	- check for flood attack on target target_p

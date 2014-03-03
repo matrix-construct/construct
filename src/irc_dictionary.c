@@ -69,7 +69,7 @@ struct Dictionary *irc_dictionary_create(DCF compare_cb)
 }
 
 /*
- * irc_dictionary_create_named(const char *name, 
+ * irc_dictionary_create_named(const char *name,
  *     DCF compare_cb)
  *
  * Dictionary object factory.
@@ -760,7 +760,7 @@ void *irc_dictionary_delete(struct Dictionary *dtree, const char *key)
 	data = delem->data;
 
 	irc_dictionary_unlink_root(dtree);
-	rb_bh_free(elem_heap, delem);	
+	rb_bh_free(elem_heap, delem);
 
 	return data;
 }

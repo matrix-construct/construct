@@ -1,6 +1,6 @@
 /*
  * Yanked out of Net::Patricia by Aaron Sethman <androsyn@ratbox.org>
- * 
+ *
  * This was then yanked out of the ratbox/devel/src tree and stuffed into
  * libratbox and had function names changed, but otherwise not really altered.
  *
@@ -8,7 +8,7 @@
  * Dave Plonka <plonka@doit.wisc.edu>
  *
  * This product includes software developed by the University of Michigan,
- * Merit Network, Inc., and their contributors. 
+ * Merit Network, Inc., and their contributors.
  *
  * This file had been called "radix.c" in the MRT sources.
  *
@@ -263,7 +263,7 @@ Deref_Prefix(rb_prefix_t *prefix)
 
 /* } */
 
-// #define PATRICIA_DEBUG 1 
+// #define PATRICIA_DEBUG 1
 
 static int num_active_patricia = 0;
 

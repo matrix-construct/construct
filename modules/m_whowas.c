@@ -57,7 +57,7 @@ DECLARE_MODULE_AV1(whowas, NULL, NULL, whowas_clist, NULL, NULL, "$Revision: 171
 */
 static int
 m_whowas(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
-{	
+{
 	struct Whowas *temp;
 	int cur = 0;
 	int max = -1, found = 0;
@@ -145,10 +145,10 @@ m_whowas(struct Client *client_p, struct Client *source_p, int parc, const char 
 	}
 
 	if(!found)
-		sendto_one(source_p, form_str(ERR_WASNOSUCHNICK), 
+		sendto_one(source_p, form_str(ERR_WASNOSUCHNICK),
 			   me.name, source_p->name, nick);
 
-	sendto_one(source_p, form_str(RPL_ENDOFWHOWAS), 
+	sendto_one(source_p, form_str(RPL_ENDOFWHOWAS),
 		   me.name, source_p->name, parv[1]);
 	return 0;
 }

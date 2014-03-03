@@ -61,7 +61,7 @@ mr_pass(struct Client *client_p, struct Client *source_p, int parc, const char *
 {
 	char *auth_user, *pass, *buf;
 	buf = LOCAL_COPY(parv[1]);
-	
+
 	if(client_p->localClient->passwd)
 	{
 		memset(client_p->localClient->passwd, 0,
@@ -80,24 +80,24 @@ mr_pass(struct Client *client_p, struct Client *source_p, int parc, const char *
 
 	if ((pass = strchr(buf, ':')) != NULL)
 	{
-		*pass++ = '\0'; 
-		auth_user = buf; 
+		*pass++ = '\0';
+		auth_user = buf;
 	}
 	else
 	{
 		pass = buf;
 		auth_user = NULL;
 	}
-	
+
 	client_p->localClient->passwd = *pass ? rb_strndup(pass, PASSWDLEN) : NULL;
-	
+
 	if(auth_user && *auth_user)
 		client_p->localClient->auth_user = rb_strndup(auth_user, PASSWDLEN);
 
 	/* These are for servers only */
 	if(parc > 2 && client_p->user == NULL)
 	{
-		/* 
+		/*
 		 * It looks to me as if orabidoo wanted to have more
 		 * than one set of option strings possible here...
 		 * i.e. ":AABBTS" as long as TS was the last two chars

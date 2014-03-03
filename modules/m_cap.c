@@ -1,5 +1,5 @@
 /* modules/m_cap.c
- * 
+ *
  *  Copyright (C) 2005 Lee Hardy <lee@leeh.co.uk>
  *  Copyright (C) 2005 ircd-ratbox development team
  *
@@ -151,7 +151,7 @@ clicap_find(const char *data, int *negate, int *finished)
 	if((s = strchr(p, ' ')))
 		*s++ = '\0';
 
-	if((cap = bsearch(p, clicap_list, CLICAP_LIST_LEN, 
+	if((cap = bsearch(p, clicap_list, CLICAP_LIST_LEN,
 				sizeof(struct clicap), (bqcmp) clicap_compare)))
 	{
 		if(s)
@@ -182,8 +182,8 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags, int clea
 	size_t i;
 
 	mlen = rb_sprintf(buf, ":%s CAP %s %s",
-			me.name, 
-			EmptyString(source_p->name) ? "*" : source_p->name, 
+			me.name,
+			EmptyString(source_p->name) ? "*" : source_p->name,
 			subcmd);
 
 	p = capbuf;
@@ -229,7 +229,7 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags, int clea
 			buflen++;
 
 			/* needs a client ack */
-			if(clicap_list[i].cap_cli && 
+			if(clicap_list[i].cap_cli &&
 			   IsCapable(source_p, clicap_list[i].cap_cli))
 			{
 				*p++ = '~';
@@ -305,7 +305,7 @@ cap_ack(struct Client *source_p, const char *arg)
 static void
 cap_clear(struct Client *source_p, const char *arg)
 {
-	clicap_generate(source_p, "ACK", 
+	clicap_generate(source_p, "ACK",
 			source_p->localClient->caps ? source_p->localClient->caps : -1, 1);
 
 	/* XXX - sticky capabs */

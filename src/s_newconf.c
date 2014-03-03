@@ -175,7 +175,7 @@ free_remote_conf(struct remote_conf *remote_p)
 }
 
 int
-find_shared_conf(const char *username, const char *host, 
+find_shared_conf(const char *username, const char *host,
 		const char *server, int flags)
 {
 	struct remote_conf *shared_p;
@@ -217,7 +217,7 @@ propagate_generic(struct Client *source_p, const char *command,
 			"ENCAP %s %s %s",
 			target, command, buffer);
 }
-			
+
 void
 cluster_generic(struct Client *source_p, const char *command,
 		int cltype, int cap, const char *format, ...)
@@ -732,7 +732,7 @@ add_nd_entry(const char *name)
 		return;
 
 	nd = rb_bh_alloc(nd_heap);
-	
+
 	rb_strlcpy(nd->name, name, sizeof(nd->name));
 	nd->expire = rb_current_time() + ConfigFileEntry.nick_delay;
 

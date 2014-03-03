@@ -390,7 +390,7 @@ bandb_handle_failure(rb_helper *helper, char **parv, int parc)
 {
 	if(server_state_foreground)
 		fprintf(stderr, "bandb - bandb failure: %s\n", parv[1]);
-	
+
 	ilog(L_MAIN, "bandb - bandb failure: %s", parv[1]);
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "bandb - bandb failure: %s", parv[1]);
 	exit(1);

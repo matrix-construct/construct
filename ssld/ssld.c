@@ -483,7 +483,7 @@ plain_check_cork(conn_t * conn)
 {
 	if(rb_rawbuf_length(conn->modbuf_out) >= 4096)
 	{
-		/* if we have over 4k pending outbound, don't read until 
+		/* if we have over 4k pending outbound, don't read until
 		 * we've cleared the queue */
 		SetCork(conn);
 		rb_setselect(conn->plain_fd, RB_SELECT_READ, NULL, NULL);
@@ -1043,7 +1043,7 @@ mod_process_cmd_recv(mod_ctl_t * ctl)
 				break;
 			}
 #else
-			
+
 		case 'Z':
 			send_nozlib_support(ctl, ctl_buf);
 			break;

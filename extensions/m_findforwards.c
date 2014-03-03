@@ -89,7 +89,7 @@ m_findforwards(struct Client *client_p, struct Client *source_p, int parc, const
 		else
 			last_used = rb_current_time();
 	}
-	
+
 	RB_DLINK_FOREACH(ptr, global_channel_list.head)
 	{
 		chptr = ptr->data;

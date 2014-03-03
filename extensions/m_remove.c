@@ -131,12 +131,12 @@ m_remove(struct Client *client_p, struct Client *source_p, int parc, const char 
 		 * There are two cases we can get to this point then...
 		 *
 		 *     1) connect burst is happening, and for some reason a legit
-		 *        op has sent a KICK, but the SJOIN hasn't happened yet or 
+		 *        op has sent a KICK, but the SJOIN hasn't happened yet or
 		 *        been seen. (who knows.. due to lag...)
 		 *
 		 *     2) The channel is desynced. That can STILL happen with TS
-		 *        
-		 *     Now, the old code roger wrote, would allow the KICK to 
+		 *
+		 *     Now, the old code roger wrote, would allow the KICK to
 		 *     go through. Thats quite legit, but lets weird things like
 		 *     KICKS by users who appear not to be chanopped happen,
 		 *     or even neater, they appear not to be on the channel.

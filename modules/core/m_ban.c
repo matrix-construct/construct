@@ -1,7 +1,7 @@
 /*
  * charybdis: An advanced ircd.
  * m_ban.c: Propagates network bans across servers.
- * 
+ *
  *  Copyright (C) 2010 Jilles Tjoelker
  *
  * Redistribution and use in source and binary forms, with or without

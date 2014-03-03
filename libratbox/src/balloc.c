@@ -6,11 +6,11 @@
  * Copyright (C) 1996-2002 Hybrid Development Team
  * Copyright (C) 2002-2006 ircd-ratbox development team
  *
- *  Below are the orignal headers from the old blalloc.c 
+ *  Below are the orignal headers from the old blalloc.c
  *
  *  File:   blalloc.c
  *  Owner:  Wohali (Joan Touzet)
- *  
+ *
  *  Modified 2001/11/29 for mmap() support by Aaron Sethman <androsyn@ratbox.org>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -31,7 +31,7 @@
  *  $Id: balloc.c 26100 2008-09-20 01:27:19Z androsyn $
  */
 
-/* 
+/*
  * About the block allocator
  *
  * Basically we have three ways of getting memory off of the operating
@@ -39,11 +39,11 @@
  *
  * 1. mmap() anonymous pages with the MMAP_ANON flag.
  * 2. mmap() via the /dev/zero trick.
- * 3. HeapCreate/HeapAlloc (on win32) 
- * 4. malloc() 
+ * 3. HeapCreate/HeapAlloc (on win32)
+ * 4. malloc()
  *
  * The advantages of 1 and 2 are this.  We can munmap() the pages which will
- * return the pages back to the operating system, thus reducing the size 
+ * return the pages back to the operating system, thus reducing the size
  * of the process as the memory is unused.  malloc() on many systems just keeps
  * a heap of memory to itself, which never gets given back to the OS, except on
  * exit.  This of course is bad, if say we have an event that causes us to allocate
@@ -52,7 +52,7 @@
  * malloc() has it locked up in its heap.  With the mmap() method, we can munmap()
  * the block and return it back to the OS, thus causing our memory consumption to go
  * down after we no longer need it.
- * 
+ *
  *
  *
  */
@@ -138,7 +138,7 @@ free_block(void *ptr, size_t size)
 
 /*
  * void rb_init_bh(void)
- * 
+ *
  * Inputs: None
  * Outputs: None
  * Side Effects: Initializes the block heap
@@ -171,7 +171,7 @@ rb_init_bh(void)
 #ifndef NOBALLOC
 /*
  * static inline void *get_block(size_t size)
- * 
+ *
  * Input: Size of block to allocate
  * Output: Pointer to new block
  * Side Effects: None

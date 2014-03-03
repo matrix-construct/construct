@@ -29,7 +29,7 @@
 
 #include "setup.h"
 
-/* 
+/*
  * Directory paths and filenames for UNIX systems.
  * IRCD_PREFIX is set using ./configure --prefix, see INSTALL.
  * The other defaults should be fine.
@@ -53,7 +53,7 @@
 #define LIBPATH IRCD_PREFIX "/lib/"
 #define MODPATH MODULE_DIR
 #define AUTOMODPATH MODULE_DIR "/autoload/"
-#define ETCPATH ETC_DIR 
+#define ETCPATH ETC_DIR
 #define LOGPATH LOG_DIR
 #define UHPATH   HELP_DIR "/users"
 #define HPATH  HELP_DIR "/opers"
@@ -95,7 +95,7 @@
 #define KILLCHASETIMELIMIT 90	/* Recommended value: 90 */
 
 /* RATBOX_SOMAXCONN
- * Use SOMAXCONN if OS has it, otherwise use this value for the 
+ * Use SOMAXCONN if OS has it, otherwise use this value for the
  * listen(); backlog.  5 for AIX/SUNOS, 25 for other OSs.
  */
 #define RATBOX_SOMAXCONN 25

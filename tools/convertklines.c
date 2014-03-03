@@ -51,13 +51,13 @@ int main(int argc,char *argv[])
       fprintf(stderr,"Can't open %s for writing\n", argv[2]);
       usage();
     }
-  
+
   if(( outdline = fopen(argv[3], "w")) == NULL )
     {
       fprintf(stderr, "Can't open %s for writing\n", argv[3]);
       usage();
     }
-    
+
   ConvertConf(in, outkline, outdline);
 
   fprintf(stderr, "The kline file has been converted and should be renamed to\n");
@@ -75,7 +75,7 @@ static void usage()
 
 
 /*
- * ConvertConf() 
+ * ConvertConf()
  *    Read configuration file.
  *
  *
@@ -153,7 +153,7 @@ static void ReplaceQuotes(char* quotedLine,char *inputLine)
     0,    /* x */
     0,    /* y */
     0,    /* z */
-    0,0,0,0,0,0 
+    0,0,0,0,0,0
     };
 
   /*
@@ -186,7 +186,7 @@ static void ReplaceQuotes(char* quotedLine,char *inputLine)
  * parse()
  * Inputs       - pointer to line to parse
  *		- pointer to output to write
- * Output       - 
+ * Output       -
  * Side Effects - Parse one old style conf line.
  */
 
@@ -208,9 +208,9 @@ static void parse(FILE *outkline, FILE *outdline, char* line)
     /* host field */
     if ((host_field = getfield(NULL)) == NULL)
       return;
-      
+
     /* pass field */
-    if ((passwd_field = getfield(NULL)) == NULL) 
+    if ((passwd_field = getfield(NULL)) == NULL)
       break;
     else
     {
@@ -239,10 +239,10 @@ static void parse(FILE *outkline, FILE *outdline, char* line)
     passwd_field = "";
     operpasswd_field = "";
   }
-   
+
   if (!user_field)
     user_field = "";
-    
+
   switch( conf_letter )
   {
     case 'd':
@@ -276,18 +276,18 @@ static char *getfield(char *newline)
 {
   static char *line = NULL;
   char  *end, *field;
-        
+
   if (newline)
     line = newline;
-  
+
   if (line == NULL)
   {
     fprintf(stderr, "returned null!\n");
     return NULL;
   }
-  
+
   field = line;
-  
+
   if ((end = strchr(line,':')) == NULL)
     {
       line = NULL;
@@ -296,9 +296,9 @@ static char *getfield(char *newline)
     }
   else
     line = end + 1;
-    
+
   *end = '\0';
-  
+
   return field;
 }
 

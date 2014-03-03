@@ -1,5 +1,5 @@
 /* modules/m_tb.c
- * 
+ *
  *  Copyright (C) 2003 Lee Hardy <lee@leeh.co.uk>
  *  Copyright (C) 2003-2005 ircd-ratbox development team
  *

@@ -1,4 +1,4 @@
-/* 
+/*
  * Charybdis: an advanced ircd
  * ip_cloaking.c: provide user hostname cloaking
  *
@@ -88,7 +88,7 @@ do_host_cloak_ip(const char *inbuf, char *outbuf)
 	{
 		ipv6 = 1;
 
-		/* Damn you IPv6... 
+		/* Damn you IPv6...
 		 * We count the number of colons so we can calculate how much
 		 * of the host to cloak. This is because some hostmasks may not
 		 * have as many octets as we'd like.
@@ -103,7 +103,7 @@ do_host_cloak_ip(const char *inbuf, char *outbuf)
 	else if (!strchr(outbuf, '.'))
 		return;
 
-	for (tptr = outbuf; *tptr != '\0'; tptr++) 
+	for (tptr = outbuf; *tptr != '\0'; tptr++)
 	{
 		if (*tptr == ':' || *tptr == '.')
 		{
@@ -131,7 +131,7 @@ do_host_cloak_host(const char *inbuf, char *outbuf)
 
 	rb_strlcpy(outbuf, inbuf, HOSTLEN + 1);
 
-	/* pass 1: scramble first section of hostname using base26 
+	/* pass 1: scramble first section of hostname using base26
 	 * alphabet toasted against the FNV hash of the string.
 	 *
 	 * numbers are not changed at this time, only letters.
@@ -157,7 +157,7 @@ do_host_cloak_host(const char *inbuf, char *outbuf)
 			*tptr = '0' + (*tptr + accum) % 10;
 
 		accum = (accum << 1) | (accum >> 31);
-	}	
+	}
 }
 
 static void

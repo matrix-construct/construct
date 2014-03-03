@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2003-2006 Lee Hardy <leeh@leeh.co.uk>
  * Copyright (C) 2003-2006 ircd-ratbox development team
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
@@ -27,7 +27,7 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * $Id: rsdb_sqlite3.c 26182 2008-11-11 02:52:41Z androsyn $
  */
 #include "stdinc.h"
@@ -82,7 +82,7 @@ rsdb_init(rsdb_error_cb * ecb)
 	{
 		rb_snprintf(errbuf, sizeof(errbuf),  "Unable to open sqlite database for write: %s", strerror(errno));
 		mlog(errbuf);
-		return -1;			
+		return -1;
 	}
 	return 0;
 }

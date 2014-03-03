@@ -58,7 +58,7 @@ parse_netmask(const char *text, struct sockaddr  *naddr, int *nb)
 		b = &xb;
 	else
 		b = nb;
-	
+
 	if(naddr == NULL)
 		addr = (struct rb_sockaddr_storage *)&xaddr;
 	else
@@ -70,7 +70,7 @@ parse_netmask(const char *text, struct sockaddr  *naddr, int *nb)
 	}
 #ifdef RB_IPV6
 	if(strchr(ip, ':'))
-	{	
+	{
 		if((ptr = strchr(ip, '/')))
 		{
 			*ptr = '\0';
@@ -127,7 +127,7 @@ static unsigned long
 hash_ipv4(struct sockaddr *saddr, int bits)
 {
 	struct sockaddr_in *addr = (struct sockaddr_in *) saddr;
-	
+
 	if(bits != 0)
 	{
 		unsigned long av = ntohl(addr->sin_addr.s_addr) & ~((1 << (32 - bits)) - 1);
@@ -216,7 +216,7 @@ get_mask_hash(const char *text)
 struct ConfItem *
 find_conf_by_address(const char *name, const char *sockhost,
 			const char *orighost,
-			struct sockaddr *addr, int type, int fam, 
+			struct sockaddr *addr, int type, int fam,
 			const char *username, const char *auth_user)
 {
 	unsigned long hprecv = 0;
@@ -240,11 +240,11 @@ find_conf_by_address(const char *name, const char *sockhost,
 					if(arec->type == (type & ~0x1) &&
 					   arec->masktype == HM_IPV6 &&
 					   comp_with_mask_sock(addr, (struct sockaddr *)&arec->Mask.ipa.addr,
-						arec->Mask.ipa.bits) && 
-						(type & 0x1 || match(arec-> username, username)) && 
-						(type != CONF_CLIENT || !arec->auth_user || 
-						(auth_user && match(arec->auth_user, auth_user))) && 
-						arec->precedence > hprecv) 
+						arec->Mask.ipa.bits) &&
+						(type & 0x1 || match(arec-> username, username)) &&
+						(type != CONF_CLIENT || !arec->auth_user ||
+						(auth_user && match(arec->auth_user, auth_user))) &&
+						arec->precedence > hprecv)
 					{
 						hprecv = arec->precedence;
 						hprec = arec->aconf;
@@ -261,11 +261,11 @@ find_conf_by_address(const char *name, const char *sockhost,
 					if(arec->type == (type & ~0x1) &&
 					   arec->masktype == HM_IPV4 &&
 					   comp_with_mask_sock(addr, (struct sockaddr *)&arec->Mask.ipa.addr,
-							       arec->Mask.ipa.bits) && 
-						(type & 0x1 || match(arec->username, username)) && 
-						(type != CONF_CLIENT || !arec->auth_user || 
-						(auth_user && match(arec->auth_user, auth_user))) && 
-						arec->precedence > hprecv) 
+							       arec->Mask.ipa.bits) &&
+						(type & 0x1 || match(arec->username, username)) &&
+						(type != CONF_CLIENT || !arec->auth_user ||
+						(auth_user && match(arec->auth_user, auth_user))) &&
+						arec->precedence > hprecv)
 					{
 						hprecv = arec->precedence;
 						hprec = arec->aconf;
@@ -281,13 +281,13 @@ find_conf_by_address(const char *name, const char *sockhost,
 		for (p = orighost; p != NULL;)
 		{
 			for (arec = atable[hash_text(p)]; arec; arec = arec->next)
-				
+
 				if((arec->type == (type & ~0x1)) &&
 				   (arec->masktype == HM_HOST) &&
 				   arec->precedence > hprecv &&
 				   match(arec->Mask.hostname, orighost) &&
-				   (type != CONF_CLIENT || !arec->auth_user || 
-				   (auth_user && match(arec->auth_user, auth_user))) && 
+				   (type != CONF_CLIENT || !arec->auth_user ||
+				   (auth_user && match(arec->auth_user, auth_user))) &&
 				   (type & 0x1 || match(arec->username, username)))
 				{
 					hprecv = arec->precedence;
@@ -303,11 +303,11 @@ find_conf_by_address(const char *name, const char *sockhost,
 		{
 			if(arec->type == (type & ~0x1) &&
 			   arec->masktype == HM_HOST &&
-			   arec->precedence > hprecv && 
+			   arec->precedence > hprecv &&
 			   (match(arec->Mask.hostname, orighost) ||
 			    (sockhost && match(arec->Mask.hostname, sockhost))) &&
-			    (type != CONF_CLIENT || !arec->auth_user || 
-			    (auth_user && match(arec->auth_user, auth_user))) && 
+			    (type != CONF_CLIENT || !arec->auth_user ||
+			    (auth_user && match(arec->auth_user, auth_user))) &&
 			   (type & 0x1 || match(arec->username, username)))
 			{
 				hprecv = arec->precedence;
@@ -328,8 +328,8 @@ find_conf_by_address(const char *name, const char *sockhost,
 				   (arec->masktype == HM_HOST) &&
 				   arec->precedence > hprecv &&
 				   match(arec->Mask.hostname, name) &&
-				   (type != CONF_CLIENT || !arec->auth_user || 
-				   (auth_user && match(arec->auth_user, auth_user))) && 
+				   (type != CONF_CLIENT || !arec->auth_user ||
+				   (auth_user && match(arec->auth_user, auth_user))) &&
 				   (type & 0x1 || match(arec->username, username)))
 				{
 					hprecv = arec->precedence;
@@ -345,11 +345,11 @@ find_conf_by_address(const char *name, const char *sockhost,
 		{
 			if(arec->type == (type & ~0x1) &&
 			   arec->masktype == HM_HOST &&
-			   arec->precedence > hprecv && 
+			   arec->precedence > hprecv &&
 			   (match(arec->Mask.hostname, name) ||
 			    (sockhost && match(arec->Mask.hostname, sockhost))) &&
-			    (type != CONF_CLIENT || !arec->auth_user || 
-			    (auth_user && match(arec->auth_user, auth_user))) && 
+			    (type != CONF_CLIENT || !arec->auth_user ||
+			    (auth_user && match(arec->auth_user, auth_user))) &&
 			   (type & 0x1 || match(arec->username, username)))
 			{
 				hprecv = arec->precedence;
@@ -367,7 +367,7 @@ find_conf_by_address(const char *name, const char *sockhost,
  * Side-effects: None
  */
 struct ConfItem *
-find_address_conf(const char *host, const char *sockhost, const char *user, 
+find_address_conf(const char *host, const char *sockhost, const char *user,
 		const char *notildeuser, struct sockaddr *ip, int aftype, char *auth_user)
 {
 	struct ConfItem *iconf, *kconf;
@@ -470,7 +470,7 @@ find_dline(struct sockaddr *addr, int aftype)
 }
 
 /* void find_exact_conf_by_address(const char*, int, const char *)
- * Input: 
+ * Input:
  * Output: ConfItem if found
  * Side-effects: None
  */
@@ -526,7 +526,7 @@ find_exact_conf_by_address(const char *address, int type, const char *username)
 
 /* void add_conf_by_address(const char*, int, const char *,
  *         struct ConfItem *aconf)
- * Input: 
+ * Input:
  * Output: None
  * Side-effects: Adds this entry to the hash table.
  */
@@ -701,7 +701,7 @@ clear_out_address_conf_bans(void)
  * show_iline_prefix()
  *
  * inputs       - pointer to struct Client requesting output
- *              - pointer to struct ConfItem 
+ *              - pointer to struct ConfItem
  *              - name to which iline prefix will be prefixed to
  * output       - pointer to static string with prefixes listed in ascii form
  * side effects - NONE
@@ -757,11 +757,11 @@ report_auth(struct Client *client_p)
 
 				get_printable_conf(aconf, &name, &host, &pass, &user, &port,
 						   &classname);
-				
+
 				if(!EmptyString(aconf->spasswd))
 					pass = aconf->spasswd;
 
-				sendto_one_numeric(client_p, RPL_STATSILINE, 
+				sendto_one_numeric(client_p, RPL_STATSILINE,
 						   form_str(RPL_STATSILINE),
 						   name, pass, show_iline_prefix(client_p, aconf, user),
 						   show_ip_conf(aconf, client_p) ? host : "255.255.255.255",
@@ -770,8 +770,8 @@ report_auth(struct Client *client_p)
 }
 
 /* report_Klines()
- * 
- * inputs       - Client to report to, mask 
+ *
+ * inputs       - Client to report to, mask
  * outputs      -
  * side effects - Reports configured K-lines to client_p.
  */

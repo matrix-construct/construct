@@ -63,7 +63,7 @@ struct Message scan_msgtab = {
 mapi_clist_av1 scan_clist[] = { &scan_msgtab, NULL };
 DECLARE_MODULE_AV1(scan, NULL, NULL, scan_clist, NULL, NULL, "$Revision: 1853 $");
 
-typedef int (*scan_handler)(struct Client *, struct Client *, int, 
+typedef int (*scan_handler)(struct Client *, struct Client *, int,
 	const char **);
 
 struct scan_cmd {
@@ -84,7 +84,7 @@ static const char *spoofed_sockhost = "0";
  *	parv[2] = [target]
  */
 static int
-mo_scan(struct Client *client_p, struct Client *source_p, int parc, 
+mo_scan(struct Client *client_p, struct Client *source_p, int parc,
 	const char *parv[])
 {
 	struct scan_cmd *sptr;
@@ -267,7 +267,7 @@ scan_umodes(struct Client *client_p, struct Client *source_p, int parc,
 			sendto_one_numeric(source_p, RPL_SCANUMODES,
 						form_str(RPL_SCANUMODES),
 						target_p->name, target_p->username,
-						target_p->host, sockhost, 
+						target_p->host, sockhost,
 						target_p->servptr->name, modebuf,
 						target_p->info);
 		}

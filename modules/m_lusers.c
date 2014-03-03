@@ -51,7 +51,7 @@ DECLARE_MODULE_AV1(lusers, NULL, NULL, lusers_clist, NULL, NULL, "$Revision: 254
  * m_lusers - LUSERS message handler
  * parv[1] = host/server mask.
  * parv[2] = server to query
- * 
+ *
  * 199970918 JRL hacked to ignore parv[1] completely and require parc > 3
  * to cause a force
  */
@@ -86,7 +86,7 @@ m_lusers(struct Client *client_p, struct Client *source_p, int parc, const char 
  * ms_lusers - LUSERS message handler for servers and opers
  * parv[1] = host/server mask.
  * parv[2] = server to query
- * 
+ *
  * 199970918 JRL hacked to ignore parv[1] completely and require parc > 3
  * to cause a force
  */

@@ -105,7 +105,7 @@ m_cmessage(int p_or_n, const char *command,
 	{
 		if(p_or_n != NOTICE)
 			sendto_one_numeric(source_p, ERR_NOTONCHANNEL,
-					form_str(ERR_NOTONCHANNEL), 
+					form_str(ERR_NOTONCHANNEL),
 					chptr->chname);
 		return 0;
 	}

@@ -61,7 +61,7 @@ m_users(struct Client *client_p, struct Client *source_p, int parc, const char *
 				   (int)rb_dlink_list_length(&lclient_list),
 				   Count.max_loc);
 
-		sendto_one_numeric(source_p, RPL_GLOBALUSERS, 
+		sendto_one_numeric(source_p, RPL_GLOBALUSERS,
 				   form_str(RPL_GLOBALUSERS),
 				   Count.total, Count.max_tot,
 				   Count.total, Count.max_tot);

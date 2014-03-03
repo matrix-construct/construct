@@ -339,14 +339,14 @@ handle_command(struct Message *mptr, struct Client *client_p,
 	handler = ehandler.handler;
 
 	/* check right amount of params is passed... --is */
-	if(i < ehandler.min_para || 
+	if(i < ehandler.min_para ||
 	   (ehandler.min_para && EmptyString(hpara[ehandler.min_para - 1])))
 	{
 		if(!IsServer(client_p))
 		{
 			sendto_one(client_p, form_str(ERR_NEEDMOREPARAMS),
-				   me.name, 
-				   EmptyString(client_p->name) ? "*" : client_p->name, 
+				   me.name,
+				   EmptyString(client_p->name) ? "*" : client_p->name,
 				   mptr->cmd);
 			if(MyClient(client_p))
 				return (1);
@@ -390,7 +390,7 @@ handle_encap(struct Client *client_p, struct Client *source_p,
 	ehandler = mptr->handlers[ENCAP_HANDLER];
 	handler = ehandler.handler;
 
-	if(parc < ehandler.min_para || 
+	if(parc < ehandler.min_para ||
 	   (ehandler.min_para && EmptyString(parv[ehandler.min_para - 1])))
 		return;
 
@@ -471,9 +471,9 @@ report_messages(struct Client *source_p)
 	DICTIONARY_FOREACH(msg, &iter, cmd_dict)
 	{
 		s_assert(msg->cmd != NULL);
-		sendto_one_numeric(source_p, RPL_STATSCOMMANDS, 
+		sendto_one_numeric(source_p, RPL_STATSCOMMANDS,
 				   form_str(RPL_STATSCOMMANDS),
-				   msg->cmd, msg->count, 
+				   msg->cmd, msg->count,
 				   msg->bytes, msg->rcount);
 	}
 
@@ -522,7 +522,7 @@ cancel_clients(struct Client *client_p, struct Client *source_p, char *cmd)
 /* remove_unknown()
  *
  * inputs	- client who gave us message, supposed sender, buffer
- * output	- 
+ * output	-
  * side effects	- kills issued for clients, squits for servers
  */
 static void
@@ -537,7 +537,7 @@ remove_unknown(struct Client *client_p, char *lsender, char *lbuffer)
 	 * #XX		is a SID (SQUIT)
 	 * meep.foo	is a server (SQUIT)
 	 */
-	if((IsDigit(lsender[0]) && slen == 3) || 
+	if((IsDigit(lsender[0]) && slen == 3) ||
 	   (strchr(lsender, '.') != NULL))
 	{
 		sendto_realops_snomask(SNO_DEBUG, L_ALL,
@@ -546,7 +546,7 @@ remove_unknown(struct Client *client_p, char *lsender, char *lbuffer)
 
 		sendto_one(client_p,
 			   ":%s SQUIT %s :(Unknown prefix (%s) from %s)",
-			   get_id(&me, client_p), lsender, 
+			   get_id(&me, client_p), lsender,
 			   lbuffer, client_p->name);
 	}
 	else if(!IsDigit(lsender[0]))
@@ -561,7 +561,7 @@ remove_unknown(struct Client *client_p, char *lsender, char *lbuffer)
 		sid[3] = '\0';
 		server = find_server(NULL, sid);
 		if (server != NULL && server->from == client_p)
-			sendto_one(client_p, ":%s KILL %s :%s (Unknown Client)", 
+			sendto_one(client_p, ":%s KILL %s :%s (Unknown Client)",
 					get_id(&me, client_p), lsender, me.name);
 	}
 }
@@ -629,7 +629,7 @@ do_numeric(char numeric[], struct Client *client_p, struct Client *source_p, int
 			 * because it will have been already killed by the local server.
 			 *
 			 * unfortunately, as we cant guarantee other servers will do the
-			 * "right thing" on a nick collision, we have to keep both kills.  
+			 * "right thing" on a nick collision, we have to keep both kills.
 			 * ergo we need to ignore ERR_NOSUCHNICK. --fl_
 			 */
 			/* quick comment. This _was_ tried. i.e. assume the other servers
@@ -660,8 +660,8 @@ do_numeric(char numeric[], struct Client *client_p, struct Client *source_p, int
 			return;
 
 		/* Fake it for server hiding, if its our client */
-		sendto_one(target_p, ":%s %s %s%s", 
-			   get_id(source_p, target_p), numeric, 
+		sendto_one(target_p, ":%s %s %s%s",
+			   get_id(source_p, target_p), numeric,
 			   get_id(target_p, target_p), buffer);
 		return;
 	}

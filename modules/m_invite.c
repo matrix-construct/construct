@@ -74,12 +74,12 @@ m_invite(struct Client *client_p, struct Client *source_p, int parc, const char 
 	if(target_p == NULL)
 	{
 		if(!MyClient(source_p) && IsDigit(parv[1][0]))
-			sendto_one_numeric(source_p, ERR_NOSUCHNICK, 
-					   "* :Target left IRC. Failed to invite to %s", 
+			sendto_one_numeric(source_p, ERR_NOSUCHNICK,
+					   "* :Target left IRC. Failed to invite to %s",
 					   parv[2]);
 		else
-			sendto_one_numeric(source_p, ERR_NOSUCHNICK, 
-					   form_str(ERR_NOSUCHNICK), 
+			sendto_one_numeric(source_p, ERR_NOSUCHNICK,
+					   form_str(ERR_NOSUCHNICK),
 					   parv[1]);
 		return 0;
 	}
@@ -93,7 +93,7 @@ m_invite(struct Client *client_p, struct Client *source_p, int parc, const char 
 	}
 
 	/* Do not send local channel invites to users if they are not on the
-	 * same server as the person sending the INVITE message. 
+	 * same server as the person sending the INVITE message.
 	 */
 	if(parv[2][0] == '&' && !MyConnect(target_p))
 	{
@@ -163,7 +163,7 @@ m_invite(struct Client *client_p, struct Client *source_p, int parc, const char 
 				   me.name, source_p->name, target_p->name);
 			return 0;
 		}
-		sendto_one(source_p, form_str(RPL_INVITING), 
+		sendto_one(source_p, form_str(RPL_INVITING),
 			   me.name, source_p->name,
 			   target_p->name, parv[2]);
 		if(target_p->user->away)
@@ -208,8 +208,8 @@ m_invite(struct Client *client_p, struct Client *source_p, int parc, const char 
 			}
 		}
 		add_reply_target(target_p, source_p);
-		sendto_one(target_p, ":%s!%s@%s INVITE %s :%s", 
-			   source_p->name, source_p->username, source_p->host, 
+		sendto_one(target_p, ":%s!%s@%s INVITE %s :%s",
+			   source_p->name, source_p->username, source_p->host,
 			   target_p->name, chptr->chname);
 
 		if(store_invite)
@@ -243,7 +243,7 @@ add_invite(struct Channel *chptr, struct Client *who)
 	}
 
 	/* ok, if their invite list is too long, remove the tail */
-	if((int)rb_dlink_list_length(&who->user->invited) >= 
+	if((int)rb_dlink_list_length(&who->user->invited) >=
 	   ConfigChannel.max_chans_per_user)
 	{
 		ptr = who->user->invited.tail;

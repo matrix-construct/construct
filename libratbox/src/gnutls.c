@@ -14,7 +14,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
@@ -128,7 +128,7 @@ rb_ssl_tryaccept(rb_fde_t *F, void *data)
 	F->accept = NULL;
 	rb_settimeout(F, 0, NULL, NULL);
 	rb_setselect(F, RB_SELECT_READ | RB_SELECT_WRITE, NULL, NULL);
-	
+
 	if(ret > 0)
 		ad->callback(F, RB_OK, (struct sockaddr *)&ad->S, ad->addrlen, ad->data);
 	else
@@ -617,9 +617,9 @@ rb_supports_ssl(void)
 void
 rb_get_ssl_info(char *buf, size_t len)
 {
-	rb_snprintf(buf, len, "GNUTLS: compiled (%s), library(%s)", 
+	rb_snprintf(buf, len, "GNUTLS: compiled (%s), library(%s)",
 		    LIBGNUTLS_VERSION, gnutls_check_version(NULL));
 }
-  
-        
+
+
 #endif /* HAVE_GNUTLS */

@@ -140,7 +140,7 @@ m_accept(struct Client *client_p, struct Client *source_p, int parc, const char 
  *		- pointer to addbuffer
  *		- pointer to remove buffer
  *		- pointer to list of nicks
- * output	- 
+ * output	-
  * side effects - addbuf/delbuf are modified to give valid nicks
  */
 static void
@@ -167,7 +167,7 @@ build_nicklist(struct Client *source_p, char *addbuf, char *delbuf, const char *
 
 		if(find_named_person(name) == NULL)
 		{
-			sendto_one_numeric(source_p, ERR_NOSUCHNICK, 
+			sendto_one_numeric(source_p, ERR_NOSUCHNICK,
 					   form_str(ERR_NOSUCHNICK), name);
 			continue;
 		}
@@ -251,10 +251,10 @@ list_accepts(struct Client *source_p)
 	}
 
 	if(*nicks)
-		sendto_one(source_p, form_str(RPL_ACCEPTLIST), 
+		sendto_one(source_p, form_str(RPL_ACCEPTLIST),
 			   me.name, source_p->name, nicks);
 
-	sendto_one(source_p, form_str(RPL_ENDOFACCEPT), 
+	sendto_one(source_p, form_str(RPL_ENDOFACCEPT),
 		   me.name, source_p->name);
 
 }

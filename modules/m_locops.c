@@ -60,7 +60,7 @@ static int
 m_locops(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	sendto_wallops_flags(UMODE_LOCOPS, source_p, "LOCOPS - %s", parv[1]);
-	
+
 	if(rb_dlink_list_length(&cluster_conf_list) > 0)
 		cluster_generic(source_p, "LOCOPS", SHARED_LOCOPS, CAP_CLUSTER,
 				":%s", parv[1]);
@@ -74,7 +74,7 @@ ms_locops(struct Client *client_p, struct Client *source_p, int parc, const char
 	/* source_p  parv[1]      parv[2]
 	 * oper      target serv  message
 	 */
-	propagate_generic(source_p, "LOCOPS", parv[1], CAP_CLUSTER, 
+	propagate_generic(source_p, "LOCOPS", parv[1], CAP_CLUSTER,
 				":%s", parv[2]);
 
 	if(!match(parv[1], me.name))

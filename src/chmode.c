@@ -2,9 +2,9 @@
  *  charybdis: A slightly useful ircd.
  *  chmode.c: channel mode management
  *
- * Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center 
- * Copyright (C) 1996-2002 Hybrid Development Team 
- * Copyright (C) 2002-2005 ircd-ratbox development team 
+ * Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center
+ * Copyright (C) 1996-2002 Hybrid Development Team
+ * Copyright (C) 2002-2005 ircd-ratbox development team
  * Copyright (C) 2005-2006 charybdis development team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -82,13 +82,13 @@ construct_cflags_strings(void)
 	int i;
         char *ptr = cflagsbuf;
 	char *ptr2 = cflagsmyinfo;
-        
+
         *ptr = '\0';
 	*ptr2 = '\0';
 
 	for(i = 0; i < 256; i++)
 	{
-		if( !(chmode_table[i].set_func == chm_ban) && 
+		if( !(chmode_table[i].set_func == chm_ban) &&
 			!(chmode_table[i].set_func == chm_forward) &&
 			!(chmode_table[i].set_func == chm_throttle) &&
                         !(chmode_table[i].set_func == chm_key) &&
@@ -102,7 +102,7 @@ construct_cflags_strings(void)
 		{
 			chmode_flags[i] = 0;
 		}
-                
+
 		switch (chmode_flags[i])
 		{
 		    case MODE_FREETARGET:
@@ -116,14 +116,14 @@ construct_cflags_strings(void)
 			    *ptr++ = (char) i;
 			}
 		}
-		
+
 		/* Should we leave orphaned check here? -- dwr */
 		if(!(chmode_table[i].set_func == chm_nosuch) && !(chmode_table[i].set_func == chm_orphaned))
 		{
 		    *ptr2++ = (char) i;
 		}
 	}
-        
+
         *ptr++ = '\0';
 	*ptr2++ = '\0';
 }
@@ -658,7 +658,7 @@ chm_orphaned(struct Client *source_p, struct Channel *chptr,
 {
 	if(MyClient(source_p))
 		return;
-        
+
 	if((dir == MODE_ADD) && !(chptr->mode.mode & mode_type))
 	{
 		chptr->mode.mode |= mode_type;
@@ -1681,7 +1681,7 @@ struct ChannelMode chmode_table[256] =
 /* set_channel_mode()
  *
  * inputs	- client, source, channel, membership pointer, params
- * output	- 
+ * output	-
  * side effects - channel modes/memberships are changed, MODE is issued
  *
  * Extensively modified to be hotpluggable, 03/09/06 -- nenolod
@@ -1833,7 +1833,7 @@ set_channel_mode(struct Client *client_p, struct Client *source_p,
 /* set_channel_mlock()
  *
  * inputs	- client, source, channel, params
- * output	- 
+ * output	-
  * side effects - channel mlock is changed / MLOCK is propagated
  */
 void

@@ -234,7 +234,7 @@ m_who(struct Client *client_p, struct Client *source_p, int parc, const char *pa
 		else
 			do_who(source_p, target_p, NULL, &fmt);
 
-		sendto_one(source_p, form_str(RPL_ENDOFWHO), 
+		sendto_one(source_p, form_str(RPL_ENDOFWHO),
 			   me.name, source_p->name, mask);
 		return 0;
 	}
@@ -486,7 +486,7 @@ do_who(struct Client *source_p, struct Client *target_p, struct membership *mspt
 			   source_p->name, msptr ? msptr->chptr->chname : "*",
 			   target_p->username, target_p->host,
 			   target_p->servptr->name, target_p->name, status,
-			   ConfigServerHide.flatten_links && !IsOper(source_p) && !IsExemptShide(source_p) ? 0 : target_p->hopcount, 
+			   ConfigServerHide.flatten_links && !IsOper(source_p) && !IsExemptShide(source_p) ? 0 : target_p->hopcount,
 			   target_p->info);
 	else
 	{

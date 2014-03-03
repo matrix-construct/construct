@@ -82,7 +82,7 @@ struct Message nickdelay_msgtab = {
 	{mg_unreg, mg_ignore, mg_ignore, mg_ignore, {me_nickdelay, 3}, mg_ignore}
 };
 
-mapi_clist_av1 services_clist[] = { 
+mapi_clist_av1 services_clist[] = {
 	&su_msgtab, &login_msgtab, &rsfnc_msgtab, &nickdelay_msgtab, NULL
 };
 mapi_hfn_list_av1 services_hfnlist[] = {
@@ -214,7 +214,7 @@ me_rsfnc(struct Client *client_p, struct Client *source_p,
 		char buf[BUFSIZE];
 
 		/* this would be one hell of a race condition to trigger
-		 * this one given the tsinfo check above, but its here for 
+		 * this one given the tsinfo check above, but its here for
 		 * safety --anfl
 		 */
 		if(target_p == exist_p)

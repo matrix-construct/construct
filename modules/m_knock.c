@@ -94,8 +94,8 @@ m_knock(struct Client *client_p, struct Client *source_p, int parc, const char *
 		return 0;
 	}
 
-	if(!((chptr->mode.mode & MODE_INVITEONLY) || (*chptr->mode.key) || 
-	     (chptr->mode.limit && 
+	if(!((chptr->mode.mode & MODE_INVITEONLY) || (*chptr->mode.key) ||
+	     (chptr->mode.limit &&
 	      rb_dlink_list_length(&chptr->members) >= (unsigned long)chptr->mode.limit)))
 	{
 		sendto_one_numeric(source_p, ERR_CHANOPEN,
@@ -111,7 +111,7 @@ m_knock(struct Client *client_p, struct Client *source_p, int parc, const char *
 		return 0;
 	}
 
-	
+
 	if(MyClient(source_p))
 	{
 		/* don't allow a knock if the user is banned */
@@ -127,7 +127,7 @@ m_knock(struct Client *client_p, struct Client *source_p, int parc, const char *
 		 * allow one knock per user per knock_delay
 		 * allow one knock per channel per knock_delay_channel
 		 */
-		if(!IsOper(source_p) && 
+		if(!IsOper(source_p) &&
 		   (source_p->localClient->last_knock + ConfigChannel.knock_delay) > rb_current_time())
 		{
 			sendto_one(source_p, form_str(ERR_TOOMANYKNOCK),

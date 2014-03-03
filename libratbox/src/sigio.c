@@ -121,7 +121,7 @@ resize_pollarray(int fd)
 
 /*
  * void setup_sigio_fd(int fd)
- * 
+ *
  * Input: File descriptor
  * Output: None
  * Side Effect: Sets the FD up for SIGIO

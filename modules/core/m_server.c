@@ -93,7 +93,7 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 		return 0;
 	}
 
-	/* 
+	/*
 	 * Reject a direct nonTS server connection if we're TS_ONLY -orabidoo
 	 */
 	if(!DoesTS(client_p))
@@ -178,7 +178,7 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 		     "Connection from servername %s requires SSL/TLS but is plaintext",
 		     name);
-		ilog(L_SERVER, "Access denied, requires SSL/TLS but is plaintext from %s", 
+		ilog(L_SERVER, "Access denied, requires SSL/TLS but is plaintext from %s",
 		     log_client_name(client_p, SHOW_IP));
 
 		exit_client(client_p, client_p, client_p, "Access denied, requires SSL/TLS but is plaintext");
@@ -325,7 +325,7 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 		 * that already exists, then sends you a client burst, you squit the
 		 * server, but you keep getting the burst of clients on a server that
 		 * doesnt exist, although ircd can handle it, its not a realistic
-		 * solution.. --fl_ 
+		 * solution.. --fl_
 		 */
 		ilog(L_SERVER, "Link %s cancelled, server %s already exists",
 			client_p->name, name);
@@ -337,7 +337,7 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 		return 0;
 	}
 
-	/* 
+	/*
 	 * User nicks never have '.' in them and server names
 	 * must always have '.' in them.
 	 */
@@ -393,7 +393,7 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 	 *            name = "irc.bighub.net";
 	 *            hub_mask="*";
 	 *            ...
-	 * 
+	 *
 	 * That would allow "irc.bighub.net" to introduce anything it wanted..
 	 *
 	 * However
@@ -431,7 +431,7 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 				     "Link %s introduced leafed server %s.",
 				     client_p->name, name);
 		ilog(L_SERVER, "Link %s introduced leafed server %s.",
-			client_p->name, name);	
+			client_p->name, name);
 
 		rb_snprintf(squitreason, sizeof squitreason,
 				"Matching leaf_mask for %s",
@@ -601,7 +601,7 @@ ms_sid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 				     "Link %s introduced leafed server %s.",
 				     client_p->name, parv[1]);
 		ilog(L_SERVER, "Link %s introduced leafed server %s.",
-			client_p->name, parv[1]);	
+			client_p->name, parv[1]);
 
 		rb_snprintf(squitreason, sizeof squitreason,
 				"Matching leaf_mask for %s",

@@ -200,7 +200,7 @@ static int mo_list(struct Client *client_p, struct Client *source_p, int parc, c
 	params->users_min = 3;
 	params->users_max = INT_MAX;
 	params->operspy = operspy;
-	params->created_min = params->topic_min = 
+	params->created_min = params->topic_min =
 		params->created_max = params->topic_max = 0;
 
 	if (args && !EmptyString(args))
@@ -484,7 +484,7 @@ static void safelist_iterate_client(struct Client *source_p)
 			return;
 		}
 
-		RB_DLINK_FOREACH(ptr, channelTable[iter].head) 
+		RB_DLINK_FOREACH(ptr, channelTable[iter].head)
 			safelist_one_channel(source_p, (struct Channel *) ptr->data);
 	}
 
@@ -495,6 +495,6 @@ static void safelist_iterate_clients(void *unused)
 {
 	rb_dlink_node *n, *n2;
 
-	RB_DLINK_FOREACH_SAFE(n, n2, safelisting_clients.head) 
+	RB_DLINK_FOREACH_SAFE(n, n2, safelisting_clients.head)
 		safelist_iterate_client((struct Client *)n->data);
 }

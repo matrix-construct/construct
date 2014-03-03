@@ -69,14 +69,14 @@ void rb_init_rb_dlink_nodes(size_t dh_size);
  */
 
 /*
- * Walks forward of a list.  
+ * Walks forward of a list.
  * pos is your node
  * head is your list head
  */
 #define RB_DLINK_FOREACH(pos, head) for (pos = (head); pos != NULL; pos = pos->next)
 
 /*
- * Walks forward of a list safely while removing nodes 
+ * Walks forward of a list safely while removing nodes
  * pos is your node
  * n is another list head for temporary storage
  * head is your list head
@@ -94,7 +94,7 @@ void rb_init_rb_dlink_nodes(size_t dh_size);
 #define rb_dlinkDestroy(node, list) do { rb_dlinkDelete(node, list); rb_free_rb_dlink_node(node); } while(0)
 
 
-/* 
+/*
  * dlink_ routines are stolen from squid, except for rb_dlinkAddBefore,
  * which is mine.
  *   -- adrian
@@ -183,7 +183,7 @@ rb_dlinkMoveTail(rb_dlink_node *m, rb_dlink_list *list)
 	if(list->tail == m)
 		return;
 
-	/* From here assume that m->next != NULL as that can only 
+	/* From here assume that m->next != NULL as that can only
 	 * be at the tail and assume that the node is on the list
 	 */
 
@@ -293,7 +293,7 @@ rb_dlinkFindDestroy(void *data, rb_dlink_list *list)
 
 /*
  * rb_dlinkFind
- * inputs	- list to search 
+ * inputs	- list to search
  *		- data
  * output	- pointer to link or NULL if not found
  * side effects	- Look for ptr in the linked listed pointed to by link.

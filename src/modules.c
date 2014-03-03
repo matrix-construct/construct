@@ -44,10 +44,10 @@
 /* -TimeMr14C:
  * I have moved the dl* function definitions and
  * the two functions (load_a_module / unload_a_module) to the
- * file dynlink.c 
+ * file dynlink.c
  * And also made the necessary changes to those functions
  * to comply with shl_load and friends.
- * In this file, to keep consistency with the makefile, 
+ * In this file, to keep consistency with the makefile,
  * I added the ability to load *.sl files, too.
  * 27/02/2002
  */
@@ -150,7 +150,7 @@ mod_find_path(const char *path)
 /* mod_add_path
  *
  * input	- path
- * ouput	- 
+ * ouput	-
  * side effects - adds path to list
  */
 void
@@ -291,7 +291,7 @@ load_one_module(const char *path, int coremodule)
 	struct stat statbuf;
 
 	if (server_state_foreground == 1)
-		inotice("loading module %s ...", path);	
+		inotice("loading module %s ...", path);
 
 	RB_DLINK_FOREACH(pathst, mod_paths.head)
 	{
@@ -691,9 +691,9 @@ unload_one_module(const char *name, int warn)
 	/*
 	 ** XXX - The type system in C does not allow direct conversion between
 	 ** data and function pointers, but as it happens, most C compilers will
-	 ** safely do this, however it is a theoretical overlow to cast as we 
-	 ** must do here.  I have library functions to take care of this, but 
-	 ** despite being more "correct" for the C language, this is more 
+	 ** safely do this, however it is a theoretical overlow to cast as we
+	 ** must do here.  I have library functions to take care of this, but
+	 ** despite being more "correct" for the C language, this is more
 	 ** practical.  Removing the abuse of the ability to cast ANY pointer
 	 ** to and from an integer value here will break some compilers.
 	 **          -jmallett

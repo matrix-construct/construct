@@ -1,7 +1,7 @@
 /*
  *  ircd-ratbox: A slightly useful ircd
  *  helper.h: Starts and deals with ircd helpers
- *  
+ *
  *  Copyright (C) 2006 Aaron Sethman <androsyn@ratbox.org>
  *
  *  This program is free software; you can redistribute it and/or modify

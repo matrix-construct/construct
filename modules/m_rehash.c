@@ -76,7 +76,7 @@ rehash_bans_loc(struct Client *source_p)
 static void
 rehash_dns(struct Client *source_p)
 {
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is rehashing DNS", 
+	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is rehashing DNS",
 			     get_oper_name(source_p));
 	if (!MyConnect(source_p))
 		remote_rehash_oper_p = source_p;
@@ -245,7 +245,7 @@ static void
 rehash_help(struct Client *source_p)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
-			     "%s is forcing re-reading of HELP files", 
+			     "%s is forcing re-reading of HELP files",
 			     get_oper_name(source_p));
 	if (!MyConnect(source_p))
 		remote_rehash_oper_p = source_p;
@@ -268,7 +268,7 @@ rehash_nickdelay(struct Client *source_p)
 	RB_DLINK_FOREACH_SAFE(ptr, safe_ptr, nd_list.head)
 	{
 		nd = ptr->data;
-	
+
 		free_nd_entry(nd);
 	}
 }

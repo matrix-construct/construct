@@ -76,12 +76,12 @@ _send_linebuf(struct Client *to, buf_head_t *linebuf)
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					     "Max SendQ limit exceeded for %s: %u > %lu",
 					     to->name,
-					     rb_linebuf_len(&to->localClient->buf_sendq), 
+					     rb_linebuf_len(&to->localClient->buf_sendq),
 					     get_sendq(to));
 
 			ilog(L_SERVER, "Max SendQ limit exceeded for %s: %u > %lu",
 			     log_client_name(to, SHOW_IP),
-			     rb_linebuf_len(&to->localClient->buf_sendq), 
+			     rb_linebuf_len(&to->localClient->buf_sendq),
 			     get_sendq(to));
 		}
 
@@ -177,7 +177,7 @@ send_queued(struct Client *to)
                                         ((buf_line_t *) to->localClient->buf_sendq.list.head->
                                          data)->buf + to->localClient->buf_sendq.writeofs;
 #endif
-     
+
 
 			ClearFlush(to);
 
@@ -241,7 +241,7 @@ send_queued_write(rb_fde_t *F, void *data)
  *
  * inputs	- client to send to, va_args
  * outputs	- client has message put into its queue
- * side effects - 
+ * side effects -
  */
 void
 sendto_one(struct Client *target_p, const char *pattern, ...)
@@ -393,7 +393,7 @@ sendto_one_numeric(struct Client *target_p, int numeric, const char *pattern, ..
 
 /*
  * sendto_server
- * 
+ *
  * inputs       - pointer to client to NOT send to
  *              - caps or'd together which must ALL be present
  *              - caps or'd together which must ALL NOT be present
@@ -403,7 +403,7 @@ sendto_one_numeric(struct Client *target_p, int numeric, const char *pattern, ..
  * side effects - Send a message to all connected servers, except the
  *                client 'one' (if non-NULL), as long as the servers
  *                support ALL capabs in 'caps', and NO capabs in 'nocaps'.
- *            
+ *
  * This function was written in an attempt to merge together the other
  * billion sendto_*serv*() functions, which sprung up with capabs, uids etc
  * -davidt
@@ -487,7 +487,7 @@ sendto_channel_flags(struct Client *one, int type, struct Client *source_p,
 	else
 		rb_linebuf_putmsg(&rb_linebuf_local, NULL, NULL,
 			       ":%s!%s@%s %s",
-			       source_p->name, source_p->username, 
+			       source_p->name, source_p->username,
 			       source_p->host, buf);
 
 	rb_linebuf_putmsg(&rb_linebuf_id, NULL, NULL, ":%s %s", use_id(source_p), buf);
@@ -560,7 +560,7 @@ sendto_channel_opmod(struct Client *one, struct Client *source_p,
 	else
 		rb_linebuf_putmsg(&rb_linebuf_local, NULL, NULL,
 			       ":%s!%s@%s %s %s :%s",
-			       source_p->name, source_p->username, 
+			       source_p->name, source_p->username,
 			       source_p->host, command, chptr->chname, text);
 
 	if (chptr->mode.mode & MODE_MODERATED)
@@ -631,9 +631,9 @@ sendto_channel_local(int type, struct Channel *chptr, const char *pattern, ...)
 	struct Client *target_p;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
-	
-	rb_linebuf_newbuf(&linebuf); 
-	
+
+	rb_linebuf_newbuf(&linebuf);
+
 	va_start(args, pattern);
 	rb_linebuf_putmsg(&linebuf, pattern, &args, NULL);
 	va_end(args);
@@ -669,10 +669,10 @@ _sendto_channel_local_with_capability_butone(struct Client *one, int type, int c
 	struct Client *target_p;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
-	
+
 	rb_linebuf_newbuf(&linebuf);
 	rb_linebuf_putmsg(&linebuf, pattern, args, NULL);
-	
+
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->locmembers.head)
 	{
 		msptr = ptr->data;
@@ -746,9 +746,9 @@ sendto_channel_local_butone(struct Client *one, int type, struct Channel *chptr,
 	struct Client *target_p;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
-	
-	rb_linebuf_newbuf(&linebuf); 
-	
+
+	rb_linebuf_newbuf(&linebuf);
+
 	va_start(args, pattern);
 	rb_linebuf_putmsg(&linebuf, pattern, &args, NULL);
 	va_end(args);
@@ -781,7 +781,7 @@ sendto_channel_local_butone(struct Client *one, int type, struct Channel *chptr,
  *		- pattern to send
  * output	- NONE
  * side effects	- Sends a message to all people on local server who are
- * 		  in same channel with user. 
+ * 		  in same channel with user.
  *		  used by m_nick.c and exit_one_client.
  */
 void
@@ -921,7 +921,7 @@ sendto_match_butone(struct Client *one, struct Client *source_p,
 	else
 		rb_linebuf_putmsg(&rb_linebuf_local, NULL, NULL,
 			       ":%s!%s@%s %s",
-			       source_p->name, source_p->username, 
+			       source_p->name, source_p->username,
 			       source_p->host, buf);
 
 	rb_linebuf_putmsg(&rb_linebuf_id, NULL, NULL, ":%s %s", use_id(source_p), buf);
@@ -963,11 +963,11 @@ sendto_match_butone(struct Client *one, struct Client *source_p,
 /* sendto_match_servs()
  *
  * inputs       - source, mask to send to, caps needed, va_args
- * outputs      - 
+ * outputs      -
  * side effects - message is sent to matching servers with caps.
  */
 void
-sendto_match_servs(struct Client *source_p, const char *mask, int cap, 
+sendto_match_servs(struct Client *source_p, const char *mask, int cap,
 			int nocap, const char *pattern, ...)
 {
 	static char buf[BUFSIZE];
@@ -985,7 +985,7 @@ sendto_match_servs(struct Client *source_p, const char *mask, int cap,
 	rb_vsnprintf(buf, sizeof(buf), pattern, args);
 	va_end(args);
 
-	rb_linebuf_putmsg(&rb_linebuf_id, NULL, NULL, 
+	rb_linebuf_putmsg(&rb_linebuf_id, NULL, NULL,
 			":%s %s", use_id(source_p), buf);
 
 	current_serial++;
@@ -1035,9 +1035,9 @@ sendto_monitor(struct monitor *monptr, const char *pattern, ...)
 	struct Client *target_p;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
-	
-	rb_linebuf_newbuf(&linebuf); 
-	
+
+	rb_linebuf_newbuf(&linebuf);
+
 	va_start(args, pattern);
 	rb_linebuf_putmsg(&linebuf, pattern, &args, NULL);
 	va_end(args);
@@ -1062,7 +1062,7 @@ sendto_monitor(struct monitor *monptr, const char *pattern, ...)
  * side effects - client is sent message with correct prefix.
  */
 void
-sendto_anywhere(struct Client *target_p, struct Client *source_p, 
+sendto_anywhere(struct Client *target_p, struct Client *source_p,
 		const char *command, const char *pattern, ...)
 {
 	va_list args;
@@ -1076,11 +1076,11 @@ sendto_anywhere(struct Client *target_p, struct Client *source_p,
 	{
 		if(IsServer(source_p))
 			rb_linebuf_putmsg(&linebuf, pattern, &args, ":%s %s %s ",
-				       source_p->name, command, 
+				       source_p->name, command,
 				       target_p->name);
 		else
-			rb_linebuf_putmsg(&linebuf, pattern, &args, 
-				       ":%s!%s@%s %s %s ", 
+			rb_linebuf_putmsg(&linebuf, pattern, &args,
+				       ":%s!%s@%s %s %s ",
 				       source_p->name, source_p->username,
 				       source_p->host, command,
 				       target_p->name);
@@ -1126,7 +1126,7 @@ sendto_realops_snomask(int flags, int level, const char *pattern, ...)
 		va_start(args, pattern);
 		rb_vsnprintf(buf, sizeof(buf), pattern, args);
 		va_end(args);
-		rb_linebuf_putmsg(&linebuf, pattern, NULL, 
+		rb_linebuf_putmsg(&linebuf, pattern, NULL,
 				":%s NOTICE * :*** Notice -- %s", me.name, buf);
 		snobuf = construct_snobuf(flags);
 		if (snobuf[1] != '\0')
@@ -1140,14 +1140,14 @@ sendto_realops_snomask(int flags, int level, const char *pattern, ...)
 		va_start(args, pattern);
 		rb_vsnprintf(buf, sizeof(buf), pattern, args);
 		va_end(args);
-		rb_linebuf_putmsg(&linebuf, pattern, NULL, 
+		rb_linebuf_putmsg(&linebuf, pattern, NULL,
 				":%s NOTICE * :*** Notice -- %s", me.name, buf);
 		sendto_one_notice(remote_rehash_oper_p, ":*** Notice -- %s", buf);
 	}
 	else
 	{
 		va_start(args, pattern);
-		rb_linebuf_putmsg(&linebuf, pattern, &args, 
+		rb_linebuf_putmsg(&linebuf, pattern, &args,
 				":%s NOTICE * :*** Notice -- ", me.name);
 		va_end(args);
 	}
@@ -1189,7 +1189,7 @@ sendto_realops_snomask_from(int flags, int level, struct Client *source_p,
 	rb_linebuf_newbuf(&linebuf);
 
 	va_start(args, pattern);
-	rb_linebuf_putmsg(&linebuf, pattern, &args, 
+	rb_linebuf_putmsg(&linebuf, pattern, &args,
 		       ":%s NOTICE * :*** Notice -- ", source_p->name);
 	va_end(args);
 
@@ -1299,7 +1299,7 @@ kill_client_serv_butone(struct Client *one, struct Client *target_p, const char 
 	buf_head_t rb_linebuf_id;
 
 	rb_linebuf_newbuf(&rb_linebuf_id);
-	
+
 	va_start(args, pattern);
 	rb_vsnprintf(buf, sizeof(buf), pattern, args);
 	va_end(args);

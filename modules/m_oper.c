@@ -79,7 +79,7 @@ m_oper(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	if(!IsFloodDone(source_p))
 		flood_endgrace(source_p);
 
-	oper_p = find_oper_conf(source_p->username, source_p->orighost, 
+	oper_p = find_oper_conf(source_p->username, source_p->orighost,
 				source_p->sockhost, name);
 
 	if(oper_p == NULL)
@@ -167,7 +167,7 @@ m_oper(struct Client *client_p, struct Client *source_p, int parc, const char *p
  * match_oper_password
  *
  * inputs       - pointer to given password
- *              - pointer to Conf 
+ *              - pointer to Conf
  * output       - YES or NO if match
  * side effects - none
  */
@@ -183,7 +183,7 @@ match_oper_password(const char *password, struct oper_conf *oper_p)
 	if(IsOperConfEncrypted(oper_p))
 	{
 		/* use first two chars of the password they send in as salt */
-		/* If the password in the conf is MD5, and ircd is linked   
+		/* If the password in the conf is MD5, and ircd is linked
 		 * to scrypt on FreeBSD, or the standard crypt library on
 		 * glibc Linux, then this code will work fine on generating
 		 * the proper encrypted hash for comparison.

@@ -1,7 +1,7 @@
 /*
  *  ircd-ratbox:  A slight useful ircd
  *  rawbuf.c: raw buffer (non-line oriented buffering)
- *  
+ *
  *  Copyright (C) 2007 Aaron Sethman <androsyn@ratbox.org>
  *  Copyright (C) 2007 ircd-ratbox development team
  *

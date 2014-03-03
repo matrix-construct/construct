@@ -69,7 +69,7 @@ DECLARE_MODULE_AV1(webirc, NULL, NULL, webirc_clist, NULL, NULL, "$Revision: 207
  * mr_webirc - webirc message handler
  *      parv[1] = password
  *      parv[2] = fake username (we ignore this)
- *	parv[3] = fake hostname 
+ *	parv[3] = fake hostname
  *	parv[4] = fake ip
  */
 static int
@@ -87,7 +87,7 @@ mr_webirc(struct Client *client_p, struct Client *source_p, int parc, const char
 		return 0;
 	}
 
-	aconf = find_address_conf(client_p->host, client_p->sockhost, 
+	aconf = find_address_conf(client_p->host, client_p->sockhost,
 				IsGotId(client_p) ? client_p->username : "webirc",
 				IsGotId(client_p) ? client_p->username : "webirc",
 				(struct sockaddr *) &client_p->localClient->ip,
@@ -143,7 +143,7 @@ mr_webirc(struct Client *client_p, struct Client *source_p, int parc, const char
 	source_p->localClient->ip = addr;
 
 	/* Check dlines now, klines will be checked on registration */
-	if((aconf = find_dline((struct sockaddr *)&source_p->localClient->ip, 
+	if((aconf = find_dline((struct sockaddr *)&source_p->localClient->ip,
 			       source_p->localClient->ip.ss_family)))
 	{
 		if(!(aconf->status & CONF_EXEMPTDLINE))

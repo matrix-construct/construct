@@ -5,8 +5,8 @@
 ** md5 patch by W. Campbell <wcampbel@botbay.net>
 ** Modernization, getopt, etc for the Hybrid IRCD team
 ** by W. Campbell
-** 
-** /dev/random for salt generation added by 
+**
+** /dev/random for salt generation added by
 ** Aaron Sethman <androsyn@ratbox.org>
 **
 ** $Id: mkpasswd.c 26439 2009-02-01 15:27:24Z jilles $

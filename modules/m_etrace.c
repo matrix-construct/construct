@@ -134,7 +134,7 @@ me_etrace(struct Client *client_p, struct Client *source_p, int parc, const char
 	if((target_p = find_person(parv[1])) && MyClient(target_p))
 		do_single_etrace(source_p, target_p);
 
-        sendto_one_numeric(source_p, RPL_ENDOFTRACE, form_str(RPL_ENDOFTRACE), 
+        sendto_one_numeric(source_p, RPL_ENDOFTRACE, form_str(RPL_ENDOFTRACE),
 				target_p ? target_p->name : parv[1]);
 
 	return 0;
@@ -158,8 +158,8 @@ do_etrace(struct Client *source_p, int ipv4, int ipv6)
 #endif
 
 		sendto_one(source_p, form_str(RPL_ETRACE),
-			   me.name, source_p->name, 
-			   IsOper(target_p) ? "Oper" : "User", 
+			   me.name, source_p->name,
+			   IsOper(target_p) ? "Oper" : "User",
 			   get_client_class(target_p),
 			   target_p->name, target_p->username, target_p->host,
 			   show_ip(source_p, target_p) ? target_p->sockhost : "255.255.255.255",
@@ -197,17 +197,17 @@ do_single_etrace(struct Client *source_p, struct Client *target_p)
 	 */
 	if(!show_ip(source_p, target_p))
 		sendto_one(source_p, form_str(RPL_ETRACEFULL),
-				me.name, source_p->name, 
+				me.name, source_p->name,
 				IsOper(target_p) ? "Oper" : "User",
 				get_client_class(target_p),
-				target_p->name, target_p->username, target_p->host, 
+				target_p->name, target_p->username, target_p->host,
 				"255.255.255.255", "<hidden> <hidden>", target_p->info);
 	else
 		sendto_one(source_p, form_str(RPL_ETRACEFULL),
-				me.name, source_p->name, 
+				me.name, source_p->name,
 				IsOper(target_p) ? "Oper" : "User",
 				get_client_class(target_p),
-				target_p->name, target_p->username, 
+				target_p->name, target_p->username,
 				target_p->host, target_p->sockhost,
 				target_p->localClient->fullcaps, target_p->info);
 }
@@ -269,7 +269,7 @@ m_chantrace(struct Client *client_p, struct Client *source_p, int parc, const ch
 			sockhost = target_p->sockhost;
 
 		sendto_one(source_p, form_str(RPL_ETRACE),
-				me.name, source_p->name, 
+				me.name, source_p->name,
 				IsOper(target_p) ? "Oper" : "User",
 				/* class field -- pretend its server.. */
 				target_p->servptr->name,
@@ -288,14 +288,14 @@ match_masktrace(struct Client *source_p, rb_dlink_list *list,
 {
 	struct Client *target_p;
 	rb_dlink_node *ptr;
-	const char *sockhost;	
-	
+	const char *sockhost;
+
 	RB_DLINK_FOREACH(ptr, list->head)
 	{
 		target_p = ptr->data;
 		if(!IsPerson(target_p))
 			continue;
-		
+
 		if(EmptyString(target_p->sockhost))
 			sockhost = empty_sockhost;
 		else if(!show_ip(source_p, target_p))
@@ -313,9 +313,9 @@ match_masktrace(struct Client *source_p, rb_dlink_list *list,
 
 			if(gecos != NULL && !match_esc(gecos, target_p->info))
 				continue;
-			
+
 			sendto_one(source_p, form_str(RPL_ETRACE),
-				me.name, source_p->name, 
+				me.name, source_p->name,
 				IsOper(target_p) ? "Oper" : "User",
 				/* class field -- pretend its server.. */
 				target_p->servptr->name,
@@ -326,15 +326,15 @@ match_masktrace(struct Client *source_p, rb_dlink_list *list,
 }
 
 static int
-mo_masktrace(struct Client *client_p, struct Client *source_p, int parc, 
+mo_masktrace(struct Client *client_p, struct Client *source_p, int parc,
 	const char *parv[])
 {
 	char *name, *username, *hostname, *gecos;
 	const char *mask;
 	int operspy = 0;
 
-	mask = parv[1];	
-	name = LOCAL_COPY(parv[1]);	
+	mask = parv[1];
+	name = LOCAL_COPY(parv[1]);
 	collapse(name);
 
 	if(IsOperSpy(source_p) && parv[1][0] == '!')
@@ -342,15 +342,15 @@ mo_masktrace(struct Client *client_p, struct Client *source_p, int parc,
 		name++;
 		mask++;
 		operspy = 1;
-	}		
-	
+	}
+
 	if(parc > 2 && !EmptyString(parv[2]))
 	{
 		gecos = LOCAL_COPY(parv[2]);
 		collapse_esc(gecos);
 	} else
 		gecos = NULL;
-	
+
 
 	if((hostname = strchr(name, '@')) == NULL)
 	{
@@ -359,7 +359,7 @@ mo_masktrace(struct Client *client_p, struct Client *source_p, int parc,
 	}
 
 	*hostname++ = '\0';
-	
+
 	if((username = strchr(name, '!')) == NULL)
 	{
 		username = name;
@@ -372,7 +372,7 @@ mo_masktrace(struct Client *client_p, struct Client *source_p, int parc,
 		sendto_one_notice(source_p, ":Invalid parameters");
 		return 0;
 	}
-			
+
 	if(operspy) {
 		if (!ConfigFileEntry.operspy_dont_care_user_info)
 		{
@@ -381,14 +381,14 @@ mo_masktrace(struct Client *client_p, struct Client *source_p, int parc,
 			if(!EmptyString(gecos)) {
 				rb_strlcat(buf, " ", sizeof(buf));
 				rb_strlcat(buf, gecos, sizeof(buf));
-			}		
+			}
 
-			report_operspy(source_p, "MASKTRACE", buf);	
+			report_operspy(source_p, "MASKTRACE", buf);
 		}
-		match_masktrace(source_p, &global_client_list, username, hostname, name, gecos);		
+		match_masktrace(source_p, &global_client_list, username, hostname, name, gecos);
 	} else
 		match_masktrace(source_p, &lclient_list, username, hostname, name, gecos);
 
-	sendto_one_numeric(source_p, RPL_ENDOFTRACE, form_str(RPL_ENDOFTRACE), me.name); 
+	sendto_one_numeric(source_p, RPL_ENDOFTRACE, form_str(RPL_ENDOFTRACE), me.name);
 	return 0;
 }

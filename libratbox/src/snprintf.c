@@ -18,7 +18,7 @@
  * Wirzenius wrote this portably, Torvalds fucked it up :-)
  */
 
-/* 
+/*
  * Fri Jul 13 2001 Crutcher Dunnavant <crutcher+kernel@datastacks.com>
  * - changed to provide snprintf and vsnprintf functions
  * So Feb  1 16:51:32 CET 2004 Juergen Quade <quade@hsnr.de>

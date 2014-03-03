@@ -492,7 +492,7 @@ burst_ban(struct Client *client_p)
  * side effects - client is sent a list of +b, +e, or +I modes
  */
 static void
-burst_modes_TS6(struct Client *client_p, struct Channel *chptr, 
+burst_modes_TS6(struct Client *client_p, struct Channel *chptr,
 		rb_dlink_list *list, char flag)
 {
 	rb_dlink_node *ptr;
@@ -546,7 +546,7 @@ burst_modes_TS6(struct Client *client_p, struct Channel *chptr,
 
 /*
  * burst_TS6
- * 
+ *
  * inputs	- client (server) to send nick towards
  * 		- client to send nick for
  * output	- NONE
@@ -586,7 +586,7 @@ burst_TS6(struct Client *client_p)
 		if(IsCapable(client_p, CAP_EUID))
 			sendto_one(client_p, ":%s EUID %s %d %ld %s %s %s %s %s %s %s :%s",
 				   target_p->servptr->id, target_p->name,
-				   target_p->hopcount + 1, 
+				   target_p->hopcount + 1,
 				   (long) target_p->tsinfo, ubuf,
 				   target_p->username, target_p->host,
 				   IsIPSpoof(target_p) ? "0" : target_p->sockhost,
@@ -597,7 +597,7 @@ burst_TS6(struct Client *client_p)
 		else
 			sendto_one(client_p, ":%s UID %s %d %ld %s %s %s %s %s :%s",
 				   target_p->servptr->id, target_p->name,
-				   target_p->hopcount + 1, 
+				   target_p->hopcount + 1,
 				   (long) target_p->tsinfo, ubuf,
 				   target_p->username, target_p->host,
 				   IsIPSpoof(target_p) ? "0" : target_p->sockhost,
@@ -657,7 +657,7 @@ burst_TS6(struct Client *client_p)
 				t = buf + mlen;
 			}
 
-			rb_sprintf(t, "%s%s ", find_channel_status(msptr, 1), 
+			rb_sprintf(t, "%s%s ", find_channel_status(msptr, 1),
 				   use_id(msptr->client_p));
 
 			cur_len += tlen;
@@ -794,7 +794,7 @@ server_estab(struct Client *client_p)
 	if(IsUnknown(client_p))
 	{
 		/* the server may be linking based on certificate fingerprint now. --nenolod */
-		sendto_one(client_p, "PASS %s TS %d :%s", 
+		sendto_one(client_p, "PASS %s TS %d :%s",
 			   EmptyString(server_p->spasswd) ? "*" : server_p->spasswd, TS_CURRENT, me.id);
 
 		/* pass info to new server */
@@ -851,7 +851,7 @@ server_estab(struct Client *client_p)
 
 	if((rb_dlink_list_length(&lclient_list) + rb_dlink_list_length(&serv_list)) >
 	   (unsigned long)MaxConnectionCount)
-		MaxConnectionCount = rb_dlink_list_length(&lclient_list) + 
+		MaxConnectionCount = rb_dlink_list_length(&lclient_list) +
 					rb_dlink_list_length(&serv_list);
 
 	/* Show the real host/IP to admins */
@@ -912,7 +912,7 @@ server_estab(struct Client *client_p)
 	 ** there are no NICK's to be cancelled...). Of course,
 	 ** if cancellation occurs, all this info is sent anyway,
 	 ** and I guess the link dies when a read is attempted...? --msa
-	 ** 
+	 **
 	 ** Note: Link cancellation to occur at this point means
 	 ** that at least two servers from my fragment are building
 	 ** up connection this other fragment at the same time, it's
@@ -997,7 +997,7 @@ serv_connect_resolved(struct Client *client_p)
 		memcpy(&myipnum, &server_p->my_ipnum, sizeof(myipnum));
 		((struct sockaddr_in *)&myipnum)->sin_port = 0;
 		myipnum.ss_family = server_p->aftype;
-				
+
 	}
 	else if(server_p->aftype == AF_INET && ServerInfo.specific_ipv4_vhost)
 	{
@@ -1006,7 +1006,7 @@ serv_connect_resolved(struct Client *client_p)
 		myipnum.ss_family = AF_INET;
 		SET_SS_LEN(&myipnum, sizeof(struct sockaddr_in));
 	}
-	
+
 #ifdef RB_IPV6
 	else if((server_p->aftype == AF_INET6) && ServerInfo.specific_ipv6_vhost)
 	{
@@ -1028,12 +1028,12 @@ serv_connect_resolved(struct Client *client_p)
 		if(ServerConfSSL(server_p))
 		{
 			rb_connect_tcp(client_p->localClient->F, (struct sockaddr *)&client_p->localClient->ip,
-					 NULL, 0, serv_connect_ssl_callback, 
+					 NULL, 0, serv_connect_ssl_callback,
 					 client_p, ConfigFileEntry.connect_timeout);
 		}
 		else
 			rb_connect_tcp(client_p->localClient->F, (struct sockaddr *)&client_p->localClient->ip,
-					 NULL, 0, serv_connect_callback, 
+					 NULL, 0, serv_connect_callback,
 					 client_p, ConfigFileEntry.connect_timeout);
 		 return 1;
 	}
@@ -1101,7 +1101,7 @@ serv_connect_dns_callback(void *vptr, struct DNSReply *reply)
 /*
  * serv_connect() - initiate a server connection
  *
- * inputs	- pointer to conf 
+ * inputs	- pointer to conf
  *		- pointer to client doing the connet
  * output	-
  * side effects	-
@@ -1259,7 +1259,7 @@ serv_connect_ssl_callback(rb_fde_t *F, int status, void *data)
                 ilog_error("rb_socketpair failed for server");
 		serv_connect_callback(F, RB_ERROR, data);
 		return;
-		
+
 	}
 	del_from_cli_fd_hash(client_p);
 	client_p->localClient->F = xF[0];
@@ -1272,7 +1272,7 @@ serv_connect_ssl_callback(rb_fde_t *F, int status, void *data)
 
 /*
  * serv_connect_callback() - complete a server connection.
- * 
+ *
  * This routine is called after the server connection attempt has
  * completed. If unsucessful, an error is sent to ops and the client
  * is closed. If sucessful, it goes through the initialisation/check
@@ -1315,7 +1315,7 @@ serv_connect_callback(rb_fde_t *F, int status, void *data)
 		{
 			sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 					"Error connecting to %s[%s]: %s",
-					client_p->name, 
+					client_p->name,
 					"255.255.255.255",
 					rb_errstr(status));
 			ilog(L_SERVER, "Error connecting to %s[%s]: %s",
@@ -1353,7 +1353,7 @@ serv_connect_callback(rb_fde_t *F, int status, void *data)
 	SetHandshake(client_p);
 
 	/* the server may be linking based on certificate fingerprint now. --nenolod */
-	sendto_one(client_p, "PASS %s TS %d :%s", 
+	sendto_one(client_p, "PASS %s TS %d :%s",
 		   EmptyString(server_p->spasswd) ? "*" : server_p->spasswd, TS_CURRENT, me.id);
 
 	/* pass my info to the new server */
@@ -1365,7 +1365,7 @@ serv_connect_callback(rb_fde_t *F, int status, void *data)
 		   me.name,
 		   ConfigServerHide.hidden ? "(H) " : "", me.info);
 
-	/* 
+	/*
 	 * If we've been marked dead because a send failed, just exit
 	 * here now and save everyone the trouble of us ever existing.
 	 */

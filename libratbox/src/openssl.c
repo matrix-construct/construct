@@ -14,7 +14,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
@@ -682,7 +682,7 @@ rb_supports_ssl(void)
 void
 rb_get_ssl_info(char *buf, size_t len)
 {
-	rb_snprintf(buf, len, "Using SSL: %s compiled: 0x%lx, library 0x%lx", 
+	rb_snprintf(buf, len, "Using SSL: %s compiled: 0x%lx, library 0x%lx",
 		    SSLeay_version(SSLEAY_VERSION),
 		    (long)OPENSSL_VERSION_NUMBER, SSLeay());
 }

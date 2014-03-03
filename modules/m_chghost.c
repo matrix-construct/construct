@@ -58,7 +58,7 @@ clean_host(const char *host)
 {
 	int len = 0;
 	const char *last_slash = 0;
-	
+
 	if (*host == '\0' || *host == ':')
 		return 0;
 

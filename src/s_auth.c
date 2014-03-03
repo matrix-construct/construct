@@ -118,7 +118,7 @@ typedef enum
 }
 ReportType;
 
-#define sendheader(c, r) sendto_one_notice(c, "%s", HeaderMessages[(r)]) 
+#define sendheader(c, r) sendto_one_notice(c, "%s", HeaderMessages[(r)])
 
 static rb_dlink_list auth_poll_list;
 static rb_bh *auth_heap;
@@ -173,13 +173,13 @@ static void
 release_auth_client(struct AuthRequest *auth)
 {
 	struct Client *client = auth->client;
-	
+
 	if(IsDNSPending(auth) || IsDoingAuth(auth))
 		return;
 
 	client->localClient->auth_request = NULL;
 	rb_dlinkDelete(&auth->node, &auth_poll_list);
-	free_auth_request(auth);	
+	free_auth_request(auth);
 
 	/*
 	 * When a client has auth'ed, we want to start reading what it sends
@@ -281,12 +281,12 @@ auth_error(struct AuthRequest *auth)
 
 	ClearAuth(auth);
 	sendheader(auth->client, REPORT_FAIL_ID);
-		
+
 	release_auth_client(auth);
 }
 
 /*
- * start_auth_query - Flag the client to show that an attempt to 
+ * start_auth_query - Flag the client to show that an attempt to
  * contact the ident server on
  * the client's host.  The connect and subsequently the socket are all put
  * into 'non-blocking' mode.  Should the connect or any later phase of the
@@ -299,10 +299,10 @@ start_auth_query(struct AuthRequest *auth)
 	struct rb_sockaddr_storage localaddr, destaddr;
 	rb_fde_t *F;
 	int family;
-	
+
 	if(IsAnyDead(auth->client))
 		return 0;
-	
+
 	family = auth->client->localClient->ip.ss_family;
 	if((F = rb_socket(family, SOCK_STREAM, 0, "ident")) == NULL)
 	{
@@ -325,7 +325,7 @@ start_auth_query(struct AuthRequest *auth)
 
 	sendheader(auth->client, REPORT_DO_ID);
 
-	/* 
+	/*
 	 * get the local address of the client and bind to that to
 	 * make the auth request.  This used to be done only for
 	 * ifdef VIRTUAL_HOST, but needs to be done for all clients
@@ -333,7 +333,7 @@ start_auth_query(struct AuthRequest *auth)
 	 * and machines with multiple IP addresses are common now
 	 */
 	localaddr = auth->client->preClient->lip;
-	
+
 	/* XXX mangle_mapped_sockaddr((struct sockaddr *)&localaddr); */
 #ifdef RB_IPV6
 	if(localaddr.ss_family == AF_INET6)
@@ -361,20 +361,20 @@ start_auth_query(struct AuthRequest *auth)
 		auth->rport = ntohs(((struct sockaddr_in *)&destaddr)->sin_port);
 		((struct sockaddr_in *)&destaddr)->sin_port = htons(113);
 	}
-	
+
 	auth->F = F;
 	SetAuthConnect(auth);
 
 	rb_connect_tcp(F, (struct sockaddr *)&destaddr,
 			 (struct sockaddr *) &localaddr, GET_SS_LEN(&localaddr),
-			 auth_connect_callback, auth, 
+			 auth_connect_callback, auth,
 			 GlobalSetOptions.ident_timeout);
 	return 1;		/* We suceed here for now */
 }
 
 /*
  * GetValidIdent - parse ident query reply from identd server
- * 
+ *
  * Inputs        - pointer to ident buf
  * Output        - NULL if no valid ident found, otherwise pointer to name
  * Side effects  -
@@ -543,7 +543,7 @@ auth_connect_callback(rb_fde_t *F, int error, void *data)
 
 
 /*
- * read_auth_reply - read the reply (if any) from the ident server 
+ * read_auth_reply - read the reply (if any) from the ident server
  * we connected to.
  * We only give it one shot, if the reply isn't good the first time
  * fail the authentication entirely. --Bleep
@@ -629,7 +629,7 @@ delete_auth_queries(struct Client *target_p)
 	if(target_p == NULL || target_p->localClient == NULL ||
 	   target_p->localClient->auth_request == NULL)
 		return;
-	
+
 	auth = target_p->localClient->auth_request;
 	target_p->localClient->auth_request = NULL;
 
@@ -638,7 +638,7 @@ delete_auth_queries(struct Client *target_p)
 
 	if(auth->F != NULL)
 		rb_close(auth->F);
-		
+
 	rb_dlinkDelete(&auth->node, &auth_poll_list);
 	free_auth_request(auth);
 }

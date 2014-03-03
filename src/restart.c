@@ -30,7 +30,7 @@
 #include "send.h"
 #include "logger.h"
 #include "s_conf.h"
-#include "client.h"		
+#include "client.h"
 #include "ircd_signal.h"
 
 /* external var */
@@ -59,10 +59,10 @@ server_reboot(void)
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "Restarting server...");
 
 	ilog(L_MAIN, "Restarting server...");
-	
+
 	/*
 	 * XXX we used to call flush_connections() here. But since this routine
-	 * doesn't exist anymore, we won't be flushing. This is ok, since 
+	 * doesn't exist anymore, we won't be flushing. This is ok, since
 	 * when close handlers come into existance, rb_close() will be called
 	 * below, and the data flushing will be implicit.
 	 *    -- adrian

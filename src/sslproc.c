@@ -289,7 +289,7 @@ start_ssldaemon(int count, const char *ssl_cert, const char *ssl_private_key, co
 			ilog(L_MAIN, "Unable to create ssld - rb_socketpair failed: %s", strerror(errno));
 			return started;
 		}
-		
+
 		rb_set_buffers(F1, READBUF_SIZE);
 		rb_set_buffers(F2, READBUF_SIZE);
 		rb_snprintf(fdarg, sizeof(fdarg), "%d", rb_get_fd(F2));
@@ -713,10 +713,10 @@ ssld_decrement_clicount(ssl_ctl_t * ctl)
 	}
 }
 
-/* 
+/*
  * what we end up sending to the ssld process for ziplinks is the following
- * Z[ourfd][level][RECVQ]  
- * Z = ziplinks command	= buf[0]   
+ * Z[ourfd][level][RECVQ]
+ * Z = ziplinks command	= buf[0]
  * ourfd = Our end of the socketpair = buf[1..4]
  * level = zip level buf[5]
  * recvqlen = our recvq len = buf[6-7]
@@ -785,7 +785,7 @@ start_zlib_session(void *data)
 		exit_client(server, server, server, "Error creating zlib socketpair");
 		return;
 	}
-	
+
 	if(IsSSL(server))
 	{
 		/* tell ssld the new connid for the ssl part*/

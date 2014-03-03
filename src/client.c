@@ -173,7 +173,7 @@ make_client(struct Client *from)
 		client_p->preClient = NULL;
 		client_p->from = from;	/* 'from' of local client is self! */
 	}
-	
+
 	SetUnknown(client_p);
 	strcpy(client_p->username, "unknown");
 
@@ -243,7 +243,7 @@ free_local_client(struct Client *client_p)
 
 	if(IsSSL(client_p))
 	    ssld_decrement_clicount(client_p->localClient->ssl_ctl);
-	    
+
 	if(IsCapable(client_p, CAP_ZIP))
 	    ssld_decrement_clicount(client_p->localClient->z_ctl);
 
@@ -268,7 +268,7 @@ free_client(struct Client *client_p)
  *
  * inputs       - NOT USED (from event)
  * output       - next time_t when check_pings() should be called again
- * side effects - 
+ * side effects -
  *
  *
  * A PING can be sent to clients as necessary.
@@ -301,7 +301,7 @@ check_pings(void *notused)
  *
  * inputs	- pointer to list to check
  * output	- NONE
- * side effects	- 
+ * side effects	-
  */
 static void
 check_pings_list(rb_dlink_list * list)
@@ -435,8 +435,8 @@ notify_banned_client(struct Client *client_p, struct ConfItem *aconf, int ban)
 	else
 		sendto_one(client_p, form_str(ERR_YOUREBANNEDCREEP),
 			   me.name, client_p->name, reason);
-	
-	exit_client(client_p, client_p, &me, 
+
+	exit_client(client_p, client_p, &me,
 			EmptyString(ConfigFileEntry.kline_reason) ? exit_reason :
 			 ConfigFileEntry.kline_reason);
 }
@@ -695,7 +695,7 @@ resv_nick_fnc(const char *mask, const char *reason, int temp_time)
  *
  * input	- pointer to client
  * output	- NONE
- * side effects	- 
+ * side effects	-
  */
 static void
 update_client_exit_stats(struct Client *client_p)
@@ -726,7 +726,7 @@ update_client_exit_stats(struct Client *client_p)
  *
  * input	- pointer to client to release
  * output	- NONE
- * side effects	- 
+ * side effects	-
  */
 static void
 release_client_state(struct Client *client_p)
@@ -807,8 +807,8 @@ find_named_person(const char *name)
 
 
 /*
- * find_chasing - find the client structure for a nick name (user) 
- *      using history mechanism if necessary. If the client is not found, 
+ * find_chasing - find the client structure for a nick name (user)
+ *      using history mechanism if necessary. If the client is not found,
  *      an error message (NO SUCH NICK) is generated. If the client was found
  *      through the history, chasing will be 1 and otherwise 0.
  */
@@ -872,7 +872,7 @@ get_client_name(struct Client *client, int showip)
 		if(!irccmp(client->name, client->host))
 			return client->name;
 
-		if(ConfigFileEntry.hide_spoof_ips && 
+		if(ConfigFileEntry.hide_spoof_ips &&
 		   showip == SHOW_IP && IsIPSpoof(client))
 			showip = MASK_IP;
 		if(IsAnyServer(client))
@@ -882,8 +882,8 @@ get_client_name(struct Client *client, int showip)
 		switch (showip)
 		{
 		case SHOW_IP:
-			rb_snprintf(nbuf, sizeof(nbuf), "%s[%s@%s]", 
-				   client->name, client->username, 
+			rb_snprintf(nbuf, sizeof(nbuf), "%s[%s@%s]",
+				   client->name, client->username,
 				   client->sockhost);
 			break;
 		case MASK_IP:
@@ -897,12 +897,12 @@ get_client_name(struct Client *client, int showip)
 		return nbuf;
 	}
 
-	/* As pointed out by Adel Mezibra 
+	/* As pointed out by Adel Mezibra
 	 * Neph|l|m@EFnet. Was missing a return here.
 	 */
 	return client->name;
 }
-	
+
 /* log_client_name()
  *
  * This version is the same as get_client_name, but doesnt contain the
@@ -974,7 +974,7 @@ free_exited_clients(void *unused)
 				if(abt->client == target_p)
 				{
 					s_assert(0);
-					sendto_realops_snomask(SNO_GENERAL, L_ALL, 
+					sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						"On abort_list: %s stat: %u flags: %u/%u handler: %c",
 						target_p->name, (unsigned int) target_p->status,
 						target_p->flags, target_p->flags2, target_p->handler);
@@ -1021,13 +1021,13 @@ free_exited_clients(void *unused)
 		rb_dlinkDestroy(ptr, &dead_remote_list);
 	}
 #endif
-	
+
 }
 
-/* 
+/*
 ** Remove all clients that depend on source_p; assumes all (S)QUITs have
-** already been sent.  we make sure to exit a server's dependent clients 
-** and servers before the server itself; exit_one_client takes care of 
+** already been sent.  we make sure to exit a server's dependent clients
+** and servers before the server itself; exit_one_client takes care of
 ** actually removing things off llists.   tweaked from +CSr31  -orabidoo
 */
 /*
@@ -1068,7 +1068,7 @@ recurse_remove_clients(struct Client *source_p, const char *comment)
 			if(!IsDead(target_p) && !IsClosing(target_p))
 				exit_remote_client(NULL, target_p, &me, comment);
 		}
-	}	
+	}
 
 	RB_DLINK_FOREACH_SAFE(ptr, ptr_next, source_p->serv->servers.head)
 	{
@@ -1118,7 +1118,7 @@ exit_aborted_clients(void *unused)
 			if(rb_dlinkFind(abt->client, &dead_list))
 			{
 				s_assert(0);
-				sendto_realops_snomask(SNO_GENERAL, L_ALL, 
+				sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					"On dead_list: %s stat: %u flags: %u/%u handler: %c",
 					abt->client->name, (unsigned int) abt->client->status,
 					abt->client->flags, abt->client->flags2, abt->client->handler);
@@ -1216,7 +1216,7 @@ exit_generic_client(struct Client *client_p, struct Client *source_p, struct Cli
 	remove_client_from_list(source_p);
 }
 
-/* 
+/*
  * Assumes IsPerson(source_p) && !MyConnect(source_p)
  */
 
@@ -1225,7 +1225,7 @@ exit_remote_client(struct Client *client_p, struct Client *source_p, struct Clie
 		   const char *comment)
 {
 	exit_generic_client(client_p, source_p, from, comment);
-	
+
 	if(source_p->servptr && source_p->servptr->serv)
 	{
 		rb_dlinkDelete(&source_p->lnode, &source_p->servptr->serv->users);
@@ -1284,13 +1284,13 @@ exit_unknown_client(struct Client *client_p, struct Client *source_p, struct Cli
 }
 
 static int
-exit_remote_server(struct Client *client_p, struct Client *source_p, struct Client *from, 
+exit_remote_server(struct Client *client_p, struct Client *source_p, struct Client *from,
 		  const char *comment)
 {
 	static char comment1[(HOSTLEN*2)+2];
 	static char newcomment[BUFSIZE];
 	struct Client *target_p;
-	
+
 	if(ConfigServerHide.flatten_links)
 		strcpy(comment1, "*.net *.split");
 	else
@@ -1313,11 +1313,11 @@ exit_remote_server(struct Client *client_p, struct Client *source_p, struct Clie
 
 	rb_dlinkFindDestroy(source_p, &global_serv_list);
 	target_p = source_p->from;
-	
+
 	if(target_p != NULL && IsServer(target_p) && target_p != client_p &&
 	   !IsMe(target_p) && (source_p->flags & FLAGS_KILLED) == 0)
 	{
-		sendto_one(target_p, ":%s SQUIT %s :%s", 
+		sendto_one(target_p, ":%s SQUIT %s :%s",
 			   get_id(from, target_p), get_id(source_p, target_p),
 			   comment);
 	}
@@ -1326,9 +1326,9 @@ exit_remote_server(struct Client *client_p, struct Client *source_p, struct Clie
 		del_from_id_hash(source_p->id, source_p);
 
 	del_from_client_hash(source_p->name, source_p);
-	remove_client_from_list(source_p);  
+	remove_client_from_list(source_p);
 	scache_split(source_p->serv->nameinfo);
-	
+
 	SetDead(source_p);
 #ifdef DEBUG_EXITED_CLIENTS
 	rb_dlinkAddAlloc(source_p, &dead_remote_list);
@@ -1339,7 +1339,7 @@ exit_remote_server(struct Client *client_p, struct Client *source_p, struct Clie
 }
 
 static int
-qs_server(struct Client *client_p, struct Client *source_p, struct Client *from, 
+qs_server(struct Client *client_p, struct Client *source_p, struct Client *from,
 		  const char *comment)
 {
 	if(source_p->servptr && source_p->servptr->serv)
@@ -1348,30 +1348,30 @@ qs_server(struct Client *client_p, struct Client *source_p, struct Client *from,
 		s_assert(0);
 
 	rb_dlinkFindDestroy(source_p, &global_serv_list);
-	
+
 	if(has_id(source_p))
 		del_from_id_hash(source_p->id, source_p);
 
 	del_from_client_hash(source_p->name, source_p);
-	remove_client_from_list(source_p);  
+	remove_client_from_list(source_p);
 	scache_split(source_p->serv->nameinfo);
-	
+
 	SetDead(source_p);
-	rb_dlinkAddAlloc(source_p, &dead_list);	
+	rb_dlinkAddAlloc(source_p, &dead_list);
 	return 0;
 }
 
 static int
-exit_local_server(struct Client *client_p, struct Client *source_p, struct Client *from, 
+exit_local_server(struct Client *client_p, struct Client *source_p, struct Client *from,
 		  const char *comment)
 {
 	static char comment1[(HOSTLEN*2)+2];
 	static char newcomment[BUFSIZE];
 	unsigned int sendk, recvk;
-	
+
 	rb_dlinkDelete(&source_p->localClient->tnode, &serv_list);
 	rb_dlinkFindDestroy(source_p, &global_serv_list);
-	
+
 	sendk = source_p->localClient->sendK;
 	recvk = source_p->localClient->receiveK;
 
@@ -1388,7 +1388,7 @@ exit_local_server(struct Client *client_p, struct Client *source_p, struct Clien
 		sendto_one(source_p, "ERROR :Closing Link: 127.0.0.1 %s (%s)",
 			   source_p->name, comment);
 	}
-	
+
 	if(source_p->servptr && source_p->servptr->serv)
 		rb_dlinkDelete(&source_p->lnode, &source_p->servptr->serv->servers);
 	else
@@ -1396,7 +1396,7 @@ exit_local_server(struct Client *client_p, struct Client *source_p, struct Clien
 
 
 	close_connection(source_p);
-	
+
 	if(ConfigServerHide.flatten_links)
 		strcpy(comment1, "*.net *.split");
 	else
@@ -1415,21 +1415,21 @@ exit_local_server(struct Client *client_p, struct Client *source_p, struct Clien
 
 	ilog(L_SERVER, "%s was connected for %ld seconds.  %d/%d sendK/recvK.",
 	     source_p->name, (long) rb_current_time() - source_p->localClient->firsttime, sendk, recvk);
-        
+
 	if(has_id(source_p))
 		del_from_id_hash(source_p->id, source_p);
 
 	del_from_client_hash(source_p->name, source_p);
 	remove_client_from_list(source_p);
 	scache_split(source_p->serv->nameinfo);
-	
+
 	SetDead(source_p);
 	rb_dlinkAddAlloc(source_p, &dead_list);
 	return 0;
 }
 
 
-/* 
+/*
  * This assumes IsPerson(source_p) == TRUE && MyConnect(source_p) == TRUE
  */
 
@@ -1545,8 +1545,8 @@ exit_client(struct Client *client_p,	/* The local client originating the
 		/* IsUnknown || IsConnecting || IsHandShake */
 		else if(!IsReject(source_p))
 			return exit_unknown_client(client_p, source_p, from, comment);
-	} 
-	else 
+	}
+	else
 	{
 		/* Remotes */
 		if(IsPerson(source_p))
@@ -1587,9 +1587,9 @@ count_remote_client_memory(size_t * count, size_t * remote_client_memory_used)
 
 /*
  * accept processing, this adds a form of "caller ID" to ircd
- * 
+ *
  * If a client puts themselves into "caller ID only" mode,
- * only clients that match a client pointer they have put on 
+ * only clients that match a client pointer they have put on
  * the accept list will be allowed to message them.
  *
  * [ source.on_allow_list ] -> [ target1 ] -> [ target2 ]
@@ -1600,7 +1600,7 @@ count_remote_client_memory(size_t * count, size_t * remote_client_memory_used)
  * each source client then has a back pointer pointing back
  * to the client that has it on its accept list.
  * This allows for exit_one_client to remove these now bogus entries
- * from any client having an accept on them. 
+ * from any client having an accept on them.
  */
 /*
  * del_all_accepts
@@ -1641,7 +1641,7 @@ del_all_accepts(struct Client *client_p)
 
 /*
  * show_ip() - asks if the true IP should be shown when source is
- *             asking for info about target 
+ *             asking for info about target
  *
  * Inputs	- source_p who is asking
  *		- target_p who do we want the info on
@@ -1744,7 +1744,7 @@ make_server(struct Client *client_p)
 
 /*
  * free_user
- * 
+ *
  * inputs	- pointer to user struct
  *		- pointer to client struct
  * output	- none
@@ -1774,7 +1774,7 @@ free_user(struct User *user, struct Client *client_p)
 					     client_p->host,
 					     (unsigned long) user,
 					     (unsigned long) user->invited.head,
-					     (unsigned long) user->channel.head, 
+					     (unsigned long) user->channel.head,
 					     rb_dlink_list_length(&user->channel),
 					     user->refcnt);
 			s_assert(!user->refcnt);
@@ -1790,7 +1790,7 @@ void
 allocate_away(struct Client *client_p)
 {
 	if(client_p->user->away == NULL)
-		client_p->user->away = rb_bh_alloc(away_heap);	
+		client_p->user->away = rb_bh_alloc(away_heap);
 }
 
 
@@ -1866,7 +1866,7 @@ close_connection(struct Client *client_p)
 	s_assert(MyConnect(client_p));
 	if(!MyConnect(client_p))
 		return;
-	
+
 	if(IsServer(client_p))
 	{
 		struct server_conf *server_p;

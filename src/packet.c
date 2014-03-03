@@ -192,20 +192,20 @@ flood_recalc(void *unused)
 
 		if(rb_unlikely(IsMe(client_p)))
 			continue;
-			
+
 		if(rb_unlikely(client_p->localClient == NULL))
 			continue;
-		
+
 		if(IsFloodDone(client_p))
 			client_p->localClient->sent_parsed -= ConfigFileEntry.client_flood_message_num;
 		else
 			client_p->localClient->sent_parsed = 0;
-			
+
 		if(client_p->localClient->sent_parsed < 0)
 			client_p->localClient->sent_parsed = 0;
 
 		parse_client_queued(client_p);
-		
+
 		if(rb_unlikely(IsAnyDead(client_p)))
 			continue;
 
@@ -257,7 +257,7 @@ read_packet(rb_fde_t * F, void *data)
 		if(length < 0)
 		{
 			if(rb_ignore_errno(errno))
-				rb_setselect(client_p->localClient->F, 
+				rb_setselect(client_p->localClient->F,
 						RB_SELECT_READ, read_packet, client_p);
 			else
 				error_exit_client(client_p, length);
@@ -292,13 +292,13 @@ read_packet(rb_fde_t * F, void *data)
 
 		if(IsAnyDead(client_p))
 			return;
-			
+
 		/* Attempt to parse what we have */
 		parse_client_queued(client_p);
 
 		if(IsAnyDead(client_p))
 			return;
-			
+
 		/* Check to make sure we're not flooding */
 		if(!IsAnyServer(client_p) &&
 		   (rb_linebuf_alloclen(&client_p->localClient->buf_recvq) > ConfigFileEntry.client_flood_max_lines))
@@ -341,13 +341,13 @@ client_dopacket(struct Client *client_p, char *buffer, size_t length)
 		return;
 	if(IsAnyDead(client_p))
 		return;
-	/* 
+	/*
 	 * Update messages received
 	 */
 	++me.localClient->receiveM;
 	++client_p->localClient->receiveM;
 
-	/* 
+	/*
 	 * Update bytes received
 	 */
 	client_p->localClient->receiveB += length;

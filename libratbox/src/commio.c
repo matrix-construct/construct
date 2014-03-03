@@ -199,7 +199,7 @@ rb_getmaxconnect(void)
 
 /*
  * set_sock_buffers - set send and receive buffers for socket
- * 
+ *
  * inputs	- fd file descriptor
  * 		- size to set
  * output       - returns true (1) if successful, false (0) otherwise
@@ -218,7 +218,7 @@ rb_set_buffers(rb_fde_t *F, int size)
 }
 
 /*
- * set_non_blocking - Set the client connection into non-blocking mode. 
+ * set_non_blocking - Set the client connection into non-blocking mode.
  *
  * inputs	- fd to set into non blocking mode
  * output	- 1 if successful 0 if not
@@ -696,7 +696,7 @@ rb_socket(int family, int sock_type, int proto, const char *note)
 		return NULL;	/* errno will be passed through, yay.. */
 
 #if defined(RB_IPV6) && defined(IPV6_V6ONLY)
-	/* 
+	/*
 	 * Make sure we can take both IPv4 and IPv6 connections
 	 * on an AF_INET6 socket
 	 */
@@ -991,8 +991,8 @@ rb_read(rb_fde_t *F, void *buf, int count)
 	if(F == NULL)
 		return 0;
 
-	/* This needs to be *before* RB_FD_SOCKET otherwise you'll process 
-	 * an SSL socket as a regular socket 
+	/* This needs to be *before* RB_FD_SOCKET otherwise you'll process
+	 * an SSL socket as a regular socket
 	 */
 #ifdef HAVE_SSL
 	if(F->type & RB_FD_SSL)
@@ -1104,7 +1104,7 @@ rb_writev(rb_fde_t *F, struct rb_iovec * vector, int count)
 #endif
 
 
-/* 
+/*
  * From: Thomas Helvey <tomh@inxpress.net>
  */
 static const char *IpQuadTab[] = {

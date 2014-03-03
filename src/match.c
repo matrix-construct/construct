@@ -188,7 +188,7 @@ int mask_match(const char *mask, const char *name)
  * is a number; '@' means match exactly one character that is a
  * letter; '\s' means match a space.
  *
- * This function supports escaping, so that a wildcard may be matched 
+ * This function supports escaping, so that a wildcard may be matched
  * exactly.
  *
  * @param[in] mask Wildcard-containing mask.

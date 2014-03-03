@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1985, 1993
  *    The Regents of the University of California.  All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -13,7 +13,7 @@
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -29,14 +29,14 @@
 
 /*
  * Portions Copyright (c) 1993 by Digital Equipment Corporation.
- * 
+ *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies, and that
  * the name of Digital Equipment Corporation not be used in advertising or
  * publicity pertaining to distribution of the document or software without
  * specific, written prior permission.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS" AND DIGITAL EQUIPMENT CORP. DISCLAIMS ALL
  * WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS.   IN NO EVENT SHALL DIGITAL EQUIPMENT
@@ -64,7 +64,7 @@
  * SOFTWARE.
  */
 
-/* Original copyright ISC as above. 
+/* Original copyright ISC as above.
  * Code modified specifically for ircd use from the following orginal files
  * in bind ...
  *
@@ -72,7 +72,7 @@
  * ns_name.c
  * ns_netint.c
  * res_init.c
- * 
+ *
  * - Dianora
  */
 
@@ -127,7 +127,7 @@ static int irc_ns_name_compress(const char *src, unsigned char *dst, size_t dsts
     const unsigned char **dnptrs, const unsigned char **lastdnptr);
 static int irc_dn_find(const unsigned char *, const unsigned char *, const unsigned char * const *,
                        const unsigned char * const *);
-static int irc_encode_bitsring(const char **, const char *, unsigned char **, unsigned char **, 
+static int irc_encode_bitsring(const char **, const char *, unsigned char **, unsigned char **,
                                const char *);
 static int irc_ns_name_uncompress(const unsigned char *, const unsigned char *,
                                   const unsigned char *, char *, size_t);
@@ -137,7 +137,7 @@ static int irc_ns_name_unpack(const unsigned char *, const unsigned char *,
 static int irc_ns_name_ntop(const char *, char *, size_t);
 static int irc_ns_name_skip(const unsigned char **, const unsigned char *);
 static int mklower(int ch);
-  
+
 int
 irc_res_init(void)
 {
@@ -426,7 +426,7 @@ irc_ns_name_ntop(const char *src, char *dst, size_t dstsiz)
 				errno = EMSGSIZE;
 				return(-1);
 			}
-			dn += m; 
+			dn += m;
 			continue;
 		}
 		for ((void)NULL; l > 0; l--) {
@@ -611,7 +611,7 @@ special(int ch)
 
 static int
 labellen(const unsigned char *lp)
-{                               
+{
   int bitlen;
   unsigned char l = *lp;
 
@@ -1121,7 +1121,7 @@ irc_dn_find(const unsigned char *domain, const unsigned char *msg,
  *   *  convert this character to lower case if it's upper case.
  *    */
 static int
-mklower(int ch) 
+mklower(int ch)
 {
   if (ch >= 0x41 && ch <= 0x5A)
     return(ch + 0x20);

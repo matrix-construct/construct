@@ -54,7 +54,7 @@ static rb_dlink_list event_list;
 static time_t event_time_min = -1;
 
 /*
- * struct ev_entry * 
+ * struct ev_entry *
  * rb_event_find(EVH *func, void *arg)
  *
  * Input: Event function and the argument passed to it
@@ -77,7 +77,7 @@ rb_event_find(EVH * func, void *arg)
 }
 
 /*
- * struct ev_entry * 
+ * struct ev_entry *
  * rb_event_add(const char *name, EVH *func, void *arg, time_t when)
  *
  * Input: Name of event, function to call, arguments to pass, and frequency
@@ -158,7 +158,7 @@ rb_event_find_delete(EVH * func, void *arg)
 	rb_event_delete(rb_event_find(func, arg));
 }
 
-/* 
+/*
  * struct ev_entry *
  * rb_event_addish(const char *name, EVH *func, void *arg, time_t delta_isa)
  *
@@ -266,7 +266,7 @@ rb_event_io_register_all(void)
  *
  * Input: None
  * Output: None
- * Side Effects: Initializes the event system. 
+ * Side Effects: Initializes the event system.
  */
 void
 rb_event_init(void)
@@ -298,7 +298,7 @@ rb_dump_events(void (*func) (char *, void *), void *ptr)
 	}
 }
 
-/* 
+/*
  * void rb_set_back_events(time_t by)
  * Input: Time to set back events by.
  * Output: None.

@@ -48,7 +48,7 @@ rb_dlink_list *clientTable;
 rb_dlink_list *channelTable;
 rb_dlink_list *idTable;
 rb_dlink_list *resvTable;
-rb_dlink_list *hostTable; 
+rb_dlink_list *hostTable;
 
 /*
  * look in whowas.c for the missing ...[WW_MAX]; entry
@@ -77,14 +77,14 @@ rb_dlink_list *hostTable;
  *
  * A - GOPbot, B - chang, C - hanuaway, D - *.mu.OZ.AU
  *
- * The order shown above is just one instant of the server. 
+ * The order shown above is just one instant of the server.
  *
  *
  * The hash functions currently used are based Fowler/Noll/Vo hashes
  * which work amazingly well and have a extremely low collision rate
  * For more info see http://www.isthe.com/chongo/tech/comp/fnv/index.html
  *
- * 
+ *
  */
 
 /* init_hash()
@@ -322,7 +322,7 @@ del_from_client_hash(const char *name, struct Client *client_p)
 }
 
 /* del_from_channel_hash()
- * 
+ *
  * removes a channel from the channel hash table
  */
 void
@@ -473,11 +473,11 @@ find_server(struct Client *source_p, const char *name)
 	struct Client *target_p;
 	rb_dlink_node *ptr;
 	unsigned int hashv;
-  
+
 	if(EmptyString(name))
 		return NULL;
 
-	if((source_p == NULL || !MyClient(source_p)) && 
+	if((source_p == NULL || !MyClient(source_p)) &&
 	   IsDigit(*name) && strlen(name) == 3)
 	{
 		target_p = find_id(name);
@@ -693,7 +693,7 @@ find_cli_fd_hash(int fd)
 		if(rb_get_fd(target_p->localClient->F) == fd)
 			return target_p;
 	}
-	return  NULL;	
+	return  NULL;
 }
 
 static void
@@ -735,7 +735,7 @@ output_hash(struct Client *source_p, const char *name, int length, int *counts, 
 				i, counts[i]);
 	}
 }
-	
+
 
 static void
 count_hash(struct Client *source_p, rb_dlink_list *table, int length, const char *name)
@@ -745,7 +745,7 @@ count_hash(struct Client *source_p, rb_dlink_list *table, int length, const char
 	int i;
 
 	memset(counts, 0, sizeof(counts));
-	
+
 	for(i = 0; i < length; i++)
 	{
 		if(rb_dlink_list_length(&table[i]) >= 10)
@@ -770,4 +770,4 @@ hash_stats(struct Client *source_p)
 	count_hash(source_p, idTable, U_MAX, "ID");
 	sendto_one_numeric(source_p, RPL_STATSDEBUG, "B :--");
 	count_hash(source_p, hostTable, HOST_MAX, "Hostname");
-}	
+}

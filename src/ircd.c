@@ -302,7 +302,7 @@ check_rehash(void *unused)
  *
  * inputs       - none
  * output       - none
- * side effects - This sets all global set options needed 
+ * side effects - This sets all global set options needed
  */
 static void
 initialize_global_set_options(void)
@@ -506,7 +506,7 @@ seed_with_urandom(void)
 static void
 seed_with_clock(void)
 {
- 	const struct timeval *tv;	
+ 	const struct timeval *tv;
 	rb_set_time();
 	tv = rb_current_time_tv();
 	srand(tv->tv_sec ^ (tv->tv_usec | (getpid() << 20)));
@@ -672,8 +672,8 @@ main(int argc, char *argv[])
 	read_conf_files(YES);	/* cold start init conf files */
 #ifndef STATIC_MODULES
 
-	mod_add_path(MODULE_DIR); 
-	mod_add_path(MODULE_DIR "/autoload"); 
+	mod_add_path(MODULE_DIR);
+	mod_add_path(MODULE_DIR "/autoload");
 #endif
 
 	init_isupport();

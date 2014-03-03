@@ -141,7 +141,7 @@ do_host_cloak_host(const char *inbuf, char *outbuf)
 
 	strncpy(outbuf, inbuf, HOSTLEN);
 
-	/* pass 1: scramble first section of hostname using base26 
+	/* pass 1: scramble first section of hostname using base26
 	 * alphabet toasted against the weighted entropy of the string.
 	 *
 	 * numbers are not changed at this time, only letters.
@@ -164,7 +164,7 @@ do_host_cloak_host(const char *inbuf, char *outbuf)
 		{
 			*tptr = 48 + ((*tptr * accum) % 10);
 		}
-	}	
+	}
 }
 
 static void

@@ -128,7 +128,7 @@ static void wipe_schema(void);
 static void drop_dupes(const char *user, const char *host, const char *t);
 
 /**
- *  swing your pants 
+ *  swing your pants
  */
 int
 main(int argc, char *argv[])

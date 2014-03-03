@@ -103,9 +103,9 @@ LockedFile(const char *filename)
 
   if (!filename)
     return (0);
-  
+
   sprintf(lockpath, "%s.lock", filename);
-  
+
   if ((fileptr = fopen(lockpath, "r")) != NULL)
     {
       if (fgets(buffer, sizeof(buffer) - 1, fileptr))
@@ -117,7 +117,7 @@ LockedFile(const char *filename)
 	   * pid - it could be a remnant left over from a
 	   * crashed editor or system reboot etc.
 	   */
-      
+
 	  killret = kill(atoi(buffer), SIGCHLD);
 	  if (killret == 0)
 	    {

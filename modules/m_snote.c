@@ -66,7 +66,7 @@ DECLARE_MODULE_AV1(snote, NULL, NULL, snote_clist, NULL, NULL, "$Revision: 623 $
  *	parv[2] = message
  */
 static int
-me_snote(struct Client *client_p, struct Client *source_p, int parc, 
+me_snote(struct Client *client_p, struct Client *source_p, int parc,
 	const char *parv[])
 {
 	/* if there's more than just two params, this is a protocol

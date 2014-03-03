@@ -1,6 +1,6 @@
 /* tools/convertilines.c
  * Copyright (c) 2002 Hybrid Development Team
- * 
+ *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are
  *  met:
@@ -62,7 +62,7 @@ struct AuthBlock
 
     char **hostname;
     int hostnum;
-    
+
     char *spoof;
     char *passwd;
     int class;
@@ -109,7 +109,7 @@ int main(int argc,char *argv[])
       fprintf(stderr, "Can't open %s for writing\n", argv[2]);
       usage();
   }
-  
+
   ConvertConf(in, out);
 
   return 0;
@@ -122,7 +122,7 @@ void usage()
 }
 
 /*
- * ConvertConf() 
+ * ConvertConf()
  *    Read configuration file.
  *
  *
@@ -228,7 +228,7 @@ static void ReplaceQuotes(char* quotedLine,char *inputLine)
     0,    /* x */
     0,    /* y */
     0,    /* z */
-    0,0,0,0,0,0 
+    0,0,0,0,0,0
     };
 
   /*
@@ -261,7 +261,7 @@ static void ReplaceQuotes(char* quotedLine,char *inputLine)
  * oldParseOneLine
  * Inputs       - pointer to line to parse
  *		- pointer to output to write
- * Output       - 
+ * Output       -
  * Side Effects - Parse one old style conf line.
  */
 
@@ -285,7 +285,7 @@ static void oldParseOneLine(FILE *out,char* line)
       /* host field */
       if ((host_field = getfield(NULL)) == NULL)
 	return;
-      
+
       /* pass field */
       if ((passwd_field = getfield(NULL)) == NULL)
 	break;
@@ -309,15 +309,15 @@ static void oldParseOneLine(FILE *out,char* line)
     passwd_field = "";
   if (!user_field)
     user_field = "";
-  if (!port_field)    
+  if (!port_field)
     port_field = "";
   if (classconf_field)
     class_field = atoi(classconf_field);
 
   switch( conf_letter )
   {
-    case 'i': 
-    case 'I': 
+    case 'i':
+    case 'I':
     {
         struct AuthBlock *ptr;
 	struct AuthBlock *tempptr;
@@ -386,7 +386,7 @@ static void oldParseOneLine(FILE *out,char* line)
 	}
     }
     break;
-      
+
     default:
       break;
   }
@@ -412,7 +412,7 @@ static void write_auth_entries(FILE *out)
 	write_specific(out, ptr);
 }
 
-    
+
 static void write_specific(FILE *out, struct AuthBlock *ptr)
 {
     int i;
@@ -437,8 +437,8 @@ static void write_specific(FILE *out, struct AuthBlock *ptr)
 	    {
 		    if(ptr->flags & flag_table[i].flag)
 		    {
-			    fprintf(out, "%s%s", 
-					prev ? ", " : "", 
+			    fprintf(out, "%s%s",
+					prev ? ", " : "",
 					flag_table[i].name);
 			    prev = 1;
 		    }
@@ -458,7 +458,7 @@ static char *getfield(char *newline)
 {
   static char *line = NULL;
   char  *end, *field;
-        
+
   if (newline)
     line = newline;
 
@@ -505,7 +505,7 @@ struct AuthBlock *find_matching_conf(struct AuthBlock *acptr)
 	if(match(ptr, acptr))
 	    return ptr;
     }
-	
+
     for(ptr = auth_general; ptr; ptr = ptr->next)
     {
         if(match(ptr, acptr))
@@ -522,7 +522,7 @@ static int match(struct AuthBlock *ptr, struct AuthBlock *acptr)
        (ptr->flags == acptr->flags))
     {
 	const char *p1, *p2;
-	
+
 	/* check the spoofs match.. */
 	if(ptr->spoof)
 	   p1 = ptr->spoof;
@@ -606,7 +606,7 @@ void set_flags(struct AuthBlock *ptr, const char *user_field, const char *host_f
               ptr->hostname = realloc((void *)ptr->hostname, ptr->hostnum * sizeof(void *));
 
 	      /* if the IP field contains something useful, use that */
-	      if(strcmp(host_field, "NOMATCH") && (*host_field != 'x') && 
+	      if(strcmp(host_field, "NOMATCH") && (*host_field != 'x') &&
 	        strcmp(host_field, "*") && !ptr->spoof)
 		  ptr->hostname[authindex] = strdup(host_field);
 	      else

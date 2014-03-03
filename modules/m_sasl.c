@@ -56,7 +56,7 @@ struct Message sasl_msgtab = {
 	{mg_ignore, mg_ignore, mg_ignore, mg_ignore, {me_sasl, 5}, mg_ignore}
 };
 
-mapi_clist_av1 sasl_clist[] = { 
+mapi_clist_av1 sasl_clist[] = {
 	&authenticate_msgtab, &sasl_msgtab, NULL
 };
 mapi_hfn_list_av1 sasl_hfnlist[] = {
@@ -174,7 +174,7 @@ me_sasl(struct Client *client_p, struct Client *source_p,
 	}
 	else if(*parv[3] == 'M')
 		sendto_one(target_p, form_str(RPL_SASLMECHS), me.name, EmptyString(target_p->name) ? "*" : target_p->name, parv[4]);
-	
+
 	return 0;
 }
 

@@ -69,7 +69,7 @@ static int apply_dline(struct Client *, const char *, int, char *);
 static int apply_undline(struct Client *, const char *);
 
 /* mo_dline()
- * 
+ *
  *   parv[1] - dline to add
  *   parv[2] - reason
  */

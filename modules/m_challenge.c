@@ -60,7 +60,7 @@
 static int	challenge_load(void)
 {
 #ifndef STATIC_MODULES
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, 
+	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 		"Challenge module not loaded because OpenSSL is not available.");
 	ilog(L_MAIN, "Challenge module not loaded because OpenSSL is not available.");
 	return -1;
@@ -90,7 +90,7 @@ cleanup_challenge(struct Client *target_p)
 {
 	if(target_p->localClient == NULL)
 		return;
-	
+
 	rb_free(target_p->localClient->challenge);
 	rb_free(target_p->localClient->opername);
 	target_p->localClient->challenge = NULL;
@@ -108,7 +108,7 @@ m_challenge(struct Client *client_p, struct Client *source_p, int parc, const ch
 {
 	struct oper_conf *oper_p;
 	char *challenge = NULL; /* to placate gcc */
-	char chal_line[CHALLENGE_WIDTH]; 
+	char chal_line[CHALLENGE_WIDTH];
 	unsigned char *b_response;
 	size_t cnt;
 	int len = 0;
@@ -140,7 +140,7 @@ m_challenge(struct Client *client_p, struct Client *source_p, int parc, const ch
 						     source_p->name, source_p->username,
 						     source_p->host);
 			cleanup_challenge(source_p);
-			return 0;			
+			return 0;
 		}
 
 		parv[1]++;
@@ -167,8 +167,8 @@ m_challenge(struct Client *client_p, struct Client *source_p, int parc, const ch
 
 		rb_free(b_response);
 
-		oper_p = find_oper_conf(source_p->username, source_p->orighost, 
-					source_p->sockhost, 
+		oper_p = find_oper_conf(source_p->username, source_p->orighost,
+					source_p->sockhost,
 					source_p->localClient->opername);
 
 		if(oper_p == NULL)
@@ -192,14 +192,14 @@ m_challenge(struct Client *client_p, struct Client *source_p, int parc, const ch
 		oper_up(source_p, oper_p);
 
 		ilog(L_OPERED, "OPER %s by %s!%s@%s (%s)",
-		     source_p->localClient->opername, source_p->name, 
+		     source_p->localClient->opername, source_p->name,
 		     source_p->username, source_p->host, source_p->sockhost);
 		return 0;
 	}
 
 	cleanup_challenge(source_p);
 
-	oper_p = find_oper_conf(source_p->username, source_p->orighost, 
+	oper_p = find_oper_conf(source_p->username, source_p->orighost,
 				source_p->sockhost, parv[1]);
 
 	if(oper_p == NULL)
@@ -269,9 +269,9 @@ m_challenge(struct Client *client_p, struct Client *source_p, int parc, const ch
 				chal += CHALLENGE_WIDTH - 1;
 			else
 				break;
-			
+
 		}
-		sendto_one(source_p, form_str(RPL_ENDOFRSACHALLENGE2), 
+		sendto_one(source_p, form_str(RPL_ENDOFRSACHALLENGE2),
 			   me.name, source_p->name);
 		rb_free(challenge);
 		source_p->localClient->opername = rb_strdup(oper_p->name);

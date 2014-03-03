@@ -60,7 +60,7 @@ sigterm_handler(int sig)
 	ircd_shutdown("Received SIGTERM");
 }
 
-/* 
+/*
  * sighup_handler - reread the server configuration
  */
 static void

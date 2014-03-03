@@ -36,7 +36,7 @@
 #include <spawn.h>
 
 #ifdef __APPLE__
-#include <crt_externs.h> 
+#include <crt_externs.h>
 #endif
 
 #ifndef __APPLE__

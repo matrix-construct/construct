@@ -106,9 +106,9 @@ rb_setselect_ports(rb_fde_t *F, unsigned int type, PF * handler, void *client_da
 		port_dissociate(pe, PORT_SOURCE_FD, F->fd);
 		return;
 	}
-	
+
 	port_associate(pe, PORT_SOURCE_FD, F->fd, F->pflags, F);
-	
+
 }
 
 /*
@@ -191,24 +191,24 @@ rb_ports_sched_event(struct ev_entry *event, int when)
 
 	event->comm_ptr = rb_malloc(sizeof(timer_t));
 	id = event->comm_ptr;
-				
+
 	memset(&ev, 0, sizeof(ev));
 	ev.sigev_notify = SIGEV_PORT;
 	ev.sigev_value.sival_ptr = &not;
-	
-	memset(&not, 0, sizeof(not));	
+
+	memset(&not, 0, sizeof(not));
 	not.portnfy_port = pe;
 	not.portnfy_user = event;
-	
+
 	if(timer_create(CLOCK_REALTIME, &ev, id) < 0)
 	{
 		rb_lib_log("timer_create: %s\n", strerror(errno));
 		return 0;
 	}
-	
+
 	memset(&ts, 0, sizeof(ts));
 	ts.it_value.tv_sec = when;
-	ts.it_value.tv_nsec = 0; 
+	ts.it_value.tv_nsec = 0;
 	if(event->frequency != 0)
 		ts.it_interval = ts.it_value;
 
@@ -217,7 +217,7 @@ rb_ports_sched_event(struct ev_entry *event, int when)
 		rb_lib_log("timer_settime: %s\n", strerror(errno));
 		return 0;
 	}
-	return 1;					
+	return 1;
 }
 
 void
@@ -241,14 +241,14 @@ rb_ports_init_event(void)
 {
 	return;
 }
- 
+
 int
 rb_ports_sched_event(struct ev_entry *event, int when)
 {
 	errno = ENOSYS;
 	return -1;
 }
- 
+
 void
 rb_ports_unsched_event(struct ev_entry *event)
 {

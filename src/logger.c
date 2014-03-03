@@ -81,7 +81,7 @@ verify_logfile_access(const char *filename)
 	d = rb_dirname(filename);
 	dirname = LOCAL_COPY(d);
 	rb_free(d);
-	
+
 	if(access(dirname, F_OK) == -1)
 	{
 		rb_snprintf(buf, sizeof(buf), "WARNING: Unable to access logfile %s - parent directory %s does not exist", filename, dirname);
@@ -95,7 +95,7 @@ verify_logfile_access(const char *filename)
 	{
 		if(access(dirname, W_OK) == -1)
 		{
-			rb_snprintf(buf, sizeof(buf), "WARNING: Unable to access logfile %s - access to parent directory %s failed: %s", 
+			rb_snprintf(buf, sizeof(buf), "WARNING: Unable to access logfile %s - access to parent directory %s failed: %s",
 				    filename, dirname, strerror(errno));
 			if(testing_conf || server_state_foreground)
 				fprintf(stderr, "%s\n", buf);
@@ -103,12 +103,12 @@ verify_logfile_access(const char *filename)
 		}
 		return;
 	}
-	
+
 	if(access(filename, W_OK) == -1)
 	{
 		rb_snprintf(buf, sizeof(buf), "WARNING: Access denied for logfile %s: %s", filename, strerror(errno));
 		if(testing_conf || server_state_foreground)
-			fprintf(stderr, "%s\n", buf);	
+			fprintf(stderr, "%s\n", buf);
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s", buf);
 		return;
 	}
@@ -144,7 +144,7 @@ open_logfiles(void)
 			*log_table[i].logfile = fopen(*log_table[i].name, "a");
 		}
 	}
-}			
+}
 
 void
 close_logfiles(void)

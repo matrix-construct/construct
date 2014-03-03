@@ -53,7 +53,7 @@ DECLARE_MODULE_AV1(connect, NULL, NULL, connect_clist, NULL, NULL, "$Revision: 3
 
 /*
  * mo_connect - CONNECT command handler
- * 
+ *
  * Added by Jto 11 Feb 1989
  *
  * m_connect
@@ -83,7 +83,7 @@ mo_connect(struct Client *client_p, struct Client *source_p, int parc, const cha
 
 	if((target_p = find_server(source_p, parv[1])))
 	{
-		sendto_one_notice(source_p, ":Connect: Server %s already exists from %s.", parv[1], 
+		sendto_one_notice(source_p, ":Connect: Server %s already exists from %s.", parv[1],
 			target_p->from->name);
 		return 0;
 	}
@@ -156,7 +156,7 @@ mo_connect(struct Client *client_p, struct Client *source_p, int parc, const cha
 
 /*
  * ms_connect - CONNECT command handler
- * 
+ *
  * Added by Jto 11 Feb 1989
  *
  * m_connect
@@ -222,7 +222,7 @@ ms_connect(struct Client *client_p, struct Client *source_p, int parc, const cha
 	 * Notify all operators about remote connect requests
 	 */
 	sendto_wallops_flags(UMODE_WALLOP, &me,
-			     "Remote CONNECT %s %d from %s", 
+			     "Remote CONNECT %s %d from %s",
 			     parv[1], port, source_p->name);
 	sendto_server(NULL, NULL, CAP_TS6, NOCAPS,
 		      ":%s WALLOPS :Remote CONNECT %s %d from %s",

@@ -173,7 +173,7 @@ modfini(void)
 /* {{{ static int mo_hurt()
  *
  * HURT [<expire>] <ip> <reason>
- * 
+ *
  * parv[1] - expire or ip
  * parv[2] - ip or reason
  * parv[3] - reason or NULL
@@ -459,7 +459,7 @@ new_local_user_hook(struct Client *source_p)
 		SetTGChange(source_p);
 		rb_dlinkAddAlloc(source_p, &hurt_state.hurt_clients);
 		sendto_one_notice(source_p, ":You are hurt. Please identify to services immediately, or use /stats p for assistance.");
-	}	
+	}
 }
 /* }}} */
 

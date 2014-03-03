@@ -94,7 +94,7 @@ mo_version(struct Client *client_p, struct Client *source_p, int parc, const cha
 	if(hunt_server(client_p, source_p, ":%s VERSION :%s", 1, parc, parv) == HUNTED_ISME)
 	{
 		sendto_one_numeric(source_p, RPL_VERSION, form_str(RPL_VERSION),
-				   ircd_version, serno, 
+				   ircd_version, serno,
 #ifdef CUSTOM_BRANDING
 				   PACKAGE_NAME " " PACKAGE_VERSION,
 #endif

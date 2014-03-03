@@ -1,4 +1,4 @@
-/* 
+/*
  * ircd-ratbox: an advanced Internet Relay Chat Daemon(ircd).
  * monitor.h: Code for server-side notify lists.
  *

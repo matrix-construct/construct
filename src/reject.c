@@ -77,12 +77,12 @@ reject_exit(void *unused)
 	rb_dlink_node *ptr, *ptr_next;
 	delay_t *ddata;
 	static const char *errbuf = "ERROR :Closing Link: (*** Banned (cache))\r\n";
-	
+
 	RB_DLINK_FOREACH_SAFE(ptr, ptr_next, delay_exit.head)
 	{
 		ddata = ptr->data;
 
-		rb_write(ddata->F, errbuf, strlen(errbuf));		
+		rb_write(ddata->F, errbuf, strlen(errbuf));
 		rb_close(ddata->F);
 		rb_free(ddata);
 	}
@@ -97,11 +97,11 @@ reject_expires(void *unused)
 	rb_dlink_node *ptr, *next;
 	rb_patricia_node_t *pnode;
 	reject_t *rdata;
-	
+
 	RB_DLINK_FOREACH_SAFE(ptr, next, reject_list.head)
 	{
 		pnode = ptr->data;
-		rdata = pnode->data;		
+		rdata = pnode->data;
 
 		if(rdata->time + ConfigFileEntry.reject_duration > rb_current_time())
 			continue;
@@ -190,7 +190,7 @@ check_reject(rb_fde_t *F, struct sockaddr *addr)
 	/* Reject is disabled */
 	if(ConfigFileEntry.reject_after_count == 0 || ConfigFileEntry.reject_duration == 0)
 		return 0;
-		
+
 	pnode = rb_match_ip(reject_tree, addr);
 	if(pnode != NULL)
 	{
@@ -206,8 +206,8 @@ check_reject(rb_fde_t *F, struct sockaddr *addr)
 			rb_dlinkAdd(ddata, &ddata->node, &delay_exit);
 			return 1;
 		}
-	}	
-	/* Caller does what it wants */	
+	}
+	/* Caller does what it wants */
 	return 0;
 }
 
@@ -221,7 +221,7 @@ is_reject_ip(struct sockaddr *addr)
 	/* Reject is disabled */
 	if(ConfigFileEntry.reject_after_count == 0 || ConfigFileEntry.reject_duration == 0)
 		return 0;
-		
+
 	pnode = rb_match_ip(reject_tree, addr);
 	if(pnode != NULL)
 	{
@@ -232,17 +232,17 @@ is_reject_ip(struct sockaddr *addr)
 			duration = rdata->time + ConfigFileEntry.reject_duration - rb_current_time();
 			return duration > 0 ? duration : 1;
 		}
-	}	
+	}
 	return 0;
 }
 
-void 
+void
 flush_reject(void)
 {
 	rb_dlink_node *ptr, *next;
 	rb_patricia_node_t *pnode;
 	reject_t *rdata;
-	
+
 	RB_DLINK_FOREACH_SAFE(ptr, next, reject_list.head)
 	{
 		pnode = ptr->data;
@@ -253,11 +253,11 @@ flush_reject(void)
 	}
 }
 
-int 
+int
 remove_reject_ip(const char *ip)
 {
 	rb_patricia_node_t *pnode;
-	
+
 	/* Reject is disabled */
 	if(ConfigFileEntry.reject_after_count == 0 || ConfigFileEntry.reject_duration == 0)
 		return -1;
@@ -281,7 +281,7 @@ remove_reject_mask(const char *mask1, const char *mask2)
 	reject_t *rdata;
 	uint32_t hashv;
 	int n = 0;
-	
+
 	hashv = 0;
 	if (mask1 != NULL)
 		hashv ^= fnv_hash_upper((const unsigned char *)mask1, 32);
@@ -327,13 +327,13 @@ throttle_add(struct sockaddr *addr)
 		if(GET_SS_FAMILY(addr) == AF_INET6)
 			bitlen = 128;
 #endif
-		t = rb_malloc(sizeof(throttle_t));	
+		t = rb_malloc(sizeof(throttle_t));
 		t->last = rb_current_time();
 		t->count = 1;
 		pnode = make_and_lookup_ip(throttle_tree, addr, bitlen);
 		pnode->data = t;
-		rb_dlinkAdd(pnode, &t->node, &throttle_list); 
-	}	
+		rb_dlinkAdd(pnode, &t->node, &throttle_list);
+	}
 	return 0;
 }
 
@@ -356,17 +356,17 @@ is_throttle_ip(struct sockaddr *addr)
 	return 0;
 }
 
-void 
+void
 flush_throttle(void)
 {
 	rb_dlink_node *ptr, *next;
 	rb_patricia_node_t *pnode;
 	throttle_t *t;
-	
+
 	RB_DLINK_FOREACH_SAFE(ptr, next, throttle_list.head)
 	{
 		pnode = ptr->data;
-		t = pnode->data;		
+		t = pnode->data;
 
 		rb_dlinkDelete(ptr, &throttle_list);
 		rb_free(t);
@@ -380,11 +380,11 @@ throttle_expires(void *unused)
 	rb_dlink_node *ptr, *next;
 	rb_patricia_node_t *pnode;
 	throttle_t *t;
-	
+
 	RB_DLINK_FOREACH_SAFE(ptr, next, throttle_list.head)
 	{
 		pnode = ptr->data;
-		t = pnode->data;		
+		t = pnode->data;
 
 		if(t->last + ConfigFileEntry.throttle_duration > rb_current_time())
 			continue;

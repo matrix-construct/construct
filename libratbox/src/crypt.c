@@ -143,7 +143,7 @@ rb_crypt(const char *key, const char *salt)
  */
 
 
-/* Re-entrantify me -- all this junk needs to be in 
+/* Re-entrantify me -- all this junk needs to be in
  * struct crypt_data to make this really reentrant... */
 static uint8_t inv_key_perm[64];
 static uint8_t inv_comp_perm[56];
@@ -160,8 +160,8 @@ static uint32_t old_salt;
 static uint32_t old_rawkey0, old_rawkey1;
 
 
-/* Static stuff that stays resident and doesn't change after 
- * being initialized, and therefore doesn't need to be made 
+/* Static stuff that stays resident and doesn't change after
+ * being initialized, and therefore doesn't need to be made
  * reentrant. */
 static uint8_t init_perm[64], final_perm[64];
 static uint8_t m_sbox[4][4096];
@@ -777,7 +777,7 @@ static void   MD5Final (unsigned char [16], MD5_CTX *);
 #ifndef WORDS_BIGENDIAN
 #define Encode memcpy
 #define Decode memcpy
-#else 
+#else
 
 /*
  * Encodes input (uint32_t) into output (unsigned char). Assumes len is
@@ -866,7 +866,7 @@ MD5Init (context)
 	context->state[3] = 0x10325476;
 }
 
-/* 
+/*
  * MD5 block update operation. Continues an MD5 message-digest
  * operation, processing another message block, and updating the
  * context.

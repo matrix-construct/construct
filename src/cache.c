@@ -75,7 +75,7 @@ init_cache(void)
 	help_dict_user = irc_dictionary_create(strcasecmp);
 }
 
-/* 
+/*
  * removes tabs from src, replaces with 8 spaces, and returns the length
  * of the new string.  if the new string would be greater than destlen,
  * it is truncated to destlen - 1
@@ -94,7 +94,7 @@ untabify(char *dest, const char *src, size_t destlen)
 			for(i = 0; i < 8 && x < destlen - 1; i++, x++, d++)
 				*d = ' ';
 			s++;
-		} else 
+		} else
 		{
 			*d++ = *s++;
 			x++;
@@ -189,8 +189,8 @@ cache_links(void *unused)
 		/* if the below is ever modified, change LINKSLINELEN */
 		links_line = rb_malloc(LINKSLINELEN);
 		rb_snprintf(links_line, LINKSLINELEN, "%s %s :1 %s",
-			   target_p->name, me.name, 
-			   target_p->info[0] ? target_p->info : 
+			   target_p->name, me.name,
+			   target_p->info[0] ? target_p->info :
 			    "(Unknown Location)");
 
 		rb_dlinkAddTailAlloc(links_line, &links_cache_list);
@@ -343,12 +343,12 @@ cache_user_motd(void)
 {
 	struct stat sb;
 	struct tm *local_tm;
-	
-	if(stat(MPATH, &sb) == 0) 
+
+	if(stat(MPATH, &sb) == 0)
 	{
 		local_tm = localtime(&sb.st_mtime);
 
-		if(local_tm != NULL) 
+		if(local_tm != NULL)
 		{
 			rb_snprintf(user_motd_changed, sizeof(user_motd_changed),
 				 "%d/%d/%d %d:%d",
@@ -356,7 +356,7 @@ cache_user_motd(void)
 				 1900 + local_tm->tm_year, local_tm->tm_hour,
 				 local_tm->tm_min);
 		}
-	} 
+	}
 	free_cachefile(user_motd);
 	user_motd = cache_file(MPATH, "ircd.motd", 0);
 }
@@ -377,7 +377,7 @@ send_oper_motd(struct Client *source_p)
 	if(oper_motd == NULL || rb_dlink_list_length(&oper_motd->contents) == 0)
 		return;
 
-	sendto_one(source_p, form_str(RPL_OMOTDSTART), 
+	sendto_one(source_p, form_str(RPL_OMOTDSTART),
 		   me.name, source_p->name);
 
 	RB_DLINK_FOREACH(ptr, oper_motd->contents.head)
@@ -387,6 +387,6 @@ send_oper_motd(struct Client *source_p)
 			   me.name, source_p->name, lineptr->data);
 	}
 
-	sendto_one(source_p, form_str(RPL_ENDOFOMOTD), 
+	sendto_one(source_p, form_str(RPL_ENDOFOMOTD),
 		   me.name, source_p->name);
 }

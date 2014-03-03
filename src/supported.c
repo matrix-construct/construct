@@ -222,7 +222,7 @@ isupport_string(const void *ptr)
 const char *
 isupport_stringptr(const void *ptr)
 {
-	return *(char * const *)ptr;	
+	return *(char * const *)ptr;
 }
 
 static const char *

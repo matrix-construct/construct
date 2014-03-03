@@ -37,11 +37,11 @@
 
 
 /*
- * ircd used to store full servernames in anUser as well as in the 
+ * ircd used to store full servernames in anUser as well as in the
  * whowas info.  there can be some 40k such structures alive at any
  * given time, while the number of unique server names a server sees
  * in its lifetime is at most a few hundred.  by tokenizing server
- * names internally, the server can easily save 2 or 3 megs of RAM.  
+ * names internally, the server can easily save 2 or 3 megs of RAM.
  * -orabidoo
  *
  * reworked to serve for flattening/delaying /links also
@@ -173,13 +173,13 @@ scache_send_flattened_links(struct Client *source_p)
 			else
 				show = scache_ptr->last_split > rb_current_time() - ConfigServerHide.links_delay && scache_ptr->last_split - scache_ptr->known_since > ConfigServerHide.links_delay;
 			if (show)
-				sendto_one_numeric(source_p, RPL_LINKS, form_str(RPL_LINKS), 
+				sendto_one_numeric(source_p, RPL_LINKS, form_str(RPL_LINKS),
 						   scache_ptr->name, me.name, 1, scache_ptr->info);
 
 			scache_ptr = scache_ptr->next;
 		}
 	}
-	sendto_one_numeric(source_p, RPL_LINKS, form_str(RPL_LINKS), 
+	sendto_one_numeric(source_p, RPL_LINKS, form_str(RPL_LINKS),
 			   me.name, me.name, 0, me.info);
 
 	sendto_one_numeric(source_p, RPL_ENDOFLINKS, form_str(RPL_ENDOFLINKS), "*");
@@ -205,7 +205,7 @@ scache_send_missing(struct Client *source_p)
 		while (scache_ptr)
 		{
 			if (!(scache_ptr->flags & SC_ONLINE) && scache_ptr->last_split > rb_current_time() - MISSING_TIMEOUT)
-				sendto_one_numeric(source_p, RPL_MAP, "** %s (recently split)", 
+				sendto_one_numeric(source_p, RPL_MAP, "** %s (recently split)",
 						   scache_ptr->name);
 
 			scache_ptr = scache_ptr->next;

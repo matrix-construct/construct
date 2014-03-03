@@ -33,7 +33,7 @@ struct Message;
 struct Client;
 
 extern void parse(struct Client *, char *, char *);
-extern void handle_encap(struct Client *, struct Client *, 
+extern void handle_encap(struct Client *, struct Client *,
 		         const char *, int, const char *parv[]);
 extern void clear_hash_parse(void);
 extern void mod_add_cmd(struct Message *msg);

@@ -62,7 +62,7 @@ DECLARE_MODULE_AV1(links, NULL, NULL, links_clist, links_hlist, NULL, "$Revision
  * m_links - LINKS message handler
  *      parv[1] = servername mask
  * or
- *      parv[1] = server to query 
+ *      parv[1] = server to query
  *      parv[2] = servername mask
  */
 static int
@@ -117,7 +117,7 @@ mo_links(struct Client *client_p, struct Client *source_p, int parc, const char 
 			continue;
 
 		/* We just send the reply, as if theyre here theres either no SHIDE,
-		 * or theyre an oper..  
+		 * or theyre an oper..
 		 */
 		sendto_one_numeric(source_p, RPL_LINKS, form_str(RPL_LINKS),
 				   target_p->name, target_p->servptr->name,

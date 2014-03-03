@@ -184,10 +184,10 @@ check_client(struct Client *client_p, struct Client *source_p, const char *usern
 
 	if((i = verify_access(source_p, username)))
 	{
-		ilog(L_FUSER, "Access denied: %s[%s]", 
+		ilog(L_FUSER, "Access denied: %s[%s]",
 		     source_p->name, source_p->sockhost);
 	}
-	
+
 	switch (i)
 	{
 	case SOCKET_ERROR:
@@ -207,7 +207,7 @@ check_client(struct Client *client_p, struct Client *source_p, const char *usern
 
 		ilog(L_FUSER, "Too many local connections from %s!%s%s@%s",
 			source_p->name, IsGotId(source_p) ? "" : "~",
-			source_p->username, source_p->sockhost);	
+			source_p->username, source_p->sockhost);
 
 		ServerStats.is_ref++;
 		exit_client(client_p, source_p, &me, "Too many host connections (local)");
@@ -248,7 +248,7 @@ check_client(struct Client *client_p, struct Client *source_p, const char *usern
 				source_p->username, source_p->host,
 				show_ip(NULL, source_p) && !IsIPSpoof(source_p) ? source_p->sockhost : "255.255.255.255");
 
-		ilog(L_FUSER, "Too many connections from %s!%s%s@%s.", 
+		ilog(L_FUSER, "Too many connections from %s!%s%s@%s.",
 			source_p->name, IsGotId(source_p) ? "" : "~",
 			source_p->username, source_p->sockhost);
 
@@ -266,7 +266,7 @@ check_client(struct Client *client_p, struct Client *source_p, const char *usern
 			else
 #endif
 				port = ntohs(((struct sockaddr_in *)&source_p->localClient->listener->addr)->sin_port);
-			
+
 			ServerStats.is_ref++;
 			/* jdc - lists server name & port connections are on */
 			/*       a purely cosmetical change */
@@ -321,7 +321,7 @@ verify_access(struct Client *client_p, const char *username)
 
 	if(IsGotId(client_p))
 	{
-		aconf = find_address_conf(client_p->host, client_p->sockhost, 
+		aconf = find_address_conf(client_p->host, client_p->sockhost,
 					client_p->username, client_p->username,
 					(struct sockaddr *) &client_p->localClient->ip,
 					client_p->localClient->ip.ss_family,
@@ -401,7 +401,7 @@ verify_access(struct Client *client_p, const char *username)
 
 /*
  * add_ip_limit
- * 
+ *
  * Returns 1 if successful 0 if not
  *
  * This checks if the user has exceed the limits for their class
@@ -572,7 +572,7 @@ detach_conf(struct Client *client_p)
 
 /*
  * attach_conf
- * 
+ *
  * inputs	- client pointer
  * 		- conf pointer
  * output	-
@@ -693,7 +693,7 @@ set_default_conf(void)
 	ConfigFileEntry.default_adminstring = NULL;
 	ConfigFileEntry.servicestring = NULL;
 
-	ConfigFileEntry.default_umodes = UMODE_INVISIBLE;	
+	ConfigFileEntry.default_umodes = UMODE_INVISIBLE;
 	ConfigFileEntry.failed_oper_notice = YES;
 	ConfigFileEntry.anti_nick_flood = NO;
 	ConfigFileEntry.disable_fake_channels = NO;
@@ -794,7 +794,7 @@ set_default_conf(void)
 	ConfigFileEntry.tkline_expire_notices = 0;
 
         ConfigFileEntry.reject_after_count = 5;
-	ConfigFileEntry.reject_ban_time = 300;  
+	ConfigFileEntry.reject_ban_time = 300;
 	ConfigFileEntry.reject_duration = 120;
 	ConfigFileEntry.throttle_count = 4;
 	ConfigFileEntry.throttle_duration = 60;
@@ -817,7 +817,7 @@ set_default_conf(void)
 #undef NO
 
 /*
- * read_conf() 
+ * read_conf()
  *
  *
  * inputs       - file descriptor pointing to config file to use
@@ -873,7 +873,7 @@ validate_conf(void)
 		int start = ServerInfo.ssld_count - get_ssld_count();
 		/* start up additional ssld if needed */
 		start_ssldaemon(start, ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params);
-				
+
 	}
 
 	/* General conf */
@@ -916,7 +916,7 @@ validate_conf(void)
  *
  * inputs        - pointer to struct ConfItem
  * output        - none
- * Side effects  - links in given struct ConfItem into 
+ * Side effects  - links in given struct ConfItem into
  *                 temporary kline link list
  */
 void
@@ -982,7 +982,7 @@ add_temp_dline(struct ConfItem *aconf)
 }
 
 /* valid_wild_card()
- * 
+ *
  * input        - user buffer, host buffer
  * output       - 0 if invalid, 1 if valid
  * side effects -
@@ -1212,7 +1212,7 @@ reorganise_temp_kd(void *list)
 
 		if(aconf->hold < (rb_current_time() + (60 * 60)))
 		{
-			rb_dlinkMoveNode(ptr, list, (aconf->status == CONF_KILL) ? 
+			rb_dlinkMoveNode(ptr, list, (aconf->status == CONF_KILL) ?
 					&temp_klines[TEMP_MIN] : &temp_dlines[TEMP_MIN]);
 			aconf->port = TEMP_MIN;
 		}
@@ -1220,14 +1220,14 @@ reorganise_temp_kd(void *list)
 		{
 			if(aconf->hold < (rb_current_time() + (1440 * 60)))
 			{
-				rb_dlinkMoveNode(ptr, list, (aconf->status == CONF_KILL) ? 
+				rb_dlinkMoveNode(ptr, list, (aconf->status == CONF_KILL) ?
 						&temp_klines[TEMP_HOUR] : &temp_dlines[TEMP_HOUR]);
 				aconf->port = TEMP_HOUR;
 			}
-			else if(aconf->port > TEMP_DAY && 
+			else if(aconf->port > TEMP_DAY &&
 				(aconf->hold < (rb_current_time() + (10080 * 60))))
 			{
-				rb_dlinkMoveNode(ptr, list, (aconf->status == CONF_KILL) ? 
+				rb_dlinkMoveNode(ptr, list, (aconf->status == CONF_KILL) ?
 						&temp_klines[TEMP_DAY] : &temp_dlines[TEMP_DAY]);
 				aconf->port = TEMP_DAY;
 			}
@@ -1257,7 +1257,7 @@ get_oper_name(struct Client *client_p)
 	}
 
 	rb_snprintf(buffer, sizeof(buffer), "%s!%s@%s{%s}",
-		   client_p->name, client_p->username, 
+		   client_p->name, client_p->username,
 		   client_p->host, client_p->servptr->name);
 	return buffer;
 }
@@ -1267,7 +1267,7 @@ get_oper_name(struct Client *client_p)
  *
  * inputs        - struct ConfItem
  *
- * output         - name 
+ * output         - name
  *                - host
  *                - pass
  *                - user
@@ -1321,7 +1321,7 @@ get_user_ban_reason(struct ConfItem *aconf)
 }
 
 void
-get_printable_kline(struct Client *source_p, struct ConfItem *aconf, 
+get_printable_kline(struct Client *source_p, struct ConfItem *aconf,
 		    char **host, char **reason,
 		    char **user, char **oper_reason)
 {
@@ -1364,7 +1364,7 @@ read_conf_files(int cold)
 	   FIXME: The full path is in conffilenamebuf first time since we
 	   dont know anything else
 
-	   - Gozem 2002-07-21 
+	   - Gozem 2002-07-21
 
 
 	 */
@@ -1533,7 +1533,7 @@ clear_out_old_conf(void)
  * conf_add_class_to_conf
  * inputs       - pointer to config item
  * output       - NONE
- * side effects - Add a class pointer to a conf 
+ * side effects - Add a class pointer to a conf
  */
 
 void
