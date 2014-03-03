@@ -243,6 +243,12 @@ static struct InfoStruct info_table[] = {
 		"Server connect/disconnect log file"
 	},
 	{
+		"fname_killlog",
+		OUTPUT_STRING,
+		&ConfigFileEntry.fname_killlog,
+		"KILL log file"
+	},
+	{
 		"fname_klinelog",
 		OUTPUT_STRING,
 		&ConfigFileEntry.fname_klinelog,
