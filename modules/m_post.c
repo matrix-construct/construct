@@ -64,9 +64,6 @@ DECLARE_MODULE_AV1(post, NULL, NULL, post_clist, NULL, NULL, "$Revision: 498 $")
 static int
 mr_dumb_proxy(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	sendto_realops_snomask(SNO_REJ, L_ALL,
-			     "HTTP Proxy disconnected: [%s@%s]",
-			     client_p->username, client_p->host);
 	exit_client(client_p, source_p, source_p, "Client Exit");
 
 	return 0;
