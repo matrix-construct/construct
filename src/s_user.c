@@ -434,6 +434,11 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 					source_p->sockhost, source_p->preClient->dnsbl_listed->host);
 		else
 		{
+			sendto_realops_snomask(SNO_REJ, L_NETWIDE,
+				"DNSBL listed: %s!%s@%s{%s} %s (%s)", source_p->name,
+				source_p->username, source_p->host, source_p->sockhost, source_p->info,
+				source_p->preClient->dnsbl_listed->host);
+
 			rb_dlink_list varlist = { NULL, NULL, 0 };
 
 			substitution_append_var(&varlist, "nick", source_p->name);
