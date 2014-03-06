@@ -18,5 +18,6 @@ User modes: (* designates that the umode is oper only)
        * +z     - Can see operwalls.
          +D     - Deaf - ignores all channel messages.
          +Q     - Prevents you from being affected by channel forwarding.
-         +R     - Prevents non accept unidentified users from messaging you.
+         +R     - Prevents unidentified users that you have not accepted from
+                  messaging you.
          +Z     - Is connected via SSL (cannot be set or unset).
