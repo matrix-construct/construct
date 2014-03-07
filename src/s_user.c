@@ -435,9 +435,12 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 		else
 		{
 			sendto_realops_snomask(SNO_REJ, L_NETWIDE,
-				"DNSBL listed: %s!%s@%s{%s} %s (%s)", source_p->name,
-				source_p->username, source_p->host, source_p->sockhost, source_p->info,
-				source_p->preClient->dnsbl_listed->host);
+				"Listed on DNSBL %s: %s (%s@%s) [%s] [%s]",
+				source_p->preClient->dnsbl_listed->host,
+				source_p->name,
+				source_p->username, source_p->host,
+				IsIPSpoof(source_p) ? "255.255.255.255" : source_p->sockhost,
+				source_p->info);
 
 			rb_dlink_list varlist = { NULL, NULL, 0 };
 
