@@ -1,7 +1,60 @@
 This is charybdis 3.4-devel, Copyright (c) 2005-2010 Charybdis team.
 See LICENSE for licensing details (GPL v2).
 
--- charybdis-3.4-devel
+-- charybdis-3.5-devel
+
+server protocol
+- Fix propagation of ip_cloaking hostname changes (only when setting or
+  unsetting the umode after connection).
+- Fix a remote-triggerable crash triggered by the CAPAB parsing code.
+- As per the TS6 spec, require QS and ENCAP capabilities.
+- Check that UIDs start with the server's SID.
+user
+- Allow mode queries on mlocked modes. In particular, allow /mode #channel f
+  to query the forward channel even if +f is mlocked.
+- Strip colours from channel topics in /list.
+- If umode +D or +g are oper-only, don't advertise them in 005.
+- Add starttls as per ircv3.
+- Abort a whowas listing when it would exceed SendQ, which would previously
+  disconnect the user.
+- Reject nicks with '~' in them, rather than truncating at the '~'.
+- Remove CHARSET=ascii from ISUPPORT
+- Use the normal rules for IP visibility in /whowas.
+oper
+- Fix a crash with /testline.
+- Complain to opers if a server that isn't a service tries to
+  SU/RSFNC/NICKDELAY/SVSLOGIN.
+- Turn off umode +p (override) when deopering.
+- Make listener error messages (e.g. port already in use) visible by default
+  instead of only on snomask +d and in ioerrorlog.
+- Remove snotes on +r about GET/PUT/POST commands ("HTTP Proxy disconnected").
+- Add DNSBL snotes on snomask +r.
+config
+- Add chm_nonotice extension, cmode +T to reject notices.
+- Add restrict-unauthenticated extension, prevents unauthenticated users from
+  doing anything as channel operator.
+- Add no_kill_services extension, prevents local opers from killing services.
+- Allow matching specific replies of DNSBLs, using the new matches option.
+- Remove blowfish crypt since it has the BSD advertising clause.
+- Fix SHA256 ($5$) crypt.
+misc
+- Work around timerfd/signalfd brokenness on OpenVZ.
+- Fix a compilation issue in libratbox/src/sigio.c with recent glibc.
+- Extend documentation slightly.
+- Remove a BSD advertising clause that permission was granted to remove.
+- Add support for hooking PRIVMSG/NOTICE.
+- Reenable and fix the GnuTLS support.
+- Try other DNS servers if errors or corrupt replies are encountered.
+- Rename genssl.sh script to genssl.
+- Choose more secure SSL/TLS algorithms.
+- Fix reconnecting with SSL/TLS with some clients such as ChatZilla (see
+  https://bugzilla.mozilla.org/show_bug.cgi?id=858394#c34 for details.)
+- Improve error messages about the configuration file.
+- Fix a crash when compiled with recent clang on 32-bit systems.
+- Fix various memory leaks in rehash.
+- Fix various code quality issues.
+
+-- charybdis-3.4.0
 
 server protocol
 - Allow overriding opers (with the new extension) to op themselves on channels.
@@ -76,6 +129,7 @@ misc
 - Ensure SIGHUP and SIGINT keep working after a SIGINT restart.
 - Add --enable-fhs-paths configure option to allow installing into a more
   FHS-like hierarchy.
+- Remove broken GnuTLS support. SSL/TLS is now only provided using OpenSSL.
 
 -- charybdis-3.3.0
 
