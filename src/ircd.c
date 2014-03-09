@@ -499,6 +499,7 @@ seed_with_urandom(void)
 			srand(seed);
 			return 1;
 		}
+		close(fd);
 	}
 	return 0;
 }
