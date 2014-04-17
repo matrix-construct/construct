@@ -56,6 +56,7 @@ strip_colour(char *string)
 		case 4:
 		case 6:
 		case 7:
+		case 15:
 		case 22:
 		case 23:
 		case 27:
