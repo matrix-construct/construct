@@ -516,7 +516,7 @@ static struct InfoStruct info_table[] = {
 		"warn_no_nline",
 		OUTPUT_BOOLEAN,
 		&ConfigFileEntry.warn_no_nline,
-		"Display warning if connecting server lacks N-line"
+		"Display warning if connecting server lacks connect block"
 	},
 	{
 		"use_propagated_bans",
