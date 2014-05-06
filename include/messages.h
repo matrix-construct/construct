@@ -117,7 +117,7 @@
 #ifndef CUSTOM_BRANDING
 #define NUMERIC_STR_351      "%s(%s). %s :%s TS%dow %s"
 #else
-#define NUMERIC_STR_351      "%s(%s, %s). %s :%s TS%dow %s"
+#define NUMERIC_STR_351      "%s(%s,%s). %s :%s TS%dow %s"
 #endif
 #define NUMERIC_STR_352      ":%s 352 %s %s %s %s %s %s %s :%d %s"
 #define NUMERIC_STR_353      ":%s 353 %s %s %s :"
