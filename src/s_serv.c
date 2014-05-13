@@ -555,7 +555,7 @@ burst_modes_TS6(struct Client *client_p, struct Channel *chptr,
 static void
 burst_TS6(struct Client *client_p)
 {
-	static char ubuf[12];
+	char ubuf[BUFSIZE];
 	struct Client *target_p;
 	struct Channel *chptr;
 	struct membership *msptr;
