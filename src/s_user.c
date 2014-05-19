@@ -592,7 +592,7 @@ register_local_user(struct Client *client_p, struct Client *source_p, const char
 int
 introduce_client(struct Client *client_p, struct Client *source_p, struct User *user, const char *nick, int use_euid)
 {
-	static char ubuf[12];
+	char ubuf[BUFSIZE];
 	struct Client *identifyservice_p;
 	char *p;
 	hook_data_umode_changed hdata;
