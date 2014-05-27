@@ -29,9 +29,10 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 
 PROGRAM_PREFIX   = @PROGRAM_PREFIX@
 
+SQLITE_LIB	= @SQLITE_LD@
 ZIP_LIB		= @ZLIB_LD@
 
-IRCDLIBS	= @MODULES_LIBS@ -L../libratbox/src/.libs -lratbox @LIBS@ $(SSL_LIBS) $(ZIP_LIB)
+IRCDLIBS	= @MODULES_LIBS@ -L../libratbox/src/.libs -lratbox @LIBS@ $(SSL_LIBS) $(ZIP_LIB) $(SQLITE_LIB)
 
 INCLUDES        = -I. -I../include -I../libratbox/include $(SSL_INCLUDES)
 CPPFLAGS        = ${INCLUDES} @CPPFLAGS@
@@ -45,16 +46,22 @@ PROGS		= $(pkglibexec_PROGS) $(bin_PROGS)
 BANDB_SOURCES =     \
   bandb.c	\
   rsdb_snprintf.c \
-  rsdb_sqlite3.c \
-  sqlite3.c
+  rsdb_sqlite3.c
+
+ifndef SQLITE_LIB
+	BANDB_SOURCES+=sqlite3.c
+endif
 
 BANDB_OBJECTS = ${BANDB_SOURCES:.c=.o}
 
 BANTOOL_SOURCES =     \
   bantool.c	\
   rsdb_snprintf.c \
-  rsdb_sqlite3.c \
-  sqlite3.c
+  rsdb_sqlite3.c
+
+ifndef SQLITE_LIB
+	BANTOOL_SOURCES+=sqlite3.c
+endif
 
 BANTOOL_OBJECTS = ${BANTOOL_SOURCES:.c=.o}
 

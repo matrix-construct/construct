@@ -564,6 +564,21 @@ AC_CHECK_HEADER(zlib.h, [
 
 fi
 
+AC_ARG_ENABLE(shared-sqlite,
+AC_HELP_STRING([--enable-shared-sqlite],[Use shared sqlite]),
+[shared_sqlite=$enableval],[shared_sqlite=no])
+
+if test "$shared_sqlite" = yes; then
+
+AC_CHECK_HEADER(sqlite3.h, [
+    AC_CHECK_LIB(sqlite3, sqlite3_open,
+    [
+        AC_SUBST(SQLITE_LD, -lsqlite3)
+    ], shared_sqlite=no)
+], shared_sqlite=no)
+
+fi
+
 dnl IO Loop Selection
 dnl =================
 

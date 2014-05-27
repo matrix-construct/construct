@@ -642,6 +642,7 @@ HELP_DIR
 logdir
 LOG_DIR
 ETC_DIR
+SQLITE_LD
 ZLIB_LD
 ENCSPEED
 ALLOCA
@@ -732,6 +733,7 @@ enable_ipv6
 enable_openssl
 with_zlib_path
 enable_zlib
+enable_shared_sqlite
 enable_ports
 enable_poll
 enable_select
@@ -1379,6 +1381,7 @@ Optional Features:
   --enable-openssl=DIR    Enable OpenSSL support (DIR optional).
   --disable-openssl       Disable OpenSSL support.
   --disable-zlib          Disable ziplinks support
+  --enable-shared-sqlite  Use shared sqlite
   --enable-ports          Force solaris I/O ports subsystem usage.
   --enable-poll           Force poll() usage.
   --enable-select         Force select() usage.
@@ -7238,6 +7241,73 @@ fi
 
 else
   zlib=no
+fi
+
+
+
+fi
+
+# Check whether --enable-shared-sqlite was given.
+if test "${enable_shared_sqlite+set}" = set; then :
+  enableval=$enable_shared_sqlite; shared_sqlite=$enableval
+else
+  shared_sqlite=no
+fi
+
+
+if test "$shared_sqlite" = yes; then
+
+ac_fn_c_check_header_mongrel "$LINENO" "sqlite3.h" "ac_cv_header_sqlite3_h" "$ac_includes_default"
+if test "x$ac_cv_header_sqlite3_h" = xyes; then :
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sqlite3_open in -lsqlite3" >&5
+$as_echo_n "checking for sqlite3_open in -lsqlite3... " >&6; }
+if ${ac_cv_lib_sqlite3_sqlite3_open+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsqlite3  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char sqlite3_open ();
+int
+main ()
+{
+return sqlite3_open ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_sqlite3_sqlite3_open=yes
+else
+  ac_cv_lib_sqlite3_sqlite3_open=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_sqlite3_sqlite3_open" >&5
+$as_echo "$ac_cv_lib_sqlite3_sqlite3_open" >&6; }
+if test "x$ac_cv_lib_sqlite3_sqlite3_open" = xyes; then :
+
+        SQLITE_LD=-lsqlite3
+
+
+else
+  shared_sqlite=no
+fi
+
+
+else
+  shared_sqlite=no
 fi
 
 
