@@ -113,17 +113,8 @@ struct ChModeChange
 	const char *arg;
 	const char *id;
 	int dir;
-	int caps;
-	int nocaps;
 	int mems;
 	struct Client *client;
-};
-
-struct ChCapCombo
-{
-	int count;
-	int cap_yes;
-	int cap_no;
 };
 
 typedef void (*ChannelModeFunc)(struct Client *source_p, struct Channel *chptr,

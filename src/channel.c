@@ -1219,8 +1219,6 @@ send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
 	int i, mbl, pbl, nc, mc, preflen, len;
 	char *pbuf;
 	const char *arg;
-	int cap;
-	int nocap;
 	int dir;
 	int arglen;
 
@@ -1245,9 +1243,6 @@ send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
 		 */
 		if (mode_changes[i].letter == 0)
 			continue;
-
-		cap = mode_changes[i].caps;
-		nocap = mode_changes[i].nocaps;
 
 		if (!EmptyString(mode_changes[i].id))
 			arg = mode_changes[i].id;
@@ -1274,7 +1269,7 @@ send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
 			   ((mbl + pbl + arglen + 4) > (BUFSIZE - 3))))
 		{
 			if(nc != 0)
-				sendto_server(client_p, chptr, cap, nocap,
+				sendto_server(client_p, chptr, NOCAPS, NOCAPS,
 					      "%s %s", modebuf, parabuf);
 			nc = 0;
 			mc = 0;
@@ -1309,7 +1304,7 @@ send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
 		parabuf[pbl - 1] = 0;
 
 	if(nc != 0)
-		sendto_server(client_p, chptr, cap, nocap, "%s %s", modebuf, parabuf);
+		sendto_server(client_p, chptr, NOCAPS, NOCAPS, "%s %s", modebuf, parabuf);
 }
 
 void
