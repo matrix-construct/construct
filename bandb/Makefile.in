@@ -46,22 +46,16 @@ PROGS		= $(pkglibexec_PROGS) $(bin_PROGS)
 BANDB_SOURCES =     \
   bandb.c	\
   rsdb_snprintf.c \
-  rsdb_sqlite3.c
-
-ifndef SQLITE_LIB
-	BANDB_SOURCES+=sqlite3.c
-endif
+  rsdb_sqlite3.c \
+  @SQLITE_SRC@
 
 BANDB_OBJECTS = ${BANDB_SOURCES:.c=.o}
 
 BANTOOL_SOURCES =     \
   bantool.c	\
   rsdb_snprintf.c \
-  rsdb_sqlite3.c
-
-ifndef SQLITE_LIB
-	BANTOOL_SOURCES+=sqlite3.c
-endif
+  rsdb_sqlite3.c \
+  @SQLITE_SRC@
 
 BANTOOL_OBJECTS = ${BANTOOL_SOURCES:.c=.o}
 

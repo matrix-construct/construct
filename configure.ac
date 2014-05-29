@@ -579,6 +579,10 @@ AC_CHECK_HEADER(sqlite3.h, [
 
 fi
 
+if test "$shared_sqlite" = no; then
+    AC_SUBST(SQLITE_SRC, sqlite3.c)
+fi
+
 dnl IO Loop Selection
 dnl =================
 

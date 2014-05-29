@@ -642,6 +642,7 @@ HELP_DIR
 logdir
 LOG_DIR
 ETC_DIR
+SQLITE_SRC
 SQLITE_LD
 ZLIB_LD
 ENCSPEED
@@ -7311,6 +7312,11 @@ else
 fi
 
 
+
+fi
+
+if test "$shared_sqlite" = no; then
+    SQLITE_SRC=sqlite3.c
 
 fi
 
