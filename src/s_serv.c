@@ -127,6 +127,8 @@ init_builtin_capabs(void)
 	CAP_MLOCK = capability_put(serv_capindex, "MLOCK");
 
 	capability_require(serv_capindex, "QS");
+	capability_require(serv_capindex, "EX");
+	capability_require(serv_capindex, "IE");
 	capability_require(serv_capindex, "ENCAP");
 }
 

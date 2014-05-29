@@ -211,10 +211,10 @@ source: unregistered server
 propagation: none
 parameters: space separated capability list
 
-Sends capabilities of the server. This must include QS and ENCAP. It is also
-strongly recommended to include EX, CHW, IE and KNOCK, and for charybdis TS6
-also SAVE and EUID. For use with services, SERVICES and RSFNC are strongly
-recommended.
+Sends capabilities of the server. This must include QS and ENCAP, and for
+charybdis TS6 also EX and IE. It is also strongly recommended to include EX,
+CHW, IE and KNOCK, and for charybdis TS6 also SAVE and EUID. For use with
+services, SERVICES and RSFNC are strongly recommended.
 
 The capabilities may depend on the configuration for the server they are sent
 to.
