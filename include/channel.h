@@ -114,7 +114,6 @@ struct ChModeChange
 	const char *id;
 	int dir;
 	int mems;
-	struct Client *client;
 };
 
 typedef void (*ChannelModeFunc)(struct Client *source_p, struct Channel *chptr,
