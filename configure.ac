@@ -564,9 +564,9 @@ AC_CHECK_HEADER(zlib.h, [
 
 fi
 
-AC_ARG_ENABLE(shared-sqlite,
-AC_HELP_STRING([--enable-shared-sqlite],[Use shared sqlite]),
-[shared_sqlite=$enableval],[shared_sqlite=no])
+AC_ARG_WITH(shared-sqlite,
+AC_HELP_STRING([--with-shared-sqlite],[Use shared sqlite]),
+[shared_sqlite=$withval],[shared_sqlite=no])
 
 if test "$shared_sqlite" = yes; then
 
