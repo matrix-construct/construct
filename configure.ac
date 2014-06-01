@@ -564,24 +564,43 @@ AC_CHECK_HEADER(zlib.h, [
 
 fi
 
+dnl Check for shared sqlite
+dnl ======================
 AC_ARG_WITH(shared-sqlite,
 AC_HELP_STRING([--with-shared-sqlite],[Use shared sqlite]),
 [shared_sqlite=$withval],[shared_sqlite=no])
 
 if test "$shared_sqlite" = yes; then
 
+saveCPPFLAGS="$CPPFLAGS"
+saveLIBS="$LIBS"
+
+dnl XXX: *BSD uses /usr/local for shared sqlite libs and includes
+OSNAME=`uname -s`
+case $OSNAME in
+	*BSD)
+		CPPFLAGS="$CPPFLAGS -I/usr/local/include"
+		LIBS="$LIBS -L/usr/local/lib"
+	;;
+esac
+
 AC_CHECK_HEADER(sqlite3.h, [
-    AC_CHECK_LIB(sqlite3, sqlite3_open,
-    [
-        AC_SUBST(SQLITE_LD, -lsqlite3)
-    ], shared_sqlite=no)
+	AC_CHECK_LIB(sqlite3, sqlite3_open, [
+		SQLITE_LD="$CPPFLAGS $LIBS -lsqlite3"
+	], shared_sqlite=no)
 ], shared_sqlite=no)
 
 fi
 
 if test "$shared_sqlite" = no; then
-    AC_SUBST(SQLITE_SRC, sqlite3.c)
+	SQLITE_SRC="sqlite3.c"
 fi
+
+AC_SUBST(SQLITE_LD)
+AC_SUBST(SQLITE_SRC)
+
+CPPFLAGS="$saveCPPFLAGS"
+LIBS="$saveLIBS"
 
 dnl IO Loop Selection
 dnl =================

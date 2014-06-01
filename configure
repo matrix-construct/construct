@@ -7259,10 +7259,21 @@ fi
 
 if test "$shared_sqlite" = yes; then
 
+saveCPPFLAGS="$CPPFLAGS"
+saveLIBS="$LIBS"
+
+OSNAME=`uname -s`
+case $OSNAME in
+	*BSD)
+		CPPFLAGS="$CPPFLAGS -I/usr/local/include"
+		LIBS="$LIBS -L/usr/local/lib"
+	;;
+esac
+
 ac_fn_c_check_header_mongrel "$LINENO" "sqlite3.h" "ac_cv_header_sqlite3_h" "$ac_includes_default"
 if test "x$ac_cv_header_sqlite3_h" = xyes; then :
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sqlite3_open in -lsqlite3" >&5
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sqlite3_open in -lsqlite3" >&5
 $as_echo_n "checking for sqlite3_open in -lsqlite3... " >&6; }
 if ${ac_cv_lib_sqlite3_sqlite3_open+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -7300,8 +7311,7 @@ fi
 $as_echo "$ac_cv_lib_sqlite3_sqlite3_open" >&6; }
 if test "x$ac_cv_lib_sqlite3_sqlite3_open" = xyes; then :
 
-        SQLITE_LD=-lsqlite3
-
+		SQLITE_LD="$CPPFLAGS $LIBS -lsqlite3"
 
 else
   shared_sqlite=no
@@ -7317,9 +7327,14 @@ fi
 fi
 
 if test "$shared_sqlite" = no; then
-    SQLITE_SRC=sqlite3.c
-
+	SQLITE_SRC="sqlite3.c"
 fi
+
+
+
+
+CPPFLAGS="$saveCPPFLAGS"
+LIBS="$saveLIBS"
 
 
 # Check whether --enable-ports was given.
