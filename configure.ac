@@ -12,6 +12,7 @@ AC_COPYRIGHT([$Id: configure.ac 3516 2007-06-10 16:14:03Z jilles $])
 
 AC_INIT([charybdis], [3.5.0-dev])
 
+AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADER(include/setup.h)
 
 AC_PREFIX_DEFAULT($HOME/ircd)
@@ -26,7 +27,6 @@ AC_LANG(C)
 dnl Make sure autoconf doesn't interfere with cflags -jmallett
 CFLAGS="$OLD_CFLAGS"
 
-AC_CONFIG_SUBDIRS(libratbox)
 
 dnl Check for various compilers. -jmallett
 dnl But if $CC turns out to be gcc, sure as hell it's, well, gcc. -joshk
@@ -563,6 +563,27 @@ AC_CHECK_HEADER(zlib.h, [
 ], zlib=no)
 
 fi
+
+dnl Check for shared sqlite
+dnl ======================
+AC_ARG_WITH(shared-sqlite,
+AC_HELP_STRING([--with-shared-sqlite],[Use shared sqlite]),
+[shared_sqlite=$withval],[shared_sqlite=no])
+
+if test "$shared_sqlite" = yes; then
+	PKG_CHECK_MODULES(SQLITE, [sqlite3],
+	[
+		shared_sqlite=yes
+	], shared_sqlite=no)
+fi
+
+if test "$shared_sqlite" = no; then
+	SQLITE_SRC="sqlite3.c"
+fi
+
+AC_SUBST(SQLITE_LD, "$SQLITE_LIBS")
+AC_SUBST(SQLITE_INCLUDES, "$SQLITE_CFLAGS")
+AC_SUBST(SQLITE_SRC)
 
 dnl IO Loop Selection
 dnl =================
