@@ -32,7 +32,7 @@ port=$(date +50%S)
 sed -e '/^serverinfo/,/^}/s/name = ".*";/name = "'"$servername"'";/' \
 	-e '/^listen/,/^}/s/port = .*;/port = '"$port"';/' \
 	-e '/^blacklist/,/^}/s/^/#/' \
-	etc/example.conf >etc/ircd.conf || exit 2
+	etc/ircd.conf.example >etc/ircd.conf || exit 2
 bin/ircd || exit 2
 ircdpid=$(cat etc/ircd.pid) || exit 2
 cd "$dir" || exit 2

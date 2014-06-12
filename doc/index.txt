@@ -6,7 +6,7 @@ CIDR.txt		- Description of CIDR in IPv4
 Tao-of-IRC.940110       - No comment...
 challenge.txt           - Overview of the challenge/response system for
                           obtaining operator status
-example.conf            - An example ircd.conf file describing most of the
+ircd.conf.example       - An example ircd.conf file describing most of the
                           user settable options
 guidelines.txt		- Documentation guidelines
 hooks.txt		- Overview of the hooks available
