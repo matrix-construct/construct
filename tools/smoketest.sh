@@ -42,7 +42,7 @@ echo "Will use servername $servername port $port, pid is $ircdpid"
 	echo 'NICK test1'
 	sleep 1
 	echo 'JOIN #test'
-	sleep 1
+	sleep 2
 	echo "PRIVMSG #test :channel message via $servername"
 	echo "PRIVMSG @#test :chanops 1 via $servername"
 	echo "MODE #test +o test2"
@@ -53,7 +53,7 @@ echo "Will use servername $servername port $port, pid is $ircdpid"
 {
 	echo 'NICK test2'
 	echo 'USER testu2 . . :Test user'
-	sleep 1
+	sleep 2
 	echo 'JOIN #test'
 	echo "PRIVMSG test1 :private message via $servername"
 	sleep 2
