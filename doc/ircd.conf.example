@@ -62,7 +62,7 @@ serverinfo {
 	ssl_private_key = "etc/ssl.key";
 
 	/* ssl_cert: certificate for our ssl server */
-	ssl_cert = "etc/ssl.cert";
+	ssl_cert = "etc/ssl.pem";
 
 	/* ssl_dh_params: DH parameters, generate with openssl dhparam -out dh.pem 1024 */
 	ssl_dh_params = "etc/dh.pem";
