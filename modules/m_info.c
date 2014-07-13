@@ -781,7 +781,7 @@ send_conf_options(struct Client *source_p)
 	{
 		if(infoptr->intvalue)
 		{
-			sendto_one(source_p, ":%s %d %s :%-30s %-5d [%-30s]",
+			sendto_one(source_p, ":%s %d %s :%-30s %-16d [%s]",
 					get_id(&me, source_p), RPL_INFO,
 					get_id(source_p, source_p),
 					infoptr->name, infoptr->intvalue,
@@ -789,7 +789,7 @@ send_conf_options(struct Client *source_p)
 		}
 		else
 		{
-			sendto_one(source_p, ":%s %d %s :%-30s %-5s [%-30s]",
+			sendto_one(source_p, ":%s %d %s :%-30s %-16s [%s]",
 					get_id(&me, source_p), RPL_INFO,
 					get_id(source_p, source_p),
 					infoptr->name, infoptr->strvalue,
@@ -804,14 +804,14 @@ send_conf_options(struct Client *source_p)
 	{
 		switch (info_table[i].output_type)
 		{
-			/*
-			 * For "char *" references
-			 */
+				/*
+				 * For "char *" references
+				 */
 			case OUTPUT_STRING:
 				{
 					char *option = *((char **) info_table[i].option);
 
-					sendto_one(source_p, ":%s %d %s :%-30s %-5s [%-30s]",
+					sendto_one(source_p, ":%s %d %s :%-30s %-16s [%s]",
 							get_id(&me, source_p), RPL_INFO,
 							get_id(source_p, source_p),
 							info_table[i].name,
@@ -827,7 +827,7 @@ send_conf_options(struct Client *source_p)
 				{
 					char *option = (char *) info_table[i].option;
 
-					sendto_one(source_p, ":%s %d %s :%-30s %-5s [%-30s]",
+					sendto_one(source_p, ":%s %d %s :%-30s %-16s [%s]",
 							get_id(&me, source_p), RPL_INFO,
 							get_id(source_p, source_p),
 							info_table[i].name,
@@ -843,7 +843,7 @@ send_conf_options(struct Client *source_p)
 				{
 					int option = *((int *) info_table[i].option);
 
-					sendto_one(source_p, ":%s %d %s :%-30s %-5d [%-30s]",
+					sendto_one(source_p, ":%s %d %s :%-30s %-16d [%s]",
 							get_id(&me, source_p), RPL_INFO,
 							get_id(source_p, source_p),
 							info_table[i].name,
@@ -860,7 +860,7 @@ send_conf_options(struct Client *source_p)
 				{
 					int option = *((int *) info_table[i].option);
 
-					sendto_one(source_p, ":%s %d %s :%-30s %-5s [%-30s]",
+					sendto_one(source_p, ":%s %d %s :%-30s %-16s [%s]",
 							get_id(&me, source_p), RPL_INFO,
 							get_id(source_p, source_p),
 							info_table[i].name,
@@ -876,7 +876,7 @@ send_conf_options(struct Client *source_p)
 				{
 					int option = *((int *) info_table[i].option);
 
-					sendto_one(source_p, ":%s %d %s :%-30s %-5s [%-30s]",
+					sendto_one(source_p, ":%s %d %s :%-30s %-16s [%s]",
 							get_id(&me, source_p), RPL_INFO,
 							get_id(source_p, source_p),
 							info_table[i].name,
@@ -890,7 +890,7 @@ send_conf_options(struct Client *source_p)
 				{
 					int option = *((int *) info_table[i].option);
 
-					sendto_one(source_p, ":%s %d %s :%-30s %-5s [%-30s]",
+					sendto_one(source_p, ":%s %d %s :%-30s %-16s [%s]",
 							me.name, RPL_INFO, source_p->name,
 							info_table[i].name,
 							option ? ((option == 1) ? "MASK" : "YES") : "NO",
