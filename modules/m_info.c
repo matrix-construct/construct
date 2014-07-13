@@ -357,12 +357,6 @@ static struct InfoStruct info_table[] = {
 		"Network name"
 	},
 	{
-		"network_desc",
-		OUTPUT_STRING,
-		&ServerInfo.network_desc,
-		"Network description"
-	},
-	{
 		"nick_delay",
 		OUTPUT_DECIMAL,
 		&ConfigFileEntry.nick_delay,

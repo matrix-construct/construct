@@ -45,7 +45,6 @@ serverinfo {
         sid = "<replaceable>text</replaceable>";
         description = "<replaceable>text</replaceable>";
         network_name = "<replaceable>text</replaceable>";
-        network_desc = "<replaceable>text</replaceable>";
         hub = <replaceable>boolean</replaceable>;
         vhost = "<replaceable>text</replaceable>";
         vhost6 = "<replaceable>text</replaceable>";
@@ -91,15 +90,6 @@ serverinfo {
 	      <para>
 		The name of the IRC network that this server will be a member of.
 		This is used in the welcome message and NETWORK= in 005.
-	      </para>
-	    </listitem>
-	  </varlistentry>
-	  <varlistentry>
-	    <term>network_desc</term>
-	    <listitem>
-	      <para>
-		A description of the IRC network that this server will be a member of.
-		This is currently unused.
 	      </para>
 	    </listitem>
 	  </varlistentry>

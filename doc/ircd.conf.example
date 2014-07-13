@@ -48,7 +48,6 @@ serverinfo {
 	sid = "42X";
 	description = "charybdis test server";
 	network_name = "StaticBox";
-	network_desc = "Your IRC network.";
 	hub = yes;
 
 	/* On multi-homed hosts you may need the following. These define

@@ -2185,7 +2185,6 @@ remove_conf_item(const char *topconf, const char *name)
 static struct ConfEntry conf_serverinfo_table[] =
 {
 	{ "description", 	CF_QSTRING, NULL, 0, &ServerInfo.description	},
-	{ "network_desc", 	CF_QSTRING, NULL, 0, &ServerInfo.network_desc	},
 	{ "hub", 		CF_YESNO,   NULL, 0, &ServerInfo.hub		},
 
 	{ "network_name", 	CF_QSTRING, conf_set_serverinfo_network_name,	0, NULL },
