@@ -8,6 +8,7 @@ server protocol
   unsetting the umode after connection).
 - Fix a remote-triggerable crash triggered by the CAPAB parsing code.
 - As per the TS6 spec, require QS and ENCAP capabilities.
+- Require EX and IE capabilities (+e and +I cmodes).
 - Check that UIDs start with the server's SID.
 user
 - Allow mode queries on mlocked modes. In particular, allow /mode #channel f
@@ -20,6 +21,11 @@ user
 - Reject nicks with '~' in them, rather than truncating at the '~'.
 - Remove CHARSET=ascii from ISUPPORT
 - Use the normal rules for IP visibility in /whowas.
+- Cmode +c now strips '\x0F' (^O, formatting off), fixing weird rendering in
+  some clients that internally use mIRC formatting such as highlighted
+  messages in HexChat.
+- Indicate join failure because of the chm_sslonly extension (cmode +S) using
+  the same 480 numeric as ircd-ratbox.
 oper
 - Fix a crash with /testline.
 - Complain to opers if a server that isn't a service tries to
@@ -37,6 +43,8 @@ config
 - Allow matching specific replies of DNSBLs, using the new matches option.
 - Remove blowfish crypt since it has the BSD advertising clause.
 - Fix SHA256 ($5$) crypt.
+- Make the channel::channel_target_change option actually work (it used to be
+  always on).
 misc
 - Work around timerfd/signalfd brokenness on OpenVZ.
 - Fix a compilation issue in libratbox/src/sigio.c with recent glibc.
@@ -53,6 +61,8 @@ misc
 - Fix a crash when compiled with recent clang on 32-bit systems.
 - Fix various memory leaks in rehash.
 - Fix various code quality issues.
+- Add --with-shared-sqlite to allow distribution packages to link to a shared
+  sqlite library. Using this is not recommended for on-server compilation.
 
 -- charybdis-3.4.0
 
