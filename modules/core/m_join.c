@@ -540,6 +540,9 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 	static char empty[] = "";
 	rb_dlink_node *ptr, *next_ptr;
 
+	if(parc < 5)
+		return 0;
+
 	if(!IsChannelName(parv[2]) || !check_channel_name(parv[2]))
 		return 0;
 
