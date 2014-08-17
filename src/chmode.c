@@ -698,6 +698,9 @@ chm_staff(struct Client *source_p, struct Channel *chptr,
 		return;
 	}
 
+	if(!allow_mode_change(source_p, chptr, CHFL_CHANOP, errors, c))
+		return;
+
 	if(MyClient(source_p) && (++mode_limit_simple > MAXMODES_SIMPLE))
 		return;
 
