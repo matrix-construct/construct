@@ -291,7 +291,8 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 					if(kline_queued == 0)
 					{
 						rb_event_addonce("check_klines", check_klines_event, NULL,
-								 ConfigFileEntry.kline_delay);
+							ConfigFileEntry.kline_delay ?
+								ConfigFileEntry.kline_delay : 1);
 						kline_queued = 1;
 					}
 				}

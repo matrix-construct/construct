@@ -88,6 +88,11 @@ rb_event_find(EVH * func, void *arg)
 struct ev_entry *
 rb_event_add(const char *name, EVH * func, void *arg, time_t when)
 {
+	if (rb_unlikely(when <= 0)) {
+		rb_lib_log("rb_event_add: tried to schedule %s event with a delay of "
+			"%d seconds", name, (int) when);
+		when = 1;
+	}
 	struct ev_entry *ev;
 	ev = rb_malloc(sizeof(struct ev_entry));
 	ev->func = func;
@@ -109,6 +114,11 @@ rb_event_add(const char *name, EVH * func, void *arg, time_t when)
 struct ev_entry *
 rb_event_addonce(const char *name, EVH * func, void *arg, time_t when)
 {
+	if (rb_unlikely(when <= 0)) {
+		rb_lib_log("rb_event_addonce: tried to schedule %s event to run in "
+			"%d seconds", name, (int) when);
+		when = 1;
+	}
 	struct ev_entry *ev;
 	ev = rb_malloc(sizeof(struct ev_entry));
 	ev->func = func;
