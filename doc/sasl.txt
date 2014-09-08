@@ -8,10 +8,10 @@ specification, at address:
 
 This document describes the client protocol for SASL authentication, as
 implemented in Charybdis and Atheme. The SASL protocol in general is documented
-in RFC 4422 [2], along with the 'EXTERNAL' mechanism. The most commonly used
-'PLAIN' mechanism is documented in RFC 4616 [3].
+in RFC 4422 [1], along with the 'EXTERNAL' mechanism. The most commonly used
+'PLAIN' mechanism is documented in RFC 4616 [2].
 
-SASL authentication relies on the CAP client capability framework [1].
+SASL authentication relies on the CAP client capability framework [3].
 Support for SASL authentication is indicated with the "sasl" capability.
 The client MUST enable the sasl capability before using the AUTHENTICATE
 command defined by this specification.
@@ -114,13 +114,17 @@ C: CAP END
 S: :jaguar.test 001 jilles :Welcome to the jillestest Internet Relay Chat Network jilles
 <usual welcome messages>
 
-[1] K. Mitchell, P. Lorier (Undernet IRC Network), L. Hardy (ircd-ratbox), P.
+[1] A. Melnikov (Isode Limited), K. Zeilenga (OpenLDAP Foundation), Simple
+Authentication and Security Layer (SASL). June 2006.
+<https://tools.ietf.org/html/rfc4422>
+
+[2] K. Zeilenga (OpenLDAP Foundation), The PLAIN Simple Authentication and
+Security Layer (SASL) Mechanism. August 2006.
+<https://tools.ietf.org/html/rfc4616>
+
+[3] K. Mitchell, P. Lorier (Undernet IRC Network), L. Hardy (ircd-ratbox), P.
 Kucharski (IRCnet), IRC Client Capabilities Extension. March 2005.
 This internet-draft has expired; it can still be found on
 http://www.leeh.co.uk/draft-mitchell-irc-capabilities-02.html
-
-[2] A. Melnikov (Isode Limited), K. Zeilenga (OpenLDAP Foundation), Simple Authentication and Security Layer (SASL). June 2006. <https://tools.ietf.org/html/rfc4422>
-
-[3] K. Zeilenga (OpenLDAP Foundation), The PLAIN Simple Authentication and Security Layer (SASL) Mechanism. August 2006. <https://tools.ietf.org/html/rfc4616>
 
 $Id: sasl.txt 3169 2007-01-28 22:13:18Z jilles $
