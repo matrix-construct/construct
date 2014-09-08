@@ -1,8 +1,15 @@
 SASL authentication
 -------------------
 
+Note: The primary location for this document is now the IRCv3 sasl-3.1
+specification, at address:
+
+    http://ircv3.atheme.org/extensions/sasl-3.1
+
 This document describes the client protocol for SASL authentication, as
-implemented in charybdis and atheme.
+implemented in Charybdis and Atheme. The SASL protocol in general is documented
+in RFC 4422 [2], along with the 'EXTERNAL' mechanism. The most commonly used
+'PLAIN' mechanism is documented in RFC 4616 [3].
 
 SASL authentication relies on the CAP client capability framework [1].
 Support for SASL authentication is indicated with the "sasl" capability.
@@ -112,8 +119,8 @@ Kucharski (IRCnet), IRC Client Capabilities Extension. March 2005.
 This internet-draft has expired; it can still be found on
 http://www.leeh.co.uk/draft-mitchell-irc-capabilities-02.html
 
-See also http://sasl.charybdis.be/ and
-http://wiki.atheme.net/index.php/PR:SASL_Authentication (these links are
-currently dead but may be resurrected in the future).
+[2] A. Melnikov (Isode Limited), K. Zeilenga (OpenLDAP Foundation), Simple Authentication and Security Layer (SASL). June 2006. <https://tools.ietf.org/html/rfc4422>
+
+[3] K. Zeilenga (OpenLDAP Foundation), The PLAIN Simple Authentication and Security Layer (SASL) Mechanism. August 2006. <https://tools.ietf.org/html/rfc4616>
 
 $Id: sasl.txt 3169 2007-01-28 22:13:18Z jilles $
