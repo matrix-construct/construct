@@ -40,18 +40,6 @@
 #include "match.h"
 
 
-
-/* -TimeMr14C:
- * I have moved the dl* function definitions and
- * the two functions (load_a_module / unload_a_module) to the
- * file dynlink.c
- * And also made the necessary changes to those functions
- * to comply with shl_load and friends.
- * In this file, to keep consistency with the makefile,
- * I added the ability to load *.sl files, too.
- * 27/02/2002
- */
-
 #ifndef STATIC_MODULES
 
 struct module **modlist = NULL;
