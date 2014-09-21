@@ -415,6 +415,7 @@ rb_base64_decode(const unsigned char *str, int length, int *ret)
 			return NULL;
 		case 2:
 			k++;
+			/* FALLTHROUGH */
 		case 3:
 			result[k++] = 0;
 		}
