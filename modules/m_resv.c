@@ -513,6 +513,7 @@ remove_resv(struct Client *source_p, const char *name, int propagated)
 {
 	struct ConfItem *aconf = NULL;
 	rb_dlink_node *ptr;
+	time_t now;
 
 	if(IsChannelName(name))
 	{
@@ -540,8 +541,9 @@ remove_resv(struct Client *source_p, const char *name, int propagated)
 					       "%s has removed the global RESV for: [%s]",
 					       get_oper_name(source_p), name);
 			ilog(L_KLINE, "UR %s %s", get_oper_name(source_p), name);
-			if(aconf->created < rb_current_time())
-				aconf->created = rb_current_time();
+			now = rb_current_time();
+			if(aconf->created < now)
+				aconf->created = now;
 			else
 				aconf->created++;
 			aconf->hold = aconf->created;
@@ -554,7 +556,7 @@ remove_resv(struct Client *source_p, const char *name, int propagated)
 					(unsigned long)aconf->created,
 					0,
 					(int)(aconf->lifetime - aconf->created));
-			deactivate_conf(aconf, ptr);
+			deactivate_conf(aconf, ptr, now);
 			return;
 		}
 		else if(propagated && rb_dlink_list_length(&cluster_conf_list) > 0)
@@ -613,8 +615,9 @@ remove_resv(struct Client *source_p, const char *name, int propagated)
 					       "%s has removed the global RESV for: [%s]",
 					       get_oper_name(source_p), name);
 			ilog(L_KLINE, "UR %s %s", get_oper_name(source_p), name);
-			if(aconf->created < rb_current_time())
-				aconf->created = rb_current_time();
+			now = rb_current_time();
+			if(aconf->created < now)
+				aconf->created = now;
 			else
 				aconf->created++;
 			aconf->hold = aconf->created;
@@ -627,7 +630,7 @@ remove_resv(struct Client *source_p, const char *name, int propagated)
 					(unsigned long)aconf->created,
 					0,
 					(int)(aconf->lifetime - aconf->created));
-			deactivate_conf(aconf, ptr);
+			deactivate_conf(aconf, ptr, now);
 			return;
 		}
 		else if(propagated && rb_dlink_list_length(&cluster_conf_list) > 0)

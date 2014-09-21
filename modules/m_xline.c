@@ -471,6 +471,7 @@ remove_xline(struct Client *source_p, const char *name, int propagated)
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
+	time_t now;
 
 	RB_DLINK_FOREACH(ptr, xline_conf_list.head)
 	{
@@ -493,8 +494,9 @@ remove_xline(struct Client *source_p, const char *name, int propagated)
 						       "%s has removed the global X-Line for: [%s]",
 						       get_oper_name(source_p), name);
 				ilog(L_KLINE, "UX %s %s", get_oper_name(source_p), name);
-				if(aconf->created < rb_current_time())
-					aconf->created = rb_current_time();
+				now = rb_current_time();
+				if(aconf->created < now)
+					aconf->created = now;
 				else
 					aconf->created++;
 				aconf->hold = aconf->created;
@@ -508,7 +510,7 @@ remove_xline(struct Client *source_p, const char *name, int propagated)
 						0,
 						(int)(aconf->lifetime - aconf->created));
 				remove_reject_mask(aconf->host, NULL);
-				deactivate_conf(aconf, ptr);
+				deactivate_conf(aconf, ptr, now);
 				return;
 			}
 			else if(propagated && rb_dlink_list_length(&cluster_conf_list))

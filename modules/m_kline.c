@@ -834,6 +834,7 @@ static void
 remove_prop_kline(struct Client *source_p, struct ConfItem *aconf)
 {
 	rb_dlink_node *ptr;
+	time_t now;
 
 	ptr = rb_dlinkFind(aconf, &prop_bans);
 	if (!ptr)
@@ -848,8 +849,9 @@ remove_prop_kline(struct Client *source_p, struct ConfItem *aconf)
 
 	ilog(L_KLINE, "UK %s %s %s",
 	     get_oper_name(source_p), aconf->user, aconf->host);
-	if(aconf->created < rb_current_time())
-		aconf->created = rb_current_time();
+	now = rb_current_time();
+	if(aconf->created < now)
+		aconf->created = now;
 	else
 		aconf->created++;
 	aconf->hold = aconf->created;
@@ -863,5 +865,5 @@ remove_prop_kline(struct Client *source_p, struct ConfItem *aconf)
 			0,
 			(int)(aconf->lifetime - aconf->created));
 	remove_reject_mask(aconf->user, aconf->host);
-	deactivate_conf(aconf, ptr);
+	deactivate_conf(aconf, ptr, now);
 }
