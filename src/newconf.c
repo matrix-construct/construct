@@ -1910,11 +1910,11 @@ conf_set_blacklist_matches(void *data)
 static void
 conf_set_blacklist_reason(void *data)
 {
-	yy_blacklist_reason = rb_strdup(data);
 	rb_dlink_node *ptr, *nptr;
 
-	if (yy_blacklist_host && yy_blacklist_reason)
+	if (yy_blacklist_host && data)
 	{
+		yy_blacklist_reason = rb_strdup(data);
 		if (yy_blacklist_ipv6)
 		{
 			/* Make sure things fit (64 = alnum count + dots) */
