@@ -103,37 +103,6 @@
          Note: If you use different names in ircd.conf, you must 'touch' the
          specific names.
 
-   6. 
-
-       If you are upgrading from Hybrid 5 or Hybrid 6, the config file has
-       changed drastically...
-
-       There is a utility to convert your old config file to the new format.
-       In prefix/bin there is something called "convertconf". Its usage is:
-       ./convertconf (old config file to convert) (converted file name)
-
-       Convertconf will NOT convert I: lines.  You must use "convertilines"
-       for this which contains a much superior method of conversion and
-       will group I: together under one auth {};.
-
-       Once this is done, move your new config to prefix/etc/ircd.conf and
-       EDIT IT! There are still things that need changing in the config,
-       including the fact that classes MUST be above auth/connect blocks!
-
-   7. 
-
-       If you are upgrading from Hybrid 5 or Hybrid 6, the kline file has
-       also changed...
-
-       There is a utility to convert the old kline configuration file to the
-       new format. In prefix/bin there is a program called "convertklines".
-       Its usage is: ./convertklines (old kline.conf filename) (new
-       kline.conf filename) (dline.conf filename).
-
-       Once this is done, move the new files into the prefix/etc/ directory
-       under their proper names. By default, the kline file is named
-       kline.conf and the dline file is named dline.conf.
-
      ----------------------------------------------------------------------
 
                                 HOW TO GET HELP

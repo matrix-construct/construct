@@ -33,8 +33,6 @@ src/version.c.last
 src/y.tab.h
 src/y.tab.c
 ssld/ssld
-tools/convertilines
-tools/convertklines
 tools/genssl
 tools/mkpasswd
 tools/viconf
