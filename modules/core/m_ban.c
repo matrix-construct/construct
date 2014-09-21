@@ -85,11 +85,12 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	struct ConfItem *aconf;
 	unsigned int ntype;
 	const char *oper, *stype;
-	time_t created, hold, lifetime;
+	time_t now, created, hold, lifetime;
 	char *p;
 	int act;
 	int valid;
 
+	now = rb_current_time();
 	if (strlen(parv[1]) != 1)
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
@@ -149,14 +150,14 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		 * is not a removal and not already expired.
 		 */
 		act = !(aconf->status & CONF_ILLEGAL) || (hold != created &&
-				hold > rb_current_time());
+				hold > now);
 		if (lifetime > aconf->lifetime)
 			aconf->lifetime = lifetime;
 		/* already expired, hmm */
-		if (aconf->lifetime <= rb_current_time())
+		if (aconf->lifetime <= now)
 			return 0;
 		/* Deactivate, it will be reactivated later if appropriate. */
-		deactivate_conf(aconf, ptr);
+		deactivate_conf(aconf, ptr, now);
 		rb_free(aconf->user);
 		aconf->user = NULL;
 		rb_free(aconf->host);
@@ -175,7 +176,7 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		aconf->status = CONF_ILLEGAL | ntype;
 		aconf->lifetime = lifetime;
 		rb_dlinkAddAlloc(aconf, &prop_bans);
-		act = hold != created && hold > rb_current_time();
+		act = hold != created && hold > now;
 	}
 	aconf->flags &= ~CONF_FLAGS_MYOPER;
 	aconf->flags |= CONF_FLAGS_TEMPORARY;
@@ -214,7 +215,7 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				       "Ignoring global %d min. %s from %s%s%s for [%s%s%s]: too few non-wildcard characters",
-				       (int)((hold - rb_current_time()) / 60),
+				       (int)((hold - now) / 60),
 				       stype,
 				       IsServer(source_p) ? source_p->name : get_oper_name(source_p),
 				       strcmp(parv[7], "*") ? " on behalf of " : "",
@@ -237,7 +238,7 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				       "%s added global %d min. %s%s%s for [%s%s%s] [%s]",
 				       IsServer(source_p) ? source_p->name : get_oper_name(source_p),
-				       (int)((hold - rb_current_time()) / 60),
+				       (int)((hold - now) / 60),
 				       stype,
 				       strcmp(parv[7], "*") ? " from " : "",
 				       strcmp(parv[7], "*") ? parv[7] : "",
@@ -247,7 +248,7 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 				       parv[parc - 1]);
 		ilog(L_KLINE, "%s %s %d %s%s%s %s", parv[1],
 				IsServer(source_p) ? source_p->name : get_oper_name(source_p),
-				(int)((hold - rb_current_time()) / 60),
+				(int)((hold - now) / 60),
 				aconf->user ? aconf->user : "",
 				aconf->user ? " " : "",
 				aconf->host,
@@ -313,7 +314,7 @@ ms_ban(struct Client *client_p, struct Client *source_p, int parc, const char *p
 			if (!(aconf->status & CONF_ILLEGAL))
 			{
 				add_to_resv_hash(aconf->host, aconf);
-				resv_chan_forcepart(aconf->host, aconf->passwd, hold - rb_current_time());
+				resv_chan_forcepart(aconf->host, aconf->passwd, hold - now);
 			}
 			break;
 		case CONF_RESV_NICK:
