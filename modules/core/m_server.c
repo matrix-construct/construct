@@ -307,7 +307,7 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 	hop = atoi(parv[2]);
 	rb_strlcpy(info, parv[3], sizeof(info));
 
-	if((target_p = find_server(NULL, name)))
+	if(find_server(NULL, name))
 	{
 		/*
 		 * This link is trying feed me a server that I already have
@@ -503,7 +503,7 @@ ms_sid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	char squitreason[160];
 
 	/* collision on the name? */
-	if((target_p = find_server(NULL, parv[1])) != NULL)
+	if(find_server(NULL, parv[1]) != NULL)
 	{
 		ilog(L_SERVER, "Link %s cancelled, server %s already exists",
 			client_p->name, parv[1]);
