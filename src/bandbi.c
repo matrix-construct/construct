@@ -424,6 +424,7 @@ bandb_parse(rb_helper *helper)
 
 		case 'C':
 			bandb_handle_clear();
+			break;
 		case 'F':
 			bandb_handle_finish();
 			break;
