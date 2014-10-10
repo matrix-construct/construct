@@ -374,18 +374,17 @@ pretty_mask(const char *idmask)
 {
 	static char mask_buf[BUFSIZE];
 	int old_mask_pos;
-	char *nick, *user, *host, *forward = NULL;
-	char splat[] = "*";
+	const char *nick, *user, *host, *forward = NULL;
 	char *t, *at, *ex, *ex2;
-	char ne = 0, ue = 0, he = 0, fe = 0;	/* save values at nick[NICKLEN], et all */
-	char e2 = 0;				/* save value that delimits forward channel */
+	int nl, ul, hl, fl;
+	char e2 = 0;
 	char *mask;
 
 	mask = LOCAL_COPY(idmask);
 	mask = check_string(mask);
 	collapse(mask);
 
-	nick = user = host = splat;
+	nick = user = host = "*";
 
 	if((size_t) BUFSIZE - mask_pos < strlen(mask) + 5)
 		return NULL;
@@ -457,31 +456,29 @@ pretty_mask(const char *idmask)
 	}
 
 	/* truncate values to max lengths */
-	if(strlen(nick) > NICKLEN - 1)
-	{
-		ne = nick[NICKLEN - 1];
-		nick[NICKLEN - 1] = '\0';
-	}
-	if(strlen(user) > USERLEN)
-	{
-		ue = user[USERLEN];
-		user[USERLEN] = '\0';
-	}
-	if(strlen(host) > HOSTLEN)
-	{
-		he = host[HOSTLEN];
-		host[HOSTLEN] = '\0';
-	}
-	if(forward && strlen(forward) > CHANNELLEN)
-	{
-		fe = forward[CHANNELLEN];
-		forward[CHANNELLEN] = '\0';
-	}
+	nl = strlen(nick);
+	if(nl > NICKLEN - 1)
+		nl = NICKLEN - 1;
+	ul = strlen(user);
+	if(ul > USERLEN)
+		ul = USERLEN;
+	hl = strlen(host);
+	if(hl > HOSTLEN)
+		hl = HOSTLEN;
+	fl = forward ? strlen(forward) : 0;
+	if(fl > CHANNELLEN)
+		fl = CHANNELLEN;
 
-	if (forward)
-		mask_pos += rb_sprintf(mask_buf + mask_pos, "%s!%s@%s$%s", nick, user, host, forward) + 1;
-	else
-		mask_pos += rb_sprintf(mask_buf + mask_pos, "%s!%s@%s", nick, user, host) + 1;
+	memcpy(mask_buf + mask_pos, nick, nl), mask_pos += nl;
+	mask_buf[mask_pos++] = '!';
+	memcpy(mask_buf + mask_pos, user, ul), mask_pos += ul;
+	mask_buf[mask_pos++] = '@';
+	memcpy(mask_buf + mask_pos, host, hl), mask_pos += hl;
+	if (forward) {
+		mask_buf[mask_pos++] = '$';
+		memcpy(mask_buf + mask_pos, forward, fl), mask_pos += fl;
+	}
+	mask_buf[mask_pos++] = '\0';
 
 	/* restore mask, since we may need to use it again later */
 	if(at)
@@ -490,14 +487,6 @@ pretty_mask(const char *idmask)
 		*ex = '!';
 	if(ex2)
 		*ex2 = e2;
-	if(ne)
-		nick[NICKLEN - 1] = ne;
-	if(ue)
-		user[USERLEN] = ue;
-	if(he)
-		host[HOSTLEN] = he;
-	if(fe)
-		forward[CHANNELLEN] = fe;
 
 	return mask_buf + old_mask_pos;
 }
