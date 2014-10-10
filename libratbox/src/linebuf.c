@@ -224,7 +224,8 @@ rb_linebuf_copy_line(buf_head_t * bufhead, buf_line_t * bufline, char *data, int
 	/* This is the ~overflow case..This doesn't happen often.. */
 	if(cpylen > (BUF_DATA_SIZE - bufline->len - 1))
 	{
-		memcpy(bufch, ch, (BUF_DATA_SIZE - bufline->len - 1));
+		cpylen = BUF_DATA_SIZE - bufline->len - 1;
+		memcpy(bufch, ch, cpylen);
 		bufline->buf[BUF_DATA_SIZE - 1] = '\0';
 		bufch = bufline->buf + BUF_DATA_SIZE - 2;
 		while(cpylen && (*bufch == '\r' || *bufch == '\n'))
