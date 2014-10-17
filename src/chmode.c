@@ -375,25 +375,29 @@ pretty_mask(const char *idmask)
 	static char mask_buf[BUFSIZE];
 	int old_mask_pos;
 	const char *nick, *user, *host, *forward = NULL;
-	char *t, *at, *ex, *ex2;
+	char *t, *at, *ex;
 	int nl, ul, hl, fl;
-	char e2 = 0;
 	char *mask;
+	size_t masklen;
 
 	mask = LOCAL_COPY(idmask);
 	mask = check_string(mask);
 	collapse(mask);
+	masklen = strlen(mask);
 
 	nick = user = host = "*";
+	nl = ul = hl = 1;
+	fl = 0;
 
-	if((size_t) BUFSIZE - mask_pos < strlen(mask) + 5)
+	if((size_t) BUFSIZE - mask_pos < masklen + 5)
 		return NULL;
 
 	old_mask_pos = mask_pos;
 
 	if (*mask == '$')
 	{
-		mask_pos += rb_sprintf(mask_buf + mask_pos, "%s", mask) + 1;
+		memcpy(mask_buf + mask_pos, mask, masklen + 1);
+		mask_pos += masklen + 1;
 		t = mask_buf + old_mask_pos + 1;
 		if (*t == '!')
 			*t = '~';
@@ -403,69 +407,65 @@ pretty_mask(const char *idmask)
 		return mask_buf + old_mask_pos;
 	}
 
-	at = ex = ex2 = NULL;
-	if((t = strchr(mask, '@')) != NULL)
+	at = ex = NULL;
+	if((t = memchr(mask, '@', masklen)) != NULL)
 	{
 		at = t;
-		*t++ = '\0';
+		t++;
 		if(*t != '\0')
-			host = t;
+			host = t, hl = strlen(t);
 
-		if((t = strchr(mask, '!')) != NULL)
+		if((t = memchr(mask, '!', at - mask)) != NULL)
 		{
 			ex = t;
-			*t++ = '\0';
-			if(*t != '\0')
-				user = t;
-			if(*mask != '\0')
-				nick = mask;
+			t++;
+			if(at != t)
+				user = t, ul = at - t;
+			if(ex != mask)
+				nick = mask, nl = ex - mask;
 		}
 		else
 		{
-			if(*mask != '\0')
-				user = mask;
+			if(at != mask)
+				user = mask, ul = at - mask;
 		}
 
-		if((t = strchr(host, '!')) != NULL || (t = strchr(host, '$')) != NULL)
+		if((t = memchr(host, '!', hl)) != NULL ||
+				(t = memchr(host, '$', hl)) != NULL)
 		{
-			ex2 = t;
-			e2 = *t;
-			*t++= '\0';
-			if (*t != '\0')
-				forward = t;
+			t++;
+			if (host + hl != t)
+				forward = t, fl = host + hl - t;
+			hl = t - 1 - host;
 		}
 	}
-	else if((t = strchr(mask, '!')) != NULL)
+	else if((t = memchr(mask, '!', masklen)) != NULL)
 	{
 		ex = t;
-		*t++ = '\0';
-		if(*mask != '\0')
-			nick = mask;
+		t++;
+		if(ex != mask)
+			nick = mask, nl = ex - mask;
 		if(*t != '\0')
-			user = t;
+			user = t, ul = strlen(t);
 	}
-	else if(strchr(mask, '.') != NULL || strchr(mask, ':') != NULL)
+	else if(memchr(mask, '.', masklen) != NULL ||
+			memchr(mask, ':', masklen) != NULL)
 	{
-		if(*mask != '\0')
-			host = mask;
+		host = mask, hl = masklen;
 	}
 	else
 	{
-		if(*mask != '\0')
-			nick = mask;
+		if(masklen > 0)
+			nick = mask, nl = masklen;
 	}
 
 	/* truncate values to max lengths */
-	nl = strlen(nick);
 	if(nl > NICKLEN - 1)
 		nl = NICKLEN - 1;
-	ul = strlen(user);
 	if(ul > USERLEN)
 		ul = USERLEN;
-	hl = strlen(host);
 	if(hl > HOSTLEN)
 		hl = HOSTLEN;
-	fl = forward ? strlen(forward) : 0;
 	if(fl > CHANNELLEN)
 		fl = CHANNELLEN;
 
@@ -479,14 +479,6 @@ pretty_mask(const char *idmask)
 		memcpy(mask_buf + mask_pos, forward, fl), mask_pos += fl;
 	}
 	mask_buf[mask_pos++] = '\0';
-
-	/* restore mask, since we may need to use it again later */
-	if(at)
-		*at = '@';
-	if(ex)
-		*ex = '!';
-	if(ex2)
-		*ex2 = e2;
 
 	return mask_buf + old_mask_pos;
 }
