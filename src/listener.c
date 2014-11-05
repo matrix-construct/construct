@@ -531,7 +531,7 @@ accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, voi
 			last_oper_notice = rb_current_time();
 		}
 
-		rb_write(F, "ERROR :All connections in use\r\n", 32);
+		rb_write(F, "ERROR :All connections in use\r\n", 31);
 		rb_close(F);
 		return 0;
 	}
