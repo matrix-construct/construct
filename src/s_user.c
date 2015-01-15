@@ -734,6 +734,9 @@ valid_hostname(const char *hostname)
 	if(hostname == NULL)
 		return NO;
 
+	if(!strcmp(hostname, "localhost"))
+		return YES;
+
 	if('.' == *p || ':' == *p || '/' == *p)
 		return NO;
 
