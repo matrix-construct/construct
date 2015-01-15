@@ -412,7 +412,7 @@ rb_sigio_sched_event(struct ev_entry *event, int when)
 	if(can_do_event <= 0)
 		return 0;
 
-	memset(&ev, 0, sizeof(&ev));
+	memset(&ev, 0, sizeof(ev));
 	event->comm_ptr = rb_malloc(sizeof(timer_t));
 	id = event->comm_ptr;
 	ev.sigev_notify = SIGEV_SIGNAL;
