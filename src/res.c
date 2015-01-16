@@ -88,6 +88,8 @@ static int ns_failure_count[IRCD_MAXNS]; /* timeouts and invalid/failed replies 
 
 static void rem_request(struct reslist *request);
 static struct reslist *make_request(struct DNSQuery *query);
+static void gethost_byname_type_fqdn(const char *name, struct DNSQuery *query,
+		int type);
 static void do_query_name(struct DNSQuery *query, const char *name, struct reslist *request, int);
 static void do_query_number(struct DNSQuery *query, const struct rb_sockaddr_storage *,
 			    struct reslist *request);
@@ -435,10 +437,23 @@ static struct reslist *find_id(int id)
 }
 
 /*
- * gethost_byname_type - get host address from name
- *
+ * gethost_byname_type - get host address from name, adding domain if needed
  */
 void gethost_byname_type(const char *name, struct DNSQuery *query, int type)
+{
+	char fqdn[IRCD_RES_HOSTLEN + 1];
+	assert(name != 0);
+
+	rb_strlcpy(fqdn, name, sizeof fqdn);
+	add_local_domain(fqdn, IRCD_RES_HOSTLEN);
+	gethost_byname_type_fqdn(fqdn, query, type);
+}
+
+/*
+ * gethost_byname_type_fqdn - get host address from fqdn
+ */
+static void gethost_byname_type_fqdn(const char *name, struct DNSQuery *query,
+		int type)
 {
 	assert(name != 0);
 	do_query_name(query, name, NULL, type);
@@ -458,19 +473,13 @@ void gethost_byaddr(const struct rb_sockaddr_storage *addr, struct DNSQuery *que
 static void do_query_name(struct DNSQuery *query, const char *name, struct reslist *request,
 			  int type)
 {
-	char host_name[IRCD_RES_HOSTLEN + 1];
-
-	rb_strlcpy(host_name, name, IRCD_RES_HOSTLEN + 1);
-	add_local_domain(host_name, IRCD_RES_HOSTLEN);
-
 	if (request == NULL)
 	{
 		request = make_request(query);
-		request->name = (char *)rb_malloc(strlen(host_name) + 1);
-		strcpy(request->name, host_name);
+		request->name = rb_strdup(name);
 	}
 
-	rb_strlcpy(request->queryname, host_name, sizeof(request->queryname));
+	rb_strlcpy(request->queryname, name, sizeof(request->queryname));
 	request->type = type;
 	query_name(request);
 }
@@ -866,10 +875,10 @@ static int res_read_single_reply(rb_fde_t *F, void *data)
 			 */
 #ifdef RB_IPV6
 			if (request->addr.ss_family == AF_INET6)
-				gethost_byname_type(request->name, request->query, T_AAAA);
+				gethost_byname_type_fqdn(request->name, request->query, T_AAAA);
 			else
 #endif
-				gethost_byname_type(request->name, request->query, T_A);
+				gethost_byname_type_fqdn(request->name, request->query, T_A);
 			rem_request(request);
 		}
 		else
