@@ -597,7 +597,6 @@ introduce_client(struct Client *client_p, struct Client *source_p, struct User *
 	char *p;
 	hook_data_umode_changed hdata;
 	hook_data_client hdata2;
-	char sockhost[HOSTLEN];
 
 	if(MyClient(source_p))
 		send_umode(source_p, source_p, 0, 0, ubuf);
@@ -612,14 +611,6 @@ introduce_client(struct Client *client_p, struct Client *source_p, struct User *
 
 	s_assert(has_id(source_p));
 
-	if(source_p->sockhost[0] == ':')
-	{
-		sockhost[0] = '0';
-		sockhost[1] = '\0';
-		rb_strlcat(sockhost, source_p->sockhost, sizeof(sockhost));
-	} else
-		strcpy(sockhost, source_p->sockhost);
-
 	if (use_euid)
 		sendto_server(client_p, NULL, CAP_EUID | CAP_TS6, NOCAPS,
 				":%s EUID %s %d %ld %s %s %s %s %s %s %s :%s",
@@ -627,7 +618,7 @@ introduce_client(struct Client *client_p, struct Client *source_p, struct User *
 				source_p->hopcount + 1,
 				(long) source_p->tsinfo, ubuf,
 				source_p->username, source_p->host,
-				IsIPSpoof(source_p) ? "0" : sockhost,
+				IsIPSpoof(source_p) ? "0" : source_p->sockhost,
 				source_p->id,
 				IsDynSpoof(source_p) ? source_p->orighost : "*",
 				EmptyString(source_p->user->suser) ? "*" : source_p->user->suser,
@@ -639,7 +630,7 @@ introduce_client(struct Client *client_p, struct Client *source_p, struct User *
 		      source_p->hopcount + 1,
 		      (long) source_p->tsinfo, ubuf,
 		      source_p->username, source_p->host,
-		      IsIPSpoof(source_p) ? "0" : sockhost,
+		      IsIPSpoof(source_p) ? "0" : source_p->sockhost,
 		      source_p->id, source_p->info);
 
 	if(!EmptyString(source_p->certfp))
