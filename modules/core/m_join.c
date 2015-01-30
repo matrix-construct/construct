@@ -529,7 +529,6 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 	int fl;
 	int isnew;
 	int mlen_uid;
-	int len_nick;
 	int len_uid;
 	int len;
 	int joins = 0;
@@ -778,7 +777,7 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 	mbuf = modebuf;
 	para[0] = para[1] = para[2] = para[3] = empty;
 	pargs = 0;
-	len_nick = len_uid = 0;
+	len_uid = 0;
 
 	/* if theres a space, theres going to be more than one nick, change the
 	 * first space to \0, so s is just the first nick, and point p to the
@@ -830,13 +829,11 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 			if(fl & CHFL_CHANOP)
 			{
 				*ptr_uid++ = '@';
-				len_nick++;
 				len_uid++;
 			}
 			if(fl & CHFL_VOICE)
 			{
 				*ptr_uid++ = '+';
-				len_nick++;
 				len_uid++;
 			}
 		}
