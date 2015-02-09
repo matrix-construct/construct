@@ -364,7 +364,7 @@ build_target_list(enum message_type msgtype, struct Client *client_p,
 						   get_id(&me, source_p),
 						   get_id(source_p, source_p),
 						   with_prefix);
-					return (-1);
+					continue;
 				}
 
 				if(!duplicate_ptr(chptr))
