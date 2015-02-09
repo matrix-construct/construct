@@ -316,10 +316,12 @@ rb_init_ssl(void)
 #ifdef SSL_OP_SINGLE_DH_USE
 			| SSL_OP_SINGLE_DH_USE
 #endif
+#ifdef SSL_OP_NO_TICKET
+			| SSL_OP_NO_TICKET
+#endif
 			);
 	SSL_CTX_set_verify(ssl_server_ctx, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, verify_accept_all_cb);
-	SSL_CTX_set_session_id_context(ssl_server_ctx,
-			(const unsigned char *)"libratbox", 9);
+	SSL_CTX_set_session_cache_mode(ssl_server_ctx, SSL_SESS_CACHE_OFF);
 	SSL_CTX_set_cipher_list(ssl_server_ctx, "EECDH+HIGH:EDH+HIGH:HIGH:!aNULL");
 
 	/* Set ECDHE on OpenSSL 1.00+, but make sure it's actually available because redhat are dicks
@@ -343,6 +345,11 @@ rb_init_ssl(void)
 			   get_ssl_error(ERR_get_error()));
 		ret = 0;
 	}
+
+#ifdef SSL_OP_NO_TICKET
+	SSL_CTX_set_options(ssl_client_ctx, SSL_OP_NO_TICKET);
+#endif
+
 	return ret;
 }
 
