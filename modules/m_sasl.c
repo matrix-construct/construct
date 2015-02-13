@@ -35,6 +35,7 @@
 #include "msg.h"
 #include "modules.h"
 #include "numeric.h"
+#include "reject.h"
 #include "s_serv.h"
 #include "s_stats.h"
 #include "string.h"
@@ -223,17 +224,30 @@ me_sasl(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		rb_strlcpy(target_p->localClient->sasl_agent, parv[1], IDLEN);
 
 	if(*parv[3] == 'C')
+	{
 		sendto_one(target_p, "AUTHENTICATE %s", parv[4]);
+		target_p->localClient->sasl_messages++;
+	}
 	else if(*parv[3] == 'D')
 	{
-		if(*parv[4] == 'F')
+		if(*parv[4] == 'F') {
 			sendto_one(target_p, form_str(ERR_SASLFAIL), me.name, EmptyString(target_p->name) ? "*" : target_p->name);
+			if (target_p->localClient->sasl_messages > 0)
+			{
+				if (throttle_add((struct sockaddr*)&target_p->localClient->ip))
+				{
+					exit_client(target_p, target_p, &me, "Too many failed authentication attempts");
+					return;
+				}
+			}
+		}
 		else if(*parv[4] == 'S') {
 			sendto_one(target_p, form_str(RPL_SASLSUCCESS), me.name, EmptyString(target_p->name) ? "*" : target_p->name);
 			target_p->localClient->sasl_complete = 1;
 			ServerStats.is_ssuc++;
 		}
 		*target_p->localClient->sasl_agent = '\0'; /* Blank the stored agent so someone else can answer */
+		target_p->localClient->sasl_messages = 0;
 	}
 	else if(*parv[3] == 'M')
 		sendto_one(target_p, form_str(RPL_SASLMECHS), me.name, EmptyString(target_p->name) ? "*" : target_p->name, parv[4]);
