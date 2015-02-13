@@ -62,21 +62,8 @@ mr_pass(struct Client *client_p, struct Client *source_p, int parc, const char *
 	char *auth_user, *pass, *buf;
 	buf = LOCAL_COPY(parv[1]);
 
-	if(client_p->localClient->passwd)
-	{
-		memset(client_p->localClient->passwd, 0,
-			strlen(client_p->localClient->passwd));
-		rb_free(client_p->localClient->passwd);
-		client_p->localClient->passwd = NULL;
-	}
-
-	if (client_p->localClient->auth_user)
-	{
-		memset(client_p->localClient->auth_user, 0,
-		       strlen(client_p->localClient->auth_user));
-		rb_free(client_p->localClient->auth_user);
-		client_p->localClient->auth_user = NULL;
-	}
+	if(client_p->localClient->passwd || client_p->localClient->auth_user)
+		return 0;
 
 	if ((pass = strchr(buf, ':')) != NULL)
 	{

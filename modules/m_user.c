@@ -69,6 +69,9 @@ mr_user(struct Client *client_p, struct Client *source_p, int parc, const char *
 		return 0;
 	}
 
+	if(source_p->flags & FLAGS_SENTUSER)
+		return 0;
+
 	if((p = strchr(parv[1], '@')))
 		*p = '\0';
 
@@ -89,11 +92,8 @@ do_local_user(struct Client *client_p, struct Client *source_p,
 
 	make_user(source_p);
 
-	if (!(source_p->flags & FLAGS_SENTUSER))
-	{
-		lookup_blacklists(source_p);
-		source_p->flags |= FLAGS_SENTUSER;
-	}
+	lookup_blacklists(source_p);
+	source_p->flags |= FLAGS_SENTUSER;
 
 	rb_strlcpy(source_p->info, realname, sizeof(source_p->info));
 
