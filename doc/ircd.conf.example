@@ -461,6 +461,14 @@ general {
 	default_operstring = "is an IRC Operator";
 	default_adminstring = "is a Server Administrator";
 	servicestring = "is a Network Service";
+
+	/*
+	 * Nick of the network's SASL agent. Used to check whether services are here,
+	 * SASL credentials are only sent to its server. Needs to be a service.
+	 *
+	 * Defaults to SaslServ if unspecified.
+	 */
+	sasl_service = "SaslServ";
 	disable_fake_channels = no;
 	tkline_expire_notices = no;
 	default_floodcount = 10;
