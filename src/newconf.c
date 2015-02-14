@@ -2315,6 +2315,7 @@ static struct ConfEntry conf_general_table[] =
 	{ "kline_reason",	CF_QSTRING, NULL, REALLEN, &ConfigFileEntry.kline_reason },
 	{ "identify_service",	CF_QSTRING, NULL, REALLEN, &ConfigFileEntry.identifyservice },
 	{ "identify_command",	CF_QSTRING, NULL, REALLEN, &ConfigFileEntry.identifycommand },
+	{ "sasl_service",	CF_QSTRING, NULL, REALLEN, &ConfigFileEntry.sasl_service },
 
 	{ "anti_spam_exit_message_time", CF_TIME,  NULL, 0, &ConfigFileEntry.anti_spam_exit_message_time },
 	{ "disable_fake_channels",	 CF_YESNO, NULL, 0, &ConfigFileEntry.disable_fake_channels },

@@ -151,6 +151,8 @@ struct config_file_entry
 	char *identifyservice;
 	char *identifycommand;
 
+	char *sasl_service;
+
 	char *fname_userlog;
 	char *fname_fuserlog;
 	char *fname_operlog;
