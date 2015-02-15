@@ -43,7 +43,7 @@
 #include "s_newconf.h"
 #include "s_conf.h"
 
-static int mr_authenticate(struct Client *, struct Client *, int, const char **);
+static int m_authenticate(struct Client *, struct Client *, int, const char **);
 static int me_sasl(struct Client *, struct Client *, int, const char **);
 
 static void abort_sasl(struct Client *);
@@ -51,7 +51,7 @@ static void abort_sasl_exit(hook_data_client_exit *);
 
 struct Message authenticate_msgtab = {
 	"AUTHENTICATE", 0, 0, 0, MFLG_SLOW,
-	{{mr_authenticate, 2}, mg_reg, mg_ignore, mg_ignore, mg_ignore, mg_reg}
+	{{m_authenticate, 2}, {m_authenticate, 2}, mg_ignore, mg_ignore, mg_ignore, {m_authenticate, 2}}
 };
 struct Message sasl_msgtab = {
 	"SASL", 0, 0, 0, MFLG_SLOW,
@@ -70,7 +70,7 @@ mapi_hfn_list_av1 sasl_hfnlist[] = {
 DECLARE_MODULE_AV1(sasl, NULL, NULL, sasl_clist, NULL, sasl_hfnlist, "$Revision: 1409 $");
 
 static int
-mr_authenticate(struct Client *client_p, struct Client *source_p,
+m_authenticate(struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
 	struct Client *agent_p = NULL;
@@ -79,6 +79,12 @@ mr_authenticate(struct Client *client_p, struct Client *source_p,
 	/* They really should use CAP for their own sake. */
 	if(!IsCapable(source_p, CLICAP_SASL))
 		return 0;
+
+	if(IsRegisteredUser(source_p) && !IsCapable(source_p, CLICAP_SASL_REAUTH))
+	{
+		sendto_one(source_p, form_str(ERR_ALREADYREGISTRED), me.name, source_p->name);
+		return 0;
+	}
 
 	if (strlen(client_p->id) == 3)
 	{
