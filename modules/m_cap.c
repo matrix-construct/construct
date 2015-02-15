@@ -404,7 +404,7 @@ cap_req(struct Client *source_p, const char *arg)
 		}
 		else
 		{
-			if(cap->cap_required_serv && !(capadd & cap->cap_required_serv == cap->cap_required_serv || IsCapable(source_p, cap->required_serv)))
+			if(cap->cap_required_serv && !((capadd & cap->cap_required_serv) == cap->cap_required_serv || IsCapable(source_p, cap->cap_required_serv)))
 			{
 				finished = 0;
 				break;
