@@ -56,8 +56,8 @@ struct Message cap_msgtab = {
 mapi_clist_av1 cap_clist[] = { &cap_msgtab, NULL };
 DECLARE_MODULE_AV1(cap, modinit, NULL, cap_clist, NULL, NULL, "$Revision: 676 $");
 
-#define _CLICAP(name, capserv, capclient, flags)	\
-	{ (name), (capserv), (capclient), (flags), sizeof(name) - 1 }
+#define _CLICAP(name, capserv, capclient, caprequired, flags)	\
+	{ (name), (capserv), (capclient), (caprequired), (flags), sizeof(name) - 1 }
 
 #define CLICAP_FLAGS_STICKY	0x001
 
@@ -66,15 +66,16 @@ static struct clicap
 	const char *name;
 	int cap_serv;		/* for altering s->c */
 	int cap_cli;		/* for altering c->s */
+	int cap_required_serv;	/* required dependency cap */
 	int flags;
 	int namelen;
 } clicap_list[] = {
-	_CLICAP("multi-prefix",	CLICAP_MULTI_PREFIX, 0, 0),
-	_CLICAP("sasl", CLICAP_SASL, 0, 0),
-	_CLICAP("account-notify", CLICAP_ACCOUNT_NOTIFY, 0, 0),
-	_CLICAP("extended-join", CLICAP_EXTENDED_JOIN, 0, 0),
-	_CLICAP("away-notify", CLICAP_AWAY_NOTIFY, 0, 0),
-	_CLICAP("tls", CLICAP_TLS, 0, 0),
+	_CLICAP("multi-prefix",	CLICAP_MULTI_PREFIX, 0, 0, 0),
+	_CLICAP("sasl", CLICAP_SASL, 0, 0, 0),
+	_CLICAP("account-notify", CLICAP_ACCOUNT_NOTIFY, 0, 0, 0),
+	_CLICAP("extended-join", CLICAP_EXTENDED_JOIN, 0, 0, 0),
+	_CLICAP("away-notify", CLICAP_AWAY_NOTIFY, 0, 0, 0),
+	_CLICAP("tls", CLICAP_TLS, 0, 0, 0),
 };
 
 #define CLICAP_LIST_LEN (sizeof(clicap_list) / sizeof(struct clicap))
@@ -402,6 +403,12 @@ cap_req(struct Client *source_p, const char *arg)
 		}
 		else
 		{
+			if(cap->cap_required_serv && !(capadd & cap->cap_required_serv == cap->cap_required_serv || IsCapable(source_p, cap->required_serv)))
+			{
+				finished = 0;
+				break;
+			}
+
 			if(cap->flags & CLICAP_FLAGS_STICKY)
 			{
 				strcat(pbuf[i], "=");
