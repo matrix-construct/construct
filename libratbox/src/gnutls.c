@@ -535,6 +535,8 @@ rb_init_prng(const char *path, prng_seed_t seed_type)
 {
 #if GNUTLS_VERSION_MAJOR < 3
 	gcry_fast_random_poll();
+#else
+	gnutls_rnd_refresh();
 #endif
 	return 1;
 }
