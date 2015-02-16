@@ -82,7 +82,7 @@ esac
 
 fi
 
-AC_MSG_CHECKING([uname -s for Solaris, AIX or HPUX])
+AC_MSG_CHECKING([uname -s for Solaris, AIX, HPUX or Darwin])
 OSNAME=`uname -s`
 case "$OSNAME" in
         HP-UX*)
@@ -106,25 +106,16 @@ case "$OSNAME" in
 		AC_MSG_RESULT(AIX - Sorry you poor bastard..really we are)
 		IRC_CFLAGS="$IRC_CFLAGS -Wl,-brtl -Wl,-G"
 	;;
+	Darwin*)
+		AC_MSG_RESULT(Darwin)
+		AppleGCC=yes
+	;;
 	*)
 		AC_MSG_RESULT(no)
 	;;
 esac
 
 if test "$ac_cv_c_compiler_gnu" = yes; then
-	AC_MSG_CHECKING(if $CC is Apple GCC)
-
-	case `$CC -v 2>&1 | tail -n 1` in
-	*Apple*)
-		AC_MSG_RESULT(yes)
-		AppleGCC=yes
-	;;
-	*)
-		AC_MSG_RESULT(no)
-		AppleGCC=no
-	;;
-	esac
-
 	IRC_CFLAGS="$IRC_CFLAGS -O0 -Wall -std=gnu99"
 fi
 
