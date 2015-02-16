@@ -4370,8 +4370,8 @@ esac
 
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking uname -s for Solaris, AIX or HPUX" >&5
-$as_echo_n "checking uname -s for Solaris, AIX or HPUX... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking uname -s for Solaris, AIX, HPUX or Darwin" >&5
+$as_echo_n "checking uname -s for Solaris, AIX, HPUX or Darwin... " >&6; }
 OSNAME=`uname -s`
 case "$OSNAME" in
         HP-UX*)
@@ -4399,6 +4399,11 @@ $as_echo "#define __EXTENSIONS__ 1" >>confdefs.h
 $as_echo "AIX - Sorry you poor bastard..really we are" >&6; }
 		IRC_CFLAGS="$IRC_CFLAGS -Wl,-brtl -Wl,-G"
 	;;
+	Darwin*)
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: Darwin" >&5
+$as_echo "Darwin" >&6; }
+		AppleGCC=yes
+	;;
 	*)
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -4406,22 +4411,6 @@ $as_echo "no" >&6; }
 esac
 
 if test "$ac_cv_c_compiler_gnu" = yes; then
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if $CC is Apple GCC" >&5
-$as_echo_n "checking if $CC is Apple GCC... " >&6; }
-
-	case `$CC -v 2>&1 | tail -n 1` in
-	*Apple*)
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-		AppleGCC=yes
-	;;
-	*)
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-		AppleGCC=no
-	;;
-	esac
-
 	IRC_CFLAGS="$IRC_CFLAGS -O0 -Wall -std=gnu99"
 fi
 
