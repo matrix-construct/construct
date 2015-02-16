@@ -99,10 +99,16 @@ m_authenticate(struct Client *client_p, struct Client *source_p,
 		return 0;
 	}
 
-	if(source_p->preClient->sasl_complete)
+	if(source_p->localClient->sasl_complete)
 	{
-		sendto_one(source_p, form_str(ERR_SASLALREADY), me.name, EmptyString(source_p->name) ? "*" : source_p->name);
-		return 0;
+		if (!IsCapable(source_p, CLICAP_SASL_REAUTH))
+		{
+			sendto_one(source_p, form_str(ERR_SASLALREADY), me.name, EmptyString(source_p->name) ? "*" : source_p->name);
+			return 0;
+		}
+
+		/* we're doing a reauth. */
+		source_p->localClient->sasl_complete = 0;
 	}
 
 	if(strlen(parv[1]) > 400)
@@ -118,8 +124,8 @@ m_authenticate(struct Client *client_p, struct Client *source_p,
 		add_to_id_hash(source_p->id, source_p);
 	}
 
-	if(*source_p->preClient->sasl_agent)
-		agent_p = find_id(source_p->preClient->sasl_agent);
+	if(*source_p->localClient->sasl_agent)
+		agent_p = find_id(source_p->localClient->sasl_agent);
 
 	if(agent_p == NULL)
 	{
@@ -132,13 +138,13 @@ m_authenticate(struct Client *client_p, struct Client *source_p,
 					source_p->id, saslserv_p->id,
 					parv[1]);
 
-		rb_strlcpy(source_p->preClient->sasl_agent, saslserv_p->id, IDLEN);
+		rb_strlcpy(source_p->localClient->sasl_agent, saslserv_p->id, IDLEN);
 	}
 	else
 		sendto_one(agent_p, ":%s ENCAP %s SASL %s %s C %s", me.id, agent_p->servptr->name,
 				source_p->id, agent_p->id,
 				parv[1]);
-	source_p->preClient->sasl_out++;
+	source_p->localClient->sasl_out++;
 
 	return 0;
 }
@@ -174,10 +180,10 @@ me_sasl(struct Client *client_p, struct Client *source_p,
 		return 0;
 
 	/* Reject if someone has already answered. */
-	if(*target_p->preClient->sasl_agent && strncmp(parv[1], target_p->preClient->sasl_agent, IDLEN))
+	if(*target_p->localClient->sasl_agent && strncmp(parv[1], target_p->localClient->sasl_agent, IDLEN))
 		return 0;
-	else if(!*target_p->preClient->sasl_agent)
-		rb_strlcpy(target_p->preClient->sasl_agent, parv[1], IDLEN);
+	else if(!*target_p->localClient->sasl_agent)
+		rb_strlcpy(target_p->localClient->sasl_agent, parv[1], IDLEN);
 
 	if(*parv[3] == 'C')
 		sendto_one(target_p, "AUTHENTICATE %s", parv[4]);
@@ -187,10 +193,10 @@ me_sasl(struct Client *client_p, struct Client *source_p,
 			sendto_one(target_p, form_str(ERR_SASLFAIL), me.name, EmptyString(target_p->name) ? "*" : target_p->name);
 		else if(*parv[4] == 'S') {
 			sendto_one(target_p, form_str(RPL_SASLSUCCESS), me.name, EmptyString(target_p->name) ? "*" : target_p->name);
-			target_p->preClient->sasl_complete = 1;
+			target_p->localClient->sasl_complete = 1;
 			ServerStats.is_ssuc++;
 		}
-		*target_p->preClient->sasl_agent = '\0'; /* Blank the stored agent so someone else can answer */
+		*target_p->localClient->sasl_agent = '\0'; /* Blank the stored agent so someone else can answer */
 	}
 	else if(*parv[3] == 'M')
 		sendto_one(target_p, form_str(RPL_SASLMECHS), me.name, EmptyString(target_p->name) ? "*" : target_p->name, parv[4]);
@@ -204,18 +210,18 @@ me_sasl(struct Client *client_p, struct Client *source_p,
 static void
 abort_sasl(struct Client *data)
 {
-	if(data->preClient->sasl_out == 0 || data->preClient->sasl_complete)
+	if(data->localClient->sasl_out == 0 || data->localClient->sasl_complete)
 		return;
 
-	data->preClient->sasl_out = data->preClient->sasl_complete = 0;
+	data->localClient->sasl_out = data->localClient->sasl_complete = 0;
 	ServerStats.is_sbad++;
 
 	if(!IsClosing(data))
 		sendto_one(data, form_str(ERR_SASLABORTED), me.name, EmptyString(data->name) ? "*" : data->name);
 
-	if(*data->preClient->sasl_agent)
+	if(*data->localClient->sasl_agent)
 	{
-		struct Client *agent_p = find_id(data->preClient->sasl_agent);
+		struct Client *agent_p = find_id(data->localClient->sasl_agent);
 		if(agent_p)
 		{
 			sendto_one(agent_p, ":%s ENCAP %s SASL %s %s D A", me.id, agent_p->servptr->name,
