@@ -64,7 +64,12 @@ serverinfo {
 	/* ssl_cert: certificate for our ssl server */
 	ssl_cert = "etc/ssl.pem";
 
-	/* ssl_dh_params: DH parameters, generate with openssl dhparam -out dh.pem 1024 */
+	/* ssl_dh_params: DH parameters, generate with openssl dhparam -out dh.pem 2048
+	 * In general, the DH parameters size should be the same as your key's size.
+	 * However it has been reported that some clients have broken TLS implementations which may
+	 * choke on keysizes larger than 2048-bit, so we would recommend using 2048-bit DH parameters
+	 * for now if your keys are larger than 2048-bit.
+	 */
 	ssl_dh_params = "etc/dh.pem";
 
 	/* ssld_count: number of ssld processes you want to start, if you
