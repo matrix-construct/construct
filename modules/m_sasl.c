@@ -129,6 +129,9 @@ m_authenticate(struct Client *client_p, struct Client *source_p,
 
 	if(agent_p == NULL)
 	{
+		sendto_server(NULL, NULL, CAP_TS6|CAP_ENCAP, NOCAPS, ":%s ENCAP * SASL %s * H %s %s", me.id,
+					source_p->id, source_p->host, source_p->sockhost);
+
 		if (!strcmp(parv[1], "EXTERNAL") && source_p->certfp != NULL)
 			sendto_one(saslserv_p, ":%s ENCAP %s SASL %s %s S %s %s", me.id, saslserv_p->servptr->name,
 					source_p->id, saslserv_p->id,
