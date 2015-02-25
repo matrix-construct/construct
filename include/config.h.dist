@@ -50,7 +50,6 @@
 /* dirs */
 #define DPATH   IRCD_PREFIX
 #define BINPATH IRCD_PREFIX "/bin/"
-#define LIBPATH IRCD_PREFIX "/lib/"
 #define MODPATH MODULE_DIR
 #define AUTOMODPATH MODULE_DIR "/autoload/"
 #define ETCPATH ETC_DIR 
@@ -60,7 +59,6 @@
 
 /* files */
 #define SPATH    BINPATH "/ircd"		   /* ircd executable */
-#define LIPATH   LIBPATH "/libircd" SHARED_SUFFIX  /* ircd library */
 #define CPATH    ETCPATH "/ircd.conf"		   /* ircd.conf file */
 #define RPATH    ETCPATH "/ircd.rsa"		   /* ircd rsa private keyfile */
 #define MPATH    ETCPATH "/ircd.motd"		   /* MOTD file */

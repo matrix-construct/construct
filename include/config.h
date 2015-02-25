@@ -50,7 +50,6 @@
 /* dirs */
 #define DPATH   IRCD_PREFIX
 #define BINPATH IRCD_PREFIX "/bin/"
-#define LIBPATH IRCD_PREFIX "/lib/"
 #define MODPATH MODULE_DIR
 #define AUTOMODPATH MODULE_DIR "/autoload/"
 #define ETCPATH ETC_DIR
