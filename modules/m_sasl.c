@@ -80,12 +80,6 @@ m_authenticate(struct Client *client_p, struct Client *source_p,
 	if(!IsCapable(source_p, CLICAP_SASL))
 		return 0;
 
-	if(IsRegisteredUser(source_p) && !IsCapable(source_p, CLICAP_SASL_REAUTH))
-	{
-		sendto_one(source_p, form_str(ERR_ALREADYREGISTRED), me.name, source_p->name);
-		return 0;
-	}
-
 	if (strlen(client_p->id) == 3)
 	{
 		exit_client(client_p, client_p, client_p, "Mixing client and server protocol");
@@ -101,13 +95,7 @@ m_authenticate(struct Client *client_p, struct Client *source_p,
 
 	if(source_p->localClient->sasl_complete)
 	{
-		if (!IsCapable(source_p, CLICAP_SASL_REAUTH))
-		{
-			sendto_one(source_p, form_str(ERR_SASLALREADY), me.name, EmptyString(source_p->name) ? "*" : source_p->name);
-			return 0;
-		}
-
-		/* we're doing a reauth. */
+		*source_p->localClient->sasl_agent = '\0';
 		source_p->localClient->sasl_complete = 0;
 	}
 
@@ -165,9 +153,6 @@ me_sasl(struct Client *client_p, struct Client *source_p,
 		return 0;
 
 	if((target_p = find_id(parv[2])) == NULL)
-		return 0;
-
-	if(target_p->preClient == NULL)
 		return 0;
 
 	if((agent_p = find_id(parv[1])) == NULL)
@@ -240,7 +225,6 @@ abort_sasl(struct Client *data)
 static void
 abort_sasl_exit(hook_data_client_exit *data)
 {
-	if (data->target->preClient)
-		abort_sasl(data->target);
+	abort_sasl(data->target);
 }
 
