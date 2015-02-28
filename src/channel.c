@@ -465,17 +465,34 @@ channel_member_names(struct Channel *chptr, struct Client *client_p, int show_eo
 			if(IsInvisible(target_p) && !is_member)
 				continue;
 
-			/* space, possible "@+" prefix */
-			if(cur_len + strlen(target_p->name) + 3 >= BUFSIZE - 3)
+			if (IsCapable(client_p, CLICAP_USERHOST_IN_NAMES))
 			{
-				*(t - 1) = '\0';
-				sendto_one(client_p, "%s", lbuf);
-				cur_len = mlen;
-				t = lbuf + mlen;
-			}
+				/* space, possible "@+" prefix */
+				if (cur_len + strlen(target_p->name) + strlen(target_p->username) + strlen(target_p->host) + 5 >= BUFSIZE - 5)
+				{
+					*(t - 1) = '\0';
+					sendto_one(client_p, "%s", lbuf);
+					cur_len = mlen;
+					t = lbuf + mlen;
+				}
 
-			tlen = rb_sprintf(t, "%s%s ", find_channel_status(msptr, stack),
-					  target_p->name);
+				tlen = rb_sprintf(t, "%s%s!%s@%s ", find_channel_status(msptr, stack),
+						  target_p->name, target_p->username, target_p->host);
+			}
+			else
+			{
+				/* space, possible "@+" prefix */
+				if(cur_len + strlen(target_p->name) + 3 >= BUFSIZE - 3)
+				{
+					*(t - 1) = '\0';
+					sendto_one(client_p, "%s", lbuf);
+					cur_len = mlen;
+					t = lbuf + mlen;
+				}
+
+				tlen = rb_sprintf(t, "%s%s ", find_channel_status(msptr, stack),
+						  target_p->name);
+			}
 
 			cur_len += tlen;
 			t += tlen;
