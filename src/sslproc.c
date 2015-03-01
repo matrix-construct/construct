@@ -323,12 +323,7 @@ start_ssldaemon(int count, const char *ssl_cert, const char *ssl_private_key, co
 		rb_close(P1);
 		ctl = allocate_ssl_daemon(F1, P2, pid);
 		if(ssl_ok)
-		{
-			if(ConfigFileEntry.use_egd && (ConfigFileEntry.egdpool_path != NULL))
-				send_init_prng(ctl, RB_PRNG_EGD, ConfigFileEntry.egdpool_path);
-			else
-				send_init_prng(ctl, RB_PRNG_DEFAULT, NULL);
-		}
+			send_init_prng(ctl, RB_PRNG_DEFAULT, NULL);
 		if(ssl_ok && ssl_cert != NULL && ssl_private_key != NULL)
 			send_new_ssl_certs_one(ctl, ssl_cert, ssl_private_key,
 					       ssl_dh_params != NULL ? ssl_dh_params : "");

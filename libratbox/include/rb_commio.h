@@ -157,7 +157,6 @@ const char *rb_get_iotype(void);
 
 typedef enum
 {
-	RB_PRNG_EGD,
 	RB_PRNG_FILE,
 #ifdef _WIN32
 	RB_PRNGWIN32,
