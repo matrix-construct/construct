@@ -737,12 +737,10 @@ set_default_conf(void)
 	ConfigFileEntry.fname_klinelog = NULL;
 	ConfigFileEntry.fname_operspylog = NULL;
 	ConfigFileEntry.fname_ioerrorlog = NULL;
-	ConfigFileEntry.use_egd = NO;
 	ConfigFileEntry.hide_spoof_ips = YES;
 	ConfigFileEntry.hide_error_messages = 1;
 	ConfigFileEntry.dots_in_ident = 0;
 	ConfigFileEntry.max_targets = MAX_TARGETS_DEFAULT;
-	ConfigFileEntry.egdpool_path = NULL;
 	ConfigFileEntry.use_whois_actually = YES;
 	ConfigFileEntry.burst_away = NO;
 	ConfigFileEntry.collision_fnc = YES;
