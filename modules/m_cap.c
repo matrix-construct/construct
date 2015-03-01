@@ -77,6 +77,7 @@ static struct clicap
 	_CLICAP("away-notify", CLICAP_AWAY_NOTIFY, 0, 0, 0),
 	_CLICAP("tls", CLICAP_TLS, 0, 0, 0),
 	_CLICAP("userhost-in-names", CLICAP_USERHOST_IN_NAMES, 0, 0, 0),
+	_CLICAP("cap-notify", CLICAP_CAP_NOTIFY, 0, 0, 0),
 };
 
 #define CLICAP_LIST_LEN (sizeof(clicap_list) / sizeof(struct clicap))
