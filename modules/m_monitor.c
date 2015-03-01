@@ -80,7 +80,7 @@ add_monitor(struct Client *client_p, const char *nicks)
 			continue;
 
 		if(rb_dlink_list_length(&client_p->localClient->monitor_list) >=
-			ConfigFileEntry.max_monitor)
+			(unsigned long)ConfigFileEntry.max_monitor)
 		{
 			char buf[100];
 

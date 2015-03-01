@@ -76,7 +76,7 @@ struct reslist
 	char sends;		/* number of sends (>1 means resent) */
 	time_t sentat;
 	time_t timeout;
-	unsigned int lastns;	/* index of last server sent to */
+	int lastns;	/* index of last server sent to */
 	struct rb_sockaddr_storage addr;
 	char *name;
 	struct DNSQuery *query;	/* query callback for this request */

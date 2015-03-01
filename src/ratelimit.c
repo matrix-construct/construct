@@ -60,7 +60,7 @@ int ratelimit_client(struct Client *client_p, unsigned int penalty)
 	}
 
 	/* Don't make it impossible to execute anything. */
-	if (penalty > ConfigFileEntry.max_ratelimit_tokens)
+	if (penalty > (unsigned int)ConfigFileEntry.max_ratelimit_tokens)
 		penalty = ConfigFileEntry.max_ratelimit_tokens;
 
 	if (client_p->localClient->ratelimit <= rb_current_time() - ConfigFileEntry.max_ratelimit_tokens)

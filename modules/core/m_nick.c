@@ -551,7 +551,7 @@ clean_nick(const char *nick, int loc_client)
 	}
 
 	/* nicklen is +1 */
-	if(len >= NICKLEN && len >= ConfigFileEntry.nicklen)
+	if(len >= NICKLEN && (unsigned int)len >= ConfigFileEntry.nicklen)
 		return 0;
 
 	return 1;

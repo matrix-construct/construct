@@ -732,7 +732,7 @@ msg_client(enum message_type msgtype,
 				!IsOper(target_p))
 		{
 			if(rb_dlink_list_length(&source_p->localClient->allow_list) <
-					ConfigFileEntry.max_accept)
+					(unsigned long)ConfigFileEntry.max_accept)
 			{
 				rb_dlinkAddAlloc(target_p, &source_p->localClient->allow_list);
 				rb_dlinkAddAlloc(source_p, &target_p->on_allow_list);

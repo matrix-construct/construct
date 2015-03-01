@@ -519,6 +519,7 @@ auth_connect_callback(rb_fde_t *F, int error, void *data)
 {
 	struct AuthRequest *auth = data;
 	char authbuf[32];
+	int authlen;
 
 	/* Check the error */
 	if(error != RB_OK)
@@ -530,8 +531,9 @@ auth_connect_callback(rb_fde_t *F, int error, void *data)
 
 	rb_snprintf(authbuf, sizeof(authbuf), "%u , %u\r\n",
 		   auth->rport, auth->lport);
+	authlen = strlen(authbuf);
 
-	if(rb_write(auth->F, authbuf, strlen(authbuf)) != strlen(authbuf))
+	if(rb_write(auth->F, authbuf, authlen) != authlen)
 	{
 		auth_error(auth);
 		return;

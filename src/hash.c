@@ -697,7 +697,7 @@ find_cli_fd_hash(int fd)
 }
 
 static void
-output_hash(struct Client *source_p, const char *name, int length, int *counts, int deepest)
+output_hash(struct Client *source_p, const char *name, int length, int *counts, unsigned long deepest)
 {
 	unsigned long total = 0;
 	int i;
@@ -724,7 +724,7 @@ output_hash(struct Client *source_p, const char *name, int length, int *counts, 
 				(float) (total / (length - counts[0])),
 				(float) (total / length));
 		sendto_one_numeric(source_p, RPL_STATSDEBUG,
-				"B :Average depth: %s Highest depth: %d",
+				"B :Average depth: %s Highest depth: %lu",
 				buf, deepest);
 	}
 
@@ -741,7 +741,7 @@ static void
 count_hash(struct Client *source_p, rb_dlink_list *table, int length, const char *name)
 {
 	int counts[11];
-	int deepest = 0;
+	unsigned long deepest = 0;
 	int i;
 
 	memset(counts, 0, sizeof(counts));
