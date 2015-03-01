@@ -1041,18 +1041,13 @@ sendto_local_clients_with_capability(int cap, const char *pattern, ...)
 	rb_linebuf_putmsg(&linebuf, pattern, &args, NULL);
 	va_end(args);
 
-	current_serial++;
-
 	RB_DLINK_FOREACH(ptr, lclient_list.head)
 	{
 		target_p = ptr->data;
 
-		if(IsIOError(target_p) ||
-		   target_p->serial == current_serial ||
-		   !IsCapable(target_p, cap))
+		if(IsIOError(target_p) || !IsCapable(target_p, cap))
 			continue;
 
-		target_p->serial = current_serial;
 		send_linebuf(target_p, &linebuf);
 	}
 
