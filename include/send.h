@@ -81,6 +81,7 @@ extern void sendto_monitor(struct monitor *monptr, const char *, ...) AFP(2, 3);
 
 extern void sendto_anywhere(struct Client *, struct Client *, const char *,
 			    const char *, ...) AFP(4, 5);
+extern void sendto_local_clients_with_capability(int cap, const char *pattern, ...) AFP(2, 3);
 
 extern void sendto_realops_snomask(int, int, const char *, ...) AFP(3, 4);
 extern void sendto_realops_snomask_from(int, int, struct Client *, const char *, ...) AFP(4, 5);

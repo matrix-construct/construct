@@ -1021,6 +1021,44 @@ sendto_match_servs(struct Client *source_p, const char *mask, int cap,
 	rb_linebuf_donebuf(&rb_linebuf_id);
 }
 
+/* sendto_local_clients_with_capability()
+ *
+ * inputs       - caps needed, pattern, va_args
+ * outputs      -
+ * side effects - message is sent to matching local clients with caps.
+ */
+void
+sendto_local_clients_with_capability(int cap, const char *pattern, ...)
+{
+	va_list args;
+	rb_dlink_node *ptr;
+	struct Client *target_p;
+	buf_head_t linebuf;
+
+	rb_linebuf_newbuf(&linebuf);
+
+	va_start(args, pattern);
+	rb_linebuf_putmsg(&linebuf, pattern, &args, NULL);
+	va_end(args);
+
+	current_serial++;
+
+	RB_DLINK_FOREACH(ptr, lclient_list.head)
+	{
+		target_p = ptr->data;
+
+		if(IsIOError(target_p) ||
+		   target_p->serial == current_serial ||
+		   !IsCapable(target_p, cap))
+			continue;
+
+		target_p->serial = current_serial;
+		send_linebuf(target_p, &linebuf);
+	}
+
+	rb_linebuf_donebuf(&linebuf);
+}
+
 /* sendto_monitor()
  *
  * inputs	- monitor nick to send to, format, va_args
