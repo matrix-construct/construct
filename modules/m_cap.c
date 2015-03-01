@@ -42,6 +42,7 @@
 #include "s_serv.h"
 #include "s_user.h"
 #include "send.h"
+#include "s_conf.h"
 
 typedef int (*bqcmp)(const void *, const void *);
 
@@ -207,6 +208,18 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags, int clea
 				continue;
 			/* they are capable of this, check sticky */
 			else if(clear && clicap_list[i].flags & CLICAP_FLAGS_STICKY)
+				continue;
+		}
+
+		if (clicap_list[i].cap_serv == CLICAP_SASL)
+		{
+			struct Client *agent_p = NULL;
+
+			if (!ConfigFileEntry.sasl_service)
+				continue;
+
+			agent_p = find_named_client(ConfigFileEntry.sasl_service);
+			if (agent_p == NULL || !IsService(agent_p))
 				continue;
 		}
 
@@ -409,6 +422,24 @@ cap_req(struct Client *source_p, const char *arg)
 			{
 				finished = 0;
 				break;
+			}
+
+			if (cap->cap_serv == CLICAP_SASL)
+			{
+				struct Client *agent_p = NULL;
+
+				if (!ConfigFileEntry.sasl_service)
+				{
+					finished = 0;
+					break;
+				}
+
+				agent_p = find_named_client(ConfigFileEntry.sasl_service);
+				if (agent_p == NULL || !IsService(agent_p))
+				{
+					finished = 0;
+					break;
+				}
 			}
 
 			if(cap->flags & CLICAP_FLAGS_STICKY)
