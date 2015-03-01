@@ -225,6 +225,7 @@ abort_sasl(struct Client *data)
 static void
 abort_sasl_exit(hook_data_client_exit *data)
 {
-	abort_sasl(data->target);
+	if (data->target->localClient)
+		abort_sasl(data->target);
 }
 
