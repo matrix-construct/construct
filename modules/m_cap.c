@@ -43,6 +43,7 @@
 #include "s_user.h"
 #include "send.h"
 #include "s_conf.h"
+#include "hash.h"
 
 typedef int (*bqcmp)(const void *, const void *);
 
