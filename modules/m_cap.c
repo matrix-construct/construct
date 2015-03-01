@@ -71,7 +71,7 @@ static struct clicap
 	int namelen;
 } clicap_list[] = {
 	_CLICAP("multi-prefix",	CLICAP_MULTI_PREFIX, 0, 0, 0),
-	_CLICAP("sasl", CLICAP_SASL, 0, 0, CLICAP_FLAGS_STICKY),
+	_CLICAP("sasl", CLICAP_SASL, 0, 0, 0),
 	_CLICAP("account-notify", CLICAP_ACCOUNT_NOTIFY, 0, 0, 0),
 	_CLICAP("extended-join", CLICAP_EXTENDED_JOIN, 0, 0, 0),
 	_CLICAP("away-notify", CLICAP_AWAY_NOTIFY, 0, 0, 0),
