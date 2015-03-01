@@ -49,6 +49,9 @@ static int me_sasl(struct Client *, struct Client *, int, const char **);
 static void abort_sasl(struct Client *);
 static void abort_sasl_exit(hook_data_client_exit *);
 
+static void advertise_sasl(struct Client *);
+static void advertise_sasl_exit(hook_data_client_exit *);
+
 struct Message authenticate_msgtab = {
 	"AUTHENTICATE", 0, 0, 0, MFLG_SLOW,
 	{{m_authenticate, 2}, {m_authenticate, 2}, mg_ignore, mg_ignore, mg_ignore, {m_authenticate, 2}}
@@ -64,6 +67,8 @@ mapi_clist_av1 sasl_clist[] = {
 mapi_hfn_list_av1 sasl_hfnlist[] = {
 	{ "new_local_user",	(hookfn) abort_sasl },
 	{ "client_exit",	(hookfn) abort_sasl_exit },
+	{ "new_remote_user",	(hookfn) advertise_sasl },
+	{ "client_exit",	(hookfn) advertise_sasl_exit },
 	{ NULL, NULL }
 };
 
@@ -229,3 +234,26 @@ abort_sasl_exit(hook_data_client_exit *data)
 		abort_sasl(data->target);
 }
 
+static void
+advertise_sasl(struct Client *client_p)
+{
+	if (!ConfigFileEntry.sasl_service)
+		return;
+
+	if (irccmp(client_p->name, ConfigFileEntry.sasl_service))
+		return;
+
+	sendto_local_clients_with_capability(CLICAP_CAP_NOTIFY, ":%s CAP * NEW :sasl", me.name);
+}
+
+static void
+advertise_sasl_exit(hook_data_client_exit *data)
+{
+	if (!ConfigFileEntry.sasl_service)
+		return;
+
+	if (irccmp(data->target->name, ConfigFileEntry.sasl_service))
+		return;
+
+	sendto_local_clients_with_capability(CLICAP_CAP_NOTIFY, ":%s CAP * DEL :sasl", me.name);
+}
