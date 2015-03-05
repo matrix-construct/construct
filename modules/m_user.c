@@ -98,17 +98,12 @@ do_local_user(struct Client *client_p, struct Client *source_p,
 	rb_strlcpy(source_p->info, realname, sizeof(source_p->info));
 
 	if(!IsGotId(source_p))
-	{
-		/* This is in this location for a reason..If there is no identd
-		 * and ping cookies are enabled..we need to have a copy of this
-		 */
 		rb_strlcpy(source_p->username, username, sizeof(source_p->username));
-	}
 
 	if(source_p->name[0])
 	{
 		/* NICK already received, now I have USER... */
-		return register_local_user(client_p, source_p, username);
+		return register_local_user(client_p, source_p);
 	}
 
 	return 0;

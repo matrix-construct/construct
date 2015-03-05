@@ -153,11 +153,7 @@ static void blacklist_dns_callback(void *vptr, struct DNSReply *reply)
 
 	/* yes, it can probably happen... */
 	if (rb_dlink_list_length(&blcptr->client_p->preClient->dnsbl_queries) == 0 && blcptr->client_p->flags & FLAGS_SENTUSER && !EmptyString(blcptr->client_p->name))
-	{
-		char buf[USERLEN + 1];
-		rb_strlcpy(buf, blcptr->client_p->username, sizeof buf);
-		register_local_user(blcptr->client_p, blcptr->client_p, buf);
-	}
+		register_local_user(blcptr->client_p, blcptr->client_p);
 
 	rb_free(blcptr);
 }
