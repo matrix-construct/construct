@@ -244,32 +244,6 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags, int clea
 		{
 			*p++ = '-';
 			buflen++;
-
-			/* needs a client ack */
-			if(clicap_list[i].cap_cli &&
-			   IsCapable(source_p, clicap_list[i].cap_cli))
-			{
-				*p++ = '~';
-				buflen++;
-			}
-		}
-		else
-		{
-			if(clicap_list[i].flags & CLICAP_FLAGS_STICKY)
-			{
-				*p++ = '=';
-				buflen++;
-			}
-
-			/* if we're doing an LS, then we only send this if
-			 * they havent ack'd
-			 */
-			if(clicap_list[i].cap_cli &&
-			   (!flags || !IsCapable(source_p, clicap_list[i].cap_cli)))
-			{
-				*p++ = '~';
-				buflen++;
-			}
 		}
 
 		curlen = rb_sprintf(p, "%s ", clicap_list[i].name);
