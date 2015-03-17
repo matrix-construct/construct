@@ -29,9 +29,14 @@ NO PARAMETERS:
               (however, new forwards can still be set subject to +F).
      +C     - Disable CTCP. All CTCP messages to the channel, except ACTION,
               are disallowed.
+
+FROM EXTENSIONS:
+     +O     - IRC Operator only channel.
+     +A     - IRC server administrator only channel.
+     +T     - No NOTICEs allowed in the channel.
      +S     - Only users connected via SSL/TLS may join the channel while this 
               mode is set. Users already in the channel are not affected.
-     
+
 WITH PARAMETERS:
      +f     - Forward.  Forwards users who cannot join because of +i,
               +j, +l or +r.
