@@ -417,12 +417,6 @@ cap_req(struct Client *source_p, const char *arg)
 				}
 			}
 
-			if(cap->flags & CLICAP_FLAGS_STICKY)
-			{
-				strcat(pbuf[i], "=");
-				plen++;
-			}
-
 			capadd |= cap->cap_serv;
 		}
 
