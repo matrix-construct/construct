@@ -662,10 +662,12 @@ rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN])
 	if(cert != NULL)
 	{
 		res = SSL_get_verify_result((SSL *) F->ssl);
-		if(res == X509_V_OK ||
-				res == X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN ||
-				res == X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE ||
-				res == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT)
+		if(
+			res == X509_V_OK ||
+			res == X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN ||
+			res == X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE ||
+			res == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT ||
+			res == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY)
 		{
 			unsigned int certfp_length = RB_SSL_CERTFP_LEN;
 			X509_digest(cert, EVP_sha1(), certfp, &certfp_length);
