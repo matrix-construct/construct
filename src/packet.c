@@ -235,7 +235,6 @@ read_packet(rb_fde_t * F, void *data)
 {
 	struct Client *client_p = data;
 	int length = 0;
-	int lbuf_len;
 
 	int binary = 0;
 #ifdef USE_IODEBUG_HOOKS
@@ -288,7 +287,7 @@ read_packet(rb_fde_t * F, void *data)
 		if(IsHandshake(client_p) || IsUnknown(client_p))
 			binary = 1;
 
-		lbuf_len = rb_linebuf_parse(&client_p->localClient->buf_recvq, readBuf, length, binary);
+		(void) rb_linebuf_parse(&client_p->localClient->buf_recvq, readBuf, length, binary);
 
 		if(IsAnyDead(client_p))
 			return;

@@ -339,9 +339,8 @@ ssl_process_zipstats(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 {
 	struct Client *server;
 	struct ZipStats *zips;
-	int parc;
 	char *parv[7];
-	parc = rb_string_to_array(ctl_buf->buf, parv, 6);
+	(void) rb_string_to_array(ctl_buf->buf, parv, 6);
 	server = find_server(NULL, parv[1]);
 	if(server == NULL || server->localClient == NULL || !IsCapable(server, CAP_ZIP))
 		return;
@@ -826,7 +825,7 @@ collect_zipstats(void *unused)
 			len = sizeof(uint8_t) + sizeof(uint32_t);
 
 			id = rb_get_fd(target_p->localClient->F);
-			int32_to_buf(&buf[1], rb_get_fd(target_p->localClient->F));
+			int32_to_buf(&buf[1], id);
 			rb_strlcpy(odata, target_p->name, (sizeof(buf) - len));
 			len += strlen(odata) + 1;	/* Get the \0 as well */
 			ssl_cmd_write_queue(target_p->localClient->z_ctl, NULL, 0, buf, len);
