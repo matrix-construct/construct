@@ -41,7 +41,7 @@ rb_helper *rb_helper_start(const char *name, const char *fullpath, rb_helper_cb 
 
 rb_helper *rb_helper_child(rb_helper_cb * read_cb, rb_helper_cb * error_cb,
 			   log_cb * ilog, restart_cb * irestart, die_cb * idie,
-			   int maxcon, size_t lb_heap_size, size_t dh_size, size_t fd_heap_size);
+			   size_t lb_heap_size, size_t dh_size, size_t fd_heap_size);
 
 void rb_helper_restart(rb_helper *helper);
 #ifdef __GNUC__

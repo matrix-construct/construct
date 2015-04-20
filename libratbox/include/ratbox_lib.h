@@ -124,7 +124,7 @@ char *rb_strerror(int error);
 #else
 #define slrb_assert(expr)	do								\
 			if(rb_unlikely(!(expr))) {							\
-				rb_lib_log(L_MAIN, 						\
+				rb_lib_log( 						\
 				"file: %s line: %d: Assertion failed: (%s)",		\
 				__FILE__, __LINE__, #expr); 				\
 			}								\

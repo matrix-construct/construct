@@ -578,7 +578,7 @@ burst_TS6(struct Client *client_p)
 		if(!IsPerson(target_p))
 			continue;
 
-		send_umode(NULL, target_p, 0, 0, ubuf);
+		send_umode(NULL, target_p, 0, ubuf);
 		if(!*ubuf)
 		{
 			ubuf[0] = '+';

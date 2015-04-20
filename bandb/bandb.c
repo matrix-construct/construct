@@ -255,7 +255,7 @@ dummy_handler(int sig)
 #endif
 
 static void
-setup_signals()
+setup_signals(void)
 {
 #ifndef WINDOWS
 	struct sigaction act;
@@ -298,7 +298,7 @@ int
 main(int argc, char *argv[])
 {
 	setup_signals();
-	bandb_helper = rb_helper_child(parse_request, error_cb, NULL, NULL, NULL, 256, 256, 256, 256);	/* XXX fix me */
+	bandb_helper = rb_helper_child(parse_request, error_cb, NULL, NULL, NULL, 256, 256, 256);	/* XXX fix me */
 	if(bandb_helper == NULL)
 	{
 		fprintf(stderr,

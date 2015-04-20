@@ -724,7 +724,7 @@ already_placed_kline(struct Client *source_p, const char *luser, const char *lho
 	if(aconf == NULL && ConfigFileEntry.non_redundant_klines)
 	{
 		bits = 0;
-		if((t = parse_netmask(lhost, (struct sockaddr *) &iphost, &bits)) != HM_HOST)
+		if((t = parse_netmask(lhost, &iphost, &bits)) != HM_HOST)
 		{
 #ifdef RB_IPV6
 			if(t == HM_IPV6)

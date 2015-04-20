@@ -124,7 +124,7 @@ int
 rb_select_ports(long delay)
 {
 	int i, fd;
-	int nget = 1;
+	unsigned int nget = 1;
 	struct timespec poll_time;
 	struct timespec *p = NULL;
 	struct ev_entry *ev;
@@ -143,7 +143,7 @@ rb_select_ports(long delay)
 	if(i == -1)
 		return RB_OK;
 
-	for(i = 0; i < nget; i++)
+	for(i = 0; (unsigned)i < nget; i++)
 	{
 		if(pelst[i].portev_source == PORT_SOURCE_FD)
 		{

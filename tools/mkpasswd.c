@@ -55,9 +55,6 @@ static void brief_usage(void);
 static char saltChars[] = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
        /* 0 .. 63, ascii - 64 */
 
-extern char *optarg;
-
-
 #ifdef __MINGW32__
 #include <conio.h>
 #ifdef PASS_MAX
@@ -72,7 +69,7 @@ getpass(const char *prompt)
 	int c;
 	int i = 0;
 
-	memset(getpassbuf, sizeof(getpassbuf), 0);
+	memset(getpassbuf, 0, sizeof(getpassbuf));
 	fputs(prompt, stderr);
 	for(;;)
 	{

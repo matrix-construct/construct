@@ -71,7 +71,7 @@ distribute_hostchange(struct Client *client_p, char *newhost)
 static void
 do_host_cloak(const char *inbuf, char *outbuf, int ipmask)
 {
-	int cyc;
+	unsigned int cyc;
 	unsigned int hosthash = 1, hosthash2 = 1;
 	unsigned int maxcycle = strlen(inbuf);
 	int len1;

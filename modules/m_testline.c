@@ -120,7 +120,7 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 		host = mask;
 
 	/* parses as an IP, check for a dline */
-	if((type = parse_netmask(host, (struct sockaddr *)&ip, &host_mask)) != HM_HOST)
+	if((type = parse_netmask(host, &ip, &host_mask)) != HM_HOST)
 	{
 #ifdef RB_IPV6
 		if(type == HM_IPV6)

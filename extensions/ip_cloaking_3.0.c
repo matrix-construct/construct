@@ -151,7 +151,7 @@ do_host_cloak_host(const char *inbuf, char *outbuf)
 		if (*tptr == '.')
 			break;
 
-		if (isdigit(*tptr) || *tptr == '-')
+		if (isdigit((unsigned char)*tptr) || *tptr == '-')
 			continue;
 
 		*tptr = b26_alphabet[(*tptr * accum) % 26];
@@ -160,7 +160,7 @@ do_host_cloak_host(const char *inbuf, char *outbuf)
 	/* pass 2: scramble each number in the address */
 	for (tptr = outbuf; *tptr != '\0'; tptr++)
 	{
-		if (isdigit(*tptr))
+		if (isdigit((unsigned char)*tptr))
 		{
 			*tptr = 48 + ((*tptr * accum) % 10);
 		}

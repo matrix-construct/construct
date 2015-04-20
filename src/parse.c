@@ -49,7 +49,7 @@ struct Dictionary *alias_dict = NULL;
 /* parv[0] is not used, and parv[LAST] == NULL */
 static char *para[MAXPARA + 2];
 
-static void cancel_clients(struct Client *, struct Client *, char *);
+static void cancel_clients(struct Client *, struct Client *);
 static void remove_unknown(struct Client *, char *, char *);
 
 static void do_numeric(char[], struct Client *, struct Client *, int, char **);
@@ -169,7 +169,7 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 			if(from->from != client_p)
 			{
 				ServerStats.is_wrdi++;
-				cancel_clients(client_p, from, pbuffer);
+				cancel_clients(client_p, from);
 				return;
 			}
 		}
@@ -269,7 +269,7 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 		return;
 	}
 
-	if(handle_command(mptr, client_p, from, i, /* XXX discards const!!! */ (const char **)para) < -1)
+	if(handle_command(mptr, client_p, from, i, /* XXX discards const!!! */ (const char **)(void *)para) < -1)
 	{
 		char *p;
 		for (p = pbuffer; p <= end; p += 8)
@@ -489,12 +489,12 @@ report_messages(struct Client *source_p)
 /* cancel_clients()
  *
  * inputs	- client who sent us the message, client with fake
- *		  direction, command
+ *		  direction
  * outputs	- a given warning about the fake direction
  * side effects -
  */
 static void
-cancel_clients(struct Client *client_p, struct Client *source_p, char *cmd)
+cancel_clients(struct Client *client_p, struct Client *source_p)
 {
 	/* ok, fake prefix happens naturally during a burst on a nick
 	 * collision with TS5, we cant kill them because one client has to

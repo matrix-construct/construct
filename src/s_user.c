@@ -599,9 +599,9 @@ introduce_client(struct Client *client_p, struct Client *source_p, struct User *
 	hook_data_client hdata2;
 
 	if(MyClient(source_p))
-		send_umode(source_p, source_p, 0, 0, ubuf);
+		send_umode(source_p, source_p, 0, ubuf);
 	else
-		send_umode(NULL, source_p, 0, 0, ubuf);
+		send_umode(NULL, source_p, 0, ubuf);
 
 	if(!*ubuf)
 	{
@@ -1155,7 +1155,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
  * -avalon
  */
 void
-send_umode(struct Client *client_p, struct Client *source_p, int old, int sendmask, char *umode_buf)
+send_umode(struct Client *client_p, struct Client *source_p, int old, char *umode_buf)
 {
 	int i;
 	int flag;
@@ -1216,7 +1216,7 @@ send_umode_out(struct Client *client_p, struct Client *source_p, int old)
 	char buf[BUFSIZE];
 	rb_dlink_node *ptr;
 
-	send_umode(NULL, source_p, old, 0, buf);
+	send_umode(NULL, source_p, old, buf);
 
 	RB_DLINK_FOREACH(ptr, serv_list.head)
 	{
@@ -1231,7 +1231,7 @@ send_umode_out(struct Client *client_p, struct Client *source_p, int old)
 	}
 
 	if(client_p && MyClient(client_p))
-		send_umode(client_p, source_p, old, 0, buf);
+		send_umode(client_p, source_p, old, buf);
 }
 
 /*

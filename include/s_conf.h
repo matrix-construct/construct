@@ -350,7 +350,7 @@ extern int detach_conf(struct Client *);
 extern struct ConfItem *find_tkline(const char *, const char *, struct sockaddr *);
 extern char *show_iline_prefix(struct Client *, struct ConfItem *, char *);
 extern void get_printable_conf(struct ConfItem *,
-			       char **, char **, char **, char **, int *, char **);
+			       char **, char **, const char **, char **, int *, char **);
 extern char *get_user_ban_reason(struct ConfItem *aconf);
 extern void get_printable_kline(struct Client *, struct ConfItem *,
 				char **, char **, char **, char **);

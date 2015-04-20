@@ -58,7 +58,7 @@ mapi_clist_av1 privs_clist[] = {
 struct mode_table
 {
 	const char *name;
-	int mode;
+	unsigned int mode;
 };
 
 /* there is no such table like this anywhere else */

@@ -399,7 +399,7 @@ rb_patricia_search_exact(rb_patricia_tree_t *patricia, rb_prefix_t *prefix)
 					prefix_toa(node->prefix), node->prefix->bitlen);
 			else
 				fprintf(stderr,
-					"patricia_search_exact: take right at %d\n", node->bit);
+					"patricia_search_exact: take right at %u\n", node->bit);
 #endif /* PATRICIA_DEBUG */
 			node = node->r;
 		}
@@ -412,7 +412,7 @@ rb_patricia_search_exact(rb_patricia_tree_t *patricia, rb_prefix_t *prefix)
 					prefix_toa(node->prefix), node->prefix->bitlen);
 			else
 				fprintf(stderr,
-					"patricia_search_exact: take left at %d\n", node->bit);
+					"patricia_search_exact: take left at %u\n", node->bit);
 #endif /* PATRICIA_DEBUG */
 			node = node->l;
 		}
@@ -423,10 +423,10 @@ rb_patricia_search_exact(rb_patricia_tree_t *patricia, rb_prefix_t *prefix)
 
 #ifdef PATRICIA_DEBUG
 	if(node->prefix)
-		fprintf(stderr, "patricia_search_exact: stop at %s/%d %d\n",
+		fprintf(stderr, "patricia_search_exact: stop at %s/%d %u\n",
 			prefix_toa(node->prefix), node->prefix->bitlen, node->bit);
 	else
-		fprintf(stderr, "patricia_search_exact: stop at %d\n", node->bit);
+		fprintf(stderr, "patricia_search_exact: stop at %u\n", node->bit);
 #endif /* PATRICIA_DEBUG */
 	if(node->bit > bitlen || node->prefix == NULL)
 		return (NULL);
@@ -486,7 +486,7 @@ rb_patricia_search_best2(rb_patricia_tree_t *patricia, rb_prefix_t *prefix, int 
 					prefix_toa(node->prefix), node->prefix->bitlen);
 			else
 				fprintf(stderr,
-					"patricia_search_best: take right at %d\n", node->bit);
+					"patricia_search_best: take right at %u\n", node->bit);
 #endif /* PATRICIA_DEBUG */
 			node = node->r;
 		}
@@ -499,7 +499,7 @@ rb_patricia_search_best2(rb_patricia_tree_t *patricia, rb_prefix_t *prefix, int 
 					prefix_toa(node->prefix), node->prefix->bitlen);
 			else
 				fprintf(stderr,
-					"patricia_search_best: take left at %d\n", node->bit);
+					"patricia_search_best: take left at %u\n", node->bit);
 #endif /* PATRICIA_DEBUG */
 			node = node->l;
 		}
@@ -518,7 +518,7 @@ rb_patricia_search_best2(rb_patricia_tree_t *patricia, rb_prefix_t *prefix, int 
 		fprintf(stderr, "patricia_search_best: stop at %s/%d\n",
 			prefix_toa(node->prefix), node->prefix->bitlen);
 	else
-		fprintf(stderr, "patricia_search_best: stop at %d\n", node->bit);
+		fprintf(stderr, "patricia_search_best: stop at %u\n", node->bit);
 #endif /* PATRICIA_DEBUG */
 
 	if(cnt <= 0)
@@ -601,7 +601,7 @@ rb_patricia_lookup(rb_patricia_tree_t *patricia, rb_prefix_t *prefix)
 					"patricia_lookup: take right %s/%d\n",
 					prefix_toa(node->prefix), node->prefix->bitlen);
 			else
-				fprintf(stderr, "patricia_lookup: take right at %d\n", node->bit);
+				fprintf(stderr, "patricia_lookup: take right at %u\n", node->bit);
 #endif /* PATRICIA_DEBUG */
 			node = node->r;
 		}
@@ -615,7 +615,7 @@ rb_patricia_lookup(rb_patricia_tree_t *patricia, rb_prefix_t *prefix)
 					"patricia_lookup: take left %s/%d\n",
 					prefix_toa(node->prefix), node->prefix->bitlen);
 			else
-				fprintf(stderr, "patricia_lookup: take left at %d\n", node->bit);
+				fprintf(stderr, "patricia_lookup: take left at %u\n", node->bit);
 #endif /* PATRICIA_DEBUG */
 			node = node->l;
 		}
@@ -654,7 +654,7 @@ rb_patricia_lookup(rb_patricia_tree_t *patricia, rb_prefix_t *prefix)
 	if(differ_bit > check_bit)
 		differ_bit = check_bit;
 #ifdef PATRICIA_DEBUG
-	fprintf(stderr, "patricia_lookup: differ_bit %d\n", differ_bit);
+	fprintf(stderr, "patricia_lookup: differ_bit %u\n", differ_bit);
 #endif /* PATRICIA_DEBUG */
 
 	parent = node->parent;
@@ -667,7 +667,7 @@ rb_patricia_lookup(rb_patricia_tree_t *patricia, rb_prefix_t *prefix)
 			fprintf(stderr, "patricia_lookup: up to %s/%d\n",
 				prefix_toa(node->prefix), node->prefix->bitlen);
 		else
-			fprintf(stderr, "patricia_lookup: up to %d\n", node->bit);
+			fprintf(stderr, "patricia_lookup: up to %u\n", node->bit);
 #endif /* PATRICIA_DEBUG */
 	}
 

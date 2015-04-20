@@ -48,7 +48,7 @@ static unsigned long hash_ipv4(struct sockaddr *, int);
  * Side effects: None
  */
 int
-parse_netmask(const char *text, struct sockaddr  *naddr, int *nb)
+parse_netmask(const char *text, struct rb_sockaddr_storage *naddr, int *nb)
 {
 	char *ip = LOCAL_COPY(text);
 	char *ptr;
@@ -60,9 +60,9 @@ parse_netmask(const char *text, struct sockaddr  *naddr, int *nb)
 		b = nb;
 
 	if(naddr == NULL)
-		addr = (struct rb_sockaddr_storage *)&xaddr;
+		addr = &xaddr;
 	else
-		addr = (struct rb_sockaddr_storage *)naddr;
+		addr = naddr;
 
 	if(strpbrk(ip, "*?") != NULL)
 	{
@@ -126,7 +126,7 @@ init_host_hash(void)
 static unsigned long
 hash_ipv4(struct sockaddr *saddr, int bits)
 {
-	struct sockaddr_in *addr = (struct sockaddr_in *) saddr;
+	struct sockaddr_in *addr = (struct sockaddr_in *)(void *)saddr;
 
 	if(bits != 0)
 	{
@@ -146,7 +146,7 @@ hash_ipv4(struct sockaddr *saddr, int bits)
 static unsigned long
 hash_ipv6(struct sockaddr *saddr, int bits)
 {
-	struct sockaddr_in6 *addr = (struct sockaddr_in6 *) saddr;
+	struct sockaddr_in6 *addr = (struct sockaddr_in6 *)(void *)saddr;
 	unsigned long v = 0, n;
 	for (n = 0; n < 16; n++)
 	{
@@ -484,7 +484,7 @@ find_exact_conf_by_address(const char *address, int type, const char *username)
 
 	if(address == NULL)
 		address = "/NOMATCH!/";
-	masktype = parse_netmask(address, (struct sockaddr *)&addr, &bits);
+	masktype = parse_netmask(address, &addr, &bits);
 #ifdef RB_IPV6
 	if(masktype == HM_IPV6)
 	{
@@ -541,7 +541,7 @@ add_conf_by_address(const char *address, int type, const char *username, const c
 	if(address == NULL)
 		address = "/NOMATCH!/";
 	arec = rb_malloc(sizeof(struct AddressRec));
-	masktype = parse_netmask(address, (struct sockaddr *)&arec->Mask.ipa.addr, &bits);
+	masktype = parse_netmask(address, &arec->Mask.ipa.addr, &bits);
 	arec->Mask.ipa.bits = bits;
 	arec->masktype = masktype;
 #ifdef RB_IPV6
@@ -587,7 +587,7 @@ delete_one_address_conf(const char *address, struct ConfItem *aconf)
 	unsigned long hv;
 	struct AddressRec *arec, *arecl = NULL;
 	struct rb_sockaddr_storage addr;
-	masktype = parse_netmask(address, (struct sockaddr *)&addr, &bits);
+	masktype = parse_netmask(address, &addr, &bits);
 #ifdef RB_IPV6
 	if(masktype == HM_IPV6)
 	{
@@ -741,7 +741,8 @@ show_iline_prefix(struct Client *sptr, struct ConfItem *aconf, char *name)
 void
 report_auth(struct Client *client_p)
 {
-	char *name, *host, *pass, *user, *classname;
+	char *name, *host, *user, *classname;
+	const char *pass;
 	struct AddressRec *arec;
 	struct ConfItem *aconf;
 	int i, port;

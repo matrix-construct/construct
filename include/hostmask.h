@@ -36,7 +36,7 @@ enum
 #endif
 };
 
-int parse_netmask(const char *, struct sockaddr *, int *);
+int parse_netmask(const char *, struct rb_sockaddr_storage *, int *);
 struct ConfItem *find_conf_by_address(const char *host, const char *sockhost,
 				      const char *orighost, struct sockaddr *,
 				      int, int, const char *, const char *);

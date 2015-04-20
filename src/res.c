@@ -552,7 +552,7 @@ static void query_name(struct reslist *request)
 	if ((request_len =
 	     irc_res_mkquery(request->queryname, C_IN, request->type, (unsigned char *)buf, sizeof(buf))) > 0)
 	{
-		HEADER *header = (HEADER *) buf;
+		HEADER *header = (HEADER *)(void *)buf;
 		header->id = request->id;
 		++request->sends;
 
@@ -784,7 +784,7 @@ static int res_read_single_reply(rb_fde_t *F, void *data)
 	/*
 	 * convert DNS reply reader from Network byte order to CPU byte order.
 	 */
-	header = (HEADER *) buf;
+	header = (HEADER *)(void *)buf;
 	header->ancount = ntohs(header->ancount);
 	header->qdcount = ntohs(header->qdcount);
 	header->nscount = ntohs(header->nscount);
