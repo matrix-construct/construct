@@ -302,6 +302,7 @@ rb_init_ssl(void)
 {
 	int ret = 1;
 	char libratbox_data[] = "libratbox data";
+	const char libratbox_ciphers[] = "kEECDH+HIGH:kEDH+HIGH:HIGH:!RC4:!aNULL";
 	SSL_load_error_strings();
 	SSL_library_init();
 	libratbox_index = SSL_get_ex_new_index(0, libratbox_data, NULL, NULL, NULL);
@@ -343,7 +344,7 @@ rb_init_ssl(void)
 	SSL_CTX_set_options(ssl_server_ctx, server_options);
 	SSL_CTX_set_verify(ssl_server_ctx, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, verify_accept_all_cb);
 	SSL_CTX_set_session_cache_mode(ssl_server_ctx, SSL_SESS_CACHE_OFF);
-	SSL_CTX_set_cipher_list(ssl_server_ctx, "kEECDH+HIGH:kEDH+HIGH:HIGH:!RC4:!aNULL");
+	SSL_CTX_set_cipher_list(ssl_server_ctx, libratbox_ciphers);
 
 	/* Set ECDHE on OpenSSL 1.00+, but make sure it's actually available because redhat are dicks
 	   and bastardise their OpenSSL for stupid reasons... */
@@ -371,6 +372,8 @@ rb_init_ssl(void)
 #ifdef SSL_OP_NO_TICKET
 	SSL_CTX_set_options(ssl_client_ctx, SSL_OP_NO_TICKET);
 #endif
+
+	SSL_CTX_set_cipher_list(ssl_client_ctx, libratbox_ciphers);
 
 	return ret;
 }
