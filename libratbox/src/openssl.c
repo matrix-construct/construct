@@ -305,40 +305,61 @@ rb_init_ssl(void)
 	SSL_load_error_strings();
 	SSL_library_init();
 	libratbox_index = SSL_get_ex_new_index(0, libratbox_data, NULL, NULL, NULL);
+
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
 	ssl_server_ctx = SSL_CTX_new(SSLv23_server_method());
+#else
+	ssl_server_ctx = SSL_CTX_new(TLS_server_method());
+#endif
+
 	if(ssl_server_ctx == NULL)
 	{
 		rb_lib_log("rb_init_openssl: Unable to initialize OpenSSL server context: %s",
 			   get_ssl_error(ERR_get_error()));
 		ret = 0;
 	}
-	/* Disable SSLv2, make the client use our settings */
-	SSL_CTX_set_options(ssl_server_ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_CIPHER_SERVER_PREFERENCE
+
+	long server_options = SSL_CTX_get_options(ssl_server_ctx);
+
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+	server_options |= SSL_OP_NO_SSLv2;
+	server_options |= SSL_OP_NO_SSLv3;
+#endif
+
 #ifdef SSL_OP_SINGLE_DH_USE
-			| SSL_OP_SINGLE_DH_USE
+	server_options |= SSL_OP_SINGLE_DH_USE;
 #endif
+
+#ifdef SSL_OP_SINGLE_ECDH_USE
+	server_options |= SSL_OP_SINGLE_ECDH_USE;
+#endif
+
 #ifdef SSL_OP_NO_TICKET
-			| SSL_OP_NO_TICKET
+	server_options |= SSL_OP_NO_TICKET;
 #endif
-			);
+
+	server_options |= SSL_OP_CIPHER_SERVER_PREFERENCE;
+
+	SSL_CTX_set_options(ssl_server_ctx, server_options);
 	SSL_CTX_set_verify(ssl_server_ctx, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, verify_accept_all_cb);
 	SSL_CTX_set_session_cache_mode(ssl_server_ctx, SSL_SESS_CACHE_OFF);
 	SSL_CTX_set_cipher_list(ssl_server_ctx, "kEECDH+HIGH:kEDH+HIGH:HIGH:!RC4:!aNULL");
 
 	/* Set ECDHE on OpenSSL 1.00+, but make sure it's actually available because redhat are dicks
 	   and bastardise their OpenSSL for stupid reasons... */
-	#if (OPENSSL_VERSION_NUMBER >= 0x10000000) && defined(NID_secp384r1)
+	#if (OPENSSL_VERSION_NUMBER >= 0x10000000L) && defined(NID_secp384r1)
 		EC_KEY *key = EC_KEY_new_by_curve_name(NID_secp384r1);
 		if (key) {
 			SSL_CTX_set_tmp_ecdh(ssl_server_ctx, key);
 			EC_KEY_free(key);
 		}
-#ifdef SSL_OP_SINGLE_ECDH_USE
-		SSL_CTX_set_options(ssl_server_ctx, SSL_OP_SINGLE_ECDH_USE);
-#endif
 	#endif
 
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
 	ssl_client_ctx = SSL_CTX_new(TLSv1_client_method());
+#else
+	ssl_server_ctx = SSL_CTX_new(TLS_client_method());
+#endif
 
 	if(ssl_client_ctx == NULL)
 	{
