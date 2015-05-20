@@ -358,7 +358,7 @@ rb_init_ssl(void)
 #if (OPENSSL_VERSION_NUMBER < 0x10100000L)
 	ssl_client_ctx = SSL_CTX_new(TLSv1_client_method());
 #else
-	ssl_server_ctx = SSL_CTX_new(TLS_client_method());
+	ssl_client_ctx = SSL_CTX_new(TLS_client_method());
 #endif
 
 	if(ssl_client_ctx == NULL)
