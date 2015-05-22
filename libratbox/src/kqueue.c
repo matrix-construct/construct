@@ -103,7 +103,7 @@ kq_update_events(rb_fde_t *F, short filter, PF * handler)
 			kep_flags = EV_DELETE;
 		}
 
-		EV_SET(kep, (uintptr_t)F->fd, filter, kep_flags, 0, 0, (void *)F);
+		EV_SET(kep, F->fd, filter, kep_flags, 0, 0, F);
 
 		if(++kqoff == kqmax)
 		{
