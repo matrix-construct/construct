@@ -86,6 +86,7 @@ FILE *conf_fbfile_in;
 extern char yytext[];
 
 static int verify_access(struct Client *client_p, const char *username);
+static struct ConfItem *find_address_conf_by_client(struct Client *client_p, const char *username);
 static int attach_iline(struct Client *, struct ConfItem *);
 
 void
@@ -317,27 +318,8 @@ static int
 verify_access(struct Client *client_p, const char *username)
 {
 	struct ConfItem *aconf;
-	char non_ident[USERLEN + 1];
 
-	if(IsGotId(client_p))
-	{
-		aconf = find_address_conf(client_p->host, client_p->sockhost,
-					client_p->username, client_p->username,
-					(struct sockaddr *) &client_p->localClient->ip,
-					client_p->localClient->ip.ss_family,
-					client_p->localClient->auth_user);
-	}
-	else
-	{
-		rb_strlcpy(non_ident, "~", sizeof(non_ident));
-		rb_strlcat(non_ident, username, sizeof(non_ident));
-		aconf = find_address_conf(client_p->host, client_p->sockhost,
-					non_ident, client_p->username,
-					(struct sockaddr *) &client_p->localClient->ip,
-					client_p->localClient->ip.ss_family,
-					client_p->localClient->auth_user);
-	}
-
+	aconf = find_address_conf_by_client(client_p, username);
 	if(aconf == NULL)
 		return NOT_AUTHORISED;
 
@@ -396,6 +378,37 @@ verify_access(struct Client *client_p, const char *username)
 	}
 
 	return NOT_AUTHORISED;
+}
+
+
+/*
+ * find_address_conf_by_client
+ */
+static struct ConfItem *
+find_address_conf_by_client(struct Client *client_p, const char *username)
+{
+	struct ConfItem *aconf;
+	char non_ident[USERLEN + 1];
+
+	if(IsGotId(client_p))
+	{
+		aconf = find_address_conf(client_p->host, client_p->sockhost,
+					client_p->username, client_p->username,
+					(struct sockaddr *) &client_p->localClient->ip,
+					client_p->localClient->ip.ss_family,
+					client_p->localClient->auth_user);
+	}
+	else
+	{
+		rb_strlcpy(non_ident, "~", sizeof(non_ident));
+		rb_strlcat(non_ident, username, sizeof(non_ident));
+		aconf = find_address_conf(client_p->host, client_p->sockhost,
+					non_ident, client_p->username,
+					(struct sockaddr *) &client_p->localClient->ip,
+					client_p->localClient->ip.ss_family,
+					client_p->localClient->auth_user);
+	}
+	return aconf;
 }
 
 
