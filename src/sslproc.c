@@ -384,6 +384,7 @@ ssl_process_certfp(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 {
 	struct Client *client_p;
 	int32_t fd;
+	int32_t len;
 	uint8_t *certfp;
 	char *certfp_string;
 	int i;
@@ -392,13 +393,14 @@ ssl_process_certfp(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 		return;		/* bogus message..drop it.. XXX should warn here */
 
 	fd = buf_to_int32(&ctl_buf->buf[1]);
-	certfp = (uint8_t *)&ctl_buf->buf[5];
+	len = buf_to_int32(&ctl_buf->buf[5]);
+	certfp = (uint8_t *)&ctl_buf->buf[9];
 	client_p = find_cli_fd_hash(fd);
 	if(client_p == NULL)
 		return;
 	rb_free(client_p->certfp);
-	certfp_string = rb_malloc(RB_SSL_CERTFP_LEN * 2 + 1);
-	for(i = 0; i < RB_SSL_CERTFP_LEN; i++)
+	certfp_string = rb_malloc(len * 2 + 1);
+	for(i = 0; i < len; i++)
 		rb_snprintf(certfp_string + 2 * i, 3, "%02x",
 				certfp[i]);
 	client_p->certfp = certfp_string;
