@@ -536,18 +536,35 @@ rb_get_ssl_strerror(rb_fde_t *F)
 }
 
 int
-rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN])
+rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
 {
 	const mbedtls_x509_crt *peer_cert;
 	uint8_t hash[RB_SSL_CERTFP_LEN];
+	size_t hashlen;
 	const mbedtls_md_info_t *md_info;
+	mbedtls_md_type_t md_type;
 	int ret;
+
+	switch (method)
+	{
+	case RB_SSL_CERTFP_METH_SHA1:
+		md_type = MBEDTLS_MD_SHA1;
+		hashlen = RB_SSL_CERTFP_LEN_SHA1;
+	case RB_SSL_CERTFP_METH_SHA256:
+		md_type = MBEDTLS_MD_SHA256;
+		hashlen = RB_SSL_CERTFP_LEN_SHA256;
+	case RB_SSL_CERTFP_METH_SHA512:
+		md_type = MBEDTLS_MD_SHA512;
+		hashlen = RB_SSL_CERTFP_LEN_SHA512;
+	default:
+		return 0;
+	}
 
 	peer_cert = mbedtls_ssl_get_peer_cert(SSL_P(F));
 	if (peer_cert == NULL)
 		return 0;
 
-	md_info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA1);
+	md_info = mbedtls_md_info_from_type(md_type);
 	if (md_info == NULL)
 		return 0;
 
@@ -557,7 +574,7 @@ rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN])
 		return 0;
 	}
 
-	memcpy(certfp, hash, RB_SSL_CERTFP_LEN);
+	memcpy(certfp, hash, hashlen);
 
 	return 1;
 }
