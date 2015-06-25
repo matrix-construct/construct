@@ -307,7 +307,7 @@ rb_init_ssl(void)
 	SSL_library_init();
 	libratbox_index = SSL_get_ex_new_index(0, libratbox_data, NULL, NULL, NULL);
 
-#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+#if defined(LIBRESSL_VERSION_NUMBER) || (OPENSSL_VERSION_NUMBER < 0x10100000L)
 	ssl_server_ctx = SSL_CTX_new(SSLv23_server_method());
 #else
 	ssl_server_ctx = SSL_CTX_new(TLS_server_method());
@@ -322,7 +322,7 @@ rb_init_ssl(void)
 
 	long server_options = SSL_CTX_get_options(ssl_server_ctx);
 
-#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+#if defined(LIBRESSL_VERSION_NUMBER) || (OPENSSL_VERSION_NUMBER < 0x10100000L)
 	server_options |= SSL_OP_NO_SSLv2;
 	server_options |= SSL_OP_NO_SSLv3;
 #endif
@@ -356,7 +356,7 @@ rb_init_ssl(void)
 		}
 	#endif
 
-#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+#if defined(LIBRESSL_VERSION_NUMBER) || (OPENSSL_VERSION_NUMBER < 0x10100000L)
 	ssl_client_ctx = SSL_CTX_new(TLSv1_client_method());
 #else
 	ssl_client_ctx = SSL_CTX_new(TLS_client_method());
