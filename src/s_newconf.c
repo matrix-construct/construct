@@ -291,7 +291,7 @@ find_oper_conf(const char *username, const char *host, const char *locip, const 
 	int bits, cbits;
 	rb_dlink_node *ptr;
 
-	parse_netmask(locip, (struct sockaddr *)&cip, &cbits);
+	parse_netmask(locip, &cip, &cbits);
 
 	RB_DLINK_FOREACH(ptr, oper_conf_list.head)
 	{
@@ -303,7 +303,7 @@ find_oper_conf(const char *username, const char *host, const char *locip, const 
 
 		rb_strlcpy(addr, oper_p->host, sizeof(addr));
 
-		if(parse_netmask(addr, (struct sockaddr *)&ip, &bits) != HM_HOST)
+		if(parse_netmask(addr, &ip, &bits) != HM_HOST)
 		{
 			if(ip.ss_family == cip.ss_family &&
 			   comp_with_mask_sock((struct sockaddr *)&ip, (struct sockaddr *)&cip, bits))

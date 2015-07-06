@@ -75,7 +75,7 @@ rb_dlink_list service_list;
 /* internally defined functions */
 static void set_default_conf(void);
 static void validate_conf(void);
-static void read_conf(FILE *);
+static void read_conf(void);
 static void clear_out_old_conf(void);
 
 static void expire_prop_bans(void *list);
@@ -818,12 +818,12 @@ set_default_conf(void)
  * read_conf()
  *
  *
- * inputs       - file descriptor pointing to config file to use
+ * inputs       - None
  * output       - None
  * side effects	- Read configuration file.
  */
 static void
-read_conf(FILE * file)
+read_conf(void)
 {
 	lineno = 0;
 
@@ -1280,7 +1280,7 @@ get_oper_name(struct Client *client_p)
  */
 void
 get_printable_conf(struct ConfItem *aconf, char **name, char **host,
-		   char **pass, char **user, int *port, char **classname)
+		   const char **pass, char **user, int *port, char **classname)
 {
 	static char null[] = "<NULL>";
 	static char zero[] = "default";
@@ -1399,7 +1399,7 @@ read_conf_files(int cold)
 	}
 
 	call_hook(h_conf_read_start, NULL);
-	read_conf(conf_fbfile_in);
+	read_conf();
 	call_hook(h_conf_read_end, NULL);
 
 	fclose(conf_fbfile_in);

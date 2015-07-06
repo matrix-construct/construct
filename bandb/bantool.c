@@ -255,10 +255,10 @@ main(int argc, char *argv[])
 	if(flag.import)
 	{
 		if(count.error && flag.verbose)
-			fprintf(stderr, "* I was unable to locate %i config files to import.\n",
+			fprintf(stderr, "* I was unable to locate %u config files to import.\n",
 				count.error);
 
-		fprintf(stdout, "* Import Stats: Klines: %i, Dlines: %i, Xlines: %i, Resvs: %i \n",
+		fprintf(stdout, "* Import Stats: Klines: %u, Dlines: %u, Xlines: %u, Resvs: %u \n",
 			count.klines, count.dlines, count.xlines, count.resvs);
 
 		fprintf(stdout,

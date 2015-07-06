@@ -412,7 +412,8 @@ stats_deny (struct Client *source_p)
 static void
 stats_exempt(struct Client *source_p)
 {
-	char *name, *host, *pass, *user, *classname;
+	char *name, *host, *user, *classname;
+	const char *pass;
 	struct AddressRec *arec;
 	struct ConfItem *aconf;
 	int i, port;
@@ -523,7 +524,8 @@ stats_auth (struct Client *source_p)
 	else if((ConfigFileEntry.stats_i_oper_only == 1) && !IsOper (source_p))
 	{
 		struct ConfItem *aconf;
-		char *name, *host, *pass = "*", *user, *classname;
+		char *name, *host, *user, *classname;
+		const char *pass = "*";
 		int port;
 
 		if(MyConnect (source_p))

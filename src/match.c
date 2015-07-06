@@ -331,14 +331,14 @@ int comp_with_mask_sock(struct sockaddr *addr, struct sockaddr *dest, u_int mask
 
 	if (addr->sa_family == AF_INET)
 	{
-		iaddr = &((struct sockaddr_in *)addr)->sin_addr;
-		idest = &((struct sockaddr_in *)dest)->sin_addr;
+		iaddr = &((struct sockaddr_in *)(void *)addr)->sin_addr;
+		idest = &((struct sockaddr_in *)(void *)dest)->sin_addr;
 	}
 #ifdef RB_IPV6
 	else
 	{
-		iaddr = &((struct sockaddr_in6 *)addr)->sin6_addr;
-		idest = &((struct sockaddr_in6 *)dest)->sin6_addr;
+		iaddr = &((struct sockaddr_in6 *)(void *)addr)->sin6_addr;
+		idest = &((struct sockaddr_in6 *)(void *)dest)->sin6_addr;
 
 	}
 #endif

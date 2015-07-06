@@ -223,7 +223,7 @@ apply_dline(struct Client *source_p, const char *dlhost, int tdline_time, char *
 	int t = AF_INET, ty, b;
 	const char *creason;
 
-	ty = parse_netmask(dlhost, (struct sockaddr *) &daddr, &b);
+	ty = parse_netmask(dlhost, &daddr, &b);
 	if(ty == HM_HOST)
 	{
 		sendto_one(source_p, ":%s NOTICE %s :Invalid D-Line", me.name, source_p->name);

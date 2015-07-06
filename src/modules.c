@@ -802,7 +802,7 @@ load_a_module(const char *path, int warn, int core)
 	{
 	case 1:
 		{
-			struct mapi_mheader_av1 *mheader = (struct mapi_mheader_av1 *) mapi_version;	/* see above */
+			struct mapi_mheader_av1 *mheader = (struct mapi_mheader_av1 *)(void *)mapi_version;	/* see above */
 			if(mheader->mapi_register && (mheader->mapi_register() == -1))
 			{
 				ilog(L_MAIN, "Module %s indicated failure during load.",

@@ -221,7 +221,7 @@ bandb_check_kline(struct ConfItem *aconf)
 	int aftype;
 	const char *p;
 
-	aftype = parse_netmask(aconf->host, (struct sockaddr *)&daddr, NULL);
+	aftype = parse_netmask(aconf->host, &daddr, NULL);
 
 	if(aftype != HM_HOST)
 	{
@@ -260,10 +260,9 @@ static int
 bandb_check_dline(struct ConfItem *aconf)
 {
 	struct rb_sockaddr_storage daddr;
-/* 	struct ConfItem *dconf; */
 	int bits;
 
-	if(!parse_netmask(aconf->host, (struct sockaddr *)&daddr, &bits))
+	if(!parse_netmask(aconf->host, &daddr, &bits))
 		return 0;
 
 	return 1;

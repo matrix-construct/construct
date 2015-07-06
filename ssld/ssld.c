@@ -51,22 +51,6 @@ int32_to_buf(uint8_t *buf, int32_t x)
 	return;
 }
 
-static inline uint16_t
-buf_to_uint16(uint8_t *buf)
-{
-	uint16_t x;
-	memcpy(&x, buf, sizeof(x));
-	return x;
-}
-
-static inline void
-uint16_to_buf(uint8_t *buf, uint16_t x)
-{
-	memcpy(buf, &x, sizeof(x));
-	return;
-}
-
-
 static char inbuf[READBUF_SIZE];
 #ifdef HAVE_LIBZ
 static char outbuf[READBUF_SIZE];

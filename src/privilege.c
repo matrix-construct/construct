@@ -29,7 +29,7 @@
 #include "logger.h"
 #include "send.h"
 
-static rb_dlink_list privilegeset_list = {};
+static rb_dlink_list privilegeset_list = {NULL, NULL, 0};
 
 int
 privilegeset_in_set(struct PrivilegeSet *set, const char *priv)

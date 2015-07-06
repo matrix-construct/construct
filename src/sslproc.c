@@ -91,23 +91,6 @@ int32_to_buf(char *buf, int32_t x)
 	return;
 }
 
-
-static inline uint16_t
-buf_to_uint16(char *buf)
-{
-	uint16_t x;
-	memcpy(&x, buf, sizeof(x));
-	return x;
-}
-
-static inline void
-uint16_to_buf(char *buf, uint16_t x)
-{
-	memcpy(buf, &x, sizeof(x));
-	return;
-}
-
-
 static ssl_ctl_t *
 allocate_ssl_daemon(rb_fde_t * F, rb_fde_t * P, int pid)
 {

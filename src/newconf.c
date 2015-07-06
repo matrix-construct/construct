@@ -1864,7 +1864,7 @@ conf_set_blacklist_matches(void *data)
 			/* Check for validity */
 			if (*p == '.')
 				type = BLACKLIST_FILTER_ALL;
-			else if (!isalnum(*p))
+			else if (!isalnum((unsigned char)*p))
 			{
 				conf_report_error("blacklist::matches has invalid IP match entry %s",
 						str);
