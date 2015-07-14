@@ -739,13 +739,13 @@ misc
 BUGS: Major bugs in this release are listed in BUGS
 
 BUG REPORTS: If you run this code and encounter problems, you must report
-via IRC to irc.atheme.org, #charybdis. For specific bugs you can use
-http://bugs-meta.atheme.org/ (Charybdis project).
+via IRC to irc.freenode.net, #charybdis. For specific bugs you can use
+https://github.com/atheme/charybdis/issues.
 
 Please include a gdb backtrace and keep the core file, binaries and 
 modules in case the developers need them.
 
-Other files recommended for reading: BUGS, README.FIRST, INSTALL
+Other files recommended for reading: README.md, INSTALL
 
 --------------------------------------------------------------------------------
 $Id: NEWS 3496 2007-05-30 10:22:01Z jilles $
