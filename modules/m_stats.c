@@ -621,6 +621,43 @@ stats_tklines(struct Client *source_p)
 	}
 }
 
+/* report_Klines()
+ *
+ * inputs       - Client to report to, mask
+ * outputs      -
+ * side effects - Reports configured K-lines to client_p.
+ */
+static void
+report_Klines(struct Client *source_p)
+{
+	char *host, *pass, *user, *oper_reason;
+	struct AddressRec *arec;
+	struct ConfItem *aconf = NULL;
+	int i;
+
+	for (i = 0; i < ATABLE_SIZE; i++)
+	{
+		for (arec = atable[i]; arec; arec = arec->next)
+		{
+			if(arec->type == CONF_KILL)
+			{
+				aconf = arec->aconf;
+
+				/* its a tempkline, theyre reported elsewhere */
+				if(aconf->flags & CONF_FLAGS_TEMPORARY)
+					continue;
+
+				get_printable_kline(source_p, aconf, &host, &pass, &user, &oper_reason);
+				sendto_one_numeric(source_p, RPL_STATSKLINE,
+						   form_str(RPL_STATSKLINE),
+						   'K', host, user, pass,
+						   oper_reason ? "|" : "",
+						   oper_reason ? oper_reason : "");
+			}
+		}
+	}
+}
+
 static void
 stats_klines(struct Client *source_p)
 {
