@@ -1475,7 +1475,7 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 		/* Resend away message to away-notify enabled clients. */
 		if (target_p->user->away)
 			sendto_common_channels_local_butone(target_p, CLICAP_AWAY_NOTIFY, ":%s!%s@%s AWAY :%s",
-							    target_p->name, target_p->username, target_p->host,
+							    nick, user, host,
 							    target_p->user->away);
 
 		if(MyClient(target_p) && changed_case)
