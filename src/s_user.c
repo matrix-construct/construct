@@ -281,7 +281,7 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 		myusername[i] = '\0';
 	}
 	else
-		strlcpy(myusername, source_p->username, sizeof myusername);
+		rb_strlcpy(myusername, source_p->username, sizeof myusername);
 
 	if((status = check_client(client_p, source_p, myusername)) < 0)
 		return (CLIENT_EXITED);
