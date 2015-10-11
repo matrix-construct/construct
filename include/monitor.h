@@ -17,9 +17,9 @@ struct monitor
 	struct monitor *hnext;
 	char name[NICKLEN];
 	rb_dlink_list users;
+	rb_dlink_node node;
+	unsigned int hashv;
 };
-
-extern struct monitor *monitorTable[];
 
 #define MONITOR_HASH_BITS 16
 #define MONITOR_HASH_SIZE (1<<MONITOR_HASH_BITS)
