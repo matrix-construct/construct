@@ -14,7 +14,6 @@ struct rb_bh;
 
 struct monitor
 {
-	struct monitor *hnext;
 	char name[NICKLEN];
 	rb_dlink_list users;
 	rb_dlink_node node;
