@@ -66,7 +66,6 @@ find_monitor(const char *name, int add)
 		monptr = ptr->data;
 		if(!irccmp(monptr->name, name))
 			return monptr;
-	
 	}
 
 	if(add)
