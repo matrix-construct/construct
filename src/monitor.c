@@ -146,7 +146,7 @@ clear_monitor(struct Client *client_p)
 		rb_dlinkFindDestroy(client_p, &monptr->users);
 		rb_free_rb_dlink_node(ptr);
 
-		free_monitor(ptr->data);
+		free_monitor(monptr);
 	}
 
 	client_p->localClient->monitor_list.head = client_p->localClient->monitor_list.tail = NULL;
