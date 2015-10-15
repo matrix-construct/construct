@@ -481,6 +481,7 @@ general {
 	min_nonwildcard = 4;
 	min_nonwildcard_simple = 3;
 	max_accept = 100;
+	max_monitor = 100;
 	anti_nick_flood = yes;
 	max_nick_time = 20 seconds;
 	max_nick_changes = 5;

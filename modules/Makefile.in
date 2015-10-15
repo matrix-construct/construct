@@ -82,6 +82,7 @@ TSRCS =                          \
   m_locops.c \
   m_lusers.c \
   m_map.c \
+  m_monitor.c \
   m_motd.c \
   m_names.c \
   m_oper.c \
