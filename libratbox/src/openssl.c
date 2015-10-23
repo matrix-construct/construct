@@ -35,6 +35,19 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
+#include <openssl/opensslv.h>
+
+/*
+ * This is a mess but what can you do when the library authors
+ * refuse to play ball with established conventions?
+ */
+#if defined(LIBRESSL_VERSION_NUMBER) && (LIBRESSL_VERSION_NUMBER >= 0x20020002L)
+#  define LRB_HAVE_TLS_METHOD_API 1
+#else
+#  if !defined(LIBRESSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+#    define LRB_HAVE_TLS_METHOD_API 1
+#  endif
+#endif
 
 static SSL_CTX *ssl_server_ctx;
 static SSL_CTX *ssl_client_ctx;
@@ -307,7 +320,7 @@ rb_init_ssl(void)
 	SSL_library_init();
 	libratbox_index = SSL_get_ex_new_index(0, libratbox_data, NULL, NULL, NULL);
 
-#if defined(LIBRESSL_VERSION_NUMBER) || (OPENSSL_VERSION_NUMBER < 0x10100000L)
+#ifndef LRB_HAVE_TLS_METHOD_API
 	ssl_server_ctx = SSL_CTX_new(SSLv23_server_method());
 #else
 	ssl_server_ctx = SSL_CTX_new(TLS_server_method());
@@ -322,7 +335,7 @@ rb_init_ssl(void)
 
 	long server_options = SSL_CTX_get_options(ssl_server_ctx);
 
-#if defined(LIBRESSL_VERSION_NUMBER) || (OPENSSL_VERSION_NUMBER < 0x10100000L)
+#ifndef LRB_HAVE_TLS_METHOD_API
 	server_options |= SSL_OP_NO_SSLv2;
 	server_options |= SSL_OP_NO_SSLv3;
 #endif
@@ -356,7 +369,7 @@ rb_init_ssl(void)
 		}
 	#endif
 
-#if defined(LIBRESSL_VERSION_NUMBER) || (OPENSSL_VERSION_NUMBER < 0x10100000L)
+#ifndef LRB_HAVE_TLS_METHOD_API
 	ssl_client_ctx = SSL_CTX_new(TLSv1_client_method());
 #else
 	ssl_client_ctx = SSL_CTX_new(TLS_client_method());
