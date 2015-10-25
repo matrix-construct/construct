@@ -166,7 +166,6 @@ typedef enum
 
 int rb_init_prng(const char *path, prng_seed_t seed_type);
 int rb_get_random(void *buf, size_t len);
-int rb_get_pseudo_random(void *buf, size_t len);
 void rb_ssl_start_accepted(rb_fde_t *new_F, ACCB * cb, void *data, int timeout);
 void rb_ssl_start_connected(rb_fde_t *F, CNCB * callback, void *data, int timeout);
 int rb_supports_ssl(void);

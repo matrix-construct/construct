@@ -86,13 +86,6 @@ rb_get_random(void *buf, size_t length)
 	return 1;
 }
 
-int
-rb_get_pseudo_random(void *buf, size_t length)
-{
-	return rb_get_random(buf, length);
-}
-
-
 const char *
 rb_get_ssl_strerror(rb_fde_t *F)
 {

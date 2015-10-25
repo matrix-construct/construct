@@ -552,17 +552,6 @@ rb_get_random(void *buf, size_t length)
 	return 1;
 }
 
-int
-rb_get_pseudo_random(void *buf, size_t length)
-{
-#if GNUTLS_VERSION_MAJOR < 3
-	gcry_randomize(buf, length, GCRY_WEAK_RANDOM);
-#else
-	gnutls_rnd(GNUTLS_RND_RANDOM, buf, length);
-#endif
-	return 1;
-}
-
 const char *
 rb_get_ssl_strerror(rb_fde_t *F)
 {

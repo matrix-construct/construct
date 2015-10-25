@@ -674,16 +674,6 @@ rb_get_random(void *buf, size_t length)
 	return ret;
 }
 
-int
-rb_get_pseudo_random(void *buf, size_t length)
-{
-	int ret;
-	ret = RAND_pseudo_bytes(buf, length);
-	if(ret < 0)
-		return 0;
-	return 1;
-}
-
 const char *
 rb_get_ssl_strerror(rb_fde_t *F)
 {
