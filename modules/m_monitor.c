@@ -39,7 +39,10 @@
 #include "numeric.h"
 #include "s_conf.h"
 #include "send.h"
+#include "supported.h"
 
+static int monitor_init(void);
+static void monitor_deinit(void);
 static int m_monitor(struct Client *, struct Client *, int, const char **);
 
 struct Message monitor_msgtab = {
@@ -48,7 +51,18 @@ struct Message monitor_msgtab = {
 };
 
 mapi_clist_av1 monitor_clist[] = { &monitor_msgtab, NULL };
-DECLARE_MODULE_AV1(monitor, NULL, NULL, monitor_clist, NULL, NULL, "$Revision: 312 $");
+DECLARE_MODULE_AV1(monitor, monitor_init, monitor_deinit, monitor_clist, NULL, NULL, "$Revision: 312 $");
+
+static int monitor_init(void)
+{
+	add_isupport("MONITOR", isupport_intptr, &ConfigFileEntry.max_monitor);
+	return 0;
+}
+
+static void monitor_deinit(void)
+{
+	delete_isupport("MONITOR");
+}
 
 static void
 add_monitor(struct Client *client_p, const char *nicks)
