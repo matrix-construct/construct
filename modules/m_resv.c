@@ -73,7 +73,6 @@ static void remove_resv(struct Client *source_p, const char *name, int propagate
 
 /*
  * mo_resv()
- *      parv[0] = sender prefix
  *      parv[1] = channel/nick to forbid
  *      parv[2] = reason
  */
@@ -151,7 +150,6 @@ mo_resv(struct Client *client_p, struct Client *source_p, int parc, const char *
 }
 
 /* ms_resv()
- *     parv[0] = sender prefix
  *     parv[1] = target server
  *     parv[2] = channel/nick to forbid
  *     parv[3] = reason
@@ -422,7 +420,6 @@ cluster_resv(struct Client *source_p, int temp_time, const char *name, const cha
 
 /*
  * mo_unresv()
- *     parv[0] = sender prefix
  *     parv[1] = channel/nick to unforbid
  */
 static int
@@ -463,7 +460,6 @@ mo_unresv(struct Client *client_p, struct Client *source_p, int parc, const char
 }
 
 /* ms_unresv()
- *     parv[0] = sender prefix
  *     parv[1] = target server
  *     parv[2] = resv to remove
  */
