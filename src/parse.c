@@ -380,8 +380,6 @@ handle_encap(struct Client *client_p, struct Client *source_p,
 	struct MessageEntry ehandler;
 	MessageHandler handler = 0;
 
-	parv[0] = source_p->name;
-
 	mptr = irc_dictionary_retrieve(cmd_dict, command);
 
 	if(mptr == NULL || mptr->cmd == NULL)
