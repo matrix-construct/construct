@@ -277,6 +277,17 @@ isupport_maxlist(const void *ptr)
 }
 
 static const char *
+isupport_targmax(const void *ptr)
+{
+	static char result[200];
+
+	rb_snprintf(result, sizeof result, "NAMES:1,LIST:1,KICK:1,WHOIS:1,PRIVMSG:%d,NOTICE:%d,ACCEPT:,MONITOR:",
+			ConfigFileEntry.max_targets,
+			ConfigFileEntry.max_targets);
+	return result;
+}
+
+static const char *
 isupport_extban(const void *ptr)
 {
 	const char *p;
@@ -328,6 +339,7 @@ init_isupport(void)
 	add_isupport("CNOTICE", isupport_string, "");
 	add_isupport("DEAF", isupport_umode, "D");
 	add_isupport("FNC", isupport_string, "");
+	add_isupport("TARGMAX", isupport_targmax, NULL);
 	add_isupport("EXTBAN", isupport_extban, NULL);
 	add_isupport("WHOX", isupport_string, "");
 	add_isupport("CLIENTVER", isupport_string, "3.0");
