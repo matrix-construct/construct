@@ -666,7 +666,7 @@ resv_nick_fnc(const char *mask, const char *reason, int temp_time)
 
 			invalidate_bancache_user(client_p);
 
-			sendto_common_channels_local(client_p, NOCAPS, ":%s!%s@%s NICK :%s",
+			sendto_common_channels_local(client_p, NOCAPS, NOCAPS, ":%s!%s@%s NICK :%s",
 				client_p->name, client_p->username, client_p->host, nick);
 			sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s NICK %s :%ld",
 				use_id(client_p), nick, (long) client_p->tsinfo);
@@ -1185,7 +1185,7 @@ exit_generic_client(struct Client *client_p, struct Client *source_p, struct Cli
 	if(IsOper(source_p))
 		rb_dlinkFindDestroy(source_p, &oper_list);
 
-	sendto_common_channels_local(source_p, NOCAPS, ":%s!%s@%s QUIT :%s",
+	sendto_common_channels_local(source_p, NOCAPS, NOCAPS, ":%s!%s@%s QUIT :%s",
 				     source_p->name,
 				     source_p->username, source_p->host, comment);
 

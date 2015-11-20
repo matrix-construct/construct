@@ -85,7 +85,7 @@ m_away(struct Client *client_p, struct Client *source_p, int parc, const char *p
 				      ":%s AWAY", use_id(source_p));
 			free_away(source_p);
 
-			sendto_common_channels_local_butone(source_p, CLICAP_AWAY_NOTIFY, ":%s!%s@%s AWAY",
+			sendto_common_channels_local_butone(source_p, CLICAP_AWAY_NOTIFY, NOCAPS, ":%s!%s@%s AWAY",
 							    source_p->name, source_p->username, source_p->host);
 		}
 		if(MyConnect(source_p))
@@ -119,7 +119,7 @@ m_away(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		sendto_server(client_p, NULL, CAP_TS6, NOCAPS,
 			      ":%s AWAY :%s", use_id(source_p), source_p->user->away);
 		sendto_common_channels_local_butone(source_p,
-					            CLICAP_AWAY_NOTIFY,
+					            CLICAP_AWAY_NOTIFY, NOCAPS,
 						    ":%s!%s@%s AWAY :%s",
 						    source_p->name,
 						    source_p->username,
