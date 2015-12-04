@@ -410,7 +410,7 @@ rb_ssl_listen(rb_fde_t *F, int backlog, int defer_accept)
 {
 	int result;
 
-	result = rb_listen(F->fd, backlog, defer_accept);
+	result = rb_listen(F, backlog, defer_accept);
 	F->type = RB_FD_SOCKET | RB_FD_LISTEN | RB_FD_SSL;
 
 	return result;
