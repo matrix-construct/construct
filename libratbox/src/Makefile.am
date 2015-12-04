@@ -2,7 +2,7 @@
 
 AUTOMAKE_OPTIONS = foreign
 
-INCLUDES = -I. -I../include @SSL_CFLAGS@ @GNUTLS_CFLAGS@
+INCLUDES = -I. -I../include @SSL_CFLAGS@ @GNUTLS_CFLAGS@ @MBEDTLS_CFLAGS@
 
 BUILT_SOURCES = version.c
 
@@ -19,6 +19,7 @@ libratbox_la_SOURCES =			\
 	crypt.c				\
 	balloc.c			\
 	commio.c			\
+	mbedtls.c			\
 	openssl.c			\
 	gnutls.c			\
 	nossl.c				\
@@ -41,8 +42,7 @@ libratbox_la_SOURCES =			\
 	arc4random.c			\
 	version.c
 	
-
-libratbox_la_LDFLAGS = @SSL_LIBS@ @GNUTLS_LIBS@  -avoid-version -no-undefined -export-symbols export-syms.txt
-libratbox_la_LIBADD = @SSL_LIBS@ @GNUTLS_LIBS@
+libratbox_la_LDFLAGS = @SSL_LIBS@ @GNUTLS_LIBS@ @MBEDTLS_LIBS@ -avoid-version -no-undefined -export-symbols export-syms.txt
+libratbox_la_LIBADD = @SSL_LIBS@ @GNUTLS_LIBS@ @MBEDTLS_LIBS@
 lib_LTLIBRARIES = libratbox.la
 

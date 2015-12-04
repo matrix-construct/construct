@@ -132,10 +132,11 @@ am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libratbox_la_DEPENDENCIES =
 am_libratbox_la_OBJECTS = unix.lo win32.lo crypt.lo balloc.lo \
-	commio.lo openssl.lo gnutls.lo nossl.lo event.lo ratbox_lib.lo \
-	rb_memory.lo linebuf.lo snprintf.lo tools.lo helper.lo \
-	devpoll.lo epoll.lo poll.lo ports.lo sigio.lo select.lo \
-	kqueue.lo rawbuf.lo patricia.lo arc4random.lo version.lo
+	commio.lo mbedtls.lo openssl.lo gnutls.lo nossl.lo event.lo \
+	ratbox_lib.lo rb_memory.lo linebuf.lo snprintf.lo tools.lo \
+	helper.lo devpoll.lo epoll.lo poll.lo ports.lo sigio.lo \
+	select.lo kqueue.lo rawbuf.lo patricia.lo arc4random.lo \
+	version.lo
 libratbox_la_OBJECTS = $(am_libratbox_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -255,6 +256,8 @@ LT_SYS_LIBRARY_PATH = @LT_SYS_LIBRARY_PATH@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
+MBEDTLS_CFLAGS = @MBEDTLS_CFLAGS@
+MBEDTLS_LIBS = @MBEDTLS_LIBS@
 MKDIR_P = @MKDIR_P@
 MV = @MV@
 NM = @NM@
@@ -340,7 +343,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign
-INCLUDES = -I. -I../include @SSL_CFLAGS@ @GNUTLS_CFLAGS@
+INCLUDES = -I. -I../include @SSL_CFLAGS@ @GNUTLS_CFLAGS@ @MBEDTLS_CFLAGS@
 BUILT_SOURCES = version.c
 libratbox_la_SOURCES = \
 	unix.c				\
@@ -348,6 +351,7 @@ libratbox_la_SOURCES = \
 	crypt.c				\
 	balloc.c			\
 	commio.c			\
+	mbedtls.c			\
 	openssl.c			\
 	gnutls.c			\
 	nossl.c				\
@@ -370,8 +374,8 @@ libratbox_la_SOURCES = \
 	arc4random.c			\
 	version.c
 
-libratbox_la_LDFLAGS = @SSL_LIBS@ @GNUTLS_LIBS@  -avoid-version -no-undefined -export-symbols export-syms.txt
-libratbox_la_LIBADD = @SSL_LIBS@ @GNUTLS_LIBS@
+libratbox_la_LDFLAGS = @SSL_LIBS@ @GNUTLS_LIBS@ @MBEDTLS_LIBS@ -avoid-version -no-undefined -export-symbols export-syms.txt
+libratbox_la_LIBADD = @SSL_LIBS@ @GNUTLS_LIBS@ @MBEDTLS_LIBS@
 lib_LTLIBRARIES = libratbox.la
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -463,6 +467,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/helper.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kqueue.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/linebuf.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbedtls.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nossl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/openssl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/patricia.Plo@am__quote@

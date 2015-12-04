@@ -637,6 +637,8 @@ am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
 RB_PREFIX
+MBEDTLS_LIBS
+MBEDTLS_CFLAGS
 SSL_LIBS
 SSL_CFLAGS
 SEDOBJ
@@ -15347,6 +15349,8 @@ fi
 if test "${enable_warnings+set}" = set; then :
   enableval=$enable_warnings; CFLAGS="$CFLAGS -Wall -Werror -Wcast-qual -Wmissing-declarations -Wmissing-prototypes -Wnested-externs -Wshadow -Wwrite-strings -W -Wno-unused -Wunused-function -Wunused-variable"
 fi
+
+
 
 
 

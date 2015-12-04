@@ -466,6 +466,8 @@ AC_SUBST(SSL_CFLAGS)
 AC_SUBST(SSL_LIBS)
 AC_SUBST(GNUTLS_CFLAGS)
 AC_SUBST(GNUTLS_LIBS)
+AC_SUBST(MBEDTLS_CFLAGS)
+AC_SUBST(MBEDTLS_LIBS)
 
 if test "$prefix" = "NONE"; then 
 	AC_DEFINE_UNQUOTED(RB_PREFIX, "$ac_default_prefix", [Prefix where libratbox is installed.])
