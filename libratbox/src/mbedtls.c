@@ -97,6 +97,9 @@ do_ssl_handshake(rb_fde_t *F, PF * callback, void *data)
 	ret = mbedtls_ssl_handshake(SSL_P(F));
 	if(ret < 0)
 	{
+		if (ret == -1 && rb_ignore_errno(errno))
+			ret = MBEDTLS_ERR_SSL_WANT_READ;
+
 		if((ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE))
 		{
 			if(ret == MBEDTLS_ERR_SSL_WANT_READ)
@@ -106,6 +109,7 @@ do_ssl_handshake(rb_fde_t *F, PF * callback, void *data)
 			rb_setselect(F, flags, callback, data);
 			return 0;
 		}
+
 		F->ssl_errno = ret;
 		return -1;
 	}
@@ -142,17 +146,27 @@ rb_ssl_tryaccept(rb_fde_t *F, void *data)
 static int
 rb_ssl_read_cb(void *opaque, unsigned char *buf, size_t size)
 {
+	int ret;
 	rb_fde_t *F = opaque;
 
-	return read(F->fd, buf, size);
+	ret = read(F->fd, buf, size);
+	if (ret < 0 && rb_ignore_errno(errno))
+		return MBEDTLS_ERR_SSL_WANT_READ;
+
+	return ret;
 }
 
 static int
 rb_ssl_write_cb(void *opaque, const unsigned char *buf, size_t size)
 {
 	rb_fde_t *F = opaque;
+	int ret;
 
-	return write(F->fd, buf, size);
+	ret = write(F->fd, buf, size);
+	if (ret < 0 && rb_ignore_errno(errno))
+		return MBEDTLS_ERR_SSL_WANT_WRITE;
+
+	return ret;
 }
 
 static void
@@ -190,6 +204,7 @@ rb_ssl_start_accepted(rb_fde_t *new_F, ACCB * cb, void *data, int timeout)
 	{
 		struct acceptdata *ad = new_F->accept;
 		new_F->accept = NULL;
+
 		ad->callback(new_F, RB_OK, (struct sockaddr *)&ad->S, ad->addrlen, ad->data);
 		rb_free(ad);
 	}
@@ -213,6 +228,7 @@ rb_ssl_accept_setup(rb_fde_t *F, rb_fde_t *new_F, struct sockaddr *st, int addrl
 	{
 		struct acceptdata *ad = F->accept;
 		F->accept = NULL;
+
 		ad->callback(F, RB_OK, (struct sockaddr *)&ad->S, ad->addrlen, ad->data);
 		rb_free(ad);
 	}
@@ -298,7 +314,7 @@ rb_init_ssl(void)
 		return 0;
 	}
 
-	mbedtls_ssl_conf_rng(&serv_config, mbedtls_ctr_drbg_random, &ctr_drbg);
+	mbedtls_ssl_conf_rng(&client_config, mbedtls_ctr_drbg_random, &ctr_drbg);
 
 	return 1;
 }
@@ -312,7 +328,7 @@ rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile)
 	ret = mbedtls_x509_crt_parse_file(&x509, cert);
 	if (ret != 0)
 	{
-		rb_lib_log("rb_setup_ssl_server: failed to parse certificate '%s': -0x%x", -ret);
+		rb_lib_log("rb_setup_ssl_server: failed to parse certificate '%s': -0x%x", cert, -ret);
 		return 0;
 	}
 
@@ -320,7 +336,7 @@ rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile)
 	ret = mbedtls_pk_parse_keyfile(&serv_pk, keyfile, NULL);
 	if (ret != 0)
 	{
-		rb_lib_log("rb_setup_ssl_server: failed to parse private key '%s': -0x%x", -ret);
+		rb_lib_log("rb_setup_ssl_server: failed to parse private key '%s': -0x%x", keyfile, -ret);
 		return 0;
 	}
 
@@ -328,7 +344,7 @@ rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile)
 	ret = mbedtls_dhm_parse_dhmfile(&dh_params, dhfile);
 	if (ret != 0)
 	{
-		rb_lib_log("rb_setup_ssl_server: failed to parse DH parameters '%s': -0x%x", -ret);
+		rb_lib_log("rb_setup_ssl_server: failed to parse DH parameters '%s': -0x%x", dhfile, -ret);
 		return 0;
 	}
 
