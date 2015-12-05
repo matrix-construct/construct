@@ -727,7 +727,9 @@ msg_client(enum message_type msgtype,
 		 * as a way to taunt users, e.g. harass them and hide behind +g
 		 * as a way of griefing.  --nenolod
 		 */
-		if(msgtype != MESSAGE_TYPE_NOTICE && IsSetCallerId(source_p) &&
+		if(msgtype != MESSAGE_TYPE_NOTICE &&
+				(IsSetCallerId(source_p) ||
+				 (IsSetRegOnlyMsg(source_p) && !target_p->user->suser[0])) &&
 				!accept_message(target_p, source_p) &&
 				!IsOper(target_p))
 		{
