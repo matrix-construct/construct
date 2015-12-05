@@ -15,6 +15,7 @@ user
   to query the forward channel even if +f is mlocked.
 - Strip colours from channel topics in /list.
 - If umode +D or +g are oper-only, don't advertise them in 005.
+- If MONITOR is not enabled, don't advertise it in 005.
 - Add starttls as per ircv3.
 - Abort a whowas listing when it would exceed SendQ, which would previously
   disconnect the user.
@@ -26,6 +27,13 @@ user
   messages in HexChat.
 - Indicate join failure because of the chm_sslonly extension (cmode +S) using
   the same 480 numeric as ircd-ratbox.
+- Do not allow SASL authentication when the configured SASL agent is unavailable.
+- Automatically add unidentified users to the ACCEPT list when a user is set +R,
+  as we do when the user is set +g.
+- Implement IRCv3.2 capabilities:
+  - cap-notify
+  - chghost
+  - userhost-in-names
 oper
 - Fix a crash with /testline.
 - Complain to opers if a server that isn't a service tries to
@@ -45,6 +53,7 @@ config
 - Fix SHA256 ($5$) crypt.
 - Make the channel::channel_target_change option actually work (it used to be
   always on).
+- SSL/TLS listeners now have defer_accept unconditionally enabled on them.
 misc
 - Work around timerfd/signalfd brokenness on OpenVZ.
 - Fix a compilation issue in libratbox/src/sigio.c with recent glibc.
@@ -52,6 +61,8 @@ misc
 - Remove a BSD advertising clause that permission was granted to remove.
 - Add support for hooking PRIVMSG/NOTICE.
 - Reenable and fix the GnuTLS support.
+- Add mbedTLS backend for SSL/TLS.
+- Remove EGD support.
 - Try other DNS servers if errors or corrupt replies are encountered.
 - Rename genssl.sh script to genssl.
 - Choose more secure SSL/TLS algorithms.
