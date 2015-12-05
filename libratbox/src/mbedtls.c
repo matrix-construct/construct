@@ -539,51 +539,27 @@ int
 rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN])
 {
 	const mbedtls_x509_crt *peer_cert;
+	uint8_t hash[RB_SSL_CERTFP_LEN];
+	const mbedtls_md_info_t *md_info;
+	int ret;
 
 	peer_cert = mbedtls_ssl_get_peer_cert(SSL_P(F));
 	if (peer_cert == NULL)
 		return 0;
 
-	return 0;
-#if 0
-	gnutls_x509_crt_t cert;
-	unsigned int cert_list_size;
-	const gnutls_datum_t *cert_list;
-	uint8_t digest[RB_SSL_CERTFP_LEN * 2];
-	size_t digest_size;
-
-	if (gnutls_certificate_type_get(SSL_P(F)) != GNUTLS_CRT_X509)
+	md_info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA1);
+	if (md_info == NULL)
 		return 0;
 
-	if (gnutls_x509_crt_init(&cert) < 0)
-		return 0;
-
-	cert_list_size = 0;
-	cert_list = gnutls_certificate_get_peers(SSL_P(F), &cert_list_size);
-	if (cert_list == NULL)
+	if ((ret = mbedtls_md(md_info, peer_cert->raw.p, peer_cert->raw.len, hash)) != 0)
 	{
-		gnutls_x509_crt_deinit(cert);
+		rb_lib_log("rb_get_ssl_certfp: unable to get certfp for F: %p, -0x%x", -ret);
 		return 0;
 	}
 
-	if (gnutls_x509_crt_import(cert, &cert_list[0], GNUTLS_X509_FMT_DER) < 0)
-	{
-		gnutls_x509_crt_deinit(cert);
-		return 0;
-	}
+	memcpy(certfp, hash, RB_SSL_CERTFP_LEN);
 
-	if (gnutls_x509_crt_get_fingerprint(cert, GNUTLS_DIG_SHA1, digest, &digest_size) < 0)
-	{
-		gnutls_x509_crt_deinit(cert);
-		return 0;
-	}
-
-	memcpy(certfp, digest, RB_SSL_CERTFP_LEN);
-
-	gnutls_x509_crt_deinit(cert);
 	return 1;
-#endif
-
 }
 
 int
