@@ -315,6 +315,7 @@ rb_init_ssl(void)
 	}
 
 	mbedtls_ssl_conf_rng(&client_config, mbedtls_ctr_drbg_random, &ctr_drbg);
+	mbedtls_ssl_conf_authmode(&client_config, MBEDTLS_SSL_VERIFY_NONE);
 
 	return 1;
 }
