@@ -14,9 +14,16 @@ used with an IRCv3-capable services implementation such as [Atheme][atheme] or [
 
 # feature specific requirements
 
- * For SSL Clients, SSL Challenge controlled OPER feature, and encrypted server links,
-   a working OpenSSL library or GnuTLS library.  CHALLENGE is not supported on GnuTLS
-   yet.
+ * For SSL/TLS client and server connections, one of:
+
+   * OpenSSL 1.0 or newer
+   * LibreSSL
+   * mbedTLS
+   * GnuTLS
+
+ * For certificate-based oper CHALLENGE, OpenSSL 1.0 or newer.
+   (Using CHALLENGE is not recommended for new deployments, so if you want to use a different TLS library,
+    feel free.)
 
  * For ECDHE, OpenSSL 1.0.0 or newer is required. RHEL/Fedora and derivatives like CentOS
    will need to compile OpenSSL from source, as ECC/ECDHE-functionality is removed from
