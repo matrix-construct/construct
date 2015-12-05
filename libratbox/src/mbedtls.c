@@ -357,9 +357,18 @@ rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile)
 	}
 
 	if (x509.next)
+	{
 		mbedtls_ssl_conf_ca_chain(&serv_config, x509.next, NULL);
+		mbedtls_ssl_conf_ca_chain(&client_config, x509.next, NULL);
+	}
 
 	if ((ret = mbedtls_ssl_conf_own_cert(&serv_config, &x509, &serv_pk)) != 0)
+	{
+		rb_lib_log("rb_setup_ssl_server: failed to set up own certificate: -0x%x", -ret);
+		return 0;
+	}
+
+	if ((ret = mbedtls_ssl_conf_own_cert(&client_config, &x509, &serv_pk)) != 0)
 	{
 		rb_lib_log("rb_setup_ssl_server: failed to set up own certificate: -0x%x", -ret);
 		return 0;
