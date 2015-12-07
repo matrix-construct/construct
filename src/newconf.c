@@ -1645,6 +1645,24 @@ conf_set_general_oper_umodes(void *data)
 }
 
 static void
+conf_set_general_certfp_method(void *data)
+{
+	char *method = data;
+
+	if (!strcasecmp(method, "sha1"))
+		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_SHA1;
+	else if (!strcasecmp(method, "sha256"))
+		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_SHA256;
+	else if (!strcasecmp(method, "sha512"))
+		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_SHA512;
+	else
+	{
+		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_SHA1;
+		conf_report_error("Ignoring general::certfp_method -- bogus certfp method %s", method);
+	}
+}
+
+static void
 conf_set_general_oper_only_umodes(void *data)
 {
 	set_modes_from_table(&ConfigFileEntry.oper_only_umodes, "umode", umode_table, data);
@@ -2376,6 +2394,7 @@ static struct ConfEntry conf_general_table[] =
 	{ "client_flood_message_time",	CF_INT,   NULL, 0, &ConfigFileEntry.client_flood_message_time	},
 	{ "max_ratelimit_tokens",	CF_INT,   NULL, 0, &ConfigFileEntry.max_ratelimit_tokens	},
 	{ "away_interval",		CF_INT,   NULL, 0, &ConfigFileEntry.away_interval		},
+	{ "certfp_method",	CF_STRING, conf_set_general_certfp_method, 0, NULL },
 	{ "\0", 		0, 	  NULL, 0, NULL }
 };
 

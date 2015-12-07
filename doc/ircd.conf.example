@@ -536,6 +536,7 @@ general {
 	throttle_count = 4;
 	max_ratelimit_tokens = 30;
 	away_interval = 30;
+	certfp_method = sha1;
 };
 
 modules {

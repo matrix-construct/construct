@@ -819,6 +819,7 @@ set_default_conf(void)
 	ServerInfo.default_max_clients = MAXCONNECTIONS;
 
 	ConfigFileEntry.nicklen = NICKLEN;
+	ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_SHA1;
 
 	if (!alias_dict)
 		alias_dict = irc_dictionary_create(strcasecmp);
