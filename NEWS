@@ -54,6 +54,8 @@ config
 - Make the channel::channel_target_change option actually work (it used to be
   always on).
 - SSL/TLS listeners now have defer_accept unconditionally enabled on them.
+- The method used for certificate fingerprints (CertFP) is now configurable.
+  SHA1, SHA256 and SHA512 are available options.
 misc
 - Work around timerfd/signalfd brokenness on OpenVZ.
 - Fix a compilation issue in libratbox/src/sigio.c with recent glibc.
