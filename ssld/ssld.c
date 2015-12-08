@@ -668,13 +668,14 @@ ssl_process_accept_cb(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen
 
 	if(status == RB_OK)
 	{
-		int len = rb_get_ssl_certfp(F, &buf[5], certfp_method);
+		int len = rb_get_ssl_certfp(F, &buf[9], certfp_method);
 		if(len)
 		{
 			lrb_assert(len <= RB_SSL_CERTFP_LEN);
 			buf[0] = 'F';
 			int32_to_buf(&buf[1], conn->id);
-			mod_cmd_write_queue(conn->ctl, buf, 5 + len);
+			int32_to_buf(&buf[5], len);
+			mod_cmd_write_queue(conn->ctl, buf, 9 + len);
 		}
 		conn_mod_read_cb(conn->mod_fd, conn);
 		conn_plain_read_cb(conn->plain_fd, conn);
@@ -693,13 +694,14 @@ ssl_process_connect_cb(rb_fde_t *F, int status, void *data)
 
 	if(status == RB_OK)
 	{
-		int len = rb_get_ssl_certfp(F, &buf[5], certfp_method);
+		int len = rb_get_ssl_certfp(F, &buf[9], certfp_method);
 		if(len)
 		{
 			lrb_assert(len <= RB_SSL_CERTFP_LEN);
 			buf[0] = 'F';
 			int32_to_buf(&buf[1], conn->id);
-			mod_cmd_write_queue(conn->ctl, buf, 5 + len);
+			int32_to_buf(&buf[5], len);
+			mod_cmd_write_queue(conn->ctl, buf, 9 + len);
 		}
 		conn_mod_read_cb(conn->mod_fd, conn);
 		conn_plain_read_cb(conn->plain_fd, conn);
