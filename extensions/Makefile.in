@@ -46,6 +46,7 @@ SRCS =                          \
   extb_account.c		\
   extb_canjoin.c		\
   extb_channel.c		\
+  extb_hostmask.c		\
   extb_oper.c			\
   extb_server.c			\
   extb_ssl.c			\
