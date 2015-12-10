@@ -17,7 +17,9 @@
 #loadmodule "extensions/extb_account.so";
 #loadmodule "extensions/extb_canjoin.so";
 #loadmodule "extensions/extb_channel.so";
+#loadmodule "extensions/extb_combi.so";
 #loadmodule "extensions/extb_extgecos.so";
+#loadmodule "extensions/extb_hostmask.so";
 #loadmodule "extensions/extb_oper.so";
 #loadmodule "extensions/extb_realname.so";
 #loadmodule "extensions/extb_server.so";
