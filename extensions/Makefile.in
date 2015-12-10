@@ -52,6 +52,7 @@ SRCS =                          \
   extb_realname.c		\
   extb_usermode.c		\
   extb_extgecos.c		\
+  extb_combi.c			\
   force_user_invis.c		\
   hurt.c			\
   ip_cloaking.c			\
