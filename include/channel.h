@@ -266,6 +266,7 @@ extern struct Ban * del_id(struct Channel *chptr, const char *banid, rb_dlink_li
 
 extern ExtbanFunc extban_table[256];
 
+extern int match_child(const char *banstr, struct Client *client_p, struct Channel *chptr, long mode_type);
 extern int match_extban(const char *banstr, struct Client *client_p, struct Channel *chptr, long mode_type);
 extern int valid_extban(const char *banstr, struct Client *client_p, struct Channel *chptr, long mode_type);
 const char * get_extban_string(void);
