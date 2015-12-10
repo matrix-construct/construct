@@ -88,12 +88,5 @@ The function is called whenever a (local) client needs to be checked against
 a +bqeI entry of the given extban type, and whenever a local client tries to
 add such an entry. (Clients are allowed to add bans matching themselves.)
 
-There is a convenience function which allows extbans to be stacked:
-extern int match_child(const char *banstr, struct Client *client_p, struct Channel *chptr, long mode_type);
-
-The arguments are as follows:
-banstr: the text after the parent banstr (extb functions already get the mask this way)
-client_p: the client to check; this is always a local client, which may be
-on or off channel
-chptr: the channel
-mode_type: CHFL_BAN, CHFL_QUIET, CHFL_EXCEPTION or CHFL_INVEX
+-- 
+$Id: extban.txt 1639 2006-06-04 23:26:47Z jilles $
