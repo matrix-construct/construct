@@ -34,6 +34,10 @@ user
   - cap-notify
   - chghost
   - userhost-in-names
+- Implement the $&, $| and $m extban types:
+  - $& combines 1 or more child extbans as an AND expression
+  - $| combines 1 or more child extbans as an OR expression
+  - $m provides normal hostmask matching as an extban for the above
 oper
 - Fix a crash with /testline.
 - Complain to opers if a server that isn't a service tries to
