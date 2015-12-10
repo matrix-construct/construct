@@ -153,6 +153,9 @@ hack_channel_access(void *vdata)
 {
 	hook_data_channel_approval *data = (hook_data_channel_approval *) vdata;
 
+	if (data->dir == MODE_QUERY)
+		return;
+
 	if (data->approved == CHFL_CHANOP)
 		return;
 
@@ -188,6 +191,9 @@ static void
 hack_can_send(void *vdata)
 {
 	hook_data_channel_approval *data = (hook_data_channel_approval *) vdata;
+
+	if (data->dir == MODE_QUERY)
+		return;
 
 	if (data->approved == CAN_SEND_NONOP || data->approved == CAN_SEND_OPV)
 		return;

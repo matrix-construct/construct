@@ -82,6 +82,7 @@ typedef struct
 	struct membership *msptr;
 	struct Client *target;
 	int approved;
+	int dir;
 } hook_data_channel_approval;
 
 typedef struct

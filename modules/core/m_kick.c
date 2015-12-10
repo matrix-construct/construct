@@ -97,7 +97,7 @@ m_kick(struct Client *client_p, struct Client *source_p, int parc, const char *p
 			return 0;
 		}
 
-		if(get_channel_access(source_p, msptr) < CHFL_CHANOP)
+		if(get_channel_access(source_p, msptr, MODE_ADD) < CHFL_CHANOP)
 		{
 			if(MyConnect(source_p))
 			{
@@ -167,6 +167,7 @@ m_kick(struct Client *client_p, struct Client *source_p, int parc, const char *p
 			hookdata.msptr = msptr;
 			hookdata.target = who;
 			hookdata.approved = 1;
+			hookdata.dir = MODE_ADD;	/* ensure modules like override speak up */
 
 			call_hook(h_can_kick, &hookdata);
 
