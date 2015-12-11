@@ -384,6 +384,32 @@ ssl_process_dead_fd(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 	exit_client(client_p, client_p, &me, reason);
 }
 
+
+static void
+ssl_process_cipher_string(ssl_ctl_t *ctl, ssl_ctl_buf_t *ctl_buf)
+{
+	struct Client *client_p;
+	const char *cstring;
+	uint32_t fd;
+
+	if(ctl_buf->buflen < 6)
+		return;         /* bogus message..drop it.. XXX should warn here */
+
+	fd = buf_to_uint32(&ctl_buf->buf[1]);
+	cstring = (const char *)&ctl_buf->buf[5];
+
+	if(EmptyString(cstring))
+		return;
+
+	client_p = find_cli_fd_hash(fd);
+	if(client_p != NULL && client_p->localClient != NULL)
+	{
+		rb_free(client_p->localClient->cipher_string);
+		client_p->localClient->cipher_string = rb_strdup(cstring);
+	}
+}
+
+
 static void
 ssl_process_certfp(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 {
@@ -430,6 +456,9 @@ ssl_process_cmd_recv(ssl_ctl_t * ctl)
 			break;
 		case 'D':
 			ssl_process_dead_fd(ctl, ctl_buf);
+			break;
+		case 'C':
+			ssl_process_cipher_string(ctl, ctl_buf);
 			break;
 		case 'F':
 			ssl_process_certfp(ctl, ctl_buf);

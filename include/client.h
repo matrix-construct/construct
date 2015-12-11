@@ -228,6 +228,7 @@ struct LocalUser
 	char *opername; /* name of operator{} block being used or tried (challenge) */
 	char *challenge;
 	char *fullcaps;
+	char *cipher_string;
 
 	int caps;		/* capabilities bit-field */
 	rb_fde_t *F;		/* >= 0, for local clients */
