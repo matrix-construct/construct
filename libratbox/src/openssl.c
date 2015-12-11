@@ -745,5 +745,18 @@ rb_get_ssl_info(char *buf, size_t len)
 		    (long)OPENSSL_VERSION_NUMBER, SSLeay());
 }
 
+const char *
+rb_ssl_get_cipher(rb_fde_t *F)
+{
+	const SSL_CIPHER *sslciph;
+
+	if(F == NULL || F->ssl == NULL)
+		return NULL;
+
+	if((sslciph = SSL_get_current_cipher(F->ssl)) == NULL)
+		return NULL;
+
+	return SSL_CIPHER_get_name(sslciph);
+}
 
 #endif /* HAVE_OPESSL */

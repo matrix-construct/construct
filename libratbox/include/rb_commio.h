@@ -186,4 +186,6 @@ void rb_ssl_clear_handshake_count(rb_fde_t *F);
 int rb_pass_fd_to_process(rb_fde_t *, pid_t, rb_fde_t *);
 rb_fde_t *rb_recv_fd(rb_fde_t *);
 
+const char *rb_ssl_get_cipher(rb_fde_t *F);
+
 #endif /* INCLUDED_commio_h */

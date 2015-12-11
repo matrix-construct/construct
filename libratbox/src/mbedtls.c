@@ -595,5 +595,12 @@ rb_get_ssl_info(char *buf, size_t len)
 		    MBEDTLS_VERSION_STRING, version_str);
 }
 
+const char *
+rb_ssl_get_cipher(rb_fde_t *F)
+{
+	if(F == NULL || F->ssl == NULL)
+		return NULL;
+	return mbedtls_ssl_get_ciphersuite(SSL_P(F));
+}
 
 #endif /* HAVE_GNUTLS */
