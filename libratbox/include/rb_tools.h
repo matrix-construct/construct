@@ -344,4 +344,24 @@ rb_dlinkMoveList(rb_dlink_list *from, rb_dlink_list *to)
 	from->length = 0;
 }
 
+typedef struct _rb_zstring
+{
+	uint16_t len; /* big enough */
+	uint16_t alloclen;
+	uint8_t *data;
+} rb_zstring_t;
+
+size_t rb_zstring_serialized(rb_zstring_t *zs, void **buf, size_t *buflen);
+size_t rb_zstring_deserialize(rb_zstring_t *zs, void *buf);
+void rb_zstring_free(rb_zstring_t *zs);
+rb_zstring_t *rb_zstring_alloc(void);
+rb_zstring_t *rb_zstring_from_c_len(const char *buf, size_t len);
+rb_zstring_t *rb_zstring_from_c(const char *buf);
+size_t rb_zstring_len(rb_zstring_t *zs);
+void rb_zstring_append_from_zstring(rb_zstring_t *dst_zs, rb_zstring_t *src_zs);
+void rb_zstring_append_from_c(rb_zstring_t *zs, const char *buf, size_t len);
+char *rb_zstring_to_c(rb_zstring_t *zs, char *buf, size_t len);
+char *rb_zstring_to_c_alloc(rb_zstring_t *zs);
+size_t rb_zstring_to_ptr(rb_zstring_t *zs, void **ptr);
+
 #endif /* __TOOLS_H__ */

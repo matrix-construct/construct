@@ -154,3 +154,15 @@ rb_waitpid
 rb_basename
 rb_dirname
 rb_ssl_get_cipher
+rb_zstring_alloc
+rb_zstring_append_from_c
+rb_zstring_append_from_zstring
+rb_zstring_deserialize
+rb_zstring_free
+rb_zstring_from_c
+rb_zstring_from_c_len
+rb_zstring_len
+rb_zstring_serialized
+rb_zstring_to_c
+rb_zstring_to_c_alloc
+rb_zstring_to_ptr

@@ -241,3 +241,128 @@ rb_dirname (const char *path)
 
 	return rb_strndup(path, ((uintptr_t)s - (uintptr_t)path) + 2);
 }
+
+size_t rb_zstring_serialized(rb_zstring_t *zs, void **buf, size_t *buflen)
+{
+        uint8_t *p;
+        size_t alloclen = sizeof(uint16_t) + zs->len;
+
+        p = rb_malloc(sizeof(alloclen));
+        memcpy(p, &zs->len, sizeof(uint16_t));
+        p += sizeof(uint16_t);
+        memcpy(p, zs->data, zs->len);
+        return alloclen;
+}
+
+size_t rb_zstring_deserialize(rb_zstring_t *zs, void *buf)
+{
+	uint8_t *p = (uint8_t *)buf;
+
+	memcpy(&zs->len, p, sizeof(uint16_t));
+	p += sizeof(uint16_t);
+	if(zs->len == 0)
+	{
+		zs->data = NULL;
+		return sizeof(uint16_t);
+	}
+	zs->data = rb_malloc(zs->len);
+	memcpy(zs->data, p, zs->len);
+	return zs->len + sizeof(uint16_t);
+}
+
+void rb_zstring_free(rb_zstring_t *zs)
+{
+	rb_free(zs->data);
+	rb_free(zs);
+
+}
+
+rb_zstring_t *rb_zstring_alloc(void)
+{
+	rb_zstring_t *zs = rb_malloc(sizeof(rb_zstring_t));
+	return zs;
+}
+
+rb_zstring_t *rb_zstring_from_c_len(const char *buf, size_t len)
+{
+	rb_zstring_t *zs;
+
+	if(len > UINT16_MAX-1)
+		return NULL;
+
+	zs = rb_zstring_alloc();
+	zs->alloclen = zs->len = (uint16_t)len;
+	zs->alloclen = (uint16_t)len;
+	if(zs->alloclen < 128)
+		zs->alloclen = 128;
+	zs->data = rb_malloc(zs->alloclen);
+	memcpy(zs->data, buf, zs->len);
+	return(zs);
+}
+
+rb_zstring_t *rb_zstring_from_c(const char *buf)
+{
+	return rb_zstring_from_c_len(buf, strlen(buf));
+}
+
+size_t rb_zstring_len(rb_zstring_t *zs)
+{
+	return zs->len;
+}
+
+void rb_zstring_append_from_zstring(rb_zstring_t *dst_zs, rb_zstring_t *src_zs)
+{
+	void *ep;
+	size_t nlen = dst_zs->len + src_zs->len;
+
+	if(nlen > dst_zs->alloclen)
+	{
+		dst_zs->alloclen += src_zs->len + 64;
+		dst_zs->data = rb_realloc(dst_zs->data, dst_zs->alloclen);
+	}
+
+	ep = dst_zs->data + dst_zs->len;
+	memcpy(ep, src_zs->data, src_zs->len);
+}
+
+void rb_zstring_append_from_c(rb_zstring_t *zs, const char *buf, size_t len)
+{
+	void *ep;
+	size_t nlen = zs->len + len;
+
+	if(nlen > zs->alloclen)
+	{
+		zs->alloclen += len + 64;
+		zs->data = rb_realloc(zs->data, zs->alloclen);
+	}
+	ep = zs->data + zs->len;
+	zs->len += len;
+	memcpy(ep, buf, len);
+}
+
+char *rb_zstring_to_c(rb_zstring_t *zs, char *buf, size_t len)
+{
+        size_t cpylen;
+        if(len < zs->len)
+                cpylen = len - 1;
+        else
+                cpylen = zs->len;
+        buf[cpylen] = '\0';
+        memcpy(buf, zs->data, cpylen);
+        return buf;
+}
+
+
+char *rb_zstring_to_c_alloc(rb_zstring_t *zs)
+{
+	char *p;
+	p = rb_malloc(zs->len+1);
+	memcpy(p, zs->data, zs->len);
+	return p;
+}
+
+size_t rb_zstring_to_ptr(rb_zstring_t *zs, void **ptr)
+{
+	*ptr = (void *)zs->data;
+	return zs->len;
+}
