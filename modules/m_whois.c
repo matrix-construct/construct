@@ -320,13 +320,20 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 	}
 
 	if(IsSSLClient(target_p))
+	{
+		char cbuf[256] = "is using a secure connection";
+
+		if (MyClient(target_p) && target_p->localClient->cipher_string != NULL)
+			rb_snprintf_append(cbuf, sizeof(cbuf), " [%s]", target_p->localClient->cipher_string);
+
 		sendto_one_numeric(source_p, RPL_WHOISSECURE, form_str(RPL_WHOISSECURE),
-				   target_p->name);
-	if((source_p == target_p || IsOper(source_p)) &&
-			target_p->certfp != NULL)
-		sendto_one_numeric(source_p, RPL_WHOISCERTFP,
-				form_str(RPL_WHOISCERTFP),
-				target_p->name, target_p->certfp);
+				   target_p->name, cbuf);
+		if((source_p == target_p || IsOper(source_p)) &&
+				target_p->certfp != NULL)
+			sendto_one_numeric(source_p, RPL_WHOISCERTFP,
+					form_str(RPL_WHOISCERTFP),
+					target_p->name, target_p->certfp);
+	}
 
 	if(MyClient(target_p))
 	{
