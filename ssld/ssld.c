@@ -663,7 +663,6 @@ maxconn(void)
 static void
 ssl_send_cipher(conn_t *conn)
 {
-#if 0
 	size_t len;
 	char buf[512];
 	char cstring[256];
@@ -683,7 +682,6 @@ ssl_send_cipher(conn_t *conn)
 	strcpy(&buf[5], cstring);
 	len = (strlen(cstring) + 1) + 5;
 	mod_cmd_write_queue(conn->ctl, buf, len);
-#endif
 }
 
 static void
