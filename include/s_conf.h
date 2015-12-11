@@ -258,6 +258,7 @@ struct config_channel_entry
 	int resv_forcepart;
 	int channel_target_change;
 	int disable_local_channels;
+	unsigned int autochanmodes;
 };
 
 struct config_server_hide

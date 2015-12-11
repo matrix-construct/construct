@@ -361,6 +361,7 @@ channel {
 	resv_forcepart = yes;
 	channel_target_change = yes;
 	disable_local_channels = no;
+	autochanmodes = "+nt";
 };
 
 serverhide {

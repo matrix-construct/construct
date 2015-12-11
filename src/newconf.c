@@ -29,6 +29,7 @@
 #include "blacklist.h"
 #include "sslproc.h"
 #include "privilege.h"
+#include "chmode.h"
 
 #define CF_TYPE(x) ((x) & CF_MTYPE)
 
@@ -1797,6 +1798,42 @@ conf_set_alias_target(void *data)
 	yy_alias->target = rb_strdup(data);
 }
 
+static void
+conf_set_channel_autochanmodes(void *data)
+{
+	char *pm;
+	int what = MODE_ADD;
+
+	ConfigChannel.autochanmodes = 0;
+	for (pm = (char *) data; *pm; pm++)
+	{
+		switch (*pm)
+		{
+		case '+':
+			what = MODE_ADD;
+			break;
+		case '-':
+			what = MODE_DEL;
+			break;
+
+		default:
+			if (chmode_table[(unsigned char) *pm].set_func == chm_simple)
+			{
+				if (what == MODE_ADD)
+					ConfigChannel.autochanmodes |= chmode_table[(unsigned char) *pm].mode_type;
+				else
+					ConfigChannel.autochanmodes &= ~chmode_table[(unsigned char) *pm].mode_type;
+			}
+			else
+			{
+				conf_report_error("channel::autochanmodes -- Invalid channel mode %c", pm);
+				continue;
+			}
+			break;
+		}
+	}
+}
+
 /* XXX for below */
 static void conf_set_blacklist_reason(void *data);
 
@@ -2419,6 +2456,7 @@ static struct ConfEntry conf_channel_table[] =
 	{ "resv_forcepart",     CF_YESNO, NULL, 0, &ConfigChannel.resv_forcepart	},
 	{ "channel_target_change", CF_YESNO, NULL, 0, &ConfigChannel.channel_target_change	},
 	{ "disable_local_channels", CF_YESNO, NULL, 0, &ConfigChannel.disable_local_channels },
+	{ "autochanmodes",	CF_QSTRING, conf_set_channel_autochanmodes, 0, NULL	},
 	{ "\0", 		0, 	  NULL, 0, NULL }
 };
 

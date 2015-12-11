@@ -793,6 +793,8 @@ set_default_conf(void)
 	ConfigChannel.channel_target_change = YES;
 	ConfigChannel.disable_local_channels = NO;
 
+	ConfigChannel.autochanmodes = MODE_TOPICLIMIT | MODE_NOPRIVMSGS;
+
 	ConfigServerHide.flatten_links = 0;
 	ConfigServerHide.links_delay = 300;
 	ConfigServerHide.hidden = 0;
