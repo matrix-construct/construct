@@ -92,10 +92,10 @@ typedef struct _conn
 
 	rb_fde_t *mod_fd;
 	rb_fde_t *plain_fd;
-	unsigned long long mod_out;
-	unsigned long long mod_in;
-	unsigned long long plain_in;
-	unsigned long long plain_out;
+	uint64_t mod_out;
+	uint64_t mod_in;
+	uint64_t plain_in;
+	uint64_t plain_out;
 	uint8_t flags;
 	void *stream;
 } conn_t;
