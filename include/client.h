@@ -616,4 +616,25 @@ extern char *generate_uid(void);
 void allocate_away(struct Client *);
 void free_away(struct Client *);
 
+static inline int
+is_valid_nick(const char *nick)
+{
+	int len = 0;
+
+	if(EmptyString(nick) || *nick == '-' || IsDigit(*nick))
+		return 0;
+
+	for(; *nick; nick++)
+	{
+		len++;
+		if(!IsNickChar(*nick))
+			return 0;
+	}
+
+	if(len >= NICKLEN)
+		return 0;
+
+	return 1;
+}
+
 #endif /* INCLUDED_client_h */

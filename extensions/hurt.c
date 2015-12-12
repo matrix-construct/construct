@@ -74,7 +74,6 @@ static void hurt_destroy(void *hurt);
 
 static int heal_nick(struct Client *, struct Client *);
 
-static int nick_is_valid(const char *);
 /* }}} */
 
 /* {{{ State containers */
@@ -312,7 +311,7 @@ mo_heal(struct Client *client_p, struct Client *source_p,
 		return 0;
 	}
 
-	if (nick_is_valid(parv[1]))
+	if (is_valid_nick(parv[1]))
 	{
 		target_p = find_named_person(parv[1]);
 		if (target_p == NULL)
@@ -364,7 +363,7 @@ me_heal(struct Client *client_p, struct Client *source_p,
 	if (parc < 2)
 		return 0;
 
-	if (nick_is_valid(parv[1]))
+	if (is_valid_nick(parv[1]))
 	{
 		target_p = find_person(parv[1]);
 		if (target_p != NULL && MyConnect(target_p))
@@ -635,25 +634,6 @@ heal_nick(struct Client *source_p, struct Client *target_p)
 		sendto_one_notice(source_p, ":%s was not hurt", target_p->name);
 		return 0;
 	}
-}
-/* }}} */
-
-/*
- * Anything else...
- */
-
-/* {{{ static int nick_is_valid() */
-static int
-nick_is_valid(const char *nick)
-{
-	const char *s = nick;
-
-	for (; *s != '\0'; s++) {
-		if (!IsNickChar(*s))
-			return 0;
-	}
-
-	return 1;
 }
 /* }}} */
 

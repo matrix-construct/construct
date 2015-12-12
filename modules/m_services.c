@@ -155,27 +155,6 @@ me_login(struct Client *client_p, struct Client *source_p,
 }
 
 static int
-clean_nick(const char *nick)
-{
-	int len = 0;
-
-	if(EmptyString(nick) || *nick == '-' || IsDigit(*nick))
-		return 0;
-
-	for(; *nick; nick++)
-	{
-		len++;
-		if(!IsNickChar(*nick))
-			return 0;
-	}
-
-	if(len >= NICKLEN)
-		return 0;
-
-	return 1;
-}
-
-static int
 me_rsfnc(struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
@@ -197,7 +176,7 @@ me_rsfnc(struct Client *client_p, struct Client *source_p,
 	if(!MyClient(target_p))
 		return 0;
 
-	if(!clean_nick(parv[2]))
+	if(!is_valid_nick(parv[2]))
 		return 0;
 
 	curts = atol(parv[4]);
