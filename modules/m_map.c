@@ -44,6 +44,7 @@ mapi_clist_av1 map_clist[] = { &map_msgtab, NULL };
 DECLARE_MODULE_AV1(map, NULL, NULL, map_clist, NULL, NULL, "$Revision: 3368 $");
 
 static void dump_map(struct Client *client_p, struct Client *root, char *pbuf);
+static void flattened_map(struct Client *client_p);
 
 static char buf[BUFSIZE];
 
@@ -55,7 +56,8 @@ m_map(struct Client *client_p, struct Client *source_p, int parc, const char *pa
 	if((!IsExemptShide(source_p) && ConfigServerHide.flatten_links) ||
 	   ConfigFileEntry.map_oper_only)
 	{
-		m_not_oper(client_p, source_p, parc, parv);
+		flattened_map(client_p);
+		sendto_one_numeric(client_p, RPL_MAPEND, form_str(RPL_MAPEND));
 		return 0;
 	}
 
@@ -143,5 +145,77 @@ dump_map(struct Client *client_p, struct Client *root_p, char *pbuf)
 		dump_map(client_p, server_p, pbuf + 4);
 
 		i++;
+	}
+}
+
+/*
+ * flattened_map - display a version of map that doesn't give away routing
+ *                 information to users when flattened links is enabled.
+ */
+static void
+flattened_map(struct Client *client_p)
+{
+	char buf[BUFSIZE];
+	rb_dlink_node *ptr;
+	struct Client *target_p;
+	int i, len;
+	int cnt = 0;
+
+	/* First display me as the root */
+	rb_strlcpy(buf, me.name, BUFSIZE);
+	len = strlen(buf);
+	buf[len] = ' ';
+
+	if(len < USER_COL)
+	{
+		for (i = len + 1; i < USER_COL; i++)
+		{
+			buf[i] = '-';
+		}
+	}
+
+	snprintf(buf + USER_COL, BUFSIZE - USER_COL,
+		" | Users: %5lu (%4.1f%%)", rb_dlink_list_length(&me.serv->users),
+		100 * (float) rb_dlink_list_length(&me.serv->users) / (float) Count.total);
+
+	sendto_one_numeric(client_p, RPL_MAP, form_str(RPL_MAP), buf);
+
+	/* Next, we run through every other server and list them */
+	RB_DLINK_FOREACH(ptr, global_serv_list.head)
+	{
+		target_p = ptr->data;
+
+		cnt++;
+
+		/* Skip ourselves, it's already counted */
+		if(IsMe(target_p))
+			continue;
+
+		/* if we're hidden, go on to the next leaf */
+		if(!ConfigServerHide.disable_hidden && IsHidden(target_p))
+			continue;
+
+		if (cnt == rb_dlink_list_length(&global_serv_list))
+			rb_strlcpy(buf, " `- ", BUFSIZE);
+		else
+			rb_strlcpy(buf, " |- ", BUFSIZE);
+
+		strlcat(buf, target_p->name, BUFSIZE);
+		len = strlen(buf);
+		buf[len] = ' ';
+
+		if(len < USER_COL)
+		{
+			for (i = len + 1; i < USER_COL; i++)
+			{
+				buf[i] = '-';
+			}
+		}
+
+		snprintf(buf + USER_COL, BUFSIZE - USER_COL,
+			" | Users: %5lu (%4.1f%%)", rb_dlink_list_length(&target_p->serv->users),
+			100 * (float) rb_dlink_list_length(&target_p->serv->users) / (float) Count.total);
+
+		sendto_one_numeric(client_p, RPL_MAP, form_str(RPL_MAP), buf);
 	}
 }
