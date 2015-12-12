@@ -664,7 +664,7 @@ static void
 ssl_send_cipher(conn_t *conn)
 {
 	size_t len;
-	char buf[512];
+	uint8_t buf[512];
 	char cstring[256];
 	const char *p;
 	if(!IsSSL(conn))
@@ -679,7 +679,7 @@ ssl_send_cipher(conn_t *conn)
 
 	buf[0] = 'C';
 	uint32_to_buf(&buf[1], conn->id);
-	strcpy(&buf[5], cstring);
+	strcpy((char *) &buf[5], cstring);
 	len = (strlen(cstring) + 1) + 5;
 	mod_cmd_write_queue(conn->ctl, buf, len);
 }
