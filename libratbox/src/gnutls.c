@@ -409,7 +409,7 @@ rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile, c
 			rb_lib_log("rb_setup_ssl_server: Unable to setup DH parameters");
 	}
 
-	ret = gnutls_priority_init(&default_priority, ssl_cipher_list, &err);
+	ret = gnutls_priority_init(&default_priority, cipher_list, &err);
 	if (ret < 0)
 	{
 		rb_lib_log("rb_setup_ssl_server: syntax error (using defaults instead) in ssl cipher list at: %s", err);
