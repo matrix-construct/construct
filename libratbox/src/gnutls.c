@@ -39,6 +39,7 @@
 
 static gnutls_certificate_credentials x509;
 static gnutls_dh_params dh_params;
+static gnutls_priority_t default_priority;
 
 /* These are all used for getting GnuTLS to supply a client cert. */
 #define MAX_CERTS 6
@@ -157,6 +158,8 @@ rb_ssl_start_accepted(rb_fde_t *new_F, ACCB * cb, void *data, int timeout)
 	gnutls_dh_set_prime_bits(*ssl, 1024);
 	gnutls_transport_set_ptr(*ssl, (gnutls_transport_ptr_t) (long int)new_F->fd);
 	gnutls_certificate_server_set_request(*ssl, GNUTLS_CERT_REQUEST);
+	gnutls_priority_set(SSL_P(F), default_priority);
+
 	if(do_ssl_handshake(new_F, rb_ssl_tryaccept, NULL))
 	{
 		struct acceptdata *ad = new_F->accept;
@@ -189,6 +192,8 @@ rb_ssl_accept_setup(rb_fde_t *F, rb_fde_t *new_F, struct sockaddr *st, int addrl
 	gnutls_dh_set_prime_bits(SSL_P(new_F), 1024);
 	gnutls_transport_set_ptr(SSL_P(new_F), (gnutls_transport_ptr_t) (long int)rb_get_fd(new_F));
 	gnutls_certificate_server_set_request(SSL_P(new_F), GNUTLS_CERT_REQUEST);
+	gnutls_priority_set(SSL_P(F), default_priority);
+
 	if(do_ssl_handshake(F, rb_ssl_tryaccept, NULL))
 	{
 		struct acceptdata *ad = F->accept;
@@ -330,6 +335,7 @@ int
 rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile, const char *cipher_list)
 {
 	int ret;
+	const char *err;
 	gnutls_datum_t *d_cert, *d_key;
 	if(cert == NULL)
 	{
@@ -403,7 +409,14 @@ rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile, c
 			rb_lib_log("rb_setup_ssl_server: Unable to setup DH parameters");
 	}
 
-	/* XXX integrate gnutls_priority_init() */
+	ret = gnutls_priority_init(&default_priority, ssl_cipher_list, &err);
+	if (ret < 0)
+	{
+		rb_lib_log("rb_setup_ssl_server: syntax error (using defaults instead) in ssl cipher list at: %s", err);
+		gnutls_priority_init(&default_priority, NULL, &err);
+		return 1;
+	}
+
 	return 1;
 }
 
@@ -484,6 +497,7 @@ rb_ssl_tryconn(rb_fde_t *F, int status, void *data)
 	gnutls_credentials_set(SSL_P(F), GNUTLS_CRD_CERTIFICATE, x509);
 	gnutls_dh_set_prime_bits(SSL_P(F), 1024);
 	gnutls_transport_set_ptr(SSL_P(F), (gnutls_transport_ptr_t) (long int)F->fd);
+	gnutls_priority_set(SSL_P(F), default_priority);
 
 	do_ssl_handshake(F, rb_ssl_tryconn_cb, (void *)sconn);
 }
@@ -526,6 +540,7 @@ rb_ssl_start_connected(rb_fde_t *F, CNCB * callback, void *data, int timeout)
 	gnutls_credentials_set(SSL_P(F), GNUTLS_CRD_CERTIFICATE, x509);
 	gnutls_dh_set_prime_bits(SSL_P(F), 1024);
 	gnutls_transport_set_ptr(SSL_P(F), (gnutls_transport_ptr_t) (long int)F->fd);
+	gnutls_priority_set(SSL_P(F), default_priority);
 
 	rb_settimeout(F, sconn->timeout, rb_ssl_tryconn_timeout_cb, sconn);
 
