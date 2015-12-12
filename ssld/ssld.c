@@ -910,7 +910,7 @@ static void
 ssl_new_keys(mod_ctl_t * ctl, mod_ctl_buf_t * ctl_buf)
 {
 	char *buf;
-	char *cert, *key, *dhparam;
+	char *cert, *key, *dhparam, *cipher_list;
 
 	buf = (char *) &ctl_buf->buf[2];
 	cert = buf;
@@ -920,8 +920,12 @@ ssl_new_keys(mod_ctl_t * ctl, mod_ctl_buf_t * ctl_buf)
 	dhparam = buf;
 	if(strlen(dhparam) == 0)
 		dhparam = NULL;
+	buf += strlen(dhparam) + 1;
+	cipher_list = buf;
+	if(strlen(cipher_list) == 0)
+		cipher_list = NULL;
 
-	if(!rb_setup_ssl_server(cert, key, dhparam))
+	if(!rb_setup_ssl_server(cert, key, dhparam, cipher_list))
 	{
 		const char *invalid = "I";
 		mod_cmd_write_queue(ctl, invalid, strlen(invalid));

@@ -321,7 +321,7 @@ rb_init_ssl(void)
 }
 
 int
-rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile)
+rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile, const char *cipher_list)
 {
 	int ret;
 
@@ -373,6 +373,8 @@ rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile)
 		rb_lib_log("rb_setup_ssl_server: failed to set up own certificate: -0x%x", -ret);
 		return 0;
 	}
+
+	/* XXX support cipher lists when added to mbedtls */
 
 	return 1;
 }

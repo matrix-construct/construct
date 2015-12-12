@@ -34,7 +34,7 @@
 #include <commio-ssl.h>
 
 int
-rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile)
+rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile, const char *cipher_list)
 {
 	errno = ENOSYS;
 	return 0;

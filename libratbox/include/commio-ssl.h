@@ -25,7 +25,7 @@
 #ifndef _COMMIO_SSL_H
 #define _COMMIO_SSL_H
 
-int rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile);
+int rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile, const char *cipher_list);
 int rb_init_ssl(void);
 
 int rb_ssl_listen(rb_fde_t *F, int backlog, int defer_accept);

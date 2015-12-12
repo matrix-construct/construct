@@ -134,7 +134,7 @@ ssize_t rb_writev(rb_fde_t *, struct rb_iovec *vector, int count);
 ssize_t rb_read(rb_fde_t *, void *buf, int count);
 int rb_pipe(rb_fde_t **, rb_fde_t **, const char *desc);
 
-int rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile);
+int rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile, const char *cipher_list);
 int rb_ssl_listen(rb_fde_t *, int backlog, int defer_accept);
 int rb_listen(rb_fde_t *, int backlog, int defer_accept);
 

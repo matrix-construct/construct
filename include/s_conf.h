@@ -289,6 +289,7 @@ struct server_info
 	char *ssl_ca_cert;
 	char *ssl_cert;
 	char *ssl_dh_params;
+	char *ssl_cipher_list;
 	int ssld_count;
 };
 

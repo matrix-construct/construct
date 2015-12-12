@@ -397,7 +397,7 @@ rb_init_ssl(void)
 
 
 int
-rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile)
+rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile, const char *cipher_list)
 {
 	DH *dh;
 	unsigned long err;
@@ -455,6 +455,12 @@ rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile)
 				   dhfile, get_ssl_error(err));
 		}
 	}
+
+	if (cipher_list != NULL)
+	{
+		SSL_CTX_set_cipher_list(ssl_server_ctx, cipher_list);
+	}
+
 	return 1;
 }
 

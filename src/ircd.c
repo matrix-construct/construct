@@ -709,7 +709,7 @@ main(int argc, char *argv[])
 	if(ServerInfo.ssl_cert != NULL && ServerInfo.ssl_private_key != NULL)
 	{
 		/* just do the rb_setup_ssl_server to validate the config */
-		if(!rb_setup_ssl_server(ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params))
+		if(!rb_setup_ssl_server(ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params, ServerInfo.ssl_cipher_list))
 		{
 			ilog(L_MAIN, "WARNING: Unable to setup SSL.");
 			ssl_ok = 0;

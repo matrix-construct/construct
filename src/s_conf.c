@@ -870,21 +870,20 @@ validate_conf(void)
 	if(ServerInfo.ssld_count < 1)
 		ServerInfo.ssld_count = 1;
 
-	if(!rb_setup_ssl_server(ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params))
+	if(!rb_setup_ssl_server(ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params, ServerInfo.ssl_cipher_list))
 	{
 		ilog(L_MAIN, "WARNING: Unable to setup SSL.");
 		ssl_ok = 0;
 	} else {
 		ssl_ok = 1;
-		send_new_ssl_certs(ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params);
+		send_new_ssl_certs(ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params, ServerInfo.ssl_cipher_list);
 	}
 
 	if(ServerInfo.ssld_count > get_ssld_count())
 	{
 		int start = ServerInfo.ssld_count - get_ssld_count();
 		/* start up additional ssld if needed */
-		start_ssldaemon(start, ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params);
-
+		start_ssldaemon(start, ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params, ServerInfo.ssl_cipher_list);
 	}
 
 	/* General conf */
