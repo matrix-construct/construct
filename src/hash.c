@@ -40,9 +40,13 @@
 #include "s_newconf.h"
 #include "s_assert.h"
 
-#define hash_cli_fd(x)	(x % CLI_FD_MAX)
+#define ZCONNID_MAX 64 /* i doubt we'll have this many ziplinks ;) */
 
-static rb_dlink_list clientbyfdTable[U_MAX];
+#define hash_cli_connid(x)	(x % CLI_CONNID_MAX)
+#define hash_zconnid(x)		(x % ZCONNID_MAX)
+
+static rb_dlink_list clientbyconnidTable[CLI_CONNID_MAX];
+static rb_dlink_list clientbyzconnidTable[ZCONNID_MAX];
 
 rb_dlink_list *clientTable;
 rb_dlink_list *channelTable;
@@ -666,34 +670,60 @@ clear_resv_hash(void)
 }
 
 void
-add_to_cli_fd_hash(struct Client *client_p)
-{
-	rb_dlinkAddAlloc(client_p, &clientbyfdTable[hash_cli_fd(rb_get_fd(client_p->localClient->F))]);
-}
-
-
-void
-del_from_cli_fd_hash(struct Client *client_p)
+add_to_zconnid_hash(struct Client *client_p)
 {
 	unsigned int hashv;
-	hashv = hash_cli_fd(rb_get_fd(client_p->localClient->F));
-	rb_dlinkFindDestroy(client_p, &clientbyfdTable[hashv]);
+	hashv = hash_zconnid(client_p->localClient->zconnid);
+	rb_dlinkAddAlloc(client_p, &clientbyzconnidTable[hashv]);       
+}
+
+void
+del_from_zconnid_hash(struct Client *client_p)
+{
+	unsigned int hashv;
+	hashv = hash_zconnid(client_p->localClient->zconnid);
+	rb_dlinkFindDestroy(client_p, &clientbyzconnidTable[hashv]); 
+}
+
+void
+add_to_cli_connid_hash(struct Client *client_p)
+{
+	unsigned int hashv;
+	hashv = hash_cli_connid(client_p->localClient->connid);
+	rb_dlinkAddAlloc(client_p, &clientbyconnidTable[hashv]);
+}
+
+void
+del_from_cli_connid_hash(struct Client *client_p)
+{
+	unsigned int hashv;
+	hashv = hash_cli_connid(client_p->localClient->connid);
+	rb_dlinkFindDestroy(client_p, &clientbyconnidTable[hashv]);
 }
 
 struct Client *
-find_cli_fd_hash(int fd)
+find_cli_connid_hash(int connid)
 {
 	struct Client *target_p;
 	rb_dlink_node *ptr;
 	unsigned int hashv;
-	hashv = hash_cli_fd(fd);
-	RB_DLINK_FOREACH(ptr, clientbyfdTable[hashv].head)
+	hashv = hash_cli_connid(connid);
+	RB_DLINK_FOREACH(ptr, clientbyconnidTable[hashv].head)
 	{
 		target_p = ptr->data;
-		if(rb_get_fd(target_p->localClient->F) == fd)
+		if(target_p->localClient->connid == connid)
 			return target_p;
 	}
-	return  NULL;
+
+	hashv = hash_zconnid(connid);
+	RB_DLINK_FOREACH(ptr, clientbyzconnidTable[hashv].head)
+	{
+		target_p = ptr->data;
+		if(target_p->localClient->zconnid == connid)
+			return target_p;
+	}
+
+	return NULL;
 }
 
 static void
@@ -770,4 +800,6 @@ hash_stats(struct Client *source_p)
 	count_hash(source_p, idTable, U_MAX, "ID");
 	sendto_one_numeric(source_p, RPL_STATSDEBUG, "B :--");
 	count_hash(source_p, hostTable, HOST_MAX, "Hostname");
+	sendto_one_numeric(source_p, RPL_STATSDEBUG, "B :--");
+	count_hash(source_p, clientbyconnidTable, CLI_CONNID_MAX, "Client by connection id");
 }

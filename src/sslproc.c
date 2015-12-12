@@ -365,7 +365,7 @@ ssl_process_dead_fd(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 
 	fd = buf_to_uint32(&ctl_buf->buf[1]);
 	rb_strlcpy(reason, &ctl_buf->buf[5], sizeof(reason));
-	client_p = find_cli_fd_hash(fd);
+	client_p = find_cli_connid_hash(fd);
 	if(client_p == NULL)
 		return;
 	if(IsAnyServer(client_p) || IsRegistered(client_p))
@@ -401,7 +401,7 @@ ssl_process_cipher_string(ssl_ctl_t *ctl, ssl_ctl_buf_t *ctl_buf)
 	if(EmptyString(cstring))
 		return;
 
-	client_p = find_cli_fd_hash(fd);
+	client_p = find_cli_connid_hash(fd);
 	if(client_p != NULL && client_p->localClient != NULL)
 	{
 		rb_free(client_p->localClient->cipher_string);
@@ -426,7 +426,7 @@ ssl_process_certfp(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 	fd = buf_to_uint32(&ctl_buf->buf[1]);
 	len = buf_to_uint32(&ctl_buf->buf[5]);
 	certfp = (uint8_t *)&ctl_buf->buf[9];
-	client_p = find_cli_fd_hash(fd);
+	client_p = find_cli_connid_hash(fd);
 	if(client_p == NULL)
 		return;
 	rb_free(client_p->certfp);
@@ -821,11 +821,11 @@ start_zlib_session(void *data)
 
 	F[0] = server->localClient->F;
 	F[1] = xF1;
-	del_from_cli_fd_hash(server);
+	del_from_cli_connid_hash(server);
 	server->localClient->F = xF2;
 	/* need to redo as what we did before isn't valid now */
 	uint32_to_buf(&buf[1], rb_get_fd(server->localClient->F));
-	add_to_cli_fd_hash(server);
+	add_to_cli_connid_hash(server);
 
 	server->localClient->z_ctl = which_ssld();
 	server->localClient->z_ctl->cli_count++;

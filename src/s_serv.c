@@ -1164,7 +1164,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	rb_strlcpy(client_p->host, server_p->host, sizeof(client_p->host));
 	rb_strlcpy(client_p->sockhost, server_p->host, sizeof(client_p->sockhost));
 	client_p->localClient->F = F;
-	add_to_cli_fd_hash(client_p);
+	add_to_cli_connid_hash(client_p);
 
 	/*
 	 * Set up the initial server evilness, ripped straight from
@@ -1263,9 +1263,9 @@ serv_connect_ssl_callback(rb_fde_t *F, int status, void *data)
 		return;
 
 	}
-	del_from_cli_fd_hash(client_p);
+	del_from_cli_connid_hash(client_p);
 	client_p->localClient->F = xF[0];
-	add_to_cli_fd_hash(client_p);
+	add_to_cli_connid_hash(client_p);
 
 	client_p->localClient->ssl_ctl = start_ssld_connect(F, xF[1], rb_get_fd(xF[0]));
 	SetSSL(client_p);

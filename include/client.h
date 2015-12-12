@@ -240,6 +240,7 @@ struct LocalUser
 
 	time_t next_away;	/* Don't allow next away before... */
 	time_t last;
+	uint32_t connid;
 
 	/* clients allowed to talk through +g */
 	rb_dlink_list allow_list;
@@ -278,6 +279,7 @@ struct LocalUser
 
 	struct _ssl_ctl *ssl_ctl;		/* which ssl daemon we're associate with */
 	struct _ssl_ctl *z_ctl;			/* second ctl for ssl+zlib */
+	uint32_t zconnid;
 	uint32_t localflags;
 	struct ZipStats *zipstats;		/* zipstats */
 	uint16_t cork_count;			/* used for corking/uncorking connections */
