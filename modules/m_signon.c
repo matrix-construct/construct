@@ -76,35 +76,6 @@ DECLARE_MODULE_AV1(signon, NULL, NULL, signon_clist, NULL, NULL, "$Revision: 119
 #define HOST_VALID	4
 
 static int
-clean_nick(const char *nick)
-{
-	int len = 0;
-
-	if(*nick == '-')
-		return 0;
-
-	/* This is used to check logins, which are often
-	 * numeric. Don't check for leading digits, if
-	 * services wants to set someone's nick to something
-	 * starting with a number, let it try.
-	 * --gxti
-	 */
-
-	for (; *nick; nick++)
-	{
-		len++;
-		if(!IsNickChar(*nick))
-			return 0;
-	}
-
-	/* nicklen is +1 */
-	if(len >= NICKLEN)
-		return 0;
-
-	return 1;
-}
-
-static int
 clean_username(const char *username)
 {
 	int len = 0;
@@ -164,7 +135,7 @@ me_svslogin(struct Client *client_p, struct Client *source_p,
 	if(!MyClient(target_p) && !IsUnknown(target_p))
 		return 0;
 
-	if(clean_nick(parv[2]))
+	if(clean_nick(parv[2], 0))
 	{
 		rb_strlcpy(nick, parv[2], NICKLEN + 1);
 		valid |= NICK_VALID;
@@ -203,7 +174,7 @@ me_svslogin(struct Client *client_p, struct Client *source_p,
 		rb_strlcpy(login, parv[5], NICKLEN + 1);
 
 	/* Login (mostly) follows nick rules. */
-	if(*login && !clean_nick(login))
+	if(*login && !clean_nick(login, 0))
 		return 0;
 
 	if((exist_p = find_person(nick)) && target_p != exist_p)
@@ -280,7 +251,7 @@ ms_signon(struct Client *client_p, struct Client *source_p,
 	int newts, sameuser;
 	char login[NICKLEN+1];
 
-	if(!clean_nick(parv[1]))
+	if(!clean_nick(parv[1], 0))
 	{
 		ServerStats.is_kill++;
 		sendto_realops_snomask(SNO_DEBUG, L_ALL,
@@ -322,7 +293,7 @@ ms_signon(struct Client *client_p, struct Client *source_p,
 		login[0] = '\0';
 	else if(*parv[5] != '*')
 	{
-		if (clean_nick(parv[5]))
+		if (clean_nick(parv[5], 0))
 			rb_strlcpy(login, parv[5], NICKLEN + 1);
 		else
 			return 0;

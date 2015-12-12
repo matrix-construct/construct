@@ -311,7 +311,7 @@ mo_heal(struct Client *client_p, struct Client *source_p,
 		return 0;
 	}
 
-	if (is_valid_nick(parv[1]))
+	if (clean_nick(parv[1], 0))
 	{
 		target_p = find_named_person(parv[1]);
 		if (target_p == NULL)
@@ -363,7 +363,7 @@ me_heal(struct Client *client_p, struct Client *source_p,
 	if (parc < 2)
 		return 0;
 
-	if (is_valid_nick(parv[1]))
+	if (clean_nick(parv[1], 0))
 	{
 		target_p = find_person(parv[1]);
 		if (target_p != NULL && MyConnect(target_p))

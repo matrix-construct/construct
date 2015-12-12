@@ -92,7 +92,6 @@ DECLARE_MODULE_AV1(nick, NULL, NULL, nick_clist, NULL, NULL, "$Revision: 3518 $"
 static int change_remote_nick(struct Client *, struct Client *, time_t,
 			      const char *, int);
 
-static int clean_nick(const char *, int loc_client);
 static int clean_username(const char *);
 static int clean_host(const char *);
 static int clean_uid(const char *uid, const char *sid);
@@ -523,38 +522,6 @@ ms_save(struct Client *client_p, struct Client *source_p, int parc, const char *
 				"Ignored SAVE message for %s from %s",
 				target_p->name, source_p->name);
 	return 0;
-}
-
-/* clean_nick()
- *
- * input	- nickname to check
- * output	- 0 if erroneous, else 1
- * side effects -
- */
-static int
-clean_nick(const char *nick, int loc_client)
-{
-	int len = 0;
-
-	/* nicks cant start with a digit or -, and must have a length */
-	if(*nick == '-' || *nick == '\0')
-		return 0;
-
-	if(loc_client && IsDigit(*nick))
-		return 0;
-
-	for(; *nick; nick++)
-	{
-		len++;
-		if(!IsNickChar(*nick))
-			return 0;
-	}
-
-	/* nicklen is +1 */
-	if(len >= NICKLEN && (unsigned int)len >= ConfigFileEntry.nicklen)
-		return 0;
-
-	return 1;
 }
 
 /* clean_username()

@@ -114,7 +114,7 @@ add_monitor(struct Client *client_p, const char *nicks)
 			return;
 		}
 
-		if (!is_valid_nick(name))
+		if (!clean_nick(name, 0))
 			continue;
 
 		monptr = find_monitor(name, 1);

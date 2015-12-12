@@ -787,6 +787,38 @@ remove_client_from_list(struct Client *client_p)
 }
 
 
+/* clean_nick()
+ *
+ * input	- nickname to check, flag for nick from local client
+ * output	- 0 if erroneous, else 1
+ * side effects -
+ */
+int
+clean_nick(const char *nick, int loc_client)
+{
+	int len = 0;
+
+	/* nicks cant start with a digit or -, and must have a length */
+	if(*nick == '-' || *nick == '\0')
+		return 0;
+
+	if(loc_client && IsDigit(*nick))
+		return 0;
+
+	for(; *nick; nick++)
+	{
+		len++;
+		if(!IsNickChar(*nick))
+			return 0;
+	}
+
+	/* nicklen is +1 */
+	if(len >= NICKLEN && (unsigned int)len >= ConfigFileEntry.nicklen)
+		return 0;
+
+	return 1;
+}
+
 /*
  * find_person	- find person by (nick)name.
  * inputs	- pointer to name

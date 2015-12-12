@@ -592,6 +592,8 @@ extern void error_exit_client(struct Client *, int);
 extern void count_local_client_memory(size_t * count, size_t * memory);
 extern void count_remote_client_memory(size_t * count, size_t * memory);
 
+extern int clean_nick(const char *, int loc_client);
+
 extern struct Client *find_chasing(struct Client *, const char *, int *);
 extern struct Client *find_person(const char *);
 extern struct Client *find_named_person(const char *);
@@ -615,26 +617,5 @@ extern char *generate_uid(void);
 
 void allocate_away(struct Client *);
 void free_away(struct Client *);
-
-static inline int
-is_valid_nick(const char *nick)
-{
-	int len = 0;
-
-	if(EmptyString(nick) || *nick == '-' || IsDigit(*nick))
-		return 0;
-
-	for(; *nick; nick++)
-	{
-		len++;
-		if(!IsNickChar(*nick))
-			return 0;
-	}
-
-	if(len >= NICKLEN)
-		return 0;
-
-	return 1;
-}
 
 #endif /* INCLUDED_client_h */
