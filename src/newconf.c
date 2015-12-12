@@ -1826,7 +1826,7 @@ conf_set_channel_autochanmodes(void *data)
 			}
 			else
 			{
-				conf_report_error("channel::autochanmodes -- Invalid channel mode %c", pm);
+				conf_report_error("channel::autochanmodes -- Invalid channel mode %c", *pm);
 				continue;
 			}
 			break;
