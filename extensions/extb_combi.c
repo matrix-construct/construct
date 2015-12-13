@@ -44,13 +44,14 @@
 
 // #define DEBUG(s) sendto_realops_snomask(SNO_DEBUG, L_NETWIDE, (s))
 #define DEBUG(s)
+#define RETURN_INVALID	{ recursion_depth--; return EXTBAN_INVALID; }
 
 static int _modinit(void);
 static void _moddeinit(void);
 static int eb_or(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type);
 static int eb_and(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type);
 static int eb_combi(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type, int is_and);
-
+static int recursion_depth = 0;
 
 DECLARE_MODULE_AV1(extb_extended, _modinit, _moddeinit, NULL, NULL, NULL, "$Revision: 1 $");
 
@@ -88,6 +89,11 @@ static int eb_combi(const char *data, struct Client *client_p,
 	const char *p, *banend;
 	int have_result = FALSE;
 	size_t datalen;
+
+	if (recursion_depth >= 5) {
+		DEBUG("combo invalid: recursion depth too high");
+		return EXTBAN_INVALID;
+	}
 
 	if (EmptyString(data)) {
 		DEBUG("combo invalid: empty data");
@@ -131,6 +137,8 @@ static int eb_combi(const char *data, struct Client *client_p,
 	 * so we always keep parsing even after we have determined a result.
 	 */
 
+	recursion_depth++;
+
 	while (TRUE) {
 		int invert = FALSE;
 		char *child_data, child_data_buf[BANLEN];
@@ -141,14 +149,14 @@ static int eb_combi(const char *data, struct Client *client_p,
 			p++;
 			if (p == banend) {
 				DEBUG("combo invalid: no data after ~");
-				return EXTBAN_INVALID;
+				RETURN_INVALID;
 			}
 		}
 
 		f = extban_table[(unsigned char) *p++];
 		if (!f) {
 			DEBUG("combo invalid: non-existant child extban");
-			return EXTBAN_INVALID;
+			RETURN_INVALID;
 		}
 
 		if (*p == ':') {
@@ -166,7 +174,7 @@ static int eb_combi(const char *data, struct Client *client_p,
 				if (p == banend) {
 					if (parencount) {
 						DEBUG("combo invalid: EOD while in parens");
-						return EXTBAN_INVALID;
+						RETURN_INVALID;
 					}
 					break;
 				}
@@ -188,7 +196,7 @@ static int eb_combi(const char *data, struct Client *client_p,
 					case ')':
 						if (!parencount) {
 							DEBUG("combo invalid: negative parencount");
-							return EXTBAN_INVALID;
+							RETURN_INVALID;
 						}
 						parencount--;
 						*o++ = *p;
@@ -218,7 +226,7 @@ static int eb_combi(const char *data, struct Client *client_p,
 
 			if (child_result == EXTBAN_INVALID) {
 				DEBUG("combo invalid: child invalid");
-				return EXTBAN_INVALID;
+				RETURN_INVALID;
 			}
 
 			/* Convert child_result to a plain boolean result */
@@ -236,14 +244,16 @@ static int eb_combi(const char *data, struct Client *client_p,
 
 		if (*p++ != ',') {
 			DEBUG("combo invalid: no ',' after ban");
-			return EXTBAN_INVALID;
+			RETURN_INVALID;
 		}
 
 		if (p == banend) {
 			DEBUG("combo invalid: banend after ','");
-			return EXTBAN_INVALID;
+			RETURN_INVALID;
 		}
 	}
+
+	recursion_depth--;
 
 	if (is_and)
 		return have_result ? EXTBAN_NOMATCH : EXTBAN_MATCH;
