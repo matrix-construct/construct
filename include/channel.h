@@ -76,6 +76,11 @@ struct Channel
 	unsigned long bants;
 	time_t channelts;
 	char *chname;
+
+	struct Client *last_checked_client;
+	time_t last_checked_ts;
+	unsigned int last_checked_type;
+	int last_checked_result;
 };
 
 struct membership
