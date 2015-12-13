@@ -677,6 +677,7 @@ is_banned(struct Channel *chptr, struct Client *who, struct membership *msptr,
 		chptr->last_checked_ts > chptr->bants)
 		return chptr->last_checked_result;
 
+	chptr->last_checked_client = who;
 	chptr->last_checked_type = CHFL_BAN;
 	chptr->last_checked_result = is_banned_list(chptr, &chptr->banlist, who, msptr, s, s2, forward);
 	chptr->last_checked_ts = rb_current_time();
@@ -701,6 +702,7 @@ is_quieted(struct Channel *chptr, struct Client *who, struct membership *msptr,
 		chptr->last_checked_ts > chptr->bants)
 		return chptr->last_checked_result;
 
+	chptr->last_checked_client = who;
 	chptr->last_checked_type = CHFL_QUIET;
 	chptr->last_checked_result = is_banned_list(chptr, &chptr->quietlist, who, msptr, s, s2, NULL);
 	chptr->last_checked_ts = rb_current_time();
