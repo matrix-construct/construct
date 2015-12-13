@@ -889,5 +889,5 @@ void
 init_ssld(void)
 {
 	rb_event_addish("collect_zipstats", collect_zipstats, NULL, ZIPSTATS_TIME);
-	rb_event_addish("cleanup_dead_ssld", cleanup_dead_ssl, NULL, 1200);
+	rb_event_addish("cleanup_dead_ssld", cleanup_dead_ssl, NULL, 60);
 }
