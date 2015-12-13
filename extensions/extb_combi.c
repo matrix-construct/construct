@@ -91,7 +91,7 @@ static int eb_combi(const char *data, struct Client *client_p,
 	int allowed_nodes = 6;
 	size_t datalen;
 
-	if (recursion_depth >= 5) {
+	if (recursion_depth >= 2) {
 		DEBUG("combo invalid: recursion depth too high");
 		return EXTBAN_INVALID;
 	}
