@@ -254,6 +254,12 @@ static int eb_combi(const char *data, struct Client *client_p,
 		}
 	}
 
+	/* at this point, *p should == banend */
+	if (p != banend) {
+		DEBUG("combo invalid: more child extbans than allowed");
+		RETURN_INVALID;
+	}
+
 	recursion_depth--;
 
 	if (is_and)
