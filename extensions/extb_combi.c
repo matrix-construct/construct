@@ -88,6 +88,7 @@ static int eb_combi(const char *data, struct Client *client_p,
 {
 	const char *p, *banend;
 	int have_result = FALSE;
+	int allowed_nodes = 3;
 	size_t datalen;
 
 	if (recursion_depth >= 5) {
@@ -139,7 +140,7 @@ static int eb_combi(const char *data, struct Client *client_p,
 
 	recursion_depth++;
 
-	while (TRUE) {
+	while (--allowed_nodes) {
 		int invert = FALSE;
 		char *child_data, child_data_buf[BANLEN];
 		ExtbanFunc f;
