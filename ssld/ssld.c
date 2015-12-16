@@ -762,11 +762,9 @@ ssl_process_accept(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 	SetSSL(conn);
 
 	if(rb_get_type(conn->mod_fd) & RB_FD_UNKNOWN)
-	{
-
 		rb_set_type(conn->mod_fd, RB_FD_SOCKET);
-	}
-	if(rb_get_type(conn->mod_fd) == RB_FD_UNKNOWN)
+
+	if(rb_get_type(conn->plain_fd) == RB_FD_UNKNOWN)
 		rb_set_type(conn->plain_fd, RB_FD_SOCKET);
 
 	rb_ssl_start_accepted(ctlb->F[0], ssl_process_accept_cb, conn, 10);
@@ -792,7 +790,7 @@ ssl_process_connect(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 	if(rb_get_type(conn->mod_fd) == RB_FD_UNKNOWN)
 		rb_set_type(conn->mod_fd, RB_FD_SOCKET);
 
-	if(rb_get_type(conn->mod_fd) == RB_FD_UNKNOWN)
+	if(rb_get_type(conn->plain_fd) == RB_FD_UNKNOWN)
 		rb_set_type(conn->plain_fd, RB_FD_SOCKET);
 
 
