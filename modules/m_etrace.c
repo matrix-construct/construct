@@ -50,6 +50,7 @@
 #include "parse.h"
 #include "modules.h"
 #include "logger.h"
+#include "supported.h"
 
 static int mo_etrace(struct Client *, struct Client *, int, const char **);
 static int me_etrace(struct Client *, struct Client *, int, const char **);
@@ -69,8 +70,22 @@ struct Message masktrace_msgtab = {
 	{mg_ignore, mg_not_oper, mg_ignore, mg_ignore, mg_ignore, {mo_masktrace, 2}}
 };
 
+static int
+_modinit(void)
+{
+    add_isupport("ETRACE", isupport_string, "");
+
+    return 0;
+}
+
+static void
+_moddeinit(void)
+{
+    delete_isupport("ETRACE");
+}
+
 mapi_clist_av1 etrace_clist[] = { &etrace_msgtab, &chantrace_msgtab, &masktrace_msgtab, NULL };
-DECLARE_MODULE_AV1(etrace, NULL, NULL, etrace_clist, NULL, NULL, "$Revision: 3161 $");
+DECLARE_MODULE_AV1(etrace, _modinit, _moddeinit, etrace_clist, NULL, NULL, "$Revision: 3161 $");
 
 static void do_etrace(struct Client *source_p, int ipv4, int ipv6);
 static void do_etrace_full(struct Client *source_p);

@@ -42,10 +42,27 @@
 #include "send.h"
 #include "s_conf.h"
 #include "packet.h"
+#include "supported.h"
 
 static int m_cmessage(int, const char *, struct Client *, struct Client *, int, const char **);
 static int m_cprivmsg(struct Client *, struct Client *, int, const char **);
 static int m_cnotice(struct Client *, struct Client *, int, const char **);
+
+static int
+_modinit(void)
+{
+	add_isupport("CPRIVMSG", isupport_string, "");
+	add_isupport("CNOTICE", isupport_string, "");
+
+	return 0;
+}
+
+static void
+_moddeinit(void)
+{
+	delete_isupport("CPRIVMSG");
+	delete_isupport("CNOTICE");
+}
 
 struct Message cprivmsg_msgtab = {
 	"CPRIVMSG", 0, 0, 0, MFLG_SLOW,
@@ -57,7 +74,7 @@ struct Message cnotice_msgtab = {
 };
 
 mapi_clist_av1 cmessage_clist[] = { &cprivmsg_msgtab, &cnotice_msgtab, NULL };
-DECLARE_MODULE_AV1(cmessage, NULL, NULL, cmessage_clist, NULL, NULL, "$Revision: 1543 $");
+DECLARE_MODULE_AV1(cmessage, _modinit, _moddeinit, cmessage_clist, NULL, NULL, "$Revision: 1543 $");
 
 #define PRIVMSG 0
 #define NOTICE 1

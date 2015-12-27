@@ -41,6 +41,7 @@
 #include "packet.h"
 #include "s_newconf.h"
 #include "ratelimit.h"
+#include "supported.h"
 
 #define FIELD_CHANNEL    0x0001
 #define FIELD_HOP        0x0002
@@ -69,8 +70,21 @@ struct Message who_msgtab = {
 	{mg_unreg, {m_who, 2}, mg_ignore, mg_ignore, mg_ignore, {m_who, 2}}
 };
 
+static int
+_modinit(void)
+{
+	add_isupport("WHOX", isupport_string, "");
+	return 0;
+}
+
+static void
+_moddeinit(void)
+{
+	delete_isupport("WHOX");
+}
+
 mapi_clist_av1 who_clist[] = { &who_msgtab, NULL };
-DECLARE_MODULE_AV1(who, NULL, NULL, who_clist, NULL, NULL, "$Revision: 3350 $");
+DECLARE_MODULE_AV1(who, _modinit, _moddeinit, who_clist, NULL, NULL, "$Revision: 3350 $");
 
 static void do_who_on_channel(struct Client *source_p, struct Channel *chptr,
 			      int server_oper, int member,

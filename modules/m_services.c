@@ -47,6 +47,7 @@
 #include "modules.h"
 #include "whowas.h"
 #include "monitor.h"
+#include "supported.h"
 
 static int _modinit(void);
 static void _moddeinit(void);
@@ -101,12 +102,14 @@ static int
 _modinit(void)
 {
 	mark_services();
+	add_isupport("FNC", isupport_string, "");
 	return 0;
 }
 
 static void
 _moddeinit(void)
 {
+	delete_isupport("FNC");
 	unmark_services();
 }
 
