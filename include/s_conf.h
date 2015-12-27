@@ -259,6 +259,7 @@ struct config_channel_entry
 	int channel_target_change;
 	int disable_local_channels;
 	unsigned int autochanmodes;
+	int displayed_usercount;
 };
 
 struct config_server_hide

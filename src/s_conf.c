@@ -792,6 +792,7 @@ set_default_conf(void)
 	ConfigChannel.resv_forcepart = YES;
 	ConfigChannel.channel_target_change = YES;
 	ConfigChannel.disable_local_channels = NO;
+	ConfigChannel.displayed_usercount = 3;
 
 	ConfigChannel.autochanmodes = MODE_TOPICLIMIT | MODE_NOPRIVMSGS;
 

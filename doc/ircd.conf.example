@@ -362,6 +362,7 @@ channel {
 	channel_target_change = yes;
 	disable_local_channels = no;
 	autochanmodes = "+nt";
+	displayed_usercount = 3;
 };
 
 serverhide {
