@@ -37,7 +37,7 @@ init(void)
 static void
 fini(void)
 {
-	snomask_modes['W'] = find_snomask_slot();
+	snomask_modes['W'] = 0;
 }
 
 DECLARE_MODULE_AV1(sno_whois, init, fini, NULL, NULL, whois_hfnlist, "$Revision: 3498 $");
