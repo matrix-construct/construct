@@ -1,4 +1,4 @@
-This is charybdis 3.5-devel, Copyright (c) 2005-2015 Charybdis team.
+This is charybdis 3.5-devel, Copyright (c) 2005-2016 Charybdis team.
 See LICENSE for licensing details (GPL v2).
 
 -- charybdis-3.5-devel
@@ -60,6 +60,8 @@ config
 - SSL/TLS listeners now have defer_accept unconditionally enabled on them.
 - The method used for certificate fingerprints (CertFP) is now configurable.
   SHA1, SHA256 and SHA512 are available options.
+- The minimum user threshold for channels in default /list output is now
+  configurable.
 misc
 - Work around timerfd/signalfd brokenness on OpenVZ.
 - Fix a compilation issue in libratbox/src/sigio.c with recent glibc.
@@ -80,6 +82,8 @@ misc
 - Fix various code quality issues.
 - Add --with-shared-sqlite to allow distribution packages to link to a shared
   sqlite library. Using this is not recommended for on-server compilation.
+- ISUPPORT tokens which are actually provided by modules have been moved to their
+  respective modules.
 
 -- charybdis-3.4.0
 
