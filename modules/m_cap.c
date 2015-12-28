@@ -426,8 +426,10 @@ cap_req(struct Client *source_p, const char *arg)
 		}
 
 		strcat(pbuf[i], cap->name);
-		strcat(pbuf[i], " ");
-		plen += (cap->namelen + 1);
+		if (!finished) {
+			strcat(pbuf[i], " ");
+			plen += (cap->namelen + 1);
+		}
 	}
 
 	if(!finished)
