@@ -2215,14 +2215,12 @@ rb_recv_fd_buf(rb_fde_t *F, void *data, size_t datasize, rb_fde_t **xF, int nfds
 int
 rb_send_fd_buf(rb_fde_t *xF, rb_fde_t **F, int count, void *data, size_t datasize, pid_t pid)
 {
-	int n;
 	struct msghdr msg;
 	struct cmsghdr *cmsg;
 	struct iovec iov[1];
 	char empty = '0';
-	char *buf;
 
-	memset(&msg, 0, sizeof msg);
+	memset(&msg, 0, sizeof(msg));
 	if(datasize == 0)
 	{
 		iov[0].iov_base = &empty;
@@ -2243,9 +2241,8 @@ rb_send_fd_buf(rb_fde_t *xF, rb_fde_t **F, int count, void *data, size_t datasiz
 
 	if(count > 0)
 	{
-		int i;
 		int len = CMSG_SPACE(sizeof(int) * count);
-		buf = alloca(len);
+		char buf[len];
 
 		msg.msg_control = buf;
 		msg.msg_controllen = len;
@@ -2254,14 +2251,14 @@ rb_send_fd_buf(rb_fde_t *xF, rb_fde_t **F, int count, void *data, size_t datasiz
 		cmsg->cmsg_type = SCM_RIGHTS;
 		cmsg->cmsg_len = CMSG_LEN(sizeof(int) * count);
 
-		for(i = 0; i < count; i++)
+		for(unsigned int i = 0; i < count; i++)
 		{
 			((int *)CMSG_DATA(cmsg))[i] = rb_get_fd(F[i]);
 		}
 		msg.msg_controllen = cmsg->cmsg_len;
+		return sendmsg(rb_get_fd(xF), &msg, MSG_NOSIGNAL);
 	}
-	n = sendmsg(rb_get_fd(xF), &msg, MSG_NOSIGNAL);
-	return n;
+	return sendmsg(rb_get_fd(xF), &msg, MSG_NOSIGNAL);
 }
 #else
 #ifndef _WIN32
