@@ -1,5 +1,3 @@
-$Id: CREDITS 3133 2007-01-21 15:38:16Z jilles $
- 
 Charybdis started as an evolution from ircd-ratbox. Its development
 is led by a team of dedicated developers who have put a lot of time
 into the project, and it has seen use on a variety of different
@@ -9,7 +7,7 @@ The charybdis core team is listed in nick-alphabetical order:
  
 jilles, Jilles Tjoelker <jilles -at- stack.nl>
 mr_flea, Keith Buck <mr_flea -at- esper.net>
-nenolod, William Pitcock <nenolod -at- nenolod.net>
+kaniini, William Pitcock <nenolod -at- dereferenced.org>
 spb, Stephen Bennett <spb -at- attenuate.org>
  
 The following people have made contributions to the Charybdis releases,
@@ -28,5 +26,5 @@ ThaPrince, Jon Christopherson <jon -at- vile.com>
 twincest, River Tarnell <river -at- attenuate.org>
 w00t, Robin Burchell <surreal.w00t -at- gmail.com>
  
-Visit the Charybdis website at: http://www.ircd-charybdis.net
-Visit us on IRC at: irc.staticbox.net #charybdis
+Visit the Charybdis website at: http://www.charybdis.io
+Visit us on IRC at: irc.freenode.net #charybdis
