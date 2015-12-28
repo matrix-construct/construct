@@ -140,7 +140,7 @@ m_mode(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		/* Finish the flood grace period... */
 		if(MyClient(source_p) && !IsFloodDone(source_p))
 		{
-			if(!((parc == 3) && (parv[2][0] == 'b') && (parv[2][1] == '\0')))
+			if(!((parc == 3) && (parv[2][0] == 'b' || parv[2][0] == 'q') && (parv[2][1] == '\0')))
 				flood_endgrace(source_p);
 		}
 
