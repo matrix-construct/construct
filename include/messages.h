@@ -97,7 +97,7 @@
 #define NUMERIC_STR_317      "%s %ld %lu :seconds idle, signon time"
 #define NUMERIC_STR_318      "%s :End of /WHOIS list."
 #define NUMERIC_STR_319      ":%s 319 %s %s :"
-#define NUMERIC_STR_320      "%s: %s"
+#define NUMERIC_STR_320      "%s :%s"
 #define NUMERIC_STR_321      ":%s 321 %s Channel :Users  Name"
 #define NUMERIC_STR_322      ":%s 322 %s %s%s %lu :%s"
 #define NUMERIC_STR_323      ":%s 323 %s :End of /LIST"
