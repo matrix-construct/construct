@@ -320,7 +320,7 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 	}
 
 	if(MyClient(target_p) && !EmptyString(target_p->localClient->opername) &&
-	   (IsOperAdmin(source_p) || IsAdmin(source_p) || (source_p == target_p)))
+	   (IsOper(source_p) || (source_p == target_p)))
 	{
 		char buf[512];
 		rb_snprintf(buf, sizeof(buf), "is opered as %s, privset %s",
