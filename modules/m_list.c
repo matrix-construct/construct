@@ -196,7 +196,6 @@ static int mo_list(struct Client *client_p, struct Client *source_p, int parc, c
 	/* Multiple channels, possibly with parameters. */
 	params = rb_malloc(sizeof(struct ListClient));
 
-	/* XXX rather arbitrary -- jilles */
 	params->users_min = ConfigChannel.displayed_usercount;
 	params->users_max = INT_MAX;
 	params->operspy = operspy;
