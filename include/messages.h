@@ -72,7 +72,7 @@
 #define NUMERIC_STR_253      "%d :unknown connection(s)"
 #define NUMERIC_STR_254      "%lu :channels formed"
 #define NUMERIC_STR_255      ":I have %d clients and %d servers"
-#define NUMERIC_STR_256      ":Administrative info about %s"
+#define NUMERIC_STR_256      "%s :Administrative info"
 #define NUMERIC_STR_257      ":%s"
 #define NUMERIC_STR_258      ":%s"
 #define NUMERIC_STR_259      ":%s"
