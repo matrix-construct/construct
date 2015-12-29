@@ -761,7 +761,7 @@ BUGS: Major bugs in this release are listed in BUGS
 
 BUG REPORTS: If you run this code and encounter problems, you must report
 via IRC to irc.freenode.net, #charybdis. For specific bugs you can use
-https://github.com/atheme/charybdis/issues.
+https://github.com/charybdis-ircd/charybdis/issues.
 
 Please include a gdb backtrace and keep the core file, binaries and 
 modules in case the developers need them.
