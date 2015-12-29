@@ -1,16 +1,19 @@
-This is charybdis 3.5-devel, Copyright (c) 2005-2016 Charybdis team.
+# News
+
+This is charybdis 3.5.0, Copyright (c) 2005-2016 Charybdis team.
 See LICENSE for licensing details (GPL v2).
 
--- charybdis-3.5-devel
+## charybdis-3.5.0
 
-server protocol
+### server protocol
 - Fix propagation of ip_cloaking hostname changes (only when setting or
   unsetting the umode after connection).
 - Fix a remote-triggerable crash triggered by the CAPAB parsing code.
 - As per the TS6 spec, require QS and ENCAP capabilities.
 - Require EX and IE capabilities (+e and +I cmodes).
 - Check that UIDs start with the server's SID.
-user
+
+### user
 - Allow mode queries on mlocked modes. In particular, allow /mode #channel f
   to query the forward channel even if +f is mlocked.
 - Strip colours from channel topics in /list.
@@ -38,7 +41,8 @@ user
   - $& combines 1 or more child extbans as an AND expression
   - $| combines 1 or more child extbans as an OR expression
   - $m provides normal hostmask matching as an extban for the above
-oper
+
+### oper
 - Fix a crash with /testline.
 - Complain to opers if a server that isn't a service tries to
   SU/RSFNC/NICKDELAY/SVSLOGIN.
@@ -47,7 +51,9 @@ oper
   instead of only on snomask +d and in ioerrorlog.
 - Remove snotes on +r about GET/PUT/POST commands ("HTTP Proxy disconnected").
 - Add DNSBL snotes on snomask +r.
-config
+
+### config
+
 - Add chm_nonotice extension, cmode +T to reject notices.
 - Add restrict-unauthenticated extension, prevents unauthenticated users from
   doing anything as channel operator.
@@ -62,7 +68,8 @@ config
   SHA1, SHA256 and SHA512 are available options.
 - The minimum user threshold for channels in default /list output is now
   configurable.
-misc
+
+### misc
 - Work around timerfd/signalfd brokenness on OpenVZ.
 - Fix a compilation issue in libratbox/src/sigio.c with recent glibc.
 - Extend documentation slightly.
@@ -85,16 +92,17 @@ misc
 - ISUPPORT tokens which are actually provided by modules have been moved to their
   respective modules.
 
--- charybdis-3.4.0
+## charybdis-3.4.0
 
-server protocol
+### server protocol
 - Allow overriding opers (with the new extension) to op themselves on channels.
 - Allow RSFNC to change a nickname's capitalization only.
 - Add channel ban forwarding <mask>$<channel> much like ircd-seven. Local use
   of this is controlled by the channel::use_forward config option.
 - Add ENCAP TGINFO to propagate IP addresses that exceeded target change
   limits (these get a lower limit when they reconnect).
-user
+
+### user
 - Consider bogus CTCP ACTION messages (without action text) CTCP (for
   cmode +C).
 - Send ERR_TOOMANYCHANNELS for each channel join that fails due to channel
@@ -126,13 +134,15 @@ user
   to @/+ channel as well.
 - Channel mode +c (and other places that disallow colour codes) now also strip
   ASCII 4 (a different kind of colour code).
-oper
+
+### oper
 - Add operspy for /list.
 - Add a server notice to snomask +b if a user exceeds target change limits.
 - Add missing server notice for kills from RSFNC and SVSLOGIN.
 - Add /stats C to show information about dynamically loaded server
   capabilities.
-config
+
+### config
 - Add support for linking using SSL certificate fingerprints as the link
   credential rather than the traditional password pair.
 - Add m_roleplay extension, provides various roleplay commands.
@@ -152,7 +162,8 @@ config
 - Add general::away_interval to allow configuring /away rate limiting.
 - Add listener::defer_accept to delay accepting a connection until the client
   sends data. This depends on kernel support. It may break BOPM checking.
-misc
+
+### misc
 - In mkpasswd, default to SHA512-based crypt instead of MD5-based crypt.
 - Add --with-custom-branding and --with-custom-version configure options to
   help forks/patchsets distinguish themselves.
@@ -162,9 +173,9 @@ misc
   FHS-like hierarchy.
 - Remove broken GnuTLS support. SSL/TLS is now only provided using OpenSSL.
 
--- charybdis-3.3.0
+## charybdis-3.3.0
 
-server protocol
+### server protocol
 - Add new BAN command, for propagated network-wide bans (K/X:lines and RESVs).
   These will burst to new servers as they are introduced, and will stay in sync
   across the whole network (new BAN capab).
@@ -172,7 +183,8 @@ server protocol
   services to send out a list of mode letters for a given channel which may not
   be changed, preventing mode fights between services and client bots (new MLOCK
   capab).
-user
+
+### user
 - New RPL_QUIETLIST(728) and RPL_ENDOFQUIETLIST(729) numerics are used for the
   quiet (+q) list, instead of overloading the ban list numerics.
 - Users may no longer change the topic of a -t channel if they cannot send to
@@ -190,8 +202,7 @@ user
   many channels at a time.
 - Show RPL_WHOISLOGGEDIN in /whowas as well as in /whois entries.  This adds at
   most an additional 0.5MB of memory usage.
-oper
-config
+### config
 - Add general::use_propagated_bans to switch the new BAN system on or off.
 - Add general::default_ident_timeout, to control the timeout for identd (auth)
   connections.
@@ -200,7 +211,7 @@ config
 - Fix class::number_per_ident so that it also applies to connections without
   identd.
 - Change the example sslport option to 6697, which is more standard than 9999.
-misc
+### misc
 - The custom channel mode API has been rewritten, allowing these modules to work
   correctly when reloaded, or loaded from the config file.
 - The EFNet RBL is now recommended, instead of DroneBL.
@@ -208,14 +219,15 @@ misc
 - Numerous bug fixes and code cleanups.
 - In mkpasswd, default to MD5 crypt instead of insecure DES.
 
--- charybdis-3.2.0
+## charybdis-3.2.0
 
-server protocol
+### server protocol
 - Apply +z to messages blocked by +b and +q as well. (new EOPMOD capab)
 - Add new topic command ETB, allowing services to set topic+setter+ts always.
   (new EOPMOD capab)
 - The slash ('/') character is now allowed in spoofs.
-user
+
+### user
 - Add can_kick hook, based on the ircd-seven one.
 - Add cmode +C (no CTCP) from ircd-seven.
 - Flood checking has been reworked.
@@ -234,7 +246,8 @@ user
 - Apply umode +g/+R restrictions to /invite, with the difference that
   instead of sending "<user> is messaging you" the invite is let through
   since that is just as noisy.
-oper
+
+### oper
 - Add /rehash throttles to clear throttling.
 - Send all server notices resulting from a remote /rehash to the oper.
 - '\s' for space is now part of the matching, not a substitution at xline
@@ -245,12 +258,14 @@ oper
 - Ignore directory names in MODRELOAD to avoid crashing if it is a core
   module and the path is incorrect.
 - Tweaks to spambot checks.
-config
+
+### config
 - Add channel::only_ascii_channels config option to restrict channel names
   to printable ascii only.
 - Add channel::resv_forcepart, forcibly parts local users on channel RESV,
   default enabled.
-misc
+
+### misc
 - New mkpasswd from ircd-ratbox.
 - Check more system calls for errors and handle the errors.
 - Various ssld/libratbox bugfixes from ircd-ratbox. [some MERGED]
@@ -262,7 +277,7 @@ misc
   helper process. Use bin/bantool -i to import your old bans into the
   database.
 
--- charybdis-3.1.0
+## charybdis-3.1.0
 
 - Remove TS5 support. No TS5 servers are permitted in a network with
   charybdis 3.1.0 or newer, except jupes.
@@ -322,13 +337,13 @@ misc
 - Add chm_adminonly extension, cmode +A for server admin only channels.
 - Various code cleanups.
 
--- charybdis-3.0.4
+## charybdis-3.0.4
 
 - Fix a crash on certain recent versions of Ubuntu.
 - Allow 127.x.y.z for DNSBL replies instead of just 127.0.0.x.
 - Various documentation improvements.
 
--- charybdis-3.0.3
+## charybdis-3.0.3
 
 - Fix IPv6 D:lines
 - Fix rejectcache and unknown_count.
@@ -337,7 +352,7 @@ misc
 - Fix SSL/TLS bugs for servers with more than about 100 connections.
 - Small bugfixes.
 
--- charybdis-3.0.2
+## charybdis-3.0.2
 
 - Improve OLIST extension error messages.
 - Improve some kline error checking.
@@ -345,7 +360,7 @@ misc
 - Fix resolver hangs with epoll.
 - Fix compilation without zlib.
 
--- charybdis-3.0.1
+## charybdis-3.0.1
 
 - Fix occasional hung clients with kqueue.
 - Fix a rare ssld crash.
@@ -353,7 +368,7 @@ misc
   reported.
 - Make the IRCd work on MacOS X again.
 
--- charybdis-3.0.0
+## charybdis-3.0.0
 
 - Port the IRCd to libratbox, which has improved our portability and allows
   us to reuse low-level code instead of maintaining our own.
@@ -395,7 +410,7 @@ misc
 - Show opers a list of recently (<24hrs) split servers in /map.
 - Add /privs command, shows effective privileges of a client.
 
--- charybdis-2.2.0
+## charybdis-2.2.0
 
 - The I/O code has been reworked, file descriptor metadata is stored in a
   hashtable and the maximum number of clients can now be set in ircd.conf.
@@ -437,7 +452,7 @@ misc
 - Add several new extensions, such as createoperonly.
 - Merge whois notice extensions into one and move it from snomask +y to +W.
 
--- charybdis-2.1.2
+## charybdis-2.1.2
 
 - Fix bug that could cause all hostmangled users to be exempted when a
   single ban exception existed on a channel.
@@ -447,7 +462,7 @@ misc
   Note that this may cause channel +bqeI modes set on such very long hosts
   to no longer match.
 
--- charybdis-2.1.1
+## charybdis-2.1.1
 
 - Search the shortest list (user's/channel's) when looking up channel
   memberships.
@@ -460,7 +475,7 @@ misc
 - Don't redirect users to an existing domain, irc.fi.
 - Improve communication of servlink-related error messages.
 
--- charybdis-2.1.0
+## charybdis-2.1.0
 
 - Our official website is now http://www.ircd-charybdis.org/.
 - Make RPL_ISUPPORT (005 numeric) modularizable.
@@ -507,7 +522,7 @@ misc
   notification before use.
 - Fix some bugs relating to the resolver.
 
--- charybdis-2.0.0
+## charybdis-2.0.0
 
 - Replace ADNS with a new smaller resolver from ircu and hybrid.
 - Make services shortcuts (/chanserv etc) configurable in ircd.conf.
@@ -537,7 +552,7 @@ misc
 - Documentation updates.
 - Many bugfixes.
 
--- charybdis-1.1.0
+## charybdis-1.1.0
 
 - Implement SAFELIST.
 - Incorporate ircu's match() algorithm.
@@ -575,7 +590,7 @@ misc
   available.
 - Move HIDE_SPOOF_IPS into the general {} block in ircd.conf
 
--- charybdis-1.0.3
+## charybdis-1.0.3
 
 - Fix /invite UID leak. (Found by logiclrd@EFnet.)
 - Incorporate ratbox bugfixes for the MONITOR system.
@@ -587,7 +602,7 @@ misc
 - Make sure TS6 services are recognized properly if connected remotely.
 - Tweak something in services support for cyrix boxes.
 
--- charybdis-1.0.2
+## charybdis-1.0.2
 
 - Fix propagation of an empty SJOIN (permanant channels).
 - Fix an exploit involving a malformed /trace request.
@@ -618,7 +633,7 @@ misc
   even if sent in TS5 format.
 - Only clear oper_only_umodes for local clients on deoper.
 
--- charybdis-1.0.1
+## charybdis-1.0.1
 
 - Display logged in status on non-local clients too.
 - Documentation updates
@@ -629,7 +644,8 @@ misc
 - Document service { } blocks (u:lines on ircu).
 - Document identify_service and identify_command in reference.conf.
 
--- charybdis-1.0
+## charybdis-1.0
+
 - Implement channel mode +L for channel list limit exemptions.
 - Implement channel mode +P primarily as a status mode, permanant 
   channel -- this is usually enforced via services registrations.
@@ -663,111 +679,3 @@ misc
 - Add services aliases: /ns, /cs, /os, /nickserv, /chanserv, /operserv.
 - Add simple hack that enables use of server password for automatic
   identify.
-
--- ircd-ratbox-2.1.5+datadrain
-- fix a buffer overflow and an unterminated buffer when TS6 forces us
-  to remove bans
-- fix potential junk SJOIN generation when splitting it into multiple
-  lines
-- make servlink check for an uncompressed ERROR
-- change NICKLEN to 15.
-- change TOPICLEN to 390.
-- force services extensions to be enabled always
-- change patchlevel.h to get it's information from 'configure'
-- add m_chghost.c, ghetto rigged hostcloaking module, using elite ENCAP
-  technique
-
--- ircd-ratbox-2.1.4
-- fix minor time bug which occurs on december 31st
-- dont drop a servers link when we get a malformed WHOIS
-- disallow commas in channel keys
-- fix compile problem with abort_list
-- fix build on darwin
-- fix compilation with gcc4
-- userhost was only allowing 4 targets instead of 5
-- invalidate channel ban cache on nickchange
-- add TARGMAX to 005, detailing maximum targets for messages
-- fix counting of clients on accept list when adding users
-- use ID instead of name when bursting SJOIN to TS6 servers
-- lower id in struct User, which was one byte bigger than it needs to be
-
--- ircd-ratbox-2.1.3
-- removed sendq_eob as it just doesnt work on efnet
-- dont allow MONITOR from an unregistered client
-- add some uniqueness into the auth process for bopm
-- fix resvs to check whether target server is us properly
-- fix a core in cidr channel ban matching
-- raise max temptime to a year
-- fix cores when we receive extra params to NICK/UID
-- remove no_oper_resvs, add resv_exempt auth flag
-- fix flattened links
-- clean up the accept code, and dont clear a users own list of accepted
-  clients on nickchange
-- non-efnet:
-  - make services {}; blocks be displayed on stats U
-  - make services {}; blocks apply on rehash, you must now have only ONE
-    service {}; block, but you may have multiple name=""; entries within.
-  - only show services logged in info for local clients
-
--- ircd-ratbox-2.1.2
-- fix missing end comment tag in example confs
-- fix display problem with unauthorised conn notice
-- remove some unused defines from INFO
-- fix tabs for spaces in some helpfiles
-- add in missing links_delay conf option
-- fix cores under amd64
-- disallow bans beginning with ':' over BMASK
-- disallow bans with a space in chm_ban()
-- stop counting hidden opers in stats p count output
-- match() params of remote unresv were inverted, causing it to never match
-- fix possibility of clients setting blank keys
-- fix UID problems with trace
-- raise default topiclen to 160
-- add in forced nick change for ratbox-services, when compiled with
-  --enable-services
-
--- ircd-ratbox-2.1.1
-- remove an 005 token to hack around the parser bug
-- exempt users messaging themselves from target change
-- disallow messaging towards UIDs
-- add in doc/tgchange.txt
-- move stats L back to RPL_STATSLINKINFO
-- fix some minor auth problems
-- properly store ipv6 ips when we're compiled for v4 only
-- fix propagation of xline/resv
-- sync remote kline reasons with form used for local klines
-
--- ircd-ratbox-2.1.0
-- no changes
-
--- ircd-ratbox-2.1.0beta2
-- fix a few compile warnings
-- added multi-prefix clicap, for showing "@+" in NAMES/WHO replies
-- remove split_delay, make split servers now work on how many servers have
-  issued EOB, rather than how many exist.
-- server-side notify lists.  See doc/monitor.txt
-- fix undline core
-- remove an unwanted space from beginning of second 005
-- fix a potential core with the patricia when removing classes
-- when we're handling global NAMES, dont output channels whose users are all
-  invisible
-
--- ircd-ratbox-2.1.0beta1
-- No release notes, see doc/whats-new-2.1.txt
-
---------------------------------------------------------------------------------
-
-BUGS: Major bugs in this release are listed in BUGS
-
-BUG REPORTS: If you run this code and encounter problems, you must report
-via IRC to irc.freenode.net, #charybdis. For specific bugs you can use
-https://github.com/charybdis-ircd/charybdis/issues.
-
-Please include a gdb backtrace and keep the core file, binaries and 
-modules in case the developers need them.
-
-Other files recommended for reading: README.md, INSTALL
-
---------------------------------------------------------------------------------
-$Id: NEWS 3496 2007-05-30 10:22:01Z jilles $
-
