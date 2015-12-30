@@ -200,7 +200,7 @@ flattened_map(struct Client *client_p)
 		else
 			rb_strlcpy(buf, " |- ", BUFSIZE);
 
-		strlcat(buf, target_p->name, BUFSIZE);
+		rb_strlcat(buf, target_p->name, BUFSIZE);
 		len = strlen(buf);
 		buf[len] = ' ';
 
