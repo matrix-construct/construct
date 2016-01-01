@@ -50,7 +50,7 @@ DECLARE_MODULE_AV1(chghost, NULL, NULL, chghost_clist, NULL, NULL, "$Revision: 3
 /* clean_host()
  *
  * input	- host to check
- * output	- 0 if erroneous, else 0
+ * output	- 0 if erroneous, else 1
  * side effects -
  */
 static int
