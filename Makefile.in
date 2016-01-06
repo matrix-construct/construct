@@ -162,7 +162,7 @@ am__define_uniq_tagged_files = \
 ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
-DIST_SUBDIRS = libratbox libltdl src ssld bandb tools modules \
+DIST_SUBDIRS = libratbox libltdl ircd ssld bandb tools modules \
 	extensions help doc
 am__DIST_COMMON = $(srcdir)/Makefile.in \
 	$(top_srcdir)/include/setup.h.in \
@@ -404,7 +404,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
-SUBDIRS = libratbox $(am__append_1) src ssld bandb tools modules \
+SUBDIRS = libratbox $(am__append_1) ircd ssld bandb tools modules \
 	extensions help doc
 all: all-recursive
 

@@ -88,7 +88,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = charybdis$(EXEEXT)
-subdir = src
+subdir = ircd
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/libltdl/m4/argz.m4 \
 	$(top_srcdir)/libltdl/m4/libtool.m4 \
@@ -133,10 +133,10 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-am__installdirs = "$(DESTDIR)$(libcoredir)" "$(DESTDIR)$(bindir)"
-LTLIBRARIES = $(libcore_LTLIBRARIES)
-libcore_la_LIBADD =
-am_libcore_la_OBJECTS = bandbi.lo blacklist.lo cache.lo capability.lo \
+am__installdirs = "$(DESTDIR)$(libircddir)" "$(DESTDIR)$(bindir)"
+LTLIBRARIES = $(libircd_LTLIBRARIES)
+libircd_la_LIBADD =
+am_libircd_la_OBJECTS = bandbi.lo blacklist.lo cache.lo capability.lo \
 	channel.lo chmode.lo class.lo client.lo extban.lo getopt.lo \
 	hash.lo hook.lo hostmask.lo ipv4_from_ipv6.lo \
 	irc_dictionary.lo ircd.lo ircd_parser.lo ircd_lexer.lo \
@@ -146,18 +146,18 @@ am_libcore_la_OBJECTS = bandbi.lo blacklist.lo cache.lo capability.lo \
 	restart.lo s_auth.lo s_conf.lo s_newconf.lo s_serv.lo \
 	s_user.lo scache.lo send.lo snomask.lo sslproc.lo \
 	substitution.lo supported.lo tgchange.lo version.lo whowas.lo
-libcore_la_OBJECTS = $(am_libcore_la_OBJECTS)
+libircd_la_OBJECTS = $(am_libircd_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-libcore_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+libircd_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(libcore_la_LDFLAGS) $(LDFLAGS) -o $@
+	$(libircd_la_LDFLAGS) $(LDFLAGS) -o $@
 PROGRAMS = $(bin_PROGRAMS)
 am_charybdis_OBJECTS = main.$(OBJEXT)
 charybdis_OBJECTS = $(am_charybdis_OBJECTS)
-charybdis_DEPENDENCIES = libcore.la
+charybdis_DEPENDENCIES = libircd.la
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -209,8 +209,8 @@ AM_V_YACC = $(am__v_YACC_@AM_V@)
 am__v_YACC_ = $(am__v_YACC_@AM_DEFAULT_V@)
 am__v_YACC_0 = @echo "  YACC    " $@;
 am__v_YACC_1 = 
-SOURCES = $(libcore_la_SOURCES) $(charybdis_SOURCES)
-DIST_SOURCES = $(libcore_la_SOURCES) $(charybdis_SOURCES)
+SOURCES = $(libircd_la_SOURCES) $(charybdis_SOURCES)
+DIST_SOURCES = $(libircd_la_SOURCES) $(charybdis_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -423,13 +423,13 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign
-libcoredir = @libdir@
+libircddir = @libdir@
 AM_CPPFLAGS = @LTDLINCL@ -I$(top_srcdir)/include -I$(top_srcdir)/libratbox/include
 AM_LDFLAGS = -L$(top_srcdir)/libratbox/src -export-dynamic -avoid-version -no-undefined
 AM_YFLAGS = -d
 LDADD = @LIBLTDL@ -lratbox
 BUILT_SOURCES = version.c
-libcore_la_SOURCES = \
+libircd_la_SOURCES = \
   bandbi.c                      \
   blacklist.c                   \
   cache.c                       \
@@ -479,10 +479,10 @@ libcore_la_SOURCES = \
   version.c                     \
   whowas.c
 
-libcore_la_LDFLAGS = $(EXTRA_FLAGS) -avoid-version
-libcore_LTLIBRARIES = libcore.la
+libircd_la_LDFLAGS = $(EXTRA_FLAGS) -avoid-version
+libircd_LTLIBRARIES = libircd.la
 charybdis_SOURCES = main.c
-charybdis_LDADD = libcore.la
+charybdis_LDADD = libircd.la
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -497,9 +497,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign ircd/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign src/Makefile
+	  $(AUTOMAKE) --foreign ircd/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \
@@ -518,33 +518,33 @@ $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
 
-install-libcoreLTLIBRARIES: $(libcore_LTLIBRARIES)
+install-libircdLTLIBRARIES: $(libircd_LTLIBRARIES)
 	@$(NORMAL_INSTALL)
-	@list='$(libcore_LTLIBRARIES)'; test -n "$(libcoredir)" || list=; \
+	@list='$(libircd_LTLIBRARIES)'; test -n "$(libircddir)" || list=; \
 	list2=; for p in $$list; do \
 	  if test -f $$p; then \
 	    list2="$$list2 $$p"; \
 	  else :; fi; \
 	done; \
 	test -z "$$list2" || { \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(libcoredir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(libcoredir)" || exit 1; \
-	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 '$(DESTDIR)$(libcoredir)'"; \
-	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 "$(DESTDIR)$(libcoredir)"; \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(libircddir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(libircddir)" || exit 1; \
+	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 '$(DESTDIR)$(libircddir)'"; \
+	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 "$(DESTDIR)$(libircddir)"; \
 	}
 
-uninstall-libcoreLTLIBRARIES:
+uninstall-libircdLTLIBRARIES:
 	@$(NORMAL_UNINSTALL)
-	@list='$(libcore_LTLIBRARIES)'; test -n "$(libcoredir)" || list=; \
+	@list='$(libircd_LTLIBRARIES)'; test -n "$(libircddir)" || list=; \
 	for p in $$list; do \
 	  $(am__strip_dir) \
-	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f '$(DESTDIR)$(libcoredir)/$$f'"; \
-	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libcoredir)/$$f"; \
+	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f '$(DESTDIR)$(libircddir)/$$f'"; \
+	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libircddir)/$$f"; \
 	done
 
-clean-libcoreLTLIBRARIES:
-	-test -z "$(libcore_LTLIBRARIES)" || rm -f $(libcore_LTLIBRARIES)
-	@list='$(libcore_LTLIBRARIES)'; \
+clean-libircdLTLIBRARIES:
+	-test -z "$(libircd_LTLIBRARIES)" || rm -f $(libircd_LTLIBRARIES)
+	@list='$(libircd_LTLIBRARIES)'; \
 	locs=`for p in $$list; do echo $$p; done | \
 	      sed 's|^[^/]*$$|.|; s|/[^/]*$$||; s|$$|/so_locations|' | \
 	      sort -u`; \
@@ -556,8 +556,8 @@ ircd_parser.h: ircd_parser.c
 	@if test ! -f $@; then rm -f ircd_parser.c; else :; fi
 	@if test ! -f $@; then $(MAKE) $(AM_MAKEFLAGS) ircd_parser.c; else :; fi
 
-libcore.la: $(libcore_la_OBJECTS) $(libcore_la_DEPENDENCIES) $(EXTRA_libcore_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(libcore_la_LINK) -rpath $(libcoredir) $(libcore_la_OBJECTS) $(libcore_la_LIBADD) $(LIBS)
+libircd.la: $(libircd_la_OBJECTS) $(libircd_la_DEPENDENCIES) $(EXTRA_libircd_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(libircd_la_LINK) -rpath $(libircddir) $(libircd_la_OBJECTS) $(libircd_la_LIBADD) $(LIBS)
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
@@ -788,7 +788,7 @@ check: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) check-am
 all-am: Makefile $(LTLIBRARIES) $(PROGRAMS)
 installdirs:
-	for dir in "$(DESTDIR)$(libcoredir)" "$(DESTDIR)$(bindir)"; do \
+	for dir in "$(DESTDIR)$(libircddir)" "$(DESTDIR)$(bindir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: $(BUILT_SOURCES)
@@ -828,7 +828,7 @@ maintainer-clean-generic:
 	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 clean: clean-am
 
-clean-am: clean-binPROGRAMS clean-generic clean-libcoreLTLIBRARIES \
+clean-am: clean-binPROGRAMS clean-generic clean-libircdLTLIBRARIES \
 	clean-libtool mostlyclean-am
 
 distclean: distclean-am
@@ -849,7 +849,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-libcoreLTLIBRARIES
+install-data-am: install-libircdLTLIBRARIES
 
 install-dvi: install-dvi-am
 
@@ -896,26 +896,26 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-libcoreLTLIBRARIES
+uninstall-am: uninstall-binPROGRAMS uninstall-libircdLTLIBRARIES
 
 .MAKE: all check install install-am install-exec-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am check check-am clean \
-	clean-binPROGRAMS clean-generic clean-libcoreLTLIBRARIES \
+	clean-binPROGRAMS clean-generic clean-libircdLTLIBRARIES \
 	clean-libtool cscopelist-am ctags ctags-am distclean \
 	distclean-compile distclean-generic distclean-libtool \
 	distclean-tags distdir dvi dvi-am html html-am info info-am \
 	install install-am install-binPROGRAMS install-data \
 	install-data-am install-dvi install-dvi-am install-exec \
 	install-exec-am install-exec-hook install-html install-html-am \
-	install-info install-info-am install-libcoreLTLIBRARIES \
+	install-info install-info-am install-libircdLTLIBRARIES \
 	install-man install-pdf install-pdf-am install-ps \
 	install-ps-am install-strip installcheck installcheck-am \
 	installdirs maintainer-clean maintainer-clean-generic \
 	mostlyclean mostlyclean-compile mostlyclean-generic \
 	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
 	uninstall-am uninstall-binPROGRAMS \
-	uninstall-libcoreLTLIBRARIES
+	uninstall-libircdLTLIBRARIES
 
 .PRECIOUS: Makefile
 
@@ -925,7 +925,7 @@ version.c: version.c.SH ../CREDITS ../include/patchlevel.h ../include/serno.h
 	$(CP) version.c version.c.last
 	touch version.c.SH
 
-install-exec-hook: install-libcoreLTLIBRARIES
+install-exec-hook: install-libircdLTLIBRARIES
 	$(RM) -f version.c
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

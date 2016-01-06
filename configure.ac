@@ -1209,7 +1209,7 @@ AC_CONFIG_FILES(			\
 	bandb/Makefile			\
 	ssld/Makefile			\
 	extensions/Makefile		\
-	src/Makefile			\
+	ircd/Makefile			\
 	modules/Makefile		\
 	tools/Makefile			\
 	tools/genssl			\

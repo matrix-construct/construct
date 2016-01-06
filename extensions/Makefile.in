@@ -455,7 +455,7 @@ LIBADD_SHL_LOAD = @LIBADD_SHL_LOAD@
 LIBLTDL = @LIBLTDL@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@ $(top_srcdir)/libratbox/src/libratbox.la \
-	$(top_srcdir)/src/libcore.la
+	$(top_srcdir)/ircd/libircd.la
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN = @LN@
