@@ -24,7 +24,7 @@ install-mkdirs:
 		mkdir -p $(DESTDIR)$(mandir); \
 	fi
 
-install: install-mkdirs build
+install: install-mkdirs
 	@echo "ircd: installing example config files ($(CONFS))"
 	@for i in $(CONFS); do \
 		if test -f $(DESTDIR)$(sysconfdir)/$$i; then \
