@@ -6,7 +6,6 @@ libircddir	= @libdir@
 AM_CPPFLAGS = @LTDLINCL@ -I$(top_srcdir)/include -I$(top_srcdir)/libratbox/include
 AM_LDFLAGS  = -L$(top_srcdir)/libratbox/src -export-dynamic -avoid-version -no-undefined
 AM_YFLAGS = -d
-LDADD = @LIBLTDL@ -lratbox
 
 BUILT_SOURCES = version.c
 
@@ -65,11 +64,13 @@ libircd_la_SOURCES =                  \
   version.c                     \
   whowas.c
 libircd_la_LDFLAGS = $(EXTRA_FLAGS) -avoid-version
+libircd_la_LIBADD = @LIBLTDL@ -L$(top_srcdir)/libratbox/src -lratbox
 libircd_LTLIBRARIES = libircd.la
 
 bin_PROGRAMS = charybdis
 charybdis_SOURCES = main.c
-charybdis_LDADD = libircd.la
+charybdis_LDFLAGS = $(EXTRA_FLAGS) -dlopen self
+charybdis_LDADD = libircd.la -L$(top_srcdir)/libratbox/src -lratbox
 
 install-exec-hook: install-libircdLTLIBRARIES
 	$(RM) -f version.c

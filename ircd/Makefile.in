@@ -135,7 +135,7 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(libircddir)" "$(DESTDIR)$(bindir)"
 LTLIBRARIES = $(libircd_LTLIBRARIES)
-libircd_la_LIBADD =
+libircd_la_DEPENDENCIES =
 am_libircd_la_OBJECTS = bandbi.lo blacklist.lo cache.lo capability.lo \
 	channel.lo chmode.lo class.lo client.lo extban.lo getopt.lo \
 	hash.lo hook.lo hostmask.lo ipv4_from_ipv6.lo \
@@ -158,6 +158,9 @@ PROGRAMS = $(bin_PROGRAMS)
 am_charybdis_OBJECTS = main.$(OBJEXT)
 charybdis_OBJECTS = $(am_charybdis_OBJECTS)
 charybdis_DEPENDENCIES = libircd.la
+charybdis_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(charybdis_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -424,7 +427,6 @@ libircddir = @libdir@
 AM_CPPFLAGS = @LTDLINCL@ -I$(top_srcdir)/include -I$(top_srcdir)/libratbox/include
 AM_LDFLAGS = -L$(top_srcdir)/libratbox/src -export-dynamic -avoid-version -no-undefined
 AM_YFLAGS = -d
-LDADD = @LIBLTDL@ -lratbox
 BUILT_SOURCES = version.c
 libircd_la_SOURCES = \
   bandbi.c                      \
@@ -477,9 +479,11 @@ libircd_la_SOURCES = \
   whowas.c
 
 libircd_la_LDFLAGS = $(EXTRA_FLAGS) -avoid-version
+libircd_la_LIBADD = @LIBLTDL@ -L$(top_srcdir)/libratbox/src -lratbox
 libircd_LTLIBRARIES = libircd.la
 charybdis_SOURCES = main.c
-charybdis_LDADD = libircd.la
+charybdis_LDFLAGS = $(EXTRA_FLAGS) -dlopen self
+charybdis_LDADD = libircd.la -L$(top_srcdir)/libratbox/src -lratbox
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -607,7 +611,7 @@ clean-binPROGRAMS:
 
 charybdis$(EXEEXT): $(charybdis_OBJECTS) $(charybdis_DEPENDENCIES) $(EXTRA_charybdis_DEPENDENCIES) 
 	@rm -f charybdis$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(charybdis_OBJECTS) $(charybdis_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(charybdis_LINK) $(charybdis_OBJECTS) $(charybdis_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
