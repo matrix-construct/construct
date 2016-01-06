@@ -10,40 +10,40 @@
  */
 
 /* Extensions */
-#loadmodule "extensions/chm_operonly_compat.la";
-#loadmodule "extensions/chm_quietunreg_compat.la";
-#loadmodule "extensions/chm_sslonly_compat.la";
-#loadmodule "extensions/createauthonly.la";
-#loadmodule "extensions/extb_account.la";
-#loadmodule "extensions/extb_canjoin.la";
-#loadmodule "extensions/extb_channel.la";
-#loadmodule "extensions/extb_combi.la";
-#loadmodule "extensions/extb_extgecos.la";
-#loadmodule "extensions/extb_hostmask.la";
-#loadmodule "extensions/extb_oper.la";
-#loadmodule "extensions/extb_realname.la";
-#loadmodule "extensions/extb_server.la";
-#loadmodule "extensions/extb_ssl.la";
-#loadmodule "extensions/hurt.la";
-#loadmodule "extensions/m_findforwards.la";
-#loadmodule "extensions/m_identify.la";
-#loadmodule "extensions/no_oper_invis.la";
-#loadmodule "extensions/sno_farconnect.la";
-#loadmodule "extensions/sno_globalkline.la";
-#loadmodule "extensions/sno_globaloper.la";
-#loadmodule "extensions/sno_whois.la";
-#loadmodule "extensions/override.la";
-#loadmodule "extensions/no_kill_services.la";
+#loadmodule "extensions/chm_operonly_compat";
+#loadmodule "extensions/chm_quietunreg_compat";
+#loadmodule "extensions/chm_sslonly_compat";
+#loadmodule "extensions/createauthonly";
+#loadmodule "extensions/extb_account";
+#loadmodule "extensions/extb_canjoin";
+#loadmodule "extensions/extb_channel";
+#loadmodule "extensions/extb_combi";
+#loadmodule "extensions/extb_extgecos";
+#loadmodule "extensions/extb_hostmask";
+#loadmodule "extensions/extb_oper";
+#loadmodule "extensions/extb_realname";
+#loadmodule "extensions/extb_server";
+#loadmodule "extensions/extb_ssl";
+#loadmodule "extensions/hurt";
+#loadmodule "extensions/m_findforwards";
+#loadmodule "extensions/m_identify";
+#loadmodule "extensions/no_oper_invis";
+#loadmodule "extensions/sno_farconnect";
+#loadmodule "extensions/sno_globalkline";
+#loadmodule "extensions/sno_globaloper";
+#loadmodule "extensions/sno_whois";
+#loadmodule "extensions/override";
+#loadmodule "extensions/no_kill_services";
 
 /*
  * IP cloaking extensions: use ip_cloaking_4.0
  * if you're linking 3.2 and later, otherwise use
- * ip_cloaking.la, for compatibility with older 3.x
+ * ip_cloaking, for compatibility with older 3.x
  * releases.
  */
 
-#loadmodule "extensions/ip_cloaking_4.0.la";
-#loadmodule "extensions/ip_cloaking.la";
+#loadmodule "extensions/ip_cloaking_4.0";
+#loadmodule "extensions/ip_cloaking";
 
 serverinfo {
 	name = "hades.arpa";
