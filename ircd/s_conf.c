@@ -1462,11 +1462,9 @@ clear_out_old_conf(void)
 	clear_s_newconf();
 
 	/* clean out module paths */
-#ifndef STATIC_MODULES
 	mod_clear_paths();
 	mod_add_path(MODULE_DIR);
 	mod_add_path(MODULE_DIR  "/autoload");
-#endif
 
 	/* clean out ServerInfo */
 	rb_free(ServerInfo.description);

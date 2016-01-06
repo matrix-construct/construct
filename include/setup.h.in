@@ -103,12 +103,6 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
-/* Define to 1 if you have the `dlfunc' function. */
-#undef HAVE_DLFUNC
-
-/* Define if the dlopen function is available. */
-#undef HAVE_DLOPEN
-
 /* Define to 1 if you have the <dl.h> header file. */
 #undef HAVE_DL_H
 
@@ -184,7 +178,7 @@
 /* Define to 1 if you have the `select' function. */
 #undef HAVE_SELECT
 
-/* Define if the shl_load function is available. */
+/* Define if you have the shl_load function. */
 #undef HAVE_SHL_LOAD
 
 /* Define to 1 if you have the `socketpair' function. */
@@ -369,9 +363,6 @@
 /* This is the type of IO loop we are using */
 #undef SELECT_TYPE
 
-/* Suffix for shared libraries on this platform. */
-#undef SHARED_SUFFIX
-
 /* The size of `int', as computed by sizeof. */
 #undef SIZEOF_INT
 
@@ -395,18 +386,11 @@
 	STACK_DIRECTION = 0 => direction of growth unknown */
 #undef STACK_DIRECTION
 
-/* Define to 1 if dynamic modules can't be used. */
-#undef STATIC_MODULES
-
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
 /* Define to 1 if string.h may be included along with strings.h */
 #undef STRING_WITH_STRINGS
-
-/* String containing extra underscores prepended to symbols loaded from
-   modules. */
-#undef SYMBOL_PREFIX
 
 /* Maximum topic length (<=390) */
 #undef TOPICLEN
@@ -470,9 +454,6 @@
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
 #undef _POSIX_SOURCE
-
-/* This is needed to use strtok_r on Solaris. */
-#undef __EXTENSIONS__
 
 /* Define so that glibc/gnulib argp.h does not typedef error_t. */
 #undef __error_t_defined

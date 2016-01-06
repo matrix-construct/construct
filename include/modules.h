@@ -80,14 +80,8 @@ struct mapi_mheader_av1
 	const char *	  mapi_module_version;			/* Module's version (freeform)	*/
 };
 
-#ifndef STATIC_MODULES
-# define DECLARE_MODULE_AV1(name,reg,unreg,cl,hl,hfnlist, v) \
+#define DECLARE_MODULE_AV1(name,reg,unreg,cl,hl,hfnlist, v) \
 	struct mapi_mheader_av1 _mheader = { MAPI_V1, reg, unreg, cl, hl, hfnlist, v}
-#else
-# define DECLARE_MODULE_AV1(name,reg,unreg,cl,hl,hfnlist, v) \
-	struct mapi_mheader_av1 name ## _mheader = { MAPI_V1, reg, unreg, cl, hl, hfnlist, v}
-void load_static_modules(void);
-#endif
 
 /* add a path */
 void mod_add_path(const char *path);

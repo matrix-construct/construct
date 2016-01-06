@@ -24,7 +24,7 @@ LTDL_INIT
 build_ltdl=$with_included_ltdl
 AM_CONDITIONAL([BUILD_LTDL], [test x"$build_ltdl" = x"yes"])
 
-AC_PROG_CC_C99([], [AC_MSG_ERROR(elemental-ircd requires a C99 capable compiler)])
+AC_PROG_CC_C99([], [AC_MSG_ERROR(charybdis requires a C99 capable compiler)])
 
 AC_GNU_SOURCE
 
@@ -38,98 +38,14 @@ CFLAGS="$OLD_CFLAGS"
 
 AC_CONFIG_SUBDIRS(libratbox)
 
-dnl Check for various compilers. -jmallett
-dnl But if $CC turns out to be gcc, sure as hell it's, well, gcc. -joshk
-
-AC_MSG_CHECKING([uname -s for Solaris, AIX, HPUX or Darwin])
-OSNAME=`uname -s`
-case "$OSNAME" in
-        HP-UX*)
-	dnl only do this if we haven't already detected the newer one
-	dnl and we're not already using gcc
-	
-		if test "$HPUX" != yes -a "$ac_cv_c_compiler_gnu" = no; then
-        	        AC_MSG_RESULT(assuming old HPUX with its own cc)  
-			IRC_CFLAGS="$IRC_CFLAGS +e"
-			HPUX=yes
-		else
-			AC_MSG_RESULT(already using newer HPUX)
-		fi
-	;;
-	SunOS*)
-		AC_MSG_RESULT(SunOS or Solaris)
-		AC_DEFINE(__EXTENSIONS__, 1, [This is needed to use strtok_r on Solaris.])
-		SUN=yes
-	;;
-	AIX*)
-		AC_MSG_RESULT(AIX - Sorry you poor bastard..really we are)
-		IRC_CFLAGS="$IRC_CFLAGS -Wl,-brtl -Wl,-G"
-	;;
-	Darwin*)
-		AC_MSG_RESULT(Darwin)
-		AppleGCC=yes
-	;;
-	*)
-		AC_MSG_RESULT(no)
-	;;
-esac
-
 if test "$ac_cv_c_compiler_gnu" = yes; then
 	IRC_CFLAGS="$IRC_CFLAGS -O0 -Wall -std=gnu99"
 fi
 
 dnl If we support -g, use it!
 if test "$ac_cv_prog_cc_g" = yes; then
-	dnl Tru64 needs -g3 for -O2
-	if test "$Tru" = yes; then
-		IRC_CFLAGS="$IRC_CFLAGS -g3"
-	else
-		IRC_CFLAGS="$IRC_CFLAGS -g"
-	fi
+	IRC_CFLAGS="$IRC_CFLAGS -g"
 fi
-
-dnl SVR4 SGS based on what we know about the compiler -jmallett
-AC_MSG_CHECKING(if $CC supports the SVR4 SGS interfaces)
-if test "$SGS" = "yes"; then
-	AC_MSG_RESULT(yes)
-else
-	AC_MSG_RESULT(no)
-fi
-
-dnl We prefer gcc -MM because it's a lot less bloated
-AC_PATH_PROG(MKDEP, mkdep)
-AC_PATH_PROG(MAKEDEPEND, makedepend)
-
-AC_MSG_CHECKING(how to generate dependency info)
-
-STDOUT="> .depend"
-
-if test "$ac_cv_c_compiler_gnu" = yes; then
-	AC_MSG_RESULT(gcc -MM)
-	MKDEP="$CC -MM"
-elif test ! -z "$MKDEP"; then
-	AC_MSG_RESULT(mkdep)
-
-	dnl Tru64's mkdep is very loud
-	if test -z "$Tru"; then
-		STDOUT=""
-	else
-		STDOUT=" 2> /dev/null"
-	fi
-elif test "$SunWorkShop" = yes; then
-	AC_MSG_RESULT($CC -xM)
-	MKDEP="$CC -xM"
-	STDOUT="> .depend 2> /dev/null"
-elif test ! -z "$MAKEDEPEND"; then
-	AC_MSG_RESULT(makedepend)
-	MKDEP="$MAKEDEPEND -f-"
-else
-	AC_MSG_RESULT([nothing suitable.. forget it!])
-	MKDEP=":"
-fi
-
-AC_SUBST(MKDEP)
-AC_SUBST(STDOUT)
 
 dnl check for /dev/null so we can use it to hold evil fd's
 AC_MSG_CHECKING([for /dev/null])
@@ -938,130 +854,6 @@ AC_HELP_STRING([--with-topiclen=NUMBER],[Set the max topic length to NUMBER (def
 AC_DEFINE_UNQUOTED(TOPICLEN, ${TOPICLEN}, [Maximum topic length (<=390)])
 AC_DEFINE_UNQUOTED(NICKLEN, (${NICKLEN}+1), [Nickname length])
 
-shared_modules="yes"
-dnl Some first-stage sanity checks.
-if test "$shared_modules" = yes; then
-	dnl TenDRA's cc is called tcc too.
-	if test "$CC" = tcc -a "$TenDRA" = "no"; then
-		AC_MSG_WARN([disabling shared modules: Tiny C Compiler can't create PIC])
-		shared_modules="no"
-	fi
-fi
-
-dnl Second stage: check for functions and headers.
-if test "$shared_modules" = yes; then
-	DYNLINK_C=dynlink.c
-	AC_CHECK_HEADERS(dlfcn.h)
-	AC_SEARCH_LIBS(shl_load, dld, 
-	[
-	  AC_DEFINE(HAVE_SHL_LOAD, 1, [Define if the shl_load function is available.])
-	  SUFFIX=".sl"
-	  MOD_TARGET=hpux_shared
-	  SEDOBJ="s/\.o/.sl/g"  
-	],
-	dnl !shl_load:
-	[
-          dnl standard dlopen
-          AC_SEARCH_LIBS(dlopen, [dl c_r],
-	  [
-	    AC_DEFINE(HAVE_DLOPEN, 1, [Define if the dlopen function is available.])
-	    SUFFIX=".so"
-	    MOD_TARGET=shared_modules
-	    SEDOBJ="s/\.o/.so/g"
-	    if test "$AppleGCC" = yes; then
-              AC_CHECK_HEADERS([mach-o/dyld.h])
-            fi
-	    AC_CHECK_FUNC(dlsym, ,
-	    [
-	      AC_MSG_WARN([dlsym is not available, shared modules disabled])
-	      shared_modules=no
-	    ])
-	    AC_CHECK_FUNCS(dlfunc)
-	  ],
-	  [
-	    shared_modules=no
-	  ])
-	])
-fi
-
-AC_DEFINE_UNQUOTED(SHARED_SUFFIX, "$SUFFIX", [Suffix for shared libraries on this platform.])
-
-dnl Third stage - wrangling the linker.
-if test "$shared_modules" = yes; then
-	# The GNU linker requires the -export-dynamic option to make
-	# all symbols visible in the dynamic symbol table.
-	hold_ldflags=$LDFLAGS
-	AC_MSG_CHECKING(for the ld -export-dynamic flag)
-	LDFLAGS="${LDFLAGS} -Wl,-export-dynamic -Werror"
-	AC_LINK_IFELSE(AC_LANG_PROGRAM([],[int i;]), found=yes, found=no)
-	LDFLAGS=$hold_ldflags
-
-	if expr "`uname -s`" : ^IRIX >/dev/null 2>&1; then
-		found="no, IRIX ld uses -B,dynamic"
-		LDFLAGS="${LDFLAGS} -Wl,-B,dynamic"
-	fi
-	
-	if expr "`uname -s`" : ^AIX >/dev/null 2>&1; then
-		found="no, AIX ld uses -G -brtl"
-		LDFLAGS="${LDFLAGS} -Wl,-G,-brtl"
-	fi
-
-	AC_MSG_RESULT($found)
-
-	if test "$found" = yes; then
-		LDFLAGS="${LDFLAGS} -Wl,-export-dynamic"
-	fi
-
-	AC_MSG_CHECKING(for compiler option to produce PIC)
-	dnl The order should be here to check for groups of compilers,
-	dnl then for odd compilers, then if no PICFLAGS were set up,
-	dnl check for GCC and set defaults, or else error. -jmallett
-	if test "$SGS" = "yes"; then
-		AC_MSG_RESULT([SVR4 SGS interfaces: -KPIC -DPIC -G])
-		PICFLAGS="-KPIC -DPIC -G"
-	fi
-	
-	if test "$AppleGCC" = "yes"; then
-		AC_MSG_RESULT([Darwin Mach-O bundles: -fno-common -bundle -flat_namespace -undefined suppress])
-		PICFLAGS="-fno-common -bundle -flat_namespace -undefined suppress"
-	fi
-	dnl Please note, that on HPUX two different stages of module compilation occurs, since
-	dnl while compiling modules, the compiler does not allow you to give arguments
-	dnl to the linker. (I did not design this) 
-	dnl So we need -c in the first stage of module compilation.
-	dnl In the second stage, we link the modules via ld -b.
-	dnl Additionally, HPUX does not like -export-dynamic, it likes -E instead.
-	dnl -TimeMr14C
-	if test "$HPUX" = "yes" -a "$CC" != gcc; then
-		AC_MSG_RESULT(HP-UX cc: +z -r -q -n)
-		PICFLAGS="+z -r -q -n -c"
-		AC_MSG_CHECKING([if +ESfic is required on this platform])
-		
-		if expr "`$CC +ESfic 2>&1`" : ".*neither supported.*" >/dev/null; then 
-			AC_MSG_RESULT(no)
-		else
-			AC_MSG_RESULT(yes)
-			PICFLAGS="$PICFLAGS +ESfic"
-		fi
-
-		LDFLAGS="${LDFLAGS} -Wl,-E"
-	fi
-	if test "$Tru" = yes -a "$CC" != gcc; then
-		AC_MSG_RESULT([Tru64: -shared -expect_unresolved '*'])
-		PICFLAGS="-shared -expect_unresolved '*' "
-		LDFLAGS="-call_shared"
-	fi
-	if test -z "$PICFLAGS"; then
-		if test "$ac_cv_c_compiler_gnu" = "yes"; then
-			AC_MSG_RESULT(gcc: -fPIC -DPIC -shared)
-			PICFLAGS="-fPIC -DPIC -shared"
-		else
-			AC_MSG_RESULT(no)
-			shared_modules=no
-		fi
-	fi
-fi
-
 # rpath, for finding libratbox.so at run time
 hold_ldflags=$LDFLAGS
 AC_MSG_CHECKING(for the ld -rpath flag)
@@ -1106,75 +898,6 @@ CHARYBDIS_C_GCC_TRY_FLAGS([-Wformat -Wformat-y2k -Wno-format-security], charybdi
 
 IRC_CFLAGS="$CFLAGS"
 ],[])
-
-if test "$shared_modules" = no; then
-	DYNLINK_C=""
-	MOD_TARGET="libmodules.a"
-	MODULES_LIBS="../modules/libmodules.a"
-	SEDOBJ=""
-	AC_DEFINE(STATIC_MODULES, 1, [Define to 1 if dynamic modules can't be used.])
-	AC_MSG_WARN([shared module support has been disabled!])
-fi
-
-dnl Stage 5 - underscores in front of symbol names.
-if test "$shared_modules" = yes; then
-
-	AC_CHECK_FUNC(nlist,,
-		AC_CHECK_LIB(dl, nlist, nlist_lib="-ldl",
-			AC_CHECK_LIB(elf, nlist, nlist_lib="-lelf",)
-		)
-	)
-
-        dnl We need to find out whether underscores are appended to symbol
-        dnl names in executable files.  First, though, we need to see
-        dnl where nlist.h is hiding.
-	AC_CHECK_HEADER(libelf/nlist.h, [ nlist_h="libelf/nlist.h" ], )
-	AC_CHECK_HEADER(elf/nlist.h, [ nlist_h="elf/nlist.h" ], )
-	AC_CHECK_HEADER(nlist.h, [ nlist_h="nlist.h" ], )
-	if test x"$nlist_h" = "x"; then
-		AC_DEFINE_UNQUOTED(SYMBOL_PREFIX, "", [String containing extra underscores prepended to symbols loaded from modules.])
-	else
-		AC_MSG_CHECKING(for extra underscores prepended to symbol names)
-		AC_CACHE_VAL(symbol_underscores,
-		[
-cat << EOF > conftest.c
-#include <$nlist_h>
-#include <stdio.h>
-#include <stdlib.h>
-void _modinit(void);
-int main(int argc, char *argv[[]]) {
-	int i;
-	struct nlist nl[[5]];
-
-	/* fill the names in this way, so it'll work almost everywhere */
-	nl[[0]].n_name = "_modinit";
-	nl[[1]].n_name = "__modinit";
-	nl[[2]].n_name = "___modinit";
-	nl[[3]].n_name = "____modinit";
-	nl[[0]].n_value = nl[[1]].n_value = nl[[2]].n_value = nl[[3]].n_value = nl[[4]].n_name = NULL;
-
-	if(argc < 2 || (nlist(argv[[1]], nl)) == -1) exit(-1);
-	for(i = 0; i < 4; i++) {
-		if(nl[[i]].n_value != NULL)
-		{
-			int j;
-			for(j = 0; j < i; j++)
-				printf("_");
-			exit(i);
-		}
-	}
-	exit(-1);
-}
-void _modinit(void) { return; }
-EOF
-		$CC $CPPFLAGS $IRC_CFLAGS -o conftest conftest.c $nlist_lib >/dev/null 2>&1
-		symbol_underscores=`./conftest conftest`
-		AC_MSG_RESULT($symbol_underscores)
-		$RM -f conftest conftest.c
-		])
-		AC_DEFINE_UNQUOTED(SYMBOL_PREFIX, "${symbol_underscores}", [String containing extra underscores prepended to symbols loaded from modules.])
-	fi
-fi
 
 IRC_CFLAGS="$IRC_CFLAGS $CWARNS"
 
@@ -1224,12 +947,6 @@ if test "$cf_openssl_version_ok" = yes; then
 	openssl="yes"
 else
 	openssl="no"
-fi
-
-if test "$shared_modules" = yes; then
-	modules=shared
-else
-	modules=static
 fi
 
 echo "

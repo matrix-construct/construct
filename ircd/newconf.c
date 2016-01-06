@@ -286,7 +286,6 @@ conf_set_serverinfo_nicklen(void *data)
 static void
 conf_set_modules_module(void *data)
 {
-#ifndef STATIC_MODULES
 	char *m_bn;
 
 	m_bn = rb_basename((char *) data);
@@ -295,19 +294,12 @@ conf_set_modules_module(void *data)
 		load_one_module((char *) data, 0);
 
 	rb_free(m_bn);
-#else
-	conf_report_error("Ignoring modules::module -- loadable module support not present.");
-#endif
 }
 
 static void
 conf_set_modules_path(void *data)
 {
-#ifndef STATIC_MODULES
 	mod_add_path((char *) data);
-#else
-	conf_report_error("Ignoring modules::path -- loadable module support not present.");
-#endif
 }
 
 struct mode_table

@@ -292,7 +292,6 @@ oneitem: qstring
 loadmodule:
 	  LOADMODULE QSTRING
             {
-#ifndef STATIC_MODULES
               char *m_bn;
 
               m_bn = rb_basename((char *) $2);
@@ -301,7 +300,6 @@ loadmodule:
 	          load_one_module($2, 0);
 
               rb_free(m_bn);
-#endif
 	    }
 	  ';'
           ;
