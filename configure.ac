@@ -929,6 +929,7 @@ fi
 
 AC_CONFIG_FILES(			\
 	Makefile			\
+	authd/Makefile			\
 	bandb/Makefile			\
 	ssld/Makefile			\
 	extensions/Makefile		\

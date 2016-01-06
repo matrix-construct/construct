@@ -18948,7 +18948,7 @@ _ACEOF
 
 fi
 
-ac_config_files="$ac_config_files Makefile bandb/Makefile ssld/Makefile extensions/Makefile ircd/Makefile modules/Makefile tools/Makefile tools/genssl doc/Makefile help/Makefile"
+ac_config_files="$ac_config_files Makefile authd/Makefile bandb/Makefile ssld/Makefile extensions/Makefile ircd/Makefile modules/Makefile tools/Makefile tools/genssl doc/Makefile help/Makefile"
 
 ac_config_commands="$ac_config_commands tools/genssl_chmod"
 
@@ -19994,6 +19994,7 @@ do
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "libtool") CONFIG_COMMANDS="$CONFIG_COMMANDS libtool" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
+    "authd/Makefile") CONFIG_FILES="$CONFIG_FILES authd/Makefile" ;;
     "bandb/Makefile") CONFIG_FILES="$CONFIG_FILES bandb/Makefile" ;;
     "ssld/Makefile") CONFIG_FILES="$CONFIG_FILES ssld/Makefile" ;;
     "extensions/Makefile") CONFIG_FILES="$CONFIG_FILES extensions/Makefile" ;;
