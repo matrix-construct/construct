@@ -1,21 +1,30 @@
-dnl $Id: configure.ac 3516 2007-06-10 16:14:03Z jilles $
-dnl Process this file with autoconf to produce a configure script.
-
 dnl TODO: clean up all the OpenSSL and shared module checking stuff;
 dnl the most major changes have already been made and it looks like
 dnl said functions need to be just about as complex as they already are.
 
 AC_PREREQ(2.57)
 
-dnl Sneaky way to get an Id tag into the configure script
-AC_COPYRIGHT([$Id: configure.ac 3516 2007-06-10 16:14:03Z jilles $])
-
 AC_INIT([charybdis], [3.6.0-dev])
 
+AC_PREFIX_DEFAULT($HOME/ircd)
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADER(include/setup.h)
 
-AC_PREFIX_DEFAULT($HOME/ircd)
+AC_CONFIG_AUX_DIR([libltdl/config])
+AC_CONFIG_MACRO_DIR([libltdl/m4])
+AM_INIT_AUTOMAKE([])
+AM_SILENT_RULES([yes])
+AM_PROG_AR
+
+LT_INIT([dlopen disable-static])
+
+LT_CONFIG_LTDL_DIR([extra/libltdl])
+LTDL_INIT
+
+build_ltdl=$with_included_ltdl
+AM_CONDITIONAL([BUILD_LTDL], [test x"$build_ltdl" = x"yes"])
+
+AC_PROG_CC_C99([], [AC_MSG_ERROR(elemental-ircd requires a C99 capable compiler)])
 
 AC_GNU_SOURCE
 
@@ -31,56 +40,6 @@ AC_CONFIG_SUBDIRS(libratbox)
 
 dnl Check for various compilers. -jmallett
 dnl But if $CC turns out to be gcc, sure as hell it's, well, gcc. -joshk
-
-if test "$ac_cv_c_compiler_gnu" != yes; then
-
-SGS=no
-AC_MSG_CHECKING($CC -version for TenDRA or MIPSpro)
-case `$CC -version 2>&1` in
-*TenDRA*)
-	AC_MSG_RESULT([yes, TenDRA])
-	IRC_CFLAGS=""
-	CPPFLAGS="$CPPFLAGS -Ylonglong -Yansi -I/usr/include"
-	SGS=yes
-	TenDRA=yes
-;;
-*MIPSpro*)
-	AC_MSG_RESULT([yes, MIPSpro])
-	MIPSpro=yes
-	SGS=yes
-;;
-*)
-	AC_MSG_RESULT(no)
-	TenDRA=no
-	MIPSpro=no
-;;
-esac
-
-AC_MSG_CHECKING([$CC -V for Sun Workshop, Forte, HPUX or Tru64 cc])
-case `$CC -V 2>&1` in
-*Sun*WorkShop* | *Forte*Developer*)
-	AC_MSG_RESULT(Sun Workshop/Forte)
-	IRC_CFLAGS="-fast -xinline=dlinkAdd,dlinkAddBefore,dlinkAddTail,dlinkDelete,dlink_list_length,dlink_node,dlinkMoveList,_MyMalloc,_MyRealloc,_MyFree,_DupString"
-	SunWorkShop=yes
-	SGS=yes
-;;
-*Tru64*)
-	AC_MSG_RESULT(Tru64 cc)
-	IRC_CFLAGS="-O2"
-	CPPFLAGS="-I/usr/local/include"
-	Tru=yes
-;;
-*HP*ANSI*)
-	AC_MSG_RESULT(HPUX cc)
-	HPUX=yes
-	IRC_CFLAGS="+e"
-;;
-*)
-	AC_MSG_RESULT(no)
-;;
-esac
-
-fi
 
 AC_MSG_CHECKING([uname -s for Solaris, AIX, HPUX or Darwin])
 OSNAME=`uname -s`
@@ -570,12 +529,12 @@ if test "$shared_sqlite" = yes; then
 fi
 
 if test "$shared_sqlite" = no; then
-	SQLITE_SRC="sqlite3.c"
+	SQLITE_OBJ='sqlite3.$(OBJEXT)'
 fi
 
 AC_SUBST(SQLITE_LD, "$SQLITE_LIBS")
 AC_SUBST(SQLITE_INCLUDES, "$SQLITE_CFLAGS")
-AC_SUBST(SQLITE_SRC)
+AC_SUBST(SQLITE_OBJ)
 
 dnl IO Loop Selection
 dnl =================
