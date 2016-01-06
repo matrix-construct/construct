@@ -107,7 +107,8 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(pkglibexecdir)"
 PROGRAMS = $(pkglibexec_PROGRAMS)
-am_authd_OBJECTS = authd.$(OBJEXT) res.$(OBJEXT) reslib.$(OBJEXT)
+am_authd_OBJECTS = authd.$(OBJEXT) res.$(OBJEXT) reslib.$(OBJEXT) \
+	dns.$(OBJEXT)
 authd_OBJECTS = $(am_authd_OBJECTS)
 authd_DEPENDENCIES = ../libratbox/src/libratbox.la
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -358,7 +359,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CFLAGS = $(WARNFLAGS)
 AM_CPPFLAGS = -I../include -I../libratbox/include 
-authd_SOURCES = authd.c res.c reslib.c
+authd_SOURCES = authd.c res.c reslib.c dns.c
 authd_LDADD = ../libratbox/src/libratbox.la
 all: all-am
 
@@ -454,6 +455,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/authd.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dns.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/res.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/reslib.Po@am__quote@
 

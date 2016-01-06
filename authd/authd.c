@@ -24,7 +24,9 @@
 #define MAXPARA 10
 
 rb_helper *authd_helper = NULL;
-authd_cmd_handler authd_cmd_handlers[255] = {};
+authd_cmd_handler authd_cmd_handlers[255] = {
+	['D'] = resolve_dns,
+};
 
 static void
 parse_request(rb_helper *helper)
@@ -102,6 +104,11 @@ main(int argc, char *argv[])
 		fprintf(stderr, "authd is not meant to be invoked by end users\n");
 		exit(1);
 	}
+
+	rb_set_time();
+	setup_signals();
+	init_resolver();
+	rb_init_prng(NULL, RB_PRNG_DEFAULT);
 
 	rb_helper_loop(authd_helper, 0);
 
