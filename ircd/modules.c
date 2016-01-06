@@ -619,7 +619,7 @@ load_a_module(const char *path, int warn, int core)
 
 	mod_basename = rb_basename(path);
 
-	tmpptr = lt_dlopenext(path);
+	tmpptr = lt_dlopen(path);
 
 	if(tmpptr == NULL)
 	{
