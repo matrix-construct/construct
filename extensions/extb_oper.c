@@ -40,8 +40,14 @@ static int eb_oper(const char *data, struct Client *client_p,
 	(void)mode_type;
 
 	if (data != NULL)
+	{
+		struct PrivilegeSet *set = privilegeset_get(data);
+		if (set != NULL && client_p->localClient->privset == set)
+			return EXTBAN_MATCH;
+
 		/* $o:admin or whatever */
 		return HasPrivilege(client_p, data) ? EXTBAN_MATCH : EXTBAN_NOMATCH;
+	}
 
 	return IsOper(client_p) ? EXTBAN_MATCH : EXTBAN_NOMATCH;
 }
