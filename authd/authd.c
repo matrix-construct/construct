@@ -18,15 +18,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ratbox_lib.h>
-#include <stdio.h>
-
-#include "setup.h"
-#include "common.h"
+#include "authd.h"
+#include "dns.h"
 
 #define MAXPARA 10
 
-static rb_helper *authd_helper = NULL;
+rb_helper *authd_helper = NULL;
+authd_cmd_handler authd_cmd_handlers[255] = {};
 
 static void
 parse_request(rb_helper *helper)
@@ -35,6 +33,7 @@ parse_request(rb_helper *helper)
 	static char readbuf[READBUF_SIZE];
 	int parc;
 	int len;
+	authd_cmd_handler handler;
 
 	while((len = rb_helper_read(helper, readbuf, sizeof(readbuf))) > 0)
 	{
@@ -43,11 +42,9 @@ parse_request(rb_helper *helper)
 		if(parc < 1)
 			continue;
 
-		switch (parv[0][0])
-		{
-		default:
-			break;
-		}
+		handler = authd_cmd_handlers[parv[0][0]];
+		if (handler != NULL)
+			handler(parc, parv);
 	}
 }
 
