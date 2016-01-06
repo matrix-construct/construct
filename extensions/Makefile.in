@@ -79,6 +79,7 @@ SRCS =                          \
   m_webirc.c			\
   m_remove.c			\
   m_roleplay.c			\
+  hide_uncommon_channels.c	\
   no_kill_services.c		\
   no_locops.c			\
   no_oper_invis.c		\
