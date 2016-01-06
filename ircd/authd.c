@@ -67,7 +67,7 @@ start_authd(void)
 				     "Unable to execute authd in %s or %s/libexec/charybdis",
 				     PKGLIBEXECDIR, ConfigFileEntry.dpath);
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
-						       "Unable to execute resolver in %s or %s/libexec/charybdis",
+						       "Unable to execute authd in %s or %s/libexec/charybdis",
 						       PKGLIBEXECDIR, ConfigFileEntry.dpath);
 				return 1;
 			}
@@ -103,8 +103,9 @@ parse_authd_reply(rb_helper * helper)
 	{
 		parc = rb_string_to_array(dnsBuf, parv, MAXPARA+1); 
 
-		if(*parv[0] == 'R')
+		switch (*parv[0])
 		{
+		case 'E':
 			if(parc != 5)
 			{
 				ilog(L_MAIN, "authd sent a result with wrong number of arguments: got %d", parc);
@@ -112,9 +113,10 @@ parse_authd_reply(rb_helper * helper)
 				return;
 			}
 			dns_results_callback(parv[1], parv[2], parv[3], parv[4]);
+			break;
+		default:
+			break;
 		}
-		else
-			return;
 	}
 }
 
@@ -132,7 +134,7 @@ static void
 restart_authd_cb(rb_helper * helper)
 {
 	ilog(L_MAIN, "authd: restart_authd_cb called, authd died?");
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd - restart_authd_cb called, authd died?");
+	sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd: restart_authd_cb called, authd died?");
 	if(helper != NULL)
 	{
 		rb_helper_close(helper);
