@@ -136,13 +136,13 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libircddir)" "$(DESTDIR)$(bindir)"
 LTLIBRARIES = $(libircd_LTLIBRARIES)
 libircd_la_DEPENDENCIES =
-am_libircd_la_OBJECTS = bandbi.lo blacklist.lo cache.lo capability.lo \
-	channel.lo chmode.lo class.lo client.lo dns.lo extban.lo \
-	getopt.lo hash.lo hook.lo hostmask.lo ipv4_from_ipv6.lo \
-	irc_dictionary.lo ircd.lo ircd_parser.lo ircd_lexer.lo \
-	ircd_signal.lo listener.lo logger.lo match.lo modules.lo \
-	monitor.lo newconf.lo operhash.lo packet.lo parse.lo \
-	privilege.lo ratelimit.lo res.lo reslib.lo reject.lo \
+am_libircd_la_OBJECTS = authd.lo bandbi.lo blacklist.lo cache.lo \
+	capability.lo channel.lo chmode.lo class.lo client.lo dns.lo \
+	extban.lo getopt.lo hash.lo hook.lo hostmask.lo \
+	ipv4_from_ipv6.lo irc_dictionary.lo ircd.lo ircd_parser.lo \
+	ircd_lexer.lo ircd_signal.lo listener.lo logger.lo match.lo \
+	modules.lo monitor.lo newconf.lo operhash.lo packet.lo \
+	parse.lo privilege.lo ratelimit.lo res.lo reslib.lo reject.lo \
 	restart.lo s_auth.lo s_conf.lo s_newconf.lo s_serv.lo \
 	s_user.lo scache.lo send.lo snomask.lo sslproc.lo \
 	substitution.lo supported.lo tgchange.lo version.lo whowas.lo
@@ -429,6 +429,7 @@ AM_LDFLAGS = -L$(top_srcdir)/libratbox/src -export-dynamic -avoid-version -no-un
 AM_YFLAGS = -d
 BUILT_SOURCES = version.c
 libircd_la_SOURCES = \
+  authd.c			\
   bandbi.c                      \
   blacklist.c                   \
   cache.c                       \
@@ -620,6 +621,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/authd.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bandbi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/blacklist.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cache.Plo@am__quote@

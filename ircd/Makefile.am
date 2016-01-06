@@ -15,6 +15,7 @@ version.c: version.c.SH ../CREDITS ../include/patchlevel.h ../include/serno.h
 	touch version.c.SH
 
 libircd_la_SOURCES =                  \
+  authd.c			\
   bandbi.c                      \
   blacklist.c                   \
   cache.c                       \

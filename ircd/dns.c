@@ -43,12 +43,6 @@
 
 static void submit_dns(const char, uint16_t id, int aftype, const char *addr);
 
-static int start_authd(void);
-static void parse_authd_reply(rb_helper * helper);
-static void restart_authd_cb(rb_helper * helper);
-
-static rb_helper *authd_helper;
-
 struct dnsreq
 {
 	DNSCB callback;
@@ -74,13 +68,6 @@ assign_dns_id(void)
 			break;
 	}
 	return (id);
-}
-
-static inline void
-check_authd(void)
-{
-	if(authd_helper == NULL)
-		restart_authd();
 }
 
 static void
@@ -158,8 +145,8 @@ lookup_ip(const char *addr, int aftype, DNSCB callback, void *data)
 	return (nid);
 }
 
-static void
-results_callback(const char *callid, const char *status, const char *aftype, const char *results)
+void
+dns_results_callback(const char *callid, const char *status, const char *aftype, const char *results)
 {
 	struct dnsreq *req;
 	uint16_t nid;
@@ -191,56 +178,6 @@ results_callback(const char *callid, const char *status, const char *aftype, con
 	req->data = NULL;
 }
 
-
-static char *resolver_path;
-
-static int
-start_authd(void)
-{
-	char fullpath[PATH_MAX + 1];
-#ifdef _WIN32
-	const char *suffix = ".exe";
-#else
-	const char *suffix = "";
-#endif
-	if(resolver_path == NULL)
-	{
-		snprintf(fullpath, sizeof(fullpath), "%s/authd%s", PKGLIBEXECDIR, suffix);
-
-		if(access(fullpath, X_OK) == -1)
-		{
-			snprintf(fullpath, sizeof(fullpath), "%s/libexec/charybdis/authd%s",
-				 ConfigFileEntry.dpath, suffix);
-			if(access(fullpath, X_OK) == -1)
-			{
-				ilog(L_MAIN,
-				     "Unable to execute authd in %s or %s/libexec/charybdis",
-				     PKGLIBEXECDIR, ConfigFileEntry.dpath);
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
-						       "Unable to execute resolver in %s or %s/libexec/charybdis",
-						       PKGLIBEXECDIR, ConfigFileEntry.dpath);
-				return 1;
-			}
-
-		}
-
-		resolver_path = rb_strdup(fullpath);
-	}
-
-	authd_helper = rb_helper_start("authd", resolver_path, parse_authd_reply, restart_authd_cb);
-
-	if(authd_helper == NULL)
-	{
-		ilog(L_MAIN, "Unable to start authd helper: %s", strerror(errno));
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Unable to start authd helper: %s", strerror(errno));
-		return 1;
-	}
-	ilog(L_MAIN, "resolver helper started");
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, "resolver helper started");
-	rb_helper_run(authd_helper);
-	return 0;
-}
-
 void
 report_dns_servers(struct Client *source_p)
 {
@@ -254,33 +191,6 @@ report_dns_servers(struct Client *source_p)
 }
 
 static void
-parse_authd_reply(rb_helper * helper)
-{
-	ssize_t len;
-	int parc;
-	char dnsBuf[READBUF_SIZE];
-
-	char *parv[MAXPARA + 1];
-	while((len = rb_helper_read(helper, dnsBuf, sizeof(dnsBuf))) > 0)
-	{
-		parc = rb_string_to_array(dnsBuf, parv, MAXPARA+1); 
-
-		if(*parv[0] == 'R')
-		{
-			if(parc != 5)
-			{
-				ilog(L_MAIN, "authd sent a result with wrong number of arguments: got %d", parc);
-				restart_authd();
-				return;
-			}
-			results_callback(parv[1], parv[2], parv[3], parv[4]);
-		}
-		else
-			return;
-	}
-}
-
-static void
 submit_dns(char type, uint16_t nid, int aftype, const char *addr)
 {
 	if(authd_helper == NULL)
@@ -290,39 +200,3 @@ submit_dns(char type, uint16_t nid, int aftype, const char *addr)
 	}
 	rb_helper_write(authd_helper, "%c %x %d %s", type, nid, aftype, addr);
 }
-
-void
-init_authd(void)
-{
-	if(start_authd())
-	{
-		ilog(L_MAIN, "Unable to start authd helper: %s", strerror(errno));
-		exit(0);
-	}
-}
-
-static void
-restart_authd_cb(rb_helper * helper)
-{
-	ilog(L_MAIN, "authd: restart_authd_cb called, authd died?");
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd - restart_authd_cb called, authd died?");
-	if(helper != NULL)
-	{
-		rb_helper_close(helper);
-		authd_helper = NULL;
-	}
-	start_authd();
-}
-
-void
-restart_authd(void)
-{
-	restart_authd_cb(authd_helper);
-}
-
-void
-rehash_resolver(void)
-{
-	rb_helper_write(authd_helper, "R");
-}
-

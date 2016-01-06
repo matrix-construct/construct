@@ -1,6 +1,6 @@
 /*
  *  charybdis
- *  dns.h: A header with the DNS functions.
+ *  authd.h: A header with the authd functions.
  *
  *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center
  *  Copyright (C) 1996-2002 Hybrid Development Team
@@ -23,10 +23,8 @@
  *  USA
  */
 
-#ifndef CHARYBDIS_DNS_H
-#define CHARYBDIS_DNS_H
-
-typedef void (*DNSCB)(const char *res, int status, int aftype, void *data);
+#ifndef CHARYBDIS_AUTHD_H
+#define CHARYBDIS_AUTHD_H
 
 extern rb_helper *authd_helper;
 
@@ -34,11 +32,5 @@ void init_authd(void);
 void restart_authd(void);
 void rehash_authd(void);
 void check_authd(void);
-
-uint16_t lookup_hostname(const char *hostname, int aftype, DNSCB callback, void *data);
-uint16_t lookup_ip(const char *hostname, int aftype, DNSCB callback, void *data);
-void cancel_lookup(uint16_t xid);
-void dns_results_callback(const char *callid, const char *status, const char *aftype, const char *results);
-void report_dns_servers(struct Client *);
 
 #endif
