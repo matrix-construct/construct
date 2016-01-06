@@ -3,5 +3,5 @@ AM_CFLAGS=$(WARNFLAGS)
 AM_CPPFLAGS = -I../include -I../libratbox/include 
 
 
-authd_SOURCES = authd.c
+authd_SOURCES = authd.c res.c reslib.c
 authd_LDADD = ../libratbox/src/libratbox.la
