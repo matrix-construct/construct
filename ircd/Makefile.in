@@ -137,8 +137,8 @@ am__installdirs = "$(DESTDIR)$(libircddir)" "$(DESTDIR)$(bindir)"
 LTLIBRARIES = $(libircd_LTLIBRARIES)
 libircd_la_DEPENDENCIES =
 am_libircd_la_OBJECTS = bandbi.lo blacklist.lo cache.lo capability.lo \
-	channel.lo chmode.lo class.lo client.lo extban.lo getopt.lo \
-	hash.lo hook.lo hostmask.lo ipv4_from_ipv6.lo \
+	channel.lo chmode.lo class.lo client.lo dns.lo extban.lo \
+	getopt.lo hash.lo hook.lo hostmask.lo ipv4_from_ipv6.lo \
 	irc_dictionary.lo ircd.lo ircd_parser.lo ircd_lexer.lo \
 	ircd_signal.lo listener.lo logger.lo match.lo modules.lo \
 	monitor.lo newconf.lo operhash.lo packet.lo parse.lo \
@@ -437,6 +437,7 @@ libircd_la_SOURCES = \
   chmode.c                      \
   class.c                       \
   client.c                      \
+  dns.c				\
   extban.c                      \
   getopt.c                      \
   hash.c                        \
@@ -627,6 +628,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chmode.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/class.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/client.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dns.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/extban.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/getopt.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Plo@am__quote@

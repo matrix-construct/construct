@@ -920,18 +920,3 @@ static struct DNSReply *make_dnsreply(struct reslist *request)
 	memcpy(&cp->addr, &request->addr, sizeof(cp->addr));
 	return (cp);
 }
-
-void report_dns_servers(struct Client *source_p)
-{
-	int i;
-	char ipaddr[128];
-
-	for (i = 0; i < irc_nscount; i++)
-	{
-		if (!rb_inet_ntop_sock((struct sockaddr *)&(irc_nsaddr_list[i]),
-				ipaddr, sizeof ipaddr))
-			rb_strlcpy(ipaddr, "?", sizeof ipaddr);
-		sendto_one_numeric(source_p, RPL_STATSDEBUG,
-				"A %s %d", ipaddr, ns_failure_count[i]);
-	}
-}

@@ -23,6 +23,7 @@ libircd_la_SOURCES =                  \
   chmode.c                      \
   class.c                       \
   client.c                      \
+  dns.c				\
   extban.c                      \
   getopt.c                      \
   hash.c                        \
