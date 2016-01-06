@@ -32,12 +32,7 @@
 
 #define MAPI_RATBOX 1
 
-#if defined(HAVE_SHL_LOAD)
-#include <dl.h>
-#endif
-#if !defined(STATIC_MODULES) && defined(HAVE_DLFCN_H)
-#include <dlfcn.h>
-#endif
+#include <ltdl.h>
 
 #include "msg.h"
 #include "hook.h"
@@ -46,7 +41,7 @@ struct module
 {
 	char *name;
 	const char *version;
-	void *address;
+	lt_dlhandle address;
 	int core;
 	int mapi_version;
 	void * mapi_header; /* actually struct mapi_mheader_av<mapi_version>	*/
