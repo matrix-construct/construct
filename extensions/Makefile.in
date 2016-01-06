@@ -275,6 +275,9 @@ override_la_OBJECTS = override.lo
 restrict_unauthenticated_la_LIBADD =
 restrict_unauthenticated_la_SOURCES = restrict-unauthenticated.c
 restrict_unauthenticated_la_OBJECTS = restrict-unauthenticated.lo
+sno_channelcreate_la_LIBADD =
+sno_channelcreate_la_SOURCES = sno_channelcreate.c
+sno_channelcreate_la_OBJECTS = sno_channelcreate.lo
 sno_farconnect_la_LIBADD =
 sno_farconnect_la_SOURCES = sno_farconnect.c
 sno_farconnect_la_OBJECTS = sno_farconnect.lo
@@ -354,10 +357,11 @@ SOURCES = chm_adminonly.c chm_nonotice.c chm_operonly.c \
 	m_identify.c m_mkpasswd.c m_ojoin.c m_okick.c m_omode.c \
 	m_opme.c m_remove.c m_roleplay.c m_sendbans.c m_webirc.c \
 	no_kill_services.c no_locops.c no_oper_invis.c override.c \
-	restrict-unauthenticated.c sno_farconnect.c sno_globalkline.c \
-	sno_globaloper.c sno_whois.c spy_admin_notice.c \
-	spy_info_notice.c spy_links_notice.c spy_motd_notice.c \
-	spy_stats_notice.c spy_stats_p_notice.c spy_trace_notice.c
+	restrict-unauthenticated.c sno_channelcreate.c \
+	sno_farconnect.c sno_globalkline.c sno_globaloper.c \
+	sno_whois.c spy_admin_notice.c spy_info_notice.c \
+	spy_links_notice.c spy_motd_notice.c spy_stats_notice.c \
+	spy_stats_p_notice.c spy_trace_notice.c
 DIST_SOURCES = chm_adminonly.c chm_nonotice.c chm_operonly.c \
 	chm_operonly_compat.c chm_quietunreg_compat.c chm_sslonly.c \
 	chm_sslonly_compat.c createauthonly.c createoperonly.c \
@@ -370,10 +374,11 @@ DIST_SOURCES = chm_adminonly.c chm_nonotice.c chm_operonly.c \
 	m_identify.c m_mkpasswd.c m_ojoin.c m_okick.c m_omode.c \
 	m_opme.c m_remove.c m_roleplay.c m_sendbans.c m_webirc.c \
 	no_kill_services.c no_locops.c no_oper_invis.c override.c \
-	restrict-unauthenticated.c sno_farconnect.c sno_globalkline.c \
-	sno_globaloper.c sno_whois.c spy_admin_notice.c \
-	spy_info_notice.c spy_links_notice.c spy_motd_notice.c \
-	spy_stats_notice.c spy_stats_p_notice.c spy_trace_notice.c
+	restrict-unauthenticated.c sno_channelcreate.c \
+	sno_farconnect.c sno_globalkline.c sno_globaloper.c \
+	sno_whois.c spy_admin_notice.c spy_info_notice.c \
+	spy_links_notice.c spy_motd_notice.c spy_stats_notice.c \
+	spy_stats_p_notice.c spy_trace_notice.c
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -614,6 +619,7 @@ extension_LTLIBRARIES = \
   ip_cloaking_4.0.la		\
   override.la			\
   restrict-unauthenticated.la    \
+  sno_channelcreate.la		\
   sno_farconnect.la		\
   sno_globalkline.la		\
   sno_globaloper.la		\
@@ -851,6 +857,9 @@ override.la: $(override_la_OBJECTS) $(override_la_DEPENDENCIES) $(EXTRA_override
 restrict-unauthenticated.la: $(restrict_unauthenticated_la_OBJECTS) $(restrict_unauthenticated_la_DEPENDENCIES) $(EXTRA_restrict_unauthenticated_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) -rpath $(extensiondir) $(restrict_unauthenticated_la_OBJECTS) $(restrict_unauthenticated_la_LIBADD) $(LIBS)
 
+sno_channelcreate.la: $(sno_channelcreate_la_OBJECTS) $(sno_channelcreate_la_DEPENDENCIES) $(EXTRA_sno_channelcreate_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(LINK) -rpath $(extensiondir) $(sno_channelcreate_la_OBJECTS) $(sno_channelcreate_la_LIBADD) $(LIBS)
+
 sno_farconnect.la: $(sno_farconnect_la_OBJECTS) $(sno_farconnect_la_DEPENDENCIES) $(EXTRA_sno_farconnect_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) -rpath $(extensiondir) $(sno_farconnect_la_OBJECTS) $(sno_farconnect_la_LIBADD) $(LIBS)
 
@@ -936,6 +945,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/no_oper_invis.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/override.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/restrict-unauthenticated.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sno_channelcreate.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sno_farconnect.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sno_globalkline.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sno_globaloper.Plo@am__quote@

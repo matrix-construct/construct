@@ -34,6 +34,7 @@ extension_LTLIBRARIES =		\
   ip_cloaking_4.0.la		\
   override.la			\
   restrict-unauthenticated.la    \
+  sno_channelcreate.la		\
   sno_farconnect.la		\
   sno_globalkline.la		\
   sno_globaloper.la		\
