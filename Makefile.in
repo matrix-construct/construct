@@ -403,7 +403,9 @@ AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = libratbox $(am__append_1) ircd ssld authd bandb tools \
 	modules extensions help doc
-all: all-recursive
+BUILT_SOURCES = include/serno.h
+all: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
 .SUFFIXES:
 am--refresh: Makefile
@@ -759,11 +761,13 @@ distcleancheck: distclean
 	       $(distcleancheck_listfiles) ; \
 	       exit 1; } >&2
 check-am: all-am
-check: check-recursive
+check: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) check-recursive
 all-am: Makefile
 installdirs: installdirs-recursive
 installdirs-am:
-install: install-recursive
+install: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) install-recursive
 install-exec: install-exec-recursive
 install-data: install-data-recursive
 uninstall: uninstall-recursive
@@ -793,6 +797,7 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 clean: clean-recursive
 
 clean-am: clean-generic clean-libtool mostlyclean-am
@@ -864,8 +869,8 @@ ps-am:
 
 uninstall-am:
 
-.MAKE: $(am__recursive_targets) install-am install-data-am \
-	install-strip
+.MAKE: $(am__recursive_targets) all check install install-am \
+	install-data-am install-strip
 
 .PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am \
 	am--refresh check check-am clean clean-cscope clean-generic \
@@ -886,6 +891,16 @@ uninstall-am:
 
 .PRECIOUS: Makefile
 
+
+include/serno.h:
+	@if [ -d .git ] ; then \
+		revh=`git log -1 --date=short --pretty=format:%cd_%h 2>/dev/null | sed -e s/-//g -e s/_/-/`;\
+		[ -z "$$revh" ] || echo '#define SERNO "'$$revh'"' >include/serno.h ; \
+	elif [ -d .hg ] ; then \
+		revh=`hg parents --template '{date|shortdate}_{node|short}' 2>/dev/null | sed -e s/-//g -e s/_/-/`;\
+		[ -z "$$revh" ] || echo '#define SERNO "'$$revh'"' >include/serno.h ; \
+	fi
+	@[ -f include/serno.h ] || echo '#define SERNO "unknown"' >include/serno.h
 
 install-data-hook:
 	test -d ${logdir} || mkdir -p ${logdir}
