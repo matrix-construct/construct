@@ -41,6 +41,10 @@ See LICENSE for licensing details (GPL v2).
   - $& combines 1 or more child extbans as an AND expression
   - $| combines 1 or more child extbans as an OR expression
   - $m provides normal hostmask matching as an extban for the above
+- Do not allow STARTTLS if a connection is already using TLS.
+- Display an operator's privilege set in WHOIS.
+- The $o extban now matches against privilege set names as well as individual
+  privileges.  Privilege set names are preferred over individual privileges.
 
 ### oper
 - Fix a crash with /testline.
@@ -53,7 +57,8 @@ See LICENSE for licensing details (GPL v2).
 - Add DNSBL snotes on snomask +r.
 
 ### config
-
+- Add hide_uncommon_channels extension to hide uncommon channel memberships in WHOIS,
+  like in ircd-seven.
 - Add chm_nonotice extension, cmode +T to reject notices.
 - Add restrict-unauthenticated extension, prevents unauthenticated users from
   doing anything as channel operator.
