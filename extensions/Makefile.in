@@ -454,7 +454,8 @@ LIBADD_DLOPEN = @LIBADD_DLOPEN@
 LIBADD_SHL_LOAD = @LIBADD_SHL_LOAD@
 LIBLTDL = @LIBLTDL@
 LIBOBJS = @LIBOBJS@
-LIBS = @LIBS@ $(top_srcdir)/libratbox/src/libratbox.la
+LIBS = @LIBS@ $(top_srcdir)/libratbox/src/libratbox.la \
+	$(top_srcdir)/src/libcore.la
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN = @LN@
@@ -584,8 +585,8 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libratbox/include
-AM_LDFLAGS = -module -export-dynamic -avoid-version -shared \
-	-export-symbols-regex _mheader
+AM_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined \
+	-shared -export-symbols-regex _mheader
 extensiondir = @moduledir@/extensions
 extension_LTLIBRARIES = \
   chm_adminonly.la		\

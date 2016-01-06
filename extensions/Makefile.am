@@ -1,7 +1,7 @@
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libratbox/include
-AM_LDFLAGS  = -module -export-dynamic -avoid-version -shared
+AM_LDFLAGS  = -module -export-dynamic -avoid-version -no-undefined -shared
 AM_LDFLAGS += -export-symbols-regex _mheader
-LIBS += $(top_srcdir)/libratbox/src/libratbox.la
+LIBS += $(top_srcdir)/libratbox/src/libratbox.la $(top_srcdir)/src/libcore.la
 
 extensiondir=@moduledir@/extensions
 
