@@ -7,7 +7,7 @@ if BUILD_LTDL
 SUBDIRS += libltdl
 endif
 
-SUBDIRS += src \
+SUBDIRS += ircd \
            ssld \
            bandb \
            tools \

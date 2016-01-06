@@ -1,7 +1,7 @@
 AUTOMAKE_OPTIONS = foreign
 
 prefix		= @prefix@
-libcoredir	= @libdir@
+libircddir	= @libdir@
 
 AM_CPPFLAGS = @LTDLINCL@ -I$(top_srcdir)/include -I$(top_srcdir)/libratbox/include
 AM_LDFLAGS  = -L$(top_srcdir)/libratbox/src -export-dynamic -avoid-version -no-undefined
@@ -15,7 +15,7 @@ version.c: version.c.SH ../CREDITS ../include/patchlevel.h ../include/serno.h
 	$(CP) version.c version.c.last
 	touch version.c.SH
 
-libcore_la_SOURCES =                  \
+libircd_la_SOURCES =                  \
   bandbi.c                      \
   blacklist.c                   \
   cache.c                       \
@@ -64,12 +64,12 @@ libcore_la_SOURCES =                  \
   tgchange.c                    \
   version.c                     \
   whowas.c
-libcore_la_LDFLAGS = $(EXTRA_FLAGS) -avoid-version
-libcore_LTLIBRARIES = libcore.la
+libircd_la_LDFLAGS = $(EXTRA_FLAGS) -avoid-version
+libircd_LTLIBRARIES = libircd.la
 
 bin_PROGRAMS = charybdis
 charybdis_SOURCES = main.c
-charybdis_LDADD = libcore.la
+charybdis_LDADD = libircd.la
 
-install-exec-hook: install-libcoreLTLIBRARIES
+install-exec-hook: install-libircdLTLIBRARIES
 	$(RM) -f version.c
