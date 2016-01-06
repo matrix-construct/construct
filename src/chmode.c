@@ -1165,7 +1165,7 @@ chm_throttle(struct Client *source_p, struct Channel *chptr,
 	{
 		sscanf(parv[(*parn)], "%d:%d", &joins, &timeslice);
 
-		if(!joins || !timeslice)
+		if(joins <= 0 || timeslice <= 0)
 			return;
 
 		mode_changes[mode_count].letter = c;
