@@ -58,7 +58,7 @@
 #define HPATH  HELP_DIR "/opers"
 
 /* files */
-#define SPATH    BINPATH "/" PROGRAM_PREFIX "/ircd"		   /* ircd executable */
+#define SPATH    BINPATH "/" PROGRAM_PREFIX "charybdis"		   /* ircd executable */
 #define CPATH    ETCPATH "/ircd.conf"		                   /* ircd.conf file */
 #define MPATH    ETCPATH "/ircd.motd"		                   /* MOTD file */
 #define LPATH    LOGPATH "/ircd.log"		                   /* ircd logfile */
