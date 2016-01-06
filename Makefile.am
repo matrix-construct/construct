@@ -9,6 +9,7 @@ endif
 
 SUBDIRS += ircd \
            ssld \
+           authd \
            bandb \
            tools \
            modules \
