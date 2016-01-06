@@ -1163,7 +1163,8 @@ chm_throttle(struct Client *source_p, struct Channel *chptr,
 
 	if((dir == MODE_ADD) && parc > *parn)
 	{
-		sscanf(parv[(*parn)], "%d:%d", &joins, &timeslice);
+		if (sscanf(parv[(*parn)], "%d:%d", &joins, &timeslice) < 2)
+			return;
 
 		if(joins <= 0 || timeslice <= 0)
 			return;
