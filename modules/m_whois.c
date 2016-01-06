@@ -60,11 +60,13 @@ struct Message whois_msgtab = {
 
 int doing_whois_hook;
 int doing_whois_global_hook;
+int doing_whois_channel_visibility_hook;
 
 mapi_clist_av1 whois_clist[] = { &whois_msgtab, NULL };
 mapi_hlist_av1 whois_hlist[] = {
-	{ "doing_whois",	&doing_whois_hook },
-	{ "doing_whois_global",	&doing_whois_global_hook },
+	{ "doing_whois",			&doing_whois_hook },
+	{ "doing_whois_global",			&doing_whois_global_hook },
+	{ "doing_whois_channel_visibility",	&doing_whois_channel_visibility_hook },
 	{ NULL, NULL }
 };
 
@@ -236,7 +238,6 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 	char *t;
 	int tlen;
 	hook_data_client hdata;
-	int visible;
 	int extra_space = 0;
 #ifdef RB_IPV6
 	struct sockaddr_in ip4;
@@ -271,6 +272,9 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 
 	t = buf + mlen;
 
+	hdata.client = source_p;
+	hdata.target = target_p;
+
 	if (!IsService(target_p))
 	{
 		RB_DLINK_FOREACH(ptr, target_p->user->channel.head)
@@ -278,9 +282,12 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 			msptr = ptr->data;
 			chptr = msptr->chptr;
 
-			visible = ShowChannel(source_p, chptr);
+			hdata.chptr = chptr;
 
-			if(visible || operspy)
+			hdata.approved = ShowChannel(source_p, chptr);
+			call_hook(doing_whois_channel_visibility_hook, &hdata);
+
+			if(hdata.approved || operspy)
 			{
 				if((cur_len + strlen(chptr->chname) + 3) > (BUFSIZE - 5))
 				{
@@ -290,7 +297,7 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 				}
 
 				tlen = rb_sprintf(t, "%s%s%s ",
-						visible ? "" : "!",
+						hdata.approved ? "" : "!",
 						find_channel_status(msptr, 1),
 						chptr->chname);
 				t += tlen;
@@ -403,9 +410,6 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 
 		}
 	}
-
-	hdata.client = source_p;
-	hdata.target = target_p;
 
 	/* doing_whois_hook must only be called for local clients,
 	 * doing_whois_global_hook must only be called for local targets

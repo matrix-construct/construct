@@ -59,6 +59,8 @@ typedef struct
 {
 	struct Client *client;
 	struct Client *target;
+	struct Channel *chptr;
+	int approved;
 } hook_data_client;
 
 typedef struct
