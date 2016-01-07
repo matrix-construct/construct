@@ -648,7 +648,6 @@ SSL_INCLUDES
 SSL_SRCS_ENABLE
 MOD_TARGET
 MODULES_LIBS
-SELECT_TYPE
 PROGRAM_PREFIX
 PKGRUNDIR
 moduledir
@@ -843,11 +842,6 @@ enable_openssl
 with_zlib_path
 enable_zlib
 with_shared_sqlite
-enable_ports
-enable_poll
-enable_select
-enable_kqueue
-enable_epoll
 with_confdir
 with_logdir
 with_helpdir
@@ -1518,11 +1512,6 @@ Optional Features:
   --enable-openssl=DIR    Enable OpenSSL support (DIR optional).
   --disable-openssl       Disable OpenSSL support.
   --disable-zlib          Disable ziplinks support
-  --enable-ports          Force solaris I/O ports subsystem usage.
-  --enable-poll           Force poll() usage.
-  --enable-select         Force select() usage.
-  --enable-kqueue         Force kqueue() usage.
-  --enable-epoll          Force sys_epoll usage (Linux only).
   --enable-assert         Enable assert(). Choose between soft(warnings) and
                           hard(aborts the daemon)
   --enable-iodebug        Enable IO Debugging hooks
@@ -13469,7 +13458,10 @@ eval "LTDLOPEN=\"$libname_spec\""
 
 build_ltdl=$with_included_ltdl
 if test x"$build_ltdl" = x"yes"; then
-	 if 1; then
+	subdirs="$subdirs libltdl"
+
+fi
+ if test x"$build_ltdl" = x"yes"; then
   BUILD_LTDL_TRUE=
   BUILD_LTDL_FALSE='#'
 else
@@ -13477,9 +13469,6 @@ else
   BUILD_LTDL_FALSE=
 fi
 
-	subdirs="$subdirs libltdl"
-
-fi
 
 if test "$ac_cv_c_compiler_gnu" = yes; then
 	IRC_CFLAGS="$IRC_CFLAGS -O0 -Wall"
@@ -15098,34 +15087,6 @@ fi
 
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether string.h and strings.h may both be included" >&5
-$as_echo_n "checking whether string.h and strings.h may both be included... " >&6; }
-if ${gcc_cv_header_string+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-
-	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <string.h>
-	#include <strings.h>
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  gcc_cv_header_string=yes
-else
-  gcc_cv_header_string=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gcc_cv_header_string" >&5
-$as_echo "$gcc_cv_header_string" >&6; }
-
-if test "$gcc_cv_header_string" = "yes"; then
-
-$as_echo "#define STRING_WITH_STRINGS 1" >>confdefs.h
-
-fi
-
  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether byte ordering is bigendian" >&5
 $as_echo_n "checking whether byte ordering is bigendian... " >&6; }
 if ${ac_cv_c_bigendian+:} false; then :
@@ -15359,79 +15320,6 @@ else
 fi
 
 
-
-
-if test "$ac_cv_c_compiler_gnu" = yes; then
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for strlcpy" >&5
-$as_echo_n "checking for strlcpy... " >&6; }
-save_CFLAGS=$CFLAGS
-CFLAGS="$CFLAGS -Wimplicit -Werror"
-
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <string.h>
-		#include <stdlib.h>
-int
-main ()
-{
-char *a = malloc(6);
-		strlcpy(a, "hello", 6);
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-$as_echo "#define HAVE_STRLCPY 1" >>confdefs.h
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for strlcat" >&5
-$as_echo_n "checking for strlcat... " >&6; }
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <string.h>
-		#include <stdlib.h>
-int
-main ()
-{
-char *a = malloc(6);
-		a[0] = '\0';
-		strlcat(a, "hello", 6);
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-$as_echo "#define HAVE_STRLCAT 1" >>confdefs.h
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-
-CFLAGS=$save_CFLAGS
-
-else
-
-
 for ac_func in strlcat strlcpy
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
@@ -15444,8 +15332,6 @@ _ACEOF
 fi
 done
 
-
-fi
 
 ac_fn_c_check_type "$LINENO" "u_int32_t" "ac_cv_type_u_int32_t" "$ac_includes_default"
 if test "x$ac_cv_type_u_int32_t" = xyes; then :
@@ -16279,75 +16165,6 @@ SQLITE_INCLUDES="$SQLITE_CFLAGS"
 
 
 
-# Check whether --enable-ports was given.
-if test "${enable_ports+set}" = set; then :
-  enableval=$enable_ports;  if test $enableval = yes; then
-	SELECT_TYPE_EXPLICIT="ports"
-  else
-  	use_ports=no
-  fi
-
-fi
-
-
-# Check whether --enable-poll was given.
-if test "${enable_poll+set}" = set; then :
-  enableval=$enable_poll;  if test $enableval = yes; then
-	SELECT_TYPE_EXPLICIT="poll"
-  else
-  	use_poll=no
-  fi
-
-fi
-
-
-# Check whether --enable-select was given.
-if test "${enable_select+set}" = set; then :
-  enableval=$enable_select;  if test $enableval = yes; then
-	SELECT_TYPE_EXPLICIT="select"
-  else
-  	use_select=no
-  fi
-
-fi
-
-
-# Check whether --enable-kqueue was given.
-if test "${enable_kqueue+set}" = set; then :
-  enableval=$enable_kqueue;  if test $enableval = yes; then
-	SELECT_TYPE_EXPLICIT="kqueue"
-  else
-  	use_kqueue=no
-  fi
-
-fi
-
-
-# Check whether --enable-epoll was given.
-if test "${enable_epoll+set}" = set; then :
-  enableval=$enable_epoll;  if test $enableval = yes; then
-	SELECT_TYPE_EXPLICIT="epoll"
-	for ac_func in epoll_ctl
-do :
-  ac_fn_c_check_func "$LINENO" "epoll_ctl" "ac_cv_func_epoll_ctl"
-if test "x$ac_cv_func_epoll_ctl" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_EPOLL_CTL 1
-_ACEOF
- haveepoll=yes
-else
-  haveepoll=no
-fi
-done
-
-  else
-  	use_epoll=no
-  fi
-
-fi
-
-
-
 
 # Check whether --with-confdir was given.
 if test "${with_confdir+set}" = set; then :
@@ -16650,215 +16467,6 @@ if test "x$BRANDING_NAME" != "x$PACKAGE_NAME"; then
 $as_echo "#define CUSTOM_BRANDING 1" >>confdefs.h
 
 fi
-
-if test ! -z "$SELECT_TYPE_EXPLICIT"; then
-	SELECT_TYPE="$SELECT_TYPE_EXPLICIT";
-	echo "Forcing $SELECT_TYPE to be enabled"
-else
-
-if test ! "x$use_ports" = "xno"; then
-	for ac_func in port_getn
-do :
-  ac_fn_c_check_func "$LINENO" "port_getn" "ac_cv_func_port_getn"
-if test "x$ac_cv_func_port_getn" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_PORT_GETN 1
-_ACEOF
- haveports=yes
-else
-  haveports=no
-fi
-done
-
-	if test "x$haveports" = "xyes" ; then
-		SELECT_TYPE="ports"
-	fi
-fi
-
-if test ! "x$use_select" = "xno"; then
-	for ac_func in select
-do :
-  ac_fn_c_check_func "$LINENO" "select" "ac_cv_func_select"
-if test "x$ac_cv_func_select" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_SELECT 1
-_ACEOF
- haveselect=yes
-else
-  haveselect=no
-fi
-done
-
-	if test "x$haveselect" = "xyes" ; then
-		SELECT_TYPE="select"
-	fi
-fi
-
-if test ! "x$use_poll" = "xno"; then
-	for ac_func in poll
-do :
-  ac_fn_c_check_func "$LINENO" "poll" "ac_cv_func_poll"
-if test "x$ac_cv_func_poll" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_POLL 1
-_ACEOF
- havepoll=yes
-else
-  havepoll=no
-fi
-done
-
-	if test "x$havepoll" = "xyes" ; then
-		SELECT_TYPE="poll"
-	fi
-fi
-
-if test ! "x$use_kqueue" = "xno"; then
-	for ac_func in kevent
-do :
-  ac_fn_c_check_func "$LINENO" "kevent" "ac_cv_func_kevent"
-if test "x$ac_cv_func_kevent" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_KEVENT 1
-_ACEOF
- havekqueue=yes
-else
-  havekqueue=no
-fi
-done
-
-	if test "x$havekqueue" = "xyes" ; then
-		SELECT_TYPE="kqueue"
-	fi
-fi
-
-if test ! "x$use_epoll" = "xno"; then
-	for ac_func in epoll_ctl
-do :
-  ac_fn_c_check_func "$LINENO" "epoll_ctl" "ac_cv_func_epoll_ctl"
-if test "x$ac_cv_func_epoll_ctl" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_EPOLL_CTL 1
-_ACEOF
- haveepoll=yes
-else
-  haveepoll=no
-fi
-done
-
-	if test "x$ac_cv_header_sys_epoll_h" = "xyes"; then
-		if test "x$haveepoll" = "xyes" ; then
-                	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for epoll support in kernel" >&5
-$as_echo_n "checking for epoll support in kernel... " >&6; }
-	                if test "$cross_compiling" = yes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <stdint.h>
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/epoll.h>
-#include <sys/syscall.h>
-#include <unistd.h>
-
-int
-main(int argc, char **argv)
-{
-        int epfd;
-
-        epfd = epoll_create(256);
-        return (epfd == -1 ? 1 : 0);
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-$as_echo "#define HAVE_EPOLL 1" >>confdefs.h
-
-	    SELECT_TYPE="epoll"
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-		fi
-	fi
-
-haveepollsyscall=no
-
-if test "x$ac_cv_header_sys_epoll_h" = "xyes"; then
-	if test "x$haveepoll" = "xno" ; then
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for epoll system call" >&5
-$as_echo_n "checking for epoll system call... " >&6; }
-                if test "$cross_compiling" = yes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <stdint.h>
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/epoll.h>
-#include <sys/syscall.h>
-#include <unistd.h>
-
-int
-epoll_create(int size)
-{
-        return (syscall(__NR_epoll_create, size));
-}
-
-int
-main(int argc, char **argv)
-{
-        int epfd;
-
-        epfd = epoll_create(256);
-        exit (epfd == -1 ? 1 : 0);
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-$as_echo "#define HAVE_EPOLL 1" >>confdefs.h
-
-    SELECT_TYPE="epoll"
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-	fi
-fi
-
-fi
-
-fi
-
-if test -z "$SELECT_TYPE"; then
-	as_fn_error $? "Unable to find a usable IO interface" "$LINENO" 5
-fi
-
-echo "Using $SELECT_TYPE for select loop."
-
-
-cat >>confdefs.h <<_ACEOF
-#define SELECT_TYPE "$SELECT_TYPE"
-_ACEOF
-
-
-
 
 
 # Check whether --enable-assert was given.
@@ -20775,7 +20383,6 @@ Configuration of ${BRANDING_NAME}-${BRANDING_VERSION}:
 
 	Ziplinks           : $zlib
 	OpenSSL            : $openssl
-	Socket Engine      : $SELECT_TYPE
 	Small network      : $small_net
 	Block allocator    : $balloc
 

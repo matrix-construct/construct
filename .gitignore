@@ -9,6 +9,7 @@ Makefile
 *.log
 *.sw?
 .deps
+.dirstamp
 .libs
 autom4te.cache
 bandb/bandb
@@ -39,3 +40,4 @@ tools/viconf
 include/serno.h
 ircd/version.c
 ircd/version.c.last
+/libtool

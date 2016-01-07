@@ -109,12 +109,6 @@
 /* Define if you have the _dyld_func_lookup function. */
 #undef HAVE_DYLD
 
-/* Define if your system supports the epoll system calls */
-#undef HAVE_EPOLL
-
-/* Define to 1 if you have the `epoll_ctl' function. */
-#undef HAVE_EPOLL_CTL
-
 /* Define to 1 if you have the <errno.h> header file. */
 #undef HAVE_ERRNO_H
 
@@ -126,9 +120,6 @@
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
-
-/* Define to 1 if you have the `kevent' function. */
-#undef HAVE_KEVENT
 
 /* Define to 1 if you have the `crypto' library (-lcrypto). */
 #undef HAVE_LIBCRYPTO
@@ -163,20 +154,11 @@
 /* Define to 1 if you have the `opendir' function. */
 #undef HAVE_OPENDIR
 
-/* Define to 1 if you have the `poll' function. */
-#undef HAVE_POLL
-
-/* Define to 1 if you have the `port_getn' function. */
-#undef HAVE_PORT_GETN
-
 /* Define if libtool can extract symbol lists from object files. */
 #undef HAVE_PRELOADED_SYMBOLS
 
 /* Define to 1 if you have the `readdir' function. */
 #undef HAVE_READDIR
-
-/* Define to 1 if you have the `select' function. */
-#undef HAVE_SELECT
 
 /* Define if you have the shl_load function. */
 #undef HAVE_SHL_LOAD
@@ -360,9 +342,6 @@
 /* String with which all programs intended to be in PATH are prefixed. */
 #undef PROGRAM_PREFIX
 
-/* This is the type of IO loop we are using */
-#undef SELECT_TYPE
-
 /* The size of `int', as computed by sizeof. */
 #undef SIZEOF_INT
 
@@ -388,9 +367,6 @@
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
-
-/* Define to 1 if string.h may be included along with strings.h */
-#undef STRING_WITH_STRINGS
 
 /* Maximum topic length (<=390) */
 #undef TOPICLEN

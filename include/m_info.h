@@ -134,8 +134,6 @@ Info MyInformation[] = {
 	{"PPATH", "NONE", 0, "Path to Pid File"},
 #endif /* PPATH */
 
-	{"SELECT_TYPE", SELECT_TYPE, 0, "Method of Multiplexed I/O"},
-
 #ifdef SPATH
 	{"SPATH", SPATH, 0, "Path to Server Executable"},
 #else
