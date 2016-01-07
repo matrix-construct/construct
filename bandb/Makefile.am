@@ -1,8 +1,9 @@
-pkglibexec_PROGRAMS = bandb 
+pkglibexec_PROGRAMS = bandb
 bin_PROGRAMS = bantool
 AM_CFLAGS=$(WARNFLAGS)
 
 AM_CPPFLAGS = -I../include -I../libratbox/include @SQLITE_INCLUDES@
+AM_CPPFLAGS += -DSQLITE_THREADSAFE=0
 
 bandb_SOURCES = bandb.c rsdb_sqlite3.c rsdb_snprintf.c
 EXTRA_bandb_SOURCES = sqlite3.c

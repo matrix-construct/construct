@@ -15,10 +15,10 @@ bandb/bandb
 bandb/bantool
 config.log
 config.status
+stamp-h1
 include/setup.h
 libratbox/include/libratbox_config.h
 libratbox/include/librb-config.h
-libratbox/include/stamp-h1
 libratbox/libratbox.pc
 libratbox/libtool
 libratbox/src/version.c
@@ -37,3 +37,5 @@ tools/genssl
 tools/mkpasswd
 tools/viconf
 include/serno.h
+ircd/version.c
+ircd/version.c.last

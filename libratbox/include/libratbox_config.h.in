@@ -240,6 +240,9 @@
 /* Define to 1 if you wish to disable the block allocator. */
 #undef NOBALLOC
 
+/* Name of package */
+#undef PACKAGE
+
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
 
@@ -311,6 +314,9 @@
 
 /* Define to 1 if we can use timer_create(CLOCK_REALTIME,...) */
 #undef USE_TIMER_CREATE
+
+/* Version number of package */
+#undef VERSION
 
 /* This is a Windows system */
 #undef WINDOWS

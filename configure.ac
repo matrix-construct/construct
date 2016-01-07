@@ -2,44 +2,38 @@ dnl TODO: clean up all the OpenSSL and shared module checking stuff;
 dnl the most major changes have already been made and it looks like
 dnl said functions need to be just about as complex as they already are.
 
-AC_PREREQ(2.57)
+AC_PREREQ(2.60)
 
 AC_INIT([charybdis], [3.6.0-dev])
+
+AC_LANG(C)
+AC_PROG_CC_C99
+AC_USE_SYSTEM_EXTENSIONS
+AC_GNU_SOURCE
 
 AC_PREFIX_DEFAULT($HOME/ircd)
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADER(include/setup.h)
-
+AC_CONFIG_SUBDIRS([libratbox])
 AC_CONFIG_AUX_DIR([libltdl/config])
 AC_CONFIG_MACRO_DIR([libltdl/m4])
-AM_INIT_AUTOMAKE([])
+
+AM_INIT_AUTOMAKE([subdir-objects])
 AM_SILENT_RULES([yes])
 AM_PROG_AR
 
 LT_INIT([dlopen disable-static])
-
 LT_CONFIG_LTDL_DIR([extra/libltdl])
 LTDL_INIT
 
 build_ltdl=$with_included_ltdl
-AM_CONDITIONAL([BUILD_LTDL], [test x"$build_ltdl" = x"yes"])
-
-AC_PROG_CC_C99([], [AC_MSG_ERROR(charybdis requires a C99 capable compiler)])
-
-AC_GNU_SOURCE
-
-OLD_CFLAGS="$CFLAGS"
-dnl Checks for programs.
-AC_PROG_CC
-AC_LANG(C)
-
-dnl Make sure autoconf doesn't interfere with cflags -jmallett
-CFLAGS="$OLD_CFLAGS"
-
-AC_CONFIG_SUBDIRS(libratbox)
+if test x"$build_ltdl" = x"yes"; then
+	AM_CONDITIONAL([BUILD_LTDL], [1])
+	AC_CONFIG_SUBDIRS([libltdl])
+fi
 
 if test "$ac_cv_c_compiler_gnu" = yes; then
-	IRC_CFLAGS="$IRC_CFLAGS -O0 -Wall -std=gnu99"
+	IRC_CFLAGS="$IRC_CFLAGS -O0 -Wall"
 fi
 
 dnl If we support -g, use it!
@@ -66,7 +60,6 @@ fi
 
 AC_ISC_POSIX
 AC_C_INLINE
-AC_PROG_GCC_TRADITIONAL
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
 AC_PATH_PROG(RM, rm)

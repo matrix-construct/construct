@@ -52,7 +52,7 @@ LT_CONFIG_LTDL_DIR([.]) # I am me!
 ## Automake Initialisation. ##
 ## ------------------------ ##
 
-AM_INIT_AUTOMAKE([gnu])
+AM_INIT_AUTOMAKE([gnu subdir-objects])
 
 
 ## ------------------------------- ##
