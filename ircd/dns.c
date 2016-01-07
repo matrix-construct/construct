@@ -24,7 +24,7 @@
 
 #include <stdinc.h>
 #include <ratbox_lib.h>
-#include <struct.h>
+#include <client.h>
 #include <ircd_defs.h>
 #include <parse.h>
 #include <dns.h>
