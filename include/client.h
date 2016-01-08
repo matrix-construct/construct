@@ -36,7 +36,7 @@
 
 #include "ircd_defs.h"
 #include "channel.h"
-#include "res.h"
+#include "dns.h"
 #include "snomask.h"
 #include "match.h"
 #include "ircd.h"

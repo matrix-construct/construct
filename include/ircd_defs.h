@@ -66,6 +66,11 @@
 #define HOSTLEN         63	/* Length of hostname.  Updated to         */
 				/* comply with RFC1123                     */
 
+/* Longest hostname we're willing to work with.
+ * Due to DNSBLs this is more than HOSTLEN.
+ */
+#define IRCD_RES_HOSTLEN 255
+
 #define USERLEN         10
 #define REALLEN         50
 #define CHANNELLEN      200

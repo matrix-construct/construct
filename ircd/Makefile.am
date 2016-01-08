@@ -47,8 +47,6 @@ libircd_la_SOURCES =                  \
   parse.c                       \
   privilege.c                   \
   ratelimit.c			\
-  res.c                         \
-  reslib.c                      \
   reject.c                      \
   restart.c                     \
   s_auth.c                      \

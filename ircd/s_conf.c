@@ -54,6 +54,7 @@
 #include "chmode.h"
 #include "hook.h"
 #include "s_assert.h"
+#include "authd.h"
 
 struct config_server_hide ConfigServerHide;
 
@@ -646,7 +647,7 @@ rehash(int sig)
 				     "Got signal SIGHUP, reloading ircd conf. file");
 	}
 
-	restart_resolver();
+	restart_authd();
 	/* don't close listeners until we know we can go ahead with the rehash */
 	read_conf_files(NO);
 

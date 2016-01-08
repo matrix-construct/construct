@@ -40,7 +40,6 @@
 #include "ircd_defs.h"
 #include "numeric.h"
 #include "packet.h"
-#include "res.h"
 #include "s_conf.h"
 #include "s_newconf.h"
 #include "logger.h"

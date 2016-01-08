@@ -32,7 +32,6 @@
 #include "ircd.h"
 #include "s_serv.h"
 #include "numeric.h"
-#include "res.h"
 #include "s_conf.h"
 #include "s_newconf.h"
 #include "logger.h"
@@ -82,7 +81,7 @@ rehash_dns(struct Client *source_p)
 		remote_rehash_oper_p = source_p;
 
 	/* reread /etc/resolv.conf and reopen res socket */
-	restart_resolver();
+	restart_authd();
 }
 
 static void

@@ -142,10 +142,10 @@ am_libircd_la_OBJECTS = authd.lo bandbi.lo blacklist.lo cache.lo \
 	ipv4_from_ipv6.lo irc_dictionary.lo ircd.lo ircd_parser.lo \
 	ircd_lexer.lo ircd_signal.lo listener.lo logger.lo match.lo \
 	modules.lo monitor.lo newconf.lo operhash.lo packet.lo \
-	parse.lo privilege.lo ratelimit.lo res.lo reslib.lo reject.lo \
-	restart.lo s_auth.lo s_conf.lo s_newconf.lo s_serv.lo \
-	s_user.lo scache.lo send.lo snomask.lo sslproc.lo \
-	substitution.lo supported.lo tgchange.lo version.lo whowas.lo
+	parse.lo privilege.lo ratelimit.lo reject.lo restart.lo \
+	s_auth.lo s_conf.lo s_newconf.lo s_serv.lo s_user.lo scache.lo \
+	send.lo snomask.lo sslproc.lo substitution.lo supported.lo \
+	tgchange.lo version.lo whowas.lo
 libircd_la_OBJECTS = $(am_libircd_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -460,8 +460,6 @@ libircd_la_SOURCES = \
   parse.c                       \
   privilege.c                   \
   ratelimit.c			\
-  res.c                         \
-  reslib.c                      \
   reject.c                      \
   restart.c                     \
   s_auth.c                      \
@@ -654,8 +652,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/privilege.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ratelimit.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/reject.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/res.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/reslib.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/restart.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/s_auth.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/s_conf.Plo@am__quote@

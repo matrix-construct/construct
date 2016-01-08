@@ -41,7 +41,6 @@
 #include "hostmask.h"
 #include "numeric.h"
 #include "parse.h"
-#include "res.h"
 #include "restart.h"
 #include "s_auth.h"
 #include "s_conf.h"
@@ -662,7 +661,6 @@ charybdis_main(int argc, char *argv[])
 
 	init_auth();		/* Initialise the auth code */
 	init_authd();		/* Start up authd. */
-	init_resolver();	/* Needs to be setup before the io loop */
 	privilegeset_set_new("default", "", 0);
 
 	if (testing_conf)
