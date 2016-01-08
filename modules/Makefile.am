@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = subdir-objects
 
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libratbox/include
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libratbox/include $(LTDLINCL)
 AM_LDFLAGS  = -module -export-dynamic -avoid-version -no-undefined -shared
 AM_LDFLAGS += -export-symbols-regex _mheader
 LIBS += $(top_srcdir)/libratbox/src/libratbox.la $(top_srcdir)/ircd/libircd.la

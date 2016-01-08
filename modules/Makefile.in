@@ -652,7 +652,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = subdir-objects
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libratbox/include
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libratbox/include $(LTDLINCL)
 AM_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined \
 	-shared -export-symbols-regex _mheader
 auto_load_moddir = @moduledir@/autoload
