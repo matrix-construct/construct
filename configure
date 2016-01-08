@@ -853,7 +853,6 @@ enable_assert
 enable_iodebug
 enable_profile
 enable_balloc
-enable_small_net
 with_nicklen
 with_topiclen
 enable_warnings
@@ -1515,7 +1514,6 @@ Optional Features:
   --enable-iodebug        Enable IO Debugging hooks
   --enable-profile        Enable profiling
   --disable-balloc        Disable the block allocator.
-  --enable-small-net      Enable small network support.
   --enable-warnings       Enable all sorts of warnings for debugging.
 
 Optional Packages:
@@ -16541,64 +16539,6 @@ $as_echo "#define NOBALLOC 1" >>confdefs.h
 
 fi
 
-# Check whether --enable-small-net was given.
-if test "${enable_small_net+set}" = set; then :
-  enableval=$enable_small_net; small_net=$enableval
-else
-  small_net=no
-fi
-
-
-if test "$small_net" = yes; then
-
-$as_echo "#define NICKNAMEHISTORYLENGTH 1500" >>confdefs.h
-
-
-$as_echo "#define CHANNEL_HEAP_SIZE 256" >>confdefs.h
-
-
-$as_echo "#define BAN_HEAP_SIZE 128" >>confdefs.h
-
-
-$as_echo "#define CLIENT_HEAP_SIZE 256" >>confdefs.h
-
-
-$as_echo "#define LCLIENT_HEAP_SIZE 128" >>confdefs.h
-
-
-$as_echo "#define PCLIENT_HEAP_SIZE 32" >>confdefs.h
-
-
-$as_echo "#define USER_HEAP_SIZE 128" >>confdefs.h
-
-
-$as_echo "#define DNODE_HEAP_SIZE 256" >>confdefs.h
-
-
-$as_echo "#define TOPIC_HEAP_SIZE 256" >>confdefs.h
-
-
-$as_echo "#define LINEBUF_HEAP_SIZE 128" >>confdefs.h
-
-
-$as_echo "#define MEMBER_HEAP_SIZE 256" >>confdefs.h
-
-
-$as_echo "#define ND_HEAP_SIZE 128" >>confdefs.h
-
-
-$as_echo "#define CONFITEM_HEAP_SIZE 128" >>confdefs.h
-
-
-$as_echo "#define MONITOR_HEAP_SIZE 128" >>confdefs.h
-
-
-$as_echo "#define FD_HEAP_SIZE 128" >>confdefs.h
-
-
-$as_echo "#define AWAY_HEAP_SIZE 128" >>confdefs.h
-
-else
 
 $as_echo "#define NICKNAMEHISTORYLENGTH 15000" >>confdefs.h
 
@@ -16647,7 +16587,6 @@ $as_echo "#define FD_HEAP_SIZE 1024" >>confdefs.h
 
 $as_echo "#define AWAY_HEAP_SIZE 512" >>confdefs.h
 
-fi
 
 
 # Check whether --with-nicklen was given.
@@ -20369,7 +20308,6 @@ Configuration of ${BRANDING_NAME}-${BRANDING_VERSION}:
 
 	Ziplinks           : $zlib
 	OpenSSL            : $openssl
-	Small network      : $small_net
 	Block allocator    : $balloc
 
 	Nickname length    : $NICKLEN
