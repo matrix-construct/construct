@@ -41,18 +41,13 @@
 
 #define hash_opername(x) fnv_hash_upper((const unsigned char *)(x), OPERHASH_MAX_BITS)
 
-struct operhash_entry
-{
-	char *name;
-	int refcount;
-};
-
 static rb_dlink_list operhash_table[OPERHASH_MAX];
 
 const char *
 operhash_add(const char *name)
 {
-	struct operhash_entry *ohash;
+	void *ohash_mem;
+	char *ohash_copy;
 	unsigned int hashv;
 	rb_dlink_node *ptr;
 
@@ -63,28 +58,31 @@ operhash_add(const char *name)
 
 	RB_DLINK_FOREACH(ptr, operhash_table[hashv].head)
 	{
-		ohash = ptr->data;
+		ohash_copy = ptr->data;
 
-		if(!irccmp(ohash->name, name))
+		if(!irccmp(ohash_copy, name))
 		{
-			ohash->refcount++;
-			return ohash->name;
+			ohash_mem = ohash_copy - 5;
+			(*(int32_t *) ohash_mem)++;
+			return ohash_copy;
 		}
 	}
 
-	ohash = rb_malloc(sizeof(struct operhash_entry));
-	ohash->refcount = 1;
-	ohash->name = rb_strdup(name);
+	ohash_mem = rb_malloc(strlen(name) + 6);
+	(*(int32_t *) ohash_mem) = 1;
+	ohash_copy = ohash_mem + 5;
+	ohash_copy[-1] = '@';
+	strcpy(ohash_copy, name);
 
-	rb_dlinkAddAlloc(ohash, &operhash_table[hashv]);
+	rb_dlinkAddAlloc(ohash_copy, &operhash_table[hashv]);
 
-	return ohash->name;
+	return ohash_copy;
 }
 
 const char *
 operhash_find(const char *name)
 {
-	struct operhash_entry *ohash;
+	char *ohash_copy;
 	unsigned int hashv;
 	rb_dlink_node *ptr;
 
@@ -95,10 +93,10 @@ operhash_find(const char *name)
 
 	RB_DLINK_FOREACH(ptr, operhash_table[hashv].head)
 	{
-		ohash = ptr->data;
+		ohash_copy = ptr->data;
 
-		if(!irccmp(ohash->name, name))
-			return ohash->name;
+		if(!irccmp(ohash_copy, name))
+			return ohash_copy;
 	}
 
 	return NULL;
@@ -107,7 +105,8 @@ operhash_find(const char *name)
 void
 operhash_delete(const char *name)
 {
-	struct operhash_entry *ohash;
+	char *ohash_copy;
+	void *ohash_mem;
 	unsigned int hashv;
 	rb_dlink_node *ptr;
 
@@ -118,18 +117,18 @@ operhash_delete(const char *name)
 
 	RB_DLINK_FOREACH(ptr, operhash_table[hashv].head)
 	{
-		ohash = ptr->data;
+		ohash_copy = ptr->data;
 
-		if(irccmp(ohash->name, name))
+		if(irccmp(ohash_copy, name))
 			continue;
 
-		ohash->refcount--;
+		ohash_mem = ohash_copy - 5;
+		(*(int32_t *) ohash_mem)--;
 
-		if(ohash->refcount == 0)
+		if((*(int32_t *) ohash_mem) == 0)
 		{
-			rb_free(ohash->name);
-			rb_free(ohash);
 			rb_dlinkDestroy(ptr, &operhash_table[hashv]);
+			rb_free(ohash_mem);
 			return;
 		}
 	}
