@@ -30,7 +30,7 @@ submit_dns_answer(void *userdata, struct DNSReply *reply)
 
 	if (reply == NULL)
 	{
-		rb_helper_write(authd_helper, "E %s E %c *\n", req->reqid, req->type);
+		rb_helper_write(authd_helper, "E %s E %c *", req->reqid, req->type);
 		goto cleanup;
 	}
 
@@ -94,7 +94,7 @@ submit_dns_answer(void *userdata, struct DNSReply *reply)
 		exit(7);
 	}
 
-	rb_helper_write(authd_helper, "E %s %c %c %s\n", req->reqid, status, req->type, response);
+	rb_helper_write(authd_helper, "E %s %c %c %s", req->reqid, status, req->type, response);
 cleanup:
 	rb_free(req);
 }
