@@ -38,10 +38,12 @@
 
 #define DNS_IDTABLE_SIZE 0x2000
 
-#define DNS_HOST	((char)'H')
-#define DNS_REVERSE	((char)'I')
+#define DNS_HOST_IPV4		((char)'4')
+#define DNS_HOST_IPV6		((char)'6')
+#define DNS_REVERSE_IPV4	((char)'R')
+#define DNS_REVERSE_IPV6	((char)'S')
 
-static void submit_dns(const char, uint16_t id, int aftype, const char *addr);
+static void submit_dns(uint16_t id, char type, const char *addr);
 
 struct dnsreq
 {
@@ -114,7 +116,7 @@ lookup_hostname(const char *hostname, int aftype, DNSCB callback, void *data)
 #endif
 		aft = 4;
 
-	submit_dns(DNS_HOST, nid, aft, hostname);
+	submit_dns(nid, aft == 4 ? DNS_HOST_IPV4 : DNS_HOST_IPV6, hostname);
 	return (nid);
 }
 
@@ -141,12 +143,12 @@ lookup_ip(const char *addr, int aftype, DNSCB callback, void *data)
 #endif
 		aft = 4;
 
-	submit_dns(DNS_REVERSE, nid, aft, addr);
+	submit_dns(nid, aft == 4 ? DNS_REVERSE_IPV4 : DNS_REVERSE_IPV6, addr);
 	return (nid);
 }
 
 void
-dns_results_callback(const char *callid, const char *status, const char *aftype, const char *results)
+dns_results_callback(const char *callid, const char *status, const char *type, const char *results)
 {
 	struct dnsreq *req;
 	uint16_t nid;
@@ -158,8 +160,8 @@ dns_results_callback(const char *callid, const char *status, const char *aftype,
 		return;
 	nid = (uint16_t)lnid;
 	req = &querytable[nid];
-	st = atoi(status);
-	aft = atoi(aftype);
+	st = *status == 'O';
+	aft = *type == '6' || *type == 'S' ? 6 : 4;
 	if(req->callback == NULL)
 	{
 		/* got cancelled..oh well */
@@ -191,12 +193,12 @@ report_dns_servers(struct Client *source_p)
 }
 
 static void
-submit_dns(char type, uint16_t nid, int aftype, const char *addr)
+submit_dns(uint16_t nid, char type, const char *addr)
 {
 	if(authd_helper == NULL)
 	{
 		handle_dns_failure(nid);
 		return;
 	}
-	rb_helper_write(authd_helper, "%c %x %d %s", type, nid, aftype, addr);
+	rb_helper_write(authd_helper, "D %x %c %s", nid, type, addr);
 }
