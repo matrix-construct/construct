@@ -971,139 +971,10 @@ server_estab(struct Client *client_p)
  *   -- adrian
  */
 
-static int
-serv_connect_resolved(struct Client *client_p)
-{
-	struct rb_sockaddr_storage myipnum;
-	char vhoststr[HOSTIPLEN];
-	struct server_conf *server_p;
-	uint16_t port;
-
-	if((server_p = client_p->localClient->att_sconf) == NULL)
-	{
-		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL, "Lost connect{} block for %s",
-				client_p->name);
-		exit_client(client_p, client_p, &me, "Lost connect{} block");
-		return 0;
-	}
-
-#ifdef RB_IPV6
-	if(client_p->localClient->ip.ss_family == AF_INET6)
-		port = ntohs(((struct sockaddr_in6 *)&client_p->localClient->ip)->sin6_port);
-	else
-#endif
-		port = ntohs(((struct sockaddr_in *)&client_p->localClient->ip)->sin_port);
-
-	if(ServerConfVhosted(server_p))
-	{
-		memcpy(&myipnum, &server_p->my_ipnum, sizeof(server_p->my_ipnum));
-		((struct sockaddr_in *)&myipnum)->sin_port = 0;
-		myipnum.ss_family = server_p->aftype;
-
-	}
-	else if(server_p->aftype == AF_INET && ServerInfo.specific_ipv4_vhost)
-	{
-		memcpy(&myipnum, &ServerInfo.ip, sizeof(ServerInfo.ip));
-		((struct sockaddr_in *)&myipnum)->sin_port = 0;
-		myipnum.ss_family = AF_INET;
-		SET_SS_LEN(&myipnum, sizeof(struct sockaddr_in));
-	}
-
-#ifdef RB_IPV6
-	else if((server_p->aftype == AF_INET6) && ServerInfo.specific_ipv6_vhost)
-	{
-		memcpy(&myipnum, &ServerInfo.ip6, sizeof(ServerInfo.ip6));
-		((struct sockaddr_in6 *)&myipnum)->sin6_port = 0;
-		myipnum.ss_family = AF_INET6;
-		SET_SS_LEN(&myipnum, sizeof(struct sockaddr_in6));
-	}
-#endif
-	else
-	{
-		/* log */
-		ilog(L_SERVER, "Connecting to %s[%s] port %d (%s)", client_p->name, client_p->sockhost, port,
-#ifdef RB_IPV6
-				server_p->aftype == AF_INET6 ? "IPv6" :
-#endif
-				(server_p->aftype == AF_INET ? "IPv4" : "?"));
-
-		if(ServerConfSSL(server_p))
-		{
-			rb_connect_tcp(client_p->localClient->F, (struct sockaddr *)&client_p->localClient->ip,
-					 NULL, 0, serv_connect_ssl_callback,
-					 client_p, ConfigFileEntry.connect_timeout);
-		}
-		else
-			rb_connect_tcp(client_p->localClient->F, (struct sockaddr *)&client_p->localClient->ip,
-					 NULL, 0, serv_connect_callback,
-					 client_p, ConfigFileEntry.connect_timeout);
-		 return 1;
-	}
-
-	/* log */
-	rb_inet_ntop_sock((struct sockaddr *)&myipnum, vhoststr, sizeof vhoststr);
-	ilog(L_SERVER, "Connecting to %s[%s] port %d (%s) (vhost %s)", client_p->name, client_p->sockhost, port,
-#ifdef RB_IPV6
-			server_p->aftype == AF_INET6 ? "IPv6" :
-#endif
-			(server_p->aftype == AF_INET ? "IPv4" : "?"), vhoststr);
-
-
-	if(ServerConfSSL(server_p))
-		rb_connect_tcp(client_p->localClient->F, (struct sockaddr *)&client_p->localClient->ip,
-				 (struct sockaddr *) &myipnum,
-				 GET_SS_LEN(&myipnum), serv_connect_ssl_callback, client_p,
-				 ConfigFileEntry.connect_timeout);
-	else
-		rb_connect_tcp(client_p->localClient->F, (struct sockaddr *)&client_p->localClient->ip,
-				 (struct sockaddr *) &myipnum,
-				 GET_SS_LEN(&myipnum), serv_connect_callback, client_p,
-				 ConfigFileEntry.connect_timeout);
-
-	return 1;
-}
-
-static void
-serv_connect_dns_callback(void *vptr, struct DNSReply *reply)
-{
-	struct Client *client_p = vptr;
-	uint16_t port;
-
-	rb_free(client_p->localClient->dnsquery);
-	client_p->localClient->dnsquery = NULL;
-
-	if (reply == NULL)
-	{
-		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL, "Cannot resolve hostname for %s",
-				client_p->name);
-		ilog(L_SERVER, "Cannot resolve hostname for %s",
-				log_client_name(client_p, HIDE_IP));
-		exit_client(client_p, client_p, &me, "Cannot resolve hostname");
-		return;
-	}
-#ifdef RB_IPV6
-	if(reply->addr.ss_family == AF_INET6)
-		port = ((struct sockaddr_in6 *)&client_p->localClient->ip)->sin6_port;
-	else
-#endif
-		port = ((struct sockaddr_in *)&client_p->localClient->ip)->sin_port;
-	memcpy(&client_p->localClient->ip, &reply->addr, sizeof(client_p->localClient->ip));
-#ifdef RB_IPV6
-	if(reply->addr.ss_family == AF_INET6)
-		((struct sockaddr_in6 *)&client_p->localClient->ip)->sin6_port = port;
-	else
-#endif
-		((struct sockaddr_in *)&client_p->localClient->ip)->sin_port = port;
-	/* Set sockhost properly now -- jilles */
-	rb_inet_ntop_sock((struct sockaddr *)&client_p->localClient->ip,
-			client_p->sockhost, sizeof client_p->sockhost);
-	serv_connect_resolved(client_p);
-}
-
 /*
  * serv_connect() - initiate a server connection
  *
- * inputs	- pointer to conf
+ * inputs	- pointer to conf 
  *		- pointer to client doing the connet
  * output	-
  * side effects	-
@@ -1121,13 +992,17 @@ int
 serv_connect(struct server_conf *server_p, struct Client *by)
 {
 	struct Client *client_p;
-	struct rb_sockaddr_storage theiripnum;
-	rb_fde_t *F;
+	struct rb_sockaddr_storage myipnum;
 	char note[HOSTLEN + 10];
+	rb_fde_t *F;
 
 	s_assert(server_p != NULL);
 	if(server_p == NULL)
 		return 0;
+
+	/* log */
+	rb_inet_ntop_sock((struct sockaddr *)&server_p->my_ipnum, buf, sizeof(buf));
+	ilog(L_SERVER, "Connect to *[%s] @%s", server_p->name, buf);
 
 	/*
 	 * Make sure this server isn't already connected
@@ -1144,27 +1019,32 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	}
 
 	/* create a socket for the server connection */
-	if((F = rb_socket(server_p->aftype, SOCK_STREAM, 0, NULL)) == NULL)
+	if((F = rb_socket(GET_SS_FAMILY(&server_p->my_ipnum), SOCK_STREAM, 0, NULL)) == NULL)
 	{
 		ilog_error("opening a stream socket");
 		return 0;
 	}
 
-	rb_snprintf(note, sizeof note, "Server: %s", server_p->name);
+	/* servernames are always guaranteed under HOSTLEN chars */
+	rb_snprintf(note, sizeof(note), "Server: %s", server_p->name);
 	rb_note(F, note);
 
 	/* Create a local client */
 	client_p = make_client(NULL);
 
-	/* Copy in the server, hostname, fd
-	 * The sockhost may be a hostname, this will be corrected later
-	 * -- jilles
-	 */
+	/* Copy in the server, hostname, fd */
 	rb_strlcpy(client_p->name, server_p->name, sizeof(client_p->name));
 	rb_strlcpy(client_p->host, server_p->host, sizeof(client_p->host));
-	rb_strlcpy(client_p->sockhost, server_p->host, sizeof(client_p->sockhost));
+	rb_strlcpy(client_p->sockhost, buf, sizeof(client_p->sockhost));
 	client_p->localClient->F = F;
 	add_to_cli_connid_hash(client_p);
+	/* shove the port number into the sockaddr */
+#ifdef RB_IPV6
+	if(GET_SS_FAMILY(&server_p->my_ipnum) == AF_INET6)
+		((struct sockaddr_in6 *)&server_p->my_ipnum)->sin6_port = htons(server_p->port);
+	else
+#endif
+		((struct sockaddr_in *)&server_p->my_ipnum)->sin_port = htons(server_p->port);
 
 	/*
 	 * Set up the initial server evilness, ripped straight from
@@ -1191,57 +1071,67 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	 * The socket has been connected or connect is in progress.
 	 */
 	make_server(client_p);
-	if(by && IsPerson(by))
-	{
-		rb_strlcpy(client_p->serv->by, by->name,
-				sizeof client_p->serv->by);
-		if(client_p->serv->user)
-			free_user(client_p->serv->user, NULL);
-		client_p->serv->user = by->user;
-		by->user->refcnt++;
-	}
+	if(by && IsClient(by))
+		strcpy(client_p->serv->by, by->name);
 	else
-	{
-		rb_strlcpy(client_p->serv->by, "AutoConn.",
-				sizeof client_p->serv->by);
-		if(client_p->serv->user)
-			free_user(client_p->serv->user, NULL);
-		client_p->serv->user = NULL;
-	}
+		strcpy(client_p->serv->by, "AutoConn.");
+
 	SetConnecting(client_p);
 	rb_dlinkAddTail(client_p, &client_p->node, &global_client_list);
 
-	if (rb_inet_pton_sock(server_p->host, (struct sockaddr *)&theiripnum) > 0)
+	if(ServerConfVhosted(server_p))
 	{
-		memcpy(&client_p->localClient->ip, &theiripnum, sizeof(client_p->localClient->ip));
-#ifdef RB_IPV6
-		if(theiripnum.ss_family == AF_INET6)
-			((struct sockaddr_in6 *)&client_p->localClient->ip)->sin6_port = htons(server_p->port);
-		else
-#endif
-			((struct sockaddr_in *)&client_p->localClient->ip)->sin_port = htons(server_p->port);
+		memcpy(&myipnum, &server_p->my_ipnum, sizeof(myipnum));
+		((struct sockaddr_in *)&myipnum)->sin_port = 0;
+		SET_SS_FAMILY(&myipnum, GET_SS_FAMILY(&server_p->my_ipnum));
 
-		return serv_connect_resolved(client_p);
 	}
+	else if(GET_SS_FAMILY(&server_p->my_ipnum) == AF_INET && ServerInfo.specific_ipv4_vhost)
+	{
+		memcpy(&myipnum, &ServerInfo.ip, sizeof(myipnum));
+		((struct sockaddr_in *)&myipnum)->sin_port = 0;
+		SET_SS_FAMILY(&myipnum, AF_INET);
+		SET_SS_LEN(&myipnum, sizeof(struct sockaddr_in));
+	}
+
+#ifdef RB_IPV6
+	else if((GET_SS_FAMILY(&server_p->my_ipnum) == AF_INET6) && ServerInfo.specific_ipv6_vhost)
+	{
+		memcpy(&myipnum, &ServerInfo.ip6, sizeof(myipnum));
+		((struct sockaddr_in6 *)&myipnum)->sin6_port = 0;
+		SET_SS_FAMILY(&myipnum, AF_INET6);
+		SET_SS_LEN(&myipnum, sizeof(struct sockaddr_in6));
+	}
+#endif
 	else
 	{
-#ifdef RB_IPV6
-		if(theiripnum.ss_family == AF_INET6)
-			((struct sockaddr_in6 *)&client_p->localClient->ip)->sin6_port = htons(server_p->port);
+		if(ServerConfSSL(server_p))
+		{
+			rb_connect_tcp(client_p->localClient->F,
+				       (struct sockaddr *)&server_p->my_ipnum, NULL, 0,
+				       serv_connect_ssl_callback, client_p,
+				       ConfigFileEntry.connect_timeout);
+		}
 		else
-#endif
-			((struct sockaddr_in *)&client_p->localClient->ip)->sin_port = htons(server_p->port);
+			rb_connect_tcp(client_p->localClient->F,
+				       (struct sockaddr *)&server_p->my_ipnum, NULL, 0,
+				       serv_connect_callback, client_p,
+				       ConfigFileEntry.connect_timeout);
 
-		client_p->localClient->dnsquery = rb_malloc(sizeof(struct DNSQuery));
-		client_p->localClient->dnsquery->ptr = client_p;
-		client_p->localClient->dnsquery->callback = serv_connect_dns_callback;
-		gethost_byname_type(server_p->host, client_p->localClient->dnsquery,
-#ifdef RB_IPV6
-				server_p->aftype == AF_INET6 ? T_AAAA :
-#endif
-				T_A);
 		return 1;
 	}
+	if(ServerConfSSL(server_p))
+		rb_connect_tcp(client_p->localClient->F, (struct sockaddr *)&server_p->my_ipnum,
+			       (struct sockaddr *)&myipnum,
+			       GET_SS_LEN(&myipnum), serv_connect_ssl_callback, client_p,
+			       ConfigFileEntry.connect_timeout);
+	else
+		rb_connect_tcp(client_p->localClient->F, (struct sockaddr *)&server_p->my_ipnum,
+			       (struct sockaddr *)&myipnum,
+			       GET_SS_LEN(&myipnum), serv_connect_callback, client_p,
+			       ConfigFileEntry.connect_timeout);
+
+	return 1;
 }
 
 static void

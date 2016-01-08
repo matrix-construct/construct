@@ -1300,11 +1300,6 @@ exit_unknown_client(struct Client *client_p, struct Client *source_p, struct Cli
 {
 	delete_auth_queries(source_p);
 	abort_blacklist_queries(source_p);
-	if (source_p->localClient->dnsquery)
-	{
-		delete_resolver_queries(source_p->localClient->dnsquery);
-		rb_free(source_p->localClient->dnsquery);
-	}
 	rb_dlinkDelete(&source_p->localClient->tnode, &unknown_list);
 
 	if(!IsIOError(source_p))

@@ -46,6 +46,7 @@
 #include "irc_dictionary.h"
 #include "s_assert.h"
 #include "logger.h"
+#include "dns.h"
 
 rb_dlink_list shared_conf_list;
 rb_dlink_list cluster_conf_list;
@@ -354,6 +355,27 @@ free_server_conf(struct server_conf *server_p)
 	rb_free(server_p);
 }
 
+/*
+ * conf_dns_callback
+ * inputs       - pointer to struct ConfItem
+ *              - pointer to adns reply
+ * output       - none
+ * side effects - called when resolver query finishes
+ * if the query resulted in a successful search, hp will contain
+ * a non-null pointer, otherwise hp will be null.
+ * if successful save hp in the conf item it was called with
+ */
+static void
+conf_dns_callback(const char *result, int status, int aftype, void *data)
+{
+	struct server_conf *server_p = data;
+
+	if(status == 1)
+		rb_inet_pton_sock(result, (struct sockaddr *)&server_p->my_ipnum);
+
+	server_p->dns_query = 0;
+}
+
 void
 add_server_conf(struct server_conf *server_p)
 {
@@ -375,8 +397,11 @@ add_server_conf(struct server_conf *server_p)
 		server_p->class_name = rb_strdup("default");
 	}
 
-	if(strchr(server_p->host, '*') || strchr(server_p->host, '?'))
+	if(strpbrk(server_p->host, "*?"))
 		return;
+
+	server_p->dns_query =
+		lookup_hostname(server_p->host, GET_SS_FAMILY(&server_p->my_ipnum), conf_dns_callback, server_p);
 }
 
 struct server_conf *

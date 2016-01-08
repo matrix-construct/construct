@@ -41,7 +41,6 @@ struct Listener
 	int ssl;		/* ssl listener */
 	int defer_accept;	/* use TCP_DEFER_ACCEPT */
 	struct rb_sockaddr_storage addr;
-	struct DNSQuery *dns_query;
 	char vhost[HOSTLEN + 1];	/* virtual name of listener */
 };
 

@@ -193,6 +193,8 @@ struct server_conf
 	char *class_name;
 	struct Class *class;
 	rb_dlink_node node;
+
+	uint16_t dns_query;
 };
 
 #define SERVER_ILLEGAL		0x0001

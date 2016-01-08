@@ -46,7 +46,7 @@ struct Blacklist {
 struct BlacklistClient {
 	struct Blacklist *blacklist;
 	struct Client *client_p;
-	struct DNSQuery dns_query;
+	uint16_t dns_id;
 	rb_dlink_node node;
 };
 

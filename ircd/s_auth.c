@@ -43,7 +43,7 @@
 #include "ircd.h"
 #include "numeric.h"
 #include "packet.h"
-#include "res.h"
+#include "dns.h"
 #include "logger.h"
 #include "s_stats.h"
 #include "send.h"
@@ -55,7 +55,7 @@ struct AuthRequest
 {
 	rb_dlink_node node;
 	struct Client *client;	/* pointer to client struct for request */
-	struct DNSQuery dns_query; /* DNS Query */
+	uint16_t dns_id;	/* DNS Query */
 	unsigned int flags;	/* current state of request */
 	rb_fde_t *F;		/* file descriptor for auth queries */
 	time_t timeout;		/* time when query expires */
@@ -198,7 +198,7 @@ release_auth_client(struct AuthRequest *auth)
  * of success of failure
  */
 static void
-auth_dns_callback(void *vptr, struct DNSReply *reply)
+auth_dns_callback(const char *result, int status, int aftype, void *vptr)
 {
         struct AuthRequest *auth = (struct AuthRequest *) vptr;
         ClearDNSPending(auth);
@@ -216,50 +216,16 @@ auth_dns_callback(void *vptr, struct DNSReply *reply)
 		return;
 	}
 
-        if(reply)
+        if(result != NULL && status)
         {
 		int good = 1;
 
-		if(auth->client->localClient->ip.ss_family == AF_INET)
+		if(good && strlen(result) <= HOSTLEN)
 		{
-			struct sockaddr_in *ip, *ip_fwd;
-
-			ip = (struct sockaddr_in *) &auth->client->localClient->ip;
-			ip_fwd = (struct sockaddr_in *) &reply->addr;
-
-			if(ip->sin_addr.s_addr != ip_fwd->sin_addr.s_addr)
-			{
-				sendheader(auth->client, REPORT_HOST_MISMATCH);
-				good = 0;
-			}
-		}
-#ifdef RB_IPV6
-		else if(auth->client->localClient->ip.ss_family == AF_INET6)
-		{
-			struct sockaddr_in6 *ip, *ip_fwd;
-
-			ip = (struct sockaddr_in6 *) &auth->client->localClient->ip;
-			ip_fwd = (struct sockaddr_in6 *) &reply->addr;
-
-			if(memcmp(&ip->sin6_addr, &ip_fwd->sin6_addr, sizeof(struct in6_addr)) != 0)
-			{
-				sendheader(auth->client, REPORT_HOST_MISMATCH);
-				good = 0;
-			}
-		}
-#endif
-		else	/* can't verify it, don't know how. reject it. */
-		{
-			sendheader(auth->client, REPORT_HOST_UNKNOWN);
-			good = 0;
-		}
-
-                if(good && strlen(reply->h_name) <= HOSTLEN)
-                {
-                        rb_strlcpy(auth->client->host, reply->h_name, sizeof(auth->client->host));
+			rb_strlcpy(auth->client->host, result, sizeof(auth->client->host));
                         sendheader(auth->client, REPORT_FIN_DNS);
                 }
-                else if (strlen(reply->h_name) > HOSTLEN)
+                else if (strlen(result) > HOSTLEN)
                         sendheader(auth->client, REPORT_HOST_TOOLONG);
         }
 	else
@@ -447,13 +413,10 @@ start_auth(struct Client *client)
 
 	auth = make_auth_request(client);
 
-	auth->dns_query.ptr = auth;
-	auth->dns_query.callback = auth_dns_callback;
-
 	sendheader(client, REPORT_DO_DNS);
 
 	/* No DNS cache now, remember? -- adrian */
-	gethost_byaddr(&client->localClient->ip, &auth->dns_query);
+	auth->dns_id = lookup_ip(client->sockhost, GET_SS_FAMILY(&client->localClient->ip), auth_dns_callback, auth);
 
 	SetDNSPending(auth);
 
@@ -493,7 +456,7 @@ timeout_auth_queries_event(void *notused)
 			if(IsDNSPending(auth))
 			{
 				ClearDNSPending(auth);
-				delete_resolver_queries(&auth->dns_query);
+				cancel_lookup(auth->dns_id);
 				sendheader(auth->client, REPORT_FAIL_DNS);
 			}
 
@@ -636,7 +599,7 @@ delete_auth_queries(struct Client *target_p)
 	target_p->localClient->auth_request = NULL;
 
 	if(IsDNSPending(auth))
-		delete_resolver_queries(&auth->dns_query);
+		cancel_lookup(auth->dns_id);
 
 	if(auth->F != NULL)
 		rb_close(auth->F);

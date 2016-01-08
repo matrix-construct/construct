@@ -34,7 +34,7 @@
 
 #include "stdinc.h"
 #include "client.h"
-#include "res.h"
+#include "dns.h"
 #include "numeric.h"
 #include "reject.h"
 #include "s_conf.h"
@@ -60,26 +60,15 @@ static struct Blacklist *find_blacklist(char *name)
 	return NULL;
 }
 
-static inline int blacklist_check_reply(struct BlacklistClient *blcptr, struct rb_sockaddr_storage *addr)
+static inline int blacklist_check_reply(struct BlacklistClient *blcptr, const char *ipaddr)
 {
 	struct Blacklist *blptr = blcptr->blacklist;
-	char ipaddr[HOSTIPLEN];
-	char *lastoctet;
+	const char *lastoctet;
 	rb_dlink_node *ptr;
-
-	/* XXX the below two checks might want to change at some point
-	 * e.g. if IPv6 blacklists don't use 127.x.y.z or A records anymore
-	 * --Elizabeth
-	 */
-	if (addr->ss_family != AF_INET ||
-			memcmp(&((struct sockaddr_in *)addr)->sin_addr, "\177", 1))
-		goto blwarn;
 
 	/* No filters and entry found - thus positive match */
 	if (!rb_dlink_list_length(&blptr->filters))
 		return 1;
-
-	rb_inet_ntop_sock((struct sockaddr *)addr, ipaddr, sizeof(ipaddr));
 
 	/* Below will prolly have to change too if the above changes */
 	if ((lastoctet = strrchr(ipaddr, '.')) == NULL || *(++lastoctet) == '\0')
@@ -88,7 +77,7 @@ static inline int blacklist_check_reply(struct BlacklistClient *blcptr, struct r
 	RB_DLINK_FOREACH(ptr, blcptr->blacklist->filters.head)
 	{
 		struct BlacklistFilter *filter = ptr->data;
-		char *cmpstr;
+		const char *cmpstr;
 
 		if (filter->type == BLACKLIST_FILTER_ALL)
 			cmpstr = ipaddr;
@@ -118,7 +107,7 @@ blwarn:
 	return 0;
 }
 
-static void blacklist_dns_callback(void *vptr, struct DNSReply *reply)
+static void blacklist_dns_callback(const char *result, int status, int aftype, void *vptr)
 {
 	struct BlacklistClient *blcptr = (struct BlacklistClient *) vptr;
 	int listed = 0;
@@ -134,9 +123,9 @@ static void blacklist_dns_callback(void *vptr, struct DNSReply *reply)
 		return;
 	}
 
-	if (reply != NULL)
+	if (result != NULL && status)
 	{
-		if (blacklist_check_reply(blcptr, &reply->addr))
+		if (blacklist_check_reply(blcptr, result))
 			listed = TRUE;
 	}
 
@@ -166,9 +155,6 @@ static void initiate_blacklist_dnsquery(struct Blacklist *blptr, struct Client *
 
 	blcptr->blacklist = blptr;
 	blcptr->client_p = client_p;
-
-	blcptr->dns_query.ptr = blcptr;
-	blcptr->dns_query.callback = blacklist_dns_callback;
 
 	if ((client_p->localClient->ip.ss_family == AF_INET) && blptr->ipv4)
 	{
@@ -219,7 +205,7 @@ static void initiate_blacklist_dnsquery(struct Blacklist *blptr, struct Client *
 	else
 		return;
 
-	gethost_byname_type(buf, &blcptr->dns_query, T_A);
+	blcptr->dns_id = lookup_hostname(buf, AF_INET, blacklist_dns_callback, blcptr);
 
 	rb_dlinkAdd(blcptr, &blcptr->node, &client_p->preClient->dnsbl_queries);
 	blptr->refcount++;
@@ -297,7 +283,7 @@ void abort_blacklist_queries(struct Client *client_p)
 		blcptr = ptr->data;
 		rb_dlinkDelete(&blcptr->node, &client_p->preClient->dnsbl_queries);
 		unref_blacklist(blcptr->blacklist);
-		delete_resolver_queries(&blcptr->dns_query);
+		cancel_lookup(blcptr->dns_id);
 		rb_free(blcptr);
 	}
 }

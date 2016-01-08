@@ -236,8 +236,6 @@ struct LocalUser
 	/* time challenge response is valid for */
 	time_t chal_time;
 
-	struct DNSQuery *dnsquery; /* for outgoing server's name lookup */
-
 	time_t next_away;	/* Don't allow next away before... */
 	time_t last;
 	uint32_t connid;
