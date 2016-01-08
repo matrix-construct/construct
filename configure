@@ -852,7 +852,6 @@ with_custom_version
 enable_assert
 enable_iodebug
 enable_profile
-enable_balloc
 with_nicklen
 with_topiclen
 enable_warnings
@@ -1513,7 +1512,6 @@ Optional Features:
                           hard(aborts the daemon)
   --enable-iodebug        Enable IO Debugging hooks
   --enable-profile        Enable profiling
-  --disable-balloc        Disable the block allocator.
   --enable-warnings       Enable all sorts of warnings for debugging.
 
 Optional Packages:
@@ -16525,20 +16523,6 @@ else
 $as_echo "no" >&6; }
 fi
 
-# Check whether --enable-balloc was given.
-if test "${enable_balloc+set}" = set; then :
-  enableval=$enable_balloc; balloc=$enableval
-else
-  balloc=yes
-fi
-
-
-if test "$balloc" = no; then
-
-$as_echo "#define NOBALLOC 1" >>confdefs.h
-
-fi
-
 
 $as_echo "#define NICKNAMEHISTORYLENGTH 15000" >>confdefs.h
 
@@ -20308,7 +20292,6 @@ Configuration of ${BRANDING_NAME}-${BRANDING_VERSION}:
 
 	Ziplinks           : $zlib
 	OpenSSL            : $openssl
-	Block allocator    : $balloc
 
 	Nickname length    : $NICKLEN
 	Topic length       : $TOPICLEN

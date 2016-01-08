@@ -300,9 +300,6 @@
 /* Size of the WHOWAS array. */
 #undef NICKNAMEHISTORYLENGTH
 
-/* Define to 1 if you wish to disable the block allocator. */
-#undef NOBALLOC
-
 /* Name of package */
 #undef PACKAGE
 

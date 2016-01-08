@@ -237,9 +237,6 @@
 /* Define this to disable debugging support. */
 #undef NDEBUG
 
-/* Define to 1 if you wish to disable the block allocator. */
-#undef NOBALLOC
-
 /* Name of package */
 #undef PACKAGE
 

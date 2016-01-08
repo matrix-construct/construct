@@ -43,7 +43,6 @@ void *rb_bh_alloc(rb_bh *);
 
 rb_bh *rb_bh_create(size_t elemsize, int elemsperblock, const char *desc);
 int rb_bh_destroy(rb_bh *bh);
-int rb_bh_gc(rb_bh *bh);
 void rb_init_bh(void);
 void rb_bh_usage(rb_bh *bh, size_t *bused, size_t *bfree, size_t *bmemusage, const char **desc);
 void rb_bh_usage_all(rb_bh_usage_cb *cb, void *data);

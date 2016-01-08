@@ -447,14 +447,6 @@ else
 	AC_MSG_RESULT(no)
 fi
 
-AC_ARG_ENABLE(balloc,
-AC_HELP_STRING([--disable-balloc],[Disable the block allocator.]),
-[balloc=$enableval], [balloc=yes])
-
-if test "$balloc" = no; then
-	AC_DEFINE([NOBALLOC], 1, [Define to 1 if you wish to disable the block allocator.])
-fi
-
 AC_ARG_ENABLE(warnings,
 AC_HELP_STRING([--enable-warnings],[Enable all sorts of warnings for debugging.]),
 [CFLAGS="$CFLAGS -Wall -Werror -Wcast-qual -Wmissing-declarations -Wmissing-prototypes -Wnested-externs -Wshadow -Wwrite-strings -W -Wno-unused -Wunused-function -Wunused-variable"],[])
@@ -693,7 +685,6 @@ echo "Installing into: $prefix"
 
 echo "IPv6 support ................... $have_v6"
 echo "Assert debugging ............... $assert"
-echo "Block allocator ................ $balloc"
 echo "SSL Type........................ $SSL_TYPE"
 echo
 

@@ -2,7 +2,6 @@ rb_bh_alloc
 rb_bh_create
 rb_bh_destroy
 rb_bh_free
-rb_bh_gc
 rb_bh_total_usage
 rb_bh_usage
 rb_bh_usage_all

@@ -538,14 +538,6 @@ else
 	AC_MSG_RESULT(no)
 fi
 
-AC_ARG_ENABLE(balloc,
-AC_HELP_STRING([--disable-balloc],[Disable the block allocator.]),
-[balloc=$enableval], [balloc=yes])
-
-if test "$balloc" = no; then
-	AC_DEFINE([NOBALLOC], 1, [Define to 1 if you wish to disable the block allocator.])
-fi
-
 AC_DEFINE([NICKNAMEHISTORYLENGTH], 15000, [Size of the WHOWAS array.])
 AC_DEFINE([CHANNEL_HEAP_SIZE], 8192, [Size of the channel heap.])
 AC_DEFINE([BAN_HEAP_SIZE], 4096, [Size of the ban heap.])
@@ -696,7 +688,6 @@ Configuration of ${BRANDING_NAME}-${BRANDING_VERSION}:
 
 	Ziplinks           : $zlib
 	OpenSSL            : $openssl
-	Block allocator    : $balloc
 
 	Nickname length    : $NICKLEN
 	Topic length       : $TOPICLEN
