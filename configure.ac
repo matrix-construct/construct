@@ -27,9 +27,6 @@ LT_CONFIG_LTDL_DIR([libltdl])
 LTDL_INIT
 
 build_ltdl=$with_included_ltdl
-#if test x"$build_ltdl" = x"yes"; then
-#	AC_CONFIG_SUBDIRS([libltdl])
-#fi
 AM_CONDITIONAL([BUILD_LTDL], [test x"$build_ltdl" = x"yes"])
 
 if test "$ac_cv_c_compiler_gnu" = yes; then
@@ -166,17 +163,6 @@ elif test "$CRYPT_LIB" = no; then
 fi
 
 AC_SUBST(CRYPT_LIB)
-
-if test "$ac_cv_header_sys_wait_h" = yes -o "$ac_cv_header_wait_h" = yes; then
-	VICONF=viconf
-	dnl We need one of the above to build viconf. Just a sanity check,
-	dnl we don't want to stop people from building the rest of ircd
-	dnl just because they can't build viconf.
-else
-	VICONF=""
-fi
-
-AC_SUBST(VICONF)
 
 AC_C_BIGENDIAN
 

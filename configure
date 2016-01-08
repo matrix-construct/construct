@@ -668,7 +668,6 @@ PKG_CONFIG
 ZLIB_LD
 ENCSPEED
 ALLOCA
-VICONF
 CRYPT_LIB
 PKGLIBEXECDIR
 pkglibexecdir
@@ -13456,9 +13455,6 @@ eval "LTDLOPEN=\"$libname_spec\""
 
 
 build_ltdl=$with_included_ltdl
-#if test x"$build_ltdl" = x"yes"; then
-#	AC_CONFIG_SUBDIRS([libltdl])
-#fi
  if test x"$build_ltdl" = x"yes"; then
   BUILD_LTDL_TRUE=
   BUILD_LTDL_FALSE='#'
@@ -15073,14 +15069,6 @@ if test "$CRYPT_LIB" = "none required"; then
 	unset CRYPT_LIB
 elif test "$CRYPT_LIB" = no; then
 	unset CRYPT_LIB
-fi
-
-
-
-if test "$ac_cv_header_sys_wait_h" = yes -o "$ac_cv_header_wait_h" = yes; then
-	VICONF=viconf
-			else
-	VICONF=""
 fi
 
 
