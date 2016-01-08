@@ -116,16 +116,14 @@ resolve_dns(int parc, char *parv[])
 	{
 	case '4':
 		type = T_A;
-		if(!rb_inet_pton_sock(rec, (struct sockaddr *) &req->addr))
-			exit(6);
 		break;
 	case '6':
 		type = T_AAAA;
-		if(!rb_inet_pton_sock(rec, (struct sockaddr *) &req->addr))
-			exit(6);
 		break;
 	case 'R':
 	case 'S':
+		if(!rb_inet_pton_sock(rec, (struct sockaddr *) &req->addr))
+			exit(6);
 		type = T_PTR;
 		break;
 	}
@@ -133,5 +131,8 @@ resolve_dns(int parc, char *parv[])
 	req->query.ptr = req;
 	req->query.callback = submit_dns_answer;
 
-	gethost_byname_type(rec, &req->query, type);
+	if (type != T_PTR)
+		gethost_byname_type(rec, &req->query, type);
+	else
+		gethost_byaddr(&req->addr, &req->query);
 }
