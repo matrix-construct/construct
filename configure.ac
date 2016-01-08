@@ -23,13 +23,13 @@ AM_SILENT_RULES([yes])
 AM_PROG_AR
 
 LT_INIT([dlopen disable-static])
-LT_CONFIG_LTDL_DIR([extra/libltdl])
+LT_CONFIG_LTDL_DIR([libltdl])
 LTDL_INIT
 
 build_ltdl=$with_included_ltdl
-if test x"$build_ltdl" = x"yes"; then
-	AC_CONFIG_SUBDIRS([libltdl])
-fi
+#if test x"$build_ltdl" = x"yes"; then
+#	AC_CONFIG_SUBDIRS([libltdl])
+#fi
 AM_CONDITIONAL([BUILD_LTDL], [test x"$build_ltdl" = x"yes"])
 
 if test "$ac_cv_c_compiler_gnu" = yes; then

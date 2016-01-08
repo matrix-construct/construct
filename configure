@@ -563,7 +563,7 @@ as_tr_sh="eval sed 'y%*+%pp%;s%[^_$as_cr_alnum]%_%g'"
 
 SHELL=${CONFIG_SHELL-/bin/sh}
 
-lt_ltdl_dir='extra/libltdl'
+lt_ltdl_dir='libltdl'
 
 lt_dlopen_dir="$lt_ltdl_dir"
 
@@ -876,7 +876,6 @@ PKG_CONFIG_LIBDIR
 SQLITE_CFLAGS
 SQLITE_LIBS'
 ac_subdirs_all='libratbox
-extra/libltdl
 libltdl'
 
 # Initialize some variables set by options.
@@ -13365,7 +13364,7 @@ fi
 
 
 
-    subdirs="$subdirs extra/libltdl"
+    subdirs="$subdirs libltdl"
 
 
 
@@ -13457,10 +13456,9 @@ eval "LTDLOPEN=\"$libname_spec\""
 
 
 build_ltdl=$with_included_ltdl
-if test x"$build_ltdl" = x"yes"; then
-	subdirs="$subdirs libltdl"
-
-fi
+#if test x"$build_ltdl" = x"yes"; then
+#	AC_CONFIG_SUBDIRS([libltdl])
+#fi
  if test x"$build_ltdl" = x"yes"; then
   BUILD_LTDL_TRUE=
   BUILD_LTDL_FALSE='#'
