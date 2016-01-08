@@ -68,6 +68,7 @@
 #include "chmode.h"
 #include "privilege.h"
 #include "bandbi.h"
+#include "authd.h"
 
 /* /quote set variables */
 struct SetOptions GlobalSetOptions;
@@ -660,6 +661,7 @@ charybdis_main(int argc, char *argv[])
 	load_core_modules(1);
 
 	init_auth();		/* Initialise the auth code */
+	init_authd();		/* Start up authd. */
 	init_resolver();	/* Needs to be setup before the io loop */
 	privilegeset_set_new("default", "", 0);
 
