@@ -34,6 +34,7 @@
 
 #include "stdinc.h"
 #include "s_assert.h"
+#include "match.h"
 #include "irc_radixtree.h"
 
 rb_dlink_list radixtree_list = {NULL, NULL, 0};
@@ -1056,3 +1057,24 @@ irc_radixtree_stats_walk(void (*cb)(const char *line, void *privdata), void *pri
 		irc_radixtree_stats(ptr->data, cb, privdata);
 	}
 }
+
+void irc_radixtree_irccasecanon(char *str)
+{
+	while (*str)
+	{
+		*str = ToUpper(*str);
+		str++;
+	}
+	return;
+}
+
+void irc_radixtree_strcasecanon(char *str)
+{
+	while (*str)
+	{
+		*str = toupper((unsigned char)*str);
+		str++;
+	}
+	return;
+}
+

@@ -138,4 +138,7 @@ unsigned int irc_radixtree_size(struct irc_radixtree *dict);
 void irc_radixtree_stats(struct irc_radixtree *dict, void (*cb)(const char *line, void *privdata), void *privdata);
 void irc_radixtree_stats_walk(void (*cb)(const char *line, void *privdata), void *privdata);
 
+void irc_radixtree_strcasecanon(char *key);
+void irc_radixtree_irccasecanon(char *key);
+
 #endif
