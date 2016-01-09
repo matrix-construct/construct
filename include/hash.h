@@ -103,7 +103,7 @@ extern void clear_resv_hash(void);
 
 void add_to_cli_connid_hash(struct Client *client_p);
 void del_from_cli_connid_hash(struct Client *client_p);
-struct Client *find_cli_connid_hash(int connid);
+struct Client *find_cli_connid_hash(uint32_t connid);
 
 void add_to_zconnid_hash(struct Client *client_p);
 void del_from_zconnid_hash(struct Client *client_p);

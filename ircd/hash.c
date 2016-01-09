@@ -39,20 +39,16 @@
 #include "cache.h"
 #include "s_newconf.h"
 #include "s_assert.h"
-
-#define ZCONNID_MAX 64 /* i doubt we'll have this many ziplinks ;) */
-
-#define hash_cli_connid(x)	(x % CLI_CONNID_MAX)
-#define hash_zconnid(x)		(x % ZCONNID_MAX)
-
-static rb_dlink_list clientbyconnidTable[CLI_CONNID_MAX];
-static rb_dlink_list clientbyzconnidTable[ZCONNID_MAX];
+#include "irc_dictionary.h"
 
 rb_dlink_list *clientTable;
 rb_dlink_list *channelTable;
 rb_dlink_list *idTable;
 rb_dlink_list *resvTable;
 rb_dlink_list *hostTable;
+
+struct Dictionary *client_connid_tree = NULL;
+struct Dictionary *client_zconnid_tree = NULL;
 
 /*
  * look in whowas.c for the missing ...[WW_MAX]; entry
@@ -103,9 +99,11 @@ init_hash(void)
 	channelTable = rb_malloc(sizeof(rb_dlink_list) * CH_MAX);
 	hostTable = rb_malloc(sizeof(rb_dlink_list) * HOST_MAX);
 	resvTable = rb_malloc(sizeof(rb_dlink_list) * R_MAX);
+
+	client_connid_tree = irc_dictionary_create("client connid", irc_uint32cmp);
+	client_zconnid_tree = irc_dictionary_create("client zconnid", irc_uint32cmp);
 }
 
-#ifndef RICER_HASHING
 u_int32_t
 fnv_hash_upper(const unsigned char *s, int bits)
 {
@@ -165,7 +163,6 @@ fnv_hash_upper_len(const unsigned char *s, int bits, int len)
 		h = ((h >> bits) ^ h) & ((1<<bits)-1);
 	return h;
 }
-#endif
 
 /* hash_nick()
  *
@@ -672,56 +669,39 @@ clear_resv_hash(void)
 void
 add_to_zconnid_hash(struct Client *client_p)
 {
-	unsigned int hashv;
-	hashv = hash_zconnid(client_p->localClient->zconnid);
-	rb_dlinkAddAlloc(client_p, &clientbyzconnidTable[hashv]);       
+	irc_dictionary_add(client_zconnid_tree, IRC_UINT_TO_POINTER(client_p->localClient->zconnid), client_p);
 }
 
 void
 del_from_zconnid_hash(struct Client *client_p)
 {
-	unsigned int hashv;
-	hashv = hash_zconnid(client_p->localClient->zconnid);
-	rb_dlinkFindDestroy(client_p, &clientbyzconnidTable[hashv]); 
+	irc_dictionary_delete(client_zconnid_tree, IRC_UINT_TO_POINTER(client_p->localClient->zconnid));
 }
 
 void
 add_to_cli_connid_hash(struct Client *client_p)
 {
-	unsigned int hashv;
-	hashv = hash_cli_connid(client_p->localClient->connid);
-	rb_dlinkAddAlloc(client_p, &clientbyconnidTable[hashv]);
+	irc_dictionary_add(client_connid_tree, IRC_UINT_TO_POINTER(client_p->localClient->connid), client_p);
 }
 
 void
 del_from_cli_connid_hash(struct Client *client_p)
 {
-	unsigned int hashv;
-	hashv = hash_cli_connid(client_p->localClient->connid);
-	rb_dlinkFindDestroy(client_p, &clientbyconnidTable[hashv]);
+	irc_dictionary_delete(client_connid_tree, IRC_UINT_TO_POINTER(client_p->localClient->connid));
 }
 
 struct Client *
-find_cli_connid_hash(int connid)
+find_cli_connid_hash(uint32_t connid)
 {
 	struct Client *target_p;
-	rb_dlink_node *ptr;
-	unsigned int hashv;
-	hashv = hash_cli_connid(connid);
-	RB_DLINK_FOREACH(ptr, clientbyconnidTable[hashv].head)
-	{
-		target_p = ptr->data;
-		if(target_p->localClient->connid == connid)
-			return target_p;
-	}
 
-	hashv = hash_zconnid(connid);
-	RB_DLINK_FOREACH(ptr, clientbyzconnidTable[hashv].head)
-	{
-		target_p = ptr->data;
-		if(target_p->localClient->zconnid == connid)
-			return target_p;
-	}
+	target_p = irc_dictionary_retrieve(client_connid_tree, IRC_UINT_TO_POINTER(connid));
+	if (target_p != NULL)
+		return target_p;
+
+	target_p = irc_dictionary_retrieve(client_zconnid_tree, IRC_UINT_TO_POINTER(connid));
+	if (target_p != NULL)
+		return target_p;
 
 	return NULL;
 }
@@ -800,6 +780,4 @@ hash_stats(struct Client *source_p)
 	count_hash(source_p, idTable, U_MAX, "ID");
 	sendto_one_numeric(source_p, RPL_STATSDEBUG, "B :--");
 	count_hash(source_p, hostTable, HOST_MAX, "Hostname");
-	sendto_one_numeric(source_p, RPL_STATSDEBUG, "B :--");
-	count_hash(source_p, clientbyconnidTable, CLI_CONNID_MAX, "Client by connection id");
 }
