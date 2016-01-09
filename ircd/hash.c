@@ -40,15 +40,17 @@
 #include "s_newconf.h"
 #include "s_assert.h"
 #include "irc_dictionary.h"
+#include "irc_radixtree.h"
 
 rb_dlink_list *clientTable;
 rb_dlink_list *channelTable;
 rb_dlink_list *idTable;
-rb_dlink_list *resvTable;
 rb_dlink_list *hostTable;
 
 struct Dictionary *client_connid_tree = NULL;
 struct Dictionary *client_zconnid_tree = NULL;
+
+struct irc_radixtree *resv_tree = NULL;
 
 /*
  * look in whowas.c for the missing ...[WW_MAX]; entry
@@ -98,10 +100,11 @@ init_hash(void)
 	idTable = rb_malloc(sizeof(rb_dlink_list) * U_MAX);
 	channelTable = rb_malloc(sizeof(rb_dlink_list) * CH_MAX);
 	hostTable = rb_malloc(sizeof(rb_dlink_list) * HOST_MAX);
-	resvTable = rb_malloc(sizeof(rb_dlink_list) * R_MAX);
 
 	client_connid_tree = irc_dictionary_create("client connid", irc_uint32cmp);
 	client_zconnid_tree = irc_dictionary_create("client zconnid", irc_uint32cmp);
+
+	resv_tree = irc_radixtree_create("resv", irc_radixtree_irccasecanon);
 }
 
 u_int32_t
@@ -205,16 +208,6 @@ hash_hostname(const char *name)
 	return fnv_hash_upper_len((const unsigned char *) name, HOST_MAX_BITS, 30);
 }
 
-/* hash_resv()
- *
- * hashes a resv channel name, based on first 30 chars only
- */
-static u_int32_t
-hash_resv(const char *name)
-{
-	return fnv_hash_upper_len((const unsigned char *) name, R_MAX_BITS, 30);
-}
-
 /* add_to_id_hash()
  *
  * adds an entry to the id hash table
@@ -274,15 +267,12 @@ add_to_hostname_hash(const char *hostname, struct Client *client_p)
 void
 add_to_resv_hash(const char *name, struct ConfItem *aconf)
 {
-	unsigned int hashv;
-
 	s_assert(!EmptyString(name));
 	s_assert(aconf != NULL);
 	if(EmptyString(name) || aconf == NULL)
 		return;
 
-	hashv = hash_resv(name);
-	rb_dlinkAddAlloc(aconf, &resvTable[hashv]);
+	irc_radixtree_add(resv_tree, name, aconf);
 }
 
 /* del_from_id_hash()
@@ -365,16 +355,12 @@ del_from_hostname_hash(const char *hostname, struct Client *client_p)
 void
 del_from_resv_hash(const char *name, struct ConfItem *aconf)
 {
-	unsigned int hashv;
-
 	s_assert(name != NULL);
 	s_assert(aconf != NULL);
 	if(EmptyString(name) || aconf == NULL)
 		return;
 
-	hashv = hash_resv(name);
-
-	rb_dlinkFindDestroy(aconf, &resvTable[hashv]);
+	irc_radixtree_delete(resv_tree, name);
 }
 
 /* find_id()
@@ -621,24 +607,16 @@ struct ConfItem *
 hash_find_resv(const char *name)
 {
 	struct ConfItem *aconf;
-	rb_dlink_node *ptr;
-	unsigned int hashv;
 
 	s_assert(name != NULL);
 	if(EmptyString(name))
 		return NULL;
 
-	hashv = hash_resv(name);
-
-	RB_DLINK_FOREACH(ptr, resvTable[hashv].head)
+	aconf = irc_radixtree_retrieve(resv_tree, name);
+	if (aconf != NULL)
 	{
-		aconf = ptr->data;
-
-		if(!irccmp(name, aconf->host))
-		{
-			aconf->port++;
-			return aconf;
-		}
+		aconf->port++;
+		return aconf;
 	}
 
 	return NULL;
@@ -648,22 +626,17 @@ void
 clear_resv_hash(void)
 {
 	struct ConfItem *aconf;
-	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
-	int i;
+	struct irc_radixtree_iteration_state iter;
 
-	HASH_WALK_SAFE(i, R_MAX, ptr, next_ptr, resvTable)
+	IRC_RADIXTREE_FOREACH(aconf, &iter, resv_tree)
 	{
-		aconf = ptr->data;
-
 		/* skip temp resvs */
 		if(aconf->hold)
 			continue;
 
-		free_conf(ptr->data);
-		rb_dlinkDestroy(ptr, &resvTable[i]);
+		irc_radixtree_delete(resv_tree, aconf->host);
+		free_conf(aconf);
 	}
-	HASH_WALK_END
 }
 
 void

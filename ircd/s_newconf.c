@@ -44,6 +44,7 @@
 #include "newconf.h"
 #include "hash.h"
 #include "irc_dictionary.h"
+#include "irc_radixtree.h"
 #include "s_assert.h"
 #include "logger.h"
 #include "dns.h"
@@ -687,11 +688,10 @@ expire_temp_rxlines(void *unused)
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 	int i;
+	struct irc_radixtree_iteration_state state;
 
-	HASH_WALK_SAFE(i, R_MAX, ptr, next_ptr, resvTable)
+	IRC_RADIXTREE_FOREACH(aconf, &state, resv_tree)
 	{
-		aconf = ptr->data;
-
 		if(aconf->lifetime != 0)
 			continue;
 		if(aconf->hold && aconf->hold <= rb_current_time())
@@ -701,11 +701,10 @@ expire_temp_rxlines(void *unused)
 						"Temporary RESV for [%s] expired",
 						aconf->host);
 
+			irc_radixtree_delete(resv_tree, aconf->host);
 			free_conf(aconf);
-			rb_dlinkDestroy(ptr, &resvTable[i]);
 		}
 	}
-	HASH_WALK_END
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, resv_conf_list.head)
 	{

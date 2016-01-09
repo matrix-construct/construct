@@ -831,6 +831,7 @@ static void
 stats_tresv(struct Client *source_p)
 {
 	struct ConfItem *aconf;
+	struct irc_radixtree_iteration_state state;
 	rb_dlink_node *ptr;
 	int i;
 
@@ -843,15 +844,13 @@ stats_tresv(struct Client *source_p)
 					'q', aconf->port, aconf->host, aconf->passwd);
 	}
 
-	HASH_WALK(i, R_MAX, ptr, resvTable)
+	IRC_RADIXTREE_FOREACH(aconf, &state, resv_tree)
 	{
-		aconf = ptr->data;
 		if(aconf->hold)
 			sendto_one_numeric(source_p, RPL_STATSQLINE,
 					form_str(RPL_STATSQLINE),
 					'q', aconf->port, aconf->host, aconf->passwd);
 	}
-	HASH_WALK_END
 }
 
 
@@ -859,6 +858,7 @@ static void
 stats_resv(struct Client *source_p)
 {
 	struct ConfItem *aconf;
+	struct irc_radixtree_iteration_state state;
 	rb_dlink_node *ptr;
 	int i;
 
@@ -871,15 +871,13 @@ stats_resv(struct Client *source_p)
 					'Q', aconf->port, aconf->host, aconf->passwd);
 	}
 
-	HASH_WALK(i, R_MAX, ptr, resvTable)
+	IRC_RADIXTREE_FOREACH(aconf, &state, resv_tree)
 	{
-		aconf = ptr->data;
 		if(!aconf->hold)
 			sendto_one_numeric(source_p, RPL_STATSQLINE,
 					form_str(RPL_STATSQLINE),
 					'Q', aconf->port, aconf->host, aconf->passwd);
 	}
-	HASH_WALK_END
 }
 
 static void

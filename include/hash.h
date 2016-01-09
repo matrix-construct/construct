@@ -28,15 +28,16 @@
 #define INCLUDED_hash_h
 
 struct Dictionary;
+struct irc_radixtree;
 
 extern rb_dlink_list *clientTable;
 extern rb_dlink_list *channelTable;
 extern rb_dlink_list *idTable;
-extern rb_dlink_list *resvTable;
 extern rb_dlink_list *hostTable;
 extern rb_dlink_list *helpTable;
 
 extern struct Dictionary *nd_dict;
+extern struct irc_radixtree *resv_tree;
 
 /* Magic value for FNV hash functions */
 #define FNV1_32_INIT 0x811c9dc5UL
