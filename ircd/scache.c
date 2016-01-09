@@ -1,5 +1,5 @@
 /*
- *  ircd-ratbox: A slightly useful ircd.
+ *  charybdis
  *  scache.c: Server names cache.
  *
  *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center
@@ -20,8 +20,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
- *
- *  $Id: scache.c 6 2005-09-10 01:02:21Z nenolod $
  */
 
 #include "stdinc.h"
@@ -34,7 +32,7 @@
 #include "scache.h"
 #include "s_conf.h"
 #include "s_assert.h"
-
+#include "irc_radixtree.h"
 
 /*
  * ircd used to store full servernames in anUser as well as in the
@@ -46,10 +44,10 @@
  *
  * reworked to serve for flattening/delaying /links also
  * -- jilles
+ *
+ * reworked to make use of irc_radixtree.
+ * -- kaniini
  */
-
-
-#define SCACHE_HASH_SIZE 257
 
 #define SC_ONLINE 1
 #define SC_HIDDEN 2
@@ -62,43 +60,24 @@ struct scache_entry
 	time_t known_since;
 	time_t last_connect;
 	time_t last_split;
-	struct scache_entry *next;
 };
 
-static struct scache_entry *scache_hash[SCACHE_HASH_SIZE];
+static struct irc_radixtree *scache_tree = NULL;
 
 void
 clear_scache_hash_table(void)
 {
-	memset(scache_hash, 0, sizeof(scache_hash));
-}
-
-static int
-sc_hash(const char *string)
-{
-	int hash_value;
-
-	hash_value = 0;
-	while (*string)
-	{
-		hash_value += ToLower(*string++);
-	}
-
-	return hash_value % SCACHE_HASH_SIZE;
+	scache_tree = irc_radixtree_create("server names cache", irc_radixtree_irccasecanon);
 }
 
 static struct scache_entry *
 find_or_add(const char *name)
 {
-	int hash_index;
 	struct scache_entry *ptr;
 
-	ptr = scache_hash[hash_index = sc_hash(name)];
-	for (; ptr; ptr = ptr->next)
-	{
-		if(!irccmp(ptr->name, name))
-			return ptr;
-	}
+	ptr = irc_radixtree_retrieve(scache_tree, name);
+	if (ptr != NULL)
+		return ptr;
 
 	ptr = (struct scache_entry *) rb_malloc(sizeof(struct scache_entry));
 	s_assert(0 != ptr);
@@ -110,8 +89,8 @@ find_or_add(const char *name)
 	ptr->last_connect = 0;
 	ptr->last_split = 0;
 
-	ptr->next = scache_hash[hash_index];
-	scache_hash[hash_index] = ptr;
+	irc_radixtree_add(scache_tree, ptr->name, ptr);
+
 	return ptr;
 }
 
@@ -155,29 +134,23 @@ void
 scache_send_flattened_links(struct Client *source_p)
 {
 	struct scache_entry *scache_ptr;
-	int i;
+	struct irc_radixtree_iteration_state iter;
 	int show;
 
-	for (i = 0; i < SCACHE_HASH_SIZE; i++)
+	IRC_RADIXTREE_FOREACH(scache_ptr, &iter, scache_tree)
 	{
-		scache_ptr = scache_hash[i];
-		while (scache_ptr)
-		{
-			if (!irccmp(scache_ptr->name, me.name))
-				show = FALSE;
-			else if (scache_ptr->flags & SC_HIDDEN &&
-					!ConfigServerHide.disable_hidden)
-				show = FALSE;
-			else if (scache_ptr->flags & SC_ONLINE)
-				show = scache_ptr->known_since < rb_current_time() - ConfigServerHide.links_delay;
-			else
-				show = scache_ptr->last_split > rb_current_time() - ConfigServerHide.links_delay && scache_ptr->last_split - scache_ptr->known_since > ConfigServerHide.links_delay;
-			if (show)
-				sendto_one_numeric(source_p, RPL_LINKS, form_str(RPL_LINKS),
-						   scache_ptr->name, me.name, 1, scache_ptr->info);
-
-			scache_ptr = scache_ptr->next;
-		}
+		if (!irccmp(scache_ptr->name, me.name))
+			show = FALSE;
+		else if (scache_ptr->flags & SC_HIDDEN &&
+				!ConfigServerHide.disable_hidden)
+			show = FALSE;
+		else if (scache_ptr->flags & SC_ONLINE)
+			show = scache_ptr->known_since < rb_current_time() - ConfigServerHide.links_delay;
+		else
+			show = scache_ptr->last_split > rb_current_time() - ConfigServerHide.links_delay && scache_ptr->last_split - scache_ptr->known_since > ConfigServerHide.links_delay;
+		if (show)
+			sendto_one_numeric(source_p, RPL_LINKS, form_str(RPL_LINKS),
+					   scache_ptr->name, me.name, 1, scache_ptr->info);
 	}
 	sendto_one_numeric(source_p, RPL_LINKS, form_str(RPL_LINKS),
 			   me.name, me.name, 0, me.info);
@@ -197,21 +170,16 @@ void
 scache_send_missing(struct Client *source_p)
 {
 	struct scache_entry *scache_ptr;
-	int i;
+	struct irc_radixtree_iteration_state iter;
 
-	for (i = 0; i < SCACHE_HASH_SIZE; i++)
+	IRC_RADIXTREE_FOREACH(scache_ptr, &iter, scache_tree)
 	{
-		scache_ptr = scache_hash[i];
-		while (scache_ptr)
-		{
-			if (!(scache_ptr->flags & SC_ONLINE) && scache_ptr->last_split > rb_current_time() - MISSING_TIMEOUT)
-				sendto_one_numeric(source_p, RPL_MAP, "** %s (recently split)",
-						   scache_ptr->name);
-
-			scache_ptr = scache_ptr->next;
-		}
+		if (!(scache_ptr->flags & SC_ONLINE) && scache_ptr->last_split > rb_current_time() - MISSING_TIMEOUT)
+			sendto_one_numeric(source_p, RPL_MAP, "** %s (recently split)",
+					   scache_ptr->name);
 	}
 }
+
 /*
  * count_scache
  * inputs	- pointer to where to leave number of servers cached
@@ -223,21 +191,15 @@ void
 count_scache(size_t * number_servers_cached, size_t * mem_servers_cached)
 {
 	struct scache_entry *scache_ptr;
-	int i;
+	struct irc_radixtree_iteration_state iter;
 
 	*number_servers_cached = 0;
 	*mem_servers_cached = 0;
 
-	for (i = 0; i < SCACHE_HASH_SIZE; i++)
+	IRC_RADIXTREE_FOREACH(scache_ptr, &iter, scache_tree)
 	{
-		scache_ptr = scache_hash[i];
-		while (scache_ptr)
-		{
-			*number_servers_cached = *number_servers_cached + 1;
-			*mem_servers_cached = *mem_servers_cached +
-				sizeof(struct scache_entry );
-
-			scache_ptr = scache_ptr->next;
-		}
+		*number_servers_cached = *number_servers_cached + 1;
+		*mem_servers_cached = *mem_servers_cached +
+			sizeof(struct scache_entry);
 	}
 }
