@@ -36,6 +36,8 @@
 #include "s_assert.h"
 #include "irc_radixtree.h"
 
+rb_dlink_list radixtree_list = {NULL, NULL, 0};
+
 /*
  * Patricia tree.
  *
@@ -59,6 +61,8 @@ struct irc_radixtree
 
 	unsigned int count;
 	char *id;
+
+	rb_dlink_node node;
 };
 
 #define POINTERS_PER_NODE 16
@@ -138,34 +142,6 @@ first_leaf(union irc_radixtree_elem *delem)
 }
 
 /*
- * irc_radixtree_create(void (*canonize_cb)(char *key))
- *
- * Dictionary object factory.
- *
- * Inputs:
- *     - function to use for canonizing keys (for example, use
- *       a function that makes the string upper case to create
- *       a patricia with case-insensitive matching)
- *
- * Outputs:
- *     - on success, a new patricia object.
- *
- * Side Effects:
- *     - if services runs out of memory and cannot allocate the object,
- *       the program will abort.
- */
-struct irc_radixtree *
-irc_radixtree_create(void (*canonize_cb)(char *key))
-{
-	struct irc_radixtree *dtree = (struct irc_radixtree *) rb_malloc(sizeof(struct irc_radixtree));
-
-	dtree->canonize_cb = canonize_cb;
-	dtree->root = NULL;
-
-	return dtree;
-}
-
-/*
  * irc_radixtree_create_named(const char *name,
  *     void (*canonize_cb)(char *key))
  *
@@ -185,13 +161,15 @@ irc_radixtree_create(void (*canonize_cb)(char *key))
  *       the program will abort.
  */
 struct irc_radixtree *
-irc_radixtree_create_named(const char *name, void (*canonize_cb)(char *key))
+irc_radixtree_create(const char *name, void (*canonize_cb)(char *key))
 {
 	struct irc_radixtree *dtree = (struct irc_radixtree *) rb_malloc(sizeof(struct irc_radixtree));
 
 	dtree->canonize_cb = canonize_cb;
 	dtree->id = rb_strdup(name);
 	dtree->root = NULL;
+
+	rb_dlinkAdd(dtree, &dtree->node, &radixtree_list);
 
 	return dtree;
 }
@@ -1053,26 +1031,28 @@ irc_radixtree_stats(struct irc_radixtree *dict, void (*cb)(const char *line, voi
 
 	s_assert(dict != NULL);
 
-	if (dict->id != NULL)
-		snprintf(str, sizeof str, "Dictionary stats for %s (%d)",
-			 dict->id, dict->count);
-	else
-		snprintf(str, sizeof str, "Dictionary stats for <%p> (%d)",
-			 (void *) dict, dict->count);
-
-	cb(str, privdata);
 	maxdepth = 0;
-
 	if (dict->count > 0)
 	{
 		sum = stats_recurse(dict->root, 0, &maxdepth);
-		snprintf(str, sizeof str, "Depth sum %d Avg depth %d Max depth %d", sum, sum / dict->count, maxdepth);
+		snprintf(str, sizeof str, "%s: Objects: %d, Depth sum: %d, Avg depth: %d, Max depth: %d.", dict->id, dict->count, sum, sum / dict->count, maxdepth);
 	}
 	else
 	{
-		snprintf(str, sizeof str, "Depth sum 0 Avg depth 0 Max depth 0");
+		snprintf(str, sizeof str, "%s: Objects: 0, Depth sum: 0, Avg depth: 0, Max depth: 0.", dict->id);
 	}
 
 	cb(str, privdata);
 	return;
+}
+
+void
+irc_radixtree_stats_walk(void (*cb)(const char *line, void *privdata), void *privdata)
+{
+	rb_dlink_node *ptr;
+
+	RB_DLINK_FOREACH(ptr, radixtree_list.head)
+	{
+		irc_radixtree_stats(ptr->data, cb, privdata);
+	}
 }

@@ -60,7 +60,7 @@ struct irc_radixtree_iteration_state
  * compare_cb is the canonizing function.
  */
 
-extern struct irc_radixtree *irc_radixtree_create(void (*canonize_cb)(char *key));
+extern struct irc_radixtree *irc_radixtree_create(const char *name, void (*canonize_cb)(char *key));
 
 /*
  * irc_radixtree_shutdown() deallocates all heaps used in patricia trees. This is
@@ -136,5 +136,6 @@ void *irc_radixtree_elem_get_data(struct irc_radixtree_leaf *elem);
 
 unsigned int irc_radixtree_size(struct irc_radixtree *dict);
 void irc_radixtree_stats(struct irc_radixtree *dict, void (*cb)(const char *line, void *privdata), void *privdata);
+void irc_radixtree_stats_walk(void (*cb)(const char *line, void *privdata), void *privdata);
 
 #endif
