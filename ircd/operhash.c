@@ -1,8 +1,9 @@
-/* ircd-ratbox: an advanced Internet Relay Chat Daemon(ircd).
+/* charybdis
  * operhash.c - Hashes nick!user@host{oper}
  *
  * Copyright (C) 2005 Lee Hardy <lee -at- leeh.co.uk>
- * Copyright (C) 2005 ircd-ratbox development team
+ * Copyright (C) 2005-2016 ircd-ratbox development team
+ * Copyright (C) 2016 William Pitcock <nenolod@dereferenced.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,109 +28,63 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id: operhash.c 26094 2008-09-19 15:33:46Z androsyn $
  */
+
 #include <ratbox_lib.h>
 #include "stdinc.h"
 #include "match.h"
 #include "hash.h"
 #include "operhash.h"
+#include "irc_radixtree.h"
 
-#define OPERHASH_MAX_BITS 7
-#define OPERHASH_MAX (1<<OPERHASH_MAX_BITS)
+static struct irc_radixtree *operhash_tree = NULL;
 
-#define hash_opername(x) fnv_hash_upper((const unsigned char *)(x), OPERHASH_MAX_BITS)
+struct operhash_entry
+{
+	unsigned int refcount;
+	char name[];
+};
 
-static rb_dlink_list operhash_table[OPERHASH_MAX];
+void
+init_operhash(void)
+{
+	operhash_tree = irc_radixtree_create("operhash", NULL);
+}
 
 const char *
 operhash_add(const char *name)
 {
-	void *ohash_mem;
-	char *ohash_copy;
-	unsigned int hashv;
-	rb_dlink_node *ptr;
+	struct operhash_entry *ohash;
+	size_t len;
 
 	if(EmptyString(name))
 		return NULL;
 
-	hashv = hash_opername(name);
-
-	RB_DLINK_FOREACH(ptr, operhash_table[hashv].head)
+	if((ohash = (struct operhash_entry *) irc_radixtree_retrieve(operhash_tree, name)) != NULL)
 	{
-		ohash_copy = ptr->data;
-
-		if(!irccmp(ohash_copy, name))
-		{
-			ohash_mem = ohash_copy - 5;
-			(*(int32_t *) ohash_mem)++;
-			return ohash_copy;
-		}
+		ohash->refcount++;
+		return ohash->name;
 	}
 
-	ohash_mem = rb_malloc(strlen(name) + 6);
-	(*(int32_t *) ohash_mem) = 1;
-	ohash_copy = ohash_mem + 5;
-	ohash_copy[-1] = '@';
-	strcpy(ohash_copy, name);
-
-	rb_dlinkAddAlloc(ohash_copy, &operhash_table[hashv]);
-
-	return ohash_copy;
+	len = strlen(name) + 1;
+	ohash = rb_malloc(sizeof(struct operhash_entry) + len);
+	ohash->refcount = 1;
+	memcpy(ohash->name, name, len);
+	irc_radixtree_add(operhash_tree, ohash->name, ohash);
+	return ohash->name;
 }
 
 const char *
 operhash_find(const char *name)
 {
-	char *ohash_copy;
-	unsigned int hashv;
-	rb_dlink_node *ptr;
-
-	if(EmptyString(name))
-		return NULL;
-
-	hashv = hash_opername(name);
-
-	RB_DLINK_FOREACH(ptr, operhash_table[hashv].head)
-	{
-		ohash_copy = ptr->data;
-
-		if(!irccmp(ohash_copy, name))
-			return ohash_copy;
-	}
-
-	return NULL;
+	return irc_radixtree_retrieve(operhash_tree, name);
 }
 
 void
 operhash_delete(const char *name)
 {
-	char *ohash_copy;
-	void *ohash_mem;
-	unsigned int hashv;
-	rb_dlink_node *ptr;
+	struct operhash_entry *ohash = irc_radixtree_retrieve(operhash_tree, name);
 
-	if(EmptyString(name))
-		return;
-
-	hashv = hash_opername(name);
-
-	RB_DLINK_FOREACH(ptr, operhash_table[hashv].head)
-	{
-		ohash_copy = ptr->data;
-
-		if(irccmp(ohash_copy, name))
-			continue;
-
-		ohash_mem = ohash_copy - 5;
-		(*(int32_t *) ohash_mem)--;
-
-		if((*(int32_t *) ohash_mem) == 0)
-		{
-			rb_dlinkDestroy(ptr, &operhash_table[hashv]);
-			rb_free(ohash_mem);
-			return;
-		}
-	}
+	if (ohash != NULL)
+		rb_free(ohash);
 }

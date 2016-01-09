@@ -68,6 +68,7 @@
 #include "privilege.h"
 #include "bandbi.h"
 #include "authd.h"
+#include "operhash.h"
 
 /* /quote set variables */
 struct SetOptions GlobalSetOptions;
@@ -570,6 +571,9 @@ charybdis_main(int argc, char *argv[])
 	 * Setup corefile size immediately after boot -kre
 	 */
 	setup_corefile();
+
+	/* initialise operhash fairly early. */
+	init_operhash();
 
 	memset(&me, 0, sizeof(me));
 	memset(&meLocalUser, 0, sizeof(meLocalUser));
