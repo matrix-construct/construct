@@ -56,39 +56,6 @@ struct irc_radixtree *resv_tree = NULL;
  * look in whowas.c for the missing ...[WW_MAX]; entry
  */
 
-/*
- * Hashing.
- *
- *   The server uses a chained hash table to provide quick and efficient
- * hash table maintenance (providing the hash function works evenly over
- * the input range).  The hash table is thus not susceptible to problems
- * of filling all the buckets or the need to rehash.
- *    It is expected that the hash table would look something like this
- * during use:
- *                   +-----+    +-----+    +-----+   +-----+
- *                ---| 224 |----| 225 |----| 226 |---| 227 |---
- *                   +-----+    +-----+    +-----+   +-----+
- *                      |          |          |
- *                   +-----+    +-----+    +-----+
- *                   |  A  |    |  C  |    |  D  |
- *                   +-----+    +-----+    +-----+
- *                      |
- *                   +-----+
- *                   |  B  |
- *                   +-----+
- *
- * A - GOPbot, B - chang, C - hanuaway, D - *.mu.OZ.AU
- *
- * The order shown above is just one instant of the server.
- *
- *
- * The hash functions currently used are based Fowler/Noll/Vo hashes
- * which work amazingly well and have a extremely low collision rate
- * For more info see http://www.isthe.com/chongo/tech/comp/fnv/index.html
- *
- *
- */
-
 /* init_hash()
  *
  * clears the various hashtables
