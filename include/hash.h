@@ -30,7 +30,6 @@
 struct Dictionary;
 struct irc_radixtree;
 
-extern rb_dlink_list *clientTable;
 extern rb_dlink_list *channelTable;
 extern rb_dlink_list *hostTable;
 
