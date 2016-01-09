@@ -32,9 +32,7 @@ struct irc_radixtree;
 
 extern rb_dlink_list *clientTable;
 extern rb_dlink_list *channelTable;
-extern rb_dlink_list *idTable;
 extern rb_dlink_list *hostTable;
-extern rb_dlink_list *helpTable;
 
 extern struct Dictionary *nd_dict;
 extern struct irc_radixtree *resv_tree;

@@ -44,11 +44,11 @@
 
 rb_dlink_list *clientTable;
 rb_dlink_list *channelTable;
-rb_dlink_list *idTable;
 rb_dlink_list *hostTable;
 
 struct Dictionary *client_connid_tree = NULL;
 struct Dictionary *client_zconnid_tree = NULL;
+struct irc_radixtree *client_id_tree = NULL;
 
 struct irc_radixtree *resv_tree = NULL;
 
@@ -97,12 +97,12 @@ void
 init_hash(void)
 {
 	clientTable = rb_malloc(sizeof(rb_dlink_list) * U_MAX);
-	idTable = rb_malloc(sizeof(rb_dlink_list) * U_MAX);
 	channelTable = rb_malloc(sizeof(rb_dlink_list) * CH_MAX);
 	hostTable = rb_malloc(sizeof(rb_dlink_list) * HOST_MAX);
 
 	client_connid_tree = irc_dictionary_create("client connid", irc_uint32cmp);
 	client_zconnid_tree = irc_dictionary_create("client zconnid", irc_uint32cmp);
+	client_id_tree = irc_radixtree_create("client id", NULL);
 
 	resv_tree = irc_radixtree_create("resv", irc_radixtree_irccasecanon);
 }
@@ -177,16 +177,6 @@ hash_nick(const char *name)
 	return fnv_hash_upper((const unsigned char *) name, U_MAX_BITS);
 }
 
-/* hash_id()
- *
- * hashes an id, case is kept
- */
-static u_int32_t
-hash_id(const char *name)
-{
-	return fnv_hash((const unsigned char *) name, U_MAX_BITS);
-}
-
 /* hash_channel()
  *
  * hashes a channel name, based on first 30 chars only for efficiency
@@ -215,13 +205,10 @@ hash_hostname(const char *name)
 void
 add_to_id_hash(const char *name, struct Client *client_p)
 {
-	unsigned int hashv;
-
 	if(EmptyString(name) || (client_p == NULL))
 		return;
 
-	hashv = hash_id(name);
-	rb_dlinkAddAlloc(client_p, &idTable[hashv]);
+	irc_radixtree_add(client_id_tree, name, client_p);
 }
 
 /* add_to_client_hash()
@@ -282,15 +269,12 @@ add_to_resv_hash(const char *name, struct ConfItem *aconf)
 void
 del_from_id_hash(const char *id, struct Client *client_p)
 {
-	unsigned int hashv;
-
 	s_assert(id != NULL);
 	s_assert(client_p != NULL);
 	if(EmptyString(id) || client_p == NULL)
 		return;
 
-	hashv = hash_id(id);
-	rb_dlinkFindDestroy(client_p, &idTable[hashv]);
+	irc_radixtree_delete(client_id_tree, id);
 }
 
 /* del_from_client_hash()
@@ -377,17 +361,7 @@ find_id(const char *name)
 	if(EmptyString(name))
 		return NULL;
 
-	hashv = hash_id(name);
-
-	RB_DLINK_FOREACH(ptr, idTable[hashv].head)
-	{
-		target_p = ptr->data;
-
-		if(strcmp(name, target_p->id) == 0)
-			return target_p;
-	}
-
-	return NULL;
+	return irc_radixtree_retrieve(client_id_tree, name);
 }
 
 /* find_client()
@@ -749,8 +723,6 @@ hash_stats(struct Client *source_p)
 	count_hash(source_p, channelTable, CH_MAX, "Channel");
 	sendto_one_numeric(source_p, RPL_STATSDEBUG, "B :--");
 	count_hash(source_p, clientTable, U_MAX, "Client");
-	sendto_one_numeric(source_p, RPL_STATSDEBUG, "B :--");
-	count_hash(source_p, idTable, U_MAX, "ID");
 	sendto_one_numeric(source_p, RPL_STATSDEBUG, "B :--");
 	count_hash(source_p, hostTable, HOST_MAX, "Hostname");
 }
