@@ -796,9 +796,9 @@ stats_recurse(struct DictionaryElement *delem, int depth, int *pmaxdepth)
 	if (depth > *pmaxdepth)
 		*pmaxdepth = depth;
 	result = depth;
-	if (delem->left)
+	if (delem && delem->left)
 		result += stats_recurse(delem->left, depth + 1, pmaxdepth);
-	if (delem->right)
+	if (delem && delem->right)
 		result += stats_recurse(delem->right, depth + 1, pmaxdepth);
 	return result;
 }
@@ -826,10 +826,17 @@ void irc_dictionary_stats(struct Dictionary *dict, void (*cb)(const char *line, 
 
 	s_assert(dict != NULL);
 
-	cb(str, privdata);
-	maxdepth = 0;
-	sum = stats_recurse(dict->root, 0, &maxdepth);
-	rb_snprintf(str, sizeof str, "%s: Objects: %d, Depth sum: %d, Avg depth: %d, Max depth: %d.", dict->id, dict->count, sum, sum / dict->count, maxdepth);
+	if (dict->count)
+	{
+		maxdepth = 0;
+		sum = stats_recurse(dict->root, 0, &maxdepth);
+		rb_snprintf(str, sizeof str, "%s: Objects: %d, Depth sum: %d, Avg depth: %d, Max depth: %d.", dict->id, dict->count, sum, sum / dict->count, maxdepth);
+	}
+	else
+	{
+		rb_snprintf(str, sizeof str, "%s: Objects: 0, Depth sum: 0, Avg depth: 0, Max depth: 0.", dict->id);
+	}
+
 	cb(str, privdata);
 }
 
