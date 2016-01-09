@@ -139,13 +139,13 @@ libircd_la_DEPENDENCIES =
 am_libircd_la_OBJECTS = authd.lo bandbi.lo blacklist.lo cache.lo \
 	capability.lo channel.lo chmode.lo class.lo client.lo dns.lo \
 	extban.lo getopt.lo hash.lo hook.lo hostmask.lo \
-	ipv4_from_ipv6.lo irc_dictionary.lo ircd.lo ircd_parser.lo \
-	ircd_lexer.lo ircd_signal.lo listener.lo logger.lo match.lo \
-	modules.lo monitor.lo newconf.lo operhash.lo packet.lo \
-	parse.lo privilege.lo ratelimit.lo reject.lo restart.lo \
-	s_auth.lo s_conf.lo s_newconf.lo s_serv.lo s_user.lo scache.lo \
-	send.lo snomask.lo sslproc.lo substitution.lo supported.lo \
-	tgchange.lo version.lo whowas.lo
+	ipv4_from_ipv6.lo irc_radixtree.lo irc_dictionary.lo ircd.lo \
+	ircd_parser.lo ircd_lexer.lo ircd_signal.lo listener.lo \
+	logger.lo match.lo modules.lo monitor.lo newconf.lo \
+	operhash.lo packet.lo parse.lo privilege.lo ratelimit.lo \
+	reject.lo restart.lo s_auth.lo s_conf.lo s_newconf.lo \
+	s_serv.lo s_user.lo scache.lo send.lo snomask.lo sslproc.lo \
+	substitution.lo supported.lo tgchange.lo version.lo whowas.lo
 libircd_la_OBJECTS = $(am_libircd_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -443,6 +443,7 @@ libircd_la_SOURCES = \
   hook.c                        \
   hostmask.c                    \
   ipv4_from_ipv6.c		\
+  irc_radixtree.c		\
   irc_dictionary.c              \
   ircd.c                        \
   ircd_parser.y                 \
@@ -634,6 +635,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hostmask.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ipv4_from_ipv6.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/irc_dictionary.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/irc_radixtree.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ircd.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ircd_lexer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ircd_parser.Plo@am__quote@
