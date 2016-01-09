@@ -273,9 +273,21 @@ stats_delay(struct Client *source_p)
 }
 
 static void
+stats_hash_cb(const char *buf, void *client_p)
+{
+	sendto_one_numeric(client_p, RPL_STATSDEBUG, "B :%s", buf);
+}
+
+static void
 stats_hash(struct Client *source_p)
 {
 	hash_stats(source_p);
+
+	sendto_one_numeric(source_p, RPL_STATSDEBUG, "B :Dictionary stats:");
+	irc_dictionary_stats_walk(stats_hash_cb, source_p);
+
+	sendto_one_numeric(source_p, RPL_STATSDEBUG, "B :Radix tree stats:");
+	irc_radixtree_stats_walk(stats_hash_cb, source_p);
 }
 
 static void

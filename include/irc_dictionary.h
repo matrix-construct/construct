@@ -149,5 +149,6 @@ extern void *irc_dictionary_delete(struct Dictionary *dtree, const char *key);
 extern unsigned int irc_dictionary_size(struct Dictionary *dtree);
 
 void irc_dictionary_stats(struct Dictionary *dict, void (*cb)(const char *line, void *privdata), void *privdata);
+void irc_dictionary_stats_walk(void (*cb)(const char *line, void *privdata), void *privdata);
 
 #endif

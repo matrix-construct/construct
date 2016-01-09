@@ -37,7 +37,11 @@ struct Dictionary
 	unsigned int count;
 	char *id;
 	unsigned int dirty:1;
+
+	rb_dlink_node node;
 };
+
+static rb_dlink_list dictionary_list = {NULL, NULL, 0};
 
 /*
  * irc_dictionary_create(const char *name, DCF compare_cb)
@@ -62,6 +66,8 @@ struct Dictionary *irc_dictionary_create(const char *name,
 
 	dtree->compare_cb = compare_cb;
 	dtree->id = rb_strdup(name);
+
+	rb_dlinkAdd(dtree, &dtree->node, &dictionary_list);
 
 	return dtree;
 }
@@ -444,6 +450,8 @@ void irc_dictionary_destroy(struct Dictionary *dtree,
 		rb_free(n);
 	}
 
+	rb_dlinkDelete(&dtree->node, &dictionary_list);
+
 	rb_free(dtree);
 }
 
@@ -818,16 +826,19 @@ void irc_dictionary_stats(struct Dictionary *dict, void (*cb)(const char *line, 
 
 	s_assert(dict != NULL);
 
-	if (dict->id != NULL)
-		rb_snprintf(str, sizeof str, "Dictionary stats for %s (%d)",
-				dict->id, dict->count);
-	else
-		rb_snprintf(str, sizeof str, "Dictionary stats for <%p> (%d)",
-				(void *)dict, dict->count);
 	cb(str, privdata);
 	maxdepth = 0;
 	sum = stats_recurse(dict->root, 0, &maxdepth);
-	rb_snprintf(str, sizeof str, "Depth sum %d Avg depth %d Max depth %d", sum, sum / dict->count, maxdepth);
+	rb_snprintf(str, sizeof str, "%s: Objects: %d, Depth sum: %d, Avg depth: %d, Max depth: %d.", dict->id, dict->count, sum, sum / dict->count, maxdepth);
 	cb(str, privdata);
-	return;
+}
+
+void irc_dictionary_stats_walk(void (*cb)(const char *line, void *privdata), void *privdata)
+{
+	rb_dlink_node *ptr;
+
+	RB_DLINK_FOREACH(ptr, dictionary_list.head)
+	{
+		irc_dictionary_stats(ptr->data, cb, privdata);
+	}
 }
