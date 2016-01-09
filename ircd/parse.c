@@ -407,7 +407,7 @@ handle_encap(struct Client *client_p, struct Client *source_p,
 void
 clear_hash_parse()
 {
-	cmd_dict = irc_dictionary_create(strcasecmp);
+	cmd_dict = irc_dictionary_create("command", strcasecmp);
 }
 
 /* mod_add_cmd

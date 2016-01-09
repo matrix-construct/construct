@@ -30,8 +30,6 @@
 #include "s_assert.h"
 #include "logger.h"
 
-static rb_bh *elem_heap = NULL;
-
 struct Dictionary
 {
 	DCF compare_cb;
@@ -42,35 +40,7 @@ struct Dictionary
 };
 
 /*
- * irc_dictionary_create(DCF compare_cb)
- *
- * Dictionary object factory.
- *
- * Inputs:
- *     - function to use for comparing two entries in the dtree
- *
- * Outputs:
- *     - on success, a new dictionary object.
- *
- * Side Effects:
- *     - if services runs out of memory and cannot allocate the object,
- *       the program will abort.
- */
-struct Dictionary *irc_dictionary_create(DCF compare_cb)
-{
-	struct Dictionary *dtree = (struct Dictionary *) rb_malloc(sizeof(struct Dictionary));
-
-	dtree->compare_cb = compare_cb;
-
-	if (!elem_heap)
-		elem_heap = rb_bh_create(sizeof(struct DictionaryElement), 1024, "dictionary_elem_heap");
-
-	return dtree;
-}
-
-/*
- * irc_dictionary_create_named(const char *name,
- *     DCF compare_cb)
+ * irc_dictionary_create(const char *name, DCF compare_cb)
  *
  * Dictionary object factory.
  *
@@ -85,16 +55,13 @@ struct Dictionary *irc_dictionary_create(DCF compare_cb)
  *     - if services runs out of memory and cannot allocate the object,
  *       the program will abort.
  */
-struct Dictionary *irc_dictionary_create_named(const char *name,
+struct Dictionary *irc_dictionary_create(const char *name,
 	DCF compare_cb)
 {
 	struct Dictionary *dtree = (struct Dictionary *) rb_malloc(sizeof(struct Dictionary));
 
 	dtree->compare_cb = compare_cb;
 	dtree->id = rb_strdup(name);
-
-	if (!elem_heap)
-		elem_heap = rb_bh_create(sizeof(struct DictionaryElement), 1024, "dictionary_elem_heap");
 
 	return dtree;
 }
@@ -365,7 +332,7 @@ irc_dictionary_link(struct Dictionary *dict,
 			dict->root->data = delem->data;
 			dict->count--;
 
-			rb_bh_free(elem_heap, delem);
+			rb_free(delem);
 		}
 	}
 }
@@ -474,7 +441,7 @@ void irc_dictionary_destroy(struct Dictionary *dtree,
 		if (destroy_cb != NULL)
 			(*destroy_cb)(n, privdata);
 
-		rb_bh_free(elem_heap, n);
+		rb_free(n);
 	}
 
 	rb_free(dtree);
@@ -714,14 +681,14 @@ struct DictionaryElement *irc_dictionary_add(struct Dictionary *dict, const char
 	s_assert(data != NULL);
 	s_assert(irc_dictionary_find(dict, key) == NULL);
 
-	delem = rb_bh_alloc(elem_heap);
+	delem = rb_malloc(sizeof(*delem));
 	delem->key = key;
 	delem->data = data;
 
 	/* TBD: is this needed? --nenolod */
 	if (delem->key == NULL)
 	{
-		rb_bh_free(elem_heap, delem);
+		rb_free(delem);
 		return NULL;
 	}
 
@@ -760,7 +727,7 @@ void *irc_dictionary_delete(struct Dictionary *dtree, const char *key)
 	data = delem->data;
 
 	irc_dictionary_unlink_root(dtree);
-	rb_bh_free(elem_heap, delem);
+	rb_free(delem);
 
 	return data;
 }

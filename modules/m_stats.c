@@ -48,6 +48,7 @@
 #include "hash.h"
 #include "reject.h"
 #include "whowas.h"
+#include "irc_radixtree.h"
 
 static int m_stats (struct Client *, struct Client *, int, const char **);
 

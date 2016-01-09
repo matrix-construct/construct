@@ -48,17 +48,10 @@ struct DictionaryIter
 #define DICTIONARY_FOREACH(element, state, dict) for (irc_dictionary_foreach_start((dict), (state)); (element = irc_dictionary_foreach_cur((dict), (state))); irc_dictionary_foreach_next((dict), (state)))
 
 /*
- * irc_dictionary_create() creates a new dictionary tree.
- * compare_cb is the comparison function, typically strcmp, strcasecmp or
- * irccasecmp.
- */
-extern struct Dictionary *irc_dictionary_create(DCF compare_cb);
-
-/*
  * irc_dictionary_create_named() creates a new dictionary tree which has a name.
  * name is the name, compare_cb is the comparator.
  */
-extern struct Dictionary *irc_dictionary_create_named(const char *name, DCF compare_cb);
+extern struct Dictionary *irc_dictionary_create(const char *name, DCF compare_cb);
 
 /*
  * irc_dictionary_set_comparator_func() resets the comparator used for lookups and

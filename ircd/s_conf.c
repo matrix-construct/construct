@@ -826,7 +826,7 @@ set_default_conf(void)
 	ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_SHA1;
 
 	if (!alias_dict)
-		alias_dict = irc_dictionary_create(strcasecmp);
+		alias_dict = irc_dictionary_create("alias", strcasecmp);
 }
 
 #undef YES

@@ -71,8 +71,8 @@ init_cache(void)
 	oper_motd = cache_file(OPATH, "opers.motd", 0);
 	memset(&links_cache_list, 0, sizeof(links_cache_list));
 
-	help_dict_oper = irc_dictionary_create(strcasecmp);
-	help_dict_user = irc_dictionary_create(strcasecmp);
+	help_dict_oper = irc_dictionary_create("oper help", strcasecmp);
+	help_dict_user = irc_dictionary_create("user help", strcasecmp);
 }
 
 /*

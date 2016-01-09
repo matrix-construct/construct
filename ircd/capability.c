@@ -143,7 +143,7 @@ capability_index_create(const char *name)
 
 	idx = rb_malloc(sizeof(struct CapabilityIndex));
 	idx->name = rb_strdup(name);
-	idx->cap_dict = irc_dictionary_create(strcasecmp);
+	idx->cap_dict = irc_dictionary_create(name, strcasecmp);
 	idx->highest_bit = 1;
 
 	rb_dlinkAdd(idx, &idx->node, &capability_indexes);
