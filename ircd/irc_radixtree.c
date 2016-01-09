@@ -1036,11 +1036,11 @@ irc_radixtree_stats(struct irc_radixtree *dict, void (*cb)(const char *line, voi
 	if (dict->count > 0)
 	{
 		sum = stats_recurse(dict->root, 0, &maxdepth);
-		snprintf(str, sizeof str, "%s: Objects: %d, Depth sum: %d, Avg depth: %d, Max depth: %d.", dict->id, dict->count, sum, sum / dict->count, maxdepth);
+		snprintf(str, sizeof str, "%-30s %-15s %-10d %-10d %-10d %-10d", dict->id, "RADIX", dict->count, sum, sum / dict->count, maxdepth);
 	}
 	else
 	{
-		snprintf(str, sizeof str, "%s: Objects: 0, Depth sum: 0, Avg depth: 0, Max depth: 0.", dict->id);
+		snprintf(str, sizeof str, "%-30s %-15s %-10s %-10s %-10s %-10s", dict->id, "RADIX", "0", "0", "0", "0");
 	}
 
 	cb(str, privdata);

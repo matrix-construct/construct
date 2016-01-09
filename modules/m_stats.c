@@ -281,12 +281,10 @@ stats_hash_cb(const char *buf, void *client_p)
 static void
 stats_hash(struct Client *source_p)
 {
-	hash_stats(source_p);
+	sendto_one_numeric(source_p, RPL_STATSDEBUG, "B :%-30s %-15s %-10s %-10s %-10s %-10s",
+		"NAME", "TYPE", "OBJECTS", "DEPTH SUM", "AVG DEPTH", "MAX DEPTH");
 
-	sendto_one_numeric(source_p, RPL_STATSDEBUG, "B :Dictionary stats:");
 	irc_dictionary_stats_walk(stats_hash_cb, source_p);
-
-	sendto_one_numeric(source_p, RPL_STATSDEBUG, "B :Radix tree stats:");
 	irc_radixtree_stats_walk(stats_hash_cb, source_p);
 }
 

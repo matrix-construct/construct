@@ -823,11 +823,11 @@ void irc_dictionary_stats(struct Dictionary *dict, void (*cb)(const char *line, 
 	{
 		maxdepth = 0;
 		sum = stats_recurse(dict->root, 0, &maxdepth);
-		rb_snprintf(str, sizeof str, "%s: Objects: %d, Depth sum: %d, Avg depth: %d, Max depth: %d.", dict->id, dict->count, sum, sum / dict->count, maxdepth);
+		snprintf(str, sizeof str, "%-30s %-15s %-10d %-10d %-10d %-10d", dict->id, "DICT", dict->count, sum, sum / dict->count, maxdepth);
 	}
 	else
 	{
-		rb_snprintf(str, sizeof str, "%s: Objects: 0, Depth sum: 0, Avg depth: 0, Max depth: 0.", dict->id);
+		snprintf(str, sizeof str, "%-30s %-15s %-10s %-10s %-10s %-10s", dict->id, "DICT", "0", "0", "0", "0");
 	}
 
 	cb(str, privdata);

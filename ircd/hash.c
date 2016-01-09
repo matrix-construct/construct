@@ -597,13 +597,6 @@ output_hash(struct Client *source_p, const char *name, int length, int *counts, 
 				"B :Average depth: %s Highest depth: %lu",
 				buf, deepest);
 	}
-
-	for(i = 0; i < 11; i++)
-	{
-		sendto_one_numeric(source_p, RPL_STATSDEBUG,
-				"B :Nodes with %d entries: %d",
-				i, counts[i]);
-	}
 }
 
 
