@@ -122,7 +122,7 @@ irc_dictionary_get_comparator_func(struct Dictionary *dict)
 
 /*
  * irc_dictionary_get_linear_index(struct Dictionary *dict,
- *     const char *key)
+ *     const void *key)
  *
  * Gets a linear index number for key.
  *
@@ -137,7 +137,7 @@ irc_dictionary_get_comparator_func(struct Dictionary *dict)
  *     - rebuilds the linear index if the tree is marked as dirty.
  */
 int
-irc_dictionary_get_linear_index(struct Dictionary *dict, const char *key)
+irc_dictionary_get_linear_index(struct Dictionary *dict, const void *key)
 {
 	struct DictionaryElement *elem;
 
@@ -165,7 +165,7 @@ irc_dictionary_get_linear_index(struct Dictionary *dict, const char *key)
 }
 
 /*
- * irc_dictionary_retune(struct Dictionary *dict, const char *key)
+ * irc_dictionary_retune(struct Dictionary *dict, const void *key)
  *
  * Retunes the tree, self-optimizing for the element which belongs to key.
  *
@@ -179,7 +179,7 @@ irc_dictionary_get_linear_index(struct Dictionary *dict, const char *key)
  *     - a new root node is nominated.
  */
 static void
-irc_dictionary_retune(struct Dictionary *dict, const char *key)
+irc_dictionary_retune(struct Dictionary *dict, const void *key)
 {
 	struct DictionaryElement n, *tn, *left, *right, *node;
 	int ret;
@@ -634,7 +634,7 @@ void irc_dictionary_foreach_next(struct Dictionary *dtree,
 }
 
 /*
- * irc_dictionary_find(struct Dictionary *dtree, const char *key)
+ * irc_dictionary_find(struct Dictionary *dtree, const void *key)
  *
  * Looks up a DTree node by name.
  *
@@ -649,7 +649,7 @@ void irc_dictionary_foreach_next(struct Dictionary *dtree,
  * Side Effects:
  *     - none
  */
-struct DictionaryElement *irc_dictionary_find(struct Dictionary *dict, const char *key)
+struct DictionaryElement *irc_dictionary_find(struct Dictionary *dict, const void *key)
 {
 	s_assert(dict != NULL);
 	s_assert(key != NULL);
@@ -664,7 +664,7 @@ struct DictionaryElement *irc_dictionary_find(struct Dictionary *dict, const cha
 }
 
 /*
- * irc_dictionary_add(struct Dictionary *dtree, const char *key, void *data)
+ * irc_dictionary_add(struct Dictionary *dtree, const void *key, void *data)
  *
  * Creates a new DTree node and binds data to it.
  *
@@ -680,7 +680,7 @@ struct DictionaryElement *irc_dictionary_find(struct Dictionary *dict, const cha
  * Side Effects:
  *     - data is inserted into the DTree.
  */
-struct DictionaryElement *irc_dictionary_add(struct Dictionary *dict, const char *key, void *data)
+struct DictionaryElement *irc_dictionary_add(struct Dictionary *dict, const void *key, void *data)
 {
 	struct DictionaryElement *delem;
 
@@ -693,20 +693,13 @@ struct DictionaryElement *irc_dictionary_add(struct Dictionary *dict, const char
 	delem->key = key;
 	delem->data = data;
 
-	/* TBD: is this needed? --nenolod */
-	if (delem->key == NULL)
-	{
-		rb_free(delem);
-		return NULL;
-	}
-
 	irc_dictionary_link(dict, delem);
 
 	return delem;
 }
 
 /*
- * irc_dictionary_delete(struct Dictionary *dtree, const char *key)
+ * irc_dictionary_delete(struct Dictionary *dtree, const void *key)
  *
  * Deletes data from a dictionary tree.
  *
@@ -724,7 +717,7 @@ struct DictionaryElement *irc_dictionary_add(struct Dictionary *dict, const char
  * Notes:
  *     - the returned data needs to be mowgli_freed/released manually!
  */
-void *irc_dictionary_delete(struct Dictionary *dtree, const char *key)
+void *irc_dictionary_delete(struct Dictionary *dtree, const void *key)
 {
 	struct DictionaryElement *delem = irc_dictionary_find(dtree, key);
 	void *data;
@@ -741,7 +734,7 @@ void *irc_dictionary_delete(struct Dictionary *dtree, const char *key)
 }
 
 /*
- * irc_dictionary_retrieve(struct Dictionary *dtree, const char *key)
+ * irc_dictionary_retrieve(struct Dictionary *dtree, const void *key)
  *
  * Retrieves data from a dictionary.
  *
@@ -756,7 +749,7 @@ void *irc_dictionary_delete(struct Dictionary *dtree, const char *key)
  * Side Effects:
  *     - none
  */
-void *irc_dictionary_retrieve(struct Dictionary *dtree, const char *key)
+void *irc_dictionary_retrieve(struct Dictionary *dtree, const void *key)
 {
 	struct DictionaryElement *delem = irc_dictionary_find(dtree, key);
 

@@ -27,13 +27,13 @@
 
 struct Dictionary; /* defined in src/dictionary.c */
 
-typedef int (*DCF)(const char *a, const char *b);
+typedef int (*DCF)(/* const void *a, const void *b */);
 
 struct DictionaryElement
 {
 	struct DictionaryElement *left, *right, *prev, *next;
 	void *data;
-	const char *key;
+	const void *key;
 	int position;
 };
 
@@ -70,7 +70,7 @@ extern DCF irc_dictionary_get_comparator_func(struct Dictionary *dict);
  * irc_dictionary_get_linear_index() returns the linear index of an object in the
  * DTree structure.
  */
-extern int irc_dictionary_get_linear_index(struct Dictionary *dict, const char *key);
+extern int irc_dictionary_get_linear_index(struct Dictionary *dict, const void *key);
 
 /*
  * irc_dictionary_destroy() destroys all entries in a dtree, and also optionally calls
@@ -126,22 +126,22 @@ extern void irc_dictionary_foreach_next(struct Dictionary *dtree,
 /*
  * irc_dictionary_add() adds a key->value entry to the dictionary tree.
  */
-extern struct DictionaryElement *irc_dictionary_add(struct Dictionary *dtree, const char *key, void *data);
+extern struct DictionaryElement *irc_dictionary_add(struct Dictionary *dtree, const void *key, void *data);
 
 /*
  * irc_dictionary_find() returns a struct DictionaryElement container from a dtree for key 'key'.
  */
-extern struct DictionaryElement *irc_dictionary_find(struct Dictionary *dtree, const char *key);
+extern struct DictionaryElement *irc_dictionary_find(struct Dictionary *dtree, const void *key);
 
 /*
  * irc_dictionary_find() returns data from a dtree for key 'key'.
  */
-extern void *irc_dictionary_retrieve(struct Dictionary *dtree, const char *key);
+extern void *irc_dictionary_retrieve(struct Dictionary *dtree, const void *key);
 
 /*
  * irc_dictionary_delete() deletes a key->value entry from the dictionary tree.
  */
-extern void *irc_dictionary_delete(struct Dictionary *dtree, const char *key);
+extern void *irc_dictionary_delete(struct Dictionary *dtree, const void *key);
 
 /*
  * irc_dictionary_size() returns the number of elements in a dictionary tree.
@@ -150,5 +150,21 @@ extern unsigned int irc_dictionary_size(struct Dictionary *dtree);
 
 void irc_dictionary_stats(struct Dictionary *dict, void (*cb)(const char *line, void *privdata), void *privdata);
 void irc_dictionary_stats_walk(void (*cb)(const char *line, void *privdata), void *privdata);
+
+#define IRC_POINTER_TO_INT(x)		((int32_t) (long) (x))
+#define IRC_INT_TO_POINTER(x)		((void *) (long) (int32_t) (x))
+
+#define IRC_POINTER_TO_UINT(x)		((uint32_t) (unsigned long) (x))
+#define IRC_UINT_TO_POINTER(x)		((void *) (unsigned long) (uint32_t) (x))
+
+static inline int irc_int32cmp(const void *a, const void *b)
+{
+	return IRC_POINTER_TO_INT(b) - IRC_POINTER_TO_INT(a);
+}
+
+static inline int irc_uint32cmp(const void *a, const void *b)
+{
+	return IRC_POINTER_TO_UINT(b) - IRC_POINTER_TO_UINT(a);
+}
 
 #endif
