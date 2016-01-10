@@ -42,7 +42,6 @@
 #include "irc_dictionary.h"
 #include "irc_radixtree.h"
 
-rb_dlink_list *channelTable;
 rb_dlink_list *hostTable;
 
 struct Dictionary *client_connid_tree = NULL;
@@ -50,6 +49,7 @@ struct Dictionary *client_zconnid_tree = NULL;
 struct irc_radixtree *client_id_tree = NULL;
 struct irc_radixtree *client_name_tree = NULL;
 
+struct irc_radixtree *channel_tree = NULL;
 struct irc_radixtree *resv_tree = NULL;
 
 /*
@@ -63,7 +63,6 @@ struct irc_radixtree *resv_tree = NULL;
 void
 init_hash(void)
 {
-	channelTable = rb_malloc(sizeof(rb_dlink_list) * CH_MAX);
 	hostTable = rb_malloc(sizeof(rb_dlink_list) * HOST_MAX);
 
 	client_connid_tree = irc_dictionary_create("client connid", irc_uint32cmp);
@@ -71,6 +70,7 @@ init_hash(void)
 	client_id_tree = irc_radixtree_create("client id", NULL);
 	client_name_tree = irc_radixtree_create("client name", irc_radixtree_irccasecanon);
 
+	channel_tree = irc_radixtree_create("channel", irc_radixtree_irccasecanon);
 	resv_tree = irc_radixtree_create("resv", irc_radixtree_irccasecanon);
 }
 
@@ -132,16 +132,6 @@ fnv_hash_upper_len(const unsigned char *s, int bits, int len)
 	if (bits < 32)
 		h = ((h >> bits) ^ h) & ((1<<bits)-1);
 	return h;
-}
-
-/* hash_channel()
- *
- * hashes a channel name, based on first 30 chars only for efficiency
- */
-static u_int32_t
-hash_channel(const char *name)
-{
-	return fnv_hash_upper_len((const unsigned char *) name, CH_MAX_BITS, 30);
 }
 
 /* hash_hostname()
@@ -254,16 +244,13 @@ del_from_client_hash(const char *name, struct Client *client_p)
 void
 del_from_channel_hash(const char *name, struct Channel *chptr)
 {
-	unsigned int hashv;
-
 	s_assert(name != NULL);
 	s_assert(chptr != NULL);
 
 	if(EmptyString(name) || chptr == NULL)
 		return;
 
-	hashv = hash_channel(name);
-	rb_dlinkFindDestroy(chptr, &channelTable[hashv]);
+	irc_radixtree_delete(channel_tree, name);
 }
 
 /* del_from_hostname_hash()
@@ -398,25 +385,11 @@ find_hostname(const char *hostname)
 struct Channel *
 find_channel(const char *name)
 {
-	struct Channel *chptr;
-	rb_dlink_node *ptr;
-	unsigned int hashv;
-
 	s_assert(name != NULL);
 	if(EmptyString(name))
 		return NULL;
 
-	hashv = hash_channel(name);
-
-	RB_DLINK_FOREACH(ptr, channelTable[hashv].head)
-	{
-		chptr = ptr->data;
-
-		if(irccmp(name, chptr->chname) == 0)
-			return chptr;
-	}
-
-	return NULL;
+	return irc_radixtree_retrieve(channel_tree, name);
 }
 
 /*
@@ -434,8 +407,6 @@ struct Channel *
 get_or_create_channel(struct Client *client_p, const char *chname, int *isnew)
 {
 	struct Channel *chptr;
-	rb_dlink_node *ptr;
-	unsigned int hashv;
 	int len;
 	const char *s = chname;
 
@@ -458,30 +429,22 @@ get_or_create_channel(struct Client *client_p, const char *chname, int *isnew)
 		s = t;
 	}
 
-	hashv = hash_channel(s);
-
-	RB_DLINK_FOREACH(ptr, channelTable[hashv].head)
+	chptr = irc_radixtree_retrieve(channel_tree, s);
+	if (chptr != NULL)
 	{
-		chptr = ptr->data;
-
-		if(irccmp(s, chptr->chname) == 0)
-		{
-			if(isnew != NULL)
-				*isnew = 0;
-			return chptr;
-		}
+		if (isnew != NULL)
+			*isnew = 0;
+		return chptr;
 	}
 
 	if(isnew != NULL)
 		*isnew = 1;
 
 	chptr = allocate_channel(s);
-
-	rb_dlinkAdd(chptr, &chptr->node, &global_channel_list);
-
 	chptr->channelts = rb_current_time();	/* doesn't hurt to set it here */
 
-	rb_dlinkAddAlloc(chptr, &channelTable[hashv]);
+	rb_dlinkAdd(chptr, &chptr->node, &global_channel_list);
+	irc_radixtree_add(channel_tree, chptr->chname, chptr);
 
 	return chptr;
 }
@@ -626,7 +589,5 @@ count_hash(struct Client *source_p, rb_dlink_list *table, int length, const char
 void
 hash_stats(struct Client *source_p)
 {
-	count_hash(source_p, channelTable, CH_MAX, "Channel");
-	sendto_one_numeric(source_p, RPL_STATSDEBUG, "B :--");
 	count_hash(source_p, hostTable, HOST_MAX, "Hostname");
 }
