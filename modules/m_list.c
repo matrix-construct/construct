@@ -58,10 +58,16 @@ static void _moddeinit(void);
 static int m_list(struct Client *, struct Client *, int, const char **);
 static int mo_list(struct Client *, struct Client *, int, const char **);
 
+struct ListOptions
+{
+	unsigned int users_min, users_max;
+	time_t created_min, created_max, topic_min, topic_max;
+	int operspy;
+};
+
 static void list_one_channel(struct Client *source_p, struct Channel *chptr, int visible);
 
-static void safelist_client_instantiate(struct Client *, struct ListClient *);
-static void safelist_one_channel(struct Client *source_p, struct Channel *chptr);
+static void safelist_one_channel(struct Client *source_p, struct Channel *chptr, struct ListOptions *params);
 static void safelist_channel_named(struct Client *source_p, const char *name, int operspy);
 
 struct Message list_msgtab = {
@@ -126,7 +132,7 @@ static int m_list(struct Client *client_p, struct Client *source_p, int parc, co
  */
 static int mo_list(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	struct ListClient *params;
+	struct ListOptions *params;
 	char *p;
 	char *args = NULL;
 	int i;
@@ -157,7 +163,7 @@ static int mo_list(struct Client *client_p, struct Client *source_p, int parc, c
 	}
 
 	/* Multiple channels, possibly with parameters. */
-	params = rb_malloc(sizeof(struct ListClient));
+	params = rb_malloc(sizeof(struct ListOptions));
 
 	params->users_min = ConfigChannel.displayed_usercount;
 	params->users_max = INT_MAX;
@@ -251,7 +257,7 @@ static int mo_list(struct Client *client_p, struct Client *source_p, int parc, c
 
 	RB_DLINK_FOREACH(ptr, global_channel_list.head)
 	{
-		safelist_one_channel(client_p, ptr->data);
+		safelist_one_channel(client_p, ptr->data, params);
 
 		if (rb_linebuf_len(&client_p->localClient->buf_sendq) > sendq_limit)
 		{
@@ -357,31 +363,30 @@ static void safelist_channel_named(struct Client *source_p, const char *name, in
  * side effects - a channel is listed if it meets the
  *                requirements
  */
-static void safelist_one_channel(struct Client *source_p, struct Channel *chptr)
+static void safelist_one_channel(struct Client *source_p, struct Channel *chptr, struct ListOptions *params)
 {
-	struct ListClient *safelist_data = source_p->localClient->safelist_data;
 	int visible;
 
 	visible = !SecretChannel(chptr) || IsMember(source_p, chptr);
-	if (!visible && !safelist_data->operspy)
+	if (!visible && !params->operspy)
 		return;
 
-	if ((unsigned int)chptr->members.length < safelist_data->users_min
-	    || (unsigned int)chptr->members.length > safelist_data->users_max)
+	if ((unsigned int)chptr->members.length < params->users_min
+	    || (unsigned int)chptr->members.length > params->users_max)
 		return;
 
-	if (safelist_data->topic_min && chptr->topic_time < safelist_data->topic_min)
+	if (params->topic_min && chptr->topic_time < params->topic_min)
 		return;
 
 	/* If a topic TS is provided, don't show channels without a topic set. */
-	if (safelist_data->topic_max && (chptr->topic_time > safelist_data->topic_max
+	if (params->topic_max && (chptr->topic_time > params->topic_max
 		|| chptr->topic_time == 0))
 		return;
 
-	if (safelist_data->created_min && chptr->channelts < safelist_data->created_min)
+	if (params->created_min && chptr->channelts < params->created_min)
 		return;
 
-	if (safelist_data->created_max && chptr->channelts > safelist_data->created_max)
+	if (params->created_max && chptr->channelts > params->created_max)
 		return;
 
 	list_one_channel(source_p, chptr, visible);
