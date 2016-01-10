@@ -40,6 +40,7 @@ struct Class
 	int max_global;
 	int max_ident;
 	int max_sendq;
+	int max_sendq_hard;
 	int con_freq;
 	int ping_freq;
 	int total;
@@ -61,6 +62,7 @@ extern struct Class *default_class;
 #define MaxUsers(x)	((x)->max_total)
 #define PingFreq(x)     ((x)->ping_freq)
 #define MaxSendq(x)     ((x)->max_sendq)
+#define MaxSendqHard(x)	((x)->max_sendq_hard)
 #define CurrUsers(x)    ((x)->total)
 #define IpLimits(x)     ((x)->ip_limits)
 #define CidrIpv4Bitlen(x)   ((x)->cidr_ipv4_bitlen)
@@ -81,12 +83,14 @@ extern struct Class *default_class;
 #define ConfCidrAmount(x) (ClassPtr(x)->cidr_amount)
 #define ConfCidrIpv4Bitlen(x) (ClassPtr(x)->cidr_ipv4_bitlen)
 #define ConfCidrIpv6Bitlen(x) (ClassPtr(x)->cidr_ipv6_bitlen)
+#define ConfMaxSendqHard(x) (ClassPtr(x)->max_sendq_hard)
 
 void add_class(struct Class *);
 
 struct Class *make_class(void);
 
 extern long get_sendq(struct Client *);
+extern long get_sendq_hard(struct Client *);
 extern int get_con_freq(struct Class *);
 extern struct Class *find_class(const char *);
 extern const char *get_client_class(struct Client *);
