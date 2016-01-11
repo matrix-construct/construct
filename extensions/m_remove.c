@@ -42,8 +42,10 @@
 #include "messages.h"
 
 unsigned int CAP_REMOVE;
+static char part_buf[REASONLEN + 1];
 
 static int m_remove(struct Client *, struct Client *, int, const char **);
+static void remove_quote_part(hook_data_privmsg_channel *);
 
 struct Message remove_msgtab = {
 	"REMOVE", 0, 0, 0, MFLG_SLOW,
@@ -51,6 +53,10 @@ struct Message remove_msgtab = {
 };
 
 mapi_clist_av1 remove_clist[] = { &remove_msgtab, NULL };
+mapi_hfn_list_av1 remove_hfnlist[] = {
+	{ "privmsg_channel", (hookfn) remove_quote_part },
+	{ NULL, NULL }
+};
 
 static int
 modinit(void)
@@ -66,7 +72,7 @@ moddeinit(void)
 	capability_orphan(serv_capindex, "REMOVE");
 }
 
-DECLARE_MODULE_AV1(remove, modinit, moddeinit, remove_clist, NULL, NULL, "$Revision: 3317 $");
+DECLARE_MODULE_AV1(remove, modinit, moddeinit, remove_clist, NULL, remove_hfnlist, "$Revision: 3317 $");
 
 static int
 m_remove(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
@@ -218,3 +224,19 @@ m_remove(struct Client *client_p, struct Client *source_p, int parc, const char 
 	return 0;
 }
 
+static void
+remove_quote_part(hook_data_privmsg_channel *data)
+{
+	size_t ret;
+	if (data->approved || EmptyString(data->text) || data->msgtype != MESSAGE_TYPE_PART)
+		return;
+
+	rb_strlcpy(part_buf, "\"", sizeof(part_buf));
+	ret = rb_strlcat(part_buf, data->text, sizeof(part_buf));
+	if (ret >= sizeof(part_buf) - 1)
+		part_buf[REASONLEN - 1] = '"';
+	else
+		rb_strlcat(part_buf, "\"", sizeof(part_buf));
+
+	data->text = part_buf;
+}
