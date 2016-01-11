@@ -227,16 +227,12 @@ m_remove(struct Client *client_p, struct Client *source_p, int parc, const char 
 static void
 remove_quote_part(hook_data_privmsg_channel *data)
 {
-	size_t ret;
 	if (data->approved || EmptyString(data->text) || data->msgtype != MESSAGE_TYPE_PART)
 		return;
 
-	rb_strlcpy(part_buf, "\"", sizeof(part_buf));
-	ret = rb_strlcat(part_buf, data->text, sizeof(part_buf));
-	if (ret >= sizeof(part_buf) - 1)
-		part_buf[REASONLEN - 1] = '"';
-	else
-		rb_strlcat(part_buf, "\"", sizeof(part_buf));
+	rb_strlcpy(part_buf, "\"", sizeof(part_buf) - 1);
+	rb_strlcat(part_buf, data->text, sizeof(part_buf) - 1);
+	rb_strlcat(part_buf, "\"", sizeof(part_buf));
 
 	data->text = part_buf;
 }
