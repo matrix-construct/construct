@@ -110,20 +110,17 @@ mo_connect(struct Client *client_p, struct Client *source_p, int parc, const cha
 	 * use the default form configuration structure. If missing
 	 * from there, then use the precompiled default.
 	 */
-	tmpport = port = server_p->port;
+	tmpport = port = 0;
 	if(parc > 2 && !EmptyString(parv[2]))
+		port = atoi(parv[2]);
+	if(port == 0 && server_p->port)
+		port = server_p->port;
+	else if(port <= 0)
 	{
-		if((port = atoi(parv[2])) <= 0)
-		{
-			sendto_one_notice(source_p, ":Connect: Illegal port number");
-			return 0;
-		}
-	}
-	else if(port <= 0 && (port = PORTNUM) <= 0)
-	{
-		sendto_one_notice(source_p, ":Connect: missing port number");
+		sendto_one_notice(source_p, ":Connect: illegal port number");
 		return 0;
 	}
+	
 	/*
 	 * Notify all operators about remote connect requests
 	 */
