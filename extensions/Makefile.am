@@ -37,6 +37,7 @@ extension_LTLIBRARIES =		\
   sno_channelcreate.la		\
   sno_farconnect.la		\
   sno_globalkline.la		\
+  sno_globalnickchange.la	\
   sno_globaloper.la		\
   sno_whois.la			\
   m_42.la			\

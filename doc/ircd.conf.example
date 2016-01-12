@@ -31,6 +31,7 @@
 #loadmodule "extensions/no_oper_invis.la";
 #loadmodule "extensions/sno_farconnect.la";
 #loadmodule "extensions/sno_globalkline.la";
+#loadmodule "extensions/sno_globalnickchange.la";
 #loadmodule "extensions/sno_globaloper.la";
 #loadmodule "extensions/sno_whois.la";
 #loadmodule "extensions/override.la";
