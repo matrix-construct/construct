@@ -391,6 +391,7 @@ static struct mode_table shared_table[] =
 	{ "rehash",	SHARED_REHASH	},
 	{ "grant",	SHARED_GRANT	},
 	{ "die",	SHARED_DIE	},
+	{ "module",	SHARED_MODULE	},
 	{ "all",	SHARED_ALL	},
 	{ "none",	0		},
 	{NULL, 0}
