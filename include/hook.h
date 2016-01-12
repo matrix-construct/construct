@@ -85,6 +85,7 @@ typedef struct
 	struct Client *target;
 	int approved;
 	int dir;
+	const char *modestr;
 } hook_data_channel_approval;
 
 typedef struct

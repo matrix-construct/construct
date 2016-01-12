@@ -164,8 +164,10 @@ hack_channel_access(void *vdata)
 		update_session_deadline(data->client, NULL);
 		data->approved = CHFL_CHANOP;
 
-		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s is using oper-override on %s (modehacking)",
-				       get_oper_name(data->client), data->chptr->chname);
+		/* we only want to report modehacks, which are always non-NULL */
+		if (data->modestr)
+			sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s is using oper-override on %s (modehacking: %s)",
+					       get_oper_name(data->client), data->chptr->chname, data->modestr);
 	}
 }
 
