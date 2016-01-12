@@ -1500,7 +1500,9 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 					target_p->username, target_p->host);
 	}
 
-	rb_strlcpy(target_p->username, user, sizeof target_p->username);
+	if (user != target_p->username)
+		rb_strlcpy(target_p->username, user, sizeof target_p->username);
+
 	rb_strlcpy(target_p->host, host, sizeof target_p->host);
 
 	if (changed)
