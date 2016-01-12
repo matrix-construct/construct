@@ -226,6 +226,9 @@ m_encap_la_OBJECTS = m_encap.lo
 m_etrace_la_LIBADD =
 m_etrace_la_SOURCES = m_etrace.c
 m_etrace_la_OBJECTS = m_etrace.lo
+m_grant_la_LIBADD =
+m_grant_la_SOURCES = m_grant.c
+m_grant_la_OBJECTS = m_grant.lo
 m_help_la_LIBADD =
 m_help_la_SOURCES = m_help.c
 m_help_la_OBJECTS = m_help.lo
@@ -419,13 +422,13 @@ SOURCES = chm_nocolour.c chm_noctcp.c core/m_ban.c core/m_die.c \
 	core/m_quit.c core/m_server.c core/m_squit.c m_accept.c \
 	m_admin.c m_away.c m_cap.c m_capab.c m_certfp.c m_challenge.c \
 	m_chghost.c m_close.c m_cmessage.c m_connect.c m_dline.c \
-	m_encap.c m_etrace.c m_help.c m_info.c m_invite.c m_ison.c \
-	m_kline.c m_knock.c m_links.c m_list.c m_locops.c m_lusers.c \
-	m_map.c m_monitor.c m_motd.c m_names.c m_oper.c m_operspy.c \
-	m_pass.c m_ping.c m_pong.c m_post.c m_privs.c m_rehash.c \
-	m_restart.c m_resv.c m_sasl.c m_scan.c m_services.c m_set.c \
-	m_signon.c m_snote.c m_starttls.c m_stats.c m_svinfo.c m_tb.c \
-	m_testline.c m_testmask.c m_tginfo.c m_time.c m_topic.c \
+	m_encap.c m_etrace.c m_grant.c m_help.c m_info.c m_invite.c \
+	m_ison.c m_kline.c m_knock.c m_links.c m_list.c m_locops.c \
+	m_lusers.c m_map.c m_monitor.c m_motd.c m_names.c m_oper.c \
+	m_operspy.c m_pass.c m_ping.c m_pong.c m_post.c m_privs.c \
+	m_rehash.c m_restart.c m_resv.c m_sasl.c m_scan.c m_services.c \
+	m_set.c m_signon.c m_snote.c m_starttls.c m_stats.c m_svinfo.c \
+	m_tb.c m_testline.c m_testmask.c m_tginfo.c m_time.c m_topic.c \
 	m_trace.c m_unreject.c m_user.c m_userhost.c m_users.c \
 	m_version.c m_wallops.c m_who.c m_whois.c m_whowas.c m_xline.c \
 	sno_routing.c
@@ -435,13 +438,13 @@ DIST_SOURCES = chm_nocolour.c chm_noctcp.c core/m_ban.c core/m_die.c \
 	core/m_quit.c core/m_server.c core/m_squit.c m_accept.c \
 	m_admin.c m_away.c m_cap.c m_capab.c m_certfp.c m_challenge.c \
 	m_chghost.c m_close.c m_cmessage.c m_connect.c m_dline.c \
-	m_encap.c m_etrace.c m_help.c m_info.c m_invite.c m_ison.c \
-	m_kline.c m_knock.c m_links.c m_list.c m_locops.c m_lusers.c \
-	m_map.c m_monitor.c m_motd.c m_names.c m_oper.c m_operspy.c \
-	m_pass.c m_ping.c m_pong.c m_post.c m_privs.c m_rehash.c \
-	m_restart.c m_resv.c m_sasl.c m_scan.c m_services.c m_set.c \
-	m_signon.c m_snote.c m_starttls.c m_stats.c m_svinfo.c m_tb.c \
-	m_testline.c m_testmask.c m_tginfo.c m_time.c m_topic.c \
+	m_encap.c m_etrace.c m_grant.c m_help.c m_info.c m_invite.c \
+	m_ison.c m_kline.c m_knock.c m_links.c m_list.c m_locops.c \
+	m_lusers.c m_map.c m_monitor.c m_motd.c m_names.c m_oper.c \
+	m_operspy.c m_pass.c m_ping.c m_pong.c m_post.c m_privs.c \
+	m_rehash.c m_restart.c m_resv.c m_sasl.c m_scan.c m_services.c \
+	m_set.c m_signon.c m_snote.c m_starttls.c m_stats.c m_svinfo.c \
+	m_tb.c m_testline.c m_testmask.c m_tginfo.c m_time.c m_topic.c \
 	m_trace.c m_unreject.c m_user.c m_userhost.c m_users.c \
 	m_version.c m_wallops.c m_who.c m_whois.c m_whowas.c m_xline.c \
 	sno_routing.c
@@ -672,6 +675,7 @@ auto_load_mod_LTLIBRARIES = \
   m_dline.la \
   m_encap.la \
   m_etrace.la \
+  m_grant.la \
   m_help.la \
   m_info.la \
   m_invite.la \
@@ -949,6 +953,9 @@ m_encap.la: $(m_encap_la_OBJECTS) $(m_encap_la_DEPENDENCIES) $(EXTRA_m_encap_la_
 m_etrace.la: $(m_etrace_la_OBJECTS) $(m_etrace_la_DEPENDENCIES) $(EXTRA_m_etrace_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) -rpath $(auto_load_moddir) $(m_etrace_la_OBJECTS) $(m_etrace_la_LIBADD) $(LIBS)
 
+m_grant.la: $(m_grant_la_OBJECTS) $(m_grant_la_DEPENDENCIES) $(EXTRA_m_grant_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(LINK) -rpath $(auto_load_moddir) $(m_grant_la_OBJECTS) $(m_grant_la_LIBADD) $(LIBS)
+
 m_help.la: $(m_help_la_OBJECTS) $(m_help_la_DEPENDENCIES) $(EXTRA_m_help_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) -rpath $(auto_load_moddir) $(m_help_la_OBJECTS) $(m_help_la_LIBADD) $(LIBS)
 
@@ -1126,6 +1133,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m_dline.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m_encap.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m_etrace.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m_grant.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m_help.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m_info.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m_invite.Plo@am__quote@

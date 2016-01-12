@@ -239,7 +239,7 @@ privset "global_op" {
 
 privset "admin" {
 	extends = "global_op";
-	privs = oper:admin, oper:die, oper:rehash, oper:spy;
+	privs = oper:admin, oper:die, oper:rehash, oper:spy, oper:grant;
 };
 
 operator "god" {
