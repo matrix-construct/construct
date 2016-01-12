@@ -61,6 +61,18 @@ static char buffer[1024];
 
 /* turn a string into a parc/parv pair */
 
+char *reconstruct_parv(int parc, const char *parv[])
+{
+	static char tmpbuf[BUFSIZE]; int i;
+
+	rb_strlcpy(tmpbuf, parv[0], BUFSIZE);
+	for (i = 1; i < parc; i++)
+	{
+		rb_strlcat(tmpbuf, " ", BUFSIZE);
+		rb_strlcat(tmpbuf, parv[i], BUFSIZE);
+	}
+	return tmpbuf;
+}
 
 static inline int
 string_to_array(char *string, char **parv)
