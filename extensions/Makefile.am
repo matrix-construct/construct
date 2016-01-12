@@ -41,6 +41,7 @@ extension_LTLIBRARIES =		\
   sno_whois.la			\
   m_42.la			\
   m_adminwall.la			\
+  m_extendchans.la		\
   m_findforwards.la		\
   m_identify.la			\
   m_mkpasswd.la                  \

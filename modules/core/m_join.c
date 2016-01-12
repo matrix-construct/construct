@@ -278,9 +278,9 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
 
 		if((rb_dlink_list_length(&source_p->user->channel) >=
 		    (unsigned long) ConfigChannel.max_chans_per_user) &&
-		   (!IsOper(source_p) ||
+		   (!IsExtendChans(source_p) ||
 		    (rb_dlink_list_length(&source_p->user->channel) >=
-		     (unsigned long) ConfigChannel.max_chans_per_user * 3)))
+		     (unsigned long) ConfigChannel.max_chans_per_user_large)))
 		{
 			sendto_one(source_p, form_str(ERR_TOOMANYCHANNELS),
 				   me.name, source_p->name, name);

@@ -110,6 +110,7 @@ struct ConfItem
 #define CONF_FLAGS_EXEMPTSHIDE		0x00010000
 #define CONF_FLAGS_EXEMPTJUPE		0x00020000	/* exempt from resv generating warnings */
 #define CONF_FLAGS_NEED_SASL		0x00040000
+#define CONF_FLAGS_EXTEND_CHANS		0x00080000
 #define CONF_FLAGS_ENCRYPTED            0x00200000
 #define CONF_FLAGS_EXEMPTDNSBL		0x04000000
 
@@ -132,6 +133,7 @@ struct ConfItem
 #define IsConfEncrypted(x)      ((x)->flags & CONF_FLAGS_ENCRYPTED)
 #define IsNeedSasl(x)		((x)->flags & CONF_FLAGS_NEED_SASL)
 #define IsConfExemptDNSBL(x)	((x)->flags & CONF_FLAGS_EXEMPTDNSBL)
+#define IsConfExtendChans(x)	((x)->flags & CONF_FLAGS_EXTEND_CHANS)
 #define IsConfSSLNeeded(x)	((x)->flags & CONF_FLAGS_NEED_SSL)
 
 /* flag definitions for opers now in client.h */
@@ -248,6 +250,7 @@ struct config_channel_entry
 	int max_bans;
 	int max_bans_large;
 	int max_chans_per_user;
+	int max_chans_per_user_large;
 	int no_create_on_split;
 	int no_join_on_split;
 	int default_split_server_count;

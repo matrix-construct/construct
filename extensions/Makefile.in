@@ -227,6 +227,9 @@ m_42_la_OBJECTS = m_42.lo
 m_adminwall_la_LIBADD =
 m_adminwall_la_SOURCES = m_adminwall.c
 m_adminwall_la_OBJECTS = m_adminwall.lo
+m_extendchans_la_LIBADD =
+m_extendchans_la_SOURCES = m_extendchans.c
+m_extendchans_la_OBJECTS = m_extendchans.lo
 m_findforwards_la_LIBADD =
 m_findforwards_la_SOURCES = m_findforwards.c
 m_findforwards_la_OBJECTS = m_findforwards.lo
@@ -353,11 +356,11 @@ SOURCES = chm_adminonly.c chm_nonotice.c chm_operonly.c \
 	extb_realname.c extb_server.c extb_ssl.c extb_usermode.c \
 	force_user_invis.c hide_uncommon_channels.c hurt.c \
 	ip_cloaking.c ip_cloaking_3.0.c ip_cloaking_4.0.c \
-	ip_cloaking_old.c m_42.c m_adminwall.c m_findforwards.c \
-	m_identify.c m_mkpasswd.c m_ojoin.c m_okick.c m_omode.c \
-	m_opme.c m_remove.c m_roleplay.c m_sendbans.c m_webirc.c \
-	no_kill_services.c no_locops.c no_oper_invis.c override.c \
-	restrict-unauthenticated.c sno_channelcreate.c \
+	ip_cloaking_old.c m_42.c m_adminwall.c m_extendchans.c \
+	m_findforwards.c m_identify.c m_mkpasswd.c m_ojoin.c m_okick.c \
+	m_omode.c m_opme.c m_remove.c m_roleplay.c m_sendbans.c \
+	m_webirc.c no_kill_services.c no_locops.c no_oper_invis.c \
+	override.c restrict-unauthenticated.c sno_channelcreate.c \
 	sno_farconnect.c sno_globalkline.c sno_globaloper.c \
 	sno_whois.c spy_admin_notice.c spy_info_notice.c \
 	spy_links_notice.c spy_motd_notice.c spy_stats_notice.c \
@@ -370,11 +373,11 @@ DIST_SOURCES = chm_adminonly.c chm_nonotice.c chm_operonly.c \
 	extb_realname.c extb_server.c extb_ssl.c extb_usermode.c \
 	force_user_invis.c hide_uncommon_channels.c hurt.c \
 	ip_cloaking.c ip_cloaking_3.0.c ip_cloaking_4.0.c \
-	ip_cloaking_old.c m_42.c m_adminwall.c m_findforwards.c \
-	m_identify.c m_mkpasswd.c m_ojoin.c m_okick.c m_omode.c \
-	m_opme.c m_remove.c m_roleplay.c m_sendbans.c m_webirc.c \
-	no_kill_services.c no_locops.c no_oper_invis.c override.c \
-	restrict-unauthenticated.c sno_channelcreate.c \
+	ip_cloaking_old.c m_42.c m_adminwall.c m_extendchans.c \
+	m_findforwards.c m_identify.c m_mkpasswd.c m_ojoin.c m_okick.c \
+	m_omode.c m_opme.c m_remove.c m_roleplay.c m_sendbans.c \
+	m_webirc.c no_kill_services.c no_locops.c no_oper_invis.c \
+	override.c restrict-unauthenticated.c sno_channelcreate.c \
 	sno_farconnect.c sno_globalkline.c sno_globaloper.c \
 	sno_whois.c spy_admin_notice.c spy_info_notice.c \
 	spy_links_notice.c spy_motd_notice.c spy_stats_notice.c \
@@ -624,6 +627,7 @@ extension_LTLIBRARIES = \
   sno_whois.la			\
   m_42.la			\
   m_adminwall.la			\
+  m_extendchans.la		\
   m_findforwards.la		\
   m_identify.la			\
   m_mkpasswd.la                  \
@@ -807,6 +811,9 @@ m_42.la: $(m_42_la_OBJECTS) $(m_42_la_DEPENDENCIES) $(EXTRA_m_42_la_DEPENDENCIES
 m_adminwall.la: $(m_adminwall_la_OBJECTS) $(m_adminwall_la_DEPENDENCIES) $(EXTRA_m_adminwall_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) -rpath $(extensiondir) $(m_adminwall_la_OBJECTS) $(m_adminwall_la_LIBADD) $(LIBS)
 
+m_extendchans.la: $(m_extendchans_la_OBJECTS) $(m_extendchans_la_DEPENDENCIES) $(EXTRA_m_extendchans_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(LINK) -rpath $(extensiondir) $(m_extendchans_la_OBJECTS) $(m_extendchans_la_LIBADD) $(LIBS)
+
 m_findforwards.la: $(m_findforwards_la_OBJECTS) $(m_findforwards_la_DEPENDENCIES) $(EXTRA_m_findforwards_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) -rpath $(extensiondir) $(m_findforwards_la_OBJECTS) $(m_findforwards_la_LIBADD) $(LIBS)
 
@@ -927,6 +934,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ip_cloaking_old.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m_42.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m_adminwall.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m_extendchans.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m_findforwards.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m_identify.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m_mkpasswd.Plo@am__quote@

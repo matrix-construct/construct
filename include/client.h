@@ -420,6 +420,7 @@ struct PreClient
 
 /* overflow flags */
 /* EARLIER FLAGS ARE IN s_newconf.h */
+#define FLAGS2_EXTENDCHANS	0x00200000
 #define FLAGS2_EXEMPTRESV	0x00400000
 #define FLAGS2_EXEMPTKLINE      0x00800000
 #define FLAGS2_EXEMPTFLOOD      0x01000000
@@ -536,6 +537,8 @@ struct PreClient
 #define SetExemptResv(x)	((x)->flags2 |= FLAGS2_EXEMPTRESV)
 #define IsIPSpoof(x)            ((x)->flags2 & FLAGS2_IP_SPOOFING)
 #define SetIPSpoof(x)           ((x)->flags2 |= FLAGS2_IP_SPOOFING)
+#define IsExtendChans(x)	((x)->flags2 & FLAGS2_EXTENDCHANS)
+#define SetExtendChans(x)	((x)->flags2 |= FLAGS2_EXTENDCHANS)
 
 /* for local users: flood grace period is over
  * for servers: mentioned in networknotice.c notice

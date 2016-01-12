@@ -25,6 +25,7 @@
 #loadmodule "extensions/extb_server.la";
 #loadmodule "extensions/extb_ssl.la";
 #loadmodule "extensions/hurt.la";
+#loadmodule "extensions/m_extendchans.la";
 #loadmodule "extensions/m_findforwards.la";
 #loadmodule "extensions/m_identify.la";
 #loadmodule "extensions/no_oper_invis.la";
@@ -349,6 +350,7 @@ channel {
 	knock_delay = 5 minutes;
 	knock_delay_channel = 1 minute;
 	max_chans_per_user = 15;
+	max_chans_per_user_large = 60;
 	max_bans = 100;
 	max_bans_large = 500;
 	default_split_user_count = 0;

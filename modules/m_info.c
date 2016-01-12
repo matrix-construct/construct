@@ -585,6 +585,12 @@ static struct InfoStruct info_table[] = {
 		"Maximum number of channels a user can join",
 	},
 	{
+		"max_chans_per_user_large",
+		OUTPUT_DECIMAL,
+		&ConfigChannel.max_chans_per_user_large,
+		"Maximum extended number of channels a user can join",
+	},
+	{
 		"no_create_on_split",
 		OUTPUT_BOOLEAN_YN,
 		&ConfigChannel.no_create_on_split,
