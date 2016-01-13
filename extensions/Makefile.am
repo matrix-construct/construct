@@ -10,6 +10,7 @@ extension_LTLIBRARIES =		\
   chm_operonly.la		\
   chm_operonly_compat.la		\
   chm_nonotice.la		\
+  chm_operpeace.la		\
   chm_quietunreg_compat.la	\
   chm_sslonly.la			\
   chm_sslonly_compat.la		\

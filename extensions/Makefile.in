@@ -149,6 +149,9 @@ chm_operonly_la_OBJECTS = chm_operonly.lo
 chm_operonly_compat_la_LIBADD =
 chm_operonly_compat_la_SOURCES = chm_operonly_compat.c
 chm_operonly_compat_la_OBJECTS = chm_operonly_compat.lo
+chm_operpeace_la_LIBADD =
+chm_operpeace_la_SOURCES = chm_operpeace.c
+chm_operpeace_la_OBJECTS = chm_operpeace.lo
 chm_quietunreg_compat_la_LIBADD =
 chm_quietunreg_compat_la_SOURCES = chm_quietunreg_compat.c
 chm_quietunreg_compat_la_OBJECTS = chm_quietunreg_compat.lo
@@ -352,35 +355,37 @@ am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = chm_adminonly.c chm_nonotice.c chm_operonly.c \
-	chm_operonly_compat.c chm_quietunreg_compat.c chm_sslonly.c \
-	chm_sslonly_compat.c createauthonly.c createoperonly.c \
-	example_module.c extb_account.c extb_canjoin.c extb_channel.c \
-	extb_combi.c extb_extgecos.c extb_hostmask.c extb_oper.c \
-	extb_realname.c extb_server.c extb_ssl.c extb_usermode.c \
-	force_user_invis.c hide_uncommon_channels.c hurt.c \
-	ip_cloaking.c ip_cloaking_3.0.c ip_cloaking_4.0.c \
-	ip_cloaking_old.c m_42.c m_adminwall.c m_extendchans.c \
-	m_findforwards.c m_identify.c m_mkpasswd.c m_ojoin.c m_okick.c \
-	m_omode.c m_opme.c m_remove.c m_roleplay.c m_sendbans.c \
-	m_webirc.c no_kill_services.c no_locops.c no_oper_invis.c \
-	override.c restrict-unauthenticated.c sno_channelcreate.c \
+	chm_operonly_compat.c chm_operpeace.c chm_quietunreg_compat.c \
+	chm_sslonly.c chm_sslonly_compat.c createauthonly.c \
+	createoperonly.c example_module.c extb_account.c \
+	extb_canjoin.c extb_channel.c extb_combi.c extb_extgecos.c \
+	extb_hostmask.c extb_oper.c extb_realname.c extb_server.c \
+	extb_ssl.c extb_usermode.c force_user_invis.c \
+	hide_uncommon_channels.c hurt.c ip_cloaking.c \
+	ip_cloaking_3.0.c ip_cloaking_4.0.c ip_cloaking_old.c m_42.c \
+	m_adminwall.c m_extendchans.c m_findforwards.c m_identify.c \
+	m_mkpasswd.c m_ojoin.c m_okick.c m_omode.c m_opme.c m_remove.c \
+	m_roleplay.c m_sendbans.c m_webirc.c no_kill_services.c \
+	no_locops.c no_oper_invis.c override.c \
+	restrict-unauthenticated.c sno_channelcreate.c \
 	sno_farconnect.c sno_globalkline.c sno_globalnickchange.c \
 	sno_globaloper.c sno_whois.c spy_admin_notice.c \
 	spy_info_notice.c spy_links_notice.c spy_motd_notice.c \
 	spy_stats_notice.c spy_stats_p_notice.c spy_trace_notice.c
 DIST_SOURCES = chm_adminonly.c chm_nonotice.c chm_operonly.c \
-	chm_operonly_compat.c chm_quietunreg_compat.c chm_sslonly.c \
-	chm_sslonly_compat.c createauthonly.c createoperonly.c \
-	example_module.c extb_account.c extb_canjoin.c extb_channel.c \
-	extb_combi.c extb_extgecos.c extb_hostmask.c extb_oper.c \
-	extb_realname.c extb_server.c extb_ssl.c extb_usermode.c \
-	force_user_invis.c hide_uncommon_channels.c hurt.c \
-	ip_cloaking.c ip_cloaking_3.0.c ip_cloaking_4.0.c \
-	ip_cloaking_old.c m_42.c m_adminwall.c m_extendchans.c \
-	m_findforwards.c m_identify.c m_mkpasswd.c m_ojoin.c m_okick.c \
-	m_omode.c m_opme.c m_remove.c m_roleplay.c m_sendbans.c \
-	m_webirc.c no_kill_services.c no_locops.c no_oper_invis.c \
-	override.c restrict-unauthenticated.c sno_channelcreate.c \
+	chm_operonly_compat.c chm_operpeace.c chm_quietunreg_compat.c \
+	chm_sslonly.c chm_sslonly_compat.c createauthonly.c \
+	createoperonly.c example_module.c extb_account.c \
+	extb_canjoin.c extb_channel.c extb_combi.c extb_extgecos.c \
+	extb_hostmask.c extb_oper.c extb_realname.c extb_server.c \
+	extb_ssl.c extb_usermode.c force_user_invis.c \
+	hide_uncommon_channels.c hurt.c ip_cloaking.c \
+	ip_cloaking_3.0.c ip_cloaking_4.0.c ip_cloaking_old.c m_42.c \
+	m_adminwall.c m_extendchans.c m_findforwards.c m_identify.c \
+	m_mkpasswd.c m_ojoin.c m_okick.c m_omode.c m_opme.c m_remove.c \
+	m_roleplay.c m_sendbans.c m_webirc.c no_kill_services.c \
+	no_locops.c no_oper_invis.c override.c \
+	restrict-unauthenticated.c sno_channelcreate.c \
 	sno_farconnect.c sno_globalkline.c sno_globalnickchange.c \
 	sno_globaloper.c sno_whois.c spy_admin_notice.c \
 	spy_info_notice.c spy_links_notice.c spy_motd_notice.c \
@@ -599,6 +604,7 @@ extension_LTLIBRARIES = \
   chm_operonly.la		\
   chm_operonly_compat.la		\
   chm_nonotice.la		\
+  chm_operpeace.la		\
   chm_quietunreg_compat.la	\
   chm_sslonly.la			\
   chm_sslonly_compat.la		\
@@ -736,6 +742,9 @@ chm_operonly.la: $(chm_operonly_la_OBJECTS) $(chm_operonly_la_DEPENDENCIES) $(EX
 
 chm_operonly_compat.la: $(chm_operonly_compat_la_OBJECTS) $(chm_operonly_compat_la_DEPENDENCIES) $(EXTRA_chm_operonly_compat_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) -rpath $(extensiondir) $(chm_operonly_compat_la_OBJECTS) $(chm_operonly_compat_la_LIBADD) $(LIBS)
+
+chm_operpeace.la: $(chm_operpeace_la_OBJECTS) $(chm_operpeace_la_DEPENDENCIES) $(EXTRA_chm_operpeace_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(LINK) -rpath $(extensiondir) $(chm_operpeace_la_OBJECTS) $(chm_operpeace_la_LIBADD) $(LIBS)
 
 chm_quietunreg_compat.la: $(chm_quietunreg_compat_la_OBJECTS) $(chm_quietunreg_compat_la_DEPENDENCIES) $(EXTRA_chm_quietunreg_compat_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) -rpath $(extensiondir) $(chm_quietunreg_compat_la_OBJECTS) $(chm_quietunreg_compat_la_LIBADD) $(LIBS)
@@ -915,6 +924,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chm_nonotice.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chm_operonly.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chm_operonly_compat.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chm_operpeace.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chm_quietunreg_compat.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chm_sslonly.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chm_sslonly_compat.Plo@am__quote@

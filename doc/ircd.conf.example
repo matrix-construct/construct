@@ -13,6 +13,7 @@
 #loadmodule "extensions/chm_operonly_compat.la";
 #loadmodule "extensions/chm_quietunreg_compat.la";
 #loadmodule "extensions/chm_sslonly_compat.la";
+#loadmodule "extensions/chm_operpeace.la";
 #loadmodule "extensions/createauthonly.la";
 #loadmodule "extensions/extb_account.la";
 #loadmodule "extensions/extb_canjoin.la";
