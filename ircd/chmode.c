@@ -692,11 +692,8 @@ chm_hidden(struct Client *source_p, struct Channel *chptr,
 
 		mode_changes[mode_count].letter = c;
 		mode_changes[mode_count].dir = MODE_ADD;
-		mode_changes[mode_count].caps = 0;
-		mode_changes[mode_count].nocaps = 0;
 		mode_changes[mode_count].id = NULL;
 		mode_changes[mode_count].mems = ONLY_OPERS;
-		mode_changes[mode_count].override = 0;
 		mode_changes[mode_count++].arg = NULL;
 	}
 	else if((dir == MODE_DEL) && (chptr->mode.mode & mode_type))
@@ -705,11 +702,8 @@ chm_hidden(struct Client *source_p, struct Channel *chptr,
 
 		mode_changes[mode_count].letter = c;
 		mode_changes[mode_count].dir = MODE_DEL;
-		mode_changes[mode_count].caps = 0;
-		mode_changes[mode_count].nocaps = 0;
 		mode_changes[mode_count].mems = ONLY_OPERS;
 		mode_changes[mode_count].id = NULL;
-		mode_changes[mode_count].override = 0;
 		mode_changes[mode_count++].arg = NULL;
 	}
 }
