@@ -1190,8 +1190,12 @@ channel_modes(struct Channel *chptr, struct Client *client_p)
 	*pbuf = '\0';
 
 	for (i = 0; i < 256; i++)
+	{
+		if(chmode_table[i].set_func == chm_hidden && (!IsOper(client_p) || !IsClient(client_p)))
+			continue;
 		if(chptr->mode.mode & chmode_flags[i])
 			*mbuf++ = i;
+	}
 
 	if(chptr->mode.limit)
 	{

@@ -646,7 +646,12 @@ sendto_channel_local(int type, struct Channel *chptr, const char *pattern, ...)
 		if(IsIOError(target_p))
 			continue;
 
-		if(type && ((msptr->flags & type) == 0))
+		if(type == ONLY_OPERS)
+		{
+			if (!IsOper(target_p))
+				continue;
+		}
+		else if(type && ((msptr->flags & type) == 0))
 			continue;
 
 		_send_linebuf(target_p, &linebuf);
