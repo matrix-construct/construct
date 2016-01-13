@@ -281,17 +281,10 @@ static int mo_list(struct Client *client_p, struct Client *source_p, int parc, c
 static void list_one_channel(struct Client *source_p, struct Channel *chptr,
 		int visible)
 {
-	char topic[TOPICLEN + 1];
-
-	if (chptr->topic != NULL)
-		rb_strlcpy(topic, chptr->topic, sizeof topic);
-	else
-		topic[0] = '\0';
-	strip_colour(topic);
 	sendto_one(source_p, form_str(RPL_LIST), me.name, source_p->name,
 		   visible ? "" : "!",
 		   chptr->chname, rb_dlink_list_length(&chptr->members),
-		   topic);
+		   chptr->topic != NULL ? chptr->topic : "");
 }
 
 /*
