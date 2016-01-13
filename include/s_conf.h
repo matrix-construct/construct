@@ -263,6 +263,7 @@ struct config_channel_entry
 	int disable_local_channels;
 	unsigned int autochanmodes;
 	int displayed_usercount;
+	int strip_topic_colors;
 };
 
 struct config_server_hide

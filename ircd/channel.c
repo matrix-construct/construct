@@ -43,6 +43,7 @@
 #include "logger.h"
 #include "ipv4_from_ipv6.h"
 #include "s_assert.h"
+#include "inline/stringops.h"
 
 struct config_channel_entry ConfigChannel;
 rb_dlink_list global_channel_list;
@@ -1158,6 +1159,9 @@ set_channel_topic(struct Channel *chptr, const char *topic, const char *topic_in
 		rb_strlcpy(chptr->topic, topic, TOPICLEN + 1);
 		rb_strlcpy(chptr->topic_info, topic_info, USERHOST_REPLYLEN);
 		chptr->topic_time = topicts;
+
+		if (ConfigChannel.strip_topic_colors)
+			strip_colour(chptr->topic);
 	}
 	else
 	{
