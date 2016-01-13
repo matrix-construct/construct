@@ -187,14 +187,11 @@ get_channel_access(struct Client *source_p, struct membership *msptr, int dir, c
 	if(!MyClient(source_p))
 		return CHFL_CHANOP;
 
-	if (msptr == NULL)
-		return CHFL_PEON;
-
 	moduledata.client = source_p;
 	moduledata.chptr = msptr->chptr;
 	moduledata.msptr = msptr;
 	moduledata.target = NULL;
-	moduledata.approved = is_chanop(msptr) ? CHFL_CHANOP : CHFL_PEON;
+	moduledata.approved = (msptr != NULL && is_chanop(msptr)) ? CHFL_CHANOP : CHFL_PEON;
 	moduledata.dir = dir;
 	moduledata.modestr = modestr;
 
