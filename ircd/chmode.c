@@ -180,7 +180,7 @@ cflag_orphan(char c_)
 }
 
 int
-get_channel_access(struct Client *source_p, struct membership *msptr, int dir, const char *modestr)
+get_channel_access(struct Client *source_p, struct Channel *chptr, struct membership *msptr, int dir, const char *modestr)
 {
 	hook_data_channel_approval moduledata;
 
@@ -188,7 +188,7 @@ get_channel_access(struct Client *source_p, struct membership *msptr, int dir, c
 		return CHFL_CHANOP;
 
 	moduledata.client = source_p;
-	moduledata.chptr = msptr->chptr;
+	moduledata.chptr = chptr;
 	moduledata.msptr = msptr;
 	moduledata.target = NULL;
 	moduledata.approved = (msptr != NULL && is_chanop(msptr)) ? CHFL_CHANOP : CHFL_PEON;
@@ -518,7 +518,7 @@ check_forward(struct Client *source_p, struct Channel *chptr,
 	if(MyClient(source_p) && !(targptr->mode.mode & MODE_FREETARGET))
 	{
 		if((msptr = find_channel_membership(targptr, source_p)) == NULL ||
-			get_channel_access(source_p, msptr, MODE_QUERY, NULL) != CHFL_CHANOP)
+			get_channel_access(source_p, targptr, msptr, MODE_QUERY, NULL) != CHFL_CHANOP)
 		{
 			sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
 				   me.name, source_p->name, targptr->chname);
@@ -1702,7 +1702,7 @@ set_channel_mode(struct Client *client_p, struct Client *source_p,
 	else
 		fakesource_p = source_p;
 
-	alevel = get_channel_access(source_p, msptr, dir, reconstruct_parv(parc, parv));
+	alevel = get_channel_access(source_p, chptr, msptr, dir, reconstruct_parv(parc, parv));
 
 	for(; (c = *ml) != 0; ml++)
 	{
@@ -1712,7 +1712,7 @@ set_channel_mode(struct Client *client_p, struct Client *source_p,
 			dir = MODE_ADD;
 			if (!reauthorized)
 			{
-				alevel = get_channel_access(source_p, msptr, dir, reconstruct_parv(parc, parv));
+				alevel = get_channel_access(source_p, chptr, msptr, dir, reconstruct_parv(parc, parv));
 				reauthorized = 1;
 			}
 			break;
@@ -1720,7 +1720,7 @@ set_channel_mode(struct Client *client_p, struct Client *source_p,
 			dir = MODE_DEL;
 			if (!reauthorized)
 			{
-				alevel = get_channel_access(source_p, msptr, dir, reconstruct_parv(parc, parv));
+				alevel = get_channel_access(source_p, chptr, msptr, dir, reconstruct_parv(parc, parv));
 				reauthorized = 1;
 			}
 			break;

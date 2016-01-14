@@ -276,7 +276,7 @@ extern int match_extban(const char *banstr, struct Client *client_p, struct Chan
 extern int valid_extban(const char *banstr, struct Client *client_p, struct Channel *chptr, long mode_type);
 const char * get_extban_string(void);
 
-extern int get_channel_access(struct Client *source_p, struct membership *msptr, int dir, const char *modestr);
+extern int get_channel_access(struct Client *source_p, struct Channel *chptr, struct membership *msptr, int dir, const char *modestr);
 
 extern void send_channel_join(struct Channel *chptr, struct Client *client_p);
 

@@ -97,7 +97,7 @@ m_kick(struct Client *client_p, struct Client *source_p, int parc, const char *p
 			return 0;
 		}
 
-		if(get_channel_access(source_p, msptr, MODE_ADD, NULL) < CHFL_CHANOP)
+		if(get_channel_access(source_p, chptr, msptr, MODE_ADD, NULL) < CHFL_CHANOP)
 		{
 			if(MyConnect(source_p))
 			{
