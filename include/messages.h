@@ -89,6 +89,7 @@
 #define NUMERIC_STR_303      ":%s 303 %s :"
 #define NUMERIC_STR_305      ":You are no longer marked as being away"
 #define NUMERIC_STR_306      ":You have been marked as being away"
+#define NUMERIC_STR_310      "%s :is available for help."
 #define NUMERIC_STR_311      "%s %s %s * :%s"
 #define NUMERIC_STR_312      "%s %s :%s"
 #define NUMERIC_STR_313      "%s :%s"

@@ -28,6 +28,7 @@ extension_LTLIBRARIES =		\
   extb_extgecos.la		\
   extb_combi.la			\
   force_user_invis.la		\
+  helpops.la			\
   hurt.la			\
   ip_cloaking.la			\
   ip_cloaking_old.la		\

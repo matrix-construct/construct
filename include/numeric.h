@@ -132,6 +132,7 @@
 
 /*      RPL_WHOISADMIN       308 -- hybrid */
 
+#define RPL_WHOISHELPOP      310
 #define RPL_WHOISUSER        311
 #define RPL_WHOISSERVER      312
 #define RPL_WHOISOPERATOR    313

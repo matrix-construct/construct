@@ -206,6 +206,9 @@ extb_usermode_la_OBJECTS = extb_usermode.lo
 force_user_invis_la_LIBADD =
 force_user_invis_la_SOURCES = force_user_invis.c
 force_user_invis_la_OBJECTS = force_user_invis.lo
+helpops_la_LIBADD =
+helpops_la_SOURCES = helpops.c
+helpops_la_OBJECTS = helpops.lo
 hide_uncommon_channels_la_LIBADD =
 hide_uncommon_channels_la_SOURCES = hide_uncommon_channels.c
 hide_uncommon_channels_la_OBJECTS = hide_uncommon_channels.lo
@@ -360,7 +363,7 @@ SOURCES = chm_adminonly.c chm_nonotice.c chm_operonly.c \
 	createoperonly.c example_module.c extb_account.c \
 	extb_canjoin.c extb_channel.c extb_combi.c extb_extgecos.c \
 	extb_hostmask.c extb_oper.c extb_realname.c extb_server.c \
-	extb_ssl.c extb_usermode.c force_user_invis.c \
+	extb_ssl.c extb_usermode.c force_user_invis.c helpops.c \
 	hide_uncommon_channels.c hurt.c ip_cloaking.c \
 	ip_cloaking_3.0.c ip_cloaking_4.0.c ip_cloaking_old.c m_42.c \
 	m_adminwall.c m_extendchans.c m_findforwards.c m_identify.c \
@@ -378,7 +381,7 @@ DIST_SOURCES = chm_adminonly.c chm_nonotice.c chm_operonly.c \
 	createoperonly.c example_module.c extb_account.c \
 	extb_canjoin.c extb_channel.c extb_combi.c extb_extgecos.c \
 	extb_hostmask.c extb_oper.c extb_realname.c extb_server.c \
-	extb_ssl.c extb_usermode.c force_user_invis.c \
+	extb_ssl.c extb_usermode.c force_user_invis.c helpops.c \
 	hide_uncommon_channels.c hurt.c ip_cloaking.c \
 	ip_cloaking_3.0.c ip_cloaking_4.0.c ip_cloaking_old.c m_42.c \
 	m_adminwall.c m_extendchans.c m_findforwards.c m_identify.c \
@@ -622,6 +625,7 @@ extension_LTLIBRARIES = \
   extb_extgecos.la		\
   extb_combi.la			\
   force_user_invis.la		\
+  helpops.la			\
   hurt.la			\
   ip_cloaking.la			\
   ip_cloaking_old.la		\
@@ -800,6 +804,9 @@ extb_usermode.la: $(extb_usermode_la_OBJECTS) $(extb_usermode_la_DEPENDENCIES) $
 force_user_invis.la: $(force_user_invis_la_OBJECTS) $(force_user_invis_la_DEPENDENCIES) $(EXTRA_force_user_invis_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) -rpath $(extensiondir) $(force_user_invis_la_OBJECTS) $(force_user_invis_la_LIBADD) $(LIBS)
 
+helpops.la: $(helpops_la_OBJECTS) $(helpops_la_DEPENDENCIES) $(EXTRA_helpops_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(LINK) -rpath $(extensiondir) $(helpops_la_OBJECTS) $(helpops_la_LIBADD) $(LIBS)
+
 hide_uncommon_channels.la: $(hide_uncommon_channels_la_OBJECTS) $(hide_uncommon_channels_la_DEPENDENCIES) $(EXTRA_hide_uncommon_channels_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) -rpath $(extensiondir) $(hide_uncommon_channels_la_OBJECTS) $(hide_uncommon_channels_la_LIBADD) $(LIBS)
 
@@ -943,6 +950,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/extb_ssl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/extb_usermode.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/force_user_invis.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/helpops.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hide_uncommon_channels.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hurt.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ip_cloaking.Plo@am__quote@
