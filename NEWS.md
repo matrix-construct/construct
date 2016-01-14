@@ -8,6 +8,27 @@ See LICENSE for licensing details (GPL v2).
 ### build
 - Build system has been converted to libtool + automake for sanity reasons.
 
+### user
+- Import the ability to exceed MAXCHANNELS from ircd-seven.
+
+### oper
+- Merge several features from ircd-seven:
+  - Implement support for remote DIE/RESTART.
+  - Implement support for remote MODLOAD et al commands.
+  - Add the GRANT command which allows for temporarily opering a client.
+  - Implement the hidden oper-only channel modes framework.
+  - Implement a channel mode that disallows kicking IRC operators (+M).
+- Enhance the oper override system, allowing more flexibility and detail
+  in network-wide notices.
+
+### conf
+- Add the ability to strip color codes from topics unconditionally.
+
+### code
+- Almost all 2.8-style hashtable structures have been moved to dictionaries or
+  radix trees, resulting in significant memory savings.
+- The block allocator has been disabled and is no longer used.
+
 ## charybdis-3.5.0
 
 ### server protocol
