@@ -53,6 +53,7 @@ typedef struct
 	struct Client *client;
 	const void *arg1;
 	int arg2;
+	int result;
 } hook_data_int;
 
 typedef struct

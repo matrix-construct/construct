@@ -76,7 +76,7 @@ static void stats_l_list(struct Client *s, const char *, int, int, rb_dlink_list
 static void stats_l_client(struct Client *source_p, struct Client *target_p,
 				char statchar);
 
-static void stats_spy(struct Client *, char, const char *);
+static int stats_spy(struct Client *, char, const char *);
 static void stats_p_spy(struct Client *);
 
 /* Heres our struct for the stats table */
@@ -192,6 +192,7 @@ m_stats(struct Client *client_p, struct Client *source_p, int parc, const char *
 	static time_t last_used = 0;
 	int i;
 	char statchar;
+	int did_stats = 0;
 
 	statchar = parv[1][0];
 
@@ -215,7 +216,11 @@ m_stats(struct Client *client_p, struct Client *source_p, int parc, const char *
 		return 0;
 
 	if((statchar != 'L') && (statchar != 'l'))
-		stats_spy(source_p, statchar, NULL);
+		did_stats = stats_spy(source_p, statchar, NULL);
+
+	/* if did_stats is true, a module grabbed this STATS request */
+	if (did_stats)
+		goto stats_out;
 
 	for (i = 0; stats_cmd_table[i].letter; i++)
 	{
@@ -246,6 +251,7 @@ m_stats(struct Client *client_p, struct Client *source_p, int parc, const char *
 		}
 	}
 
+stats_out:
 	/* Send the end of stats notice, and the stats_spy */
 	sendto_one_numeric(source_p, RPL_ENDOFSTATS,
 			   form_str(RPL_ENDOFSTATS), statchar);
@@ -1711,7 +1717,7 @@ stats_comm(struct Client *source_p)
  * any damage with stats requests now anyway. So, why show them?
  * -Dianora
  */
-static void
+static int
 stats_spy(struct Client *source_p, char statchar, const char *name)
 {
 	hook_data_int data;
@@ -1719,8 +1725,11 @@ stats_spy(struct Client *source_p, char statchar, const char *name)
 	data.client = source_p;
 	data.arg1 = name;
 	data.arg2 = (int) statchar;
+	data.result = 0;
 
 	call_hook(doing_stats_hook, &data);
+
+	return data.result;
 }
 
 /* stats_p_spy()
