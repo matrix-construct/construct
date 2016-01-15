@@ -825,6 +825,7 @@ set_default_conf(void)
 
 	ConfigFileEntry.nicklen = NICKLEN;
 	ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_SHA1;
+	ConfigFileEntry.hide_opers_in_whois = 0;
 
 	if (!alias_dict)
 		alias_dict = irc_dictionary_create("alias", strcasecmp);

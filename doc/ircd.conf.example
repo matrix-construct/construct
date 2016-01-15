@@ -546,6 +546,7 @@ general {
 	max_ratelimit_tokens = 30;
 	away_interval = 30;
 	certfp_method = sha1;
+	hide_opers_in_whois = no;
 };
 
 modules {

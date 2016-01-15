@@ -237,6 +237,8 @@ struct config_file_entry
 
 	unsigned int nicklen;
 	int certfp_method;
+
+	int hide_opers_in_whois;
 };
 
 struct config_channel_entry

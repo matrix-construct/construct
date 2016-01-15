@@ -2428,6 +2428,7 @@ static struct ConfEntry conf_general_table[] =
 	{ "client_flood_message_time",	CF_INT,   NULL, 0, &ConfigFileEntry.client_flood_message_time	},
 	{ "max_ratelimit_tokens",	CF_INT,   NULL, 0, &ConfigFileEntry.max_ratelimit_tokens	},
 	{ "away_interval",		CF_INT,   NULL, 0, &ConfigFileEntry.away_interval		},
+	{ "hide_opers_in_whois",	CF_YESNO, NULL, 0, &ConfigFileEntry.hide_opers_in_whois		},
 	{ "certfp_method",	CF_STRING, conf_set_general_certfp_method, 0, NULL },
 	{ "\0", 		0, 	  NULL, 0, NULL }
 };
