@@ -25,6 +25,7 @@
 static void check_umode_change(void *data);
 static void hack_channel_access(void *data);
 static void hack_can_join(void *data);
+static void hack_can_kick(void *data);
 static void hack_can_send(void *data);
 static void handle_client_exit(void *data);
 
@@ -32,11 +33,13 @@ mapi_hfn_list_av1 override_hfnlist[] = {
 	{ "umode_changed", (hookfn) check_umode_change },
 	{ "get_channel_access", (hookfn) hack_channel_access },
 	{ "can_join", (hookfn) hack_can_join },
+	{ "can_kick", (hookfn) hack_can_kick },
 	{ "can_send", (hookfn) hack_can_send },
 	{ "client_exit", (hookfn) handle_client_exit },
 	{ NULL, NULL }
 };
 
+#define CHFL_OVERRIDE		0x0004
 #define IsOperOverride(x)	(HasPrivilege((x), "oper:override"))
 
 struct OverrideSession {
@@ -162,7 +165,7 @@ hack_channel_access(void *vdata)
 	if (data->client->umodes & user_modes['p'])
 	{
 		update_session_deadline(data->client, NULL);
-		data->approved = CHFL_CHANOP;
+		data->approved = CHFL_OVERRIDE;
 
 		/* we only want to report modehacks, which are always non-NULL */
 		if (data->modestr)
@@ -186,6 +189,24 @@ hack_can_join(void *vdata)
 
 		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s is using oper-override on %s (banwalking)",
 				       get_oper_name(data->client), data->chptr->chname);
+	}
+}
+
+static void
+hack_can_kick(void *vdata)
+{
+	hook_data_channel_approval *data = (hook_data_channel_approval *) vdata;
+	int alevel;
+
+	alevel = get_channel_access(data->client, data->chptr, data->msptr, data->dir, "KICK");
+	if (alevel != CHFL_OVERRIDE)
+		return;
+
+	if (data->client->umodes & user_modes['p'])
+	{
+		update_session_deadline(data->client, NULL);
+		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s is using oper-override on %s (KICK %s)",
+				       get_oper_name(data->client), data->chptr->chname, data->target->name);
 	}
 }
 
