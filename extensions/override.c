@@ -198,7 +198,7 @@ hack_can_kick(void *vdata)
 	hook_data_channel_approval *data = (hook_data_channel_approval *) vdata;
 	int alevel;
 
-	alevel = get_channel_access(data->client, data->chptr, data->msptr, data->dir, "KICK");
+	alevel = get_channel_access(data->client, data->chptr, data->msptr, data->dir, NULL);
 	if (alevel != CHFL_OVERRIDE)
 		return;
 
