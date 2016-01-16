@@ -225,7 +225,7 @@ allow_mode_change(struct Client *source_p, struct Channel *chptr, int alevel,
 		*errors |= SM_ERR_MLOCK;
 		return 0;
 	}
-	if(alevel != CHFL_CHANOP)
+	if(alevel < CHFL_CHANOP)
 	{
 		if(!(*errors & SM_ERR_NOOPS))
 			sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
@@ -518,7 +518,7 @@ check_forward(struct Client *source_p, struct Channel *chptr,
 	if(MyClient(source_p) && !(targptr->mode.mode & MODE_FREETARGET))
 	{
 		if((msptr = find_channel_membership(targptr, source_p)) == NULL ||
-			get_channel_access(source_p, targptr, msptr, MODE_QUERY, NULL) != CHFL_CHANOP)
+			get_channel_access(source_p, targptr, msptr, MODE_QUERY, NULL) < CHFL_CHANOP)
 		{
 			sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
 				   me.name, source_p->name, targptr->chname);
@@ -836,7 +836,7 @@ chm_ban(struct Client *source_p, struct Channel *chptr,
 
 		/* non-ops cant see +eI lists.. */
 		/* note that this is still permitted if +e/+I are mlocked. */
-		if(alevel != CHFL_CHANOP && mode_type != CHFL_BAN &&
+		if(alevel < CHFL_CHANOP && mode_type != CHFL_BAN &&
 				mode_type != CHFL_QUIET)
 		{
 			if(!(*errors & SM_ERR_NOOPS))
