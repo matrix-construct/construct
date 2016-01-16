@@ -133,9 +133,6 @@ h_hdl_stats_request(hook_data_int *hdata)
 	{
 		target_p = helper_ptr->data;
 
-		if(IsOperInvis(target_p) && !IsOper(hdata->client))
-			continue;
-
 		if(target_p->user->away)
 			continue;
 
