@@ -317,7 +317,7 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 		sendto_one_numeric(source_p, RPL_AWAY, form_str(RPL_AWAY),
 				   target_p->name, target_p->user->away);
 
-	if(IsOper(target_p) && (!ConfigFileEntry.hide_opers_in_whois || source_p == target_p))
+	if(IsOper(target_p) && (!ConfigFileEntry.hide_opers_in_whois || IsOper(source_p)))
 	{
 		sendto_one_numeric(source_p, RPL_WHOISOPERATOR, form_str(RPL_WHOISOPERATOR),
 				   target_p->name,
