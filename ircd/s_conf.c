@@ -647,7 +647,7 @@ rehash(int sig)
 				     "Got signal SIGHUP, reloading ircd conf. file");
 	}
 
-	restart_authd();
+	rehash_authd();
 	/* don't close listeners until we know we can go ahead with the rehash */
 	read_conf_files(NO);
 
