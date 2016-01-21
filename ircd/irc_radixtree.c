@@ -536,7 +536,7 @@ irc_radixtree_foreach_next(struct irc_radixtree *dtree, struct irc_radixtree_ite
 }
 
 /*
- * mowgli_radix_elem_find(struct irc_radixtree *dtree, const char *key)
+ * irc_radixtree_elem_find(struct irc_radixtree *dtree, const char *key)
  *
  * Looks up a DTree node by name.
  *
@@ -552,7 +552,7 @@ irc_radixtree_foreach_next(struct irc_radixtree *dtree, struct irc_radixtree_ite
  *     - none
  */
 struct irc_radixtree_leaf *
-mowgli_radix_elem_find(struct irc_radixtree *dict, const char *key)
+irc_radixtree_elem_find(struct irc_radixtree *dict, const char *key)
 {
 	char ckey_store[256];
 
@@ -627,7 +627,7 @@ mowgli_radix_elem_find(struct irc_radixtree *dict, const char *key)
  *     - data is inserted into the DTree.
  */
 struct irc_radixtree_leaf *
-mowgli_radix_elem_add(struct irc_radixtree *dict, const char *key, void *data)
+irc_radixtree_elem_add(struct irc_radixtree *dict, const char *key, void *data)
 {
 	char *ckey;
 
@@ -777,7 +777,7 @@ mowgli_radix_elem_add(struct irc_radixtree *dict, const char *key, void *data)
 int
 irc_radixtree_add(struct irc_radixtree *dict, const char *key, void *data)
 {
-	return (mowgli_radix_elem_add(dict, key, data) != NULL);
+	return (irc_radixtree_elem_add(dict, key, data) != NULL);
 }
 
 /*
@@ -805,7 +805,7 @@ irc_radixtree_delete(struct irc_radixtree *dict, const char *key)
 	void *data;
 	struct irc_radixtree_leaf *leaf;
 
-	leaf = mowgli_radix_elem_find(dict, key);
+	leaf = irc_radixtree_elem_find(dict, key);
 
 	if (leaf == NULL)
 		return NULL;
@@ -905,7 +905,7 @@ irc_radixtree_elem_delete(struct irc_radixtree *dict, struct irc_radixtree_leaf 
 void *
 irc_radixtree_retrieve(struct irc_radixtree *dtree, const char *key)
 {
-	struct irc_radixtree_leaf *delem = mowgli_radix_elem_find(dtree, key);
+	struct irc_radixtree_leaf *delem = irc_radixtree_elem_find(dtree, key);
 
 	if (delem != NULL)
 		return delem->data;
@@ -914,7 +914,7 @@ irc_radixtree_retrieve(struct irc_radixtree *dtree, const char *key)
 }
 
 const char *
-mowgli_radix_elem_get_key(struct irc_radixtree_leaf *leaf)
+irc_radixtree_elem_get_key(struct irc_radixtree_leaf *leaf)
 {
 	s_assert(leaf != NULL);
 
@@ -922,7 +922,7 @@ mowgli_radix_elem_get_key(struct irc_radixtree_leaf *leaf)
 }
 
 void
-mowgli_radix_elem_set_data(struct irc_radixtree_leaf *leaf, void *data)
+irc_radixtree_elem_set_data(struct irc_radixtree_leaf *leaf, void *data)
 {
 	s_assert(leaf != NULL);
 
@@ -930,7 +930,7 @@ mowgli_radix_elem_set_data(struct irc_radixtree_leaf *leaf, void *data)
 }
 
 void *
-mowgli_radix_elem_get_data(struct irc_radixtree_leaf *leaf)
+irc_radixtree_elem_get_data(struct irc_radixtree_leaf *leaf)
 {
 	s_assert(leaf != NULL);
 
