@@ -55,6 +55,9 @@ struct irc_radixtree_iteration_state
 #define IRC_RADIXTREE_FOREACH(element, state, dict) \
 	for (irc_radixtree_foreach_start((dict), (state)); (element = irc_radixtree_foreach_cur((dict), (state))); irc_radixtree_foreach_next((dict), (state)))
 
+#define IRC_RADIXTREE_FOREACH_FROM(element, state, dict, key) \
+	for (irc_radixtree_foreach_start_from((dict), (state), (key)); (element = irc_radixtree_foreach_cur((dict), (state))); irc_radixtree_foreach_next((dict), (state)))
+
 /*
  * irc_radixtree_create() creates a new patricia tree of the defined resolution.
  * compare_cb is the canonizing function.
@@ -99,6 +102,15 @@ extern void *irc_radixtree_search(struct irc_radixtree *dtree, void *(*foreach_c
  * of the iteration (but not any other element).
  */
 extern void irc_radixtree_foreach_start(struct irc_radixtree *dtree, struct irc_radixtree_iteration_state *state);
+
+/*
+ * irc_radixtree_foreach_start_from() begins an iteration over all items,
+ * starting with the item specified by `key`.  If there is only one iteration
+ * in progress at a time, it is permitted to remove the current element
+ * of the iteration (but not any other element).
+ * Use NULL as a key to have it start at the beginning.
+ */
+extern void irc_radixtree_foreach_start_from(struct irc_radixtree *dtree, struct irc_radixtree_iteration_state *state, const char *key);
 
 /*
  * irc_radixtree_foreach_cur() returns the current element of the iteration,

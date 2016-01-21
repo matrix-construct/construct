@@ -610,6 +610,41 @@ irc_radixtree_elem_find(struct irc_radixtree *dict, const char *key)
 }
 
 /*
+ * irc_radixtree_foreach_start_from(struct irc_radixtree *dtree, struct irc_radixtree_iteration_state *state, const char *key)
+ *
+ * Starts iteration from a specified key, by wrapping irc_radixtree_elem_find().
+ *
+ * Inputs:
+ *     - patricia tree object
+ *     - iterator
+ *     - key to start from
+ *
+ * Outputs:
+ *     - none
+ *
+ * Side Effects:
+ *     - the iterator's state is initialized at a specific point
+ */
+void
+irc_radixtree_foreach_start_from(struct irc_radixtree *dtree, struct irc_radixtree_iteration_state *state, const char *key)
+{
+	s_assert(dtree != NULL);
+	s_assert(state != NULL);
+
+	if (key != NULL)
+	{
+		STATE_CUR(state) = NULL;
+		STATE_NEXT(state) = irc_radixtree_elem_find(dtree, key);
+
+		/* make STATE_CUR point to selected item and STATE_NEXT point to
+		 * next item in the tree */
+		irc_radixtree_foreach_next(dtree, state);
+	}
+	else
+		irc_radixtree_foreach_start(dtree, state);
+}
+
+/*
  * irc_radixtree_add(struct irc_radixtree *dtree, const char *key, void *data)
  *
  * Creates a new DTree node and binds data to it.
