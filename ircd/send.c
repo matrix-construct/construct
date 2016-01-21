@@ -69,20 +69,20 @@ _send_linebuf(struct Client *to, buf_head_t *linebuf)
 	if(!MyConnect(to) || IsIOError(to))
 		return 0;
 
-	if(rb_linebuf_len(&to->localClient->buf_sendq) > get_sendq_hard(to))
+	if(rb_linebuf_len(&to->localClient->buf_sendq) > get_sendq(to))
 	{
 		if(IsServer(to))
 		{
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
-					     "Hard SendQ limit exceeded for %s: %u > %lu",
+					     "Max SendQ limit exceeded for %s: %u > %lu",
 					     to->name,
 					     rb_linebuf_len(&to->localClient->buf_sendq),
-					     get_sendq_hard(to));
+					     get_sendq(to));
 
-			ilog(L_SERVER, "Hard SendQ limit exceeded for %s: %u > %lu",
+			ilog(L_SERVER, "Max SendQ limit exceeded for %s: %u > %lu",
 			     log_client_name(to, SHOW_IP),
 			     rb_linebuf_len(&to->localClient->buf_sendq),
-			     get_sendq_hard(to));
+			     get_sendq(to));
 		}
 
 		dead_link(to, 1);

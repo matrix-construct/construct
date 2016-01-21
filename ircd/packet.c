@@ -108,23 +108,11 @@ parse_client_queued(struct Client *client_p)
 		else
 			allow_read = ConfigFileEntry.client_flood_burst_rate;
 		allow_read *= ConfigFileEntry.client_flood_message_time;
-
 		/* allow opers 4 times the amount of messages as users. why 4?
 		 * why not. :) --fl_
 		 */
 		if(IsOper(client_p) && ConfigFileEntry.no_oper_flood)
 			allow_read *= 4;
-		else
-		{
-			/*
-			 * If a client's sendq is greater than the soft limit, do not allow any
-			 * more messages to be read.  This allows us to safely handle commands like
-			 * LIST without harming the server.  --kaniini
-			 */
-			if (rb_linebuf_len(&client_p->localClient->buf_sendq) > (get_sendq(client_p)))
-				allow_read = 0;
-		}
-
 		/*
 		 * Handle flood protection here - if we exceed our flood limit on
 		 * messages in this loop, we simply drop out of the loop prematurely.

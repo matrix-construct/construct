@@ -55,7 +55,6 @@ make_class(void)
 	PingFreq(tmp) = DEFAULT_PINGFREQUENCY;
 	MaxUsers(tmp) = 1;
 	MaxSendq(tmp) = DEFAULT_SENDQ;
-	MaxSendqHard(tmp) = DEFAULT_SENDQ * 4;
 
 	tmp->ip_limits = rb_new_patricia(PATRICIA_BITS);
 	return tmp;
@@ -199,7 +198,6 @@ add_class(struct Class *classptr)
 		MaxIdent(tmpptr) = MaxIdent(classptr);
 		PingFreq(tmpptr) = PingFreq(classptr);
 		MaxSendq(tmpptr) = MaxSendq(classptr);
-		MaxSendqHard(tmpptr) = MaxSendq(classptr) * 4;
 		ConFreq(tmpptr) = ConFreq(classptr);
 		CidrIpv4Bitlen(tmpptr) = CidrIpv4Bitlen(classptr);
 		CidrIpv6Bitlen(tmpptr) = CidrIpv6Bitlen(classptr);
@@ -340,36 +338,6 @@ get_sendq(struct Client *client_p)
 
 		if(aconf != NULL && aconf->status & CONF_CLIENT)
 			return ConfMaxSendq(aconf);
-	}
-
-	return DEFAULT_SENDQ;
-}
-
-/*
- * get_sendq_hard
- *
- * inputs	- pointer to client
- * output	- hard sendq limit for this client as found from its class
- * side effects	- NONE
- */
-long
-get_sendq_hard(struct Client *client_p)
-{
-	if(client_p == NULL || IsMe(client_p))
-		return DEFAULT_SENDQ;
-
-	if(IsServer(client_p))
-	{
-		struct server_conf *server_p;
-		server_p = client_p->localClient->att_sconf;
-		return MaxSendqHard(server_p->class);
-	}
-	else
-	{
-		struct ConfItem *aconf = client_p->localClient->att_conf;
-
-		if(aconf != NULL && aconf->status & CONF_CLIENT)
-			return ConfMaxSendqHard(aconf);
 	}
 
 	return DEFAULT_SENDQ;
