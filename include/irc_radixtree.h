@@ -140,7 +140,7 @@ extern void *irc_radixtree_delete(struct irc_radixtree *dtree, const char *key);
 
 /* Low-level functions */
 struct irc_radixtree_leaf *irc_radixtree_elem_add(struct irc_radixtree *dtree, const char *key, void *data);
-struct irc_radixtree_leaf *irc_radixtree_elem_find(struct irc_radixtree *dtree, const char *key);
+struct irc_radixtree_leaf *irc_radixtree_elem_find(struct irc_radixtree *dtree, const char *key, int fuzzy);
 void irc_radixtree_elem_delete(struct irc_radixtree *dtree, struct irc_radixtree_leaf *elem);
 const char *irc_radixtree_elem_get_key(struct irc_radixtree_leaf *elem);
 void irc_radixtree_elem_set_data(struct irc_radixtree_leaf *elem, void *data);

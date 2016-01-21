@@ -543,6 +543,7 @@ irc_radixtree_foreach_next(struct irc_radixtree *dtree, struct irc_radixtree_ite
  * Inputs:
  *     - patricia tree object
  *     - name of node to lookup
+ *     - whether to do a direct or fuzzy match
  *
  * Outputs:
  *     - on success, the dtree node requested
@@ -552,7 +553,7 @@ irc_radixtree_foreach_next(struct irc_radixtree *dtree, struct irc_radixtree_ite
  *     - none
  */
 struct irc_radixtree_leaf *
-irc_radixtree_elem_find(struct irc_radixtree *dict, const char *key)
+irc_radixtree_elem_find(struct irc_radixtree *dict, const char *key, int fuzzy)
 {
 	char ckey_store[256];
 
@@ -600,7 +601,7 @@ irc_radixtree_elem_find(struct irc_radixtree *dict, const char *key)
 	}
 
 	/* Now, if the key is in the tree, delem contains it. */
-	if ((delem != NULL) && strcmp(delem->leaf.key, ckey))
+	if ((delem != NULL) && !fuzzy && strcmp(delem->leaf.key, ckey))
 		delem = NULL;
 
 	if (ckey_buf != NULL)
@@ -634,7 +635,7 @@ irc_radixtree_foreach_start_from(struct irc_radixtree *dtree, struct irc_radixtr
 	if (key != NULL)
 	{
 		STATE_CUR(state) = NULL;
-		STATE_NEXT(state) = irc_radixtree_elem_find(dtree, key);
+		STATE_NEXT(state) = irc_radixtree_elem_find(dtree, key, 1);
 
 		/* make STATE_CUR point to selected item and STATE_NEXT point to
 		 * next item in the tree */
@@ -840,7 +841,7 @@ irc_radixtree_delete(struct irc_radixtree *dict, const char *key)
 	void *data;
 	struct irc_radixtree_leaf *leaf;
 
-	leaf = irc_radixtree_elem_find(dict, key);
+	leaf = irc_radixtree_elem_find(dict, key, 0);
 
 	if (leaf == NULL)
 		return NULL;
@@ -940,7 +941,7 @@ irc_radixtree_elem_delete(struct irc_radixtree *dict, struct irc_radixtree_leaf 
 void *
 irc_radixtree_retrieve(struct irc_radixtree *dtree, const char *key)
 {
-	struct irc_radixtree_leaf *delem = irc_radixtree_elem_find(dtree, key);
+	struct irc_radixtree_leaf *delem = irc_radixtree_elem_find(dtree, key, 0);
 
 	if (delem != NULL)
 		return delem->data;
