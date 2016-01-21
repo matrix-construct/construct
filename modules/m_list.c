@@ -51,6 +51,9 @@
 #include "inline/stringops.h"
 #include "s_assert.h"
 #include "logger.h"
+#include "irc_radixtree.h"
+
+static rb_dlink_list safelisting_clients = { NULL, NULL, 0 };
 
 static int _modinit(void);
 static void _moddeinit(void);
@@ -58,16 +61,14 @@ static void _moddeinit(void);
 static int m_list(struct Client *, struct Client *, int, const char **);
 static int mo_list(struct Client *, struct Client *, int, const char **);
 
-struct ListOptions
-{
-	unsigned int users_min, users_max;
-	time_t created_min, created_max, topic_min, topic_max;
-	int operspy;
-};
-
 static void list_one_channel(struct Client *source_p, struct Channel *chptr, int visible);
 
-static void safelist_one_channel(struct Client *source_p, struct Channel *chptr, struct ListOptions *params);
+static void safelist_one_channel(struct Client *source_p, struct Channel *chptr, struct ListClient *params);
+static void safelist_check_cliexit(hook_data_client_exit * hdata);
+static void safelist_client_instantiate(struct Client *, struct ListClient *);
+static void safelist_client_release(struct Client *);
+static void safelist_iterate_client(struct Client *source_p);
+static void safelist_iterate_clients(void *unused);
 static void safelist_channel_named(struct Client *source_p, const char *name, int operspy);
 
 struct Message list_msgtab = {
@@ -77,10 +78,19 @@ struct Message list_msgtab = {
 
 mapi_clist_av1 list_clist[] = { &list_msgtab, NULL };
 
-DECLARE_MODULE_AV1(list, _modinit, _moddeinit, list_clist, NULL, NULL, "$Revision: 3372 $");
+mapi_hfn_list_av1 list_hfnlist[] = {
+	{"client_exit", (hookfn) safelist_check_cliexit},
+	{NULL, NULL}
+};
+
+DECLARE_MODULE_AV1(list, _modinit, _moddeinit, list_clist, NULL, list_hfnlist, "$Revision: 3372 $");
+
+static struct ev_entry *iterate_clients_ev = NULL;
 
 static int _modinit(void)
 {
+	iterate_clients_ev = rb_event_add("safelist_iterate_clients", safelist_iterate_clients, NULL, 3);
+
 	/* ELIST=[tokens]:
 	 *
 	 * M = mask search
@@ -97,8 +107,21 @@ static int _modinit(void)
 
 static void _moddeinit(void)
 {
+	rb_event_delete(iterate_clients_ev);
+
 	delete_isupport("SAFELIST");
 	delete_isupport("ELIST");
+}
+
+static void safelist_check_cliexit(hook_data_client_exit * hdata)
+{
+	/* Cancel the safelist request if we are disconnecting
+	 * from the server. That way it doesn't core. :P --nenolod
+	 */
+	if (MyClient(hdata->target) && hdata->target->localClient->safelist_data != NULL)
+	{
+		safelist_client_release(hdata->target);
+	}
 }
 
 /* m_list()
@@ -110,6 +133,13 @@ static void _moddeinit(void)
 static int m_list(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0L;
+
+	if (source_p->localClient->safelist_data != NULL)
+	{
+		sendto_one_notice(source_p, ":/LIST aborted");
+		safelist_client_release(source_p);
+		return 0;
+	}
 
 	if (parc < 2 || !IsChannelName(parv[1]))
 	{
@@ -132,16 +162,18 @@ static int m_list(struct Client *client_p, struct Client *source_p, int parc, co
  */
 static int mo_list(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	struct ListOptions *params;
+	struct ListClient *params;
 	char *p;
 	char *args = NULL;
 	int i;
 	int operspy = 0;
-	int sendq_limit = get_sendq_hard(client_p);
-	rb_dlink_node *ptr;
 
-	sendq_limit /= 10;
-	sendq_limit *= 9;
+	if (source_p->localClient->safelist_data != NULL)
+	{
+		sendto_one_notice(source_p, ":/LIST aborted");
+		safelist_client_release(source_p);
+		return 0;
+	}
 
 	if (parc > 1)
 	{
@@ -163,7 +195,7 @@ static int mo_list(struct Client *client_p, struct Client *source_p, int parc, c
 	}
 
 	/* Multiple channels, possibly with parameters. */
-	params = rb_malloc(sizeof(struct ListOptions));
+	params = rb_malloc(sizeof(struct ListClient));
 
 	params->users_min = ConfigChannel.displayed_usercount;
 	params->users_max = INT_MAX;
@@ -253,20 +285,7 @@ static int mo_list(struct Client *client_p, struct Client *source_p, int parc, c
 		}
 	}
 
-	sendto_one(client_p, form_str(RPL_LISTSTART), me.name, client_p->name);
-
-	RB_DLINK_FOREACH(ptr, global_channel_list.head)
-	{
-		safelist_one_channel(client_p, ptr->data, params);
-
-		if (rb_linebuf_len(&client_p->localClient->buf_sendq) > sendq_limit)
-		{
-			sendto_one(source_p, form_str(ERR_TOOMANYMATCHES), me.name, source_p->name, "LIST");
-			break;
-		}
-	}
-
-	sendto_one(source_p, form_str(RPL_LISTEND), me.name, source_p->name);
+	safelist_client_instantiate(source_p, params);
 
 	return 0;
 }
@@ -311,6 +330,59 @@ static int safelist_sendq_exceeded(struct Client *client_p)
 		return YES;
 	else
 		return NO;
+}
+
+/*
+ * safelist_client_instantiate()
+ *
+ * inputs       - pointer to Client to be listed,
+ *                pointer to ListClient for params
+ * outputs      - none
+ * side effects - the safelist process begins for a
+ *                client.
+ *
+ * Please do not ever call this on a non-local client.
+ * If you do, you will get SIGSEGV.
+ */
+static void safelist_client_instantiate(struct Client *client_p, struct ListClient *params)
+{
+	s_assert(MyClient(client_p));
+	s_assert(params != NULL);
+
+	client_p->localClient->safelist_data = params;
+
+	sendto_one(client_p, form_str(RPL_LISTSTART), me.name, client_p->name);
+
+	/* pop the client onto the queue for processing */
+	rb_dlinkAddAlloc(client_p, &safelisting_clients);
+
+	/* give the user some initial data to work with */
+	safelist_iterate_client(client_p);
+}
+
+/*
+ * safelist_client_release()
+ *
+ * inputs       - pointer to Client being listed on
+ * outputs      - none
+ * side effects - the client is no longer being
+ *                listed
+ *
+ * Please do not ever call this on a non-local client.
+ * If you do, you will get SIGSEGV.
+ */
+static void safelist_client_release(struct Client *client_p)
+{
+	s_assert(MyClient(client_p));
+
+	rb_dlinkFindDestroy(client_p, &safelisting_clients);
+
+	rb_free(client_p->localClient->safelist_data->chname);
+	rb_free(client_p->localClient->safelist_data);
+
+	client_p->localClient->safelist_data = NULL;
+
+	sendto_one(client_p, form_str(RPL_LISTEND), me.name, client_p->name);
 }
 
 /*
@@ -363,7 +435,7 @@ static void safelist_channel_named(struct Client *source_p, const char *name, in
  * side effects - a channel is listed if it meets the
  *                requirements
  */
-static void safelist_one_channel(struct Client *source_p, struct Channel *chptr, struct ListOptions *params)
+static void safelist_one_channel(struct Client *source_p, struct Channel *chptr, struct ListClient *params)
 {
 	int visible;
 
@@ -390,4 +462,38 @@ static void safelist_one_channel(struct Client *source_p, struct Channel *chptr,
 		return;
 
 	list_one_channel(source_p, chptr, visible);
+}
+
+/*
+ * safelist_iterate_client()
+ *
+ * inputs       - client pointer
+ * outputs      - none
+ * side effects - the client's sendq is filled up again
+ */
+static void safelist_iterate_client(struct Client *source_p)
+{
+	struct Channel *chptr;
+	struct irc_radixtree_iteration_state iter;
+
+	IRC_RADIXTREE_FOREACH_FROM(chptr, &iter, channel_tree, source_p->localClient->safelist_data->chname)
+	{
+		if (safelist_sendq_exceeded(source_p->from) == YES)
+		{
+			source_p->localClient->safelist_data->chname = rb_strdup(chptr->chname);
+			return;
+		}
+
+		safelist_one_channel(source_p, chptr, source_p->localClient->safelist_data);
+	}
+
+	safelist_client_release(source_p);
+}
+
+static void safelist_iterate_clients(void *unused)
+{
+	rb_dlink_node *n, *n2;
+
+	RB_DLINK_FOREACH_SAFE(n, n2, safelisting_clients.head)
+		safelist_iterate_client((struct Client *)n->data);
 }

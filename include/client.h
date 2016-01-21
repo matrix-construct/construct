@@ -71,6 +71,7 @@ struct Server;
 struct LocalUser;
 struct AuthRequest;
 struct PreClient;
+struct ListClient;
 struct scache_entry;
 
 /*
@@ -269,6 +270,8 @@ struct LocalUser
 	time_t ratelimit;
 	unsigned int join_who_credits;
 
+	struct ListClient *safelist_data;
+
 	char *mangledhost; /* non-NULL if host mangling module loaded and
 			      applicable to this client */
 
@@ -297,6 +300,14 @@ struct PreClient
 	struct Blacklist *dnsbl_listed; /* first dnsbl where it's listed */
 
 	struct rb_sockaddr_storage lip; /* address of our side of the connection */
+};
+
+struct ListClient
+{
+	char *chname;
+	unsigned int users_min, users_max;
+	time_t created_min, created_max, topic_min, topic_max;
+	int operspy;
 };
 
 /*
