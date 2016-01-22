@@ -480,7 +480,9 @@ static void safelist_iterate_client(struct Client *source_p)
 	{
 		if (safelist_sendq_exceeded(source_p->from) == YES)
 		{
+			rb_free(source_p->localClient->safelist_data->chname);
 			source_p->localClient->safelist_data->chname = rb_strdup(chptr->chname);
+
 			return;
 		}
 
