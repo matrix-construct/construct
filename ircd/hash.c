@@ -42,8 +42,6 @@
 #include "irc_dictionary.h"
 #include "irc_radixtree.h"
 
-rb_dlink_list *hostTable;
-
 struct Dictionary *client_connid_tree = NULL;
 struct Dictionary *client_zconnid_tree = NULL;
 struct irc_radixtree *client_id_tree = NULL;
@@ -51,6 +49,7 @@ struct irc_radixtree *client_name_tree = NULL;
 
 struct irc_radixtree *channel_tree = NULL;
 struct irc_radixtree *resv_tree = NULL;
+struct irc_radixtree *hostname_tree = NULL;
 
 /*
  * look in whowas.c for the missing ...[WW_MAX]; entry
@@ -63,8 +62,6 @@ struct irc_radixtree *resv_tree = NULL;
 void
 init_hash(void)
 {
-	hostTable = rb_malloc(sizeof(rb_dlink_list) * HOST_MAX);
-
 	client_connid_tree = irc_dictionary_create("client connid", irc_uint32cmp);
 	client_zconnid_tree = irc_dictionary_create("client zconnid", irc_uint32cmp);
 	client_id_tree = irc_radixtree_create("client id", NULL);
@@ -72,6 +69,8 @@ init_hash(void)
 
 	channel_tree = irc_radixtree_create("channel", irc_radixtree_irccasecanon);
 	resv_tree = irc_radixtree_create("resv", irc_radixtree_irccasecanon);
+
+	hostname_tree = irc_radixtree_create("hostname", irc_radixtree_irccasecanon);
 }
 
 u_int32_t
@@ -134,17 +133,6 @@ fnv_hash_upper_len(const unsigned char *s, int bits, int len)
 	return h;
 }
 
-/* hash_hostname()
- *
- * hashes a hostname, based on first 30 chars only, as thats likely to
- * be more dynamic than rest.
- */
-static u_int32_t
-hash_hostname(const char *name)
-{
-	return fnv_hash_upper_len((const unsigned char *) name, HOST_MAX_BITS, 30);
-}
-
 /* add_to_id_hash()
  *
  * adds an entry to the id hash table
@@ -180,15 +168,23 @@ add_to_client_hash(const char *name, struct Client *client_p)
 void
 add_to_hostname_hash(const char *hostname, struct Client *client_p)
 {
-	unsigned int hashv;
+	rb_dlink_list *list;
 
 	s_assert(hostname != NULL);
 	s_assert(client_p != NULL);
 	if(EmptyString(hostname) || (client_p == NULL))
 		return;
 
-	hashv = hash_hostname(hostname);
-	rb_dlinkAddAlloc(client_p, &hostTable[hashv]);
+	list = irc_radixtree_retrieve(hostname_tree, hostname);
+	if (list != NULL)
+	{
+		rb_dlinkAddAlloc(client_p, list);
+		return;
+	}
+
+	list = rb_malloc(sizeof(*list));
+	irc_radixtree_add(hostname_tree, hostname, list);
+	rb_dlinkAddAlloc(client_p, list);
 }
 
 /* add_to_resv_hash()
@@ -260,14 +256,22 @@ del_from_channel_hash(const char *name, struct Channel *chptr)
 void
 del_from_hostname_hash(const char *hostname, struct Client *client_p)
 {
-	unsigned int hashv;
+	rb_dlink_list *list;
 
 	if(hostname == NULL || client_p == NULL)
 		return;
 
-	hashv = hash_hostname(hostname);
+	list = irc_radixtree_retrieve(hostname_tree, hostname);
+	if (list == NULL)
+		return;
 
-	rb_dlinkFindDestroy(client_p, &hostTable[hashv]);
+	rb_dlinkFindDestroy(client_p, list);
+
+	if (rb_dlink_list_length(list) == 0)
+	{
+		irc_radixtree_delete(hostname_tree, hostname);
+		rb_free(list);
+	}
 }
 
 /* del_from_resv_hash()
@@ -368,14 +372,16 @@ find_server(struct Client *source_p, const char *name)
 rb_dlink_node *
 find_hostname(const char *hostname)
 {
-	unsigned int hashv;
+	rb_dlink_list *hlist;
 
 	if(EmptyString(hostname))
 		return NULL;
 
-	hashv = hash_hostname(hostname);
+	hlist = irc_radixtree_retrieve(hostname_tree, hostname);
+	if (hlist == NULL)
+		return NULL;
 
-	return hostTable[hashv].head;
+	return hlist->head;
 }
 
 /* find_channel()
