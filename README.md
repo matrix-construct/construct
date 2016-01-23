@@ -1,7 +1,8 @@
 # charybdis
 
-Charybdis is a reference implementation of the IRCv3.1 server component.  It is meant to be
-used with an IRCv3-capable services implementation such as [Atheme][atheme] or [Anope][anope].
+Charybdis is an IRCv3 server designed to be highly scalable.  It implements IRCv3.1 and some parts of IRCv3.2.
+
+It is meant to be used with an IRCv3-capable services implementation such as [Atheme][atheme] or [Anope][anope].
 
    [atheme]: http://www.atheme.net/
    [anope]: http://www.anope.org/
