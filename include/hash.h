@@ -30,8 +30,6 @@
 struct Dictionary;
 struct irc_radixtree;
 
-extern rb_dlink_list *hostTable;
-
 extern struct Dictionary *nd_dict;
 extern struct irc_radixtree *resv_tree;
 extern struct irc_radixtree *channel_tree;
@@ -105,7 +103,5 @@ struct Client *find_cli_connid_hash(uint32_t connid);
 
 void add_to_zconnid_hash(struct Client *client_p);
 void del_from_zconnid_hash(struct Client *client_p);
-
-extern void hash_stats(struct Client *);
 
 #endif /* INCLUDED_hash_h */
