@@ -653,7 +653,7 @@ charybdis_main(int argc, char *argv[])
 	init_hook();
 	init_channels();
 	initclass();
-	initwhowas();
+	whowas_init();
 	init_reject();
 	init_cache();
 	init_monitor();

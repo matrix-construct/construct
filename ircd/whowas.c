@@ -4,7 +4,8 @@
  *
  *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center
  *  Copyright (C) 1996-2002 Hybrid Development Team
- *  Copyright (C) 2002-2005 ircd-ratbox development team
+ *  Copyright (C) 2002-2012 ircd-ratbox development team
+ *  Copyright (C) 2016 William Pitcock <nenolod@dereferenced.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,178 +19,203 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
- *
- *  $Id: whowas.c 1717 2006-07-04 14:41:11Z jilles $
  */
 
 #include "stdinc.h"
-
-#include "whowas.h"
-#include "client.h"
-#include "common.h"
 #include "hash.h"
+#include "whowas.h"
 #include "match.h"
 #include "ircd.h"
-#include "ircd_defs.h"
 #include "numeric.h"
+#include "s_assert.h"
 #include "s_serv.h"
 #include "s_user.h"
 #include "send.h"
 #include "s_conf.h"
+#include "client.h"
+#include "send.h"
+#include "logger.h"
 #include "scache.h"
-#include "s_assert.h"
+#include "irc_radixtree.h"
 
-/* internally defined function */
-static void add_whowas_to_clist(struct Whowas **, struct Whowas *);
-static void del_whowas_from_clist(struct Whowas **, struct Whowas *);
-static void add_whowas_to_list(struct Whowas **, struct Whowas *);
-static void del_whowas_from_list(struct Whowas **, struct Whowas *);
-
-struct Whowas WHOWAS[NICKNAMEHISTORYLENGTH];
-struct Whowas *WHOWASHASH[WW_MAX];
-
-static int whowas_next = 0;
-
-unsigned int hash_whowas_name(const char *name)
+struct whowas_top
 {
-	return fnv_hash_upper((const unsigned char *) name, WW_MAX_BITS);
+	char *name;
+	rb_dlink_list wwlist;
+};
+
+static struct irc_radixtree *whowas_tree = NULL;
+static rb_dlink_list whowas_list = {NULL, NULL, 0};
+static unsigned int whowas_list_length = NICKNAMEHISTORYLENGTH;
+static void whowas_trim(void *unused);
+
+static void
+whowas_free_wtop(struct whowas_top *wtop)
+{
+	if(rb_dlink_list_length(&wtop->wwlist) == 0)
+	{
+		irc_radixtree_delete(whowas_tree, wtop->name);
+		rb_free(wtop->name);
+		rb_free(wtop);
+	}
 }
 
-void add_history(struct Client *client_p, int online)
+static struct whowas_top *
+whowas_get_top(const char *name)
 {
-	struct Whowas *who = &WHOWAS[whowas_next];
+	struct whowas_top *wtop;
 
+	wtop = irc_radixtree_retrieve(whowas_tree, name);
+	if (wtop != NULL)
+		return wtop;
+
+	wtop = rb_malloc(sizeof(struct whowas_top));
+	wtop->name = rb_strdup(name);
+	irc_radixtree_add(whowas_tree, wtop->name, wtop);
+
+	return wtop;
+}
+
+rb_dlink_list *
+whowas_get_list(const char *name)
+{
+	struct whowas_top *wtop;
+	wtop = irc_radixtree_retrieve(whowas_tree, name);
+	if(wtop == NULL)
+		return NULL;
+	return &wtop->wwlist;
+}
+
+void
+whowas_add_history(struct Client *client_p, int online)
+{
+	struct whowas_top *wtop;
+	struct Whowas *who;
 	s_assert(NULL != client_p);
 
 	if(client_p == NULL)
 		return;
 
-	if(who->hashv != -1)
-	{
-		if(who->online)
-			del_whowas_from_clist(&(who->online->whowas), who);
-		del_whowas_from_list(&WHOWASHASH[who->hashv], who);
-	}
-	who->hashv = hash_whowas_name(client_p->name);
+	/* trim some of the entries if we're getting well over our history length */
+	if(rb_dlink_list_length(&whowas_list) > whowas_list_length + 100)
+		whowas_trim(NULL);
+
+	wtop = whowas_get_top(client_p->name);
+	who = rb_malloc(sizeof(struct Whowas));
+	who->wtop = wtop;
 	who->logoff = rb_current_time();
-	/*
-	 * NOTE: strcpy ok here, the sizes in the client struct MUST
-	 * match the sizes in the whowas struct
-	 */
+
 	rb_strlcpy(who->name, client_p->name, sizeof(who->name));
-	strcpy(who->username, client_p->username);
-	strcpy(who->hostname, client_p->host);
-	strcpy(who->realname, client_p->info);
-	strcpy(who->suser, client_p->user->suser);
-	strcpy(who->sockhost, client_p->sockhost);
+	rb_strlcpy(who->username, client_p->username, sizeof(who->username));
+	rb_strlcpy(who->hostname, client_p->host, sizeof(who->hostname));
+	rb_strlcpy(who->realname, client_p->info, sizeof(who->realname));
+	rb_strlcpy(who->sockhost, client_p->sockhost, sizeof(who->sockhost));
+
 	who->flags = (IsIPSpoof(client_p) ? WHOWAS_IP_SPOOFING : 0) |
 		(IsDynSpoof(client_p) ? WHOWAS_DYNSPOOF : 0);
 
+	/* this is safe do to with the servername cache */
 	who->servername = scache_get_name(client_p->servptr->serv->nameinfo);
 
 	if(online)
 	{
 		who->online = client_p;
-		add_whowas_to_clist(&(client_p->whowas), who);
+		rb_dlinkAdd(who, &who->cnode, &client_p->whowas_clist);
 	}
 	else
 		who->online = NULL;
-	add_whowas_to_list(&WHOWASHASH[who->hashv], who);
-	whowas_next++;
-	if(whowas_next == NICKNAMEHISTORYLENGTH)
-		whowas_next = 0;
+
+	rb_dlinkAdd(who, &who->wnode, &wtop->wwlist);
+	rb_dlinkAdd(who, &who->whowas_node, &whowas_list);
 }
 
-void off_history(struct Client *client_p)
-{
-	struct Whowas *temp, *next;
 
-	for (temp = client_p->whowas; temp; temp = next)
+void
+whowas_off_history(struct Client *client_p)
+{
+	rb_dlink_node *ptr, *next;
+
+	RB_DLINK_FOREACH_SAFE(ptr, next, client_p->whowas_clist.head)
 	{
-		next = temp->cnext;
-		temp->online = NULL;
-		del_whowas_from_clist(&(client_p->whowas), temp);
+		struct Whowas *who = ptr->data;
+		who->online = NULL;
+		rb_dlinkDelete(&who->cnode, &client_p->whowas_clist);
 	}
 }
 
-struct Client *get_history(const char *nick, time_t timelimit)
+struct Client *
+whowas_get_history(const char *nick, time_t timelimit)
 {
-	struct Whowas *temp;
-	int blah;
+	struct whowas_top *wtop;
+	rb_dlink_node *ptr;
+
+	wtop = irc_radixtree_retrieve(whowas_tree, nick);
+	if(wtop == NULL)
+		return NULL;
 
 	timelimit = rb_current_time() - timelimit;
-	blah = hash_whowas_name(nick);
-	temp = WHOWASHASH[blah];
-	for (; temp; temp = temp->next)
+
+	RB_DLINK_FOREACH_PREV(ptr, wtop->wwlist.tail)
 	{
-		if(irccmp(nick, temp->name))
-			continue;
-		if(temp->logoff < timelimit)
-			continue;
-		return temp->online;
+		struct Whowas *who = ptr->data;
+		if(who->logoff >= timelimit)
+		{
+			return who->online;
+		}
 	}
+
 	return NULL;
 }
 
-void count_whowas_memory(size_t * wwu, size_t * wwum)
+static void
+whowas_trim(void *unused)
 {
-	*wwu = NICKNAMEHISTORYLENGTH;
-	*wwum = NICKNAMEHISTORYLENGTH * sizeof(struct Whowas);
+	long over;
+
+	if(rb_dlink_list_length(&whowas_list) < whowas_list_length)
+		return;
+	over = rb_dlink_list_length(&whowas_list) - whowas_list_length;
+
+	/* remove whowas entries over the configured length */
+	for(long i = 0; i < over; i++)
+	{
+		if(whowas_list.tail != NULL && whowas_list.tail->data != NULL)
+		{
+			struct Whowas *twho = whowas_list.tail->data;
+			if(twho->online != NULL)
+				rb_dlinkDelete(&twho->cnode, &twho->online->whowas_clist);
+			rb_dlinkDelete(&twho->wnode, &twho->wtop->wwlist);
+			rb_dlinkDelete(&twho->whowas_node, &whowas_list);
+			whowas_free_wtop(twho->wtop);
+			rb_free(twho);
+		}
+	}
 }
 
 void
-initwhowas()
+whowas_init(void)
 {
-	int i;
-
-	for (i = 0; i < NICKNAMEHISTORYLENGTH; i++)
+	whowas_tree = irc_radixtree_create("whowas", irc_radixtree_irccasecanon);
+	if(whowas_list_length == 0)
 	{
-		memset((void *) &WHOWAS[i], 0, sizeof(struct Whowas));
-		WHOWAS[i].hashv = -1;
+		whowas_list_length = NICKNAMEHISTORYLENGTH;
 	}
-	for (i = 0; i < WW_MAX; i++)
-		WHOWASHASH[i] = NULL;
+	rb_event_add("whowas_trim", whowas_trim, NULL, 10);
 }
 
-
-static void
-add_whowas_to_clist(struct Whowas **bucket, struct Whowas *whowas)
+void
+whowas_set_size(int len)
 {
-	whowas->cprev = NULL;
-	if((whowas->cnext = *bucket) != NULL)
-		whowas->cnext->cprev = whowas;
-	*bucket = whowas;
+	whowas_list_length = len;
+	whowas_trim(NULL);
 }
 
-static void
-del_whowas_from_clist(struct Whowas **bucket, struct Whowas *whowas)
+void
+whowas_memory_usage(size_t * count, size_t * memused)
 {
-	if(whowas->cprev)
-		whowas->cprev->cnext = whowas->cnext;
-	else
-		*bucket = whowas->cnext;
-	if(whowas->cnext)
-		whowas->cnext->cprev = whowas->cprev;
-}
-
-static void
-add_whowas_to_list(struct Whowas **bucket, struct Whowas *whowas)
-{
-	whowas->prev = NULL;
-	if((whowas->next = *bucket) != NULL)
-		whowas->next->prev = whowas;
-	*bucket = whowas;
-}
-
-static void
-del_whowas_from_list(struct Whowas **bucket, struct Whowas *whowas)
-{
-	if(whowas->prev)
-		whowas->prev->next = whowas->next;
-	else
-		*bucket = whowas->next;
-	if(whowas->next)
-		whowas->next->prev = whowas->prev;
+	*count = rb_dlink_list_length(&whowas_list);
+	*memused += *count * sizeof(struct Whowas);
+	*memused += sizeof(struct whowas_top) * irc_radixtree_size(whowas_tree);
 }

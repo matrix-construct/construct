@@ -1267,7 +1267,7 @@ stats_memory (struct Client *source_p)
 
 	size_t total_memory = 0;
 
-	count_whowas_memory(&ww, &wwm);
+	whowas_memory_usage(&ww, &wwm);
 
 	RB_DLINK_FOREACH(ptr, global_client_list.head)
 	{

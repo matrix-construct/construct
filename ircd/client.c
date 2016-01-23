@@ -672,7 +672,7 @@ resv_nick_fnc(const char *mask, const char *reason, int temp_time)
 
 			/* Do all of the nick-changing gymnastics. */
 			client_p->tsinfo = rb_current_time();
-			add_history(client_p, 1);
+			whowas_add_history(client_p, 1);
 
 			monitor_signoff(client_p);
 
@@ -872,7 +872,7 @@ find_chasing(struct Client *source_p, const char *user, int *chasing)
 	if(who || IsDigit(*user))
 		return who;
 
-	if(!(who = get_history(user, (long) KILLCHASETIMELIMIT)))
+	if(!(who = whowas_get_history(user, (long) KILLCHASETIMELIMIT)))
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHNICK,
 				   form_str(ERR_NOSUCHNICK), user);
@@ -1247,8 +1247,8 @@ exit_generic_client(struct Client *client_p, struct Client *source_p, struct Cli
 	/* Clean up allow lists */
 	del_all_accepts(source_p);
 
-	add_history(source_p, 0);
-	off_history(source_p);
+	whowas_add_history(source_p, 0);
+	whowas_off_history(source_p);
 
 	monitor_signoff(source_p);
 

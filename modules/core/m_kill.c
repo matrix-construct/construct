@@ -102,7 +102,7 @@ mo_kill(struct Client *client_p, struct Client *source_p, int parc, const char *
 		 ** rewrite the KILL for this new nickname--this keeps
 		 ** servers in synch when nick change and kill collide
 		 */
-		if((target_p = get_history(user, (long) KILLCHASETIMELIMIT)) == NULL)
+		if((target_p = whowas_get_history(user, (long) KILLCHASETIMELIMIT)) == NULL)
 		{
 			if (strchr(user, '.'))
 				sendto_one_numeric(source_p, ERR_CANTKILLSERVER, form_str(ERR_CANTKILLSERVER));
@@ -221,7 +221,7 @@ ms_kill(struct Client *client_p, struct Client *source_p, int parc, const char *
 		 * not an uid, automatically rewrite the KILL for this new nickname.
 		 * --this keeps servers in synch when nick change and kill collide
 		 */
-		if(IsDigit(*user) || (!(target_p = get_history(user, (long) KILLCHASETIMELIMIT))))
+		if(IsDigit(*user) || (!(target_p = whowas_get_history(user, (long) KILLCHASETIMELIMIT))))
 		{
 			sendto_one_numeric(source_p, ERR_NOSUCHNICK,
 					   form_str(ERR_NOSUCHNICK), IsDigit(*user) ? "*" : user);

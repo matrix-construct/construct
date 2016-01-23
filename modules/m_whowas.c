@@ -58,9 +58,10 @@ DECLARE_MODULE_AV1(whowas, NULL, NULL, whowas_clist, NULL, NULL, "$Revision: 171
 static int
 m_whowas(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	struct Whowas *temp;
+	rb_dlink_list *whowas_list;
+	rb_dlink_node *ptr;
 	int cur = 0;
-	int max = -1, found = 0;
+	int max = -1;
 	char *p;
 	const char *nick;
 	char tbuf[26];
@@ -76,8 +77,8 @@ m_whowas(struct Client *client_p, struct Client *source_p, int parc, const char 
 		{
 			sendto_one(source_p, form_str(RPL_LOAD2HI),
 				   me.name, source_p->name, "WHOWAS");
-			sendto_one(source_p, form_str(RPL_ENDOFWHOWAS),
-				   me.name, source_p->name, parv[1]);
+			sendto_one_numeric(source_p, RPL_ENDOFWHOWAS, form_str(RPL_ENDOFWHOWAS),
+				   parv[1]);
 			return 0;
 		}
 		else
@@ -101,54 +102,50 @@ m_whowas(struct Client *client_p, struct Client *source_p, int parc, const char 
 	nick = parv[1];
 
 	sendq_limit = get_sendq(client_p) * 9 / 10;
+	whowas_list = whowas_get_list(nick);
 
-	temp = WHOWASHASH[hash_whowas_name(nick)];
-	found = 0;
-	for (; temp; temp = temp->next)
+	if(whowas_list == NULL)
 	{
-		if(!irccmp(nick, temp->name))
+		sendto_one_numeric(source_p, ERR_WASNOSUCHNICK, form_str(ERR_WASNOSUCHNICK), nick);
+		sendto_one_numeric(source_p, RPL_ENDOFWHOWAS, form_str(RPL_ENDOFWHOWAS), parv[1]);
+		return 0;
+	}
+
+	RB_DLINK_FOREACH(ptr, whowas_list->head)
+	{
+		struct Whowas *temp = ptr->data;
+		if(cur > 0 && rb_linebuf_len(&client_p->localClient->buf_sendq) > sendq_limit)
 		{
-			if(cur > 0 && rb_linebuf_len(&client_p->localClient->buf_sendq) > sendq_limit)
-			{
-				sendto_one(source_p, form_str(ERR_TOOMANYMATCHES),
-					   me.name, source_p->name, "WHOWAS");
-				break;
-			}
-			sendto_one(source_p, form_str(RPL_WHOWASUSER),
-				   me.name, source_p->name, temp->name,
-				   temp->username, temp->hostname, temp->realname);
-			if (!EmptyString(temp->sockhost) &&
-					strcmp(temp->sockhost, "0") &&
-					show_ip_whowas(temp, source_p))
-#if 0
-				sendto_one(source_p, form_str(RPL_WHOWASREAL),
-					   me.name, source_p->name, temp->name,
-					   "<untracked>", temp->sockhost);
-#else
-				sendto_one_numeric(source_p, RPL_WHOISACTUALLY,
-						   form_str(RPL_WHOISACTUALLY),
-						   temp->name, temp->sockhost);
-#endif
-			if (!EmptyString(temp->suser))
-				sendto_one_numeric(source_p, RPL_WHOISLOGGEDIN,
-						   "%s %s :was logged in as",
-						   temp->name, temp->suser);
-			sendto_one_numeric(source_p, RPL_WHOISSERVER,
-					   form_str(RPL_WHOISSERVER),
-					   temp->name, temp->servername,
-					   rb_ctime(temp->logoff, tbuf, sizeof(tbuf)));
-			cur++;
-			found++;
+			sendto_one(source_p, form_str(ERR_TOOMANYMATCHES),
+				   me.name, source_p->name, "WHOWAS");
+			break;
 		}
+
+		sendto_one(source_p, form_str(RPL_WHOWASUSER),
+			   me.name, source_p->name, temp->name,
+			   temp->username, temp->hostname, temp->realname);
+		if (!EmptyString(temp->sockhost) &&
+				strcmp(temp->sockhost, "0") &&
+				show_ip_whowas(temp, source_p))
+			sendto_one_numeric(source_p, RPL_WHOISACTUALLY,
+					   form_str(RPL_WHOISACTUALLY),
+					   temp->name, temp->sockhost);
+
+		if (!EmptyString(temp->suser))
+			sendto_one_numeric(source_p, RPL_WHOISLOGGEDIN,
+					   "%s %s :was logged in as",
+					   temp->name, temp->suser);
+
+		sendto_one_numeric(source_p, RPL_WHOISSERVER,
+				   form_str(RPL_WHOISSERVER),
+				   temp->name, temp->servername,
+				   rb_ctime(temp->logoff, tbuf, sizeof(tbuf)));
+
+		cur++;
 		if(max > 0 && cur >= max)
 			break;
 	}
 
-	if(!found)
-		sendto_one(source_p, form_str(ERR_WASNOSUCHNICK),
-			   me.name, source_p->name, nick);
-
-	sendto_one(source_p, form_str(RPL_ENDOFWHOWAS),
-		   me.name, source_p->name, parv[1]);
+	sendto_one_numeric(source_p, RPL_ENDOFWHOWAS, form_str(RPL_ENDOFWHOWAS), parv[1]);
 	return 0;
 }

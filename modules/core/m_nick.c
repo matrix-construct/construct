@@ -685,7 +685,7 @@ change_local_nick(struct Client *client_p, struct Client *source_p,
 	/* send the nick change to servers.. */
 	if(source_p->user)
 	{
-		add_history(source_p, 1);
+		whowas_add_history(source_p, 1);
 
 		if (dosend)
 		{
@@ -745,7 +745,7 @@ change_remote_nick(struct Client *client_p, struct Client *source_p,
 
 	if(source_p->user)
 	{
-		add_history(source_p, 1);
+		whowas_add_history(source_p, 1);
 		if (dosend)
 		{
 			sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s NICK %s :%ld",

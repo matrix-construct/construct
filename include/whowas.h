@@ -31,13 +31,6 @@
 
 #include "setup.h"
 
-/*
- * Whowas hash table size
- *
- */
-#define WW_MAX_BITS 16
-#define WW_MAX 65536
-
 struct User;
 struct Client;
 
@@ -48,7 +41,10 @@ struct Client;
  */
 struct Whowas
 {
-	int hashv;
+	struct whowas_top *wtop;
+	rb_dlink_node wnode;		/* for the wtop linked list */
+	rb_dlink_node cnode;		/* node for online clients */
+	rb_dlink_node whowas_node;	/* node for the whowas linked list */
 	char name[NICKLEN + 1];
 	char username[USERLEN + 1];
 	char hostname[HOSTLEN + 1];
@@ -59,10 +55,6 @@ struct Whowas
 	const char *servername;
 	time_t logoff;
 	struct Client *online;	/* Pointer to new nickname for chasing or NULL */
-	struct Whowas *next;	/* for hash table... */
-	struct Whowas *prev;	/* for hash table... */
-	struct Whowas *cnext;	/* for client struct linked list */
-	struct Whowas *cprev;	/* for client struct linked list */
 };
 
 /* Flags */
@@ -72,7 +64,7 @@ struct Whowas
 /*
 ** initwhowas
 */
-extern void initwhowas(void);
+extern void whowas_init(void);
 
 /*
 ** add_history
@@ -81,7 +73,7 @@ extern void initwhowas(void);
 **      Client must be a fully registered user (specifically,
 **      the user structure must have been allocated).
 */
-void add_history(struct Client *, int);
+void whowas_add_history(struct Client *, int);
 
 /*
 ** off_history
@@ -90,7 +82,7 @@ void add_history(struct Client *, int);
 **      structures and it must know when they cease to exist. This
 **      also implicitly calls AddHistory.
 */
-void off_history(struct Client *);
+void whowas_off_history(struct Client *);
 
 /*
 ** get_history
@@ -98,18 +90,12 @@ void off_history(struct Client *);
 **      nickname within the timelimit. Returns NULL, if no
 **      one found...
 */
-struct Client *get_history(const char *, time_t);
+struct Client *whowas_get_history(const char *, time_t);
 					/* Nick name */
 					/* Time limit in seconds */
 
-/*
-** for debugging...counts related structures stored in whowas array.
-*/
-void count_whowas_memory(size_t *, size_t *);
-
-/* XXX m_whowas.c in modules needs these */
-extern struct Whowas WHOWAS[];
-extern struct Whowas *WHOWASHASH[];
-extern unsigned int hash_whowas_name(const char *name);
+rb_dlink_list *whowas_get_list(const char *name);
+void whowas_set_size(int whowas_length);
+void whowas_memory_usage(size_t *count, size_t *memused);
 
 #endif /* INCLUDED_whowas_h */

@@ -117,7 +117,8 @@ struct Client
 	struct Client *servptr;	/* Points to server this Client is on */
 	struct Client *from;	/* == self, if Local Client, *NEVER* NULL! */
 
-	struct Whowas *whowas;	/* Pointers to whowas structs */
+	rb_dlink_list whowas_clist;
+
 	time_t tsinfo;		/* TS on the nick, SVINFO on server */
 	unsigned int umodes;	/* opers, normal users subset */
 	unsigned int flags;	/* client flags */

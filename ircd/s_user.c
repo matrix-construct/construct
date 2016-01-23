@@ -1513,7 +1513,7 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 	rb_strlcpy(target_p->host, host, sizeof target_p->host);
 
 	if (changed)
-		add_history(target_p, 1);
+		whowas_add_history(target_p, 1);
 
 	del_from_client_hash(target_p->name, target_p);
 	rb_strlcpy(target_p->name, nick, NICKLEN);
