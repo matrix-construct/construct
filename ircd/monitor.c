@@ -37,44 +37,31 @@
 #include "hash.h"
 #include "numeric.h"
 #include "send.h"
+#include "irc_radixtree.h"
 
-static rb_dlink_list monitorTable[MONITOR_HASH_SIZE];
-static rb_bh *monitor_heap;
+static struct irc_radixtree *monitor_tree;
 
 void
 init_monitor(void)
 {
-	monitor_heap = rb_bh_create(sizeof(struct monitor), MONITOR_HEAP_SIZE, "monitor_heap");
-}
-
-static inline unsigned int
-hash_monitor_nick(const char *name)
-{
-	return fnv_hash_upper((const unsigned char *)name, MONITOR_HASH_BITS);
+	monitor_tree = irc_radixtree_create("monitor lists", irc_radixtree_irccasecanon);
 }
 
 struct monitor *
 find_monitor(const char *name, int add)
 {
 	struct monitor *monptr;
-	rb_dlink_node *ptr;
 
-	unsigned int hashv = hash_monitor_nick(name);
-
-	RB_DLINK_FOREACH(ptr, monitorTable[hashv].head)
-	{
-		monptr = ptr->data;
-		if(!irccmp(monptr->name, name))
-			return monptr;
-	}
+	monptr = irc_radixtree_retrieve(monitor_tree, name);
+	if (monptr != NULL)
+		return monptr;
 
 	if(add)
 	{
-		monptr = rb_bh_alloc(monitor_heap);
+		monptr = rb_malloc(sizeof(*monptr));
 		rb_strlcpy(monptr->name, name, sizeof(monptr->name));
-		monptr->hashv = hashv;
+		irc_radixtree_add(monitor_tree, monptr->name, monptr);
 
-		rb_dlinkAdd(monptr, &monptr->node, &monitorTable[hashv]);
 		return monptr;
 	}
 
@@ -87,8 +74,8 @@ free_monitor(struct monitor *monptr)
 	if (rb_dlink_list_length(&monptr->users) > 0)
 		return;
 
-	rb_dlinkDelete(&monptr->node, &monitorTable[monptr->hashv]);
-	rb_bh_free(monitor_heap, monptr);
+	irc_radixtree_delete(monitor_tree, monptr->name);
+	rb_free(monptr);
 }
 
 /* monitor_signon()
