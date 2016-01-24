@@ -46,9 +46,13 @@ static gnutls_priority_t default_priority;
 static unsigned int x509_cert_count;
 static gnutls_x509_crt_t x509_cert[MAX_CERTS];
 static gnutls_x509_privkey_t x509_key;
+#if GNUTLS_VERSION_MAJOR < 3
 static int cert_callback(gnutls_session_t session, const gnutls_datum_t *req_ca_rdn, int nreqs,
 	const gnutls_pk_algorithm_t *sign_algos, int sign_algos_len, gnutls_retr_st *st);
-
+#else
+static int cert_callback(gnutls_session_t session, const gnutls_datum_t *req_ca_rdn, int nreqs,
+	const gnutls_pk_algorithm_t *sign_algos, int sign_algos_len, gnutls_retr2_st *st);
+#endif
 
 #define SSL_P(x) *((gnutls_session_t *)F->ssl)
 
@@ -271,10 +275,11 @@ rb_init_ssl(void)
 		return 0;
 	}
 
-	/* This should be changed to gnutls_certificate_set_retrieve_function2 once
-	 * everyone in the world has upgraded to GnuTLS 3.
-	 */
+#if GNUTLS_VERSION_MAJOR < 3
 	gnutls_certificate_client_set_retrieve_function(x509, cert_callback);
+#else
+	gnutls_certificate_set_retrieve_function(x509, cert_callback);
+#endif
 
 	rb_event_addish("rb_gcry_random_seed", rb_gcry_random_seed, NULL, 300);
 	return 1;
@@ -287,9 +292,15 @@ rb_init_ssl(void)
  * as it breaks fingerprint auth.  Thus, we use this callback to force GnuTLS to always
  * authenticate with our certificate at all times.
  */
+#if GNUTLS_VERSION_MAJOR < 3
 static int
 cert_callback(gnutls_session_t session, const gnutls_datum_t *req_ca_rdn, int nreqs,
 	const gnutls_pk_algorithm_t *sign_algos, int sign_algos_len, gnutls_retr_st *st)
+#else
+static int
+cert_callback(gnutls_session_t session, const gnutls_datum_t *req_ca_rdn, int nreqs,
+	const gnutls_pk_algorithm_t *sign_algos, int sign_algos_len, gnutls_retr2_st *st)
+#endif
 {
 	/* XXX - ugly hack. Tell GnuTLS to use the first (only) certificate we have for auth. */
 	st->type = GNUTLS_CRT_X509;
