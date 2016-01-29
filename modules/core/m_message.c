@@ -490,6 +490,7 @@ msg_channel(enum message_type msgtype,
 	hdata.chptr = chptr;
 	hdata.text = text;
 	hdata.approved = 0;
+	hdata.reason = NULL;
 
 	call_hook(h_privmsg_channel, &hdata);
 
@@ -497,7 +498,17 @@ msg_channel(enum message_type msgtype,
 	text = hdata.text;
 
 	if (hdata.approved != 0)
+	{
+		if (msgtype == MESSAGE_TYPE_PRIVMSG)
+		{
+			if (!EmptyString(hdata.reason))
+				sendto_one_numeric(source_p, ERR_CANNOTSENDTOCHAN,form_str(ERR_CANNOTSENDTOCHAN)" (%s).",chptr->chname,hdata.reason);
+			else
+				sendto_one_numeric(source_p, ERR_CANNOTSENDTOCHAN,form_str(ERR_CANNOTSENDTOCHAN),chptr->chname);
+		}
+
 		return;
+	}
 
 	/* hook may have reduced the string to nothing. */
 	if (EmptyString(text))
@@ -575,6 +586,7 @@ msg_channel_opmod(enum message_type msgtype,
 	hdata.chptr = chptr;
 	hdata.text = text;
 	hdata.approved = 0;
+	hdata.reason = NULL;
 
 	call_hook(h_privmsg_channel, &hdata);
 
@@ -656,6 +668,7 @@ msg_channel_flags(enum message_type msgtype, struct Client *client_p,
 	hdata.chptr = chptr;
 	hdata.text = text;
 	hdata.approved = 0;
+	hdata.reason = NULL;
 
 	call_hook(h_privmsg_channel, &hdata);
 
