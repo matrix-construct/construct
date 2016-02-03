@@ -31,14 +31,15 @@
 
 #include <gnutls/gnutls.h>
 #include <gnutls/x509.h>
-#include <gnutls/crypto.h>
 
-#if GNUTLS_VERSION_MAJOR < 3
+#if (GNUTLS_VERSION_MAJOR < 3)
 # include <gcrypt.h>
+#else
+# include <gnutls/crypto.h>
 #endif
 
-static gnutls_certificate_credentials x509;
-static gnutls_dh_params dh_params;
+static gnutls_certificate_credentials_t x509;
+static gnutls_dh_params_t dh_params;
 static gnutls_priority_t default_priority;
 
 /* These are all used for getting GnuTLS to supply a client cert. */
@@ -162,7 +163,7 @@ rb_ssl_start_accepted(rb_fde_t *new_F, ACCB * cb, void *data, int timeout)
 	gnutls_dh_set_prime_bits(*ssl, 1024);
 	gnutls_transport_set_ptr(*ssl, (gnutls_transport_ptr_t) (long int)new_F->fd);
 	gnutls_certificate_server_set_request(*ssl, GNUTLS_CERT_REQUEST);
-	gnutls_priority_set(SSL_P(F), default_priority);
+	gnutls_priority_set(*ssl, default_priority);
 
 	if(do_ssl_handshake(new_F, rb_ssl_tryaccept, NULL))
 	{
@@ -256,13 +257,13 @@ rb_ssl_write(rb_fde_t *F, const void *buf, size_t count)
 	return rb_ssl_read_or_write(1, F, NULL, buf, count);
 }
 
+#if (GNUTLS_VERSION_MAJOR < 3)
 static void
 rb_gcry_random_seed(void *unused)
 {
-#if GNUTLS_VERSION_MAJOR < 3
 	gcry_fast_random_poll();
-#endif
 }
+#endif
 
 int
 rb_init_ssl(void)
@@ -281,7 +282,10 @@ rb_init_ssl(void)
 	gnutls_certificate_set_retrieve_function(x509, cert_callback);
 #endif
 
+#if (GNUTLS_VERSION_MAJOR < 3)
 	rb_event_addish("rb_gcry_random_seed", rb_gcry_random_seed, NULL, 300);
+#endif
+
 	return 1;
 }
 
@@ -303,10 +307,16 @@ cert_callback(gnutls_session_t session, const gnutls_datum_t *req_ca_rdn, int nr
 #endif
 {
 	/* XXX - ugly hack. Tell GnuTLS to use the first (only) certificate we have for auth. */
+#if (GNUTLS_VERSION_MAJOR < 3)
 	st->type = GNUTLS_CRT_X509;
+#else
+	st->cert_type = GNUTLS_CRT_X509;
+	st->key_type = GNUTLS_PRIVKEY_X509;
+#endif
 	st->ncerts = x509_cert_count;
 	st->cert.x509 = x509_cert;
 	st->key.x509 = x509_key;
+	st->deinit_all = 0;
 
 	return 0;
 }
@@ -563,8 +573,6 @@ rb_init_prng(const char *path, prng_seed_t seed_type)
 {
 #if GNUTLS_VERSION_MAJOR < 3
 	gcry_fast_random_poll();
-#else
-	gnutls_rnd_refresh();
 #endif
 	return 1;
 }
