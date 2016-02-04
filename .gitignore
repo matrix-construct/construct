@@ -11,6 +11,7 @@ Makefile
 .deps
 .dirstamp
 .libs
+authd/authd
 autom4te.cache
 bandb/bandb
 bandb/bantool
@@ -34,10 +35,12 @@ src/version.c.last
 src/y.tab.h
 src/y.tab.c
 ssld/ssld
+tools/charybdis-mkpasswd
 tools/genssl
 tools/mkpasswd
 tools/viconf
 include/serno.h
+ircd/charybdis
 ircd/version.c
 ircd/version.c.last
 /libtool
