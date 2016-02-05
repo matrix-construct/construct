@@ -209,6 +209,7 @@ free_conn(conn_t * conn)
 		zlib_stream_t *stream = conn->stream;
 		inflateEnd(&stream->instream);
 		deflateEnd(&stream->outstream);
+		rb_free(stream);
 	}
 #endif
 	rb_free(conn);
