@@ -214,15 +214,15 @@ AC_FUNC_ALLOCA
 dnl Specialized functions checks
 dnl ============================
 
-dnl check for nanosleep          
+dnl check for nanosleep
 AC_CHECK_FUNC(nanosleep,,[AC_CHECK_LIB(rt,nanosleep,
                  LIBS="${LIBS} -lrt",
                  [AC_CHECK_LIB(posix4,nanosleep, LIBS="${LIBS} -lposix4"
                  )])])
 if test x$ac_cv_func_nanosleep = xno && test x$ac_cv_lib_posix4_nanosleep = xno  && test x$ac_cv_lib_rt_nanosleep = xno
-then     
+then
          AC_MSG_RESULT("nanosleep not found..using select for delay")
-else     
+else
 	 AC_DEFINE([HAVE_NANOSLEEP], 1, [Define if nanosleep exists])
 fi
 
@@ -310,7 +310,7 @@ if test "$cf_enable_openssl" != no; then
 
 		dnl Work around pmake/gmake conditional incompatibilities
 		AC_SUBST(ENCSPEED, encspeed)
-		
+
 		dnl Do all the HAVE_LIBCRYPTO magic -- and check for ciphers
 		CPPFLAGS="$CPPFLAGS $SSL_LIBS"
 		AC_CHECK_LIB(crypto, RSA_free)
@@ -387,7 +387,7 @@ dnl Check for --with-logdir
 dnl **********************************************************************
 
 AC_MSG_CHECKING([whether to modify logdir])
-AC_ARG_WITH(logdir, 
+AC_ARG_WITH(logdir,
 AC_HELP_STRING([--with-logdir=DIR],
 	       [Directory where to write logfiles.]),
 	       [ logdir=`echo $withval | sed 's/\/$//'`
@@ -404,7 +404,7 @@ dnl Check for --with-helpdir
 dnl **********************************************************************
 
 AC_MSG_CHECKING([whether to modify helpdir])
-AC_ARG_WITH(helpdir, 
+AC_ARG_WITH(helpdir,
 AC_HELP_STRING([--with-helpdir=DIR],
 	       [Directory to install help files.]),
 	       [ helpdir=`echo $withval | sed 's/\/$//'`
@@ -421,7 +421,7 @@ dnl Check for --with-moduledir
 dnl **********************************************************************
 
 AC_MSG_CHECKING([whether to modify moduledir])
-AC_ARG_WITH(moduledir, 
+AC_ARG_WITH(moduledir,
 	[AC_HELP_STRING([--with-moduledir=DIR],
 	       [Directory to install modules.])],
 	       [ moduledir=`echo $withval | sed 's/\/$//'`
@@ -558,9 +558,9 @@ AC_DEFINE([AWAY_HEAP_SIZE], 512, [Size of away heap.])
 AC_ARG_WITH(nicklen,
 AC_HELP_STRING([--with-nicklen=LENGTH],[Set the upper-bound nick length to LENGTH (default 31, max 50)]),
 [
-  if ! expr "$withval" + 0 >/dev/null 2>&1; then 
+  if ! expr "$withval" + 0 >/dev/null 2>&1; then
 	AC_ERROR([NICKLEN must be a numeric value])
-  fi 
+  fi
   if test $withval -gt 50; then
 	NICKLEN=50
 	AC_MSG_WARN([NICKLEN has a hard limit of 50. Setting NICKLEN=50])
@@ -572,7 +572,7 @@ AC_HELP_STRING([--with-nicklen=LENGTH],[Set the upper-bound nick length to LENGT
   fi
 ], [NICKLEN=31])
 
-AC_ARG_WITH(topiclen,           
+AC_ARG_WITH(topiclen,
 AC_HELP_STRING([--with-topiclen=NUMBER],[Set the max topic length to NUMBER (default 390, max 390)]),
 [
  if test $withval -gt 390; then
@@ -646,7 +646,7 @@ AC_SUBST(IRC_CFLAGS)
 AC_SUBST(SEDOBJ)
 
 
-if test "$prefix" = "NONE"; then 
+if test "$prefix" = "NONE"; then
 	AC_DEFINE_UNQUOTED(IRCD_PREFIX, "$ac_default_prefix", [Prefix where the ircd is installed.])
 
 else
@@ -656,7 +656,7 @@ dnl a custom prefix with a trailing slash
 
 	prefix=`echo $prefix | sed 's/\/$//'`
 	AC_DEFINE_UNQUOTED(IRCD_PREFIX, "$prefix", [Prefix where the ircd is installed.])
-	
+
 fi
 
 AC_CONFIG_FILES(			\
