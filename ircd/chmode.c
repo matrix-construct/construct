@@ -1747,8 +1747,9 @@ set_channel_mode(struct Client *client_p, struct Client *source_p,
 				  source_p->name, source_p->username,
 				  source_p->host, chptr->chname);
 
-	for(j = 0, flags = flags_list[0]; j < 3; j++, flags = flags_list[j])
+	for(j = 0; j < 3; j++)
 	{
+		flags = flags_list[j];
 		cur_len = mlen;
 		mbuf = modebuf + mlen;
 		pbuf = parabuf;
