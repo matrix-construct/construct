@@ -16600,7 +16600,7 @@ fi
 # Check whether --with-topiclen was given.
 if test "${with_topiclen+set}" = set; then :
   withval=$with_topiclen;
- if test $withval -ge 390; then
+ if test $withval -gt 390; then
 	TOPICLEN=390
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: TOPICLEN has a hard limit of 390. Setting TOPICLEN=390" >&5
 $as_echo "$as_me: WARNING: TOPICLEN has a hard limit of 390. Setting TOPICLEN=390" >&2;}
