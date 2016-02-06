@@ -19,6 +19,8 @@ config.log
 config.status
 stamp-h1
 include/setup.h
+libltdl/config.h
+libltdl/libtool
 libratbox/include/libratbox_config.h
 libratbox/include/librb-config.h
 libratbox/libratbox.pc
