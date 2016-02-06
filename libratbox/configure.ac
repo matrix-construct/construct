@@ -307,11 +307,11 @@ if test "$cf_enable_openssl" != no; then
 	dnl Check OpenSSL version (must be 0.9.7 or above!)
 	AC_MSG_CHECKING(for OpenSSL 0.9.7 or above)
 	AC_RUN_IFELSE(
-		AC_LANG_PROGRAM(
+		[AC_LANG_PROGRAM(
 	    	[#include <openssl/opensslv.h>
 		#include <stdlib.h>],
 		[[if (OPENSSL_VERSION_NUMBER >= 0x00907000)
-		exit(0); else exit(1);]]),
+		exit(0); else exit(1);]])],
 	cf_enable_openssl=yes,
 	cf_enable_openssl=no,
 	cf_enable_openssl=no)

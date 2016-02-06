@@ -296,11 +296,11 @@ if test "$cf_enable_openssl" != no; then
 	dnl Check OpenSSL version (must be 0.9.6 or above!)
 	AC_MSG_CHECKING(for OpenSSL 0.9.6 or above)
 	AC_RUN_IFELSE(
-		AC_LANG_PROGRAM(
+		[AC_LANG_PROGRAM(
 	    	[#include <openssl/opensslv.h>
 		#include <stdlib.h>],
 		[[if ( OPENSSL_VERSION_NUMBER >= 0x00906000)
-		exit(0); else exit(1);]]),
+		exit(0); else exit(1);]])],
 	cf_openssl_version_ok=yes,
 	cf_openssl_version_ok=no,
 	cf_openssl_version_ok=no)
@@ -590,7 +590,7 @@ AC_DEFINE_UNQUOTED(NICKLEN, (${NICKLEN}+1), [Nickname length])
 hold_ldflags=$LDFLAGS
 AC_MSG_CHECKING(for the ld -rpath flag)
 LDFLAGS="${LDFLAGS} -Wl,-rpath=${libdir}"
-AC_LINK_IFELSE(AC_LANG_PROGRAM([],[int i;]), found=yes, found=no)
+AC_LINK_IFELSE([AC_LANG_PROGRAM([],[int i;])], found=yes, found=no)
 LDFLAGS=$hold_ldflags
 AC_MSG_RESULT($found)
 if test "$found" = yes; then
