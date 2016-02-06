@@ -575,7 +575,7 @@ AC_HELP_STRING([--with-nicklen=LENGTH],[Set the upper-bound nick length to LENGT
 AC_ARG_WITH(topiclen,           
 AC_HELP_STRING([--with-topiclen=NUMBER],[Set the max topic length to NUMBER (default 390, max 390)]),
 [
- if test $withval -ge 390; then
+ if test $withval -gt 390; then
 	TOPICLEN=390
 	AC_MSG_WARN([TOPICLEN has a hard limit of 390. Setting TOPICLEN=390])
  else
