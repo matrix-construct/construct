@@ -76,6 +76,27 @@ rb_event_find(EVH * func, void *arg)
 	return NULL;
 }
 
+static
+struct ev_entry *
+rb_event_add_common(const char *name, EVH * func, void *arg, time_t when, time_t frequency)
+{
+	struct ev_entry *ev;
+	ev = rb_malloc(sizeof(struct ev_entry));
+	ev->func = func;
+	ev->name = rb_strndup(name, EV_NAME_LEN);
+	ev->arg = arg;
+	ev->when = rb_current_time() + when;
+	ev->next = when;
+	ev->frequency = frequency;
+
+	if((ev->when < event_time_min) || (event_time_min == -1))
+		event_time_min = ev->when;
+
+	rb_dlinkAdd(ev, &ev->node, &event_list);
+	rb_io_sched_event(ev, when);
+	return ev;
+}
+
 /*
  * struct ev_entry *
  * rb_event_add(const char *name, EVH *func, void *arg, time_t when)
@@ -93,22 +114,8 @@ rb_event_add(const char *name, EVH * func, void *arg, time_t when)
 			"%d seconds", name, (int) when);
 		when = 1;
 	}
-	struct ev_entry *ev;
-	ev = rb_malloc(sizeof(struct ev_entry));
-	ev->func = func;
-	ev->name = rb_strndup(name, EV_NAME_LEN);
-	ev->arg = arg;
-	ev->when = rb_current_time() + when;
-	ev->next = when;
-	ev->frequency = when;
 
-	if((ev->when < event_time_min) || (event_time_min == -1))
-	{
-		event_time_min = ev->when;
-	}
-	rb_dlinkAdd(ev, &ev->node, &event_list);
-	rb_io_sched_event(ev, when);
-	return ev;
+	return rb_event_add_common(name, func, arg, when, when);
 }
 
 struct ev_entry *
@@ -119,21 +126,8 @@ rb_event_addonce(const char *name, EVH * func, void *arg, time_t when)
 			"%d seconds", name, (int) when);
 		when = 1;
 	}
-	struct ev_entry *ev;
-	ev = rb_malloc(sizeof(struct ev_entry));
-	ev->func = func;
-	ev->name = rb_strndup(name, EV_NAME_LEN);
-	ev->arg = arg;
-	ev->when = rb_current_time() + when;
-	ev->next = when;
-	ev->frequency = 0;
 
-	if((ev->when < event_time_min) || (event_time_min == -1))
-		event_time_min = ev->when;
-
-	rb_dlinkAdd(ev, &ev->node, &event_list);
-	rb_io_sched_event(ev, when);
-	return ev;
+	return rb_event_add_common(name, func, arg, when, 0);
 }
 
 /*
@@ -168,6 +162,17 @@ rb_event_find_delete(EVH * func, void *arg)
 	rb_event_delete(rb_event_find(func, arg));
 }
 
+static time_t
+rb_event_frequency(time_t frequency)
+{
+	if(frequency < 0)
+	{
+		const time_t two_third = (2 * abs(frequency)) / 3;
+		frequency = two_third + ((rand() % 1000) * two_third) / 1000;
+	}
+	return frequency;
+}
+
 /*
  * struct ev_entry *
  * rb_event_addish(const char *name, EVH *func, void *arg, time_t delta_isa)
@@ -181,16 +186,11 @@ rb_event_find_delete(EVH * func, void *arg)
 struct ev_entry *
 rb_event_addish(const char *name, EVH * func, void *arg, time_t delta_ish)
 {
+	delta_ish = abs(delta_ish);
 	if(delta_ish >= 3.0)
-	{
-		const time_t two_third = (2 * delta_ish) / 3;
-		delta_ish = two_third + ((rand() % 1000) * two_third) / 1000;
-		/*
-		 * XXX I hate the above magic, I don't even know if its right.
-		 * Grr. -- adrian
-		 */
-	}
-	return rb_event_add(name, func, arg, delta_ish);
+		delta_ish = -delta_ish;
+	return rb_event_add_common(name, func, arg,
+		rb_event_frequency(delta_ish), delta_ish);
 }
 
 
@@ -204,7 +204,7 @@ rb_run_event(struct ev_entry *ev)
 		rb_event_delete(ev);
 		return;
 	}
-	ev->when = rb_current_time() + ev->frequency;
+	ev->when = rb_current_time() + rb_event_frequency(ev->frequency);
 	if((ev->when < event_time_min) || (event_time_min == -1))
 		event_time_min = ev->when;
 }
@@ -237,7 +237,7 @@ rb_event_run(void)
 			/* event is scheduled more than once */
 			if(ev->frequency)
 			{
-				ev->when = rb_current_time() + ev->frequency;
+				ev->when = rb_current_time() + rb_event_frequency(ev->frequency);
 				if((ev->when < event_time_min) || (event_time_min == -1))
 					event_time_min = ev->when;
 			}
@@ -302,8 +302,8 @@ rb_dump_events(void (*func) (char *, void *), void *ptr)
 	RB_DLINK_FOREACH(dptr, event_list.head)
 	{
 		ev = dptr->data;
-		snprintf(buf, len, "%-28s %-4ld seconds", ev->name,
-			    ev->when - (long)rb_current_time());
+		snprintf(buf, len, "%-28s %-4ld seconds (frequency=%d)", ev->name,
+			    ev->when - (long)rb_current_time(), (int)ev->frequency);
 		func(buf, ptr);
 	}
 }
@@ -337,11 +337,12 @@ rb_event_update(struct ev_entry *ev, time_t freq)
 
 	ev->frequency = freq;
 
-	/* update when its scheduled to run if its higher
+	/* update when it's scheduled to run if it's higher
 	 * than the new frequency
 	 */
-	if((rb_current_time() + freq) < ev->when)
-		ev->when = rb_current_time() + freq;
+	time_t next = rb_event_frequency(freq);
+	if((rb_current_time() + next) < ev->when)
+		ev->when = rb_current_time() + next;
 	return;
 }
 
