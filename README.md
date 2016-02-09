@@ -1,4 +1,4 @@
-# charybdis
+# charybdis [![Build Status](https://travis-ci.org/charybdis-ircd/charybdis.svg?branch=master)](https://travis-ci.org/charybdis-ircd/charybdis)
 
 Charybdis is an IRCv3 server designed to be highly scalable.  It implements IRCv3.1 and some parts of IRCv3.2.
 
@@ -45,7 +45,7 @@ It is meant to be used with an IRCv3-capable services implementation such as [At
    problems with ipv4 due to the way the socket code is written.  To
    fix this you must: "sysctl net.inet6.ip6.v6only=0"
 
- * SOLARIS USERS: this code appears to tickle a bug in older gcc and 
+ * SOLARIS USERS: this code appears to tickle a bug in older gcc and
    egcs ONLY on 64-bit Solaris7.  gcc-2.95 and SunPro C on 64bit should
    work fine, and any gcc or SunPro compiled on 32bit.
 
@@ -58,7 +58,7 @@ It is meant to be used with an IRCv3-capable services implementation such as [At
    * OpenSuSE 11/12
    * OpenSolaris 2008.x?
    * Solaris 10 sparc.
-  
+
   Please let us know if you find otherwise.  
   It probably does not compile on AIX, IRIX or libc5 Linux.
 
