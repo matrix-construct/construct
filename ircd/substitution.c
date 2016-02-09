@@ -83,7 +83,7 @@ void substitution_free(rb_dlink_list *varlist)
 	{
 		struct substitution_variable *tmp = (struct substitution_variable *) nptr->data;
 
-		rb_dlinkDelete(nptr, varlist);
+		rb_dlinkDestroy(nptr, varlist);
 		rb_free(tmp->name);
 		rb_free(tmp->value);
 		rb_free(tmp);

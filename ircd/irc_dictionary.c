@@ -451,7 +451,7 @@ void irc_dictionary_destroy(struct Dictionary *dtree,
 	}
 
 	rb_dlinkDelete(&dtree->node, &dictionary_list);
-
+	rb_free(dtree->id);
 	rb_free(dtree);
 }
 
