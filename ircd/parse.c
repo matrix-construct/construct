@@ -148,10 +148,10 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 		{
 			if (IsPerson(client_p))
 			{
-				struct alias_entry *aptr = irc_dictionary_retrieve(alias_dict, ch);
+				struct alias_entry *aptr = irc_dictionary_retrieve(alias_dict, msgbuf.cmd);
 				if (aptr != NULL)
 				{
-					do_alias(aptr, client_p, s);
+					do_alias(aptr, client_p, reconstruct_parv(msgbuf.n_para - 1, msgbuf.para + 1));
 					return;
 				}
 			}
