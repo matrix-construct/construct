@@ -51,7 +51,7 @@ struct Dictionary *alias_dict = NULL;
 static char *para[MAXPARA + 2];
 
 static void cancel_clients(struct Client *, struct Client *);
-static void remove_unknown(struct Client *, char *, char *);
+static void remove_unknown(struct Client *, const char *, char *);
 
 static void do_numeric(int, struct Client *, struct Client *, int, const char **);
 static void do_alias(struct alias_entry *, struct Client *, char *);
@@ -83,9 +83,6 @@ void
 parse(struct Client *client_p, char *pbuffer, char *bufend)
 {
 	struct Client *from = client_p;
-	char *sender;
-	char *ch;
-	char *s;
 	char *end;
 	int i = 1, res;
 	int numeric = 0;
@@ -120,7 +117,7 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 		if(from == NULL)
 		{
 			ServerStats.is_unpf++;
-			remove_unknown(client_p, sender, pbuffer);
+			remove_unknown(client_p, msgbuf.origin, pbuffer);
 			return;
 		}
 
@@ -158,7 +155,7 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 			if(IsPerson(from))
 			{
 				sendto_one(from, form_str(ERR_UNKNOWNCOMMAND),
-					   me.name, from->name, ch);
+					   me.name, from->name, msgbuf.cmd);
 			}
 			ServerStats.is_unco++;
 			return;
@@ -428,7 +425,7 @@ cancel_clients(struct Client *client_p, struct Client *source_p)
  * side effects	- kills issued for clients, squits for servers
  */
 static void
-remove_unknown(struct Client *client_p, char *lsender, char *lbuffer)
+remove_unknown(struct Client *client_p, const char *lsender, char *lbuffer)
 {
 	int slen = strlen(lsender);
 	char sid[4];
