@@ -62,9 +62,9 @@ static PF res_readreply;
 #define ANSWER_FIXED_SIZE (TYPE_SIZE + CLASS_SIZE + TTL_SIZE + RDLENGTH_SIZE)
 
 #ifdef RB_IPV6
-extern struct in6_addr ipv6_addr;
+struct in6_addr ipv6_addr;
 #endif
-extern struct in_addr ipv4_addr;
+struct in_addr ipv4_addr;
 
 struct reslist
 {
