@@ -49,12 +49,43 @@ struct MsgBuf {
 int msgbuf_parse(struct MsgBuf *msgbuf, const char *line);
 
 /*
+ * unparse a pure MsgBuf into a buffer.
+ * if origin is NULL, me.name will be used.
+ * cmd may not be NULL.
+ * returns 0 on success, 1 on error.
+ */
+int msgbuf_unparse(char *buf, struct MsgBuf *msgbuf);
+
+/*
  * unparse a MsgBuf header plus payload into a buffer.
  * if origin is NULL, me.name will be used.
  * cmd may not be NULL.
  * returns 0 on success, 1 on error.
  */
-int msgbuf_unparse(char *buf, struct MsgBuf *head, const char *fmt, ...) AFP(3, 4);
-int msgbuf_vunparse(char *buf, struct MsgBuf *head, const char *fmt, va_list va);
+int msgbuf_unparse_fmt(char *buf, struct MsgBuf *head, const char *fmt, ...) AFP(3, 4);
+int msgbuf_vunparse_fmt(char *buf, struct MsgBuf *head, const char *fmt, va_list va);
+
+static inline void
+msgbuf_init(struct MsgBuf *msgbuf)
+{
+	msgbuf->n_tags = msgbuf->n_para = msgbuf->parselen = 0;
+	msgbuf->origin = NULL;
+	msgbuf->cmd = NULL;
+}
+
+static inline void
+msgbuf_append_tag(struct MsgBuf *msgbuf, const char *key, const char *value)
+{
+	msgbuf->tags[msgbuf->n_tags].key = key;
+	msgbuf->tags[msgbuf->n_tags].value = value;
+	msgbuf->n_tags++;
+}
+
+static inline void
+msgbuf_append_para(struct MsgBuf *msgbuf, const char *para)
+{
+	msgbuf->para[msgbuf->n_para] = para;
+	msgbuf->n_para++;
+}
 
 #endif
