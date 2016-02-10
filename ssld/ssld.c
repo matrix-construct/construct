@@ -829,6 +829,20 @@ change_connid(mod_ctl_t *ctl, mod_ctl_buf_t *ctlb)
 	uint32_t id = buf_to_uint32(&ctlb->buf[1]);
 	uint32_t newid = buf_to_uint32(&ctlb->buf[5]);
 	conn_t *conn = conn_find_by_id(id);
+	lrb_assert(conn != NULL);
+	if(conn == NULL)
+	{
+		char buf[256];
+		int len;
+
+		buf[0] = 'D';
+		uint32_to_buf(&buf[1], newid);
+		sprintf(&buf[5], "connid %d does not exist", id);
+		len = (strlen(&buf[5]) + 1) + 5;
+		mod_cmd_write_queue(ctl, buf, len);
+
+		return;
+	}
 	rb_dlinkDelete(&conn->node, connid_hash(conn->id));
 	SetZipSSL(conn);
 	conn->id = newid;
