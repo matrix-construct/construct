@@ -68,9 +68,7 @@ int msgbuf_vunparse_fmt(char *buf, struct MsgBuf *head, const char *fmt, va_list
 static inline void
 msgbuf_init(struct MsgBuf *msgbuf)
 {
-	msgbuf->n_tags = msgbuf->n_para = msgbuf->parselen = 0;
-	msgbuf->origin = NULL;
-	msgbuf->cmd = NULL;
+	memset(msgbuf, 0, sizeof(*msgbuf));
 }
 
 static inline void

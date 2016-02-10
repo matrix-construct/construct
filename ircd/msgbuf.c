@@ -48,7 +48,7 @@ msgbuf_parse(struct MsgBuf *msgbuf, char *line)
 		ch = strchr(ch, ' ');
 		if (ch != NULL)
 		{
-			while (t < ch)
+			while (1)
 			{
 				char *next = strchr(t, ';');
 				char *eq = strchr(t, '=');
@@ -63,7 +63,11 @@ msgbuf_parse(struct MsgBuf *msgbuf, char *line)
 					*eq = '\0';
 
 				msgbuf_append_tag(msgbuf, t, eq);
-				t = next + 1;
+
+				if (next != NULL)
+					t = next + 1;
+				else
+					break;
 			}
 		}
 	}
@@ -95,9 +99,7 @@ msgbuf_parse(struct MsgBuf *msgbuf, char *line)
 		return 1;
 
 	msgbuf->cmd = parv[0];
-	msgbuf->n_para = n_para - 1;
-
-	for (i = 1; i < n_para; i++)
+	for (i = 0; i < n_para; i++)
 		msgbuf_append_para(msgbuf, parv[i]);
 
 	return 0;
