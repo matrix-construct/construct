@@ -809,6 +809,7 @@ start_zlib_session(void *data)
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Error creating zlib socketpair - %s", strerror(errno));
 		ilog(L_MAIN, "Error creating zlib socketpairs - %s", strerror(errno));
 		exit_client(server, server, server, "Error creating zlib socketpair");
+		rb_free(buf);
 		return;
 	}
 
