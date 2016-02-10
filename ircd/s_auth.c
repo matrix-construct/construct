@@ -492,7 +492,7 @@ auth_connect_callback(rb_fde_t *F, int error, void *data)
 		return;
 	}
 
-	rb_snprintf(authbuf, sizeof(authbuf), "%u , %u\r\n",
+	snprintf(authbuf, sizeof(authbuf), "%u , %u\r\n",
 		   auth->rport, auth->lport);
 	authlen = strlen(authbuf);
 

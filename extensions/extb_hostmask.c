@@ -38,16 +38,16 @@ eb_hostmask(const char *banstr, struct Client *client_p, struct Channel *chptr, 
 	struct sockaddr_in ip4;
 	char *s = src_host, *s2 = src_iphost, *s3 = NULL, *s4 = NULL;
 
-	rb_sprintf(src_host, "%s!%s@%s", client_p->name, client_p->username, client_p->host);
-	rb_sprintf(src_iphost, "%s!%s@%s", client_p->name, client_p->username, client_p->sockhost);
+	sprintf(src_host, "%s!%s@%s", client_p->name, client_p->username, client_p->host);
+	sprintf(src_iphost, "%s!%s@%s", client_p->name, client_p->username, client_p->sockhost);
 
 	/* handle hostmangling if necessary */
 	if (client_p->localClient->mangledhost != NULL)
 	{
 		if (!strcmp(client_p->host, client_p->localClient->mangledhost))
-			rb_sprintf(src_althost, "%s!%s@%s", client_p->name, client_p->username, client_p->orighost);
+			sprintf(src_althost, "%s!%s@%s", client_p->name, client_p->username, client_p->orighost);
 		else if (!IsDynSpoof(client_p))
-			rb_sprintf(src_althost, "%s!%s@%s", client_p->name, client_p->username, client_p->localClient->mangledhost);
+			sprintf(src_althost, "%s!%s@%s", client_p->name, client_p->username, client_p->localClient->mangledhost);
 
 		s3 = src_althost;
 	}
@@ -56,7 +56,7 @@ eb_hostmask(const char *banstr, struct Client *client_p, struct Channel *chptr, 
 	/* handle Teredo if necessary */
 	if (client_p->localClient->ip.ss_family == AF_INET6 && ipv4_from_ipv6((const struct sockaddr_in6 *) &client_p->localClient->ip, &ip4))
 	{
-		rb_sprintf(src_ip4host, "%s!%s@", client_p->name, client_p->username);
+		sprintf(src_ip4host, "%s!%s@", client_p->name, client_p->username);
 		s4 = src_ip4host + strlen(src_ip4host);
 		rb_inet_ntop_sock((struct sockaddr *)&ip4,
 				s4, src_ip4host + sizeof src_ip4host - s4);
@@ -66,4 +66,3 @@ eb_hostmask(const char *banstr, struct Client *client_p, struct Channel *chptr, 
 
 	return match(banstr, s) || match(banstr, s2) || (s3 != NULL && match(banstr, s3)) || (s4 != NULL && match(banstr, s4)) ? EXTBAN_MATCH : EXTBAN_NOMATCH;
 }
-

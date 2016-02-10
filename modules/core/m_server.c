@@ -330,7 +330,7 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 		ilog(L_SERVER, "Link %s cancelled, server %s already exists",
 			client_p->name, name);
 
-		rb_snprintf(squitreason, sizeof squitreason,
+		snprintf(squitreason, sizeof squitreason,
 				"Server %s already exists",
 				name);
 		exit_client(client_p, client_p, &me, squitreason);
@@ -416,7 +416,7 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 		ilog(L_SERVER, "Non-Hub link %s introduced %s.",
 			client_p->name, name);
 
-		rb_snprintf(squitreason, sizeof squitreason,
+		snprintf(squitreason, sizeof squitreason,
 				"No matching hub_mask for %s",
 				name);
 		exit_client(NULL, client_p, &me, squitreason);
@@ -433,7 +433,7 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 		ilog(L_SERVER, "Link %s introduced leafed server %s.",
 			client_p->name, name);
 
-		rb_snprintf(squitreason, sizeof squitreason,
+		snprintf(squitreason, sizeof squitreason,
 				"Matching leaf_mask for %s",
 				name);
 		exit_client(NULL, client_p, &me, squitreason);
@@ -508,7 +508,7 @@ ms_sid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		ilog(L_SERVER, "Link %s cancelled, server %s already exists",
 			client_p->name, parv[1]);
 
-		rb_snprintf(squitreason, sizeof squitreason,
+		snprintf(squitreason, sizeof squitreason,
 				"Server %s already exists",
 				parv[1]);
 		exit_client(NULL, client_p, &me, squitreason);
@@ -527,7 +527,7 @@ ms_sid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		ilog(L_SERVER, "Link %s cancelled, SID %s for server %s already in use by %s",
 			client_p->name, parv[3], parv[1], target_p->name);
 
-		rb_snprintf(squitreason, sizeof squitreason,
+		snprintf(squitreason, sizeof squitreason,
 				"SID %s for %s already in use by %s",
 				parv[3], parv[1], target_p->name);
 		exit_client(NULL, client_p, &me, squitreason);
@@ -587,7 +587,7 @@ ms_sid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		ilog(L_SERVER, "Non-Hub link %s introduced %s.",
 			client_p->name, parv[1]);
 
-		rb_snprintf(squitreason, sizeof squitreason,
+		snprintf(squitreason, sizeof squitreason,
 				"No matching hub_mask for %s",
 				parv[1]);
 		exit_client(NULL, client_p, &me, squitreason);
@@ -603,7 +603,7 @@ ms_sid(struct Client *client_p, struct Client *source_p, int parc, const char *p
 		ilog(L_SERVER, "Link %s introduced leafed server %s.",
 			client_p->name, parv[1]);
 
-		rb_snprintf(squitreason, sizeof squitreason,
+		snprintf(squitreason, sizeof squitreason,
 				"Matching leaf_mask for %s",
 				parv[1]);
 		exit_client(NULL, client_p, &me, squitreason);

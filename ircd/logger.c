@@ -84,7 +84,7 @@ verify_logfile_access(const char *filename)
 
 	if(access(dirname, F_OK) == -1)
 	{
-		rb_snprintf(buf, sizeof(buf), "WARNING: Unable to access logfile %s - parent directory %s does not exist", filename, dirname);
+		snprintf(buf, sizeof(buf), "WARNING: Unable to access logfile %s - parent directory %s does not exist", filename, dirname);
 		if(testing_conf || server_state_foreground)
 			fprintf(stderr, "%s\n", buf);
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s", buf);
@@ -95,7 +95,7 @@ verify_logfile_access(const char *filename)
 	{
 		if(access(dirname, W_OK) == -1)
 		{
-			rb_snprintf(buf, sizeof(buf), "WARNING: Unable to access logfile %s - access to parent directory %s failed: %s",
+			snprintf(buf, sizeof(buf), "WARNING: Unable to access logfile %s - access to parent directory %s failed: %s",
 				    filename, dirname, strerror(errno));
 			if(testing_conf || server_state_foreground)
 				fprintf(stderr, "%s\n", buf);
@@ -106,7 +106,7 @@ verify_logfile_access(const char *filename)
 
 	if(access(filename, W_OK) == -1)
 	{
-		rb_snprintf(buf, sizeof(buf), "WARNING: Access denied for logfile %s: %s", filename, strerror(errno));
+		snprintf(buf, sizeof(buf), "WARNING: Access denied for logfile %s: %s", filename, strerror(errno));
 		if(testing_conf || server_state_foreground)
 			fprintf(stderr, "%s\n", buf);
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s", buf);
@@ -177,10 +177,10 @@ ilog(ilogfile dest, const char *format, ...)
 		return;
 
 	va_start(args, format);
-	rb_vsnprintf(buf, sizeof(buf), format, args);
+	vsnprintf(buf, sizeof(buf), format, args);
 	va_end(args);
 
-	rb_snprintf(buf2, sizeof(buf2), "%s %s\n",
+	snprintf(buf2, sizeof(buf2), "%s %s\n",
 			smalldate(rb_current_time()), buf);
 
 	if(fputs(buf2, logfile) < 0)
@@ -209,7 +209,7 @@ inotice(const char *format, ...)
 	va_list args;
 
 	va_start(args, format);
-	rb_vsnprintf(buf, sizeof(buf), format, args);
+	vsnprintf(buf, sizeof(buf), format, args);
 	va_end(args);
 
 	_iprint("notice", buf);
@@ -224,7 +224,7 @@ iwarn(const char *format, ...)
 	va_list args;
 
 	va_start(args, format);
-	rb_vsnprintf(buf, sizeof(buf), format, args);
+	vsnprintf(buf, sizeof(buf), format, args);
 	va_end(args);
 
 	_iprint("warning", buf);
@@ -239,7 +239,7 @@ ierror(const char *format, ...)
 	va_list args;
 
 	va_start(args, format);
-	rb_vsnprintf(buf, sizeof(buf), format, args);
+	vsnprintf(buf, sizeof(buf), format, args);
 	va_end(args);
 
 	_iprint("error", buf);
@@ -274,7 +274,7 @@ smalldate(time_t ltime)
 
 	lt = localtime(&ltime);
 
-	rb_snprintf(buf, sizeof(buf), "%d/%d/%d %02d.%02d",
+	snprintf(buf, sizeof(buf), "%d/%d/%d %02d.%02d",
 		    lt->tm_year + 1900, lt->tm_mon + 1,
 		    lt->tm_mday, lt->tm_hour, lt->tm_min);
 

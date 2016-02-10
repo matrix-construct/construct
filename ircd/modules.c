@@ -240,12 +240,12 @@ load_all_modules(int warn)
 
 	while ((ldirent = readdir(system_module_dir)) != NULL)
 	{
-        	len = strlen(ldirent->d_name);
+		len = strlen(ldirent->d_name);
 		if((len > 3) && !strcmp(ldirent->d_name+len-3, ".la"))
-                {
-		 	(void) rb_snprintf(module_fq_name, sizeof(module_fq_name), "%s/%s", AUTOMODPATH, ldirent->d_name);
-		 	(void) load_a_module(module_fq_name, warn, 0);
-                }
+		{
+			(void) snprintf(module_fq_name, sizeof(module_fq_name), "%s/%s", AUTOMODPATH, ldirent->d_name);
+			(void) load_a_module(module_fq_name, warn, 0);
+		}
 
 	}
 	(void) closedir(system_module_dir);
@@ -266,7 +266,7 @@ load_core_modules(int warn)
 
 	for (i = 0; core_module_table[i]; i++)
 	{
-		rb_snprintf(module_name, sizeof(module_name), "%s/%s%s", MODPATH,
+		snprintf(module_name, sizeof(module_name), "%s/%s%s", MODPATH,
 			    core_module_table[i], ".la");
 
 		if(load_a_module(module_name, warn, 1) == -1)
@@ -301,7 +301,7 @@ load_one_module(const char *path, int coremodule)
 	{
 		mpath = pathst->data;
 
-		rb_snprintf(modpath, sizeof(modpath), "%s/%s", mpath, path);
+		snprintf(modpath, sizeof(modpath), "%s/%s", mpath, path);
 		if((strstr(modpath, "../") == NULL) && (strstr(modpath, "/..") == NULL))
 		{
 			if(stat(modpath, &statbuf) == 0)

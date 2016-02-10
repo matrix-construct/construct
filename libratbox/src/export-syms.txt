@@ -124,14 +124,7 @@ rb_rawbuf_flush
 rb_rawbuf_get
 rb_rawbuf_length
 rb_outofmemory
-rb_snprintf
 rb_snprintf_append
-rb_sprintf
-rb_sprintf_append
-rb_vsnprintf
-rb_vsnprintf_append
-rb_vsprintf
-rb_vsprintf_append
 rb_free_rb_dlink_node
 rb_init_rb_dlink_nodes
 rb_make_rb_dlink_node

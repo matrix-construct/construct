@@ -201,7 +201,7 @@ const char *
 isupport_intptr(const void *ptr)
 {
 	static char buf[15];
-	rb_snprintf(buf, sizeof buf, "%d", *(const int *)ptr);
+	snprintf(buf, sizeof buf, "%d", *(const int *)ptr);
 	return buf;
 }
 
@@ -240,7 +240,7 @@ isupport_chanmodes(const void *ptr)
 {
 	static char result[80];
 
-	rb_snprintf(result, sizeof result, "%s%sbq,k,%slj,%s",
+	snprintf(result, sizeof result, "%s%sbq,k,%slj,%s",
 			ConfigChannel.use_except ? "e" : "",
 			ConfigChannel.use_invex ? "I" : "",
 			ConfigChannel.use_forward ? "f" : "",
@@ -259,7 +259,7 @@ isupport_chanlimit(const void *ptr)
 {
 	static char result[30];
 
-	rb_snprintf(result, sizeof result, "%s:%i",
+	snprintf(result, sizeof result, "%s:%i",
 		ConfigChannel.disable_local_channels ? "#" : "&#", ConfigChannel.max_chans_per_user);
 	return result;
 }
@@ -269,7 +269,7 @@ isupport_maxlist(const void *ptr)
 {
 	static char result[30];
 
-	rb_snprintf(result, sizeof result, "bq%s%s:%i",
+	snprintf(result, sizeof result, "bq%s%s:%i",
 			ConfigChannel.use_except ? "e" : "",
 			ConfigChannel.use_invex ? "I" : "",
 			ConfigChannel.max_bans);
@@ -281,7 +281,7 @@ isupport_targmax(const void *ptr)
 {
 	static char result[200];
 
-	rb_snprintf(result, sizeof result, "NAMES:1,LIST:1,KICK:1,WHOIS:1,PRIVMSG:%d,NOTICE:%d,ACCEPT:,MONITOR:",
+	snprintf(result, sizeof result, "NAMES:1,LIST:1,KICK:1,WHOIS:1,PRIVMSG:%d,NOTICE:%d,ACCEPT:,MONITOR:",
 			ConfigFileEntry.max_targets,
 			ConfigFileEntry.max_targets);
 	return result;
@@ -296,7 +296,7 @@ isupport_extban(const void *ptr)
 	p = get_extban_string();
 	if (EmptyString(p))
 		return NULL;
-	rb_snprintf(result, sizeof result, "$,%s", p);
+	snprintf(result, sizeof result, "$,%s", p);
 	return result;
 }
 
@@ -305,7 +305,7 @@ isupport_nicklen(const void *ptr)
 {
 	static char result[200];
 
-	rb_snprintf(result, sizeof result, "%u", ConfigFileEntry.nicklen - 1);
+	snprintf(result, sizeof result, "%u", ConfigFileEntry.nicklen - 1);
 	return result;
 }
 

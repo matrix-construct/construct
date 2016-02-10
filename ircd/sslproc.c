@@ -246,11 +246,11 @@ start_ssldaemon(int count, const char *ssl_cert, const char *ssl_private_key, co
 
 	if(ssld_path == NULL)
 	{
-		rb_snprintf(fullpath, sizeof(fullpath), "%s/ssld%s", PKGLIBEXECDIR, suffix);
+		snprintf(fullpath, sizeof(fullpath), "%s/ssld%s", PKGLIBEXECDIR, suffix);
 
 		if(access(fullpath, X_OK) == -1)
 		{
-			rb_snprintf(fullpath, sizeof(fullpath), "%s/bin/ssld%s",
+			snprintf(fullpath, sizeof(fullpath), "%s/bin/ssld%s",
 				    ConfigFileEntry.dpath, suffix);
 			if(access(fullpath, X_OK) == -1)
 			{
@@ -277,16 +277,16 @@ start_ssldaemon(int count, const char *ssl_cert, const char *ssl_private_key, co
 
 		rb_set_buffers(F1, READBUF_SIZE);
 		rb_set_buffers(F2, READBUF_SIZE);
-		rb_snprintf(fdarg, sizeof(fdarg), "%d", rb_get_fd(F2));
+		snprintf(fdarg, sizeof(fdarg), "%d", rb_get_fd(F2));
 		rb_setenv("CTL_FD", fdarg, 1);
 		if(rb_pipe(&P1, &P2, "SSL/TLS pipe") == -1)
 		{
 			ilog(L_MAIN, "Unable to create ssld - rb_pipe failed: %s", strerror(errno));
 			return started;
 		}
-		rb_snprintf(fdarg, sizeof(fdarg), "%d", rb_get_fd(P1));
+		snprintf(fdarg, sizeof(fdarg), "%d", rb_get_fd(P1));
 		rb_setenv("CTL_PIPE", fdarg, 1);
-		rb_snprintf(s_pid, sizeof(s_pid), "%d", (int)getpid());
+		snprintf(s_pid, sizeof(s_pid), "%d", (int)getpid());
 		rb_setenv("CTL_PPID", s_pid, 1);
 #ifdef _WIN32
 		SetHandleInformation((HANDLE) rb_get_fd(F2), HANDLE_FLAG_INHERIT, 1);
@@ -434,7 +434,7 @@ ssl_process_certfp(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 	rb_free(client_p->certfp);
 	certfp_string = rb_malloc(len * 2 + 1);
 	for(i = 0; i < len; i++)
-		rb_snprintf(certfp_string + 2 * i, 3, "%02x",
+		snprintf(certfp_string + 2 * i, 3, "%02x",
 				certfp[i]);
 	client_p->certfp = certfp_string;
 }
@@ -630,7 +630,7 @@ send_new_ssl_certs_one(ssl_ctl_t * ctl, const char *ssl_cert, const char *ssl_pr
 		     len, sizeof(tmpbuf));
 		return;
 	}
-	len = rb_snprintf(tmpbuf, sizeof(tmpbuf), "K%c%s%c%s%c%s%c%s%c", nul, ssl_cert, nul,
+	len = snprintf(tmpbuf, sizeof(tmpbuf), "K%c%s%c%s%c%s%c%s%c", nul, ssl_cert, nul,
 			  ssl_private_key, nul, ssl_dh_params, nul,
 			  ssl_cipher_list != NULL ? ssl_cipher_list : "", nul);
 	ssl_cmd_write_queue(ctl, NULL, 0, tmpbuf, len);
@@ -660,7 +660,7 @@ send_init_prng(ssl_ctl_t * ctl, prng_seed_t seedtype, const char *path)
 		return;
 
 	}
-	len = rb_snprintf(tmpbuf, sizeof(tmpbuf), "I%c%s%c", seed, s, nul);
+	len = snprintf(tmpbuf, sizeof(tmpbuf), "I%c%s%c", seed, s, nul);
 	ssl_cmd_write_queue(ctl, NULL, 0, tmpbuf, len);
 }
 

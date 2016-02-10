@@ -161,11 +161,11 @@ list_bans(void)
 		for(j = 0; j < table.row_count; j++)
 		{
 			if(i == BANDB_KLINE)
-				rb_snprintf(buf, sizeof(buf), "%c %s %s %s :%s",
+				snprintf(buf, sizeof(buf), "%c %s %s %s :%s",
 					    bandb_letter[i], table.row[j][0],
 					    table.row[j][1], table.row[j][2], table.row[j][3]);
 			else
-				rb_snprintf(buf, sizeof(buf), "%c %s %s :%s",
+				snprintf(buf, sizeof(buf), "%c %s %s :%s",
 					    bandb_letter[i], table.row[j][0],
 					    table.row[j][2], table.row[j][3]);
 
@@ -288,7 +288,7 @@ static void
 db_error_cb(const char *errstr)
 {
 	char buf[256];
-	rb_snprintf(buf, sizeof(buf), "! :%s", errstr);
+	snprintf(buf, sizeof(buf), "! :%s", errstr);
 	rb_helper_write(bandb_helper, "%s", buf);
 	rb_sleep(2 << 30, 0);
 	exit(1);

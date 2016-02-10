@@ -145,7 +145,7 @@ rb_setenv(const char *name, const char *value, int overwrite)
 		return -1;
 	len = strlen(name) + strlen(value) + 5;
 	buf = rb_malloc(len);
-	rb_snprintf(buf, len, "%s=%s", name, value);
+	snprintf(buf, len, "%s=%s", name, value);
 	len = putenv(buf);
 	rb_free(buf);
 	return (len);

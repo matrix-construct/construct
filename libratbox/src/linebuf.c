@@ -526,13 +526,13 @@ rb_linebuf_putmsg(buf_head_t * bufhead, const char *format, va_list * va_args,
 	if(prefixfmt != NULL)
 	{
 		va_start(prefix_args, prefixfmt);
-		len = rb_vsnprintf(bufline->buf, BUF_DATA_SIZE, prefixfmt, prefix_args);
+		len = vsnprintf(bufline->buf, BUF_DATA_SIZE, prefixfmt, prefix_args);
 		va_end(prefix_args);
 	}
 
 	if(va_args != NULL)
 	{
-		len += rb_vsnprintf((bufline->buf + len), (BUF_DATA_SIZE - len), format, *va_args);
+		len += vsnprintf((bufline->buf + len), (BUF_DATA_SIZE - len), format, *va_args);
 	}
 
 	bufline->terminated = 1;
@@ -644,7 +644,7 @@ rb_linebuf_put(buf_head_t * bufhead, const char *format, ...)
 	if(rb_unlikely(format != NULL))
 	{
 		va_start(args, format);
-		len = rb_vsnprintf(bufline->buf, BUF_DATA_SIZE, format, args);
+		len = vsnprintf(bufline->buf, BUF_DATA_SIZE, format, args);
 		va_end(args);
 	}
 

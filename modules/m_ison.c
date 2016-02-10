@@ -76,7 +76,7 @@ m_ison(struct Client *client_p, struct Client *source_p, int parc, const char *p
 	current_insert_point2 = buf2;
 	*buf2 = '\0';
 
-	rb_sprintf(buf, form_str(RPL_ISON), me.name, source_p->name);
+	sprintf(buf, form_str(RPL_ISON), me.name, source_p->name);
 	len = strlen(buf);
 	current_insert_point = buf + len;
 

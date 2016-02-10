@@ -13954,7 +13954,7 @@ fi
 
 
 
-for ac_func in socketpair gettimeofday writev sendmsg gmtime_r strtok_r usleep posix_spawn strlcpy strlcat strnlen fstat signalfd select poll kevent port_create epoll_ctl arc4random getrusage timerfd_create
+for ac_func in snprintf vsnprintf socketpair gettimeofday writev sendmsg gmtime_r strtok_r usleep posix_spawn strlcpy strlcat strnlen fstat signalfd select poll kevent port_create epoll_ctl arc4random getrusage timerfd_create
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -17914,4 +17914,3 @@ echo "IPv6 support ................... $have_v6"
 echo "Assert debugging ............... $assert"
 echo "SSL Type........................ $SSL_TYPE"
 echo
-

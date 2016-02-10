@@ -451,7 +451,7 @@ channel_member_names(struct Channel *chptr, struct Client *client_p, int show_eo
 	{
 		is_member = IsMember(client_p, chptr);
 
-		cur_len = mlen = rb_sprintf(lbuf, form_str(RPL_NAMREPLY),
+		cur_len = mlen = sprintf(lbuf, form_str(RPL_NAMREPLY),
 					    me.name, client_p->name,
 					    channel_pub_or_secret(chptr), chptr->chname);
 
@@ -476,7 +476,7 @@ channel_member_names(struct Channel *chptr, struct Client *client_p, int show_eo
 					t = lbuf + mlen;
 				}
 
-				tlen = rb_sprintf(t, "%s%s!%s@%s ", find_channel_status(msptr, stack),
+				tlen = sprintf(t, "%s%s!%s@%s ", find_channel_status(msptr, stack),
 						  target_p->name, target_p->username, target_p->host);
 			}
 			else
@@ -490,7 +490,7 @@ channel_member_names(struct Channel *chptr, struct Client *client_p, int show_eo
 					t = lbuf + mlen;
 				}
 
-				tlen = rb_sprintf(t, "%s%s ", find_channel_status(msptr, stack),
+				tlen = sprintf(t, "%s%s ", find_channel_status(msptr, stack),
 						  target_p->name);
 			}
 
@@ -560,8 +560,8 @@ is_banned_list(struct Channel *chptr, rb_dlink_list *list,
 	/* if the buffers havent been built, do it here */
 	if(s == NULL)
 	{
-		rb_sprintf(src_host, "%s!%s@%s", who->name, who->username, who->host);
-		rb_sprintf(src_iphost, "%s!%s@%s", who->name, who->username, who->sockhost);
+		sprintf(src_host, "%s!%s@%s", who->name, who->username, who->host);
+		sprintf(src_iphost, "%s!%s@%s", who->name, who->username, who->sockhost);
 
 		s = src_host;
 		s2 = src_iphost;
@@ -571,14 +571,14 @@ is_banned_list(struct Channel *chptr, rb_dlink_list *list,
 		/* if host mangling mode enabled, also check their real host */
 		if(!strcmp(who->host, who->localClient->mangledhost))
 		{
-			rb_sprintf(src_althost, "%s!%s@%s", who->name, who->username, who->orighost);
+			sprintf(src_althost, "%s!%s@%s", who->name, who->username, who->orighost);
 			s3 = src_althost;
 		}
 		/* if host mangling mode not enabled and no other spoof,
 		 * also check the mangled form of their host */
 		else if (!IsDynSpoof(who))
 		{
-			rb_sprintf(src_althost, "%s!%s@%s", who->name, who->username, who->localClient->mangledhost);
+			sprintf(src_althost, "%s!%s@%s", who->name, who->username, who->localClient->mangledhost);
 			s3 = src_althost;
 		}
 	}
@@ -586,7 +586,7 @@ is_banned_list(struct Channel *chptr, rb_dlink_list *list,
 	if(who->localClient->ip.ss_family == AF_INET6 &&
 			ipv4_from_ipv6((const struct sockaddr_in6 *)&who->localClient->ip, &ip4))
 	{
-		rb_sprintf(src_ip4host, "%s!%s@", who->name, who->username);
+		sprintf(src_ip4host, "%s!%s@", who->name, who->username);
 		s4 = src_ip4host + strlen(src_ip4host);
 		rb_inet_ntop_sock((struct sockaddr *)&ip4,
 				s4, src_ip4host + sizeof src_ip4host - s4);
@@ -736,21 +736,21 @@ can_join(struct Client *source_p, struct Channel *chptr, const char *key, const 
 	moduledata.chptr = chptr;
 	moduledata.approved = 0;
 
-	rb_sprintf(src_host, "%s!%s@%s", source_p->name, source_p->username, source_p->host);
-	rb_sprintf(src_iphost, "%s!%s@%s", source_p->name, source_p->username, source_p->sockhost);
+	sprintf(src_host, "%s!%s@%s", source_p->name, source_p->username, source_p->host);
+	sprintf(src_iphost, "%s!%s@%s", source_p->name, source_p->username, source_p->sockhost);
 	if(source_p->localClient->mangledhost != NULL)
 	{
 		/* if host mangling mode enabled, also check their real host */
 		if(!strcmp(source_p->host, source_p->localClient->mangledhost))
 		{
-			rb_sprintf(src_althost, "%s!%s@%s", source_p->name, source_p->username, source_p->orighost);
+			sprintf(src_althost, "%s!%s@%s", source_p->name, source_p->username, source_p->orighost);
 			use_althost = 1;
 		}
 		/* if host mangling mode not enabled and no other spoof,
 		 * also check the mangled form of their host */
 		else if (!IsDynSpoof(source_p))
 		{
-			rb_sprintf(src_althost, "%s!%s@%s", source_p->name, source_p->username, source_p->localClient->mangledhost);
+			sprintf(src_althost, "%s!%s@%s", source_p->name, source_p->username, source_p->localClient->mangledhost);
 			use_althost = 1;
 		}
 	}
@@ -971,8 +971,8 @@ find_bannickchange_channel(struct Client *client_p)
 	if (!MyClient(client_p))
 		return NULL;
 
-	rb_sprintf(src_host, "%s!%s@%s", client_p->name, client_p->username, client_p->host);
-	rb_sprintf(src_iphost, "%s!%s@%s", client_p->name, client_p->username, client_p->sockhost);
+	sprintf(src_host, "%s!%s@%s", client_p->name, client_p->username, client_p->host);
+	sprintf(src_iphost, "%s!%s@%s", client_p->name, client_p->username, client_p->sockhost);
 
 	RB_DLINK_FOREACH(ptr, client_p->user->channel.head)
 	{
@@ -1202,7 +1202,7 @@ channel_modes(struct Channel *chptr, struct Client *client_p)
 		*mbuf++ = 'l';
 
 		if(!IsClient(client_p) || IsMember(client_p, chptr))
-			pbuf += rb_sprintf(pbuf, " %d", chptr->mode.limit);
+			pbuf += sprintf(pbuf, " %d", chptr->mode.limit);
 	}
 
 	if(*chptr->mode.key)
@@ -1210,7 +1210,7 @@ channel_modes(struct Channel *chptr, struct Client *client_p)
 		*mbuf++ = 'k';
 
 		if(pbuf > buf2 || !IsClient(client_p) || IsMember(client_p, chptr))
-			pbuf += rb_sprintf(pbuf, " %s", chptr->mode.key);
+			pbuf += sprintf(pbuf, " %s", chptr->mode.key);
 	}
 
 	if(chptr->mode.join_num)
@@ -1218,7 +1218,7 @@ channel_modes(struct Channel *chptr, struct Client *client_p)
 		*mbuf++ = 'j';
 
 		if(pbuf > buf2 || !IsClient(client_p) || IsMember(client_p, chptr))
-			pbuf += rb_sprintf(pbuf, " %d:%d", chptr->mode.join_num,
+			pbuf += sprintf(pbuf, " %d:%d", chptr->mode.join_num,
 					   chptr->mode.join_time);
 	}
 
@@ -1228,7 +1228,7 @@ channel_modes(struct Channel *chptr, struct Client *client_p)
 		*mbuf++ = 'f';
 
 		if(pbuf > buf2 || !IsClient(client_p) || IsMember(client_p, chptr))
-			pbuf += rb_sprintf(pbuf, " %s", chptr->mode.forward);
+			pbuf += sprintf(pbuf, " %s", chptr->mode.forward);
 	}
 
 	*mbuf = '\0';
@@ -1273,7 +1273,7 @@ send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
 	pbuf = parabuf;
 	dir = MODE_QUERY;
 
-	mbl = preflen = rb_sprintf(modebuf, ":%s TMODE %ld %s ",
+	mbl = preflen = sprintf(modebuf, ":%s TMODE %ld %s ",
 				   use_id(source_p), (long) chptr->channelts,
 				   chptr->chname);
 
@@ -1336,7 +1336,7 @@ send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
 
 		if(arg != NULL)
 		{
-			len = rb_sprintf(pbuf, "%s ", arg);
+			len = sprintf(pbuf, "%s ", arg);
 			pbuf += len;
 			pbl += len;
 			mc++;

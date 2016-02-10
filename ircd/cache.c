@@ -188,7 +188,7 @@ cache_links(void *unused)
 
 		/* if the below is ever modified, change LINKSLINELEN */
 		links_line = rb_malloc(LINKSLINELEN);
-		rb_snprintf(links_line, LINKSLINELEN, "%s %s :1 %s",
+		snprintf(links_line, LINKSLINELEN, "%s %s :1 %s",
 			   target_p->name, me.name,
 			   target_p->info[0] ? target_p->info :
 			    "(Unknown Location)");
@@ -265,7 +265,7 @@ load_help(void)
 	{
 		if(ldirent->d_name[0] == '.')
 			continue;
-		rb_snprintf(filename, sizeof(filename), "%s/%s", HPATH, ldirent->d_name);
+		snprintf(filename, sizeof(filename), "%s/%s", HPATH, ldirent->d_name);
 		cacheptr = cache_file(filename, ldirent->d_name, HELP_OPER);
 		irc_dictionary_add(help_dict_oper, cacheptr->name, cacheptr);
 	}
@@ -280,7 +280,7 @@ load_help(void)
 	{
 		if(ldirent->d_name[0] == '.')
 			continue;
-		rb_snprintf(filename, sizeof(filename), "%s/%s", UHPATH, ldirent->d_name);
+		snprintf(filename, sizeof(filename), "%s/%s", UHPATH, ldirent->d_name);
 
 #if defined(S_ISLNK) && defined(HAVE_LSTAT)
 		if(lstat(filename, &sb) < 0)
@@ -350,7 +350,7 @@ cache_user_motd(void)
 
 		if(local_tm != NULL)
 		{
-			rb_snprintf(user_motd_changed, sizeof(user_motd_changed),
+			snprintf(user_motd_changed, sizeof(user_motd_changed),
 				 "%d/%d/%d %d:%d",
 				 local_tm->tm_mday, local_tm->tm_mon + 1,
 				 1900 + local_tm->tm_year, local_tm->tm_hour,

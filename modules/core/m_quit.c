@@ -67,7 +67,7 @@ m_quit(struct Client *client_p, struct Client *source_p, int parc, const char *p
 
 	if(ConfigFileEntry.client_exit && comment[0])
 	{
-		rb_snprintf(reason, sizeof(reason), "Quit: %s", comment);
+		snprintf(reason, sizeof(reason), "Quit: %s", comment);
 		comment = reason;
 	}
 

@@ -47,7 +47,7 @@ mlog(const char *errstr, ...)
 		char buf[256];
 		va_list ap;
 		va_start(ap, errstr);
-		rb_vsnprintf(buf, sizeof(buf), errstr, ap);
+		vsnprintf(buf, sizeof(buf), errstr, ap);
 		va_end(ap);
 		error_cb(buf);
 	}
@@ -73,14 +73,14 @@ rsdb_init(rsdb_error_cb * ecb)
 
 	if(sqlite3_open(dbpath, &rb_bandb) != SQLITE_OK)
 	{
-		rb_snprintf(errbuf, sizeof(errbuf), "Unable to open sqlite database: %s",
+		snprintf(errbuf, sizeof(errbuf), "Unable to open sqlite database: %s",
 			    sqlite3_errmsg(rb_bandb));
 		mlog(errbuf);
 		return -1;
 	}
 	if(access(dbpath, W_OK))
 	{
-		rb_snprintf(errbuf, sizeof(errbuf),  "Unable to open sqlite database for write: %s", strerror(errno));
+		snprintf(errbuf, sizeof(errbuf),  "Unable to open sqlite database for write: %s", strerror(errno));
 		mlog(errbuf);
 		return -1;
 	}

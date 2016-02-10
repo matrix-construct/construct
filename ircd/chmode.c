@@ -283,7 +283,7 @@ add_id(struct Client *source_p, struct Channel *chptr, const char *banid, const 
 
 
 	if(IsPerson(source_p))
-		rb_sprintf(who, "%s!%s@%s", source_p->name, source_p->username, source_p->host);
+		sprintf(who, "%s!%s@%s", source_p->name, source_p->username, source_p->host);
 	else
 		rb_strlcpy(who, source_p->name, sizeof(who));
 
@@ -851,7 +851,7 @@ chm_ban(struct Client *source_p, struct Channel *chptr,
 			char buf[BANLEN];
 			banptr = ptr->data;
 			if(banptr->forward)
-				rb_snprintf(buf, sizeof(buf), "%s$%s", banptr->banstr, banptr->forward);
+				snprintf(buf, sizeof(buf), "%s$%s", banptr->banstr, banptr->forward);
 			else
 				rb_strlcpy(buf, banptr->banstr, sizeof(buf));
 
@@ -981,7 +981,7 @@ chm_ban(struct Client *source_p, struct Channel *chptr,
 		}
 
 		if(removed && removed->forward)
-			removed_mask_pos += rb_snprintf(buf + old_removed_mask_pos, sizeof(buf), "%s$%s", removed->banstr, removed->forward) + 1;
+			removed_mask_pos += snprintf(buf + old_removed_mask_pos, sizeof(buf), "%s$%s", removed->banstr, removed->forward) + 1;
 		else
 			removed_mask_pos += rb_strlcpy(buf + old_removed_mask_pos, mask, sizeof(buf)) + 1;
 		if(removed)
@@ -1166,7 +1166,7 @@ chm_limit(struct Client *source_p, struct Channel *chptr,
 		if(EmptyString(lstr) || (limit = atoi(lstr)) <= 0)
 			return;
 
-		rb_sprintf(limitstr, "%d", limit);
+		sprintf(limitstr, "%d", limit);
 
 		mode_changes[mode_count].letter = c;
 		mode_changes[mode_count].dir = MODE_ADD;
@@ -1741,9 +1741,9 @@ set_channel_mode(struct Client *client_p, struct Client *source_p,
 		return;
 
 	if(IsServer(source_p))
-		mlen = rb_sprintf(modebuf, ":%s MODE %s ", fakesource_p->name, chptr->chname);
+		mlen = sprintf(modebuf, ":%s MODE %s ", fakesource_p->name, chptr->chname);
 	else
-		mlen = rb_sprintf(modebuf, ":%s!%s@%s MODE %s ",
+		mlen = sprintf(modebuf, ":%s!%s@%s MODE %s ",
 				  source_p->name, source_p->username,
 				  source_p->host, chptr->chname);
 
@@ -1808,7 +1808,7 @@ set_channel_mode(struct Client *client_p, struct Client *source_p,
 			if(mode_changes[i].arg != NULL)
 			{
 				paracount++;
-				len = rb_sprintf(pbuf, "%s ", mode_changes[i].arg);
+				len = sprintf(pbuf, "%s ", mode_changes[i].arg);
 				pbuf += len;
 				paralen += len;
 			}

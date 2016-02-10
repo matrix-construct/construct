@@ -85,11 +85,11 @@ start_bandb(void)
 	rb_setenv("BANDB_DBPATH", PKGLOCALSTATEDIR "/ban.db", 1);
 	if(bandb_path == NULL)
 	{
-		rb_snprintf(fullpath, sizeof(fullpath), "%s/bandb%s", PKGLIBEXECDIR, suffix);
+		snprintf(fullpath, sizeof(fullpath), "%s/bandb%s", PKGLIBEXECDIR, suffix);
 
 		if(access(fullpath, X_OK) == -1)
 		{
-			rb_snprintf(fullpath, sizeof(fullpath), "%s/bin/bandb%s",
+			snprintf(fullpath, sizeof(fullpath), "%s/bin/bandb%s",
 				    ConfigFileEntry.dpath, suffix);
 
 			if(access(fullpath, X_OK) == -1)
@@ -127,7 +127,7 @@ bandb_add(bandb_type type, struct Client *source_p, const char *mask1,
 
 	static char buf[BUFSIZE];
 
-	rb_snprintf(buf, sizeof(buf), "%c %s ", bandb_add_letter[type], mask1);
+	snprintf(buf, sizeof(buf), "%c %s ", bandb_add_letter[type], mask1);
 
 	if(!EmptyString(mask2))
 		rb_snprintf_append(buf, sizeof(buf), "%s ", mask2);

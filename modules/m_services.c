@@ -217,7 +217,7 @@ me_rsfnc(struct Client *client_p, struct Client *source_p,
 					parv[2]);
 		}
 
-		rb_snprintf(buf, sizeof(buf), "Killed (%s (Nickname regained by services))",
+		snprintf(buf, sizeof(buf), "Killed (%s (Nickname regained by services))",
 			me.name);
 		exit_client(NULL, exist_p, &me, buf);
 	}
@@ -256,7 +256,7 @@ doit:
 
 	del_all_accepts(target_p);
 
-	rb_snprintf(note, NICKLEN + 10, "Nick: %s", target_p->name);
+	snprintf(note, NICKLEN + 10, "Nick: %s", target_p->name);
 	rb_note(target_p->localClient->F, note);
 	return 0;
 }

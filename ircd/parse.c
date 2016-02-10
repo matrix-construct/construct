@@ -373,7 +373,7 @@ handle_command(struct Message *mptr, struct Client *client_p,
 		ilog(L_SERVER,
 		     "Insufficient parameters (%d < %d) for command '%s' from %s.",
 		     i, ehandler.min_para, mptr->cmd, client_p->name);
-		rb_snprintf(squitreason, sizeof squitreason,
+		snprintf(squitreason, sizeof squitreason,
 				"Insufficient parameters (%d < %d) for command '%s'",
 				i, ehandler.min_para, mptr->cmd);
 		exit_client(client_p, client_p, client_p, squitreason);
@@ -618,10 +618,10 @@ do_numeric(char numeric[], struct Client *client_p, struct Client *source_p, int
 		int tl;		/* current length of presently being built string in t */
 		for (i = 2; i < (parc - 1); i++)
 		{
-			tl = rb_sprintf(t, " %s", parv[i]);
+			tl = sprintf(t, " %s", parv[i]);
 			t += tl;
 		}
-		rb_sprintf(t, " :%s", parv[parc - 1]);
+		sprintf(t, " :%s", parv[parc - 1]);
 	}
 
 	if((target_p = find_client(parv[1])) != NULL)

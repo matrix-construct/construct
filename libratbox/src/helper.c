@@ -119,21 +119,21 @@ rb_helper_start(const char *name, const char *fullpath, rb_helper_cb * read_cb,
 
 	helper = rb_malloc(sizeof(rb_helper));
 
-	rb_snprintf(buf, sizeof(buf), "%s helper - read", name);
+	snprintf(buf, sizeof(buf), "%s helper - read", name);
 	if(rb_pipe(&in_f[0], &in_f[1], buf) < 0)
 	{
 		rb_free(helper);
 		return NULL;
 	}
-	rb_snprintf(buf, sizeof(buf), "%s helper - write", name);
+	snprintf(buf, sizeof(buf), "%s helper - write", name);
 	if(rb_pipe(&out_f[0], &out_f[1], buf) < 0)
 	{
 		rb_free(helper);
 		return NULL;
 	}
 
-	rb_snprintf(fx, sizeof(fx), "%d", rb_get_fd(in_f[1]));
-	rb_snprintf(fy, sizeof(fy), "%d", rb_get_fd(out_f[0]));
+	snprintf(fx, sizeof(fx), "%d", rb_get_fd(in_f[1]));
+	snprintf(fy, sizeof(fy), "%d", rb_get_fd(out_f[0]));
 
 	rb_set_nb(in_f[0]);
 	rb_set_nb(in_f[1]);
@@ -144,7 +144,7 @@ rb_helper_start(const char *name, const char *fullpath, rb_helper_cb * read_cb,
 	rb_setenv("OFD", fx, 1);
 	rb_setenv("MAXFD", "256", 1);
 
-	rb_snprintf(buf, sizeof(buf), "-ircd %s daemon", name);
+	snprintf(buf, sizeof(buf), "-ircd %s daemon", name);
 	parv[0] = buf;
 	parv[1] = NULL;
 
