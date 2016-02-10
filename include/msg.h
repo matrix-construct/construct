@@ -28,6 +28,7 @@
 #define INCLUDED_msg_h
 
 #include "config.h"
+#include "msgbuf.h"
 
 struct Client;
 
@@ -76,8 +77,6 @@ struct Message
 
 #define MFLG_SLOW	0x01	/* executed roughly once per 2s */
 #define MFLG_UNREG	0x02	/* available to unregistered clients */
-
-#define MAXPARA    15
 
 /* generic handlers */
 extern int m_ignore(struct Client *, struct Client *, int, const char **);
