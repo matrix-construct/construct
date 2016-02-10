@@ -5,7 +5,7 @@
  *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center
  *  Copyright (C) 1996-2002 Hybrid Development Team
  *  Copyright (C) 2002-2005 ircd-ratbox development team
- *  Copyright (C) 2007 William Pitcock
+ *  Copyright (C) 2007-2016 William Pitcock
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,6 +38,7 @@
 #include "s_stats.h"
 #include "send.h"
 #include "msg.h"
+#include "msgbuf.h"
 #include "s_conf.h"
 #include "s_serv.h"
 #include "packet.h"
@@ -52,7 +53,7 @@ static char *para[MAXPARA + 2];
 static void cancel_clients(struct Client *, struct Client *);
 static void remove_unknown(struct Client *, char *, char *);
 
-static void do_numeric(char[], struct Client *, struct Client *, int, char **);
+static void do_numeric(int, struct Client *, struct Client *, int, const char **);
 static void do_alias(struct alias_entry *, struct Client *, char *);
 
 static int handle_command(struct Message *, struct Client *, struct Client *, int, const char**);
@@ -74,55 +75,6 @@ char *reconstruct_parv(int parc, const char *parv[])
 	return tmpbuf;
 }
 
-static inline int
-string_to_array(char *string, char **parv)
-{
-	char *p, *buf = string;
-	int x = 1;
-
-	parv[x] = NULL;
-	while (*buf == ' ')	/* skip leading spaces */
-		buf++;
-	if(*buf == '\0')	/* ignore all-space args */
-		return x;
-
-	do
-	{
-		if(*buf == ':')	/* Last parameter */
-		{
-			buf++;
-			parv[x++] = buf;
-			parv[x] = NULL;
-			return x;
-		}
-		else
-		{
-			parv[x++] = buf;
-			parv[x] = NULL;
-			if((p = strchr(buf, ' ')) != NULL)
-			{
-				*p++ = '\0';
-				buf = p;
-			}
-			else
-				return x;
-		}
-		while (*buf == ' ')
-			buf++;
-		if(*buf == '\0')
-			return x;
-	}
-	/* we can go upto parv[MAXPARA], as parv[0] is skipped */
-	while (x < MAXPARA);
-
-	if(*p == ':')
-		p++;
-
-	parv[x++] = p;
-	parv[x] = NULL;
-	return x;
-}
-
 /* parse()
  *
  * given a raw buffer, parses it and generates parv and parc
@@ -135,134 +87,15 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 	char *ch;
 	char *s;
 	char *end;
-	int i = 1;
-	char *numeric = 0;
+	int i = 1, res;
+	int numeric = 0;
 	struct Message *mptr;
+	struct MsgBuf msgbuf;
 
 	s_assert(MyConnect(client_p));
 	s_assert(client_p->localClient->F != NULL);
 	if(IsAnyDead(client_p))
 		return;
-
-	for (ch = pbuffer; *ch == ' '; ch++)	/* skip spaces */
-		/* null statement */ ;
-
-	para[0] = from->name;
-
-	if(*ch == ':')
-	{
-		ch++;
-
-		/* point sender to the sender param */
-		sender = ch;
-
-		if((s = strchr(ch, ' ')))
-		{
-			*s = '\0';
-			s++;
-			ch = s;
-		}
-
-		if(*sender && IsServer(client_p))
-		{
-			from = find_client(sender);
-
-			/* didnt find any matching client, issue a kill */
-			if(from == NULL)
-			{
-				ServerStats.is_unpf++;
-				remove_unknown(client_p, sender, pbuffer);
-				return;
-			}
-
-			para[0] = from->name;
-
-			/* fake direction, hmm. */
-			if(from->from != client_p)
-			{
-				ServerStats.is_wrdi++;
-				cancel_clients(client_p, from);
-				return;
-			}
-		}
-		while (*ch == ' ')
-			ch++;
-	}
-
-	if(*ch == '\0')
-	{
-		ServerStats.is_empt++;
-		return;
-	}
-
-	/* at this point there must be some sort of command parameter */
-
-	/*
-	 * Extract the command code from the packet.  Point s to the end
-	 * of the command code and calculate the length using pointer
-	 * arithmetic.  Note: only need length for numerics and *all*
-	 * numerics must have parameters and thus a space after the command
-	 * code. -avalon
-	 */
-
-	/* EOB is 3 chars long but is not a numeric */
-
-	if(*(ch + 3) == ' ' &&	/* ok, lets see if its a possible numeric.. */
-	   IsDigit(*ch) && IsDigit(*(ch + 1)) && IsDigit(*(ch + 2)))
-	{
-		mptr = NULL;
-		numeric = ch;
-		ServerStats.is_num++;
-		s = ch + 3;	/* I know this is ' ' from above if */
-		*s++ = '\0';	/* blow away the ' ', and point s to next part */
-	}
-	else
-	{
-		int ii = 0;
-
-		if((s = strchr(ch, ' ')))
-			*s++ = '\0';
-
-		mptr = irc_dictionary_retrieve(cmd_dict, ch);
-
-		/* no command or its encap only, error */
-		if(!mptr || !mptr->cmd)
-		{
-			/*
-			 * Note: Give error message *only* to recognized
-			 * persons. It's a nightmare situation to have
-			 * two programs sending "Unknown command"'s or
-			 * equivalent to each other at full blast....
-			 * If it has got to person state, it at least
-			 * seems to be well behaving. Perhaps this message
-			 * should never be generated, though...  --msa
-			 * Hm, when is the buffer empty -- if a command
-			 * code has been found ?? -Armin
-			 */
-			if(pbuffer[0] != '\0')
-			{
-				if (IsPerson(client_p))
-				{
-					struct alias_entry *aptr = irc_dictionary_retrieve(alias_dict, ch);
-					if (aptr != NULL)
-					{
-						do_alias(aptr, client_p, s);
-						return;
-					}
-				}
-				if(IsPerson(from))
-				{
-					sendto_one(from, form_str(ERR_UNKNOWNCOMMAND),
-						   me.name, from->name, ch);
-				}
-			}
-			ServerStats.is_unco++;
-			return;
-		}
-
-		ii = bufend - ((s) ? s : ch);
-		mptr->bytes += ii;
-	}
 
 	end = bufend - 1;
 
@@ -272,16 +105,75 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 	if(*end == '\r')
 		*end = '\0';
 
-	if(s != NULL)
-		i = string_to_array(s, para);
-
-	if(mptr == NULL)
+	res = msgbuf_parse(&msgbuf, pbuffer);
+	if (res)
 	{
-		do_numeric(numeric, client_p, from, i, para);
+		ServerStats.is_empt++;
 		return;
 	}
 
-	if(handle_command(mptr, client_p, from, i, /* XXX discards const!!! */ (const char **)(void *)para) < -1)
+	if (msgbuf.origin != NULL)
+	{
+		from = find_client(msgbuf.origin);
+
+		/* didnt find any matching client, issue a kill */
+		if(from == NULL)
+		{
+			ServerStats.is_unpf++;
+			remove_unknown(client_p, sender, pbuffer);
+			return;
+		}
+
+		/* fake direction, hmm. */
+		if(from->from != client_p)
+		{
+			ServerStats.is_wrdi++;
+			cancel_clients(client_p, from);
+			return;
+		}
+	}
+
+	if(IsDigit(*msgbuf.cmd) && IsDigit(*(msgbuf.cmd + 1)) && IsDigit(*(msgbuf.cmd + 2)))
+	{
+		mptr = NULL;
+		numeric = atoi(msgbuf.cmd);
+		ServerStats.is_num++;
+	}
+	else
+	{
+		mptr = irc_dictionary_retrieve(cmd_dict, msgbuf.cmd);
+
+		/* no command or its encap only, error */
+		if(!mptr || !mptr->cmd)
+		{
+			if (IsPerson(client_p))
+			{
+				struct alias_entry *aptr = irc_dictionary_retrieve(alias_dict, ch);
+				if (aptr != NULL)
+				{
+					do_alias(aptr, client_p, s);
+					return;
+				}
+			}
+			if(IsPerson(from))
+			{
+				sendto_one(from, form_str(ERR_UNKNOWNCOMMAND),
+					   me.name, from->name, ch);
+			}
+			ServerStats.is_unco++;
+			return;
+		}
+
+		mptr->bytes += msgbuf.parselen;
+	}
+
+	if(mptr == NULL)
+	{
+		do_numeric(numeric, client_p, from, msgbuf.n_para, msgbuf.para);
+		return;
+	}
+
+	if(handle_command(mptr, client_p, from, msgbuf.n_para, /* XXX discards const!!! */ (const char **)(void *) msgbuf.para) < -1)
 	{
 		char *p;
 		for (p = pbuffer; p <= end; p += 8)
@@ -592,7 +484,7 @@ remove_unknown(struct Client *client_p, char *lsender, char *lbuffer)
  *      a ping pong error message...
  */
 static void
-do_numeric(char numeric[], struct Client *client_p, struct Client *source_p, int parc, char *parv[])
+do_numeric(int numeric, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 	struct Channel *chptr;
@@ -601,8 +493,8 @@ do_numeric(char numeric[], struct Client *client_p, struct Client *source_p, int
 		return;
 
 	/* Remap low number numerics. */
-	if(numeric[0] == '0')
-		numeric[0] = '1';
+	if(numeric < 100)
+		numeric += 100;
 
 	/*
 	 * Prepare the parameter portion of the message into 'buffer'.
@@ -649,10 +541,10 @@ do_numeric(char numeric[], struct Client *client_p, struct Client *source_p, int
 			/* note, now we send PING on server connect, we can
 			 * also get ERR_NOSUCHSERVER..
 			 */
-			if(atoi(numeric) != ERR_NOSUCHNICK &&
-			   atoi(numeric) != ERR_NOSUCHSERVER)
+			if(numeric != ERR_NOSUCHNICK &&
+			   numeric != ERR_NOSUCHSERVER)
 				sendto_realops_snomask(SNO_GENERAL, L_ADMIN,
-						     "*** %s(via %s) sent a %s numeric to me: %s",
+						     "*** %s(via %s) sent a %03d numeric to me: %s",
 						     source_p->name,
 						     client_p->name, numeric, buffer);
 			return;
@@ -666,18 +558,18 @@ do_numeric(char numeric[], struct Client *client_p, struct Client *source_p, int
 		}
 
 		/* csircd will send out unknown umode flag for +a (admin), drop it here. */
-		if((atoi(numeric) == ERR_UMODEUNKNOWNFLAG) && MyClient(target_p))
+		if(numeric == ERR_UMODEUNKNOWNFLAG && MyClient(target_p))
 			return;
 
 		/* Fake it for server hiding, if its our client */
-		sendto_one(target_p, ":%s %s %s%s",
+		sendto_one(target_p, ":%s %03d %s%s",
 			   get_id(source_p, target_p), numeric,
 			   get_id(target_p, target_p), buffer);
 		return;
 	}
 	else if((chptr = find_channel(parv[1])) != NULL)
 		sendto_channel_flags(client_p, ALL_MEMBERS, source_p, chptr,
-				     "%s %s%s",
+				     "%03d %s%s",
 				     numeric, chptr->chname, buffer);
 }
 
