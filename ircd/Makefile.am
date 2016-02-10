@@ -42,6 +42,7 @@ libircd_la_SOURCES =                  \
   match.c                       \
   modules.c                     \
   monitor.c                     \
+  msgbuf.c			\
   newconf.c                     \
   operhash.c                    \
   packet.c                      \

@@ -46,7 +46,7 @@ struct MsgBuf {
  * parse a message into a MsgBuf.
  * returns 0 on success, 1 on error.
  */
-int msgbuf_parse(struct MsgBuf *msgbuf, const char *line);
+int msgbuf_parse(struct MsgBuf *msgbuf, char *line);
 
 /*
  * unparse a pure MsgBuf into a buffer.

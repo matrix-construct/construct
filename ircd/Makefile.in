@@ -141,7 +141,7 @@ am_libircd_la_OBJECTS = authd.lo bandbi.lo blacklist.lo cache.lo \
 	extban.lo getopt.lo hash.lo hook.lo hostmask.lo \
 	ipv4_from_ipv6.lo irc_radixtree.lo irc_dictionary.lo ircd.lo \
 	ircd_parser.lo ircd_lexer.lo ircd_signal.lo listener.lo \
-	logger.lo match.lo modules.lo monitor.lo newconf.lo \
+	logger.lo match.lo modules.lo monitor.lo msgbuf.lo newconf.lo \
 	operhash.lo packet.lo parse.lo privilege.lo ratelimit.lo \
 	reject.lo restart.lo s_auth.lo s_conf.lo s_newconf.lo \
 	s_serv.lo s_user.lo scache.lo send.lo snomask.lo sslproc.lo \
@@ -454,6 +454,7 @@ libircd_la_SOURCES = \
   match.c                       \
   modules.c                     \
   monitor.c                     \
+  msgbuf.c			\
   newconf.c                     \
   operhash.c                    \
   packet.c                      \
@@ -646,6 +647,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/match.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/modules.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/monitor.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgbuf.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/newconf.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/operhash.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/packet.Plo@am__quote@
