@@ -27,7 +27,6 @@ libratbox_la_SOURCES =			\
 	ratbox_lib.c			\
 	rb_memory.c			\
 	linebuf.c			\
-	snprintf.c			\
 	tools.c				\
 	helper.c			\
 	devpoll.c			\
@@ -41,8 +40,7 @@ libratbox_la_SOURCES =			\
 	patricia.c			\
 	arc4random.c			\
 	version.c
-	
+
 libratbox_la_LDFLAGS = @SSL_LIBS@ @GNUTLS_LIBS@ @MBEDTLS_LIBS@ -avoid-version -no-undefined -export-symbols export-syms.txt
 libratbox_la_LIBADD = @SSL_LIBS@ @GNUTLS_LIBS@ @MBEDTLS_LIBS@
 lib_LTLIBRARIES = libratbox.la
-

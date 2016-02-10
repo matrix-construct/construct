@@ -485,7 +485,7 @@ rb_epoll_sched_event_timerfd(struct ev_entry *event, int when)
 		close(fd);
 		return 0;
 	}
-	rb_snprintf(buf, sizeof(buf), "timerfd: %s", event->name);
+	snprintf(buf, sizeof(buf), "timerfd: %s", event->name);
 	F = rb_open(fd, RB_FD_UNKNOWN, buf);
 	rb_set_nb(F);
 	event->comm_ptr = F;

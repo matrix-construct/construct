@@ -202,6 +202,35 @@ rb_strnlen(const char *s, size_t count)
 }
 #endif
 
+/*
+ * rb_snprintf_append()
+ * appends snprintf formatted string to the end of the buffer but not
+ * exceeding len
+ */
+int
+rb_snprintf_append(char *str, size_t len, const char *format, ...)
+{
+	int x;
+
+	if(len == 0)
+		return 0;
+
+	x = strlen(str);
+
+	if(len < x)
+	{
+		str[len - 1] = '\0';
+		return (int)len - 1;
+	}
+
+	va_list ap;
+	va_start(ap, format);
+	x = (vsnprintf(str + x, len - x, format, ap) + (int)x);
+	va_end(ap);
+
+	return (x);
+}
+
 /* rb_basename
  *
  * input        -

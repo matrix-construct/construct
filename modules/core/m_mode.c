@@ -341,7 +341,7 @@ ms_bmask(struct Client *client_p, struct Client *source_p, int parc, const char 
 		fakesource_p = &me;
 	else
 		fakesource_p = source_p;
-	mlen = rb_sprintf(modebuf, ":%s MODE %s +", fakesource_p->name, chptr->chname);
+	mlen = sprintf(modebuf, ":%s MODE %s +", fakesource_p->name, chptr->chname);
 	mbuf = modebuf + mlen;
 	pbuf = parabuf;
 
@@ -401,7 +401,7 @@ ms_bmask(struct Client *client_p, struct Client *source_p, int parc, const char 
 				forward[-1] = '$';
 
 			*mbuf++ = parv[3][0];
-			arglen = rb_sprintf(pbuf, "%s ", s);
+			arglen = sprintf(pbuf, "%s ", s);
 			pbuf += arglen;
 			plen += arglen;
 			modecount++;
@@ -433,4 +433,3 @@ ms_bmask(struct Client *client_p, struct Client *source_p, int parc, const char 
 		      source_p->id, (long) chptr->channelts, chptr->chname, parv[3], parv[4]);
 	return 0;
 }
-

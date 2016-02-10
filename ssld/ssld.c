@@ -256,7 +256,7 @@ close_conn(conn_t * conn, int wait_plain, const char *fmt, ...)
 	rb_setselect(conn->plain_fd, RB_SELECT_READ, conn_plain_read_shutdown_cb, conn);
 	rb_setselect(conn->plain_fd, RB_SELECT_WRITE, NULL, NULL);
 	va_start(ap, fmt);
-	rb_vsnprintf(reason, sizeof(reason), fmt, ap);
+	vsnprintf(reason, sizeof(reason), fmt, ap);
 	va_end(ap);
 
 	buf[0] = 'D';
@@ -814,7 +814,7 @@ process_stats(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 	if(conn == NULL)
 		return;
 
-	rb_snprintf(outstat, sizeof(outstat), "S %s %llu %llu %llu %llu", odata,
+	snprintf(outstat, sizeof(outstat), "S %s %llu %llu %llu %llu", odata,
 		    conn->plain_out, conn->mod_in, conn->plain_in, conn->mod_out);
 	conn->plain_out = 0;
 	conn->plain_in = 0;

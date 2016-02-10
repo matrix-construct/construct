@@ -664,7 +664,7 @@ rb_supports_ssl(void)
 void
 rb_get_ssl_info(char *buf, size_t len)
 {
-	rb_snprintf(buf, len, "GNUTLS: compiled (%s), library(%s)",
+	snprintf(buf, len, "GNUTLS: compiled (%s), library(%s)",
 		    LIBGNUTLS_VERSION, gnutls_check_version(NULL));
 }
 
@@ -673,7 +673,7 @@ rb_ssl_get_cipher(rb_fde_t *F)
 {
 	static char buf[1024];
 
-	rb_snprintf(buf, sizeof(buf), "%s-%s-%s-%s",
+	snprintf(buf, sizeof(buf), "%s-%s-%s-%s",
 		gnutls_protocol_get_name(gnutls_protocol_get_version(SSL_P(F))),
 		gnutls_kx_get_name(gnutls_kx_get(SSL_P(F))),
 		gnutls_cipher_get_name(gnutls_cipher_get(SSL_P(F))),

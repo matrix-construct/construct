@@ -77,7 +77,7 @@ server_reboot(void)
 	execv(SPATH, (void *)myargv);
 
 	/* use this if execv of SPATH fails */
-	rb_snprintf(path, sizeof(path), "%s/bin/ircd", ConfigFileEntry.dpath);
+	snprintf(path, sizeof(path), "%s/bin/ircd", ConfigFileEntry.dpath);
 
 	execv(path, (void *)myargv);
 	exit(-1);

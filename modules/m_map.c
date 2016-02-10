@@ -110,7 +110,7 @@ dump_map(struct Client *client_p, struct Client *root_p, char *pbuf)
 	}
 
 	frac = (1000 * rb_dlink_list_length(&root_p->serv->users) + Count.total / 2) / Count.total;
-	rb_snprintf(buf + USER_COL, BUFSIZE - USER_COL,
+	snprintf(buf + USER_COL, BUFSIZE - USER_COL,
 		 " | Users: %5lu (%2d.%1d%%)", rb_dlink_list_length(&root_p->serv->users),
 		 frac / 10, frac % 10);
 

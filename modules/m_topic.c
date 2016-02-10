@@ -127,7 +127,7 @@ m_topic(struct Client *client_p, struct Client *source_p, int parc, const char *
 			char topic[TOPICLEN + 1];
 			char topic_info[USERHOST_REPLYLEN];
 			rb_strlcpy(topic, parv[2], sizeof(topic));
-			rb_sprintf(topic_info, "%s!%s@%s",
+			sprintf(topic_info, "%s!%s@%s",
 					source_p->name, source_p->username, source_p->host);
 
 			if (ConfigChannel.strip_topic_colors)

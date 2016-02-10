@@ -34,6 +34,14 @@
 size_t rb_strlcpy(char *dst, const char *src, size_t siz);
 size_t rb_strlcat(char *dst, const char *src, size_t siz);
 size_t rb_strnlen(const char *s, size_t count);
+
+#ifdef __GNUC__
+int rb_snprintf_append(char *str, size_t len, const char *format, ...)
+	__attribute__ ((format(printf, 3, 4)));
+#else
+int rb_snprintf_append(char *str, const size_t size, const char *, ...);
+#endif
+
 char *rb_basename(const char *);
 char *rb_dirname(const char *);
 

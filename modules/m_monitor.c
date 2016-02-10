@@ -104,9 +104,9 @@ add_monitor(struct Client *client_p, const char *nicks)
 				sendto_one(client_p, "%s", offbuf);
 
 			if(p)
-				rb_snprintf(buf, sizeof(buf), "%s,%s", name, p);
+				snprintf(buf, sizeof(buf), "%s,%s", name, p);
 			else
-				rb_snprintf(buf, sizeof(buf), "%s", name);
+				snprintf(buf, sizeof(buf), "%s", name);
 
 			sendto_one(client_p, form_str(ERR_MONLISTFULL),
 					me.name, client_p->name,
@@ -370,4 +370,3 @@ m_monitor(struct Client *client_p, struct Client *source_p, int parc, const char
 
 	return 0;
 }
-

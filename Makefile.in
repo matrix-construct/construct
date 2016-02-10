@@ -172,7 +172,7 @@ am__DIST_COMMON = $(srcdir)/Makefile.in \
 	$(top_srcdir)/libltdl/config/config.sub \
 	$(top_srcdir)/libltdl/config/install-sh \
 	$(top_srcdir)/libltdl/config/ltmain.sh \
-	$(top_srcdir)/libltdl/config/missing INSTALL TODO install-sh \
+	$(top_srcdir)/libltdl/config/missing INSTALL install-sh \
 	libltdl/config/ar-lib libltdl/config/compile \
 	libltdl/config/config.guess libltdl/config/config.sub \
 	libltdl/config/depcomp libltdl/config/install-sh \

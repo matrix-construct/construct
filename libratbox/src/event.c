@@ -293,7 +293,7 @@ rb_dump_events(void (*func) (char *, void *), void *ptr)
 	struct ev_entry *ev;
 	len = sizeof(buf);
 
-	rb_snprintf(buf, len, "Last event to run: %s", last_event_ran);
+	snprintf(buf, len, "Last event to run: %s", last_event_ran);
 	func(buf, ptr);
 
 	rb_strlcpy(buf, "Operation                    Next Execution", len);
@@ -302,7 +302,7 @@ rb_dump_events(void (*func) (char *, void *), void *ptr)
 	RB_DLINK_FOREACH(dptr, event_list.head)
 	{
 		ev = dptr->data;
-		rb_snprintf(buf, len, "%-28s %-4ld seconds", ev->name,
+		snprintf(buf, len, "%-28s %-4ld seconds", ev->name,
 			    ev->when - (long)rb_current_time());
 		func(buf, ptr);
 	}

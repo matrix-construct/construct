@@ -468,7 +468,7 @@ append_format(char *buf, size_t bufsize, size_t *pos, const char *fmt, ...)
 
 	max = *pos >= bufsize ? 0 : bufsize - *pos;
 	va_start(ap, fmt);
-	result = rb_vsnprintf(buf + *pos, max, fmt, ap);
+	result = vsnprintf(buf + *pos, max, fmt, ap);
 	va_end(ap);
 	*pos += result;
 }
@@ -492,7 +492,7 @@ do_who(struct Client *source_p, struct Client *target_p, struct membership *mspt
 	size_t pos;
 	const char *q;
 
-	rb_sprintf(status, "%c%s%s",
+	sprintf(status, "%c%s%s",
 		   target_p->user->away ? 'G' : 'H', IsOper(target_p) ? "*" : "", msptr ? find_channel_status(msptr, fmt->fields || IsCapable(source_p, CLICAP_MULTI_PREFIX)) : "");
 
 	if (fmt->fields == 0)

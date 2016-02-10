@@ -769,7 +769,7 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 	else
 		modes = empty_modes;
 
-	mlen_uid = rb_sprintf(buf_uid, ":%s SJOIN %ld %s %s :",
+	mlen_uid = sprintf(buf_uid, ":%s SJOIN %ld %s %s :",
 			      use_id(source_p), (long) chptr->channelts, parv[2], modes);
 	ptr_uid = buf_uid + mlen_uid;
 
@@ -838,7 +838,7 @@ ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char 
 		}
 
 		/* copy the nick to the two buffers */
-		len = rb_sprintf(ptr_uid, "%s ", use_id(target_p));
+		len = sprintf(ptr_uid, "%s ", use_id(target_p));
 		ptr_uid += len;
 		len_uid += len;
 
@@ -1109,7 +1109,7 @@ set_final_mode(struct Mode *mode, struct Mode *oldmode)
 			dir = MODE_DEL;
 		}
 		*mbuf++ = 'k';
-		len = rb_sprintf(pbuf, "%s ", oldmode->key);
+		len = sprintf(pbuf, "%s ", oldmode->key);
 		pbuf += len;
 	}
 	if(oldmode->join_num && !mode->join_num)
@@ -1138,7 +1138,7 @@ set_final_mode(struct Mode *mode, struct Mode *oldmode)
 			dir = MODE_ADD;
 		}
 		*mbuf++ = 'l';
-		len = rb_sprintf(pbuf, "%d ", mode->limit);
+		len = sprintf(pbuf, "%d ", mode->limit);
 		pbuf += len;
 	}
 	if(mode->key[0] && strcmp(oldmode->key, mode->key))
@@ -1149,7 +1149,7 @@ set_final_mode(struct Mode *mode, struct Mode *oldmode)
 			dir = MODE_ADD;
 		}
 		*mbuf++ = 'k';
-		len = rb_sprintf(pbuf, "%s ", mode->key);
+		len = sprintf(pbuf, "%s ", mode->key);
 		pbuf += len;
 	}
 	if(mode->join_num && (oldmode->join_num != mode->join_num || oldmode->join_time != mode->join_time))
@@ -1160,7 +1160,7 @@ set_final_mode(struct Mode *mode, struct Mode *oldmode)
 			dir = MODE_ADD;
 		}
 		*mbuf++ = 'j';
-		len = rb_sprintf(pbuf, "%d:%d ", mode->join_num, mode->join_time);
+		len = sprintf(pbuf, "%d:%d ", mode->join_num, mode->join_time);
 		pbuf += len;
 	}
 	if(mode->forward[0] && strcmp(oldmode->forward, mode->forward) &&
@@ -1172,7 +1172,7 @@ set_final_mode(struct Mode *mode, struct Mode *oldmode)
 			dir = MODE_ADD;
 		}
 		*mbuf++ = 'f';
-		len = rb_sprintf(pbuf, "%s ", mode->forward);
+		len = sprintf(pbuf, "%s ", mode->forward);
 		pbuf += len;
 	}
 	*mbuf = '\0';
@@ -1297,7 +1297,7 @@ remove_ban_list(struct Channel *chptr, struct Client *source_p,
 
 	pbuf = lparabuf;
 
-	cur_len = mlen = rb_sprintf(lmodebuf, ":%s MODE %s -", source_p->name, chptr->chname);
+	cur_len = mlen = sprintf(lmodebuf, ":%s MODE %s -", source_p->name, chptr->chname);
 	mbuf = lmodebuf + mlen;
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, list->head)
@@ -1325,9 +1325,9 @@ remove_ban_list(struct Channel *chptr, struct Client *source_p,
 		*mbuf++ = c;
 		cur_len += plen;
 		if (banptr->forward)
-			pbuf += rb_sprintf(pbuf, "%s$%s ", banptr->banstr, banptr->forward);
+			pbuf += sprintf(pbuf, "%s$%s ", banptr->banstr, banptr->forward);
 		else
-			pbuf += rb_sprintf(pbuf, "%s ", banptr->banstr);
+			pbuf += sprintf(pbuf, "%s ", banptr->banstr);
 		count++;
 
 		free_ban(banptr);

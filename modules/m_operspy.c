@@ -87,7 +87,7 @@ ms_operspy(struct Client *client_p, struct Client *source_p,
 			if((size_t)(cur_len + len) >= sizeof(buffer))
 				return 0;
 
-			rb_snprintf(ptr, sizeof(buffer) - cur_len, "%s ",
+			snprintf(ptr, sizeof(buffer) - cur_len, "%s ",
 				 parv[i]);
 			ptr += len;
 			cur_len += len;
@@ -98,4 +98,3 @@ ms_operspy(struct Client *client_p, struct Client *source_p,
 
 	return 0;
 }
-

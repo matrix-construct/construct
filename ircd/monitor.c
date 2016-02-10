@@ -95,7 +95,7 @@ monitor_signon(struct Client *client_p)
 	if(monptr == NULL)
 		return;
 
-	rb_snprintf(buf, sizeof(buf), "%s!%s@%s", client_p->name, client_p->username, client_p->host);
+	snprintf(buf, sizeof(buf), "%s!%s@%s", client_p->name, client_p->username, client_p->host);
 
 	sendto_monitor(monptr, form_str(RPL_MONONLINE), me.name, "*", buf);
 }

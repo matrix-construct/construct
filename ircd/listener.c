@@ -128,7 +128,7 @@ get_listener_name(const struct Listener *listener)
 	if(listener == NULL)
 		return NULL;
 
-	rb_snprintf(buf, sizeof(buf), "%s[%s/%u]",
+	snprintf(buf, sizeof(buf), "%s[%s/%u]",
 			me.name, listener->name, get_listener_port(listener));
 	return buf;
 }
@@ -562,7 +562,7 @@ accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, voi
 
 		if(ConfigFileEntry.dline_with_reason)
 		{
-			len = rb_snprintf(buf, sizeof(buf), "ERROR :*** Banned: %s\r\n", get_user_ban_reason(aconf));
+			len = snprintf(buf, sizeof(buf), "ERROR :*** Banned: %s\r\n", get_user_ban_reason(aconf));
 			if (len >= (int)(sizeof(buf)-1))
 			{
 				buf[sizeof(buf) - 3] = '\r';

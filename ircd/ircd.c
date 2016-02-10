@@ -377,7 +377,7 @@ write_pidfile(const char *filename)
 	{
 		unsigned int pid = (unsigned int) getpid();
 
-		rb_snprintf(buff, sizeof(buff), "%u\n", pid);
+		snprintf(buff, sizeof(buff), "%u\n", pid);
 		if((fputs(buff, fb) == -1))
 		{
 			ilog(L_MAIN, "Error writing %u to pid file %s (%s)",

@@ -1174,26 +1174,6 @@ inetntoa(const char *in)
 	return buf;
 }
 
-
-/*
- * Copyright (c) 1996-1999 by Internet Software Consortium.
- *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
- * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
- */
-
-#define SPRINTF(x) ((size_t)rb_sprintf x)
-
 /*
  * WARNING: Don't even consider trying to compile this on a system where
  * sizeof(int) < 4.  sizeof(int) > 4 is fine; all the world's not a VAX.
@@ -1317,7 +1297,7 @@ inet_ntop6(const unsigned char *src, char *dst, unsigned int size)
 			tp += strlen(tp);
 			break;
 		}
-		tp += SPRINTF((tp, "%x", words[i]));
+		tp += sprintf(tp, "%x", words[i]);
 	}
 	/* Was it a trailing run of 0x00's? */
 	if(best.base != -1 && (best.base + best.len) == (IN6ADDRSZ / INT16SZ))
@@ -1607,7 +1587,7 @@ rb_inet_pton(int af, const char *src, void *dst)
 		if(inet_pton4(src, dst))
 		{
 			char tmp[HOSTIPLEN];
-			rb_sprintf(tmp, "::ffff:%s", src);
+			sprintf(tmp, "::ffff:%s", src);
 			return (inet_pton6(tmp, dst));
 		}
 		else

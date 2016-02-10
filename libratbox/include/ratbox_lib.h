@@ -220,7 +220,6 @@ pid_t rb_getpid(void);
 #include <rb_commio.h>
 #include <rb_balloc.h>
 #include <rb_linebuf.h>
-#include <rb_snprintf.h>
 #include <rb_event.h>
 #include <rb_helper.h>
 #include <rb_rawbuf.h>

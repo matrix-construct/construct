@@ -75,7 +75,7 @@ mr_user(struct Client *client_p, struct Client *source_p, int parc, const char *
 	if((p = strchr(parv[1], '@')))
 		*p = '\0';
 
-	rb_snprintf(buf, sizeof(buf), "%s %s", parv[2], parv[3]);
+	snprintf(buf, sizeof(buf), "%s %s", parv[2], parv[3]);
 	rb_free(source_p->localClient->fullcaps);
 	source_p->localClient->fullcaps = rb_strdup(buf);
 

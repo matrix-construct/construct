@@ -24,7 +24,7 @@ AC_PROG_CC_C99
 if test x"$ac_cv_prog_cc_c99" = "xno"; then
 	AC_ERROR([ircd-ratbox requires a C99 capable compiler])
 fi
-        
+
 
 AC_PROG_INSTALL
 AC_PROG_EGREP
@@ -192,7 +192,7 @@ RB_PROTO_INET6([], [
 		])
 	fi
 
-fi			
+fi
 
 AC_CHECK_TYPES([struct sockaddr_storage],[
 	rb_have_sockaddr_storage=yes
@@ -200,7 +200,7 @@ AC_CHECK_TYPES([struct sockaddr_storage],[
 		#include <sys/types.h>
 		#include <sys/socket.h>
 	])
-                
+
 
 dnl Check for stdarg.h - if we cant find it, halt configure
 AC_CHECK_HEADER(stdarg.h, , [AC_MSG_ERROR([** stdarg.h could not be found - libratbox will not compile without it **])])
@@ -212,7 +212,7 @@ AC_CHECK_TYPE([sa_family_t], [],
 
 
 dnl check for various functions...
-AC_CHECK_FUNCS([socketpair gettimeofday writev sendmsg gmtime_r strtok_r usleep posix_spawn strlcpy strlcat strnlen fstat signalfd select poll kevent port_create epoll_ctl arc4random getrusage timerfd_create])	
+AC_CHECK_FUNCS([snprintf vsnprintf socketpair gettimeofday writev sendmsg gmtime_r strtok_r usleep posix_spawn strlcpy strlcat strnlen fstat signalfd select poll kevent port_create epoll_ctl arc4random getrusage timerfd_create])	
 
 AC_SEARCH_LIBS(nanosleep, rt posix4, AC_DEFINE(HAVE_NANOSLEEP, 1, [Define if you have nanosleep]))
 AC_SEARCH_LIBS(timer_create, rt, AC_DEFINE(HAVE_TIMER_CREATE, 1, [Define if you have timer_create]))
@@ -228,7 +228,7 @@ if test -c "/dev/poll"; then
         AC_MSG_RESULT(yes)
 	AC_DEFINE(HAVE_DEVPOLL, [1], [Define to 1 if you have devpoll])
 else
-	AC_MSG_RESULT(no)	
+	AC_MSG_RESULT(no)
 fi
 
 
@@ -327,14 +327,14 @@ fi
 
 if test "$cf_enable_openssl" != no; then
 	CPPFLAGS="$CPPFLAGS $SSL_LIBS"
-	AC_CHECK_LIB(crypto, RAND_status, 
+	AC_CHECK_LIB(crypto, RAND_status,
 		[cf_enable_openssl=yes],
 		[cf_enable_openssl=no])
 fi
 
 if test "$cf_enable_openssl" != no; then
 	CPPFLAGS="$CPPFLAGS $SSL_LIBS"
-	AC_CHECK_LIB(ssl, SSL_read, 
+	AC_CHECK_LIB(ssl, SSL_read,
 		[SSL_LIBS="$SSL_LIBS -lssl -lcrypto"],
 		[cf_enable_openssl=no], [-lcrypto])
 fi
@@ -364,11 +364,11 @@ AC_ARG_ENABLE(gnutls,
 AC_HELP_STRING([--disable-gnutls],[Disable GnuTLS support.])],
 [cf_enable_gnutls=$enableval],
 [cf_enable_gnutls="auto"])
- 
+
 if test "$cf_enable_gnutls" != no; then
        PKG_CHECK_MODULES(GNUTLS, [gnutls], [
-               cf_enable_gnutls="yes"   
-       ], [cf_enable_gnutls="no"])      
+               cf_enable_gnutls="yes"
+       ], [cf_enable_gnutls="no"])
 fi
 
 dnl mbed TLS is given highest preference when no specified TLS library is provided
@@ -390,10 +390,10 @@ if test x"$cf_enable_openssl" != xno; then
 elif test x"$cf_enable_mbedtls" != xno; then
 	AC_DEFINE(HAVE_MBEDTLS, 1, [Has mbedTLS])
 	SSL_LIBS=""
-	SSL_CFLAGS=""	
+	SSL_CFLAGS=""
 	GNUTLS_CFLAGS=""
 	GNUTLS_LIBS=""
-	SSL_TYPE="mbedtls"	
+	SSL_TYPE="mbedtls"
 elif test x"$cf_enable_gnutls" != xno; then
 	AC_DEFINE(HAVE_GNUTLS, 1, [Has GnuTLS])
 	SSL_LIBS=""
@@ -462,7 +462,7 @@ AC_SUBST(GNUTLS_LIBS)
 AC_SUBST(MBEDTLS_CFLAGS)
 AC_SUBST(MBEDTLS_LIBS)
 
-if test "$prefix" = "NONE"; then 
+if test "$prefix" = "NONE"; then
 	AC_DEFINE_UNQUOTED(RB_PREFIX, "$ac_default_prefix", [Prefix where libratbox is installed.])
 
 else
@@ -472,7 +472,7 @@ dnl a custom prefix with a trailing slash
 
 	prefix=`echo $prefix | sed 's/\/$//'`
 	AC_DEFINE_UNQUOTED(RB_PREFIX, "$prefix", [Prefix where libratbox is installed.])
-	
+
 fi
 
 AC_SUBST(RB_PREFIX)
@@ -481,14 +481,14 @@ AC_CONFIG_COMMANDS([include/librb-config.h],
 [
 	outfile=include/librb-config.h.tmp
 	cat > $outfile  <<\_______EOF
-/*    
+/*
  * librb-config.h: libratbox config file. Please modify configure.ac
  */
- 
+
 #ifndef __LIBRB_CONFIG_H
 #define __LIBRB_CONFIG_H
 
-_______EOF 
+_______EOF
 
 if test "x$rb_have_ipv6" = "xyes"; then
 	echo "#define RB_IPV6 1" >> $outfile
@@ -651,18 +651,18 @@ fi
 	rb_socklen_t=$rb_socklen_t
 
 	if test "x$rb_have_sockaddr_storage" = "xyes"; then
-		rb_sockaddr_storage="yes" 
+		rb_sockaddr_storage="yes"
 	else
 		rb_sockaddr_storage="no"
 	fi
-	
+
 	rb_have_ipv6="$have_v6"
-		
+
 	rb_mv="$MV"
 	rb_rm="$RM"
-		
+
 ]
-	
+
 
 )
 
@@ -687,4 +687,3 @@ echo "IPv6 support ................... $have_v6"
 echo "Assert debugging ............... $assert"
 echo "SSL Type........................ $SSL_TYPE"
 echo
-

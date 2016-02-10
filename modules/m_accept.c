@@ -245,7 +245,7 @@ list_accepts(struct Client *source_p)
 				*nicks = '\0';
 			}
 
-			len += rb_snprintf(nicks + len, sizeof(nicks) - len, "%s ", target_p->name);
+			len += snprintf(nicks + len, sizeof(nicks) - len, "%s ", target_p->name);
 			count++;
 		}
 	}

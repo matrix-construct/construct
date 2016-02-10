@@ -295,7 +295,7 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 		rb_strlcpy(source_p->name, source_p->preClient->spoofnick, NICKLEN + 1);
 		add_to_client_hash(source_p->name, source_p);
 
-		rb_snprintf(note, NICKLEN + 10, "Nick: %s", source_p->name);
+		snprintf(note, NICKLEN + 10, "Nick: %s", source_p->name);
 		rb_note(source_p->localClient->F, note);
 	}
 
@@ -477,7 +477,7 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 		ServerStats.is_ref++;
 		sendto_one_notice(source_p, ":*** Your username is invalid. Please make sure that your username contains "
 					    "only alphanumeric characters.");
-		rb_sprintf(tmpstr2, "Invalid username [%s]", source_p->username);
+		sprintf(tmpstr2, "Invalid username [%s]", source_p->username);
 		exit_client(client_p, source_p, &me, tmpstr2);
 		return (CLIENT_EXITED);
 	}

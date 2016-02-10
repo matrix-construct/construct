@@ -478,7 +478,7 @@ sendto_channel_flags(struct Client *one, int type, struct Client *source_p,
 	current_serial++;
 
 	va_start(args, pattern);
-	rb_vsnprintf(buf, sizeof(buf), pattern, args);
+	vsnprintf(buf, sizeof(buf), pattern, args);
 	va_end(args);
 
 	if(IsServer(source_p))
@@ -921,7 +921,7 @@ sendto_match_butone(struct Client *one, struct Client *source_p,
 	rb_linebuf_newbuf(&rb_linebuf_id);
 
 	va_start(args, pattern);
-	rb_vsnprintf(buf, sizeof(buf), pattern, args);
+	vsnprintf(buf, sizeof(buf), pattern, args);
 	va_end(args);
 
 	if(IsServer(source_p))
@@ -991,7 +991,7 @@ sendto_match_servs(struct Client *source_p, const char *mask, int cap,
 	rb_linebuf_newbuf(&rb_linebuf_id);
 
 	va_start(args, pattern);
-	rb_vsnprintf(buf, sizeof(buf), pattern, args);
+	vsnprintf(buf, sizeof(buf), pattern, args);
 	va_end(args);
 
 	rb_linebuf_putmsg(&rb_linebuf_id, NULL, NULL,
@@ -1166,7 +1166,7 @@ sendto_realops_snomask(int flags, int level, const char *pattern, ...)
 	{
 		/* rather a lot of copying around, oh well -- jilles */
 		va_start(args, pattern);
-		rb_vsnprintf(buf, sizeof(buf), pattern, args);
+		vsnprintf(buf, sizeof(buf), pattern, args);
 		va_end(args);
 		rb_linebuf_putmsg(&linebuf, pattern, NULL,
 				":%s NOTICE * :*** Notice -- %s", me.name, buf);
@@ -1180,7 +1180,7 @@ sendto_realops_snomask(int flags, int level, const char *pattern, ...)
 	{
 		/* rather a lot of copying around, oh well -- jilles */
 		va_start(args, pattern);
-		rb_vsnprintf(buf, sizeof(buf), pattern, args);
+		vsnprintf(buf, sizeof(buf), pattern, args);
 		va_end(args);
 		rb_linebuf_putmsg(&linebuf, pattern, NULL,
 				":%s NOTICE * :*** Notice -- %s", me.name, buf);
@@ -1343,7 +1343,7 @@ kill_client_serv_butone(struct Client *one, struct Client *target_p, const char 
 	rb_linebuf_newbuf(&rb_linebuf_id);
 
 	va_start(args, pattern);
-	rb_vsnprintf(buf, sizeof(buf), pattern, args);
+	vsnprintf(buf, sizeof(buf), pattern, args);
 	va_end(args);
 
 	rb_linebuf_putmsg(&rb_linebuf_id, NULL, NULL, ":%s KILL %s :%s",

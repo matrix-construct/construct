@@ -350,7 +350,7 @@ check_pings_list(rb_dlink_list * list)
 					     "No response from %s, closing link",
 					     log_client_name(client_p, HIDE_IP));
 				}
-				(void) rb_snprintf(scratch, sizeof(scratch),
+				(void) snprintf(scratch, sizeof(scratch),
 						  "Ping timeout: %d seconds",
 						  (int) (rb_current_time() - client_p->localClient->lasttime));
 
@@ -696,7 +696,7 @@ resv_nick_fnc(const char *mask, const char *reason, int temp_time)
 				rb_dlinkDestroy(ptr, &client_p->on_allow_list);
 			}
 
-			rb_snprintf(note, sizeof(note), "Nick: %s", nick);
+			snprintf(note, sizeof(note), "Nick: %s", nick);
 			rb_note(client_p->localClient->F, note);
 		}
 	}
@@ -926,16 +926,16 @@ get_client_name(struct Client *client, int showip)
 		switch (showip)
 		{
 		case SHOW_IP:
-			rb_snprintf(nbuf, sizeof(nbuf), "%s[%s@%s]",
+			snprintf(nbuf, sizeof(nbuf), "%s[%s@%s]",
 				   client->name, client->username,
 				   client->sockhost);
 			break;
 		case MASK_IP:
-			rb_snprintf(nbuf, sizeof(nbuf), "%s[%s@255.255.255.255]",
+			snprintf(nbuf, sizeof(nbuf), "%s[%s@255.255.255.255]",
 				   client->name, client->username);
 			break;
 		default:
-			rb_snprintf(nbuf, sizeof(nbuf), "%s[%s@%s]",
+			snprintf(nbuf, sizeof(nbuf), "%s[%s@%s]",
 				   client->name, client->username, client->host);
 		}
 		return nbuf;
@@ -968,12 +968,12 @@ log_client_name(struct Client *target_p, int showip)
 		switch (showip)
 		{
 		case SHOW_IP:
-			rb_snprintf(nbuf, sizeof(nbuf), "%s[%s@%s]", target_p->name,
+			snprintf(nbuf, sizeof(nbuf), "%s[%s@%s]", target_p->name,
 				   target_p->username, target_p->sockhost);
 			break;
 
 		default:
-			rb_snprintf(nbuf, sizeof(nbuf), "%s[%s@%s]", target_p->name,
+			snprintf(nbuf, sizeof(nbuf), "%s[%s@%s]", target_p->name,
 				   target_p->username, target_p->host);
 		}
 
@@ -1209,7 +1209,7 @@ dead_link(struct Client *client_p, int sendqex)
 	if(sendqex)
 		rb_strlcpy(abt->notice, "Max SendQ exceeded", sizeof(abt->notice));
 	else
-		rb_snprintf(abt->notice, sizeof(abt->notice), "Write error: %s", strerror(errno));
+		snprintf(abt->notice, sizeof(abt->notice), "Write error: %s", strerror(errno));
 
     	abt->client = client_p;
 	SetIOError(client_p);
@@ -1339,7 +1339,7 @@ exit_remote_server(struct Client *client_p, struct Client *source_p, struct Clie
 		strcat(comment1, source_p->name);
 	}
 	if (IsPerson(from))
-		rb_snprintf(newcomment, sizeof(newcomment), "by %s: %s",
+		snprintf(newcomment, sizeof(newcomment), "by %s: %s",
 				from->name, comment);
 
 	if(source_p->serv != NULL)
@@ -1417,7 +1417,7 @@ exit_local_server(struct Client *client_p, struct Client *source_p, struct Clien
 	/* Always show source here, so the server notices show
 	 * which side initiated the split -- jilles
 	 */
-	rb_snprintf(newcomment, sizeof(newcomment), "by %s: %s",
+	snprintf(newcomment, sizeof(newcomment), "by %s: %s",
 			from == source_p ? me.name : from->name, comment);
 	if (!IsIOError(source_p))
 		sendto_one(source_p, "SQUIT %s :%s", use_id(source_p),
@@ -2010,7 +2010,7 @@ error_exit_client(struct Client *client_p, int error)
 	if(error == 0)
 		rb_strlcpy(errmsg, "Remote host closed the connection", sizeof(errmsg));
 	else
-		rb_snprintf(errmsg, sizeof(errmsg), "Read error: %s", strerror(current_error));
+		snprintf(errmsg, sizeof(errmsg), "Read error: %s", strerror(current_error));
 
 	exit_client(client_p, client_p, &me, errmsg);
 }
