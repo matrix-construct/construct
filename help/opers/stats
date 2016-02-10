@@ -32,6 +32,7 @@ X f - Shows File Descriptors
 * q - Shows temporary and global resv'd nicks and channels
 * Q - Shows resv'd nicks and channels
 * r - Shows resource usage by ircd
+X S - Shows ssld processes
 * t - Shows generic server stats
 * U - Shows shared blocks (Old U: lines)
   u - Shows server uptime

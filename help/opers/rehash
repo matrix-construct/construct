@@ -11,6 +11,7 @@ ircd.conf file.
   NICKDELAY - Clears delayed nicks
   OMOTD    - Re-reads Oper MOTD file
   REJECTCACHE - Clears the reject cache
+  SSLD     - Restarts the ssld processes
   TDLINES  - Clears temporary D Lines
   THROTTLES - Clears throttled IP addresses
   TKLINES  - Clears temporary K Lines
