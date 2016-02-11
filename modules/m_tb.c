@@ -44,8 +44,8 @@
 #include "hash.h"
 #include "s_serv.h"
 
-static int ms_tb(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int ms_etb(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int ms_tb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int ms_etb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message tb_msgtab = {
 	"TB", 0, 0, 0, MFLG_SLOW,
@@ -68,7 +68,7 @@ DECLARE_MODULE_AV1(tb, NULL, NULL, tb_clist, NULL, NULL, "$Revision: 1349 $");
  * parv[4] - topic
  */
 static int
-ms_tb(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_tb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr;
 	const char *newtopic;
@@ -134,7 +134,7 @@ ms_tb(struct Client *client_p, struct Client *source_p, int parc, const char *pa
  * parv[5] - topic
  */
 static int
-ms_etb(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_etb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr;
 	const char *newtopic;

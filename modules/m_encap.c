@@ -43,7 +43,7 @@
 #include "parse.h"
 #include "modules.h"
 
-static int ms_encap(struct Client *client_p, struct Client *source_p,
+static int ms_encap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 		     int parc, const char *parv[]);
 
 struct Message encap_msgtab = {
@@ -61,7 +61,7 @@ DECLARE_MODULE_AV1(encap, NULL, NULL, encap_clist, NULL, NULL, "$Revision: 254 $
  * parv[3] - parameters
  */
 static int
-ms_encap(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_encap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	char buffer[BUFSIZE];
 	char *ptr;
@@ -101,7 +101,7 @@ ms_encap(struct Client *client_p, struct Client *source_p, int parc, const char 
 
 	/* if it matches us, find a matching handler and call it */
 	if(match(parv[1], me.name))
-		handle_encap(client_p, source_p, parv[2], parc - 2, parv + 2);
+		handle_encap(msgbuf_p, client_p, source_p, parv[2], parc - 2, parv + 2);
 
 	return 0;
 }

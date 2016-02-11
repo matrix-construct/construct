@@ -42,7 +42,7 @@
 #include "inline/stringops.h"
 #include "hook.h"
 
-static int m_part(struct Client *, struct Client *, int, const char **);
+static int m_part(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message part_msgtab = {
 	"PART", 0, 0, 0, MFLG_SLOW,
@@ -66,7 +66,7 @@ static int do_message_hook(struct Client *source_p, struct Channel *chptr, const
 **      parv[2] = reason
 */
 static int
-m_part(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_part(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	char *p, *name;
 	char reason[REASONLEN + 1];

@@ -42,9 +42,9 @@
 #include "parse.h"
 #include "modules.h"
 
-static int mr_server(struct Client *, struct Client *, int, const char **);
-static int ms_server(struct Client *, struct Client *, int, const char **);
-static int ms_sid(struct Client *, struct Client *, int, const char **);
+static int mr_server(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_server(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_sid(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message server_msgtab = {
 	"SERVER", 0, 0, 0, MFLG_SLOW | MFLG_UNREG,
@@ -69,7 +69,7 @@ static int set_server_gecos(struct Client *, const char *);
  *      parv[3] = serverinfo
  */
 static int
-mr_server(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mr_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	char info[REALLEN + 1];
 	const char *name;
@@ -289,7 +289,7 @@ mr_server(struct Client *client_p, struct Client *source_p, int parc, const char
  *      parv[3] = serverinfo
  */
 static int
-ms_server(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	char info[REALLEN + 1];
 	/* same size as in s_misc.c */
@@ -492,7 +492,7 @@ ms_server(struct Client *client_p, struct Client *source_p, int parc, const char
 }
 
 static int
-ms_sid(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_sid(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 	struct remote_conf *hub_p;

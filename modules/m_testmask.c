@@ -48,7 +48,7 @@
 #include "parse.h"
 #include "modules.h"
 
-static int mo_testmask(struct Client *client_p, struct Client *source_p,
+static int mo_testmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 			int parc, const char *parv[]);
 
 struct Message testmask_msgtab = {
@@ -63,7 +63,7 @@ static const char *empty_sockhost = "255.255.255.255";
 static const char *spoofed_sockhost = "0";
 
 static int
-mo_testmask(struct Client *client_p, struct Client *source_p,
+mo_testmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
                         int parc, const char *parv[])
 {
 	struct Client *target_p;

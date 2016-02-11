@@ -38,9 +38,9 @@
 #include "cache.h"
 #include "irc_dictionary.h"
 
-static int m_help(struct Client *, struct Client *, int, const char **);
-static int mo_help(struct Client *, struct Client *, int, const char **);
-static int mo_uhelp(struct Client *, struct Client *, int, const char **);
+static int m_help(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int mo_help(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int mo_uhelp(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static void dohelp(struct Client *, int, const char *);
 
 struct Message help_msgtab = {
@@ -59,7 +59,7 @@ DECLARE_MODULE_AV1(help, NULL, NULL, help_clist, NULL, NULL, "$Revision: 254 $")
  * m_help - HELP message handler
  */
 static int
-m_help(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_help(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	dohelp(source_p, HELP_USER, parc > 1 ? parv[1] : NULL);
 
@@ -70,7 +70,7 @@ m_help(struct Client *client_p, struct Client *source_p, int parc, const char *p
  * mo_help - HELP message handler
  */
 static int
-mo_help(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_help(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	dohelp(source_p, HELP_OPER, parc > 1 ? parv[1] : NULL);
 	return 0;
@@ -81,7 +81,7 @@ mo_help(struct Client *client_p, struct Client *source_p, int parc, const char *
  * This is used so that opers can view the user help file without deopering
  */
 static int
-mo_uhelp(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_uhelp(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	dohelp(source_p, HELP_USER, parc > 1 ? parv[1] : NULL);
 	return 0;

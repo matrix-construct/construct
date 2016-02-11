@@ -43,7 +43,7 @@
 
 static int monitor_init(void);
 static void monitor_deinit(void);
-static int m_monitor(struct Client *, struct Client *, int, const char **);
+static int m_monitor(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message monitor_msgtab = {
 	"MONITOR", 0, 0, 0, MFLG_SLOW,
@@ -324,7 +324,7 @@ show_monitor_status(struct Client *client_p)
 }
 
 static int
-m_monitor(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_monitor(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	switch(parv[1][0])
 	{

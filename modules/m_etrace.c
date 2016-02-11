@@ -52,10 +52,10 @@
 #include "logger.h"
 #include "supported.h"
 
-static int mo_etrace(struct Client *, struct Client *, int, const char **);
-static int me_etrace(struct Client *, struct Client *, int, const char **);
-static int m_chantrace(struct Client *, struct Client *, int, const char **);
-static int mo_masktrace(struct Client *, struct Client *, int, const char **);
+static int mo_etrace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int me_etrace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int m_chantrace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int mo_masktrace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message etrace_msgtab = {
 	"ETRACE", 0, 0, 0, MFLG_SLOW,
@@ -100,7 +100,7 @@ static const char *spoofed_sockhost = "0";
  *	parv[2] = [target]
  */
 static int
-mo_etrace(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_etrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(parc > 1 && !EmptyString(parv[1]))
 	{
@@ -138,7 +138,7 @@ mo_etrace(struct Client *client_p, struct Client *source_p, int parc, const char
 }
 
 static int
-me_etrace(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_etrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 
@@ -228,7 +228,7 @@ do_single_etrace(struct Client *source_p, struct Client *target_p)
 }
 
 static int
-m_chantrace(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_chantrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 	struct Channel *chptr;
@@ -341,7 +341,7 @@ match_masktrace(struct Client *source_p, rb_dlink_list *list,
 }
 
 static int
-mo_masktrace(struct Client *client_p, struct Client *source_p, int parc,
+mo_masktrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
 	const char *parv[])
 {
 	char *name, *username, *hostname, *gecos;

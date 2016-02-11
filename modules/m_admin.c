@@ -36,9 +36,9 @@
 #include "hook.h"
 #include "modules.h"
 
-static int m_admin(struct Client *, struct Client *, int, const char **);
-static int mr_admin(struct Client *, struct Client *, int, const char **);
-static int ms_admin(struct Client *, struct Client *, int, const char **);
+static int m_admin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int mr_admin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_admin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static void do_admin(struct Client *source_p);
 
 static void admin_spy(struct Client *);
@@ -63,7 +63,7 @@ DECLARE_MODULE_AV1(admin, NULL, NULL, admin_clist, admin_hlist, NULL, "$Revision
  *      parv[1] = servername
  */
 static int
-mr_admin(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mr_admin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0L;
 
@@ -88,7 +88,7 @@ mr_admin(struct Client *client_p, struct Client *source_p, int parc, const char 
  *      parv[1] = servername
  */
 static int
-m_admin(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_admin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0L;
 
@@ -118,7 +118,7 @@ m_admin(struct Client *client_p, struct Client *source_p, int parc, const char *
  *      parv[1] = servername
  */
 static int
-ms_admin(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_admin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(hunt_server(client_p, source_p, ":%s ADMIN :%s", 1, parc, parv) != HUNTED_ISME)
 		return 0;

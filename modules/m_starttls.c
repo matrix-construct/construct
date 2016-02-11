@@ -32,7 +32,7 @@
 #include "s_assert.h"
 #include "logger.h"
 
-static int mr_starttls(struct Client *, struct Client *, int, const char **);
+static int mr_starttls(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message starttls_msgtab = {
 	"STARTTLS", 0, 0, 0, MFLG_SLOW,
@@ -44,7 +44,7 @@ mapi_clist_av1 starttls_clist[] = { &starttls_msgtab, NULL };
 DECLARE_MODULE_AV1(starttls, NULL, NULL, starttls_clist, NULL, NULL, "$Revision$");
 
 static int
-mr_starttls(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mr_starttls(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 #ifdef HAVE_LIBCRYPTO
 	ssl_ctl_t *ctl;

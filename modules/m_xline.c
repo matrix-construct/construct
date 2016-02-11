@@ -53,14 +53,14 @@
 #include "bandbi.h"
 #include "operhash.h"
 
-static int mo_xline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int ms_xline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int me_xline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int mo_unxline(struct Client *client_p, struct Client *source_p, int parc,
+static int mo_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int ms_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int me_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int mo_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
 		      const char *parv[]);
-static int ms_unxline(struct Client *client_p, struct Client *source_p, int parc,
+static int ms_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
 		      const char *parv[]);
-static int me_unxline(struct Client *client_p, struct Client *source_p, int parc,
+static int me_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
 		      const char *parv[]);
 
 struct Message xline_msgtab = {
@@ -100,7 +100,7 @@ static void remove_xline(struct Client *source_p, const char *name,
  * parv[3] - reason
  */
 static int
-mo_xline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct ConfItem *aconf;
 	const char *name;
@@ -187,7 +187,7 @@ mo_xline(struct Client *client_p, struct Client *source_p, int parc, const char 
  * handles a remote xline
  */
 static int
-ms_xline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* parv[0]  parv[1]      parv[2]  parv[3]  parv[4]
 	 * oper     target serv  xline    type     reason
@@ -206,7 +206,7 @@ ms_xline(struct Client *client_p, struct Client *source_p, int parc, const char 
 }
 
 static int
-me_xline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* time name type :reason */
 	if(!IsPerson(source_p))
@@ -388,7 +388,7 @@ cluster_xline(struct Client *source_p, int temp_time, const char *name, const ch
  * parv[1] - thing to unxline
  */
 static int
-mo_unxline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	int propagated = 1;
 
@@ -426,7 +426,7 @@ mo_unxline(struct Client *client_p, struct Client *source_p, int parc, const cha
  * handles a remote unxline
  */
 static int
-ms_unxline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* parv[0]  parv[1]        parv[2]
 	 * oper     target server  gecos
@@ -444,7 +444,7 @@ ms_unxline(struct Client *client_p, struct Client *source_p, int parc, const cha
 }
 
 static int
-me_unxline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* name */
 	if(!IsPerson(source_p))

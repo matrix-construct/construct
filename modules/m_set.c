@@ -41,7 +41,7 @@
 #include "parse.h"
 #include "modules.h"
 
-static int mo_set(struct Client *, struct Client *, int, const char **);
+static int mo_set(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message set_msgtab = {
 	"SET", 0, 0, 0, MFLG_SLOW,
@@ -454,7 +454,7 @@ quote_splitusers(struct Client *source_p, const char *arg, int newval)
  * set options while running
  */
 static int
-mo_set(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_set(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	int newval;
 	int i, n;

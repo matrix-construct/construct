@@ -37,8 +37,8 @@
 #include "s_conf.h"
 #include "s_serv.h"
 
-static int m_ping(struct Client *, struct Client *, int, const char **);
-static int ms_ping(struct Client *, struct Client *, int, const char **);
+static int m_ping(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_ping(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message ping_msgtab = {
 	"PING", 0, 0, 0, MFLG_SLOW,
@@ -54,7 +54,7 @@ DECLARE_MODULE_AV1(ping, NULL, NULL, ping_clist, NULL, NULL, "$Revision: 254 $")
 **      parv[2] = destination
 */
 static int
-m_ping(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_ping(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 	const char *destination;
@@ -85,7 +85,7 @@ m_ping(struct Client *client_p, struct Client *source_p, int parc, const char *p
 }
 
 static int
-ms_ping(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_ping(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 	const char *destination;

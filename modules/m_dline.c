@@ -45,10 +45,10 @@
 #include "bandbi.h"
 #include "operhash.h"
 
-static int mo_dline(struct Client *, struct Client *, int, const char **);
-static int me_dline(struct Client *, struct Client *, int, const char **);
-static int mo_undline(struct Client *, struct Client *, int, const char **);
-static int me_undline(struct Client *, struct Client *, int, const char **);
+static int mo_dline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int me_dline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int mo_undline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int me_undline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message dline_msgtab = {
 	"DLINE", 0, 0, 0, MFLG_SLOW,
@@ -74,7 +74,7 @@ static int apply_undline(struct Client *, const char *);
  *   parv[2] - reason
  */
 static int
-mo_dline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_dline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	char def[] = "No Reason";
 	const char *dlhost;
@@ -142,7 +142,7 @@ mo_dline(struct Client *client_p, struct Client *source_p, int parc, const char 
  *      parv[1] = dline to remove
  */
 static int
-mo_undline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_undline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	const char *cidr;
 	const char *target_server = NULL;
@@ -178,7 +178,7 @@ mo_undline(struct Client *client_p, struct Client *source_p, int parc, const cha
 }
 
 static int
-me_dline(struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+me_dline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {
 	int tdline_time = atoi(parv[1]);
 	/* Since this is coming over a server link, assume that the originating
@@ -200,7 +200,7 @@ me_dline(struct Client *client_p, struct Client *source_p, int parc, const char 
 }
 
 static int
-me_undline(struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+me_undline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {
 	if(!IsPerson(source_p))
 		return 0;

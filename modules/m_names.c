@@ -39,7 +39,7 @@
 #include "parse.h"
 #include "modules.h"
 
-static int m_names(struct Client *, struct Client *, int, const char **);
+static int m_names(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message names_msgtab = {
 	"NAMES", 0, 0, 0, MFLG_SLOW,
@@ -60,7 +60,7 @@ static void names_global(struct Client *source_p);
  *      parv[1] = channel
  */
 static int
-m_names(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_names(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
 	struct Channel *chptr = NULL;

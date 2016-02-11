@@ -41,7 +41,7 @@
 #include "packet.h"
 #include "tgchange.h"
 
-static int m_invite(struct Client *, struct Client *, int, const char **);
+static int m_invite(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message invite_msgtab = {
 	"INVITE", 0, 0, 0, MFLG_SLOW,
@@ -57,7 +57,7 @@ static void add_invite(struct Channel *, struct Client *);
  *      parv[2] - channel name
  */
 static int
-m_invite(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 	struct Channel *chptr;

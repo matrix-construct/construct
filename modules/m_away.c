@@ -37,7 +37,7 @@
 #include "s_serv.h"
 #include "packet.h"
 
-static int m_away(struct Client *, struct Client *, int, const char **);
+static int m_away(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message away_msgtab = {
 	"AWAY", 0, 0, 0, MFLG_SLOW,
@@ -66,7 +66,7 @@ DECLARE_MODULE_AV1(away, NULL, NULL, away_clist, NULL, NULL, "$Revision: 3370 $"
 **      parv[1] = away message
 */
 static int
-m_away(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_away(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(MyClient(source_p) && source_p->localClient->next_away &&
 			!IsFloodDone(source_p))

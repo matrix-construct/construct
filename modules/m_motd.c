@@ -38,8 +38,8 @@
 #include "cache.h"
 #include "ratelimit.h"
 
-static int m_motd(struct Client *, struct Client *, int, const char **);
-static int mo_motd(struct Client *, struct Client *, int, const char **);
+static int m_motd(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int mo_motd(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message motd_msgtab = {
 	"MOTD", 0, 0, 0, MFLG_SLOW,
@@ -63,7 +63,7 @@ static void motd_spy(struct Client *);
 **      parv[1] = servername
 */
 static int
-m_motd(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_motd(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
 
@@ -93,7 +93,7 @@ m_motd(struct Client *client_p, struct Client *source_p, int parc, const char *p
 **      parv[1] = servername
 */
 static int
-mo_motd(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_motd(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(hunt_server(client_p, source_p, ":%s MOTD :%s", 1, parc, parv) != HUNTED_ISME)
 		return 0;

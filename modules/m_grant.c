@@ -16,8 +16,8 @@
 #include "s_conf.h"
 #include "s_newconf.h"
 
-static int mo_grant(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int me_grant(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int mo_grant(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int me_grant(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 static int do_grant(struct Client *source_p, struct Client *target_p, const char *new_privset);
 
@@ -31,7 +31,7 @@ mapi_clist_av1 grant_clist[] = { &grant_msgtab, NULL };
 DECLARE_MODULE_AV1(grant, NULL, NULL, grant_clist, NULL, NULL, "$Revision$");
 
 static int
-mo_grant(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_grant(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 
@@ -63,7 +63,7 @@ mo_grant(struct Client *client_p, struct Client *source_p, int parc, const char 
 	return 0;
 }
 
-static int me_grant(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+static int me_grant(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 

@@ -33,8 +33,8 @@
 #include "parse.h"
 #include "modules.h"
 
-static int mr_capab(struct Client *, struct Client *, int, const char **);
-static int me_gcap(struct Client *, struct Client *, int, const char **);
+static int mr_capab(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int me_gcap(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message capab_msgtab = {
 	"CAPAB", 0, 0, 0, MFLG_SLOW | MFLG_UNREG,
@@ -54,7 +54,7 @@ DECLARE_MODULE_AV1(capab, NULL, NULL, capab_clist, NULL, NULL, "$Revision: 1295 
  *
  */
 static int
-mr_capab(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mr_capab(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	int i;
 	char *p;
@@ -90,7 +90,7 @@ mr_capab(struct Client *client_p, struct Client *source_p, int parc, const char 
 }
 
 static int
-me_gcap(struct Client *client_p, struct Client *source_p,
+me_gcap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 		int parc, const char *parv[])
 {
 	char *t = LOCAL_COPY(parv[1]);

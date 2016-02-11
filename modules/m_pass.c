@@ -37,7 +37,7 @@
 #include "hash.h"
 #include "s_conf.h"
 
-static int mr_pass(struct Client *, struct Client *, int, const char **);
+static int mr_pass(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message pass_msgtab = {
 	"PASS", 0, 0, 0, MFLG_SLOW | MFLG_UNREG,
@@ -57,7 +57,7 @@ DECLARE_MODULE_AV1(pass, NULL, NULL, pass_clist, NULL, NULL, "$Revision: 3550 $"
  *      parv[3] = optional TS version field -- needed for TS6
  */
 static int
-mr_pass(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mr_pass(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	char *auth_user, *pass, *buf;
 	buf = LOCAL_COPY(parv[1]);

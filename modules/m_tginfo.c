@@ -39,7 +39,7 @@
 #include "modules.h"
 #include "s_newconf.h" /* add_tgchange */
 
-static int me_tginfo(struct Client *, struct Client *, int, const char **);
+static int me_tginfo(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message tginfo_msgtab = {
 	"TGINFO", 0, 0, 0, MFLG_SLOW,
@@ -55,7 +55,7 @@ DECLARE_MODULE_AV1(tginfo, NULL, NULL, tginfo_clist, NULL, NULL, "$Revision$");
 **      parv[1] = 0, reserved for future use (number of remaining targets)
 */
 static int
-me_tginfo(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_tginfo(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if (!IsPerson(source_p))
 		return 0;

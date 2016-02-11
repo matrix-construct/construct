@@ -28,10 +28,10 @@
 #include "whowas.h"
 #include "monitor.h"
 
-static int me_realhost(struct Client *, struct Client *, int, const char **);
-static int ms_chghost(struct Client *, struct Client *, int, const char **);
-static int me_chghost(struct Client *, struct Client *, int, const char **);
-static int mo_chghost(struct Client *, struct Client *, int, const char **);
+static int me_realhost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_chghost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int me_chghost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int mo_chghost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message realhost_msgtab = {
 	"REALHOST", 0, 0, 0, MFLG_SLOW,
@@ -91,7 +91,7 @@ clean_host(const char *host)
  * race condition.
  */
 static int
-me_realhost(struct Client *client_p, struct Client *source_p,
+me_realhost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
 	if (!IsPerson(source_p))
@@ -149,7 +149,7 @@ do_chghost(struct Client *source_p, struct Client *target_p,
  * parv[2] = host
  */
 static int
-ms_chghost(struct Client *client_p, struct Client *source_p,
+ms_chghost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
 	struct Client *target_p;
@@ -176,7 +176,7 @@ ms_chghost(struct Client *client_p, struct Client *source_p,
  * parv[2] = host
  */
 static int
-me_chghost(struct Client *client_p, struct Client *source_p,
+me_chghost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
 	struct Client *target_p;
@@ -198,7 +198,7 @@ me_chghost(struct Client *client_p, struct Client *source_p,
  * No, make it toggleable via ./configure. --nenolod
  */
 static int
-mo_chghost(struct Client *client_p, struct Client *source_p,
+mo_chghost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
 #ifdef ENABLE_OPER_CHGHOST

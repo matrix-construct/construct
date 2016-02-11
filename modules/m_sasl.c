@@ -43,8 +43,8 @@
 #include "s_newconf.h"
 #include "s_conf.h"
 
-static int m_authenticate(struct Client *, struct Client *, int, const char **);
-static int me_sasl(struct Client *, struct Client *, int, const char **);
+static int m_authenticate(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int me_sasl(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 static void abort_sasl(struct Client *);
 static void abort_sasl_exit(hook_data_client_exit *);
@@ -75,7 +75,7 @@ mapi_hfn_list_av1 sasl_hfnlist[] = {
 DECLARE_MODULE_AV1(sasl, NULL, NULL, sasl_clist, NULL, sasl_hfnlist, "$Revision: 1409 $");
 
 static int
-m_authenticate(struct Client *client_p, struct Client *source_p,
+m_authenticate(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
 	struct Client *agent_p = NULL;
@@ -147,7 +147,7 @@ m_authenticate(struct Client *client_p, struct Client *source_p,
 }
 
 static int
-me_sasl(struct Client *client_p, struct Client *source_p,
+me_sasl(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
 	struct Client *target_p, *agent_p;

@@ -40,8 +40,8 @@
 #include "modules.h"
 #include "hash.h"
 
-static int mo_restart(struct Client *, struct Client *, int, const char **);
-static int me_restart(struct Client *, struct Client *, int, const char **);
+static int mo_restart(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int me_restart(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int do_restart(struct Client *source_p, const char *servername);
 
 struct Message restart_msgtab = {
@@ -57,7 +57,7 @@ DECLARE_MODULE_AV1(restart, NULL, NULL, restart_clist, NULL, NULL, "$Revision: 3
  *
  */
 static int
-mo_restart(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_restart(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	char buf[BUFSIZE];
 	rb_dlink_node *ptr;
@@ -97,7 +97,7 @@ mo_restart(struct Client *client_p, struct Client *source_p, int parc, const cha
 }
 
 static int
-me_restart(struct Client *client_p __unused, struct Client *source_p, int parc, const char *parv[])
+me_restart(struct MsgBuf *msgbuf_p __unused, struct Client *client_p __unused, struct Client *source_p, int parc, const char *parv[])
 {
 	if(!find_shared_conf(source_p->username, source_p->host, source_p->servptr->name, SHARED_DIE))
 	{

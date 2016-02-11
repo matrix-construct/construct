@@ -44,9 +44,9 @@
 #include "packet.h"
 #include "supported.h"
 
-static int m_cmessage(int, const char *, struct Client *, struct Client *, int, const char **);
-static int m_cprivmsg(struct Client *, struct Client *, int, const char **);
-static int m_cnotice(struct Client *, struct Client *, int, const char **);
+static int m_cmessage(int, const char *, struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int m_cprivmsg(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int m_cnotice(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 static int
 _modinit(void)
@@ -80,19 +80,19 @@ DECLARE_MODULE_AV1(cmessage, _modinit, _moddeinit, cmessage_clist, NULL, NULL, "
 #define NOTICE 1
 
 static int
-m_cprivmsg(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_cprivmsg(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	return m_cmessage(PRIVMSG, "PRIVMSG", client_p, source_p, parc, parv);
+	return m_cmessage(PRIVMSG, "PRIVMSG", msgbuf_p, client_p, source_p, parc, parv);
 }
 
 static int
-m_cnotice(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_cnotice(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	return m_cmessage(NOTICE, "NOTICE", client_p, source_p, parc, parv);
+	return m_cmessage(NOTICE, "NOTICE", msgbuf_p, client_p, source_p, parc, parv);
 }
 
 static int
-m_cmessage(int p_or_n, const char *command,
+m_cmessage(int p_or_n, const char *command, struct MsgBuf *msgbuf_p,
 		struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;

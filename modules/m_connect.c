@@ -40,8 +40,8 @@
 #include "modules.h"
 #include "sslproc.h"
 
-static int mo_connect(struct Client *, struct Client *, int, const char **);
-static int ms_connect(struct Client *, struct Client *, int, const char **);
+static int mo_connect(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_connect(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message connect_msgtab = {
 	"CONNECT", 0, 0, 0, MFLG_SLOW,
@@ -62,7 +62,7 @@ DECLARE_MODULE_AV1(connect, NULL, NULL, connect_clist, NULL, NULL, "$Revision: 3
  *      parv[3] = remote server
  */
 static int
-mo_connect(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_connect(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	int port;
 	int tmpport;
@@ -162,7 +162,7 @@ mo_connect(struct Client *client_p, struct Client *source_p, int parc, const cha
  *      parv[3] = remote server
  */
 static int
-ms_connect(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_connect(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	int port;
 	int tmpport;

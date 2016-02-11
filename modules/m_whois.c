@@ -50,8 +50,8 @@
 static void do_whois(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static void single_whois(struct Client *source_p, struct Client *target_p, int operspy);
 
-static int m_whois(struct Client *, struct Client *, int, const char **);
-static int ms_whois(struct Client *, struct Client *, int, const char **);
+static int m_whois(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_whois(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message whois_msgtab = {
 	"WHOIS", 0, 0, 0, MFLG_SLOW,
@@ -77,7 +77,7 @@ DECLARE_MODULE_AV1(whois, NULL, NULL, whois_clist, whois_hlist, NULL, "$Revision
  *      parv[1] = nickname masklist
  */
 static int
-m_whois(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_whois(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
 
@@ -123,7 +123,7 @@ m_whois(struct Client *client_p, struct Client *source_p, int parc, const char *
  *      parv[2] = nickname to whois
  */
 static int
-ms_whois(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_whois(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 

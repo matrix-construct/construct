@@ -38,9 +38,9 @@
 #include "modules.h"
 #include "s_serv.h"
 
-static int mo_operwall(struct Client *, struct Client *, int, const char **);
-static int ms_operwall(struct Client *, struct Client *, int, const char **);
-static int ms_wallops(struct Client *, struct Client *, int, const char **);
+static int mo_operwall(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_operwall(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_wallops(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message wallops_msgtab = {
 	"WALLOPS", 0, 0, 0, MFLG_SLOW,
@@ -59,7 +59,7 @@ DECLARE_MODULE_AV1(wallops, NULL, NULL, wallops_clist, NULL, NULL, "$Revision: 1
  *      parv[1] = message text
  */
 static int
-mo_operwall(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_operwall(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(!IsOperOperwall(source_p))
 	{
@@ -81,7 +81,7 @@ mo_operwall(struct Client *client_p, struct Client *source_p, int parc, const ch
  *      parv[1] = message text
  */
 static int
-ms_operwall(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_operwall(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s OPERWALL :%s",
 		      use_id(source_p), parv[1]);
@@ -95,7 +95,7 @@ ms_operwall(struct Client *client_p, struct Client *source_p, int parc, const ch
  *      parv[1] = message text
  */
 static int
-ms_wallops(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_wallops(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	const char *prefix = "";
 

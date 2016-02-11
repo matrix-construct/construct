@@ -46,8 +46,8 @@ static void send_birthdate_online_time(struct Client *source_p);
 static void send_info_text(struct Client *source_p);
 static void info_spy(struct Client *);
 
-static int m_info(struct Client *, struct Client *, int, const char **);
-static int mo_info(struct Client *, struct Client *, int, const char **);
+static int m_info(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int mo_info(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message info_msgtab = {
 	"INFO", 0, 0, 0, MFLG_SLOW,
@@ -672,7 +672,7 @@ static struct InfoStruct info_table[] = {
  **  parv[1] = servername
  */
 static int
-m_info(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_info(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0L;
 
@@ -704,7 +704,7 @@ m_info(struct Client *client_p, struct Client *source_p, int parc, const char *p
  **  parv[1] = servername
  */
 static int
-mo_info(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_info(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(hunt_server(client_p, source_p, ":%s INFO :%s", 1, parc, parv) == HUNTED_ISME)
 	{

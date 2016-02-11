@@ -63,7 +63,7 @@ struct who_format
 	const char *querytype;
 };
 
-static int m_who(struct Client *, struct Client *, int, const char **);
+static int m_who(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message who_msgtab = {
 	"WHO", 0, 0, 0, MFLG_SLOW,
@@ -103,7 +103,7 @@ static void do_who(struct Client *source_p,
 **      parv[2] = additional selection flag and format options
 */
 static int
-m_who(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_who(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
 	struct Client *target_p;

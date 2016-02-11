@@ -33,7 +33,7 @@
 #include "parse.h"
 #include "modules.h"
 
-static int mo_close(struct Client *, struct Client *, int, const char **);
+static int mo_close(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message close_msgtab = {
 	"CLOSE", 0, 0, 0, MFLG_SLOW,
@@ -48,7 +48,7 @@ DECLARE_MODULE_AV1(close, NULL, NULL, close_clist, NULL, NULL, "$Revision: 254 $
  *  - added by Darren Reed Jul 13 1992.
  */
 static int
-mo_close(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_close(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 	rb_dlink_node *ptr;

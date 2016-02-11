@@ -46,12 +46,12 @@
 #include "bandbi.h"
 #include "operhash.h"
 
-static int mo_kline(struct Client *, struct Client *, int, const char **);
-static int ms_kline(struct Client *, struct Client *, int, const char **);
-static int me_kline(struct Client *, struct Client *, int, const char **);
-static int mo_unkline(struct Client *, struct Client *, int, const char **);
-static int ms_unkline(struct Client *, struct Client *, int, const char **);
-static int me_unkline(struct Client *, struct Client *, int, const char **);
+static int mo_kline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_kline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int me_kline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int mo_unkline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_unkline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int me_unkline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message kline_msgtab = {
 	"KLINE", 0, 0, 0, MFLG_SLOW,
@@ -95,7 +95,7 @@ static void remove_prop_kline(struct Client *, struct ConfItem *);
  *   parv[5] - reason
  */
 static int
-mo_kline(struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+mo_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {
 	char def[] = "No Reason";
 	char user[USERLEN + 2];
@@ -240,7 +240,7 @@ mo_kline(struct Client *client_p, struct Client *source_p, int parc, const char 
  *   parv[5] - reason
  */
 static int
-ms_kline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	int tkline_time = atoi(parv[2]);
 
@@ -265,7 +265,7 @@ ms_kline(struct Client *client_p, struct Client *source_p, int parc, const char 
 }
 
 static int
-me_kline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* <tkline_time> <user> <host> :<reason> */
 	if(!IsPerson(source_p))
@@ -352,7 +352,7 @@ handle_remote_kline(struct Client *source_p, int tkline_time,
  *   parv[3] - optional target server
  */
 static int
-mo_unkline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_unkline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	const char *user;
 	char *host;
@@ -453,7 +453,7 @@ mo_unkline(struct Client *client_p, struct Client *source_p, int parc, const cha
  *   parv[3] - host to unkline
  */
 static int
-ms_unkline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_unkline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* parv[0]  parv[1]        parv[2]  parv[3]
 	 * oper     target server  user     host    */
@@ -470,7 +470,7 @@ ms_unkline(struct Client *client_p, struct Client *source_p, int parc, const cha
 }
 
 static int
-me_unkline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_unkline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* user host */
 	if(!IsPerson(source_p))

@@ -40,12 +40,12 @@
 #include "bandbi.h"
 #include "operhash.h"
 
-static int mo_resv(struct Client *, struct Client *, int, const char **);
-static int ms_resv(struct Client *, struct Client *, int, const char **);
-static int me_resv(struct Client *, struct Client *, int, const char **);
-static int mo_unresv(struct Client *, struct Client *, int, const char **);
-static int ms_unresv(struct Client *, struct Client *, int, const char **);
-static int me_unresv(struct Client *, struct Client *, int, const char **);
+static int mo_resv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_resv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int me_resv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int mo_unresv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_unresv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int me_unresv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message resv_msgtab = {
 	"RESV", 0, 0, 0, MFLG_SLOW | MFLG_UNREG,
@@ -77,7 +77,7 @@ static void remove_resv(struct Client *source_p, const char *name, int propagate
  *      parv[2] = reason
  */
 static int
-mo_resv(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_resv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	const char *name;
 	const char *reason;
@@ -155,7 +155,7 @@ mo_resv(struct Client *client_p, struct Client *source_p, int parc, const char *
  *     parv[3] = reason
  */
 static int
-ms_resv(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_resv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* parv[0]  parv[1]        parv[2]  parv[3]
 	 * oper     target server  resv     reason
@@ -173,7 +173,7 @@ ms_resv(struct Client *client_p, struct Client *source_p, int parc, const char *
 }
 
 static int
-me_resv(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_resv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* time name 0 :reason */
 	if(!IsPerson(source_p))
@@ -423,7 +423,7 @@ cluster_resv(struct Client *source_p, int temp_time, const char *name, const cha
  *     parv[1] = channel/nick to unforbid
  */
 static int
-mo_unresv(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_unresv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	int propagated = 1;
 
@@ -464,7 +464,7 @@ mo_unresv(struct Client *client_p, struct Client *source_p, int parc, const char
  *     parv[2] = resv to remove
  */
 static int
-ms_unresv(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_unresv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* parv[0]  parv[1]        parv[2]
 	 * oper     target server  resv to remove
@@ -482,7 +482,7 @@ ms_unresv(struct Client *client_p, struct Client *source_p, int parc, const char
 }
 
 static int
-me_unresv(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_unresv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* name */
 	if(!IsPerson(source_p))

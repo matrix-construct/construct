@@ -36,8 +36,8 @@
 #include "s_conf.h"
 #include "inline/stringops.h"
 
-static int m_quit(struct Client *, struct Client *, int, const char **);
-static int ms_quit(struct Client *, struct Client *, int, const char **);
+static int m_quit(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_quit(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message quit_msgtab = {
 	"QUIT", 0, 0, 0, MFLG_SLOW | MFLG_UNREG,
@@ -53,7 +53,7 @@ DECLARE_MODULE_AV1(quit, NULL, NULL, quit_clist, NULL, NULL, "$Revision: 1333 $"
 **      parv[1] = comment
 */
 static int
-m_quit(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_quit(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	char *comment = LOCAL_COPY((parc > 1 && parv[1]) ? parv[1] : client_p->name);
 	char reason[REASONLEN + 1];
@@ -89,7 +89,7 @@ m_quit(struct Client *client_p, struct Client *source_p, int parc, const char *p
 **      parv[1] = comment
 */
 static int
-ms_quit(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_quit(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	char *comment = LOCAL_COPY((parc > 1 && parv[1]) ? parv[1] : client_p->name);
 

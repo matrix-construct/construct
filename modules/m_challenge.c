@@ -72,7 +72,7 @@ static int	challenge_load(void)
 DECLARE_MODULE_AV1(challenge, challenge_load, NULL, NULL, NULL, NULL, "$Revision: 3161 $");
 #else
 
-static int m_challenge(struct Client *, struct Client *, int, const char **);
+static int m_challenge(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 /* We have openssl support, so include /CHALLENGE */
 struct Message challenge_msgtab = {
@@ -104,7 +104,7 @@ cleanup_challenge(struct Client *target_p)
  *
  */
 static int
-m_challenge(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_challenge(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct oper_conf *oper_p;
 	char *challenge = NULL; /* to placate gcc */

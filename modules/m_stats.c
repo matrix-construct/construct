@@ -51,7 +51,7 @@
 #include "irc_radixtree.h"
 #include "sslproc.h"
 
-static int m_stats (struct Client *, struct Client *, int, const char **);
+static int m_stats (struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message stats_msgtab = {
 	"STATS", 0, 0, 0, MFLG_SLOW,
@@ -191,7 +191,7 @@ static struct StatsStruct stats_cmd_table[] = {
  * if found execute it.
  */
 static int
-m_stats(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_stats(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
 	int i;
@@ -903,7 +903,9 @@ stats_ssld_foreach(void *data, pid_t pid, int cli_count, enum ssld_status status
 static void
 stats_ssld(struct Client *source_p)
 {
+#if 0
 	ssld_foreach_info(stats_ssld_foreach, source_p);
+#endif
 }
 
 static void

@@ -41,7 +41,7 @@
 #include "packet.h"
 #include "cache.h"
 
-static int m_oper(struct Client *, struct Client *, int, const char **);
+static int m_oper(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message oper_msgtab = {
 	"OPER", 0, 0, 0, MFLG_SLOW,
@@ -59,7 +59,7 @@ static int match_oper_password(const char *password, struct oper_conf *oper_p);
  *      parv[2] = oper password
  */
 static int
-m_oper(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_oper(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct oper_conf *oper_p;
 	const char *name;

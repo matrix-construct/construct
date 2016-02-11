@@ -37,7 +37,7 @@
 #include "parse.h"
 #include "modules.h"
 
-static int ms_svinfo(struct Client *, struct Client *, int, const char **);
+static int ms_svinfo(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message svinfo_msgtab = {
 	"SVINFO", 0, 0, 0, MFLG_SLOW,
@@ -55,7 +55,7 @@ DECLARE_MODULE_AV1(svinfo, NULL, NULL, svinfo_clist, NULL, NULL, "$Revision: 494
  *      parv[4] = server's idea of UTC time
  */
 static int
-ms_svinfo(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_svinfo(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	signed long deltat;
 	time_t theirtime;

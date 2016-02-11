@@ -35,7 +35,7 @@
 #include "modules.h"
 #include "s_conf.h"
 
-static int mr_dumb_proxy(struct Client *, struct Client *, int, const char **);
+static int mr_dumb_proxy(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message post_msgtab = {
 	"POST", 0, 0, 0, MFLG_SLOW | MFLG_UNREG,
@@ -62,7 +62,7 @@ DECLARE_MODULE_AV1(post, NULL, NULL, post_clist, NULL, NULL, "$Revision: 498 $")
 **      parv[1] = comment
 */
 static int
-mr_dumb_proxy(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mr_dumb_proxy(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	exit_client(client_p, source_p, source_p, "Client Exit");
 

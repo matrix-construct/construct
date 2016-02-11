@@ -55,10 +55,10 @@ static void _moddeinit(void);
 static void mark_services(void);
 static void unmark_services(void);
 
-static int me_su(struct Client *, struct Client *, int, const char **);
-static int me_login(struct Client *, struct Client *, int, const char **);
-static int me_rsfnc(struct Client *, struct Client *, int, const char **);
-static int me_nickdelay(struct Client *, struct Client *, int, const char **);
+static int me_su(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int me_login(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int me_rsfnc(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int me_nickdelay(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 static void h_svc_server_introduced(hook_data_client *);
 static void h_svc_whois(hook_data_client *);
@@ -114,7 +114,7 @@ _moddeinit(void)
 }
 
 static int
-me_su(struct Client *client_p, struct Client *source_p,
+me_su(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
 	struct Client *target_p;
@@ -147,7 +147,7 @@ me_su(struct Client *client_p, struct Client *source_p,
 }
 
 static int
-me_login(struct Client *client_p, struct Client *source_p,
+me_login(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
 	if(!IsPerson(source_p))
@@ -158,7 +158,7 @@ me_login(struct Client *client_p, struct Client *source_p,
 }
 
 static int
-me_rsfnc(struct Client *client_p, struct Client *source_p,
+me_rsfnc(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
 	struct Client *target_p;
@@ -267,7 +267,7 @@ doit:
 **      parv[2] = nick
 */
 static int
-me_nickdelay(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_nickdelay(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	int duration;
 	struct nd_entry *nd;

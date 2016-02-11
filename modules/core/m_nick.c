@@ -56,13 +56,13 @@
  */
 #define SAVE_NICKTS 100
 
-static int mr_nick(struct Client *, struct Client *, int, const char **);
-static int m_nick(struct Client *, struct Client *, int, const char **);
-static int mc_nick(struct Client *, struct Client *, int, const char **);
-static int ms_nick(struct Client *, struct Client *, int, const char **);
-static int ms_uid(struct Client *, struct Client *, int, const char **);
-static int ms_euid(struct Client *, struct Client *, int, const char **);
-static int ms_save(struct Client *, struct Client *, int, const char **);
+static int mr_nick(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int m_nick(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int mc_nick(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_nick(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_uid(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_euid(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_save(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int can_save(struct Client *);
 static void save_user(struct Client *, struct Client *, struct Client *);
 static void bad_nickname(struct Client *, const char *);
@@ -111,7 +111,7 @@ static int perform_nickchange_collides(struct Client *, struct Client *,
  *       parv[1] = nickname
  */
 static int
-mr_nick(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mr_nick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 	char nick[NICKLEN];
@@ -169,7 +169,7 @@ mr_nick(struct Client *client_p, struct Client *source_p, int parc, const char *
  *     parv[1] = nickname
  */
 static int
-m_nick(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_nick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 	char nick[NICKLEN];
@@ -244,7 +244,7 @@ m_nick(struct Client *client_p, struct Client *source_p, int parc, const char *p
  *    parv[2] = TS when nick change
  */
 static int
-mc_nick(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mc_nick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 	time_t newts = 0;
@@ -284,7 +284,7 @@ mc_nick(struct Client *client_p, struct Client *source_p, int parc, const char *
 }
 
 static int
-ms_nick(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_nick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	const char *nick, *server;
 
@@ -317,7 +317,7 @@ ms_nick(struct Client *client_p, struct Client *source_p, int parc, const char *
  *     parv[9] - gecos
  */
 static int
-ms_uid(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_uid(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 	time_t newts = 0;
@@ -408,7 +408,7 @@ ms_uid(struct Client *client_p, struct Client *source_p, int parc, const char *p
  *     parv[11] - gecos
  */
 static int
-ms_euid(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_euid(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 	time_t newts = 0;
@@ -500,7 +500,7 @@ ms_euid(struct Client *client_p, struct Client *source_p, int parc, const char *
  *   parv[2] - TS
  */
 static int
-ms_save(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_save(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 

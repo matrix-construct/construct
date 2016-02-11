@@ -44,9 +44,9 @@
 #include "ratelimit.h"
 #include "s_assert.h"
 
-static int m_join(struct Client *, struct Client *, int, const char **);
-static int ms_join(struct Client *, struct Client *, int, const char **);
-static int ms_sjoin(struct Client *, struct Client *, int, const char **);
+static int m_join(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_join(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_sjoin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 static int h_can_create_channel;
 static int h_channel_join;
@@ -139,7 +139,7 @@ check_forward(struct Client *source_p, struct Channel *chptr,
  *      parv[2] = channel password (key)
  */
 static int
-m_join(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static char jbuf[BUFSIZE];
 	struct Channel *chptr = NULL, *chptr2 = NULL;
@@ -392,7 +392,7 @@ m_join(struct Client *client_p, struct Client *source_p, int parc, const char *p
  * alternatively, a single "0" parameter parts all channels
  */
 static int
-ms_join(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr;
 	static struct Mode mode;
@@ -512,7 +512,7 @@ ms_join(struct Client *client_p, struct Client *source_p, int parc, const char *
 }
 
 static int
-ms_sjoin(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static char buf_uid[BUFSIZE];
 	static const char empty_modes[] = "0";

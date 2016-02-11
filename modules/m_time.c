@@ -36,7 +36,7 @@
 #include "modules.h"
 #include "packet.h"
 
-static int m_time(struct Client *, struct Client *, int, const char **);
+static int m_time(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static char *date(void);
 
 struct Message time_msgtab = {
@@ -63,7 +63,7 @@ static const char *weekdays[] = {
  *      parv[1] = servername
  */
 static int
-m_time(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_time(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* this is not rate limited, so end the grace period */
 	if(MyClient(source_p) && !IsFloodDone(source_p))

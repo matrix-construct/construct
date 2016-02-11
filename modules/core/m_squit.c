@@ -40,8 +40,8 @@
 #include "hash.h"
 #include "s_newconf.h"
 
-static int ms_squit(struct Client *, struct Client *, int, const char **);
-static int mo_squit(struct Client *, struct Client *, int, const char **);
+static int ms_squit(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int mo_squit(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message squit_msgtab = {
 	"SQUIT", 0, 0, 0, MFLG_SLOW,
@@ -68,7 +68,7 @@ static struct squit_parms *find_squit(struct Client *client_p,
  *      parv[2] = comment
  */
 static int
-mo_squit(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_squit(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct squit_parms *found_squit;
 	const char *comment = (parc > 2 && parv[2]) ? parv[2] : client_p->name;
@@ -109,7 +109,7 @@ mo_squit(struct Client *client_p, struct Client *source_p, int parc, const char 
  *      parv[2] = comment
  */
 static int
-ms_squit(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_squit(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 	const char *comment = (parc > 2 && parv[2]) ? parv[2] : client_p->name;

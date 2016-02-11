@@ -46,9 +46,9 @@
 #include "tgchange.h"
 #include "inline/stringops.h"
 
-static int m_message(enum message_type, struct Client *, struct Client *, int, const char **);
-static int m_privmsg(struct Client *, struct Client *, int, const char **);
-static int m_notice(struct Client *, struct Client *, int, const char **);
+static int m_message(enum message_type, struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int m_privmsg(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int m_notice(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 static void expire_tgchange(void *unused);
 static struct ev_entry *expire_tgchange_event;
@@ -152,15 +152,15 @@ const char *cmdname[MESSAGE_TYPE_COUNT] = {
 };
 
 static int
-m_privmsg(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_privmsg(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	return m_message(MESSAGE_TYPE_PRIVMSG, client_p, source_p, parc, parv);
+	return m_message(MESSAGE_TYPE_PRIVMSG, msgbuf_p, client_p, source_p, parc, parv);
 }
 
 static int
-m_notice(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_notice(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	return m_message(MESSAGE_TYPE_NOTICE, client_p, source_p, parc, parv);
+	return m_message(MESSAGE_TYPE_NOTICE, msgbuf_p, client_p, source_p, parc, parv);
 }
 
 /*
@@ -170,7 +170,7 @@ m_notice(struct Client *client_p, struct Client *source_p, int parc, const char 
  *		- pointer to channel
  */
 static int
-m_message(enum message_type msgtype,
+m_message(enum message_type msgtype, struct MsgBuf *msgbuf_p,
 	  struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	int i;

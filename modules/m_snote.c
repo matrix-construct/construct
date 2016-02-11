@@ -50,7 +50,7 @@
 #include "parse.h"
 #include "modules.h"
 
-static int me_snote(struct Client *, struct Client *, int, const char **);
+static int me_snote(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message snote_msgtab = {
 	"SNOTE", 0, 0, 0, MFLG_SLOW,
@@ -66,7 +66,7 @@ DECLARE_MODULE_AV1(snote, NULL, NULL, snote_clist, NULL, NULL, "$Revision: 623 $
  *	parv[2] = message
  */
 static int
-me_snote(struct Client *client_p, struct Client *source_p, int parc,
+me_snote(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
 	const char *parv[])
 {
 	/* if there's more than just two params, this is a protocol

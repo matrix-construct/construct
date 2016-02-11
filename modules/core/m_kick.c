@@ -39,7 +39,7 @@
 #include "s_serv.h"
 #include "hook.h"
 
-static int m_kick(struct Client *, struct Client *, int, const char **);
+static int m_kick(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 #define mg_kick { m_kick, 3 }
 
 struct Message kick_msgtab = {
@@ -58,7 +58,7 @@ DECLARE_MODULE_AV1(kick, NULL, NULL, kick_clist, NULL, NULL, "$Revision: 3317 $"
 **      parv[3] = kick comment
 */
 static int
-m_kick(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_kick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct membership *msptr;
 	struct Client *who;

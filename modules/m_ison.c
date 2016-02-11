@@ -39,7 +39,7 @@
 
 #include <string.h>
 
-static int m_ison(struct Client *, struct Client *, int, const char **);
+static int m_ison(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message ison_msgtab = {
 	"ISON", 0, 0, 0, MFLG_SLOW,
@@ -63,7 +63,7 @@ static char buf2[BUFSIZE];
  * ISON :nicklist
  */
 static int
-m_ison(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_ison(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 	char *nick;

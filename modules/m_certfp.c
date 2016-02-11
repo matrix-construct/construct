@@ -38,7 +38,7 @@
 #include "msg.h"
 #include "modules.h"
 
-static int me_certfp(struct Client *, struct Client *, int, const char **);
+static int me_certfp(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message certfp_msgtab = {
 	"CERTFP", 0, 0, 0, MFLG_SLOW,
@@ -54,7 +54,7 @@ DECLARE_MODULE_AV1(certfp, NULL, NULL, certfp_clist, NULL, NULL, "$Revision$");
 **      parv[1] = certfp string
 */
 static int
-me_certfp(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_certfp(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if (!IsPerson(source_p))
 		return 0;

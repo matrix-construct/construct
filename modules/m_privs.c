@@ -40,9 +40,9 @@
 #include "s_conf.h"
 #include "s_newconf.h"
 
-static int m_privs(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int me_privs(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int mo_privs(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int m_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int me_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int mo_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message privs_msgtab = {
 	"PRIVS", 0, 0, 0, MFLG_SLOW,
@@ -113,7 +113,7 @@ static void show_privs(struct Client *source_p, struct Client *target_p)
 			target_p->name, buf);
 }
 
-static int me_privs(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+static int me_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 
@@ -127,7 +127,7 @@ static int me_privs(struct Client *client_p, struct Client *source_p, int parc, 
 	return 0;
 }
 
-static int mo_privs(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+static int mo_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 
@@ -154,7 +154,7 @@ static int mo_privs(struct Client *client_p, struct Client *source_p, int parc, 
 	return 0;
 }
 
-static int m_privs(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+static int m_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if (parc >= 2 && !EmptyString(parv[1]) &&
 			irccmp(parv[1], source_p->name)) {

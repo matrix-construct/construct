@@ -42,7 +42,7 @@
 #include "parse.h"
 #include "modules.h"
 
-static int m_trace(struct Client *, struct Client *, int, const char **);
+static int m_trace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 static void trace_spy(struct Client *, struct Client *);
 
@@ -70,7 +70,7 @@ static const char *empty_sockhost = "255.255.255.255";
  *      parv[1] = servername
  */
 static int
-m_trace(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_trace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p = NULL;
 	struct Class *cltmp;

@@ -35,8 +35,8 @@
 #include "logger.h"
 #include "s_conf.h"
 
-static int m_error(struct Client *, struct Client *, int, const char **);
-static int ms_error(struct Client *, struct Client *, int, const char **);
+static int m_error(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_error(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message error_msgtab = {
 	"ERROR", 0, 0, 0, MFLG_SLOW | MFLG_UNREG,
@@ -88,7 +88,7 @@ is_safe_error(const char *message)
  *      parv[*] = parameters
  */
 int
-m_error(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_error(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	const char *para;
 	int hideit = ConfigFileEntry.hide_error_messages;
@@ -121,7 +121,7 @@ m_error(struct Client *client_p, struct Client *source_p, int parc, const char *
 }
 
 static int
-ms_error(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_error(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	const char *para;
 	int hideit = ConfigFileEntry.hide_error_messages;

@@ -47,7 +47,7 @@
 
 typedef int (*bqcmp)(const void *, const void *);
 
-static int m_cap(struct Client *, struct Client *, int, const char **);
+static int m_cap(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int modinit(void);
 
 struct Message cap_msgtab = {
@@ -472,7 +472,7 @@ clicap_cmd_search(const char *command, struct clicap_cmd *entry)
 }
 
 static int
-m_cap(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_cap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct clicap_cmd *cmd;
 

@@ -39,8 +39,8 @@
 #include "scache.h"
 #include "s_assert.h"
 
-static int m_links(struct Client *, struct Client *, int, const char **);
-static int mo_links(struct Client *, struct Client *, int, const char **);
+static int m_links(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int mo_links(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static char * clean_string(char *dest, const unsigned char *src, size_t len);
 
 struct Message links_msgtab = {
@@ -66,18 +66,18 @@ DECLARE_MODULE_AV1(links, NULL, NULL, links_clist, links_hlist, NULL, "$Revision
  *      parv[2] = servername mask
  */
 static int
-m_links(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_links(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(ConfigServerHide.flatten_links && !IsExemptShide(source_p))
 		scache_send_flattened_links(source_p);
 	else
-		mo_links(client_p, source_p, parc, parv);
+		mo_links(msgbuf_p, client_p, source_p, parc, parv);
 
 	return 0;
 }
 
 static int
-mo_links(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_links(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	const char *mask = "";
 	struct Client *target_p;

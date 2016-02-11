@@ -32,7 +32,7 @@
 #include "modules.h"
 #include "send.h"
 
-static int mo_unreject(struct Client *, struct Client *, int, const char **);
+static int mo_unreject(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message unreject_msgtab = {
 	"UNREJECT", 0, 0, 0, MFLG_SLOW,
@@ -47,7 +47,7 @@ DECLARE_MODULE_AV1(unreject, NULL, NULL, unreject_clist, NULL, NULL, "$Revision:
  *
  */
 static int
-mo_unreject(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_unreject(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(ConfigFileEntry.reject_after_count == 0 || ConfigFileEntry.reject_ban_time == 0 ||
 	   ConfigFileEntry.reject_duration == 0)

@@ -51,9 +51,9 @@
 #include "modules.h"
 #include "logger.h"
 
-static int mo_scan(struct Client *, struct Client *, int, const char **);
-static int scan_umodes(struct Client *, struct Client *, int, const char **);
-/*static int scan_cmodes(struct Client *, struct Client *, int, const char **);*/
+static int mo_scan(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int scan_umodes(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+/*static int scan_cmodes(struct MsgBuf *, struct Client *, struct Client *, int, const char **);*/
 
 struct Message scan_msgtab = {
 	"SCAN", 0, 0, 0, MFLG_SLOW,
@@ -63,7 +63,7 @@ struct Message scan_msgtab = {
 mapi_clist_av1 scan_clist[] = { &scan_msgtab, NULL };
 DECLARE_MODULE_AV1(scan, NULL, NULL, scan_clist, NULL, NULL, "$Revision: 1853 $");
 
-typedef int (*scan_handler)(struct Client *, struct Client *, int,
+typedef int (*scan_handler)(struct MsgBuf *, struct Client *, struct Client *, int,
 	const char **);
 
 struct scan_cmd {
@@ -84,7 +84,7 @@ static const char *spoofed_sockhost = "0";
  *	parv[2] = [target]
  */
 static int
-mo_scan(struct Client *client_p, struct Client *source_p, int parc,
+mo_scan(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
 	const char *parv[])
 {
 	struct scan_cmd *sptr;
@@ -97,7 +97,7 @@ mo_scan(struct Client *client_p, struct Client *source_p, int parc,
 				!IsOperAdmin(source_p))
 				return -1;
 			else
-				return sptr->handler(client_p, source_p, parc, parv);
+				return sptr->handler(msgbuf_p, client_p, source_p, parc, parv);
 		}
 	}
 
@@ -108,7 +108,7 @@ mo_scan(struct Client *client_p, struct Client *source_p, int parc,
 }
 
 static int
-scan_umodes(struct Client *client_p, struct Client *source_p, int parc,
+scan_umodes(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
 	const char *parv[])
 {
 	unsigned int allowed_umodes = 0, disallowed_umodes = 0;

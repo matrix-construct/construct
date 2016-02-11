@@ -32,8 +32,8 @@
 
 #define USER_COL       50	/* display | Users: %d at col 50 */
 
-static int m_map(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int mo_map(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int m_map(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int mo_map(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message map_msgtab = {
 	"MAP", 0, 0, 0, MFLG_SLOW,
@@ -51,7 +51,7 @@ static char buf[BUFSIZE];
 /* m_map
 */
 static int
-m_map(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_map(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if((!IsExemptShide(source_p) && ConfigServerHide.flatten_links) ||
 	   ConfigFileEntry.map_oper_only)
@@ -70,7 +70,7 @@ m_map(struct Client *client_p, struct Client *source_p, int parc, const char *pa
 ** mo_map
 */
 static int
-mo_map(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_map(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	dump_map(client_p, &me, buf);
 	scache_send_missing(client_p);

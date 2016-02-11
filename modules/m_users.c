@@ -35,7 +35,7 @@
 #include "parse.h"
 #include "modules.h"
 
-static int m_users(struct Client *, struct Client *, int, const char **);
+static int m_users(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message users_msgtab = {
 	"USERS", 0, 0, 0, MFLG_SLOW,
@@ -50,7 +50,7 @@ DECLARE_MODULE_AV1(users, NULL, NULL, users_clist, NULL, NULL, "$Revision: 254 $
  *      parv[1] = servername
  */
 static int
-m_users(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_users(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(hunt_server(client_p, source_p, ":%s USERS :%s", 1, parc, parv) == HUNTED_ISME)
 	{

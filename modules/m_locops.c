@@ -39,9 +39,9 @@
 #include "modules.h"
 #include "s_serv.h"
 
-static int m_locops(struct Client *, struct Client *, int, const char **);
-static int ms_locops(struct Client *, struct Client *, int, const char **);
-static int me_locops(struct Client *, struct Client *, int, const char **);
+static int m_locops(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_locops(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int me_locops(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message locops_msgtab = {
 	"LOCOPS", 0, 0, 0, MFLG_SLOW,
@@ -57,7 +57,7 @@ DECLARE_MODULE_AV1(locops, NULL, NULL, locops_clist, NULL, NULL, "$Revision: 254
  *      parv[1] = message text
  */
 static int
-m_locops(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_locops(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	sendto_wallops_flags(UMODE_LOCOPS, source_p, "LOCOPS - %s", parv[1]);
 
@@ -69,7 +69,7 @@ m_locops(struct Client *client_p, struct Client *source_p, int parc, const char 
 }
 
 static int
-ms_locops(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_locops(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* source_p  parv[1]      parv[2]
 	 * oper      target serv  message
@@ -87,7 +87,7 @@ ms_locops(struct Client *client_p, struct Client *source_p, int parc, const char
 }
 
 static int
-me_locops(struct Client *client_p, struct Client *source_p,
+me_locops(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 		int parc, const char *parv[])
 {
 	if(!IsPerson(source_p))

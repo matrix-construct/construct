@@ -42,11 +42,11 @@
 #include "packet.h"
 #include "s_newconf.h"
 
-static int m_mode(struct Client *, struct Client *, int, const char **);
-static int ms_mode(struct Client *, struct Client *, int, const char **);
-static int ms_tmode(struct Client *, struct Client *, int, const char **);
-static int ms_mlock(struct Client *, struct Client *, int, const char **);
-static int ms_bmask(struct Client *, struct Client *, int, const char **);
+static int m_mode(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_mode(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_tmode(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_mlock(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_bmask(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message mode_msgtab = {
 	"MODE", 0, 0, 0, MFLG_SLOW,
@@ -74,7 +74,7 @@ DECLARE_MODULE_AV1(mode, NULL, NULL, mode_clist, NULL, NULL, "$Revision: 1006 $"
  * parv[1] - channel
  */
 static int
-m_mode(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_mode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr = NULL;
 	struct membership *msptr;
@@ -151,7 +151,7 @@ m_mode(struct Client *client_p, struct Client *source_p, int parc, const char *p
 }
 
 static int
-ms_mode(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_mode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr;
 
@@ -170,7 +170,7 @@ ms_mode(struct Client *client_p, struct Client *source_p, int parc, const char *
 }
 
 static int
-ms_tmode(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_tmode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr = NULL;
 	struct membership *msptr;
@@ -210,7 +210,7 @@ ms_tmode(struct Client *client_p, struct Client *source_p, int parc, const char 
 }
 
 static int
-ms_mlock(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_mlock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr = NULL;
 
@@ -270,7 +270,7 @@ possibly_remove_lower_forward(struct Client *fakesource_p, int mems,
 }
 
 static int
-ms_bmask(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_bmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static char modebuf[BUFSIZE];
 	static char parabuf[BUFSIZE];

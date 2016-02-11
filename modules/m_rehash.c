@@ -46,8 +46,8 @@
 #include "irc_radixtree.h"
 #include "sslproc.h"
 
-static int mo_rehash(struct Client *, struct Client *, int, const char **);
-static int me_rehash(struct Client *, struct Client *, int, const char **);
+static int mo_rehash(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int me_rehash(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message rehash_msgtab = {
 	"REHASH", 0, 0, 0, MFLG_SLOW,
@@ -356,7 +356,7 @@ do_rehash(struct Client *source_p, const char *type)
  * parv[2] = destination
  */
 static int
-mo_rehash(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_rehash(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	const char *type = NULL, *target_server = NULL;
 
@@ -398,7 +398,7 @@ mo_rehash(struct Client *client_p, struct Client *source_p, int parc, const char
 }
 
 static int
-me_rehash(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_rehash(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 
 	if (!IsPerson(source_p))

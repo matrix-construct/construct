@@ -43,8 +43,8 @@
 #include "logger.h"
 #include "inline/stringops.h"
 
-static int m_topic(struct Client *, struct Client *, int, const char **);
-static int ms_topic(struct Client *, struct Client *, int, const char **);
+static int m_topic(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_topic(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message topic_msgtab = {
 	"TOPIC", 0, 0, 0, MFLG_SLOW,
@@ -60,7 +60,7 @@ DECLARE_MODULE_AV1(topic, NULL, NULL, topic_clist, NULL, NULL, "$Revision: 254 $
  *	parv[2] = new topic, if setting topic
  */
 static int
-m_topic(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_topic(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr = NULL;
 	struct membership *msptr;
@@ -189,7 +189,7 @@ m_topic(struct Client *client_p, struct Client *source_p, int parc, const char *
  * Let servers always set a topic
  */
 static int
-ms_topic(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_topic(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr = NULL;
 

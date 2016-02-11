@@ -36,7 +36,7 @@
 #include "parse.h"
 #include "modules.h"
 
-static int m_accept(struct Client *, struct Client *, int, const char **);
+static int m_accept(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static void build_nicklist(struct Client *, char *, char *, const char *);
 
 static void add_accept(struct Client *, struct Client *);
@@ -57,7 +57,7 @@ DECLARE_MODULE_AV1(accept, NULL, NULL, accept_clist, NULL, NULL, "$Revision: 254
  *      parv[1] = servername
  */
 static int
-m_accept(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_accept(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	char *nick;
 	char *p = NULL;

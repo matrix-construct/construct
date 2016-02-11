@@ -38,7 +38,7 @@
 #include "s_serv.h"
 #include "supported.h"
 
-static int m_knock(struct Client *, struct Client *, int, const char **);
+static int m_knock(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message knock_msgtab = {
 	"KNOCK", 0, 0, 0, MFLG_SLOW,
@@ -75,7 +75,7 @@ DECLARE_MODULE_AV1(knock, _modinit, _moddeinit, knock_clist, NULL, NULL, "$Revis
  *  <anonymous>
  */
 static int
-m_knock(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_knock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr;
 	char *p, *name;

@@ -43,8 +43,8 @@
 static int h_can_kill;
 static char buf[BUFSIZE];
 
-static int ms_kill(struct Client *, struct Client *, int, const char **);
-static int mo_kill(struct Client *, struct Client *, int, const char **);
+static int ms_kill(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int mo_kill(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static void relay_kill(struct Client *, struct Client *, struct Client *,
 		       const char *, const char *);
 
@@ -68,7 +68,7 @@ DECLARE_MODULE_AV1(kill, NULL, NULL, kill_clist, kill_hlist, NULL, "$Revision: 3
 **      parv[2] = kill path
 */
 static int
-mo_kill(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_kill(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 	const char *inpath = client_p->name;
@@ -178,7 +178,7 @@ mo_kill(struct Client *client_p, struct Client *source_p, int parc, const char *
  *      parv[2] = kill path and reason
  */
 static int
-ms_kill(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_kill(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 	const char *user;

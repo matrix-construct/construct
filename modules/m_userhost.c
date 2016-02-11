@@ -38,7 +38,7 @@
 
 static char buf[BUFSIZE];
 
-static int m_userhost(struct Client *, struct Client *, int, const char **);
+static int m_userhost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message userhost_msgtab = {
 	"USERHOST", 0, 0, 0, MFLG_SLOW,
@@ -54,7 +54,7 @@ DECLARE_MODULE_AV1(userhost, NULL, NULL, userhost_clist, NULL, NULL, "$Revision:
  * information only (no spurious AWAY labels or channels).
  */
 static int
-m_userhost(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_userhost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 	char response[NICKLEN * 2 + USERLEN + HOSTLEN + 30];

@@ -38,8 +38,8 @@
 #include "s_newconf.h"
 #include "hash.h"
 
-static int mo_die(struct Client *, struct Client *, int, const char **);
-static int me_die(struct Client *, struct Client *, int, const char **);
+static int mo_die(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int me_die(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int do_die(struct Client *, const char *);
 
 static struct Message die_msgtab = {
@@ -55,7 +55,7 @@ DECLARE_MODULE_AV1(die, NULL, NULL, die_clist, NULL, NULL, "$Revision: 3295 $");
  * mo_die - DIE command handler
  */
 static int
-mo_die(struct Client *client_p __unused, struct Client *source_p, int parc, const char *parv[])
+mo_die(struct MsgBuf *msgbuf_p __unused, struct Client *client_p __unused, struct Client *source_p, int parc, const char *parv[])
 {
 	if(!IsOperDie(source_p))
 	{
@@ -90,7 +90,7 @@ mo_die(struct Client *client_p __unused, struct Client *source_p, int parc, cons
 }
 
 static int
-me_die(struct Client *client_p __unused, struct Client *source_p, int parc, const char *parv[])
+me_die(struct MsgBuf *msgbuf_p __unused, struct Client *client_p __unused, struct Client *source_p, int parc, const char *parv[])
 {
 	if(!find_shared_conf(source_p->username, source_p->host, source_p->servptr->name, SHARED_DIE))
 	{

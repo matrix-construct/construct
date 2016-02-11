@@ -51,8 +51,8 @@
 #include "match.h"
 #include "s_user.h"
 
-static int me_svslogin(struct Client *, struct Client *, int, const char **);
-static int ms_signon(struct Client *, struct Client *, int, const char **);
+static int me_svslogin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_signon(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 static void send_signon(struct Client *, struct Client *, const char *, const char *, const char *, unsigned int, const char *);
 
@@ -114,7 +114,7 @@ clean_host(const char *host)
 }
 
 static int
-me_svslogin(struct Client *client_p, struct Client *source_p,
+me_svslogin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
 	struct Client *target_p, *exist_p;
@@ -244,7 +244,7 @@ me_svslogin(struct Client *client_p, struct Client *source_p,
 }
 
 static int
-ms_signon(struct Client *client_p, struct Client *source_p,
+ms_signon(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
 	struct Client *target_p;

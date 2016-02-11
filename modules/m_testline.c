@@ -41,8 +41,8 @@
 #include "s_newconf.h"
 #include "reject.h"
 
-static int mo_testline(struct Client *, struct Client *, int, const char **);
-static int mo_testgecos(struct Client *, struct Client *, int, const char **);
+static int mo_testline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int mo_testgecos(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message testline_msgtab = {
 	"TESTLINE", 0, 0, 0, MFLG_SLOW,
@@ -57,7 +57,7 @@ mapi_clist_av1 testline_clist[] = { &testline_msgtab, &testgecos_msgtab, NULL };
 DECLARE_MODULE_AV1(testline, NULL, NULL, testline_clist, NULL, NULL, "$Revision: 3303 $");
 
 static int
-mo_testline(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_testline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct ConfItem *aconf;
 	struct ConfItem *resv_p;
@@ -231,7 +231,7 @@ mo_testline(struct Client *client_p, struct Client *source_p, int parc, const ch
 }
 
 static int
-mo_testgecos(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_testgecos(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct ConfItem *aconf;
 

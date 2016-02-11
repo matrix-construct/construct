@@ -58,8 +58,8 @@ static rb_dlink_list safelisting_clients = { NULL, NULL, 0 };
 static int _modinit(void);
 static void _moddeinit(void);
 
-static int m_list(struct Client *, struct Client *, int, const char **);
-static int mo_list(struct Client *, struct Client *, int, const char **);
+static int m_list(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int mo_list(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 static void list_one_channel(struct Client *source_p, struct Channel *chptr, int visible);
 
@@ -130,7 +130,7 @@ static void safelist_check_cliexit(hook_data_client_exit * hdata)
  * XXX - With SAFELIST, do we really need to continue pacing?
  *       In theory, the server cannot be lagged by this. --nenolod
  */
-static int m_list(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+static int m_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0L;
 
@@ -154,13 +154,13 @@ static int m_list(struct Client *client_p, struct Client *source_p, int parc, co
 			last_used = rb_current_time();
 	}
 
-	return mo_list(client_p, source_p, parc, parv);
+	return mo_list(msgbuf_p, client_p, source_p, parc, parv);
 }
 
 /* mo_list()
  *      parv[1] = channel
  */
-static int mo_list(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+static int mo_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct ListClient *params;
 	char *p;
