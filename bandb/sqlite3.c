@@ -23422,19 +23422,20 @@ unixRandomness(sqlite3_vfs * pVfs, int nBuf, char *zBuf)
 #if !defined(SQLITE_TEST)
 	{
 		int pid, fd;
+		int len = 0;
 		fd = open("/dev/urandom", O_RDONLY);
-		if(fd < 0)
+		if(fd >= 0)
+		{
+			len = read(fd, zBuf, nBuf);
+			close(fd);
+		}
+		if(len < nBuf)
 		{
 			time_t t;
 			time(&t);
 			memcpy(zBuf, &t, sizeof(t));
 			pid = getpid();
 			memcpy(&zBuf[sizeof(t)], &pid, sizeof(pid));
-		}
-		else
-		{
-			read(fd, zBuf, nBuf);
-			close(fd);
 		}
 	}
 #endif
