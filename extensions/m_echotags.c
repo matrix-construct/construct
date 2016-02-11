@@ -1,0 +1,38 @@
+#include "stdinc.h"
+#include "modules.h"
+#include "client.h"
+#include "ircd.h"
+#include "send.h"
+
+static int m_echotags(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+
+struct Message echotags_msgtab = {
+  "ECHOTAGS", 0, 0, 0, MFLG_SLOW,
+  { mg_ignore, {m_echotags, 0}, mg_ignore, mg_ignore, mg_ignore, {m_echotags, 0} }
+};
+
+mapi_clist_av1 echotags_clist[] = { &echotags_msgtab, NULL };
+
+DECLARE_MODULE_AV1(echotags, NULL, NULL, echotags_clist, NULL, NULL, "$Id$");
+
+static int
+m_echotags(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+{
+	int i;
+
+	sendto_one_notice(source_p, ":*** You sent %zu tags.", msgbuf_p->n_tags);
+
+	for (i = 0; i < msgbuf_p->n_tags; i++)
+	{
+		struct MsgTag *tag = &msgbuf_p->tags[i];
+
+		if (tag->value)
+			sendto_one_notice(source_p, ":*** %d: %s => %s", i, tag->key, tag->value);
+		else
+			sendto_one_notice(source_p, ":*** %d: %s", i, tag->key);
+	}
+
+	return 0;
+}
+
+
