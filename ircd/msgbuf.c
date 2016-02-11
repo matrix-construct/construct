@@ -43,7 +43,7 @@ msgbuf_parse(struct MsgBuf *msgbuf, char *line)
 
 	if (*ch == '@')
 	{
-		char *t = ch++;
+		char *t = ch + 1;
 
 		ch = strchr(ch, ' ');
 		if (ch != NULL)
@@ -54,21 +54,28 @@ msgbuf_parse(struct MsgBuf *msgbuf, char *line)
 				char *eq = strchr(t, '=');
 
 				if (next != NULL)
+				{
 					*next = '\0';
 
-				if (eq > next)
-					eq = NULL;
+					if (eq > next)
+						eq = NULL;
+				}
 
 				if (eq != NULL)
-					*eq = '\0';
+					*eq++ = '\0';
 
-				msgbuf_append_tag(msgbuf, t, eq);
+				if (*t && *t != ' ')
+					msgbuf_append_tag(msgbuf, t, eq);
+				else
+					break;
 
 				if (next != NULL)
 					t = next + 1;
 				else
 					break;
 			}
+
+			*ch++ = '\0';
 		}
 	}
 
