@@ -1157,6 +1157,11 @@ serv_connect_ssl_callback(rb_fde_t *F, int status, void *data)
 	add_to_cli_connid_hash(client_p);
 
 	client_p->localClient->ssl_ctl = start_ssld_connect(F, xF[1], rb_get_fd(xF[0]));
+	if(!client_p->localClient->ssl_ctl)
+	{
+		serv_connect_callback(client_p->localClient->F, RB_ERROR, data);
+		return;
+	}
 	SetSSL(client_p);
 	serv_connect_callback(client_p->localClient->F, RB_OK, client_p);
 }

@@ -703,6 +703,8 @@ start_ssld_accept(rb_fde_t * sslF, rb_fde_t * plainF, uint32_t id)
 	buf[0] = 'A';
 	uint32_to_buf(&buf[1], id);
 	ctl = which_ssld();
+	if(!ctl)
+		return NULL;
 	ctl->cli_count++;
 	ssl_cmd_write_queue(ctl, F, 2, buf, sizeof(buf));
 	return ctl;
@@ -721,6 +723,8 @@ start_ssld_connect(rb_fde_t * sslF, rb_fde_t * plainF, uint32_t id)
 	uint32_to_buf(&buf[1], id);
 
 	ctl = which_ssld();
+	if(!ctl)
+		return NULL;
 	ctl->cli_count++;
 	ssl_cmd_write_queue(ctl, F, 2, buf, sizeof(buf));
 	return ctl;
@@ -809,6 +813,7 @@ start_zlib_session(void *data)
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Error creating zlib socketpair - %s", strerror(errno));
 		ilog(L_MAIN, "Error creating zlib socketpairs - %s", strerror(errno));
 		exit_client(server, server, server, "Error creating zlib socketpair");
+		rb_free(buf);
 		return;
 	}
 
@@ -831,6 +836,12 @@ start_zlib_session(void *data)
 	add_to_cli_connid_hash(server);
 
 	server->localClient->z_ctl = which_ssld();
+	if(!server->localClient->z_ctl)
+	{
+		exit_client(server, server, server, "Error finding available ssld");
+		rb_free(buf);
+		return;
+	}
 	server->localClient->z_ctl->cli_count++;
 	ssl_cmd_write_queue(server->localClient->z_ctl, F, 2, buf, len);
 	rb_free(buf);
