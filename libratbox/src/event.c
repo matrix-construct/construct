@@ -167,7 +167,7 @@ rb_event_frequency(time_t frequency)
 {
 	if(frequency < 0)
 	{
-		const time_t two_third = (2 * abs(frequency)) / 3;
+		const time_t two_third = (2 * labs(frequency)) / 3;
 		frequency = two_third + ((rand() % 1000) * two_third) / 1000;
 	}
 	return frequency;
@@ -186,7 +186,7 @@ rb_event_frequency(time_t frequency)
 struct ev_entry *
 rb_event_addish(const char *name, EVH * func, void *arg, time_t delta_ish)
 {
-	delta_ish = abs(delta_ish);
+	delta_ish = labs(delta_ish);
 	if(delta_ish >= 3.0)
 		delta_ish = -delta_ish;
 	return rb_event_add_common(name, func, arg,
