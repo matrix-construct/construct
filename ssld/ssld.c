@@ -832,13 +832,13 @@ change_connid(mod_ctl_t *ctl, mod_ctl_buf_t *ctlb)
 	lrb_assert(conn != NULL);
 	if(conn == NULL)
 	{
-		char buf[256];
+		uint8_t buf[256];
 		int len;
 
 		buf[0] = 'D';
 		uint32_to_buf(&buf[1], newid);
-		sprintf(&buf[5], "connid %d does not exist", id);
-		len = (strlen(&buf[5]) + 1) + 5;
+		sprintf((char *) &buf[5], "connid %d does not exist", id);
+		len = (strlen((char *) &buf[5]) + 1) + 5;
 		mod_cmd_write_queue(ctl, buf, len);
 
 		return;
