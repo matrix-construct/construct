@@ -815,7 +815,10 @@ process_stats(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 		return;
 
 	snprintf(outstat, sizeof(outstat), "S %s %llu %llu %llu %llu", odata,
-		    conn->plain_out, conn->mod_in, conn->plain_in, conn->mod_out);
+			(unsigned long long)conn->plain_out,
+			(unsigned long long)conn->mod_in,
+			(unsigned long long)conn->plain_in,
+			(unsigned long long)conn->mod_out);
 	conn->plain_out = 0;
 	conn->plain_in = 0;
 	conn->mod_in = 0;
