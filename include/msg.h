@@ -45,12 +45,13 @@ typedef enum HandlerType
 }
 HandlerType;
 
-/* struct Client* client_p   - connection message originated from
+/* struct MsgBuf* msgbuf_p   - message buffer (including tags)
+ * struct Client* client_p   - connection message originated from
  * struct Client* source_p   - source of message, may be different from client_p
- * int            parc   - parameter count
- * char*          parv[] - parameter vector
+ * int            parc   - parameter count (from msgbuf_p)
+ * char*          parv[] - parameter vector (from msgbuf_p)
  */
-typedef int (*MessageHandler) (struct Client *, struct Client *, int, const char *[]);
+typedef int (*MessageHandler) (struct MsgBuf *, struct Client *, struct Client *, int, const char *[]);
 
 struct MessageEntry
 {
@@ -79,10 +80,10 @@ struct Message
 #define MFLG_UNREG	0x02	/* available to unregistered clients */
 
 /* generic handlers */
-extern int m_ignore(struct Client *, struct Client *, int, const char **);
-extern int m_not_oper(struct Client *, struct Client *, int, const char **);
-extern int m_registered(struct Client *, struct Client *, int, const char **);
-extern int m_unregistered(struct Client *, struct Client *, int, const char **);
+extern int m_ignore(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+extern int m_not_oper(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+extern int m_registered(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+extern int m_unregistered(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 #define mg_ignore { m_ignore, 0 }
 #define mg_not_oper { m_not_oper, 0 }

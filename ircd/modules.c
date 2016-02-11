@@ -65,17 +65,17 @@ int max_mods = MODS_INCREMENT;
 
 static rb_dlink_list mod_paths;
 
-static int mo_modload(struct Client *, struct Client *, int, const char **);
-static int mo_modlist(struct Client *, struct Client *, int, const char **);
-static int mo_modreload(struct Client *, struct Client *, int, const char **);
-static int mo_modunload(struct Client *, struct Client *, int, const char **);
-static int mo_modrestart(struct Client *, struct Client *, int, const char **);
+static int mo_modload(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int mo_modlist(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int mo_modreload(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int mo_modunload(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int mo_modrestart(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
-static int me_modload(struct Client *, struct Client *, int, const char **);
-static int me_modlist(struct Client *, struct Client *, int, const char **);
-static int me_modreload(struct Client *, struct Client *, int, const char **);
-static int me_modunload(struct Client *, struct Client *, int, const char **);
-static int me_modrestart(struct Client *, struct Client *, int, const char **);
+static int me_modload(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int me_modlist(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int me_modreload(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int me_modunload(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int me_modrestart(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 static int do_modload(struct Client *, const char *);
 static int do_modunload(struct Client *, const char *);
@@ -326,7 +326,7 @@ load_one_module(const char *path, int coremodule)
 
 /* load a module .. */
 static int
-mo_modload(struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+mo_modload(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {
 	if(!IsOperAdmin(source_p))
 	{
@@ -347,7 +347,7 @@ mo_modload(struct Client *client_p, struct Client *source_p, int parc, const cha
 }
 
 static int
-me_modload(struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+me_modload(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {
 	if(!find_shared_conf(source_p->username, source_p->host, source_p->servptr->name, SHARED_MODULE))
 	{
@@ -381,7 +381,7 @@ do_modload(struct Client *source_p, const char *module)
 
 /* unload a module .. */
 static int
-mo_modunload(struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+mo_modunload(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {
 	if(!IsOperAdmin(source_p))
 	{
@@ -402,7 +402,7 @@ mo_modunload(struct Client *client_p, struct Client *source_p, int parc, const c
 }
 
 static int
-me_modunload(struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+me_modunload(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {
 	if(!find_shared_conf(source_p->username, source_p->host, source_p->servptr->name, SHARED_MODULE))
 	{
@@ -445,7 +445,7 @@ do_modunload(struct Client *source_p, const char *module)
 
 /* unload and load in one! */
 static int
-mo_modreload(struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+mo_modreload(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {
 	if(!IsOperAdmin(source_p))
 	{
@@ -466,7 +466,7 @@ mo_modreload(struct Client *client_p, struct Client *source_p, int parc, const c
 }
 
 static int
-me_modreload(struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+me_modreload(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {
 	if(!find_shared_conf(source_p->username, source_p->host, source_p->servptr->name, SHARED_MODULE))
 	{
@@ -515,7 +515,7 @@ do_modreload(struct Client *source_p, const char *module)
 
 /* list modules .. */
 static int
-mo_modlist(struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+mo_modlist(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {
 	if(!IsOperAdmin(source_p))
 	{
@@ -536,7 +536,7 @@ mo_modlist(struct Client *client_p, struct Client *source_p, int parc, const cha
 }
 
 static int
-me_modlist(struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+me_modlist(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {
 	if(!find_shared_conf(source_p->username, source_p->host, source_p->servptr->name, SHARED_MODULE))
 	{
@@ -581,7 +581,7 @@ do_modlist(struct Client *source_p, const char *pattern)
 
 /* unload and reload all modules */
 static int
-mo_modrestart(struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+mo_modrestart(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {
 	if(!IsOperAdmin(source_p))
 	{
@@ -602,7 +602,7 @@ mo_modrestart(struct Client *client_p, struct Client *source_p, int parc, const 
 }
 
 static int
-me_modrestart(struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+me_modrestart(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {
 	if(!find_shared_conf(source_p->username, source_p->host, source_p->servptr->name, SHARED_MODULE))
 	{

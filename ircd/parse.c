@@ -56,7 +56,7 @@ static void remove_unknown(struct Client *, const char *, char *);
 static void do_numeric(int, struct Client *, struct Client *, int, const char **);
 static void do_alias(struct alias_entry *, struct Client *, char *);
 
-static int handle_command(struct Message *, struct Client *, struct Client *, int, const char**);
+static int handle_command(struct Message *, struct MsgBuf *, struct Client *, struct Client *);
 
 static char buffer[1024];
 
@@ -170,7 +170,7 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 		return;
 	}
 
-	if(handle_command(mptr, client_p, from, msgbuf.n_para, /* XXX discards const!!! */ (const char **)(void *) msgbuf.para) < -1)
+	if(handle_command(mptr, &msgbuf, client_p, from) < -1)
 	{
 		char *p;
 		for (p = pbuffer; p <= end; p += 8)
@@ -200,16 +200,14 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
  * handle_command
  *
  * inputs	- pointer to message block
+ * 		- pointer to message buffer
  *		- pointer to client
  *		- pointer to client message is from
- *		- count of number of args
- *		- pointer to argv[] array
  * output	- -1 if error from server
  * side effects	-
  */
 static int
-handle_command(struct Message *mptr, struct Client *client_p,
-	       struct Client *from, int i, const char** hpara)
+handle_command(struct Message *mptr, struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *from)
 {
 	struct MessageEntry ehandler;
 	MessageHandler handler = 0;
@@ -240,8 +238,8 @@ handle_command(struct Message *mptr, struct Client *client_p,
 	handler = ehandler.handler;
 
 	/* check right amount of params is passed... --is */
-	if(i < ehandler.min_para ||
-	   (ehandler.min_para && EmptyString(hpara[ehandler.min_para - 1])))
+	if(msgbuf_p->n_para < ehandler.min_para ||
+	   (ehandler.min_para && EmptyString(msgbuf_p->para[ehandler.min_para - 1])))
 	{
 		if(!IsServer(client_p))
 		{
@@ -257,24 +255,24 @@ handle_command(struct Message *mptr, struct Client *client_p,
 
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Dropping server %s due to (invalid) command '%s'"
-				     " with only %d arguments (expecting %d).",
-				     client_p->name, mptr->cmd, i, ehandler.min_para);
+				     " with only %zu arguments (expecting %d).",
+				     client_p->name, mptr->cmd, msgbuf_p->n_para, ehandler.min_para);
 		ilog(L_SERVER,
-		     "Insufficient parameters (%d < %d) for command '%s' from %s.",
-		     i, ehandler.min_para, mptr->cmd, client_p->name);
+		     "Insufficient parameters (%zu < %d) for command '%s' from %s.",
+		     msgbuf_p->n_para, ehandler.min_para, mptr->cmd, client_p->name);
 		snprintf(squitreason, sizeof squitreason,
-				"Insufficient parameters (%d < %d) for command '%s'",
-				i, ehandler.min_para, mptr->cmd);
+				"Insufficient parameters (%zu < %d) for command '%s'",
+				msgbuf_p->n_para, ehandler.min_para, mptr->cmd);
 		exit_client(client_p, client_p, client_p, squitreason);
 		return (-1);
 	}
 
-	(*handler) (client_p, from, i, hpara);
+	(*handler) (msgbuf_p, client_p, from, msgbuf_p->n_para, msgbuf_p->para);
 	return (1);
 }
 
 void
-handle_encap(struct Client *client_p, struct Client *source_p,
+handle_encap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	     const char *command, int parc, const char *parv[])
 {
 	struct Message *mptr;
@@ -293,7 +291,7 @@ handle_encap(struct Client *client_p, struct Client *source_p,
 	   (ehandler.min_para && EmptyString(parv[ehandler.min_para - 1])))
 		return;
 
-	(*handler) (client_p, source_p, parc, parv);
+	(*handler) (msgbuf_p, client_p, source_p, parc, parv);
 }
 
 /*
@@ -618,14 +616,14 @@ static void do_alias(struct alias_entry *aptr, struct Client *source_p, char *te
 }
 
 int
-m_not_oper(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_not_oper(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	sendto_one_numeric(source_p, ERR_NOPRIVILEGES, form_str(ERR_NOPRIVILEGES));
 	return 0;
 }
 
 int
-m_unregistered(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_unregistered(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* bit of a hack.
 	 * I don't =really= want to waste a bit in a flag
@@ -642,14 +640,14 @@ m_unregistered(struct Client *client_p, struct Client *source_p, int parc, const
 }
 
 int
-m_registered(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_registered(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	sendto_one(client_p, form_str(ERR_ALREADYREGISTRED), me.name, source_p->name);
 	return 0;
 }
 
 int
-m_ignore(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_ignore(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	return 0;
 }
