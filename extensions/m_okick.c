@@ -40,7 +40,7 @@
 #include "messages.h"
 #include "logger.h"
 
-static int mo_okick(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int mo_okick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 
 struct Message okick_msgtab = {
@@ -59,7 +59,7 @@ DECLARE_MODULE_AV1(okick, NULL, NULL, okick_clist, NULL, NULL, "$Revision: 3554 
 **      parv[3] = kick comment
 */
 static int
-mo_okick(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_okick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *who;
 	struct Client *target_p;

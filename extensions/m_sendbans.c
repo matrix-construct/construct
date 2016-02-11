@@ -45,7 +45,7 @@
 #include "messages.h"
 #include "irc_radixtree.h"
 
-static int mo_sendbans(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int mo_sendbans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message sendbans_msgtab = {
 	"SENDBANS", 0, 0, 0, MFLG_SLOW,
@@ -83,7 +83,7 @@ static const char *expand_xline(const char *mask)
 	return buf;
 }
 
-static int mo_sendbans(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+static int mo_sendbans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;

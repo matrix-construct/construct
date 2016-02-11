@@ -49,10 +49,10 @@ typedef struct _hurt {
 /* }}} */
 
 /* {{{ Prototypes */
-static int mo_hurt(struct Client *, struct Client *, int, const char **);
-static int me_hurt(struct Client *, struct Client *, int, const char **);
-static int mo_heal(struct Client *, struct Client *, int, const char **);
-static int me_heal(struct Client *, struct Client *, int, const char **);
+static int mo_hurt(struct MsgBuf *msgbuf_p, struct Client *, struct Client *, int, const char **);
+static int me_hurt(struct MsgBuf *msgbuf_p, struct Client *, struct Client *, int, const char **);
+static int mo_heal(struct MsgBuf *msgbuf_p, struct Client *, struct Client *, int, const char **);
+static int me_heal(struct MsgBuf *msgbuf_p, struct Client *, struct Client *, int, const char **);
 
 static int modinit(void);
 static void modfini(void);
@@ -178,7 +178,7 @@ modfini(void)
  * parv[3] - reason or NULL
  */
 static int
-mo_hurt(struct Client *client_p, struct Client *source_p,
+mo_hurt(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 		int parc, const char **parv)
 {
 	const char			*ip, *expire, *reason;
@@ -262,7 +262,7 @@ mo_hurt(struct Client *client_p, struct Client *source_p,
  * parv[3] - reason
  */
 static int
-me_hurt(struct Client *client_p, struct Client *source_p,
+me_hurt(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 		int parc, const char **parv)
 {
 	time_t				expire_time;
@@ -299,7 +299,7 @@ me_hurt(struct Client *client_p, struct Client *source_p,
  * parv[1] - nick or ip
  */
 static int
-mo_heal(struct Client *client_p, struct Client *source_p,
+mo_heal(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 		int parc, const char **parv)
 {
 	struct Client *target_p;
@@ -352,7 +352,7 @@ mo_heal(struct Client *client_p, struct Client *source_p,
 /* }}} */
 
 static int
-me_heal(struct Client *client_p, struct Client *source_p,
+me_heal(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 		int parc, const char **parv)
 {
 	struct Client *target_p;

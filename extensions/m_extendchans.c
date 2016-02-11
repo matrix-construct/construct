@@ -31,8 +31,8 @@
 #include "send.h"
 #include "numeric.h"
 
-static int mo_extendchans(struct Client *, struct Client *, int, const char **);
-static int me_extendchans(struct Client *, struct Client *, int, const char **);
+static int mo_extendchans(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int me_extendchans(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message extendchans_msgtab = {
 	"EXTENDCHANS", 0, 0, 0, MFLG_SLOW,
@@ -44,7 +44,7 @@ mapi_clist_av1 extendchans_clist[] = { &extendchans_msgtab, NULL };
 DECLARE_MODULE_AV1(extendchans, NULL, NULL, extendchans_clist, NULL, NULL, "$Revision: $");
 
 static int
-mo_extendchans(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_extendchans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 
@@ -84,7 +84,7 @@ mo_extendchans(struct Client *client_p, struct Client *source_p, int parc, const
 }
 
 static int
-me_extendchans(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_extendchans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 

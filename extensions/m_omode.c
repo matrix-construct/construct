@@ -44,7 +44,7 @@
 #include "messages.h"
 #include "logger.h"
 
-static int mo_omode(struct Client *, struct Client *, int, const char **);
+static int mo_omode(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message omode_msgtab = {
 	"OMODE", 0, 0, 0, MFLG_SLOW,
@@ -60,7 +60,7 @@ DECLARE_MODULE_AV1(omode, NULL, NULL, omode_clist, NULL, NULL, "$Revision: 3121 
  * parv[1] - channel
  */
 static int
-mo_omode(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_omode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr = NULL;
 	struct membership *msptr;

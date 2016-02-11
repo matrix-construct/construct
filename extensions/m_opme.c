@@ -36,7 +36,7 @@
 #include "s_newconf.h"
 #include "messages.h"
 
-static int mo_opme(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int mo_opme(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message opme_msgtab = {
 	"OPME", 0, 0, 0, MFLG_SLOW,
@@ -53,7 +53,7 @@ DECLARE_MODULE_AV1(opme, NULL, NULL, opme_clist, NULL, NULL, "$Revision: 3554 $"
 **      parv[1] = channel
 */
 static int
-mo_opme(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_opme(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr;
 	struct membership *msptr;

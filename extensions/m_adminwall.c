@@ -39,8 +39,8 @@
 #include "s_serv.h"
 #include "messages.h"
 
-static int mo_adminwall(struct Client *, struct Client *, int, const char **);
-static int me_adminwall(struct Client *, struct Client *, int, const char **);
+static int mo_adminwall(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int me_adminwall(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message adminwall_msgtab = {
 	"ADMINWALL", 0, 0, 0, MFLG_SLOW,
@@ -58,7 +58,7 @@ DECLARE_MODULE_AV1(adminwall, NULL, NULL, adminwall_clist, NULL, NULL, "$Revisio
  */
 
 static int
-mo_adminwall(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_adminwall(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
         if(!IsAdmin(source_p))
         {
@@ -72,7 +72,7 @@ mo_adminwall(struct Client *client_p, struct Client *source_p, int parc, const c
 }
 
 static int
-me_adminwall(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_adminwall(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
         sendto_wallops_flags(UMODE_ADMIN, source_p, "ADMINWALL - %s", parv[1]);
         return 0;

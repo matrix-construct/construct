@@ -55,7 +55,7 @@
 #include "s_conf.h"
 #include "reject.h"
 
-static int mr_webirc(struct Client *, struct Client *, int, const char **);
+static int mr_webirc(struct MsgBuf *msgbuf_p, struct Client *, struct Client *, int, const char **);
 
 struct Message webirc_msgtab = {
 	"WEBIRC", 0, 0, 0, MFLG_SLOW | MFLG_UNREG,
@@ -73,7 +73,7 @@ DECLARE_MODULE_AV1(webirc, NULL, NULL, webirc_clist, NULL, NULL, "$Revision: 207
  *	parv[4] = fake ip
  */
 static int
-mr_webirc(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mr_webirc(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct ConfItem *aconf;
 	const char *encr;

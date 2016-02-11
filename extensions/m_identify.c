@@ -49,7 +49,7 @@
 #define SVS_chanserv_NICK "ChanServ"
 #define SVS_nickserv_NICK "NickServ"
 
-static int m_identify(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int m_identify(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message identify_msgtab = {
 	"IDENTIFY", 0, 0, 0, MFLG_SLOW,
@@ -63,7 +63,7 @@ mapi_clist_av1 identify_clist[] = {
 
 DECLARE_MODULE_AV1(identify, NULL, NULL, identify_clist, NULL, NULL, "$Revision: 2729 $");
 
-static int m_identify(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+static int m_identify(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	const char *nick;
 	struct Client *target_p;

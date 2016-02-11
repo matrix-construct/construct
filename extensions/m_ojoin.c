@@ -37,7 +37,7 @@
 #include "modules.h"
 #include "messages.h"
 
-static int mo_ojoin(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int mo_ojoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 
 struct Message ojoin_msgtab = {
@@ -54,7 +54,7 @@ DECLARE_MODULE_AV1(ojoin, NULL, NULL, ojoin_clist, NULL, NULL, "$Revision: 3554 
 **      parv[1] = channel
 */
 static int
-mo_ojoin(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_ojoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr;
 	int move_me = 0;

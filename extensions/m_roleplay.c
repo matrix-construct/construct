@@ -29,13 +29,13 @@
 #include "packet.h"
 #include "messages.h"
 
-static int m_scene(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int m_fsay(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int m_faction(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int m_npc(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int m_npca(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int m_displaymsg(struct Client *source_p, const char *channel, int underline, int action, const char *nick, const char *text);
-static int me_roleplay(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int m_scene(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int m_fsay(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int m_faction(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int m_npc(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int m_npca(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int m_displaymsg(struct MsgBuf *msgbuf_p, struct Client *source_p, const char *channel, int underline, int action, const char *nick, const char *text);
+static int me_roleplay(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static unsigned int mymode;
 
 static int
@@ -98,42 +98,42 @@ mapi_clist_av1 roleplay_clist[] = { &scene_msgtab, &ambiance_msgtab, &fsay_msgta
 DECLARE_MODULE_AV1(roleplay, _modinit, _moddeinit, roleplay_clist, NULL, NULL, "$m_roleplay$");
 
 static int
-m_scene(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_scene(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	m_displaymsg(source_p, parv[1], 0, 0, "=Scene=", parv[2]);
+	m_displaymsg(msgbuf_p, source_p, parv[1], 0, 0, "=Scene=", parv[2]);
 	return 0;
 }
 
 static int
-m_fsay(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_fsay(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	m_displaymsg(source_p, parv[1], 0, 0, parv[2], parv[3]);
+	m_displaymsg(msgbuf_p, source_p, parv[1], 0, 0, parv[2], parv[3]);
 	return 0;
 }
 
 static int
-m_faction(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_faction(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	m_displaymsg(source_p, parv[1], 0, 1, parv[2], parv[3]);
+	m_displaymsg(msgbuf_p, source_p, parv[1], 0, 1, parv[2], parv[3]);
 	return 0;
 }
 
 static int
-m_npc(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_npc(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	m_displaymsg(source_p, parv[1], 1, 0, parv[2], parv[3]);
+	m_displaymsg(msgbuf_p, source_p, parv[1], 1, 0, parv[2], parv[3]);
 	return 0;
 }
 
 static int
-m_npca(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_npca(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	m_displaymsg(source_p, parv[1], 1, 1, parv[2], parv[3]);
+	m_displaymsg(msgbuf_p, source_p, parv[1], 1, 1, parv[2], parv[3]);
 	return 0;
 }
 
 static int
-m_displaymsg(struct Client *source_p, const char *channel, int underline, int action, const char *nick, const char *text)
+m_displaymsg(struct MsgBuf *msgbuf_p, struct Client *source_p, const char *channel, int underline, int action, const char *nick, const char *text)
 {
 	struct Channel *chptr;
 	struct membership *msptr;
@@ -212,7 +212,7 @@ m_displaymsg(struct Client *source_p, const char *channel, int underline, int ac
 }
 
 static int
-me_roleplay(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_roleplay(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr;
 

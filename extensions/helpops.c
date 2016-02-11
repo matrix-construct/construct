@@ -20,8 +20,8 @@ static void h_hdl_new_remote_user(struct Client *client_p);
 static void h_hdl_client_exit(hook_data_client_exit *hdata);
 static void h_hdl_umode_changed(hook_data_umode_changed *hdata);
 static void h_hdl_whois(hook_data_client *hdata);
-static int mo_dehelper(struct Client *, struct Client *, int, const char **);
-static int me_dehelper(struct Client *, struct Client *, int, const char **);
+static int mo_dehelper(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int me_dehelper(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int do_dehelper(struct Client *source_p, struct Client *target_p);
 
 mapi_hfn_list_av1 helpops_hfnlist[] = {
@@ -43,7 +43,7 @@ struct Message dehelper_msgtab = {
 
 mapi_clist_av1 helpops_clist[] = { &dehelper_msgtab, NULL };
 
-static int mo_dehelper(struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+static int mo_dehelper(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {
 	struct Client *target_p;
 
@@ -68,7 +68,7 @@ static int mo_dehelper(struct Client *client_p, struct Client *source_p, int par
 	return 0;
 }
 
-static int me_dehelper(struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+static int me_dehelper(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {
 	struct Client *target_p = find_person(parv[1]);
 	if(!target_p)

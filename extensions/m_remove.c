@@ -44,7 +44,7 @@
 unsigned int CAP_REMOVE;
 static char part_buf[REASONLEN + 1];
 
-static int m_remove(struct Client *, struct Client *, int, const char **);
+static int m_remove(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static void remove_quote_part(hook_data_privmsg_channel *);
 
 struct Message remove_msgtab = {
@@ -75,7 +75,7 @@ moddeinit(void)
 DECLARE_MODULE_AV1(remove, modinit, moddeinit, remove_clist, NULL, remove_hfnlist, "$Revision: 3317 $");
 
 static int
-m_remove(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_remove(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct membership *msptr;
 	struct Client *who;

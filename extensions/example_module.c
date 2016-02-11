@@ -37,11 +37,11 @@
  * parv     == an array of the parameters
  */
 
-static int munreg_test(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int mclient_test(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int mserver_test(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int mrclient_test(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int moper_test(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int munreg_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int mclient_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int mserver_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int mrclient_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int moper_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 /* Show the commands this module can handle in a msgtab
  * and give the msgtab a name, here its test_msgtab
@@ -158,7 +158,7 @@ DECLARE_MODULE_AV1(
  * and the fairly normal C coding
  */
 static int
-munreg_test(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+munreg_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(parc < 2)
 	{
@@ -180,7 +180,7 @@ munreg_test(struct Client *client_p, struct Client *source_p, int parc, const ch
  *      parv[1] = parameter
  */
 static int
-mclient_test(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mclient_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(parc < 2)
 	{
@@ -202,7 +202,7 @@ mclient_test(struct Client *client_p, struct Client *source_p, int parc, const c
  *      parv[1] = parameter
  */
 static int
-mrclient_test(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mrclient_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(parc < 2)
 	{
@@ -220,7 +220,7 @@ mrclient_test(struct Client *client_p, struct Client *source_p, int parc, const 
  *      parv[1] = parameter
  */
 static int
-mserver_test(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mserver_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(parc < 2)
 	{
@@ -238,7 +238,7 @@ mserver_test(struct Client *client_p, struct Client *source_p, int parc, const c
  *      parv[1] = parameter
  */
 static int
-moper_test(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+moper_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(parc < 2)
 	{

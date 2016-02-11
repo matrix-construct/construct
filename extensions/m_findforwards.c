@@ -36,7 +36,7 @@
 #include "packet.h"
 #include "messages.h"
 
-static int m_findforwards(struct Client *client_p, struct Client *source_p,
+static int m_findforwards(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 			int parc, const char *parv[]);
 
 struct Message findforwards_msgtab = {
@@ -53,7 +53,7 @@ DECLARE_MODULE_AV1(findforwards, NULL, NULL, findforwards_clist, NULL, NULL, "$R
 **      parv[1] = channel
 */
 static int
-m_findforwards(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_findforwards(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
 	struct Channel *chptr;

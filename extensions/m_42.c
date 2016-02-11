@@ -11,7 +11,7 @@
 #include "ircd.h"
 #include "send.h"
 
-static int mclient_42(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int mclient_42(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message hgtg_msgtab = {
   "42", 0, 0, 0, MFLG_SLOW,
@@ -26,7 +26,7 @@ DECLARE_MODULE_AV1(42, NULL, NULL, hgtg_clist, NULL, NULL, "Revision 0.42");
 
 
 static int
-mclient_42(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mclient_42(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	sendto_one_notice(source_p, ":The Answer to Life, the Universe, and Everything.");
 	return 0;
