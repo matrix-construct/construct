@@ -19,6 +19,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "s_assert.h"
+
 #ifndef CHARYBDIS__MSGBUF_H
 #define CHARYBDIS__MSGBUF_H
 
