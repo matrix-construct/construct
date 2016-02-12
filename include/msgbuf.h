@@ -26,20 +26,21 @@
 
 /* a key-value structure for each message tag. */
 struct MsgTag {
-	const char *key;
-	const char *value;
+	const char *key;		/* the key of the tag (must be set) */
+	const char *value;		/* the value of the tag or NULL */
+	unsigned int capmask;		/* the capability mask this tag belongs to (used only when sending) */
 };
 
 struct MsgBuf {
-	size_t n_tags;
-	struct MsgTag tags[MAXPARA];
+	size_t n_tags;			/* the number of tags in the MsgBuf */
+	struct MsgTag tags[MAXPARA];	/* the tags themselves, upto MAXPARA tags available */
 
-	const char *origin;
-	const char *cmd;
+	const char *origin;		/* the origin of the message (or NULL) */
+	const char *cmd;		/* the cmd/verb of the message (also para[0]) */
 
-	size_t parselen;
-	size_t n_para;
-	const char *para[MAXPARA];
+	size_t parselen;		/* the length of the message */
+	size_t n_para;			/* the number of parameters (always at least 1) */
+	const char *para[MAXPARA];	/* parameters vector (starting with cmd as para[0]) */
 };
 
 /*
@@ -54,7 +55,7 @@ int msgbuf_parse(struct MsgBuf *msgbuf, char *line);
  * cmd may not be NULL.
  * returns 0 on success, 1 on error.
  */
-int msgbuf_unparse(char *buf, struct MsgBuf *msgbuf);
+int msgbuf_unparse(char *buf, struct MsgBuf *msgbuf, unsigned int capmask);
 
 /*
  * unparse a MsgBuf header plus payload into a buffer.
@@ -62,8 +63,8 @@ int msgbuf_unparse(char *buf, struct MsgBuf *msgbuf);
  * cmd may not be NULL.
  * returns 0 on success, 1 on error.
  */
-int msgbuf_unparse_fmt(char *buf, struct MsgBuf *head, const char *fmt, ...) AFP(3, 4);
-int msgbuf_vunparse_fmt(char *buf, struct MsgBuf *head, const char *fmt, va_list va);
+int msgbuf_unparse_fmt(char *buf, struct MsgBuf *head, unsigned int capmask, const char *fmt, ...) AFP(3, 4);
+int msgbuf_vunparse_fmt(char *buf, struct MsgBuf *head, unsigned int capmask, const char *fmt, va_list va);
 
 static inline void
 msgbuf_init(struct MsgBuf *msgbuf)
@@ -74,6 +75,8 @@ msgbuf_init(struct MsgBuf *msgbuf)
 static inline void
 msgbuf_append_tag(struct MsgBuf *msgbuf, const char *key, const char *value)
 {
+	s_assert(msgbuf->n_tags < MAXPARA);
+
 	msgbuf->tags[msgbuf->n_tags].key = key;
 	msgbuf->tags[msgbuf->n_tags].value = value;
 	msgbuf->n_tags++;
@@ -82,6 +85,8 @@ msgbuf_append_tag(struct MsgBuf *msgbuf, const char *key, const char *value)
 static inline void
 msgbuf_append_para(struct MsgBuf *msgbuf, const char *para)
 {
+	s_assert(msgbuf->n_para < MAXPARA);
+
 	msgbuf->para[msgbuf->n_para] = para;
 	msgbuf->n_para++;
 }
