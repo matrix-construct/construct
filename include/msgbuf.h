@@ -63,7 +63,7 @@ int msgbuf_unparse(char *buf, struct MsgBuf *msgbuf, unsigned int capmask);
  * cmd may not be NULL.
  * returns 0 on success, 1 on error.
  */
-int msgbuf_unparse_fmt(char *buf, struct MsgBuf *head, unsigned int capmask, const char *fmt, ...) AFP(3, 4);
+int msgbuf_unparse_fmt(char *buf, struct MsgBuf *head, unsigned int capmask, const char *fmt, ...) AFP(4, 5);
 int msgbuf_vunparse_fmt(char *buf, struct MsgBuf *head, unsigned int capmask, const char *fmt, va_list va);
 
 static inline void
