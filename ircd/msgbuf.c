@@ -65,7 +65,7 @@ msgbuf_parse(struct MsgBuf *msgbuf, char *line)
 					*eq++ = '\0';
 
 				if (*t && *t != ' ')
-					msgbuf_append_tag(msgbuf, t, eq);
+					msgbuf_append_tag(msgbuf, t, eq, 0);
 				else
 					break;
 

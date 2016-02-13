@@ -75,12 +75,13 @@ msgbuf_init(struct MsgBuf *msgbuf)
 }
 
 static inline void
-msgbuf_append_tag(struct MsgBuf *msgbuf, const char *key, const char *value)
+msgbuf_append_tag(struct MsgBuf *msgbuf, const char *key, const char *value, unsigned int capmask)
 {
 	s_assert(msgbuf->n_tags < MAXPARA);
 
 	msgbuf->tags[msgbuf->n_tags].key = key;
 	msgbuf->tags[msgbuf->n_tags].value = value;
+	msgbuf->tags[msgbuf->n_tags].capmask = capmask;
 	msgbuf->n_tags++;
 }
 
