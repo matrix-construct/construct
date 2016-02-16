@@ -17,14 +17,6 @@ fi
 
 generation=`expr $generation + 1`
 
-uname=`uname -a`
-
-creation=`date | \
-awk '{if (NF == 6) \
-         { print $1 " "  $2 " " $3 " "  $6 " at " $4 " " $5 } \
-else \
-         { print $1 " "  $2 " " $3 " " $7 " at " $4 " " $5 " " $6 }}'`
-
 $spitshell >version.c <<!SUB!THIS!
 /*
  *   libratbox: a library used by ircd-ratbox and other things
@@ -55,9 +47,7 @@ $spitshell >version.c <<!SUB!THIS!
 #include "../include/serno.h"
 
 const char *libratbox_generation = "$generation";
-const char *libratbox_platform = "$uname";
 const char *libratbox_serno = SERIALNUM;
-const char *libratbox_creation = "$creation";
 
 const char *libratbox_infotext[] =
 {

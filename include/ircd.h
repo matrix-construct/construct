@@ -61,7 +61,6 @@ extern struct SetOptions GlobalSetOptions;	/* defined in ircd.c */
 
 extern const char *creation;
 extern const char *generation;
-extern const char *platform;
 extern const char *infotext[];
 extern const char *serno;
 extern const char *ircd_version;
