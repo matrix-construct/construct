@@ -17,13 +17,15 @@ fi
 
 generation=`expr $generation + 1`
 
-uname=`uname -a`
-
-creation=`LC_ALL=C date | \
+if test "$EXTERNAL_BUILD_TIMESTAMP" = ''; then
+    creation=`LC_ALL=C date | \
 awk '{if (NF == 6) \
          { print $1 " "  $2 " " $3 " "  $6 " at " $4 " " $5 } \
 else \
          { print $1 " "  $2 " " $3 " " $7 " at " $4 " " $5 " " $6 }}'`
+else
+    creation="$EXTERNAL_BUILD_TIMESTAMP"
+fi
 
 $spitshell >version.c <<!SUB!THIS!
 /*
@@ -54,7 +56,6 @@ $spitshell >version.c <<!SUB!THIS!
 
 const char *generation = "$generation";
 const char *creation = "$creation";
-const char *platform = "$uname";
 const char *ircd_version = PATCHLEVEL;
 const char *serno = SERNO;
 
