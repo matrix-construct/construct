@@ -41,7 +41,7 @@
 static int me_certfp(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message certfp_msgtab = {
-	"CERTFP", 0, 0, 0, MFLG_SLOW,
+	"CERTFP", 0, 0, 0, 0,
 	{mg_unreg, mg_ignore, mg_ignore, mg_ignore, {me_certfp, 2}, mg_ignore}
 };
 

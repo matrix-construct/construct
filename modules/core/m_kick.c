@@ -43,7 +43,7 @@ static int m_kick(struct MsgBuf *, struct Client *, struct Client *, int, const 
 #define mg_kick { m_kick, 3 }
 
 struct Message kick_msgtab = {
-	"KICK", 0, 0, 0, MFLG_SLOW,
+	"KICK", 0, 0, 0, 0,
 	{mg_unreg, mg_kick, mg_kick, mg_kick, mg_ignore, mg_kick}
 };
 

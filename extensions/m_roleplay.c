@@ -58,38 +58,38 @@ _moddeinit(void)
 
 
 struct Message scene_msgtab = {
-	"SCENE", 0, 0, 0, MFLG_SLOW,
+	"SCENE", 0, 0, 0, 0,
 	{mg_unreg, {m_scene, 3}, mg_ignore, mg_ignore, mg_ignore, {m_scene, 3}}
 };
 
 /* this serves as an alias for people who are used to inspircd/unreal m_roleplay */
 struct Message ambiance_msgtab = {
-	"AMBIANCE", 0, 0, 0, MFLG_SLOW,
+	"AMBIANCE", 0, 0, 0, 0,
 	{mg_unreg, {m_scene, 3}, mg_ignore, mg_ignore, mg_ignore, {m_scene, 3}}
 };
 
 struct Message fsay_msgtab = {
-	"FSAY", 0, 0, 0, MFLG_SLOW,
+	"FSAY", 0, 0, 0, 0,
 	{mg_unreg, {m_npc, 4}, mg_ignore, mg_ignore, mg_ignore, {m_fsay, 4}}
 };
 
 struct Message faction_msgtab = {
-	"FACTION", 0, 0, 0, MFLG_SLOW,
+	"FACTION", 0, 0, 0, 0,
 	{mg_unreg, {m_npca, 4}, mg_ignore, mg_ignore, mg_ignore, {m_faction, 4}}
 };
 
 struct Message npc_msgtab = {
-	"NPC", 0, 0, 0, MFLG_SLOW,
+	"NPC", 0, 0, 0, 0,
 	{mg_unreg, {m_npc, 4}, mg_ignore, mg_ignore, mg_ignore, {m_npc, 4}}
 };
 
 struct Message npca_msgtab = {
-	"NPCA", 0, 0, 0, MFLG_SLOW,
+	"NPCA", 0, 0, 0, 0,
 	{mg_unreg, {m_npca, 4}, mg_ignore, mg_ignore, mg_ignore, {m_npca, 4}}
 };
 
 struct Message roleplay_msgtab = {
-	"ROLEPLAY", 0, 0, 0, MFLG_SLOW,
+	"ROLEPLAY", 0, 0, 0, 0,
 	{mg_ignore, mg_ignore, mg_ignore, mg_ignore, {me_roleplay, 4}, mg_ignore}
 };
 

@@ -45,7 +45,7 @@ static int me_restart(struct MsgBuf *, struct Client *, struct Client *, int, co
 static int do_restart(struct Client *source_p, const char *servername);
 
 struct Message restart_msgtab = {
-	"RESTART", 0, 0, 0, MFLG_SLOW,
+	"RESTART", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, {me_restart, 1}, {mo_restart, 0}}
 };
 

@@ -43,7 +43,7 @@ static int me_die(struct MsgBuf *, struct Client *, struct Client *, int, const 
 static int do_die(struct Client *, const char *);
 
 static struct Message die_msgtab = {
-	"DIE", 0, 0, 0, MFLG_SLOW,
+	"DIE", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, {me_die, 1}, {mo_die, 0}}
 };
 

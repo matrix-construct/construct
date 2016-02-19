@@ -47,7 +47,7 @@
 static int mo_omode(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message omode_msgtab = {
-	"OMODE", 0, 0, 0, MFLG_SLOW,
+	"OMODE", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, mg_ignore, {mo_omode, 3}}
 };
 

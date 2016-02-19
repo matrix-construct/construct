@@ -45,11 +45,11 @@ static int mo_testline(struct MsgBuf *, struct Client *, struct Client *, int, c
 static int mo_testgecos(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message testline_msgtab = {
-	"TESTLINE", 0, 0, 0, MFLG_SLOW,
+	"TESTLINE", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, mg_ignore, {mo_testline, 2}}
 };
 struct Message testgecos_msgtab = {
-	"TESTGECOS", 0, 0, 0, MFLG_SLOW,
+	"TESTGECOS", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, mg_ignore, {mo_testgecos, 2}}
 };
 

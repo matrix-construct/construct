@@ -42,7 +42,7 @@
 static int m_ison(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message ison_msgtab = {
-	"ISON", 0, 0, 0, MFLG_SLOW,
+	"ISON", 0, 0, 0, 0,
 	{mg_unreg, {m_ison, 2}, mg_ignore, mg_ignore, mg_ignore, {m_ison, 2}}
 };
 

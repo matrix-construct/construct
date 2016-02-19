@@ -51,12 +51,12 @@ static int mo_undline(struct MsgBuf *, struct Client *, struct Client *, int, co
 static int me_undline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message dline_msgtab = {
-	"DLINE", 0, 0, 0, MFLG_SLOW,
+	"DLINE", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, {me_dline, 4}, {mo_dline, 2}}
 };
 
 struct Message undline_msgtab = {
-	"UNDLINE", 0, 0, 0, MFLG_SLOW,
+	"UNDLINE", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, {me_undline, 2}, {mo_undline, 2}}
 };
 

@@ -53,11 +53,11 @@ static void advertise_sasl(struct Client *);
 static void advertise_sasl_exit(hook_data_client_exit *);
 
 struct Message authenticate_msgtab = {
-	"AUTHENTICATE", 0, 0, 0, MFLG_SLOW,
+	"AUTHENTICATE", 0, 0, 0, 0,
 	{{m_authenticate, 2}, {m_authenticate, 2}, mg_ignore, mg_ignore, mg_ignore, {m_authenticate, 2}}
 };
 struct Message sasl_msgtab = {
-	"SASL", 0, 0, 0, MFLG_SLOW,
+	"SASL", 0, 0, 0, 0,
 	{mg_ignore, mg_ignore, mg_ignore, mg_ignore, {me_sasl, 5}, mg_ignore}
 };
 

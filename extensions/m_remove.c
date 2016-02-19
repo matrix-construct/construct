@@ -48,7 +48,7 @@ static int m_remove(struct MsgBuf *, struct Client *, struct Client *, int, cons
 static void remove_quote_part(hook_data_privmsg_channel *);
 
 struct Message remove_msgtab = {
-	"REMOVE", 0, 0, 0, MFLG_SLOW,
+	"REMOVE", 0, 0, 0, 0,
 	{mg_unreg, {m_remove, 3}, {m_remove, 3}, {m_remove, 3}, mg_ignore, {m_remove, 3}}
 };
 

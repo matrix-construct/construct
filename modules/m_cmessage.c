@@ -65,11 +65,11 @@ _moddeinit(void)
 }
 
 struct Message cprivmsg_msgtab = {
-	"CPRIVMSG", 0, 0, 0, MFLG_SLOW,
+	"CPRIVMSG", 0, 0, 0, 0,
 	{mg_ignore, {m_cprivmsg, 4}, mg_ignore, mg_ignore, mg_ignore, {m_cprivmsg, 4}}
 };
 struct Message cnotice_msgtab = {
-	"CNOTICE", 0, 0, 0, MFLG_SLOW,
+	"CNOTICE", 0, 0, 0, 0,
 	{mg_ignore, {m_cnotice, 4}, mg_ignore, mg_ignore, mg_ignore, {m_cnotice, 4}}
 };
 

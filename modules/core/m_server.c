@@ -47,11 +47,11 @@ static int ms_server(struct MsgBuf *, struct Client *, struct Client *, int, con
 static int ms_sid(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message server_msgtab = {
-	"SERVER", 0, 0, 0, MFLG_SLOW | MFLG_UNREG,
+	"SERVER", 0, 0, 0, 0,
 	{{mr_server, 4}, mg_reg, mg_ignore, {ms_server, 4}, mg_ignore, mg_reg}
 };
 struct Message sid_msgtab = {
-	"SID", 0, 0, 0, MFLG_SLOW,
+	"SID", 0, 0, 0, 0,
 	{mg_ignore, mg_reg, mg_ignore, {ms_sid, 5}, mg_ignore, mg_reg}
 };
 

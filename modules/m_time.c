@@ -40,7 +40,7 @@ static int m_time(struct MsgBuf *, struct Client *, struct Client *, int, const 
 static char *date(void);
 
 struct Message time_msgtab = {
-	"TIME", 0, 0, 0, MFLG_SLOW,
+	"TIME", 0, 0, 0, 0,
 	{mg_unreg, {m_time, 0}, {m_time, 2}, mg_ignore, mg_ignore, {m_time, 0}}
 };
 

@@ -34,12 +34,12 @@ static int me_chghost(struct MsgBuf *, struct Client *, struct Client *, int, co
 static int mo_chghost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message realhost_msgtab = {
-	"REALHOST", 0, 0, 0, MFLG_SLOW,
+	"REALHOST", 0, 0, 0, 0,
 	{mg_ignore, mg_ignore, mg_ignore, mg_ignore, {me_realhost, 2}, mg_ignore}
 };
 
 struct Message chghost_msgtab = {
-	"CHGHOST", 0, 0, 0, MFLG_SLOW,
+	"CHGHOST", 0, 0, 0, 0,
 	{mg_ignore, mg_not_oper, {ms_chghost, 3}, {ms_chghost, 3}, {me_chghost, 3}, {mo_chghost, 3}}
 };
 

@@ -43,7 +43,7 @@ static int mo_adminwall(struct MsgBuf *, struct Client *, struct Client *, int, 
 static int me_adminwall(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message adminwall_msgtab = {
-	"ADMINWALL", 0, 0, 0, MFLG_SLOW,
+	"ADMINWALL", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, {me_adminwall, 2}, {mo_adminwall, 2}}
 };
 

@@ -43,11 +43,11 @@ static int ms_operwall(struct MsgBuf *, struct Client *, struct Client *, int, c
 static int ms_wallops(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message wallops_msgtab = {
-	"WALLOPS", 0, 0, 0, MFLG_SLOW,
+	"WALLOPS", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, {ms_wallops, 2}, {ms_wallops, 2}, mg_ignore, {ms_wallops, 2}}
 };
 struct Message operwall_msgtab = {
-	"OPERWALL", 0, 0, 0, MFLG_SLOW,
+	"OPERWALL", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, {ms_operwall, 2}, mg_ignore, mg_ignore, {mo_operwall, 2}}
 };
 

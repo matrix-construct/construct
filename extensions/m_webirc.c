@@ -58,7 +58,7 @@
 static int mr_webirc(struct MsgBuf *msgbuf_p, struct Client *, struct Client *, int, const char **);
 
 struct Message webirc_msgtab = {
-	"WEBIRC", 0, 0, 0, MFLG_SLOW | MFLG_UNREG,
+	"WEBIRC", 0, 0, 0, 0,
 	{{mr_webirc, 5}, mg_reg, mg_ignore, mg_ignore, mg_ignore, mg_reg}
 };
 

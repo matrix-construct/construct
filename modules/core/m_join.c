@@ -52,12 +52,12 @@ static int h_can_create_channel;
 static int h_channel_join;
 
 struct Message join_msgtab = {
-	"JOIN", 0, 0, 0, MFLG_SLOW,
+	"JOIN", 0, 0, 0, 0,
 	{mg_unreg, {m_join, 2}, {ms_join, 2}, mg_ignore, mg_ignore, {m_join, 2}}
 };
 
 struct Message sjoin_msgtab = {
-	"SJOIN", 0, 0, 0, MFLG_SLOW,
+	"SJOIN", 0, 0, 0, 0,
 	{mg_unreg, mg_ignore, mg_ignore, {ms_sjoin, 4}, mg_ignore, mg_ignore}
 };
 

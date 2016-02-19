@@ -43,7 +43,7 @@ static void add_accept(struct Client *, struct Client *);
 static void list_accepts(struct Client *);
 
 struct Message accept_msgtab = {
-	"ACCEPT", 0, 0, 0, MFLG_SLOW | MFLG_UNREG,
+	"ACCEPT", 0, 0, 0, 0,
 	{mg_unreg, {m_accept, 2}, mg_ignore, mg_ignore, mg_ignore, {m_accept, 2}}
 };
 

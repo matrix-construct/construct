@@ -38,15 +38,15 @@
 static int mr_dumb_proxy(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message post_msgtab = {
-	"POST", 0, 0, 0, MFLG_SLOW | MFLG_UNREG,
+	"POST", 0, 0, 0, 0,
 	{{mr_dumb_proxy, 0}, mg_ignore, mg_ignore, mg_ignore, mg_ignore, mg_ignore}
 };
 struct Message get_msgtab = {
-	"GET", 0, 0, 0, MFLG_SLOW | MFLG_UNREG,
+	"GET", 0, 0, 0, 0,
 	{{mr_dumb_proxy, 0}, mg_ignore, mg_ignore, mg_ignore, mg_ignore, mg_ignore}
 };
 struct Message put_msgtab = {
-	"PUT", 0, 0, 0, MFLG_SLOW | MFLG_UNREG,
+	"PUT", 0, 0, 0, 0,
 	{{mr_dumb_proxy, 0}, mg_ignore, mg_ignore, mg_ignore, mg_ignore, mg_ignore}
 };
 

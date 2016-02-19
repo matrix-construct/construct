@@ -53,7 +53,7 @@
 static int me_snote(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message snote_msgtab = {
-	"SNOTE", 0, 0, 0, MFLG_SLOW,
+	"SNOTE", 0, 0, 0, 0,
 	{mg_ignore, mg_not_oper, mg_ignore, mg_ignore, {me_snote, 3}, mg_ignore}
 };
 

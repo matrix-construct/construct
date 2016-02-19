@@ -64,12 +64,12 @@ static int me_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct C
 		      const char *parv[]);
 
 struct Message xline_msgtab = {
-	"XLINE", 0, 0, 0, MFLG_SLOW,
+	"XLINE", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, {ms_xline, 5}, {ms_xline, 5}, {me_xline, 5}, {mo_xline, 3}}
 };
 
 struct Message unxline_msgtab = {
-	"UNXLINE", 0, 0, 0, MFLG_SLOW,
+	"UNXLINE", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, {ms_unxline, 3}, {ms_unxline, 3}, {me_unxline, 2}, {mo_unxline, 2}}
 };
 

@@ -35,7 +35,7 @@
 static int mo_unreject(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message unreject_msgtab = {
-	"UNREJECT", 0, 0, 0, MFLG_SLOW,
+	"UNREJECT", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, mg_ignore, {mo_unreject, 2}}
 };
 

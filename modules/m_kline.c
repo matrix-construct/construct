@@ -54,12 +54,12 @@ static int ms_unkline(struct MsgBuf *, struct Client *, struct Client *, int, co
 static int me_unkline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message kline_msgtab = {
-	"KLINE", 0, 0, 0, MFLG_SLOW,
+	"KLINE", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, {ms_kline, 5}, {ms_kline, 5}, {me_kline, 5}, {mo_kline, 3}}
 };
 
 struct Message unkline_msgtab = {
-	"UNKLINE", 0, 0, 0, MFLG_SLOW,
+	"UNKLINE", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, {ms_unkline, 4}, {ms_unkline, 4}, {me_unkline, 3}, {mo_unkline, 2}}
 };
 

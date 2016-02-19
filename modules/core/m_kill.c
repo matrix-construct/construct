@@ -49,7 +49,7 @@ static void relay_kill(struct Client *, struct Client *, struct Client *,
 		       const char *, const char *);
 
 struct Message kill_msgtab = {
-	"KILL", 0, 0, 0, MFLG_SLOW,
+	"KILL", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, {ms_kill, 2}, {ms_kill, 2}, mg_ignore, {mo_kill, 2}}
 };
 

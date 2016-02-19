@@ -40,7 +40,7 @@ static int m_lusers(struct MsgBuf *, struct Client *, struct Client *, int, cons
 static int ms_lusers(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message lusers_msgtab = {
-	"LUSERS", 0, 0, 0, MFLG_SLOW,
+	"LUSERS", 0, 0, 0, 0,
 	{mg_unreg, {m_lusers, 0}, {ms_lusers, 0}, mg_ignore, mg_ignore, {ms_lusers, 0}}
 };
 

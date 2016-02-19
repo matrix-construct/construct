@@ -52,7 +52,7 @@ struct Message test_msgtab = {
   0,                    /* SET TO ZERO -- number of times command used by clients */
   0,                    /* SET TO ZERO -- number of times command used by clients */
   0,                    /* SET TO ZERO -- number of times command used by clients */
-  MFLG_SLOW,            /* ALWAYS SET TO MFLG_SLOW */
+  0,            /* ALWAYS SET TO 0 */
 
   /* the functions to call for each handler.  If not using the generic
    * handlers, the first param is the function to call, the second is the

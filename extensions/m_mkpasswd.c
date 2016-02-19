@@ -30,7 +30,7 @@ static char saltChars[] = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmno
 	/* 0 .. 63, ascii - 64 */
 
 struct Message mkpasswd_msgtab = {
-	"MKPASSWD", 0, 0, 0, MFLG_SLOW,
+	"MKPASSWD", 0, 0, 0, 0,
 	{mg_unreg, {m_mkpasswd, 2}, mg_ignore, mg_ignore, mg_ignore, {mo_mkpasswd, 2}}
 };
 

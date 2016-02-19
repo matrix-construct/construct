@@ -50,7 +50,7 @@ static int mo_rehash(struct MsgBuf *, struct Client *, struct Client *, int, con
 static int me_rehash(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message rehash_msgtab = {
-	"REHASH", 0, 0, 0, MFLG_SLOW,
+	"REHASH", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, {me_rehash, 0}, {mo_rehash, 0}}
 };
 

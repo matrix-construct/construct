@@ -48,12 +48,12 @@ static int ms_tb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client
 static int ms_etb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message tb_msgtab = {
-	"TB", 0, 0, 0, MFLG_SLOW,
+	"TB", 0, 0, 0, 0,
 	{mg_unreg, mg_ignore, mg_ignore, {ms_tb, 4}, mg_ignore, mg_ignore}
 };
 
 struct Message etb_msgtab = {
-	"ETB", 0, 0, 0, MFLG_SLOW,
+	"ETB", 0, 0, 0, 0,
 	{mg_unreg, mg_ignore, {ms_etb, 5}, {ms_etb, 5}, mg_ignore, mg_ignore}
 };
 

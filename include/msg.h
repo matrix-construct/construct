@@ -66,18 +66,13 @@ struct Message
 	unsigned int count;	/* number of times command used */
 	unsigned int rcount;	/* number of times command used by server */
 	unsigned long bytes;	/* bytes received for this message */
-	unsigned int flags;	/* bit 0 set means that this command is allowed
-				 * to be used only on the average of once per 2
-				 * seconds -SRB
-				 */
+	unsigned int flags;
+
 	/* handlers:
 	 * UNREGISTERED, CLIENT, RCLIENT, SERVER, OPER, LAST
 	 */
 	struct MessageEntry handlers[LAST_HANDLER_TYPE];
 };
-
-#define MFLG_SLOW	0x01	/* executed roughly once per 2s */
-#define MFLG_UNREG	0x02	/* available to unregistered clients */
 
 /* generic handlers */
 extern int m_ignore(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

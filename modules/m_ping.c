@@ -41,7 +41,7 @@ static int m_ping(struct MsgBuf *, struct Client *, struct Client *, int, const 
 static int ms_ping(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message ping_msgtab = {
-	"PING", 0, 0, 0, MFLG_SLOW,
+	"PING", 0, 0, 0, 0,
 	{mg_unreg, {m_ping, 2}, {ms_ping, 2}, {ms_ping, 2}, mg_ignore, {m_ping, 2}}
 };
 

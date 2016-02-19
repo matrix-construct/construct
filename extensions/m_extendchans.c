@@ -35,7 +35,7 @@ static int mo_extendchans(struct MsgBuf *, struct Client *, struct Client *, int
 static int me_extendchans(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message extendchans_msgtab = {
-	"EXTENDCHANS", 0, 0, 0, MFLG_SLOW,
+	"EXTENDCHANS", 0, 0, 0, 0,
 	{ mg_unreg, mg_ignore, mg_ignore, mg_ignore, {me_extendchans, 2}, {mo_extendchans, 2}}
 };
 

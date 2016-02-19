@@ -48,7 +48,7 @@
 static int mo_sendbans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message sendbans_msgtab = {
-	"SENDBANS", 0, 0, 0, MFLG_SLOW,
+	"SENDBANS", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, mg_ignore, {mo_sendbans, 2}}
 };
 

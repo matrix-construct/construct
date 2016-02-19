@@ -7,7 +7,7 @@
 static int m_echotags(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message echotags_msgtab = {
-  "ECHOTAGS", 0, 0, 0, MFLG_SLOW,
+  "ECHOTAGS", 0, 0, 0, 0,
   { mg_ignore, {m_echotags, 0}, mg_ignore, mg_ignore, mg_ignore, {m_echotags, 0} }
 };
 

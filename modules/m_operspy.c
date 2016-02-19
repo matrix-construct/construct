@@ -48,7 +48,7 @@ static int ms_operspy(struct MsgBuf *msgbuf_p, struct Client *client_p, struct C
 		      int parc, const char *parv[]);
 
 struct Message operspy_msgtab = {
-	"OPERSPY", 0, 0, 0, MFLG_SLOW,
+	"OPERSPY", 0, 0, 0, 0,
 	{mg_ignore, mg_ignore, mg_ignore, mg_ignore, {ms_operspy, 2}, mg_ignore}
 };
 

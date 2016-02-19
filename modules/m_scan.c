@@ -56,7 +56,7 @@ static int scan_umodes(struct MsgBuf *, struct Client *, struct Client *, int, c
 /*static int scan_cmodes(struct MsgBuf *, struct Client *, struct Client *, int, const char **);*/
 
 struct Message scan_msgtab = {
-	"SCAN", 0, 0, 0, MFLG_SLOW,
+	"SCAN", 0, 0, 0, 0,
 	{mg_ignore, mg_not_oper, mg_ignore, mg_ignore, mg_ignore, {mo_scan, 2}}
 };
 

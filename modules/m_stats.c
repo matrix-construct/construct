@@ -54,7 +54,7 @@
 static int m_stats (struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message stats_msgtab = {
-	"STATS", 0, 0, 0, MFLG_SLOW,
+	"STATS", 0, 0, 0, 0,
 	{mg_unreg, {m_stats, 2}, {m_stats, 3}, mg_ignore, mg_ignore, {m_stats, 2}}
 };
 

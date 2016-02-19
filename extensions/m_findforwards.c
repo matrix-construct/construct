@@ -40,7 +40,7 @@ static int m_findforwards(struct MsgBuf *msgbuf_p, struct Client *client_p, stru
 			int parc, const char *parv[]);
 
 struct Message findforwards_msgtab = {
-	"FINDFORWARDS", 0, 0, 0, MFLG_SLOW,
+	"FINDFORWARDS", 0, 0, 0, 0,
 	{mg_unreg, {m_findforwards, 2}, mg_ignore, mg_ignore, mg_ignore, {m_findforwards, 2}}
 };
 

@@ -44,7 +44,7 @@ static int mo_links(struct MsgBuf *, struct Client *, struct Client *, int, cons
 static char * clean_string(char *dest, const unsigned char *src, size_t len);
 
 struct Message links_msgtab = {
-	"LINKS", 0, 0, 0, MFLG_SLOW,
+	"LINKS", 0, 0, 0, 0,
 	{mg_unreg, {m_links, 0}, {mo_links, 0}, mg_ignore, mg_ignore, {mo_links, 0}}
 };
 

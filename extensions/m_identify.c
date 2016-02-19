@@ -52,7 +52,7 @@
 static int m_identify(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message identify_msgtab = {
-	"IDENTIFY", 0, 0, 0, MFLG_SLOW,
+	"IDENTIFY", 0, 0, 0, 0,
 	{mg_unreg, {m_identify, 0}, mg_ignore, mg_ignore, mg_ignore, {m_identify, 0}}
 };
 

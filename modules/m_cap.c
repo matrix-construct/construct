@@ -51,7 +51,7 @@ static int m_cap(struct MsgBuf *, struct Client *, struct Client *, int, const c
 static int modinit(void);
 
 struct Message cap_msgtab = {
-	"CAP", 0, 0, 0, MFLG_SLOW,
+	"CAP", 0, 0, 0, 0,
 	{{m_cap, 2}, {m_cap, 2}, mg_ignore, mg_ignore, mg_ignore, {m_cap, 2}}
 };
 

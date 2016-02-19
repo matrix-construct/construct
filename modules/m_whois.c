@@ -54,7 +54,7 @@ static int m_whois(struct MsgBuf *, struct Client *, struct Client *, int, const
 static int ms_whois(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message whois_msgtab = {
-	"WHOIS", 0, 0, 0, MFLG_SLOW,
+	"WHOIS", 0, 0, 0, 0,
 	{mg_unreg, {m_whois, 2}, {ms_whois, 2}, mg_ignore, mg_ignore, {m_whois, 2}}
 };
 

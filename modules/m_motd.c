@@ -42,7 +42,7 @@ static int m_motd(struct MsgBuf *, struct Client *, struct Client *, int, const 
 static int mo_motd(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message motd_msgtab = {
-	"MOTD", 0, 0, 0, MFLG_SLOW,
+	"MOTD", 0, 0, 0, 0,
 	{mg_unreg, {m_motd, 0}, {mo_motd, 0}, mg_ignore, mg_ignore, {mo_motd, 0}}
 };
 

@@ -68,19 +68,19 @@ static void save_user(struct Client *, struct Client *, struct Client *);
 static void bad_nickname(struct Client *, const char *);
 
 struct Message nick_msgtab = {
-	"NICK", 0, 0, 0, MFLG_SLOW,
+	"NICK", 0, 0, 0, 0,
 	{{mr_nick, 0}, {m_nick, 0}, {mc_nick, 3}, {ms_nick, 0}, mg_ignore, {m_nick, 0}}
 };
 struct Message uid_msgtab = {
-	"UID", 0, 0, 0, MFLG_SLOW,
+	"UID", 0, 0, 0, 0,
 	{mg_ignore, mg_ignore, mg_ignore, {ms_uid, 9}, mg_ignore, mg_ignore}
 };
 struct Message euid_msgtab = {
-	"EUID", 0, 0, 0, MFLG_SLOW,
+	"EUID", 0, 0, 0, 0,
 	{mg_ignore, mg_ignore, mg_ignore, {ms_euid, 12}, mg_ignore, mg_ignore}
 };
 struct Message save_msgtab = {
-	"SAVE", 0, 0, 0, MFLG_SLOW,
+	"SAVE", 0, 0, 0, 0,
 	{mg_ignore, mg_ignore, mg_ignore, {ms_save, 3}, mg_ignore, mg_ignore}
 };
 

@@ -42,7 +42,7 @@
 static int m_names(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message names_msgtab = {
-	"NAMES", 0, 0, 0, MFLG_SLOW,
+	"NAMES", 0, 0, 0, 0,
 	{mg_unreg, {m_names, 0}, mg_ignore, mg_ignore, mg_ignore, {m_names, 0}}
 };
 

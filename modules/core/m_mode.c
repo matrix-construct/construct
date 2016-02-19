@@ -49,19 +49,19 @@ static int ms_mlock(struct MsgBuf *, struct Client *, struct Client *, int, cons
 static int ms_bmask(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message mode_msgtab = {
-	"MODE", 0, 0, 0, MFLG_SLOW,
+	"MODE", 0, 0, 0, 0,
 	{mg_unreg, {m_mode, 2}, {m_mode, 3}, {ms_mode, 3}, mg_ignore, {m_mode, 2}}
 };
 struct Message tmode_msgtab = {
-	"TMODE", 0, 0, 0, MFLG_SLOW,
+	"TMODE", 0, 0, 0, 0,
 	{mg_ignore, mg_ignore, {ms_tmode, 4}, {ms_tmode, 4}, mg_ignore, mg_ignore}
 };
 struct Message mlock_msgtab = {
-	"MLOCK", 0, 0, 0, MFLG_SLOW,
+	"MLOCK", 0, 0, 0, 0,
 	{mg_ignore, mg_ignore, {ms_mlock, 3}, {ms_mlock, 3}, mg_ignore, mg_ignore}
 };
 struct Message bmask_msgtab = {
-	"BMASK", 0, 0, 0, MFLG_SLOW,
+	"BMASK", 0, 0, 0, 0,
 	{mg_ignore, mg_ignore, mg_ignore, {ms_bmask, 5}, mg_ignore, mg_ignore}
 };
 

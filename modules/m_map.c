@@ -36,7 +36,7 @@ static int m_map(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client
 static int mo_map(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message map_msgtab = {
-	"MAP", 0, 0, 0, MFLG_SLOW,
+	"MAP", 0, 0, 0, 0,
 	{mg_unreg, {m_map, 0}, mg_ignore, mg_ignore, mg_ignore, {mo_map, 0}}
 };
 

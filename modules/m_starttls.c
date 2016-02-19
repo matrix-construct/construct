@@ -35,7 +35,7 @@
 static int mr_starttls(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message starttls_msgtab = {
-	"STARTTLS", 0, 0, 0, MFLG_SLOW,
+	"STARTTLS", 0, 0, 0, 0,
 	{{mr_starttls, 0}, mg_ignore, mg_ignore, mg_ignore, mg_ignore, mg_ignore}
 };
 

@@ -46,7 +46,7 @@ static void monitor_deinit(void);
 static int m_monitor(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message monitor_msgtab = {
-	"MONITOR", 0, 0, 0, MFLG_SLOW,
+	"MONITOR", 0, 0, 0, 0,
 	{mg_unreg, {m_monitor, 2}, mg_ignore, mg_ignore, mg_ignore, {m_monitor, 2}}
 };
 

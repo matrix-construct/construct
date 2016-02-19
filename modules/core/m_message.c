@@ -68,11 +68,11 @@ moddeinit(void)
 }
 
 struct Message privmsg_msgtab = {
-	"PRIVMSG", 0, 0, 0, MFLG_SLOW | MFLG_UNREG,
+	"PRIVMSG", 0, 0, 0, 0,
 	{mg_unreg, {m_privmsg, 0}, {m_privmsg, 0}, mg_ignore, mg_ignore, {m_privmsg, 0}}
 };
 struct Message notice_msgtab = {
-	"NOTICE", 0, 0, 0, MFLG_SLOW,
+	"NOTICE", 0, 0, 0, 0,
 	{mg_unreg, {m_notice, 0}, {m_notice, 0}, {m_notice, 0}, mg_ignore, {m_notice, 0}}
 };
 

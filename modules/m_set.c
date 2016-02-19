@@ -44,7 +44,7 @@
 static int mo_set(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message set_msgtab = {
-	"SET", 0, 0, 0, MFLG_SLOW,
+	"SET", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, mg_ignore, {mo_set, 0}}
 };
 

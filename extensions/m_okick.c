@@ -44,7 +44,7 @@ static int mo_okick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Cli
 
 
 struct Message okick_msgtab = {
-	"OKICK", 0, 0, 0, MFLG_SLOW,
+	"OKICK", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, mg_ignore, {mo_okick, 4}}
 };
 

@@ -50,7 +50,7 @@ static int m_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client
 static int ms_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message ban_msgtab = {
-	"BAN", 0, 0, 0, MFLG_SLOW,
+	"BAN", 0, 0, 0, 0,
 	{mg_unreg, {m_ban, 0}, {ms_ban, 9}, {ms_ban, 9}, mg_ignore, {m_ban, 0}}
 };
 

@@ -22,7 +22,7 @@ static int me_grant(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Cli
 static int do_grant(struct Client *source_p, struct Client *target_p, const char *new_privset);
 
 struct Message grant_msgtab = {
-  "GRANT", 0, 0, 0, MFLG_SLOW,
+  "GRANT", 0, 0, 0, 0,
   { mg_ignore, mg_not_oper, mg_ignore, mg_ignore, {me_grant, 3}, {mo_grant, 3}}
 };
 

@@ -38,7 +38,7 @@
 static int m_users(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message users_msgtab = {
-	"USERS", 0, 0, 0, MFLG_SLOW,
+	"USERS", 0, 0, 0, 0,
 	{mg_unreg, {m_users, 0}, {m_users, 0}, mg_ignore, mg_ignore, {m_users, 0}}
 };
 

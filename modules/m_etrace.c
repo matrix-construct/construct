@@ -58,15 +58,15 @@ static int m_chantrace(struct MsgBuf *, struct Client *, struct Client *, int, c
 static int mo_masktrace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message etrace_msgtab = {
-	"ETRACE", 0, 0, 0, MFLG_SLOW,
+	"ETRACE", 0, 0, 0, 0,
 	{mg_ignore, mg_not_oper, mg_ignore, mg_ignore, {me_etrace, 0}, {mo_etrace, 0}}
 };
 struct Message chantrace_msgtab = {
-	"CHANTRACE", 0, 0, 0, MFLG_SLOW,
+	"CHANTRACE", 0, 0, 0, 0,
 	{mg_ignore, {m_chantrace, 2}, mg_ignore, mg_ignore, mg_ignore, {m_chantrace, 2}}
 };
 struct Message masktrace_msgtab = {
-	"MASKTRACE", 0, 0, 0, MFLG_SLOW,
+	"MASKTRACE", 0, 0, 0, 0,
 	{mg_ignore, mg_not_oper, mg_ignore, mg_ignore, mg_ignore, {mo_masktrace, 2}}
 };
 

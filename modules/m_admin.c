@@ -44,7 +44,7 @@ static void do_admin(struct Client *source_p);
 static void admin_spy(struct Client *);
 
 struct Message admin_msgtab = {
-	"ADMIN", 0, 0, 0, MFLG_SLOW | MFLG_UNREG,
+	"ADMIN", 0, 0, 0, 0,
 	{{mr_admin, 0}, {m_admin, 0}, {ms_admin, 0}, mg_ignore, mg_ignore, {ms_admin, 0}}
 };
 

@@ -76,7 +76,7 @@ static int m_challenge(struct MsgBuf *, struct Client *, struct Client *, int, c
 
 /* We have openssl support, so include /CHALLENGE */
 struct Message challenge_msgtab = {
-	"CHALLENGE", 0, 0, 0, MFLG_SLOW,
+	"CHALLENGE", 0, 0, 0, 0,
 	{mg_unreg, {m_challenge, 2}, mg_ignore, mg_ignore, mg_ignore, {m_challenge, 2}}
 };
 

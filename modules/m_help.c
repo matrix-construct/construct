@@ -44,11 +44,11 @@ static int mo_uhelp(struct MsgBuf *, struct Client *, struct Client *, int, cons
 static void dohelp(struct Client *, int, const char *);
 
 struct Message help_msgtab = {
-	"HELP", 0, 0, 0, MFLG_SLOW,
+	"HELP", 0, 0, 0, 0,
 	{mg_unreg, {m_help, 0}, mg_ignore, mg_ignore, mg_ignore, {mo_help, 0}}
 };
 struct Message uhelp_msgtab = {
-	"UHELP", 0, 0, 0, MFLG_SLOW,
+	"UHELP", 0, 0, 0, 0,
 	{mg_unreg, {m_help, 0}, mg_ignore, mg_ignore, mg_ignore, {mo_uhelp, 0}}
 };
 

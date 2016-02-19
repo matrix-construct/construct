@@ -44,7 +44,7 @@ static int ms_squit(struct MsgBuf *, struct Client *, struct Client *, int, cons
 static int mo_squit(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message squit_msgtab = {
-	"SQUIT", 0, 0, 0, MFLG_SLOW,
+	"SQUIT", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, {ms_squit, 0}, {ms_squit, 0}, mg_ignore, {mo_squit, 2}}
 };
 

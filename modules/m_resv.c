@@ -48,12 +48,12 @@ static int ms_unresv(struct MsgBuf *, struct Client *, struct Client *, int, con
 static int me_unresv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message resv_msgtab = {
-	"RESV", 0, 0, 0, MFLG_SLOW | MFLG_UNREG,
+	"RESV", 0, 0, 0, 0,
 	{mg_ignore, mg_not_oper, {ms_resv, 4}, {ms_resv, 4}, {me_resv, 5}, {mo_resv, 3}}
 };
 
 struct Message unresv_msgtab = {
-	"UNRESV", 0, 0, 0, MFLG_SLOW | MFLG_UNREG,
+	"UNRESV", 0, 0, 0, 0,
 	{mg_ignore, mg_not_oper, {ms_unresv, 3}, {ms_unresv, 3}, {me_unresv, 2}, {mo_unresv, 2}}
 };
 

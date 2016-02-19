@@ -221,19 +221,6 @@ handle_command(struct Message *mptr, struct MsgBuf *msgbuf_p, struct Client *cli
 
 	mptr->count++;
 
-	/* New patch to avoid server flooding from unregistered connects
-	   - Pie-Man 07/27/2000 */
-
-	if(!IsRegistered(client_p))
-	{
-		/* if its from a possible server connection
-		 * ignore it.. more than likely its a header thats sneaked through
-		 */
-
-		if(IsAnyServer(client_p) && !(mptr->flags & MFLG_UNREG))
-			return (1);
-	}
-
 	ehandler = mptr->handlers[from->handler];
 	handler = ehandler.handler;
 

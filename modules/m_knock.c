@@ -41,7 +41,7 @@
 static int m_knock(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message knock_msgtab = {
-	"KNOCK", 0, 0, 0, MFLG_SLOW,
+	"KNOCK", 0, 0, 0, 0,
 	{mg_unreg, {m_knock, 2}, {m_knock, 2}, mg_ignore, mg_ignore, {m_knock, 2}}
 };
 

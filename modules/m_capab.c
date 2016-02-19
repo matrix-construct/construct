@@ -37,11 +37,11 @@ static int mr_capab(struct MsgBuf *, struct Client *, struct Client *, int, cons
 static int me_gcap(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message capab_msgtab = {
-	"CAPAB", 0, 0, 0, MFLG_SLOW | MFLG_UNREG,
+	"CAPAB", 0, 0, 0, 0,
 	{{mr_capab, 2}, mg_ignore, mg_ignore, mg_ignore, mg_ignore, mg_ignore}
 };
 struct Message gcap_msgtab = {
-	"GCAP", 0, 0, 0, MFLG_SLOW,
+	"GCAP", 0, 0, 0, 0,
 	{mg_ignore, mg_ignore, mg_ignore, mg_ignore, {me_gcap, 2}, mg_ignore}
 };
 

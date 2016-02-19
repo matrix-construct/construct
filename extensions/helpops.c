@@ -37,7 +37,7 @@ mapi_hfn_list_av1 helpops_hfnlist[] = {
 static int UMODE_HELPOPS = 0;
 
 struct Message dehelper_msgtab = {
-	"DEHELPER", 0, 0, 0, MFLG_SLOW,
+	"DEHELPER", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, mg_not_oper, mg_ignore, {me_dehelper, 2}, {mo_dehelper, 2}}
 };
 

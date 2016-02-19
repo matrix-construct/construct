@@ -67,19 +67,19 @@ static void h_svc_conf_read_start(void *);
 static void h_svc_conf_read_end(void *);
 
 struct Message su_msgtab = {
-	"SU", 0, 0, 0, MFLG_SLOW,
+	"SU", 0, 0, 0, 0,
 	{mg_ignore, mg_ignore, mg_ignore, mg_ignore, {me_su, 2}, mg_ignore}
 };
 struct Message login_msgtab = {
-	"LOGIN", 0, 0, 0, MFLG_SLOW,
+	"LOGIN", 0, 0, 0, 0,
 	{mg_ignore, mg_ignore, mg_ignore, mg_ignore, {me_login, 2}, mg_ignore}
 };
 struct Message rsfnc_msgtab = {
-	"RSFNC", 0, 0, 0, MFLG_SLOW,
+	"RSFNC", 0, 0, 0, 0,
 	{mg_ignore, mg_ignore, mg_ignore, mg_ignore, {me_rsfnc, 4}, mg_ignore}
 };
 struct Message nickdelay_msgtab = {
-	"NICKDELAY", 0, 0, 0, MFLG_SLOW,
+	"NICKDELAY", 0, 0, 0, 0,
 	{mg_unreg, mg_ignore, mg_ignore, mg_ignore, {me_nickdelay, 3}, mg_ignore}
 };
 

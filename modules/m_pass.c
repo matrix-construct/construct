@@ -40,7 +40,7 @@
 static int mr_pass(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message pass_msgtab = {
-	"PASS", 0, 0, 0, MFLG_SLOW | MFLG_UNREG,
+	"PASS", 0, 0, 0, 0,
 	{{mr_pass, 2}, mg_reg, mg_ignore, mg_ignore, mg_ignore, mg_reg}
 };
 

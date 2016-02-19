@@ -44,7 +44,7 @@
 static int m_whowas(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message whowas_msgtab = {
-	"WHOWAS", 0, 0, 0, MFLG_SLOW,
+	"WHOWAS", 0, 0, 0, 0,
 	{mg_unreg, {m_whowas, 2}, {m_whowas, 4}, mg_ignore, mg_ignore, {m_whowas, 2}}
 };
 

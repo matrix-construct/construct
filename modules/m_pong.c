@@ -44,7 +44,7 @@ static int mr_pong(struct MsgBuf *, struct Client *, struct Client *, int, const
 static int ms_pong(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message pong_msgtab = {
-	"PONG", 0, 0, 0, MFLG_SLOW | MFLG_UNREG,
+	"PONG", 0, 0, 0, 0,
 	{{mr_pong, 0}, mg_ignore, mg_ignore, {ms_pong, 2}, mg_ignore, mg_ignore}
 };
 

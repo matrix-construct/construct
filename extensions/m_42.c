@@ -14,7 +14,7 @@
 static int mclient_42(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message hgtg_msgtab = {
-  "42", 0, 0, 0, MFLG_SLOW,
+  "42", 0, 0, 0, 0,
   { mg_ignore, {mclient_42, 0}, mg_ignore, mg_ignore, mg_ignore, {mclient_42, 0}
   }
 };

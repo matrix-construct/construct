@@ -57,11 +57,11 @@ static int ms_signon(struct MsgBuf *, struct Client *, struct Client *, int, con
 static void send_signon(struct Client *, struct Client *, const char *, const char *, const char *, unsigned int, const char *);
 
 struct Message svslogin_msgtab = {
-	"SVSLOGIN", 0, 0, 0, MFLG_SLOW,
+	"SVSLOGIN", 0, 0, 0, 0,
 	{mg_ignore, mg_ignore, mg_ignore, mg_ignore, {me_svslogin, 6}, mg_ignore}
 };
 struct Message signon_msgtab = {
-	"SIGNON", 0, 0, 0, MFLG_SLOW,
+	"SIGNON", 0, 0, 0, 0,
 	{mg_ignore, mg_ignore, {ms_signon, 6}, mg_ignore, mg_ignore, mg_ignore}
 };
 

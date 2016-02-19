@@ -66,7 +66,7 @@ struct who_format
 static int m_who(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message who_msgtab = {
-	"WHO", 0, 0, 0, MFLG_SLOW,
+	"WHO", 0, 0, 0, 0,
 	{mg_unreg, {m_who, 2}, mg_ignore, mg_ignore, mg_ignore, {m_who, 2}}
 };
 

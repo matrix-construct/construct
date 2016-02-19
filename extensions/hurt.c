@@ -84,14 +84,14 @@ rb_dlink_list hurt_confs = { NULL, NULL, 0 };
 
 /* {{{ Messages */
 struct Message hurt_msgtab = {
-	"HURT", 0, 0, 0, MFLG_SLOW, {
+	"HURT", 0, 0, 0, 0, {
 		mg_ignore, mg_ignore, mg_ignore,
 		mg_ignore, {me_hurt, 0}, {mo_hurt, 3}
 	}
 };
 
 struct Message heal_msgtab = {
-	"HEAL", 0, 0, 0, MFLG_SLOW, {
+	"HEAL", 0, 0, 0, 0, {
 		mg_ignore, mg_ignore, mg_ignore,
 		mg_ignore, {me_heal, 0}, {mo_heal, 2}
 	}

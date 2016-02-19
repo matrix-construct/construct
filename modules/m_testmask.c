@@ -52,7 +52,7 @@ static int mo_testmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct 
 			int parc, const char *parv[]);
 
 struct Message testmask_msgtab = {
-	"TESTMASK", 0, 0, 0, MFLG_SLOW,
+	"TESTMASK", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, mg_ignore, {mo_testmask, 2}}
 };
 

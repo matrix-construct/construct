@@ -42,7 +42,7 @@
 static int me_tginfo(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message tginfo_msgtab = {
-	"TGINFO", 0, 0, 0, MFLG_SLOW,
+	"TGINFO", 0, 0, 0, 0,
 	{mg_unreg, mg_ignore, mg_ignore, mg_ignore, {me_tginfo, 2}, mg_ignore}
 };
 

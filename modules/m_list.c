@@ -72,7 +72,7 @@ static void safelist_iterate_clients(void *unused);
 static void safelist_channel_named(struct Client *source_p, const char *name, int operspy);
 
 struct Message list_msgtab = {
-	"LIST", 0, 0, 0, MFLG_SLOW,
+	"LIST", 0, 0, 0, 0,
 	{mg_unreg, {m_list, 0}, mg_ignore, mg_ignore, mg_ignore, {mo_list, 0}}
 };
 

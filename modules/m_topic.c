@@ -47,7 +47,7 @@ static int m_topic(struct MsgBuf *, struct Client *, struct Client *, int, const
 static int ms_topic(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message topic_msgtab = {
-	"TOPIC", 0, 0, 0, MFLG_SLOW,
+	"TOPIC", 0, 0, 0, 0,
 	{mg_unreg, {m_topic, 2}, {m_topic, 2}, {ms_topic, 5}, mg_ignore, {m_topic, 2}}
 };
 

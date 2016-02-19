@@ -84,27 +84,27 @@ static int do_modlist(struct Client *, const char *);
 static int do_modrestart(struct Client *);
 
 struct Message modload_msgtab = {
-	"MODLOAD", 0, 0, 0, MFLG_SLOW,
+	"MODLOAD", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, {me_modload, 2}, {mo_modload, 2}}
 };
 
 struct Message modunload_msgtab = {
-	"MODUNLOAD", 0, 0, 0, MFLG_SLOW,
+	"MODUNLOAD", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, {me_modunload, 2}, {mo_modunload, 2}}
 };
 
 struct Message modreload_msgtab = {
-	"MODRELOAD", 0, 0, 0, MFLG_SLOW,
+	"MODRELOAD", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, {me_modreload, 2}, {mo_modreload, 2}}
 };
 
 struct Message modlist_msgtab = {
-	"MODLIST", 0, 0, 0, MFLG_SLOW,
+	"MODLIST", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, {me_modlist, 0}, {mo_modlist, 0}}
 };
 
 struct Message modrestart_msgtab = {
-	"MODRESTART", 0, 0, 0, MFLG_SLOW,
+	"MODRESTART", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, {me_modrestart, 0}, {mo_modrestart, 0}}
 };
 
