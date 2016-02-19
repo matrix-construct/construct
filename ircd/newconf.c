@@ -864,8 +864,8 @@ conf_set_listen_port_both(void *data, int ssl)
                 {
 			if (!ssl)
 			{
-				conf_report_error("listener 'ANY/%d': support for plaintext listeners is being deprecated and may be removed in a future release.  "
-                                                  "It is suggested that users be migrated to SSL/TLS connections.", args->v.number);
+				conf_report_warning("listener 'ANY/%d': support for plaintext listeners may be removed in a future release per RFC 7194.  "
+                                                    "It is suggested that users be migrated to SSL/TLS connections.", args->v.number);
 			}
 			add_listener(args->v.number, listener_address, AF_INET, ssl, ssl || yy_defer_accept);
 #ifdef RB_IPV6
@@ -884,8 +884,8 @@ conf_set_listen_port_both(void *data, int ssl)
 
 			if (!ssl)
 			{
-				conf_report_error("listener '%s/%d': support for plaintext listeners is being deprecated and may be removed in a future release.  "
-                                                  "It is suggested that users be migrated to SSL/TLS connections.", listener_address, args->v.number);
+				conf_report_warning("listener '%s/%d': support for plaintext listeners may be removed in a future release per RFC 7194.  "
+                                                    "It is suggested that users be migrated to SSL/TLS connections.", listener_address, args->v.number);
 			}
 
 			add_listener(args->v.number, listener_address, family, ssl, ssl || yy_defer_accept);
@@ -2044,7 +2044,27 @@ conf_report_error(const char *fmt, ...)
 	}
 
 	ierror("\"%s\", line %d: %s", current_file, lineno + 1, msg);
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, "\"%s\", line %d: %s", current_file, lineno + 1, msg);
+	sendto_realops_snomask(SNO_GENERAL, L_ALL, "error: \"%s\", line %d: %s", current_file, lineno + 1, msg);
+}
+
+void
+conf_report_warning(const char *fmt, ...)
+{
+	va_list ap;
+	char msg[IRCD_BUFSIZE + 1] = { 0 };
+
+	va_start(ap, fmt);
+	vsnprintf(msg, IRCD_BUFSIZE, fmt, ap);
+	va_end(ap);
+
+	if (testing_conf)
+	{
+		fprintf(stderr, "\"%s\", line %d: %s\n", current_file, lineno + 1, msg);
+		return;
+	}
+
+	iwarn("\"%s\", line %d: %s", current_file, lineno + 1, msg);
+	sendto_realops_snomask(SNO_GENERAL, L_ALL, "warning: \"%s\", line %d: %s", current_file, lineno + 1, msg);
 }
 
 int

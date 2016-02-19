@@ -69,6 +69,7 @@ int conf_start_block(char *, char *);
 int conf_end_block(struct TopConf *);
 int conf_call_set(struct TopConf *, char *, conf_parm_t *);
 void conf_report_error(const char *, ...);
+void conf_report_warning(const char *, ...);
 void newconf_init(void);
 int add_conf_item(const char *topconf, const char *name, int type, void (*func) (void *));
 int remove_conf_item(const char *topconf, const char *name);
