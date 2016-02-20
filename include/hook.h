@@ -45,9 +45,16 @@ void call_hook(int id, void *arg);
 typedef struct
 {
 	struct Client *client;
+	void *arg1;
+	void *arg2;
+} hook_data;
+
+typedef struct
+{
+	struct Client *client;
 	const void *arg1;
 	const void *arg2;
-} hook_data;
+} hook_cdata;
 
 typedef struct
 {

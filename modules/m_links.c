@@ -82,7 +82,7 @@ mo_links(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	const char *mask = "";
 	struct Client *target_p;
 	char clean_mask[2 * HOSTLEN + 4];
-	hook_data hd;
+	hook_cdata hd;
 
 	rb_dlink_node *ptr;
 
