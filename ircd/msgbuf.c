@@ -156,6 +156,9 @@ msgbuf_unparse_prefix(char *buf, size_t buflen, struct MsgBuf *msgbuf, unsigned 
 
 	if (msgbuf->cmd != NULL)
 		rb_snprintf_append(buf, buflen, "%s ", msgbuf->cmd);
+
+	if (msgbuf->target != NULL)
+		rb_snprintf_append(buf, buflen, "%s ", msgbuf->target);
 }
 
 /*

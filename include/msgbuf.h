@@ -38,10 +38,11 @@ struct MsgBuf {
 	struct MsgTag tags[MAXPARA];	/* the tags themselves, upto MAXPARA tags available */
 
 	const char *origin;		/* the origin of the message (or NULL) */
-	const char *cmd;		/* the cmd/verb of the message (also para[0]) */
+	const char *target;		/* the target of the message (either NULL, or custom defined) */
+	const char *cmd;		/* the cmd/verb of the message (either NULL, or para[0]) */
 
 	size_t parselen;		/* the length of the message */
-	size_t n_para;			/* the number of parameters (always at least 1) */
+	size_t n_para;			/* the number of parameters (always at least 1 if a full message) */
 	const char *para[MAXPARA];	/* parameters vector (starting with cmd as para[0]) */
 };
 
