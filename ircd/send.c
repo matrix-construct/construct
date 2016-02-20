@@ -1175,6 +1175,8 @@ sendto_anywhere(struct Client *target_p, struct Client *source_p,
 			struct MsgBuf msgbuf;
 
 			build_msgbuf_from(&msgbuf, source_p, command);
+			msgbuf.target = target_p->name;
+
 			linebuf_put_msgvbuf(&msgbuf, &linebuf, target_p->localClient->caps, pattern, &args);
 		}
 	}
