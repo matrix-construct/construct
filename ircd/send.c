@@ -39,8 +39,7 @@
 #include "logger.h"
 #include "hook.h"
 #include "monitor.h"
-
-#define LOG_BUFSIZE 2048
+#include "msgbuf.h"
 
 /* send the message to the link the target is attached to */
 #define send_linebuf(a,b) _send_linebuf((a->from ? a->from : a) ,b)
@@ -121,9 +120,7 @@ send_linebuf_remote(struct Client *to, struct Client *from, buf_head_t *linebuf)
 		to = to->from;
 
 	/* we assume the caller has already tested for fake direction */
-
 	_send_linebuf(to, linebuf);
-	return;
 }
 
 /* send_queued_write()
@@ -213,6 +210,55 @@ send_queued_write(rb_fde_t *F, void *data)
 	send_queued(to);
 }
 
+/* linebuf_put_msgbuf
+ *
+ * inputs       - msgbuf header, linebuf object, capability mask, pattern, arguments
+ * outputs      - none
+ * side effects - the linebuf object is cleared, then populated using rb_linebuf_putmsg().
+ */
+static void
+linebuf_put_msgbuf(struct MsgBuf *msgbuf, buf_head_t *linebuf, unsigned int capmask, const char *pattern, ...)
+{
+	char buf[IRCD_BUFSIZE];
+	va_list va;
+
+	rb_linebuf_newbuf(linebuf);
+
+	msgbuf_unparse_prefix(buf, sizeof buf, msgbuf, capmask);
+
+	va_start(va, pattern);
+	rb_linebuf_putprefix(linebuf, pattern, &va, buf);
+	va_end(va);
+}
+
+/* build_msgbuf_from
+ *
+ * inputs       - msgbuf object, client the message is from
+ * outputs      - none
+ * side effects - a msgbuf object is populated with an origin and relevant tags
+ * notes        - to make this reentrant, find a solution for `buf` below
+ */
+static void
+build_msgbuf_from(struct MsgBuf *msgbuf, struct Client *from)
+{
+	static char buf[BUFSIZE];
+	hook_data hdata;
+
+	msgbuf_init(msgbuf);
+
+	msgbuf->origin = buf;
+
+	if (IsPerson(from))
+		snprintf(buf, sizeof buf, "%s!%s@%s", from->name, from->username, from->host);
+	else
+		rb_strlcpy(buf, from->name, sizeof buf);
+
+	hdata.client = from;
+	hdata.arg1 = msgbuf;
+
+	call_hook(h_outbound_msgbuf, &hdata);
+}
+
 /* sendto_one()
  *
  * inputs	- client to send to, va_args
@@ -241,7 +287,6 @@ sendto_one(struct Client *target_p, const char *pattern, ...)
 	_send_linebuf(target_p, &linebuf);
 
 	rb_linebuf_donebuf(&linebuf);
-
 }
 
 /* sendto_one_prefix()
