@@ -494,8 +494,6 @@ rb_linebuf_attach(buf_head_t * bufhead, buf_head_t * new)
 	}
 }
 
-
-
 /*
  * rb_linebuf_putmsg
  *
@@ -529,6 +527,72 @@ rb_linebuf_putmsg(buf_head_t * bufhead, const char *format, va_list * va_args,
 		len = vsnprintf(bufline->buf, BUF_DATA_SIZE, prefixfmt, prefix_args);
 		va_end(prefix_args);
 	}
+
+	if(va_args != NULL)
+	{
+		len += vsnprintf((bufline->buf + len), (BUF_DATA_SIZE - len), format, *va_args);
+	}
+
+	bufline->terminated = 1;
+
+	/* Truncate the data if required */
+	if(rb_unlikely(len > 510))
+	{
+		len = 510;
+		bufline->buf[len++] = '\r';
+		bufline->buf[len++] = '\n';
+	}
+	else if(rb_unlikely(len == 0))
+	{
+		bufline->buf[len++] = '\r';
+		bufline->buf[len++] = '\n';
+		bufline->buf[len] = '\0';
+	}
+	else
+	{
+		/* Chop trailing CRLF's .. */
+		while((bufline->buf[len] == '\r') || (bufline->buf[len] == '\n')
+		      || (bufline->buf[len] == '\0'))
+		{
+			len--;
+		}
+
+		bufline->buf[++len] = '\r';
+		bufline->buf[++len] = '\n';
+		bufline->buf[++len] = '\0';
+	}
+
+	bufline->len = len;
+	bufhead->len += len;
+}
+
+/*
+ * rb_linebuf_putprefix
+ *
+ * Similar to rb_linebuf_put, but designed for use by send.c.
+ *
+ * prefix is inserted first, then format/va_args is appended to the buffer.
+ */
+void
+rb_linebuf_putprefix(buf_head_t * bufhead, const char *format, va_list * va_args,
+		  const char *prefix)
+{
+	buf_line_t *bufline;
+	int len = 0;
+
+	/* make sure the previous line is terminated */
+#ifndef NDEBUG
+	if(bufhead->list.tail)
+	{
+		bufline = bufhead->list.tail->data;
+		lrb_assert(bufline->terminated);
+	}
+#endif
+	/* Create a new line */
+	bufline = rb_linebuf_new_line(bufhead);
+
+	if(prefix != NULL)
+		len = rb_strlcpy(bufline->buf, prefix, BUF_DATA_SIZE);
 
 	if(va_args != NULL)
 	{

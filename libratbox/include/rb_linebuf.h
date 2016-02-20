@@ -73,6 +73,7 @@ void rb_linebuf_donebuf(buf_head_t *);
 int rb_linebuf_parse(buf_head_t *, char *, int, int);
 int rb_linebuf_get(buf_head_t *, char *, int, int, int);
 void rb_linebuf_putmsg(buf_head_t *, const char *, va_list *, const char *, ...);
+void rb_linebuf_putprefix(buf_head_t *, const char *, va_list *, const char *);
 void rb_linebuf_put(buf_head_t *, const char *, ...);
 void rb_linebuf_putbuf(buf_head_t * bufhead, const char *buffer);
 void rb_linebuf_attach(buf_head_t *, buf_head_t *);
