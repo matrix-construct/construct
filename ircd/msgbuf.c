@@ -111,3 +111,74 @@ msgbuf_parse(struct MsgBuf *msgbuf, char *line)
 
 	return 0;
 }
+
+static void
+msgbuf_unparse_tags(char *buf, size_t buflen, struct MsgBuf *msgbuf, unsigned int capmask)
+{
+	int i;
+
+	*buf = '@';
+
+	for (i = 0; i < msgbuf->n_tags; i++)
+	{
+		if ((msgbuf->tags[i].capmask & capmask) == 0)
+			continue;
+
+		if (i != 0)
+			rb_strlcat(buf, ";", buflen);
+
+		rb_strlcat(buf, msgbuf->tags[i].key, buflen);
+
+		/* XXX properly handle escaping */
+		if (msgbuf->tags[i].value)
+		{
+			rb_strlcat(buf, "=", buflen);
+			rb_strlcat(buf, msgbuf->tags[i].value, buflen);
+		}
+	}
+
+	rb_strlcat(buf, " ", buflen);
+}
+
+static void
+msgbuf_unparse_prefix(char *buf, size_t buflen, struct MsgBuf *msgbuf, unsigned int capmask)
+{
+	int i;
+
+	memset(buf, 0, buflen);
+
+	if (msgbuf->n_tags > 0)
+		msgbuf_unparse_tags(buf, buflen, msgbuf, capmask);
+
+	if (msgbuf->origin)
+		rb_snprintf_append(buf, buflen, ":%s ", msgbuf->origin);
+}
+
+/*
+ * unparse a pure MsgBuf into a buffer.
+ * if origin is NULL, me.name will be used.
+ * cmd may not be NULL.
+ * returns 0 on success, 1 on error.
+ */
+int
+msgbuf_unparse(char *buf, size_t buflen, struct MsgBuf *msgbuf, unsigned int capmask)
+{
+	int i;
+
+	msgbuf_unparse_prefix(buf, buflen, msgbuf, capmask);
+
+	for (i = 0; i < msgbuf->n_para; i++)
+	{
+		if (i == (msgbuf->n_para - 1))
+		{
+			if (strchr(msgbuf->para[i], ' ') != NULL)
+				rb_snprintf_append(buf, buflen, ":%s", msgbuf->para[i]);
+			else
+				rb_strlcat(buf, msgbuf->para[i], buflen);
+		}
+		else
+			rb_strlcat(buf, msgbuf->para[i], buflen);
+	}
+
+	return 0;
+}

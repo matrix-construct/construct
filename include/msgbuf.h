@@ -57,7 +57,7 @@ int msgbuf_parse(struct MsgBuf *msgbuf, char *line);
  * cmd may not be NULL.
  * returns 0 on success, 1 on error.
  */
-int msgbuf_unparse(char *buf, struct MsgBuf *msgbuf, unsigned int capmask);
+int msgbuf_unparse(char *buf, size_t buflen, struct MsgBuf *msgbuf, unsigned int capmask);
 
 /*
  * unparse a MsgBuf header plus payload into a buffer.
@@ -65,8 +65,8 @@ int msgbuf_unparse(char *buf, struct MsgBuf *msgbuf, unsigned int capmask);
  * cmd may not be NULL.
  * returns 0 on success, 1 on error.
  */
-int msgbuf_unparse_fmt(char *buf, struct MsgBuf *head, unsigned int capmask, const char *fmt, ...) AFP(4, 5);
-int msgbuf_vunparse_fmt(char *buf, struct MsgBuf *head, unsigned int capmask, const char *fmt, va_list va);
+int msgbuf_unparse_fmt(char *buf, size_t buflen, struct MsgBuf *head, unsigned int capmask, const char *fmt, ...) AFP(5, 6);
+int msgbuf_vunparse_fmt(char *buf, size_t buflen, struct MsgBuf *head, unsigned int capmask, const char *fmt, va_list va);
 
 static inline void
 msgbuf_init(struct MsgBuf *msgbuf)
