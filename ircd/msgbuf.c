@@ -22,6 +22,8 @@
 #include "stdinc.h"
 #include "ircd_defs.h"
 #include "msgbuf.h"
+#include "client.h"
+#include "ircd.h"
 
 /*
  * parse a message into a MsgBuf.
@@ -150,8 +152,7 @@ msgbuf_unparse_prefix(char *buf, size_t buflen, struct MsgBuf *msgbuf, unsigned 
 	if (msgbuf->n_tags > 0)
 		msgbuf_unparse_tags(buf, buflen, msgbuf, capmask);
 
-	if (msgbuf->origin)
-		rb_snprintf_append(buf, buflen, ":%s ", msgbuf->origin);
+	rb_snprintf_append(buf, buflen, ":%s ", msgbuf->origin != NULL ? msgbuf->origin : me.name);
 }
 
 /*
