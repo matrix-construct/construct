@@ -86,6 +86,7 @@ rb_linebuf_parse
 rb_linebuf_put
 rb_linebuf_putbuf
 rb_linebuf_putmsg
+rb_linebuf_putprefix
 make_and_lookup
 make_and_lookup_ip
 rb_clear_patricia
