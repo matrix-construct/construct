@@ -183,3 +183,43 @@ msgbuf_unparse(char *buf, size_t buflen, struct MsgBuf *msgbuf, unsigned int cap
 
 	return 0;
 }
+
+/*
+ * unparse a MsgBuf stem + format string into a buffer
+ * if origin is NULL, me.name will be used.
+ * cmd may not be NULL.
+ * returns 0 on success, 1 on error.
+ */
+int
+msgbuf_vunparse_fmt(char *buf, size_t buflen, struct MsgBuf *head, unsigned int capmask, const char *fmt, va_list va)
+{
+	char *ws;
+	size_t prefixlen;
+
+	msgbuf_unparse_prefix(buf, buflen, head, capmask);
+	prefixlen = strlen(buf);
+
+	ws = buf + prefixlen;
+	vsnprintf(ws, buflen - prefixlen, fmt, va);
+
+	return 0;
+}
+
+/*
+ * unparse a MsgBuf stem + format string into a buffer (with va_list handling)
+ * if origin is NULL, me.name will be used.
+ * cmd may not be NULL.
+ * returns 0 on success, 1 on error.
+ */
+int
+msgbuf_unparse_fmt(char *buf, size_t buflen, struct MsgBuf *head, unsigned int capmask, const char *fmt, ...)
+{
+	va_list va;
+	int res;
+
+	va_start(va, fmt);
+	res = msgbuf_vunparse_fmt(buf, buflen, head, capmask, fmt, va);
+	va_end(va);
+
+	return res;
+}
