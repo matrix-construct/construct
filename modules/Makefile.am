@@ -8,6 +8,7 @@ LIBS += $(top_srcdir)/libratbox/src/libratbox.la $(top_srcdir)/ircd/libircd.la
 auto_load_moddir=@moduledir@/autoload
 
 auto_load_mod_LTLIBRARIES = \
+  cap_account_tag.la \
   chm_nocolour.la \
   chm_noctcp.la \
   m_accept.la \
