@@ -153,6 +153,9 @@ msgbuf_unparse_prefix(char *buf, size_t buflen, struct MsgBuf *msgbuf, unsigned 
 		msgbuf_unparse_tags(buf, buflen, msgbuf, capmask);
 
 	rb_snprintf_append(buf, buflen, ":%s ", msgbuf->origin != NULL ? msgbuf->origin : me.name);
+
+	if (msgbuf->cmd != NULL)
+		rb_snprintf_append(buf, buflen, "%s ", msgbuf->cmd);
 }
 
 /*
@@ -168,7 +171,7 @@ msgbuf_unparse(char *buf, size_t buflen, struct MsgBuf *msgbuf, unsigned int cap
 
 	msgbuf_unparse_prefix(buf, buflen, msgbuf, capmask);
 
-	for (i = 0; i < msgbuf->n_para; i++)
+	for (i = msgbuf->cmd != NULL ? 0 : 1; i < msgbuf->n_para; i++)
 	{
 		if (i == (msgbuf->n_para - 1))
 		{

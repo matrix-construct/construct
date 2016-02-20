@@ -210,6 +210,23 @@ send_queued_write(rb_fde_t *F, void *data)
 	send_queued(to);
 }
 
+/*
+ * linebuf_put_msgvbuf
+ *
+ * inputs       - msgbuf header, linebuf object, capability mask, pattern, arguments
+ * outputs      - none
+ * side effects - the linebuf object is cleared, then populated using rb_linebuf_putmsg().
+ */
+static void
+linebuf_put_msgvbuf(struct MsgBuf *msgbuf, buf_head_t *linebuf, unsigned int capmask, const char *pattern, va_list *va)
+{
+	char buf[IRCD_BUFSIZE];
+
+	rb_linebuf_newbuf(linebuf);
+	msgbuf_unparse_prefix(buf, sizeof buf, msgbuf, capmask);
+	rb_linebuf_putprefix(linebuf, pattern, va, buf);
+} 
+
 /* linebuf_put_msgbuf
  *
  * inputs       - msgbuf header, linebuf object, capability mask, pattern, arguments
@@ -219,15 +236,10 @@ send_queued_write(rb_fde_t *F, void *data)
 static void
 linebuf_put_msgbuf(struct MsgBuf *msgbuf, buf_head_t *linebuf, unsigned int capmask, const char *pattern, ...)
 {
-	char buf[IRCD_BUFSIZE];
 	va_list va;
 
-	rb_linebuf_newbuf(linebuf);
-
-	msgbuf_unparse_prefix(buf, sizeof buf, msgbuf, capmask);
-
 	va_start(va, pattern);
-	rb_linebuf_putprefix(linebuf, pattern, &va, buf);
+	linebuf_put_msgvbuf(msgbuf, linebuf, capmask, pattern, &va);
 	va_end(va);
 }
 
@@ -239,7 +251,7 @@ linebuf_put_msgbuf(struct MsgBuf *msgbuf, buf_head_t *linebuf, unsigned int capm
  * notes        - to make this reentrant, find a solution for `buf` below
  */
 static void
-build_msgbuf_from(struct MsgBuf *msgbuf, struct Client *from)
+build_msgbuf_from(struct MsgBuf *msgbuf, struct Client *from, const char *cmd)
 {
 	static char buf[BUFSIZE];
 	hook_data hdata;
@@ -247,6 +259,7 @@ build_msgbuf_from(struct MsgBuf *msgbuf, struct Client *from)
 	msgbuf_init(msgbuf);
 
 	msgbuf->origin = buf;
+	msgbuf->cmd = cmd;
 
 	if (IsPerson(from))
 		snprintf(buf, sizeof buf, "%s!%s@%s", from->name, from->username, from->host);
@@ -770,14 +783,17 @@ sendto_channel_local_butone(struct Client *one, int type, struct Channel *chptr,
 	buf_head_t linebuf;
 	struct membership *msptr;
 	struct Client *target_p;
+	struct MsgBuf msgbuf;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
+	unsigned int current_capmask = 0;
 
 	rb_linebuf_newbuf(&linebuf);
 
+	build_msgbuf_from(&msgbuf, one, NULL);
+
 	va_start(args, pattern);
 	rb_linebuf_putmsg(&linebuf, pattern, &args, NULL);
-	va_end(args);
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->locmembers.head)
 	{
@@ -793,8 +809,22 @@ sendto_channel_local_butone(struct Client *one, int type, struct Channel *chptr,
 		if(type && ((msptr->flags & type) == 0))
 			continue;
 
+		if (target_p->localClient->caps != current_capmask)
+		{
+			/* reset the linebuf */
+			rb_linebuf_donebuf(&linebuf);
+			rb_linebuf_newbuf(&linebuf);
+
+			/* render the new linebuf and attach it */
+			linebuf_put_msgvbuf(&msgbuf, &linebuf, target_p->localClient->caps, pattern, &args);
+			current_capmask = target_p->localClient->caps;
+		}
+
+		/* attach the present linebuf to the target */
 		_send_linebuf(target_p, &linebuf);
 	}
+
+	va_end(args);
 
 	rb_linebuf_donebuf(&linebuf);
 }
@@ -888,6 +918,7 @@ sendto_common_channels_local_butone(struct Client *user, int cap, int negcap, co
 	buf_head_t linebuf;
 
 	rb_linebuf_newbuf(&linebuf);
+
 	va_start(args, pattern);
 	rb_linebuf_putmsg(&linebuf, pattern, &args, NULL);
 	va_end(args);
@@ -1131,8 +1162,6 @@ sendto_anywhere(struct Client *target_p, struct Client *source_p,
 	va_list args;
 	buf_head_t linebuf;
 
-	rb_linebuf_newbuf(&linebuf);
-
 	va_start(args, pattern);
 
 	if(MyClient(target_p))
@@ -1142,11 +1171,12 @@ sendto_anywhere(struct Client *target_p, struct Client *source_p,
 				       source_p->name, command,
 				       target_p->name);
 		else
-			rb_linebuf_putmsg(&linebuf, pattern, &args,
-				       ":%s!%s@%s %s %s ",
-				       source_p->name, source_p->username,
-				       source_p->host, command,
-				       target_p->name);
+		{
+			struct MsgBuf msgbuf;
+
+			build_msgbuf_from(&msgbuf, source_p, command);
+			linebuf_put_msgvbuf(&msgbuf, &linebuf, target_p->localClient->caps, pattern, &args);
+		}
 	}
 	else
 		rb_linebuf_putmsg(&linebuf, pattern, &args, ":%s %s %s ",
