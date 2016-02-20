@@ -48,11 +48,6 @@ int num_hooks = 0;
 int last_hook = 0;
 int max_hooks = HOOK_INCREMENT;
 
-#ifdef USE_IODEBUG_HOOKS
-int h_iosend_id;
-int h_iorecv_id;
-int h_iorecvctrl_id;
-#endif
 int h_burst_client;
 int h_burst_channel;
 int h_burst_finished;
@@ -73,12 +68,6 @@ void
 init_hook(void)
 {
 	hooks = rb_malloc(sizeof(hook) * HOOK_INCREMENT);
-
-#ifdef USE_IODEBUG_HOOKS
-	h_iosend_id = register_hook("iosend");
-	h_iorecv_id = register_hook("iorecv");
-	h_iorecvctrl_id = register_hook("iorecvctrl");
-#endif
 
 	h_burst_client = register_hook("burst_client");
 	h_burst_channel = register_hook("burst_channel");

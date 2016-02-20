@@ -136,9 +136,7 @@ void
 send_queued(struct Client *to)
 {
 	int retlen;
-#ifdef USE_IODEBUG_HOOKS
-	hook_data_int hd;
-#endif
+
 	rb_fde_t *F = to->localClient->F;
 	if (!F)
 		return;
@@ -147,20 +145,9 @@ send_queued(struct Client *to)
 	if(IsIOError(to))
 		return;
 
-	/* Something wants us to not send anything currently */
-	/* if(IsCork(to))
-		return; */
-
 	/* try to flush later when the write event resets this */
 	if(IsFlush(to))
 		return;
-
-#ifdef USE_IODEBUG_HOOKS
-	hd.client = to;
-	if(to->localClient->buf_sendq.list.head)
-		hd.arg1 = ((buf_line_t *) to->localClient->buf_sendq.list.head->data)->buf +
-	                     to->localClient->buf_sendq.writeofs;
-#endif
 
 	if(rb_linebuf_len(&to->localClient->buf_sendq))
 	{
@@ -168,17 +155,6 @@ send_queued(struct Client *to)
 			rb_linebuf_flush(F, &to->localClient->buf_sendq)) > 0)
 		{
 			/* We have some data written .. update counters */
-#ifdef USE_IODEBUG_HOOKS
-                        hd.arg2 = retlen;
-                        call_hook(h_iosend_id, &hd);
-
-                        if(to->localClient->buf_sendq.list.head)
-                                hd.arg1 =
-                                        ((buf_line_t *) to->localClient->buf_sendq.list.head->
-                                         data)->buf + to->localClient->buf_sendq.writeofs;
-#endif
-
-
 			ClearFlush(to);
 
 			to->localClient->sendB += retlen;

@@ -513,19 +513,6 @@ elif test "$assert" = yes; then
 	assert = "hard";
 fi
 
-AC_MSG_CHECKING(if you want IO Debugging hooks)
-AC_ARG_ENABLE(iodebug,
-AC_HELP_STRING([--enable-iodebug],[Enable IO Debugging hooks]),
-[iodebug=$enableval], [iodebug=no])
-
-if test "$iodebug" = yes; then
-	AC_DEFINE(USE_IODEBUG_HOOKS, 1, [Define this to enable IO Debug hooks.])
-	AC_MSG_RESULT(yes)
-else
-	AC_MSG_RESULT(no)
-fi
-
-
 AC_MSG_CHECKING(if you want to do a profile build)
 AC_ARG_ENABLE(profile,
 AC_HELP_STRING([--enable-profile],[Enable profiling]),

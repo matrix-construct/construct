@@ -235,11 +235,7 @@ read_packet(rb_fde_t * F, void *data)
 {
 	struct Client *client_p = data;
 	int length = 0;
-
 	int binary = 0;
-#ifdef USE_IODEBUG_HOOKS
-	hook_data_int hdata;
-#endif
 
 	while(1)
 	{
@@ -267,13 +263,6 @@ read_packet(rb_fde_t * F, void *data)
 			error_exit_client(client_p, length);
 			return;
 		}
-
-#ifdef USE_IODEBUG_HOOKS
-		hdata.client = client_p;
-		hdata.arg1 = readBuf;
-		hdata.arg2 = length;
-		call_hook(h_iorecv_id, &hdata);
-#endif
 
 		if(client_p->localClient->lasttime < rb_current_time())
 			client_p->localClient->lasttime = rb_current_time();
