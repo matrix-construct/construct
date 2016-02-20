@@ -68,6 +68,8 @@ int msgbuf_unparse(char *buf, size_t buflen, struct MsgBuf *msgbuf, unsigned int
 int msgbuf_unparse_fmt(char *buf, size_t buflen, struct MsgBuf *head, unsigned int capmask, const char *fmt, ...) AFP(5, 6);
 int msgbuf_vunparse_fmt(char *buf, size_t buflen, struct MsgBuf *head, unsigned int capmask, const char *fmt, va_list va);
 
+void msgbuf_unparse_prefix(char *buf, size_t buflen, struct MsgBuf *msgbuf, unsigned int capmask);
+
 static inline void
 msgbuf_init(struct MsgBuf *msgbuf)
 {

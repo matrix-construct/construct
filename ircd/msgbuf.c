@@ -142,7 +142,7 @@ msgbuf_unparse_tags(char *buf, size_t buflen, struct MsgBuf *msgbuf, unsigned in
 	rb_strlcat(buf, " ", buflen);
 }
 
-static void
+void
 msgbuf_unparse_prefix(char *buf, size_t buflen, struct MsgBuf *msgbuf, unsigned int capmask)
 {
 	int i;
