@@ -114,10 +114,27 @@ msgbuf_parse(struct MsgBuf *msgbuf, char *line)
 	return 0;
 }
 
+static int
+msgbuf_has_matching_tags(struct MsgBuf *msgbuf, unsigned int capmask)
+{
+	int i;
+
+	for (i = 0; i < msgbuf->n_tags; i++)
+	{
+		if ((msgbuf->tags[i].capmask & capmask) != 0)
+			return 1;
+	}
+
+	return 0;
+}
+
 static void
 msgbuf_unparse_tags(char *buf, size_t buflen, struct MsgBuf *msgbuf, unsigned int capmask)
 {
 	int i;
+
+	if (!msgbuf_has_matching_tags(msgbuf, capmask))
+		return;
 
 	*buf = '@';
 
