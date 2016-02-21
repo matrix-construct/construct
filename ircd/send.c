@@ -1162,6 +1162,8 @@ sendto_anywhere(struct Client *target_p, struct Client *source_p,
 	va_list args;
 	buf_head_t linebuf;
 
+	rb_linebuf_newbuf(&linebuf);
+
 	va_start(args, pattern);
 
 	if(MyClient(target_p))
