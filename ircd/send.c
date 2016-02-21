@@ -497,6 +497,7 @@ void
 sendto_channel_flags(struct Client *one, int type, struct Client *source_p,
 		     struct Channel *chptr, const char *pattern, ...)
 {
+	char buf[IRCD_BUFSIZE];
 	va_list args;
 	buf_head_t rb_linebuf_local;
 	buf_head_t rb_linebuf_id;
@@ -515,9 +516,11 @@ sendto_channel_flags(struct Client *one, int type, struct Client *source_p,
 	build_msgbuf_from(&msgbuf, source_p, NULL);
 
 	va_start(args, pattern);
+	vsnprintf(buf, sizeof buf, pattern, args);
+	va_end(args);
 
-	linebuf_put_msgvbuf(&msgbuf, &rb_linebuf_local, NOCAPS, pattern, &args);
-	rb_linebuf_putmsg(&rb_linebuf_id, pattern, &args, ":%s ", use_id(source_p));
+	linebuf_put_msgbuf(&msgbuf, &rb_linebuf_local, NOCAPS, "%s", buf);
+	rb_linebuf_putmsg(&rb_linebuf_id, NULL, NULL, ":%s %s", use_id(source_p), buf);
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->members.head)
 	{
@@ -556,15 +559,13 @@ sendto_channel_flags(struct Client *one, int type, struct Client *source_p,
 				rb_linebuf_newbuf(&rb_linebuf_local);
 
 				/* render the new linebuf and attach it */
-				linebuf_put_msgvbuf(&msgbuf, &rb_linebuf_local, target_p->localClient->caps, pattern, &args);
+				linebuf_put_msgbuf(&msgbuf, &rb_linebuf_local, target_p->localClient->caps, "%s", buf);
 				current_capmask = target_p->localClient->caps;
 			}
 
 			_send_linebuf(target_p, &rb_linebuf_local);
 		}
 	}
-
-	va_end(args);
 
 	rb_linebuf_donebuf(&rb_linebuf_local);
 	rb_linebuf_donebuf(&rb_linebuf_id);
