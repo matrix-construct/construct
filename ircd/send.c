@@ -795,7 +795,6 @@ sendto_channel_local_butone(struct Client *one, int type, struct Channel *chptr,
 	struct MsgBuf msgbuf;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
-	unsigned int current_capmask = 0;
 
 	rb_linebuf_newbuf(&linebuf);
 
@@ -803,6 +802,7 @@ sendto_channel_local_butone(struct Client *one, int type, struct Channel *chptr,
 
 	va_start(args, pattern);
 	rb_linebuf_putmsg(&linebuf, pattern, &args, NULL);
+	va_end(args);
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->locmembers.head)
 	{
@@ -818,22 +818,9 @@ sendto_channel_local_butone(struct Client *one, int type, struct Channel *chptr,
 		if(type && ((msptr->flags & type) == 0))
 			continue;
 
-		if (target_p->localClient->caps != current_capmask)
-		{
-			/* reset the linebuf */
-			rb_linebuf_donebuf(&linebuf);
-			rb_linebuf_newbuf(&linebuf);
-
-			/* render the new linebuf and attach it */
-			linebuf_put_msgvbuf(&msgbuf, &linebuf, target_p->localClient->caps, pattern, &args);
-			current_capmask = target_p->localClient->caps;
-		}
-
 		/* attach the present linebuf to the target */
 		_send_linebuf(target_p, &linebuf);
 	}
-
-	va_end(args);
 
 	rb_linebuf_donebuf(&linebuf);
 }
