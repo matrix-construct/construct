@@ -141,6 +141,9 @@ AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+cap_server_time_la_LIBADD =
+cap_server_time_la_SOURCES = cap_server_time.c
+cap_server_time_la_OBJECTS = cap_server_time.lo
 chm_nocolour_la_LIBADD =
 chm_nocolour_la_SOURCES = chm_nocolour.c
 chm_nocolour_la_OBJECTS = chm_nocolour.lo
@@ -419,38 +422,39 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = cap_account_tag.c chm_nocolour.c chm_noctcp.c core/m_ban.c \
-	core/m_die.c core/m_error.c core/m_join.c core/m_kick.c \
-	core/m_kill.c core/m_message.c core/m_mode.c core/m_nick.c \
-	core/m_part.c core/m_quit.c core/m_server.c core/m_squit.c \
-	m_accept.c m_admin.c m_away.c m_cap.c m_capab.c m_certfp.c \
-	m_challenge.c m_chghost.c m_close.c m_cmessage.c m_connect.c \
-	m_dline.c m_encap.c m_etrace.c m_grant.c m_help.c m_info.c \
-	m_invite.c m_ison.c m_kline.c m_knock.c m_links.c m_list.c \
-	m_locops.c m_lusers.c m_map.c m_monitor.c m_motd.c m_names.c \
-	m_oper.c m_operspy.c m_pass.c m_ping.c m_pong.c m_post.c \
-	m_privs.c m_rehash.c m_restart.c m_resv.c m_sasl.c m_scan.c \
-	m_services.c m_set.c m_signon.c m_snote.c m_starttls.c \
-	m_stats.c m_svinfo.c m_tb.c m_testline.c m_testmask.c \
-	m_tginfo.c m_time.c m_topic.c m_trace.c m_unreject.c m_user.c \
-	m_userhost.c m_users.c m_version.c m_wallops.c m_who.c \
-	m_whois.c m_whowas.c m_xline.c sno_routing.c
-DIST_SOURCES = cap_account_tag.c chm_nocolour.c chm_noctcp.c \
-	core/m_ban.c core/m_die.c core/m_error.c core/m_join.c \
-	core/m_kick.c core/m_kill.c core/m_message.c core/m_mode.c \
-	core/m_nick.c core/m_part.c core/m_quit.c core/m_server.c \
-	core/m_squit.c m_accept.c m_admin.c m_away.c m_cap.c m_capab.c \
-	m_certfp.c m_challenge.c m_chghost.c m_close.c m_cmessage.c \
-	m_connect.c m_dline.c m_encap.c m_etrace.c m_grant.c m_help.c \
-	m_info.c m_invite.c m_ison.c m_kline.c m_knock.c m_links.c \
-	m_list.c m_locops.c m_lusers.c m_map.c m_monitor.c m_motd.c \
-	m_names.c m_oper.c m_operspy.c m_pass.c m_ping.c m_pong.c \
-	m_post.c m_privs.c m_rehash.c m_restart.c m_resv.c m_sasl.c \
-	m_scan.c m_services.c m_set.c m_signon.c m_snote.c \
-	m_starttls.c m_stats.c m_svinfo.c m_tb.c m_testline.c \
-	m_testmask.c m_tginfo.c m_time.c m_topic.c m_trace.c \
-	m_unreject.c m_user.c m_userhost.c m_users.c m_version.c \
-	m_wallops.c m_who.c m_whois.c m_whowas.c m_xline.c \
+SOURCES = cap_account_tag.c cap_server_time.c chm_nocolour.c \
+	chm_noctcp.c core/m_ban.c core/m_die.c core/m_error.c \
+	core/m_join.c core/m_kick.c core/m_kill.c core/m_message.c \
+	core/m_mode.c core/m_nick.c core/m_part.c core/m_quit.c \
+	core/m_server.c core/m_squit.c m_accept.c m_admin.c m_away.c \
+	m_cap.c m_capab.c m_certfp.c m_challenge.c m_chghost.c \
+	m_close.c m_cmessage.c m_connect.c m_dline.c m_encap.c \
+	m_etrace.c m_grant.c m_help.c m_info.c m_invite.c m_ison.c \
+	m_kline.c m_knock.c m_links.c m_list.c m_locops.c m_lusers.c \
+	m_map.c m_monitor.c m_motd.c m_names.c m_oper.c m_operspy.c \
+	m_pass.c m_ping.c m_pong.c m_post.c m_privs.c m_rehash.c \
+	m_restart.c m_resv.c m_sasl.c m_scan.c m_services.c m_set.c \
+	m_signon.c m_snote.c m_starttls.c m_stats.c m_svinfo.c m_tb.c \
+	m_testline.c m_testmask.c m_tginfo.c m_time.c m_topic.c \
+	m_trace.c m_unreject.c m_user.c m_userhost.c m_users.c \
+	m_version.c m_wallops.c m_who.c m_whois.c m_whowas.c m_xline.c \
+	sno_routing.c
+DIST_SOURCES = cap_account_tag.c cap_server_time.c chm_nocolour.c \
+	chm_noctcp.c core/m_ban.c core/m_die.c core/m_error.c \
+	core/m_join.c core/m_kick.c core/m_kill.c core/m_message.c \
+	core/m_mode.c core/m_nick.c core/m_part.c core/m_quit.c \
+	core/m_server.c core/m_squit.c m_accept.c m_admin.c m_away.c \
+	m_cap.c m_capab.c m_certfp.c m_challenge.c m_chghost.c \
+	m_close.c m_cmessage.c m_connect.c m_dline.c m_encap.c \
+	m_etrace.c m_grant.c m_help.c m_info.c m_invite.c m_ison.c \
+	m_kline.c m_knock.c m_links.c m_list.c m_locops.c m_lusers.c \
+	m_map.c m_monitor.c m_motd.c m_names.c m_oper.c m_operspy.c \
+	m_pass.c m_ping.c m_pong.c m_post.c m_privs.c m_rehash.c \
+	m_restart.c m_resv.c m_sasl.c m_scan.c m_services.c m_set.c \
+	m_signon.c m_snote.c m_starttls.c m_stats.c m_svinfo.c m_tb.c \
+	m_testline.c m_testmask.c m_tginfo.c m_time.c m_topic.c \
+	m_trace.c m_unreject.c m_user.c m_userhost.c m_users.c \
+	m_version.c m_wallops.c m_who.c m_whois.c m_whowas.c m_xline.c \
 	sno_routing.c
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
@@ -664,6 +668,7 @@ AM_LDFLAGS = -module -export-dynamic -avoid-version -no-undefined \
 auto_load_moddir = @moduledir@/autoload
 auto_load_mod_LTLIBRARIES = \
   cap_account_tag.la \
+  cap_server_time.la \
   chm_nocolour.la \
   chm_noctcp.la \
   m_accept.la \
@@ -854,6 +859,9 @@ clean-moduleLTLIBRARIES:
 
 cap_account_tag.la: $(cap_account_tag_la_OBJECTS) $(cap_account_tag_la_DEPENDENCIES) $(EXTRA_cap_account_tag_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) -rpath $(auto_load_moddir) $(cap_account_tag_la_OBJECTS) $(cap_account_tag_la_LIBADD) $(LIBS)
+
+cap_server_time.la: $(cap_server_time_la_OBJECTS) $(cap_server_time_la_DEPENDENCIES) $(EXTRA_cap_server_time_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(LINK) -rpath $(auto_load_moddir) $(cap_server_time_la_OBJECTS) $(cap_server_time_la_LIBADD) $(LIBS)
 
 chm_nocolour.la: $(chm_nocolour_la_OBJECTS) $(chm_nocolour_la_DEPENDENCIES) $(EXTRA_chm_nocolour_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) -rpath $(auto_load_moddir) $(chm_nocolour_la_OBJECTS) $(chm_nocolour_la_LIBADD) $(LIBS)
@@ -1126,6 +1134,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cap_account_tag.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cap_server_time.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chm_nocolour.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chm_noctcp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m_accept.Plo@am__quote@
