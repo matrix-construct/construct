@@ -39,10 +39,11 @@ struct CapabilityEntry {
 	char *cap;
 	unsigned int value;
 	unsigned int flags;
+	void *ownerdata;
 };
 
 unsigned int
-capability_get(struct CapabilityIndex *idx, const char *cap)
+capability_get(struct CapabilityIndex *idx, const char *cap, void **ownerdata)
 {
 	struct CapabilityEntry *entry;
 
@@ -52,13 +53,17 @@ capability_get(struct CapabilityIndex *idx, const char *cap)
 
 	entry = irc_dictionary_retrieve(idx->cap_dict, cap);
 	if (entry != NULL && !(entry->flags & CAP_ORPHANED))
+	{
+		if (ownerdata != NULL)
+			*ownerdata = entry->ownerdata;
 		return (1 << entry->value);
+	}
 
 	return 0;
 }
 
 unsigned int
-capability_put(struct CapabilityIndex *idx, const char *cap)
+capability_put(struct CapabilityIndex *idx, const char *cap, void *ownerdata)
 {
 	struct CapabilityEntry *entry;
 
@@ -76,6 +81,7 @@ capability_put(struct CapabilityIndex *idx, const char *cap)
 	entry->cap = rb_strdup(cap);
 	entry->flags = 0;
 	entry->value = idx->highest_bit;
+	entry->ownerdata = ownerdata;
 
 	irc_dictionary_add(idx->cap_dict, entry->cap, entry);
 

@@ -61,7 +61,7 @@ mapi_hfn_list_av1 remove_hfnlist[] = {
 static int
 modinit(void)
 {
-	CAP_REMOVE = capability_put(serv_capindex, "REMOVE");
+	CAP_REMOVE = capability_put(serv_capindex, "REMOVE", NULL);
 
 	return 0;
 }
