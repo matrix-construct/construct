@@ -30,6 +30,7 @@
 #include "modules.h"
 #include "sslproc.h"
 #include "s_assert.h"
+#include "s_serv.h"
 #include "logger.h"
 
 static int mr_starttls(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
