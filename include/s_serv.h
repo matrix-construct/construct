@@ -67,11 +67,9 @@ extern unsigned int CLICAP_SASL;
 extern unsigned int CLICAP_ACCOUNT_NOTIFY;
 extern unsigned int CLICAP_EXTENDED_JOIN;
 extern unsigned int CLICAP_AWAY_NOTIFY;
-extern unsigned int CLICAP_TLS;
 extern unsigned int CLICAP_USERHOST_IN_NAMES;
 extern unsigned int CLICAP_CAP_NOTIFY;
 extern unsigned int CLICAP_CHGHOST;
-extern unsigned int CLICAP_ACCOUNT_TAG;
 
 /*
  * XXX: this is kind of ugly, but this allows us to have backwards

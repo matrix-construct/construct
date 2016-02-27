@@ -100,7 +100,6 @@ unsigned int CLICAP_SASL;
 unsigned int CLICAP_ACCOUNT_NOTIFY;
 unsigned int CLICAP_EXTENDED_JOIN;
 unsigned int CLICAP_AWAY_NOTIFY;
-unsigned int CLICAP_TLS;
 unsigned int CLICAP_USERHOST_IN_NAMES;
 unsigned int CLICAP_CAP_NOTIFY;
 unsigned int CLICAP_CHGHOST;
@@ -148,7 +147,6 @@ init_builtin_capabs(void)
 	CLICAP_ACCOUNT_NOTIFY = capability_put(cli_capindex, "account-notify", NULL);
 	CLICAP_EXTENDED_JOIN = capability_put(cli_capindex, "extended-join", NULL);
 	CLICAP_AWAY_NOTIFY = capability_put(cli_capindex, "away-notify", NULL);
-	CLICAP_TLS = capability_put(cli_capindex, "tls", NULL);
 	CLICAP_USERHOST_IN_NAMES = capability_put(cli_capindex, "userhost-in-names", NULL);
 	CLICAP_CAP_NOTIFY = capability_put(cli_capindex, "cap-notify", NULL);
 	CLICAP_CHGHOST = capability_put(cli_capindex, "chghost", NULL);
