@@ -527,7 +527,10 @@ sendto_channel_flags(struct Client *one, int type, struct Client *source_p,
 		msptr = ptr->data;
 		target_p = msptr->client_p;
 
-		if(IsIOError(target_p->from) || target_p->from == one)
+		if(!MyClient(source_p) && (IsIOError(target_p->from) || target_p->from == one))
+			continue;
+
+		if(MyClient(source_p) && !IsCapable(source_p, CLICAP_ECHO_MESSAGE) && target_p == one)
 			continue;
 
 		if(type && ((msptr->flags & type) == 0))
@@ -624,7 +627,10 @@ sendto_channel_opmod(struct Client *one, struct Client *source_p,
 		msptr = ptr->data;
 		target_p = msptr->client_p;
 
-		if(IsIOError(target_p->from) || target_p->from == one)
+		if(!MyClient(source_p) && (IsIOError(target_p->from) || target_p->from == one))
+			continue;
+
+		if(MyClient(source_p) && !IsCapable(source_p, CLICAP_ECHO_MESSAGE) && target_p == one)
 			continue;
 
 		if((msptr->flags & CHFL_CHANOP) == 0)
