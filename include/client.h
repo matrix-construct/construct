@@ -445,18 +445,6 @@ struct ListClient
                              UMODE_WALLOP | UMODE_LOCOPS)
 #define DEFAULT_OPER_SNOMASK SNO_GENERAL
 
-/* XXX make clicap a registry */
-#define CLICAP_MULTI_PREFIX		0x0001
-#define CLICAP_SASL			0x0002
-#define CLICAP_ACCOUNT_NOTIFY		0x0004
-#define CLICAP_EXTENDED_JOIN		0x0008
-#define CLICAP_AWAY_NOTIFY		0x0010
-#define CLICAP_TLS			0x0020
-#define CLICAP_USERHOST_IN_NAMES	0x0040
-#define CLICAP_CAP_NOTIFY		0x0080
-#define CLICAP_CHGHOST			0x0100
-#define CLICAP_ACCOUNT_TAG		0x0200
-
 /*
  * flags macros.
  */

@@ -41,6 +41,8 @@ mapi_hfn_list_av1 cap_account_tag_hfnlist[] = {
 	{ NULL, NULL }
 };
 
+unsigned int CLICAP_ACCOUNT_TAG = 0;
+
 static void
 cap_account_tag_process(hook_data *data)
 {
@@ -50,4 +52,17 @@ cap_account_tag_process(hook_data *data)
 		msgbuf_append_tag(msgbuf, "account", data->client->user->suser, CLICAP_ACCOUNT_TAG);
 }
 
-DECLARE_MODULE_AV1(cap_account_tag, NULL, NULL, NULL, NULL, cap_account_tag_hfnlist, "$Revision$");
+static int
+_modinit(void)
+{
+	CLICAP_ACCOUNT_TAG = capability_put(cli_capindex, "account-tag", NULL);
+	return 0;
+}
+
+static void
+_moddeinit(void)
+{
+	capability_orphan(cli_capindex, "account-tag");
+}
+
+DECLARE_MODULE_AV1(cap_account_tag, _modinit, _moddeinit, NULL, NULL, cap_account_tag_hfnlist, "$Revision$");

@@ -25,6 +25,16 @@
 
 static rb_dlink_list capability_indexes = { NULL, NULL, 0 };
 
+struct CapabilityEntry *
+capability_find(struct CapabilityIndex *idx, const char *cap)
+{
+	s_assert(idx != NULL);
+	if (cap == NULL)
+		return NULL;
+
+	return irc_dictionary_retrieve(idx->cap_dict, cap);
+}
+
 unsigned int
 capability_get(struct CapabilityIndex *idx, const char *cap, void **ownerdata)
 {

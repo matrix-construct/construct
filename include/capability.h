@@ -38,6 +38,7 @@ struct CapabilityEntry {
 	void *ownerdata;
 };
 
+extern struct CapabilityEntry *capability_find(struct CapabilityIndex *idx, const char *cap);
 extern unsigned int capability_get(struct CapabilityIndex *idx, const char *cap, void **ownerdata);
 extern unsigned int capability_put(struct CapabilityIndex *idx, const char *cap, void *ownerdata);
 extern unsigned int capability_put_anonymous(struct CapabilityIndex *idx);

@@ -51,6 +51,28 @@ struct Channel;
 extern struct CapabilityIndex *serv_capindex;
 extern struct CapabilityIndex *cli_capindex;
 
+/* register client capabilities with this structure for 3.2 enhanced capability negotiation */
+#define CLICAP_FLAGS_STICKY    0x001
+#define CLICAP_FLAGS_REQACK    0x002
+
+struct ClientCapability {
+	int (*visible)(void);			/* whether or not to display the capability.  set to NULL or true return value = displayed */
+	const char *(*data)(void);		/* any custom data for the capability.  set to NULL or return NULL = no data */
+	unsigned int flags;
+};
+
+/* builtin client capabilities */
+extern unsigned int CLICAP_MULTI_PREFIX;
+extern unsigned int CLICAP_SASL;
+extern unsigned int CLICAP_ACCOUNT_NOTIFY;
+extern unsigned int CLICAP_EXTENDED_JOIN;
+extern unsigned int CLICAP_AWAY_NOTIFY;
+extern unsigned int CLICAP_TLS;
+extern unsigned int CLICAP_USERHOST_IN_NAMES;
+extern unsigned int CLICAP_CAP_NOTIFY;
+extern unsigned int CLICAP_CHGHOST;
+extern unsigned int CLICAP_ACCOUNT_TAG;
+
 /*
  * XXX: this is kind of ugly, but this allows us to have backwards
  * API-compatibility.

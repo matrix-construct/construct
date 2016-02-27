@@ -2,6 +2,7 @@
  *
  *  Copyright (C) 2005 Lee Hardy <lee@leeh.co.uk>
  *  Copyright (C) 2005 ircd-ratbox development team
+ *  Copyright (C) 2016 William Pitcock <nenolod@dereferenced.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -26,8 +27,6 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id: m_cap.c 676 2006-02-03 20:05:09Z gxti $
  */
 
 #include "stdinc.h"
@@ -48,7 +47,6 @@
 typedef int (*bqcmp)(const void *, const void *);
 
 static int m_cap(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int modinit(void);
 
 struct Message cap_msgtab = {
 	"CAP", 0, 0, 0, 0,
@@ -56,57 +54,10 @@ struct Message cap_msgtab = {
 };
 
 mapi_clist_av1 cap_clist[] = { &cap_msgtab, NULL };
-DECLARE_MODULE_AV1(cap, modinit, NULL, cap_clist, NULL, NULL, "$Revision: 676 $");
+DECLARE_MODULE_AV1(cap, NULL, NULL, cap_clist, NULL, NULL, "$Revision: 676 $");
 
-#define _CLICAP(name, capserv, capclient, caprequired, flags)	\
-	{ (name), (capserv), (capclient), (caprequired), (flags), sizeof(name) - 1 }
-
-#define CLICAP_FLAGS_STICKY	0x001
-
-static struct clicap
-{
-	const char *name;
-	int cap_serv;		/* for altering s->c */
-	int cap_cli;		/* for altering c->s */
-	int cap_required_serv;	/* required dependency cap */
-	int flags;
-	int namelen;
-} clicap_list[] = {
-	_CLICAP("multi-prefix",	CLICAP_MULTI_PREFIX, 0, 0, 0),
-	_CLICAP("sasl", CLICAP_SASL, 0, 0, CLICAP_FLAGS_STICKY),
-	_CLICAP("account-notify", CLICAP_ACCOUNT_NOTIFY, 0, 0, 0),
-	_CLICAP("extended-join", CLICAP_EXTENDED_JOIN, 0, 0, 0),
-	_CLICAP("away-notify", CLICAP_AWAY_NOTIFY, 0, 0, 0),
-	_CLICAP("tls", CLICAP_TLS, 0, 0, 0),
-	_CLICAP("userhost-in-names", CLICAP_USERHOST_IN_NAMES, 0, 0, 0),
-	_CLICAP("cap-notify", CLICAP_CAP_NOTIFY, 0, 0, 0),
-	_CLICAP("chghost", CLICAP_CHGHOST, 0, 0, 0),
-	_CLICAP("account-tag", CLICAP_ACCOUNT_TAG, 0, 0, 0),
-};
-
-#define CLICAP_LIST_LEN (sizeof(clicap_list) / sizeof(struct clicap))
-
-static int clicap_sort(struct clicap *, struct clicap *);
-
-static int
-modinit(void)
-{
-	qsort(clicap_list, CLICAP_LIST_LEN, sizeof(struct clicap),
-		(bqcmp) clicap_sort);
-	return 0;
-}
-
-static int
-clicap_sort(struct clicap *one, struct clicap *two)
-{
-	return irccmp(one->name, two->name);
-}
-
-static int
-clicap_compare(const char *name, struct clicap *cap)
-{
-	return irccmp(name, cap->name);
-}
+#define IsCapableEntry(c, e)		IsCapable(c, 1 << (e)->value)
+#define HasCapabilityFlag(c, f)		(c->ownerdata != NULL && (((struct ClientCapability *)c->ownerdata)->flags & (f)) == f)
 
 /* clicap_find()
  *   Used iteratively over a buffer, extracts individual cap tokens.
@@ -116,12 +67,12 @@ clicap_compare(const char *name, struct clicap *cap)
  *         int pointer to whether we finish with success
  * Ouputs: Cap entry if found, NULL otherwise.
  */
-static struct clicap *
+static struct CapabilityEntry *
 clicap_find(const char *data, int *negate, int *finished)
 {
 	static char buf[BUFSIZE];
 	static char *p;
-	struct clicap *cap;
+	struct CapabilityEntry *cap;
 	char *s;
 
 	*negate = 0;
@@ -158,8 +109,7 @@ clicap_find(const char *data, int *negate, int *finished)
 	if((s = strchr(p, ' ')))
 		*s++ = '\0';
 
-	if((cap = bsearch(p, clicap_list, CLICAP_LIST_LEN,
-				sizeof(struct clicap), (bqcmp) clicap_compare)))
+	if((cap = capability_find(cli_capindex, p)) != NULL)
 	{
 		if(s)
 			p = s;
@@ -186,7 +136,8 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags, int clea
 	char *p;
 	int buflen = 0;
 	int curlen, mlen;
-	size_t i;
+	struct CapabilityEntry *entry;
+	struct DictionaryIter iter;
 
 	mlen = sprintf(buf, ":%s CAP %s %s",
 			me.name,
@@ -203,18 +154,18 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags, int clea
 		return;
 	}
 
-	for(i = 0; i < CLICAP_LIST_LEN; i++)
+	DICTIONARY_FOREACH(entry, &iter, cli_capindex->cap_dict)
 	{
 		if(flags)
 		{
-			if(!IsCapable(source_p, clicap_list[i].cap_serv))
+			if(!IsCapableEntry(source_p, entry))
 				continue;
 			/* they are capable of this, check sticky */
-			else if(clear && clicap_list[i].flags & CLICAP_FLAGS_STICKY)
+			else if(clear && HasCapabilityFlag(entry, CLICAP_FLAGS_STICKY))
 				continue;
 		}
 
-		if (clicap_list[i].cap_serv == CLICAP_SASL)
+		if ((1 << entry->value) == CLICAP_SASL)
 		{
 			struct Client *agent_p = NULL;
 
@@ -227,7 +178,7 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags, int clea
 		}
 
 		/* \r\n\0, possible "-~=", space, " *" */
-		if(buflen + clicap_list[i].namelen >= BUFSIZE - 10)
+		if(buflen + strlen(entry->cap) >= BUFSIZE - 10)
 		{
 			/* remove our trailing space -- if buflen == mlen
 			 * here, we didnt even succeed in adding one.
@@ -248,7 +199,7 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags, int clea
 			buflen++;
 		}
 
-		curlen = sprintf(p, "%s ", clicap_list[i].name);
+		curlen = sprintf(p, "%s ", entry->cap);
 		p += curlen;
 		buflen += curlen;
 	}
@@ -265,7 +216,7 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags, int clea
 static void
 cap_ack(struct Client *source_p, const char *arg)
 {
-	struct clicap *cap;
+	struct CapabilityEntry *cap;
 	int capadd = 0, capdel = 0;
 	int finished = 0, negate;
 
@@ -276,19 +227,19 @@ cap_ack(struct Client *source_p, const char *arg)
 	    cap = clicap_find(NULL, &negate, &finished))
 	{
 		/* sent an ACK for something they havent REQd */
-		if(!IsCapable(source_p, cap->cap_serv))
+		if(!IsCapableEntry(source_p, cap))
 			continue;
 
 		if(negate)
 		{
 			/* dont let them ack something sticky off */
-			if(cap->flags & CLICAP_FLAGS_STICKY)
+			if(HasCapabilityFlag(cap, CLICAP_FLAGS_STICKY))
 				continue;
 
-			capdel |= cap->cap_cli;
+			capdel |= (1 << cap->value);
 		}
 		else
-			capadd |= cap->cap_cli;
+			capadd |= (1 << cap->value);
 	}
 
 	source_p->localClient->caps |= capadd;
@@ -301,12 +252,7 @@ cap_clear(struct Client *source_p, const char *arg)
 	clicap_generate(source_p, "ACK",
 			source_p->localClient->caps ? source_p->localClient->caps : -1, 1);
 
-	/* XXX - sticky capabs */
-#ifdef CLICAP_STICKY
-	source_p->localClient->caps = source_p->localClient->caps & CLICAP_STICKY;
-#else
 	source_p->localClient->caps = 0;
-#endif
 }
 
 static void
@@ -346,7 +292,7 @@ cap_req(struct Client *source_p, const char *arg)
 {
 	char buf[BUFSIZE];
 	char pbuf[2][BUFSIZE];
-	struct clicap *cap;
+	struct CapabilityEntry *cap;
 	int buflen, plen;
 	int i = 0;
 	int capadd = 0, capdel = 0;
@@ -367,11 +313,13 @@ cap_req(struct Client *source_p, const char *arg)
 	for(cap = clicap_find(arg, &negate, &finished); cap;
 	    cap = clicap_find(NULL, &negate, &finished))
 	{
+		size_t namelen = strlen(cap->cap);
+
 		/* filled the first array, but cant send it in case the
 		 * request fails.  one REQ should never fill more than two
 		 * buffers --fl
 		 */
-		if(buflen + plen + cap->namelen + 6 >= BUFSIZE)
+		if(buflen + plen + namelen + 6 >= BUFSIZE)
 		{
 			pbuf[1][0] = '\0';
 			plen = 0;
@@ -380,7 +328,7 @@ cap_req(struct Client *source_p, const char *arg)
 
 		if(negate)
 		{
-			if(cap->flags & CLICAP_FLAGS_STICKY)
+			if(HasCapabilityFlag(cap, CLICAP_FLAGS_STICKY))
 			{
 				finished = 0;
 				break;
@@ -389,17 +337,11 @@ cap_req(struct Client *source_p, const char *arg)
 			strcat(pbuf[i], "-");
 			plen++;
 
-			capdel |= cap->cap_serv;
+			capdel |= (1 << cap->value);
 		}
 		else
 		{
-			if(cap->cap_required_serv && !((capadd & cap->cap_required_serv) == cap->cap_required_serv || IsCapable(source_p, cap->cap_required_serv)))
-			{
-				finished = 0;
-				break;
-			}
-
-			if (cap->cap_serv == CLICAP_SASL)
+			if ((1 << cap->value) == CLICAP_SASL)
 			{
 				struct Client *agent_p = NULL;
 
@@ -417,19 +359,20 @@ cap_req(struct Client *source_p, const char *arg)
 				}
 			}
 
-			capadd |= cap->cap_serv;
+			capadd |= (1 << cap->value);
 		}
 
-		if(cap->cap_cli)
+		/* XXX this probably should exclude REQACK'd caps from capadd/capdel, but keep old behaviour for now */
+		if(HasCapabilityFlag(cap, CLICAP_FLAGS_REQACK))
 		{
 			strcat(pbuf[i], "~");
 			plen++;
 		}
 
-		strcat(pbuf[i], cap->name);
+		strcat(pbuf[i], cap->cap);
 		if (!finished) {
 			strcat(pbuf[i], " ");
-			plen += (cap->namelen + 1);
+			plen += (namelen + 1);
 		}
 	}
 
