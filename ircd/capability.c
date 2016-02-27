@@ -25,23 +25,6 @@
 
 static rb_dlink_list capability_indexes = { NULL, NULL, 0 };
 
-struct CapabilityIndex {
-	char *name;
-	struct Dictionary *cap_dict;
-	unsigned int highest_bit;
-	rb_dlink_node node;
-};
-
-#define CAP_ORPHANED	0x1
-#define CAP_REQUIRED	0x2
-
-struct CapabilityEntry {
-	char *cap;
-	unsigned int value;
-	unsigned int flags;
-	void *ownerdata;
-};
-
 unsigned int
 capability_get(struct CapabilityIndex *idx, const char *cap, void **ownerdata)
 {
@@ -78,7 +61,7 @@ capability_put(struct CapabilityIndex *idx, const char *cap, void *ownerdata)
 	}
 
 	entry = rb_malloc(sizeof(struct CapabilityEntry));
-	entry->cap = rb_strdup(cap);
+	entry->cap = cap;
 	entry->flags = 0;
 	entry->value = idx->highest_bit;
 	entry->ownerdata = ownerdata;
@@ -148,7 +131,7 @@ capability_index_create(const char *name)
 	struct CapabilityIndex *idx;
 
 	idx = rb_malloc(sizeof(struct CapabilityIndex));
-	idx->name = rb_strdup(name);
+	idx->name = name;
 	idx->cap_dict = irc_dictionary_create(name, strcasecmp);
 	idx->highest_bit = 1;
 

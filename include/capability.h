@@ -21,8 +21,22 @@
 #ifndef __CAPABILITY_H__
 #define __CAPABILITY_H__
 
-struct CapabilityIndex;
-struct CapabilityEntry;
+struct CapabilityIndex {
+	const char *name;
+	struct Dictionary *cap_dict;
+	unsigned int highest_bit;
+	rb_dlink_node node;
+};
+
+#define CAP_ORPHANED	0x1
+#define CAP_REQUIRED	0x2
+
+struct CapabilityEntry {
+	const char *cap;
+	unsigned int value;
+	unsigned int flags;
+	void *ownerdata;
+};
 
 extern unsigned int capability_get(struct CapabilityIndex *idx, const char *cap, void **ownerdata);
 extern unsigned int capability_put(struct CapabilityIndex *idx, const char *cap, void *ownerdata);
