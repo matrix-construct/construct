@@ -72,6 +72,7 @@ static char buf[BUFSIZE];
  * extra argument to "PASS" takes care of checking that.  -orabidoo
  */
 struct CapabilityIndex *serv_capindex = NULL;
+struct CapabilityIndex *cli_capindex = NULL;
 
 unsigned int CAP_CAP;
 unsigned int CAP_QS;
@@ -106,29 +107,31 @@ init_builtin_capabs(void)
 	CAP_CAP = capability_put_anonymous(serv_capindex);
 	CAP_TS6 = capability_put_anonymous(serv_capindex);
 
-	CAP_QS = capability_put(serv_capindex, "QS");
-	CAP_EX = capability_put(serv_capindex, "EX");
-	CAP_CHW = capability_put(serv_capindex, "CHW");
-	CAP_IE = capability_put(serv_capindex, "IE");
-	CAP_KLN = capability_put(serv_capindex, "KLN");
-	CAP_KNOCK = capability_put(serv_capindex, "KNOCK");
-	CAP_ZIP = capability_put(serv_capindex, "ZIP");
-	CAP_TB = capability_put(serv_capindex, "TB");
-	CAP_UNKLN = capability_put(serv_capindex, "UNKLN");
-	CAP_CLUSTER = capability_put(serv_capindex, "CLUSTER");
-	CAP_ENCAP = capability_put(serv_capindex, "ENCAP");
-	CAP_SERVICE = capability_put(serv_capindex, "SERVICES");
-	CAP_RSFNC = capability_put(serv_capindex, "RSFNC");
-	CAP_SAVE = capability_put(serv_capindex, "SAVE");
-	CAP_EUID = capability_put(serv_capindex, "EUID");
-	CAP_EOPMOD = capability_put(serv_capindex, "EOPMOD");
-	CAP_BAN = capability_put(serv_capindex, "BAN");
-	CAP_MLOCK = capability_put(serv_capindex, "MLOCK");
+	CAP_QS = capability_put(serv_capindex, "QS", NULL);
+	CAP_EX = capability_put(serv_capindex, "EX", NULL);
+	CAP_CHW = capability_put(serv_capindex, "CHW", NULL);
+	CAP_IE = capability_put(serv_capindex, "IE", NULL);
+	CAP_KLN = capability_put(serv_capindex, "KLN", NULL);
+	CAP_KNOCK = capability_put(serv_capindex, "KNOCK", NULL);
+	CAP_ZIP = capability_put(serv_capindex, "ZIP", NULL);
+	CAP_TB = capability_put(serv_capindex, "TB", NULL);
+	CAP_UNKLN = capability_put(serv_capindex, "UNKLN", NULL);
+	CAP_CLUSTER = capability_put(serv_capindex, "CLUSTER", NULL);
+	CAP_ENCAP = capability_put(serv_capindex, "ENCAP", NULL);
+	CAP_SERVICE = capability_put(serv_capindex, "SERVICES", NULL);
+	CAP_RSFNC = capability_put(serv_capindex, "RSFNC", NULL);
+	CAP_SAVE = capability_put(serv_capindex, "SAVE", NULL);
+	CAP_EUID = capability_put(serv_capindex, "EUID", NULL);
+	CAP_EOPMOD = capability_put(serv_capindex, "EOPMOD", NULL);
+	CAP_BAN = capability_put(serv_capindex, "BAN", NULL);
+	CAP_MLOCK = capability_put(serv_capindex, "MLOCK", NULL);
 
 	capability_require(serv_capindex, "QS");
 	capability_require(serv_capindex, "EX");
 	capability_require(serv_capindex, "IE");
 	capability_require(serv_capindex, "ENCAP");
+
+	cli_capindex = capability_index_create("client capabilities");
 }
 
 static CNCB serv_connect_callback;

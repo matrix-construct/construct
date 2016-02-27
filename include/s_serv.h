@@ -49,6 +49,7 @@ struct Channel;
 
 /* Capabilities */
 extern struct CapabilityIndex *serv_capindex;
+extern struct CapabilityIndex *cli_capindex;
 
 /*
  * XXX: this is kind of ugly, but this allows us to have backwards
