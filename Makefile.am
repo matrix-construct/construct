@@ -32,4 +32,4 @@ include/serno.h:
 	@[ -f include/serno.h ] || echo '#define SERNO "unknown"' >include/serno.h
 
 install-data-hook:
-	test -d ${logdir} || mkdir -p ${logdir}
+	test -d ${DESTDIR}${logdir} || mkdir -p ${DESTDIR}${logdir}
