@@ -48,7 +48,7 @@ cap_account_tag_process(hook_data *data)
 {
 	struct MsgBuf *msgbuf = data->arg1;
 
-	if (IsPerson(data->client) && *data->client->user->suser)
+	if (data->client != NULL && IsPerson(data->client) && *data->client->user->suser)
 		msgbuf_append_tag(msgbuf, "account", data->client->user->suser, CLICAP_ACCOUNT_TAG);
 }
 

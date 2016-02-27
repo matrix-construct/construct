@@ -261,10 +261,12 @@ build_msgbuf_from(struct MsgBuf *msgbuf, struct Client *from, const char *cmd)
 	msgbuf->origin = buf;
 	msgbuf->cmd = cmd;
 
-	if (IsPerson(from))
+	if (from != NULL && IsPerson(from))
 		snprintf(buf, sizeof buf, "%s!%s@%s", from->name, from->username, from->host);
-	else
+	else if (from != NULL)
 		rb_strlcpy(buf, from->name, sizeof buf);
+	else
+		rb_strlcpy(buf, me.name, sizeof buf);
 
 	hdata.client = from;
 	hdata.arg1 = msgbuf;
