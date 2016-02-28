@@ -305,7 +305,10 @@ cap_ls(struct Client *source_p, const char *arg)
 		source_p->flags |= FLAGS_CLICAP;
 
 	if (arg != NULL && !strcmp(arg, "302"))
+	{
 		source_p->flags |= FLAGS_CLICAP_DATA;
+		source_p->localClient->caps |= CLICAP_CAP_NOTIFY;
+	}
 
 	/* list of what we support */
 	clicap_generate(source_p, "LS", 0, 0);
