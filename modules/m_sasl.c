@@ -45,6 +45,7 @@
 
 static int m_authenticate(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int me_sasl(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int me_mechlist(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 static void abort_sasl(struct Client *);
 static void abort_sasl_exit(hook_data_client_exit *);
@@ -52,7 +53,8 @@ static void abort_sasl_exit(hook_data_client_exit *);
 static void advertise_sasl(struct Client *);
 static void advertise_sasl_exit(hook_data_client_exit *);
 
-unsigned int CLICAP_SASL = 0;
+static unsigned int CLICAP_SASL = 0;
+static char mechlist_buf[BUFSIZE];
 
 struct Message authenticate_msgtab = {
 	"AUTHENTICATE", 0, 0, 0, 0,
@@ -62,9 +64,13 @@ struct Message sasl_msgtab = {
 	"SASL", 0, 0, 0, 0,
 	{mg_ignore, mg_ignore, mg_ignore, mg_ignore, {me_sasl, 5}, mg_ignore}
 };
+struct Message mechlist_msgtab = {
+	"MECHLIST", 0, 0, 0, 0,
+	{mg_ignore, mg_ignore, mg_ignore, mg_ignore, {me_mechlist, 2}, mg_ignore}
+};
 
 mapi_clist_av1 sasl_clist[] = {
-	&authenticate_msgtab, &sasl_msgtab, NULL
+	&authenticate_msgtab, &sasl_msgtab, &mechlist_msgtab, NULL
 };
 mapi_hfn_list_av1 sasl_hfnlist[] = {
 	{ "new_local_user",	(hookfn) abort_sasl },
@@ -85,14 +91,22 @@ sasl_visible(void)
 	return agent_p != NULL && IsService(agent_p);
 }
 
+static const char *
+sasl_data(void)
+{
+	return *mechlist_buf != 0 ? mechlist_buf : NULL;
+}
+
 static struct ClientCapability capdata_sasl = {
 	.visible = sasl_visible,
+	.data = sasl_data,
 	.flags = CLICAP_FLAGS_STICKY,
 };
 
 static int
 _modinit(void)
 {
+	memset(mechlist_buf, 0, sizeof mechlist_buf);
 	CLICAP_SASL = capability_put(cli_capindex, "sasl", &capdata_sasl);
 	return 0;
 }
@@ -225,6 +239,15 @@ me_sasl(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	}
 	else if(*parv[3] == 'M')
 		sendto_one(target_p, form_str(RPL_SASLMECHS), me.name, EmptyString(target_p->name) ? "*" : target_p->name, parv[4]);
+
+	return 0;
+}
+
+static int
+me_mechlist(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+	    int parc, const char *parv[])
+{
+	rb_strlcpy(mechlist_buf, parv[1], sizeof mechlist_buf);
 
 	return 0;
 }
