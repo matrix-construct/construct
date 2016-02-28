@@ -171,6 +171,10 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags, int clea
 
 	DICTIONARY_FOREACH(entry, &iter, cli_capindex->cap_dict)
 	{
+		size_t caplen = 0;
+		struct ClientCapability *clicap = entry->ownerdata;
+		const char *data = NULL;
+
 		if(flags)
 		{
 			if(!IsCapableEntry(source_p, entry))
@@ -183,8 +187,15 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags, int clea
 		if (!clicap_visible(entry))
 			continue;
 
+		caplen = strlen(entry->cap);
+		if (!flags && (source_p->flags & FLAGS_CLICAP_DATA) && clicap != NULL && clicap->data != NULL)
+			data = clicap->data();
+
+		if (data != NULL)
+			caplen += strlen(data) + 1;
+
 		/* \r\n\0, possible "-~=", space, " *" */
-		if(buflen + strlen(entry->cap) >= BUFSIZE - 10)
+		if(buflen + caplen >= BUFSIZE - 10)
 		{
 			/* remove our trailing space -- if buflen == mlen
 			 * here, we didnt even succeed in adding one.
@@ -205,7 +216,11 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags, int clea
 			buflen++;
 		}
 
-		curlen = sprintf(p, "%s ", entry->cap);
+		if (data == NULL)
+			curlen = sprintf(p, "%s ", entry->cap);
+		else
+			curlen = sprintf(p, "%s=%s ", entry->cap, data);
+
 		p += curlen;
 		buflen += curlen;
 	}
@@ -288,6 +303,9 @@ cap_ls(struct Client *source_p, const char *arg)
 {
 	if(!IsRegistered(source_p))
 		source_p->flags |= FLAGS_CLICAP;
+
+	if (arg != NULL && !strcmp(arg, "302"))
+		source_p->flags |= FLAGS_CLICAP_DATA;
 
 	/* list of what we support */
 	clicap_generate(source_p, "LS", 0, 0);

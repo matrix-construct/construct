@@ -406,6 +406,7 @@ struct ListClient
 #define FLAGS_TGCHANGE     0x400000	/* we're allowed to clear something */
 #define FLAGS_DYNSPOOF     0x800000	/* dynamic spoof, only opers see ip */
 #define FLAGS_TGEXCESSIVE  0x1000000	/* whether the client has attemped to change targets excessively fast */
+#define FLAGS_CLICAP_DATA  0x2000000	/* requested CAP LS 302 */
 
 /* flags for local clients, this needs stuff moved from above to here at some point */
 #define LFLAGS_SSL		0x00000001
