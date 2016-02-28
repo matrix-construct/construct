@@ -50,7 +50,7 @@ cap_server_time_process(hook_data *data)
 	time_t ts = rb_current_time();
 	struct MsgBuf *msgbuf = data->arg1;
 
-	strftime(buf, sizeof buf, "%Y-%m-%dT%H:%M:%SZ", gmtime(&ts));
+	strftime(buf, sizeof buf, "%Y-%m-%dT%H:%M:%S.000Z", gmtime(&ts));
 
 	msgbuf_append_tag(msgbuf, "time", buf, CLICAP_SERVER_TIME);
 }
