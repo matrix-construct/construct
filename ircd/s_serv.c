@@ -96,7 +96,6 @@ unsigned int CAP_BAN;
 unsigned int CAP_MLOCK;
 
 unsigned int CLICAP_MULTI_PREFIX;
-unsigned int CLICAP_SASL;
 unsigned int CLICAP_ACCOUNT_NOTIFY;
 unsigned int CLICAP_EXTENDED_JOIN;
 unsigned int CLICAP_AWAY_NOTIFY;
@@ -144,7 +143,6 @@ init_builtin_capabs(void)
 	cli_capindex = capability_index_create("client capabilities");
 
 	CLICAP_MULTI_PREFIX = capability_put(cli_capindex, "multi-prefix", NULL);
-	CLICAP_SASL = capability_put(cli_capindex, "sasl", NULL);
 	CLICAP_ACCOUNT_NOTIFY = capability_put(cli_capindex, "account-notify", NULL);
 	CLICAP_EXTENDED_JOIN = capability_put(cli_capindex, "extended-join", NULL);
 	CLICAP_AWAY_NOTIFY = capability_put(cli_capindex, "away-notify", NULL);

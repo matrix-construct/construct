@@ -59,6 +59,21 @@ DECLARE_MODULE_AV1(cap, NULL, NULL, cap_clist, NULL, NULL, "$Revision: 676 $");
 #define IsCapableEntry(c, e)		IsCapable(c, 1 << (e)->value)
 #define HasCapabilityFlag(c, f)		(c->ownerdata != NULL && (((struct ClientCapability *)c->ownerdata)->flags & (f)) == f)
 
+static inline int
+clicap_visible(const struct CapabilityEntry *cap)
+{
+	struct ClientCapability *clicap;
+
+	if (cap->ownerdata == NULL)
+		return 1;
+
+	clicap = cap->ownerdata;
+	if (clicap->visible == NULL)
+		return 1;
+
+	return clicap->visible();
+}
+
 /* clicap_find()
  *   Used iteratively over a buffer, extracts individual cap tokens.
  *
@@ -165,17 +180,8 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags, int clea
 				continue;
 		}
 
-		if ((1 << entry->value) == CLICAP_SASL)
-		{
-			struct Client *agent_p = NULL;
-
-			if (!ConfigFileEntry.sasl_service)
-				continue;
-
-			agent_p = find_named_client(ConfigFileEntry.sasl_service);
-			if (agent_p == NULL || !IsService(agent_p))
-				continue;
-		}
+		if (!clicap_visible(entry))
+			continue;
 
 		/* \r\n\0, possible "-~=", space, " *" */
 		if(buflen + strlen(entry->cap) >= BUFSIZE - 10)
@@ -341,22 +347,10 @@ cap_req(struct Client *source_p, const char *arg)
 		}
 		else
 		{
-			if ((1 << cap->value) == CLICAP_SASL)
+			if (!clicap_visible(cap))
 			{
-				struct Client *agent_p = NULL;
-
-				if (!ConfigFileEntry.sasl_service)
-				{
-					finished = 0;
-					break;
-				}
-
-				agent_p = find_named_client(ConfigFileEntry.sasl_service);
-				if (agent_p == NULL || !IsService(agent_p))
-				{
-					finished = 0;
-					break;
-				}
+				finished = 0;
+				break;
 			}
 
 			capadd |= (1 << cap->value);

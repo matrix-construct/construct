@@ -63,7 +63,6 @@ struct ClientCapability {
 
 /* builtin client capabilities */
 extern unsigned int CLICAP_MULTI_PREFIX;
-extern unsigned int CLICAP_SASL;
 extern unsigned int CLICAP_ACCOUNT_NOTIFY;
 extern unsigned int CLICAP_EXTENDED_JOIN;
 extern unsigned int CLICAP_AWAY_NOTIFY;

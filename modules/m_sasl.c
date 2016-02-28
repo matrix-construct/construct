@@ -52,6 +52,8 @@ static void abort_sasl_exit(hook_data_client_exit *);
 static void advertise_sasl(struct Client *);
 static void advertise_sasl_exit(hook_data_client_exit *);
 
+unsigned int CLICAP_SASL = 0;
+
 struct Message authenticate_msgtab = {
 	"AUTHENTICATE", 0, 0, 0, 0,
 	{{m_authenticate, 2}, {m_authenticate, 2}, mg_ignore, mg_ignore, mg_ignore, {m_authenticate, 2}}
@@ -72,7 +74,36 @@ mapi_hfn_list_av1 sasl_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(sasl, NULL, NULL, sasl_clist, NULL, sasl_hfnlist, "$Revision: 1409 $");
+static int
+sasl_visible(void)
+{
+	struct Client *agent_p = NULL;
+
+	if (ConfigFileEntry.sasl_service)
+		agent_p = find_named_client(ConfigFileEntry.sasl_service);
+
+	return agent_p != NULL && IsService(agent_p);
+}
+
+static struct ClientCapability capdata_sasl = {
+	.visible = sasl_visible,
+	.flags = CLICAP_FLAGS_STICKY,
+};
+
+static int
+_modinit(void)
+{
+	CLICAP_SASL = capability_put(cli_capindex, "sasl", &capdata_sasl);
+	return 0;
+}
+
+static void
+_moddeinit(void)
+{
+	capability_orphan(cli_capindex, "sasl");
+}
+
+DECLARE_MODULE_AV1(sasl, _modinit, _moddeinit, sasl_clist, NULL, sasl_hfnlist, "$Revision: 1409 $");
 
 static int
 m_authenticate(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
