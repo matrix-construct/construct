@@ -64,6 +64,10 @@ clicap_visible(const struct CapabilityEntry *cap)
 {
 	struct ClientCapability *clicap;
 
+	/* orphaned caps shouldn't be visible */
+	if (cap->flags & CAP_ORPHANED)
+		return 0;
+
 	if (cap->ownerdata == NULL)
 		return 1;
 
