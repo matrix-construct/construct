@@ -146,8 +146,8 @@ clicap_find(const char *data, int *negate, int *finished)
 static void
 clicap_generate(struct Client *source_p, const char *subcmd, int flags, int clear)
 {
-	char buf[BUFSIZE];
-	char capbuf[BUFSIZE];
+	char buf[BUFSIZE] = { 0 };
+	char capbuf[BUFSIZE] = { 0 };
 	char *p;
 	int buflen = 0;
 	int curlen, mlen;
@@ -206,8 +206,10 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags, int clea
 				*p = '\0';
 
 			sendto_one(source_p, "%s * :%s", buf, capbuf);
+
 			p = capbuf;
 			buflen = mlen;
+			memset(capbuf, 0, sizeof capbuf);
 		}
 
 		if(clear)
