@@ -171,7 +171,7 @@ m_authenticate(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *
 					me.id, saslserv_p->servptr->name, source_p->id, saslserv_p->id,
 					source_p->host, source_p->sockhost);
 
-		if (!strcmp(parv[1], "EXTERNAL") && source_p->certfp != NULL)
+		if (source_p->certfp != NULL)
 			sendto_one(saslserv_p, ":%s ENCAP %s SASL %s %s S %s %s",
 						me.id, saslserv_p->servptr->name, source_p->id, saslserv_p->id,
 						parv[1], source_p->certfp);
