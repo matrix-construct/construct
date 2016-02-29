@@ -112,6 +112,7 @@ capability_orphan(struct CapabilityIndex *idx, const char *cap)
 	{
 		entry->flags &= ~CAP_REQUIRED;
 		entry->flags |= CAP_ORPHANED;
+		entry->ownerdata = NULL;
 	}
 }
 
