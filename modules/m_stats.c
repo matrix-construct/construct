@@ -903,9 +903,7 @@ stats_ssld_foreach(void *data, pid_t pid, int cli_count, enum ssld_status status
 static void
 stats_ssld(struct Client *source_p)
 {
-#if 0
 	ssld_foreach_info(stats_ssld_foreach, source_p);
-#endif
 }
 
 static void
