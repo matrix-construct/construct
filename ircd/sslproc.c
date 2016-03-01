@@ -938,6 +938,20 @@ get_ssld_count(void)
 }
 
 void
+ssld_foreach_info(void (*func)(void *data, pid_t pid, int cli_count, enum ssld_status status), void *data)
+{
+	rb_dlink_node *ptr, *next;
+	ssl_ctl_t *ctl;
+	RB_DLINK_FOREACH_SAFE(ptr, next, ssl_daemons.head)
+	{
+		ctl = ptr->data;
+		func(data, ctl->pid, ctl->cli_count,
+			ctl->dead ? SSLD_DEAD :
+				(ctl->shutdown ? SSLD_SHUTDOWN : SSLD_ACTIVE));
+	}
+}
+
+void
 init_ssld(void)
 {
 	rb_event_addish("collect_zipstats", collect_zipstats, NULL, ZIPSTATS_TIME);
