@@ -7,9 +7,21 @@ See LICENSE for licensing details (GPL v2).
 
 ### build
 - Build system has been converted to libtool + automake for sanity reasons.
+- The compile date is now set at configure time rather than build time, allowing for
+  reproducible builds. (#148, #149)
+- Support for GNUTLS 3.4 has been added.
 
 ### user
 - Import the ability to exceed MAXCHANNELS from ircd-seven.
+- Implement IRCv3.2 enhanced capability negotiation (`CAP LS 302`).
+- Implement support for receiving and sending IRCv3 message tags.
+- Implement IRCv3.2 capabilities: (#141)
+  - account-tag
+  - echo-message
+  - sasl
+  - server-time
+- SASL: certificate fingerprints are now always sent to the SASL agent, allowing for
+  the certificate to be used as a second authentication factor.
 
 ### oper
 - Merge several features from ircd-seven:
@@ -28,6 +40,12 @@ See LICENSE for licensing details (GPL v2).
 - Almost all 2.8-style hashtable structures have been moved to dictionaries or
   radix trees, resulting in significant memory savings.
 - The block allocator has been disabled and is no longer used.
+- The ratbox client capabilities have been ported to use the ircd capabilities
+  framework, allowing for modules to provide capabilities.
+- Support for restarting ssld has been added.  ssld processes which are still
+  servicing clients will remain in use, but not service new connections, and
+  are garbage collected when they are no longer servicing connections.
+- Support for ratbox-style 'iodebug' hooks has been removed.
 
 ## charybdis-3.5.0
 
