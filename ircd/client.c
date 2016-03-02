@@ -1944,13 +1944,14 @@ close_connection(struct Client *client_p)
 	else
 		ServerStats.is_ni++;
 
+	del_from_cli_connid_hash(client_p);
+
 	if(client_p->localClient->F != NULL)
 	{
 		/* attempt to flush any pending dbufs. Evil, but .. -- adrian */
 		if(!IsIOError(client_p))
 			send_queued(client_p);
 
-		del_from_cli_connid_hash(client_p);
 		rb_close(client_p->localClient->F);
 		client_p->localClient->F = NULL;
 	}
