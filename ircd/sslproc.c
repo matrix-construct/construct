@@ -869,11 +869,11 @@ start_zlib_session(void *data)
 
 	F[0] = server->localClient->F;
 	F[1] = xF1;
-	del_from_cli_connid_hash(server);
+	del_from_cli_zconnid_hash(server);
 	server->localClient->F = xF2;
 	/* need to redo as what we did before isn't valid now */
-	uint32_to_buf(&buf[1], rb_get_fd(server->localClient->F));
-	add_to_cli_connid_hash(server);
+	uint32_to_buf(&buf[1], server->localClient->zconnid);
+	add_to_cli_zconnid_hash(server);
 
 	server->localClient->z_ctl = which_ssld();
 	if(!server->localClient->z_ctl)
