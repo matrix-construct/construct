@@ -110,7 +110,7 @@ mo_connect(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 	 * use the default form configuration structure. If missing
 	 * from there, then use the precompiled default.
 	 */
-	tmpport = port = 0;
+	port = 0;
 	if(parc > 2 && !EmptyString(parv[2]))
 		port = atoi(parv[2]);
 	if(port == 0 && server_p->port)
@@ -127,7 +127,9 @@ mo_connect(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 
 	ilog(L_SERVER, "CONNECT From %s : %s %s", source_p->name, parv[1], parc > 2 ? parv[2] : "");
 
+	tmpport = server_p->port;
 	server_p->port = port;
+
 	/*
 	 * at this point we should be calling connect_server with a valid
 	 * C:line and a valid port in the C:line
@@ -145,9 +147,10 @@ mo_connect(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 
 	/*
 	 * client is either connecting with all the data it needs or has been
-	 * destroyed
+	 * destroyed, so reset it back to the configured settings
 	 */
 	server_p->port = tmpport;
+
 	return 0;
 }
 
