@@ -1057,7 +1057,6 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	rb_strlcpy(client_p->host, server_p->host, sizeof(client_p->host));
 	rb_strlcpy(client_p->sockhost, buf, sizeof(client_p->sockhost));
 	client_p->localClient->F = F;
-	add_to_cli_connid_hash(client_p);
 	/* shove the port number into the sockaddr */
 #ifdef RB_IPV6
 	if(GET_SS_FAMILY(&server_p->my_ipnum) == AF_INET6)
@@ -1173,9 +1172,7 @@ serv_connect_ssl_callback(rb_fde_t *F, int status, void *data)
 		return;
 
 	}
-	del_from_cli_connid_hash(client_p);
 	client_p->localClient->F = xF[0];
-	add_to_cli_connid_hash(client_p);
 
 	client_p->localClient->ssl_ctl = start_ssld_connect(F, xF[1], rb_get_fd(xF[0]));
 	if(!client_p->localClient->ssl_ctl)
