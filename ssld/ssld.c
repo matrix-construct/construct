@@ -974,6 +974,14 @@ send_i_am_useless(mod_ctl_t * ctl)
 }
 
 static void
+send_version(mod_ctl_t * ctl)
+{
+	char version[256] = { 'V', 0 };
+	strncpy(&version[1], rb_lib_version(), sizeof(version) - 2);
+	mod_cmd_write_queue(ctl, version, strlen(version));
+}
+
+static void
 send_nozlib_support(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 {
 	static const char *nozlib_cmd = "z";
@@ -1242,6 +1250,7 @@ main(int argc, char **argv)
 	rb_event_add("check_handshake_flood", check_handshake_flood, NULL, 10);
 	read_pipe_ctl(mod_ctl->F_pipe, NULL);
 	mod_read_ctl(mod_ctl->F, mod_ctl);
+	send_version(mod_ctl);
 	if(!zlib_ok && !ssl_ok)
 	{
 		/* this is really useless... */

@@ -42,7 +42,7 @@ void start_zlib_session(void *data);
 void send_new_ssl_certs(const char *ssl_cert, const char *ssl_private_key, const char *ssl_dh_params, const char *ssl_cipher_list);
 void ssld_decrement_clicount(ssl_ctl_t *ctl);
 int get_ssld_count(void);
-void ssld_foreach_info(void (*func)(void *data, pid_t pid, int cli_count, enum ssld_status status), void *data);
+void ssld_foreach_info(void (*func)(void *data, pid_t pid, int cli_count, enum ssld_status status, const char *version), void *data);
 
 #endif
 

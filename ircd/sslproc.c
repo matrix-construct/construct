@@ -68,6 +68,7 @@ struct _ssl_ctl
 	rb_dlink_list writeq;
 	uint8_t shutdown;
 	uint8_t dead;
+	char version[256];
 };
 
 static void send_new_ssl_certs_one(ssl_ctl_t * ctl, const char *ssl_cert,
@@ -479,8 +480,11 @@ ssl_process_cmd_recv(ssl_ctl_t * ctl)
 	static const char *no_ssl_or_zlib = "ssld has neither SSL/TLS or zlib support killing all sslds";
 	rb_dlink_node *ptr, *next;
 	ssl_ctl_buf_t *ctl_buf;
+	int len;
+
 	if(ctl->dead)
 		return;
+
 	RB_DLINK_FOREACH_SAFE(ptr, next, ctl->readq.head)
 	{
 		ctl_buf = ptr->data;
@@ -513,6 +517,11 @@ ssl_process_cmd_recv(ssl_ctl_t * ctl)
 			sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s", no_ssl_or_zlib);
 			ssl_killall();
 			break;
+		case 'V':
+			len = ctl_buf->buflen - 1;
+			if (len > sizeof(ctl->version) - 1)
+				len = sizeof(ctl->version) - 1;
+			strncpy(ctl->version, &ctl_buf->buf[1], len);
 		case 'z':
 			zlib_ok = 0;
 			break;
@@ -938,7 +947,7 @@ get_ssld_count(void)
 }
 
 void
-ssld_foreach_info(void (*func)(void *data, pid_t pid, int cli_count, enum ssld_status status), void *data)
+ssld_foreach_info(void (*func)(void *data, pid_t pid, int cli_count, enum ssld_status status, const char *version), void *data)
 {
 	rb_dlink_node *ptr, *next;
 	ssl_ctl_t *ctl;
@@ -947,7 +956,8 @@ ssld_foreach_info(void (*func)(void *data, pid_t pid, int cli_count, enum ssld_s
 		ctl = ptr->data;
 		func(data, ctl->pid, ctl->cli_count,
 			ctl->dead ? SSLD_DEAD :
-				(ctl->shutdown ? SSLD_SHUTDOWN : SSLD_ACTIVE));
+				(ctl->shutdown ? SSLD_SHUTDOWN : SSLD_ACTIVE),
+			ctl->version);
 	}
 }
 
