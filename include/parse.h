@@ -42,5 +42,6 @@ extern void mod_del_cmd(struct Message *msg);
 extern char *reconstruct_parv(int parc, const char *parv[]);
 
 extern struct Dictionary *alias_dict;
+extern struct Dictionary *cmd_dict;
 
 #endif /* INCLUDED_parse_h_h */

@@ -44,7 +44,7 @@
 #include "packet.h"
 #include "s_assert.h"
 
-static struct Dictionary *cmd_dict = NULL;
+struct Dictionary *cmd_dict = NULL;
 struct Dictionary *alias_dict = NULL;
 
 /* parv[0] is not used, and parv[LAST] == NULL */
