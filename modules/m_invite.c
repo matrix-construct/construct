@@ -42,13 +42,28 @@
 #include "tgchange.h"
 
 static int m_invite(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static unsigned int CAP_INVITE_NOTIFY = 0;
 
 struct Message invite_msgtab = {
 	"INVITE", 0, 0, 0, 0,
 	{mg_unreg, {m_invite, 3}, {m_invite, 3}, mg_ignore, mg_ignore, {m_invite, 3}}
 };
 mapi_clist_av1 invite_clist[] = { &invite_msgtab, NULL };
-DECLARE_MODULE_AV1(invite, NULL, NULL, invite_clist, NULL, NULL, "$Revision: 3438 $");
+
+static int
+invite_modinit(void)
+{
+	CAP_INVITE_NOTIFY = capability_put(cli_capindex, "invite-notify", NULL);
+	return 0;
+}
+
+static void
+invite_moddeinit(void)
+{
+	capability_orphan(cli_capindex, "invite-notify");
+}
+
+DECLARE_MODULE_AV1(invite, invite_modinit, invite_moddeinit, invite_clist, NULL, NULL, "$Revision: 3438 $");
 
 static void add_invite(struct Channel *, struct Client *);
 
@@ -213,7 +228,16 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 			   target_p->name, chptr->chname);
 
 		if(store_invite)
+		{
 			add_invite(chptr, target_p);
+
+			sendto_channel_local_with_capability(CHFL_CHANOP, 0, CAP_INVITE_NOTIFY, chptr,
+				":%s NOTICE %s :%s is inviting %s to %s.",
+				me.name, chptr->chname, source_p->name, target_p->name, chptr->chname);
+			sendto_channel_local_with_capability(CHFL_CHANOP, CAP_INVITE_NOTIFY, 0, chptr,
+				":%s!%s@%s INVITE %s %s", source_p->name, source_p->username,
+				source_p->host, target_p->name, chptr->chname);
+		}
 	}
 
 	sendto_server(source_p, chptr, CAP_TS6, 0, ":%s INVITE %s %s %lu",
@@ -255,5 +279,3 @@ add_invite(struct Channel *chptr, struct Client *who)
 	/* add channel to user invite list */
 	rb_dlinkAddAlloc(chptr, &who->user->invited);
 }
-
-
