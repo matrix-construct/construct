@@ -13,6 +13,11 @@ It is meant to be used with an IRCv3-capable services implementation such as [At
  * A working dynamic load library.
  * A working lex.  Solaris /usr/ccs/bin/lex appears to be broken, on this system flex should be used.
 
+# building from git
+
+We no longer supply a prebuilt configure script in git, due to use of automake and libtool causing problems.
+You will need to run `autogen.sh` to build the autotools files prior to building charybdis.
+
 # feature specific requirements
 
  * For SSL/TLS client and server connections, one of:
