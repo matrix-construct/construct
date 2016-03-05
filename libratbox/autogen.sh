@@ -78,14 +78,7 @@ run_or_die ()
 
 parse_options "$@"
 
-echo "Building libratbox autotools files."
-
-cd "$TOP_DIR"/libratbox
-bash autogen.sh
-
-echo "Building main autotools files."
-
-cd "$TOP_DIR"
+cd $TOP_DIR
 
 run_or_die $ACLOCAL -I m4
 run_or_die $LIBTOOLIZE --force --copy
