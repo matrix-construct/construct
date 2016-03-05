@@ -215,11 +215,10 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		if(store_invite)
 			add_invite(chptr, target_p);
 	}
-	else if(target_p->from != client_p)
-	{
-		sendto_one_prefix(target_p, source_p, "INVITE", "%s %lu",
-				  chptr->chname, (unsigned long) chptr->channelts);
-	}
+
+	sendto_server(source_p, chptr, CAP_TS6, 0, ":%s INVITE %s %s %lu",
+		      use_id(source_p), use_id(target_p),
+		      chptr->chname, (unsigned long) chptr->channelts);
 
 	return 0;
 }
