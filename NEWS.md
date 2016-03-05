@@ -18,6 +18,7 @@ See LICENSE for licensing details (GPL v2).
 - Implement IRCv3.2 capabilities: (#141)
   - account-tag
   - echo-message
+  - invite-notify
   - sasl
   - server-time
 - SASL: certificate fingerprints are now always sent to the SASL agent, allowing for
