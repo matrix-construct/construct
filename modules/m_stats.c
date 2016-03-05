@@ -722,7 +722,26 @@ stats_klines(struct Client *source_p)
 static void
 stats_messages(struct Client *source_p)
 {
-	report_messages(source_p);
+	struct DictionaryIter iter;
+	struct Message *msg;
+	struct alias_entry *amsg;
+
+	DICTIONARY_FOREACH(msg, &iter, cmd_dict)
+	{
+		s_assert(msg->cmd != NULL);
+		sendto_one_numeric(source_p, RPL_STATSCOMMANDS,
+				   form_str(RPL_STATSCOMMANDS),
+				   msg->cmd, msg->count,
+				   msg->bytes, msg->rcount);
+	}
+
+	DICTIONARY_FOREACH(amsg, &iter, alias_dict)
+	{
+		s_assert(amsg->name != NULL);
+		sendto_one_numeric(source_p, RPL_STATSCOMMANDS,
+				   form_str(RPL_STATSCOMMANDS),
+				   amsg->name, amsg->hits, 0L, 0);
+	}
 }
 
 static void
@@ -1771,4 +1790,3 @@ stats_p_spy (struct Client *source_p)
 
 	call_hook(doing_stats_p_hook, &data);
 }
-
