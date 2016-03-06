@@ -37,7 +37,13 @@ See LICENSE for licensing details (GPL v2).
 ### conf
 - Add the ability to strip color codes from topics unconditionally.
 
+### docs
+- The documentation has been cleaned up; obsolete files have been purged, and
+  stuff has been renamed and shuffled around to be more consistent.
+
 ### code
+- libratbox has been renamed to librb, as we have diverged from upstream long
+  ago.
 - Almost all 2.8-style hashtable structures have been moved to dictionaries or
   radix trees, resulting in significant memory savings.
 - The block allocator has been disabled and is no longer used.
