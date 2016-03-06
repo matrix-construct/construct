@@ -107,7 +107,7 @@ struct mapi_mheader_av2
 	struct mapi_mheader_av1 _mheader = { MAPI_V1, reg, unreg, cl, hl, hfnlist, v}
 
 #define DECLARE_MODULE_AV2(name, reg, unreg, cl, hl, hfnlist, caplist, v, desc) \
-	struct mapi_mheader_av2 _mheader = { MAPI_V1, reg, unreg, cl, hl, hfnlist, caplist, v, desc}
+	struct mapi_mheader_av2 _mheader = { MAPI_V2, reg, unreg, cl, hl, hfnlist, caplist, v, desc}
 
 /* add a path */
 void mod_add_path(const char *path);
