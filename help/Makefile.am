@@ -1,5 +1,4 @@
 # Generated automatically from Makefile.in by configure.
-# $Id: Makefile.in 1044 2006-03-12 16:05:39Z jilles $
 # makefile for include/
 
 AUTOMAKE_OPTIONS = foreign 

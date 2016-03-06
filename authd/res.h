@@ -1,7 +1,6 @@
 /*
  * res.h for referencing functions in res.c, reslib.c
  *
- * $Id: res.h 2023 2006-09-02 23:47:27Z jilles $
  */
 
 #ifndef _CHARYBDIS_RES_H

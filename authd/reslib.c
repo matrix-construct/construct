@@ -89,9 +89,6 @@
 #define DNS_LABELTYPE_BITSTRING 0x41
 #define DNS_MAXLINE 128
 
-/* $Id: reslib.c 1695 2006-06-27 15:11:23Z jilles $ */
-/* from Hybrid Id: reslib.c 177 2005-10-22 09:05:05Z michael $ */
-
 struct rb_sockaddr_storage irc_nsaddr_list[IRCD_MAXNS];
 int irc_nscount = 0;
 char irc_domain[IRCD_RES_HOSTLEN + 1];

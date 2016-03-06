@@ -1,4 +1,3 @@
-# $Id: aclocal.m4 3321 2007-03-30 23:32:43Z jilles $ - aclocal.m4 - Autoconf fun...
 AC_DEFUN([AC_DEFINE_DIR], [
   test "x$prefix" = xNONE && prefix="$ac_default_prefix"
   test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
