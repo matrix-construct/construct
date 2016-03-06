@@ -22,9 +22,6 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  *
- *  $Id: bantool.c 26164 2008-10-26 19:52:43Z androsyn $
- *
- *
  * The following server admins have either contributed various configs to test against,
  * or helped with debugging and feature requests. Many thanks to them.
  * stevoo / efnet.port80.se
@@ -201,8 +198,7 @@ main(int argc, char *argv[])
 		rb_strlcpy(etc, ETCPATH, sizeof(ETCPATH));
 
 	fprintf(stdout,
-		"* ircd-ratbox bantool v.%s ($Id: bantool.c 26164 2008-10-26 19:52:43Z androsyn $)\n",
-		BT_VERSION);
+		"* charybdis bantool v.%s\n", BT_VERSION);
 
 	if(flag.pretend == NO)
 	{
@@ -870,9 +866,8 @@ bt_smalldate(const char *string)
 void
 print_help(int i_exit)
 {
-	fprintf(stderr, "bantool v.%s - the ircd-ratbox database tool.\n", BT_VERSION);
+	fprintf(stderr, "bantool v.%s - the charybdis database tool.\n", BT_VERSION);
 	fprintf(stderr, "Copyright (C) 2008 Daniel J Reidy <dubkat@gmail.com>\n");
-	fprintf(stderr, "$Id: bantool.c 26164 2008-10-26 19:52:43Z androsyn $\n\n");
 	fprintf(stderr, "This program is distributed in the hope that it will be useful,\n"
 		"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
 		"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
