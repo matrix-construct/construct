@@ -20,8 +20,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
- *
- *  $Id: s_stats.h 1409 2006-05-21 14:46:17Z jilles $
  */
 
 #ifndef INCLUDED_s_stats_h

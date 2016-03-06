@@ -20,8 +20,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
- *
- *  $Id: s_serv.c 3550 2007-08-09 06:47:26Z nenolod $
  */
 
 #include "stdinc.h"
@@ -438,7 +436,6 @@ check_server(const char *name, struct Client *client_p)
  *		- int flag of capabilities that this server has
  * output	- NONE
  * side effects	- send the CAPAB line to a server  -orabidoo
- *
  */
 void
 send_capabilities(struct Client *client_p, unsigned int cap_can_send)

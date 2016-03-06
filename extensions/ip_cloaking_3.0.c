@@ -1,4 +1,3 @@
-/* $Id: ip_cloaking.c 3526 2007-07-06 07:56:14Z nenolod $ */
 
 #include "stdinc.h"
 #include "modules.h"

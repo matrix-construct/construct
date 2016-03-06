@@ -20,8 +20,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
- *
- *  $Id: common.h 6 2005-09-10 01:02:21Z nenolod $
  */
 
 #ifndef INCLUDED_common_h

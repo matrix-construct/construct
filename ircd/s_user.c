@@ -20,8 +20,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
- *
- *  $Id: s_user.c 3586 2007-11-20 11:16:43Z nenolod $
  */
 
 #include "stdinc.h"
@@ -216,7 +214,7 @@ show_lusers(struct Client *source_p)
 **         would just issue "KILL foobar" to clean out dups. But,
 **         this is not fair. It should actually request another
 **         nick from local user or kill him/her...
-*/
+ */
 
 int
 register_local_user(struct Client *client_p, struct Client *source_p)

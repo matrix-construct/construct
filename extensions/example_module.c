@@ -15,8 +15,6 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- *   $Id: example_module.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 /* List of ircd includes from ../include/ */

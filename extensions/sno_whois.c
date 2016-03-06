@@ -4,8 +4,6 @@
  *
  * If #define OPERONLY is removed, then any user can use this snomask
  * (you need to put ~servnotice in oper_only_umodes for this to work).
- *
- * $Id: sno_whois.c 3498 2007-05-30 10:22:25Z jilles $
  */
 
 #include "stdinc.h"

@@ -20,8 +20,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
- *
- *  $Id: m_wallops.c 20702 2005-08-31 20:59:02Z leeh $
  */
 
 #include "stdinc.h"

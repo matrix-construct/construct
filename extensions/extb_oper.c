@@ -1,8 +1,6 @@
 /*
  * Oper extban type: matches opers
  * -- jilles
- *
- * $Id: extb_oper.c 1299 2006-05-11 15:43:03Z jilles $
  */
 
 #include "stdinc.h"

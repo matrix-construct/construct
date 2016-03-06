@@ -20,8 +20,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
- *
- *  $Id: m_whowas.c 1717 2006-07-04 14:41:11Z jilles $
  */
 
 #include "stdinc.h"

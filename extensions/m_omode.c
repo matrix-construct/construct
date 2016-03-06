@@ -21,8 +21,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
- *
- *  $Id: m_omode.c 3121 2007-01-02 13:23:04Z jilles $
  */
 
 #include "stdinc.h"

@@ -21,8 +21,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
- *
- *  $Id: client.h 3446 2007-05-14 22:21:16Z jilles $
  */
 
 #ifndef INCLUDED_client_h

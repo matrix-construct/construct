@@ -21,8 +21,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
- *
- *  $Id: client.c 3514 2007-06-06 16:25:21Z nenolod $
  */
 #include "stdinc.h"
 #include "config.h"
@@ -1073,7 +1071,7 @@ free_exited_clients(void *unused)
 ** already been sent.  we make sure to exit a server's dependent clients
 ** and servers before the server itself; exit_one_client takes care of
 ** actually removing things off llists.   tweaked from +CSr31  -orabidoo
-*/
+ */
 /*
  * added sanity test code.... source_p->serv might be NULL...
  */
@@ -1126,7 +1124,7 @@ recurse_remove_clients(struct Client *source_p, const char *comment)
 ** Remove *everything* that depends on source_p, from all lists, and sending
 ** all necessary SQUITs.  source_p itself is still on the lists,
 ** and its SQUITs have been sent except for the upstream one  -orabidoo
-*/
+ */
 static void
 remove_dependents(struct Client *client_p,
 		  struct Client *source_p,
@@ -1193,7 +1191,6 @@ exit_aborted_clients(void *unused)
 
 /*
  * dead_link - Adds client to a list of clients that need an exit_client()
- *
  */
 void
 dead_link(struct Client *client_p, int sendqex)
@@ -1544,7 +1541,7 @@ exit_local_client(struct Client *client_p, struct Client *source_p, struct Clien
 **
 **        CLIENT_EXITED        if (client_p == source_p)
 **        0                if (client_p != source_p)
-*/
+ */
 int
 exit_client(struct Client *client_p,	/* The local client originating the
 					 * exit or NULL, if this exit is

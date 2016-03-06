@@ -4,8 +4,6 @@
  * systems, or if a network gets droneflood problems. It will
  * return ERR_NEEDREGGEDNICK on failure.
  *    -- nenolod
- *
- * $Id: createoperonly.c 3476 2007-05-24 04:28:36Z nenolod $
  */
 
 #include "stdinc.h"

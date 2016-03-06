@@ -1,7 +1,5 @@
 /*
  * Remote oper up notices.
- *
- * $Id: sno_globaloper.c 639 2006-01-29 21:42:06Z jilles $
  */
 
 #include "stdinc.h"

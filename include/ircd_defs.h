@@ -21,14 +21,11 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
- *
- *  $Id: ircd_defs.h 3512 2007-06-06 16:20:40Z nenolod $
  */
 
 /*
  * NOTE: NICKLEN and TOPICLEN do not live here anymore. Set it with configure
  * Otherwise there are no user servicable part here.
- *
  */
 
 /* ircd_defs.h - Global size definitions for record entries used

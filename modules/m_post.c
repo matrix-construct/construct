@@ -20,8 +20,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
- *
- *  $Id: m_post.c 498 2006-01-15 16:40:33Z jilles $
  */
 
 #include "stdinc.h"

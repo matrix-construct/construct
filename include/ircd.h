@@ -20,8 +20,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
- *
- *  $Id: ircd.h 1851 2006-08-24 17:16:53Z jilles $
  */
 
 #ifndef INCLUDED_ircd_h

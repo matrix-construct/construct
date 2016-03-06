@@ -20,8 +20,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
- *
- *  $Id: m_version.c 1887 2006-08-29 13:42:56Z jilles $
  */
 
 #include <stdinc.h>

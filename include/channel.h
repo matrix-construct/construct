@@ -20,8 +20,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
- *
- *  $Id: channel.h 3580 2007-11-07 23:45:14Z jilles $
  */
 
 #ifndef INCLUDED_channel_h

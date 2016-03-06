@@ -1,6 +1,5 @@
 /*
  * Channel creation notices
- *
  */
 
 #include "stdinc.h"

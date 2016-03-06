@@ -20,8 +20,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
- *
- *  $Id: m_capab.c 1295 2006-05-08 13:05:25Z nenolod $
  */
 
 #include "stdinc.h"
@@ -51,7 +49,6 @@ DECLARE_MODULE_AV1(capab, NULL, NULL, capab_clist, NULL, NULL, "$Revision: 1295 
 /*
  * mr_capab - CAPAB message handler
  *      parv[1] = space-separated list of capabilities
- *
  */
 static int
 mr_capab(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])

@@ -13,7 +13,6 @@ struct Message echotags_msgtab = {
 
 mapi_clist_av1 echotags_clist[] = { &echotags_msgtab, NULL };
 
-DECLARE_MODULE_AV1(echotags, NULL, NULL, echotags_clist, NULL, NULL, "$Id$");
 
 static int
 m_echotags(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])

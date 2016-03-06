@@ -20,8 +20,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
- *
- *  $Id: m_challenge.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 #include "stdinc.h"
@@ -101,7 +99,6 @@ cleanup_challenge(struct Client *target_p)
 /*
  * m_challenge - generate RSA challenge for wouldbe oper
  * parv[1] = operator to challenge for, or +response
- *
  */
 static int
 m_challenge(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])

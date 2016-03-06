@@ -15,8 +15,6 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- *   $Id: m_opme.c 3554 2007-08-10 22:31:14Z jilles $
  */
 #include "stdinc.h"
 #include "channel.h"

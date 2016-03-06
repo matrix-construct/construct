@@ -2,8 +2,6 @@
  * Deny opers setting themselves +i unless they are bots (i.e. have
  * hidden_oper privilege).
  * -- jilles
- *
- * $Id: no_oper_invis.c 3219 2007-02-24 19:34:28Z jilles $
  */
 
 #include "stdinc.h"

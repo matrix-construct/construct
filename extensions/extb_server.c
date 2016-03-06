@@ -1,8 +1,6 @@
 /*
  * Server name extban type: bans all users using a certain server
  * -- jilles
- *
- * $Id: extb_server.c 1299 2006-05-11 15:43:03Z jilles $
  */
 
 #include "stdinc.h"

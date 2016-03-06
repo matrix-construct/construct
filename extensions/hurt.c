@@ -3,8 +3,6 @@
  *
  * Copyright (C) 2006 charybdis development team
  * All rights reserved
- *
- * $Id: hurt.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 #include "stdinc.h"
 #include "modules.h"

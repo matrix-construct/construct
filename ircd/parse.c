@@ -21,8 +21,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
- *
- *  $Id: parse.c 3177 2007-02-01 00:19:14Z jilles $
  */
 
 #include "stdinc.h"
@@ -288,7 +286,6 @@ handle_encap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *so
  * output       - NONE
  * side effects - MUST MUST be called at startup ONCE before
  *                any other keyword hash routine is used.
- *
  */
 void
 clear_hash_parse()

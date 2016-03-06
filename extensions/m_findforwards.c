@@ -16,8 +16,6 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- *   $Id: m_findforwards.c 986 2006-03-08 00:10:46Z jilles $
  */
 #include "stdinc.h"
 #include "channel.h"

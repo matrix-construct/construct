@@ -17,8 +17,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
- *
- *  $Id: sslproc.h 25179 2008-03-30 16:34:57Z androsyn $
  */
 
 #ifndef INCLUDED_sslproc_h

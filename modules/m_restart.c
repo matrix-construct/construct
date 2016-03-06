@@ -20,8 +20,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
- *
- *  $Id: m_restart.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 #include "stdinc.h"
@@ -54,7 +52,6 @@ DECLARE_MODULE_AV1(restart, NULL, NULL, restart_clist, NULL, NULL, "$Revision: 3
 
 /*
  * mo_restart
- *
  */
 static int
 mo_restart(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])

@@ -1,8 +1,6 @@
 /*
  * Account extban type: bans all users with any/matching account
  * -- jilles
- *
- * $Id: extb_account.c 1299 2006-05-11 15:43:03Z jilles $
  */
 
 #include "stdinc.h"

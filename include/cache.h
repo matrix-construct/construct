@@ -1,4 +1,3 @@
-/* $Id: cache.h 24250 2007-08-22 19:15:08Z androsyn $ */
 #ifndef INCLUDED_CACHE_H
 #define INCLUDED_CACHE_H
 

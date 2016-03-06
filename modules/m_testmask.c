@@ -29,8 +29,6 @@
  *  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- *  $Id: m_testmask.c 3161 2007-01-25 07:23:01Z nenolod $
- *
  */
 
 /* List of ircd includes from ../include/ */

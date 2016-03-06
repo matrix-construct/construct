@@ -1,8 +1,6 @@
 /*
  * Copyright (C) 2006 Jilles Tjoelker
  * Copyright (C) 2006 Stephen Bennett <spb@gentoo.org>
- *
- * $Id$
  */
 
 #include "stdinc.h"

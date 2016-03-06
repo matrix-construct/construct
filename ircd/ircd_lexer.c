@@ -513,8 +513,6 @@ char *yytext;
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
- *
- * $Id: ircd_lexer.l 3540 2007-07-30 17:26:00Z jilles $
  */
 #line 26 "ircd_lexer.l"
 #include <sys/types.h>

@@ -1,7 +1,5 @@
 #!/bin/sh
 
-# $Id: version.c.SH 3342 2007-04-01 22:10:05Z jilles $ 
-
 spitshell=cat
 package=IRC
 

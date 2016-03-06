@@ -20,8 +20,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
- *
- *  $Id: m_message.c 3173 2007-01-31 23:57:18Z jilles $
  */
 
 #include "stdinc.h"
@@ -246,7 +244,6 @@ m_message(enum message_type msgtype, struct MsgBuf *msgbuf_p,
  *		  all the classic old bizzare oper privmsg tricks
  *		  are parsed and sent as is, if prefixed with $
  *		  to disambiguate.
- *
  */
 
 static int

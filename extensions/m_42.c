@@ -2,7 +2,6 @@
  *   Copyright (C) infinity-infinity God <God@Heaven>
  *
  *   Bob was here
- *   $Id: m_42.c 3161 2007-01-25 07:23:01Z nenolod $
  */
 
 #include "stdinc.h"

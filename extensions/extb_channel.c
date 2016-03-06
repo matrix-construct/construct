@@ -1,8 +1,6 @@
 /*
  * Channel extban type: matches users who are in a certain public channel
  * -- jilles
- *
- * $Id: extb_channel.c 1723 2006-07-06 15:23:58Z jilles $
  */
 
 #include "stdinc.h"

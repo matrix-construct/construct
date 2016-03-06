@@ -15,8 +15,6 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- *   $Id: messages.tab 3548 2007-08-09 06:40:52Z nenolod $
  */
 
 #ifndef INCLUDED_messages_h
