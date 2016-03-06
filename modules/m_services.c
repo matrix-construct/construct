@@ -280,7 +280,7 @@ me_nickdelay(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *so
 	duration = atoi(parv[1]);
 	if (duration <= 0)
 	{
-		nd = irc_dictionary_retrieve(nd_dict, parv[2]);
+		nd = rb_dictionary_retrieve(nd_dict, parv[2]);
 		if (nd != NULL)
 			free_nd_entry(nd);
 	}
@@ -289,7 +289,7 @@ me_nickdelay(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *so
 		if (duration > 86400)
 			duration = 86400;
 		add_nd_entry(parv[2]);
-		nd = irc_dictionary_retrieve(nd_dict, parv[2]);
+		nd = rb_dictionary_retrieve(nd_dict, parv[2]);
 		if (nd != NULL)
 			nd->expire = rb_current_time() + duration;
 	}

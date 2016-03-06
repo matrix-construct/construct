@@ -37,7 +37,7 @@
 #include "client.h"
 #include "hash.h"
 #include "cache.h"
-#include "irc_dictionary.h"
+#include "rb_dictionary.h"
 #include "numeric.h"
 #include "send.h"
 
@@ -69,8 +69,8 @@ init_cache(void)
 	oper_motd = cache_file(OPATH, "opers.motd", 0);
 	memset(&links_cache_list, 0, sizeof(links_cache_list));
 
-	help_dict_oper = irc_dictionary_create("oper help", strcasecmp);
-	help_dict_user = irc_dictionary_create("user help", strcasecmp);
+	help_dict_oper = rb_dictionary_create("oper help", strcasecmp);
+	help_dict_user = rb_dictionary_create("user help", strcasecmp);
 }
 
 /*
@@ -245,12 +245,12 @@ load_help(void)
 
 	DICTIONARY_FOREACH(cacheptr, &iter, help_dict_oper)
 	{
-		irc_dictionary_delete(help_dict_oper, cacheptr->name);
+		rb_dictionary_delete(help_dict_oper, cacheptr->name);
 		free_cachefile(cacheptr);
 	}
 	DICTIONARY_FOREACH(cacheptr, &iter, help_dict_user)
 	{
-		irc_dictionary_delete(help_dict_user, cacheptr->name);
+		rb_dictionary_delete(help_dict_user, cacheptr->name);
 		free_cachefile(cacheptr);
 	}
 
@@ -265,7 +265,7 @@ load_help(void)
 			continue;
 		snprintf(filename, sizeof(filename), "%s/%s", HPATH, ldirent->d_name);
 		cacheptr = cache_file(filename, ldirent->d_name, HELP_OPER);
-		irc_dictionary_add(help_dict_oper, cacheptr->name, cacheptr);
+		rb_dictionary_add(help_dict_oper, cacheptr->name, cacheptr);
 	}
 
 	closedir(helpfile_dir);
@@ -289,7 +289,7 @@ load_help(void)
 		 */
 		if(S_ISLNK(sb.st_mode))
 		{
-			cacheptr = irc_dictionary_retrieve(help_dict_oper, ldirent->d_name);
+			cacheptr = rb_dictionary_retrieve(help_dict_oper, ldirent->d_name);
 
 			if(cacheptr != NULL)
 			{
@@ -300,7 +300,7 @@ load_help(void)
 #endif
 
 		cacheptr = cache_file(filename, ldirent->d_name, HELP_USER);
-		irc_dictionary_add(help_dict_user, cacheptr->name, cacheptr);
+		rb_dictionary_add(help_dict_user, cacheptr->name, cacheptr);
 	}
 
 	closedir(helpfile_dir);

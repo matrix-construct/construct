@@ -41,7 +41,7 @@
 #include "reject.h"
 #include "hash.h"
 #include "cache.h"
-#include "irc_radixtree.h"
+#include "rb_radixtree.h"
 #include "sslproc.h"
 
 static int mo_rehash(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
@@ -194,7 +194,7 @@ static void
 rehash_tresvs(struct Client *source_p)
 {
 	struct ConfItem *aconf;
-	struct irc_radixtree_iteration_state iter;
+	struct rb_radixtree_iteration_state iter;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 	int i;
@@ -204,12 +204,12 @@ rehash_tresvs(struct Client *source_p)
 	if (!MyConnect(source_p))
 		remote_rehash_oper_p = source_p;
 
-	IRC_RADIXTREE_FOREACH(aconf, &iter, resv_tree)
+	RB_RADIXTREE_FOREACH(aconf, &iter, resv_tree)
 	{
 		if(!aconf->hold || aconf->lifetime)
 			continue;
 
-		irc_radixtree_delete(resv_tree, aconf->host);
+		rb_radixtree_delete(resv_tree, aconf->host);
 		free_conf(aconf);
 	}
 

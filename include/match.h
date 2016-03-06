@@ -1,6 +1,6 @@
 /*
  *  ircd-ratbox: A slightly useful ircd.
- *  irc_string.h: A header for the ircd string functions.
+ *  match.h: A header for the ircd string functions.
  *
  *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center
  *  Copyright (C) 1996-2002 Hybrid Development Team
@@ -136,5 +136,27 @@ extern const unsigned int CharAttrs[];
 
 #define IsNonEOS(c) (CharAttrs[(unsigned char)(c)] & NONEOS_C)
 #define IsEol(c) (CharAttrs[(unsigned char)(c)] & EOL_C)
+
+
+/* Below are used for radix trees and the like */
+static inline void irccasecanon(char *str)
+{
+        while (*str)
+        {
+                *str = ToUpper(*str);
+                str++;
+        }
+        return;
+}
+
+static inline void strcasecanon(char *str)
+{
+        while (*str)
+        {
+                *str = toupper((unsigned char)*str);
+                str++;
+        }
+        return;
+}
 
 #endif /* INCLUDED_match_h */

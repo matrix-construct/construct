@@ -37,17 +37,17 @@
 #include "cache.h"
 #include "s_newconf.h"
 #include "s_assert.h"
-#include "irc_dictionary.h"
-#include "irc_radixtree.h"
+#include "rb_dictionary.h"
+#include "rb_radixtree.h"
 
 struct Dictionary *client_connid_tree = NULL;
 struct Dictionary *client_zconnid_tree = NULL;
-struct irc_radixtree *client_id_tree = NULL;
-struct irc_radixtree *client_name_tree = NULL;
+struct rb_radixtree *client_id_tree = NULL;
+struct rb_radixtree *client_name_tree = NULL;
 
-struct irc_radixtree *channel_tree = NULL;
-struct irc_radixtree *resv_tree = NULL;
-struct irc_radixtree *hostname_tree = NULL;
+struct rb_radixtree *channel_tree = NULL;
+struct rb_radixtree *resv_tree = NULL;
+struct rb_radixtree *hostname_tree = NULL;
 
 /*
  * look in whowas.c for the missing ...[WW_MAX]; entry
@@ -60,15 +60,15 @@ struct irc_radixtree *hostname_tree = NULL;
 void
 init_hash(void)
 {
-	client_connid_tree = irc_dictionary_create("client connid", irc_uint32cmp);
-	client_zconnid_tree = irc_dictionary_create("client zconnid", irc_uint32cmp);
-	client_id_tree = irc_radixtree_create("client id", NULL);
-	client_name_tree = irc_radixtree_create("client name", irc_radixtree_irccasecanon);
+	client_connid_tree = rb_dictionary_create("client connid", rb_uint32cmp);
+	client_zconnid_tree = rb_dictionary_create("client zconnid", rb_uint32cmp);
+	client_id_tree = rb_radixtree_create("client id", NULL);
+	client_name_tree = rb_radixtree_create("client name", irccasecanon);
 
-	channel_tree = irc_radixtree_create("channel", irc_radixtree_irccasecanon);
-	resv_tree = irc_radixtree_create("resv", irc_radixtree_irccasecanon);
+	channel_tree = rb_radixtree_create("channel", irccasecanon);
+	resv_tree = rb_radixtree_create("resv", irccasecanon);
 
-	hostname_tree = irc_radixtree_create("hostname", irc_radixtree_irccasecanon);
+	hostname_tree = rb_radixtree_create("hostname", irccasecanon);
 }
 
 u_int32_t
@@ -141,7 +141,7 @@ add_to_id_hash(const char *name, struct Client *client_p)
 	if(EmptyString(name) || (client_p == NULL))
 		return;
 
-	irc_radixtree_add(client_id_tree, name, client_p);
+	rb_radixtree_add(client_id_tree, name, client_p);
 }
 
 /* add_to_client_hash()
@@ -156,7 +156,7 @@ add_to_client_hash(const char *name, struct Client *client_p)
 	if(EmptyString(name) || (client_p == NULL))
 		return;
 
-	irc_radixtree_add(client_name_tree, name, client_p);
+	rb_radixtree_add(client_name_tree, name, client_p);
 }
 
 /* add_to_hostname_hash()
@@ -173,7 +173,7 @@ add_to_hostname_hash(const char *hostname, struct Client *client_p)
 	if(EmptyString(hostname) || (client_p == NULL))
 		return;
 
-	list = irc_radixtree_retrieve(hostname_tree, hostname);
+	list = rb_radixtree_retrieve(hostname_tree, hostname);
 	if (list != NULL)
 	{
 		rb_dlinkAddAlloc(client_p, list);
@@ -181,7 +181,7 @@ add_to_hostname_hash(const char *hostname, struct Client *client_p)
 	}
 
 	list = rb_malloc(sizeof(*list));
-	irc_radixtree_add(hostname_tree, hostname, list);
+	rb_radixtree_add(hostname_tree, hostname, list);
 	rb_dlinkAddAlloc(client_p, list);
 }
 
@@ -197,7 +197,7 @@ add_to_resv_hash(const char *name, struct ConfItem *aconf)
 	if(EmptyString(name) || aconf == NULL)
 		return;
 
-	irc_radixtree_add(resv_tree, name, aconf);
+	rb_radixtree_add(resv_tree, name, aconf);
 }
 
 /* del_from_id_hash()
@@ -212,7 +212,7 @@ del_from_id_hash(const char *id, struct Client *client_p)
 	if(EmptyString(id) || client_p == NULL)
 		return;
 
-	irc_radixtree_delete(client_id_tree, id);
+	rb_radixtree_delete(client_id_tree, id);
 }
 
 /* del_from_client_hash()
@@ -228,7 +228,7 @@ del_from_client_hash(const char *name, struct Client *client_p)
 	if(EmptyString(name) || client_p == NULL)
 		return;
 
-	irc_radixtree_delete(client_name_tree, name);
+	rb_radixtree_delete(client_name_tree, name);
 }
 
 /* del_from_channel_hash()
@@ -244,7 +244,7 @@ del_from_channel_hash(const char *name, struct Channel *chptr)
 	if(EmptyString(name) || chptr == NULL)
 		return;
 
-	irc_radixtree_delete(channel_tree, name);
+	rb_radixtree_delete(channel_tree, name);
 }
 
 /* del_from_hostname_hash()
@@ -259,7 +259,7 @@ del_from_hostname_hash(const char *hostname, struct Client *client_p)
 	if(hostname == NULL || client_p == NULL)
 		return;
 
-	list = irc_radixtree_retrieve(hostname_tree, hostname);
+	list = rb_radixtree_retrieve(hostname_tree, hostname);
 	if (list == NULL)
 		return;
 
@@ -267,7 +267,7 @@ del_from_hostname_hash(const char *hostname, struct Client *client_p)
 
 	if (rb_dlink_list_length(list) == 0)
 	{
-		irc_radixtree_delete(hostname_tree, hostname);
+		rb_radixtree_delete(hostname_tree, hostname);
 		rb_free(list);
 	}
 }
@@ -284,7 +284,7 @@ del_from_resv_hash(const char *name, struct ConfItem *aconf)
 	if(EmptyString(name) || aconf == NULL)
 		return;
 
-	irc_radixtree_delete(resv_tree, name);
+	rb_radixtree_delete(resv_tree, name);
 }
 
 /* find_id()
@@ -297,7 +297,7 @@ find_id(const char *name)
 	if(EmptyString(name))
 		return NULL;
 
-	return irc_radixtree_retrieve(client_id_tree, name);
+	return rb_radixtree_retrieve(client_id_tree, name);
 }
 
 /* find_client()
@@ -315,7 +315,7 @@ find_client(const char *name)
 	if(IsDigit(*name))
 		return (find_id(name));
 
-	return irc_radixtree_retrieve(client_name_tree, name);
+	return rb_radixtree_retrieve(client_name_tree, name);
 }
 
 /* find_named_client()
@@ -329,7 +329,7 @@ find_named_client(const char *name)
 	if(EmptyString(name))
 		return NULL;
 
-	return irc_radixtree_retrieve(client_name_tree, name);
+	return rb_radixtree_retrieve(client_name_tree, name);
 }
 
 /* find_server()
@@ -351,7 +351,7 @@ find_server(struct Client *source_p, const char *name)
       		return(target_p);
 	}
 
-	target_p = irc_radixtree_retrieve(client_name_tree, name);
+	target_p = rb_radixtree_retrieve(client_name_tree, name);
 	if (target_p != NULL)
 	{
 		if(IsServer(target_p) || IsMe(target_p))
@@ -375,7 +375,7 @@ find_hostname(const char *hostname)
 	if(EmptyString(hostname))
 		return NULL;
 
-	hlist = irc_radixtree_retrieve(hostname_tree, hostname);
+	hlist = rb_radixtree_retrieve(hostname_tree, hostname);
 	if (hlist == NULL)
 		return NULL;
 
@@ -393,7 +393,7 @@ find_channel(const char *name)
 	if(EmptyString(name))
 		return NULL;
 
-	return irc_radixtree_retrieve(channel_tree, name);
+	return rb_radixtree_retrieve(channel_tree, name);
 }
 
 /*
@@ -433,7 +433,7 @@ get_or_create_channel(struct Client *client_p, const char *chname, int *isnew)
 		s = t;
 	}
 
-	chptr = irc_radixtree_retrieve(channel_tree, s);
+	chptr = rb_radixtree_retrieve(channel_tree, s);
 	if (chptr != NULL)
 	{
 		if (isnew != NULL)
@@ -448,7 +448,7 @@ get_or_create_channel(struct Client *client_p, const char *chname, int *isnew)
 	chptr->channelts = rb_current_time();	/* doesn't hurt to set it here */
 
 	rb_dlinkAdd(chptr, &chptr->node, &global_channel_list);
-	irc_radixtree_add(channel_tree, chptr->chname, chptr);
+	rb_radixtree_add(channel_tree, chptr->chname, chptr);
 
 	return chptr;
 }
@@ -466,7 +466,7 @@ hash_find_resv(const char *name)
 	if(EmptyString(name))
 		return NULL;
 
-	aconf = irc_radixtree_retrieve(resv_tree, name);
+	aconf = rb_radixtree_retrieve(resv_tree, name);
 	if (aconf != NULL)
 	{
 		aconf->port++;
@@ -480,15 +480,15 @@ void
 clear_resv_hash(void)
 {
 	struct ConfItem *aconf;
-	struct irc_radixtree_iteration_state iter;
+	struct rb_radixtree_iteration_state iter;
 
-	IRC_RADIXTREE_FOREACH(aconf, &iter, resv_tree)
+	RB_RADIXTREE_FOREACH(aconf, &iter, resv_tree)
 	{
 		/* skip temp resvs */
 		if(aconf->hold)
 			continue;
 
-		irc_radixtree_delete(resv_tree, aconf->host);
+		rb_radixtree_delete(resv_tree, aconf->host);
 		free_conf(aconf);
 	}
 }
@@ -496,25 +496,25 @@ clear_resv_hash(void)
 void
 add_to_zconnid_hash(struct Client *client_p)
 {
-	irc_dictionary_add(client_zconnid_tree, IRC_UINT_TO_POINTER(client_p->localClient->zconnid), client_p);
+	rb_dictionary_add(client_zconnid_tree, RB_UINT_TO_POINTER(client_p->localClient->zconnid), client_p);
 }
 
 void
 del_from_zconnid_hash(struct Client *client_p)
 {
-	irc_dictionary_delete(client_zconnid_tree, IRC_UINT_TO_POINTER(client_p->localClient->zconnid));
+	rb_dictionary_delete(client_zconnid_tree, RB_UINT_TO_POINTER(client_p->localClient->zconnid));
 }
 
 void
 add_to_cli_connid_hash(struct Client *client_p)
 {
-	irc_dictionary_add(client_connid_tree, IRC_UINT_TO_POINTER(client_p->localClient->connid), client_p);
+	rb_dictionary_add(client_connid_tree, RB_UINT_TO_POINTER(client_p->localClient->connid), client_p);
 }
 
 void
 del_from_cli_connid_hash(struct Client *client_p)
 {
-	irc_dictionary_delete(client_connid_tree, IRC_UINT_TO_POINTER(client_p->localClient->connid));
+	rb_dictionary_delete(client_connid_tree, RB_UINT_TO_POINTER(client_p->localClient->connid));
 }
 
 struct Client *
@@ -522,11 +522,11 @@ find_cli_connid_hash(uint32_t connid)
 {
 	struct Client *target_p;
 
-	target_p = irc_dictionary_retrieve(client_connid_tree, IRC_UINT_TO_POINTER(connid));
+	target_p = rb_dictionary_retrieve(client_connid_tree, RB_UINT_TO_POINTER(connid));
 	if (target_p != NULL)
 		return target_p;
 
-	target_p = irc_dictionary_retrieve(client_zconnid_tree, IRC_UINT_TO_POINTER(connid));
+	target_p = rb_dictionary_retrieve(client_zconnid_tree, RB_UINT_TO_POINTER(connid));
 	if (target_p != NULL)
 		return target_p;
 

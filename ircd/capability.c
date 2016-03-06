@@ -20,7 +20,7 @@
 
 #include "stdinc.h"
 #include "capability.h"
-#include "irc_dictionary.h"
+#include "rb_dictionary.h"
 #include "s_assert.h"
 
 static rb_dlink_list capability_indexes = { NULL, NULL, 0 };
@@ -32,7 +32,7 @@ capability_find(struct CapabilityIndex *idx, const char *cap)
 	if (cap == NULL)
 		return NULL;
 
-	return irc_dictionary_retrieve(idx->cap_dict, cap);
+	return rb_dictionary_retrieve(idx->cap_dict, cap);
 }
 
 unsigned int
@@ -44,7 +44,7 @@ capability_get(struct CapabilityIndex *idx, const char *cap, void **ownerdata)
 	if (cap == NULL)
 		return 0;
 
-	entry = irc_dictionary_retrieve(idx->cap_dict, cap);
+	entry = rb_dictionary_retrieve(idx->cap_dict, cap);
 	if (entry != NULL && !(entry->flags & CAP_ORPHANED))
 	{
 		if (ownerdata != NULL)
@@ -64,7 +64,7 @@ capability_put(struct CapabilityIndex *idx, const char *cap, void *ownerdata)
 	if (!idx->highest_bit)
 		return 0xFFFFFFFF;
 
-	if ((entry = irc_dictionary_retrieve(idx->cap_dict, cap)) != NULL)
+	if ((entry = rb_dictionary_retrieve(idx->cap_dict, cap)) != NULL)
 	{
 		entry->flags &= ~CAP_ORPHANED;
 		return (1 << entry->value);
@@ -76,7 +76,7 @@ capability_put(struct CapabilityIndex *idx, const char *cap, void *ownerdata)
 	entry->value = idx->highest_bit;
 	entry->ownerdata = ownerdata;
 
-	irc_dictionary_add(idx->cap_dict, entry->cap, entry);
+	rb_dictionary_add(idx->cap_dict, entry->cap, entry);
 
 	idx->highest_bit++;
 	if (idx->highest_bit % (sizeof(unsigned int) * 8) == 0)
@@ -107,7 +107,7 @@ capability_orphan(struct CapabilityIndex *idx, const char *cap)
 
 	s_assert(idx != NULL);
 
-	entry = irc_dictionary_retrieve(idx->cap_dict, cap);
+	entry = rb_dictionary_retrieve(idx->cap_dict, cap);
 	if (entry != NULL)
 	{
 		entry->flags &= ~CAP_REQUIRED;
@@ -123,7 +123,7 @@ capability_require(struct CapabilityIndex *idx, const char *cap)
 
 	s_assert(idx != NULL);
 
-	entry = irc_dictionary_retrieve(idx->cap_dict, cap);
+	entry = rb_dictionary_retrieve(idx->cap_dict, cap);
 	if (entry != NULL)
 		entry->flags |= CAP_REQUIRED;
 }
@@ -143,7 +143,7 @@ capability_index_create(const char *name)
 
 	idx = rb_malloc(sizeof(struct CapabilityIndex));
 	idx->name = name;
-	idx->cap_dict = irc_dictionary_create(name, strcasecmp);
+	idx->cap_dict = rb_dictionary_create(name, strcasecmp);
 	idx->highest_bit = 1;
 
 	rb_dlinkAdd(idx, &idx->node, &capability_indexes);
@@ -158,7 +158,7 @@ capability_index_destroy(struct CapabilityIndex *idx)
 
 	rb_dlinkDelete(&idx->node, &capability_indexes);
 
-	irc_dictionary_destroy(idx->cap_dict, capability_destroy, NULL);
+	rb_dictionary_destroy(idx->cap_dict, capability_destroy, NULL);
 	rb_free(idx);
 }
 

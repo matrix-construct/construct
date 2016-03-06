@@ -49,7 +49,7 @@
 #include "inline/stringops.h"
 #include "s_assert.h"
 #include "logger.h"
-#include "irc_radixtree.h"
+#include "rb_radixtree.h"
 
 static rb_dlink_list safelisting_clients = { NULL, NULL, 0 };
 
@@ -472,9 +472,9 @@ static void safelist_one_channel(struct Client *source_p, struct Channel *chptr,
 static void safelist_iterate_client(struct Client *source_p)
 {
 	struct Channel *chptr;
-	struct irc_radixtree_iteration_state iter;
+	struct rb_radixtree_iteration_state iter;
 
-	IRC_RADIXTREE_FOREACH_FROM(chptr, &iter, channel_tree, source_p->localClient->safelist_data->chname)
+	RB_RADIXTREE_FOREACH_FROM(chptr, &iter, channel_tree, source_p->localClient->safelist_data->chname)
 	{
 		if (safelist_sendq_exceeded(source_p->from) == YES)
 		{

@@ -38,7 +38,7 @@
 #include "send.h"
 #include "logger.h"
 #include "scache.h"
-#include "irc_radixtree.h"
+#include "rb_radixtree.h"
 
 struct whowas_top
 {
@@ -46,7 +46,7 @@ struct whowas_top
 	rb_dlink_list wwlist;
 };
 
-static struct irc_radixtree *whowas_tree = NULL;
+static struct rb_radixtree *whowas_tree = NULL;
 static rb_dlink_list whowas_list = {NULL, NULL, 0};
 static unsigned int whowas_list_length = NICKNAMEHISTORYLENGTH;
 static void whowas_trim(void *unused);
@@ -56,7 +56,7 @@ whowas_free_wtop(struct whowas_top *wtop)
 {
 	if(rb_dlink_list_length(&wtop->wwlist) == 0)
 	{
-		irc_radixtree_delete(whowas_tree, wtop->name);
+		rb_radixtree_delete(whowas_tree, wtop->name);
 		rb_free(wtop->name);
 		rb_free(wtop);
 	}
@@ -67,13 +67,13 @@ whowas_get_top(const char *name)
 {
 	struct whowas_top *wtop;
 
-	wtop = irc_radixtree_retrieve(whowas_tree, name);
+	wtop = rb_radixtree_retrieve(whowas_tree, name);
 	if (wtop != NULL)
 		return wtop;
 
 	wtop = rb_malloc(sizeof(struct whowas_top));
 	wtop->name = rb_strdup(name);
-	irc_radixtree_add(whowas_tree, wtop->name, wtop);
+	rb_radixtree_add(whowas_tree, wtop->name, wtop);
 
 	return wtop;
 }
@@ -82,7 +82,7 @@ rb_dlink_list *
 whowas_get_list(const char *name)
 {
 	struct whowas_top *wtop;
-	wtop = irc_radixtree_retrieve(whowas_tree, name);
+	wtop = rb_radixtree_retrieve(whowas_tree, name);
 	if(wtop == NULL)
 		return NULL;
 	return &wtop->wwlist;
@@ -151,7 +151,7 @@ whowas_get_history(const char *nick, time_t timelimit)
 	struct whowas_top *wtop;
 	rb_dlink_node *ptr;
 
-	wtop = irc_radixtree_retrieve(whowas_tree, nick);
+	wtop = rb_radixtree_retrieve(whowas_tree, nick);
 	if(wtop == NULL)
 		return NULL;
 
@@ -197,7 +197,7 @@ whowas_trim(void *unused)
 void
 whowas_init(void)
 {
-	whowas_tree = irc_radixtree_create("whowas", irc_radixtree_irccasecanon);
+	whowas_tree = rb_radixtree_create("whowas", irccasecanon);
 	if(whowas_list_length == 0)
 	{
 		whowas_list_length = NICKNAMEHISTORYLENGTH;
@@ -217,5 +217,5 @@ whowas_memory_usage(size_t * count, size_t * memused)
 {
 	*count = rb_dlink_list_length(&whowas_list);
 	*memused += *count * sizeof(struct Whowas);
-	*memused += sizeof(struct whowas_top) * irc_radixtree_size(whowas_tree);
+	*memused += sizeof(struct whowas_top) * rb_radixtree_size(whowas_tree);
 }

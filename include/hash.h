@@ -26,11 +26,11 @@
 #define INCLUDED_hash_h
 
 struct Dictionary;
-struct irc_radixtree;
+struct rb_radixtree;
 
 extern struct Dictionary *nd_dict;
-extern struct irc_radixtree *resv_tree;
-extern struct irc_radixtree *channel_tree;
+extern struct rb_radixtree *resv_tree;
+extern struct rb_radixtree *channel_tree;
 
 /* Magic value for FNV hash functions */
 #define FNV1_32_INIT 0x811c9dc5UL

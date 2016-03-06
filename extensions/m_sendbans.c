@@ -43,7 +43,7 @@
 #include "hash.h"
 #include "modules.h"
 #include "messages.h"
-#include "irc_radixtree.h"
+#include "rb_radixtree.h"
 
 static int mo_sendbans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
@@ -90,7 +90,7 @@ static int mo_sendbans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct 
 	int i, count;
 	const char *target, *mask2;
 	struct Client *server_p;
-	struct irc_radixtree_iteration_state state;
+	struct rb_radixtree_iteration_state state;
 
 	if (!IsOperRemoteBan(source_p))
 	{
@@ -144,7 +144,7 @@ static int mo_sendbans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct 
 				target, aconf->host, aconf->passwd);
 	}
 
-	IRC_RADIXTREE_FOREACH(aconf, &state, resv_tree)
+	RB_RADIXTREE_FOREACH(aconf, &state, resv_tree)
 	{
 		if (aconf->hold)
 			continue;

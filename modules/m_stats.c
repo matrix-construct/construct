@@ -46,7 +46,7 @@
 #include "hash.h"
 #include "reject.h"
 #include "whowas.h"
-#include "irc_radixtree.h"
+#include "rb_radixtree.h"
 #include "sslproc.h"
 
 static int m_stats (struct MsgBuf *, struct Client *, struct Client *, int, const char **);
@@ -292,8 +292,8 @@ stats_hash(struct Client *source_p)
 	sendto_one_numeric(source_p, RPL_STATSDEBUG, "B :%-30s %-15s %-10s %-10s %-10s %-10s",
 		"NAME", "TYPE", "OBJECTS", "DEPTH SUM", "AVG DEPTH", "MAX DEPTH");
 
-	irc_dictionary_stats_walk(stats_hash_cb, source_p);
-	irc_radixtree_stats_walk(stats_hash_cb, source_p);
+	rb_dictionary_stats_walk(stats_hash_cb, source_p);
+	rb_radixtree_stats_walk(stats_hash_cb, source_p);
 }
 
 static void
@@ -856,7 +856,7 @@ static void
 stats_tresv(struct Client *source_p)
 {
 	struct ConfItem *aconf;
-	struct irc_radixtree_iteration_state state;
+	struct rb_radixtree_iteration_state state;
 	rb_dlink_node *ptr;
 	int i;
 
@@ -869,7 +869,7 @@ stats_tresv(struct Client *source_p)
 					'q', aconf->port, aconf->host, aconf->passwd);
 	}
 
-	IRC_RADIXTREE_FOREACH(aconf, &state, resv_tree)
+	RB_RADIXTREE_FOREACH(aconf, &state, resv_tree)
 	{
 		if(aconf->hold)
 			sendto_one_numeric(source_p, RPL_STATSQLINE,
@@ -883,7 +883,7 @@ static void
 stats_resv(struct Client *source_p)
 {
 	struct ConfItem *aconf;
-	struct irc_radixtree_iteration_state state;
+	struct rb_radixtree_iteration_state state;
 	rb_dlink_node *ptr;
 	int i;
 
@@ -896,7 +896,7 @@ stats_resv(struct Client *source_p)
 					'Q', aconf->port, aconf->host, aconf->passwd);
 	}
 
-	IRC_RADIXTREE_FOREACH(aconf, &state, resv_tree)
+	RB_RADIXTREE_FOREACH(aconf, &state, resv_tree)
 	{
 		if(!aconf->hold)
 			sendto_one_numeric(source_p, RPL_STATSQLINE,

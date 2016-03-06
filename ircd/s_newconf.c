@@ -41,8 +41,8 @@
 #include "hostmask.h"
 #include "newconf.h"
 #include "hash.h"
-#include "irc_dictionary.h"
-#include "irc_radixtree.h"
+#include "rb_dictionary.h"
+#include "rb_radixtree.h"
 #include "s_assert.h"
 #include "logger.h"
 #include "dns.h"
@@ -686,9 +686,9 @@ expire_temp_rxlines(void *unused)
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 	int i;
-	struct irc_radixtree_iteration_state state;
+	struct rb_radixtree_iteration_state state;
 
-	IRC_RADIXTREE_FOREACH(aconf, &state, resv_tree)
+	RB_RADIXTREE_FOREACH(aconf, &state, resv_tree)
 	{
 		if(aconf->lifetime != 0)
 			continue;
@@ -699,7 +699,7 @@ expire_temp_rxlines(void *unused)
 						"Temporary RESV for [%s] expired",
 						aconf->host);
 
-			irc_radixtree_delete(resv_tree, aconf->host);
+			rb_radixtree_delete(resv_tree, aconf->host);
 			free_conf(aconf);
 		}
 	}
@@ -750,7 +750,7 @@ add_nd_entry(const char *name)
 {
 	struct nd_entry *nd;
 
-	if(irc_dictionary_find(nd_dict, name) != NULL)
+	if(rb_dictionary_find(nd_dict, name) != NULL)
 		return;
 
 	nd = rb_bh_alloc(nd_heap);
@@ -761,13 +761,13 @@ add_nd_entry(const char *name)
 	/* this list is ordered */
 	rb_dlinkAddTail(nd, &nd->lnode, &nd_list);
 
-	irc_dictionary_add(nd_dict, nd->name, nd);
+	rb_dictionary_add(nd_dict, nd->name, nd);
 }
 
 void
 free_nd_entry(struct nd_entry *nd)
 {
-	irc_dictionary_delete(nd_dict, nd->name);
+	rb_dictionary_delete(nd_dict, nd->name);
 
 	rb_dlinkDelete(&nd->lnode, &nd_list);
 	rb_bh_free(nd_heap, nd);

@@ -38,6 +38,8 @@ librb_la_SOURCES =			\
 	kqueue.c			\
 	rawbuf.c			\
 	patricia.c			\
+	dictionary.c			\
+	radixtree.c			\
 	arc4random.c			\
 	version.c
 

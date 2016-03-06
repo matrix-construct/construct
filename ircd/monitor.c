@@ -35,14 +35,14 @@
 #include "hash.h"
 #include "numeric.h"
 #include "send.h"
-#include "irc_radixtree.h"
+#include "rb_radixtree.h"
 
-static struct irc_radixtree *monitor_tree;
+static struct rb_radixtree *monitor_tree;
 
 void
 init_monitor(void)
 {
-	monitor_tree = irc_radixtree_create("monitor lists", irc_radixtree_irccasecanon);
+	monitor_tree = rb_radixtree_create("monitor lists", irccasecanon);
 }
 
 struct monitor *
@@ -50,7 +50,7 @@ find_monitor(const char *name, int add)
 {
 	struct monitor *monptr;
 
-	monptr = irc_radixtree_retrieve(monitor_tree, name);
+	monptr = rb_radixtree_retrieve(monitor_tree, name);
 	if (monptr != NULL)
 		return monptr;
 
@@ -58,7 +58,7 @@ find_monitor(const char *name, int add)
 	{
 		monptr = rb_malloc(sizeof(*monptr));
 		rb_strlcpy(monptr->name, name, sizeof(monptr->name));
-		irc_radixtree_add(monitor_tree, monptr->name, monptr);
+		rb_radixtree_add(monitor_tree, monptr->name, monptr);
 
 		return monptr;
 	}
@@ -72,7 +72,7 @@ free_monitor(struct monitor *monptr)
 	if (rb_dlink_list_length(&monptr->users) > 0)
 		return;
 
-	irc_radixtree_delete(monitor_tree, monptr->name);
+	rb_radixtree_delete(monitor_tree, monptr->name);
 	rb_free(monptr);
 }
 

@@ -32,7 +32,7 @@
 #include "scache.h"
 #include "s_conf.h"
 #include "s_assert.h"
-#include "irc_radixtree.h"
+#include "rb_radixtree.h"
 
 /*
  * ircd used to store full servernames in anUser as well as in the
@@ -45,7 +45,7 @@
  * reworked to serve for flattening/delaying /links also
  * -- jilles
  *
- * reworked to make use of irc_radixtree.
+ * reworked to make use of rb_radixtree.
  * -- kaniini
  */
 
@@ -62,12 +62,12 @@ struct scache_entry
 	time_t last_split;
 };
 
-static struct irc_radixtree *scache_tree = NULL;
+static struct rb_radixtree *scache_tree = NULL;
 
 void
 clear_scache_hash_table(void)
 {
-	scache_tree = irc_radixtree_create("server names cache", irc_radixtree_irccasecanon);
+	scache_tree = rb_radixtree_create("server names cache", irccasecanon);
 }
 
 static struct scache_entry *
@@ -75,7 +75,7 @@ find_or_add(const char *name)
 {
 	struct scache_entry *ptr;
 
-	ptr = irc_radixtree_retrieve(scache_tree, name);
+	ptr = rb_radixtree_retrieve(scache_tree, name);
 	if (ptr != NULL)
 		return ptr;
 
@@ -89,7 +89,7 @@ find_or_add(const char *name)
 	ptr->last_connect = 0;
 	ptr->last_split = 0;
 
-	irc_radixtree_add(scache_tree, ptr->name, ptr);
+	rb_radixtree_add(scache_tree, ptr->name, ptr);
 
 	return ptr;
 }
@@ -134,10 +134,10 @@ void
 scache_send_flattened_links(struct Client *source_p)
 {
 	struct scache_entry *scache_ptr;
-	struct irc_radixtree_iteration_state iter;
+	struct rb_radixtree_iteration_state iter;
 	int show;
 
-	IRC_RADIXTREE_FOREACH(scache_ptr, &iter, scache_tree)
+	RB_RADIXTREE_FOREACH(scache_ptr, &iter, scache_tree)
 	{
 		if (!irccmp(scache_ptr->name, me.name))
 			show = FALSE;
@@ -170,9 +170,9 @@ void
 scache_send_missing(struct Client *source_p)
 {
 	struct scache_entry *scache_ptr;
-	struct irc_radixtree_iteration_state iter;
+	struct rb_radixtree_iteration_state iter;
 
-	IRC_RADIXTREE_FOREACH(scache_ptr, &iter, scache_tree)
+	RB_RADIXTREE_FOREACH(scache_ptr, &iter, scache_tree)
 	{
 		if (!(scache_ptr->flags & SC_ONLINE) && scache_ptr->last_split > rb_current_time() - MISSING_TIMEOUT)
 			sendto_one_numeric(source_p, RPL_MAP, "** %s (recently split)",
@@ -191,12 +191,12 @@ void
 count_scache(size_t * number_servers_cached, size_t * mem_servers_cached)
 {
 	struct scache_entry *scache_ptr;
-	struct irc_radixtree_iteration_state iter;
+	struct rb_radixtree_iteration_state iter;
 
 	*number_servers_cached = 0;
 	*mem_servers_cached = 0;
 
-	IRC_RADIXTREE_FOREACH(scache_ptr, &iter, scache_tree)
+	RB_RADIXTREE_FOREACH(scache_ptr, &iter, scache_tree)
 	{
 		*number_servers_cached = *number_servers_cached + 1;
 		*mem_servers_cached = *mem_servers_cached +

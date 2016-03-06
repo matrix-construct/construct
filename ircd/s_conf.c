@@ -826,7 +826,7 @@ set_default_conf(void)
 	ConfigFileEntry.hide_opers_in_whois = 0;
 
 	if (!alias_dict)
-		alias_dict = irc_dictionary_create("alias", strcasecmp);
+		alias_dict = rb_dictionary_create("alias", strcasecmp);
 }
 
 #undef YES
@@ -1532,7 +1532,7 @@ clear_out_old_conf(void)
 	/* remove any aliases... -- nenolod */
 	if (alias_dict != NULL)
 	{
-		irc_dictionary_destroy(alias_dict, free_alias_cb, NULL);
+		rb_dictionary_destroy(alias_dict, free_alias_cb, NULL);
 		alias_dict = NULL;
 	}
 

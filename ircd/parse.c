@@ -136,14 +136,14 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 	}
 	else
 	{
-		mptr = irc_dictionary_retrieve(cmd_dict, msgbuf.cmd);
+		mptr = rb_dictionary_retrieve(cmd_dict, msgbuf.cmd);
 
 		/* no command or its encap only, error */
 		if(!mptr || !mptr->cmd)
 		{
 			if (IsPerson(client_p))
 			{
-				struct alias_entry *aptr = irc_dictionary_retrieve(alias_dict, msgbuf.cmd);
+				struct alias_entry *aptr = rb_dictionary_retrieve(alias_dict, msgbuf.cmd);
 				if (aptr != NULL)
 				{
 					do_alias(aptr, client_p, reconstruct_parv(msgbuf.n_para - 1, msgbuf.para + 1));
@@ -264,7 +264,7 @@ handle_encap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *so
 	struct MessageEntry ehandler;
 	MessageHandler handler = 0;
 
-	mptr = irc_dictionary_retrieve(cmd_dict, command);
+	mptr = rb_dictionary_retrieve(cmd_dict, command);
 
 	if(mptr == NULL || mptr->cmd == NULL)
 		return;
@@ -290,7 +290,7 @@ handle_encap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *so
 void
 clear_hash_parse()
 {
-	cmd_dict = irc_dictionary_create("command", strcasecmp);
+	cmd_dict = rb_dictionary_create("command", strcasecmp);
 }
 
 /* mod_add_cmd
@@ -309,14 +309,14 @@ mod_add_cmd(struct Message *msg)
 	if(msg == NULL)
 		return;
 
-	if (irc_dictionary_find(cmd_dict, msg->cmd) != NULL)
+	if (rb_dictionary_find(cmd_dict, msg->cmd) != NULL)
 		return;
 
 	msg->count = 0;
 	msg->rcount = 0;
 	msg->bytes = 0;
 
-	irc_dictionary_add(cmd_dict, msg->cmd, msg);
+	rb_dictionary_add(cmd_dict, msg->cmd, msg);
 }
 
 /* mod_del_cmd
@@ -332,7 +332,7 @@ mod_del_cmd(struct Message *msg)
 	if(msg == NULL)
 		return;
 
-	irc_dictionary_delete(cmd_dict, msg->cmd);
+	rb_dictionary_delete(cmd_dict, msg->cmd);
 }
 
 /* cancel_clients()

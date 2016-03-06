@@ -1780,7 +1780,7 @@ conf_end_alias(struct TopConf *tc)
 		return -1;
 	}
 
-	irc_dictionary_add(alias_dict, yy_alias->name, yy_alias);
+	rb_dictionary_add(alias_dict, yy_alias->name, yy_alias);
 
 	return 0;
 }

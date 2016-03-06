@@ -35,9 +35,9 @@
 #include "match.h"
 #include "hash.h"
 #include "operhash.h"
-#include "irc_radixtree.h"
+#include "rb_radixtree.h"
 
-static struct irc_radixtree *operhash_tree = NULL;
+static struct rb_radixtree *operhash_tree = NULL;
 
 struct operhash_entry
 {
@@ -48,7 +48,7 @@ struct operhash_entry
 void
 init_operhash(void)
 {
-	operhash_tree = irc_radixtree_create("operhash", NULL);
+	operhash_tree = rb_radixtree_create("operhash", NULL);
 }
 
 const char *
@@ -60,7 +60,7 @@ operhash_add(const char *name)
 	if(EmptyString(name))
 		return NULL;
 
-	if((ohash = (struct operhash_entry *) irc_radixtree_retrieve(operhash_tree, name)) != NULL)
+	if((ohash = (struct operhash_entry *) rb_radixtree_retrieve(operhash_tree, name)) != NULL)
 	{
 		ohash->refcount++;
 		return ohash->name;
@@ -70,20 +70,20 @@ operhash_add(const char *name)
 	ohash = rb_malloc(sizeof(struct operhash_entry) + len);
 	ohash->refcount = 1;
 	memcpy(ohash->name, name, len);
-	irc_radixtree_add(operhash_tree, ohash->name, ohash);
+	rb_radixtree_add(operhash_tree, ohash->name, ohash);
 	return ohash->name;
 }
 
 const char *
 operhash_find(const char *name)
 {
-	return irc_radixtree_retrieve(operhash_tree, name);
+	return rb_radixtree_retrieve(operhash_tree, name);
 }
 
 void
 operhash_delete(const char *name)
 {
-	struct operhash_entry *ohash = irc_radixtree_retrieve(operhash_tree, name);
+	struct operhash_entry *ohash = rb_radixtree_retrieve(operhash_tree, name);
 
 	if (ohash != NULL)
 		rb_free(ohash);
