@@ -66,13 +66,13 @@ libircd_la_SOURCES =                  \
   version.c                     \
   whowas.c
 libircd_la_LDFLAGS = $(EXTRA_FLAGS) -avoid-version
-libircd_la_LIBADD = @LIBLTDL@ -L$(top_srcdir)/librb/src -lratbox
+libircd_la_LIBADD = @LIBLTDL@ -L$(top_srcdir)/librb/src -lrb
 libircd_LTLIBRARIES = libircd.la
 
 bin_PROGRAMS = charybdis
 charybdis_SOURCES = main.c
 charybdis_LDFLAGS = $(EXTRA_FLAGS) -dlopen self
-charybdis_LDADD = libircd.la -L$(top_srcdir)/librb/src -lratbox
+charybdis_LDADD = libircd.la -L$(top_srcdir)/librb/src -lrb
 
 install-exec-hook: install-libircdLTLIBRARIES
 	$(RM) -f version.c
