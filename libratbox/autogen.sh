@@ -80,8 +80,8 @@ parse_options "$@"
 
 cd $TOP_DIR
 
-run_or_die $ACLOCAL -I m4
+run_or_die $ACLOCAL
 run_or_die $LIBTOOLIZE --force --copy
 run_or_die $AUTOHEADER
 run_or_die $AUTOCONF
-run_or_die $AUTOMAKE --add-missing
+run_or_die $AUTOMAKE --add-missing --copy

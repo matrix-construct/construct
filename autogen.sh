@@ -85,10 +85,10 @@ bash autogen.sh
 
 echo "Building main autotools files."
 
-cd "$TOP_DIR"
+cd "$LAST_DIR"
 
 run_or_die $ACLOCAL -I m4
 run_or_die $LIBTOOLIZE --force --copy
 run_or_die $AUTOHEADER
 run_or_die $AUTOCONF
-run_or_die $AUTOMAKE --add-missing
+run_or_die $AUTOMAKE --add-missing --copy
