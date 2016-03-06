@@ -1,8 +1,6 @@
 Overview of the event subsystem
 Adrian Chadd <adrian@creative.net.au>
 
-$Id: event.txt 6 2005-09-10 01:02:21Z nenolod $
-
 
 One of the things that immediately struck me whilst first looking at the
 code was that the ircd periodically scheduled things in io_loop() but

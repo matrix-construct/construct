@@ -88,5 +88,3 @@ The function is called whenever a (local) client needs to be checked against
 a +bqeI entry of the given extban type, and whenever a local client tries to
 add such an entry. (Clients are allowed to add bans matching themselves.)
 
--- 
-$Id: extban.txt 1639 2006-06-04 23:26:47Z jilles $

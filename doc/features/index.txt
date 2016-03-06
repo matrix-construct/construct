@@ -1,0 +1,15 @@
+Here is an overview of the docs in the doc/features directory.
+
+account-notify.txt	- Description of the account-notify system
+away-notify.txt		- Description of the away-notify system
+challenge.txt		- Overview of the challenge/response system for
+                          obtaining operator status
+collision_fnc.txt	- Overview of the SAVE nick collision method
+extban.txt		- Description of extended bans
+extended-join.txt	- Description of the extended-join system
+modeg.txt		- Description of UMODE +g, the caller ID system
+monitor.txt		- Description of the MONITOR system
+sasl.txt		- Description of the SASL services authentication
+			  system
+services.txt		- Overview of features added by services
+tgchange.txt		- Overview of the target change system

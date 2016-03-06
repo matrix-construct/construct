@@ -1,5 +1,3 @@
-$Id: cluster.txt 6 2005-09-10 01:02:21Z nenolod $
-
 Short description of how remote kline and friends are propagated under
 the old hyb7 style (CAP_KLN etc) and under the new style over ENCAP.
 

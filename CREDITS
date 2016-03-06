@@ -16,7 +16,7 @@ in nick-alphabetical order:
 AndroSyn, Aaron Sethman <androsyn -at- ratbox.org>
 anfl, Lee Hardy <lee -at- leeh.co.uk>
 beu, Elfyn McBratney <elfyn.mcbratney -at- gmail.com>
-Elizacat, Elizabeth Myers <elizabeth -at- interlinked.me>
+Elizafox, Elizabeth Myers <elizabeth -at- interlinked.me>
 Entrope, Michael Poole <mdpoole -at- trolius.org> 
 gxti, Michael Tharp <gxti -at- partiallystapled.com>
 jdhore, JD Horelick <jdhore1 -at- gmail.com>
@@ -25,6 +25,9 @@ ThaPrince, Jon Christopherson <jon -at- vile.com>
 twincest, River Tarnell <river -at- attenuate.org>
 viatsko, Valerii Iatsko <dwr -at- codingbox.io>
 w00t, Robin Burchell <surreal.w00t -at- gmail.com>
- 
+
+For a list of contributors to ircd-ratbox, ircd-hyrbid, and ircd2.8 (the
+predecessors to Charybdis), see the doc/credits-past.txt file.
+
 Visit the Charybdis website at: http://www.charybdis.io
 Visit us on IRC at: irc.freenode.net #charybdis

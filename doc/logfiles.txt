@@ -1,5 +1,4 @@
-ircd-ratbox logfiles - Lee H <lee -at- leeh.co.uk>
-$Id: logfiles.txt 6 2005-09-10 01:02:21Z nenolod $
+Charybdis logfiles - Lee H <lee -at- leeh.co.uk>
 ---------------------------
 
 fname_killlog

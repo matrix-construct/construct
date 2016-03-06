@@ -215,4 +215,3 @@ which is ambiguous if the user may contain a [ and in the author's opinion ugly.
 --
 W. Campbell
 updated by J. Tjoelker
-$Id: modeg.txt 3556 2007-08-18 14:45:10Z jilles $

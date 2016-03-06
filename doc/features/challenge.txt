@@ -82,5 +82,3 @@ ratbox-respond/README for more information.
 A number of scripts for clients have already been written to automate this
 process, see client-scripts/README for more information.
 
--- 
-$Id: challenge.txt 678 2006-02-03 20:25:01Z jilles $

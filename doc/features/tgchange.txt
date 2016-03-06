@@ -41,6 +41,3 @@ you are messaging that channel or a client within that channel.  The latter
 can be done explicitly using the CNOTICE and CPRIVMSG commands, see
 /quote help cnotice and /quote help cprivmsg, but is also implicit in a
 normal /msg, /notice or /invite.
-
--- 
-$Id: tgchange.txt 6 2005-09-10 01:02:21Z nenolod $

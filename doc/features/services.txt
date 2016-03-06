@@ -1,9 +1,12 @@
-ratbox-services compatibility documentation - Lee H <lee -at- leeh.co.uk>
--------------------------------------------------------------------------
+Services compatibility documentation
+------------------------------------
 
-Compatibility with ratbox-services is always enabled.  Note that some or
-all of this is also used by atheme-services and anope.  It will add the
-following features to ircd:
+Originally written by Lee Hardy for ircd-ratbox. Minor changes by Elizabeth
+Myers for modern services.
+
+
+Compatibility with services is always enabled.  Supported services include
+atheme and anope. They add the following features to Charybdis:
 
 1. Channel mode +r
 
@@ -17,8 +20,8 @@ following features to ircd:
 
    Ability to specify the names of services servers in ircd.conf:
    service {
-       name = "services.ircd-ratbox.org";
-       name = "backup-services.ircd-ratbox.org";
+       name = "services.charybdis.io";
+       name = "backup-services.charybdis.io";
    };
 
    These must be specified for certain features to work.  You may specify as
@@ -60,4 +63,3 @@ following features to ircd:
    Gives numeric 486 to users sending a PRIVMSG who are not logged in:
    :<server> 486 <nick> <targetnick> :You must log in with services to message this user
 
-# $Id: services.txt 6 2005-09-10 01:02:21Z nenolod $

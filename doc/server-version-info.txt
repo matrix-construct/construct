@@ -1,25 +1,21 @@
                               Server VERSION Info
 
-   $Id: server-version-info 1851 2006-08-24 17:16:53Z jilles $
 
    Copyright (c) 2001 by ircd-hybrid team
    Copyright (c) 2002 ircd-ratbox development team
+   Copyright (c) 2016 Charybdis development team
 
      ----------------------------------------------------------------------
 
    When you type /version, you will often see something like this:
 
- ircd-ratbox-1.0rc7(20021120_0). embers.lan egGHIKMpZ6 TS5ow
+ charybdis-3.5.0-rc1(20151011-d09bde1). joestar.interlinked.me :eIKMpSZ6 TS6ow 1US
 
    Ever wondered what those funny chars mean after the version number? Well
    here they are:
 
    +----------------------------+
    | 'e'  | USE_EXCEPT          |
-   |------+---------------------|
-   | 'g'  | NO_FAKE_GLINES      |
-   |------+---------------------|
-   | 'G'  | GLINES              |
    |------+---------------------|
    | 'H'  | HUB                 |
    |------+---------------------|
@@ -43,7 +39,7 @@
    |------+---------------------|
    | 'TS' | Supports TS         |
    |------+---------------------|
-   | '5'  | TS Version 5        |
+   | '6'  | TS Version 6        |
    |------+---------------------|
    | 'o'  | TS Only             |
    |------+---------------------|
