@@ -1,5 +1,5 @@
 /*
- *  libratbox: a library used by ircd-ratbox and other things
+ *  librb: a library used by ircd-ratbox and other things
  *  nossl.c: ssl stub code
  *
  *  Copyright (C) 2007-2008 ircd-ratbox development team
@@ -24,8 +24,8 @@
  */
 
 
-#include <libratbox_config.h>
-#include <ratbox_lib.h>
+#include <librb_config.h>
+#include <rb_lib.h>
 #if !defined(HAVE_OPENSSL) && !defined(HAVE_GNUTLS) && !defined(HAVE_MBEDTLS)
 
 #include "arc4random.h"

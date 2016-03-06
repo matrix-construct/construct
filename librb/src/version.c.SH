@@ -3,7 +3,7 @@
 # $Id: version.c.SH 24870 2008-01-10 16:51:01Z androsyn $ 
 
 spitshell=cat
-package=libratbox
+package=librb
 
 echo "Extracting $package/src/version.c..."
 
@@ -19,7 +19,7 @@ generation=`expr $generation + 1`
 
 $spitshell >version.c <<!SUB!THIS!
 /*
- *   libratbox: a library used by ircd-ratbox and other things
+ *   librb: a library used by charybdis and other things
  *   src/version.c
  *   
  *   Copyright (C) 1990 Chelsea Ashley Dyerman
@@ -46,10 +46,10 @@ $spitshell >version.c <<!SUB!THIS!
 
 #include "../include/serno.h"
 
-const char *libratbox_generation = "$generation";
-const char *libratbox_serno = SERIALNUM;
+const char *librb_generation = "$generation";
+const char *librb_serno = SERIALNUM;
 
-const char *libratbox_infotext[] =
+const char *librb_infotext[] =
 {
   "$package --",
   "Based on the original code written by Jarkko Oikarinen",

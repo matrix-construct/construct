@@ -19,7 +19,7 @@
  *  USA
  */
 
-#include <ratbox_lib.h>
+#include <rb_lib.h>
 #include "stdinc.h"
 
 

@@ -24,7 +24,7 @@ librb_la_SOURCES =			\
 	gnutls.c			\
 	nossl.c				\
 	event.c				\
-	ratbox_lib.c			\
+	rb_lib.c			\
 	rb_memory.c			\
 	linebuf.c			\
 	tools.c				\

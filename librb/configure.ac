@@ -9,20 +9,20 @@ AC_PREREQ(2.63)
 AUTOMAKE_OPTIONS = 1.10
 dnl Sneaky way to get an Id tag into the configure script
 AC_COPYRIGHT([$Id: configure.ac 26260 2008-12-10 04:08:39Z androsyn $])
-AC_INIT([libratbox],[devel])
+AC_INIT([librb],[devel])
 AM_INIT_AUTOMAKE([subdir-objects])
 AM_SILENT_RULES([yes])
 
-AM_CONFIG_HEADER(include/libratbox_config.h)
+AM_CONFIG_HEADER(include/librb_config.h)
 
-AC_PREFIX_DEFAULT(/usr/local/libratbox)
+AC_PREFIX_DEFAULT(/usr/local/librb)
 AC_GNU_SOURCE
 
 dnl Checks for programs.
 AC_PROG_CC_C99
 
 if test x"$ac_cv_prog_cc_c99" = "xno"; then
-	AC_ERROR([ircd-ratbox requires a C99 capable compiler])
+	AC_ERROR([charybdis requires a C99 capable compiler])
 fi
 
 
@@ -203,7 +203,7 @@ AC_CHECK_TYPES([struct sockaddr_storage],[
 
 
 dnl Check for stdarg.h - if we cant find it, halt configure
-AC_CHECK_HEADER(stdarg.h, , [AC_MSG_ERROR([** stdarg.h could not be found - libratbox will not compile without it **])])
+AC_CHECK_HEADER(stdarg.h, , [AC_MSG_ERROR([** stdarg.h could not be found - librb will not compile without it **])])
 
 AC_CHECK_TYPE([sa_family_t], [],
 [AC_DEFINE(sa_family_t, [u_int16_t], [If system does not define sa_family_t, define it here.])],
@@ -463,7 +463,7 @@ AC_SUBST(MBEDTLS_CFLAGS)
 AC_SUBST(MBEDTLS_LIBS)
 
 if test "$prefix" = "NONE"; then
-	AC_DEFINE_UNQUOTED(RB_PREFIX, "$ac_default_prefix", [Prefix where libratbox is installed.])
+	AC_DEFINE_UNQUOTED(RB_PREFIX, "$ac_default_prefix", [Prefix where librb is installed.])
 
 else
 
@@ -471,7 +471,7 @@ dnl Don't get bitten by Cygwin's stupidity if the user specified
 dnl a custom prefix with a trailing slash
 
 	prefix=`echo $prefix | sed 's/\/$//'`
-	AC_DEFINE_UNQUOTED(RB_PREFIX, "$prefix", [Prefix where libratbox is installed.])
+	AC_DEFINE_UNQUOTED(RB_PREFIX, "$prefix", [Prefix where librb is installed.])
 
 fi
 
@@ -482,7 +482,7 @@ AC_CONFIG_COMMANDS([include/librb-config.h],
 	outfile=include/librb-config.h.tmp
 	cat > $outfile  <<\_______EOF
 /*
- * librb-config.h: libratbox config file. Please modify configure.ac
+ * librb-config.h: librb config file. Please modify configure.ac
  */
 
 #ifndef __LIBRB_CONFIG_H

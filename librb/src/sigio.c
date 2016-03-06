@@ -30,8 +30,8 @@
 #define _GNU_SOURCE 1		/* Needed for F_SETSIG */
 #endif
 
-#include <libratbox_config.h>
-#include <ratbox_lib.h>
+#include <librb_config.h>
+#include <rb_lib.h>
 #include <commio-int.h>
 #include <event-int.h>
 #include <fcntl.h>		/* Yes this needs to be before the ifdef */

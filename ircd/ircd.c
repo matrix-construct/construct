@@ -23,7 +23,7 @@
  *  USA
  */
 
-#include "ratbox_lib.h"
+#include "rb_lib.h"
 #include "stdinc.h"
 #include "setup.h"
 #include "config.h"
@@ -448,13 +448,13 @@ setup_corefile(void)
 static void
 ircd_log_cb(const char *str)
 {
-	ilog(L_MAIN, "libratbox reports: %s", str);
+	ilog(L_MAIN, "librb reports: %s", str);
 }
 
 static void
 ircd_restart_cb(const char *str)
 {
-	inotice("libratbox has called the restart callback: %s", str);
+	inotice("librb has called the restart callback: %s", str);
 	restart(str);
 }
 
@@ -471,11 +471,11 @@ ircd_die_cb(const char *str)
 	if(str != NULL)
 	{
 		/* Try to get the message out to currently logged in operators. */
-		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "libratbox has called the die callback..aborting: %s", str);
-		inotice("libratbox has called the die callback..aborting: %s", str);
+		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "librb has called the die callback..aborting: %s", str);
+		inotice("librb has called the die callback..aborting: %s", str);
 	}
 	else
-		inotice("libratbox has called the die callback..aborting");
+		inotice("librb has called the die callback..aborting");
 
 	unlink(pidFileName);
 	exit(EXIT_FAILURE);

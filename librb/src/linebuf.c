@@ -24,8 +24,8 @@
  *  $Id: linebuf.c 26092 2008-09-19 15:13:52Z androsyn $
  */
 
-#include <libratbox_config.h>
-#include <ratbox_lib.h>
+#include <librb_config.h>
+#include <rb_lib.h>
 #include <commio-int.h>
 
 static rb_bh *rb_linebuf_heap;

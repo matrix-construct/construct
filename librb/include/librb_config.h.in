@@ -1,4 +1,4 @@
-/* include/libratbox_config.h.in.  Generated from configure.ac by autoheader.  */
+/* include/librb_config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Define if building universal (internal helper macro) */
 #undef AC_APPLE_UNIVERSAL_BUILD
@@ -267,7 +267,7 @@
 /* Defined to mark profiling is enabled */
 #undef RATBOX_PROFILE
 
-/* Prefix where libratbox is installed. */
+/* Prefix where librb is installed. */
 #undef RB_PREFIX
 
 /* Define to 1 if sockaddr has a 'sa_len' member. */

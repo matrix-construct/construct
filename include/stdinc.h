@@ -21,7 +21,7 @@
  *
  */
 
-#include "ratbox_lib.h"
+#include "rb_lib.h"
 #include "config.h"		/* Gotta pull in the autoconf stuff */
 #include "ircd_defs.h"  /* Needed for some reasons here -- dwr */
 

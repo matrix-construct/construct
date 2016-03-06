@@ -10,7 +10,7 @@
 #include "send.h"
 #include "s_conf.h"
 #include "snomask.h"
-#include "ratbox_lib.h"
+#include "rb_lib.h"
 
 static int _modinit(void);
 static void _moddeinit(void);

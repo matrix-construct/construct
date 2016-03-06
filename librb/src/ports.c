@@ -26,8 +26,8 @@
  *  $Id: ports.c 26286 2008-12-10 23:28:53Z androsyn $
  */
 
-#include <libratbox_config.h>
-#include <ratbox_lib.h>
+#include <librb_config.h>
+#include <rb_lib.h>
 #include <commio-int.h>
 #include <event-int.h>
 #if defined(HAVE_PORT_H) && (HAVE_PORT_CREATE)

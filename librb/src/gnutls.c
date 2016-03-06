@@ -1,5 +1,5 @@
 /*
- *  libratbox: a library used by ircd-ratbox and other things
+ *  librb: a library used by charybdis and other things
  *  gnutls.c: gnutls related code
  *
  *  Copyright (C) 2007-2008 ircd-ratbox development team
@@ -23,8 +23,8 @@
  *  $Id: gnutls.c 26296 2008-12-13 03:36:00Z androsyn $
  */
 
-#include <libratbox_config.h>
-#include <ratbox_lib.h>
+#include <librb_config.h>
+#include <rb_lib.h>
 #include <commio-int.h>
 #include <commio-ssl.h>
 #ifdef HAVE_GNUTLS

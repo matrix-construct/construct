@@ -22,8 +22,8 @@
  *
  *  $Id$
  */
-#include <libratbox_config.h>
-#include <ratbox_lib.h>
+#include <librb_config.h>
+#include <rb_lib.h>
 #include <commio-int.h>
 #define RAWBUF_SIZE 1024
 

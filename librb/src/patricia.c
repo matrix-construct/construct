@@ -2,7 +2,7 @@
  * Yanked out of Net::Patricia by Aaron Sethman <androsyn@ratbox.org>
  *
  * This was then yanked out of the ratbox/devel/src tree and stuffed into
- * libratbox and had function names changed, but otherwise not really altered.
+ * librb and had function names changed, but otherwise not really altered.
  *
  * $Id: patricia.c 24244 2007-08-22 19:04:55Z androsyn $
  * Dave Plonka <plonka@doit.wisc.edu>
@@ -20,8 +20,8 @@
  * Network, Inc., and their contributors.
  *
  */
-#include <libratbox_config.h>
-#include <ratbox_lib.h>
+#include <librb_config.h>
+#include <rb_lib.h>
 
 /* Enable both of these to debug patricia.c
  * #define NOTYET 1

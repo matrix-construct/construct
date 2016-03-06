@@ -27,8 +27,8 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#include <libratbox_config.h>
-#include <ratbox_lib.h>
+#include <librb_config.h>
+#include <rb_lib.h>
 
 static char *rb_md5_crypt(const char *pw, const char *salt);
 static char *rb_des_crypt(const char *pw, const char *salt);

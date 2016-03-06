@@ -24,8 +24,8 @@
  *
  *  $Id: devpoll.c 26254 2008-12-10 04:04:38Z androsyn $
  */
-#include <libratbox_config.h>
-#include <ratbox_lib.h>
+#include <librb_config.h>
+#include <rb_lib.h>
 #include <commio-int.h>
 #include <fcntl.h>
 

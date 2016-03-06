@@ -23,7 +23,7 @@
  */
 
 #include <stdinc.h>
-#include <ratbox_lib.h>
+#include <rb_lib.h>
 #include <client.h>
 #include <ircd_defs.h>
 #include <parse.h>

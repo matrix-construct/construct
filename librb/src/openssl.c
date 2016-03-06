@@ -1,5 +1,5 @@
 /*
- *  libratbox: a library used by ircd-ratbox and other things
+ *  librb: a library used by ircd-ratbox and other things
  *  openssl.c: openssl related code
  *
  *  Copyright (C) 2007-2008 ircd-ratbox development team
@@ -23,8 +23,8 @@
  *  $Id: commio.c 24808 2008-01-02 08:17:05Z androsyn $
  */
 
-#include <libratbox_config.h>
-#include <ratbox_lib.h>
+#include <librb_config.h>
+#include <rb_lib.h>
 
 #ifdef HAVE_OPENSSL
 
@@ -51,7 +51,7 @@
 
 static SSL_CTX *ssl_server_ctx;
 static SSL_CTX *ssl_client_ctx;
-static int libratbox_index = -1;
+static int librb_index = -1;
 
 static unsigned long
 get_last_err(void)
@@ -109,7 +109,7 @@ rb_ssl_info_callback(SSL * ssl, int where, int ret)
 {
 	if(where & SSL_CB_HANDSHAKE_START)
 	{
-		rb_fde_t *F = SSL_get_ex_data(ssl, libratbox_index);
+		rb_fde_t *F = SSL_get_ex_data(ssl, librb_index);
 		if(F == NULL)
 			return;
 		F->handshake_count++;
@@ -119,7 +119,7 @@ rb_ssl_info_callback(SSL * ssl, int where, int ret)
 static void
 rb_setup_ssl_cb(rb_fde_t *F)
 {
-	SSL_set_ex_data(F->ssl, libratbox_index, (char *)F);
+	SSL_set_ex_data(F->ssl, librb_index, (char *)F);
 	SSL_set_info_callback((SSL *) F->ssl, (void (*)(const SSL *,int,int))rb_ssl_info_callback);
 }
 
@@ -314,11 +314,11 @@ int
 rb_init_ssl(void)
 {
 	int ret = 1;
-	char libratbox_data[] = "libratbox data";
-	const char libratbox_ciphers[] = "kEECDH+HIGH:kEDH+HIGH:HIGH:!RC4:!aNULL";
+	char librb_data[] = "librb data";
+	const char librb_ciphers[] = "kEECDH+HIGH:kEDH+HIGH:HIGH:!RC4:!aNULL";
 	SSL_load_error_strings();
 	SSL_library_init();
-	libratbox_index = SSL_get_ex_new_index(0, libratbox_data, NULL, NULL, NULL);
+	librb_index = SSL_get_ex_new_index(0, librb_data, NULL, NULL, NULL);
 
 #ifndef LRB_HAVE_TLS_METHOD_API
 	ssl_server_ctx = SSL_CTX_new(SSLv23_server_method());
@@ -357,7 +357,7 @@ rb_init_ssl(void)
 	SSL_CTX_set_options(ssl_server_ctx, server_options);
 	SSL_CTX_set_verify(ssl_server_ctx, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, verify_accept_all_cb);
 	SSL_CTX_set_session_cache_mode(ssl_server_ctx, SSL_SESS_CACHE_OFF);
-	SSL_CTX_set_cipher_list(ssl_server_ctx, libratbox_ciphers);
+	SSL_CTX_set_cipher_list(ssl_server_ctx, librb_ciphers);
 
 	/* Set ECDHE on OpenSSL 1.00+, but make sure it's actually available because redhat are dicks
 	   and bastardise their OpenSSL for stupid reasons... */
@@ -390,7 +390,7 @@ rb_init_ssl(void)
 	SSL_CTX_set_options(ssl_client_ctx, SSL_OP_NO_TICKET);
 #endif
 
-	SSL_CTX_set_cipher_list(ssl_client_ctx, libratbox_ciphers);
+	SSL_CTX_set_cipher_list(ssl_client_ctx, librb_ciphers);
 
 	return ret;
 }

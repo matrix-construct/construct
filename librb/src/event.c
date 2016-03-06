@@ -42,8 +42,8 @@
  *  $Id: event.c 26272 2008-12-10 05:55:10Z androsyn $
  */
 
-#include <libratbox_config.h>
-#include <ratbox_lib.h>
+#include <librb_config.h>
+#include <rb_lib.h>
 #include <commio-int.h>
 #include <event-int.h>
 

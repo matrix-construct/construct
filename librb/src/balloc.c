@@ -56,8 +56,8 @@
  *
  *
  */
-#include <libratbox_config.h>
-#include <ratbox_lib.h>
+#include <librb_config.h>
+#include <rb_lib.h>
 
 static uintptr_t offset_pad;
 

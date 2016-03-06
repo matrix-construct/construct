@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include "stdinc.h"
-#include "ratbox_lib.h"
+#include "rb_lib.h"
 #include "client.h"
 #include "s_conf.h"
 #include "logger.h"

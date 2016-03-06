@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include "setup.h"
-#include <ratbox_lib.h>
+#include <rb_lib.h>
 #include <stdio.h>
 #include "rsdb.h"
 #include "common.h"

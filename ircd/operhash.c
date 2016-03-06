@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ratbox_lib.h>
+#include <rb_lib.h>
 #include "stdinc.h"
 #include "match.h"
 #include "hash.h"

@@ -1,6 +1,6 @@
 /*
  *  ircd-ratbox: A slightly useful ircd.
- *  ratbox_lib.c: libircd initialization functions at the like
+ *  rb_lib.c: libircd initialization functions at the like
  *
  *  Copyright (C) 2005,2006 ircd-ratbox development team
  *  Copyright (C) 2005,2006 Aaron Sethman <androsyn@ratbox.org>
@@ -20,11 +20,11 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: ratbox_lib.c 26282 2008-12-10 20:33:21Z androsyn $
+ *  $Id: rb_lib.c 26282 2008-12-10 20:33:21Z androsyn $
  */
 
-#include <libratbox_config.h>
-#include <ratbox_lib.h>
+#include <librb_config.h>
+#include <rb_lib.h>
 #include <commio-int.h>
 #include <commio-ssl.h>
 
@@ -184,7 +184,7 @@ rb_set_time(void)
 	memcpy(&rb_time, &newtime, sizeof(struct timeval));
 }
 
-extern const char *libratbox_serno;
+extern const char *librb_serno;
 
 const char *
 rb_lib_version(void)
@@ -192,7 +192,7 @@ rb_lib_version(void)
 	static char version_info[512];
 	char ssl_info[512];
 	rb_get_ssl_info(ssl_info, sizeof(ssl_info));
-	snprintf(version_info, sizeof(version_info), "libratbox version: %s - %s", libratbox_serno, ssl_info);
+	snprintf(version_info, sizeof(version_info), "librb version: %s - %s", librb_serno, ssl_info);
 	return version_info;
 }
 

@@ -32,7 +32,7 @@
  * January 2016 --kaniini
  */
 
-#include <ratbox_lib.h>
+#include <rb_lib.h>
 #include "setup.h"
 #include "res.h"
 #include "reslib.h"

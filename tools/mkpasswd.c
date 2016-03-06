@@ -16,7 +16,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include "ratbox_lib.h"
+#include "rb_lib.h"
 #ifndef __MINGW32__
 #include <pwd.h>
 #endif

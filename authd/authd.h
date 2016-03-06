@@ -21,7 +21,7 @@
 #ifndef _AUTHD_H
 #define _AUTHD_H
 
-#include <ratbox_lib.h>
+#include <rb_lib.h>
 #include <stdio.h>
 
 #include "setup.h"

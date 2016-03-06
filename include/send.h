@@ -25,7 +25,7 @@
 #ifndef INCLUDED_send_h
 #define INCLUDED_send_h
 
-#include "ratbox_lib.h"
+#include "rb_lib.h"
 #include "ircd_defs.h"
 #include "config.h"		/* HAVE_STDARG_H */
 
