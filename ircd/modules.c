@@ -967,6 +967,7 @@ load_a_module(const char *path, int warn, int core)
 	modlist[num_mods] = rb_malloc(sizeof(struct module));
 	modlist[num_mods]->address = tmpptr;
 	modlist[num_mods]->version = ver;
+	modlist[num_mods]->description = description;
 	modlist[num_mods]->core = core;
 	modlist[num_mods]->name = rb_strdup(mod_basename);
 	modlist[num_mods]->mapi_header = mapi_version;

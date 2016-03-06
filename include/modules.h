@@ -39,6 +39,7 @@ struct module
 {
 	char *name;
 	const char *version;
+	const char *description;
 	lt_dlhandle address;
 	int core;
 	int mapi_version;
