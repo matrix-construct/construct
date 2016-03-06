@@ -81,7 +81,7 @@ mapi_hfn_list_av1 sasl_hfnlist[] = {
 };
 
 static int
-sasl_visible(void)
+sasl_visible(struct Client *client_p)
 {
 	struct Client *agent_p = NULL;
 
@@ -92,7 +92,7 @@ sasl_visible(void)
 }
 
 static const char *
-sasl_data(void)
+sasl_data(struct Client *client_p)
 {
 	return *mechlist_buf != 0 ? mechlist_buf : NULL;
 }

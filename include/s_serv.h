@@ -56,8 +56,8 @@ extern struct CapabilityIndex *cli_capindex;
 #define CLICAP_FLAGS_REQACK    0x002
 
 struct ClientCapability {
-	int (*visible)(void);			/* whether or not to display the capability.  set to NULL or true return value = displayed */
-	const char *(*data)(void);		/* any custom data for the capability.  set to NULL or return NULL = no data */
+	int (*visible)(struct Client *);			/* whether or not to display the capability.  set to NULL or true return value = displayed */
+	const char *(*data)(struct Client *);			/* any custom data for the capability.  set to NULL or return NULL = no data */
 	unsigned int flags;
 };
 

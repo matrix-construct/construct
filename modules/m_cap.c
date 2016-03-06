@@ -60,7 +60,7 @@ DECLARE_MODULE_AV1(cap, NULL, NULL, cap_clist, NULL, NULL, "$Revision: 676 $");
 #define HasCapabilityFlag(c, f)		(c->ownerdata != NULL && (((struct ClientCapability *)c->ownerdata)->flags & (f)) == f)
 
 static inline int
-clicap_visible(const struct CapabilityEntry *cap)
+clicap_visible(struct Client *client_p, const struct CapabilityEntry *cap)
 {
 	struct ClientCapability *clicap;
 
@@ -75,7 +75,7 @@ clicap_visible(const struct CapabilityEntry *cap)
 	if (clicap->visible == NULL)
 		return 1;
 
-	return clicap->visible();
+	return clicap->visible(client_p);
 }
 
 /* clicap_find()
@@ -188,12 +188,12 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags, int clea
 				continue;
 		}
 
-		if (!clicap_visible(entry))
+		if (!clicap_visible(source_p, entry))
 			continue;
 
 		caplen = strlen(entry->cap);
 		if (!flags && (source_p->flags & FLAGS_CLICAP_DATA) && clicap != NULL && clicap->data != NULL)
-			data = clicap->data();
+			data = clicap->data(source_p);
 
 		if (data != NULL)
 			caplen += strlen(data) + 1;
@@ -374,7 +374,7 @@ cap_req(struct Client *source_p, const char *arg)
 		}
 		else
 		{
-			if (!clicap_visible(cap))
+			if (!clicap_visible(source_p, cap))
 			{
 				finished = 0;
 				break;
