@@ -3,7 +3,7 @@ bin_PROGRAMS = bantool
 AM_CFLAGS=$(WARNFLAGS)
 
 AM_CPPFLAGS = -I../include -I../libratbox/include @SQLITE_INCLUDES@
-AM_CPPFLAGS += -DSQLITE_THREADSAFE=0
+AM_CPPFLAGS += -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_LOAD_EXTENSION
 
 bandb_SOURCES = bandb.c rsdb_sqlite3.c rsdb_snprintf.c
 EXTRA_bandb_SOURCES = sqlite3.c
