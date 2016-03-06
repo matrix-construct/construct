@@ -9,25 +9,33 @@ jilles, Jilles Tjoelker <jilles -at- stack.nl>
 mr_flea, Keith Buck <mr_flea -at- esper.net>
 kaniini, William Pitcock <nenolod -at- dereferenced.org>
 spb, Stephen Bennett <spb -at- attenuate.org>
- 
+
+The following people are also project members:
+
+amdj, Aaron Jones <aaronmdjones -at- gmail.com>
+Elizafox, Elizabeth Myers <elizabeth -at- interlinked.me>
+grawity, Mantas Mikulėnas <grawity -at- gmail.com>
+jdhore, JD Horelick <jdhore1 -at- gmail.com>
+lp0, Simon Arlott <simon -at- arlott.org>
+mniip <mniip -at- mniip.com>
+viatsko, Valerii Iatsko <dwr -at- codingbox.io>
+
 The following people have made contributions to the Charybdis releases,
 in nick-alphabetical order:
  
 AndroSyn, Aaron Sethman <androsyn -at- ratbox.org>
 anfl, Lee Hardy <lee -at- leeh.co.uk>
 beu, Elfyn McBratney <elfyn.mcbratney -at- gmail.com>
-Elizafox, Elizabeth Myers <elizabeth -at- interlinked.me>
 Entrope, Michael Poole <mdpoole -at- trolius.org> 
 gxti, Michael Tharp <gxti -at- partiallystapled.com>
-jdhore, JD Horelick <jdhore1 -at- gmail.com>
 Taros, Brett Greenham <taros -at- shadowircd.net>
 ThaPrince, Jon Christopherson <jon -at- vile.com>
 twincest, River Tarnell <river -at- attenuate.org>
-viatsko, Valerii Iatsko <dwr -at- codingbox.io>
 w00t, Robin Burchell <surreal.w00t -at- gmail.com>
 
 For a list of contributors to ircd-ratbox, ircd-hyrbid, and ircd2.8 (the
-predecessors to Charybdis), see the doc/credits-past.txt file.
+predecessors to Charybdis), see the doc/credits-past.txt file in the Charybdis
+distribution.
 
 Visit the Charybdis website at: http://www.charybdis.io
 Visit us on IRC at: irc.freenode.net #charybdis
