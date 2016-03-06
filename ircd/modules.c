@@ -562,15 +562,15 @@ do_modlist(struct Client *source_p, const char *pattern)
 					   me.name, source_p->name,
 					   modlist[i]->name,
 					   (unsigned long)(uintptr_t)modlist[i]->address,
-					   modlist[i]->version, modlist[i]->core ? "(core)" : "");
+					   modlist[i]->version, modlist[i]->description, modlist[i]->core ? " (core)" : "");
 			}
 		}
 		else
 		{
 			sendto_one(source_p, form_str(RPL_MODLIST),
 				   me.name, source_p->name, modlist[i]->name,
-				   (unsigned long)(uintptr_t)modlist[i]->address, modlist[i]->version,
-				   modlist[i]->core ? "(core)" : "");
+				   (unsigned long)(uintptr_t)modlist[i]->address,
+				   modlist[i]->version, modlist[i]->description, modlist[i]->core ? " (core)" : "");
 		}
 	}
 
