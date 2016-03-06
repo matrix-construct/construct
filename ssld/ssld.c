@@ -1206,10 +1206,9 @@ main(int argc, char **argv)
 	if(s_ctlfd == NULL || s_pipe == NULL || s_pid == NULL)
 	{
 		fprintf(stderr,
-			"This is ircd-ratbox ssld.  You know you aren't supposed to run me directly?\n");
+			"This is the charybdis ssld for internal ircd use.\n");
 		fprintf(stderr,
-			"You get an Id tag for this: $Id$\n");
-		fprintf(stderr, "Have a nice life\n");
+			"You aren't supposed to run me directly. Exiting.\n");
 		exit(1);
 	}
 

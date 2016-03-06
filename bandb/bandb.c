@@ -302,10 +302,9 @@ main(int argc, char *argv[])
 	if(bandb_helper == NULL)
 	{
 		fprintf(stderr,
-			"This is ircd-ratbox bandb.  You aren't supposed to run me directly. Maybe you want bantool?\n");
+			"This is the charybdis bandb for internal ircd use.\n");
 		fprintf(stderr,
-			"However I will print my Id tag $Id: bandb.c 26094 2008-09-19 15:33:46Z androsyn $\n");
-		fprintf(stderr, "Have a nice day\n");
+			"You aren't supposed to run me directly (did you want bantool?). Exiting.\n");
 		exit(1);
 	}
 	rsdb_init(db_error_cb);
