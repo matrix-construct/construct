@@ -35,6 +35,7 @@
 #include "ircd_defs.h"
 #include "match.h"
 #include "s_serv.h"
+#include "capability.h"
 
 #include <ltdl.h>
 
@@ -640,6 +641,7 @@ static void increase_modlist(void);
 #define MODS_INCREMENT 10
 
 static char unknown_ver[] = "<unknown>";
+static char unknown_description[] = "<none>";
 
 /* unload_one_module()
  *
@@ -693,6 +695,60 @@ unload_one_module(const char *name, int warn)
 				mheader->mapi_unregister();
 			break;
 		}
+	case 2:
+		{
+			struct mapi_mheader_av2 *mheader = modlist[modindex]->mapi_header;
+
+			/* XXX duplicate code :( */
+			if(mheader->mapi_command_list)
+			{
+				struct Message **m;
+				for (m = mheader->mapi_command_list; *m; ++m)
+					mod_del_cmd(*m);
+			}
+
+			/* hook events are never removed, we simply lose the
+			 * ability to call them --fl
+			 */
+			if(mheader->mapi_hfn_list)
+			{
+				mapi_hfn_list_av1 *m;
+				for (m = mheader->mapi_hfn_list; m->hapi_name; ++m)
+					remove_hook(m->hapi_name, m->fn);
+			}
+
+			if(mheader->mapi_unregister)
+				mheader->mapi_unregister();
+
+			if(mheader->mapi_cap_list)
+			{
+				mapi_cap_list_av2 *m;
+				for (m = mheader->mapi_cap_list; m->cap_name; ++m)
+				{
+					struct CapabilityIndex *idx;
+
+					switch(m->cap_index)
+					{
+					case MAPI_CAP_CLIENT:
+						idx = cli_capindex;
+						break;
+					case MAPI_CAP_SERVER:
+						idx = serv_capindex;
+						break;
+					default:
+						sendto_realops_snomask(SNO_GENERAL, L_ALL,
+							"Unknown/unsupported CAP index found of type %d on capability %s when unloading %s",
+							m->cap_index, m->cap_name, modlist[modindex]->name);
+						ilog(L_MAIN,
+							"Unknown/unsupported CAP index found of type %d on capability %s when unloading %s",
+							m->cap_index, m->cap_name, modlist[modindex]->name);
+						continue;
+					}
+
+					capability_orphan(idx, m->cap_name);
+				}
+			}
+		}
 	default:
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Unknown/unsupported MAPI version %d when unloading %s!",
@@ -734,7 +790,7 @@ load_a_module(const char *path, int warn, int core)
 {
 	lt_dlhandle tmpptr;
 	char *mod_basename;
-	const char *ver;
+	const char *ver, *description = NULL;
 
 	int *mapi_version;
 
@@ -814,7 +870,79 @@ load_a_module(const char *path, int warn, int core)
 			ver = mheader->mapi_module_version;
 			break;
 		}
+	case 2:
+		{
+			struct mapi_mheader_av2 *mheader = (struct mapi_mheader_av2 *)(void *)mapi_version;     /* see above */
 
+			/* XXX duplicated code :( */
+			if(mheader->mapi_register && (mheader->mapi_register() == -1))
+			{
+				ilog(L_MAIN, "Module %s indicated failure during load.",
+				     mod_basename);
+				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+						     "Module %s indicated failure during load.",
+						     mod_basename);
+				lt_dlclose(tmpptr);
+				rb_free(mod_basename);
+				return -1;
+			}
+			if(mheader->mapi_command_list)
+			{
+				struct Message **m;
+				for (m = mheader->mapi_command_list; *m; ++m)
+					mod_add_cmd(*m);
+			}
+
+			if(mheader->mapi_hook_list)
+			{
+				mapi_hlist_av1 *m;
+				for (m = mheader->mapi_hook_list; m->hapi_name; ++m)
+					*m->hapi_id = register_hook(m->hapi_name);
+			}
+
+			if(mheader->mapi_hfn_list)
+			{
+				mapi_hfn_list_av1 *m;
+				for (m = mheader->mapi_hfn_list; m->hapi_name; ++m)
+					add_hook(m->hapi_name, m->fn);
+			}
+
+			/* New in MAPI v2 - version replacement */
+			ver = mheader->mapi_module_version ? mheader->mapi_module_version : ircd_version;
+			description = mheader->mapi_module_description;
+
+			if(mheader->mapi_cap_list)
+			{
+				mapi_cap_list_av2 *m;
+				for (m = mheader->mapi_cap_list; m->cap_name; ++m)
+				{
+					struct CapabilityIndex *idx;
+					int result;
+
+					switch(m->cap_index)
+					{
+					case MAPI_CAP_CLIENT:
+						idx = cli_capindex;
+						break;
+					case MAPI_CAP_SERVER:
+						idx = serv_capindex;
+						break;
+					default:
+						sendto_realops_snomask(SNO_GENERAL, L_ALL,
+							"Unknown/unsupported CAP index found of type %d on capability %s when loading %s",
+							m->cap_index, m->cap_name, mod_basename);
+						ilog(L_MAIN,
+							"Unknown/unsupported CAP index found of type %d on capability %s when loading %s",
+							m->cap_index, m->cap_name, mod_basename);
+						continue;
+					}
+
+					result = capability_put(idx, m->cap_name, m->cap_ownerdata);
+					if (m->cap_id != NULL)
+						*(m->cap_id) = result;
+				}
+			}
+		}
 	default:
 		ilog(L_MAIN, "Module %s has unknown/unsupported MAPI version %d.",
 		     mod_basename, MAPI_VERSION(*mapi_version));
@@ -828,6 +956,9 @@ load_a_module(const char *path, int warn, int core)
 
 	if(ver == NULL)
 		ver = unknown_ver;
+
+	if(description == NULL)
+		description = unknown_description;
 
 	increase_modlist();
 
@@ -843,11 +974,11 @@ load_a_module(const char *path, int warn, int core)
 	if(warn == 1)
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "Module %s [version: %s; MAPI version: %d] loaded at 0x%lx",
-				     mod_basename, ver, MAPI_VERSION(*mapi_version),
+				     "Module %s [version: %s; MAPI version: %d; description: \"%s\"] loaded at 0x%lx",
+				     mod_basename, ver, MAPI_VERSION(*mapi_version), description,
 				     (unsigned long) tmpptr);
-		ilog(L_MAIN, "Module %s [version: %s; MAPI version: %d] loaded at 0x%lx",
-		     mod_basename, ver, MAPI_VERSION(*mapi_version), (unsigned long) tmpptr);
+		ilog(L_MAIN, "Module %s [version: %s; MAPI version: %d; description: \"%s\"] loaded at 0x%lx",
+		     mod_basename, ver, MAPI_VERSION(*mapi_version), description, (unsigned long) tmpptr);
 	}
 	rb_free(mod_basename);
 	return 0;

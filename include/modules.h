@@ -28,7 +28,7 @@
 #include "setup.h"
 #include "parse.h"
 
-#define MAPI_RATBOX 1
+#define MAPI_CHARYBDIS 2
 
 #include <ltdl.h>
 
@@ -42,12 +42,13 @@ struct module
 	lt_dlhandle address;
 	int core;
 	int mapi_version;
-	void * mapi_header; /* actually struct mapi_mheader_av<mapi_version>	*/
+	void *mapi_header; /* actually struct mapi_mheader_av<mapi_version> */
 };
 
 #define MAPI_MAGIC_HDR	0x4D410000
 
 #define MAPI_V1		(MAPI_MAGIC_HDR | 0x1)
+#define MAPI_V2		(MAPI_MAGIC_HDR | 0x2)
 
 #define MAPI_MAGIC(x)	((x) & 0xffff0000)
 #define MAPI_VERSION(x)	((x) & 0x0000ffff)
@@ -56,30 +57,57 @@ typedef struct Message* mapi_clist_av1;
 
 typedef struct
 {
-	const char *	hapi_name;
-	int *		hapi_id;
+	const char *hapi_name;
+	int *hapi_id;
 } mapi_hlist_av1;
 
 typedef struct
 {
-	const char * 	hapi_name;
-	hookfn 		fn;
+	const char *hapi_name;
+	hookfn fn;
 } mapi_hfn_list_av1;
+
+
+#define MAPI_CAP_CLIENT		1
+#define MAPI_CAP_SERVER		2
+
+typedef struct
+{
+	int cap_index;		/* Which cap index does this belong to? */
+	const char *cap_name;	/* Capability name */
+	void *cap_ownerdata;	/* Not used much but why not... */
+	int *cap_id;		/* May be set to non-NULL to store cap id */
+} mapi_cap_list_av2;
 
 struct mapi_mheader_av1
 {
-	int		  mapi_version;				/* Module API version		*/
-	int		(*mapi_register)	(void);		/* Register function;
-								   ret -1 = failure (unload)	*/
-	void		(*mapi_unregister)	(void);		/* Unregister function.		*/
-	mapi_clist_av1	* mapi_command_list;			/* List of commands to add.	*/
-	mapi_hlist_av1	* mapi_hook_list;			/* List of hooks to add.	*/
-	mapi_hfn_list_av1 *mapi_hfn_list;			/* List of hook_add_hook's to do */
-	const char *	  mapi_module_version;			/* Module's version (freeform)	*/
+	int mapi_version;			/* Module API version */
+	int (*mapi_register)(void);		/* Register function; ret -1 = failure (unload) */
+	void (*mapi_unregister)(void);		/* Unregister function.	*/
+	mapi_clist_av1 *mapi_command_list;	/* List of commands to add. */
+	mapi_hlist_av1 *mapi_hook_list;		/* List of hooks to add. */
+	mapi_hfn_list_av1 *mapi_hfn_list;	/* List of hook_add_hook's to do */
+	const char *mapi_module_version;	/* Module's version (freeform) */
 };
 
-#define DECLARE_MODULE_AV1(name,reg,unreg,cl,hl,hfnlist, v) \
+struct mapi_mheader_av2
+{
+	int mapi_version;			/* Module API version */
+	int (*mapi_register)(void);		/* Register function; ret -1 = failure (unload) */
+	void (*mapi_unregister)(void);		/* Unregister function.	*/
+	mapi_clist_av1 *mapi_command_list;	/* List of commands to add. */
+	mapi_hlist_av1 *mapi_hook_list;		/* List of hooks to add. */
+	mapi_hfn_list_av1 *mapi_hfn_list;	/* List of hook_add_hook's to do */
+	mapi_cap_list_av2 *mapi_cap_list;	/* List of CAPs to add */
+	const char *mapi_module_version;	/* Module's version (freeform), replaced with ircd version if NULL */
+	const char *mapi_module_description;	/* Module's description (freeform) */
+};
+
+#define DECLARE_MODULE_AV1(name, reg, unreg, cl, hl, hfnlist, v) \
 	struct mapi_mheader_av1 _mheader = { MAPI_V1, reg, unreg, cl, hl, hfnlist, v}
+
+#define DECLARE_MODULE_AV2(name, reg, unreg, cl, hl, hfnlist, caplist, v, desc) \
+	struct mapi_mheader_av2 _mheader = { MAPI_V1, reg, unreg, cl, hl, hfnlist, caplist, v, desc}
 
 /* add a path */
 void mod_add_path(const char *path);
