@@ -943,6 +943,8 @@ load_a_module(const char *path, int warn, int core)
 				}
 			}
 		}
+
+		break;
 	default:
 		ilog(L_MAIN, "Module %s has unknown/unsupported MAPI version %d.",
 		     mod_basename, MAPI_VERSION(*mapi_version));
