@@ -1,7 +1,7 @@
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = libratbox
+SUBDIRS = librb
 
 if BUILD_LTDL
 SUBDIRS += libltdl

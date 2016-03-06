@@ -19,7 +19,7 @@ fi
 AC_PREFIX_DEFAULT($HOME/ircd)
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADER(include/setup.h)
-AC_CONFIG_SUBDIRS([libratbox])
+AC_CONFIG_SUBDIRS([librb])
 AC_CONFIG_AUX_DIR([libltdl/config])
 
 AM_INIT_AUTOMAKE([subdir-objects])

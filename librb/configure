@@ -15418,7 +15418,7 @@ ac_config_commands="$ac_config_commands include/librb-config.h"
 
 
 
-ac_config_files="$ac_config_files src/Makefile Makefile libratbox.pc"
+ac_config_files="$ac_config_files src/Makefile Makefile librb.pc"
 
 
 cat >confcache <<\_ACEOF
@@ -16523,7 +16523,7 @@ do
     "include/librb-config.h") CONFIG_COMMANDS="$CONFIG_COMMANDS include/librb-config.h" ;;
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
-    "libratbox.pc") CONFIG_FILES="$CONFIG_FILES libratbox.pc" ;;
+    "librb.pc") CONFIG_FILES="$CONFIG_FILES librb.pc" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

@@ -78,9 +78,9 @@ run_or_die ()
 
 parse_options "$@"
 
-echo "Building libratbox autotools files."
+echo "Building librb autotools files."
 
-cd "$TOP_DIR"/libratbox
+cd "$TOP_DIR"/librb
 bash autogen.sh
 
 echo "Building main autotools files."

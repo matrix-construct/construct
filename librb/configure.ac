@@ -670,7 +670,7 @@ fi
 AC_CONFIG_FILES(		\
 	src/Makefile		\
 	Makefile		\
-	libratbox.pc
+	librb.pc
 )
 
 AC_OUTPUT

@@ -4,11 +4,11 @@ datarootdir=@datarootdir@
 data_dir=@datadir@/@PACKAGE_NAME@
 
 version=@PACKAGE_VERSION@
-include_dir=@includedir@/libratbox
+include_dir=@includedir@/librb
 lib_dir=@libdir@
 
-Name: libratbox
-Description: Portable runtime for ircd-ratbox and other things
+Name: librb
+Description: Portable runtime for charybdis and other things, based on libratbox
 Version: @PACKAGE_VERSION@
-Libs: -L${lib_dir} -lratbox
+Libs: -L${lib_dir} -lrb
 Cflags: -I${include_dir}

@@ -13,7 +13,7 @@ version.c: version.c.SH ../CREDITS
 version.lo: version.c ../include/serno.h
 	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-libratbox_la_SOURCES =			\
+librb_la_SOURCES =			\
 	unix.c				\
 	win32.c				\
 	crypt.c				\
@@ -41,6 +41,6 @@ libratbox_la_SOURCES =			\
 	arc4random.c			\
 	version.c
 
-libratbox_la_LDFLAGS = @SSL_LIBS@ @GNUTLS_LIBS@ @MBEDTLS_LIBS@ -avoid-version -no-undefined -export-symbols export-syms.txt
-libratbox_la_LIBADD = @SSL_LIBS@ @GNUTLS_LIBS@ @MBEDTLS_LIBS@
-lib_LTLIBRARIES = libratbox.la
+librb_la_LDFLAGS = @SSL_LIBS@ @GNUTLS_LIBS@ @MBEDTLS_LIBS@ -avoid-version -no-undefined -export-symbols export-syms.txt
+librb_la_LIBADD = @SSL_LIBS@ @GNUTLS_LIBS@ @MBEDTLS_LIBS@
+lib_LTLIBRARIES = librb.la
