@@ -55,22 +55,14 @@ mapi_hfn_list_av1 remove_hfnlist[] = {
 	{ "privmsg_channel", (hookfn) remove_quote_part },
 	{ NULL, NULL }
 };
+mapi_cap_list_av2 remove_cap_list[] = {
+	{ MAPI_CAP_SERVER, "REMOVE", NULL, &CAP_REMOVE },
+	{ 0, NULL, NULL, NULL }
+};
 
-static int
-modinit(void)
-{
-	CAP_REMOVE = capability_put(serv_capindex, "REMOVE", NULL);
+const char description[] = "Provides the REMOVE command, an alternative to KICK";
 
-	return 0;
-}
-
-static void
-moddeinit(void)
-{
-	capability_orphan(serv_capindex, "REMOVE");
-}
-
-DECLARE_MODULE_AV1(remove, modinit, moddeinit, remove_clist, NULL, remove_hfnlist, "$Revision: 3317 $");
+DECLARE_MODULE_AV2(remove, NULL, NULL, remove_clist, NULL, remove_hfnlist, remove_cap_list, NULL, description);
 
 static int
 m_remove(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
