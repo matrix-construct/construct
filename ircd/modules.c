@@ -791,6 +791,7 @@ load_a_module(const char *path, int warn, int core)
 	lt_dlhandle tmpptr;
 	char *mod_basename;
 	const char *ver, *description = NULL;
+	int origin = 0;
 
 	int *mapi_version;
 
@@ -910,6 +911,7 @@ load_a_module(const char *path, int warn, int core)
 			/* New in MAPI v2 - version replacement */
 			ver = mheader->mapi_module_version ? mheader->mapi_module_version : ircd_version;
 			description = mheader->mapi_module_description;
+			origin = mheader->mapi_origin;
 
 			if(mheader->mapi_cap_list)
 			{
@@ -972,16 +974,35 @@ load_a_module(const char *path, int warn, int core)
 	modlist[num_mods]->name = rb_strdup(mod_basename);
 	modlist[num_mods]->mapi_header = mapi_version;
 	modlist[num_mods]->mapi_version = MAPI_VERSION(*mapi_version);
+	modlist[num_mods]->origin = origin;
 	num_mods++;
 
 	if(warn == 1)
 	{
+		const char *o;
+
+		switch(origin)
+		{
+		case MAPI_ORIGIN_EXTERNAL:
+			o = "external";
+			break;
+		case MAPI_ORIGIN_EXTENSION:
+			o = "extension";
+			break;
+		case MAPI_ORIGIN_CORE:
+			o = "core";
+			break;
+		default:
+			o = "unknown";
+			break;
+		}
+
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "Module %s [version: %s; MAPI version: %d; description: \"%s\"] loaded at 0x%lx",
-				     mod_basename, ver, MAPI_VERSION(*mapi_version), description,
+				     "Module %s [version: %s; MAPI version: %d; origin: %s; description: \"%s\"] loaded at 0x%lx",
+				     mod_basename, ver, MAPI_VERSION(*mapi_version), o, description,
 				     (unsigned long) tmpptr);
-		ilog(L_MAIN, "Module %s [version: %s; MAPI version: %d; description: \"%s\"] loaded at 0x%lx",
-		     mod_basename, ver, MAPI_VERSION(*mapi_version), description, (unsigned long) tmpptr);
+		ilog(L_MAIN, "Module %s [version: %s; MAPI version: %d; origin: %s; description: \"%s\"] loaded at 0x%lx",
+		     mod_basename, ver, MAPI_VERSION(*mapi_version), o, description, (unsigned long) tmpptr);
 	}
 	rb_free(mod_basename);
 	return 0;

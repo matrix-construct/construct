@@ -62,7 +62,7 @@ mapi_cap_list_av2 remove_cap_list[] = {
 
 const char description[] = "Provides the REMOVE command, an alternative to KICK";
 
-DECLARE_MODULE_AV2(remove, NULL, NULL, remove_clist, NULL, remove_hfnlist, remove_cap_list, NULL, description);
+DECLARE_MODULE_AV2(remove, MAPI_ORIGIN_EXTENSION, NULL, NULL, remove_clist, NULL, remove_hfnlist, remove_cap_list, NULL, description);
 
 static int
 m_remove(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
