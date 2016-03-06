@@ -64,8 +64,7 @@ You will need to run `autogen.sh` to build the autotools files prior to building
    * OpenSolaris 2008.x?
    * Solaris 10 sparc.
 
-  Please let us know if you find otherwise.  
-  It probably does not compile on AIX, IRIX or libc5 Linux.
+  Please let us know if you find otherwise. It may work on other platforms, but this is not guaranteed.
 
  * Please read NEWS for information about what is in this release.
 
