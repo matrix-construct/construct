@@ -1,4 +1,9 @@
-This is libircd from ircd-ratbox.  A few notes about this library:
+# librb
+
+This is based on libratbox, the common runtime support code in ircd-ratbox.
+It has significant modifications and is no longer compatible with libratbox itself (nor can be used as a dropin replacement), so we renamed it.
+
+# original libratbox notes
 
 1. Most of this code isn't anywhere near threadsafe at this point.  Don't
    hold your breath on this either.
