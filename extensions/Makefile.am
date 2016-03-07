@@ -43,7 +43,6 @@ extension_LTLIBRARIES =		\
   sno_globalnickchange.la	\
   sno_globaloper.la		\
   sno_whois.la			\
-  m_42.la			\
   m_adminwall.la			\
   m_echotags.la			\
   m_extendchans.la		\
