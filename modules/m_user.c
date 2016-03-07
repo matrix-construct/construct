@@ -38,7 +38,7 @@
 
 static int mr_user(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static const char user_desc[] =
-	"Provides the USER command to register a new connection":
+	"Provides the USER command to register a new connection";
 
 struct Message user_msgtab = {
 	"USER", 0, 0, 0, 0,

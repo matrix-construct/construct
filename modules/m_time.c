@@ -37,7 +37,7 @@
 static int m_time(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static char *date(void);
 static const char time_desc[] =
-	"Provides the TIME command to show the current server time":
+	"Provides the TIME command to show the current server time";
 
 struct Message time_msgtab = {
 	"TIME", 0, 0, 0, 0,
