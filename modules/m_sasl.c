@@ -44,6 +44,7 @@
 static int m_authenticate(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int me_sasl(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int me_mechlist(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static const char sasl_desc[] = "Provides SASL authentication support";
 
 static void abort_sasl(struct Client *);
 static void abort_sasl_exit(hook_data_client_exit *);
@@ -115,7 +116,7 @@ _moddeinit(void)
 	capability_orphan(cli_capindex, "sasl");
 }
 
-DECLARE_MODULE_AV2(sasl, _modinit, _moddeinit, sasl_clist, NULL, sasl_hfnlist, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(sasl, _modinit, _moddeinit, sasl_clist, NULL, sasl_hfnlist, NULL, NULL, sasl_desc);
 
 static int
 m_authenticate(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,

@@ -58,6 +58,8 @@ static int me_login(struct MsgBuf *, struct Client *, struct Client *, int, cons
 static int me_rsfnc(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int me_nickdelay(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
+static const char services_desc[] = "Provides support for running a services daemon";
+
 static void h_svc_server_introduced(hook_data_client *);
 static void h_svc_whois(hook_data_client *);
 static void h_svc_stats(hook_data_int *);
@@ -94,7 +96,7 @@ mapi_hfn_list_av1 services_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV2(services, _modinit, _moddeinit, services_clist, NULL, services_hfnlist, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(services, _modinit, _moddeinit, services_clist, NULL, services_hfnlist, NULL, NULL, services_desc);
 
 static int
 _modinit(void)

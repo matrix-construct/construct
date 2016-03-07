@@ -36,6 +36,8 @@
 #include "modules.h"
 
 static int ms_svinfo(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static const char svinfo_desc[] =
+	"Provides TS6 SVINFO command to ensure version and clock synchronisation";
 
 struct Message svinfo_msgtab = {
 	"SVINFO", 0, 0, 0, 0,
@@ -43,7 +45,7 @@ struct Message svinfo_msgtab = {
 };
 
 mapi_clist_av1 svinfo_clist[] = { &svinfo_msgtab, NULL };
-DECLARE_MODULE_AV2(svinfo, NULL, NULL, svinfo_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(svinfo, NULL, NULL, svinfo_clist, NULL, NULL, NULL, NULL, svinfo_desc);
 
 /*
  * ms_svinfo - SVINFO message handler
