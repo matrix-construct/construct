@@ -49,7 +49,10 @@ struct Message part_msgtab = {
 
 mapi_clist_av1 part_clist[] = { &part_msgtab, NULL };
 
-DECLARE_MODULE_AV2(part, NULL, NULL, part_clist, NULL, NULL, NULL, NULL, NULL);
+static const char part_desc[] =
+	"Provides the PART client and server commands";
+
+DECLARE_MODULE_AV2(part, NULL, NULL, part_clist, NULL, NULL, NULL, NULL, part_desc);
 
 static void part_one_client(struct Client *client_p,
 			    struct Client *source_p, char *name,

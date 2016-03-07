@@ -24,7 +24,7 @@
 
 #include "stdinc.h"
 #include "client.h"
-#include "common.h"		/* FALSE bleah */
+#include "common.h"
 #include "match.h"
 #include "ircd.h"
 #include "numeric.h"
@@ -48,7 +48,9 @@ struct Message squit_msgtab = {
 
 mapi_clist_av1 squit_clist[] = { &squit_msgtab, NULL };
 
-DECLARE_MODULE_AV2(squit, NULL, NULL, squit_clist, NULL, NULL, NULL, NULL, NULL);
+static const char squit_desc[] = "Provides the TS6 SQUIT command";
+
+DECLARE_MODULE_AV2(squit, NULL, NULL, squit_clist, NULL, NULL, NULL, NULL, squit_desc);
 
 struct squit_parms
 {

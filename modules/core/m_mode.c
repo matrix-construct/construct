@@ -64,8 +64,10 @@ struct Message bmask_msgtab = {
 };
 
 mapi_clist_av1 mode_clist[] = { &mode_msgtab, &tmode_msgtab, &mlock_msgtab, &bmask_msgtab, NULL };
+static const char mode_desc[] =
+	"Provides the MODE and MLOCK client and server commands, and TS6 server-to-server TMODE and BMASK commands";
 
-DECLARE_MODULE_AV2(mode, NULL, NULL, mode_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(mode, NULL, NULL, mode_clist, NULL, NULL, NULL, NULL, mode_desc);
 
 /*
  * m_mode - MODE command handler

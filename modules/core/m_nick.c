@@ -85,7 +85,10 @@ struct Message save_msgtab = {
 mapi_clist_av1 nick_clist[] = { &nick_msgtab, &uid_msgtab, &euid_msgtab,
 	&save_msgtab, NULL };
 
-DECLARE_MODULE_AV2(nick, NULL, NULL, nick_clist, NULL, NULL, NULL, NULL, NULL);
+static const char nick_desc[] =
+	"Provides the NICK client and server commands as well as the UID, EUID, and SAVE TS6 server commands";
+
+DECLARE_MODULE_AV2(nick, NULL, NULL, nick_clist, NULL, NULL, NULL, NULL, nick_desc);
 
 static int change_remote_nick(struct Client *, struct Client *, time_t,
 			      const char *, int);

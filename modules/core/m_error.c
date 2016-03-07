@@ -24,7 +24,7 @@
 
 #include "stdinc.h"
 #include "client.h"
-#include "common.h"		/* FALSE */
+#include "common.h"
 #include "ircd.h"
 #include "numeric.h"
 #include "send.h"
@@ -45,7 +45,10 @@ mapi_clist_av1 error_clist[] = {
 	&error_msgtab, NULL
 };
 
-DECLARE_MODULE_AV2(error, NULL, NULL, error_clist, NULL, NULL, NULL, NULL, NULL);
+static const char error_desc[] =
+	"Provides the ERROR command for clients and servers";
+
+DECLARE_MODULE_AV2(error, NULL, NULL, error_clist, NULL, NULL, NULL, NULL, error_desc);
 
 /* Determine whether an ERROR message is safe to show (no IP address in it) */
 static int

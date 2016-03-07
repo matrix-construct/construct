@@ -55,7 +55,9 @@ struct Message sid_msgtab = {
 
 mapi_clist_av1 server_clist[] = { &server_msgtab, &sid_msgtab, NULL };
 
-DECLARE_MODULE_AV2(server, NULL, NULL, server_clist, NULL, NULL, NULL, NULL, NULL);
+static const char server_desc[] = "Provides the SERVER and SID commands for TS6 use";
+
+DECLARE_MODULE_AV2(server, NULL, NULL, server_clist, NULL, NULL, NULL, NULL, server_desc);
 
 int bogus_host(const char *host);
 static int set_server_gecos(struct Client *, const char *);
