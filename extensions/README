@@ -11,9 +11,6 @@ createauthonly.c - Only allow authenticated (identified) users to create
 
 ip_cloaking.c  - Cloak (spoof) the host for users that have umode +h.
 
-m_42.c         - The Answer to Life, the Universe, and Everything.
-                 Syntax: 42
-
 m_adminwall.c  - Sends a message to all admins network-wide (umode +a)
                  Syntax: ADMINWALL :<message>
 
