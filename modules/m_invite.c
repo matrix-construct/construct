@@ -41,27 +41,21 @@
 
 static int m_invite(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static unsigned int CAP_INVITE_NOTIFY = 0;
+static const char invite_desc[] = "Provides facilities for invite and related notifications";
 
 struct Message invite_msgtab = {
 	"INVITE", 0, 0, 0, 0,
 	{mg_unreg, {m_invite, 3}, {m_invite, 3}, mg_ignore, mg_ignore, {m_invite, 3}}
 };
+
 mapi_clist_av1 invite_clist[] = { &invite_msgtab, NULL };
 
-static int
-invite_modinit(void)
-{
-	CAP_INVITE_NOTIFY = capability_put(cli_capindex, "invite-notify", NULL);
-	return 0;
-}
+mapi_cap_list_av2 invite_cap_list[] = {
+	{ MAPI_CAP_CLIENT, "invite-notify", NULL, &CAP_INVITE_NOTIFY },
+	{ 0, NULL, NULL, NULL }
+};
 
-static void
-invite_moddeinit(void)
-{
-	capability_orphan(cli_capindex, "invite-notify");
-}
-
-DECLARE_MODULE_AV2(invite, invite_modinit, invite_moddeinit, invite_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(invite, NULL, NULL, invite_clist, NULL, NULL, invite_cap_list, NULL, invite_desc);
 
 static void add_invite(struct Channel *, struct Client *);
 
