@@ -112,6 +112,7 @@ int main(int argc, char *argv[])
 }
      ],
      [rb__cv_timer_create_works=yes],
+     [rb__cv_timer_create_works=no],
      [rb__cv_timer_create_works=no])
   ])
 case $rb__cv_timer_create_works in
@@ -151,6 +152,7 @@ int main(int argc, char *argv[])
 }
      ],
      [rb__cv_timerfd_create_works=yes],
+     [rb__cv_timerfd_create_works=no],
      [rb__cv_timerfd_create_works=no])
   ])
 case $rb__cv_timerfd_create_works in

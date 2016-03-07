@@ -14102,10 +14102,7 @@ if ${rb__cv_timer_create_works+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   if test "$cross_compiling" = yes; then :
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot run test program while cross compiling
-See \`config.log' for more details" "$LINENO" 5; }
+  rb__cv_timer_create_works=no
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -14161,10 +14158,7 @@ if ${rb__cv_timerfd_create_works+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   if test "$cross_compiling" = yes; then :
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot run test program while cross compiling
-See \`config.log' for more details" "$LINENO" 5; }
+  rb__cv_timerfd_create_works=no
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
