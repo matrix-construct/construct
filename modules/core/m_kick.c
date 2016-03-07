@@ -39,6 +39,7 @@
 
 static int m_kick(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 #define mg_kick { m_kick, 3 }
+static const char kick_desc[] = "Provides the KICK command to remove a user from a channel";
 
 struct Message kick_msgtab = {
 	"KICK", 0, 0, 0, 0,
@@ -47,7 +48,7 @@ struct Message kick_msgtab = {
 
 mapi_clist_av1 kick_clist[] = { &kick_msgtab, NULL };
 
-DECLARE_MODULE_AV2(kick, NULL, NULL, kick_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(kick, NULL, NULL, kick_clist, NULL, NULL, NULL, NULL, kick_desc);
 
 /*
 ** m_kick
