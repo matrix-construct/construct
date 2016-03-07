@@ -45,24 +45,16 @@ mapi_clist_av1 starttls_clist[] = { &starttls_msgtab, NULL };
 
 unsigned int CLICAP_TLS = 0;
 
-static int
-_modinit(void)
-{
 #ifdef HAVE_LIBCRYPTO
-	CLICAP_TLS = capability_put(cli_capindex, "tls", NULL);
-#endif
-	return 0;
-}
+mapi_cap_list_av2 starttls_cap_list[] = {
+	{ MAPI_CAP_CLIENT, "tls", NULL, &CLICAP_TLS },
+	{ 0, NULL, NULL, NULL }
+};
+#else /* HAVE_LIBCRYPTO */
+mapi_cap_list_av2 starttls_cap_list[] = { { 0, NULL, NULL, NULL } };
+#endif /* HAVE_LIBCRYPTO */
 
-static void
-_moddeinit(void)
-{
-#ifdef HAVE_LIBCRYPTO
-	capability_orphan(cli_capindex, "tls");
-#endif
-}
-
-DECLARE_MODULE_AV2(starttls, _modinit, _moddeinit, starttls_clist, NULL, NULL, NULL, NULL, starttls_desc);
+DECLARE_MODULE_AV2(starttls, _modinit, _moddeinit, starttls_clist, NULL, NULL, starttls_cap_list, NULL, starttls_desc);
 
 static int
 mr_starttls(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
