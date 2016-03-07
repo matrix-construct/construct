@@ -61,7 +61,10 @@ struct Message webirc_msgtab = {
 };
 
 mapi_clist_av1 webirc_clist[] = { &webirc_msgtab, NULL };
-DECLARE_MODULE_AV2(webirc, NULL, NULL, webirc_clist, NULL, NULL, NULL, NULL, NULL);
+
+static const char webirc_desc[] = "Adds support for the WebIRC system";
+
+DECLARE_MODULE_AV2(webirc, NULL, NULL, webirc_clist, NULL, NULL, NULL, NULL, webirc_desc);
 
 /*
  * mr_webirc - webirc message handler

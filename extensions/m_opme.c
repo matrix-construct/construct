@@ -43,8 +43,9 @@ struct Message opme_msgtab = {
 
 mapi_clist_av1 opme_clist[] = { &opme_msgtab, NULL };
 
-DECLARE_MODULE_AV2(opme, NULL, NULL, opme_clist, NULL, NULL, NULL, NULL, NULL);
+static const char opme_desc[] = "Allow admins to op themselves on opless channels";
 
+DECLARE_MODULE_AV2(opme, NULL, NULL, opme_clist, NULL, NULL, NULL, NULL, opme_desc);
 
 /*
 ** mo_opme

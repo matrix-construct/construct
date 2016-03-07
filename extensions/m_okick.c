@@ -48,7 +48,9 @@ struct Message okick_msgtab = {
 
 mapi_clist_av1 okick_clist[] = { &okick_msgtab, NULL };
 
-DECLARE_MODULE_AV2(okick, NULL, NULL, okick_clist, NULL, NULL, NULL, NULL, NULL);
+static const char okick_desc[] = "Allow admins to forcibly kick users from channels with the OKICK command";
+
+DECLARE_MODULE_AV2(okick, NULL, NULL, okick_clist, NULL, NULL, NULL, NULL, okick_desc);
 
 /*
 ** m_okick

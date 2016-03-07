@@ -41,7 +41,10 @@ struct Message extendchans_msgtab = {
 
 mapi_clist_av1 extendchans_clist[] = { &extendchans_msgtab, NULL };
 
-DECLARE_MODULE_AV2(extendchans, NULL, NULL, extendchans_clist, NULL, NULL, NULL, NULL, NULL);
+static const char extendchans_desc =
+	"Allow an oper or service to let a given user join more channels";
+
+DECLARE_MODULE_AV2(extendchans, NULL, NULL, extendchans_clist, NULL, NULL, NULL, NULL, extendchans_desc);
 
 static int
 mo_extendchans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
@@ -62,7 +65,7 @@ mo_extendchans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *
 
 	if((target_p = find_chasing(source_p, parv[1], NULL)) == NULL)
 		return 0;
-	
+
 	/* Is the target user local? */
 	if(MyClient(target_p))
 	{

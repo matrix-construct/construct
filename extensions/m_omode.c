@@ -51,7 +51,9 @@ struct Message omode_msgtab = {
 
 mapi_clist_av1 omode_clist[] = { &omode_msgtab, NULL };
 
-DECLARE_MODULE_AV2(omode, NULL, NULL, omode_clist, NULL, NULL, NULL, NULL, NULL);
+static const char omode_desc[] = "Allow admins to forcibly change modes on channels with the OMODE command";
+
+DECLARE_MODULE_AV2(omode, NULL, NULL, omode_clist, NULL, NULL, NULL, NULL, omode_desc);
 
 /*
  * mo_omode - MODE command handler

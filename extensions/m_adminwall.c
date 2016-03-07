@@ -47,7 +47,11 @@ struct Message adminwall_msgtab = {
 
 
 mapi_clist_av1 adminwall_clist[] = { &adminwall_msgtab, NULL };
-DECLARE_MODULE_AV2(adminwall, NULL, NULL, adminwall_clist, NULL, NULL, NULL, NULL, NULL);
+
+static const char adminwall_desc[] =
+        "Provides the ADMINWALL command to send a message to all administrators";
+
+DECLARE_MODULE_AV2(adminwall, NULL, NULL, adminwall_clist, NULL, NULL, NULL, NULL, adminwall_desc);
 
 
 /*

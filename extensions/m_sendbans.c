@@ -57,7 +57,10 @@ mapi_clist_av1 sendbans_clist[] = {
 	NULL
 };
 
-DECLARE_MODULE_AV2(sendbans, NULL, NULL, sendbans_clist, NULL, NULL, NULL, NULL, NULL);
+static const char sendbands_desc[] =
+	"Adds the ability to send all permanent RESVs and XLINEs to given server";
+
+DECLARE_MODULE_AV2(sendbans, NULL, NULL, sendbans_clist, NULL, NULL, NULL, NULL, sendbands_desc);
 
 static const char *expand_xline(const char *mask)
 {

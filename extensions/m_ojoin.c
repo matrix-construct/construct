@@ -37,7 +37,6 @@
 
 static int mo_ojoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
-
 struct Message ojoin_msgtab = {
 	"OJOIN", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, mg_ignore, {mo_ojoin, 2}}
@@ -45,7 +44,9 @@ struct Message ojoin_msgtab = {
 
 mapi_clist_av1 ojoin_clist[] = { &ojoin_msgtab, NULL };
 
-DECLARE_MODULE_AV2(ojoin, NULL, NULL, ojoin_clist, NULL, NULL, NULL, NULL, NULL);
+static const char ojoin_desc[] = "Allow admins to forcibly join channels with the OJOIN command";
+
+DECLARE_MODULE_AV2(ojoin, NULL, NULL, ojoin_clist, NULL, NULL, NULL, NULL, ojoin_desc);
 
 /*
 ** mo_ojoin

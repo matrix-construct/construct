@@ -59,7 +59,9 @@ mapi_clist_av1 identify_clist[] = {
 	NULL
 };
 
-DECLARE_MODULE_AV2(identify, NULL, NULL, identify_clist, NULL, NULL, NULL, NULL, NULL);
+static const char identify_desc[] = "Adds the IDENTIFY alias that forwards to NickServ or ChanServ";
+
+DECLARE_MODULE_AV2(identify, NULL, NULL, identify_clist, NULL, NULL, NULL, NULL, identify_desc);
 
 static int m_identify(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {

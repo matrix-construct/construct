@@ -7,13 +7,15 @@
 static int m_echotags(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message echotags_msgtab = {
-  "ECHOTAGS", 0, 0, 0, 0,
-  { mg_ignore, {m_echotags, 0}, mg_ignore, mg_ignore, mg_ignore, {m_echotags, 0} }
+	"ECHOTAGS", 0, 0, 0, 0,
+	{ mg_ignore, {m_echotags, 0}, mg_ignore, mg_ignore, mg_ignore, {m_echotags, 0} }
 };
 
 mapi_clist_av1 echotags_clist[] = { &echotags_msgtab, NULL };
 
-DECLARE_MODULE_AV2(echotags, NULL, NULL, echotags_clist, NULL, NULL, NULL, NULL, NULL);
+static const char echotags_desc = "A test module for tags";
+
+DECLARE_MODULE_AV2(echotags, NULL, NULL, echotags_clist, NULL, NULL, NULL, NULL, echotags_desc);
 
 static int
 m_echotags(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
