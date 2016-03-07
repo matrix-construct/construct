@@ -38,6 +38,8 @@ static char *confopts(void);
 
 static int m_version(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int mo_version(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static const char version_desc[] =
+	"Provides the VERSION command to display server version information";
 
 struct Message version_msgtab = {
 	"VERSION", 0, 0, 0, 0,
@@ -45,7 +47,7 @@ struct Message version_msgtab = {
 };
 
 mapi_clist_av1 version_clist[] = { &version_msgtab, NULL };
-DECLARE_MODULE_AV2(version, NULL, NULL, version_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(version, NULL, NULL, version_clist, NULL, NULL, NULL, NULL, version_desc);
 
 /*
  * m_version - VERSION command handler
