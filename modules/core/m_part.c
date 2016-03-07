@@ -41,6 +41,7 @@
 #include "hook.h"
 
 static int m_part(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static const char part_desc[] = "Provides the PART command to leave a channel";
 
 struct Message part_msgtab = {
 	"PART", 0, 0, 0, 0,
@@ -48,9 +49,6 @@ struct Message part_msgtab = {
 };
 
 mapi_clist_av1 part_clist[] = { &part_msgtab, NULL };
-
-static const char part_desc[] =
-	"Provides the PART client and server commands";
 
 DECLARE_MODULE_AV2(part, NULL, NULL, part_clist, NULL, NULL, NULL, NULL, part_desc);
 

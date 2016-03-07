@@ -36,6 +36,7 @@
 
 static int m_quit(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int ms_quit(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static const char quit_desc[] = "Provides the QUIT command to allow a user to leave the network";
 
 struct Message quit_msgtab = {
 	"QUIT", 0, 0, 0, 0,
@@ -43,9 +44,6 @@ struct Message quit_msgtab = {
 };
 
 mapi_clist_av1 quit_clist[] = { &quit_msgtab, NULL };
-
-static const char quit_desc[] =
-	"Provides the QUIT command for clients and servers";
 
 DECLARE_MODULE_AV2(quit, NULL, NULL, quit_clist, NULL, NULL, NULL, NULL, quit_desc);
 
