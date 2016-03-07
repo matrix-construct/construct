@@ -35,13 +35,18 @@
 #include "inline/stringops.h"
 
 static void cap_account_tag_process(hook_data *);
+unsigned int CLICAP_ACCOUNT_TAG = 0;
 
 mapi_hfn_list_av1 cap_account_tag_hfnlist[] = {
 	{ "outbound_msgbuf", (hookfn) cap_account_tag_process },
 	{ NULL, NULL }
 };
-
-unsigned int CLICAP_ACCOUNT_TAG = 0;
+mapi_cap_list_av2 cap_account_tag_cap_list[] = {
+	{ MAPI_CAP_CLIENT, "account-tag", NULL, &CLICAP_ACCOUNT_TAG },
+	{ 0, NULL, NULL, NULL },
+};
+static const char cap_account_tag_desc[] =
+	"Provides the account-tag capability";
 
 static void
 cap_account_tag_process(hook_data *data)
@@ -52,17 +57,4 @@ cap_account_tag_process(hook_data *data)
 		msgbuf_append_tag(msgbuf, "account", data->client->user->suser, CLICAP_ACCOUNT_TAG);
 }
 
-static int
-_modinit(void)
-{
-	CLICAP_ACCOUNT_TAG = capability_put(cli_capindex, "account-tag", NULL);
-	return 0;
-}
-
-static void
-_moddeinit(void)
-{
-	capability_orphan(cli_capindex, "account-tag");
-}
-
-DECLARE_MODULE_AV2(cap_account_tag, _modinit, _moddeinit, NULL, NULL, cap_account_tag_hfnlist, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(cap_account_tag, NULL, NULL, NULL, NULL, cap_account_tag_hfnlist, cap_account_tag_cap_list, NULL, cap_account_tag_desc);
