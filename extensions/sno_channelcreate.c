@@ -21,7 +21,10 @@ mapi_hfn_list_av1 scc_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV2(sno_channelcreate, _modinit, _moddeinit, NULL, NULL, scc_hfnlist, NULL, NULL, NULL);
+static const char sno_desc[] =
+	"Adds server notice mask +l that allows operators to receive channel creation notices";
+
+DECLARE_MODULE_AV2(sno_channelcreate, _modinit, _moddeinit, NULL, NULL, scc_hfnlist, NULL, NULL, sno_desc);
 
 static int
 _modinit(void)

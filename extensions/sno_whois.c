@@ -38,7 +38,16 @@ fini(void)
 	snomask_modes['W'] = 0;
 }
 
-DECLARE_MODULE_AV2(sno_whois, init, fini, NULL, NULL, whois_hfnlist, NULL, NULL, NULL);
+static const char sno_desc[] =
+	"Adds server notice mask +W that allows "
+#ifdef OPERONLY
+	"operators"
+#else
+	"users"
+#endif
+	" to receive notices for when a WHOIS has been done on them";
+
+DECLARE_MODULE_AV2(sno_whois, init, fini, NULL, NULL, whois_hfnlist, NULL, NULL, sno_desc);
 
 void
 show_whois(hook_data_client *data)

@@ -19,7 +19,10 @@ mapi_hfn_list_av1 gcn_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV2(globalnickchange, _modinit, NULL, NULL, NULL, gcn_hfnlist, NULL, NULL, NULL);
+static const char sno_desc[] =
+	"Adds server notices for remote nick changes";
+
+DECLARE_MODULE_AV2(globalnickchange, _modinit, NULL, NULL, NULL, gcn_hfnlist, NULL, NULL, sno_desc);
 
 static int
 _modinit(void)

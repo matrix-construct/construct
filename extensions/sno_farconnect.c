@@ -26,7 +26,10 @@ mapi_hfn_list_av1 gcn_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV2(globalconnexit, _modinit, _moddeinit, NULL, NULL, gcn_hfnlist, NULL, NULL, NULL);
+static const char sno_desc[] =
+	"Adds server notice mask +F that allows operators to receive notices for connections on other servers";
+
+DECLARE_MODULE_AV2(globalconnexit, _modinit, _moddeinit, NULL, NULL, gcn_hfnlist, NULL, NULL, sno_desc);
 
 static int
 _modinit(void)
