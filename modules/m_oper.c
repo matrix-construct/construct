@@ -47,7 +47,10 @@ struct Message oper_msgtab = {
 };
 
 mapi_clist_av1 oper_clist[] = { &oper_msgtab, NULL };
-DECLARE_MODULE_AV2(oper, NULL, NULL, oper_clist, NULL, NULL, NULL, NULL, NULL);
+
+static const char oper_desc[] = "Provides the OPER command to become an IRC operator";
+
+DECLARE_MODULE_AV2(oper, NULL, NULL, oper_clist, NULL, NULL, NULL, NULL, oper_desc);
 
 static int match_oper_password(const char *password, struct oper_conf *oper_p);
 

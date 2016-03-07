@@ -45,7 +45,10 @@ struct Message names_msgtab = {
 };
 
 mapi_clist_av1 names_clist[] = { &names_msgtab, NULL };
-DECLARE_MODULE_AV2(names, NULL, NULL, names_clist, NULL, NULL, NULL, NULL, NULL);
+
+static const char names_desc[] = "Provides the NAMES command to view users on a channel";
+
+DECLARE_MODULE_AV2(names, NULL, NULL, names_clist, NULL, NULL, NULL, NULL, names_desc);
 
 static void names_global(struct Client *source_p);
 
