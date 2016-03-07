@@ -12,6 +12,8 @@
 #include "s_conf.h"
 #include "s_newconf.h"
 
+static const char no_locops_desc[] = "Disables local operators";
+
 static void h_nl_umode_changed(hook_data_umode_changed *);
 
 mapi_hfn_list_av1 nl_hfnlist[] = {
@@ -19,7 +21,7 @@ mapi_hfn_list_av1 nl_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV2(no_locops, NULL, NULL, NULL, NULL, nl_hfnlist, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(no_locops, NULL, NULL, NULL, NULL, nl_hfnlist, NULL, NULL, no_locops_desc);
 
 static void
 h_nl_umode_changed(hook_data_umode_changed *hdata)

@@ -20,6 +20,8 @@
 #include "privilege.h"
 #include "s_newconf.h"
 
+static const char nokill_desc[] = "Prevents operators from killing services";
+
 static void block_services_kill(void *data);
 
 mapi_hfn_list_av1 no_kill_services_hfnlist[] = {
@@ -47,5 +49,5 @@ block_services_kill(void *vdata)
 	}
 }
 
-DECLARE_MODULE_AV1(no_kill_services, NULL, NULL, NULL, NULL,
-			no_kill_services_hfnlist, "Charybdis 3.4+");
+DECLARE_MODULE_AV2(no_kill_services, NULL, NULL, NULL, NULL,
+			no_kill_services_hfnlist, NULL, NULL, nokill_desc);

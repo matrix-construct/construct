@@ -22,6 +22,9 @@
 #include "privilege.h"
 #include "s_newconf.h"
 
+static const char override_desc[] =
+	"Adds user mode +p, an operator-only user mode that grants temporary privileges to override anything";
+
 static void check_umode_change(void *data);
 static void hack_channel_access(void *data);
 static void hack_can_join(void *data);
@@ -277,5 +280,5 @@ _moddeinit(void)
 	rb_event_delete(expire_override_deadlines_ev);
 }
 
-DECLARE_MODULE_AV1(override, _modinit, _moddeinit, NULL, NULL,
-			override_hfnlist, NULL);
+DECLARE_MODULE_AV2(override, _modinit, _moddeinit, NULL, NULL,
+			override_hfnlist, NULL, NULL, override_desc);
