@@ -58,7 +58,7 @@ mapi_hlist_av1 kill_hlist[] = {
 	{ NULL, NULL},
 };
 
-DECLARE_MODULE_AV1(kill, NULL, NULL, kill_clist, kill_hlist, NULL, "$Revision: 3408 $");
+DECLARE_MODULE_AV2(kill, NULL, NULL, kill_clist, kill_hlist, NULL, NULL, NULL, NULL);
 
 /*
 ** mo_kill

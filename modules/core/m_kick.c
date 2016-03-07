@@ -47,7 +47,7 @@ struct Message kick_msgtab = {
 
 mapi_clist_av1 kick_clist[] = { &kick_msgtab, NULL };
 
-DECLARE_MODULE_AV1(kick, NULL, NULL, kick_clist, NULL, NULL, "$Revision: 3317 $");
+DECLARE_MODULE_AV2(kick, NULL, NULL, kick_clist, NULL, NULL, NULL, NULL, NULL);
 
 /*
 ** m_kick

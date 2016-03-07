@@ -45,7 +45,7 @@ struct Message chghost_msgtab = {
 
 mapi_clist_av1 chghost_clist[] = { &chghost_msgtab, &realhost_msgtab, NULL };
 
-DECLARE_MODULE_AV1(chghost, NULL, NULL, chghost_clist, NULL, NULL, "$Revision: 3424 $");
+DECLARE_MODULE_AV2(chghost, NULL, NULL, chghost_clist, NULL, NULL, NULL, NULL, NULL);
 
 /* clean_host()
  *

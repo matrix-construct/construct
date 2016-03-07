@@ -45,7 +45,7 @@ struct Message names_msgtab = {
 };
 
 mapi_clist_av1 names_clist[] = { &names_msgtab, NULL };
-DECLARE_MODULE_AV1(names, NULL, NULL, names_clist, NULL, NULL, "$Revision: 254 $");
+DECLARE_MODULE_AV2(names, NULL, NULL, names_clist, NULL, NULL, NULL, NULL, NULL);
 
 static void names_global(struct Client *source_p);
 

@@ -47,7 +47,7 @@ struct Message whowas_msgtab = {
 };
 
 mapi_clist_av1 whowas_clist[] = { &whowas_msgtab, NULL };
-DECLARE_MODULE_AV1(whowas, NULL, NULL, whowas_clist, NULL, NULL, "$Revision: 1717 $");
+DECLARE_MODULE_AV2(whowas, NULL, NULL, whowas_clist, NULL, NULL, NULL, NULL, NULL);
 
 /*
 ** m_whowas

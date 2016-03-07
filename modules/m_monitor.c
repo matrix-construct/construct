@@ -49,7 +49,7 @@ struct Message monitor_msgtab = {
 };
 
 mapi_clist_av1 monitor_clist[] = { &monitor_msgtab, NULL };
-DECLARE_MODULE_AV1(monitor, monitor_init, monitor_deinit, monitor_clist, NULL, NULL, "$Revision: 312 $");
+DECLARE_MODULE_AV2(monitor, monitor_init, monitor_deinit, monitor_clist, NULL, NULL, NULL, NULL, NULL);
 
 static int monitor_init(void)
 {

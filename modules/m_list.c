@@ -81,7 +81,7 @@ mapi_hfn_list_av1 list_hfnlist[] = {
 	{NULL, NULL}
 };
 
-DECLARE_MODULE_AV1(list, _modinit, _moddeinit, list_clist, NULL, list_hfnlist, "$Revision: 3372 $");
+DECLARE_MODULE_AV2(list, _modinit, _moddeinit, list_clist, NULL, list_hfnlist, NULL, NULL, NULL);
 
 static struct ev_entry *iterate_clients_ev = NULL;
 

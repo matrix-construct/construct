@@ -76,4 +76,4 @@ _moddeinit(void)
 	cflag_orphan('C');
 }
 
-DECLARE_MODULE_AV1(chm_noctcp, _modinit, _moddeinit, NULL, NULL, chm_noctcp_hfnlist, "$Revision$");
+DECLARE_MODULE_AV2(chm_noctcp, _modinit, _moddeinit, NULL, NULL, chm_noctcp_hfnlist, NULL, NULL, NULL);

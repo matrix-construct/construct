@@ -45,7 +45,7 @@ mapi_hfn_list_av1 nn_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(networknotice, NULL, NULL, NULL, NULL, nn_hfnlist, "$Revision: 1172 $");
+DECLARE_MODULE_AV2(networknotice, NULL, NULL, NULL, NULL, nn_hfnlist, NULL, NULL, NULL);
 
 /*
  * count_mark_downlinks

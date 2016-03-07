@@ -115,7 +115,7 @@ _moddeinit(void)
 	capability_orphan(cli_capindex, "sasl");
 }
 
-DECLARE_MODULE_AV1(sasl, _modinit, _moddeinit, sasl_clist, NULL, sasl_hfnlist, "$Revision: 1409 $");
+DECLARE_MODULE_AV2(sasl, _modinit, _moddeinit, sasl_clist, NULL, sasl_hfnlist, NULL, NULL, NULL);
 
 static int
 m_authenticate(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,

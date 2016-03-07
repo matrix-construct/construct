@@ -56,7 +56,7 @@ struct Message snote_msgtab = {
 };
 
 mapi_clist_av1 snote_clist[] = { &snote_msgtab, NULL };
-DECLARE_MODULE_AV1(snote, NULL, NULL, snote_clist, NULL, NULL, "$Revision: 623 $");
+DECLARE_MODULE_AV2(snote, NULL, NULL, snote_clist, NULL, NULL, NULL, NULL, NULL);
 
 /*
  * me_snote

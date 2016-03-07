@@ -48,7 +48,7 @@ struct Message tginfo_msgtab = {
 
 mapi_clist_av1 tginfo_clist[] = { &tginfo_msgtab, NULL };
 
-DECLARE_MODULE_AV1(tginfo, NULL, NULL, tginfo_clist, NULL, NULL, "$Revision$");
+DECLARE_MODULE_AV2(tginfo, NULL, NULL, tginfo_clist, NULL, NULL, NULL, NULL, NULL);
 
 /*
 ** me_tginfo

@@ -65,7 +65,7 @@ struct Message bmask_msgtab = {
 
 mapi_clist_av1 mode_clist[] = { &mode_msgtab, &tmode_msgtab, &mlock_msgtab, &bmask_msgtab, NULL };
 
-DECLARE_MODULE_AV1(mode, NULL, NULL, mode_clist, NULL, NULL, "$Revision: 1006 $");
+DECLARE_MODULE_AV2(mode, NULL, NULL, mode_clist, NULL, NULL, NULL, NULL, NULL);
 
 /*
  * m_mode - MODE command handler

@@ -52,7 +52,7 @@ struct Message put_msgtab = {
 mapi_clist_av1 post_clist[] = {
 	&post_msgtab, &get_msgtab, &put_msgtab, NULL
 };
-DECLARE_MODULE_AV1(post, NULL, NULL, post_clist, NULL, NULL, "$Revision: 498 $");
+DECLARE_MODULE_AV2(post, NULL, NULL, post_clist, NULL, NULL, NULL, NULL, NULL);
 
 
 /*

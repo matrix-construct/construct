@@ -54,7 +54,7 @@ mapi_hlist_av1 links_hlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(links, NULL, NULL, links_clist, links_hlist, NULL, "$Revision: 254 $");
+DECLARE_MODULE_AV2(links, NULL, NULL, links_clist, links_hlist, NULL, NULL, NULL, NULL);
 
 /*
  * m_links - LINKS message handler

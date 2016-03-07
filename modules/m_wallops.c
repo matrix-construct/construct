@@ -50,7 +50,7 @@ struct Message operwall_msgtab = {
 };
 
 mapi_clist_av1 wallops_clist[] = { &wallops_msgtab, &operwall_msgtab, NULL };
-DECLARE_MODULE_AV1(wallops, NULL, NULL, wallops_clist, NULL, NULL, "$Revision: 1377 $");
+DECLARE_MODULE_AV2(wallops, NULL, NULL, wallops_clist, NULL, NULL, NULL, NULL, NULL);
 
 /*
  * mo_operwall (write to *all* opers currently online)

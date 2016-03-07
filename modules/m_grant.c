@@ -26,7 +26,7 @@ struct Message grant_msgtab = {
 
 mapi_clist_av1 grant_clist[] = { &grant_msgtab, NULL };
 
-DECLARE_MODULE_AV1(grant, NULL, NULL, grant_clist, NULL, NULL, "$Revision$");
+DECLARE_MODULE_AV2(grant, NULL, NULL, grant_clist, NULL, NULL, NULL, NULL, NULL);
 
 static int
 mo_grant(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])

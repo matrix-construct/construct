@@ -52,7 +52,7 @@ mapi_hlist_av1 motd_hlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(motd, NULL, NULL, motd_clist, motd_hlist, NULL, "$Revision: 254 $");
+DECLARE_MODULE_AV2(motd, NULL, NULL, motd_clist, motd_hlist, NULL, NULL, NULL, NULL);
 
 static void motd_spy(struct Client *);
 

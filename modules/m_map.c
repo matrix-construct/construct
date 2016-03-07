@@ -39,7 +39,7 @@ struct Message map_msgtab = {
 };
 
 mapi_clist_av1 map_clist[] = { &map_msgtab, NULL };
-DECLARE_MODULE_AV1(map, NULL, NULL, map_clist, NULL, NULL, "$Revision: 3368 $");
+DECLARE_MODULE_AV2(map, NULL, NULL, map_clist, NULL, NULL, NULL, NULL, NULL);
 
 static void dump_map(struct Client *client_p, struct Client *root, char *pbuf);
 static void flattened_map(struct Client *client_p);

@@ -61,7 +61,7 @@ invite_moddeinit(void)
 	capability_orphan(cli_capindex, "invite-notify");
 }
 
-DECLARE_MODULE_AV1(invite, invite_modinit, invite_moddeinit, invite_clist, NULL, NULL, "$Revision: 3438 $");
+DECLARE_MODULE_AV2(invite, invite_modinit, invite_moddeinit, invite_clist, NULL, NULL, NULL, NULL, NULL);
 
 static void add_invite(struct Channel *, struct Client *);
 

@@ -68,4 +68,4 @@ _moddeinit(void)
 	capability_orphan(cli_capindex, "server-time");
 }
 
-DECLARE_MODULE_AV1(cap_server_time, _modinit, _moddeinit, NULL, NULL, cap_server_time_hfnlist, "$Revision$");
+DECLARE_MODULE_AV2(cap_server_time, _modinit, _moddeinit, NULL, NULL, cap_server_time_hfnlist, NULL, NULL, NULL);

@@ -68,7 +68,7 @@ mapi_hlist_av1 whois_hlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(whois, NULL, NULL, whois_clist, whois_hlist, NULL, "$Revision: 3536 $");
+DECLARE_MODULE_AV2(whois, NULL, NULL, whois_clist, whois_hlist, NULL, NULL, NULL, NULL);
 
 /*
  * m_whois

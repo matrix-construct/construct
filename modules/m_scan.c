@@ -59,7 +59,7 @@ struct Message scan_msgtab = {
 };
 
 mapi_clist_av1 scan_clist[] = { &scan_msgtab, NULL };
-DECLARE_MODULE_AV1(scan, NULL, NULL, scan_clist, NULL, NULL, "$Revision: 1853 $");
+DECLARE_MODULE_AV2(scan, NULL, NULL, scan_clist, NULL, NULL, NULL, NULL, NULL);
 
 typedef int (*scan_handler)(struct MsgBuf *, struct Client *, struct Client *, int,
 	const char **);

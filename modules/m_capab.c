@@ -44,7 +44,7 @@ struct Message gcap_msgtab = {
 };
 
 mapi_clist_av1 capab_clist[] = { &capab_msgtab, &gcap_msgtab, NULL };
-DECLARE_MODULE_AV1(capab, NULL, NULL, capab_clist, NULL, NULL, "$Revision: 1295 $");
+DECLARE_MODULE_AV2(capab, NULL, NULL, capab_clist, NULL, NULL, NULL, NULL, NULL);
 
 /*
  * mr_capab - CAPAB message handler

@@ -67,7 +67,7 @@ mapi_hlist_av1 join_hlist[] = {
 	{ NULL, NULL },
 };
 
-DECLARE_MODULE_AV1(join, NULL, NULL, join_clist, join_hlist, NULL, "$Revision: 3494 $");
+DECLARE_MODULE_AV2(join, NULL, NULL, join_clist, join_hlist, NULL, NULL, NULL, NULL);
 
 static void do_join_0(struct Client *client_p, struct Client *source_p);
 static int check_channel_name_loc(struct Client *source_p, const char *name);

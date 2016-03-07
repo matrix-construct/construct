@@ -44,7 +44,7 @@ struct Message ping_msgtab = {
 };
 
 mapi_clist_av1 ping_clist[] = { &ping_msgtab, NULL };
-DECLARE_MODULE_AV1(ping, NULL, NULL, ping_clist, NULL, NULL, "$Revision: 254 $");
+DECLARE_MODULE_AV2(ping, NULL, NULL, ping_clist, NULL, NULL, NULL, NULL, NULL);
 
 /*
 ** m_ping

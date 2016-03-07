@@ -67,7 +67,7 @@ mapi_clist_av1 signon_clist[] = {
 	&svslogin_msgtab, &signon_msgtab, NULL
 };
 
-DECLARE_MODULE_AV1(signon, NULL, NULL, signon_clist, NULL, NULL, "$Revision: 1192 $");
+DECLARE_MODULE_AV2(signon, NULL, NULL, signon_clist, NULL, NULL, NULL, NULL, NULL);
 
 #define NICK_VALID	1
 #define USER_VALID	2

@@ -43,7 +43,7 @@ struct Message time_msgtab = {
 };
 
 mapi_clist_av1 time_clist[] = { &time_msgtab, NULL };
-DECLARE_MODULE_AV1(time, NULL, NULL, time_clist, NULL, NULL, "$Revision: 254 $");
+DECLARE_MODULE_AV2(time, NULL, NULL, time_clist, NULL, NULL, NULL, NULL, NULL);
 
 static const char *months[] = {
 	"January", "February", "March", "April",

@@ -60,7 +60,7 @@ struct Message undline_msgtab = {
 
 mapi_clist_av1 dline_clist[] = { &dline_msgtab, &undline_msgtab, NULL };
 
-DECLARE_MODULE_AV1(dline, NULL, NULL, dline_clist, NULL, NULL, "$Revision$");
+DECLARE_MODULE_AV2(dline, NULL, NULL, dline_clist, NULL, NULL, NULL, NULL, NULL);
 
 static int remove_temp_dline(struct ConfItem *);
 static int apply_dline(struct Client *, const char *, int, char *);

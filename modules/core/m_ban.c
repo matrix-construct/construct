@@ -55,7 +55,7 @@ struct Message ban_msgtab = {
 };
 
 mapi_clist_av1 ban_clist[] =  { &ban_msgtab, NULL };
-DECLARE_MODULE_AV1(ban, NULL, NULL, ban_clist, NULL, NULL, "$Revision: 1349 $");
+DECLARE_MODULE_AV2(ban, NULL, NULL, ban_clist, NULL, NULL, NULL, NULL, NULL);
 
 static int
 m_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])

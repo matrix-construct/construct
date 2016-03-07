@@ -76,4 +76,4 @@ _moddeinit(void)
 	cflag_orphan('c');
 }
 
-DECLARE_MODULE_AV1(chm_nocolour, _modinit, _moddeinit, NULL, NULL, chm_nocolour_hfnlist, "$Revision$");
+DECLARE_MODULE_AV2(chm_nocolour, _modinit, _moddeinit, NULL, NULL, chm_nocolour_hfnlist, NULL, NULL, NULL);

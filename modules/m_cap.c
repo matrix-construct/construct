@@ -54,7 +54,7 @@ struct Message cap_msgtab = {
 };
 
 mapi_clist_av1 cap_clist[] = { &cap_msgtab, NULL };
-DECLARE_MODULE_AV1(cap, NULL, NULL, cap_clist, NULL, NULL, "$Revision: 676 $");
+DECLARE_MODULE_AV2(cap, NULL, NULL, cap_clist, NULL, NULL, NULL, NULL, NULL);
 
 #define IsCapableEntry(c, e)		IsCapable(c, 1 << (e)->value)
 #define HasCapabilityFlag(c, f)		(c->ownerdata != NULL && (((struct ClientCapability *)c->ownerdata)->flags & (f)) == f)

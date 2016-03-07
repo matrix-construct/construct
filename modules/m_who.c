@@ -82,7 +82,7 @@ _moddeinit(void)
 }
 
 mapi_clist_av1 who_clist[] = { &who_msgtab, NULL };
-DECLARE_MODULE_AV1(who, _modinit, _moddeinit, who_clist, NULL, NULL, "$Revision: 3350 $");
+DECLARE_MODULE_AV2(who, _modinit, _moddeinit, who_clist, NULL, NULL, NULL, NULL, NULL);
 
 static void do_who_on_channel(struct Client *source_p, struct Channel *chptr,
 			      int server_oper, int member,

@@ -73,7 +73,7 @@ struct Message unxline_msgtab = {
 
 mapi_clist_av1 xline_clist[] = { &xline_msgtab, &unxline_msgtab, NULL };
 
-DECLARE_MODULE_AV1(xline, NULL, NULL, xline_clist, NULL, NULL, "$Revision$");
+DECLARE_MODULE_AV2(xline, NULL, NULL, xline_clist, NULL, NULL, NULL, NULL, NULL);
 
 static int valid_xline(struct Client *, const char *, const char *);
 static void apply_xline(struct Client *client_p, const char *name,

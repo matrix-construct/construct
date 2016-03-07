@@ -94,7 +94,7 @@ mapi_hfn_list_av1 services_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(services, _modinit, _moddeinit, services_clist, NULL, services_hfnlist, "$Revision: 1907 $");
+DECLARE_MODULE_AV2(services, _modinit, _moddeinit, services_clist, NULL, services_hfnlist, NULL, NULL, NULL);
 
 static int
 _modinit(void)

@@ -43,7 +43,7 @@ struct Message away_msgtab = {
 };
 
 mapi_clist_av1 away_clist[] = { &away_msgtab, NULL };
-DECLARE_MODULE_AV1(away, NULL, NULL, away_clist, NULL, NULL, "$Revision: 3370 $");
+DECLARE_MODULE_AV2(away, NULL, NULL, away_clist, NULL, NULL, NULL, NULL, NULL);
 
 /***********************************************************************
  * m_away() - Added 14 Dec 1988 by jto.

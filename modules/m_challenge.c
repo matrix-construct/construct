@@ -67,7 +67,7 @@ static int	challenge_load(void)
 #endif
 }
 
-DECLARE_MODULE_AV1(challenge, challenge_load, NULL, NULL, NULL, NULL, "$Revision: 3161 $");
+DECLARE_MODULE_AV2(challenge, challenge_load, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 #else
 
 static int m_challenge(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
@@ -79,7 +79,7 @@ struct Message challenge_msgtab = {
 };
 
 mapi_clist_av1 challenge_clist[] = { &challenge_msgtab, NULL };
-DECLARE_MODULE_AV1(challenge, NULL, NULL, challenge_clist, NULL, NULL, "$Revision: 3161 $");
+DECLARE_MODULE_AV2(challenge, NULL, NULL, challenge_clist, NULL, NULL, NULL, NULL, NULL);
 
 static int generate_challenge(char **r_challenge, char **r_response, RSA * key);
 

@@ -65,4 +65,4 @@ _moddeinit(void)
 	capability_orphan(cli_capindex, "account-tag");
 }
 
-DECLARE_MODULE_AV1(cap_account_tag, _modinit, _moddeinit, NULL, NULL, cap_account_tag_hfnlist, "$Revision$");
+DECLARE_MODULE_AV2(cap_account_tag, _modinit, _moddeinit, NULL, NULL, cap_account_tag_hfnlist, NULL, NULL, NULL);

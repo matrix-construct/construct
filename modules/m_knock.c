@@ -57,7 +57,7 @@ _moddeinit(void)
 }
 
 mapi_clist_av1 knock_clist[] = { &knock_msgtab, NULL };
-DECLARE_MODULE_AV1(knock, _modinit, _moddeinit, knock_clist, NULL, NULL, "$Revision: 3570 $");
+DECLARE_MODULE_AV2(knock, _modinit, _moddeinit, knock_clist, NULL, NULL, NULL, NULL, NULL);
 
 /* m_knock
  *    parv[1] = channel

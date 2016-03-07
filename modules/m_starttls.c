@@ -61,7 +61,7 @@ _moddeinit(void)
 #endif
 }
 
-DECLARE_MODULE_AV1(starttls, _modinit, _moddeinit, starttls_clist, NULL, NULL, "$Revision$");
+DECLARE_MODULE_AV2(starttls, _modinit, _moddeinit, starttls_clist, NULL, NULL, NULL, NULL, NULL);
 
 static int
 mr_starttls(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
