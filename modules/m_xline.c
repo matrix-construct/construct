@@ -60,6 +60,8 @@ static int ms_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct C
 		      const char *parv[]);
 static int me_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
 		      const char *parv[]);
+static const char xline_desc[] =
+	"Provides management of GECOS bans via (UN)XLINE command";
 
 struct Message xline_msgtab = {
 	"XLINE", 0, 0, 0, 0,
@@ -73,7 +75,7 @@ struct Message unxline_msgtab = {
 
 mapi_clist_av1 xline_clist[] = { &xline_msgtab, &unxline_msgtab, NULL };
 
-DECLARE_MODULE_AV2(xline, NULL, NULL, xline_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(xline, NULL, NULL, xline_clist, NULL, NULL, NULL, NULL, xline_desc);
 
 static int valid_xline(struct Client *, const char *, const char *);
 static void apply_xline(struct Client *client_p, const char *name,
