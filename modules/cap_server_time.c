@@ -35,13 +35,18 @@
 #include "inline/stringops.h"
 
 static void cap_server_time_process(hook_data *);
+unsigned int CLICAP_SERVER_TIME = 0;
 
 mapi_hfn_list_av1 cap_server_time_hfnlist[] = {
 	{ "outbound_msgbuf", (hookfn) cap_server_time_process },
 	{ NULL, NULL }
 };
-
-unsigned int CLICAP_SERVER_TIME = 0;
+mapi_cap_list_av2 cap_server_time_cap_list[] = {
+	{ MAPI_CAP_CLIENT, "server-time", NULL, &CLICAP_SERVER_TIME },
+	{ 0, NULL, NULL, NULL }
+};
+static const char cap_server_time_desc[] =
+	"Provides the server-time client capability";
 
 static void
 cap_server_time_process(hook_data *data)
@@ -55,17 +60,4 @@ cap_server_time_process(hook_data *data)
 	msgbuf_append_tag(msgbuf, "time", buf, CLICAP_SERVER_TIME);
 }
 
-static int
-_modinit(void)
-{
-	CLICAP_SERVER_TIME = capability_put(cli_capindex, "server-time", NULL);
-	return 0;
-}
-
-static void
-_moddeinit(void)
-{
-	capability_orphan(cli_capindex, "server-time");
-}
-
-DECLARE_MODULE_AV2(cap_server_time, _modinit, _moddeinit, NULL, NULL, cap_server_time_hfnlist, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(cap_server_time, NULL, NULL, NULL, NULL, cap_server_time_hfnlist, cap_server_time_cap_list, NULL, cap_server_time_desc);

@@ -46,7 +46,7 @@ mapi_cap_list_av2 cap_account_tag_cap_list[] = {
 	{ 0, NULL, NULL, NULL },
 };
 static const char cap_account_tag_desc[] =
-	"Provides the account-tag capability";
+	"Provides the account-tag client capability";
 
 static void
 cap_account_tag_process(hook_data *data)
