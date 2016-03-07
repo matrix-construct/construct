@@ -39,6 +39,7 @@
 static int mo_die(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int me_die(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int do_die(struct Client *, const char *);
+static const char die_desc[] = "Provides the DIE command to allow an operator to shutdown a server";
 
 static struct Message die_msgtab = {
 	"DIE", 0, 0, 0, 0,
@@ -47,7 +48,7 @@ static struct Message die_msgtab = {
 
 mapi_clist_av1 die_clist[] = { &die_msgtab, NULL };
 
-DECLARE_MODULE_AV2(die, NULL, NULL, die_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(die, NULL, NULL, die_clist, NULL, NULL, NULL, NULL, die_desc);
 
 /*
  * mo_die - DIE command handler
