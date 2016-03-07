@@ -78,7 +78,7 @@ typedef struct
 	int cap_index;		/* Which cap index does this belong to? */
 	const char *cap_name;	/* Capability name */
 	void *cap_ownerdata;	/* Not used much but why not... */
-	int *cap_id;		/* May be set to non-NULL to store cap id */
+	unsigned int *cap_id;		/* May be set to non-NULL to store cap id */
 } mapi_cap_list_av2;
 
 struct mapi_mheader_av1
