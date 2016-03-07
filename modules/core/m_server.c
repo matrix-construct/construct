@@ -43,6 +43,8 @@
 static int mr_server(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int ms_server(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int ms_sid(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static const char server_desc[] =
+	"Provides the TS6 commands to introduce a new server to the network";
 
 struct Message server_msgtab = {
 	"SERVER", 0, 0, 0, 0,
@@ -54,8 +56,6 @@ struct Message sid_msgtab = {
 };
 
 mapi_clist_av1 server_clist[] = { &server_msgtab, &sid_msgtab, NULL };
-
-static const char server_desc[] = "Provides the SERVER and SID commands for TS6 use";
 
 DECLARE_MODULE_AV2(server, NULL, NULL, server_clist, NULL, NULL, NULL, NULL, server_desc);
 
