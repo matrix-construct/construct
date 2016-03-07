@@ -44,6 +44,9 @@ mapi_hfn_list_av1 chm_nocolour_hfnlist[] = {
 	{ NULL, NULL }
 };
 
+static const char chm_nocolour_desc[] =
+	"Enables channel mode +c that filters colours and formatting from a channel";
+
 static void
 chm_nocolour_process(hook_data_privmsg_channel *data)
 {
@@ -76,4 +79,4 @@ _moddeinit(void)
 	cflag_orphan('c');
 }
 
-DECLARE_MODULE_AV2(chm_nocolour, _modinit, _moddeinit, NULL, NULL, chm_nocolour_hfnlist, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(chm_nocolour, _modinit, _moddeinit, NULL, NULL, chm_nocolour_hfnlist, NULL, NULL, chm_nocolour_desc);
