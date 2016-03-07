@@ -243,7 +243,7 @@ load_all_modules(int warn)
 		if((len > 3) && !strcmp(ldirent->d_name+len-3, ".la"))
 		{
 			(void) snprintf(module_fq_name, sizeof(module_fq_name), "%s/%s", AUTOMODPATH, ldirent->d_name);
-			(void) load_a_module(module_fq_name, warn, 0);
+			(void) load_a_module(module_fq_name, warn, MAPI_ORIGIN_CORE, 0);
 		}
 
 	}
@@ -268,7 +268,7 @@ load_core_modules(int warn)
 		snprintf(module_name, sizeof(module_name), "%s/%s%s", MODPATH,
 			    core_module_table[i], ".la");
 
-		if(load_a_module(module_name, warn, 1) == -1)
+		if(load_a_module(module_name, warn, MAPI_ORIGIN_CORE, 1) == -1)
 		{
 			ilog(L_MAIN,
 			     "Error loading core module %s%s: terminating ircd",
@@ -285,7 +285,7 @@ load_core_modules(int warn)
  * side effects -
  */
 int
-load_one_module(const char *path, int coremodule)
+load_one_module(const char *path, int origin, int coremodule)
 {
 	char modpath[PATH_MAX];
 	rb_dlink_node *pathst;
@@ -295,6 +295,12 @@ load_one_module(const char *path, int coremodule)
 
 	if (server_state_foreground == 1)
 		inotice("loading module %s ...", path);
+
+	if(coremodule != 0)
+	{
+		coremodule = 1;
+		origin = MAPI_ORIGIN_CORE;
+	}
 
 	RB_DLINK_FOREACH(pathst, mod_paths.head)
 	{
@@ -308,10 +314,7 @@ load_one_module(const char *path, int coremodule)
 				if(S_ISREG(statbuf.st_mode))
 				{
 					/* Regular files only please */
-					if(coremodule)
-						return load_a_module(modpath, 1, 1);
-					else
-						return load_a_module(modpath, 1, 0);
+					return load_a_module(modpath, 1, origin, coremodule);
 				}
 			}
 
@@ -362,6 +365,7 @@ static int
 do_modload(struct Client *source_p, const char *module)
 {
 	char *m_bn = rb_basename(module);
+	int origin;
 
 	if(findmodule_byname(m_bn) != -1)
 	{
@@ -370,7 +374,8 @@ do_modload(struct Client *source_p, const char *module)
 		return 0;
 	}
 
-	load_one_module(module, 0);
+	origin = strcmp(module, m_bn) == 0 ? MAPI_ORIGIN_CORE : MAPI_ORIGIN_EXTENSION;
+	load_one_module(module, origin, 0);
 
 	rb_free(m_bn);
 
@@ -500,7 +505,7 @@ do_modreload(struct Client *source_p, const char *module)
 		return 0;
 	}
 
-	if((load_one_module(m_bn, check_core) == -1) && check_core)
+	if((load_one_module(m_bn, modlist[modindex]->origin, check_core) == -1) && check_core)
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
 				     "Error reloading core module: %s: terminating ircd", m_bn);
@@ -781,17 +786,16 @@ unload_one_module(const char *name, int warn)
 /*
  * load_a_module()
  *
- * inputs	- path name of module, int to notice, int of core
+ * inputs	- path name of module, int to notice, int of origin, int of core
  * output	- -1 if error 0 if success
  * side effects - loads a module if successful
  */
 int
-load_a_module(const char *path, int warn, int core)
+load_a_module(const char *path, int warn, int origin, int core)
 {
 	lt_dlhandle tmpptr;
 	char *mod_basename;
 	const char *ver, *description = NULL;
-	int origin = 0;
 
 	int *mapi_version;
 
@@ -911,7 +915,6 @@ load_a_module(const char *path, int warn, int core)
 			/* New in MAPI v2 - version replacement */
 			ver = mheader->mapi_module_version ? mheader->mapi_module_version : ircd_version;
 			description = mheader->mapi_module_description;
-			origin = mheader->mapi_origin;
 
 			if(mheader->mapi_cap_list)
 			{
@@ -983,9 +986,6 @@ load_a_module(const char *path, int warn, int core)
 
 		switch(origin)
 		{
-		case MAPI_ORIGIN_EXTERNAL:
-			o = "external";
-			break;
 		case MAPI_ORIGIN_EXTENSION:
 			o = "extension";
 			break;

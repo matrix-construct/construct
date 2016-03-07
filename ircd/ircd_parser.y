@@ -291,14 +291,15 @@ oneitem: qstring
 loadmodule:
 	  LOADMODULE QSTRING
             {
-              char *m_bn;
+                char *m_bn;
+                m_bn = rb_basename((char *) $2);
 
-              m_bn = rb_basename((char *) $2);
+                if (findmodule_byname(m_bn) == -1)
+	        {
+	            load_one_module($2, MAPI_ORIGIN_EXTENSION, 0);
+		}
 
-              if (findmodule_byname(m_bn) == -1)
-	          load_one_module($2, 0);
-
-              rb_free(m_bn);
+                rb_free(m_bn);
 	    }
 	  ';'
           ;

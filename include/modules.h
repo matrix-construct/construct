@@ -93,14 +93,12 @@ struct mapi_mheader_av1
 };
 
 #define MAPI_ORIGIN_UNKNOWN	0		/* Unknown provenance (AV1 etc.) */
-#define MAPI_ORIGIN_EXTERNAL	1		/* Came from outside charybdis */
-#define MAPI_ORIGIN_EXTENSION	2		/* Charybdis bundled extension */
-#define MAPI_ORIGIN_CORE	3		/* Charybdis core module */
+#define MAPI_ORIGIN_EXTENSION	1		/* Charybdis extension */
+#define MAPI_ORIGIN_CORE	2		/* Charybdis core module */
 
 struct mapi_mheader_av2
 {
 	int mapi_version;			/* Module API version */
-	int mapi_origin;			/* Module provenance */
 	int (*mapi_register)(void);		/* Register function; ret -1 = failure (unload) */
 	void (*mapi_unregister)(void);		/* Unregister function.	*/
 	mapi_clist_av1 *mapi_command_list;	/* List of commands to add. */
@@ -114,8 +112,8 @@ struct mapi_mheader_av2
 #define DECLARE_MODULE_AV1(name, reg, unreg, cl, hl, hfnlist, v) \
 	struct mapi_mheader_av1 _mheader = { MAPI_V1, reg, unreg, cl, hl, hfnlist, v}
 
-#define DECLARE_MODULE_AV2(name, origin, reg, unreg, cl, hl, hfnlist, caplist, v, desc) \
-	struct mapi_mheader_av2 _mheader = { MAPI_V2, origin, reg, unreg, cl, hl, hfnlist, caplist, v, desc}
+#define DECLARE_MODULE_AV2(name, reg, unreg, cl, hl, hfnlist, caplist, v, desc) \
+	struct mapi_mheader_av2 _mheader = { MAPI_V2, reg, unreg, cl, hl, hfnlist, caplist, v, desc}
 
 /* add a path */
 void mod_add_path(const char *path);
@@ -131,8 +129,8 @@ extern void load_all_modules(int warn);
 extern void load_core_modules(int);
 
 extern int unload_one_module(const char *, int);
-extern int load_one_module(const char *, int);
-extern int load_a_module(const char *, int, int);
+extern int load_one_module(const char *, int, int);
+extern int load_a_module(const char *, int, int, int);
 extern int findmodule_byname(const char *);
 extern void modules_init(void);
 
