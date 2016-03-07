@@ -13,7 +13,7 @@ struct Message echotags_msgtab = {
 
 mapi_clist_av1 echotags_clist[] = { &echotags_msgtab, NULL };
 
-static const char echotags_desc = "A test module for tags";
+static const char echotags_desc[] = "A test module for tags";
 
 DECLARE_MODULE_AV2(echotags, NULL, NULL, echotags_clist, NULL, NULL, NULL, NULL, echotags_desc);
 
