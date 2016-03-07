@@ -51,7 +51,11 @@ struct Message uhelp_msgtab = {
 };
 
 mapi_clist_av1 help_clist[] = { &help_msgtab, &uhelp_msgtab, NULL };
-DECLARE_MODULE_AV2(help, NULL, NULL, help_clist, NULL, NULL, NULL, NULL, NULL);
+
+static const char help_desc[] =
+	"Provides the help facility for commands, modes, and server concepts";
+
+DECLARE_MODULE_AV2(help, NULL, NULL, help_clist, NULL, NULL, NULL, NULL, help_desc);
 
 /*
  * m_help - HELP message handler

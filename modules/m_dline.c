@@ -60,7 +60,9 @@ struct Message undline_msgtab = {
 
 mapi_clist_av1 dline_clist[] = { &dline_msgtab, &undline_msgtab, NULL };
 
-DECLARE_MODULE_AV2(dline, NULL, NULL, dline_clist, NULL, NULL, NULL, NULL, NULL);
+static const char dline_desc[] = "Provides the DLINE facility to ban users via IP address";
+
+DECLARE_MODULE_AV2(dline, NULL, NULL, dline_clist, NULL, NULL, NULL, NULL, dline_desc);
 
 static int remove_temp_dline(struct ConfItem *);
 static int apply_dline(struct Client *, const char *, int, char *);

@@ -83,7 +83,11 @@ _moddeinit(void)
 }
 
 mapi_clist_av1 etrace_clist[] = { &etrace_msgtab, &chantrace_msgtab, &masktrace_msgtab, NULL };
-DECLARE_MODULE_AV2(etrace, _modinit, _moddeinit, etrace_clist, NULL, NULL, NULL, NULL, NULL);
+
+static const char etrace_desc[] =
+    "Provides enhanced tracing facilities to opers (ETRACE, CHANTRACE, and MASKTRACE)";
+
+DECLARE_MODULE_AV2(etrace, _modinit, _moddeinit, etrace_clist, NULL, NULL, NULL, NULL, etrace_desc);
 
 static void do_etrace(struct Client *source_p, int ipv4, int ipv6);
 static void do_etrace_full(struct Client *source_p);

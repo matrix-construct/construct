@@ -50,7 +50,10 @@ struct Message encap_msgtab = {
 };
 
 mapi_clist_av1 encap_clist[] = { &encap_msgtab, NULL };
-DECLARE_MODULE_AV2(encap, NULL, NULL, encap_clist, NULL, NULL, NULL, NULL, NULL);
+
+static const char encap_desc[] = "Provides the TS6 ENCAP facility";
+
+DECLARE_MODULE_AV2(encap, NULL, NULL, encap_clist, NULL, NULL, NULL, NULL, encap_desc);
 
 /* ms_encap()
  *
