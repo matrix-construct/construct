@@ -109,6 +109,20 @@ mapi_hfn_list_av1 test_hfnlist[] = {
 	{ NULL, NULL }
 };
 
+/* The mapi_cap_list_av2 declares the capabilities this module adds.  This is
+ * for protocol usage. Here we declare both server and client capabilities.
+ * The first parameter is the cap type (server or client). The second is the
+ * name of the capability we wish to register. The third is the data attached
+ * to the cap (typically NULL). The last parameter is a pointer to an integer
+ * for the CAP index (recommended).
+ */
+unsigned int CAP_TESTCAP_SERVER, CAP_TESTCAP_CLIENT;
+mapi_cap_list_av2 test_cap_list[] = {
+	{ MAPI_CAP_SERVER, "TESTCAP", NULL, &CAP_TESTCAP_SERVER },
+	{ MAPI_CAP_CLIENT, "testcap", NULL, &CAP_TESTCAP_CLIENT },
+	{ 0, NULL, NULL, NULL }
+}
+
 /* Here we tell it what to do when the module is loaded */
 static int
 modinit(void)
@@ -127,8 +141,8 @@ moddeinit(void)
 	/* Again, nothing to do. */
 }
 
-/* DECLARE_MODULE_AV1() actually declare the MAPI header. */
-DECLARE_MODULE_AV1(
+/* DECLARE_MODULE_AV2() actually declare the MAPI header. */
+DECLARE_MODULE_AV2(
 			  /* The first argument is the name */
 			  example,
 			  /* The second argument is the function to call on load */
@@ -141,8 +155,12 @@ DECLARE_MODULE_AV1(
 			  test_hlist,
 			  /* Then the hook function list, if we have one */
 			  test_hfnlist,
-			  /* And finally the version number of this module. */
-			  NULL);
+			  /* Then the caps list, if we have one */
+			  test_cap_list,
+			  /* Then the version number of this module (NULL for bundled) */
+			  NULL,
+			  /* And finally, the description of this module */
+			  "This is an example module");
 
 /* Any of the above arguments can be NULL to indicate they aren't used. */
 
