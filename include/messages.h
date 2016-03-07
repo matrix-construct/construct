@@ -192,6 +192,7 @@
 #define NUMERIC_STR_486      "%s :You must log in with services to message this user"
 #define NUMERIC_STR_489      ":%s 489 %s %s :You're neither voiced nor channel operator"
 #define NUMERIC_STR_491      ":No appropriate operator blocks were found for your host"
+#define NUMERIC_STR_492      ":Cannot send to user %s (%s)"
 #define NUMERIC_STR_494      "%s :cannot answer you while you are %s, your message was not sent"
 #define NUMERIC_STR_501      ":%s 501 %s :Unknown MODE flag"
 #define NUMERIC_STR_502      ":%s 502 %s :Can't change mode for other users"
