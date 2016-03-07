@@ -48,7 +48,10 @@ struct Message accept_msgtab = {
 mapi_clist_av1 accept_clist[] = {
 	&accept_msgtab, NULL
 };
-DECLARE_MODULE_AV2(accept, NULL, NULL, accept_clist, NULL, NULL, NULL, NULL, NULL);
+static const char accept_desc[] =
+	"Provides the ACCEPT command for use with Caller ID/user mode +g";
+
+DECLARE_MODULE_AV2(accept, NULL, NULL, accept_clist, NULL, NULL, NULL, NULL, accept_desc);
 
 /*
  * m_accept - ACCEPT command handler

@@ -54,7 +54,10 @@ mapi_hlist_av1 admin_hlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV2(admin, NULL, NULL, admin_clist, admin_hlist, NULL, NULL, NULL, NULL);
+const char admin_desc[] =
+	"Provides the ADMIN command to show server administrator information";
+
+DECLARE_MODULE_AV2(admin, NULL, NULL, admin_clist, admin_hlist, NULL, NULL, NULL, admin_desc);
 
 /*
  * mr_admin - ADMIN command handler

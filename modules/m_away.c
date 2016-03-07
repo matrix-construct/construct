@@ -43,7 +43,10 @@ struct Message away_msgtab = {
 };
 
 mapi_clist_av1 away_clist[] = { &away_msgtab, NULL };
-DECLARE_MODULE_AV2(away, NULL, NULL, away_clist, NULL, NULL, NULL, NULL, NULL);
+
+static const char away_desc[] = "Provides the AWAY command to set yourself away";
+
+DECLARE_MODULE_AV2(away, NULL, NULL, away_clist, NULL, NULL, NULL, NULL, away_desc);
 
 /***********************************************************************
  * m_away() - Added 14 Dec 1988 by jto.
