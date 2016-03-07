@@ -45,7 +45,10 @@ struct Message ison_msgtab = {
 };
 
 mapi_clist_av1 ison_clist[] = { &ison_msgtab, NULL };
-DECLARE_MODULE_AV2(ison, NULL, NULL, ison_clist, NULL, NULL, NULL, NULL, NULL);
+
+static const char ison_desc[] = "Provides the ISON command to check if a set of users is online";
+
+DECLARE_MODULE_AV2(ison, NULL, NULL, ison_clist, NULL, NULL, NULL, NULL, ison_desc);
 
 static char buf[BUFSIZE];
 static char buf2[BUFSIZE];

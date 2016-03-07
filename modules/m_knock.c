@@ -57,7 +57,10 @@ _moddeinit(void)
 }
 
 mapi_clist_av1 knock_clist[] = { &knock_msgtab, NULL };
-DECLARE_MODULE_AV2(knock, _modinit, _moddeinit, knock_clist, NULL, NULL, NULL, NULL, NULL);
+
+static const char knock_desc[] = "Provides the KNOCK command to ask for an invite to an invite-only channel";
+
+DECLARE_MODULE_AV2(knock, _modinit, _moddeinit, knock_clist, NULL, NULL, NULL, NULL, knock_desc);
 
 /* m_knock
  *    parv[1] = channel
