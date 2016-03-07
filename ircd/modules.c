@@ -559,6 +559,20 @@ do_modlist(struct Client *source_p, const char *pattern)
 
 	for (i = 0; i < num_mods; i++)
 	{
+		const char *origin;
+		switch (modlist[i]->origin)
+		{
+		case MAPI_ORIGIN_EXTENSION:
+			origin = "extension";
+			break;
+		case MAPI_ORIGIN_CORE:
+			origin = "builtin";
+			break;
+		default:
+			origin = "unknown";
+			break;
+		}
+
 		if(pattern)
 		{
 			if(match(pattern, modlist[i]->name))
@@ -566,16 +580,16 @@ do_modlist(struct Client *source_p, const char *pattern)
 				sendto_one(source_p, form_str(RPL_MODLIST),
 					   me.name, source_p->name,
 					   modlist[i]->name,
-					   (unsigned long)(uintptr_t)modlist[i]->address,
-					   modlist[i]->version, modlist[i]->description, modlist[i]->core ? " (core)" : "");
+					   (unsigned long)(uintptr_t)modlist[i]->address, origin,
+					   modlist[i]->core ? " (core)" : "", modlist[i]->version, modlist[i]->description);
 			}
 		}
 		else
 		{
 			sendto_one(source_p, form_str(RPL_MODLIST),
 				   me.name, source_p->name, modlist[i]->name,
-				   (unsigned long)(uintptr_t)modlist[i]->address,
-				   modlist[i]->version, modlist[i]->description, modlist[i]->core ? " (core)" : "");
+				   (unsigned long)(uintptr_t)modlist[i]->address, origin,
+				   modlist[i]->core ? " (core)" : "", modlist[i]->version, modlist[i]->description);
 		}
 	}
 
@@ -732,7 +746,7 @@ unload_one_module(const char *name, int warn)
 				{
 					struct CapabilityIndex *idx;
 
-					switch(m->cap_index)
+					switch (m->cap_index)
 					{
 					case MAPI_CAP_CLIENT:
 						idx = cli_capindex;
@@ -924,7 +938,7 @@ load_a_module(const char *path, int warn, int origin, int core)
 					struct CapabilityIndex *idx;
 					int result;
 
-					switch(m->cap_index)
+					switch (m->cap_index)
 					{
 					case MAPI_CAP_CLIENT:
 						idx = cli_capindex;
@@ -984,7 +998,7 @@ load_a_module(const char *path, int warn, int origin, int core)
 	{
 		const char *o;
 
-		switch(origin)
+		switch (origin)
 		{
 		case MAPI_ORIGIN_EXTENSION:
 			o = "extension";
