@@ -44,7 +44,10 @@ struct Message quit_msgtab = {
 
 mapi_clist_av1 quit_clist[] = { &quit_msgtab, NULL };
 
-DECLARE_MODULE_AV2(quit, NULL, NULL, quit_clist, NULL, NULL, NULL, NULL, NULL);
+static const char quit_desc[] =
+	"Provides the QUIT command for clients and servers";
+
+DECLARE_MODULE_AV2(quit, NULL, NULL, quit_clist, NULL, NULL, NULL, NULL, quit_desc);
 
 /*
 ** m_quit
