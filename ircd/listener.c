@@ -159,11 +159,11 @@ show_ports(struct Client *source_p)
  * returns true (1) if successful false (0) on error.
  *
  * If the operating system has a define for SOMAXCONN, use it, otherwise
- * use RATBOX_SOMAXCONN
+ * use CHARYBDIS_SOMAXCONN
  */
 #ifdef SOMAXCONN
-#undef RATBOX_SOMAXCONN
-#define RATBOX_SOMAXCONN SOMAXCONN
+#undef CHARYBDIS_SOMAXCONN
+#define CHARYBDIS_SOMAXCONN SOMAXCONN
 #endif
 
 static int
@@ -253,7 +253,7 @@ inetport(struct Listener *listener)
 		return 0;
 	}
 
-	if(rb_listen(F, RATBOX_SOMAXCONN, listener->defer_accept))
+	if(rb_listen(F, CHARYBDIS_SOMAXCONN, listener->defer_accept))
 	{
 		errstr = strerror(rb_get_sockerr(F));
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,

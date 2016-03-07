@@ -91,11 +91,11 @@
  */
 #define KILLCHASETIMELIMIT 90	/* Recommended value: 90 */
 
-/* RATBOX_SOMAXCONN
+/* CHARYBDIS_SOMAXCONN
  * Use SOMAXCONN if OS has it, otherwise use this value for the
  * listen(); backlog.  5 for AIX/SUNOS, 25 for other OSs.
  */
-#define RATBOX_SOMAXCONN 25
+#define CHARYBDIS_SOMAXCONN 25
 
 /* MAX_BUFFER
  * The amount of fds to reserve for clients exempt from limits
@@ -110,7 +110,7 @@
  * ----------------------------------------------------------------
  */
 
-#define CONFIG_RATBOX_LEVEL_2
+#define CONFIG_CHARYBDIS_LEVEL_2
 
 #include "defaults.h"
 #endif /* INCLUDED_config_h */
