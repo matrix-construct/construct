@@ -43,14 +43,18 @@ struct Message lusers_msgtab = {
 };
 
 mapi_clist_av1 lusers_clist[] = { &lusers_msgtab, NULL };
-DECLARE_MODULE_AV2(lusers, NULL, NULL, lusers_clist, NULL, NULL, NULL, NULL, NULL);
+
+static const char lusers_desc[] =
+	"Provides the LUSERS command to view the number of current and maximum lusers on a server";
+
+DECLARE_MODULE_AV2(lusers, NULL, NULL, lusers_clist, NULL, NULL, NULL, NULL, lusers_desc);
 
 /*
  * m_lusers - LUSERS message handler
  * parv[1] = host/server mask.
  * parv[2] = server to query
  *
- * 199970918 JRL hacked to ignore parv[1] completely and require parc > 3
+ * 19970918 JRL hacked to ignore parv[1] completely and require parc > 3
  * to cause a force
  */
 static int

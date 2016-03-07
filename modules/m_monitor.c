@@ -49,7 +49,10 @@ struct Message monitor_msgtab = {
 };
 
 mapi_clist_av1 monitor_clist[] = { &monitor_msgtab, NULL };
-DECLARE_MODULE_AV2(monitor, monitor_init, monitor_deinit, monitor_clist, NULL, NULL, NULL, NULL, NULL);
+
+static const char monitor_desc[] = "Provides the MONITOR facility for tracking user signon and signoff";
+
+DECLARE_MODULE_AV2(monitor, monitor_init, monitor_deinit, monitor_clist, NULL, NULL, NULL, NULL, monitor_desc);
 
 static int monitor_init(void)
 {

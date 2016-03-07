@@ -47,7 +47,11 @@ struct Message locops_msgtab = {
 };
 
 mapi_clist_av1 locops_clist[] = { &locops_msgtab, NULL };
-DECLARE_MODULE_AV2(locops, NULL, NULL, locops_clist, NULL, NULL, NULL, NULL, NULL);
+
+static const char locops_desc[] =
+	"Provides the LOCOPS command to send a message to all local operators";
+
+DECLARE_MODULE_AV2(locops, NULL, NULL, locops_clist, NULL, NULL, NULL, NULL, locops_desc);
 
 /*
  * m_locops - LOCOPS message handler

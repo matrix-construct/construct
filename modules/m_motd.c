@@ -52,7 +52,9 @@ mapi_hlist_av1 motd_hlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV2(motd, NULL, NULL, motd_clist, motd_hlist, NULL, NULL, NULL, NULL);
+static const char motd_desc[] = "Provides the MOTD command to view the Message of the Day";
+
+DECLARE_MODULE_AV2(motd, NULL, NULL, motd_clist, motd_hlist, NULL, NULL, NULL, motd_desc);
 
 static void motd_spy(struct Client *);
 

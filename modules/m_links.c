@@ -54,7 +54,10 @@ mapi_hlist_av1 links_hlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV2(links, NULL, NULL, links_clist, links_hlist, NULL, NULL, NULL, NULL);
+static const char links_desc[] =
+	"Provides the LINKS command to view servers linked to the host server";
+
+DECLARE_MODULE_AV2(links, NULL, NULL, links_clist, links_hlist, NULL, NULL, NULL, links_desc);
 
 /*
  * m_links - LINKS message handler

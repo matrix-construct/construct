@@ -81,7 +81,9 @@ mapi_hfn_list_av1 list_hfnlist[] = {
 	{NULL, NULL}
 };
 
-DECLARE_MODULE_AV2(list, _modinit, _moddeinit, list_clist, NULL, list_hfnlist, NULL, NULL, NULL);
+static const char list_desc[] = "Provides the LIST command to clients to view non-hidden channels";
+
+DECLARE_MODULE_AV2(list, _modinit, _moddeinit, list_clist, NULL, list_hfnlist, NULL, NULL, list_desc);
 
 static struct ev_entry *iterate_clients_ev = NULL;
 
