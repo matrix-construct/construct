@@ -45,6 +45,7 @@
 static int m_join(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int ms_join(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int ms_sjoin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static const char join_desc[] = "Provides the JOIN and TS6 SJOIN commands to facilitate joining and creating channels";
 
 static int h_can_create_channel;
 static int h_channel_join;
@@ -67,7 +68,7 @@ mapi_hlist_av1 join_hlist[] = {
 	{ NULL, NULL },
 };
 
-DECLARE_MODULE_AV2(join, NULL, NULL, join_clist, join_hlist, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(join, NULL, NULL, join_clist, join_hlist, NULL, NULL, NULL, join_desc);
 
 static void do_join_0(struct Client *client_p, struct Client *source_p);
 static int check_channel_name_loc(struct Client *source_p, const char *name);
