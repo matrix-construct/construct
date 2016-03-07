@@ -152,19 +152,15 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags, int clea
 {
 	char buf[BUFSIZE] = { 0 };
 	char capbuf[BUFSIZE] = { 0 };
-	char *p;
 	int buflen = 0;
 	int curlen, mlen;
 	struct CapabilityEntry *entry;
 	struct DictionaryIter iter;
 
-	mlen = sprintf(buf, ":%s CAP %s %s",
+	mlen = snprintf(buf, sizeof buf, ":%s CAP %s %s",
 			me.name,
 			EmptyString(source_p->name) ? "*" : source_p->name,
 			subcmd);
-
-	p = capbuf;
-	buflen = mlen;
 
 	/* shortcut, nothing to do */
 	if(flags == -1)
@@ -199,43 +195,25 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags, int clea
 			caplen += strlen(data) + 1;
 
 		/* \r\n\0, possible "-~=", space, " *" */
-		if(buflen + caplen >= BUFSIZE - 10)
+		if(buflen + mlen >= BUFSIZE - 10)
 		{
 			/* remove our trailing space -- if buflen == mlen
 			 * here, we didnt even succeed in adding one.
 			 */
-			if(buflen != mlen)
-				*(p - 1) = '\0';
-			else
-				*p = '\0';
+			capbuf[buflen] = '\0';
 
 			sendto_one(source_p, "%s * :%s", buf, capbuf);
 
-			p = capbuf;
 			buflen = mlen;
 			memset(capbuf, 0, sizeof capbuf);
 		}
 
-		if(clear)
-		{
-			*p++ = '-';
-			buflen++;
-		}
-
-		if (data == NULL)
-			curlen = sprintf(p, "%s ", entry->cap);
-		else
-			curlen = sprintf(p, "%s=%s ", entry->cap, data);
-
-		p += curlen;
-		buflen += curlen;
+		buflen = rb_snprintf_append(capbuf, sizeof capbuf, "%s%s%s%s ",
+				clear ? "-" : "", entry->cap, data != NULL ? "=" : "", data != NULL ? data : "");
 	}
 
 	/* remove trailing space */
-	if(buflen != mlen)
-		*(p - 1) = '\0';
-	else
-		*p = '\0';
+	capbuf[buflen] = '\0';
 
 	sendto_one(source_p, "%s :%s", buf, capbuf);
 }
