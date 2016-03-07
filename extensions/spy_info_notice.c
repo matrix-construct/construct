@@ -26,6 +26,8 @@
 #include "ircd.h"
 #include "send.h"
 
+static const char spy_desc[] = "Sends a notice when someone uses INFO";
+
 void show_info(hook_data *);
 
 mapi_hfn_list_av1 info_hfnlist[] = {
@@ -33,7 +35,7 @@ mapi_hfn_list_av1 info_hfnlist[] = {
 	{NULL, NULL}
 };
 
-DECLARE_MODULE_AV2(info_spy, NULL, NULL, NULL, NULL, info_hfnlist, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(info_spy, NULL, NULL, NULL, NULL, info_hfnlist, NULL, NULL, spy_desc);
 
 void
 show_info(hook_data *data)

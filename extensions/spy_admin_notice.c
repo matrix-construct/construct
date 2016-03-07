@@ -26,6 +26,8 @@
 #include "ircd.h"
 #include "send.h"
 
+static const char spy_desc[] = "Sends a notice when someone uses ADMIN";
+
 void show_admin(hook_data *);
 
 mapi_hfn_list_av1 admin_hfnlist[] = {
@@ -33,7 +35,7 @@ mapi_hfn_list_av1 admin_hfnlist[] = {
 	{NULL, NULL}
 };
 
-DECLARE_MODULE_AV2(admin_spy, NULL, NULL, NULL, NULL, admin_hfnlist, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(admin_spy, NULL, NULL, NULL, NULL, admin_hfnlist, NULL, NULL, spy_desc);
 
 void
 show_admin(hook_data *data)

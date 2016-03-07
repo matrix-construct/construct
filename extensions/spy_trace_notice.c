@@ -26,6 +26,8 @@
 #include "ircd.h"
 #include "send.h"
 
+static const char spy_desc[] = "Sends a notice when someone uses TRACE or LTRACE";
+
 void show_trace(hook_data_client *);
 
 mapi_hfn_list_av1 trace_hfnlist[] = {
@@ -33,7 +35,7 @@ mapi_hfn_list_av1 trace_hfnlist[] = {
 	{NULL, NULL}
 };
 
-DECLARE_MODULE_AV2(trace_spy, NULL, NULL, NULL, NULL, trace_hfnlist, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(trace_spy, NULL, NULL, NULL, NULL, trace_hfnlist, NULL, NULL, spy_desc);
 
 void
 show_trace(hook_data_client *data)

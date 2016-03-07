@@ -26,6 +26,8 @@
 #include "ircd.h"
 #include "send.h"
 
+static const char spy_desc[] = "Sends a notice when someone looks at the operator list";
+
 void show_stats_p(hook_data *);
 
 mapi_hfn_list_av1 stats_p_hfnlist[] = {
@@ -33,7 +35,7 @@ mapi_hfn_list_av1 stats_p_hfnlist[] = {
 	{NULL, NULL}
 };
 
-DECLARE_MODULE_AV2(stats_p_spy, NULL, NULL, NULL, NULL, stats_p_hfnlist, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(stats_p_spy, NULL, NULL, NULL, NULL, stats_p_hfnlist, NULL, NULL, spy_desc);
 
 void
 show_stats_p(hook_data *data)
