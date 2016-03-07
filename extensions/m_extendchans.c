@@ -41,7 +41,7 @@ struct Message extendchans_msgtab = {
 
 mapi_clist_av1 extendchans_clist[] = { &extendchans_msgtab, NULL };
 
-DECLARE_MODULE_AV1(extendchans, NULL, NULL, extendchans_clist, NULL, NULL, "$Revision: $");
+DECLARE_MODULE_AV2(extendchans, NULL, NULL, extendchans_clist, NULL, NULL, NULL, NULL, NULL);
 
 static int
 mo_extendchans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])

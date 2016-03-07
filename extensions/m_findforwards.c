@@ -44,7 +44,7 @@ struct Message findforwards_msgtab = {
 
 mapi_clist_av1 findforwards_clist[] = { &findforwards_msgtab, NULL };
 
-DECLARE_MODULE_AV1(findforwards, NULL, NULL, findforwards_clist, NULL, NULL, "$Revision: 986 $");
+DECLARE_MODULE_AV2(findforwards, NULL, NULL, findforwards_clist, NULL, NULL, NULL, NULL, NULL);
 
 /*
 ** mo_findforwards

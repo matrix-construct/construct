@@ -19,7 +19,7 @@ mapi_hfn_list_av1 huc_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(hide_uncommon_channels, NULL, NULL, NULL, NULL, huc_hfnlist, "");
+DECLARE_MODULE_AV2(hide_uncommon_channels, NULL, NULL, NULL, NULL, huc_hfnlist, NULL, NULL, NULL);
 
 static void
 h_huc_doing_whois_channel_visibility(hook_data_client *hdata)

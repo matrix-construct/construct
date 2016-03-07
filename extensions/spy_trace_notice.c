@@ -33,7 +33,7 @@ mapi_hfn_list_av1 trace_hfnlist[] = {
 	{NULL, NULL}
 };
 
-DECLARE_MODULE_AV1(trace_spy, NULL, NULL, NULL, NULL, trace_hfnlist, "$Revision: 498 $");
+DECLARE_MODULE_AV2(trace_spy, NULL, NULL, NULL, NULL, trace_hfnlist, NULL, NULL, NULL);
 
 void
 show_trace(hook_data_client *data)

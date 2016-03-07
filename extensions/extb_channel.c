@@ -14,7 +14,7 @@ static int _modinit(void);
 static void _moddeinit(void);
 static int eb_channel(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type);
 
-DECLARE_MODULE_AV1(extb_channel, _modinit, _moddeinit, NULL, NULL, NULL, "$Revision: 1723 $");
+DECLARE_MODULE_AV2(extb_channel, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, NULL);
 
 static int
 _modinit(void)

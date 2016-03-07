@@ -23,7 +23,7 @@ mapi_hfn_list_av1 restrict_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(createoperonly, NULL, NULL, NULL, NULL, restrict_hfnlist, "$Revision: 3476 $");
+DECLARE_MODULE_AV2(createoperonly, NULL, NULL, NULL, NULL, restrict_hfnlist, NULL, NULL, NULL);
 
 static void
 h_can_create_channel_authenticated(hook_data_client_approval *data)

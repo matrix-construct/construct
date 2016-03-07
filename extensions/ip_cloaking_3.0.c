@@ -40,7 +40,7 @@ mapi_hfn_list_av1 ip_cloaking_hfnlist[] = {
 };
 
 DECLARE_MODULE_AV1(ip_cloaking, _modinit, _moddeinit, NULL, NULL,
-			ip_cloaking_hfnlist, "$Revision: 3526 $");
+			ip_cloaking_hfnlist, NULL);
 
 static void
 distribute_hostchange(struct Client *client_p, char *newhost)

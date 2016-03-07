@@ -48,7 +48,7 @@ struct Message okick_msgtab = {
 
 mapi_clist_av1 okick_clist[] = { &okick_msgtab, NULL };
 
-DECLARE_MODULE_AV1(okick, NULL, NULL, okick_clist, NULL, NULL, "$Revision: 3554 $");
+DECLARE_MODULE_AV2(okick, NULL, NULL, okick_clist, NULL, NULL, NULL, NULL, NULL);
 
 /*
 ** m_okick

@@ -47,7 +47,7 @@ struct Message adminwall_msgtab = {
 
 
 mapi_clist_av1 adminwall_clist[] = { &adminwall_msgtab, NULL };
-DECLARE_MODULE_AV1(adminwall, NULL, NULL, adminwall_clist, NULL, NULL, "$Revision: 20702 $");
+DECLARE_MODULE_AV2(adminwall, NULL, NULL, adminwall_clist, NULL, NULL, NULL, NULL, NULL);
 
 
 /*

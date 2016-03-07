@@ -113,7 +113,7 @@ DECLARE_MODULE_AV1(
 	hurt_clist,
 	NULL,
 	hurt_hfnlist,
-	"$Revision: 3161 $"
+	NULL
 );
 /* }}} */
 

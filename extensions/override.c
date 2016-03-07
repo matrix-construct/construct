@@ -278,4 +278,4 @@ _moddeinit(void)
 }
 
 DECLARE_MODULE_AV1(override, _modinit, _moddeinit, NULL, NULL,
-			override_hfnlist, "$Revision: 3526 $");
+			override_hfnlist, NULL);

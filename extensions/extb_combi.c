@@ -53,7 +53,7 @@ static int eb_and(const char *data, struct Client *client_p, struct Channel *chp
 static int eb_combi(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type, int is_and);
 static int recursion_depth = 0;
 
-DECLARE_MODULE_AV1(extb_extended, _modinit, _moddeinit, NULL, NULL, NULL, "$Revision: 1 $");
+DECLARE_MODULE_AV2(extb_extended, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, NULL);
 
 static int
 _modinit(void)

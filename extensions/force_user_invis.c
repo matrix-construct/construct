@@ -22,7 +22,7 @@ mapi_hfn_list_av1 noi_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(force_user_invis, NULL, NULL, NULL, NULL, noi_hfnlist, "1.0.0");
+DECLARE_MODULE_AV2(force_user_invis, NULL, NULL, NULL, NULL, noi_hfnlist, NULL, NULL, NULL);
 
 static void
 h_noi_umode_changed(hook_data_umode_changed *hdata)

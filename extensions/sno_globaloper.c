@@ -18,7 +18,7 @@ mapi_hfn_list_av1 sgo_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(sno_globaloper, NULL, NULL, NULL, NULL, sgo_hfnlist, "$Revision: 639 $");
+DECLARE_MODULE_AV2(sno_globaloper, NULL, NULL, NULL, NULL, sgo_hfnlist, NULL, NULL, NULL);
 
 static void
 h_sgo_umode_changed(void *vdata)

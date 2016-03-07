@@ -57,7 +57,7 @@ mapi_clist_av1 sendbans_clist[] = {
 	NULL
 };
 
-DECLARE_MODULE_AV1(sendbans, NULL, NULL, sendbans_clist, NULL, NULL, "$Revision$");
+DECLARE_MODULE_AV2(sendbans, NULL, NULL, sendbans_clist, NULL, NULL, NULL, NULL, NULL);
 
 static const char *expand_xline(const char *mask)
 {

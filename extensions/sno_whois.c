@@ -38,7 +38,7 @@ fini(void)
 	snomask_modes['W'] = 0;
 }
 
-DECLARE_MODULE_AV1(sno_whois, init, fini, NULL, NULL, whois_hfnlist, "$Revision: 3498 $");
+DECLARE_MODULE_AV2(sno_whois, init, fini, NULL, NULL, whois_hfnlist, NULL, NULL, NULL);
 
 void
 show_whois(hook_data_client *data)

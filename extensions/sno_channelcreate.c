@@ -21,7 +21,7 @@ mapi_hfn_list_av1 scc_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(sno_channelcreate, _modinit, _moddeinit, NULL, NULL, scc_hfnlist, "$Revision: 639 $");
+DECLARE_MODULE_AV2(sno_channelcreate, _modinit, _moddeinit, NULL, NULL, scc_hfnlist, NULL, NULL, NULL);
 
 static int
 _modinit(void)

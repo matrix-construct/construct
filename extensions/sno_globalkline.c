@@ -22,7 +22,7 @@ mapi_hfn_list_av1 gla_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(globallineactive, NULL, NULL, NULL, NULL, gla_hfnlist, "$Revision: 613 $");
+DECLARE_MODULE_AV2(globallineactive, NULL, NULL, NULL, NULL, gla_hfnlist, NULL, NULL, NULL);
 
 static void
 h_gla_client_exit(hook_data_client_exit *hdata)

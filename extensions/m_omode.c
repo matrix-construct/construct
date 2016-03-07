@@ -51,7 +51,7 @@ struct Message omode_msgtab = {
 
 mapi_clist_av1 omode_clist[] = { &omode_msgtab, NULL };
 
-DECLARE_MODULE_AV1(omode, NULL, NULL, omode_clist, NULL, NULL, "$Revision: 3121 $");
+DECLARE_MODULE_AV2(omode, NULL, NULL, omode_clist, NULL, NULL, NULL, NULL, NULL);
 
 /*
  * mo_omode - MODE command handler

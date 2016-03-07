@@ -20,7 +20,7 @@ mapi_hfn_list_av1 noi_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(no_oper_invis, NULL, NULL, NULL, NULL, noi_hfnlist, "$Revision: 3219 $");
+DECLARE_MODULE_AV2(no_oper_invis, NULL, NULL, NULL, NULL, noi_hfnlist, NULL, NULL, NULL);
 
 static void
 h_noi_umode_changed(hook_data_umode_changed *hdata)

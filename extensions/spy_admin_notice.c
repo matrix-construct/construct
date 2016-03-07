@@ -33,7 +33,7 @@ mapi_hfn_list_av1 admin_hfnlist[] = {
 	{NULL, NULL}
 };
 
-DECLARE_MODULE_AV1(admin_spy, NULL, NULL, NULL, NULL, admin_hfnlist, "$Revision: 498 $");
+DECLARE_MODULE_AV2(admin_spy, NULL, NULL, NULL, NULL, admin_hfnlist, NULL, NULL, NULL);
 
 void
 show_admin(hook_data *data)

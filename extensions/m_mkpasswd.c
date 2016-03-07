@@ -36,7 +36,7 @@ struct Message mkpasswd_msgtab = {
 
 mapi_clist_av1 mkpasswd_clist[] = { &mkpasswd_msgtab, NULL };
 
-DECLARE_MODULE_AV1(mkpasswd, NULL, NULL, mkpasswd_clist, NULL, NULL, "$Revision$");
+DECLARE_MODULE_AV2(mkpasswd, NULL, NULL, mkpasswd_clist, NULL, NULL, NULL, NULL, NULL);
 
 
 /* m_mkpasswd - mkpasswd message handler

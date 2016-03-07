@@ -36,4 +36,4 @@ hack_channel_access(void *vdata)
 }
 
 DECLARE_MODULE_AV1(restrict_unauthenticated, NULL, NULL, NULL, NULL,
-			restrict_unauthenticated_hfnlist, "$Revision: 3526 $");
+			restrict_unauthenticated_hfnlist, NULL);

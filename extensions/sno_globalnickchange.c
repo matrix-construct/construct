@@ -19,7 +19,7 @@ mapi_hfn_list_av1 gcn_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV1(globalnickchange, _modinit, NULL, NULL, NULL, gcn_hfnlist, "$Revision: 1869 $");
+DECLARE_MODULE_AV2(globalnickchange, _modinit, NULL, NULL, NULL, gcn_hfnlist, NULL, NULL, NULL);
 
 static int
 _modinit(void)
