@@ -44,6 +44,8 @@
 
 static int ms_tb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static int ms_etb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static const char tb_desc[] =
+	"Provides TS6 TB and ETB commands for topic bursting between servers";
 
 struct Message tb_msgtab = {
 	"TB", 0, 0, 0, 0,
@@ -56,7 +58,7 @@ struct Message etb_msgtab = {
 };
 
 mapi_clist_av1 tb_clist[] =  { &tb_msgtab, &etb_msgtab, NULL };
-DECLARE_MODULE_AV2(tb, NULL, NULL, tb_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(tb, NULL, NULL, tb_clist, NULL, NULL, NULL, NULL, tb_desc);
 
 /* m_tb()
  *

@@ -40,6 +40,7 @@
 #include "s_newconf.h" /* add_tgchange */
 
 static int me_tginfo(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static const char tginfo_desc[] = "Processes target change notifications from other servers";
 
 struct Message tginfo_msgtab = {
 	"TGINFO", 0, 0, 0, 0,
@@ -48,7 +49,7 @@ struct Message tginfo_msgtab = {
 
 mapi_clist_av1 tginfo_clist[] = { &tginfo_msgtab, NULL };
 
-DECLARE_MODULE_AV2(tginfo, NULL, NULL, tginfo_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(tginfo, NULL, NULL, tginfo_clist, NULL, NULL, NULL, NULL, tginfo_desc);
 
 /*
 ** me_tginfo

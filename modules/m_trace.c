@@ -41,6 +41,8 @@
 #include "modules.h"
 
 static int m_trace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static const char trace_desc[] =
+	"Provides the TRACE command to trace the route to a client or server";
 
 static void trace_spy(struct Client *, struct Client *);
 
@@ -56,7 +58,7 @@ mapi_hlist_av1 trace_hlist[] = {
 	{ "doing_trace",	&doing_trace_hook },
 	{ NULL, NULL }
 };
-DECLARE_MODULE_AV2(trace, NULL, NULL, trace_clist, trace_hlist, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(trace, NULL, NULL, trace_clist, trace_hlist, NULL, NULL, NULL, trace_desc);
 
 static void count_downlinks(struct Client *server_p, int *pservcount, int *pusercount);
 static int report_this_status(struct Client *source_p, struct Client *target_p);

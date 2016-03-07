@@ -43,6 +43,8 @@
 
 static int m_topic(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int ms_topic(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static const char topic_desc[] =
+	"Provides the TOPIC command to set, remove, and inspect channel topics";
 
 struct Message topic_msgtab = {
 	"TOPIC", 0, 0, 0, 0,
@@ -50,7 +52,7 @@ struct Message topic_msgtab = {
 };
 
 mapi_clist_av1 topic_clist[] = { &topic_msgtab, NULL };
-DECLARE_MODULE_AV2(topic, NULL, NULL, topic_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(topic, NULL, NULL, topic_clist, NULL, NULL, NULL, NULL, topic_desc);
 
 /*
  * m_topic

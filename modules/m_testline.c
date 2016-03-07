@@ -41,6 +41,7 @@
 
 static int mo_testline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int mo_testgecos(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static const char testline_desc[] = "Provides the ability to test I/K/D/X lines and RESVs";
 
 struct Message testline_msgtab = {
 	"TESTLINE", 0, 0, 0, 0,
@@ -52,7 +53,7 @@ struct Message testgecos_msgtab = {
 };
 
 mapi_clist_av1 testline_clist[] = { &testline_msgtab, &testgecos_msgtab, NULL };
-DECLARE_MODULE_AV2(testline, NULL, NULL, testline_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(testline, NULL, NULL, testline_clist, NULL, NULL, NULL, NULL, testline_desc);
 
 static int
 mo_testline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
