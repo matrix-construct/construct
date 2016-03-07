@@ -1,4 +1,3 @@
-dnl $Id: configure.ac 26260 2008-12-10 04:08:39Z androsyn $
 dnl Process this file with autoconf to produce a configure script.
 
 dnl TODO: clean up all the OpenSSL and shared module checking stuff;
@@ -8,7 +7,6 @@ dnl said functions need to be just about as complex as they already are.
 AC_PREREQ(2.63)
 AUTOMAKE_OPTIONS = 1.10
 dnl Sneaky way to get an Id tag into the configure script
-AC_COPYRIGHT([$Id: configure.ac 26260 2008-12-10 04:08:39Z androsyn $])
 AC_INIT([librb],[devel])
 AM_INIT_AUTOMAKE([subdir-objects])
 AM_SILENT_RULES([yes])
