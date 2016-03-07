@@ -41,6 +41,7 @@
 static int mo_restart(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int me_restart(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int do_restart(struct Client *source_p, const char *servername);
+static const char restart_desc[] = "Provides the RESTART command to restart the server";
 
 struct Message restart_msgtab = {
 	"RESTART", 0, 0, 0, 0,
@@ -48,7 +49,7 @@ struct Message restart_msgtab = {
 };
 
 mapi_clist_av1 restart_clist[] = { &restart_msgtab, NULL };
-DECLARE_MODULE_AV2(restart, NULL, NULL, restart_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(restart, NULL, NULL, restart_clist, NULL, NULL, NULL, NULL, restart_desc);
 
 /*
  * mo_restart

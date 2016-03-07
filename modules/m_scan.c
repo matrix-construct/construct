@@ -52,6 +52,8 @@
 static int mo_scan(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int scan_umodes(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 /*static int scan_cmodes(struct MsgBuf *, struct Client *, struct Client *, int, const char **);*/
+static const char scan_desc[] =
+	"Provides the SCAN command to show users that have a mode set or cleared";
 
 struct Message scan_msgtab = {
 	"SCAN", 0, 0, 0, 0,
@@ -59,7 +61,7 @@ struct Message scan_msgtab = {
 };
 
 mapi_clist_av1 scan_clist[] = { &scan_msgtab, NULL };
-DECLARE_MODULE_AV2(scan, NULL, NULL, scan_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(scan, NULL, NULL, scan_clist, NULL, NULL, NULL, NULL, scan_desc);
 
 typedef int (*scan_handler)(struct MsgBuf *, struct Client *, struct Client *, int,
 	const char **);

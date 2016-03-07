@@ -48,6 +48,8 @@
 
 static int mo_testmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 			int parc, const char *parv[]);
+static const char testmask_desc[] =
+	"Provides the TESTMASK command to show the number of clients matching a hostmask or GECOS";
 
 struct Message testmask_msgtab = {
 	"TESTMASK", 0, 0, 0, 0,
@@ -55,7 +57,7 @@ struct Message testmask_msgtab = {
 };
 
 mapi_clist_av1 testmask_clist[] = { &testmask_msgtab, NULL };
-DECLARE_MODULE_AV2(testmask, NULL, NULL, testmask_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(testmask, NULL, NULL, testmask_clist, NULL, NULL, NULL, NULL, testmask_desc);
 
 static const char *empty_sockhost = "255.255.255.255";
 static const char *spoofed_sockhost = "0";

@@ -31,6 +31,8 @@
 #include "send.h"
 
 static int mo_unreject(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static const char unreject_desc[] =
+	"Provides the UNREJECT command to remove an IP from the reject cache";
 
 struct Message unreject_msgtab = {
 	"UNREJECT", 0, 0, 0, 0,
@@ -38,7 +40,7 @@ struct Message unreject_msgtab = {
 };
 
 mapi_clist_av1 unreject_clist[] = { &unreject_msgtab, NULL };
-DECLARE_MODULE_AV2(unreject, NULL, NULL, unreject_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(unreject, NULL, NULL, unreject_clist, NULL, NULL, NULL, NULL, unreject_desc);
 
 /*
  * mo_unreject

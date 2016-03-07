@@ -40,6 +40,7 @@
 #include "modules.h"
 
 static int mo_set(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static const char set_desc[] = "Provides the SET command to change server parameters";
 
 struct Message set_msgtab = {
 	"SET", 0, 0, 0, 0,
@@ -47,7 +48,7 @@ struct Message set_msgtab = {
 };
 
 mapi_clist_av1 set_clist[] = { &set_msgtab, NULL };
-DECLARE_MODULE_AV2(set, NULL, NULL, set_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(set, NULL, NULL, set_clist, NULL, NULL, NULL, NULL, set_desc);
 
 /* Structure used for the SET table itself */
 struct SetStruct

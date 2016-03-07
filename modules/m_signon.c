@@ -51,6 +51,7 @@
 
 static int me_svslogin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int ms_signon(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static const char signon_desc[] = "Provides account login/logout support for services";
 
 static void send_signon(struct Client *, struct Client *, const char *, const char *, const char *, unsigned int, const char *);
 
@@ -67,7 +68,7 @@ mapi_clist_av1 signon_clist[] = {
 	&svslogin_msgtab, &signon_msgtab, NULL
 };
 
-DECLARE_MODULE_AV2(signon, NULL, NULL, signon_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(signon, NULL, NULL, signon_clist, NULL, NULL, NULL, NULL, signon_desc);
 
 #define NICK_VALID	1
 #define USER_VALID	2

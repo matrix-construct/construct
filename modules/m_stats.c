@@ -50,6 +50,8 @@
 #include "sslproc.h"
 
 static int m_stats (struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static const char stats_desc[] =
+	"Provides the STATS command to inspect various server/network information";
 
 struct Message stats_msgtab = {
 	"STATS", 0, 0, 0, 0,
@@ -66,7 +68,7 @@ mapi_hlist_av1 stats_hlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV2(stats, NULL, NULL, stats_clist, stats_hlist, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(stats, NULL, NULL, stats_clist, stats_hlist, NULL, NULL, NULL, stats_desc);
 
 const char *Lformat = "%s %u %u %u %u %u :%u %u %s";
 

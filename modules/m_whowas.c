@@ -40,6 +40,8 @@
 #include "modules.h"
 
 static int m_whowas(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static const char whowas_desc[] =
+	"Provides the WHOWAS command to display information on a disconnected user";
 
 struct Message whowas_msgtab = {
 	"WHOWAS", 0, 0, 0, 0,
@@ -47,7 +49,7 @@ struct Message whowas_msgtab = {
 };
 
 mapi_clist_av1 whowas_clist[] = { &whowas_msgtab, NULL };
-DECLARE_MODULE_AV2(whowas, NULL, NULL, whowas_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(whowas, NULL, NULL, whowas_clist, NULL, NULL, NULL, NULL, whowas_desc);
 
 /*
 ** m_whowas

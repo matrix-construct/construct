@@ -34,6 +34,8 @@
 #include "s_conf.h"
 
 static int mr_dumb_proxy(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static const char post_desc[] =
+	"Ensure Web forms/proxies cannot connect by disconnecting on POST, GET, and PUT";
 
 struct Message post_msgtab = {
 	"POST", 0, 0, 0, 0,
@@ -52,7 +54,7 @@ struct Message put_msgtab = {
 mapi_clist_av1 post_clist[] = {
 	&post_msgtab, &get_msgtab, &put_msgtab, NULL
 };
-DECLARE_MODULE_AV2(post, NULL, NULL, post_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(post, NULL, NULL, post_clist, NULL, NULL, NULL, NULL, post_desc);
 
 
 /*

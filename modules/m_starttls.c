@@ -34,6 +34,7 @@
 #include "logger.h"
 
 static int mr_starttls(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static const char starttls_desc[] = "Provides the tls CAP and STARTTLS command";
 
 struct Message starttls_msgtab = {
 	"STARTTLS", 0, 0, 0, 0,
@@ -61,7 +62,7 @@ _moddeinit(void)
 #endif
 }
 
-DECLARE_MODULE_AV2(starttls, _modinit, _moddeinit, starttls_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(starttls, _modinit, _moddeinit, starttls_clist, NULL, NULL, NULL, NULL, starttls_desc);
 
 static int
 mr_starttls(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])

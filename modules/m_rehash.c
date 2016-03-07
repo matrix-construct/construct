@@ -46,6 +46,8 @@
 
 static int mo_rehash(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int me_rehash(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static const char rehash_desc[] =
+	"Provides the REHASH command to reload configuration and other files";
 
 struct Message rehash_msgtab = {
 	"REHASH", 0, 0, 0, 0,
@@ -53,7 +55,7 @@ struct Message rehash_msgtab = {
 };
 
 mapi_clist_av1 rehash_clist[] = { &rehash_msgtab, NULL };
-DECLARE_MODULE_AV2(rehash, NULL, NULL, rehash_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(rehash, NULL, NULL, rehash_clist, NULL, NULL, NULL, NULL, rehash_desc);
 
 struct hash_commands
 {

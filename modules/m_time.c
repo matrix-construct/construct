@@ -36,6 +36,8 @@
 
 static int m_time(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static char *date(void);
+static const char time_desc[] =
+	"Provides the TIME command to show the current server time";
 
 struct Message time_msgtab = {
 	"TIME", 0, 0, 0, 0,
@@ -43,7 +45,7 @@ struct Message time_msgtab = {
 };
 
 mapi_clist_av1 time_clist[] = { &time_msgtab, NULL };
-DECLARE_MODULE_AV2(time, NULL, NULL, time_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(time, NULL, NULL, time_clist, NULL, NULL, NULL, NULL, time_desc);
 
 static const char *months[] = {
 	"January", "February", "March", "April",

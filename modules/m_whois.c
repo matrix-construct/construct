@@ -50,6 +50,8 @@ static void single_whois(struct Client *source_p, struct Client *target_p, int o
 
 static int m_whois(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int ms_whois(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static const char whois_desc[] =
+	"Provides the WHOIS command to display information about a user";
 
 struct Message whois_msgtab = {
 	"WHOIS", 0, 0, 0, 0,
@@ -68,7 +70,7 @@ mapi_hlist_av1 whois_hlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV2(whois, NULL, NULL, whois_clist, whois_hlist, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(whois, NULL, NULL, whois_clist, whois_hlist, NULL, NULL, NULL, whois_desc);
 
 /*
  * m_whois
