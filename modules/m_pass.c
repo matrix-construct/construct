@@ -36,6 +36,7 @@
 #include "s_conf.h"
 
 static int mr_pass(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static const char pass_desc[] = "Provides the PASS command to authenticate clients and servers";
 
 struct Message pass_msgtab = {
 	"PASS", 0, 0, 0, 0,
@@ -43,7 +44,7 @@ struct Message pass_msgtab = {
 };
 
 mapi_clist_av1 pass_clist[] = { &pass_msgtab, NULL };
-DECLARE_MODULE_AV2(pass, NULL, NULL, pass_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(pass, NULL, NULL, pass_clist, NULL, NULL, NULL, NULL, pass_desc);
 
 /*
  * m_pass() - Added Sat, 4 March 1989

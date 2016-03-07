@@ -43,6 +43,7 @@
 static int m_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static int me_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static int mo_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static const char privs_desc[] = "Provides the PRIVS command to inspect an operator's privileges";
 
 struct Message privs_msgtab = {
 	"PRIVS", 0, 0, 0, 0,
@@ -73,7 +74,7 @@ static struct mode_table auth_client_table[] = {
 	{NULL, 0}
 };
 
-DECLARE_MODULE_AV2(privs, NULL, NULL, privs_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(privs, NULL, NULL, privs_clist, NULL, NULL, NULL, NULL, privs_desc);
 
 static void show_privs(struct Client *source_p, struct Client *target_p)
 {
