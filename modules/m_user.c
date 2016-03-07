@@ -37,6 +37,8 @@
 #include "s_assert.h"
 
 static int mr_user(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static const char user_desc[] =
+	"Provides the USER command to register a new connection":
 
 struct Message user_msgtab = {
 	"USER", 0, 0, 0, 0,
@@ -44,7 +46,7 @@ struct Message user_msgtab = {
 };
 
 mapi_clist_av1 user_clist[] = { &user_msgtab, NULL };
-DECLARE_MODULE_AV2(user, NULL, NULL, user_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(user, NULL, NULL, user_clist, NULL, NULL, NULL, NULL, user_desc);
 
 static int do_local_user(struct Client *client_p, struct Client *source_p,
 			 const char *username, const char *realname);
