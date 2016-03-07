@@ -45,7 +45,9 @@ mapi_hfn_list_av1 nn_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV2(networknotice, NULL, NULL, NULL, NULL, nn_hfnlist, NULL, NULL, NULL);
+static const char sno_desc[] = "Show notices about netjoins and netsplits";
+
+DECLARE_MODULE_AV2(networknotice, NULL, NULL, NULL, NULL, nn_hfnlist, NULL, NULL, sno_desc);
 
 /*
  * count_mark_downlinks
