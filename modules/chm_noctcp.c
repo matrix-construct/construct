@@ -43,6 +43,9 @@ mapi_hfn_list_av1 chm_noctcp_hfnlist[] = {
 	{ NULL, NULL }
 };
 
+static const char chm_noctcp_desc[] =
+	"Adds channel mode +C, which blocks CTCP messages from a channel (except ACTION)";
+
 static void
 chm_noctcp_process(hook_data_privmsg_channel *data)
 {
@@ -76,4 +79,4 @@ _moddeinit(void)
 	cflag_orphan('C');
 }
 
-DECLARE_MODULE_AV2(chm_noctcp, _modinit, _moddeinit, NULL, NULL, chm_noctcp_hfnlist, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(chm_noctcp, _modinit, _moddeinit, NULL, NULL, chm_noctcp_hfnlist, NULL, NULL, chm_noctcp_desc);
