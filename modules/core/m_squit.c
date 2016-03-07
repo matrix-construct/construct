@@ -40,6 +40,7 @@
 
 static int ms_squit(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int mo_squit(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static const char squit_desc[] = "Provides the SQUIT command to cause a server to quit";
 
 struct Message squit_msgtab = {
 	"SQUIT", 0, 0, 0, 0,
@@ -48,7 +49,7 @@ struct Message squit_msgtab = {
 
 mapi_clist_av1 squit_clist[] = { &squit_msgtab, NULL };
 
-DECLARE_MODULE_AV2(squit, NULL, NULL, squit_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(squit, NULL, NULL, squit_clist, NULL, NULL, NULL, NULL, squit_desc);
 
 struct squit_parms
 {
