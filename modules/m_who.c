@@ -62,6 +62,8 @@ struct who_format
 };
 
 static int m_who(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static const char who_desc[] =
+	"Provides the WHO command to display information for users on a channel";
 
 struct Message who_msgtab = {
 	"WHO", 0, 0, 0, 0,
@@ -82,7 +84,7 @@ _moddeinit(void)
 }
 
 mapi_clist_av1 who_clist[] = { &who_msgtab, NULL };
-DECLARE_MODULE_AV2(who, _modinit, _moddeinit, who_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(who, _modinit, _moddeinit, who_clist, NULL, NULL, NULL, NULL, who_desc);
 
 static void do_who_on_channel(struct Client *source_p, struct Channel *chptr,
 			      int server_oper, int member,
