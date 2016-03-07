@@ -54,7 +54,7 @@ mapi_cap_list_av2 starttls_cap_list[] = {
 mapi_cap_list_av2 starttls_cap_list[] = { { 0, NULL, NULL, NULL } };
 #endif /* HAVE_LIBCRYPTO */
 
-DECLARE_MODULE_AV2(starttls, _modinit, _moddeinit, starttls_clist, NULL, NULL, starttls_cap_list, NULL, starttls_desc);
+DECLARE_MODULE_AV2(starttls, NULL, NULL, starttls_clist, NULL, NULL, starttls_cap_list, NULL, starttls_desc);
 
 static int
 mr_starttls(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
