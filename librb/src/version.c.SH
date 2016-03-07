@@ -47,7 +47,8 @@ $spitshell >version.c <<!SUB!THIS!
 #include "../include/serno.h"
 
 const char *librb_generation = "$generation";
-const char *librb_serno = SERIALNUM;
+const char *librb_serno = SERNO;
+const unsigned long int librb_datecode = DATECODE;
 
 const char *librb_infotext[] =
 {

@@ -22,14 +22,17 @@ logdir = @prefix@/logs
 BUILT_SOURCES = include/serno.h
 
 include/serno.h:
-	@if [ -d .git ] ; then \
-		revh=`git log -1 --date=format:%Y%m%d --pretty=format:%cd-%h`;\
-		[ -z "$$revh" ] || echo '#define SERNO "'$$revh'"' >include/serno.h ; \
-	elif [ -d .hg ] ; then \
-		revh=`hg parents --template '{date|shortdate}_{node|short}' 2>/dev/null | sed -e s/-//g -e s/_/-/`;\
-		[ -z "$$revh" ] || echo '#define SERNO "'$$revh'"' >include/serno.h ; \
+	@if [ -d .git ]; then \
+		revh=`git log -1 --date=format:%Y%m%d --pretty=format:%cd-%h`; \
+		datecode=`git log -1 --date=format:%Y%m%d --pretty=format:%cd`; \
+		if [ -n "$$revh" ]; then \
+			echo '#define SERNO "'$$revh'"' >include/serno.h ; \
+			echo "#define DATECODE $${datecode}UL" >>include/serno.h; \
+		fi \
+	else \
+		echo '#define SERNO "unknown"' >include/serno.h; \
+		echo '#define DATECODE 0UL' >>include/serno.h; \
 	fi
-	@[ -f include/serno.h ] || echo '#define SERNO "unknown"' >include/serno.h
 
 install-data-hook:
 	test -d ${DESTDIR}${logdir} || mkdir -p ${DESTDIR}${logdir}
