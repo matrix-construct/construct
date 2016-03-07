@@ -19,6 +19,9 @@ mapi_hfn_list_av1 sslonly_hfnlist[] = {
 
 static unsigned int mymode;
 
+static const char chm_sslonly_desc[] =
+	"Adds channel mode +S that bans non-SSL users from joing a channel";
+
 static int
 _modinit(void)
 {
@@ -29,14 +32,13 @@ _modinit(void)
 	return 0;
 }
 
-
 static void
 _moddeinit(void)
 {
 	cflag_orphan('S');
 }
 
-DECLARE_MODULE_AV1(chm_sslonly, _modinit, _moddeinit, NULL, NULL, sslonly_hfnlist, "$Revision$");
+DECLARE_MODULE_AV2(chm_sslonly, _modinit, _moddeinit, NULL, NULL, sslonly_hfnlist, NULL, NULL, chm_sslonly_desc);
 
 static void
 h_can_join(hook_data_channel *data)

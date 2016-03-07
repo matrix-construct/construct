@@ -19,6 +19,8 @@
 #include "chmode.h"
 
 static void hdl_can_kick(hook_data_channel_approval *);
+static const char chm_operpeace_desc[] =
+	"Adds channel mode +M which prohibits operators from being kicked";
 
 mapi_hfn_list_av1 chm_operpeace_hfnlist[] = {
 	{ "can_kick", (hookfn) hdl_can_kick },
@@ -43,7 +45,7 @@ _moddeinit(void)
 	cflag_orphan('M');
 }
 
-DECLARE_MODULE_AV1(chm_operpeace, _modinit, _moddeinit, NULL, NULL, chm_operpeace_hfnlist, "$Revision$");
+DECLARE_MODULE_AV2(chm_operpeace, _modinit, _moddeinit, NULL, NULL, chm_operpeace_hfnlist, NULL, NULL, chm_operpeace_desc);
 
 static void
 hdl_can_kick(hook_data_channel_approval *data)

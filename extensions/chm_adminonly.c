@@ -11,6 +11,8 @@
 #include "chmode.h"
 
 static void h_can_join(hook_data_channel *);
+static const char chm_adminonly_desc[] =
+	"Enables channel mode +A that blocks non-admins from joining a channel";
 
 mapi_hfn_list_av1 adminonly_hfnlist[] = {
 	{ "can_join", (hookfn) h_can_join },
@@ -35,7 +37,7 @@ _moddeinit(void)
 	cflag_orphan('A');
 }
 
-DECLARE_MODULE_AV1(chm_adminonly, _modinit, _moddeinit, NULL, NULL, adminonly_hfnlist, "$Revision$");
+DECLARE_MODULE_AV2(chm_adminonly, _modinit, _moddeinit, NULL, NULL, adminonly_hfnlist, NULL, NULL, chm_adminonly_desc);
 
 static void
 h_can_join(hook_data_channel *data)

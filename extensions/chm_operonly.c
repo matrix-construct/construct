@@ -11,6 +11,8 @@
 #include "chmode.h"
 
 static void h_can_join(hook_data_channel *);
+static const char chm_operonly_desc[] =
+	"Adds channel mode +O which makes a channel operator-only";
 
 mapi_hfn_list_av1 operonly_hfnlist[] = {
 	{ "can_join", (hookfn) h_can_join },
@@ -19,10 +21,6 @@ mapi_hfn_list_av1 operonly_hfnlist[] = {
 
 static unsigned int mymode;
 
-/* This is a simple example of how to use dynamic channel modes.
- * Not tested enough yet, use at own risk.
- * -- dwr
- */
 static int
 _modinit(void)
 {
@@ -40,7 +38,7 @@ _moddeinit(void)
 	cflag_orphan('O');
 }
 
-DECLARE_MODULE_AV1(chm_operonly, _modinit, _moddeinit, NULL, NULL, operonly_hfnlist, "$Revision$");
+DECLARE_MODULE_AV2(chm_operonly, _modinit, _moddeinit, NULL, NULL, operonly_hfnlist, NULL, NULL, chm_operonly_desc);
 
 static void
 h_can_join(hook_data_channel *data)

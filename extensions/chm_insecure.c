@@ -11,6 +11,9 @@
 #include "chmode.h"
 
 static void h_can_join(hook_data_channel *);
+static const char chm_insecure_desc[] =
+	"Adds channel mode +U that allows non-SSL users to join a channel, "
+	"disallowing them by default";
 
 mapi_hfn_list_av1 sslonly_hfnlist[] = {
 	{ "can_join", (hookfn) h_can_join },
@@ -36,7 +39,7 @@ _moddeinit(void)
 	cflag_orphan('U');
 }
 
-DECLARE_MODULE_AV1(chm_insecure, _modinit, _moddeinit, NULL, NULL, sslonly_hfnlist, "$Revision$");
+DECLARE_MODULE_AV2(chm_insecure, _modinit, _moddeinit, NULL, NULL, sslonly_hfnlist, NULL, NULL, chm_insecure_desc);
 
 static void
 h_can_join(hook_data_channel *data)
