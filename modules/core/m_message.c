@@ -47,6 +47,8 @@
 static int m_message(enum message_type, struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int m_privmsg(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int m_notice(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static const char message_desc[] =
+	"Provides the PRIVMSG and NOTICE commands to send messages to users and channels";
 
 static void expire_tgchange(void *unused);
 static struct ev_entry *expire_tgchange_event;
@@ -76,7 +78,7 @@ struct Message notice_msgtab = {
 
 mapi_clist_av1 message_clist[] = { &privmsg_msgtab, &notice_msgtab, NULL };
 
-DECLARE_MODULE_AV2(message, modinit, moddeinit, message_clist, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(message, modinit, moddeinit, message_clist, NULL, NULL, NULL, NULL, message_desc);
 
 struct entity
 {
