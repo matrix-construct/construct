@@ -43,6 +43,8 @@ struct Message dehelper_msgtab = {
 
 mapi_clist_av1 helpops_clist[] = { &dehelper_msgtab, NULL };
 
+static const char helpops_desc[] = "The helpops system as used by freenode";
+
 static int mo_dehelper(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {
 	struct Client *target_p;

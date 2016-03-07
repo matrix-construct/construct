@@ -106,14 +106,20 @@ mapi_hfn_list_av1 hurt_hfnlist[] = {
 
 mapi_clist_av1 hurt_clist[] = { &hurt_msgtab, &heal_msgtab, NULL };
 
-DECLARE_MODULE_AV1(
+static const char hurt_desc[] =
+	"Prevents \"hurt\" users from messaging anyone but operators or "
+	"services until they identify or are \"healed\"";
+
+DECLARE_MODULE_AV2(
 	hurt,
 	modinit,
 	modfini,
 	hurt_clist,
 	NULL,
 	hurt_hfnlist,
-	NULL
+	NULL,
+	NULL,
+	hurt_desc
 );
 /* }}} */
 
