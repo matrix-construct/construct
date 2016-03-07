@@ -12,8 +12,9 @@
 static int _modinit(void);
 static void _moddeinit(void);
 static int eb_hostmask(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type);
+static const char extb_desc[] = "Hostmask ($m) extban type";
 
-DECLARE_MODULE_AV2(extb_hostmask, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(extb_hostmask, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, extb_desc);
 
 static int
 _modinit(void)

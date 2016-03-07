@@ -17,13 +17,14 @@
 #include "numeric.h"
 
 static void h_can_create_channel_authenticated(hook_data_client_approval *);
+static const char restrict_desc[] = "Restricts channel creation to authenticated users and IRC operators only";
 
 mapi_hfn_list_av1 restrict_hfnlist[] = {
 	{ "can_create_channel", (hookfn) h_can_create_channel_authenticated },
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV2(createauthonly, NULL, NULL, NULL, NULL, restrict_hfnlist, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(createauthonly, NULL, NULL, NULL, NULL, restrict_hfnlist, NULL, NULL, restrict_desc);
 
 static void
 h_can_create_channel_authenticated(hook_data_client_approval *data)

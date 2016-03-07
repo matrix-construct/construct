@@ -14,8 +14,9 @@
 static int _modinit(void);
 static void _moddeinit(void);
 static int eb_canjoin(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type);
+static const char extb_desc[] = "Can join ($j) extban type - matches users who are or are not banned from a specified channel";
 
-DECLARE_MODULE_AV2(extb_canjoin, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(extb_canjoin, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, extb_desc);
 
 static int
 _modinit(void)

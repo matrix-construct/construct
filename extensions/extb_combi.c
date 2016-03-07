@@ -52,8 +52,9 @@ static int eb_or(const char *data, struct Client *client_p, struct Channel *chpt
 static int eb_and(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type);
 static int eb_combi(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type, int is_and);
 static int recursion_depth = 0;
+static const char extb_desc[] = "Combination ($&, $|) extban types";
 
-DECLARE_MODULE_AV2(extb_extended, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(extb_extended, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, extb_desc);
 
 static int
 _modinit(void)
