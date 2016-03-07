@@ -45,7 +45,9 @@ struct Message chghost_msgtab = {
 
 mapi_clist_av1 chghost_clist[] = { &chghost_msgtab, &realhost_msgtab, NULL };
 
-DECLARE_MODULE_AV2(chghost, NULL, NULL, chghost_clist, NULL, NULL, NULL, NULL, NULL);
+static const char chghost_desc[] = "Provides commands used to change and retrieve client hostnames";
+
+DECLARE_MODULE_AV2(chghost, NULL, NULL, chghost_clist, NULL, NULL, NULL, NULL, chghost_desc);
 
 /* clean_host()
  *

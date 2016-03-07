@@ -67,7 +67,9 @@ static int	challenge_load(void)
 #endif
 }
 
-DECLARE_MODULE_AV2(challenge, challenge_load, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+static const char challenge_desc[] = "Does nothing as OpenSSL was not enabled.";
+
+DECLARE_MODULE_AV2(challenge, challenge_load, NULL, NULL, NULL, NULL, NULL, NULL, challenge_desc);
 #else
 
 static int m_challenge(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
@@ -79,7 +81,12 @@ struct Message challenge_msgtab = {
 };
 
 mapi_clist_av1 challenge_clist[] = { &challenge_msgtab, NULL };
-DECLARE_MODULE_AV2(challenge, NULL, NULL, challenge_clist, NULL, NULL, NULL, NULL, NULL);
+
+static const char challenge_desc[] =
+	"Provides the challenge-response facility used for becoming an IRC operator";
+
+
+DECLARE_MODULE_AV2(challenge, NULL, NULL, challenge_clist, NULL, NULL, NULL, NULL, challenge_desc);
 
 static int generate_challenge(char **r_challenge, char **r_response, RSA * key);
 

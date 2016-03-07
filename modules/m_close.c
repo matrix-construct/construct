@@ -39,7 +39,10 @@ struct Message close_msgtab = {
 };
 
 mapi_clist_av1 close_clist[] = { &close_msgtab, NULL };
-DECLARE_MODULE_AV2(close, NULL, NULL, close_clist, NULL, NULL, NULL, NULL, NULL);
+
+static const char close_desc[] = "Provides the CLOSE command to clear all unfinished connections";
+
+DECLARE_MODULE_AV2(close, NULL, NULL, close_clist, NULL, NULL, NULL, NULL, close_desc);
 
 /*
  * mo_close - CLOSE message handler

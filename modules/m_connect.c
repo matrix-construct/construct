@@ -47,7 +47,11 @@ struct Message connect_msgtab = {
 };
 
 mapi_clist_av1 connect_clist[] = { &connect_msgtab, NULL };
-DECLARE_MODULE_AV2(connect, NULL, NULL, connect_clist, NULL, NULL, NULL, NULL, NULL);
+
+static const char connect_desc[] =
+	"Provides the CONNECT command to introduce servers to the network";
+
+DECLARE_MODULE_AV2(connect, NULL, NULL, connect_clist, NULL, NULL, NULL, NULL, connect_desc);
 
 /*
  * mo_connect - CONNECT command handler
@@ -118,7 +122,7 @@ mo_connect(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 		sendto_one_notice(source_p, ":Connect: illegal port number");
 		return 0;
 	}
-	
+
 	/*
 	 * Notify all operators about remote connect requests
 	 */

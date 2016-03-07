@@ -47,7 +47,10 @@ struct Message certfp_msgtab = {
 
 mapi_clist_av1 certfp_clist[] = { &certfp_msgtab, NULL };
 
-DECLARE_MODULE_AV2(certfp, NULL, NULL, certfp_clist, NULL, NULL, NULL, NULL, NULL);
+static const char certfp_desc[] =
+	"Provides the CERTFP facility used by servers to set certificate fingerprints";
+
+DECLARE_MODULE_AV2(certfp, NULL, NULL, certfp_clist, NULL, NULL, NULL, NULL, certfp_desc);
 
 /*
 ** me_certfp

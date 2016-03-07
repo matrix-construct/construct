@@ -44,7 +44,10 @@ struct Message gcap_msgtab = {
 };
 
 mapi_clist_av1 capab_clist[] = { &capab_msgtab, &gcap_msgtab, NULL };
-DECLARE_MODULE_AV2(capab, NULL, NULL, capab_clist, NULL, NULL, NULL, NULL, NULL);
+
+static const char capab_desc[] = "Provides the commands used for server-to-server capability negotiation";
+
+DECLARE_MODULE_AV2(capab, NULL, NULL, capab_clist, NULL, NULL, NULL, NULL, capab_desc);
 
 /*
  * mr_capab - CAPAB message handler

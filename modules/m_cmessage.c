@@ -72,7 +72,11 @@ struct Message cnotice_msgtab = {
 };
 
 mapi_clist_av1 cmessage_clist[] = { &cprivmsg_msgtab, &cnotice_msgtab, NULL };
-DECLARE_MODULE_AV2(cmessage, _modinit, _moddeinit, cmessage_clist, NULL, NULL, NULL, NULL, NULL);
+
+static const char cmessage_desc[] =
+	"Provides the CPRIVMSG and CNOTICE facilities for bypassing anti-spam measures";
+
+DECLARE_MODULE_AV2(cmessage, _modinit, _moddeinit, cmessage_clist, NULL, NULL, NULL, NULL, cmessage_desc);
 
 #define PRIVMSG 0
 #define NOTICE 1
