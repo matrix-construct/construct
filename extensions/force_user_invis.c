@@ -15,6 +15,9 @@
 #include "s_conf.h"
 #include "s_newconf.h"
 
+static const char noi_desc[] =
+	"Do not allow users to remove user mode +i unless they are operators";
+
 static void h_noi_umode_changed(hook_data_umode_changed *);
 
 mapi_hfn_list_av1 noi_hfnlist[] = {
@@ -22,7 +25,7 @@ mapi_hfn_list_av1 noi_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-DECLARE_MODULE_AV2(force_user_invis, NULL, NULL, NULL, NULL, noi_hfnlist, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(force_user_invis, NULL, NULL, NULL, NULL, noi_hfnlist, NULL, NULL, noi_desc);
 
 static void
 h_noi_umode_changed(hook_data_umode_changed *hdata)

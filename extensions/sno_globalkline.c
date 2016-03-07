@@ -25,7 +25,7 @@ mapi_hfn_list_av1 gla_hfnlist[] = {
 static const char sno_desc[] =
 	"Adds server notices for global XLINEs, KLINEs, and DLINEs";
 
-DECLARE_MODULE_AV2(globallineactive, NULL, NULL, NULL, NULL, gla_hfnlist, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(globallineactive, NULL, NULL, NULL, NULL, gla_hfnlist, NULL, NULL, sno_desc);
 
 static void
 h_gla_client_exit(hook_data_client_exit *hdata)

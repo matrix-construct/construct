@@ -202,4 +202,4 @@ h_hdl_whois(hook_data_client *hdata)
 	}
 }
 
-DECLARE_MODULE_AV2(helpops, _modinit, _moddeinit, helpops_clist, NULL, helpops_hfnlist, NULL, NULL, NULL);
+DECLARE_MODULE_AV2(helpops, _modinit, _moddeinit, helpops_clist, NULL, helpops_hfnlist, NULL, NULL, helpops_desc);
