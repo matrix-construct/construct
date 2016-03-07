@@ -121,7 +121,7 @@ mapi_cap_list_av2 test_cap_list[] = {
 	{ MAPI_CAP_SERVER, "TESTCAP", NULL, &CAP_TESTCAP_SERVER },
 	{ MAPI_CAP_CLIENT, "testcap", NULL, &CAP_TESTCAP_CLIENT },
 	{ 0, NULL, NULL, NULL }
-}
+};
 
 /* Here we tell it what to do when the module is loaded */
 static int
