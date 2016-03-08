@@ -919,8 +919,7 @@ load_a_module(const char *path, int warn, int origin, int core)
 				if (delta > MOD_WARN_DELTA)
 				{
 					delta /= 86400;
-					iwarn(L_MAIN,
-						"Module %s build date is out of sync with ircd build date by %ld days, expect problems",
+					iwarn("Module %s build date is out of sync with ircd build date by %ld days, expect problems",
 						mod_basename, delta);
 					sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						"Module %s build date is out of sync with ircd build date by %ld days, expect problems",
