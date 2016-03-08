@@ -25,7 +25,7 @@
 #include "stdinc.h"
 #include "class.h"		/* report_classes */
 #include "client.h"		/* Client */
-#include "common.h"		/* TRUE/FALSE */
+#include "common.h"
 #include "match.h"
 #include "ircd.h"		/* me */
 #include "listener.h"		/* show_ports */
@@ -81,9 +81,8 @@ static int stats_spy(struct Client *, char, const char *);
 static void stats_p_spy(struct Client *);
 
 /* Heres our struct for the stats table */
-struct StatsStruct
+struct stats_cmd
 {
-	char letter;
 	void (*handler) (struct Client *source_p);
 	int need_oper;
 	int need_admin;
@@ -127,63 +126,66 @@ static void stats_comm(struct Client *);
 static void stats_capability(struct Client *);
 
 /* This table contains the possible stats items, in order:
- * stats letter,  function to call, operonly? adminonly?
- * case only matters in the stats letter column.. -- fl_
+ * stats letter,  function to call, operonly? adminonly? --fl_
+ *
+ * Previously in this table letters were a column. I fixed it to use modern
+ * C initalisers so we don't have to iterate anymore.
+ * --Elizafox
  */
-static struct StatsStruct stats_cmd_table[] = {
+static struct stats_cmd stats_cmd_table[255] = {
     /* letter     function	need_oper need_admin */
-	{'a', stats_dns_servers,	1, 1, },
-	{'A', stats_dns_servers,	1, 1, },
-	{'b', stats_delay,		1, 1, },
-	{'B', stats_hash,		1, 1, },
-	{'c', stats_connect,		0, 0, },
-	{'C', stats_capability,		1, 0, },
-	{'d', stats_tdeny,		1, 0, },
-	{'D', stats_deny,		1, 0, },
-	{'e', stats_exempt,		1, 0, },
-	{'E', stats_events,		1, 1, },
-	{'f', stats_comm,		1, 1, },
-	{'F', stats_comm,		1, 1, },
-	{'g', stats_prop_klines,	1, 0, },
-	{'h', stats_hubleaf,		0, 0, },
-	{'H', stats_hubleaf,		0, 0, },
-	{'i', stats_auth,		0, 0, },
-	{'I', stats_auth,		0, 0, },
-	{'k', stats_tklines,		0, 0, },
-	{'K', stats_klines,		0, 0, },
-	{'l', NULL /* special */,	0, 0, },
-	{'L', NULL /* special */,	0, 0, },
-	{'m', stats_messages,		0, 0, },
-	{'M', stats_messages,		0, 0, },
-	{'n', stats_dnsbl,		0, 0, },
-	{'o', stats_oper,		0, 0, },
-	{'O', stats_privset,		1, 0, },
-	{'p', stats_operedup,		0, 0, },
-	{'P', stats_ports,		0, 0, },
-	{'q', stats_tresv,		1, 0, },
-	{'Q', stats_resv,		1, 0, },
-	{'r', stats_usage,		1, 0, },
-	{'R', stats_usage,		1, 0, },
-	{'s', stats_ssld,		1, 1, },
-	{'S', stats_ssld,		1, 1, },
-	{'t', stats_tstats,		1, 0, },
-	{'T', stats_tstats,		1, 0, },
-	{'u', stats_uptime,		0, 0, },
-	{'U', stats_shared,		1, 0, },
-	{'v', stats_servers,		0, 0, },
-	{'V', stats_servers,		0, 0, },
-	{'x', stats_tgecos,		1, 0, },
-	{'X', stats_gecos,		1, 0, },
-	{'y', stats_class,		0, 0, },
-	{'Y', stats_class,		0, 0, },
-	{'z', stats_memory,		1, 0, },
-	{'Z', stats_ziplinks,		1, 0, },
-	{'?', stats_servlinks,		0, 0, },
-	{(char) 0, (void (*)()) 0, 	0, 0, }
+	['a'] = { stats_dns_servers,	1, 1, },
+	['A'] = { stats_dns_servers,	1, 1, },
+	['b'] = { stats_delay,		1, 1, },
+	['B'] = { stats_hash,		1, 1, },
+	['c'] = { stats_connect,	0, 0, },
+	['C'] = { stats_capability,	1, 0, },
+	['d'] = { stats_tdeny,		1, 0, },
+	['D'] = { stats_deny,		1, 0, },
+	['e'] = { stats_exempt,		1, 0, },
+	['E'] = { stats_events,		1, 1, },
+	['f'] = { stats_comm,		1, 1, },
+	['F'] = { stats_comm,		1, 1, },
+	['g'] = { stats_prop_klines,	1, 0, },
+	['h'] = { stats_hubleaf,	0, 0, },
+	['H'] = { stats_hubleaf,	0, 0, },
+	['i'] = { stats_auth,		0, 0, },
+	['I'] = { stats_auth,		0, 0, },
+	['k'] = { stats_tklines,	0, 0, },
+	['K'] = { stats_klines,		0, 0, },
+	['l'] = { NULL /* special */,	0, 0, },
+	['L'] = { NULL /* special */,	0, 0, },
+	['m'] = { stats_messages,	0, 0, },
+	['M'] = { stats_messages,	0, 0, },
+	['n'] = { stats_dnsbl,		0, 0, },
+	['o'] = { stats_oper,		0, 0, },
+	['O'] = { stats_privset,	1, 0, },
+	['p'] = { stats_operedup,	0, 0, },
+	['P'] = { stats_ports,		0, 0, },
+	['q'] = { stats_tresv,		1, 0, },
+	['Q'] = { stats_resv,		1, 0, },
+	['r'] = { stats_usage,		1, 0, },
+	['R'] = { stats_usage,		1, 0, },
+	['s'] = { stats_ssld,		1, 1, },
+	['S'] = { stats_ssld,		1, 1, },
+	['t'] = { stats_tstats,		1, 0, },
+	['T'] = { stats_tstats,		1, 0, },
+	['u'] = { stats_uptime,		0, 0, },
+	['U'] = { stats_shared,		1, 0, },
+	['v'] = { stats_servers,	0, 0, },
+	['V'] = { stats_servers,	0, 0, },
+	['x'] = { stats_tgecos,		1, 0, },
+	['X'] = { stats_gecos,		1, 0, },
+	['y'] = { stats_class,		0, 0, },
+	['Y'] = { stats_class,		0, 0, },
+	['z'] = { stats_memory,		1, 0, },
+	['Z'] = { stats_ziplinks,	1, 0, },
+	['?'] = { stats_servlinks,	0, 0, },
 };
 
 /*
  * m_stats by fl_
+ * Modified heavily by Elizafox
  *      parv[1] = stat letter/command
  *      parv[2] = (if present) server/mask in stats L, or target
  *
@@ -195,6 +197,7 @@ m_stats(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 {
 	static time_t last_used = 0;
 	int i;
+	struct stats_cmd *cmd;
 	char statchar;
 	int did_stats = 0;
 
@@ -220,39 +223,42 @@ m_stats(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		return 0;
 
 	if((statchar != 'L') && (statchar != 'l'))
+	{
 		did_stats = stats_spy(source_p, statchar, NULL);
+	}
+	else
+	{
+		/* Blah, stats L needs the parameters, none of the others do.. */
+		stats_ltrace (source_p, parc, parv);
+		goto stats_out;
+	}
 
 	/* if did_stats is true, a module grabbed this STATS request */
-	if (did_stats)
+	if(did_stats)
 		goto stats_out;
 
-	for (i = 0; stats_cmd_table[i].letter; i++)
+	/* Look up */
+	cmd = &stats_cmd_table[statchar];
+	if(cmd->handler != NULL)
 	{
-		if(stats_cmd_table[i].letter == statchar)
+		/* The stats table says what privs are needed, so check --fl_ */
+		/* Called for remote clients and for local opers, so check need_admin
+		 * and need_oper
+		 */
+		if(cmd->need_admin && !IsOperAdmin(source_p))
 		{
-			/* The stats table says what privs are needed, so check --fl_ */
-			/* Called for remote clients and for local opers, so check need_admin
-			 * and need_oper
-			 */
-			if(stats_cmd_table[i].need_oper && !IsOper(source_p))
-			{
-				sendto_one_numeric(source_p, ERR_NOPRIVILEGES,
-						   form_str (ERR_NOPRIVILEGES));
-				break;
-			}
-			if(stats_cmd_table[i].need_admin && !IsOperAdmin(source_p))
-			{
-				sendto_one(source_p, form_str(ERR_NOPRIVS),
-					   me.name, source_p->name, "admin");
-				break;
-			}
-
-			/* Blah, stats L needs the parameters, none of the others do.. */
-			if(statchar == 'L' || statchar == 'l')
-				stats_ltrace (source_p, parc, parv);
-			else
-				stats_cmd_table[i].handler (source_p);
+			sendto_one(source_p, form_str(ERR_NOPRIVS),
+				   me.name, source_p->name, "admin");
+			goto stats_out;
 		}
+		if(cmd->need_oper && !IsOper(source_p))
+		{
+			sendto_one_numeric(source_p, ERR_NOPRIVILEGES,
+					   form_str (ERR_NOPRIVILEGES));
+			goto stats_out;
+		}
+
+		cmd->handler(source_p);
 	}
 
 stats_out:
