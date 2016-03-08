@@ -178,7 +178,7 @@ hash_text(const char *start)
 
 	while(*p)
 	{
-		h = (h << 4) - (h + (unsigned char) ToLower(*p++));
+		h = (h << 4) - (h + (unsigned char) irctolower(*p++));
 	}
 
 	return (h & (ATABLE_SIZE - 1));

@@ -78,7 +78,7 @@ fnv_hash_upper(const unsigned char *s, int bits)
 
 	while (*s)
 	{
-         	h ^= ToUpper(*s++);
+         	h ^= irctoupper(*s++);
 		h += (h<<1) + (h<<4) + (h<<7) + (h << 8) + (h << 24);
 	}
 	if (bits < 32)
@@ -123,7 +123,7 @@ fnv_hash_upper_len(const unsigned char *s, int bits, int len)
 	const unsigned char *x = s + len;
 	while (*s && s < x)
 	{
-         	h ^= ToUpper(*s++);
+         	h ^= irctoupper(*s++);
 		h += (h<<1) + (h<<4) + (h<<7) + (h << 8) + (h << 24);
 	}
 	if (bits < 32)

@@ -42,7 +42,7 @@ match_extban(const char *banstr, struct Client *client_p, struct Channel *chptr,
 		invert = 1;
 		p++;
 	}
-	f = extban_table[(unsigned char) ToLower(*p)];
+	f = extban_table[(unsigned char) irctolower(*p)];
 	if (*p != '\0')
 	{
 		p++;
@@ -74,7 +74,7 @@ valid_extban(const char *banstr, struct Client *client_p, struct Channel *chptr,
 	p = banstr + 1;
 	if (*p == '~')
 		p++;
-	f = extban_table[(unsigned char) ToLower(*p)];
+	f = extban_table[(unsigned char) irctolower(*p)];
 	if (*p != '\0')
 	{
 		p++;
@@ -99,7 +99,7 @@ get_extban_string(void)
 
 	j = 0;
 	for (i = 1; i < 256; i++)
-		if (i == ToLower(i) && extban_table[i])
+		if (i == irctolower(i) && extban_table[i])
 			e[j++] = i;
 	e[j] = 0;
 	return e;

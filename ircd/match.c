@@ -88,14 +88,14 @@ int match(const char *mask, const char *name)
 				  else
 				  {
 					  m_tmp = m;
-					  for (n_tmp = n; *n && ToLower(*n) != ToLower(*m); n++);
+					  for (n_tmp = n; *n && irctolower(*n) != irctolower(*m); n++);
 				  }
 			  }
 			  /* and fall through */
 		  default:
 			  if (!*n)
 				  return (*m != '\0' ? 0 : 1);
-			  if (ToLower(*m) != ToLower(*n))
+			  if (irctolower(*m) != irctolower(*n))
 				  goto backtrack;
 			  m++;
 			  n++;
@@ -160,14 +160,14 @@ int mask_match(const char *mask, const char *name)
 				  else
 				  {
 					  m_tmp = m;
-					  for (n_tmp = n; *n && ToLower(*n) != ToLower(*m); n++);
+					  for (n_tmp = n; *n && irctolower(*n) != irctolower(*m); n++);
 				  }
 			  }
 			  /* and fall through */
 		  default:
 			  if (!*n)
 				  return (*m != '\0' ? 0 : 1);
-			  if (ToLower(*m) != ToLower(*n))
+			  if (irctolower(*m) != irctolower(*n))
 				  goto backtrack;
 			  m++;
 			  n++;
@@ -281,7 +281,7 @@ match_esc(const char *mask, const char *name)
 		}
 
 		if(quote)
-			match1 = *m == 's' ? *n == ' ' : ToLower(*m) == ToLower(*n);
+			match1 = *m == 's' ? *n == ' ' : irctolower(*m) == irctolower(*n);
 		else if(*m == '?')
 			match1 = 1;
 		else if(*m == '@')
@@ -289,7 +289,7 @@ match_esc(const char *mask, const char *name)
 		else if(*m == '#')
 			match1 = IsDigit(*n);
 		else
-			match1 = ToLower(*m) == ToLower(*n);
+			match1 = irctolower(*m) == irctolower(*n);
 		if(match1)
 		{
 			if(*m)
@@ -565,7 +565,7 @@ int irccmp(const char *s1, const char *s2)
 	s_assert(s1 != NULL);
 	s_assert(s2 != NULL);
 
-	while ((res = ToUpper(*str1) - ToUpper(*str2)) == 0)
+	while ((res = irctoupper(*str1) - irctoupper(*str2)) == 0)
 	{
 		if (*str1 == '\0')
 			return 0;
@@ -583,7 +583,7 @@ int ircncmp(const char *s1, const char *s2, int n)
 	s_assert(s1 != NULL);
 	s_assert(s2 != NULL);
 
-	while ((res = ToUpper(*str1) - ToUpper(*str2)) == 0)
+	while ((res = irctoupper(*str1) - irctoupper(*str2)) == 0)
 	{
 		str1++;
 		str2++;
@@ -594,7 +594,7 @@ int ircncmp(const char *s1, const char *s2, int n)
 	return (res);
 }
 
-const unsigned char ToLowerTab[] = {
+const unsigned char irctolower_tab[] = {
 	0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa,
 	0xb, 0xc, 0xd, 0xe, 0xf, 0x10, 0x11, 0x12, 0x13, 0x14,
 	0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d,
@@ -629,7 +629,7 @@ const unsigned char ToLowerTab[] = {
 	0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff
 };
 
-const unsigned char ToUpperTab[] = {
+const unsigned char irctoupper_tab[] = {
 	0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa,
 	0xb, 0xc, 0xd, 0xe, 0xf, 0x10, 0x11, 0x12, 0x13, 0x14,
 	0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d,

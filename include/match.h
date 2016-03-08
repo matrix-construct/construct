@@ -81,11 +81,11 @@ extern char *canonize(char *);
 /*
  * character macros
  */
-extern const unsigned char ToLowerTab[];
-#define ToLower(c) (ToLowerTab[(unsigned char)(c)])
+extern const unsigned char irctolower_tab[];
+#define irctolower(c) (irctolower_tab[(unsigned char)(c)])
 
-extern const unsigned char ToUpperTab[];
-#define ToUpper(c) (ToUpperTab[(unsigned char)(c)])
+extern const unsigned char irctoupper_tab[];
+#define irctoupper(c) (irctoupper_tab[(unsigned char)(c)])
 
 extern const unsigned int CharAttrs[];
 
@@ -143,7 +143,7 @@ static inline void irccasecanon(char *str)
 {
         while (*str)
         {
-                *str = ToUpper(*str);
+                *str = irctoupper(*str);
                 str++;
         }
         return;
