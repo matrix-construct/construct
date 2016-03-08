@@ -915,7 +915,7 @@ load_a_module(const char *path, int warn, int origin, int core)
 			 */
 			if(mheader->mapi_datecode != datecode && mheader->mapi_datecode > 0)
 			{
-				long int delta = labs(datecode - mheader->mapi_datecode);
+				long int delta = datecode - mheader->mapi_datecode;
 				if (delta > MOD_WARN_DELTA)
 				{
 					delta /= 86400;
