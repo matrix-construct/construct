@@ -23,10 +23,32 @@
 
 #define MAXPARA 10
 
+static void handle_stat(int parc, char *parv[]);
+
 rb_helper *authd_helper = NULL;
 authd_cmd_handler authd_cmd_handlers[255] = {
 	['D'] = resolve_dns,
+	['S'] = handle_stat,
 };
+
+authd_stat_handler authd_stat_handlers[255] = {
+	['D'] = enumerate_nameservers,
+};
+
+static void
+handle_stat(int parc, char *parv[])
+{
+	authd_stat_handler handler;
+
+	if(parc < 3)
+		 /* XXX Should log this somehow */
+		return;
+
+	if (!(handler = authd_stat_handlers[parv[2][0]]))
+		return;
+
+	handler(parv[1], parv[2][0]);
+}
 
 static void
 parse_request(rb_helper *helper)

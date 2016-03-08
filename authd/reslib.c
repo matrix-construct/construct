@@ -1111,9 +1111,9 @@ irc_dn_find(const unsigned char *domain, const unsigned char *msg,
 }
 
 /*
- *  *  Thinking in noninternationalized USASCII (per the DNS spec),
- *   *  convert this character to lower case if it's upper case.
- *    */
+ *  Thinking in noninternationalized USASCII (per the DNS spec),
+ *  convert this character to lower case if it's upper case.
+ */
 static int
 mklower(int ch)
 {

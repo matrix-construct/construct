@@ -20,6 +20,7 @@
 
 #include "authd.h"
 #include "dns.h"
+#include "res.h"
 
 static void
 submit_dns_answer(void *userdata, struct DNSReply *reply)
@@ -135,4 +136,41 @@ resolve_dns(int parc, char *parv[])
 		gethost_byname_type(rec, &req->query, type);
 	else
 		gethost_byaddr(&req->addr, &req->query);
+}
+
+void
+enumerate_nameservers(const char *rid, const char letter)
+{
+	char buf[40 * IRCD_MAXNS]; /* Plenty */
+	char *c = buf;
+	int i;
+
+	if (!irc_nscount)
+	{
+		/* Shouldn't happen */
+		rb_helper_write(authd_helper, "X %s %c NONAMESERVERS", rid, letter);
+		return;
+	}
+
+	for(i = 0; i < irc_nscount; i++)
+	{
+		char addr[40];
+		int ret;
+
+		rb_inet_ntop_sock((struct sockaddr *)&irc_nsaddr_list[i], addr, sizeof(addr));
+
+		if (!addr[0])
+		{
+			/* Shouldn't happen */
+			rb_helper_write(authd_helper, "X %s %c INVALIDNAMESERVER", rid, letter);
+			return;
+		}
+
+		ret = snprintf(c, 40, "%s ", addr);
+		c += (size_t)ret;
+	}
+
+	*(--c) = '\0';
+
+	rb_helper_write(authd_helper, "Y %s %c %s", rid, letter, buf);
 }

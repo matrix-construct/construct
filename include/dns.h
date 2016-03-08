@@ -26,19 +26,17 @@
 #ifndef CHARYBDIS_DNS_H
 #define CHARYBDIS_DNS_H
 
+#include "stdinc.h"
+#include "authd.h"
+
 typedef void (*DNSCB)(const char *res, int status, int aftype, void *data);
-
-extern rb_helper *authd_helper;
-
-void init_authd(void);
-void restart_authd(void);
-void rehash_authd(void);
-void check_authd(void);
+typedef void (*DNSLISTCB)(int resc, const char *resv[], int status, void *data);
 
 uint16_t lookup_hostname(const char *hostname, int aftype, DNSCB callback, void *data);
 uint16_t lookup_ip(const char *hostname, int aftype, DNSCB callback, void *data);
 void cancel_lookup(uint16_t xid);
 void dns_results_callback(const char *callid, const char *status, const char *aftype, const char *results);
-void report_dns_servers(struct Client *);
+void dns_stats_results_callback(const char *callid, const char *status, int resc, const char *resv[]);
+void report_dns_servers(struct Client *, char);
 
 #endif

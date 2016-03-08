@@ -97,11 +97,11 @@ parse_authd_reply(rb_helper * helper)
 	ssize_t len;
 	int parc;
 	char dnsBuf[READBUF_SIZE];
-
 	char *parv[MAXPARA + 1];
+
 	while((len = rb_helper_read(helper, dnsBuf, sizeof(dnsBuf))) > 0)
 	{
-		parc = rb_string_to_array(dnsBuf, parv, MAXPARA+1); 
+		parc = rb_string_to_array(dnsBuf, parv, MAXPARA+1);
 
 		switch (*parv[0])
 		{
@@ -113,6 +113,33 @@ parse_authd_reply(rb_helper * helper)
 				return;
 			}
 			dns_results_callback(parv[1], parv[2], parv[3], parv[4]);
+			break;
+		case 'X':
+		case 'Y':
+		case 'Z':
+			if(parc < 3)
+			{
+				ilog(L_MAIN, "authd sent a result with wrong number of arguments: got %d", parc);
+				restart_authd();
+				return;
+			}
+
+			/* Select by type */
+			switch(*parv[2])
+			{
+			case 'D':
+				/* parv[0] conveys status */
+				if(parc < 4)
+				{
+					ilog(L_MAIN, "authd sent a result with wrong number of arguments: got %d", parc);
+					restart_authd();
+					return;
+				}
+				dns_stats_results_callback(parv[1], parv[0], parc - 3, (const char **)&parv[3]);
+				break;
+			default:
+				break;
+			}
 			break;
 		default:
 			break;

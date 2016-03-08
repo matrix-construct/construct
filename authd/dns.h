@@ -35,5 +35,6 @@ struct dns_request
 };
 
 extern void resolve_dns(int parc, char *parv[]);
+extern void enumerate_nameservers(const char *rid, const char letter);
 
 #endif

@@ -22,28 +22,31 @@
  *  USA
  */
 
-#include <stdinc.h>
-#include <rb_lib.h>
-#include <client.h>
-#include <ircd_defs.h>
-#include <parse.h>
-#include <dns.h>
-#include <match.h>
-#include <logger.h>
-#include <s_conf.h>
-#include <client.h>
-#include <send.h>
-#include <numeric.h>
-#include <msg.h>
+#include "stdinc.h"
+#include "rb_lib.h"
+#include "client.h"
+#include "ircd_defs.h"
+#include "parse.h"
+#include "dns.h"
+#include "match.h"
+#include "logger.h"
+#include "s_conf.h"
+#include "client.h"
+#include "send.h"
+#include "numeric.h"
+#include "msg.h"
+#include "hash.h"
 
 #define DNS_IDTABLE_SIZE 0x2000
+#define DNS_STATTABLE_SIZE 0x10
 
 #define DNS_HOST_IPV4		((char)'4')
 #define DNS_HOST_IPV6		((char)'6')
 #define DNS_REVERSE_IPV4	((char)'R')
 #define DNS_REVERSE_IPV6	((char)'S')
 
-static void submit_dns(uint16_t id, char type, const char *addr);
+static void submit_dns(uint16_t uid, char type, const char *addr);
+static void submit_dns_stat(uint16_t uid);
 
 struct dnsreq
 {
@@ -51,7 +54,20 @@ struct dnsreq
 	void *data;
 };
 
+struct dnsstatreq
+{
+	DNSLISTCB callback;
+	void *data;
+};
+
+struct dnsstatreq_data
+{
+	char uid[IDLEN];
+	char statchar;
+};
+
 static struct dnsreq querytable[DNS_IDTABLE_SIZE];
+static struct dnsstatreq stattable[DNS_STATTABLE_SIZE];
 
 static uint16_t
 assign_dns_id(void)
@@ -72,6 +88,25 @@ assign_dns_id(void)
 	return (id);
 }
 
+static uint8_t
+assign_dns_stat_id(void)
+{
+	static uint8_t id = 1;
+	int loopcnt = 0;
+	while(1)
+	{
+		if(++loopcnt > DNS_STATTABLE_SIZE)
+			return 0;
+		if(id < DNS_STATTABLE_SIZE - 1 || id == 0)
+			id++;
+		else
+			id = 1;
+		if(stattable[id].callback == NULL)
+			break;
+	}
+	return (id);
+}
+
 static void
 handle_dns_failure(uint16_t xid)
 {
@@ -86,11 +121,40 @@ handle_dns_failure(uint16_t xid)
 	req->data = NULL;
 }
 
+static void
+handle_dns_stat_failure(uint8_t xid)
+{
+	struct dnsstatreq *req;
+	const char *err[] = { "Unknown failure" };
+
+	req = &stattable[xid];
+	if(req->callback == NULL)
+		return;
+
+	req->callback(1, err, 2, req->data);
+
+	/* NOTE - this assumes req->data is on the heap */
+	rb_free(req->data);
+
+	req->callback = NULL;
+	req->data = NULL;
+}
+
 void
 cancel_lookup(uint16_t xid)
 {
 	querytable[xid].callback = NULL;
 	querytable[xid].data = NULL;
+}
+
+void
+cancel_dns_stats(uint16_t xid)
+{
+	/* NOTE - this assumes data is on the heap */
+	rb_free(stattable[xid].data);
+
+	stattable[xid].callback = NULL;
+	stattable[xid].data = NULL;
 }
 
 uint16_t
@@ -130,7 +194,7 @@ lookup_ip(const char *addr, int aftype, DNSCB callback, void *data)
 
 	if((nid = assign_dns_id()) == 0)
 		return 0;
-		
+
 	req = &querytable[nid];
 
 	req->callback = callback;
@@ -147,6 +211,24 @@ lookup_ip(const char *addr, int aftype, DNSCB callback, void *data)
 	return (nid);
 }
 
+uint8_t
+get_nameservers(DNSLISTCB callback, void *data)
+{
+	struct dnsstatreq *req;
+	uint8_t nid;
+	check_authd();
+
+	if((nid = assign_dns_stat_id()) == 0)
+		return 0;
+
+	req = &stattable[nid];
+	req->callback = callback;
+	req->data = data;
+
+	submit_dns_stat(nid);
+	return (nid);
+}
+
 void
 dns_results_callback(const char *callid, const char *status, const char *type, const char *results)
 {
@@ -160,7 +242,7 @@ dns_results_callback(const char *callid, const char *status, const char *type, c
 		return;
 	nid = (uint16_t)lnid;
 	req = &querytable[nid];
-	st = *status == 'O';
+	st = (*status == 'O');
 	aft = *type == '6' || *type == 'S' ? 6 : 4;
 	if(req->callback == NULL)
 	{
@@ -181,15 +263,82 @@ dns_results_callback(const char *callid, const char *status, const char *type, c
 }
 
 void
-report_dns_servers(struct Client *source_p)
+dns_stats_results_callback(const char *callid, const char *status, int resc, const char *resv[])
 {
-#if 0
-	rb_dlink_node *ptr;
-	RB_DLINK_FOREACH(ptr, nameservers.head)
+	struct dnsstatreq *req;
+	uint8_t nid;
+	int st, i;
+	long lnid = strtol(callid, NULL, 16);
+
+	if(lnid > DNS_STATTABLE_SIZE || lnid == 0)
+		return;
+	nid = (uint8_t)lnid;
+	req = &stattable[nid];
+
+	if(req->callback == NULL)
 	{
-		sendto_one_numeric(source_p, RPL_STATSDEBUG, "A %s", (char *)ptr->data);
+		/* NOTE - this assumes req->data is strdup'd or such */
+		rb_free(req->data);
+		req->data = NULL;
+		return;
 	}
-#endif
+
+	switch(*status)
+	{
+	case 'Y':
+		st = 0;
+		break;
+	case 'X':
+		/* Error */
+		st = 1;
+		break;
+	default:
+		/* Shouldn't happen... */
+		return;
+	}
+
+	/* Query complete */
+	req->callback(resc, resv, st, stattable[nid].data);
+
+	rb_free(req->data);
+	req->data = NULL;
+	req->callback = NULL;
+}
+
+static void
+report_dns_servers_cb(int resc, const char *resv[], int status, void *data)
+{
+	struct Client *source_p;
+	struct dnsstatreq_data *c_data = data;
+
+	if(!(source_p = find_id(c_data->uid)))
+		/* Client's gone, oh well. */
+		return;
+
+	if(status == 0)
+	{
+		for(int i = 0; i < resc; i++)
+			sendto_one_numeric(source_p, RPL_STATSDEBUG, "A %s", resv[i]);
+	}
+	else
+	{
+		if(resc && resv[resc][0])
+			/* XXX is this the right reply? */
+			sendto_one_numeric(source_p, RPL_STATSDEBUG, "A Error: %s", resv[resc]);
+	}
+
+	sendto_one_numeric(source_p, RPL_ENDOFSTATS, form_str(RPL_ENDOFSTATS), c_data->statchar);
+}
+
+void
+report_dns_servers(struct Client *source_p, char statchar)
+{
+	/* Use the UID to avoid a race where source_p goes away */
+	struct dnsstatreq_data *data = rb_malloc(sizeof(struct dnsstatreq_data));
+	rb_strlcpy(data->uid, source_p->id, IDLEN);
+	data->statchar = statchar;
+
+	get_nameservers(report_dns_servers_cb, data);
 }
 
 static void
@@ -201,4 +350,15 @@ submit_dns(uint16_t nid, char type, const char *addr)
 		return;
 	}
 	rb_helper_write(authd_helper, "D %x %c %s", nid, type, addr);
+}
+
+static void
+submit_dns_stat(uint16_t nid)
+{
+	if(authd_helper == NULL)
+	{
+		handle_dns_stat_failure(nid);
+		return;
+	}
+	rb_helper_write(authd_helper, "S %x D", nid);
 }

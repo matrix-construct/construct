@@ -89,7 +89,7 @@ struct StatsStruct
 	int need_admin;
 };
 
-static void stats_dns_servers(struct Client *);
+static void stats_dns_servers(struct Client *, char);
 static void stats_delay(struct Client *);
 static void stats_hash(struct Client *);
 static void stats_connect(struct Client *);
@@ -132,8 +132,8 @@ static void stats_capability(struct Client *);
  */
 static struct StatsStruct stats_cmd_table[] = {
     /* letter     function        need_oper need_admin */
-	{'a', stats_dns_servers,	1, 1, },
-	{'A', stats_dns_servers,	1, 1, },
+	{'a', NULL /* special */,	1, 1, },
+	{'A', NULL /* special */,	1, 1, },
 	{'b', stats_delay,		1, 1, },
 	{'B', stats_hash,		1, 1, },
 	{'c', stats_connect,		0, 0, },
@@ -219,7 +219,7 @@ m_stats(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	if(hunt_server (client_p, source_p, ":%s STATS %s :%s", 2, parc, parv) != HUNTED_ISME)
 		return 0;
 
-	if((statchar != 'L') && (statchar != 'l'))
+	if((statchar != 'L') && (statchar != 'l') && (statchar != 'A') && (statchar != 'a'))
 		did_stats = stats_spy(source_p, statchar, NULL);
 
 	/* if did_stats is true, a module grabbed this STATS request */
@@ -247,9 +247,17 @@ m_stats(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 				break;
 			}
 
-			/* Blah, stats L needs the parameters, none of the others do.. */
 			if(statchar == 'L' || statchar == 'l')
+			{
+				/* Blah, stats L needs the parameters, none of the others do.. */
 				stats_ltrace (source_p, parc, parv);
+			}
+			else if(statchar == 'a' || statchar == 'A')
+			{
+				/* Need to suppress RPL_ENDOFSTATS since this is an async call */
+				stats_dns_servers(source_p, statchar);
+				return 0;
+			}
 			else
 				stats_cmd_table[i].handler (source_p);
 		}
@@ -264,9 +272,9 @@ stats_out:
 }
 
 static void
-stats_dns_servers (struct Client *source_p)
+stats_dns_servers (struct Client *source_p, char statchar)
 {
-	report_dns_servers (source_p);
+	report_dns_servers (source_p, statchar);
 }
 
 static void
