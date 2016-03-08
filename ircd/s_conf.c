@@ -1357,12 +1357,12 @@ get_printable_kline(struct Client *source_p, struct ConfItem *aconf,
 /*
  * read_conf_files
  *
- * inputs       - cold start YES or NO
+ * inputs       - cold start
  * output       - none
  * side effects - read all conf files needed, ircd.conf kline.conf etc.
  */
 void
-read_conf_files(int cold)
+read_conf_files(bool cold)
 {
 	const char *filename;
 

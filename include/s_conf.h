@@ -348,7 +348,7 @@ extern rb_dlink_node *find_prop_ban(unsigned int status, const char *user, const
 extern void deactivate_conf(struct ConfItem *, rb_dlink_node *, time_t);
 extern void replace_old_ban(struct ConfItem *);
 
-extern void read_conf_files(int cold);
+extern void read_conf_files(bool cold);
 
 extern int attach_conf(struct Client *, struct ConfItem *);
 extern int check_client(struct Client *client_p, struct Client *source_p, const char *);

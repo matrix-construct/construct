@@ -669,7 +669,7 @@ charybdis_main(int argc, char *argv[])
 
 	if (testing_conf)
 		fprintf(stderr, "\nBeginning config test\n");
-	read_conf_files(YES);	/* cold start init conf files */
+	read_conf_files(true);	/* cold start init conf files */
 
 	mod_add_path(MODULE_DIR);
 	mod_add_path(MODULE_DIR "/autoload");
