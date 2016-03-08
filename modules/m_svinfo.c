@@ -23,7 +23,7 @@
  */
 #include "stdinc.h"
 #include "client.h"
-#include "common.h"		/* TRUE bleah */
+#include "common.h"
 #include "match.h"
 #include "ircd.h"
 #include "numeric.h"
