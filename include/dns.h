@@ -29,6 +29,8 @@
 #include "stdinc.h"
 #include "authd.h"
 
+extern rb_dlink_list nameservers;
+
 typedef void (*DNSCB)(const char *res, int status, int aftype, void *data);
 typedef void (*DNSLISTCB)(int resc, const char *resv[], int status, void *data);
 
@@ -37,6 +39,7 @@ uint16_t lookup_ip(const char *hostname, int aftype, DNSCB callback, void *data)
 void cancel_lookup(uint16_t xid);
 void dns_results_callback(const char *callid, const char *status, const char *aftype, const char *results);
 void dns_stats_results_callback(const char *callid, const char *status, int resc, const char *resv[]);
-void report_dns_servers(struct Client *, char);
+void report_dns_servers(struct Client *);
+void init_nameserver_cache(void);
 
 #endif

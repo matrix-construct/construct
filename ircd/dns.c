@@ -60,14 +60,10 @@ struct dnsstatreq
 	void *data;
 };
 
-struct dnsstatreq_data
-{
-	char uid[IDLEN];
-	char statchar;
-};
-
 static struct dnsreq querytable[DNS_IDTABLE_SIZE];
 static struct dnsstatreq stattable[DNS_STATTABLE_SIZE];
+rb_dlink_list nameservers;
+
 
 static uint16_t
 assign_dns_id(void)
@@ -133,9 +129,6 @@ handle_dns_stat_failure(uint8_t xid)
 
 	req->callback(1, err, 2, req->data);
 
-	/* NOTE - this assumes req->data is on the heap */
-	rb_free(req->data);
-
 	req->callback = NULL;
 	req->data = NULL;
 }
@@ -150,9 +143,6 @@ cancel_lookup(uint16_t xid)
 void
 cancel_dns_stats(uint16_t xid)
 {
-	/* NOTE - this assumes data is on the heap */
-	rb_free(stattable[xid].data);
-
 	stattable[xid].callback = NULL;
 	stattable[xid].data = NULL;
 }
@@ -277,8 +267,6 @@ dns_stats_results_callback(const char *callid, const char *status, int resc, con
 
 	if(req->callback == NULL)
 	{
-		/* NOTE - this assumes req->data is strdup'd or such */
-		rb_free(req->data);
 		req->data = NULL;
 		return;
 	}
@@ -300,45 +288,49 @@ dns_stats_results_callback(const char *callid, const char *status, int resc, con
 	/* Query complete */
 	req->callback(resc, resv, st, stattable[nid].data);
 
-	rb_free(req->data);
 	req->data = NULL;
 	req->callback = NULL;
 }
 
 static void
-report_dns_servers_cb(int resc, const char *resv[], int status, void *data)
+get_nameservers_cb(int resc, const char *resv[], int status, void *data)
 {
-	struct Client *source_p;
-	struct dnsstatreq_data *c_data = data;
-
-	if(!(source_p = find_id(c_data->uid)))
-		/* Client's gone, oh well. */
-		return;
-
 	if(status == 0)
 	{
+		rb_dlink_node *n, *tn;
+
+		RB_DLINK_FOREACH_SAFE(n, tn, nameservers.head)
+		{
+			/* Clean up old nameservers */
+			rb_free(n->data);
+			rb_dlinkDestroy(n, &nameservers);
+		}
+
 		for(int i = 0; i < resc; i++)
-			sendto_one_numeric(source_p, RPL_STATSDEBUG, "A %s", resv[i]);
+			rb_dlinkAddAlloc(rb_strdup(resv[i]), &nameservers);
 	}
 	else
 	{
-		if(resc && resv[resc][0])
-			/* XXX is this the right reply? */
-			sendto_one_numeric(source_p, RPL_STATSDEBUG, "A Error: %s", resv[resc]);
+		const char *error = resc ? resv[resc] : "Unknown error";
+		iwarn(L_MAIN, "Error getting DNS servers: %s", error);
 	}
-
-	sendto_one_numeric(source_p, RPL_ENDOFSTATS, form_str(RPL_ENDOFSTATS), c_data->statchar);
 }
 
 void
-report_dns_servers(struct Client *source_p, char statchar)
+report_dns_servers(struct Client *source_p)
 {
-	/* Use the UID to avoid a race where source_p goes away */
-	struct dnsstatreq_data *data = rb_malloc(sizeof(struct dnsstatreq_data));
-	rb_strlcpy(data->uid, source_p->id, IDLEN);
-	data->statchar = statchar;
+	rb_dlink_node *n;
 
-	get_nameservers(report_dns_servers_cb, data);
+	RB_DLINK_FOREACH(n, nameservers.head)
+	{
+		sendto_one_numeric(source_p, RPL_STATSDEBUG, "A %s", (char *)n->data);
+	}
+}
+
+void
+init_nameserver_cache(void)
+{
+	(void)get_nameservers(get_nameservers_cb, NULL);
 }
 
 static void
