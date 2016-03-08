@@ -29,7 +29,8 @@ include/serno.h:
 			echo '#define SERNO "'$$revh'"' >include/serno.h ; \
 			echo "#define DATECODE $${datecode}UL" >>include/serno.h; \
 		fi \
-	else \
+	fi
+	@if [ ! -f include/serno.h ]; then \
 		echo '#define SERNO "unknown"' >include/serno.h; \
 		echo '#define DATECODE 0UL' >>include/serno.h; \
 	fi

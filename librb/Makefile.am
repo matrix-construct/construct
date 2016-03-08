@@ -9,4 +9,10 @@ BUILT_SOURCES = include/serno.h
 
 # NOTE: you'll want to change the below if you are unbundling
 include/serno.h:
-	@cp ../include/serno.h include/
+	@if [ -f ../include/serno.h ]; then \
+		cp ../include/serno.h include/; \
+	else \
+		echo '#define SERNO "unknown"' >include/serno.h; \
+		echo '#define DATECODE 0UL' >>include/serno.h; \
+	fi
+
