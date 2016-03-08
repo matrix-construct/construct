@@ -675,10 +675,6 @@ rehash_bans(int sig)
  *		  of values later, put them in validate_conf().
  */
 
-#define YES     1
-#define NO      0
-#define UNSET  -1
-
 static void
 set_default_conf(void)
 {
@@ -695,7 +691,7 @@ set_default_conf(void)
 #endif
 
 	/* Don't reset hub, as that will break lazylinks */
-	/* ServerInfo.hub = NO; */
+	/* ServerInfo.hub = false; */
 	AdminInfo.name = NULL;
 	AdminInfo.email = NULL;
 	AdminInfo.description = NULL;
@@ -706,39 +702,39 @@ set_default_conf(void)
 	ConfigFileEntry.sasl_service = NULL;
 
 	ConfigFileEntry.default_umodes = UMODE_INVISIBLE;
-	ConfigFileEntry.failed_oper_notice = YES;
-	ConfigFileEntry.anti_nick_flood = NO;
-	ConfigFileEntry.disable_fake_channels = NO;
+	ConfigFileEntry.failed_oper_notice = true;
+	ConfigFileEntry.anti_nick_flood = false;
+	ConfigFileEntry.disable_fake_channels = false;
 	ConfigFileEntry.max_nick_time = 20;
 	ConfigFileEntry.max_nick_changes = 5;
 	ConfigFileEntry.max_accept = 20;
 	ConfigFileEntry.max_monitor = 60;
 	ConfigFileEntry.nick_delay = 900;	/* 15 minutes */
-	ConfigFileEntry.target_change = YES;
+	ConfigFileEntry.target_change = true;
 	ConfigFileEntry.anti_spam_exit_message_time = 0;
 	ConfigFileEntry.ts_warn_delta = TS_WARN_DELTA_DEFAULT;
 	ConfigFileEntry.ts_max_delta = TS_MAX_DELTA_DEFAULT;
-	ConfigFileEntry.client_exit = YES;
-	ConfigFileEntry.dline_with_reason = YES;
-	ConfigFileEntry.kline_with_reason = YES;
+	ConfigFileEntry.client_exit = true;
+	ConfigFileEntry.dline_with_reason = true;
+	ConfigFileEntry.kline_with_reason = true;
 	ConfigFileEntry.kline_delay = 0;
-	ConfigFileEntry.warn_no_nline = YES;
-	ConfigFileEntry.non_redundant_klines = YES;
-	ConfigFileEntry.stats_e_disabled = NO;
-	ConfigFileEntry.stats_o_oper_only = NO;
+	ConfigFileEntry.warn_no_nline = true;
+	ConfigFileEntry.non_redundant_klines = true;
+	ConfigFileEntry.stats_e_disabled = false;
+	ConfigFileEntry.stats_o_oper_only = false;
 	ConfigFileEntry.stats_k_oper_only = 1;	/* masked */
 	ConfigFileEntry.stats_i_oper_only = 1;	/* masked */
-	ConfigFileEntry.stats_P_oper_only = NO;
-	ConfigFileEntry.stats_c_oper_only = NO;
-	ConfigFileEntry.stats_y_oper_only = NO;
-	ConfigFileEntry.stats_h_oper_only = NO;
-	ConfigFileEntry.map_oper_only = YES;
-	ConfigFileEntry.operspy_admin_only = NO;
+	ConfigFileEntry.stats_P_oper_only = false;
+	ConfigFileEntry.stats_c_oper_only = false;
+	ConfigFileEntry.stats_y_oper_only = false;
+	ConfigFileEntry.stats_h_oper_only = false;
+	ConfigFileEntry.map_oper_only = true;
+	ConfigFileEntry.operspy_admin_only = false;
 	ConfigFileEntry.pace_wait = 10;
 	ConfigFileEntry.caller_id_wait = 60;
 	ConfigFileEntry.pace_wait_simple = 1;
-	ConfigFileEntry.short_motd = NO;
-	ConfigFileEntry.no_oper_flood = NO;
+	ConfigFileEntry.short_motd = false;
+	ConfigFileEntry.no_oper_flood = false;
 	ConfigFileEntry.fname_userlog = NULL;
 	ConfigFileEntry.fname_fuserlog = NULL;
 	ConfigFileEntry.fname_operlog = NULL;
@@ -748,17 +744,17 @@ set_default_conf(void)
 	ConfigFileEntry.fname_klinelog = NULL;
 	ConfigFileEntry.fname_operspylog = NULL;
 	ConfigFileEntry.fname_ioerrorlog = NULL;
-	ConfigFileEntry.hide_spoof_ips = YES;
+	ConfigFileEntry.hide_spoof_ips = true;
 	ConfigFileEntry.hide_error_messages = 1;
 	ConfigFileEntry.dots_in_ident = 0;
 	ConfigFileEntry.max_targets = MAX_TARGETS_DEFAULT;
-	ConfigFileEntry.use_whois_actually = YES;
-	ConfigFileEntry.burst_away = NO;
-	ConfigFileEntry.collision_fnc = YES;
-	ConfigFileEntry.resv_fnc = YES;
-	ConfigFileEntry.global_snotices = YES;
-	ConfigFileEntry.operspy_dont_care_user_info = NO;
-	ConfigFileEntry.use_propagated_bans = YES;
+	ConfigFileEntry.use_whois_actually = true;
+	ConfigFileEntry.burst_away = false;
+	ConfigFileEntry.collision_fnc = true;
+	ConfigFileEntry.resv_fnc = true;
+	ConfigFileEntry.global_snotices = true;
+	ConfigFileEntry.operspy_dont_care_user_info = false;
+	ConfigFileEntry.use_propagated_bans = true;
 	ConfigFileEntry.max_ratelimit_tokens = 30;
 	ConfigFileEntry.away_interval = 30;
 
@@ -771,27 +767,27 @@ set_default_conf(void)
 	ConfigFileEntry.oper_only_umodes = UMODE_SERVNOTICE;
 	ConfigFileEntry.oper_snomask = SNO_GENERAL;
 
-	ConfigChannel.use_except = YES;
-	ConfigChannel.use_invex = YES;
-	ConfigChannel.use_forward = YES;
-	ConfigChannel.use_knock = YES;
+	ConfigChannel.use_except = true;
+	ConfigChannel.use_invex = true;
+	ConfigChannel.use_forward = true;
+	ConfigChannel.use_knock = true;
 	ConfigChannel.knock_delay = 300;
 	ConfigChannel.knock_delay_channel = 60;
 	ConfigChannel.max_chans_per_user = 15;
 	ConfigChannel.max_chans_per_user_large = 60;
 	ConfigChannel.max_bans = 25;
 	ConfigChannel.max_bans_large = 500;
-	ConfigChannel.only_ascii_channels = NO;
-	ConfigChannel.burst_topicwho = NO;
-	ConfigChannel.kick_on_split_riding = NO;
+	ConfigChannel.only_ascii_channels = false;
+	ConfigChannel.burst_topicwho = false;
+	ConfigChannel.kick_on_split_riding = false;
 
 	ConfigChannel.default_split_user_count = 15000;
 	ConfigChannel.default_split_server_count = 10;
-	ConfigChannel.no_join_on_split = NO;
-	ConfigChannel.no_create_on_split = YES;
-	ConfigChannel.resv_forcepart = YES;
-	ConfigChannel.channel_target_change = YES;
-	ConfigChannel.disable_local_channels = NO;
+	ConfigChannel.no_join_on_split = false;
+	ConfigChannel.no_create_on_split = true;
+	ConfigChannel.resv_forcepart = true;
+	ConfigChannel.channel_target_change = true;
+	ConfigChannel.disable_local_channels = false;
 	ConfigChannel.displayed_usercount = 3;
 
 	ConfigChannel.autochanmodes = MODE_TOPICLIMIT | MODE_NOPRIVMSGS;
@@ -828,9 +824,6 @@ set_default_conf(void)
 	if (!alias_dict)
 		alias_dict = rb_dictionary_create("alias", strcasecmp);
 }
-
-#undef YES
-#undef NO
 
 /*
  * read_conf()
