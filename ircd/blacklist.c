@@ -155,6 +155,7 @@ static void initiate_blacklist_dnsquery(struct Blacklist *blptr, struct Client *
 	blcptr->blacklist = blptr;
 	blcptr->client_p = client_p;
 
+	/* IPv4 */
 	if ((client_p->localClient->ip.ss_family == AF_INET) && blptr->ipv4)
 	{
 		ip = (uint8_t *)&((struct sockaddr_in *)&client_p->localClient->ip)->sin_addr.s_addr;
@@ -167,34 +168,30 @@ static void initiate_blacklist_dnsquery(struct Blacklist *blptr, struct Client *
 			    (unsigned int) ip[0],
 			    blptr->host);
 	}
-	/* IPv6 is supported now. --Elizabeth */
+	/* IPv6 */
 	else if ((client_p->localClient->ip.ss_family == AF_INET6) && blptr->ipv6)
 	{
-		/* Breaks it into ip[0] = 0x00, ip[1] = 0x00... ip[16] = 0x01 for localhost
-		 * I wish there was a uint4_t for C, this would make the below cleaner, but... */
+		/* Split up for rDNS lookup
+		 * ex: ip[0] = 0x00, ip[1] = 0x00... ip[16] = 0x01 for localhost
+		 * Giving us:
+		 * 1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.foobl.invalid
+		 * or something like that.
+		 */
 		ip = (uint8_t *)&((struct sockaddr_in6 *)&client_p->localClient->ip)->sin6_addr.s6_addr;
 		char *bufptr = buf;
 		int i;
 
-		/* The below will give us something like
-		 * 1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.foobl.invalid
-		 */
-
 		/* Going backwards */
-		for (i = 15; i >= 0; i--)
+		for (i = 15; i >= 0; i--, bufptr += 4)
 		{
-			/* Get upper and lower nibbles (yes this works fine on
-			 * both big and little endian) */
+			/* Get upper and lower nibbles */
 			uint8_t hi = (ip[i] >> 4) & 0x0F;
 			uint8_t lo = ip[i] & 0x0F;
 
-			/* One part... (why 5? rb_snprintf adds \0) */
+			/* One part... 4 chars + terminator */
 			snprintf(bufptr, 5, "%1x.%1x.",
 				    (unsigned int) lo, /* Remember, backwards */
 				    (unsigned int) hi);
-
-			/* Lurch forward to next position */
-			bufptr += 4;
 		}
 
 		/* Tack host on */
