@@ -30,17 +30,6 @@
 #define NULL 0
 #endif
 
-#ifdef TRUE
-#undef TRUE
-#endif
-
-#ifdef FALSE
-#undef FALSE
-#endif
-
-#define FALSE  0
-#define TRUE   1
-#define HIDEME 2
 
 /* Blah. I use these a lot. -Dianora */
 #ifdef YES

@@ -1288,7 +1288,7 @@ exit_remote_client(struct Client *client_p, struct Client *source_p, struct Clie
 }
 
 /*
- * This assumes IsUnknown(source_p) == TRUE and MyConnect(source_p) == TRUE
+ * This assumes IsUnknown(source_p) == true and MyConnect(source_p) == true
  */
 
 static int
@@ -1466,7 +1466,7 @@ exit_local_server(struct Client *client_p, struct Client *source_p, struct Clien
 
 
 /*
- * This assumes IsPerson(source_p) == TRUE && MyConnect(source_p) == TRUE
+ * This assumes IsPerson(source_p) == true && MyConnect(source_p) == true
  */
 
 static int

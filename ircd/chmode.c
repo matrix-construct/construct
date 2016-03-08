@@ -1833,7 +1833,7 @@ set_channel_mode(struct Client *client_p, struct Client *source_p,
  */
 void
 set_channel_mlock(struct Client *client_p, struct Client *source_p,
-		  struct Channel *chptr, const char *newmlock, int propagate)
+		  struct Channel *chptr, const char *newmlock, bool propagate)
 {
 	rb_free(chptr->mode_lock);
 	chptr->mode_lock = newmlock ? rb_strdup(newmlock) : NULL;

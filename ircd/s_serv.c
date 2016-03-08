@@ -261,7 +261,7 @@ try_connections(void *unused)
 	struct server_conf *tmp_p;
 	struct Class *cltmp;
 	rb_dlink_node *ptr;
-	int connecting = FALSE;
+	bool connecting = false;
 	int confrq = 0;
 	time_t next = 0;
 
@@ -306,7 +306,7 @@ try_connections(void *unused)
 			server_p = tmp_p;
 
 			/* We connect only one at time... */
-			connecting = TRUE;
+			connecting = true;
 		}
 
 		if((next > tmp_p->hold) || (next == 0))

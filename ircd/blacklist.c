@@ -109,7 +109,7 @@ blwarn:
 static void blacklist_dns_callback(const char *result, int status, int aftype, void *vptr)
 {
 	struct BlacklistClient *blcptr = (struct BlacklistClient *) vptr;
-	int listed = 0;
+	bool listed = false;
 
 	if (blcptr == NULL || blcptr->client_p == NULL)
 		return;
@@ -125,7 +125,7 @@ static void blacklist_dns_callback(const char *result, int status, int aftype, v
 	if (result != NULL && status)
 	{
 		if (blacklist_check_reply(blcptr, result))
-			listed = TRUE;
+			listed = true;
 	}
 
 	/* they have a blacklist entry for this client */

@@ -235,7 +235,7 @@ ms_mlock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		return 0;
 
 	if(IsServer(source_p))
-		set_channel_mlock(client_p, source_p, chptr, parv[3], TRUE);
+		set_channel_mlock(client_p, source_p, chptr, parv[3], true);
 
 	return 0;
 }
