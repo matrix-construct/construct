@@ -24,6 +24,7 @@
 
 #ifndef INCLUDED_modules_h
 #define INCLUDED_modules_h
+#include "serno.h"
 #include "config.h"
 #include "setup.h"
 #include "parse.h"
@@ -107,13 +108,14 @@ struct mapi_mheader_av2
 	mapi_cap_list_av2 *mapi_cap_list;	/* List of CAPs to add */
 	const char *mapi_module_version;	/* Module's version (freeform), replaced with ircd version if NULL */
 	const char *mapi_module_description;	/* Module's description (freeform) */
+	unsigned long int mapi_datecode;	/* Unix timestamp of module's build */
 };
 
 #define DECLARE_MODULE_AV1(name, reg, unreg, cl, hl, hfnlist, v) \
 	struct mapi_mheader_av1 _mheader = { MAPI_V1, reg, unreg, cl, hl, hfnlist, v}
 
 #define DECLARE_MODULE_AV2(name, reg, unreg, cl, hl, hfnlist, caplist, v, desc) \
-	struct mapi_mheader_av2 _mheader = { MAPI_V2, reg, unreg, cl, hl, hfnlist, caplist, v, desc}
+	struct mapi_mheader_av2 _mheader = { MAPI_V2, reg, unreg, cl, hl, hfnlist, caplist, v, desc, DATECODE}
 
 /* add a path */
 void mod_add_path(const char *path);

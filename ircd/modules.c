@@ -58,6 +58,8 @@ static const char *core_module_table[] = {
 	NULL
 };
 
+#define MOD_WARN_DELTA (90 * 86400)	/* time in seconds, 86400 seconds in a day */
+
 #define MODS_INCREMENT 10
 int num_mods = 0;
 int max_mods = MODS_INCREMENT;
@@ -796,7 +798,6 @@ unload_one_module(const char *name, int warn)
 	return 0;
 }
 
-
 /*
  * load_a_module()
  *
@@ -897,7 +898,7 @@ load_a_module(const char *path, int warn, int origin, int core)
 			if(mheader->mapi_register && (mheader->mapi_register() == -1))
 			{
 				ilog(L_MAIN, "Module %s indicated failure during load.",
-				     mod_basename);
+					mod_basename);
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						     "Module %s indicated failure during load.",
 						     mod_basename);
@@ -905,6 +906,28 @@ load_a_module(const char *path, int warn, int origin, int core)
 				rb_free(mod_basename);
 				return -1;
 			}
+
+			/* Basic date code checks
+			 *
+			 * Don't make them fatal, but do complain about differences within a certain time frame.
+			 * Later on if there are major API changes we can add fatal checks.
+			 * -- Elizafox
+			 */
+			if(mheader->mapi_datecode != datecode && mheader->mapi_datecode > 0)
+			{
+				long int delta = labs(datecode - mheader->mapi_datecode);
+				if (delta > MOD_WARN_DELTA)
+				{
+					delta /= 86400;
+					iwarn(L_MAIN,
+						"Module %s build date is out of sync with ircd build date by %ld days, expect problems",
+						mod_basename, delta);
+					sendto_realops_snomask(SNO_GENERAL, L_ALL,
+						"Module %s build date is out of sync with ircd build date by %ld days, expect problems",
+						mod_basename, delta);
+				}
+			}
+
 			if(mheader->mapi_command_list)
 			{
 				struct Message **m;
