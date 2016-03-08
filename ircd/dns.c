@@ -317,17 +317,6 @@ get_nameservers_cb(int resc, const char *resv[], int status, void *data)
 }
 
 void
-report_dns_servers(struct Client *source_p)
-{
-	rb_dlink_node *n;
-
-	RB_DLINK_FOREACH(n, nameservers.head)
-	{
-		sendto_one_numeric(source_p, RPL_STATSDEBUG, "A %s", (char *)n->data);
-	}
-}
-
-void
 init_nameserver_cache(void)
 {
 	(void)get_nameservers(get_nameservers_cb, NULL);

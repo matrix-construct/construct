@@ -131,7 +131,7 @@ static void stats_capability(struct Client *);
  * case only matters in the stats letter column.. -- fl_
  */
 static struct StatsStruct stats_cmd_table[] = {
-    /* letter     function        need_oper need_admin */
+    /* letter     function	need_oper need_admin */
 	{'a', stats_dns_servers,	1, 1, },
 	{'A', stats_dns_servers,	1, 1, },
 	{'b', stats_delay,		1, 1, },
@@ -266,7 +266,12 @@ stats_out:
 static void
 stats_dns_servers (struct Client *source_p)
 {
-	report_dns_servers (source_p);
+	rb_dlink_node *n;
+
+	RB_DLINK_FOREACH(n, nameservers.head)
+	{
+		sendto_one_numeric(source_p, RPL_STATSDEBUG, "A %s", (char *)n->data);
+	}
 }
 
 static void
