@@ -138,7 +138,7 @@ int user_modes[256] = {
  * output	-
  * side effects	- display to client user counts etc.
  */
-int
+void
 show_lusers(struct Client *source_p)
 {
 	if(rb_dlink_list_length(&lclient_list) > (unsigned long)MaxClientCount)
@@ -188,8 +188,6 @@ show_lusers(struct Client *source_p)
 			   form_str(RPL_STATSCONN),
 			   MaxConnectionCount, MaxClientCount,
 			   Count.totalrestartcount);
-
-	return 0;
 }
 
 /*
@@ -575,7 +573,8 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 
 	free_pre_client(source_p);
 
-	return (introduce_client(client_p, source_p, user, source_p->name, 1));
+	introduce_client(client_p, source_p, user, source_p->name, 1);
+	return 0;
 }
 
 /*
@@ -587,7 +586,7 @@ register_local_user(struct Client *client_p, struct Client *source_p)
  *		  of the net, either from a local client connect or
  *		  from a remote connect.
  */
-int
+void
 introduce_client(struct Client *client_p, struct Client *source_p, struct User *user, const char *nick, int use_euid)
 {
 	char ubuf[BUFSIZE];
@@ -698,21 +697,19 @@ introduce_client(struct Client *client_p, struct Client *source_p, struct User *
 	hdata2.client = client_p;
 	hdata2.target = source_p;
 	call_hook(h_introduce_client, &hdata2);
-
-	return 0;
 }
 
 /*
  * valid_hostname - check hostname for validity
  *
  * Inputs       - pointer to user
- * Output       - YES if valid, NO if not
+ * Output       - true if valid, false if not
  * Side effects - NONE
  *
  * NOTE: this doesn't allow a hostname to begin with a dot and
  * will not allow more dots than chars.
  */
-int
+bool
 valid_hostname(const char *hostname)
 {
 	const char *p = hostname, *last_slash = 0;
@@ -721,18 +718,18 @@ valid_hostname(const char *hostname)
 	s_assert(NULL != p);
 
 	if(hostname == NULL)
-		return NO;
+		return false;
 
 	if(!strcmp(hostname, "localhost"))
-		return YES;
+		return true;
 
 	if('.' == *p || ':' == *p || '/' == *p)
-		return NO;
+		return false;
 
 	while (*p)
 	{
 		if(!IsHostChar(*p))
-			return NO;
+			return false;
                 if(*p == '.' || *p == ':')
   			found_sep++;
 		else if(*p == '/')
@@ -744,19 +741,19 @@ valid_hostname(const char *hostname)
 	}
 
 	if(found_sep == 0)
-		return NO;
+		return false;
 
 	if(last_slash && IsDigit(last_slash[1]))
-		return NO;
+		return false;
 
-	return YES;
+	return true;
 }
 
 /*
  * valid_username - check username for validity
  *
  * Inputs       - pointer to user
- * Output       - YES if valid, NO if not
+ * Output       - true if valid, false if not
  * Side effects - NONE
  *
  * Absolutely always reject any '*' '!' '?' '@' in an user name
@@ -764,7 +761,7 @@ valid_hostname(const char *hostname)
  * Allow '.' in username to allow for "first.last"
  * style of username
  */
-int
+bool
 valid_username(const char *username)
 {
 	int dots = 0;
@@ -773,7 +770,7 @@ valid_username(const char *username)
 	s_assert(NULL != p);
 
 	if(username == NULL)
-		return NO;
+		return false;
 
 	if('~' == *p)
 		++p;
@@ -783,7 +780,7 @@ valid_username(const char *username)
 	 * or "-hi-@somehost", "h-----@somehost" would still be accepted.
 	 */
 	if(!IsAlNum(*p))
-		return NO;
+		return false;
 
 	while (*++p)
 	{
@@ -791,14 +788,14 @@ valid_username(const char *username)
 		{
 			dots++;
 			if(dots > ConfigFileEntry.dots_in_ident)
-				return NO;
+				return false;
 			if(!IsUserChar(p[1]))
-				return NO;
+				return false;
 		}
 		else if(!IsUserChar(*p))
-			return NO;
+			return false;
 	}
-	return YES;
+	return true;
 }
 
 /* report_and_set_user_flags
@@ -914,8 +911,8 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 	const char *pm;
 	struct Client *target_p;
 	int what, setflags;
-	int badflag = NO;	/* Only send one bad flag notice */
-	int showsnomask = NO;
+	bool badflag = false;	/* Only send one bad flag notice */
+	bool showsnomask = false;
 	unsigned int setsnomask;
 	char buf[BUFSIZE];
 	hook_data_umode_changed hdata;
@@ -1021,7 +1018,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 					if (!(source_p->umodes & UMODE_SERVNOTICE) && source_p->snomask != 0)
 					{
 						source_p->snomask = 0;
-						showsnomask = YES;
+						showsnomask = true;
 					}
 					source_p->flags2 &= ~OPER_FLAGS;
 
@@ -1057,10 +1054,10 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 						&& (ConfigFileEntry.oper_only_umodes & UMODE_SERVNOTICE))
 				{
 					if (what == MODE_ADD || source_p->umodes & UMODE_SERVNOTICE)
-						badflag = YES;
+						badflag = true;
 					continue;
 				}
-				showsnomask = YES;
+				showsnomask = true;
 				if(what == MODE_ADD)
 				{
 					if (parc > 3)
@@ -1080,7 +1077,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 		default:
 			if (MyConnect(source_p) && *pm == 'Q' && !ConfigChannel.use_forward)
 			{
-				badflag = YES;
+				badflag = true;
 				break;
 			}
 
@@ -1092,7 +1089,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 						|| (orphaned_umodes & flag)))
 				{
 					if (what == MODE_ADD || source_p->umodes & flag)
-						badflag = YES;
+						badflag = true;
 				}
 				else
 				{
@@ -1105,7 +1102,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 			else
 			{
 				if(MyConnect(source_p))
-					badflag = YES;
+					badflag = true;
 			}
 			break;
 		}
@@ -1282,7 +1279,7 @@ user_welcome(struct Client *source_p)
  * output	- none
  * side effects	- opers up source_p using aconf for reference
  */
-int
+void
 oper_up(struct Client *source_p, struct oper_conf *oper_p)
 {
 	unsigned int old = source_p->umodes, oldsnomask = source_p->snomask;
@@ -1348,8 +1345,6 @@ oper_up(struct Client *source_p, struct oper_conf *oper_p)
 	sendto_one_notice(source_p, ":*** Oper privilege set is %s", oper_p->privset->name);
 	sendto_one_notice(source_p, ":*** Oper privs are %s", oper_p->privset->privs);
 	send_oper_motd(source_p);
-
-	return (1);
 }
 
 /*

@@ -1138,7 +1138,8 @@ register_client(struct Client *client_p, struct Client *server,
 
 	call_hook(h_new_remote_user, source_p);
 
-	return (introduce_client(client_p, source_p, user, nick, parc == 12));
+	introduce_client(client_p, source_p, user, nick, parc == 12);
+	return 0;
 }
 
 /* Check if we can do SAVE. target_p can be a client to save or a
