@@ -241,7 +241,7 @@
 #undef PACKAGE_VERSION
 
 /* Defined to mark profiling is enabled */
-#undef RATBOX_PROFILE
+#undef RB_PROFILE
 
 /* Prefix where libratbox is installed. */
 #define RB_PREFIX "/ratbox"

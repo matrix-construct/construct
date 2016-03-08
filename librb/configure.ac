@@ -437,7 +437,7 @@ if test "$profile" = yes; then
 	if test "$ac_cv_c_compiler_gnu" = yes; then
 		CFLAGS="$CFLAGS -pg -static"
 		AC_MSG_RESULT([yes, adding -pg -static])
-		AC_DEFINE(RATBOX_PROFILE, 1, [Defined to mark profiling is enabled])
+		AC_DEFINE(RB_PROFILE, 1, [Defined to mark profiling is enabled])
 	else
 		AC_MSG_RESULT([no, profile builds only work with gcc])
 	fi
