@@ -55,7 +55,7 @@ static const char stats_desc[] =
 static void m_stats (struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message stats_msgtab = {
-	"STATS", 0, 0, 0, 0,
+	"STATS", false, false, false, false,
 	{mg_unreg, {m_stats, 2}, {m_stats, 3}, mg_ignore, mg_ignore, {m_stats, 2}}
 };
 
@@ -81,12 +81,19 @@ static void stats_l_client(struct Client *source_p, struct Client *target_p,
 static int stats_spy(struct Client *, char, const char *);
 static void stats_p_spy(struct Client *);
 
-/* Heres our struct for the stats table */
+typedef void (*handler_t)(struct Client *source_p);
+typedef void (*handler_parv_t)(struct Client *source_p, int parc, const char *parv[]);
+
 struct stats_cmd
 {
-	void (*handler) (struct Client *source_p);
-	int need_oper;
-	int need_admin;
+	union
+	{
+		handler_t handler;
+		handler_parv_t handler_parv;
+	};
+	bool need_parv;
+	bool need_oper;
+	bool need_admin;
 };
 
 static void stats_dns_servers(struct Client *);
@@ -130,58 +137,58 @@ static void stats_capability(struct Client *);
  * stats letter,  function to call, operonly? adminonly? --fl_
  *
  * Previously in this table letters were a column. I fixed it to use modern
- * C initalisers so we don't have to iterate anymore.
+ * C initalisers so we don't have to iterate anymore
  * --Elizafox
  */
 static struct stats_cmd stats_cmd_table[256] = {
-    /* letter     function	need_oper need_admin */
-	['a'] = { stats_dns_servers,	1, 1, },
-	['A'] = { stats_dns_servers,	1, 1, },
-	['b'] = { stats_delay,		1, 1, },
-	['B'] = { stats_hash,		1, 1, },
-	['c'] = { stats_connect,	0, 0, },
-	['C'] = { stats_capability,	1, 0, },
-	['d'] = { stats_tdeny,		1, 0, },
-	['D'] = { stats_deny,		1, 0, },
-	['e'] = { stats_exempt,		1, 0, },
-	['E'] = { stats_events,		1, 1, },
-	['f'] = { stats_comm,		1, 1, },
-	['F'] = { stats_comm,		1, 1, },
-	['g'] = { stats_prop_klines,	1, 0, },
-	['h'] = { stats_hubleaf,	0, 0, },
-	['H'] = { stats_hubleaf,	0, 0, },
-	['i'] = { stats_auth,		0, 0, },
-	['I'] = { stats_auth,		0, 0, },
-	['k'] = { stats_tklines,	0, 0, },
-	['K'] = { stats_klines,		0, 0, },
-	['l'] = { NULL /* special */,	0, 0, },
-	['L'] = { NULL /* special */,	0, 0, },
-	['m'] = { stats_messages,	0, 0, },
-	['M'] = { stats_messages,	0, 0, },
-	['n'] = { stats_dnsbl,		0, 0, },
-	['o'] = { stats_oper,		0, 0, },
-	['O'] = { stats_privset,	1, 0, },
-	['p'] = { stats_operedup,	0, 0, },
-	['P'] = { stats_ports,		0, 0, },
-	['q'] = { stats_tresv,		1, 0, },
-	['Q'] = { stats_resv,		1, 0, },
-	['r'] = { stats_usage,		1, 0, },
-	['R'] = { stats_usage,		1, 0, },
-	['s'] = { stats_ssld,		1, 1, },
-	['S'] = { stats_ssld,		1, 1, },
-	['t'] = { stats_tstats,		1, 0, },
-	['T'] = { stats_tstats,		1, 0, },
-	['u'] = { stats_uptime,		0, 0, },
-	['U'] = { stats_shared,		1, 0, },
-	['v'] = { stats_servers,	0, 0, },
-	['V'] = { stats_servers,	0, 0, },
-	['x'] = { stats_tgecos,		1, 0, },
-	['X'] = { stats_gecos,		1, 0, },
-	['y'] = { stats_class,		0, 0, },
-	['Y'] = { stats_class,		0, 0, },
-	['z'] = { stats_memory,		1, 0, },
-	['Z'] = { stats_ziplinks,	1, 0, },
-	['?'] = { stats_servlinks,	0, 0, },
+/*	letter	handler/handler_parv			parv	oper	admin	*/
+	['a'] = { stats_dns_servers,			false,	true,	true,	},
+	['A'] = { stats_dns_servers,			false,	true,	true,	},
+	['b'] = { stats_delay,				false,	true,	true,	},
+	['B'] = { stats_hash,				false,	true,	true,	},
+	['c'] = { stats_connect,			false,	false,	false,	},
+	['C'] = { stats_capability,			false,	true,	false,	},
+	['d'] = { stats_tdeny,				false,	true,	false,	},
+	['D'] = { stats_deny,				false,	true,	false,	},
+	['e'] = { stats_exempt,				false,	true,	false,	},
+	['E'] = { stats_events,				false,	true,	true,	},
+	['f'] = { stats_comm,				false,	true,	true,	},
+	['F'] = { stats_comm,				false,	true,	true,	},
+	['g'] = { stats_prop_klines,			false,	true,	false,	},
+	['h'] = { stats_hubleaf,			false,	false,	false,	},
+	['H'] = { stats_hubleaf,			false,	false,	false,	},
+	['i'] = { stats_auth,				false,	false,	false,	},
+	['I'] = { stats_auth,				false,	false,	false,	},
+	['k'] = { stats_tklines,			false,	false,	false,	},
+	['K'] = { stats_klines,				false,	false,	false,	},
+	['l'] = { .handler_parv = stats_ltrace,		true,	false,	false,	},
+	['L'] = { .handler_parv = stats_ltrace,		true,	false,	false,	},
+	['m'] = { stats_messages,			false,	false,	false,	},
+	['M'] = { stats_messages,			false,	false,	false,	},
+	['n'] = { stats_dnsbl,				false,	false,	false,	},
+	['o'] = { stats_oper,				false,	false,	false,	},
+	['O'] = { stats_privset,			false,	true,	false,	},
+	['p'] = { stats_operedup,			false,	false,	false,	},
+	['P'] = { stats_ports,				false,	false,	false,	},
+	['q'] = { stats_tresv,				false,	true,	false,	},
+	['Q'] = { stats_resv,				false,	true,	false,	},
+	['r'] = { stats_usage,				false,	true,	false,	},
+	['R'] = { stats_usage,				false,	true,	false,	},
+	['s'] = { stats_ssld,				false,	true,	true,	},
+	['S'] = { stats_ssld,				false,	true,	true,	},
+	['t'] = { stats_tstats,				false,	true,	false,	},
+	['T'] = { stats_tstats,				false,	true,	false,	},
+	['u'] = { stats_uptime,				false,	false,	false,	},
+	['U'] = { stats_shared,				false,	true,	false,	},
+	['v'] = { stats_servers,			false,	false,	false,	},
+	['V'] = { stats_servers,			false,	false,	false,	},
+	['x'] = { stats_tgecos,				false,	true,	false,	},
+	['X'] = { stats_gecos,				false,	true,	false,	},
+	['y'] = { stats_class,				false,	false,	false,	},
+	['Y'] = { stats_class,				false,	false,	false,	},
+	['z'] = { stats_memory,				false,	true,	false,	},
+	['Z'] = { stats_ziplinks,			false,	true,	false,	},
+	['?'] = { stats_servlinks,			false,	false,	false,	},
 };
 
 /*
@@ -223,16 +230,9 @@ m_stats(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	if(hunt_server (client_p, source_p, ":%s STATS %s :%s", 2, parc, parv) != HUNTED_ISME)
 		return;
 
-	if((statchar != 'L') && (statchar != 'l'))
-	{
+	if(tolower(statchar) != 'l')
+		/* FIXME */
 		did_stats = stats_spy(source_p, statchar, NULL);
-	}
-	else
-	{
-		/* Blah, stats L needs the parameters, none of the others do.. */
-		stats_ltrace (source_p, parc, parv);
-		goto stats_out;
-	}
 
 	/* if did_stats is true, a module grabbed this STATS request */
 	if(did_stats)
@@ -259,7 +259,10 @@ m_stats(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 			goto stats_out;
 		}
 
-		cmd->handler(source_p);
+		if(cmd->need_parv)
+			cmd->handler_parv(source_p, parc, parv);
+		else
+			cmd->handler(source_p);
 	}
 
 stats_out:
