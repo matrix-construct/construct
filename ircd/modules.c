@@ -295,7 +295,7 @@ load_one_module(const char *path, int origin, int coremodule)
 
 	struct stat statbuf;
 
-	if (server_state_foreground == 1)
+	if (server_state_foreground)
 		inotice("loading module %s ...", path);
 
 	if(coremodule != 0)

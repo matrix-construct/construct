@@ -103,10 +103,10 @@ bool dorehash = false;
 bool dorehashbans = false;
 bool doremotd = false;
 bool kline_queued = false;
-int server_state_foreground = 0;
-int opers_see_all_users = 0;
-int ssl_ok = 0;
-int zlib_ok = 1;
+bool server_state_foreground = false;
+bool opers_see_all_users = false;
+bool ssl_ok = false;
+bool zlib_ok = true;
 
 int testing_conf = 0;
 time_t startup_time;
@@ -605,7 +605,7 @@ charybdis_main(int argc, char *argv[])
 	setup_signals();
 
 	if (testing_conf)
-		server_state_foreground = 1;
+		server_state_foreground = true;
 
 	/* Make sure fd 0, 1 and 2 are in use -- jilles */
 	do
@@ -713,10 +713,10 @@ charybdis_main(int argc, char *argv[])
 		if(!rb_setup_ssl_server(ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params, ServerInfo.ssl_cipher_list))
 		{
 			ilog(L_MAIN, "WARNING: Unable to setup SSL.");
-			ssl_ok = 0;
+			ssl_ok = false;
 		}
 		else
-			ssl_ok = 1;
+			ssl_ok = true;
 	}
 
 	if (testing_conf)

@@ -868,9 +868,9 @@ validate_conf(void)
 	if(!rb_setup_ssl_server(ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params, ServerInfo.ssl_cipher_list))
 	{
 		ilog(L_MAIN, "WARNING: Unable to setup SSL.");
-		ssl_ok = 0;
+		ssl_ok = false;
 	} else {
-		ssl_ok = 1;
+		ssl_ok = true;
 		send_new_ssl_certs(ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params, ServerInfo.ssl_cipher_list);
 	}
 

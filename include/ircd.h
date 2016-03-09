@@ -69,9 +69,9 @@ extern bool dorehash;
 extern bool dorehashbans;
 extern bool doremotd;
 extern bool kline_queued;
-extern int server_state_foreground;
-extern int opers_see_all_users; /* sno_farconnect.so loaded, operspy without
-				   accountability, etc */
+extern bool server_state_foreground;
+extern bool opers_see_all_users; /* sno_farconnect.so loaded, operspy without
+				    accountability, etc */
 
 extern struct Client me;
 extern rb_dlink_list global_client_list;
@@ -99,8 +99,8 @@ extern int testing_conf;
 
 extern struct ev_entry *check_splitmode_ev;
 
-extern int ssl_ok;
-extern int zlib_ok;
+extern bool ssl_ok;
+extern bool zlib_ok;
 extern int maxconnections;
 
 void ircd_shutdown(const char *reason);
