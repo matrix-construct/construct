@@ -68,7 +68,7 @@ is_safe_error(const char *message)
 	if (!strncmp(message, "Terminated by ", 14))
 		return 1;
 
-	if (!ircncmp(message, "Closing Link", 12))
+	if (!strncmp(message, "Closing Link", 12))
 		return 0;
 	if (strchr(message, '['))
 		return 0;
