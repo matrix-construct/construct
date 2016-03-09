@@ -84,8 +84,7 @@ rehash_dns(struct Client *source_p)
 	if (!MyConnect(source_p))
 		remote_rehash_oper_p = source_p;
 
-	/* reread /etc/resolv.conf and reopen res socket */
-	restart_authd();
+	reload_nameservers();
 }
 
 static void

@@ -174,3 +174,10 @@ enumerate_nameservers(const char *rid, const char letter)
 
 	rb_helper_write(authd_helper, "Y %s %c %s", rid, letter, buf);
 }
+
+void
+reload_nameservers(const char letter)
+{
+	/* Not a whole lot to it */
+	restart_resolver();
+}

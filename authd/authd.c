@@ -23,16 +23,22 @@
 
 #define MAXPARA 10
 
+static void handle_reload(int parc, char *parv[]);
 static void handle_stat(int parc, char *parv[]);
 
 rb_helper *authd_helper = NULL;
 authd_cmd_handler authd_cmd_handlers[255] = {
+	['C'] = handle_reload,
 	['D'] = resolve_dns,
 	['S'] = handle_stat,
 };
 
 authd_stat_handler authd_stat_handlers[255] = {
 	['D'] = enumerate_nameservers,
+};
+
+authd_reload_handler authd_reload_handlers[255] = {
+	['D'] = reload_nameservers,
 };
 
 static void
@@ -48,6 +54,21 @@ handle_stat(int parc, char *parv[])
 		return;
 
 	handler(parv[1], parv[2][0]);
+}
+
+static void
+handle_reload(int parc, char *parv[])
+{
+	authd_reload_handler handler;
+
+	if(parc < 2)
+		 /* XXX Should log this somehow */
+		return;
+
+	if (!(handler = authd_reload_handlers[parv[1][0]]))
+		return;
+
+	handler(parv[1][0]);
 }
 
 static void

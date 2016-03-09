@@ -322,6 +322,20 @@ init_nameserver_cache(void)
 	(void)get_nameservers(get_nameservers_cb, NULL);
 }
 
+bool
+reload_nameservers(void)
+{
+	if(authd_helper == NULL)
+	{
+		/* Shit */
+		return false;
+	}
+	rb_helper_write(authd_helper, "C D");
+	init_nameserver_cache();
+	return true;
+}
+
+
 static void
 submit_dns(uint16_t nid, char type, const char *addr)
 {
