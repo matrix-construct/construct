@@ -65,7 +65,6 @@ extern const unsigned long int datecode;
 extern const char *ircd_version;
 extern const char *logFileName;
 extern const char *pidFileName;
-extern int cold_start;
 extern int dorehash;
 extern int dorehashbans;
 extern int doremotd;
