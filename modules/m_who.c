@@ -64,7 +64,15 @@ struct who_format
 	const char *querytype;
 };
 
-static int m_who(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_who(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+
+static void do_who_on_channel(struct Client *source_p, struct Channel *chptr,
+			      int server_oper, int member,
+			      struct who_format *fmt);
+static void who_global(struct Client *source_p, const char *mask, int server_oper, int operspy, struct who_format *fmt);
+static void do_who(struct Client *source_p,
+		   struct Client *target_p, struct membership *msptr,
+		   struct who_format *fmt);
 
 struct Message who_msgtab = {
 	"WHO", 0, 0, 0, 0,
@@ -87,23 +95,12 @@ _moddeinit(void)
 mapi_clist_av1 who_clist[] = { &who_msgtab, NULL };
 DECLARE_MODULE_AV2(who, _modinit, _moddeinit, who_clist, NULL, NULL, NULL, NULL, who_desc);
 
-static void do_who_on_channel(struct Client *source_p, struct Channel *chptr,
-			      int server_oper, int member,
-			      struct who_format *fmt);
-
-static void who_global(struct Client *source_p, const char *mask, int server_oper, int operspy, struct who_format *fmt);
-
-static void do_who(struct Client *source_p,
-		   struct Client *target_p, struct membership *msptr,
-		   struct who_format *fmt);
-
-
 /*
 ** m_who
 **      parv[1] = nickname mask list
 **      parv[2] = additional selection flag and format options
 */
-static int
+static void
 m_who(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
@@ -162,17 +159,17 @@ m_who(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	if((*(mask + 1) == '\0') && (*mask == '*'))
 	{
 		if(source_p->user == NULL)
-			return 0;
+			return;
 
 		if((lp = source_p->user->channel.head) != NULL)
 		{
 			msptr = lp->data;
-			do_who_on_channel(source_p, msptr->chptr, server_oper, YES, &fmt);
+			do_who_on_channel(source_p, msptr->chptr, server_oper, true, &fmt);
 		}
 
 		sendto_one(source_p, form_str(RPL_ENDOFWHO),
 			   me.name, source_p->name, "*");
-		return 0;
+		return;
 	}
 
 	if(IsOperSpy(source_p) && *mask == '!')
@@ -184,7 +181,7 @@ m_who(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 		{
 			sendto_one(source_p, form_str(RPL_ENDOFWHO),
 					me.name, source_p->name, parv[1]);
-			return 0;
+			return;
 		}
 	}
 
@@ -202,21 +199,21 @@ m_who(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 						me.name, source_p->name, "WHO");
 				sendto_one(source_p, form_str(RPL_ENDOFWHO),
 					   me.name, source_p->name, "*");
-				return 0;
+				return;
 			}
 
 			if(operspy)
 				report_operspy(source_p, "WHO", chptr->chname);
 
 			if(IsMember(source_p, chptr) || operspy)
-				do_who_on_channel(source_p, chptr, server_oper, YES, &fmt);
+				do_who_on_channel(source_p, chptr, server_oper, true, &fmt);
 			else if(!SecretChannel(chptr))
-				do_who_on_channel(source_p, chptr, server_oper, NO, &fmt);
+				do_who_on_channel(source_p, chptr, server_oper, false, &fmt);
 		}
 
 		sendto_one(source_p, form_str(RPL_ENDOFWHO),
 			   me.name, source_p->name, parv[1] + operspy);
-		return 0;
+		return;
 	}
 
 	/* '/who nick' */
@@ -251,7 +248,7 @@ m_who(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 
 		sendto_one(source_p, form_str(RPL_ENDOFWHO),
 			   me.name, source_p->name, mask);
-		return 0;
+		return;
 	}
 
 	if(!IsFloodDone(source_p))
@@ -266,7 +263,7 @@ m_who(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 					me.name, source_p->name, "WHO");
 			sendto_one(source_p, form_str(RPL_ENDOFWHO),
 				   me.name, source_p->name, "*");
-			return 0;
+			return;
 		}
 		else
 			last_used = rb_current_time();
@@ -288,8 +285,6 @@ m_who(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 
 	sendto_one(source_p, form_str(RPL_ENDOFWHO),
 		   me.name, source_p->name, mask);
-
-	return 0;
 }
 
 /* who_common_channel
@@ -556,12 +551,12 @@ do_who(struct Client *source_p, struct Client *target_p, struct membership *mspt
 
 		if (pos >= sizeof str)
 		{
-			static int warned = 0;
+			static bool warned = false;
 			if (!warned)
 				sendto_realops_snomask(SNO_DEBUG, L_NETWIDE,
 						"WHOX overflow while sending information about %s to %s",
 						target_p->name, source_p->name);
-			warned = 1;
+			warned = true;
 		}
 		sendto_one(source_p, "%s", str);
 	}

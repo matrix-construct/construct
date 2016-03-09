@@ -44,7 +44,7 @@
 
 static const char omode_desc[] = "Allow admins to forcibly change modes on channels with the OMODE command";
 
-static int mo_omode(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_omode(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message omode_msgtab = {
 	"OMODE", 0, 0, 0, 0,
@@ -59,7 +59,7 @@ DECLARE_MODULE_AV2(omode, NULL, NULL, omode_clist, NULL, NULL, NULL, NULL, omode
  * mo_omode - MODE command handler
  * parv[1] - channel
  */
-static int
+static void
 mo_omode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr = NULL;
@@ -72,7 +72,7 @@ mo_omode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	if(!IsOperAdmin(source_p))
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "admin");
-		return 0;
+		return;
 	}
 
 	/* Now, try to find the channel in question */
@@ -80,7 +80,7 @@ mo_omode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	{
 		sendto_one_numeric(source_p, ERR_BADCHANNAME,
 				form_str(ERR_BADCHANNAME), parv[1]);
-		return 0;
+		return;
 	}
 
 	chptr = find_channel(parv[1]);
@@ -89,7 +89,7 @@ mo_omode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
 				form_str(ERR_NOSUCHCHANNEL), parv[1]);
-		return 0;
+		return;
 	}
 
 	/* Now know the channel exists */
@@ -99,7 +99,7 @@ mo_omode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	if (is_chanop(msptr))
 	{
 		sendto_one_notice(source_p, ":Use a normal MODE you idiot");
-		return 0;
+		return;
 	}
 
 	params[0] = '\0';
@@ -133,7 +133,7 @@ mo_omode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		{
 			sendto_one_numeric(source_p, ERR_USERNOTINCHANNEL,
 					   form_str(ERR_USERNOTINCHANNEL), parv[3], chptr->chname);
-			return 0;
+			return;
 		}
 		sendto_channel_local(ALL_MEMBERS, chptr, ":%s MODE %s +o %s",
 				me.name, parv[1], source_p->name);
@@ -164,5 +164,4 @@ mo_omode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 			remove_user_from_channel(msptr);
 	}
 #endif
-	return 0;
 }

@@ -55,10 +55,10 @@ static void _moddeinit(void);
 static void mark_services(void);
 static void unmark_services(void);
 
-static int me_su(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int me_login(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int me_rsfnc(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int me_nickdelay(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_su(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_login(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_rsfnc(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_nickdelay(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 static void h_svc_server_introduced(hook_data_client *);
 static void h_svc_whois(hook_data_client *);
@@ -113,7 +113,7 @@ _moddeinit(void)
 	unmark_services();
 }
 
-static int
+static void
 me_su(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
@@ -123,14 +123,14 @@ me_su(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			"Non-service server %s attempting to execute services-only command SU", source_p->name);
-		return 0;
+		return;
 	}
 
 	if((target_p = find_client(parv[1])) == NULL)
-		return 0;
+		return;
 
 	if(!target_p->user)
-		return 0;
+		return;
 
 	if(EmptyString(parv[2]))
 		target_p->user->suser[0] = '\0';
@@ -142,22 +142,19 @@ me_su(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 					    EmptyString(target_p->user->suser) ? "*" : target_p->user->suser);
 
 	invalidate_bancache_user(target_p);
-
-	return 0;
 }
 
-static int
+static void
 me_login(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
 	if(!IsPerson(source_p))
-		return 0;
+		return;
 
 	rb_strlcpy(source_p->user->suser, parv[1], sizeof(source_p->user->suser));
-	return 0;
 }
 
-static int
+static void
 me_rsfnc(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
@@ -170,17 +167,17 @@ me_rsfnc(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			"Non-service server %s attempting to execute services-only command RSFNC", source_p->name);
-		return 0;
+		return;
 	}
 
 	if((target_p = find_person(parv[1])) == NULL)
-		return 0;
+		return;
 
 	if(!MyClient(target_p))
-		return 0;
+		return;
 
 	if(!clean_nick(parv[2], 0) || IsDigit(parv[2][0]))
-		return 0;
+		return;
 
 	curts = atol(parv[4]);
 
@@ -189,7 +186,7 @@ me_rsfnc(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	 * nicknames before the RSFNC arrives.. --anfl
 	 */
 	if(target_p->tsinfo != curts)
-		return 0;
+		return;
 
 	if((exist_p = find_named_client(parv[2])))
 	{
@@ -258,7 +255,6 @@ doit:
 
 	snprintf(note, NICKLEN + 10, "Nick: %s", target_p->name);
 	rb_note(target_p->localClient->F, note);
-	return 0;
 }
 
 /*
@@ -266,7 +262,7 @@ doit:
 **      parv[1] = duration in seconds (0 to remove)
 **      parv[2] = nick
 */
-static int
+static void
 me_nickdelay(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	int duration;
@@ -276,7 +272,7 @@ me_nickdelay(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *so
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			"Non-service server %s attempting to execute services-only command NICKDELAY", source_p->name);
-		return 0;
+		return;
 	}
 
 	duration = atoi(parv[1]);
@@ -295,8 +291,6 @@ me_nickdelay(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *so
 		if (nd != NULL)
 			nd->expire = rb_current_time() + duration;
 	}
-
-	return 0;
 }
 
 static void

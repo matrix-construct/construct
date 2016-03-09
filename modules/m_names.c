@@ -39,7 +39,7 @@
 
 static const char names_desc[] = "Provides the NAMES command to view users on a channel";
 
-static int m_names(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_names(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message names_msgtab = {
 	"NAMES", 0, 0, 0, 0,
@@ -60,7 +60,7 @@ static void names_global(struct Client *source_p);
  * m_names
  *      parv[1] = channel
  */
-static int
+static void
 m_names(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
@@ -78,7 +78,7 @@ m_names(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 			sendto_one_numeric(source_p, ERR_BADCHANNAME,
 					   form_str(ERR_BADCHANNAME),
 					   (unsigned char *) p);
-			return 0;
+			return;
 		}
 
 		if((chptr = find_channel(p)) != NULL)
@@ -97,7 +97,7 @@ m_names(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 					   me.name, source_p->name, "NAMES");
 				sendto_one(source_p, form_str(RPL_ENDOFNAMES),
 					   me.name, source_p->name, "*");
-				return 0;
+				return;
 			}
 			else
 				last_used = rb_current_time();
@@ -108,7 +108,7 @@ m_names(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 			   me.name, source_p->name, "*");
 	}
 
-	return 0;
+	return;
 }
 
 /*
@@ -124,7 +124,7 @@ names_global(struct Client *source_p)
 	int mlen;
 	int tlen;
 	int cur_len;
-	int dont_show = NO;
+	bool dont_show = false;
 	rb_dlink_node *lp, *ptr;
 	struct Client *target_p;
 	struct Channel *chptr = NULL;
@@ -146,7 +146,7 @@ names_global(struct Client *source_p)
 	RB_DLINK_FOREACH(ptr, global_client_list.head)
 	{
 		target_p = ptr->data;
-		dont_show = NO;
+		dont_show = false;
 
 		if(!IsPerson(target_p) || IsInvisible(target_p))
 			continue;
@@ -166,7 +166,7 @@ names_global(struct Client *source_p)
 			if(PubChannel(chptr) || IsMember(source_p, chptr) ||
 			   SecretChannel(chptr))
 			{
-				dont_show = YES;
+				dont_show = true;
 				break;
 			}
 		}

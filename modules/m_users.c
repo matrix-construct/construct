@@ -36,7 +36,7 @@
 static const char users_desc[] =
 	"Provides the USERS command to display connection statistics locally and globally";
 
-static int m_users(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_users(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message users_msgtab = {
 	"USERS", 0, 0, 0, 0,
@@ -51,7 +51,7 @@ DECLARE_MODULE_AV2(users, NULL, NULL, users_clist, NULL, NULL, NULL, NULL, users
  * m_users
  *      parv[1] = servername
  */
-static int
+static void
 m_users(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(hunt_server(client_p, source_p, ":%s USERS :%s", 1, parc, parv) == HUNTED_ISME)
@@ -68,6 +68,4 @@ m_users(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 				   Count.total, Count.max_tot,
 				   Count.total, Count.max_tot);
 	}
-
-	return 0;
 }

@@ -47,8 +47,8 @@
 static const char rehash_desc[] =
 	"Provides the REHASH command to reload configuration and other files";
 
-static int mo_rehash(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int me_rehash(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_rehash(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_rehash(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message rehash_msgtab = {
 	"REHASH", 0, 0, 0, 0,
@@ -357,7 +357,7 @@ do_rehash(struct Client *source_p, const char *type)
  * parv[1] = rehash type or destination
  * parv[2] = destination
  */
-static int
+static void
 mo_rehash(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	const char *type = NULL, *target_server = NULL;
@@ -366,7 +366,7 @@ mo_rehash(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS),
 			   me.name, source_p->name, "rehash");
-		return 0;
+		return;
 	}
 
 	if (parc > 2)
@@ -384,33 +384,29 @@ mo_rehash(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 		{
 			sendto_one(source_p, form_str(ERR_NOPRIVS),
 				me.name, source_p->name, "remoteban");
-			return 0;
+			return;
 		}
 		sendto_match_servs(source_p, target_server,
 				CAP_ENCAP, NOCAPS,
 				"ENCAP %s REHASH %s",
 				target_server, type != NULL ? type : "");
 		if (match(target_server, me.name) == 0)
-			return 0;
+			return;
 	}
 
 	do_rehash(source_p, type);
-
-	return 0;
 }
 
-static int
+static void
 me_rehash(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 
 	if (!IsPerson(source_p))
-		return 0;
+		return;
 
 	if (!find_shared_conf(source_p->username, source_p->host,
 				source_p->servptr->name, SHARED_REHASH))
-		return 0;
+		return;
 
 	do_rehash(source_p, parc > 1 ? parv[1] : NULL);
-
-	return 0;
 }

@@ -66,7 +66,7 @@ DECLARE_MODULE_AV2(snote, NULL, NULL, snote_clist, NULL, NULL, NULL, NULL, snote
  *      parv[1] = snomask letter
  *	parv[2] = message
  */
-static int
+static void
 me_snote(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
 	const char *parv[])
 {
@@ -75,12 +75,10 @@ me_snote(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	 * shit happens afterall -nenolod
 	 */
 	if (parc > 3)
-		return 0;
+		return;
 	if (!IsServer(source_p))
-		return 0;
+		return;
 
 	sendto_realops_snomask_from(snomask_modes[(unsigned char) *parv[1]],
 		L_ALL, source_p, "%s", parv[2]);
-
-	return 0;
 }

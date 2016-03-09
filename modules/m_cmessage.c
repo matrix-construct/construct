@@ -45,9 +45,9 @@
 static const char cmessage_desc[] =
 	"Provides the CPRIVMSG and CNOTICE facilities for bypassing anti-spam measures";
 
-static int m_cmessage(int, const char *, struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int m_cprivmsg(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int m_cnotice(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_cmessage(int, const char *, struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_cprivmsg(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_cnotice(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 static int
 _modinit(void)
@@ -81,19 +81,19 @@ DECLARE_MODULE_AV2(cmessage, _modinit, _moddeinit, cmessage_clist, NULL, NULL, N
 #define PRIVMSG 0
 #define NOTICE 1
 
-static int
+static void
 m_cprivmsg(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	return m_cmessage(PRIVMSG, "PRIVMSG", msgbuf_p, client_p, source_p, parc, parv);
+	m_cmessage(PRIVMSG, "PRIVMSG", msgbuf_p, client_p, source_p, parc, parv);
 }
 
-static int
+static void
 m_cnotice(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	return m_cmessage(NOTICE, "NOTICE", msgbuf_p, client_p, source_p, parc, parv);
+	m_cmessage(NOTICE, "NOTICE", msgbuf_p, client_p, source_p, parc, parv);
 }
 
-static int
+static void
 m_cmessage(int p_or_n, const char *command, struct MsgBuf *msgbuf_p,
 		struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
@@ -109,7 +109,7 @@ m_cmessage(int p_or_n, const char *command, struct MsgBuf *msgbuf_p,
 		if(p_or_n != NOTICE)
 			sendto_one_numeric(source_p, ERR_NOSUCHNICK,
 					form_str(ERR_NOSUCHNICK), parv[1]);
-		return 0;
+		return;
 	}
 
 	if((chptr = find_channel(parv[2])) == NULL)
@@ -117,7 +117,7 @@ m_cmessage(int p_or_n, const char *command, struct MsgBuf *msgbuf_p,
 		if(p_or_n != NOTICE)
 			sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
 					form_str(ERR_NOSUCHCHANNEL), parv[2]);
-		return 0;
+		return;
 	}
 
 	if((msptr = find_channel_membership(chptr, source_p)) == NULL)
@@ -126,7 +126,7 @@ m_cmessage(int p_or_n, const char *command, struct MsgBuf *msgbuf_p,
 			sendto_one_numeric(source_p, ERR_NOTONCHANNEL,
 					form_str(ERR_NOTONCHANNEL),
 					chptr->chname);
-		return 0;
+		return;
 	}
 
 	if(!is_chanop_voiced(msptr))
@@ -134,7 +134,7 @@ m_cmessage(int p_or_n, const char *command, struct MsgBuf *msgbuf_p,
 		if(p_or_n != NOTICE)
 			sendto_one(source_p, form_str(ERR_VOICENEEDED),
 				me.name, source_p->name, chptr->chname);
-		return 0;
+		return;
 	}
 
 	if(!IsMember(target_p, chptr))
@@ -143,7 +143,7 @@ m_cmessage(int p_or_n, const char *command, struct MsgBuf *msgbuf_p,
 			sendto_one_numeric(source_p, ERR_USERNOTINCHANNEL,
 					form_str(ERR_USERNOTINCHANNEL),
 					target_p->name, chptr->chname);
-		return 0;
+		return;
 	}
 
 	if(MyClient(target_p) && (IsSetCallerId(target_p) || (IsSetRegOnlyMsg(target_p) && !source_p->user->suser[0])) &&
@@ -155,7 +155,7 @@ m_cmessage(int p_or_n, const char *command, struct MsgBuf *msgbuf_p,
 				sendto_one_numeric(source_p, ERR_NONONREG,
 						form_str(ERR_NONONREG),
 						target_p->name);
-			return 0;
+			return;
 		}
 		if(p_or_n != NOTICE)
 			sendto_one_numeric(source_p, ERR_TARGUMODEG,
@@ -176,12 +176,11 @@ m_cmessage(int p_or_n, const char *command, struct MsgBuf *msgbuf_p,
 			target_p->localClient->last_caller_id_time = rb_current_time();
 		}
 
-		return 0;
+		return;
 	}
 
 	if(p_or_n != NOTICE)
 		source_p->localClient->last = rb_current_time();
 
 	sendto_anywhere(target_p, source_p, command, ":%s", parv[3]);
-	return 0;
 }

@@ -47,10 +47,10 @@ typedef struct _hurt {
 /* }}} */
 
 /* {{{ Prototypes */
-static int mo_hurt(struct MsgBuf *msgbuf_p, struct Client *, struct Client *, int, const char **);
-static int me_hurt(struct MsgBuf *msgbuf_p, struct Client *, struct Client *, int, const char **);
-static int mo_heal(struct MsgBuf *msgbuf_p, struct Client *, struct Client *, int, const char **);
-static int me_heal(struct MsgBuf *msgbuf_p, struct Client *, struct Client *, int, const char **);
+static void mo_hurt(struct MsgBuf *msgbuf_p, struct Client *, struct Client *, int, const char **);
+static void me_hurt(struct MsgBuf *msgbuf_p, struct Client *, struct Client *, int, const char **);
+static void mo_heal(struct MsgBuf *msgbuf_p, struct Client *, struct Client *, int, const char **);
+static void me_heal(struct MsgBuf *msgbuf_p, struct Client *, struct Client *, int, const char **);
 
 static int modinit(void);
 static void modfini(void);
@@ -70,7 +70,7 @@ static hurt_t *hurt_find_exact(const char *ip);
 static void hurt_remove(const char *ip);
 static void hurt_destroy(void *hurt);
 
-static int heal_nick(struct Client *, struct Client *);
+static void heal_nick(struct Client *, struct Client *);
 
 /* }}} */
 
@@ -173,7 +173,7 @@ modfini(void)
  * Message handlers.
  */
 
-/* {{{ static int mo_hurt()
+/* {{{ static void mo_hurt()
  *
  * HURT [<expire>] <ip> <reason>
  *
@@ -181,7 +181,7 @@ modfini(void)
  * parv[2] - ip or reason
  * parv[3] - reason or NULL
  */
-static int
+static void
 mo_hurt(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 		int parc, const char **parv)
 {
@@ -193,7 +193,7 @@ mo_hurt(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	if (!IsOperK(source_p)) {
 		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name,
 				source_p->name, "kline");
-		return 0;
+		return;
 	}
 
 	if (parc == 3)
@@ -205,11 +205,11 @@ mo_hurt(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		expire_time = HURT_DEFAULT_EXPIRE;
 	if (expire && (expire_time = valid_temp_time(expire)) < 1) {
 		sendto_one_notice(source_p, ":Permanent HURTs are not supported");
-		return 0;
+		return;
 	}
 	if (EmptyString(reason)) {
 		sendto_one_notice(source_p, ":Empty HURT reasons are bad for business");
-		return 0;
+		return;
 	}
 
 	/* Is this a client? */
@@ -220,7 +220,7 @@ mo_hurt(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		{
 			sendto_one_numeric(source_p, ERR_NOSUCHNICK,
 					   form_str(ERR_NOSUCHNICK), ip);
-			return 0;
+			return;
 		}
 		ip = target_p->orighost;
 	}
@@ -232,13 +232,13 @@ mo_hurt(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		{
 			sendto_one_notice(source_p, ":Invalid HURT mask [%s]",
 					ip);
-			return 0;
+			return;
 		}
 	}
 
 	if (hurt_find(ip) != NULL) {
 		sendto_one(source_p, ":[%s] already HURT", ip);
-		return 0;
+		return;
 	}
 
 	/*
@@ -252,12 +252,10 @@ mo_hurt(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	hurt = hurt_new(expire_time, ip, reason);
 	hurt_add(hurt);
 	hurt_propagate(NULL, source_p, hurt);
-
-	return 0;
 }
 /* }}} */
 
-/* {{{ static int me_hurt()
+/* {{{ static void me_hurt()
  *
  * [ENCAP mask] HURT <target> <expire> <ip> <reason>
  *
@@ -265,7 +263,7 @@ mo_hurt(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
  * parv[2] - ip
  * parv[3] - reason
  */
-static int
+static void
 me_hurt(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 		int parc, const char **parv)
 {
@@ -278,31 +276,29 @@ me_hurt(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	 * dropping a server over.
 	 */
 	if (parc < 4 || !IsPerson(source_p))
-		return 0;
+		return;
 	if ((expire_time = atoi(parv[1])) < 1)
-		return 0;
+		return;
 	if (hurt_find(parv[2]) != NULL)
-		return 0;
+		return;
 	if (EmptyString(parv[3]))
-		return 0;
+		return;
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			"%s added HURT on [%s] for %ld minutes with reason [%s]",
 			get_oper_name(source_p), parv[2], (long) expire_time / 60, parv[3]);
 	hurt = hurt_new(expire_time, parv[2], parv[3]);
 	hurt_add(hurt);
-
-	return 0;
 }
 /* }}} */
 
-/* {{{ static int mo_heal()
+/* {{{ static void mo_heal()
  *
  * HURT <nick>|<ip>
  *
  * parv[1] - nick or ip
  */
-static int
+static void
 mo_heal(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 		int parc, const char **parv)
 {
@@ -312,7 +308,7 @@ mo_heal(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS),
 				me.name, source_p->name, "unkline");
-		return 0;
+		return;
 	}
 
 	if (clean_nick(parv[1], 0))
@@ -322,7 +318,7 @@ mo_heal(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		{
 			sendto_one_numeric(source_p, ERR_NOSUCHNICK,
 					form_str(ERR_NOSUCHNICK), parv[1]);
-			return 0;
+			return;
 		}
 		if (MyConnect(target_p))
 			heal_nick(source_p, target_p);
@@ -337,7 +333,7 @@ mo_heal(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		if (hurt_find_exact(parv[1]) == NULL)
 		{
 			sendto_one_notice(source_p, ":Mask [%s] is not HURT", parv[1]);
-			return 0;
+			return;
 		}
 		hurt_remove(parv[1]);
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s removed HURT on %s",
@@ -348,14 +344,12 @@ mo_heal(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	else
 	{
 		sendto_one(source_p, ":[%s] is not a valid IP address/nick", parv[1]);
-		return 0;
+		return;
 	}
-
-	return 0;
 }
 /* }}} */
 
-static int
+static void
 me_heal(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 		int parc, const char **parv)
 {
@@ -365,7 +359,7 @@ me_heal(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	 * *poof*, it's dropped...
 	 */
 	if (parc < 2)
-		return 0;
+		return;
 
 	if (clean_nick(parv[1], 0))
 	{
@@ -376,16 +370,12 @@ me_heal(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	else if (strchr(parv[1], '.'))	/* host or mask to remove ban for */
 	{
 		if (hurt_find_exact(parv[1]) == NULL)
-			return 0;
+			return;
 
 		hurt_remove(parv[1]);
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s removed HURT on %s",
 				get_oper_name(source_p), parv[1]);
 	}
-	else
-		return 0;
-
-	return 0;
 }
 
 /*
@@ -499,7 +489,6 @@ doing_stats_hook(hook_data_int *hdata)
 			sendto_one_numeric(source_p, RPL_STATSKLINE,
 					form_str(RPL_STATSKLINE), 's',
 					"*", hurt->ip, hurt->reason, "", "");
-			return;
 		}
 		return;
 	}
@@ -620,8 +609,8 @@ hurt_remove(const char *ip)
 	hurt_destroy(hurt);
 }
 
-/* {{{ static int heal_nick() */
-static int
+/* {{{ static void heal_nick() */
+static void
 heal_nick(struct Client *source_p, struct Client *target_p)
 {
 	if (rb_dlinkFindDestroy(target_p, &hurt_state.hurt_clients))
@@ -631,12 +620,10 @@ heal_nick(struct Client *source_p, struct Client *target_p)
 		sendto_one_notice(target_p, ":HURT restriction temporarily removed by operator");
 		sendto_one_notice(source_p, ":HURT restriction on %s temporarily removed", target_p->name);
 		target_p->localClient->target_last = rb_current_time();		/* don't ask --nenolod */
-		return 1;
 	}
 	else
 	{
 		sendto_one_notice(source_p, ":%s was not hurt", target_p->name);
-		return 0;
 	}
 }
 /* }}} */

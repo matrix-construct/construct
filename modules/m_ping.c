@@ -38,8 +38,8 @@
 static const char ping_desc[] =
 	"Provides the PING command to ensure a client or server is still alive";
 
-static int m_ping(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_ping(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_ping(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_ping(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message ping_msgtab = {
 	"PING", 0, 0, 0, 0,
@@ -55,7 +55,7 @@ DECLARE_MODULE_AV2(ping, NULL, NULL, ping_clist, NULL, NULL, NULL, NULL, ping_de
 **      parv[1] = origin
 **      parv[2] = destination
 */
-static int
+static void
 m_ping(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
@@ -76,17 +76,15 @@ m_ping(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 			sendto_one_numeric(source_p, ERR_NOSUCHSERVER,
 					   form_str(ERR_NOSUCHSERVER),
 					   destination);
-			return 0;
+			return;
 		}
 	}
 	else
 		sendto_one(source_p, ":%s PONG %s :%s", me.name,
 			   (destination) ? destination : me.name, parv[1]);
-
-	return 0;
 }
 
-static int
+static void
 ms_ping(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
@@ -111,6 +109,4 @@ ms_ping(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		sendto_one(source_p, ":%s PONG %s :%s",
 			   get_id(&me, source_p), me.name,
 			   get_id(source_p, source_p));
-
-	return 0;
 }

@@ -55,7 +55,7 @@
 
 static const char webirc_desc[] = "Adds support for the WebIRC system";
 
-static int mr_webirc(struct MsgBuf *msgbuf_p, struct Client *, struct Client *, int, const char **);
+static void mr_webirc(struct MsgBuf *msgbuf_p, struct Client *, struct Client *, int, const char **);
 
 struct Message webirc_msgtab = {
 	"WEBIRC", 0, 0, 0, 0,
@@ -73,7 +73,7 @@ DECLARE_MODULE_AV2(webirc, NULL, NULL, webirc_clist, NULL, NULL, NULL, NULL, web
  *	parv[3] = fake hostname
  *	parv[4] = fake ip
  */
-static int
+static void
 mr_webirc(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct ConfItem *aconf;
@@ -85,7 +85,7 @@ mr_webirc(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 			sizeof(source_p->sockhost))
 	{
 		sendto_one(source_p, "NOTICE * :Invalid IP");
-		return 0;
+		return;
 	}
 
 	aconf = find_address_conf(client_p->host, client_p->sockhost,
@@ -94,17 +94,17 @@ mr_webirc(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 				(struct sockaddr *) &client_p->localClient->ip,
 				client_p->localClient->ip.ss_family, NULL);
 	if (aconf == NULL || !(aconf->status & CONF_CLIENT))
-		return 0;
+		return;
 	if (!IsConfDoSpoofIp(aconf) || irccmp(aconf->info.name, "webirc."))
 	{
 		/* XXX */
 		sendto_one(source_p, "NOTICE * :Not a CGI:IRC auth block");
-		return 0;
+		return;
 	}
 	if (EmptyString(aconf->passwd))
 	{
 		sendto_one(source_p, "NOTICE * :CGI:IRC auth blocks must have a password");
-		return 0;
+		return;
 	}
 
 	if (EmptyString(parv[1]))
@@ -117,13 +117,13 @@ mr_webirc(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 	if (encr == NULL || strcmp(encr, aconf->passwd))
 	{
 		sendto_one(source_p, "NOTICE * :CGI:IRC password incorrect");
-		return 0;
+		return;
 	}
 
 	if (rb_inet_pton_sock(parv[4], (struct sockaddr *)&addr) <= 0)
 	{
 		sendto_one(source_p, "NOTICE * :Invalid IP");
-		return 0;
+		return;
 	}
 
 	if (*parv[4] == ':')
@@ -150,10 +150,9 @@ mr_webirc(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 		if(!(aconf->status & CONF_EXEMPTDLINE))
 		{
 			exit_client(client_p, source_p, &me, "D-lined");
-			return 0;
+			return;
 		}
 	}
 
 	sendto_one(source_p, "NOTICE * :CGI:IRC host/IP set to %s %s", parv[3], parv[4]);
-	return 0;
 }

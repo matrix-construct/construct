@@ -33,7 +33,7 @@
 
 static const char close_desc[] = "Provides the CLOSE command to clear all unfinished connections";
 
-static int mo_close(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_close(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message close_msgtab = {
 	"CLOSE", 0, 0, 0, 0,
@@ -48,7 +48,7 @@ DECLARE_MODULE_AV2(close, NULL, NULL, close_clist, NULL, NULL, NULL, NULL, close
  * mo_close - CLOSE message handler
  *  - added by Darren Reed Jul 13 1992.
  */
-static int
+static void
 mo_close(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
@@ -68,5 +68,5 @@ mo_close(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	}
 
 	sendto_one(source_p, form_str(RPL_CLOSEEND), me.name, source_p->name, closed);
-	return 0;
+	return;
 }

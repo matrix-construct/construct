@@ -41,12 +41,12 @@
 static const char resv_desc[] =
 	"Provides management of reserved nicknames and channels using (UN)RESV";
 
-static int mo_resv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_resv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int me_resv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int mo_unresv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_unresv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int me_unresv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_resv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_resv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_resv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_unresv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_unresv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_unresv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message resv_msgtab = {
 	"RESV", 0, 0, 0, 0,
@@ -77,7 +77,7 @@ static void remove_resv(struct Client *source_p, const char *name, int propagate
  *      parv[1] = channel/nick to forbid
  *      parv[2] = reason
  */
-static int
+static void
 mo_resv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	const char *name;
@@ -90,7 +90,7 @@ mo_resv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	if(!IsOperResv(source_p))
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "resv");
-		return 0;
+		return;
 	}
 
 	/* RESV [time] <name> [ON <server>] :<reason> */
@@ -110,7 +110,7 @@ mo_resv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		{
 			sendto_one(source_p, form_str(ERR_NOPRIVS),
 				   me.name, source_p->name, "remoteban");
-			return 0;
+			return;
 		}
 
 		target_server = parv[loc + 1];
@@ -123,7 +123,7 @@ mo_resv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	if(parc <= loc || EmptyString(parv[loc]))
 	{
 		sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS), me.name, source_p->name, "RESV");
-		return 0;
+		return;
 	}
 
 	reason = parv[loc];
@@ -134,7 +134,7 @@ mo_resv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		propagate_resv(source_p, target_server, temp_time, name, reason);
 
 		if(match(target_server, me.name) == 0)
-			return 0;
+			return;
 	}
 	else if(!propagated && rb_dlink_list_length(&cluster_conf_list) > 0)
 		cluster_resv(source_p, temp_time, name, reason);
@@ -142,12 +142,10 @@ mo_resv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	if(propagated && temp_time == 0)
 	{
 		sendto_one_notice(source_p, ":Cannot set a permanent global ban");
-		return 0;
+		return;
 	}
 
 	parse_resv(source_p, name, reason, temp_time, propagated);
-
-	return 0;
 }
 
 /* ms_resv()
@@ -155,7 +153,7 @@ mo_resv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
  *     parv[2] = channel/nick to forbid
  *     parv[3] = reason
  */
-static int
+static void
 ms_resv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* parv[0]  parv[1]        parv[2]  parv[3]
@@ -164,24 +162,22 @@ ms_resv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	propagate_resv(source_p, parv[1], 0, parv[2], parv[3]);
 
 	if(!match(parv[1], me.name))
-		return 0;
+		return;
 
 	if(!IsPerson(source_p))
-		return 0;
+		return;
 
 	parse_resv(source_p, parv[2], parv[3], 0, 0);
-	return 0;
 }
 
-static int
+static void
 me_resv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* time name 0 :reason */
 	if(!IsPerson(source_p))
-		return 0;
+		return;
 
 	parse_resv(source_p, parv[2], parv[4], atoi(parv[1]), 0);
-	return 0;
 }
 
 /* parse_resv()
@@ -423,7 +419,7 @@ cluster_resv(struct Client *source_p, int temp_time, const char *name, const cha
  * mo_unresv()
  *     parv[1] = channel/nick to unforbid
  */
-static int
+static void
 mo_unresv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	int propagated = 1;
@@ -431,7 +427,7 @@ mo_unresv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 	if(!IsOperResv(source_p))
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "resv");
-		return 0;
+		return;
 	}
 
 	if((parc == 4) && (irccmp(parv[2], "ON") == 0))
@@ -440,13 +436,13 @@ mo_unresv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 		{
 			sendto_one(source_p, form_str(ERR_NOPRIVS),
 				   me.name, source_p->name, "remoteban");
-			return 0;
+			return;
 		}
 
 		propagate_generic(source_p, "UNRESV", parv[3], CAP_CLUSTER, "%s", parv[1]);
 
 		if(match(parv[3], me.name) == 0)
-			return 0;
+			return;
 
 		propagated = 0;
 	}
@@ -457,14 +453,13 @@ mo_unresv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 	/* cluster{} moved to remove_resv */
 
 	remove_resv(source_p, parv[1], propagated);
-	return 0;
 }
 
 /* ms_unresv()
  *     parv[1] = target server
  *     parv[2] = resv to remove
  */
-static int
+static void
 ms_unresv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* parv[0]  parv[1]        parv[2]
@@ -473,24 +468,22 @@ ms_unresv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 	propagate_generic(source_p, "UNRESV", parv[1], CAP_CLUSTER, "%s", parv[2]);
 
 	if(!match(parv[1], me.name))
-		return 0;
+		return;
 
 	if(!IsPerson(source_p))
-		return 0;
+		return;
 
 	handle_remote_unresv(source_p, parv[2]);
-	return 0;
 }
 
-static int
+static void
 me_unresv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* name */
 	if(!IsPerson(source_p))
-		return 0;
+		return;
 
 	handle_remote_unresv(source_p, parv[1]);
-	return 0;
 }
 
 static void

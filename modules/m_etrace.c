@@ -53,10 +53,10 @@
 static const char etrace_desc[] =
     "Provides enhanced tracing facilities to opers (ETRACE, CHANTRACE, and MASKTRACE)";
 
-static int mo_etrace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int me_etrace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int m_chantrace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int mo_masktrace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_etrace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_etrace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_chantrace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_masktrace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message etrace_msgtab = {
 	"ETRACE", 0, 0, 0, 0,
@@ -101,7 +101,7 @@ static const char *spoofed_sockhost = "0";
  *      parv[1] = options [or target]
  *	parv[2] = [target]
  */
-static int
+static void
 mo_etrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(parc > 1 && !EmptyString(parv[1]))
@@ -135,17 +135,15 @@ mo_etrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 	}
 	else
 		do_etrace(source_p, 1, 1);
-
-	return 0;
 }
 
-static int
+static void
 me_etrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 
 	if(!IsOper(source_p) || parc < 2 || EmptyString(parv[1]))
-		return 0;
+		return;
 
 	/* we cant etrace remote clients.. we shouldnt even get sent them */
 	if((target_p = find_person(parv[1])) && MyClient(target_p))
@@ -153,8 +151,6 @@ me_etrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 
         sendto_one_numeric(source_p, RPL_ENDOFTRACE, form_str(RPL_ENDOFTRACE),
 				target_p ? target_p->name : parv[1]);
-
-	return 0;
 }
 
 static void
@@ -229,7 +225,7 @@ do_single_etrace(struct Client *source_p, struct Client *target_p)
 				target_p->localClient->fullcaps, target_p->info);
 }
 
-static int
+static void
 m_chantrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
@@ -251,7 +247,7 @@ m_chantrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 		{
 			sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS),
 					me.name, source_p->name, "CHANTRACE");
-			return 0;
+			return;
 		}
 	}
 
@@ -259,7 +255,7 @@ m_chantrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL, form_str(ERR_NOSUCHCHANNEL),
 				name);
-		return 0;
+		return;
 	}
 
 	/* dont report operspys for nonexistant channels. */
@@ -270,7 +266,7 @@ m_chantrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 	{
 		sendto_one_numeric(source_p, ERR_NOTONCHANNEL, form_str(ERR_NOTONCHANNEL),
 				chptr->chname);
-		return 0;
+		return;
 	}
 
 	RB_DLINK_FOREACH(ptr, chptr->members.head)
@@ -295,7 +291,6 @@ m_chantrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 	}
 
 	sendto_one_numeric(source_p, RPL_ENDOFTRACE, form_str(RPL_ENDOFTRACE), me.name);
-	return 0;
 }
 
 static void
@@ -342,7 +337,7 @@ match_masktrace(struct Client *source_p, rb_dlink_list *list,
 	}
 }
 
-static int
+static void
 mo_masktrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
 	const char *parv[])
 {
@@ -372,7 +367,7 @@ mo_masktrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *so
 	if((hostname = strchr(name, '@')) == NULL)
 	{
 		sendto_one_notice(source_p, ":Invalid parameters");
-		return 0;
+		return;
 	}
 
 	*hostname++ = '\0';
@@ -387,7 +382,7 @@ mo_masktrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *so
 	if(EmptyString(username) || EmptyString(hostname))
 	{
 		sendto_one_notice(source_p, ":Invalid parameters");
-		return 0;
+		return;
 	}
 
 	if(operspy) {
@@ -407,5 +402,4 @@ mo_masktrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *so
 		match_masktrace(source_p, &lclient_list, username, hostname, name, gecos);
 
 	sendto_one_numeric(source_p, RPL_ENDOFTRACE, form_str(RPL_ENDOFTRACE), me.name);
-	return 0;
 }

@@ -41,7 +41,7 @@
 
 static const char invite_desc[] = "Provides facilities for invite and related notifications";
 
-static int m_invite(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_invite(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static unsigned int CAP_INVITE_NOTIFY = 0;
 
 struct Message invite_msgtab = {
@@ -64,7 +64,7 @@ static void add_invite(struct Channel *, struct Client *);
  *      parv[1] - user to invite
  *      parv[2] - channel name
  */
-static int
+static void
 m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
@@ -89,7 +89,7 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 			sendto_one_numeric(source_p, ERR_NOSUCHNICK,
 					   form_str(ERR_NOSUCHNICK),
 					   parv[1]);
-		return 0;
+		return;
 	}
 
 	if(check_channel_name(parv[2]) == 0)
@@ -97,7 +97,7 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		sendto_one_numeric(source_p, ERR_BADCHANNAME,
 				   form_str(ERR_BADCHANNAME),
 				   parv[2]);
-		return 0;
+		return;
 	}
 
 	/* Do not send local channel invites to users if they are not on the
@@ -107,7 +107,7 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	{
 		sendto_one(source_p, form_str(ERR_USERNOTONSERV),
 			   me.name, source_p->name, target_p->name);
-		return 0;
+		return;
 	}
 
 	if(((MyConnect(source_p) && !IsExemptResv(source_p)) ||
@@ -117,14 +117,14 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		sendto_one_numeric(source_p, ERR_BADCHANNAME,
 				   form_str(ERR_BADCHANNAME),
 				   parv[2]);
-		return 0;
+		return;
 	}
 
 	if((chptr = find_channel(parv[2])) == NULL)
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
 				   form_str(ERR_NOSUCHCHANNEL), parv[2]);
-		return 0;
+		return;
 	}
 
 	msptr = find_channel_membership(chptr, source_p);
@@ -132,7 +132,7 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	{
 		sendto_one_numeric(source_p, ERR_NOTONCHANNEL,
 				   form_str(ERR_NOTONCHANNEL), parv[2]);
-		return 0;
+		return;
 	}
 
 	if(IsMember(target_p, chptr))
@@ -140,7 +140,7 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		sendto_one_numeric(source_p, ERR_USERONCHANNEL,
 				   form_str(ERR_USERONCHANNEL),
 				   target_p->name, parv[2]);
-		return 0;
+		return;
 	}
 
 	/* unconditionally require ops, unless the channel is +g */
@@ -150,7 +150,7 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	{
 		sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
 			   me.name, source_p->name, parv[2]);
-		return 0;
+		return;
 	}
 
 	/* store invites when they could affect the ability to join
@@ -169,7 +169,7 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		{
 			sendto_one(source_p, form_str(ERR_TARGCHANGE),
 				   me.name, source_p->name, target_p->name);
-			return 0;
+			return;
 		}
 		sendto_one(source_p, form_str(RPL_INVITING),
 			   me.name, source_p->name,
@@ -183,7 +183,7 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	{
 		/* this should never be less than */
 		if(atol(parv[3]) > chptr->channelts)
-			return 0;
+			return;
 	}
 
 	if(MyConnect(target_p))
@@ -197,7 +197,7 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 				sendto_one_numeric(source_p, ERR_NONONREG,
 						form_str(ERR_NONONREG),
 						target_p->name);
-				return 0;
+				return;
 			}
 			else
 			{
@@ -210,7 +210,7 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 					sendto_one_numeric(source_p, ERR_TARGUMODEG,
 							   form_str(ERR_TARGUMODEG),
 							   target_p->name);
-					return 0;
+					return;
 				}
 				target_p->localClient->last_caller_id_time = rb_current_time();
 			}
@@ -236,8 +236,6 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	sendto_server(source_p, chptr, CAP_TS6, 0, ":%s INVITE %s %s %lu",
 		      use_id(source_p), use_id(target_p),
 		      chptr->chname, (unsigned long) chptr->channelts);
-
-	return 0;
 }
 
 /* add_invite()

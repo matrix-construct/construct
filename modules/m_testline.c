@@ -41,8 +41,8 @@
 
 static const char testline_desc[] = "Provides the ability to test I/K/D/X lines and RESVs";
 
-static int mo_testline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int mo_testgecos(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_testline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_testgecos(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message testline_msgtab = {
 	"TESTLINE", 0, 0, 0, 0,
@@ -57,7 +57,7 @@ mapi_clist_av1 testline_clist[] = { &testline_msgtab, &testgecos_msgtab, NULL };
 
 DECLARE_MODULE_AV2(testline, NULL, NULL, testline_clist, NULL, NULL, NULL, NULL, testline_desc);
 
-static int
+static void
 mo_testline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct ConfItem *aconf;
@@ -95,7 +95,7 @@ mo_testline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 		else
 			sendto_one(source_p, form_str(RPL_NOTESTLINE),
 					me.name, source_p->name, parv[1]);
-		return 0;
+		return;
 	}
 
 	if((p = strchr(mask, '!')))
@@ -105,7 +105,7 @@ mo_testline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 		mask = p;
 
 		if(EmptyString(mask))
-			return 0;
+			return;
 	}
 
 	if((p = strchr(mask, '@')))
@@ -115,7 +115,7 @@ mo_testline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 		host = p;
 
 		if(EmptyString(host))
-			return 0;
+			return;
 	}
 	else
 		host = mask;
@@ -142,7 +142,7 @@ mo_testline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 				 (long) ((aconf->hold - rb_current_time()) / 60) : 0L,
 				phost, reasonbuf);
 
-			return 0;
+			return;
 		}
 		/* Otherwise, aconf is an exempt{} */
 		if(aconf == NULL &&
@@ -195,7 +195,7 @@ mo_testline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 				(aconf->flags & CONF_FLAGS_TEMPORARY) ?
 				 (long) ((aconf->hold - rb_current_time()) / 60) : 0L,
 				buf, reasonbuf);
-			return 0;
+			return;
 		}
 	}
 
@@ -212,7 +212,7 @@ mo_testline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 		 * --nenolod
 		 */
 		resv_p->port--;
-		return 0;
+		return;
 	}
 
 	/* no matching resv, we can print the I: if it exists */
@@ -222,16 +222,15 @@ mo_testline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 				aconf->info.name, EmptyString(aconf->spasswd) ? "<NULL>" : aconf->spasswd,
 				show_iline_prefix(source_p, aconf, aconf->user),
 				aconf->host, aconf->port, aconf->className);
-		return 0;
+		return;
 	}
 
 	/* nothing matches.. */
 	sendto_one(source_p, form_str(RPL_NOTESTLINE),
 			me.name, source_p->name, parv[1]);
-	return 0;
 }
 
-static int
+static void
 mo_testgecos(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct ConfItem *aconf;
@@ -240,7 +239,7 @@ mo_testgecos(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *so
 	{
 		sendto_one(source_p, form_str(RPL_NOTESTLINE),
 				me.name, source_p->name, parv[1]);
-		return 0;
+		return;
 	}
 
 	sendto_one(source_p, form_str(RPL_TESTLINE),
@@ -248,5 +247,4 @@ mo_testgecos(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *so
 			aconf->hold ? 'x' : 'X',
 			aconf->hold ? (long) ((aconf->hold - rb_current_time()) / 60) : 0L,
 			aconf->host, aconf->passwd);
-	return 0;
 }

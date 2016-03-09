@@ -41,7 +41,7 @@
 
 static const char description[] = "Provides the REMOVE command, an alternative to KICK";
 
-static int m_remove(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_remove(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static void remove_quote_part(hook_data_privmsg_channel *);
 
 unsigned int CAP_REMOVE;
@@ -64,7 +64,7 @@ mapi_cap_list_av2 remove_cap_list[] = {
 
 DECLARE_MODULE_AV2(remove, NULL, NULL, remove_clist, NULL, remove_hfnlist, remove_cap_list, NULL, description);
 
-static int
+static void
 m_remove(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct membership *msptr;
@@ -90,7 +90,7 @@ m_remove(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	if(chptr == NULL)
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL, form_str(ERR_NOSUCHCHANNEL), name);
-		return 0;
+		return;
 	}
 
 	if(!IsServer(source_p))
@@ -101,7 +101,7 @@ m_remove(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		{
 			sendto_one_numeric(source_p, ERR_NOTONCHANNEL,
 					   form_str(ERR_NOTONCHANNEL), name);
-			return 0;
+			return;
 		}
 
 		if(get_channel_access(source_p, chptr, msptr, MODE_ADD, NULL) < CHFL_CHANOP)
@@ -110,7 +110,7 @@ m_remove(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 			{
 				sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
 					   me.name, source_p->name, name);
-				return 0;
+				return;
 			}
 
 			/* If its a TS 0 channel, do it the old way */
@@ -118,7 +118,7 @@ m_remove(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 			{
 				sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
 					   get_id(&me, source_p), get_id(source_p, source_p), name);
-				return 0;
+				return;
 			}
 		}
 
@@ -151,7 +151,7 @@ m_remove(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 	if(!(who = find_chasing(source_p, user, &chasing)))
 	{
-		return 0;
+		return;
 	}
 
 	msptr = find_channel_membership(chptr, who);
@@ -162,7 +162,7 @@ m_remove(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		{
 			sendto_one(source_p, form_str(ERR_ISCHANSERVICE),
 				   me.name, source_p->name, who->name, chptr->chname);
-			return 0;
+			return;
 		}
 
 		if(MyClient(source_p))
@@ -179,7 +179,7 @@ m_remove(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 			call_hook(h_can_kick, &hookdata);
 
 			if (!hookdata.approved)
-				return 0;
+				return;
 		}
 
 		comment = LOCAL_COPY((EmptyString(parv[3])) ? who->name : parv[3]);
@@ -210,8 +210,6 @@ m_remove(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	else if (MyClient(source_p))
 		sendto_one_numeric(source_p, ERR_USERNOTINCHANNEL,
 				   form_str(ERR_USERNOTINCHANNEL), user, name);
-
-	return 0;
 }
 
 static void

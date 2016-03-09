@@ -47,8 +47,8 @@ static void send_birthdate_online_time(struct Client *source_p);
 static void send_info_text(struct Client *source_p);
 static void info_spy(struct Client *);
 
-static int m_info(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int mo_info(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_info(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_info(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message info_msgtab = {
 	"INFO", 0, 0, 0, 0,
@@ -672,7 +672,7 @@ static struct InfoStruct info_table[] = {
  ** m_info
  **  parv[1] = servername
  */
-static int
+static void
 m_info(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0L;
@@ -683,13 +683,13 @@ m_info(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		sendto_one(source_p, form_str(RPL_LOAD2HI),
 				me.name, source_p->name, "INFO");
 		sendto_one_numeric(source_p, RPL_ENDOFINFO, form_str(RPL_ENDOFINFO));
-		return 0;
+		return;
 	}
 	else
 		last_used = rb_current_time();
 
 	if(hunt_server(client_p, source_p, ":%s INFO :%s", 1, parc, parv) != HUNTED_ISME)
-		return 0;
+		return;
 
 	info_spy(source_p);
 
@@ -697,14 +697,13 @@ m_info(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 	send_birthdate_online_time(source_p);
 
 	sendto_one_numeric(source_p, RPL_ENDOFINFO, form_str(RPL_ENDOFINFO));
-	return 0;
 }
 
 /*
  ** mo_info
  **  parv[1] = servername
  */
-static int
+static void
 mo_info(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(hunt_server(client_p, source_p, ":%s INFO :%s", 1, parc, parv) == HUNTED_ISME)
@@ -723,8 +722,6 @@ mo_info(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 
 		sendto_one_numeric(source_p, RPL_ENDOFINFO, form_str(RPL_ENDOFINFO));
 	}
-
-	return 0;
 }
 
 /*

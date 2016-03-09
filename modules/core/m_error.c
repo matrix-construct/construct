@@ -36,8 +36,8 @@
 static const char error_desc[] =
 	"Provides the ERROR command for clients and servers";
 
-static int m_error(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_error(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_error(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_error(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message error_msgtab = {
 	"ERROR", 0, 0, 0, 0,
@@ -51,34 +51,34 @@ mapi_clist_av1 error_clist[] = {
 DECLARE_MODULE_AV2(error, NULL, NULL, error_clist, NULL, NULL, NULL, NULL, error_desc);
 
 /* Determine whether an ERROR message is safe to show (no IP address in it) */
-static int
+static bool
 is_safe_error(const char *message)
 {
 	char prefix2[100];
 	const char *p;
 
 	if (!strncmp(message, "Closing Link: 127.0.0.1 (", 25))
-		return 1;
+		return true;
 	snprintf(prefix2, sizeof prefix2,
 			"Closing Link: 127.0.0.1 %s (", me.name);
 	if (!strncmp(message, prefix2, strlen(prefix2)))
-		return 1;
+		return true;
 	if (!strncmp(message, "Restart by ", 11))
-		return 1;
+		return true;
 	if (!strncmp(message, "Terminated by ", 14))
-		return 1;
+		return true;
 
 	if (!ircncmp(message, "Closing Link", 12))
-		return 0;
+		return false;
 	if (strchr(message, '['))
-		return 0;
+		return false;
 	p = strchr(message, '.');
 	if (p != NULL && p[1] != '\0')
-		return 0;
+		return false;
 	if (strchr(message, ':'))
-		return 0;
+		return false;
 
-	return 1;
+	return true;
 }
 
 /*
@@ -88,7 +88,7 @@ is_safe_error(const char *message)
  *
  *      parv[*] = parameters
  */
-int
+static void
 m_error(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	const char *para;
@@ -117,11 +117,9 @@ m_error(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	}
 
 	exit_client(client_p, source_p, source_p, "ERROR");
-
-	return 0;
 }
 
-static int
+static void
 ms_error(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	const char *para;
@@ -135,7 +133,7 @@ ms_error(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	if(is_safe_error(para))
 		hideit = 0;
 	if(hideit == 2)
-		return 0;
+		return;
 
 	if(client_p == source_p)
 	{
@@ -147,6 +145,4 @@ ms_error(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		sendto_realops_snomask(SNO_GENERAL, hideit ? L_ADMIN : L_ALL, "ERROR :from %s via %s -- %s",
 				     source_p->name, client_p->name, para);
 	}
-
-	return 0;
 }

@@ -40,8 +40,8 @@
 
 static const char pong_desc[] = "Provides the PONG command to respond to a PING message";
 
-static int mr_pong(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_pong(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mr_pong(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_pong(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message pong_msgtab = {
 	"PONG", 0, 0, 0, 0,
@@ -52,7 +52,7 @@ mapi_clist_av1 pong_clist[] = { &pong_msgtab, NULL };
 
 DECLARE_MODULE_AV2(pong, NULL, NULL, pong_clist, NULL, NULL, NULL, NULL, pong_desc);
 
-static int
+static void
 ms_pong(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
@@ -79,7 +79,7 @@ ms_pong(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 			if(!IsDigit(*destination))
 				sendto_one_numeric(source_p, ERR_NOSUCHSERVER,
 						   form_str(ERR_NOSUCHSERVER), destination);
-			return 0;
+			return;
 		}
 	}
 
@@ -95,11 +95,9 @@ ms_pong(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		eob_count++;
 		call_hook(h_server_eob, source_p);
 	}
-
-	return 0;
 }
 
-static int
+static void
 mr_pong(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(parc == 2 && !EmptyString(parv[1]))
@@ -119,7 +117,7 @@ mr_pong(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 					sendto_one(source_p, form_str(ERR_WRONGPONG),
 						   me.name, source_p->name,
 						   source_p->localClient->random_ping);
-					return 0;
+					return;
 				}
 			}
 		}
@@ -129,6 +127,4 @@ mr_pong(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		sendto_one(source_p, form_str(ERR_NOORIGIN), me.name, source_p->name);
 
 	source_p->flags &= ~FLAGS_PINGSENT;
-
-	return 0;
 }

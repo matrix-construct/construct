@@ -49,7 +49,7 @@
 
 static const char identify_desc[] = "Adds the IDENTIFY alias that forwards to NickServ or ChanServ";
 
-static int m_identify(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void m_identify(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message identify_msgtab = {
 	"IDENTIFY", 0, 0, 0, 0,
@@ -61,11 +61,10 @@ mapi_clist_av1 identify_clist[] = {
 	NULL
 };
 
-static const char identify_desc[] = "Adds the IDENTIFY alias that forwards to NickServ or ChanServ";
-
 DECLARE_MODULE_AV2(identify, NULL, NULL, identify_clist, NULL, NULL, NULL, NULL, identify_desc);
 
-static int m_identify(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+static void
+m_identify(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	const char *nick;
 	struct Client *target_p;
@@ -73,7 +72,7 @@ static int m_identify(struct MsgBuf *msgbuf_p, struct Client *client_p, struct C
 	if (parc < 2 || EmptyString(parv[1]))
 	{
 		sendto_one(source_p, form_str(ERR_NOTEXTTOSEND), me.name, source_p->name);
-		return 0;
+		return;
 	}
 
 	nick = parv[1][0] == '#' ? SVS_chanserv_NICK : SVS_nickserv_NICK;
@@ -85,5 +84,4 @@ static int m_identify(struct MsgBuf *msgbuf_p, struct Client *client_p, struct C
 	{
 		sendto_one_numeric(source_p, ERR_SERVICESDOWN, form_str(ERR_SERVICESDOWN), nick);
 	}
-	return 0;
 }

@@ -37,7 +37,7 @@
 
 static const char pass_desc[] = "Provides the PASS command to authenticate clients and servers";
 
-static int mr_pass(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mr_pass(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message pass_msgtab = {
 	"PASS", 0, 0, 0, 0,
@@ -57,14 +57,14 @@ DECLARE_MODULE_AV2(pass, NULL, NULL, pass_clist, NULL, NULL, NULL, NULL, pass_de
  *      parv[2] = "TS" if this server supports TS.
  *      parv[3] = optional TS version field -- needed for TS6
  */
-static int
+static void
 mr_pass(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	char *auth_user, *pass, *buf;
 	buf = LOCAL_COPY(parv[1]);
 
 	if(client_p->localClient->passwd || client_p->localClient->auth_user)
-		return 0;
+		return;
 
 	if ((pass = strchr(buf, ':')) != NULL)
 	{
@@ -108,6 +108,4 @@ mr_pass(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 			}
 		}
 	}
-
-	return 0;
 }

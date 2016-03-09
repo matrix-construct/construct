@@ -37,9 +37,9 @@
 const char admin_desc[] =
 	"Provides the ADMIN command to show server administrator information";
 
-static int m_admin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int mr_admin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_admin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_admin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mr_admin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_admin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static void do_admin(struct Client *source_p);
 
 static void admin_spy(struct Client *);
@@ -63,7 +63,7 @@ DECLARE_MODULE_AV2(admin, NULL, NULL, admin_clist, admin_hlist, NULL, NULL, NULL
  * mr_admin - ADMIN command handler
  *      parv[1] = servername
  */
-static int
+static void
 mr_admin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0L;
@@ -74,21 +74,19 @@ mr_admin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 			   me.name,
 			   EmptyString(source_p->name) ? "*" : source_p->name,
 			   "ADMIN");
-		return 0;
+		return;
 	}
 	else
 		last_used = rb_current_time();
 
 	do_admin(source_p);
-
-	return 0;
 }
 
 /*
  * m_admin - ADMIN command handler
  *      parv[1] = servername
  */
-static int
+static void
 m_admin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0L;
@@ -99,18 +97,16 @@ m_admin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		{
 			sendto_one(source_p, form_str(RPL_LOAD2HI),
 				   me.name, source_p->name, "ADMIN");
-			return 0;
+			return;
 		}
 		else
 			last_used = rb_current_time();
 
 		if(hunt_server(client_p, source_p, ":%s ADMIN :%s", 1, parc, parv) != HUNTED_ISME)
-			return 0;
+			return;
 	}
 
 	do_admin(source_p);
-
-	return 0;
 }
 
 
@@ -118,15 +114,13 @@ m_admin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
  * ms_admin - ADMIN command handler, used for OPERS as well
  *      parv[1] = servername
  */
-static int
+static void
 ms_admin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(hunt_server(client_p, source_p, ":%s ADMIN :%s", 1, parc, parv) != HUNTED_ISME)
-		return 0;
+		return;
 
 	do_admin(source_p);
-
-	return 0;
 }
 
 

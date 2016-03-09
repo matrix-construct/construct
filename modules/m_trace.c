@@ -43,7 +43,7 @@
 static const char trace_desc[] =
 	"Provides the TRACE command to trace the route to a client or server";
 
-static int m_trace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_trace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 static void trace_spy(struct Client *, struct Client *);
 
@@ -70,14 +70,14 @@ static const char *empty_sockhost = "255.255.255.255";
  * m_trace
  *      parv[1] = servername
  */
-static int
+static void
 m_trace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p = NULL;
 	struct Class *cltmp;
 	const char *tname;
-	int doall = 0;
-	int cnt = 0, wilds, dow;
+	bool doall = false, wilds, dow;
+	int cnt = 0;
 	rb_dlink_node *ptr;
 
 	if(parc > 1)
@@ -88,7 +88,7 @@ m_trace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		{
 			if(hunt_server(client_p, source_p, ":%s TRACE %s :%s", 2, parc, parv) !=
 					HUNTED_ISME)
-				return 0;
+				return;
 		}
 	}
 	else
@@ -134,27 +134,27 @@ m_trace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 						   ac2ptr ? ac2ptr->name : tname,
 						   ac2ptr ? ac2ptr->from->name : "EEK!");
 
-			return 0;
+			return;
 		}
 
 		case HUNTED_ISME:
 			break;
 
 		default:
-			return 0;
+			return;
 		}
 	}
 
 	if(match(tname, me.name))
 	{
-		doall = 1;
+		doall = true;
 	}
 	/* if theyre tracing our SID, we need to move tname to our name so
 	 * we dont give the sid in ENDOFTRACE
 	 */
 	else if(!MyClient(source_p) && !strcmp(tname, me.id))
 	{
-		doall = 1;
+		doall = true;
 		tname = me.name;
 	}
 
@@ -162,7 +162,7 @@ m_trace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	dow = wilds || doall;
 
 	/* specific trace */
-	if(dow == 0)
+	if(!dow)
 	{
 		if(MyClient(source_p) || parc > 2)
 			target_p = find_named_person(tname);
@@ -182,7 +182,7 @@ m_trace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 
 		sendto_one_numeric(source_p, RPL_ENDOFTRACE,
 				   form_str(RPL_ENDOFTRACE), tname);
-		return 0;
+		return;
 	}
 
 	trace_spy(source_p, NULL);
@@ -223,7 +223,7 @@ m_trace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 
 		sendto_one_numeric(source_p, RPL_ENDOFTRACE,
 				   form_str(RPL_ENDOFTRACE), tname);
-		return 0;
+		return;
 	}
 
 	/* source_p is opered */
@@ -281,7 +281,7 @@ m_trace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		 */
 		sendto_one_numeric(source_p, RPL_ENDOFTRACE,
 				   form_str(RPL_ENDOFTRACE), tname);
-		return 0;
+		return;
 	}
 
 	if(doall)
@@ -298,8 +298,6 @@ m_trace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	}
 
 	sendto_one_numeric(source_p, RPL_ENDOFTRACE, form_str(RPL_ENDOFTRACE), tname);
-
-	return 0;
 }
 
 /*

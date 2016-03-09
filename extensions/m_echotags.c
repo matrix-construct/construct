@@ -4,7 +4,7 @@
 #include "ircd.h"
 #include "send.h"
 
-static int m_echotags(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void m_echotags(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message echotags_msgtab = {
 	"ECHOTAGS", 0, 0, 0, 0,
@@ -17,7 +17,7 @@ static const char echotags_desc[] = "A test module for tags";
 
 DECLARE_MODULE_AV2(echotags, NULL, NULL, echotags_clist, NULL, NULL, NULL, NULL, echotags_desc);
 
-static int
+static void
 m_echotags(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	int i;
@@ -33,8 +33,6 @@ m_echotags(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 		else
 			sendto_one_notice(source_p, ":*** %d: %s", i, tag->key);
 	}
-
-	return 0;
 }
 
 

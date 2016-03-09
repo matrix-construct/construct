@@ -39,7 +39,7 @@ static const char userhost_desc[] =
 
 static char buf[BUFSIZE];
 
-static int m_userhost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_userhost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message userhost_msgtab = {
 	"USERHOST", 0, 0, 0, 0,
@@ -55,7 +55,7 @@ DECLARE_MODULE_AV2(userhost, NULL, NULL, userhost_clist, NULL, NULL, NULL, NULL,
  * the need for complicated requests like WHOIS. It returns user/host
  * information only (no spurious AWAY labels or channels).
  */
-static int
+static void
 m_userhost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
@@ -111,6 +111,4 @@ m_userhost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 	}
 
 	sendto_one(source_p, "%s", buf);
-
-	return 0;
 }

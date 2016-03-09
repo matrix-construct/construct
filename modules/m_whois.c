@@ -51,8 +51,8 @@ static const char whois_desc[] =
 static void do_whois(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static void single_whois(struct Client *source_p, struct Client *target_p, int operspy);
 
-static int m_whois(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_whois(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_whois(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_whois(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message whois_msgtab = {
 	"WHOIS", 0, 0, 0, 0,
@@ -77,7 +77,7 @@ DECLARE_MODULE_AV2(whois, NULL, NULL, whois_clist, whois_hlist, NULL, NULL, NULL
  * m_whois
  *      parv[1] = nickname masklist
  */
-static int
+static void
 m_whois(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
@@ -88,7 +88,7 @@ m_whois(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		{
 			sendto_one(source_p, form_str(ERR_NONICKNAMEGIVEN),
 					me.name, source_p->name);
-			return 0;
+			return;
 		}
 
 		if(!IsOper(source_p))
@@ -100,7 +100,7 @@ m_whois(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 					   me.name, source_p->name, "WHOIS");
 				sendto_one_numeric(source_p, RPL_ENDOFWHOIS,
 						   form_str(RPL_ENDOFWHOIS), parv[2]);
-				return 0;
+				return;
 			}
 			else
 				last_used = rb_current_time();
@@ -108,14 +108,12 @@ m_whois(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 
 		if(hunt_server(client_p, source_p, ":%s WHOIS %s :%s", 1, parc, parv) !=
 		   HUNTED_ISME)
-			return 0;
+			return;
 
 		parv[1] = parv[2];
 
 	}
 	do_whois(client_p, source_p, parc, parv);
-
-	return 0;
 }
 
 /*
@@ -123,7 +121,7 @@ m_whois(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
  *      parv[1] = server to reply
  *      parv[2] = nickname to whois
  */
-static int
+static void
 ms_whois(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
@@ -136,7 +134,7 @@ ms_whois(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	{
 		sendto_one(source_p, form_str(ERR_NONICKNAMEGIVEN),
 				me.name, source_p->name);
-		return 0;
+		return;
 	}
 
 	/* check if parv[1] exists */
@@ -145,7 +143,7 @@ ms_whois(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		sendto_one_numeric(source_p, ERR_NOSUCHSERVER,
 				   form_str(ERR_NOSUCHSERVER),
 				   IsDigit(parv[1][0]) ? "*" : parv[1]);
-		return 0;
+		return;
 	}
 
 	/* if parv[1] isnt my client, or me, someone else is supposed
@@ -156,7 +154,7 @@ ms_whois(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		sendto_one(target_p, ":%s WHOIS %s :%s",
 			   get_id(source_p, target_p),
 			   get_id(target_p, target_p), parv[2]);
-		return 0;
+		return;
 	}
 
 	/* ok, the target is either us, or a client on our server, so perform the whois
@@ -165,8 +163,6 @@ ms_whois(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	 */
 	parv[1] = parv[2];
 	do_whois(client_p, source_p, parc, parv);
-
-	return 0;
 }
 
 /* do_whois
@@ -215,7 +211,6 @@ do_whois(struct Client *client_p, struct Client *source_p, int parc, const char 
 
 	sendto_one_numeric(source_p, RPL_ENDOFWHOIS,
 			   form_str(RPL_ENDOFWHOIS), parv[1]);
-	return;
 }
 
 /*
@@ -421,6 +416,4 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 		call_hook(doing_whois_hook, &hdata);
 	else
 		call_hook(doing_whois_global_hook, &hdata);
-
-	return;
 }

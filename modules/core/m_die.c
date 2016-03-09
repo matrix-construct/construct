@@ -38,9 +38,9 @@
 
 static const char die_desc[] = "Provides the DIE command to allow an operator to shutdown a server";
 
-static int mo_die(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int me_die(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int do_die(struct Client *, const char *);
+static void mo_die(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_die(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void do_die(struct Client *, const char *);
 
 static struct Message die_msgtab = {
 	"DIE", 0, 0, 0, 0,
@@ -54,19 +54,19 @@ DECLARE_MODULE_AV2(die, NULL, NULL, die_clist, NULL, NULL, NULL, NULL, die_desc)
 /*
  * mo_die - DIE command handler
  */
-static int
+static void
 mo_die(struct MsgBuf *msgbuf_p __unused, struct Client *client_p __unused, struct Client *source_p, int parc, const char *parv[])
 {
 	if(!IsOperDie(source_p))
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "die");
-		return 0;
+		return;
 	}
 
 	if(parc < 2 || EmptyString(parv[1]))
 	{
 		sendto_one_notice(source_p, ":Need server name /die %s", me.name);
-		return 0;
+		return;
 	}
 
 	if(parc > 2)
@@ -76,42 +76,40 @@ mo_die(struct MsgBuf *msgbuf_p __unused, struct Client *client_p __unused, struc
 		if (!server_p)
 		{
 			sendto_one_numeric(source_p, ERR_NOSUCHSERVER, form_str(ERR_NOSUCHSERVER), parv[2]);
-			return 0;
+			return;
 		}
 
 		if (!IsMe(server_p))
 		{
 			sendto_one(server_p, ":%s ENCAP %s DIE %s", source_p->name, parv[2], parv[1]);
-			return 0;
+			return;
 		}
 	}
 
-        return do_die(source_p, parv[1]);
+        do_die(source_p, parv[1]);
 }
 
-static int
+static void
 me_die(struct MsgBuf *msgbuf_p __unused, struct Client *client_p __unused, struct Client *source_p, int parc, const char *parv[])
 {
 	if(!find_shared_conf(source_p->username, source_p->host, source_p->servptr->name, SHARED_DIE))
 	{
 		sendto_one_notice(source_p, ":*** You do not have an appropriate shared block to "
 				"remotely shut down this server.");
-		return 0;
+		return;
 	}
 
-	return do_die(source_p, parv[1]);
+	do_die(source_p, parv[1]);
 }
 
-static int
+static void
 do_die(struct Client *source_p, const char *servername)
 {
 	if(irccmp(servername, me.name))
 	{
 		sendto_one_notice(source_p, ":Mismatch on /die %s", me.name);
-		return 0;
+		return;
 	}
 
 	ircd_shutdown(get_client_name(source_p, HIDE_IP));
-
-	return 0;
 }

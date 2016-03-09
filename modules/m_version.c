@@ -39,8 +39,8 @@ static const char version_desc[] =
 
 static char *confopts(void);
 
-static int m_version(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int mo_version(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_version(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_version(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message version_msgtab = {
 	"VERSION", 0, 0, 0, 0,
@@ -55,7 +55,7 @@ DECLARE_MODULE_AV2(version, NULL, NULL, version_clist, NULL, NULL, NULL, NULL, v
  * m_version - VERSION command handler
  *      parv[1] = remote server
  */
-static int
+static void
 m_version(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0L;
@@ -67,13 +67,13 @@ m_version(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 			/* safe enough to give this on a local connect only */
 			sendto_one(source_p, form_str(RPL_LOAD2HI),
 				   me.name, source_p->name, "VERSION");
-			return 0;
+			return;
 		}
 		else
 			last_used = rb_current_time();
 
 		if(hunt_server(client_p, source_p, ":%s VERSION :%s", 1, parc, parv) != HUNTED_ISME)
-			return 0;
+			return;
 	}
 
 	sendto_one_numeric(source_p, RPL_VERSION, form_str(RPL_VERSION),
@@ -85,15 +85,13 @@ m_version(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 			   ServerInfo.sid);
 
 	show_isupport(source_p);
-
-	return 0;
 }
 
 /*
  * mo_version - VERSION command handler
  *      parv[1] = remote server
  */
-static int
+static void
 mo_version(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(hunt_server(client_p, source_p, ":%s VERSION :%s", 1, parc, parv) == HUNTED_ISME)
@@ -107,8 +105,6 @@ mo_version(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 				   ServerInfo.sid);
 		show_isupport(source_p);
 	}
-
-	return 0;
 }
 
 /* confopts()

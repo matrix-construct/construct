@@ -40,9 +40,9 @@
 static const char locops_desc[] =
 	"Provides the LOCOPS command to send a message to all local operators";
 
-static int m_locops(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_locops(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int me_locops(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_locops(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_locops(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_locops(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message locops_msgtab = {
 	"LOCOPS", 0, 0, 0, 0,
@@ -58,7 +58,7 @@ DECLARE_MODULE_AV2(locops, NULL, NULL, locops_clist, NULL, NULL, NULL, NULL, loc
  * (write to *all* local opers currently online)
  *      parv[1] = message text
  */
-static int
+static void
 m_locops(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	sendto_wallops_flags(UMODE_LOCOPS, source_p, "LOCOPS - %s", parv[1]);
@@ -66,11 +66,9 @@ m_locops(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	if(rb_dlink_list_length(&cluster_conf_list) > 0)
 		cluster_generic(source_p, "LOCOPS", SHARED_LOCOPS, CAP_CLUSTER,
 				":%s", parv[1]);
-
-	return 0;
 }
 
-static int
+static void
 ms_locops(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* source_p  parv[1]      parv[2]
@@ -80,24 +78,20 @@ ms_locops(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 				":%s", parv[2]);
 
 	if(!match(parv[1], me.name))
-		return 0;
+		return;
 
 	if(find_shared_conf("*", "*", source_p->servptr->name, SHARED_LOCOPS))
 		sendto_wallops_flags(UMODE_LOCOPS, source_p, "SLOCOPS - %s", parv[2]);
-
-	return 0;
 }
 
-static int
+static void
 me_locops(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 		int parc, const char *parv[])
 {
 	if(!IsPerson(source_p))
-		return 0;
+		return;
 
 	if(find_shared_conf("*", "*", source_p->servptr->name, SHARED_LOCOPS))
 		sendto_wallops_flags(UMODE_LOCOPS, source_p, "SLOCOPS - %s", parv[1]);
-
-	return 0;
 }
 

@@ -45,8 +45,8 @@
 static const char tb_desc[] =
 	"Provides TS6 TB and ETB commands for topic bursting between servers";
 
-static int ms_tb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int ms_etb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void ms_tb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void ms_etb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message tb_msgtab = {
 	"TB", 0, 0, 0, 0,
@@ -68,7 +68,7 @@ DECLARE_MODULE_AV2(tb, NULL, NULL, tb_clist, NULL, NULL, NULL, NULL, tb_desc);
  * parv[3] - optional topicwho/topic
  * parv[4] - topic
  */
-static int
+static void
 ms_tb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr;
@@ -80,7 +80,7 @@ ms_tb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	chptr = find_channel(parv[1]);
 
 	if(chptr == NULL)
-		return 0;
+		return;
 
 	newtopicts = atol(parv[2]);
 
@@ -102,7 +102,7 @@ ms_tb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	}
 
 	if (EmptyString(newtopic))
-		return 0;
+		return;
 
 	if(chptr->topic == NULL || chptr->topic_time > newtopicts)
 	{
@@ -111,7 +111,7 @@ ms_tb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 		 * same topic just drop the message --fl
 		 */
 		if(chptr->topic != NULL && strcmp(chptr->topic, newtopic) == 0)
-			return 0;
+			return;
 
 		set_channel_topic(chptr, newtopic, newtopicwho, newtopicts);
 		sendto_channel_local(ALL_MEMBERS, chptr, ":%s TOPIC %s :%s",
@@ -122,8 +122,6 @@ ms_tb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 			      ConfigChannel.burst_topicwho ? chptr->topic_info : "",
 			      ConfigChannel.burst_topicwho ? " " : "", chptr->topic);
 	}
-
-	return 0;
 }
 
 /* ms_etb()
@@ -134,7 +132,7 @@ ms_tb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
  * parv[4] - topicwho
  * parv[5] - topic
  */
-static int
+static void
 ms_etb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr;
@@ -148,7 +146,7 @@ ms_etb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 	chptr = find_channel(parv[2]);
 
 	if(chptr == NULL)
-		return 0;
+		return;
 
 	newtopicts = atol(parv[3]);
 
@@ -250,6 +248,4 @@ ms_etb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 				      me.id, chptr->chname, chptr->chname);
 		}
 	}
-
-	return 0;
 }

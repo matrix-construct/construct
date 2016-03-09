@@ -54,17 +54,17 @@
 static const char xline_desc[] =
 	"Provides management of GECOS bans via (UN)XLINE command";
 
-static int mo_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int ms_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int me_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int mo_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
+static void mo_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void ms_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void me_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void mo_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
 		      const char *parv[]);
-static int ms_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
+static void ms_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
 		      const char *parv[]);
-static int me_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
+static void me_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
 		      const char *parv[]);
 
-static int valid_xline(struct Client *, const char *, const char *);
+static bool valid_xline(struct Client *, const char *, const char *);
 static void apply_xline(struct Client *client_p, const char *name,
 			const char *reason, int temp_time, int propagated);
 static void propagate_xline(struct Client *source_p, const char *target,
@@ -98,7 +98,7 @@ DECLARE_MODULE_AV2(xline, NULL, NULL, xline_clist, NULL, NULL, NULL, NULL, xline
  * parv[2] - optional type/reason
  * parv[3] - reason
  */
-static int
+static void
 mo_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct ConfItem *aconf;
@@ -112,7 +112,7 @@ mo_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	if(!IsOperXline(source_p))
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "xline");
-		return 0;
+		return;
 	}
 
 	if((temp_time = valid_temp_time(parv[loc])) >= 0)
@@ -131,7 +131,7 @@ mo_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		{
 			sendto_one(source_p, form_str(ERR_NOPRIVS),
 				   me.name, source_p->name, "remoteban");
-			return 0;
+			return;
 		}
 
 		target_server = parv[loc + 1];
@@ -142,7 +142,7 @@ mo_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	{
 		sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS),
 			   me.name, source_p->name, "XLINE");
-		return 0;
+		return;
 	}
 
 	reason = parv[loc];
@@ -152,7 +152,7 @@ mo_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		propagate_xline(source_p, target_server, temp_time, name, "2", reason);
 
 		if(!match(target_server, me.name))
-			return 0;
+			return;
 
 		/* Set as local-only. */
 		propagated = 0;
@@ -164,28 +164,26 @@ mo_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	{
 		sendto_one(source_p, ":%s NOTICE %s :[%s] already X-Lined by [%s] - %s",
 			   me.name, source_p->name, name, aconf->host, aconf->passwd);
-		return 0;
+		return;
 	}
 
 	if(!valid_xline(source_p, name, reason))
-		return 0;
+		return;
 
 	if(propagated && temp_time == 0)
 	{
 		sendto_one_notice(source_p, ":Cannot set a permanent global ban");
-		return 0;
+		return;
 	}
 
 	apply_xline(source_p, name, reason, temp_time, propagated);
-
-	return 0;
 }
 
 /* ms_xline()
  *
  * handles a remote xline
  */
-static int
+static void
 ms_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* parv[0]  parv[1]      parv[2]  parv[3]  parv[4]
@@ -194,25 +192,23 @@ ms_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	propagate_xline(source_p, parv[1], 0, parv[2], parv[3], parv[4]);
 
 	if(!IsPerson(source_p))
-		return 0;
+		return;
 
 	/* destined for me? */
 	if(!match(parv[1], me.name))
-		return 0;
+		return;
 
 	handle_remote_xline(source_p, 0, parv[2], parv[4]);
-	return 0;
 }
 
-static int
+static void
 me_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* time name type :reason */
 	if(!IsPerson(source_p))
-		return 0;
+		return;
 
 	handle_remote_xline(source_p, atoi(parv[1]), parv[2], parv[4]);
-	return 0;
 }
 
 static void
@@ -245,14 +241,14 @@ handle_remote_xline(struct Client *source_p, int temp_time, const char *name, co
  * outputs	-
  * side effects - checks the xline for validity, erroring if needed
  */
-static int
+static bool
 valid_xline(struct Client *source_p, const char *gecos, const char *reason)
 {
 	if(EmptyString(reason))
 	{
 		sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS),
 			   get_id(&me, source_p), get_id(source_p, source_p), "XLINE");
-		return 0;
+		return false;
 	}
 
 	if(!valid_wild_card_simple(gecos))
@@ -261,10 +257,10 @@ valid_xline(struct Client *source_p, const char *gecos, const char *reason)
 				  ":Please include at least %d non-wildcard "
 				  "characters with the xline",
 				  ConfigFileEntry.min_nonwildcard_simple);
-		return 0;
+		return false;
 	}
 
-	return 1;
+	return true;
 }
 
 void
@@ -386,7 +382,7 @@ cluster_xline(struct Client *source_p, int temp_time, const char *name, const ch
  *
  * parv[1] - thing to unxline
  */
-static int
+static void
 mo_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	int propagated = 1;
@@ -394,7 +390,7 @@ mo_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 	if(!IsOperXline(source_p))
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "xline");
-		return 0;
+		return;
 	}
 
 	if(parc == 4 && !(irccmp(parv[2], "ON")))
@@ -403,28 +399,26 @@ mo_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 		{
 			sendto_one(source_p, form_str(ERR_NOPRIVS),
 				   me.name, source_p->name, "remoteban");
-			return 0;
+			return;
 		}
 
 		propagate_generic(source_p, "UNXLINE", parv[3], CAP_CLUSTER, "%s", parv[1]);
 
 		if(match(parv[3], me.name) == 0)
-			return 0;
+			return;
 
 		propagated = 0;
 	}
 	/* cluster{} moved to remove_xline */
 
 	remove_xline(source_p, parv[1], propagated);
-
-	return 0;
 }
 
 /* ms_unxline()
  *
  * handles a remote unxline
  */
-static int
+static void
 ms_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* parv[0]  parv[1]        parv[2]
@@ -433,24 +427,22 @@ ms_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 	propagate_generic(source_p, "UNXLINE", parv[1], CAP_CLUSTER, "%s", parv[2]);
 
 	if(!match(parv[1], me.name))
-		return 0;
+		return;
 
 	if(!IsPerson(source_p))
-		return 0;
+		return;
 
 	handle_remote_unxline(source_p, parv[2]);
-	return 0;
 }
 
-static int
+static void
 me_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* name */
 	if(!IsPerson(source_p))
-		return 0;
+		return;
 
 	handle_remote_unxline(source_p, parv[1]);
-	return 0;
 }
 
 static void
@@ -461,8 +453,6 @@ handle_remote_unxline(struct Client *source_p, const char *name)
 		return;
 
 	remove_xline(source_p, name, 0);
-
-	return;
 }
 
 static void
@@ -544,6 +534,4 @@ remove_xline(struct Client *source_p, const char *name, int propagated)
 		cluster_generic(source_p, "UNXLINE", SHARED_UNXLINE, CAP_CLUSTER, "%s", name);
 
 	sendto_one_notice(source_p, ":No X-Line for %s", name);
-
-	return;
 }

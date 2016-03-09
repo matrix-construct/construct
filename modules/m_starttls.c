@@ -35,7 +35,7 @@
 
 static const char starttls_desc[] = "Provides the tls CAP and STARTTLS command";
 
-static int mr_starttls(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mr_starttls(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message starttls_msgtab = {
 	"STARTTLS", 0, 0, 0, 0,
@@ -59,7 +59,7 @@ mapi_cap_list_av2 starttls_cap_list[] = { { 0, NULL, NULL, NULL } };
 
 DECLARE_MODULE_AV2(starttls, NULL, NULL, starttls_clist, NULL, NULL, starttls_cap_list, NULL, starttls_desc);
 
-static int
+static void
 mr_starttls(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 #ifdef HAVE_LIBCRYPTO
@@ -67,25 +67,25 @@ mr_starttls(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 	rb_fde_t *F[2];
 
 	if (!MyConnect(client_p))
-		return 0;
+		return;
 
 	if (IsSSL(client_p))
 	{
 		sendto_one_numeric(client_p, ERR_STARTTLS, form_str(ERR_STARTTLS), "Nested TLS handshake not allowed");
-		return 1;
+		return;
 	}
 
 	if (!ssl_ok || !get_ssld_count())
 	{
 		sendto_one_numeric(client_p, ERR_STARTTLS, form_str(ERR_STARTTLS), "TLS is not configured");
-		return 1;
+		return;
 	}
 
 	if (rb_socketpair(AF_UNIX, SOCK_STREAM, 0, &F[0], &F[1], "STARTTLS ssld session") == -1)
 	{
 		ilog_error("error creating SSL/TLS socketpair for ssld slave");
 		sendto_one_numeric(client_p, ERR_STARTTLS, form_str(ERR_STARTTLS), "Unable to create SSL/TLS socketpair for ssld offload slave");
-		return 1;
+		return;
 	}
 
 	s_assert(client_p->localClient != NULL);
@@ -103,11 +103,7 @@ mr_starttls(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 		client_p->localClient->ssl_ctl = ctl;
 		SetSSL(client_p);
 	}
-	else
-		return 1;
-
-#else
+#else /* HAVE_LIBCRYPTO */
 	sendto_one_numeric(client_p, ERR_STARTTLS, form_str(ERR_STARTTLS), "TLS is not configured");
-#endif
-	return 0;
+#endif /* HAVE_LIBCRYPTO */
 }

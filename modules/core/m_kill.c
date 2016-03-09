@@ -43,8 +43,8 @@ static const char kill_desc[] = "Provides the KILL command to remove a user from
 static int h_can_kill;
 static char buf[BUFSIZE];
 
-static int ms_kill(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int mo_kill(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_kill(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_kill(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static void relay_kill(struct Client *, struct Client *, struct Client *,
 		       const char *, const char *);
 
@@ -67,7 +67,7 @@ DECLARE_MODULE_AV2(kill, NULL, NULL, kill_clist, kill_hlist, NULL, NULL, NULL, k
 **      parv[1] = kill victim
 **      parv[2] = kill path
 */
-static int
+static void
 mo_kill(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
@@ -81,7 +81,7 @@ mo_kill(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	if(!IsOperLocalKill(source_p))
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "local_kill");
-		return 0;
+		return;
 	}
 
 	if(!EmptyString(parv[2]))
@@ -109,7 +109,7 @@ mo_kill(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 			else
 				sendto_one_numeric(source_p, ERR_NOSUCHNICK,
 						   form_str(ERR_NOSUCHNICK), user);
-			return 0;
+			return;
 		}
 		sendto_one_notice(source_p, ":KILL changed from %s to %s", user, target_p->name);
 	}
@@ -119,7 +119,7 @@ mo_kill(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		sendto_one_notice(source_p, ":Nick %s is not on your server "
 				            "and you do not have the global_kill flag",
 				target_p->name);
-		return 0;
+		return;
 	}
 
 	/* Last chance to stop the kill */
@@ -130,7 +130,7 @@ mo_kill(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 
 	if (moduledata.approved == 0)
 		/* The callee should have sent a message. */
-		return 0;
+		return;
 
 	if(MyConnect(target_p))
 		sendto_one(target_p, ":%s!%s@%s KILL %s :%s",
@@ -168,8 +168,6 @@ mo_kill(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	sprintf(buf, "Killed (%s (%s))", source_p->name, reason);
 
 	exit_client(client_p, target_p, source_p, buf);
-
-	return 0;
 }
 
 /*
@@ -177,7 +175,7 @@ mo_kill(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
  *      parv[1] = kill victim
  *      parv[2] = kill path and reason
  */
-static int
+static void
 ms_kill(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
@@ -225,7 +223,7 @@ ms_kill(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		{
 			sendto_one_numeric(source_p, ERR_NOSUCHNICK,
 					   form_str(ERR_NOSUCHNICK), IsDigit(*user) ? "*" : user);
-			return 0;
+			return;
 		}
 		sendto_one_notice(source_p, ":KILL changed from %s to %s", user, target_p->name);
 	}
@@ -233,7 +231,7 @@ ms_kill(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	if(IsServer(target_p) || IsMe(target_p))
 	{
 		sendto_one_numeric(source_p, ERR_CANTKILLSERVER, form_str(ERR_CANTKILLSERVER));
-		return 0;
+		return;
 	}
 
 	if(MyConnect(target_p))
@@ -287,8 +285,6 @@ ms_kill(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	sprintf(buf, "Killed (%s %s)", source_p->name, reason);
 
 	exit_client(client_p, target_p, source_p, buf);
-
-	return 0;
 }
 
 static void

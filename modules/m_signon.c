@@ -51,8 +51,8 @@
 
 static const char signon_desc[] = "Provides account login/logout support for services";
 
-static int me_svslogin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_signon(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_svslogin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_signon(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 static void send_signon(struct Client *, struct Client *, const char *, const char *, const char *, unsigned int, const char *);
 
@@ -75,7 +75,7 @@ DECLARE_MODULE_AV2(signon, NULL, NULL, signon_clist, NULL, NULL, NULL, NULL, sig
 #define USER_VALID	2
 #define HOST_VALID	4
 
-static int
+static bool
 clean_username(const char *username)
 {
 	int len = 0;
@@ -85,16 +85,16 @@ clean_username(const char *username)
 		len++;
 
 		if(!IsUserChar(*username))
-			return 0;
+			return false;
 	}
 
 	if(len > USERLEN)
-		return 0;
+		return false;
 
-	return 1;
+	return true;
 }
 
-static int
+static bool
 clean_host(const char *host)
 {
 	int len = 0;
@@ -104,16 +104,16 @@ clean_host(const char *host)
 		len++;
 
 		if(!IsHostChar(*host))
-			return 0;
+			return false;
 	}
 
 	if(len > HOSTLEN)
-		return 0;
+		return false;
 
-	return 1;
+	return true;
 }
 
-static int
+static void
 me_svslogin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
@@ -126,14 +126,14 @@ me_svslogin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			"Non-service server %s attempting to execute services-only command SVSLOGIN", source_p->name);
-		return 0;
+		return;
 	}
 
 	if((target_p = find_client(parv[1])) == NULL)
-		return 0;
+		return;
 
 	if(!MyClient(target_p) && !IsUnknown(target_p))
-		return 0;
+		return;
 
 	if(clean_nick(parv[2], 0))
 	{
@@ -175,7 +175,7 @@ me_svslogin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 
 	/* Login (mostly) follows nick rules. */
 	if(*login && !clean_nick(login, 0))
-		return 0;
+		return;
 
 	if((exist_p = find_person(nick)) && target_p != exist_p)
 	{
@@ -195,7 +195,9 @@ me_svslogin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 		snprintf(buf, sizeof(buf), "Killed (%s (Nickname regained by services))",
 			me.name);
 		exit_client(NULL, exist_p, &me, buf);
-	}else if((exist_p = find_client(nick)) && IsUnknown(exist_p) && exist_p != target_p) {
+	}
+	else if((exist_p = find_client(nick)) && IsUnknown(exist_p) && exist_p != target_p)
+	{
 		exit_client(NULL, exist_p, &me, "Overridden");
 	}
 
@@ -239,11 +241,9 @@ me_svslogin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 		snprintf(note, NICKLEN + 10, "Nick: %s", target_p->name);
 		rb_note(target_p->localClient->F, note);
 	}
-
-	return 0;
 }
 
-static int
+static void
 ms_signon(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
@@ -266,7 +266,7 @@ ms_signon(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 				me.name);
 		source_p->flags |= FLAGS_KILLED;
 		exit_client(NULL, source_p, &me, "Bad nickname from SIGNON");
-		return 0;
+		return;
 	}
 
 	if(!clean_username(parv[2]) || !clean_host(parv[3]))
@@ -284,7 +284,7 @@ ms_signon(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 				me.name);
 		source_p->flags |= FLAGS_KILLED;
 		exit_client(NULL, source_p, &me, "Bad user@host from SIGNON");
-		return 0;
+		return;
 	}
 
 	newts = atol(parv[4]);
@@ -296,7 +296,7 @@ ms_signon(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 		if (clean_nick(parv[5], 0))
 			rb_strlcpy(login, parv[5], NICKLEN + 1);
 		else
-			return 0;
+			return;
 	}
 	else
 		login[0] = '\0';
@@ -331,7 +331,7 @@ ms_signon(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 				exit_client(NULL, target_p, &me, "Nick collision(new)");
 				source_p->flags |= FLAGS_KILLED;
 				exit_client(client_p, source_p, &me, "Nick collision(old)");
-				return 0;
+				return;
 			}
 			else
 			{
@@ -367,7 +367,7 @@ ms_signon(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 						exit_client(client_p, source_p, &me, "Nick collision(old)");
 					else
 						exit_client(client_p, source_p, &me, "Nick collision(new)");
-					return 0;
+					return;
 				}
 				else
 				{
@@ -400,7 +400,6 @@ ms_signon(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 	}
 
 	send_signon(client_p, source_p, parv[1], parv[2], parv[3], newts, login);
-	return 0;
 }
 
 static void

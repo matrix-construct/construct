@@ -42,7 +42,7 @@
 
 static const char part_desc[] = "Provides the PART command to leave a channel";
 
-static int m_part(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_part(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message part_msgtab = {
 	"PART", 0, 0, 0, 0,
@@ -56,8 +56,8 @@ DECLARE_MODULE_AV2(part, NULL, NULL, part_clist, NULL, NULL, NULL, NULL, part_de
 static void part_one_client(struct Client *client_p,
 			    struct Client *source_p, char *name,
 			    const char *reason);
-static int can_send_part(struct Client *source_p, struct Channel *chptr, struct membership *msptr);
-static int do_message_hook(struct Client *source_p, struct Channel *chptr, const char **reason);
+static bool can_send_part(struct Client *source_p, struct Channel *chptr, struct membership *msptr);
+static bool do_message_hook(struct Client *source_p, struct Channel *chptr, const char **reason);
 
 
 /*
@@ -65,7 +65,7 @@ static int do_message_hook(struct Client *source_p, struct Channel *chptr, const
 **      parv[1] = channel
 **      parv[2] = reason
 */
-static int
+static void
 m_part(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	char *p, *name;
@@ -88,7 +88,6 @@ m_part(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		part_one_client(client_p, source_p, name, reason);
 		name = rb_strtok_r(NULL, ",", &p);
 	}
-	return 0;
 }
 
 /*
@@ -158,19 +157,19 @@ part_one_client(struct Client *client_p, struct Client *source_p, char *name, co
  *    - channel being parted
  *    - membership pointer
  * outputs:
- *    - 1 if message allowed
- *    - 0 if message denied
+ *    - true if message allowed
+ *    - false if message denied
  * side effects:
  *    - none.
  */
-static int
+static bool
 can_send_part(struct Client *source_p, struct Channel *chptr, struct membership *msptr)
 {
 	if (!can_send(chptr, source_p, msptr))
-		return 0;
+		return false;
 	/* Allow chanops to bypass anti_spam_exit_message_time for part messages. */
 	if (is_chanop(msptr))
-		return 1;
+		return true;
 	return (source_p->localClient->firsttime + ConfigFileEntry.anti_spam_exit_message_time) < rb_current_time();
 }
 
@@ -182,12 +181,12 @@ can_send_part(struct Client *source_p, struct Channel *chptr, struct membership 
  *    - channel being parted
  *    - pointer to reason
  * outputs:
- *    - 1 if message is allowed
- *    - 0 if message is denied or message is now empty
+ *    - true if message is allowed
+ *    - false if message is denied or message is now empty
  * side effects:
  *    - reason may be modified.
  */
-static int
+static bool
 do_message_hook(struct Client *source_p, struct Channel *chptr, const char **reason)
 {
 	hook_data_privmsg_channel hdata;

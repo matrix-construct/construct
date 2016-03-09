@@ -43,7 +43,7 @@ static const char monitor_desc[] = "Provides the MONITOR facility for tracking u
 
 static int monitor_init(void);
 static void monitor_deinit(void);
-static int m_monitor(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_monitor(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message monitor_msgtab = {
 	"MONITOR", 0, 0, 0, 0,
@@ -324,7 +324,7 @@ show_monitor_status(struct Client *client_p)
 		sendto_one(client_p, "%s", offbuf);
 }
 
-static int
+static void
 m_monitor(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	switch(parv[1][0])
@@ -334,7 +334,7 @@ m_monitor(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 			{
 				sendto_one(client_p, form_str(ERR_NEEDMOREPARAMS),
 						me.name, source_p->name, "MONITOR");
-				return 0;
+				return;
 			}
 
 			add_monitor(source_p, parv[2]);
@@ -344,7 +344,7 @@ m_monitor(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 			{
 				sendto_one(client_p, form_str(ERR_NEEDMOREPARAMS),
 						me.name, source_p->name, "MONITOR");
-				return 0;
+				return;
 			}
 
 			del_monitor(source_p, parv[2]);
@@ -368,6 +368,4 @@ m_monitor(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 		default:
 			break;
 	}
-
-	return 0;
 }

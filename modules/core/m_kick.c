@@ -39,7 +39,7 @@
 
 static const char kick_desc[] = "Provides the KICK command to remove a user from a channel";
 
-static int m_kick(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_kick(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 #define mg_kick { m_kick, 3 }
 
 struct Message kick_msgtab = {
@@ -57,7 +57,7 @@ DECLARE_MODULE_AV2(kick, NULL, NULL, kick_clist, NULL, NULL, NULL, NULL, kick_de
 **      parv[2] = client to kick
 **      parv[3] = kick comment
 */
-static int
+static void
 m_kick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct membership *msptr;
@@ -83,7 +83,7 @@ m_kick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 	if(chptr == NULL)
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL, form_str(ERR_NOSUCHCHANNEL), name);
-		return 0;
+		return;
 	}
 
 	if(!IsServer(source_p))
@@ -94,7 +94,7 @@ m_kick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		{
 			sendto_one_numeric(source_p, ERR_NOTONCHANNEL,
 					   form_str(ERR_NOTONCHANNEL), name);
-			return 0;
+			return;
 		}
 
 		if(get_channel_access(source_p, chptr, msptr, MODE_ADD, NULL) < CHFL_CHANOP)
@@ -103,7 +103,7 @@ m_kick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 			{
 				sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
 					   me.name, source_p->name, name);
-				return 0;
+				return;
 			}
 
 			/* If its a TS 0 channel, do it the old way */
@@ -124,7 +124,7 @@ m_kick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 
 	if(!(who = find_chasing(source_p, user, &chasing)))
 	{
-		return 0;
+		return;
 	}
 
 	msptr = find_channel_membership(chptr, who);
@@ -135,7 +135,7 @@ m_kick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		{
 			sendto_one(source_p, form_str(ERR_ISCHANSERVICE),
 				   me.name, source_p->name, who->name, chptr->chname);
-			return 0;
+			return;
 		}
 
 		if(MyClient(source_p))
@@ -152,7 +152,7 @@ m_kick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 			call_hook(h_can_kick, &hookdata);
 
 			if (!hookdata.approved)
-				return 0;
+				return;
 		}
 
 		comment = LOCAL_COPY((EmptyString(parv[3])) ? who->name : parv[3]);
@@ -183,6 +183,4 @@ m_kick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 	else if (MyClient(source_p))
 		sendto_one_numeric(source_p, ERR_USERNOTINCHANNEL,
 				   form_str(ERR_USERNOTINCHANNEL), user, name);
-
-	return 0;
 }

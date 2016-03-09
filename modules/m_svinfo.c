@@ -38,7 +38,7 @@
 static const char svinfo_desc[] =
 	"Provides TS6 SVINFO command to ensure version and clock synchronisation";
 
-static int ms_svinfo(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_svinfo(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 struct Message svinfo_msgtab = {
 	"SVINFO", 0, 0, 0, 0,
 	{mg_unreg, mg_ignore, mg_ignore, {ms_svinfo, 5}, mg_ignore, mg_ignore}
@@ -54,7 +54,7 @@ DECLARE_MODULE_AV2(svinfo, NULL, NULL, svinfo_clist, NULL, NULL, NULL, NULL, svi
  *      parv[3] = unused, send 0
  *      parv[4] = server's idea of UTC time
  */
-static int
+static void
 ms_svinfo(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	signed long deltat;
@@ -63,7 +63,7 @@ ms_svinfo(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 
 	/* SVINFO isnt remote. */
 	if(source_p != client_p)
-		return 0;
+		return;
 
 	if(TS_CURRENT < atoi(parv[2]) || atoi(parv[1]) < TS_MIN)
 	{
@@ -74,7 +74,7 @@ ms_svinfo(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 		snprintf(squitreason, sizeof squitreason, "Incompatible TS version (%s,%s)",
 				parv[1], parv[2]);
 		exit_client(source_p, source_p, source_p, squitreason);
-		return 0;
+		return;
 	}
 
 	/*
@@ -99,7 +99,7 @@ ms_svinfo(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 				(long) rb_current_time(), (long) theirtime, deltat);
 		disable_server_conf_autoconn(source_p->name);
 		exit_client(source_p, source_p, source_p, squitreason);
-		return 0;
+		return;
 	}
 
 	if(deltat > ConfigFileEntry.ts_warn_delta)
@@ -109,6 +109,4 @@ ms_svinfo(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 				     " (my TS=%ld, their TS=%ld, delta=%ld)",
 				     source_p->name, (long) rb_current_time(), (long) theirtime, deltat);
 	}
-
-	return 0;
 }

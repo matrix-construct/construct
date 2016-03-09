@@ -41,7 +41,9 @@
 
 static const char oper_desc[] = "Provides the OPER command to become an IRC operator";
 
-static int m_oper(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_oper(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+
+static bool match_oper_password(const char *password, struct oper_conf *oper_p);
 
 struct Message oper_msgtab = {
 	"OPER", 0, 0, 0, 0,
@@ -52,14 +54,12 @@ mapi_clist_av1 oper_clist[] = { &oper_msgtab, NULL };
 
 DECLARE_MODULE_AV2(oper, NULL, NULL, oper_clist, NULL, NULL, NULL, NULL, oper_desc);
 
-static int match_oper_password(const char *password, struct oper_conf *oper_p);
-
 /*
  * m_oper
  *      parv[1] = oper name
  *      parv[2] = oper password
  */
-static int
+static void
 m_oper(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct oper_conf *oper_p;
@@ -73,7 +73,7 @@ m_oper(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 	{
 		sendto_one(source_p, form_str(RPL_YOUREOPER), me.name, source_p->name);
 		send_oper_motd(source_p);
-		return 0;
+		return;
 	}
 
 	/* end the grace period */
@@ -97,7 +97,7 @@ m_oper(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 					     source_p->name, source_p->username, source_p->host);
 		}
 
-		return 0;
+		return;
 	}
 
 	if(IsOperConfNeedSSL(oper_p) && !IsSSLClient(source_p))
@@ -113,7 +113,7 @@ m_oper(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 					     "Failed OPER attempt - missing SSL/TLS by %s (%s@%s)",
 					     source_p->name, source_p->username, source_p->host);
 		}
-		return 0;
+		return;
 	}
 
 	if (oper_p->certfp != NULL)
@@ -131,7 +131,7 @@ m_oper(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 						     "Failed OPER attempt - client certificate fingerprint mismatch by %s (%s@%s)",
 						     source_p->name, source_p->username, source_p->host);
 			}
-			return 0;
+			return;
 		}
 	}
 
@@ -142,7 +142,7 @@ m_oper(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		ilog(L_OPERED, "OPER %s by %s!%s@%s (%s)",
 		     name, source_p->name, source_p->username, source_p->host,
 		     source_p->sockhost);
-		return 0;
+		return;
 	}
 	else
 	{
@@ -160,8 +160,6 @@ m_oper(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 					     source_p->name, source_p->username, source_p->host);
 		}
 	}
-
-	return 0;
 }
 
 /*
@@ -169,17 +167,17 @@ m_oper(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
  *
  * inputs       - pointer to given password
  *              - pointer to Conf
- * output       - YES or NO if match
+ * output       - true if match, false otherwise
  * side effects - none
  */
-static int
+static bool
 match_oper_password(const char *password, struct oper_conf *oper_p)
 {
 	const char *encr;
 
 	/* passwd may be NULL pointer. Head it off at the pass... */
 	if(EmptyString(oper_p->passwd))
-		return NO;
+		return false;
 
 	if(IsOperConfEncrypted(oper_p))
 	{
@@ -198,7 +196,7 @@ match_oper_password(const char *password, struct oper_conf *oper_p)
 		encr = password;
 
 	if(encr != NULL && strcmp(encr, oper_p->passwd) == 0)
-		return YES;
+		return true;
 	else
-		return NO;
+		return false;
 }

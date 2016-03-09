@@ -38,7 +38,7 @@
 
 static const char knock_desc[] = "Provides the KNOCK command to ask for an invite to an invite-only channel";
 
-static int m_knock(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_knock(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message knock_msgtab = {
 	"KNOCK", 0, 0, 0, 0,
@@ -75,7 +75,7 @@ DECLARE_MODULE_AV2(knock, _modinit, _moddeinit, knock_clist, NULL, NULL, NULL, N
  *  of these conditions.  Concept by Dianora <db@db.net> and written by
  *  <anonymous>
  */
-static int
+static void
 m_knock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr;
@@ -85,7 +85,7 @@ m_knock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	{
 		sendto_one(source_p, form_str(ERR_KNOCKDISABLED),
 			   me.name, source_p->name);
-		return 0;
+		return;
 	}
 
 	name = LOCAL_COPY(parv[1]);
@@ -98,7 +98,7 @@ m_knock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
 				   form_str(ERR_NOSUCHCHANNEL), name);
-		return 0;
+		return;
 	}
 
 	if(IsMember(source_p, chptr))
@@ -106,7 +106,7 @@ m_knock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		if(MyClient(source_p))
 			sendto_one(source_p, form_str(ERR_KNOCKONCHAN),
 				   me.name, source_p->name, name);
-		return 0;
+		return;
 	}
 
 	if(!((chptr->mode.mode & MODE_INVITEONLY) || (*chptr->mode.key) ||
@@ -115,7 +115,7 @@ m_knock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	{
 		sendto_one_numeric(source_p, ERR_CHANOPEN,
 				   form_str(ERR_CHANOPEN), name);
-		return 0;
+		return;
 	}
 
 	/* cant knock to a +p channel */
@@ -123,7 +123,7 @@ m_knock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	{
 		sendto_one_numeric(source_p, ERR_CANNOTSENDTOCHAN,
 				   form_str(ERR_CANNOTSENDTOCHAN), name);
-		return 0;
+		return;
 	}
 
 
@@ -135,7 +135,7 @@ m_knock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		{
 			sendto_one_numeric(source_p, ERR_CANNOTSENDTOCHAN,
 					   form_str(ERR_CANNOTSENDTOCHAN), name);
-			return 0;
+			return;
 		}
 
 		/* local flood protection:
@@ -147,13 +147,13 @@ m_knock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		{
 			sendto_one(source_p, form_str(ERR_TOOMANYKNOCK),
 					me.name, source_p->name, name, "user");
-			return 0;
+			return;
 		}
 		else if((chptr->last_knock + ConfigChannel.knock_delay_channel) > rb_current_time())
 		{
 			sendto_one(source_p, form_str(ERR_TOOMANYKNOCK),
 					me.name, source_p->name, name, "channel");
-			return 0;
+			return;
 		}
 
 		/* ok, we actually can send the knock, tell client */
@@ -175,6 +175,5 @@ m_knock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		      ":%s KNOCK %s", use_id(source_p), name);
 	sendto_server(client_p, chptr, CAP_KNOCK, CAP_TS6,
 		      ":%s KNOCK %s", source_p->name, name);
-	return 0;
 }
 

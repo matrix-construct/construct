@@ -72,7 +72,7 @@ DECLARE_MODULE_AV2(challenge, challenge_load, NULL, NULL, NULL, NULL, NULL, NULL
 static const char challenge_desc[] =
 	"Provides the challenge-response facility used for becoming an IRC operator";
 
-static int m_challenge(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_challenge(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 /* We have openssl support, so include /CHALLENGE */
 struct Message challenge_msgtab = {
@@ -84,7 +84,7 @@ mapi_clist_av1 challenge_clist[] = { &challenge_msgtab, NULL };
 
 DECLARE_MODULE_AV2(challenge, NULL, NULL, challenge_clist, NULL, NULL, NULL, NULL, challenge_desc);
 
-static int generate_challenge(char **r_challenge, char **r_response, RSA * key);
+static bool generate_challenge(char **r_challenge, char **r_response, RSA * key);
 
 static void
 cleanup_challenge(struct Client *target_p)
@@ -103,7 +103,7 @@ cleanup_challenge(struct Client *target_p)
  * m_challenge - generate RSA challenge for wouldbe oper
  * parv[1] = operator to challenge for, or +response
  */
-static int
+static void
 m_challenge(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct oper_conf *oper_p;
@@ -118,14 +118,14 @@ m_challenge(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 	{
 		sendto_one(source_p, form_str(RPL_YOUREOPER), me.name, source_p->name);
 		send_oper_motd(source_p);
-		return 0;
+		return;
 	}
 
 	if(*parv[1] == '+')
 	{
 		/* Ignore it if we aren't expecting this... -A1kmm */
 		if(!source_p->localClient->challenge)
-			return 0;
+			return;
 
 		if((rb_current_time() - source_p->localClient->chal_time) > CHALLENGE_EXPIRES)
 		{
@@ -140,7 +140,7 @@ m_challenge(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 						     source_p->name, source_p->username,
 						     source_p->host);
 			cleanup_challenge(source_p);
-			return 0;
+			return;
 		}
 
 		parv[1]++;
@@ -162,7 +162,7 @@ m_challenge(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 
 			rb_free(b_response);
 			cleanup_challenge(source_p);
-			return 0;
+			return;
 		}
 
 		rb_free(b_response);
@@ -184,7 +184,7 @@ m_challenge(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 						     "Failed CHALLENGE attempt - host mismatch by %s (%s@%s)",
 						     source_p->name, source_p->username,
 						     source_p->host);
-			return 0;
+			return;
 		}
 
 		cleanup_challenge(source_p);
@@ -194,7 +194,7 @@ m_challenge(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 		ilog(L_OPERED, "OPER %s by %s!%s@%s (%s)",
 		     source_p->localClient->opername, source_p->name,
 		     source_p->username, source_p->host, source_p->sockhost);
-		return 0;
+		return;
 	}
 
 	cleanup_challenge(source_p);
@@ -213,13 +213,13 @@ m_challenge(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 			sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
 					     "Failed CHALLENGE attempt - host mismatch by %s (%s@%s)",
 					     source_p->name, source_p->username, source_p->host);
-		return 0;
+		return;
 	}
 
 	if(!oper_p->rsa_pubkey)
 	{
 		sendto_one_notice(source_p, ":I'm sorry, PK authentication is not enabled for your oper{} block.");
-		return 0;
+		return;
 	}
 
 	if(IsOperConfNeedSSL(oper_p) && !IsSSLClient(source_p))
@@ -235,7 +235,7 @@ m_challenge(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 					     "Failed CHALLENGE attempt - missing SSL/TLS by %s (%s@%s)",
 					     source_p->name, source_p->username, source_p->host);
 		}
-		return 0;
+		return;
 	}
 
 	if (oper_p->certfp != NULL)
@@ -253,11 +253,11 @@ m_challenge(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 						     "Failed OPER attempt - client certificate fingerprint mismatch by %s (%s@%s)",
 						     source_p->name, source_p->username, source_p->host);
 			}
-			return 0;
+			return;
 		}
 	}
 
-	if(!generate_challenge(&challenge, &(source_p->localClient->challenge), oper_p->rsa_pubkey))
+	if(generate_challenge(&challenge, &(source_p->localClient->challenge), oper_p->rsa_pubkey))
 	{
 		char *chal = challenge;
 		source_p->localClient->chal_time = rb_current_time();
@@ -278,11 +278,9 @@ m_challenge(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 	}
 	else
 		sendto_one_notice(source_p, ":Failed to generate challenge.");
-
-	return 0;
 }
 
-static int
+static bool
 generate_challenge(char **r_challenge, char **r_response, RSA * rsa)
 {
 	SHA_CTX ctx;
@@ -293,7 +291,7 @@ generate_challenge(char **r_challenge, char **r_response, RSA * rsa)
 	int ret;
 
 	if(!rsa)
-		return -1;
+		return false;
 	if(rb_get_random(secret, CHALLENGE_SECRET_LENGTH))
 	{
 		SHA1_Init(&ctx);
@@ -309,7 +307,7 @@ generate_challenge(char **r_challenge, char **r_response, RSA * rsa)
 		{
 			*r_challenge = (char *)rb_base64_encode(tmp, ret);
 			rb_free(tmp);
-			return 0;
+			return true;
 		}
 
 		rb_free(tmp);
@@ -324,7 +322,7 @@ generate_challenge(char **r_challenge, char **r_response, RSA * rsa)
 		cnt++;
 	}
 
-	return (-1);
+	return false;
 }
 
 #endif /* HAVE_LIBCRYPTO */

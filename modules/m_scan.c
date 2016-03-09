@@ -52,8 +52,8 @@
 static const char scan_desc[] =
 	"Provides the SCAN command to show users that have a mode set or cleared";
 
-static int mo_scan(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int scan_umodes(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_scan(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void scan_umodes(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message scan_msgtab = {
 	"SCAN", 0, 0, 0, 0,
@@ -64,7 +64,7 @@ mapi_clist_av1 scan_clist[] = { &scan_msgtab, NULL };
 
 DECLARE_MODULE_AV2(scan, NULL, NULL, scan_clist, NULL, NULL, NULL, NULL, scan_desc);
 
-typedef int (*scan_handler)(struct MsgBuf *, struct Client *, struct Client *, int,
+typedef void (*scan_handler)(struct MsgBuf *, struct Client *, struct Client *, int,
 	const char **);
 
 struct scan_cmd {
@@ -84,7 +84,7 @@ static const char *spoofed_sockhost = "0";
  *      parv[1] = options [or target]
  *	parv[2] = [target]
  */
-static int
+static void
 mo_scan(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
 	const char *parv[])
 {
@@ -94,28 +94,25 @@ mo_scan(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	{
 		if (!irccmp(sptr->name, parv[1]))
 		{
-			if (sptr->operlevel == L_ADMIN &&
-				!IsOperAdmin(source_p))
-				return -1;
-			else
-				return sptr->handler(msgbuf_p, client_p, source_p, parc, parv);
+			if (!(sptr->operlevel == L_ADMIN && !IsOperAdmin(source_p)))
+				sptr->handler(msgbuf_p, client_p, source_p, parc, parv);
+
+			return;
 		}
 	}
 
 	sendto_one_notice(source_p, ":*** %s is not an implemented SCAN target",
 			  parv[1]);
-
-	return 0;
 }
 
-static int
+static void
 scan_umodes(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
 	const char *parv[])
 {
 	unsigned int allowed_umodes = 0, disallowed_umodes = 0;
 	int what = MODE_ADD;
 	int mode;
-	int list_users = YES;
+	bool list_users = true;
 	int list_max = 500;
 	int list_count = 0, count = 0;
 	const char *mask = NULL;
@@ -133,13 +130,13 @@ scan_umodes(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 			sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS),
 				me.name, source_p->name, "SCAN UMODES");
 
-		return -1;
+		return;
 	}
 
 	if (parv[2][0] != '+' && parv[2][0] != '-')
 	{
 		sendto_one_notice(source_p, ":SCAN UMODES: umodes parameter must start with '+' or '-'");
-		return -1;
+		return;
 	}
 
 	for (c = parv[2]; *c; c++)
@@ -166,9 +163,9 @@ scan_umodes(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 	for (i = 3; i < parc; i++)
 	{
 		if (!irccmp(parv[i], "no-list"))
-			list_users = NO;
+			list_users = false;
 		else if (!irccmp(parv[i], "list"))
-			list_users = YES;
+			list_users = true;
 		else if (!irccmp(parv[i], "global"))
 			target_list = &global_client_list;
 		else if (i < (parc - 1))
@@ -180,13 +177,13 @@ scan_umodes(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 			else
 			{
 				sendto_one_notice(source_p, ":SCAN UMODES: invalid parameters");
-				return -1;
+				return;
 			}
 		}
 		else
 		{
 			sendto_one_notice(source_p, ":SCAN UMODES: invalid parameters");
-			return -1;
+			return;
 		}
 	}
 	if (target_list == &global_client_list && list_users)
@@ -208,7 +205,7 @@ scan_umodes(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 		{
 			sendto_one(source_p, form_str(ERR_NOPRIVS),
 				   me.name, source_p->name, "oper_spy");
-			return -1;
+			return;
 		}
 	}
 
@@ -277,6 +274,4 @@ scan_umodes(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 
 	sendto_one_numeric(source_p, RPL_SCANMATCHED,
 			form_str(RPL_SCANMATCHED), count);
-
-	return 0;
 }

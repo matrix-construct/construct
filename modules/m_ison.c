@@ -39,7 +39,7 @@
 
 static const char ison_desc[] = "Provides the ISON command to check if a set of users is online";
 
-static int m_ison(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_ison(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message ison_msgtab = {
 	"ISON", 0, 0, 0, 0,
@@ -63,7 +63,7 @@ static char buf2[BUFSIZE];
  * format:
  * ISON :nicklist
  */
-static int
+static void
 m_ison(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
@@ -81,7 +81,7 @@ m_ison(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 	len = strlen(buf);
 	current_insert_point = buf + len;
 
-	/* rfc1489 is ambigious about how to handle ISON
+	/* rfc1459 is ambigious about how to handle ISON
 	 * this should handle both interpretations.
 	 */
 	for (i = 1; i < parc; i++)
@@ -120,6 +120,4 @@ m_ison(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 	*current_insert_point2 = '\0';
 
 	sendto_one(source_p, "%s", buf);
-
-	return 0;
 }

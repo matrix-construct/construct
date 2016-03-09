@@ -66,23 +66,23 @@ int max_mods = MODS_INCREMENT;
 
 static rb_dlink_list mod_paths;
 
-static int mo_modload(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int mo_modlist(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int mo_modreload(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int mo_modunload(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int mo_modrestart(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_modload(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_modlist(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_modreload(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_modunload(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_modrestart(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
-static int me_modload(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int me_modlist(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int me_modreload(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int me_modunload(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int me_modrestart(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_modload(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_modlist(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_modreload(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_modunload(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_modrestart(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
-static int do_modload(struct Client *, const char *);
-static int do_modunload(struct Client *, const char *);
-static int do_modreload(struct Client *, const char *);
-static int do_modlist(struct Client *, const char *);
-static int do_modrestart(struct Client *);
+static void do_modload(struct Client *, const char *);
+static void do_modunload(struct Client *, const char *);
+static void do_modreload(struct Client *, const char *);
+static void do_modlist(struct Client *, const char *);
+static void do_modrestart(struct Client *);
 
 struct Message modload_msgtab = {
 	"MODLOAD", 0, 0, 0, 0,
@@ -329,14 +329,14 @@ load_one_module(const char *path, int origin, int coremodule)
 
 
 /* load a module .. */
-static int
+static void
 mo_modload(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {
 	if(!IsOperAdmin(source_p))
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS),
 			   me.name, source_p->name, "admin");
-		return 0;
+		return;
 	}
 
 	if(parc > 2)
@@ -344,26 +344,167 @@ mo_modload(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 		sendto_match_servs(source_p, parv[2], CAP_ENCAP, NOCAPS,
 				"ENCAP %s MODLOAD %s", parv[2], parv[1]);
 		if (match(parv[2], me.name) == 0)
-			return 0;
+			return;
 	}
 
-	return do_modload(source_p, parv[1]);
+	do_modload(source_p, parv[1]);
 }
 
-static int
+static void
 me_modload(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {
 	if(!find_shared_conf(source_p->username, source_p->host, source_p->servptr->name, SHARED_MODULE))
 	{
 		sendto_one_notice(source_p, ":*** You do not have an appropriate shared block "
 				"to load modules on this server.");
-		return 0;
+		return;
 	}
 
-	return do_modload(source_p, parv[1]);
+	do_modload(source_p, parv[1]);
 }
 
-static int
+
+/* unload a module .. */
+static void
+mo_modunload(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+{
+	if(!IsOperAdmin(source_p))
+	{
+		sendto_one(source_p, form_str(ERR_NOPRIVS),
+			   me.name, source_p->name, "admin");
+		return;
+	}
+
+	if(parc > 2)
+	{
+		sendto_match_servs(source_p, parv[2], CAP_ENCAP, NOCAPS,
+				"ENCAP %s MODUNLOAD %s", parv[2], parv[1]);
+		if (match(parv[2], me.name) == 0)
+			return;
+	}
+
+	do_modunload(source_p, parv[1]);
+}
+
+static void
+me_modunload(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+{
+	if(!find_shared_conf(source_p->username, source_p->host, source_p->servptr->name, SHARED_MODULE))
+	{
+		sendto_one_notice(source_p, ":*** You do not have an appropriate shared block "
+				"to load modules on this server.");
+		return;
+	}
+
+	do_modunload(source_p, parv[1]);
+}
+
+/* unload and load in one! */
+static void
+mo_modreload(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+{
+	if(!IsOperAdmin(source_p))
+	{
+		sendto_one(source_p, form_str(ERR_NOPRIVS),
+			   me.name, source_p->name, "admin");
+		return;
+	}
+
+	if(parc > 2)
+	{
+		sendto_match_servs(source_p, parv[2], CAP_ENCAP, NOCAPS,
+				"ENCAP %s MODRELOAD %s", parv[2], parv[1]);
+		if (match(parv[2], me.name) == 0)
+			return;
+	}
+
+	do_modreload(source_p, parv[1]);
+}
+
+static void
+me_modreload(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+{
+	if(!find_shared_conf(source_p->username, source_p->host, source_p->servptr->name, SHARED_MODULE))
+	{
+		sendto_one_notice(source_p, ":*** You do not have an appropriate shared block "
+				"to load modules on this server.");
+		return;
+	}
+
+	do_modreload(source_p, parv[1]);
+}
+
+/* list modules .. */
+static void
+mo_modlist(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+{
+	if(!IsOperAdmin(source_p))
+	{
+		sendto_one(source_p, form_str(ERR_NOPRIVS),
+			   me.name, source_p->name, "admin");
+		return;
+	}
+
+	if(parc > 2)
+	{
+		sendto_match_servs(source_p, parv[2], CAP_ENCAP, NOCAPS,
+				"ENCAP %s MODLIST %s", parv[2], parv[1]);
+		if (match(parv[2], me.name) == 0)
+			return;
+	}
+
+	do_modlist(source_p, parc > 1 ? parv[1] : 0);
+}
+
+static void
+me_modlist(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+{
+	if(!find_shared_conf(source_p->username, source_p->host, source_p->servptr->name, SHARED_MODULE))
+	{
+		sendto_one_notice(source_p, ":*** You do not have an appropriate shared block "
+				"to load modules on this server.");
+		return;
+	}
+
+	do_modlist(source_p, parv[1]);
+}
+
+/* unload and reload all modules */
+static void
+mo_modrestart(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+{
+	if(!IsOperAdmin(source_p))
+	{
+		sendto_one(source_p, form_str(ERR_NOPRIVS),
+			   me.name, source_p->name, "admin");
+		return;
+	}
+
+	if(parc > 1)
+	{
+		sendto_match_servs(source_p, parv[1], CAP_ENCAP, NOCAPS,
+				"ENCAP %s MODRESTART", parv[1]);
+		if (match(parv[1], me.name) == 0)
+			return;
+	}
+
+	do_modrestart(source_p);
+}
+
+static void
+me_modrestart(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+{
+	if(!find_shared_conf(source_p->username, source_p->host, source_p->servptr->name, SHARED_MODULE))
+	{
+		sendto_one_notice(source_p, ":*** You do not have an appropriate shared block "
+				"to load modules on this server.");
+		return;
+	}
+
+	do_modrestart(source_p);
+}
+
+static void
 do_modload(struct Client *source_p, const char *module)
 {
 	char *m_bn = rb_basename(module);
@@ -373,54 +514,16 @@ do_modload(struct Client *source_p, const char *module)
 	{
 		sendto_one_notice(source_p, ":Module %s is already loaded", m_bn);
 		rb_free(m_bn);
-		return 0;
+		return;
 	}
 
 	origin = strcmp(module, m_bn) == 0 ? MAPI_ORIGIN_CORE : MAPI_ORIGIN_EXTENSION;
 	load_one_module(module, origin, 0);
 
 	rb_free(m_bn);
-
-	return 0;
 }
 
-
-/* unload a module .. */
-static int
-mo_modunload(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
-{
-	if(!IsOperAdmin(source_p))
-	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS),
-			   me.name, source_p->name, "admin");
-		return 0;
-	}
-
-	if(parc > 2)
-	{
-		sendto_match_servs(source_p, parv[2], CAP_ENCAP, NOCAPS,
-				"ENCAP %s MODUNLOAD %s", parv[2], parv[1]);
-		if (match(parv[2], me.name) == 0)
-			return 0;
-	}
-
-	return do_modunload(source_p, parv[1]);
-}
-
-static int
-me_modunload(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
-{
-	if(!find_shared_conf(source_p->username, source_p->host, source_p->servptr->name, SHARED_MODULE))
-	{
-		sendto_one_notice(source_p, ":*** You do not have an appropriate shared block "
-				"to load modules on this server.");
-		return 0;
-	}
-
-	return do_modunload(source_p, parv[1]);
-}
-
-static int
+static void
 do_modunload(struct Client *source_p, const char *module)
 {
 	int modindex;
@@ -430,14 +533,14 @@ do_modunload(struct Client *source_p, const char *module)
 	{
 		sendto_one_notice(source_p, ":Module %s is not loaded", m_bn);
 		rb_free(m_bn);
-		return 0;
+		return;
 	}
 
 	if(modlist[modindex]->core == 1)
 	{
 		sendto_one_notice(source_p, ":Module %s is a core module and may not be unloaded", m_bn);
 		rb_free(m_bn);
-		return 0;
+		return;
 	}
 
 	if(unload_one_module(m_bn, 1) == -1)
@@ -446,45 +549,9 @@ do_modunload(struct Client *source_p, const char *module)
 	}
 
 	rb_free(m_bn);
-	return 0;
 }
 
-/* unload and load in one! */
-static int
-mo_modreload(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
-{
-	if(!IsOperAdmin(source_p))
-	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS),
-			   me.name, source_p->name, "admin");
-		return 0;
-	}
-
-	if(parc > 2)
-	{
-		sendto_match_servs(source_p, parv[2], CAP_ENCAP, NOCAPS,
-				"ENCAP %s MODRELOAD %s", parv[2], parv[1]);
-		if (match(parv[2], me.name) == 0)
-			return 0;
-	}
-
-	return do_modreload(source_p, parv[1]);
-}
-
-static int
-me_modreload(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
-{
-	if(!find_shared_conf(source_p->username, source_p->host, source_p->servptr->name, SHARED_MODULE))
-	{
-		sendto_one_notice(source_p, ":*** You do not have an appropriate shared block "
-				"to load modules on this server.");
-		return 0;
-	}
-
-	return do_modreload(source_p, parv[1]);
-}
-
-static int
+static void
 do_modreload(struct Client *source_p, const char *module)
 {
 	int modindex;
@@ -495,7 +562,7 @@ do_modreload(struct Client *source_p, const char *module)
 	{
 		sendto_one_notice(source_p, ":Module %s is not loaded", m_bn);
 		rb_free(m_bn);
-		return 0;
+		return;
 	}
 
 	check_core = modlist[modindex]->core;
@@ -504,7 +571,7 @@ do_modreload(struct Client *source_p, const char *module)
 	{
 		sendto_one_notice(source_p, ":Module %s is not loaded", m_bn);
 		rb_free(m_bn);
-		return 0;
+		return;
 	}
 
 	if((load_one_module(m_bn, modlist[modindex]->origin, check_core) == -1) && check_core)
@@ -516,45 +583,30 @@ do_modreload(struct Client *source_p, const char *module)
 	}
 
 	rb_free(m_bn);
-	return 0;
 }
 
-/* list modules .. */
-static int
-mo_modlist(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+static void
+do_modrestart(struct Client *source_p)
 {
-	if(!IsOperAdmin(source_p))
-	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS),
-			   me.name, source_p->name, "admin");
-		return 0;
-	}
+	int modnum;
 
-	if(parc > 2)
-	{
-		sendto_match_servs(source_p, parv[2], CAP_ENCAP, NOCAPS,
-				"ENCAP %s MODLIST %s", parv[2], parv[1]);
-		if (match(parv[2], me.name) == 0)
-			return 0;
-	}
+	sendto_one_notice(source_p, ":Reloading all modules");
 
-	return do_modlist(source_p, parc > 1 ? parv[1] : 0);
+	modnum = num_mods;
+	while (num_mods)
+		unload_one_module(modlist[0]->name, 0);
+
+	load_all_modules(0);
+	load_core_modules(0);
+	rehash(0);
+
+	sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
+			     "Module Restart: %d modules unloaded, %d modules loaded",
+			     modnum, num_mods);
+	ilog(L_MAIN, "Module Restart: %d modules unloaded, %d modules loaded", modnum, num_mods);
 }
 
-static int
-me_modlist(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
-{
-	if(!find_shared_conf(source_p->username, source_p->host, source_p->servptr->name, SHARED_MODULE))
-	{
-		sendto_one_notice(source_p, ":*** You do not have an appropriate shared block "
-				"to load modules on this server.");
-		return 0;
-	}
-
-	return do_modlist(source_p, parv[1]);
-}
-
-static int
+static void
 do_modlist(struct Client *source_p, const char *pattern)
 {
 	int i;
@@ -596,66 +648,7 @@ do_modlist(struct Client *source_p, const char *pattern)
 	}
 
 	sendto_one(source_p, form_str(RPL_ENDOFMODLIST), me.name, source_p->name);
-	return 0;
 }
-
-/* unload and reload all modules */
-static int
-mo_modrestart(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
-{
-	if(!IsOperAdmin(source_p))
-	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS),
-			   me.name, source_p->name, "admin");
-		return 0;
-	}
-
-	if(parc > 1)
-	{
-		sendto_match_servs(source_p, parv[1], CAP_ENCAP, NOCAPS,
-				"ENCAP %s MODRESTART", parv[1]);
-		if (match(parv[1], me.name) == 0)
-			return 0;
-	}
-
-	return do_modrestart(source_p);
-}
-
-static int
-me_modrestart(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
-{
-	if(!find_shared_conf(source_p->username, source_p->host, source_p->servptr->name, SHARED_MODULE))
-	{
-		sendto_one_notice(source_p, ":*** You do not have an appropriate shared block "
-				"to load modules on this server.");
-		return 0;
-	}
-
-	return do_modrestart(source_p);
-}
-
-static int
-do_modrestart(struct Client *source_p)
-{
-	int modnum;
-
-	sendto_one_notice(source_p, ":Reloading all modules");
-
-	modnum = num_mods;
-	while (num_mods)
-		unload_one_module(modlist[0]->name, 0);
-
-	load_all_modules(0);
-	load_core_modules(0);
-	rehash(0);
-
-	sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
-			     "Module Restart: %d modules unloaded, %d modules loaded",
-			     modnum, num_mods);
-	ilog(L_MAIN, "Module Restart: %d modules unloaded, %d modules loaded", modnum, num_mods);
-	return 0;
-}
-
 
 static void increase_modlist(void);
 

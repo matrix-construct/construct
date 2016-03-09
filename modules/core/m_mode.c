@@ -43,11 +43,11 @@
 static const char mode_desc[] =
 	"Provides the MODE and MLOCK client and server commands, and TS6 server-to-server TMODE and BMASK commands";
 
-static int m_mode(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_mode(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_tmode(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_mlock(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_bmask(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_mode(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_mode(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_tmode(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_mlock(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_bmask(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message mode_msgtab = {
 	"MODE", 0, 0, 0, 0,
@@ -74,7 +74,7 @@ DECLARE_MODULE_AV2(mode, NULL, NULL, mode_clist, NULL, NULL, NULL, NULL, mode_de
  * m_mode - MODE command handler
  * parv[1] - channel
  */
-static int
+static void
 m_mode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr = NULL;
@@ -94,7 +94,7 @@ m_mode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		{
 			sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS),
 				   me.name, source_p->name, "MODE");
-			return 0;
+			return;
 		}
 	}
 
@@ -103,13 +103,13 @@ m_mode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 	{
 		/* if here, it has to be a non-channel name */
 		user_mode(client_p, source_p, parc, parv);
-		return 0;
+		return;
 	}
 
 	if(!check_channel_name(dest))
 	{
 		sendto_one_numeric(source_p, ERR_BADCHANNAME, form_str(ERR_BADCHANNAME), parv[1]);
-		return 0;
+		return;
 	}
 
 	chptr = find_channel(dest);
@@ -118,7 +118,7 @@ m_mode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
 				   form_str(ERR_NOSUCHCHANNEL), parv[1]);
-		return 0;
+		return;
 	}
 
 	/* Now know the channel exists */
@@ -147,11 +147,9 @@ m_mode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 
 		set_channel_mode(client_p, source_p, chptr, msptr, parc - n, parv + n);
 	}
-
-	return 0;
 }
 
-static int
+static void
 ms_mode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr;
@@ -162,15 +160,13 @@ ms_mode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
 				   form_str(ERR_NOSUCHCHANNEL), parv[1]);
-		return 0;
+		return;
 	}
 
 	set_channel_mode(client_p, source_p, chptr, NULL, parc - 2, parv + 2);
-
-	return 0;
 }
 
-static int
+static void
 ms_tmode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr = NULL;
@@ -180,7 +176,7 @@ ms_tmode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	if(!IsChanPrefix(parv[2][0]) || !check_channel_name(parv[2]))
 	{
 		sendto_one_numeric(source_p, ERR_BADCHANNAME, form_str(ERR_BADCHANNAME), parv[2]);
-		return 0;
+		return;
 	}
 
 	chptr = find_channel(parv[2]);
@@ -189,12 +185,12 @@ ms_tmode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
 				   form_str(ERR_NOSUCHCHANNEL), parv[2]);
-		return 0;
+		return;
 	}
 
 	/* TS is higher, drop it. */
 	if(atol(parv[1]) > chptr->channelts)
-		return 0;
+		return;
 
 	if(IsServer(source_p))
 	{
@@ -206,11 +202,9 @@ ms_tmode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 		set_channel_mode(client_p, source_p, chptr, msptr, parc - 3, parv + 3);
 	}
-
-	return 0;
 }
 
-static int
+static void
 ms_mlock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr = NULL;
@@ -219,7 +213,7 @@ ms_mlock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	if(!IsChanPrefix(parv[2][0]) || !check_channel_name(parv[2]))
 	{
 		sendto_one_numeric(source_p, ERR_BADCHANNAME, form_str(ERR_BADCHANNAME), parv[2]);
-		return 0;
+		return;
 	}
 
 	chptr = find_channel(parv[2]);
@@ -228,17 +222,15 @@ ms_mlock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
 				   form_str(ERR_NOSUCHCHANNEL), parv[2]);
-		return 0;
+		return;
 	}
 
 	/* TS is higher, drop it. */
 	if(atol(parv[1]) > chptr->channelts)
-		return 0;
+		return;
 
 	if(IsServer(source_p))
 		set_channel_mlock(client_p, source_p, chptr, parv[3], true);
-
-	return 0;
 }
 
 static void
@@ -270,7 +262,7 @@ possibly_remove_lower_forward(struct Client *fakesource_p, int mems,
 	}
 }
 
-static int
+static void
 ms_bmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static char modebuf[BUFSIZE];
@@ -292,14 +284,14 @@ ms_bmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	struct Client *fakesource_p;
 
 	if(!IsChanPrefix(parv[2][0]) || !check_channel_name(parv[2]))
-		return 0;
+		return;
 
 	if((chptr = find_channel(parv[2])) == NULL)
-		return 0;
+		return;
 
 	/* TS is higher, drop it. */
 	if(atol(parv[1]) > chptr->channelts)
-		return 0;
+		return;
 
 	switch (parv[3][0])
 	{
@@ -331,7 +323,7 @@ ms_bmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 		/* maybe we should just blindly propagate this? */
 	default:
-		return 0;
+		return;
 	}
 
 	parabuf[0] = '\0';
@@ -432,5 +424,4 @@ ms_bmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 	sendto_server(client_p, chptr, CAP_TS6 | needcap, NOCAPS, ":%s BMASK %ld %s %s :%s",
 		      source_p->id, (long) chptr->channelts, chptr->chname, parv[3], parv[4]);
-	return 0;
 }

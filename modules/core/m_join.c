@@ -44,9 +44,9 @@
 
 static const char join_desc[] = "Provides the JOIN and TS6 SJOIN commands to facilitate joining and creating channels";
 
-static int m_join(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_join(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_sjoin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_join(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_join(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_sjoin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 static int h_can_create_channel;
 static int h_channel_join;
@@ -72,7 +72,7 @@ mapi_hlist_av1 join_hlist[] = {
 DECLARE_MODULE_AV2(join, NULL, NULL, join_clist, join_hlist, NULL, NULL, NULL, join_desc);
 
 static void do_join_0(struct Client *client_p, struct Client *source_p);
-static int check_channel_name_loc(struct Client *source_p, const char *name);
+static bool check_channel_name_loc(struct Client *source_p, const char *name);
 static void send_join_error(struct Client *source_p, int numeric, const char *name);
 
 static void set_final_mode(struct Mode *mode, struct Mode *oldmode);
@@ -138,7 +138,7 @@ check_forward(struct Client *source_p, struct Channel *chptr,
  *      parv[1] = channel
  *      parv[2] = channel password (key)
  */
-static int
+static void
 m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static char jbuf[BUFSIZE];
@@ -380,8 +380,6 @@ m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		hook_info.key = key;
 		call_hook(h_channel_join, &hook_info);
 	}
-
-	return 0;
 }
 
 /*
@@ -391,7 +389,7 @@ m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
  *      parv[3] = "+", formerly channel modes but now unused
  * alternatively, a single "0" parameter parts all channels
  */
-static int
+static void
 ms_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr;
@@ -399,32 +397,32 @@ ms_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	time_t oldts;
 	time_t newts;
 	int isnew;
-	int keep_our_modes = YES;
+	bool keep_our_modes = true;
 	rb_dlink_node *ptr, *next_ptr;
 
 	/* special case for join 0 */
 	if((parv[1][0] == '0') && (parv[1][1] == '\0') && parc == 2)
 	{
 		do_join_0(client_p, source_p);
-		return 0;
+		return;
 	}
 
 	if(parc < 4)
-		return 0;
+		return;
 
 	if(!IsChannelName(parv[2]) || !check_channel_name(parv[2]))
-		return 0;
+		return;
 
 	/* joins for local channels cant happen. */
 	if(parv[2][0] == '&')
-		return 0;
+		return;
 
 	mbuf = modebuf;
 	mode.key[0] = mode.forward[0] = '\0';
 	mode.mode = mode.limit = mode.join_num = mode.join_time = 0;
 
 	if((chptr = get_or_create_channel(source_p, parv[2], &isnew)) == NULL)
-		return 0;
+		return;
 
 	newts = atol(parv[1]);
 	oldts = chptr->channelts;
@@ -458,7 +456,7 @@ ms_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		;
 	else if(newts < oldts)
 	{
-		keep_our_modes = NO;
+		keep_our_modes = false;
 		chptr->channelts = newts;
 	}
 
@@ -508,10 +506,9 @@ ms_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
 		      ":%s JOIN %ld %s +",
 		      source_p->id, (long) chptr->channelts, chptr->chname);
-	return 0;
 }
 
-static int
+static void
 ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static char buf_uid[BUFSIZE];
@@ -523,8 +520,8 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	static struct Mode mode, *oldmode;
 	const char *modes;
 	int args = 0;
-	int keep_our_modes = 1;
-	int keep_new_modes = 1;
+	bool keep_our_modes = true;
+	bool keep_new_modes = true;
 	int fl;
 	int isnew;
 	int mlen_uid;
@@ -539,14 +536,14 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	rb_dlink_node *ptr, *next_ptr;
 
 	if(parc < 5)
-		return 0;
+		return;
 
 	if(!IsChannelName(parv[2]) || !check_channel_name(parv[2]))
-		return 0;
+		return;
 
 	/* SJOIN's for local channels can't happen. */
 	if(*parv[2] == '&')
-		return 0;
+		return;
 
 	modebuf[0] = parabuf[0] = mode.key[0] = mode.forward[0] = '\0';
 	pargs = mode.mode = mode.limit = mode.join_num = mode.join_time = 0;
@@ -569,7 +566,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 			rb_strlcpy(mode.forward, parv[4 + args], sizeof(mode.forward));
 			args++;
 			if(parc < 5 + args)
-				return 0;
+				return;
 			break;
 		case 'j':
 			sscanf(parv[4 + args], "%d:%d", &joinc, &timeslice);
@@ -577,19 +574,19 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 			mode.join_num = joinc;
 			mode.join_time = timeslice;
 			if(parc < 5 + args)
-				return 0;
+				return;
 			break;
 		case 'k':
 			rb_strlcpy(mode.key, parv[4 + args], sizeof(mode.key));
 			args++;
 			if(parc < 5 + args)
-				return 0;
+				return;
 			break;
 		case 'l':
 			mode.limit = atoi(parv[4 + args]);
 			args++;
 			if(parc < 5 + args)
-				return 0;
+				return;
 			break;
 		default:
 			if(chmode_flags[(int) *s] != 0)
@@ -611,7 +608,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		s = "";
 
 	if((chptr = get_or_create_channel(source_p, parv[2], &isnew)) == NULL)
-		return 0;	/* channel name too long? */
+		return;	/* channel name too long? */
 
 
 	oldts = chptr->channelts;
@@ -684,16 +681,16 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 			{
 				/* Channel was emptied, create a new one */
 				if((chptr = get_or_create_channel(source_p, parv[2], &isnew)) == NULL)
-					return 0;		/* oops! */
+					return;		/* oops! */
 
 				oldmode = &chptr->mode;
 			}
 		}
-		keep_our_modes = NO;
+		keep_our_modes = false;
 		chptr->channelts = newts;
 	}
 	else
-		keep_new_modes = NO;
+		keep_new_modes = false;
 
 	if(!keep_new_modes)
 		mode = *oldmode;
@@ -936,7 +933,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	{
 		destroy_channel(chptr);
 
-		return 0;
+		return;
 	}
 
 	/* Keep the colon if we're sending an SJOIN without nicks -- jilles */
@@ -946,8 +943,6 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	}
 
 	sendto_server(client_p->from, NULL, CAP_TS6, NOCAPS, "%s", buf_uid);
-
-	return 0;
 }
 
 /*
@@ -986,21 +981,21 @@ do_join_0(struct Client *client_p, struct Client *source_p)
 	}
 }
 
-static int
+static bool
 check_channel_name_loc(struct Client *source_p, const char *name)
 {
 	const char *p;
 
 	s_assert(name != NULL);
 	if(EmptyString(name))
-		return 0;
+		return false;
 
 	if(ConfigFileEntry.disable_fake_channels && !IsOper(source_p))
 	{
 		for(p = name; *p; ++p)
 		{
 			if(!IsChanChar(*p) || IsFakeChanChar(*p))
-				return 0;
+				return false;
 		}
 	}
 	else
@@ -1008,7 +1003,7 @@ check_channel_name_loc(struct Client *source_p, const char *name)
 		for(p = name; *p; ++p)
 		{
 			if(!IsChanChar(*p))
-				return 0;
+				return false;
 		}
 	}
 
@@ -1016,10 +1011,10 @@ check_channel_name_loc(struct Client *source_p, const char *name)
 	{
 		for(p = name; *p; ++p)
 			if(*p < 33 || *p > 126)
-				return 0;
+				return false;
 	}
 
-	return 1;
+	return true;
 }
 
 /* send_join_error()

@@ -46,10 +46,11 @@
 #include "parse.h"
 #include "modules.h"
 
-static void mo_testmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
-			int parc, const char *parv[]);
 static const char testmask_desc[] =
 	"Provides the TESTMASK command to show the number of clients matching a hostmask or GECOS";
+
+static void mo_testmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+			int parc, const char *parv[]);
 
 struct Message testmask_msgtab = {
 	"TESTMASK", 0, 0, 0, 0,
@@ -62,7 +63,7 @@ DECLARE_MODULE_AV2(testmask, NULL, NULL, testmask_clist, NULL, NULL, NULL, NULL,
 static const char *empty_sockhost = "255.255.255.255";
 static const char *spoofed_sockhost = "0";
 
-static int
+static void
 mo_testmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
                         int parc, const char *parv[])
 {
@@ -81,7 +82,7 @@ mo_testmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 	if((hostname = strchr(name, '@')) == NULL)
 	{
 		sendto_one_notice(source_p, ":Invalid parameters");
-		return 0;
+		return;
 	}
 
 	*hostname++ = '\0';
@@ -98,7 +99,7 @@ mo_testmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 	if(EmptyString(username) || EmptyString(hostname))
 	{
 		sendto_one_notice(source_p, ":Invalid parameters");
-		return 0;
+		return;
 	}
 
 	if(parc > 2 && !EmptyString(parv[2]))
@@ -143,5 +144,4 @@ mo_testmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 			me.name, source_p->name,
 			lcount, gcount, name ? name : "*",
 			username, hostname, gecos ? gecos : "*");
-	return 0;
 }

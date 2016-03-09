@@ -48,7 +48,7 @@
 static const char sendbands_desc[] =
 	"Adds the ability to send all permanent RESVs and XLINEs to given server";
 
-static int mo_sendbans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void mo_sendbans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message sendbans_msgtab = {
 	"SENDBANS", 0, 0, 0, 0,
@@ -86,7 +86,8 @@ static const char *expand_xline(const char *mask)
 	return buf;
 }
 
-static int mo_sendbans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+static void
+mo_sendbans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
@@ -99,19 +100,19 @@ static int mo_sendbans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct 
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS),
 			me.name, source_p->name, "remoteban");
-		return 0;
+		return;
 	}
 	if (!IsOperXline(source_p))
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS),
 			me.name, source_p->name, "xline");
-		return 0;
+		return;
 	}
 	if (!IsOperResv(source_p))
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS),
 			me.name, source_p->name, "resv");
-		return 0;
+		return;
 	}
 
 	target = parv[1];
@@ -128,7 +129,7 @@ static int mo_sendbans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct 
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHSERVER,
 				form_str(ERR_NOSUCHSERVER), target);
-		return 0;
+		return;
 	}
 
 	sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
@@ -174,6 +175,4 @@ static int mo_sendbans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct 
 				"ENCAP %s XLINE 0 %s 2 :%s",
 				target, mask2, aconf->passwd);
 	}
-
-	return 0;
 }

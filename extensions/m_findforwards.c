@@ -36,7 +36,7 @@
 
 static const char findfowards_desc[] = "Allows operators to find forwards to a given channel";
 
-static int m_findforwards(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+static void m_findforwards(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 			int parc, const char *parv[]);
 
 struct Message findforwards_msgtab = {
@@ -52,7 +52,7 @@ DECLARE_MODULE_AV2(findforwards, NULL, NULL, findforwards_clist, NULL, NULL, NUL
 ** mo_findforwards
 **      parv[1] = channel
 */
-static int
+static void
 m_findforwards(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
@@ -70,21 +70,21 @@ m_findforwards(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *
 		{
 			sendto_one_numeric(source_p, ERR_NOTONCHANNEL,
 					form_str(ERR_NOTONCHANNEL), parv[1]);
-			return 0;
+			return;
 		}
 
 		if(!is_chanop(msptr))
 		{
 			sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
 					me.name, source_p->name, parv[1]);
-			return 0;
+			return;
 		}
 
 		if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
 		{
 			sendto_one(source_p, form_str(RPL_LOAD2HI),
 					me.name, source_p->name, "FINDFORWARDS");
-			return 0;
+			return;
 		}
 		else
 			last_used = rb_current_time();
@@ -111,6 +111,4 @@ m_findforwards(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *
 		*(--p) = '\0';
 
 	sendto_one_notice(source_p, ":Forwards for %s: %s", parv[1], buf);
-
-	return 0;
 }

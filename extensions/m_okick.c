@@ -40,7 +40,7 @@
 
 static const char okick_desc[] = "Allow admins to forcibly kick users from channels with the OKICK command";
 
-static int mo_okick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void mo_okick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message okick_msgtab = {
 	"OKICK", 0, 0, 0, 0,
@@ -57,7 +57,7 @@ DECLARE_MODULE_AV2(okick, NULL, NULL, okick_clist, NULL, NULL, NULL, NULL, okick
 **      parv[2] = client to kick
 **      parv[3] = kick comment
 */
-static int
+static void
 mo_okick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *who;
@@ -74,7 +74,7 @@ mo_okick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	if(*parv[2] == '\0')
 	{
 		sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS), me.name, source_p->name, "KICK");
-		return 0;
+		return;
 	}
 
 	if(MyClient(source_p) && !IsFloodDone(source_p))
@@ -94,7 +94,7 @@ mo_okick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	if(!chptr)
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL, form_str(ERR_NOSUCHCHANNEL), name);
-		return 0;
+		return;
 	}
 
 
@@ -103,19 +103,19 @@ mo_okick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	user = LOCAL_COPY(parv[2]);	// strtoken(&p2, parv[2], ",");
 	if(!(who = find_chasing(source_p, user, &chasing)))
 	{
-		return 0;
+		return;
 	}
 
 	if((target_p = find_client(user)) == NULL)
 	{
 		sendto_one(source_p, form_str(ERR_NOSUCHNICK), user);
-		return 0;
+		return;
 	}
 
 	if((msptr = find_channel_membership(chptr, target_p)) == NULL)
 	{
 		sendto_one(source_p, form_str(ERR_USERNOTINCHANNEL), parv[1], parv[2]);
-		return 0;
+		return;
 	}
 
 	sendto_wallops_flags(UMODE_WALLOP, &me,
@@ -136,5 +136,4 @@ mo_okick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	sendto_server(&me, chptr, CAP_TS6, NOCAPS,
 		      ":%s KICK %s %s :%s", me.id, chptr->chname, who->id, comment);
 	remove_user_from_channel(msptr);
-	return 0;
 }

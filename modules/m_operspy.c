@@ -45,7 +45,7 @@
 static const char operspy_desc[] =
 	"Provides the operspy facility for viewing normally private data";
 
-static int ms_operspy(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+static void ms_operspy(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 		       int parc, const char *parv[]);
 
 struct Message operspy_msgtab = {
@@ -62,7 +62,7 @@ DECLARE_MODULE_AV2(operspy, NULL, NULL, operspy_clist, NULL, NULL, NULL, NULL, o
  * parv[1] - operspy command
  * parv[2] - optional params
  */
-static int
+static void
 ms_operspy(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	   int parc, const char *parv[])
 {
@@ -87,7 +87,7 @@ ms_operspy(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 			len = strlen(parv[i]) + 1;
 
 			if((size_t)(cur_len + len) >= sizeof(buffer))
-				return 0;
+				return;
 
 			snprintf(ptr, sizeof(buffer) - cur_len, "%s ",
 				 parv[i]);
@@ -97,6 +97,4 @@ ms_operspy(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 
 		report_operspy(source_p, parv[1], buffer);
 	}
-
-	return 0;
 }

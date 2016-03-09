@@ -567,14 +567,13 @@ static void do_alias(struct alias_entry *aptr, struct Client *source_p, char *te
 			text);
 }
 
-int
+void
 m_not_oper(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	sendto_one_numeric(source_p, ERR_NOPRIVILEGES, form_str(ERR_NOPRIVILEGES));
-	return 0;
 }
 
-int
+void
 m_unregistered(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* bit of a hack.
@@ -587,19 +586,16 @@ m_unregistered(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *
 		sendto_one(client_p, form_str(ERR_NOTREGISTERED), me.name);
 		client_p->localClient->number_of_nick_changes++;
 	}
-
-	return 0;
 }
 
-int
+void
 m_registered(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	sendto_one(client_p, form_str(ERR_ALREADYREGISTRED), me.name, source_p->name);
-	return 0;
 }
 
-int
+void
 m_ignore(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	return 0;
+	/* Does nothing */
 }

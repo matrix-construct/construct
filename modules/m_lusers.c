@@ -37,8 +37,8 @@
 static const char lusers_desc[] =
 	"Provides the LUSERS command to view the number of current and maximum lusers on a server";
 
-static int m_lusers(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_lusers(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_lusers(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_lusers(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message lusers_msgtab = {
 	"LUSERS", 0, 0, 0, 0,
@@ -57,7 +57,7 @@ DECLARE_MODULE_AV2(lusers, NULL, NULL, lusers_clist, NULL, NULL, NULL, NULL, lus
  * 19970918 JRL hacked to ignore parv[1] completely and require parc > 3
  * to cause a force
  */
-static int
+static void
 m_lusers(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
@@ -69,19 +69,17 @@ m_lusers(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 			/* safe enough to give this on a local connect only */
 			sendto_one(source_p, form_str(RPL_LOAD2HI),
 				   me.name, source_p->name, "LUSERS");
-			return 0;
+			return;
 		}
 		else
 			last_used = rb_current_time();
 
 		if(hunt_server(client_p, source_p, ":%s LUSERS %s :%s", 2, parc, parv) !=
 			   HUNTED_ISME)
-			return 0;
+			return;
 	}
 
 	show_lusers(source_p);
-
-	return 0;
 }
 
 /*
@@ -92,17 +90,15 @@ m_lusers(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
  * 199970918 JRL hacked to ignore parv[1] completely and require parc > 3
  * to cause a force
  */
-static int
+static void
 ms_lusers(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(parc > 2)
 	{
 		if(hunt_server(client_p, source_p, ":%s LUSERS %s :%s", 2, parc, parv)
 		   != HUNTED_ISME)
-			return 0;
+			return;
 	}
 
 	show_lusers(source_p);
-
-	return 0;
 }

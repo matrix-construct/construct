@@ -42,11 +42,11 @@ static const char example_desc[] = "This is an example Charybdis module.";
  * parv     == an array of the parameters
  */
 
-static int munreg_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int mclient_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int mserver_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int mrclient_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int moper_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void munreg_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void mclient_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void mserver_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void mrclient_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void moper_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 /* Show the commands this module can handle in a msgtab
  * and give the msgtab a name, here its test_msgtab
@@ -179,7 +179,7 @@ DECLARE_MODULE_AV2(
 /* Here we have the functions themselves that we declared above,
  * and the fairly normal C coding
  */
-static int
+static void
 munreg_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(parc < 2)
@@ -193,15 +193,13 @@ munreg_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 
 	/* illustration of how to call a hook function */
 	call_hook(doing_example_hook, NULL);
-
-	return 0;
 }
 
 /*
  * mclient_test
  *      parv[1] = parameter
  */
-static int
+static void
 mclient_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(parc < 2)
@@ -215,15 +213,13 @@ mclient_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *so
 
 	/* illustration of how to call a hook function */
 	call_hook(doing_example_hook, NULL);
-
-	return 0;
 }
 
 /*
  * mrclient_test
  *      parv[1] = parameter
  */
-static int
+static void
 mrclient_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(parc < 2)
@@ -234,14 +230,13 @@ mrclient_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *s
 	{
 		sendto_one_notice(source_p, ":You are a remote client, and sent parameters: %s", parv[1]);
 	}
-	return 0;
 }
 
 /*
  * mserver_test
  *      parv[1] = parameter
  */
-static int
+static void
 mserver_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(parc < 2)
@@ -252,14 +247,13 @@ mserver_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *so
 	{
 		sendto_one_notice(source_p, ":You are a server, and sent parameters: %s", parv[1]);
 	}
-	return 0;
 }
 
 /*
  * moper_test
  *      parv[1] = parameter
  */
-static int
+static void
 moper_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(parc < 2)
@@ -270,7 +264,6 @@ moper_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 	{
 		sendto_one_notice(source_p, ":You are an operator, and sent parameters: %s", parv[1]);
 	}
-	return 0;
 }
 
 static void

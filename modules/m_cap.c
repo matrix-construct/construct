@@ -48,7 +48,7 @@ static const char cap_desc[] = "Provides the commands used for client capability
 
 typedef int (*bqcmp)(const void *, const void *);
 
-static int m_cap(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_cap(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message cap_msgtab = {
 	"CAP", 0, 0, 0, 0,
@@ -417,7 +417,7 @@ clicap_cmd_search(const char *command, struct clicap_cmd *entry)
 	return irccmp(command, entry->cmd);
 }
 
-static int
+static void
 m_cap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct clicap_cmd *cmd;
@@ -429,9 +429,8 @@ m_cap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 		sendto_one(source_p, form_str(ERR_INVALIDCAPCMD),
 				me.name, EmptyString(source_p->name) ? "*" : source_p->name,
 				parv[1]);
-		return 0;
+		return;
 	}
 
 	(cmd->func)(source_p, parv[2]);
-	return 0;
 }

@@ -34,10 +34,11 @@
 #include "modules.h"
 #include "packet.h"
 
-static int m_time(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static char *date(void);
 static const char time_desc[] =
 	"Provides the TIME command to show the current server time";
+
+static void m_time(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static char *date(void);
 
 struct Message time_msgtab = {
 	"TIME", 0, 0, 0, 0,
@@ -62,7 +63,7 @@ static const char *weekdays[] = {
  * m_time
  *      parv[1] = servername
  */
-static int
+static void
 m_time(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* this is not rate limited, so end the grace period */
@@ -72,8 +73,6 @@ m_time(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 	if(hunt_server(client_p, source_p, ":%s TIME :%s", 1, parc, parv) == HUNTED_ISME)
 		sendto_one_numeric(source_p, RPL_TIME, form_str(RPL_TIME),
 				   me.name, date());
-
-	return 0;
 }
 
 /* date()

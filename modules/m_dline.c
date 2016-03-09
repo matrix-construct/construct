@@ -45,10 +45,10 @@
 
 static const char dline_desc[] = "Provides the DLINE facility to ban users via IP address";
 
-static int mo_dline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int me_dline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int mo_undline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int me_undline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_dline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_dline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_undline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_undline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message dline_msgtab = {
 	"DLINE", 0, 0, 0, 0,
@@ -62,20 +62,18 @@ struct Message undline_msgtab = {
 
 mapi_clist_av1 dline_clist[] = { &dline_msgtab, &undline_msgtab, NULL };
 
-static const char dline_desc[] = "Provides the DLINE facility to ban users via IP address";
-
 DECLARE_MODULE_AV2(dline, NULL, NULL, dline_clist, NULL, NULL, NULL, NULL, dline_desc);
 
-static int remove_temp_dline(struct ConfItem *);
-static int apply_dline(struct Client *, const char *, int, char *);
-static int apply_undline(struct Client *, const char *);
+static bool remove_temp_dline(struct ConfItem *);
+static void apply_dline(struct Client *, const char *, int, char *);
+static void apply_undline(struct Client *, const char *);
 
 /* mo_dline()
  *
  *   parv[1] - dline to add
  *   parv[2] - reason
  */
-static int
+static void
 mo_dline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	char def[] = "No Reason";
@@ -89,7 +87,7 @@ mo_dline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	if(!IsOperK(source_p))
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "kline");
-		return 0;
+		return;
 	}
 
 	if((tdline_time = valid_temp_time(parv[loc])) >= 0)
@@ -103,7 +101,7 @@ mo_dline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	if (*dlhost == ':')
 	{
 		sendto_one_notice(source_p, ":Invalid D-Line");
-		return 0;
+		return;
 	}
 
 	if(parc >= loc + 2 && !irccmp(parv[loc], "ON"))
@@ -112,7 +110,7 @@ mo_dline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		{
 			sendto_one(source_p, form_str(ERR_NOPRIVS),
 				   me.name, source_p->name, "remoteban");
-			return 0;
+			return;
 		}
 
 		target_server = parv[loc + 1];
@@ -130,20 +128,19 @@ mo_dline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 				   target_server, tdline_time, dlhost, reason);
 
 		if(!match(target_server, me.name))
-			return 0;
+			return;
 	}
 
 	apply_dline(source_p, dlhost, tdline_time, reason);
 
 	check_dlines();
-	return 0;
 }
 
 /* mo_undline()
  *
  *      parv[1] = dline to remove
  */
-static int
+static void
 mo_undline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	const char *cidr;
@@ -152,7 +149,7 @@ mo_undline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 	if(!IsOperK(source_p))
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "unkline");
-		return 0;
+		return;
 	}
 
 	cidr = parv[1];
@@ -163,7 +160,7 @@ mo_undline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 		{
 			sendto_one(source_p, form_str(ERR_NOPRIVS),
 				   me.name, source_p->name, "remoteban");
-			return 0;
+			return;
 		}
 
 		target_server = parv[3];
@@ -171,15 +168,13 @@ mo_undline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 				   CAP_ENCAP, NOCAPS, "ENCAP %s UNDLINE %s", target_server, cidr);
 
 		if(!match(target_server, me.name))
-			return 0;
+			return;
 	}
 
 	apply_undline(source_p, cidr);
-
-	return 0;
 }
 
-static int
+static void
 me_dline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {
 	int tdline_time = atoi(parv[1]);
@@ -188,35 +183,32 @@ me_dline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	 */
 
 	if(!IsPerson(source_p))
-		return 0;
+		return;
 
 	if(!find_shared_conf(source_p->username, source_p->host,
 			     source_p->servptr->name,
 			     tdline_time > 0 ? SHARED_TDLINE : SHARED_PDLINE))
-		return 0;
+		return;
 
 	apply_dline(source_p, parv[2], tdline_time, LOCAL_COPY(parv[3]));
 
 	check_dlines();
-	return 0;
 }
 
-static int
+static void
 me_undline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {
 	if(!IsPerson(source_p))
-		return 0;
+		return;
 
 	if(!find_shared_conf(source_p->username, source_p->host,
 			     source_p->servptr->name, SHARED_UNDLINE))
-		return 0;
+		return;
 
 	apply_undline(source_p, parv[1]);
-
-	return 0;
 }
 
-static int
+static void
 apply_dline(struct Client *source_p, const char *dlhost, int tdline_time, char *reason)
 {
 	struct ConfItem *aconf;
@@ -229,7 +221,7 @@ apply_dline(struct Client *source_p, const char *dlhost, int tdline_time, char *
 	if(ty == HM_HOST)
 	{
 		sendto_one(source_p, ":%s NOTICE %s :Invalid D-Line", me.name, source_p->name);
-		return 0;
+		return;
 	}
 #ifdef RB_IPV6
 	if(ty == HM_IPV6)
@@ -245,7 +237,7 @@ apply_dline(struct Client *source_p, const char *dlhost, int tdline_time, char *
 		{
 			sendto_one_notice(source_p,
 					  ":For safety, bitmasks less than 8 require conf access.");
-			return 0;
+			return;
 		}
 	}
 	else
@@ -254,7 +246,7 @@ apply_dline(struct Client *source_p, const char *dlhost, int tdline_time, char *
 		{
 			sendto_one_notice(source_p,
 					  ":Dline bitmasks less than 16 are for admins only.");
-			return 0;
+			return;
 		}
 	}
 
@@ -277,7 +269,7 @@ apply_dline(struct Client *source_p, const char *dlhost, int tdline_time, char *
 						   ":%s NOTICE %s :[%s] already D-lined by [%s] - %s",
 						   me.name, source_p->name, dlhost, aconf->host,
 						   creason);
-				return 0;
+				return;
 			}
 		}
 	}
@@ -357,11 +349,9 @@ apply_dline(struct Client *source_p, const char *dlhost, int tdline_time, char *
 			     aconf->host, reason, oper_reason);
 		}
 	}
-
-	return 0;
 }
 
-static int
+static void
 apply_undline(struct Client *source_p, const char *cidr)
 {
 	char buf[BUFSIZE];
@@ -370,14 +360,14 @@ apply_undline(struct Client *source_p, const char *cidr)
 	if(parse_netmask(cidr, NULL, NULL) == HM_HOST)
 	{
 		sendto_one_notice(source_p, ":Invalid D-Line");
-		return 0;
+		return;
 	}
 
 	aconf = find_exact_conf_by_address(cidr, CONF_DLINE, NULL);
 	if(aconf == NULL)
 	{
 		sendto_one_notice(source_p, ":No D-Line for %s", cidr);
-		return 0;
+		return;
 	}
 
 	rb_strlcpy(buf, aconf->host, sizeof buf);
@@ -390,7 +380,7 @@ apply_undline(struct Client *source_p, const char *cidr)
 				       "%s has removed the temporary D-Line for: [%s]",
 				       get_oper_name(source_p), buf);
 		ilog(L_KLINE, "UD %s %s", get_oper_name(source_p), buf);
-		return 0;
+		return;
 	}
 
 	bandb_del(BANDB_DLINE, aconf->host, NULL);
@@ -401,17 +391,15 @@ apply_undline(struct Client *source_p, const char *cidr)
 			       get_oper_name(source_p), aconf->host);
 	ilog(L_KLINE, "UD %s %s", get_oper_name(source_p), aconf->host);
 	delete_one_address_conf(aconf->host, aconf);
-
-	return 0;
 }
 
 /* remove_temp_dline()
  *
  * inputs       - confitem to undline
- * outputs      -
+ * outputs      - true if removed, false otherwise.
  * side effects - tries to undline anything that matches
  */
-static int
+static bool
 remove_temp_dline(struct ConfItem *aconf)
 {
 	rb_dlink_node *ptr;
@@ -425,10 +413,10 @@ remove_temp_dline(struct ConfItem *aconf)
 			{
 				rb_dlinkDestroy(ptr, &temp_dlines[i]);
 				delete_one_address_conf(aconf->host, aconf);
-				return YES;
+				return true;
 			}
 		}
 	}
 
-	return NO;
+	return false;
 }

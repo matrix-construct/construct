@@ -39,9 +39,9 @@
 static const char wallops_desc[] =
 	"Provides the WALLOPS and OPERWALL commands to message online operators";
 
-static int mo_operwall(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_operwall(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_wallops(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_operwall(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_operwall(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_wallops(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message wallops_msgtab = {
 	"WALLOPS", 0, 0, 0, 0,
@@ -60,21 +60,19 @@ DECLARE_MODULE_AV2(wallops, NULL, NULL, wallops_clist, NULL, NULL, NULL, NULL, w
  * mo_operwall (write to *all* opers currently online)
  *      parv[1] = message text
  */
-static int
+static void
 mo_operwall(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(!IsOperOperwall(source_p))
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS),
 			   me.name, source_p->name, "operwall");
-		return 0;
+		return;
 	}
 
 	sendto_wallops_flags(UMODE_OPERWALL, source_p, "OPERWALL - %s", parv[1]);
 	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s OPERWALL :%s",
 		      use_id(source_p), parv[1]);
-
-	return 0;
 }
 
 /*
@@ -82,21 +80,19 @@ mo_operwall(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
  *  (write to *all* local opers currently online)
  *      parv[1] = message text
  */
-static int
+static void
 ms_operwall(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s OPERWALL :%s",
 		      use_id(source_p), parv[1]);
 	sendto_wallops_flags(UMODE_OPERWALL, source_p, "OPERWALL - %s", parv[1]);
-
-	return 0;
 }
 
 /*
  * ms_wallops (write to *all* opers currently online)
  *      parv[1] = message text
  */
-static int
+static void
 ms_wallops(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	const char *prefix = "";
@@ -105,7 +101,7 @@ ms_wallops(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS),
 			   me.name, source_p->name, "mass_notice");
-		return 0;
+		return;
 	}
 
 	if (IsPerson(source_p))
@@ -121,7 +117,5 @@ ms_wallops(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 
 	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s WALLOPS :%s",
 		      use_id(source_p), parv[1]);
-
-	return 0;
 }
 

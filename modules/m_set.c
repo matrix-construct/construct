@@ -41,7 +41,7 @@
 
 static const char set_desc[] = "Provides the SET command to change server parameters";
 
-static int mo_set(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_set(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message set_msgtab = {
 	"SET", 0, 0, 0, 0,
@@ -453,7 +453,7 @@ quote_splitusers(struct Client *source_p, const char *arg, int newval)
  * mo_set - SET command handler
  * set options while running
  */
-static int
+static void
 mo_set(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	int newval;
@@ -497,7 +497,7 @@ mo_set(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 						    wants_char ? "string, " : ""),
 						   (set_cmd_table[i].
 						    wants_char ? "int" : ""));
-					return 0;
+					return;
 				}
 
 				if(parc <= 2)
@@ -529,14 +529,14 @@ mo_set(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 							   ":Value less than 0 illegal for %s",
 							   set_cmd_table[i].name);
 
-						return 0;
+						return;
 					}
 				}
 				else
 					newval = -1;
 
 				set_cmd_table[i].handler(source_p, arg, newval);
-				return 0;
+				return;
 			}
 		}
 
@@ -545,10 +545,8 @@ mo_set(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		 * found within set_cmd_table.
 		 */
 		sendto_one_notice(source_p, ":Variable not found.");
-		return 0;
+		return;
 	}
 
 	list_quote_commands(source_p);
-
-	return 0;
 }

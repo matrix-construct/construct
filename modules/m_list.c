@@ -55,11 +55,13 @@ static const char list_desc[] = "Provides the LIST command to clients to view no
 
 static rb_dlink_list safelisting_clients = { NULL, NULL, 0 };
 
+static struct ev_entry *iterate_clients_ev = NULL;
+
 static int _modinit(void);
 static void _moddeinit(void);
 
-static int m_list(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int mo_list(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_list(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_list(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 static void list_one_channel(struct Client *source_p, struct Channel *chptr, int visible);
 
@@ -84,8 +86,6 @@ mapi_hfn_list_av1 list_hfnlist[] = {
 };
 
 DECLARE_MODULE_AV2(list, _modinit, _moddeinit, list_clist, NULL, list_hfnlist, NULL, NULL, list_desc);
-
-static struct ev_entry *iterate_clients_ev = NULL;
 
 static int _modinit(void)
 {
@@ -130,7 +130,8 @@ static void safelist_check_cliexit(hook_data_client_exit * hdata)
  * XXX - With SAFELIST, do we really need to continue pacing?
  *       In theory, the server cannot be lagged by this. --nenolod
  */
-static int m_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+static void
+m_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0L;
 
@@ -138,7 +139,7 @@ static int m_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Clien
 	{
 		sendto_one_notice(source_p, ":/LIST aborted");
 		safelist_client_release(source_p);
-		return 0;
+		return;
 	}
 
 	if (parc < 2 || !IsChannelName(parv[1]))
@@ -148,19 +149,20 @@ static int m_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Clien
 		{
 			sendto_one(source_p, form_str(RPL_LOAD2HI), me.name, source_p->name, "LIST");
 			sendto_one(source_p, form_str(RPL_LISTEND), me.name, source_p->name);
-			return 0;
+			return;
 		}
 		else
 			last_used = rb_current_time();
 	}
 
-	return mo_list(msgbuf_p, client_p, source_p, parc, parv);
+	mo_list(msgbuf_p, client_p, source_p, parc, parv);
 }
 
 /* mo_list()
  *      parv[1] = channel
  */
-static int mo_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+static void
+mo_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct ListClient *params;
 	char *p;
@@ -172,7 +174,7 @@ static int mo_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Clie
 	{
 		sendto_one_notice(source_p, ":/LIST aborted");
 		safelist_client_release(source_p);
-		return 0;
+		return;
 	}
 
 	if (parc > 1)
@@ -191,7 +193,7 @@ static int mo_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Clie
 	if (args && IsChannelName(args))
 	{
 		safelist_channel_named(source_p, args, operspy);
-		return 0;
+		return;
 	}
 
 	/* Multiple channels, possibly with parameters. */
@@ -286,8 +288,6 @@ static int mo_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Clie
 	}
 
 	safelist_client_instantiate(source_p, params);
-
-	return 0;
 }
 
 /*
@@ -317,19 +317,16 @@ static void list_one_channel(struct Client *source_p, struct Channel *chptr,
  * safelist_sendq_exceeded()
  *
  * inputs       - pointer to client that needs checking
- * outputs      - 1 if a client has exceeded the reserved
- *                sendq limit, 0 if not
+ * outputs      - true if a client has exceeded the reserved
+ *                sendq limit, false if not
  * side effects - none
  *
  * When safelisting, we only use half of the SendQ at any
  * given time.
  */
-static int safelist_sendq_exceeded(struct Client *client_p)
+static bool safelist_sendq_exceeded(struct Client *client_p)
 {
-	if (rb_linebuf_len(&client_p->localClient->buf_sendq) > (get_sendq(client_p) / 2))
-		return YES;
-	else
-		return NO;
+	return rb_linebuf_len(&client_p->localClient->buf_sendq) > (get_sendq(client_p) / 2);
 }
 
 /*
@@ -367,12 +364,12 @@ static void safelist_client_instantiate(struct Client *client_p, struct ListClie
  * outputs      - none
  * side effects - the client is no longer being
  *                listed
- *
- * Please do not ever call this on a non-local client.
- * If you do, you will get SIGSEGV.
  */
 static void safelist_client_release(struct Client *client_p)
 {
+	if(!MyClient(client_p))
+		return;
+
 	s_assert(MyClient(client_p));
 
 	rb_dlinkFindDestroy(client_p, &safelisting_clients);
@@ -478,7 +475,7 @@ static void safelist_iterate_client(struct Client *source_p)
 
 	RB_RADIXTREE_FOREACH_FROM(chptr, &iter, channel_tree, source_p->localClient->safelist_data->chname)
 	{
-		if (safelist_sendq_exceeded(source_p->from) == YES)
+		if (safelist_sendq_exceeded(source_p->from))
 		{
 			rb_free(source_p->localClient->safelist_data->chname);
 			source_p->localClient->safelist_data->chname = rb_strdup(chptr->chname);

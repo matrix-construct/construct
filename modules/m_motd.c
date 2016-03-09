@@ -38,8 +38,8 @@
 
 static const char motd_desc[] = "Provides the MOTD command to view the Message of the Day";
 
-static int m_motd(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int mo_motd(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_motd(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_motd(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message motd_msgtab = {
 	"MOTD", 0, 0, 0, 0,
@@ -62,7 +62,7 @@ static void motd_spy(struct Client *);
 ** m_motd
 **      parv[1] = servername
 */
-static int
+static void
 m_motd(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
@@ -74,34 +74,30 @@ m_motd(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 			   me.name, source_p->name, "MOTD");
 		sendto_one(source_p, form_str(RPL_ENDOFMOTD),
 			   me.name, source_p->name);
-		return 0;
+		return;
 	}
 	else
 		last_used = rb_current_time();
 
 	if(hunt_server(client_p, source_p, ":%s MOTD :%s", 1, parc, parv) != HUNTED_ISME)
-		return 0;
+		return;
 
 	motd_spy(source_p);
 	send_user_motd(source_p);
-
-	return 0;
 }
 
 /*
 ** mo_motd
 **      parv[1] = servername
 */
-static int
+static void
 mo_motd(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(hunt_server(client_p, source_p, ":%s MOTD :%s", 1, parc, parv) != HUNTED_ISME)
-		return 0;
+		return;
 
 	motd_spy(source_p);
 	send_user_motd(source_p);
-
-	return 0;
 }
 
 /* motd_spy()

@@ -33,8 +33,8 @@
 
 static const char capab_desc[] = "Provides the commands used for server-to-server capability negotiation";
 
-static int mr_capab(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int me_gcap(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mr_capab(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_gcap(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message capab_msgtab = {
 	"CAPAB", 0, 0, 0, 0,
@@ -53,7 +53,7 @@ DECLARE_MODULE_AV2(capab, NULL, NULL, capab_clist, NULL, NULL, NULL, NULL, capab
  * mr_capab - CAPAB message handler
  *      parv[1] = space-separated list of capabilities
  */
-static int
+static void
 mr_capab(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	int i;
@@ -62,16 +62,16 @@ mr_capab(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 	/* ummm, this shouldn't happen. Could argue this should be logged etc. */
 	if(client_p->localClient == NULL)
-		return 0;
+		return;
 
 	if(client_p->user)
-		return 0;
+		return;
 
 	/* CAP_TS6 is set in PASS, so is valid.. */
 	if((client_p->localClient->caps & ~CAP_TS6) != 0)
 	{
 		exit_client(client_p, client_p, client_p, "CAPAB received twice");
-		return 0;
+		return;
 	}
 	else
 		client_p->localClient->caps |= CAP_CAP;
@@ -85,11 +85,9 @@ mr_capab(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		for (s = rb_strtok_r(t, " ", &p); s; s = rb_strtok_r(NULL, " ", &p))
 			client_p->localClient->caps |= capability_get(serv_capindex, s, NULL);
 	}
-
-	return 0;
 }
 
-static int
+static void
 me_gcap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 		int parc, const char *parv[])
 {
@@ -98,7 +96,7 @@ me_gcap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	char *p;
 
 	if(!IsServer(source_p))
-		return 0;
+		return;
 
 	/* already had GCAPAB?! */
 	if(!EmptyString(source_p->serv->fullcaps))
@@ -111,6 +109,4 @@ me_gcap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 
 	for (s = rb_strtok_r(t, " ", &p); s; s = rb_strtok_r(NULL, " ", &p))
 		source_p->serv->caps |= capability_get(serv_capindex, s, NULL);
-
-	return 0;
 }

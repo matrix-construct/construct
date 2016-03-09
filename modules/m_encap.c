@@ -43,7 +43,7 @@
 
 static const char encap_desc[] = "Provides the TS6 ENCAP facility";
 
-static int ms_encap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+static void ms_encap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 		int parc, const char *parv[]);
 
 struct Message encap_msgtab = {
@@ -61,7 +61,7 @@ DECLARE_MODULE_AV2(encap, NULL, NULL, encap_clist, NULL, NULL, NULL, NULL, encap
  * parv[2] - subcommand
  * parv[3] - parameters
  */
-static int
+static void
 ms_encap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	char buffer[BUFSIZE];
@@ -78,7 +78,7 @@ ms_encap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 		/* ugh, not even at the last parameter, just bail --fl */
 		if((size_t)(cur_len + len) >= sizeof(buffer))
-			return 0;
+			return;
 
 		snprintf(ptr, sizeof(buffer) - cur_len, "%s ", parv[i]);
 		cur_len += len;
@@ -103,6 +103,4 @@ ms_encap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	/* if it matches us, find a matching handler and call it */
 	if(match(parv[1], me.name))
 		handle_encap(msgbuf_p, client_p, source_p, parv[2], parc - 2, parv + 2);
-
-	return 0;
 }

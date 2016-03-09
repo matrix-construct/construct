@@ -39,9 +39,9 @@
 static const char help_desc[] =
 	"Provides the help facility for commands, modes, and server concepts";
 
-static int m_help(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int mo_help(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int mo_uhelp(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_help(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_help(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_uhelp(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static void dohelp(struct Client *, int, const char *);
 
 struct Message help_msgtab = {
@@ -60,33 +60,29 @@ DECLARE_MODULE_AV2(help, NULL, NULL, help_clist, NULL, NULL, NULL, NULL, help_de
 /*
  * m_help - HELP message handler
  */
-static int
+static void
 m_help(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	dohelp(source_p, HELP_USER, parc > 1 ? parv[1] : NULL);
-
-	return 0;
 }
 
 /*
  * mo_help - HELP message handler
  */
-static int
+static void
 mo_help(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	dohelp(source_p, HELP_OPER, parc > 1 ? parv[1] : NULL);
-	return 0;
 }
 
 /*
  * mo_uhelp - HELP message handler
  * This is used so that opers can view the user help file without deopering
  */
-static int
+static void
 mo_uhelp(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	dohelp(source_p, HELP_USER, parc > 1 ? parv[1] : NULL);
-	return 0;
 }
 
 static void
@@ -127,5 +123,4 @@ dohelp(struct Client *source_p, int flags, const char *topic)
 
 	sendto_one(source_p, form_str(RPL_ENDOFHELP),
 		   me.name, source_p->name, topic);
-	return;
 }

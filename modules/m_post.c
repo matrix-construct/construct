@@ -36,7 +36,7 @@
 static const char post_desc[] =
 	"Ensure Web forms/proxies cannot connect by disconnecting on POST, GET, and PUT";
 
-static int mr_dumb_proxy(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mr_dumb_proxy(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message post_msgtab = {
 	"POST", 0, 0, 0, 0,
@@ -54,17 +54,15 @@ struct Message put_msgtab = {
 mapi_clist_av1 post_clist[] = {
 	&post_msgtab, &get_msgtab, &put_msgtab, NULL
 };
-DECLARE_MODULE_AV2(post, NULL, NULL, post_clist, NULL, NULL, NULL, NULL, post_desc);
 
+DECLARE_MODULE_AV2(post, NULL, NULL, post_clist, NULL, NULL, NULL, NULL, post_desc);
 
 /*
 ** mr_dumb_proxy
 **      parv[1] = comment
 */
-static int
+static void
 mr_dumb_proxy(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	exit_client(client_p, source_p, source_p, "Client Exit");
-
-	return 0;
 }

@@ -37,7 +37,7 @@
 static const char accept_desc[] =
 	"Provides the ACCEPT command for use with Caller ID/user mode +g";
 
-static int m_accept(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_accept(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static void build_nicklist(struct Client *, char *, char *, const char *);
 
 static void add_accept(struct Client *, struct Client *);
@@ -58,7 +58,7 @@ DECLARE_MODULE_AV2(accept, NULL, NULL, accept_clist, NULL, NULL, NULL, NULL, acc
  * m_accept - ACCEPT command handler
  *      parv[1] = servername
  */
-static int
+static void
 m_accept(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	char *nick;
@@ -71,7 +71,7 @@ m_accept(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	if(*parv[1] == '*')
 	{
 		list_accepts(source_p);
-		return 0;
+		return;
 	}
 
 	build_nicklist(source_p, addbuf, delbuf, parv[1]);
@@ -124,15 +124,13 @@ m_accept(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		if(accept_num >= ConfigFileEntry.max_accept)
 		{
 			sendto_one(source_p, form_str(ERR_ACCEPTFULL), me.name, source_p->name);
-			return 0;
+			return;
 		}
 
 		/* why is this here? */
 		/* del_from accept(target_p, source_p); */
 		add_accept(source_p, target_p);
 	}
-
-	return 0;
 }
 
 /*

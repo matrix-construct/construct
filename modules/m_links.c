@@ -40,8 +40,8 @@
 static const char links_desc[] =
 	"Provides the LINKS command to view servers linked to the host server";
 
-static int m_links(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int mo_links(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_links(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_links(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static char * clean_string(char *dest, const unsigned char *src, size_t len);
 
 struct Message links_msgtab = {
@@ -66,18 +66,16 @@ DECLARE_MODULE_AV2(links, NULL, NULL, links_clist, links_hlist, NULL, NULL, NULL
  *      parv[1] = server to query
  *      parv[2] = servername mask
  */
-static int
+static void
 m_links(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if(ConfigServerHide.flatten_links && !IsExemptShide(source_p))
 		scache_send_flattened_links(source_p);
 	else
 		mo_links(msgbuf_p, client_p, source_p, parc, parv);
-
-	return 0;
 }
 
-static int
+static void
 mo_links(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	const char *mask = "";
@@ -90,10 +88,10 @@ mo_links(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	if(parc > 2)
 	{
 		if(strlen(parv[2]) > HOSTLEN)
-			return 0;
+			return;
 		if(hunt_server(client_p, source_p, ":%s LINKS %s :%s", 1, parc, parv)
 		   != HUNTED_ISME)
-			return 0;
+			return;
 
 		mask = parv[2];
 	}
@@ -128,8 +126,6 @@ mo_links(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 	sendto_one_numeric(source_p, RPL_ENDOFLINKS, form_str(RPL_ENDOFLINKS),
 			   EmptyString(mask) ? "*" : mask);
-
-	return 0;
 }
 
 static char *

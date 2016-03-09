@@ -43,9 +43,13 @@
 static const char server_desc[] =
 	"Provides the TS6 commands to introduce a new server to the network";
 
-static int mr_server(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_server(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_sid(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mr_server(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_server(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_sid(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+
+static bool bogus_host(const char *host);
+static void set_server_gecos(struct Client *, const char *);
+
 struct Message server_msgtab = {
 	"SERVER", 0, 0, 0, 0,
 	{{mr_server, 4}, mg_reg, mg_ignore, {ms_server, 4}, mg_ignore, mg_reg}
@@ -59,16 +63,13 @@ mapi_clist_av1 server_clist[] = { &server_msgtab, &sid_msgtab, NULL };
 
 DECLARE_MODULE_AV2(server, NULL, NULL, server_clist, NULL, NULL, NULL, NULL, server_desc);
 
-int bogus_host(const char *host);
-static int set_server_gecos(struct Client *, const char *);
-
 /*
  * mr_server - SERVER message handler
  *      parv[1] = servername
  *      parv[2] = serverinfo/hopcount
  *      parv[3] = serverinfo
  */
-static int
+static void
 mr_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	char info[REALLEN + 1];
@@ -90,7 +91,7 @@ mr_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 		ilog(L_SERVER, "Server %s has unexpected name %s",
 				log_client_name(client_p, SHOW_IP), name);
 		exit_client(client_p, client_p, client_p, "Server name mismatch");
-		return 0;
+		return;
 	}
 
 	/*
@@ -101,13 +102,13 @@ mr_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Link %s dropped, non-TS server",
 				     client_p->name);
 		exit_client(client_p, client_p, client_p, "Non-TS server");
-		return 0;
+		return;
 	}
 
 	if(bogus_host(name))
 	{
 		exit_client(client_p, client_p, client_p, "Bogus server name");
-		return 0;
+		return;
 	}
 
 	/* Now we just have to call check_server and everything should be
@@ -128,7 +129,7 @@ mr_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 		}
 
 		exit_client(client_p, client_p, client_p, "Invalid servername.");
-		return 0;
+		return;
 		/* NOT REACHED */
 		break;
 
@@ -143,7 +144,7 @@ mr_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 		     log_client_name(client_p, SHOW_IP));
 
 		exit_client(client_p, client_p, client_p, "Invalid credentials.");
-		return 0;
+		return;
 		/* NOT REACHED */
 		break;
 
@@ -158,7 +159,7 @@ mr_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 		     log_client_name(client_p, SHOW_IP));
 
 		exit_client(client_p, client_p, client_p, "Invalid host.");
-		return 0;
+		return;
 		/* NOT REACHED */
 		break;
 
@@ -171,7 +172,7 @@ mr_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 		     log_client_name(client_p, SHOW_IP));
 
 		exit_client(client_p, client_p, client_p, "Invalid servername.");
-		return 0;
+		return;
 		/* NOT REACHED */
 		break;
 	case -5:
@@ -182,7 +183,7 @@ mr_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 		     log_client_name(client_p, SHOW_IP));
 
 		exit_client(client_p, client_p, client_p, "Access denied, requires SSL/TLS but is plaintext");
-		return 0;
+		return;
 	}
 
 	/* require TS6 for direct links */
@@ -191,7 +192,7 @@ mr_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 					"Link %s dropped, TS6 protocol is required", name);
 		exit_client(client_p, client_p, client_p, "Incompatible TS version");
-		return 0;
+		return;
 	}
 
 	/* check to ensure any "required" caps are set. --nenolod */
@@ -213,7 +214,7 @@ mr_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 		sendto_one(client_p, "ERROR :Missing required CAPABs (%s)", missing);
 		exit_client(client_p, client_p, client_p, "Missing required CAPABs");
 
-		return 0;
+		return;
 	}
 
 	if((target_p = find_server(NULL, name)))
@@ -248,7 +249,7 @@ mr_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 			sendto_one(client_p, "ERROR :Server already exists.");
 		}
 		exit_client(client_p, client_p, client_p, "Server Exists");
-		return 0;
+		return;
 	}
 
 	if(has_id(client_p) && (target_p = find_id(client_p->id)) != NULL)
@@ -266,7 +267,7 @@ mr_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 
 		sendto_one(client_p, "ERROR :SID already exists.");
 		exit_client(client_p, client_p, client_p, "SID Exists");
-		return 0;
+		return;
 	}
 
 	/*
@@ -278,8 +279,6 @@ mr_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 	set_server_gecos(client_p, info);
 	client_p->hopcount = hop;
 	server_estab(client_p);
-
-	return 0;
 }
 
 /*
@@ -288,7 +287,7 @@ mr_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
  *      parv[2] = serverinfo/hopcount
  *      parv[3] = serverinfo
  */
-static int
+static void
 ms_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	char info[REALLEN + 1];
@@ -334,7 +333,7 @@ ms_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 				"Server %s already exists",
 				name);
 		exit_client(client_p, client_p, &me, squitreason);
-		return 0;
+		return;
 	}
 
 	/*
@@ -356,7 +355,7 @@ ms_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 			client_p->name, name);
 
 		exit_client(client_p, client_p, client_p, "Nick as Server");
-		return 0;
+		return;
 	}
 
 	/*
@@ -420,7 +419,7 @@ ms_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 				"No matching hub_mask for %s",
 				name);
 		exit_client(NULL, client_p, &me, squitreason);
-		return 0;
+		return;
 	}
 
 	/* Check for the new server being leafed behind this HUB */
@@ -437,7 +436,7 @@ ms_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 				"Matching leaf_mask for %s",
 				name);
 		exit_client(NULL, client_p, &me, squitreason);
-		return 0;
+		return;
 	}
 
 
@@ -451,7 +450,7 @@ ms_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 			client_p->name, name);
 
 		exit_client(NULL, client_p, &me, "Invalid servername introduced.");
-		return 0;
+		return;
 	}
 
 	target_p = make_client(client_p);
@@ -487,11 +486,9 @@ ms_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 	hdata.client = source_p;
 	hdata.target = target_p;
 	call_hook(h_server_introduced, &hdata);
-
-	return 0;
 }
 
-static int
+static void
 ms_sid(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
@@ -512,7 +509,7 @@ ms_sid(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 				"Server %s already exists",
 				parv[1]);
 		exit_client(NULL, client_p, &me, squitreason);
-		return 0;
+		return;
 	}
 
 	/* collision on the SID? */
@@ -531,7 +528,7 @@ ms_sid(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 				"SID %s for %s already in use by %s",
 				parv[3], parv[1], target_p->name);
 		exit_client(NULL, client_p, &me, squitreason);
-		return 0;
+		return;
 	}
 
 	if(bogus_host(parv[1]) || strlen(parv[1]) > HOSTLEN)
@@ -544,7 +541,7 @@ ms_sid(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 			client_p->name, parv[1]);
 
 		exit_client(NULL, client_p, &me, "Bogus server name");
-		return 0;
+		return;
 	}
 
 	if(!IsDigit(parv[3][0]) || !IsIdChar(parv[3][1]) ||
@@ -558,7 +555,7 @@ ms_sid(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 			client_p->name, parv[3]);
 
 		exit_client(NULL, client_p, &me, "Bogus SID");
-		return 0;
+		return;
 	}
 
 	/* for the directly connected server:
@@ -591,7 +588,7 @@ ms_sid(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 				"No matching hub_mask for %s",
 				parv[1]);
 		exit_client(NULL, client_p, &me, squitreason);
-		return 0;
+		return;
 	}
 
 	/* matching leaf_mask */
@@ -607,7 +604,7 @@ ms_sid(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 				"Matching leaf_mask for %s",
 				parv[1]);
 		exit_client(NULL, client_p, &me, squitreason);
-		return 0;
+		return;
 	}
 
 	/* ok, alls good */
@@ -645,8 +642,6 @@ ms_sid(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 	hdata.client = source_p;
 	hdata.target = target_p;
 	call_hook(h_server_introduced, &hdata);
-
-	return 0;
 }
 
 /* set_server_gecos()
@@ -655,7 +650,7 @@ ms_sid(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
  * output	- none
  * side effects - servers gecos field is set
  */
-static int
+static void
 set_server_gecos(struct Client *client_p, const char *info)
 {
 	/* check the info for [IP] */
@@ -709,27 +704,25 @@ set_server_gecos(struct Client *client_p, const char *info)
 			if(s && (*s != '\0'))
 			{
 				rb_strlcpy(client_p->info, s, sizeof(client_p->info));
-				return 1;
+				return;
 			}
 		}
 	}
 
 	rb_strlcpy(client_p->info, "(Unknown Location)", sizeof(client_p->info));
-
-	return 1;
 }
 
 /*
  * bogus_host
  *
  * inputs	- hostname
- * output	- 1 if a bogus hostname input, 0 if its valid
+ * output	- true if a bogus hostname input, false if its valid
  * side effects	- none
  */
-int
+static bool
 bogus_host(const char *host)
 {
-	int bogus_server = 0;
+	bool bogus_server = false;
 	const char *s;
 	int dots = 0;
 
@@ -737,7 +730,7 @@ bogus_host(const char *host)
 	{
 		if(!IsServChar(*s))
 		{
-			bogus_server = 1;
+			bogus_server = true;
 			break;
 		}
 		if('.' == *s)
@@ -745,7 +738,7 @@ bogus_host(const char *host)
 	}
 
 	if(!dots || bogus_server)
-		return 1;
+		return true;
 
-	return 0;
+	return false;
 }

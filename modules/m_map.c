@@ -32,8 +32,8 @@
 
 static const char map_desc[] = "Provides the MAP command to view network topology information";
 
-static int m_map(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int mo_map(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void m_map(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void mo_map(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message map_msgtab = {
 	"MAP", 0, 0, 0, 0,
@@ -51,7 +51,7 @@ static char buf[BUFSIZE];
 
 /* m_map
 */
-static int
+static void
 m_map(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if((!IsExemptShide(source_p) && ConfigServerHide.flatten_links) ||
@@ -59,25 +59,22 @@ m_map(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	{
 		flattened_map(client_p);
 		sendto_one_numeric(client_p, RPL_MAPEND, form_str(RPL_MAPEND));
-		return 0;
+		return;
 	}
 
 	dump_map(client_p, &me, buf);
 	sendto_one_numeric(client_p, RPL_MAPEND, form_str(RPL_MAPEND));
-	return 0;
 }
 
 /*
 ** mo_map
 */
-static int
+static void
 mo_map(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	dump_map(client_p, &me, buf);
 	scache_send_missing(client_p);
 	sendto_one_numeric(client_p, RPL_MAPEND, form_str(RPL_MAPEND));
-
-	return 0;
 }
 
 /*

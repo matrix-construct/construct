@@ -37,7 +37,7 @@
 
 static const char ojoin_desc[] = "Allow admins to forcibly join channels with the OJOIN command";
 
-static int mo_ojoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void mo_ojoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message ojoin_msgtab = {
 	"OJOIN", 0, 0, 0, 0,
@@ -52,7 +52,7 @@ DECLARE_MODULE_AV2(ojoin, NULL, NULL, ojoin_clist, NULL, NULL, NULL, NULL, ojoin
 ** mo_ojoin
 **      parv[1] = channel
 */
-static int
+static void
 mo_ojoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr;
@@ -62,7 +62,7 @@ mo_ojoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	if(!IsOperAdmin(source_p))
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "admin");
-		return 0;
+		return;
 	}
 
 	if(*parv[1] == '@' || *parv[1] == '+')
@@ -75,13 +75,13 @@ mo_ojoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
 				   form_str(ERR_NOSUCHCHANNEL), parv[1]);
-		return 0;
+		return;
 	}
 
 	if(IsMember(source_p, chptr))
 	{
 		sendto_one_notice(source_p, ":Please part %s before using OJOIN", parv[1]);
-		return 0;
+		return;
 	}
 
 	if(move_me == 1)
@@ -139,6 +139,4 @@ mo_ojoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 	source_p->localClient->last_join_time = rb_current_time();
 	channel_member_names(chptr, source_p, 1);
-
-	return 0;
 }

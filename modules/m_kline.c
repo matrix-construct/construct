@@ -46,12 +46,12 @@
 
 static const char kline_desc[] = "Provides the KLINE facility to ban users via hostmask";
 
-static int mo_kline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_kline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int me_kline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int mo_unkline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_unkline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int me_unkline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_kline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_kline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_kline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_unkline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_unkline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_unkline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message kline_msgtab = {
 	"KLINE", 0, 0, 0, 0,
@@ -68,8 +68,8 @@ mapi_clist_av1 kline_clist[] = { &kline_msgtab, &unkline_msgtab, NULL };
 DECLARE_MODULE_AV2(kline, NULL, NULL, kline_clist, NULL, NULL, NULL, NULL, kline_desc);
 
 /* Local function prototypes */
-static int find_user_host(struct Client *source_p, const char *userhost, char *user, char *host);
-static int valid_user_host(struct Client *source_p, const char *user, const char *host);
+static bool find_user_host(struct Client *source_p, const char *userhost, char *user, char *host);
+static bool valid_user_host(struct Client *source_p, const char *user, const char *host);
 
 static void handle_remote_kline(struct Client *source_p, int tkline_time,
 				const char *user, const char *host, const char *reason);
@@ -79,11 +79,11 @@ static void apply_tkline(struct Client *source_p, struct ConfItem *aconf,
 			 const char *, const char *, int);
 static void apply_prop_kline(struct Client *source_p, struct ConfItem *aconf,
 			 const char *, const char *, int);
-static int already_placed_kline(struct Client *, const char *, const char *, int);
+static bool already_placed_kline(struct Client *, const char *, const char *, int);
 
 static void handle_remote_unkline(struct Client *source_p, const char *user, const char *host);
 static void remove_permkline_match(struct Client *, struct ConfItem *);
-static int remove_temp_kline(struct Client *, struct ConfItem *);
+static bool remove_temp_kline(struct Client *, struct ConfItem *);
 static void remove_prop_kline(struct Client *, struct ConfItem *);
 
 /* mo_kline()
@@ -94,7 +94,7 @@ static void remove_prop_kline(struct Client *, struct ConfItem *);
  *   parv[4] - server to target, or reason
  *   parv[5] - reason
  */
-static int
+static void
 mo_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {
 	char def[] = "No Reason";
@@ -111,7 +111,7 @@ mo_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	if(!IsOperK(source_p))
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "kline");
-		return 0;
+		return;
 	}
 
 	if((tkline_time = valid_temp_time(parv[loc])) >= 0)
@@ -121,7 +121,7 @@ mo_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		tkline_time = 0;
 
 	if(find_user_host(source_p, parv[loc], user, host) == 0)
-		return 0;
+		return;
 
 	loc++;
 
@@ -131,7 +131,7 @@ mo_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		{
 			sendto_one(source_p, form_str(ERR_NOPRIVS),
 				   me.name, source_p->name, "remoteban");
-			return 0;
+			return;
 		}
 
 		target_server = parv[loc + 1];
@@ -142,7 +142,7 @@ mo_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	{
 		sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS),
 			   me.name, source_p->name, "KLINE");
-		return 0;
+		return;
 	}
 
 	reason = LOCAL_COPY(parv[loc]);
@@ -154,7 +154,7 @@ mo_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 		/* If we are sending it somewhere that doesnt include us, stop */
 		if(!match(target_server, me.name))
-			return 0;
+			return;
 
 		/* Set as local-only. */
 		propagated = 0;
@@ -166,7 +166,7 @@ mo_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 				"%lu %s %s :%s", tkline_time, user, host, reason);
 
 	if(!valid_user_host(source_p, user, host))
-		return 0;
+		return;
 
 	if(!valid_wild_card(user, host))
 	{
@@ -174,17 +174,17 @@ mo_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 				  ":Please include at least %d non-wildcard "
 				  "characters with the user@host",
 				  ConfigFileEntry.min_nonwildcard);
-		return 0;
+		return;
 	}
 
 	if(propagated && tkline_time == 0)
 	{
 		sendto_one_notice(source_p, ":Cannot set a permanent global ban");
-		return 0;
+		return;
 	}
 
 	if(already_placed_kline(source_p, user, host, tkline_time))
-		return 0;
+		return;
 
 	rb_set_time();
 	aconf = make_conf();
@@ -227,8 +227,6 @@ mo_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	}
 	else
 		check_klines();
-
-	return 0;
 }
 
 /* ms_kline()
@@ -239,7 +237,7 @@ mo_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
  *   parv[4] - host
  *   parv[5] - reason
  */
-static int
+static void
 ms_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	int tkline_time = atoi(parv[2]);
@@ -249,30 +247,28 @@ ms_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	 * but its not worth dropping the link over.. --anfl
 	 */
 	if(parc < 6 || EmptyString(parv[5]))
-		return 0;
+		return;
 
 	propagate_generic(source_p, "KLINE", parv[1], CAP_KLN,
 			  "%d %s %s :%s", tkline_time, parv[3], parv[4], parv[5]);
 
 	if(!match(parv[1], me.name))
-		return 0;
+		return;
 
 	if(!IsPerson(source_p))
-		return 0;
+		return;
 
 	handle_remote_kline(source_p, tkline_time, parv[3], parv[4], parv[5]);
-	return 0;
 }
 
-static int
+static void
 me_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* <tkline_time> <user> <host> :<reason> */
 	if(!IsPerson(source_p))
-		return 0;
+		return;
 
 	handle_remote_kline(source_p, atoi(parv[1]), parv[2], parv[3], parv[4]);
-	return 0;
 }
 
 static void
@@ -341,8 +337,6 @@ handle_remote_kline(struct Client *source_p, int tkline_time,
 	}
 	else
 		check_klines();
-
-	return;
 }
 
 /* mo_unkline()
@@ -351,7 +345,7 @@ handle_remote_kline(struct Client *source_p, int tkline_time,
  *   parv[2] - optional "ON"
  *   parv[3] - optional target server
  */
-static int
+static void
 mo_unkline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	const char *user;
@@ -364,7 +358,7 @@ mo_unkline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 	if(!IsOperUnkline(source_p))
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "unkline");
-		return 0;
+		return;
 	}
 
 	if((host = strchr(h, '@')) || *h == '*' || strchr(h, '.') || strchr(h, ':'))
@@ -394,7 +388,7 @@ mo_unkline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 	else
 	{
 		sendto_one_notice(source_p, ":Invalid parameters");
-		return 0;
+		return;
 	}
 
 	/* possible remote kline.. */
@@ -404,13 +398,13 @@ mo_unkline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 		{
 			sendto_one(source_p, form_str(ERR_NOPRIVS),
 				   me.name, source_p->name, "remoteban");
-			return 0;
+			return;
 		}
 
 		propagate_generic(source_p, "UNKLINE", parv[3], CAP_UNKLN, "%s %s", user, host);
 
 		if(match(parv[3], me.name) == 0)
-			return 0;
+			return;
 
 		propagated = 0;
 	}
@@ -426,7 +420,7 @@ mo_unkline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 	if(aconf == NULL)
 	{
 		sendto_one_notice(source_p, ":No K-Line for %s@%s", user, host);
-		return 0;
+		return;
 	}
 
 	if(aconf->lifetime)
@@ -435,15 +429,13 @@ mo_unkline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 			remove_prop_kline(source_p, aconf);
 		else
 			sendto_one_notice(source_p, ":Cannot remove global K-Line %s@%s on specific servers", user, host);
-		return 0;
+		return;
 	}
 
 	if(remove_temp_kline(source_p, aconf))
-		return 0;
+		return;
 
 	remove_permkline_match(source_p, aconf);
-
-	return 0;
 }
 
 /* ms_unkline()
@@ -452,7 +444,7 @@ mo_unkline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
  *   parv[2] - user to unkline
  *   parv[3] - host to unkline
  */
-static int
+static void
 ms_unkline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* parv[0]  parv[1]        parv[2]  parv[3]
@@ -460,24 +452,22 @@ ms_unkline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 	propagate_generic(source_p, "UNKLINE", parv[1], CAP_UNKLN, "%s %s", parv[2], parv[3]);
 
 	if(!match(parv[1], me.name))
-		return 0;
+		return;
 
 	if(!IsPerson(source_p))
-		return 0;
+		return;
 
 	handle_remote_unkline(source_p, parv[2], parv[3]);
-	return 0;
 }
 
-static int
+static void
 me_unkline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	/* user host */
 	if(!IsPerson(source_p))
-		return 0;
+		return;
 
 	handle_remote_unkline(source_p, parv[1], parv[2]);
-	return 0;
 }
 
 static void
@@ -634,10 +624,10 @@ apply_prop_kline(struct Client *source_p, struct ConfItem *aconf,
 /* find_user_host()
  *
  * inputs	- client placing kline, user@host, user buffer, host buffer
- * output	- 0 if not ok to kline, 1 to kline i.e. if valid user host
+ * output	- false if not ok to kline, true to kline i.e. if valid user host
  * side effects -
  */
-static int
+static bool
 find_user_host(struct Client *source_p, const char *userhost, char *luser, char *lhost)
 {
 	char *hostp;
@@ -664,7 +654,7 @@ find_user_host(struct Client *source_p, const char *userhost, char *luser, char 
 		if(strchr(userhost, '.') == NULL && strchr(userhost, ':') == NULL)
 		{
 			sendto_one_notice(source_p, ":K-Line must be a user@host or host");
-			return 0;
+			return false;
 		}
 
 		luser[0] = '*';	/* no @ found, assume its *@somehost */
@@ -676,43 +666,43 @@ find_user_host(struct Client *source_p, const char *userhost, char *luser, char 
 	if (*luser == ':' || *lhost == ':')
 	{
 		sendto_one_notice(source_p, ":Invalid K-Line");
-		return 0;
+		return false;
 	}
 
-	return 1;
+	return true;
 }
 
 /* valid_user_host()
  *
  * inputs       - user buffer, host buffer
- * output	- 0 if invalid, 1 if valid
+ * output	- false if invalid, true if valid
  * side effects -
  */
-static int
+static bool
 valid_user_host(struct Client *source_p, const char *luser, const char *lhost)
 {
 	/* # is invalid, as are '!' (n!u@h kline) and '@' (u@@h kline) */
 	if(strchr(lhost, '#') || strchr(luser, '#') || strchr(luser, '!') || strchr(lhost, '@'))
 	{
 		sendto_one_notice(source_p, ":Invalid K-Line");
-		return 0;
+		return false;
 	}
 
-	return 1;
+	return true;
 }
 
 /* already_placed_kline()
  *
  * inputs       - source to notify, user@host to check, tkline time
- * outputs      - 1 if a perm kline or a tkline when a tkline is being
- *                set exists, else 0
+ * outputs      - true if a perm kline or a tkline when a tkline is being
+ *                set exists, else false
  * side effects - notifies source_p kline exists
  */
 /* Note: This currently works if the new K-line is a special case of an
  *       existing K-line, but not the other way round. To do that we would
  *       have to walk the hash and check every existing K-line. -A1kmm.
  */
-static int
+static bool
 already_placed_kline(struct Client *source_p, const char *luser, const char *lhost, int tkline)
 {
 	const char *reason, *p;
@@ -762,11 +752,11 @@ already_placed_kline(struct Client *source_p, const char *luser, const char *lho
 			sendto_one_notice(source_p,
 					  ":[%s@%s] already K-Lined by [%s@%s] - %s",
 					  luser, lhost, aconf->user, aconf->host, reason);
-			return 1;
+			return true;
 		}
 	}
 
-	return 0;
+	return false;
 }
 
 /* remove_permkline_match()
@@ -787,8 +777,6 @@ remove_permkline_match(struct Client *source_p, struct ConfItem *aconf)
 	remove_reject_mask(aconf->user, aconf->host);
 	bandb_del(BANDB_KLINE, aconf->user, aconf->host);
 	delete_one_address_conf(aconf->host, aconf);
-
-	return;
 }
 
 /* remove_temp_kline()
@@ -797,7 +785,7 @@ remove_permkline_match(struct Client *source_p, struct ConfItem *aconf)
  * outputs      -
  * side effects - tries to unkline anything that matches
  */
-static int
+static bool
 remove_temp_kline(struct Client *source_p, struct ConfItem *aconf)
 {
 	rb_dlink_node *ptr;
@@ -822,12 +810,12 @@ remove_temp_kline(struct Client *source_p, struct ConfItem *aconf)
 				rb_dlinkDestroy(ptr, &temp_klines[i]);
 				remove_reject_mask(aconf->user, aconf->host);
 				delete_one_address_conf(aconf->host, aconf);
-				return YES;
+				return true;
 			}
 		}
 	}
 
-	return NO;
+	return false;
 }
 
 static void

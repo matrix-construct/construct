@@ -36,8 +36,8 @@
 
 static const char quit_desc[] = "Provides the QUIT command to allow a user to leave the network";
 
-static int m_quit(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_quit(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_quit(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_quit(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message quit_msgtab = {
 	"QUIT", 0, 0, 0, 0,
@@ -52,7 +52,7 @@ DECLARE_MODULE_AV2(quit, NULL, NULL, quit_clist, NULL, NULL, NULL, NULL, quit_de
 ** m_quit
 **      parv[1] = comment
 */
-static int
+static void
 m_quit(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	char *comment = LOCAL_COPY((parc > 1 && parv[1]) ? parv[1] : client_p->name);
@@ -76,19 +76,17 @@ m_quit(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 	   rb_current_time())
 	{
 		exit_client(client_p, source_p, source_p, "Client Quit");
-		return 0;
+		return;
 	}
 
 	exit_client(client_p, source_p, source_p, comment);
-
-	return 0;
 }
 
 /*
 ** ms_quit
 **      parv[1] = comment
 */
-static int
+static void
 ms_quit(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	char *comment = LOCAL_COPY((parc > 1 && parv[1]) ? parv[1] : client_p->name);
@@ -98,6 +96,4 @@ ms_quit(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		comment[REASONLEN] = '\0';
 
 	exit_client(client_p, source_p, source_p, comment);
-
-	return 0;
 }

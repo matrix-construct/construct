@@ -40,8 +40,8 @@
 static const char adminwall_desc[] =
         "Provides the ADMINWALL command to send a message to all administrators";
 
-static int mo_adminwall(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int me_adminwall(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_adminwall(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_adminwall(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message adminwall_msgtab = {
 	"ADMINWALL", 0, 0, 0, 0,
@@ -57,23 +57,21 @@ DECLARE_MODULE_AV2(adminwall, NULL, NULL, adminwall_clist, NULL, NULL, NULL, NUL
  *      parv[1] = message text
  */
 
-static int
+static void
 mo_adminwall(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
         if(!IsAdmin(source_p))
         {
                 sendto_one(source_p, form_str(ERR_NOPRIVS),
                            me.name, source_p->name, "adminwall");
-                return 0;
+                return;
         }
         sendto_wallops_flags(UMODE_ADMIN, source_p, "ADMINWALL - %s", parv[1]);
         sendto_match_servs(source_p, "*", CAP_ENCAP, NOCAPS, "ENCAP * ADMINWALL :%s", parv[1]);
-        return 0;
 }
 
-static int
+static void
 me_adminwall(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
         sendto_wallops_flags(UMODE_ADMIN, source_p, "ADMINWALL - %s", parv[1]);
-        return 0;
 }

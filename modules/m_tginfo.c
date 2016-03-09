@@ -41,7 +41,7 @@
 
 static const char tginfo_desc[] = "Processes target change notifications from other servers";
 
-static int me_tginfo(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_tginfo(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message tginfo_msgtab = {
 	"TGINFO", 0, 0, 0, 0,
@@ -56,15 +56,15 @@ DECLARE_MODULE_AV2(tginfo, NULL, NULL, tginfo_clist, NULL, NULL, NULL, NULL, tgi
 ** me_tginfo
 **      parv[1] = 0, reserved for future use (number of remaining targets)
 */
-static int
+static void
 me_tginfo(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if (!IsPerson(source_p))
-		return 0;
+		return;
 
 	int remaining = atoi(parv[1]);
 	if (remaining != 0)
-		return 0; /* not implemented */
+		return; /* not implemented */
 
 	if (!EmptyString(source_p->sockhost) && strcmp(source_p->sockhost, "0"))
 	{
@@ -79,6 +79,4 @@ me_tginfo(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 			"Excessive target change from %s (%s@%s)",
 			source_p->name, source_p->username, source_p->orighost);
 	}
-
-	return 0;
 }

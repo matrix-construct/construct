@@ -30,10 +30,10 @@
 
 static const char chghost_desc[] = "Provides commands used to change and retrieve client hostnames";
 
-static int me_realhost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_chghost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int me_chghost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int mo_chghost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_realhost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_chghost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_chghost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_chghost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message realhost_msgtab = {
 	"REALHOST", 0, 0, 0, 0,
@@ -92,12 +92,12 @@ clean_host(const char *host)
  * I don't think that's a big problem as the whole thing is a
  * race condition.
  */
-static int
+static void
 me_realhost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
 	if (!IsPerson(source_p))
-		return 0;
+		return;
 
 	del_from_hostname_hash(source_p->orighost, source_p);
 	rb_strlcpy(source_p->orighost, parv[1], sizeof source_p->orighost);
@@ -106,7 +106,7 @@ me_realhost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 	else
 		ClearDynSpoof(source_p);
 	add_to_hostname_hash(source_p->orighost, source_p);
-	return 0;
+	return;
 }
 
 static int
@@ -150,14 +150,14 @@ do_chghost(struct Client *source_p, struct Client *target_p,
  * parv[1] = target
  * parv[2] = host
  */
-static int
+static void
 ms_chghost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
 	struct Client *target_p;
 
 	if (!(target_p = find_person(parv[1])))
-		return -1;
+		return;
 
 	if (do_chghost(source_p, target_p, parv[2], 0))
 	{
@@ -169,7 +169,7 @@ ms_chghost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 			use_id(source_p), use_id(target_p), parv[2]);
 	}
 
-	return 0;
+	return;
 }
 
 /*
@@ -177,18 +177,18 @@ ms_chghost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
  * parv[1] = target
  * parv[2] = host
  */
-static int
+static void
 me_chghost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
 	struct Client *target_p;
 
 	if (!(target_p = find_person(parv[1])))
-		return -1;
+		return;
 
 	do_chghost(source_p, target_p, parv[2], 1);
 
-	return 0;
+	return;
 }
 
 /*
@@ -199,7 +199,7 @@ me_chghost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 /* Disable this because of the abuse potential -- jilles
  * No, make it toggleable via ./configure. --nenolod
  */
-static int
+static void
 mo_chghost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
@@ -210,20 +210,20 @@ mo_chghost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS),
 			   me.name, source_p->name, "admin");
-		return 0;
+		return;
 	}
 
 	if (!(target_p = find_named_person(parv[1])))
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHNICK,
 				form_str(ERR_NOSUCHNICK), parv[1]);
-		return 0;
+		return;
 	}
 
 	if (!clean_host(parv[2]))
 	{
 		sendto_one_notice(source_p, ":Hostname %s is invalid", parv[2]);
-		return 0;
+		return;
 	}
 
 	do_chghost(source_p, target_p, parv[2], 0);
@@ -239,6 +239,6 @@ mo_chghost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 			"CHGHOST");
 #endif
 
-	return 0;
+	return;
 }
 

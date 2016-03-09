@@ -43,9 +43,9 @@
 
 static const char sasl_desc[] = "Provides SASL authentication support";
 
-static int m_authenticate(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int me_sasl(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int me_mechlist(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_authenticate(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_sasl(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_mechlist(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 static void abort_sasl(struct Client *);
 static void abort_sasl_exit(hook_data_client_exit *);
@@ -80,7 +80,7 @@ mapi_hfn_list_av1 sasl_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-static int
+static bool
 sasl_visible(struct Client *client_p)
 {
 	struct Client *agent_p = NULL;
@@ -119,7 +119,7 @@ _moddeinit(void)
 
 DECLARE_MODULE_AV2(sasl, _modinit, _moddeinit, sasl_clist, NULL, sasl_hfnlist, NULL, NULL, sasl_desc);
 
-static int
+static void
 m_authenticate(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
@@ -128,19 +128,19 @@ m_authenticate(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *
 
 	/* They really should use CAP for their own sake. */
 	if(!IsCapable(source_p, CLICAP_SASL))
-		return 0;
+		return;
 
 	if (strlen(client_p->id) == 3)
 	{
 		exit_client(client_p, client_p, client_p, "Mixing client and server protocol");
-		return 0;
+		return;
 	}
 
 	saslserv_p = find_named_client(ConfigFileEntry.sasl_service);
 	if (saslserv_p == NULL || !IsService(saslserv_p))
 	{
 		sendto_one(source_p, form_str(ERR_SASLABORTED), me.name, EmptyString(source_p->name) ? "*" : source_p->name);
-		return 0;
+		return;
 	}
 
 	if(source_p->localClient->sasl_complete)
@@ -152,7 +152,7 @@ m_authenticate(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *
 	if(strlen(parv[1]) > 400)
 	{
 		sendto_one(source_p, form_str(ERR_SASLTOOLONG), me.name, EmptyString(source_p->name) ? "*" : source_p->name);
-		return 0;
+		return;
 	}
 
 	if(!*source_p->id)
@@ -187,11 +187,9 @@ m_authenticate(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *
 				me.id, agent_p->servptr->name, source_p->id, agent_p->id,
 				parv[1]);
 	source_p->localClient->sasl_out++;
-
-	return 0;
 }
 
-static int
+static void
 me_sasl(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	int parc, const char *parv[])
 {
@@ -201,26 +199,26 @@ me_sasl(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	 * Only SASL agents can answer global requests.
 	 */
 	if(strncmp(parv[2], me.id, 3))
-		return 0;
+		return;
 
 	if((target_p = find_id(parv[2])) == NULL)
-		return 0;
+		return;
 
 	if((agent_p = find_id(parv[1])) == NULL)
-		return 0;
+		return;
 
 	if(source_p != agent_p->servptr) /* WTF?! */
-		return 0;
+		return;
 
 	/* We only accept messages from SASL agents; these must have umode +S
 	 * (so the server must be listed in a service{} block).
 	 */
 	if(!IsService(agent_p))
-		return 0;
+		return;
 
 	/* Reject if someone has already answered. */
 	if(*target_p->localClient->sasl_agent && strncmp(parv[1], target_p->localClient->sasl_agent, IDLEN))
-		return 0;
+		return;
 	else if(!*target_p->localClient->sasl_agent)
 		rb_strlcpy(target_p->localClient->sasl_agent, parv[1], IDLEN);
 
@@ -239,17 +237,13 @@ me_sasl(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	}
 	else if(*parv[3] == 'M')
 		sendto_one(target_p, form_str(RPL_SASLMECHS), me.name, EmptyString(target_p->name) ? "*" : target_p->name, parv[4]);
-
-	return 0;
 }
 
-static int
+static void
 me_mechlist(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	    int parc, const char *parv[])
 {
 	rb_strlcpy(mechlist_buf, parv[1], sizeof mechlist_buf);
-
-	return 0;
 }
 
 /* If the client never finished authenticating but is

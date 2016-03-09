@@ -42,7 +42,7 @@
 static const char whowas_desc[] =
 	"Provides the WHOWAS command to display information on a disconnected user";
 
-static int m_whowas(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_whowas(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message whowas_msgtab = {
 	"WHOWAS", 0, 0, 0, 0,
@@ -57,7 +57,7 @@ DECLARE_MODULE_AV2(whowas, NULL, NULL, whowas_clist, NULL, NULL, NULL, NULL, who
 ** m_whowas
 **      parv[1] = nickname queried
 */
-static int
+static void
 m_whowas(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	rb_dlink_list *whowas_list;
@@ -81,7 +81,7 @@ m_whowas(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 				   me.name, source_p->name, "WHOWAS");
 			sendto_one_numeric(source_p, RPL_ENDOFWHOWAS, form_str(RPL_ENDOFWHOWAS),
 				   parv[1]);
-			return 0;
+			return;
 		}
 		else
 			last_used = rb_current_time();
@@ -93,7 +93,7 @@ m_whowas(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 	if(parc > 3)
 		if(hunt_server(client_p, source_p, ":%s WHOWAS %s %s :%s", 3, parc, parv))
-			return 0;
+			return;
 
 	if(!MyClient(source_p) && (max <= 0 || max > 20))
 		max = 20;
@@ -110,7 +110,7 @@ m_whowas(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	{
 		sendto_one_numeric(source_p, ERR_WASNOSUCHNICK, form_str(ERR_WASNOSUCHNICK), nick);
 		sendto_one_numeric(source_p, RPL_ENDOFWHOWAS, form_str(RPL_ENDOFWHOWAS), parv[1]);
-		return 0;
+		return;
 	}
 
 	RB_DLINK_FOREACH(ptr, whowas_list->head)
@@ -149,5 +149,4 @@ m_whowas(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	}
 
 	sendto_one_numeric(source_p, RPL_ENDOFWHOWAS, form_str(RPL_ENDOFWHOWAS), parv[1]);
-	return 0;
 }

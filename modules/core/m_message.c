@@ -47,9 +47,9 @@
 static const char message_desc[] =
 	"Provides the PRIVMSG and NOTICE commands to send messages to users and channels";
 
-static int m_message(enum message_type, struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int m_privmsg(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int m_notice(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_message(enum message_type, struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_privmsg(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_notice(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 static void expire_tgchange(void *unused);
 static struct ev_entry *expire_tgchange_event;
@@ -92,7 +92,7 @@ static int build_target_list(enum message_type msgtype,
 			     struct Client *client_p,
 			     struct Client *source_p, const char *nicks_channels, const char *text);
 
-static int flood_attack_client(enum message_type msgtype, struct Client *source_p, struct Client *target_p);
+static bool flood_attack_client(enum message_type msgtype, struct Client *source_p, struct Client *target_p);
 
 /* Fifteen seconds should be plenty for a client to reply a ctcp */
 #define LARGE_CTCP_TIME 15
@@ -106,7 +106,7 @@ static int flood_attack_client(enum message_type msgtype, struct Client *source_
 static struct entity targets[512];
 static int ntargets = 0;
 
-static int duplicate_ptr(void *);
+static bool duplicate_ptr(void *);
 
 static void msg_channel(enum message_type msgtype,
 			struct Client *client_p,
@@ -152,16 +152,16 @@ const char *cmdname[MESSAGE_TYPE_COUNT] = {
 	[MESSAGE_TYPE_NOTICE] = "NOTICE",
 };
 
-static int
+static void
 m_privmsg(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	return m_message(MESSAGE_TYPE_PRIVMSG, msgbuf_p, client_p, source_p, parc, parv);
+	m_message(MESSAGE_TYPE_PRIVMSG, msgbuf_p, client_p, source_p, parc, parv);
 }
 
-static int
+static void
 m_notice(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	return m_message(MESSAGE_TYPE_NOTICE, msgbuf_p, client_p, source_p, parc, parv);
+	m_message(MESSAGE_TYPE_NOTICE, msgbuf_p, client_p, source_p, parc, parv);
 }
 
 /*
@@ -170,7 +170,7 @@ m_notice(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
  *		- pointer to source_p
  *		- pointer to channel
  */
-static int
+static void
 m_message(enum message_type msgtype, struct MsgBuf *msgbuf_p,
 	  struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
@@ -181,14 +181,14 @@ m_message(enum message_type msgtype, struct MsgBuf *msgbuf_p,
 		if(msgtype != MESSAGE_TYPE_NOTICE)
 			sendto_one(source_p, form_str(ERR_NORECIPIENT), me.name,
 				   source_p->name, cmdname[msgtype]);
-		return 0;
+		return;
 	}
 
 	if(parc < 3 || EmptyString(parv[2]))
 	{
 		if(msgtype != MESSAGE_TYPE_NOTICE)
 			sendto_one(source_p, form_str(ERR_NOTEXTTOSEND), me.name, source_p->name);
-		return 0;
+		return;
 	}
 
 	/* Finish the flood grace period if theyre not messaging themselves
@@ -199,7 +199,7 @@ m_message(enum message_type msgtype, struct MsgBuf *msgbuf_p,
 
 	if(build_target_list(msgtype, client_p, source_p, parv[1], parv[2]) < 0)
 	{
-		return 0;
+		return;
 	}
 
 	for(i = 0; i < ntargets; i++)
@@ -228,8 +228,6 @@ m_message(enum message_type msgtype, struct MsgBuf *msgbuf_p,
 			break;
 		}
 	}
-
-	return 0;
 }
 
 /*
@@ -447,18 +445,18 @@ build_target_list(enum message_type msgtype, struct Client *client_p,
  * inputs	- pointer to check
  *		- pointer to table of entities
  *		- number of valid entities so far
- * output	- YES if duplicate pointer in table, NO if not.
+ * output	- true if duplicate pointer in table, false if not.
  *		  note, this does the canonize using pointers
  * side effects	- NONE
  */
-static int
+static bool
 duplicate_ptr(void *ptr)
 {
 	int i;
 	for(i = 0; i < ntargets; i++)
 		if(targets[i].ptr == ptr)
-			return YES;
-	return NO;
+			return true;
+	return false;
 }
 
 /*
@@ -879,13 +877,13 @@ msg_client(enum message_type msgtype,
 /*
  * flood_attack_client
  * inputs       - flag 0 if PRIVMSG 1 if NOTICE. RFC
- *                say NOTICE must not auto reply
+ *                says NOTICE must not auto reply
  *              - pointer to source Client
  *		- pointer to target Client
- * output	- 1 if target is under flood attack
+ * output	- true if target is under flood attack
  * side effects	- check for flood attack on target target_p
  */
-static int
+static bool
 flood_attack_client(enum message_type msgtype, struct Client *source_p, struct Client *target_p)
 {
 	int delta;
@@ -927,13 +925,13 @@ flood_attack_client(enum message_type msgtype, struct Client *source_p, struct C
 				sendto_one(source_p,
 					   ":%s NOTICE %s :*** Message to %s throttled due to flooding",
 					   me.name, source_p->name, target_p->name);
-			return 1;
+			return true;
 		}
 		else
 			target_p->received_number_of_privmsgs++;
 	}
 
-	return 0;
+	return false;
 }
 
 /*

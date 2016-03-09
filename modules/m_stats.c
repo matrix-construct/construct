@@ -52,7 +52,7 @@
 static const char stats_desc[] =
 	"Provides the STATS command to inspect various server/network information";
 
-static int m_stats (struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_stats (struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message stats_msgtab = {
 	"STATS", 0, 0, 0, 0,
@@ -73,8 +73,8 @@ DECLARE_MODULE_AV2(stats, NULL, NULL, stats_clist, stats_hlist, NULL, NULL, NULL
 
 const char *Lformat = "%s %u %u %u %u %u :%u %u %s";
 
-static void stats_l_list(struct Client *s, const char *, int, int, rb_dlink_list *, char,
-				int (*check_fn)(struct Client *target_p));
+static void stats_l_list(struct Client *s, const char *, bool, bool, rb_dlink_list *, char,
+				bool (*check_fn)(struct Client *target_p));
 static void stats_l_client(struct Client *source_p, struct Client *target_p,
 				char statchar);
 
@@ -193,7 +193,7 @@ static struct stats_cmd stats_cmd_table[255] = {
  * This will search the tables for the appropriate stats letter,
  * if found execute it.
  */
-static int
+static void
 m_stats(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
@@ -214,14 +214,14 @@ m_stats(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 				   me.name, source_p->name, "STATS");
 			sendto_one_numeric(source_p, RPL_ENDOFSTATS,
 					   form_str(RPL_ENDOFSTATS), statchar);
-			return 0;
+			return;
 		}
 		else
 			last_used = rb_current_time();
 	}
 
 	if(hunt_server (client_p, source_p, ":%s STATS %s :%s", 2, parc, parv) != HUNTED_ISME)
-		return 0;
+		return;
 
 	if((statchar != 'L') && (statchar != 'l'))
 	{
@@ -266,8 +266,6 @@ stats_out:
 	/* Send the end of stats notice, and the stats_spy */
 	sendto_one_numeric(source_p, RPL_ENDOFSTATS,
 			   form_str(RPL_ENDOFSTATS), statchar);
-
-	return 0;
 }
 
 static void
@@ -1587,20 +1585,17 @@ stats_servlinks (struct Client *source_p)
 	sendto_one_numeric(source_p, RPL_STATSDEBUG, "? :Server recv: %s", buf);
 }
 
-static int
+static inline bool
 stats_l_should_show_oper(struct Client *target_p)
 {
-	if (IsOperInvis(target_p))
-		return 0;
-
-	return 1;
+	return (!IsOperInvis(target_p));
 }
 
 static void
 stats_ltrace(struct Client *source_p, int parc, const char *parv[])
 {
-	int doall = 0;
-	int wilds = 0;
+	bool doall = false;
+	bool wilds = false;
 	const char *name;
 	char statchar = parv[1][0];
 
@@ -1612,7 +1607,7 @@ stats_ltrace(struct Client *source_p, int parc, const char *parv[])
 		   (!MyClient(source_p) && !irccmp(parv[2], me.id)))
 		{
 			name = me.name;
-			doall = 1;
+			doall = true;
 		}
 		else
 		{
@@ -1646,7 +1641,7 @@ stats_ltrace(struct Client *source_p, int parc, const char *parv[])
 	else
 	{
 		name = me.name;
-		doall = 1;
+		doall = true;
 	}
 
 	stats_spy(source_p, statchar, name);
@@ -1684,8 +1679,8 @@ stats_ltrace(struct Client *source_p, int parc, const char *parv[])
 }
 
 static void
-stats_l_list(struct Client *source_p, const char *name, int doall, int wilds,
-	     rb_dlink_list * list, char statchar, int (*check_fn)(struct Client *target_p))
+stats_l_list(struct Client *source_p, const char *name, bool doall, bool wilds,
+	     rb_dlink_list * list, char statchar, bool (*check_fn)(struct Client *target_p))
 {
 	rb_dlink_node *ptr;
 	struct Client *target_p;
@@ -1766,10 +1761,6 @@ stats_comm(struct Client *source_p)
  * output	- none
  * side effects -
  * This little helper function reports to opers if configured.
- * personally, I don't see why opers need to see stats requests
- * at all. They are just "noise" to an oper, and users can't do
- * any damage with stats requests now anyway. So, why show them?
- * -Dianora
  */
 static int
 stats_spy(struct Client *source_p, char statchar, const char *name)

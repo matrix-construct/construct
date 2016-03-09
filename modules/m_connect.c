@@ -41,8 +41,8 @@
 static const char connect_desc[] =
 	"Provides the CONNECT command to introduce servers to the network";
 
-static int mo_connect(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_connect(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_connect(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_connect(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message connect_msgtab = {
 	"CONNECT", 0, 0, 0, 0,
@@ -63,7 +63,7 @@ DECLARE_MODULE_AV2(connect, NULL, NULL, connect_clist, NULL, NULL, NULL, NULL, c
  *      parv[2] = port number
  *      parv[3] = remote server
  */
-static int
+static void
 mo_connect(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	int port;
@@ -77,17 +77,17 @@ mo_connect(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS),
 			   me.name, source_p->name, "remote");
-		return 0;
+		return;
 	}
 
 	if(hunt_server(client_p, source_p, ":%s CONNECT %s %s :%s", 3, parc, parv) != HUNTED_ISME)
-		return 0;
+		return;
 
 	if((target_p = find_server(source_p, parv[1])))
 	{
 		sendto_one_notice(source_p, ":Connect: Server %s already exists from %s.", parv[1],
 			target_p->from->name);
-		return 0;
+		return;
 	}
 
 	/*
@@ -96,7 +96,7 @@ mo_connect(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 	if((server_p = find_server_conf(parv[1])) == NULL)
 	{
 		sendto_one_notice(source_p, ":Connect: Host %s not listed in ircd.conf", parv[1]);
-		return 0;
+		return;
 	}
 
 	if(ServerConfSSL(server_p) && (!ssl_ok || !get_ssld_count()))
@@ -104,7 +104,7 @@ mo_connect(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 		sendto_one_notice(source_p,
 				  ":Connect: Server %s is set to use SSL/TLS but SSL/TLS is not configured.",
 				  parv[1]);
-		return 0;
+		return;
 	}
 
 	/*
@@ -120,7 +120,7 @@ mo_connect(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 	else if(port <= 0)
 	{
 		sendto_one_notice(source_p, ":Connect: illegal port number");
-		return 0;
+		return;
 	}
 
 	/*
@@ -152,8 +152,6 @@ mo_connect(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 	 * destroyed, so reset it back to the configured settings
 	 */
 	server_p->port = tmpport;
-
-	return 0;
 }
 
 /*
@@ -166,7 +164,7 @@ mo_connect(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
  *      parv[2] = port number
  *      parv[3] = remote server
  */
-static int
+static void
 ms_connect(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	int port;
@@ -175,13 +173,13 @@ ms_connect(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 	struct Client *target_p;
 
 	if(hunt_server(client_p, source_p, ":%s CONNECT %s %s :%s", 3, parc, parv) != HUNTED_ISME)
-		return 0;
+		return;
 
 	if((target_p = find_server(NULL, parv[1])))
 	{
 		sendto_one_notice(source_p, ":Connect: Server %s already exists from %s.",
 				  parv[1], target_p->from->name);
-		return 0;
+		return;
 	}
 
 	/*
@@ -191,7 +189,7 @@ ms_connect(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 	{
 		sendto_one_notice(source_p, ":Connect: Host %s not listed in ircd.conf",
 				  parv[1]);
-		return 0;
+		return;
 	}
 
 	if(ServerConfSSL(server_p) && (!ssl_ok || !get_ssld_count()))
@@ -199,7 +197,7 @@ ms_connect(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 		sendto_one_notice(source_p,
 				  ":Connect: Server %s is set to use SSL/TLS but SSL/TLS is not configured.",
 				  parv[1]);
-		return 0;
+		return;
 	}
 
 	/*
@@ -217,7 +215,7 @@ ms_connect(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 	else if(port <= 0)
 	{
 		sendto_one_notice(source_p, ":Connect: Illegal port number");
-		return 0;
+		return;
 	}
 
 	/*
@@ -248,5 +246,4 @@ ms_connect(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 	 * destroyed
 	 */
 	server_p->port = tmpport;
-	return 0;
 }

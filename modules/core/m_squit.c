@@ -40,8 +40,8 @@
 
 static const char squit_desc[] = "Provides the SQUIT command to cause a server to quit";
 
-static int ms_squit(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int mo_squit(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_squit(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_squit(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message squit_msgtab = {
 	"SQUIT", 0, 0, 0, 0,
@@ -67,7 +67,7 @@ static struct squit_parms *find_squit(struct Client *client_p,
  *      parv[1] = server name
  *      parv[2] = comment
  */
-static int
+static void
 mo_squit(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct squit_parms *found_squit;
@@ -89,18 +89,16 @@ mo_squit(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		{
 			sendto_one(source_p, form_str(ERR_NOPRIVS),
 				   me.name, source_p->name, "remote");
-			return 0;
+			return;
 		}
 
 		exit_client(client_p, found_squit->target_p, source_p, comment);
-		return 0;
+		return;
 	}
 	else
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHSERVER, form_str(ERR_NOSUCHSERVER), parv[1]);
 	}
-
-	return 0;
 }
 
 /*
@@ -108,7 +106,7 @@ mo_squit(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
  *      parv[1] = server name
  *      parv[2] = comment
  */
-static int
+static void
 ms_squit(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
@@ -119,12 +117,12 @@ ms_squit(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	else
 	{
 		if((target_p = find_server(NULL, parv[1])) == NULL)
-			return 0;
+			return;
 
 		if(IsMe(target_p))
 			target_p = client_p;
 		if(!IsServer(target_p))
-			return 0;
+			return;
 	}
 
 	/* Server is closing its link */
@@ -149,7 +147,6 @@ ms_squit(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		ilog(L_SERVER, "SQUIT From %s : %s (%s)", source_p->name, target_p->name, comment);
 	}
 	exit_client(client_p, target_p, source_p, comment);
-	return 0;
 }
 
 

@@ -48,8 +48,8 @@
 
 static const char ban_desc[] = "Provides the TS6 BAN command for propagating network-wide bans";
 
-static int m_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int ms_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void m_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void ms_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message ban_msgtab = {
 	"BAN", 0, 0, 0, 0,
@@ -60,14 +60,13 @@ mapi_clist_av1 ban_clist[] =  { &ban_msgtab, NULL };
 
 DECLARE_MODULE_AV2(ban, NULL, NULL, ban_clist, NULL, NULL, NULL, NULL, ban_desc);
 
-static int
+static void
 m_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	sendto_one_notice(source_p, ":The BAN command is not user-accessible.");
 	sendto_one_notice(source_p, ":To ban a user from a channel, see /QUOTE HELP CMODE");
 	if (IsOper(source_p))
 		sendto_one_notice(source_p, ":To ban a user from a server or from the network, see /QUOTE HELP KLINE");
-	return 0;
 }
 
 /* ms_ban()
@@ -81,7 +80,7 @@ m_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
  * parv[7] - oper or *
  * parv[8] - reason (possibly with |operreason)
  */
-static int
+static void
 ms_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	rb_dlink_node *ptr;
@@ -99,7 +98,7 @@ ms_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
 				"Unknown BAN type %s from %s",
 				parv[1], source_p->name);
-		return 0;
+		return;
 	}
 	switch (parv[1][0])
 	{
@@ -120,7 +119,7 @@ ms_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 			sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
 					"Unknown BAN type %s from %s",
 					parv[1], source_p->name);
-			return 0;
+			return;
 	}
 	created = atol(parv[4]);
 	hold = created + atoi(parv[5]);
@@ -145,7 +144,7 @@ ms_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 						aconf->user ? aconf->user : "",
 						aconf->user ? "@" : "",
 						aconf->host);
-			return 0;
+			return;
 		}
 		/* act indicates if something happened (from the oper's
 		 * point of view). This is the case if the ban was
@@ -158,7 +157,7 @@ ms_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 			aconf->lifetime = lifetime;
 		/* already expired, hmm */
 		if (aconf->lifetime <= now)
-			return 0;
+			return;
 		/* Deactivate, it will be reactivated later if appropriate. */
 		deactivate_conf(aconf, ptr, now);
 		rb_free(aconf->user);
@@ -336,5 +335,4 @@ ms_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 			parv[6],
 			parv[7],
 			parv[parc - 1]);
-	return 0;
 }

@@ -44,8 +44,8 @@
 static const char topic_desc[] =
 	"Provides the TOPIC command to set, remove, and inspect channel topics";
 
-static int m_topic(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_topic(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_topic(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_topic(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message topic_msgtab = {
 	"TOPIC", 0, 0, 0, 0,
@@ -60,7 +60,7 @@ DECLARE_MODULE_AV2(topic, NULL, NULL, topic_clist, NULL, NULL, NULL, NULL, topic
  *      parv[1] = channel name
  *	parv[2] = new topic, if setting topic
  */
-static int
+static void
 m_topic(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr = NULL;
@@ -83,7 +83,7 @@ m_topic(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		{
 			sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS),
 					me.name, source_p->name, "TOPIC");
-			return 0;
+			return;
 		}
 	}
 
@@ -96,7 +96,7 @@ m_topic(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
 				form_str(ERR_NOSUCHCHANNEL), name);
-		return 0;
+		return;
 	}
 
 	/* setting topic */
@@ -108,7 +108,7 @@ m_topic(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		{
 			sendto_one_numeric(source_p, ERR_NOTONCHANNEL,
 					form_str(ERR_NOTONCHANNEL), name);
-			return 0;
+			return;
 		}
 
 		if(MyClient(source_p) && !is_chanop_voiced(msptr) &&
@@ -117,7 +117,7 @@ m_topic(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		{
 			sendto_one(source_p, form_str(ERR_TARGCHANGE),
 				   me.name, source_p->name, chptr->chname);
-			return 0;
+			return;
 		}
 
 		if(((chptr->mode.mode & MODE_TOPICLIMIT) == 0 ||
@@ -160,7 +160,7 @@ m_topic(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		{
 			sendto_one_numeric(source_p, ERR_NOTONCHANNEL,
 					form_str(ERR_NOTONCHANNEL), name);
-			return 0;
+			return;
 		}
 		if(chptr->topic == NULL)
 			sendto_one(source_p, form_str(RPL_NOTOPIC),
@@ -176,8 +176,6 @@ m_topic(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 					(unsigned long)chptr->topic_time);
 		}
 	}
-
-	return 0;
 }
 
 /*
@@ -189,19 +187,17 @@ m_topic(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
  *
  * Let servers always set a topic
  */
-static int
+static void
 ms_topic(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr = NULL;
 
 	if((chptr = find_channel(parv[1])) == NULL)
-		return 0;
+		return;
 
 	set_channel_topic(chptr, parv[4], parv[2], atoi(parv[3]));
 
 	sendto_channel_local(ALL_MEMBERS, chptr, ":%s TOPIC %s :%s",
 			     source_p->name, parv[1],
 			     chptr->topic == NULL ? "" : chptr->topic);
-
-	return 0;
 }

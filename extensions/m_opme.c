@@ -36,7 +36,7 @@
 
 static const char opme_desc[] = "Allow admins to op themselves on opless channels";
 
-static int mo_opme(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void mo_opme(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message opme_msgtab = {
 	"OPME", 0, 0, 0, 0,
@@ -51,7 +51,7 @@ DECLARE_MODULE_AV2(opme, NULL, NULL, opme_clist, NULL, NULL, NULL, NULL, opme_de
 ** mo_opme
 **      parv[1] = channel
 */
-static int
+static void
 mo_opme(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Channel *chptr;
@@ -62,14 +62,14 @@ mo_opme(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	if(!IsOperAdmin(source_p))
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "admin");
-		return 0;
+		return;
 	}
 
 	if((chptr = find_channel(parv[1])) == NULL)
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
 				   form_str(ERR_NOSUCHCHANNEL), parv[1]);
-		return 0;
+		return;
 	}
 
 	RB_DLINK_FOREACH(ptr, chptr->members.head)
@@ -79,14 +79,14 @@ mo_opme(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		if(is_chanop(msptr))
 		{
 			sendto_one_notice(source_p, ":%s Channel is not opless", parv[1]);
-			return 0;
+			return;
 		}
 	}
 
 	msptr = find_channel_membership(chptr, source_p);
 
 	if(msptr == NULL)
-		return 0;
+		return;
 
 	msptr->flags |= CHFL_CHANOP;
 
@@ -110,6 +110,4 @@ mo_opme(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 
 	sendto_channel_local(ALL_MEMBERS, chptr,
 			     ":%s MODE %s +o %s", me.name, parv[1], source_p->name);
-
-	return 0;
 }

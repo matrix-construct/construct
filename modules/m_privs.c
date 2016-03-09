@@ -42,9 +42,9 @@
 
 static const char privs_desc[] = "Provides the PRIVS command to inspect an operator's privileges";
 
-static int m_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int me_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int mo_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void m_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void me_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void mo_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message privs_msgtab = {
 	"PRIVS", 0, 0, 0, 0,
@@ -115,21 +115,21 @@ static void show_privs(struct Client *source_p, struct Client *target_p)
 			target_p->name, buf);
 }
 
-static int me_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+static void
+me_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 
 	if (!IsOper(source_p) || parc < 2 || EmptyString(parv[1]))
-		return 0;
+		return;
 
 	/* we cannot show privs for remote clients */
 	if((target_p = find_person(parv[1])) && MyClient(target_p))
 		show_privs(source_p, target_p);
-
-	return 0;
 }
 
-static int mo_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+static void
+mo_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
 
@@ -142,7 +142,7 @@ static int mo_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Cli
 		{
 			sendto_one_numeric(source_p, ERR_NOSUCHNICK,
 					   form_str(ERR_NOSUCHNICK), parv[1]);
-			return 0;
+			return;
 		}
 	}
 
@@ -153,18 +153,17 @@ static int mo_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Cli
 				get_id(source_p, target_p),
 				target_p->servptr->name,
 				use_id(target_p));
-	return 0;
 }
 
-static int m_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+static void
+m_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	if (parc >= 2 && !EmptyString(parv[1]) &&
 			irccmp(parv[1], source_p->name)) {
 		sendto_one_numeric(source_p, ERR_NOPRIVILEGES,
 				   form_str(ERR_NOPRIVILEGES));
-		return 0;
+		return;
 	}
 
 	show_privs(source_p, source_p);
-	return 0;
 }
