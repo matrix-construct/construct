@@ -456,7 +456,7 @@ handle_remote_unxline(struct Client *source_p, const char *name)
 }
 
 static void
-remove_xline(struct Client *source_p, const char *name, int propagated)
+remove_xline(struct Client *source_p, const char *name, bool propagated)
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
