@@ -66,7 +66,7 @@ static void me_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct 
 
 static bool valid_xline(struct Client *, const char *, const char *);
 static void apply_xline(struct Client *client_p, const char *name,
-			const char *reason, int temp_time, int propagated);
+			const char *reason, int temp_time, bool propagated);
 static void propagate_xline(struct Client *source_p, const char *target,
 			    int temp_time, const char *name, const char *type, const char *reason);
 static void cluster_xline(struct Client *source_p, int temp_time,
@@ -76,7 +76,7 @@ static void handle_remote_xline(struct Client *source_p, int temp_time,
 				const char *name, const char *reason);
 static void handle_remote_unxline(struct Client *source_p, const char *name);
 static void remove_xline(struct Client *source_p, const char *name,
-			 int propagated);
+			 bool propagated);
 
 struct Message xline_msgtab = {
 	"XLINE", 0, 0, 0, 0,
@@ -107,7 +107,7 @@ mo_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	const char *target_server = NULL;
 	int temp_time;
 	int loc = 1;
-	int propagated = ConfigFileEntry.use_propagated_bans;
+	bool propagated = ConfigFileEntry.use_propagated_bans;
 
 	if(!IsOperXline(source_p))
 	{
@@ -155,7 +155,7 @@ mo_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 			return;
 
 		/* Set as local-only. */
-		propagated = 0;
+		propagated = false;
 	}
 	else if(!propagated && rb_dlink_list_length(&cluster_conf_list) > 0)
 		cluster_xline(source_p, temp_time, name, reason);
@@ -232,7 +232,7 @@ handle_remote_xline(struct Client *source_p, int temp_time, const char *name, co
 		return;
 	}
 
-	apply_xline(source_p, name, reason, temp_time, 0);
+	apply_xline(source_p, name, reason, temp_time, false);
 }
 
 /* valid_xline()
@@ -264,7 +264,7 @@ valid_xline(struct Client *source_p, const char *gecos, const char *reason)
 }
 
 void
-apply_xline(struct Client *source_p, const char *name, const char *reason, int temp_time, int propagated)
+apply_xline(struct Client *source_p, const char *name, const char *reason, int temp_time, bool propagated)
 {
 	struct ConfItem *aconf;
 
@@ -385,7 +385,7 @@ cluster_xline(struct Client *source_p, int temp_time, const char *name, const ch
 static void
 mo_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	int propagated = 1;
+	bool propagated = true;
 
 	if(!IsOperXline(source_p))
 	{
@@ -407,7 +407,7 @@ mo_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 		if(match(parv[3], me.name) == 0)
 			return;
 
-		propagated = 0;
+		propagated = false;
 	}
 	/* cluster{} moved to remove_xline */
 
@@ -452,7 +452,7 @@ handle_remote_unxline(struct Client *source_p, const char *name)
 			     source_p->servptr->name, SHARED_UNXLINE))
 		return;
 
-	remove_xline(source_p, name, 0);
+	remove_xline(source_p, name, false);
 }
 
 static void

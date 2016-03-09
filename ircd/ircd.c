@@ -102,7 +102,7 @@ char **myargv;
 int dorehash = 0;
 int dorehashbans = 0;
 int doremotd = 0;
-int kline_queued = 0;
+bool kline_queued = false;
 int server_state_foreground = 0;
 int opers_see_all_users = 0;
 int ssl_ok = 0;

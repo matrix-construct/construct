@@ -69,7 +69,7 @@ extern int cold_start;
 extern int dorehash;
 extern int dorehashbans;
 extern int doremotd;
-extern int kline_queued;
+extern bool kline_queued;
 extern int server_state_foreground;
 extern int opers_see_all_users; /* sno_farconnect.so loaded, operspy without
 				   accountability, etc */

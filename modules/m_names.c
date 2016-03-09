@@ -107,8 +107,6 @@ m_names(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		sendto_one(source_p, form_str(RPL_ENDOFNAMES),
 			   me.name, source_p->name, "*");
 	}
-
-	return;
 }
 
 /*

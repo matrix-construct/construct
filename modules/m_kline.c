@@ -106,7 +106,7 @@ mo_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	struct ConfItem *aconf;
 	int tkline_time = 0;
 	int loc = 1;
-	int propagated = ConfigFileEntry.use_propagated_bans;
+	bool propagated = ConfigFileEntry.use_propagated_bans;
 
 	if(!IsOperK(source_p))
 	{
@@ -157,7 +157,7 @@ mo_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 			return;
 
 		/* Set as local-only. */
-		propagated = 0;
+		propagated = false;
 	}
 	/* if we have cluster servers, send it to them.. */
 	else if(!propagated && rb_dlink_list_length(&cluster_conf_list) > 0)
@@ -218,11 +218,11 @@ mo_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 	if(ConfigFileEntry.kline_delay)
 	{
-		if(kline_queued == 0)
+		if(!kline_queued)
 		{
 			rb_event_addonce("check_klines", check_klines_event, NULL,
 					 ConfigFileEntry.kline_delay);
-			kline_queued = 1;
+			kline_queued = true;
 		}
 	}
 	else
@@ -328,11 +328,11 @@ handle_remote_kline(struct Client *source_p, int tkline_time,
 
 	if(ConfigFileEntry.kline_delay)
 	{
-		if(kline_queued == 0)
+		if(!kline_queued)
 		{
 			rb_event_addonce("check_klines", check_klines_event, NULL,
 					 ConfigFileEntry.kline_delay);
-			kline_queued = 1;
+			kline_queued = true;
 		}
 	}
 	else
@@ -353,7 +353,7 @@ mo_unkline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 	char splat[] = "*";
 	char *h = LOCAL_COPY(parv[1]);
 	struct ConfItem *aconf;
-	int propagated = 1;
+	bool propagated = true;
 
 	if(!IsOperUnkline(source_p))
 	{
@@ -406,7 +406,7 @@ mo_unkline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 		if(match(parv[3], me.name) == 0)
 			return;
 
-		propagated = 0;
+		propagated = false;
 	}
 
 	aconf = find_exact_conf_by_address(host, CONF_KILL, user);

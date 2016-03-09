@@ -475,7 +475,7 @@ check_banned_lines(void)
 void
 check_klines_event(void *unused)
 {
-	kline_queued = 0;
+	kline_queued = false;
 	check_klines();
 }
 
