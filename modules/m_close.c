@@ -68,5 +68,4 @@ mo_close(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	}
 
 	sendto_one(source_p, form_str(RPL_CLOSEEND), me.name, source_p->name, closed);
-	return;
 }
