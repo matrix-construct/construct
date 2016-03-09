@@ -52,35 +52,35 @@ DECLARE_MODULE_AV2(chghost, NULL, NULL, chghost_clist, NULL, NULL, NULL, NULL, c
 /* clean_host()
  *
  * input	- host to check
- * output	- 0 if erroneous, else 1
+ * output	- false if erroneous, else true
  * side effects -
  */
-static int
+static bool
 clean_host(const char *host)
 {
 	int len = 0;
 	const char *last_slash = 0;
 
 	if (*host == '\0' || *host == ':')
-		return 0;
+		return false;
 
 	for(; *host; host++)
 	{
 		len++;
 
 		if(!IsHostChar(*host))
-			return 0;
+			return false;
 		if(*host == '/')
 			last_slash = host;
 	}
 
 	if(len > HOSTLEN)
-		return 0;
+		return false;
 
 	if(last_slash && IsDigit(last_slash[1]))
-		return 0;
+		return false;
 
-	return 1;
+	return true;
 }
 
 /*
@@ -106,10 +106,9 @@ me_realhost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 	else
 		ClearDynSpoof(source_p);
 	add_to_hostname_hash(source_p->orighost, source_p);
-	return;
 }
 
-static int
+static bool
 do_chghost(struct Client *source_p, struct Client *target_p,
 		const char *newhost, int is_encap)
 {
@@ -123,7 +122,7 @@ do_chghost(struct Client *source_p, struct Client *target_p,
 		if (is_encap ? MyClient(target_p) : !ConfigServerHide.flatten_links)
 			sendto_one_notice(target_p, ":*** Notice -- %s attempted to change your hostname to %s (invalid)",
 					source_p->name, newhost);
-		return 0;
+		return false;
 	}
 	change_nick_user_host(target_p, target_p->name, target_p->username, newhost, 0, "Changing host");
 	if (irccmp(target_p->host, target_p->orighost))
@@ -142,7 +141,7 @@ do_chghost(struct Client *source_p, struct Client *target_p,
 		sendto_one_notice(source_p, ":Changed hostname for %s to %s", target_p->name, target_p->host);
 	if (!IsServer(source_p) && !IsService(source_p))
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s changed hostname for %s to %s", get_oper_name(source_p), target_p->name, target_p->host);
-	return 1;
+	return true;
 }
 
 /*
@@ -187,8 +186,6 @@ me_chghost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 		return;
 
 	do_chghost(source_p, target_p, parv[2], 1);
-
-	return;
 }
 
 /*
@@ -238,7 +235,5 @@ mo_chghost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 	sendto_one_numeric(source_p, ERR_DISABLED, form_str(ERR_DISABLED),
 			"CHGHOST");
 #endif
-
-	return;
 }
 
