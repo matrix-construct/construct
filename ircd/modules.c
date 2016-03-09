@@ -908,12 +908,11 @@ load_a_module(const char *path, int warn, int origin, int core)
 			 */
 			if(mheader->mapi_datecode != datecode && mheader->mapi_datecode > 0)
 			{
-				long int delta = labs(datecode - mheader->mapi_datecode);
+				long int delta = datecode - mheader->mapi_datecode;
 				if (delta > MOD_WARN_DELTA)
 				{
 					delta /= 86400;
-					iwarn(L_MAIN,
-						"Module %s build date is out of sync with ircd build date by %ld days, expect problems",
+					iwarn("Module %s build date is out of sync with ircd build date by %ld days, expect problems",
 						mod_basename, delta);
 					sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						"Module %s build date is out of sync with ircd build date by %ld days, expect problems",

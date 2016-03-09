@@ -312,7 +312,7 @@ get_nameservers_cb(int resc, const char *resv[], int status, void *data)
 	else
 	{
 		const char *error = resc ? resv[resc] : "Unknown error";
-		iwarn(L_MAIN, "Error getting DNS servers: %s", error);
+		iwarn("Error getting DNS servers: %s", error);
 	}
 }
 
