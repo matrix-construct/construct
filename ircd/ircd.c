@@ -99,9 +99,9 @@ const char *logFileName = LPATH;
 const char *pidFileName = PPATH;
 
 char **myargv;
-int dorehash = 0;
-int dorehashbans = 0;
-int doremotd = 0;
+bool dorehash = false;
+bool dorehashbans = false;
+bool doremotd = false;
 bool kline_queued = false;
 int server_state_foreground = 0;
 int opers_see_all_users = 0;
@@ -278,13 +278,13 @@ check_rehash(void *unused)
 	if(dorehash)
 	{
 		rehash(1);
-		dorehash = 0;
+		dorehash = false;
 	}
 
 	if(dorehashbans)
 	{
 		rehash_bans(1);
-		dorehashbans = 0;
+		dorehashbans = false;
 	}
 
 	if(doremotd)
@@ -292,7 +292,7 @@ check_rehash(void *unused)
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Got signal SIGUSR1, reloading ircd motd file");
 		cache_user_motd();
-		doremotd = 0;
+		doremotd = false;
 	}
 }
 

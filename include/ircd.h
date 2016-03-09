@@ -65,9 +65,9 @@ extern const unsigned long int datecode;
 extern const char *ircd_version;
 extern const char *logFileName;
 extern const char *pidFileName;
-extern int dorehash;
-extern int dorehashbans;
-extern int doremotd;
+extern bool dorehash;
+extern bool dorehashbans;
+extern bool doremotd;
 extern bool kline_queued;
 extern int server_state_foreground;
 extern int opers_see_all_users; /* sno_farconnect.so loaded, operspy without
