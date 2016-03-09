@@ -47,6 +47,8 @@
 #include "monitor.h"
 #include "supported.h"
 
+static const char services_desc[] = "Provides support for running a services daemon";
+
 static int _modinit(void);
 static void _moddeinit(void);
 
@@ -57,8 +59,6 @@ static int me_su(struct MsgBuf *, struct Client *, struct Client *, int, const c
 static int me_login(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int me_rsfnc(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int me_nickdelay(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-
-static const char services_desc[] = "Provides support for running a services daemon";
 
 static void h_svc_server_introduced(hook_data_client *);
 static void h_svc_whois(hook_data_client *);

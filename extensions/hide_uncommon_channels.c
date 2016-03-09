@@ -12,14 +12,14 @@
 #include "s_conf.h"
 #include "s_newconf.h"
 
+static const char hide_desc[] = "Hides channel memberships not shared";
+
 static void h_huc_doing_whois_channel_visibility(hook_data_client *);
 
 mapi_hfn_list_av1 huc_hfnlist[] = {
 	{ "doing_whois_channel_visibility", (hookfn) h_huc_doing_whois_channel_visibility },
 	{ NULL, NULL }
 };
-
-static const char hide_desc[] = "Hides channel memberships not shared";
 
 DECLARE_MODULE_AV2(hide_uncommon_channels, NULL, NULL, NULL, NULL, huc_hfnlist, NULL, NULL, hide_desc);
 

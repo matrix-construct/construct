@@ -44,6 +44,8 @@
 #include "s_conf.h"
 #include "hash.h"
 
+static const char cap_desc[] = "Provides the commands used for client capability negotiation";
+
 typedef int (*bqcmp)(const void *, const void *);
 
 static int m_cap(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
@@ -54,8 +56,6 @@ struct Message cap_msgtab = {
 };
 
 mapi_clist_av1 cap_clist[] = { &cap_msgtab, NULL };
-
-static const char cap_desc[] = "Provides the commands used for client capability negotiation";
 
 DECLARE_MODULE_AV2(cap, NULL, NULL, cap_clist, NULL, NULL, NULL, NULL, cap_desc);
 

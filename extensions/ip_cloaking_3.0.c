@@ -10,6 +10,8 @@
 #include "s_serv.h"
 #include "numeric.h"
 
+static const char ip_cloaking_desc[] = "The old IP cloaking mechanism version 3.0";
+
 /* if you're modifying this module, you'll probably want to change this */
 #define KEY 0x13748cfa
 
@@ -38,8 +40,6 @@ mapi_hfn_list_av1 ip_cloaking_hfnlist[] = {
 	{ "new_local_user", (hookfn) check_new_user },
 	{ NULL, NULL }
 };
-
-static const char ip_cloaking_desc[] = "The old IP cloaking mechanism version 3.0";
 
 DECLARE_MODULE_AV2(ip_cloaking, _modinit, _moddeinit, NULL, NULL,
 	ip_cloaking_hfnlist, NULL, NULL, ip_cloaking_desc);

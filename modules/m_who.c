@@ -55,6 +55,9 @@
 #define FIELD_ACCOUNT    0x0800
 #define FIELD_OPLEVEL    0x1000 /* meaningless and stupid, but whatever */
 
+static const char who_desc[] =
+	"Provides the WHO command to display information for users on a channel";
+
 struct who_format
 {
 	int fields;
@@ -62,8 +65,6 @@ struct who_format
 };
 
 static int m_who(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static const char who_desc[] =
-	"Provides the WHO command to display information for users on a channel";
 
 struct Message who_msgtab = {
 	"WHO", 0, 0, 0, 0,

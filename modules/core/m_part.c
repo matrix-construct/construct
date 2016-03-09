@@ -40,8 +40,9 @@
 #include "inline/stringops.h"
 #include "hook.h"
 
-static int m_part(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static const char part_desc[] = "Provides the PART command to leave a channel";
+
+static int m_part(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message part_msgtab = {
 	"PART", 0, 0, 0, 0,

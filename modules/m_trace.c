@@ -40,9 +40,10 @@
 #include "parse.h"
 #include "modules.h"
 
-static int m_trace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static const char trace_desc[] =
 	"Provides the TRACE command to trace the route to a client or server";
+
+static int m_trace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 static void trace_spy(struct Client *, struct Client *);
 

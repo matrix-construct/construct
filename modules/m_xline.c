@@ -51,6 +51,9 @@
 #include "bandbi.h"
 #include "operhash.h"
 
+static const char xline_desc[] =
+	"Provides management of GECOS bans via (UN)XLINE command";
+
 static int mo_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static int ms_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static int me_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
@@ -60,8 +63,20 @@ static int ms_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct C
 		      const char *parv[]);
 static int me_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
 		      const char *parv[]);
-static const char xline_desc[] =
-	"Provides management of GECOS bans via (UN)XLINE command";
+
+static int valid_xline(struct Client *, const char *, const char *);
+static void apply_xline(struct Client *client_p, const char *name,
+			const char *reason, int temp_time, int propagated);
+static void propagate_xline(struct Client *source_p, const char *target,
+			    int temp_time, const char *name, const char *type, const char *reason);
+static void cluster_xline(struct Client *source_p, int temp_time,
+			  const char *name, const char *reason);
+
+static void handle_remote_xline(struct Client *source_p, int temp_time,
+				const char *name, const char *reason);
+static void handle_remote_unxline(struct Client *source_p, const char *name);
+static void remove_xline(struct Client *source_p, const char *name,
+			 int propagated);
 
 struct Message xline_msgtab = {
 	"XLINE", 0, 0, 0, 0,
@@ -76,22 +91,6 @@ struct Message unxline_msgtab = {
 mapi_clist_av1 xline_clist[] = { &xline_msgtab, &unxline_msgtab, NULL };
 
 DECLARE_MODULE_AV2(xline, NULL, NULL, xline_clist, NULL, NULL, NULL, NULL, xline_desc);
-
-static int valid_xline(struct Client *, const char *, const char *);
-static void apply_xline(struct Client *client_p, const char *name,
-			const char *reason, int temp_time, int propagated);
-static void propagate_xline(struct Client *source_p, const char *target,
-			    int temp_time, const char *name, const char *type, const char *reason);
-static void cluster_xline(struct Client *source_p, int temp_time,
-			  const char *name, const char *reason);
-
-static void handle_remote_xline(struct Client *source_p, int temp_time,
-				const char *name, const char *reason);
-static void handle_remote_unxline(struct Client *source_p, const char *name);
-
-static void remove_xline(struct Client *source_p, const char *name,
-			 int propagated);
-
 
 /* m_xline()
  *

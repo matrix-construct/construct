@@ -36,11 +36,12 @@
 #include "modules.h"
 #include "s_serv.h"
 
+static const char wallops_desc[] =
+	"Provides the WALLOPS and OPERWALL commands to message online operators";
+
 static int mo_operwall(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int ms_operwall(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int ms_wallops(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static const char wallops_desc[] =
-	"Provides the WALLOPS and OPERWALL commands to message online operators";
 
 struct Message wallops_msgtab = {
 	"WALLOPS", 0, 0, 0, 0,
@@ -52,6 +53,7 @@ struct Message operwall_msgtab = {
 };
 
 mapi_clist_av1 wallops_clist[] = { &wallops_msgtab, &operwall_msgtab, NULL };
+
 DECLARE_MODULE_AV2(wallops, NULL, NULL, wallops_clist, NULL, NULL, NULL, NULL, wallops_desc);
 
 /*

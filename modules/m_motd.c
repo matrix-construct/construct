@@ -36,6 +36,8 @@
 #include "cache.h"
 #include "ratelimit.h"
 
+static const char motd_desc[] = "Provides the MOTD command to view the Message of the Day";
+
 static int m_motd(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int mo_motd(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
@@ -51,8 +53,6 @@ mapi_hlist_av1 motd_hlist[] = {
 	{ "doing_motd",	&doing_motd_hook },
 	{ NULL, NULL }
 };
-
-static const char motd_desc[] = "Provides the MOTD command to view the Message of the Day";
 
 DECLARE_MODULE_AV2(motd, NULL, NULL, motd_clist, motd_hlist, NULL, NULL, NULL, motd_desc);
 

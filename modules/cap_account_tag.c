@@ -34,6 +34,9 @@
 #include "chmode.h"
 #include "inline/stringops.h"
 
+static const char cap_account_tag_desc[] =
+	"Provides the account-tag client capability";
+
 static void cap_account_tag_process(hook_data *);
 unsigned int CLICAP_ACCOUNT_TAG = 0;
 
@@ -45,9 +48,6 @@ mapi_cap_list_av2 cap_account_tag_cap_list[] = {
 	{ MAPI_CAP_CLIENT, "account-tag", NULL, &CLICAP_ACCOUNT_TAG },
 	{ 0, NULL, NULL, NULL },
 };
-static const char cap_account_tag_desc[] =
-	"Provides the account-tag client capability";
-
 static void
 cap_account_tag_process(hook_data *data)
 {

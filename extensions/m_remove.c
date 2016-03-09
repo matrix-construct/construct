@@ -39,11 +39,13 @@
 #include "hook.h"
 #include "messages.h"
 
-unsigned int CAP_REMOVE;
-static char part_buf[REASONLEN + 1];
+static const char description[] = "Provides the REMOVE command, an alternative to KICK";
 
 static int m_remove(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static void remove_quote_part(hook_data_privmsg_channel *);
+
+unsigned int CAP_REMOVE;
+static char part_buf[REASONLEN + 1];
 
 struct Message remove_msgtab = {
 	"REMOVE", 0, 0, 0, 0,
@@ -59,8 +61,6 @@ mapi_cap_list_av2 remove_cap_list[] = {
 	{ MAPI_CAP_SERVER, "REMOVE", NULL, &CAP_REMOVE },
 	{ 0, NULL, NULL, NULL }
 };
-
-const char description[] = "Provides the REMOVE command, an alternative to KICK";
 
 DECLARE_MODULE_AV2(remove, NULL, NULL, remove_clist, NULL, remove_hfnlist, remove_cap_list, NULL, description);
 

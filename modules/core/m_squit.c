@@ -38,9 +38,10 @@
 #include "hash.h"
 #include "s_newconf.h"
 
+static const char squit_desc[] = "Provides the SQUIT command to cause a server to quit";
+
 static int ms_squit(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int mo_squit(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static const char squit_desc[] = "Provides the SQUIT command to cause a server to quit";
 
 struct Message squit_msgtab = {
 	"SQUIT", 0, 0, 0, 0,

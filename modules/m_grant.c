@@ -14,6 +14,9 @@
 #include "s_conf.h"
 #include "s_newconf.h"
 
+static const char grant_desc[] =
+	"Provides the grant facility for giving other users specific privilege sets";
+
 static int mo_grant(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static int me_grant(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
@@ -25,9 +28,6 @@ struct Message grant_msgtab = {
 };
 
 mapi_clist_av1 grant_clist[] = { &grant_msgtab, NULL };
-
-static const char grant_desc[] =
-	"Provides the grant facility for giving other users specific privilege sets";
 
 DECLARE_MODULE_AV2(grant, NULL, NULL, grant_clist, NULL, NULL, NULL, NULL, grant_desc);
 

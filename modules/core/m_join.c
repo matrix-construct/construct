@@ -42,10 +42,11 @@
 #include "ratelimit.h"
 #include "s_assert.h"
 
+static const char join_desc[] = "Provides the JOIN and TS6 SJOIN commands to facilitate joining and creating channels";
+
 static int m_join(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int ms_join(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int ms_sjoin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static const char join_desc[] = "Provides the JOIN and TS6 SJOIN commands to facilitate joining and creating channels";
 
 static int h_can_create_channel;
 static int h_channel_join;

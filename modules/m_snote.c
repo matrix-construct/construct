@@ -48,8 +48,9 @@
 #include "parse.h"
 #include "modules.h"
 
-static int me_snote(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static const char snote_desc[] = "Provides server notices via the SNOTE command";
+
+static void me_snote(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message snote_msgtab = {
 	"SNOTE", 0, 0, 0, 0,
@@ -57,6 +58,7 @@ struct Message snote_msgtab = {
 };
 
 mapi_clist_av1 snote_clist[] = { &snote_msgtab, NULL };
+
 DECLARE_MODULE_AV2(snote, NULL, NULL, snote_clist, NULL, NULL, NULL, NULL, snote_desc);
 
 /*

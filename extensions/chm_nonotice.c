@@ -35,11 +35,12 @@
 #include "messages.h"
 #include "inline/stringops.h"
 
+static const char chm_nonotice_desc[] =
+	"Adds channel mode +T which blocks notices to the channel.";
+
 static unsigned int mode_nonotice;
 
 static void chm_nonotice_process(hook_data_privmsg_channel *);
-static const char chm_nonotice_desc[] =
-	"Adds channel mode +T which blocks notices to the channel.";
 
 mapi_hfn_list_av1 chm_nonotice_hfnlist[] = {
 	{ "privmsg_channel", (hookfn) chm_nonotice_process },

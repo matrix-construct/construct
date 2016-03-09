@@ -38,8 +38,9 @@
 #include "messages.h"
 #include "logger.h"
 
-static int mo_okick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static const char okick_desc[] = "Allow admins to forcibly kick users from channels with the OKICK command";
 
+static int mo_okick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message okick_msgtab = {
 	"OKICK", 0, 0, 0, 0,
@@ -47,8 +48,6 @@ struct Message okick_msgtab = {
 };
 
 mapi_clist_av1 okick_clist[] = { &okick_msgtab, NULL };
-
-static const char okick_desc[] = "Allow admins to forcibly kick users from channels with the OKICK command";
 
 DECLARE_MODULE_AV2(okick, NULL, NULL, okick_clist, NULL, NULL, NULL, NULL, okick_desc);
 

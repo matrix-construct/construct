@@ -15,6 +15,8 @@
 
 #include <string.h>
 
+const char mkpasswd_desc[] = "Hash a password for use in ircd.conf";
+
 static int m_mkpasswd(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 		      int parc, const char *parv[]);
 static int mo_mkpasswd(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
@@ -35,8 +37,6 @@ struct Message mkpasswd_msgtab = {
 };
 
 mapi_clist_av1 mkpasswd_clist[] = { &mkpasswd_msgtab, NULL };
-
-const char mkpasswd_desc[] = "Hash a password for use in ircd.conf";
 
 DECLARE_MODULE_AV2(mkpasswd, NULL, NULL, mkpasswd_clist, NULL, NULL, NULL, NULL, mkpasswd_desc);
 

@@ -34,6 +34,8 @@
 #include "s_newconf.h"
 #include "messages.h"
 
+static const char opme_desc[] = "Allow admins to op themselves on opless channels";
+
 static int mo_opme(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message opme_msgtab = {
@@ -42,8 +44,6 @@ struct Message opme_msgtab = {
 };
 
 mapi_clist_av1 opme_clist[] = { &opme_msgtab, NULL };
-
-static const char opme_desc[] = "Allow admins to op themselves on opless channels";
 
 DECLARE_MODULE_AV2(opme, NULL, NULL, opme_clist, NULL, NULL, NULL, NULL, opme_desc);
 

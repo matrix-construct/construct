@@ -33,8 +33,9 @@
 #include "s_serv.h"
 #include "logger.h"
 
-static int mr_starttls(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static const char starttls_desc[] = "Provides the tls CAP and STARTTLS command";
+
+static int mr_starttls(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message starttls_msgtab = {
 	"STARTTLS", 0, 0, 0, 0,
@@ -51,7 +52,9 @@ mapi_cap_list_av2 starttls_cap_list[] = {
 	{ 0, NULL, NULL, NULL }
 };
 #else /* HAVE_LIBCRYPTO */
+
 mapi_cap_list_av2 starttls_cap_list[] = { { 0, NULL, NULL, NULL } };
+
 #endif /* HAVE_LIBCRYPTO */
 
 DECLARE_MODULE_AV2(starttls, NULL, NULL, starttls_clist, NULL, NULL, starttls_cap_list, NULL, starttls_desc);

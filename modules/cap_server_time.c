@@ -34,6 +34,9 @@
 #include "chmode.h"
 #include "inline/stringops.h"
 
+static const char cap_server_time_desc[] =
+	"Provides the server-time client capability";
+
 static void cap_server_time_process(hook_data *);
 unsigned int CLICAP_SERVER_TIME = 0;
 
@@ -45,8 +48,6 @@ mapi_cap_list_av2 cap_server_time_cap_list[] = {
 	{ MAPI_CAP_CLIENT, "server-time", NULL, &CLICAP_SERVER_TIME },
 	{ 0, NULL, NULL, NULL }
 };
-static const char cap_server_time_desc[] =
-	"Provides the server-time client capability";
 
 static void
 cap_server_time_process(hook_data *data)

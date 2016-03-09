@@ -41,8 +41,10 @@
 #include "parse.h"
 #include "modules.h"
 
+static const char encap_desc[] = "Provides the TS6 ENCAP facility";
+
 static int ms_encap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
-		     int parc, const char *parv[]);
+		int parc, const char *parv[]);
 
 struct Message encap_msgtab = {
 	"ENCAP", 0, 0, 0, 0,
@@ -50,8 +52,6 @@ struct Message encap_msgtab = {
 };
 
 mapi_clist_av1 encap_clist[] = { &encap_msgtab, NULL };
-
-static const char encap_desc[] = "Provides the TS6 ENCAP facility";
 
 DECLARE_MODULE_AV2(encap, NULL, NULL, encap_clist, NULL, NULL, NULL, NULL, encap_desc);
 

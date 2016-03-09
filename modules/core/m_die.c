@@ -36,10 +36,11 @@
 #include "s_newconf.h"
 #include "hash.h"
 
+static const char die_desc[] = "Provides the DIE command to allow an operator to shutdown a server";
+
 static int mo_die(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int me_die(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int do_die(struct Client *, const char *);
-static const char die_desc[] = "Provides the DIE command to allow an operator to shutdown a server";
 
 static struct Message die_msgtab = {
 	"DIE", 0, 0, 0, 0,

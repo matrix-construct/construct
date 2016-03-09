@@ -8,10 +8,11 @@
 #include "client.h"
 #include "ircd.h"
 
+static const char extb_desc[] = "Server ($s) extban type";
+
 static int _modinit(void);
 static void _moddeinit(void);
 static int eb_server(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type);
-static const char extb_desc[] = "Server ($s) extban type";
 
 DECLARE_MODULE_AV2(extb_server, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, extb_desc);
 

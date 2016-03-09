@@ -35,6 +35,8 @@
 #include "s_serv.h"
 #include "packet.h"
 
+static const char away_desc[] = "Provides the AWAY command to set yourself away";
+
 static int m_away(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message away_msgtab = {
@@ -43,8 +45,6 @@ struct Message away_msgtab = {
 };
 
 mapi_clist_av1 away_clist[] = { &away_msgtab, NULL };
-
-static const char away_desc[] = "Provides the AWAY command to set yourself away";
 
 DECLARE_MODULE_AV2(away, NULL, NULL, away_clist, NULL, NULL, NULL, NULL, away_desc);
 

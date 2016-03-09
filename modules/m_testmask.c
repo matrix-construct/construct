@@ -46,7 +46,7 @@
 #include "parse.h"
 #include "modules.h"
 
-static int mo_testmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+static void mo_testmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 			int parc, const char *parv[]);
 static const char testmask_desc[] =
 	"Provides the TESTMASK command to show the number of clients matching a hostmask or GECOS";

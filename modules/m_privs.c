@@ -40,10 +40,11 @@
 #include "s_conf.h"
 #include "s_newconf.h"
 
+static const char privs_desc[] = "Provides the PRIVS command to inspect an operator's privileges";
+
 static int m_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static int me_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static int mo_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static const char privs_desc[] = "Provides the PRIVS command to inspect an operator's privileges";
 
 struct Message privs_msgtab = {
 	"PRIVS", 0, 0, 0, 0,

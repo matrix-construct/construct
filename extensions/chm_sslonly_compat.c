@@ -9,13 +9,14 @@
 #include "ircd.h"
 #include "chmode.h"
 
+static const char chm_sslonly_compat_desc[] =
+	"Adds an emulated channel mode +S which is converted into mode +b $~z";
+
 static int _modinit(void);
 static void _moddeinit(void);
 static void chm_sslonly(struct Client *source_p, struct Channel *chptr,
 	int alevel, int parc, int *parn,
 	const char **parv, int *errors, int dir, char c, long mode_type);
-static const char chm_sslonly_compat_desc[] =
-	"Adds an emulated channel mode +S which is converted into mode +b $~z";
 
 DECLARE_MODULE_AV2(chm_sslonly_compat, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, chm_sslonly_compat_desc);
 

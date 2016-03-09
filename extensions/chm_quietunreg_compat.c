@@ -10,13 +10,14 @@
 #include "ircd.h"
 #include "chmode.h"
 
+static const char chm_quietunreg_compat_desc[] =
+	"Adds an emulated channel mode +R which is converted into mode +q $~a";
+
 static int _modinit(void);
 static void _moddeinit(void);
 static void chm_quietunreg(struct Client *source_p, struct Channel *chptr,
 	int alevel, int parc, int *parn,
 	const char **parv, int *errors, int dir, char c, long mode_type);
-static const char chm_quietunreg_compat_desc[] =
-	"Adds an emulated channel mode +R which is converted into mode +q $~a";
 
 DECLARE_MODULE_AV2(chm_quietunreg_compat, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, chm_quietunreg_compat_desc);
 

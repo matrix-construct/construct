@@ -45,13 +45,14 @@
 #include "ratelimit.h"
 #include "s_assert.h"
 
+static const char whois_desc[] =
+	"Provides the WHOIS command to display information about a user";
+
 static void do_whois(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static void single_whois(struct Client *source_p, struct Client *target_p, int operspy);
 
 static int m_whois(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int ms_whois(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static const char whois_desc[] =
-	"Provides the WHOIS command to display information about a user";
 
 struct Message whois_msgtab = {
 	"WHOIS", 0, 0, 0, 0,

@@ -10,6 +10,9 @@
 #include "numeric.h"
 #include "chmode.h"
 
+static const char chm_sslonly_desc[] =
+	"Adds channel mode +S that bans non-SSL users from joing a channel";
+
 static void h_can_join(hook_data_channel *);
 
 mapi_hfn_list_av1 sslonly_hfnlist[] = {
@@ -18,9 +21,6 @@ mapi_hfn_list_av1 sslonly_hfnlist[] = {
 };
 
 static unsigned int mymode;
-
-static const char chm_sslonly_desc[] =
-	"Adds channel mode +S that bans non-SSL users from joing a channel";
 
 static int
 _modinit(void)

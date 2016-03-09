@@ -53,24 +53,24 @@
 #define CHALLENGE_SECRET_LENGTH	128	/* how long our challenge secret should be */
 
 #ifndef HAVE_LIBCRYPTO
+
+static const char challenge_desc[] = "Does nothing as OpenSSL was not enabled.";
+
 /* Maybe this should be an error or something?-davidt */
 /* now it is	-larne	*/
-static int	challenge_load(void)
+static int challenge_load(void)
 {
-#ifndef STATIC_MODULES
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 		"Challenge module not loaded because OpenSSL is not available.");
 	ilog(L_MAIN, "Challenge module not loaded because OpenSSL is not available.");
 	return -1;
-#else
-	return 0;
-#endif
 }
-
-static const char challenge_desc[] = "Does nothing as OpenSSL was not enabled.";
 
 DECLARE_MODULE_AV2(challenge, challenge_load, NULL, NULL, NULL, NULL, NULL, NULL, challenge_desc);
 #else
+
+static const char challenge_desc[] =
+	"Provides the challenge-response facility used for becoming an IRC operator";
 
 static int m_challenge(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
@@ -81,10 +81,6 @@ struct Message challenge_msgtab = {
 };
 
 mapi_clist_av1 challenge_clist[] = { &challenge_msgtab, NULL };
-
-static const char challenge_desc[] =
-	"Provides the challenge-response facility used for becoming an IRC operator";
-
 
 DECLARE_MODULE_AV2(challenge, NULL, NULL, challenge_clist, NULL, NULL, NULL, NULL, challenge_desc);
 

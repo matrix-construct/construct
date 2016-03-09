@@ -16,6 +16,15 @@
 /* undefine this to allow anyone to receive whois notifications */
 #define OPERONLY
 
+static const char sno_desc[] =
+	"Adds server notice mask +W that allows "
+#ifdef OPERONLY
+	"operators"
+#else
+	"users"
+#endif
+	" to receive notices for when a WHOIS has been done on them";
+
 void show_whois(hook_data_client *);
 
 mapi_hfn_list_av1 whois_hfnlist[] = {
@@ -37,15 +46,6 @@ fini(void)
 {
 	snomask_modes['W'] = 0;
 }
-
-static const char sno_desc[] =
-	"Adds server notice mask +W that allows "
-#ifdef OPERONLY
-	"operators"
-#else
-	"users"
-#endif
-	" to receive notices for when a WHOIS has been done on them";
 
 DECLARE_MODULE_AV2(sno_whois, init, fini, NULL, NULL, whois_hfnlist, NULL, NULL, sno_desc);
 

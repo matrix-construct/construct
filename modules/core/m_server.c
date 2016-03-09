@@ -40,12 +40,12 @@
 #include "parse.h"
 #include "modules.h"
 
-static int mr_server(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_server(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_sid(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static const char server_desc[] =
 	"Provides the TS6 commands to introduce a new server to the network";
 
+static int mr_server(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_server(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_sid(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 struct Message server_msgtab = {
 	"SERVER", 0, 0, 0, 0,
 	{{mr_server, 4}, mg_reg, mg_ignore, {ms_server, 4}, mg_ignore, mg_reg}

@@ -44,6 +44,8 @@
 #include "bandbi.h"
 #include "operhash.h"
 
+static const char kline_desc[] = "Provides the KLINE facility to ban users via hostmask";
+
 static int mo_kline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int ms_kline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int me_kline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
@@ -62,8 +64,6 @@ struct Message unkline_msgtab = {
 };
 
 mapi_clist_av1 kline_clist[] = { &kline_msgtab, &unkline_msgtab, NULL };
-
-static const char kline_desc[] = "Provides the KLINE facility to ban users via hostmask";
 
 DECLARE_MODULE_AV2(kline, NULL, NULL, kline_clist, NULL, NULL, NULL, NULL, kline_desc);
 

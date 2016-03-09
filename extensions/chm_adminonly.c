@@ -10,9 +10,10 @@
 #include "numeric.h"
 #include "chmode.h"
 
-static void h_can_join(hook_data_channel *);
 static const char chm_adminonly_desc[] =
 	"Enables channel mode +A that blocks non-admins from joining a channel";
+
+static void h_can_join(hook_data_channel *);
 
 mapi_hfn_list_av1 adminonly_hfnlist[] = {
 	{ "can_join", (hookfn) h_can_join },

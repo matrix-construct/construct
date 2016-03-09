@@ -42,6 +42,9 @@
 #include "packet.h"
 #include "supported.h"
 
+static const char cmessage_desc[] =
+	"Provides the CPRIVMSG and CNOTICE facilities for bypassing anti-spam measures";
+
 static int m_cmessage(int, const char *, struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int m_cprivmsg(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int m_cnotice(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
@@ -72,9 +75,6 @@ struct Message cnotice_msgtab = {
 };
 
 mapi_clist_av1 cmessage_clist[] = { &cprivmsg_msgtab, &cnotice_msgtab, NULL };
-
-static const char cmessage_desc[] =
-	"Provides the CPRIVMSG and CNOTICE facilities for bypassing anti-spam measures";
 
 DECLARE_MODULE_AV2(cmessage, _modinit, _moddeinit, cmessage_clist, NULL, NULL, NULL, NULL, cmessage_desc);
 

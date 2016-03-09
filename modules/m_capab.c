@@ -31,6 +31,8 @@
 #include "parse.h"
 #include "modules.h"
 
+static const char capab_desc[] = "Provides the commands used for server-to-server capability negotiation";
+
 static int mr_capab(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int me_gcap(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
@@ -44,8 +46,6 @@ struct Message gcap_msgtab = {
 };
 
 mapi_clist_av1 capab_clist[] = { &capab_msgtab, &gcap_msgtab, NULL };
-
-static const char capab_desc[] = "Provides the commands used for server-to-server capability negotiation";
 
 DECLARE_MODULE_AV2(capab, NULL, NULL, capab_clist, NULL, NULL, NULL, NULL, capab_desc);
 

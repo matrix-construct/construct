@@ -42,8 +42,10 @@
 #include "client.h"
 #include "ircd.h"
 
-// #define DEBUG(s) sendto_realops_snomask(SNO_DEBUG, L_NETWIDE, (s))
-#define DEBUG(s)
+static const char extb_desc[] = "Combination ($&, $|) extban types";
+
+// #define MOD_DEBUG(s) sendto_realops_snomask(SNO_DEBUG, L_NETWIDE, (s))
+#define MOD_DEBUG(s)
 #define RETURN_INVALID	{ recursion_depth--; return EXTBAN_INVALID; }
 
 static int _modinit(void);
@@ -52,7 +54,6 @@ static int eb_or(const char *data, struct Client *client_p, struct Channel *chpt
 static int eb_and(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type);
 static int eb_combi(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type, int is_and);
 static int recursion_depth = 0;
-static const char extb_desc[] = "Combination ($&, $|) extban types";
 
 DECLARE_MODULE_AV2(extb_extended, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, extb_desc);
 
@@ -93,12 +94,12 @@ static int eb_combi(const char *data, struct Client *client_p,
 	size_t datalen;
 
 	if (recursion_depth >= 5) {
-		DEBUG("combo invalid: recursion depth too high");
+		MOD_DEBUG("combo invalid: recursion depth too high");
 		return EXTBAN_INVALID;
 	}
 
 	if (EmptyString(data)) {
-		DEBUG("combo invalid: empty data");
+		MOD_DEBUG("combo invalid: empty data");
 		return EXTBAN_INVALID;
 	}
 
@@ -107,7 +108,7 @@ static int eb_combi(const char *data, struct Client *client_p,
 		/* I'd be sad if this ever happened, but if it does we
 		 * could overflow the buffer used below, so...
 		 */
-		DEBUG("combo invalid: > BANLEN");
+		MOD_DEBUG("combo invalid: > BANLEN");
 		return EXTBAN_INVALID;
 	}
 	banend = data + datalen;
@@ -116,7 +117,7 @@ static int eb_combi(const char *data, struct Client *client_p,
 		p = data + 1;
 		banend--;
 		if (*banend != ')') {
-			DEBUG("combo invalid: starting but no closing paren");
+			MOD_DEBUG("combo invalid: starting but no closing paren");
 			return EXTBAN_INVALID;
 		}
 	} else {
@@ -125,7 +126,7 @@ static int eb_combi(const char *data, struct Client *client_p,
 
 	/* Empty combibans are invalid. */
 	if (banend == p) {
-		DEBUG("combo invalid: no data (after removing parens)");
+		MOD_DEBUG("combo invalid: no data (after removing parens)");
 		return EXTBAN_INVALID;
 	}
 
@@ -150,14 +151,14 @@ static int eb_combi(const char *data, struct Client *client_p,
 			invert = TRUE;
 			p++;
 			if (p == banend) {
-				DEBUG("combo invalid: no data after ~");
+				MOD_DEBUG("combo invalid: no data after ~");
 				RETURN_INVALID;
 			}
 		}
 
 		f = extban_table[(unsigned char) *p++];
 		if (!f) {
-			DEBUG("combo invalid: non-existant child extban");
+			MOD_DEBUG("combo invalid: non-existant child extban");
 			RETURN_INVALID;
 		}
 
@@ -175,7 +176,7 @@ static int eb_combi(const char *data, struct Client *client_p,
 			while (TRUE) {
 				if (p == banend) {
 					if (parencount) {
-						DEBUG("combo invalid: EOD while in parens");
+						MOD_DEBUG("combo invalid: EOD while in parens");
 						RETURN_INVALID;
 					}
 					break;
@@ -197,7 +198,7 @@ static int eb_combi(const char *data, struct Client *client_p,
 						break;
 					case ')':
 						if (!parencount) {
-							DEBUG("combo invalid: negative parencount");
+							MOD_DEBUG("combo invalid: negative parencount");
 							RETURN_INVALID;
 						}
 						parencount--;
@@ -227,7 +228,7 @@ static int eb_combi(const char *data, struct Client *client_p,
 			int child_result = f(child_data, client_p, chptr, mode_type);
 
 			if (child_result == EXTBAN_INVALID) {
-				DEBUG("combo invalid: child invalid");
+				MOD_DEBUG("combo invalid: child invalid");
 				RETURN_INVALID;
 			}
 
@@ -245,19 +246,19 @@ static int eb_combi(const char *data, struct Client *client_p,
 			break;
 
 		if (*p++ != ',') {
-			DEBUG("combo invalid: no ',' after ban");
+			MOD_DEBUG("combo invalid: no ',' after ban");
 			RETURN_INVALID;
 		}
 
 		if (p == banend) {
-			DEBUG("combo invalid: banend after ','");
+			MOD_DEBUG("combo invalid: banend after ','");
 			RETURN_INVALID;
 		}
 	}
 
 	/* at this point, *p should == banend */
 	if (p != banend) {
-		DEBUG("combo invalid: more child extbans than allowed");
+		MOD_DEBUG("combo invalid: more child extbans than allowed");
 		RETURN_INVALID;
 	}
 

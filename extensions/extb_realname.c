@@ -8,10 +8,11 @@
 #include "client.h"
 #include "ircd.h"
 
+static const char extb_desc[] = "Realname/GECOS ($r) extban type";
+
 static int _modinit(void);
 static void _moddeinit(void);
 static int eb_realname(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type);
-static const char extb_desc[] = "Realname/GECOS ($r) extban type";
 
 DECLARE_MODULE_AV2(extb_realname, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, extb_desc);
 

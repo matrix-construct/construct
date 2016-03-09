@@ -35,6 +35,8 @@
 #include "modules.h"
 #include "messages.h"
 
+static const char ojoin_desc[] = "Allow admins to forcibly join channels with the OJOIN command";
+
 static int mo_ojoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message ojoin_msgtab = {
@@ -43,8 +45,6 @@ struct Message ojoin_msgtab = {
 };
 
 mapi_clist_av1 ojoin_clist[] = { &ojoin_msgtab, NULL };
-
-static const char ojoin_desc[] = "Allow admins to forcibly join channels with the OJOIN command";
 
 DECLARE_MODULE_AV2(ojoin, NULL, NULL, ojoin_clist, NULL, NULL, NULL, NULL, ojoin_desc);
 

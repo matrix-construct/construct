@@ -51,6 +51,8 @@
 #include "logger.h"
 #include "rb_radixtree.h"
 
+static const char list_desc[] = "Provides the LIST command to clients to view non-hidden channels";
+
 static rb_dlink_list safelisting_clients = { NULL, NULL, 0 };
 
 static int _modinit(void);
@@ -80,8 +82,6 @@ mapi_hfn_list_av1 list_hfnlist[] = {
 	{"client_exit", (hookfn) safelist_check_cliexit},
 	{NULL, NULL}
 };
-
-static const char list_desc[] = "Provides the LIST command to clients to view non-hidden channels";
 
 DECLARE_MODULE_AV2(list, _modinit, _moddeinit, list_clist, NULL, list_hfnlist, NULL, NULL, list_desc);
 

@@ -36,9 +36,10 @@
 #include "blacklist.h"
 #include "s_assert.h"
 
-static int mr_user(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static const char user_desc[] =
 	"Provides the USER command to register a new connection";
+
+static int mr_user(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message user_msgtab = {
 	"USER", 0, 0, 0, 0,

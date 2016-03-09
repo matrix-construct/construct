@@ -36,6 +36,9 @@
 #include "cache.h"
 #include "rb_dictionary.h"
 
+static const char help_desc[] =
+	"Provides the help facility for commands, modes, and server concepts";
+
 static int m_help(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int mo_help(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int mo_uhelp(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
@@ -51,9 +54,6 @@ struct Message uhelp_msgtab = {
 };
 
 mapi_clist_av1 help_clist[] = { &help_msgtab, &uhelp_msgtab, NULL };
-
-static const char help_desc[] =
-	"Provides the help facility for commands, modes, and server concepts";
 
 DECLARE_MODULE_AV2(help, NULL, NULL, help_clist, NULL, NULL, NULL, NULL, help_desc);
 

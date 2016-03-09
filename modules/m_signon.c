@@ -49,9 +49,10 @@
 #include "match.h"
 #include "s_user.h"
 
+static const char signon_desc[] = "Provides account login/logout support for services";
+
 static int me_svslogin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int ms_signon(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static const char signon_desc[] = "Provides account login/logout support for services";
 
 static void send_signon(struct Client *, struct Client *, const char *, const char *, const char *, unsigned int, const char *);
 

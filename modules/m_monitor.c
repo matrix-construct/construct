@@ -39,6 +39,8 @@
 #include "send.h"
 #include "supported.h"
 
+static const char monitor_desc[] = "Provides the MONITOR facility for tracking user signon and signoff";
+
 static int monitor_init(void);
 static void monitor_deinit(void);
 static int m_monitor(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
@@ -49,8 +51,6 @@ struct Message monitor_msgtab = {
 };
 
 mapi_clist_av1 monitor_clist[] = { &monitor_msgtab, NULL };
-
-static const char monitor_desc[] = "Provides the MONITOR facility for tracking user signon and signoff";
 
 DECLARE_MODULE_AV2(monitor, monitor_init, monitor_deinit, monitor_clist, NULL, NULL, NULL, NULL, monitor_desc);
 

@@ -42,10 +42,11 @@
 #include "hash.h"
 #include "s_serv.h"
 
-static int ms_tb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static int ms_etb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static const char tb_desc[] =
 	"Provides TS6 TB and ETB commands for topic bursting between servers";
+
+static int ms_tb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static int ms_etb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message tb_msgtab = {
 	"TB", 0, 0, 0, 0,

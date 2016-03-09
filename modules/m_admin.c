@@ -34,6 +34,9 @@
 #include "hook.h"
 #include "modules.h"
 
+const char admin_desc[] =
+	"Provides the ADMIN command to show server administrator information";
+
 static int m_admin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int mr_admin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int ms_admin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
@@ -53,9 +56,6 @@ mapi_hlist_av1 admin_hlist[] = {
 	{ "doing_admin",	&doing_admin_hook },
 	{ NULL, NULL }
 };
-
-const char admin_desc[] =
-	"Provides the ADMIN command to show server administrator information";
 
 DECLARE_MODULE_AV2(admin, NULL, NULL, admin_clist, admin_hlist, NULL, NULL, NULL, admin_desc);
 

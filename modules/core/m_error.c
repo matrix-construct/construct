@@ -33,6 +33,9 @@
 #include "logger.h"
 #include "s_conf.h"
 
+static const char error_desc[] =
+	"Provides the ERROR command for clients and servers";
+
 static int m_error(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int ms_error(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
@@ -44,9 +47,6 @@ struct Message error_msgtab = {
 mapi_clist_av1 error_clist[] = {
 	&error_msgtab, NULL
 };
-
-static const char error_desc[] =
-	"Provides the ERROR command for clients and servers";
 
 DECLARE_MODULE_AV2(error, NULL, NULL, error_clist, NULL, NULL, NULL, NULL, error_desc);
 

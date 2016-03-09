@@ -14,6 +14,8 @@
 #include "s_newconf.h"
 #include "numeric.h"
 
+static const char helpops_desc[] = "The helpops system as used by freenode";
+
 static rb_dlink_list helper_list = { NULL, NULL, 0 };
 static void h_hdl_stats_request(hook_data_int *hdata);
 static void h_hdl_new_remote_user(struct Client *client_p);
@@ -42,8 +44,6 @@ struct Message dehelper_msgtab = {
 };
 
 mapi_clist_av1 helpops_clist[] = { &dehelper_msgtab, NULL };
-
-static const char helpops_desc[] = "The helpops system as used by freenode";
 
 static int mo_dehelper(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {

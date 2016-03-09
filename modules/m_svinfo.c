@@ -35,10 +35,10 @@
 #include "parse.h"
 #include "modules.h"
 
-static int ms_svinfo(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static const char svinfo_desc[] =
 	"Provides TS6 SVINFO command to ensure version and clock synchronisation";
 
+static int ms_svinfo(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 struct Message svinfo_msgtab = {
 	"SVINFO", 0, 0, 0, 0,
 	{mg_unreg, mg_ignore, mg_ignore, {ms_svinfo, 5}, mg_ignore, mg_ignore}

@@ -34,9 +34,10 @@
 #include "s_conf.h"
 #include "inline/stringops.h"
 
+static const char quit_desc[] = "Provides the QUIT command to allow a user to leave the network";
+
 static int m_quit(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int ms_quit(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static const char quit_desc[] = "Provides the QUIT command to allow a user to leave the network";
 
 struct Message quit_msgtab = {
 	"QUIT", 0, 0, 0, 0,

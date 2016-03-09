@@ -12,6 +12,9 @@
 #include "snomask.h"
 #include "rb_lib.h"
 
+static const char sno_desc[] =
+	"Adds server notice mask +l that allows operators to receive channel creation notices";
+
 static int _modinit(void);
 static void _moddeinit(void);
 static void h_scc_channel_join(void *);
@@ -20,9 +23,6 @@ mapi_hfn_list_av1 scc_hfnlist[] = {
 	{ "channel_join", (hookfn) h_scc_channel_join },
 	{ NULL, NULL }
 };
-
-static const char sno_desc[] =
-	"Adds server notice mask +l that allows operators to receive channel creation notices";
 
 DECLARE_MODULE_AV2(sno_channelcreate, _modinit, _moddeinit, NULL, NULL, scc_hfnlist, NULL, NULL, sno_desc);
 

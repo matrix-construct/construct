@@ -31,6 +31,8 @@
 #include "parse.h"
 #include "modules.h"
 
+static const char close_desc[] = "Provides the CLOSE command to clear all unfinished connections";
+
 static int mo_close(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message close_msgtab = {
@@ -39,8 +41,6 @@ struct Message close_msgtab = {
 };
 
 mapi_clist_av1 close_clist[] = { &close_msgtab, NULL };
-
-static const char close_desc[] = "Provides the CLOSE command to clear all unfinished connections";
 
 DECLARE_MODULE_AV2(close, NULL, NULL, close_clist, NULL, NULL, NULL, NULL, close_desc);
 

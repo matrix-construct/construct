@@ -37,6 +37,9 @@
 #include "scache.h"
 #include "s_assert.h"
 
+static const char links_desc[] =
+	"Provides the LINKS command to view servers linked to the host server";
+
 static int m_links(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int mo_links(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static char * clean_string(char *dest, const unsigned char *src, size_t len);
@@ -53,9 +56,6 @@ mapi_hlist_av1 links_hlist[] = {
 	{ "doing_links",	&doing_links_hook },
 	{ NULL, NULL }
 };
-
-static const char links_desc[] =
-	"Provides the LINKS command to view servers linked to the host server";
 
 DECLARE_MODULE_AV2(links, NULL, NULL, links_clist, links_hlist, NULL, NULL, NULL, links_desc);
 

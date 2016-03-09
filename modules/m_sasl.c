@@ -41,10 +41,11 @@
 #include "s_newconf.h"
 #include "s_conf.h"
 
+static const char sasl_desc[] = "Provides SASL authentication support";
+
 static int m_authenticate(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int me_sasl(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int me_mechlist(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static const char sasl_desc[] = "Provides SASL authentication support";
 
 static void abort_sasl(struct Client *);
 static void abort_sasl_exit(hook_data_client_exit *);

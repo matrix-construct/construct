@@ -39,8 +39,9 @@
 #include "modules.h"
 #include "s_newconf.h" /* add_tgchange */
 
-static int me_tginfo(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static const char tginfo_desc[] = "Processes target change notifications from other servers";
+
+static int me_tginfo(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message tginfo_msgtab = {
 	"TGINFO", 0, 0, 0, 0,

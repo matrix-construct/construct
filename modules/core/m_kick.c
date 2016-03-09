@@ -37,9 +37,10 @@
 #include "s_serv.h"
 #include "hook.h"
 
+static const char kick_desc[] = "Provides the KICK command to remove a user from a channel";
+
 static int m_kick(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 #define mg_kick { m_kick, 3 }
-static const char kick_desc[] = "Provides the KICK command to remove a user from a channel";
 
 struct Message kick_msgtab = {
 	"KICK", 0, 0, 0, 0,
@@ -110,30 +111,10 @@ m_kick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 			{
 				sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
 					   get_id(&me, source_p), get_id(source_p, source_p), name);
-				return 0;
+				return;
 			}
 		}
 
-		/* Its a user doing a kick, but is not showing as chanop locally
-		 * its also not a user ON -my- server, and the channel has a TS.
-		 * There are two cases we can get to this point then...
-		 *
-		 *     1) connect burst is happening, and for some reason a legit
-		 *        op has sent a KICK, but the SJOIN hasn't happened yet or
-		 *        been seen. (who knows.. due to lag...)
-		 *
-		 *     2) The channel is desynced. That can STILL happen with TS
-		 *
-		 *     Now, the old code roger wrote, would allow the KICK to
-		 *     go through. Thats quite legit, but lets weird things like
-		 *     KICKS by users who appear not to be chanopped happen,
-		 *     or even neater, they appear not to be on the channel.
-		 *     This fits every definition of a desync, doesn't it? ;-)
-		 *     So I will allow the KICK, otherwise, things are MUCH worse.
-		 *     But I will warn it as a possible desync.
-		 *
-		 *     -Dianora
-		 */
 	}
 
 	if((p = strchr(parv[2], ',')))

@@ -42,8 +42,11 @@
 #include "modules.h"
 #include "logger.h"
 
+static const char operspy_desc[] =
+	"Provides the operspy facility for viewing normally private data";
+
 static int ms_operspy(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
-		      int parc, const char *parv[]);
+		       int parc, const char *parv[]);
 
 struct Message operspy_msgtab = {
 	"OPERSPY", 0, 0, 0, 0,
@@ -51,9 +54,6 @@ struct Message operspy_msgtab = {
 };
 
 mapi_clist_av1 operspy_clist[] = { &operspy_msgtab, NULL };
-
-static const char operspy_desc[] =
-	"Provides the operspy facility for viewing normally private data";
 
 DECLARE_MODULE_AV2(operspy, NULL, NULL, operspy_clist, NULL, NULL, NULL, NULL, operspy_desc);
 

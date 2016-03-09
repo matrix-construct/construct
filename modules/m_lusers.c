@@ -34,6 +34,9 @@
 #include "parse.h"
 #include "modules.h"
 
+static const char lusers_desc[] =
+	"Provides the LUSERS command to view the number of current and maximum lusers on a server";
+
 static int m_lusers(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int ms_lusers(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
@@ -43,9 +46,6 @@ struct Message lusers_msgtab = {
 };
 
 mapi_clist_av1 lusers_clist[] = { &lusers_msgtab, NULL };
-
-static const char lusers_desc[] =
-	"Provides the LUSERS command to view the number of current and maximum lusers on a server";
 
 DECLARE_MODULE_AV2(lusers, NULL, NULL, lusers_clist, NULL, NULL, NULL, NULL, lusers_desc);
 

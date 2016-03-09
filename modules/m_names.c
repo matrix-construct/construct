@@ -37,6 +37,8 @@
 #include "parse.h"
 #include "modules.h"
 
+static const char names_desc[] = "Provides the NAMES command to view users on a channel";
+
 static int m_names(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message names_msgtab = {
@@ -45,8 +47,6 @@ struct Message names_msgtab = {
 };
 
 mapi_clist_av1 names_clist[] = { &names_msgtab, NULL };
-
-static const char names_desc[] = "Provides the NAMES command to view users on a channel";
 
 DECLARE_MODULE_AV2(names, NULL, NULL, names_clist, NULL, NULL, NULL, NULL, names_desc);
 

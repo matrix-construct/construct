@@ -39,9 +39,10 @@
 #include "packet.h"
 #include "tgchange.h"
 
+static const char invite_desc[] = "Provides facilities for invite and related notifications";
+
 static int m_invite(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static unsigned int CAP_INVITE_NOTIFY = 0;
-static const char invite_desc[] = "Provides facilities for invite and related notifications";
 
 struct Message invite_msgtab = {
 	"INVITE", 0, 0, 0, 0,

@@ -37,6 +37,9 @@
 #include "modules.h"
 #include "s_serv.h"
 
+static const char locops_desc[] =
+	"Provides the LOCOPS command to send a message to all local operators";
+
 static int m_locops(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int ms_locops(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int me_locops(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
@@ -47,9 +50,6 @@ struct Message locops_msgtab = {
 };
 
 mapi_clist_av1 locops_clist[] = { &locops_msgtab, NULL };
-
-static const char locops_desc[] =
-	"Provides the LOCOPS command to send a message to all local operators";
 
 DECLARE_MODULE_AV2(locops, NULL, NULL, locops_clist, NULL, NULL, NULL, NULL, locops_desc);
 

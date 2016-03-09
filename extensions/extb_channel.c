@@ -10,10 +10,11 @@
 #include "hash.h"
 #include "ircd.h"
 
+static const char extb_desc[] = "Channel ($c) extban type";
+
 static int _modinit(void);
 static void _moddeinit(void);
 static int eb_channel(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type);
-static const char extb_desc[] = "Channel ($c) extban type";
 
 DECLARE_MODULE_AV2(extb_channel, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, extb_desc);
 

@@ -53,6 +53,8 @@
 #include "s_conf.h"
 #include "reject.h"
 
+static const char webirc_desc[] = "Adds support for the WebIRC system";
+
 static int mr_webirc(struct MsgBuf *msgbuf_p, struct Client *, struct Client *, int, const char **);
 
 struct Message webirc_msgtab = {
@@ -61,8 +63,6 @@ struct Message webirc_msgtab = {
 };
 
 mapi_clist_av1 webirc_clist[] = { &webirc_msgtab, NULL };
-
-static const char webirc_desc[] = "Adds support for the WebIRC system";
 
 DECLARE_MODULE_AV2(webirc, NULL, NULL, webirc_clist, NULL, NULL, NULL, NULL, webirc_desc);
 

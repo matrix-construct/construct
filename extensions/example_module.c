@@ -25,6 +25,13 @@
 #include "ircd.h"
 #include "send.h"
 
+/* This string describes the module. Always declare it a static const char[].
+ * It is preferred for stylistic reasons to put it first.
+ *
+ * Make it short, sweet, and to the point.
+ */
+static const char example_desc[] = "This is an example Charybdis module.";
+
 /* Declare the void's initially up here, as modules dont have an
  * include file, we will normally have client_p, source_p, parc
  * and parv[] where:
@@ -46,25 +53,25 @@ static int moper_test(struct MsgBuf *msgbuf_p, struct Client *client_p, struct C
  */
 
 struct Message test_msgtab = {
-  "TEST",               /* the /COMMAND you want */
-  0,                    /* SET TO ZERO -- number of times command used by clients */
-  0,                    /* SET TO ZERO -- number of times command used by clients */
-  0,                    /* SET TO ZERO -- number of times command used by clients */
-  0,            /* ALWAYS SET TO 0 */
+	"TEST",		/* the /COMMAND you want */
+	0,		/* SET TO ZERO -- number of times command used by clients */
+	0,		/* SET TO ZERO -- number of times command used by clients */
+	0,		/* SET TO ZERO -- number of times command used by clients */
+	0,		/* ALWAYS SET TO 0 */
 
-  /* the functions to call for each handler.  If not using the generic
-   * handlers, the first param is the function to call, the second is the
-   * required number of parameters.  NOTE: If you specify a min para of 2,
-   * then parv[1] must *also* be non-empty.
-   */
-  {
-    {munreg_test, 0},   /* function call for unregistered clients, 0 parms required */
-    {mclient_test, 0},  /* function call for local clients, 0 parms required */
-    {mrclient_test, 0}, /* function call for remote clients, 0 parms required */
-    {mserver_test, 0},  /* function call for servers, 0 parms required */
-    mg_ignore,          /* function call for ENCAP, unused in this test */
-    {moper_test, 0}     /* function call for operators, 0 parms required */
-  }
+	/* the functions to call for each handler.  If not using the generic
+	 * handlers, the first param is the function to call, the second is the
+	 * required number of parameters.  NOTE: If you specify a min para of 2,
+	 * then parv[1] must *also* be non-empty.
+	 */
+	{
+		{munreg_test, 0},   /* function call for unregistered clients, 0 parms required */
+		{mclient_test, 0},  /* function call for local clients, 0 parms required */
+		{mrclient_test, 0}, /* function call for remote clients, 0 parms required */
+		{mserver_test, 0},  /* function call for servers, 0 parms required */
+		mg_ignore,          /* function call for ENCAP, unused in this test */
+		{moper_test, 0}     /* function call for operators, 0 parms required */
+	}
 };
 /*
  * There are also some macros for the above function calls and parameter counts.
@@ -143,27 +150,26 @@ moddeinit(void)
 
 /* DECLARE_MODULE_AV2() actually declare the MAPI header. */
 DECLARE_MODULE_AV2(
-			  /* The first argument is the name */
-			  example,
-			  /* The second argument is the function to call on load */
-			  modinit,
-			  /* And the function to call on unload */
-			  moddeinit,
-			  /* Then the MAPI command list */
-			  test_clist,
-			  /* Next the hook list, if we have one. */
-			  test_hlist,
-			  /* Then the hook function list, if we have one */
-			  test_hfnlist,
-			  /* Then the caps list, if we have one */
-			  test_cap_list,
-			  /* Then the version number of this module (NULL for bundled) */
-			  NULL,
-			  /* And finally, the description of this module */
-			  "This is an example module");
+	/* The first argument is the name */
+	example,
+	/* The second argument is the function to call on load */
+	modinit,
+	/* And the function to call on unload */
+	moddeinit,
+	/* Then the MAPI command list */
+	test_clist,
+	/* Next the hook list, if we have one. */
+	test_hlist,
+	/* Then the hook function list, if we have one */
+	test_hfnlist,
+	/* Then the caps list, if we have one */
+	test_cap_list,
+	/* Then the version number of this module (NULL for bundled) */
+	NULL,
+	/* And finally, the description of this module */
+	example_desc);
 
 /* Any of the above arguments can be NULL to indicate they aren't used. */
-
 
 /*
  * mr_test

@@ -39,8 +39,9 @@
 #include "parse.h"
 #include "modules.h"
 
-static int mo_set(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static const char set_desc[] = "Provides the SET command to change server parameters";
+
+static int mo_set(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message set_msgtab = {
 	"SET", 0, 0, 0, 0,

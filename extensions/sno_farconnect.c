@@ -15,6 +15,9 @@
 #include "s_conf.h"
 #include "snomask.h"
 
+static const char sno_desc[] =
+	"Adds server notice mask +F that allows operators to receive notices for connections on other servers";
+
 static int _modinit(void);
 static void _moddeinit(void);
 static void h_gcn_new_remote_user(struct Client *);
@@ -25,9 +28,6 @@ mapi_hfn_list_av1 gcn_hfnlist[] = {
 	{ "client_exit", (hookfn) h_gcn_client_exit },
 	{ NULL, NULL }
 };
-
-static const char sno_desc[] =
-	"Adds server notice mask +F that allows operators to receive notices for connections on other servers";
 
 DECLARE_MODULE_AV2(globalconnexit, _modinit, _moddeinit, NULL, NULL, gcn_hfnlist, NULL, NULL, sno_desc);
 

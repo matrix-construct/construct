@@ -38,6 +38,8 @@
 #include "modules.h"
 #include "s_newconf.h"
 
+static const char kill_desc[] = "Provides the KILL command to remove a user from the network";
+
 static int h_can_kill;
 static char buf[BUFSIZE];
 
@@ -45,7 +47,6 @@ static int ms_kill(struct MsgBuf *, struct Client *, struct Client *, int, const
 static int mo_kill(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static void relay_kill(struct Client *, struct Client *, struct Client *,
 		       const char *, const char *);
-static const char kill_desc[] = "Provides the KILL command to remove a user from the network";
 
 struct Message kill_msgtab = {
 	"KILL", 0, 0, 0, 0,

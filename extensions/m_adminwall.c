@@ -37,6 +37,9 @@
 #include "s_serv.h"
 #include "messages.h"
 
+static const char adminwall_desc[] =
+        "Provides the ADMINWALL command to send a message to all administrators";
+
 static int mo_adminwall(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int me_adminwall(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
@@ -45,14 +48,9 @@ struct Message adminwall_msgtab = {
 	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, {me_adminwall, 2}, {mo_adminwall, 2}}
 };
 
-
 mapi_clist_av1 adminwall_clist[] = { &adminwall_msgtab, NULL };
 
-static const char adminwall_desc[] =
-        "Provides the ADMINWALL command to send a message to all administrators";
-
 DECLARE_MODULE_AV2(adminwall, NULL, NULL, adminwall_clist, NULL, NULL, NULL, NULL, adminwall_desc);
-
 
 /*
  * mo_adminwall (write to *all* admins currently online)

@@ -10,9 +10,10 @@
 #include "numeric.h"
 #include "chmode.h"
 
-static void h_can_join(hook_data_channel *);
 static const char chm_operonly_desc[] =
 	"Adds channel mode +O which makes a channel operator-only";
+
+static void h_can_join(hook_data_channel *);
 
 mapi_hfn_list_av1 operonly_hfnlist[] = {
 	{ "can_join", (hookfn) h_can_join },

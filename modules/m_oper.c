@@ -39,6 +39,8 @@
 #include "packet.h"
 #include "cache.h"
 
+static const char oper_desc[] = "Provides the OPER command to become an IRC operator";
+
 static int m_oper(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message oper_msgtab = {
@@ -47,8 +49,6 @@ struct Message oper_msgtab = {
 };
 
 mapi_clist_av1 oper_clist[] = { &oper_msgtab, NULL };
-
-static const char oper_desc[] = "Provides the OPER command to become an IRC operator";
 
 DECLARE_MODULE_AV2(oper, NULL, NULL, oper_clist, NULL, NULL, NULL, NULL, oper_desc);
 

@@ -45,6 +45,9 @@
 #include "messages.h"
 #include "rb_radixtree.h"
 
+static const char sendbands_desc[] =
+	"Adds the ability to send all permanent RESVs and XLINEs to given server";
+
 static int mo_sendbans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message sendbans_msgtab = {
@@ -56,9 +59,6 @@ mapi_clist_av1 sendbans_clist[] = {
 	&sendbans_msgtab,
 	NULL
 };
-
-static const char sendbands_desc[] =
-	"Adds the ability to send all permanent RESVs and XLINEs to given server";
 
 DECLARE_MODULE_AV2(sendbans, NULL, NULL, sendbans_clist, NULL, NULL, NULL, NULL, sendbands_desc);
 

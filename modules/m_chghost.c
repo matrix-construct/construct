@@ -28,6 +28,8 @@
 #include "whowas.h"
 #include "monitor.h"
 
+static const char chghost_desc[] = "Provides commands used to change and retrieve client hostnames";
+
 static int me_realhost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int ms_chghost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int me_chghost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
@@ -44,8 +46,6 @@ struct Message chghost_msgtab = {
 };
 
 mapi_clist_av1 chghost_clist[] = { &chghost_msgtab, &realhost_msgtab, NULL };
-
-static const char chghost_desc[] = "Provides commands used to change and retrieve client hostnames";
 
 DECLARE_MODULE_AV2(chghost, NULL, NULL, chghost_clist, NULL, NULL, NULL, NULL, chghost_desc);
 

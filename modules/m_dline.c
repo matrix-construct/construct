@@ -43,6 +43,8 @@
 #include "bandbi.h"
 #include "operhash.h"
 
+static const char dline_desc[] = "Provides the DLINE facility to ban users via IP address";
+
 static int mo_dline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int me_dline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int mo_undline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

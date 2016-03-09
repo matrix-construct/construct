@@ -33,9 +33,10 @@
 #include "parse.h"
 #include "modules.h"
 
-static int m_users(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static const char users_desc[] =
 	"Provides the USERS command to display connection statistics locally and globally";
+
+static int m_users(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message users_msgtab = {
 	"USERS", 0, 0, 0, 0,
@@ -43,6 +44,7 @@ struct Message users_msgtab = {
 };
 
 mapi_clist_av1 users_clist[] = { &users_msgtab, NULL };
+
 DECLARE_MODULE_AV2(users, NULL, NULL, users_clist, NULL, NULL, NULL, NULL, users_desc);
 
 /*

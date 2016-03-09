@@ -39,6 +39,9 @@
 #include "parse.h"
 #include "modules.h"
 
+static const char info_desc[] =
+	"Provides the INFO command for retrieving server copyright, credits, and other info";
+
 static void send_conf_options(struct Client *source_p);
 static void send_birthdate_online_time(struct Client *source_p);
 static void send_info_text(struct Client *source_p);
@@ -59,9 +62,6 @@ mapi_hlist_av1 info_hlist[] = {
 	{ "doing_info",		&doing_info_hook },
 	{ NULL, NULL }
 };
-
-static const char info_desc[] =
-	"Provides the INFO command for retrieving server copyright, credits, and other info";
 
 DECLARE_MODULE_AV2(info, NULL, NULL, info_clist, info_hlist, NULL, NULL, NULL, info_desc);
 

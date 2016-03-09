@@ -46,9 +46,10 @@
 #include "hostmask.h"
 #include "logger.h"
 
+static const char ban_desc[] = "Provides the TS6 BAN command for propagating network-wide bans";
+
 static int m_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static int ms_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static const char ban_desc[] = "Provides the TS6 BAN command for propagating network-wide bans";
 
 struct Message ban_msgtab = {
 	"BAN", 0, 0, 0, 0,
@@ -56,6 +57,7 @@ struct Message ban_msgtab = {
 };
 
 mapi_clist_av1 ban_clist[] =  { &ban_msgtab, NULL };
+
 DECLARE_MODULE_AV2(ban, NULL, NULL, ban_clist, NULL, NULL, NULL, NULL, ban_desc);
 
 static int

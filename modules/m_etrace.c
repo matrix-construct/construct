@@ -50,6 +50,9 @@
 #include "logger.h"
 #include "supported.h"
 
+static const char etrace_desc[] =
+    "Provides enhanced tracing facilities to opers (ETRACE, CHANTRACE, and MASKTRACE)";
+
 static int mo_etrace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int me_etrace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int m_chantrace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
@@ -83,9 +86,6 @@ _moddeinit(void)
 }
 
 mapi_clist_av1 etrace_clist[] = { &etrace_msgtab, &chantrace_msgtab, &masktrace_msgtab, NULL };
-
-static const char etrace_desc[] =
-    "Provides enhanced tracing facilities to opers (ETRACE, CHANTRACE, and MASKTRACE)";
 
 DECLARE_MODULE_AV2(etrace, _modinit, _moddeinit, etrace_clist, NULL, NULL, NULL, NULL, etrace_desc);
 

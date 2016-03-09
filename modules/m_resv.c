@@ -38,14 +38,15 @@
 #include "bandbi.h"
 #include "operhash.h"
 
+static const char resv_desc[] =
+	"Provides management of reserved nicknames and channels using (UN)RESV";
+
 static int mo_resv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int ms_resv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int me_resv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int mo_unresv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int ms_unresv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int me_unresv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static const char resv_desc[] =
-	"Provides management of reserved nicknames and channels using (UN)RESV";
 
 struct Message resv_msgtab = {
 	"RESV", 0, 0, 0, 0,

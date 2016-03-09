@@ -35,10 +35,11 @@
 #include "s_conf.h"
 #include "s_serv.h"
 
-static int m_ping(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_ping(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static const char ping_desc[] =
 	"Provides the PING command to ensure a client or server is still alive";
+
+static int m_ping(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_ping(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message ping_msgtab = {
 	"PING", 0, 0, 0, 0,
@@ -46,6 +47,7 @@ struct Message ping_msgtab = {
 };
 
 mapi_clist_av1 ping_clist[] = { &ping_msgtab, NULL };
+
 DECLARE_MODULE_AV2(ping, NULL, NULL, ping_clist, NULL, NULL, NULL, NULL, ping_desc);
 
 /*

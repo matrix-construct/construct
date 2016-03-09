@@ -38,6 +38,9 @@
 #include "modules.h"
 #include "sslproc.h"
 
+static const char connect_desc[] =
+	"Provides the CONNECT command to introduce servers to the network";
+
 static int mo_connect(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int ms_connect(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
@@ -47,9 +50,6 @@ struct Message connect_msgtab = {
 };
 
 mapi_clist_av1 connect_clist[] = { &connect_msgtab, NULL };
-
-static const char connect_desc[] =
-	"Provides the CONNECT command to introduce servers to the network";
 
 DECLARE_MODULE_AV2(connect, NULL, NULL, connect_clist, NULL, NULL, NULL, NULL, connect_desc);
 

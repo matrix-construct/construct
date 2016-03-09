@@ -36,6 +36,8 @@
 #include "s_serv.h"
 #include "supported.h"
 
+static const char knock_desc[] = "Provides the KNOCK command to ask for an invite to an invite-only channel";
+
 static int m_knock(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message knock_msgtab = {
@@ -57,8 +59,6 @@ _moddeinit(void)
 }
 
 mapi_clist_av1 knock_clist[] = { &knock_msgtab, NULL };
-
-static const char knock_desc[] = "Provides the KNOCK command to ask for an invite to an invite-only channel";
 
 DECLARE_MODULE_AV2(knock, _modinit, _moddeinit, knock_clist, NULL, NULL, NULL, NULL, knock_desc);
 

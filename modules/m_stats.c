@@ -49,9 +49,10 @@
 #include "rb_radixtree.h"
 #include "sslproc.h"
 
-static int m_stats (struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static const char stats_desc[] =
 	"Provides the STATS command to inspect various server/network information";
+
+static int m_stats (struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message stats_msgtab = {
 	"STATS", 0, 0, 0, 0,

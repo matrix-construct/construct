@@ -34,6 +34,8 @@
 #include "packet.h"
 #include "messages.h"
 
+static const char findfowards_desc[] = "Allows operators to find forwards to a given channel";
+
 static int m_findforwards(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 			int parc, const char *parv[]);
 
@@ -43,8 +45,6 @@ struct Message findforwards_msgtab = {
 };
 
 mapi_clist_av1 findforwards_clist[] = { &findforwards_msgtab, NULL };
-
-static const char findfowards_desc[] = "Allows operators to find forwards to a given channel";
 
 DECLARE_MODULE_AV2(findforwards, NULL, NULL, findforwards_clist, NULL, NULL, NULL, NULL, findfowards_desc);
 

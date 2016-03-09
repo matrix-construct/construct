@@ -41,10 +41,11 @@
 #include "logger.h"
 #include "inline/stringops.h"
 
-static int m_topic(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static int ms_topic(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static const char topic_desc[] =
 	"Provides the TOPIC command to set, remove, and inspect channel topics";
+
+static int m_topic(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static int ms_topic(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message topic_msgtab = {
 	"TOPIC", 0, 0, 0, 0,

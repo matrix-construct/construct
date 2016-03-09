@@ -11,6 +11,9 @@
 #include "s_conf.h"
 #include "snomask.h"
 
+static const char sno_desc[] =
+	"Adds server notices for remote nick changes";
+
 static int _modinit(void);
 static void h_gnc_nick_change(hook_data *data);
 
@@ -18,9 +21,6 @@ mapi_hfn_list_av1 gcn_hfnlist[] = {
 	{ "remote_nick_change", (hookfn) h_gnc_nick_change },
 	{ NULL, NULL }
 };
-
-static const char sno_desc[] =
-	"Adds server notices for remote nick changes";
 
 DECLARE_MODULE_AV2(globalnickchange, _modinit, NULL, NULL, NULL, gcn_hfnlist, NULL, NULL, sno_desc);
 

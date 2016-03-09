@@ -34,11 +34,12 @@
 #include "modules.h"
 #include "s_conf.h"
 
+static const char userhost_desc[] =
+	"Provides the USERHOST command to show a user's host";
+
 static char buf[BUFSIZE];
 
 static int m_userhost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static const char userhost_desc[] =
-	"Provides the USERHOST command to show a user's host";
 
 struct Message userhost_msgtab = {
 	"USERHOST", 0, 0, 0, 0,
@@ -46,6 +47,7 @@ struct Message userhost_msgtab = {
 };
 
 mapi_clist_av1 userhost_clist[] = { &userhost_msgtab, NULL };
+
 DECLARE_MODULE_AV2(userhost, NULL, NULL, userhost_clist, NULL, NULL, NULL, NULL, userhost_desc);
 
 /*

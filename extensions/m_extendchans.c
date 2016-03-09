@@ -31,6 +31,9 @@
 #include "send.h"
 #include "numeric.h"
 
+static const char extendchans_desc[] =
+	"Allow an oper or service to let a given user join more channels";
+
 static int mo_extendchans(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static int me_extendchans(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
@@ -40,9 +43,6 @@ struct Message extendchans_msgtab = {
 };
 
 mapi_clist_av1 extendchans_clist[] = { &extendchans_msgtab, NULL };
-
-static const char extendchans_desc[] =
-	"Allow an oper or service to let a given user join more channels";
 
 DECLARE_MODULE_AV2(extendchans, NULL, NULL, extendchans_clist, NULL, NULL, NULL, NULL, extendchans_desc);
 

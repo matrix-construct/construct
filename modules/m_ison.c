@@ -37,6 +37,8 @@
 
 #include <string.h>
 
+static const char ison_desc[] = "Provides the ISON command to check if a set of users is online";
+
 static int m_ison(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
 struct Message ison_msgtab = {
@@ -45,8 +47,6 @@ struct Message ison_msgtab = {
 };
 
 mapi_clist_av1 ison_clist[] = { &ison_msgtab, NULL };
-
-static const char ison_desc[] = "Provides the ISON command to check if a set of users is online";
 
 DECLARE_MODULE_AV2(ison, NULL, NULL, ison_clist, NULL, NULL, NULL, NULL, ison_desc);
 

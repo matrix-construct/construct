@@ -30,6 +30,8 @@
 
 #define USER_COL       50	/* display | Users: %d at col 50 */
 
+static const char map_desc[] = "Provides the MAP command to view network topology information";
+
 static int m_map(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 static int mo_map(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
@@ -39,8 +41,6 @@ struct Message map_msgtab = {
 };
 
 mapi_clist_av1 map_clist[] = { &map_msgtab, NULL };
-
-static const char map_desc[] = "Provides the MAP command to view network topology information";
 
 DECLARE_MODULE_AV2(map, NULL, NULL, map_clist, NULL, NULL, NULL, NULL, map_desc);
 
