@@ -133,7 +133,7 @@ static void stats_capability(struct Client *);
  * C initalisers so we don't have to iterate anymore.
  * --Elizafox
  */
-static struct stats_cmd stats_cmd_table[255] = {
+static struct stats_cmd stats_cmd_table[256] = {
     /* letter     function	need_oper need_admin */
 	['a'] = { stats_dns_servers,	1, 1, },
 	['A'] = { stats_dns_servers,	1, 1, },

@@ -33,8 +33,8 @@ typedef void (*authd_cmd_handler)(int parc, char *parv[]);
 typedef void (*authd_stat_handler)(const char *rid, const char letter);
 typedef void (*authd_reload_handler)(const char letter);
 
-extern authd_cmd_handler authd_cmd_handlers[255];
-extern authd_stat_handler authd_stat_handlers[255];
-extern authd_reload_handler authd_reload_handlers[255];
+extern authd_cmd_handler authd_cmd_handlers[256];
+extern authd_stat_handler authd_stat_handlers[256];
+extern authd_reload_handler authd_reload_handlers[256];
 
 #endif

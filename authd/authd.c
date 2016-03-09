@@ -27,17 +27,17 @@ static void handle_reload(int parc, char *parv[]);
 static void handle_stat(int parc, char *parv[]);
 
 rb_helper *authd_helper = NULL;
-authd_cmd_handler authd_cmd_handlers[255] = {
+authd_cmd_handler authd_cmd_handlers[256] = {
 	['C'] = handle_reload,
 	['D'] = resolve_dns,
 	['S'] = handle_stat,
 };
 
-authd_stat_handler authd_stat_handlers[255] = {
+authd_stat_handler authd_stat_handlers[256] = {
 	['D'] = enumerate_nameservers,
 };
 
-authd_reload_handler authd_reload_handlers[255] = {
+authd_reload_handler authd_reload_handlers[256] = {
 	['D'] = reload_nameservers,
 };
 
