@@ -83,7 +83,7 @@ void destroy_providers(void)
 		{
 			/* TBD - is this the right thing?
 			 * (NOTE - this error message is designed for morons) */
-			reject_client(&auth_clients[i], 0,
+			reject_client(&auth_clients[i], 0, true,
 					"IRC server reloading... try reconnecting in a few seconds");
 		}
 	}
@@ -138,8 +138,8 @@ void provider_done(struct auth_client *auth, provider_t id)
 	}
 }
 
-/* Reject a client, cancel outstanding providers if any */
-void reject_client(struct auth_client *auth, provider_t id, const char *reason)
+/* Reject a client, cancel outstanding providers if any if hard set to true */
+void reject_client(struct auth_client *auth, provider_t id, bool hard, const char *reason)
 {
 	uint16_t cid = auth->cid;
 	char reject;
@@ -165,10 +165,11 @@ void reject_client(struct auth_client *auth, provider_t id, const char *reason)
 
 	unset_provider(auth, id);
 
-	if(auth->providers)
+	if(hard && auth->providers)
+	{
 		cancel_providers(auth);
-
-	memset(&auth_clients[cid], 0, sizeof(struct auth_client));
+		memset(&auth_clients[cid], 0, sizeof(struct auth_client));
+	}
 }
 
 /* Accept a client, cancel outstanding providers if any */

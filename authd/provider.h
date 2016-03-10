@@ -82,9 +82,9 @@ void init_providers(void);
 void destroy_providers(void);
 void cancel_providers(struct auth_client *auth);
 
-void provider_done(struct auth_client *auth, provider_t provider);
-void reject_client(struct auth_client *auth, provider_t provider, const char *reason);
-void accept_client(struct auth_client *auth, provider_t provider);
+void provider_done(struct auth_client *auth, provider_t id);
+void accept_client(struct auth_client *auth, provider_t id);
+void reject_client(struct auth_client *auth, provider_t id, bool hard, const char *reason);
 
 void notice_client(struct auth_client *auth, const char *notice);
 
