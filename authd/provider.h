@@ -39,11 +39,8 @@ struct auth_client
 {
 	uint16_t cid;				/* Client ID */
 
-	struct rb_sockaddr_storage l_ip;	/* Listener IP address */
-	uint16_t l_port;			/* Listener port */
-
+	struct rb_sockaddr_storage l_addr;	/* Listener IP address */
 	struct rb_sockaddr_storage c_addr;	/* Client IP address */
-	uint16_t c_port;			/* Client port */
 
 	char hostname[HOSTLEN + 1];		/* Used for DNS lookup */
 	char username[USERLEN + 1];		/* Used for ident lookup */

@@ -174,7 +174,7 @@ void notice_client(struct auth_client *auth, const char *notice)
 }
 
 /* Begin authenticating user */
-static void start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_addr, const char *c_port)
+static void start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_ip, const char *c_port)
 {
 	rb_dlink_node *ptr;
 	struct auth_provider *provider;
@@ -191,11 +191,22 @@ static void start_auth(const char *cid, const char *l_ip, const char *l_port, co
 
 	auth->cid = (uint16_t)lcid;
 
-	(void)rb_inet_pton_sock(l_ip, (struct sockaddr *)&auth->l_ip);
-	auth->l_port = (uint16_t)atoi(l_port); /* Safe cast, port shouldn't exceed 16 bits  */
+	(void)rb_inet_pton_sock(l_ip, (struct sockaddr *)&auth->l_addr);
+#ifdef RB_IPV6
+	if(GET_SS_FAMILY(&auth->l_addr) == AF_INET6)
+		((struct sockaddr_in6 *)&auth->l_addr)->sin6_port = htons(atoi(l_ip));
+	else
+#endif
+		((struct sockaddr_in *)&auth->l_addr)->sin_port = htons(atoi(l_ip));
 
-	(void)rb_inet_pton_sock(c_addr, (struct sockaddr *)&auth->c_addr);
-	auth->c_port = (uint16_t)atoi(c_port);
+	(void)rb_inet_pton_sock(c_ip, (struct sockaddr *)&auth->c_addr);
+#ifdef RB_IPV6
+	if(GET_SS_FAMILY(&auth->c_addr) == AF_INET6)
+		((struct sockaddr_in6 *)&auth->c_addr)->sin6_port = htons(atoi(c_ip));
+	else
+#endif
+		((struct sockaddr_in *)&auth->c_addr)->sin_port = htons(atoi(c_ip));
+
 
 	RB_DLINK_FOREACH(ptr, auth_providers.head)
 	{
