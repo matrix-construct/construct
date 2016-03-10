@@ -24,7 +24,7 @@
 #include "stdinc.h"
 
 /* Arbitrary limit */
-#define MAX_CLIENTS 1024
+#define MAX_CLIENTS 4096
 
 /* Registered providers */
 typedef enum
@@ -41,9 +41,11 @@ struct auth_client
 
 	char l_ip[HOSTIPLEN + 1];		/* Listener IP address */
 	uint16_t l_port;			/* Listener port */
+	int l_family;				/* AF_INET or AF_INET6 */
 
 	char c_ip[HOSTIPLEN + 1];		/* Client IP address */
 	uint16_t c_port;			/* Client port */
+	int c_family;				/* AF_INET or AF_INET6 */
 
 	char hostname[IRCD_RES_HOSTLEN + 1];	/* Used for DNS lookup */
 	char username[USERLEN + 1];		/* Used for ident lookup */
@@ -89,7 +91,6 @@ void accept_client(struct auth_client *auth, provider_t provider);
 
 void notice_client(struct auth_client *auth, const char *notice);
 
-void start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_ip, const char *c_port);
 void handle_new_connection(int parc, char *parv[]);
 
 /* Provider is operating on this auth_client (set this if you have async work to do) */
