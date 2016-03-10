@@ -34,6 +34,7 @@ struct dns_request
 	char type;
 };
 
+extern void format_address(struct rb_sockaddr_storage *addr, char *buffer, size_t length);
 extern void resolve_dns(int parc, char *parv[]);
 extern void enumerate_nameservers(const char *rid, const char letter);
 extern void reload_nameservers(const char letter);

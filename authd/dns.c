@@ -22,6 +22,29 @@
 #include "dns.h"
 #include "res.h"
 
+void
+format_address(struct rb_sockaddr_storage *addr, char *buffer, size_t length)
+{
+	if(GET_SS_FAMILY(addr) == AF_INET)
+	{
+		rb_inet_ntop_sock((struct sockaddr *)addr, buffer, length);
+	}
+	else if(GET_SS_FAMILY(addr) == AF_INET6)
+	{
+		char tmpbuf[length];
+
+		rb_inet_ntop_sock((struct sockaddr *)addr, tmpbuf, length);
+
+		if(*tmpbuf == ':')
+		{
+			rb_strlcpy(buffer, "0", length);
+			rb_strlcat(buffer, tmpbuf, length);
+		}
+		else
+			rb_strlcpy(buffer, tmpbuf, length);
+	}
+}
+
 static void
 submit_dns_answer(void *userdata, struct DNSReply *reply)
 {
@@ -38,29 +61,9 @@ submit_dns_answer(void *userdata, struct DNSReply *reply)
 	switch (req->type)
 	{
 	case '4':
-		if (GET_SS_FAMILY(&reply->addr) == AF_INET)
-		{
-			status = 'O';
-			rb_inet_ntop_sock((struct sockaddr *) &reply->addr, response, sizeof(response));
-		}
-		break;
 #ifdef RB_IPV6
 	case '6':
-		if (GET_SS_FAMILY(&reply->addr) == AF_INET6)
-		{
-			char tmpres[63];
-			rb_inet_ntop_sock((struct sockaddr *) &reply->addr, tmpres, sizeof(tmpres));
-
-			if (*tmpres == ':')
-			{
-				rb_strlcpy(response, "0", sizeof(response));
-				rb_strlcat(response, tmpres, sizeof(response));
-			}
-			else
-				rb_strlcpy(response, tmpres, sizeof(response));
-
-			status = 'O';
-		}
+		format_address(&reply->addr, response, sizeof(response));
 		break;
 #endif
 	case 'R':
