@@ -94,6 +94,7 @@ bool client_dns_start(struct auth_client *auth)
 
 	gethost_byaddr(&auth->c_addr, &query->query);
 	notice_client(auth, messages[REPORT_LOOKUP]);
+	set_provider(auth, PROVIDER_RDNS);
 	return true;
 }
 
