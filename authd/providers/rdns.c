@@ -186,7 +186,6 @@ static void timeout_dns_queries_event(void *notused)
 		if(query->auth && query->timeout < rb_current_time())
 		{
 			client_fail(query, REPORT_FAIL);
-			return;
 		}
 	}
 }
