@@ -33,22 +33,24 @@ typedef enum
 	PROVIDER_RDNS = 0x1,
 	PROVIDER_IDENT = 0x2,
 	PROVIDER_BLACKLIST = 0x4,
+	PROVIDER_DUMMY = 0x8,
 } provider_t;
 
 struct auth_client
 {
-	uint16_t cid;		/* Client ID */
+	uint16_t cid;				/* Client ID */
 
-	char *l_ip;		/* Listener IP address */
-	uint16_t l_port;	/* Listener port */
+	char l_ip[HOSTIPLEN + 1];		/* Listener IP address */
+	uint16_t l_port;			/* Listener port */
 
-	char *c_ip;		/* Client IP address */
-	uint16_t c_port;	/* Client port */
+	char c_ip[HOSTIPLEN + 1];		/* Client IP address */
+	uint16_t c_port;			/* Client port */
 
-	char *hostname;		/* Used for DNS lookup */
-	char *username;		/* Used for ident lookup */
+	char hostname[IRCD_RES_HOSTLEN + 1];	/* Used for DNS lookup */
+	char username[USERLEN + 1];		/* Used for ident lookup */
 
-	unsigned int providers;	/* Providers at work, 0 = none left */
+	unsigned int providers;			/* Providers at work,
+						 * none left when set to 0 */
 };
 
 typedef bool (*provider_init_t)(void);
