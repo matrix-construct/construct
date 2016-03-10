@@ -330,7 +330,7 @@ reload_nameservers(void)
 		/* Shit */
 		return false;
 	}
-	rb_helper_write(authd_helper, "C D");
+	rb_helper_write(authd_helper, "H D");
 	init_nameserver_cache();
 	return true;
 }

@@ -169,7 +169,7 @@
 /* Define to 1 if you have the `socketpair' function. */
 #undef HAVE_SOCKETPAIR
 
-/* Define to 1 if you have the <stdbool.h> header file. */
+/* Define to 1 if stdbool.h conforms to C99. */
 #undef HAVE_STDBOOL_H
 
 /* Define to 1 if you have the <stddef.h> header file. */
@@ -240,6 +240,9 @@
 
 /* This value is set to 1 to indicate that the system argz facility works */
 #undef HAVE_WORKING_ARGZ
+
+/* Define to 1 if the system has the type `_Bool'. */
+#undef HAVE__BOOL
 
 /* Prefix where help files are installed. */
 #undef HELP_DIR

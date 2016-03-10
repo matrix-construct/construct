@@ -28,7 +28,7 @@ static void handle_stat(int parc, char *parv[]);
 
 rb_helper *authd_helper = NULL;
 authd_cmd_handler authd_cmd_handlers[256] = {
-	['C'] = handle_reload,
+	['H'] = handle_reload,
 	['D'] = resolve_dns,
 	['S'] = handle_stat,
 };
