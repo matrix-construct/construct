@@ -20,6 +20,7 @@
 
 #include "authd.h"
 #include "dns.h"
+#include "provider.h"
 
 #define MAXPARA 10
 
@@ -28,8 +29,9 @@ static void handle_stat(int parc, char *parv[]);
 
 rb_helper *authd_helper = NULL;
 authd_cmd_handler authd_cmd_handlers[256] = {
-	['H'] = handle_reload,
+	['C'] = handle_new_connection,
 	['D'] = resolve_dns,
+	['H'] = handle_reload,
 	['S'] = handle_stat,
 };
 
