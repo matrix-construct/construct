@@ -72,6 +72,13 @@ struct auth_provider
 	provider_complete_t completed;	/* Callback for when other performers complete (think dependency chains) */
 };
 
+extern rb_dlink_list auth_providers;
+
+extern struct auth_client auth_clients[MAX_CLIENTS];
+
+void load_provider(struct auth_provider *provider);
+void unload_provider(struct auth_provider *provider);
+
 void init_providers(void);
 void destroy_providers(void);
 void cancel_providers(struct auth_client *auth);
