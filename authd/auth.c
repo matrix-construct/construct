@@ -45,32 +45,35 @@
 #include "authd.h"
 #include "auth.h"
 
-#define NULL_PROVIDER {			\
-	.provider = PROVIDER_NULL,	\
-	.init = NULL,			\
-	.destroy = NULL,		\
-	.start = NULL,			\
-	.cancel = NULL,			\
-	.completed = NULL,		\
-}
-
-/* Providers */
-static struct auth_provider auth_providers[] =
-{
-	NULL_PROVIDER,
-};
+rb_dlink_list auth_providers;
 
 /* Clients waiting */
 struct auth_client auth_clients[MAX_CLIENTS];
 
+/* Load a provider */
+void load_provider(struct auth_provider *provider)
+{
+	provider->init();
+	rb_dlinkAdd(provider, &provider->node, &auth_providers);
+}
+
+void unload_provider(struct auth_provider *provider)
+{
+	provider->destroy();
+	rb_dlinkDelete(&provider->node, &auth_providers);
+}
+
 /* Initalise all providers */
 void init_providers(void)
 {
-	struct auth_provider *pptr;
+	rb_dlink_node *ptr;
+	struct auth_provider *provider;
 
-	AUTH_PROVIDER_FOREACH(pptr)
+	RB_DLINK_FOREACH(ptr, auth_providers.head)
 	{
-		if(pptr->init && !pptr->init())
+		provider = ptr->data;
+
+		if(provider->init && !provider->init())
 			/* Provider failed to init, time to go */
 			exit(1);
 	}
@@ -79,7 +82,8 @@ void init_providers(void)
 /* Terminate all providers */
 void destroy_providers(void)
 {
-	struct auth_provider *pptr;
+	rb_dlink_node *ptr;
+	struct auth_provider *provider;
 
 	/* Cancel outstanding connections */
 	for (size_t i = 0; i < MAX_CLIENTS; i++)
@@ -93,32 +97,38 @@ void destroy_providers(void)
 		}
 	}
 
-	AUTH_PROVIDER_FOREACH(pptr)
+	RB_DLINK_FOREACH(ptr, auth_providers.head)
 	{
-		if(pptr->destroy)
-			pptr->destroy();
+		provider = ptr->data;
+
+		if(provider->destroy)
+			provider->destroy();
 	}
 }
 
 /* Cancel outstanding providers for a client */
 void cancel_providers(struct auth_client *auth)
 {
-	struct auth_provider *pptr;
+	rb_dlink_node *ptr;
+	struct auth_provider *provider;
 
-	AUTH_PROVIDER_FOREACH(pptr)
+	RB_DLINK_FOREACH(ptr, auth_providers.head)
 	{
-		if(pptr->cancel && is_provider(auth, pptr->provider))
+		provider = ptr->data;
+
+		if(provider->cancel && is_provider(auth, provider->id))
 			/* Cancel if required */
-			pptr->cancel(auth);
+			provider->cancel(auth);
 	}
 }
 
 /* Provider is done */
-void provider_done(struct auth_client *auth, provider_t provider)
+void provider_done(struct auth_client *auth, provider_t id)
 {
-	struct auth_provider *pptr;
+	rb_dlink_node *ptr;
+	struct auth_provider *provider;
 
-	unset_provider(auth, provider);
+	unset_provider(auth, id);
 
 	if(!auth->providers)
 	{
@@ -127,22 +137,24 @@ void provider_done(struct auth_client *auth, provider_t provider)
 		return;
 	}
 
-	AUTH_PROVIDER_FOREACH(pptr)
+	RB_DLINK_FOREACH(ptr, auth_providers.head)
 	{
-		if(pptr->completed && is_provider(auth, pptr->provider))
+		provider = ptr->data;
+
+		if(provider->completed && is_provider(auth, provider->id))
 			/* Notify pending clients who asked for it */
-			pptr->completed(auth, provider);
+			provider->completed(auth, id);
 	}
 }
 
 /* Reject a client, cancel outstanding providers if any */
-void reject_client(struct auth_client *auth, provider_t provider, const char *reason)
+void reject_client(struct auth_client *auth, provider_t id, const char *reason)
 {
 	uint16_t cid = auth->cid;
 
 	rb_helper_write(authd_helper, "R %x :%s", auth->cid, reason);
 
-	unset_provider(auth, provider);
+	unset_provider(auth, id);
 
 	if(auth->providers)
 		cancel_providers(auth);
@@ -151,13 +163,13 @@ void reject_client(struct auth_client *auth, provider_t provider, const char *re
 }
 
 /* Accept a client, cancel outstanding providers if any */
-void accept_client(struct auth_client *auth, provider_t provider)
+void accept_client(struct auth_client *auth, provider_t id)
 {
 	uint16_t cid = auth->cid;
 
 	rb_helper_write(authd_helper, "A %x %s %s", auth->cid, auth->username, auth->hostname);
 
-	unset_provider(auth, provider);
+	unset_provider(auth, id);
 
 	if(auth->providers)
 		cancel_providers(auth);
@@ -174,7 +186,8 @@ void notice_client(struct auth_client *auth, const char *notice)
 /* Begin authenticating user */
 void start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_ip, const char *c_port)
 {
-	struct auth_provider *pptr;
+	rb_dlink_node *ptr;
+	struct auth_provider *provider;
 	struct auth_client *auth;
 	long lcid = strtol(cid, NULL, 16);
 
@@ -194,10 +207,12 @@ void start_auth(const char *cid, const char *l_ip, const char *l_port, const cha
 	rb_strlcpy(auth->c_ip, c_ip, sizeof(auth->c_ip));
 	auth->c_port = (uint16_t)atoi(c_port);
 
-	AUTH_PROVIDER_FOREACH(pptr)
+	RB_DLINK_FOREACH(ptr, auth_providers.head)
 	{
+		provider = ptr->data;
+
 		/* Execute providers */
-		if(!pptr->start(auth))
+		if(!provider->start(auth))
 		{
 			/* Rejected immediately */
 			cancel_providers(auth);

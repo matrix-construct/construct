@@ -60,7 +60,9 @@ typedef void (*provider_destroy_t)(void);
 
 struct auth_provider
 {
-	provider_t provider;
+	rb_dlink_node node;
+
+	provider_t id;
 
 	provider_init_t init;		/* Initalise the provider */
 	provider_destroy_t destroy;	/* Terminate the provider */
@@ -69,8 +71,6 @@ struct auth_provider
 	provider_cancel_t cancel;	/* Authentication cancelled */
 	provider_complete_t completed;	/* Callback for when other performers complete (think dependency chains) */
 };
-
-#define AUTH_PROVIDER_FOREACH(a) for((a) = auth_providers; (a)->provider; (a)++)
 
 void init_providers(void);
 void destroy_providers(void);
