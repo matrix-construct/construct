@@ -56,14 +56,14 @@ static void client_fail(struct dns_query *query, dns_message message);
 static void client_success(struct dns_query *query);
 static void get_dns_answer(void *userdata, struct DNSReply *reply);
 
-rb_dlink_list queries;
+static rb_dlink_list queries;
 static struct ev_entry *timeout_ev;
-int timeout = 30;
+static int rdns_timeout = 30;
 
 
 bool client_dns_init(void)
 {
-	timeout_ev = rb_event_addish("timeout_dns_queries_event", timeout_dns_queries_event, NULL, 1);
+	timeout_ev = rb_event_addish("timeout_dns_queries_event", timeout_dns_queries_event, NULL, 5);
 	return (timeout_ev != NULL);
 }
 
@@ -87,7 +87,7 @@ bool client_dns_start(struct auth_client *auth)
 	struct dns_query *query = rb_malloc(sizeof(struct dns_query));
 
 	query->auth = auth;
-	query->timeout = rb_current_time() + timeout;
+	query->timeout = rb_current_time() + rdns_timeout;
 
 	query->query.ptr = query;
 	query->query.callback = get_dns_answer;

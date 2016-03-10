@@ -8,6 +8,7 @@ authd_SOURCES = provider.c \
 		res.c \
 		reslib.c \
 		dns.c \
-		providers/rdns.c
+		providers/rdns.c \
+		providers/ident.c
 
 authd_LDADD = ../librb/src/librb.la

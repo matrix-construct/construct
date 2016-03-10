@@ -71,6 +71,7 @@ struct auth_provider
 
 extern rb_dlink_list auth_providers;
 extern struct auth_provider rdns_provider;
+extern struct auth_provider ident_provider;
 
 extern struct auth_client auth_clients[MAX_CLIENTS];
 
