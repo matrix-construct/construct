@@ -142,8 +142,26 @@ void provider_done(struct auth_client *auth, provider_t id)
 void reject_client(struct auth_client *auth, provider_t id, const char *reason)
 {
 	uint16_t cid = auth->cid;
+	char reject;
 
-	rb_helper_write(authd_helper, "R %x :%s", auth->cid, reason);
+	switch(id)
+	{
+	case PROVIDER_RDNS:
+		reject = 'D';
+		break;
+	case PROVIDER_IDENT:
+		reject = 'I';
+		break;
+	case PROVIDER_BLACKLIST:
+		reject = 'B';
+		break;
+	case PROVIDER_NULL:
+	default:
+		reject = 'N';
+		break;
+	}
+
+	rb_helper_write(authd_helper, "R %x %c :%s", auth->cid, reject, reason);
 
 	unset_provider(auth, id);
 
