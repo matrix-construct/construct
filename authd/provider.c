@@ -67,6 +67,7 @@ void unload_provider(struct auth_provider *provider)
 void init_providers(void)
 {
 	load_provider(&rdns_provider);
+	load_provider(&ident_provider);
 }
 
 /* Terminate all providers */
