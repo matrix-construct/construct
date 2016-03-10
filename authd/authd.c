@@ -153,6 +153,7 @@ main(int argc, char *argv[])
 	rb_set_time();
 	setup_signals();
 	init_resolver();
+	init_providers();
 	rb_init_prng(NULL, RB_PRNG_DEFAULT);
 
 	rb_helper_loop(authd_helper, 0);
