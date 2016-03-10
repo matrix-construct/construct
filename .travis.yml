@@ -44,6 +44,10 @@ matrix:
       compiler: clang
       env: COMPILER=clang LIBTOOLIZE=glibtoolize
 
+branches:
+  only:
+    - master
+
 osx_image: xcode7.3
 
 cache:
