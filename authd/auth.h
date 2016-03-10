@@ -33,7 +33,6 @@ typedef enum
 	PROVIDER_RDNS = 0x1,
 	PROVIDER_IDENT = 0x2,
 	PROVIDER_BLACKLIST = 0x4,
-	PROVIDER_DUMMY = 0x8,
 } provider_t;
 
 struct auth_client
