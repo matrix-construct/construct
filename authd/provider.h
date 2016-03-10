@@ -1,4 +1,4 @@
-/* authd/auth.h - authentication provider framework
+/* authd/provider.h - authentication provider framework
  * Copyright (c) 2016 Elizabeth Myers <elizabeth@interlinked.me>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -18,8 +18,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __CHARYBDIS_AUTHD_AUTH_H__
-#define __CHARYBDIS_AUTHD_AUTH_H__
+#ifndef __CHARYBDIS_AUTHD_PROVIDER_H__
+#define __CHARYBDIS_AUTHD_PROVIDER_H__
 
 #include "stdinc.h"
 
@@ -103,4 +103,4 @@ static inline bool is_provider(struct auth_client *auth, provider_t provider)
 	return auth->providers & provider;
 }
 
-#endif /* __CHARYBDIS_AUTHD_AUTH_H__ */
+#endif /* __CHARYBDIS_AUTHD_PROVIDER_H__ */

@@ -1,4 +1,4 @@
-/* authd/auth.c - authentication provider framework
+/* authd/provider.c - authentication provider framework
  * Copyright (c) 2016 Elizabeth Myers <elizabeth@interlinked.me>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -43,7 +43,7 @@
  */
 
 #include "authd.h"
-#include "auth.h"
+#include "provider.h"
 
 rb_dlink_list auth_providers;
 
