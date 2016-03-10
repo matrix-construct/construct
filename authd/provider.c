@@ -66,17 +66,7 @@ void unload_provider(struct auth_provider *provider)
 /* Initalise all providers */
 void init_providers(void)
 {
-	rb_dlink_node *ptr;
-	struct auth_provider *provider;
-
-	RB_DLINK_FOREACH(ptr, auth_providers.head)
-	{
-		provider = ptr->data;
-
-		if(provider->init && !provider->init())
-			/* Provider failed to init, time to go */
-			exit(1);
-	}
+	load_provider(&rdns_provider);
 }
 
 /* Terminate all providers */
@@ -184,7 +174,7 @@ void notice_client(struct auth_client *auth, const char *notice)
 }
 
 /* Begin authenticating user */
-static void start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_ip, const char *c_port)
+static void start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_addr, const char *c_port)
 {
 	rb_dlink_node *ptr;
 	struct auth_provider *provider;
@@ -204,7 +194,7 @@ static void start_auth(const char *cid, const char *l_ip, const char *l_port, co
 	(void)rb_inet_pton_sock(l_ip, (struct sockaddr *)&auth->l_ip);
 	auth->l_port = (uint16_t)atoi(l_port); /* Safe cast, port shouldn't exceed 16 bits  */
 
-	(void)rb_inet_pton_sock(c_ip, (struct sockaddr *)&auth->c_ip);
+	(void)rb_inet_pton_sock(c_addr, (struct sockaddr *)&auth->c_addr);
 	auth->c_port = (uint16_t)atoi(c_port);
 
 	RB_DLINK_FOREACH(ptr, auth_providers.head)

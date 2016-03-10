@@ -42,7 +42,7 @@ struct auth_client
 	struct rb_sockaddr_storage l_ip;	/* Listener IP address */
 	uint16_t l_port;			/* Listener port */
 
-	struct rb_sockaddr_storage c_ip;	/* Client IP address */
+	struct rb_sockaddr_storage c_addr;	/* Client IP address */
 	uint16_t c_port;			/* Client port */
 
 	char hostname[HOSTLEN + 1];		/* Used for DNS lookup */
@@ -73,6 +73,7 @@ struct auth_provider
 };
 
 extern rb_dlink_list auth_providers;
+extern struct auth_provider rdns_provider;
 
 extern struct auth_client auth_clients[MAX_CLIENTS];
 
