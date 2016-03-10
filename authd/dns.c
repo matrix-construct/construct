@@ -29,6 +29,7 @@ format_address(struct rb_sockaddr_storage *addr, char *buffer, size_t length)
 	{
 		rb_inet_ntop_sock((struct sockaddr *)addr, buffer, length);
 	}
+#ifdef RB_IPV6
 	else if(GET_SS_FAMILY(addr) == AF_INET6)
 	{
 		char tmpbuf[length];
@@ -43,6 +44,32 @@ format_address(struct rb_sockaddr_storage *addr, char *buffer, size_t length)
 		else
 			rb_strlcpy(buffer, tmpbuf, length);
 	}
+#endif
+}
+
+bool
+sockcmp(struct rb_sockaddr_storage *addr, struct rb_sockaddr_storage *addr2, int family)
+{
+	if(family == AF_INET)
+	{
+		struct sockaddr_in *ip, *ip2;
+		ip = (struct sockaddr_in *)addr;
+		ip2 = (struct sockaddr_in *)addr2;
+
+		return ip->sin_addr.s_addr == ip2->sin_addr.s_addr;
+	}
+#ifdef RB_IPV6
+	else if(family == AF_INET6)
+	{
+		struct sockaddr_in6 *ip, *ip2;
+		ip = (struct sockaddr_in6 *) addr;
+		ip2 = (struct sockaddr_in6 *) addr2;
+
+		return(memcmp(&ip->sin6_addr, &ip2->sin6_addr, sizeof(struct in6_addr)) == 0);
+	}
+#endif
+
+	return false;
 }
 
 static void
@@ -51,6 +78,7 @@ submit_dns_answer(void *userdata, struct DNSReply *reply)
 	struct dns_request *req = userdata;
 	char response[64] = "*";
 	char status = 'E';
+	int family = AF_INET;
 
 	if (reply == NULL)
 	{
@@ -66,34 +94,17 @@ submit_dns_answer(void *userdata, struct DNSReply *reply)
 		format_address(&reply->addr, response, sizeof(response));
 		break;
 #endif
-	case 'R':
-		{
-			struct sockaddr_in *ip, *ip_fwd;
-			ip = (struct sockaddr_in *) &req->addr;
-			ip_fwd = (struct sockaddr_in *) &reply->addr;
-
-			if(ip->sin_addr.s_addr == ip_fwd->sin_addr.s_addr && strlen(reply->h_name) < 63)
-			{
-				rb_strlcpy(response, reply->h_name, sizeof(response));
-				status = 'O';
-			}
-		}
-		break;
 #ifdef RB_IPV6
 	case 'S':
+		family = AF_INET6;
+#endif
+	case 'R':
+		if(sockcmp(&req->addr, &reply->addr, family) && strlen(reply->h_name) < 63)
 		{
-			struct sockaddr_in6 *ip, *ip_fwd;
-			ip = (struct sockaddr_in6 *) &req->addr;
-			ip_fwd = (struct sockaddr_in6 *) &reply->addr;
-
-			if(memcmp(&ip->sin6_addr, &ip_fwd->sin6_addr, sizeof(struct in6_addr)) == 0 && strlen(reply->h_name) < 63)
-			{
-				rb_strlcpy(response, reply->h_name, sizeof(response));
-				status = 'O';
-			}
+			rb_strlcpy(response, reply->h_name, sizeof(response));
+			status = 'O';
 		}
 		break;
-#endif
 	default:
 		exit(7);
 	}

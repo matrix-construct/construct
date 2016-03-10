@@ -23,6 +23,7 @@
 
 #define DNS_REQ_IDLEN 10
 
+#include "stdinc.h"
 #include "res.h"
 #include "reslib.h"
 
@@ -35,6 +36,7 @@ struct dns_request
 };
 
 extern void format_address(struct rb_sockaddr_storage *addr, char *buffer, size_t length);
+extern bool sockcmp(struct rb_sockaddr_storage *addr, struct rb_sockaddr_storage *addr2, int family);
 extern void resolve_dns(int parc, char *parv[]);
 extern void enumerate_nameservers(const char *rid, const char letter);
 extern void reload_nameservers(const char letter);
