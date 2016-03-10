@@ -184,9 +184,7 @@ void notice_client(struct auth_client *auth, const char *notice)
 }
 
 /* Begin authenticating user */
-static void start_auth(const char *cid, const char *l_ip, const char *l_port,
-		const char *l_family, const char *c_ip, const char *c_port,
-		const char *c_family)
+static void start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_ip, const char *c_port)
 {
 	rb_dlink_node *ptr;
 	struct auth_provider *provider;
@@ -203,13 +201,11 @@ static void start_auth(const char *cid, const char *l_ip, const char *l_port,
 
 	auth->cid = (uint16_t)lcid;
 
-	rb_strlcpy(auth->l_ip, l_ip, sizeof(auth->l_ip));
+	(void)rb_inet_pton_sock(l_ip, (struct sockaddr *)&auth->l_ip);
 	auth->l_port = (uint16_t)atoi(l_port); /* Safe cast, port shouldn't exceed 16 bits  */
-	auth->l_family = atoi(l_family);
 
-	rb_strlcpy(auth->c_ip, c_ip, sizeof(auth->c_ip));
+	(void)rb_inet_pton_sock(c_ip, (struct sockaddr *)&auth->c_ip);
 	auth->c_port = (uint16_t)atoi(c_port);
-	auth->c_family = atoi(c_family);
 
 	RB_DLINK_FOREACH(ptr, auth_providers.head)
 	{
@@ -235,5 +231,5 @@ void handle_new_connection(int parc, char *parv[])
 	if(parc < 7)
 		return;
 
-	start_auth(parv[1], parv[2], parv[3], parv[4], parv[5], parv[6], parv[7]);
+	start_auth(parv[1], parv[2], parv[3], parv[4], parv[5]);
 }
