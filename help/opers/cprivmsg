@@ -1,5 +1,0 @@
-CPRIVMSG <nick> <channel> :<text>
-
-Providing you are opped (+o) or voiced (+v) in <channel>, and <nick>
-is a member of <channel>, CPRIVMSG generates a PRIVMSG towards 
-<nick>.  CPRIVMSG bypasses any anti-spam measures in place.
