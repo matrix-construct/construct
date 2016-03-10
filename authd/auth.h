@@ -78,9 +78,9 @@ void destroy_providers(void);
 void cancel_providers(struct auth_client *auth);
 
 void provider_done(struct auth_client *auth, provider_t provider);
+void reject_client(struct auth_client *auth, provider_t provider, const char *reason);
+void accept_client(struct auth_client *auth, provider_t provider);
 
-void reject_client(struct auth_client *auth, const char *reason);
-void accept_client(struct auth_client *auth);
 void notice_client(struct auth_client *auth, const char *notice);
 
 void start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_ip, const char *c_port);

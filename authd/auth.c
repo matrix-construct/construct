@@ -35,39 +35,15 @@
  * Providers may kick clients off by rejecting them. Upon rejection, all
  * providers are cancelled. They can also unconditionally accept them.
  *
- * When a provider has done its work, it should call provider_done.
+ * When a provider is done and is neutral on accepting/rejecting a client, it
+ * should call provider_done. Do NOT call this if you have accepted or rejected
+ * the client.
  *
  * --Elizafox, 9 March 2016
  */
 
 #include "authd.h"
 #include "auth.h"
-
-/*****************************************************************************/
-/* This is just some test code for the system */
-bool dummy_init(void)
-{
-	/* Do a dummy init */
-	return true;
-}
-
-void dummy_destroy(void)
-{
-	/* Do a dummy destroy */
-}
-
-bool dummy_start(struct auth_client *auth)
-{
-	/* Set the client's username to testhost as a test */
-	strcpy(auth->username, "testhost");
-	return true;
-}
-
-void dummy_cancel(struct auth_client *auth)
-{
-	/* Does nothing */
-}
-/*****************************************************************************/
 
 #define NULL_PROVIDER {			\
 	.provider = PROVIDER_NULL,	\
@@ -78,20 +54,10 @@ void dummy_cancel(struct auth_client *auth)
 	.completed = NULL,		\
 }
 
-#define DUMMY_PROVIDER {		\
-	.provider = PROVIDER_DUMMY,	\
-	.init = dummy_init,		\
-	.destroy = dummy_destroy,	\
-	.start = dummy_start,		\
-	.cancel = dummy_cancel,		\
-	.completed = NULL,		\
-}
-
 /* Providers */
 static struct auth_provider auth_providers[] =
 {
 	NULL_PROVIDER,
-	DUMMY_PROVIDER
 };
 
 /* Clients waiting */
@@ -111,7 +77,7 @@ void init_providers(void)
 }
 
 /* Terminate all providers */
-void destroy_providerss(void)
+void destroy_providers(void)
 {
 	struct auth_provider *pptr;
 
@@ -122,7 +88,7 @@ void destroy_providerss(void)
 		{
 			/* TBD - is this the right thing?
 			 * (NOTE - this error message is designed for morons) */
-			reject_client(&auth_clients[i],
+			reject_client(&auth_clients[i], 0,
 					"IRC server reloading... try reconnecting in a few seconds");
 		}
 	}
@@ -157,7 +123,7 @@ void provider_done(struct auth_client *auth, provider_t provider)
 	if(!auth->providers)
 	{
 		/* No more providers, done */
-		accept_client(auth);
+		accept_client(auth, 0);
 		return;
 	}
 
@@ -170,11 +136,13 @@ void provider_done(struct auth_client *auth, provider_t provider)
 }
 
 /* Reject a client, cancel outstanding providers if any */
-void reject_client(struct auth_client *auth, const char *reason)
+void reject_client(struct auth_client *auth, provider_t provider, const char *reason)
 {
 	uint16_t cid = auth->cid;
 
 	rb_helper_write(authd_helper, "R %x :%s", auth->cid, reason);
+
+	unset_provider(auth, provider);
 
 	if(auth->providers)
 		cancel_providers(auth);
@@ -183,11 +151,13 @@ void reject_client(struct auth_client *auth, const char *reason)
 }
 
 /* Accept a client, cancel outstanding providers if any */
-void accept_client(struct auth_client *auth)
+void accept_client(struct auth_client *auth, provider_t provider)
 {
 	uint16_t cid = auth->cid;
 
 	rb_helper_write(authd_helper, "A %x %s %s", auth->cid, auth->username, auth->hostname);
+
+	unset_provider(auth, provider);
 
 	if(auth->providers)
 		cancel_providers(auth);
@@ -237,7 +207,7 @@ void start_auth(const char *cid, const char *l_ip, const char *l_port, const cha
 
 	/* If no providers are running, accept the client */
 	if(!auth->providers)
-		accept_client(auth);
+		accept_client(auth, 0);
 }
 
 /* Callback for the initiation */
