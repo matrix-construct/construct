@@ -104,7 +104,7 @@ lookup_hostname(const char *ip, int aftype, DNSCB callback, void *data)
 }
 
 /* Cancel a pending query */
-static void
+void
 cancel_query(struct dns_query *query)
 {
 	query->callback = query->data = NULL;
