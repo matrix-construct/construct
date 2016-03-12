@@ -13,7 +13,7 @@ SYMLINKS=	topic accept cmode admin names links away whowas \
 		version kick who invite quit join list nick oper part \
 		time credits motd userhost users whois ison lusers \
 		user help pass error challenge knock ping pong \
-		cprivmsg cnotice map trace chantrace extban monitor
+		map trace chantrace extban monitor
 
 all:
 build:
