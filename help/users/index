@@ -3,12 +3,12 @@ Help topics available to users:
 ACCEPT          ADMIN           AWAY            CHALLENGE
 CHANTRACE       CMODE           CNOTICE         CPRIVMSG
 CREDITS         ERROR           EXTBAN          HELP
-INDEX           INFO            INVITE          ISON
-JOIN            KICK            KNOCK           LINKS
-LIST            LUSERS          MAP             MONITOR
-MOTD            NAMES           NICK            NOTICE
-OPER            PART            PASS            PING
-PONG            PRIVMSG         QUIT            STATS
-TIME            TOPIC           TRACE           UMODE
-USER            USERHOST        USERS           VERSION
-WHO             WHOIS           WHOWAS
+INFO            INVITE          ISON            JOIN
+KICK            KNOCK           LINKS           LIST
+LUSERS          MAP             MONITOR         MOTD
+NAMES           NICK            NOTICE          OPER
+PART            PASS            PING            PONG
+PRIVMSG         QUIT            STATS           TIME
+TOPIC           TRACE           UMODE           USER
+USERHOST        USERS           VERSION         WHO
+WHOIS           WHOWAS
