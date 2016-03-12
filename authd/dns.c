@@ -103,6 +103,13 @@ lookup_hostname(const char *ip, int aftype, DNSCB callback, void *data)
 	return query;
 }
 
+/* Cancel a pending query */
+static void
+cancel_query(struct dns_query *query)
+{
+	query->callback = query->data = NULL;
+}
+
 /* Callback from gethost_byname_type */
 static void
 handle_lookup_ip_reply(void *data, struct DNSReply *reply)

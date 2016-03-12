@@ -52,6 +52,7 @@ struct dns_query
 
 extern struct dns_query *lookup_hostname(const char *ip, int aftype, DNSCB callback, void *data);
 extern struct dns_query *lookup_ip(const char *host, int aftype, DNSCB callback, void *data);
+extern static void cancel_query(struct dns_query *query);
 
 extern void resolve_dns(int parc, char *parv[]);
 extern void enumerate_nameservers(const char *rid, const char letter);
