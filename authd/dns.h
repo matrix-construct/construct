@@ -23,16 +23,35 @@
 
 #define DNS_REQ_IDLEN 10
 
+#include "stdinc.h"
 #include "res.h"
 #include "reslib.h"
 
-struct dns_request
+typedef enum
+{
+	QUERY_INVALID = 0,
+	QUERY_A = '4',
+	QUERY_AAAA = '6',
+	QUERY_PTR_A = 'R',
+	QUERY_PTR_AAAA = 'S',
+} query_type;
+
+/* Similar to that in ircd */
+typedef void (*DNSCB)(const char *res, bool status, query_type type, void *data);
+
+struct dns_query
 {
 	struct DNSQuery query;
-	char reqid[DNS_REQ_IDLEN];
+	query_type type;
 	struct rb_sockaddr_storage addr;
-	char type;
+	uint64_t id;
+
+	DNSCB callback;
+	void *data;
 };
+
+extern struct dns_query *lookup_hostname(const char *ip, int aftype, DNSCB callback, void *data);
+extern struct dns_query *lookup_ip(const char *host, int aftype, DNSCB callback, void *data);
 
 extern void resolve_dns(int parc, char *parv[]);
 extern void enumerate_nameservers(const char *rid, const char letter);
