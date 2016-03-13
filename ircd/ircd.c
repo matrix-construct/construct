@@ -663,7 +663,7 @@ charybdis_main(int argc, char *argv[])
 
 	init_auth();		/* Initialise the auth code */
 	init_authd();		/* Start up authd. */
-	init_nameserver_cache();	/* Get our nameserver cache for STATS a/A */
+	init_dns();		/* Start up DNS query system */
 
 	privilegeset_set_new("default", "", 0);
 
