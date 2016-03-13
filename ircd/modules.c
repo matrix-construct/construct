@@ -39,6 +39,10 @@
 
 #include <ltdl.h>
 
+#ifndef LT_MODULE_EXT
+#	error "Charybdis requires loadable module support."
+#endif
+
 struct module **modlist = NULL;
 
 static const char *core_module_table[] = {
@@ -223,8 +227,8 @@ load_all_modules(int warn)
 	DIR *system_module_dir = NULL;
 	struct dirent *ldirent = NULL;
 	char module_fq_name[PATH_MAX + 1];
-	int len;
-
+	static size_t module_ext_len = strlen(LT_MODULE_EXT);
+	
 	modules_init();
 
 	modlist = (struct module **) rb_malloc(sizeof(struct module *) * (MODS_INCREMENT));
@@ -241,8 +245,11 @@ load_all_modules(int warn)
 
 	while ((ldirent = readdir(system_module_dir)) != NULL)
 	{
+		struct stat s;
+		size_t len;
+
 		len = strlen(ldirent->d_name);
-		if((len > 3) && !strcmp(ldirent->d_name+len-3, ".la"))
+		if(len > module_ext_len && !strcasecmp(ldirent->d_name + (len - module_ext_len), LT_MODULE_EXT))
 		{
 			(void) snprintf(module_fq_name, sizeof(module_fq_name), "%s/%s", AUTOMODPATH, ldirent->d_name);
 			(void) load_a_module(module_fq_name, warn, MAPI_ORIGIN_CORE, 0);
@@ -267,14 +274,14 @@ load_core_modules(int warn)
 
 	for (i = 0; core_module_table[i]; i++)
 	{
-		snprintf(module_name, sizeof(module_name), "%s/%s%s", MODPATH,
-			    core_module_table[i], ".la");
+		snprintf(module_name, sizeof(module_name), "%s/%s", MODPATH,
+			    core_module_table[i]);
 
 		if(load_a_module(module_name, warn, MAPI_ORIGIN_CORE, 1) == -1)
 		{
 			ilog(L_MAIN,
-			     "Error loading core module %s%s: terminating ircd",
-			     core_module_table[i], ".la");
+			     "Error loading core module %s: terminating ircd",
+			     core_module_table[i]);
 			exit(0);
 		}
 	}
@@ -809,7 +816,7 @@ load_a_module(const char *path, int warn, int origin, int core)
 
 	mod_basename = rb_basename(path);
 
-	tmpptr = lt_dlopen(path);
+	tmpptr = lt_dlopenext(path);
 
 	if(tmpptr == NULL)
 	{
@@ -821,7 +828,6 @@ load_a_module(const char *path, int warn, int origin, int core)
 		rb_free(mod_basename);
 		return -1;
 	}
-
 
 	/*
 	 * _mheader is actually a struct mapi_mheader_*, but mapi_version

@@ -37,3 +37,8 @@ include/serno.h:
 
 install-data-hook:
 	test -d ${DESTDIR}${logdir} || mkdir -p ${DESTDIR}${logdir}
+
+install-exec-hook:
+	rm -f ${DESTDIR}${moduledir}/*.la
+	rm -f ${DESTDIR}${moduledir}/autoload/*.la
+	rm -f ${DESTDIR}${moduledir}/extensions/*.la
