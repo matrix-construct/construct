@@ -216,6 +216,7 @@ submit_dns_answer(const char *reply, bool status, query_type type, void *data)
 	{
 		rb_helper_write(authd_helper, "E %s E %c *", id, type);
 		rb_free(id);
+		return;
 	}
 
 	rb_helper_write(authd_helper, "E %s O %c %s", id, type, reply);
