@@ -37,9 +37,6 @@
 #include "msg.h"
 #include "hash.h"
 
-#define DNS_IDTABLE_SIZE 0x2000
-#define DNS_STATTABLE_SIZE 0x10
-
 #define DNS_HOST_IPV4		((char)'4')
 #define DNS_HOST_IPV6		((char)'6')
 #define DNS_REVERSE_IPV4	((char)'R')

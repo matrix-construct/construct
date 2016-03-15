@@ -180,7 +180,7 @@ static inline int rb_int64cmp(const void *a, const void *b)
 
 static inline int rb_uint64cmp(const void *a, const void *b)
 {
-	return RB_POINER_TO_ULONG(b) - RB_POINTER_TO_ULONG(a);
+	return RB_POINTER_TO_ULONG(b) - RB_POINTER_TO_ULONG(a);
 }
 
 #endif
