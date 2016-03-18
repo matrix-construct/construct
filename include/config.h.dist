@@ -72,11 +72,6 @@
  */
 #undef  IGNORE_BOGUS_TS
 
-/* ENABLE_OPER_CHGHOST
- * Allow opers to use the CHGHOST command. Potentially abusive.
- */
-#undef	ENABLE_OPER_CHGHOST
-
 /* HANGONGOODLINK and HANGONRETRYDELAY
  * Often net breaks for a short time and it's useful to try to
  * establishing the same connection again faster than CONNECTFREQUENCY

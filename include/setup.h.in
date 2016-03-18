@@ -41,6 +41,9 @@
 /* Size of the dlink_node heap. */
 #undef DNODE_HEAP_SIZE
 
+/* Define this to enable opers to use the CHGHOST command. */
+#undef ENABLE_OPER_CHGHOST
+
 /* Prefix where config files are installed. */
 #undef ETC_DIR
 
