@@ -174,7 +174,15 @@ print_startup(int pid)
 	/* let the parent process know the initialization was successful
 	 * -- jilles */
 	if (!server_state_foreground)
-		write(0, ".", 1);
+	{
+		if(write(0, ".", 1) < 1)
+			/* The circumstances in which this could fail are pretty implausible.
+			 * However, this shuts GCC up about warning the result of write is unused,
+			 * and is "standards compliant" behaviour.
+			 * --Elizabeth
+			 */
+			abort();
+	}
 	if (dup2(1, 0) == -1)
 		abort();
 	if (dup2(1, 2) == -1)
