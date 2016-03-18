@@ -64,14 +64,6 @@
 #define OPATH    ETCPATH "/opers.motd"		                   /* oper MOTD file */
 #define DBPATH   PKGLOCALSTATEDIR "/ban.db"                        /* bandb file */
 
-/* IGNORE_BOGUS_TS
- * Ignore bogus timestamps from other servers. Yes this will desync
- * the network, but it will allow chanops to resync with a valid non TS 0
- *
- * This should be enabled network wide, or not at all.
- */
-#undef  IGNORE_BOGUS_TS
-
 /* HANGONGOODLINK and HANGONRETRYDELAY
  * Often net breaks for a short time and it's useful to try to
  * establishing the same connection again faster than CONNECTFREQUENCY

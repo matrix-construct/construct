@@ -250,6 +250,10 @@
 /* Prefix where help files are installed. */
 #undef HELP_DIR
 
+/* Define this to enable the reset of timestamps in channels to current time
+   if set to 0. */
+#undef IGNORE_BOGUS_TS
+
 /* Prefix where the ircd is installed. */
 #undef IRCD_PREFIX
 
