@@ -227,8 +227,8 @@ load_all_modules(int warn)
 	DIR *system_module_dir = NULL;
 	struct dirent *ldirent = NULL;
 	char module_fq_name[PATH_MAX + 1];
-	static size_t module_ext_len = strlen(LT_MODULE_EXT);
-	
+	size_t module_ext_len = strlen(LT_MODULE_EXT);
+
 	modules_init();
 
 	modlist = (struct module **) rb_malloc(sizeof(struct module *) * (MODS_INCREMENT));
