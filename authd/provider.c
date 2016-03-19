@@ -42,6 +42,7 @@
  * --Elizafox, 9 March 2016
  */
 
+#include "rb_dictionary.h"
 #include "authd.h"
 #include "provider.h"
 
@@ -110,6 +111,10 @@ void cancel_providers(struct auth_client *auth)
 			/* Cancel if required */
 			provider->cancel(auth);
 	}
+
+	/* All data should be already destroyed */
+	rb_dictionary_destroy(auth->data, NULL, NULL);
+	auth->data = NULL;
 }
 
 /* Provider is done */
@@ -160,15 +165,12 @@ void reject_client(struct auth_client *auth, provider_t id, const char *reason)
 		break;
 	}
 
+	/* TODO send back ident */
 	rb_helper_write(authd_helper, "R %x %c :%s", auth->cid, reject, reason);
 
 	unset_provider(auth, id);
-
-	if(auth->providers)
-	{
-		cancel_providers(auth);
-		memset(&auth_clients[cid], 0, sizeof(struct auth_client));
-	}
+	cancel_providers(auth);
+	memset(&auth_clients[cid], 0, sizeof(struct auth_client));
 }
 
 /* Accept a client, cancel outstanding providers if any */
@@ -179,10 +181,7 @@ void accept_client(struct auth_client *auth, provider_t id)
 	rb_helper_write(authd_helper, "A %x %s %s", auth->cid, auth->username, auth->hostname);
 
 	unset_provider(auth, id);
-
-	if(auth->providers)
-		cancel_providers(auth);
-
+	cancel_providers(auth);
 	memset(&auth_clients[cid], 0, sizeof(struct auth_client));
 }
 
@@ -217,7 +216,7 @@ static void start_auth(const char *cid, const char *l_ip, const char *l_port, co
 	rb_strlcpy(auth->c_ip, c_ip, sizeof(auth->c_ip));
 	auth->c_port = (uint16_t)atoi(c_port);
 
-	snprintf("%d provider data", sizeof(name), auth->cid);
+	snprintf(name, sizeof(name), "%d provider data", auth->cid);
 	auth->data = rb_dictionary_create(name, rb_uint32cmp);
 
 	RB_DLINK_FOREACH(ptr, auth_providers.head)
