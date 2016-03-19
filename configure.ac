@@ -509,18 +509,6 @@ if test "$operchghost" = yes; then
 	AC_DEFINE(ENABLE_OPER_CHGHOST, 1, [Define this to enable opers to use the CHGHOST command.])
 fi
 
-dnl **********************************************************************
-dnl Enable ignoring of bogus timestamps
-dnl **********************************************************************
-
-AC_ARG_ENABLE(ignore-bogus-ts,
-AC_HELP_STRING([--enable-ignore-bogus-ts],[Enable the reset of timestamps in channels to current time if set to 0. Set this network wide or not at all.]),
-[ignorebogusts=$enableval],[ignorebogusts=no])
-
-if test "$ignorebogusts" = yes; then
-	AC_DEFINE(IGNORE_BOGUS_TS, 1, [Define this to enable the reset of timestamps in channels to current time if set to 0.])
-fi
-
 dnl Debug-related options
 dnl =====================
 

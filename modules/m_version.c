@@ -139,9 +139,6 @@ confopts(void)
 
 	if(opers_see_all_users || ConfigFileEntry.operspy_dont_care_user_info)
 		*p++ = 'S';
-#ifdef IGNORE_BOGUS_TS
-	*p++ = 'T';
-#endif
 
 #ifdef HAVE_LIBZ
 	*p++ = 'Z';
