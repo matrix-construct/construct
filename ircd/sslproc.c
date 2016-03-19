@@ -339,7 +339,7 @@ start_ssldaemon(int count, const char *ssl_cert, const char *ssl_private_key, co
 		rb_close(F2);
 		rb_close(P1);
 		ctl = allocate_ssl_daemon(F1, P2, pid);
-		if(ssl_ok)
+		if(ircd_ssl_ok)
 		{
 			send_init_prng(ctl, RB_PRNG_DEFAULT, NULL);
 			send_certfp_method(ctl, ConfigFileEntry.certfp_method);
@@ -489,7 +489,7 @@ ssl_process_cmd_recv(ssl_ctl_t * ctl)
 		switch (*ctl_buf->buf)
 		{
 		case 'N':
-			ssl_ok = false;	/* ssld says it can't do ssl/tls */
+			ircd_ssl_ok = false;	/* ssld says it can't do ssl/tls */
 			break;
 		case 'D':
 			ssl_process_dead_fd(ctl, ctl_buf);
@@ -504,24 +504,24 @@ ssl_process_cmd_recv(ssl_ctl_t * ctl)
 			ssl_process_zipstats(ctl, ctl_buf);
 			break;
 		case 'I':
-			ssl_ok = false;
+			ircd_ssl_ok = false;
 			ilog(L_MAIN, "%s", cannot_setup_ssl);
 			sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s", cannot_setup_ssl);
 			break;
 		case 'U':
-			zlib_ok = 0;
-			ssl_ok = false;
+			ircd_zlib_ok = 0;
+			ircd_ssl_ok = false;
 			ilog(L_MAIN, "%s", no_ssl_or_zlib);
 			sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s", no_ssl_or_zlib);
 			ssl_killall();
-			break;
+			return;
 		case 'V':
 			len = ctl_buf->buflen - 1;
 			if (len > sizeof(ctl->version) - 1)
 				len = sizeof(ctl->version) - 1;
 			strncpy(ctl->version, &ctl_buf->buf[1], len);
 		case 'z':
-			zlib_ok = 0;
+			ircd_zlib_ok = 0;
 			break;
 		default:
 			ilog(L_MAIN, "Received invalid command from ssld: %s", ctl_buf->buf);
@@ -722,7 +722,7 @@ send_new_ssl_certs(const char *ssl_cert, const char *ssl_private_key, const char
 	rb_dlink_node *ptr;
 	if(ssl_cert == NULL || ssl_private_key == NULL || ssl_dh_params == NULL)
 	{
-		ssl_ok = false;
+		ircd_ssl_ok = false;
 		return;
 	}
 	RB_DLINK_FOREACH(ptr, ssl_daemons.head)

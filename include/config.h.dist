@@ -27,7 +27,7 @@
 
 #include "setup.h"
 
-/* 
+/*
  * Directory paths and filenames for UNIX systems.
  * IRCD_PREFIX is set using ./configure --prefix, see INSTALL.
  * The other defaults should be fine.
@@ -50,7 +50,7 @@
 #define BINPATH IRCD_PREFIX "/bin/"
 #define MODPATH MODULE_DIR
 #define AUTOMODPATH MODULE_DIR "/autoload/"
-#define ETCPATH ETC_DIR 
+#define ETCPATH ETC_DIR
 #define LOGPATH LOG_DIR
 #define UHPATH   HELP_DIR "/users"
 #define HPATH  HELP_DIR "/opers"
@@ -64,14 +64,6 @@
 #define OPATH    ETCPATH "/opers.motd"		                   /* oper MOTD file */
 #define DBPATH   PKGLOCALSTATEDIR "/ban.db"                        /* bandb file */
 
-/* IGNORE_BOGUS_TS
- * Ignore bogus timestamps from other servers. Yes this will desync
- * the network, but it will allow chanops to resync with a valid non TS 0
- *
- * This should be enabled network wide, or not at all.
- */
-#undef  IGNORE_BOGUS_TS
-
 /* HANGONGOODLINK and HANGONRETRYDELAY
  * Often net breaks for a short time and it's useful to try to
  * establishing the same connection again faster than CONNECTFREQUENCY
@@ -80,7 +72,6 @@
  * (HANGONGOODLINK) and we give the net few seconds to steady
  * (HANGONRETRYDELAY). This latter has to be long enough that the
  * other end of the connection has time to notice it broke too.
- * 1997/09/18 recommended values by ThemBones for modern EFnet
  */
 #define HANGONRETRYDELAY 60	/* Recommended value: 30-60 seconds */
 #define HANGONGOODLINK 3600	/* Recommended value: 30-60 minutes */
@@ -92,7 +83,7 @@
 #define KILLCHASETIMELIMIT 90	/* Recommended value: 90 */
 
 /* CHARYBDIS_SOMAXCONN
- * Use SOMAXCONN if OS has it, otherwise use this value for the 
+ * Use SOMAXCONN if OS has it, otherwise use this value for the
  * listen(); backlog.  5 for AIX/SUNOS, 25 for other OSs.
  */
 #define CHARYBDIS_SOMAXCONN 25

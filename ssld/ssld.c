@@ -151,7 +151,7 @@ static void conn_plain_read_cb(rb_fde_t *fd, void *data);
 static void conn_plain_read_shutdown_cb(rb_fde_t *fd, void *data);
 static void mod_cmd_write_queue(mod_ctl_t * ctl, const void *data, size_t len);
 static const char *remote_closed = "Remote host closed the connection";
-static bool ssl_ok;
+static bool ssld_ssl_ok;
 static int certfp_method = RB_SSL_CERTFP_METH_SHA1;
 #ifdef HAVE_LIBZ
 static bool zlib_ok = true;
@@ -1015,7 +1015,7 @@ mod_process_cmd_recv(mod_ctl_t * ctl)
 					break;
 				}
 
-				if(!ssl_ok)
+				if(!ssld_ssl_ok)
 				{
 					send_nossl_support(ctl, ctl_buf);
 					break;
@@ -1031,7 +1031,7 @@ mod_process_cmd_recv(mod_ctl_t * ctl)
 					break;
 				}
 
-				if(!ssl_ok)
+				if(!ssld_ssl_ok)
 				{
 					send_nossl_support(ctl, ctl_buf);
 					break;
@@ -1051,7 +1051,7 @@ mod_process_cmd_recv(mod_ctl_t * ctl)
 			}
 		case 'K':
 			{
-				if(!ssl_ok)
+				if(!ssld_ssl_ok)
 				{
 					send_nossl_support(ctl, ctl_buf);
 					break;
@@ -1237,7 +1237,7 @@ main(int argc, char **argv)
 	setup_signals();
 	rb_lib_init(NULL, NULL, NULL, 0, maxfd, 1024, 4096);
 	rb_init_rawbuffers(1024);
-	ssl_ok = rb_supports_ssl();
+	ssld_ssl_ok = rb_supports_ssl();
 	mod_ctl = rb_malloc(sizeof(mod_ctl_t));
 	mod_ctl->F = rb_open(ctlfd, RB_FD_SOCKET, "ircd control socket");
 	mod_ctl->F_pipe = rb_open(pipefd, RB_FD_PIPE, "ircd pipe");
@@ -1248,7 +1248,7 @@ main(int argc, char **argv)
 	read_pipe_ctl(mod_ctl->F_pipe, NULL);
 	mod_read_ctl(mod_ctl->F, mod_ctl);
 	send_version(mod_ctl);
-	if(!zlib_ok && !ssl_ok)
+	if(!zlib_ok && !ssld_ssl_ok)
 	{
 		/* this is really useless... */
 		send_i_am_useless(mod_ctl);
@@ -1259,7 +1259,7 @@ main(int argc, char **argv)
 
 	if(!zlib_ok)
 		send_nozlib_support(mod_ctl, NULL);
-	if(!ssl_ok)
+	if(!ssld_ssl_ok)
 		send_nossl_support(mod_ctl, NULL);
 	rb_lib_loop(0);
 	return 0;

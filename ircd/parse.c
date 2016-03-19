@@ -146,6 +146,15 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 				struct alias_entry *aptr = rb_dictionary_retrieve(alias_dict, msgbuf.cmd);
 				if (aptr != NULL)
 				{
+					if (msgbuf.n_para < 2)
+					{
+						sendto_one(client_p, form_str(ERR_NEEDMOREPARAMS),
+							   me.name,
+							   EmptyString(client_p->name) ? "*" : client_p->name,
+							   msgbuf.cmd);
+						return;
+					}
+
 					do_alias(aptr, client_p, reconstruct_parv(msgbuf.n_para - 1, msgbuf.para + 1));
 					return;
 				}

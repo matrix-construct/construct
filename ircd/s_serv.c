@@ -273,7 +273,7 @@ try_connections(void *unused)
 			continue;
 
 		/* don't allow ssl connections if ssl isn't setup */
-		if(ServerConfSSL(tmp_p) && (!ssl_ok || !get_ssld_count()))
+		if(ServerConfSSL(tmp_p) && (!ircd_ssl_ok || !get_ssld_count()))
 			continue;
 
 		cltmp = tmp_p->class;

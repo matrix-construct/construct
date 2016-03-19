@@ -105,8 +105,8 @@ bool doremotd = false;
 bool kline_queued = false;
 bool server_state_foreground = false;
 bool opers_see_all_users = false;
-bool ssl_ok = false;
-bool zlib_ok = true;
+bool ircd_ssl_ok = false;
+bool ircd_zlib_ok = true;
 
 int testing_conf = 0;
 time_t startup_time;
@@ -174,7 +174,15 @@ print_startup(int pid)
 	/* let the parent process know the initialization was successful
 	 * -- jilles */
 	if (!server_state_foreground)
-		write(0, ".", 1);
+	{
+		if(write(0, ".", 1) < 1)
+			/* The circumstances in which this could fail are pretty implausible.
+			 * However, this shuts GCC up about warning the result of write is unused,
+			 * and is "standards compliant" behaviour.
+			 * --Elizabeth
+			 */
+			abort();
+	}
 	if (dup2(1, 0) == -1)
 		abort();
 	if (dup2(1, 2) == -1)
@@ -713,10 +721,10 @@ charybdis_main(int argc, char *argv[])
 		if(!rb_setup_ssl_server(ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params, ServerInfo.ssl_cipher_list))
 		{
 			ilog(L_MAIN, "WARNING: Unable to setup SSL.");
-			ssl_ok = false;
+			ircd_ssl_ok = false;
 		}
 		else
-			ssl_ok = true;
+			ircd_ssl_ok = true;
 	}
 
 	if (testing_conf)

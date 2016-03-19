@@ -1350,7 +1350,7 @@ static void rb_sha256_init_ctx(struct sha256_ctx *ctx)
 static void *rb_sha256_finish_ctx(struct sha256_ctx *ctx, void *resbuf)
 {
 	/* Take yet unprocessed bytes into account.  */
-	uint32_t bytes = ctx->buflen;
+	uint32_t bytes = ctx->buflen, *ptr;
 	size_t pad;
 	unsigned int i;
 
@@ -1363,9 +1363,11 @@ static void *rb_sha256_finish_ctx(struct sha256_ctx *ctx, void *resbuf)
 	memcpy(&ctx->buffer[bytes], SHA256_fillbuf, pad);
 
 	/* Put the 64-bit file length in *bits* at the end of the buffer.  */
-	*(uint32_t *) & ctx->buffer[bytes + pad + 4] = SHA256_SWAP(ctx->total[0] << 3);
-	*(uint32_t *) & ctx->buffer[bytes + pad] = SHA256_SWAP((ctx->total[1] << 3) |
-							(ctx->total[0] >> 29));
+	ptr = (uint32_t *)&ctx->buffer[bytes + pad + 4];	/* Avoid warnings about strict aliasing */
+	*ptr = SHA256_SWAP(ctx->total[0] << 3);
+
+	ptr = (uint32_t *)&ctx->buffer[bytes + pad];
+	*ptr = SHA256_SWAP((ctx->total[1] << 3) | (ctx->total[0] >> 29));
 
 	/* Process last bytes.  */
 	rb_sha256_process_block(ctx->buffer, bytes + pad + 8, ctx);
@@ -1924,7 +1926,7 @@ static void rb_sha512_init_ctx(struct sha512_ctx *ctx)
 static void *rb_sha512_finish_ctx(struct sha512_ctx *ctx, void *resbuf)
 {
 	/* Take yet unprocessed bytes into account.  */
-	uint64_t bytes = ctx->buflen;
+	uint64_t bytes = ctx->buflen, *ptr;
 	size_t pad;
 	unsigned int i;
 
@@ -1937,9 +1939,11 @@ static void *rb_sha512_finish_ctx(struct sha512_ctx *ctx, void *resbuf)
 	memcpy(&ctx->buffer[bytes], SHA512_fillbuf, pad);
 
 	/* Put the 128-bit file length in *bits* at the end of the buffer.  */
-	*(uint64_t *) & ctx->buffer[bytes + pad + 8] = SHA512_SWAP(ctx->total[0] << 3);
-	*(uint64_t *) & ctx->buffer[bytes + pad] = SHA512_SWAP((ctx->total[1] << 3) |
-							(ctx->total[0] >> 61));
+	ptr = (uint64_t *)&ctx->buffer[bytes + pad + 8];	/* Avoid warnings about strict aliasing */
+	*ptr = SHA512_SWAP(ctx->total[0] << 3);
+
+	ptr = (uint64_t *)&ctx->buffer[bytes + pad];
+	*ptr = SHA512_SWAP((ctx->total[1] << 3) | (ctx->total[0] >> 61));
 
 	/* Process last bytes.  */
 	rb_sha512_process_block(ctx->buffer, bytes + pad + 16, ctx);

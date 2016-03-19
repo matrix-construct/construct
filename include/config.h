@@ -57,20 +57,12 @@
 
 /* files */
 #define SPATH    BINPATH "/" PROGRAM_PREFIX "charybdis"		   /* ircd executable */
-#define CPATH    ETCPATH "/ircd.conf"		   /* ircd.conf file */
-#define MPATH    ETCPATH "/ircd.motd"		   /* MOTD file */
-#define LPATH    LOGPATH "/ircd.log"		   /* ircd logfile */
-#define PPATH    PKGRUNDIR "/ircd.pid"		   /* pid file */
-#define OPATH    ETCPATH "/opers.motd"		   /* oper MOTD file */
-#define DBPATH   PKGLOCALSTATEDIR "/ban.db"                 /* bandb file */
-
-/* IGNORE_BOGUS_TS
- * Ignore bogus timestamps from other servers. Yes this will desync
- * the network, but it will allow chanops to resync with a valid non TS 0
- *
- * This should be enabled network wide, or not at all.
- */
-#undef  IGNORE_BOGUS_TS
+#define CPATH    ETCPATH "/ircd.conf"		                   /* ircd.conf file */
+#define MPATH    ETCPATH "/ircd.motd"		                   /* MOTD file */
+#define LPATH    LOGPATH "/ircd.log"		                   /* ircd logfile */
+#define PPATH    PKGRUNDIR "/ircd.pid"		                   /* pid file */
+#define OPATH    ETCPATH "/opers.motd"		                   /* oper MOTD file */
+#define DBPATH   PKGLOCALSTATEDIR "/ban.db"                        /* bandb file */
 
 /* HANGONGOODLINK and HANGONRETRYDELAY
  * Often net breaks for a short time and it's useful to try to
@@ -80,7 +72,6 @@
  * (HANGONGOODLINK) and we give the net few seconds to steady
  * (HANGONRETRYDELAY). This latter has to be long enough that the
  * other end of the connection has time to notice it broke too.
- * 1997/09/18 recommended values by ThemBones for modern EFnet
  */
 #define HANGONRETRYDELAY 60	/* Recommended value: 30-60 seconds */
 #define HANGONGOODLINK 3600	/* Recommended value: 30-60 minutes */
