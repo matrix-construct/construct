@@ -25,6 +25,8 @@
 #ifndef __RB_DICTIONARY_H__
 #define __RB_DICTIONARY_H__
 
+#include "librb-config.h"
+
 struct Dictionary; /* defined in src/dictionary.c */
 
 typedef int (*DCF)(/* const void *a, const void *b */);
