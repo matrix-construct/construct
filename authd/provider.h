@@ -50,6 +50,8 @@ struct auth_client
 
 	unsigned int providers;			/* Providers at work,
 						 * none left when set to 0 */
+
+	struct Dictionary *data;		/* Provider-specific data */
 };
 
 typedef bool (*provider_init_t)(void);
@@ -87,7 +89,7 @@ void cancel_providers(struct auth_client *auth);
 
 void provider_done(struct auth_client *auth, provider_t id);
 void accept_client(struct auth_client *auth, provider_t id);
-void reject_client(struct auth_client *auth, provider_t id, bool hard, const char *reason);
+void reject_client(struct auth_client *auth, provider_t id, const char *reason);
 
 void notice_client(struct auth_client *auth, const char *notice);
 

@@ -21,13 +21,13 @@
 /* So the basic design here is to have "authentication providers" that do
  * things like query ident and blacklists and even open proxies.
  *
- * Providers are registered statically in the struct auth_providers array. You will
- * probably want to add an item to the provider_t enum also.
+ * Providers are registered in the auth_providers linked list. It is planned to
+ * use a bitmap to store provider ID's later.
  *
  * Providers can either return failure immediately, immediate acceptance, or
  * do work in the background (calling set_provider to signal this).
  *
- * It is up to providers to keep their own state on clients if they need to.
+ * A dictionary is provided in auth_client for storage of provider-specific data.
  *
  * All providers must implement at a minimum a perform_provider function. You
  * don't have to implement the others if you don't need them.
@@ -81,10 +81,9 @@ void destroy_providers(void)
 	{
 		if(auth_clients[i].cid)
 		{
-			/* TBD - is this the right thing?
-			 * (NOTE - this error message is designed for morons) */
-			reject_client(&auth_clients[i], 0, true,
-					"IRC server reloading... try reconnecting in a few seconds");
+			/* TBD - is this the right thing? */
+			reject_client(&auth_clients[i], 0,
+					"Authentication system is down... try reconnecting in a few seconds");
 		}
 	}
 
@@ -138,8 +137,8 @@ void provider_done(struct auth_client *auth, provider_t id)
 	}
 }
 
-/* Reject a client, cancel outstanding providers if any if hard set to true */
-void reject_client(struct auth_client *auth, provider_t id, bool hard, const char *reason)
+/* Reject a client */
+void reject_client(struct auth_client *auth, provider_t id, const char *reason)
 {
 	uint16_t cid = auth->cid;
 	char reject;
@@ -165,7 +164,7 @@ void reject_client(struct auth_client *auth, provider_t id, bool hard, const cha
 
 	unset_provider(auth, id);
 
-	if(hard && auth->providers)
+	if(auth->providers)
 	{
 		cancel_providers(auth);
 		memset(&auth_clients[cid], 0, sizeof(struct auth_client));
@@ -199,6 +198,7 @@ static void start_auth(const char *cid, const char *l_ip, const char *l_port, co
 	struct auth_provider *provider;
 	struct auth_client *auth;
 	long lcid = strtol(cid, NULL, 16);
+	char name[20];
 	rb_dlink_node *ptr;
 
 	if(lcid >= MAX_CLIENTS)
@@ -216,6 +216,9 @@ static void start_auth(const char *cid, const char *l_ip, const char *l_port, co
 
 	rb_strlcpy(auth->c_ip, c_ip, sizeof(auth->c_ip));
 	auth->c_port = (uint16_t)atoi(c_port);
+
+	snprintf("%d provider data", sizeof(name), auth->cid);
+	auth->data = rb_dictionary_create(name, rb_uint32cmp);
 
 	RB_DLINK_FOREACH(ptr, auth_providers.head)
 	{
