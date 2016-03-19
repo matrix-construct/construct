@@ -75,7 +75,7 @@ mr_starttls(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 		return;
 	}
 
-	if (!ssl_ok || !get_ssld_count())
+	if (!ircd_ssl_ok || !get_ssld_count())
 	{
 		sendto_one_numeric(client_p, ERR_STARTTLS, form_str(ERR_STARTTLS), "TLS is not configured");
 		return;
