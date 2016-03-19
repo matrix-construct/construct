@@ -509,7 +509,7 @@ ssl_process_cmd_recv(ssl_ctl_t * ctl)
 			sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s", cannot_setup_ssl);
 			break;
 		case 'U':
-			zlib_ok = 0;
+			ircd_zlib_ok = 0;
 			ircd_ssl_ok = false;
 			ilog(L_MAIN, "%s", no_ssl_or_zlib);
 			sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s", no_ssl_or_zlib);
@@ -521,7 +521,7 @@ ssl_process_cmd_recv(ssl_ctl_t * ctl)
 				len = sizeof(ctl->version) - 1;
 			strncpy(ctl->version, &ctl_buf->buf[1], len);
 		case 'z':
-			zlib_ok = 0;
+			ircd_zlib_ok = 0;
 			break;
 		default:
 			ilog(L_MAIN, "Received invalid command from ssld: %s", ctl_buf->buf);
