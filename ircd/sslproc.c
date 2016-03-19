@@ -514,7 +514,7 @@ ssl_process_cmd_recv(ssl_ctl_t * ctl)
 			ilog(L_MAIN, "%s", no_ssl_or_zlib);
 			sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s", no_ssl_or_zlib);
 			ssl_killall();
-			break;
+			return;
 		case 'V':
 			len = ctl_buf->buflen - 1;
 			if (len > sizeof(ctl->version) - 1)
