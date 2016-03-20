@@ -133,6 +133,8 @@ static const char digitvalue[256] = {
 
 #ifndef _WIN32
 static int parse_resvconf(void);
+#else
+static void parse_windows_resolvers(void);
 #endif
 
 static void add_nameserver(const char *);
