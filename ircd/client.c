@@ -542,7 +542,7 @@ check_dlines(void)
 		if(IsMe(client_p))
 			continue;
 
-		if((aconf = find_dline((struct sockaddr *)&client_p->localClient->ip,client_p->localClient->ip.ss_family)) != NULL)
+		if((aconf = find_dline((struct sockaddr *)&client_p->localClient->ip, GET_SS_FAMILY(&client_p->localClient->ip))) != NULL)
 		{
 			if(aconf->status & CONF_EXEMPTDLINE)
 				continue;
@@ -561,7 +561,7 @@ check_dlines(void)
 	{
 		client_p = ptr->data;
 
-		if((aconf = find_dline((struct sockaddr *)&client_p->localClient->ip,client_p->localClient->ip.ss_family)) != NULL)
+		if((aconf = find_dline((struct sockaddr *)&client_p->localClient->ip, GET_SS_FAMILY(&client_p->localClient->ip))) != NULL)
 		{
 			if(aconf->status & CONF_EXEMPTDLINE)
 				continue;

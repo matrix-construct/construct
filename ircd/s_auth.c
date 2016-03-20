@@ -269,7 +269,7 @@ start_auth_query(struct AuthRequest *auth)
 	if(IsAnyDead(auth->client))
 		return 0;
 
-	family = auth->client->localClient->ip.ss_family;
+	family = GET_SS_FAMILY(&auth->client->localClient->ip);
 	if((F = rb_socket(family, SOCK_STREAM, 0, "ident")) == NULL)
 	{
 		ilog_error("creating auth stream socket");
@@ -302,7 +302,7 @@ start_auth_query(struct AuthRequest *auth)
 
 	/* XXX mangle_mapped_sockaddr((struct sockaddr *)&localaddr); */
 #ifdef RB_IPV6
-	if(localaddr.ss_family == AF_INET6)
+	if(GET_SS_FAMILY(&localaddr) == AF_INET6)
 	{
 		auth->lport = ntohs(((struct sockaddr_in6 *)&localaddr)->sin6_port);
 		((struct sockaddr_in6 *)&localaddr)->sin6_port = 0;
@@ -316,7 +316,7 @@ start_auth_query(struct AuthRequest *auth)
 
 	destaddr = auth->client->localClient->ip;
 #ifdef RB_IPV6
-	if(localaddr.ss_family == AF_INET6)
+	if(GET_SS_FAMILY(&localaddr) == AF_INET6)
 	{
 		auth->rport = ntohs(((struct sockaddr_in6 *)&destaddr)->sin6_port);
 		((struct sockaddr_in6 *)&destaddr)->sin6_port = htons(113);

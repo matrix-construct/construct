@@ -261,7 +261,7 @@ check_client(struct Client *client_p, struct Client *source_p, const char *usern
 		{
 			int port = -1;
 #ifdef RB_IPV6
-			if(source_p->localClient->ip.ss_family == AF_INET6)
+			if(GET_SS_FAMILY(&source_p->localClient->ip) == AF_INET6)
 				port = ntohs(((struct sockaddr_in6 *)&source_p->localClient->listener->addr)->sin6_port);
 			else
 #endif
@@ -394,7 +394,7 @@ find_address_conf_by_client(struct Client *client_p, const char *username)
 		aconf = find_address_conf(client_p->host, client_p->sockhost,
 					client_p->username, client_p->username,
 					(struct sockaddr *) &client_p->localClient->ip,
-					client_p->localClient->ip.ss_family,
+					GET_SS_FAMILY(&client_p->localClient->ip),
 					client_p->localClient->auth_user);
 	}
 	else
@@ -404,7 +404,7 @@ find_address_conf_by_client(struct Client *client_p, const char *username)
 		aconf = find_address_conf(client_p->host, client_p->sockhost,
 					non_ident, client_p->username,
 					(struct sockaddr *) &client_p->localClient->ip,
-					client_p->localClient->ip.ss_family,
+					GET_SS_FAMILY(&client_p->localClient->ip),
 					client_p->localClient->auth_user);
 	}
 	return aconf;

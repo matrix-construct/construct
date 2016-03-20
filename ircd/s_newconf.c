@@ -305,7 +305,7 @@ find_oper_conf(const char *username, const char *host, const char *locip, const 
 
 		if(parse_netmask(addr, &ip, &bits) != HM_HOST)
 		{
-			if(ip.ss_family == cip.ss_family &&
+			if(GET_SS_FAMILY(&ip) == GET_SS_FAMILY(&cip) &&
 			   comp_with_mask_sock((struct sockaddr *)&ip, (struct sockaddr *)&cip, bits))
 				return oper_p;
 		}
