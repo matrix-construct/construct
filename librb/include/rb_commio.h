@@ -88,7 +88,7 @@ struct rb_iovec
 
 void rb_fdlist_init(int closeall, int maxfds, size_t heapsize);
 
-rb_fde_t *rb_open(int, uint8_t, const char *);
+rb_fde_t *rb_open(rb_platform_fd_t, uint8_t, const char *);
 void rb_close(rb_fde_t *);
 void rb_dump_fd(DUMPCB *, void *xdata);
 void rb_note(rb_fde_t *, const char *);

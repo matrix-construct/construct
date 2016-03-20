@@ -74,7 +74,7 @@ static void mangle_mapped_sockaddr(struct sockaddr *in);
 #endif
 
 #ifndef HAVE_SOCKETPAIR
-static int rb_inet_socketpair(int d, int type, int protocol, int sv[2]);
+static int rb_inet_socketpair(int d, int type, int protocol, rb_platform_fd_t sv[2]);
 static int rb_inet_socketpair_udp(rb_fde_t **newF1, rb_fde_t **newF2);
 #endif
 
