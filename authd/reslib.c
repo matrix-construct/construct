@@ -79,7 +79,11 @@
 #include <rb_lib.h>
 
 #ifndef _WIN32
+
 #include <netdb.h>
+
+typedef struct addrinfo rb_addrinfo;
+
 #else
 #include "getaddrinfo.h"
 #include "getnameinfo.h"
@@ -88,6 +92,7 @@
 #define freeaddrinfo rb_freeaddrinfo
 
 extern const char * get_windows_nameservers(void);
+typedef struct rb_addrinfo rb_addrinfo;
 #endif
 
 #include "stdinc.h"
@@ -235,7 +240,7 @@ parse_resvconf(void)
 static void
 add_nameserver(const char *arg)
 {
-  struct addrinfo hints, *res;
+  rb_addrinfo hints, *res;
 
   /* Done max number of nameservers? */
   if (irc_nscount >= IRCD_MAXNS)

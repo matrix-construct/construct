@@ -28,7 +28,7 @@
  */
 
 #ifdef _WIN32
-#include <ratbox_lib.h>
+#include <rb_lib.h>
 #include "getaddrinfo.h"
 
 /*  $Id$ */
