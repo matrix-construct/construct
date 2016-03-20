@@ -156,6 +156,7 @@ print_startup(int pid)
 {
 	int fd;
 
+#ifndef _WIN32
 	close(1);
 	fd = open("/dev/null", O_RDWR);
 	if (fd == -1) {
@@ -166,11 +167,13 @@ print_startup(int pid)
 		fd = dup(fd);
 	if (fd != 1)
 		abort();
+#endif
 
 	inotice("now running in %s mode from %s as pid %d ...",
 	       !server_state_foreground ? "background" : "foreground",
         	ConfigFileEntry.dpath, pid);
 
+#ifndef _WIN32
 	/* let the parent process know the initialization was successful
 	 * -- jilles */
 	if (!server_state_foreground)
@@ -181,6 +184,7 @@ print_startup(int pid)
 		abort();
 	if (dup2(1, 2) == -1)
 		abort();
+#endif
 }
 
 /*
@@ -193,7 +197,7 @@ print_startup(int pid)
 static void
 init_sys(void)
 {
-#if defined(RLIMIT_NOFILE) && defined(HAVE_SYS_RESOURCE_H)
+#if !defined(_WIN32) && defined(RLIMIT_NOFILE) && defined(HAVE_SYS_RESOURCE_H)
 	struct rlimit limit;
 
 	if(!getrlimit(RLIMIT_NOFILE, &limit))
