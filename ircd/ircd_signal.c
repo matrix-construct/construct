@@ -29,6 +29,9 @@
 
 #ifndef _WIN32
 
+#include <sys/types.h>
+#include <sys/wait.h>
+
 /*
  * dummy_handler - don't know if this is really needed but if alarm is still
  * being used we probably will
