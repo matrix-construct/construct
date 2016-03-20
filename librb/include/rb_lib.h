@@ -88,38 +88,29 @@ typedef int rb_platform_fd_t;
 #define strerror(x) rb_strerror(x)
 char *rb_strerror(int error);
 
-
-#ifndef ENOBUFS
+#undef ENOBUFS
 #define ENOBUFS	    WSAENOBUFS
-#endif
 
-#ifndef EINPROGRESS
+#undef EINPROGRESS
 #define EINPROGRESS WSAEINPROGRESS
-#endif
 
-#ifndef EWOULDBLOCK
+#undef EWOULDBLOCK
 #define EWOULDBLOCK WSAEWOULDBLOCK
-#endif
 
-#ifndef EMSGSIZE
+#undef EMSGSIZE
 #define EMSGSIZE    WSAEMSGSIZE
-#endif
 
-#ifndef EALREADY
+#undef EALREADY
 #define EALREADY    WSAEALREADY
-#endif
 
-#ifndef EISCONN
+#undef EISCONN
 #define EISCONN     WSAEISCONN
-#endif
 
-#ifndef EADDRINUSE
+#undef EADDRINUSE
 #define EADDRINUSE  WSAEADDRINUSE
-#endif
 
-#ifndef EAFNOSUPPORT
+#undef EAFNOSUPPORT
 #define EAFNOSUPPORT WSAEAFNOSUPPORT
-#endif
 
 #define pipe(x)  _pipe(x, 1024, O_BINARY)
 #define ioctl(x,y,z)  ioctlsocket(x,y, (u_long *)z)
