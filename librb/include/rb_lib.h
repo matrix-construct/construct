@@ -66,7 +66,13 @@ char *alloca();
 #define rb_unlikely(x)	(x)
 #endif
 
-
+#ifdef _WIN32
+#define rb_get_errno() do { errno = WSAGetLastError(); WSASetLastError(errno); } while(0)
+typedef SOCKET rb_platform_fd_t;
+#else
+#define rb_get_errno()
+typedef int rb_platform_fd_t;
+#endif
 
 #ifdef _WIN32
 #include <process.h>
