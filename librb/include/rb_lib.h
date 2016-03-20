@@ -83,14 +83,37 @@ char *alloca();
 char *rb_strerror(int error);
 
 
+#ifndef ENOBUFS
 #define ENOBUFS	    WSAENOBUFS
+#endif
+
+#ifndef EINPROGRESS
 #define EINPROGRESS WSAEINPROGRESS
+#endif
+
+#ifndef EWOULDBLOCK
 #define EWOULDBLOCK WSAEWOULDBLOCK
+#endif
+
+#ifndef EMSGSIZE
 #define EMSGSIZE    WSAEMSGSIZE
+#endif
+
+#ifndef EALREADY
 #define EALREADY    WSAEALREADY
+#endif
+
+#ifndef EISCONN
 #define EISCONN     WSAEISCONN
+#endif
+
+#ifndef EADDRINUSE
 #define EADDRINUSE  WSAEADDRINUSE
+#endif
+
+#ifndef EAFNOSUPPORT
 #define EAFNOSUPPORT WSAEAFNOSUPPORT
+#endif
 
 #define pipe(x)  _pipe(x, 1024, O_BINARY)
 #define ioctl(x,y,z)  ioctlsocket(x,y, (u_long *)z)
