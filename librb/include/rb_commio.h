@@ -150,7 +150,7 @@ void rb_setselect(rb_fde_t *, unsigned int type, PF * handler, void *client_data
 void rb_init_netio(void);
 int rb_select(unsigned long);
 int rb_fd_ssl(rb_fde_t *F);
-int rb_get_fd(rb_fde_t *F);
+rb_platform_fd_t rb_get_fd(rb_fde_t *F);
 const char *rb_get_ssl_strerror(rb_fde_t *F);
 int rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN], int method);
 

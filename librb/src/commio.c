@@ -970,7 +970,7 @@ rb_fd_ssl(rb_fde_t *F)
 	return 0;
 }
 
-int
+rb_platform_fd_t
 rb_get_fd(rb_fde_t *F)
 {
 	if(F == NULL)
