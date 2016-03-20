@@ -220,6 +220,7 @@ init_sys(void)
 static int
 make_daemon(void)
 {
+#ifndef _WIN32
 	int pid;
 	int pip[2];
 	char c;
@@ -254,7 +255,7 @@ make_daemon(void)
 /*	fclose(stdin);
 	fclose(stdout);
 	fclose(stderr); */
-
+#endif
 	return 0;
 }
 
@@ -420,7 +421,7 @@ check_pidfile(const char *filename)
 		if(fgets(buff, 20, fb) != NULL)
 		{
 			pidfromfile = atoi(buff);
-			if(!kill(pidfromfile, 0))
+			if(!rb_kill(pidfromfile, 0))
 			{
 				printf("ircd: daemon is already running\n");
 				exit(-1);
