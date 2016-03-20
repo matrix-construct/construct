@@ -92,7 +92,7 @@ mr_webirc(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 				IsGotId(client_p) ? client_p->username : "webirc",
 				IsGotId(client_p) ? client_p->username : "webirc",
 				(struct sockaddr *) &client_p->localClient->ip,
-				client_p->localClient->ip.ss_family, NULL);
+				GET_SS_FAMILY(&client_p->localClient->ip), NULL);
 	if (aconf == NULL || !(aconf->status & CONF_CLIENT))
 		return;
 	if (!IsConfDoSpoofIp(aconf) || irccmp(aconf->info.name, "webirc."))
@@ -145,7 +145,7 @@ mr_webirc(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 
 	/* Check dlines now, klines will be checked on registration */
 	if((aconf = find_dline((struct sockaddr *)&source_p->localClient->ip,
-			       source_p->localClient->ip.ss_family)))
+			       GET_SS_FAMILY(&source_p->localClient->ip))))
 	{
 		if(!(aconf->status & CONF_EXEMPTDLINE))
 		{
