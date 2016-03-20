@@ -112,14 +112,10 @@ typedef bool _Bool;
 
 
 #include <sys/stat.h>
-#include <sys/wait.h>
 
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
