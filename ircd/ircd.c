@@ -616,6 +616,7 @@ charybdis_main(int argc, char *argv[])
 	if (testing_conf)
 		server_state_foreground = true;
 
+#ifndef _WIN32
 	/* Make sure fd 0, 1 and 2 are in use -- jilles */
 	do
 	{
@@ -625,6 +626,7 @@ charybdis_main(int argc, char *argv[])
 		close(fd);
 	else if (fd == -1)
 		exit(1);
+#endif
 
 	/* Check if there is pidfile and daemon already running */
 	if(!testing_conf)
