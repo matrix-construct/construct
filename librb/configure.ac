@@ -496,6 +496,7 @@ if test "x$rb_windows_h" = "xyes"; then
 	echo '#define WIN32_LEAN_AND_MEAN 1' >> $outfile
 	echo '#include <windows.h>' >> $outfile
 	echo '#include <winsock2.h>' >> $outfile
+	echo '#include <ws2tcpip.h>' >> $outfile
 	echo '#include <iphlpapi.h>' >> $outfile
 fi
 
