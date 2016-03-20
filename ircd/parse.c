@@ -186,7 +186,7 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 			/* Its expected this nasty code can be removed
 			 * or rewritten later if still needed.
 			 */
-			if((unsigned long) (p + 8) > (unsigned long) end)
+			if((p + 8) > end)
 			{
 				for (; p <= end; p++)
 				{
