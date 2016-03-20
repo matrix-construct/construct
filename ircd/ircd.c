@@ -175,13 +175,7 @@ print_startup(int pid)
 	 * -- jilles */
 	if (!server_state_foreground)
 	{
-		if(write(0, ".", 1) < 1)
-			/* The circumstances in which this could fail are pretty implausible.
-			 * However, this shuts GCC up about warning the result of write is unused,
-			 * and is "standards compliant" behaviour.
-			 * --Elizabeth
-			 */
-			abort();
+		(void) write(0, ".", 1);
 	}
 	if (dup2(1, 0) == -1)
 		abort();
