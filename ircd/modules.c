@@ -274,8 +274,8 @@ load_core_modules(int warn)
 
 	for (i = 0; core_module_table[i]; i++)
 	{
-		snprintf(module_name, sizeof(module_name), "%s/%s", MODPATH,
-			    core_module_table[i]);
+		snprintf(module_name, sizeof(module_name), "%s/%s%s", MODPATH,
+			    core_module_table[i], LT_MODULE_EXT);
 
 		if(load_a_module(module_name, warn, MAPI_ORIGIN_CORE, 1) == -1)
 		{
@@ -299,7 +299,6 @@ load_one_module(const char *path, int origin, int coremodule)
 	char modpath[PATH_MAX];
 	rb_dlink_node *pathst;
 	const char *mpath;
-
 	struct stat statbuf;
 
 	if (server_state_foreground)
@@ -315,7 +314,7 @@ load_one_module(const char *path, int origin, int coremodule)
 	{
 		mpath = pathst->data;
 
-		snprintf(modpath, sizeof(modpath), "%s/%s", mpath, path);
+		snprintf(modpath, sizeof(modpath), "%s/%s%s", mpath, path, LT_MODULE_EXT);
 		if((strstr(modpath, "../") == NULL) && (strstr(modpath, "/..") == NULL))
 		{
 			if(stat(modpath, &statbuf) == 0)
