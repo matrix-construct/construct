@@ -144,6 +144,7 @@ AC_CHECK_TYPE([socklen_t], rb_cv_socklen_t=socklen_t,[
 #endif
 #ifdef HAVE_WINSOCK2_H
 #include <winsock2.h>
+#include <ws2tcpip.h>
 #endif
 int getpeername (int, $arg2 *, $t *);
 ],[
