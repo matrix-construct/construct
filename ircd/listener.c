@@ -282,7 +282,7 @@ find_listener(struct rb_sockaddr_storage *addr)
 		if(GET_SS_FAMILY(addr) != GET_SS_FAMILY(&listener->addr))
 			continue;
 
-		switch(addr->ss_family)
+		switch(GET_SS_FAMILY(addr))
 		{
 			case AF_INET:
 			{
