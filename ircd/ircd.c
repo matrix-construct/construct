@@ -548,12 +548,14 @@ charybdis_main(int argc, char *argv[])
 {
 	int fd;
 
+#ifndef _WIN32
 	/* Check to see if the user is running us as root, which is a nono */
 	if(geteuid() == 0)
 	{
 		fprintf(stderr, "Don't run ircd as root!!!\n");
 		return -1;
 	}
+#endif
 
 	init_sys();
 
