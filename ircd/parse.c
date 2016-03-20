@@ -107,7 +107,7 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 		return;
 	}
 
-	if (msgbuf.origin != NULL)
+	if (msgbuf.origin != NULL && IsServer(client_p))
 	{
 		from = find_client(msgbuf.origin);
 
