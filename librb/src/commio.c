@@ -1609,7 +1609,7 @@ rb_inet_socketpair_udp(rb_fde_t **newF1, rb_fde_t **newF2)
 	struct sockaddr_in addr[2];
 	rb_socklen_t size = sizeof(struct sockaddr_in);
 	rb_fde_t *F[2];
-	unsigned rb_platform_fd_t fd[2];
+	rb_platform_fd_t fd[2];
 	int i, got;
 	unsigned short port;
 	struct timeval wait = { 0, 100000 };
@@ -1693,7 +1693,9 @@ rb_inet_socketpair_udp(rb_fde_t **newF1, rb_fde_t **newF2)
 	return 0;
 
 #ifdef _WIN32
+#ifndef ECONNABORTED
 #define	ECONNABORTED WSAECONNABORTED
+#endif
 #endif
 
       abort_failed:
