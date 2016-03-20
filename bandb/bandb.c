@@ -255,7 +255,7 @@ dummy_handler(int sig)
 static void
 setup_signals(void)
 {
-#ifndef WINDOWS
+#ifndef _WIN32
 	struct sigaction act;
 
 	act.sa_flags = 0;
