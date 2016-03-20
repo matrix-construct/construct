@@ -564,7 +564,7 @@ rb_errstr(int error)
 int
 rb_socketpair(int family, int sock_type, int proto, rb_fde_t **F1, rb_fde_t **F2, const char *note)
 {
-	int nfd[2];
+	rb_platform_fd_t nfd[2];
 	if(number_fd >= rb_maxconnections)
 	{
 		errno = ENFILE;
