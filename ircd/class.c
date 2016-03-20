@@ -23,7 +23,7 @@
  */
 
 #include "stdinc.h"
-#include "config.h"
+#include "defaults.h"
 
 #include "class.h"
 #include "client.h"

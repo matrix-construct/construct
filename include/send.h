@@ -27,7 +27,6 @@
 
 #include "rb_lib.h"
 #include "ircd_defs.h"
-#include "config.h"		/* HAVE_STDARG_H */
 
 struct Client;
 struct Channel;

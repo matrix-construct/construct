@@ -26,7 +26,7 @@
 #include "rb_lib.h"
 #include "stdinc.h"
 #include "setup.h"
-#include "config.h"
+#include "defaults.h"
 #include "ircd.h"
 #include "channel.h"
 #include "class.h"

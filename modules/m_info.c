@@ -779,7 +779,7 @@ send_conf_options(struct Client *source_p)
 
 	/*
 	 * Now send them a list of all our configuration options
-	 * (mostly from config.h)
+	 * (mostly from defaults.h)
 	 */
 	for (infoptr = MyInformation; infoptr->name; infoptr++)
 	{

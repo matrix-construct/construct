@@ -23,7 +23,7 @@
  *  USA
  */
 #include "stdinc.h"
-#include "config.h"
+#include "defaults.h"
 
 #include "client.h"
 #include "class.h"

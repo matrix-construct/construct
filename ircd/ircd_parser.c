@@ -78,7 +78,7 @@
 #include "setup.h"
 #include "common.h"
 #include "ircd_defs.h"
-#include "config.h"
+#include "defaults.h"
 #include "client.h"
 #include "modules.h"
 #include "newconf.h"
