@@ -913,7 +913,7 @@ static int res_read_single_reply(rb_fde_t *F, void *data)
 			 * ip#.
 			 */
 #ifdef RB_IPV6
-			if (request->addr.ss_family == AF_INET6)
+			if (GET_SS_FAMILY(&request->addr) == AF_INET6)
 				gethost_byname_type_fqdn(request->name, request->query, T_AAAA);
 			else
 #endif
