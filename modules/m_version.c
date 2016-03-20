@@ -124,10 +124,6 @@ confopts(void)
 	if(ConfigChannel.use_except)
 		*p++ = 'e';
 
-	/* might wanna hide this :P */
-	if(ServerInfo.hub)
-		*p++ = 'H';
-
 	if(ConfigChannel.use_invex)
 		*p++ = 'I';
 

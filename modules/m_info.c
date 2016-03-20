@@ -286,12 +286,6 @@ static struct InfoStruct info_table[] = {
 		"Hide IPs of spoofed users"
 	},
 	{
-		"hub",
-		OUTPUT_BOOLEAN_YN,
-		&ServerInfo.hub,
-		"Server is a hub"
-	},
-	{
 		"kline_delay",
 		OUTPUT_DECIMAL,
 		&ConfigFileEntry.kline_delay,

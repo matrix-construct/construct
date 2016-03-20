@@ -797,19 +797,6 @@ server_estab(struct Client *client_p)
 	/* Its got identd , since its a server */
 	SetGotId(client_p);
 
-	/* If there is something in the serv_list, it might be this
-	 * connecting server..
-	 */
-	if(!ServerInfo.hub && serv_list.head)
-	{
-		if(client_p != serv_list.head->data || serv_list.head->next)
-		{
-			ServerStats.is_ref++;
-			sendto_one(client_p, "ERROR :I'm a leaf not a hub");
-			return exit_client(client_p, client_p, client_p, "I'm a leaf");
-		}
-	}
-
 	if(IsUnknown(client_p))
 	{
 		/* the server may be linking based on certificate fingerprint now. --nenolod */

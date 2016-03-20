@@ -690,8 +690,6 @@ set_default_conf(void)
 	ServerInfo.specific_ipv6_vhost = 0;
 #endif
 
-	/* Don't reset hub, as that will break lazylinks */
-	/* ServerInfo.hub = false; */
 	AdminInfo.name = NULL;
 	AdminInfo.email = NULL;
 	AdminInfo.description = NULL;
