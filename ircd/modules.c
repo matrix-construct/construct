@@ -1033,11 +1033,11 @@ load_a_module(const char *path, int warn, int origin, int core)
 		}
 
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "Module %s [version: %s; MAPI version: %d; origin: %s; description: \"%s\"] loaded at 0x%lx",
+				     "Module %s [version: %s; MAPI version: %d; origin: %s; description: \"%s\"] loaded at %p",
 				     mod_basename, ver, MAPI_VERSION(*mapi_version), o, description,
-				     (unsigned long) tmpptr);
-		ilog(L_MAIN, "Module %s [version: %s; MAPI version: %d; origin: %s; description: \"%s\"] loaded at 0x%lx",
-		     mod_basename, ver, MAPI_VERSION(*mapi_version), o, description, (unsigned long) tmpptr);
+				     (void *) tmpptr);
+		ilog(L_MAIN, "Module %s [version: %s; MAPI version: %d; origin: %s; description: \"%s\"] loaded at %p",
+		     mod_basename, ver, MAPI_VERSION(*mapi_version), o, description, (void *) tmpptr);
 	}
 	rb_free(mod_basename);
 	return 0;
