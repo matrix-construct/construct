@@ -208,8 +208,8 @@ findmodule_byname(const char *name)
 	int i;
 	char name_ext[PATH_MAX + 1];
 
-	rb_strlcpy(name_ext, name, sizeof basename_ext);
-	rb_strlcat(name_ext, LT_MODULE_EXT, sizeof basename_ext);
+	rb_strlcpy(name_ext, name, sizeof name_ext);
+	rb_strlcat(name_ext, LT_MODULE_EXT, sizeof name_ext);
 
 	for (i = 0; i < num_mods; i++)
 	{
