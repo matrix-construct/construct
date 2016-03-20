@@ -20,6 +20,20 @@ AC_PREFIX_DEFAULT($HOME/ircd)
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADER(include/setup.h)
 
+AC_CONFIG_SUBDIRS([librb])
+AC_CONFIG_AUX_DIR([libltdl/config])
+
+AM_INIT_AUTOMAKE([subdir-objects])
+AM_SILENT_RULES([yes])
+AM_PROG_AR
+
+LT_INIT([dlopen disable-static])
+LT_CONFIG_LTDL_DIR([libltdl])
+LTDL_INIT
+
+build_ltdl=$with_included_ltdl
+AM_CONDITIONAL([BUILD_LTDL], [test x"$build_ltdl" = x"yes"])
+
 case "$host_os" in
 *cygwin*)
      AC_DEFINE_UNQUOTED(CYGWIN,1,[This is a Cygwin system])
@@ -37,20 +51,6 @@ case "$host_os" in
 esac
 
 AM_CONDITIONAL([MINGW], [test "$is_mingw" = "yes"])
-
-AC_CONFIG_SUBDIRS([librb])
-AC_CONFIG_AUX_DIR([libltdl/config])
-
-AM_INIT_AUTOMAKE([subdir-objects])
-AM_SILENT_RULES([yes])
-AM_PROG_AR
-
-LT_INIT([dlopen disable-static])
-LT_CONFIG_LTDL_DIR([libltdl])
-LTDL_INIT
-
-build_ltdl=$with_included_ltdl
-AM_CONDITIONAL([BUILD_LTDL], [test x"$build_ltdl" = x"yes"])
 
 if test "$ac_cv_c_compiler_gnu" = yes; then
 	IRC_CFLAGS="$IRC_CFLAGS -O0 -Wall"
