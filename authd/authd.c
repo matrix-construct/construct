@@ -99,7 +99,7 @@ error_cb(rb_helper *helper)
 	exit(1);
 }
 
-#ifndef WINDOWS
+#ifndef _WIN32
 static void
 dummy_handler(int sig)
 {
@@ -110,7 +110,7 @@ dummy_handler(int sig)
 static void
 setup_signals(void)
 {
-#ifndef WINDOWS
+#ifndef _WIN32
 	struct sigaction act;
 
 	act.sa_flags = 0;
