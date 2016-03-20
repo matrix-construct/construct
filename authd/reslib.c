@@ -76,6 +76,18 @@
  * - Dianora
  */
 
+#ifndef _WIN32
+#include <netdb.h>
+#else
+#include "getaddrinfo.h"
+#include "getnameinfo.h"
+#define getaddrinfo rb_getaddrinfo
+#define getnameinfo rb_getnameinfo
+#define freeaddrinfo rb_freeaddrinfo
+
+extern const char * get_windows_nameservers(void);
+#endif
+
 #include "stdinc.h"
 #include "ircd_defs.h"
 #include "common.h"

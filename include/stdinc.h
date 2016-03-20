@@ -92,7 +92,6 @@ typedef bool _Bool;
 #include <stdio.h>
 #include <time.h>
 #include <fcntl.h>
-#include <netdb.h>
 #include <stdarg.h>
 #include <signal.h>
 #include <dirent.h>
@@ -112,7 +111,6 @@ typedef bool _Bool;
 #endif
 
 
-#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 
