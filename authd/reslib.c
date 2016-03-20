@@ -76,6 +76,8 @@
  * - Dianora
  */
 
+#include <rb_lib.h>
+
 #ifndef _WIN32
 #include <netdb.h>
 #else
