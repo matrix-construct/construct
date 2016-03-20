@@ -79,7 +79,7 @@ static int rb_inet_socketpair_udp(rb_fde_t **newF1, rb_fde_t **newF2);
 #endif
 
 static inline rb_fde_t *
-add_fd(int fd)
+add_fd(rb_platform_fd_t fd)
 {
 	rb_fde_t *F = rb_find_fd(fd);
 
@@ -230,7 +230,7 @@ rb_set_nb(rb_fde_t *F)
 {
 	int nonb = 0;
 	int res;
-	int fd;
+	rb_platform_fd_t fd;
 	if(F == NULL)
 		return 0;
 	fd = F->fd;
@@ -409,7 +409,7 @@ rb_accept_tcp(rb_fde_t *F, ACPRE * precb, ACCB * callback, void *data)
 }
 
 /*
- * void rb_connect_tcp(int fd, struct sockaddr *dest,
+ * void rb_connect_tcp(rb_platform_fd_t fd, struct sockaddr *dest,
  *                       struct sockaddr *clocal, int socklen,
  *                       CNCB *callback, void *data, int timeout)
  * Input: An fd to connect with, a host and port to connect to,
@@ -496,7 +496,7 @@ rb_connect_timeout(rb_fde_t *F, void *notused)
 	rb_connect_callback(F, RB_ERR_TIMEOUT);
 }
 
-/* static void rb_connect_tryconnect(int fd, void *notused)
+/* static void rb_connect_tryconnect(rb_platform_fd_t fd, void *notused)
  * Input: The fd, the handler data(unused).
  * Output: None.
  * Side-effects: Try and connect with pending connect data for the FD. If
@@ -627,7 +627,7 @@ int
 rb_pipe(rb_fde_t **F1, rb_fde_t **F2, const char *desc)
 {
 #ifndef _WIN32
-	int fd[2];
+	rb_platform_fd_t fd[2];
 	if(number_fd >= rb_maxconnections)
 	{
 		errno = ENFILE;
@@ -677,7 +677,7 @@ rb_fde_t *
 rb_socket(int family, int sock_type, int proto, const char *note)
 {
 	rb_fde_t *F;
-	int fd;
+	rb_platform_fd_t fd;
 	/* First, make sure we aren't going to run out of file descriptors */
 	if(rb_unlikely(number_fd >= rb_maxconnections))
 	{
@@ -821,7 +821,7 @@ rb_fdlist_init(int closeall, int maxfds, size_t heapsize)
 
 /* Called to open a given filedescriptor */
 rb_fde_t *
-rb_open(int fd, uint8_t type, const char *desc)
+rb_open(rb_platform_fd_t fd, uint8_t type, const char *desc)
 {
 	rb_fde_t *F;
 	lrb_assert(fd >= 0);
@@ -979,7 +979,7 @@ rb_get_fd(rb_fde_t *F)
 }
 
 rb_fde_t *
-rb_get_fde(int fd)
+rb_get_fde(rb_platform_fd_t fd)
 {
 	return rb_find_fd(fd);
 }
@@ -1609,7 +1609,7 @@ rb_inet_socketpair_udp(rb_fde_t **newF1, rb_fde_t **newF2)
 	struct sockaddr_in addr[2];
 	rb_socklen_t size = sizeof(struct sockaddr_in);
 	rb_fde_t *F[2];
-	unsigned int fd[2];
+	unsigned rb_platform_fd_t fd[2];
 	int i, got;
 	unsigned short port;
 	struct timeval wait = { 0, 100000 };
@@ -1713,7 +1713,7 @@ rb_inet_socketpair_udp(rb_fde_t **newF1, rb_fde_t **newF2)
 
 
 int
-rb_inet_socketpair(int family, int type, int protocol, int fd[2])
+rb_inet_socketpair(int family, int type, int protocol, rb_platform_fd_t fd[2])
 {
 	int listener = -1;
 	int connector = -1;
@@ -2136,7 +2136,7 @@ rb_recv_fd_buf(rb_fde_t *F, void *data, size_t datasize, rb_fde_t **xF, int nfds
 	struct stat st;
 	uint8_t stype = RB_FD_UNKNOWN;
 	const char *desc;
-	int fd, len, x, rfds;
+	rb_platform_fd_t fd, len, x, rfds;
 
 	int control_len = CMSG_SPACE(sizeof(int) * nfds);
 

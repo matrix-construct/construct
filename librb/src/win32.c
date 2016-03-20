@@ -94,7 +94,7 @@ rb_spawn_process(const char *path, const char **argv)
 }
 
 pid_t
-rb_waitpid(int pid, int *status, int flags)
+rb_waitpid(pid_t pid, int *status, int flags)
 {
 	DWORD timeout = (flags & WNOHANG) ? 0 : INFINITE;
 	HANDLE hProcess;
@@ -152,7 +152,7 @@ rb_setenv(const char *name, const char *value, int overwrite)
 }
 
 int
-rb_kill(int pid, int sig)
+rb_kill(pid_t pid, int sig)
 {
 	HANDLE hProcess;
 	int ret = -1;

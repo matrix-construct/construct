@@ -154,7 +154,7 @@ int rb_get_fd(rb_fde_t *F);
 const char *rb_get_ssl_strerror(rb_fde_t *F);
 int rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN], int method);
 
-rb_fde_t *rb_get_fde(int fd);
+rb_fde_t *rb_get_fde(rb_platform_fd_t fd);
 
 int rb_send_fd_buf(rb_fde_t *xF, rb_fde_t **F, int count, void *data, size_t datasize, pid_t pid);
 int rb_recv_fd_buf(rb_fde_t *F, void *data, size_t datasize, rb_fde_t **xF, int count);

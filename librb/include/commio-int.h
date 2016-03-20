@@ -36,8 +36,10 @@
 
 #ifdef _WIN32
 #define rb_get_errno() do { errno = WSAGetLastError(); WSASetLastError(errno); } while(0)
+typedef SOCKET rb_platform_fd_t;
 #else
 #define rb_get_errno()
+typedef int rb_platform_fd_t;
 #endif
 
 #define rb_hash_fd(x) ((x ^ (x >> RB_FD_HASH_BITS) ^ (x >> (RB_FD_HASH_BITS * 2))) & RB_FD_HASH_MASK)
@@ -104,7 +106,7 @@ struct _fde
 	 * filedescriptor. Think though: when do you think we'll need more?
 	 */
 	rb_dlink_node node;
-	int fd;			/* So we can use the rb_fde_t as a callback ptr */
+	rb_platform_fd_t fd;			/* So we can use the rb_fde_t as a callback ptr */
 	uint8_t flags;
 	uint8_t type;
 	int pflags;
@@ -136,7 +138,7 @@ typedef struct timer_data
 extern rb_dlink_list *rb_fd_table;
 
 static inline rb_fde_t *
-rb_find_fd(int fd)
+rb_find_fd(rb_platform_fd_t fd)
 {
 	rb_dlink_list *hlist;
 	rb_dlink_node *ptr;
