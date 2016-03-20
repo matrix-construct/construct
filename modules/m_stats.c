@@ -566,7 +566,7 @@ stats_auth (struct Client *source_p)
 			aconf = find_conf_by_address (source_p->host, source_p->sockhost, NULL,
 						      (struct sockaddr *)&source_p->localClient->ip,
 						      CONF_CLIENT,
-						      source_p->localClient->ip.ss_family,
+						      GET_SS_FAMILY(&source_p->localClient->ip),
 						      source_p->username, NULL);
 		else
 			aconf = find_conf_by_address (source_p->host, NULL, NULL, NULL, CONF_CLIENT,
@@ -608,7 +608,7 @@ stats_tklines(struct Client *source_p)
 			aconf = find_conf_by_address (source_p->host, source_p->sockhost, NULL,
 						      (struct sockaddr *)&source_p->localClient->ip,
 						      CONF_KILL,
-						      source_p->localClient->ip.ss_family,
+						      GET_SS_FAMILY(&source_p->localClient->ip),
 						      source_p->username, NULL);
 		else
 			aconf = find_conf_by_address (source_p->host, NULL, NULL, NULL, CONF_KILL,
@@ -711,7 +711,7 @@ stats_klines(struct Client *source_p)
 			aconf = find_conf_by_address (source_p->host, source_p->sockhost, NULL,
 						      (struct sockaddr *)&source_p->localClient->ip,
 						      CONF_KILL,
-						      source_p->localClient->ip.ss_family,
+						      GET_SS_FAMILY(&source_p->localClient->ip),
 						      source_p->username, NULL);
 		else
 			aconf = find_conf_by_address (source_p->host, NULL, NULL, NULL, CONF_KILL,
@@ -942,6 +942,7 @@ stats_ssld(struct Client *source_p)
 static void
 stats_usage (struct Client *source_p)
 {
+#ifndef _WIN32
 	struct rusage rus;
 	time_t secs;
 	time_t rup;
@@ -993,6 +994,7 @@ stats_usage (struct Client *source_p)
 			   "R :Signals %d Context Vol. %d Invol %d",
 			   (int) rus.ru_nsignals, (int) rus.ru_nvcsw,
 			   (int) rus.ru_nivcsw);
+#endif
 }
 
 static void
