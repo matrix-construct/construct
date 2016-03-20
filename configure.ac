@@ -141,7 +141,7 @@ AC_CHECK_SIZEOF(long long)
 dnl Networking Functions
 dnl ====================
 
-AC_SEARCH_LIBS(socket, socket, , [AC_MSG_ERROR([You have no socket()! Aborting.])])
+AC_SEARCH_LIBS(socket, [socket ws2_32], , [AC_MSG_ERROR([You have no socket()! Aborting.])])
 
 dnl SunOS/Solaris required libnsl for inet_ntoa()
 if test x"$SUN" = xyes; then
