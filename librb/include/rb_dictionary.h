@@ -161,12 +161,6 @@ void rb_dictionary_stats_walk(void (*cb)(const char *line, void *privdata), void
 #define RB_POINTER_TO_UINT(x)		((uint32_t) (unsigned long) (x))
 #define RB_UINT_TO_POINTER(x)		((void *) (unsigned long) (uint32_t) (x))
 
-#define RB_POINTER_TO_LONG(x)		((int64_t) (unsigned long long) (x))
-#define RB_LONG_TO_POINTER(x)		((void *) (unsigned long long) (int64_t) (x))
-
-#define RB_POINTER_TO_ULONG(x)		((uint64_t) (unsigned long long) (x))
-#define RB_ULONG_TO_POINTER(x)		((void *) (unsigned long long) (uint64_t) (x))
-
 #else
 
 #define RB_POINTER_TO_INT(x)		((int32_t) (unsigned long long) (x))
@@ -174,12 +168,6 @@ void rb_dictionary_stats_walk(void (*cb)(const char *line, void *privdata), void
 
 #define RB_POINTER_TO_UINT(x)		((uint32_t) (unsigned long long) (x))
 #define RB_UINT_TO_POINTER(x)		((void *) (unsigned long long) (uint32_t) (x))
-
-#define RB_POINTER_TO_LONG(x)		((int64_t) (unsigned long long) (x))
-#define RB_LONG_TO_POINTER(x)		((void *) (unsigned long long) (int64_t) (x))
-
-#define RB_POINTER_TO_ULONG(x)		((uint64_t) (unsigned long long) (x))
-#define RB_ULONG_TO_POINTER(x)		((void *) (unsigned long long) (uint64_t) (x))
 
 #endif
 
@@ -191,16 +179,6 @@ static inline int rb_int32cmp(const void *a, const void *b)
 static inline int rb_uint32cmp(const void *a, const void *b)
 {
 	return RB_POINTER_TO_UINT(b) - RB_POINTER_TO_UINT(a);
-}
-
-static inline int rb_int64cmp(const void *a, const void *b)
-{
-	return RB_POINTER_TO_LONG(b) - RB_POINTER_TO_LONG(a);
-}
-
-static inline int rb_uint64cmp(const void *a, const void *b)
-{
-	return RB_POINTER_TO_ULONG(b) - RB_POINTER_TO_ULONG(a);
 }
 
 #endif
