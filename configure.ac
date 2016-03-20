@@ -19,6 +19,25 @@ fi
 AC_PREFIX_DEFAULT($HOME/ircd)
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADER(include/setup.h)
+
+case "$host_os" in
+*cygwin*)
+     AC_DEFINE_UNQUOTED(CYGWIN,1,[This is a Cygwin system])
+     AC_DEFINE_UNQUOTED(WINDOWS,1,[This is a Windows system])
+     ;;
+*mingw*)
+     AC_DEFINE_UNQUOTED(MINGW,1,[This is a MinGW system])
+     AC_DEFINE_UNQUOTED(WINDOWS,1,[This is a Windows system])
+     AC_CHECK_HEADER(winsock2.h, , [AC_MSG_ERROR([** MinGW and no winsock2.h.  I give up.])])
+     LIBS="$LIBS -lws2_32 -liphlpapi"
+     is_mingw="yes"
+     ;;
+*)
+     ;;
+esac
+
+AM_CONDITIONAL([MINGW], [test "$is_mingw" = "yes"])
+
 AC_CONFIG_SUBDIRS([librb])
 AC_CONFIG_AUX_DIR([libltdl/config])
 
