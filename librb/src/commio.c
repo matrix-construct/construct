@@ -703,7 +703,7 @@ rb_socket(int family, int sock_type, int proto, const char *note)
 	if(family == AF_INET6)
 	{
 		int off = 1;
-		if(setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &off, sizeof(off)) == -1)
+		if(setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (void *) &off, sizeof(off)) == -1)
 		{
 			rb_lib_log("rb_socket: Could not set IPV6_V6ONLY option to 1 on FD %d: %s",
 				   fd, strerror(errno));
