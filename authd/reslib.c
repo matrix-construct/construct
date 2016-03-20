@@ -166,7 +166,7 @@ irc_res_init(void)
 #ifndef _WIN32
   parse_resvconf();
 #else
-  parse_windows_nameservers();
+  parse_windows_resolvers();
 #endif
   if (irc_nscount == 0)
     add_nameserver("127.0.0.1");
