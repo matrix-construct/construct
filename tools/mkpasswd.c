@@ -1,15 +1,14 @@
 /* simple password generator by Nelson Minar (minar@reed.edu)
-** copyright 1991, all rights reserved.
-** You can use this code as long as my name stays with it.
-**
-** md5 patch by W. Campbell <wcampbel@botbay.net>
-** Modernization, getopt, etc for the Hybrid IRCD team
-** by W. Campbell
-**
-** /dev/random for salt generation added by
-** Aaron Sethman <androsyn@ratbox.org>
-**
-*/
+ * copyright 1991, all rights reserved.
+ * You can use this code as long as my name stays with it.
+ *
+ * md5 patch by W. Campbell <wcampbel@botbay.net>
+ * Modernization, getopt, etc for the Hybrid IRCD team
+ * by W. Campbell
+ *
+ * /dev/random for salt generation added by
+ * Aaron Sethman <androsyn@ratbox.org>
+ */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -22,20 +21,15 @@
 #endif
 
 #define FLAG_MD5      0x00000001
-#define FLAG_DES      0x00000002
-#define FLAG_SALT     0x00000004
-#define FLAG_PASS     0x00000008
-#define FLAG_LENGTH   0x00000010
-#define FLAG_BLOWFISH 0x00000020
-#define FLAG_ROUNDS   0x00000040
-#define FLAG_EXT      0x00000080
-#define FLAG_SHA256   0x00000100
-#define FLAG_SHA512   0x00000200
+#define FLAG_SALT     0x00000002
+#define FLAG_PASS     0x00000004
+#define FLAG_LENGTH   0x00000008
+#define FLAG_BLOWFISH 0x00000010
+#define FLAG_ROUNDS   0x00000020
+#define FLAG_SHA256   0x00000040
+#define FLAG_SHA512   0x00000080
 
 
-static char *make_des_salt(void);
-static char *make_ext_salt(int);
-static char *make_ext_salt_para(int, char *);
 static char *make_md5_salt(int);
 static char *make_md5_salt_para(char *);
 static char *make_sha256_salt(int);
@@ -100,29 +94,21 @@ main(int argc, char *argv[])
 	char *hashed;
 	int flag = 0;
 	int length = 0;		/* Not Set */
-	int rounds = 0;		/* Not set, since extended DES needs 25 and blowfish needs
-				 ** 4 by default, a side effect of this being the encryption
-				 ** type parameter must be specified before the rounds
-				 ** parameter.
+	int rounds = 0;		/* Not set, since blowfish needs 4 by default, a side effect
+				 * of this being the encryption type parameter must be
+				 * specified before the rounds  parameter.
 				 */
 
-	while((c = getopt(argc, argv, "xymdber:h?l:s:p:")) != -1)
+	while((c = getopt(argc, argv, "xymbr:h?l:s:p:")) != -1)
 	{
 		switch (c)
 		{
 		case 'm':
 			flag |= FLAG_MD5;
 			break;
-		case 'd':
-			flag |= FLAG_DES;
-			break;
 		case 'b':
 			flag |= FLAG_BLOWFISH;
 			rounds = 4;
-			break;
-		case 'e':
-			flag |= FLAG_EXT;
-			rounds = 25;
 			break;
 		case 'l':
 			flag |= FLAG_LENGTH;
@@ -187,45 +173,6 @@ main(int argc, char *argv[])
 		else
 			salt = make_sha256_salt(length);
 	}
-	else if(flag & FLAG_EXT)
-	{
-		/* XXX - rounds needs to be done */
-		if(flag & FLAG_SALT)
-		{
-			if((strlen(saltpara) == 4))
-			{
-				salt = make_ext_salt_para(rounds, saltpara);
-			}
-			else
-			{
-				printf("Invalid salt, please enter 4 alphanumeric characters\n");
-				exit(1);
-			}
-		}
-		else
-		{
-			salt = make_ext_salt(rounds);
-		}
-	}
-	else if (flag & FLAG_DES)
-	{
-		if(flag & FLAG_SALT)
-		{
-			if((strlen(saltpara) == 2))
-			{
-				salt = saltpara;
-			}
-			else
-			{
-				printf("Invalid salt, please enter 2 alphanumeric characters\n");
-				exit(1);
-			}
-		}
-		else
-		{
-			salt = make_des_salt();
-		}
-	}
 	else
 	{
 		if(length == 0)
@@ -262,15 +209,6 @@ main(int argc, char *argv[])
 	return 0;
 }
 
-static char *
-make_des_salt()
-{
-	static char salt[3];
-	generate_random_salt(salt, 2);
-	salt[2] = '\0';
-	return salt;
-}
-
 char *
 int_to_base64(int value)
 {
@@ -287,26 +225,6 @@ int_to_base64(int value)
 				 ** to \0.
 				 */
 	return buf;
-}
-
-char *
-make_ext_salt(int rounds)
-{
-	static char salt[10];
-
-	sprintf(salt, "_%s", int_to_base64(rounds));
-	generate_random_salt(&salt[5], 4);
-	salt[9] = '\0';
-	return salt;
-}
-
-char *
-make_ext_salt_para(int rounds, char *saltpara)
-{
-	static char salt[10];
-
-	sprintf(salt, "_%s%s", int_to_base64(rounds), saltpara);
-	return salt;
 }
 
 char *
@@ -499,19 +417,16 @@ generate_random_salt(char *salt, int length)
 void
 full_usage()
 {
-	printf("mkpasswd [-m|-d|-b|-e] [-l saltlength] [-r rounds] [-s salt] [-p plaintext]\n");
+	printf("mkpasswd [-m|-b|-x|-y] [-l saltlength] [-r rounds] [-s salt] [-p plaintext]\n");
 	printf("-x Generate a SHA256 password\n");
 	printf("-y Generate a SHA512 password\n");
 	printf("-m Generate an MD5 password\n");
-	printf("-d Generate a DES password\n");
 	printf("-b Generate a Blowfish password\n");
-	printf("-e Generate an Extended DES password\n");
 	printf("-l Specify a length for a random MD5 or Blowfish salt\n");
-	printf("-r Specify a number of rounds for a Blowfish or Extended DES password\n");
-	printf("   Blowfish:  default 4, no more than 6 recommended\n");
-	printf("   Extended DES:  default 25\n");
-	printf("-s Specify a salt, 2 alphanumeric characters for DES, up to 16 for MD5,\n");
-	printf("   up to 22 for Blowfish, and 4 for Extended DES\n");
+	printf("-r Specify a number of rounds for a Blowfish password\n");
+	printf("   Default 4, no more than 6 recommended\n");
+	printf("-s Specify a salt, up to 16 for MD5, SHA256, and SHA512\n");
+	printf("   up to 22 for Blowfish\n");
 	printf("-p Specify a plaintext password to use\n");
 	printf("Example: mkpasswd -m -s 3dr -p test\n");
 	exit(0);
@@ -521,11 +436,11 @@ void
 brief_usage()
 {
 	printf("mkpasswd - password hash generator\n");
-	printf("Standard DES:  mkpasswd [-d] [-s salt] [-p plaintext]\n");
-	printf("Extended DES:  mkpasswd -e [-r rounds] [-s salt] [-p plaintext]\n");
-	printf("         MD5:  mkpasswd -m [-l saltlength] [-s salt] [-p plaintext]\n");
-	printf("    Blowfish:  mkpasswd -b [-r rounds] [-l saltlength] [-s salt]\n");
-	printf("                           [-p plaintext]\n");
+	printf("  SHA512:  mkpasswd [-y] [-l saltlength] [-s salt] [-p plaintext]\n");
+	printf("  SHA256:  mkpasswd -x [-l saltlength] [-s salt] [-p plaintext]\n");
+	printf("     MD5:  mkpasswd -m [-l saltlength] [-s salt] [-p plaintext]\n");
+	printf("Blowfish:  mkpasswd -b [-r rounds] [-l saltlength] [-s salt]\n");
+	printf("                       [-p plaintext]\n");
 	printf("Use -h for full usage\n");
 	exit(0);
 }

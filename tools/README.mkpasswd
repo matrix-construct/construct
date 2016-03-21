@@ -3,56 +3,36 @@ mkpasswd.c documentation
 This is documentation for the updated mkpasswd.c included with a number
 of ircd, irc services, and non-IRC related programs
 
-This version of mkpasswd can create DES, Extended DES, Blowfish, and MD5
+This version of mkpasswd can create Blowfish, MD5, SHA256, and SHA512 crypted
 passwords, with either randomly generated or user provided salts.  
 
 Options:
+-x Generate a SHA256 password
+-y Generate a SHA512 password
 -m Generate an MD5 password
--d Generate a DES password
 -b Generate a Blowfish password
--e Generate an Extended (BSDi) DES password
 -l Specify a length for a random MD5 or Blowfish salt
--r Specify a number of rounds for a Blowfish or Extended DES password
-   Blowfish: no more than 6 recommended, no less than 4 accepted
-   Extended DES: default of 25
--s Specify a salt, 2 alphanumeric characters for DES, up to 16 for MD5,
-   up to 22 for Blowfish, 2 for Extended DES
+-r Specify a number of rounds for a Blowfish password
+   Default 4, no more than 6 recommended
+-s Specify a salt, up to 16 for MD5, SHA256, and SHA512
+   up to 22 for Blowfish
 -p Specify a plaintext password to use
 -? Get brief help
 -h Get extended help
 
-Without the presence of any parameters, it'll behave like the old mkpasswd,
-creating a DES password with a randomly generated salt and prompting for
-the password (without echo).
+Without the presence of any parameters, it'll generate a SHA512 hash with a
+randomly generated salt and prompting for the password (without echo).
 
-A DES salt is a pair of alphanumeric characters ('.' and '/' are permitted
-as well), such as 'a4' or 'Td'.
-
-An MD5 salt consists of up to 16 (though most implementations limit you to
-8) alphanumeric characters (plus '.' and '/'),
-such as 'tGd' or 'J6d4dfG'.
+An MD5, SHA256, and SHA512 salt consists of up to 16 alphanumeric characters
+(plus '.' and '/'), such as 'tGd' or 'J6d4dfG'.
 
 A Blowfish salt consists of up to 22 alphanumeric characters (plus '.' and
 '/').  Blowfish also specifies a number of rounds*, by default 4.
 
-Known bugs:
-The encryption algorithms supported depend on your system's crypt()
-  implementation.
-The maximum length of an MD5 salt is limited to your systems crypt()
-  implementation, typically 8.
+Blowfish may not always be available, but MD5, SHA256, and SHA512 are
+guaranteed to be.
 
-Supported Platforms (Known and tested):
-Linux glibc (DES and MD5)
-FreeBSD 3.x (DES (MD5 maybe))
-FreeBSD 4.x (DES, MD5, Blowfish, Extended DES)
-Solaris 2.5-2.6 (DES only)
-Cygwin 1.1.4 (DES only)
-Prior Cygwin with the MD5 libcrypt (MD5 only)
-OpenBSD 2.7 (don't link with -lcrypt) (DES, MD5, Blowfish)
-Mac OS-X (Darwin) (don't link with -lcrypt) (DES only)
+This program should work anywhere Charybdis does; if you find otherwise, file
+a bug.
 
-An MMK build script is included, as well as an MD5 crypt() implementation
-
-Other systems probably work, but they haven't been amply tested.
-
-* Blowfish's rounds parameter is a logarithm, not an integer value
+ * Blowfish's rounds parameter is a logarithm, not an integer value
