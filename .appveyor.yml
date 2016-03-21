@@ -1,7 +1,7 @@
 version: 3.6-dev_{build}
 clone_depth: 10
 install:
-  - c:\msys64\usr\bin\sh.exe -lc "pacman -Syu --noconfirm bash pacman msys2-runtime"
+  - c:\msys64\usr\bin\sh.exe -lc "pacman -Sy --noconfirm bash pacman msys2-runtime"
   - c:\msys64\usr\bin\sh.exe -lc "pacman -Syu --noconfirm"
   - c:\msys64\usr\bin\sh.exe -lc "echo 'Building on:'"
   - c:\msys64\usr\bin\sh.exe -lc "uname -a"
