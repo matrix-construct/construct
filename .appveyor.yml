@@ -12,3 +12,4 @@ build_script:
   - c:\msys64\usr\bin\sh.exe -lc "cd $APPVEYOR_BUILD_FOLDER/build/bin; ./charybdis -version"
 on_failure:
   - ps: Push-AppveyorArtifact config.log
+  - ps: Push-AppveyorArtifact librb\include\librb-config.h
