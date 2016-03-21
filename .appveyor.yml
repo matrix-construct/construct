@@ -1,6 +1,7 @@
 version: 3.6-dev_{build}
 clone_depth: 10
 install:
+  - c:\msys64\usr\bin\sh.exe -lc "pacman -Sy mingw-w64-x86_64-libwinpthread-git"
   - c:\msys64\usr\bin\sh.exe -lc "uname -a"
   - c:\msys64\usr\bin\sh.exe -lc "cat /proc/cpuinfo"
   - c:\msys64\usr\bin\sh.exe -lc "cat /proc/meminfo"
