@@ -1,0 +1,17 @@
+version: 3.6-dev_{build}
+clone_depth: 10
+install:
+  - c:\msys64\usr\bin\sh.exe -lc "pacman -Syu mingw-w64-x86_64-gcc autoconf automake libtool pkgconf bison flex make mingw-w64-x86_64-openssl"
+  - c:\msys64\usr\bin\sh.exe -lc "echo 'Building on:'"
+  - c:\msys64\usr\bin\sh.exe -lc "uname -a"
+  - c:\msys64\usr\bin\sh.exe -lc "cat /proc/cpuinfo"
+  - c:\msys64\usr\bin\sh.exe -lc "cat /proc/meminfo"
+  - c:\msys64\usr\bin\sh.exe -lc "cygcheck -s -v > $APPVEYOR_BUILD_FOLDER/cygcheck.log 2>&1"
+  - ps: Push-AppveyorArtifact cygcheck.log
+build_script:
+  - c:\msys64\usr\bin\sh.exe -lc "cd $APPVEYOR_BUILD_FOLDER; ./autogen.sh < /dev/null"
+  - c:\msys64\usr\bin\sh.exe -lc "cd $APPVEYOR_BUILD_FOLDER; ./configure --prefix=$APPVEYOR_BUILD_FOLDER/build --enable-openssl=/mingw64 < /dev/null"
+  - c:\msys64\usr\bin\sh.exe -lc "cd $APPVEYOR_BUILD_FOLDER; make -j2 < /dev/null"
+  - c:\msys64\usr\bin\sh.exe -lc "cd $APPVEYOR_BUILD_FOLDER; make install < /dev/null"
+  - c:\msys64\usr\bin\sh.exe -lc "cd $APPVEYOR_BUILD_FOLDER/build/bin; ./charybdis -version"
+
