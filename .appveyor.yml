@@ -1,7 +1,7 @@
 version: 3.6-dev_{build}
 clone_depth: 10
 install:
-  - c:\msys64\usr\bin\sh.exe -lc "pacman -Syu mingw-w64-x86_64-gcc autoconf automake libtool pkgconf bison flex make mingw-w64-x86_64-openssl"
+  - c:\msys64\usr\bin\sh.exe -lc "pacman -Sy mingw-w64-x86_64-gcc autoconf automake libtool pkgconf bison flex make mingw-w64-x86_64-openssl"
   - c:\msys64\usr\bin\sh.exe -lc "echo 'Building on:'"
   - c:\msys64\usr\bin\sh.exe -lc "uname -a"
   - c:\msys64\usr\bin\sh.exe -lc "cat /proc/cpuinfo"
