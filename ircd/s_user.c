@@ -1464,10 +1464,8 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 								    target_p->info);
 
 			if(*mode)
-				sendto_channel_local_butone(target_p, ALL_MEMBERS, chptr,
-						":%s MODE %s +%s %s",
-						target_p->servptr->name,
-						chptr->chname, mode, modeval);
+				sendto_channel_local_with_capability_butone(target_p, ALL_MEMBERS, NOCAPS, CLICAP_CHGHOST, chptr,
+						":%s MODE %s +%s %s", target_p->servptr->name, chptr->chname, mode, modeval);
 
 			*modeval = '\0';
 		}
