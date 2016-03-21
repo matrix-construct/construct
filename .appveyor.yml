@@ -15,4 +15,5 @@ build_script:
   - c:\msys64\usr\bin\sh.exe -lc "cd $APPVEYOR_BUILD_FOLDER; make -j2 < /dev/null"
   - c:\msys64\usr\bin\sh.exe -lc "cd $APPVEYOR_BUILD_FOLDER; make install < /dev/null"
   - c:\msys64\usr\bin\sh.exe -lc "cd $APPVEYOR_BUILD_FOLDER/build/bin; ./charybdis -version"
-
+on_failure:
+  - ps: Push-AppveyorArtifact config.log
