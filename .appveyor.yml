@@ -1,14 +1,13 @@
 version: 3.6-dev_{build}
 clone_depth: 10
 install:
-  - c:\msys64\usr\bin\sh.exe -lc "pacman -Sy --noconfirm bash pacman msys2-runtime"
-  - c:\msys64\usr\bin\sh.exe -lc "pacman -Syu --noconfirm"
-  - c:\msys64\usr\bin\sh.exe -lc "echo 'Building on:'"
   - c:\msys64\usr\bin\sh.exe -lc "uname -a"
   - c:\msys64\usr\bin\sh.exe -lc "cat /proc/cpuinfo"
   - c:\msys64\usr\bin\sh.exe -lc "cat /proc/meminfo"
   - c:\msys64\usr\bin\sh.exe -lc "cygcheck -s -v > $APPVEYOR_BUILD_FOLDER/cygcheck.log 2>&1"
   - c:\msys64\usr\bin\sh.exe -lc "/mingw64/bin/x86_64-w64-mingw32-gcc.exe -v"
+  - c:\msys64\usr\bin\sh.exe -lc "echo 'int main(void) { return 0; }' > gcc-test.c && /mingw64/bin/x86_64-w64-mingw32-gcc.exe -o gcc-test.exe gcc-test.c"
+  - c:\msys64\usr\bin\sh.exe -lc "./gcc-test"
   - ps: Push-AppveyorArtifact cygcheck.log
 build_script:
   - c:\msys64\usr\bin\sh.exe -lc "cd $APPVEYOR_BUILD_FOLDER; ./autogen.sh < /dev/null"
