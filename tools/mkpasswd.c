@@ -38,7 +38,6 @@ static char *make_sha512_salt(int);
 static char *make_sha512_salt_para(char *);
 static char *make_bf_salt(int, int);
 static char *make_bf_salt_para(int, char *);
-static char *int_to_base64(int);
 static char *generate_random_salt(char *, int);
 static char *generate_poor_salt(char *, int);
 
@@ -207,24 +206,6 @@ main(int argc, char *argv[])
 
 	printf("%s\n", hashed);
 	return 0;
-}
-
-char *
-int_to_base64(int value)
-{
-	static char buf[5];
-	int i;
-
-	for(i = 0; i < 4; i++)
-	{
-		buf[i] = saltChars[value & 63];
-		value >>= 6;	/* Right shifting 6 places is the same as dividing by 64 */
-	}
-
-	buf[i] = '\0';		/* not REALLY needed as it's static, and thus initialized
-				 ** to \0.
-				 */
-	return buf;
 }
 
 char *

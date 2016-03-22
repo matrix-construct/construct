@@ -162,8 +162,6 @@ msgbuf_unparse_tags(char *buf, size_t buflen, struct MsgBuf *msgbuf, unsigned in
 void
 msgbuf_unparse_prefix(char *buf, size_t buflen, struct MsgBuf *msgbuf, unsigned int capmask)
 {
-	int i;
-
 	memset(buf, 0, buflen);
 
 	if (msgbuf->n_tags > 0)

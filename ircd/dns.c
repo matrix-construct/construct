@@ -228,7 +228,7 @@ dns_stats_results_callback(const char *callid, const char *status, int resc, con
 {
 	struct dnsstatreq *req;
 	uint32_t qid;
-	int st, i;
+	int st;
 	long lqid = strtol(callid, NULL, 16);
 
 	if(lqid > UINT32_MAX)

@@ -253,7 +253,6 @@ load_all_modules(int warn)
 
 	while ((ldirent = readdir(system_module_dir)) != NULL)
 	{
-		struct stat s;
 		size_t len;
 
 		len = strlen(ldirent->d_name);

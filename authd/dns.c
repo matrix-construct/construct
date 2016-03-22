@@ -121,7 +121,7 @@ handle_lookup_ip_reply(void *data, struct DNSReply *reply)
 	if(!query)
 		/* Shouldn't happen */
 		exit(2);
-	
+
 	type = query->type;
 
 	if(!reply)
@@ -163,13 +163,10 @@ handle_lookup_hostname_reply(void *data, struct DNSReply *reply)
 {
 	struct dns_query *query = data;
 	char *hostname = NULL;
-	query_type type = QUERY_INVALID;
 
 	if(!query)
 		/* Shouldn't happen */
 		exit(4);
-
-	type = query->type;
 
 	if(!reply)
 		goto end;

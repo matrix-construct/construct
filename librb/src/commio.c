@@ -2223,6 +2223,7 @@ rb_send_fd_buf(rb_fde_t *xF, rb_fde_t **F, int count, void *data, size_t datasiz
 
 	if(count > 0)
 	{
+		size_t ucount = (size_t)count;
 		int len = CMSG_SPACE(sizeof(int) * count);
 		char buf[len];
 
@@ -2233,7 +2234,7 @@ rb_send_fd_buf(rb_fde_t *xF, rb_fde_t **F, int count, void *data, size_t datasiz
 		cmsg->cmsg_type = SCM_RIGHTS;
 		cmsg->cmsg_len = CMSG_LEN(sizeof(int) * count);
 
-		for(unsigned int i = 0; i < count; i++)
+		for(size_t i = 0; i < ucount; i++)
 		{
 			((int *)CMSG_DATA(cmsg))[i] = rb_get_fd(F[i]);
 		}
