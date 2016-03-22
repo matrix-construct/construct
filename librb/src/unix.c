@@ -26,18 +26,22 @@
 #include <librb_config.h>
 #include <rb_lib.h>
 
-
 #ifndef _WIN32
 
 #include <sys/wait.h>
 
+#ifdef HAVE_DLINFO
+# include <link.h>
+# include <dlfcn.h>
+#endif
+
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#include <crt_externs.h>
+#endif
 
 #if defined(HAVE_SPAWN_H) && defined(HAVE_POSIX_SPAWN)
 #include <spawn.h>
-
-#ifdef __APPLE__
-#include <crt_externs.h>
-#endif
 
 #ifndef __APPLE__
 extern char **environ;
@@ -151,5 +155,36 @@ rb_getpid(void)
 	return getpid();
 }
 
+const char *
+rb_path_to_self(void)
+{
+	static char path_buf[4096];
+#if defined(HAVE_GETEXECNAME)
+	char *s = getexecname();
+	if (s == NULL)
+		return NULL;
+	realpath(s, path_buf);
+	return path_buf;
+#elif defined(HAVE_DLINFO)
+	struct link_map *map = NULL;
+	dlinfo(RTLD_SELF, RTLD_DI_LINKMAP, &map);
+	if (map == NULL)
+		return NULL;
+	realpath(map->l_name, path_buf);
+#elif defined(__linux__)
+	if (readlink("/proc/self/exe", path_buf, sizeof path_buf) != -1)
+		return path_buf;
+	return NULL;
+#elif defined(__APPLE__)
+	char tmp_path[4096];
+	uint32_t pathlen = 4096;
+
+	if (_NSGetExecutablePath(tmp_path, &pathlen) < 0)
+		return NULL;
+
+	realpath(tmp_path, path_buf);
+	return path_buf;
+#endif
+}
 
 #endif /* !WIN32 */

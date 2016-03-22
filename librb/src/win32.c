@@ -614,6 +614,15 @@ rb_strerror(int error)
 	rb_strlcpy(buf, _rb_strerror(error), sizeof(buf));
 	return buf;
 }
+
+const char *
+rb_path_to_self(void)
+{
+	static char path_buf[MAX_PATH];
+	GetModuleFileName(NULL, exepath, MAX_PATH);
+	return path_buf;
+}
+
 #else /* win32 not supported */
 int
 rb_init_netio_win32(void)
