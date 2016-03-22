@@ -165,16 +165,16 @@ rb_path_to_self(void)
 		return NULL;
 	realpath(s, path_buf);
 	return path_buf;
+#elif defined(__linux__)
+	if (readlink("/proc/self/exe", path_buf, sizeof path_buf) != -1)
+		return path_buf;
+	return NULL;
 #elif defined(HAVE_DLINFO)
 	struct link_map *map = NULL;
 	dlinfo(RTLD_SELF, RTLD_DI_LINKMAP, &map);
 	if (map == NULL)
 		return NULL;
 	realpath(map->l_name, path_buf);
-#elif defined(__linux__)
-	if (readlink("/proc/self/exe", path_buf, sizeof path_buf) != -1)
-		return path_buf;
-	return NULL;
 #elif defined(__APPLE__)
 	char tmp_path[4096];
 	uint32_t pathlen = 4096;
