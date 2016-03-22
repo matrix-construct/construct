@@ -619,7 +619,7 @@ const char *
 rb_path_to_self(void)
 {
 	static char path_buf[MAX_PATH];
-	GetModuleFileName(NULL, exepath, MAX_PATH);
+	GetModuleFileName(NULL, path_buf, MAX_PATH);
 	return path_buf;
 }
 
