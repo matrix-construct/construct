@@ -168,7 +168,7 @@ print_startup(int pid)
 	if (fd != 1)
 		abort();
 #endif
-
+	inotice("runtime path: %s", rb_path_to_self());
 	inotice("now running in %s mode from %s as pid %d ...",
 	       !server_state_foreground ? "background" : "foreground",
         	ConfigFileEntry.dpath, pid);
