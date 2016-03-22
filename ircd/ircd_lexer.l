@@ -25,8 +25,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <netinet/in.h>
-
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
@@ -36,7 +34,7 @@
 #include "stdinc.h"
 #include "ircd_defs.h"
 #include "common.h"
-#include "config.h"
+#include "defaults.h"
 #include "logger.h"
 #include "s_conf.h"
 #include "newconf.h"

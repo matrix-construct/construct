@@ -38,8 +38,13 @@ dnl RB_PROTO_INET6
 AC_DEFUN([RB_PROTO_INET6],[
   AC_CACHE_CHECK([for INET6 protocol support], [rb_cv_proto_inet6],[
     AC_TRY_CPP([
+#ifndef _WIN32
 #include <sys/types.h>
 #include <sys/socket.h>
+#else
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
 
 #ifndef PF_INET6
 #error Missing PF_INET6
@@ -69,9 +74,14 @@ AC_DEFUN([RB_TYPE_STRUCT_SOCKADDR_IN6],[
   ],[
     rb_have_sockaddr_in6=no
   ],[
+#ifndef _WIN32
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#else
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
   ])
 
   if test "X$rb_have_sockaddr_in6" = "Xyes"; then :

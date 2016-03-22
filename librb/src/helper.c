@@ -78,7 +78,7 @@ rb_helper_child(rb_helper_cb * read_cb, rb_helper_cb * error_cb, log_cb * ilog,
 	if(x > 2)		/* don't undo what we just did */
 		close(x);
 #else
-	x = 0;			/* shut gcc up */
+	(void) x;	/* shut gcc up */
 #endif
 
 	rb_lib_init(ilog, irestart, idie, 0, maxfd, dh_size, fd_heap_size);

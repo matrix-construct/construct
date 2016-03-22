@@ -35,7 +35,7 @@
 #ifndef INCLUDED_ircd_defs_h
 #define INCLUDED_ircd_defs_h
 
-#include "config.h"
+#include "defaults.h"
 
 /* For those unfamiliar with GNU format attributes, a is the 1 based
  * argument number of the format string, and b is the 1 based argument
@@ -54,10 +54,6 @@
 #define IRC_DEPRECATED __attribute__((deprecated))
 #else
 #define IRC_DEPRECATED
-#endif
-
-#if !defined(CONFIG_CHARYBDIS_LEVEL_1)
-#  error Incorrect config.h for this revision of ircd.
 #endif
 
 #define HOSTLEN         63	/* Length of hostname.  Updated to         */

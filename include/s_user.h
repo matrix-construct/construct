@@ -25,7 +25,7 @@
 #ifndef INCLUDED_s_user_h
 #define INCLUDED_s_user_h
 
-#include "config.h"
+#include "defaults.h"
 
 struct Client;
 struct User;

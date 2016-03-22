@@ -20,14 +20,10 @@
 #
 
 if [ "x$1" = "x" ]; then
-	echo "usage: $0 releasename [--automatic]"
+	echo "usage: $0 releasename"
 	exit
 else
 	RELEASENAME="$1"
-fi
-
-if [ "x$2" = "x--automatic" ]; then
-	AUTOMATIC="yes"
 fi
 
 TIP=`git log -1 --pretty=oneline | cut -d" " -f1`
@@ -66,41 +62,6 @@ echo "Building $RELEASENAME.tbz2 from $RELEASENAME/"
 tar jcf $RELEASENAME.tar.bz2 $RELEASENAME/
 
 rm $RELEASENAME-working.tar.gz
+rm -rf $RELEASENAME
 
-PUBLISH="yes"
-
-ok="0"
-if [ "x$AUTOMATIC" != "xyes" ]; then
-	echo
-	echo "Would you like to publish these releases now?"
-	while [ $ok -eq 0 ]; do
-		echo -n "[$PUBLISH] "
-
-		read INPUT
-		case $INPUT in
-			[Yy]*)
-				PUBLISH="yes"
-				ok=1
-				;;
-			[Nn]*)
-				PUBLISH="no"
-				ok=1
-				;;
-		esac
-	done
-fi
-
-if [ "x$PUBLISH" = "xyes" ]; then
-	scp $RELEASENAME.tgz hg.atheme.org:/srv/distfiles
-	scp $RELEASENAME.tbz2 hg.atheme.org:/srv/distfiles
-
-	echo
-	echo "The releases have been published, and will be available to the entire"
-	echo "distribution network within 15 minutes."
-fi
-
-echo
-echo "Done. If you have any bugs to report, report them against"
-echo "the distfiles.atheme.org component at http://jira.atheme.org"
-echo "Thanks!"
-echo
+echo "Done. $RELEASENAME.tar.gz and $RELEASENAME.tar.bz2 built."

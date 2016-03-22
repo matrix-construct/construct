@@ -6,7 +6,10 @@ authd_SOURCES =	\
 	authd.c	\
 	res.c \
 	reslib.c \
+	reslist.c \
 	dns.c \
+	getaddrinfo.c \
+	getnameinfo.c \
 	provider.c \
 	providers/rdns.c \
 	providers/ident.c

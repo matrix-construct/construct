@@ -6,8 +6,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <netinet/in.h>
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -17,7 +15,7 @@
 #include "setup.h"
 #include "common.h"
 #include "ircd_defs.h"
-#include "config.h"
+#include "defaults.h"
 #include "client.h"
 #include "modules.h"
 #include "newconf.h"

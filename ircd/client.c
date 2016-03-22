@@ -23,7 +23,7 @@
  *  USA
  */
 #include "stdinc.h"
-#include "config.h"
+#include "defaults.h"
 
 #include "client.h"
 #include "class.h"
@@ -542,7 +542,7 @@ check_dlines(void)
 		if(IsMe(client_p))
 			continue;
 
-		if((aconf = find_dline((struct sockaddr *)&client_p->localClient->ip,client_p->localClient->ip.ss_family)) != NULL)
+		if((aconf = find_dline((struct sockaddr *)&client_p->localClient->ip, GET_SS_FAMILY(&client_p->localClient->ip))) != NULL)
 		{
 			if(aconf->status & CONF_EXEMPTDLINE)
 				continue;
@@ -561,7 +561,7 @@ check_dlines(void)
 	{
 		client_p = ptr->data;
 
-		if((aconf = find_dline((struct sockaddr *)&client_p->localClient->ip,client_p->localClient->ip.ss_family)) != NULL)
+		if((aconf = find_dline((struct sockaddr *)&client_p->localClient->ip, GET_SS_FAMILY(&client_p->localClient->ip))) != NULL)
 		{
 			if(aconf->status & CONF_EXEMPTDLINE)
 				continue;
@@ -1802,15 +1802,15 @@ free_user(struct User *user, struct Client *client_p)
 		if(user->refcnt < 0 || user->invited.head || user->channel.head)
 		{
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
-					     "* %#lx user (%s!%s@%s) %#lx %#lx %#lx %lu %d *",
-					     (unsigned long) client_p,
+					     "* %p user (%s!%s@%s) %p %p %p %lu %d *",
+					     client_p,
 					     client_p ? client_p->
 					     name : "<noname>",
 					     client_p->username,
 					     client_p->host,
-					     (unsigned long) user,
-					     (unsigned long) user->invited.head,
-					     (unsigned long) user->channel.head,
+					     user,
+					     user->invited.head,
+					     user->channel.head,
 					     rb_dlink_list_length(&user->channel),
 					     user->refcnt);
 			s_assert(!user->refcnt);

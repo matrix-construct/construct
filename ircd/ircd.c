@@ -26,7 +26,7 @@
 #include "rb_lib.h"
 #include "stdinc.h"
 #include "setup.h"
-#include "config.h"
+#include "defaults.h"
 #include "ircd.h"
 #include "channel.h"
 #include "class.h"
@@ -156,6 +156,7 @@ print_startup(int pid)
 {
 	int fd;
 
+#ifndef _WIN32
 	close(1);
 	fd = open("/dev/null", O_RDWR);
 	if (fd == -1) {
@@ -166,27 +167,24 @@ print_startup(int pid)
 		fd = dup(fd);
 	if (fd != 1)
 		abort();
-
+#endif
+	inotice("runtime path: %s", rb_path_to_self());
 	inotice("now running in %s mode from %s as pid %d ...",
 	       !server_state_foreground ? "background" : "foreground",
         	ConfigFileEntry.dpath, pid);
 
+#ifndef _WIN32
 	/* let the parent process know the initialization was successful
 	 * -- jilles */
 	if (!server_state_foreground)
 	{
-		if(write(0, ".", 1) < 1)
-			/* The circumstances in which this could fail are pretty implausible.
-			 * However, this shuts GCC up about warning the result of write is unused,
-			 * and is "standards compliant" behaviour.
-			 * --Elizabeth
-			 */
-			abort();
+		(void) write(0, ".", 1);
 	}
 	if (dup2(1, 0) == -1)
 		abort();
 	if (dup2(1, 2) == -1)
 		abort();
+#endif
 }
 
 /*
@@ -199,7 +197,7 @@ print_startup(int pid)
 static void
 init_sys(void)
 {
-#if defined(RLIMIT_NOFILE) && defined(HAVE_SYS_RESOURCE_H)
+#if !defined(_WIN32) && defined(RLIMIT_NOFILE) && defined(HAVE_SYS_RESOURCE_H)
 	struct rlimit limit;
 
 	if(!getrlimit(RLIMIT_NOFILE, &limit))
@@ -220,6 +218,7 @@ init_sys(void)
 static int
 make_daemon(void)
 {
+#ifndef _WIN32
 	int pid;
 	int pip[2];
 	char c;
@@ -254,7 +253,7 @@ make_daemon(void)
 /*	fclose(stdin);
 	fclose(stdout);
 	fclose(stderr); */
-
+#endif
 	return 0;
 }
 
@@ -420,7 +419,7 @@ check_pidfile(const char *filename)
 		if(fgets(buff, 20, fb) != NULL)
 		{
 			pidfromfile = atoi(buff);
-			if(!kill(pidfromfile, 0))
+			if(!rb_kill(pidfromfile, 0))
 			{
 				printf("ircd: daemon is already running\n");
 				exit(-1);
@@ -547,12 +546,14 @@ charybdis_main(int argc, char *argv[])
 {
 	int fd;
 
+#ifndef _WIN32
 	/* Check to see if the user is running us as root, which is a nono */
 	if(geteuid() == 0)
 	{
 		fprintf(stderr, "Don't run ircd as root!!!\n");
 		return -1;
 	}
+#endif
 
 	init_sys();
 
@@ -615,6 +616,7 @@ charybdis_main(int argc, char *argv[])
 	if (testing_conf)
 		server_state_foreground = true;
 
+#ifndef _WIN32
 	/* Make sure fd 0, 1 and 2 are in use -- jilles */
 	do
 	{
@@ -624,6 +626,7 @@ charybdis_main(int argc, char *argv[])
 		close(fd);
 	else if (fd == -1)
 		exit(1);
+#endif
 
 	/* Check if there is pidfile and daemon already running */
 	if(!testing_conf)

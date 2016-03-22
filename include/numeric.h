@@ -25,7 +25,7 @@
 #ifndef INCLUDED_numeric_h
 #define INCLUDED_numeric_h
 
-#include "config.h"
+#include "defaults.h"
 #include "messages.h"
 
 /*

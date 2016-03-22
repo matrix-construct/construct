@@ -206,12 +206,20 @@ int
 findmodule_byname(const char *name)
 {
 	int i;
+	char name_ext[PATH_MAX + 1];
+
+	rb_strlcpy(name_ext, name, sizeof name_ext);
+	rb_strlcat(name_ext, LT_MODULE_EXT, sizeof name_ext);
 
 	for (i = 0; i < num_mods; i++)
 	{
 		if(!irccmp(modlist[i]->name, name))
 			return i;
+
+		if(!irccmp(modlist[i]->name, name_ext))
+			return i;
 	}
+
 	return -1;
 }
 
@@ -245,7 +253,6 @@ load_all_modules(int warn)
 
 	while ((ldirent = readdir(system_module_dir)) != NULL)
 	{
-		struct stat s;
 		size_t len;
 
 		len = strlen(ldirent->d_name);
@@ -274,8 +281,8 @@ load_core_modules(int warn)
 
 	for (i = 0; core_module_table[i]; i++)
 	{
-		snprintf(module_name, sizeof(module_name), "%s/%s", MODPATH,
-			    core_module_table[i]);
+		snprintf(module_name, sizeof(module_name), "%s/%s%s", MODPATH,
+			    core_module_table[i], LT_MODULE_EXT);
 
 		if(load_a_module(module_name, warn, MAPI_ORIGIN_CORE, 1) == -1)
 		{
@@ -299,7 +306,6 @@ load_one_module(const char *path, int origin, int coremodule)
 	char modpath[PATH_MAX];
 	rb_dlink_node *pathst;
 	const char *mpath;
-
 	struct stat statbuf;
 
 	if (server_state_foreground)
@@ -315,7 +321,7 @@ load_one_module(const char *path, int origin, int coremodule)
 	{
 		mpath = pathst->data;
 
-		snprintf(modpath, sizeof(modpath), "%s/%s", mpath, path);
+		snprintf(modpath, sizeof(modpath), "%s/%s%s", mpath, path, LT_MODULE_EXT);
 		if((strstr(modpath, "../") == NULL) && (strstr(modpath, "/..") == NULL))
 		{
 			if(stat(modpath, &statbuf) == 0)
@@ -1033,11 +1039,11 @@ load_a_module(const char *path, int warn, int origin, int core)
 		}
 
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "Module %s [version: %s; MAPI version: %d; origin: %s; description: \"%s\"] loaded at 0x%lx",
+				     "Module %s [version: %s; MAPI version: %d; origin: %s; description: \"%s\"] loaded at %p",
 				     mod_basename, ver, MAPI_VERSION(*mapi_version), o, description,
-				     (unsigned long) tmpptr);
-		ilog(L_MAIN, "Module %s [version: %s; MAPI version: %d; origin: %s; description: \"%s\"] loaded at 0x%lx",
-		     mod_basename, ver, MAPI_VERSION(*mapi_version), o, description, (unsigned long) tmpptr);
+				     (void *) tmpptr);
+		ilog(L_MAIN, "Module %s [version: %s; MAPI version: %d; origin: %s; description: \"%s\"] loaded at %p",
+		     mod_basename, ver, MAPI_VERSION(*mapi_version), o, description, (void *) tmpptr);
 	}
 	rb_free(mod_basename);
 	return 0;

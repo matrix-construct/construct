@@ -156,7 +156,7 @@ static void initiate_blacklist_dnsquery(struct Blacklist *blptr, struct Client *
 	blcptr->client_p = client_p;
 
 	/* IPv4 */
-	if ((client_p->localClient->ip.ss_family == AF_INET) && blptr->ipv4)
+	if ((GET_SS_FAMILY(&client_p->localClient->ip) == AF_INET) && blptr->ipv4)
 	{
 		ip = (uint8_t *)&((struct sockaddr_in *)&client_p->localClient->ip)->sin_addr.s_addr;
 
@@ -168,8 +168,9 @@ static void initiate_blacklist_dnsquery(struct Blacklist *blptr, struct Client *
 			    (unsigned int) ip[0],
 			    blptr->host);
 	}
+#ifdef RB_IPV6
 	/* IPv6 */
-	else if ((client_p->localClient->ip.ss_family == AF_INET6) && blptr->ipv6)
+	else if ((GET_SS_FAMILY(&client_p->localClient->ip) == AF_INET6) && blptr->ipv6)
 	{
 		/* Split up for rDNS lookup
 		 * ex: ip[0] = 0x00, ip[1] = 0x00... ip[16] = 0x01 for localhost
@@ -197,6 +198,7 @@ static void initiate_blacklist_dnsquery(struct Blacklist *blptr, struct Client *
 		/* Tack host on */
 		strcpy(bufptr, blptr->host);
 	}
+#endif
 	/* This shouldn't happen... */
 	else
 		return;

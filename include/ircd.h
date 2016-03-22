@@ -25,7 +25,7 @@
 #ifndef INCLUDED_ircd_h
 #define INCLUDED_ircd_h
 
-#include "config.h"
+#include "defaults.h"
 
 struct Client;
 struct rb_dlink_list;

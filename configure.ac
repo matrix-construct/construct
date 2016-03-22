@@ -19,6 +19,7 @@ fi
 AC_PREFIX_DEFAULT($HOME/ircd)
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADER(include/setup.h)
+
 AC_CONFIG_SUBDIRS([librb])
 AC_CONFIG_AUX_DIR([libltdl/config])
 
@@ -32,6 +33,24 @@ LTDL_INIT
 
 build_ltdl=$with_included_ltdl
 AM_CONDITIONAL([BUILD_LTDL], [test x"$build_ltdl" = x"yes"])
+
+case "$host_os" in
+*cygwin*)
+     AC_DEFINE_UNQUOTED(CYGWIN,1,[This is a Cygwin system])
+     AC_DEFINE_UNQUOTED(WINDOWS,1,[This is a Windows system])
+     ;;
+*mingw* | *msys*)
+     AC_DEFINE_UNQUOTED(MINGW,1,[This is a MinGW system])
+     AC_DEFINE_UNQUOTED(WINDOWS,1,[This is a Windows system])
+     AC_CHECK_HEADER(winsock2.h, , [AC_MSG_ERROR([** MinGW and no winsock2.h.  I give up.])])
+     LIBS="$LIBS -lws2_32 -liphlpapi"
+     is_mingw="yes"
+     ;;
+*)
+     ;;
+esac
+
+AM_CONDITIONAL([MINGW], [test "$is_mingw" = "yes"])
 
 if test "$ac_cv_c_compiler_gnu" = yes; then
 	IRC_CFLAGS="$IRC_CFLAGS -O0 -Wall"
@@ -141,18 +160,12 @@ AC_CHECK_SIZEOF(long long)
 dnl Networking Functions
 dnl ====================
 
-AC_SEARCH_LIBS(socket, socket, , [AC_MSG_ERROR([You have no socket()! Aborting.])])
+AC_SEARCH_LIBS(socket, [socket ws2_32], , [AC_MSG_ERROR([You have no socket()! Aborting.])])
 
 dnl SunOS/Solaris required libnsl for inet_ntoa()
 if test x"$SUN" = xyes; then
 	AC_SEARCH_LIBS(inet_ntoa, nsl,, [AC_MSG_ERROR([libnsl not found! Aborting.])])
 fi
-
-AC_CHECK_TYPE(socklen_t, ,
-[AC_DEFINE([socklen_t], [unsigned int],
-[If we don't have a real socklen_t, unsigned int is good enough.])],
-[#include <sys/types.h>
-#include <sys/socket.h>])
 
 AC_ARG_ENABLE(ipv6,
 AC_HELP_STRING([--enable-ipv6],[Enable IPv6 support]),[ipv6=$enableval],[ipv6=no])
@@ -507,18 +520,6 @@ AC_HELP_STRING([--enable-oper-chghost],[Enable opers to use the CHGHOST command]
 
 if test "$operchghost" = yes; then
 	AC_DEFINE(ENABLE_OPER_CHGHOST, 1, [Define this to enable opers to use the CHGHOST command.])
-fi
-
-dnl **********************************************************************
-dnl Enable ignoring of bogus timestamps
-dnl **********************************************************************
-
-AC_ARG_ENABLE(ignore-bogus-ts,
-AC_HELP_STRING([--enable-ignore-bogus-ts],[Enable the reset of timestamps in channels to current time if set to 0. Set this network wide or not at all.]),
-[ignorebogusts=$enableval],[ignorebogusts=no])
-
-if test "$ignorebogusts" = yes; then
-	AC_DEFINE(IGNORE_BOGUS_TS, 1, [Define this to enable the reset of timestamps in channels to current time if set to 0.])
 fi
 
 dnl Debug-related options

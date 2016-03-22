@@ -26,11 +26,7 @@
 #ifndef INCLUDED_client_h
 #define INCLUDED_client_h
 
-#include "config.h"
-
-#if !defined(CONFIG_CHARYBDIS_LEVEL_1)
-#error Incorrect config.h for this revision of ircd.
-#endif
+#include "defaults.h"
 
 #include "ircd_defs.h"
 #include "channel.h"

@@ -25,9 +25,12 @@
 #ifndef INCLUDED_defaults_h
 #define INCLUDED_defaults_h
 
-/* this file is included (only) at the end of config.h, to supply default
- * values for things which are now configurable at runtime.
+/* /!\ DANGER WILL ROBINSON! DANGER! /!\
+ *
+ * Do not mess with these values unless you know what you are doing!
  */
+
+#include "setup.h"
 
 /*
  * First, set other fd limits based on values from user
@@ -59,5 +62,64 @@
 #define JOIN_LEAVE_COUNT_EXPIRE_TIME 120
 #define MIN_SPAM_NUM 5
 #define MIN_SPAM_TIME 60
-#define CONFIG_CHARYBDIS_LEVEL_1
+
+/*
+ * Directory paths and filenames for UNIX systems.
+ * IRCD_PREFIX is set using ./configure --prefix, see INSTALL.
+ *
+ * IRCD_PREFIX = prefix for all directories,
+ * DPATH       = root directory of installation,
+ * BINPATH     = directory for binary files,
+ * ETCPATH     = directory for configuration files,
+ * LOGPATH     = directory for logfiles,
+ * MODPATH     = directory for modules,
+ * AUTOMODPATH = directory for autoloaded modules
+ */
+
+#define DPATH   IRCD_PREFIX
+#define BINPATH IRCD_PREFIX "/bin/"
+#define MODPATH MODULE_DIR
+#define AUTOMODPATH MODULE_DIR "/autoload/"
+#define ETCPATH ETC_DIR
+#define LOGPATH LOG_DIR
+#define UHPATH   HELP_DIR "/users"
+#define HPATH  HELP_DIR "/opers"
+#define SPATH    BINPATH "/" PROGRAM_PREFIX "charybdis"		   /* ircd executable */
+#define CPATH    ETCPATH "/ircd.conf"		                   /* ircd.conf file */
+#define MPATH    ETCPATH "/ircd.motd"		                   /* MOTD file */
+#define LPATH    LOGPATH "/ircd.log"		                   /* ircd logfile */
+#define PPATH    PKGRUNDIR "/ircd.pid"		                   /* pid file */
+#define OPATH    ETCPATH "/opers.motd"		                   /* oper MOTD file */
+#define DBPATH   PKGLOCALSTATEDIR "/ban.db"                        /* bandb file */
+
+/* HANGONGOODLINK and HANGONRETRYDELAY
+ * Often net breaks for a short time and it's useful to try to
+ * establishing the same connection again faster than CONNECTFREQUENCY
+ * would allow. But, to keep trying on bad connection, we require
+ * that connection has been open for certain minimum time
+ * (HANGONGOODLINK) and we give the net few seconds to steady
+ * (HANGONRETRYDELAY). This latter has to be long enough that the
+ * other end of the connection has time to notice it broke too.
+ */
+#define HANGONRETRYDELAY 60	/* Recommended value: 30-60 seconds */
+#define HANGONGOODLINK 3600	/* Recommended value: 30-60 minutes */
+
+/* KILLCHASETIMELIMIT -
+ * Max time from the nickname change that still causes KILL
+ * automatically to switch for the current nick of that user. (seconds)
+ */
+#define KILLCHASETIMELIMIT 90	/* Recommended value: 90 */
+
+/* MAX_BUFFER
+ * The amount of fds to reserve for clients exempt from limits
+ * and dns lookups.
+ */
+#define MAX_BUFFER      60
+
+/* CHARYBDIS_SOMAXCONN
+ * Use SOMAXCONN if OS has it, otherwise use this value for the
+ * listen(); backlog.  5 for AIX/SUNOS, 25 for other OSs.
+ */
+#define CHARYBDIS_SOMAXCONN 25
+
 #endif				/* INCLUDED_defaults_h */

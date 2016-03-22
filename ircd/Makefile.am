@@ -14,6 +14,10 @@ version.c: version.c.SH ../CREDITS ../include/patchlevel.h ../include/serno.h
 	$(CP) version.c version.c.last
 	touch version.c.SH
 
+if MINGW
+EXTRA_FLAGS = -Wl,--enable-runtime-pseudo-reloc -export-symbols-regex '*'
+endif
+
 libircd_la_SOURCES =                  \
   authd.c			\
   bandbi.c                      \

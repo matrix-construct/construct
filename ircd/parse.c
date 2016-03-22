@@ -45,9 +45,6 @@
 struct Dictionary *cmd_dict = NULL;
 struct Dictionary *alias_dict = NULL;
 
-/* parv[0] is not used, and parv[LAST] == NULL */
-static char *para[MAXPARA + 2];
-
 static void cancel_clients(struct Client *, struct Client *);
 static void remove_unknown(struct Client *, const char *, char *);
 
@@ -82,7 +79,7 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 {
 	struct Client *from = client_p;
 	char *end;
-	int i = 1, res;
+	int res;
 	int numeric = 0;
 	struct Message *mptr;
 	struct MsgBuf msgbuf;
@@ -107,7 +104,7 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 		return;
 	}
 
-	if (msgbuf.origin != NULL)
+	if (msgbuf.origin != NULL && IsServer(client_p))
 	{
 		from = find_client(msgbuf.origin);
 
@@ -186,7 +183,7 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 			/* Its expected this nasty code can be removed
 			 * or rewritten later if still needed.
 			 */
-			if((unsigned long) (p + 8) > (unsigned long) end)
+			if((p + 8) > end)
 			{
 				for (; p <= end; p++)
 				{

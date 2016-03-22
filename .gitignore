@@ -46,11 +46,11 @@ scripts/*.tar.gz
 include/setup.h
 include/setup.h.in
 ircd/charybdis
-ircd/lex.yy.c
+ircd/ircd_parser.c
+ircd/ircd_parser.h
+ircd/ircd_lexer.c
 ircd/version.c
 ircd/version.c.last
-ircd/y.tab.h
-ircd/y.tab.c
 ssld/ssld
 tools/charybdis-mkpasswd
 tools/genssl

@@ -142,53 +142,53 @@ static void stats_capability(struct Client *);
  */
 static struct stats_cmd stats_cmd_table[256] = {
 /*	letter	handler/handler_parv			parv	oper	admin	*/
-	['a'] = { stats_dns_servers,			false,	true,	true,	},
-	['A'] = { stats_dns_servers,			false,	true,	true,	},
-	['b'] = { stats_delay,				false,	true,	true,	},
-	['B'] = { stats_hash,				false,	true,	true,	},
-	['c'] = { stats_connect,			false,	false,	false,	},
-	['C'] = { stats_capability,			false,	true,	false,	},
-	['d'] = { stats_tdeny,				false,	true,	false,	},
-	['D'] = { stats_deny,				false,	true,	false,	},
-	['e'] = { stats_exempt,				false,	true,	false,	},
-	['E'] = { stats_events,				false,	true,	true,	},
-	['f'] = { stats_comm,				false,	true,	true,	},
-	['F'] = { stats_comm,				false,	true,	true,	},
-	['g'] = { stats_prop_klines,			false,	true,	false,	},
-	['h'] = { stats_hubleaf,			false,	false,	false,	},
-	['H'] = { stats_hubleaf,			false,	false,	false,	},
-	['i'] = { stats_auth,				false,	false,	false,	},
-	['I'] = { stats_auth,				false,	false,	false,	},
-	['k'] = { stats_tklines,			false,	false,	false,	},
-	['K'] = { stats_klines,				false,	false,	false,	},
-	['l'] = { .handler_parv = stats_ltrace,		true,	false,	false,	},
-	['L'] = { .handler_parv = stats_ltrace,		true,	false,	false,	},
-	['m'] = { stats_messages,			false,	false,	false,	},
-	['M'] = { stats_messages,			false,	false,	false,	},
-	['n'] = { stats_dnsbl,				false,	false,	false,	},
-	['o'] = { stats_oper,				false,	false,	false,	},
-	['O'] = { stats_privset,			false,	true,	false,	},
-	['p'] = { stats_operedup,			false,	false,	false,	},
-	['P'] = { stats_ports,				false,	false,	false,	},
-	['q'] = { stats_tresv,				false,	true,	false,	},
-	['Q'] = { stats_resv,				false,	true,	false,	},
-	['r'] = { stats_usage,				false,	true,	false,	},
-	['R'] = { stats_usage,				false,	true,	false,	},
-	['s'] = { stats_ssld,				false,	true,	true,	},
-	['S'] = { stats_ssld,				false,	true,	true,	},
-	['t'] = { stats_tstats,				false,	true,	false,	},
-	['T'] = { stats_tstats,				false,	true,	false,	},
-	['u'] = { stats_uptime,				false,	false,	false,	},
-	['U'] = { stats_shared,				false,	true,	false,	},
-	['v'] = { stats_servers,			false,	false,	false,	},
-	['V'] = { stats_servers,			false,	false,	false,	},
-	['x'] = { stats_tgecos,				false,	true,	false,	},
-	['X'] = { stats_gecos,				false,	true,	false,	},
-	['y'] = { stats_class,				false,	false,	false,	},
-	['Y'] = { stats_class,				false,	false,	false,	},
-	['z'] = { stats_memory,				false,	true,	false,	},
-	['Z'] = { stats_ziplinks,			false,	true,	false,	},
-	['?'] = { stats_servlinks,			false,	false,	false,	},
+	['a'] = { { stats_dns_servers },			false,	true,	true,	},
+	['A'] = { { stats_dns_servers },			false,	true,	true,	},
+	['b'] = { { stats_delay },				false,	true,	true,	},
+	['B'] = { { stats_hash },				false,	true,	true,	},
+	['c'] = { { stats_connect },			false,	false,	false,	},
+	['C'] = { { stats_capability },			false,	true,	false,	},
+	['d'] = { { stats_tdeny },				false,	true,	false,	},
+	['D'] = { { stats_deny },				false,	true,	false,	},
+	['e'] = { { stats_exempt },				false,	true,	false,	},
+	['E'] = { { stats_events },				false,	true,	true,	},
+	['f'] = { { stats_comm },				false,	true,	true,	},
+	['F'] = { { stats_comm },				false,	true,	true,	},
+	['g'] = { { stats_prop_klines },			false,	true,	false,	},
+	['h'] = { { stats_hubleaf },			false,	false,	false,	},
+	['H'] = { { stats_hubleaf },			false,	false,	false,	},
+	['i'] = { { stats_auth },				false,	false,	false,	},
+	['I'] = { { stats_auth },				false,	false,	false,	},
+	['k'] = { { stats_tklines },			false,	false,	false,	},
+	['K'] = { { stats_klines },				false,	false,	false,	},
+	['l'] = { { .handler_parv = stats_ltrace },		true,	false,	false,	},
+	['L'] = { { .handler_parv = stats_ltrace },		true,	false,	false,	},
+	['m'] = { { stats_messages },			false,	false,	false,	},
+	['M'] = { { stats_messages },			false,	false,	false,	},
+	['n'] = { { stats_dnsbl },				false,	false,	false,	},
+	['o'] = { { stats_oper },				false,	false,	false,	},
+	['O'] = { { stats_privset },			false,	true,	false,	},
+	['p'] = { { stats_operedup },			false,	false,	false,	},
+	['P'] = { { stats_ports },				false,	false,	false,	},
+	['q'] = { { stats_tresv },				false,	true,	false,	},
+	['Q'] = { { stats_resv },				false,	true,	false,	},
+	['r'] = { { stats_usage },				false,	true,	false,	},
+	['R'] = { { stats_usage },				false,	true,	false,	},
+	['s'] = { { stats_ssld },				false,	true,	true,	},
+	['S'] = { { stats_ssld },				false,	true,	true,	},
+	['t'] = { { stats_tstats },				false,	true,	false,	},
+	['T'] = { { stats_tstats },				false,	true,	false,	},
+	['u'] = { { stats_uptime },				false,	false,	false,	},
+	['U'] = { { stats_shared },				false,	true,	false,	},
+	['v'] = { { stats_servers },			false,	false,	false,	},
+	['V'] = { { stats_servers },			false,	false,	false,	},
+	['x'] = { { stats_tgecos },				false,	true,	false,	},
+	['X'] = { { stats_gecos },				false,	true,	false,	},
+	['y'] = { { stats_class },				false,	false,	false,	},
+	['Y'] = { { stats_class },				false,	false,	false,	},
+	['z'] = { { stats_memory },				false,	true,	false,	},
+	['Z'] = { { stats_ziplinks },			false,	true,	false,	},
+	['?'] = { { stats_servlinks },			false,	false,	false,	},
 };
 
 /*
@@ -204,9 +204,8 @@ static void
 m_stats(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
-	int i;
 	struct stats_cmd *cmd;
-	char statchar;
+	unsigned char statchar;
 	int did_stats = 0;
 
 	statchar = parv[1][0];
@@ -566,7 +565,7 @@ stats_auth (struct Client *source_p)
 			aconf = find_conf_by_address (source_p->host, source_p->sockhost, NULL,
 						      (struct sockaddr *)&source_p->localClient->ip,
 						      CONF_CLIENT,
-						      source_p->localClient->ip.ss_family,
+						      GET_SS_FAMILY(&source_p->localClient->ip),
 						      source_p->username, NULL);
 		else
 			aconf = find_conf_by_address (source_p->host, NULL, NULL, NULL, CONF_CLIENT,
@@ -608,7 +607,7 @@ stats_tklines(struct Client *source_p)
 			aconf = find_conf_by_address (source_p->host, source_p->sockhost, NULL,
 						      (struct sockaddr *)&source_p->localClient->ip,
 						      CONF_KILL,
-						      source_p->localClient->ip.ss_family,
+						      GET_SS_FAMILY(&source_p->localClient->ip),
 						      source_p->username, NULL);
 		else
 			aconf = find_conf_by_address (source_p->host, NULL, NULL, NULL, CONF_KILL,
@@ -711,7 +710,7 @@ stats_klines(struct Client *source_p)
 			aconf = find_conf_by_address (source_p->host, source_p->sockhost, NULL,
 						      (struct sockaddr *)&source_p->localClient->ip,
 						      CONF_KILL,
-						      source_p->localClient->ip.ss_family,
+						      GET_SS_FAMILY(&source_p->localClient->ip),
 						      source_p->username, NULL);
 		else
 			aconf = find_conf_by_address (source_p->host, NULL, NULL, NULL, CONF_KILL,
@@ -873,7 +872,6 @@ stats_tresv(struct Client *source_p)
 	struct ConfItem *aconf;
 	struct rb_radixtree_iteration_state state;
 	rb_dlink_node *ptr;
-	int i;
 
 	RB_DLINK_FOREACH(ptr, resv_conf_list.head)
 	{
@@ -900,7 +898,6 @@ stats_resv(struct Client *source_p)
 	struct ConfItem *aconf;
 	struct rb_radixtree_iteration_state state;
 	rb_dlink_node *ptr;
-	int i;
 
 	RB_DLINK_FOREACH(ptr, resv_conf_list.head)
 	{
@@ -942,6 +939,7 @@ stats_ssld(struct Client *source_p)
 static void
 stats_usage (struct Client *source_p)
 {
+#ifndef _WIN32
 	struct rusage rus;
 	time_t secs;
 	time_t rup;
@@ -993,6 +991,7 @@ stats_usage (struct Client *source_p)
 			   "R :Signals %d Context Vol. %d Invol %d",
 			   (int) rus.ru_nsignals, (int) rus.ru_nvcsw,
 			   (int) rus.ru_nivcsw);
+#endif
 }
 
 static void

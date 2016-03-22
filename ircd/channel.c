@@ -581,7 +581,7 @@ is_banned_list(struct Channel *chptr, rb_dlink_list *list,
 		}
 	}
 #ifdef RB_IPV6
-	if(who->localClient->ip.ss_family == AF_INET6 &&
+	if(GET_SS_FAMILY(&who->localClient->ip) == AF_INET6 &&
 			ipv4_from_ipv6((const struct sockaddr_in6 *)&who->localClient->ip, &ip4))
 	{
 		sprintf(src_ip4host, "%s!%s@", who->name, who->username);

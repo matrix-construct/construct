@@ -119,13 +119,10 @@ handle_lookup_ip_reply(void *data, struct DNSReply *reply)
 {
 	struct dns_query *query = data;
 	char ip[64] = "*";
-	query_type type = QUERY_INVALID;
 
-	if(!query)
+	if(query == NULL)
 		/* Shouldn't happen */
 		exit(2);
-
-	type = query->type;
 
 	if(reply == NULL)
 		goto end;
@@ -155,7 +152,7 @@ handle_lookup_ip_reply(void *data, struct DNSReply *reply)
 
 end:
 	if(query->callback)
-		query->callback(ip, ip[0] != '*', type, query->data);
+		query->callback(ip, ip[0] != '*', query->type, query->data);
 
 	rb_free(query);
 }
@@ -166,13 +163,10 @@ handle_lookup_hostname_reply(void *data, struct DNSReply *reply)
 {
 	struct dns_query *query = data;
 	char *hostname = NULL;
-	query_type type = QUERY_INVALID;
 
 	if(query == NULL)
 		/* Shouldn't happen */
 		exit(4);
-
-	type = query->type;
 
 	if(reply == NULL)
 		goto end;
