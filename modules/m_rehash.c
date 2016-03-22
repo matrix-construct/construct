@@ -200,7 +200,6 @@ rehash_tresvs(struct Client *source_p)
 	struct rb_radixtree_iteration_state iter;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
-	int i;
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing temp resvs",
 				get_oper_name(source_p));

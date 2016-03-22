@@ -155,7 +155,7 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags)
 	char buf[BUFSIZE] = { 0 };
 	char capbuf[BUFSIZE] = { 0 };
 	int buflen = 0;
-	int curlen, mlen;
+	int mlen;
 	struct CapabilityEntry *entry;
 	struct DictionaryIter iter;
 

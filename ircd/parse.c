@@ -45,9 +45,6 @@
 struct Dictionary *cmd_dict = NULL;
 struct Dictionary *alias_dict = NULL;
 
-/* parv[0] is not used, and parv[LAST] == NULL */
-static char *para[MAXPARA + 2];
-
 static void cancel_clients(struct Client *, struct Client *);
 static void remove_unknown(struct Client *, const char *, char *);
 
@@ -82,7 +79,7 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 {
 	struct Client *from = client_p;
 	char *end;
-	int i = 1, res;
+	int res;
 	int numeric = 0;
 	struct Message *mptr;
 	struct MsgBuf msgbuf;

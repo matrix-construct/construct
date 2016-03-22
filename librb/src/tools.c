@@ -210,12 +210,10 @@ rb_strnlen(const char *s, size_t count)
 int
 rb_snprintf_append(char *str, size_t len, const char *format, ...)
 {
-	int x;
-
 	if(len == 0)
 		return 0;
 
-	x = strlen(str);
+	size_t x = strlen(str);
 
 	if(len < x)
 	{
@@ -225,10 +223,10 @@ rb_snprintf_append(char *str, size_t len, const char *format, ...)
 
 	va_list ap;
 	va_start(ap, format);
-	x = (vsnprintf(str + x, len - x, format, ap) + (int)x);
+	int y = (vsnprintf(str + x, len - x, format, ap) + (int)x);
 	va_end(ap);
 
-	return (x);
+	return (y);
 }
 
 /* rb_basename

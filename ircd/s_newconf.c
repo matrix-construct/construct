@@ -685,7 +685,6 @@ expire_temp_rxlines(void *unused)
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
-	int i;
 	struct rb_radixtree_iteration_state state;
 
 	RB_RADIXTREE_FOREACH(aconf, &state, resv_tree)

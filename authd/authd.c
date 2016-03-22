@@ -50,7 +50,7 @@ handle_stat(int parc, char *parv[])
 		 /* XXX Should log this somehow */
 		return;
 
-	if (!(handler = authd_stat_handlers[parv[2][0]]))
+	if (!(handler = authd_stat_handlers[(unsigned char)parv[2][0]]))
 		return;
 
 	handler(parv[1], parv[2][0]);
@@ -65,7 +65,7 @@ handle_reload(int parc, char *parv[])
 		 /* XXX Should log this somehow */
 		return;
 
-	if (!(handler = authd_reload_handlers[parv[1][0]]))
+	if (!(handler = authd_reload_handlers[(unsigned char)parv[1][0]]))
 		return;
 
 	handler(parv[1][0]);
@@ -87,7 +87,7 @@ parse_request(rb_helper *helper)
 		if(parc < 1)
 			continue;
 
-		handler = authd_cmd_handlers[parv[0][0]];
+		handler = authd_cmd_handlers[(unsigned char)parv[0][0]];
 		if (handler != NULL)
 			handler(parc, parv);
 	}
