@@ -23,7 +23,6 @@
 #include "stdinc.h"
 #include "channel.h"
 #include "client.h"
-#include "common.h"
 
 ExtbanFunc extban_table[256] = { NULL };
 

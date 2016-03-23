@@ -34,7 +34,6 @@
 /* List of ircd includes from ../include/ */
 #include "stdinc.h"
 #include "client.h"
-#include "common.h"
 #include "ircd.h"
 #include "match.h"
 #include "numeric.h"

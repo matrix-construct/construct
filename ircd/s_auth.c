@@ -38,7 +38,6 @@
 #include "s_auth.h"
 #include "s_conf.h"
 #include "client.h"
-#include "common.h"
 #include "match.h"
 #include "ircd.h"
 #include "numeric.h"

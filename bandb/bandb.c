@@ -31,7 +31,7 @@
 #include <rb_lib.h>
 #include <stdio.h>
 #include "rsdb.h"
-#include "common.h"
+#include "ircd_defs.h"
 
 
 #define MAXPARA 10

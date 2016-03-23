@@ -26,7 +26,6 @@
 #include "channel.h"
 #include "class.h"
 #include "client.h"
-#include "common.h"
 #include "match.h"
 #include "ircd.h"
 #include "hostmask.h"

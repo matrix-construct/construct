@@ -31,7 +31,6 @@
 #include "send.h"
 #include "channel.h"
 #include "client.h"
-#include "common.h"
 #include "defaults.h"
 #include "ircd.h"
 #include "numeric.h"

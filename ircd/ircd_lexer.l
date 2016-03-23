@@ -33,7 +33,6 @@
 
 #include "stdinc.h"
 #include "ircd_defs.h"
-#include "common.h"
 #include "defaults.h"
 #include "logger.h"
 #include "s_conf.h"
@@ -53,8 +52,8 @@ void cinclude(void);
 void hashcomment(void);
 int ieof(void);
 int lineno_stack[MAX_INCLUDE_DEPTH];
-char conffile_stack[MAX_INCLUDE_DEPTH][IRCD_BUFSIZE];
-char conffilebuf[IRCD_BUFSIZE+1];
+char conffile_stack[MAX_INCLUDE_DEPTH][BUFSIZE];
+char conffilebuf[BUFSIZE+1];
 char *current_file = conffilebuf;
 
 FILE *inc_fbfile_in[MAX_INCLUDE_DEPTH];
@@ -195,7 +194,7 @@ void cinclude(void)
     if (tmp_fbfile_in == NULL)
     {
       /* if its not found in PREFIX, look in ETCPATH */
-      char fnamebuf[IRCD_BUFSIZE];
+      char fnamebuf[BUFSIZE];
 
       snprintf(fnamebuf, sizeof(fnamebuf), "%s/%s", ETCPATH, c);
       tmp_fbfile_in = fopen(fnamebuf, "r");

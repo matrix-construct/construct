@@ -31,7 +31,6 @@
 #include "numeric.h"
 #include "s_serv.h"
 #include "send.h"
-#include "common.h"
 #include "channel.h"
 #include "s_conf.h"
 #include "s_newconf.h"

@@ -29,7 +29,6 @@
 
 #include "stdinc.h"
 #include "client.h"
-#include "common.h"
 #include "match.h"
 #include "hash.h"
 #include "ircd.h"

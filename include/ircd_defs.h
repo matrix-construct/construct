@@ -56,6 +56,14 @@
 #define IRC_DEPRECATED
 #endif
 
+#ifndef MAX
+#define MAX(a, b)	((a) > (b) ? (a) : (b))
+#endif
+
+#ifndef MIN
+#define MIN(a, b)	((a) < (b) ? (a) : (b))
+#endif
+
 #define HOSTLEN         63	/* Length of hostname.  Updated to         */
 				/* comply with RFC1123                     */
 
@@ -114,5 +122,8 @@
 #else
 #define PATRICIA_BITS	32
 #endif
+
+/* Read buffer size */
+#define READBUF_SIZE 16384
 
 #endif /* INCLUDED_ircd_defs_h */

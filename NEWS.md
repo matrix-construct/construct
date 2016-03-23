@@ -46,8 +46,7 @@ See LICENSE for licensing details (GPL v2).
   Typedefs have been added for consistency reasons. For example, now you would
   write `rb_dictionary *foo` and `RB_DICTIONARY_FOREACH`.
 - C99 bools have been added. Don't use ints as simple true/false flags anymore.
-  Don't use `YES`/`NO` or `TRUE`/`FALSE` macros (`TRUE`/`FALSE` has been removed
-  and `YES`/`NO` is awaiting the same fate). Use just `true` and `false`.
+  Accordingly, the `YES`/`NO` and `TRUE`/`FALSE` macros have been removed.
 - libratbox has been renamed to librb, as we have diverged from upstream long
   ago.
 - Almost all 2.8-style hashtable structures have been moved to dictionaries or

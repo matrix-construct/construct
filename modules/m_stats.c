@@ -25,7 +25,6 @@
 #include "stdinc.h"
 #include "class.h"		/* report_classes */
 #include "client.h"		/* Client */
-#include "common.h"
 #include "match.h"
 #include "ircd.h"		/* me */
 #include "listener.h"		/* show_ports */

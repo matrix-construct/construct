@@ -23,7 +23,6 @@
  */
 
 #include "stdinc.h"
-#include "common.h"
 #include "client.h"
 #include "hash.h"
 #include "channel.h"

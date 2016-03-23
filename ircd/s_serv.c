@@ -31,7 +31,6 @@
 #include "s_serv.h"
 #include "class.h"
 #include "client.h"
-#include "common.h"
 #include "hash.h"
 #include "match.h"
 #include "ircd.h"

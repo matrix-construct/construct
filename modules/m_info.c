@@ -26,7 +26,6 @@
 #include "m_info.h"
 #include "channel.h"
 #include "client.h"
-#include "common.h"
 #include "match.h"
 #include "ircd.h"
 #include "hook.h"

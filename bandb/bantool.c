@@ -40,7 +40,6 @@
 #include <time.h>
 
 #include "stdinc.h"
-#include "common.h"
 #include "rsdb.h"
 
 #define EmptyString(x) ((x == NULL) || (*(x) == '\0'))
