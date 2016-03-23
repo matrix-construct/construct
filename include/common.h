@@ -25,12 +25,6 @@
 #ifndef INCLUDED_common_h
 #define INCLUDED_common_h
 
-
-#ifndef NULL
-#define NULL 0
-#endif
-
-
 /* Just blindly define our own MIN/MAX macro */
 
 #define IRCD_MAX(a, b)  ((a) > (b) ? (a) : (b))
