@@ -47,8 +47,8 @@ struct cacheline *emptyline = NULL;
 rb_dlink_list links_cache_list;
 char user_motd_changed[MAX_DATE_STRING];
 
-struct Dictionary *help_dict_oper = NULL;
-struct Dictionary *help_dict_user = NULL;
+rb_dictionary *help_dict_oper = NULL;
+rb_dictionary *help_dict_user = NULL;
 
 /* init_cache()
  *
@@ -237,7 +237,7 @@ load_help(void)
 	struct dirent *ldirent= NULL;
 	char filename[PATH_MAX];
 	struct cachefile *cacheptr;
-	struct DictionaryIter iter;
+	rb_dictionary_iter iter;
 
 #if defined(S_ISLNK) && defined(HAVE_LSTAT)
 	struct stat sb;

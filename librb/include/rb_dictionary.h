@@ -27,21 +27,25 @@
 
 #include "librb-config.h"
 
-struct Dictionary; /* defined in src/dictionary.c */
+typedef struct rb_dictionary rb_dictionary;
+typedef struct rb_dictionary_element rb_dictionary_element;
+typedef struct rb_dictionary_iter rb_dictionary_iter;
+
+struct rb_dictionary;
 
 typedef int (*DCF)(/* const void *a, const void *b */);
 
-struct DictionaryElement
+struct rb_dictionary_element
 {
-	struct DictionaryElement *left, *right, *prev, *next;
+	rb_dictionary_element *left, *right, *prev, *next;
 	void *data;
 	const void *key;
 	int position;
 };
 
-struct DictionaryIter
+struct rb_dictionary_iter
 {
-	struct DictionaryElement *cur, *next;
+	rb_dictionary_element *cur, *next;
 };
 
 /*
@@ -53,33 +57,33 @@ struct DictionaryIter
  * rb_dictionary_create_named() creates a new dictionary tree which has a name.
  * name is the name, compare_cb is the comparator.
  */
-extern struct Dictionary *rb_dictionary_create(const char *name, DCF compare_cb);
+extern rb_dictionary *rb_dictionary_create(const char *name, DCF compare_cb);
 
 /*
  * rb_dictionary_set_comparator_func() resets the comparator used for lookups and
  * insertions in the DTree structure.
  */
-extern void rb_dictionary_set_comparator_func(struct Dictionary *dict,
+extern void rb_dictionary_set_comparator_func(rb_dictionary *dict,
 	DCF compare_cb);
 
 /*
  * rb_dictionary_get_comparator_func() returns the comparator used for lookups and
  * insertions in the DTree structure.
  */
-extern DCF rb_dictionary_get_comparator_func(struct Dictionary *dict);
+extern DCF rb_dictionary_get_comparator_func(rb_dictionary *dict);
 
 /*
  * rb_dictionary_get_linear_index() returns the linear index of an object in the
  * DTree structure.
  */
-extern int rb_dictionary_get_linear_index(struct Dictionary *dict, const void *key);
+extern int rb_dictionary_get_linear_index(rb_dictionary *dict, const void *key);
 
 /*
  * rb_dictionary_destroy() destroys all entries in a dtree, and also optionally calls
  * a defined callback function to destroy any data attached to it.
  */
-extern void rb_dictionary_destroy(struct Dictionary *dtree,
-	void (*destroy_cb)(struct DictionaryElement *delem, void *privdata),
+extern void rb_dictionary_destroy(rb_dictionary *dtree,
+	void (*destroy_cb)(rb_dictionary_element *delem, void *privdata),
 	void *privdata);
 
 /*
@@ -88,8 +92,8 @@ extern void rb_dictionary_destroy(struct Dictionary *dtree,
  *
  * To shortcircuit iteration, return non-zero from the callback function.
  */
-extern void rb_dictionary_foreach(struct Dictionary *dtree,
-	int (*foreach_cb)(struct DictionaryElement *delem, void *privdata),
+extern void rb_dictionary_foreach(rb_dictionary *dtree,
+	int (*foreach_cb)(rb_dictionary_element *delem, void *privdata),
 	void *privdata);
 
 /*
@@ -99,8 +103,8 @@ extern void rb_dictionary_foreach(struct Dictionary *dtree,
  * When the object is found, a non-NULL is returned from the callback, which results
  * in that object being returned to the user.
  */
-extern void *rb_dictionary_search(struct Dictionary *dtree,
-	void *(*foreach_cb)(struct DictionaryElement *delem, void *privdata),
+extern void *rb_dictionary_search(rb_dictionary *dtree,
+	void *(*foreach_cb)(rb_dictionary_element *delem, void *privdata),
 	void *privdata);
 
 /*
@@ -109,48 +113,48 @@ extern void *rb_dictionary_search(struct Dictionary *dtree,
  * in progress at a time, it is permitted to remove the current element
  * of the iteration (but not any other element).
  */
-extern void rb_dictionary_foreach_start(struct Dictionary *dtree,
-	struct DictionaryIter *state);
+extern void rb_dictionary_foreach_start(rb_dictionary *dtree,
+	rb_dictionary_iter *state);
 
 /*
  * rb_dictionary_foreach_cur() returns the current element of the iteration,
  * or NULL if there are no more elements.
  */
-extern void *rb_dictionary_foreach_cur(struct Dictionary *dtree,
-	struct DictionaryIter *state);
+extern void *rb_dictionary_foreach_cur(rb_dictionary *dtree,
+	rb_dictionary_iter *state);
 
 /*
  * rb_dictionary_foreach_next() moves to the next element.
  */
-extern void rb_dictionary_foreach_next(struct Dictionary *dtree,
-	struct DictionaryIter *state);
+extern void rb_dictionary_foreach_next(rb_dictionary *dtree,
+	rb_dictionary_iter *state);
 
 /*
  * rb_dictionary_add() adds a key->value entry to the dictionary tree.
  */
-extern struct DictionaryElement *rb_dictionary_add(struct Dictionary *dtree, const void *key, void *data);
+extern rb_dictionary_element *rb_dictionary_add(rb_dictionary *dtree, const void *key, void *data);
 
 /*
- * rb_dictionary_find() returns a struct DictionaryElement container from a dtree for key 'key'.
+ * rb_dictionary_find() returns a rb_dictionary_element container from a dtree for key 'key'.
  */
-extern struct DictionaryElement *rb_dictionary_find(struct Dictionary *dtree, const void *key);
+extern rb_dictionary_element *rb_dictionary_find(rb_dictionary *dtree, const void *key);
 
 /*
  * rb_dictionary_find() returns data from a dtree for key 'key'.
  */
-extern void *rb_dictionary_retrieve(struct Dictionary *dtree, const void *key);
+extern void *rb_dictionary_retrieve(rb_dictionary *dtree, const void *key);
 
 /*
  * rb_dictionary_delete() deletes a key->value entry from the dictionary tree.
  */
-extern void *rb_dictionary_delete(struct Dictionary *dtree, const void *key);
+extern void *rb_dictionary_delete(rb_dictionary *dtree, const void *key);
 
 /*
  * rb_dictionary_size() returns the number of elements in a dictionary tree.
  */
-extern unsigned int rb_dictionary_size(struct Dictionary *dtree);
+extern unsigned int rb_dictionary_size(rb_dictionary *dtree);
 
-void rb_dictionary_stats(struct Dictionary *dict, void (*cb)(const char *line, void *privdata), void *privdata);
+void rb_dictionary_stats(rb_dictionary *dict, void (*cb)(const char *line, void *privdata), void *privdata);
 void rb_dictionary_stats_walk(void (*cb)(const char *line, void *privdata), void *privdata);
 
 #ifndef _WIN32

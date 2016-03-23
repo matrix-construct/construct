@@ -40,8 +40,8 @@
 #include "rb_dictionary.h"
 #include "rb_radixtree.h"
 
-struct Dictionary *client_connid_tree = NULL;
-struct Dictionary *client_zconnid_tree = NULL;
+rb_dictionary *client_connid_tree = NULL;
+rb_dictionary *client_zconnid_tree = NULL;
 struct rb_radixtree *client_id_tree = NULL;
 struct rb_radixtree *client_name_tree = NULL;
 

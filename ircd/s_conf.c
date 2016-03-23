@@ -1417,7 +1417,7 @@ read_conf_files(bool cold)
  * free an alias{} entry.
  */
 static void
-free_alias_cb(struct DictionaryElement *ptr, void *unused)
+free_alias_cb(rb_dictionary_element *ptr, void *unused)
 {
 	struct alias_entry *aptr = ptr->data;
 

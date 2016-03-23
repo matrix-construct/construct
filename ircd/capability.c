@@ -129,7 +129,7 @@ capability_require(struct CapabilityIndex *idx, const char *cap)
 }
 
 static void
-capability_destroy(struct DictionaryElement *delem, void *privdata)
+capability_destroy(rb_dictionary_element *delem, void *privdata)
 {
 	s_assert(delem != NULL);
 
@@ -165,7 +165,7 @@ capability_index_destroy(struct CapabilityIndex *idx)
 const char *
 capability_index_list(struct CapabilityIndex *idx, unsigned int cap_mask)
 {
-	struct DictionaryIter iter;
+	rb_dictionary_iter iter;
 	struct CapabilityEntry *entry;
 	static char buf[BUFSIZE];
 	char *t = buf;
@@ -193,7 +193,7 @@ capability_index_list(struct CapabilityIndex *idx, unsigned int cap_mask)
 unsigned int
 capability_index_mask(struct CapabilityIndex *idx)
 {
-	struct DictionaryIter iter;
+	rb_dictionary_iter iter;
 	struct CapabilityEntry *entry;
 	unsigned int mask = 0;
 
@@ -211,7 +211,7 @@ capability_index_mask(struct CapabilityIndex *idx)
 unsigned int
 capability_index_get_required(struct CapabilityIndex *idx)
 {
-	struct DictionaryIter iter;
+	rb_dictionary_iter iter;
 	struct CapabilityEntry *entry;
 	unsigned int mask = 0;
 
@@ -235,7 +235,7 @@ capability_index_stats(void (*cb)(const char *line, void *privdata), void *privd
 	RB_DLINK_FOREACH(node, capability_indexes.head)
 	{
 		struct CapabilityIndex *idx = node->data;
-		struct DictionaryIter iter;
+		rb_dictionary_iter iter;
 		struct CapabilityEntry *entry;
 
 		snprintf(buf, sizeof buf, "'%s': allocated bits - %d", idx->name, (idx->highest_bit - 1));

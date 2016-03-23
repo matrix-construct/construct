@@ -42,8 +42,8 @@
 #include "packet.h"
 #include "s_assert.h"
 
-struct Dictionary *cmd_dict = NULL;
-struct Dictionary *alias_dict = NULL;
+rb_dictionary *cmd_dict = NULL;
+rb_dictionary *alias_dict = NULL;
 
 static void cancel_clients(struct Client *, struct Client *);
 static void remove_unknown(struct Client *, const char *, char *);

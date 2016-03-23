@@ -79,7 +79,7 @@ static rb_bh *away_heap = NULL;
 static char current_uid[IDLEN];
 static int32_t current_connid = 0;
 
-struct Dictionary *nd_dict = NULL;
+rb_dictionary *nd_dict = NULL;
 
 enum
 {

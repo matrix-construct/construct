@@ -285,7 +285,7 @@ static void
 stats_delay(struct Client *source_p)
 {
 	struct nd_entry *nd;
-	struct DictionaryIter iter;
+	rb_dictionary_iter iter;
 
 	RB_DICTIONARY_FOREACH(nd, &iter, nd_dict)
 	{
@@ -734,7 +734,7 @@ stats_klines(struct Client *source_p)
 static void
 stats_messages(struct Client *source_p)
 {
-	struct DictionaryIter iter;
+	rb_dictionary_iter iter;
 	struct Message *msg;
 	struct alias_entry *amsg;
 

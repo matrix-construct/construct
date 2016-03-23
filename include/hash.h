@@ -25,10 +25,10 @@
 #ifndef INCLUDED_hash_h
 #define INCLUDED_hash_h
 
-struct Dictionary;
-struct rb_radixtree;
+#include "rb_dictionary.h"
+#include "rb_radixtree.h"
 
-extern struct Dictionary *nd_dict;
+extern rb_dictionary *nd_dict;
 extern struct rb_radixtree *resv_tree;
 extern struct rb_radixtree *channel_tree;
 

@@ -157,7 +157,7 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags)
 	int buflen = 0;
 	int mlen;
 	struct CapabilityEntry *entry;
-	struct DictionaryIter iter;
+	rb_dictionary_iter iter;
 
 	mlen = snprintf(buf, sizeof buf, ":%s CAP %s %s",
 			me.name,
