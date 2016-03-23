@@ -174,7 +174,7 @@ free_remote_conf(struct remote_conf *remote_p)
 	rb_free(remote_p);
 }
 
-int
+bool
 find_shared_conf(const char *username, const char *host,
 		const char *server, int flags)
 {
@@ -190,9 +190,9 @@ find_shared_conf(const char *username, const char *host,
 		   match(shared_p->server, server))
 		{
 			if(shared_p->flags & flags)
-				return YES;
+				return true;
 			else
-				return NO;
+				return false;
 		}
 	}
 
