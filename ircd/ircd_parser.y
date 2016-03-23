@@ -161,7 +161,7 @@ static void	add_cur_list(int type, char *str, int number)
 
 %union {
 	int		number;
-	char		string[IRCD_BUFSIZE + 1];
+	char		string[BUFSIZE + 1];
 	conf_parm_t *	conf_parm;
 }
 
