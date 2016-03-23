@@ -27,8 +27,6 @@
 
 struct user_query
 {
-	rb_dlink_node node;
-
 	struct dns_query *query;		/* Pending DNS query */
 	time_t timeout;				/* When the request times out */
 };
