@@ -40,9 +40,11 @@ struct auth_client
 
 	char l_ip[HOSTIPLEN + 1];		/* Listener IP address */
 	uint16_t l_port;			/* Listener port */
+	struct rb_sockaddr_storage l_addr;	/* Listener address/port */
 
 	char c_ip[HOSTIPLEN + 1];		/* Client IP address */
 	uint16_t c_port;			/* Client port */
+	struct rb_sockaddr_storage c_addr;	/* Client address/port */
 
 	char hostname[HOSTLEN + 1];		/* Used for DNS lookup */
 	char username[USERLEN + 1];		/* Used for ident lookup */
