@@ -86,7 +86,7 @@ void destroy_providers(void)
 	struct auth_provider *provider;
 
 	/* Cancel outstanding connections */
-	DICTIONARY_FOREACH(auth, &iter, auth_clients)
+	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
 		/* TBD - is this the right thing? */
 		reject_client(auth, 0, "Authentication system is down... try reconnecting in a few seconds");

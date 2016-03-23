@@ -74,7 +74,7 @@ struct auth_provider
 };
 
 extern rb_dlink_list auth_providers;
-extern struct Dictionary *auth_clients;
+extern rb_dictionary *auth_clients;
 
 extern struct auth_provider rdns_provider;
 extern struct auth_provider ident_provider;
