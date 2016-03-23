@@ -50,9 +50,8 @@ You will need to run `autogen.sh` to build the autotools files prior to building
    problems with ipv4 due to the way the socket code is written.  To
    fix this you must: "sysctl net.inet6.ip6.v6only=0"
 
- * SOLARIS USERS: this code appears to tickle a bug in older gcc and
-   egcs ONLY on 64-bit Solaris7.  gcc-2.95 and SunPro C on 64bit should
-   work fine, and any gcc or SunPro compiled on 32bit.
+ * SOLARIS USERS: you may have to set your PATH to include /usr/gnu/bin before /usr/bin. Solaris versions
+   older than 10 are not supported.
 
  * SUPPORTED PLATFORMS: this code should compile without any warnings on:
 
@@ -63,9 +62,8 @@ You will need to run `autogen.sh` to build the autotools files prior to building
    * OpenSuSE 11/12
    * OpenSolaris 2008.x?
    * Solaris 10 sparc.
+   * Solaris 11 x86
 
   Please let us know if you find otherwise. It may work on other platforms, but this is not guaranteed.
 
  * Please read NEWS for information about what is in this release.
-
- * Other files recommended for reading: BUGS, INSTALL
