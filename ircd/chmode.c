@@ -535,9 +535,9 @@ check_forward(struct Client *source_p, struct Channel *chptr,
 static char *
 fix_key(char *arg)
 {
-	u_char *s, *t, c;
+	unsigned char *s, *t, c;
 
-	for(s = t = (u_char *) arg; (c = *s); s++)
+	for(s = t = (unsigned char *) arg; (c = *s); s++)
 	{
 		c &= 0x7f;
 		if(c != ':' && c != ',' && c > ' ')
@@ -558,9 +558,9 @@ fix_key(char *arg)
 static char *
 fix_key_remote(char *arg)
 {
-	u_char *s, *t, c;
+	unsigned char *s, *t, c;
 
-	for(s = t = (u_char *) arg; (c = *s); s++)
+	for(s = t = (unsigned char *) arg; (c = *s); s++)
 	{
 		c &= 0x7f;
 		if((c != 0x0a) && (c != ':') && (c != ',') && (c != 0x0d) && (c != ' '))
