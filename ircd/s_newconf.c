@@ -196,7 +196,7 @@ find_shared_conf(const char *username, const char *host,
 		}
 	}
 
-	return NO;
+	return false;
 }
 
 void

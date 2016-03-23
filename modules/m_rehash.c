@@ -73,7 +73,7 @@ rehash_bans_loc(struct Client *source_p)
 	if (!MyConnect(source_p))
 		remote_rehash_oper_p = source_p;
 
-	rehash_bans(0);
+	rehash_bans();
 }
 
 static void

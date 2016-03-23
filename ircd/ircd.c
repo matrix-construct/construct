@@ -290,13 +290,13 @@ check_rehash(void *unused)
 	 */
 	if(dorehash)
 	{
-		rehash(1);
+		rehash(true);
 		dorehash = false;
 	}
 
 	if(dorehashbans)
 	{
-		rehash_bans(1);
+		rehash_bans();
 		dorehashbans = false;
 	}
 
@@ -696,7 +696,7 @@ charybdis_main(int argc, char *argv[])
 	init_bandb();
 	init_ssld();
 
-	rehash_bans(0);
+	rehash_bans();
 
 	initialize_server_capabs();	/* Set up default_server_capabs */
 	initialize_global_set_options();
