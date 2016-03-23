@@ -25,7 +25,7 @@
 #include <stdio.h>
 
 #include "setup.h"
-#include "common.h"
+#include "ircd_defs.h"
 
 extern rb_helper *authd_helper;
 

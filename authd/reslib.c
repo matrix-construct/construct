@@ -97,7 +97,6 @@ typedef struct rb_addrinfo rb_addrinfo;
 
 #include "stdinc.h"
 #include "ircd_defs.h"
-#include "common.h"
 #include "ircd.h"
 #include "res.h"
 #include "reslib.h"
