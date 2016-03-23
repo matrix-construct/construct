@@ -223,7 +223,7 @@ linebuf_put_msgvbuf(struct MsgBuf *msgbuf, buf_head_t *linebuf, unsigned int cap
 	rb_linebuf_newbuf(linebuf);
 	msgbuf_unparse_prefix(buf, sizeof buf, msgbuf, capmask);
 	rb_linebuf_putprefix(linebuf, pattern, va, buf);
-} 
+}
 
 /* linebuf_put_msgbuf
  *
@@ -505,7 +505,7 @@ sendto_channel_flags(struct Client *one, int type, struct Client *source_p,
 	struct membership *msptr;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
-	unsigned int current_capmask = 0;
+	int current_capmask = 0;
 	struct MsgBuf msgbuf;
 
 	rb_linebuf_newbuf(&rb_linebuf_local);

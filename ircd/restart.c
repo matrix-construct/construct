@@ -37,11 +37,11 @@ extern char **myargv;
 void
 restart(const char *mesg)
 {
-	static int was_here = NO;	/* redundant due to restarting flag below */
+	static bool was_here = false;	/* redundant due to restarting flag below */
 
 	if(was_here)
 		abort();
-	was_here = YES;
+	was_here = true;
 
 	ilog(L_MAIN, "Restarting Server because: %s", mesg);
 

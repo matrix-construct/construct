@@ -178,7 +178,13 @@ print_startup(int pid)
 	 * -- jilles */
 	if (!server_state_foreground)
 	{
-		(void) write(0, ".", 1);
+		/* GCC complains on Linux if we don't check the value of write pedantically.
+		 * Technically you're supposed to check the value, yes, but it probably can't fail.
+		 * No, casting to void is of no use to shut the warning up. You HAVE to use the value.
+		 * --Elizfaox
+		 */
+		if(write(0, ".", 1) < 1)
+			abort();
 	}
 	if (dup2(1, 0) == -1)
 		abort();
@@ -284,13 +290,13 @@ check_rehash(void *unused)
 	 */
 	if(dorehash)
 	{
-		rehash(1);
+		rehash(true);
 		dorehash = false;
 	}
 
 	if(dorehashbans)
 	{
-		rehash_bans(1);
+		rehash_bans();
 		dorehashbans = false;
 	}
 
@@ -690,7 +696,7 @@ charybdis_main(int argc, char *argv[])
 	init_bandb();
 	init_ssld();
 
-	rehash_bans(0);
+	rehash_bans();
 
 	initialize_server_capabs();	/* Set up default_server_capabs */
 	initialize_global_set_options();

@@ -373,8 +373,8 @@ extern void add_temp_dline(struct ConfItem *);
 extern void report_temp_klines(struct Client *);
 extern void show_temp_klines(struct Client *, rb_dlink_list *);
 
-extern int rehash(int);
-extern void rehash_bans(int);
+extern bool rehash(bool);
+extern void rehash_bans(void);
 
 extern int conf_add_server(struct ConfItem *, int);
 extern void conf_add_class_to_conf(struct ConfItem *);

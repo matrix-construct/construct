@@ -452,7 +452,6 @@ ssl_process_certfp(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 	uint32_t len;
 	uint8_t *certfp;
 	char *certfp_string;
-	int i;
 
 	if(ctl_buf->buflen > 5 + RB_SSL_CERTFP_LEN)
 		return;		/* bogus message..drop it.. XXX should warn here */
@@ -465,7 +464,7 @@ ssl_process_certfp(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 		return;
 	rb_free(client_p->certfp);
 	certfp_string = rb_malloc(len * 2 + 1);
-	for(i = 0; i < len; i++)
+	for(uint32_t i = 0; i < len; i++)
 		snprintf(certfp_string + 2 * i, 3, "%02x",
 				certfp[i]);
 	client_p->certfp = certfp_string;
@@ -478,7 +477,7 @@ ssl_process_cmd_recv(ssl_ctl_t * ctl)
 	static const char *no_ssl_or_zlib = "ssld has neither SSL/TLS or zlib support killing all sslds";
 	rb_dlink_node *ptr, *next;
 	ssl_ctl_buf_t *ctl_buf;
-	int len;
+	unsigned long len;
 
 	if(ctl->dead)
 		return;

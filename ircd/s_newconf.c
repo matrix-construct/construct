@@ -174,7 +174,7 @@ free_remote_conf(struct remote_conf *remote_p)
 	rb_free(remote_p);
 }
 
-int
+bool
 find_shared_conf(const char *username, const char *host,
 		const char *server, int flags)
 {
@@ -190,13 +190,13 @@ find_shared_conf(const char *username, const char *host,
 		   match(shared_p->server, server))
 		{
 			if(shared_p->flags & flags)
-				return YES;
+				return true;
 			else
-				return NO;
+				return false;
 		}
 	}
 
-	return NO;
+	return false;
 }
 
 void
@@ -685,7 +685,7 @@ expire_temp_rxlines(void *unused)
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
-	struct rb_radixtree_iteration_state state;
+	rb_radixtree_iteration_state state;
 
 	RB_RADIXTREE_FOREACH(aconf, &state, resv_tree)
 	{

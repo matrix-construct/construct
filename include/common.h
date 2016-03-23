@@ -31,19 +31,6 @@
 #endif
 
 
-/* Blah. I use these a lot. -Dianora */
-#ifdef YES
-#undef YES
-#endif
-
-#define YES 1
-
-#ifdef NO
-#undef NO
-#endif
-
-#define NO  0
-
 /* Just blindly define our own MIN/MAX macro */
 
 #define IRCD_MAX(a, b)  ((a) > (b) ? (a) : (b))

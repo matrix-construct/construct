@@ -73,7 +73,7 @@ struct Channel
 	unsigned int join_count;  /* joins within delta */
 	unsigned int join_delta;  /* last ts of join */
 
-	unsigned long bants;
+	time_t bants;
 	time_t channelts;
 	char *chname;
 
@@ -93,7 +93,7 @@ struct membership
 	struct Client *client_p;
 	unsigned int flags;
 
-	unsigned long bants;
+	time_t bants;
 };
 
 #define BANLEN 195

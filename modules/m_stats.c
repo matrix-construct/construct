@@ -285,9 +285,9 @@ static void
 stats_delay(struct Client *source_p)
 {
 	struct nd_entry *nd;
-	struct DictionaryIter iter;
+	rb_dictionary_iter iter;
 
-	DICTIONARY_FOREACH(nd, &iter, nd_dict)
+	RB_DICTIONARY_FOREACH(nd, &iter, nd_dict)
 	{
 		sendto_one_notice(source_p, ":Delaying: %s for %ld",
 				nd->name, (long) nd->expire);
@@ -734,11 +734,11 @@ stats_klines(struct Client *source_p)
 static void
 stats_messages(struct Client *source_p)
 {
-	struct DictionaryIter iter;
+	rb_dictionary_iter iter;
 	struct Message *msg;
 	struct alias_entry *amsg;
 
-	DICTIONARY_FOREACH(msg, &iter, cmd_dict)
+	RB_DICTIONARY_FOREACH(msg, &iter, cmd_dict)
 	{
 		s_assert(msg->cmd != NULL);
 		sendto_one_numeric(source_p, RPL_STATSCOMMANDS,
@@ -747,7 +747,7 @@ stats_messages(struct Client *source_p)
 				   msg->bytes, msg->rcount);
 	}
 
-	DICTIONARY_FOREACH(amsg, &iter, alias_dict)
+	RB_DICTIONARY_FOREACH(amsg, &iter, alias_dict)
 	{
 		s_assert(amsg->name != NULL);
 		sendto_one_numeric(source_p, RPL_STATSCOMMANDS,
@@ -870,7 +870,7 @@ static void
 stats_tresv(struct Client *source_p)
 {
 	struct ConfItem *aconf;
-	struct rb_radixtree_iteration_state state;
+	rb_radixtree_iteration_state state;
 	rb_dlink_node *ptr;
 
 	RB_DLINK_FOREACH(ptr, resv_conf_list.head)
@@ -896,7 +896,7 @@ static void
 stats_resv(struct Client *source_p)
 {
 	struct ConfItem *aconf;
-	struct rb_radixtree_iteration_state state;
+	rb_radixtree_iteration_state state;
 	rb_dlink_node *ptr;
 
 	RB_DLINK_FOREACH(ptr, resv_conf_list.head)

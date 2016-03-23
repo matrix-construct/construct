@@ -53,11 +53,15 @@ rb_dlink_list radixtree_list = {NULL, NULL, 0};
  */
 
 union rb_radixtree_elem;
+typedef union rb_radixtree_elem rb_radixtree_elem;
+
+/* Other typedefs are in rb_radixtree.h */
+typedef struct rb_radixtree_node rb_radixtree_node;
 
 struct rb_radixtree
 {
 	void (*canonize_cb)(char *key);
-	union rb_radixtree_elem *root;
+	rb_radixtree_elem *root;
 
 	unsigned int count;
 	char *id;
@@ -74,8 +78,8 @@ struct rb_radixtree_node
 	int nibnum;
 
 	/* branches of the tree */
-	union rb_radixtree_elem *down[POINTERS_PER_NODE];
-	union rb_radixtree_elem *parent;
+	rb_radixtree_elem *down[POINTERS_PER_NODE];
+	rb_radixtree_elem *parent;
 
 	char parent_val;
 };
@@ -90,7 +94,7 @@ struct rb_radixtree_leaf
 
 	/* key (canonized copy) */
 	char *key;
-	union rb_radixtree_elem *parent;
+	rb_radixtree_elem *parent;
 
 	char parent_val;
 };
@@ -98,9 +102,9 @@ struct rb_radixtree_leaf
 union rb_radixtree_elem
 {
 	int nibnum;
-	struct rb_radixtree_node node;
+	rb_radixtree_node node;
 
-	struct rb_radixtree_leaf leaf;
+	rb_radixtree_leaf leaf;
 };
 
 #define IS_LEAF(elem) ((elem)->nibnum == -1)
@@ -123,8 +127,8 @@ union rb_radixtree_elem
  * Side Effects:
  *     - none
  */
-static union rb_radixtree_elem *
-first_leaf(union rb_radixtree_elem *delem)
+static rb_radixtree_elem *
+first_leaf(rb_radixtree_elem *delem)
 {
 	int val;
 
@@ -160,10 +164,10 @@ first_leaf(union rb_radixtree_elem *delem)
  *     - if services runs out of memory and cannot allocate the object,
  *       the program will abort.
  */
-struct rb_radixtree *
+rb_radixtree *
 rb_radixtree_create(const char *name, void (*canonize_cb)(char *key))
 {
-	struct rb_radixtree *dtree = (struct rb_radixtree *) rb_malloc(sizeof(struct rb_radixtree));
+	rb_radixtree *dtree = (rb_radixtree *) rb_malloc(sizeof(rb_radixtree));
 
 	dtree->canonize_cb = canonize_cb;
 	dtree->id = rb_strdup(name);
@@ -175,7 +179,7 @@ rb_radixtree_create(const char *name, void (*canonize_cb)(char *key))
 }
 
 /*
- * rb_radixtree_destroy(struct rb_radixtree *dtree,
+ * rb_radixtree_destroy(rb_radixtree *dtree,
  *     void (*destroy_cb)(const char *key, void *data, void *privdata),
  *     void *privdata);
  *
@@ -197,10 +201,10 @@ rb_radixtree_create(const char *name, void (*canonize_cb)(char *key))
  *       DTree will not be destroyed.
  */
 void
-rb_radixtree_destroy(struct rb_radixtree *dtree, void (*destroy_cb)(const char *key, void *data, void *privdata), void *privdata)
+rb_radixtree_destroy(rb_radixtree *dtree, void (*destroy_cb)(const char *key, void *data, void *privdata), void *privdata)
 {
-	struct rb_radixtree_iteration_state state;
-	union rb_radixtree_elem *delem;
+	rb_radixtree_iteration_state state;
+	rb_radixtree_elem *delem;
 
 	void *entry;
 
@@ -223,7 +227,7 @@ rb_radixtree_destroy(struct rb_radixtree *dtree, void (*destroy_cb)(const char *
 }
 
 /*
- * rb_radixtree_foreach(struct rb_radixtree *dtree,
+ * rb_radixtree_foreach(rb_radixtree *dtree,
  *     int (*foreach_cb)(const char *key, void *data, void *privdata),
  *     void *privdata);
  *
@@ -241,9 +245,9 @@ rb_radixtree_destroy(struct rb_radixtree *dtree, void (*destroy_cb)(const char *
  *     - on success, a dtree is iterated
  */
 void
-rb_radixtree_foreach(struct rb_radixtree *dtree, int (*foreach_cb)(const char *key, void *data, void *privdata), void *privdata)
+rb_radixtree_foreach(rb_radixtree *dtree, int (*foreach_cb)(const char *key, void *data, void *privdata), void *privdata)
 {
-	union rb_radixtree_elem *delem, *next;
+	rb_radixtree_elem *delem, *next;
 
 	int val;
 
@@ -299,7 +303,7 @@ rb_radixtree_foreach(struct rb_radixtree *dtree, int (*foreach_cb)(const char *k
 }
 
 /*
- * rb_radixtree_search(struct rb_radixtree *dtree,
+ * rb_radixtree_search(rb_radixtree *dtree,
  *     void *(*foreach_cb)(const char *key, void *data, void *privdata),
  *     void *privdata);
  *
@@ -318,9 +322,9 @@ rb_radixtree_foreach(struct rb_radixtree *dtree, int (*foreach_cb)(const char *k
  *     - a dtree is iterated until the requested conditions are met
  */
 void *
-rb_radixtree_search(struct rb_radixtree *dtree, void *(*foreach_cb)(const char *key, void *data, void *privdata), void *privdata)
+rb_radixtree_search(rb_radixtree *dtree, void *(*foreach_cb)(const char *key, void *data, void *privdata), void *privdata)
 {
-	union rb_radixtree_elem *delem, *next;
+	rb_radixtree_elem *delem, *next;
 
 	int val;
 	void *ret = NULL;
@@ -382,8 +386,8 @@ rb_radixtree_search(struct rb_radixtree *dtree, void *(*foreach_cb)(const char *
 }
 
 /*
- * rb_radixtree_foreach_start(struct rb_radixtree *dtree,
- *     struct rb_radixtree_iteration_state *state);
+ * rb_radixtree_foreach_start(rb_radixtree *dtree,
+ *     rb_radixtree_iteration_state *state);
  *
  * Initializes a static DTree iterator.
  *
@@ -398,7 +402,7 @@ rb_radixtree_search(struct rb_radixtree *dtree, void *(*foreach_cb)(const char *
  *     - the static iterator, &state, is initialized.
  */
 void
-rb_radixtree_foreach_start(struct rb_radixtree *dtree, struct rb_radixtree_iteration_state *state)
+rb_radixtree_foreach_start(rb_radixtree *dtree, rb_radixtree_iteration_state *state)
 {
 	if (dtree == NULL)
 		return;
@@ -421,8 +425,8 @@ rb_radixtree_foreach_start(struct rb_radixtree *dtree, struct rb_radixtree_itera
 }
 
 /*
- * rb_radixtree_foreach_cur(struct rb_radixtree *dtree,
- *     struct rb_radixtree_iteration_state *state);
+ * rb_radixtree_foreach_cur(rb_radixtree *dtree,
+ *     rb_radixtree_iteration_state *state);
  *
  * Returns the data from the current node being iterated by the
  * static iterator.
@@ -438,7 +442,7 @@ rb_radixtree_foreach_start(struct rb_radixtree *dtree, struct rb_radixtree_itera
  *     - none
  */
 void *
-rb_radixtree_foreach_cur(struct rb_radixtree *dtree, struct rb_radixtree_iteration_state *state)
+rb_radixtree_foreach_cur(rb_radixtree *dtree, rb_radixtree_iteration_state *state)
 {
 	if (dtree == NULL)
 		return NULL;
@@ -446,12 +450,12 @@ rb_radixtree_foreach_cur(struct rb_radixtree *dtree, struct rb_radixtree_iterati
 	lrb_assert(state != NULL);
 
 	return STATE_CUR(state) != NULL ?
-	       ((struct rb_radixtree_leaf *) STATE_CUR(state))->data : NULL;
+	       ((rb_radixtree_leaf *) STATE_CUR(state))->data : NULL;
 }
 
 /*
- * rb_radixtree_foreach_next(struct rb_radixtree *dtree,
- *     struct rb_radixtree_iteration_state *state);
+ * rb_radixtree_foreach_next(rb_radixtree *dtree,
+ *     rb_radixtree_iteration_state *state);
  *
  * Advances a static DTree iterator.
  *
@@ -466,11 +470,11 @@ rb_radixtree_foreach_cur(struct rb_radixtree *dtree, struct rb_radixtree_iterati
  *     - the static iterator, &state, is advanced to a new DTree node.
  */
 void
-rb_radixtree_foreach_next(struct rb_radixtree *dtree, struct rb_radixtree_iteration_state *state)
+rb_radixtree_foreach_next(rb_radixtree *dtree, rb_radixtree_iteration_state *state)
 {
-	struct rb_radixtree_leaf *leaf;
+	rb_radixtree_leaf *leaf;
 
-	union rb_radixtree_elem *delem, *next;
+	rb_radixtree_elem *delem, *next;
 
 	int val;
 
@@ -537,7 +541,7 @@ rb_radixtree_foreach_next(struct rb_radixtree *dtree, struct rb_radixtree_iterat
 }
 
 /*
- * rb_radixtree_elem_find(struct rb_radixtree *dtree, const char *key)
+ * rb_radixtree_elem_find(rb_radixtree *dtree, const char *key)
  *
  * Looks up a DTree node by name.
  *
@@ -553,14 +557,14 @@ rb_radixtree_foreach_next(struct rb_radixtree *dtree, struct rb_radixtree_iterat
  * Side Effects:
  *     - none
  */
-struct rb_radixtree_leaf *
-rb_radixtree_elem_find(struct rb_radixtree *dict, const char *key, int fuzzy)
+rb_radixtree_leaf *
+rb_radixtree_elem_find(rb_radixtree *dict, const char *key, int fuzzy)
 {
 	char ckey_store[256];
 
 	char *ckey_buf = NULL;
 	const char *ckey;
-	union rb_radixtree_elem *delem;
+	rb_radixtree_elem *delem;
 
 	int val, keylen;
 
@@ -612,7 +616,7 @@ rb_radixtree_elem_find(struct rb_radixtree *dict, const char *key, int fuzzy)
 }
 
 /*
- * rb_radixtree_foreach_start_from(struct rb_radixtree *dtree, struct rb_radixtree_iteration_state *state, const char *key)
+ * rb_radixtree_foreach_start_from(rb_radixtree *dtree, rb_radixtree_iteration_state *state, const char *key)
  *
  * Starts iteration from a specified key, by wrapping rb_radixtree_elem_find().
  *
@@ -628,7 +632,7 @@ rb_radixtree_elem_find(struct rb_radixtree *dict, const char *key, int fuzzy)
  *     - the iterator's state is initialized at a specific point
  */
 void
-rb_radixtree_foreach_start_from(struct rb_radixtree *dtree, struct rb_radixtree_iteration_state *state, const char *key)
+rb_radixtree_foreach_start_from(rb_radixtree *dtree, rb_radixtree_iteration_state *state, const char *key)
 {
 	lrb_assert(dtree != NULL);
 	lrb_assert(state != NULL);
@@ -647,7 +651,7 @@ rb_radixtree_foreach_start_from(struct rb_radixtree *dtree, struct rb_radixtree_
 }
 
 /*
- * rb_radixtree_add(struct rb_radixtree *dtree, const char *key, void *data)
+ * rb_radixtree_add(rb_radixtree *dtree, const char *key, void *data)
  *
  * Creates a new DTree node and binds data to it.
  *
@@ -663,14 +667,14 @@ rb_radixtree_foreach_start_from(struct rb_radixtree *dtree, struct rb_radixtree_
  * Side Effects:
  *     - data is inserted into the DTree.
  */
-struct rb_radixtree_leaf *
-rb_radixtree_elem_add(struct rb_radixtree *dict, const char *key, void *data)
+rb_radixtree_leaf *
+rb_radixtree_elem_add(rb_radixtree *dict, const char *key, void *data)
 {
 	char *ckey;
 
-	union rb_radixtree_elem *delem, *prev, *newnode;
+	rb_radixtree_elem *delem, *prev, *newnode;
 
-	union rb_radixtree_elem **place1;
+	rb_radixtree_elem **place1;
 
 	int val, keylen;
 	int i, j;
@@ -720,7 +724,7 @@ rb_radixtree_elem_add(struct rb_radixtree *dict, const char *key, void *data)
 		lrb_assert(prev == NULL);
 		lrb_assert(dict->count == 0);
 		place1 = &dict->root;
-		*place1 = rb_malloc(sizeof(struct rb_radixtree_leaf));
+		*place1 = rb_malloc(sizeof(rb_radixtree_leaf));
 		lrb_assert(*place1 != NULL);
 		(*place1)->nibnum = -1;
 		(*place1)->leaf.data = data;
@@ -745,7 +749,7 @@ rb_radixtree_elem_add(struct rb_radixtree *dict, const char *key, void *data)
 	if ((prev == NULL) || (prev->nibnum < i))
 	{
 		/* Insert new node below prev */
-		newnode = rb_malloc(sizeof(struct rb_radixtree_node));
+		newnode = rb_malloc(sizeof(rb_radixtree_node));
 		lrb_assert(newnode != NULL);
 		newnode->nibnum = i;
 		newnode->node.parent = prev;
@@ -800,7 +804,7 @@ rb_radixtree_elem_add(struct rb_radixtree *dict, const char *key, void *data)
 	val = NIBBLE_VAL(ckey, i);
 	place1 = &newnode->node.down[val];
 	lrb_assert(*place1 == NULL);
-	*place1 = rb_malloc(sizeof(struct rb_radixtree_leaf));
+	*place1 = rb_malloc(sizeof(rb_radixtree_leaf));
 	lrb_assert(*place1 != NULL);
 	(*place1)->nibnum = -1;
 	(*place1)->leaf.data = data;
@@ -812,13 +816,13 @@ rb_radixtree_elem_add(struct rb_radixtree *dict, const char *key, void *data)
 }
 
 int
-rb_radixtree_add(struct rb_radixtree *dict, const char *key, void *data)
+rb_radixtree_add(rb_radixtree *dict, const char *key, void *data)
 {
 	return (rb_radixtree_elem_add(dict, key, data) != NULL);
 }
 
 /*
- * rb_radixtree_delete(struct rb_radixtree *dtree, const char *key)
+ * rb_radixtree_delete(rb_radixtree *dtree, const char *key)
  *
  * Deletes data from a patricia tree.
  *
@@ -837,10 +841,10 @@ rb_radixtree_add(struct rb_radixtree *dict, const char *key, void *data)
  *     - the returned data needs to be rb_freed/released manually!
  */
 void *
-rb_radixtree_delete(struct rb_radixtree *dict, const char *key)
+rb_radixtree_delete(rb_radixtree *dict, const char *key)
 {
 	void *data;
-	struct rb_radixtree_leaf *leaf;
+	rb_radixtree_leaf *leaf;
 
 	leaf = rb_radixtree_elem_find(dict, key, 0);
 
@@ -853,16 +857,16 @@ rb_radixtree_delete(struct rb_radixtree *dict, const char *key)
 }
 
 void
-rb_radixtree_elem_delete(struct rb_radixtree *dict, struct rb_radixtree_leaf *leaf)
+rb_radixtree_elem_delete(rb_radixtree *dict, rb_radixtree_leaf *leaf)
 {
-	union rb_radixtree_elem *delem, *prev, *next;
+	rb_radixtree_elem *delem, *prev, *next;
 
 	int val, i, used;
 
 	lrb_assert(dict != NULL);
 	lrb_assert(leaf != NULL);
 
-	delem = (union rb_radixtree_elem *) leaf;
+	delem = (rb_radixtree_elem *) leaf;
 
 	val = delem->leaf.parent_val;
 	prev = delem->leaf.parent;
@@ -924,7 +928,7 @@ rb_radixtree_elem_delete(struct rb_radixtree *dict, struct rb_radixtree_leaf *le
 }
 
 /*
- * rb_radixtree_retrieve(struct rb_radixtree *dtree, const char *key)
+ * rb_radixtree_retrieve(rb_radixtree *dtree, const char *key)
  *
  * Retrieves data from a patricia.
  *
@@ -940,9 +944,9 @@ rb_radixtree_elem_delete(struct rb_radixtree *dict, struct rb_radixtree_leaf *le
  *     - none
  */
 void *
-rb_radixtree_retrieve(struct rb_radixtree *dtree, const char *key)
+rb_radixtree_retrieve(rb_radixtree *dtree, const char *key)
 {
-	struct rb_radixtree_leaf *delem = rb_radixtree_elem_find(dtree, key, 0);
+	rb_radixtree_leaf *delem = rb_radixtree_elem_find(dtree, key, 0);
 
 	if (delem != NULL)
 		return delem->data;
@@ -951,7 +955,7 @@ rb_radixtree_retrieve(struct rb_radixtree *dtree, const char *key)
 }
 
 const char *
-rb_radixtree_elem_get_key(struct rb_radixtree_leaf *leaf)
+rb_radixtree_elem_get_key(rb_radixtree_leaf *leaf)
 {
 	lrb_assert(leaf != NULL);
 
@@ -959,7 +963,7 @@ rb_radixtree_elem_get_key(struct rb_radixtree_leaf *leaf)
 }
 
 void
-rb_radixtree_elem_set_data(struct rb_radixtree_leaf *leaf, void *data)
+rb_radixtree_elem_set_data(rb_radixtree_leaf *leaf, void *data)
 {
 	lrb_assert(leaf != NULL);
 
@@ -967,7 +971,7 @@ rb_radixtree_elem_set_data(struct rb_radixtree_leaf *leaf, void *data)
 }
 
 void *
-rb_radixtree_elem_get_data(struct rb_radixtree_leaf *leaf)
+rb_radixtree_elem_get_data(rb_radixtree_leaf *leaf)
 {
 	lrb_assert(leaf != NULL);
 
@@ -975,7 +979,7 @@ rb_radixtree_elem_get_data(struct rb_radixtree_leaf *leaf)
 }
 
 /*
- * rb_radixtree_size(struct rb_radixtree *dict)
+ * rb_radixtree_size(rb_radixtree *dict)
  *
  * Returns the size of a patricia.
  *
@@ -989,7 +993,7 @@ rb_radixtree_elem_get_data(struct rb_radixtree_leaf *leaf)
  *     - none
  */
 unsigned int
-rb_radixtree_size(struct rb_radixtree *dict)
+rb_radixtree_size(rb_radixtree *dict)
 {
 	lrb_assert(dict != NULL);
 
@@ -999,11 +1003,11 @@ rb_radixtree_size(struct rb_radixtree *dict)
 /* returns the sum of the depths of the subtree rooted in delem at depth depth */
 /* there is no need for this to be recursive, but it is easier... */
 static int
-stats_recurse(union rb_radixtree_elem *delem, int depth, int *pmaxdepth)
+stats_recurse(rb_radixtree_elem *delem, int depth, int *pmaxdepth)
 {
 	int result = 0;
 	int val;
-	union rb_radixtree_elem *next;
+	rb_radixtree_elem *next;
 
 	if (depth > *pmaxdepth)
 		*pmaxdepth = depth;
@@ -1046,7 +1050,7 @@ stats_recurse(union rb_radixtree_elem *delem, int depth, int *pmaxdepth)
 }
 
 /*
- * rb_radixtree_stats(struct rb_radixtree *dict, void (*cb)(const char *line, void *privdata), void *privdata)
+ * rb_radixtree_stats(rb_radixtree *dict, void (*cb)(const char *line, void *privdata), void *privdata)
  *
  * Returns the size of a patricia.
  *
@@ -1062,7 +1066,7 @@ stats_recurse(union rb_radixtree_elem *delem, int depth, int *pmaxdepth)
  *     - callback called with stats text
  */
 void
-rb_radixtree_stats(struct rb_radixtree *dict, void (*cb)(const char *line, void *privdata), void *privdata)
+rb_radixtree_stats(rb_radixtree *dict, void (*cb)(const char *line, void *privdata), void *privdata)
 {
 	char str[256];
 	int sum, maxdepth;

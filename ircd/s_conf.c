@@ -636,10 +636,10 @@ attach_conf(struct Client *client_p, struct ConfItem *aconf)
  * as a result of an operator issuing this command, else assume it has been
  * called as a result of the server receiving a HUP signal.
  */
-int
-rehash(int sig)
+bool
+rehash(bool sig)
 {
-	if(sig != 0)
+	if(sig)
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Got signal SIGHUP, reloading ircd conf. file");
@@ -647,7 +647,7 @@ rehash(int sig)
 
 	rehash_authd();
 	/* don't close listeners until we know we can go ahead with the rehash */
-	read_conf_files(NO);
+	read_conf_files(false);
 
 	if(ServerInfo.description != NULL)
 		rb_strlcpy(me.info, ServerInfo.description, sizeof(me.info));
@@ -655,11 +655,11 @@ rehash(int sig)
 		rb_strlcpy(me.info, "unknown", sizeof(me.info));
 
 	open_logfiles();
-	return (0);
+	return false;
 }
 
 void
-rehash_bans(int sig)
+rehash_bans(void)
 {
 	bandb_rehash_bans();
 }
@@ -1417,7 +1417,7 @@ read_conf_files(bool cold)
  * free an alias{} entry.
  */
 static void
-free_alias_cb(struct DictionaryElement *ptr, void *unused)
+free_alias_cb(rb_dictionary_element *ptr, void *unused)
 {
 	struct alias_entry *aptr = ptr->data;
 

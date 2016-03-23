@@ -58,8 +58,8 @@ struct dnsstatreq
 };
 
 /* These serve as a form of sparse array */
-static struct Dictionary *query_dict;
-static struct Dictionary *stat_dict;
+static rb_dictionary *query_dict;
+static rb_dictionary *stat_dict;
 
 rb_dlink_list nameservers;
 
