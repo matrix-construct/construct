@@ -20,18 +20,16 @@ DECLARE_MODULE_AV2(echotags, NULL, NULL, echotags_clist, NULL, NULL, NULL, NULL,
 static void
 m_echotags(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	int i;
-
 	sendto_one_notice(source_p, ":*** You sent %zu tags.", msgbuf_p->n_tags);
 
-	for (i = 0; i < msgbuf_p->n_tags; i++)
+	for (size_t i = 0; i < msgbuf_p->n_tags; i++)
 	{
 		struct MsgTag *tag = &msgbuf_p->tags[i];
 
 		if (tag->value)
-			sendto_one_notice(source_p, ":*** %d: %s => %s", i, tag->key, tag->value);
+			sendto_one_notice(source_p, ":*** %zu: %s => %s", i, tag->key, tag->value);
 		else
-			sendto_one_notice(source_p, ":*** %d: %s", i, tag->key);
+			sendto_one_notice(source_p, ":*** %zu: %s", i, tag->key);
 	}
 }
 

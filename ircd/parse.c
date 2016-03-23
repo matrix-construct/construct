@@ -246,13 +246,13 @@ handle_command(struct Message *mptr, struct MsgBuf *msgbuf_p, struct Client *cli
 
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Dropping server %s due to (invalid) command '%s'"
-				     " with only %zu arguments (expecting %d).",
+				     " with only %zu arguments (expecting %zu).",
 				     client_p->name, mptr->cmd, msgbuf_p->n_para, ehandler.min_para);
 		ilog(L_SERVER,
-		     "Insufficient parameters (%zu < %d) for command '%s' from %s.",
+		     "Insufficient parameters (%zu < %zu) for command '%s' from %s.",
 		     msgbuf_p->n_para, ehandler.min_para, mptr->cmd, client_p->name);
 		snprintf(squitreason, sizeof squitreason,
-				"Insufficient parameters (%zu < %d) for command '%s'",
+				"Insufficient parameters (%zu < %zu) for command '%s'",
 				msgbuf_p->n_para, ehandler.min_para, mptr->cmd);
 		exit_client(client_p, client_p, client_p, squitreason);
 		return (-1);
@@ -278,7 +278,7 @@ handle_encap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *so
 	ehandler = mptr->handlers[ENCAP_HANDLER];
 	handler = ehandler.handler;
 
-	if(parc < ehandler.min_para ||
+	if((size_t)parc < ehandler.min_para ||
 	   (ehandler.min_para && EmptyString(parv[ehandler.min_para - 1])))
 		return;
 

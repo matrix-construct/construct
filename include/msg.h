@@ -54,7 +54,7 @@ typedef void (*MessageHandler) (struct MsgBuf *, struct Client *, struct Client 
 struct MessageEntry
 {
 	MessageHandler handler;
-	int min_para;
+	size_t min_para;
 };
 
 /* Message table structure */
