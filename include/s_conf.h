@@ -389,7 +389,7 @@ extern int yylex(void);
 
 extern unsigned long cidr_to_bitmask[];
 
-extern char conffilebuf[IRCD_BUFSIZE + 1];
+extern char conffilebuf[BUFSIZE + 1];
 extern int lineno;
 
 #define NOT_AUTHORISED  (-1)

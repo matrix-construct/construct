@@ -2030,10 +2030,10 @@ void
 conf_report_error(const char *fmt, ...)
 {
 	va_list ap;
-	char msg[IRCD_BUFSIZE + 1] = { 0 };
+	char msg[BUFSIZE + 1] = { 0 };
 
 	va_start(ap, fmt);
-	vsnprintf(msg, IRCD_BUFSIZE, fmt, ap);
+	vsnprintf(msg, BUFSIZE, fmt, ap);
 	va_end(ap);
 
 	if (testing_conf)
@@ -2050,10 +2050,10 @@ void
 conf_report_warning(const char *fmt, ...)
 {
 	va_list ap;
-	char msg[IRCD_BUFSIZE + 1] = { 0 };
+	char msg[BUFSIZE + 1] = { 0 };
 
 	va_start(ap, fmt);
-	vsnprintf(msg, IRCD_BUFSIZE, fmt, ap);
+	vsnprintf(msg, BUFSIZE, fmt, ap);
 	va_end(ap);
 
 	if (testing_conf)

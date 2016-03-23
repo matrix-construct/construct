@@ -219,7 +219,7 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 {
 	struct ConfItem *aconf, *xconf;
 	struct User *user = source_p->user;
-	char tmpstr2[IRCD_BUFSIZE];
+	char tmpstr2[BUFSIZE];
 	char ipaddr[HOSTIPLEN];
 	char myusername[USERLEN+1];
 	int status;
