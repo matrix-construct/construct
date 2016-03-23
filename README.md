@@ -48,8 +48,8 @@ These platforms should only be considered weakly supported, as they are either e
 tested. These platforms have usually been tested in the past, but they may or may not be in a useful state.
 Bugs for tier 3 architectures should have patches attached.
 
-* Solaris 10 and above (sparc64)
 * Old operating system versions of tier 2 and above platforms
+* Other architectures of the above operating systems
 
 ## Tier 4
 
