@@ -123,7 +123,7 @@ rb_setselect_ports(rb_fde_t *F, unsigned int type, PF * handler, void *client_da
 int
 rb_select_ports(long delay)
 {
-	int i;
+	int i, fd = -1;
 	unsigned int nget = 1;
 	struct timespec poll_time;
 	struct timespec *p = NULL;
