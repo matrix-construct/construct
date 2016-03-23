@@ -50,7 +50,7 @@
 rb_dlink_list auth_providers;
 
 /* Clients waiting */
-struct Dictionary *auth_clients;
+rb_dictionary *auth_clients;
 
 /* Load a provider */
 void load_provider(struct auth_provider *provider)
@@ -81,7 +81,7 @@ void init_providers(void)
 void destroy_providers(void)
 {
 	rb_dlink_node *ptr;
-	struct DictionaryIter iter;
+	rb_dictionary_iter iter;
 	struct auth_client *auth;
 	struct auth_provider *provider;
 

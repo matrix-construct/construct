@@ -68,7 +68,7 @@ bool client_dns_init(void)
 void client_dns_destroy(void)
 {
 	struct auth_client *auth;
-	struct DictionaryIter iter;
+	rb_dictionary_iter iter;
 
 	DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
@@ -123,7 +123,7 @@ get_dns_answer(const char *res, bool status, query_type type, void *data)
 static void timeout_dns_queries_event(void *notused)
 {
 	struct auth_client *auth;
-	struct DictionaryIter iter;
+	rb_dictionary_iter iter;
 
 	DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{

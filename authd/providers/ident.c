@@ -68,7 +68,7 @@ bool ident_init(void)
 void ident_destroy(void)
 {
 	struct auth_client *auth;
-	struct DictionaryIter iter;
+	rb_dictionary_iter iter;
 
 	/* Nuke all ident queries */
 	DICTIONARY_FOREACH(auth, &iter, auth_clients)
@@ -142,7 +142,7 @@ void ident_cancel(struct auth_client *auth)
 static void timeout_ident_queries_event(void *notused)
 {
 	struct auth_client *auth;
-	struct DictionaryIter iter;
+	rb_dictionary_iter iter;
 
 	DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
