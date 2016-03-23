@@ -62,6 +62,7 @@ ircd/version.c
 ircd/version.c.last
 /libtool
 Makefile.in
+m4/argz.m4
 m4/libtool.m4
 m4/ltargz.m4
 m4/ltdl.m4
