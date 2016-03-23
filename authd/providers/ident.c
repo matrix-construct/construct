@@ -28,9 +28,6 @@
 
 struct ident_query
 {
-	rb_dlink_node node;
-
-	struct auth_client *auth;		/* Our client */
 	time_t timeout;				/* Timeout interval */
 	rb_fde_t *F;				/* Our FD */
 };
@@ -54,12 +51,10 @@ static EVH timeout_ident_queries_event;
 static CNCB ident_connected;
 static PF read_ident_reply;
 
-static void client_fail(struct ident_query *query, ident_message message);
-static void client_success(struct ident_query *query);
-static void cleanup_query(struct ident_query *query);
+static void client_fail(struct auth_client *auth, ident_message message);
+static void client_success(struct auth_client *auth);
 static char * get_valid_ident(char *buf);
 
-static rb_dlink_list queries;
 static struct ev_entry *timeout_ev;
 static int ident_timeout = 5;
 
@@ -72,18 +67,14 @@ bool ident_init(void)
 
 void ident_destroy(void)
 {
-	rb_dlink_node *ptr, *nptr;
+	struct auth_client *auth;
+	struct DictionaryIter iter;
 
 	/* Nuke all ident queries */
-	RB_DLINK_FOREACH_SAFE(ptr, nptr, queries.head)
+	DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
-		struct ident_query *query = ptr->data;
-
-		notice_client(query->auth, messages[REPORT_FAIL]);
-
-		rb_close(query->F);
-		rb_free(query);
-		rb_dlinkDelete(ptr, &queries);
+		if(auth->data[PROVIDER_IDENT] != NULL)
+			client_fail(auth, REPORT_FAIL);
 	}
 }
 
@@ -94,12 +85,12 @@ bool ident_start(struct auth_client *auth)
 	int family;
 	rb_fde_t *F;
 
-	query->auth = auth;
+	auth->data[PROVIDER_IDENT] = query;
 	query->timeout = rb_current_time() + ident_timeout;
 
 	if((F = rb_socket(family, SOCK_STREAM, 0, "ident")) == NULL)
 	{
-		client_fail(query, REPORT_FAIL);
+		client_fail(auth, REPORT_FAIL);
 		return true;	/* Not a fatal error */
 	}
 
@@ -109,7 +100,7 @@ bool ident_start(struct auth_client *auth)
 	if(!rb_inet_ntop_sock((struct sockaddr *)&l_addr, auth->l_ip, sizeof(l_addr)) ||
 		!rb_inet_ntop_sock((struct sockaddr *)&c_addr, auth->c_ip, sizeof(c_addr)))
 	{
-		client_fail(query, REPORT_FAIL);
+		client_fail(auth, REPORT_FAIL);
 		return true;
 	}
 
@@ -133,52 +124,32 @@ bool ident_start(struct auth_client *auth)
 			GET_SS_LEN(&l_addr), ident_connected,
 			query, ident_timeout);
 
-	rb_dlinkAdd(query, &query->node, &queries);
-
-	set_provider(auth, PROVIDER_IDENT);
 	notice_client(auth, messages[REPORT_LOOKUP]);
+	set_provider(auth, PROVIDER_IDENT);
 
 	return true;
 }
 
 void ident_cancel(struct auth_client *auth)
 {
-	rb_dlink_node *ptr, *nptr;
+	struct ident_query *query = auth->data[PROVIDER_IDENT];
 
-	RB_DLINK_FOREACH_SAFE(ptr, nptr, queries.head)
-	{
-		struct ident_query *query = ptr->data;
-
-		if(query->auth == auth)
-		{
-			client_fail(query, REPORT_FAIL);
-
-			rb_close(query->F);
-			rb_free(query);
-			rb_dlinkDelete(ptr, &queries);
-
-			return;
-		}
-	}
+	if(query != NULL)
+		client_fail(auth, REPORT_FAIL);
 }
 
 /* Timeout outstanding queries */
 static void timeout_ident_queries_event(void *notused)
 {
-	rb_dlink_node *ptr, *nptr;
+	struct auth_client *auth;
+	struct DictionaryIter iter;
 
-	RB_DLINK_FOREACH_SAFE(ptr, nptr, queries.head)
+	DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
-		struct ident_query *query = ptr->data;
+		struct ident_query *query = auth->data[PROVIDER_IDENT];
 
-		if(query->timeout < rb_current_time())
-		{
-			client_fail(query, REPORT_FAIL);
-
-			rb_close(query->F);
-			rb_free(query);
-			rb_dlinkDelete(ptr, &queries);
-		}
+		if(query != NULL && query->timeout < rb_current_time())
+			client_fail(auth, REPORT_FAIL);
 	}
 }
 
@@ -195,8 +166,8 @@ static void timeout_ident_queries_event(void *notused)
  */
 static void ident_connected(rb_fde_t *F, int error, void *data)
 {
-	struct ident_query *query = data;
-	struct auth_client *auth = query->auth;
+	struct auth_client *auth = data;
+	struct ident_query *query = auth->data[PROVIDER_IDENT];
 	char authbuf[32];
 	int authlen;
 
@@ -204,8 +175,7 @@ static void ident_connected(rb_fde_t *F, int error, void *data)
 	if(error != RB_OK)
 	{
 		/* We had an error during connection :( */
-		client_fail(query, REPORT_FAIL);
-		cleanup_query(query);
+		client_fail(auth, REPORT_FAIL);
 		return;
 	}
 
@@ -215,18 +185,18 @@ static void ident_connected(rb_fde_t *F, int error, void *data)
 
 	if(rb_write(query->F, authbuf, authlen) != authlen)
 	{
-		client_fail(query, REPORT_FAIL);
+		client_fail(auth, REPORT_FAIL);
 		return;
 	}
 
-	read_ident_reply(query->F, query);
+	read_ident_reply(query->F, auth);
 }
 
 static void
 read_ident_reply(rb_fde_t *F, void *data)
 {
-	struct ident_query *query = data;
-	struct auth_client *auth = query->auth;
+	struct auth_client *auth = data;
+	struct ident_query *query = auth->data[PROVIDER_IDENT];
 	char *s = NULL;
 	char *t = NULL;
 	int len;
@@ -268,51 +238,35 @@ read_ident_reply(rb_fde_t *F, void *data)
 	}
 
 	if(s == NULL)
-		client_fail(query, REPORT_FAIL);
+		client_fail(auth, REPORT_FAIL);
 	else
-		client_success(query);
-
-	cleanup_query(query);
+		client_success(auth);
 }
 
-static void client_fail(struct ident_query *query, ident_message report)
+static void client_fail(struct auth_client *auth, ident_message report)
 {
-	struct auth_client *auth = query->auth;
+	struct ident_query *query = auth->data[PROVIDER_IDENT];
 
-	if(auth)
-	{
-		rb_strlcpy(auth->username, "*", sizeof(auth->username));
-		notice_client(auth, messages[report]);
-		provider_done(auth, PROVIDER_IDENT);
-	}
+	rb_strlcpy(auth->username, "*", sizeof(auth->username));
+
+	rb_close(query->F);
+	rb_free(query);
+	auth->data[PROVIDER_IDENT] = NULL;
+
+	notice_client(auth, messages[report]);
+	provider_done(auth, PROVIDER_IDENT);
 }
 
-static void client_success(struct ident_query *query)
+static void client_success(struct auth_client *auth)
 {
-	struct auth_client *auth = query->auth;
+	struct ident_query *query = auth->data[PROVIDER_IDENT];
 
-	if(auth)
-	{
-		notice_client(auth, messages[REPORT_FOUND]);
-		provider_done(auth, PROVIDER_IDENT);
-	}
-}
+	rb_close(query->F);
+	rb_free(query);
+	auth->data[PROVIDER_IDENT] = NULL;
 
-static void cleanup_query(struct ident_query *query)
-{
-	rb_dlink_node *ptr, *nptr;
-
-	RB_DLINK_FOREACH_SAFE(ptr, nptr, queries.head)
-	{
-		struct ident_query *query_l = ptr->data;
-
-		if(query_l == query)
-		{
-			rb_close(query->F);
-			rb_free(query);
-			rb_dlinkDelete(ptr, &queries);
-		}
-	}
+	notice_client(auth, messages[REPORT_FOUND]);
+	provider_done(auth, PROVIDER_IDENT);
 }
 
 /* get_valid_ident

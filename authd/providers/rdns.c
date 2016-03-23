@@ -29,7 +29,6 @@ struct user_query
 {
 	rb_dlink_node node;
 
-	struct auth_client *auth;		/* Our client */
 	struct dns_query *query;		/* Pending DNS query */
 	time_t timeout;				/* When the request times out */
 };
@@ -51,14 +50,13 @@ typedef enum
 	REPORT_TOOLONG,
 } dns_message;
 
-static void client_fail(struct user_query *query, dns_message message);
-static void client_success(struct user_query *query);
+static void client_fail(struct auth_client *auth, dns_message message);
+static void client_success(struct auth_client *auth);
 static void get_dns_answer(const char *res, bool status, query_type type, void *data);
 
 static struct ev_entry *timeout_ev;
 static EVH timeout_dns_queries_event;
 static int rdns_timeout = 30;
-static rb_dlink_list queries;	/* Stored here for easy timeout */
 
 
 bool client_dns_init(void)
@@ -69,14 +67,13 @@ bool client_dns_init(void)
 
 void client_dns_destroy(void)
 {
-	rb_dlink_node *ptr, *nptr;
-	struct user_query *query;
+	struct auth_client *auth;
+	struct DictionaryIter iter;
 
-	RB_DLINK_FOREACH_SAFE(ptr, nptr, queries.head)
+	DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
-		client_fail(ptr->data, REPORT_FAIL);
-		rb_dlinkDelete(ptr, &queries);
-		rb_free(ptr);
+		if(auth->data[PROVIDER_RDNS] != NULL)
+			client_fail(auth, REPORT_FAIL);
 	}
 
 	rb_event_delete(timeout_ev);
@@ -86,10 +83,11 @@ bool client_dns_start(struct auth_client *auth)
 {
 	struct user_query *query = rb_malloc(sizeof(struct user_query));
 
-	query->auth = auth;
 	query->timeout = rb_current_time() + rdns_timeout;
 
-	query->query = lookup_hostname(auth->c_ip, get_dns_answer, query);
+	auth->data[PROVIDER_RDNS] = query;
+
+	query->query = lookup_hostname(auth->c_ip, get_dns_answer, auth);
 
 	notice_client(auth, messages[REPORT_LOOKUP]);
 	set_provider(auth, PROVIDER_RDNS);
@@ -98,104 +96,75 @@ bool client_dns_start(struct auth_client *auth)
 
 void client_dns_cancel(struct auth_client *auth)
 {
-	rb_dlink_node *ptr, *nptr;
+	struct user_query *query = auth->data[PROVIDER_RDNS];
 
-	RB_DLINK_FOREACH_SAFE(ptr, nptr, queries.head)
-	{
-		struct user_query *query = ptr->data;
-
-		if(query->auth == auth)
-		{
-			/* Victim found */
-			client_fail(query, REPORT_FAIL);
-			rb_dlinkDelete(ptr, &queries);
-			rb_free(query);
-			return;
-		}
-	}
+	if(query != NULL)
+		client_fail(auth, REPORT_FAIL);
 }
 
 static void
 get_dns_answer(const char *res, bool status, query_type type, void *data)
 {
-	struct user_query *query = data;
-	struct auth_client *auth = query->auth;
-	bool fail = false;
-	dns_message response;
-	rb_dlink_node *ptr, *nptr;
+	struct auth_client *auth = data;
+	struct user_query *query = auth->data[PROVIDER_RDNS];
 
-	if(res == NULL || status == false)
-	{
-		response = REPORT_FAIL;
-		fail = true;
-		goto cleanup;
-	}
+	if(query == NULL || res == NULL || status == false)
+		client_fail(auth, REPORT_FAIL);
 	else if(strlen(res) > HOSTLEN)
+		client_fail(auth, REPORT_TOOLONG);
+	else
 	{
-		/* Ah well. */
-		response = REPORT_TOOLONG;
-		fail = true;
-		goto cleanup;
-	}
-
-	rb_strlcpy(auth->hostname, res, HOSTLEN + 1);
-
-cleanup:
-	/* Clean us up off the pending queries list */
-	RB_DLINK_FOREACH_SAFE(ptr, nptr, queries.head)
-	{
-		struct user_query *query_l = ptr->data;
-
-		if(query == query_l)
-		{
-			/* Found */
-			if(fail)
-				client_fail(query, response);
-			else
-				client_success(query);
-
-			rb_dlinkDelete(ptr, &queries);
-			rb_free(query);
-			return;
-		}
+		rb_strlcpy(auth->hostname, res, HOSTLEN + 1);
+		client_success(auth);
 	}
 }
 
 /* Timeout outstanding queries */
 static void timeout_dns_queries_event(void *notused)
 {
-	rb_dlink_node *ptr, *nptr;
+	struct auth_client *auth;
+	struct DictionaryIter iter;
 
-	RB_DLINK_FOREACH_SAFE(ptr, nptr, queries.head)
+	DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
-		struct user_query *query = ptr->data;
+		struct user_query *query = auth->data[PROVIDER_RDNS];
 
-		if(query->auth && query->timeout < rb_current_time())
+		if(query != NULL && query->timeout < rb_current_time())
 		{
-			client_fail(query, REPORT_FAIL);
-			rb_dlinkDelete(ptr, &queries);
-			rb_free(query);
+			client_fail(auth, REPORT_FAIL);
 			return;
 		}
 	}
 }
 
-static void client_fail(struct user_query *query, dns_message report)
+static void client_fail(struct auth_client *auth, dns_message report)
 {
-	struct auth_client *auth = query->auth;
+	struct user_query *query = auth->data[PROVIDER_RDNS];
+
+	if(query == NULL)
+		return;
 
 	rb_strlcpy(auth->hostname, "*", sizeof(auth->hostname));
+
 	notice_client(auth, messages[report]);
 	cancel_query(query->query);
+
+	rb_free(query);
+	auth->data[PROVIDER_RDNS] = NULL;
+
 	provider_done(auth, PROVIDER_RDNS);
 }
 
-static void client_success(struct user_query *query)
+static void client_success(struct auth_client *auth)
 {
-	struct auth_client *auth = query->auth;
+	struct user_query *query = auth->data[PROVIDER_RDNS];
 
 	notice_client(auth, messages[REPORT_FOUND]);
 	cancel_query(query->query);
+
+	rb_free(query);
+	auth->data[PROVIDER_RDNS] = NULL;
+
 	provider_done(auth, PROVIDER_RDNS);
 }
 

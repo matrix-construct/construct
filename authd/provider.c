@@ -27,7 +27,8 @@
  * Providers can either return failure immediately, immediate acceptance, or
  * do work in the background (calling set_provider to signal this).
  *
- * A dictionary is provided in auth_client for storage of provider-specific data.
+ * Provider-specific data for each client can be kept in an index of the data
+ * struct member (using the provider's ID).
  *
  * All providers must implement at a minimum a perform_provider function. You
  * don't have to implement the others if you don't need them.
@@ -49,11 +50,15 @@
 rb_dlink_list auth_providers;
 
 /* Clients waiting */
-struct auth_client auth_clients[MAX_CLIENTS];
+struct Dictionary *auth_clients;
 
 /* Load a provider */
 void load_provider(struct auth_provider *provider)
 {
+	if(rb_dlink_list_length(&auth_providers) >= MAX_PROVIDERS)
+		/* XXX should probably warn here */
+		return;
+
 	provider->init();
 	rb_dlinkAdd(provider, &provider->node, &auth_providers);
 }
@@ -67,6 +72,7 @@ void unload_provider(struct auth_provider *provider)
 /* Initalise all providers */
 void init_providers(void)
 {
+	auth_clients = rb_dictionary_create("pending auth clients", rb_uint32cmp);
 	load_provider(&rdns_provider);
 	load_provider(&ident_provider);
 }
@@ -75,17 +81,15 @@ void init_providers(void)
 void destroy_providers(void)
 {
 	rb_dlink_node *ptr;
+	struct DictionaryIter iter;
+	struct auth_client *auth;
 	struct auth_provider *provider;
 
 	/* Cancel outstanding connections */
-	for (size_t i = 0; i < MAX_CLIENTS; i++)
+	DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
-		if(auth_clients[i].cid)
-		{
-			/* TBD - is this the right thing? */
-			reject_client(&auth_clients[i], 0,
-					"Authentication system is down... try reconnecting in a few seconds");
-		}
+		/* TBD - is this the right thing? */
+		reject_client(auth, 0, "Authentication system is down... try reconnecting in a few seconds");
 	}
 
 	RB_DLINK_FOREACH(ptr, auth_providers.head)
@@ -112,9 +116,8 @@ void cancel_providers(struct auth_client *auth)
 			provider->cancel(auth);
 	}
 
-	/* All data should be already destroyed */
-	rb_dictionary_destroy(auth->data, NULL, NULL);
-	auth->data = NULL;
+	rb_dictionary_delete(auth_clients, RB_UINT_TO_POINTER(auth->cid));
+	rb_free(auth);
 }
 
 /* Provider is done */
@@ -145,7 +148,6 @@ void provider_done(struct auth_client *auth, provider_t id)
 /* Reject a client */
 void reject_client(struct auth_client *auth, provider_t id, const char *reason)
 {
-	uint16_t cid = auth->cid;
 	char reject;
 
 	switch(id)
@@ -159,7 +161,6 @@ void reject_client(struct auth_client *auth, provider_t id, const char *reason)
 	case PROVIDER_BLACKLIST:
 		reject = 'B';
 		break;
-	case PROVIDER_NULL:
 	default:
 		reject = 'N';
 		break;
@@ -170,19 +171,17 @@ void reject_client(struct auth_client *auth, provider_t id, const char *reason)
 
 	unset_provider(auth, id);
 	cancel_providers(auth);
-	memset(&auth_clients[cid], 0, sizeof(struct auth_client));
 }
 
 /* Accept a client, cancel outstanding providers if any */
 void accept_client(struct auth_client *auth, provider_t id)
 {
-	uint16_t cid = auth->cid;
+	uint32_t cid = auth->cid;
 
 	rb_helper_write(authd_helper, "A %x %s %s", auth->cid, auth->username, auth->hostname);
 
 	unset_provider(auth, id);
 	cancel_providers(auth);
-	memset(&auth_clients[cid], 0, sizeof(struct auth_client));
 }
 
 /* Send a notice to a client */
@@ -195,20 +194,14 @@ void notice_client(struct auth_client *auth, const char *notice)
 static void start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_ip, const char *c_port)
 {
 	struct auth_provider *provider;
-	struct auth_client *auth;
+	struct auth_client *auth = rb_malloc(sizeof(struct auth_client));
 	long lcid = strtol(cid, NULL, 16);
-	char name[20];
 	rb_dlink_node *ptr;
 
-	if(lcid >= MAX_CLIENTS)
+	if(lcid >= UINT32_MAX)
 		return;
 
-	auth = &auth_clients[lcid];
-	if(auth->cid != 0)
-		/* Shouldn't get here */
-		return;
-
-	auth->cid = (uint16_t)lcid;
+	auth->cid = (uint32_t)lcid;
 
 	rb_strlcpy(auth->l_ip, l_ip, sizeof(auth->l_ip));
 	auth->l_port = (uint16_t)atoi(l_port);	/* should be safe */
@@ -216,8 +209,7 @@ static void start_auth(const char *cid, const char *l_ip, const char *l_port, co
 	rb_strlcpy(auth->c_ip, c_ip, sizeof(auth->c_ip));
 	auth->c_port = (uint16_t)atoi(c_port);
 
-	snprintf(name, sizeof(name), "%d provider data", auth->cid);
-	auth->data = rb_dictionary_create(name, rb_uint32cmp);
+	rb_dictionary_add(auth_clients, RB_UINT_TO_POINTER(auth->cid), auth);
 
 	RB_DLINK_FOREACH(ptr, auth_providers.head)
 	{

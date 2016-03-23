@@ -22,17 +22,16 @@
 #define __CHARYBDIS_AUTHD_PROVIDER_H__
 
 #include "stdinc.h"
+#include "rb_dictionary.h"
 
-/* Arbitrary limit */
-#define MAX_CLIENTS 4096
+#define MAX_PROVIDERS 32	/* This should be enough */
 
 /* Registered providers */
 typedef enum
 {
-	PROVIDER_NULL = 0x0, /* Dummy value */
-	PROVIDER_RDNS = 0x1,
-	PROVIDER_IDENT = 0x2,
-	PROVIDER_BLACKLIST = 0x4,
+	PROVIDER_RDNS,
+	PROVIDER_IDENT,
+	PROVIDER_BLACKLIST,
 } provider_t;
 
 struct auth_client
@@ -48,10 +47,10 @@ struct auth_client
 	char hostname[HOSTLEN + 1];		/* Used for DNS lookup */
 	char username[USERLEN + 1];		/* Used for ident lookup */
 
-	unsigned int providers;			/* Providers at work,
+	uint32_t providers;			/* Providers at work,
 						 * none left when set to 0 */
 
-	struct Dictionary *data;		/* Provider-specific data */
+	void *data[MAX_PROVIDERS];		/* Provider-specific data slots */
 };
 
 typedef bool (*provider_init_t)(void);
@@ -75,10 +74,10 @@ struct auth_provider
 };
 
 extern rb_dlink_list auth_providers;
+extern struct Dictionary *auth_clients;
+
 extern struct auth_provider rdns_provider;
 extern struct auth_provider ident_provider;
-
-extern struct auth_client auth_clients[MAX_CLIENTS];
 
 void load_provider(struct auth_provider *provider);
 void unload_provider(struct auth_provider *provider);
@@ -98,19 +97,19 @@ void handle_new_connection(int parc, char *parv[]);
 /* Provider is operating on this auth_client (set this if you have async work to do) */
 static inline void set_provider(struct auth_client *auth, provider_t provider)
 {
-	auth->providers |= provider;
+	auth->providers |= (1 << provider);
 }
 
 /* Provider is no longer operating on this auth client (you should use provider_done) */
 static inline void unset_provider(struct auth_client *auth, provider_t provider)
 {
-	auth->providers &= ~provider;
+	auth->providers &= ~(1 << provider);
 }
 
 /* Check if provider is operating on this auth client */
 static inline bool is_provider(struct auth_client *auth, provider_t provider)
 {
-	return auth->providers & provider;
+	return auth->providers & (1 << provider);
 }
 
 #endif /* __CHARYBDIS_AUTHD_PROVIDER_H__ */
