@@ -178,7 +178,13 @@ print_startup(int pid)
 	 * -- jilles */
 	if (!server_state_foreground)
 	{
-		(void) write(0, ".", 1);
+		/* GCC complains on Linux if we don't check the value of write pedantically.
+		 * Technically you're supposed to check the value, yes, but it probably can't fail.
+		 * No, casting to void is of no use to shut the warning up. You HAVE to use the value.
+		 * --Elizfaox
+		 */
+		if(write(0, ".", 1) < 1)
+			abort();
 	}
 	if (dup2(1, 0) == -1)
 		abort();
