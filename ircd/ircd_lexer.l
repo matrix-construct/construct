@@ -33,7 +33,6 @@
 
 #include "stdinc.h"
 #include "ircd_defs.h"
-#include "common.h"
 #include "defaults.h"
 #include "logger.h"
 #include "s_conf.h"
