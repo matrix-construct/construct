@@ -10,7 +10,6 @@
 
 #include "newconf.h"
 #include "ircd_defs.h"
-#include "common.h"
 #include "logger.h"
 #include "s_conf.h"
 #include "s_user.h"

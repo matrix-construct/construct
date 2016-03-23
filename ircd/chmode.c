@@ -26,7 +26,6 @@
 #include "stdinc.h"
 #include "channel.h"
 #include "client.h"
-#include "common.h"
 #include "hash.h"
 #include "hook.h"
 #include "match.h"
@@ -889,7 +888,7 @@ chm_ban(struct Client *source_p, struct Channel *chptr,
 	 * also make sure it will always fit on a line with channel
 	 * name etc.
 	 */
-	if(strlen(mask) > IRCD_MIN(BANLEN, MODEBUFLEN - 5))
+	if(strlen(mask) > MIN(BANLEN, MODEBUFLEN - 5))
 	{
 		sendto_one_numeric(source_p, ERR_INVALIDBAN,
 				form_str(ERR_INVALIDBAN),

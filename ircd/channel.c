@@ -26,7 +26,6 @@
 #include "channel.h"
 #include "chmode.h"
 #include "client.h"
-#include "common.h"
 #include "hash.h"
 #include "hook.h"
 #include "match.h"

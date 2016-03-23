@@ -33,7 +33,6 @@
 #include "ircd_defs.h"
 #include "class.h"
 #include "client.h"
-#include "common.h"
 
 struct Client;
 struct DNSReply;

@@ -25,7 +25,6 @@
 #include "stdinc.h"
 #include "client.h"
 #include "channel.h"
-#include "common.h"
 #include "match.h"
 #include "ircd.h"
 #include "s_serv.h"

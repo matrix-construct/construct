@@ -32,7 +32,6 @@
 
 #include "stdinc.h"
 #include "ircd_defs.h"
-#include "common.h"
 #include "s_conf.h"
 #include "s_newconf.h"
 #include "client.h"
