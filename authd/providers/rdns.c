@@ -70,7 +70,7 @@ void client_dns_destroy(void)
 	struct auth_client *auth;
 	rb_dictionary_iter iter;
 
-	DICTIONARY_FOREACH(auth, &iter, auth_clients)
+	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
 		if(auth->data[PROVIDER_RDNS] != NULL)
 			client_fail(auth, REPORT_FAIL);
@@ -125,7 +125,7 @@ static void timeout_dns_queries_event(void *notused)
 	struct auth_client *auth;
 	rb_dictionary_iter iter;
 
-	DICTIONARY_FOREACH(auth, &iter, auth_clients)
+	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
 		struct user_query *query = auth->data[PROVIDER_RDNS];
 

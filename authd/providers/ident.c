@@ -71,7 +71,7 @@ void ident_destroy(void)
 	rb_dictionary_iter iter;
 
 	/* Nuke all ident queries */
-	DICTIONARY_FOREACH(auth, &iter, auth_clients)
+	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
 		if(auth->data[PROVIDER_IDENT] != NULL)
 			client_fail(auth, REPORT_FAIL);
@@ -144,7 +144,7 @@ static void timeout_ident_queries_event(void *notused)
 	struct auth_client *auth;
 	rb_dictionary_iter iter;
 
-	DICTIONARY_FOREACH(auth, &iter, auth_clients)
+	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
 		struct ident_query *query = auth->data[PROVIDER_IDENT];
 
