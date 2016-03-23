@@ -32,9 +32,9 @@ problems, please file a bug.
 
 ## Tier 2
 
-These platforms are supported, and most features should work, but this is not guaranteed. If you find any
-problems, file a bug, but as these are not regularly tested platforms, a timely resolution may not be
-possible.
+These platforms are supported and occasionally tested, and most features should work, but this is not
+guaranteed. If you find any problems, file a bug, but as these are not regularly tested platforms, a timely
+resolution may not be possible.
 
 * DragonflyBSD 4.4 and above (i386)
 * Linux with uClibc (i386 or x86_64)
@@ -44,17 +44,7 @@ possible.
 
 ## Tier 3
 
-These platforms should only be considered weakly supported, as they are either experimental or not actively
-tested. These platforms have usually been tested in the past, but they may or may not be in a useful state.
-Bugs for tier 3 architectures should have patches attached.
-
-* Old operating system versions of tier 2 and above platforms
-* Other architectures of the above operating systems
-
-## Tier 4
-
-Platforms that are tier 4 are not supported at all. They include all platforms not included in tier 3 or
-above. Bugs to tier 4 platforms **must** have patches attached or will be rejected, possibly without comment.
+Anything else that hasn't been tested. Charybdis may or may not work on it; patches welcome if they don't.
 
 # platform specific errata
 
