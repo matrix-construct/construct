@@ -29,8 +29,8 @@
 #include "rb_radixtree.h"
 
 extern rb_dictionary *nd_dict;
-extern struct rb_radixtree *resv_tree;
-extern struct rb_radixtree *channel_tree;
+extern rb_radixtree *resv_tree;
+extern rb_radixtree *channel_tree;
 
 /* Magic value for FNV hash functions */
 #define FNV1_32_INIT 0x811c9dc5UL

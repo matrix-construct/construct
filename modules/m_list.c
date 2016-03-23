@@ -471,7 +471,7 @@ static void safelist_one_channel(struct Client *source_p, struct Channel *chptr,
 static void safelist_iterate_client(struct Client *source_p)
 {
 	struct Channel *chptr;
-	struct rb_radixtree_iteration_state iter;
+	rb_radixtree_iteration_state iter;
 
 	RB_RADIXTREE_FOREACH_FROM(chptr, &iter, channel_tree, source_p->localClient->safelist_data->chname)
 	{

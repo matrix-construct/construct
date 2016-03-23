@@ -39,12 +39,16 @@ struct rb_radixtree;		/* defined in src/rb_radixtree.c */
 
 struct rb_radixtree_leaf;	/* defined in src/rb_radixtree.c */
 
+typedef struct rb_radixtree rb_radixtree;
+typedef struct rb_radixtree_leaf rb_radixtree_leaf;
+typedef struct rb_radixtree_iteration_state rb_radixtree_iteration_state;
+
 /*
  * struct rb_radixtree_iteration_state, private.
  */
 struct rb_radixtree_iteration_state
 {
-	struct rb_radixtree_leaf *cur, *next;
+	rb_radixtree_leaf *cur, *next;
 	void *pspare[4];
 	int ispare[4];
 };
@@ -63,7 +67,7 @@ struct rb_radixtree_iteration_state
  * compare_cb is the canonizing function.
  */
 
-extern struct rb_radixtree *rb_radixtree_create(const char *name, void (*canonize_cb)(char *key));
+extern rb_radixtree *rb_radixtree_create(const char *name, void (*canonize_cb)(char *key));
 
 /*
  * rb_radixtree_shutdown() deallocates all heaps used in patricia trees. This is
@@ -76,7 +80,7 @@ extern void rb_radixtree_shutdown(void);
  * rb_radixtree_destroy() destroys all entries in a dtree, and also optionally calls
  * a defined callback function to destroy any data attached to it.
  */
-extern void rb_radixtree_destroy(struct rb_radixtree *dtree, void (*destroy_cb)(const char *key, void *data, void *privdata), void *privdata);
+extern void rb_radixtree_destroy(rb_radixtree *dtree, void (*destroy_cb)(const char *key, void *data, void *privdata), void *privdata);
 
 /*
  * rb_radixtree_foreach() iterates all entries in a dtree, and also optionally calls
@@ -84,7 +88,7 @@ extern void rb_radixtree_destroy(struct rb_radixtree *dtree, void (*destroy_cb)(
  *
  * To shortcircuit iteration, return non-zero from the callback function.
  */
-extern void rb_radixtree_foreach(struct rb_radixtree *dtree, int (*foreach_cb)(const char *key, void *data, void *privdata), void *privdata);
+extern void rb_radixtree_foreach(rb_radixtree *dtree, int (*foreach_cb)(const char *key, void *data, void *privdata), void *privdata);
 
 /*
  * rb_radixtree_search() iterates all entries in a dtree, and also optionally calls
@@ -93,7 +97,7 @@ extern void rb_radixtree_foreach(struct rb_radixtree *dtree, int (*foreach_cb)(c
  * When the object is found, a non-NULL is returned from the callback, which results
  * in that object being returned to the user.
  */
-extern void *rb_radixtree_search(struct rb_radixtree *dtree, void *(*foreach_cb)(const char *key, void *data, void *privdata), void *privdata);
+extern void *rb_radixtree_search(rb_radixtree *dtree, void *(*foreach_cb)(const char *key, void *data, void *privdata), void *privdata);
 
 /*
  * rb_radixtree_foreach_start() begins an iteration over all items
@@ -101,7 +105,7 @@ extern void *rb_radixtree_search(struct rb_radixtree *dtree, void *(*foreach_cb)
  * in progress at a time, it is permitted to remove the current element
  * of the iteration (but not any other element).
  */
-extern void rb_radixtree_foreach_start(struct rb_radixtree *dtree, struct rb_radixtree_iteration_state *state);
+extern void rb_radixtree_foreach_start(rb_radixtree *dtree, rb_radixtree_iteration_state *state);
 
 /*
  * rb_radixtree_foreach_start_from() begins an iteration over all items,
@@ -110,44 +114,44 @@ extern void rb_radixtree_foreach_start(struct rb_radixtree *dtree, struct rb_rad
  * of the iteration (but not any other element).
  * Use NULL as a key to have it start at the beginning.
  */
-extern void rb_radixtree_foreach_start_from(struct rb_radixtree *dtree, struct rb_radixtree_iteration_state *state, const char *key);
+extern void rb_radixtree_foreach_start_from(rb_radixtree *dtree, rb_radixtree_iteration_state *state, const char *key);
 
 /*
  * rb_radixtree_foreach_cur() returns the current element of the iteration,
  * or NULL if there are no more elements.
  */
-extern void *rb_radixtree_foreach_cur(struct rb_radixtree *dtree, struct rb_radixtree_iteration_state *state);
+extern void *rb_radixtree_foreach_cur(rb_radixtree *dtree, rb_radixtree_iteration_state *state);
 
 /*
  * rb_radixtree_foreach_next() moves to the next element.
  */
-extern void rb_radixtree_foreach_next(struct rb_radixtree *dtree, struct rb_radixtree_iteration_state *state);
+extern void rb_radixtree_foreach_next(rb_radixtree *dtree, rb_radixtree_iteration_state *state);
 
 /*
  * rb_radixtree_add() adds a key->value entry to the patricia tree.
  */
-extern int rb_radixtree_add(struct rb_radixtree *dtree, const char *key, void *data);
+extern int rb_radixtree_add(rb_radixtree *dtree, const char *key, void *data);
 
 /*
  * rb_radixtree_find() returns data from a dtree for key 'key'.
  */
-extern void *rb_radixtree_retrieve(struct rb_radixtree *dtree, const char *key);
+extern void *rb_radixtree_retrieve(rb_radixtree *dtree, const char *key);
 
 /*
  * rb_radixtree_delete() deletes a key->value entry from the patricia tree.
  */
-extern void *rb_radixtree_delete(struct rb_radixtree *dtree, const char *key);
+extern void *rb_radixtree_delete(rb_radixtree *dtree, const char *key);
 
 /* Low-level functions */
-struct rb_radixtree_leaf *rb_radixtree_elem_add(struct rb_radixtree *dtree, const char *key, void *data);
-struct rb_radixtree_leaf *rb_radixtree_elem_find(struct rb_radixtree *dtree, const char *key, int fuzzy);
-void rb_radixtree_elem_delete(struct rb_radixtree *dtree, struct rb_radixtree_leaf *elem);
-const char *rb_radixtree_elem_get_key(struct rb_radixtree_leaf *elem);
-void rb_radixtree_elem_set_data(struct rb_radixtree_leaf *elem, void *data);
-void *rb_radixtree_elem_get_data(struct rb_radixtree_leaf *elem);
+rb_radixtree_leaf *rb_radixtree_elem_add(rb_radixtree *dtree, const char *key, void *data);
+rb_radixtree_leaf *rb_radixtree_elem_find(rb_radixtree *dtree, const char *key, int fuzzy);
+void rb_radixtree_elem_delete(rb_radixtree *dtree, rb_radixtree_leaf *elem);
+const char *rb_radixtree_elem_get_key(rb_radixtree_leaf *elem);
+void rb_radixtree_elem_set_data(rb_radixtree_leaf *elem, void *data);
+void *rb_radixtree_elem_get_data(rb_radixtree_leaf *elem);
 
-unsigned int rb_radixtree_size(struct rb_radixtree *dict);
-void rb_radixtree_stats(struct rb_radixtree *dict, void (*cb)(const char *line, void *privdata), void *privdata);
+unsigned int rb_radixtree_size(rb_radixtree *dict);
+void rb_radixtree_stats(rb_radixtree *dict, void (*cb)(const char *line, void *privdata), void *privdata);
 void rb_radixtree_stats_walk(void (*cb)(const char *line, void *privdata), void *privdata);
 
 #endif

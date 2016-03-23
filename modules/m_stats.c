@@ -870,7 +870,7 @@ static void
 stats_tresv(struct Client *source_p)
 {
 	struct ConfItem *aconf;
-	struct rb_radixtree_iteration_state state;
+	rb_radixtree_iteration_state state;
 	rb_dlink_node *ptr;
 
 	RB_DLINK_FOREACH(ptr, resv_conf_list.head)
@@ -896,7 +896,7 @@ static void
 stats_resv(struct Client *source_p)
 {
 	struct ConfItem *aconf;
-	struct rb_radixtree_iteration_state state;
+	rb_radixtree_iteration_state state;
 	rb_dlink_node *ptr;
 
 	RB_DLINK_FOREACH(ptr, resv_conf_list.head)

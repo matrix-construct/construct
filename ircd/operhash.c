@@ -37,7 +37,7 @@
 #include "operhash.h"
 #include "rb_radixtree.h"
 
-static struct rb_radixtree *operhash_tree = NULL;
+static rb_radixtree *operhash_tree = NULL;
 
 struct operhash_entry
 {

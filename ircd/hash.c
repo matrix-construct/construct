@@ -42,12 +42,12 @@
 
 rb_dictionary *client_connid_tree = NULL;
 rb_dictionary *client_zconnid_tree = NULL;
-struct rb_radixtree *client_id_tree = NULL;
-struct rb_radixtree *client_name_tree = NULL;
+rb_radixtree *client_id_tree = NULL;
+rb_radixtree *client_name_tree = NULL;
 
-struct rb_radixtree *channel_tree = NULL;
-struct rb_radixtree *resv_tree = NULL;
-struct rb_radixtree *hostname_tree = NULL;
+rb_radixtree *channel_tree = NULL;
+rb_radixtree *resv_tree = NULL;
+rb_radixtree *hostname_tree = NULL;
 
 /*
  * look in whowas.c for the missing ...[WW_MAX]; entry
@@ -480,7 +480,7 @@ void
 clear_resv_hash(void)
 {
 	struct ConfItem *aconf;
-	struct rb_radixtree_iteration_state iter;
+	rb_radixtree_iteration_state iter;
 
 	RB_RADIXTREE_FOREACH(aconf, &iter, resv_tree)
 	{

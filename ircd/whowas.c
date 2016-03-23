@@ -46,7 +46,7 @@ struct whowas_top
 	rb_dlink_list wwlist;
 };
 
-static struct rb_radixtree *whowas_tree = NULL;
+static rb_radixtree *whowas_tree = NULL;
 static rb_dlink_list whowas_list = {NULL, NULL, 0};
 static unsigned int whowas_list_length = NICKNAMEHISTORYLENGTH;
 static void whowas_trim(void *unused);

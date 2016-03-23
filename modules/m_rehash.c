@@ -197,7 +197,7 @@ static void
 rehash_tresvs(struct Client *source_p)
 {
 	struct ConfItem *aconf;
-	struct rb_radixtree_iteration_state iter;
+	rb_radixtree_iteration_state iter;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 
