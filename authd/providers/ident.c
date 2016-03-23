@@ -97,8 +97,8 @@ bool ident_start(struct auth_client *auth)
 	query->F = F;
 
 	/* Build sockaddr_storages for rb_connect_tcp below */
-	if(!rb_inet_ntop_sock((struct sockaddr *)&l_addr, auth->l_ip, sizeof(l_addr)) ||
-		!rb_inet_ntop_sock((struct sockaddr *)&c_addr, auth->c_ip, sizeof(c_addr)))
+	if(!rb_inet_pton_sock(auth->l_ip, (struct sockaddr *)&l_addr, sizeof(l_addr)) ||
+		!rb_inet_pton_sock(auth->c_ip, (struct sockaddr)&c_addr, sizeof(c_addr)))
 	{
 		client_fail(auth, REPORT_FAIL);
 		return true;
