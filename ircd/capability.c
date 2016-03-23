@@ -175,7 +175,7 @@ capability_index_list(struct CapabilityIndex *idx, unsigned int cap_mask)
 
 	*t = '\0';
 
-	DICTIONARY_FOREACH(entry, &iter, idx->cap_dict)
+	RB_DICTIONARY_FOREACH(entry, &iter, idx->cap_dict)
 	{
 		if ((1 << entry->value) & cap_mask)
 		{
@@ -199,7 +199,7 @@ capability_index_mask(struct CapabilityIndex *idx)
 
 	s_assert(idx != NULL);
 
-	DICTIONARY_FOREACH(entry, &iter, idx->cap_dict)
+	RB_DICTIONARY_FOREACH(entry, &iter, idx->cap_dict)
 	{
 		if (!(entry->flags & CAP_ORPHANED))
 			mask |= (1 << entry->value);
@@ -217,7 +217,7 @@ capability_index_get_required(struct CapabilityIndex *idx)
 
 	s_assert(idx != NULL);
 
-	DICTIONARY_FOREACH(entry, &iter, idx->cap_dict)
+	RB_DICTIONARY_FOREACH(entry, &iter, idx->cap_dict)
 	{
 		if (!(entry->flags & CAP_ORPHANED) && (entry->flags & CAP_REQUIRED))
 			mask |= (1 << entry->value);
@@ -241,7 +241,7 @@ capability_index_stats(void (*cb)(const char *line, void *privdata), void *privd
 		snprintf(buf, sizeof buf, "'%s': allocated bits - %d", idx->name, (idx->highest_bit - 1));
 		cb(buf, privdata);
 
-		DICTIONARY_FOREACH(entry, &iter, idx->cap_dict)
+		RB_DICTIONARY_FOREACH(entry, &iter, idx->cap_dict)
 		{
 			snprintf(buf, sizeof buf, "bit %d: '%s'", entry->value, entry->cap);
 			cb(buf, privdata);

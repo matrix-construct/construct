@@ -47,7 +47,7 @@ struct DictionaryIter
 /*
  * this is a convenience macro for inlining iteration of dictionaries.
  */
-#define DICTIONARY_FOREACH(element, state, dict) for (rb_dictionary_foreach_start((dict), (state)); (element = rb_dictionary_foreach_cur((dict), (state))); rb_dictionary_foreach_next((dict), (state)))
+#define RB_DICTIONARY_FOREACH(element, state, dict) for (rb_dictionary_foreach_start((dict), (state)); (element = rb_dictionary_foreach_cur((dict), (state))); rb_dictionary_foreach_next((dict), (state)))
 
 /*
  * rb_dictionary_create_named() creates a new dictionary tree which has a name.

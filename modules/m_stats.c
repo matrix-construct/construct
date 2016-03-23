@@ -287,7 +287,7 @@ stats_delay(struct Client *source_p)
 	struct nd_entry *nd;
 	struct DictionaryIter iter;
 
-	DICTIONARY_FOREACH(nd, &iter, nd_dict)
+	RB_DICTIONARY_FOREACH(nd, &iter, nd_dict)
 	{
 		sendto_one_notice(source_p, ":Delaying: %s for %ld",
 				nd->name, (long) nd->expire);
@@ -738,7 +738,7 @@ stats_messages(struct Client *source_p)
 	struct Message *msg;
 	struct alias_entry *amsg;
 
-	DICTIONARY_FOREACH(msg, &iter, cmd_dict)
+	RB_DICTIONARY_FOREACH(msg, &iter, cmd_dict)
 	{
 		s_assert(msg->cmd != NULL);
 		sendto_one_numeric(source_p, RPL_STATSCOMMANDS,
@@ -747,7 +747,7 @@ stats_messages(struct Client *source_p)
 				   msg->bytes, msg->rcount);
 	}
 
-	DICTIONARY_FOREACH(amsg, &iter, alias_dict)
+	RB_DICTIONARY_FOREACH(amsg, &iter, alias_dict)
 	{
 		s_assert(amsg->name != NULL);
 		sendto_one_numeric(source_p, RPL_STATSCOMMANDS,

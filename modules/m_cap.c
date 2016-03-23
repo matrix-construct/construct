@@ -171,7 +171,7 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags)
 		return;
 	}
 
-	DICTIONARY_FOREACH(entry, &iter, cli_capindex->cap_dict)
+	RB_DICTIONARY_FOREACH(entry, &iter, cli_capindex->cap_dict)
 	{
 		size_t caplen = 0;
 		struct ClientCapability *clicap = entry->ownerdata;

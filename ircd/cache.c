@@ -243,12 +243,12 @@ load_help(void)
 	struct stat sb;
 #endif
 
-	DICTIONARY_FOREACH(cacheptr, &iter, help_dict_oper)
+	RB_DICTIONARY_FOREACH(cacheptr, &iter, help_dict_oper)
 	{
 		rb_dictionary_delete(help_dict_oper, cacheptr->name);
 		free_cachefile(cacheptr);
 	}
-	DICTIONARY_FOREACH(cacheptr, &iter, help_dict_user)
+	RB_DICTIONARY_FOREACH(cacheptr, &iter, help_dict_user)
 	{
 		rb_dictionary_delete(help_dict_user, cacheptr->name);
 		free_cachefile(cacheptr);
