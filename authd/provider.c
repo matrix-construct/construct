@@ -205,25 +205,25 @@ static void start_auth(const char *cid, const char *l_ip, const char *l_port, co
 
 	rb_strlcpy(auth->l_ip, l_ip, sizeof(auth->l_ip));
 	auth->l_port = (uint16_t)atoi(l_port);	/* should be safe */
-	(void) rb_inet_pton_sock(l_ip, (struct sockaddr *)&auth->l_addr, sizeof(auth->l_addr));
+	(void) rb_inet_pton_sock(l_ip, (struct sockaddr *)&auth->l_addr);
 
 	rb_strlcpy(auth->c_ip, c_ip, sizeof(auth->c_ip));
 	auth->c_port = (uint16_t)atoi(c_port);
-	(void) rb_inet_pton_sock(c_ip, (struct sockaddr *)&auth->c_addr, sizeof(auth->c_addr));
+	(void) rb_inet_pton_sock(c_ip, (struct sockaddr *)&auth->c_addr);
 
 #ifdef RB_IPV6
 	if(GET_SS_FAMILY(&auth->l_addr) == AF_INET6)
-		((struct sockaddr_in6 *)&l_addr)->sin6_port = htons(auth->l_port);
+		((struct sockaddr_in6 *)&auth->l_addr)->sin6_port = htons(auth->l_port);
 	else
 #endif
-		((struct sockaddr_in *)&l_addr)->sin_port = htons(auth->l_port);
+		((struct sockaddr_in *)&auth->l_addr)->sin_port = htons(auth->l_port);
 
 #ifdef RB_IPV6
 	if(GET_SS_FAMILY(&auth->c_addr) == AF_INET6)
-		((struct sockaddr_in6 *)&c_addr)->sin6_port = htons(auth->c_port);
+		((struct sockaddr_in6 *)&auth->c_addr)->sin6_port = htons(auth->c_port);
 	else
 #endif
-		((struct sockaddr_in *)&c_addr)->sin_port = htons(auth->c_port);
+		((struct sockaddr_in *)&auth->c_addr)->sin_port = htons(auth->c_port);
 
 	rb_dictionary_add(auth_clients, RB_UINT_TO_POINTER(auth->cid), auth);
 
