@@ -39,7 +39,6 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: event.c 26272 2008-12-10 05:55:10Z androsyn $
  */
 
 #include <librb_config.h>

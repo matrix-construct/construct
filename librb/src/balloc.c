@@ -28,7 +28,6 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: balloc.c 26100 2008-09-20 01:27:19Z androsyn $
  */
 
 /*

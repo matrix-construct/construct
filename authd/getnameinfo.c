@@ -46,8 +46,6 @@
 #include "getaddrinfo.h"
 #include "getnameinfo.h"
 
-/*  $Id$ */
-
 static const struct afd {
   int a_af;
   int a_addrlen;

@@ -31,8 +31,6 @@
 #include <rb_lib.h>
 #include "getaddrinfo.h"
 
-/*  $Id$ */
-
 static const char in_addrany[]	= { 0, 0, 0, 0 };
 static const char in_loopback[] = { 127, 0, 0, 1 };
 static const char in6_addrany[] = {
@@ -497,7 +495,7 @@ get_ai(const struct rb_addrinfo *pai, const struct afd *afd, const char *addr)
 {
   char *p;
   struct rb_addrinfo *ai;
-	
+
     ai = (struct rb_addrinfo *)rb_malloc(sizeof(struct rb_addrinfo)
 		+ (afd->a_socklen));
 	if (ai == NULL)
@@ -517,7 +515,7 @@ static int
 get_portmatch(const struct rb_addrinfo *ai, const char *servname)
 {
   struct rb_addrinfo xai;
-  memcpy(&xai, ai, sizeof(struct rb_addrinfo)); 
+  memcpy(&xai, ai, sizeof(struct rb_addrinfo));
   return(get_port(&xai, servname, 1));
 }
 
