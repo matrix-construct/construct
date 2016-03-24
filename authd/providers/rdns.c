@@ -50,7 +50,7 @@ typedef enum
 
 static void client_fail(struct auth_client *auth, dns_message message);
 static void client_success(struct auth_client *auth);
-static void get_dns_answer(const char *res, bool status, query_type type, void *data);
+static void dns_answer_callback(const char *res, bool status, query_type type, void *data);
 
 static struct ev_entry *timeout_ev;
 static EVH timeout_dns_queries_event;
@@ -85,7 +85,7 @@ bool client_dns_start(struct auth_client *auth)
 
 	auth->data[PROVIDER_RDNS] = query;
 
-	query->query = lookup_hostname(auth->c_ip, get_dns_answer, auth);
+	query->query = lookup_hostname(auth->c_ip, dns_answer_callback, auth);
 
 	notice_client(auth, messages[REPORT_LOOKUP]);
 	set_provider(auth, PROVIDER_RDNS);
@@ -101,7 +101,7 @@ void client_dns_cancel(struct auth_client *auth)
 }
 
 static void
-get_dns_answer(const char *res, bool status, query_type type, void *data)
+dns_answer_callback(const char *res, bool status, query_type type, void *data)
 {
 	struct auth_client *auth = data;
 	struct user_query *query = auth->data[PROVIDER_RDNS];
