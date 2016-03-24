@@ -336,7 +336,7 @@ invalidate_bancache_user(struct Client *client_p)
 /* check_channel_name()
  *
  * input	- channel name
- * output	- true if valid channel name, else 0
+ * output	- true if valid channel name, else false
  * side effects -
  */
 bool
