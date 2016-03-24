@@ -30,6 +30,7 @@
 #ifdef _WIN32
 #include <rb_lib.h>
 #include "getaddrinfo.h"
+#include "stdinc.h"
 
 static const char in_addrany[]	= { 0, 0, 0, 0 };
 static const char in_loopback[] = { 127, 0, 0, 1 };
@@ -187,7 +188,8 @@ str_isnumber(const char *p)
 	char *ep;
 
 	if (*p == '\0')
-		return NO;
+		return false;
+
 	ep = NULL;
 	errno = 0;
 	(void)strtoul(p, &ep, 10);
