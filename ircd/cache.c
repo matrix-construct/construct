@@ -268,7 +268,7 @@ load_help(void)
 	}
 
 	closedir(helpfile_dir);
-	helpfile_dir = opendir(ircd_path[IRCD_PATH_USERHELP]);
+	helpfile_dir = opendir(ircd_paths[IRCD_PATH_USERHELP]);
 
 	if(helpfile_dir == NULL)
 		return;
