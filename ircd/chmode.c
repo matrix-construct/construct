@@ -202,10 +202,10 @@ get_channel_access(struct Client *source_p, struct Channel *chptr, struct member
  * Checks if mlock and chanops permit a mode change.
  *
  * inputs	- client, channel, access level, errors pointer, mode char
- * outputs	- 0 on failure, 1 on success
+ * outputs	- false on failure, true on success
  * side effects - error message sent on failure
  */
-static int
+static bool
 allow_mode_change(struct Client *source_p, struct Channel *chptr, int alevel,
 		int *errors, char c)
 {
@@ -220,7 +220,7 @@ allow_mode_change(struct Client *source_p, struct Channel *chptr, int alevel,
 					c,
 					chptr->mode_lock);
 		*errors |= SM_ERR_MLOCK;
-		return 0;
+		return false;
 	}
 	if(alevel < CHFL_CHANOP)
 	{
@@ -228,9 +228,9 @@ allow_mode_change(struct Client *source_p, struct Channel *chptr, int alevel,
 			sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
 				   me.name, source_p->name, chptr->chname);
 		*errors |= SM_ERR_NOOPS;
-		return 0;
+		return false;
 	}
-	return 1;
+	return true;
 }
 
 /* add_id()
