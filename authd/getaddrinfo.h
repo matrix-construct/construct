@@ -94,8 +94,6 @@ void rb_freeaddrinfo(struct rb_addrinfo *ai);
 
 #define SUCCESS 0
 #define ANY 0
-#define YES 1
-#define NO  0
 
 #undef EAI_ADDRFAMILY
 #undef EAI_AGAIN

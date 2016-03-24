@@ -94,7 +94,7 @@ static const struct explore explore[] = {
 
 #define PTON_MAX	16
 
-static int str_isnumber(const char *);
+static bool str_isnumber(const char *);
 static int explore_null(const struct rb_addrinfo *,
 	const char *, struct rb_addrinfo **);
 static int explore_numeric(const struct rb_addrinfo *, const char *,
@@ -183,7 +183,7 @@ rb_freeaddrinfo(struct rb_addrinfo *ai)
 	} while (ai);
 }
 
-static int
+static bool
 str_isnumber(const char *p)
 {
 	char *ep;
@@ -194,9 +194,9 @@ str_isnumber(const char *p)
 	errno = 0;
 	(void)strtoul(p, &ep, 10);
 	if (errno == 0 && ep && *ep == '\0')
-		return YES;
+		return true;
 	else
-		return NO;
+		return false;
 }
 
 int
