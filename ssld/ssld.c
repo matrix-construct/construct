@@ -459,7 +459,7 @@ common_zlib_inflate(conn_t * conn, void *buf, size_t len)
 }
 #endif
 
-static int
+static bool
 plain_check_cork(conn_t * conn)
 {
 	if(rb_rawbuf_length(conn->modbuf_out) >= 4096)
@@ -470,9 +470,9 @@ plain_check_cork(conn_t * conn)
 		rb_setselect(conn->plain_fd, RB_SELECT_READ, NULL, NULL);
 		/* try to write */
 		conn_mod_write_sendq(conn->mod_fd, conn);
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
 
