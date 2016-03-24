@@ -94,9 +94,6 @@ rb_dlink_list global_serv_list;    /* global servers on the network */
 rb_dlink_list local_oper_list;     /* our opers, duplicated in lclient_list */
 rb_dlink_list oper_list;           /* network opers */
 
-const char *logFileName = LPATH;
-const char *pidFileName = PPATH;
-
 char **myargv;
 bool dorehash = false;
 bool dorehashbans = false;
@@ -117,6 +114,28 @@ int splitchecking;
 int split_users;
 int split_servers;
 int eob_count;
+
+const char *ircd_paths[IRCD_PATH_COUNT] = {
+	[IRCD_PATH_PREFIX] = DPATH,
+	[IRCD_PATH_MODULES] = MODPATH,
+	[IRCD_PATH_AUTOLOAD_MODULES] = AUTOMODPATH,
+	[IRCD_PATH_ETC] = ETCPATH,
+	[IRCD_PATH_LOG] = LOGPATH,
+	[IRCD_PATH_USERHELP] = UHPATH,
+	[IRCD_PATH_OPERHELP] = HPATH,
+	[IRCD_PATH_IRCD_EXEC] = SPATH,
+	[IRCD_PATH_IRCD_CONF] = CPATH,
+	[IRCD_PATH_IRCD_MOTD] = MPATH,
+	[IRCD_PATH_IRCD_LOG] = LPATH,
+	[IRCD_PATH_IRCD_PID] = PPATH,
+	[IRCD_PATH_IRCD_OMOTD] = OPATH,
+	[IRCD_PATH_BANDB] = DBPATH,
+	[IRCD_PATH_BIN] = BINPATH,
+	[IRCD_PATH_LIBEXEC] = PKGLIBEXECDIR,
+};
+
+const char *logFileName = LPATH;
+const char *pidFileName = PPATH;
 
 void
 ircd_shutdown(const char *reason)
@@ -562,8 +581,8 @@ charybdis_main(int argc, char *argv[])
 
 	init_sys();
 
-	ConfigFileEntry.dpath = DPATH;
-	ConfigFileEntry.configfile = CPATH;	/* Server configuration file */
+	ConfigFileEntry.dpath = ircd_paths[IRCD_PATH_PREFIX];
+	ConfigFileEntry.configfile = ircd_paths[IRCD_PATH_IRCD_CONF];	/* Server configuration file */
 	ConfigFileEntry.connect_timeout = 30;	/* Default to 30 */
 
 	umask(077);		/* better safe than sorry --SRB */

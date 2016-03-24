@@ -278,17 +278,17 @@ start_ssldaemon(int count, const char *ssl_cert, const char *ssl_private_key, co
 
 	if(ssld_path == NULL)
 	{
-		snprintf(fullpath, sizeof(fullpath), "%s/ssld%s", PKGLIBEXECDIR, suffix);
+		snprintf(fullpath, sizeof(fullpath), "%s%cssld%s", ircd_paths[IRCD_PATH_LIBEXEC], RB_PATH_SEPARATOR, suffix);
 
 		if(access(fullpath, X_OK) == -1)
 		{
-			snprintf(fullpath, sizeof(fullpath), "%s/bin/ssld%s",
-				    ConfigFileEntry.dpath, suffix);
+			snprintf(fullpath, sizeof(fullpath), "%s%cbin%cssld%s",
+				    ConfigFileEntry.dpath, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR, suffix);
 			if(access(fullpath, X_OK) == -1)
 			{
 				ilog(L_MAIN,
 				     "Unable to execute ssld%s in %s or %s/bin",
-				     suffix, PKGLIBEXECDIR, ConfigFileEntry.dpath);
+				     suffix, ircd_paths[IRCD_PATH_LIBEXEC], ConfigFileEntry.dpath);
 				return 0;
 			}
 		}

@@ -55,20 +55,20 @@ start_authd(void)
 #endif
 	if(authd_path == NULL)
 	{
-		snprintf(fullpath, sizeof(fullpath), "%s/authd%s", PKGLIBEXECDIR, suffix);
+		snprintf(fullpath, sizeof(fullpath), "%s%cauthd%s", ircd_paths[IRCD_PATH_LIBEXEC], RB_PATH_SEPARATOR, suffix);
 
 		if(access(fullpath, X_OK) == -1)
 		{
-			snprintf(fullpath, sizeof(fullpath), "%s/libexec/charybdis/authd%s",
-				 ConfigFileEntry.dpath, suffix);
+			snprintf(fullpath, sizeof(fullpath), "%s%cbin%cauthd%s",
+				 ConfigFileEntry.dpath, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR, suffix);
 			if(access(fullpath, X_OK) == -1)
 			{
 				ilog(L_MAIN,
-				     "Unable to execute authd in %s or %s/libexec/charybdis",
-				     PKGLIBEXECDIR, ConfigFileEntry.dpath);
+				     "Unable to execute authd in %s or %s/bin",
+				     ircd_paths[IRCD_PATH_LIBEXEC], ConfigFileEntry.dpath);
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
-						       "Unable to execute authd in %s or %s/libexec/charybdis",
-						       PKGLIBEXECDIR, ConfigFileEntry.dpath);
+						       "Unable to execute authd in %s or %s/bin",
+						       ircd_paths[IRCD_PATH_LIBEXEC], ConfigFileEntry.dpath);
 				return 1;
 			}
 
