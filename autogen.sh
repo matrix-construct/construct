@@ -81,7 +81,7 @@ parse_options "$@"
 echo "Building librb autotools files."
 
 cd "$TOP_DIR"/librb
-bash autogen.sh
+sh autogen.sh
 
 echo "Building main autotools files."
 
