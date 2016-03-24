@@ -414,7 +414,7 @@ rb_setup_fd_win32(rb_fde_t *F)
 	{
 	case RB_FD_SOCKET:
 		{
-			u_long nonb = 1;
+			unsigned long nonb = 1;
 			if(ioctlsocket((SOCKET) F->fd, FIONBIO, &nonb) == -1)
 			{
 				rb_get_errno();

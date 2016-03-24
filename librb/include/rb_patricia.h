@@ -24,7 +24,6 @@
 #define INET6_ADDRSTRLEN 46
 #endif
 
-/* typedef unsigned int u_int; */
 #define rb_prefix_touchar(prefix) ((unsigned char *)&(prefix)->add.sin)
 #define MAXLINE 1024
 #define BIT_TEST(f, b)  ((f) & (b))

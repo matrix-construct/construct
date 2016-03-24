@@ -113,7 +113,7 @@ char *rb_strerror(int error);
 #define EAFNOSUPPORT WSAEAFNOSUPPORT
 
 #define pipe(x)  _pipe(x, 1024, O_BINARY)
-#define ioctl(x,y,z)  ioctlsocket(x,y, (u_long *)z)
+#define ioctl(x,y,z)  ioctlsocket(x,y, (unsigned long *)z)
 
 #define WNOHANG 1
 

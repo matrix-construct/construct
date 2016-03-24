@@ -754,7 +754,7 @@ rb_des_crypt(const char *key, const char *setting)
 #define MD5_SIZE			16
 
 static void
-_crypt_to64(char *s, u_long v, int n)
+_crypt_to64(char *s, unsigned long v, int n)
 {
 	while (--n >= 0) {
 	        *s++ = ascii64[v&0x3f];
