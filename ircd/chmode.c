@@ -236,10 +236,10 @@ allow_mode_change(struct Client *source_p, struct Channel *chptr, int alevel,
 /* add_id()
  *
  * inputs	- client, channel, id to add, type, forward
- * outputs	- 0 on failure, 1 on success
+ * outputs	- false on failure, true on success
  * side effects - given id is added to the appropriate list
  */
-int
+bool
 add_id(struct Client *source_p, struct Channel *chptr, const char *banid, const char *forward,
        rb_dlink_list * list, long mode_type)
 {
@@ -257,14 +257,14 @@ add_id(struct Client *source_p, struct Channel *chptr, const char *banid, const 
 		{
 			sendto_one(source_p, form_str(ERR_BANLISTFULL),
 				   me.name, source_p->name, chptr->chname, realban);
-			return 0;
+			return false;
 		}
 
 		RB_DLINK_FOREACH(ptr, list->head)
 		{
 			actualBan = ptr->data;
 			if(mask_match(actualBan->banstr, realban))
-				return 0;
+				return false;
 		}
 	}
 	/* dont let remotes set duplicates */
@@ -274,7 +274,7 @@ add_id(struct Client *source_p, struct Channel *chptr, const char *banid, const 
 		{
 			actualBan = ptr->data;
 			if(!irccmp(actualBan->banstr, realban))
-				return 0;
+				return false;
 		}
 	}
 
@@ -293,7 +293,7 @@ add_id(struct Client *source_p, struct Channel *chptr, const char *banid, const 
 	if(mode_type == CHFL_BAN || mode_type == CHFL_QUIET || mode_type == CHFL_EXCEPTION)
 		chptr->bants++;
 
-	return 1;
+	return true;
 }
 
 /* del_id()
