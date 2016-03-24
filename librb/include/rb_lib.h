@@ -69,9 +69,11 @@ char *alloca();
 #ifdef _WIN32
 #define rb_get_errno() do { errno = WSAGetLastError(); WSASetLastError(errno); } while(0)
 typedef SOCKET rb_platform_fd_t;
+#define RB_PATH_SEPARATOR '\\'
 #else
 #define rb_get_errno()
 typedef int rb_platform_fd_t;
+#define RB_PATH_SEPARATOR '/'
 #endif
 
 #ifdef _WIN32
