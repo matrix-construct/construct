@@ -231,7 +231,7 @@ extern void invalidate_bancache_user(struct Client *);
 
 extern void free_channel_list(rb_dlink_list *);
 
-extern int check_channel_name(const char *name);
+extern bool check_channel_name(const char *name);
 
 extern void channel_member_names(struct Channel *chptr, struct Client *,
 				 int show_eon);

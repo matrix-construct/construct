@@ -336,23 +336,23 @@ invalidate_bancache_user(struct Client *client_p)
 /* check_channel_name()
  *
  * input	- channel name
- * output	- 1 if valid channel name, else 0
+ * output	- true if valid channel name, else 0
  * side effects -
  */
-int
+bool
 check_channel_name(const char *name)
 {
 	s_assert(name != NULL);
 	if(name == NULL)
-		return 0;
+		return false;
 
 	for (; *name; ++name)
 	{
 		if(!IsChanChar(*name))
-			return 0;
+			return false;
 	}
 
-	return 1;
+	return true;
 }
 
 /* free_channel_list()
