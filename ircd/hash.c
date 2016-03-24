@@ -70,10 +70,10 @@ init_hash(void)
 	hostname_tree = rb_radixtree_create("hostname", irccasecanon);
 }
 
-u_int32_t
+uint32_t
 fnv_hash_upper(const unsigned char *s, int bits)
 {
- 	u_int32_t h = FNV1_32_INIT;
+	uint32_t h = FNV1_32_INIT;
 
 	while (*s)
 	{
@@ -85,10 +85,10 @@ fnv_hash_upper(const unsigned char *s, int bits)
 	return h;
 }
 
-u_int32_t
+uint32_t
 fnv_hash(const unsigned char *s, int bits)
 {
- 	u_int32_t h = FNV1_32_INIT;
+	uint32_t h = FNV1_32_INIT;
 
 	while (*s)
 	{
@@ -100,10 +100,10 @@ fnv_hash(const unsigned char *s, int bits)
 	return h;
 }
 
-u_int32_t
+uint32_t
 fnv_hash_len(const unsigned char *s, int bits, int len)
 {
- 	u_int32_t h = FNV1_32_INIT;
+	uint32_t h = FNV1_32_INIT;
 	const unsigned char *x = s + len;
 	while (*s && s < x)
 	{
@@ -115,10 +115,10 @@ fnv_hash_len(const unsigned char *s, int bits, int len)
 	return h;
 }
 
-u_int32_t
+uint32_t
 fnv_hash_upper_len(const unsigned char *s, int bits, int len)
 {
- 	u_int32_t h = FNV1_32_INIT;
+	uint32_t h = FNV1_32_INIT;
 	const unsigned char *x = s + len;
 	while (*s && s < x)
 	{
