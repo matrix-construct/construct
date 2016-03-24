@@ -901,11 +901,11 @@ can_send(struct Channel *chptr, struct Client *source_p, struct membership *mspt
  * inputs       - flag 0 if PRIVMSG 1 if NOTICE. RFC
  *                says NOTICE must not auto reply
  *              - pointer to source Client
- *		- pointer to target channel
- * output	- 1 if target is under flood attack
+ *              - pointer to target channel
+ * output       - true if target is under flood attack
  * side effects	- check for flood attack on target chptr
  */
-int
+bool
 flood_attack_channel(int p_or_n, struct Client *source_p, struct Channel *chptr, char *chname)
 {
 	int delta;
@@ -943,13 +943,13 @@ flood_attack_channel(int p_or_n, struct Client *source_p, struct Channel *chptr,
 				sendto_one(source_p,
 					   ":%s NOTICE %s :*** Message to %s throttled due to flooding",
 					   me.name, source_p->name, chptr->chname);
-			return 1;
+			return true;
 		}
 		else
 			chptr->received_number_of_privmsgs++;
 	}
 
-	return 0;
+	return false;
 }
 
 /* find_bannickchange_channel()
