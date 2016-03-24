@@ -486,7 +486,7 @@ pretty_mask(const char *idmask)
  * output	- true if forwarding should be allowed
  * side effects - numeric sent if not allowed
  */
-static int
+static bool
 check_forward(struct Client *source_p, struct Channel *chptr,
 		const char *forward)
 {
@@ -497,20 +497,20 @@ check_forward(struct Client *source_p, struct Channel *chptr,
 			(MyClient(source_p) && (strlen(forward) > LOC_CHANNELLEN || hash_find_resv(forward))))
 	{
 		sendto_one_numeric(source_p, ERR_BADCHANNAME, form_str(ERR_BADCHANNAME), forward);
-		return 0;
+		return false;
 	}
 	/* don't forward to inconsistent target -- jilles */
 	if(chptr->chname[0] == '#' && forward[0] == '&')
 	{
 		sendto_one_numeric(source_p, ERR_BADCHANNAME,
 				   form_str(ERR_BADCHANNAME), forward);
-		return 0;
+		return false;
 	}
 	if(MyClient(source_p) && (targptr = find_channel(forward)) == NULL)
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
 				   form_str(ERR_NOSUCHCHANNEL), forward);
-		return 0;
+		return false;
 	}
 	if(MyClient(source_p) && !(targptr->mode.mode & MODE_FREETARGET))
 	{
@@ -519,10 +519,10 @@ check_forward(struct Client *source_p, struct Channel *chptr,
 		{
 			sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
 				   me.name, source_p->name, targptr->chname);
-			return 0;
+			return false;
 		}
 	}
-	return 1;
+	return true;
 }
 
 /* fix_key()
