@@ -20,7 +20,6 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: gnutls.c 26296 2008-12-13 03:36:00Z androsyn $
  */
 
 #include <librb_config.h>

@@ -26,7 +26,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *  $Id$
  */
 
 struct rb_addrinfo {
@@ -94,8 +93,6 @@ void rb_freeaddrinfo(struct rb_addrinfo *ai);
 
 #define SUCCESS 0
 #define ANY 0
-#define YES 1
-#define NO  0
 
 #undef EAI_ADDRFAMILY
 #undef EAI_AGAIN

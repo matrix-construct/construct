@@ -31,8 +31,6 @@
 #include <rb_lib.h>
 #include "getaddrinfo.h"
 
-/*  $Id$ */
-
 static const char in_addrany[]	= { 0, 0, 0, 0 };
 static const char in_loopback[] = { 127, 0, 0, 1 };
 static const char in6_addrany[] = {
@@ -94,7 +92,7 @@ static const struct explore explore[] = {
 
 #define PTON_MAX	16
 
-static int str_isnumber(const char *);
+static bool str_isnumber(const char *);
 static int explore_null(const struct rb_addrinfo *,
 	const char *, struct rb_addrinfo **);
 static int explore_numeric(const struct rb_addrinfo *, const char *,
@@ -183,7 +181,7 @@ rb_freeaddrinfo(struct rb_addrinfo *ai)
 	} while (ai);
 }
 
-static int
+static bool
 str_isnumber(const char *p)
 {
 	char *ep;
@@ -194,9 +192,9 @@ str_isnumber(const char *p)
 	errno = 0;
 	(void)strtoul(p, &ep, 10);
 	if (errno == 0 && ep && *ep == '\0')
-		return YES;
+		return true;
 	else
-		return NO;
+		return false;
 }
 
 int
@@ -497,7 +495,7 @@ get_ai(const struct rb_addrinfo *pai, const struct afd *afd, const char *addr)
 {
   char *p;
   struct rb_addrinfo *ai;
-	
+
     ai = (struct rb_addrinfo *)rb_malloc(sizeof(struct rb_addrinfo)
 		+ (afd->a_socklen));
 	if (ai == NULL)
@@ -517,7 +515,7 @@ static int
 get_portmatch(const struct rb_addrinfo *ai, const char *servname)
 {
   struct rb_addrinfo xai;
-  memcpy(&xai, ai, sizeof(struct rb_addrinfo)); 
+  memcpy(&xai, ai, sizeof(struct rb_addrinfo));
   return(get_port(&xai, servname, 1));
 }
 
