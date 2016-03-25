@@ -134,8 +134,8 @@ const char *ircd_paths[IRCD_PATH_COUNT] = {
 	[IRCD_PATH_LIBEXEC] = PKGLIBEXECDIR,
 };
 
-const char *logFileName = LPATH;
-const char *pidFileName = PPATH;
+const char *logFileName = NULL;
+const char *pidFileName = NULL;
 
 void
 ircd_shutdown(const char *reason)
@@ -580,6 +580,9 @@ charybdis_main(int argc, char *argv[])
 #endif
 
 	init_sys();
+
+	logFileName = ircd_paths[IRCD_PATH_IRCD_LOG];
+	pidFileName = ircd_paths[IRCD_PATH_IRCD_PID];
 
 	ConfigFileEntry.dpath = ircd_paths[IRCD_PATH_PREFIX];
 	ConfigFileEntry.configfile = ircd_paths[IRCD_PATH_IRCD_CONF];	/* Server configuration file */
