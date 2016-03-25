@@ -56,10 +56,11 @@ struct auth_client
 };
 
 typedef bool (*provider_init_t)(void);
-typedef bool (*provider_perform_t)(struct auth_client *);
-typedef void (*provider_complete_t)(struct auth_client *, provider_t provider);
-typedef void (*provider_cancel_t)(struct auth_client *);
 typedef void (*provider_destroy_t)(void);
+
+typedef bool (*provider_start_t)(struct auth_client *);
+typedef void (*provider_cancel_t)(struct auth_client *);
+typedef void (*provider_complete_t)(struct auth_client *, provider_t provider);
 
 struct auth_provider
 {
@@ -70,7 +71,7 @@ struct auth_provider
 	provider_init_t init;		/* Initalise the provider */
 	provider_destroy_t destroy;	/* Terminate the provider */
 
-	provider_perform_t start;	/* Perform authentication */
+	provider_start_t start;		/* Perform authentication */
 	provider_cancel_t cancel;	/* Authentication cancelled */
 	provider_complete_t completed;	/* Callback for when other performers complete (think dependency chains) */
 };
@@ -92,7 +93,8 @@ void provider_done(struct auth_client *auth, provider_t id);
 void accept_client(struct auth_client *auth, provider_t id);
 void reject_client(struct auth_client *auth, provider_t id, const char *reason);
 
-void notice_client(struct auth_client *auth, const char *notice);
+void notice_client(struct auth_client *auth, const char *fmt, ...);
+void warn_opers(provider_t id, const char *fmt, ...);
 
 void handle_new_connection(int parc, char *parv[]);
 

@@ -18,14 +18,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* So the basic design here is to have "authentication providers" that do
- * things like query ident and blacklists and even open proxies.
+/* The basic design here is to have "authentication providers" that do things
+ * like query ident and blacklists and even open proxies.
  *
  * Providers are registered in the auth_providers linked list. It is planned to
  * use a bitmap to store provider ID's later.
  *
- * Providers can either return failure immediately, immediate acceptance, or
- * do work in the background (calling set_provider to signal this).
+ * Providers can either return failure immediately, immediate acceptance, or do
+ * work in the background (calling set_provider to signal this).
  *
  * Provider-specific data for each client can be kept in an index of the data
  * struct member (using the provider's ID).
@@ -39,6 +39,9 @@
  * When a provider is done and is neutral on accepting/rejecting a client, it
  * should call provider_done. Do NOT call this if you have accepted or rejected
  * the client.
+ *
+ * Eventually, stuff like *:line handling will be moved here, but that means we
+ * have to talk to bandb directly first.
  *
  * --Elizafox, 9 March 2016
  */
@@ -185,9 +188,29 @@ void accept_client(struct auth_client *auth, provider_t id)
 }
 
 /* Send a notice to a client */
-void notice_client(struct auth_client *auth, const char *notice)
+void notice_client(struct auth_client *auth, const char *fmt, ...)
 {
-	rb_helper_write(authd_helper, "N %x :%s", auth->cid, notice);
+	char buf[BUFSIZE];
+	va_list args;
+
+	va_start(args, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, args);
+	va_end(args);
+
+	rb_helper_write(authd_helper, "N %x :%s", auth->cid, buf);
+}
+
+/* Send a warning to the IRC daemon for logging, etc. */
+void warn_opers(provider_t id, const char *fmt, ...)
+{
+	char buf[BUFSIZE];
+	va_list args;
+
+	va_start(args, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, args);
+	va_end(args);
+
+	rb_helper_write(authd_helper, "W %c :%s", id, buf);
 }
 
 /* Begin authenticating user */
