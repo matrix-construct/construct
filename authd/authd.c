@@ -49,8 +49,10 @@ handle_stat(int parc, char *parv[])
 	authd_stat_handler handler;
 
 	if(parc < 3)
-		 /* XXX Should log this somehow */
+	{
+		warn_opers(L_CRIT, "BUG: handle_stat received too few parameters (at least 3 expected, got %d)", parc);
 		return;
+	}
 
 	if (!(handler = authd_stat_handlers[(unsigned char)parv[2][0]]))
 		return;
@@ -64,8 +66,10 @@ handle_reload(int parc, char *parv[])
 	authd_reload_handler handler;
 
 	if(parc < 2)
-		 /* XXX Should log this somehow */
+	{
+		warn_opers(L_CRIT, "BUG: handle_reload received too few parameters (at least 2 expected, got %d)", parc);
 		return;
+	}
 
 	if (!(handler = authd_reload_handlers[(unsigned char)parv[1][0]]))
 		return;

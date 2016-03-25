@@ -34,6 +34,14 @@ typedef enum
 	PROVIDER_BLACKLIST,
 } provider_t;
 
+typedef enum
+{
+	L_DEBUG = 'D',
+	L_INFO = 'I',
+	L_WARN = 'W',
+	L_CRIT ='C',
+} notice_level_t;
+
 struct auth_client
 {
 	uint16_t cid;				/* Client ID */
@@ -94,7 +102,7 @@ void accept_client(struct auth_client *auth, provider_t id);
 void reject_client(struct auth_client *auth, provider_t id, const char *reason);
 
 void notice_client(struct auth_client *auth, const char *fmt, ...);
-void warn_opers(provider_t id, const char *fmt, ...);
+void warn_opers(notice_level_t level, const char *fmt, ...);
 
 void handle_new_connection(int parc, char *parv[]);
 

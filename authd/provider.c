@@ -59,8 +59,10 @@ rb_dictionary *auth_clients;
 void load_provider(struct auth_provider *provider)
 {
 	if(rb_dlink_list_length(&auth_providers) >= MAX_PROVIDERS)
-		/* XXX should probably warn here */
+	{
+		warn_opers(L_CRIT, "Exceeded maximum level of authd providers (%d max)", MAX_PROVIDERS);
 		return;
+	}
 
 	provider->init();
 	rb_dlinkAdd(provider, &provider->node, &auth_providers);
@@ -201,7 +203,7 @@ void notice_client(struct auth_client *auth, const char *fmt, ...)
 }
 
 /* Send a warning to the IRC daemon for logging, etc. */
-void warn_opers(provider_t id, const char *fmt, ...)
+void warn_opers(notice_level_t level, const char *fmt, ...)
 {
 	char buf[BUFSIZE];
 	va_list args;
@@ -210,7 +212,7 @@ void warn_opers(provider_t id, const char *fmt, ...)
 	vsnprintf(buf, sizeof(buf), fmt, args);
 	va_end(args);
 
-	rb_helper_write(authd_helper, "W %c :%s", id, buf);
+	rb_helper_write(authd_helper, "W %c :%s", level, buf);
 }
 
 /* Begin authenticating user */
@@ -272,7 +274,10 @@ static void start_auth(const char *cid, const char *l_ip, const char *l_port, co
 void handle_new_connection(int parc, char *parv[])
 {
 	if(parc < 7)
+	{
+		warn_opers(L_CRIT, "BUG: received too few params for new connection (7 expected, got %d)", parc);
 		return;
+	}
 
 	start_auth(parv[1], parv[2], parv[3], parv[4], parv[5]);
 }
