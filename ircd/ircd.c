@@ -389,6 +389,83 @@ initialize_server_capabs(void)
 	default_server_capabs &= ~CAP_ZIP;
 }
 
+/*
+ * relocate_paths
+ *
+ * inputs       - none
+ * output       - none
+ * side effects - items in ircd_paths[] array are relocated
+ */
+static void
+relocate_paths(void)
+{
+	char prefix[PATH_MAX], workbuf[PATH_MAX];
+	char *p;
+
+	rb_strlcpy(prefix, rb_path_to_self(), sizeof prefix);
+
+	ircd_paths[IRCD_PATH_IRCD_EXEC] = rb_strdup(prefix);
+
+	/* if we're running from inside the source tree, we probably do not want to relocate any other paths */
+	if (strstr(prefix, ".libs") != NULL)
+		return;
+
+	/* prefix = /home/kaniini/ircd/bin/ircd */
+	p = strrchr(prefix, RB_PATH_SEPARATOR);
+	if (rb_unlikely(p == NULL))
+		return;
+	*p = 0;
+
+	/* prefix = /home/kaniini/ircd/bin */
+	p = strrchr(prefix, RB_PATH_SEPARATOR);
+	if (rb_unlikely(p == NULL))
+		return;
+	*p = 0;
+
+	/* prefix = /home/kaniini/ircd */
+	ircd_paths[IRCD_PATH_PREFIX] = rb_strdup(prefix);
+
+	/* now that we have our prefix, we can relocate the other paths... */
+	snprintf(workbuf, sizeof workbuf, "%s%cmodules", prefix, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_MODULES] = rb_strdup(workbuf);
+
+	snprintf(workbuf, sizeof workbuf, "%s%cmodules%cautoload", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_AUTOLOAD_MODULES] = rb_strdup(workbuf);
+
+	snprintf(workbuf, sizeof workbuf, "%s%cetc", prefix, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_ETC] = rb_strdup(workbuf);
+
+	snprintf(workbuf, sizeof workbuf, "%s%clog", prefix, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_LOG] = rb_strdup(workbuf);
+
+	snprintf(workbuf, sizeof workbuf, "%s%chelp%cusers", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_USERHELP] = rb_strdup(workbuf);
+
+	snprintf(workbuf, sizeof workbuf, "%s%chelp%copers", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_OPERHELP] = rb_strdup(workbuf);
+
+	snprintf(workbuf, sizeof workbuf, "%s%cetc%circd.conf", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_IRCD_CONF] = rb_strdup(workbuf);
+
+	snprintf(workbuf, sizeof workbuf, "%s%cetc%circd.motd", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_IRCD_MOTD] = rb_strdup(workbuf);
+
+	snprintf(workbuf, sizeof workbuf, "%s%cetc%copers.motd", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_IRCD_OMOTD] = rb_strdup(workbuf);
+
+	snprintf(workbuf, sizeof workbuf, "%s%cetc%cban.db", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_BANDB] = rb_strdup(workbuf);
+
+	snprintf(workbuf, sizeof workbuf, "%s%cetc%circd.pid", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_IRCD_PID] = rb_strdup(workbuf);
+
+	snprintf(workbuf, sizeof workbuf, "%s%clogs%circd.log", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_IRCD_LOG] = rb_strdup(workbuf);
+
+	snprintf(workbuf, sizeof workbuf, "%s%cbin", prefix, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_BIN] = rb_strdup(workbuf);
+	ircd_paths[IRCD_PATH_LIBEXEC] = rb_strdup(workbuf);
+}
 
 /*
  * write_pidfile
@@ -579,7 +656,9 @@ charybdis_main(int argc, char *argv[])
 	}
 #endif
 
-	init_sys();
+#ifndef ENABLE_FHS_PATHS
+	relocate_paths();
+#endif
 
 	logFileName = ircd_paths[IRCD_PATH_IRCD_LOG];
 	pidFileName = ircd_paths[IRCD_PATH_IRCD_PID];
@@ -587,6 +666,8 @@ charybdis_main(int argc, char *argv[])
 	ConfigFileEntry.dpath = ircd_paths[IRCD_PATH_PREFIX];
 	ConfigFileEntry.configfile = ircd_paths[IRCD_PATH_IRCD_CONF];	/* Server configuration file */
 	ConfigFileEntry.connect_timeout = 30;	/* Default to 30 */
+
+	init_sys();
 
 	umask(077);		/* better safe than sorry --SRB */
 
