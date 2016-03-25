@@ -21,7 +21,6 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: commio.h 24059 2007-07-24 17:25:41Z androsyn $
  */
 
 #ifndef _COMMIO_INT_H

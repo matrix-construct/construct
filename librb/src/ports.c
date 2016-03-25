@@ -23,7 +23,6 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: ports.c 26286 2008-12-10 23:28:53Z androsyn $
  */
 
 #include <librb_config.h>

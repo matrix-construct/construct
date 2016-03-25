@@ -193,10 +193,10 @@ void cinclude(void)
     
     if (tmp_fbfile_in == NULL)
     {
-      /* if its not found in PREFIX, look in ETCPATH */
+      /* if its not found in PREFIX, look in IRCD_PATH_ETC */
       char fnamebuf[BUFSIZE];
 
-      snprintf(fnamebuf, sizeof(fnamebuf), "%s/%s", ETCPATH, c);
+      snprintf(fnamebuf, sizeof(fnamebuf), "%s%c%s", IRCD_PATH_ETC, RB_PATH_SEPARATOR, c);
       tmp_fbfile_in = fopen(fnamebuf, "r");
 
       /* wasnt found there either.. error. */

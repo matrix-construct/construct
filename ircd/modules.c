@@ -129,8 +129,8 @@ modules_init(void)
 	mod_add_cmd(&modrestart_msgtab);
 
 	/* Add the default paths we look in to the module system --nenolod */
-	mod_add_path(MODPATH);
-	mod_add_path(AUTOMODPATH);
+	mod_add_path(ircd_paths[IRCD_PATH_MODULES]);
+	mod_add_path(ircd_paths[IRCD_PATH_AUTOLOAD_MODULES]);
 }
 
 /* mod_find_path()
@@ -243,11 +243,11 @@ load_all_modules(int warn)
 
 	max_mods = MODS_INCREMENT;
 
-	system_module_dir = opendir(AUTOMODPATH);
+	system_module_dir = opendir(ircd_paths[IRCD_PATH_AUTOLOAD_MODULES]);
 
 	if(system_module_dir == NULL)
 	{
-		ilog(L_MAIN, "Could not load modules from %s: %s", AUTOMODPATH, strerror(errno));
+		ilog(L_MAIN, "Could not load modules from %s: %s", ircd_paths[IRCD_PATH_AUTOLOAD_MODULES], strerror(errno));
 		return;
 	}
 
@@ -258,7 +258,7 @@ load_all_modules(int warn)
 		len = strlen(ldirent->d_name);
 		if(len > module_ext_len && !strcasecmp(ldirent->d_name + (len - module_ext_len), LT_MODULE_EXT))
 		{
-			(void) snprintf(module_fq_name, sizeof(module_fq_name), "%s/%s", AUTOMODPATH, ldirent->d_name);
+			(void) snprintf(module_fq_name, sizeof(module_fq_name), "%s%c%s", ircd_paths[IRCD_PATH_AUTOLOAD_MODULES], RB_PATH_SEPARATOR, ldirent->d_name);
 			(void) load_a_module(module_fq_name, warn, MAPI_ORIGIN_CORE, 0);
 		}
 
@@ -281,7 +281,7 @@ load_core_modules(int warn)
 
 	for (i = 0; core_module_table[i]; i++)
 	{
-		snprintf(module_name, sizeof(module_name), "%s/%s%s", MODPATH,
+		snprintf(module_name, sizeof(module_name), "%s%c%s%s", ircd_paths[IRCD_PATH_MODULES], RB_PATH_SEPARATOR,
 			    core_module_table[i], LT_MODULE_EXT);
 
 		if(load_a_module(module_name, warn, MAPI_ORIGIN_CORE, 1) == -1)

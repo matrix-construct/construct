@@ -80,21 +80,21 @@ start_bandb(void)
 	const char *suffix = "";
 #endif
 
-	rb_setenv("BANDB_DBPATH", PKGLOCALSTATEDIR "/ban.db", 1);
+	rb_setenv("BANDB_DBPATH", ircd_paths[IRCD_PATH_BANDB], 1);
 	if(bandb_path == NULL)
 	{
-		snprintf(fullpath, sizeof(fullpath), "%s/bandb%s", PKGLIBEXECDIR, suffix);
+		snprintf(fullpath, sizeof(fullpath), "%s%cbandb%s", ircd_paths[IRCD_PATH_LIBEXEC], RB_PATH_SEPARATOR, suffix);
 
 		if(access(fullpath, X_OK) == -1)
 		{
-			snprintf(fullpath, sizeof(fullpath), "%s/bin/bandb%s",
-				    ConfigFileEntry.dpath, suffix);
+			snprintf(fullpath, sizeof(fullpath), "%s%cbin%cbandb%s",
+				    ConfigFileEntry.dpath, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR, suffix);
 
 			if(access(fullpath, X_OK) == -1)
 			{
 				ilog(L_MAIN,
 				     "Unable to execute bandb%s in %s or %s/bin",
-				     suffix, PKGLIBEXECDIR, ConfigFileEntry.dpath);
+				     suffix, ircd_paths[IRCD_PATH_LIBEXEC], ConfigFileEntry.dpath);
 				return 0;
 			}
 		}

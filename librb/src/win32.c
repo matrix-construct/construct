@@ -23,7 +23,6 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: win32.c 26092 2008-09-19 15:13:52Z androsyn $
  */
 
 #include <librb_config.h>
@@ -415,7 +414,7 @@ rb_setup_fd_win32(rb_fde_t *F)
 	{
 	case RB_FD_SOCKET:
 		{
-			u_long nonb = 1;
+			unsigned long nonb = 1;
 			if(ioctlsocket((SOCKET) F->fd, FIONBIO, &nonb) == -1)
 			{
 				rb_get_errno();

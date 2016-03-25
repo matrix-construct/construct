@@ -1,6 +1,5 @@
 #!/bin/sh
 
-# $Id: version.c.SH 24870 2008-01-10 16:51:01Z androsyn $ 
 
 spitshell=cat
 package=librb
@@ -21,7 +20,7 @@ $spitshell >version.c <<!SUB!THIS!
 /*
  *   librb: a library used by charybdis and other things
  *   src/version.c
- *   
+ *
  *   Copyright (C) 1990 Chelsea Ashley Dyerman
  *   Copyright (C) 2008 ircd-ratbox development team
  *
@@ -55,7 +54,7 @@ const char *librb_infotext[] =
   "$package --",
   "Based on the original code written by Jarkko Oikarinen",
   "Copyright 1988, 1989, 1990, 1991 University of Oulu, Computing Center",
-  "Copyright (c) 1996-2001 Hybrid Development Team", 
+  "Copyright (c) 1996-2001 Hybrid Development Team",
   "Copyright (c) 2002-2008 ircd-ratbox Development Team",
   "",
   "This program is free software; you can redistribute it and/or",

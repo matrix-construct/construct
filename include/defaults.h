@@ -36,6 +36,27 @@
  * First, set other fd limits based on values from user
  */
 
+typedef enum {
+	IRCD_PATH_PREFIX,
+	IRCD_PATH_MODULES,
+	IRCD_PATH_AUTOLOAD_MODULES,
+	IRCD_PATH_ETC,
+	IRCD_PATH_LOG,
+	IRCD_PATH_USERHELP,
+	IRCD_PATH_OPERHELP,
+	IRCD_PATH_IRCD_EXEC,
+	IRCD_PATH_IRCD_CONF,
+	IRCD_PATH_IRCD_MOTD,
+	IRCD_PATH_IRCD_LOG,
+	IRCD_PATH_IRCD_PID,
+	IRCD_PATH_IRCD_OMOTD,
+	IRCD_PATH_BANDB,
+	IRCD_PATH_BIN,
+	IRCD_PATH_LIBEXEC,
+	IRCD_PATH_COUNT
+} ircd_path_t;
+
+extern const char *ircd_paths[IRCD_PATH_COUNT];
 
 #define MAXCONNECTIONS 65535 /* default max connections if getrlimit doesn't work */
 /* class {} default values */

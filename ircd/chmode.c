@@ -202,10 +202,10 @@ get_channel_access(struct Client *source_p, struct Channel *chptr, struct member
  * Checks if mlock and chanops permit a mode change.
  *
  * inputs	- client, channel, access level, errors pointer, mode char
- * outputs	- 0 on failure, 1 on success
+ * outputs	- false on failure, true on success
  * side effects - error message sent on failure
  */
-static int
+static bool
 allow_mode_change(struct Client *source_p, struct Channel *chptr, int alevel,
 		int *errors, char c)
 {
@@ -220,7 +220,7 @@ allow_mode_change(struct Client *source_p, struct Channel *chptr, int alevel,
 					c,
 					chptr->mode_lock);
 		*errors |= SM_ERR_MLOCK;
-		return 0;
+		return false;
 	}
 	if(alevel < CHFL_CHANOP)
 	{
@@ -228,18 +228,18 @@ allow_mode_change(struct Client *source_p, struct Channel *chptr, int alevel,
 			sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
 				   me.name, source_p->name, chptr->chname);
 		*errors |= SM_ERR_NOOPS;
-		return 0;
+		return false;
 	}
-	return 1;
+	return true;
 }
 
 /* add_id()
  *
  * inputs	- client, channel, id to add, type, forward
- * outputs	- 0 on failure, 1 on success
+ * outputs	- false on failure, true on success
  * side effects - given id is added to the appropriate list
  */
-int
+bool
 add_id(struct Client *source_p, struct Channel *chptr, const char *banid, const char *forward,
        rb_dlink_list * list, long mode_type)
 {
@@ -257,14 +257,14 @@ add_id(struct Client *source_p, struct Channel *chptr, const char *banid, const 
 		{
 			sendto_one(source_p, form_str(ERR_BANLISTFULL),
 				   me.name, source_p->name, chptr->chname, realban);
-			return 0;
+			return false;
 		}
 
 		RB_DLINK_FOREACH(ptr, list->head)
 		{
 			actualBan = ptr->data;
 			if(mask_match(actualBan->banstr, realban))
-				return 0;
+				return false;
 		}
 	}
 	/* dont let remotes set duplicates */
@@ -274,7 +274,7 @@ add_id(struct Client *source_p, struct Channel *chptr, const char *banid, const 
 		{
 			actualBan = ptr->data;
 			if(!irccmp(actualBan->banstr, realban))
-				return 0;
+				return false;
 		}
 	}
 
@@ -293,7 +293,7 @@ add_id(struct Client *source_p, struct Channel *chptr, const char *banid, const 
 	if(mode_type == CHFL_BAN || mode_type == CHFL_QUIET || mode_type == CHFL_EXCEPTION)
 		chptr->bants++;
 
-	return 1;
+	return true;
 }
 
 /* del_id()
@@ -486,7 +486,7 @@ pretty_mask(const char *idmask)
  * output	- true if forwarding should be allowed
  * side effects - numeric sent if not allowed
  */
-static int
+static bool
 check_forward(struct Client *source_p, struct Channel *chptr,
 		const char *forward)
 {
@@ -497,20 +497,20 @@ check_forward(struct Client *source_p, struct Channel *chptr,
 			(MyClient(source_p) && (strlen(forward) > LOC_CHANNELLEN || hash_find_resv(forward))))
 	{
 		sendto_one_numeric(source_p, ERR_BADCHANNAME, form_str(ERR_BADCHANNAME), forward);
-		return 0;
+		return false;
 	}
 	/* don't forward to inconsistent target -- jilles */
 	if(chptr->chname[0] == '#' && forward[0] == '&')
 	{
 		sendto_one_numeric(source_p, ERR_BADCHANNAME,
 				   form_str(ERR_BADCHANNAME), forward);
-		return 0;
+		return false;
 	}
 	if(MyClient(source_p) && (targptr = find_channel(forward)) == NULL)
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
 				   form_str(ERR_NOSUCHCHANNEL), forward);
-		return 0;
+		return false;
 	}
 	if(MyClient(source_p) && !(targptr->mode.mode & MODE_FREETARGET))
 	{
@@ -519,10 +519,10 @@ check_forward(struct Client *source_p, struct Channel *chptr,
 		{
 			sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
 				   me.name, source_p->name, targptr->chname);
-			return 0;
+			return false;
 		}
 	}
-	return 1;
+	return true;
 }
 
 /* fix_key()
@@ -535,9 +535,9 @@ check_forward(struct Client *source_p, struct Channel *chptr,
 static char *
 fix_key(char *arg)
 {
-	u_char *s, *t, c;
+	unsigned char *s, *t, c;
 
-	for(s = t = (u_char *) arg; (c = *s); s++)
+	for(s = t = (unsigned char *) arg; (c = *s); s++)
 	{
 		c &= 0x7f;
 		if(c != ':' && c != ',' && c > ' ')
@@ -558,9 +558,9 @@ fix_key(char *arg)
 static char *
 fix_key_remote(char *arg)
 {
-	u_char *s, *t, c;
+	unsigned char *s, *t, c;
 
-	for(s = t = (u_char *) arg; (c = *s); s++)
+	for(s = t = (unsigned char *) arg; (c = *s); s++)
 	{
 		c &= 0x7f;
 		if((c != 0x0a) && (c != ':') && (c != ',') && (c != 0x0d) && (c != ' '))

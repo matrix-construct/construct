@@ -1,5 +1,4 @@
 /*
- * $Id: patricia.h 23020 2006-09-01 18:20:19Z androsyn $
  * Dave Plonka <plonka@doit.wisc.edu>
  *
  * This product includes software developed by the University of Michigan,
@@ -25,7 +24,6 @@
 #define INET6_ADDRSTRLEN 46
 #endif
 
-/* typedef unsigned int u_int; */
 #define rb_prefix_touchar(prefix) ((unsigned char *)&(prefix)->add.sin)
 #define MAXLINE 1024
 #define BIT_TEST(f, b)  ((f) & (b))
