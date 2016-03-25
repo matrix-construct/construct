@@ -45,3 +45,6 @@ install-exec-hook:
 	rm -f ${DESTDIR}${moduledir}/*.dll.a
 	rm -f ${DESTDIR}${moduledir}/autoload/*.dll.a
 	rm -f ${DESTDIR}${moduledir}/extensions/*.dll.a
+
+clean-local:
+	rm -f include/serno.h
