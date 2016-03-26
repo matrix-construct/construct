@@ -323,6 +323,29 @@ lookup_all_blacklists(struct auth_client *auth)
 	bluser->timeout = rb_current_time() + blacklist_timeout;
 }
 
+static inline void
+delete_blacklist(struct blacklist *bl)
+{
+	if (bl->refcount > 0)
+		bl->delete = true;
+	else
+	{
+		rb_dlinkFindDestroy(bl, &blacklist_list);
+		rb_free(bl);
+	}
+}
+
+static void
+delete_all_blacklists(void)
+{
+	rb_dlink_node *ptr, *nptr;
+
+	RB_DLINK_FOREACH_SAFE(ptr, nptr, blacklist_list.head)
+	{
+		delete_blacklist(ptr->data);
+	}
+}
+
 /* public interfaces */
 static bool
 blacklists_start(struct auth_client *auth)
@@ -406,17 +429,8 @@ blacklists_destroy(void)
 		blacklists_cancel(auth);
 	}
 
-	RB_DLINK_FOREACH_SAFE(ptr, nptr, blacklist_list.head)
-	{
-		bl = ptr->data;
-		if (bl->refcount > 0)
-			bl->delete = true;
-		else
-		{
-			rb_free(ptr->data);
-			rb_dlinkDestroy(ptr, &blacklist_list);
-		}
-	}
+	delete_all_blacklists();
+	rb_event_delete(timeout_ev);
 }
 
 static void
@@ -490,6 +504,25 @@ add_conf_blacklist(const char *key, int parc, const char **parv)
 }
 
 static void
+del_conf_blacklist(const char *key, int parc, const char **parv)
+{
+	struct blacklist *bl = find_blacklist(parv[0]);
+	if(bl == NULL)
+	{
+		warn_opers(L_CRIT, "BUG: tried to remove nonexistent blacklist %s", parv[0]);
+		return;
+	}
+
+	delete_blacklist(bl);
+}
+
+static void
+del_conf_blacklist_all(const char *key, int parc, const char **parv)
+{
+	delete_all_blacklists();
+}
+
+static void
 add_conf_blacklist_timeout(const char *key, int parc, const char **parv)
 {
 	int timeout = atoi(parv[0]);
@@ -506,6 +539,8 @@ add_conf_blacklist_timeout(const char *key, int parc, const char **parv)
 struct auth_opts_handler blacklist_options[] =
 {
 	{ "rbl", 4, add_conf_blacklist },
+	{ "rbl_del", 1, del_conf_blacklist },
+	{ "rbl_del_all", 0, del_conf_blacklist_all },
 	{ "rbl_timeout", 1, add_conf_blacklist_timeout },
 	{ NULL, 0, NULL },
 };
