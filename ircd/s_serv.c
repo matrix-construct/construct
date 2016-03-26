@@ -31,7 +31,6 @@
 #include "s_serv.h"
 #include "class.h"
 #include "client.h"
-#include "common.h"
 #include "hash.h"
 #include "match.h"
 #include "ircd.h"
@@ -273,7 +272,7 @@ try_connections(void *unused)
 			continue;
 
 		/* don't allow ssl connections if ssl isn't setup */
-		if(ServerConfSSL(tmp_p) && (!ssl_ok || !get_ssld_count()))
+		if(ServerConfSSL(tmp_p) && (!ircd_ssl_ok || !get_ssld_count()))
 			continue;
 
 		cltmp = tmp_p->class;
@@ -797,19 +796,6 @@ server_estab(struct Client *client_p)
 	/* Its got identd , since its a server */
 	SetGotId(client_p);
 
-	/* If there is something in the serv_list, it might be this
-	 * connecting server..
-	 */
-	if(!ServerInfo.hub && serv_list.head)
-	{
-		if(client_p != serv_list.head->data || serv_list.head->next)
-		{
-			ServerStats.is_ref++;
-			sendto_one(client_p, "ERROR :I'm a leaf not a hub");
-			return exit_client(client_p, client_p, client_p, "I'm a leaf");
-		}
-	}
-
 	if(IsUnknown(client_p))
 	{
 		/* the server may be linking based on certificate fingerprint now. --nenolod */
@@ -1171,7 +1157,7 @@ serv_connect_ssl_callback(rb_fde_t *F, int status, void *data)
 	}
 	client_p->localClient->F = xF[0];
 
-	client_p->localClient->ssl_ctl = start_ssld_connect(F, xF[1], rb_get_fd(xF[0]));
+	client_p->localClient->ssl_ctl = start_ssld_connect(F, xF[1], connid_get(client_p));
 	if(!client_p->localClient->ssl_ctl)
 	{
 		serv_connect_callback(client_p->localClient->F, RB_ERROR, data);

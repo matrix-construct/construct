@@ -106,7 +106,7 @@ static uint16_t
 get_listener_port(const struct Listener *listener)
 {
 #ifdef RB_IPV6
-	if(listener->addr.ss_family == AF_INET6)
+	if(GET_SS_FAMILY(&listener->addr) == AF_INET6)
 		return ntohs(((const struct sockaddr_in6 *)&listener->addr)->sin6_port);
 	else
 #endif
@@ -180,7 +180,7 @@ inetport(struct Listener *listener)
 	F = rb_socket(GET_SS_FAMILY(&listener->addr), SOCK_STREAM, 0, "Listener socket");
 
 #ifdef RB_IPV6
-	if(listener->addr.ss_family == AF_INET6)
+	if(GET_SS_FAMILY(&listener->addr) == AF_INET6)
 	{
 		struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)&listener->addr;
 		if(!IN6_ARE_ADDR_EQUAL(&in6->sin6_addr, &in6addr_any))
@@ -279,10 +279,10 @@ find_listener(struct rb_sockaddr_storage *addr)
 
 	for (listener = ListenerPollList; listener; listener = listener->next)
 	{
-		if(addr->ss_family != listener->addr.ss_family)
+		if(GET_SS_FAMILY(addr) != GET_SS_FAMILY(&listener->addr))
 			continue;
 
-		switch(addr->ss_family)
+		switch(GET_SS_FAMILY(addr))
 		{
 			case AF_INET:
 			{
@@ -342,7 +342,7 @@ add_listener(int port, const char *vhost_ip, int family, int ssl, int defer_acce
 	if(port == 0)
 		return;
 	memset(&vaddr, 0, sizeof(vaddr));
-	vaddr.ss_family = family;
+	SET_SS_FAMILY(&vaddr, family);
 
 	if(vhost_ip != NULL)
 	{
@@ -481,7 +481,7 @@ add_connection(struct Listener *listener, rb_fde_t *F, struct sockaddr *sai, str
 			free_client(new_client);
 			return;
 		}
-		new_client->localClient->ssl_ctl = start_ssld_accept(F, xF[1], new_client->localClient->connid);        /* this will close F for us */
+		new_client->localClient->ssl_ctl = start_ssld_accept(F, xF[1], connid_get(new_client));        /* this will close F for us */
 		if(new_client->localClient->ssl_ctl == NULL)
 		{
 			free_client(new_client);
@@ -523,7 +523,7 @@ accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, voi
 	static time_t last_oper_notice = 0;
 	int len;
 
-	if(listener->ssl && (!ssl_ok || !get_ssld_count()))
+	if(listener->ssl && (!ircd_ssl_ok || !get_ssld_count()))
 	{
 		rb_close(F);
 		return 0;

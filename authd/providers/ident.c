@@ -18,9 +18,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* Largely adapted from old s_auth.c, but reworked for authd. rDNS code
+ * moved to its own provider.
+ *
+ * --Elizafox 13 March 2016
+ */
+
 #include "stdinc.h"
 #include "match.h"
 #include "authd.h"
+#include "notice.h"
 #include "provider.h"
 #include "res.h"
 
@@ -28,11 +35,8 @@
 
 struct ident_query
 {
-	rb_dlink_node node;
-
-	struct auth_client *auth;	/* Our client */
-	time_t timeout;			/* Timeout interval */
-	rb_fde_t *F;			/* Our FD */
+	time_t timeout;				/* Timeout interval */
+	rb_fde_t *F;				/* Our FD */
 };
 
 /* Goinked from old s_auth.c --Elizafox */
@@ -54,128 +58,27 @@ static EVH timeout_ident_queries_event;
 static CNCB ident_connected;
 static PF read_ident_reply;
 
-static void client_fail(struct ident_query *query, ident_message message);
-static void client_success(struct ident_query *query);
-static void cleanup_query(struct ident_query *query);
+static void client_fail(struct auth_client *auth, ident_message message);
+static void client_success(struct auth_client *auth);
 static char * get_valid_ident(char *buf);
 
-static rb_dlink_list queries;
 static struct ev_entry *timeout_ev;
 static int ident_timeout = 5;
 
 
-bool ident_init(void)
-{
-	timeout_ev = rb_event_addish("timeout_ident_queries_event", timeout_ident_queries_event, NULL, 1);
-	return (timeout_ev != NULL);
-}
-
-void ident_destroy(void)
-{
-	rb_dlink_node *ptr, *nptr;
-
-	/* Nuke all ident queries */
-	RB_DLINK_FOREACH_SAFE(ptr, nptr, queries.head)
-	{
-		struct ident_query *query = ptr->data;
-
-		notice_client(query->auth, messages[REPORT_FAIL]);
-
-		rb_close(query->F);
-		rb_free(query);
-		rb_dlinkDelete(ptr, &queries);
-	}
-}
-
-bool ident_start(struct auth_client *auth)
-{
-	struct ident_query *query = rb_malloc(sizeof(struct ident_query));
-	struct rb_sockaddr_storage localaddr, clientaddr;
-	int family;
-	rb_fde_t *F;
-
-	query->auth = auth;
-	query->timeout = rb_current_time() + ident_timeout;
-
-	if((F = rb_socket(family, SOCK_STREAM, 0, "ident")) == NULL)
-	{
-		client_fail(query, REPORT_FAIL);
-		return true;	/* Not a fatal error */
-	}
-
-	query->F = F;
-
-	/* Build sockaddr_storages for rb_connect_tcp below */
-	memcpy(&localaddr, &auth->l_addr, sizeof(struct rb_sockaddr_storage));
-	memcpy(&clientaddr, &auth->c_addr, sizeof(struct rb_sockaddr_storage));
-
-	/* Set the ports correctly */
-#ifdef RB_IPV6
-	if(GET_SS_FAMILY(&localaddr) == AF_INET6)
-		((struct sockaddr_in6 *)&localaddr)->sin6_port = 0;
-	else
-#endif
-		((struct sockaddr_in *)&localaddr)->sin_port = 0;
-
-#ifdef RB_IPV6
-	if(GET_SS_FAMILY(&clientaddr) == AF_INET6)
-		((struct sockaddr_in6 *)&clientaddr)->sin6_port = htons(113);
-	else
-#endif
-		((struct sockaddr_in *)&clientaddr)->sin_port = htons(113);
-
-	rb_connect_tcp(F, (struct sockaddr *)&auth->c_addr,
-			(struct sockaddr *)&auth->l_addr,
-			GET_SS_LEN(&auth->l_addr), ident_connected,
-			query, ident_timeout);
-
-	set_provider(auth, PROVIDER_IDENT);
-
-	rb_dlinkAdd(query, &query->node, &queries);
-
-	notice_client(auth, messages[REPORT_LOOKUP]);
-
-	return true;
-}
-
-void ident_cancel(struct auth_client *auth)
-{
-	rb_dlink_node *ptr, *nptr;
-
-	RB_DLINK_FOREACH_SAFE(ptr, nptr, queries.head)
-	{
-		struct ident_query *query = ptr->data;
-
-		if(query->auth == auth)
-		{
-			client_fail(query, REPORT_FAIL);
-
-			rb_close(query->F);
-			rb_free(query);
-			rb_dlinkDelete(ptr, &queries);
-
-			return;
-		}
-	}
-}
-
 /* Timeout outstanding queries */
-static void timeout_ident_queries_event(void *notused)
+static void
+timeout_ident_queries_event(void *notused)
 {
-	rb_dlink_node *ptr, *nptr;
+	struct auth_client *auth;
+	rb_dictionary_iter iter;
 
-	RB_DLINK_FOREACH_SAFE(ptr, nptr, queries.head)
+	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
-		struct ident_query *query = ptr->data;
+		struct ident_query *query = auth->data[PROVIDER_IDENT];
 
-		if(query->timeout < rb_current_time())
-		{
-			client_fail(query, REPORT_FAIL);
-
-			rb_close(query->F);
-			rb_free(query);
-			rb_dlinkDelete(ptr, &queries);
-		}
+		if(query != NULL && query->timeout < rb_current_time())
+			client_fail(auth, REPORT_FAIL);
 	}
 }
 
@@ -190,11 +93,11 @@ static void timeout_ident_queries_event(void *notused)
  * a write buffer far greater than this message to store it in should
  * problems arise. -avalon
  */
-static void ident_connected(rb_fde_t *F, int error, void *data)
+static void
+ident_connected(rb_fde_t *F, int error, void *data)
 {
-	struct ident_query *query = data;
-	struct auth_client *auth = query->auth;
-	uint16_t c_port, l_port;
+	struct auth_client *auth = data;
+	struct ident_query *query = auth->data[PROVIDER_IDENT];
 	char authbuf[32];
 	int authlen;
 
@@ -202,44 +105,28 @@ static void ident_connected(rb_fde_t *F, int error, void *data)
 	if(error != RB_OK)
 	{
 		/* We had an error during connection :( */
-		client_fail(query, REPORT_FAIL);
-		cleanup_query(query);
+		client_fail(auth, REPORT_FAIL);
 		return;
 	}
 
-#ifdef RB_IPV6
-	if(GET_SS_FAMILY(&auth->c_addr) == AF_INET6)
-		c_port = ntohs(((struct sockaddr_in6 *)&auth->c_addr)->sin6_port);
-	else
-#endif
-		c_port = ntohs(((struct sockaddr_in *)&auth->c_addr)->sin_port);
-
-#ifdef RB_IPV6
-	if(GET_SS_FAMILY(&auth->l_addr) == AF_INET6)
-		l_port = ntohs(((struct sockaddr_in6 *)&auth->l_addr)->sin6_port);
-	else
-#endif
-		l_port = ntohs(((struct sockaddr_in *)&auth->l_addr)->sin_port);
-
-
 	snprintf(authbuf, sizeof(authbuf), "%u , %u\r\n",
-			c_port, l_port);
+			auth->c_port, auth->l_port);
 	authlen = strlen(authbuf);
 
 	if(rb_write(query->F, authbuf, authlen) != authlen)
 	{
-		client_fail(query, REPORT_FAIL);
+		client_fail(auth, REPORT_FAIL);
 		return;
 	}
 
-	read_ident_reply(query->F, query);
+	read_ident_reply(query->F, auth);
 }
 
 static void
 read_ident_reply(rb_fde_t *F, void *data)
 {
-	struct ident_query *query = data;
-	struct auth_client *auth = query->auth;
+	struct auth_client *auth = data;
+	struct ident_query *query = auth->data[PROVIDER_IDENT];
 	char *s = NULL;
 	char *t = NULL;
 	int len;
@@ -281,58 +168,43 @@ read_ident_reply(rb_fde_t *F, void *data)
 	}
 
 	if(s == NULL)
-		client_fail(query, REPORT_FAIL);
+		client_fail(auth, REPORT_FAIL);
 	else
-		client_success(query);
-
-	cleanup_query(query);
+		client_success(auth);
 }
 
-static void client_fail(struct ident_query *query, ident_message report)
+static void
+client_fail(struct auth_client *auth, ident_message report)
 {
-	struct auth_client *auth = query->auth;
+	struct ident_query *query = auth->data[PROVIDER_IDENT];
 
-	if(auth)
-	{
-		rb_strlcpy(auth->username, "*", sizeof(auth->username));
-		notice_client(auth, messages[report]);
-		provider_done(auth, PROVIDER_IDENT);
-	}
+	rb_strlcpy(auth->username, "*", sizeof(auth->username));
+
+	rb_close(query->F);
+	rb_free(query);
+	auth->data[PROVIDER_IDENT] = NULL;
+
+	notice_client(auth->cid, messages[report]);
+	provider_done(auth, PROVIDER_IDENT);
 }
 
-static void client_success(struct ident_query *query)
+static void
+client_success(struct auth_client *auth)
 {
-	struct auth_client *auth = query->auth;
+	struct ident_query *query = auth->data[PROVIDER_IDENT];
 
-	if(auth)
-	{
-		notice_client(auth, messages[REPORT_FOUND]);
-		provider_done(auth, PROVIDER_IDENT);
-	}
-}
+	rb_close(query->F);
+	rb_free(query);
+	auth->data[PROVIDER_IDENT] = NULL;
 
-static void cleanup_query(struct ident_query *query)
-{
-	rb_dlink_node *ptr, *nptr;
-
-	RB_DLINK_FOREACH_SAFE(ptr, nptr, queries.head)
-	{
-		struct ident_query *query_l = ptr->data;
-
-		if(query_l == query)
-		{
-			rb_close(query->F);
-			rb_free(query);
-			rb_dlinkDelete(ptr, &queries);
-		}
-	}
+	notice_client(auth->cid, messages[REPORT_FOUND]);
+	provider_done(auth, PROVIDER_IDENT);
 }
 
 /* get_valid_ident
  * parse ident query reply from identd server
  *
- * Torn out of old s_auth.c because there was nothing wrong with it
- * --Elizafox
+ * Taken from old s_auth.c --Elizafox
  *
  * Inputs	- pointer to ident buf
  * Outputs	- NULL if no valid ident found, otherwise pointer to name
@@ -393,6 +265,104 @@ get_valid_ident(char *buf)
 	return (colon3Ptr);
 }
 
+static bool
+ident_init(void)
+{
+	timeout_ev = rb_event_addish("timeout_ident_queries_event", timeout_ident_queries_event, NULL, 1);
+	return (timeout_ev != NULL);
+}
+
+static void
+ident_destroy(void)
+{
+	struct auth_client *auth;
+	rb_dictionary_iter iter;
+
+	/* Nuke all ident queries */
+	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
+	{
+		if(auth->data[PROVIDER_IDENT] != NULL)
+			client_fail(auth, REPORT_FAIL);
+	}
+}
+
+static bool ident_start(struct auth_client *auth)
+{
+	struct ident_query *query = rb_malloc(sizeof(struct ident_query));
+	struct rb_sockaddr_storage l_addr, c_addr;
+	int family;
+	rb_fde_t *F;
+
+	auth->data[PROVIDER_IDENT] = query;
+	query->timeout = rb_current_time() + ident_timeout;
+
+	if((F = rb_socket(family, SOCK_STREAM, 0, "ident")) == NULL)
+	{
+		client_fail(auth, REPORT_FAIL);
+		return true;	/* Not a fatal error */
+	}
+
+	query->F = F;
+
+	/* Build sockaddr_storages for rb_connect_tcp below */
+	memcpy(&l_addr, &auth->l_addr, sizeof(l_addr));
+	memcpy(&c_addr, &auth->c_addr, sizeof(c_addr));
+
+	/* Set the ports correctly */
+#ifdef RB_IPV6
+	if(GET_SS_FAMILY(&l_addr) == AF_INET6)
+		((struct sockaddr_in6 *)&l_addr)->sin6_port = 0;
+	else
+#endif
+		((struct sockaddr_in *)&l_addr)->sin_port = 0;
+
+#ifdef RB_IPV6
+	if(GET_SS_FAMILY(&c_addr) == AF_INET6)
+		((struct sockaddr_in6 *)&c_addr)->sin6_port = htons(113);
+	else
+#endif
+		((struct sockaddr_in *)&c_addr)->sin_port = htons(113);
+
+	rb_connect_tcp(F, (struct sockaddr *)&c_addr,
+			(struct sockaddr *)&l_addr,
+			GET_SS_LEN(&l_addr), ident_connected,
+			query, ident_timeout);
+
+	notice_client(auth->cid, messages[REPORT_LOOKUP]);
+	set_provider_on(auth, PROVIDER_IDENT);
+
+	return true;
+}
+
+static void
+ident_cancel(struct auth_client *auth)
+{
+	struct ident_query *query = auth->data[PROVIDER_IDENT];
+
+	if(query != NULL)
+		client_fail(auth, REPORT_FAIL);
+}
+
+static void
+add_conf_ident_timeout(const char *key, int parc, const char **parv)
+{
+	int timeout = atoi(parv[0]);
+
+	if(timeout < 0)
+	{
+		warn_opers(L_CRIT, "BUG: ident timeout < 0 (value: %d)", timeout);
+		return;
+	}
+
+	ident_timeout = timeout;
+}
+
+struct auth_opts_handler ident_options[] =
+{
+	{ "ident_timeout", 1, add_conf_ident_timeout },
+	{ NULL, 0, NULL },
+};
+
 
 struct auth_provider ident_provider =
 {
@@ -402,4 +372,5 @@ struct auth_provider ident_provider =
 	.start = ident_start,
 	.cancel = ident_cancel,
 	.completed = NULL,
+	.opt_handlers = ident_options,
 };

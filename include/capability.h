@@ -21,9 +21,12 @@
 #ifndef __CAPABILITY_H__
 #define __CAPABILITY_H__
 
+#include "stdinc.h"
+#include "rb_dictionary.h"
+
 struct CapabilityIndex {
 	const char *name;
-	struct Dictionary *cap_dict;
+	rb_dictionary *cap_dict;
 	unsigned int highest_bit;
 	rb_dlink_node node;
 };

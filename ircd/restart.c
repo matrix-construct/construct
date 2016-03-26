@@ -37,11 +37,11 @@ extern char **myargv;
 void
 restart(const char *mesg)
 {
-	static int was_here = NO;	/* redundant due to restarting flag below */
+	static bool was_here = false;	/* redundant due to restarting flag below */
 
 	if(was_here)
 		abort();
-	was_here = YES;
+	was_here = true;
 
 	ilog(L_MAIN, "Restarting Server because: %s", mesg);
 
@@ -72,10 +72,10 @@ server_reboot(void)
 		close(i);
 
 	unlink(pidFileName);
-	execv(SPATH, (void *)myargv);
+	execv(ircd_paths[IRCD_PATH_IRCD_EXEC], (void *)myargv);
 
 	/* use this if execv of SPATH fails */
-	snprintf(path, sizeof(path), "%s/bin/ircd", ConfigFileEntry.dpath);
+	snprintf(path, sizeof(path), "%s%cbin%circd", ConfigFileEntry.dpath, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
 
 	execv(path, (void *)myargv);
 	exit(-1);

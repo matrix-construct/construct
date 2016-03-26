@@ -19,6 +19,7 @@ fi
 AC_PREFIX_DEFAULT($HOME/ircd)
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADER(include/setup.h)
+
 AC_CONFIG_SUBDIRS([librb])
 AC_CONFIG_AUX_DIR([libltdl/config])
 
@@ -32,6 +33,24 @@ LTDL_INIT
 
 build_ltdl=$with_included_ltdl
 AM_CONDITIONAL([BUILD_LTDL], [test x"$build_ltdl" = x"yes"])
+
+case "$host_os" in
+*cygwin*)
+     AC_DEFINE_UNQUOTED(CYGWIN,1,[This is a Cygwin system])
+     AC_DEFINE_UNQUOTED(WINDOWS,1,[This is a Windows system])
+     ;;
+*mingw* | *msys*)
+     AC_DEFINE_UNQUOTED(MINGW,1,[This is a MinGW system])
+     AC_DEFINE_UNQUOTED(WINDOWS,1,[This is a Windows system])
+     AC_CHECK_HEADER(winsock2.h, , [AC_MSG_ERROR([** MinGW and no winsock2.h.  I give up.])])
+     LIBS="$LIBS -lws2_32 -liphlpapi"
+     is_mingw="yes"
+     ;;
+*)
+     ;;
+esac
+
+AM_CONDITIONAL([MINGW], [test "$is_mingw" = "yes"])
 
 if test "$ac_cv_c_compiler_gnu" = yes; then
 	IRC_CFLAGS="$IRC_CFLAGS -O0 -Wall"
@@ -102,7 +121,8 @@ AS_IF([test "x$enable_fhs_paths" = "xyes"],
 	pkglibexecdir='${libexecdir}/${PACKAGE_TARNAME}'
 	rundir=${rundir-'${prefix}/run'}
 	pkgrundir='${rundir}/${PACKAGE_TARNAME}'
-	pkglocalstatedir='${localstatedir}/${PACKAGE_TARNAME}'],
+	pkglocalstatedir='${localstatedir}/${PACKAGE_TARNAME}'
+	AC_DEFINE([ENABLE_FHS_PATHS], [1], [Uncomment if FHS pathnames are enabled])],
 	[libexecdir='${bindir}'
 	pkglibexecdir='${libexecdir}'
 	rundir='${sysconfdir}'
@@ -141,18 +161,12 @@ AC_CHECK_SIZEOF(long long)
 dnl Networking Functions
 dnl ====================
 
-AC_SEARCH_LIBS(socket, socket, , [AC_MSG_ERROR([You have no socket()! Aborting.])])
+AC_SEARCH_LIBS(socket, [socket ws2_32], , [AC_MSG_ERROR([You have no socket()! Aborting.])])
 
 dnl SunOS/Solaris required libnsl for inet_ntoa()
 if test x"$SUN" = xyes; then
 	AC_SEARCH_LIBS(inet_ntoa, nsl,, [AC_MSG_ERROR([libnsl not found! Aborting.])])
 fi
-
-AC_CHECK_TYPE(socklen_t, ,
-[AC_DEFINE([socklen_t], [unsigned int],
-[If we don't have a real socklen_t, unsigned int is good enough.])],
-[#include <sys/types.h>
-#include <sys/socket.h>])
 
 AC_ARG_ENABLE(ipv6,
 AC_HELP_STRING([--enable-ipv6],[Enable IPv6 support]),[ipv6=$enableval],[ipv6=no])
@@ -175,34 +189,8 @@ dnl Check for stdarg.h - if we can't find it, halt configure
 AC_CHECK_HEADER(stdarg.h, , [AC_MSG_ERROR([** stdarg.h could not be found - charybdis will not compile without it **])])
 AC_CHECK_FUNCS([strlcat strlcpy])
 
-AC_CHECK_TYPE([u_int32_t], [],
-[
-	AC_CHECK_TYPE([uint32_t],
-	[
-		AC_DEFINE(u_int32_t, [uint32_t], [If system does not define u_int32_t, define a reasonable substitute.])
-	],
-	[
-		AC_MSG_WARN([system has no u_int32_t or uint32_t, default to unsigned long int])
-		AC_DEFINE(u_int32_t, [unsigned long int], [If system does not define u_int32_t, define to unsigned long int here.])
-	])
-])
-
-AC_CHECK_TYPE([u_int16_t], [],
-[
-	AC_CHECK_TYPE([uint16_t],
-	[
-		AC_DEFINE(u_int16_t, [uint16_t], [If system does not define u_int16_t, define a usable substitute])
-	],
-	[
-		AC_MSG_WARN([system has no u_int16_t or uint16_t, default to unsigned short int])
-		AC_DEFINE(u_int16_t, [unsigned short int], [If system does not define u_int16_t, define a usable substitute.])
-	])
-])
-
-AC_CHECK_TYPE([in_port_t], [],
-[AC_DEFINE(in_port_t, [u_int16_t], [If system does not define in_port_t, define it to what it should be.])],
-[[#include <sys/types.h>
-#include <netinet/in.h>]])
+AC_TYPE_INT16_T
+AC_TYPE_INT32_T
 
 AC_CHECK_TYPE([sa_family_t], [],
 [AC_DEFINE(sa_family_t, [u_int16_t], [If system does not define sa_family_t, define it here.])],
@@ -497,6 +485,18 @@ if test "x$BRANDING_NAME" != "x$PACKAGE_NAME"; then
 	AC_DEFINE(CUSTOM_BRANDING, 1, [Define if custom branding is enabled.])
 fi
 
+dnl **********************************************************************
+dnl Enable oper chghost
+dnl **********************************************************************
+
+AC_ARG_ENABLE(oper-chghost,
+AC_HELP_STRING([--enable-oper-chghost],[Enable opers to use the CHGHOST command]),
+[operchghost=$enableval],[operchghost=no])
+
+if test "$operchghost" = yes; then
+	AC_DEFINE(ENABLE_OPER_CHGHOST, 1, [Define this to enable opers to use the CHGHOST command.])
+fi
+
 dnl Debug-related options
 dnl =====================
 
@@ -607,7 +607,7 @@ CHARYBDIS_C_GCC_TRY_FLAGS([-Wcast-qual], charybdis_cv_c_gcc_w_cast_qual)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wwrite-strings], charybdis_cv_c_gcc_w_write_strings)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Werror-implicit-function-declaration], charybdis_cv_c_gcc_w_error_implicit_function_declaration)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations], charybdis_cv_c_gcc_prototypes)
-CHARYBDIS_C_GCC_TRY_FLAGS([-Wparenthesis], charybdis_cv_c_gcc_parenthesis)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Wparentheses], charybdis_cv_c_gcc_parentheses)
 CHARYBDIS_C_GCC_TRY_FLAGS([-W -Wno-unused], charybdis_cv_c_gcc_w)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wextra], charybdis_cv_c_gcc_w_extra)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wshadow], charybdis_cv_c_gcc_w_shadow)
@@ -656,6 +656,7 @@ AC_CONFIG_FILES(			\
 	authd/Makefile			\
 	bandb/Makefile			\
 	ssld/Makefile			\
+	wsockd/Makefile			\
 	extensions/Makefile		\
 	ircd/Makefile			\
 	modules/Makefile		\

@@ -278,17 +278,17 @@ start_ssldaemon(int count, const char *ssl_cert, const char *ssl_private_key, co
 
 	if(ssld_path == NULL)
 	{
-		snprintf(fullpath, sizeof(fullpath), "%s/ssld%s", PKGLIBEXECDIR, suffix);
+		snprintf(fullpath, sizeof(fullpath), "%s%cssld%s", ircd_paths[IRCD_PATH_LIBEXEC], RB_PATH_SEPARATOR, suffix);
 
 		if(access(fullpath, X_OK) == -1)
 		{
-			snprintf(fullpath, sizeof(fullpath), "%s/bin/ssld%s",
-				    ConfigFileEntry.dpath, suffix);
+			snprintf(fullpath, sizeof(fullpath), "%s%cbin%cssld%s",
+				    ConfigFileEntry.dpath, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR, suffix);
 			if(access(fullpath, X_OK) == -1)
 			{
 				ilog(L_MAIN,
 				     "Unable to execute ssld%s in %s or %s/bin",
-				     suffix, PKGLIBEXECDIR, ConfigFileEntry.dpath);
+				     suffix, ircd_paths[IRCD_PATH_LIBEXEC], ConfigFileEntry.dpath);
 				return 0;
 			}
 		}
@@ -339,7 +339,7 @@ start_ssldaemon(int count, const char *ssl_cert, const char *ssl_private_key, co
 		rb_close(F2);
 		rb_close(P1);
 		ctl = allocate_ssl_daemon(F1, P2, pid);
-		if(ssl_ok)
+		if(ircd_ssl_ok)
 		{
 			send_init_prng(ctl, RB_PRNG_DEFAULT, NULL);
 			send_certfp_method(ctl, ConfigFileEntry.certfp_method);
@@ -452,7 +452,6 @@ ssl_process_certfp(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 	uint32_t len;
 	uint8_t *certfp;
 	char *certfp_string;
-	int i;
 
 	if(ctl_buf->buflen > 5 + RB_SSL_CERTFP_LEN)
 		return;		/* bogus message..drop it.. XXX should warn here */
@@ -465,7 +464,7 @@ ssl_process_certfp(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 		return;
 	rb_free(client_p->certfp);
 	certfp_string = rb_malloc(len * 2 + 1);
-	for(i = 0; i < len; i++)
+	for(uint32_t i = 0; i < len; i++)
 		snprintf(certfp_string + 2 * i, 3, "%02x",
 				certfp[i]);
 	client_p->certfp = certfp_string;
@@ -478,7 +477,7 @@ ssl_process_cmd_recv(ssl_ctl_t * ctl)
 	static const char *no_ssl_or_zlib = "ssld has neither SSL/TLS or zlib support killing all sslds";
 	rb_dlink_node *ptr, *next;
 	ssl_ctl_buf_t *ctl_buf;
-	int len;
+	unsigned long len;
 
 	if(ctl->dead)
 		return;
@@ -489,7 +488,7 @@ ssl_process_cmd_recv(ssl_ctl_t * ctl)
 		switch (*ctl_buf->buf)
 		{
 		case 'N':
-			ssl_ok = false;	/* ssld says it can't do ssl/tls */
+			ircd_ssl_ok = false;	/* ssld says it can't do ssl/tls */
 			break;
 		case 'D':
 			ssl_process_dead_fd(ctl, ctl_buf);
@@ -504,24 +503,24 @@ ssl_process_cmd_recv(ssl_ctl_t * ctl)
 			ssl_process_zipstats(ctl, ctl_buf);
 			break;
 		case 'I':
-			ssl_ok = false;
+			ircd_ssl_ok = false;
 			ilog(L_MAIN, "%s", cannot_setup_ssl);
 			sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s", cannot_setup_ssl);
 			break;
 		case 'U':
-			zlib_ok = 0;
-			ssl_ok = false;
+			ircd_zlib_ok = 0;
+			ircd_ssl_ok = false;
 			ilog(L_MAIN, "%s", no_ssl_or_zlib);
 			sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s", no_ssl_or_zlib);
 			ssl_killall();
-			break;
+			return;
 		case 'V':
 			len = ctl_buf->buflen - 1;
 			if (len > sizeof(ctl->version) - 1)
 				len = sizeof(ctl->version) - 1;
 			strncpy(ctl->version, &ctl_buf->buf[1], len);
 		case 'z':
-			zlib_ok = 0;
+			ircd_zlib_ok = 0;
 			break;
 		default:
 			ilog(L_MAIN, "Received invalid command from ssld: %s", ctl_buf->buf);
@@ -722,7 +721,7 @@ send_new_ssl_certs(const char *ssl_cert, const char *ssl_private_key, const char
 	rb_dlink_node *ptr;
 	if(ssl_cert == NULL || ssl_private_key == NULL || ssl_dh_params == NULL)
 	{
-		ssl_ok = false;
+		ircd_ssl_ok = false;
 		return;
 	}
 	RB_DLINK_FOREACH(ptr, ssl_daemons.head)
@@ -810,7 +809,6 @@ start_zlib_session(void *data)
 	rb_fde_t *F[2];
 	rb_fde_t *xF1, *xF2;
 	char *buf;
-	char buf2[9];
 	void *recvq_start;
 
 	size_t hdr = (sizeof(uint8_t) * 2) + sizeof(uint32_t);
@@ -864,23 +862,11 @@ start_zlib_session(void *data)
 		return;
 	}
 
-	if(IsSSL(server))
-	{
-		/* tell ssld the new connid for the ssl part*/
-		buf2[0] = 'Y';
-		uint32_to_buf(&buf2[1], rb_get_fd(server->localClient->F));
-		uint32_to_buf(&buf2[5], rb_get_fd(xF2));
-		ssl_cmd_write_queue(server->localClient->ssl_ctl, NULL, 0, buf2, sizeof(buf2));
-	}
-
-
 	F[0] = server->localClient->F;
 	F[1] = xF1;
-	del_from_zconnid_hash(server);
 	server->localClient->F = xF2;
 	/* need to redo as what we did before isn't valid now */
-	uint32_to_buf(&buf[1], server->localClient->zconnid);
-	add_to_zconnid_hash(server);
+	uint32_to_buf(&buf[1], connid_get(server));
 
 	server->localClient->z_ctl = which_ssld();
 	if(!server->localClient->z_ctl)

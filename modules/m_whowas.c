@@ -25,7 +25,6 @@
 #include "stdinc.h"
 #include "whowas.h"
 #include "client.h"
-#include "common.h"
 #include "hash.h"
 #include "match.h"
 #include "ircd.h"

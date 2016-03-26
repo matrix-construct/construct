@@ -20,7 +20,6 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: tools.c 26170 2008-10-26 20:59:07Z androsyn $
  *
  *  Here is the original header:
  *
@@ -32,6 +31,7 @@
  *  defined, tools.h will build inlined versions of the functions
  *  on supported compilers
  */
+
 #define _GNU_SOURCE 1
 #include <librb_config.h>
 #include <rb_lib.h>
@@ -210,12 +210,10 @@ rb_strnlen(const char *s, size_t count)
 int
 rb_snprintf_append(char *str, size_t len, const char *format, ...)
 {
-	int x;
-
 	if(len == 0)
 		return 0;
 
-	x = strlen(str);
+	size_t x = strlen(str);
 
 	if(len < x)
 	{
@@ -225,10 +223,10 @@ rb_snprintf_append(char *str, size_t len, const char *format, ...)
 
 	va_list ap;
 	va_start(ap, format);
-	x = (vsnprintf(str + x, len - x, format, ap) + (int)x);
+	int y = (vsnprintf(str + x, len - x, format, ap) + (int)x);
 	va_end(ap);
 
-	return (x);
+	return (y);
 }
 
 /* rb_basename

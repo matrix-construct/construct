@@ -20,7 +20,6 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: event-int.h 26272 2008-12-10 05:55:10Z androsyn $
  */
 
 struct ev_entry

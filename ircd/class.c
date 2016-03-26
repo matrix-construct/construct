@@ -23,11 +23,10 @@
  */
 
 #include "stdinc.h"
-#include "config.h"
+#include "defaults.h"
 
 #include "class.h"
 #include "client.h"
-#include "common.h"
 #include "ircd.h"
 #include "numeric.h"
 #include "s_conf.h"

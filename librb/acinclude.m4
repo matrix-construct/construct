@@ -1,4 +1,3 @@
-# $Id: acinclude.m4 23020 2006-09-01 18:20:19Z androsyn $ - aclocal.m4 - Autoconf fun...
 AC_DEFUN([AC_DEFINE_DIR], [
   test "x$prefix" = xNONE && prefix="$ac_default_prefix"
   test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
@@ -34,12 +33,17 @@ AC_DEFUN([AC_SUBST_DIR], [
 dnl IPv6 support macros..pretty much swiped from wget
 
 dnl RB_PROTO_INET6
- 
+
 AC_DEFUN([RB_PROTO_INET6],[
   AC_CACHE_CHECK([for INET6 protocol support], [rb_cv_proto_inet6],[
     AC_TRY_CPP([
+#ifndef _WIN32
 #include <sys/types.h>
 #include <sys/socket.h>
+#else
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
 
 #ifndef PF_INET6
 #error Missing PF_INET6
@@ -52,14 +56,14 @@ AC_DEFUN([RB_PROTO_INET6],[
     ],[
       rb_cv_proto_inet6=no
     ])
-  ])  
+  ])
 
   if test "X$rb_cv_proto_inet6" = "Xyes"; then :
     $1
   else :
-    $2  
-  fi    
-])      
+    $2
+  fi
+])
 
 
 AC_DEFUN([RB_TYPE_STRUCT_SOCKADDR_IN6],[
@@ -69,9 +73,14 @@ AC_DEFUN([RB_TYPE_STRUCT_SOCKADDR_IN6],[
   ],[
     rb_have_sockaddr_in6=no
   ],[
+#ifndef _WIN32
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#else
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
   ])
 
   if test "X$rb_have_sockaddr_in6" = "Xyes"; then :
@@ -83,7 +92,7 @@ AC_DEFUN([RB_TYPE_STRUCT_SOCKADDR_IN6],[
 
 
 AC_DEFUN([RB_CHECK_TIMER_CREATE],
-  [AC_CACHE_CHECK([for a working timer_create(CLOCK_REALTIME)], 
+  [AC_CACHE_CHECK([for a working timer_create(CLOCK_REALTIME)],
     [rb__cv_timer_create_works],
     [AC_TRY_RUN([
 #ifdef HAVE_TIME_H
@@ -116,7 +125,7 @@ int main(int argc, char *argv[])
      [rb__cv_timer_create_works=no])
   ])
 case $rb__cv_timer_create_works in
-    yes) AC_DEFINE([USE_TIMER_CREATE], 1, 
+    yes) AC_DEFINE([USE_TIMER_CREATE], 1,
                    [Define to 1 if we can use timer_create(CLOCK_REALTIME,...)]);;
 esac
 ])
@@ -124,7 +133,7 @@ esac
 
 
 AC_DEFUN([RB_CHECK_TIMERFD_CREATE],
-  [AC_CACHE_CHECK([for a working timerfd_create(CLOCK_REALTIME)], 
+  [AC_CACHE_CHECK([for a working timerfd_create(CLOCK_REALTIME)],
     [rb__cv_timerfd_create_works],
     [AC_TRY_RUN([
 #ifdef HAVE_TIME_H
@@ -156,7 +165,7 @@ int main(int argc, char *argv[])
      [rb__cv_timerfd_create_works=no])
   ])
 case $rb__cv_timerfd_create_works in
-    yes) AC_DEFINE([USE_TIMERFD_CREATE], 1, 
+    yes) AC_DEFINE([USE_TIMERFD_CREATE], 1,
                    [Define to 1 if we can use timerfd_create(CLOCK_REALTIME,...)]);;
 esac
 ])

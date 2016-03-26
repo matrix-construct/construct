@@ -25168,7 +25168,7 @@ winFullPathname(sqlite3_vfs * pVfs,	/* Pointer to vfs object */
 {
 
 #if defined(__CYGWIN__)
-	cygwin_conv_to_full_win32_path(zRelative, zFull);
+	cygwin_conv_path(CCP_POSIX_TO_WIN_A, zRelative, zFull, nFull);
 	return SQLITE_OK;
 #endif
 

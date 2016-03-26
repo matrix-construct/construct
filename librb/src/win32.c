@@ -23,7 +23,6 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: win32.c 26092 2008-09-19 15:13:52Z androsyn $
  */
 
 #include <librb_config.h>
@@ -94,7 +93,7 @@ rb_spawn_process(const char *path, const char **argv)
 }
 
 pid_t
-rb_waitpid(int pid, int *status, int flags)
+rb_waitpid(pid_t pid, int *status, int flags)
 {
 	DWORD timeout = (flags & WNOHANG) ? 0 : INFINITE;
 	HANDLE hProcess;
@@ -152,7 +151,7 @@ rb_setenv(const char *name, const char *value, int overwrite)
 }
 
 int
-rb_kill(int pid, int sig)
+rb_kill(pid_t pid, int sig)
 {
 	HANDLE hProcess;
 	int ret = -1;
@@ -415,7 +414,7 @@ rb_setup_fd_win32(rb_fde_t *F)
 	{
 	case RB_FD_SOCKET:
 		{
-			u_long nonb = 1;
+			unsigned long nonb = 1;
 			if(ioctlsocket((SOCKET) F->fd, FIONBIO, &nonb) == -1)
 			{
 				rb_get_errno();
@@ -614,6 +613,15 @@ rb_strerror(int error)
 	rb_strlcpy(buf, _rb_strerror(error), sizeof(buf));
 	return buf;
 }
+
+const char *
+rb_path_to_self(void)
+{
+	static char path_buf[MAX_PATH];
+	GetModuleFileName(NULL, path_buf, MAX_PATH);
+	return path_buf;
+}
+
 #else /* win32 not supported */
 int
 rb_init_netio_win32(void)

@@ -35,7 +35,6 @@ msgbuf_parse(struct MsgBuf *msgbuf, char *line)
 	char *ch;
 	char *parv[MAXPARA];
 	size_t n_para;
-	int i;
 
 	/* skip any leading spaces */
 	for (ch = line; *ch && *ch == ' '; ch++)
@@ -108,7 +107,7 @@ msgbuf_parse(struct MsgBuf *msgbuf, char *line)
 		return 1;
 
 	msgbuf->cmd = parv[0];
-	for (i = 0; i < n_para; i++)
+	for (size_t i = 0; i < n_para; i++)
 		msgbuf_append_para(msgbuf, parv[i]);
 
 	return 0;
@@ -117,9 +116,7 @@ msgbuf_parse(struct MsgBuf *msgbuf, char *line)
 static int
 msgbuf_has_matching_tags(struct MsgBuf *msgbuf, unsigned int capmask)
 {
-	int i;
-
-	for (i = 0; i < msgbuf->n_tags; i++)
+	for (size_t i = 0; i < msgbuf->n_tags; i++)
 	{
 		if ((msgbuf->tags[i].capmask & capmask) != 0)
 			return 1;
@@ -131,14 +128,12 @@ msgbuf_has_matching_tags(struct MsgBuf *msgbuf, unsigned int capmask)
 static void
 msgbuf_unparse_tags(char *buf, size_t buflen, struct MsgBuf *msgbuf, unsigned int capmask)
 {
-	int i;
-
 	if (!msgbuf_has_matching_tags(msgbuf, capmask))
 		return;
 
 	*buf = '@';
 
-	for (i = 0; i < msgbuf->n_tags; i++)
+	for (size_t i = 0; i < msgbuf->n_tags; i++)
 	{
 		if ((msgbuf->tags[i].capmask & capmask) == 0)
 			continue;
@@ -162,8 +157,6 @@ msgbuf_unparse_tags(char *buf, size_t buflen, struct MsgBuf *msgbuf, unsigned in
 void
 msgbuf_unparse_prefix(char *buf, size_t buflen, struct MsgBuf *msgbuf, unsigned int capmask)
 {
-	int i;
-
 	memset(buf, 0, buflen);
 
 	if (msgbuf->n_tags > 0)
@@ -187,11 +180,9 @@ msgbuf_unparse_prefix(char *buf, size_t buflen, struct MsgBuf *msgbuf, unsigned 
 int
 msgbuf_unparse(char *buf, size_t buflen, struct MsgBuf *msgbuf, unsigned int capmask)
 {
-	int i;
-
 	msgbuf_unparse_prefix(buf, buflen, msgbuf, capmask);
 
-	for (i = msgbuf->cmd != NULL ? 0 : 1; i < msgbuf->n_para; i++)
+	for (size_t i = msgbuf->cmd != NULL ? 0 : 1; i < msgbuf->n_para; i++)
 	{
 		if (i == (msgbuf->n_para - 1))
 		{

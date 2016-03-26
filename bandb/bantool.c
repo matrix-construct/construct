@@ -40,7 +40,6 @@
 #include <time.h>
 
 #include "stdinc.h"
-#include "common.h"
 #include "rsdb.h"
 
 #define EmptyString(x) ((x == NULL) || (*(x) == '\0'))
@@ -93,16 +92,16 @@ struct counter
 /* flags set by command line options */
 struct flags
 {
-	int none;
-	int export;
-	int import;
-	int verify;
-	int vacuum;
-	int pretend;
-	int verbose;
-	int wipe;
-	int dupes_ok;
-} flag = {YES, NO, NO, NO, NO, NO, NO, NO, NO};
+	bool none;
+	bool export;
+	bool import;
+	bool verify;
+	bool vacuum;
+	bool pretend;
+	bool verbose;
+	bool wipe;
+	bool dupes_ok;
+} flag = {true, false, false, false, false, false, false, false, false};
 /* *INDENT-ON* */
 
 static int table_has_rows(const char *table);
@@ -145,32 +144,32 @@ main(int argc, char *argv[])
 			print_help(EXIT_SUCCESS);
 			break;
 		case 'i':
-			flag.none = NO;
-			flag.import = YES;
+			flag.none = false;
+			flag.import = true;
 			break;
 		case 'e':
-			flag.none = NO;
-			flag.export = YES;
+			flag.none = false;
+			flag.export = true;
 			break;
 		case 'u':
-			flag.none = NO;
-			flag.verify = YES;
+			flag.none = false;
+			flag.verify = true;
 			break;
 		case 's':
-			flag.none = NO;
-			flag.vacuum = YES;
+			flag.none = false;
+			flag.vacuum = true;
 			break;
 		case 'p':
-			flag.pretend = YES;
+			flag.pretend = true;
 			break;
 		case 'v':
-			flag.verbose = YES;
+			flag.verbose = true;
 			break;
 		case 'w':
-			flag.wipe = YES;
+			flag.wipe = true;
 			break;
 		case 'd':
-			flag.dupes_ok = YES;
+			flag.dupes_ok = true;
 			break;
 		default:	/* '?' */
 			print_help(EXIT_FAILURE);
@@ -200,7 +199,7 @@ main(int argc, char *argv[])
 	fprintf(stdout,
 		"* charybdis bantool v.%s\n", BT_VERSION);
 
-	if(flag.pretend == NO)
+	if(flag.pretend == false)
 	{
 		if(rsdb_init(db_error_cb) == -1)
 		{
@@ -214,7 +213,7 @@ main(int argc, char *argv[])
 
 		if(flag.import && flag.wipe)
 		{
-			flag.dupes_ok = YES;	/* dont check for dupes if we are wiping the db clean */
+			flag.dupes_ok = true;	/* dont check for dupes if we are wiping the db clean */
 			for(i = 0; i < 3; i++)
 				fprintf(stdout,
 					"* WARNING: YOU ARE ABOUT TO WIPE YOUR DATABASE!\n");
@@ -226,7 +225,7 @@ main(int argc, char *argv[])
 			wipe_schema();
 		}
 	}
-	if(flag.verbose && flag.dupes_ok == YES)
+	if(flag.verbose && flag.dupes_ok == true)
 		fprintf(stdout, "* Allowing duplicate bans...\n");
 
 	/* checking for our files to import or export */
@@ -235,7 +234,7 @@ main(int argc, char *argv[])
 		snprintf(conf, sizeof(conf), "%s/%s.conf%s",
 			    etc, bandb_table[i], bandb_suffix[i]);
 
-		if(flag.import && flag.pretend == NO)
+		if(flag.import && flag.pretend == false)
 			rsdb_transaction(RSDB_TRANS_START);
 
 		if(flag.import)
@@ -244,7 +243,7 @@ main(int argc, char *argv[])
 		if(flag.export)
 			export_config(conf, i);
 
-		if(flag.import && flag.pretend == NO)
+		if(flag.import && flag.pretend == false)
 			rsdb_transaction(RSDB_TRANS_END);
 	}
 
@@ -497,9 +496,9 @@ import_config(const char *conf, int id)
 		else
 			snprintf(newreason, sizeof(newreason), "%s", f_reason);
 
-		if(flag.pretend == NO)
+		if(flag.pretend == false)
 		{
-			if(flag.dupes_ok == NO)
+			if(flag.dupes_ok == false)
 				drop_dupes(f_mask1, f_mask2, bandb_table[id]);
 
 			rsdb_exec(NULL,

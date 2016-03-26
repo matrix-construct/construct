@@ -146,19 +146,18 @@ clicap_find(const char *data, int *negate, int *finished)
  *   Generates a list of capabilities.
  *
  * Inputs: client to send to, subcmd to send,
- *         flags to match against: 0 to do none, -1 if client has no flags,
- *         int to whether we are doing CAP CLEAR
+ *         flags to match against: 0 to do none, -1 if client has no flags
  * Outputs: None
  */
 static void
-clicap_generate(struct Client *source_p, const char *subcmd, int flags, int clear)
+clicap_generate(struct Client *source_p, const char *subcmd, int flags)
 {
 	char buf[BUFSIZE] = { 0 };
 	char capbuf[BUFSIZE] = { 0 };
 	int buflen = 0;
-	int curlen, mlen;
+	int mlen;
 	struct CapabilityEntry *entry;
-	struct DictionaryIter iter;
+	rb_dictionary_iter iter;
 
 	mlen = snprintf(buf, sizeof buf, ":%s CAP %s %s",
 			me.name,
@@ -172,20 +171,14 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags, int clea
 		return;
 	}
 
-	DICTIONARY_FOREACH(entry, &iter, cli_capindex->cap_dict)
+	RB_DICTIONARY_FOREACH(entry, &iter, cli_capindex->cap_dict)
 	{
 		size_t caplen = 0;
 		struct ClientCapability *clicap = entry->ownerdata;
 		const char *data = NULL;
 
-		if(flags)
-		{
-			if(!IsCapableEntry(source_p, entry))
-				continue;
-			/* they are capable of this, check sticky */
-			else if(clear && HasCapabilityFlag(entry, CLICAP_FLAGS_STICKY))
-				continue;
-		}
+		if(flags && !IsCapableEntry(source_p, entry))
+			continue;
 
 		if (!clicap_visible(source_p, entry))
 			continue;
@@ -211,8 +204,8 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags, int clea
 			memset(capbuf, 0, sizeof capbuf);
 		}
 
-		buflen = rb_snprintf_append(capbuf, sizeof capbuf, "%s%s%s%s ",
-				clear ? "-" : "", entry->cap, data != NULL ? "=" : "", data != NULL ? data : "");
+		buflen = rb_snprintf_append(capbuf, sizeof capbuf, "%s%s%s ",
+				entry->cap, data != NULL ? "=" : "", data != NULL ? data : "");
 	}
 
 	/* remove trailing space */
@@ -255,15 +248,6 @@ cap_ack(struct Client *source_p, const char *arg)
 }
 
 static void
-cap_clear(struct Client *source_p, const char *arg)
-{
-	clicap_generate(source_p, "ACK",
-			source_p->localClient->caps ? source_p->localClient->caps : -1, 1);
-
-	source_p->localClient->caps = 0;
-}
-
-static void
 cap_end(struct Client *source_p, const char *arg)
 {
 	if(IsRegistered(source_p))
@@ -282,7 +266,7 @@ cap_list(struct Client *source_p, const char *arg)
 {
 	/* list of what theyre currently using */
 	clicap_generate(source_p, "LIST",
-			source_p->localClient->caps ? source_p->localClient->caps : -1, 0);
+			source_p->localClient->caps ? source_p->localClient->caps : -1);
 }
 
 static void
@@ -298,7 +282,7 @@ cap_ls(struct Client *source_p, const char *arg)
 	}
 
 	/* list of what we support */
-	clicap_generate(source_p, "LS", 0, 0);
+	clicap_generate(source_p, "LS", 0);
 }
 
 static void
@@ -404,7 +388,6 @@ static struct clicap_cmd
 } clicap_cmdlist[] = {
 	/* This list *MUST* be in alphabetical order */
 	{ "ACK",	cap_ack		},
-	{ "CLEAR",	cap_clear	},
 	{ "END",	cap_end		},
 	{ "LIST",	cap_list	},
 	{ "LS",		cap_ls		},

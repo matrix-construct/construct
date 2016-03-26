@@ -26,12 +26,11 @@
 #include "rb_lib.h"
 #include "stdinc.h"
 #include "setup.h"
-#include "config.h"
+#include "defaults.h"
 #include "ircd.h"
 #include "channel.h"
 #include "class.h"
 #include "client.h"
-#include "common.h"
 #include "hash.h"
 #include "match.h"
 #include "ircd_signal.h"
@@ -95,9 +94,6 @@ rb_dlink_list global_serv_list;    /* global servers on the network */
 rb_dlink_list local_oper_list;     /* our opers, duplicated in lclient_list */
 rb_dlink_list oper_list;           /* network opers */
 
-const char *logFileName = LPATH;
-const char *pidFileName = PPATH;
-
 char **myargv;
 bool dorehash = false;
 bool dorehashbans = false;
@@ -105,8 +101,8 @@ bool doremotd = false;
 bool kline_queued = false;
 bool server_state_foreground = false;
 bool opers_see_all_users = false;
-bool ssl_ok = false;
-bool zlib_ok = true;
+bool ircd_ssl_ok = false;
+bool ircd_zlib_ok = true;
 
 int testing_conf = 0;
 time_t startup_time;
@@ -118,6 +114,28 @@ int splitchecking;
 int split_users;
 int split_servers;
 int eob_count;
+
+const char *ircd_paths[IRCD_PATH_COUNT] = {
+	[IRCD_PATH_PREFIX] = DPATH,
+	[IRCD_PATH_MODULES] = MODPATH,
+	[IRCD_PATH_AUTOLOAD_MODULES] = AUTOMODPATH,
+	[IRCD_PATH_ETC] = ETCPATH,
+	[IRCD_PATH_LOG] = LOGPATH,
+	[IRCD_PATH_USERHELP] = UHPATH,
+	[IRCD_PATH_OPERHELP] = HPATH,
+	[IRCD_PATH_IRCD_EXEC] = SPATH,
+	[IRCD_PATH_IRCD_CONF] = CPATH,
+	[IRCD_PATH_IRCD_MOTD] = MPATH,
+	[IRCD_PATH_IRCD_LOG] = LPATH,
+	[IRCD_PATH_IRCD_PID] = PPATH,
+	[IRCD_PATH_IRCD_OMOTD] = OPATH,
+	[IRCD_PATH_BANDB] = DBPATH,
+	[IRCD_PATH_BIN] = BINPATH,
+	[IRCD_PATH_LIBEXEC] = PKGLIBEXECDIR,
+};
+
+const char *logFileName = NULL;
+const char *pidFileName = NULL;
 
 void
 ircd_shutdown(const char *reason)
@@ -156,6 +174,7 @@ print_startup(int pid)
 {
 	int fd;
 
+#ifndef _WIN32
 	close(1);
 	fd = open("/dev/null", O_RDWR);
 	if (fd == -1) {
@@ -166,19 +185,30 @@ print_startup(int pid)
 		fd = dup(fd);
 	if (fd != 1)
 		abort();
-
+#endif
+	inotice("runtime path: %s", rb_path_to_self());
 	inotice("now running in %s mode from %s as pid %d ...",
 	       !server_state_foreground ? "background" : "foreground",
         	ConfigFileEntry.dpath, pid);
 
+#ifndef _WIN32
 	/* let the parent process know the initialization was successful
 	 * -- jilles */
 	if (!server_state_foreground)
-		write(0, ".", 1);
+	{
+		/* GCC complains on Linux if we don't check the value of write pedantically.
+		 * Technically you're supposed to check the value, yes, but it probably can't fail.
+		 * No, casting to void is of no use to shut the warning up. You HAVE to use the value.
+		 * --Elizfaox
+		 */
+		if(write(0, ".", 1) < 1)
+			abort();
+	}
 	if (dup2(1, 0) == -1)
 		abort();
 	if (dup2(1, 2) == -1)
 		abort();
+#endif
 }
 
 /*
@@ -191,7 +221,7 @@ print_startup(int pid)
 static void
 init_sys(void)
 {
-#if defined(RLIMIT_NOFILE) && defined(HAVE_SYS_RESOURCE_H)
+#if !defined(_WIN32) && defined(RLIMIT_NOFILE) && defined(HAVE_SYS_RESOURCE_H)
 	struct rlimit limit;
 
 	if(!getrlimit(RLIMIT_NOFILE, &limit))
@@ -212,6 +242,7 @@ init_sys(void)
 static int
 make_daemon(void)
 {
+#ifndef _WIN32
 	int pid;
 	int pip[2];
 	char c;
@@ -246,7 +277,7 @@ make_daemon(void)
 /*	fclose(stdin);
 	fclose(stdout);
 	fclose(stderr); */
-
+#endif
 	return 0;
 }
 
@@ -277,13 +308,13 @@ check_rehash(void *unused)
 	 */
 	if(dorehash)
 	{
-		rehash(1);
+		rehash(true);
 		dorehash = false;
 	}
 
 	if(dorehashbans)
 	{
-		rehash_bans(1);
+		rehash_bans();
 		dorehashbans = false;
 	}
 
@@ -358,6 +389,85 @@ initialize_server_capabs(void)
 	default_server_capabs &= ~CAP_ZIP;
 }
 
+/*
+ * relocate_paths
+ *
+ * inputs       - none
+ * output       - none
+ * side effects - items in ircd_paths[] array are relocated
+ */
+#ifdef _WIN32
+static void
+relocate_paths(void)
+{
+	char prefix[PATH_MAX], workbuf[PATH_MAX];
+	char *p;
+
+	rb_strlcpy(prefix, rb_path_to_self(), sizeof prefix);
+
+	ircd_paths[IRCD_PATH_IRCD_EXEC] = rb_strdup(prefix);
+
+	/* if we're running from inside the source tree, we probably do not want to relocate any other paths */
+	if (strstr(prefix, ".libs") != NULL)
+		return;
+
+	/* prefix = /home/kaniini/ircd/bin/ircd */
+	p = strrchr(prefix, RB_PATH_SEPARATOR);
+	if (rb_unlikely(p == NULL))
+		return;
+	*p = 0;
+
+	/* prefix = /home/kaniini/ircd/bin */
+	p = strrchr(prefix, RB_PATH_SEPARATOR);
+	if (rb_unlikely(p == NULL))
+		return;
+	*p = 0;
+
+	/* prefix = /home/kaniini/ircd */
+	ircd_paths[IRCD_PATH_PREFIX] = rb_strdup(prefix);
+
+	/* now that we have our prefix, we can relocate the other paths... */
+	snprintf(workbuf, sizeof workbuf, "%s%cmodules", prefix, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_MODULES] = rb_strdup(workbuf);
+
+	snprintf(workbuf, sizeof workbuf, "%s%cmodules%cautoload", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_AUTOLOAD_MODULES] = rb_strdup(workbuf);
+
+	snprintf(workbuf, sizeof workbuf, "%s%cetc", prefix, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_ETC] = rb_strdup(workbuf);
+
+	snprintf(workbuf, sizeof workbuf, "%s%clog", prefix, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_LOG] = rb_strdup(workbuf);
+
+	snprintf(workbuf, sizeof workbuf, "%s%chelp%cusers", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_USERHELP] = rb_strdup(workbuf);
+
+	snprintf(workbuf, sizeof workbuf, "%s%chelp%copers", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_OPERHELP] = rb_strdup(workbuf);
+
+	snprintf(workbuf, sizeof workbuf, "%s%cetc%circd.conf", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_IRCD_CONF] = rb_strdup(workbuf);
+
+	snprintf(workbuf, sizeof workbuf, "%s%cetc%circd.motd", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_IRCD_MOTD] = rb_strdup(workbuf);
+
+	snprintf(workbuf, sizeof workbuf, "%s%cetc%copers.motd", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_IRCD_OMOTD] = rb_strdup(workbuf);
+
+	snprintf(workbuf, sizeof workbuf, "%s%cetc%cban.db", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_BANDB] = rb_strdup(workbuf);
+
+	snprintf(workbuf, sizeof workbuf, "%s%cetc%circd.pid", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_IRCD_PID] = rb_strdup(workbuf);
+
+	snprintf(workbuf, sizeof workbuf, "%s%clogs%circd.log", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_IRCD_LOG] = rb_strdup(workbuf);
+
+	snprintf(workbuf, sizeof workbuf, "%s%cbin", prefix, RB_PATH_SEPARATOR);
+	ircd_paths[IRCD_PATH_BIN] = rb_strdup(workbuf);
+	ircd_paths[IRCD_PATH_LIBEXEC] = rb_strdup(workbuf);
+}
+#endif
 
 /*
  * write_pidfile
@@ -412,7 +522,7 @@ check_pidfile(const char *filename)
 		if(fgets(buff, 20, fb) != NULL)
 		{
 			pidfromfile = atoi(buff);
-			if(!kill(pidfromfile, 0))
+			if(!rb_kill(pidfromfile, 0))
 			{
 				printf("ircd: daemon is already running\n");
 				exit(-1);
@@ -539,18 +649,27 @@ charybdis_main(int argc, char *argv[])
 {
 	int fd;
 
+#ifndef _WIN32
 	/* Check to see if the user is running us as root, which is a nono */
 	if(geteuid() == 0)
 	{
 		fprintf(stderr, "Don't run ircd as root!!!\n");
 		return -1;
 	}
+#endif
+
+#ifdef _WIN32
+	relocate_paths();
+#endif
+
+	logFileName = ircd_paths[IRCD_PATH_IRCD_LOG];
+	pidFileName = ircd_paths[IRCD_PATH_IRCD_PID];
+
+	ConfigFileEntry.dpath = ircd_paths[IRCD_PATH_PREFIX];
+	ConfigFileEntry.configfile = ircd_paths[IRCD_PATH_IRCD_CONF];	/* Server configuration file */
+	ConfigFileEntry.connect_timeout = 30;	/* Default to 30 */
 
 	init_sys();
-
-	ConfigFileEntry.dpath = DPATH;
-	ConfigFileEntry.configfile = CPATH;	/* Server configuration file */
-	ConfigFileEntry.connect_timeout = 30;	/* Default to 30 */
 
 	umask(077);		/* better safe than sorry --SRB */
 
@@ -607,6 +726,7 @@ charybdis_main(int argc, char *argv[])
 	if (testing_conf)
 		server_state_foreground = true;
 
+#ifndef _WIN32
 	/* Make sure fd 0, 1 and 2 are in use -- jilles */
 	do
 	{
@@ -616,6 +736,7 @@ charybdis_main(int argc, char *argv[])
 		close(fd);
 	else if (fd == -1)
 		exit(1);
+#endif
 
 	/* Check if there is pidfile and daemon already running */
 	if(!testing_conf)
@@ -663,7 +784,7 @@ charybdis_main(int argc, char *argv[])
 
 	init_auth();		/* Initialise the auth code */
 	init_authd();		/* Start up authd. */
-	init_nameserver_cache();	/* Get our nameserver cache for STATS a/A */
+	init_dns();		/* Start up DNS query system */
 
 	privilegeset_set_new("default", "", 0);
 
@@ -679,7 +800,7 @@ charybdis_main(int argc, char *argv[])
 	init_bandb();
 	init_ssld();
 
-	rehash_bans(0);
+	rehash_bans();
 
 	initialize_server_capabs();	/* Set up default_server_capabs */
 	initialize_global_set_options();
@@ -713,10 +834,10 @@ charybdis_main(int argc, char *argv[])
 		if(!rb_setup_ssl_server(ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params, ServerInfo.ssl_cipher_list))
 		{
 			ilog(L_MAIN, "WARNING: Unable to setup SSL.");
-			ssl_ok = false;
+			ircd_ssl_ok = false;
 		}
 		else
-			ssl_ok = true;
+			ircd_ssl_ok = true;
 	}
 
 	if (testing_conf)

@@ -157,7 +157,7 @@ flattened_map(struct Client *client_p)
 	rb_dlink_node *ptr;
 	struct Client *target_p;
 	int i, len;
-	int cnt = 0;
+	unsigned long cnt = 0;
 
 	/* First display me as the root */
 	rb_strlcpy(buf, me.name, BUFSIZE);

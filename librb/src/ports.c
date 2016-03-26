@@ -23,7 +23,6 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: ports.c 26286 2008-12-10 23:28:53Z androsyn $
  */
 
 #include <librb_config.h>
@@ -123,7 +122,7 @@ rb_setselect_ports(rb_fde_t *F, unsigned int type, PF * handler, void *client_da
 int
 rb_select_ports(long delay)
 {
-	int i, fd;
+	int i, fd = -1;
 	unsigned int nget = 1;
 	struct timespec poll_time;
 	struct timespec *p = NULL;

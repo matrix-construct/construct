@@ -54,7 +54,7 @@ struct ConfItem *find_dline(struct sockaddr *, int);
 #define find_kline(x)	(find_conf_by_address((x)->host, (x)->sockhost, \
 			 (x)->orighost, \
 			 (struct sockaddr *)&(x)->localClient->ip, CONF_KILL,\
-			 (x)->localClient->ip.ss_family, (x)->username, NULL))
+			 GET_SS_FAMILY(&(x)->localClient->ip), (x)->username, NULL))
 
 void report_auth(struct Client *);
 #ifdef RB_IPV6

@@ -754,7 +754,7 @@ rb_des_crypt(const char *key, const char *setting)
 #define MD5_SIZE			16
 
 static void
-_crypt_to64(char *s, u_long v, int n)
+_crypt_to64(char *s, unsigned long v, int n)
 {
 	while (--n >= 0) {
 	        *s++ = ascii64[v&0x3f];
@@ -1072,8 +1072,8 @@ rb_md5_crypt(const char *pw, const char *salt)
 	MD5_CTX	ctx,ctx1;
 	unsigned long l;
 	int sl, pl;
-	u_int i;
-	u_char final[MD5_SIZE];
+	unsigned int i;
+	unsigned char final[MD5_SIZE];
 	static const char *sp, *ep;
 	static char passwd[120], *p;
 	static const char *magic = "$1$";
@@ -1095,23 +1095,23 @@ rb_md5_crypt(const char *pw, const char *salt)
 	MD5Init(&ctx);
 
 	/* The password first, since that is what is most unknown */
-	MD5Update(&ctx, (const u_char *)pw, strlen(pw));
+	MD5Update(&ctx, (const unsigned char *)pw, strlen(pw));
 
 	/* Then our magic string */
-	MD5Update(&ctx, (const u_char *)magic, strlen(magic));
+	MD5Update(&ctx, (const unsigned char *)magic, strlen(magic));
 
 	/* Then the raw salt */
-	MD5Update(&ctx, (const u_char *)sp, (u_int)sl);
+	MD5Update(&ctx, (const unsigned char *)sp, (unsigned int)sl);
 
 	/* Then just as many characters of the MD5(pw,salt,pw) */
 	MD5Init(&ctx1);
-	MD5Update(&ctx1, (const u_char *)pw, strlen(pw));
-	MD5Update(&ctx1, (const u_char *)sp, (u_int)sl);
-	MD5Update(&ctx1, (const u_char *)pw, strlen(pw));
+	MD5Update(&ctx1, (const unsigned char *)pw, strlen(pw));
+	MD5Update(&ctx1, (const unsigned char *)sp, (unsigned int)sl);
+	MD5Update(&ctx1, (const unsigned char *)pw, strlen(pw));
 	MD5Final(final, &ctx1);
 	for(pl = (int)strlen(pw); pl > 0; pl -= MD5_SIZE)
-		MD5Update(&ctx, (const u_char *)final,
-		    (u_int)(pl > MD5_SIZE ? MD5_SIZE : pl));
+		MD5Update(&ctx, (const unsigned char *)final,
+		    (unsigned int)(pl > MD5_SIZE ? MD5_SIZE : pl));
 
 	/* Don't leave anything around in vm they could use. */
 	memset(final, 0, sizeof(final));
@@ -1119,13 +1119,13 @@ rb_md5_crypt(const char *pw, const char *salt)
 	/* Then something really weird... */
 	for (i = strlen(pw); i; i >>= 1)
 		if(i & 1)
-		    MD5Update(&ctx, (const u_char *)final, 1);
+		    MD5Update(&ctx, (const unsigned char *)final, 1);
 		else
-		    MD5Update(&ctx, (const u_char *)pw, 1);
+		    MD5Update(&ctx, (const unsigned char *)pw, 1);
 
 	/* Now make the output string */
 	rb_strlcpy(passwd, magic, sizeof(passwd));
-	strncat(passwd, sp, (u_int)sl);
+	strncat(passwd, sp, (unsigned int)sl);
 	rb_strlcat(passwd, "$", sizeof(passwd));
 
 	MD5Final(final, &ctx);
@@ -1138,20 +1138,20 @@ rb_md5_crypt(const char *pw, const char *salt)
 	for(i = 0; i < 1000; i++) {
 		MD5Init(&ctx1);
 		if(i & 1)
-			MD5Update(&ctx1, (const u_char *)pw, strlen(pw));
+			MD5Update(&ctx1, (const unsigned char *)pw, strlen(pw));
 		else
-			MD5Update(&ctx1, (const u_char *)final, MD5_SIZE);
+			MD5Update(&ctx1, (const unsigned char *)final, MD5_SIZE);
 
 		if(i % 3)
-			MD5Update(&ctx1, (const u_char *)sp, (u_int)sl);
+			MD5Update(&ctx1, (const unsigned char *)sp, (unsigned int)sl);
 
 		if(i % 7)
-			MD5Update(&ctx1, (const u_char *)pw, strlen(pw));
+			MD5Update(&ctx1, (const unsigned char *)pw, strlen(pw));
 
 		if(i & 1)
-			MD5Update(&ctx1, (const u_char *)final, MD5_SIZE);
+			MD5Update(&ctx1, (const unsigned char *)final, MD5_SIZE);
 		else
-			MD5Update(&ctx1, (const u_char *)pw, strlen(pw));
+			MD5Update(&ctx1, (const unsigned char *)pw, strlen(pw));
 		MD5Final(final, &ctx1);
 	}
 
@@ -1350,7 +1350,7 @@ static void rb_sha256_init_ctx(struct sha256_ctx *ctx)
 static void *rb_sha256_finish_ctx(struct sha256_ctx *ctx, void *resbuf)
 {
 	/* Take yet unprocessed bytes into account.  */
-	uint32_t bytes = ctx->buflen;
+	uint32_t bytes = ctx->buflen, *ptr;
 	size_t pad;
 	unsigned int i;
 
@@ -1363,9 +1363,11 @@ static void *rb_sha256_finish_ctx(struct sha256_ctx *ctx, void *resbuf)
 	memcpy(&ctx->buffer[bytes], SHA256_fillbuf, pad);
 
 	/* Put the 64-bit file length in *bits* at the end of the buffer.  */
-	*(uint32_t *) & ctx->buffer[bytes + pad + 4] = SHA256_SWAP(ctx->total[0] << 3);
-	*(uint32_t *) & ctx->buffer[bytes + pad] = SHA256_SWAP((ctx->total[1] << 3) |
-							(ctx->total[0] >> 29));
+	ptr = (uint32_t *)&ctx->buffer[bytes + pad + 4];	/* Avoid warnings about strict aliasing */
+	*ptr = SHA256_SWAP(ctx->total[0] << 3);
+
+	ptr = (uint32_t *)&ctx->buffer[bytes + pad];
+	*ptr = SHA256_SWAP((ctx->total[1] << 3) | (ctx->total[0] >> 29));
 
 	/* Process last bytes.  */
 	rb_sha256_process_block(ctx->buffer, bytes + pad + 8, ctx);
@@ -1924,7 +1926,7 @@ static void rb_sha512_init_ctx(struct sha512_ctx *ctx)
 static void *rb_sha512_finish_ctx(struct sha512_ctx *ctx, void *resbuf)
 {
 	/* Take yet unprocessed bytes into account.  */
-	uint64_t bytes = ctx->buflen;
+	uint64_t bytes = ctx->buflen, *ptr;
 	size_t pad;
 	unsigned int i;
 
@@ -1937,9 +1939,11 @@ static void *rb_sha512_finish_ctx(struct sha512_ctx *ctx, void *resbuf)
 	memcpy(&ctx->buffer[bytes], SHA512_fillbuf, pad);
 
 	/* Put the 128-bit file length in *bits* at the end of the buffer.  */
-	*(uint64_t *) & ctx->buffer[bytes + pad + 8] = SHA512_SWAP(ctx->total[0] << 3);
-	*(uint64_t *) & ctx->buffer[bytes + pad] = SHA512_SWAP((ctx->total[1] << 3) |
-							(ctx->total[0] >> 61));
+	ptr = (uint64_t *)&ctx->buffer[bytes + pad + 8];	/* Avoid warnings about strict aliasing */
+	*ptr = SHA512_SWAP(ctx->total[0] << 3);
+
+	ptr = (uint64_t *)&ctx->buffer[bytes + pad];
+	*ptr = SHA512_SWAP((ctx->total[1] << 3) | (ctx->total[0] >> 61));
 
 	/* Process last bytes.  */
 	rb_sha512_process_block(ctx->buffer, bytes + pad + 16, ctx);

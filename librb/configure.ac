@@ -62,7 +62,7 @@ case "$host_os" in
      AC_DEFINE_UNQUOTED(CYGWIN,1,[This is a Cygwin system])
      AC_DEFINE_UNQUOTED(WINDOWS,1,[This is a Windows system])
      ;;
-*mingw*)
+*mingw* | *msys*)
      AC_DEFINE_UNQUOTED(MINGW,1,[This is a MinGW system])
      AC_DEFINE_UNQUOTED(WINDOWS,1,[This is a Windows system])
      AC_CHECK_HEADER(windows.h, , [AC_MSG_ERROR([** MinGW and no windows.h.  I give up.])])
@@ -144,6 +144,7 @@ AC_CHECK_TYPE([socklen_t], rb_cv_socklen_t=socklen_t,[
 #endif
 #ifdef HAVE_WINSOCK2_H
 #include <winsock2.h>
+#include <ws2tcpip.h>
 #endif
 int getpeername (int, $arg2 *, $t *);
 ],[
@@ -210,8 +211,9 @@ AC_CHECK_TYPE([sa_family_t], [],
 
 
 dnl check for various functions...
-AC_CHECK_FUNCS([snprintf vsnprintf socketpair gettimeofday writev sendmsg gmtime_r strtok_r usleep posix_spawn strlcpy strlcat strnlen fstat signalfd select poll kevent port_create epoll_ctl arc4random getrusage timerfd_create])	
+AC_CHECK_FUNCS([snprintf vsnprintf socketpair gettimeofday writev sendmsg gmtime_r strtok_r usleep posix_spawn getexecname strlcpy strlcat strnlen fstat signalfd select poll kevent port_create epoll_ctl arc4random getrusage timerfd_create])	
 
+AC_SEARCH_LIBS(dlinfo, dl, AC_DEFINE(HAVE_DLINFO, 1, [Define if you have dlinfo]))
 AC_SEARCH_LIBS(nanosleep, rt posix4, AC_DEFINE(HAVE_NANOSLEEP, 1, [Define if you have nanosleep]))
 AC_SEARCH_LIBS(timer_create, rt, AC_DEFINE(HAVE_TIMER_CREATE, 1, [Define if you have timer_create]))
 RB_CHECK_TIMER_CREATE
@@ -496,6 +498,7 @@ if test "x$rb_windows_h" = "xyes"; then
 	echo '#define WIN32_LEAN_AND_MEAN 1' >> $outfile
 	echo '#include <windows.h>' >> $outfile
 	echo '#include <winsock2.h>' >> $outfile
+	echo '#include <ws2tcpip.h>' >> $outfile
 	echo '#include <iphlpapi.h>' >> $outfile
 fi
 

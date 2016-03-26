@@ -25,12 +25,12 @@
 #ifndef INCLUDED_hash_h
 #define INCLUDED_hash_h
 
-struct Dictionary;
-struct rb_radixtree;
+#include "rb_dictionary.h"
+#include "rb_radixtree.h"
 
-extern struct Dictionary *nd_dict;
-extern struct rb_radixtree *resv_tree;
-extern struct rb_radixtree *channel_tree;
+extern rb_dictionary *nd_dict;
+extern rb_radixtree *resv_tree;
+extern rb_radixtree *channel_tree;
 
 /* Magic value for FNV hash functions */
 #define FNV1_32_INIT 0x811c9dc5UL
@@ -65,10 +65,10 @@ struct ConfItem;
 struct cachefile;
 struct nd_entry;
 
-extern u_int32_t fnv_hash_upper(const unsigned char *s, int bits);
-extern u_int32_t fnv_hash(const unsigned char *s, int bits);
-extern u_int32_t fnv_hash_len(const unsigned char *s, int bits, int len);
-extern u_int32_t fnv_hash_upper_len(const unsigned char *s, int bits, int len);
+extern uint32_t fnv_hash_upper(const unsigned char *s, int bits);
+extern uint32_t fnv_hash(const unsigned char *s, int bits);
+extern uint32_t fnv_hash_len(const unsigned char *s, int bits, int len);
+extern uint32_t fnv_hash_upper_len(const unsigned char *s, int bits, int len);
 
 extern void init_hash(void);
 
@@ -95,11 +95,8 @@ extern void del_from_resv_hash(const char *name, struct ConfItem *aconf);
 extern struct ConfItem *hash_find_resv(const char *name);
 extern void clear_resv_hash(void);
 
-void add_to_cli_connid_hash(struct Client *client_p);
-void del_from_cli_connid_hash(struct Client *client_p);
+void add_to_cli_connid_hash(struct Client *client_p, uint32_t id);
+void del_from_cli_connid_hash(uint32_t id);
 struct Client *find_cli_connid_hash(uint32_t connid);
-
-void add_to_zconnid_hash(struct Client *client_p);
-void del_from_zconnid_hash(struct Client *client_p);
 
 #endif /* INCLUDED_hash_h */

@@ -24,7 +24,6 @@
 
 #include "stdinc.h"
 #include "client.h"
-#include "common.h"
 #include "match.h"
 #include "ircd.h"
 #include "numeric.h"
@@ -59,10 +58,6 @@ DECLARE_MODULE_AV2(restart, NULL, NULL, restart_clist, NULL, NULL, NULL, NULL, r
 static void
 mo_restart(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	char buf[BUFSIZE];
-	rb_dlink_node *ptr;
-	struct Client *target_p;
-
 	if(!IsOperDie(source_p))
 	{
 		sendto_one(source_p, form_str(ERR_NOPRIVS),

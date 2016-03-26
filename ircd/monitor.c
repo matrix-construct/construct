@@ -37,7 +37,7 @@
 #include "send.h"
 #include "rb_radixtree.h"
 
-static struct rb_radixtree *monitor_tree;
+static rb_radixtree *monitor_tree;
 
 void
 init_monitor(void)

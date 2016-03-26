@@ -25,7 +25,7 @@
 #ifndef INCLUDED_ircd_h
 #define INCLUDED_ircd_h
 
-#include "config.h"
+#include "defaults.h"
 
 struct Client;
 struct rb_dlink_list;
@@ -99,8 +99,8 @@ extern int testing_conf;
 
 extern struct ev_entry *check_splitmode_ev;
 
-extern bool ssl_ok;
-extern bool zlib_ok;
+extern bool ircd_ssl_ok;
+extern bool ircd_zlib_ok;
 extern int maxconnections;
 
 void ircd_shutdown(const char *reason);

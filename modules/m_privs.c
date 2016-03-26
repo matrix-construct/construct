@@ -31,7 +31,6 @@
 
 #include "stdinc.h"
 #include "client.h"
-#include "common.h"
 #include "numeric.h"
 #include "send.h"
 #include "msg.h"

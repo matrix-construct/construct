@@ -35,7 +35,7 @@
 #ifndef INCLUDED_ircd_defs_h
 #define INCLUDED_ircd_defs_h
 
-#include "config.h"
+#include "defaults.h"
 
 /* For those unfamiliar with GNU format attributes, a is the 1 based
  * argument number of the format string, and b is the 1 based argument
@@ -56,8 +56,12 @@
 #define IRC_DEPRECATED
 #endif
 
-#if !defined(CONFIG_CHARYBDIS_LEVEL_1)
-#  error Incorrect config.h for this revision of ircd.
+#ifndef MAX
+#define MAX(a, b)	((a) > (b) ? (a) : (b))
+#endif
+
+#ifndef MIN
+#define MIN(a, b)	((a) < (b) ? (a) : (b))
 #endif
 
 #define HOSTLEN         63	/* Length of hostname.  Updated to         */
@@ -118,5 +122,8 @@
 #else
 #define PATRICIA_BITS	32
 #endif
+
+/* Read buffer size */
+#define READBUF_SIZE 16384
 
 #endif /* INCLUDED_ircd_defs_h */

@@ -19,8 +19,8 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: helper.c 26092 2008-09-19 15:13:52Z androsyn $
  */
+
 #include <librb_config.h>
 #include <rb_lib.h>
 #include <commio-int.h>
@@ -78,7 +78,7 @@ rb_helper_child(rb_helper_cb * read_cb, rb_helper_cb * error_cb, log_cb * ilog,
 	if(x > 2)		/* don't undo what we just did */
 		close(x);
 #else
-	x = 0;			/* shut gcc up */
+	(void) x;	/* shut gcc up */
 #endif
 
 	rb_lib_init(ilog, irestart, idie, 0, maxfd, dh_size, fd_heap_size);

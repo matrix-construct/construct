@@ -16,3 +16,5 @@ include/serno.h:
 		echo '#define DATECODE 0UL' >>include/serno.h; \
 	fi
 
+clean-local:
+	rm -f include/serno.h

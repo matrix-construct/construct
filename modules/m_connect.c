@@ -99,7 +99,7 @@ mo_connect(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 		return;
 	}
 
-	if(ServerConfSSL(server_p) && (!ssl_ok || !get_ssld_count()))
+	if(ServerConfSSL(server_p) && (!ircd_ssl_ok || !get_ssld_count()))
 	{
 		sendto_one_notice(source_p,
 				  ":Connect: Server %s is set to use SSL/TLS but SSL/TLS is not configured.",
@@ -192,7 +192,7 @@ ms_connect(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 		return;
 	}
 
-	if(ServerConfSSL(server_p) && (!ssl_ok || !get_ssld_count()))
+	if(ServerConfSSL(server_p) && (!ircd_ssl_ok || !get_ssld_count()))
 	{
 		sendto_one_notice(source_p,
 				  ":Connect: Server %s is set to use SSL/TLS but SSL/TLS is not configured.",

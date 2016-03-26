@@ -25,7 +25,7 @@
 #ifndef INCLUDED_msg_h
 #define INCLUDED_msg_h
 
-#include "config.h"
+#include "defaults.h"
 #include "msgbuf.h"
 
 struct Client;
@@ -54,7 +54,7 @@ typedef void (*MessageHandler) (struct MsgBuf *, struct Client *, struct Client 
 struct MessageEntry
 {
 	MessageHandler handler;
-	int min_para;
+	size_t min_para;
 };
 
 /* Message table structure */

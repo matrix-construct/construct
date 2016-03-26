@@ -26,10 +26,10 @@
 #include <rb_lib.h>
 #include <rb_dictionary.h>
 
-struct Dictionary
+struct rb_dictionary
 {
 	DCF compare_cb;
-	struct DictionaryElement *root, *head, *tail;
+	rb_dictionary_element *root, *head, *tail;
 	unsigned int count;
 	char *id;
 	unsigned int dirty:1;
@@ -55,10 +55,10 @@ static rb_dlink_list dictionary_list = {NULL, NULL, 0};
  *     - if services runs out of memory and cannot allocate the object,
  *       the program will abort.
  */
-struct Dictionary *rb_dictionary_create(const char *name,
+rb_dictionary *rb_dictionary_create(const char *name,
 	DCF compare_cb)
 {
-	struct Dictionary *dtree = (struct Dictionary *) rb_malloc(sizeof(struct Dictionary));
+	rb_dictionary *dtree = (rb_dictionary *) rb_malloc(sizeof(rb_dictionary));
 
 	dtree->compare_cb = compare_cb;
 	dtree->id = rb_strdup(name);
@@ -69,7 +69,7 @@ struct Dictionary *rb_dictionary_create(const char *name,
 }
 
 /*
- * rb_dictionary_set_comparator_func(struct Dictionary *dict,
+ * rb_dictionary_set_comparator_func(rb_dictionary *dict,
  *     DCF compare_cb)
  *
  * Resets the comparator function used by the dictionary code for
@@ -85,7 +85,7 @@ struct Dictionary *rb_dictionary_create(const char *name,
  * Side Effects:
  *     - the dictionary comparator function is reset.
  */
-void rb_dictionary_set_comparator_func(struct Dictionary *dict,
+void rb_dictionary_set_comparator_func(rb_dictionary *dict,
 	DCF compare_cb)
 {
 	lrb_assert(dict != NULL);
@@ -95,7 +95,7 @@ void rb_dictionary_set_comparator_func(struct Dictionary *dict,
 }
 
 /*
- * rb_dictionary_get_comparator_func(struct Dictionary *dict)
+ * rb_dictionary_get_comparator_func(rb_dictionary *dict)
  *
  * Returns the current comparator function used by the dictionary.
  *
@@ -109,7 +109,7 @@ void rb_dictionary_set_comparator_func(struct Dictionary *dict,
  *     - none
  */
 DCF
-rb_dictionary_get_comparator_func(struct Dictionary *dict)
+rb_dictionary_get_comparator_func(rb_dictionary *dict)
 {
 	lrb_assert(dict != NULL);
 
@@ -117,7 +117,7 @@ rb_dictionary_get_comparator_func(struct Dictionary *dict)
 }
 
 /*
- * rb_dictionary_get_linear_index(struct Dictionary *dict,
+ * rb_dictionary_get_linear_index(rb_dictionary *dict,
  *     const void *key)
  *
  * Gets a linear index number for key.
@@ -133,9 +133,9 @@ rb_dictionary_get_comparator_func(struct Dictionary *dict)
  *     - rebuilds the linear index if the tree is marked as dirty.
  */
 int
-rb_dictionary_get_linear_index(struct Dictionary *dict, const void *key)
+rb_dictionary_get_linear_index(rb_dictionary *dict, const void *key)
 {
-	struct DictionaryElement *elem;
+	rb_dictionary_element *elem;
 
 	lrb_assert(dict != NULL);
 	lrb_assert(key != NULL);
@@ -148,7 +148,7 @@ rb_dictionary_get_linear_index(struct Dictionary *dict, const void *key)
 		return elem->position;
 	else
 	{
-		struct DictionaryElement *delem;
+		rb_dictionary_element *delem;
 		int i;
 
 		for (delem = dict->head, i = 0; delem != NULL; delem = delem->next, i++)
@@ -161,7 +161,7 @@ rb_dictionary_get_linear_index(struct Dictionary *dict, const void *key)
 }
 
 /*
- * rb_dictionary_retune(struct Dictionary *dict, const void *key)
+ * rb_dictionary_retune(rb_dictionary *dict, const void *key)
  *
  * Retunes the tree, self-optimizing for the element which belongs to key.
  *
@@ -175,9 +175,9 @@ rb_dictionary_get_linear_index(struct Dictionary *dict, const void *key)
  *     - a new root node is nominated.
  */
 static void
-rb_dictionary_retune(struct Dictionary *dict, const void *key)
+rb_dictionary_retune(rb_dictionary *dict, const void *key)
 {
-	struct DictionaryElement n, *tn, *left, *right, *node;
+	rb_dictionary_element n, *tn, *left, *right, *node;
 	int ret;
 
 	lrb_assert(dict != NULL);
@@ -253,8 +253,8 @@ rb_dictionary_retune(struct Dictionary *dict, const void *key)
 }
 
 /*
- * rb_dictionary_link(struct Dictionary *dict,
- *     struct DictionaryElement *delem)
+ * rb_dictionary_link(rb_dictionary *dict,
+ *     rb_dictionary_element *delem)
  *
  * Links a dictionary tree element to the dictionary.
  *
@@ -274,8 +274,8 @@ rb_dictionary_retune(struct Dictionary *dict, const void *key)
  *     - a node is linked to the dictionary tree
  */
 static void
-rb_dictionary_link(struct Dictionary *dict,
-	struct DictionaryElement *delem)
+rb_dictionary_link(rb_dictionary *dict,
+	rb_dictionary_element *delem)
 {
 	lrb_assert(dict != NULL);
 	lrb_assert(delem != NULL);
@@ -340,7 +340,7 @@ rb_dictionary_link(struct Dictionary *dict,
 }
 
 /*
- * rb_dictionary_unlink_root(struct Dictionary *dict)
+ * rb_dictionary_unlink_root(rb_dictionary *dict)
  *
  * Unlinks the root dictionary tree element from the dictionary.
  *
@@ -354,9 +354,9 @@ rb_dictionary_link(struct Dictionary *dict,
  *     - the root node is unlinked from the dictionary tree
  */
 static void
-rb_dictionary_unlink_root(struct Dictionary *dict)
+rb_dictionary_unlink_root(rb_dictionary *dict)
 {
-	struct DictionaryElement *delem, *nextnode, *parentofnext;
+	rb_dictionary_element *delem, *nextnode, *parentofnext;
 
 	dict->dirty = TRUE;
 
@@ -409,7 +409,7 @@ rb_dictionary_unlink_root(struct Dictionary *dict)
 }
 
 /*
- * rb_dictionary_destroy(struct Dictionary *dtree,
+ * rb_dictionary_destroy(rb_dictionary *dtree,
  *     void (*destroy_cb)(dictionary_elem_t *delem, void *privdata),
  *     void *privdata);
  *
@@ -430,11 +430,11 @@ rb_dictionary_unlink_root(struct Dictionary *dict)
  *     - if this is called without a callback, the objects bound to the
  *       DTree will not be destroyed.
  */
-void rb_dictionary_destroy(struct Dictionary *dtree,
-	void (*destroy_cb)(struct DictionaryElement *delem, void *privdata),
+void rb_dictionary_destroy(rb_dictionary *dtree,
+	void (*destroy_cb)(rb_dictionary_element *delem, void *privdata),
 	void *privdata)
 {
-	struct DictionaryElement *n, *tn;
+	rb_dictionary_element *n, *tn;
 
 	lrb_assert(dtree != NULL);
 
@@ -452,7 +452,7 @@ void rb_dictionary_destroy(struct Dictionary *dtree,
 }
 
 /*
- * rb_dictionary_foreach(struct Dictionary *dtree,
+ * rb_dictionary_foreach(rb_dictionary *dtree,
  *     void (*destroy_cb)(dictionary_elem_t *delem, void *privdata),
  *     void *privdata);
  *
@@ -469,18 +469,18 @@ void rb_dictionary_destroy(struct Dictionary *dtree,
  * Side Effects:
  *     - on success, a dtree is iterated
  */
-void rb_dictionary_foreach(struct Dictionary *dtree,
-	int (*foreach_cb)(struct DictionaryElement *delem, void *privdata),
+void rb_dictionary_foreach(rb_dictionary *dtree,
+	int (*foreach_cb)(rb_dictionary_element *delem, void *privdata),
 	void *privdata)
 {
-	struct DictionaryElement *n, *tn;
+	rb_dictionary_element *n, *tn;
 
 	lrb_assert(dtree != NULL);
 
 	RB_DLINK_FOREACH_SAFE(n, tn, dtree->head)
 	{
 		/* delem_t is a subclass of node_t. */
-		struct DictionaryElement *delem = (struct DictionaryElement *) n;
+		rb_dictionary_element *delem = (rb_dictionary_element *) n;
 
 		if (foreach_cb != NULL)
 			(*foreach_cb)(delem, privdata);
@@ -488,8 +488,8 @@ void rb_dictionary_foreach(struct Dictionary *dtree,
 }
 
 /*
- * rb_dictionary_search(struct Dictionary *dtree,
- *     void (*destroy_cb)(struct DictionaryElement *delem, void *privdata),
+ * rb_dictionary_search(rb_dictionary *dtree,
+ *     void (*destroy_cb)(rb_dictionary_element *delem, void *privdata),
  *     void *privdata);
  *
  * Searches all entries in a DTree using a custom callback.
@@ -506,11 +506,11 @@ void rb_dictionary_foreach(struct Dictionary *dtree,
  * Side Effects:
  *     - a dtree is iterated until the requested conditions are met
  */
-void *rb_dictionary_search(struct Dictionary *dtree,
-	void *(*foreach_cb)(struct DictionaryElement *delem, void *privdata),
+void *rb_dictionary_search(rb_dictionary *dtree,
+	void *(*foreach_cb)(rb_dictionary_element *delem, void *privdata),
 	void *privdata)
 {
-	struct DictionaryElement *n, *tn;
+	rb_dictionary_element *n, *tn;
 	void *ret = NULL;
 
 	lrb_assert(dtree != NULL);
@@ -518,7 +518,7 @@ void *rb_dictionary_search(struct Dictionary *dtree,
 	RB_DLINK_FOREACH_SAFE(n, tn, dtree->head)
 	{
 		/* delem_t is a subclass of node_t. */
-		struct DictionaryElement *delem = (struct DictionaryElement *) n;
+		rb_dictionary_element *delem = (rb_dictionary_element *) n;
 
 		if (foreach_cb != NULL)
 			ret = (*foreach_cb)(delem, privdata);
@@ -531,8 +531,8 @@ void *rb_dictionary_search(struct Dictionary *dtree,
 }
 
 /*
- * rb_dictionary_foreach_start(struct Dictionary *dtree,
- *     struct DictionaryIter *state);
+ * rb_dictionary_foreach_start(rb_dictionary *dtree,
+ *     rb_dictionary_iter *state);
  *
  * Initializes a static DTree iterator.
  *
@@ -546,8 +546,8 @@ void *rb_dictionary_search(struct Dictionary *dtree,
  * Side Effects:
  *     - the static iterator, &state, is initialized.
  */
-void rb_dictionary_foreach_start(struct Dictionary *dtree,
-	struct DictionaryIter *state)
+void rb_dictionary_foreach_start(rb_dictionary *dtree,
+	rb_dictionary_iter *state)
 {
 	lrb_assert(dtree != NULL);
 	lrb_assert(state != NULL);
@@ -568,8 +568,8 @@ void rb_dictionary_foreach_start(struct Dictionary *dtree,
 }
 
 /*
- * rb_dictionary_foreach_cur(struct Dictionary *dtree,
- *     struct DictionaryIter *state);
+ * rb_dictionary_foreach_cur(rb_dictionary *dtree,
+ *     rb_dictionary_iter *state);
  *
  * Returns the data from the current node being iterated by the
  * static iterator.
@@ -584,8 +584,8 @@ void rb_dictionary_foreach_start(struct Dictionary *dtree,
  * Side Effects:
  *     - none
  */
-void *rb_dictionary_foreach_cur(struct Dictionary *dtree,
-	struct DictionaryIter *state)
+void *rb_dictionary_foreach_cur(rb_dictionary *dtree,
+	rb_dictionary_iter *state)
 {
 	lrb_assert(dtree != NULL);
 	lrb_assert(state != NULL);
@@ -594,8 +594,8 @@ void *rb_dictionary_foreach_cur(struct Dictionary *dtree,
 }
 
 /*
- * rb_dictionary_foreach_next(struct Dictionary *dtree,
- *     struct DictionaryIter *state);
+ * rb_dictionary_foreach_next(rb_dictionary *dtree,
+ *     rb_dictionary_iter *state);
  *
  * Advances a static DTree iterator.
  *
@@ -609,8 +609,8 @@ void *rb_dictionary_foreach_cur(struct Dictionary *dtree,
  * Side Effects:
  *     - the static iterator, &state, is advanced to a new DTree node.
  */
-void rb_dictionary_foreach_next(struct Dictionary *dtree,
-	struct DictionaryIter *state)
+void rb_dictionary_foreach_next(rb_dictionary *dtree,
+	rb_dictionary_iter *state)
 {
 	lrb_assert(dtree != NULL);
 	lrb_assert(state != NULL);
@@ -630,7 +630,7 @@ void rb_dictionary_foreach_next(struct Dictionary *dtree,
 }
 
 /*
- * rb_dictionary_find(struct Dictionary *dtree, const void *key)
+ * rb_dictionary_find(rb_dictionary *dtree, const void *key)
  *
  * Looks up a DTree node by name.
  *
@@ -645,7 +645,7 @@ void rb_dictionary_foreach_next(struct Dictionary *dtree,
  * Side Effects:
  *     - none
  */
-struct DictionaryElement *rb_dictionary_find(struct Dictionary *dict, const void *key)
+rb_dictionary_element *rb_dictionary_find(rb_dictionary *dict, const void *key)
 {
 	lrb_assert(dict != NULL);
 	lrb_assert(key != NULL);
@@ -660,7 +660,7 @@ struct DictionaryElement *rb_dictionary_find(struct Dictionary *dict, const void
 }
 
 /*
- * rb_dictionary_add(struct Dictionary *dtree, const void *key, void *data)
+ * rb_dictionary_add(rb_dictionary *dtree, const void *key, void *data)
  *
  * Creates a new DTree node and binds data to it.
  *
@@ -676,9 +676,9 @@ struct DictionaryElement *rb_dictionary_find(struct Dictionary *dict, const void
  * Side Effects:
  *     - data is inserted into the DTree.
  */
-struct DictionaryElement *rb_dictionary_add(struct Dictionary *dict, const void *key, void *data)
+rb_dictionary_element *rb_dictionary_add(rb_dictionary *dict, const void *key, void *data)
 {
-	struct DictionaryElement *delem;
+	rb_dictionary_element *delem;
 
 	lrb_assert(dict != NULL);
 	lrb_assert(key != NULL);
@@ -695,7 +695,7 @@ struct DictionaryElement *rb_dictionary_add(struct Dictionary *dict, const void 
 }
 
 /*
- * rb_dictionary_delete(struct Dictionary *dtree, const void *key)
+ * rb_dictionary_delete(rb_dictionary *dtree, const void *key)
  *
  * Deletes data from a dictionary tree.
  *
@@ -713,9 +713,9 @@ struct DictionaryElement *rb_dictionary_add(struct Dictionary *dict, const void 
  * Notes:
  *     - the returned data needs to be mowgli_freed/released manually!
  */
-void *rb_dictionary_delete(struct Dictionary *dtree, const void *key)
+void *rb_dictionary_delete(rb_dictionary *dtree, const void *key)
 {
-	struct DictionaryElement *delem = rb_dictionary_find(dtree, key);
+	rb_dictionary_element *delem = rb_dictionary_find(dtree, key);
 	void *data;
 
 	if (delem == NULL)
@@ -730,7 +730,7 @@ void *rb_dictionary_delete(struct Dictionary *dtree, const void *key)
 }
 
 /*
- * rb_dictionary_retrieve(struct Dictionary *dtree, const void *key)
+ * rb_dictionary_retrieve(rb_dictionary *dtree, const void *key)
  *
  * Retrieves data from a dictionary.
  *
@@ -745,9 +745,9 @@ void *rb_dictionary_delete(struct Dictionary *dtree, const void *key)
  * Side Effects:
  *     - none
  */
-void *rb_dictionary_retrieve(struct Dictionary *dtree, const void *key)
+void *rb_dictionary_retrieve(rb_dictionary *dtree, const void *key)
 {
-	struct DictionaryElement *delem = rb_dictionary_find(dtree, key);
+	rb_dictionary_element *delem = rb_dictionary_find(dtree, key);
 
 	if (delem != NULL)
 		return delem->data;
@@ -756,7 +756,7 @@ void *rb_dictionary_retrieve(struct Dictionary *dtree, const void *key)
 }
 
 /*
- * rb_dictionary_size(struct Dictionary *dict)
+ * rb_dictionary_size(rb_dictionary *dict)
  *
  * Returns the size of a dictionary.
  *
@@ -769,7 +769,7 @@ void *rb_dictionary_retrieve(struct Dictionary *dtree, const void *key)
  * Side Effects:
  *     - none
  */
-unsigned int rb_dictionary_size(struct Dictionary *dict)
+unsigned int rb_dictionary_size(rb_dictionary *dict)
 {
 	lrb_assert(dict != NULL);
 
@@ -778,7 +778,7 @@ unsigned int rb_dictionary_size(struct Dictionary *dict)
 
 /* returns the sum of the depths of the subtree rooted in delem at depth depth */
 static int
-stats_recurse(struct DictionaryElement *delem, int depth, int *pmaxdepth)
+stats_recurse(rb_dictionary_element *delem, int depth, int *pmaxdepth)
 {
 	int result;
 
@@ -793,7 +793,7 @@ stats_recurse(struct DictionaryElement *delem, int depth, int *pmaxdepth)
 }
 
 /*
- * rb_dictionary_stats(struct Dictionary *dict, void (*cb)(const char *line, void *privdata), void *privdata)
+ * rb_dictionary_stats(rb_dictionary *dict, void (*cb)(const char *line, void *privdata), void *privdata)
  *
  * Returns the size of a dictionary.
  *
@@ -808,7 +808,7 @@ stats_recurse(struct DictionaryElement *delem, int depth, int *pmaxdepth)
  * Side Effects:
  *     - callback called with stats text
  */
-void rb_dictionary_stats(struct Dictionary *dict, void (*cb)(const char *line, void *privdata), void *privdata)
+void rb_dictionary_stats(rb_dictionary *dict, void (*cb)(const char *line, void *privdata), void *privdata)
 {
 	char str[256];
 	int sum, maxdepth;

@@ -32,7 +32,6 @@
 #include "channel.h"
 #include "class.h"
 #include "client.h"
-#include "common.h"
 #include "hash.h"
 #include "match.h"
 #include "ircd.h"
@@ -169,7 +168,7 @@ free_conf(struct ConfItem *aconf)
  * inputs	- pointer to client
  * output	- 0 = Success
  * 		  NOT_AUTHORISED (-1) = Access denied (no I line match)
- * 		  SOCKET_ERROR   (-2) = Bad socket.
+ * 		  I_SOCKET_ERROR (-2) = Bad socket.
  * 		  I_LINE_FULL    (-3) = I-line is full
  *		  TOO_MANY       (-4) = Too many connections from hostname
  * 		  BANNED_CLIENT  (-5) = K-lined
@@ -190,7 +189,7 @@ check_client(struct Client *client_p, struct Client *source_p, const char *usern
 
 	switch (i)
 	{
-	case SOCKET_ERROR:
+	case I_SOCKET_ERROR:
 		exit_client(client_p, source_p, &me, "Socket Error");
 		break;
 
@@ -261,7 +260,7 @@ check_client(struct Client *client_p, struct Client *source_p, const char *usern
 		{
 			int port = -1;
 #ifdef RB_IPV6
-			if(source_p->localClient->ip.ss_family == AF_INET6)
+			if(GET_SS_FAMILY(&source_p->localClient->ip) == AF_INET6)
 				port = ntohs(((struct sockaddr_in6 *)&source_p->localClient->listener->addr)->sin6_port);
 			else
 #endif
@@ -394,7 +393,7 @@ find_address_conf_by_client(struct Client *client_p, const char *username)
 		aconf = find_address_conf(client_p->host, client_p->sockhost,
 					client_p->username, client_p->username,
 					(struct sockaddr *) &client_p->localClient->ip,
-					client_p->localClient->ip.ss_family,
+					GET_SS_FAMILY(&client_p->localClient->ip),
 					client_p->localClient->auth_user);
 	}
 	else
@@ -404,7 +403,7 @@ find_address_conf_by_client(struct Client *client_p, const char *username)
 		aconf = find_address_conf(client_p->host, client_p->sockhost,
 					non_ident, client_p->username,
 					(struct sockaddr *) &client_p->localClient->ip,
-					client_p->localClient->ip.ss_family,
+					GET_SS_FAMILY(&client_p->localClient->ip),
 					client_p->localClient->auth_user);
 	}
 	return aconf;
@@ -636,10 +635,10 @@ attach_conf(struct Client *client_p, struct ConfItem *aconf)
  * as a result of an operator issuing this command, else assume it has been
  * called as a result of the server receiving a HUP signal.
  */
-int
-rehash(int sig)
+bool
+rehash(bool sig)
 {
-	if(sig != 0)
+	if(sig)
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Got signal SIGHUP, reloading ircd conf. file");
@@ -647,7 +646,7 @@ rehash(int sig)
 
 	rehash_authd();
 	/* don't close listeners until we know we can go ahead with the rehash */
-	read_conf_files(NO);
+	read_conf_files(false);
 
 	if(ServerInfo.description != NULL)
 		rb_strlcpy(me.info, ServerInfo.description, sizeof(me.info));
@@ -655,11 +654,11 @@ rehash(int sig)
 		rb_strlcpy(me.info, "unknown", sizeof(me.info));
 
 	open_logfiles();
-	return (0);
+	return false;
 }
 
 void
-rehash_bans(int sig)
+rehash_bans(void)
 {
 	bandb_rehash_bans();
 }
@@ -690,8 +689,6 @@ set_default_conf(void)
 	ServerInfo.specific_ipv6_vhost = 0;
 #endif
 
-	/* Don't reset hub, as that will break lazylinks */
-	/* ServerInfo.hub = false; */
 	AdminInfo.name = NULL;
 	AdminInfo.email = NULL;
 	AdminInfo.description = NULL;
@@ -868,9 +865,9 @@ validate_conf(void)
 	if(!rb_setup_ssl_server(ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params, ServerInfo.ssl_cipher_list))
 	{
 		ilog(L_MAIN, "WARNING: Unable to setup SSL.");
-		ssl_ok = false;
+		ircd_ssl_ok = false;
 	} else {
-		ssl_ok = true;
+		ircd_ssl_ok = true;
 		send_new_ssl_certs(ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params, ServerInfo.ssl_cipher_list);
 	}
 
@@ -1419,7 +1416,7 @@ read_conf_files(bool cold)
  * free an alias{} entry.
  */
 static void
-free_alias_cb(struct DictionaryElement *ptr, void *unused)
+free_alias_cb(rb_dictionary_element *ptr, void *unused)
 {
 	struct alias_entry *aptr = ptr->data;
 

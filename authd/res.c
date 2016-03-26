@@ -98,7 +98,6 @@ static int check_question(struct reslist *request, HEADER * header, char *buf, c
 static int proc_answer(struct reslist *request, HEADER * header, char *, char *);
 static struct reslist *find_id(int id);
 static struct DNSReply *make_dnsreply(struct reslist *request);
-static int generate_random_port(void);
 static uint16_t generate_random_id(void);
 
 #ifdef RES_MIN
@@ -106,55 +105,6 @@ static uint16_t generate_random_id(void);
 #endif
 
 #define RES_MIN(a, b)  ((a) < (b) ? (a) : (b))
-
-static rb_fde_t *
-random_socket(int family)
-{
-	rb_fde_t *F;
-	int nport;
-	int i;
-	rb_socklen_t len;
-	struct rb_sockaddr_storage sockaddr;
-	F = rb_socket(family, SOCK_DGRAM, 0, "UDP resolver socket");
-	if(F == NULL)
-		return NULL;
-
-	memset(&sockaddr, 0, sizeof(sockaddr));
-
-	SET_SS_FAMILY(&sockaddr, family);
-
-#ifdef RB_IPV6
-	if(family == AF_INET6)
-	{
-		struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)&sockaddr;
-		memcpy(&in6->sin6_addr, &ipv6_addr, sizeof(struct in6_addr));
-		len = (rb_socklen_t) sizeof(struct sockaddr_in6);
-	}
-	else
-#endif
-	{
-		struct sockaddr_in *in = (struct sockaddr_in *)&sockaddr;
-		in->sin_addr.s_addr = ipv4_addr.s_addr;
-		len = (rb_socklen_t) sizeof(struct sockaddr_in);
-	}
-
-	for(i = 0; i < 10; i++)
-	{
-		nport = htons(generate_random_port());
-
-		if(family == AF_INET)
-			((struct sockaddr_in *)&sockaddr)->sin_port = nport;
-#ifdef RB_IPV6
-		else
-			((struct sockaddr_in6 *)&sockaddr)->sin6_port = nport;
-
-#endif
-		if(bind(rb_get_fd(F), (struct sockaddr *)&sockaddr, len) == 0)
-			return F;
-	}
-	rb_close(F);
-	return NULL;
-}
 
 /*
  * int
@@ -167,7 +117,8 @@ random_socket(int family)
  *      revised for ircd, cryogen(stu) may03
  *      slightly modified for charybdis, mr_flea oct12
  */
-static int res_ourserver(const struct rb_sockaddr_storage *inp)
+static int
+res_ourserver(const struct rb_sockaddr_storage *inp)
 {
 #ifdef RB_IPV6
 	const struct sockaddr_in6 *v6;
@@ -177,49 +128,43 @@ static int res_ourserver(const struct rb_sockaddr_storage *inp)
 	const struct sockaddr_in *v4in = (const struct sockaddr_in *)inp;
 	int ns;
 
-	for (ns = 0; ns < irc_nscount; ns++)
+	for(ns = 0; ns < irc_nscount; ns++)
 	{
 		const struct rb_sockaddr_storage *srv = &irc_nsaddr_list[ns];
-
-	  	if (srv->ss_family != inp->ss_family)
-			continue;
-
 #ifdef RB_IPV6
 		v6 = (const struct sockaddr_in6 *)srv;
 #endif
 		v4 = (const struct sockaddr_in *)srv;
 
 		/* could probably just memcmp(srv, inp, srv.ss_len) here
-		 * but we'll err on the side of caution - stu
+		 * but we'll air on the side of caution - stu
 		 */
-		switch (srv->ss_family)
+		switch (GET_SS_FAMILY(srv))
 		{
 #ifdef RB_IPV6
-			case AF_INET6:
-				if (v6->sin6_port == v6in->sin6_port)
-					if ((memcmp(&v6->sin6_addr.s6_addr, &v6in->sin6_addr.s6_addr,
-									sizeof(struct in6_addr)) == 0) ||
-							(memcmp(&v6->sin6_addr.s6_addr, &in6addr_any,
-									sizeof(struct in6_addr)) == 0))
-					{
-						return ns;
-					}
-				break;
+		case AF_INET6:
+			if(GET_SS_FAMILY(srv) == GET_SS_FAMILY(inp))
+				if(v6->sin6_port == v6in->sin6_port)
+					if((memcmp(&v6->sin6_addr.s6_addr, &v6in->sin6_addr.s6_addr,
+						   sizeof(struct in6_addr)) == 0) ||
+					   (memcmp(&v6->sin6_addr.s6_addr, &in6addr_any,
+						   sizeof(struct in6_addr)) == 0))
+						return 1;
+			break;
 #endif
-			case AF_INET:
-				if (v4->sin_port == v4in->sin_port)
-					if ((v4->sin_addr.s_addr == INADDR_ANY)
-							|| (v4->sin_addr.s_addr == v4in->sin_addr.s_addr))
-					{
-						return ns;
-					}
-				break;
-			default:
-				break;
+		case AF_INET:
+			if(GET_SS_FAMILY(srv) == GET_SS_FAMILY(inp))
+				if(v4->sin_port == v4in->sin_port)
+					if((v4->sin_addr.s_addr == INADDR_ANY)
+					   || (v4->sin_addr.s_addr == v4in->sin_addr.s_addr))
+						return 1;
+			break;
+		default:
+			break;
 		}
 	}
 
-	return -1;
+	return 0;
 }
 
 /*
@@ -280,7 +225,7 @@ static void start_resolver(void)
 
 	if (res_fd == NULL)
 	{
-		if ((res_fd = rb_socket(irc_nsaddr_list[0].ss_family, SOCK_DGRAM, 0,
+		if ((res_fd = rb_socket(GET_SS_FAMILY(&irc_nsaddr_list[0]), SOCK_DGRAM, 0,
 			       "UDP resolver socket")) == NULL)
 			return;
 
@@ -472,20 +417,6 @@ generate_random_id(void)
 	return id;
 }
 
-static int
-generate_random_port(void)
-{
-	uint16_t port;
-
-	while(1)
-	{
-		rb_get_random(&port, sizeof(port));
-		if(port > 1024)
-			break;
-	}
-	return (int)port;
-}
-
 /*
  * gethost_byname_type - get host address from name, adding domain if needed
  */
@@ -534,6 +465,52 @@ static void do_query_name(struct DNSQuery *query, const char *name, struct resli
 	query_name(request);
 }
 
+/* Build an rDNS style query - if suffix is NULL, use the appropriate .arpa zone */
+void build_rdns(char *buf, size_t size, const struct rb_sockaddr_storage *addr, const char *suffix)
+{
+	const unsigned char *cp;
+
+	if (GET_SS_FAMILY(addr) == AF_INET)
+	{
+		const struct sockaddr_in *v4 = (const struct sockaddr_in *)addr;
+		cp = (const unsigned char *)&v4->sin_addr.s_addr;
+
+		(void) snprintf(buf, size, "%u.%u.%u.%u.%s",
+			(unsigned int)(cp[3]),
+			(unsigned int)(cp[2]),
+			(unsigned int)(cp[1]),
+			(unsigned int)(cp[0]),
+			suffix == NULL ? "in-addr.arpa" : suffix);
+	}
+#ifdef RB_IPV6
+	else if (GET_SS_FAMILY(addr) == AF_INET6)
+	{
+		const struct sockaddr_in6 *v6 = (const struct sockaddr_in6 *)addr;
+		cp = (const unsigned char *)&v6->sin6_addr.s6_addr;
+
+		(void) snprintf(buf, size,
+			"%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%s",
+			(unsigned int)(cp[15] & 0xf), (unsigned int)(cp[15] >> 4),
+			(unsigned int)(cp[14] & 0xf), (unsigned int)(cp[14] >> 4),
+			(unsigned int)(cp[13] & 0xf), (unsigned int)(cp[13] >> 4),
+			(unsigned int)(cp[12] & 0xf), (unsigned int)(cp[12] >> 4),
+			(unsigned int)(cp[11] & 0xf), (unsigned int)(cp[11] >> 4),
+			(unsigned int)(cp[10] & 0xf), (unsigned int)(cp[10] >> 4),
+			(unsigned int)(cp[9] & 0xf), (unsigned int)(cp[9] >> 4),
+			(unsigned int)(cp[8] & 0xf), (unsigned int)(cp[8] >> 4),
+			(unsigned int)(cp[7] & 0xf), (unsigned int)(cp[7] >> 4),
+			(unsigned int)(cp[6] & 0xf), (unsigned int)(cp[6] >> 4),
+			(unsigned int)(cp[5] & 0xf), (unsigned int)(cp[5] >> 4),
+			(unsigned int)(cp[4] & 0xf), (unsigned int)(cp[4] >> 4),
+			(unsigned int)(cp[3] & 0xf), (unsigned int)(cp[3] >> 4),
+			(unsigned int)(cp[2] & 0xf), (unsigned int)(cp[2] >> 4),
+			(unsigned int)(cp[1] & 0xf), (unsigned int)(cp[1] >> 4),
+			(unsigned int)(cp[0] & 0xf), (unsigned int)(cp[0] >> 4),
+			suffix == NULL ? "ip6.arpa" : suffix);
+	}
+#endif
+}
+
 /*
  * do_query_number - Use this to do reverse IP# lookups.
  */
@@ -549,40 +526,7 @@ static void do_query_number(struct DNSQuery *query, const struct rb_sockaddr_sto
 		request->name = (char *)rb_malloc(IRCD_RES_HOSTLEN + 1);
 	}
 
-	if (addr->ss_family == AF_INET)
-	{
-		const struct sockaddr_in *v4 = (const struct sockaddr_in *)addr;
-		cp = (const unsigned char *)&v4->sin_addr.s_addr;
-
-		sprintf(request->queryname, "%u.%u.%u.%u.in-addr.arpa", (unsigned int)(cp[3]),
-			   (unsigned int)(cp[2]), (unsigned int)(cp[1]), (unsigned int)(cp[0]));
-	}
-#ifdef RB_IPV6
-	else if (addr->ss_family == AF_INET6)
-	{
-		const struct sockaddr_in6 *v6 = (const struct sockaddr_in6 *)addr;
-		cp = (const unsigned char *)&v6->sin6_addr.s6_addr;
-
-		(void)sprintf(request->queryname, "%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x."
-			      "%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.ip6.arpa",
-			      (unsigned int)(cp[15] & 0xf), (unsigned int)(cp[15] >> 4),
-			      (unsigned int)(cp[14] & 0xf), (unsigned int)(cp[14] >> 4),
-			      (unsigned int)(cp[13] & 0xf), (unsigned int)(cp[13] >> 4),
-			      (unsigned int)(cp[12] & 0xf), (unsigned int)(cp[12] >> 4),
-			      (unsigned int)(cp[11] & 0xf), (unsigned int)(cp[11] >> 4),
-			      (unsigned int)(cp[10] & 0xf), (unsigned int)(cp[10] >> 4),
-			      (unsigned int)(cp[9] & 0xf), (unsigned int)(cp[9] >> 4),
-			      (unsigned int)(cp[8] & 0xf), (unsigned int)(cp[8] >> 4),
-			      (unsigned int)(cp[7] & 0xf), (unsigned int)(cp[7] >> 4),
-			      (unsigned int)(cp[6] & 0xf), (unsigned int)(cp[6] >> 4),
-			      (unsigned int)(cp[5] & 0xf), (unsigned int)(cp[5] >> 4),
-			      (unsigned int)(cp[4] & 0xf), (unsigned int)(cp[4] >> 4),
-			      (unsigned int)(cp[3] & 0xf), (unsigned int)(cp[3] >> 4),
-			      (unsigned int)(cp[2] & 0xf), (unsigned int)(cp[2] >> 4),
-			      (unsigned int)(cp[1] & 0xf), (unsigned int)(cp[1] >> 4),
-			      (unsigned int)(cp[0] & 0xf), (unsigned int)(cp[0] >> 4));
-	}
-#endif
+	build_rdns(request->queryname, IRCD_RES_HOSTLEN + 1, addr, NULL);
 
 	request->type = T_PTR;
 	query_name(request);
@@ -918,7 +862,7 @@ static int res_read_single_reply(rb_fde_t *F, void *data)
 			 * ip#.
 			 */
 #ifdef RB_IPV6
-			if (request->addr.ss_family == AF_INET6)
+			if (GET_SS_FAMILY(&request->addr) == AF_INET6)
 				gethost_byname_type_fqdn(request->name, request->query, T_AAAA);
 			else
 #endif

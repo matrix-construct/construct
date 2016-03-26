@@ -52,7 +52,7 @@ mapi_cap_list_av2 cap_server_time_cap_list[] = {
 static void
 cap_server_time_process(hook_data *data)
 {
-	static char buf[IRCD_BUFSIZE];
+	static char buf[BUFSIZE];
 	time_t ts = rb_current_time();
 	struct MsgBuf *msgbuf = data->arg1;
 

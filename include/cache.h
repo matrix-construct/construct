@@ -1,6 +1,8 @@
 #ifndef INCLUDED_CACHE_H
 #define INCLUDED_CACHE_H
 
+#include "rb_dictionary.h"
+
 #define HELP_MAX	100
 
 #define CACHEFILELEN	30
@@ -43,8 +45,7 @@ void send_user_motd(struct Client *);
 void send_oper_motd(struct Client *);
 void cache_user_motd(void);
 
-struct Dictionary;
-extern struct Dictionary *help_dict_oper;
-extern struct Dictionary *help_dict_user;
+extern rb_dictionary *help_dict_oper;
+extern rb_dictionary *help_dict_user;
 #endif
 

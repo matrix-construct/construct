@@ -21,8 +21,8 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: commio.c 26254 2008-12-10 04:04:38Z androsyn $
  */
+
 #include <librb_config.h>
 #include <rb_lib.h>
 #include <commio-int.h>
@@ -74,12 +74,12 @@ static void mangle_mapped_sockaddr(struct sockaddr *in);
 #endif
 
 #ifndef HAVE_SOCKETPAIR
-static int rb_inet_socketpair(int d, int type, int protocol, int sv[2]);
+static int rb_inet_socketpair(int d, int type, int protocol, rb_platform_fd_t sv[2]);
 static int rb_inet_socketpair_udp(rb_fde_t **newF1, rb_fde_t **newF2);
 #endif
 
 static inline rb_fde_t *
-add_fd(int fd)
+add_fd(rb_platform_fd_t fd)
 {
 	rb_fde_t *F = rb_find_fd(fd);
 
@@ -230,7 +230,7 @@ rb_set_nb(rb_fde_t *F)
 {
 	int nonb = 0;
 	int res;
-	int fd;
+	rb_platform_fd_t fd;
 	if(F == NULL)
 		return 0;
 	fd = F->fd;
@@ -409,7 +409,7 @@ rb_accept_tcp(rb_fde_t *F, ACPRE * precb, ACCB * callback, void *data)
 }
 
 /*
- * void rb_connect_tcp(int fd, struct sockaddr *dest,
+ * void rb_connect_tcp(rb_platform_fd_t fd, struct sockaddr *dest,
  *                       struct sockaddr *clocal, int socklen,
  *                       CNCB *callback, void *data, int timeout)
  * Input: An fd to connect with, a host and port to connect to,
@@ -496,7 +496,7 @@ rb_connect_timeout(rb_fde_t *F, void *notused)
 	rb_connect_callback(F, RB_ERR_TIMEOUT);
 }
 
-/* static void rb_connect_tryconnect(int fd, void *notused)
+/* static void rb_connect_tryconnect(rb_platform_fd_t fd, void *notused)
  * Input: The fd, the handler data(unused).
  * Output: None.
  * Side-effects: Try and connect with pending connect data for the FD. If
@@ -564,7 +564,7 @@ rb_errstr(int error)
 int
 rb_socketpair(int family, int sock_type, int proto, rb_fde_t **F1, rb_fde_t **F2, const char *note)
 {
-	int nfd[2];
+	rb_platform_fd_t nfd[2];
 	if(number_fd >= rb_maxconnections)
 	{
 		errno = ENFILE;
@@ -627,7 +627,7 @@ int
 rb_pipe(rb_fde_t **F1, rb_fde_t **F2, const char *desc)
 {
 #ifndef _WIN32
-	int fd[2];
+	rb_platform_fd_t fd[2];
 	if(number_fd >= rb_maxconnections)
 	{
 		errno = ENFILE;
@@ -677,7 +677,7 @@ rb_fde_t *
 rb_socket(int family, int sock_type, int proto, const char *note)
 {
 	rb_fde_t *F;
-	int fd;
+	rb_platform_fd_t fd;
 	/* First, make sure we aren't going to run out of file descriptors */
 	if(rb_unlikely(number_fd >= rb_maxconnections))
 	{
@@ -703,7 +703,7 @@ rb_socket(int family, int sock_type, int proto, const char *note)
 	if(family == AF_INET6)
 	{
 		int off = 1;
-		if(setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &off, sizeof(off)) == -1)
+		if(setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (void *) &off, sizeof(off)) == -1)
 		{
 			rb_lib_log("rb_socket: Could not set IPV6_V6ONLY option to 1 on FD %d: %s",
 				   fd, strerror(errno));
@@ -821,7 +821,7 @@ rb_fdlist_init(int closeall, int maxfds, size_t heapsize)
 
 /* Called to open a given filedescriptor */
 rb_fde_t *
-rb_open(int fd, uint8_t type, const char *desc)
+rb_open(rb_platform_fd_t fd, uint8_t type, const char *desc)
 {
 	rb_fde_t *F;
 	lrb_assert(fd >= 0);
@@ -970,7 +970,7 @@ rb_fd_ssl(rb_fde_t *F)
 	return 0;
 }
 
-int
+rb_platform_fd_t
 rb_get_fd(rb_fde_t *F)
 {
 	if(F == NULL)
@@ -979,7 +979,7 @@ rb_get_fd(rb_fde_t *F)
 }
 
 rb_fde_t *
-rb_get_fde(int fd)
+rb_get_fde(rb_platform_fd_t fd)
 {
 	return rb_find_fd(fd);
 }
@@ -1609,7 +1609,7 @@ rb_inet_socketpair_udp(rb_fde_t **newF1, rb_fde_t **newF2)
 	struct sockaddr_in addr[2];
 	rb_socklen_t size = sizeof(struct sockaddr_in);
 	rb_fde_t *F[2];
-	unsigned int fd[2];
+	rb_platform_fd_t fd[2];
 	int i, got;
 	unsigned short port;
 	struct timeval wait = { 0, 100000 };
@@ -1693,7 +1693,9 @@ rb_inet_socketpair_udp(rb_fde_t **newF1, rb_fde_t **newF2)
 	return 0;
 
 #ifdef _WIN32
+#ifndef ECONNABORTED
 #define	ECONNABORTED WSAECONNABORTED
+#endif
 #endif
 
       abort_failed:
@@ -1713,7 +1715,7 @@ rb_inet_socketpair_udp(rb_fde_t **newF1, rb_fde_t **newF2)
 
 
 int
-rb_inet_socketpair(int family, int type, int protocol, int fd[2])
+rb_inet_socketpair(int family, int type, int protocol, rb_platform_fd_t fd[2])
 {
 	int listener = -1;
 	int connector = -1;
@@ -2136,7 +2138,7 @@ rb_recv_fd_buf(rb_fde_t *F, void *data, size_t datasize, rb_fde_t **xF, int nfds
 	struct stat st;
 	uint8_t stype = RB_FD_UNKNOWN;
 	const char *desc;
-	int fd, len, x, rfds;
+	rb_platform_fd_t fd, len, x, rfds;
 
 	int control_len = CMSG_SPACE(sizeof(int) * nfds);
 
@@ -2221,6 +2223,7 @@ rb_send_fd_buf(rb_fde_t *xF, rb_fde_t **F, int count, void *data, size_t datasiz
 
 	if(count > 0)
 	{
+		size_t ucount = (size_t)count;
 		int len = CMSG_SPACE(sizeof(int) * count);
 		char buf[len];
 
@@ -2231,7 +2234,7 @@ rb_send_fd_buf(rb_fde_t *xF, rb_fde_t **F, int count, void *data, size_t datasiz
 		cmsg->cmsg_type = SCM_RIGHTS;
 		cmsg->cmsg_len = CMSG_LEN(sizeof(int) * count);
 
-		for(unsigned int i = 0; i < count; i++)
+		for(size_t i = 0; i < ucount; i++)
 		{
 			((int *)CMSG_DATA(cmsg))[i] = rb_get_fd(F[i]);
 		}

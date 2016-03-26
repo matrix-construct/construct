@@ -1,0 +1,15 @@
+version: 3.6-dev_{build}
+clone_depth: 10
+install:
+  - c:\msys64\usr\bin\sh.exe -lc "pacman -Sy --noconfirm git"
+  - c:\msys64\usr\bin\sh.exe -lc "uname -a"
+  - c:\msys64\usr\bin\sh.exe -lc "cat /proc/cpuinfo"
+  - c:\msys64\usr\bin\sh.exe -lc "cat /proc/meminfo"
+  - c:\msys64\usr\bin\sh.exe -lc "cygcheck -s -v > $APPVEYOR_BUILD_FOLDER/cygcheck.log 2>&1"
+  - ps: Push-AppveyorArtifact cygcheck.log
+build_script:
+  - c:\msys64\usr\bin\sh.exe -lc "cd $APPVEYOR_BUILD_FOLDER; sh .appveyor-build.sh"
+#  - c:\msys64\usr\bin\sh.exe -lc "cd $APPVEYOR_BUILD_FOLDER/build/bin; ./charybdis -version"
+on_failure:
+  - ps: Push-AppveyorArtifact config.log
+  - ps: Push-AppveyorArtifact librb\include\librb-config.h

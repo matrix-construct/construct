@@ -25,7 +25,7 @@
 #ifndef INCLUDED_modules_h
 #define INCLUDED_modules_h
 #include "serno.h"
-#include "config.h"
+#include "defaults.h"
 #include "setup.h"
 #include "parse.h"
 

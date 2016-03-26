@@ -24,10 +24,13 @@ if [ "x$TIP" = "x" ]; then
 	exit
 fi
 
-# Charybdis wants the hg tip to be in include/serno.h, in its own format.
-MYTIP=`git log -1 --date=short --pretty=format:%cd_%h 2>/dev/null | sed -e s/-//g -e s/_/-/`
+# Charybdis wants the git head to be in include/serno.h, in its own format.
+SERNO=`git log -1 --date=format:%Y%m%d --pretty=format:%cd-%h`
+DATECODE=`git log -1 --pretty=format:%ct`
+
 echo "[charybdis] Generating include/serno.h for tip $MYTIP."
 cat << _EOF_ > include/serno.h
 /* Generated automatically by makepackage. Any changes made here will be lost. */
-#define SERNO "$MYTIP"
+#define SERNO "$SERNO"
+#define DATECODE "$DATECODE"
 _EOF_

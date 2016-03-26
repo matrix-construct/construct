@@ -27,7 +27,6 @@
 #include "channel.h"
 #include "class.h"
 #include "client.h"
-#include "common.h"
 #include "match.h"
 #include "ircd.h"
 #include "numeric.h"
@@ -218,12 +217,12 @@ send_queued_write(rb_fde_t *F, void *data)
 static void
 linebuf_put_msgvbuf(struct MsgBuf *msgbuf, buf_head_t *linebuf, unsigned int capmask, const char *pattern, va_list *va)
 {
-	char buf[IRCD_BUFSIZE];
+	char buf[BUFSIZE];
 
 	rb_linebuf_newbuf(linebuf);
 	msgbuf_unparse_prefix(buf, sizeof buf, msgbuf, capmask);
 	rb_linebuf_putprefix(linebuf, pattern, va, buf);
-} 
+}
 
 /* linebuf_put_msgbuf
  *
@@ -497,7 +496,7 @@ void
 sendto_channel_flags(struct Client *one, int type, struct Client *source_p,
 		     struct Channel *chptr, const char *pattern, ...)
 {
-	char buf[IRCD_BUFSIZE];
+	char buf[BUFSIZE];
 	va_list args;
 	buf_head_t rb_linebuf_local;
 	buf_head_t rb_linebuf_id;
@@ -505,7 +504,7 @@ sendto_channel_flags(struct Client *one, int type, struct Client *source_p,
 	struct membership *msptr;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
-	unsigned int current_capmask = 0;
+	int current_capmask = 0;
 	struct MsgBuf msgbuf;
 
 	rb_linebuf_newbuf(&rb_linebuf_local);

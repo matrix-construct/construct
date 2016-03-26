@@ -31,7 +31,6 @@
 
 #include "stdinc.h"
 #include "client.h"
-#include "common.h"
 #include "ircd.h"
 #include "match.h"
 #include "numeric.h"
@@ -91,7 +90,7 @@ mo_sendbans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
-	int i, count;
+	int count;
 	const char *target, *mask2;
 	struct Client *server_p;
 	struct rb_radixtree_iteration_state state;

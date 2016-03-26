@@ -27,7 +27,6 @@
 #include "channel.h"
 #include "class.h"
 #include "client.h"
-#include "common.h"
 #include "hash.h"
 #include "match.h"
 #include "ircd.h"
@@ -219,7 +218,7 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 {
 	struct ConfItem *aconf, *xconf;
 	struct User *user = source_p->user;
-	char tmpstr2[IRCD_BUFSIZE];
+	char tmpstr2[BUFSIZE];
 	char ipaddr[HOSTIPLEN];
 	char myusername[USERLEN+1];
 	int status;
@@ -1464,10 +1463,8 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 								    target_p->info);
 
 			if(*mode)
-				sendto_channel_local_butone(target_p, ALL_MEMBERS, chptr,
-						":%s MODE %s +%s %s",
-						target_p->servptr->name,
-						chptr->chname, mode, modeval);
+				sendto_channel_local_with_capability_butone(target_p, ALL_MEMBERS, NOCAPS, CLICAP_CHGHOST, chptr,
+						":%s MODE %s +%s %s", target_p->servptr->name, chptr->chname, mode, modeval);
 
 			*modeval = '\0';
 		}

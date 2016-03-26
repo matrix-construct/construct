@@ -32,7 +32,6 @@
 
 #include "stdinc.h"
 #include "ircd_defs.h"
-#include "common.h"
 #include "s_conf.h"
 #include "client.h"
 #include "hash.h"
@@ -47,8 +46,8 @@ struct cacheline *emptyline = NULL;
 rb_dlink_list links_cache_list;
 char user_motd_changed[MAX_DATE_STRING];
 
-struct Dictionary *help_dict_oper = NULL;
-struct Dictionary *help_dict_user = NULL;
+rb_dictionary *help_dict_oper = NULL;
+rb_dictionary *help_dict_user = NULL;
 
 /* init_cache()
  *
@@ -65,8 +64,8 @@ init_cache(void)
 
 	user_motd_changed[0] = '\0';
 
-	user_motd = cache_file(MPATH, "ircd.motd", 0);
-	oper_motd = cache_file(OPATH, "opers.motd", 0);
+	user_motd = cache_file(ircd_paths[IRCD_PATH_IRCD_MOTD], "ircd.motd", 0);
+	oper_motd = cache_file(ircd_paths[IRCD_PATH_IRCD_OMOTD], "opers.motd", 0);
 	memset(&links_cache_list, 0, sizeof(links_cache_list));
 
 	help_dict_oper = rb_dictionary_create("oper help", strcasecmp);
@@ -237,24 +236,24 @@ load_help(void)
 	struct dirent *ldirent= NULL;
 	char filename[PATH_MAX];
 	struct cachefile *cacheptr;
-	struct DictionaryIter iter;
+	rb_dictionary_iter iter;
 
 #if defined(S_ISLNK) && defined(HAVE_LSTAT)
 	struct stat sb;
 #endif
 
-	DICTIONARY_FOREACH(cacheptr, &iter, help_dict_oper)
+	RB_DICTIONARY_FOREACH(cacheptr, &iter, help_dict_oper)
 	{
 		rb_dictionary_delete(help_dict_oper, cacheptr->name);
 		free_cachefile(cacheptr);
 	}
-	DICTIONARY_FOREACH(cacheptr, &iter, help_dict_user)
+	RB_DICTIONARY_FOREACH(cacheptr, &iter, help_dict_user)
 	{
 		rb_dictionary_delete(help_dict_user, cacheptr->name);
 		free_cachefile(cacheptr);
 	}
 
-	helpfile_dir = opendir(HPATH);
+	helpfile_dir = opendir(ircd_paths[IRCD_PATH_OPERHELP]);
 
 	if(helpfile_dir == NULL)
 		return;
@@ -263,13 +262,13 @@ load_help(void)
 	{
 		if(ldirent->d_name[0] == '.')
 			continue;
-		snprintf(filename, sizeof(filename), "%s/%s", HPATH, ldirent->d_name);
+		snprintf(filename, sizeof(filename), "%s%c%s", ircd_paths[IRCD_PATH_OPERHELP], RB_PATH_SEPARATOR, ldirent->d_name);
 		cacheptr = cache_file(filename, ldirent->d_name, HELP_OPER);
 		rb_dictionary_add(help_dict_oper, cacheptr->name, cacheptr);
 	}
 
 	closedir(helpfile_dir);
-	helpfile_dir = opendir(UHPATH);
+	helpfile_dir = opendir(ircd_paths[IRCD_PATH_USERHELP]);
 
 	if(helpfile_dir == NULL)
 		return;
@@ -278,7 +277,7 @@ load_help(void)
 	{
 		if(ldirent->d_name[0] == '.')
 			continue;
-		snprintf(filename, sizeof(filename), "%s/%s", UHPATH, ldirent->d_name);
+		snprintf(filename, sizeof(filename), "%s%c%s", ircd_paths[IRCD_PATH_USERHELP], RB_PATH_SEPARATOR, ldirent->d_name);
 
 #if defined(S_ISLNK) && defined(HAVE_LSTAT)
 		if(lstat(filename, &sb) < 0)
@@ -342,7 +341,7 @@ cache_user_motd(void)
 	struct stat sb;
 	struct tm *local_tm;
 
-	if(stat(MPATH, &sb) == 0)
+	if(stat(ircd_paths[IRCD_PATH_IRCD_MOTD], &sb) == 0)
 	{
 		local_tm = localtime(&sb.st_mtime);
 
@@ -356,7 +355,7 @@ cache_user_motd(void)
 		}
 	}
 	free_cachefile(user_motd);
-	user_motd = cache_file(MPATH, "ircd.motd", 0);
+	user_motd = cache_file(ircd_paths[IRCD_PATH_IRCD_MOTD], "ircd.motd", 0);
 }
 
 

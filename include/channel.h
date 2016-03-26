@@ -73,7 +73,7 @@ struct Channel
 	unsigned int join_count;  /* joins within delta */
 	unsigned int join_delta;  /* last ts of join */
 
-	unsigned long bants;
+	time_t bants;
 	time_t channelts;
 	char *chname;
 
@@ -93,7 +93,7 @@ struct membership
 	struct Client *client_p;
 	unsigned int flags;
 
-	unsigned long bants;
+	time_t bants;
 };
 
 #define BANLEN 195
@@ -213,7 +213,7 @@ extern void destroy_channel(struct Channel *);
 
 extern int can_send(struct Channel *chptr, struct Client *who,
 		    struct membership *);
-extern int flood_attack_channel(int p_or_n, struct Client *source_p,
+extern bool flood_attack_channel(int p_or_n, struct Client *source_p,
 				struct Channel *chptr, char *chname);
 extern int is_banned(struct Channel *chptr, struct Client *who,
 		    struct membership *msptr, const char *, const char *, const char **);
@@ -231,7 +231,7 @@ extern void invalidate_bancache_user(struct Client *);
 
 extern void free_channel_list(rb_dlink_list *);
 
-extern int check_channel_name(const char *name);
+extern bool check_channel_name(const char *name);
 
 extern void channel_member_names(struct Channel *chptr, struct Client *,
 				 int show_eon);
@@ -264,7 +264,7 @@ extern void set_channel_mlock(struct Client *client_p, struct Client *source_p,
 
 extern struct ChannelMode chmode_table[256];
 
-extern int add_id(struct Client *source_p, struct Channel *chptr, const char *banid,
+extern bool add_id(struct Client *source_p, struct Channel *chptr, const char *banid,
 	const char *forward, rb_dlink_list * list, long mode_type);
 
 extern struct Ban * del_id(struct Channel *chptr, const char *banid, rb_dlink_list * list,

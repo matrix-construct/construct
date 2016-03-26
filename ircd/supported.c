@@ -72,7 +72,6 @@
 
 #include "stdinc.h"
 #include "client.h"
-#include "common.h"
 #include "numeric.h"
 #include "ircd.h"
 #include "s_conf.h"
