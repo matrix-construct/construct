@@ -172,7 +172,10 @@ void reject_client(struct auth_client *auth, provider_t id, const char *reason)
 		break;
 	}
 
-	/* TODO send back ident */
+	/* We send back username and hostname in case ircd wants to overrule our decision.
+	 * In the future this may not be the case.
+	 * --Elizafox
+	 */
 	rb_helper_write(authd_helper, "R %x %c %s %s :%s", auth->cid, reject, auth->username, auth->hostname, reason);
 
 	set_provider_off(auth, id);
