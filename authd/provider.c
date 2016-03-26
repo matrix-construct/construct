@@ -65,12 +65,27 @@ void load_provider(struct auth_provider *provider)
 		return;
 	}
 
+	if(provider->opt_handlers != NULL)
+	{
+		struct auth_opts_handler *handler;
+
+		for(handler = provider->opt_handlers; handler->option != NULL; handler++)
+			rb_dictionary_add(authd_option_handlers, handler->option, handler);
+	}
+
 	provider->init();
 	rb_dlinkAdd(provider, &provider->node, &auth_providers);
 }
 
 void unload_provider(struct auth_provider *provider)
 {
+	if(provider->opt_handlers != NULL)
+	{
+		struct auth_opts_handler *handler;
+
+		for(handler = provider->opt_handlers; handler->option != NULL; handler++)
+			rb_dictionary_delete(authd_option_handlers, handler->option);
+	}
 	provider->destroy();
 	rb_dlinkDelete(&provider->node, &auth_providers);
 }

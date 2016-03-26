@@ -22,6 +22,7 @@
 #define __CHARYBDIS_AUTHD_PROVIDER_H__
 
 #include "stdinc.h"
+#include "authd.h"
 #include "rb_dictionary.h"
 
 #define MAX_PROVIDERS 32	/* This should be enough */
@@ -61,7 +62,7 @@ typedef void (*provider_destroy_t)(void);
 
 typedef bool (*provider_start_t)(struct auth_client *);
 typedef void (*provider_cancel_t)(struct auth_client *);
-typedef void (*provider_complete_t)(struct auth_client *, provider_t provider);
+typedef void (*provider_complete_t)(struct auth_client *, provider_t);
 
 struct auth_provider
 {
@@ -75,6 +76,8 @@ struct auth_provider
 	provider_start_t start;		/* Perform authentication */
 	provider_cancel_t cancel;	/* Authentication cancelled */
 	provider_complete_t completed;	/* Callback for when other performers complete (think dependency chains) */
+
+	struct auth_opts_handler *opt_handlers;
 };
 
 extern rb_dlink_list auth_providers;

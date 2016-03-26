@@ -27,11 +27,13 @@
 
 static void handle_reload(int parc, char *parv[]);
 static void handle_stat(int parc, char *parv[]);
+static void handle_options(int parc, char *parv[]);
 
 rb_helper *authd_helper = NULL;
 authd_cmd_handler authd_cmd_handlers[256] = {
 	['C'] = handle_new_connection,
 	['D'] = resolve_dns,
+	['O'] = handle_options,
 	['R'] = handle_reload,
 	['S'] = handle_stat,
 };
@@ -43,6 +45,8 @@ authd_stat_handler authd_stat_handlers[256] = {
 authd_reload_handler authd_reload_handlers[256] = {
 	['D'] = reload_nameservers,
 };
+
+rb_dictionary *authd_option_handlers;
 
 static void
 handle_stat(int parc, char *parv[])
@@ -62,6 +66,32 @@ handle_stat(int parc, char *parv[])
 }
 
 static void
+handle_options(int parc, char *parv[])
+{
+	struct auth_opts_handler *handler;
+
+	if(parc < 4)
+	{
+		warn_opers(L_CRIT, "BUG: handle_options received too few parameters (at least 4 expected, got %d)", parc);
+		return;
+	}
+
+	if((handler = rb_dictionary_retrieve(authd_option_handlers, parv[1])) == NULL)
+	{
+		warn_opers(L_CRIT, "BUG: handle_options got a bad option type %s", parv[1]);
+		return;
+	}
+
+	if((parc - 2) < handler->min_parc)
+	{
+		warn_opers(L_CRIT, "BUG: handle_options received too few parameters (at least %d expected, got %d)", handler->min_parc, parc);
+		return;
+	}
+
+	handler->handler(parv[1], parc - 2, (const char **)(parv + 3));
+}
+
+static void
 handle_reload(int parc, char *parv[])
 {
 	authd_reload_handler handler;
@@ -69,7 +99,7 @@ handle_reload(int parc, char *parv[])
 	if(parc < 2)
 	{
 		/* Reload all handlers */
-		for(size_t i = 0; i < sizeof(authd_reload_handlers); i++)
+		for(size_t i = 0; i < 256; i++)
 		{
 			if ((handler = authd_reload_handlers[(unsigned char) i]) != NULL)
 				handler(parv[1][0]);
@@ -163,6 +193,9 @@ main(int argc, char *argv[])
 
 	rb_set_time();
 	setup_signals();
+
+	authd_option_handlers = rb_dictionary_create("authd options handlers", strcasecmp);
+
 	init_resolver();
 	init_providers();
 	rb_init_prng(NULL, RB_PRNG_DEFAULT);
