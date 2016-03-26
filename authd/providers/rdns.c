@@ -54,12 +54,12 @@ static void dns_answer_callback(const char *res, bool status, query_type type, v
 
 static struct ev_entry *timeout_ev;
 static EVH timeout_dns_queries_event;
-static int rdns_timeout = 30;
+static int rdns_timeout = 15;
 
 
 bool client_dns_init(void)
 {
-	timeout_ev = rb_event_addish("timeout_dns_queries_event", timeout_dns_queries_event, NULL, 5);
+	timeout_ev = rb_event_addish("timeout_dns_queries_event", timeout_dns_queries_event, NULL, 1);
 	return (timeout_ev != NULL);
 }
 
