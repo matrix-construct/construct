@@ -114,6 +114,39 @@ parse_authd_reply(rb_helper * helper)
 			}
 			dns_results_callback(parv[1], parv[2], parv[3], parv[4]);
 			break;
+		case 'W':
+			if(parc != 3)
+			{
+				ilog(L_MAIN, "authd sent a result with wrong number of arguments: got %d", parc);
+				restart_authd();
+				return;
+			}
+
+			switch(*parv[2])
+			{
+			case 'D':
+				sendto_realops_snomask(SNO_DEBUG, L_ALL, "authd debug: %s", parv[3]);
+				break;
+			case 'I':
+				sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd info: %s", parv[3]);
+				inotice("authd info: %s", parv[3]);
+				break;
+			case 'W':
+				sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd WARNING: %s", parv[3]);
+				iwarn("authd warning: %s", parv[3]);
+				break;
+			case 'C':
+				sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd CRITICAL: %s", parv[3]);
+				ierror("authd critical: %s", parv[3]);
+				break;
+			default:
+				sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd sent us an unknown oper notice type (%s): %s", parv[2], parv[3]);
+				ilog(L_MAIN, "authd unknown oper notice type (%s): %s", parv[2], parv[3]);
+				break;
+			}
+
+			/* NOTREACHED */
+			break;
 		case 'X':
 		case 'Y':
 		case 'Z':
