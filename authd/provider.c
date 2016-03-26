@@ -244,6 +244,8 @@ static void start_auth(const char *cid, const char *l_ip, const char *l_port, co
 #endif
 		((struct sockaddr_in *)&auth->c_addr)->sin_port = htons(auth->c_port);
 
+	memset(auth->data, 0, sizeof(auth->data));
+
 	rb_dictionary_add(auth_clients, RB_UINT_TO_POINTER(auth->cid), auth);
 
 	RB_DLINK_FOREACH(ptr, auth_providers.head)
@@ -267,9 +269,9 @@ static void start_auth(const char *cid, const char *l_ip, const char *l_port, co
 /* Callback for the initiation */
 void handle_new_connection(int parc, char *parv[])
 {
-	if(parc < 7)
+	if(parc < 6)
 	{
-		warn_opers(L_CRIT, "BUG: received too few params for new connection (7 expected, got %d)", parc);
+		warn_opers(L_CRIT, "BUG: received too few params for new connection (6 expected, got %d)", parc);
 		return;
 	}
 
