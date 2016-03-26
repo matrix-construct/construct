@@ -166,7 +166,9 @@ struct Client
 
 struct LocalUser
 {
-	rb_dlink_node tnode;	/* This is the node for the local list type the client is on*/
+	rb_dlink_node tnode;	/* This is the node for the local list type the client is on */
+	rb_dlink_list connids;	/* This is the list of connids to free */
+
 	/*
 	 * The following fields are allocated only for local clients
 	 * (directly connected to *this* server with a socket.
@@ -233,7 +235,6 @@ struct LocalUser
 
 	time_t next_away;	/* Don't allow next away before... */
 	time_t last;
-	uint32_t connid;
 
 	/* clients allowed to talk through +g */
 	rb_dlink_list allow_list;
@@ -272,7 +273,6 @@ struct LocalUser
 
 	struct _ssl_ctl *ssl_ctl;		/* which ssl daemon we're associate with */
 	struct _ssl_ctl *z_ctl;			/* second ctl for ssl+zlib */
-	uint32_t zconnid;
 	uint32_t localflags;
 	struct ZipStats *zipstats;		/* zipstats */
 	uint16_t cork_count;			/* used for corking/uncorking connections */
@@ -604,5 +604,9 @@ extern char *generate_uid(void);
 
 void allocate_away(struct Client *);
 void free_away(struct Client *);
+
+uint32_t connid_get(struct Client *client_p);
+void connid_put(uint32_t id);
+void client_release_connids(struct Client *client_p);
 
 #endif /* INCLUDED_client_h */

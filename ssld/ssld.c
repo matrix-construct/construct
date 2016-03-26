@@ -1067,11 +1067,6 @@ mod_process_cmd_recv(mod_ctl_t * ctl)
 				process_stats(ctl, ctl_buf);
 				break;
 			}
-		case 'Y':
-			{
-				change_connid(ctl, ctl_buf);
-				break;
-			}
 
 #ifdef HAVE_LIBZ
 		case 'Z':

@@ -76,7 +76,7 @@ static rb_bh *pclient_heap = NULL;
 static rb_bh *user_heap = NULL;
 static rb_bh *away_heap = NULL;
 static char current_uid[IDLEN];
-static int32_t current_connid = 0;
+static uint32_t current_connid = 0;
 
 rb_dictionary *nd_dict = NULL;
 
@@ -129,6 +129,78 @@ init_client(void)
 	nd_dict = rb_dictionary_create("nickdelay", irccmp);
 }
 
+/*
+ * connid_get - allocate a connid
+ *
+ * inputs       - none
+ * outputs      - a connid token which is used to represent a logical circuit
+ * side effects - current_connid is incremented, possibly multiple times.
+ *                the association of the connid to it's client is committed.
+ */
+uint32_t
+connid_get(struct Client *client_p)
+{
+	s_assert(MyClient(client_p));
+	if (!MyClient(client_p))
+		return 0;
+
+	/* find a connid that is available */
+	while (find_cli_connid_hash(++current_connid) != NULL)
+	{
+		/* handle wraparound, current_connid must NEVER be 0 */
+		if (current_connid == 0)
+			++current_connid;
+	}
+
+	add_to_cli_connid_hash(client_p, current_connid);
+	rb_dlinkAddAlloc(RB_UINT_TO_POINTER(current_connid), &client_p->localClient->connids);
+
+	return current_connid;
+}
+
+/*
+ * connid_put - free a connid
+ *
+ * inputs       - connid to free
+ * outputs      - nothing
+ * side effects - connid bookkeeping structures are freed
+ */
+void
+connid_put(uint32_t id)
+{
+	struct Client *client_p;
+
+	s_assert(id != 0);
+	if (id == 0)
+		return;
+
+	client_p = find_cli_connid_hash(id);
+	if (client_p == NULL)
+		return;
+
+	del_from_cli_connid_hash(id);
+	rb_dlinkFindDestroy(RB_UINT_TO_POINTER(id), &client_p->localClient->connids);
+}
+
+/*
+ * client_release_connids - release any connids still attached to a client
+ *
+ * inputs       - client to garbage collect
+ * outputs      - none
+ * side effects - client's connids are garbage collected
+ */
+void
+client_release_connids(struct Client *client_p)
+{
+	rb_dlink_node *ptr, *ptr2;
+
+	s_assert(MyClient(client_p));
+	if (!MyClient(client_p))
+		return;
+
+	RB_DLINK_FOREACH_SAFE(ptr, ptr2, client_p->localClient->connids.head)
+		connid_put(RB_POINTER_TO_UINT(ptr->data));
+}
 
 /*
  * make_client - create a new Client struct and set it to initial state.
@@ -159,17 +231,6 @@ make_client(struct Client *from)
 		client_p->localClient->lasttime = client_p->localClient->firsttime = rb_current_time();
 
 		client_p->localClient->F = NULL;
-
-		if(current_connid+1 == 0)
-			current_connid++;
-
-		client_p->localClient->connid = ++current_connid;
-
-		if(current_connid+1 == 0)
-			current_connid++;
-
-		client_p->localClient->zconnid = ++current_connid;
-		add_to_cli_connid_hash(client_p);
 
 		client_p->preClient = rb_bh_alloc(pclient_heap);
 
@@ -229,7 +290,7 @@ free_local_client(struct Client *client_p)
 		client_p->localClient->listener = 0;
 	}
 
-	del_from_cli_connid_hash(client_p);
+	client_release_connids(client_p);
 	if(client_p->localClient->F != NULL)
 	{
 		rb_close(client_p->localClient->F);
@@ -1949,7 +2010,7 @@ close_connection(struct Client *client_p)
 	else
 		ServerStats.is_ni++;
 
-	del_from_cli_connid_hash(client_p);
+	client_release_connids(client_p);
 
 	if(client_p->localClient->F != NULL)
 	{
