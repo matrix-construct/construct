@@ -4,13 +4,14 @@ AM_CPPFLAGS = -I../include -I../librb/include
 
 authd_SOURCES =	\
 	authd.c	\
-	res.c \
-	reslib.c \
-	reslist.c \
 	dns.c \
 	getaddrinfo.c \
 	getnameinfo.c \
+	notice.c \
 	provider.c \
+	res.c \
+	reslib.c \
+	reslist.c \
 	providers/blacklist.c \
 	providers/ident.c \
 	providers/rdns.c

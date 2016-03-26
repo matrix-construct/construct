@@ -39,6 +39,7 @@
 
 #include "authd.h"
 #include "provider.h"
+#include "notice.h"
 #include "stdinc.h"
 #include "dns.h"
 

@@ -49,6 +49,7 @@
 #include "rb_dictionary.h"
 #include "authd.h"
 #include "provider.h"
+#include "notice.h"
 
 rb_dlink_list auth_providers;
 
@@ -191,32 +192,6 @@ void accept_client(struct auth_client *auth, provider_t id)
 
 	set_provider_off(auth, id);
 	cancel_providers(auth);
-}
-
-/* Send a notice to a client */
-void notice_client(struct auth_client *auth, const char *fmt, ...)
-{
-	char buf[BUFSIZE];
-	va_list args;
-
-	va_start(args, fmt);
-	vsnprintf(buf, sizeof(buf), fmt, args);
-	va_end(args);
-
-	rb_helper_write(authd_helper, "N %x :%s", auth->cid, buf);
-}
-
-/* Send a warning to the IRC daemon for logging, etc. */
-void warn_opers(notice_level_t level, const char *fmt, ...)
-{
-	char buf[BUFSIZE];
-	va_list args;
-
-	va_start(args, fmt);
-	vsnprintf(buf, sizeof(buf), fmt, args);
-	va_end(args);
-
-	rb_helper_write(authd_helper, "W %c :%s", level, buf);
 }
 
 /* Begin authenticating user */

@@ -21,6 +21,7 @@
 #include "authd.h"
 #include "dns.h"
 #include "provider.h"
+#include "notice.h"
 
 #define MAXPARA 10
 

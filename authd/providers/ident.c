@@ -21,6 +21,7 @@
 #include "stdinc.h"
 #include "match.h"
 #include "authd.h"
+#include "notice.h"
 #include "provider.h"
 #include "res.h"
 
@@ -120,7 +121,7 @@ bool ident_start(struct auth_client *auth)
 			GET_SS_LEN(&l_addr), ident_connected,
 			query, ident_timeout);
 
-	notice_client(auth, messages[REPORT_LOOKUP]);
+	notice_client(auth->cid, messages[REPORT_LOOKUP]);
 	set_provider_on(auth, PROVIDER_IDENT);
 
 	return true;
@@ -249,7 +250,7 @@ static void client_fail(struct auth_client *auth, ident_message report)
 	rb_free(query);
 	auth->data[PROVIDER_IDENT] = NULL;
 
-	notice_client(auth, messages[report]);
+	notice_client(auth->cid, messages[report]);
 	provider_done(auth, PROVIDER_IDENT);
 }
 
@@ -261,7 +262,7 @@ static void client_success(struct auth_client *auth)
 	rb_free(query);
 	auth->data[PROVIDER_IDENT] = NULL;
 
-	notice_client(auth, messages[REPORT_FOUND]);
+	notice_client(auth->cid, messages[REPORT_FOUND]);
 	provider_done(auth, PROVIDER_IDENT);
 }
 

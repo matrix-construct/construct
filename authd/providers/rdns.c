@@ -22,6 +22,7 @@
 #include "rb_commio.h"
 #include "authd.h"
 #include "provider.h"
+#include "notice.h"
 #include "res.h"
 #include "dns.h"
 
@@ -87,7 +88,7 @@ bool client_dns_start(struct auth_client *auth)
 
 	query->query = lookup_hostname(auth->c_ip, dns_answer_callback, auth);
 
-	notice_client(auth, messages[REPORT_LOOKUP]);
+	notice_client(auth->cid, messages[REPORT_LOOKUP]);
 	set_provider_on(auth, PROVIDER_RDNS);
 	return true;
 }
@@ -144,7 +145,7 @@ static void client_fail(struct auth_client *auth, dns_message report)
 
 	rb_strlcpy(auth->hostname, "*", sizeof(auth->hostname));
 
-	notice_client(auth, messages[report]);
+	notice_client(auth->cid, messages[report]);
 	cancel_query(query->query);
 
 	rb_free(query);
@@ -157,7 +158,7 @@ static void client_success(struct auth_client *auth)
 {
 	struct user_query *query = auth->data[PROVIDER_RDNS];
 
-	notice_client(auth, messages[REPORT_FOUND]);
+	notice_client(auth->cid, messages[REPORT_FOUND]);
 	cancel_query(query->query);
 
 	rb_free(query);
