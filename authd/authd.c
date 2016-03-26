@@ -28,7 +28,7 @@ static void handle_stat(int parc, char *parv[]);
 
 rb_helper *authd_helper = NULL;
 authd_cmd_handler authd_cmd_handlers[256] = {
-	['H'] = handle_reload,
+	['R'] = handle_reload,
 	['D'] = resolve_dns,
 	['S'] = handle_stat,
 };
@@ -62,8 +62,13 @@ handle_reload(int parc, char *parv[])
 	authd_reload_handler handler;
 
 	if(parc < 2)
-		 /* XXX Should log this somehow */
+	{
+		/* Reload all handlers */
+		for(size_t i = 0; i < sizeof(authd_reload_handlers); handler = authd_reload_handlers[i++])
+			handler(parv[1][0]);
+
 		return;
+	}
 
 	if (!(handler = authd_reload_handlers[(unsigned char)parv[1][0]]))
 		return;
