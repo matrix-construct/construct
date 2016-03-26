@@ -346,16 +346,20 @@ blacklists_start(struct auth_client *auth)
 	return true;
 }
 
-/* This is called every time a provider is completed */
+/* This is called every time a provider is completed as long as we are marked not done */
 static void
 blacklists_initiate(struct auth_client *auth, provider_t provider)
 {
 	struct blacklist_user *bluser = auth->data[PROVIDER_BLACKLIST];
 
-	if(bluser == NULL || is_provider_done(auth, PROVIDER_BLACKLIST) || rb_dlink_list_length(&bluser->queries))
+	lrb_assert(provider != PROVIDER_BLACKLIST);
+	lrb_assert(!is_provider_done(auth, PROVIDER_BLACKLIST));
+	lrb_assert(rb_dlink_list_length(&blacklist_list) > 0);
+
+	if(bluser == NULL || rb_dlink_list_length(&bluser->queries))
 		/* Nothing to do */
 		return;
-	else if(!is_provider_done(auth, PROVIDER_RDNS) && !is_provider_done(auth, PROVIDER_IDENT))
+	else if(!(is_provider_done(auth, PROVIDER_RDNS) && is_provider_done(auth, PROVIDER_IDENT)))
 		/* Don't start until we've completed these */
 		return;
 	else
