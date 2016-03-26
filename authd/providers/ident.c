@@ -42,9 +42,9 @@ struct ident_query
 /* Goinked from old s_auth.c --Elizafox */
 static const char *messages[] =
 {
-	":*** Checking Ident",
-	":*** Got Ident response",
-	":*** No Ident response",
+	"*** Checking Ident",
+	"*** Got Ident response",
+	"*** No Ident response",
 };
 
 typedef enum
@@ -101,6 +101,9 @@ ident_connected(rb_fde_t *F, int error, void *data)
 	char authbuf[32];
 	int authlen;
 
+	if(query == NULL)
+		return;
+
 	/* Check the error */
 	if(error != RB_OK)
 	{
@@ -132,6 +135,9 @@ read_ident_reply(rb_fde_t *F, void *data)
 	int len;
 	int count;
 	char buf[IDENT_BUFSIZE + 1];	/* buffer to read auth reply into */
+
+	if(query == NULL)
+		return;
 
 	len = rb_read(F, buf, IDENT_BUFSIZE);
 	if(len < 0 && rb_ignore_errno(errno))
@@ -178,9 +184,14 @@ client_fail(struct auth_client *auth, ident_message report)
 {
 	struct ident_query *query = auth->data[PROVIDER_IDENT];
 
+	if(query == NULL)
+		return;
+
 	rb_strlcpy(auth->username, "*", sizeof(auth->username));
 
-	rb_close(query->F);
+	if(query->F != NULL)
+		rb_close(query->F);
+
 	rb_free(query);
 	auth->data[PROVIDER_IDENT] = NULL;
 
@@ -193,7 +204,12 @@ client_success(struct auth_client *auth)
 {
 	struct ident_query *query = auth->data[PROVIDER_IDENT];
 
-	rb_close(query->F);
+	if(query == NULL)
+		return;
+
+	if(query->F != NULL)
+		rb_close(query->F);
+
 	rb_free(query);
 	auth->data[PROVIDER_IDENT] = NULL;
 
