@@ -124,22 +124,22 @@ parse_authd_reply(rb_helper * helper)
 
 			switch(*parv[2])
 			{
-			case 'D':
+			case 'D':	/* debug */
 				sendto_realops_snomask(SNO_DEBUG, L_ALL, "authd debug: %s", parv[3]);
 				break;
-			case 'I':
+			case 'I':	/* Info */
 				sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd info: %s", parv[3]);
 				inotice("authd info: %s", parv[3]);
 				break;
-			case 'W':
+			case 'W':	/* Warning */
 				sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd WARNING: %s", parv[3]);
 				iwarn("authd warning: %s", parv[3]);
 				break;
-			case 'C':
+			case 'C':	/* Critical (error) */
 				sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd CRITICAL: %s", parv[3]);
 				ierror("authd critical: %s", parv[3]);
 				break;
-			default:
+			default:	/* idk */
 				sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd sent us an unknown oper notice type (%s): %s", parv[2], parv[3]);
 				ilog(L_MAIN, "authd unknown oper notice type (%s): %s", parv[2], parv[3]);
 				break;
