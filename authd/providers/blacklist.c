@@ -496,7 +496,7 @@ add_conf_blacklist_timeout(const char *key, int parc, const char **parv)
 
 	if(timeout < 0)
 	{
-		warn_opers(L_CRIT, "BUG: timeout < 0 (value: %d)", timeout);
+		warn_opers(L_CRIT, "BUG: blacklist timeout < 0 (value: %d)", timeout);
 		return;
 	}
 
