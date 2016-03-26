@@ -81,7 +81,7 @@ struct blacklist_lookup
 struct blacklist_filter
 {
 	filter_t type;			/* Type of filter */
-	char filterstr[HOSTIPLEN];	/* The filter itself */
+	char filter[HOSTIPLEN];	/* The filter itself */
 
 	rb_dlink_node node;
 };
@@ -102,8 +102,8 @@ static void blacklists_cancel(struct auth_client *);
 
 /* private interfaces */
 static void unref_blacklist(struct blacklist *);
-static struct blacklist *new_blacklist(char *, char *, bool, bool, rb_dlink_list *);
-static struct blacklist *find_blacklist(char *);
+static struct blacklist *new_blacklist(const char *, const char *, unsigned char, rb_dlink_list *);
+static struct blacklist *find_blacklist(const char *);
 static bool blacklist_check_reply(struct blacklist_lookup *, const char *);
 static void blacklist_dns_callback(const char *, bool, query_type, void *);
 static void initiate_blacklist_dnsquery(struct blacklist *, struct auth_client *);
@@ -137,11 +137,11 @@ unref_blacklist(struct blacklist *bl)
 }
 
 static struct blacklist *
-new_blacklist(char *name, char *reason, bool ipv4, bool ipv6, rb_dlink_list *filters)
+new_blacklist(const char *name, const char *reason, unsigned char iptype, rb_dlink_list *filters)
 {
 	struct blacklist *bl;
 
-	if (name == NULL || reason == NULL || !(ipv4 || ipv6))
+	if (name == NULL || reason == NULL || iptype == 0)
 		return NULL;
 
 	if((bl = find_blacklist(name)) == NULL)
@@ -154,10 +154,7 @@ new_blacklist(char *name, char *reason, bool ipv4, bool ipv6, rb_dlink_list *fil
 
 	rb_strlcpy(bl->host, name, IRCD_RES_HOSTLEN + 1);
 	rb_strlcpy(bl->reason, reason, BUFSIZE);
-	if(ipv4)
-		bl->iptype |= IPTYPE_IPV4;
-	if(ipv6)
-		bl->iptype |= IPTYPE_IPV6;
+	bl->iptype = iptype;
 
 	rb_dlinkMoveList(filters, &bl->filters);
 
@@ -167,7 +164,7 @@ new_blacklist(char *name, char *reason, bool ipv4, bool ipv6, rb_dlink_list *fil
 }
 
 static struct blacklist *
-find_blacklist(char *name)
+find_blacklist(const char *name)
 {
 	rb_dlink_node *ptr;
 
@@ -213,7 +210,7 @@ blacklist_check_reply(struct blacklist_lookup *bllookup, const char *ipaddr)
 			continue;
 		}
 
-		if (strcmp(cmpstr, filter->filterstr) == 0)
+		if (strcmp(cmpstr, filter->filter) == 0)
 			/* Match! */
 			return true;
 	}
@@ -422,6 +419,97 @@ blacklists_destroy(void)
 	}
 }
 
+static void
+add_conf_blacklist(const char *key, int parc, const char **parv)
+{
+	rb_dlink_list filters;
+	char *tmp, *elemlist = rb_strdup(parv[2]);
+	unsigned char iptype;
+
+	for(char *elem = rb_strtok_r(elemlist, ",", &tmp); elem; elem = rb_strtok_r(NULL, ",", &tmp))
+	{
+		struct blacklist_filter *filter = rb_malloc(sizeof(struct blacklist_filter));
+		int dot_c = 0;
+		filter_t type = FILTER_LAST;
+		bool valid = true;
+
+		/* Check blacklist filter type and for validity */
+		for(char *c = elem; *c != '\0'; c++)
+		{
+			if(*c == '.')
+			{
+				if(++dot_c > 3)
+				{
+					warn_opers(L_CRIT, "addr_conf_blacklist got a bad filter (too many octets)");
+					valid = false;
+					break;
+				}
+
+				type = FILTER_ALL;
+			}
+			else if(!isdigit(*c))
+			{
+				warn_opers(L_CRIT, "addr_conf_blacklist got a bad filter (invalid character in blacklist filter: %c)", *c);
+				valid = false;
+				break;
+			}
+		}
+
+		if(valid && dot_c > 0 && dot_c < 3)
+		{
+			warn_opers(L_CRIT, "addr_conf_blacklist got a bad filter (insufficient octets)");
+			valid = false;
+		}
+
+		if(!valid)
+		{
+			rb_free(filter);
+			continue;
+		}
+
+		filter->type = type;
+		rb_strlcpy(filter->filter, elem, sizeof(filter->filter));
+		rb_dlinkAdd(filter, &filter->node, &filters);
+	}
+
+	rb_free(elemlist);
+
+	iptype = atoi(parv[1]) & 0x3;
+	if(new_blacklist(parv[0], parv[3], iptype, &filters) == NULL)
+	{
+		rb_dlink_node *ptr, *nptr;
+
+		warn_opers(L_CRIT, "addr_conf_blacklist got a malformed blacklist");
+
+		RB_DLINK_FOREACH_SAFE(ptr, nptr, filters.head)
+		{
+			rb_free(ptr->data);
+			rb_dlinkDelete(ptr, &filters);
+		}
+	}
+}
+
+static void
+add_conf_blacklist_timeout(const char *key, int parc, const char **parv)
+{
+	int timeout = atoi(parv[0]);
+
+	if(timeout < 0)
+	{
+		warn_opers(L_CRIT, "BUG: timeout < 0 (value: %d)", timeout);
+		return;
+	}
+
+	blacklist_timeout = timeout;
+}
+
+struct auth_opts_handler blacklist_options[] =
+{
+	{ "rbl", 4, add_conf_blacklist },
+	{ "rbl_timeout", 1, add_conf_blacklist_timeout },
+	{ NULL, 0, NULL },
+};
+
 struct auth_provider blacklist_provider =
 {
 	.id = PROVIDER_BLACKLIST,
@@ -430,4 +518,5 @@ struct auth_provider blacklist_provider =
 	.start = blacklists_start,
 	.cancel = blacklists_cancel,
 	.completed = blacklists_initiate,
+	.opt_handlers = blacklist_options,
 };
