@@ -50,15 +50,10 @@ struct dns_query
 	void *data;
 };
 
-<<<<<<< HEAD
-extern void format_address(struct rb_sockaddr_storage *addr, char *buffer, size_t length);
-extern bool sockcmp(struct rb_sockaddr_storage *addr, struct rb_sockaddr_storage *addr2, int family);
-=======
 extern struct dns_query *lookup_hostname(const char *ip, DNSCB callback, void *data);
 extern struct dns_query *lookup_ip(const char *host, int aftype, DNSCB callback, void *data);
 extern void cancel_query(struct dns_query *query);
 
->>>>>>> authd-framework-2
 extern void resolve_dns(int parc, char *parv[]);
 extern void enumerate_nameservers(const char *rid, const char letter);
 extern void reload_nameservers(const char letter);

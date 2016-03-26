@@ -39,10 +39,6 @@ struct auth_client
 {
 	uint16_t cid;				/* Client ID */
 
-<<<<<<< HEAD
-	struct rb_sockaddr_storage l_addr;	/* Listener IP address */
-	struct rb_sockaddr_storage c_addr;	/* Client IP address */
-=======
 	char l_ip[HOSTIPLEN + 1];		/* Listener IP address */
 	uint16_t l_port;			/* Listener port */
 	struct rb_sockaddr_storage l_addr;	/* Listener address/port */
@@ -50,23 +46,10 @@ struct auth_client
 	char c_ip[HOSTIPLEN + 1];		/* Client IP address */
 	uint16_t c_port;			/* Client port */
 	struct rb_sockaddr_storage c_addr;	/* Client address/port */
->>>>>>> authd-framework-2
 
 	char hostname[HOSTLEN + 1];		/* Used for DNS lookup */
 	char username[USERLEN + 1];		/* Used for ident lookup */
 
-<<<<<<< HEAD
-	unsigned int providers;			/* Providers at work,
-						 * none left when set to 0 */
-};
-
-typedef bool (*provider_init_t)(void);
-typedef bool (*provider_perform_t)(struct auth_client *);
-typedef void (*provider_complete_t)(struct auth_client *, provider_t provider);
-typedef void (*provider_cancel_t)(struct auth_client *);
-typedef void (*provider_destroy_t)(void);
-
-=======
 	uint32_t providers;			/* Providers at work,
 						 * none left when set to 0 */
 	uint32_t providers_done;		/* Providers completed */
@@ -81,7 +64,6 @@ typedef bool (*provider_start_t)(struct auth_client *);
 typedef void (*provider_cancel_t)(struct auth_client *);
 typedef void (*provider_complete_t)(struct auth_client *, provider_t);
 
->>>>>>> authd-framework-2
 struct auth_provider
 {
 	rb_dlink_node node;
@@ -118,6 +100,7 @@ void reject_client(struct auth_client *auth, provider_t id, const char *reason);
 
 void handle_new_connection(int parc, char *parv[]);
 
+/* Provider is operating on this auth_client (set this if you have async work to do) */
 static inline void set_provider_on(struct auth_client *auth, provider_t provider)
 {
 	auth->providers |= (1 << provider);
