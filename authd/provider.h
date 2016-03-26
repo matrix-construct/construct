@@ -89,6 +89,7 @@ extern rb_dictionary *auth_clients;
 
 extern struct auth_provider rdns_provider;
 extern struct auth_provider ident_provider;
+extern struct auth_provider blacklist_provider;
 
 void load_provider(struct auth_provider *provider);
 void unload_provider(struct auth_provider *provider);

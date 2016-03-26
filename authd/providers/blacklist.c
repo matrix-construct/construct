@@ -1,0 +1,404 @@
+/*
+ * charybdis: A slightly useful ircd.
+ * blacklist.c: Manages DNS blacklist entries and lookups
+ *
+ * Copyright (C) 2006-2011 charybdis development team
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/* Originally written for charybdis circa 2006 (by nenolod?).
+ * Tweaked for authd. Some functions and structs renamed. Public/private
+ * interfaces have been shifted around. Some code has been cleaned up too.
+ * -- Elizafox 24 March 2016
+ */
+
+#include "authd.h"
+#include "provider.h"
+#include "stdinc.h"
+#include "dns.h"
+
+typedef enum filter_t
+{
+	FILTER_ALL = 1,
+	FILTER_LAST = 2,
+} filter_t;
+
+/* Blacklist accepted IP types */
+#define IPTYPE_IPV4	1
+#define IPTYPE_IPV6	2
+
+/* A configured DNSBL */
+struct blacklist
+{
+	char host[IRCD_RES_HOSTLEN + 1];
+	char reason[BUFSIZE];		/* Reason template (ircd fills in the blanks) */
+	unsigned char iptype;		/* IP types supported */
+	rb_dlink_list filters;		/* Filters for queries */
+
+	bool delete;			/* If true delete when no clients */
+	int refcount;			/* When 0 and delete is set, remove this blacklist */
+
+	time_t lastwarning;		/* Last warning about garbage replies sent */
+};
+
+/* A lookup in progress for a particular DNSBL for a particular client */
+struct blacklist_lookup
+{
+	struct blacklist *bl;		/* Blacklist we're checking */
+	struct auth_client *auth;	/* Client */
+	struct dns_query *query;	/* DNS query pointer */
+	
+	rb_dlink_node node;
+};
+
+/* A blacklist filter */
+struct blacklist_filter
+{
+	filter_t type;			/* Type of filter */
+	char filterstr[HOSTIPLEN];	/* The filter itself */
+
+	rb_dlink_node node;
+};
+
+/* Blacklist user data attached to auth_client instance */
+struct blacklist_user
+{
+	rb_dlink_list queries;		/* Blacklist queries in flight */
+	time_t timeout;			/* When this times out */
+};
+
+/* public interfaces */
+static bool blacklists_init(void);
+static void blacklists_destroy(void);
+
+static bool blacklists_start(struct auth_client *);
+static void blacklists_cancel(struct auth_client *);
+
+/* private interfaces */
+static void unref_blacklist(struct blacklist *);
+static struct blacklist *new_blacklist(char *, char *, bool, bool, rb_dlink_list *);
+static struct blacklist *find_blacklist(char *);
+static bool blacklist_check_reply(struct blacklist_lookup *, const char *);
+static void blacklist_dns_callback(const char *, bool, query_type, void *);
+static void initiate_blacklist_dnsquery(struct blacklist *, struct auth_client *);
+static void timeout_blacklist_queries_event(void *);
+
+/* Variables */
+static rb_dlink_list blacklist_list = { NULL, NULL, 0 };
+static struct ev_entry *timeout_ev;
+static EVH timeout_blacklists;
+static int blacklist_timeout = 15;
+
+/* private interfaces */
+
+static void
+unref_blacklist(struct blacklist *bl)
+{
+	rb_dlink_node *ptr, *nptr;
+
+	bl->refcount--;
+	if (bl->delete && bl->refcount <= 0)
+	{
+		RB_DLINK_FOREACH_SAFE(ptr, nptr, bl->filters.head)
+		{
+			rb_dlinkDelete(ptr, &bl->filters);
+			rb_free(ptr);
+		}
+
+		rb_dlinkFindDestroy(bl, &blacklist_list);
+		rb_free(bl);
+	}
+}
+
+static struct blacklist *
+new_blacklist(char *name, char *reason, bool ipv4, bool ipv6, rb_dlink_list *filters)
+{
+	struct blacklist *bl;
+
+	if (name == NULL || reason == NULL || !(ipv4 || ipv6))
+		return NULL;
+
+	if((bl = find_blacklist(name)) == NULL)
+	{
+		bl = rb_malloc(sizeof(struct blacklist));
+		rb_dlinkAddAlloc(bl, &blacklist_list);
+	}
+	else
+		bl->delete = false;
+
+	rb_strlcpy(bl->host, name, IRCD_RES_HOSTLEN + 1);
+	rb_strlcpy(bl->reason, reason, BUFSIZE);
+	if(ipv4)
+		bl->iptype |= IPTYPE_IPV4;
+	if(ipv6)
+		bl->iptype |= IPTYPE_IPV6;
+
+	rb_dlinkMoveList(filters, &bl->filters);
+
+	bl->lastwarning = 0;
+
+	return bl;
+}
+
+static struct blacklist *
+find_blacklist(char *name)
+{
+	rb_dlink_node *ptr;
+
+	RB_DLINK_FOREACH(ptr, blacklist_list.head)
+	{
+		struct blacklist *bl = (struct blacklist *)ptr->data;
+
+		if (!strcasecmp(bl->host, name))
+			return bl;
+	}
+
+	return NULL;
+}
+
+static inline bool
+blacklist_check_reply(struct blacklist_lookup *bllookup, const char *ipaddr)
+{
+	struct blacklist *bl = bllookup->bl;
+	const char *lastoctet;
+	rb_dlink_node *ptr;
+
+	/* No filters and entry found - thus positive match */
+	if (!rb_dlink_list_length(&bl->filters))
+		return true;
+
+	/* Below will prolly have to change if IPv6 address replies are sent back */
+	if ((lastoctet = strrchr(ipaddr, '.')) == NULL || *(++lastoctet) == '\0')
+		goto blwarn;
+
+	RB_DLINK_FOREACH(ptr, bl->filters.head)
+	{
+		struct blacklist_filter *filter = ptr->data;
+		const char *cmpstr;
+
+		if (filter->type == FILTER_ALL)
+			cmpstr = ipaddr;
+		else if (filter->type == FILTER_LAST)
+			cmpstr = lastoctet;
+		else
+		{
+			warn_opers(L_CRIT, "BUG: Unknown blacklist filter type on blacklist %s: %d",
+					bl->host, filter->type);
+			continue;
+		}
+
+		if (strcmp(cmpstr, filter->filterstr) == 0)
+			/* Match! */
+			return true;
+	}
+
+	return false;
+blwarn:
+	if (bl->lastwarning + 3600 < rb_current_time())
+	{
+		warn_opers(L_WARN, "Garbage/undecipherable reply received from blacklist %s (reply %s)",
+				bl->host, ipaddr);
+		bl->lastwarning = rb_current_time();
+	}
+	return false;
+}
+
+static void
+blacklist_dns_callback(const char *result, bool status, query_type type, void *data)
+{
+	struct blacklist_lookup *bllookup = (struct blacklist_lookup *)data;
+	struct blacklist_user *bluser;
+	struct auth_client *auth;
+
+	if (bllookup == NULL || bllookup->auth == NULL)
+		return;
+
+	auth = bllookup->auth;
+	bluser = auth->data[PROVIDER_BLACKLIST];
+	if(bluser == NULL)
+		return;
+
+	if (result != NULL && status && blacklist_check_reply(bllookup, result))
+	{
+		/* Match found, so proceed no further */
+		blacklists_cancel(auth);
+		reject_client(auth, PROVIDER_BLACKLIST, bllookup->bl->reason);
+		return;
+	}
+
+	unref_blacklist(bllookup->bl);
+	rb_dlinkDelete(&bllookup->node, &bluser->queries);
+	rb_free(bllookup);
+
+	if(!rb_dlink_list_length(&bluser->queries))
+	{
+		/* Done here */
+		provider_done(auth, PROVIDER_BLACKLIST); 
+		rb_free(bluser);
+		auth->data[PROVIDER_BLACKLIST] = NULL;
+	}
+}
+
+static void
+initiate_blacklist_dnsquery(struct blacklist *bl, struct auth_client *auth)
+{
+	struct blacklist_lookup *bllookup = rb_malloc(sizeof(struct blacklist_lookup));
+	struct blacklist_user *bluser = auth->data[PROVIDER_BLACKLIST];
+	char buf[IRCD_RES_HOSTLEN + 1];
+	int aftype;
+
+	bllookup->bl = bl;
+	bllookup->auth = auth;
+
+	aftype = GET_SS_FAMILY(&auth->c_addr);
+	if((aftype == AF_INET && (bl->iptype & IPTYPE_IPV4) == 0) ||
+		(aftype == AF_INET6 && (bl->iptype & IPTYPE_IPV6) == 0))
+		/* Incorrect blacklist type for this IP... */
+		return;
+
+	build_rdns(buf, sizeof(buf), &auth->c_addr, bl->host);
+
+	bllookup->query = lookup_ip(buf, AF_INET, blacklist_dns_callback, bllookup);
+
+	rb_dlinkAdd(bllookup, &bllookup->node, &bluser->queries);
+	bl->refcount++;
+}
+
+/* Timeout outstanding queries */
+static void
+timeout_blacklist_queries_event(void *notused)
+{
+	struct auth_client *auth;
+	rb_dictionary_iter iter;
+
+	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
+	{
+		struct blacklist_user *bluser = auth->data[PROVIDER_BLACKLIST];
+
+		if(bluser != NULL && bluser->timeout < rb_current_time())
+		{
+			blacklists_cancel(auth);
+			provider_done(auth, PROVIDER_BLACKLIST);
+		}
+	}
+}
+
+/* public interfaces */
+static bool
+blacklists_start(struct auth_client *auth)
+{
+	struct blacklist_user *bluser;
+	rb_dlink_node *nptr;
+
+	if(auth->data[PROVIDER_BLACKLIST] != NULL)
+		return true;
+
+	if(!rb_dlink_list_length(&blacklist_list))
+		/* Nothing to do... */
+		return true;
+
+	bluser = auth->data[PROVIDER_BLACKLIST] = rb_malloc(sizeof(struct blacklist_user));
+
+	RB_DLINK_FOREACH(nptr, blacklist_list.head)
+	{
+		struct blacklist *bl = (struct blacklist *) nptr->data;
+
+		if (!bl->delete)
+			initiate_blacklist_dnsquery(bl, auth);
+	}
+
+	bluser->timeout = rb_current_time() + blacklist_timeout; 
+
+	set_provider(auth, PROVIDER_BLACKLIST);
+	return true;
+}
+
+static void
+blacklists_cancel(struct auth_client *auth)
+{
+	rb_dlink_node *ptr, *nptr;
+	struct blacklist_user *bluser = auth->data[PROVIDER_BLACKLIST];
+
+	if(bluser == NULL)
+		return;
+
+	RB_DLINK_FOREACH_SAFE(ptr, nptr, bluser->queries.head)
+	{
+		struct blacklist_lookup *bllookup = ptr->data;
+		rb_dlinkDelete(&bllookup->node, &bluser->queries);
+		unref_blacklist(bllookup->bl);
+		cancel_query(bllookup->query);
+		rb_free(bllookup);
+	}
+
+	rb_free(bluser);
+	auth->data[PROVIDER_BLACKLIST] = NULL;
+}
+
+static bool
+blacklists_init(void)
+{
+	timeout_ev = rb_event_addish("timeout_blacklist_queries_event", timeout_blacklist_queries_event, NULL, 1);
+	return (timeout_ev != NULL);
+}
+
+static void
+blacklists_destroy(void)
+{
+	rb_dlink_node *ptr, *nptr;
+	rb_dictionary_iter iter;
+	struct blacklist *bl;
+	struct auth_client *auth;
+
+	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
+	{
+		blacklists_cancel(auth);
+	}
+
+	RB_DLINK_FOREACH_SAFE(ptr, nptr, blacklist_list.head)
+	{
+		bl = ptr->data;
+		if (bl->refcount > 0)
+			bl->delete = true;
+		else
+		{
+			rb_free(ptr->data);
+			rb_dlinkDestroy(ptr, &blacklist_list);
+		}
+	}
+}
+
+struct auth_provider blacklist_provider =
+{
+	.id = PROVIDER_BLACKLIST,
+	.init = blacklists_init,
+	.destroy = blacklists_destroy,
+	.start = blacklists_start,
+	.cancel = blacklists_cancel,
+	.completed = NULL,
+};

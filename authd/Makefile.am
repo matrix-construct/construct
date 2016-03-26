@@ -11,7 +11,8 @@ authd_SOURCES =	\
 	getaddrinfo.c \
 	getnameinfo.c \
 	provider.c \
-	providers/rdns.c \
-	providers/ident.c
+	providers/blacklist.c \
+	providers/ident.c \
+	providers/rdns.c
 
 authd_LDADD = ../librb/src/librb.la
