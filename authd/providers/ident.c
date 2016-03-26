@@ -343,6 +343,26 @@ ident_cancel(struct auth_client *auth)
 		client_fail(auth, REPORT_FAIL);
 }
 
+static void
+add_conf_ident_timeout(const char *key, int parc, const char **parv)
+{
+	int timeout = atoi(parv[0]);
+
+	if(timeout < 0)
+	{
+		warn_opers(L_CRIT, "BUG: ident timeout < 0 (value: %d)", timeout);
+		return;
+	}
+
+	ident_timeout = timeout;
+}
+
+struct auth_opts_handler ident_options[] =
+{
+	{ "ident_timeout", 1, add_conf_ident_timeout },
+	{ NULL, 0, NULL },
+};
+
 
 struct auth_provider ident_provider =
 {
@@ -352,4 +372,5 @@ struct auth_provider ident_provider =
 	.start = ident_start,
 	.cancel = ident_cancel,
 	.completed = NULL,
+	.opt_handlers = ident_options,
 };
