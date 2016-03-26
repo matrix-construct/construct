@@ -95,11 +95,8 @@ extern void del_from_resv_hash(const char *name, struct ConfItem *aconf);
 extern struct ConfItem *hash_find_resv(const char *name);
 extern void clear_resv_hash(void);
 
-void add_to_cli_connid_hash(struct Client *client_p);
-void del_from_cli_connid_hash(struct Client *client_p);
+void add_to_cli_connid_hash(struct Client *client_p, uint32_t id);
+void del_from_cli_connid_hash(uint32_t id);
 struct Client *find_cli_connid_hash(uint32_t connid);
-
-void add_to_zconnid_hash(struct Client *client_p);
-void del_from_zconnid_hash(struct Client *client_p);
 
 #endif /* INCLUDED_hash_h */

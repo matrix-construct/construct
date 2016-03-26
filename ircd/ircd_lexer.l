@@ -66,7 +66,7 @@ char linebuf[512];
 
 #define YY_INPUT(buf,result,max_size) \
   if (!(result = conf_fgets(buf, max_size, conf_fbfile_in))) \
-    YY_FATAL_ERROR("input in flex scanner failed"); 
+    YY_FATAL_ERROR("input in flex scanner failed");
 %}
 
 ws        [ \t]*
@@ -101,9 +101,9 @@ include   \.include{ws}(\<.*\>|\".*\")
                         {
                           int i,j;
                           yylval.string[yyleng-2] = '\0'; /* remove close
-                                                           *  quote 
+                                                           *  quote
                                                            */
-                          
+
                           for (j=i=0 ;yylval.string[i] != '\0'; i++,j++)
                             {
                               if (yylval.string[i] != '\\')
@@ -113,7 +113,7 @@ include   \.include{ws}(\<.*\>|\".*\")
                               else
                                 {
                                   i++;
-                                  if (yylval.string[i] == '\0') /* XXX 
+                                  if (yylval.string[i] == '\0') /* XXX
                                                                  * should not
                                                                  * happen
                                                                  */
@@ -133,7 +133,7 @@ include   \.include{ws}(\<.*\>|\".*\")
 
 
 loadmodule	{ return LOADMODULE; }
-{string}        { 
+{string}        {
 		  strcpy(yylval.string, yytext);
                   yylval.string[yyleng] = '\0';
                   return STRING;
@@ -148,7 +148,7 @@ loadmodule	{ return LOADMODULE; }
 void ccomment()
 {
   int c;
-  
+
   /* log(L_NOTICE, "got comment"); */
   while (1)
     {
@@ -157,7 +157,7 @@ void ccomment()
       if (c == '*')
         {
           while ((c = input()) == '*');
-          if (c == '/') 
+          if (c == '/')
             break;
           if (c == '\n') ++lineno;
         }
@@ -182,15 +182,15 @@ void cinclude(void)
   else
     *strchr(++c, '>') = 0;
 
-  /* do stacking and co. */ 
+  /* do stacking and co. */
   if (include_stack_ptr >= MAX_INCLUDE_DEPTH)
     conf_report_error("Includes nested too deep (max is %d)", MAX_INCLUDE_DEPTH);
   else
   {
     FILE *tmp_fbfile_in;
-    
+
     tmp_fbfile_in = fopen(c, "r");
-    
+
     if (tmp_fbfile_in == NULL)
     {
       /* if its not found in PREFIX, look in IRCD_PATH_ETC */

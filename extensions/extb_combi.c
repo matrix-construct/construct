@@ -52,7 +52,7 @@ static int _modinit(void);
 static void _moddeinit(void);
 static int eb_or(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type);
 static int eb_and(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type);
-static int eb_combi(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type, int is_and);
+static int eb_combi(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type, bool is_and);
 static int recursion_depth = 0;
 
 DECLARE_MODULE_AV2(extb_extended, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, extb_desc);
@@ -76,20 +76,20 @@ _moddeinit(void)
 static int eb_or(const char *data, struct Client *client_p,
 				 struct Channel *chptr, long mode_type)
 {
-	return eb_combi(data, client_p, chptr, mode_type, FALSE);
+	return eb_combi(data, client_p, chptr, mode_type, false);
 }
 
 static int eb_and(const char *data, struct Client *client_p,
 				  struct Channel *chptr, long mode_type)
 {
-	return eb_combi(data, client_p, chptr, mode_type, TRUE);
+	return eb_combi(data, client_p, chptr, mode_type, true);
 }
 
 static int eb_combi(const char *data, struct Client *client_p,
-					struct Channel *chptr, long mode_type, int is_and)
+					struct Channel *chptr, long mode_type, bool is_and)
 {
 	const char *p, *banend;
-	int have_result = FALSE;
+	bool have_result = false;
 	int allowed_nodes = 11;
 	size_t datalen;
 
@@ -143,12 +143,12 @@ static int eb_combi(const char *data, struct Client *client_p,
 	recursion_depth++;
 
 	while (--allowed_nodes) {
-		int invert = FALSE;
+		bool invert = false;
 		char *child_data, child_data_buf[BANLEN];
 		ExtbanFunc f;
 
 		if (*p == '~') {
-			invert = TRUE;
+			invert = true;
 			p++;
 			if (p == banend) {
 				MOD_DEBUG("combo invalid: no data after ~");
@@ -164,7 +164,7 @@ static int eb_combi(const char *data, struct Client *client_p,
 
 		if (*p == ':') {
 			unsigned int parencount = 0;
-			int escaped = FALSE, done = FALSE;
+			bool escaped = false, done = false;
 			char *o;
 
 			p++;
@@ -173,7 +173,7 @@ static int eb_combi(const char *data, struct Client *client_p,
 			 * we already have_result.
 			 */
 			o = child_data = child_data_buf;
-			while (TRUE) {
+			while (true) {
 				if (p == banend) {
 					if (parencount) {
 						MOD_DEBUG("combo invalid: EOD while in parens");
@@ -186,11 +186,11 @@ static int eb_combi(const char *data, struct Client *client_p,
 					if (*p != '(' && *p != ')' && *p != '\\' && *p != ',')
 						*o++ = '\\';
 					*o++ = *p++;
-					escaped = FALSE;
+					escaped = false;
 				} else {
 					switch (*p) {
 					case '\\':
-						escaped = TRUE;
+						escaped = true;
 						break;
 					case '(':
 						parencount++;
@@ -208,7 +208,7 @@ static int eb_combi(const char *data, struct Client *client_p,
 						if (parencount)
 							*o++ = *p;
 						else
-							done = TRUE;
+							done = true;
 						break;
 					default:
 						*o++ = *p;
@@ -239,7 +239,7 @@ static int eb_combi(const char *data, struct Client *client_p,
 				child_result = child_result == EXTBAN_MATCH;
 
 			if (is_and ? !child_result : child_result)
-				have_result = TRUE;
+				have_result = true;
 		}
 
 		if (p == banend)

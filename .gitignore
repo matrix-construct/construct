@@ -34,6 +34,7 @@ librb/aclocal.m4
 librb/include/librb_config.h
 librb/include/librb_config.h.in
 librb/include/librb-config.h
+librb/include/serno.h
 librb/librb.pc
 librb/ltmain.sh
 librb/missing

@@ -1157,7 +1157,7 @@ serv_connect_ssl_callback(rb_fde_t *F, int status, void *data)
 	}
 	client_p->localClient->F = xF[0];
 
-	client_p->localClient->ssl_ctl = start_ssld_connect(F, xF[1], rb_get_fd(xF[0]));
+	client_p->localClient->ssl_ctl = start_ssld_connect(F, xF[1], connid_get(client_p));
 	if(!client_p->localClient->ssl_ctl)
 	{
 		serv_connect_callback(client_p->localClient->F, RB_ERROR, data);

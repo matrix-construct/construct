@@ -481,7 +481,7 @@ add_connection(struct Listener *listener, rb_fde_t *F, struct sockaddr *sai, str
 			free_client(new_client);
 			return;
 		}
-		new_client->localClient->ssl_ctl = start_ssld_accept(F, xF[1], new_client->localClient->connid);        /* this will close F for us */
+		new_client->localClient->ssl_ctl = start_ssld_accept(F, xF[1], connid_get(new_client));        /* this will close F for us */
 		if(new_client->localClient->ssl_ctl == NULL)
 		{
 			free_client(new_client);

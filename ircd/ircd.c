@@ -396,6 +396,7 @@ initialize_server_capabs(void)
  * output       - none
  * side effects - items in ircd_paths[] array are relocated
  */
+#ifdef _WIN32
 static void
 relocate_paths(void)
 {
@@ -466,6 +467,7 @@ relocate_paths(void)
 	ircd_paths[IRCD_PATH_BIN] = rb_strdup(workbuf);
 	ircd_paths[IRCD_PATH_LIBEXEC] = rb_strdup(workbuf);
 }
+#endif
 
 /*
  * write_pidfile
@@ -656,7 +658,7 @@ charybdis_main(int argc, char *argv[])
 	}
 #endif
 
-#ifndef ENABLE_FHS_PATHS
+#ifdef _WIN32
 	relocate_paths();
 #endif
 
