@@ -127,14 +127,14 @@ client_success(struct auth_client *auth)
 }
 
 static bool
-client_dns_init(void)
+rdns_init(void)
 {
 	timeout_ev = rb_event_addish("timeout_dns_queries_event", timeout_dns_queries_event, NULL, 1);
 	return (timeout_ev != NULL);
 }
 
 static void
-client_dns_destroy(void)
+rdns_destroy(void)
 {
 	struct auth_client *auth;
 	rb_dictionary_iter iter;
@@ -149,7 +149,7 @@ client_dns_destroy(void)
 }
 
 static bool
-client_dns_start(struct auth_client *auth)
+rdns_start(struct auth_client *auth)
 {
 	struct user_query *query = rb_malloc(sizeof(struct user_query));
 
@@ -165,7 +165,7 @@ client_dns_start(struct auth_client *auth)
 }
 
 static void
-client_dns_cancel(struct auth_client *auth)
+rdns_cancel(struct auth_client *auth)
 {
 	struct user_query *query = auth->data[PROVIDER_RDNS];
 
@@ -196,10 +196,10 @@ struct auth_opts_handler rdns_options[] =
 struct auth_provider rdns_provider =
 {
 	.id = PROVIDER_RDNS,
-	.init = client_dns_init,
-	.destroy = client_dns_destroy,
-	.start = client_dns_start,
-	.cancel = client_dns_cancel,
+	.init = rdns_init,
+	.destroy = rdns_destroy,
+	.start = rdns_start,
+	.cancel = rdns_cancel,
 	.completed = NULL,
 	.opt_handlers = rdns_options,
 };
