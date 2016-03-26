@@ -68,7 +68,7 @@ handle_reload(int parc, char *parv[])
 	if(parc < 2)
 	{
 		/* Reload all handlers */
-		for(size_t i = 0; i < sizeof(authd_reload_handlers); handler = authd_reload_handlers[i++])
+		for(size_t i = 0; i < 256; handler = authd_reload_handlers[i++])
 			handler(parv[1][0]);
 
 		return;
