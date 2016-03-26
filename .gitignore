@@ -53,6 +53,7 @@ ircd/ircd_lexer.c
 ircd/version.c
 ircd/version.c.last
 ssld/ssld
+wsockd/wsockd
 tools/charybdis-mkpasswd
 tools/genssl
 tools/mkpasswd
