@@ -173,7 +173,7 @@ void reject_client(struct auth_client *auth, provider_t id, const char *reason)
 	}
 
 	/* TODO send back ident */
-	rb_helper_write(authd_helper, "R %x %c :%s", auth->cid, reject, reason);
+	rb_helper_write(authd_helper, "R %x %c %s %s :%s", auth->cid, reject, auth->username, auth->hostname, reason);
 
 	set_provider_off(auth, id);
 	cancel_providers(auth);
