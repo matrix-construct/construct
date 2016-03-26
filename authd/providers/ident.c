@@ -290,19 +290,19 @@ static bool ident_start(struct auth_client *auth)
 {
 	struct ident_query *query = rb_malloc(sizeof(struct ident_query));
 	struct rb_sockaddr_storage l_addr, c_addr;
-	int family;
-	rb_fde_t *F;
+	int family = GET_SS_FAMILY(&auth->c_addr);
+
+	notice_client(auth->cid, messages[REPORT_LOOKUP]);
 
 	auth->data[PROVIDER_IDENT] = query;
 	query->timeout = rb_current_time() + ident_timeout;
 
-	if((F = rb_socket(family, SOCK_STREAM, 0, "ident")) == NULL)
+	if((query->F = rb_socket(family, SOCK_STREAM, 0, "ident")) == NULL)
 	{
+		warn_opers(L_DEBUG, "Could not create ident socket: %s", strerror(errno));
 		client_fail(auth, REPORT_FAIL);
 		return true;	/* Not a fatal error */
 	}
-
-	query->F = F;
 
 	/* Build sockaddr_storages for rb_connect_tcp below */
 	memcpy(&l_addr, &auth->l_addr, sizeof(l_addr));
@@ -323,12 +323,11 @@ static bool ident_start(struct auth_client *auth)
 #endif
 		((struct sockaddr_in *)&c_addr)->sin_port = htons(113);
 
-	rb_connect_tcp(F, (struct sockaddr *)&c_addr,
+	rb_connect_tcp(query->F, (struct sockaddr *)&c_addr,
 			(struct sockaddr *)&l_addr,
 			GET_SS_LEN(&l_addr), ident_connected,
 			query, ident_timeout);
 
-	notice_client(auth->cid, messages[REPORT_LOOKUP]);
 	set_provider_on(auth, PROVIDER_IDENT);
 
 	return true;
