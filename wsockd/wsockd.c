@@ -111,6 +111,8 @@ typedef struct _conn
 static rb_dlink_list connid_hash_table[CONN_HASH_SIZE];
 static rb_dlink_list dead_list;
 
+static void conn_plain_read_shutdown_cb(rb_fde_t *fd, void *data);
+
 #ifndef _WIN32
 static void
 dummy_handler(int sig)
@@ -207,6 +209,87 @@ clean_dead_conns(void *unused)
 	dead_list.tail = dead_list.head = NULL;
 }
 
+static void
+mod_write_ctl(rb_fde_t *F, void *data)
+{
+	mod_ctl_t *ctl = data;
+	mod_ctl_buf_t *ctl_buf;
+	rb_dlink_node *ptr, *next;
+	int retlen, x;
+
+	RB_DLINK_FOREACH_SAFE(ptr, next, ctl->writeq.head)
+	{
+		ctl_buf = ptr->data;
+		retlen = rb_send_fd_buf(ctl->F, ctl_buf->F, ctl_buf->nfds, ctl_buf->buf,
+					ctl_buf->buflen, ppid);
+		if(retlen > 0)
+		{
+			rb_dlinkDelete(ptr, &ctl->writeq);
+			for(x = 0; x < ctl_buf->nfds; x++)
+				rb_close(ctl_buf->F[x]);
+			rb_free(ctl_buf->buf);
+			rb_free(ctl_buf);
+
+		}
+		if(retlen == 0 || (retlen < 0 && !rb_ignore_errno(errno)))
+			exit(0);
+
+	}
+	if(rb_dlink_list_length(&ctl->writeq) > 0)
+		rb_setselect(ctl->F, RB_SELECT_WRITE, mod_write_ctl, ctl);
+}
+
+static void
+mod_cmd_write_queue(mod_ctl_t * ctl, const void *data, size_t len)
+{
+	mod_ctl_buf_t *ctl_buf;
+	ctl_buf = rb_malloc(sizeof(mod_ctl_buf_t));
+	ctl_buf->buf = rb_malloc(len);
+	ctl_buf->buflen = len;
+	memcpy(ctl_buf->buf, data, len);
+	ctl_buf->nfds = 0;
+	rb_dlinkAddTail(ctl_buf, &ctl_buf->node, &ctl->writeq);
+	mod_write_ctl(ctl->F, ctl);
+}
+
+static void
+close_conn(conn_t * conn, int wait_plain, const char *fmt, ...)
+{
+	va_list ap;
+	char reason[128];	/* must always be under 250 bytes */
+	uint8_t buf[256];
+	int len;
+	if(IsDead(conn))
+		return;
+
+	rb_rawbuf_flush(conn->modbuf_out, conn->mod_fd);
+	rb_rawbuf_flush(conn->plainbuf_out, conn->plain_fd);
+	rb_close(conn->mod_fd);
+	SetDead(conn);
+
+	rb_dlinkDelete(&conn->node, connid_hash(conn->id));
+
+	if(!wait_plain || fmt == NULL)
+	{
+		rb_close(conn->plain_fd);
+		rb_dlinkAdd(conn, &conn->node, &dead_list);
+		return;
+	}
+
+	rb_setselect(conn->plain_fd, RB_SELECT_READ, conn_plain_read_shutdown_cb, conn);
+	rb_setselect(conn->plain_fd, RB_SELECT_WRITE, NULL, NULL);
+
+	va_start(ap, fmt);
+	vsnprintf(reason, sizeof(reason), fmt, ap);
+	va_end(ap);
+
+	buf[0] = 'D';
+	uint32_to_buf(&buf[1], conn->id);
+	rb_strlcpy((char *) &buf[5], reason, sizeof(buf) - 5);
+	len = (strlen(reason) + 1) + 5;
+	mod_cmd_write_queue(conn->ctl, buf, len);
+}
+
 static conn_t *
 make_conn(mod_ctl_t * ctl, rb_fde_t *mod_fd, rb_fde_t *plain_fd)
 {
@@ -233,7 +316,72 @@ cleanup_bad_message(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 }
 
 static void
-wsock_process_accept(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
+conn_mod_handshake_cb(rb_fde_t *fd, void *data)
+{
+	char inbuf[READBUF_SIZE];
+	conn_t *conn = data;
+	int length = 0;
+	if (conn == NULL)
+		return;
+
+	if (IsDead(conn))
+		return;
+
+	while (1)
+	{
+		if (IsDead(conn))
+			return;
+
+		length = rb_read(conn->plain_fd, inbuf, sizeof(inbuf));
+		if (length == 0 || (length < 0 && !rb_ignore_errno(errno)))
+		{
+			close_conn(conn, NO_WAIT, "Connection closed");
+			return;
+		}
+	}
+}
+
+static void
+conn_mod_read_cb(rb_fde_t *fd, void *data)
+{
+}
+
+static void
+conn_plain_read_cb(rb_fde_t *fd, void *data)
+{
+}
+
+static void
+conn_plain_read_shutdown_cb(rb_fde_t *fd, void *data)
+{
+	char inbuf[READBUF_SIZE];
+	conn_t *conn = data;
+	int length = 0;
+
+	if(conn == NULL)
+		return;
+
+	while(1)
+	{
+		length = rb_read(conn->plain_fd, inbuf, sizeof(inbuf));
+
+		if(length == 0 || (length < 0 && !rb_ignore_errno(errno)))
+		{
+			rb_close(conn->plain_fd);
+			rb_dlinkAdd(conn, &conn->node, &dead_list);
+			return;
+		}
+
+		if(length < 0)
+		{
+			rb_setselect(conn->plain_fd, RB_SELECT_READ, conn_plain_read_shutdown_cb, conn);
+			return;
+		}
+	}
+}
+
+static void
+wsock_process(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 {
 	conn_t *conn;
 	uint32_t id;
@@ -250,7 +398,7 @@ wsock_process_accept(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 	if(rb_get_type(conn->plain_fd) == RB_FD_UNKNOWN)
 		rb_set_type(conn->plain_fd, RB_FD_SOCKET);
 
-	// XXX todo
+	conn_mod_handshake_cb(conn->mod_fd, conn);
 }
 
 static void
@@ -272,7 +420,7 @@ mod_process_cmd_recv(mod_ctl_t * ctl)
 					cleanup_bad_message(ctl, ctl_buf);
 					break;
 				}
-				wsock_process_accept(ctl, ctl_buf);
+				wsock_process(ctl, ctl_buf);
 				break;
 			}
 		default:
@@ -322,36 +470,6 @@ mod_read_ctl(rb_fde_t *F, void *data)
 
 	mod_process_cmd_recv(ctl);
 	rb_setselect(ctl->F, RB_SELECT_READ, mod_read_ctl, ctl);
-}
-
-static void
-mod_write_ctl(rb_fde_t *F, void *data)
-{
-	mod_ctl_t *ctl = data;
-	mod_ctl_buf_t *ctl_buf;
-	rb_dlink_node *ptr, *next;
-	int retlen, x;
-
-	RB_DLINK_FOREACH_SAFE(ptr, next, ctl->writeq.head)
-	{
-		ctl_buf = ptr->data;
-		retlen = rb_send_fd_buf(ctl->F, ctl_buf->F, ctl_buf->nfds, ctl_buf->buf,
-					ctl_buf->buflen, ppid);
-		if(retlen > 0)
-		{
-			rb_dlinkDelete(ptr, &ctl->writeq);
-			for(x = 0; x < ctl_buf->nfds; x++)
-				rb_close(ctl_buf->F[x]);
-			rb_free(ctl_buf->buf);
-			rb_free(ctl_buf);
-
-		}
-		if(retlen == 0 || (retlen < 0 && !rb_ignore_errno(errno)))
-			exit(0);
-
-	}
-	if(rb_dlink_list_length(&ctl->writeq) > 0)
-		rb_setselect(ctl->F, RB_SELECT_WRITE, mod_write_ctl, ctl);
 }
 
 static void
