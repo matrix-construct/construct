@@ -68,7 +68,7 @@ static int ident_timeout = 5;
 
 /* Timeout outstanding queries */
 static void
-timeout_ident_queries_event(void *notused)
+timeout_ident_queries_event(void *notused __unused)
 {
 	struct auth_client *auth;
 	rb_dictionary_iter iter;
@@ -94,12 +94,17 @@ timeout_ident_queries_event(void *notused)
  * problems arise. -avalon
  */
 static void
-ident_connected(rb_fde_t *F, int error, void *data)
+ident_connected(rb_fde_t *F __unused, int error, void *data)
 {
 	struct auth_client *auth = data;
-	struct ident_query *query = auth->data[PROVIDER_IDENT];
+	struct ident_query *query;
 	char authbuf[32];
 	int authlen;
+
+	if(auth == NULL)
+		return;
+
+	query = auth->data[PROVIDER_IDENT];
 
 	if(query == NULL)
 		return;
@@ -129,12 +134,17 @@ static void
 read_ident_reply(rb_fde_t *F, void *data)
 {
 	struct auth_client *auth = data;
-	struct ident_query *query = auth->data[PROVIDER_IDENT];
+	struct ident_query *query;
 	char *s = NULL;
 	char *t = NULL;
 	int len;
 	int count;
 	char buf[IDENT_BUFSIZE + 1];	/* buffer to read auth reply into */
+
+	if(auth == NULL)
+		return;
+
+	query = auth->data[PROVIDER_IDENT];
 
 	if(query == NULL)
 		return;
@@ -142,7 +152,7 @@ read_ident_reply(rb_fde_t *F, void *data)
 	len = rb_read(F, buf, IDENT_BUFSIZE);
 	if(len < 0 && rb_ignore_errno(errno))
 	{
-		rb_setselect(F, RB_SELECT_READ, read_ident_reply, query);
+		rb_setselect(F, RB_SELECT_READ, read_ident_reply, auth);
 		return;
 	}
 
@@ -342,7 +352,7 @@ static bool ident_start(struct auth_client *auth)
 	rb_connect_tcp(query->F, (struct sockaddr *)&c_addr,
 			(struct sockaddr *)&l_addr,
 			GET_SS_LEN(&l_addr), ident_connected,
-			query, ident_timeout);
+			auth, ident_timeout);
 
 	set_provider_on(auth, PROVIDER_IDENT);
 
@@ -359,7 +369,7 @@ ident_cancel(struct auth_client *auth)
 }
 
 static void
-add_conf_ident_timeout(const char *key, int parc, const char **parv)
+add_conf_ident_timeout(const char *key __unused, int parc __unused, const char **parv)
 {
 	int timeout = atoi(parv[0]);
 
