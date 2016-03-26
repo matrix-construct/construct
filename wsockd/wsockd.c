@@ -82,7 +82,6 @@ typedef struct _conn
 	uint64_t plain_in;
 	uint64_t plain_out;
 	uint8_t flags;
-	void *stream;
 } conn_t;
 
 #define FLAG_CORK	0x01
@@ -218,7 +217,6 @@ make_conn(mod_ctl_t * ctl, rb_fde_t *mod_fd, rb_fde_t *plain_fd)
 	conn->mod_fd = mod_fd;
 	conn->plain_fd = plain_fd;
 	conn->id = -1;
-	conn->stream = NULL;
 	rb_set_nb(mod_fd);
 	rb_set_nb(plain_fd);
 	return conn;
