@@ -303,7 +303,7 @@ void
 reload_nameservers(void)
 {
 	check_authd();
-	rb_helper_write(authd_helper, "H D");
+	rb_helper_write(authd_helper, "R D");
 	(void)get_nameservers(stats_results_callback, NULL);
 }
 
