@@ -121,7 +121,7 @@ bool ident_start(struct auth_client *auth)
 			query, ident_timeout);
 
 	notice_client(auth, messages[REPORT_LOOKUP]);
-	set_provider(auth, PROVIDER_IDENT);
+	set_provider_on(auth, PROVIDER_IDENT);
 
 	return true;
 }

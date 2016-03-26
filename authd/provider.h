@@ -59,6 +59,7 @@ struct auth_client
 
 	uint32_t providers;			/* Providers at work,
 						 * none left when set to 0 */
+	uint32_t providers_done;		/* Providers completed */
 
 	void *data[MAX_PROVIDERS];		/* Provider-specific data slots */
 };
@@ -108,21 +109,32 @@ void warn_opers(notice_level_t level, const char *fmt, ...);
 void handle_new_connection(int parc, char *parv[]);
 
 /* Provider is operating on this auth_client (set this if you have async work to do) */
-static inline void set_provider(struct auth_client *auth, provider_t provider)
+static inline void set_provider_on(struct auth_client *auth, provider_t provider)
 {
 	auth->providers |= (1 << provider);
 }
 
 /* Provider is no longer operating on this auth client (you should use provider_done) */
-static inline void unset_provider(struct auth_client *auth, provider_t provider)
+static inline void set_provider_off(struct auth_client *auth, provider_t provider)
 {
 	auth->providers &= ~(1 << provider);
 }
 
+/* Set the provider to done (you should use provider_done) */
+static inline void set_provider_done(struct auth_client *auth, provider_t provider)
+{
+	auth->providers_done |= (1 << provider);
+}
+
 /* Check if provider is operating on this auth client */
-static inline bool is_provider(struct auth_client *auth, provider_t provider)
+static inline bool is_provider_on(struct auth_client *auth, provider_t provider)
 {
 	return auth->providers & (1 << provider);
+}
+
+static inline bool is_provider_done(struct auth_client *auth, provider_t provider)
+{
+	return auth->providers_done & (1 << provider);
 }
 
 #endif /* __CHARYBDIS_AUTHD_PROVIDER_H__ */

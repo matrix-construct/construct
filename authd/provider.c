@@ -116,7 +116,7 @@ void cancel_providers(struct auth_client *auth)
 	{
 		provider = ptr->data;
 
-		if(provider->cancel && is_provider(auth, provider->id))
+		if(provider->cancel && is_provider_on(auth, provider->id))
 			/* Cancel if required */
 			provider->cancel(auth);
 	}
@@ -131,7 +131,8 @@ void provider_done(struct auth_client *auth, provider_t id)
 	rb_dlink_node *ptr;
 	struct auth_provider *provider;
 
-	unset_provider(auth, id);
+	set_provider_off(auth, id);
+	set_provider_done(auth, id);
 
 	if(!auth->providers)
 	{
@@ -144,7 +145,7 @@ void provider_done(struct auth_client *auth, provider_t id)
 	{
 		provider = ptr->data;
 
-		if(provider->completed && is_provider(auth, provider->id))
+		if(provider->completed && is_provider_on(auth, provider->id))
 			/* Notify pending clients who asked for it */
 			provider->completed(auth, id);
 	}
@@ -174,7 +175,7 @@ void reject_client(struct auth_client *auth, provider_t id, const char *reason)
 	/* TODO send back ident */
 	rb_helper_write(authd_helper, "R %x %c :%s", auth->cid, reject, reason);
 
-	unset_provider(auth, id);
+	set_provider_off(auth, id);
 	cancel_providers(auth);
 }
 
@@ -185,7 +186,7 @@ void accept_client(struct auth_client *auth, provider_t id)
 
 	rb_helper_write(authd_helper, "A %x %s %s", auth->cid, auth->username, auth->hostname);
 
-	unset_provider(auth, id);
+	set_provider_off(auth, id);
 	cancel_providers(auth);
 }
 

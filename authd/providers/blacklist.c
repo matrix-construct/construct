@@ -258,7 +258,7 @@ blacklist_dns_callback(const char *result, bool status, query_type type, void *d
 	if(!rb_dlink_list_length(&bluser->queries))
 	{
 		/* Done here */
-		provider_done(auth, PROVIDER_BLACKLIST); 
+		provider_done(auth, PROVIDER_BLACKLIST);
 		rb_free(bluser);
 		auth->data[PROVIDER_BLACKLIST] = NULL;
 	}
@@ -308,13 +308,27 @@ timeout_blacklist_queries_event(void *notused)
 	}
 }
 
+static inline void
+lookup_all_blacklists(struct auth_client *auth)
+{
+	struct blacklist_user *bluser = auth->data[PROVIDER_BLACKLIST];
+	rb_dlink_node *ptr;
+
+	RB_DLINK_FOREACH(ptr, blacklist_list.head)
+	{
+		struct blacklist *bl = (struct blacklist *)ptr->data;
+
+		if (!bl->delete)
+			initiate_blacklist_dnsquery(bl, auth);
+	}
+
+	bluser->timeout = rb_current_time() + blacklist_timeout;
+}
+
 /* public interfaces */
 static bool
 blacklists_start(struct auth_client *auth)
 {
-	struct blacklist_user *bluser;
-	rb_dlink_node *nptr;
-
 	if(auth->data[PROVIDER_BLACKLIST] != NULL)
 		return true;
 
@@ -322,20 +336,30 @@ blacklists_start(struct auth_client *auth)
 		/* Nothing to do... */
 		return true;
 
-	bluser = auth->data[PROVIDER_BLACKLIST] = rb_malloc(sizeof(struct blacklist_user));
+	auth->data[PROVIDER_BLACKLIST] = rb_malloc(sizeof(struct blacklist_user));
 
-	RB_DLINK_FOREACH(nptr, blacklist_list.head)
-	{
-		struct blacklist *bl = (struct blacklist *) nptr->data;
+	if(is_provider_done(auth, PROVIDER_RDNS) && is_provider_done(auth, PROVIDER_IDENT))
+		/* This probably can't happen but let's handle this case anyway */
+		lookup_all_blacklists(auth);
 
-		if (!bl->delete)
-			initiate_blacklist_dnsquery(bl, auth);
-	}
-
-	bluser->timeout = rb_current_time() + blacklist_timeout; 
-
-	set_provider(auth, PROVIDER_BLACKLIST);
+	set_provider_on(auth, PROVIDER_BLACKLIST);
 	return true;
+}
+
+/* This is called every time a provider is completed */
+static void
+blacklists_initiate(struct auth_client *auth, provider_t provider)
+{
+	struct blacklist_user *bluser = auth->data[PROVIDER_BLACKLIST];
+
+	if(bluser == NULL || is_provider_done(auth, PROVIDER_BLACKLIST) || rb_dlink_list_length(&bluser->queries))
+		/* Nothing to do */
+		return;
+	else if(!is_provider_done(auth, PROVIDER_RDNS) && !is_provider_done(auth, PROVIDER_IDENT))
+		/* Don't start until we've completed these */
+		return;
+	else
+		lookup_all_blacklists(auth);
 }
 
 static void
@@ -400,5 +424,5 @@ struct auth_provider blacklist_provider =
 	.destroy = blacklists_destroy,
 	.start = blacklists_start,
 	.cancel = blacklists_cancel,
-	.completed = NULL,
+	.completed = blacklists_initiate,
 };
