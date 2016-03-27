@@ -73,7 +73,7 @@ struct blacklist_lookup
 	struct blacklist *bl;		/* Blacklist we're checking */
 	struct auth_client *auth;	/* Client */
 	struct dns_query *query;	/* DNS query pointer */
-	
+
 	rb_dlink_node node;
 };
 
@@ -230,11 +230,13 @@ blacklist_dns_callback(const char *result, bool status, query_type type, void *d
 {
 	struct blacklist_lookup *bllookup = (struct blacklist_lookup *)data;
 	struct blacklist_user *bluser;
+	struct blacklist *bl;
 	struct auth_client *auth;
 
 	if (bllookup == NULL || bllookup->auth == NULL)
 		return;
 
+	bl = bllookup->bl;
 	auth = bllookup->auth;
 	bluser = auth->data[PROVIDER_BLACKLIST];
 	if(bluser == NULL)
@@ -244,20 +246,21 @@ blacklist_dns_callback(const char *result, bool status, query_type type, void *d
 	{
 		/* Match found, so proceed no further */
 		blacklists_cancel(auth);
-		reject_client(auth, PROVIDER_BLACKLIST, bllookup->bl->reason);
+		reject_client(auth, PROVIDER_BLACKLIST, bl->reason);
 		return;
 	}
 
-	unref_blacklist(bllookup->bl);
+	unref_blacklist(bl);
+	cancel_query(bllookup->query);	/* Ignore future responses */
 	rb_dlinkDelete(&bllookup->node, &bluser->queries);
 	rb_free(bllookup);
 
 	if(!rb_dlink_list_length(&bluser->queries))
 	{
 		/* Done here */
-		provider_done(auth, PROVIDER_BLACKLIST);
 		rb_free(bluser);
 		auth->data[PROVIDER_BLACKLIST] = NULL;
+		provider_done(auth, PROVIDER_BLACKLIST);
 	}
 }
 
@@ -398,9 +401,11 @@ blacklists_cancel(struct auth_client *auth)
 	RB_DLINK_FOREACH_SAFE(ptr, nptr, bluser->queries.head)
 	{
 		struct blacklist_lookup *bllookup = ptr->data;
-		rb_dlinkDelete(&bllookup->node, &bluser->queries);
-		unref_blacklist(bllookup->bl);
+
 		cancel_query(bllookup->query);
+		unref_blacklist(bllookup->bl);
+
+		rb_dlinkDelete(&bllookup->node, &bluser->queries);
 		rb_free(bllookup);
 	}
 
