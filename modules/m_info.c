@@ -26,7 +26,6 @@
 #include "m_info.h"
 #include "channel.h"
 #include "client.h"
-#include "common.h"
 #include "match.h"
 #include "ircd.h"
 #include "hook.h"
@@ -284,12 +283,6 @@ static struct InfoStruct info_table[] = {
 		OUTPUT_BOOLEAN_YN,
 		&ConfigFileEntry.hide_spoof_ips,
 		"Hide IPs of spoofed users"
-	},
-	{
-		"hub",
-		OUTPUT_BOOLEAN_YN,
-		&ServerInfo.hub,
-		"Server is a hub"
 	},
 	{
 		"kline_delay",
@@ -779,7 +772,7 @@ send_conf_options(struct Client *source_p)
 
 	/*
 	 * Now send them a list of all our configuration options
-	 * (mostly from config.h)
+	 * (mostly from defaults.h)
 	 */
 	for (infoptr = MyInformation; infoptr->name; infoptr++)
 	{

@@ -22,15 +22,13 @@
 #include "rb_commio.h"
 #include "authd.h"
 #include "provider.h"
+#include "notice.h"
 #include "res.h"
 #include "dns.h"
 
-struct dns_query
+struct user_query
 {
-	rb_dlink_node node;
-
-	struct auth_client *auth;		/* Our client */
-	struct DNSQuery query;			/* DNS query */
+	struct dns_query *query;		/* Pending DNS query */
 	time_t timeout;				/* When the request times out */
 };
 
@@ -51,176 +49,157 @@ typedef enum
 	REPORT_TOOLONG,
 } dns_message;
 
-static EVH timeout_dns_queries_event;
-static void client_fail(struct dns_query *query, dns_message message);
-static void client_success(struct dns_query *query);
-static void get_dns_answer(void *userdata, struct DNSReply *reply);
+static void client_fail(struct auth_client *auth, dns_message message);
+static void client_success(struct auth_client *auth);
+static void dns_answer_callback(const char *res, bool status, query_type type, void *data);
 
-static rb_dlink_list queries;
 static struct ev_entry *timeout_ev;
-static int rdns_timeout = 30;
+static EVH timeout_dns_queries_event;
+static int rdns_timeout = 15;
 
-
-bool client_dns_init(void)
+static void
+dns_answer_callback(const char *res, bool status, query_type type, void *data)
 {
-	timeout_ev = rb_event_addish("timeout_dns_queries_event", timeout_dns_queries_event, NULL, 5);
-	return (timeout_ev != NULL);
-}
+	struct auth_client *auth = data;
+	struct user_query *query = auth->data[PROVIDER_RDNS];
 
-void client_dns_destroy(void)
-{
-	rb_dlink_node *ptr, *nptr;
-	struct dns_query *query;
-
-	RB_DLINK_FOREACH_SAFE(ptr, nptr, queries.head)
+	if(query == NULL || res == NULL || status == false)
+		client_fail(auth, REPORT_FAIL);
+	else if(strlen(res) > HOSTLEN)
+		client_fail(auth, REPORT_TOOLONG);
+	else
 	{
-		client_fail(ptr->data, REPORT_FAIL);
-		rb_dlinkDelete(ptr, &queries);
-		rb_free(ptr);
+		rb_strlcpy(auth->hostname, res, HOSTLEN + 1);
+		client_success(auth);
 	}
-
-	rb_event_delete(timeout_ev);
 }
 
-bool client_dns_start(struct auth_client *auth)
+/* Timeout outstanding queries */
+static void
+timeout_dns_queries_event(void *notused)
 {
-	struct dns_query *query = rb_malloc(sizeof(struct dns_query));
+	struct auth_client *auth;
+	rb_dictionary_iter iter;
 
-	query->auth = auth;
-	query->timeout = rb_current_time() + rdns_timeout;
-
-	query->query.ptr = query;
-	query->query.callback = get_dns_answer;
-
-	gethost_byaddr(&auth->c_addr, &query->query);
-	notice_client(auth, messages[REPORT_LOOKUP]);
-	set_provider(auth, PROVIDER_RDNS);
-	return true;
-}
-
-void client_dns_cancel(struct auth_client *auth)
-{
-	rb_dlink_node *ptr;
-
-	/* Bah, the stupid DNS resolver code doesn't have a cancellation
-	 * func... */
-	RB_DLINK_FOREACH(ptr, queries.head)
+	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
-		struct dns_query *query = ptr->data;
+		struct user_query *query = auth->data[PROVIDER_RDNS];
 
-		if(query->auth == auth)
+		if(query != NULL && query->timeout < rb_current_time())
 		{
-			/* This will get cleaned up later by the DNS stuff */
-			client_fail(query, REPORT_FAIL);
+			client_fail(auth, REPORT_FAIL);
 			return;
 		}
 	}
 }
 
 static void
-get_dns_answer(void *userdata, struct DNSReply *reply)
+client_fail(struct auth_client *auth, dns_message report)
 {
-	struct dns_query *query = userdata;
-	struct auth_client *auth = query->auth;
-	rb_dlink_node *ptr, *nptr;
-	bool fail = false;
-	dns_message response;
+	struct user_query *query = auth->data[PROVIDER_RDNS];
 
-	if(reply == NULL || auth == NULL)
-	{
-		response = REPORT_FAIL;
-		fail = true;
-		goto cleanup;
-	}
+	if(query == NULL)
+		return;
 
-	if(!sockcmp(&auth->c_addr, &reply->addr, GET_SS_FAMILY(&auth->c_addr)))
-	{
-		response = REPORT_FAIL;
-		fail = true;
-		goto cleanup;
-	}
+	rb_strlcpy(auth->hostname, "*", sizeof(auth->hostname));
 
-	if(strlen(reply->h_name) > HOSTLEN)
-	{
-		/* Ah well. */
-		response = REPORT_TOOLONG;
-		fail = true;
-		goto cleanup;
-	}
+	notice_client(auth->cid, messages[report]);
+	cancel_query(query->query);
 
-	rb_strlcpy(auth->hostname, reply->h_name, HOSTLEN + 1);
+	rb_free(query);
+	auth->data[PROVIDER_RDNS] = NULL;
 
-cleanup:
-	/* Clean us up off the pending queries list */
-	RB_DLINK_FOREACH_SAFE(ptr, nptr, queries.head)
-	{
-		struct dns_query *query_l = ptr->data;
-
-		if(query == query_l)
-		{
-			/* Found */
-			if(fail)
-				client_fail(query, response);
-			else
-				client_success(query);
-
-			rb_dlinkDelete(ptr, &queries);
-			rb_free(query);
-			return;
-		}
-	}
+	provider_done(auth, PROVIDER_RDNS);
 }
 
-/* Timeout outstanding queries */
-static void timeout_dns_queries_event(void *notused)
+static void
+client_success(struct auth_client *auth)
 {
-	rb_dlink_node *ptr;
+	struct user_query *query = auth->data[PROVIDER_RDNS];
 
-	/* NOTE - we do not delete queries from the list from a timeout, when
-	 * the query times out later it will be deleted.
-	 */
-	RB_DLINK_FOREACH(ptr, queries.head)
-	{
-		struct dns_query *query = ptr->data;
+	notice_client(auth->cid, messages[REPORT_FOUND]);
+	cancel_query(query->query);
 
-		if(query->auth && query->timeout < rb_current_time())
-		{
-			client_fail(query, REPORT_FAIL);
-		}
-	}
+	rb_free(query);
+	auth->data[PROVIDER_RDNS] = NULL;
+
+	provider_done(auth, PROVIDER_RDNS);
 }
 
-static void client_fail(struct dns_query *query, dns_message report)
+static bool
+rdns_init(void)
 {
-	struct auth_client *auth = query->auth;
-
-	if(auth)
-	{
-		rb_strlcpy(auth->hostname, "*", sizeof(auth->hostname));
-		notice_client(auth, messages[report]);
-		provider_done(auth, PROVIDER_RDNS);
-		query->auth = NULL;
-	}
+	timeout_ev = rb_event_addish("timeout_dns_queries_event", timeout_dns_queries_event, NULL, 1);
+	return (timeout_ev != NULL);
 }
 
-static void client_success(struct dns_query *query)
+static void
+rdns_destroy(void)
 {
-	struct auth_client *auth = query->auth;
+	struct auth_client *auth;
+	rb_dictionary_iter iter;
 
-	if(auth)
+	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
-		notice_client(auth, messages[REPORT_FOUND]);
-		provider_done(auth, PROVIDER_RDNS);
-		query->auth = NULL;
+		if(auth->data[PROVIDER_RDNS] != NULL)
+			client_fail(auth, REPORT_FAIL);
 	}
+
+	rb_event_delete(timeout_ev);
 }
+
+static bool
+rdns_start(struct auth_client *auth)
+{
+	struct user_query *query = rb_malloc(sizeof(struct user_query));
+
+	query->timeout = rb_current_time() + rdns_timeout;
+
+	auth->data[PROVIDER_RDNS] = query;
+
+	query->query = lookup_hostname(auth->c_ip, dns_answer_callback, auth);
+
+	notice_client(auth->cid, messages[REPORT_LOOKUP]);
+	set_provider_on(auth, PROVIDER_RDNS);
+	return true;
+}
+
+static void
+rdns_cancel(struct auth_client *auth)
+{
+	struct user_query *query = auth->data[PROVIDER_RDNS];
+
+	if(query != NULL)
+		client_fail(auth, REPORT_FAIL);
+}
+
+static void
+add_conf_dns_timeout(const char *key, int parc, const char **parv)
+{
+	int timeout = atoi(parv[0]);
+
+	if(timeout < 0)
+	{
+		warn_opers(L_CRIT, "BUG: DNS timeout < 0 (value: %d)", timeout);
+		return;
+	}
+
+	rdns_timeout = timeout;
+}
+
+struct auth_opts_handler rdns_options[] =
+{
+	{ "dns_timeout", 1, add_conf_dns_timeout },
+	{ NULL, 0, NULL },
+};
 
 struct auth_provider rdns_provider =
 {
 	.id = PROVIDER_RDNS,
-	.init = client_dns_init,
-	.destroy = client_dns_destroy,
-	.start = client_dns_start,
-	.cancel = client_dns_cancel,
+	.init = rdns_init,
+	.destroy = rdns_destroy,
+	.start = rdns_start,
+	.cancel = rdns_cancel,
 	.completed = NULL,
+	.opt_handlers = rdns_options,
 };

@@ -6,8 +6,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <netinet/in.h>
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -15,9 +13,8 @@
 #define WE_ARE_MEMORY_C
 #include "stdinc.h"
 #include "setup.h"
-#include "common.h"
 #include "ircd_defs.h"
-#include "config.h"
+#include "defaults.h"
 #include "client.h"
 #include "modules.h"
 #include "newconf.h"
@@ -163,7 +160,7 @@ static void	add_cur_list(int type, char *str, int number)
 
 %union {
 	int		number;
-	char		string[IRCD_BUFSIZE + 1];
+	char		string[BUFSIZE + 1];
 	conf_parm_t *	conf_parm;
 }
 

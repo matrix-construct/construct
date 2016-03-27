@@ -55,20 +55,20 @@ start_authd(void)
 #endif
 	if(authd_path == NULL)
 	{
-		snprintf(fullpath, sizeof(fullpath), "%s/authd%s", PKGLIBEXECDIR, suffix);
+		snprintf(fullpath, sizeof(fullpath), "%s%cauthd%s", ircd_paths[IRCD_PATH_LIBEXEC], RB_PATH_SEPARATOR, suffix);
 
 		if(access(fullpath, X_OK) == -1)
 		{
-			snprintf(fullpath, sizeof(fullpath), "%s/libexec/charybdis/authd%s",
-				 ConfigFileEntry.dpath, suffix);
+			snprintf(fullpath, sizeof(fullpath), "%s%cbin%cauthd%s",
+				 ConfigFileEntry.dpath, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR, suffix);
 			if(access(fullpath, X_OK) == -1)
 			{
 				ilog(L_MAIN,
-				     "Unable to execute authd in %s or %s/libexec/charybdis",
-				     PKGLIBEXECDIR, ConfigFileEntry.dpath);
+				     "Unable to execute authd in %s or %s/bin",
+				     ircd_paths[IRCD_PATH_LIBEXEC], ConfigFileEntry.dpath);
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
-						       "Unable to execute authd in %s or %s/libexec/charybdis",
-						       PKGLIBEXECDIR, ConfigFileEntry.dpath);
+						       "Unable to execute authd in %s or %s/bin",
+						       ircd_paths[IRCD_PATH_LIBEXEC], ConfigFileEntry.dpath);
 				return 1;
 			}
 
@@ -113,6 +113,39 @@ parse_authd_reply(rb_helper * helper)
 				return;
 			}
 			dns_results_callback(parv[1], parv[2], parv[3], parv[4]);
+			break;
+		case 'W':
+			if(parc != 3)
+			{
+				ilog(L_MAIN, "authd sent a result with wrong number of arguments: got %d", parc);
+				restart_authd();
+				return;
+			}
+
+			switch(*parv[2])
+			{
+			case 'D':	/* debug */
+				sendto_realops_snomask(SNO_DEBUG, L_ALL, "authd debug: %s", parv[3]);
+				break;
+			case 'I':	/* Info */
+				sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd info: %s", parv[3]);
+				inotice("authd info: %s", parv[3]);
+				break;
+			case 'W':	/* Warning */
+				sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd WARNING: %s", parv[3]);
+				iwarn("authd warning: %s", parv[3]);
+				break;
+			case 'C':	/* Critical (error) */
+				sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd CRITICAL: %s", parv[3]);
+				ierror("authd critical: %s", parv[3]);
+				break;
+			default:	/* idk */
+				sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd sent us an unknown oper notice type (%s): %s", parv[2], parv[3]);
+				ilog(L_MAIN, "authd unknown oper notice type (%s): %s", parv[2], parv[3]);
+				break;
+			}
+
+			/* NOTREACHED */
 			break;
 		case 'X':
 		case 'Y':

@@ -35,7 +35,6 @@
 #include "hook.h"
 #include "client.h"
 #include "hash.h"
-#include "common.h"
 #include "hash.h"
 #include "match.h"
 #include "ircd.h"
@@ -165,8 +164,8 @@ do_etrace(struct Client *source_p, int ipv4, int ipv6)
 		target_p = ptr->data;
 
 #ifdef RB_IPV6
-		if((!ipv4 && target_p->localClient->ip.ss_family == AF_INET) ||
-		   (!ipv6 && target_p->localClient->ip.ss_family == AF_INET6))
+		if((!ipv4 && GET_SS_FAMILY(&target_p->localClient->ip) == AF_INET) ||
+		   (!ipv6 && GET_SS_FAMILY(&target_p->localClient->ip) == AF_INET6))
 			continue;
 #endif
 

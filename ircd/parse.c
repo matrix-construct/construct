@@ -27,7 +27,6 @@
 #include "parse.h"
 #include "client.h"
 #include "channel.h"
-#include "common.h"
 #include "hash.h"
 #include "match.h"
 #include "ircd.h"
@@ -42,11 +41,8 @@
 #include "packet.h"
 #include "s_assert.h"
 
-struct Dictionary *cmd_dict = NULL;
-struct Dictionary *alias_dict = NULL;
-
-/* parv[0] is not used, and parv[LAST] == NULL */
-static char *para[MAXPARA + 2];
+rb_dictionary *cmd_dict = NULL;
+rb_dictionary *alias_dict = NULL;
 
 static void cancel_clients(struct Client *, struct Client *);
 static void remove_unknown(struct Client *, const char *, char *);
@@ -82,7 +78,7 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 {
 	struct Client *from = client_p;
 	char *end;
-	int i = 1, res;
+	int res;
 	int numeric = 0;
 	struct Message *mptr;
 	struct MsgBuf msgbuf;
@@ -107,7 +103,7 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 		return;
 	}
 
-	if (msgbuf.origin != NULL)
+	if (msgbuf.origin != NULL && IsServer(client_p))
 	{
 		from = find_client(msgbuf.origin);
 
@@ -146,6 +142,15 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 				struct alias_entry *aptr = rb_dictionary_retrieve(alias_dict, msgbuf.cmd);
 				if (aptr != NULL)
 				{
+					if (msgbuf.n_para < 2)
+					{
+						sendto_one(client_p, form_str(ERR_NEEDMOREPARAMS),
+							   me.name,
+							   EmptyString(client_p->name) ? "*" : client_p->name,
+							   msgbuf.cmd);
+						return;
+					}
+
 					do_alias(aptr, client_p, reconstruct_parv(msgbuf.n_para - 1, msgbuf.para + 1));
 					return;
 				}
@@ -177,7 +182,7 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 			/* Its expected this nasty code can be removed
 			 * or rewritten later if still needed.
 			 */
-			if((unsigned long) (p + 8) > (unsigned long) end)
+			if((p + 8) > end)
 			{
 				for (; p <= end; p++)
 				{
@@ -240,13 +245,13 @@ handle_command(struct Message *mptr, struct MsgBuf *msgbuf_p, struct Client *cli
 
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Dropping server %s due to (invalid) command '%s'"
-				     " with only %zu arguments (expecting %d).",
+				     " with only %zu arguments (expecting %zu).",
 				     client_p->name, mptr->cmd, msgbuf_p->n_para, ehandler.min_para);
 		ilog(L_SERVER,
-		     "Insufficient parameters (%zu < %d) for command '%s' from %s.",
+		     "Insufficient parameters (%zu < %zu) for command '%s' from %s.",
 		     msgbuf_p->n_para, ehandler.min_para, mptr->cmd, client_p->name);
 		snprintf(squitreason, sizeof squitreason,
-				"Insufficient parameters (%zu < %d) for command '%s'",
+				"Insufficient parameters (%zu < %zu) for command '%s'",
 				msgbuf_p->n_para, ehandler.min_para, mptr->cmd);
 		exit_client(client_p, client_p, client_p, squitreason);
 		return (-1);
@@ -272,7 +277,7 @@ handle_encap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *so
 	ehandler = mptr->handlers[ENCAP_HANDLER];
 	handler = ehandler.handler;
 
-	if(parc < ehandler.min_para ||
+	if((size_t)parc < ehandler.min_para ||
 	   (ehandler.min_para && EmptyString(parv[ehandler.min_para - 1])))
 		return;
 

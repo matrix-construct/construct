@@ -34,12 +34,15 @@ extern rb_dlink_list nameservers;
 typedef void (*DNSCB)(const char *res, int status, int aftype, void *data);
 typedef void (*DNSLISTCB)(int resc, const char *resv[], int status, void *data);
 
-uint16_t lookup_hostname(const char *hostname, int aftype, DNSCB callback, void *data);
-uint16_t lookup_ip(const char *hostname, int aftype, DNSCB callback, void *data);
-void cancel_lookup(uint16_t xid);
+uint32_t lookup_hostname(const char *hostname, int aftype, DNSCB callback, void *data);
+uint32_t lookup_ip(const char *hostname, int aftype, DNSCB callback, void *data);
+void cancel_lookup(uint32_t xid);
+void cancel_dns_stats(uint32_t xid);
+
 void dns_results_callback(const char *callid, const char *status, const char *aftype, const char *results);
 void dns_stats_results_callback(const char *callid, const char *status, int resc, const char *resv[]);
-void init_nameserver_cache(void);
-bool reload_nameservers(void);
+
+void init_dns(void);
+void reload_nameservers(void);
 
 #endif

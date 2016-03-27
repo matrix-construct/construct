@@ -39,6 +39,10 @@
 
 #include <ltdl.h>
 
+#ifndef LT_MODULE_EXT
+#	error "Charybdis requires loadable module support."
+#endif
+
 struct module **modlist = NULL;
 
 static const char *core_module_table[] = {
@@ -125,8 +129,8 @@ modules_init(void)
 	mod_add_cmd(&modrestart_msgtab);
 
 	/* Add the default paths we look in to the module system --nenolod */
-	mod_add_path(MODPATH);
-	mod_add_path(AUTOMODPATH);
+	mod_add_path(ircd_paths[IRCD_PATH_MODULES]);
+	mod_add_path(ircd_paths[IRCD_PATH_AUTOLOAD_MODULES]);
 }
 
 /* mod_find_path()
@@ -202,12 +206,20 @@ int
 findmodule_byname(const char *name)
 {
 	int i;
+	char name_ext[PATH_MAX + 1];
+
+	rb_strlcpy(name_ext, name, sizeof name_ext);
+	rb_strlcat(name_ext, LT_MODULE_EXT, sizeof name_ext);
 
 	for (i = 0; i < num_mods; i++)
 	{
 		if(!irccmp(modlist[i]->name, name))
 			return i;
+
+		if(!irccmp(modlist[i]->name, name_ext))
+			return i;
 	}
+
 	return -1;
 }
 
@@ -223,7 +235,7 @@ load_all_modules(int warn)
 	DIR *system_module_dir = NULL;
 	struct dirent *ldirent = NULL;
 	char module_fq_name[PATH_MAX + 1];
-	int len;
+	size_t module_ext_len = strlen(LT_MODULE_EXT);
 
 	modules_init();
 
@@ -231,20 +243,22 @@ load_all_modules(int warn)
 
 	max_mods = MODS_INCREMENT;
 
-	system_module_dir = opendir(AUTOMODPATH);
+	system_module_dir = opendir(ircd_paths[IRCD_PATH_AUTOLOAD_MODULES]);
 
 	if(system_module_dir == NULL)
 	{
-		ilog(L_MAIN, "Could not load modules from %s: %s", AUTOMODPATH, strerror(errno));
+		ilog(L_MAIN, "Could not load modules from %s: %s", ircd_paths[IRCD_PATH_AUTOLOAD_MODULES], strerror(errno));
 		return;
 	}
 
 	while ((ldirent = readdir(system_module_dir)) != NULL)
 	{
+		size_t len;
+
 		len = strlen(ldirent->d_name);
-		if((len > 3) && !strcmp(ldirent->d_name+len-3, ".la"))
+		if(len > module_ext_len && !strcasecmp(ldirent->d_name + (len - module_ext_len), LT_MODULE_EXT))
 		{
-			(void) snprintf(module_fq_name, sizeof(module_fq_name), "%s/%s", AUTOMODPATH, ldirent->d_name);
+			(void) snprintf(module_fq_name, sizeof(module_fq_name), "%s%c%s", ircd_paths[IRCD_PATH_AUTOLOAD_MODULES], RB_PATH_SEPARATOR, ldirent->d_name);
 			(void) load_a_module(module_fq_name, warn, MAPI_ORIGIN_CORE, 0);
 		}
 
@@ -267,14 +281,14 @@ load_core_modules(int warn)
 
 	for (i = 0; core_module_table[i]; i++)
 	{
-		snprintf(module_name, sizeof(module_name), "%s/%s%s", MODPATH,
-			    core_module_table[i], ".la");
+		snprintf(module_name, sizeof(module_name), "%s%c%s%s", ircd_paths[IRCD_PATH_MODULES], RB_PATH_SEPARATOR,
+			    core_module_table[i], LT_MODULE_EXT);
 
 		if(load_a_module(module_name, warn, MAPI_ORIGIN_CORE, 1) == -1)
 		{
 			ilog(L_MAIN,
-			     "Error loading core module %s%s: terminating ircd",
-			     core_module_table[i], ".la");
+			     "Error loading core module %s: terminating ircd",
+			     core_module_table[i]);
 			exit(0);
 		}
 	}
@@ -292,7 +306,6 @@ load_one_module(const char *path, int origin, int coremodule)
 	char modpath[PATH_MAX];
 	rb_dlink_node *pathst;
 	const char *mpath;
-
 	struct stat statbuf;
 
 	if (server_state_foreground)
@@ -308,7 +321,7 @@ load_one_module(const char *path, int origin, int coremodule)
 	{
 		mpath = pathst->data;
 
-		snprintf(modpath, sizeof(modpath), "%s/%s", mpath, path);
+		snprintf(modpath, sizeof(modpath), "%s/%s%s", mpath, path, LT_MODULE_EXT);
 		if((strstr(modpath, "../") == NULL) && (strstr(modpath, "/..") == NULL))
 		{
 			if(stat(modpath, &statbuf) == 0)
@@ -809,7 +822,7 @@ load_a_module(const char *path, int warn, int origin, int core)
 
 	mod_basename = rb_basename(path);
 
-	tmpptr = lt_dlopen(path);
+	tmpptr = lt_dlopenext(path);
 
 	if(tmpptr == NULL)
 	{
@@ -821,7 +834,6 @@ load_a_module(const char *path, int warn, int origin, int core)
 		rb_free(mod_basename);
 		return -1;
 	}
-
 
 	/*
 	 * _mheader is actually a struct mapi_mheader_*, but mapi_version
@@ -1027,11 +1039,11 @@ load_a_module(const char *path, int warn, int origin, int core)
 		}
 
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "Module %s [version: %s; MAPI version: %d; origin: %s; description: \"%s\"] loaded at 0x%lx",
+				     "Module %s [version: %s; MAPI version: %d; origin: %s; description: \"%s\"] loaded at %p",
 				     mod_basename, ver, MAPI_VERSION(*mapi_version), o, description,
-				     (unsigned long) tmpptr);
-		ilog(L_MAIN, "Module %s [version: %s; MAPI version: %d; origin: %s; description: \"%s\"] loaded at 0x%lx",
-		     mod_basename, ver, MAPI_VERSION(*mapi_version), o, description, (unsigned long) tmpptr);
+				     (void *) tmpptr);
+		ilog(L_MAIN, "Module %s [version: %s; MAPI version: %d; origin: %s; description: \"%s\"] loaded at %p",
+		     mod_basename, ver, MAPI_VERSION(*mapi_version), o, description, (void *) tmpptr);
 	}
 	rb_free(mod_basename);
 	return 0;

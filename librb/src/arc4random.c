@@ -1,4 +1,3 @@
-/* $Id: arc4random.c 26092 2008-09-19 15:13:52Z androsyn $ */
 /*	$$$: arc4random.c 2005/02/08 robert */
 /*	$NetBSD: arc4random.c,v 1.5.2.1 2004/03/26 22:52:50 jmc Exp $	*/
 /*	$OpenBSD: arc4random.c,v 1.6 2001/06/05 05:05:38 pvalchev Exp $	*/

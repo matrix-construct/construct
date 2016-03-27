@@ -37,16 +37,13 @@
 #include "msg.h"
 #include "hash.h"
 
-#define DNS_IDTABLE_SIZE 0x2000
-#define DNS_STATTABLE_SIZE 0x10
-
 #define DNS_HOST_IPV4		((char)'4')
 #define DNS_HOST_IPV6		((char)'6')
 #define DNS_REVERSE_IPV4	((char)'R')
 #define DNS_REVERSE_IPV6	((char)'S')
 
-static void submit_dns(uint16_t uid, char type, const char *addr);
-static void submit_dns_stat(uint16_t uid);
+static void submit_dns(uint32_t uid, char type, const char *addr);
+static void submit_dns_stat(uint32_t uid);
 
 struct dnsreq
 {
@@ -60,55 +57,24 @@ struct dnsstatreq
 	void *data;
 };
 
-static struct dnsreq querytable[DNS_IDTABLE_SIZE];
-static struct dnsstatreq stattable[DNS_STATTABLE_SIZE];
+/* These serve as a form of sparse array */
+static rb_dictionary *query_dict;
+static rb_dictionary *stat_dict;
+
 rb_dlink_list nameservers;
 
+static uint32_t query_id = 0;
+static uint32_t stat_id = 0;
 
-static uint16_t
-assign_dns_id(void)
-{
-	static uint16_t id = 1;
-	int loopcnt = 0;
-	while(1)
-	{
-		if(++loopcnt > DNS_IDTABLE_SIZE)
-			return 0;
-		if(id < DNS_IDTABLE_SIZE - 1 || id == 0)
-			id++;
-		else
-			id = 1;
-		if(querytable[id].callback == NULL)
-			break;
-	}
-	return (id);
-}
+#define ASSIGN_ID(id) (id++)
 
-static uint8_t
-assign_dns_stat_id(void)
-{
-	static uint8_t id = 1;
-	int loopcnt = 0;
-	while(1)
-	{
-		if(++loopcnt > DNS_STATTABLE_SIZE)
-			return 0;
-		if(id < DNS_STATTABLE_SIZE - 1 || id == 0)
-			id++;
-		else
-			id = 1;
-		if(stattable[id].callback == NULL)
-			break;
-	}
-	return (id);
-}
 
 static void
-handle_dns_failure(uint16_t xid)
+handle_dns_failure(uint32_t xid)
 {
-	struct dnsreq *req;
+	struct dnsreq *req = rb_dictionary_retrieve(query_dict, RB_UINT_TO_POINTER(xid));
+	s_assert(req);
 
-	req = &querytable[xid];
 	if(req->callback == NULL)
 		return;
 
@@ -118,47 +84,49 @@ handle_dns_failure(uint16_t xid)
 }
 
 static void
-handle_dns_stat_failure(uint8_t xid)
+handle_dns_stat_failure(uint32_t xid)
 {
-	struct dnsstatreq *req;
-	const char *err[] = { "Unknown failure" };
+	struct dnsstatreq *req = rb_dictionary_retrieve(stat_dict, RB_UINT_TO_POINTER(xid));
+	s_assert(req);
 
-	req = &stattable[xid];
 	if(req->callback == NULL)
 		return;
 
-	req->callback(1, err, 2, req->data);
+	req->callback(1, NULL, 2, req->data);
+	req->callback = NULL;
+	req->data = NULL;
+}
 
+
+void
+cancel_lookup(uint32_t xid)
+{
+	struct dnsreq *req = rb_dictionary_retrieve(query_dict, RB_UINT_TO_POINTER(xid));
+	s_assert(req);
 	req->callback = NULL;
 	req->data = NULL;
 }
 
 void
-cancel_lookup(uint16_t xid)
+cancel_dns_stats(uint32_t xid)
 {
-	querytable[xid].callback = NULL;
-	querytable[xid].data = NULL;
+	struct dnsstatreq *req = rb_dictionary_retrieve(stat_dict, RB_UINT_TO_POINTER(xid));
+	s_assert(req);
+	req->callback = NULL;
+	req->data = NULL;
 }
 
-void
-cancel_dns_stats(uint16_t xid)
-{
-	stattable[xid].callback = NULL;
-	stattable[xid].data = NULL;
-}
 
-uint16_t
+uint32_t
 lookup_hostname(const char *hostname, int aftype, DNSCB callback, void *data)
 {
-	struct dnsreq *req;
+	struct dnsreq *req = rb_malloc(sizeof(struct dnsreq));
 	int aft;
-	uint16_t nid;
-	check_authd();
-	nid = assign_dns_id();
-	if((nid = assign_dns_id()) == 0)
-		return 0;
+	uint32_t rid = ASSIGN_ID(query_id);
 
-	req = &querytable[nid];
+	check_authd();
+
+	rb_dictionary_add(query_dict, RB_UINT_TO_POINTER(rid), req);
 
 	req->callback = callback;
 	req->data = data;
@@ -170,22 +138,20 @@ lookup_hostname(const char *hostname, int aftype, DNSCB callback, void *data)
 #endif
 		aft = 4;
 
-	submit_dns(nid, aft == 4 ? DNS_HOST_IPV4 : DNS_HOST_IPV6, hostname);
-	return (nid);
+	submit_dns(rid, aft == 4 ? DNS_HOST_IPV4 : DNS_HOST_IPV6, hostname);
+	return (rid);
 }
 
-uint16_t
+uint32_t
 lookup_ip(const char *addr, int aftype, DNSCB callback, void *data)
 {
-	struct dnsreq *req;
+	struct dnsreq *req = rb_malloc(sizeof(struct dnsreq));
 	int aft;
-	uint16_t nid;
+	uint32_t rid = ASSIGN_ID(query_id);
+
 	check_authd();
 
-	if((nid = assign_dns_id()) == 0)
-		return 0;
-
-	req = &querytable[nid];
+	rb_dictionary_add(query_dict, RB_UINT_TO_POINTER(rid), req);
 
 	req->callback = callback;
 	req->data = data;
@@ -197,41 +163,45 @@ lookup_ip(const char *addr, int aftype, DNSCB callback, void *data)
 #endif
 		aft = 4;
 
-	submit_dns(nid, aft == 4 ? DNS_REVERSE_IPV4 : DNS_REVERSE_IPV6, addr);
-	return (nid);
+	submit_dns(rid, aft == 4 ? DNS_REVERSE_IPV4 : DNS_REVERSE_IPV6, addr);
+	return (rid);
 }
 
-uint8_t
+uint32_t
 get_nameservers(DNSLISTCB callback, void *data)
 {
-	struct dnsstatreq *req;
-	uint8_t nid;
+	struct dnsstatreq *req = rb_malloc(sizeof(struct dnsstatreq));
+	uint32_t qid = ASSIGN_ID(stat_id);
+
 	check_authd();
 
-	if((nid = assign_dns_stat_id()) == 0)
-		return 0;
+	rb_dictionary_add(stat_dict, RB_UINT_TO_POINTER(qid), req);
 
-	req = &stattable[nid];
 	req->callback = callback;
 	req->data = data;
 
-	submit_dns_stat(nid);
-	return (nid);
+	submit_dns_stat(qid);
+	return (qid);
 }
+
 
 void
 dns_results_callback(const char *callid, const char *status, const char *type, const char *results)
 {
 	struct dnsreq *req;
-	uint16_t nid;
+	uint32_t rid;
 	int st;
 	int aft;
-	long lnid = strtol(callid, NULL, 16);
+	long lrid = strtol(callid, NULL, 16);
 
-	if(lnid > DNS_IDTABLE_SIZE || lnid == 0)
+	if(lrid > UINT32_MAX)
 		return;
-	nid = (uint16_t)lnid;
-	req = &querytable[nid];
+
+	rid = (uint32_t)lrid;
+	req = rb_dictionary_retrieve(query_dict, RB_UINT_TO_POINTER(rid));
+	if(req == NULL)
+		return;
+
 	st = (*status == 'O');
 	aft = *type == '6' || *type == 'S' ? 6 : 4;
 	if(req->callback == NULL)
@@ -248,22 +218,26 @@ dns_results_callback(const char *callid, const char *status, const char *type, c
 		aft = AF_INET;
 
 	req->callback(results, st, aft, req->data);
-	req->callback = NULL;
-	req->data = NULL;
+
+	rb_free(req);
+	rb_dictionary_delete(query_dict, RB_UINT_TO_POINTER(rid));
 }
 
 void
 dns_stats_results_callback(const char *callid, const char *status, int resc, const char *resv[])
 {
 	struct dnsstatreq *req;
-	uint8_t nid;
-	int st, i;
-	long lnid = strtol(callid, NULL, 16);
+	uint32_t qid;
+	int st;
+	long lqid = strtol(callid, NULL, 16);
 
-	if(lnid > DNS_STATTABLE_SIZE || lnid == 0)
+	if(lqid > UINT32_MAX)
 		return;
-	nid = (uint8_t)lnid;
-	req = &stattable[nid];
+
+	qid = (uint32_t)lqid;
+	req = rb_dictionary_retrieve(stat_dict, RB_UINT_TO_POINTER(qid));
+
+	s_assert(req);
 
 	if(req->callback == NULL)
 	{
@@ -286,14 +260,14 @@ dns_stats_results_callback(const char *callid, const char *status, int resc, con
 	}
 
 	/* Query complete */
-	req->callback(resc, resv, st, stattable[nid].data);
+	req->callback(resc, resv, st, req->data);
 
-	req->data = NULL;
-	req->callback = NULL;
+	rb_free(req);
+	rb_dictionary_delete(stat_dict, RB_UINT_TO_POINTER(qid));
 }
 
 static void
-get_nameservers_cb(int resc, const char *resv[], int status, void *data)
+stats_results_callback(int resc, const char *resv[], int status, void *data)
 {
 	if(status == 0)
 	{
@@ -316,28 +290,26 @@ get_nameservers_cb(int resc, const char *resv[], int status, void *data)
 	}
 }
 
+
 void
-init_nameserver_cache(void)
+init_dns(void)
 {
-	(void)get_nameservers(get_nameservers_cb, NULL);
+	query_dict = rb_dictionary_create("dns queries", rb_uint32cmp);
+	stat_dict = rb_dictionary_create("dns stat queries", rb_uint32cmp);
+	(void)get_nameservers(stats_results_callback, NULL);
 }
 
-bool
+void
 reload_nameservers(void)
 {
-	if(authd_helper == NULL)
-	{
-		/* Shit */
-		return false;
-	}
-	rb_helper_write(authd_helper, "H D");
-	init_nameserver_cache();
-	return true;
+	check_authd();
+	rb_helper_write(authd_helper, "R D");
+	(void)get_nameservers(stats_results_callback, NULL);
 }
 
 
 static void
-submit_dns(uint16_t nid, char type, const char *addr)
+submit_dns(uint32_t nid, char type, const char *addr)
 {
 	if(authd_helper == NULL)
 	{
@@ -348,7 +320,7 @@ submit_dns(uint16_t nid, char type, const char *addr)
 }
 
 static void
-submit_dns_stat(uint16_t nid)
+submit_dns_stat(uint32_t nid)
 {
 	if(authd_helper == NULL)
 	{

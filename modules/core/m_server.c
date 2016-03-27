@@ -24,7 +24,6 @@
 
 #include "stdinc.h"
 #include "client.h"		/* client struct */
-#include "common.h"
 #include "hash.h"		/* add_to_client_hash */
 #include "match.h"
 #include "ircd.h"		/* me */

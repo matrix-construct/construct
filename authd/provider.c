@@ -18,16 +18,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* So the basic design here is to have "authentication providers" that do
- * things like query ident and blacklists and even open proxies.
+/* The basic design here is to have "authentication providers" that do things
+ * like query ident and blacklists and even open proxies.
  *
- * Providers are registered statically in the struct auth_providers array. You will
- * probably want to add an item to the provider_t enum also.
+ * Providers are registered in the auth_providers linked list. It is planned to
+ * use a bitmap to store provider ID's later.
  *
- * Providers can either return failure immediately, immediate acceptance, or
- * do work in the background (calling set_provider to signal this).
+ * Providers can either return failure immediately, immediate acceptance, or do
+ * work in the background (calling set_provider to signal this).
  *
- * It is up to providers to keep their own state on clients if they need to.
+ * Provider-specific data for each client can be kept in an index of the data
+ * struct member (using the provider's ID).
  *
  * All providers must implement at a minimum a perform_provider function. You
  * don't have to implement the others if you don't need them.
@@ -39,53 +40,82 @@
  * should call provider_done. Do NOT call this if you have accepted or rejected
  * the client.
  *
+ * Eventually, stuff like *:line handling will be moved here, but that means we
+ * have to talk to bandb directly first.
+ *
  * --Elizafox, 9 March 2016
  */
 
+#include "rb_dictionary.h"
 #include "authd.h"
 #include "provider.h"
+#include "notice.h"
 
 rb_dlink_list auth_providers;
 
 /* Clients waiting */
-struct auth_client auth_clients[MAX_CLIENTS];
+rb_dictionary *auth_clients;
 
 /* Load a provider */
-void load_provider(struct auth_provider *provider)
+void
+load_provider(struct auth_provider *provider)
 {
+	if(rb_dlink_list_length(&auth_providers) >= MAX_PROVIDERS)
+	{
+		warn_opers(L_CRIT, "Exceeded maximum level of authd providers (%d max)", MAX_PROVIDERS);
+		return;
+	}
+
+	if(provider->opt_handlers != NULL)
+	{
+		struct auth_opts_handler *handler;
+
+		for(handler = provider->opt_handlers; handler->option != NULL; handler++)
+			rb_dictionary_add(authd_option_handlers, handler->option, handler);
+	}
+
 	provider->init();
 	rb_dlinkAdd(provider, &provider->node, &auth_providers);
 }
 
-void unload_provider(struct auth_provider *provider)
+void
+unload_provider(struct auth_provider *provider)
 {
+	if(provider->opt_handlers != NULL)
+	{
+		struct auth_opts_handler *handler;
+
+		for(handler = provider->opt_handlers; handler->option != NULL; handler++)
+			rb_dictionary_delete(authd_option_handlers, handler->option);
+	}
 	provider->destroy();
 	rb_dlinkDelete(&provider->node, &auth_providers);
 }
 
 /* Initalise all providers */
-void init_providers(void)
+void
+init_providers(void)
 {
+	auth_clients = rb_dictionary_create("pending auth clients", rb_uint32cmp);
 	load_provider(&rdns_provider);
 	load_provider(&ident_provider);
+	load_provider(&blacklist_provider);
 }
 
 /* Terminate all providers */
-void destroy_providers(void)
+void
+destroy_providers(void)
 {
 	rb_dlink_node *ptr;
+	rb_dictionary_iter iter;
+	struct auth_client *auth;
 	struct auth_provider *provider;
 
 	/* Cancel outstanding connections */
-	for (size_t i = 0; i < MAX_CLIENTS; i++)
+	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
-		if(auth_clients[i].cid)
-		{
-			/* TBD - is this the right thing?
-			 * (NOTE - this error message is designed for morons) */
-			reject_client(&auth_clients[i], 0, true,
-					"IRC server reloading... try reconnecting in a few seconds");
-		}
+		/* TBD - is this the right thing? */
+		reject_client(auth, 0, "Authentication system is down... try reconnecting in a few seconds");
 	}
 
 	RB_DLINK_FOREACH(ptr, auth_providers.head)
@@ -98,7 +128,8 @@ void destroy_providers(void)
 }
 
 /* Cancel outstanding providers for a client */
-void cancel_providers(struct auth_client *auth)
+void
+cancel_providers(struct auth_client *auth)
 {
 	rb_dlink_node *ptr;
 	struct auth_provider *provider;
@@ -107,24 +138,30 @@ void cancel_providers(struct auth_client *auth)
 	{
 		provider = ptr->data;
 
-		if(provider->cancel && is_provider(auth, provider->id))
+		if(provider->cancel && is_provider_on(auth, provider->id))
 			/* Cancel if required */
 			provider->cancel(auth);
 	}
+
+	rb_dictionary_delete(auth_clients, RB_UINT_TO_POINTER(auth->cid));
+	rb_free(auth);
 }
 
-/* Provider is done */
-void provider_done(struct auth_client *auth, provider_t id)
+/* Provider is done - WARNING: do not use auth instance after calling! */
+void
+provider_done(struct auth_client *auth, provider_t id)
 {
 	rb_dlink_node *ptr;
 	struct auth_provider *provider;
 
-	unset_provider(auth, id);
+	set_provider_off(auth, id);
+	set_provider_done(auth, id);
 
 	if(!auth->providers)
 	{
-		/* No more providers, done */
-		accept_client(auth, 0);
+		if(!auth->providers_starting)
+			/* Only do this when there are no providers left */
+			accept_client(auth, 0);
 		return;
 	}
 
@@ -132,16 +169,16 @@ void provider_done(struct auth_client *auth, provider_t id)
 	{
 		provider = ptr->data;
 
-		if(provider->completed && is_provider(auth, provider->id))
+		if(provider->completed && is_provider_on(auth, provider->id))
 			/* Notify pending clients who asked for it */
 			provider->completed(auth, id);
 	}
 }
 
-/* Reject a client, cancel outstanding providers if any if hard set to true */
-void reject_client(struct auth_client *auth, provider_t id, bool hard, const char *reason)
+/* Reject a client - WARNING: do not use auth instance after calling! */
+void
+reject_client(struct auth_client *auth, provider_t id, const char *reason)
 {
-	uint16_t cid = auth->cid;
 	char reject;
 
 	switch(id)
@@ -155,82 +192,86 @@ void reject_client(struct auth_client *auth, provider_t id, bool hard, const cha
 	case PROVIDER_BLACKLIST:
 		reject = 'B';
 		break;
-	case PROVIDER_NULL:
 	default:
 		reject = 'N';
 		break;
 	}
 
-	rb_helper_write(authd_helper, "R %x %c :%s", auth->cid, reject, reason);
+	/* We send back username and hostname in case ircd wants to overrule our decision.
+	 * In the future this may not be the case.
+	 * --Elizafox
+	 */
+	rb_helper_write(authd_helper, "R %x %c %s %s :%s", auth->cid, reject, auth->username, auth->hostname, reason);
 
-	unset_provider(auth, id);
-
-	if(hard && auth->providers)
-	{
-		cancel_providers(auth);
-		memset(&auth_clients[cid], 0, sizeof(struct auth_client));
-	}
+	set_provider_off(auth, id);
+	cancel_providers(auth);
 }
 
-/* Accept a client, cancel outstanding providers if any */
-void accept_client(struct auth_client *auth, provider_t id)
+/* Accept a client, cancel outstanding providers if any - WARNING: do nto use auth instance after calling! */
+void
+accept_client(struct auth_client *auth, provider_t id)
 {
-	uint16_t cid = auth->cid;
+	uint32_t cid = auth->cid;
 
 	rb_helper_write(authd_helper, "A %x %s %s", auth->cid, auth->username, auth->hostname);
 
-	unset_provider(auth, id);
-
-	if(auth->providers)
-		cancel_providers(auth);
-
-	memset(&auth_clients[cid], 0, sizeof(struct auth_client));
-}
-
-/* Send a notice to a client */
-void notice_client(struct auth_client *auth, const char *notice)
-{
-	rb_helper_write(authd_helper, "N %x :%s", auth->cid, notice);
+	set_provider_off(auth, id);
+	cancel_providers(auth);
 }
 
 /* Begin authenticating user */
-static void start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_ip, const char *c_port)
+static void
+start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_ip, const char *c_port)
 {
-	rb_dlink_node *ptr;
 	struct auth_provider *provider;
-	struct auth_client *auth;
+	struct auth_client *auth = rb_malloc(sizeof(struct auth_client));
 	long lcid = strtol(cid, NULL, 16);
+	rb_dlink_node *ptr;
 
-	if(lcid >= MAX_CLIENTS)
+	if(lcid >= UINT32_MAX)
 		return;
 
-	auth = &auth_clients[lcid];
-	if(auth->cid != 0)
-		/* Shouldn't get here */
+	auth->cid = (uint32_t)lcid;
+
+	if(rb_dictionary_find(auth_clients, RB_UINT_TO_POINTER(auth->cid)) == NULL)
+		rb_dictionary_add(auth_clients, RB_UINT_TO_POINTER(auth->cid), auth);
+	else
+	{
+		warn_opers(L_CRIT, "BUG: duplicate client added via start_auth: %x", auth->cid);
+		rb_free(auth);
 		return;
+	}
 
-	auth->cid = (uint16_t)lcid;
+	rb_strlcpy(auth->l_ip, l_ip, sizeof(auth->l_ip));
+	auth->l_port = (uint16_t)atoi(l_port);	/* should be safe */
+	(void) rb_inet_pton_sock(l_ip, (struct sockaddr *)&auth->l_addr);
 
-	(void)rb_inet_pton_sock(l_ip, (struct sockaddr *)&auth->l_addr);
+	rb_strlcpy(auth->c_ip, c_ip, sizeof(auth->c_ip));
+	auth->c_port = (uint16_t)atoi(c_port);
+	(void) rb_inet_pton_sock(c_ip, (struct sockaddr *)&auth->c_addr);
+
 #ifdef RB_IPV6
 	if(GET_SS_FAMILY(&auth->l_addr) == AF_INET6)
-		((struct sockaddr_in6 *)&auth->l_addr)->sin6_port = htons(atoi(l_ip));
+		((struct sockaddr_in6 *)&auth->l_addr)->sin6_port = htons(auth->l_port);
 	else
 #endif
-		((struct sockaddr_in *)&auth->l_addr)->sin_port = htons(atoi(l_ip));
+		((struct sockaddr_in *)&auth->l_addr)->sin_port = htons(auth->l_port);
 
-	(void)rb_inet_pton_sock(c_ip, (struct sockaddr *)&auth->c_addr);
 #ifdef RB_IPV6
 	if(GET_SS_FAMILY(&auth->c_addr) == AF_INET6)
-		((struct sockaddr_in6 *)&auth->c_addr)->sin6_port = htons(atoi(c_ip));
+		((struct sockaddr_in6 *)&auth->c_addr)->sin6_port = htons(auth->c_port);
 	else
 #endif
-		((struct sockaddr_in *)&auth->c_addr)->sin_port = htons(atoi(c_ip));
+		((struct sockaddr_in *)&auth->c_addr)->sin_port = htons(auth->c_port);
 
+	memset(auth->data, 0, sizeof(auth->data));
 
+	auth->providers_starting = true;
 	RB_DLINK_FOREACH(ptr, auth_providers.head)
 	{
 		provider = ptr->data;
+
+		lrb_assert(provider->start != NULL);
 
 		/* Execute providers */
 		if(!provider->start(auth))
@@ -240,6 +281,7 @@ static void start_auth(const char *cid, const char *l_ip, const char *l_port, co
 			return;
 		}
 	}
+	auth->providers_starting = false;
 
 	/* If no providers are running, accept the client */
 	if(!auth->providers)
@@ -247,10 +289,41 @@ static void start_auth(const char *cid, const char *l_ip, const char *l_port, co
 }
 
 /* Callback for the initiation */
-void handle_new_connection(int parc, char *parv[])
+void
+handle_new_connection(int parc, char *parv[])
 {
-	if(parc < 7)
+	if(parc < 6)
+	{
+		warn_opers(L_CRIT, "BUG: received too few params for new connection (6 expected, got %d)", parc);
 		return;
+	}
 
 	start_auth(parv[1], parv[2], parv[3], parv[4], parv[5]);
+}
+
+void
+handle_cancel_connection(int parc, char *parv[])
+{
+	struct auth_client *auth;
+	long lcid;
+
+	if(parc < 2)
+	{
+		warn_opers(L_CRIT, "BUG: received too few params for new connection (2 expected, got %d)", parc);
+		return;
+	}
+
+	if((lcid = strtol(parv[1], NULL, 16)) > UINT32_MAX)
+	{
+		warn_opers(L_CRIT, "BUG: got a request to cancel a connection that can't exist: %lx", lcid);
+		return;
+	}
+
+	if((auth = rb_dictionary_retrieve(auth_clients, RB_UINT_TO_POINTER((uint32_t)lcid))) == NULL)
+	{
+		warn_opers(L_CRIT, "BUG: tried to cancel nonexistent connection %lx", lcid);
+		return;
+	}
+
+	cancel_providers(auth);
 }

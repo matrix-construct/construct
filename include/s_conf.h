@@ -33,7 +33,6 @@
 #include "ircd_defs.h"
 #include "class.h"
 #include "client.h"
-#include "common.h"
 
 struct Client;
 struct DNSReply;
@@ -373,8 +372,8 @@ extern void add_temp_dline(struct ConfItem *);
 extern void report_temp_klines(struct Client *);
 extern void show_temp_klines(struct Client *, rb_dlink_list *);
 
-extern int rehash(int);
-extern void rehash_bans(int);
+extern bool rehash(bool);
+extern void rehash_bans(void);
 
 extern int conf_add_server(struct ConfItem *, int);
 extern void conf_add_class_to_conf(struct ConfItem *);
@@ -389,11 +388,11 @@ extern int yylex(void);
 
 extern unsigned long cidr_to_bitmask[];
 
-extern char conffilebuf[IRCD_BUFSIZE + 1];
+extern char conffilebuf[BUFSIZE + 1];
 extern int lineno;
 
 #define NOT_AUTHORISED  (-1)
-#define SOCKET_ERROR    (-2)
+#define I_SOCKET_ERROR  (-2)
 #define I_LINE_FULL     (-3)
 #define BANNED_CLIENT   (-4)
 #define TOO_MANY_LOCAL	(-6)

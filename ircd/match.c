@@ -18,7 +18,7 @@
  *
  */
 #include "stdinc.h"
-#include "config.h"
+#include "defaults.h"
 #include "client.h"
 #include "ircd.h"
 #include "match.h"
@@ -308,13 +308,13 @@ match_esc(const char *mask, const char *name)
 	return 0;
 }
 
-int comp_with_mask(void *addr, void *dest, u_int mask)
+int comp_with_mask(void *addr, void *dest, unsigned int mask)
 {
 	if (memcmp(addr, dest, mask / 8) == 0)
 	{
 		int n = mask / 8;
 		int m = ((-1) << (8 - (mask % 8)));
-		if (mask % 8 == 0 || (((u_char *) addr)[n] & m) == (((u_char *) dest)[n] & m))
+		if (mask % 8 == 0 || (((unsigned char *) addr)[n] & m) == (((unsigned char *) dest)[n] & m))
 		{
 			return (1);
 		}
@@ -322,7 +322,7 @@ int comp_with_mask(void *addr, void *dest, u_int mask)
 	return (0);
 }
 
-int comp_with_mask_sock(struct sockaddr *addr, struct sockaddr *dest, u_int mask)
+int comp_with_mask_sock(struct sockaddr *addr, struct sockaddr *dest, unsigned int mask)
 {
 	void *iaddr = NULL;
 	void *idest = NULL;

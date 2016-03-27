@@ -22,7 +22,6 @@
  */
 
 #include "rb_lib.h"
-#include "config.h"		/* Gotta pull in the autoconf stuff */
 #include "ircd_defs.h"  /* Needed for some reasons here -- dwr */
 
 /* AIX requires this to be the first thing in the file.  */
@@ -93,7 +92,6 @@ typedef bool _Bool;
 #include <stdio.h>
 #include <time.h>
 #include <fcntl.h>
-#include <netdb.h>
 #include <stdarg.h>
 #include <signal.h>
 #include <dirent.h>
@@ -113,16 +111,11 @@ typedef bool _Bool;
 #endif
 
 
-#include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
 
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>

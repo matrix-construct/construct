@@ -124,10 +124,6 @@ confopts(void)
 	if(ConfigChannel.use_except)
 		*p++ = 'e';
 
-	/* might wanna hide this :P */
-	if(ServerInfo.hub)
-		*p++ = 'H';
-
 	if(ConfigChannel.use_invex)
 		*p++ = 'I';
 
@@ -139,9 +135,6 @@ confopts(void)
 
 	if(opers_see_all_users || ConfigFileEntry.operspy_dont_care_user_info)
 		*p++ = 'S';
-#ifdef IGNORE_BOGUS_TS
-	*p++ = 'T';
-#endif
 
 #ifdef HAVE_LIBZ
 	*p++ = 'Z';

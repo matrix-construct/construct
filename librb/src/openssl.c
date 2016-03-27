@@ -20,7 +20,6 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: commio.c 24808 2008-01-02 08:17:05Z androsyn $
  */
 
 #include <librb_config.h>
@@ -359,9 +358,10 @@ rb_init_ssl(void)
 	SSL_CTX_set_session_cache_mode(ssl_server_ctx, SSL_SESS_CACHE_OFF);
 	SSL_CTX_set_cipher_list(ssl_server_ctx, librb_ciphers);
 
-	/* Set ECDHE on OpenSSL 1.00+, but make sure it's actually available because redhat are dicks
-	   and bastardise their OpenSSL for stupid reasons... */
-	#if (OPENSSL_VERSION_NUMBER >= 0x10000000L) && defined(NID_secp384r1)
+	/* Set ECDHE on OpenSSL 1.00+, but make sure it's actually available
+	 * (it's not by default on Solaris or Red Hat... fuck Red Hat and Oracle)
+	 */
+	#if (OPENSSL_VERSION_NUMBER >= 0x10000000L) && !defined(OPENSSL_NO_ECDH)
 		EC_KEY *key = EC_KEY_new_by_curve_name(NID_secp384r1);
 		if (key) {
 			SSL_CTX_set_tmp_ecdh(ssl_server_ctx, key);

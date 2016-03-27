@@ -20,7 +20,6 @@
 
 #include "stdinc.h"
 #include "client.h"
-#include "common.h"
 #include "match.h"
 #include "hash.h"
 #include "ircd.h"
@@ -75,7 +74,7 @@ mr_starttls(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 		return;
 	}
 
-	if (!ssl_ok || !get_ssld_count())
+	if (!ircd_ssl_ok || !get_ssld_count())
 	{
 		sendto_one_numeric(client_p, ERR_STARTTLS, form_str(ERR_STARTTLS), "TLS is not configured");
 		return;
@@ -96,7 +95,7 @@ mr_starttls(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 	sendto_one_numeric(client_p, RPL_STARTTLS, form_str(RPL_STARTTLS));
 	send_queued(client_p);
 
-	ctl = start_ssld_accept(client_p->localClient->F, F[1], rb_get_fd(F[0]));
+	ctl = start_ssld_accept(client_p->localClient->F, F[1], connid_get(client_p));
 	if (ctl != NULL)
 	{
 		client_p->localClient->F = F[0];

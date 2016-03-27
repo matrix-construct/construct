@@ -24,7 +24,6 @@
 
 #include "stdinc.h"
 #include "client.h"
-#include "common.h"
 #include "match.h"
 #include "ircd.h"
 #include "numeric.h"
@@ -62,7 +61,7 @@ struct scache_entry
 	time_t last_split;
 };
 
-static struct rb_radixtree *scache_tree = NULL;
+static rb_radixtree *scache_tree = NULL;
 
 void
 clear_scache_hash_table(void)
@@ -134,7 +133,7 @@ void
 scache_send_flattened_links(struct Client *source_p)
 {
 	struct scache_entry *scache_ptr;
-	struct rb_radixtree_iteration_state iter;
+	rb_radixtree_iteration_state iter;
 	int show;
 
 	RB_RADIXTREE_FOREACH(scache_ptr, &iter, scache_tree)
@@ -170,7 +169,7 @@ void
 scache_send_missing(struct Client *source_p)
 {
 	struct scache_entry *scache_ptr;
-	struct rb_radixtree_iteration_state iter;
+	rb_radixtree_iteration_state iter;
 
 	RB_RADIXTREE_FOREACH(scache_ptr, &iter, scache_tree)
 	{
@@ -191,7 +190,7 @@ void
 count_scache(size_t * number_servers_cached, size_t * mem_servers_cached)
 {
 	struct scache_entry *scache_ptr;
-	struct rb_radixtree_iteration_state iter;
+	rb_radixtree_iteration_state iter;
 
 	*number_servers_cached = 0;
 	*mem_servers_cached = 0;

@@ -32,7 +32,6 @@
 
 #include "stdinc.h"
 #include "ircd_defs.h"
-#include "common.h"
 #include "s_conf.h"
 #include "s_newconf.h"
 #include "client.h"
@@ -174,7 +173,7 @@ free_remote_conf(struct remote_conf *remote_p)
 	rb_free(remote_p);
 }
 
-int
+bool
 find_shared_conf(const char *username, const char *host,
 		const char *server, int flags)
 {
@@ -190,13 +189,13 @@ find_shared_conf(const char *username, const char *host,
 		   match(shared_p->server, server))
 		{
 			if(shared_p->flags & flags)
-				return YES;
+				return true;
 			else
-				return NO;
+				return false;
 		}
 	}
 
-	return NO;
+	return false;
 }
 
 void
@@ -305,7 +304,7 @@ find_oper_conf(const char *username, const char *host, const char *locip, const 
 
 		if(parse_netmask(addr, &ip, &bits) != HM_HOST)
 		{
-			if(ip.ss_family == cip.ss_family &&
+			if(GET_SS_FAMILY(&ip) == GET_SS_FAMILY(&cip) &&
 			   comp_with_mask_sock((struct sockaddr *)&ip, (struct sockaddr *)&cip, bits))
 				return oper_p;
 		}
@@ -685,8 +684,7 @@ expire_temp_rxlines(void *unused)
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
-	int i;
-	struct rb_radixtree_iteration_state state;
+	rb_radixtree_iteration_state state;
 
 	RB_RADIXTREE_FOREACH(aconf, &state, resv_tree)
 	{

@@ -27,7 +27,6 @@
 #include "s_conf.h"
 #include "channel.h"
 #include "client.h"
-#include "common.h"
 #include "hash.h"
 #include "match.h"
 #include "ircd.h"
@@ -40,14 +39,13 @@
 #include "rb_dictionary.h"
 #include "rb_radixtree.h"
 
-struct Dictionary *client_connid_tree = NULL;
-struct Dictionary *client_zconnid_tree = NULL;
-struct rb_radixtree *client_id_tree = NULL;
-struct rb_radixtree *client_name_tree = NULL;
+rb_dictionary *client_connid_tree = NULL;
+rb_radixtree *client_id_tree = NULL;
+rb_radixtree *client_name_tree = NULL;
 
-struct rb_radixtree *channel_tree = NULL;
-struct rb_radixtree *resv_tree = NULL;
-struct rb_radixtree *hostname_tree = NULL;
+rb_radixtree *channel_tree = NULL;
+rb_radixtree *resv_tree = NULL;
+rb_radixtree *hostname_tree = NULL;
 
 /*
  * look in whowas.c for the missing ...[WW_MAX]; entry
@@ -61,7 +59,6 @@ void
 init_hash(void)
 {
 	client_connid_tree = rb_dictionary_create("client connid", rb_uint32cmp);
-	client_zconnid_tree = rb_dictionary_create("client zconnid", rb_uint32cmp);
 	client_id_tree = rb_radixtree_create("client id", NULL);
 	client_name_tree = rb_radixtree_create("client name", irccasecanon);
 
@@ -71,10 +68,10 @@ init_hash(void)
 	hostname_tree = rb_radixtree_create("hostname", irccasecanon);
 }
 
-u_int32_t
+uint32_t
 fnv_hash_upper(const unsigned char *s, int bits)
 {
- 	u_int32_t h = FNV1_32_INIT;
+	uint32_t h = FNV1_32_INIT;
 
 	while (*s)
 	{
@@ -86,10 +83,10 @@ fnv_hash_upper(const unsigned char *s, int bits)
 	return h;
 }
 
-u_int32_t
+uint32_t
 fnv_hash(const unsigned char *s, int bits)
 {
- 	u_int32_t h = FNV1_32_INIT;
+	uint32_t h = FNV1_32_INIT;
 
 	while (*s)
 	{
@@ -101,10 +98,10 @@ fnv_hash(const unsigned char *s, int bits)
 	return h;
 }
 
-u_int32_t
+uint32_t
 fnv_hash_len(const unsigned char *s, int bits, int len)
 {
- 	u_int32_t h = FNV1_32_INIT;
+	uint32_t h = FNV1_32_INIT;
 	const unsigned char *x = s + len;
 	while (*s && s < x)
 	{
@@ -116,10 +113,10 @@ fnv_hash_len(const unsigned char *s, int bits, int len)
 	return h;
 }
 
-u_int32_t
+uint32_t
 fnv_hash_upper_len(const unsigned char *s, int bits, int len)
 {
- 	u_int32_t h = FNV1_32_INIT;
+	uint32_t h = FNV1_32_INIT;
 	const unsigned char *x = s + len;
 	while (*s && s < x)
 	{
@@ -480,7 +477,7 @@ void
 clear_resv_hash(void)
 {
 	struct ConfItem *aconf;
-	struct rb_radixtree_iteration_state iter;
+	rb_radixtree_iteration_state iter;
 
 	RB_RADIXTREE_FOREACH(aconf, &iter, resv_tree)
 	{
@@ -494,41 +491,19 @@ clear_resv_hash(void)
 }
 
 void
-add_to_zconnid_hash(struct Client *client_p)
+add_to_cli_connid_hash(struct Client *client_p, uint32_t id)
 {
-	rb_dictionary_add(client_zconnid_tree, RB_UINT_TO_POINTER(client_p->localClient->zconnid), client_p);
+	rb_dictionary_add(client_connid_tree, RB_UINT_TO_POINTER(id), client_p);
 }
 
 void
-del_from_zconnid_hash(struct Client *client_p)
+del_from_cli_connid_hash(uint32_t id)
 {
-	rb_dictionary_delete(client_zconnid_tree, RB_UINT_TO_POINTER(client_p->localClient->zconnid));
-}
-
-void
-add_to_cli_connid_hash(struct Client *client_p)
-{
-	rb_dictionary_add(client_connid_tree, RB_UINT_TO_POINTER(client_p->localClient->connid), client_p);
-}
-
-void
-del_from_cli_connid_hash(struct Client *client_p)
-{
-	rb_dictionary_delete(client_connid_tree, RB_UINT_TO_POINTER(client_p->localClient->connid));
+	rb_dictionary_delete(client_connid_tree, RB_UINT_TO_POINTER(id));
 }
 
 struct Client *
 find_cli_connid_hash(uint32_t connid)
 {
-	struct Client *target_p;
-
-	target_p = rb_dictionary_retrieve(client_connid_tree, RB_UINT_TO_POINTER(connid));
-	if (target_p != NULL)
-		return target_p;
-
-	target_p = rb_dictionary_retrieve(client_zconnid_tree, RB_UINT_TO_POINTER(connid));
-	if (target_p != NULL)
-		return target_p;
-
-	return NULL;
+	return rb_dictionary_retrieve(client_connid_tree, RB_UINT_TO_POINTER(connid));
 }

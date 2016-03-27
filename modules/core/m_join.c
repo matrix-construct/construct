@@ -25,7 +25,6 @@
 #include "stdinc.h"
 #include "channel.h"
 #include "client.h"
-#include "common.h"
 #include "hash.h"
 #include "match.h"
 #include "ircd.h"
@@ -427,15 +426,6 @@ ms_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	newts = atol(parv[1]);
 	oldts = chptr->channelts;
 
-#ifdef IGNORE_BOGUS_TS
-	if(newts < 800000000)
-	{
-		sendto_realops_snomask(SNO_DEBUG, L_ALL,
-				     "*** Bogus TS %ld on %s ignored from %s",
-				     (long) newts, chptr->chname, client_p->name);
-		newts = (oldts == 0) ? oldts : 800000000;
-	}
-#else
 	/* making a channel TS0 */
 	if(!isnew && !newts && oldts)
 	{
@@ -446,7 +436,6 @@ ms_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 				     "Server %s changing TS on %s from %ld to 0",
 				     source_p->name, chptr->chname, (long) oldts);
 	}
-#endif
 
 	if(isnew)
 		chptr->channelts = newts;
@@ -614,16 +603,6 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	oldts = chptr->channelts;
 	oldmode = &chptr->mode;
 
-#ifdef IGNORE_BOGUS_TS
-	if(newts < 800000000)
-	{
-		sendto_realops_snomask(SNO_DEBUG, L_ALL,
-				     "*** Bogus TS %ld on %s ignored from %s",
-				     (long) newts, chptr->chname, client_p->name);
-
-		newts = (oldts == 0) ? oldts : 800000000;
-	}
-#else
 	if(!isnew && !newts && oldts)
 	{
 		sendto_channel_local(ALL_MEMBERS, chptr,
@@ -634,7 +613,6 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 				     "Server %s changing TS on %s from %ld to 0",
 				     source_p->name, chptr->chname, (long) oldts);
 	}
-#endif
 
 	if(isnew)
 		chptr->channelts = newts;

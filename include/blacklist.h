@@ -36,7 +36,7 @@ struct Blacklist {
 	int ipv6;	/* Does this blacklist support IPv6 lookups? */
 	char host[IRCD_RES_HOSTLEN + 1];
 	rb_dlink_list filters;	/* Filters for queries */
-	char reject_reason[IRCD_BUFSIZE];
+	char reject_reason[BUFSIZE];
 	unsigned int hits;
 	time_t lastwarning;
 };

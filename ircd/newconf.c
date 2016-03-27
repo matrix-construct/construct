@@ -10,7 +10,6 @@
 
 #include "newconf.h"
 #include "ircd_defs.h"
-#include "common.h"
 #include "logger.h"
 #include "s_conf.h"
 #include "s_user.h"
@@ -239,7 +238,7 @@ conf_set_serverinfo_vhost(void *data)
 {
 	if(rb_inet_pton(AF_INET, (char *) data, &ServerInfo.ip.sin_addr) <= 0)
 	{
-		conf_report_error("Invalid netmask for server IPv4 vhost (%s)", (char *) data);
+		conf_report_error("Invalid IPv4 address for server vhost (%s)", (char *) data);
 		return;
 	}
 	ServerInfo.ip.sin_family = AF_INET;
@@ -252,7 +251,7 @@ conf_set_serverinfo_vhost6(void *data)
 #ifdef RB_IPV6
 	if(rb_inet_pton(AF_INET6, (char *) data, &ServerInfo.ip6.sin6_addr) <= 0)
 	{
-		conf_report_error("Invalid netmask for server IPv6 vhost (%s)", (char *) data);
+		conf_report_error("Invalid IPv6 address for server vhost (%s)", (char *) data);
 		return;
 	}
 
@@ -1325,7 +1324,7 @@ conf_set_connect_vhost(void *data)
 {
 	if(rb_inet_pton_sock(data, (struct sockaddr *)&yy_server->my_ipnum) <= 0)
 	{
-		conf_report_error("Invalid netmask for server vhost (%s)",
+		conf_report_error("Invalid IP address for server connect vhost (%s)",
 		    		  (char *) data);
 		return;
 	}
@@ -2030,10 +2029,10 @@ void
 conf_report_error(const char *fmt, ...)
 {
 	va_list ap;
-	char msg[IRCD_BUFSIZE + 1] = { 0 };
+	char msg[BUFSIZE + 1] = { 0 };
 
 	va_start(ap, fmt);
-	vsnprintf(msg, IRCD_BUFSIZE, fmt, ap);
+	vsnprintf(msg, BUFSIZE, fmt, ap);
 	va_end(ap);
 
 	if (testing_conf)
@@ -2050,10 +2049,10 @@ void
 conf_report_warning(const char *fmt, ...)
 {
 	va_list ap;
-	char msg[IRCD_BUFSIZE + 1] = { 0 };
+	char msg[BUFSIZE + 1] = { 0 };
 
 	va_start(ap, fmt);
-	vsnprintf(msg, IRCD_BUFSIZE, fmt, ap);
+	vsnprintf(msg, BUFSIZE, fmt, ap);
 	va_end(ap);
 
 	if (testing_conf)
@@ -2265,7 +2264,6 @@ remove_conf_item(const char *topconf, const char *name)
 static struct ConfEntry conf_serverinfo_table[] =
 {
 	{ "description", 	CF_QSTRING, NULL, 0, &ServerInfo.description	},
-	{ "hub", 		CF_YESNO,   NULL, 0, &ServerInfo.hub		},
 
 	{ "network_name", 	CF_QSTRING, conf_set_serverinfo_network_name,	0, NULL },
 	{ "name", 		CF_QSTRING, conf_set_serverinfo_name,	0, NULL },

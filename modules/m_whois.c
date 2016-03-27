@@ -23,7 +23,6 @@
  */
 
 #include "stdinc.h"
-#include "common.h"
 #include "client.h"
 #include "hash.h"
 #include "channel.h"
@@ -367,7 +366,7 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 					   target_p->name, target_p->sockhost);
 
 #ifdef RB_IPV6
-		if (target_p->localClient->ip.ss_family == AF_INET6 &&
+		if (GET_SS_FAMILY(&target_p->localClient->ip) == AF_INET6 &&
 				(show_ip(source_p, target_p) ||
 				 (source_p == target_p && !IsIPSpoof(target_p))) &&
 				ipv4_from_ipv6((struct sockaddr_in6 *)&target_p->localClient->ip, &ip4))

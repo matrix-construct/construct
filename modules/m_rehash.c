@@ -25,7 +25,6 @@
 #include "stdinc.h"
 #include "client.h"
 #include "channel.h"
-#include "common.h"
 #include "match.h"
 #include "ircd.h"
 #include "s_serv.h"
@@ -73,7 +72,7 @@ rehash_bans_loc(struct Client *source_p)
 	if (!MyConnect(source_p))
 		remote_rehash_oper_p = source_p;
 
-	rehash_bans(0);
+	rehash_bans();
 }
 
 static void
@@ -118,7 +117,7 @@ rehash_omotd(struct Client *source_p)
 		remote_rehash_oper_p = source_p;
 
 	free_cachefile(oper_motd);
-	oper_motd = cache_file(OPATH, "opers.motd", 0);
+	oper_motd = cache_file(ircd_paths[IRCD_PATH_IRCD_OMOTD], "opers.motd", 0);
 }
 
 static void
@@ -197,10 +196,9 @@ static void
 rehash_tresvs(struct Client *source_p)
 {
 	struct ConfItem *aconf;
-	struct rb_radixtree_iteration_state iter;
+	rb_radixtree_iteration_state iter;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
-	int i;
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing temp resvs",
 				get_oper_name(source_p));

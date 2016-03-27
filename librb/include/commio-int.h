@@ -21,7 +21,6 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: commio.h 24059 2007-07-24 17:25:41Z androsyn $
  */
 
 #ifndef _COMMIO_INT_H
@@ -32,13 +31,6 @@
 #define RB_FD_HASH_MASK (RB_FD_HASH_SIZE-1)
 
 #define FD_DESC_SZ 128		/* hostlen + comment */
-
-
-#ifdef _WIN32
-#define rb_get_errno() do { errno = WSAGetLastError(); WSASetLastError(errno); } while(0)
-#else
-#define rb_get_errno()
-#endif
 
 #define rb_hash_fd(x) ((x ^ (x >> RB_FD_HASH_BITS) ^ (x >> (RB_FD_HASH_BITS * 2))) & RB_FD_HASH_MASK)
 
@@ -104,7 +96,7 @@ struct _fde
 	 * filedescriptor. Think though: when do you think we'll need more?
 	 */
 	rb_dlink_node node;
-	int fd;			/* So we can use the rb_fde_t as a callback ptr */
+	rb_platform_fd_t fd;			/* So we can use the rb_fde_t as a callback ptr */
 	uint8_t flags;
 	uint8_t type;
 	int pflags;
@@ -136,7 +128,7 @@ typedef struct timer_data
 extern rb_dlink_list *rb_fd_table;
 
 static inline rb_fde_t *
-rb_find_fd(int fd)
+rb_find_fd(rb_platform_fd_t fd)
 {
 	rb_dlink_list *hlist;
 	rb_dlink_node *ptr;

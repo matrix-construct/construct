@@ -46,8 +46,8 @@ extern int match_ips(const char *mask, const char *name);
 /*
  * comp_with_mask - compares to IP address
  */
-int comp_with_mask(void *addr, void *dest, u_int mask);
-int comp_with_mask_sock(struct sockaddr *addr, struct sockaddr *dest, u_int mask);
+int comp_with_mask(void *addr, void *dest, unsigned int mask);
+int comp_with_mask_sock(struct sockaddr *addr, struct sockaddr *dest, unsigned int mask);
 
 /*
  * collapse - collapse a string in place, converts multiple adjacent *'s

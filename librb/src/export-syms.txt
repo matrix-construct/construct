@@ -188,3 +188,4 @@ rb_zstring_serialized
 rb_zstring_to_c
 rb_zstring_to_c_alloc
 rb_zstring_to_ptr
+rb_path_to_self

@@ -26,7 +26,6 @@
 #include "client.h"
 #include "ircd.h"
 #include "numeric.h"
-#include "common.h"
 #include "s_conf.h"
 #include "s_serv.h"
 #include "msg.h"

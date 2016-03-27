@@ -22,8 +22,8 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  *
- *  $Id: select.c 26092 2008-09-19 15:13:52Z androsyn $
  */
+
 #define FD_SETSIZE 65535
 #include <librb_config.h>
 #include <rb_lib.h>

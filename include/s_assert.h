@@ -26,7 +26,7 @@
 #ifndef INCLUDED_s_assert_h
 #define INCLUDED_s_assert_h
 
-#include "config.h"
+#include "defaults.h"
 
 #ifdef SOFT_ASSERT
 

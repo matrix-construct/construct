@@ -31,7 +31,7 @@
 #include <rb_lib.h>
 #include <stdio.h>
 #include "rsdb.h"
-#include "common.h"
+#include "ircd_defs.h"
 
 
 #define MAXPARA 10
@@ -255,7 +255,7 @@ dummy_handler(int sig)
 static void
 setup_signals(void)
 {
-#ifndef WINDOWS
+#ifndef _WIN32
 	struct sigaction act;
 
 	act.sa_flags = 0;

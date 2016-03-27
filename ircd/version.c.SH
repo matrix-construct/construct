@@ -7,7 +7,7 @@ echo "Extracting $package/src/version.c..."
 
 if test -r version.c.last
 then
-   generation=`sed -n 's/^char \*generation = \"\(.*\)\";/\1/p' < version.c.last`
+   generation=`sed -n 's/^const char \*generation = \"\(.*\)\";/\1/p' < version.c.last`
    if test ! "$generation" ; then generation=0; fi
 else
    generation=0
@@ -63,7 +63,7 @@ const char *infotext[] =
   "$package --",
   "Based on the original code written by Jarkko Oikarinen",
   "Copyright 1988, 1989, 1990, 1991 University of Oulu, Computing Center",
-  "Copyright (c) 1996-2001 Hybrid Development Team", 
+  "Copyright (c) 1996-2001 Hybrid Development Team",
   "Copyright (c) 2002-2009 ircd-ratbox Development Team",
   "Copyright (c) 2005-2016 charybdis development team",
   " ",
