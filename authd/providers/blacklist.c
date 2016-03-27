@@ -58,7 +58,7 @@ struct blacklist
 {
 	char host[IRCD_RES_HOSTLEN + 1];
 	char reason[BUFSIZE];		/* Reason template (ircd fills in the blanks) */
-	unsigned char iptype;		/* IP types supported */
+	uint8_t iptype;			/* IP types supported */
 	rb_dlink_list filters;		/* Filters for queries */
 
 	bool delete;			/* If true delete when no clients */
@@ -102,7 +102,7 @@ static void blacklists_cancel(struct auth_client *);
 
 /* private interfaces */
 static void unref_blacklist(struct blacklist *);
-static struct blacklist *new_blacklist(const char *, const char *, unsigned char, rb_dlink_list *);
+static struct blacklist *new_blacklist(const char *, const char *, uint8_t, rb_dlink_list *);
 static struct blacklist *find_blacklist(const char *);
 static bool blacklist_check_reply(struct blacklist_lookup *, const char *);
 static void blacklist_dns_callback(const char *, bool, query_type, void *);
@@ -136,7 +136,7 @@ unref_blacklist(struct blacklist *bl)
 }
 
 static struct blacklist *
-new_blacklist(const char *name, const char *reason, unsigned char iptype, rb_dlink_list *filters)
+new_blacklist(const char *name, const char *reason, uint8_t iptype, rb_dlink_list *filters)
 {
 	struct blacklist *bl;
 
@@ -442,7 +442,7 @@ add_conf_blacklist(const char *key, int parc, const char **parv)
 {
 	rb_dlink_list filters = { NULL, NULL, 0 };
 	char *tmp, *elemlist = rb_strdup(parv[2]);
-	unsigned char iptype;
+	uint8_t iptype;
 
 	if(*elemlist == '*')
 		goto end;
