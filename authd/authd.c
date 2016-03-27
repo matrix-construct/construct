@@ -88,7 +88,7 @@ handle_options(int parc, char *parv[])
 		return;
 	}
 
-	handler->handler(parv[1], parc - 2, (const char **)(parv + 3));
+	handler->handler(parv[1], parc - 2, (const char **)&parv[2]);
 }
 
 static void

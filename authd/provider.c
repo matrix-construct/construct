@@ -96,6 +96,7 @@ void init_providers(void)
 	auth_clients = rb_dictionary_create("pending auth clients", rb_uint32cmp);
 	load_provider(&rdns_provider);
 	load_provider(&ident_provider);
+	load_provider(&blacklist_provider);
 }
 
 /* Terminate all providers */

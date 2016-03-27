@@ -435,9 +435,12 @@ blacklists_destroy(void)
 static void
 add_conf_blacklist(const char *key, int parc, const char **parv)
 {
-	rb_dlink_list filters;
+	rb_dlink_list filters = { NULL, NULL, 0 };
 	char *tmp, *elemlist = rb_strdup(parv[2]);
 	unsigned char iptype;
+
+	if(*elemlist == '*')
+		goto end;
 
 	for(char *elem = rb_strtok_r(elemlist, ",", &tmp); elem; elem = rb_strtok_r(NULL, ",", &tmp))
 	{
@@ -485,6 +488,7 @@ add_conf_blacklist(const char *key, int parc, const char **parv)
 		rb_dlinkAdd(filter, &filter->node, &filters);
 	}
 
+end:
 	rb_free(elemlist);
 
 	iptype = atoi(parv[1]) & 0x3;
