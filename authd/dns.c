@@ -252,17 +252,15 @@ handle_resolve_dns(int parc, char *parv[])
 }
 
 void
-enumerate_nameservers(const char *rid, const char letter)
+enumerate_nameservers(uint32_t rid, const char letter)
 {
 	char buf[(HOSTIPLEN + 1) * IRCD_MAXNS];
-	char *c = buf;
 	size_t s = 0;
-	uint32_t i_rid = (uint32_t)strtol(rid, NULL, 16);
 
 	if (!irc_nscount)
 	{
 		/* Shouldn't happen */
-		stats_error(i_rid, letter, "NONAMESERVERS");
+		stats_error(rid, letter, "NONAMESERVERS");
 		return;
 	}
 
@@ -276,19 +274,19 @@ enumerate_nameservers(const char *rid, const char letter)
 		if (!addr[0])
 		{
 			/* Shouldn't happen */
-			stats_error(i_rid, letter, "INVALIDNAMESERVER");
+			stats_error(rid, letter, "INVALIDNAMESERVER");
 			return;
 		}
 
 		addrlen = strlen(addr) + 1;
-		(void)snprintf(c, sizeof(buf) - s, "%s ", addr);
-		c += addrlen;
+		(void)snprintf(&buf[s], sizeof(buf) - s, "%s ", addr);
 		s += addrlen;
 	}
 
-	*(--c) = '\0';
+	if(s > 0)
+		buf[--s] = '\0';
 
-	stats_result(i_rid, letter, "%s", buf);
+	stats_result(rid, letter, "%s", buf);
 }
 
 void
