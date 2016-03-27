@@ -395,7 +395,7 @@ ms_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	static struct Mode mode;
 	time_t oldts;
 	time_t newts;
-	int isnew;
+	bool isnew;
 	bool keep_our_modes = true;
 	rb_dlink_node *ptr, *next_ptr;
 
@@ -512,7 +512,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	bool keep_our_modes = true;
 	bool keep_new_modes = true;
 	int fl;
-	int isnew;
+	bool isnew;
 	int mlen_uid;
 	int len_uid;
 	int len;
