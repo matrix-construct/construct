@@ -221,7 +221,7 @@ submit_dns_answer(const char *reply, bool status, query_type type, void *data)
 }
 
 void
-resolve_dns(int parc, char *parv[])
+handle_resolve_dns(int parc, char *parv[])
 {
 	char *id = rb_strdup(parv[1]);
 	char qtype = *parv[2];

@@ -100,32 +100,38 @@ void accept_client(struct auth_client *auth, provider_t id);
 void reject_client(struct auth_client *auth, provider_t id, const char *reason);
 
 void handle_new_connection(int parc, char *parv[]);
+void handle_cancel_connection(int parc, char *parv[]);
 
 /* Provider is operating on this auth_client (set this if you have async work to do) */
-static inline void set_provider_on(struct auth_client *auth, provider_t provider)
+static inline void
+set_provider_on(struct auth_client *auth, provider_t provider)
 {
 	auth->providers |= (1 << provider);
 }
 
 /* Provider is no longer operating on this auth client (you should use provider_done) */
-static inline void set_provider_off(struct auth_client *auth, provider_t provider)
+static inline void
+set_provider_off(struct auth_client *auth, provider_t provider)
 {
 	auth->providers &= ~(1 << provider);
 }
 
 /* Set the provider to done (you should use provider_done) */
-static inline void set_provider_done(struct auth_client *auth, provider_t provider)
+static inline void
+set_provider_done(struct auth_client *auth, provider_t provider)
 {
 	auth->providers_done |= (1 << provider);
 }
 
 /* Check if provider is operating on this auth client */
-static inline bool is_provider_on(struct auth_client *auth, provider_t provider)
+static inline bool
+is_provider_on(struct auth_client *auth, provider_t provider)
 {
 	return auth->providers & (1 << provider);
 }
 
-static inline bool is_provider_done(struct auth_client *auth, provider_t provider)
+static inline bool
+is_provider_done(struct auth_client *auth, provider_t provider)
 {
 	return auth->providers_done & (1 << provider);
 }

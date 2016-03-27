@@ -57,7 +57,8 @@ rb_dlink_list auth_providers;
 rb_dictionary *auth_clients;
 
 /* Load a provider */
-void load_provider(struct auth_provider *provider)
+void
+load_provider(struct auth_provider *provider)
 {
 	if(rb_dlink_list_length(&auth_providers) >= MAX_PROVIDERS)
 	{
@@ -77,7 +78,8 @@ void load_provider(struct auth_provider *provider)
 	rb_dlinkAdd(provider, &provider->node, &auth_providers);
 }
 
-void unload_provider(struct auth_provider *provider)
+void
+unload_provider(struct auth_provider *provider)
 {
 	if(provider->opt_handlers != NULL)
 	{
@@ -91,7 +93,8 @@ void unload_provider(struct auth_provider *provider)
 }
 
 /* Initalise all providers */
-void init_providers(void)
+void
+init_providers(void)
 {
 	auth_clients = rb_dictionary_create("pending auth clients", rb_uint32cmp);
 	load_provider(&rdns_provider);
@@ -100,7 +103,8 @@ void init_providers(void)
 }
 
 /* Terminate all providers */
-void destroy_providers(void)
+void
+destroy_providers(void)
 {
 	rb_dlink_node *ptr;
 	rb_dictionary_iter iter;
@@ -124,7 +128,8 @@ void destroy_providers(void)
 }
 
 /* Cancel outstanding providers for a client */
-void cancel_providers(struct auth_client *auth)
+void
+cancel_providers(struct auth_client *auth)
 {
 	rb_dlink_node *ptr;
 	struct auth_provider *provider;
@@ -143,7 +148,8 @@ void cancel_providers(struct auth_client *auth)
 }
 
 /* Provider is done - WARNING: do not use auth instance after calling! */
-void provider_done(struct auth_client *auth, provider_t id)
+void
+provider_done(struct auth_client *auth, provider_t id)
 {
 	rb_dlink_node *ptr;
 	struct auth_provider *provider;
@@ -170,7 +176,8 @@ void provider_done(struct auth_client *auth, provider_t id)
 }
 
 /* Reject a client - WARNING: do not use auth instance after calling! */
-void reject_client(struct auth_client *auth, provider_t id, const char *reason)
+void
+reject_client(struct auth_client *auth, provider_t id, const char *reason)
 {
 	char reject;
 
@@ -201,7 +208,8 @@ void reject_client(struct auth_client *auth, provider_t id, const char *reason)
 }
 
 /* Accept a client, cancel outstanding providers if any - WARNING: do nto use auth instance after calling! */
-void accept_client(struct auth_client *auth, provider_t id)
+void
+accept_client(struct auth_client *auth, provider_t id)
 {
 	uint32_t cid = auth->cid;
 
@@ -212,7 +220,8 @@ void accept_client(struct auth_client *auth, provider_t id)
 }
 
 /* Begin authenticating user */
-static void start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_ip, const char *c_port)
+static void
+start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_ip, const char *c_port)
 {
 	struct auth_provider *provider;
 	struct auth_client *auth = rb_malloc(sizeof(struct auth_client));
@@ -280,7 +289,8 @@ static void start_auth(const char *cid, const char *l_ip, const char *l_port, co
 }
 
 /* Callback for the initiation */
-void handle_new_connection(int parc, char *parv[])
+void
+handle_new_connection(int parc, char *parv[])
 {
 	if(parc < 6)
 	{
@@ -289,4 +299,31 @@ void handle_new_connection(int parc, char *parv[])
 	}
 
 	start_auth(parv[1], parv[2], parv[3], parv[4], parv[5]);
+}
+
+void
+handle_cancel_connection(int parc, char *parv[])
+{
+	struct auth_client *auth;
+	long lcid;
+
+	if(parc < 2)
+	{
+		warn_opers(L_CRIT, "BUG: received too few params for new connection (2 expected, got %d)", parc);
+		return;
+	}
+
+	if((lcid = strtol(parv[1], NULL, 16)) > UINT32_MAX)
+	{
+		warn_opers(L_CRIT, "BUG: got a request to cancel a connection that can't exist: %lx", lcid);
+		return;
+	}
+
+	if((auth = rb_dictionary_retrieve(auth_clients, RB_UINT_TO_POINTER((uint32_t)lcid))) == NULL)
+	{
+		warn_opers(L_CRIT, "BUG: tried to cancel nonexistent connection %lx", lcid);
+		return;
+	}
+
+	cancel_providers(auth);
 }

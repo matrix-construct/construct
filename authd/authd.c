@@ -32,7 +32,8 @@ static void handle_options(int parc, char *parv[]);
 rb_helper *authd_helper = NULL;
 authd_cmd_handler authd_cmd_handlers[256] = {
 	['C'] = handle_new_connection,
-	['D'] = resolve_dns,
+	['D'] = handle_resolve_dns,
+	['E'] = handle_cancel_connection,
 	['O'] = handle_options,
 	['R'] = handle_reload,
 	['S'] = handle_stat,

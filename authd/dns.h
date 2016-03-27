@@ -54,7 +54,7 @@ extern struct dns_query *lookup_hostname(const char *ip, DNSCB callback, void *d
 extern struct dns_query *lookup_ip(const char *host, int aftype, DNSCB callback, void *data);
 extern void cancel_query(struct dns_query *query);
 
-extern void resolve_dns(int parc, char *parv[]);
+extern void handle_resolve_dns(int parc, char *parv[]);
 extern void enumerate_nameservers(const char *rid, const char letter);
 extern void reload_nameservers(const char letter);
 
