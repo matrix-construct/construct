@@ -320,6 +320,9 @@ static bool ident_start(struct auth_client *auth)
 	struct rb_sockaddr_storage l_addr, c_addr;
 	int family = GET_SS_FAMILY(&auth->c_addr);
 
+	if(auth->data[PROVIDER_IDENT] != NULL)
+		return true;
+
 	notice_client(auth->cid, messages[REPORT_LOOKUP]);
 
 	auth->data[PROVIDER_IDENT] = query;
