@@ -185,8 +185,6 @@ read_ident_reply(rb_fde_t *F, void *data)
 			message = REPORT_INVALID;
 	}
 
-	warn_opers(L_DEBUG, "Got username: '%s'", auth->username);
-
 	if(s == NULL)
 		client_fail(auth, message);
 	else
