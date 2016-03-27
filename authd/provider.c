@@ -153,8 +153,9 @@ void provider_done(struct auth_client *auth, provider_t id)
 
 	if(!auth->providers)
 	{
-		/* No more providers, done */
-		accept_client(auth, 0);
+		if(!auth->providers_starting)
+			/* Only do this when there are no providers left */
+			accept_client(auth, 0);
 		return;
 	}
 
@@ -223,6 +224,15 @@ static void start_auth(const char *cid, const char *l_ip, const char *l_port, co
 
 	auth->cid = (uint32_t)lcid;
 
+	if(rb_dictionary_find(auth_clients, RB_UINT_TO_POINTER(auth->cid)) == NULL)
+		rb_dictionary_add(auth_clients, RB_UINT_TO_POINTER(auth->cid), auth);
+	else
+	{
+		warn_opers(L_CRIT, "BUG: duplicate client added via start_auth: %x", auth->cid);
+		rb_free(auth);
+		return;
+	}
+
 	rb_strlcpy(auth->l_ip, l_ip, sizeof(auth->l_ip));
 	auth->l_port = (uint16_t)atoi(l_port);	/* should be safe */
 	(void) rb_inet_pton_sock(l_ip, (struct sockaddr *)&auth->l_addr);
@@ -247,11 +257,12 @@ static void start_auth(const char *cid, const char *l_ip, const char *l_port, co
 
 	memset(auth->data, 0, sizeof(auth->data));
 
-	rb_dictionary_add(auth_clients, RB_UINT_TO_POINTER(auth->cid), auth);
-
+	auth->providers_starting = true;
 	RB_DLINK_FOREACH(ptr, auth_providers.head)
 	{
 		provider = ptr->data;
+
+		lrb_assert(provider->start != NULL);
 
 		/* Execute providers */
 		if(!provider->start(auth))
@@ -261,6 +272,7 @@ static void start_auth(const char *cid, const char *l_ip, const char *l_port, co
 			return;
 		}
 	}
+	auth->providers_starting = false;
 
 	/* If no providers are running, accept the client */
 	if(!auth->providers)
