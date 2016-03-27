@@ -112,7 +112,6 @@ static void timeout_blacklist_queries_event(void *);
 /* Variables */
 static rb_dlink_list blacklist_list = { NULL, NULL, 0 };
 static struct ev_entry *timeout_ev;
-static EVH timeout_blacklists;
 static int blacklist_timeout = 15;
 
 /* private interfaces */
