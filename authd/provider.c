@@ -142,7 +142,7 @@ void cancel_providers(struct auth_client *auth)
 	rb_free(auth);
 }
 
-/* Provider is done */
+/* Provider is done - WARNING: do not use auth instance after calling! */
 void provider_done(struct auth_client *auth, provider_t id)
 {
 	rb_dlink_node *ptr;
@@ -169,7 +169,7 @@ void provider_done(struct auth_client *auth, provider_t id)
 	}
 }
 
-/* Reject a client */
+/* Reject a client - WARNING: do not use auth instance after calling! */
 void reject_client(struct auth_client *auth, provider_t id, const char *reason)
 {
 	char reject;
@@ -200,7 +200,7 @@ void reject_client(struct auth_client *auth, provider_t id, const char *reason)
 	cancel_providers(auth);
 }
 
-/* Accept a client, cancel outstanding providers if any */
+/* Accept a client, cancel outstanding providers if any - WARNING: do nto use auth instance after calling! */
 void accept_client(struct auth_client *auth, provider_t id)
 {
 	uint32_t cid = auth->cid;
