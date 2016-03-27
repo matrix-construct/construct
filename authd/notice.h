@@ -31,5 +31,8 @@ typedef enum
 
 void notice_client(uint32_t cid, const char *fmt, ...);
 void warn_opers(notice_level_t level, const char *fmt, ...);
+void stats_result(uint32_t cid, char letter, const char *fmt, ...);
+void stats_error(uint32_t cid, char letter, const char *fmt, ...);
+void stats_done(uint32_t cid, char letter);
 
 #endif /* __CHARYBDIS_AUTHD_NOTICE_H__ */
