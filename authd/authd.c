@@ -202,5 +202,7 @@ main(int argc, char *argv[])
 
 	rb_helper_loop(authd_helper, 0);
 
+	destroy_providers();
+
 	return 0;
 }
