@@ -45,6 +45,7 @@ static const char *messages[] =
 	"*** Checking Ident",
 	"*** Got Ident response",
 	"*** No Ident response",
+	"*** Cannot verify ident validity, ignoring ident",
 };
 
 typedef enum
@@ -52,6 +53,7 @@ typedef enum
 	REPORT_LOOKUP,
 	REPORT_FOUND,
 	REPORT_FAIL,
+	REPORT_INVALID,
 } ident_message;
 
 static EVH timeout_ident_queries_event;
@@ -135,11 +137,12 @@ read_ident_reply(rb_fde_t *F, void *data)
 {
 	struct auth_client *auth = data;
 	struct ident_query *query;
+	char buf[IDENT_BUFSIZE + 1];	/* buffer to read auth reply into */
+	ident_message message = REPORT_FAIL;
 	char *s = NULL;
 	char *t = NULL;
-	int len;
+	ssize_t len;
 	int count;
-	char buf[IDENT_BUFSIZE + 1];	/* buffer to read auth reply into */
 
 	if(auth == NULL)
 		return;
@@ -158,9 +161,7 @@ read_ident_reply(rb_fde_t *F, void *data)
 
 	if(len > 0)
 	{
-		buf[len] = '\0';
-
-		if((s = get_valid_ident(buf)))
+		if((s = get_valid_ident(buf)) != NULL)
 		{
 			t = auth->username;
 
@@ -169,10 +170,9 @@ read_ident_reply(rb_fde_t *F, void *data)
 
 			for (count = USERLEN; *s && count; s++)
 			{
-				if(*s == '@')
-				{
+				if(*s == '@' || *s == '\r' || *s == '\n')
 					break;
-				}
+
 				if(*s != ' ' && *s != ':' && *s != '[')
 				{
 					*t++ = *s;
@@ -181,10 +181,14 @@ read_ident_reply(rb_fde_t *F, void *data)
 			}
 			*t = '\0';
 		}
+		else
+			message = REPORT_INVALID;
 	}
 
+	warn_opers(L_DEBUG, "Got username: '%s'", auth->username);
+
 	if(s == NULL)
-		client_fail(auth, REPORT_FAIL);
+		client_fail(auth, message);
 	else
 		client_success(auth);
 }
@@ -252,39 +256,39 @@ get_valid_ident(char *buf)
 
 	colon1Ptr = strchr(remotePortString, ':');
 	if(!colon1Ptr)
-		return 0;
+		return NULL;
 
 	*colon1Ptr = '\0';
 	colon1Ptr++;
 	colon2Ptr = strchr(colon1Ptr, ':');
 	if(!colon2Ptr)
-		return 0;
+		return NULL;
 
 	*colon2Ptr = '\0';
 	colon2Ptr++;
 	commaPtr = strchr(remotePortString, ',');
 
 	if(!commaPtr)
-		return 0;
+		return NULL;
 
 	*commaPtr = '\0';
 	commaPtr++;
 
 	remp = atoi(remotePortString);
 	if(!remp)
-		return 0;
+		return NULL;
 
 	locp = atoi(commaPtr);
 	if(!locp)
-		return 0;
+		return NULL;
 
 	/* look for USERID bordered by first pair of colons */
 	if(!strstr(colon1Ptr, "USERID"))
-		return 0;
+		return NULL;
 
 	colon3Ptr = strchr(colon2Ptr, ':');
 	if(!colon3Ptr)
-		return 0;
+		return NULL;
 
 	*colon3Ptr = '\0';
 	colon3Ptr++;
