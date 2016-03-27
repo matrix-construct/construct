@@ -545,7 +545,7 @@ read_auth_reply(rb_fde_t *F, void *data)
 
 			for (count = USERLEN; *s && count; s++)
 			{
-				if(*s == '@')
+				if(*s == '@' || *s == '\r' || *s == '\n')
 				{
 					break;
 				}
