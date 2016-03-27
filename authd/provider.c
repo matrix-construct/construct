@@ -74,6 +74,9 @@ load_provider(struct auth_provider *provider)
 			rb_dictionary_add(authd_option_handlers, handler->option, handler);
 	}
 
+	if(provider->stats_handler.letter != '\0')
+		authd_stat_handlers[provider->stats_handler.letter] = provider->stats_handler.handler;
+
 	provider->init();
 	rb_dlinkAdd(provider, &provider->node, &auth_providers);
 }
@@ -88,6 +91,10 @@ unload_provider(struct auth_provider *provider)
 		for(handler = provider->opt_handlers; handler->option != NULL; handler++)
 			rb_dictionary_delete(authd_option_handlers, handler->option);
 	}
+
+	if(provider->stats_handler.letter != '\0')
+		authd_stat_handlers[provider->stats_handler.letter] = NULL;
+
 	provider->destroy();
 	rb_dlinkDelete(&provider->node, &auth_providers);
 }
