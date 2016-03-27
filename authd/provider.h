@@ -53,6 +53,7 @@ struct auth_client
 	uint32_t providers;			/* Providers at work,
 						 * none left when set to 0 */
 	uint32_t providers_done;		/* Providers completed */
+	bool providers_starting;		/* Providers are still warming up */
 
 	void *data[MAX_PROVIDERS];		/* Provider-specific data slots */
 };
