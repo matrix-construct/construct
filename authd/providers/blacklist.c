@@ -246,7 +246,7 @@ blacklist_dns_callback(const char *result, bool status, query_type type, void *d
 	{
 		/* Match found, so proceed no further */
 		blacklists_cancel(auth);
-		reject_client(auth, PROVIDER_BLACKLIST, bl->reason);
+		reject_client(auth, PROVIDER_BLACKLIST, bl->host, bl->reason);
 		return;
 	}
 

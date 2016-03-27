@@ -97,7 +97,7 @@ void cancel_providers(struct auth_client *auth);
 
 void provider_done(struct auth_client *auth, provider_t id);
 void accept_client(struct auth_client *auth, provider_t id);
-void reject_client(struct auth_client *auth, provider_t id, const char *reason);
+void reject_client(struct auth_client *auth, provider_t id, const char *data, const char *reason);
 
 void handle_new_connection(int parc, char *parv[]);
 void handle_cancel_connection(int parc, char *parv[]);
