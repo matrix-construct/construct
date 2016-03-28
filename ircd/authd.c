@@ -462,7 +462,6 @@ timeout_dead_authd_clients(void *notused __unused)
 		if(client_p->preClient->authd_timeout < rb_current_time())
 		{
 			rb_helper_write(authd_helper, "E %x", client_p->preClient->authd_cid);
-			rb_free(id);
 			rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(client_p->preClient->authd_cid));
 		}
 	}
