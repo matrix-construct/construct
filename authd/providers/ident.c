@@ -66,6 +66,7 @@ static char * get_valid_ident(char *buf);
 
 static struct ev_entry *timeout_ev;
 static int ident_timeout = 5;
+static bool ident_enable = true;
 
 
 /* Timeout outstanding queries */
@@ -320,8 +321,11 @@ static bool ident_start(struct auth_client *auth)
 	struct rb_sockaddr_storage l_addr, c_addr;
 	int family = GET_SS_FAMILY(&auth->c_addr);
 
-	if(auth->data[PROVIDER_IDENT] != NULL)
+	if(!ident_enable || auth->data[PROVIDER_IDENT] != NULL)
+	{
+		set_provider_done(auth, PROVIDER_IDENT); /* for blacklists */
 		return true;
+	}
 
 	notice_client(auth->cid, messages[REPORT_LOOKUP]);
 
@@ -387,9 +391,18 @@ add_conf_ident_timeout(const char *key __unused, int parc __unused, const char *
 	ident_timeout = timeout;
 }
 
+static void
+set_ident_enabled(const char *key __unused, int parc __unused, const char **parv)
+{
+	ident_enable = (strcasecmp(parv[0], "true") == 0 ||
+			strcasecmp(parv[0], "1") == 0 ||
+			strcasecmp(parv[0], "enable") == 0);
+}
+
 struct auth_opts_handler ident_options[] =
 {
 	{ "ident_timeout", 1, add_conf_ident_timeout },
+	{ "ident_enabled", 1, set_ident_enabled },
 	{ NULL, 0, NULL },
 };
 

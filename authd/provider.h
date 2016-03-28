@@ -65,6 +65,12 @@ typedef bool (*provider_start_t)(struct auth_client *);
 typedef void (*provider_cancel_t)(struct auth_client *);
 typedef void (*provider_complete_t)(struct auth_client *, provider_t);
 
+struct auth_stats_handler
+{
+	const char letter;
+	authd_stat_handler handler;
+};
+
 struct auth_provider
 {
 	rb_dlink_node node;
@@ -77,6 +83,8 @@ struct auth_provider
 	provider_start_t start;		/* Perform authentication */
 	provider_cancel_t cancel;	/* Authentication cancelled */
 	provider_complete_t completed;	/* Callback for when other performers complete (think dependency chains) */
+
+	struct auth_stats_handler stats_handler;
 
 	struct auth_opts_handler *opt_handlers;
 };
@@ -97,7 +105,7 @@ void cancel_providers(struct auth_client *auth);
 
 void provider_done(struct auth_client *auth, provider_t id);
 void accept_client(struct auth_client *auth, provider_t id);
-void reject_client(struct auth_client *auth, provider_t id, const char *reason);
+void reject_client(struct auth_client *auth, provider_t id, const char *data, const char *reason);
 
 void handle_new_connection(int parc, char *parv[]);
 void handle_cancel_connection(int parc, char *parv[]);

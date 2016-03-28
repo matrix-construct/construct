@@ -189,7 +189,7 @@ add_conf_dns_timeout(const char *key, int parc, const char **parv)
 
 struct auth_opts_handler rdns_options[] =
 {
-	{ "dns_timeout", 1, add_conf_dns_timeout },
+	{ "rdns_timeout", 1, add_conf_dns_timeout },
 	{ NULL, 0, NULL },
 };
 

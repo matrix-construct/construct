@@ -32,7 +32,7 @@
 #include "ircd.h"
 #include "numeric.h"
 #include "packet.h"
-#include "s_auth.h"
+#include "authd.h"
 #include "s_conf.h"
 #include "s_newconf.h"
 #include "logger.h"
@@ -47,7 +47,6 @@
 #include "hook.h"
 #include "msg.h"
 #include "monitor.h"
-#include "blacklist.h"
 #include "reject.h"
 #include "scache.h"
 #include "rb_dictionary.h"
@@ -253,17 +252,15 @@ make_client(struct Client *from)
 void
 free_pre_client(struct Client *client_p)
 {
-	struct Blacklist *blptr;
-
 	s_assert(NULL != client_p);
 
 	if(client_p->preClient == NULL)
 		return;
 
-	blptr = client_p->preClient->dnsbl_listed;
-	if (blptr != NULL)
-		unref_blacklist(blptr);
-	s_assert(rb_dlink_list_length(&client_p->preClient->dnsbl_queries) == 0);
+	s_assert(client_p->preClient->authd_cid == 0);
+
+	rb_free(client_p->preClient->authd_data);
+	rb_free(client_p->preClient->authd_reason);
 
 	rb_bh_free(pclient_heap, client_p->preClient);
 	client_p->preClient = NULL;
@@ -454,9 +451,8 @@ check_unknowns_list(rb_dlink_list * list)
 		if(IsDead(client_p) || IsClosing(client_p))
 			continue;
 
-		/* still has DNSbls to validate against */
-		if(client_p->preClient != NULL &&
-				rb_dlink_list_length(&client_p->preClient->dnsbl_queries) > 0)
+		/* Still querying with authd */
+		if(client_p->preClient != NULL && client_p->preClient->authd_cid != 0)
 			continue;
 
 		/*
@@ -1355,8 +1351,7 @@ static int
 exit_unknown_client(struct Client *client_p, struct Client *source_p, struct Client *from,
 		  const char *comment)
 {
-	delete_auth_queries(source_p);
-	abort_blacklist_queries(source_p);
+	authd_abort_client(client_p);
 	rb_dlinkDelete(&source_p->localClient->tnode, &unknown_list);
 
 	if(!IsIOError(source_p))

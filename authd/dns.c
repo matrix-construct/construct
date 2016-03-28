@@ -20,6 +20,7 @@
 
 #include "authd.h"
 #include "dns.h"
+#include "notice.h"
 #include "res.h"
 
 static void handle_lookup_ip_reply(void *data, struct DNSReply *reply);
@@ -251,39 +252,41 @@ handle_resolve_dns(int parc, char *parv[])
 }
 
 void
-enumerate_nameservers(const char *rid, const char letter)
+enumerate_nameservers(uint32_t rid, const char letter)
 {
 	char buf[(HOSTIPLEN + 1) * IRCD_MAXNS];
-	char *c = buf;
-	int i;
+	size_t s = 0;
 
 	if (!irc_nscount)
 	{
 		/* Shouldn't happen */
-		rb_helper_write(authd_helper, "X %s %c NONAMESERVERS", rid, letter);
+		stats_error(rid, letter, "NONAMESERVERS");
 		return;
 	}
 
-	for(i = 0; i < irc_nscount; i++)
+	for(int i = 0; i < irc_nscount; i++)
 	{
 		char addr[HOSTIPLEN];
+		size_t addrlen;
 
 		rb_inet_ntop_sock((struct sockaddr *)&irc_nsaddr_list[i], addr, sizeof(addr));
 
 		if (!addr[0])
 		{
 			/* Shouldn't happen */
-			rb_helper_write(authd_helper, "X %s %c INVALIDNAMESERVER", rid, letter);
+			stats_error(rid, letter, "INVALIDNAMESERVER");
 			return;
 		}
 
-		(void)snprintf(c, HOSTIPLEN + 1, "%s ", addr);
-		c += strlen(addr) + 1;
+		addrlen = strlen(addr) + 1;
+		(void)snprintf(&buf[s], sizeof(buf) - s, "%s ", addr);
+		s += addrlen;
 	}
 
-	*(--c) = '\0';
+	if(s > 0)
+		buf[--s] = '\0';
 
-	rb_helper_write(authd_helper, "Y %s %c %s", rid, letter, buf);
+	stats_result(rid, letter, "%s", buf);
 }
 
 void

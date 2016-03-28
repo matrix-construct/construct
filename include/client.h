@@ -63,7 +63,6 @@ struct Client;
 struct User;
 struct Server;
 struct LocalUser;
-struct AuthRequest;
 struct PreClient;
 struct ListClient;
 struct scache_entry;
@@ -190,6 +189,7 @@ struct LocalUser
 	/* Send and receive linebuf queues .. */
 	buf_head_t buf_sendq;
 	buf_head_t buf_recvq;
+
 	/*
 	 * we want to use unsigned int here so the sizes have a better chance of
 	 * staying the same on 64 bit machines. The current trend is to use
@@ -199,13 +199,15 @@ struct LocalUser
 	 * performed on these, it's not safe to allow them to become negative,
 	 * which is possible for long running server connections. Unsigned values
 	 * generally overflow gracefully. --Bleep
+	 *
+	 * We have modern conveniences. Let's use uint32_t. --Elizafox
 	 */
-	unsigned int sendM;	/* Statistics: protocol messages send */
-	unsigned int sendK;	/* Statistics: total k-bytes send */
-	unsigned int receiveM;	/* Statistics: protocol messages received */
-	unsigned int receiveK;	/* Statistics: total k-bytes received */
-	unsigned short sendB;	/* counters to count upto 1-k lots of bytes */
-	unsigned short receiveB;	/* sent and received. */
+	uint32_t sendM;		/* Statistics: protocol messages send */
+	uint32_t sendK;		/* Statistics: total k-bytes send */
+	uint32_t receiveM;	/* Statistics: protocol messages received */
+	uint32_t receiveK;	/* Statistics: total k-bytes received */
+	uint16_t sendB;		/* counters to count upto 1-k lots of bytes */
+	uint16_t receiveB;	/* sent and received. */
 	struct Listener *listener;	/* listener accepted from */
 	struct ConfItem *att_conf;	/* attached conf */
 	struct server_conf *att_sconf;
@@ -251,7 +253,6 @@ struct LocalUser
 	int sent_parsed;	/* how many messages we've parsed in this second */
 	time_t last_knock;	/* time of last knock */
 	unsigned long random_ping;
-	struct AuthRequest *auth_request;
 
 	/* target change stuff */
 	/* targets we're aware of (fnv32(use_id(target_p))):
@@ -291,8 +292,12 @@ struct PreClient
 	char spoofuser[USERLEN + 1];
 	char spoofhost[HOSTLEN + 1];
 
-	rb_dlink_list dnsbl_queries; /* list of struct BlacklistClient * */
-	struct Blacklist *dnsbl_listed; /* first dnsbl where it's listed */
+	uint32_t authd_cid;		/* authd id */
+	time_t authd_timeout;		/* When to terminate authd query */
+	bool authd_accepted;		/* did authd accept us? */
+	char authd_cause;		/* rejection cause */
+	char *authd_data;		/* reason data */
+	char *authd_reason;		/* reason we were rejected */
 
 	struct rb_sockaddr_storage lip; /* address of our side of the connection */
 };
@@ -574,8 +579,6 @@ extern int exit_client(struct Client *, struct Client *, struct Client *, const 
 
 extern void error_exit_client(struct Client *, int);
 
-
-
 extern void count_local_client_memory(size_t * count, size_t * memory);
 extern void count_remote_client_memory(size_t * count, size_t * memory);
 
@@ -594,7 +597,6 @@ extern int show_ip(struct Client *source_p, struct Client *target_p);
 extern int show_ip_conf(struct ConfItem *aconf, struct Client *source_p);
 extern int show_ip_whowas(struct Whowas *whowas, struct Client *source_p);
 
-extern void initUser(void);
 extern void free_user(struct User *, struct Client *);
 extern struct User *make_user(struct Client *);
 extern struct Server *make_server(struct Client *);

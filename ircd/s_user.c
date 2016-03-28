@@ -48,7 +48,6 @@
 #include "hook.h"
 #include "monitor.h"
 #include "snomask.h"
-#include "blacklist.h"
 #include "substitution.h"
 #include "chmode.h"
 #include "s_assert.h"
@@ -252,8 +251,8 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 	if(source_p->flags & FLAGS_CLICAP)
 		return -1;
 
-	/* still has DNSbls to validate against */
-	if(rb_dlink_list_length(&source_p->preClient->dnsbl_queries) > 0)
+	/* Waiting on authd */
+	if(source_p->preClient->authd_cid)
 		return -1;
 
 	client_p->localClient->last = rb_current_time();
@@ -300,7 +299,6 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 
 		rb_strlcpy(source_p->host, source_p->sockhost, sizeof(source_p->host));
  	}
-
 
 	aconf = source_p->localClient->att_conf;
 
@@ -421,45 +419,83 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 		return CLIENT_EXITED;
 	}
 
-	/* dnsbl check */
-	if (source_p->preClient->dnsbl_listed != NULL)
+	/* authd rejection check */
+	if(source_p->preClient->authd_accepted == false)
 	{
-		if (IsExemptKline(source_p) || IsConfExemptDNSBL(aconf))
-			sendto_one_notice(source_p, ":*** Your IP address %s is listed in %s, but you are exempt",
-					source_p->sockhost, source_p->preClient->dnsbl_listed->host);
-		else
+		struct blacklist_stats *stats;
+		rb_dlink_list varlist = { NULL, NULL, 0 };
+		char *reason;
+
+		substitution_append_var(&varlist, "nick", source_p->name);
+		substitution_append_var(&varlist, "ip", source_p->sockhost);
+		substitution_append_var(&varlist, "host", source_p->host);
+		substitution_append_var(&varlist, "dnsbl-host", source_p->preClient->authd_data);
+		substitution_append_var(&varlist, "network-name", ServerInfo.network_name);
+		reason = substitution_parse(source_p->preClient->authd_reason, &varlist);
+
+		switch(source_p->preClient->authd_cause)
 		{
-			sendto_realops_snomask(SNO_REJ, L_NETWIDE,
-				"Listed on DNSBL %s: %s (%s@%s) [%s] [%s]",
-				source_p->preClient->dnsbl_listed->host,
-				source_p->name,
-				source_p->username, source_p->host,
-				IsIPSpoof(source_p) ? "255.255.255.255" : source_p->sockhost,
-				source_p->info);
+		case 'B':	/* Blacklists */
+			if((stats = rb_dictionary_retrieve(bl_stats, source_p->preClient->authd_data)) != NULL)
+				stats->hits++;
+			
+			if(IsExemptKline(source_p) || IsConfExemptDNSBL(aconf))
+			{
+				sendto_one_notice(source_p, ":*** Your IP address %s is listed in %s, but you are exempt",
+						source_p->sockhost, source_p->preClient->authd_data);
+			}
+			else
+			{
+				sendto_realops_snomask(SNO_REJ, L_NETWIDE,
+					"Listed on DNSBL %s: %s (%s@%s) [%s] [%s]",
+					source_p->preClient->authd_data,
+					source_p->name,
+					source_p->username, source_p->host,
+					IsIPSpoof(source_p) ? "255.255.255.255" : source_p->sockhost,
+					source_p->info);
 
-			rb_dlink_list varlist = { NULL, NULL, 0 };
+				ServerStats.is_ref++;
 
-			substitution_append_var(&varlist, "nick", source_p->name);
-			substitution_append_var(&varlist, "ip", source_p->sockhost);
-			substitution_append_var(&varlist, "host", source_p->host);
-			substitution_append_var(&varlist, "dnsbl-host", source_p->preClient->dnsbl_listed->host);
-			substitution_append_var(&varlist, "network-name", ServerInfo.network_name);
+				sendto_one(source_p, form_str(ERR_YOUREBANNEDCREEP),
+						me.name, source_p->name, reason);
 
-			ServerStats.is_ref++;
+				sendto_one_notice(source_p, ":*** Your IP address %s is listed in %s",
+						source_p->sockhost, source_p->preClient->authd_data);
+				add_reject(source_p, NULL, NULL);
+				exit_client(client_p, source_p, &me, "*** Banned (DNS blacklist)");
+				substitution_free(&varlist);
+				return CLIENT_EXITED;
+			}
+			break;
+		default:	/* Unknown, but handle the case properly */
+			if (IsExemptKline(source_p))
+			{
+				sendto_one_notice(source_p, ":*** You were rejected, but you are exempt (reason: %s)",
+						reason);
+			}
+			else
+			{
+				sendto_realops_snomask(SNO_REJ, L_NETWIDE,
+						"Rejected by authentication system (reason %s): %s (%s@%s) [%s] [%s]",
+						reason, source_p->name, source_p->username, source_p->host,
+						IsIPSpoof(source_p) ? "255.255.255.255" : source_p->sockhost,
+						source_p->info);
 
-			sendto_one(source_p, form_str(ERR_YOUREBANNEDCREEP),
-					me.name, source_p->name,
-					substitution_parse(source_p->preClient->dnsbl_listed->reject_reason, &varlist));
+				ServerStats.is_ref++;
 
-			substitution_free(&varlist);
+				sendto_one(source_p, form_str(ERR_YOUREBANNEDCREEP),
+						me.name, source_p->name, reason);
 
-			sendto_one_notice(source_p, ":*** Your IP address %s is listed in %s",
-					source_p->sockhost, source_p->preClient->dnsbl_listed->host);
-			source_p->preClient->dnsbl_listed->hits++;
-			add_reject(source_p, NULL, NULL);
-			exit_client(client_p, source_p, &me, "*** Banned (DNS blacklist)");
-			return CLIENT_EXITED;
+				sendto_one_notice(source_p, ":*** Rejected by authentication system: %s",
+						reason);
+				add_reject(source_p, NULL, NULL);
+				exit_client(client_p, source_p, &me, "*** Banned (authentication system)");
+				substitution_free(&varlist);
+				return CLIENT_EXITED;
+			}
 		}
+
+		substitution_free(&varlist);
 	}
 
 	/* valid user name check */

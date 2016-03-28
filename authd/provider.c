@@ -74,6 +74,9 @@ load_provider(struct auth_provider *provider)
 			rb_dictionary_add(authd_option_handlers, handler->option, handler);
 	}
 
+	if(provider->stats_handler.letter != '\0')
+		authd_stat_handlers[provider->stats_handler.letter] = provider->stats_handler.handler;
+
 	provider->init();
 	rb_dlinkAdd(provider, &provider->node, &auth_providers);
 }
@@ -88,6 +91,10 @@ unload_provider(struct auth_provider *provider)
 		for(handler = provider->opt_handlers; handler->option != NULL; handler++)
 			rb_dictionary_delete(authd_option_handlers, handler->option);
 	}
+
+	if(provider->stats_handler.letter != '\0')
+		authd_stat_handlers[provider->stats_handler.letter] = NULL;
+
 	provider->destroy();
 	rb_dlinkDelete(&provider->node, &auth_providers);
 }
@@ -115,7 +122,7 @@ destroy_providers(void)
 	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
 		/* TBD - is this the right thing? */
-		reject_client(auth, 0, "Authentication system is down... try reconnecting in a few seconds");
+		reject_client(auth, -1, "destroy", "Authentication system is down... try reconnecting in a few seconds");
 	}
 
 	RB_DLINK_FOREACH(ptr, auth_providers.head)
@@ -161,7 +168,7 @@ provider_done(struct auth_client *auth, provider_t id)
 	{
 		if(!auth->providers_starting)
 			/* Only do this when there are no providers left */
-			accept_client(auth, 0);
+			accept_client(auth, -1);
 		return;
 	}
 
@@ -177,7 +184,7 @@ provider_done(struct auth_client *auth, provider_t id)
 
 /* Reject a client - WARNING: do not use auth instance after calling! */
 void
-reject_client(struct auth_client *auth, provider_t id, const char *reason)
+reject_client(struct auth_client *auth, provider_t id, const char *data, const char *reason)
 {
 	char reject;
 
@@ -197,11 +204,14 @@ reject_client(struct auth_client *auth, provider_t id, const char *reason)
 		break;
 	}
 
+	if(data == NULL)
+		data = "*";
+
 	/* We send back username and hostname in case ircd wants to overrule our decision.
 	 * In the future this may not be the case.
 	 * --Elizafox
 	 */
-	rb_helper_write(authd_helper, "R %x %c %s %s :%s", auth->cid, reject, auth->username, auth->hostname, reason);
+	rb_helper_write(authd_helper, "R %x %c %s %s %s :%s", auth->cid, reject, auth->username, auth->hostname, data, reason);
 
 	set_provider_off(auth, id);
 	cancel_providers(auth);
@@ -285,7 +295,7 @@ start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_
 
 	/* If no providers are running, accept the client */
 	if(!auth->providers)
-		accept_client(auth, 0);
+		accept_client(auth, -1);
 }
 
 /* Callback for the initiation */

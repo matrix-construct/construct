@@ -40,7 +40,7 @@ struct auth_opts_handler
 extern rb_helper *authd_helper;
 
 typedef void (*authd_cmd_handler)(int parc, char *parv[]);
-typedef void (*authd_stat_handler)(const char *rid, const char letter);
+typedef void (*authd_stat_handler)(uint32_t rid, const char letter);
 typedef void (*authd_reload_handler)(const char letter);
 
 extern authd_cmd_handler authd_cmd_handlers[256];
