@@ -316,6 +316,7 @@ configure_authd(void)
 	set_authd_timeout("ident_timeout", GlobalSetOptions.ident_timeout);
 	set_authd_timeout("rdns_timeout", ConfigFileEntry.connect_timeout);
 	set_authd_timeout("blacklist_timeout", ConfigFileEntry.connect_timeout);
+	ident_check_enable(ConfigFileEntry.disable_auth);	
 }
 
 static void
@@ -575,4 +576,10 @@ void
 set_authd_timeout(const char *key, int timeout)
 {
 	rb_helper_write(authd_helper, "O %s %d", key, timeout);
+}
+
+void
+ident_check_enable(bool enabled)
+{
+	rb_helper_write(authd_helper, "O ident_enabled %d", enabled ? 1 : 0);
 }
