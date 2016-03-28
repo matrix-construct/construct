@@ -23,6 +23,7 @@
 #loadmodule "extensions/extb_realname";
 #loadmodule "extensions/extb_server";
 #loadmodule "extensions/extb_ssl";
+#loadmodule "extensions/extb_usermode";
 #loadmodule "extensions/hurt";
 #loadmodule "extensions/m_extendchans";
 #loadmodule "extensions/m_findforwards";
