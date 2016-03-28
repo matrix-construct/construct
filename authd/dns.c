@@ -119,7 +119,7 @@ static void
 handle_lookup_ip_reply(void *data, struct DNSReply *reply)
 {
 	struct dns_query *query = data;
-	char ip[64] = "*";
+	char ip[HOSTIPLEN] = "*";
 
 	if(query == NULL)
 		/* Shouldn't happen */
