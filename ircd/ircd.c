@@ -39,7 +39,6 @@
 #include "numeric.h"
 #include "parse.h"
 #include "restart.h"
-#include "s_auth.h"
 #include "s_conf.h"
 #include "logger.h"
 #include "s_serv.h"		/* try_connections */
@@ -782,7 +781,6 @@ charybdis_main(int argc, char *argv[])
 	load_all_modules(1);
 	load_core_modules(1);
 
-	init_auth();		/* Initialise the auth code */
 	init_authd();		/* Start up authd. */
 	init_dns();		/* Start up DNS query system */
 
@@ -846,6 +844,8 @@ charybdis_main(int argc, char *argv[])
 		fflush(stderr);
 		return 0;	/* Why? We want the launcher to exit out. */
 	}
+
+	configure_authd();
 
 	me.from = &me;
 	me.servptr = &me;

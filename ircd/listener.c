@@ -34,7 +34,7 @@
 #include "s_newconf.h"
 #include "s_stats.h"
 #include "send.h"
-#include "s_auth.h"
+#include "authd.h"
 #include "reject.h"
 #include "s_conf.h"
 #include "hostmask.h"
@@ -509,7 +509,7 @@ add_connection(struct Listener *listener, rb_fde_t *F, struct sockaddr *sai, str
 
 	++listener->ref_count;
 
-	start_auth(new_client);
+	authd_initiate_client(new_client);
 }
 
 static const char *toofast = "ERROR :Reconnecting too fast, throttled.\r\n";

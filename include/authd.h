@@ -26,11 +26,34 @@
 #ifndef CHARYBDIS_AUTHD_H
 #define CHARYBDIS_AUTHD_H
 
+#include "stdinc.h"
+#include "rb_dictionary.h"
+#include "client.h"
+
+struct blacklist_stats
+{
+	uint8_t iptype;
+	unsigned int hits;
+};
+
 extern rb_helper *authd_helper;
 
+extern rb_dictionary *bl_stats;
+
 void init_authd(void);
+void configure_authd(void);
 void restart_authd(void);
 void rehash_authd(void);
 void check_authd(void);
+
+void authd_initiate_client(struct Client *);
+void authd_decide_client(struct Client *client_p, const char *ident, const char *host, bool accept, char cause, const char *data, const char *reason);
+void authd_abort_client(struct Client *);
+const char *get_provider_string(char cause);
+
+void add_blacklist(const char *host, const char *reason, uint8_t iptype, rb_dlink_list *filters);
+void del_blacklist(const char *host);
+void del_blacklist_all(void);
+void set_authd_timeout(const char *key, int timeout);
 
 #endif

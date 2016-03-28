@@ -37,7 +37,6 @@
 #include "s_serv.h"		/* hunt_server */
 #include "s_stats.h"
 #include "s_user.h"		/* show_opers */
-#include "blacklist.h"		/* dnsbl stuff */
 #include "parse.h"
 #include "modules.h"
 #include "hook.h"
@@ -141,51 +140,51 @@ static void stats_capability(struct Client *);
  */
 static struct stats_cmd stats_cmd_table[256] = {
 /*	letter	handler/handler_parv			parv	oper	admin	*/
-	['a'] = { { stats_dns_servers },			false,	true,	true,	},
-	['A'] = { { stats_dns_servers },			false,	true,	true,	},
-	['b'] = { { stats_delay },				false,	true,	true,	},
-	['B'] = { { stats_hash },				false,	true,	true,	},
+	['a'] = { { stats_dns_servers },		false,	true,	true,	},
+	['A'] = { { stats_dns_servers },		false,	true,	true,	},
+	['b'] = { { stats_delay },			false,	true,	true,	},
+	['B'] = { { stats_hash },			false,	true,	true,	},
 	['c'] = { { stats_connect },			false,	false,	false,	},
 	['C'] = { { stats_capability },			false,	true,	false,	},
-	['d'] = { { stats_tdeny },				false,	true,	false,	},
-	['D'] = { { stats_deny },				false,	true,	false,	},
-	['e'] = { { stats_exempt },				false,	true,	false,	},
-	['E'] = { { stats_events },				false,	true,	true,	},
-	['f'] = { { stats_comm },				false,	true,	true,	},
-	['F'] = { { stats_comm },				false,	true,	true,	},
-	['g'] = { { stats_prop_klines },			false,	true,	false,	},
+	['d'] = { { stats_tdeny },			false,	true,	false,	},
+	['D'] = { { stats_deny },			false,	true,	false,	},
+	['e'] = { { stats_exempt },			false,	true,	false,	},
+	['E'] = { { stats_events },			false,	true,	true,	},
+	['f'] = { { stats_comm },			false,	true,	true,	},
+	['F'] = { { stats_comm },			false,	true,	true,	},
+	['g'] = { { stats_prop_klines },		false,	true,	false,	},
 	['h'] = { { stats_hubleaf },			false,	false,	false,	},
 	['H'] = { { stats_hubleaf },			false,	false,	false,	},
-	['i'] = { { stats_auth },				false,	false,	false,	},
-	['I'] = { { stats_auth },				false,	false,	false,	},
+	['i'] = { { stats_auth },			false,	false,	false,	},
+	['I'] = { { stats_auth },			false,	false,	false,	},
 	['k'] = { { stats_tklines },			false,	false,	false,	},
-	['K'] = { { stats_klines },				false,	false,	false,	},
-	['l'] = { { .handler_parv = stats_ltrace },		true,	false,	false,	},
-	['L'] = { { .handler_parv = stats_ltrace },		true,	false,	false,	},
+	['K'] = { { stats_klines },			false,	false,	false,	},
+	['l'] = { { .handler_parv = stats_ltrace },	true,	false,	false,	},
+	['L'] = { { .handler_parv = stats_ltrace },	true,	false,	false,	},
 	['m'] = { { stats_messages },			false,	false,	false,	},
 	['M'] = { { stats_messages },			false,	false,	false,	},
-	['n'] = { { stats_dnsbl },				false,	false,	false,	},
-	['o'] = { { stats_oper },				false,	false,	false,	},
+	['n'] = { { stats_dnsbl },			false,	false,	false,	},
+	['o'] = { { stats_oper },			false,	false,	false,	},
 	['O'] = { { stats_privset },			false,	true,	false,	},
 	['p'] = { { stats_operedup },			false,	false,	false,	},
-	['P'] = { { stats_ports },				false,	false,	false,	},
-	['q'] = { { stats_tresv },				false,	true,	false,	},
-	['Q'] = { { stats_resv },				false,	true,	false,	},
-	['r'] = { { stats_usage },				false,	true,	false,	},
-	['R'] = { { stats_usage },				false,	true,	false,	},
-	['s'] = { { stats_ssld },				false,	true,	true,	},
-	['S'] = { { stats_ssld },				false,	true,	true,	},
-	['t'] = { { stats_tstats },				false,	true,	false,	},
-	['T'] = { { stats_tstats },				false,	true,	false,	},
-	['u'] = { { stats_uptime },				false,	false,	false,	},
-	['U'] = { { stats_shared },				false,	true,	false,	},
+	['P'] = { { stats_ports },			false,	false,	false,	},
+	['q'] = { { stats_tresv },			false,	true,	false,	},
+	['Q'] = { { stats_resv },			false,	true,	false,	},
+	['r'] = { { stats_usage },			false,	true,	false,	},
+	['R'] = { { stats_usage },			false,	true,	false,	},
+	['s'] = { { stats_ssld },			false,	true,	true,	},
+	['S'] = { { stats_ssld },			false,	true,	true,	},
+	['t'] = { { stats_tstats },			false,	true,	false,	},
+	['T'] = { { stats_tstats },			false,	true,	false,	},
+	['u'] = { { stats_uptime },			false,	false,	false,	},
+	['U'] = { { stats_shared },			false,	true,	false,	},
 	['v'] = { { stats_servers },			false,	false,	false,	},
 	['V'] = { { stats_servers },			false,	false,	false,	},
-	['x'] = { { stats_tgecos },				false,	true,	false,	},
-	['X'] = { { stats_gecos },				false,	true,	false,	},
-	['y'] = { { stats_class },				false,	false,	false,	},
-	['Y'] = { { stats_class },				false,	false,	false,	},
-	['z'] = { { stats_memory },				false,	true,	false,	},
+	['x'] = { { stats_tgecos },			false,	true,	false,	},
+	['X'] = { { stats_gecos },			false,	true,	false,	},
+	['y'] = { { stats_class },			false,	false,	false,	},
+	['Y'] = { { stats_class },			false,	false,	false,	},
+	['z'] = { { stats_memory },			false,	true,	false,	},
 	['Z'] = { { stats_ziplinks },			false,	true,	false,	},
 	['?'] = { { stats_servlinks },			false,	false,	false,	},
 };
@@ -758,19 +757,14 @@ stats_messages(struct Client *source_p)
 static void
 stats_dnsbl(struct Client *source_p)
 {
-	rb_dlink_node *ptr;
-	struct Blacklist *blptr;
+	rb_dictionary_iter iter;
+	struct blacklist_stats *stats;
 
-	RB_DLINK_FOREACH(ptr, blacklist_list.head)
+	RB_DICTIONARY_FOREACH(stats, &iter, bl_stats)
 	{
-		blptr = ptr->data;
-
 		/* use RPL_STATSDEBUG for now -- jilles */
-		sendto_one_numeric(source_p, RPL_STATSDEBUG, "n :%d %s %s (%d)",
-				blptr->hits,
-				blptr->host,
-				blptr->status & CONF_ILLEGAL ? "disabled" : "active",
-				blptr->refcount);
+		sendto_one_numeric(source_p, RPL_STATSDEBUG, "n :%d %s",
+				stats->hits, (const char *)iter.cur->key);
 	}
 }
 

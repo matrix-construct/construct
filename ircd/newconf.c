@@ -24,7 +24,6 @@
 #include "cache.h"
 #include "ircd.h"
 #include "snomask.h"
-#include "blacklist.h"
 #include "sslproc.h"
 #include "privilege.h"
 #include "chmode.h"
@@ -55,8 +54,7 @@ static struct alias_entry *yy_alias = NULL;
 
 static char *yy_blacklist_host = NULL;
 static char *yy_blacklist_reason = NULL;
-static int yy_blacklist_ipv4 = 1;
-static int yy_blacklist_ipv6 = 0;
+static uint8_t yy_blacklist_iptype = 0;
 static rb_dlink_list yy_blacklist_filters;
 
 static char *yy_privset_extends = NULL;
@@ -1841,6 +1839,9 @@ conf_set_channel_autochanmodes(void *data)
 /* XXX for below */
 static void conf_set_blacklist_reason(void *data);
 
+#define IPTYPE_IPV4 1
+#define IPTYPE_IPV6 2
+
 static void
 conf_set_blacklist_host(void *data)
 {
@@ -1854,8 +1855,7 @@ conf_set_blacklist_host(void *data)
 		return;
 	}
 
-	yy_blacklist_ipv4 = 1;
-	yy_blacklist_ipv6 = 0;
+	yy_blacklist_iptype |= IPTYPE_IPV4;
 	yy_blacklist_host = rb_strdup(data);
 }
 
@@ -1865,25 +1865,24 @@ conf_set_blacklist_type(void *data)
 	conf_parm_t *args = data;
 
 	/* Don't assume we have either if we got here */
-	yy_blacklist_ipv4 = 0;
-	yy_blacklist_ipv6 = 0;
+	yy_blacklist_iptype = 0;
 
 	for (; args; args = args->next)
 	{
 		if (!strcasecmp(args->v.string, "ipv4"))
-			yy_blacklist_ipv4 = 1;
+			yy_blacklist_iptype |= IPTYPE_IPV4;
 		else if (!strcasecmp(args->v.string, "ipv6"))
-			yy_blacklist_ipv6 = 1;
+			yy_blacklist_iptype |= IPTYPE_IPV6;
 		else
 			conf_report_error("blacklist::type has unknown address family %s",
 					  args->v.string);
 	}
 
 	/* If we have neither, just default to IPv4 */
-	if (!yy_blacklist_ipv4 && !yy_blacklist_ipv6)
+	if (!yy_blacklist_iptype)
 	{
 		conf_report_error("blacklist::type has neither IPv4 nor IPv6 (defaulting to IPv4)");
-		yy_blacklist_ipv4 = 1;
+		yy_blacklist_iptype = IPTYPE_IPV4;
 	}
 }
 
@@ -1891,13 +1890,13 @@ static void
 conf_set_blacklist_matches(void *data)
 {
 	conf_parm_t *args = data;
+	enum filter_t { FILTER_NONE, FILTER_ALL, FILTER_LAST };
 
 	for (; args; args = args->next)
 	{
-		struct BlacklistFilter *filter;
 		char *str = args->v.string;
 		char *p;
-		int type = BLACKLIST_FILTER_LAST;
+		enum filter_t type = FILTER_LAST;
 
 		if (CF_TYPE(args->type) != CF_QSTRING)
 		{
@@ -1922,17 +1921,17 @@ conf_set_blacklist_matches(void *data)
 		{
 			/* Check for validity */
 			if (*p == '.')
-				type = BLACKLIST_FILTER_ALL;
-			else if (!isalnum((unsigned char)*p))
+				type = FILTER_ALL;
+			else if (!isdigit((unsigned char)*p))
 			{
 				conf_report_error("blacklist::matches has invalid IP match entry %s",
 						str);
-				type = 0;
+				type = FILTER_NONE;
 				break;
 			}
 		}
 
-		if (type == BLACKLIST_FILTER_ALL)
+		if (type == FILTER_ALL)
 		{
 			/* Basic IP sanity check */
 			struct rb_sockaddr_storage tmp;
@@ -1943,7 +1942,7 @@ conf_set_blacklist_matches(void *data)
 				continue;
 			}
 		}
-		else if (type == BLACKLIST_FILTER_LAST)
+		else if (type == FILTER_LAST)
 		{
 			/* Verify it's the correct length */
 			if (strlen(str) > 3)
@@ -1958,11 +1957,7 @@ conf_set_blacklist_matches(void *data)
 			continue; /* Invalid entry */
 		}
 
-		filter = rb_malloc(sizeof(struct BlacklistFilter));
-		filter->type = type;
-		rb_strlcpy(filter->filterstr, str, sizeof(filter->filterstr));
-
-		rb_dlinkAdd(filter, &filter->node, &yy_blacklist_filters);
+		rb_dlinkAddAlloc(rb_strdup(str), &yy_blacklist_filters);
 	}
 }
 
@@ -1974,7 +1969,7 @@ conf_set_blacklist_reason(void *data)
 	if (yy_blacklist_host && data)
 	{
 		yy_blacklist_reason = rb_strdup(data);
-		if (yy_blacklist_ipv6)
+		if (yy_blacklist_iptype & IPTYPE_IPV4)
 		{
 			/* Make sure things fit (64 = alnum count + dots) */
 			if ((64 + strlen(yy_blacklist_host)) > IRCD_RES_HOSTLEN)
@@ -1985,7 +1980,7 @@ conf_set_blacklist_reason(void *data)
 			}
 		}
 		/* Avoid doing redundant check, IPv6 is bigger than IPv4 --Elizabeth */
-		if (yy_blacklist_ipv4 && !yy_blacklist_ipv6)
+		if ((yy_blacklist_iptype & IPTYPE_IPV4) && !(yy_blacklist_iptype & IPTYPE_IPV6))
 		{
 			/* Make sure things fit (16 = number of nums + dots) */
 			if ((16 + strlen(yy_blacklist_host)) > IRCD_RES_HOSTLEN)
@@ -1996,30 +1991,23 @@ conf_set_blacklist_reason(void *data)
 			}
 		}
 
-		new_blacklist(yy_blacklist_host, yy_blacklist_reason, yy_blacklist_ipv4, yy_blacklist_ipv6,
-				&yy_blacklist_filters);
+		add_blacklist(yy_blacklist_host, yy_blacklist_reason, yy_blacklist_iptype, &yy_blacklist_filters);
 	}
 
 cleanup_bl:
-	if (data == NULL)
+	RB_DLINK_FOREACH_SAFE(ptr, nptr, yy_blacklist_filters.head)
 	{
-		RB_DLINK_FOREACH_SAFE(ptr, nptr, yy_blacklist_filters.head)
-		{
-			rb_dlinkDelete(ptr, &yy_blacklist_filters);
-			rb_free(ptr);
-		}
+		rb_free(ptr->data);
+		rb_dlinkDestroy(ptr, &yy_blacklist_filters);
 	}
-	else
-	{
-		yy_blacklist_filters = (rb_dlink_list){ NULL, NULL, 0 };
-	}
+
+	yy_blacklist_filters = (rb_dlink_list){ NULL, NULL, 0 };
 
 	rb_free(yy_blacklist_host);
 	rb_free(yy_blacklist_reason);
 	yy_blacklist_host = NULL;
 	yy_blacklist_reason = NULL;
-	yy_blacklist_ipv4 = 1;
-	yy_blacklist_ipv6 = 0;
+	yy_blacklist_iptype = 0;
 }
 
 /* public functions */

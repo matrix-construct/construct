@@ -22,20 +22,23 @@
  *  USA
  */
 
-#include <stdinc.h>
-#include <rb_lib.h>
-#include <client.h>
-#include <ircd_defs.h>
-#include <parse.h>
-#include <authd.h>
-#include <match.h>
-#include <logger.h>
-#include <s_conf.h>
-#include <client.h>
-#include <send.h>
-#include <numeric.h>
-#include <msg.h>
-#include <dns.h>
+#include "stdinc.h"
+#include "rb_lib.h"
+#include "client.h"
+#include "ircd_defs.h"
+#include "parse.h"
+#include "authd.h"
+#include "match.h"
+#include "logger.h"
+#include "s_conf.h"
+#include "s_stats.h"
+#include "client.h"
+#include "packet.h"
+#include "hash.h"
+#include "send.h"
+#include "numeric.h"
+#include "msg.h"
+#include "dns.h"
 
 static int start_authd(void);
 static void parse_authd_reply(rb_helper * helper);
@@ -43,6 +46,11 @@ static void restart_authd_cb(rb_helper * helper);
 
 rb_helper *authd_helper;
 static char *authd_path;
+
+uint32_t cid = 1;
+static rb_dictionary *cid_clients;
+
+rb_dictionary *bl_stats;
 
 static int
 start_authd(void)
@@ -77,6 +85,12 @@ start_authd(void)
 		authd_path = rb_strdup(fullpath);
 	}
 
+	if(cid_clients == NULL)
+		cid_clients = rb_dictionary_create("authd cid to uid mapping", rb_uint32cmp);
+
+	if(bl_stats == NULL)
+		bl_stats = rb_dictionary_create("blacklist statistics", strcasecmp);
+
 	authd_helper = rb_helper_start("authd", authd_path, parse_authd_reply, restart_authd_cb);
 
 	if(authd_helper == NULL)
@@ -98,6 +112,9 @@ parse_authd_reply(rb_helper * helper)
 	int parc;
 	char dnsBuf[READBUF_SIZE];
 	char *parv[MAXPARA + 1];
+	long lcid;
+	char *id;
+	struct Client *client_p;
 
 	while((len = rb_helper_read(helper, dnsBuf, sizeof(dnsBuf))) > 0)
 	{
@@ -105,7 +122,75 @@ parse_authd_reply(rb_helper * helper)
 
 		switch (*parv[0])
 		{
-		case 'E':
+		case 'A':	/* Accepted a client */
+			if(parc != 4)
+			{
+				iwarn("authd sent a result with wrong number of arguments: got %d", parc);
+				restart_authd();
+				return;
+			}
+
+			if((lcid = strtol(parv[1], NULL, 16)) > UINT32_MAX)
+			{
+				iwarn("authd sent us back a bad client ID");
+				restart_authd();
+				return;
+			}
+
+			/* cid to uid (retrieve and delete) */
+			if((id = rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER((uint32_t)lcid))) == NULL)
+			{
+				iwarn("authd sent us back an unknown client ID");
+				restart_authd();
+				return;
+			}
+
+			if((client_p = find_id(id)) == NULL)
+			{
+				/* Client vanished... */
+				rb_free(id);
+				return;
+			}
+
+			rb_free(id);
+
+			authd_decide_client(client_p, parv[2], parv[3], true, '\0', NULL, NULL);
+			break;
+		case 'R':	/* Reject client */
+			if(parc != 7)
+			{
+				iwarn("authd sent us a result with wrong number of arguments: got %d", parc);
+				restart_authd();
+				return;
+			}
+
+			if((lcid = strtol(parv[1], NULL, 16)) > UINT32_MAX)
+			{
+				iwarn("authd sent us back a bad client ID");
+				restart_authd();
+				return;
+			}
+
+			/* cid to uid (retrieve and delete) */
+			if((id = rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER((uint32_t)lcid))) == NULL)
+			{
+				iwarn("authd sent us back an unknown client ID");
+				restart_authd();
+				return;
+			}
+
+			if((client_p = find_id(id)) == NULL)
+			{
+				/* Client vanished... */
+				rb_free(id);
+				return;
+			}
+
+			rb_free(id);
+
+			authd_decide_client(client_p, parv[3], parv[4], false, toupper(*parv[2]), parv[5], parv[6]);
+			return;
+		case 'E':	/* DNS Result */
 			if(parc != 5)
 			{
 				ilog(L_MAIN, "authd sent a result with wrong number of arguments: got %d", parc);
@@ -114,7 +199,7 @@ parse_authd_reply(rb_helper * helper)
 			}
 			dns_results_callback(parv[1], parv[2], parv[3], parv[4]);
 			break;
-		case 'W':
+		case 'W':	/* Oper warning */
 			if(parc != 3)
 			{
 				ilog(L_MAIN, "authd sent a result with wrong number of arguments: got %d", parc);
@@ -124,7 +209,7 @@ parse_authd_reply(rb_helper * helper)
 
 			switch(*parv[2])
 			{
-			case 'D':	/* debug */
+			case 'D':	/* Debug */
 				sendto_realops_snomask(SNO_DEBUG, L_ALL, "authd debug: %s", parv[3]);
 				break;
 			case 'I':	/* Info */
@@ -147,9 +232,9 @@ parse_authd_reply(rb_helper * helper)
 
 			/* NOTREACHED */
 			break;
-		case 'X':
-		case 'Y':
-		case 'Z':
+		case 'X':	/* Stats error */
+		case 'Y':	/* Stats reply */
+		case 'Z':	/* End of stats reply */
 			if(parc < 3)
 			{
 				ilog(L_MAIN, "authd sent a result with wrong number of arguments: got %d", parc);
@@ -190,6 +275,15 @@ init_authd(void)
 	}
 }
 
+void
+configure_authd(void)
+{
+	/* These will do for now */
+	set_authd_timeout("ident_timeout", GlobalSetOptions.ident_timeout);
+	set_authd_timeout("rdns_timeout", ConfigFileEntry.connect_timeout);
+	set_authd_timeout("blacklist_timeout", ConfigFileEntry.connect_timeout);
+}
+
 static void
 restart_authd_cb(rb_helper * helper)
 {
@@ -213,6 +307,7 @@ void
 rehash_authd(void)
 {
 	rb_helper_write(authd_helper, "R");
+	configure_authd();
 }
 
 void
@@ -220,4 +315,203 @@ check_authd(void)
 {
 	if(authd_helper == NULL)
 		restart_authd();
+}
+
+static inline uint32_t
+generate_cid(void)
+{
+	if(++cid == 0)
+		cid = 1;
+
+	return cid;
+}
+
+/* Basically when this is called we begin handing off the client to authd for
+ * processing. authd "owns" the client until processing is finished, or we
+ * timeout from authd. authd will make a decision whether or not to accept the
+ * client, but it's up to other parts of the code (for now) to decide if we're
+ * gonna accept the client and ignore authd's suggestion.
+ *
+ * --Elizafox
+ */
+void
+authd_initiate_client(struct Client *client_p)
+{
+	char client_ipaddr[HOSTIPLEN+1];
+	char listen_ipaddr[HOSTIPLEN+1];
+	uint16_t client_port, listen_port;
+	uint32_t authd_cid;
+
+	if(client_p->preClient == NULL || client_p->preClient->authd_cid == 0)
+		return;
+
+	authd_cid = client_p->preClient->authd_cid = generate_cid();
+
+	/* Collisions are extremely unlikely, so disregard the possibility */
+	rb_dictionary_add(cid_clients, RB_UINT_TO_POINTER(authd_cid), rb_strdup(client_p->id));
+
+	/* Retrieve listener and client IP's */
+	rb_inet_ntop_sock((struct sockaddr *)&client_p->preClient->lip, listen_ipaddr, sizeof(listen_ipaddr));
+	rb_inet_ntop_sock((struct sockaddr *)&client_p->localClient->ip, client_ipaddr, sizeof(client_ipaddr));
+
+	/* Retrieve listener and client ports */
+#ifdef RB_IPV6
+	if(GET_SS_FAMILY(&client_p->preClient->lip) == AF_INET6)
+		listen_port = ntohs(((struct sockaddr_in6 *)&client_p->preClient->lip)->sin6_port);
+	else
+#endif
+		listen_port = ntohs(((struct sockaddr_in *)&client_p->preClient->lip)->sin_port);
+
+#ifdef RB_IPV6
+	if(GET_SS_FAMILY(&client_p->localClient->ip) == AF_INET6)
+		client_port = ntohs(((struct sockaddr_in6 *)&client_p->localClient->ip)->sin6_port);
+	else
+#endif
+		client_port = ntohs(((struct sockaddr_in *)&client_p->localClient->ip)->sin_port);
+
+	/* FIXME timeout should be configurable */
+	client_p->preClient->authd_timeout = rb_current_time() + 45;
+
+	rb_helper_write(authd_helper, "C %x %s %hu %s %hu", authd_cid, listen_ipaddr, listen_port, client_ipaddr, client_port);
+}
+
+/* When this is called we have a decision on client acceptance.
+ *
+ * After this point authd no longer "owns" the client.
+ */
+void
+authd_decide_client(struct Client *client_p, const char *ident, const char *host, bool accept, char cause, const char *data, const char *reason)
+{
+	if(client_p->preClient == NULL || client_p->preClient->authd_cid == 0)
+		return;
+
+	if(*ident != '*')
+	{
+		rb_strlcpy(client_p->username, ident, sizeof(client_p->username));
+		ServerStats.is_abad++; /* s_auth used to do this, stay compatible */
+	}
+	else
+		ServerStats.is_asuc++;
+
+	if(*host != '*')
+		rb_strlcpy(client_p->host, host, sizeof(client_p->host));
+
+	client_p->preClient->authd_accepted = accept;
+	client_p->preClient->authd_cause = cause;
+	client_p->preClient->authd_data = (data == NULL ? NULL : rb_strdup(data));
+	client_p->preClient->authd_reason = (reason == NULL ? NULL : rb_strdup(reason));
+
+	rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(client_p->preClient->authd_cid));
+
+	client_p->preClient->authd_cid = 0;
+
+	/*
+	 * When a client has auth'ed, we want to start reading what it sends
+	 * us. This is what read_packet() does.
+	 *     -- adrian
+	 *
+	 * Above comment was originally in s_auth.c, but moved here with below code.
+	 * --Elizafox
+	 */
+	rb_dlinkAddTail(client_p, &client_p->node, &global_client_list);
+	read_packet(client_p->localClient->F, client_p);
+}
+
+void
+authd_abort_client(struct Client *client_p)
+{
+	if(client_p->preClient == NULL)
+		return;
+
+	if(client_p->preClient->authd_cid == 0)
+		return;
+
+	rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(client_p->preClient->authd_cid));
+
+	rb_helper_write(authd_helper, "E %x", client_p->preClient->authd_cid);
+	client_p->preClient->authd_cid = 0;
+}
+
+/* Turn a cause char (who rejected us) into the name of the provider */
+const char *
+get_provider_string(char cause)
+{
+	switch(cause)
+	{
+	case 'B':
+		return "Blacklist";
+	case 'D':
+		return "rDNS";
+	case 'I':
+		return "Ident";
+	default:
+		return "Unknown";
+	}
+}
+
+/* Send a new blacklist to authd */
+void
+add_blacklist(const char *host, const char *reason, uint8_t iptype, rb_dlink_list *filters)
+{
+	rb_dlink_node *ptr;
+	struct blacklist_stats *stats = rb_malloc(sizeof(struct blacklist_stats));
+	char filterbuf[BUFSIZE];
+	size_t s = 0;
+
+	/* Build a list of comma-separated values for authd.
+	 * We don't check for validity - do it elsewhere.
+	 */
+	RB_DLINK_FOREACH(ptr, filters->head)
+	{
+		char *filter = ptr->data;
+		size_t filterlen = strlen(filter) + 1;
+
+		if(s + filterlen > sizeof(filterbuf))
+			break;
+
+		snprintf(&filterbuf[s], sizeof(filterbuf) - s, "%s,", filter);
+
+		s += filterlen;
+	}
+
+	if(s)
+		filterbuf[s - 1] = '\0';
+
+	stats->iptype = iptype;
+	stats->hits = 0;
+	rb_dictionary_add(bl_stats, host, stats);
+
+	rb_helper_write(authd_helper, "O rbl %s %hhu %s :%s", host, iptype, filterbuf, reason);
+}
+
+/* Delete a blacklist */
+void
+del_blacklist(const char *host)
+{
+	rb_dictionary_delete(bl_stats, host);
+
+	rb_helper_write(authd_helper, "O rbl_del %s", host);
+}
+
+/* Delete all the blacklists */
+void
+del_blacklist_all(void)
+{
+	struct blacklist_stats *stats;
+	rb_dictionary_iter iter;
+
+	RB_DICTIONARY_FOREACH(stats, &iter, bl_stats)
+	{
+		rb_free(stats);
+		rb_dictionary_delete(bl_stats, iter.cur->key);
+	}
+
+	rb_helper_write(authd_helper, "O rbl_del_all");
+}
+
+/* Adjust an authd timeout value */
+void
+set_authd_timeout(const char *key, int timeout)
+{
+	rb_helper_write(authd_helper, "O %s %d", key, timeout);
 }
