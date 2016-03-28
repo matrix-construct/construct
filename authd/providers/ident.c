@@ -46,6 +46,7 @@ static const char *messages[] =
 	"*** Got Ident response",
 	"*** No Ident response",
 	"*** Cannot verify ident validity, ignoring ident",
+	"*** Ident disabled, not checking ident",
 };
 
 typedef enum
@@ -54,6 +55,7 @@ typedef enum
 	REPORT_FOUND,
 	REPORT_FAIL,
 	REPORT_INVALID,
+	REPORT_DISABLED,
 } ident_message;
 
 static EVH timeout_ident_queries_event;
@@ -321,9 +323,15 @@ static bool ident_start(struct auth_client *auth)
 	struct rb_sockaddr_storage l_addr, c_addr;
 	int family = GET_SS_FAMILY(&auth->c_addr);
 
-	if(!ident_enable || auth->data[PROVIDER_IDENT] != NULL)
+	if(auth->data[PROVIDER_IDENT] != NULL)
 	{
 		set_provider_done(auth, PROVIDER_IDENT); /* for blacklists */
+		return true;
+	}
+	else if(!ident_enable)
+	{
+		notice_client(auth->cid, messages[REPORT_DISABLED]);
+		set_provider_done(auth, PROVIDER_IDENT);
 		return true;
 	}
 
@@ -394,9 +402,7 @@ add_conf_ident_timeout(const char *key __unused, int parc __unused, const char *
 static void
 set_ident_enabled(const char *key __unused, int parc __unused, const char **parv)
 {
-	ident_enable = (strcasecmp(parv[0], "true") == 0 ||
-			strcasecmp(parv[0], "1") == 0 ||
-			strcasecmp(parv[0], "enable") == 0);
+	ident_enable = (*parv[0] == '1');
 }
 
 struct auth_opts_handler ident_options[] =

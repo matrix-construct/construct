@@ -274,6 +274,9 @@ start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_
 #endif
 		((struct sockaddr_in *)&auth->c_addr)->sin_port = htons(auth->c_port);
 
+	rb_strlcpy(auth->hostname, "*", sizeof(auth->hostname));
+	rb_strlcpy(auth->username, "*", sizeof(auth->username));
+
 	memset(auth->data, 0, sizeof(auth->data));
 
 	auth->providers_starting = true;
