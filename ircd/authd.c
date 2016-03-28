@@ -455,12 +455,10 @@ static void
 timeout_dead_authd_clients(void *notused __unused)
 {
 	rb_dictionary_iter iter;
-	char *id;
+	struct Client *client_p;
 
-	RB_DICTIONARY_FOREACH(id, &iter, cid_clients)
+	RB_DICTIONARY_FOREACH(client_p, &iter, cid_clients)
 	{
-		struct Client *client_p = ptr->data;
-
 		if(client_p->preClient->authd_timeout < rb_current_time())
 		{
 			rb_helper_write(authd_helper, "E %x", client_p->preClient->authd_cid);
