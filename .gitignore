@@ -55,6 +55,7 @@ ircd/version.c
 ircd/version.c.last
 ssld/ssld
 wsockd/wsockd
+testsuite/ircd.pid.*
 tools/charybdis-mkpasswd
 tools/genssl
 tools/mkpasswd
