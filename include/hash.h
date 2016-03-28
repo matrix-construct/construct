@@ -82,7 +82,7 @@ extern void add_to_id_hash(const char *, struct Client *);
 extern void del_from_id_hash(const char *name, struct Client *client);
 extern struct Client *find_id(const char *name);
 
-extern struct Channel *get_or_create_channel(struct Client *client_p, const char *chname, int *isnew);
+extern struct Channel *get_or_create_channel(struct Client *client_p, const char *chname, bool *isnew);
 extern void del_from_channel_hash(const char *name, struct Channel *chan);
 extern struct Channel *find_channel(const char *name);
 

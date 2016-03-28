@@ -94,9 +94,9 @@ rb_dlink_list local_oper_list;     /* our opers, duplicated in lclient_list */
 rb_dlink_list oper_list;           /* network opers */
 
 char **myargv;
-bool dorehash = false;
-bool dorehashbans = false;
-bool doremotd = false;
+volatile sig_atomic_t dorehash = false;
+volatile sig_atomic_t dorehashbans = false;
+volatile sig_atomic_t doremotd = false;
 bool kline_queued = false;
 bool server_state_foreground = false;
 bool opers_see_all_users = false;

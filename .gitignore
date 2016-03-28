@@ -17,6 +17,7 @@ bandb/bantool
 autom4te.cache
 aclocal.m4
 compile
+confdefs.h
 config.guess
 config.sub
 depcomp
@@ -54,6 +55,7 @@ ircd/version.c
 ircd/version.c.last
 ssld/ssld
 wsockd/wsockd
+testsuite/ircd.pid.*
 tools/charybdis-mkpasswd
 tools/genssl
 tools/mkpasswd

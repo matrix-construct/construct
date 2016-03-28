@@ -26,7 +26,7 @@ DECLARE_MODULE_AV2(extb_usermode, _modinit, _moddeinit, NULL, NULL, NULL, NULL, 
 static int
 _modinit(void)
 {
-	extban_table['m'] = eb_usermode;
+	extban_table['u'] = eb_usermode;
 
 	return 0;
 }
@@ -34,7 +34,7 @@ _modinit(void)
 static void
 _moddeinit(void)
 {
-	extban_table['m'] = NULL;
+	extban_table['u'] = NULL;
 }
 
 static int eb_usermode(const char *data, struct Client *client_p,
