@@ -63,6 +63,7 @@ struct blacklist
 
 	bool delete;			/* If true delete when no clients */
 	int refcount;			/* When 0 and delete is set, remove this blacklist */
+	unsigned int hits;
 
 	time_t lastwarning;		/* Last warning about garbage replies sent */
 };
@@ -81,7 +82,7 @@ struct blacklist_lookup
 struct blacklist_filter
 {
 	filter_t type;			/* Type of filter */
-	char filter[HOSTIPLEN];	/* The filter itself */
+	char filter[HOSTIPLEN];		/* The filter itself */
 
 	rb_dlink_node node;
 };
@@ -245,6 +246,7 @@ blacklist_dns_callback(const char *result, bool status, query_type type, void *d
 	if (result != NULL && status && blacklist_check_reply(bllookup, result))
 	{
 		/* Match found, so proceed no further */
+		bl->hits++;
 		blacklists_cancel(auth);
 		reject_client(auth, PROVIDER_BLACKLIST, bl->host, bl->reason);
 		return;
@@ -544,6 +546,24 @@ add_conf_blacklist_timeout(const char *key, int parc, const char **parv)
 	blacklist_timeout = timeout;
 }
 
+static void
+blacklist_stats(uint32_t rid, char letter)
+{
+	rb_dlink_node *ptr;
+
+	RB_DLINK_FOREACH(ptr, blacklist_list.head)
+	{
+		struct blacklist *bl = ptr->data;
+
+		if(bl->delete)
+			continue;
+
+		stats_result(rid, letter, "%s %hhu %u", bl->host, bl->iptype, bl->hits);
+	}
+
+	stats_done(rid, letter);
+}
+
 struct auth_opts_handler blacklist_options[] =
 {
 	{ "rbl", 4, add_conf_blacklist },
@@ -562,4 +582,5 @@ struct auth_provider blacklist_provider =
 	.cancel = blacklists_cancel,
 	.completed = blacklists_initiate,
 	.opt_handlers = blacklist_options,
+	.stats_handler = { 'B', blacklist_stats },
 };
