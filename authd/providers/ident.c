@@ -394,7 +394,7 @@ add_conf_ident_timeout(const char *key __unused, int parc __unused, const char *
 static void
 set_ident_enabled(const char *key __unused, int parc __unused, const char **parv)
 {
-	enable_ident = (strcasecmp(parv[0], "true") == 0 ||
+	ident_enable = (strcasecmp(parv[0], "true") == 0 ||
 			strcasecmp(parv[0], "1") == 0 ||
 			strcasecmp(parv[0], "enable") == 0);
 }
