@@ -546,6 +546,7 @@ add_conf_blacklist_timeout(const char *key, int parc, const char **parv)
 	blacklist_timeout = timeout;
 }
 
+#if 0
 static void
 blacklist_stats(uint32_t rid, char letter)
 {
@@ -563,6 +564,7 @@ blacklist_stats(uint32_t rid, char letter)
 
 	stats_done(rid, letter);
 }
+#endif
 
 struct auth_opts_handler blacklist_options[] =
 {
@@ -582,5 +584,5 @@ struct auth_provider blacklist_provider =
 	.cancel = blacklists_cancel,
 	.completed = blacklists_initiate,
 	.opt_handlers = blacklist_options,
-	.stats_handler = { 'B', blacklist_stats },
+	/* .stats_handler = { 'B', blacklist_stats }, */
 };
