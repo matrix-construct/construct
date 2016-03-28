@@ -459,7 +459,7 @@ timeout_dead_authd_clients(void *notused __unused)
 
 	RB_DICTIONARY_FOREACH(id, &iter, cid_clients)
 	{
-		struct Client *client_p;
+		struct Client *client_p = ptr->data;
 
 		if(client_p->preClient->authd_timeout < rb_current_time())
 		{
