@@ -405,7 +405,7 @@ find_channel(const char *name)
  *  block, if it didn't exist before).
  */
 struct Channel *
-get_or_create_channel(struct Client *client_p, const char *chname, int *isnew)
+get_or_create_channel(struct Client *client_p, const char *chname, bool *isnew)
 {
 	struct Channel *chptr;
 	int len;
@@ -434,12 +434,12 @@ get_or_create_channel(struct Client *client_p, const char *chname, int *isnew)
 	if (chptr != NULL)
 	{
 		if (isnew != NULL)
-			*isnew = 0;
+			*isnew = false;
 		return chptr;
 	}
 
 	if(isnew != NULL)
-		*isnew = 1;
+		*isnew = true;
 
 	chptr = allocate_channel(s);
 	chptr->channelts = rb_current_time();	/* doesn't hurt to set it here */
