@@ -1969,7 +1969,7 @@ conf_set_blacklist_reason(void *data)
 	if (yy_blacklist_host && data)
 	{
 		yy_blacklist_reason = rb_strdup(data);
-		if (yy_blacklist_iptype & IPTYPE_IPV4)
+		if (yy_blacklist_iptype & IPTYPE_IPV6)
 		{
 			/* Make sure things fit (64 = alnum count + dots) */
 			if ((64 + strlen(yy_blacklist_host)) > IRCD_RES_HOSTLEN)
