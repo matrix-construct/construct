@@ -43,12 +43,14 @@
 static int start_authd(void);
 static void parse_authd_reply(rb_helper * helper);
 static void restart_authd_cb(rb_helper * helper);
+static EVH timeout_dead_authd_clients;
 
 rb_helper *authd_helper;
 static char *authd_path;
 
 uint32_t cid = 1;
 static rb_dictionary *cid_clients;
+static struct ev_entry *timeout_ev;
 
 rb_dictionary *bl_stats;
 
@@ -90,6 +92,9 @@ start_authd(void)
 
 	if(bl_stats == NULL)
 		bl_stats = rb_dictionary_create("blacklist statistics", strcasecmp);
+
+	if(timeout_ev == NULL)
+		timeout_ev = rb_event_addish("timeout_dead_authd_clients", timeout_dead_authd_clients, NULL, 1);
 
 	authd_helper = rb_helper_start("authd", authd_path, parse_authd_reply, restart_authd_cb);
 
@@ -191,7 +196,7 @@ parse_authd_reply(rb_helper * helper)
 			authd_decide_client(client_p, parv[3], parv[4], false, toupper(*parv[2]), parv[5], parv[6]);
 			break;
 		case 'N':	/* Notice to client */
-			if(parv != 3)
+			if(parc != 3)
 			{
 				iwarn("authd sent us a result with wrong number of arguments: got %d", parc);
 				restart_authd();
@@ -459,6 +464,33 @@ authd_abort_client(struct Client *client_p)
 
 	rb_helper_write(authd_helper, "E %x", client_p->preClient->authd_cid);
 	client_p->preClient->authd_cid = 0;
+}
+
+static void
+timeout_dead_authd_clients(void *notused __unused)
+{
+	rb_dictionary_iter iter;
+	char *id;
+
+	RB_DICTIONARY_FOREACH(id, &iter, cid_clients)
+	{
+		struct Client *client_p;
+		if((client_p = find_id(id)) == NULL)
+		{
+			/* This shouldn't happen... but just in case... */
+			rb_helper_write(authd_helper, "E %x", RB_POINTER_TO_UINT(iter.cur->key));
+			rb_free(id);
+			rb_dictionary_delete(cid_clients, iter.cur->key);
+			continue;
+		}
+
+		if(client_p->preClient->authd_timeout < rb_current_time())
+		{
+			rb_helper_write(authd_helper, "E %x", client_p->preClient->authd_cid);
+			rb_free(id);
+			rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(client_p->preClient->authd_cid));
+		}
+	}
 }
 
 /* Turn a cause char (who rejected us) into the name of the provider */
