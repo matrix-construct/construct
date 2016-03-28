@@ -32,5 +32,6 @@ extern void init_resolver(void);
 extern void restart_resolver(void);
 extern void gethost_byname_type(const char *, struct DNSQuery *, int);
 extern void gethost_byaddr(const struct rb_sockaddr_storage *, struct DNSQuery *);
+extern void build_rdns(char *, size_t, const struct rb_sockaddr_storage *, const char *);
 
 #endif

@@ -43,7 +43,6 @@
 #include "send.h"
 #include "reject.h"
 #include "cache.h"
-#include "blacklist.h"
 #include "privilege.h"
 #include "sslproc.h"
 #include "bandbi.h"
@@ -1526,7 +1525,7 @@ clear_out_old_conf(void)
 		alias_dict = NULL;
 	}
 
-	destroy_blacklists();
+	del_blacklist_all();
 
 	privilegeset_mark_all_illegal();
 

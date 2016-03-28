@@ -21,7 +21,6 @@ endif
 libircd_la_SOURCES =                  \
   authd.c			\
   bandbi.c                      \
-  blacklist.c                   \
   cache.c                       \
   capability.c			\
   channel.c                     \
@@ -53,7 +52,6 @@ libircd_la_SOURCES =                  \
   ratelimit.c			\
   reject.c                      \
   restart.c                     \
-  s_auth.c                      \
   s_conf.c                      \
   s_newconf.c                   \
   s_serv.c                      \

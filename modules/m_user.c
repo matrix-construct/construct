@@ -33,7 +33,6 @@
 #include "msg.h"
 #include "parse.h"
 #include "modules.h"
-#include "blacklist.h"
 #include "s_assert.h"
 
 static const char user_desc[] =
@@ -92,7 +91,6 @@ do_local_user(struct Client *client_p, struct Client *source_p,
 
 	make_user(source_p);
 
-	lookup_blacklists(source_p);
 	source_p->flags |= FLAGS_SENTUSER;
 
 	rb_strlcpy(source_p->info, realname, sizeof(source_p->info));

@@ -21,20 +21,32 @@
 #ifndef _AUTHD_H
 #define _AUTHD_H
 
-#include <rb_lib.h>
-#include <stdio.h>
+#include "stdinc.h"
+#include "rb_lib.h"
+#include "rb_dictionary.h"
 
 #include "setup.h"
 #include "ircd_defs.h"
 
+typedef void (*provider_opts_handler_t)(const char *, int, const char **);
+
+struct auth_opts_handler
+{
+	const char *option;
+	int min_parc;
+	provider_opts_handler_t handler;
+};
+
 extern rb_helper *authd_helper;
 
 typedef void (*authd_cmd_handler)(int parc, char *parv[]);
-typedef void (*authd_stat_handler)(const char *rid, const char letter);
+typedef void (*authd_stat_handler)(uint32_t rid, const char letter);
 typedef void (*authd_reload_handler)(const char letter);
 
 extern authd_cmd_handler authd_cmd_handlers[256];
 extern authd_stat_handler authd_stat_handlers[256];
 extern authd_reload_handler authd_reload_handlers[256];
+
+extern rb_dictionary *authd_option_handlers;
 
 #endif
