@@ -189,7 +189,36 @@ parse_authd_reply(rb_helper * helper)
 			rb_free(id);
 
 			authd_decide_client(client_p, parv[3], parv[4], false, toupper(*parv[2]), parv[5], parv[6]);
-			return;
+			break;
+		case 'N':	/* Notice to client */
+			if(parv != 3)
+			{
+				iwarn("authd sent us a result with wrong number of arguments: got %d", parc);
+				restart_authd();
+				return;
+			}
+			
+			if((lcid = strtol(parv[1], NULL, 16)) > UINT32_MAX)
+			{
+				iwarn("authd sent us back a bad client ID");
+				restart_authd();
+				return;
+			}
+
+			/* cid to uid */
+			if((id = rb_dictionary_retrieve(cid_clients, RB_UINT_TO_POINTER((uint32_t)lcid))) == NULL)
+			{
+				iwarn("authd sent us back an unknown client ID");
+				restart_authd();
+				return;
+			}
+
+			if((client_p = find_id(id)) == NULL)
+				/* Client vanished... we'll let the timeout code handle it */
+				return;
+
+			sendto_one_notice(client_p, ":%s", parv[2]);
+			break;
 		case 'E':	/* DNS Result */
 			if(parc != 5)
 			{
