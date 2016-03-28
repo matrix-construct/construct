@@ -17,6 +17,7 @@ bandb/bantool
 autom4te.cache
 aclocal.m4
 compile
+confdefs.h
 config.guess
 config.sub
 depcomp
