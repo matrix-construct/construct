@@ -1971,7 +1971,7 @@ conf_set_blacklist_reason(void *data)
 		yy_blacklist_reason = rb_strdup(data);
 		if (yy_blacklist_iptype & IPTYPE_IPV6)
 		{
-			/* Make sure things fit (64 = alnum count + dots in rDNS notation)
+			/* Make sure things fit (magic number 64 = alnum count + dots)
 			 * Example: 1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa
 			 */
 			if ((64 + strlen(yy_blacklist_host)) > IRCD_RES_HOSTLEN)
@@ -1984,8 +1984,8 @@ conf_set_blacklist_reason(void *data)
 		/* Avoid doing redundant check, IPv6 is bigger than IPv4 --Elizabeth */
 		if ((yy_blacklist_iptype & IPTYPE_IPV4) && !(yy_blacklist_iptype & IPTYPE_IPV6))
 		{
-			/* Make sure things fit (16 = number of nums + dots)
-			 * Example: 1.0.0.127.in-addr.arpa
+			/* Make sure things fit for worst case (magic number 16 = number of nums + dots)
+			 * Example: 127.127.127.127.in-addr.arpa
 			 */
 			if ((16 + strlen(yy_blacklist_host)) > IRCD_RES_HOSTLEN)
 			{
