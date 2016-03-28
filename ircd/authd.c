@@ -403,8 +403,8 @@ authd_initiate_client(struct Client *client_p)
 #endif
 		client_port = ntohs(((struct sockaddr_in *)&client_p->localClient->ip)->sin_port);
 
-	/* FIXME timeout should be configurable */
-	client_p->preClient->authd_timeout = rb_current_time() + 45;
+	/* Add a bit of a fudge factor... */
+	client_p->preClient->authd_timeout = rb_current_time() + ConfigFileEntry.connect_timeout + 5;
 
 	rb_helper_write(authd_helper, "C %x %s %hu %s %hu", authd_cid, listen_ipaddr, listen_port, client_ipaddr, client_port);
 }
