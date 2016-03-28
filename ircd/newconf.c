@@ -1881,7 +1881,7 @@ conf_set_blacklist_type(void *data)
 	/* If we have neither, just default to IPv4 */
 	if (!yy_blacklist_iptype)
 	{
-		conf_report_error("blacklist::type has neither IPv4 nor IPv6 (defaulting to IPv4)");
+		conf_report_warning("blacklist::type has neither IPv4 nor IPv6 (defaulting to IPv4)");
 		yy_blacklist_iptype = IPTYPE_IPV4;
 	}
 }
