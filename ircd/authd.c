@@ -48,7 +48,7 @@ static EVH timeout_dead_authd_clients;
 rb_helper *authd_helper;
 static char *authd_path;
 
-uint32_t cid = 1;
+uint32_t cid;
 static rb_dictionary *cid_clients;
 static struct ev_entry *timeout_ev;
 
@@ -115,15 +115,15 @@ parse_authd_reply(rb_helper * helper)
 {
 	ssize_t len;
 	int parc;
-	char dnsBuf[READBUF_SIZE];
+	char authdBuf[READBUF_SIZE];
 	char *parv[MAXPARA + 1];
 	long lcid;
-	char *id;
+	uint32_t cid;
 	struct Client *client_p;
 
-	while((len = rb_helper_read(helper, dnsBuf, sizeof(dnsBuf))) > 0)
+	while((len = rb_helper_read(helper, authdBuf, sizeof(authdBuf))) > 0)
 	{
-		parc = rb_string_to_array(dnsBuf, parv, MAXPARA+1);
+		parc = rb_string_to_array(authdBuf, parv, MAXPARA+1);
 
 		switch (*parv[0])
 		{
@@ -135,29 +135,22 @@ parse_authd_reply(rb_helper * helper)
 				return;
 			}
 
-			if((lcid = strtol(parv[1], NULL, 16)) > UINT32_MAX)
+			if((lcid = strtol(parv[1], NULL, 16)) > UINT32_MAX || lcid < 0)
 			{
-				iwarn("authd sent us back a bad client ID");
+				iwarn("authd sent us back a bad client ID: %ld", lcid);
 				restart_authd();
 				return;
 			}
+
+			cid = (uint32_t)lcid;
 
 			/* cid to uid (retrieve and delete) */
-			if((id = rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER((uint32_t)lcid))) == NULL)
+			if((client_p = rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(cid))) == NULL)
 			{
-				iwarn("authd sent us back an unknown client ID");
+				iwarn("authd sent us back an unknown client ID %x", cid);
 				restart_authd();
 				return;
 			}
-
-			if((client_p = find_id(id)) == NULL)
-			{
-				/* Client vanished... */
-				rb_free(id);
-				return;
-			}
-
-			rb_free(id);
 
 			authd_decide_client(client_p, parv[2], parv[3], true, '\0', NULL, NULL);
 			break;
@@ -169,29 +162,22 @@ parse_authd_reply(rb_helper * helper)
 				return;
 			}
 
-			if((lcid = strtol(parv[1], NULL, 16)) > UINT32_MAX)
+			if((lcid = strtol(parv[1], NULL, 16)) > UINT32_MAX || lcid < 0)
 			{
-				iwarn("authd sent us back a bad client ID");
+				iwarn("authd sent us back a bad client ID %ld", lcid);
 				restart_authd();
 				return;
 			}
+
+			cid = (uint32_t)lcid;
 
 			/* cid to uid (retrieve and delete) */
-			if((id = rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER((uint32_t)lcid))) == NULL)
+			if((client_p = rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(cid))) == NULL)
 			{
-				iwarn("authd sent us back an unknown client ID");
+				iwarn("authd sent us back an unknown client ID %x", cid);
 				restart_authd();
 				return;
 			}
-
-			if((client_p = find_id(id)) == NULL)
-			{
-				/* Client vanished... */
-				rb_free(id);
-				return;
-			}
-
-			rb_free(id);
 
 			authd_decide_client(client_p, parv[3], parv[4], false, toupper(*parv[2]), parv[5], parv[6]);
 			break;
@@ -202,25 +188,23 @@ parse_authd_reply(rb_helper * helper)
 				restart_authd();
 				return;
 			}
-			
-			if((lcid = strtol(parv[1], NULL, 16)) > UINT32_MAX)
+
+			if((lcid = strtol(parv[1], NULL, 16)) > UINT32_MAX || lcid < 0)
 			{
-				iwarn("authd sent us back a bad client ID");
+				iwarn("authd sent us back a bad client ID %ld", lcid);
 				restart_authd();
 				return;
 			}
+
+			cid = (uint32_t)lcid;
 
 			/* cid to uid */
-			if((id = rb_dictionary_retrieve(cid_clients, RB_UINT_TO_POINTER((uint32_t)lcid))) == NULL)
+			if((client_p = rb_dictionary_retrieve(cid_clients, RB_UINT_TO_POINTER(cid))) == NULL)
 			{
-				iwarn("authd sent us back an unknown client ID");
+				iwarn("authd sent us back an unknown client ID %x", cid);
 				restart_authd();
 				return;
 			}
-
-			if((client_p = find_id(id)) == NULL)
-				/* Client vanished... we'll let the timeout code handle it */
-				return;
 
 			sendto_one_notice(client_p, ":%s", parv[2]);
 			break;
@@ -315,8 +299,8 @@ configure_authd(void)
 	/* These will do for now */
 	set_authd_timeout("ident_timeout", GlobalSetOptions.ident_timeout);
 	set_authd_timeout("rdns_timeout", ConfigFileEntry.connect_timeout);
-	set_authd_timeout("blacklist_timeout", ConfigFileEntry.connect_timeout);
-	ident_check_enable(ConfigFileEntry.disable_auth);	
+	set_authd_timeout("rbl_timeout", ConfigFileEntry.connect_timeout);
+	ident_check_enable(!ConfigFileEntry.disable_auth);
 }
 
 static void
@@ -377,13 +361,13 @@ authd_initiate_client(struct Client *client_p)
 	uint16_t client_port, listen_port;
 	uint32_t authd_cid;
 
-	if(client_p->preClient == NULL || client_p->preClient->authd_cid == 0)
+	if(client_p->preClient == NULL || client_p->preClient->authd_cid != 0)
 		return;
 
 	authd_cid = client_p->preClient->authd_cid = generate_cid();
 
 	/* Collisions are extremely unlikely, so disregard the possibility */
-	rb_dictionary_add(cid_clients, RB_UINT_TO_POINTER(authd_cid), rb_strdup(client_p->id));
+	rb_dictionary_add(cid_clients, RB_UINT_TO_POINTER(authd_cid), client_p);
 
 	/* Retrieve listener and client IP's */
 	rb_inet_ntop_sock((struct sockaddr *)&client_p->preClient->lip, listen_ipaddr, sizeof(listen_ipaddr));
@@ -476,14 +460,6 @@ timeout_dead_authd_clients(void *notused __unused)
 	RB_DICTIONARY_FOREACH(id, &iter, cid_clients)
 	{
 		struct Client *client_p;
-		if((client_p = find_id(id)) == NULL)
-		{
-			/* This shouldn't happen... but just in case... */
-			rb_helper_write(authd_helper, "E %x", RB_POINTER_TO_UINT(iter.cur->key));
-			rb_free(id);
-			rb_dictionary_delete(cid_clients, iter.cur->key);
-			continue;
-		}
 
 		if(client_p->preClient->authd_timeout < rb_current_time())
 		{
@@ -517,7 +493,7 @@ add_blacklist(const char *host, const char *reason, uint8_t iptype, rb_dlink_lis
 {
 	rb_dlink_node *ptr;
 	struct blacklist_stats *stats = rb_malloc(sizeof(struct blacklist_stats));
-	char filterbuf[BUFSIZE];
+	char filterbuf[BUFSIZE] = "*";
 	size_t s = 0;
 
 	/* Build a list of comma-separated values for authd.

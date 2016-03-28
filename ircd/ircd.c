@@ -845,8 +845,6 @@ charybdis_main(int argc, char *argv[])
 		return 0;	/* Why? We want the launcher to exit out. */
 	}
 
-	configure_authd();
-
 	me.from = &me;
 	me.servptr = &me;
 	SetMe(&me);
@@ -864,6 +862,8 @@ charybdis_main(int argc, char *argv[])
 	write_pidfile(pidFileName);
 	load_help();
 	open_logfiles();
+
+	configure_authd();
 
 	ilog(L_MAIN, "Server Ready");
 

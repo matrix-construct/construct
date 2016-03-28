@@ -55,7 +55,7 @@ static struct alias_entry *yy_alias = NULL;
 static char *yy_blacklist_host = NULL;
 static char *yy_blacklist_reason = NULL;
 static uint8_t yy_blacklist_iptype = 0;
-static rb_dlink_list yy_blacklist_filters;
+static rb_dlink_list yy_blacklist_filters = { NULL, NULL, 0 };
 
 static char *yy_privset_extends = NULL;
 
