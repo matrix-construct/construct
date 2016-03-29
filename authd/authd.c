@@ -187,6 +187,12 @@ setup_signals(void)
 #endif
 }
 
+static void
+do_exit(void)
+{
+	destroy_providers();
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -208,9 +214,9 @@ main(int argc, char *argv[])
 	init_providers();
 	rb_init_prng(NULL, RB_PRNG_DEFAULT);
 
-	rb_helper_loop(authd_helper, 0);
+	atexit(do_exit);
 
-	destroy_providers();
+	rb_helper_loop(authd_helper, 0);
 
 	return 0;
 }
