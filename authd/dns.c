@@ -122,8 +122,11 @@ handle_lookup_ip_reply(void *data, struct DNSReply *reply)
 	char ip[HOSTIPLEN] = "*";
 
 	if(query == NULL)
+	{
 		/* Shouldn't happen */
-		exit(2);
+		warn_opers(L_CRIT, "DNS: handle_lookup_ip_reply: query == NULL!");
+		exit(EX_DNS_ERROR);
+	}
 
 	if(reply == NULL)
 		goto end;
@@ -148,7 +151,9 @@ handle_lookup_ip_reply(void *data, struct DNSReply *reply)
 		break;
 #endif
 	default:
-		exit(3);
+		warn_opers(L_CRIT, "DNS: handle_lookup_ip_reply: unknown query type %d",
+				query->type);
+		exit(EX_DNS_ERROR);
 	}
 
 end:
@@ -166,8 +171,11 @@ handle_lookup_hostname_reply(void *data, struct DNSReply *reply)
 	char *hostname = NULL;
 
 	if(query == NULL)
+	{
 		/* Shouldn't happen */
-		exit(4);
+		warn_opers(L_CRIT, "DNS: handle_lookup_hostname_reply: query == NULL!");
+		exit(EX_DNS_ERROR);
+	}
 
 	if(reply == NULL)
 		goto end;
@@ -193,8 +201,12 @@ handle_lookup_hostname_reply(void *data, struct DNSReply *reply)
 	}
 #endif
 	else
+	{
 		/* Shouldn't happen */
-		exit(5);
+		warn_opers(L_CRIT, "DNS: handle_lookup_hostname_reply: unknown query type %d",
+				query->type);
+		exit(EX_DNS_ERROR);
+	}
 end:
 	if(query->callback)
 		query->callback(hostname, hostname != NULL, query->type, query->data);
@@ -208,7 +220,10 @@ submit_dns_answer(const char *reply, bool status, query_type type, void *data)
 	char *id = data;
 
 	if(!id || type == QUERY_INVALID)
-		exit(6);
+	{
+		warn_opers(L_CRIT, "DNS: submit_dns_answer gave us a bad query");
+		exit(EX_DNS_ERROR);
+	}
 
 	if(reply == NULL || status == false)
 	{
@@ -247,7 +262,8 @@ handle_resolve_dns(int parc, char *parv[])
 			submit_dns_answer(NULL, false, qtype, NULL);
 		break;
 	default:
-		exit(7);
+		warn_opers(L_CRIT, "DNS: handle_resolve_dns got an unknown query: %c", qtype);
+		exit(EX_DNS_ERROR);
 	}
 }
 
@@ -260,8 +276,9 @@ enumerate_nameservers(uint32_t rid, const char letter)
 	if (!irc_nscount)
 	{
 		/* Shouldn't happen */
+		warn_opers(L_CRIT, "DNS: no name servers!");
 		stats_error(rid, letter, "NONAMESERVERS");
-		return;
+		exit(EX_DNS_ERROR);
 	}
 
 	for(int i = 0; i < irc_nscount; i++)
@@ -274,8 +291,9 @@ enumerate_nameservers(uint32_t rid, const char letter)
 		if (!addr[0])
 		{
 			/* Shouldn't happen */
+			warn_opers(L_CRIT, "DNS: bad nameserver!");
 			stats_error(rid, letter, "INVALIDNAMESERVER");
-			return;
+			exit(EX_DNS_ERROR);
 		}
 
 		addrlen = strlen(addr) + 1;

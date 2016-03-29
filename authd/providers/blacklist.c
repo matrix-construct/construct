@@ -205,9 +205,9 @@ blacklist_check_reply(struct blacklist_lookup *bllookup, const char *ipaddr)
 			cmpstr = lastoctet;
 		else
 		{
-			warn_opers(L_CRIT, "BUG: Unknown blacklist filter type on blacklist %s: %d",
+			warn_opers(L_CRIT, "Blacklist: Unknown blacklist filter type (host %s): %d",
 					bl->host, filter->type);
-			continue;
+			exit(EX_PROVIDER_ERROR);
 		}
 
 		if (strcmp(cmpstr, filter->filter) == 0)
@@ -452,7 +452,6 @@ add_conf_blacklist(const char *key, int parc, const char **parv)
 		struct blacklist_filter *filter = rb_malloc(sizeof(struct blacklist_filter));
 		int dot_c = 0;
 		filter_t type = FILTER_LAST;
-		bool valid = true;
 
 		/* Check blacklist filter type and for validity */
 		for(char *c = elem; *c != '\0'; c++)
@@ -461,31 +460,24 @@ add_conf_blacklist(const char *key, int parc, const char **parv)
 			{
 				if(++dot_c > 3)
 				{
-					warn_opers(L_CRIT, "addr_conf_blacklist got a bad filter (too many octets)");
-					valid = false;
-					break;
+					warn_opers(L_CRIT, "Blacklist: addr_conf_blacklist got a bad filter (too many octets)");
+					exit(EX_PROVIDER_ERROR);
 				}
 
 				type = FILTER_ALL;
 			}
 			else if(!isdigit(*c))
 			{
-				warn_opers(L_CRIT, "addr_conf_blacklist got a bad filter (invalid character in blacklist filter: %c)", *c);
-				valid = false;
-				break;
+				warn_opers(L_CRIT, "Blacklist: addr_conf_blacklist got a bad filter (invalid character in blacklist filter: %c)",
+						*c);
+				exit(EX_PROVIDER_ERROR);
 			}
 		}
 
-		if(valid && dot_c > 0 && dot_c < 3)
+		if(dot_c > 0 && dot_c < 3)
 		{
-			warn_opers(L_CRIT, "addr_conf_blacklist got a bad filter (insufficient octets)");
-			valid = false;
-		}
-
-		if(!valid)
-		{
-			rb_free(filter);
-			continue;
+			warn_opers(L_CRIT, "Blacklist: addr_conf_blacklist got a bad filter (insufficient octets)");
+			exit(EX_PROVIDER_ERROR);
 		}
 
 		filter->type = type;
@@ -499,15 +491,8 @@ end:
 	iptype = atoi(parv[1]) & 0x3;
 	if(new_blacklist(parv[0], parv[3], iptype, &filters) == NULL)
 	{
-		rb_dlink_node *ptr, *nptr;
-
-		warn_opers(L_CRIT, "addr_conf_blacklist got a malformed blacklist");
-
-		RB_DLINK_FOREACH_SAFE(ptr, nptr, filters.head)
-		{
-			rb_free(ptr->data);
-			rb_dlinkDelete(ptr, &filters);
-		}
+		warn_opers(L_CRIT, "Blacklist: addr_conf_blacklist got a malformed blacklist");
+		exit(EX_PROVIDER_ERROR);
 	}
 }
 
@@ -517,7 +502,8 @@ del_conf_blacklist(const char *key, int parc, const char **parv)
 	struct blacklist *bl = find_blacklist(parv[0]);
 	if(bl == NULL)
 	{
-		warn_opers(L_CRIT, "BUG: tried to remove nonexistent blacklist %s", parv[0]);
+		/* Not fatal for now... */
+		warn_opers(L_WARN, "Blacklist: tried to remove nonexistent blacklist %s", parv[0]);
 		return;
 	}
 
@@ -537,8 +523,8 @@ add_conf_blacklist_timeout(const char *key, int parc, const char **parv)
 
 	if(timeout < 0)
 	{
-		warn_opers(L_CRIT, "BUG: blacklist timeout < 0 (value: %d)", timeout);
-		return;
+		warn_opers(L_CRIT, "Blacklist: blacklist timeout < 0 (value: %d)", timeout);
+		exit(EX_PROVIDER_ERROR);
 	}
 
 	blacklist_timeout = timeout;

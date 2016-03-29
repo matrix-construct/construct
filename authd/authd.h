@@ -28,6 +28,13 @@
 #include "setup.h"
 #include "ircd_defs.h"
 
+typedef enum exit_reasons
+{
+	EX_ERROR = 1,
+	EX_DNS_ERROR = 2,
+	EX_PROVIDER_ERROR = 3,
+} exit_reasons;
+
 typedef void (*provider_opts_handler_t)(const char *, int, const char **);
 
 struct auth_opts_handler

@@ -392,8 +392,8 @@ add_conf_ident_timeout(const char *key __unused, int parc __unused, const char *
 
 	if(timeout < 0)
 	{
-		warn_opers(L_CRIT, "BUG: ident timeout < 0 (value: %d)", timeout);
-		return;
+		warn_opers(L_CRIT, "Ident: ident timeout < 0 (value: %d)", timeout);
+		exit(EX_PROVIDER_ERROR);
 	}
 
 	ident_timeout = timeout;

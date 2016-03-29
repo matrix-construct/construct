@@ -180,8 +180,8 @@ add_conf_dns_timeout(const char *key, int parc, const char **parv)
 
 	if(timeout < 0)
 	{
-		warn_opers(L_CRIT, "BUG: DNS timeout < 0 (value: %d)", timeout);
-		return;
+		warn_opers(L_CRIT, "rDNS: DNS timeout < 0 (value: %d)", timeout);
+		exit(EX_PROVIDER_ERROR);
 	}
 
 	rdns_timeout = timeout;

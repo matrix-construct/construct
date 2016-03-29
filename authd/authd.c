@@ -147,7 +147,7 @@ parse_request(rb_helper *helper)
 static void
 error_cb(rb_helper *helper)
 {
-	exit(1);
+	exit(EX_ERROR);
 }
 
 #ifndef _WIN32
@@ -196,7 +196,7 @@ main(int argc, char *argv[])
 	if(authd_helper == NULL)
 	{
 		fprintf(stderr, "authd is not meant to be invoked by end users\n");
-		exit(1);
+		exit(EX_ERROR);
 	}
 
 	rb_set_time();
