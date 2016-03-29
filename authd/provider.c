@@ -221,8 +221,6 @@ reject_client(struct auth_client *auth, provider_t id, const char *data, const c
 void
 accept_client(struct auth_client *auth, provider_t id)
 {
-	uint32_t cid = auth->cid;
-
 	rb_helper_write(authd_helper, "A %x %s %s", auth->cid, auth->username, auth->hostname);
 
 	set_provider_off(auth, id);

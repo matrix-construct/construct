@@ -425,9 +425,7 @@ blacklists_init(void)
 static void
 blacklists_destroy(void)
 {
-	rb_dlink_node *ptr, *nptr;
 	rb_dictionary_iter iter;
-	struct blacklist *bl;
 	struct auth_client *auth;
 
 	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)

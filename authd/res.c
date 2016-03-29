@@ -517,8 +517,6 @@ void build_rdns(char *buf, size_t size, const struct rb_sockaddr_storage *addr, 
 static void do_query_number(struct DNSQuery *query, const struct rb_sockaddr_storage *addr,
 			    struct reslist *request)
 {
-	const unsigned char *cp;
-
 	if (request == NULL)
 	{
 		request = make_request(query);
