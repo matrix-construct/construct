@@ -201,6 +201,23 @@ _iprint(const char *domain, const char *buf)
 }
 
 void
+idebug(const char *format, ...)
+{
+#ifndef NDEBUG
+	char buf[BUFSIZE];
+	va_list args;
+
+	va_start(args, format);
+	vsnprintf(buf, sizeof(buf), format, args);
+	va_end(args);
+
+	_iprint("debug", buf);
+
+	ilog(L_MAIN, "%s", buf);
+#endif
+}
+
+void
 inotice(const char *format, ...)
 {
 	char buf[BUFSIZE];

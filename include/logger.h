@@ -55,6 +55,7 @@ extern void init_main_logfile(void);
 extern void open_logfiles(void);
 extern void close_logfiles(void);
 extern void ilog(ilogfile dest, const char *fmt, ...) AFP(2, 3);
+extern void idebug(const char *fmt, ...) AFP(1, 2);
 extern void inotice(const char *fmt, ...) AFP(1, 2);
 extern void iwarn(const char *fmt, ...) AFP(1, 2);
 extern void ierror(const char *fmt, ...) AFP(1, 2);

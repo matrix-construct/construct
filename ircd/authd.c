@@ -73,9 +73,8 @@ start_authd(void)
 				 ConfigFileEntry.dpath, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR, suffix);
 			if(access(fullpath, X_OK) == -1)
 			{
-				ilog(L_MAIN,
-				     "Unable to execute authd in %s or %s/bin",
-				     ircd_paths[IRCD_PATH_LIBEXEC], ConfigFileEntry.dpath);
+				ierror("Unable to execute authd in %s or %s/bin",
+					ircd_paths[IRCD_PATH_LIBEXEC], ConfigFileEntry.dpath);
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						       "Unable to execute authd in %s or %s/bin",
 						       ircd_paths[IRCD_PATH_LIBEXEC], ConfigFileEntry.dpath);
@@ -100,7 +99,7 @@ start_authd(void)
 
 	if(authd_helper == NULL)
 	{
-		ilog(L_MAIN, "Unable to start authd helper: %s", strerror(errno));
+		ierror("Unable to start authd helper: %s", strerror(errno));
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Unable to start authd helper: %s", strerror(errno));
 		return 1;
 	}
@@ -211,7 +210,7 @@ parse_authd_reply(rb_helper * helper)
 		case 'E':	/* DNS Result */
 			if(parc != 5)
 			{
-				ilog(L_MAIN, "authd sent a result with wrong number of arguments: got %d", parc);
+				iwarn("authd sent a result with wrong number of arguments: got %d", parc);
 				restart_authd();
 				return;
 			}
@@ -220,7 +219,7 @@ parse_authd_reply(rb_helper * helper)
 		case 'W':	/* Oper warning */
 			if(parc != 3)
 			{
-				ilog(L_MAIN, "authd sent a result with wrong number of arguments: got %d", parc);
+				iwarn("authd sent a result with wrong number of arguments: got %d", parc);
 				restart_authd();
 				return;
 			}
@@ -229,18 +228,19 @@ parse_authd_reply(rb_helper * helper)
 			{
 			case 'D':	/* Debug */
 				sendto_realops_snomask(SNO_DEBUG, L_ALL, "authd debug: %s", parv[3]);
+				idebug("authd: %s", parv[3]);
 				break;
 			case 'I':	/* Info */
 				sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd info: %s", parv[3]);
-				inotice("authd info: %s", parv[3]);
+				inotice("authd: %s", parv[3]);
 				break;
 			case 'W':	/* Warning */
 				sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd WARNING: %s", parv[3]);
-				iwarn("authd warning: %s", parv[3]);
+				iwarn("authd: %s", parv[3]);
 				break;
 			case 'C':	/* Critical (error) */
 				sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd CRITICAL: %s", parv[3]);
-				ierror("authd critical: %s", parv[3]);
+				ierror("authd: %s", parv[3]);
 				break;
 			default:	/* idk */
 				sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd sent us an unknown oper notice type (%s): %s", parv[2], parv[3]);
@@ -255,7 +255,7 @@ parse_authd_reply(rb_helper * helper)
 		case 'Z':	/* End of stats reply */
 			if(parc < 3)
 			{
-				ilog(L_MAIN, "authd sent a result with wrong number of arguments: got %d", parc);
+				iwarn("authd sent a result with wrong number of arguments: got %d", parc);
 				restart_authd();
 				return;
 			}
@@ -267,7 +267,7 @@ parse_authd_reply(rb_helper * helper)
 				/* parv[0] conveys status */
 				if(parc < 4)
 				{
-					ilog(L_MAIN, "authd sent a result with wrong number of arguments: got %d", parc);
+					iwarn("authd sent a result with wrong number of arguments: got %d", parc);
 					restart_authd();
 					return;
 				}
@@ -288,7 +288,7 @@ init_authd(void)
 {
 	if(start_authd())
 	{
-		ilog(L_MAIN, "Unable to start authd helper: %s", strerror(errno));
+		ierror("Unable to start authd helper: %s", strerror(errno));
 		exit(0);
 	}
 }
@@ -306,7 +306,7 @@ configure_authd(void)
 static void
 restart_authd_cb(rb_helper * helper)
 {
-	ilog(L_MAIN, "authd: restart_authd_cb called, authd died?");
+	iwarn("authd: restart_authd_cb called, authd died?");
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd: restart_authd_cb called, authd died?");
 	if(helper != NULL)
 	{
