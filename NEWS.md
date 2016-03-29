@@ -33,9 +33,13 @@ See LICENSE for licensing details (GPL v2).
   - Implement a channel mode that disallows kicking IRC operators (+M).
 - Enhance the oper override system, allowing more flexibility and detail
   in network-wide notices.
+- DNS, ident, and blacklist lookups have been moved to a dedicated daemon known
+  as authd. Some cosmetic changes to blacklist statistics and rejection notices
+  have resulted.
 
 ### conf
 - Add the ability to strip color codes from topics unconditionally.
+- The obsolete hub option from server info has been removed.
 
 ### docs
 - The documentation has been cleaned up; obsolete files have been purged, and
