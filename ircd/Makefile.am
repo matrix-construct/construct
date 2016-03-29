@@ -7,7 +7,7 @@ AM_CPPFLAGS = @LTDLINCL@ -I$(top_srcdir)/include -I$(top_srcdir)/librb/include
 AM_LDFLAGS  = -L$(top_srcdir)/librb/src -export-dynamic -avoid-version -no-undefined
 AM_YFLAGS = -d
 
-BUILT_SOURCES = version.c
+BUILT_SOURCES = ircd_parser.h version.c
 
 version.c: version.c.SH ../CREDITS ../include/patchlevel.h ../include/serno.h
 	$(SHELL) version.c.SH
