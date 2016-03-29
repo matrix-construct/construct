@@ -94,7 +94,7 @@ Section 3.3: Initialising and rehashing
 To initialise, call init_host_hash(). This only needs to be done once on
 startup.
 On rehash, to wipe out the old unwanted conf, and free them if there are
-no references to them, call clear_out_address_conf(). 
+no references to them, call clear_out_address_conf().
 
 Section 3.4: Finding IP/host confs
 ----------------------------------

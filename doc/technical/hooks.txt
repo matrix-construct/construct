@@ -6,7 +6,7 @@ contrib/example_module.c, this document simply describes which hooks are
 available.
 
 There are various hook structures available that may be passed to hooks:
-hook_data		- struct Client *client; const void *arg1; 
+hook_data		- struct Client *client; const void *arg1;
 			  const void *arg2;
 hook_data_int		- struct Client *client; const void *arg1; int arg2;
 hook_data_client	- struct Client *client; struct Client *target;
@@ -114,7 +114,7 @@ The following hooks are called during various events related to clients.
 			  oldsnomask = new snomask field
 
 
-The following are for debugging and take struct hook_io_data for arguments. 
+The following are for debugging and take struct hook_io_data for arguments.
 These can be used for a variety of purposes, but are aimed at the developer
 community.
 "iosend"

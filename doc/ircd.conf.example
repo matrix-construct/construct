@@ -59,7 +59,7 @@ serverinfo {
 	#vhost = "192.0.2.6";
 	/* for IPv6 */
 	#vhost6 = "2001:db8:2::6";
-	
+
 	/* ssl_private_key: our ssl private key */
 	ssl_private_key = "etc/ssl.key";
 
@@ -183,7 +183,7 @@ auth {
 	 * flags = ...; below if it is.
 	 */
 	password = "letmein";
-	
+
 	/* spoof: fake the users user@host to be be this.  You may either
 	 * specify a host or a user@host to spoof to.  This is free-form,
 	 * just do everyone a favour and dont abuse it. (OLD I: = flag)
@@ -191,7 +191,7 @@ auth {
 	spoof = "I.still.hate.packets";
 
 	/* Possible flags in auth:
-	 * 
+	 *
 	 * encrypted                  | password is encrypted with mkpasswd
 	 * spoof_notice               | give a notice when spoofing hosts
 	 * exceed_limit (old > flag)  | allow user to exceed class user limits
@@ -210,7 +210,7 @@ auth {
 	 * need_sasl                  | require SASL id for user in this class
 	 */
 	flags = kline_exempt, exceed_limit;
-	
+
 	/* class: the class the user is placed in */
 	class = "opers";
 };
@@ -253,13 +253,13 @@ operator "god" {
 	user = "*god@127.0.0.1";
 
 	/* password: the password required to oper.  Unless ~encrypted is
-	 * contained in flags = ...; this will need to be encrypted using 
+	 * contained in flags = ...; this will need to be encrypted using
 	 * mkpasswd, MD5 is supported
 	 */
 	password = "etcnjl8juSU1E";
 
 	/* rsa key: the public key for this oper when using Challenge.
-	 * A password should not be defined when this is used, see 
+	 * A password should not be defined when this is used, see
 	 * doc/challenge.txt for more information.
 	 */
 	#rsa_public_key_file = "/usr/local/ircd/etc/oper.pub";
@@ -400,10 +400,10 @@ serverhide {
  * as of this writing.
  *
  * As of charybdis 3.5, a matches parameter is allowed; if omitted, any result
- * is considered a match. If included, a comma-separated list of *quoted* 
+ * is considered a match. If included, a comma-separated list of *quoted*
  * strings is allowed to match queries. They may be of the format "0" to "255"
  * to match the final octet (e.g. 127.0.0.1) or "127.x.y.z" to explicitly match
- * an A record. The blacklist is only applied if it matches anything in the 
+ * an A record. The blacklist is only applied if it matches anything in the
  * list. You may freely mix full IP's and final octets.
  *
  * Consult your blacklist provider for the meaning of these parameters; they
