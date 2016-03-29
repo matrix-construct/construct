@@ -1,15 +1,15 @@
 /*
  * reslist.c - get nameservers from windows *
- * 
+ *
  * ircd-ratbox related changes are as follows
- * 
+ *
  * Copyright (C) 2008 Aaron Sethman <androsyn@ratbox.org>
  * Copyright (C) 2008-2012 ircd-ratbox development team
- * 
- * pretty much all of this was yanked from c-ares ares_init.c here is the original 
+ *
+ * pretty much all of this was yanked from c-ares ares_init.c here is the original
  * header from there --
  *
- * Id: ares_init.c,v 1.72 2008-05-15 00:00:19 yangtse Exp $ 
+ * Id: ares_init.c,v 1.72 2008-05-15 00:00:19 yangtse Exp $
  * Copyright 1998 by the Massachusetts Institute of Technology.
  * Copyright (C) 2007-2008 by Daniel Stenberg
  *

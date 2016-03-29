@@ -142,7 +142,7 @@ rb_getnameinfo(const struct sockaddr *sa, rb_socklen_t salen, char *host,
 			flags |= NI_NUMERICHOST;
 		v4a >>= IN_CLASSA_NSHIFT;
 		if (v4a == 0)
-			flags |= NI_NUMERICHOST;			
+			flags |= NI_NUMERICHOST;
 		break;
 #ifdef IPV6
 	case AF_INET6:

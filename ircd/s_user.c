@@ -438,7 +438,7 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 		case 'B':	/* Blacklists */
 			if((stats = rb_dictionary_retrieve(bl_stats, source_p->preClient->authd_data)) != NULL)
 				stats->hits++;
-			
+
 			if(IsExemptKline(source_p) || IsConfExemptDNSBL(aconf))
 			{
 				sendto_one_notice(source_p, ":*** Your IP address %s is listed in %s, but you are exempt",
