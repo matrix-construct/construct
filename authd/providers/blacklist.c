@@ -223,6 +223,7 @@ blwarn:
 				bl->host, ipaddr);
 		bl->lastwarning = rb_current_time();
 	}
+
 	return false;
 }
 
@@ -260,6 +261,8 @@ blacklist_dns_callback(const char *result, bool status, query_type type, void *d
 	if(!rb_dlink_list_length(&bluser->queries))
 	{
 		/* Done here */
+		notice_client(auth->cid, "*** IP not found in DNS blacklist%s",
+				rb_dlink_list_length(blacklist_list) > 1 : "s" : "");
 		rb_free(bluser);
 		auth->data[PROVIDER_BLACKLIST] = NULL;
 		provider_done(auth, PROVIDER_BLACKLIST);
@@ -316,6 +319,9 @@ lookup_all_blacklists(struct auth_client *auth)
 	struct blacklist_user *bluser = auth->data[PROVIDER_BLACKLIST];
 	rb_dlink_node *ptr;
 
+	notice_client(auth->cid, "*** Checking your IP against DNS blacklist%s",
+			rb_dlink_list_length(blacklist_list) > 1 ? "s" : "");
+
 	RB_DLINK_FOREACH(ptr, blacklist_list.head)
 	{
 		struct blacklist *bl = (struct blacklist *)ptr->data;
@@ -358,8 +364,11 @@ blacklists_start(struct auth_client *auth)
 		return true;
 
 	if(!rb_dlink_list_length(&blacklist_list))
+	{
 		/* Nothing to do... */
+		notice_client(auth->cid, "*** No DNS blacklists configured, not checking your IP");
 		return true;
+	}
 
 	auth->data[PROVIDER_BLACKLIST] = rb_malloc(sizeof(struct blacklist_user));
 
@@ -400,15 +409,20 @@ blacklists_cancel(struct auth_client *auth)
 	if(bluser == NULL)
 		return;
 
-	RB_DLINK_FOREACH_SAFE(ptr, nptr, bluser->queries.head)
+	if(rb_dlink_list_length(bluser) > 0)
 	{
-		struct blacklist_lookup *bllookup = ptr->data;
+		notice_client(auth->cid, "*** Aborting DNS blacklist queries");
 
-		cancel_query(bllookup->query);
-		unref_blacklist(bllookup->bl);
+		RB_DLINK_FOREACH_SAFE(ptr, nptr, bluser->queries.head)
+		{
+			struct blacklist_lookup *bllookup = ptr->data;
 
-		rb_dlinkDelete(&bllookup->node, &bluser->queries);
-		rb_free(bllookup);
+			cancel_query(bllookup->query);
+			unref_blacklist(bllookup->bl);
+
+			rb_dlinkDelete(&bllookup->node, &bluser->queries);
+			rb_free(bllookup);
+		}
 	}
 
 	rb_free(bluser);
