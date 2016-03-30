@@ -262,7 +262,7 @@ blacklist_dns_callback(const char *result, bool status, query_type type, void *d
 	{
 		/* Done here */
 		notice_client(auth->cid, "*** IP not found in DNS blacklist%s",
-				rb_dlink_list_length(&blacklist_list) > 1 : "s" : "");
+				rb_dlink_list_length(&blacklist_list) > 1 ? "s" : "");
 		rb_free(bluser);
 		auth->data[PROVIDER_BLACKLIST] = NULL;
 		provider_done(auth, PROVIDER_BLACKLIST);
