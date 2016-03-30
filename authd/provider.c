@@ -184,9 +184,11 @@ provider_done(struct auth_client *auth, provider_t id)
 
 /* Reject a client - WARNING: do not use auth instance after calling! */
 void
-reject_client(struct auth_client *auth, provider_t id, const char *data, const char *reason)
+reject_client(struct auth_client *auth, provider_t id, const char *data, const char *fmt, ...)
 {
 	char reject;
+	char buf[BUFSIZE];
+	va_list args;
 
 	switch(id)
 	{
@@ -207,11 +209,15 @@ reject_client(struct auth_client *auth, provider_t id, const char *data, const c
 	if(data == NULL)
 		data = "*";
 
+	va_begin(fmt, args);
+	vsnprintf(buf, sizeof(buf), fmt, args);
+	va_end(args);
+
 	/* We send back username and hostname in case ircd wants to overrule our decision.
 	 * In the future this may not be the case.
 	 * --Elizafox
 	 */
-	rb_helper_write(authd_helper, "R %x %c %s %s %s :%s", auth->cid, reject, auth->username, auth->hostname, data, reason);
+	rb_helper_write(authd_helper, "R %x %c %s %s %s :%s", auth->cid, reject, auth->username, auth->hostname, data, buf);
 
 	set_provider_off(auth, id);
 	cancel_providers(auth);
