@@ -209,7 +209,7 @@ reject_client(struct auth_client *auth, provider_t id, const char *data, const c
 	if(data == NULL)
 		data = "*";
 
-	va_begin(fmt, args);
+	va_start(fmt, args);
 	vsnprintf(buf, sizeof(buf), fmt, args);
 	va_end(args);
 
