@@ -223,6 +223,8 @@ inetport(struct Listener *listener)
 	/*
 	 * XXX - we don't want to do all this crap for a listener
 	 * set_sock_opts(listener);
+	 *
+	 * FIXME - doesn't this belong in librb? --Elizafox
 	 */
 	if(setsockopt(rb_get_fd(F), SOL_SOCKET, SO_REUSEADDR, (char *) &opt, sizeof(opt)))
 	{
@@ -236,11 +238,7 @@ inetport(struct Listener *listener)
 		return 0;
 	}
 
-	/*
-	 * Bind a port to listen for new connections if port is non-null,
-	 * else assume it is already open and try get something from it.
-	 */
-
+	/* FIXME - doesn't this belong in librb? --Elizafox */
 	if(bind(rb_get_fd(F), (struct sockaddr *) &listener->addr, GET_SS_LEN(&listener->addr)))
 	{
 		errstr = strerror(rb_get_sockerr(F));
