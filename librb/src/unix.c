@@ -175,6 +175,7 @@ rb_path_to_self(void)
 	if (map == NULL)
 		return NULL;
 	realpath(map->l_name, path_buf);
+	return path_buf;
 #elif defined(__APPLE__)
 	char tmp_path[4096];
 	uint32_t pathlen = 4096;
