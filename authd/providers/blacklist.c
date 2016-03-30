@@ -262,7 +262,7 @@ blacklist_dns_callback(const char *result, bool status, query_type type, void *d
 	{
 		/* Done here */
 		notice_client(auth->cid, "*** IP not found in DNS blacklist%s",
-				rb_dlink_list_length(blacklist_list) > 1 : "s" : "");
+				rb_dlink_list_length(&blacklist_list) > 1 : "s" : "");
 		rb_free(bluser);
 		auth->data[PROVIDER_BLACKLIST] = NULL;
 		provider_done(auth, PROVIDER_BLACKLIST);
@@ -320,7 +320,7 @@ lookup_all_blacklists(struct auth_client *auth)
 	rb_dlink_node *ptr;
 
 	notice_client(auth->cid, "*** Checking your IP against DNS blacklist%s",
-			rb_dlink_list_length(blacklist_list) > 1 ? "s" : "");
+			rb_dlink_list_length(&blacklist_list) > 1 ? "s" : "");
 
 	RB_DLINK_FOREACH(ptr, blacklist_list.head)
 	{
@@ -409,7 +409,7 @@ blacklists_cancel(struct auth_client *auth)
 	if(bluser == NULL)
 		return;
 
-	if(rb_dlink_list_length(bluser) > 0)
+	if(rb_dlink_list_length(&bluser->queries))
 	{
 		notice_client(auth->cid, "*** Aborting DNS blacklist queries");
 
