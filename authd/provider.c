@@ -52,10 +52,14 @@
 #include "provider.h"
 #include "notice.h"
 
+static EVH provider_timeout_event;
+
 rb_dlink_list auth_providers;
 
 /* Clients waiting */
 rb_dictionary *auth_clients;
+
+static struct ev_entry *timeout_ev;
 
 /* Load a provider */
 void
@@ -105,6 +109,7 @@ void
 init_providers(void)
 {
 	auth_clients = rb_dictionary_create("pending auth clients", rb_uint32cmp);
+	timeout_ev = rb_event_addish("provider_timeout_event", provider_timeout_event, NULL, 1);
 	load_provider(&rdns_provider);
 	load_provider(&ident_provider);
 	load_provider(&blacklist_provider);
@@ -344,4 +349,29 @@ handle_cancel_connection(int parc, char *parv[])
 	}
 
 	cancel_providers(auth);
+}
+
+static void
+provider_timeout_event(void *notused __unused)
+{
+	struct auth_client *auth;
+	rb_dictionary_iter iter;
+	const time_t curtime = rb_current_time();
+
+	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
+	{
+		rb_dlink_node *ptr;
+
+		RB_DLINK_FOREACH(ptr, auth_providers.head)
+		{
+			struct auth_provider *provider = ptr->data;
+			const time_t timeout = auth->timeout[provider->id];
+
+			if(is_provider_on(auth, provider->id) && provider->timeout != NULL &&
+				timeout && timeout < curtime)
+			{
+				provider->timeout(auth);
+			}
+		}
+	}
 }

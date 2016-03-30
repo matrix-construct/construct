@@ -33,6 +33,7 @@ typedef enum
 	PROVIDER_RDNS,
 	PROVIDER_IDENT,
 	PROVIDER_BLACKLIST,
+	PROVIDER_OPM,
 } provider_t;
 
 struct auth_client
@@ -56,6 +57,7 @@ struct auth_client
 	bool providers_starting;		/* Providers are still warming up */
 
 	void *data[MAX_PROVIDERS];		/* Provider-specific data slots */
+	time_t timeout[MAX_PROVIDERS];		/* When to call timeout callback */
 };
 
 typedef bool (*provider_init_t)(void);
@@ -63,6 +65,7 @@ typedef void (*provider_destroy_t)(void);
 
 typedef bool (*provider_start_t)(struct auth_client *);
 typedef void (*provider_cancel_t)(struct auth_client *);
+typedef void (*provider_timeout_t)(struct auth_client *);
 typedef void (*provider_complete_t)(struct auth_client *, provider_t);
 
 struct auth_stats_handler
@@ -82,6 +85,7 @@ struct auth_provider
 
 	provider_start_t start;		/* Perform authentication */
 	provider_cancel_t cancel;	/* Authentication cancelled */
+	provider_timeout_t timeout;	/* Timeout callback */
 	provider_complete_t completed;	/* Callback for when other performers complete (think dependency chains) */
 
 	struct auth_stats_handler stats_handler;

@@ -91,11 +91,9 @@ struct blacklist_filter
 struct blacklist_user
 {
 	rb_dlink_list queries;		/* Blacklist queries in flight */
-	time_t timeout;			/* When this times out */
 };
 
 /* public interfaces */
-static bool blacklists_init(void);
 static void blacklists_destroy(void);
 
 static bool blacklists_start(struct auth_client *);
@@ -108,11 +106,9 @@ static struct blacklist *find_blacklist(const char *);
 static bool blacklist_check_reply(struct blacklist_lookup *, const char *);
 static void blacklist_dns_callback(const char *, bool, query_type, void *);
 static void initiate_blacklist_dnsquery(struct blacklist *, struct auth_client *);
-static void timeout_blacklist_queries_event(void *);
 
 /* Variables */
 static rb_dlink_list blacklist_list = { NULL, NULL, 0 };
-static struct ev_entry *timeout_ev;
 static int blacklist_timeout = 15;
 
 /* private interfaces */
@@ -265,6 +261,7 @@ blacklist_dns_callback(const char *result, bool status, query_type type, void *d
 				rb_dlink_list_length(&blacklist_list) > 1 ? "s" : "");
 		rb_free(bluser);
 		auth->data[PROVIDER_BLACKLIST] = NULL;
+		auth->timeout[PROVIDER_BLACKLIST] = 0;
 		provider_done(auth, PROVIDER_BLACKLIST);
 	}
 }
@@ -294,25 +291,6 @@ initiate_blacklist_dnsquery(struct blacklist *bl, struct auth_client *auth)
 	bl->refcount++;
 }
 
-/* Timeout outstanding queries */
-static void
-timeout_blacklist_queries_event(void *notused)
-{
-	struct auth_client *auth;
-	rb_dictionary_iter iter;
-
-	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
-	{
-		struct blacklist_user *bluser = auth->data[PROVIDER_BLACKLIST];
-
-		if(bluser != NULL && bluser->timeout < rb_current_time())
-		{
-			blacklists_cancel(auth);
-			provider_done(auth, PROVIDER_BLACKLIST);
-		}
-	}
-}
-
 static inline void
 lookup_all_blacklists(struct auth_client *auth)
 {
@@ -330,7 +308,7 @@ lookup_all_blacklists(struct auth_client *auth)
 			initiate_blacklist_dnsquery(bl, auth);
 	}
 
-	bluser->timeout = rb_current_time() + blacklist_timeout;
+	auth->timeout[PROVIDER_BLACKLIST] = rb_current_time() + blacklist_timeout;
 }
 
 static inline void
@@ -427,13 +405,8 @@ blacklists_cancel(struct auth_client *auth)
 
 	rb_free(bluser);
 	auth->data[PROVIDER_BLACKLIST] = NULL;
-}
-
-static bool
-blacklists_init(void)
-{
-	timeout_ev = rb_event_addish("timeout_blacklist_queries_event", timeout_blacklist_queries_event, NULL, 1);
-	return (timeout_ev != NULL);
+	auth->timeout[PROVIDER_BLACKLIST] = 0;
+	provider_done(auth, PROVIDER_BLACKLIST);
 }
 
 static void
@@ -448,7 +421,6 @@ blacklists_destroy(void)
 	}
 
 	delete_all_blacklists();
-	rb_event_delete(timeout_ev);
 }
 
 static void
@@ -576,10 +548,10 @@ struct auth_opts_handler blacklist_options[] =
 struct auth_provider blacklist_provider =
 {
 	.id = PROVIDER_BLACKLIST,
-	.init = blacklists_init,
 	.destroy = blacklists_destroy,
 	.start = blacklists_start,
 	.cancel = blacklists_cancel,
+	.timeout = blacklists_cancel,
 	.completed = blacklists_initiate,
 	.opt_handlers = blacklist_options,
 	/* .stats_handler = { 'B', blacklist_stats }, */

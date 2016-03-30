@@ -35,7 +35,6 @@
 
 struct ident_query
 {
-	time_t timeout;				/* Timeout interval */
 	rb_fde_t *F;				/* Our FD */
 };
 
@@ -58,7 +57,6 @@ typedef enum
 	REPORT_DISABLED,
 } ident_message;
 
-static EVH timeout_ident_queries_event;
 static CNCB ident_connected;
 static PF read_ident_reply;
 
@@ -66,26 +64,9 @@ static void client_fail(struct auth_client *auth, ident_message message);
 static void client_success(struct auth_client *auth);
 static char * get_valid_ident(char *buf);
 
-static struct ev_entry *timeout_ev;
 static int ident_timeout = 5;
 static bool ident_enable = true;
 
-
-/* Timeout outstanding queries */
-static void
-timeout_ident_queries_event(void *notused __unused)
-{
-	struct auth_client *auth;
-	rb_dictionary_iter iter;
-
-	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
-	{
-		struct ident_query *query = auth->data[PROVIDER_IDENT];
-
-		if(query != NULL && query->timeout < rb_current_time())
-			client_fail(auth, REPORT_FAIL);
-	}
-}
 
 /*
  * ident_connected() - deal with the result of rb_connect_tcp()
@@ -209,6 +190,7 @@ client_fail(struct auth_client *auth, ident_message report)
 
 	rb_free(query);
 	auth->data[PROVIDER_IDENT] = NULL;
+	auth->timeout[PROVIDER_IDENT] = 0;
 
 	notice_client(auth->cid, messages[report]);
 	provider_done(auth, PROVIDER_IDENT);
@@ -227,6 +209,7 @@ client_success(struct auth_client *auth)
 
 	rb_free(query);
 	auth->data[PROVIDER_IDENT] = NULL;
+	auth->timeout[PROVIDER_IDENT] = 0;
 
 	notice_client(auth->cid, messages[REPORT_FOUND]);
 	provider_done(auth, PROVIDER_IDENT);
@@ -296,13 +279,6 @@ get_valid_ident(char *buf)
 	return (colon3Ptr);
 }
 
-static bool
-ident_init(void)
-{
-	timeout_ev = rb_event_addish("timeout_ident_queries_event", timeout_ident_queries_event, NULL, 1);
-	return (timeout_ev != NULL);
-}
-
 static void
 ident_destroy(void)
 {
@@ -338,7 +314,7 @@ static bool ident_start(struct auth_client *auth)
 	notice_client(auth->cid, messages[REPORT_LOOKUP]);
 
 	auth->data[PROVIDER_IDENT] = query;
-	query->timeout = rb_current_time() + ident_timeout;
+	auth->timeout[PROVIDER_IDENT] = rb_current_time() + ident_timeout;
 
 	if((query->F = rb_socket(family, SOCK_STREAM, 0, "ident")) == NULL)
 	{
@@ -416,10 +392,8 @@ struct auth_opts_handler ident_options[] =
 struct auth_provider ident_provider =
 {
 	.id = PROVIDER_IDENT,
-	.init = ident_init,
 	.destroy = ident_destroy,
-	.start = ident_start,
 	.cancel = ident_cancel,
-	.completed = NULL,
+	.timeout = ident_cancel,
 	.opt_handlers = ident_options,
 };

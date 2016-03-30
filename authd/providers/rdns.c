@@ -29,7 +29,6 @@
 struct user_query
 {
 	struct dns_query *query;		/* Pending DNS query */
-	time_t timeout;				/* When the request times out */
 };
 
 /* Goinked from old s_auth.c --Elizabeth */
@@ -53,8 +52,6 @@ static void client_fail(struct auth_client *auth, dns_message message);
 static void client_success(struct auth_client *auth);
 static void dns_answer_callback(const char *res, bool status, query_type type, void *data);
 
-static struct ev_entry *timeout_ev;
-static EVH timeout_dns_queries_event;
 static int rdns_timeout = 15;
 
 static void
@@ -74,25 +71,6 @@ dns_answer_callback(const char *res, bool status, query_type type, void *data)
 	}
 }
 
-/* Timeout outstanding queries */
-static void
-timeout_dns_queries_event(void *notused)
-{
-	struct auth_client *auth;
-	rb_dictionary_iter iter;
-
-	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
-	{
-		struct user_query *query = auth->data[PROVIDER_RDNS];
-
-		if(query != NULL && query->timeout < rb_current_time())
-		{
-			client_fail(auth, REPORT_FAIL);
-			return;
-		}
-	}
-}
-
 static void
 client_fail(struct auth_client *auth, dns_message report)
 {
@@ -108,6 +86,7 @@ client_fail(struct auth_client *auth, dns_message report)
 
 	rb_free(query);
 	auth->data[PROVIDER_RDNS] = NULL;
+	auth->timeout[PROVIDER_RDNS] = 0;
 
 	provider_done(auth, PROVIDER_RDNS);
 }
@@ -122,15 +101,9 @@ client_success(struct auth_client *auth)
 
 	rb_free(query);
 	auth->data[PROVIDER_RDNS] = NULL;
+	auth->timeout[PROVIDER_RDNS] = 0;
 
 	provider_done(auth, PROVIDER_RDNS);
-}
-
-static bool
-rdns_init(void)
-{
-	timeout_ev = rb_event_addish("timeout_dns_queries_event", timeout_dns_queries_event, NULL, 1);
-	return (timeout_ev != NULL);
 }
 
 static void
@@ -144,8 +117,6 @@ rdns_destroy(void)
 		if(auth->data[PROVIDER_RDNS] != NULL)
 			client_fail(auth, REPORT_FAIL);
 	}
-
-	rb_event_delete(timeout_ev);
 }
 
 static bool
@@ -153,9 +124,8 @@ rdns_start(struct auth_client *auth)
 {
 	struct user_query *query = rb_malloc(sizeof(struct user_query));
 
-	query->timeout = rb_current_time() + rdns_timeout;
-
 	auth->data[PROVIDER_RDNS] = query;
+	auth->timeout[PROVIDER_RDNS] = rb_current_time() + rdns_timeout;
 
 	query->query = lookup_hostname(auth->c_ip, dns_answer_callback, auth);
 
@@ -196,10 +166,9 @@ struct auth_opts_handler rdns_options[] =
 struct auth_provider rdns_provider =
 {
 	.id = PROVIDER_RDNS,
-	.init = rdns_init,
 	.destroy = rdns_destroy,
 	.start = rdns_start,
 	.cancel = rdns_cancel,
-	.completed = NULL,
+	.timeout = rdns_cancel,
 	.opt_handlers = rdns_options,
 };
