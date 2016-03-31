@@ -18,8 +18,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <netinet/tcp.h>
-
+#include "rb_lib.h"
 #include "stdinc.h"
 #include "setup.h"
 #include "authd.h"
