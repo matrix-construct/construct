@@ -67,7 +67,8 @@ load_provider(struct auth_provider *provider)
 {
 	if(rb_dlink_list_length(&auth_providers) >= MAX_PROVIDERS)
 	{
-		warn_opers(L_CRIT, "Exceeded maximum level of authd providers (%d max)", MAX_PROVIDERS);
+		warn_opers(L_WARN, "provider: cannot load provider with id %d: maximum reached (%d)",
+				provider->id, MAX_PROVIDERS);
 		return;
 	}
 
@@ -142,6 +143,8 @@ destroy_providers(void)
 		if(provider->destroy)
 			provider->destroy();
 	}
+
+	rb_event_delete(timeout_ev);
 }
 
 /* Cancel outstanding providers for a client */
@@ -261,9 +264,8 @@ start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_
 		rb_dictionary_add(auth_clients, RB_UINT_TO_POINTER(auth->cid), auth);
 	else
 	{
-		warn_opers(L_CRIT, "BUG: duplicate client added via start_auth: %x", auth->cid);
-		rb_free(auth);
-		return;
+		warn_opers(L_CRIT, "provider: duplicate client added via start_auth: %x", auth->cid);
+		exit(EX_PROVIDER_ERROR);
 	}
 
 	rb_strlcpy(auth->l_ip, l_ip, sizeof(auth->l_ip));
@@ -321,8 +323,8 @@ handle_new_connection(int parc, char *parv[])
 {
 	if(parc < 6)
 	{
-		warn_opers(L_CRIT, "BUG: received too few params for new connection (6 expected, got %d)", parc);
-		return;
+		warn_opers(L_CRIT, "provider: received too few params for new connection (6 expected, got %d)", parc);
+		exit(EX_PROVIDER_ERROR);
 	}
 
 	start_auth(parv[1], parv[2], parv[3], parv[4], parv[5]);
@@ -336,20 +338,20 @@ handle_cancel_connection(int parc, char *parv[])
 
 	if(parc < 2)
 	{
-		warn_opers(L_CRIT, "BUG: received too few params for new connection (2 expected, got %d)", parc);
-		return;
+		warn_opers(L_CRIT, "provider: received too few params for new connection (2 expected, got %d)", parc);
+		exit(EX_PROVIDER_ERROR);
 	}
 
 	if((lcid = strtol(parv[1], NULL, 16)) > UINT32_MAX)
 	{
-		warn_opers(L_CRIT, "BUG: got a request to cancel a connection that can't exist: %lx", lcid);
-		return;
+		warn_opers(L_CRIT, "provider: got a request to cancel a connection that can't exist: %lx", lcid);
+		exit(EX_PROVIDER_ERROR);
 	}
 
 	if((auth = rb_dictionary_retrieve(auth_clients, RB_UINT_TO_POINTER((uint32_t)lcid))) == NULL)
 	{
-		warn_opers(L_CRIT, "BUG: tried to cancel nonexistent connection %lx", lcid);
-		return;
+		warn_opers(L_CRIT, "provider: tried to cancel nonexistent connection %lx", lcid);
+		exit(EX_PROVIDER_ERROR);
 	}
 
 	cancel_providers(auth);
@@ -372,7 +374,7 @@ provider_timeout_event(void *notused __unused)
 			const time_t timeout = auth->timeout[provider->id];
 
 			if(is_provider_on(auth, provider->id) && provider->timeout != NULL &&
-				timeout && timeout < curtime)
+				timeout > 0 && timeout < curtime)
 			{
 				provider->timeout(auth);
 			}
