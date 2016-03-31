@@ -293,7 +293,8 @@ ident_destroy(void)
 	}
 }
 
-static bool ident_start(struct auth_client *auth)
+static bool
+ident_start(struct auth_client *auth)
 {
 	struct ident_query *query = rb_malloc(sizeof(struct ident_query));
 	struct rb_sockaddr_storage l_addr, c_addr;
@@ -392,6 +393,7 @@ struct auth_opts_handler ident_options[] =
 struct auth_provider ident_provider =
 {
 	.id = PROVIDER_IDENT,
+	.start = ident_start,
 	.destroy = ident_destroy,
 	.cancel = ident_cancel,
 	.timeout = ident_cancel,
