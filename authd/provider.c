@@ -118,6 +118,7 @@ init_providers(void)
 	load_provider(&rdns_provider);
 	load_provider(&ident_provider);
 	load_provider(&blacklist_provider);
+	load_provider(&opm_provider);
 }
 
 /* Terminate all providers */

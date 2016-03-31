@@ -14,6 +14,7 @@ authd_SOURCES =	\
 	reslist.c \
 	providers/blacklist.c \
 	providers/ident.c \
-	providers/rdns.c
+	providers/rdns.c \
+	providers/opm.c
 
 authd_LDADD = ../librb/src/librb.la
