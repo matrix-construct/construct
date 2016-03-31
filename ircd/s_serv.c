@@ -1041,12 +1041,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	rb_strlcpy(client_p->sockhost, buf, sizeof(client_p->sockhost));
 	client_p->localClient->F = F;
 	/* shove the port number into the sockaddr */
-#ifdef RB_IPV6
-	if(GET_SS_FAMILY(&server_p->my_ipnum) == AF_INET6)
-		((struct sockaddr_in6 *)&server_p->my_ipnum)->sin6_port = htons(server_p->port);
-	else
-#endif
-		((struct sockaddr_in *)&server_p->my_ipnum)->sin_port = htons(server_p->port);
+	SET_SS_PORT(&server_p->my_ipnum, htons(server_p->port));
 
 	/*
 	 * Set up the initial server evilness, ripped straight from
@@ -1084,15 +1079,15 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	if(ServerConfVhosted(server_p))
 	{
 		memcpy(&myipnum, &server_p->my_ipnum, sizeof(myipnum));
-		((struct sockaddr_in *)&myipnum)->sin_port = 0;
 		SET_SS_FAMILY(&myipnum, GET_SS_FAMILY(&server_p->my_ipnum));
+		SET_SS_PORT(&myipnum, 0);
 
 	}
 	else if(GET_SS_FAMILY(&server_p->my_ipnum) == AF_INET && ServerInfo.specific_ipv4_vhost)
 	{
 		memcpy(&myipnum, &ServerInfo.ip, sizeof(myipnum));
-		((struct sockaddr_in *)&myipnum)->sin_port = 0;
 		SET_SS_FAMILY(&myipnum, AF_INET);
+		SET_SS_PORT(&myipnum, 0);
 		SET_SS_LEN(&myipnum, sizeof(struct sockaddr_in));
 	}
 
@@ -1100,8 +1095,8 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	else if((GET_SS_FAMILY(&server_p->my_ipnum) == AF_INET6) && ServerInfo.specific_ipv6_vhost)
 	{
 		memcpy(&myipnum, &ServerInfo.ip6, sizeof(myipnum));
-		((struct sockaddr_in6 *)&myipnum)->sin6_port = 0;
 		SET_SS_FAMILY(&myipnum, AF_INET6);
+		SET_SS_PORT(&myipnum, 0);
 		SET_SS_LEN(&myipnum, sizeof(struct sockaddr_in6));
 	}
 #endif

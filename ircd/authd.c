@@ -374,22 +374,11 @@ authd_initiate_client(struct Client *client_p)
 	rb_inet_ntop_sock((struct sockaddr *)&client_p->localClient->ip, client_ipaddr, sizeof(client_ipaddr));
 
 	/* Retrieve listener and client ports */
-#ifdef RB_IPV6
-	if(GET_SS_FAMILY(&client_p->preClient->lip) == AF_INET6)
-		listen_port = ntohs(((struct sockaddr_in6 *)&client_p->preClient->lip)->sin6_port);
-	else
-#endif
-		listen_port = ntohs(((struct sockaddr_in *)&client_p->preClient->lip)->sin_port);
-
-#ifdef RB_IPV6
-	if(GET_SS_FAMILY(&client_p->localClient->ip) == AF_INET6)
-		client_port = ntohs(((struct sockaddr_in6 *)&client_p->localClient->ip)->sin6_port);
-	else
-#endif
-		client_port = ntohs(((struct sockaddr_in *)&client_p->localClient->ip)->sin_port);
+	listen_port = ntohs(GET_SS_PORT(&client_p->preClient->lip));
+	client_port = ntohs(GET_SS_PORT(&client_p->localClient->ip));
 
 	/* Add a bit of a fudge factor... */
-	client_p->preClient->authd_timeout = rb_current_time() + ConfigFileEntry.connect_timeout + 5;
+	client_p->preClient->authd_timeout = rb_current_time() + ConfigFileEntry.connect_timeout + 10;
 
 	rb_helper_write(authd_helper, "C %x %s %hu %s %hu", authd_cid, listen_ipaddr, listen_port, client_ipaddr, client_port);
 }

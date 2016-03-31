@@ -328,20 +328,8 @@ ident_start(struct auth_client *auth)
 	l_addr = auth->l_addr;
 	c_addr = auth->c_addr;
 
-	/* Set the ports correctly */
-#ifdef RB_IPV6
-	if(GET_SS_FAMILY(&l_addr) == AF_INET6)
-		((struct sockaddr_in6 *)&l_addr)->sin6_port = 0;
-	else
-#endif
-		((struct sockaddr_in *)&l_addr)->sin_port = 0;
-
-#ifdef RB_IPV6
-	if(GET_SS_FAMILY(&c_addr) == AF_INET6)
-		((struct sockaddr_in6 *)&c_addr)->sin6_port = htons(113);
-	else
-#endif
-		((struct sockaddr_in *)&c_addr)->sin_port = htons(113);
+	SET_SS_PORT(&l_addr, 0);
+	SET_SS_PORT(&c_addr, htons(113));
 
 	rb_connect_tcp(query->F, (struct sockaddr *)&c_addr,
 			(struct sockaddr *)&l_addr,

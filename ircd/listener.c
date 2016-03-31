@@ -105,12 +105,7 @@ free_listener(struct Listener *listener)
 static uint16_t
 get_listener_port(const struct Listener *listener)
 {
-#ifdef RB_IPV6
-	if(GET_SS_FAMILY(&listener->addr) == AF_INET6)
-		return ntohs(((const struct sockaddr_in6 *)&listener->addr)->sin6_port);
-	else
-#endif
-		return ntohs(((const struct sockaddr_in *)&listener->addr)->sin_port);
+	return ntohs(GET_SS_PORT(&listener->addr));
 }
 
 /*
@@ -377,12 +372,14 @@ add_listener(int port, const char *vhost_ip, int family, int ssl, int defer_acce
 	{
 		case AF_INET:
 			SET_SS_LEN(&vaddr, sizeof(struct sockaddr_in));
-			((struct sockaddr_in *)&vaddr)->sin_port = htons(port);
+			SET_SS_FAMILY(&vaddr, AF_INET);
+			SET_SS_PORT(&vaddr, htons(port));
 			break;
 #ifdef RB_IPV6
 		case AF_INET6:
 			SET_SS_LEN(&vaddr, sizeof(struct sockaddr_in6));
-			((struct sockaddr_in6 *)&vaddr)->sin6_port = htons(port);
+			SET_SS_FAMILY(&vaddr, AF_INET6);
+			SET_SS_PORT(&vaddr, htons(port));
 			break;
 #endif
 		default:

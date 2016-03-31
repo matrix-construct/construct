@@ -184,7 +184,7 @@ accept_opm(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t len, voi
 			{
 				struct sockaddr_in6 *s = (struct sockaddr_in6 *)&localaddr, *c = (struct sockaddr_in6 *)&auth->c_addr;
 
-				if(memcmp(s->sin6_addr.s6_addr, c->sin6_addr.s6_addr, 16) == 0)
+				if(IN6_ARE_ADDR_EQUAL(&s->sin6_addr, &c->sin6_addr))
 				{
 					rb_setselect(F, RB_SELECT_READ, read_opm_reply, auth);
 					return;
@@ -364,20 +364,8 @@ establish_connection(struct auth_client *auth, struct opm_proxy *proxy)
 	/* Disable Nagle's algorithim - buffering could affect scans */
 	(void)setsockopt(rb_get_fd(scan->F), IPPROTO_TCP, TCP_NODELAY, (char *)&opt, sizeof(opt));
 
-        /* Set the ports correctly */
-#ifdef RB_IPV6
-	if(GET_SS_FAMILY(&l_a) == AF_INET6)
-		((struct sockaddr_in6 *)&l_a)->sin6_port = 0;
-	else
-#endif
-		((struct sockaddr_in *)&l_a)->sin_port = 0;
-
-#ifdef RB_IPV6
-	if(GET_SS_FAMILY(&c_a) == AF_INET6)
-		((struct sockaddr_in6 *)&c_a)->sin6_port = ((struct sockaddr_in6 *)&listener->addr)->sin6_port;
-	else
-#endif
-		((struct sockaddr_in *)&c_a)->sin_port = ((struct sockaddr_in *)&listener->addr)->sin_port;
+	SET_SS_PORT(&l_a, 0);
+	SET_SS_PORT(&c_a, GET_SS_PORT(&listener->addr));
 
 	rb_dlinkAdd(scan, &scan->node, &lookup->scans);
 	rb_connect_tcp(scan->F,
