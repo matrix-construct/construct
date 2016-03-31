@@ -325,8 +325,8 @@ ident_start(struct auth_client *auth)
 	}
 
 	/* Build sockaddr_storages for rb_connect_tcp below */
-	memcpy(&l_addr, &auth->l_addr, sizeof(l_addr));
-	memcpy(&c_addr, &auth->c_addr, sizeof(c_addr));
+	l_addr = auth->l_addr;
+	c_addr = auth->c_addr;
 
 	/* Set the ports correctly */
 #ifdef RB_IPV6
