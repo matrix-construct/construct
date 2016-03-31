@@ -82,7 +82,9 @@ load_provider(struct auth_provider *provider)
 	if(provider->stats_handler.letter != '\0')
 		authd_stat_handlers[provider->stats_handler.letter] = provider->stats_handler.handler;
 
-	provider->init();
+	if(provider->init != NULL)
+		provider->init();
+
 	rb_dlinkAdd(provider, &provider->node, &auth_providers);
 }
 
@@ -100,7 +102,9 @@ unload_provider(struct auth_provider *provider)
 	if(provider->stats_handler.letter != '\0')
 		authd_stat_handlers[provider->stats_handler.letter] = NULL;
 
-	provider->destroy();
+	if(provider->destroy != NULL)
+		provider->destroy();
+
 	rb_dlinkDelete(&provider->node, &auth_providers);
 }
 
@@ -182,7 +186,7 @@ provider_done(struct auth_client *auth, provider_t id)
 	{
 		provider = ptr->data;
 
-		if(provider->completed && is_provider_on(auth, provider->id))
+		if(provider->completed != NULL && is_provider_on(auth, provider->id))
 			/* Notify pending clients who asked for it */
 			provider->completed(auth, id);
 	}
