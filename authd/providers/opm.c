@@ -60,7 +60,7 @@ struct opm_listener
 {
 	char ip[HOSTIPLEN];
 	uint16_t port;
-	struct sockaddr_storage addr;
+	struct rb_sockaddr_storage addr;
 	rb_fde_t *F;
 };
 
@@ -326,7 +326,7 @@ establish_connection(struct auth_client *auth, struct opm_proxy *proxy)
 	struct opm_lookup *lookup = auth->data[PROVIDER_OPM];
 	struct opm_listener *listener;
 	struct opm_scan *scan = rb_malloc(sizeof(struct opm_scan));
-	struct sockaddr_storage c_a, l_a;
+	struct rb_sockaddr_storage c_a, l_a;
 	int opt = 1;
 	CNCB *callback;
 
@@ -473,7 +473,7 @@ static void
 set_opm_listener(const char *key __unused, int parc __unused, const char **parv)
 {
 	struct auth_client *auth;
-	struct sockaddr_storage addr;
+	struct rb_sockaddr_storage addr;
 	struct opm_listener *listener;
 	int port = atoi(parv[1]), opt = 1;
 	rb_dictionary_iter iter;
