@@ -510,6 +510,14 @@ set_opm_listener(const char *key __unused, int parc __unused, const char **parv)
 		exit(EX_PROVIDER_ERROR);
 	}
 
+	/* Set up ports for binding */
+#ifdef RB_IPV6
+	if(GET_SS_FAMILY(&addr) == AF_INET6)
+		((struct sockaddr_in6 *)&addr)->sin6_port = htons(port);
+	else
+#endif
+		((struct sockaddr_in *)&addr)->sin_port = htons(port);
+
 	if(bind(rb_get_fd(F), (struct sockaddr *)&addr, GET_SS_LEN(&addr)))
 	{
 		/* Shit happens, let's not cripple authd over this */
@@ -525,6 +533,8 @@ set_opm_listener(const char *key __unused, int parc __unused, const char **parv)
 		return;
 	}
 
+	/* From this point forward we assume we have a listener */
+
 	if(listener->F != NULL)
 		/* Close old listener */
 		rb_close(listener->F);
@@ -539,20 +549,13 @@ set_opm_listener(const char *key __unused, int parc __unused, const char **parv)
 		opm_cancel(auth);
 	}
 
-#ifdef RB_IPV6
-	if(GET_SS_FAMILY(&addr) == AF_INET6)
-		((struct sockaddr_in6 *)&addr)->sin6_port = htons(port);
-	else
-#endif
-		((struct sockaddr_in *)&addr)->sin_port = htons(port);
-
 	/* Copy data */
 	rb_strlcpy(listener->ip, parv[0], sizeof(listener->ip));
 	listener->port = (uint16_t)port;
 	listener->addr = addr;
 
 	opm_enable = true; /* Implicitly set this to true for now if we have a listener */
-	rb_accept_tcp(F, NULL, accept_opm, listener);
+	rb_accept_tcp(listener->F, NULL, accept_opm, listener);
 }
 
 struct auth_opts_handler opm_options[] =
