@@ -141,7 +141,7 @@ accept_opm(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t len, voi
 {
 	struct auth_client *auth = NULL;
 	struct opm_listener *listener = data;
-	struct rb_sockaddr_storage s_addr;
+	struct rb_sockaddr_storage localaddr;
 	unsigned int llen = sizeof(struct rb_sockaddr_storage);
 	rb_dictionary_iter iter;
 
@@ -151,7 +151,7 @@ accept_opm(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t len, voi
 		return;
 	}
 
-	if(getsockname(rb_get_fd(F), (struct sockaddr *)&s_addr, &llen))
+	if(getsockname(rb_get_fd(F), (struct sockaddr *)&localaddr, &llen))
 	{
 		/* This can happen if the client goes away after accept */
 		rb_close(F);
@@ -161,15 +161,15 @@ accept_opm(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t len, voi
 	/* Correlate connection with client(s) */
 	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
-		if(GET_SS_FAMILY(&auth->c_addr) != GET_SS_FAMILY(&s_addr))
+		if(GET_SS_FAMILY(&auth->c_addr) != GET_SS_FAMILY(&localaddr))
 			continue;
 
 		/* Compare the addresses */
-		switch(GET_SS_FAMILY(&s_addr))
+		switch(GET_SS_FAMILY(&localaddr))
 		{
 		case AF_INET:
 			{
-				struct sockaddr_in *s = (struct sockaddr_in *)&s_addr, *c = (struct sockaddr_in *)&auth->c_addr;
+				struct sockaddr_in *s = (struct sockaddr_in *)&localaddr, *c = (struct sockaddr_in *)&auth->c_addr;
 
 				if(s->sin_addr.s_addr == c->sin_addr.s_addr)
 				{
@@ -182,7 +182,7 @@ accept_opm(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t len, voi
 #ifdef RB_IPV6
 		case AF_INET6:
 			{
-				struct sockaddr_in6 *s = (struct sockaddr_in6 *)&s_addr, *c = (struct sockaddr_in6 *)&auth->c_addr;
+				struct sockaddr_in6 *s = (struct sockaddr_in6 *)&localaddr, *c = (struct sockaddr_in6 *)&auth->c_addr;
 
 				if(memcmp(s->sin6_addr.s6_addr, c->sin6_addr.s6_addr, 16) == 0)
 				{
