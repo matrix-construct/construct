@@ -10,10 +10,6 @@
 #include <signal.h>
 #include <ctype.h>
 
-#ifdef HAVE_LINUX_TCP_H
-# include <linux/tcp.h>
-#endif
-
 #ifdef __GNUC__
 #undef alloca
 #define alloca __builtin_alloca
