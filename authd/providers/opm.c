@@ -85,7 +85,7 @@ static CNCB socks5_connected;
 
 static void opm_cancel(struct auth_client *auth);
 
-static int opm_timeout = 5;
+static int opm_timeout = 10;
 static bool opm_enable = false;
 
 #define LISTEN_IPV4 0

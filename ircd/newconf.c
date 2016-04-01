@@ -57,6 +57,11 @@ static char *yy_blacklist_reason = NULL;
 static uint8_t yy_blacklist_iptype = 0;
 static rb_dlink_list yy_blacklist_filters = { NULL, NULL, 0 };
 
+static char *yy_opm_address_ipv4 = NULL;
+static char *yy_opm_address_ipv6 = NULL;
+static uint16_t yy_opm_port_ipv4 = 0;
+static uint16_t yy_opm_port_ipv6 = 0;
+
 static char *yy_privset_extends = NULL;
 
 static const char *
@@ -2014,6 +2019,216 @@ cleanup_bl:
 	yy_blacklist_iptype = 0;
 }
 
+static int
+conf_begin_opm(struct TopConf *tc)
+{
+	yy_opm_address_ipv4 = yy_opm_address_ipv6 = NULL;
+	yy_opm_port_ipv4 = yy_opm_port_ipv6 = 0;
+	return 0;
+}
+
+static int
+conf_end_opm(struct TopConf *tc)
+{
+	if(yy_opm_port_ipv4 > 0)
+	{
+		if(yy_opm_address_ipv4 != NULL)
+			create_opm_listener(yy_opm_address_ipv4, yy_opm_port_ipv4);
+		else
+		{
+			char ip[HOSTIPLEN];
+			if(!rb_inet_ntop_sock((struct sockaddr *)&ServerInfo.ip, ip, sizeof(ip)))
+			{
+				conf_report_error("No opm::listen_ipv4 nor serverinfo::vhost directive; cannot listen on IPv4");
+				return 1;
+			}
+			else
+			{
+				create_opm_listener(ip, yy_opm_port_ipv4);
+			}
+		}
+	}
+
+	if(yy_opm_port_ipv6 > 0)
+	{
+		if(yy_opm_address_ipv6 != NULL)
+			create_opm_listener(yy_opm_address_ipv6, yy_opm_port_ipv6);
+		else
+		{
+			char ip[HOSTIPLEN];
+			if(!rb_inet_ntop_sock((struct sockaddr *)&ServerInfo.ip6, ip, sizeof(ip)))
+			{
+				conf_report_error("No opm::listen_ipv6 nor serverinfo::vhost directive; cannot listen on IPv6");
+				return 1;
+			}
+			else
+			{
+				create_opm_listener(ip, yy_opm_port_ipv6);
+			}
+		}
+	}
+
+	rb_free(yy_opm_address_ipv4);
+	rb_free(yy_opm_address_ipv6);
+	return 0;
+}
+
+static void
+conf_set_opm_listen_address_ipv4(void *data)
+{
+	struct rb_sockaddr_storage addr;
+	char *ip = data;
+
+	if(ip == NULL)
+	{
+		conf_report_error("opm::listen_ipv4 cannot be empty");
+		return;
+	}
+
+	/* Test the address for validity */
+	if(!rb_inet_pton_sock(ip, (struct sockaddr *)&addr))
+	{
+		conf_report_error("opm::listen_ipv4 is invalid: %s", ip);
+		return;
+	}
+
+#ifdef RB_IPV6
+	if(GET_SS_FAMILY(&addr) == AF_INET6)
+	{
+		conf_report_error("opm::listen_ipv4 is an IPv6 address: %s", ip);
+		return;
+	}
+#endif
+
+	if(yy_opm_address_ipv4 != NULL)
+	{
+		conf_report_error("opm::listen_ipv4 %s overwrites previous one: %s",
+				ip, yy_opm_address_ipv4);
+		return;
+	}
+
+	yy_opm_address_ipv4 = rb_strdup(ip);
+}
+
+static void
+conf_set_opm_listen_address_ipv6(void *data)
+{
+#ifndef RB_IPV6
+	conf_report_error("opm::listen_ipv6 requires IPv6 support in your ircd");
+	return;
+#else
+	struct rb_sockaddr_storage addr;
+	char *ip = data;
+
+	if(ip == NULL)
+	{
+		conf_report_error("opm::listen_ipv4 cannot be empty");
+		return;
+	}
+
+	/* Test the address for validity */
+	if(!rb_inet_pton_sock(ip, (struct sockaddr *)&addr))
+	{
+		conf_report_error("opm::listen_ipv6 is invalid: %s", ip);
+		return;
+	}
+
+	if(GET_SS_FAMILY(&addr) == AF_INET)
+	{
+		conf_report_error("opm::listen_ipv6 is an IPv4 address: %s", ip);
+		return;
+	}
+
+	if(yy_opm_address_ipv6 != NULL)
+	{
+		conf_report_error("opm::listen_ipv6 %s overwrites previous one: %s",
+				ip, yy_opm_address_ipv6);
+		return;
+	}
+
+	yy_opm_address_ipv6 = rb_strdup(ip);
+#endif
+}
+
+static void
+conf_set_opm_listen_port_ipv4(void *data)
+{
+#ifndef RB_IPV6
+	conf_report_error("opm::listen_ipv6 requires IPv6 support in your ircd");
+	return;
+#else
+	int port = *((int *)data);
+
+	if(port > 65535 || port <= 0)
+	{
+		conf_report_error("opm::port_ipv4 is out of range: %d", port);
+		return;
+	}
+
+	if(yy_opm_port_ipv4)
+	{
+		conf_report_error("opm::port_ipv4 %d overwrites existing port %hu",
+				port, yy_opm_port_ipv4);
+		return;
+	}
+
+	yy_opm_port_ipv4 = (uint16_t)port;
+#endif
+}
+
+static void
+conf_set_opm_listen_port_ipv6(void *data)
+{
+	int port = *((int *)data);
+
+	if(port > 65535 || port <= 0)
+	{
+		conf_report_error("opm::port_ipv6 is out of range: %d", port);
+		return;
+	}
+
+	if(yy_opm_port_ipv6)
+	{
+		conf_report_error("opm::port_ipv6 %d overwrites existing port %hu",
+				port, yy_opm_port_ipv6);
+		return;
+	}
+
+	yy_opm_port_ipv6 = (uint16_t)port;
+}
+
+static void
+conf_set_opm_listen_port(void *data)
+{
+	int port = *((int *)data);
+	bool fail = false; /* Allow us to report shadowing of IPv4 and IPv6 port */
+
+	if(port > 65535 || port <= 0)
+	{
+		conf_report_error("opm::port is out of range: %d", port);
+		return;
+	}
+
+	if(yy_opm_port_ipv4)
+	{
+		conf_report_error("opm::port %d overwrites existing IPv4 port %hu",
+				port, yy_opm_port_ipv4);
+		fail = true;
+	}
+
+	if(yy_opm_port_ipv6)
+	{
+		conf_report_error("opm::port %d overwrites existing IPv6 port %hu",
+				port, yy_opm_port_ipv6);
+		fail = true;
+	}
+
+	if(fail)
+		return;
+
+	yy_opm_port_ipv4 = yy_opm_port_ipv6 = (uint16_t)port;
+}
+
 /* public functions */
 
 
@@ -2542,4 +2757,11 @@ newconf_init()
 	add_conf_item("blacklist", "type", CF_STRING | CF_FLIST, conf_set_blacklist_type);
 	add_conf_item("blacklist", "matches", CF_QSTRING | CF_FLIST, conf_set_blacklist_matches);
 	add_conf_item("blacklist", "reject_reason", CF_QSTRING, conf_set_blacklist_reason);
+
+	add_top_conf("opm", conf_begin_opm, conf_end_opm, NULL);
+	add_conf_item("opm", "listen_ipv4", CF_QSTRING, conf_set_opm_listen_address_ipv4);
+	add_conf_item("opm", "port_v4", CF_INT, conf_set_opm_listen_port_ipv4);
+	add_conf_item("opm", "listen_ipv6", CF_QSTRING, conf_set_opm_listen_address_ipv6);
+	add_conf_item("opm", "port_v6", CF_INT, conf_set_opm_listen_port_ipv6);
+	add_conf_item("opm", "listen_port", CF_INT, conf_set_opm_listen_port);
 }
