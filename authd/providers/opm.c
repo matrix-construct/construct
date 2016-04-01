@@ -84,6 +84,7 @@ static CNCB socks4_connected;
 static CNCB socks5_connected;
 
 static void opm_cancel(struct auth_client *auth);
+static bool create_listener(const char *ip, uint16_t port);
 
 static int opm_timeout = 10;
 static bool opm_enable = false;
@@ -470,9 +471,11 @@ add_conf_opm_timeout(const char *key __unused, int parc __unused, const char **p
 static void
 set_opm_enabled(const char *key __unused, int parc __unused, const char **parv)
 {
-	if(listeners[LISTEN_IPV4].F != NULL || listeners[LISTEN_IPV6].F != NULL)
+	bool enable = (*parv[0] == '1');
+
+	if(!enable)
 	{
-		if(!(opm_enable = (*parv[0] == '1')))
+		if(listeners[LISTEN_IPV4].F != NULL || listeners[LISTEN_IPV6].F != NULL)
 		{
 			struct auth_client *auth;
 			rb_dictionary_iter iter;
@@ -484,6 +487,8 @@ set_opm_enabled(const char *key __unused, int parc __unused, const char **parv)
 			if(listeners[LISTEN_IPV6].F != NULL)
 				rb_close(listeners[LISTEN_IPV6].F);
 
+			listeners[LISTEN_IPV4].F = listeners[LISTEN_IPV6].F = NULL;
+
 			RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 			{
 				opm_cancel(auth);
@@ -491,40 +496,83 @@ set_opm_enabled(const char *key __unused, int parc __unused, const char **parv)
 		}
 	}
 	else
-		/* No listener, no point... */
-		opm_enable = false;
+	{
+		if(listeners[LISTEN_IPV4].ip[0] != '\0' && listeners[LISTEN_IPV4].port != 0)
+		{
+			lrb_assert(listeners[LISTEN_IPV4].F == NULL);
+
+			/* Pre-configured IP/port, just re-establish */
+			create_listener(listeners[LISTEN_IPV4].ip, listeners[LISTEN_IPV4].port);
+		}
+
+		if(listeners[LISTEN_IPV6].ip[0] != '\0' && listeners[LISTEN_IPV6].port != 0)
+		{
+			lrb_assert(listeners[LISTEN_IPV6].F == NULL);
+
+			/* Pre-configured IP/port, just re-establish */
+			create_listener(listeners[LISTEN_IPV6].ip, listeners[LISTEN_IPV6].port);
+		}
+	}
+
+	opm_enable = enable;
 }
 
-static void
-set_opm_listener(const char *key __unused, int parc __unused, const char **parv)
+static bool
+create_listener(const char *ip, uint16_t port)
 {
 	struct auth_client *auth;
-	struct rb_sockaddr_storage addr;
 	struct opm_listener *listener;
-	int port = atoi(parv[1]), opt = 1;
+	struct rb_sockaddr_storage addr;
 	rb_dictionary_iter iter;
 	rb_fde_t *F;
-	size_t i;
+	int opt = 1;
 
-	if(port > 65535 || port <= 0 || !rb_inet_pton_sock(parv[0], (struct sockaddr *)&addr))
+	if(!rb_inet_pton_sock(ip, (struct sockaddr *)&addr))
 	{
-		warn_opers(L_CRIT, "OPM: got a bad listener: %s:%s", parv[0], parv[1]);
+		warn_opers(L_CRIT, "OPM: got a bad listener: %s:%hu", ip, port);
 		exit(EX_PROVIDER_ERROR);
 	}
 
 #ifdef RB_IPV6
 	if(GET_SS_FAMILY(&addr) == AF_INET6)
+	{
+		struct sockaddr_in6 *a1, *a2;
+
 		listener = &listeners[LISTEN_IPV6];
+
+		a1 = (struct sockaddr_in6 *)&addr;
+		a2 = (struct sockaddr_in6 *)&listener->addr;
+
+		if(IN6_ARE_ADDR_EQUAL(&a1->sin6_addr, &a2->sin6_addr) &&
+			GET_SS_PORT(&addr) == GET_SS_PORT(&listener->addr) &&
+			listener->F != NULL)
+		{
+			/* Listener already exists */
+			return false;
+		}
+	}
 	else
 #endif
+	{
+		struct sockaddr_in *a1, *a2;
+
 		listener = &listeners[LISTEN_IPV4];
 
-	if(strcmp(listener->ip, parv[0]) == 0 || listener->port == port)
-		return;
+		a1 = (struct sockaddr_in *)&addr;
+		a2 = (struct sockaddr_in *)&listener->addr;
+
+		if(a1->sin_addr.s_addr == a2->sin_addr.s_addr &&
+			GET_SS_PORT(&addr) == GET_SS_PORT(&listener->addr) &&
+			listener->F != NULL)
+		{
+			/* Listener already exists */
+			return false;
+		}
+	}
 
 	if((F = rb_socket(GET_SS_FAMILY(&addr), SOCK_STREAM, 0, "OPM listener socket")) == NULL)
 	{
-		/* This shouldn't fail, or we have problems... */
+		/* This shouldn't fail, or we have big problems... */
 		warn_opers(L_CRIT, "OPM: cannot create socket: %s", strerror(errno));
 		exit(EX_PROVIDER_ERROR);
 	}
@@ -546,17 +594,18 @@ set_opm_listener(const char *key __unused, int parc __unused, const char **parv)
 
 	if(bind(rb_get_fd(F), (struct sockaddr *)&addr, GET_SS_LEN(&addr)))
 	{
-		/* Shit happens, let's not cripple authd over this */
+		/* Shit happens, let's not cripple authd over /this/ since it could be user error */
 		warn_opers(L_WARN, "OPM: cannot bind on socket: %s", strerror(errno));
 		rb_close(F);
-		return;
+		return false;
 	}
 
 	if(rb_listen(F, SOMAXCONN, false)) /* deferred accept could interfere with detection */
 	{
+		/* Again, could be user error */
 		warn_opers(L_WARN, "OPM: cannot listen on socket: %s", strerror(errno));
 		rb_close(F);
-		return;
+		return false;
 	}
 
 	/* From this point forward we assume we have a listener */
@@ -567,7 +616,7 @@ set_opm_listener(const char *key __unused, int parc __unused, const char **parv)
 
 	listener->F = F;
 
-	/* Cancel old clients that may be on old stale listener
+	/* Cancel clients that may be on old listener
 	 * XXX - should rescan clients that need it
 	 */
 	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
@@ -576,12 +625,28 @@ set_opm_listener(const char *key __unused, int parc __unused, const char **parv)
 	}
 
 	/* Copy data */
-	rb_strlcpy(listener->ip, parv[0], sizeof(listener->ip));
-	listener->port = (uint16_t)port;
+	rb_strlcpy(listener->ip, ip, sizeof(listener->ip));
+	listener->port = port;
 	listener->addr = addr;
 
 	opm_enable = true; /* Implicitly set this to true for now if we have a listener */
 	rb_accept_tcp(listener->F, NULL, accept_opm, listener);
+	return true;
+}
+
+static void
+set_opm_listener(const char *key __unused, int parc __unused, const char **parv)
+{
+	const char *ip = parv[0];
+	int port = atoi(parv[1]);
+
+	if(port > 65535 || port <= 0)
+	{
+		warn_opers(L_CRIT, "OPM: got a bad listener: %s:%s", parv[0], parv[1]);
+		exit(EX_PROVIDER_ERROR);
+	}
+
+	create_listener(ip, (uint16_t)port);
 }
 
 struct auth_opts_handler opm_options[] =
