@@ -333,6 +333,13 @@ establish_connection(struct auth_client *auth, struct opm_proxy *proxy)
 	switch(proxy->proto)
 	{
 	case PROTO_SOCKS4:
+#ifdef RB_IPV6
+		if(GET_SS_FAMILY(&auth->c_addr) == AF_INET6)
+		{
+			rb_free(scan);
+			return;
+		}
+#endif
 		callback = socks4_connected;
 		break;
 	case PROTO_SOCKS5:
@@ -365,7 +372,7 @@ establish_connection(struct auth_client *auth, struct opm_proxy *proxy)
 	(void)setsockopt(rb_get_fd(scan->F), IPPROTO_TCP, TCP_NODELAY, (char *)&opt, sizeof(opt));
 
 	SET_SS_PORT(&l_a, 0);
-	SET_SS_PORT(&c_a, GET_SS_PORT(&listener->addr));
+	SET_SS_PORT(&c_a, htons(proxy->port));
 
 	rb_dlinkAdd(scan, &scan->node, &lookup->scans);
 	rb_connect_tcp(scan->F,
