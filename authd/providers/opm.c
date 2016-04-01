@@ -123,14 +123,25 @@ read_opm_reply(rb_fde_t *F, void *data)
 
 	for(struct opm_proxy *proxy = opm_proxy_scans; proxy->note != NULL; proxy++)
 	{
-		if(strncmp(proxy->note, readbuf, sizeof(readbuf)) != 0)
-			/* Nope */
-			continue;
+		if(strncmp(proxy->note, readbuf, sizeof(readbuf)) == 0)
+		{
+			rb_dlink_node *ptr, *nptr;
 
-		/* If we get here we have an open proxy */
-		reject_client(auth, PROVIDER_OPM, readbuf, "Open proxy detected");
-		opm_cancel(auth);
-		break;
+			/* Cancel outstanding lookups */
+			RB_DLINK_FOREACH_SAFE(ptr, nptr, lookup->scans.head)
+			{
+				struct opm_scan *scan = ptr->data;
+
+				rb_close(scan->F);
+				rb_free(scan);
+			}
+
+			/* No longer needed, client is going away */
+			rb_free(lookup);
+
+			reject_client(auth, PROVIDER_OPM, readbuf, "Open proxy detected");
+			break;
+		}
 	}
 
 	rb_close(F);
