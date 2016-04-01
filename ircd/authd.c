@@ -407,10 +407,10 @@ authd_decide_client(struct Client *client_p, const char *ident, const char *host
 	if(*ident != '*')
 	{
 		rb_strlcpy(client_p->username, ident, sizeof(client_p->username));
-		ServerStats.is_abad++; /* s_auth used to do this, stay compatible */
+		ServerStats.is_asuc++;
 	}
 	else
-		ServerStats.is_asuc++;
+		ServerStats.is_abad++; /* s_auth used to do this, stay compatible */
 
 	if(*host != '*')
 		rb_strlcpy(client_p->host, host, sizeof(client_p->host));
@@ -546,14 +546,39 @@ del_blacklist_all(void)
 }
 
 /* Adjust an authd timeout value */
-void
+bool
 set_authd_timeout(const char *key, int timeout)
 {
+	if(timeout <= 0)
+		return false;
+
 	rb_helper_write(authd_helper, "O %s %d", key, timeout);
+	return true;
 }
 
+/* Enable identd checks */
 void
 ident_check_enable(bool enabled)
 {
 	rb_helper_write(authd_helper, "O ident_enabled %d", enabled ? 1 : 0);
+}
+
+/* Create an OPM listener */
+bool
+create_opm_listener(struct rb_sockaddr_storage *addr)
+{
+	char addrbuf[HOSTIPLEN];
+
+	if(!rb_inet_ntop_sock((struct sockaddr *)addr, addrbuf, sizeof(addrbuf)))
+		return false;
+
+	if(addrbuf[0] == ':')
+	{
+		/* Reformat for authd sending */
+		memmove(addrbuf + 1, addrbuf, sizeof(addrbuf) - 1);
+		addrbuf[0] = '0';
+	}
+
+	rb_helper_write(authd_helper, "O opm_listener %s %hu", addrbuf, ntohs(GET_SS_PORT(addr)));
+	return true;
 }

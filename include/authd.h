@@ -54,7 +54,8 @@ const char *get_provider_string(char cause);
 void add_blacklist(const char *host, const char *reason, uint8_t iptype, rb_dlink_list *filters);
 void del_blacklist(const char *host);
 void del_blacklist_all(void);
-void set_authd_timeout(const char *key, int timeout);
+bool set_authd_timeout(const char *key, int timeout);
 void ident_check_enable(bool enabled);
+bool create_opm_listener(struct rb_sockaddr_storage *addr);
 
 #endif
