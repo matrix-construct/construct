@@ -306,13 +306,24 @@ configure_authd(void)
 static void
 restart_authd_cb(rb_helper * helper)
 {
+	rb_dictionary_iter iter;
+	struct Client *client_p;
+
 	iwarn("authd: restart_authd_cb called, authd died?");
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd: restart_authd_cb called, authd died?");
+
 	if(helper != NULL)
 	{
 		rb_helper_close(helper);
 		authd_helper = NULL;
 	}
+
+	RB_DICTIONARY_FOREACH(client_p, &iter, cid_clients)
+	{
+		/* Abort any existing clients */
+		authd_abort_client(client_p);
+	}
+
 	start_authd();
 }
 
@@ -428,7 +439,7 @@ authd_decide_client(struct Client *client_p, const char *ident, const char *host
 void
 authd_abort_client(struct Client *client_p)
 {
-	if(client_p->preClient == NULL)
+	if(client_p == NULL || client_p->preClient == NULL)
 		return;
 
 	if(client_p->preClient->authd_cid == 0)
@@ -436,7 +447,12 @@ authd_abort_client(struct Client *client_p)
 
 	rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(client_p->preClient->authd_cid));
 
-	rb_helper_write(authd_helper, "E %x", client_p->preClient->authd_cid);
+	if(authd_helper != NULL)
+		rb_helper_write(authd_helper, "E %x", client_p->preClient->authd_cid);
+
+	/* XXX should we blindly allow like this? */
+	authd_decide_client(client_p, parv[2], parv[3], true, '\0', NULL, NULL);
+
 	client_p->preClient->authd_cid = 0;
 }
 
@@ -449,10 +465,7 @@ timeout_dead_authd_clients(void *notused __unused)
 	RB_DICTIONARY_FOREACH(client_p, &iter, cid_clients)
 	{
 		if(client_p->preClient->authd_timeout < rb_current_time())
-		{
-			rb_helper_write(authd_helper, "E %x", client_p->preClient->authd_cid);
-			rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(client_p->preClient->authd_cid));
-		}
+			authd_abort_client(client_p);
 	}
 }
 
