@@ -451,7 +451,6 @@ authd_abort_client(struct Client *client_p)
 
 	/* XXX should we blindly allow like this? */
 	authd_decide_client(client_p, "*", "*", true, '\0', NULL, NULL);
-
 	client_p->preClient->authd_cid = 0;
 }
 
