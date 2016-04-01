@@ -438,6 +438,8 @@ opm_cancel(struct auth_client *auth)
 	{
 		rb_dlink_node *ptr, *nptr;
 
+		notice_client(auth->cid, "*** Did not detect open proxies");
+
 		RB_DLINK_FOREACH_SAFE(ptr, nptr, lookup->scans.head)
 		{
 			struct opm_scan *scan = ptr->data;
@@ -469,7 +471,25 @@ static void
 set_opm_enabled(const char *key __unused, int parc __unused, const char **parv)
 {
 	if(listeners[LISTEN_IPV4].F != NULL || listeners[LISTEN_IPV6].F != NULL)
-		opm_enable = (*parv[0] == '1');
+	{
+		if(!(opm_enable = (*parv[0] == '1')))
+		{
+			struct auth_client *auth;
+			rb_dictionary_iter iter;
+
+			/* Close the listening socket */
+			if(listeners[LISTEN_IPV4].F != NULL)
+				rb_close(listeners[LISTEN_IPV4].F);
+
+			if(listeners[LISTEN_IPV6].F != NULL)
+				rb_close(listeners[LISTEN_IPV6].F);
+
+			RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
+			{
+				opm_cancel(auth);
+			}
+		}
+	}
 	else
 		/* No listener, no point... */
 		opm_enable = false;
