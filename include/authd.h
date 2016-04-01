@@ -56,6 +56,6 @@ void del_blacklist(const char *host);
 void del_blacklist_all(void);
 bool set_authd_timeout(const char *key, int timeout);
 void ident_check_enable(bool enabled);
-bool create_opm_listener(struct rb_sockaddr_storage *addr);
+bool create_opm_listener(const char *ip, uint16_t port);
 
 #endif

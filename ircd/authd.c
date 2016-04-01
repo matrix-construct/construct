@@ -564,20 +564,8 @@ ident_check_enable(bool enabled)
 
 /* Create an OPM listener */
 bool
-create_opm_listener(struct rb_sockaddr_storage *addr)
+create_opm_listener(const char *ip, uint16_t port)
 {
-	char addrbuf[HOSTIPLEN];
-
-	if(!rb_inet_ntop_sock((struct sockaddr *)addr, addrbuf, sizeof(addrbuf)))
-		return false;
-
-	if(addrbuf[0] == ':')
-	{
-		/* Reformat for authd sending */
-		memmove(addrbuf + 1, addrbuf, sizeof(addrbuf) - 1);
-		addrbuf[0] = '0';
-	}
-
-	rb_helper_write(authd_helper, "O opm_listener %s %hu", addrbuf, ntohs(GET_SS_PORT(addr)));
+	rb_helper_write(authd_helper, "O opm_listener %s %hu", ip, port);
 	return true;
 }
