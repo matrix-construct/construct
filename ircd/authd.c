@@ -40,10 +40,25 @@
 #include "msg.h"
 #include "dns.h"
 
+typedef void (*authd_cb_t)(int, char **);
+
+struct authd_cb
+{
+	authd_cb_t fn;
+	int min_parc;
+};
+
 static int start_authd(void);
 static void parse_authd_reply(rb_helper * helper);
 static void restart_authd_cb(rb_helper * helper);
 static EVH timeout_dead_authd_clients;
+
+static void cmd_accept_client(int parc, char **parv);
+static void cmd_reject_client(int parc, char **parv);
+static void cmd_dns_result(int parc, char **parv);
+static void cmd_notice_client(int parc, char **parv);
+static void cmd_oper_warn(int parc, char **parv);
+static void cmd_stats_results(int parc, char **parv);
 
 rb_helper *authd_helper;
 static char *authd_path;
@@ -53,6 +68,18 @@ static rb_dictionary *cid_clients;
 static struct ev_entry *timeout_ev;
 
 rb_dictionary *bl_stats;
+
+static struct authd_cb authd_cmd_tab[256] =
+{
+	['A'] = { cmd_accept_client,	4 },
+	['E'] = { cmd_dns_result,	5 },
+	['N'] = { cmd_notice_client,	3 },
+	['R'] = { cmd_reject_client,	7 },
+	['W'] = { cmd_oper_warn,	3 },
+	['X'] = { cmd_stats_results,	3 },
+	['Y'] = { cmd_stats_results,	3 },
+	['Z'] = { cmd_stats_results,	3 },
+};
 
 static int
 start_authd(void)
@@ -152,134 +179,121 @@ str_cid_to_client(const char *str, bool delete)
 }
 
 static void
+cmd_accept_client(int parc, char **parv)
+{
+	struct Client *client_p;
+	
+	/* cid to uid (retrieve and delete) */
+	if((client_p = str_cid_to_client(parv[1], true)) == NULL)
+		return;
+
+	authd_accept_client(client_p, parv[2], parv[3]);
+}
+
+static void
+cmd_dns_result(int parc, char **parv)
+{
+	dns_results_callback(parv[1], parv[2], parv[3], parv[4]);
+}
+
+static void
+cmd_notice_client(int parc, char **parv)
+{
+	struct Client *client_p;
+
+	if((client_p = str_cid_to_client(parv[1], false)) == NULL)
+		return;
+
+	sendto_one_notice(client_p, ":%s", parv[2]);
+}
+
+static void
+cmd_reject_client(int parc, char **parv)
+{
+	struct Client *client_p;
+
+	/* cid to uid (retrieve and delete) */
+	if((client_p = str_cid_to_client(parv[1], true)) == NULL)
+		return;
+
+	authd_reject_client(client_p, parv[3], parv[4], toupper(*parv[2]), parv[5], parv[6]);
+}
+
+static void
+cmd_oper_warn(int parc, char **parv)
+{
+	switch(*parv[2])
+	{
+	case 'D':	/* Debug */
+		sendto_realops_snomask(SNO_DEBUG, L_ALL, "authd debug: %s", parv[3]);
+		idebug("authd: %s", parv[3]);
+		break;
+	case 'I':	/* Info */
+		sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd info: %s", parv[3]);
+		inotice("authd: %s", parv[3]);
+		break;
+	case 'W':	/* Warning */
+		sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd WARNING: %s", parv[3]);
+		iwarn("authd: %s", parv[3]);
+		break;
+	case 'C':	/* Critical (error) */
+		sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd CRITICAL: %s", parv[3]);
+		ierror("authd: %s", parv[3]);
+		break;
+	default:	/* idk */
+		sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd sent us an unknown oper notice type (%s): %s", parv[2], parv[3]);
+		ilog(L_MAIN, "authd unknown oper notice type (%s): %s", parv[2], parv[3]);
+		break;
+	}
+}
+
+static void
+cmd_stats_results(int parc, char **parv)
+{
+	/* Select by type */
+	switch(*parv[2])
+	{
+	case 'D':
+		/* parv[0] conveys status */
+		if(parc < 4)
+		{
+			iwarn("authd sent a result with wrong number of arguments: got %d", parc);
+			restart_authd();
+			return;
+		}
+		dns_stats_results_callback(parv[1], parv[0], parc - 3, (const char **)&parv[3]);
+		break;
+	default:
+		break;
+	}
+}
+
+static void
 parse_authd_reply(rb_helper * helper)
 {
 	ssize_t len;
 	int parc;
 	char authdBuf[READBUF_SIZE];
 	char *parv[MAXPARA + 1];
-	struct Client *client_p;
 
 	while((len = rb_helper_read(helper, authdBuf, sizeof(authdBuf))) > 0)
 	{
+		struct authd_cb *cmd;
+
 		parc = rb_string_to_array(authdBuf, parv, MAXPARA+1);
 
-		switch (*parv[0])
+		cmd = &authd_cmd_tab[*parv[0]];
+		if(cmd->fn != NULL)
 		{
-		case 'A':	/* Accepted a client */
-			if(parc != 4)
+			if(cmd->min_parc > parc)
 			{
-				iwarn("authd sent a result with wrong number of arguments: got %d", parc);
+				iwarn("authd sent a result with wrong number of arguments: expected %d, got %d",
+					cmd->min_parc, parc);
 				restart_authd();
-				return;
+				continue;
 			}
 
-			/* cid to uid (retrieve and delete) */
-			if((client_p = str_cid_to_client(parv[1], true)) == NULL)
-				return;
-
-			authd_accept_client(client_p, parv[2], parv[3]);
-			break;
-		case 'R':	/* Reject client */
-			if(parc != 7)
-			{
-				iwarn("authd sent us a result with wrong number of arguments: got %d", parc);
-				restart_authd();
-				return;
-			}
-
-			/* cid to uid (retrieve and delete) */
-			if((client_p = str_cid_to_client(parv[1], true)) == NULL)
-				return;
-
-			authd_reject_client(client_p, parv[3], parv[4], toupper(*parv[2]), parv[5], parv[6]);
-			break;
-		case 'N':	/* Notice to client */
-			if(parc != 3)
-			{
-				iwarn("authd sent us a result with wrong number of arguments: got %d", parc);
-				restart_authd();
-				return;
-			}
-
-			if((client_p = str_cid_to_client(parv[1], false)) == NULL)
-				return;
-
-			sendto_one_notice(client_p, ":%s", parv[2]);
-			break;
-		case 'E':	/* DNS Result */
-			if(parc != 5)
-			{
-				iwarn("authd sent a result with wrong number of arguments: got %d", parc);
-				restart_authd();
-				return;
-			}
-
-			dns_results_callback(parv[1], parv[2], parv[3], parv[4]);
-			break;
-		case 'W':	/* Oper warning */
-			if(parc != 3)
-			{
-				iwarn("authd sent a result with wrong number of arguments: got %d", parc);
-				restart_authd();
-				return;
-			}
-
-			switch(*parv[2])
-			{
-			case 'D':	/* Debug */
-				sendto_realops_snomask(SNO_DEBUG, L_ALL, "authd debug: %s", parv[3]);
-				idebug("authd: %s", parv[3]);
-				break;
-			case 'I':	/* Info */
-				sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd info: %s", parv[3]);
-				inotice("authd: %s", parv[3]);
-				break;
-			case 'W':	/* Warning */
-				sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd WARNING: %s", parv[3]);
-				iwarn("authd: %s", parv[3]);
-				break;
-			case 'C':	/* Critical (error) */
-				sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd CRITICAL: %s", parv[3]);
-				ierror("authd: %s", parv[3]);
-				break;
-			default:	/* idk */
-				sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd sent us an unknown oper notice type (%s): %s", parv[2], parv[3]);
-				ilog(L_MAIN, "authd unknown oper notice type (%s): %s", parv[2], parv[3]);
-				break;
-			}
-
-			/* NOTREACHED */
-			break;
-		case 'X':	/* Stats error */
-		case 'Y':	/* Stats reply */
-		case 'Z':	/* End of stats reply */
-			if(parc < 3)
-			{
-				iwarn("authd sent a result with wrong number of arguments: got %d", parc);
-				restart_authd();
-				return;
-			}
-
-			/* Select by type */
-			switch(*parv[2])
-			{
-			case 'D':
-				/* parv[0] conveys status */
-				if(parc < 4)
-				{
-					iwarn("authd sent a result with wrong number of arguments: got %d", parc);
-					restart_authd();
-					return;
-				}
-				dns_stats_results_callback(parv[1], parv[0], parc - 3, (const char **)&parv[3]);
-				break;
-			default:
-				break;
-			}
-			break;
-		default:
-			break;
+			cmd->fn(parc, parv);
 		}
 	}
 }
