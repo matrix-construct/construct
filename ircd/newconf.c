@@ -2290,6 +2290,12 @@ conf_set_opm_scan_ports_socks5(void *data)
 	conf_set_opm_scan_ports_all(data, "opm::socks5_ports", "socks5");
 }
 
+static void
+conf_set_opm_scan_ports_httpconnect(void *data)
+{
+	conf_set_opm_scan_ports_all(data, "opm::httpconnect_ports", "httpconnect");
+}
+
 /* public functions */
 
 
@@ -2828,4 +2834,5 @@ newconf_init()
 	add_conf_item("opm", "listen_port", CF_INT, conf_set_opm_listen_port);
 	add_conf_item("opm", "socks4_ports", CF_INT | CF_FLIST, conf_set_opm_scan_ports_socks4);
 	add_conf_item("opm", "socks5_ports", CF_INT | CF_FLIST, conf_set_opm_scan_ports_socks5);
+	add_conf_item("opm", "httpconnect_ports", CF_INT | CF_FLIST, conf_set_opm_scan_ports_httpconnect);
 }

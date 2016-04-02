@@ -32,6 +32,7 @@ typedef enum protocol_t
 	PROTO_NONE,
 	PROTO_SOCKS4,
 	PROTO_SOCKS5,
+	PROTO_HTTP_CONNECT,
 } protocol_t;
 
 struct opm_lookup
@@ -88,12 +89,14 @@ static bool opm_enable = false;
 static struct opm_listener listeners[2];
 
 static inline protocol_t
-get_protocol_from_string(const char *string)
+get_protocol_from_string(const char *str)
 {
-	if(strcasecmp(string, "socks4") == 0)
+	if(strcasecmp(str, "socks4") == 0)
 		return PROTO_SOCKS4;
-	else if(strcasecmp(string, "socks5") == 0)
+	else if(strcasecmp(str, "socks5") == 0)
 		return PROTO_SOCKS5;
+	else if(strcasecmp(str, "httpconnect") == 0)
+		return PROTO_HTTP_CONNECT;
 	else
 		return PROTO_NONE;
 }
@@ -145,7 +148,7 @@ read_opm_reply(rb_fde_t *F, void *data)
 	{
 		struct opm_proxy *proxy = ptr->data;
 
-		if(strncmp(proxy->note, readbuf, sizeof(readbuf)) == 0)
+		if(strncmp(proxy->note, readbuf, strlen(proxy->note)) == 0)
 		{
 			rb_dlink_node *ptr, *nptr;
 
@@ -293,7 +296,7 @@ static void
 socks5_connected(rb_fde_t *F, int error, void *data)
 {
 	struct opm_scan *scan = data;
-	struct opm_lookup *lookup; 
+	struct opm_lookup *lookup;
 	struct opm_listener *listener;
 	struct auth_client *auth;
 	uint8_t sendbuf[25]; /* Size we're building */
@@ -307,7 +310,7 @@ socks5_connected(rb_fde_t *F, int error, void *data)
 		goto end;
 
 	/* Build the version header and socks request
-	 * version header (3 bytes): version, number of auth methods, auth type (0 for none) 
+	 * version header (3 bytes): version, number of auth methods, auth type (0 for none)
 	 * connect req (3 bytes): version, command (1 = connect), reserved (0)
 	 */
 	memcpy(c, "\x05\x01\x00\x05\x01\x00", 6); c += 6;
@@ -352,6 +355,62 @@ end:
 	rb_free(scan);
 }
 
+static void
+http_connect_connected(rb_fde_t *F, int error, void *data)
+{
+	struct opm_scan *scan = data;
+	struct opm_lookup *lookup;
+	struct opm_listener *listener;
+	struct auth_client *auth;
+	char sendbuf[128]; /* A bit bigger than we need but better safe than sorry */
+	char *c = sendbuf;
+	ssize_t ret;
+
+	if(scan == NULL || (auth = scan->auth) == NULL || (lookup = auth->data[PROVIDER_OPM]) == NULL)
+		return;
+
+	if(error || !opm_enable)
+		goto end;
+
+	switch(GET_SS_FAMILY(&auth->c_addr))
+	{
+	case AF_INET:
+		listener = &listeners[LISTEN_IPV4];
+		if(!listener->F)
+			goto end;
+		break;
+#ifdef RB_IPV6
+	case AF_INET6:
+		listener = &listeners[LISTEN_IPV6];
+		if(!listener->F)
+			goto end;
+		break;
+#endif
+	default:
+		goto end;
+	}
+
+	/* Simple enough to build */
+	snprintf(sendbuf, sizeof(sendbuf), "CONNECT %s:%hu HTTP/1.0\r\n\r\n", listener->ip, listener->port);
+
+	/* Send request */
+	if(rb_write(scan->F, sendbuf, strlen(sendbuf)) <= 0)
+		goto end;
+
+	/* Now the note in a separate write */
+	if(rb_write(scan->F, scan->proxy->note, strlen(scan->proxy->note) + 1) <= 0)
+		goto end;
+
+	/* MiroTik needs this, and as a separate write */
+	if(rb_write(scan->F, "\r\n", 2) <= 0)
+		goto end;
+
+end:
+	rb_close(scan->F);
+	rb_dlinkDelete(&scan->node, &lookup->scans);
+	rb_free(scan);
+}
+
 /* Establish connections */
 static inline void
 establish_connection(struct auth_client *auth, struct opm_proxy *proxy)
@@ -378,6 +437,8 @@ establish_connection(struct auth_client *auth, struct opm_proxy *proxy)
 	case PROTO_SOCKS5:
 		callback = socks5_connected;
 		break;
+	case PROTO_HTTP_CONNECT:
+		callback = http_connect_connected;
 	default:
 		return;
 	}
@@ -696,6 +757,9 @@ create_opm_scanner(const char *key __unused, int parc __unused, const char **par
 		break;
 	case PROTO_SOCKS5:
 		snprintf(proxy->note, sizeof(proxy->note), "socks5:%hu", proxy->port);
+		break;
+	case PROTO_HTTP_CONNECT:
+		snprintf(proxy->note, sizeof(proxy->note), "httpconnect:%hu", proxy->port);
 		break;
 	default:
 		warn_opers(L_CRIT, "OPM: got an unknown proxy type: %s (port %hu)", parv[0], proxy->port);

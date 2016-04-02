@@ -475,6 +475,12 @@ opm {
 	 * with other scan types. Sensible defaults are given below.
 	 */
 	socks5_ports = 1080, 10800, 443, 80, 8080, 8000;
+
+	/* These are the ports to scan for HTTP connect proxies on (plaintext).
+	 * They may overlap with other scan types. Sensible defaults are given
+	 * below.
+	 */
+	httpconnect_ports = 80, 8080, 8000;
 };
 
 alias "NickServ" {
