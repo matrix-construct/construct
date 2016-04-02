@@ -595,9 +595,9 @@ opm_check_enable(bool enabled)
 	rb_helper_write(authd_helper, "O opm_enable %d", enabled ? 1 : 0);
 }
 
-/* Create an OPM proxy scan */
+/* Create an OPM proxy scanner */
 void
-create_opm_proxy_scan(const char *scan, uint16_t port)
+create_opm_proxy_scanner(const char *type, uint16_t port)
 {
-	rb_helper_write(authd_helper, "O opm_scanner %s %hu", scan, port);
+	rb_helper_write(authd_helper, "O opm_scanner %s %hu", type, port);
 }

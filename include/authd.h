@@ -59,6 +59,6 @@ bool set_authd_timeout(const char *key, int timeout);
 void ident_check_enable(bool enabled);
 void create_opm_listener(const char *ip, uint16_t port);
 void opm_check_enable(bool enabled);
-void create_opm_proxy_scan(const char *scan, uint16_t port);
+void create_opm_proxy_scanner(const char *type, uint16_t port);
 
 #endif

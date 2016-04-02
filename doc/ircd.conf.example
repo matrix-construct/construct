@@ -190,25 +190,25 @@ auth {
 	 */
 	spoof = "I.still.hate.packets";
 
-	/* Possible flags in auth:
-	 *
-	 * encrypted                  | password is encrypted with mkpasswd
-	 * spoof_notice               | give a notice when spoofing hosts
-	 * exceed_limit (old > flag)  | allow user to exceed class user limits
-	 * kline_exempt (old ^ flag)  | exempt this user from k/g/xlines&dnsbls
-	 * dnsbl_exempt		      | exempt this user from dnsbls
-	 * spambot_exempt	      | exempt this user from spambot checks
-	 * shide_exempt		      | exempt this user from serverhiding
-	 * jupe_exempt                | exempt this user from generating
-	 *                              warnings joining juped channels
-	 * resv_exempt		      | exempt this user from resvs
-	 * flood_exempt               | exempt this user from flood limits
-	 *                                     USE WITH CAUTION.
-	 * no_tilde     (old - flag)  | don't prefix ~ to username if no ident
-	 * need_ident   (old + flag)  | require ident for user in this class
-	 * need_ssl                   | require SSL/TLS for user in this class
-	 * need_sasl                  | require SASL id for user in this class
-	 */
+        /* Possible flags in auth:
+         *
+         * encrypted                  | password is encrypted with mkpasswd
+         * spoof_notice               | give a notice when spoofing hosts
+         * exceed_limit (old > flag)  | allow user to exceed class user limits
+         * kline_exempt (old ^ flag)  | exempt this user from k/g/xlines&dnsbls
+         * dnsbl_exempt               | exempt this user from dnsbls
+         * spambot_exempt             | exempt this user from spambot checks
+         * shide_exempt               | exempt this user from serverhiding
+         * jupe_exempt                | exempt this user from generating
+         *                              warnings joining juped channels
+         * resv_exempt                | exempt this user from resvs
+         * flood_exempt               | exempt this user from flood limits
+         *                              USE WITH CAUTION.
+         * no_tilde     (old - flag)  | don't prefix ~ to username if no ident
+         * need_ident   (old + flag)  | require ident for user in this class
+         * need_ssl                   | require SSL/TLS for user in this class
+         * need_sasl                  | require SASL id for user in this class
+         */
 	flags = kline_exempt, exceed_limit;
 
 	/* class: the class the user is placed in */
@@ -463,6 +463,16 @@ opm {
 	 * IPv6 ports at once.
 	 */
 	port = 32000;
+
+	/* These are the ports to scan for SOCKS4 proxies on. They may overlap
+	 * with other scan types. Sensible defaults are given below.
+	 */
+	socks4_ports = 1080, 10800, 443, 80, 8080, 8000;
+
+	/* These are the ports to scan for SOCKS5 proxies on. They may overlap
+	 * with other scan types. Sensible defaults are given below.
+	 */
+	socks5_ports = 1080, 10800, 443, 80, 8080, 8000;
 };
 
 alias "NickServ" {
