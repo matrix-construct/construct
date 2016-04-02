@@ -41,9 +41,11 @@ struct opm_lookup
 
 struct opm_proxy
 {
-	const char *note;
+	char note[16];
 	protocol_t proto;
 	uint16_t port;
+
+	rb_dlink_node node;
 };
 
 struct opm_scan
@@ -65,17 +67,7 @@ struct opm_listener
 };
 
 /* Proxies that we scan for */
-static struct opm_proxy opm_proxy_scans[] =
-{
-	{ "socks4-1080",	PROTO_SOCKS4,		1080  },
-	{ "socks5-1080",	PROTO_SOCKS5,		1080  },
-	{ "socks4-80",		PROTO_SOCKS4,		80    },
-	{ "socks5-80",		PROTO_SOCKS5,		80    },
-	{ "socks4-8080",	PROTO_SOCKS4,		8080  },
-	{ "socks5-8080",	PROTO_SOCKS5,		8080  },
-	{ NULL,			PROTO_NONE,		0     }
-};
-
+static rb_dlink_list proxy_scanners;
 
 static ACCB accept_opm;
 static PF read_opm_reply;
@@ -95,10 +87,37 @@ static bool opm_enable = false;
 /* IPv4 and IPv6 */
 static struct opm_listener listeners[2];
 
+static inline protocol_t
+get_protocol_from_string(const char *string)
+{
+	if(strcasecmp(string, "socks4") == 0)
+		return PROTO_SOCKS4;
+	else if(strcasecmp(string, "socks5") == 0)
+		return PROTO_SOCKS5;
+	else
+		return PROTO_NONE;
+}
+
+static inline struct opm_proxy *
+find_proxy_scanner(protocol_t proto, uint16_t port)
+{
+	rb_dlink_node *ptr;
+
+	RB_DLINK_FOREACH(ptr, proxy_scanners.head)
+	{
+		struct opm_proxy *proxy = ptr->data;
+
+		if(proxy->proto == proto && proxy->port == port)
+			return proxy;
+	}
+
+	return NULL;
+}
 
 static void
 read_opm_reply(rb_fde_t *F, void *data)
 {
+	rb_dlink_node *ptr;
 	struct auth_client *auth = data;
 	struct opm_lookup *lookup;
 	char readbuf[OPM_READSIZE];
@@ -122,8 +141,10 @@ read_opm_reply(rb_fde_t *F, void *data)
 		return;
 	}
 
-	for(struct opm_proxy *proxy = opm_proxy_scans; proxy->note != NULL; proxy++)
+	RB_DLINK_FOREACH(ptr, proxy_scanners.head)
 	{
+		struct opm_proxy *proxy = ptr->data;
+
 		if(strncmp(proxy->note, readbuf, sizeof(readbuf)) == 0)
 		{
 			rb_dlink_node *ptr, *nptr;
@@ -394,129 +415,6 @@ establish_connection(struct auth_client *auth, struct opm_proxy *proxy)
 			callback, scan, opm_timeout);
 }
 
-static void
-opm_destroy(void)
-{
-	struct auth_client *auth;
-	rb_dictionary_iter iter;
-
-	/* Nuke all opm lookups */
-	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
-	{
-		opm_cancel(auth);
-	}
-}
-
-static bool
-opm_start(struct auth_client *auth)
-{
-	struct opm_lookup *lookup = rb_malloc(sizeof(struct opm_lookup));
-
-	if(!opm_enable)
-	{
-		notice_client(auth->cid, "*** Proxy scanning disabled, not scanning");
-		return true;
-	}
-
-	auth->data[PROVIDER_OPM] = lookup = rb_malloc(sizeof(struct opm_lookup));
-	auth->timeout[PROVIDER_OPM] = rb_current_time() + opm_timeout;
-
-	for(struct opm_proxy *proxy = opm_proxy_scans; proxy->note != NULL; proxy++)
-		establish_connection(auth, proxy);
-
-	notice_client(auth->cid, "*** Scanning for open proxies...");
-	set_provider_on(auth, PROVIDER_OPM);
-
-	return true;
-}
-
-static void
-opm_cancel(struct auth_client *auth)
-{
-	struct opm_lookup *lookup = auth->data[PROVIDER_OPM];
-
-	if(lookup != NULL)
-	{
-		rb_dlink_node *ptr, *nptr;
-
-		notice_client(auth->cid, "*** Did not detect open proxies");
-
-		RB_DLINK_FOREACH_SAFE(ptr, nptr, lookup->scans.head)
-		{
-			struct opm_scan *scan = ptr->data;
-
-			rb_close(scan->F);
-			rb_free(scan);
-		}
-
-		rb_free(lookup);
-		provider_done(auth, PROVIDER_OPM);
-	}
-}
-
-static void
-add_conf_opm_timeout(const char *key __unused, int parc __unused, const char **parv)
-{
-	int timeout = atoi(parv[0]);
-
-	if(timeout < 0)
-	{
-		warn_opers(L_CRIT, "opm: opm timeout < 0 (value: %d)", timeout);
-		return;
-	}
-
-	opm_timeout = timeout;
-}
-
-static void
-set_opm_enabled(const char *key __unused, int parc __unused, const char **parv)
-{
-	bool enable = (*parv[0] == '1');
-
-	if(!enable)
-	{
-		if(listeners[LISTEN_IPV4].F != NULL || listeners[LISTEN_IPV6].F != NULL)
-		{
-			struct auth_client *auth;
-			rb_dictionary_iter iter;
-
-			/* Close the listening socket */
-			if(listeners[LISTEN_IPV4].F != NULL)
-				rb_close(listeners[LISTEN_IPV4].F);
-
-			if(listeners[LISTEN_IPV6].F != NULL)
-				rb_close(listeners[LISTEN_IPV6].F);
-
-			listeners[LISTEN_IPV4].F = listeners[LISTEN_IPV6].F = NULL;
-
-			RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
-			{
-				opm_cancel(auth);
-			}
-		}
-	}
-	else
-	{
-		if(listeners[LISTEN_IPV4].ip[0] != '\0' && listeners[LISTEN_IPV4].port != 0)
-		{
-			lrb_assert(listeners[LISTEN_IPV4].F == NULL);
-
-			/* Pre-configured IP/port, just re-establish */
-			create_listener(listeners[LISTEN_IPV4].ip, listeners[LISTEN_IPV4].port);
-		}
-
-		if(listeners[LISTEN_IPV6].ip[0] != '\0' && listeners[LISTEN_IPV6].port != 0)
-		{
-			lrb_assert(listeners[LISTEN_IPV6].F == NULL);
-
-			/* Pre-configured IP/port, just re-establish */
-			create_listener(listeners[LISTEN_IPV6].ip, listeners[LISTEN_IPV6].port);
-		}
-	}
-
-	opm_enable = enable;
-}
-
 static bool
 create_listener(const char *ip, uint16_t port)
 {
@@ -634,26 +532,271 @@ create_listener(const char *ip, uint16_t port)
 	return true;
 }
 
+
+static void
+opm_destroy(void)
+{
+	struct auth_client *auth;
+	rb_dictionary_iter iter;
+
+	/* Nuke all opm lookups */
+	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
+	{
+		opm_cancel(auth);
+	}
+}
+
+static bool
+opm_start(struct auth_client *auth)
+{
+	rb_dlink_node *ptr;
+	struct opm_lookup *lookup = rb_malloc(sizeof(struct opm_lookup));
+
+	if(!opm_enable || !rb_dlink_list_length(&proxy_scanners))
+	{
+		notice_client(auth->cid, "*** Proxy scanning disabled, not scanning");
+		return true;
+	}
+
+	auth->data[PROVIDER_OPM] = lookup = rb_malloc(sizeof(struct opm_lookup));
+	auth->timeout[PROVIDER_OPM] = rb_current_time() + opm_timeout;
+
+	RB_DLINK_FOREACH(ptr, proxy_scanners.head)
+	{
+		struct opm_proxy *proxy = ptr->data;
+		establish_connection(auth, proxy);
+	}
+
+	notice_client(auth->cid, "*** Scanning for open proxies...");
+	set_provider_on(auth, PROVIDER_OPM);
+
+	return true;
+}
+
+static void
+opm_cancel(struct auth_client *auth)
+{
+	struct opm_lookup *lookup = auth->data[PROVIDER_OPM];
+
+	if(lookup != NULL)
+	{
+		rb_dlink_node *ptr, *nptr;
+
+		notice_client(auth->cid, "*** Did not detect open proxies");
+
+		RB_DLINK_FOREACH_SAFE(ptr, nptr, lookup->scans.head)
+		{
+			struct opm_scan *scan = ptr->data;
+
+			rb_close(scan->F);
+			rb_free(scan);
+		}
+
+		rb_free(lookup);
+		provider_done(auth, PROVIDER_OPM);
+	}
+}
+
+static void
+add_conf_opm_timeout(const char *key __unused, int parc __unused, const char **parv)
+{
+	int timeout = atoi(parv[0]);
+
+	if(timeout < 0)
+	{
+		warn_opers(L_CRIT, "opm: opm timeout < 0 (value: %d)", timeout);
+		return;
+	}
+
+	opm_timeout = timeout;
+}
+
+static void
+set_opm_enabled(const char *key __unused, int parc __unused, const char **parv)
+{
+	bool enable = (*parv[0] == '1');
+
+	if(!enable)
+	{
+		if(listeners[LISTEN_IPV4].F != NULL || listeners[LISTEN_IPV6].F != NULL)
+		{
+			struct auth_client *auth;
+			rb_dictionary_iter iter;
+
+			/* Close the listening socket */
+			if(listeners[LISTEN_IPV4].F != NULL)
+				rb_close(listeners[LISTEN_IPV4].F);
+
+			if(listeners[LISTEN_IPV6].F != NULL)
+				rb_close(listeners[LISTEN_IPV6].F);
+
+			listeners[LISTEN_IPV4].F = listeners[LISTEN_IPV6].F = NULL;
+
+			RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
+			{
+				opm_cancel(auth);
+			}
+		}
+	}
+	else
+	{
+		if(listeners[LISTEN_IPV4].ip[0] != '\0' && listeners[LISTEN_IPV4].port != 0)
+		{
+			lrb_assert(listeners[LISTEN_IPV4].F == NULL);
+
+			/* Pre-configured IP/port, just re-establish */
+			create_listener(listeners[LISTEN_IPV4].ip, listeners[LISTEN_IPV4].port);
+		}
+
+		if(listeners[LISTEN_IPV6].ip[0] != '\0' && listeners[LISTEN_IPV6].port != 0)
+		{
+			lrb_assert(listeners[LISTEN_IPV6].F == NULL);
+
+			/* Pre-configured IP/port, just re-establish */
+			create_listener(listeners[LISTEN_IPV6].ip, listeners[LISTEN_IPV6].port);
+		}
+	}
+
+	opm_enable = enable;
+}
+
 static void
 set_opm_listener(const char *key __unused, int parc __unused, const char **parv)
 {
 	const char *ip = parv[0];
-	int port = atoi(parv[1]);
+	int iport = atoi(parv[1]);
 
-	if(port > 65535 || port <= 0)
+	if(iport > 65535 || iport <= 0)
 	{
 		warn_opers(L_CRIT, "OPM: got a bad listener: %s:%s", parv[0], parv[1]);
 		exit(EX_PROVIDER_ERROR);
 	}
 
-	create_listener(ip, (uint16_t)port);
+	create_listener(ip, (uint16_t)iport);
 }
+
+static void
+create_opm_scanner(const char *key __unused, int parc __unused, const char **parv)
+{
+	int iport = atoi(parv[1]);
+	struct opm_proxy *proxy = rb_malloc(sizeof(struct opm_proxy));
+
+	if(iport <= 0 || iport > 65535)
+	{
+		warn_opers(L_CRIT, "OPM: got a bad scanner: %s (port %s)", parv[0], parv[1]);
+		exit(EX_PROVIDER_ERROR);
+	}
+
+	proxy->port = (uint16_t)iport;
+
+	switch((proxy->proto = get_protocol_from_string(parv[0])))
+	{
+	case PROTO_SOCKS4:
+		snprintf(proxy->note, sizeof(proxy->note), "socks4:%hu", proxy->port);
+		break;
+	case PROTO_SOCKS5:
+		snprintf(proxy->note, sizeof(proxy->note), "socks5:%hu", proxy->port);
+		break;
+	default:
+		warn_opers(L_CRIT, "OPM: got an unknown proxy type: %s (port %hu)", parv[0], proxy->port);
+		exit(EX_PROVIDER_ERROR);
+	}
+
+	if(find_proxy_scanner(proxy->proto, proxy->port) != NULL)
+	{
+		warn_opers(L_CRIT, "OPM: got a duplicate scanner: %s (port %hu)", parv[0], proxy->port);
+		exit(EX_PROVIDER_ERROR);
+	}
+
+	rb_dlinkAdd(proxy, &proxy->node, &proxy_scanners);
+}
+
+static void
+delete_opm_scanner(const char *key __unused, int parc __unused, const char **parv)
+{
+	struct auth_client *auth;
+	struct opm_proxy *proxy;
+	protocol_t proto = get_protocol_from_string(parv[0]);
+	int iport = atoi(parv[1]);
+	rb_dictionary_iter iter;
+
+	if(iport <= 0 || iport > 65535)
+	{
+		warn_opers(L_CRIT, "OPM: got a bad scanner to delete: %s (port %s)", parv[0], parv[1]);
+		exit(EX_PROVIDER_ERROR);
+	}
+
+	if(proto == PROTO_NONE)
+	{
+		warn_opers(L_CRIT, "OPM: got an unknown proxy type to delete: %s (port %d)", parv[0], iport);
+		exit(EX_PROVIDER_ERROR);
+	}
+
+	if((proxy = find_proxy_scanner(proto, (uint16_t)iport)) == NULL)
+	{
+		warn_opers(L_CRIT, "OPM: cannot find proxy to delete: %s (port %d)", parv[0], iport);
+		exit(EX_PROVIDER_ERROR);
+	}
+
+	/* Abort remaining clients on this scanner */
+	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
+	{
+		rb_dlink_node *ptr;
+		struct opm_lookup *lookup = auth->data[PROVIDER_OPM];
+
+		if(lookup == NULL)
+			continue;
+
+		RB_DLINK_FOREACH(ptr, lookup->scans.head)
+		{
+			struct opm_scan *scan = ptr->data;
+
+			if(scan->proxy->port == proxy->port && scan->proxy->proto == proxy->proto)
+			{
+				/* Match */
+				rb_dlinkDelete(&scan->node, &lookup->scans);
+				rb_free(scan);
+
+				if(!rb_dlink_list_length(&lookup->scans))
+					opm_cancel(auth);
+
+				break;
+			}
+		}
+	}
+
+	rb_dlinkDelete(&proxy->node, &proxy_scanners);
+	rb_free(proxy);
+}
+
+static void
+delete_opm_scanner_all(const char *key __unused, int parc __unused, const char **parv __unused)
+{
+	struct auth_client *auth;
+	rb_dlink_node *ptr, *nptr;
+	rb_dictionary_iter iter;
+
+	RB_DLINK_FOREACH_SAFE(ptr, nptr, proxy_scanners.head)
+	{
+		rb_free(ptr->data);
+		rb_dlinkDelete(ptr, &proxy_scanners);
+	}
+
+	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
+	{
+		opm_cancel(auth);
+	}
+}
+
 
 struct auth_opts_handler opm_options[] =
 {
 	{ "opm_timeout", 1, add_conf_opm_timeout },
 	{ "opm_enabled", 1, set_opm_enabled },
 	{ "opm_listener", 2, set_opm_listener },
+	{ "opm_scanner", 2, create_opm_scanner },
+	{ "opm_scanner_del", 2, delete_opm_scanner },
+	{ "opm_scanner_del_all", 0, delete_opm_scanner_all },
 	{ NULL, 0, NULL },
 };
 
