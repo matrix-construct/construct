@@ -109,6 +109,41 @@ start_authd(void)
 	return 0;
 }
 
+static inline uint32_t
+str_to_cid(const char *str)
+{
+	long lcid = strtol(str, NULL, 16);
+
+	if(lcid > UINT32_MAX || lcid <= 0)
+	{
+		iwarn("authd sent us back a bad client ID: %lx", lcid);
+		restart_authd();
+		return 0;
+	}
+
+	return (uint32_t)lcid;
+}
+
+static inline struct Client *
+cid_to_client(uint32_t cid, bool delete)
+{
+	struct Client *client_p;
+
+	if(delete)
+		client_p = rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(cid));
+	else
+		client_p = rb_dictionary_retrieve(cid_clients, RB_UINT_TO_POINTER(cid));
+
+	if(client_p == NULL)
+	{
+		iwarn("authd sent us back a bad client ID: %ux", cid);
+		restart_authd();
+		return NULL;
+	}
+
+	return client_p;
+}
+
 static void
 parse_authd_reply(rb_helper * helper)
 {
@@ -116,7 +151,6 @@ parse_authd_reply(rb_helper * helper)
 	int parc;
 	char authdBuf[READBUF_SIZE];
 	char *parv[MAXPARA + 1];
-	long lcid;
 	uint32_t cid;
 	struct Client *client_p;
 
@@ -134,22 +168,12 @@ parse_authd_reply(rb_helper * helper)
 				return;
 			}
 
-			if((lcid = strtol(parv[1], NULL, 16)) > UINT32_MAX || lcid < 0)
-			{
-				iwarn("authd sent us back a bad client ID: %ld", lcid);
-				restart_authd();
+			if((cid = str_to_cid(parv[1])) == 0)
 				return;
-			}
-
-			cid = (uint32_t)lcid;
 
 			/* cid to uid (retrieve and delete) */
-			if((client_p = rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(cid))) == NULL)
-			{
-				iwarn("authd sent us back an unknown client ID %x", cid);
-				restart_authd();
+			if((client_p = cid_to_client(cid, true)) == NULL)
 				return;
-			}
 
 			authd_accept_client(client_p, parv[2], parv[3]);
 			break;
@@ -161,22 +185,12 @@ parse_authd_reply(rb_helper * helper)
 				return;
 			}
 
-			if((lcid = strtol(parv[1], NULL, 16)) > UINT32_MAX || lcid < 0)
-			{
-				iwarn("authd sent us back a bad client ID %ld", lcid);
-				restart_authd();
+			if((cid = str_to_cid(parv[1])) == 0)
 				return;
-			}
-
-			cid = (uint32_t)lcid;
 
 			/* cid to uid (retrieve and delete) */
-			if((client_p = rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(cid))) == NULL)
-			{
-				iwarn("authd sent us back an unknown client ID %x", cid);
-				restart_authd();
+			if((client_p = cid_to_client(cid, true)) == NULL)
 				return;
-			}
 
 			authd_reject_client(client_p, parv[3], parv[4], toupper(*parv[2]), parv[5], parv[6]);
 			break;
@@ -188,22 +202,12 @@ parse_authd_reply(rb_helper * helper)
 				return;
 			}
 
-			if((lcid = strtol(parv[1], NULL, 16)) > UINT32_MAX || lcid < 0)
-			{
-				iwarn("authd sent us back a bad client ID %ld", lcid);
-				restart_authd();
+			if((cid = str_to_cid(parv[1])) == 0)
 				return;
-			}
-
-			cid = (uint32_t)lcid;
 
 			/* cid to uid */
-			if((client_p = rb_dictionary_retrieve(cid_clients, RB_UINT_TO_POINTER(cid))) == NULL)
-			{
-				iwarn("authd sent us back an unknown client ID %x", cid);
-				restart_authd();
+			if((client_p = cid_to_client(cid, false)) == NULL)
 				return;
-			}
 
 			sendto_one_notice(client_p, ":%s", parv[2]);
 			break;
