@@ -1,5 +1,5 @@
 /*
- *  sslproc.c: An interface to ssld
+ *  sslproc.c: An interface to wsockd
  *  Copyright (C) 2007 Aaron Sethman <androsyn@ratbox.org>
  *  Copyright (C) 2007 ircd-ratbox development team
  *
@@ -215,7 +215,7 @@ ws_do_pipe(rb_fde_t * F, void *data)
 }
 
 static void
-restart_ssld_event(void *unused)
+restart_wsockd_event(void *unused)
 {
 	wsockd_spin_count = 0;
 	last_spin = 0;
@@ -253,10 +253,10 @@ start_wsockd(int count)
 
 	if(wsockd_spin_count > 20 && (rb_current_time() - last_spin < 5))
 	{
-		ilog(L_MAIN, "ssld helper is spinning - will attempt to restart in 1 minute");
+		ilog(L_MAIN, "wsockd helper is spinning - will attempt to restart in 1 minute");
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				       "ssld helper is spinning - will attempt to restart in 1 minute");
-		rb_event_add("restart_ssld_event", restart_ssld_event, NULL, 60);
+				       "wsockd helper is spinning - will attempt to restart in 1 minute");
+		rb_event_add("restart_wsockd_event", restart_wsockd_event, NULL, 60);
 		wsockd_wait = 1;
 		return 0;
 	}
@@ -275,14 +275,14 @@ start_wsockd(int count)
 			if(access(fullpath, X_OK) == -1)
 			{
 				ilog(L_MAIN,
-				     "Unable to execute ssld%s in %s or %s/bin",
+				     "Unable to execute wsockd%s in %s or %s/bin",
 				     suffix, ircd_paths[IRCD_PATH_LIBEXEC], ConfigFileEntry.dpath);
 				return 0;
 			}
 		}
 		wsockd_path = rb_strdup(fullpath);
 	}
-	rb_strlcpy(buf, "-ircd ssld daemon", sizeof(buf));
+	rb_strlcpy(buf, "-ircd wsockd daemon", sizeof(buf));
 	parv[0] = buf;
 	parv[1] = NULL;
 
@@ -317,7 +317,7 @@ start_wsockd(int count)
 		pid = rb_spawn_process(wsockd_path, (const char **) parv);
 		if(pid == -1)
 		{
-			ilog(L_MAIN, "Unable to create ssld: %s\n", strerror(errno));
+			ilog(L_MAIN, "Unable to create wsockd: %s\n", strerror(errno));
 			rb_close(F1);
 			rb_close(F2);
 			rb_close(P1);
@@ -365,8 +365,6 @@ ws_process_dead_fd(ws_ctl_t * ctl, ws_ctl_buf_t * ctl_buf)
 static void
 ws_process_cmd_recv(ws_ctl_t * ctl)
 {
-	static const char *cannot_setup_ssl = "ssld cannot setup ssl, check your certificates and private key";
-	static const char *no_ssl_or_zlib = "ssld has neither SSL/TLS or zlib support killing all sslds";
 	rb_dlink_node *ptr, *next;
 	ws_ctl_buf_t *ctl_buf;
 	unsigned long len;
@@ -383,8 +381,8 @@ ws_process_cmd_recv(ws_ctl_t * ctl)
 			ws_process_dead_fd(ctl, ctl_buf);
 			break;
 		default:
-			ilog(L_MAIN, "Received invalid command from ssld: %s", ctl_buf->buf);
-			sendto_realops_snomask(SNO_GENERAL, L_ALL, "Received invalid command from ssld");
+			ilog(L_MAIN, "Received invalid command from wsockd: %s", ctl_buf->buf);
+			sendto_realops_snomask(SNO_GENERAL, L_ALL, "Received invalid command from wsockd");
 			break;
 		}
 		rb_dlinkDelete(ptr, &ctl->readq);
