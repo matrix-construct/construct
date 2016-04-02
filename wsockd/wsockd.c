@@ -21,11 +21,16 @@
  */
 
 #include "stdinc.h"
+#include "sha1.h"
 
 #define MAXPASSFD 4
 #ifndef READBUF_SIZE
 #define READBUF_SIZE 16384
 #endif
+
+#define WEBSOCKET_SERVER_KEY "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+#define WEBSOCKET_ANSWER_STRING_1 "HTTP/1.1 101 Switching Protocols\r\nAccess-Control-Allow-Origin: *\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: "
+#define WEBSOCKET_ANSWER_STRING_2 "\r\n\r\n"
 
 static void setup_signals(void);
 static pid_t ppid;
@@ -71,8 +76,8 @@ typedef struct _conn
 	rb_dlink_node node;
 	mod_ctl_t *ctl;
 
-	buf_head_t modbuf_out;
-	buf_head_t modbuf_in;
+	rawbuf_head_t *modbuf_out;
+	rawbuf_head_t *modbuf_in;
 
 	buf_head_t plainbuf_out;
 	buf_head_t plainbuf_in;
@@ -86,23 +91,33 @@ typedef struct _conn
 	uint64_t plain_in;
 	uint64_t plain_out;
 	uint8_t flags;
+
+	char client_key[37];		/* maximum 36 bytes + nul */
 } conn_t;
+
+static void close_conn(conn_t * conn, int wait_plain, const char *fmt, ...);
+static void conn_mod_read_cb(rb_fde_t *fd, void *data);
+static void conn_plain_read_cb(rb_fde_t *fd, void *data);
 
 #define FLAG_CORK	0x01
 #define FLAG_DEAD	0x02
 #define FLAG_WSOCK	0x04
+#define FLAG_KEYED	0x08
 
 #define IsCork(x) ((x)->flags & FLAG_CORK)
 #define IsDead(x) ((x)->flags & FLAG_DEAD)
 #define IsWS(x)   ((x)->flags & FLAG_WSOCK)
+#define IsKeyed(x) ((x)->flags & FLAG_KEYED)
 
 #define SetCork(x) ((x)->flags |= FLAG_CORK)
 #define SetDead(x) ((x)->flags |= FLAG_DEAD)
 #define SetWS(x)   ((x)->flags |= FLAG_WSOCK)
+#define SetKeyed(x) ((x)->flags |= FLAG_KEYED)
 
 #define ClearCork(x) ((x)->flags &= ~FLAG_CORK)
 #define ClearDead(x) ((x)->flags &= ~FLAG_DEAD)
 #define ClearWS(x)   ((x)->flags &= ~FLAG_WSOCK)
+#define ClearKeyed(x) ((x)->flags &= ~FLAG_KEYED)
 
 #define NO_WAIT 0x0
 #define WAIT_PLAIN 0x1
@@ -111,6 +126,8 @@ typedef struct _conn
 #define HASH_WALK_END }
 #define CONN_HASH_SIZE 2000
 #define connid_hash(x)	(&connid_hash_table[(x % CONN_HASH_SIZE)])
+
+static const char *remote_closed = "Remote host closed the connection";
 
 static rb_dlink_list connid_hash_table[CONN_HASH_SIZE];
 static rb_dlink_list dead_list;
@@ -196,8 +213,8 @@ free_conn(conn_t * conn)
 	rb_linebuf_donebuf(&conn->plainbuf_in);
 	rb_linebuf_donebuf(&conn->plainbuf_out);
 
-	rb_linebuf_donebuf(&conn->modbuf_in);
-	rb_linebuf_donebuf(&conn->modbuf_out);
+	rb_free_rawbuffer(conn->modbuf_in);
+	rb_free_rawbuffer(conn->modbuf_out);
 
 	rb_free(conn);
 }
@@ -215,6 +232,56 @@ clean_dead_conns(void *unused)
 	}
 
 	dead_list.tail = dead_list.head = NULL;
+}
+
+static void
+conn_mod_write_sendq(rb_fde_t *fd, void *data)
+{
+	conn_t *conn = data;
+	const char *err;
+	int retlen;
+
+	if(IsDead(conn))
+		return;
+
+	while((retlen = rb_rawbuf_flush(conn->modbuf_out, fd)) > 0)
+		conn->mod_out += retlen;
+
+	if(retlen == 0 || (retlen < 0 && !rb_ignore_errno(errno)))
+	{
+		if(retlen == 0)
+			close_conn(conn, WAIT_PLAIN, "%s", remote_closed);
+		err = strerror(errno);
+		close_conn(conn, WAIT_PLAIN, "Write error: %s", err);
+		return;
+	}
+
+	if(rb_rawbuf_length(conn->modbuf_out) > 0)
+		rb_setselect(conn->mod_fd, RB_SELECT_WRITE, conn_mod_write_sendq, conn);
+	else
+		rb_setselect(conn->mod_fd, RB_SELECT_WRITE, NULL, NULL);
+
+	if(IsCork(conn) && rb_rawbuf_length(conn->modbuf_out) == 0)
+	{
+		ClearCork(conn);
+		conn_plain_read_cb(conn->plain_fd, conn);
+	}
+}
+
+static void
+conn_mod_write(conn_t * conn, void *data, size_t len)
+{
+	if(IsDead(conn))	/* no point in queueing to a dead man */
+		return;
+	rb_rawbuf_append(conn->modbuf_out, data, len);
+}
+
+static void
+conn_plain_write(conn_t * conn, void *data, size_t len)
+{
+	if(IsDead(conn))	/* again no point in queueing to dead men */
+		return;
+	rb_linebuf_put(&conn->plainbuf_out, data, len);
 }
 
 static void
@@ -270,7 +337,7 @@ close_conn(conn_t * conn, int wait_plain, const char *fmt, ...)
 	if(IsDead(conn))
 		return;
 
-	rb_linebuf_flush(conn->mod_fd, &conn->modbuf_out);
+	rb_rawbuf_flush(conn->modbuf_out, conn->mod_fd);
 	rb_linebuf_flush(conn->plain_fd, &conn->plainbuf_out);
 	rb_close(conn->mod_fd);
 	SetDead(conn);
@@ -312,8 +379,8 @@ make_conn(mod_ctl_t * ctl, rb_fde_t *mod_fd, rb_fde_t *plain_fd)
 	rb_linebuf_newbuf(&conn->plainbuf_in);
 	rb_linebuf_newbuf(&conn->plainbuf_out);
 
-	rb_linebuf_newbuf(&conn->modbuf_in);
-	rb_linebuf_newbuf(&conn->modbuf_out);
+	conn->modbuf_in = rb_new_rawbuffer();
+	conn->modbuf_out = rb_new_rawbuffer();
 
 	return conn;
 }
@@ -335,10 +402,59 @@ conn_mod_handshake_process(conn_t *conn)
 
 	while (1)
 	{
-		size_t dolen = rb_linebuf_get(&conn->modbuf_in, inbuf, READBUF_SIZE, LINEBUF_COMPLETE, LINEBUF_PARSED);
+		char *p = NULL;
+
+		size_t dolen = rb_rawbuf_get(conn->modbuf_in, inbuf, sizeof inbuf);
 		if (!dolen)
 			break;
+
+		if ((p = strcasestr(inbuf, "Sec-WebSocket-Key:")) != NULL)
+		{
+			char *start, *end;
+
+			start = p + strlen("Sec-WebSocket-Key:");
+
+			for (; start < (inbuf + READBUF_SIZE) && *start; start++)
+			{
+				if (*start != ' ' && *start != '\t')
+					break;
+			}
+
+			for (end = start; end < (inbuf + READBUF_SIZE) && *end; end++)
+			{
+				if (*end == '\r' || *end == '\n')
+				{
+					*end = '\0';
+					break;
+				}
+			}
+
+			rb_strlcpy(conn->client_key, start, sizeof(conn->client_key));
+			SetKeyed(conn);
+		}
 	}
+
+	if (IsKeyed(conn))
+	{
+		SHA1 sha1;
+		uint8_t digest[SHA1_DIGEST_LENGTH];
+		char *resp;
+
+		sha1_init(&sha1);
+		sha1_update(&sha1, (uint8_t *) conn->client_key, strlen(conn->client_key));
+		sha1_update(&sha1, (uint8_t *) WEBSOCKET_SERVER_KEY, strlen(WEBSOCKET_SERVER_KEY));
+		sha1_final(&sha1, digest);
+
+		resp = (char *) rb_base64_encode(digest, SHA1_DIGEST_LENGTH);
+
+		conn_mod_write(conn, WEBSOCKET_ANSWER_STRING_1, strlen(WEBSOCKET_ANSWER_STRING_1));
+		conn_mod_write(conn, resp, strlen(resp));
+		conn_mod_write(conn, WEBSOCKET_ANSWER_STRING_2, strlen(WEBSOCKET_ANSWER_STRING_2));
+
+		rb_free(resp);
+	}
+
+	conn_mod_write_sendq(conn->mod_fd, conn);
 }
 
 static void
@@ -375,7 +491,7 @@ conn_mod_handshake_cb(rb_fde_t *fd, void *data)
 			return;
 		}
 
-		int res = rb_linebuf_parse(&conn->modbuf_in, inbuf, length, 0);
+		rb_rawbuf_append(conn->modbuf_in, inbuf, length);
 		conn_mod_handshake_process(conn);
 
 		if (length < sizeof(inbuf))
@@ -578,6 +694,7 @@ main(int argc, char **argv)
 	setup_signals();
 	rb_lib_init(NULL, NULL, NULL, 0, maxfd, 1024, 4096);
 	rb_linebuf_init(4096);
+	rb_init_rawbuffers(4096);
 
 	mod_ctl = rb_malloc(sizeof(mod_ctl_t));
 	mod_ctl->F = rb_open(ctlfd, RB_FD_SOCKET, "ircd control socket");
