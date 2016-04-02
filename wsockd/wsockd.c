@@ -95,6 +95,28 @@ typedef struct _conn
 	char client_key[37];		/* maximum 36 bytes + nul */
 } conn_t;
 
+#ifdef _WIN32
+char *
+strcasestr(const char *s, *find)
+{
+	char c, sc;
+	size_t len;
+
+	if ((c = *find++) != 0) {
+		c = tolower((unsigned char)c);
+		len = strlen(find);
+		do {
+			do {
+				if ((sc = *s++) == 0)
+					return (NULL);
+			} while ((char)tolower((unsigned char)sc) != c);
+		} while (strnicmp(s, find, len) != 0);
+		s--;
+	}
+	return ((char *)s);
+}
+#endif
+
 static void close_conn(conn_t * conn, int wait_plain, const char *fmt, ...);
 static void conn_mod_read_cb(rb_fde_t *fd, void *data);
 static void conn_plain_read_cb(rb_fde_t *fd, void *data);
