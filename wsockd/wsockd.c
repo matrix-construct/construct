@@ -70,8 +70,12 @@ typedef struct _conn
 {
 	rb_dlink_node node;
 	mod_ctl_t *ctl;
-	rawbuf_head_t *modbuf_out;
-	rawbuf_head_t *plainbuf_out;
+
+	buf_head_t modbuf_out;
+	buf_head_t modbuf_in;
+
+	buf_head_t plainbuf_out;
+	buf_head_t plainbuf_in;
 
 	uint32_t id;
 
@@ -189,8 +193,12 @@ conn_add_id_hash(conn_t * conn, uint32_t id)
 static void
 free_conn(conn_t * conn)
 {
-	rb_free_rawbuffer(conn->modbuf_out);
-	rb_free_rawbuffer(conn->plainbuf_out);
+	rb_linebuf_donebuf(&conn->plainbuf_in);
+	rb_linebuf_donebuf(&conn->plainbuf_out);
+
+	rb_linebuf_donebuf(&conn->modbuf_in);
+	rb_linebuf_donebuf(&conn->modbuf_out);
+
 	rb_free(conn);
 }
 
@@ -262,8 +270,8 @@ close_conn(conn_t * conn, int wait_plain, const char *fmt, ...)
 	if(IsDead(conn))
 		return;
 
-	rb_rawbuf_flush(conn->modbuf_out, conn->mod_fd);
-	rb_rawbuf_flush(conn->plainbuf_out, conn->plain_fd);
+	rb_linebuf_flush(conn->mod_fd, &conn->modbuf_out);
+	rb_linebuf_flush(conn->plain_fd, &conn->plainbuf_out);
 	rb_close(conn->mod_fd);
 	SetDead(conn);
 
@@ -295,13 +303,18 @@ make_conn(mod_ctl_t * ctl, rb_fde_t *mod_fd, rb_fde_t *plain_fd)
 {
 	conn_t *conn = rb_malloc(sizeof(conn_t));
 	conn->ctl = ctl;
-	conn->modbuf_out = rb_new_rawbuffer();
-	conn->plainbuf_out = rb_new_rawbuffer();
 	conn->mod_fd = mod_fd;
 	conn->plain_fd = plain_fd;
 	conn->id = -1;
 	rb_set_nb(mod_fd);
 	rb_set_nb(plain_fd);
+
+	rb_linebuf_newbuf(&conn->plainbuf_in);
+	rb_linebuf_newbuf(&conn->plainbuf_out);
+
+	rb_linebuf_newbuf(&conn->modbuf_in);
+	rb_linebuf_newbuf(&conn->modbuf_out);
+
 	return conn;
 }
 
@@ -313,6 +326,19 @@ cleanup_bad_message(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 	/* XXX should log this somehow */
 	for (i = 0; i < ctlb->nfds; i++)
 		rb_close(ctlb->F[i]);
+}
+
+static void
+conn_mod_handshake_process(conn_t *conn)
+{
+	char inbuf[READBUF_SIZE];
+
+	while (1)
+	{
+		size_t dolen = rb_linebuf_get(&conn->modbuf_in, inbuf, READBUF_SIZE, LINEBUF_COMPLETE, LINEBUF_PARSED);
+		if (!dolen)
+			break;
+	}
 }
 
 static void
@@ -332,10 +358,29 @@ conn_mod_handshake_cb(rb_fde_t *fd, void *data)
 		if (IsDead(conn))
 			return;
 
-		length = rb_read(conn->plain_fd, inbuf, sizeof(inbuf));
-		if (length == 0 || (length < 0 && !rb_ignore_errno(errno)))
+		length = rb_read(fd, inbuf, sizeof(inbuf));
+
+                if (length < 0)
+		{
+			if (rb_ignore_errno(errno))
+				rb_setselect(fd, RB_SELECT_READ, conn_mod_handshake_cb, conn);
+			else
+				close_conn(conn, NO_WAIT, "Connection closed");
+
+			return;
+		}
+		else if (length == 0)
 		{
 			close_conn(conn, NO_WAIT, "Connection closed");
+			return;
+		}
+
+		int res = rb_linebuf_parse(&conn->modbuf_in, inbuf, length, 0);
+		conn_mod_handshake_process(conn);
+
+		if (length < sizeof(inbuf))
+		{
+			rb_setselect(fd, RB_SELECT_READ, conn_mod_handshake_cb, conn);
 			return;
 		}
 	}
@@ -532,7 +577,7 @@ main(int argc, char **argv)
 #endif
 	setup_signals();
 	rb_lib_init(NULL, NULL, NULL, 0, maxfd, 1024, 4096);
-	rb_init_rawbuffers(1024);
+	rb_linebuf_init(4096);
 
 	mod_ctl = rb_malloc(sizeof(mod_ctl_t));
 	mod_ctl->F = rb_open(ctlfd, RB_FD_SOCKET, "ircd control socket");
