@@ -342,8 +342,8 @@ handle_cancel_connection(int parc, char *parv[])
 
 	if((auth = rb_dictionary_retrieve(auth_clients, RB_UINT_TO_POINTER((uint32_t)lcid))) == NULL)
 	{
-		/* This could happen as a race if we've accepted but they've just rejected us,
-		 * so don't die here. --Elizafox */
+		/* This could happen as a race if we've accepted/rejected but they cancel, so don't die here.
+		 * --Elizafox */
 		return;
 	}
 
