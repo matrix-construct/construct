@@ -294,6 +294,12 @@ parse_authd_reply(rb_helper * helper)
 
 			cmd->fn(parc, parv);
 		}
+		else
+		{
+			iwarn("authd sent us a bad command type: %c", *parv[0]);
+			restart_authd();
+			continue;
+		}
 	}
 }
 
