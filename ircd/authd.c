@@ -144,6 +144,17 @@ cid_to_client(uint32_t cid, bool delete)
 	return client_p;
 }
 
+static inline struct Client *
+str_cid_to_client(const char *str, bool delete)
+{
+	uint32_t cid = str_to_cid(str);
+
+	if(cid == 0)
+		return NULL;
+
+	return cid_to_client(cid, delete);
+}
+
 static void
 parse_authd_reply(rb_helper * helper)
 {
@@ -151,7 +162,6 @@ parse_authd_reply(rb_helper * helper)
 	int parc;
 	char authdBuf[READBUF_SIZE];
 	char *parv[MAXPARA + 1];
-	uint32_t cid;
 	struct Client *client_p;
 
 	while((len = rb_helper_read(helper, authdBuf, sizeof(authdBuf))) > 0)
@@ -168,11 +178,8 @@ parse_authd_reply(rb_helper * helper)
 				return;
 			}
 
-			if((cid = str_to_cid(parv[1])) == 0)
-				return;
-
 			/* cid to uid (retrieve and delete) */
-			if((client_p = cid_to_client(cid, true)) == NULL)
+			if((client_p = str_cid_to_client(parv[1], true)) == NULL)
 				return;
 
 			authd_accept_client(client_p, parv[2], parv[3]);
@@ -185,11 +192,8 @@ parse_authd_reply(rb_helper * helper)
 				return;
 			}
 
-			if((cid = str_to_cid(parv[1])) == 0)
-				return;
-
 			/* cid to uid (retrieve and delete) */
-			if((client_p = cid_to_client(cid, true)) == NULL)
+			if((client_p = str_cid_to_client(parv[1], true)) == NULL)
 				return;
 
 			authd_reject_client(client_p, parv[3], parv[4], toupper(*parv[2]), parv[5], parv[6]);
@@ -202,11 +206,7 @@ parse_authd_reply(rb_helper * helper)
 				return;
 			}
 
-			if((cid = str_to_cid(parv[1])) == 0)
-				return;
-
-			/* cid to uid */
-			if((client_p = cid_to_client(cid, false)) == NULL)
+			if((client_p = str_cid_to_client(parv[1], false)) == NULL)
 				return;
 
 			sendto_one_notice(client_p, ":%s", parv[2]);
@@ -218,6 +218,7 @@ parse_authd_reply(rb_helper * helper)
 				restart_authd();
 				return;
 			}
+
 			dns_results_callback(parv[1], parv[2], parv[3], parv[4]);
 			break;
 		case 'W':	/* Oper warning */
