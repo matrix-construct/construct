@@ -95,6 +95,44 @@ typedef struct _conn
 	char client_key[37];		/* maximum 36 bytes + nul */
 } conn_t;
 
+#define WEBSOCKET_OPCODE_CONTINUATION_FRAME  0
+#define WEBSOCKET_OPCODE_TEXT_FRAME          1
+#define WEBSOCKET_OPCODE_BINARY_FRAME        2
+#define WEBSOCKET_OPCODE_CLOSE_FRAME         8
+#define WEBSOCKET_OPCODE_PING_FRAME          9
+#define WEBSOCKET_OPCODE_PONG_FRAME         10
+
+#define WEBSOCKET_MASK_LENGTH 4
+
+#define WEBSOCKET_MAX_UNEXTENDED_PAYLOAD_DATA_LENGTH 125
+
+typedef struct {
+	uint8_t opcode_rsv_fin; // opcode: 4, rsv1: 1, rsv2: 1, rsv3: 1, fin: 1
+	uint8_t payload_length_mask; // payload_length: 7, mask: 1
+} ws_frame_hdr_t;
+
+typedef struct {
+	ws_frame_hdr_t header;
+	uint8_t payload_data[WEBSOCKET_MAX_UNEXTENDED_PAYLOAD_DATA_LENGTH];
+} ws_frame_payload_t;
+
+typedef struct {
+	ws_frame_hdr_t header;
+	uint8_t masking_key[WEBSOCKET_MASK_LENGTH];
+} ws_frame_t;
+
+typedef struct {
+	ws_frame_hdr_t header;
+	uint16_t payload_length_extended;
+	uint8_t masking_key[WEBSOCKET_MASK_LENGTH];
+} ws_frame_ext_t;
+
+typedef struct {
+	ws_frame_hdr_t header;
+	uint64_t payload_length_extended;
+	uint8_t masking_key[WEBSOCKET_MASK_LENGTH];
+} ws_frame_ext2_t;
+
 #ifdef _WIN32
 char *
 strcasestr(const char *s, const char *find)
