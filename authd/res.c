@@ -322,21 +322,23 @@ static struct reslist *make_request(struct DNSQuery *query)
 /*
  * retryfreq - determine how many queries to wait before resending
  * if there have been that many consecutive timeouts
+ *
+ * This is a cubic backoff btw, if anyone didn't pick up on it. --Elizafox
  */
 static int retryfreq(int timeouts)
 {
 	switch (timeouts)
 	{
-		case 1:
-			return 3;
-		case 2:
-			return 9;
-		case 3:
-			return 27;
-		case 4:
-			return 81;
-		default:
-			return 243;
+	case 1:
+		return 3;
+	case 2:
+		return 9;
+	case 3:
+		return 27;
+	case 4:
+		return 81;
+	default:
+		return 243;
 	}
 }
 
@@ -565,17 +567,17 @@ static void resend_query(struct reslist *request)
 
 	switch (request->type)
 	{
-	  case T_PTR:
-		  do_query_number(NULL, &request->addr, request);
-		  break;
-	  case T_A:
+	case T_PTR:
+		do_query_number(NULL, &request->addr, request);
+		break;
+	case T_A:
 #ifdef RB_IPV6
-	  case T_AAAA:
+	case T_AAAA:
 #endif
-		  do_query_name(NULL, request->name, request, request->type);
-		  break;
-	  default:
-		  break;
+		do_query_name(NULL, request->name, request, request->type);
+		break;
+	default:
+		break;
 	}
 }
 
@@ -679,55 +681,54 @@ static int proc_answer(struct reslist *request, HEADER * header, char *buf, char
 		 */
 		switch (type)
 		{
-		  case T_A:
-			  if (request->type != T_A)
-				  return (0);
+		case T_A:
+			if (request->type != T_A)
+				return (0);
 
-			  /*
-			   * check for invalid rd_length or too many addresses
-			   */
-			  if (rd_length != sizeof(struct in_addr))
-				  return (0);
-			  v4 = (struct sockaddr_in *)&request->addr;
-			  SET_SS_LEN(&request->addr, sizeof(struct sockaddr_in));
-			  v4->sin_family = AF_INET;
-			  memcpy(&v4->sin_addr, current, sizeof(struct in_addr));
-			  return (1);
-			  break;
+			/*
+			 * check for invalid rd_length or too many addresses
+			 */
+			if (rd_length != sizeof(struct in_addr))
+				return (0);
+			v4 = (struct sockaddr_in *)&request->addr;
+			SET_SS_LEN(&request->addr, sizeof(struct sockaddr_in));
+			v4->sin_family = AF_INET;
+			memcpy(&v4->sin_addr, current, sizeof(struct in_addr));
+			return (1);
+			break;
 #ifdef RB_IPV6
-		  case T_AAAA:
-			  if (request->type != T_AAAA)
-				  return (0);
-			  if (rd_length != sizeof(struct in6_addr))
-				  return (0);
-			  SET_SS_LEN(&request->addr, sizeof(struct sockaddr_in6));
-			  v6 = (struct sockaddr_in6 *)&request->addr;
-			  v6->sin6_family = AF_INET6;
-			  memcpy(&v6->sin6_addr, current, sizeof(struct in6_addr));
-			  return (1);
-			  break;
+		case T_AAAA:
+			if (request->type != T_AAAA)
+				return (0);
+			if (rd_length != sizeof(struct in6_addr))
+				return (0);
+			SET_SS_LEN(&request->addr, sizeof(struct sockaddr_in6));
+			v6 = (struct sockaddr_in6 *)&request->addr;
+			v6->sin6_family = AF_INET6;
+			memcpy(&v6->sin6_addr, current, sizeof(struct in6_addr));
+			return (1);
+			break;
 #endif
-		  case T_PTR:
-			  if (request->type != T_PTR)
-				  return (0);
-			  n = irc_dn_expand((unsigned char *)buf, (unsigned char *)eob, current,
-					    hostbuf, sizeof(hostbuf));
-			  if (n < 0)
-				  return (0);	/* broken message */
-			  else if (n == 0)
-				  return (0);	/* no more answers left */
+		case T_PTR:
+			if (request->type != T_PTR)
+				return (0);
+			n = irc_dn_expand((unsigned char *)buf, (unsigned char *)eob, current,
+				hostbuf, sizeof(hostbuf));
+			if (n < 0)
+				return (0);	/* broken message */
+			else if (n == 0)
+				return (0);	/* no more answers left */
 
-			  rb_strlcpy(request->name, hostbuf, IRCD_RES_HOSTLEN + 1);
+			rb_strlcpy(request->name, hostbuf, IRCD_RES_HOSTLEN + 1);
 
-			  return (1);
-			  break;
-		  case T_CNAME:
-			  /* real answer will follow */
-			  current += rd_length;
-			  break;
-
-		  default:
-			  break;
+			return (1);
+			break;
+		case T_CNAME:
+			/* real answer will follow */
+			current += rd_length;
+			break;
+		default:
+			break;
 		}
 	}
 
