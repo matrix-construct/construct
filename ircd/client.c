@@ -32,7 +32,7 @@
 #include "ircd.h"
 #include "numeric.h"
 #include "packet.h"
-#include "authd.h"
+#include "authproc.h"
 #include "s_conf.h"
 #include "s_newconf.h"
 #include "logger.h"

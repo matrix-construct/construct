@@ -34,7 +34,7 @@
 #include "s_newconf.h"
 #include "s_stats.h"
 #include "send.h"
-#include "authd.h"
+#include "authproc.h"
 #include "reject.h"
 #include "s_conf.h"
 #include "hostmask.h"

@@ -27,7 +27,7 @@
 #include "client.h"
 #include "ircd_defs.h"
 #include "parse.h"
-#include "authd.h"
+#include "authproc.h"
 #include "match.h"
 #include "logger.h"
 #include "s_conf.h"

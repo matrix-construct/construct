@@ -1,6 +1,6 @@
 /*
  *  charybdis
- *  authd.h: A header with the authd functions.
+ *  authproc.h: A header with the authd functions.
  *
  *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center
  *  Copyright (C) 1996-2002 Hybrid Development Team

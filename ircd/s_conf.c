@@ -51,7 +51,7 @@
 #include "chmode.h"
 #include "hook.h"
 #include "s_assert.h"
-#include "authd.h"
+#include "authproc.h"
 
 struct config_server_hide ConfigServerHide;
 

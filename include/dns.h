@@ -27,7 +27,7 @@
 #define CHARYBDIS_DNS_H
 
 #include "stdinc.h"
-#include "authd.h"
+#include "authproc.h"
 
 extern rb_dlink_list nameservers;
 

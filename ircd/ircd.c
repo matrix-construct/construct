@@ -64,7 +64,7 @@
 #include "chmode.h"
 #include "privilege.h"
 #include "bandbi.h"
-#include "authd.h"
+#include "authproc.h"
 #include "operhash.h"
 
 /* /quote set variables */

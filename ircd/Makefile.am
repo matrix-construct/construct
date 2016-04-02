@@ -19,7 +19,7 @@ EXTRA_FLAGS = -Wl,--enable-runtime-pseudo-reloc -export-symbols-regex '*'
 endif
 
 libircd_la_SOURCES =                  \
-  authd.c			\
+  authproc.c			\
   bandbi.c                      \
   cache.c                       \
   capability.c			\
