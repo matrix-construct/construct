@@ -878,7 +878,7 @@ validate_conf(void)
 
 	if(ServerInfo.wsockd_count > get_wsockd_count())
 	{
-		int start = ServerInfo.wsockd_count - get_ssld_count();
+		int start = ServerInfo.wsockd_count - get_wsockd_count();
 		start_wsockd(start);
 	}
 
