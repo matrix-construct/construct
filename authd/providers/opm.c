@@ -33,6 +33,7 @@ typedef enum protocol_t
 	PROTO_SOCKS4,
 	PROTO_SOCKS5,
 	PROTO_HTTP_CONNECT,
+	PROTO_HTTPS_CONNECT,
 } protocol_t;
 
 struct opm_lookup
@@ -45,6 +46,7 @@ struct opm_proxy
 	char note[16];
 	protocol_t proto;
 	uint16_t port;
+	bool ssl;
 
 	rb_dlink_node node;
 };
@@ -97,6 +99,8 @@ get_protocol_from_string(const char *str)
 		return PROTO_SOCKS5;
 	else if(strcasecmp(str, "httpconnect") == 0)
 		return PROTO_HTTP_CONNECT;
+	else if(strcasecmp(str, "httpsconnect") == 0)
+		return PROTO_HTTPS_CONNECT;
 	else
 		return PROTO_NONE;
 }
@@ -426,6 +430,7 @@ establish_connection(struct auth_client *auth, struct opm_proxy *proxy)
 	{
 	case PROTO_SOCKS4:
 #ifdef RB_IPV6
+		/* SOCKS4 is IPv4 only */
 		if(GET_SS_FAMILY(&auth->c_addr) == AF_INET6)
 		{
 			rb_free(scan);
@@ -438,6 +443,7 @@ establish_connection(struct auth_client *auth, struct opm_proxy *proxy)
 		callback = socks5_connected;
 		break;
 	case PROTO_HTTP_CONNECT:
+	case PROTO_HTTPS_CONNECT:
 		callback = http_connect_connected;
 	default:
 		return;
@@ -469,11 +475,19 @@ establish_connection(struct auth_client *auth, struct opm_proxy *proxy)
 	SET_SS_PORT(&c_a, htons(proxy->port));
 
 	rb_dlinkAdd(scan, &scan->node, &lookup->scans);
-	rb_connect_tcp(scan->F,
-			(struct sockaddr *)&c_a,
-			(struct sockaddr *)&l_a,
-			GET_SS_LEN(&l_a),
-			callback, scan, opm_timeout);
+
+	if(!proxy->ssl)
+		rb_connect_tcp(scan->F,
+				(struct sockaddr *)&c_a,
+				(struct sockaddr *)&l_a,
+				GET_SS_LEN(&l_a),
+				callback, scan, opm_timeout);
+	else
+		rb_connect_tcp_ssl(scan->F,
+				(struct sockaddr *)&c_a,
+				(struct sockaddr *)&l_a,
+				GET_SS_LEN(&l_a),
+				callback, scan, opm_timeout);
 }
 
 static bool
@@ -754,12 +768,19 @@ create_opm_scanner(const char *key __unused, int parc __unused, const char **par
 	{
 	case PROTO_SOCKS4:
 		snprintf(proxy->note, sizeof(proxy->note), "socks4:%hu", proxy->port);
+		proxy->ssl = false;
 		break;
 	case PROTO_SOCKS5:
 		snprintf(proxy->note, sizeof(proxy->note), "socks5:%hu", proxy->port);
+		proxy->ssl = false;
 		break;
 	case PROTO_HTTP_CONNECT:
 		snprintf(proxy->note, sizeof(proxy->note), "httpconnect:%hu", proxy->port);
+		proxy->ssl = false;
+		break;
+	case PROTO_HTTPS_CONNECT:
+		snprintf(proxy->note, sizeof(proxy->note), "httpsconnect:%hu", proxy->port);
+		proxy->ssl = true;
 		break;
 	default:
 		warn_opers(L_CRIT, "OPM: got an unknown proxy type: %s (port %hu)", parv[0], proxy->port);

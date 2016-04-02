@@ -489,6 +489,12 @@ opm {
 	 * below.
 	 */
 	httpconnect_ports = 80, 8080, 8000;
+
+	/* These are the ports to scan for HTTPS CONNECT proxies on (SSL).
+	 * They may overlap with other scan types. Sensible defaults are given
+	 * below.
+	 */
+	httpsconnect_ports = 443, 4443;
 };
 
 alias "NickServ" {

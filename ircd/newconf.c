@@ -2314,6 +2314,12 @@ conf_set_opm_scan_ports_httpconnect(void *data)
 	conf_set_opm_scan_ports_all(data, "opm::httpconnect_ports", "httpconnect");
 }
 
+static void
+conf_set_opm_scan_ports_httpsconnect(void *data)
+{
+	conf_set_opm_scan_ports_all(data, "opm::httpsconnect_ports", "httpsconnect");
+}
+
 /* public functions */
 
 
@@ -2854,4 +2860,5 @@ newconf_init()
 	add_conf_item("opm", "socks4_ports", CF_INT | CF_FLIST, conf_set_opm_scan_ports_socks4);
 	add_conf_item("opm", "socks5_ports", CF_INT | CF_FLIST, conf_set_opm_scan_ports_socks5);
 	add_conf_item("opm", "httpconnect_ports", CF_INT | CF_FLIST, conf_set_opm_scan_ports_httpconnect);
+	add_conf_item("opm", "httpsconnect_ports", CF_INT | CF_FLIST, conf_set_opm_scan_ports_httpsconnect);
 }
