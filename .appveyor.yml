@@ -13,3 +13,5 @@ build_script:
 on_failure:
   - ps: Push-AppveyorArtifact config.log
   - ps: Push-AppveyorArtifact librb\include\librb-config.h
+except:
+  - release/3.5
