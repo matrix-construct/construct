@@ -342,8 +342,9 @@ handle_cancel_connection(int parc, char *parv[])
 
 	if((auth = rb_dictionary_retrieve(auth_clients, RB_UINT_TO_POINTER((uint32_t)lcid))) == NULL)
 	{
-		warn_opers(L_CRIT, "provider: tried to cancel nonexistent connection %lx", lcid);
-		exit(EX_PROVIDER_ERROR);
+		/* This could happen as a race if we've accepted but they've just rejected us,
+		 * so don't die here. --Elizafox */
+		return;
 	}
 
 	cancel_providers(auth);
