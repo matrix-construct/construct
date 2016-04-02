@@ -420,12 +420,12 @@ authd_decide_client(struct Client *client_p, const char *ident, const char *host
 	if(*host != '*')
 		rb_strlcpy(client_p->host, host, sizeof(client_p->host));
 
+	rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(client_p->preClient->authd_cid));
+
 	client_p->preClient->authd_accepted = accept;
 	client_p->preClient->authd_cause = cause;
 	client_p->preClient->authd_data = (data == NULL ? NULL : rb_strdup(data));
 	client_p->preClient->authd_reason = (reason == NULL ? NULL : rb_strdup(reason));
-
-	rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(client_p->preClient->authd_cid));
 	client_p->preClient->authd_cid = 0;
 
 	/*
@@ -468,8 +468,7 @@ authd_abort_client(struct Client *client_p)
 	if(authd_helper != NULL)
 		rb_helper_write(authd_helper, "E %x", client_p->preClient->authd_cid);
 
-	/* XXX should we blindly allow like this? */
-	authd_accept_client(client_p, "*", "*");
+	client_p->preClient->authd_accepted = true;
 	client_p->preClient->authd_cid = 0;
 }
 
