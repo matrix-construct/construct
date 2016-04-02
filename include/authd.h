@@ -47,7 +47,8 @@ void rehash_authd(void);
 void check_authd(void);
 
 void authd_initiate_client(struct Client *);
-void authd_decide_client(struct Client *client_p, const char *ident, const char *host, bool accept, char cause, const char *data, const char *reason);
+void authd_accept_client(struct Client *client_p, const char *ident, const char *host);
+void authd_reject_client(struct Client *client_p, const char *ident, const char *host, char cause, const char *data, const char *reason);
 void authd_abort_client(struct Client *);
 const char *get_provider_string(char cause);
 
@@ -56,6 +57,8 @@ void del_blacklist(const char *host);
 void del_blacklist_all(void);
 bool set_authd_timeout(const char *key, int timeout);
 void ident_check_enable(bool enabled);
-bool create_opm_listener(const char *ip, uint16_t port);
+void create_opm_listener(const char *ip, uint16_t port);
+void opm_check_enable(bool enabled);
+void create_opm_proxy_scan(const char *scan, uint16_t port);
 
 #endif

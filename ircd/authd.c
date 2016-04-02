@@ -151,7 +151,7 @@ parse_authd_reply(rb_helper * helper)
 				return;
 			}
 
-			authd_decide_client(client_p, parv[2], parv[3], true, '\0', NULL, NULL);
+			authd_accept_client(client_p, parv[2], parv[3]);
 			break;
 		case 'R':	/* Reject client */
 			if(parc != 7)
@@ -178,7 +178,7 @@ parse_authd_reply(rb_helper * helper)
 				return;
 			}
 
-			authd_decide_client(client_p, parv[3], parv[4], false, toupper(*parv[2]), parv[5], parv[6]);
+			authd_reject_client(client_p, parv[3], parv[4], toupper(*parv[2]), parv[5], parv[6]);
 			break;
 		case 'N':	/* Notice to client */
 			if(parc != 3)
@@ -398,7 +398,7 @@ authd_initiate_client(struct Client *client_p)
  *
  * After this point authd no longer "owns" the client.
  */
-void
+static inline void
 authd_decide_client(struct Client *client_p, const char *ident, const char *host, bool accept, char cause, const char *data, const char *reason)
 {
 	if(client_p->preClient == NULL || client_p->preClient->authd_cid == 0)
@@ -435,6 +435,20 @@ authd_decide_client(struct Client *client_p, const char *ident, const char *host
 	read_packet(client_p->localClient->F, client_p);
 }
 
+/* Convenience function to accept client */
+void
+authd_accept_client(struct Client *client_p, const char *ident, const char *host)
+{
+	authd_decide_client(client_p, ident, host, true, '\0', NULL, NULL);
+}
+
+/* Convenience function to reject client */
+void
+authd_reject_client(struct Client *client_p, const char *ident, const char *host, char cause, const char *data, const char *reason)
+{
+	authd_decide_client(client_p, ident, host, false, cause, data, reason);
+}
+
 void
 authd_abort_client(struct Client *client_p)
 {
@@ -450,7 +464,7 @@ authd_abort_client(struct Client *client_p)
 		rb_helper_write(authd_helper, "E %x", client_p->preClient->authd_cid);
 
 	/* XXX should we blindly allow like this? */
-	authd_decide_client(client_p, "*", "*", true, '\0', NULL, NULL);
+	authd_accept_client(client_p, "*", "*");
 	client_p->preClient->authd_cid = 0;
 }
 
@@ -563,9 +577,22 @@ ident_check_enable(bool enabled)
 }
 
 /* Create an OPM listener */
-bool
+void
 create_opm_listener(const char *ip, uint16_t port)
 {
 	rb_helper_write(authd_helper, "O opm_listener %s %hu", ip, port);
-	return true;
+}
+
+/* Disable all OPM scans */
+void
+opm_check_enable(bool enabled)
+{
+	rb_helper_write(authd_helper, "O opm_enable %d", enabled ? 1 : 0);
+}
+
+/* Create an OPM proxy scan */
+void
+create_opm_proxy_scan(const char *scan, uint16_t port)
+{
+	rb_helper_write(authd_helper, "O opm_scanner %s %hu", scan, port);
 }
