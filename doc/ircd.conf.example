@@ -466,6 +466,13 @@ opm {
 	 */
 	port = 32000;
 
+	/* This sets the timeout in seconds before ending open proxy scans.
+	 * Values less than 1 or greater than 60 are ignored.
+	 * It is advisable to keep it as short as feasible, so clients do not
+	 * get held up by excessively long scan times.
+	 */
+	timeout = 5;
+
 	/* These are the ports to scan for SOCKS4 proxies on. They may overlap
 	 * with other scan types. Sensible defaults are given below.
 	 */

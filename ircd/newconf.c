@@ -63,6 +63,7 @@ static char *yy_opm_address_ipv4 = NULL;
 static char *yy_opm_address_ipv6 = NULL;
 static uint16_t yy_opm_port_ipv4 = 0;
 static uint16_t yy_opm_port_ipv6 = 0;
+static int yy_opm_timeout = 0;
 static rb_dlink_list yy_opm_scanner_list;
 
 static char *yy_privset_extends = NULL;
@@ -382,9 +383,9 @@ static struct mode_table shared_table[] =
 	{ "kline",	SHARED_PKLINE|SHARED_TKLINE	},
 	{ "xline",	SHARED_PXLINE|SHARED_TXLINE	},
 	{ "resv",	SHARED_PRESV|SHARED_TRESV	},
-	{ "dline",  SHARED_PDLINE|SHARED_TDLINE },
-	{ "tdline", SHARED_TDLINE	},
-	{ "pdline", SHARED_PDLINE   },
+	{ "dline",	SHARED_PDLINE|SHARED_TDLINE	},
+	{ "tdline",	SHARED_TDLINE	},
+	{ "pdline",	SHARED_PDLINE   },
 	{ "undline",    SHARED_UNDLINE  },
 	{ "tkline",	SHARED_TKLINE	},
 	{ "unkline",	SHARED_UNKLINE	},
@@ -2041,7 +2042,7 @@ static int
 conf_begin_opm(struct TopConf *tc)
 {
 	yy_opm_address_ipv4 = yy_opm_address_ipv6 = NULL;
-	yy_opm_port_ipv4 = yy_opm_port_ipv6 = 0;
+	yy_opm_port_ipv4 = yy_opm_port_ipv6 = yy_opm_timeout = 0;
 	return 0;
 }
 
@@ -2089,6 +2090,10 @@ conf_end_opm(struct TopConf *tc)
 	/* If there's no listeners... */
 	fail = (yy_opm_port_ipv4 == 0 || yy_opm_port_ipv6 == 0);
 
+	if(!fail && yy_opm_timeout > 0)
+		/* Send timeout */
+		set_authd_timeout("opm_timeout", yy_opm_timeout);
+
 end:
 	RB_DLINK_FOREACH_SAFE(ptr, nptr, yy_opm_scanner_list.head)
 	{
@@ -2106,6 +2111,19 @@ end:
 	return 0;
 }
 
+static void
+conf_set_opm_timeout(void *data)
+{
+	int timeout = *((int *)data);
+
+	if(timeout <= 0 || timeout > 60)
+	{
+		conf_report_error("opm::timeout value %d is bogus, ignoring", timeout);
+		return;
+	}
+
+	yy_opm_timeout = timeout;
+}
 
 static void
 conf_set_opm_listen_address_both(void *data, bool ipv6)
@@ -2827,6 +2845,7 @@ newconf_init()
 	add_conf_item("blacklist", "reject_reason", CF_QSTRING, conf_set_blacklist_reason);
 
 	add_top_conf("opm", conf_begin_opm, conf_end_opm, NULL);
+	add_conf_item("opm", "timeout", CF_INT, conf_set_opm_timeout);
 	add_conf_item("opm", "listen_ipv4", CF_QSTRING, conf_set_opm_listen_address_ipv4);
 	add_conf_item("opm", "listen_ipv6", CF_QSTRING, conf_set_opm_listen_address_ipv6);
 	add_conf_item("opm", "port_v4", CF_INT, conf_set_opm_listen_port_ipv4);
