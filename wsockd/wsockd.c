@@ -97,7 +97,7 @@ typedef struct _conn
 
 #ifdef _WIN32
 char *
-strcasestr(const char *s, *find)
+strcasestr(const char *s, const char *find)
 {
 	char c, sc;
 	size_t len;
