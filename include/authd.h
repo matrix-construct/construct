@@ -50,7 +50,6 @@ void authd_initiate_client(struct Client *);
 void authd_accept_client(struct Client *client_p, const char *ident, const char *host);
 void authd_reject_client(struct Client *client_p, const char *ident, const char *host, char cause, const char *data, const char *reason);
 void authd_abort_client(struct Client *);
-const char *get_provider_string(char cause);
 
 void add_blacklist(const char *host, const char *reason, uint8_t iptype, rb_dlink_list *filters);
 void del_blacklist(const char *host);

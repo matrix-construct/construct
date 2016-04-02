@@ -182,7 +182,7 @@ static void
 cmd_accept_client(int parc, char **parv)
 {
 	struct Client *client_p;
-	
+
 	/* cid to uid (retrieve and delete) */
 	if((client_p = str_cid_to_client(parv[1], true)) == NULL)
 		return;
@@ -273,15 +273,14 @@ parse_authd_reply(rb_helper * helper)
 {
 	ssize_t len;
 	int parc;
-	char authdBuf[READBUF_SIZE];
+	char buf[READBUF_SIZE];
 	char *parv[MAXPARA + 1];
 
-	while((len = rb_helper_read(helper, authdBuf, sizeof(authdBuf))) > 0)
+	while((len = rb_helper_read(helper, buf, sizeof(buf))) > 0)
 	{
 		struct authd_cb *cmd;
 
-		parc = rb_string_to_array(authdBuf, parv, MAXPARA+1);
-
+		parc = rb_string_to_array(buf, parv, MAXPARA+1);
 		cmd = &authd_cmd_tab[*parv[0]];
 		if(cmd->fn != NULL)
 		{
@@ -492,23 +491,6 @@ timeout_dead_authd_clients(void *notused __unused)
 	{
 		if(client_p->preClient->authd_timeout < rb_current_time())
 			authd_abort_client(client_p);
-	}
-}
-
-/* Turn a cause char (who rejected us) into the name of the provider */
-const char *
-get_provider_string(char cause)
-{
-	switch(cause)
-	{
-	case 'B':
-		return "Blacklist";
-	case 'D':
-		return "rDNS";
-	case 'I':
-		return "Ident";
-	default:
-		return "Unknown";
 	}
 }
 
