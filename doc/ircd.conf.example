@@ -28,6 +28,7 @@
 #loadmodule "extensions/m_extendchans";
 #loadmodule "extensions/m_findforwards";
 #loadmodule "extensions/m_identify";
+#loadmodule "extensions/m_locops";
 #loadmodule "extensions/no_oper_invis";
 #loadmodule "extensions/sno_farconnect";
 #loadmodule "extensions/sno_globalkline";

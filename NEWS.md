@@ -1,6 +1,6 @@
 # News
 
-This is charybdis 3.6-dev, Copyright (c) 2005-2016 Charybdis team.
+This is charybdis 4.0-dev, Copyright (c) 2005-2016 Charybdis team.
 See LICENSE for licensing details (GPL v2).
 
 ## charybdis-3.6-dev
@@ -36,6 +36,9 @@ See LICENSE for licensing details (GPL v2).
 - DNS, ident, and blacklist lookups have been moved to a dedicated daemon known
   as authd. Some cosmetic changes to blacklist statistics and rejection notices
   have resulted.
+- An experimental OPM scanner has been added to authd. Plaintext SOCKS4,
+  SOCKS5, and HTTP CONNECT proxies can be checked for.
+- The LOCOPS command has been moved from core to an extension.
 
 ### conf
 - Add the ability to strip color codes from topics unconditionally.
@@ -43,14 +46,16 @@ See LICENSE for licensing details (GPL v2).
 
 ### docs
 - The documentation has been cleaned up; obsolete files have been purged, and
-  stuff has been renamed and shuffled around to be more consistent.
+  files have been renamed and shuffled around to be more consistent.
 
 ### code
-- irc_dictionary and irc_radixtree stuff is now in librb, prefixed accordingly.
-  Typedefs have been added for consistency reasons. For example, now you would
-  write `rb_dictionary *foo` and `RB_DICTIONARY_FOREACH`.
-- C99 bools have been added. Don't use ints as simple true/false flags anymore.
-  Accordingly, the `YES`/`NO` and `TRUE`/`FALSE` macros have been removed.
+- irc_dictionary and irc_radixtree related functions are now in librb, and
+  prefixed accordingly. Typedefs have been added for consistency with existing
+  data structures. For example, now you would write `rb_dictionary *foo` and
+  `RB_DICTIONARY_FOREACH`.
+- C99 bools are now included and used in the code. Don't use ints as simple true
+  or false flags anymore. In accordance with this change, the `YES`/`NO` and
+  `TRUE`/`FALSE` macros have been removed.
 - libratbox has been renamed to librb, as we have diverged from upstream long
   ago.
 - Almost all 2.8-style hashtable structures have been moved to dictionaries or

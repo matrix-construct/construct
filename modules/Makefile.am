@@ -34,7 +34,6 @@ auto_load_mod_LTLIBRARIES = \
   m_knock.la \
   m_links.la \
   m_list.la \
-  m_locops.la \
   m_lusers.la \
   m_map.la \
   m_monitor.la \
