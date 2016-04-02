@@ -25,12 +25,14 @@
 #include "ircd.h"
 #include "snomask.h"
 #include "sslproc.h"
+#include "wsproc.h"
 #include "privilege.h"
 #include "chmode.h"
 
 #define CF_TYPE(x) ((x) & CF_MTYPE)
 
 static int yy_defer_accept = 1;
+static int yy_wsock = 0;
 
 struct TopConf *conf_cur_block;
 static char *conf_cur_block_name = NULL;
@@ -852,6 +854,12 @@ conf_set_listen_defer_accept(void *data)
 }
 
 static void
+conf_set_listen_wsock(void *data)
+{
+	yy_wsock = *(unsigned int *) data;
+}
+
+static void
 conf_set_listen_port_both(void *data, int ssl)
 {
 	conf_parm_t *args = data;
@@ -870,9 +878,9 @@ conf_set_listen_port_both(void *data, int ssl)
 				conf_report_warning("listener 'ANY/%d': support for plaintext listeners may be removed in a future release per RFC 7194.  "
                                                     "It is suggested that users be migrated to SSL/TLS connections.", args->v.number);
 			}
-			add_listener(args->v.number, listener_address, AF_INET, ssl, ssl || yy_defer_accept);
+			add_listener(args->v.number, listener_address, AF_INET, ssl, ssl || yy_defer_accept, yy_wsock);
 #ifdef RB_IPV6
-			add_listener(args->v.number, listener_address, AF_INET6, ssl, ssl || yy_defer_accept);
+			add_listener(args->v.number, listener_address, AF_INET6, ssl, ssl || yy_defer_accept, yy_wsock);
 #endif
                 }
 		else
@@ -891,7 +899,7 @@ conf_set_listen_port_both(void *data, int ssl)
                                                     "It is suggested that users be migrated to SSL/TLS connections.", listener_address, args->v.number);
 			}
 
-			add_listener(args->v.number, listener_address, family, ssl, ssl || yy_defer_accept);
+			add_listener(args->v.number, listener_address, family, ssl, ssl || yy_defer_accept, yy_wsock);
                 }
 	}
 }
@@ -2774,6 +2782,7 @@ newconf_init()
 
 	add_top_conf("listen", conf_begin_listen, conf_end_listen, NULL);
 	add_conf_item("listen", "defer_accept", CF_YESNO, conf_set_listen_defer_accept);
+	add_conf_item("listen", "wsock", CF_YESNO, conf_set_listen_wsock);
 	add_conf_item("listen", "port", CF_INT | CF_FLIST, conf_set_listen_port);
 	add_conf_item("listen", "sslport", CF_INT | CF_FLIST, conf_set_listen_sslport);
 	add_conf_item("listen", "ip", CF_QSTRING, conf_set_listen_address);

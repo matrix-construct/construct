@@ -45,6 +45,7 @@
 #include "cache.h"
 #include "privilege.h"
 #include "sslproc.h"
+#include "wsproc.h"
 #include "bandbi.h"
 #include "operhash.h"
 #include "chmode.h"
@@ -856,6 +857,9 @@ validate_conf(void)
 	if(ServerInfo.ssld_count < 1)
 		ServerInfo.ssld_count = 1;
 
+	/* XXX: configurable? */
+	ServerInfo.wsockd_count = 1;
+
 	if(!rb_setup_ssl_server(ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params, ServerInfo.ssl_cipher_list))
 	{
 		ilog(L_MAIN, "WARNING: Unable to setup SSL.");
@@ -870,6 +874,12 @@ validate_conf(void)
 		int start = ServerInfo.ssld_count - get_ssld_count();
 		/* start up additional ssld if needed */
 		start_ssldaemon(start, ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params, ServerInfo.ssl_cipher_list);
+	}
+
+	if(ServerInfo.wsockd_count > get_wsockd_count())
+	{
+		int start = ServerInfo.wsockd_count - get_ssld_count();
+		start_wsockd(start);
 	}
 
 	/* General conf */

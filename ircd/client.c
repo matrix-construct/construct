@@ -51,6 +51,7 @@
 #include "scache.h"
 #include "rb_dictionary.h"
 #include "sslproc.h"
+#include "wsproc.h"
 #include "s_assert.h"
 
 #define DEBUG_EXITED_CLIENTS
@@ -308,11 +309,14 @@ free_local_client(struct Client *client_p)
 	if (client_p->localClient->privset)
 		privilegeset_unref(client_p->localClient->privset);
 
-	if(IsSSL(client_p))
-	    ssld_decrement_clicount(client_p->localClient->ssl_ctl);
+	if (IsSSL(client_p))
+		ssld_decrement_clicount(client_p->localClient->ssl_ctl);
 
-	if(IsCapable(client_p, CAP_ZIP))
-	    ssld_decrement_clicount(client_p->localClient->z_ctl);
+	if (IsCapable(client_p, CAP_ZIP))
+		ssld_decrement_clicount(client_p->localClient->z_ctl);
+
+	if (client_p->localClient->ws_ctl != NULL)
+		wsockd_decrement_clicount(client_p->localClient->ws_ctl);
 
 	rb_bh_free(lclient_heap, client_p->localClient);
 	client_p->localClient = NULL;

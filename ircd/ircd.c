@@ -60,6 +60,7 @@
 #include "patchlevel.h"
 #include "serno.h"
 #include "sslproc.h"
+#include "wsproc.h"
 #include "chmode.h"
 #include "privilege.h"
 #include "bandbi.h"
@@ -797,6 +798,7 @@ charybdis_main(int argc, char *argv[])
 
 	init_bandb();
 	init_ssld();
+	init_wsockd();
 
 	rehash_bans();
 

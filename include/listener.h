@@ -38,11 +38,12 @@ struct Listener
 	int active;		/* current state of listener */
 	int ssl;		/* ssl listener */
 	int defer_accept;	/* use TCP_DEFER_ACCEPT */
+	int wsock;		/* wsock listener */
 	struct rb_sockaddr_storage addr;
 	char vhost[HOSTLEN + 1];	/* virtual name of listener */
 };
 
-extern void add_listener(int port, const char *vaddr_ip, int family, int ssl, int defer_accept);
+extern void add_listener(int port, const char *vaddr_ip, int family, int ssl, int defer_accept, int wsock);
 extern void close_listener(struct Listener *listener);
 extern void close_listeners(void);
 extern const char *get_listener_name(const struct Listener *listener);

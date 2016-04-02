@@ -39,6 +39,7 @@
 #include "s_conf.h"
 #include "hostmask.h"
 #include "sslproc.h"
+#include "wsproc.h"
 #include "hash.h"
 #include "s_assert.h"
 #include "logger.h"
@@ -324,7 +325,7 @@ find_listener(struct rb_sockaddr_storage *addr)
  * the format "255.255.255.255"
  */
 void
-add_listener(int port, const char *vhost_ip, int family, int ssl, int defer_accept)
+add_listener(int port, const char *vhost_ip, int family, int ssl, int defer_accept, int wsock)
 {
 	struct Listener *listener;
 	struct rb_sockaddr_storage vaddr;
@@ -400,6 +401,7 @@ add_listener(int port, const char *vhost_ip, int family, int ssl, int defer_acce
 	listener->F = NULL;
 	listener->ssl = ssl;
 	listener->defer_accept = defer_accept;
+	listener->wsock = wsock;
 
 	if(inetport(listener))
 		listener->active = 1;
@@ -484,6 +486,23 @@ add_connection(struct Listener *listener, rb_fde_t *F, struct sockaddr *sai, str
 		}
 		F = xF[0];
 		SetSSL(new_client);
+	}
+
+	if (listener->wsock)
+	{
+		rb_fde_t *xF[2];
+		if(rb_socketpair(AF_UNIX, SOCK_STREAM, 0, &xF[0], &xF[1], "Incoming wsockd Connection") == -1)
+		{
+			free_client(new_client);
+			return;
+		}
+		new_client->localClient->ws_ctl = start_wsockd_accept(F, xF[1], connid_get(new_client));        /* this will close F for us */
+		if(new_client->localClient->ws_ctl == NULL)
+		{
+			free_client(new_client);
+			return;
+		}
+		F = xF[0];
 	}
 
 	memcpy(&new_client->localClient->ip, sai, sizeof(struct rb_sockaddr_storage));
