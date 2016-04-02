@@ -215,6 +215,9 @@ reject_client(struct auth_client *auth, provider_t id, const char *data, const c
 	case PROVIDER_BLACKLIST:
 		reject = 'B';
 		break;
+	case PROVIDER_OPM:
+		reject = 'O';
+		break;
 	default:
 		reject = 'N';
 		break;
