@@ -134,12 +134,8 @@ cid_to_client(uint32_t cid, bool delete)
 	else
 		client_p = rb_dictionary_retrieve(cid_clients, RB_UINT_TO_POINTER(cid));
 
-	if(client_p == NULL)
-	{
-		iwarn("authd sent us back a bad client ID: %ux", cid);
-		restart_authd();
-		return NULL;
-	}
+	/* If the client's not found, that's okay, it may have already gone away.
+	 * --Elizafox */
 
 	return client_p;
 }
