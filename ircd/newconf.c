@@ -2053,7 +2053,7 @@ conf_end_opm(struct TopConf *tc)
 	rb_dlink_node *ptr, *nptr;
 	bool fail = false;
 
-	if(!rb_dlink_list_length(&yy_opm_scanner_list))
+	if(rb_dlink_list_length(&yy_opm_scanner_list) == 0)
 	{
 		conf_report_error("No opm scanners configured -- disabling opm.");
 		fail = true;
@@ -2434,7 +2434,7 @@ conf_call_set(struct TopConf *tc, char *item, conf_parm_t * value)
 	if((cf = find_conf_item(tc, item)) == NULL)
 	{
 		conf_report_error
-			("Non-existant configuration setting %s::%s.", tc->tc_name, (char *) item);
+			("Non-existent configuration setting %s::%s.", tc->tc_name, (char *) item);
 		return -1;
 	}
 

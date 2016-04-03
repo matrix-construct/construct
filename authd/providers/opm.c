@@ -621,7 +621,7 @@ opm_start(struct auth_client *auth)
 	rb_dlink_node *ptr;
 	struct opm_lookup *lookup = rb_malloc(sizeof(struct opm_lookup));
 
-	if(!opm_enable || !rb_dlink_list_length(&proxy_scanners))
+	if(!opm_enable || rb_dlink_list_length(&proxy_scanners) == 0)
 	{
 		notice_client(auth->cid, "*** Proxy scanning disabled, not scanning");
 		return true;
@@ -836,7 +836,7 @@ delete_opm_scanner(const char *key __unused, int parc __unused, const char **par
 				rb_dlinkDelete(&scan->node, &lookup->scans);
 				rb_free(scan);
 
-				if(!rb_dlink_list_length(&lookup->scans))
+				if(rb_dlink_list_length(&lookup->scans) == 0)
 					opm_cancel(auth);
 
 				break;
@@ -847,7 +847,7 @@ delete_opm_scanner(const char *key __unused, int parc __unused, const char **par
 	rb_dlinkDelete(&proxy->node, &proxy_scanners);
 	rb_free(proxy);
 
-	if(!rb_dlink_list_length(proxy_scanners))
+	if(rb_dlink_list_length(&proxy_scanners) == 0)
 		opm_enable = false;
 }
 
