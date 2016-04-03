@@ -433,11 +433,10 @@ blacklist {
  * notified upon connect if they are being scanned.
  *
  * WARNING:
- * These settings are considered experimental, and as of this writing, the
- * Charybdis scanner is not as comprehensive as the one available in HOPM. Only
- * basic SOCKS4 and SOCKS5 scanning is performed on a few well-known ports. You
- * may disable the open proxy scanning feature by deleting this block if you are
- * uncomfortable with this.
+ * These settings are considered experimental. Only the most common proxy types
+ * are checked for (Charybdis is immune from POST and GET proxies). If you are
+ * not comfortable with experimental code, remove or comment out the block
+ * below to disable the proxy scanner.
  */
 opm {
 	/* IPv4 address to listen on. This must be a publicly facing IP address
