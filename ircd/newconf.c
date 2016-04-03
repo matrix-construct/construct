@@ -2054,7 +2054,7 @@ conf_end_opm(struct TopConf *tc)
 
 	if(!rb_dlink_list_length(&yy_opm_scanner_list))
 	{
-		conf_report_error("No opm scanners configured, disabling opm.");
+		conf_report_error("No opm scanners configured -- disabling opm.");
 		fail = true;
 		goto end;
 	}
@@ -2089,10 +2089,13 @@ conf_end_opm(struct TopConf *tc)
 
 	/* If there's no listeners... */
 	fail = (yy_opm_port_ipv4 == 0 || yy_opm_port_ipv6 == 0);
-
-	if(!fail && yy_opm_timeout > 0)
+	if(!fail && yy_opm_timeout > 0 && yy_opm_timeout < 60)
 		/* Send timeout */
 		set_authd_timeout("opm_timeout", yy_opm_timeout);
+	else if(fail)
+		conf_report_error("No opm listeners -- disabling");
+	else if(yy_opm_timeout <= 0 || yy_opm_timeout >= 60)
+		conf_report_error("opm::timeout value is invalid -- ignoring");
 
 end:
 	RB_DLINK_FOREACH_SAFE(ptr, nptr, yy_opm_scanner_list.head)
