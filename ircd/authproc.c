@@ -597,7 +597,7 @@ create_opm_listener(const char *ip, uint16_t port)
 void
 opm_check_enable(bool enabled)
 {
-	rb_helper_write(authd_helper, "O opm_enable %d", enabled ? 1 : 0);
+	rb_helper_write(authd_helper, "O opm_enabled %d", enabled ? 1 : 0);
 }
 
 /* Create an OPM proxy scanner */
@@ -605,4 +605,16 @@ void
 create_opm_proxy_scanner(const char *type, uint16_t port)
 {
 	rb_helper_write(authd_helper, "O opm_scanner %s %hu", type, port);
+}
+
+void
+delete_opm_proxy_scanner(const char *type, uint16_t port)
+{
+	rb_helper_write(authd_helper, "O opm_scanner_del %s %hu", type, port);
+}
+
+void
+delete_opm_proxy_scanner_all(void)
+{
+	rb_helper_write(authd_helper, "O opm_scanner_del_all");
 }

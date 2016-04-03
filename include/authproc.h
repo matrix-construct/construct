@@ -54,10 +54,14 @@ void authd_abort_client(struct Client *);
 void add_blacklist(const char *host, const char *reason, uint8_t iptype, rb_dlink_list *filters);
 void del_blacklist(const char *host);
 void del_blacklist_all(void);
+
 bool set_authd_timeout(const char *key, int timeout);
 void ident_check_enable(bool enabled);
+
 void create_opm_listener(const char *ip, uint16_t port);
 void opm_check_enable(bool enabled);
 void create_opm_proxy_scanner(const char *type, uint16_t port);
+void delete_opm_proxy_scanner(const char *type, uint16_t port);
+void delete_opm_proxy_scanner_all(void);
 
 #endif
