@@ -118,20 +118,43 @@ typedef struct {
 
 typedef struct {
 	ws_frame_hdr_t header;
-	uint8_t masking_key[WEBSOCKET_MASK_LENGTH];
 } ws_frame_t;
 
 typedef struct {
 	ws_frame_hdr_t header;
 	uint16_t payload_length_extended;
-	uint8_t masking_key[WEBSOCKET_MASK_LENGTH];
 } ws_frame_ext_t;
 
 typedef struct {
 	ws_frame_hdr_t header;
 	uint64_t payload_length_extended;
-	uint8_t masking_key[WEBSOCKET_MASK_LENGTH];
 } ws_frame_ext2_t;
+
+static inline int
+ws_frame_get_opcode(ws_frame_hdr_t *header)
+{
+	return header->opcode_rsv_fin & 0xF;
+}
+
+static inline void
+ws_frame_set_opcode(ws_frame_hdr_t *header, int opcode)
+{
+	header->opcode_rsv_fin &= ~0xF;
+	header->opcode_rsv_fin |= opcode & 0xF;
+}
+
+static inline int
+ws_frame_get_fin(ws_frame_hdr_t *header)
+{
+	return (header->opcode_rsv_fin >> 7) & 0x1;
+}
+
+static inline void
+ws_frame_set_fin(ws_frame_hdr_t *header, int fin)
+{
+	header->opcode_rsv_fin &= ~(0x1 << 7);
+	header->opcode_rsv_fin |= (fin << 7) & (0x1 << 7);
+}
 
 #ifdef _WIN32
 char *
@@ -339,8 +362,18 @@ conn_mod_write(conn_t * conn, void *data, size_t len)
 static void
 conn_mod_write_frame(conn_t * conn, void *data, size_t len)
 {
+	ws_frame_ext_t hdr;
+
 	if(IsDead(conn))	/* no point in queueing to a dead man */
 		return;
+
+	ws_frame_set_opcode(&hdr.header, WEBSOCKET_OPCODE_BINARY_FRAME);
+	hdr.header.payload_length_mask = 127;
+	hdr.payload_length_extended = htons(len + 7);
+
+	conn_mod_write(conn, &hdr, sizeof(hdr));
+	conn_mod_write(conn, data, len);
+	conn_mod_write(conn, "\r\n\0", 3);
 }
 
 static void
@@ -467,11 +500,13 @@ conn_mod_handshake_process(conn_t *conn)
 {
 	char inbuf[READBUF_SIZE];
 
+	memset(inbuf, 0, sizeof inbuf);
+
 	while (1)
 	{
 		char *p = NULL;
 
-		size_t dolen = rb_rawbuf_get(conn->modbuf_in, inbuf, sizeof inbuf);
+		int dolen = rb_rawbuf_get(conn->modbuf_in, inbuf, sizeof inbuf);
 		if (!dolen)
 			break;
 
@@ -528,6 +563,9 @@ static void
 conn_mod_read_cb(rb_fde_t *fd, void *data)
 {
 	char inbuf[READBUF_SIZE];
+
+	memset(inbuf, 0, sizeof inbuf);
+
 	conn_t *conn = data;
 	int length = 0;
 	if (conn == NULL)
@@ -580,7 +618,8 @@ plain_check_cork(conn_t * conn)
 		SetCork(conn);
 		rb_setselect(conn->plain_fd, RB_SELECT_READ, NULL, NULL);
 		/* try to write */
-		conn_mod_write_sendq(conn->mod_fd, conn);
+		if (IsKeyed(conn))
+			conn_mod_write_sendq(conn->mod_fd, conn);
 		return true;
 	}
 
@@ -592,20 +631,28 @@ conn_plain_process_recvq(conn_t *conn)
 {
 	char inbuf[READBUF_SIZE];
 
+	memset(inbuf, 0, sizeof inbuf);
+
 	while (1)
 	{
-		size_t dolen = rb_linebuf_get(&conn->plainbuf_in, inbuf, sizeof inbuf, LINEBUF_COMPLETE, LINEBUF_PARSED);
+		int dolen = rb_linebuf_get(&conn->plainbuf_in, inbuf, sizeof inbuf, LINEBUF_COMPLETE, LINEBUF_PARSED);
 		if (!dolen)
 			break;
 
 		conn_mod_write_frame(conn, inbuf, dolen);
 	}
+
+	if (IsKeyed(conn))
+		conn_mod_write_sendq(conn->mod_fd, conn);
 }
 
 static void
 conn_plain_read_cb(rb_fde_t *fd, void *data)
 {
 	char inbuf[READBUF_SIZE];
+
+	memset(inbuf, 0, sizeof inbuf);
+
 	conn_t *conn = data;
 	int length = 0;
 	if(conn == NULL)
@@ -633,7 +680,8 @@ conn_plain_read_cb(rb_fde_t *fd, void *data)
 		if(length < 0)
 		{
 			rb_setselect(conn->plain_fd, RB_SELECT_READ, conn_plain_read_cb, conn);
-			conn_plain_process_recvq(conn);
+			if (IsKeyed(conn))
+				conn_plain_process_recvq(conn);
 			return;
 		}
 		conn->plain_in += length;
@@ -695,6 +743,7 @@ wsock_process(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 		rb_set_type(conn->plain_fd, RB_FD_SOCKET);
 
 	conn_mod_read_cb(conn->mod_fd, conn);
+	conn_plain_read_cb(conn->plain_fd, conn);
 }
 
 static void
