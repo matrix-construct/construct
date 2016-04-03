@@ -319,6 +319,30 @@ clean_dead_conns(void *unused)
 }
 
 static void
+conn_plain_write_sendq(rb_fde_t *fd, void *data)
+{
+	conn_t *conn = data;
+	int retlen;
+
+	if(IsDead(conn))
+		return;
+
+	while((retlen = rb_linebuf_flush(fd, &conn->plainbuf_out)) > 0)
+		conn->plain_out += retlen;
+
+	if(retlen == 0 || (retlen < 0 && !rb_ignore_errno(errno)))
+	{
+		close_conn(data, NO_WAIT, NULL);
+		return;
+	}
+
+	if(rb_linebuf_alloclen(&conn->plainbuf_out) > 0)
+		rb_setselect(conn->plain_fd, RB_SELECT_WRITE, conn_plain_write_sendq, conn);
+	else
+		rb_setselect(conn->plain_fd, RB_SELECT_WRITE, NULL, NULL);
+}
+
+static void
 conn_mod_write_sendq(rb_fde_t *fd, void *data)
 {
 	conn_t *conn = data;
@@ -637,6 +661,8 @@ conn_mod_process(conn_t *conn)
 			break;
 		}
 	}
+
+	conn_plain_write_sendq(conn->plain_fd, conn);
 }
 
 static void
@@ -728,7 +754,10 @@ conn_mod_read_cb(rb_fde_t *fd, void *data)
                 if (length < 0)
 		{
 			if (rb_ignore_errno(errno))
+			{
 				rb_setselect(fd, RB_SELECT_READ, conn_mod_read_cb, conn);
+				conn_plain_write_sendq(conn->plain_fd, conn);
+			}
 			else
 				close_conn(conn, NO_WAIT, "Connection closed");
 
