@@ -522,6 +522,124 @@ cleanup_bad_message(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 }
 
 static void
+ws_frame_unmask(char *msg, int length, uint8_t maskval[WEBSOCKET_MASK_LENGTH])
+{
+	int i;
+
+	for (i = 0; i < length; i++)
+		msg[i] = msg[i] ^ maskval[i % 4];
+}
+
+static void
+conn_mod_process_frame(conn_t *conn, ws_frame_hdr_t *hdr, int masked)
+{
+	char msg[WEBSOCKET_MAX_UNEXTENDED_PAYLOAD_DATA_LENGTH];
+	uint8_t maskval[WEBSOCKET_MASK_LENGTH];
+	int dolen;
+
+	/* if we're masked, we get to collect the masking key for this frame */
+	if (masked)
+	{
+		dolen = rb_rawbuf_get(conn->modbuf_in, maskval, sizeof(maskval));
+		if (!dolen)
+		{
+			close_conn(conn, WAIT_PLAIN, "websocket error: fault unpacking unmask key");
+			return;
+		}
+	}
+
+	dolen = rb_rawbuf_get(conn->modbuf_in, msg, hdr->payload_length_mask);
+	if (!dolen)
+	{
+		close_conn(conn, WAIT_PLAIN, "websocket error: fault unpacking message");
+		return;
+	}
+
+	if (masked)
+		ws_frame_unmask(msg, dolen, maskval);
+
+	rb_linebuf_parse(&conn->plainbuf_out, msg, dolen, 1);
+}
+
+static void
+conn_mod_process_large(conn_t *conn, ws_frame_hdr_t *hdr, int masked)
+{
+	char msg[READBUF_SIZE];
+	uint16_t msglen;
+	uint8_t maskval[WEBSOCKET_MASK_LENGTH];
+	int dolen;
+
+	memset(msg, 0, sizeof msg);
+
+	dolen = rb_rawbuf_get(conn->modbuf_in, &msglen, sizeof(msglen));
+	if (!dolen)
+	{
+		close_conn(conn, WAIT_PLAIN, "websocket error: fault unpacking message size");
+		return;
+	}
+
+	msglen = ntohs(msglen);
+
+	if (masked)
+	{
+		dolen = rb_rawbuf_get(conn->modbuf_in, maskval, sizeof(maskval));
+		if (!dolen)
+		{
+			close_conn(conn, WAIT_PLAIN, "websocket error: fault unpacking unmask key");
+			return;
+		}
+	}
+
+	dolen = rb_rawbuf_get(conn->modbuf_in, msg, msglen);
+	if (!dolen)
+	{
+		close_conn(conn, WAIT_PLAIN, "websocket error: fault unpacking message");
+		return;
+	}
+
+	if (masked)
+		ws_frame_unmask(msg, dolen, maskval);
+
+	rb_linebuf_parse(&conn->plainbuf_out, msg, dolen, 1);
+}
+
+static void
+conn_mod_process_huge(conn_t *conn, ws_frame_hdr_t *hdr, int masked)
+{
+	/* XXX implement me */
+}
+
+static void
+conn_mod_process(conn_t *conn)
+{
+	ws_frame_hdr_t hdr;
+
+	while (1)
+	{
+		int masked;
+		int dolen = rb_rawbuf_get(conn->modbuf_in, &hdr, sizeof(hdr));
+		if (dolen != sizeof(hdr))
+			break;
+
+		masked = (hdr.payload_length_mask >> 7) == 1;
+
+		hdr.payload_length_mask &= 0x7f;
+		switch (hdr.payload_length_mask)
+		{
+		case 126:
+			conn_mod_process_large(conn, &hdr, masked);
+			break;
+		case 127:
+			conn_mod_process_huge(conn, &hdr, masked);
+			break;
+		default:
+			conn_mod_process_frame(conn, &hdr, masked);
+			break;
+		}
+	}
+}
+
+static void
 conn_mod_handshake_process(conn_t *conn)
 {
 	char inbuf[READBUF_SIZE];
@@ -625,6 +743,8 @@ conn_mod_read_cb(rb_fde_t *fd, void *data)
 		rb_rawbuf_append(conn->modbuf_in, inbuf, length);
 		if (!IsKeyed(conn))
 			conn_mod_handshake_process(conn);
+		else
+			conn_mod_process(conn);
 
 		if (length < sizeof(inbuf))
 		{
