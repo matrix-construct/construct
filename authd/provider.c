@@ -86,7 +86,7 @@ load_provider(struct auth_provider *provider)
 	if(provider->init != NULL)
 		provider->init();
 
-	rb_dlinkAdd(provider, &provider->node, &auth_providers);
+	rb_dlinkAddTail(provider, &provider->node, &auth_providers);
 }
 
 void
