@@ -506,6 +506,8 @@ create_listener(const char *ip, uint16_t port)
 		exit(EX_PROVIDER_ERROR);
 	}
 
+	SET_SS_PORT(&addr, htons(port));
+
 #ifdef RB_IPV6
 	if(GET_SS_FAMILY(&addr) == AF_INET6)
 	{
@@ -556,14 +558,6 @@ create_listener(const char *ip, uint16_t port)
 		warn_opers(L_CRIT, "OPM: cannot set options on socket: %s", strerror(errno));
 		exit(EX_PROVIDER_ERROR);
 	}
-
-	/* Set up ports for binding */
-#ifdef RB_IPV6
-	if(GET_SS_FAMILY(&addr) == AF_INET6)
-		((struct sockaddr_in6 *)&addr)->sin6_port = htons(port);
-	else
-#endif
-		((struct sockaddr_in *)&addr)->sin_port = htons(port);
 
 	if(bind(rb_get_fd(F), (struct sockaddr *)&addr, GET_SS_LEN(&addr)))
 	{
