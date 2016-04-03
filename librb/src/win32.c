@@ -372,7 +372,7 @@ rb_init_netio_win32(void)
 {
 	/* this muchly sucks, but i'm too lazy to do overlapped i/o, maybe someday... -androsyn */
 	WNDCLASS wc;
-	static const char *classname = "ircd-ratbox-class";
+	static const char *classname = "charybdis-class";
 
 	wc.style = 0;
 	wc.lpfnWndProc = (WNDPROC) rb_process_events;
