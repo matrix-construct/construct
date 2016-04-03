@@ -104,13 +104,13 @@ handle_reload(int parc, char *parv[])
 {
 	authd_reload_handler handler;
 
-	if(parc < 2)
+	if(parc <= 2)
 	{
 		/* Reload all handlers */
 		for(size_t i = 0; i < 256; i++)
 		{
 			if ((handler = authd_reload_handlers[(unsigned char) i]) != NULL)
-				handler(parv[1][0]);
+				handler('\0');
 		}
 
 		return;
