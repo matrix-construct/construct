@@ -2110,6 +2110,9 @@ end:
 		rb_free(scanner);
 	}
 
+	if(!fail)
+		opm_check_enable(true);
+
 	rb_free(yy_opm_address_ipv4);
 	rb_free(yy_opm_address_ipv6);
 	return 0;
