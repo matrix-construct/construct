@@ -463,7 +463,7 @@ establish_connection(struct auth_client *auth, struct opm_proxy *proxy)
 	scan->proxy = proxy;
 	if((scan->F = rb_socket(GET_SS_FAMILY(&auth->c_addr), SOCK_STREAM, 0, proxy->note)) == NULL)
 	{
-		warn_opers(L_CRIT, "OPM: could not create OPM socket (proto %s): %s", proxy->note, strerror(errno));
+		warn_opers(L_WARN, "OPM: could not create OPM socket (proto %s): %s", proxy->note, strerror(errno));
 		rb_free(scan);
 		return;
 	}
