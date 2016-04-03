@@ -582,7 +582,15 @@ ident_check_enable(bool enabled)
 void
 create_opm_listener(const char *ip, uint16_t port)
 {
-	rb_helper_write(authd_helper, "O opm_listener %s %hu", ip, port);
+	char ipbuf[HOSTIPLEN];
+	rb_strlcpy(ipbuf, ip, sizeof(ipbuf));
+	if(ipbuf[0] == ':')
+	{
+		memmove(ipbuf + 1, ipbuf, sizeof(ipbuf) - 1);
+		ipbuf[0] = '0';
+	}
+
+	rb_helper_write(authd_helper, "O opm_listener %s %hu", ipbuf, port);
 }
 
 /* Disable all OPM scans */
