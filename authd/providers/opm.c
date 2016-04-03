@@ -846,6 +846,9 @@ delete_opm_scanner(const char *key __unused, int parc __unused, const char **par
 
 	rb_dlinkDelete(&proxy->node, &proxy_scanners);
 	rb_free(proxy);
+
+	if(!rb_dlink_list_length(proxy_scanners))
+		opm_enable = false;
 }
 
 static void
@@ -865,6 +868,8 @@ delete_opm_scanner_all(const char *key __unused, int parc __unused, const char *
 	{
 		opm_cancel(auth);
 	}
+
+	opm_enable = false;
 }
 
 
