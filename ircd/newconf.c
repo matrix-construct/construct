@@ -296,7 +296,7 @@ conf_set_modules_module(void *data)
 	m_bn = rb_basename((char *) data);
 
 	if(findmodule_byname(m_bn) == -1)
-		load_one_module((char *) data, MAPI_ORIGIN_EXTENSION, 0);
+		load_one_module((char *) data, MAPI_ORIGIN_EXTENSION, false);
 
 	rb_free(m_bn);
 }

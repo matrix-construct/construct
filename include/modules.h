@@ -42,8 +42,8 @@ struct module
 	const char *version;
 	const char *description;
 	lt_dlhandle address;
-	int core;
-	int origin;
+	int core;	/* This is int for backwards compat reasons */
+	int origin;	/* Ditto */
 	int mapi_version;
 	void *mapi_header; /* actually struct mapi_mheader_av<mapi_version> */
 };
@@ -125,14 +125,14 @@ void mod_clear_paths(void);
 extern void load_module(char *path);
 
 /* load all modules */
-extern void load_all_modules(int warn);
+extern void load_all_modules(bool warn);
 
 /* load core modules */
-extern void load_core_modules(int);
+extern void load_core_modules(bool);
 
-extern int unload_one_module(const char *, int);
-extern int load_one_module(const char *, int, int);
-extern int load_a_module(const char *, int, int, int);
+extern bool unload_one_module(const char *, bool);
+extern bool load_one_module(const char *, int, bool);
+extern bool load_a_module(const char *, bool, int, bool);
 extern int findmodule_byname(const char *);
 extern void modules_init(void);
 
