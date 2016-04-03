@@ -253,12 +253,13 @@ load_all_modules(int warn)
 
 	while ((ldirent = readdir(system_module_dir)) != NULL)
 	{
-		size_t len;
+		size_t len = strlen(ldirent->d_name);
 
-		len = strlen(ldirent->d_name);
-		if(len > module_ext_len && !strcasecmp(ldirent->d_name + (len - module_ext_len), LT_MODULE_EXT))
+		if(len > module_ext_len &&
+			strncasecmp(ldirent->d_name + (len - module_ext_len), LT_MODULE_EXT, module_ext_len) == 0)
 		{
-			(void) snprintf(module_fq_name, sizeof(module_fq_name), "%s%c%s", ircd_paths[IRCD_PATH_AUTOLOAD_MODULES], RB_PATH_SEPARATOR, ldirent->d_name);
+			(void) snprintf(module_fq_name, sizeof(module_fq_name), "%s%c%s",
+					ircd_paths[IRCD_PATH_AUTOLOAD_MODULES], RB_PATH_SEPARATOR, ldirent->d_name);
 			(void) load_a_module(module_fq_name, warn, MAPI_ORIGIN_CORE, 0);
 		}
 
