@@ -360,20 +360,42 @@ conn_mod_write(conn_t * conn, void *data, size_t len)
 }
 
 static void
-conn_mod_write_frame(conn_t * conn, void *data, size_t len)
+conn_mod_write_short_frame(conn_t * conn, void *data, int len)
 {
-	ws_frame_ext_t hdr;
+	ws_frame_hdr_t hdr;
 
-	if(IsDead(conn))	/* no point in queueing to a dead man */
-		return;
-
-	ws_frame_set_opcode(&hdr.header, WEBSOCKET_OPCODE_BINARY_FRAME);
-	hdr.header.payload_length_mask = 127;
-	hdr.payload_length_extended = htons(len + 7);
+	ws_frame_set_opcode(&hdr, WEBSOCKET_OPCODE_BINARY_FRAME);
+	hdr.payload_length_mask = (len + 2) & 0x7f;
 
 	conn_mod_write(conn, &hdr, sizeof(hdr));
 	conn_mod_write(conn, data, len);
-	conn_mod_write(conn, "\r\n\0", 3);
+	conn_mod_write(conn, "\r\n", 2);
+}
+
+static void
+conn_mod_write_long_frame(conn_t * conn, void *data, int len)
+{
+	ws_frame_ext_t hdr;
+
+	ws_frame_set_opcode(&hdr.header, WEBSOCKET_OPCODE_BINARY_FRAME);
+	hdr.header.payload_length_mask = 126;
+	hdr.payload_length_extended = htons(len + 2);
+
+	conn_mod_write(conn, &hdr, sizeof(hdr));
+	conn_mod_write(conn, data, len);
+	conn_mod_write(conn, "\r\n", 2);
+}
+
+static void
+conn_mod_write_frame(conn_t *conn, void *data, int len)
+{
+	if(IsDead(conn))	/* no point in queueing to a dead man */
+		return;
+
+	if (len < 123)
+		return conn_mod_write_short_frame(conn, data, len);
+
+	return conn_mod_write_long_frame(conn, data, len);
 }
 
 static void
@@ -686,7 +708,7 @@ conn_plain_read_cb(rb_fde_t *fd, void *data)
 		}
 		conn->plain_in += length;
 
-		(void) rb_linebuf_parse(&conn->plainbuf_in, inbuf, sizeof(inbuf), 0);
+		(void) rb_linebuf_parse(&conn->plainbuf_in, inbuf, length, 0);
 
 		if(IsDead(conn))
 			return;
