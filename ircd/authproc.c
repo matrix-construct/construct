@@ -345,6 +345,7 @@ restart_authd_cb(rb_helper * helper)
 	}
 
 	start_authd();
+	rehash(false);	/* FIXME - needed to reload authd configuration */
 }
 
 void
