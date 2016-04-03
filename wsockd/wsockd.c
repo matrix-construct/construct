@@ -181,6 +181,7 @@ strcasestr(const char *s, const char *find)
 static void close_conn(conn_t * conn, int wait_plain, const char *fmt, ...);
 static void conn_mod_read_cb(rb_fde_t *fd, void *data);
 static void conn_plain_read_cb(rb_fde_t *fd, void *data);
+static void conn_plain_process_recvq(conn_t *conn);
 
 #define FLAG_CORK	0x01
 #define FLAG_DEAD	0x02
@@ -458,6 +459,9 @@ close_conn(conn_t * conn, int wait_plain, const char *fmt, ...)
 	int len;
 	if(IsDead(conn))
 		return;
+
+	if (IsKeyed(conn))
+		conn_plain_process_recvq(conn);
 
 	rb_rawbuf_flush(conn->modbuf_out, conn->mod_fd);
 	rb_linebuf_flush(conn->plain_fd, &conn->plainbuf_out);
