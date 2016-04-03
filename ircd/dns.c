@@ -66,8 +66,15 @@ rb_dlink_list nameservers;
 static uint32_t query_id = 0;
 static uint32_t stat_id = 0;
 
-#define ASSIGN_ID(id) (id++)
 
+static inline uint32_t
+assign_id(uint32_t *id)
+{
+	if(++(*id) == 0)
+		*id = 1;
+
+	return *id;
+}
 
 static void
 handle_dns_failure(uint32_t xid)
@@ -122,7 +129,7 @@ lookup_hostname(const char *hostname, int aftype, DNSCB callback, void *data)
 {
 	struct dnsreq *req = rb_malloc(sizeof(struct dnsreq));
 	int aft;
-	uint32_t rid = ASSIGN_ID(query_id);
+	uint32_t rid = assign_id(&query_id);
 
 	check_authd();
 
@@ -147,7 +154,7 @@ lookup_ip(const char *addr, int aftype, DNSCB callback, void *data)
 {
 	struct dnsreq *req = rb_malloc(sizeof(struct dnsreq));
 	int aft;
-	uint32_t rid = ASSIGN_ID(query_id);
+	uint32_t rid = assign_id(&query_id);
 
 	check_authd();
 
@@ -171,7 +178,7 @@ uint32_t
 get_nameservers(DNSLISTCB callback, void *data)
 {
 	struct dnsstatreq *req = rb_malloc(sizeof(struct dnsstatreq));
-	uint32_t qid = ASSIGN_ID(stat_id);
+	uint32_t qid = assign_id(&stat_id);
 
 	check_authd();
 
