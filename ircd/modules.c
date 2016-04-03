@@ -600,9 +600,9 @@ do_modrestart(struct Client *source_p)
 	while (num_mods)
 		unload_one_module(modlist[0]->name, false);
 
-	load_all_modules(0);
-	load_core_modules(0);
-	rehash(0);
+	load_all_modules(false);
+	load_core_modules(false);
+	rehash(false);
 
 	sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
 			     "Module Restart: %d modules unloaded, %d modules loaded",
