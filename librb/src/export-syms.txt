@@ -143,7 +143,7 @@ rb_rawbuf_get
 rb_rawbuf_length
 rb_read
 rb_recv_fd_buf
-rb_run_event
+rb_run_one_event
 rb_select
 rb_send_fd_buf
 rb_set_buffers

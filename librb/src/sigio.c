@@ -270,7 +270,7 @@ rb_select_sigio(long delay)
 					struct ev_entry *ev = (struct ev_entry *)si.si_ptr;
 					if(ev == NULL)
 						continue;
-					rb_run_event(ev);
+					rb_run_one_event(ev);
 					continue;
 				}
 #endif

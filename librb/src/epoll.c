@@ -366,7 +366,7 @@ signalfd_handler(rb_fde_t *F, void *data)
 #endif
 			if(ev == NULL)
 				continue;
-			rb_run_event(ev);
+			rb_run_one_event(ev);
 		}
 	}
 }
@@ -455,7 +455,7 @@ rb_read_timerfd(rb_fde_t *F, void *data)
 		return;
 	}
 	rb_setselect(F, RB_SELECT_READ, rb_read_timerfd, event);
-	rb_run_event(event);
+	rb_run_one_event(event);
 }
 
 

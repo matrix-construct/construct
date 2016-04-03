@@ -162,7 +162,7 @@ rb_select_ports(long delay)
 		} else if(pelst[i].portev_source == PORT_SOURCE_TIMER)
 		{
 			ev = (struct ev_entry *)pelst[i].portev_user;
-			rb_run_event(ev);
+			rb_run_one_event(ev);
 		}
 	}
 	return RB_OK;

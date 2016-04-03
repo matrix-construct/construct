@@ -43,7 +43,7 @@ void rb_event_find_delete(EVH * func, void *);
 void rb_event_update(struct ev_entry *, time_t freq);
 void rb_set_back_events(time_t);
 void rb_dump_events(void (*func) (char *, void *), void *ptr);
-void rb_run_event(struct ev_entry *);
+void rb_run_one_event(struct ev_entry *);
 time_t rb_event_next(void);
 
 #endif /* INCLUDED_event_h */

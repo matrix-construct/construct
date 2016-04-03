@@ -277,7 +277,7 @@ rb_select_kqueue(long delay)
 			break;
 #if defined(EVFILT_TIMER)
 		case EVFILT_TIMER:
-			rb_run_event(kqout[i].udata);
+			rb_run_one_event(kqout[i].udata);
 			break;
 #endif
 		default:

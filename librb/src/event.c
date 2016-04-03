@@ -194,7 +194,7 @@ rb_event_addish(const char *name, EVH * func, void *arg, time_t delta_ish)
 
 
 void
-rb_run_event(struct ev_entry *ev)
+rb_run_one_event(struct ev_entry *ev)
 {
 	rb_strlcpy(last_event_ran, ev->name, sizeof(last_event_ran));
 	ev->func(ev->arg);
