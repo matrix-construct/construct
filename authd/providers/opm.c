@@ -39,6 +39,7 @@ typedef enum protocol_t
 struct opm_lookup
 {
 	rb_dlink_list scans;	/* List of scans */
+	bool in_progress;
 };
 
 struct opm_proxy
@@ -601,34 +602,18 @@ create_listener(const char *ip, uint16_t port)
 	return true;
 }
 
-
 static void
-opm_destroy(void)
-{
-	struct auth_client *auth;
-	rb_dictionary_iter iter;
-
-	/* Nuke all opm lookups */
-	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
-	{
-		opm_cancel(auth);
-	}
-}
-
-static bool
-opm_start(struct auth_client *auth)
+opm_scan(struct auth_client *auth)
 {
 	rb_dlink_node *ptr;
-	struct opm_lookup *lookup = rb_malloc(sizeof(struct opm_lookup));
+	struct opm_lookup *lookup;
 
-	if(!opm_enable || rb_dlink_list_length(&proxy_scanners) == 0)
-	{
-		notice_client(auth->cid, "*** Proxy scanning disabled, not scanning");
-		return true;
-	}
+	lrb_assert(auth != NULL);
+	lookup = auth->data[PROVIDER_OPM];
 
-	auth->data[PROVIDER_OPM] = lookup = rb_malloc(sizeof(struct opm_lookup));
 	auth->timeout[PROVIDER_OPM] = rb_current_time() + opm_timeout;
+
+	lookup->in_progress = true;
 
 	RB_DLINK_FOREACH(ptr, proxy_scanners.head)
 	{
@@ -637,8 +622,48 @@ opm_start(struct auth_client *auth)
 	}
 
 	notice_client(auth->cid, "*** Scanning for open proxies...");
-	set_provider_on(auth, PROVIDER_OPM);
+}
 
+/* This is called every time a provider is completed as long as we are marked not done */
+static void
+blacklists_initiate(struct auth_client *auth, provider_t provider)
+{
+	struct opm_lookup *lookup = auth->data[PROVIDER_OPM];
+
+	lrb_assert(provider != PROVIDER_OPM);
+	lrb_assert(!is_provider_done(auth, PROVIDER_OPM));
+	lrb_assert(rb_dlink_list_length(&proxy_scanners) > 0);
+
+	if(lookup == NULL || lookup->in_progress)
+		/* Nothing to do */
+		return;
+	else if(!(is_provider_done(auth, PROVIDER_RDNS) && is_provider_done(auth, PROVIDER_IDENT)))
+		/* Don't start until we've completed these */
+		return;
+	else
+		opm_scan(auth);
+}
+
+static bool
+opm_start(struct auth_client *auth)
+{
+	if(auth->data[PROVIDER_OPM] != NULL)
+		return true;
+
+	if(!opm_enable || rb_dlink_list_length(&proxy_scanners) == 0)
+	{
+		/* Nothing to do... */
+		notice_client(auth->cid, "*** Proxy scanning disabled, not scanning");
+		return true;
+	}
+
+	auth->data[PROVIDER_BLACKLIST] = rb_malloc(sizeof(struct opm_lookup));
+
+	if(is_provider_done(auth, PROVIDER_RDNS) && is_provider_done(auth, PROVIDER_IDENT))
+		/* This probably can't happen but let's handle this case anyway */
+		opm_scan(auth);
+
+	set_provider_on(auth, PROVIDER_BLACKLIST);
 	return true;
 }
 
@@ -665,6 +690,20 @@ opm_cancel(struct auth_client *auth)
 		provider_done(auth, PROVIDER_OPM);
 	}
 }
+
+static void
+opm_destroy(void)
+{
+	struct auth_client *auth;
+	rb_dictionary_iter iter;
+
+	/* Nuke all opm lookups */
+	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
+	{
+		opm_cancel(auth);
+	}
+}
+
 
 static void
 add_conf_opm_timeout(const char *key __unused, int parc __unused, const char **parv)
