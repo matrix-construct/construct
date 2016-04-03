@@ -462,10 +462,10 @@ opm {
 	 */
 	#port_ipv6 = 32000;
 
-	/* You can also set a port directive which will set both the IPv4 and
-	 * IPv6 ports at once.
+	/* You can also set the listen_port directive which will set both the
+	 * IPv4 and IPv6 ports at once.
 	 */
-	port = 32000;
+	listen_port = 32000;
 
 	/* This sets the timeout in seconds before ending open proxy scans.
 	 * Values less than 1 or greater than 60 are ignored.
