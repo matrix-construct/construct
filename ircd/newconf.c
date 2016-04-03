@@ -2043,6 +2043,7 @@ conf_begin_opm(struct TopConf *tc)
 {
 	yy_opm_address_ipv4 = yy_opm_address_ipv6 = NULL;
 	yy_opm_port_ipv4 = yy_opm_port_ipv6 = yy_opm_timeout = 0;
+	delete_opm_proxy_scanner_all();
 	return 0;
 }
 

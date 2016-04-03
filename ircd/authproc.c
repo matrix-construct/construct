@@ -352,6 +352,7 @@ restart_authd_cb(rb_helper * helper)
 void
 restart_authd(void)
 {
+	ierror("authd restarting...");
 	restart_authd_cb(authd_helper);
 }
 
