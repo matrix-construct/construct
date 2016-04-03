@@ -78,9 +78,9 @@ handle_options(int parc, char *parv[])
 {
 	struct auth_opts_handler *handler;
 
-	if(parc < 3)
+	if(parc < 2)
 	{
-		warn_opers(L_CRIT, "BUG: handle_options received too few parameters (at least 3 expected, got %d)", parc);
+		warn_opers(L_CRIT, "BUG: handle_options received too few parameters (at least 2 expected, got %d)", parc);
 		return;
 	}
 
