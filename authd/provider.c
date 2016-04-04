@@ -374,3 +374,18 @@ provider_timeout_event(void *notused __unused)
 		}
 	}
 }
+
+void *
+get_provider_data(struct auth_client *auth, uint32_t id)
+{
+	lrb_assert(id < rb_dlink_list_length(&auth_providers));
+	return auth->data[(size_t)id];
+}
+
+void
+set_provider_data(struct auth_client *auth, uint32_t id, void *data)
+{
+	lrb_assert(id < rb_dlink_list_length(&auth_providers));
+	auth->data[(size_t)id] = data;
+}
+

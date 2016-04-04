@@ -93,13 +93,13 @@ struct auth_provider
 	struct auth_opts_handler *opt_handlers;
 };
 
-extern rb_dlink_list auth_providers;
-extern rb_dictionary *auth_clients;
-
 extern struct auth_provider rdns_provider;
 extern struct auth_provider ident_provider;
 extern struct auth_provider blacklist_provider;
 extern struct auth_provider opm_provider;
+
+extern rb_dlink_list auth_providers;
+extern rb_dictionary *auth_clients;
 
 void load_provider(struct auth_provider *provider);
 void unload_provider(struct auth_provider *provider);
@@ -114,6 +114,9 @@ void reject_client(struct auth_client *auth, provider_t id, const char *data, co
 
 void handle_new_connection(int parc, char *parv[]);
 void handle_cancel_connection(int parc, char *parv[]);
+
+void *get_provider_data(struct auth_client *auth, uint32_t id);
+void set_provider_data(struct auth_client *auth, uint32_t id, void *data);
 
 /* Provider is operating on this auth_client (set this if you have async work to do) */
 static inline void
