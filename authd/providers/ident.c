@@ -90,9 +90,7 @@ ident_connected(rb_fde_t *F __unused, int error, void *data)
 	if(auth == NULL)
 		return;
 
-	query = auth->data[PROVIDER_IDENT];
-
-	if(query == NULL)
+	if((query = get_provider_data(auth, PROVIDER_IDENT)) == NULL)
 		return;
 
 	/* Check the error */
@@ -131,9 +129,7 @@ read_ident_reply(rb_fde_t *F, void *data)
 	if(auth == NULL)
 		return;
 
-	query = auth->data[PROVIDER_IDENT];
-
-	if(query == NULL)
+	if((query = get_provider_data(auth, PROVIDER_IDENT)) == NULL)
 		return;
 
 	len = rb_read(F, buf, IDENT_BUFSIZE);
@@ -178,7 +174,7 @@ read_ident_reply(rb_fde_t *F, void *data)
 static void
 client_fail(struct auth_client *auth, ident_message report)
 {
-	struct ident_query *query = auth->data[PROVIDER_IDENT];
+	struct ident_query *query = get_provider_data(auth, PROVIDER_IDENT);
 
 	if(query == NULL)
 		return;
@@ -189,7 +185,7 @@ client_fail(struct auth_client *auth, ident_message report)
 		rb_close(query->F);
 
 	rb_free(query);
-	auth->data[PROVIDER_IDENT] = NULL;
+	set_provider_data(auth, PROVIDER_IDENT, NULL);
 	auth->timeout[PROVIDER_IDENT] = 0;
 
 	notice_client(auth->cid, messages[report]);
@@ -199,7 +195,7 @@ client_fail(struct auth_client *auth, ident_message report)
 static void
 client_success(struct auth_client *auth)
 {
-	struct ident_query *query = auth->data[PROVIDER_IDENT];
+	struct ident_query *query = get_provider_data(auth, PROVIDER_IDENT);
 
 	if(query == NULL)
 		return;
@@ -208,7 +204,7 @@ client_success(struct auth_client *auth)
 		rb_close(query->F);
 
 	rb_free(query);
-	auth->data[PROVIDER_IDENT] = NULL;
+	set_provider_data(auth, PROVIDER_IDENT, NULL);
 	auth->timeout[PROVIDER_IDENT] = 0;
 
 	notice_client(auth->cid, messages[REPORT_FOUND]);
@@ -288,7 +284,7 @@ ident_destroy(void)
 	/* Nuke all ident queries */
 	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
-		if(auth->data[PROVIDER_IDENT] != NULL)
+		if(get_provider_data(auth, PROVIDER_IDENT) != NULL)
 			client_fail(auth, REPORT_FAIL);
 	}
 }
@@ -300,13 +296,11 @@ ident_start(struct auth_client *auth)
 	struct rb_sockaddr_storage l_addr, c_addr;
 	int family = GET_SS_FAMILY(&auth->c_addr);
 
-	if(auth->data[PROVIDER_IDENT] != NULL)
+	lrb_assert(get_provider_data(auth, PROVIDER_IDENT) == NULL);
+
+	if(!ident_enable)
 	{
-		set_provider_done(auth, PROVIDER_IDENT); /* for blacklists */
-		return true;
-	}
-	else if(!ident_enable)
-	{
+		rb_free(query);
 		notice_client(auth->cid, messages[REPORT_DISABLED]);
 		set_provider_done(auth, PROVIDER_IDENT);
 		return true;
@@ -314,7 +308,7 @@ ident_start(struct auth_client *auth)
 
 	notice_client(auth->cid, messages[REPORT_LOOKUP]);
 
-	auth->data[PROVIDER_IDENT] = query;
+	set_provider_data(auth, PROVIDER_IDENT, query);
 	auth->timeout[PROVIDER_IDENT] = rb_current_time() + ident_timeout;
 
 	if((query->F = rb_socket(family, SOCK_STREAM, 0, "ident")) == NULL)
@@ -344,7 +338,7 @@ ident_start(struct auth_client *auth)
 static void
 ident_cancel(struct auth_client *auth)
 {
-	struct ident_query *query = auth->data[PROVIDER_IDENT];
+	struct ident_query *query = get_provider_data(auth, PROVIDER_IDENT);
 
 	if(query != NULL)
 		client_fail(auth, REPORT_FAIL);
