@@ -122,6 +122,7 @@ find_proxy_scanner(protocol_t proto, uint16_t port)
 	return NULL;
 }
 
+/* This is called when an open proxy connects to us */
 static void
 read_opm_reply(rb_fde_t *F, void *data)
 {
@@ -131,11 +132,9 @@ read_opm_reply(rb_fde_t *F, void *data)
 	char readbuf[OPM_READSIZE];
 	ssize_t len;
 
-	if(auth == NULL || (lookup = auth->data[PROVIDER_OPM]) == NULL)
-	{
-		rb_close(F);
-		return;
-	}
+	lrb_assert(auth != NULL);
+	lookup = get_provider_data(auth, PROVIDER_OPM);
+	lrb_assert(lookup != NULL);
 
 	if((len = rb_read(F, readbuf, sizeof(readbuf))) < 0 && rb_ignore_errno(errno))
 	{
@@ -255,11 +254,13 @@ socks4_connected(rb_fde_t *F, int error, void *data)
 	uint8_t *c = sendbuf;
 	ssize_t ret;
 
-	if(scan == NULL || (auth = scan->auth) == NULL || (lookup = auth->data[PROVIDER_OPM]) == NULL)
-		return;
-
 	if(error || !opm_enable)
 		goto end;
+
+	lrb_assert(scan != NULL);
+
+	auth = scan->auth;
+	lookup = get_provider_data(auth, PROVIDER_OPM);
 
 	memcpy(c, "\x04\x01", 2); c += 2; /* Socks version 4, connect command */
 
@@ -308,11 +309,13 @@ socks5_connected(rb_fde_t *F, int error, void *data)
 	uint8_t *c = sendbuf;
 	ssize_t ret;
 
-	if(scan == NULL || (auth = scan->auth) == NULL || (lookup = auth->data[PROVIDER_OPM]) == NULL)
-		return;
-
 	if(error || !opm_enable)
 		goto end;
+
+	lrb_assert(scan != NULL);
+
+	auth = scan->auth;
+	loookup = get_provider_data(auth, PROVIDER_OPM);
 
 	/* Build the version header and socks request
 	 * version header (3 bytes): version, number of auth methods, auth type (0 for none)
@@ -371,11 +374,13 @@ http_connect_connected(rb_fde_t *F, int error, void *data)
 	char *c = sendbuf;
 	ssize_t ret;
 
-	if(scan == NULL || (auth = scan->auth) == NULL || (lookup = auth->data[PROVIDER_OPM]) == NULL)
-		return;
-
 	if(error || !opm_enable)
 		goto end;
+
+	lrb_assert(scan != NULL);
+
+	auth = scan->auth;
+	lookup = get_provider_data(auth, PROVIDER_OPM);
 
 	switch(GET_SS_FAMILY(&auth->c_addr))
 	{
@@ -420,12 +425,14 @@ end:
 static inline void
 establish_connection(struct auth_client *auth, struct opm_proxy *proxy)
 {
-	struct opm_lookup *lookup = auth->data[PROVIDER_OPM];
+	struct opm_lookup *lookup = get_provider_data(auth, PROVIDER_OPM);
 	struct opm_listener *listener;
 	struct opm_scan *scan = rb_malloc(sizeof(struct opm_scan));
 	struct rb_sockaddr_storage c_a, l_a;
 	int opt = 1;
 	CNCB *callback;
+
+	lrb_assert(lookup != NULL);
 
 	switch(proxy->proto)
 	{
@@ -609,8 +616,8 @@ opm_scan(struct auth_client *auth)
 	struct opm_lookup *lookup;
 
 	lrb_assert(auth != NULL);
-	lookup = auth->data[PROVIDER_OPM];
 
+	lookup = get_provider_data(auth, PROVIDER_OPM);
 	auth->timeout[PROVIDER_OPM] = rb_current_time() + opm_timeout;
 
 	lookup->in_progress = true;
@@ -628,7 +635,7 @@ opm_scan(struct auth_client *auth)
 static void
 blacklists_initiate(struct auth_client *auth, provider_t provider)
 {
-	struct opm_lookup *lookup = auth->data[PROVIDER_OPM];
+	struct opm_lookup *lookup = get_provider_data(auth, PROVIDER_OPM);
 
 	lrb_assert(provider != PROVIDER_OPM);
 	lrb_assert(!is_provider_done(auth, PROVIDER_OPM));
@@ -647,8 +654,7 @@ blacklists_initiate(struct auth_client *auth, provider_t provider)
 static bool
 opm_start(struct auth_client *auth)
 {
-	if(auth->data[PROVIDER_OPM] != NULL)
-		return true;
+	lrb_assert(get_provider_data(auth, PROVIDER_OPM) == NULL);
 
 	if(!opm_enable || rb_dlink_list_length(&proxy_scanners) == 0)
 	{
@@ -657,7 +663,7 @@ opm_start(struct auth_client *auth)
 		return true;
 	}
 
-	auth->data[PROVIDER_BLACKLIST] = rb_malloc(sizeof(struct opm_lookup));
+	set_provider_data(auth, PROVIDER_BLACKLIST, rb_malloc(sizeof(struct opm_lookup)));
 
 	if(is_provider_done(auth, PROVIDER_RDNS) && is_provider_done(auth, PROVIDER_IDENT))
 		/* This probably can't happen but let's handle this case anyway */
@@ -670,7 +676,7 @@ opm_start(struct auth_client *auth)
 static void
 opm_cancel(struct auth_client *auth)
 {
-	struct opm_lookup *lookup = auth->data[PROVIDER_OPM];
+	struct opm_lookup *lookup = get_provider_data(auth, PROVIDER_OPM);
 
 	if(lookup != NULL)
 	{
@@ -687,6 +693,9 @@ opm_cancel(struct auth_client *auth)
 		}
 
 		rb_free(lookup);
+
+		set_provider_data(auth, PROVIDER_OPM, NULL);
+		auth->timeout[PROVIDER_OPM] = 0;
 		provider_done(auth, PROVIDER_OPM);
 	}
 }
@@ -860,7 +869,7 @@ delete_opm_scanner(const char *key __unused, int parc __unused, const char **par
 	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
 		rb_dlink_node *ptr;
-		struct opm_lookup *lookup = auth->data[PROVIDER_OPM];
+		struct opm_lookup *lookup = get_provider_data(auth, PROVIDER_OPM);
 
 		if(lookup == NULL)
 			continue;
