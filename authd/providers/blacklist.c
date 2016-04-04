@@ -231,13 +231,13 @@ blacklist_dns_callback(const char *result, bool status, query_type type, void *d
 	struct blacklist *bl;
 	struct auth_client *auth;
 
-	if (bllookup == NULL || bllookup->auth == NULL)
-		return;
+	lrb_assert(bllookup != NULL);
+	lrb_assert(bllookup->auth != NULL);
 
 	bl = bllookup->bl;
 	auth = bllookup->auth;
-	bluser = auth->data[PROVIDER_BLACKLIST];
-	if(bluser == NULL)
+
+	if((bluser = get_provider_data(auth, PROVIDER_BLACKLIST)) == NULL)
 		return;
 
 	if (result != NULL && status && blacklist_check_reply(bllookup, result))
@@ -260,7 +260,7 @@ blacklist_dns_callback(const char *result, bool status, query_type type, void *d
 		notice_client(auth->cid, "*** IP not found in DNS blacklist%s",
 				rb_dlink_list_length(&blacklist_list) > 1 ? "s" : "");
 		rb_free(bluser);
-		auth->data[PROVIDER_BLACKLIST] = NULL;
+		set_provider_data(auth, PROVIDER_BLACKLIST, NULL);
 		auth->timeout[PROVIDER_BLACKLIST] = 0;
 		provider_done(auth, PROVIDER_BLACKLIST);
 	}
@@ -270,7 +270,7 @@ static void
 initiate_blacklist_dnsquery(struct blacklist *bl, struct auth_client *auth)
 {
 	struct blacklist_lookup *bllookup = rb_malloc(sizeof(struct blacklist_lookup));
-	struct blacklist_user *bluser = auth->data[PROVIDER_BLACKLIST];
+	struct blacklist_user *bluser = get_provider_data(auth, PROVIDER_BLACKLIST);
 	char buf[IRCD_RES_HOSTLEN + 1];
 	int aftype;
 
@@ -281,7 +281,10 @@ initiate_blacklist_dnsquery(struct blacklist *bl, struct auth_client *auth)
 	if((aftype == AF_INET && (bl->iptype & IPTYPE_IPV4) == 0) ||
 		(aftype == AF_INET6 && (bl->iptype & IPTYPE_IPV6) == 0))
 		/* Incorrect blacklist type for this IP... */
+	{
+		rb_free(bllookup);
 		return;
+	}
 
 	build_rdns(buf, sizeof(buf), &auth->c_addr, bl->host);
 
@@ -294,7 +297,7 @@ initiate_blacklist_dnsquery(struct blacklist *bl, struct auth_client *auth)
 static inline void
 lookup_all_blacklists(struct auth_client *auth)
 {
-	struct blacklist_user *bluser = auth->data[PROVIDER_BLACKLIST];
+	struct blacklist_user *bluser = get_provider_data(auth, PROVIDER_BLACKLIST);
 	rb_dlink_node *ptr;
 
 	notice_client(auth->cid, "*** Checking your IP against DNS blacklist%s",
@@ -338,8 +341,7 @@ delete_all_blacklists(void)
 static bool
 blacklists_start(struct auth_client *auth)
 {
-	if(auth->data[PROVIDER_BLACKLIST] != NULL)
-		return true;
+	lrb_assert(get_provider_data(auth, PROVIDER_BLACKLIST) == NULL);
 
 	if(!rb_dlink_list_length(&blacklist_list))
 	{
@@ -348,7 +350,7 @@ blacklists_start(struct auth_client *auth)
 		return true;
 	}
 
-	auth->data[PROVIDER_BLACKLIST] = rb_malloc(sizeof(struct blacklist_user));
+	set_provider_data(auth, PROVIDER_BLACKLIST, rb_malloc(sizeof(struct blacklist_user)));
 
 	if(is_provider_done(auth, PROVIDER_RDNS) && is_provider_done(auth, PROVIDER_IDENT))
 		/* This probably can't happen but let's handle this case anyway */
@@ -362,7 +364,7 @@ blacklists_start(struct auth_client *auth)
 static void
 blacklists_initiate(struct auth_client *auth, provider_t provider)
 {
-	struct blacklist_user *bluser = auth->data[PROVIDER_BLACKLIST];
+	struct blacklist_user *bluser = get_provider_data(auth, PROVIDER_BLACKLIST);
 
 	lrb_assert(provider != PROVIDER_BLACKLIST);
 	lrb_assert(!is_provider_done(auth, PROVIDER_BLACKLIST));
@@ -382,7 +384,7 @@ static void
 blacklists_cancel(struct auth_client *auth)
 {
 	rb_dlink_node *ptr, *nptr;
-	struct blacklist_user *bluser = auth->data[PROVIDER_BLACKLIST];
+	struct blacklist_user *bluser = get_provider_data(auth, PROVIDER_BLACKLIST);
 
 	if(bluser == NULL)
 		return;
@@ -404,7 +406,7 @@ blacklists_cancel(struct auth_client *auth)
 	}
 
 	rb_free(bluser);
-	auth->data[PROVIDER_BLACKLIST] = NULL;
+	set_provider_data(auth, PROVIDER_BLACKLIST, NULL);
 	auth->timeout[PROVIDER_BLACKLIST] = 0;
 	provider_done(auth, PROVIDER_BLACKLIST);
 }
