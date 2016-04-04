@@ -891,7 +891,7 @@ load_a_module(const char *path, bool warn, int origin, bool core)
 			struct mapi_mheader_av2 *mheader = (struct mapi_mheader_av2 *)(void *)mapi_version;     /* see above */
 
 			/* XXX duplicated code :( */
-			if(mheader->mapi_register && (mheader->mapi_register() == false))
+			if(mheader->mapi_register && (mheader->mapi_register() == -1))
 			{
 				ilog(L_MAIN, "Module %s indicated failure during load.",
 					mod_basename);
