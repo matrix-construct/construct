@@ -315,7 +315,7 @@ socks5_connected(rb_fde_t *F, int error, void *data)
 	lrb_assert(scan != NULL);
 
 	auth = scan->auth;
-	loookup = get_provider_data(auth, PROVIDER_OPM);
+	lookup = get_provider_data(auth, PROVIDER_OPM);
 
 	/* Build the version header and socks request
 	 * version header (3 bytes): version, number of auth methods, auth type (0 for none)
