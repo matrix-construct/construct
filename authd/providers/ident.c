@@ -87,11 +87,9 @@ ident_connected(rb_fde_t *F __unused, int error, void *data)
 	char authbuf[32];
 	int authlen;
 
-	if(auth == NULL)
-		return;
-
-	if((query = get_provider_data(auth, PROVIDER_IDENT)) == NULL)
-		return;
+	lrb_assert(auth != NULL);
+	query = get_provider_data(auth, PROVIDER_IDENT);
+	lrb_assert(query != NULL);
 
 	/* Check the error */
 	if(error != RB_OK)
@@ -126,11 +124,9 @@ read_ident_reply(rb_fde_t *F, void *data)
 	ssize_t len;
 	int count;
 
-	if(auth == NULL)
-		return;
-
-	if((query = get_provider_data(auth, PROVIDER_IDENT)) == NULL)
-		return;
+	lrb_assert(auth != NULL);
+	query = get_provider_data(auth, PROVIDER_IDENT);
+	lrb_assert(query != NULL);
 
 	len = rb_read(F, buf, IDENT_BUFSIZE);
 	if(len < 0 && rb_ignore_errno(errno))
@@ -176,8 +172,7 @@ client_fail(struct auth_client *auth, ident_message report)
 {
 	struct ident_query *query = get_provider_data(auth, PROVIDER_IDENT);
 
-	if(query == NULL)
-		return;
+	lrb_assert(query != NULL);
 
 	rb_strlcpy(auth->username, "*", sizeof(auth->username));
 
@@ -197,8 +192,7 @@ client_success(struct auth_client *auth)
 {
 	struct ident_query *query = get_provider_data(auth, PROVIDER_IDENT);
 
-	if(query == NULL)
-		return;
+	lrb_assert(query != NULL);
 
 	if(query->F != NULL)
 		rb_close(query->F);
