@@ -110,19 +110,28 @@ check_forward(struct Client *source_p, struct Channel *chptr,
 	{
 		if (next == NULL)
 			return NULL;
+
 		chptr = find_channel(next);
 		/* Can only forward to existing channels */
 		if (chptr == NULL)
 			return NULL;
-		/* Already on there, show original error message */
+		/* Already on there... but don't send the original reason for
+		 * being unable to join. It isn't their fault they're already
+		 * on the channel, and it looks hostile otherwise.
+		 * --Elizafox
+		 */
 		if (IsMember(source_p, chptr))
+		{
+			*err = ERR_USERONCHANNEL; /* I'm borrowing this for now. --Elizafox */
 			return NULL;
+		}
 		/* Juped. Sending a warning notice would be unfair */
 		if (hash_find_resv(chptr->chname))
 			return NULL;
 		/* Don't forward to +Q channel */
 		if (chptr->mode.mode & MODE_DISFORWARD)
 			return NULL;
+
 		i = can_join(source_p, chptr, key, &next);
 		if (i == 0)
 			return chptr;
@@ -299,7 +308,7 @@ m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		}
 
 		/* If check_forward returns NULL, they couldn't join and there wasn't a usable forward channel. */
-		if(!(chptr2 = check_forward(source_p, chptr, key, &i)))
+		if((chptr2 = check_forward(source_p, chptr, key, &i)) == NULL)
 		{
 			/* might be wrong, but is there any other better location for such?
 			 * see extensions/chm_operonly.c for other comments on this
