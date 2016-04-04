@@ -763,7 +763,11 @@ unload_one_module(const char *name, bool warn)
 						continue;
 					}
 
-					capability_orphan(idx, m->cap_name);
+					if (m->cap_id != NULL)
+					{
+						capability_orphan(idx, m->cap_name);
+						sendto_local_clients_with_capability(CLICAP_CAP_NOTIFY, ":%s CAP * DEL :%s", me.name, m->cap_name);
+					}
 				}
 			}
 		}
@@ -976,7 +980,10 @@ load_a_module(const char *path, bool warn, int origin, bool core)
 
 					result = capability_put(idx, m->cap_name, m->cap_ownerdata);
 					if (m->cap_id != NULL)
+					{
 						*(m->cap_id) = result;
+						sendto_local_clients_with_capability(CLICAP_CAP_NOTIFY, ":%s CAP * ADD :%s", me.name, m->cap_name);
+					}
 				}
 			}
 		}
