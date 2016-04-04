@@ -261,7 +261,7 @@ blacklist_dns_callback(const char *result, bool status, query_type type, void *d
 				rb_dlink_list_length(&blacklist_list) > 1 ? "s" : "");
 		rb_free(bluser);
 		set_provider_data(auth, PROVIDER_BLACKLIST, NULL);
-		auth->timeout[PROVIDER_BLACKLIST] = 0;
+		set_provider_timeout_absolute(auth, PROVIDER_BLACKLIST, 0);
 		provider_done(auth, PROVIDER_BLACKLIST);
 	}
 }
@@ -311,7 +311,7 @@ lookup_all_blacklists(struct auth_client *auth)
 			initiate_blacklist_dnsquery(bl, auth);
 	}
 
-	auth->timeout[PROVIDER_BLACKLIST] = rb_current_time() + blacklist_timeout;
+	set_provider_timeout_relative(auth, PROVIDER_BLACKLIST, blacklist_timeout);
 }
 
 static inline void
@@ -407,7 +407,7 @@ blacklists_cancel(struct auth_client *auth)
 
 	rb_free(bluser);
 	set_provider_data(auth, PROVIDER_BLACKLIST, NULL);
-	auth->timeout[PROVIDER_BLACKLIST] = 0;
+	set_provider_timeout_absolute(auth, PROVIDER_BLACKLIST, 0);
 	provider_done(auth, PROVIDER_BLACKLIST);
 }
 

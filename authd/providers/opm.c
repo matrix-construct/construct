@@ -618,7 +618,7 @@ opm_scan(struct auth_client *auth)
 	lrb_assert(auth != NULL);
 
 	lookup = get_provider_data(auth, PROVIDER_OPM);
-	auth->timeout[PROVIDER_OPM] = rb_current_time() + opm_timeout;
+	set_provider_timeout_relative(auth, PROVIDER_OPM, opm_timeout);
 
 	lookup->in_progress = true;
 
@@ -695,7 +695,7 @@ opm_cancel(struct auth_client *auth)
 		rb_free(lookup);
 
 		set_provider_data(auth, PROVIDER_OPM, NULL);
-		auth->timeout[PROVIDER_OPM] = 0;
+		set_provider_timeout_absolute(auth, PROVIDER_OPM, 0);
 		provider_done(auth, PROVIDER_OPM);
 	}
 }

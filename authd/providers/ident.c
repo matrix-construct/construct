@@ -181,7 +181,7 @@ client_fail(struct auth_client *auth, ident_message report)
 
 	rb_free(query);
 	set_provider_data(auth, PROVIDER_IDENT, NULL);
-	auth->timeout[PROVIDER_IDENT] = 0;
+	set_provider_timeout_absolute(auth, PROVIDER_IDENT, 0);
 
 	notice_client(auth->cid, messages[report]);
 	provider_done(auth, PROVIDER_IDENT);
@@ -199,7 +199,7 @@ client_success(struct auth_client *auth)
 
 	rb_free(query);
 	set_provider_data(auth, PROVIDER_IDENT, NULL);
-	auth->timeout[PROVIDER_IDENT] = 0;
+	set_provider_timeout_absolute(auth, PROVIDER_IDENT, 0);
 
 	notice_client(auth->cid, messages[REPORT_FOUND]);
 	provider_done(auth, PROVIDER_IDENT);
@@ -303,7 +303,7 @@ ident_start(struct auth_client *auth)
 	notice_client(auth->cid, messages[REPORT_LOOKUP]);
 
 	set_provider_data(auth, PROVIDER_IDENT, query);
-	auth->timeout[PROVIDER_IDENT] = rb_current_time() + ident_timeout;
+	set_provider_timeout_relative(auth, PROVIDER_IDENT, ident_timeout);
 
 	if((query->F = rb_socket(family, SOCK_STREAM, 0, "ident")) == NULL)
 	{

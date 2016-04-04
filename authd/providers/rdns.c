@@ -58,9 +58,11 @@ static void
 dns_answer_callback(const char *res, bool status, query_type type, void *data)
 {
 	struct auth_client *auth = data;
-	struct user_query *query = auth->data[PROVIDER_RDNS];
+	struct user_query *query = get_provider_data(auth, PROVIDER_RDNS);
 
-	if(query == NULL || res == NULL || status == false)
+	lrb_assert(query != NULL);
+
+	if(res == NULL || status == false)
 		client_fail(auth, REPORT_FAIL);
 	else if(strlen(res) > HOSTLEN)
 		client_fail(auth, REPORT_TOOLONG);
@@ -74,10 +76,9 @@ dns_answer_callback(const char *res, bool status, query_type type, void *data)
 static void
 client_fail(struct auth_client *auth, dns_message report)
 {
-	struct user_query *query = auth->data[PROVIDER_RDNS];
+	struct user_query *query = get_provider_data(auth, PROVIDER_RDNS);
 
-	if(query == NULL)
-		return;
+	lrb_assert(query != NULL);
 
 	rb_strlcpy(auth->hostname, "*", sizeof(auth->hostname));
 
@@ -85,24 +86,26 @@ client_fail(struct auth_client *auth, dns_message report)
 	cancel_query(query->query);
 
 	rb_free(query);
-	auth->data[PROVIDER_RDNS] = NULL;
-	auth->timeout[PROVIDER_RDNS] = 0;
 
+	set_provider_data(auth, PROVIDER_RDNS, NULL);
+	set_provider_timeout_absolute(auth, PROVIDER_RDNS, 0);
 	provider_done(auth, PROVIDER_RDNS);
 }
 
 static void
 client_success(struct auth_client *auth)
 {
-	struct user_query *query = auth->data[PROVIDER_RDNS];
+	struct user_query *query = get_provider_data(auth, PROVIDER_RDNS);
+
+	lrb_assert(query != NULL);
 
 	notice_client(auth->cid, messages[REPORT_FOUND]);
 	cancel_query(query->query);
 
 	rb_free(query);
-	auth->data[PROVIDER_RDNS] = NULL;
-	auth->timeout[PROVIDER_RDNS] = 0;
 
+	set_provider_data(auth, PROVIDER_RDNS, NULL);
+	set_provider_timeout_absolute(auth, PROVIDER_RDNS, 0);
 	provider_done(auth, PROVIDER_RDNS);
 }
 
@@ -114,7 +117,7 @@ rdns_destroy(void)
 
 	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
-		if(auth->data[PROVIDER_RDNS] != NULL)
+		if(get_provider_data(auth, PROVIDER_RDNS) != NULL)
 			client_fail(auth, REPORT_FAIL);
 	}
 }
@@ -124,8 +127,8 @@ rdns_start(struct auth_client *auth)
 {
 	struct user_query *query = rb_malloc(sizeof(struct user_query));
 
-	auth->data[PROVIDER_RDNS] = query;
-	auth->timeout[PROVIDER_RDNS] = rb_current_time() + rdns_timeout;
+	set_provider_data(auth, PROVIDER_RDNS, query);
+	set_provider_timeout_relative(auth, PROVIDER_RDNS, rdns_timeout);
 
 	query->query = lookup_hostname(auth->c_ip, dns_answer_callback, auth);
 
@@ -137,7 +140,7 @@ rdns_start(struct auth_client *auth)
 static void
 rdns_cancel(struct auth_client *auth)
 {
-	struct user_query *query = auth->data[PROVIDER_RDNS];
+	struct user_query *query = get_provider_data(auth, PROVIDER_RDNS);
 
 	if(query != NULL)
 		client_fail(auth, REPORT_FAIL);
