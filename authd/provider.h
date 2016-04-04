@@ -117,6 +117,8 @@ void handle_cancel_connection(int parc, char *parv[]);
 
 void *get_provider_data(struct auth_client *auth, uint32_t id);
 void set_provider_data(struct auth_client *auth, uint32_t id, void *data);
+void set_provider_timeout_relative(struct auth_client *auth, uint32_t id, time_t timeout);
+void set_provider_timeout_absolute(struct auth_client *auth, uint32_t id, time_t timeout);
 
 /* Provider is operating on this auth_client (set this if you have async work to do) */
 static inline void

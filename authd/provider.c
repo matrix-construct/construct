@@ -389,3 +389,17 @@ set_provider_data(struct auth_client *auth, uint32_t id, void *data)
 	auth->data[(size_t)id] = data;
 }
 
+void
+set_provider_timeout_relative(struct auth_client *auth, uint32_t id, time_t timeout)
+{
+	lrb_assert(id < rb_dlink_list_length(&auth_providers));
+	auth->timeout[(size_t)id] = timeout + rb_current_time();
+}
+
+void
+set_provider_timeout_absolute(struct auth_client *auth, uint32_t id, time_t timeout)
+{
+	lrb_assert(id < rb_dlink_list_length(&auth_providers));
+	auth->timeout[(size_t)id] = timeout;
+}
+
