@@ -295,7 +295,7 @@ handle_encap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *so
 void
 clear_hash_parse()
 {
-	cmd_dict = rb_dictionary_create("command", strcasecmp);
+	cmd_dict = rb_dictionary_create("command", rb_strcasecmp);
 }
 
 /* mod_add_cmd

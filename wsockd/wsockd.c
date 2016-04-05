@@ -156,28 +156,6 @@ ws_frame_set_fin(ws_frame_hdr_t *header, int fin)
 	header->opcode_rsv_fin |= (fin << 7) & (0x1 << 7);
 }
 
-#ifdef _WIN32
-char *
-strcasestr(const char *s, const char *find)
-{
-	char c, sc;
-	size_t len;
-
-	if ((c = *find++) != 0) {
-		c = tolower((unsigned char)c);
-		len = strlen(find);
-		do {
-			do {
-				if ((sc = *s++) == 0)
-					return (NULL);
-			} while ((char)tolower((unsigned char)sc) != c);
-		} while (strnicmp(s, find, len) != 0);
-		s--;
-	}
-	return ((char *)s);
-}
-#endif
-
 static void close_conn(conn_t * conn, int wait_plain, const char *fmt, ...);
 static void conn_mod_read_cb(rb_fde_t *fd, void *data);
 static void conn_plain_read_cb(rb_fde_t *fd, void *data);
@@ -682,7 +660,7 @@ conn_mod_handshake_process(conn_t *conn)
 		if (!dolen)
 			break;
 
-		if ((p = strcasestr(inbuf, "Sec-WebSocket-Key:")) != NULL)
+		if ((p = rb_strcasestr(inbuf, "Sec-WebSocket-Key:")) != NULL)
 		{
 			char *start, *end;
 

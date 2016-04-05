@@ -576,7 +576,7 @@ hurt_find_exact(const char *ip)
 	{
 		hurt = (hurt_t *) ptr->data;
 
-		if (!strcasecmp(ip, hurt->ip))
+		if (!rb_strcasecmp(ip, hurt->ip))
 			return hurt;
 	}
 

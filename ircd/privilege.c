@@ -51,7 +51,7 @@ privilegeset_get_any(const char *name)
 	{
 		struct PrivilegeSet *set = (struct PrivilegeSet *) iter->data;
 
-		if (!strcasecmp(set->name, name))
+		if (!rb_strcasecmp(set->name, name))
 			return set;
 	}
 

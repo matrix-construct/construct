@@ -397,7 +397,7 @@ check_server(const char *name, struct Client *client_p)
 
 			if(tmp_p->certfp)
 			{
-				if(!client_p->certfp || strcasecmp(tmp_p->certfp, client_p->certfp) != 0)
+				if(!client_p->certfp || rb_strcasecmp(tmp_p->certfp, client_p->certfp) != 0)
 					continue;
 			}
 

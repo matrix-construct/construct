@@ -135,7 +135,7 @@ char *substitution_parse(const char *fmt, rb_dlink_list *varlist)
 			{
 				struct substitution_variable *val = (struct substitution_variable *) nptr->data;
 
-				if (!strcasecmp(varname, val->name))
+				if (!rb_strcasecmp(varname, val->name))
 				{
 					rb_strlcpy(bptr, val->value, BUFSIZE - (bptr - buf));
 					bptr += strlen(val->value);

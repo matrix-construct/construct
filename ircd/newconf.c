@@ -114,7 +114,7 @@ find_top_conf(const char *name)
 	RB_DLINK_FOREACH(d, conf_items.head)
 	{
 		tc = d->data;
-		if(strcasecmp(tc->tc_name, name) == 0)
+		if(rb_strcasecmp(tc->tc_name, name) == 0)
 			return tc;
 	}
 
@@ -136,7 +136,7 @@ find_conf_item(const struct TopConf *top, const char *name)
 		{
 			cf = &top->tc_entries[i];
 
-			if(!strcasecmp(cf->cf_name, name))
+			if(!rb_strcasecmp(cf->cf_name, name))
 				return cf;
 		}
 	}
@@ -144,7 +144,7 @@ find_conf_item(const struct TopConf *top, const char *name)
 	RB_DLINK_FOREACH(d, top->tc_items.head)
 	{
 		cf = d->data;
-		if(strcasecmp(cf->cf_name, name) == 0)
+		if(rb_strcasecmp(cf->cf_name, name) == 0)
 			return cf;
 	}
 
@@ -1395,10 +1395,10 @@ conf_set_connect_aftype(void *data)
 {
 	char *aft = data;
 
-	if(strcasecmp(aft, "ipv4") == 0)
+	if(rb_strcasecmp(aft, "ipv4") == 0)
 		yy_server->aftype = AF_INET;
 #ifdef RB_IPV6
-	else if(strcasecmp(aft, "ipv6") == 0)
+	else if(rb_strcasecmp(aft, "ipv6") == 0)
 		yy_server->aftype = AF_INET6;
 #endif
 	else
@@ -1549,11 +1549,11 @@ conf_set_general_hide_error_messages(void *data)
 {
 	char *val = data;
 
-	if(strcasecmp(val, "yes") == 0)
+	if(rb_strcasecmp(val, "yes") == 0)
 		ConfigFileEntry.hide_error_messages = 2;
-	else if(strcasecmp(val, "opers") == 0)
+	else if(rb_strcasecmp(val, "opers") == 0)
 		ConfigFileEntry.hide_error_messages = 1;
-	else if(strcasecmp(val, "no") == 0)
+	else if(rb_strcasecmp(val, "no") == 0)
 		ConfigFileEntry.hide_error_messages = 0;
 	else
 		conf_report_error("Invalid setting '%s' for general::hide_error_messages.", val);
@@ -1573,11 +1573,11 @@ conf_set_general_stats_k_oper_only(void *data)
 {
 	char *val = data;
 
-	if(strcasecmp(val, "yes") == 0)
+	if(rb_strcasecmp(val, "yes") == 0)
 		ConfigFileEntry.stats_k_oper_only = 2;
-	else if(strcasecmp(val, "masked") == 0)
+	else if(rb_strcasecmp(val, "masked") == 0)
 		ConfigFileEntry.stats_k_oper_only = 1;
-	else if(strcasecmp(val, "no") == 0)
+	else if(rb_strcasecmp(val, "no") == 0)
 		ConfigFileEntry.stats_k_oper_only = 0;
 	else
 		conf_report_error("Invalid setting '%s' for general::stats_k_oper_only.", val);
@@ -1588,11 +1588,11 @@ conf_set_general_stats_i_oper_only(void *data)
 {
 	char *val = data;
 
-	if(strcasecmp(val, "yes") == 0)
+	if(rb_strcasecmp(val, "yes") == 0)
 		ConfigFileEntry.stats_i_oper_only = 2;
-	else if(strcasecmp(val, "masked") == 0)
+	else if(rb_strcasecmp(val, "masked") == 0)
 		ConfigFileEntry.stats_i_oper_only = 1;
-	else if(strcasecmp(val, "no") == 0)
+	else if(rb_strcasecmp(val, "no") == 0)
 		ConfigFileEntry.stats_i_oper_only = 0;
 	else
 		conf_report_error("Invalid setting '%s' for general::stats_i_oper_only.", val);
@@ -1667,11 +1667,11 @@ conf_set_general_certfp_method(void *data)
 {
 	char *method = data;
 
-	if (!strcasecmp(method, "sha1"))
+	if (!rb_strcasecmp(method, "sha1"))
 		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_SHA1;
-	else if (!strcasecmp(method, "sha256"))
+	else if (!rb_strcasecmp(method, "sha256"))
 		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_SHA256;
-	else if (!strcasecmp(method, "sha512"))
+	else if (!rb_strcasecmp(method, "sha512"))
 		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_SHA512;
 	else
 	{
@@ -1884,9 +1884,9 @@ conf_set_blacklist_type(void *data)
 
 	for (; args; args = args->next)
 	{
-		if (!strcasecmp(args->v.string, "ipv4"))
+		if (!rb_strcasecmp(args->v.string, "ipv4"))
 			yy_blacklist_iptype |= IPTYPE_IPV4;
-		else if (!strcasecmp(args->v.string, "ipv6"))
+		else if (!rb_strcasecmp(args->v.string, "ipv6"))
 			yy_blacklist_iptype |= IPTYPE_IPV6;
 		else
 			conf_report_error("blacklist::type has unknown address family %s",

@@ -243,9 +243,9 @@ parse_resvconf(void)
     if ((p = strpbrk(arg, " \t")) != NULL)
       *p = '\0';  /* take the first word */
 
-    if (strcasecmp(opt, "domain") == 0)
+    if (rb_strcasecmp(opt, "domain") == 0)
       rb_strlcpy(irc_domain, arg, sizeof(irc_domain));
-    else if (strcasecmp(opt, "nameserver") == 0)
+    else if (rb_strcasecmp(opt, "nameserver") == 0)
       add_nameserver(arg);
   }
 

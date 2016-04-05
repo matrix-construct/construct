@@ -255,7 +255,7 @@ load_all_modules(bool warn)
 		size_t len = strlen(ldirent->d_name);
 
 		if(len > module_ext_len &&
-			strncasecmp(ldirent->d_name + (len - module_ext_len), LT_MODULE_EXT, module_ext_len) == 0)
+			rb_strncasecmp(ldirent->d_name + (len - module_ext_len), LT_MODULE_EXT, module_ext_len) == 0)
 		{
 			(void) snprintf(module_fq_name, sizeof(module_fq_name), "%s%c%s",
 					ircd_paths[IRCD_PATH_AUTOLOAD_MODULES], RB_PATH_SEPARATOR, ldirent->d_name);

@@ -599,7 +599,7 @@ static int check_question(struct reslist *request, HEADER * header, char *buf, c
 			  sizeof(hostbuf));
 	if (n <= 0)
 		return 0;
-	if (strcasecmp(hostbuf, request->queryname))
+	if (rb_strcasecmp(hostbuf, request->queryname))
 		return 0;
 	return 1;
 }

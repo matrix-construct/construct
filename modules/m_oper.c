@@ -117,7 +117,7 @@ m_oper(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 
 	if (oper_p->certfp != NULL)
 	{
-		if (source_p->certfp == NULL || strcasecmp(source_p->certfp, oper_p->certfp))
+		if (source_p->certfp == NULL || rb_strcasecmp(source_p->certfp, oper_p->certfp))
 		{
 			sendto_one_numeric(source_p, ERR_NOOPERHOST, form_str(ERR_NOOPERHOST));
 			ilog(L_FOPER, "FAILED OPER (%s) by (%s!%s@%s) (%s) -- client certificate fingerprint mismatch",

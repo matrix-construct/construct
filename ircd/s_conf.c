@@ -814,7 +814,7 @@ set_default_conf(void)
 	ConfigFileEntry.hide_opers_in_whois = 0;
 
 	if (!alias_dict)
-		alias_dict = rb_dictionary_create("alias", strcasecmp);
+		alias_dict = rb_dictionary_create("alias", rb_strcasecmp);
 }
 
 /*

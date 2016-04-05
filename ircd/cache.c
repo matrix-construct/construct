@@ -68,8 +68,8 @@ init_cache(void)
 	oper_motd = cache_file(ircd_paths[IRCD_PATH_IRCD_OMOTD], "opers.motd", 0);
 	memset(&links_cache_list, 0, sizeof(links_cache_list));
 
-	help_dict_oper = rb_dictionary_create("oper help", strcasecmp);
-	help_dict_user = rb_dictionary_create("user help", strcasecmp);
+	help_dict_oper = rb_dictionary_create("oper help", rb_strcasecmp);
+	help_dict_user = rb_dictionary_create("user help", rb_strcasecmp);
 }
 
 /*

@@ -117,7 +117,7 @@ start_authd(void)
 		cid_clients = rb_dictionary_create("authd cid to uid mapping", rb_uint32cmp);
 
 	if(bl_stats == NULL)
-		bl_stats = rb_dictionary_create("blacklist statistics", strcasecmp);
+		bl_stats = rb_dictionary_create("blacklist statistics", rb_strcasecmp);
 
 	if(timeout_ev == NULL)
 		timeout_ev = rb_event_addish("timeout_dead_authd_clients", timeout_dead_authd_clients, NULL, 1);

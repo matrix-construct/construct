@@ -46,7 +46,7 @@ umode_noctcp_process(hook_data_privmsg_user *data) {
 		return;
 	}
 
-	if (data->target_p->umodes & user_modes['C'] && *data->text == '\001' && strncasecmp(data->text + 1, "ACTION", 6)) {
+	if (data->target_p->umodes & user_modes['C'] && *data->text == '\001' && rb_strncasecmp(data->text + 1, "ACTION", 6)) {
 		sendto_one_numeric(data->source_p, ERR_CANNOTSENDTOUSER, form_str(ERR_CANNOTSENDTOUSER), data->target_p->name, "+C set");
 		data->approved = ERR_CANNOTSENDTOUSER;
 		return;

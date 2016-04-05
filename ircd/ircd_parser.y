@@ -58,8 +58,8 @@ time_t conf_find_time(char *name)
 
   for (i = 0; ircd_times[i].name; i++)
     {
-      if (strcasecmp(ircd_times[i].name, name) == 0 ||
-	  (ircd_times[i].plural && strcasecmp(ircd_times[i].plural, name) == 0))
+      if (rb_strcasecmp(ircd_times[i].name, name) == 0 ||
+	  (ircd_times[i].plural && rb_strcasecmp(ircd_times[i].plural, name) == 0))
 	return ircd_times[i].val;
     }
 
@@ -86,7 +86,7 @@ static int	conf_get_yesno_value(char *str)
 
 	for (i = 0; yesno[i].word; i++)
 	{
-		if (strcasecmp(str, yesno[i].word) == 0)
+		if (rb_strcasecmp(str, yesno[i].word) == 0)
 		{
 			return yesno[i].yesno;
 		}

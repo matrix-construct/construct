@@ -251,6 +251,6 @@ void hashcomment(void)
   if (strlen(yytext) < sizeof(INCLUDE) - 1)
     return;
 
-  if (!strncasecmp(yytext, INCLUDE, sizeof(INCLUDE) - 1))
+  if (!rb_strncasecmp(yytext, INCLUDE, sizeof(INCLUDE) - 1))
       yyerror("You probably meant '.include', skipping");
 }
