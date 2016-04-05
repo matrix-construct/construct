@@ -36,6 +36,12 @@ typedef enum
 	PROVIDER_OPM,
 } provider_t;
 
+struct auth_client_data
+{
+	time_t timeout;		/* Provider timeout */
+	void *data;		/* Proivder data */
+};
+
 struct auth_client
 {
 	uint16_t cid;				/* Client ID */
@@ -56,8 +62,7 @@ struct auth_client
 	uint32_t providers_done;		/* Providers completed */
 	bool providers_starting;		/* Providers are still warming up */
 
-	void *data[MAX_PROVIDERS];		/* Provider-specific data slots */
-	time_t timeout[MAX_PROVIDERS];		/* When to call timeout callback */
+	struct auth_client_data *data;		/* Provider-specific data */
 };
 
 typedef bool (*provider_init_t)(void);
@@ -119,6 +124,7 @@ void *get_provider_data(struct auth_client *auth, uint32_t id);
 void set_provider_data(struct auth_client *auth, uint32_t id, void *data);
 void set_provider_timeout_relative(struct auth_client *auth, uint32_t id, time_t timeout);
 void set_provider_timeout_absolute(struct auth_client *auth, uint32_t id, time_t timeout);
+time_t get_provider_timeout(struct auth_client *auth, uint32_t id);
 
 /* Provider is operating on this auth_client (set this if you have async work to do) */
 static inline void

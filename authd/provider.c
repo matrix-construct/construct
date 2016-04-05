@@ -165,6 +165,7 @@ cancel_providers(struct auth_client *auth)
 	}
 
 	rb_dictionary_delete(auth_clients, RB_UINT_TO_POINTER(auth->cid));
+	rb_free(auth->data);
 	rb_free(auth);
 }
 
@@ -285,7 +286,8 @@ start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_
 	rb_strlcpy(auth->hostname, "*", sizeof(auth->hostname));
 	rb_strlcpy(auth->username, "*", sizeof(auth->username));
 
-	memset(auth->data, 0, sizeof(auth->data));
+	auth->data = rb_malloc(rb_dlink_list_length(&auth_providers) *
+			sizeof(struct auth_client_data));
 
 	auth->providers_starting = true;
 	RB_DLINK_FOREACH(ptr, auth_providers.head)
@@ -364,7 +366,7 @@ provider_timeout_event(void *notused __unused)
 		RB_DLINK_FOREACH(ptr, auth_providers.head)
 		{
 			struct auth_provider *provider = ptr->data;
-			const time_t timeout = auth->timeout[provider->id];
+			const time_t timeout = get_provider_timeout(auth, provider->id);
 
 			if(is_provider_on(auth, provider->id) && provider->timeout != NULL &&
 				timeout > 0 && timeout < curtime)
@@ -379,27 +381,33 @@ void *
 get_provider_data(struct auth_client *auth, uint32_t id)
 {
 	lrb_assert(id < rb_dlink_list_length(&auth_providers));
-	return auth->data[(size_t)id];
+	return auth->data[id].data;
 }
 
 void
 set_provider_data(struct auth_client *auth, uint32_t id, void *data)
 {
 	lrb_assert(id < rb_dlink_list_length(&auth_providers));
-	auth->data[(size_t)id] = data;
+	auth->data[id].data = data;
 }
 
 void
 set_provider_timeout_relative(struct auth_client *auth, uint32_t id, time_t timeout)
 {
 	lrb_assert(id < rb_dlink_list_length(&auth_providers));
-	auth->timeout[(size_t)id] = timeout + rb_current_time();
+	auth->data[id].timeout = timeout + rb_current_time();
 }
 
 void
 set_provider_timeout_absolute(struct auth_client *auth, uint32_t id, time_t timeout)
 {
 	lrb_assert(id < rb_dlink_list_length(&auth_providers));
-	auth->timeout[(size_t)id] = timeout;
+	auth->data[id].timeout = timeout;
 }
 
+time_t
+get_provider_timeout(struct auth_client *auth, uint32_t id)
+{
+	lrb_assert(id < rb_dlink_list_length(&auth_providers));
+	return auth->data[id].timeout;
+}
