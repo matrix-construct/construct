@@ -131,7 +131,7 @@ rdns_start(struct auth_client *auth)
 	query->query = lookup_hostname(auth->c_ip, dns_answer_callback, auth);
 
 	notice_client(auth->cid, messages[REPORT_LOOKUP]);
-	set_provider_on(auth, PROVIDER_RDNS);
+	set_provider_running(auth, PROVIDER_RDNS);
 	return true;
 }
 

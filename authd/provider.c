@@ -159,7 +159,7 @@ cancel_providers(struct auth_client *auth)
 	{
 		provider = ptr->data;
 
-		if(provider->cancel && is_provider_on(auth, provider->id))
+		if(provider->cancel && is_provider_running(auth, provider->id))
 			/* Cancel if required */
 			provider->cancel(auth);
 	}
@@ -176,13 +176,12 @@ provider_done(struct auth_client *auth, provider_t id)
 	rb_dlink_node *ptr;
 	struct auth_provider *provider;
 
-	set_provider_off(auth, id);
 	set_provider_done(auth, id);
 
-	if(!auth->providers)
+	if(!auth->refcount)
 	{
 		if(!auth->providers_starting)
-			/* Only do this when there are no providers left */
+			/* Providers aren't being executed and refcount is 0, accept */
 			accept_client(auth, -1);
 		return;
 	}
@@ -191,7 +190,7 @@ provider_done(struct auth_client *auth, provider_t id)
 	{
 		provider = ptr->data;
 
-		if(provider->completed != NULL && is_provider_on(auth, provider->id))
+		if(provider->completed != NULL && is_provider_running(auth, provider->id))
 			/* Notify pending clients who asked for it */
 			provider->completed(auth, id);
 	}
@@ -237,7 +236,7 @@ reject_client(struct auth_client *auth, provider_t id, const char *data, const c
 	 */
 	rb_helper_write(authd_helper, "R %x %c %s %s %s :%s", auth->cid, reject, auth->username, auth->hostname, data, buf);
 
-	set_provider_off(auth, id);
+	set_provider_done(auth, id);
 	cancel_providers(auth);
 }
 
@@ -247,7 +246,7 @@ accept_client(struct auth_client *auth, provider_t id)
 {
 	rb_helper_write(authd_helper, "A %x %s %s", auth->cid, auth->username, auth->hostname);
 
-	set_provider_off(auth, id);
+	set_provider_done(auth, id);
 	cancel_providers(auth);
 }
 
@@ -307,7 +306,7 @@ start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_
 	auth->providers_starting = false;
 
 	/* If no providers are running, accept the client */
-	if(!auth->providers)
+	if(!auth->refcount)
 		accept_client(auth, -1);
 }
 
@@ -368,46 +367,11 @@ provider_timeout_event(void *notused __unused)
 			struct auth_provider *provider = ptr->data;
 			const time_t timeout = get_provider_timeout(auth, provider->id);
 
-			if(is_provider_on(auth, provider->id) && provider->timeout != NULL &&
+			if(is_provider_running(auth, provider->id) && provider->timeout != NULL &&
 				timeout > 0 && timeout < curtime)
 			{
 				provider->timeout(auth);
 			}
 		}
 	}
-}
-
-void *
-get_provider_data(struct auth_client *auth, uint32_t id)
-{
-	lrb_assert(id < rb_dlink_list_length(&auth_providers));
-	return auth->data[id].data;
-}
-
-void
-set_provider_data(struct auth_client *auth, uint32_t id, void *data)
-{
-	lrb_assert(id < rb_dlink_list_length(&auth_providers));
-	auth->data[id].data = data;
-}
-
-void
-set_provider_timeout_relative(struct auth_client *auth, uint32_t id, time_t timeout)
-{
-	lrb_assert(id < rb_dlink_list_length(&auth_providers));
-	auth->data[id].timeout = timeout + rb_current_time();
-}
-
-void
-set_provider_timeout_absolute(struct auth_client *auth, uint32_t id, time_t timeout)
-{
-	lrb_assert(id < rb_dlink_list_length(&auth_providers));
-	auth->data[id].timeout = timeout;
-}
-
-time_t
-get_provider_timeout(struct auth_client *auth, uint32_t id)
-{
-	lrb_assert(id < rb_dlink_list_length(&auth_providers));
-	return auth->data[id].timeout;
 }

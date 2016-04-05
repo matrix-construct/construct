@@ -669,7 +669,7 @@ opm_start(struct auth_client *auth)
 		/* This probably can't happen but let's handle this case anyway */
 		opm_scan(auth);
 
-	set_provider_on(auth, PROVIDER_BLACKLIST);
+	set_provider_running(auth, PROVIDER_BLACKLIST);
 	return true;
 }
 

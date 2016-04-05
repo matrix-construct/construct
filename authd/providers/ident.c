@@ -324,7 +324,7 @@ ident_start(struct auth_client *auth)
 			GET_SS_LEN(&l_addr), ident_connected,
 			auth, ident_timeout);
 
-	set_provider_on(auth, PROVIDER_IDENT);
+	set_provider_running(auth, PROVIDER_IDENT);
 
 	return true;
 }
