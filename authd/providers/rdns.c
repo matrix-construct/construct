@@ -35,7 +35,6 @@ struct user_query
 static const char *messages[] =
 {
 	"*** Looking up your hostname...",
-	"*** Found your hostname",
 	"*** Couldn't look up your hostname",
 	"*** Your hostname is too long, ignoring hostname",
 };
@@ -43,7 +42,6 @@ static const char *messages[] =
 typedef enum
 {
 	REPORT_LOOKUP,
-	REPORT_FOUND,
 	REPORT_FAIL,
 	REPORT_TOOLONG,
 } dns_message;
@@ -99,7 +97,7 @@ client_success(struct auth_client *auth)
 
 	lrb_assert(query != NULL);
 
-	notice_client(auth->cid, messages[REPORT_FOUND]);
+	notice_client(auth->cid, "*** Found your hostname: %s", auth->hostname);
 	cancel_query(query->query);
 
 	rb_free(query);
