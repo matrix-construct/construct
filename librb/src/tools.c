@@ -138,6 +138,99 @@ rb_string_to_array(char *string, char **parv, int maxpara)
 	return x;
 }
 
+#ifndef HAVE_STRCASECMP
+#ifndef _WIN32
+/* Crummy fallback impl by me. --Elizafox */
+int
+rb_strcasecmp(const char *s1, const char *s2)
+{
+	for(; *s1 != '\0' || *s2 != '\0'; s1++, s2++)
+	{
+		if(tolower(*s1) != tolower(*s2))
+			return tolower(*s1) - tolower(*s2);
+	}
+
+	if(*s1 == '\0' && *s2 == '\0')
+		return 0;
+
+	return tolower(*(--s1)) - tolower(*(--s2));
+}
+#else /* _WIN32 */
+int
+rb_strcasecmp(const char *s1, const char *s2)
+{
+	return stricmp(s1, s2);
+}
+#endif /* _WIN32 */
+#else /* HAVE_STRCASECMP */
+int
+rb_strcasecmp(const char *s1, const char *s2)
+{
+	return strcasecmp(s1, s2);
+}
+#endif
+
+#ifndef HAVE_STRNCASECMP
+#ifndef _WIN32
+/* Crummy fallback impl by me. --Elizafox */
+int
+rb_strncasecmp(const char *s1, const char *s2, size_t n)
+{
+	if(n == 0)
+		return 0;
+
+	for(; *s1 != '\0' || *s2 != '\0' || n; s1++, s2++, n--)
+	{
+		if(tolower(*s1) != tolower(*s2))
+			return tolower(*s1) - tolower(*s2);
+	}
+
+	if(*s1 == '\0' && *s2 == '\0')
+		return 0;
+
+	return tolower(*(--s1)) - tolower(*(--s2));
+}
+#else /* _WIN32 */
+int
+rb_strncasecmp(const char *s1, const char *s2, size_t n)
+{
+	return strnicmp(s1, s2, n);
+}
+#endif /* _WIN32 */
+#else /* HAVE_STRNCASECMP */
+int
+rb_strncasecmp(const char *s1, const char *s2, size_t n)
+{
+	return strncasecmp(s1, s2, n);
+}
+#endif
+
+#ifndef HAVE_STRCASESTR
+/* Crummy fallback impl by me. --Elizafox */
+char *
+rb_strcasestr(const char *s, const char *find)
+{
+	size_t len_f = strlen(find);
+
+	if(*s == '\0')
+		return s;
+
+	for(char *c = s; *c != '\0'; c++)
+	{
+		if(*c == *find && strncasecmp(c, find, len_f) == 0)
+			return c;
+	}
+
+	return NULL;
+}
+#else
+char *
+rb_strcasestr(const char *s, const char *find)
+{
+	return strcasestr(s, find);
+}
+#endif
+
 #ifndef HAVE_STRLCAT
 size_t
 rb_strlcat(char *dest, const char *src, size_t count)

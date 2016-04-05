@@ -30,6 +30,9 @@
 #ifndef __TOOLS_H__
 #define __TOOLS_H__
 
+int rb_strcasecmp(const char *s1, const char *s2);
+int rb_strncasecmp(const char *s1, const char *s2, size_t n);
+char *rb_strcasestr(const char *s, const char *find);
 size_t rb_strlcpy(char *dst, const char *src, size_t siz);
 size_t rb_strlcat(char *dst, const char *src, size_t siz);
 size_t rb_strnlen(const char *s, size_t count);
