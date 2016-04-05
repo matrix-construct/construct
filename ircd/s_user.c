@@ -467,7 +467,7 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 				return CLIENT_EXITED;
 			}
 			break;
-		case 'O':
+		case 'O':	/* OPM */
 			if(IsExemptKline(source_p) || IsConfExemptProxy(aconf))
 			{
 				sendto_one_notice(source_p, ":*** Your IP address %s has been detected as an open proxy (ip:port %s), but you are exempt",

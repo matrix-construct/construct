@@ -43,6 +43,8 @@
 #include "stdinc.h"
 #include "dns.h"
 
+#define SELF_PID (blacklist_provider.id)
+
 typedef enum filter_t
 {
 	FILTER_ALL = 1,
@@ -237,7 +239,7 @@ blacklist_dns_callback(const char *result, bool status, query_type type, void *d
 	bl = bllookup->bl;
 	auth = bllookup->auth;
 
-	if((bluser = get_provider_data(auth, PROVIDER_BLACKLIST)) == NULL)
+	if((bluser = get_provider_data(auth, SELF_PID)) == NULL)
 		return;
 
 	if (result != NULL && status && blacklist_check_reply(bllookup, result))
@@ -245,7 +247,7 @@ blacklist_dns_callback(const char *result, bool status, query_type type, void *d
 		/* Match found, so proceed no further */
 		bl->hits++;
 		blacklists_cancel(auth);
-		reject_client(auth, PROVIDER_BLACKLIST, bl->host, bl->reason);
+		reject_client(auth, SELF_PID, bl->host, bl->reason);
 		return;
 	}
 
@@ -260,9 +262,9 @@ blacklist_dns_callback(const char *result, bool status, query_type type, void *d
 		notice_client(auth->cid, "*** IP not found in DNS blacklist%s",
 				rb_dlink_list_length(&blacklist_list) > 1 ? "s" : "");
 		rb_free(bluser);
-		set_provider_data(auth, PROVIDER_BLACKLIST, NULL);
-		set_provider_timeout_absolute(auth, PROVIDER_BLACKLIST, 0);
-		provider_done(auth, PROVIDER_BLACKLIST);
+		set_provider_data(auth, SELF_PID, NULL);
+		set_provider_timeout_absolute(auth, SELF_PID, 0);
+		provider_done(auth, SELF_PID);
 	}
 }
 
@@ -270,7 +272,7 @@ static void
 initiate_blacklist_dnsquery(struct blacklist *bl, struct auth_client *auth)
 {
 	struct blacklist_lookup *bllookup = rb_malloc(sizeof(struct blacklist_lookup));
-	struct blacklist_user *bluser = get_provider_data(auth, PROVIDER_BLACKLIST);
+	struct blacklist_user *bluser = get_provider_data(auth, SELF_PID);
 	char buf[IRCD_RES_HOSTLEN + 1];
 	int aftype;
 
@@ -297,7 +299,7 @@ initiate_blacklist_dnsquery(struct blacklist *bl, struct auth_client *auth)
 static inline void
 lookup_all_blacklists(struct auth_client *auth)
 {
-	struct blacklist_user *bluser = get_provider_data(auth, PROVIDER_BLACKLIST);
+	struct blacklist_user *bluser = get_provider_data(auth, SELF_PID);
 	rb_dlink_node *ptr;
 
 	notice_client(auth->cid, "*** Checking your IP against DNS blacklist%s",
@@ -311,7 +313,7 @@ lookup_all_blacklists(struct auth_client *auth)
 			initiate_blacklist_dnsquery(bl, auth);
 	}
 
-	set_provider_timeout_relative(auth, PROVIDER_BLACKLIST, blacklist_timeout);
+	set_provider_timeout_relative(auth, SELF_PID, blacklist_timeout);
 }
 
 static inline void
@@ -341,7 +343,9 @@ delete_all_blacklists(void)
 static bool
 blacklists_start(struct auth_client *auth)
 {
-	lrb_assert(get_provider_data(auth, PROVIDER_BLACKLIST) == NULL);
+	uint32_t rdns_pid, ident_pid;
+
+	lrb_assert(get_provider_data(auth, SELF_PID) == NULL);
 
 	if(!rb_dlink_list_length(&blacklist_list))
 	{
@@ -350,31 +354,36 @@ blacklists_start(struct auth_client *auth)
 		return true;
 	}
 
-	set_provider_data(auth, PROVIDER_BLACKLIST, rb_malloc(sizeof(struct blacklist_user)));
+	set_provider_data(auth, SELF_PID, rb_malloc(sizeof(struct blacklist_user)));
 
-	if(is_provider_done(auth, PROVIDER_RDNS) && is_provider_done(auth, PROVIDER_IDENT))
-		/* This probably can't happen but let's handle this case anyway */
+	if((!get_provider_id("rdns", &rdns_pid) || is_provider_done(auth, rdns_pid)) &&
+		(!get_provider_id("ident", &ident_pid) || is_provider_done(auth, ident_pid)))
+	{
+		/* Start the lookup if ident and rdns are finished, or not loaded. */
 		lookup_all_blacklists(auth);
+	}
 
-	set_provider_running(auth, PROVIDER_BLACKLIST);
+	set_provider_running(auth, SELF_PID);
 	return true;
 }
 
 /* This is called every time a provider is completed as long as we are marked not done */
 static void
-blacklists_initiate(struct auth_client *auth, provider_t provider)
+blacklists_initiate(struct auth_client *auth, uint32_t provider)
 {
-	struct blacklist_user *bluser = get_provider_data(auth, PROVIDER_BLACKLIST);
+	struct blacklist_user *bluser = get_provider_data(auth, SELF_PID);
+	uint32_t rdns_pid, ident_pid;
 
-	lrb_assert(provider != PROVIDER_BLACKLIST);
-	lrb_assert(!is_provider_done(auth, PROVIDER_BLACKLIST));
+	lrb_assert(provider != SELF_PID);
+	lrb_assert(!is_provider_done(auth, SELF_PID));
 	lrb_assert(rb_dlink_list_length(&blacklist_list) > 0);
 
 	if(bluser == NULL || rb_dlink_list_length(&bluser->queries))
 		/* Nothing to do */
 		return;
-	else if(!(is_provider_done(auth, PROVIDER_RDNS) && is_provider_done(auth, PROVIDER_IDENT)))
-		/* Don't start until we've completed these */
+	else if((!get_provider_id("rdns", &rdns_pid) || is_provider_done(auth, rdns_pid)) &&
+		(!get_provider_id("ident", &ident_pid) || is_provider_done(auth, ident_pid)))
+		/* Don't start until ident and rdns are finished (or not loaded) */
 		return;
 	else
 		lookup_all_blacklists(auth);
@@ -384,7 +393,7 @@ static void
 blacklists_cancel(struct auth_client *auth)
 {
 	rb_dlink_node *ptr, *nptr;
-	struct blacklist_user *bluser = get_provider_data(auth, PROVIDER_BLACKLIST);
+	struct blacklist_user *bluser = get_provider_data(auth, SELF_PID);
 
 	if(bluser == NULL)
 		return;
@@ -406,9 +415,9 @@ blacklists_cancel(struct auth_client *auth)
 	}
 
 	rb_free(bluser);
-	set_provider_data(auth, PROVIDER_BLACKLIST, NULL);
-	set_provider_timeout_absolute(auth, PROVIDER_BLACKLIST, 0);
-	provider_done(auth, PROVIDER_BLACKLIST);
+	set_provider_data(auth, SELF_PID, NULL);
+	set_provider_timeout_absolute(auth, SELF_PID, 0);
+	provider_done(auth, SELF_PID);
 }
 
 static void
@@ -549,7 +558,8 @@ struct auth_opts_handler blacklist_options[] =
 
 struct auth_provider blacklist_provider =
 {
-	.id = PROVIDER_BLACKLIST,
+	.name = "blacklist",
+	.letter = 'B',
 	.destroy = blacklists_destroy,
 	.start = blacklists_start,
 	.cancel = blacklists_cancel,

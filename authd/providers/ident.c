@@ -31,6 +31,8 @@
 #include "provider.h"
 #include "res.h"
 
+#define SELF_PID (ident_provider.id)
+
 #define IDENT_BUFSIZE 128
 
 struct ident_query
@@ -88,7 +90,7 @@ ident_connected(rb_fde_t *F __unused, int error, void *data)
 	int authlen;
 
 	lrb_assert(auth != NULL);
-	query = get_provider_data(auth, PROVIDER_IDENT);
+	query = get_provider_data(auth, SELF_PID);
 	lrb_assert(query != NULL);
 
 	/* Check the error */
@@ -125,7 +127,7 @@ read_ident_reply(rb_fde_t *F, void *data)
 	int count;
 
 	lrb_assert(auth != NULL);
-	query = get_provider_data(auth, PROVIDER_IDENT);
+	query = get_provider_data(auth, SELF_PID);
 	lrb_assert(query != NULL);
 
 	len = rb_read(F, buf, IDENT_BUFSIZE);
@@ -170,7 +172,7 @@ read_ident_reply(rb_fde_t *F, void *data)
 static void
 client_fail(struct auth_client *auth, ident_message report)
 {
-	struct ident_query *query = get_provider_data(auth, PROVIDER_IDENT);
+	struct ident_query *query = get_provider_data(auth, SELF_PID);
 
 	lrb_assert(query != NULL);
 
@@ -180,17 +182,17 @@ client_fail(struct auth_client *auth, ident_message report)
 		rb_close(query->F);
 
 	rb_free(query);
-	set_provider_data(auth, PROVIDER_IDENT, NULL);
-	set_provider_timeout_absolute(auth, PROVIDER_IDENT, 0);
+	set_provider_data(auth, SELF_PID, NULL);
+	set_provider_timeout_absolute(auth, SELF_PID, 0);
 
 	notice_client(auth->cid, messages[report]);
-	provider_done(auth, PROVIDER_IDENT);
+	provider_done(auth, SELF_PID);
 }
 
 static void
 client_success(struct auth_client *auth)
 {
-	struct ident_query *query = get_provider_data(auth, PROVIDER_IDENT);
+	struct ident_query *query = get_provider_data(auth, SELF_PID);
 
 	lrb_assert(query != NULL);
 
@@ -198,11 +200,11 @@ client_success(struct auth_client *auth)
 		rb_close(query->F);
 
 	rb_free(query);
-	set_provider_data(auth, PROVIDER_IDENT, NULL);
-	set_provider_timeout_absolute(auth, PROVIDER_IDENT, 0);
+	set_provider_data(auth, SELF_PID, NULL);
+	set_provider_timeout_absolute(auth, SELF_PID, 0);
 
 	notice_client(auth->cid, messages[REPORT_FOUND]);
-	provider_done(auth, PROVIDER_IDENT);
+	provider_done(auth, SELF_PID);
 }
 
 /* get_valid_ident
@@ -278,7 +280,7 @@ ident_destroy(void)
 	/* Nuke all ident queries */
 	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
-		if(get_provider_data(auth, PROVIDER_IDENT) != NULL)
+		if(get_provider_data(auth, SELF_PID) != NULL)
 			client_fail(auth, REPORT_FAIL);
 	}
 }
@@ -290,20 +292,20 @@ ident_start(struct auth_client *auth)
 	struct rb_sockaddr_storage l_addr, c_addr;
 	int family = GET_SS_FAMILY(&auth->c_addr);
 
-	lrb_assert(get_provider_data(auth, PROVIDER_IDENT) == NULL);
+	lrb_assert(get_provider_data(auth, SELF_PID) == NULL);
 
 	if(!ident_enable)
 	{
 		rb_free(query);
 		notice_client(auth->cid, messages[REPORT_DISABLED]);
-		set_provider_done(auth, PROVIDER_IDENT);
+		set_provider_done(auth, SELF_PID);
 		return true;
 	}
 
 	notice_client(auth->cid, messages[REPORT_LOOKUP]);
 
-	set_provider_data(auth, PROVIDER_IDENT, query);
-	set_provider_timeout_relative(auth, PROVIDER_IDENT, ident_timeout);
+	set_provider_data(auth, SELF_PID, query);
+	set_provider_timeout_relative(auth, SELF_PID, ident_timeout);
 
 	if((query->F = rb_socket(family, SOCK_STREAM, 0, "ident")) == NULL)
 	{
@@ -324,7 +326,7 @@ ident_start(struct auth_client *auth)
 			GET_SS_LEN(&l_addr), ident_connected,
 			auth, ident_timeout);
 
-	set_provider_running(auth, PROVIDER_IDENT);
+	set_provider_running(auth, SELF_PID);
 
 	return true;
 }
@@ -332,7 +334,7 @@ ident_start(struct auth_client *auth)
 static void
 ident_cancel(struct auth_client *auth)
 {
-	struct ident_query *query = get_provider_data(auth, PROVIDER_IDENT);
+	struct ident_query *query = get_provider_data(auth, SELF_PID);
 
 	if(query != NULL)
 		client_fail(auth, REPORT_FAIL);
@@ -368,7 +370,8 @@ struct auth_opts_handler ident_options[] =
 
 struct auth_provider ident_provider =
 {
-	.id = PROVIDER_IDENT,
+	.name = "ident",
+	.letter = 'I',
 	.start = ident_start,
 	.destroy = ident_destroy,
 	.cancel = ident_cancel,

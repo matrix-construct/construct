@@ -54,67 +54,21 @@
 
 static EVH provider_timeout_event;
 
-rb_dlink_list auth_providers;
-
-/* Clients waiting */
 rb_dictionary *auth_clients;
+rb_dictionary *auth_providers;	/* Referenced by name */
 
+static rb_dlink_list free_pids;
+static uint32_t pid;
 static struct ev_entry *timeout_ev;
-
-/* Load a provider */
-void
-load_provider(struct auth_provider *provider)
-{
-	if(rb_dlink_list_length(&auth_providers) >= MAX_PROVIDERS)
-	{
-		warn_opers(L_WARN, "provider: cannot load provider with id %d: maximum reached (%d)",
-				provider->id, MAX_PROVIDERS);
-		return;
-	}
-
-	if(provider->opt_handlers != NULL)
-	{
-		struct auth_opts_handler *handler;
-
-		for(handler = provider->opt_handlers; handler->option != NULL; handler++)
-			rb_dictionary_add(authd_option_handlers, handler->option, handler);
-	}
-
-	if(provider->stats_handler.letter != '\0')
-		authd_stat_handlers[provider->stats_handler.letter] = provider->stats_handler.handler;
-
-	if(provider->init != NULL)
-		provider->init();
-
-	rb_dlinkAddTail(provider, &provider->node, &auth_providers);
-}
-
-void
-unload_provider(struct auth_provider *provider)
-{
-	if(provider->opt_handlers != NULL)
-	{
-		struct auth_opts_handler *handler;
-
-		for(handler = provider->opt_handlers; handler->option != NULL; handler++)
-			rb_dictionary_delete(authd_option_handlers, handler->option);
-	}
-
-	if(provider->stats_handler.letter != '\0')
-		authd_stat_handlers[provider->stats_handler.letter] = NULL;
-
-	if(provider->destroy != NULL)
-		provider->destroy();
-
-	rb_dlinkDelete(&provider->node, &auth_providers);
-}
 
 /* Initalise all providers */
 void
 init_providers(void)
 {
 	auth_clients = rb_dictionary_create("pending auth clients", rb_uint32cmp);
+	auth_providers = rb_dictionary_create("auth providers", strcmp);
 	timeout_ev = rb_event_addish("provider_timeout_event", provider_timeout_event, NULL, 1);
+
 	load_provider(&rdns_provider);
 	load_provider(&ident_provider);
 	load_provider(&blacklist_provider);
@@ -137,28 +91,81 @@ destroy_providers(void)
 		reject_client(auth, -1, "destroy", "Authentication system is down... try reconnecting in a few seconds");
 	}
 
-	RB_DLINK_FOREACH(ptr, auth_providers.head)
+	RB_DICTIONARY_FOREACH(provider, &iter, auth_providers)
 	{
-		provider = ptr->data;
-
 		if(provider->destroy)
 			provider->destroy();
 	}
 
+	rb_dictionary_destroy(auth_clients, NULL, NULL);
+	rb_dictionary_destroy(auth_providers, NULL, NULL);
 	rb_event_delete(timeout_ev);
 }
+
+/* Load a provider */
+void
+load_provider(struct auth_provider *provider)
+{
+	/* Assign a PID */
+	if(rb_dlink_list_length(&free_pids) > 0)
+	{
+		/* use the free list */
+		provider->id = RB_POINTER_TO_UINT(free_pids.head->data);
+		rb_dlinkDestroy(free_pids.head, &free_pids);
+	}
+	else
+		provider->id = pid++;
+
+	if(provider->opt_handlers != NULL)
+	{
+		struct auth_opts_handler *handler;
+
+		for(handler = provider->opt_handlers; handler->option != NULL; handler++)
+			rb_dictionary_add(authd_option_handlers, handler->option, handler);
+	}
+
+	if(provider->stats_handler.letter != '\0')
+		authd_stat_handlers[provider->stats_handler.letter] = provider->stats_handler.handler;
+
+	if(provider->init != NULL)
+		provider->init();
+
+	rb_dictionary_add(auth_providers, provider->name, provider);
+}
+
+void
+unload_provider(struct auth_provider *provider)
+{
+	if(provider->opt_handlers != NULL)
+	{
+		struct auth_opts_handler *handler;
+
+		for(handler = provider->opt_handlers; handler->option != NULL; handler++)
+			rb_dictionary_delete(authd_option_handlers, handler->option);
+	}
+
+	if(provider->stats_handler.letter != '\0')
+		authd_stat_handlers[provider->stats_handler.letter] = NULL;
+
+	if(provider->destroy != NULL)
+		provider->destroy();
+
+	rb_dictionary_delete(auth_providers, provider->name);
+
+	/* Reclaim ID */
+	rb_dlinkAddAlloc(RB_UINT_TO_POINTER(provider->id), &free_pids);
+}
+
 
 /* Cancel outstanding providers for a client */
 void
 cancel_providers(struct auth_client *auth)
 {
-	rb_dlink_node *ptr;
+	rb_dictionary_iter iter;
 	struct auth_provider *provider;
 
-	RB_DLINK_FOREACH(ptr, auth_providers.head)
+	RB_DICTIONARY_FOREACH(provider, &iter, auth_providers)
 	{
-		provider = ptr->data;
-
 		if(provider->cancel && is_provider_running(auth, provider->id))
 			/* Cancel if required */
 			provider->cancel(auth);
@@ -171,9 +178,9 @@ cancel_providers(struct auth_client *auth)
 
 /* Provider is done - WARNING: do not use auth instance after calling! */
 void
-provider_done(struct auth_client *auth, provider_t id)
+provider_done(struct auth_client *auth, uint32_t id)
 {
-	rb_dlink_node *ptr;
+	rb_dictionary_iter iter;
 	struct auth_provider *provider;
 
 	set_provider_done(auth, id);
@@ -186,10 +193,8 @@ provider_done(struct auth_client *auth, provider_t id)
 		return;
 	}
 
-	RB_DLINK_FOREACH(ptr, auth_providers.head)
+	RB_DICTIONARY_FOREACH(provider, &iter, auth_providers)
 	{
-		provider = ptr->data;
-
 		if(provider->completed != NULL && is_provider_running(auth, provider->id))
 			/* Notify pending clients who asked for it */
 			provider->completed(auth, id);
@@ -198,30 +203,10 @@ provider_done(struct auth_client *auth, provider_t id)
 
 /* Reject a client - WARNING: do not use auth instance after calling! */
 void
-reject_client(struct auth_client *auth, provider_t id, const char *data, const char *fmt, ...)
+reject_client(struct auth_client *auth, uint32_t id, const char *data, const char *fmt, ...)
 {
-	char reject;
 	char buf[BUFSIZE];
 	va_list args;
-
-	switch(id)
-	{
-	case PROVIDER_RDNS:
-		reject = 'D';
-		break;
-	case PROVIDER_IDENT:
-		reject = 'I';
-		break;
-	case PROVIDER_BLACKLIST:
-		reject = 'B';
-		break;
-	case PROVIDER_OPM:
-		reject = 'O';
-		break;
-	default:
-		reject = 'N';
-		break;
-	}
 
 	if(data == NULL)
 		data = "*";
@@ -234,7 +219,10 @@ reject_client(struct auth_client *auth, provider_t id, const char *data, const c
 	 * In the future this may not be the case.
 	 * --Elizafox
 	 */
-	rb_helper_write(authd_helper, "R %x %c %s %s %s :%s", auth->cid, reject, auth->username, auth->hostname, data, buf);
+	rb_helper_write(authd_helper, "R %x %c %s %s %s :%s",
+		auth->cid, auth->data[id].provider->letter,
+		auth->username, auth->hostname,
+		data, buf);
 
 	set_provider_done(auth, id);
 	cancel_providers(auth);
@@ -242,7 +230,7 @@ reject_client(struct auth_client *auth, provider_t id, const char *data, const c
 
 /* Accept a client, cancel outstanding providers if any - WARNING: do nto use auth instance after calling! */
 void
-accept_client(struct auth_client *auth, provider_t id)
+accept_client(struct auth_client *auth, uint32_t id)
 {
 	rb_helper_write(authd_helper, "A %x %s %s", auth->cid, auth->username, auth->hostname);
 
@@ -257,7 +245,7 @@ start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_
 	struct auth_provider *provider;
 	struct auth_client *auth = rb_malloc(sizeof(struct auth_client));
 	long lcid = strtol(cid, NULL, 16);
-	rb_dlink_node *ptr;
+	rb_dictionary_iter iter;
 
 	if(lcid >= UINT32_MAX)
 		return;
@@ -285,13 +273,13 @@ start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_
 	rb_strlcpy(auth->hostname, "*", sizeof(auth->hostname));
 	rb_strlcpy(auth->username, "*", sizeof(auth->username));
 
-	auth->data = rb_malloc(rb_dlink_list_length(&auth_providers) *
+	auth->data = rb_malloc(rb_dictionary_size(auth_providers) *
 			sizeof(struct auth_client_data));
 
 	auth->providers_starting = true;
-	RB_DLINK_FOREACH(ptr, auth_providers.head)
+	RB_DICTIONARY_FOREACH(provider, &iter, auth_providers)
 	{
-		provider = ptr->data;
+		auth->data[provider->id].provider = provider;
 
 		lrb_assert(provider->start != NULL);
 
@@ -360,11 +348,11 @@ provider_timeout_event(void *notused __unused)
 
 	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
-		rb_dlink_node *ptr;
+		rb_dictionary_iter iter2;
+		struct auth_provider *provider;
 
-		RB_DLINK_FOREACH(ptr, auth_providers.head)
+		RB_DICTIONARY_FOREACH(provider, &iter2, auth_providers)
 		{
-			struct auth_provider *provider = ptr->data;
 			const time_t timeout = get_provider_timeout(auth, provider->id);
 
 			if(is_provider_running(auth, provider->id) && provider->timeout != NULL &&

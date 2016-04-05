@@ -27,15 +27,6 @@
 
 #define MAX_PROVIDERS 32	/* This should be enough */
 
-/* Registered providers */
-typedef enum
-{
-	PROVIDER_RDNS,
-	PROVIDER_IDENT,
-	PROVIDER_BLACKLIST,
-	PROVIDER_OPM,
-} provider_t;
-
 typedef enum
 {
 	PROVIDER_STATUS_NOTRUN = 0,
@@ -45,6 +36,7 @@ typedef enum
 
 struct auth_client_data
 {
+	struct auth_provider *provider;	/* Pointer back */
 	time_t timeout;			/* Provider timeout */
 	void *data;			/* Provider data */
 	provider_status_t status;	/* Provider status */
@@ -76,8 +68,8 @@ typedef void (*provider_destroy_t)(void);
 
 typedef bool (*provider_start_t)(struct auth_client *);
 typedef void (*provider_cancel_t)(struct auth_client *);
-typedef void (*provider_timeout_t)(struct auth_client *);
-typedef void (*provider_complete_t)(struct auth_client *, provider_t);
+typedef void (*uint32_timeout_t)(struct auth_client *);
+typedef void (*provider_complete_t)(struct auth_client *, uint32_t);
 
 struct auth_stats_handler
 {
@@ -89,14 +81,17 @@ struct auth_provider
 {
 	rb_dlink_node node;
 
-	provider_t id;
+	uint32_t id;			/* Provider ID */
+
+	const char *name;		/* Name of the provider */
+	char letter;			/* Letter used on reject, etc. */
 
 	provider_init_t init;		/* Initalise the provider */
 	provider_destroy_t destroy;	/* Terminate the provider */
 
 	provider_start_t start;		/* Perform authentication */
 	provider_cancel_t cancel;	/* Authentication cancelled */
-	provider_timeout_t timeout;	/* Timeout callback */
+	uint32_timeout_t timeout;	/* Timeout callback */
 	provider_complete_t completed;	/* Callback for when other performers complete (think dependency chains) */
 
 	struct auth_stats_handler stats_handler;
@@ -109,7 +104,7 @@ extern struct auth_provider ident_provider;
 extern struct auth_provider blacklist_provider;
 extern struct auth_provider opm_provider;
 
-extern rb_dlink_list auth_providers;
+extern rb_dictionary *auth_providers;
 extern rb_dictionary *auth_clients;
 
 void load_provider(struct auth_provider *provider);
@@ -119,24 +114,46 @@ void init_providers(void);
 void destroy_providers(void);
 void cancel_providers(struct auth_client *auth);
 
-void provider_done(struct auth_client *auth, provider_t id);
-void accept_client(struct auth_client *auth, provider_t id);
-void reject_client(struct auth_client *auth, provider_t id, const char *data, const char *fmt, ...);
+void provider_done(struct auth_client *auth, uint32_t id);
+void accept_client(struct auth_client *auth, uint32_t id);
+void reject_client(struct auth_client *auth, uint32_t id, const char *data, const char *fmt, ...);
 
 void handle_new_connection(int parc, char *parv[]);
 void handle_cancel_connection(int parc, char *parv[]);
 
 
+/* Get a provider by name */
+static inline struct auth_provider *
+get_provider(const char *name)
+{
+	return rb_dictionary_retrieve(auth_providers, name);
+}
+
+/* Get a provider's id by name */
+static inline bool
+get_provider_id(const char *name, int *id)
+{
+	struct auth_provider *provider = get_provider(name);
+
+	if(provider != NULL)
+	{
+		*id = provider->id;
+		return true;
+	}
+	else
+		return false;
+}
+
 /* Get a provider's raw status */
 static inline provider_status_t
-get_provider_status(struct auth_client *auth, provider_t provider)
+get_provider_status(struct auth_client *auth, uint32_t provider)
 {
 	return auth->data[provider].status;
 }
 
 /* Set a provider's raw status */
 static inline void
-set_provider_status(struct auth_client *auth, provider_t provider, provider_status_t status)
+set_provider_status(struct auth_client *auth, uint32_t provider, provider_status_t status)
 {
 	auth->data[provider].status = status;
 }
@@ -144,7 +161,7 @@ set_provider_status(struct auth_client *auth, provider_t provider, provider_stat
 /* Set the provider as running
  * If you're doing asynchronous work call this */
 static inline void
-set_provider_running(struct auth_client *auth, provider_t provider)
+set_provider_running(struct auth_client *auth, uint32_t provider)
 {
 	auth->refcount++;
 	set_provider_status(auth, provider, PROVIDER_STATUS_RUNNING);
@@ -153,7 +170,7 @@ set_provider_running(struct auth_client *auth, provider_t provider)
 /* Provider is no longer operating on this auth client
  * You should use provider_done and not this */
 static inline void
-set_provider_done(struct auth_client *auth, provider_t provider)
+set_provider_done(struct auth_client *auth, uint32_t provider)
 {
 	auth->refcount--;
 	set_provider_status(auth, provider, PROVIDER_STATUS_DONE);
@@ -161,14 +178,14 @@ set_provider_done(struct auth_client *auth, provider_t provider)
 
 /* Check if provider is operating on this auth client */
 static inline bool
-is_provider_running(struct auth_client *auth, provider_t provider)
+is_provider_running(struct auth_client *auth, uint32_t provider)
 {
 	return get_provider_status(auth, provider) == PROVIDER_STATUS_RUNNING;
 }
 
 /* Check if provider has finished on this client */
 static inline bool
-is_provider_done(struct auth_client *auth, provider_t provider)
+is_provider_done(struct auth_client *auth, uint32_t provider)
 {
 	return get_provider_status(auth, provider) == PROVIDER_STATUS_DONE;
 }
@@ -177,7 +194,6 @@ is_provider_done(struct auth_client *auth, provider_t provider)
 static inline void *
 get_provider_data(struct auth_client *auth, uint32_t id)
 {
-	lrb_assert(id < rb_dlink_list_length(&auth_providers));
 	return auth->data[id].data;
 }
 
@@ -185,7 +201,6 @@ get_provider_data(struct auth_client *auth, uint32_t id)
 static inline void
 set_provider_data(struct auth_client *auth, uint32_t id, void *data)
 {
-	lrb_assert(id < rb_dlink_list_length(&auth_providers));
 	auth->data[id].data = data;
 }
 
@@ -194,7 +209,6 @@ set_provider_data(struct auth_client *auth, uint32_t id, void *data)
 static inline void
 set_provider_timeout_relative(struct auth_client *auth, uint32_t id, time_t timeout)
 {
-	lrb_assert(id < rb_dlink_list_length(&auth_providers));
 	auth->data[id].timeout = timeout + rb_current_time();
 }
 
@@ -203,7 +217,6 @@ set_provider_timeout_relative(struct auth_client *auth, uint32_t id, time_t time
 static inline void
 set_provider_timeout_absolute(struct auth_client *auth, uint32_t id, time_t timeout)
 {
-	lrb_assert(id < rb_dlink_list_length(&auth_providers));
 	auth->data[id].timeout = timeout;
 }
 
@@ -211,7 +224,6 @@ set_provider_timeout_absolute(struct auth_client *auth, uint32_t id, time_t time
 static inline time_t
 get_provider_timeout(struct auth_client *auth, uint32_t id)
 {
-	lrb_assert(id < rb_dlink_list_length(&auth_providers));
 	return auth->data[id].timeout;
 }
 

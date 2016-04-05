@@ -25,6 +25,8 @@
 #include "notice.h"
 #include "provider.h"
 
+#define SELF_PID (opm_provider.id)
+
 #define OPM_READSIZE 128
 
 typedef enum protocol_t
@@ -133,7 +135,7 @@ read_opm_reply(rb_fde_t *F, void *data)
 	ssize_t len;
 
 	lrb_assert(auth != NULL);
-	lookup = get_provider_data(auth, PROVIDER_OPM);
+	lookup = get_provider_data(auth, SELF_PID);
 	lrb_assert(lookup != NULL);
 
 	if((len = rb_read(F, readbuf, sizeof(readbuf))) < 0 && rb_ignore_errno(errno))
@@ -168,7 +170,7 @@ read_opm_reply(rb_fde_t *F, void *data)
 			/* No longer needed, client is going away */
 			rb_free(lookup);
 
-			reject_client(auth, PROVIDER_OPM, readbuf, "Open proxy detected");
+			reject_client(auth, SELF_PID, readbuf, "Open proxy detected");
 			break;
 		}
 	}
@@ -260,7 +262,7 @@ socks4_connected(rb_fde_t *F, int error, void *data)
 	lrb_assert(scan != NULL);
 
 	auth = scan->auth;
-	lookup = get_provider_data(auth, PROVIDER_OPM);
+	lookup = get_provider_data(auth, SELF_PID);
 
 	memcpy(c, "\x04\x01", 2); c += 2; /* Socks version 4, connect command */
 
@@ -315,7 +317,7 @@ socks5_connected(rb_fde_t *F, int error, void *data)
 	lrb_assert(scan != NULL);
 
 	auth = scan->auth;
-	lookup = get_provider_data(auth, PROVIDER_OPM);
+	lookup = get_provider_data(auth, SELF_PID);
 
 	/* Build the version header and socks request
 	 * version header (3 bytes): version, number of auth methods, auth type (0 for none)
@@ -380,7 +382,7 @@ http_connect_connected(rb_fde_t *F, int error, void *data)
 	lrb_assert(scan != NULL);
 
 	auth = scan->auth;
-	lookup = get_provider_data(auth, PROVIDER_OPM);
+	lookup = get_provider_data(auth, SELF_PID);
 
 	switch(GET_SS_FAMILY(&auth->c_addr))
 	{
@@ -425,7 +427,7 @@ end:
 static inline void
 establish_connection(struct auth_client *auth, struct opm_proxy *proxy)
 {
-	struct opm_lookup *lookup = get_provider_data(auth, PROVIDER_OPM);
+	struct opm_lookup *lookup = get_provider_data(auth, SELF_PID);
 	struct opm_listener *listener;
 	struct opm_scan *scan = rb_malloc(sizeof(struct opm_scan));
 	struct rb_sockaddr_storage c_a, l_a;
@@ -617,8 +619,8 @@ opm_scan(struct auth_client *auth)
 
 	lrb_assert(auth != NULL);
 
-	lookup = get_provider_data(auth, PROVIDER_OPM);
-	set_provider_timeout_relative(auth, PROVIDER_OPM, opm_timeout);
+	lookup = get_provider_data(auth, SELF_PID);
+	set_provider_timeout_relative(auth, SELF_PID, opm_timeout);
 
 	lookup->in_progress = true;
 
@@ -633,19 +635,21 @@ opm_scan(struct auth_client *auth)
 
 /* This is called every time a provider is completed as long as we are marked not done */
 static void
-blacklists_initiate(struct auth_client *auth, provider_t provider)
+blacklists_initiate(struct auth_client *auth, uint32_t provider)
 {
-	struct opm_lookup *lookup = get_provider_data(auth, PROVIDER_OPM);
+	struct opm_lookup *lookup = get_provider_data(auth, SELF_PID);
+	uint32_t rdns_pid, ident_pid;
 
-	lrb_assert(provider != PROVIDER_OPM);
-	lrb_assert(!is_provider_done(auth, PROVIDER_OPM));
+	lrb_assert(provider != SELF_PID);
+	lrb_assert(!is_provider_done(auth, SELF_PID));
 	lrb_assert(rb_dlink_list_length(&proxy_scanners) > 0);
 
 	if(lookup == NULL || lookup->in_progress)
 		/* Nothing to do */
 		return;
-	else if(!(is_provider_done(auth, PROVIDER_RDNS) && is_provider_done(auth, PROVIDER_IDENT)))
-		/* Don't start until we've completed these */
+	else if((!get_provider_id("rdns", &rdns_pid) || is_provider_done(auth, rdns_pid)) &&
+		(!get_provider_id("ident", &ident_pid) || is_provider_done(auth, ident_pid)))
+		/* Don't start until ident and rdns are finished (or not loaded) */
 		return;
 	else
 		opm_scan(auth);
@@ -654,7 +658,9 @@ blacklists_initiate(struct auth_client *auth, provider_t provider)
 static bool
 opm_start(struct auth_client *auth)
 {
-	lrb_assert(get_provider_data(auth, PROVIDER_OPM) == NULL);
+	uint32_t rdns_pid, ident_pid;
+
+	lrb_assert(get_provider_data(auth, SELF_PID) == NULL);
 
 	if(!opm_enable || rb_dlink_list_length(&proxy_scanners) == 0)
 	{
@@ -663,20 +669,23 @@ opm_start(struct auth_client *auth)
 		return true;
 	}
 
-	set_provider_data(auth, PROVIDER_BLACKLIST, rb_malloc(sizeof(struct opm_lookup)));
+	set_provider_data(auth, SELF_PID, rb_malloc(sizeof(struct opm_lookup)));
 
-	if(is_provider_done(auth, PROVIDER_RDNS) && is_provider_done(auth, PROVIDER_IDENT))
-		/* This probably can't happen but let's handle this case anyway */
+	if((!get_provider_id("rdns", &rdns_pid) || is_provider_done(auth, rdns_pid)) &&
+		(!get_provider_id("ident", &ident_pid) || is_provider_done(auth, ident_pid)))
+	{
+		/* Don't start until ident and rdns are finished (or not loaded) */
 		opm_scan(auth);
+	}
 
-	set_provider_running(auth, PROVIDER_BLACKLIST);
+	set_provider_running(auth, SELF_PID);
 	return true;
 }
 
 static void
 opm_cancel(struct auth_client *auth)
 {
-	struct opm_lookup *lookup = get_provider_data(auth, PROVIDER_OPM);
+	struct opm_lookup *lookup = get_provider_data(auth, SELF_PID);
 
 	if(lookup != NULL)
 	{
@@ -694,9 +703,9 @@ opm_cancel(struct auth_client *auth)
 
 		rb_free(lookup);
 
-		set_provider_data(auth, PROVIDER_OPM, NULL);
-		set_provider_timeout_absolute(auth, PROVIDER_OPM, 0);
-		provider_done(auth, PROVIDER_OPM);
+		set_provider_data(auth, SELF_PID, NULL);
+		set_provider_timeout_absolute(auth, SELF_PID, 0);
+		provider_done(auth, SELF_PID);
 	}
 }
 
@@ -869,7 +878,7 @@ delete_opm_scanner(const char *key __unused, int parc __unused, const char **par
 	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
 		rb_dlink_node *ptr;
-		struct opm_lookup *lookup = get_provider_data(auth, PROVIDER_OPM);
+		struct opm_lookup *lookup = get_provider_data(auth, SELF_PID);
 
 		if(lookup == NULL)
 			continue;
@@ -934,7 +943,8 @@ struct auth_opts_handler opm_options[] =
 
 struct auth_provider opm_provider =
 {
-	.id = PROVIDER_OPM,
+	.name = "opm",
+	.letter = 'O',
 	.destroy = opm_destroy,
 	.start = opm_start,
 	.cancel = opm_cancel,

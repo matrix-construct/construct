@@ -704,14 +704,14 @@ rb_dictionary_element *rb_dictionary_add(rb_dictionary *dict, const void *key, v
  *     - name of DTree node to delete
  *
  * Outputs:
- *     - on success, the remaining data that needs to be mowgli_freed
+ *     - on success, the remaining data that needs to be rb_freed
  *     - on failure, NULL
  *
  * Side Effects:
  *     - data is removed from the DTree.
  *
  * Notes:
- *     - the returned data needs to be mowgli_freed/released manually!
+ *     - the returned data needs to be rb_freed/released manually!
  */
 void *rb_dictionary_delete(rb_dictionary *dtree, const void *key)
 {
