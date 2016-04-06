@@ -316,8 +316,6 @@ struct alias_entry
 };
 
 /* All variables are GLOBAL */
-extern int specific_ipv4_vhost;	/* used in s_bsd.c */
-extern int specific_ipv6_vhost;
 extern struct config_file_entry ConfigFileEntry;	/* defined in ircd.c */
 extern struct config_channel_entry ConfigChannel;	/* defined in channel.c */
 extern struct config_server_hide ConfigServerHide;	/* defined in s_conf.c */
