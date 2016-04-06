@@ -779,9 +779,6 @@ charybdis_main(int argc, char *argv[])
 
         construct_cflags_strings();
 
-	load_all_modules(1);
-	load_core_modules(1);
-
 	init_authd();		/* Start up authd. */
 	init_dns();		/* Start up DNS query system */
 
@@ -793,6 +790,8 @@ charybdis_main(int argc, char *argv[])
 
 	mod_add_path(MODULE_DIR);
 	mod_add_path(MODULE_DIR "/autoload");
+	load_all_modules(1);
+	load_core_modules(1);
 
 	init_isupport();
 
