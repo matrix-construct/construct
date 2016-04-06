@@ -88,7 +88,8 @@ destroy_providers(void)
 	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
 		/* TBD - is this the right thing? */
-		reject_client(auth, -1, "destroy", "Authentication system is down... try reconnecting in a few seconds");
+		reject_client(auth, UINT32_MAX, "destroy",
+			"Authentication system is down... try reconnecting in a few seconds");
 	}
 
 	RB_DICTIONARY_FOREACH(provider, &iter, auth_providers)
@@ -114,7 +115,17 @@ load_provider(struct auth_provider *provider)
 		rb_dlinkDestroy(free_pids.head, &free_pids);
 	}
 	else
+	{
+		if(pid == UINT32_MAX)
+		{
+			/* If this happens, well, I don't know what to say. Probably a bug.
+			 * In any case, UINT32_MAX is a special sentinel. */
+			warn_opers(L_WARN, "Cannot load additional provider, max reached!");
+			return;
+		}
+
 		provider->id = pid++;
+	}
 
 	if(provider->opt_handlers != NULL)
 	{
@@ -157,21 +168,24 @@ unload_provider(struct auth_provider *provider)
 }
 
 
-/* Cancel outstanding providers for a client */
+/* Cancel outstanding providers for a client (if any) and free the auth instance
+ * WARNING: do not use auth instance after calling! */
 void
 cancel_providers(struct auth_client *auth)
 {
-	rb_dictionary_iter iter;
-	struct auth_provider *provider;
-
-	RB_DICTIONARY_FOREACH(provider, &iter, auth_providers)
+	if(auth->refcount > 0)
 	{
-		if(provider->cancel != NULL && is_provider_running(auth, provider->id))
-			/* Cancel if required */
-			provider->cancel(auth);
+		rb_dictionary_iter iter;
+		struct auth_provider *provider;
+
+		RB_DICTIONARY_FOREACH(provider, &iter, auth_providers)
+		{
+			if(provider->cancel != NULL && is_provider_running(auth, provider->id))
+				/* Cancel if required */
+				provider->cancel(auth);
+		}
 	}
 
-	auth->refcount = 0;
 	rb_dictionary_delete(auth_clients, RB_UINT_TO_POINTER(auth->cid));
 	rb_free(auth->data);
 	rb_free(auth);
@@ -185,17 +199,19 @@ provider_done(struct auth_client *auth, uint32_t id)
 	rb_dictionary_iter iter;
 	struct auth_provider *provider;
 
-	if(auth->refcount == 1 && !auth->providers_starting)
+	lrb_assert(is_provider_running(auth, id));
+	lrb_assert(id != UINT32_MAX);
+	lrb_assert(id <= pid);
+
+	set_provider_done(auth, id);
+
+	if(auth->refcount == 0 && !auth->providers_starting)
 	{
-		/* Providers aren't being executed and refcount is 1 (last provider), accept */
+		/* All done */
 		accept_client(auth, id);
 		return;
 	}
 
-	set_provider_done(auth, id);
-
-	/* It's safe to use auth below, since refcount will be > 0, per above 
-	 * Thus the object will still be live */
 	RB_DICTIONARY_FOREACH(provider, &iter, auth_providers)
 	{
 		if(provider->completed != NULL && is_provider_running(auth, provider->id))
@@ -204,7 +220,7 @@ provider_done(struct auth_client *auth, uint32_t id)
 	}
 }
 
-/* Reject a client
+/* Reject a client and cancel any outstanding providers
  * WARNING: do not use auth instance after calling! */
 void
 reject_client(struct auth_client *auth, uint32_t id, const char *data, const char *fmt, ...)
@@ -212,9 +228,6 @@ reject_client(struct auth_client *auth, uint32_t id, const char *data, const cha
 	unsigned int refcount = auth->refcount;
 	char buf[BUFSIZE];
 	va_list args;
-
-	if(data == NULL)
-		data = "*";
 
 	va_start(args, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, args);
@@ -227,15 +240,15 @@ reject_client(struct auth_client *auth, uint32_t id, const char *data, const cha
 	rb_helper_write(authd_helper, "R %x %c %s %s %s :%s",
 		auth->cid, auth->data[id].provider->letter,
 		auth->username, auth->hostname,
-		data, buf);
+		data == NULL ? "*" : data, buf);
 
-	set_provider_done(auth, id);
-	if(--refcount > 0)
-		/* We have providers remaining, let them clean up */
-		cancel_providers(auth);
+	if(id != UINT32_MAX)
+		set_provider_done(auth, id);
+
+	cancel_providers(auth);
 }
 
-/* Accept a client, cancel outstanding providers if any
+/* Accept a client and cancel outstanding providers if any
  * WARNING: do not use auth instance after calling! */
 void
 accept_client(struct auth_client *auth, uint32_t id)
@@ -244,10 +257,10 @@ accept_client(struct auth_client *auth, uint32_t id)
 
 	rb_helper_write(authd_helper, "A %x %s %s", auth->cid, auth->username, auth->hostname);
 
-	set_provider_done(auth, id);
-	if(--refcount > 0)
-		/* We have providers remaining, let them clean up */
-		cancel_providers(auth);
+	if(id != UINT32_MAX)
+		set_provider_done(auth, id);
+
+	cancel_providers(auth);
 }
 
 /* Begin authenticating user */
@@ -297,17 +310,14 @@ start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_
 
 		/* Execute providers */
 		if(!provider->start(auth))
-		{
 			/* Rejected immediately */
-			cancel_providers(auth);
 			return;
-		}
 	}
 	auth->providers_starting = false;
 
 	/* If no providers are running, accept the client */
-	if(!auth->refcount)
-		accept_client(auth, -1);
+	if(auth->refcount == 0)
+		accept_client(auth, UINT32_MAX);
 }
 
 /* Callback for the initiation */
