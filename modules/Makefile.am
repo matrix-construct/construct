@@ -14,6 +14,7 @@ auto_load_mod_LTLIBRARIES = \
   chm_noctcp.la \
   m_accept.la \
   m_admin.la \
+  m_alias.la \
   m_away.la \
   m_cap.la \
   m_capab.la \
