@@ -33,6 +33,7 @@ extern int h_privmsg_user;
 extern int h_conf_read_start;
 extern int h_conf_read_end;
 extern int h_outbound_msgbuf;
+extern int h_rehash;
 
 void init_hook(void);
 int register_hook(const char *name);
@@ -141,5 +142,10 @@ typedef struct
 	const char *text;
 	int approved;
 } hook_data_privmsg_user;
+
+typedef struct
+{
+	bool signal;
+} hook_data_rehash;
 
 #endif

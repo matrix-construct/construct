@@ -633,13 +633,14 @@ attach_conf(struct Client *client_p, struct ConfItem *aconf)
 bool
 rehash(bool sig)
 {
+	hook_data_rehash hdata = { sig };
+
 	if(sig)
-	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Got signal SIGHUP, reloading ircd conf. file");
-	}
 
 	rehash_authd();
+
 	/* don't close listeners until we know we can go ahead with the rehash */
 	read_conf_files(false);
 
@@ -649,6 +650,8 @@ rehash(bool sig)
 		rb_strlcpy(me.info, "unknown", sizeof(me.info));
 
 	open_logfiles();
+
+	call_hook(h_rehash, &hdata);
 	return false;
 }
 

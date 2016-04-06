@@ -62,6 +62,7 @@ int h_privmsg_channel;
 int h_conf_read_start;
 int h_conf_read_end;
 int h_outbound_msgbuf;
+int h_rehash;
 
 void
 init_hook(void)
@@ -84,6 +85,7 @@ init_hook(void)
 	h_conf_read_start = register_hook("conf_read_start");
 	h_conf_read_end = register_hook("conf_read_end");
 	h_outbound_msgbuf = register_hook("outbound_msgbuf");
+	h_rehash = register_hook("rehash");
 }
 
 /* grow_hooktable()
