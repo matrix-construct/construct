@@ -161,9 +161,6 @@ m_alias(struct MsgBuf *msgbuf, struct Client *client_p, struct Client *source_p,
 		return;
 	}
 
-	/* increment the hitcounter on this alias */
-	aptr->hits++;
-
 	sendto_one(target_p, ":%s PRIVMSG %s :%s",
 			get_id(client_p, target_p),
 			p != NULL ? aptr->target : get_id(target_p, target_p),

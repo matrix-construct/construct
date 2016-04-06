@@ -1763,7 +1763,6 @@ conf_begin_alias(struct TopConf *tc)
 		yy_alias->name = rb_strdup(conf_cur_block_name);
 
 	yy_alias->flags = 0;
-	yy_alias->hits = 0;
 
 	return 0;
 }

@@ -312,7 +312,6 @@ struct alias_entry
 	char *name;
 	char *target;
 	int flags;			/* reserved for later use */
-	int hits;
 };
 
 /* All variables are GLOBAL */
