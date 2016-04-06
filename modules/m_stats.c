@@ -744,14 +744,6 @@ stats_messages(struct Client *source_p)
 				   msg->cmd, msg->count,
 				   msg->bytes, msg->rcount);
 	}
-
-	RB_DICTIONARY_FOREACH(amsg, &iter, alias_dict)
-	{
-		s_assert(amsg->name != NULL);
-		sendto_one_numeric(source_p, RPL_STATSCOMMANDS,
-				   form_str(RPL_STATSCOMMANDS),
-				   amsg->name, amsg->hits, 0L, 0);
-	}
 }
 
 static void
