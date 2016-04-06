@@ -85,7 +85,7 @@ extern void m_unregistered(struct MsgBuf *, struct Client *, struct Client *, in
 
 /*
  * m_functions execute protocol messages on this server:
- * void m_func(struct Client* client_p, struct Client* source_p, int parc, char* parv[]);
+ * void m_func(struct MsgBuf *, struct Client* client_p, struct Client* source_p, int parc, char* parv[]);
  *
  *    client_p    is always NON-NULL, pointing to a *LOCAL* client
  *            structure (with an open socket connected!). This
