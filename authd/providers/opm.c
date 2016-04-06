@@ -635,7 +635,7 @@ opm_scan(struct auth_client *auth)
 
 /* This is called every time a provider is completed as long as we are marked not done */
 static void
-blacklists_initiate(struct auth_client *auth, uint32_t provider)
+opm_initiate(struct auth_client *auth, uint32_t provider)
 {
 	struct opm_lookup *lookup = get_provider_data(auth, SELF_PID);
 	uint32_t rdns_pid, ident_pid;
@@ -949,5 +949,6 @@ struct auth_provider opm_provider =
 	.start = opm_start,
 	.cancel = opm_cancel,
 	.timeout = opm_cancel,
+	.completed = opm_initiate,
 	.opt_handlers = opm_options,
 };
