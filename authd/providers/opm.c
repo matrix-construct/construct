@@ -455,6 +455,7 @@ establish_connection(struct auth_client *auth, struct opm_proxy *proxy)
 	case PROTO_HTTP_CONNECT:
 	case PROTO_HTTPS_CONNECT:
 		callback = http_connect_connected;
+		break;
 	default:
 		return;
 	}
@@ -768,18 +769,16 @@ set_opm_enabled(const char *key __unused, int parc __unused, const char **parv)
 	{
 		if(listeners[LISTEN_IPV4].ip[0] != '\0' && listeners[LISTEN_IPV4].port != 0)
 		{
-			lrb_assert(listeners[LISTEN_IPV4].F == NULL);
-
-			/* Pre-configured IP/port, just re-establish */
-			create_listener(listeners[LISTEN_IPV4].ip, listeners[LISTEN_IPV4].port);
+			if(listeners[LISTEN_IPV4].F == NULL)
+				/* Pre-configured IP/port, just re-establish */
+				create_listener(listeners[LISTEN_IPV4].ip, listeners[LISTEN_IPV4].port);
 		}
 
 		if(listeners[LISTEN_IPV6].ip[0] != '\0' && listeners[LISTEN_IPV6].port != 0)
 		{
-			lrb_assert(listeners[LISTEN_IPV6].F == NULL);
-
-			/* Pre-configured IP/port, just re-establish */
-			create_listener(listeners[LISTEN_IPV6].ip, listeners[LISTEN_IPV6].port);
+			if(listeners[LISTEN_IPV6].F == NULL)
+				/* Pre-configured IP/port, just re-establish */
+				create_listener(listeners[LISTEN_IPV6].ip, listeners[LISTEN_IPV6].port);
 		}
 	}
 
