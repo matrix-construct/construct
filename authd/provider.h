@@ -131,7 +131,7 @@ get_provider(const char *name)
 
 /* Get a provider's id by name */
 static inline bool
-get_provider_id(const char *name, int *id)
+get_provider_id(const char *name, uint32_t *id)
 {
 	struct auth_provider *provider = get_provider(name);
 
