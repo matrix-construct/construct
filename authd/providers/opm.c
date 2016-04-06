@@ -38,32 +38,31 @@ typedef enum protocol_t
 	PROTO_HTTPS_CONNECT,
 } protocol_t;
 
+/* Lookup data associated with auth client */
 struct opm_lookup
 {
 	rb_dlink_list scans;	/* List of scans */
 	bool in_progress;
 };
 
+struct opm_scan;
+typedef void (*opm_callback_t)(struct opm_scan *);
+
+/* A proxy scanner */
 struct opm_proxy
 {
 	char note[16];
 	protocol_t proto;
 	uint16_t port;
-	bool ssl;
+	bool ssl;		/* Connect to proxy with SSL */
+	bool ipv6;		/* Proxy supports IPv6 */
+
+	opm_callback_t callback;
 
 	rb_dlink_node node;
 };
 
-struct opm_scan
-{
-	struct auth_client *auth;
-
-	struct opm_proxy *proxy;
-	rb_fde_t *F;		/* fd for scan */
-
-	rb_dlink_node node;
-};
-
+/* A listener for proxy replies */
 struct opm_listener
 {
 	char ip[HOSTIPLEN];
@@ -72,14 +71,25 @@ struct opm_listener
 	rb_fde_t *F;
 };
 
+/* An individual proxy scan */
+struct opm_scan
+{
+	struct auth_client *auth;
+	rb_fde_t *F;			/* fd for scan */
+
+	struct opm_proxy *proxy;	/* Associated proxy */
+	struct opm_listener *listener;	/* Associated listener */
+
+	rb_dlink_node node;
+};
+
 /* Proxies that we scan for */
 static rb_dlink_list proxy_scanners;
 
 static ACCB accept_opm;
 static PF read_opm_reply;
 
-static CNCB socks4_connected;
-static CNCB socks5_connected;
+static CNCB opm_connected;
 
 static void opm_cancel(struct auth_client *auth);
 static bool create_listener(const char *ip, uint16_t port);
@@ -247,24 +257,18 @@ accept_opm(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t len, voi
 /* Scanners */
 
 static void
-socks4_connected(rb_fde_t *F, int error, void *data)
+opm_connected(rb_fde_t *F, int error, void *data)
 {
 	struct opm_scan *scan = data;
-	struct opm_lookup *lookup;
-	struct auth_client *auth;
-	uint8_t sendbuf[9]; /* Size we're building */
-	uint8_t *c = sendbuf;
-	ssize_t ret;
+	struct opm_proxy *proxy = scan->proxy;
+	struct auth_client *auth = scan->auth;
+	struct opm_lookup *lookup = get_provider_data(auth, SELF_PID);
 
 	if(error || !opm_enable)
+	{
+		//notice_client(scan->auth->cid, "*** Scan not connected: %s", proxy->note);
 		goto end;
-
-	lrb_assert(scan != NULL);
-
-	auth = scan->auth;
-	lookup = get_provider_data(auth, SELF_PID);
-
-	memcpy(c, "\x04\x01", 2); c += 2; /* Socks version 4, connect command */
+	}
 
 	switch(GET_SS_FAMILY(&auth->c_addr))
 	{
@@ -273,48 +277,60 @@ socks4_connected(rb_fde_t *F, int error, void *data)
 			/* They cannot respond to us */
 			goto end;
 
-		memcpy(c, &(((struct sockaddr_in *)&listeners[LISTEN_IPV4].addr)->sin_port), 2); c += 2; /* Port */
-		memcpy(c, &(((struct sockaddr_in *)&listeners[LISTEN_IPV4].addr)->sin_addr.s_addr), 4); c += 4; /* Address */
 		break;
 #ifdef RB_IPV6
 	case AF_INET6:
-	/* socks4 doesn't support IPv6 */
+		if(!proxy->ipv6)
+			/* Welp, too bad */
+			goto end;
+
+		if(listeners[LISTEN_IPV6].F == NULL)
+			/* They cannot respond to us */
+			goto end;
+
+		break;
 #endif
 	default:
 		goto end;
 	}
 
-	*c = '\x00'; /* No userid */
-
-	/* Send header */
-	if(rb_write(scan->F, sendbuf, sizeof(sendbuf)) < 0)
-		goto end;
-
-	/* Send note */
-	if(rb_write(scan->F, scan->proxy->note, strlen(scan->proxy->note) + 1) < 0)
-		goto end;
+	proxy->callback(scan);
 
 end:
 	rb_close(scan->F);
-	rb_dlinkDelete(&scan->node, &lookup->scans);
+	rb_dlinkFindDelete(scan, &lookup->scans);
 	rb_free(scan);
 }
 
 static void
-socks5_connected(rb_fde_t *F, int error, void *data)
+socks4_connected(struct opm_scan *scan)
 {
-	struct opm_scan *scan = data;
-	struct opm_lookup *lookup;
-	struct opm_listener *listener;
-	struct auth_client *auth;
+	struct auth_client *auth = scan->auth;
+	struct opm_lookup *lookup = get_provider_data(auth, SELF_PID);
+	uint8_t sendbuf[9]; /* Size we're building */
+	uint8_t *c = sendbuf;
+
+	memcpy(c, "\x04\x01", 2); c += 2; /* Socks version 4, connect command */
+	memcpy(c, &(((struct sockaddr_in *)&scan->listener->addr)->sin_port), 2); c += 2; /* Port */
+	memcpy(c, &(((struct sockaddr_in *)&scan->listener->addr)->sin_addr.s_addr), 4); c += 4; /* Address */
+	*c = '\x00'; /* No userid */
+
+	/* Send header */
+	if(rb_write(scan->F, sendbuf, sizeof(sendbuf)) < 0)
+		return;
+
+	/* Send note */
+	if(rb_write(scan->F, scan->proxy->note, strlen(scan->proxy->note) + 1) < 0)
+		return;
+}
+
+static void
+socks5_connected(struct opm_scan *scan)
+{
+	struct auth_client *auth = scan->auth;
+	struct opm_lookup *lookup = get_provider_data(auth, SELF_PID);
 	uint8_t sendbuf[25]; /* Size we're building */
 	uint8_t *c = sendbuf;
-	ssize_t ret;
-
-	if(error || !opm_enable)
-		goto end;
-
-	lrb_assert(scan != NULL);
 
 	auth = scan->auth;
 	lookup = get_provider_data(auth, SELF_PID);
@@ -328,99 +344,52 @@ socks5_connected(rb_fde_t *F, int error, void *data)
 	switch(GET_SS_FAMILY(&auth->c_addr))
 	{
 	case AF_INET:
-		listener = &listeners[LISTEN_IPV4];
-		if(!listener->F)
-			goto end;
-
 		*(c++) = '\x01'; /* Address type (1 = IPv4) */
-		memcpy(c, &(((struct sockaddr_in *)&listener->addr)->sin_addr.s_addr), 4); c += 4;/* Address */
-		memcpy(c, &(((struct sockaddr_in *)&listener->addr)->sin_port), 2); c += 2; /* Port */
+		memcpy(c, &(((struct sockaddr_in *)&scan->listener->addr)->sin_addr.s_addr), 4); c += 4; /* Address */
+		memcpy(c, &(((struct sockaddr_in *)&scan->listener->addr)->sin_port), 2); c += 2; /* Port */
 		break;
 #ifdef RB_IPV6
 	case AF_INET6:
-		listener = &listeners[LISTEN_IPV6];
-		if(!listener->F)
-			goto end;
-
 		*(c++) = '\x04'; /* Address type (4 = IPv6) */
-		memcpy(c, ((struct sockaddr_in6 *)&listener->addr)->sin6_addr.s6_addr, 16); c += 16; /* Address */
-		memcpy(c, &(((struct sockaddr_in6 *)&listener->addr)->sin6_port), 2); c += 2; /* Port */
+		memcpy(c, ((struct sockaddr_in6 *)&scan->listener->addr)->sin6_addr.s6_addr, 16); c += 16; /* Address */
+		memcpy(c, &(((struct sockaddr_in6 *)&scan->listener->addr)->sin6_port), 2); c += 2; /* Port */
 		break;
 #endif
 	default:
-		goto end;
+		return;
 	}
 
 	/* Send header */
 	if(rb_write(scan->F, sendbuf, (size_t)(sendbuf - c)) <= 0)
-		goto end;
+		return;
 
 	/* Now the note in a separate write */
 	if(rb_write(scan->F, scan->proxy->note, strlen(scan->proxy->note) + 1) <= 0)
-		goto end;
-
-end:
-	rb_close(scan->F);
-	rb_dlinkDelete(&scan->node, &lookup->scans);
-	rb_free(scan);
+		return;
 }
 
 static void
-http_connect_connected(rb_fde_t *F, int error, void *data)
+http_connect_connected(struct opm_scan *scan)
 {
-	struct opm_scan *scan = data;
-	struct opm_lookup *lookup;
-	struct opm_listener *listener;
-	struct auth_client *auth;
+	struct auth_client *auth = scan->auth;
+	struct opm_lookup *lookup = get_provider_data(auth, SELF_PID);
 	char sendbuf[128]; /* A bit bigger than we need but better safe than sorry */
 	char *c = sendbuf;
-	ssize_t ret;
-
-	if(error || !opm_enable)
-		goto end;
-
-	lrb_assert(scan != NULL);
-
-	auth = scan->auth;
-	lookup = get_provider_data(auth, SELF_PID);
-
-	switch(GET_SS_FAMILY(&auth->c_addr))
-	{
-	case AF_INET:
-		listener = &listeners[LISTEN_IPV4];
-		if(!listener->F)
-			goto end;
-		break;
-#ifdef RB_IPV6
-	case AF_INET6:
-		listener = &listeners[LISTEN_IPV6];
-		if(!listener->F)
-			goto end;
-		break;
-#endif
-	default:
-		goto end;
-	}
 
 	/* Simple enough to build */
-	snprintf(sendbuf, sizeof(sendbuf), "CONNECT %s:%hu HTTP/1.0\r\n\r\n", listener->ip, listener->port);
+	snprintf(sendbuf, sizeof(sendbuf), "CONNECT %s:%hu HTTP/1.0\r\n\r\n", scan->listener->ip, scan->listener->port);
 
 	/* Send request */
 	if(rb_write(scan->F, sendbuf, strlen(sendbuf)) <= 0)
-		goto end;
+		return;
 
 	/* Now the note in a separate write */
 	if(rb_write(scan->F, scan->proxy->note, strlen(scan->proxy->note) + 1) <= 0)
-		goto end;
+		return;
 
 	/* MiroTik needs this, and as a separate write */
 	if(rb_write(scan->F, "\r\n", 2) <= 0)
-		goto end;
-
-end:
-	rb_close(scan->F);
-	rb_dlinkDelete(&scan->node, &lookup->scans);
-	rb_free(scan);
+		return;
 }
 
 /* Establish connections */
@@ -428,50 +397,41 @@ static inline void
 establish_connection(struct auth_client *auth, struct opm_proxy *proxy)
 {
 	struct opm_lookup *lookup = get_provider_data(auth, SELF_PID);
-	struct opm_listener *listener;
 	struct opm_scan *scan = rb_malloc(sizeof(struct opm_scan));
+	struct opm_listener *listener;
 	struct rb_sockaddr_storage c_a, l_a;
 	int opt = 1;
-	CNCB *callback;
 
 	lrb_assert(lookup != NULL);
 
-	switch(proxy->proto)
-	{
-	case PROTO_SOCKS4:
 #ifdef RB_IPV6
-		/* SOCKS4 is IPv4 only */
-		if(GET_SS_FAMILY(&auth->c_addr) == AF_INET6)
+	if(GET_SS_FAMILY(&auth->c_addr) == AF_INET6)
+	{
+		if(proxy->proto == PROTO_SOCKS4)
 		{
+			/* SOCKS4 doesn't support IPv6 */
 			rb_free(scan);
 			return;
 		}
-#endif
-		callback = socks4_connected;
-		break;
-	case PROTO_SOCKS5:
-		callback = socks5_connected;
-		break;
-	case PROTO_HTTP_CONNECT:
-	case PROTO_HTTPS_CONNECT:
-		callback = http_connect_connected;
-		break;
-	default:
-		return;
-	}
-
-#ifdef RB_IPV6
-	if(GET_SS_FAMILY(&auth->c_addr) == AF_INET6)
 		listener = &listeners[LISTEN_IPV6];
+	}
 	else
 #endif
 		listener = &listeners[LISTEN_IPV4];
 
+	if(listener->F == NULL)
+	{
+		/* We can't respond */
+		rb_free(scan);
+		return;
+	}
+
 	c_a = auth->c_addr;	/* Client */
-	l_a = listener->addr;	/* Listener */
+	l_a = listener->addr;	/* Listener (connect using its IP) */
 
 	scan->auth = auth;
 	scan->proxy = proxy;
+	scan->listener = listener;
 	if((scan->F = rb_socket(GET_SS_FAMILY(&auth->c_addr), SOCK_STREAM, 0, proxy->note)) == NULL)
 	{
 		warn_opers(L_WARN, "OPM: could not create OPM socket (proto %s): %s", proxy->note, strerror(errno));
@@ -492,13 +452,13 @@ establish_connection(struct auth_client *auth, struct opm_proxy *proxy)
 				(struct sockaddr *)&c_a,
 				(struct sockaddr *)&l_a,
 				GET_SS_LEN(&l_a),
-				callback, scan, opm_timeout);
+				opm_connected, scan, opm_timeout);
 	else
 		rb_connect_tcp_ssl(scan->F,
 				(struct sockaddr *)&c_a,
 				(struct sockaddr *)&l_a,
 				GET_SS_LEN(&l_a),
-				callback, scan, opm_timeout);
+				opm_connected, scan, opm_timeout);
 }
 
 static bool
@@ -628,6 +588,7 @@ opm_scan(struct auth_client *auth)
 	RB_DLINK_FOREACH(ptr, proxy_scanners.head)
 	{
 		struct opm_proxy *proxy = ptr->data;
+		//notice_client(auth->cid, "*** Scanning for proxy type %s", proxy->note);
 		establish_connection(auth, proxy);
 	}
 
@@ -819,17 +780,21 @@ create_opm_scanner(const char *key __unused, int parc __unused, const char **par
 	case PROTO_SOCKS4:
 		snprintf(proxy->note, sizeof(proxy->note), "socks4:%hu", proxy->port);
 		proxy->ssl = false;
+		proxy->callback = socks4_connected;
 		break;
 	case PROTO_SOCKS5:
 		snprintf(proxy->note, sizeof(proxy->note), "socks5:%hu", proxy->port);
 		proxy->ssl = false;
+		proxy->callback = socks5_connected;
 		break;
 	case PROTO_HTTP_CONNECT:
 		snprintf(proxy->note, sizeof(proxy->note), "httpconnect:%hu", proxy->port);
 		proxy->ssl = false;
+		proxy->callback = http_connect_connected;
 		break;
 	case PROTO_HTTPS_CONNECT:
 		snprintf(proxy->note, sizeof(proxy->note), "httpsconnect:%hu", proxy->port);
+		proxy->callback = http_connect_connected;
 		proxy->ssl = true;
 		break;
 	default:
@@ -889,7 +854,7 @@ delete_opm_scanner(const char *key __unused, int parc __unused, const char **par
 			if(scan->proxy->port == proxy->port && scan->proxy->proto == proxy->proto)
 			{
 				/* Match */
-				rb_dlinkDelete(&scan->node, &lookup->scans);
+				rb_dlinkFindDelete(scan, &lookup->scans);
 				rb_free(scan);
 
 				if(rb_dlink_list_length(&lookup->scans) == 0)
@@ -900,7 +865,7 @@ delete_opm_scanner(const char *key __unused, int parc __unused, const char **par
 		}
 	}
 
-	rb_dlinkDelete(&proxy->node, &proxy_scanners);
+	rb_dlinkFindDelete(proxy, &proxy_scanners);
 	rb_free(proxy);
 
 	if(rb_dlink_list_length(&proxy_scanners) == 0)
