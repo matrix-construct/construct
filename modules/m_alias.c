@@ -97,7 +97,7 @@ _moddeinit(void)
 }
 
 static int
-reload_aliases(hook_data *data __unused)
+reload_aliases(hook_data *data)
 {
 	destroy_aliases(); /* Clear old aliases */
 	create_aliases();
@@ -114,9 +114,10 @@ m_alias(struct MsgBuf *msgbuf, struct Client *client_p, struct Client *source_p,
 
 	if(aptr == NULL)
 	{
-		if(IsPerson(source_p))
-			sendto_one(source_p, form_str(ERR_UNKNOWNCOMMAND),
-				me.name, source_p->name, msgbuf->cmd);
+		/* This shouldn't happen... */
+		if(IsPerson(client_p))
+			sendto_one(client_p, form_str(ERR_UNKNOWNCOMMAND),
+				me.name, client_p->name, msgbuf->cmd);
 
 		return;
 	}
@@ -129,8 +130,8 @@ m_alias(struct MsgBuf *msgbuf, struct Client *client_p, struct Client *source_p,
 		return;
 	}
 
-	if(!IsFloodDone(source_p) && source_p->localClient->receiveM > 20)
-		flood_endgrace(source_p);
+	if(!IsFloodDone(client_p) && client_p->localClient->receiveM > 20)
+		flood_endgrace(client_p);
 
 	p = strchr(aptr->target, '@');
 	if(p != NULL)
@@ -150,13 +151,13 @@ m_alias(struct MsgBuf *msgbuf, struct Client *client_p, struct Client *source_p,
 
 	if(target_p == NULL)
 	{
-		sendto_one_numeric(source_p, ERR_SERVICESDOWN, form_str(ERR_SERVICESDOWN), aptr->target);
+		sendto_one_numeric(client_p, ERR_SERVICESDOWN, form_str(ERR_SERVICESDOWN), aptr->target);
 		return;
 	}
 
-	if(*parv[1] == '\0')
+	if(EmptyString(parv[1]))
 	{
-		sendto_one(source_p, form_str(ERR_NOTEXTTOSEND), me.name, source_p->name);
+		sendto_one(client_p, form_str(ERR_NOTEXTTOSEND), me.name, target_p->name);
 		return;
 	}
 
@@ -164,7 +165,7 @@ m_alias(struct MsgBuf *msgbuf, struct Client *client_p, struct Client *source_p,
 	aptr->hits++;
 
 	sendto_one(target_p, ":%s PRIVMSG %s :%s",
-			get_id(source_p, target_p),
+			get_id(client_p, target_p),
 			p != NULL ? aptr->target : get_id(target_p, target_p),
 			parv[1]);
 }
