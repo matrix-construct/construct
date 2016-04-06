@@ -56,7 +56,7 @@ create_aliases(void)
 	rb_dictionary_iter iter;
 	struct alias_entry *alias;
 
-	s_assert(rb_dlink_list_length(alias_messages) > 0);
+	s_assert(rb_dlink_list_length(&alias_messages) > 0);
 
 	RB_DICTIONARY_FOREACH(alias, &iter, alias_dict)
 	{
