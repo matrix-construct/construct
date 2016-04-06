@@ -166,33 +166,36 @@ cancel_providers(struct auth_client *auth)
 
 	RB_DICTIONARY_FOREACH(provider, &iter, auth_providers)
 	{
-		if(provider->cancel && is_provider_running(auth, provider->id))
+		if(provider->cancel != NULL && is_provider_running(auth, provider->id))
 			/* Cancel if required */
 			provider->cancel(auth);
 	}
 
+	auth->refcount = 0;
 	rb_dictionary_delete(auth_clients, RB_UINT_TO_POINTER(auth->cid));
 	rb_free(auth->data);
 	rb_free(auth);
 }
 
-/* Provider is done - WARNING: do not use auth instance after calling! */
+/* Provider is done
+ * WARNING: do not use auth instance after calling! */
 void
 provider_done(struct auth_client *auth, uint32_t id)
 {
 	rb_dictionary_iter iter;
 	struct auth_provider *provider;
 
-	set_provider_done(auth, id);
-
-	if(!auth->refcount)
+	if(auth->refcount == 1 && !auth->providers_starting)
 	{
-		if(!auth->providers_starting)
-			/* Providers aren't being executed and refcount is 0, accept */
-			accept_client(auth, -1);
+		/* Providers aren't being executed and refcount is 1 (last provider), accept */
+		accept_client(auth, id);
 		return;
 	}
 
+	set_provider_done(auth, id);
+
+	/* It's safe to use auth below, since refcount will be > 0, per above 
+	 * Thus the object will still be live */
 	RB_DICTIONARY_FOREACH(provider, &iter, auth_providers)
 	{
 		if(provider->completed != NULL && is_provider_running(auth, provider->id))
@@ -201,10 +204,12 @@ provider_done(struct auth_client *auth, uint32_t id)
 	}
 }
 
-/* Reject a client - WARNING: do not use auth instance after calling! */
+/* Reject a client
+ * WARNING: do not use auth instance after calling! */
 void
 reject_client(struct auth_client *auth, uint32_t id, const char *data, const char *fmt, ...)
 {
+	unsigned int refcount = auth->refcount;
 	char buf[BUFSIZE];
 	va_list args;
 
@@ -225,17 +230,24 @@ reject_client(struct auth_client *auth, uint32_t id, const char *data, const cha
 		data, buf);
 
 	set_provider_done(auth, id);
-	cancel_providers(auth);
+	if(--refcount > 0)
+		/* We have providers remaining, let them clean up */
+		cancel_providers(auth);
 }
 
-/* Accept a client, cancel outstanding providers if any - WARNING: do nto use auth instance after calling! */
+/* Accept a client, cancel outstanding providers if any
+ * WARNING: do not use auth instance after calling! */
 void
 accept_client(struct auth_client *auth, uint32_t id)
 {
+	unsigned int refcount = auth->refcount;
+
 	rb_helper_write(authd_helper, "A %x %s %s", auth->cid, auth->username, auth->hostname);
 
 	set_provider_done(auth, id);
-	cancel_providers(auth);
+	if(--refcount > 0)
+		/* We have providers remaining, let them clean up */
+		cancel_providers(auth);
 }
 
 /* Begin authenticating user */
