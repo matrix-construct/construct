@@ -115,8 +115,7 @@ struct Client
 
 	time_t tsinfo;		/* TS on the nick, SVINFO on server */
 	unsigned int umodes;	/* opers, normal users subset */
-	unsigned int flags;	/* client flags */
-	unsigned int flags2;	/* ugh. overflow */
+	uint64_t flags;		/* client flags */
 
 	unsigned int snomask;	/* server notice mask */
 
@@ -388,26 +387,35 @@ struct ListClient
 
 /* housekeeping flags */
 
-#define FLAGS_PINGSENT     0x0001	/* Unreplied ping sent */
-#define FLAGS_DEAD	   0x0002	/* Local socket is dead--Exiting soon */
-#define FLAGS_KILLED       0x0004	/* Prevents "QUIT" from being sent for this */
-#define FLAGS_SENTUSER     0x0008	/* Client sent a USER command. */
-#define FLAGS_CLICAP       0x0010	/* In CAP negotiation, wait for CAP END */
-#define FLAGS_CLOSING      0x0020	/* set when closing to suppress errors */
-#define FLAGS_PING_COOKIE  0x0040	/* has sent ping cookie */
-#define FLAGS_GOTID        0x0080	/* successful ident lookup achieved */
-#define FLAGS_FLOODDONE    0x0100	/* flood grace period over / reported */
-#define FLAGS_NORMALEX     0x0400	/* Client exited normally */
-#define FLAGS_MARK	   0x10000	/* marked client */
-#define FLAGS_HIDDEN       0x20000	/* hidden server */
-#define FLAGS_EOB          0x40000	/* EOB */
-#define FLAGS_MYCONNECT	   0x80000	/* MyConnect */
-#define FLAGS_IOERROR      0x100000	/* IO error */
-#define FLAGS_SERVICE	   0x200000	/* network service */
-#define FLAGS_TGCHANGE     0x400000	/* we're allowed to clear something */
-#define FLAGS_DYNSPOOF     0x800000	/* dynamic spoof, only opers see ip */
-#define FLAGS_TGEXCESSIVE  0x1000000	/* whether the client has attemped to change targets excessively fast */
-#define FLAGS_CLICAP_DATA  0x2000000	/* requested CAP LS 302 */
+#define FLAGS_PINGSENT		0x00000001	/* Unreplied ping sent */
+#define FLAGS_DEAD		0x00000002	/* Local socket is dead--Exiting soon */
+#define FLAGS_KILLED		0x00000004	/* Prevents "QUIT" from being sent for this */
+#define FLAGS_SENTUSER		0x00000008	/* Client sent a USER command. */
+#define FLAGS_CLICAP		0x00000010	/* In CAP negotiation, wait for CAP END */
+#define FLAGS_CLOSING		0x00000020	/* set when closing to suppress errors */
+#define FLAGS_PING_COOKIE	0x00000040	/* has sent ping cookie */
+#define FLAGS_GOTID		0x00000080	/* successful ident lookup achieved */
+#define FLAGS_FLOODDONE		0x00000100	/* flood grace period over / reported */
+#define FLAGS_NORMALEX		0x00000200	/* Client exited normally */
+#define FLAGS_MARK		0x00000400	/* marked client */
+#define FLAGS_HIDDEN		0x00000800	/* hidden server */
+#define FLAGS_EOB		0x00001000	/* EOB */
+#define FLAGS_MYCONNECT		0x00002000	/* MyConnect */
+#define FLAGS_IOERROR		0x00004000	/* IO error */
+#define FLAGS_SERVICE		0x00008000	/* network service */
+#define FLAGS_TGCHANGE		0x00010000	/* we're allowed to clear something */
+#define FLAGS_DYNSPOOF		0x00020000	/* dynamic spoof, only opers see ip */
+#define FLAGS_TGEXCESSIVE	0x00040000	/* whether the client has attemped to change targets excessively fast */
+#define FLAGS_CLICAP_DATA	0x00080000	/* requested CAP LS 302 */
+#define FLAGS_EXTENDCHANS	0x00100000
+#define FLAGS_EXEMPTRESV	0x00200000
+#define FLAGS_EXEMPTKLINE	0x00400000
+#define FLAGS_EXEMPTFLOOD	0x00800000
+#define FLAGS_IP_SPOOFING	0x01000000
+#define FLAGS_EXEMPTSPAMBOT	0x02000000
+#define FLAGS_EXEMPTSHIDE	0x04000000
+#define FLAGS_EXEMPTJUPE	0x08000000
+
 
 /* flags for local clients, this needs stuff moved from above to here at some point */
 #define LFLAGS_SSL		0x00000001
@@ -431,17 +439,6 @@ struct ListClient
 #define UMODE_OPER         0x1000	/* Operator */
 #define UMODE_ADMIN        0x2000	/* Admin on server */
 #define UMODE_SSLCLIENT    0x4000	/* using SSL */
-
-/* overflow flags */
-/* EARLIER FLAGS ARE IN s_newconf.h */
-#define FLAGS2_EXTENDCHANS	0x00200000
-#define FLAGS2_EXEMPTRESV	0x00400000
-#define FLAGS2_EXEMPTKLINE      0x00800000
-#define FLAGS2_EXEMPTFLOOD      0x01000000
-#define FLAGS2_IP_SPOOFING      0x10000000
-#define FLAGS2_EXEMPTSPAMBOT	0x20000000
-#define FLAGS2_EXEMPTSHIDE	0x40000000
-#define FLAGS2_EXEMPTJUPE	0x80000000
 
 #define DEFAULT_OPER_UMODES (UMODE_SERVNOTICE | UMODE_OPERWALL | \
                              UMODE_WALLOP | UMODE_LOCOPS)
@@ -524,25 +521,22 @@ struct ListClient
 #define SetGotId(x)             ((x)->flags |= FLAGS_GOTID)
 #define IsGotId(x)              (((x)->flags & FLAGS_GOTID) != 0)
 
-/*
- * flags2 macros.
- */
-#define IsExemptKline(x)        ((x)->flags2 & FLAGS2_EXEMPTKLINE)
-#define SetExemptKline(x)       ((x)->flags2 |= FLAGS2_EXEMPTKLINE)
-#define IsExemptFlood(x)        ((x)->flags2 & FLAGS2_EXEMPTFLOOD)
-#define SetExemptFlood(x)       ((x)->flags2 |= FLAGS2_EXEMPTFLOOD)
-#define IsExemptSpambot(x)	((x)->flags2 & FLAGS2_EXEMPTSPAMBOT)
-#define SetExemptSpambot(x)	((x)->flags2 |= FLAGS2_EXEMPTSPAMBOT)
-#define IsExemptShide(x)	((x)->flags2 & FLAGS2_EXEMPTSHIDE)
-#define SetExemptShide(x)	((x)->flags2 |= FLAGS2_EXEMPTSHIDE)
-#define IsExemptJupe(x)		((x)->flags2 & FLAGS2_EXEMPTJUPE)
-#define SetExemptJupe(x)	((x)->flags2 |= FLAGS2_EXEMPTJUPE)
-#define IsExemptResv(x)		((x)->flags2 & FLAGS2_EXEMPTRESV)
-#define SetExemptResv(x)	((x)->flags2 |= FLAGS2_EXEMPTRESV)
-#define IsIPSpoof(x)            ((x)->flags2 & FLAGS2_IP_SPOOFING)
-#define SetIPSpoof(x)           ((x)->flags2 |= FLAGS2_IP_SPOOFING)
-#define IsExtendChans(x)	((x)->flags2 & FLAGS2_EXTENDCHANS)
-#define SetExtendChans(x)	((x)->flags2 |= FLAGS2_EXTENDCHANS)
+#define IsExemptKline(x)        ((x)->flags & FLAGS_EXEMPTKLINE)
+#define SetExemptKline(x)       ((x)->flags |= FLAGS_EXEMPTKLINE)
+#define IsExemptFlood(x)        ((x)->flags & FLAGS_EXEMPTFLOOD)
+#define SetExemptFlood(x)       ((x)->flags |= FLAGS_EXEMPTFLOOD)
+#define IsExemptSpambot(x)	((x)->flags & FLAGS_EXEMPTSPAMBOT)
+#define SetExemptSpambot(x)	((x)->flags |= FLAGS_EXEMPTSPAMBOT)
+#define IsExemptShide(x)	((x)->flags & FLAGS_EXEMPTSHIDE)
+#define SetExemptShide(x)	((x)->flags |= FLAGS_EXEMPTSHIDE)
+#define IsExemptJupe(x)		((x)->flags & FLAGS_EXEMPTJUPE)
+#define SetExemptJupe(x)	((x)->flags |= FLAGS_EXEMPTJUPE)
+#define IsExemptResv(x)		((x)->flags & FLAGS_EXEMPTRESV)
+#define SetExemptResv(x)	((x)->flags |= FLAGS_EXEMPTRESV)
+#define IsIPSpoof(x)            ((x)->flags & FLAGS_IP_SPOOFING)
+#define SetIPSpoof(x)           ((x)->flags |= FLAGS_IP_SPOOFING)
+#define IsExtendChans(x)	((x)->flags & FLAGS_EXTENDCHANS)
+#define SetExtendChans(x)	((x)->flags |= FLAGS_EXTENDCHANS)
 
 /* for local users: flood grace period is over
  * for servers: mentioned in networknotice.c notice

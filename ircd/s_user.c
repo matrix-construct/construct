@@ -1083,7 +1083,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 						source_p->snomask = 0;
 						showsnomask = true;
 					}
-					source_p->flags2 &= ~OPER_FLAGS;
+					source_p->flags &= ~OPER_FLAGS;
 
 					rb_free(source_p->localClient->opername);
 					source_p->localClient->opername = NULL;
@@ -1376,7 +1376,7 @@ oper_up(struct Client *source_p, struct oper_conf *oper_p)
 	SetExtendChans(source_p);
 	SetExemptKline(source_p);
 
-	source_p->flags2 |= oper_p->flags;
+	source_p->flags |= oper_p->flags;
 	source_p->localClient->opername = rb_strdup(oper_p->name);
 	source_p->localClient->privset = privilegeset_ref(oper_p->privset);
 

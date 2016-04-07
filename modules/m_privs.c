@@ -55,22 +55,26 @@ mapi_clist_av1 privs_clist[] = {
 	NULL
 };
 
-/* XXX this is a copy, not so nice */
+/* XXX this is a copy, not so nice
+ *
+ * Sort of... it's int in newconf.c since oper confs don't need 64-bit wide flags.
+ * --Elizafox
+ */
 struct mode_table
 {
 	const char *name;
-	unsigned int mode;
+	uint64_t mode;
 };
 
 /* there is no such table like this anywhere else */
 static struct mode_table auth_client_table[] = {
-	{"resv_exempt",		FLAGS2_EXEMPTRESV	},
-	{"kline_exempt",	FLAGS2_EXEMPTKLINE	},
-	{"flood_exempt",	FLAGS2_EXEMPTFLOOD	},
-	{"spambot_exempt",	FLAGS2_EXEMPTSPAMBOT	},
-	{"shide_exempt",	FLAGS2_EXEMPTSHIDE	},
-	{"jupe_exempt",		FLAGS2_EXEMPTJUPE	},
-	{"extend_chans",	FLAGS2_EXTENDCHANS	},
+	{"resv_exempt",		FLAGS_EXEMPTRESV	},
+	{"kline_exempt",	FLAGS_EXEMPTKLINE	},
+	{"flood_exempt",	FLAGS_EXEMPTFLOOD	},
+	{"spambot_exempt",	FLAGS_EXEMPTSPAMBOT	},
+	{"shide_exempt",	FLAGS_EXEMPTSHIDE	},
+	{"jupe_exempt",		FLAGS_EXEMPTJUPE	},
+	{"extend_chans",	FLAGS_EXTENDCHANS	},
 	{NULL, 0}
 };
 
@@ -102,7 +106,7 @@ static void show_privs(struct Client *source_p, struct Client *target_p)
 	p = &auth_client_table[0];
 	while (p->name != NULL)
 	{
-		if (target_p->flags2 & p->mode)
+		if (target_p->flags & p->mode)
 		{
 			if (buf[0] != '\0')
 				rb_strlcat(buf, " ", sizeof buf);

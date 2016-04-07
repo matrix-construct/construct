@@ -138,11 +138,11 @@ extern void propagate_generic(struct Client *source_p, const char *command,
 extern void cluster_generic(struct Client *, const char *, int cltype,
 			int cap, const char *format, ...);
 
-#define OPER_ENCRYPTED	0x00001
-#define OPER_NEEDSSL    0x80000
-/* 0x400000 and above are in client.h */
+/* Other client flags are in client.h */
+#define OPER_ENCRYPTED	0x10000000
+#define OPER_NEEDSSL	0x20000000
 
-#define OPER_FLAGS	0 /* no oper privs in Client.flags2/oper_conf.flags currently */
+#define OPER_FLAGS	0	 /* no oper privs in Client.flags/oper_conf.flags currently */
 
 #define IsOperConfEncrypted(x)	((x)->flags & OPER_ENCRYPTED)
 #define IsOperConfNeedSSL(x)	((x)->flags & OPER_NEEDSSL)
