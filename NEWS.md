@@ -51,6 +51,17 @@ See LICENSE for licensing details (GPL v2).
   files have been renamed and shuffled around to be more consistent.
 
 ### code
+- `common.h` is gone. Everything useful in it was moved to `ircd_defs.h`.
+- `config.h` is gone; the few remaining knobs in it were not for configuration
+  by mere mortals, and mostly existed as a 2.8 relic. Most of the knobs live in
+  `defaults.h`, but one is well-advised to stay away unless they know exactly
+  what they are doing.
+- A new module API has been introduced, known as AV2. It includes things such as
+  module datecodes (to ensure modules don't fall out of sync with the code),
+  module descriptions, and other fun things.
+- Alias and module commands are now in m_alias and m_modules, respectively, and
+  can be reloaded if need be. For sanity reasons, m_modules is a core module,
+  and cannot be unloaded.
 - irc_dictionary and irc_radixtree related functions are now in librb, and
   prefixed accordingly. Typedefs have been added for consistency with existing
   data structures. For example, now you would write `rb_dictionary *foo` and
@@ -58,6 +69,8 @@ See LICENSE for licensing details (GPL v2).
 - C99 bools are now included and used in the code. Don't use ints as simple true
   or false flags anymore. In accordance with this change, the `YES`/`NO` and
   `TRUE`/`FALSE` macros have been removed.
+- Return types from command handlers have been axed, as they have been useless
+  for years.
 - libratbox has been renamed to librb, as we have diverged from upstream long
   ago.
 - Almost all 2.8-style hashtable structures have been moved to dictionaries or
@@ -69,9 +82,6 @@ See LICENSE for licensing details (GPL v2).
   servicing clients will remain in use, but not service new connections, and
   are garbage collected when they are no longer servicing connections.
 - Support for ratbox-style 'iodebug' hooks has been removed.
-- Alias and module commands are now in m_alias and m_modules, respectively, and
-  can be reloaded if need be. For sanity reasons, m_modules is a core module,
-  and cannot be unloaded.
 
 ## charybdis-3.5.0
 
