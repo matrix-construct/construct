@@ -87,6 +87,7 @@ module_LTLIBRARIES = \
   core/m_kill.la \
   core/m_message.la \
   core/m_mode.la \
+  core/m_modules.la \
   core/m_nick.la \
   core/m_part.la \
   core/m_quit.la \

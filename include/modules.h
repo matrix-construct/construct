@@ -136,4 +136,9 @@ extern bool load_a_module(const char *, bool, int, bool);
 extern int findmodule_byname(const char *);
 extern void modules_init(void);
 
+/* Misc externs */
+extern struct module **modlist;
+extern int num_mods;
+extern int max_mods;
+
 #endif /* INCLUDED_modules_h */
