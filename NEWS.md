@@ -39,6 +39,9 @@ See LICENSE for licensing details (GPL v2).
 - An experimental OPM scanner has been added to authd. Plaintext SOCKS4,
   SOCKS5, and HTTP CONNECT proxies can be checked for.
 - The LOCOPS command has been moved from core to an extension.
+- All core modules in charybdis have descriptions, which are shown in MODLIST.
+- Alias and module commands are now in m_alias and m_modules, respectively.
+- Suffixes should not be used when doing /MODLOAD, /MODUNLOAD, /MODRELOAD, etc.
 
 ### conf
 - Add the ability to strip color codes from topics unconditionally.
