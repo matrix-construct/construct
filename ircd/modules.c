@@ -441,12 +441,17 @@ bool
 load_a_module(const char *path, bool warn, int origin, bool core)
 {
 	lt_dlhandle tmpptr;
-	char *mod_basename;
+	char *mod_displayname, *c;
 	const char *ver, *description = NULL;
+	size_t module_ext_len = strlen(LT_MODULE_EXT);
 
 	int *mapi_version;
 
-	mod_basename = rb_basename(path);
+	mod_displayname = rb_basename(path);
+
+	/* Trim off the ending for the display name if we have to */
+	if((c = rb_strcasestr(mod_displayname, LT_MODULE_EXT)) != NULL)
+		*c = '\0';
 
 	tmpptr = lt_dlopenext(path);
 
@@ -455,9 +460,9 @@ load_a_module(const char *path, bool warn, int origin, bool core)
 		const char *err = lt_dlerror();
 
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "Error loading module %s: %s", mod_basename, err);
-		ilog(L_MAIN, "Error loading module %s: %s", mod_basename, err);
-		rb_free(mod_basename);
+				     "Error loading module %s: %s", mod_displayname, err);
+		ilog(L_MAIN, "Error loading module %s: %s", mod_displayname, err);
+		rb_free(mod_displayname);
 		return false;
 	}
 
@@ -474,10 +479,10 @@ load_a_module(const char *path, bool warn, int origin, bool core)
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Data format error: module %s has no MAPI header.",
-				     mod_basename);
-		ilog(L_MAIN, "Data format error: module %s has no MAPI header.", mod_basename);
+				     mod_displayname);
+		ilog(L_MAIN, "Data format error: module %s has no MAPI header.", mod_displayname);
 		(void) lt_dlclose(tmpptr);
-		rb_free(mod_basename);
+		rb_free(mod_displayname);
 		return false;
 	}
 
@@ -489,12 +494,12 @@ load_a_module(const char *path, bool warn, int origin, bool core)
 			if(mheader->mapi_register && (mheader->mapi_register() == -1))
 			{
 				ilog(L_MAIN, "Module %s indicated failure during load.",
-				     mod_basename);
+				     mod_displayname);
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						     "Module %s indicated failure during load.",
-						     mod_basename);
+						     mod_displayname);
 				lt_dlclose(tmpptr);
-				rb_free(mod_basename);
+				rb_free(mod_displayname);
 				return false;
 			}
 			if(mheader->mapi_command_list)
@@ -529,12 +534,12 @@ load_a_module(const char *path, bool warn, int origin, bool core)
 			if(mheader->mapi_register && (mheader->mapi_register() == -1))
 			{
 				ilog(L_MAIN, "Module %s indicated failure during load.",
-					mod_basename);
+					mod_displayname);
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						     "Module %s indicated failure during load.",
-						     mod_basename);
+						     mod_displayname);
 				lt_dlclose(tmpptr);
-				rb_free(mod_basename);
+				rb_free(mod_displayname);
 				return false;
 			}
 
@@ -551,10 +556,10 @@ load_a_module(const char *path, bool warn, int origin, bool core)
 				{
 					delta /= 86400;
 					iwarn("Module %s build date is out of sync with ircd build date by %ld days, expect problems",
-						mod_basename, delta);
+						mod_displayname, delta);
 					sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						"Module %s build date is out of sync with ircd build date by %ld days, expect problems",
-						mod_basename, delta);
+						mod_displayname, delta);
 				}
 			}
 
@@ -602,10 +607,10 @@ load_a_module(const char *path, bool warn, int origin, bool core)
 					default:
 						sendto_realops_snomask(SNO_GENERAL, L_ALL,
 							"Unknown/unsupported CAP index found of type %d on capability %s when loading %s",
-							m->cap_index, m->cap_name, mod_basename);
+							m->cap_index, m->cap_name, mod_displayname);
 						ilog(L_MAIN,
 							"Unknown/unsupported CAP index found of type %d on capability %s when loading %s",
-							m->cap_index, m->cap_name, mod_basename);
+							m->cap_index, m->cap_name, mod_displayname);
 						continue;
 					}
 
@@ -622,12 +627,12 @@ load_a_module(const char *path, bool warn, int origin, bool core)
 		break;
 	default:
 		ilog(L_MAIN, "Module %s has unknown/unsupported MAPI version %d.",
-		     mod_basename, MAPI_VERSION(*mapi_version));
+		     mod_displayname, MAPI_VERSION(*mapi_version));
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Module %s has unknown/unsupported MAPI version %d.",
-				     mod_basename, *mapi_version);
+				     mod_displayname, *mapi_version);
 		lt_dlclose(tmpptr);
-		rb_free(mod_basename);
+		rb_free(mod_displayname);
 		return false;
 	}
 
@@ -644,7 +649,7 @@ load_a_module(const char *path, bool warn, int origin, bool core)
 	modlist[num_mods]->version = ver;
 	modlist[num_mods]->description = description;
 	modlist[num_mods]->core = core;
-	modlist[num_mods]->name = rb_strdup(mod_basename);
+	modlist[num_mods]->name = rb_strdup(mod_displayname);
 	modlist[num_mods]->mapi_header = mapi_version;
 	modlist[num_mods]->mapi_version = MAPI_VERSION(*mapi_version);
 	modlist[num_mods]->origin = origin;
@@ -669,12 +674,12 @@ load_a_module(const char *path, bool warn, int origin, bool core)
 
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Module %s [version: %s; MAPI version: %d; origin: %s; description: \"%s\"] loaded at %p",
-				     mod_basename, ver, MAPI_VERSION(*mapi_version), o, description,
+				     mod_displayname, ver, MAPI_VERSION(*mapi_version), o, description,
 				     (void *) tmpptr);
 		ilog(L_MAIN, "Module %s [version: %s; MAPI version: %d; origin: %s; description: \"%s\"] loaded at %p",
-		     mod_basename, ver, MAPI_VERSION(*mapi_version), o, description, (void *) tmpptr);
+		     mod_displayname, ver, MAPI_VERSION(*mapi_version), o, description, (void *) tmpptr);
 	}
-	rb_free(mod_basename);
+	rb_free(mod_displayname);
 	return true;
 }
 
