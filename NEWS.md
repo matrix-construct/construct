@@ -40,7 +40,6 @@ See LICENSE for licensing details (GPL v2).
   SOCKS5, and HTTP CONNECT proxies can be checked for.
 - The LOCOPS command has been moved from core to an extension.
 - All core modules in charybdis have descriptions, which are shown in MODLIST.
-- Alias and module commands are now in m_alias and m_modules, respectively.
 - Suffixes should not be used when doing /MODLOAD, /MODUNLOAD, /MODRELOAD, etc.
 
 ### conf
@@ -70,6 +69,9 @@ See LICENSE for licensing details (GPL v2).
   servicing clients will remain in use, but not service new connections, and
   are garbage collected when they are no longer servicing connections.
 - Support for ratbox-style 'iodebug' hooks has been removed.
+- Alias and module commands are now in m_alias and m_modules, respectively, and
+  can be reloaded if need be. For sanity reasons, m_modules is a core module,
+  and cannot be unloaded.
 
 ## charybdis-3.5.0
 
