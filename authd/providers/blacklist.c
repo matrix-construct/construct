@@ -349,11 +349,8 @@ blacklists_start(struct auth_client *auth)
 	lrb_assert(get_provider_data(auth, SELF_PID) == NULL);
 
 	if(!rb_dlink_list_length(&blacklist_list))
-	{
 		/* Nothing to do... */
-		notice_client(auth->cid, "*** No DNS blacklists configured, not checking your IP");
 		return true;
-	}
 
 	set_provider_data(auth, SELF_PID, rb_malloc(sizeof(struct blacklist_user)));
 

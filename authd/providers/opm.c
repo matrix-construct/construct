@@ -626,11 +626,8 @@ opm_start(struct auth_client *auth)
 	lrb_assert(get_provider_data(auth, SELF_PID) == NULL);
 
 	if(!opm_enable || rb_dlink_list_length(&proxy_scanners) == 0)
-	{
 		/* Nothing to do... */
-		notice_client(auth->cid, "*** Proxy scanning disabled, not scanning");
 		return true;
-	}
 
 	set_provider_data(auth, SELF_PID, rb_malloc(sizeof(struct opm_lookup)));
 
