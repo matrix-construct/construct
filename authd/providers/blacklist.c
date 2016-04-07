@@ -38,6 +38,7 @@
  */
 
 #include "authd.h"
+#include "defaults.h"
 #include "provider.h"
 #include "notice.h"
 #include "stdinc.h"
@@ -111,7 +112,7 @@ static void initiate_blacklist_dnsquery(struct blacklist *, struct auth_client *
 
 /* Variables */
 static rb_dlink_list blacklist_list = { NULL, NULL, 0 };
-static int blacklist_timeout = 15;
+static int blacklist_timeout = BLACKLIST_TIMEOUT_DEFAULT;
 
 /* private interfaces */
 

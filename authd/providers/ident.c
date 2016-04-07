@@ -25,6 +25,7 @@
  */
 
 #include "stdinc.h"
+#include "defaults.h"
 #include "match.h"
 #include "authd.h"
 #include "notice.h"
@@ -66,7 +67,7 @@ static void client_fail(struct auth_client *auth, ident_message message);
 static void client_success(struct auth_client *auth);
 static char * get_valid_ident(char *buf);
 
-static int ident_timeout = 5;
+static int ident_timeout = IDENT_TIMEOUT_DEFAULT;
 static bool ident_enable = true;
 
 

@@ -18,8 +18,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "rb_lib.h"
 #include "stdinc.h"
+#include "rb_lib.h"
+#include "defaults.h"
 #include "setup.h"
 #include "authd.h"
 #include "notice.h"
@@ -94,7 +95,7 @@ static CNCB opm_connected;
 static void opm_cancel(struct auth_client *auth);
 static bool create_listener(const char *ip, uint16_t port);
 
-static int opm_timeout = 10;
+static int opm_timeout = OPM_TIMEOUT_DEFAULT;
 static bool opm_enable = false;
 
 #define LISTEN_IPV4 0

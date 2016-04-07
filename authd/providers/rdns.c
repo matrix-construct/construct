@@ -52,7 +52,7 @@ static void client_fail(struct auth_client *auth, dns_message message);
 static void client_success(struct auth_client *auth);
 static void dns_answer_callback(const char *res, bool status, query_type type, void *data);
 
-static int rdns_timeout = 15;
+static int rdns_timeout = RDNS_TIMEOUT_DEFAULT;
 
 static void
 dns_answer_callback(const char *res, bool status, query_type type, void *data)
