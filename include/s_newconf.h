@@ -138,9 +138,8 @@ extern void propagate_generic(struct Client *source_p, const char *command,
 extern void cluster_generic(struct Client *, const char *, int cltype,
 			int cap, const char *format, ...);
 
-/* Other client flags are in client.h */
-#define OPER_ENCRYPTED	0x10000000
-#define OPER_NEEDSSL	0x20000000
+#define OPER_ENCRYPTED	0x00001
+#define OPER_NEEDSSL    0x80000
 
 #define OPER_FLAGS	0	 /* no oper privs in Client.flags/oper_conf.flags currently */
 
