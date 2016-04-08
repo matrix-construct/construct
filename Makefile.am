@@ -47,5 +47,13 @@ install-exec-hook:
 	rm -f ${DESTDIR}${moduledir}/autoload/*.dll.a
 	rm -f ${DESTDIR}${moduledir}/extensions/*.dll.a
 
+distclean-local:
+	rm -f librb/include/librb-config.h
+
 clean-local:
 	rm -f include/serno.h
+	rm -f ircd/ircd_lexer.c
+	rm -f ircd/ircd_parser.c
+	rm -f ircd/ircd_parser.h
+	rm -f ircd/version.c
+	rm -f ircd/version.c.last
