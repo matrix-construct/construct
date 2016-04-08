@@ -33,7 +33,6 @@ libircd_la_SOURCES =                  \
   hash.c                        \
   hook.c                        \
   hostmask.c                    \
-  ipv4_from_ipv6.c		\
   ircd.c                        \
   ircd_parser.y                 \
   ircd_lexer.l                  \

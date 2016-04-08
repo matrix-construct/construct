@@ -181,10 +181,11 @@ int rb_supports_ssl(void);
 unsigned int rb_ssl_handshake_count(rb_fde_t *F);
 void rb_ssl_clear_handshake_count(rb_fde_t *F);
 
-
 int rb_pass_fd_to_process(rb_fde_t *, pid_t, rb_fde_t *);
 rb_fde_t *rb_recv_fd(rb_fde_t *);
 
 const char *rb_ssl_get_cipher(rb_fde_t *F);
+
+int rb_ipv4_from_ipv6(const struct sockaddr_in6 *restrict ip6, struct sockaddr_in *restrict ip4);
 
 #endif /* INCLUDED_commio_h */

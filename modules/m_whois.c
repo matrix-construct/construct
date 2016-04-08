@@ -40,7 +40,6 @@
 #include "modules.h"
 #include "hook.h"
 #include "s_newconf.h"
-#include "ipv4_from_ipv6.h"
 #include "ratelimit.h"
 #include "s_assert.h"
 
@@ -369,7 +368,7 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 		if (GET_SS_FAMILY(&target_p->localClient->ip) == AF_INET6 &&
 				(show_ip(source_p, target_p) ||
 				 (source_p == target_p && !IsIPSpoof(target_p))) &&
-				ipv4_from_ipv6((struct sockaddr_in6 *)&target_p->localClient->ip, &ip4))
+				rb_ipv4_from_ipv6((struct sockaddr_in6 *)&target_p->localClient->ip, &ip4))
 		{
 			rb_inet_ntop_sock((struct sockaddr *)&ip4,
 					buf, sizeof buf);

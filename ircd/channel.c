@@ -38,7 +38,6 @@
 #include "s_conf.h"		/* ConfigFileEntry, ConfigChannel */
 #include "s_newconf.h"
 #include "logger.h"
-#include "ipv4_from_ipv6.h"
 #include "s_assert.h"
 
 struct config_channel_entry ConfigChannel;
@@ -581,7 +580,7 @@ is_banned_list(struct Channel *chptr, rb_dlink_list *list,
 	}
 #ifdef RB_IPV6
 	if(GET_SS_FAMILY(&who->localClient->ip) == AF_INET6 &&
-			ipv4_from_ipv6((const struct sockaddr_in6 *)&who->localClient->ip, &ip4))
+			rb_ipv4_from_ipv6((const struct sockaddr_in6 *)&who->localClient->ip, &ip4))
 	{
 		sprintf(src_ip4host, "%s!%s@", who->name, who->username);
 		s4 = src_ip4host + strlen(src_ip4host);

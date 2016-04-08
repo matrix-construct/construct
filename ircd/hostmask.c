@@ -30,7 +30,6 @@
 #include "numeric.h"
 #include "send.h"
 #include "match.h"
-#include "ipv4_from_ipv6.h"
 
 #ifdef RB_IPV6
 static unsigned long hash_ipv6(struct sockaddr *, int);
@@ -425,7 +424,7 @@ find_address_conf(const char *host, const char *sockhost, const char *user,
 
 #ifdef RB_IPV6
 	if(ip != NULL && ip->sa_family == AF_INET6 &&
-			ipv4_from_ipv6((const struct sockaddr_in6 *)(const void *)ip, &ip4))
+			rb_ipv4_from_ipv6((const struct sockaddr_in6 *)(const void *)ip, &ip4))
 	{
 		kconf = find_conf_by_address(NULL, NULL, NULL, (struct sockaddr *)&ip4, CONF_KILL, AF_INET, vuser, NULL);
 		if(kconf)
@@ -457,7 +456,7 @@ find_dline(struct sockaddr *addr, int aftype)
 		return aconf;
 #ifdef RB_IPV6
 	if(addr->sa_family == AF_INET6 &&
-			ipv4_from_ipv6((const struct sockaddr_in6 *)(const void *)addr, &addr2))
+			rb_ipv4_from_ipv6((const struct sockaddr_in6 *)(const void *)addr, &addr2))
 	{
 		aconf = find_conf_by_address(NULL, NULL, NULL, (struct sockaddr *)&addr2, CONF_DLINE | 1, AF_INET, NULL, NULL);
 		if(aconf)

@@ -2095,7 +2095,6 @@ rb_setup_fd(rb_fde_t *F)
 }
 
 
-
 int
 rb_ignore_errno(int error)
 {
@@ -2242,7 +2241,7 @@ rb_send_fd_buf(rb_fde_t *xF, rb_fde_t **F, int count, void *data, size_t datasiz
 	}
 	return sendmsg(rb_get_fd(xF), &msg, MSG_NOSIGNAL);
 }
-#else
+#else /* defined(HAVE_SENDMSG) && !defined(WIN32) */
 #ifndef _WIN32
 int
 rb_recv_fd_buf(rb_fde_t *F, void *data, size_t datasize, rb_fde_t **xF, int nfds)
@@ -2257,5 +2256,38 @@ rb_send_fd_buf(rb_fde_t *xF, rb_fde_t **F, int count, void *data, size_t datasiz
 	errno = ENOSYS;
 	return -1;
 }
-#endif
-#endif
+#endif /* _WIN32 */
+#endif /* defined(HAVE_SENDMSG) && !defined(WIN32) */
+
+#ifdef RB_IPV6
+int
+rb_ipv4_from_ipv6(const struct sockaddr_in6 *restrict ip6, struct sockaddr_in *restrict ip4)
+{
+	int i;
+
+	if (!memcmp(ip6->sin6_addr.s6_addr, "\x20\x02", 2))
+	{
+		/* 6to4 and similar */
+		memcpy(&ip4->sin_addr, ip6->sin6_addr.s6_addr + 2, 4);
+	}
+	else if (!memcmp(ip6->sin6_addr.s6_addr, "\x20\x01\x00\x00", 4))
+	{
+		/* Teredo */
+		for (i = 0; i < 4; i++)
+			((uint8_t *)&ip4->sin_addr)[i] = 0xFF ^
+				ip6->sin6_addr.s6_addr[12 + i];
+	}
+	else
+		return 0;
+	SET_SS_LEN(ip4, sizeof(struct sockaddr_in));
+	ip4->sin_family = AF_INET;
+	ip4->sin_port = 0;
+	return 1;
+}
+#else
+int
+rb_ipv4_from_ipv6(const struct sockaddr_in6 *restrict ip6, struct sockaddr_in *restrict ip4)
+{
+	return 0;
+}
+#endif /* RB_IPV6 */

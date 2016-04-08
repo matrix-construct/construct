@@ -84,6 +84,7 @@ rb_init_patricia
 rb_init_prng
 rb_init_rawbuffers
 rb_init_rb_dlink_nodes
+rb_ipv4_from_ipv6
 rb_kill
 rb_lib_die
 rb_lib_init

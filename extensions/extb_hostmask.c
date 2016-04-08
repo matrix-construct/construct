@@ -7,7 +7,6 @@
 #include "modules.h"
 #include "client.h"
 #include "ircd.h"
-#include "ipv4_from_ipv6.h"
 
 static const char extb_desc[] = "Hostmask ($m) extban type";
 
@@ -56,7 +55,7 @@ eb_hostmask(const char *banstr, struct Client *client_p, struct Channel *chptr, 
 
 #ifdef RB_IPV6
 	/* handle Teredo if necessary */
-	if (GET_SS_FAMILY(&client_p->localClient->ip) == AF_INET6 && ipv4_from_ipv6((const struct sockaddr_in6 *) &client_p->localClient->ip, &ip4))
+	if (GET_SS_FAMILY(&client_p->localClient->ip) == AF_INET6 && rb_ipv4_from_ipv6((const struct sockaddr_in6 *) &client_p->localClient->ip, &ip4))
 	{
 		sprintf(src_ip4host, "%s!%s@", client_p->name, client_p->username);
 		s4 = src_ip4host + strlen(src_ip4host);
