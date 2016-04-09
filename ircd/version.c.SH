@@ -1,7 +1,7 @@
 #!/bin/sh
 
 spitshell=cat
-package=IRC
+package=charybdis
 
 echo "Extracting $package/src/version.c..."
 
@@ -27,7 +27,7 @@ fi
 
 $spitshell >version.c <<!SUB!THIS!
 /*
- *   IRC - Internet Relay Chat, src/version.c
+ *   $package - Internet Relay Chat, src/version.c
  *   Copyright (C) 1990 Chelsea Ashley Dyerman
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -62,7 +62,7 @@ const char *infotext[] =
 {
   "$package --",
   "Based on the original code written by Jarkko Oikarinen",
-  "Copyright 1988, 1989, 1990, 1991 University of Oulu, Computing Center",
+  "Copyright (c) 1988-1991 University of Oulu, Computing Center",
   "Copyright (c) 1996-2001 Hybrid Development Team",
   "Copyright (c) 2002-2009 ircd-ratbox Development Team",
   "Copyright (c) 2005-2016 charybdis development team",
@@ -74,13 +74,9 @@ const char *infotext[] =
   " ",
 !SUB!THIS!
 
-IFS='
-'
-for i in `grep -v '^$Id' ../CREDITS |tr -d '"'` ; do
-echo "  \"$i\"," >> version.c
-done
+sed 's/^$/ /;s/.*/\  "&\",/' ../CREDITS >> version.c
 $spitshell >>version.c <<!SUB!THISTOO!
-  "",
-  0,
+  " ",
+  NULL,
 };
 !SUB!THISTOO!
