@@ -51,6 +51,7 @@ $spitshell >version.c <<!SUB!THIS!
 
 #include "patchlevel.h"
 #include "serno.h"
+#include "stdinc.h"
 
 const char *generation = "$generation";
 const char *creation = "$creation";
