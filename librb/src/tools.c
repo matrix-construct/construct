@@ -209,7 +209,7 @@ rb_strncasecmp(const char *s1, const char *s2, size_t n)
 #ifndef HAVE_STRCASESTR
 /* Fallback taken from FreeBSD. --Elizafox */
 char *
-rb_strcasestr(cnst char *s, const char *find)
+rb_strcasestr(const char *s, const char *find)
 {
 	char c, sc;
 	size_t len;
