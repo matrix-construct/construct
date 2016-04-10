@@ -174,7 +174,7 @@ rb_strcasecmp(const char *s1, const char *s2)
 #ifndef _WIN32
 /* Fallback taken from FreeBSD. --Elizafox */
 int
-strncasecmp(const char *s1, const char *s2, size_t n)
+rb_strncasecmp(const char *s1, const char *s2, size_t n)
 {
 	if (n != 0)
 	{
