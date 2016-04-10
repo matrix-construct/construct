@@ -394,10 +394,10 @@ authd_initiate_client(struct Client *client_p)
 	uint16_t client_port, listen_port;
 	uint32_t authd_cid;
 
-	if(client_p->preClient == NULL || client_p->preClient->authd_cid != 0)
+	if(client_p->preClient == NULL || client_p->preClient->auth.cid != 0)
 		return;
 
-	authd_cid = client_p->preClient->authd_cid = generate_cid();
+	authd_cid = client_p->preClient->auth.cid = generate_cid();
 
 	/* Collisions are extremely unlikely, so disregard the possibility */
 	rb_dictionary_add(cid_clients, RB_UINT_TO_POINTER(authd_cid), client_p);
@@ -411,7 +411,7 @@ authd_initiate_client(struct Client *client_p)
 	client_port = ntohs(GET_SS_PORT(&client_p->localClient->ip));
 
 	/* Add a bit of a fudge factor... */
-	client_p->preClient->authd_timeout = rb_current_time() + ConfigFileEntry.connect_timeout + 10;
+	client_p->preClient->auth.timeout = rb_current_time() + ConfigFileEntry.connect_timeout + 10;
 
 	rb_helper_write(authd_helper, "C %x %s %hu %s %hu", authd_cid, listen_ipaddr, listen_port, client_ipaddr, client_port);
 }
@@ -423,7 +423,7 @@ authd_initiate_client(struct Client *client_p)
 static inline void
 authd_decide_client(struct Client *client_p, const char *ident, const char *host, bool accept, char cause, const char *data, const char *reason)
 {
-	if(client_p->preClient == NULL || client_p->preClient->authd_cid == 0)
+	if(client_p->preClient == NULL || client_p->preClient->auth.cid == 0)
 		return;
 
 	if(*ident != '*')
@@ -437,13 +437,13 @@ authd_decide_client(struct Client *client_p, const char *ident, const char *host
 	if(*host != '*')
 		rb_strlcpy(client_p->host, host, sizeof(client_p->host));
 
-	rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(client_p->preClient->authd_cid));
+	rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(client_p->preClient->auth.cid));
 
-	client_p->preClient->authd_accepted = accept;
-	client_p->preClient->authd_cause = cause;
-	client_p->preClient->authd_data = (data == NULL ? NULL : rb_strdup(data));
-	client_p->preClient->authd_reason = (reason == NULL ? NULL : rb_strdup(reason));
-	client_p->preClient->authd_cid = 0;
+	client_p->preClient->auth.accepted = accept;
+	client_p->preClient->auth.cause = cause;
+	client_p->preClient->auth.data = (data == NULL ? NULL : rb_strdup(data));
+	client_p->preClient->auth.reason = (reason == NULL ? NULL : rb_strdup(reason));
+	client_p->preClient->auth.cid = 0;
 
 	/*
 	 * When a client has auth'ed, we want to start reading what it sends
@@ -477,16 +477,16 @@ authd_abort_client(struct Client *client_p)
 	if(client_p == NULL || client_p->preClient == NULL)
 		return;
 
-	if(client_p->preClient->authd_cid == 0)
+	if(client_p->preClient->auth.cid == 0)
 		return;
 
-	rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(client_p->preClient->authd_cid));
+	rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(client_p->preClient->auth.cid));
 
 	if(authd_helper != NULL)
-		rb_helper_write(authd_helper, "E %x", client_p->preClient->authd_cid);
+		rb_helper_write(authd_helper, "E %x", client_p->preClient->auth.cid);
 
-	client_p->preClient->authd_accepted = true;
-	client_p->preClient->authd_cid = 0;
+	client_p->preClient->auth.accepted = true;
+	client_p->preClient->auth.cid = 0;
 }
 
 static void
@@ -497,7 +497,7 @@ timeout_dead_authd_clients(void *notused __unused)
 
 	RB_DICTIONARY_FOREACH(client_p, &iter, cid_clients)
 	{
-		if(client_p->preClient->authd_timeout < rb_current_time())
+		if(client_p->preClient->auth.timeout < rb_current_time())
 			authd_abort_client(client_p);
 	}
 }

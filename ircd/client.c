@@ -258,10 +258,10 @@ free_pre_client(struct Client *client_p)
 	if(client_p->preClient == NULL)
 		return;
 
-	s_assert(client_p->preClient->authd_cid == 0);
+	s_assert(client_p->preClient->auth.cid == 0);
 
-	rb_free(client_p->preClient->authd_data);
-	rb_free(client_p->preClient->authd_reason);
+	rb_free(client_p->preClient->auth.data);
+	rb_free(client_p->preClient->auth.reason);
 
 	rb_bh_free(pclient_heap, client_p->preClient);
 	client_p->preClient = NULL;
@@ -456,7 +456,7 @@ check_unknowns_list(rb_dlink_list * list)
 			continue;
 
 		/* Still querying with authd */
-		if(client_p->preClient != NULL && client_p->preClient->authd_cid != 0)
+		if(client_p->preClient != NULL && client_p->preClient->auth.cid != 0)
 			continue;
 
 		/*

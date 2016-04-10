@@ -41,9 +41,9 @@ struct Blacklist;
 
 /* we store ipv6 ips for remote clients, so this needs to be v6 always */
 #define HOSTIPLEN	53	/* sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255.ipv6") */
-#define PASSWDLEN       128
-#define CIPHERKEYLEN    64	/* 512bit */
-#define CLIENT_BUFSIZE 512	/* must be at least 512 bytes */
+#define PASSWDLEN	128
+#define CIPHERKEYLEN	64	/* 512bit */
+#define CLIENT_BUFSIZE	512	/* must be at least 512 bytes */
 
 #define IDLEN		10
 
@@ -287,18 +287,24 @@ struct LocalUser
 	unsigned char sasl_complete;
 };
 
+struct AuthClient
+{
+	uint32_t cid;	/* authd id */
+	time_t timeout;	/* When to terminate authd query */
+	bool accepted;	/* did authd accept us? */
+	char cause;	/* rejection cause */
+	char *data;	/* reason data */
+	char *reason;	/* reason we were rejected */
+
+};
+
 struct PreClient
 {
 	char spoofnick[NICKLEN + 1];
 	char spoofuser[USERLEN + 1];
 	char spoofhost[HOSTLEN + 1];
 
-	uint32_t authd_cid;		/* authd id */
-	time_t authd_timeout;		/* When to terminate authd query */
-	bool authd_accepted;		/* did authd accept us? */
-	char authd_cause;		/* rejection cause */
-	char *authd_data;		/* reason data */
-	char *authd_reason;		/* reason we were rejected */
+	struct AuthClient auth;
 
 	struct rb_sockaddr_storage lip; /* address of our side of the connection */
 };

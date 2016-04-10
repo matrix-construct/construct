@@ -252,7 +252,7 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 		return -1;
 
 	/* Waiting on authd */
-	if(source_p->preClient->authd_cid)
+	if(source_p->preClient->auth.cid)
 		return -1;
 
 	client_p->localClient->last = rb_current_time();
@@ -420,7 +420,7 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 	}
 
 	/* authd rejection check */
-	if(source_p->preClient->authd_accepted == false)
+	if(source_p->preClient->auth.accepted == false)
 	{
 		struct blacklist_stats *stats;
 		rb_dlink_list varlist = { NULL, NULL, 0 };
@@ -429,26 +429,26 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 		substitution_append_var(&varlist, "nick", source_p->name);
 		substitution_append_var(&varlist, "ip", source_p->sockhost);
 		substitution_append_var(&varlist, "host", source_p->host);
-		substitution_append_var(&varlist, "dnsbl-host", source_p->preClient->authd_data);
+		substitution_append_var(&varlist, "dnsbl-host", source_p->preClient->auth.data);
 		substitution_append_var(&varlist, "network-name", ServerInfo.network_name);
-		reason = substitution_parse(source_p->preClient->authd_reason, &varlist);
+		reason = substitution_parse(source_p->preClient->auth.reason, &varlist);
 
-		switch(source_p->preClient->authd_cause)
+		switch(source_p->preClient->auth.cause)
 		{
 		case 'B':	/* Blacklists */
-			if((stats = rb_dictionary_retrieve(bl_stats, source_p->preClient->authd_data)) != NULL)
+			if((stats = rb_dictionary_retrieve(bl_stats, source_p->preClient->auth.data)) != NULL)
 				stats->hits++;
 
 			if(IsExemptKline(source_p) || IsConfExemptDNSBL(aconf))
 			{
 				sendto_one_notice(source_p, ":*** Your IP address %s is listed in %s, but you are exempt",
-						source_p->sockhost, source_p->preClient->authd_data);
+						source_p->sockhost, source_p->preClient->auth.data);
 			}
 			else
 			{
 				sendto_realops_snomask(SNO_REJ, L_NETWIDE,
 					"Listed on DNSBL %s: %s (%s@%s) [%s] [%s]",
-					source_p->preClient->authd_data,
+					source_p->preClient->auth.data,
 					source_p->name,
 					source_p->username, source_p->host,
 					IsIPSpoof(source_p) ? "255.255.255.255" : source_p->sockhost,
@@ -460,7 +460,7 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 						me.name, source_p->name, reason);
 
 				sendto_one_notice(source_p, ":*** Your IP address %s is listed in %s",
-						source_p->sockhost, source_p->preClient->authd_data);
+						source_p->sockhost, source_p->preClient->auth.data);
 				add_reject(source_p, NULL, NULL);
 				exit_client(client_p, source_p, &me, "*** Banned (DNS blacklist)");
 				substitution_free(&varlist);
@@ -471,13 +471,13 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 			if(IsExemptKline(source_p) || IsConfExemptProxy(aconf))
 			{
 				sendto_one_notice(source_p, ":*** Your IP address %s has been detected as an open proxy (ip:port %s), but you are exempt",
-						source_p->sockhost, source_p->preClient->authd_data);
+						source_p->sockhost, source_p->preClient->auth.data);
 			}
 			else
 			{
 				sendto_realops_snomask(SNO_REJ, L_NETWIDE,
 					"Open proxy %s: %s (%s@%s) [%s] [%s]",
-					source_p->preClient->authd_data,
+					source_p->preClient->auth.data,
 					source_p->name,
 					source_p->username, source_p->host,
 					IsIPSpoof(source_p) ? "255.255.255.255" : source_p->sockhost,
@@ -489,7 +489,7 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 						me.name, source_p->name, reason);
 
 				sendto_one_notice(source_p, ":*** Your IP address %s has been detected as an open proxy (ip:port %s)",
-						source_p->sockhost, source_p->preClient->authd_data);
+						source_p->sockhost, source_p->preClient->auth.data);
 				add_reject(source_p, NULL, NULL);
 				exit_client(client_p, source_p, &me, "*** Banned (Open proxy)");
 				substitution_free(&varlist);
