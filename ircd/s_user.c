@@ -468,33 +468,52 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 			}
 			break;
 		case 'O':	/* OPM */
-			if(IsExemptKline(source_p) || IsConfExemptProxy(aconf))
 			{
-				sendto_one_notice(source_p, ":*** Your IP address %s has been detected as an open proxy (ip:port %s), but you are exempt",
-						source_p->sockhost, source_p->preClient->auth.data);
+				char *proxy = source_p->preClient->auth.data;
+				char *port = strrchr(proxy, ':');
+
+				if(port == NULL)
+				{
+					ierror("authd sent us a malformed OPM string");
+					sendto_realops_snomask(SNO_GENERAL, L_ALL,
+						"authd sent us a malformed OPM string: %s", proxy);
+					break;
+				}
+
+				/* Terminate the proxy type */
+				*(port++) = '\0';
+
+				if(IsExemptKline(source_p) || IsConfExemptProxy(aconf))
+				{
+					sendto_one_notice(source_p,
+						":*** Your IP address %s has been detected as an open proxy (type %s, port %s), but you are exempt",
+						source_p->sockhost, proxy, port);
+				}
+				else
+				{
+					sendto_realops_snomask(SNO_REJ, L_NETWIDE,
+						"Open proxy %s/%s: %s (%s@%s) [%s] [%s]",
+						proxy, port,
+						source_p->name,
+						source_p->username, source_p->host,
+						IsIPSpoof(source_p) ? "255.255.255.255" : source_p->sockhost,
+						source_p->info);
+
+					ServerStats.is_ref++;
+
+					sendto_one(source_p, form_str(ERR_YOUREBANNEDCREEP),
+							me.name, source_p->name, reason);
+
+					sendto_one_notice(source_p,
+						":*** Your IP address %s has been detected as an open proxy (type %s, port %s)",
+						source_p->sockhost, proxy, port);
+					add_reject(source_p, NULL, NULL);
+					exit_client(client_p, source_p, &me, "*** Banned (Open proxy)");
+					substitution_free(&varlist);
+					return CLIENT_EXITED;
+				}
 			}
-			else
-			{
-				sendto_realops_snomask(SNO_REJ, L_NETWIDE,
-					"Open proxy %s: %s (%s@%s) [%s] [%s]",
-					source_p->preClient->auth.data,
-					source_p->name,
-					source_p->username, source_p->host,
-					IsIPSpoof(source_p) ? "255.255.255.255" : source_p->sockhost,
-					source_p->info);
-
-				ServerStats.is_ref++;
-
-				sendto_one(source_p, form_str(ERR_YOUREBANNEDCREEP),
-						me.name, source_p->name, reason);
-
-				sendto_one_notice(source_p, ":*** Your IP address %s has been detected as an open proxy (ip:port %s)",
-						source_p->sockhost, source_p->preClient->auth.data);
-				add_reject(source_p, NULL, NULL);
-				exit_client(client_p, source_p, &me, "*** Banned (Open proxy)");
-				substitution_free(&varlist);
-				return CLIENT_EXITED;
-			}
+			break;
 		default:	/* Unknown, but handle the case properly */
 			if (IsExemptKline(source_p))
 			{
