@@ -94,7 +94,7 @@ You will need to run `autogen.sh` to build the autotools files prior to building
 # git access
 
  * The Charybdis GIT repository can be checked out using the following command:
-	git clone https://github.com/charybdis-ircd/charybdis
+	`git clone https://github.com/charybdis-ircd/charybdis`
 
  * Charybdis's GIT repository depot can be browsed over the Internet at the following address:
 	https://github.com/charybdis-ircd/charybdis
