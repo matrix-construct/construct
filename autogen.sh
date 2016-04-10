@@ -13,7 +13,7 @@ ACLOCAL=${ACLOCAL:-aclocal}
 AUTOMAKE=${AUTOMAKE:-automake}
 AUTOHEADER=${AUTOHEADER:-autoheader}
 LIBTOOLIZE=${LIBTOOLIZE:-libtoolize}
-SHTOOLIZE=${SHTOOLIZE:-shtoolize}
+#SHTOOLIZE=${SHTOOLIZE:-shtoolize}
 
 dump_help_screen ()
 {
@@ -93,4 +93,4 @@ run_or_die $LIBTOOLIZE --force --copy
 run_or_die $AUTOHEADER
 run_or_die $AUTOCONF
 run_or_die $AUTOMAKE --add-missing --copy
-run_or_die $SHTOOLIZE all
+#run_or_die $SHTOOLIZE all
