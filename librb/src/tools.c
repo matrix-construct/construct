@@ -140,20 +140,20 @@ rb_string_to_array(char *string, char **parv, int maxpara)
 
 #ifndef HAVE_STRCASECMP
 #ifndef _WIN32
-/* Crummy fallback impl by me. --Elizafox */
+/* Fallback taken from FreeBSD. --Elizafox */
 int
 rb_strcasecmp(const char *s1, const char *s2)
 {
-	for(; *s1 != '\0' || *s2 != '\0'; s1++, s2++)
+	const unsigned char *us1 = (const unsigned char *)s1,
+	const unsigned char *us2 = (const unsigned char *)s2;
+
+	while (tolower(*us1) == tolower(*us2++))
 	{
-		if(tolower(*s1) != tolower(*s2))
-			return tolower(*s1) - tolower(*s2);
+		if (*us1++ == '\0')
+			return 0;
 	}
 
-	if(*s1 == '\0' && *s2 == '\0')
-		return 0;
-
-	return tolower(*(--s1)) - tolower(*(--s2));
+	return (tolower(*us1) - tolower(*--us2));
 }
 #else /* _WIN32 */
 int
@@ -172,23 +172,24 @@ rb_strcasecmp(const char *s1, const char *s2)
 
 #ifndef HAVE_STRNCASECMP
 #ifndef _WIN32
-/* Crummy fallback impl by me. --Elizafox */
+/* Fallback taken from FreeBSD. --Elizafox */
 int
-rb_strncasecmp(const char *s1, const char *s2, size_t n)
+strncasecmp(const char *s1, const char *s2, size_t n)
 {
-	if(n == 0)
-		return 0;
-
-	for(; *s1 != '\0' || *s2 != '\0' || n; s1++, s2++, n--)
+	if (n != 0)
 	{
-		if(tolower(*s1) != tolower(*s2))
-			return tolower(*s1) - tolower(*s2);
+		const unsigned char *us1 = (const unsigned char *)s1;
+		const unsigned char *us2 = (const unsigned char *)s2;
+
+		do
+		{
+			if (tolower(*us1) != tolower(*us2++))
+				return (tolower(*us1) - tolower(*--us2));
+			if (*us1++ == '\0')
+				break;
+		} while (--n != 0);
 	}
-
-	if(*s1 == '\0' && *s2 == '\0')
-		return 0;
-
-	return tolower(*(--s1)) - tolower(*(--s2));
+	return 0;
 }
 #else /* _WIN32 */
 int
@@ -206,22 +207,25 @@ rb_strncasecmp(const char *s1, const char *s2, size_t n)
 #endif
 
 #ifndef HAVE_STRCASESTR
-/* Crummy fallback impl by me. --Elizafox */
+/* Fallback taken from FreeBSD. --Elizafox */
 char *
-rb_strcasestr(const char *s, const char *find)
+rb_strcasestr(cnst char *s, const char *find)
 {
-	size_t len_f = strlen(find);
+	char c, sc;
+	size_t len;
 
-	if(*s == '\0')
-		return (char *)s;
-
-	for(char *c = (char *)s; *c != '\0'; c++)
-	{
-		if(*c == *find && strncasecmp(c, find, len_f) == 0)
-			return c;
+	if ((c = *find++) != 0) {
+		c = tolower((unsigned char)c);
+		len = strlen(find);
+		do {
+			do {
+				if ((sc = *s++) == 0)
+					return (NULL);
+			} while ((char)tolower((unsigned char)sc) != c);
+		} while (rb_strncasecmp(s, find, len) != 0);
+		s--;
 	}
-
-	return NULL;
+	return ((char *)s);
 }
 #else
 char *
