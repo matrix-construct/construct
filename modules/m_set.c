@@ -55,11 +55,11 @@ struct SetStruct
 {
 	const char *name;
 	void (*handler)(struct Client *source_p, const char *chararg, int intarg);
-	int wants_char;		/* 1 if it expects (char *, [int]) */
-	int wants_int;		/* 1 if it expects ([char *], int) */
+	bool wants_char;	/* true if it expects (char *, [int]) */
+	bool wants_int;		/* true if it expects ([char *], int) */
 
-	/* eg:  0, 1 == only an int arg
-	 * eg:  1, 1 == char and int args */
+	/* eg:  false, true == only an int arg
+	 * eg:  true, true  == char and int args */
 };
 
 
@@ -88,23 +88,23 @@ static void list_quote_commands(struct Client *);
  */
 
 static struct SetStruct set_cmd_table[] = {
-	/* name               function      string arg  int arg */
+	/* name               function      string arg  bool arg */
 	/* -------------------------------------------------------- */
-	{"ADMINSTRING",	quote_adminstring,	1,	0	},
-	{"AUTOCONN", 	quote_autoconn, 	1,	1	},
-	{"AUTOCONNALL", quote_autoconnall, 	0,	1	},
-	{"FLOODCOUNT", 	quote_floodcount, 	0,	1	},
-	{"IDENTTIMEOUT", quote_identtimeout,	0,	1	},
-	{"MAX", 	quote_max, 		0,	1	},
-	{"MAXCLIENTS",	quote_max,		0,	1	},
-	{"OPERSTRING",	quote_operstring,	1,	0	},
-	{"SPAMNUM", 	quote_spamnum, 		0,	1	},
-	{"SPAMTIME", 	quote_spamtime, 	0,	1	},
-	{"SPLITMODE", 	quote_splitmode, 	1,	0	},
-	{"SPLITNUM", 	quote_splitnum, 	0,	1	},
-	{"SPLITUSERS", 	quote_splitusers, 	0,	1	},
+	{"ADMINSTRING",	quote_adminstring,	true,	false	},
+	{"AUTOCONN", 	quote_autoconn, 	true,	true	},
+	{"AUTOCONNALL", quote_autoconnall, 	false,	true	},
+	{"FLOODCOUNT", 	quote_floodcount, 	false,	true	},
+	{"IDENTTIMEOUT", quote_identtimeout,	false,	true	},
+	{"MAX", 	quote_max, 		false,	true	},
+	{"MAXCLIENTS",	quote_max,		false,	true	},
+	{"OPERSTRING",	quote_operstring,	true,	false	},
+	{"SPAMNUM", 	quote_spamnum, 		false,	true	},
+	{"SPAMTIME", 	quote_spamtime, 	false,	true	},
+	{"SPLITMODE", 	quote_splitmode, 	true,	false	},
+	{"SPLITNUM", 	quote_splitnum, 	false,	true	},
+	{"SPLITUSERS", 	quote_splitusers, 	false,	true	},
 	/* -------------------------------------------------------- */
-	{(char *) 0, (void (*)(struct Client *, const char *, int)) 0, 0, 0}
+	{NULL,		NULL,			false,	false	},
 };
 
 
@@ -375,8 +375,8 @@ quote_splitmode(struct Client *source_p, const char *charval, int intval)
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					     "%s is disabling splitmode", get_oper_name(source_p));
 
-			splitmode = 0;
-			splitchecking = 0;
+			splitmode = false;
+			splitchecking = false;
 
 			rb_event_delete(check_splitmode_ev);
 			check_splitmode_ev = NULL;
@@ -388,8 +388,8 @@ quote_splitmode(struct Client *source_p, const char *charval, int intval)
 					     "%s is enabling and activating splitmode",
 					     get_oper_name(source_p));
 
-			splitmode = 1;
-			splitchecking = 0;
+			splitmode = true;
+			splitchecking = false;
 
 			/* we might be deactivating an automatic splitmode, so pull the event */
 			rb_event_delete(check_splitmode_ev);
@@ -402,7 +402,7 @@ quote_splitmode(struct Client *source_p, const char *charval, int intval)
 					     "%s is enabling automatic splitmode",
 					     get_oper_name(source_p));
 
-			splitchecking = 1;
+			splitchecking = true;
 			check_splitmode(NULL);
 		}
 	}
