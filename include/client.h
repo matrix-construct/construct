@@ -295,7 +295,6 @@ struct AuthClient
 	char cause;	/* rejection cause */
 	char *data;	/* reason data */
 	char *reason;	/* reason we were rejected */
-
 };
 
 struct PreClient
