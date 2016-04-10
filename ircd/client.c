@@ -1079,7 +1079,7 @@ free_exited_clients(void *unused)
 					sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						"On abort_list: %s stat: %u flags: %llu handler: %c",
 						target_p->name, (unsigned int) target_p->status,
-						target_p->flags,  target_p->handler);
+						(unsigned long long)target_p->flags,  target_p->handler);
 					sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						"Please report this to the charybdis developers!");
 					found++;
@@ -1223,7 +1223,7 @@ exit_aborted_clients(void *unused)
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					"On dead_list: %s stat: %u flags: %llu handler: %c",
 					abt->client->name, (unsigned int) abt->client->status,
-					abt->client->flags, abt->client->handler);
+					(unsigned long long)abt->client->flags, abt->client->handler);
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					"Please report this to the charybdis developers!");
 				continue;
