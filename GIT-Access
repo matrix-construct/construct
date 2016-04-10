@@ -1,6 +1,0 @@
-The Charybdis GIT repository can be checked out using the following command:
-	git clone git://github.com/charybdis-ircd/charybdis.git charybdis-devel
-
-Charybdis's GIT repository depot can be browsed over the internet at 
-the following address:
-	http://github.com/charybdis-ircd/charybdis
