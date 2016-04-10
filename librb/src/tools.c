@@ -213,9 +213,9 @@ rb_strcasestr(const char *s, const char *find)
 	size_t len_f = strlen(find);
 
 	if(*s == '\0')
-		return s;
+		return (char *)s;
 
-	for(char *c = s; *c != '\0'; c++)
+	for(char *c = (char *)s; *c != '\0'; c++)
 	{
 		if(*c == *find && strncasecmp(c, find, len_f) == 0)
 			return c;
