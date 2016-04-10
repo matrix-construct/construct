@@ -188,6 +188,138 @@ show_lusers(struct Client *source_p)
 			   Count.totalrestartcount);
 }
 
+/* check if we should exit a client due to authd decision
+ * inputs	- client server, client connecting
+ * outputs	- true if exited, false if not
+ * side effects	- messages/exits client if authd rejected and not exempt
+ */
+static bool
+authd_check(struct Client *client_p, struct Client *source_p)
+{
+	struct ConfItem *aconf = source_p->localClient->att_conf;
+	rb_dlink_list varlist = { NULL, NULL, 0 };
+	bool reject = false;
+	char *reason;
+
+	if(source_p->preClient->auth.accepted == true)
+		return reject;
+
+	substitution_append_var(&varlist, "nick", source_p->name);
+	substitution_append_var(&varlist, "ip", source_p->sockhost);
+	substitution_append_var(&varlist, "host", source_p->host);
+	substitution_append_var(&varlist, "dnsbl-host", source_p->preClient->auth.data);
+	substitution_append_var(&varlist, "network-name", ServerInfo.network_name);
+	reason = substitution_parse(source_p->preClient->auth.reason, &varlist);
+
+	switch(source_p->preClient->auth.cause)
+	{
+	case 'B':	/* Blacklists */
+		{
+			struct blacklist_stats *stats;
+			char *blacklist = source_p->preClient->auth.data;
+
+			if((stats = rb_dictionary_retrieve(bl_stats, blacklist)) != NULL)
+				stats->hits++;
+
+			if(IsExemptKline(source_p) || IsConfExemptDNSBL(aconf))
+			{
+				sendto_one_notice(source_p, ":*** Your IP address %s is listed in %s, but you are exempt",
+						source_p->sockhost, blacklist);
+				break;
+			}
+
+			sendto_realops_snomask(SNO_REJ, L_NETWIDE,
+				"Listed on DNSBL %s: %s (%s@%s) [%s] [%s]",
+				blacklist, source_p->name, source_p->username, source_p->host,
+				IsIPSpoof(source_p) ? "255.255.255.255" : source_p->sockhost,
+				source_p->info);
+
+			sendto_one(source_p, form_str(ERR_YOUREBANNEDCREEP),
+				me.name, source_p->name, reason);
+
+			sendto_one_notice(source_p, ":*** Your IP address %s is listed in %s",
+				source_p->sockhost, blacklist);
+			add_reject(source_p, NULL, NULL);
+			exit_client(client_p, source_p, &me, "Banned (DNS blacklist)");
+			reject = true;
+		}
+		break;
+	case 'O':	/* OPM */
+		{
+			char *proxy = source_p->preClient->auth.data;
+			char *port = strrchr(proxy, ':');
+
+			if(port == NULL)
+			{
+				/* This shouldn't happen, better tell the ops... */
+				ierror("authd sent us a malformed OPM string %s", proxy);
+				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+					"authd sent us a malformed OPM string %s", proxy);
+				break;
+			}
+
+			/* Terminate the proxy type */
+			*(port++) = '\0';
+
+			if(IsExemptKline(source_p) || IsConfExemptProxy(aconf))
+			{
+				sendto_one_notice(source_p,
+					":*** Your IP address %s has been detected as an open proxy (type %s, port %s), but you are exempt",
+					source_p->sockhost, proxy, port);
+				break;
+			}
+			sendto_realops_snomask(SNO_REJ, L_NETWIDE,
+				"Open proxy %s/%s: %s (%s@%s) [%s] [%s]",
+				proxy, port,
+				source_p->name,
+				source_p->username, source_p->host,
+				IsIPSpoof(source_p) ? "255.255.255.255" : source_p->sockhost,
+				source_p->info);
+
+			sendto_one(source_p, form_str(ERR_YOUREBANNEDCREEP),
+					me.name, source_p->name, reason);
+
+			sendto_one_notice(source_p,
+				":*** Your IP address %s has been detected as an open proxy (type %s, port %s)",
+				source_p->sockhost, proxy, port);
+			add_reject(source_p, NULL, NULL);
+			exit_client(client_p, source_p, &me, "Banned (Open proxy)");
+			reject = true;
+		}
+		break;
+	default:	/* Unknown, but handle the case properly */
+		if(IsExemptKline(source_p))
+		{
+			sendto_one_notice(source_p,
+				":*** You were rejected, but you are exempt (reason: %s)",
+				reason);
+			break;
+		}
+		sendto_realops_snomask(SNO_REJ, L_NETWIDE,
+			"Rejected by authentication system (reason %s): %s (%s@%s) [%s] [%s]",
+			reason, source_p->name, source_p->username, source_p->host,
+			IsIPSpoof(source_p) ? "255.255.255.255" : source_p->sockhost,
+			source_p->info);
+
+		sendto_one(source_p, form_str(ERR_YOUREBANNEDCREEP),
+			me.name, source_p->name, reason);
+
+		sendto_one_notice(source_p, ":*** Rejected by authentication system: %s",
+			reason);
+		add_reject(source_p, NULL, NULL);
+		exit_client(client_p, source_p, &me, "Banned (authentication system)");
+		reject = true;
+		break;
+	}
+
+	if(reject)
+		ServerStats.is_ref++;
+
+	substitution_free(&varlist);
+
+	return reject;
+}
+
 /*
 ** register_local_user
 **      This function is called when both NICK and USER messages
@@ -211,7 +343,6 @@ show_lusers(struct Client *source_p)
 **         this is not fair. It should actually request another
 **         nick from local user or kill him/her...
  */
-
 int
 register_local_user(struct Client *client_p, struct Client *source_p)
 {
@@ -386,7 +517,7 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 		}
 	}
 
-	/* report if user has &^>= etc. and set flags as needed in source_p */
+	/* report and set flags (kline exempt etc.) as needed in source_p */
 	report_and_set_user_flags(source_p, aconf);
 
 	/* Limit clients */
@@ -420,130 +551,8 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 	}
 
 	/* authd rejection check */
-	if(source_p->preClient->auth.accepted == false)
-	{
-		struct blacklist_stats *stats;
-		rb_dlink_list varlist = { NULL, NULL, 0 };
-		char *reason;
-
-		substitution_append_var(&varlist, "nick", source_p->name);
-		substitution_append_var(&varlist, "ip", source_p->sockhost);
-		substitution_append_var(&varlist, "host", source_p->host);
-		substitution_append_var(&varlist, "dnsbl-host", source_p->preClient->auth.data);
-		substitution_append_var(&varlist, "network-name", ServerInfo.network_name);
-		reason = substitution_parse(source_p->preClient->auth.reason, &varlist);
-
-		switch(source_p->preClient->auth.cause)
-		{
-		case 'B':	/* Blacklists */
-			if((stats = rb_dictionary_retrieve(bl_stats, source_p->preClient->auth.data)) != NULL)
-				stats->hits++;
-
-			if(IsExemptKline(source_p) || IsConfExemptDNSBL(aconf))
-			{
-				sendto_one_notice(source_p, ":*** Your IP address %s is listed in %s, but you are exempt",
-						source_p->sockhost, source_p->preClient->auth.data);
-			}
-			else
-			{
-				sendto_realops_snomask(SNO_REJ, L_NETWIDE,
-					"Listed on DNSBL %s: %s (%s@%s) [%s] [%s]",
-					source_p->preClient->auth.data,
-					source_p->name,
-					source_p->username, source_p->host,
-					IsIPSpoof(source_p) ? "255.255.255.255" : source_p->sockhost,
-					source_p->info);
-
-				ServerStats.is_ref++;
-
-				sendto_one(source_p, form_str(ERR_YOUREBANNEDCREEP),
-						me.name, source_p->name, reason);
-
-				sendto_one_notice(source_p, ":*** Your IP address %s is listed in %s",
-						source_p->sockhost, source_p->preClient->auth.data);
-				add_reject(source_p, NULL, NULL);
-				exit_client(client_p, source_p, &me, "*** Banned (DNS blacklist)");
-				substitution_free(&varlist);
-				return CLIENT_EXITED;
-			}
-			break;
-		case 'O':	/* OPM */
-			{
-				char *proxy = source_p->preClient->auth.data;
-				char *port = strrchr(proxy, ':');
-
-				if(port == NULL)
-				{
-					ierror("authd sent us a malformed OPM string");
-					sendto_realops_snomask(SNO_GENERAL, L_ALL,
-						"authd sent us a malformed OPM string: %s", proxy);
-					break;
-				}
-
-				/* Terminate the proxy type */
-				*(port++) = '\0';
-
-				if(IsExemptKline(source_p) || IsConfExemptProxy(aconf))
-				{
-					sendto_one_notice(source_p,
-						":*** Your IP address %s has been detected as an open proxy (type %s, port %s), but you are exempt",
-						source_p->sockhost, proxy, port);
-				}
-				else
-				{
-					sendto_realops_snomask(SNO_REJ, L_NETWIDE,
-						"Open proxy %s/%s: %s (%s@%s) [%s] [%s]",
-						proxy, port,
-						source_p->name,
-						source_p->username, source_p->host,
-						IsIPSpoof(source_p) ? "255.255.255.255" : source_p->sockhost,
-						source_p->info);
-
-					ServerStats.is_ref++;
-
-					sendto_one(source_p, form_str(ERR_YOUREBANNEDCREEP),
-							me.name, source_p->name, reason);
-
-					sendto_one_notice(source_p,
-						":*** Your IP address %s has been detected as an open proxy (type %s, port %s)",
-						source_p->sockhost, proxy, port);
-					add_reject(source_p, NULL, NULL);
-					exit_client(client_p, source_p, &me, "*** Banned (Open proxy)");
-					substitution_free(&varlist);
-					return CLIENT_EXITED;
-				}
-			}
-			break;
-		default:	/* Unknown, but handle the case properly */
-			if (IsExemptKline(source_p))
-			{
-				sendto_one_notice(source_p, ":*** You were rejected, but you are exempt (reason: %s)",
-						reason);
-			}
-			else
-			{
-				sendto_realops_snomask(SNO_REJ, L_NETWIDE,
-						"Rejected by authentication system (reason %s): %s (%s@%s) [%s] [%s]",
-						reason, source_p->name, source_p->username, source_p->host,
-						IsIPSpoof(source_p) ? "255.255.255.255" : source_p->sockhost,
-						source_p->info);
-
-				ServerStats.is_ref++;
-
-				sendto_one(source_p, form_str(ERR_YOUREBANNEDCREEP),
-						me.name, source_p->name, reason);
-
-				sendto_one_notice(source_p, ":*** Rejected by authentication system: %s",
-						reason);
-				add_reject(source_p, NULL, NULL);
-				exit_client(client_p, source_p, &me, "*** Banned (authentication system)");
-				substitution_free(&varlist);
-				return CLIENT_EXITED;
-			}
-		}
-
-		substitution_free(&varlist);
-	}
+	if(authd_check(client_p, source_p))
+		return CLIENT_EXITED;
 
 	/* valid user name check */
 
