@@ -131,14 +131,20 @@ m_authenticate(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *
 	if(!IsCapable(source_p, CLICAP_SASL))
 		return;
 
-	if (strlen(client_p->id) == 3)
+	if(source_p->localClient->sasl_next_retry > rb_current_time())
+	{
+		sendto_one(source_p, form_str(RPL_LOAD2HI), me.name, EmptyString(source_p->name) ? "*" : source_p->name, msgbuf_p->cmd);
+		return;
+	}
+
+	if(strlen(client_p->id) == 3)
 	{
 		exit_client(client_p, client_p, client_p, "Mixing client and server protocol");
 		return;
 	}
 
 	saslserv_p = find_named_client(ConfigFileEntry.sasl_service);
-	if (saslserv_p == NULL || !IsService(saslserv_p))
+	if(saslserv_p == NULL || !IsService(saslserv_p))
 	{
 		sendto_one(source_p, form_str(ERR_SASLABORTED), me.name, EmptyString(source_p->name) ? "*" : source_p->name);
 		return;
@@ -233,9 +239,15 @@ me_sasl(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		if(*parv[4] == 'F')
 		{
 			sendto_one(target_p, form_str(ERR_SASLFAIL), me.name, EmptyString(target_p->name) ? "*" : target_p->name);
+			/* Failures with zero messages are just "unknown mechanism" errors; don't count those. */
 			if(target_p->localClient->sasl_messages > 0)
 			{
-				if(throttle_add((struct sockaddr*)&target_p->localClient->ip))
+				if(*target_p->name)
+				{
+					target_p->localClient->sasl_failures++;
+					target_p->localClient->sasl_next_retry = rb_current_time() + (1 << MIN(target_p->localClient->sasl_failures + 5, 13));
+				}
+				else if(throttle_add((struct sockaddr*)&target_p->localClient->ip))
 				{
 					exit_client(target_p, target_p, &me, "Too many failed authentication attempts");
 					return;
@@ -245,6 +257,7 @@ me_sasl(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		else if(*parv[4] == 'S')
 		{
 			sendto_one(target_p, form_str(RPL_SASLSUCCESS), me.name, EmptyString(target_p->name) ? "*" : target_p->name);
+			target_p->localClient->sasl_failures = 0;
 			target_p->localClient->sasl_complete = 1;
 			ServerStats.is_ssuc++;
 		}
