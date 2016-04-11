@@ -230,18 +230,20 @@ me_sasl(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	}
 	else if(*parv[3] == 'D')
 	{
-		if(*parv[4] == 'F') {
+		if(*parv[4] == 'F')
+		{
 			sendto_one(target_p, form_str(ERR_SASLFAIL), me.name, EmptyString(target_p->name) ? "*" : target_p->name);
-			if (target_p->localClient->sasl_messages > 0)
+			if(target_p->localClient->sasl_messages > 0)
 			{
-				if (throttle_add((struct sockaddr*)&target_p->localClient->ip))
+				if(throttle_add((struct sockaddr*)&target_p->localClient->ip))
 				{
 					exit_client(target_p, target_p, &me, "Too many failed authentication attempts");
 					return;
 				}
 			}
 		}
-		else if(*parv[4] == 'S') {
+		else if(*parv[4] == 'S')
+		{
 			sendto_one(target_p, form_str(RPL_SASLSUCCESS), me.name, EmptyString(target_p->name) ? "*" : target_p->name);
 			target_p->localClient->sasl_complete = 1;
 			ServerStats.is_ssuc++;
