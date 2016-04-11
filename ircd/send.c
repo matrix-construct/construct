@@ -483,7 +483,6 @@ sendto_server(struct Client *one, struct Channel *chptr, unsigned long caps,
 	}
 
 	rb_linebuf_donebuf(&linebuf);
-
 }
 
 /* sendto_channel_flags()
