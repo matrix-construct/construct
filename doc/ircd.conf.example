@@ -435,8 +435,8 @@ blacklist {
  * WARNING:
  * These settings are considered experimental. Only the most common proxy types
  * are checked for (Charybdis is immune from POST and GET proxies). If you are
- * not comfortable with experimental code, remove or comment out the block
- * below to disable the proxy scanner.
+ * not comfortable with experimental code, remove or comment out the *entire*
+ * block below to disable the proxy scanner.
  */
 opm {
 	/* IPv4 address to listen on. This must be a publicly facing IP address
