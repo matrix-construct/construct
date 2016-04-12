@@ -654,7 +654,7 @@ create_opm_listener(const char *ip, uint16_t port)
 	}
 
 	conf_create_opm_listener(ip, port);
-	rb_helper_write(authd_helper, "O opm_listener %s %hu", ip, port);
+	rb_helper_write(authd_helper, "O opm_listener %s %hu", ipbuf, port);
 }
 
 void
