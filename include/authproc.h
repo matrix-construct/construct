@@ -30,15 +30,38 @@
 #include "rb_dictionary.h"
 #include "client.h"
 
-struct blacklist_stats
+struct BlacklistStats
 {
 	uint8_t iptype;
 	unsigned int hits;
 };
 
+struct OPMScanner
+{
+	char type[16];	/* Type of proxy */
+	uint16_t port;	/* Port */
+
+	rb_dlink_node node;
+};
+
+struct OPMListener
+{
+	char ipaddr[HOSTIPLEN];	/* Listener address */
+	uint16_t port;		/* Listener port */
+};
+
+enum
+{
+	LISTEN_IPV4,
+	LISTEN_IPV6,
+	LISTEN_LAST,
+};
+
 extern rb_helper *authd_helper;
 
 extern rb_dictionary *bl_stats;
+extern rb_dlink_list opm_list;
+extern struct OPMListener opm_listeners[LISTEN_LAST];
 
 void init_authd(void);
 void configure_authd(void);
@@ -58,10 +81,13 @@ void del_blacklist_all(void);
 bool set_authd_timeout(const char *key, int timeout);
 void ident_check_enable(bool enabled);
 
+void conf_create_opm_listener(const char *ip, uint16_t port);
 void create_opm_listener(const char *ip, uint16_t port);
-void opm_check_enable(bool enabled);
+void conf_create_opm_proxy_scanner(const char *type, uint16_t port);
 void create_opm_proxy_scanner(const char *type, uint16_t port);
 void delete_opm_proxy_scanner(const char *type, uint16_t port);
 void delete_opm_proxy_scanner_all(void);
+void delete_opm_listener_all(void);
+void opm_check_enable(bool enabled);
 
 #endif

@@ -69,6 +69,9 @@ static struct ev_entry *timeout_ev;
 
 rb_dictionary *bl_stats;
 
+rb_dlink_list opm_list;
+struct OPMListener opm_listeners[LISTEN_LAST];
+
 static struct authd_cb authd_cmd_tab[256] =
 {
 	['A'] = { cmd_accept_client,	4 },
@@ -316,11 +319,41 @@ init_authd(void)
 void
 configure_authd(void)
 {
-	/* These will do for now */
+	/* Timeouts */
 	set_authd_timeout("ident_timeout", GlobalSetOptions.ident_timeout);
 	set_authd_timeout("rdns_timeout", ConfigFileEntry.connect_timeout);
 	set_authd_timeout("rbl_timeout", ConfigFileEntry.connect_timeout);
+
 	ident_check_enable(!ConfigFileEntry.disable_auth);
+
+	/* Configure OPM */
+	if(rb_dlink_list_length(&opm_list) > 0 &&
+		(opm_listeners[LISTEN_IPV4].ipaddr[0] != '\0' ||
+		opm_listeners[LISTEN_IPV6].ipaddr[0] != '\0'))
+	{
+		rb_dlink_node *ptr;
+
+		if(opm_listeners[LISTEN_IPV4].ipaddr[0] != '\0')
+			rb_helper_write(authd_helper, "O opm_listener %s %hu",
+				opm_listeners[LISTEN_IPV4].ipaddr, opm_listeners[LISTEN_IPV4].port);
+
+#ifdef RB_IPV6
+		if(opm_listeners[LISTEN_IPV6].ipaddr[0] != '\0')
+			rb_helper_write(authd_helper, "O opm_listener %s %hu",
+				opm_listeners[LISTEN_IPV6].ipaddr, opm_listeners[LISTEN_IPV6].port);
+#endif
+
+		RB_DLINK_FOREACH(ptr, opm_list.head)
+		{
+			struct OPMScanner *scanner = ptr->data;
+			rb_helper_write(authd_helper, "O opm_scanner %s %hu",
+				scanner->type, scanner->port);
+		}
+
+		opm_check_enable(true);
+	}
+	else
+		opm_check_enable(false);
 }
 
 static void
@@ -346,7 +379,6 @@ restart_authd_cb(rb_helper * helper)
 
 	start_authd();
 	configure_authd();
-	rehash(false);	/* FIXME - needed to reload authd configuration */
 }
 
 void
@@ -507,7 +539,7 @@ void
 add_blacklist(const char *host, const char *reason, uint8_t iptype, rb_dlink_list *filters)
 {
 	rb_dlink_node *ptr;
-	struct blacklist_stats *stats = rb_malloc(sizeof(struct blacklist_stats));
+	struct BlacklistStats *stats = rb_malloc(sizeof(struct BlacklistStats));
 	char filterbuf[BUFSIZE] = "*";
 	size_t s = 0;
 
@@ -541,7 +573,12 @@ add_blacklist(const char *host, const char *reason, uint8_t iptype, rb_dlink_lis
 void
 del_blacklist(const char *host)
 {
-	rb_free(rb_dictionary_delete(bl_stats, host));
+	struct BlacklistStats *stats = rb_dictionary_retrieve(bl_stats, host);
+	if(stats != NULL)
+	{
+		rb_dictionary_delete(bl_stats, host);
+		rb_free(stats);
+	}
 
 	rb_helper_write(authd_helper, "O rbl_del %s", host);
 }
@@ -550,7 +587,7 @@ del_blacklist(const char *host)
 void
 del_blacklist_all(void)
 {
-	struct blacklist_stats *stats;
+	struct BlacklistStats *stats;
 	rb_dictionary_iter iter;
 
 	RB_DICTIONARY_FOREACH(stats, &iter, bl_stats)
@@ -580,11 +617,16 @@ ident_check_enable(bool enabled)
 	rb_helper_write(authd_helper, "O ident_enabled %d", enabled ? 1 : 0);
 }
 
-/* Create an OPM listener */
+/* Create an OPM listener
+ * XXX - This is a big nasty hack, but it avoids resending duplicate data when
+ * configure_authd() is called.
+ */
 void
-create_opm_listener(const char *ip, uint16_t port)
+conf_create_opm_listener(const char *ip, uint16_t port)
 {
 	char ipbuf[HOSTIPLEN];
+	struct OPMListener *listener;
+
 	rb_strlcpy(ipbuf, ip, sizeof(ipbuf));
 	if(ipbuf[0] == ':')
 	{
@@ -592,7 +634,34 @@ create_opm_listener(const char *ip, uint16_t port)
 		ipbuf[0] = '0';
 	}
 
-	rb_helper_write(authd_helper, "O opm_listener %s %hu", ipbuf, port);
+	/* I am much too lazy to use rb_inet_pton and GET_SS_FAMILY for now --Elizafox */
+	listener = &opm_listeners[(strchr(ipbuf, ':') != NULL ? LISTEN_IPV6 : LISTEN_IPV4)];
+	rb_strlcpy(listener->ipaddr, ipbuf, sizeof(listener->ipaddr));
+	listener->port = port;
+}
+
+void
+create_opm_listener(const char *ip, uint16_t port)
+{
+	char ipbuf[HOSTIPLEN];
+
+	/* XXX duplicated in conf_create_opm_listener */
+	rb_strlcpy(ipbuf, ip, sizeof(ipbuf));
+	if(ipbuf[0] == ':')
+	{
+		memmove(ipbuf + 1, ipbuf, sizeof(ipbuf) - 1);
+		ipbuf[0] = '0';
+	}
+
+	conf_create_opm_listener(ip, port);
+	rb_helper_write(authd_helper, "O opm_listener %s %hu", ip, port);
+}
+
+void
+delete_opm_listener_all(void)
+{
+	memset(&opm_listeners, 0, sizeof(opm_listeners));
+	rb_helper_write(authd_helper, "O opm_listener_del_all");
 }
 
 /* Disable all OPM scans */
@@ -602,21 +671,60 @@ opm_check_enable(bool enabled)
 	rb_helper_write(authd_helper, "O opm_enabled %d", enabled ? 1 : 0);
 }
 
-/* Create an OPM proxy scanner */
+/* Create an OPM proxy scanner
+ * XXX - This is a big nasty hack, but it avoids resending duplicate data when
+ * configure_authd() is called.
+ */
+void
+conf_create_opm_proxy_scanner(const char *type, uint16_t port)
+{
+	struct OPMScanner *scanner = rb_malloc(sizeof(struct OPMScanner));
+
+	rb_strlcpy(scanner->type, type, sizeof(scanner->type));
+	scanner->port = port;
+	rb_dlinkAdd(scanner, &scanner->node, &opm_list);
+}
+
 void
 create_opm_proxy_scanner(const char *type, uint16_t port)
 {
+	conf_create_opm_proxy_scanner(type, port);
 	rb_helper_write(authd_helper, "O opm_scanner %s %hu", type, port);
 }
 
 void
 delete_opm_proxy_scanner(const char *type, uint16_t port)
 {
+	rb_dlink_node *ptr, *nptr;
+
+	RB_DLINK_FOREACH_SAFE(ptr, nptr, opm_list.head)
+	{
+		struct OPMScanner *scanner = ptr->data;
+
+		if(rb_strncasecmp(scanner->type, type, sizeof(scanner->type)) == 0 &&
+			scanner->port == port)
+		{
+			rb_dlinkDelete(ptr, &opm_list);
+			rb_free(scanner);
+			break;
+		}
+	}
+
 	rb_helper_write(authd_helper, "O opm_scanner_del %s %hu", type, port);
 }
 
 void
 delete_opm_proxy_scanner_all(void)
 {
+	rb_dlink_node *ptr, *nptr;
+
+	RB_DLINK_FOREACH_SAFE(ptr, nptr, opm_list.head)
+	{
+		struct OPMScanner *scanner = ptr->data;
+
+		rb_dlinkDelete(ptr, &opm_list);
+		rb_free(scanner);
+	}
+
 	rb_helper_write(authd_helper, "O opm_scanner_del_all");
 }

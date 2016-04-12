@@ -2043,6 +2043,7 @@ conf_begin_opm(struct TopConf *tc)
 	yy_opm_address_ipv4 = yy_opm_address_ipv6 = NULL;
 	yy_opm_port_ipv4 = yy_opm_port_ipv6 = yy_opm_timeout = 0;
 	delete_opm_proxy_scanner_all();
+	delete_opm_listener_all();
 	return 0;
 }
 
@@ -2062,28 +2063,28 @@ conf_end_opm(struct TopConf *tc)
 	if(yy_opm_port_ipv4 > 0)
 	{
 		if(yy_opm_address_ipv4 != NULL)
-			create_opm_listener(yy_opm_address_ipv4, yy_opm_port_ipv4);
+			conf_create_opm_listener(yy_opm_address_ipv4, yy_opm_port_ipv4);
 		else
 		{
 			char ip[HOSTIPLEN];
 			if(!rb_inet_ntop_sock((struct sockaddr *)&ServerInfo.ip, ip, sizeof(ip)))
 				conf_report_error("No opm::listen_ipv4 nor serverinfo::vhost directive; cannot listen on IPv4");
 			else
-				create_opm_listener(ip, yy_opm_port_ipv4);
+				conf_create_opm_listener(ip, yy_opm_port_ipv4);
 		}
 	}
 
 	if(yy_opm_port_ipv6 > 0)
 	{
 		if(yy_opm_address_ipv6 != NULL)
-			create_opm_listener(yy_opm_address_ipv6, yy_opm_port_ipv6);
+			conf_create_opm_listener(yy_opm_address_ipv6, yy_opm_port_ipv6);
 		else
 		{
 			char ip[HOSTIPLEN];
 			if(!rb_inet_ntop_sock((struct sockaddr *)&ServerInfo.ip6, ip, sizeof(ip)))
 				conf_report_error("No opm::listen_ipv6 nor serverinfo::vhost directive; cannot listen on IPv6");
 			else
-				create_opm_listener(ip, yy_opm_port_ipv6);
+				conf_create_opm_listener(ip, yy_opm_port_ipv6);
 		}
 	}
 
@@ -2272,7 +2273,7 @@ conf_set_opm_scan_ports_all(void *data, const char *node, const char *type)
 			conf_report_error("%s argument is not an integer -- ignoring.", node);
 			continue;
 		}
-		
+
 		if(args->v.number > 65535 || args->v.number <= 0)
 		{
 			conf_report_error("%s argument is not an integer between 1 and 65535 -- ignoring.", node);

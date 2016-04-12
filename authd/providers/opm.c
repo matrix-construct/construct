@@ -98,11 +98,15 @@ static bool create_listener(const char *ip, uint16_t port);
 static int opm_timeout = OPM_TIMEOUT_DEFAULT;
 static bool opm_enable = false;
 
-#define LISTEN_IPV4 0
-#define LISTEN_IPV6 1
+enum
+{
+	LISTEN_IPV4,
+	LISTEN_IPV6,
+	LISTEN_LAST,
+};
 
 /* IPv4 and IPv6 */
-static struct opm_listener listeners[2];
+static struct opm_listener listeners[LISTEN_LAST];
 
 static inline protocol_t
 get_protocol_from_string(const char *str)
@@ -891,12 +895,27 @@ delete_opm_scanner_all(const char *key __unused, int parc __unused, const char *
 	opm_enable = false;
 }
 
+static void
+delete_opm_listener_all(const char *key __unused, int parc __unused, const char **parv __unused)
+{
+	if(listeners[LISTEN_IPV4].F != NULL)
+		rb_close(listeners[LISTEN_IPV4].F);
+
+#ifdef RB_IPV6
+	if(listeners[LISTEN_IPV6].F != NULL)
+		rb_close(listeners[LISTEN_IPV6].F);
+#endif
+
+	memset(&listeners, 0, sizeof(listeners));
+}
+
 
 struct auth_opts_handler opm_options[] =
 {
 	{ "opm_timeout", 1, add_conf_opm_timeout },
 	{ "opm_enabled", 1, set_opm_enabled },
 	{ "opm_listener", 2, set_opm_listener },
+	{ "opm_listener_del_all", 0, delete_opm_listener_all },
 	{ "opm_scanner", 2, create_opm_scanner },
 	{ "opm_scanner_del", 2, delete_opm_scanner },
 	{ "opm_scanner_del_all", 0, delete_opm_scanner_all },

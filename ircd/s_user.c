@@ -215,7 +215,7 @@ authd_check(struct Client *client_p, struct Client *source_p)
 	{
 	case 'B':	/* Blacklists */
 		{
-			struct blacklist_stats *stats;
+			struct BlacklistStats *stats;
 			char *blacklist = source_p->preClient->auth.data;
 
 			if((stats = rb_dictionary_retrieve(bl_stats, blacklist)) != NULL)

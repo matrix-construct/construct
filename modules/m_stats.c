@@ -753,7 +753,7 @@ static void
 stats_dnsbl(struct Client *source_p)
 {
 	rb_dictionary_iter iter;
-	struct blacklist_stats *stats;
+	struct BlacklistStats *stats;
 
 	RB_DICTIONARY_FOREACH(stats, &iter, bl_stats)
 	{
