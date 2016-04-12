@@ -562,6 +562,7 @@ add_blacklist(const char *host, const char *reason, uint8_t iptype, rb_dlink_lis
 	if(s)
 		filterbuf[s - 1] = '\0';
 
+	stats->host = rb_strdup(host);
 	stats->iptype = iptype;
 	stats->hits = 0;
 	rb_dictionary_add(bl_stats, host, stats);
@@ -577,6 +578,7 @@ del_blacklist(const char *host)
 	if(stats != NULL)
 	{
 		rb_dictionary_delete(bl_stats, host);
+		rb_free(stats->host);
 		rb_free(stats);
 	}
 
@@ -592,8 +594,9 @@ del_blacklist_all(void)
 
 	RB_DICTIONARY_FOREACH(stats, &iter, bl_stats)
 	{
+		rb_dictionary_delete(bl_stats, stats->host);
+		rb_free(stats->host);
 		rb_free(stats);
-		rb_dictionary_delete(bl_stats, iter.cur->key);
 	}
 
 	rb_helper_write(authd_helper, "O rbl_del_all");

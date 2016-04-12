@@ -32,6 +32,7 @@
 
 struct BlacklistStats
 {
+	char *host;
 	uint8_t iptype;
 	unsigned int hits;
 };
