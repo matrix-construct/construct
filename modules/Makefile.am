@@ -9,7 +9,6 @@ auto_load_moddir=@moduledir@/autoload
 
 auto_load_mod_LTLIBRARIES = \
   cap_account_tag.la \
-  cap_batch.la \
   cap_server_time.la \
   chm_nocolour.la \
   chm_noctcp.la \

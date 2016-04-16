@@ -53,7 +53,6 @@
 #include "sslproc.h"
 #include "wsproc.h"
 #include "s_assert.h"
-#include "batch.h"
 
 #define DEBUG_EXITED_CLIENTS
 
@@ -1386,25 +1385,14 @@ exit_remote_server(struct Client *client_p, struct Client *source_p, struct Clie
 	static char comment1[(HOSTLEN*2)+2];
 	static char newcomment[BUFSIZE];
 	struct Client *target_p;
-	struct Batch *batch_p;
 
 	if(ConfigServerHide.flatten_links)
-	{
 		strcpy(comment1, "*.net *.split");
-
-		/* rb_strdup since they are later freed */
-		batch_p = start_batch(BATCH_NETSPLIT, source_p, 2,
-			rb_strdup("*.net"), rb_strdup("*.split"));
-	}
 	else
 	{
 		strcpy(comment1, source_p->servptr->name);
 		strcat(comment1, " ");
 		strcat(comment1, source_p->name);
-
-		batch_p = start_batch(BATCH_NETSPLIT, source_p, 2,
-			rb_strdup(source_p->servptr->name),
-			rb_strdup(source_p->name));
 	}
 	if (IsPerson(from))
 		snprintf(newcomment, sizeof(newcomment), "by %s: %s",
@@ -1442,7 +1430,6 @@ exit_remote_server(struct Client *client_p, struct Client *source_p, struct Clie
 #else
 	rb_dlinkAddAlloc(source_p, &dead_list);
 #endif
-	finish_batch(batch_p);
 	return 0;
 }
 
@@ -1476,7 +1463,6 @@ exit_local_server(struct Client *client_p, struct Client *source_p, struct Clien
 	static char comment1[(HOSTLEN*2)+2];
 	static char newcomment[BUFSIZE];
 	unsigned int sendk, recvk;
-	struct Batch *batch_p;
 
 	rb_dlinkDelete(&source_p->localClient->tnode, &serv_list);
 	rb_dlinkFindDestroy(source_p, &global_serv_list);
@@ -1507,18 +1493,12 @@ exit_local_server(struct Client *client_p, struct Client *source_p, struct Clien
 	close_connection(source_p);
 
 	if(ConfigServerHide.flatten_links)
-	{
 		strcpy(comment1, "*.net *.split");
-		batch_p = start_batch(BATCH_NETSPLIT, source_p, 2,
-			rb_strdup("*.net"), rb_strdup("*.split"));
-	}
 	else
 	{
 		strcpy(comment1, source_p->servptr->name);
 		strcat(comment1, " ");
 		strcat(comment1, source_p->name);
-		batch_p = start_batch(BATCH_NETSPLIT, source_p, 2,
-			rb_strdup(source_p->servptr->name), rb_strdup(source_p->name));
 	}
 
 	if(source_p->serv != NULL)
@@ -1540,7 +1520,6 @@ exit_local_server(struct Client *client_p, struct Client *source_p, struct Clien
 
 	SetDead(source_p);
 	rb_dlinkAddAlloc(source_p, &dead_list);
-	finish_batch(batch_p);
 	return 0;
 }
 

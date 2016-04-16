@@ -18,10 +18,9 @@ if MINGW
 EXTRA_FLAGS = -Wl,--enable-runtime-pseudo-reloc -export-symbols-regex '*'
 endif
 
-libircd_la_SOURCES =		\
+libircd_la_SOURCES =                  \
   authproc.c			\
   bandbi.c                      \
-  batch.c			\
   cache.c                       \
   capability.c			\
   channel.c                     \

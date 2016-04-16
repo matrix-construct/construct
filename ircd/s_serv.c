@@ -100,7 +100,6 @@ unsigned int CLICAP_USERHOST_IN_NAMES;
 unsigned int CLICAP_CAP_NOTIFY;
 unsigned int CLICAP_CHGHOST;
 unsigned int CLICAP_ECHO_MESSAGE;
-unsigned int CLICAP_BATCH;
 
 /*
  * initialize our builtin capability table. --nenolod
@@ -148,7 +147,6 @@ init_builtin_capabs(void)
 	CLICAP_CAP_NOTIFY = capability_put(cli_capindex, "cap-notify", NULL);
 	CLICAP_CHGHOST = capability_put(cli_capindex, "chghost", NULL);
 	CLICAP_ECHO_MESSAGE = capability_put(cli_capindex, "echo-message", NULL);
-	CLICAP_BATCH = capability_put(cli_capindex, "batch", NULL);
 }
 
 static CNCB serv_connect_callback;
