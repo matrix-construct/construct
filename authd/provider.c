@@ -136,7 +136,7 @@ load_provider(struct auth_provider *provider)
 	}
 
 	if(provider->stats_handler.letter != '\0')
-		authd_stat_handlers[provider->stats_handler.letter] = provider->stats_handler.handler;
+		authd_stat_handlers[(unsigned char)provider->stats_handler.letter] = provider->stats_handler.handler;
 
 	if(provider->init != NULL)
 		provider->init();
@@ -156,7 +156,7 @@ unload_provider(struct auth_provider *provider)
 	}
 
 	if(provider->stats_handler.letter != '\0')
-		authd_stat_handlers[provider->stats_handler.letter] = NULL;
+		authd_stat_handlers[(unsigned char)provider->stats_handler.letter] = NULL;
 
 	if(provider->destroy != NULL)
 		provider->destroy();

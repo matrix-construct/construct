@@ -731,7 +731,7 @@ conn_mod_read_cb(rb_fde_t *fd, void *data)
 
 		length = rb_read(fd, inbuf, sizeof(inbuf));
 
-                if (length < 0)
+		if (length < 0)
 		{
 			if (rb_ignore_errno(errno))
 			{
