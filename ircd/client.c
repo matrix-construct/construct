@@ -194,9 +194,8 @@ client_release_connids(struct Client *client_p)
 {
 	rb_dlink_node *ptr, *ptr2;
 
-	s_assert(MyConnect(client_p));
-	if (!MyConnect(client_p))
-		return;
+	if (client_p->localClient->connids.head)
+		s_assert(MyConnect(client_p));
 
 	RB_DLINK_FOREACH_SAFE(ptr, ptr2, client_p->localClient->connids.head)
 		connid_put(RB_POINTER_TO_UINT(ptr->data));
