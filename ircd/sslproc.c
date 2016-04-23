@@ -453,7 +453,7 @@ ssl_process_certfp(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 	uint8_t *certfp;
 	char *certfp_string;
 
-	if(ctl_buf->buflen > 5 + RB_SSL_CERTFP_LEN)
+	if(ctl_buf->buflen > 9 + RB_SSL_CERTFP_LEN)
 		return;		/* bogus message..drop it.. XXX should warn here */
 
 	fd = buf_to_uint32(&ctl_buf->buf[1]);
