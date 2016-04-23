@@ -551,12 +551,15 @@ rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
 	case RB_SSL_CERTFP_METH_SHA1:
 		md_type = MBEDTLS_MD_SHA1;
 		hashlen = RB_SSL_CERTFP_LEN_SHA1;
+		break;
 	case RB_SSL_CERTFP_METH_SHA256:
 		md_type = MBEDTLS_MD_SHA256;
 		hashlen = RB_SSL_CERTFP_LEN_SHA256;
+		break;
 	case RB_SSL_CERTFP_METH_SHA512:
 		md_type = MBEDTLS_MD_SHA512;
 		hashlen = RB_SSL_CERTFP_LEN_SHA512;
+		break;
 	default:
 		return 0;
 	}
@@ -577,7 +580,7 @@ rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
 
 	memcpy(certfp, hash, hashlen);
 
-	return 1;
+	return hashlen;
 }
 
 int
