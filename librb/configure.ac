@@ -352,9 +352,9 @@ if test "$cf_enable_mbedtls" != no; then
 	save_LIBS="$LIBS"
 	LIBS="$LIBS $MBEDTLS_LIBS"
 	AC_CHECK_LIB(mbedtls, mbedtls_ssl_init, [
-		MBEDTLS_LIBS="$MBEDTLS_LIBS -lmbedtls -lmbedcrypto -lmbedx509"
+		MBEDTLS_LIBS="$MBEDTLS_LIBS -lmbedtls -lmbedx509 -lmbedcrypto"
 		cf_enable_mbedtls=yes
-	], [cf_enable_mbedtls=no], [-lmbedcrypto -lmbedx509])
+	], [cf_enable_mbedtls=no], [-lmbedx509 -lmbedcrypto])
 fi
 
 dnl GnuTLS support
