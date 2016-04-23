@@ -358,7 +358,8 @@ stats_connect(struct Client *source_p)
 				form_str(RPL_STATSCLINE),
 				"*@127.0.0.1",
 				buf, server_p->name,
-				server_p->port, server_p->class_name);
+				server_p->port, server_p->class_name,
+				server_p->certfp ? server_p->certfp : "*");
 	}
 }
 
