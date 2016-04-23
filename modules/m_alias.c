@@ -60,9 +60,12 @@ create_aliases(void)
 
 	RB_DICTIONARY_FOREACH(alias, &iter, alias_dict)
 	{
-		struct Message *message = rb_malloc(sizeof(struct Message));
+		struct Message *message = rb_malloc(sizeof(*message) + strlen(alias->name) + 1);
+		char *cmd = (void*)message + sizeof(*message);
 
-		message->cmd = alias->name;
+		/* copy the alias name as it will be freed early on a rehash */
+		strcpy(cmd, alias->name);
+		message->cmd = cmd;
 		memcpy(message->handlers, alias_msgtab, sizeof(alias_msgtab));
 
 		mod_add_cmd(message);
