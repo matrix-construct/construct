@@ -197,6 +197,9 @@ client_release_connids(struct Client *client_p)
 	if (client_p->localClient->connids.head)
 		s_assert(MyConnect(client_p));
 
+	if (!MyConnect(client_p))
+		return;
+
 	RB_DLINK_FOREACH_SAFE(ptr, ptr2, client_p->localClient->connids.head)
 		connid_put(RB_POINTER_TO_UINT(ptr->data));
 }
