@@ -706,28 +706,49 @@ rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
 			res == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT ||
 			res == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY)
 		{
+			const ASN1_ITEM *it;
 			const EVP_MD *evp;
+			void *data;
 			unsigned int len;
 
 			switch(method)
 			{
-			case RB_SSL_CERTFP_METH_SHA1:
+			case RB_SSL_CERTFP_METH_CERT_SHA1:
+				it = ASN1_ITEM_rptr(X509);
 				evp = EVP_sha1();
+				data = cert;
 				len = RB_SSL_CERTFP_LEN_SHA1;
 				break;
-			case RB_SSL_CERTFP_METH_SHA256:
+			case RB_SSL_CERTFP_METH_CERT_SHA256:
+				it = ASN1_ITEM_rptr(X509);
 				evp = EVP_sha256();
+				data = cert;
 				len = RB_SSL_CERTFP_LEN_SHA256;
 				break;
-			case RB_SSL_CERTFP_METH_SHA512:
+			case RB_SSL_CERTFP_METH_CERT_SHA512:
+				it = ASN1_ITEM_rptr(X509);
 				evp = EVP_sha512();
+				data = cert;
+				len = RB_SSL_CERTFP_LEN_SHA512;
+				break;
+			case RB_SSL_CERTFP_METH_SPKI_SHA256:
+				it = ASN1_ITEM_rptr(X509_PUBKEY);
+				evp = EVP_sha256();
+				data = X509_get_X509_PUBKEY(cert);
+				len = RB_SSL_CERTFP_LEN_SHA256;
+				break;
+			case RB_SSL_CERTFP_METH_SPKI_SHA512:
+				it = ASN1_ITEM_rptr(X509_PUBKEY);
+				evp = EVP_sha512();
+				data = X509_get_X509_PUBKEY(cert);
 				len = RB_SSL_CERTFP_LEN_SHA512;
 				break;
 			default:
 				return 0;
 			}
 
-			X509_digest(cert, evp, certfp, &len);
+			if (ASN1_item_digest(it, evp, data, certfp, &len) != 1)
+				len = 0;
 			X509_free(cert);
 			return len;
 		}

@@ -1668,14 +1668,18 @@ conf_set_general_certfp_method(void *data)
 	char *method = data;
 
 	if (!rb_strcasecmp(method, "sha1"))
-		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_SHA1;
+		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_CERT_SHA1;
 	else if (!rb_strcasecmp(method, "sha256"))
-		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_SHA256;
+		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_CERT_SHA256;
 	else if (!rb_strcasecmp(method, "sha512"))
-		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_SHA512;
+		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_CERT_SHA512;
+	else if (!rb_strcasecmp(method, "spki_sha256"))
+		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_SPKI_SHA256;
+	else if (!rb_strcasecmp(method, "spki_sha512"))
+		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_SPKI_SHA512;
 	else
 	{
-		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_SHA1;
+		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_CERT_SHA1;
 		conf_report_error("Ignoring general::certfp_method -- bogus certfp method %s", method);
 	}
 }

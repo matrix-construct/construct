@@ -152,7 +152,7 @@ static void conn_plain_read_shutdown_cb(rb_fde_t *fd, void *data);
 static void mod_cmd_write_queue(mod_ctl_t * ctl, const void *data, size_t len);
 static const char *remote_closed = "Remote host closed the connection";
 static bool ssld_ssl_ok;
-static int certfp_method = RB_SSL_CERTFP_METH_SHA1;
+static int certfp_method = RB_SSL_CERTFP_METH_CERT_SHA1;
 #ifdef HAVE_LIBZ
 static bool zlib_ok = true;
 #else

@@ -813,7 +813,7 @@ set_default_conf(void)
 	ServerInfo.default_max_clients = MAXCONNECTIONS;
 
 	ConfigFileEntry.nicklen = NICKLEN;
-	ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_SHA1;
+	ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_CERT_SHA1;
 	ConfigFileEntry.hide_opers_in_whois = 0;
 
 	if (!alias_dict)

@@ -27,6 +27,7 @@
 #include <rb_lib.h>
 #include <commio-int.h>
 #include <commio-ssl.h>
+#include <stdbool.h>
 
 #ifdef HAVE_MBEDTLS
 
@@ -545,18 +546,23 @@ rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
 	const mbedtls_md_info_t *md_info;
 	mbedtls_md_type_t md_type;
 	int ret;
+	bool spki = false;
 
 	switch (method)
 	{
-	case RB_SSL_CERTFP_METH_SHA1:
+	case RB_SSL_CERTFP_METH_CERT_SHA1:
 		md_type = MBEDTLS_MD_SHA1;
 		hashlen = RB_SSL_CERTFP_LEN_SHA1;
 		break;
-	case RB_SSL_CERTFP_METH_SHA256:
+	case RB_SSL_CERTFP_METH_SPKI_SHA256:
+		spki = true;
+	case RB_SSL_CERTFP_METH_CERT_SHA256:
 		md_type = MBEDTLS_MD_SHA256;
 		hashlen = RB_SSL_CERTFP_LEN_SHA256;
 		break;
-	case RB_SSL_CERTFP_METH_SHA512:
+	case RB_SSL_CERTFP_METH_SPKI_SHA512:
+		spki = true;
+	case RB_SSL_CERTFP_METH_CERT_SHA512:
 		md_type = MBEDTLS_MD_SHA512;
 		hashlen = RB_SSL_CERTFP_LEN_SHA512;
 		break;
@@ -572,13 +578,37 @@ rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
 	if (md_info == NULL)
 		return 0;
 
-	if ((ret = mbedtls_md(md_info, peer_cert->raw.p, peer_cert->raw.len, hash)) != 0)
+	if (!spki)
 	{
-		rb_lib_log("rb_get_ssl_certfp: unable to get certfp for F: %p, -0x%x", -ret);
-		return 0;
+		if ((ret = mbedtls_md(md_info, peer_cert->raw.p, peer_cert->raw.len, hash)) != 0)
+		{
+			rb_lib_log("rb_get_ssl_certfp: unable to get certfp for F: %p, -0x%x", -ret);
+			hashlen = 0;
+		}
+	}
+	else
+	{
+		const size_t der_pubkey_bufsz = 4096;
+		void *der_pubkey = rb_malloc(der_pubkey_bufsz);
+		int der_pubkey_len;
+
+		der_pubkey_len = mbedtls_pk_write_pubkey_der((mbedtls_pk_context *)&peer_cert->pk, der_pubkey, der_pubkey_bufsz);
+		if (der_pubkey_len < 0)
+		{
+			rb_lib_log("rb_get_ssl_certfp: unable to get pubkey for F: %p, -0x%x", -der_pubkey_len);
+			hashlen = 0;
+		}
+		else if ((ret = mbedtls_md(md_info, der_pubkey+(der_pubkey_bufsz-der_pubkey_len), der_pubkey_len, hash)) != 0)
+		{
+			rb_lib_log("rb_get_ssl_certfp: unable to get certfp for F: %p, -0x%x", -ret);
+			hashlen = 0;
+		}
+
+		rb_free(der_pubkey);
 	}
 
-	memcpy(certfp, hash, hashlen);
+	if (hashlen)
+		memcpy(certfp, hash, hashlen);
 
 	return hashlen;
 }

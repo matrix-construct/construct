@@ -26,10 +26,12 @@
 #include <rb_lib.h>
 #include <commio-int.h>
 #include <commio-ssl.h>
+#include <stdbool.h>
 #ifdef HAVE_GNUTLS
 
 #include <gnutls/gnutls.h>
 #include <gnutls/x509.h>
+#include <gnutls/abstract.h>
 
 #if (GNUTLS_VERSION_MAJOR < 3)
 # include <gcrypt.h>
@@ -603,6 +605,7 @@ rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
 	uint8_t digest[RB_SSL_CERTFP_LEN * 2];
 	size_t digest_size;
 	int len;
+	bool spki = false;
 
 	if (gnutls_certificate_type_get(SSL_P(F)) != GNUTLS_CRT_X509)
 		return 0;
@@ -626,15 +629,19 @@ rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
 
 	switch(method)
 	{
-	case RB_SSL_CERTFP_METH_SHA1:
+	case RB_SSL_CERTFP_METH_CERT_SHA1:
 		algo = GNUTLS_DIG_SHA1;
 		len = RB_SSL_CERTFP_LEN_SHA1;
 		break;
-	case RB_SSL_CERTFP_METH_SHA256:
+	case RB_SSL_CERTFP_METH_SPKI_SHA256:
+		spki = true;
+	case RB_SSL_CERTFP_METH_CERT_SHA256:
 		algo = GNUTLS_DIG_SHA256;
 		len = RB_SSL_CERTFP_LEN_SHA256;
 		break;
-	case RB_SSL_CERTFP_METH_SHA512:
+	case RB_SSL_CERTFP_METH_SPKI_SHA512:
+		spki = true;
+	case RB_SSL_CERTFP_METH_CERT_SHA512:
 		algo = GNUTLS_DIG_SHA512;
 		len = RB_SSL_CERTFP_LEN_SHA512;
 		break;
@@ -642,13 +649,51 @@ rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
 		return 0;
 	}
 
-	if (gnutls_x509_crt_get_fingerprint(cert, algo, digest, &digest_size) < 0)
+	if (!spki)
 	{
-		gnutls_x509_crt_deinit(cert);
-		return 0;
+		if (gnutls_x509_crt_get_fingerprint(cert, algo, digest, &digest_size) < 0)
+			len = 0;
+	}
+	else
+	{
+		gnutls_pubkey_t pubkey;
+		unsigned char *der_pubkey = NULL;
+		size_t der_pubkey_len = 0;
+
+		if (gnutls_pubkey_init(&pubkey) == GNUTLS_E_SUCCESS)
+		{
+			if (gnutls_pubkey_import_x509(pubkey, cert, 0) == GNUTLS_E_SUCCESS)
+			{
+				if (gnutls_pubkey_export(pubkey, GNUTLS_X509_FMT_DER, der_pubkey, &der_pubkey_len) == GNUTLS_E_SHORT_MEMORY_BUFFER)
+				{
+					der_pubkey = rb_malloc(der_pubkey_len);
+
+					if (gnutls_pubkey_export(pubkey, GNUTLS_X509_FMT_DER, der_pubkey, &der_pubkey_len) != GNUTLS_E_SUCCESS)
+					{
+						rb_free(der_pubkey);
+						der_pubkey = NULL;
+					}
+				}
+			}
+
+			gnutls_pubkey_deinit(pubkey);
+		}
+
+		if (der_pubkey)
+		{
+			if (gnutls_hash_fast(algo, der_pubkey, der_pubkey_len, digest) != 0)
+				len = 0;
+
+			rb_free(der_pubkey);
+		}
+		else
+		{
+			len = 0;
+		}
 	}
 
-	memcpy(certfp, digest, len);
+	if (len)
+		memcpy(certfp, digest, len);
 
 	gnutls_x509_crt_deinit(cert);
 	return len;
