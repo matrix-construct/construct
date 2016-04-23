@@ -1016,7 +1016,7 @@ mod_process_cmd_recv(mod_ctl_t * ctl)
 			}
 		case 'F':
 			{
-				if (ctl_buf->nfds != 2 || ctl_buf->buflen != 5)
+				if (ctl_buf->buflen != 5)
 				{
 					cleanup_bad_message(ctl, ctl_buf);
 					break;
