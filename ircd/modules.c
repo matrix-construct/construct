@@ -401,6 +401,7 @@ unload_one_module(const char *name, bool warn)
 					}
 				}
 			}
+			break;
 		}
 	default:
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
