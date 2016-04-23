@@ -140,8 +140,8 @@ init_client(void)
 uint32_t
 connid_get(struct Client *client_p)
 {
-	s_assert(MyClient(client_p));
-	if (!MyClient(client_p))
+	s_assert(MyConnect(client_p));
+	if (!MyConnect(client_p))
 		return 0;
 
 	/* find a connid that is available */
