@@ -295,8 +295,10 @@ mod_add_cmd(struct Message *msg)
 	if(msg == NULL)
 		return;
 
-	if (rb_dictionary_find(cmd_dict, msg->cmd) != NULL)
+	if (rb_dictionary_find(cmd_dict, msg->cmd) != NULL) {
+		s_assert(0);
 		return;
+	}
 
 	msg->count = 0;
 	msg->rcount = 0;
@@ -318,7 +320,8 @@ mod_del_cmd(struct Message *msg)
 	if(msg == NULL)
 		return;
 
-	rb_dictionary_delete(cmd_dict, msg->cmd);
+	if (rb_dictionary_delete(cmd_dict, msg->cmd) == NULL)
+		s_assert(0);
 }
 
 /* cancel_clients()
