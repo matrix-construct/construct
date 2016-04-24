@@ -178,7 +178,13 @@ extern const char *get_oper_privs(int flags);
 struct server_conf
 {
 	char *name;
-	char *host;
+	char *connect_host;
+	struct rb_sockaddr_storage connect4;
+	uint16_t dns_query_connect4;
+#ifdef RB_IPV6
+	struct rb_sockaddr_storage connect6;
+	uint16_t dns_query_connect6;
+#endif
 	char *passwd;
 	char *spasswd;
 	char *certfp;
@@ -188,17 +194,20 @@ struct server_conf
 	time_t hold;
 
 	int aftype;
-	struct rb_sockaddr_storage my_ipnum;
+	char *bind_host;
+	struct rb_sockaddr_storage bind4;
+	uint16_t dns_query_bind4;
+#ifdef RB_IPV6
+	struct rb_sockaddr_storage bind6;
+	uint16_t dns_query_bind6;
+#endif
 
 	char *class_name;
 	struct Class *class;
 	rb_dlink_node node;
-
-	uint16_t dns_query;
 };
 
 #define SERVER_ILLEGAL		0x0001
-#define SERVER_VHOSTED		0x0002
 #define SERVER_ENCRYPTED	0x0004
 #define SERVER_COMPRESSED	0x0008
 #define SERVER_TB		0x0010
@@ -206,7 +215,6 @@ struct server_conf
 #define SERVER_SSL		0x0040
 
 #define ServerConfIllegal(x)	((x)->flags & SERVER_ILLEGAL)
-#define ServerConfVhosted(x)	((x)->flags & SERVER_VHOSTED)
 #define ServerConfEncrypted(x)	((x)->flags & SERVER_ENCRYPTED)
 #define ServerConfCompressed(x)	((x)->flags & SERVER_COMPRESSED)
 #define ServerConfTb(x)		((x)->flags & SERVER_TB)

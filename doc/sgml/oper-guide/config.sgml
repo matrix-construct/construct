@@ -105,7 +105,7 @@ serverinfo {
 	    <term>vhost</term>
 	    <listitem>
 	      <para>
-		An optional text field which defines an IP from which to connect outward to other IRC servers.
+		An optional text field which defines an IPv4 address from which to connect outward to other IRC servers.
 	      </para>
 	    </listitem>
 	  </varlistentry>
@@ -113,7 +113,7 @@ serverinfo {
 	    <term>vhost6</term>
 	    <listitem>
 	      <para>
-		An optional text field which defines an IPv6 IP from which to connect outward to other IRC servers.
+		An optional text field which defines an IPv6 address from which to connect outward to other IRC servers.
 	      </para>
 	    </listitem>
 	  </varlistentry>
@@ -599,10 +599,6 @@ connect "<replaceable>name</replaceable>" {
 		Furthermore, if a hostname is used, it must have an A or AAAA
 		record (no CNAME) and it must be the primary
 		hostname for inbound connections to work.
-	      </para><para>
-	        IPv6 addresses must be in :: shortened form; addresses which
-		then start with a colon must be prepended with a zero,
-		for example 0::1.
 	      </para></note>
 	    </listitem>
 	  </varlistentry>
@@ -662,7 +658,7 @@ connect "<replaceable>name</replaceable>" {
 	  <varlistentry>
 	    <term>aftype</term>
 	    <listitem>
-	      <para>The protocol that should be used to connect with, either ipv4 or ipv6. This defaults to ipv4 unless host is a numeric IPv6 address.</para>
+	      <para>The protocol that must be used to connect with, either ipv4 or ipv6. This defaults to neither, allowing connection using either address family.</para>
 	    </listitem>
 	  </varlistentry>
 	</variablelist>

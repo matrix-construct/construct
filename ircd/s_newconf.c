@@ -324,8 +324,24 @@ struct server_conf *
 make_server_conf(void)
 {
 	struct server_conf *server_p = rb_malloc(sizeof(struct server_conf));
-	server_p->aftype = AF_INET;
-	return server_p;
+
+	SET_SS_FAMILY(&server_p->connect4, AF_UNSPEC);
+	SET_SS_LEN(&server_p->connect4, sizeof(struct sockaddr_in));
+
+	SET_SS_FAMILY(&server_p->bind4, AF_UNSPEC);
+	SET_SS_LEN(&server_p->bind4, sizeof(struct sockaddr_in));
+
+#ifdef RB_IPV6
+	SET_SS_FAMILY(&server_p->connect6, AF_UNSPEC);
+	SET_SS_LEN(&server_p->connect6, sizeof(struct sockaddr_in6));
+
+	SET_SS_FAMILY(&server_p->bind6, AF_UNSPEC);
+	SET_SS_LEN(&server_p->bind6, sizeof(struct sockaddr_in6));
+#endif
+
+	server_p->aftype = AF_UNSPEC;
+
+	return rb_malloc(sizeof(struct server_conf));
 }
 
 void
@@ -348,13 +364,14 @@ free_server_conf(struct server_conf *server_p)
 	}
 
 	rb_free(server_p->name);
-	rb_free(server_p->host);
+	rb_free(server_p->connect_host);
+	rb_free(server_p->bind_host);
 	rb_free(server_p->class_name);
 	rb_free(server_p);
 }
 
 /*
- * conf_dns_callback
+ * conf_connect_dns_callback
  * inputs       - pointer to struct ConfItem
  *              - pointer to adns reply
  * output       - none
@@ -364,14 +381,59 @@ free_server_conf(struct server_conf *server_p)
  * if successful save hp in the conf item it was called with
  */
 static void
-conf_dns_callback(const char *result, int status, int aftype, void *data)
+conf_connect_dns_callback(const char *result, int status, int aftype, void *data)
 {
 	struct server_conf *server_p = data;
 
-	if(status == 1)
-		rb_inet_pton_sock(result, (struct sockaddr *)&server_p->my_ipnum);
+	if(aftype == AF_INET)
+	{
+		if(status == 1)
+			rb_inet_pton_sock(result, (struct sockaddr *)&server_p->connect4);
 
-	server_p->dns_query = 0;
+		server_p->dns_query_connect4 = 0;
+	}
+#ifdef RB_IPV6
+	else if(aftype == AF_INET6)
+	{
+		if(status == 1)
+			rb_inet_pton_sock(result, (struct sockaddr *)&server_p->connect6);
+
+		server_p->dns_query_connect6 = 0;
+	}
+#endif
+}
+
+/*
+ * conf_bind_dns_callback
+ * inputs       - pointer to struct ConfItem
+ *              - pointer to adns reply
+ * output       - none
+ * side effects - called when resolver query finishes
+ * if the query resulted in a successful search, hp will contain
+ * a non-null pointer, otherwise hp will be null.
+ * if successful save hp in the conf item it was called with
+ */
+static void
+conf_bind_dns_callback(const char *result, int status, int aftype, void *data)
+{
+	struct server_conf *server_p = data;
+
+	if(aftype == AF_INET)
+	{
+		if(status == 1)
+			rb_inet_pton_sock(result, (struct sockaddr *)&server_p->bind4);
+
+		server_p->dns_query_bind4 = 0;
+	}
+#ifdef RB_IPV6
+	else if(aftype == AF_INET6)
+	{
+		if(status == 1)
+			rb_inet_pton_sock(result, (struct sockaddr *)&server_p->bind6);
+
+		server_p->dns_query_bind6 = 0;
+	}
+#endif
 }
 
 void
@@ -395,11 +457,25 @@ add_server_conf(struct server_conf *server_p)
 		server_p->class_name = rb_strdup("default");
 	}
 
-	if(strpbrk(server_p->host, "*?"))
-		return;
+	if(server_p->connect_host && !strpbrk(server_p->connect_host, "*?"))
+	{
+		server_p->dns_query_connect4 =
+			lookup_hostname(server_p->connect_host, AF_INET, conf_connect_dns_callback, server_p);
+#ifdef RB_IPV6
+		server_p->dns_query_connect6 =
+			lookup_hostname(server_p->connect_host, AF_INET6, conf_connect_dns_callback, server_p);
+#endif
+	}
 
-	server_p->dns_query =
-		lookup_hostname(server_p->host, GET_SS_FAMILY(&server_p->my_ipnum), conf_dns_callback, server_p);
+	if(server_p->bind_host)
+	{
+		server_p->dns_query_bind4 =
+			lookup_hostname(server_p->bind_host, AF_INET, conf_bind_dns_callback, server_p);
+#ifdef RB_IPV6
+		server_p->dns_query_bind6 =
+			lookup_hostname(server_p->bind_host, AF_INET6, conf_bind_dns_callback, server_p);
+#endif
+	}
 }
 
 struct server_conf *

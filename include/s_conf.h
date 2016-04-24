@@ -282,14 +282,10 @@ struct server_info
 	char *description;
 	char *network_name;
 	int hub;
-	struct sockaddr_in ip;
+	struct rb_sockaddr_storage bind4;
 	int default_max_clients;
 #ifdef RB_IPV6
-	struct sockaddr_in6 ip6;
-#endif
-	int specific_ipv4_vhost;
-#ifdef RB_IPV6
-	int specific_ipv6_vhost;
+	struct rb_sockaddr_storage bind6;
 #endif
 	char *ssl_private_key;
 	char *ssl_ca_cert;

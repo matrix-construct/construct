@@ -243,27 +243,31 @@ conf_set_serverinfo_network_name(void *data)
 static void
 conf_set_serverinfo_vhost(void *data)
 {
-	if(rb_inet_pton(AF_INET, (char *) data, &ServerInfo.ip.sin_addr) <= 0)
+	struct rb_sockaddr_storage addr;
+
+	if(rb_inet_pton_sock(data, (struct sockaddr *)&addr) <= 0 || GET_SS_FAMILY(&addr) != AF_INET)
 	{
 		conf_report_error("Invalid IPv4 address for server vhost (%s)", (char *) data);
 		return;
 	}
-	ServerInfo.ip.sin_family = AF_INET;
-	ServerInfo.specific_ipv4_vhost = 1;
+
+	ServerInfo.bind4 = addr;
 }
 
 static void
 conf_set_serverinfo_vhost6(void *data)
 {
+
 #ifdef RB_IPV6
-	if(rb_inet_pton(AF_INET6, (char *) data, &ServerInfo.ip6.sin6_addr) <= 0)
+	struct rb_sockaddr_storage addr;
+
+	if(rb_inet_pton_sock(data, (struct sockaddr *)&addr) <= 0 || GET_SS_FAMILY(&addr) != AF_INET6)
 	{
 		conf_report_error("Invalid IPv6 address for server vhost (%s)", (char *) data);
 		return;
 	}
 
-	ServerInfo.specific_ipv6_vhost = 1;
-	ServerInfo.ip6.sin6_family = AF_INET6;
+	ServerInfo.bind6 = addr;
 #else
 	conf_report_error("Warning -- ignoring serverinfo::vhost6 -- IPv6 support not available.");
 #endif
@@ -1301,7 +1305,12 @@ conf_end_connect(struct TopConf *tc)
 		return 0;
 	}
 
-	if(EmptyString(yy_server->host))
+	if(EmptyString(yy_server->connect_host)
+			&& GET_SS_FAMILY(&yy_server->connect4) != AF_INET
+#ifdef RB_IPV6
+			&& GET_SS_FAMILY(&yy_server->connect6) != AF_INET6
+#endif
+		)
 	{
 		conf_report_error("Ignoring connect block for %s -- missing host.",
 					yy_server->name);
@@ -1326,23 +1335,57 @@ conf_end_connect(struct TopConf *tc)
 static void
 conf_set_connect_host(void *data)
 {
-	rb_free(yy_server->host);
-	yy_server->host = rb_strdup(data);
-	if (strchr(yy_server->host, ':'))
-		yy_server->aftype = AF_INET6;
+	struct rb_sockaddr_storage addr;
+
+	if(rb_inet_pton_sock(data, (struct sockaddr *)&addr) <= 0)
+	{
+		rb_free(yy_server->connect_host);
+		yy_server->connect_host = rb_strdup(data);
+	}
+	else if(GET_SS_FAMILY(&addr) == AF_INET)
+	{
+		yy_server->connect4 = addr;
+	}
+#ifdef RB_IPV6
+	else if(GET_SS_FAMILY(&addr) == AF_INET6)
+	{
+		yy_server->connect6 = addr;
+	}
+#endif
+	else
+	{
+		conf_report_error("Unsupported IP address for server connect host (%s)",
+				  (char *)data);
+		return;
+	}
 }
 
 static void
 conf_set_connect_vhost(void *data)
 {
-	if(rb_inet_pton_sock(data, (struct sockaddr *)&yy_server->my_ipnum) <= 0)
+	struct rb_sockaddr_storage addr;
+
+	if(rb_inet_pton_sock(data, (struct sockaddr *)&addr) <= 0)
 	{
-		conf_report_error("Invalid IP address for server connect vhost (%s)",
-		    		  (char *) data);
+		rb_free(yy_server->bind_host);
+		yy_server->bind_host = rb_strdup(data);
+	}
+	else if(GET_SS_FAMILY(&addr) == AF_INET)
+	{
+		yy_server->bind4 = addr;
+	}
+#ifdef RB_IPV6
+	else if(GET_SS_FAMILY(&addr) == AF_INET6)
+	{
+		yy_server->bind6 = addr;
+	}
+#endif
+	else
+	{
+		conf_report_error("Unsupported IP address for server connect vhost (%s)",
+				  (char *)data);
 		return;
 	}
-
-	yy_server->flags |= SERVER_VHOSTED;
 }
 
 static void
@@ -2071,7 +2114,7 @@ conf_end_opm(struct TopConf *tc)
 		else
 		{
 			char ip[HOSTIPLEN];
-			if(!rb_inet_ntop_sock((struct sockaddr *)&ServerInfo.ip, ip, sizeof(ip)))
+			if(!rb_inet_ntop_sock((struct sockaddr *)&ServerInfo.bind4, ip, sizeof(ip)))
 				conf_report_error("No opm::listen_ipv4 nor serverinfo::vhost directive; cannot listen on IPv4");
 			else
 				conf_create_opm_listener(ip, yy_opm_port_ipv4);
@@ -2085,7 +2128,7 @@ conf_end_opm(struct TopConf *tc)
 		else
 		{
 			char ip[HOSTIPLEN];
-			if(!rb_inet_ntop_sock((struct sockaddr *)&ServerInfo.ip6, ip, sizeof(ip)))
+			if(!rb_inet_ntop_sock((struct sockaddr *)&ServerInfo.bind6, ip, sizeof(ip)))
 				conf_report_error("No opm::listen_ipv6 nor serverinfo::vhost directive; cannot listen on IPv6");
 			else
 				conf_create_opm_listener(ip, yy_opm_port_ipv6);

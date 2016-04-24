@@ -363,6 +363,8 @@ check_server(const char *name, struct Client *client_p)
 
 	RB_DLINK_FOREACH(ptr, server_conf_list.head)
 	{
+		struct rb_sockaddr_storage client_addr;
+
 		tmp_p = ptr->data;
 
 		if(ServerConfIllegal(tmp_p))
@@ -373,10 +375,19 @@ check_server(const char *name, struct Client *client_p)
 
 		name_matched = true;
 
-		/* XXX: Fix me for IPv6 */
-		/* XXX sockhost is the IPv4 ip as a string */
-		if(match(tmp_p->host, client_p->host) ||
-		   match(tmp_p->host, client_p->sockhost))
+		if(rb_inet_pton_sock(client_p->sockhost, (struct sockaddr *)&client_addr) <= 0)
+			SET_SS_FAMILY(&client_addr, AF_UNSPEC);
+
+		if((tmp_p->connect_host && match(tmp_p->connect_host, client_p->host))
+			|| (GET_SS_FAMILY(&client_addr) == GET_SS_FAMILY(&tmp_p->connect4)
+				&& comp_with_mask_sock((struct sockaddr *)&client_addr,
+					(struct sockaddr *)&tmp_p->connect4, 32))
+#ifdef RB_IPV6
+			|| (GET_SS_FAMILY(&client_addr) == GET_SS_FAMILY(&tmp_p->connect6)
+				&& comp_with_mask_sock((struct sockaddr *)&client_addr,
+					(struct sockaddr *)&tmp_p->connect6, 128))
+#endif
+			)
 		{
 			host_matched = true;
 
@@ -1010,7 +1021,8 @@ int
 serv_connect(struct server_conf *server_p, struct Client *by)
 {
 	struct Client *client_p;
-	struct rb_sockaddr_storage myipnum;
+	struct rb_sockaddr_storage sa_connect;
+	struct rb_sockaddr_storage sa_bind;
 	char note[HOSTLEN + 10];
 	rb_fde_t *F;
 
@@ -1018,8 +1030,39 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	if(server_p == NULL)
 		return 0;
 
+#ifdef RB_IPV6
+	if(server_p->aftype != AF_UNSPEC
+		&& GET_SS_FAMILY(&server_p->connect4) == AF_INET
+		&& GET_SS_FAMILY(&server_p->connect6) == AF_INET6)
+	{
+		if(rand() % 2 == 0)
+		{
+			sa_connect = server_p->connect4;
+			sa_bind = server_p->bind4;
+		}
+		else
+		{
+			sa_connect = server_p->connect6;
+			sa_bind = server_p->bind6;
+		}
+	}
+	else if(server_p->aftype == AF_INET || GET_SS_FAMILY(&server_p->connect4) == AF_INET)
+#endif
+	{
+		sa_connect = server_p->connect4;
+		sa_bind = server_p->bind4;
+	}
+#ifdef RB_IPV6
+	else if(server_p->aftype == AF_INET6 || GET_SS_FAMILY(&server_p->connect6) == AF_INET6)
+	{
+		sa_connect = server_p->connect6;
+		sa_bind = server_p->bind6;
+	}
+#endif
+
 	/* log */
-	rb_inet_ntop_sock((struct sockaddr *)&server_p->my_ipnum, buf, sizeof(buf));
+	buf[0] = 0;
+	rb_inet_ntop_sock((struct sockaddr *)&sa_connect, buf, sizeof(buf));
 	ilog(L_SERVER, "Connect to *[%s] @%s", server_p->name, buf);
 
 	/*
@@ -1037,7 +1080,12 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	}
 
 	/* create a socket for the server connection */
-	if((F = rb_socket(GET_SS_FAMILY(&server_p->my_ipnum), SOCK_STREAM, 0, NULL)) == NULL)
+	if(GET_SS_FAMILY(&sa_connect) == AF_UNSPEC)
+	{
+		ilog_error("unspecified socket address family");
+		return 0;
+	}
+	else if((F = rb_socket(GET_SS_FAMILY(&sa_connect), SOCK_STREAM, 0, NULL)) == NULL)
 	{
 		ilog_error("opening a stream socket");
 		return 0;
@@ -1052,11 +1100,14 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 
 	/* Copy in the server, hostname, fd */
 	rb_strlcpy(client_p->name, server_p->name, sizeof(client_p->name));
-	rb_strlcpy(client_p->host, server_p->host, sizeof(client_p->host));
+	if(server_p->connect_host)
+		rb_strlcpy(client_p->host, server_p->connect_host, sizeof(client_p->host));
+	else
+		rb_strlcpy(client_p->host, buf, sizeof(client_p->host));
 	rb_strlcpy(client_p->sockhost, buf, sizeof(client_p->sockhost));
 	client_p->localClient->F = F;
 	/* shove the port number into the sockaddr */
-	SET_SS_PORT(&server_p->my_ipnum, htons(server_p->port));
+	SET_SS_PORT(&sa_connect, htons(server_p->port));
 
 	/*
 	 * Set up the initial server evilness, ripped straight from
@@ -1091,58 +1142,22 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	SetConnecting(client_p);
 	rb_dlinkAddTail(client_p, &client_p->node, &global_client_list);
 
-	if(ServerConfVhosted(server_p))
+	if(GET_SS_FAMILY(&sa_bind) == AF_UNSPEC)
 	{
-		memcpy(&myipnum, &server_p->my_ipnum, sizeof(myipnum));
-		SET_SS_FAMILY(&myipnum, GET_SS_FAMILY(&server_p->my_ipnum));
-		SET_SS_PORT(&myipnum, 0);
-
-	}
-	else if(GET_SS_FAMILY(&server_p->my_ipnum) == AF_INET && ServerInfo.specific_ipv4_vhost)
-	{
-		memcpy(&myipnum, &ServerInfo.ip, sizeof(myipnum));
-		SET_SS_FAMILY(&myipnum, AF_INET);
-		SET_SS_PORT(&myipnum, 0);
-		SET_SS_LEN(&myipnum, sizeof(struct sockaddr_in));
-	}
-
+		if(GET_SS_FAMILY(&sa_connect) == GET_SS_FAMILY(&ServerInfo.bind4))
+			sa_bind = ServerInfo.bind4;
 #ifdef RB_IPV6
-	else if((GET_SS_FAMILY(&server_p->my_ipnum) == AF_INET6) && ServerInfo.specific_ipv6_vhost)
-	{
-		memcpy(&myipnum, &ServerInfo.ip6, sizeof(myipnum));
-		SET_SS_FAMILY(&myipnum, AF_INET6);
-		SET_SS_PORT(&myipnum, 0);
-		SET_SS_LEN(&myipnum, sizeof(struct sockaddr_in6));
-	}
+		if(GET_SS_FAMILY(&sa_connect) == GET_SS_FAMILY(&ServerInfo.bind6))
+			sa_bind = ServerInfo.bind6;
 #endif
-	else
-	{
-		if(ServerConfSSL(server_p))
-		{
-			rb_connect_tcp(client_p->localClient->F,
-				       (struct sockaddr *)&server_p->my_ipnum, NULL, 0,
-				       serv_connect_ssl_callback, client_p,
-				       ConfigFileEntry.connect_timeout);
-		}
-		else
-			rb_connect_tcp(client_p->localClient->F,
-				       (struct sockaddr *)&server_p->my_ipnum, NULL, 0,
-				       serv_connect_callback, client_p,
-				       ConfigFileEntry.connect_timeout);
-
-		return 1;
 	}
-	if(ServerConfSSL(server_p))
-		rb_connect_tcp(client_p->localClient->F, (struct sockaddr *)&server_p->my_ipnum,
-			       (struct sockaddr *)&myipnum,
-			       GET_SS_LEN(&myipnum), serv_connect_ssl_callback, client_p,
-			       ConfigFileEntry.connect_timeout);
-	else
-		rb_connect_tcp(client_p->localClient->F, (struct sockaddr *)&server_p->my_ipnum,
-			       (struct sockaddr *)&myipnum,
-			       GET_SS_LEN(&myipnum), serv_connect_callback, client_p,
-			       ConfigFileEntry.connect_timeout);
 
+	rb_connect_tcp(client_p->localClient->F,
+		(struct sockaddr *)&sa_connect,
+		GET_SS_FAMILY(&sa_bind) == AF_UNSPEC ? NULL : (struct sockaddr *)&sa_bind,
+		GET_SS_LEN(&sa_bind),
+		ServerConfSSL(server_p) ? serv_connect_ssl_callback : serv_connect_callback,
+		client_p, ConfigFileEntry.connect_timeout);
 	return 1;
 }
 

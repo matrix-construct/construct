@@ -680,11 +680,11 @@ set_default_conf(void)
 	ServerInfo.description = NULL;
 	ServerInfo.network_name = NULL;
 
-	memset(&ServerInfo.ip, 0, sizeof(ServerInfo.ip));
-	ServerInfo.specific_ipv4_vhost = 0;
+	memset(&ServerInfo.bind4, 0, sizeof(ServerInfo.bind4));
+	SET_SS_FAMILY(&ServerInfo.bind4, AF_UNSPEC);
 #ifdef RB_IPV6
-	memset(&ServerInfo.ip6, 0, sizeof(ServerInfo.ip6));
-	ServerInfo.specific_ipv6_vhost = 0;
+	memset(&ServerInfo.bind6, 0, sizeof(ServerInfo.bind6));
+	SET_SS_FAMILY(&ServerInfo.bind6, AF_UNSPEC);
 #endif
 
 	AdminInfo.name = NULL;

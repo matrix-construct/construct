@@ -310,10 +310,6 @@ connect "irc.uplink.com" {
 	flags = compressed, topicburst;
 
 	#fingerprint = "c77106576abf7f9f90cca0f63874a60f2e40a64b";
-
-	/* If the connection is IPv6, uncomment below.
-	 * Use 0::1, not ::1, for IPv6 localhost. */
-	#aftype = ipv6;
 };
 
 connect "ssl.uplink.com" {
@@ -454,7 +450,7 @@ opm {
 	 * to be effective.
 	 * If omitted, it defaults to serverinfo::vhost6.
 	 */
-	#listen_ipv6 = "0::1";
+	#listen_ipv6 = "::1";
 
 	/* IPv6 port to listen on.
 	 * This should not be the same as any existing listeners.
