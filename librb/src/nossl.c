@@ -112,7 +112,7 @@ rb_ssl_start_connected(rb_fde_t *F, CNCB * callback, void *data, int timeout)
 
 void
 rb_connect_tcp_ssl(rb_fde_t *F, struct sockaddr *dest,
-		   struct sockaddr *clocal, int socklen, CNCB * callback, void *data, int timeout)
+		   struct sockaddr *clocal, CNCB * callback, void *data, int timeout)
 {
 	return;
 }

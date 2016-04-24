@@ -410,10 +410,10 @@ rb_accept_tcp(rb_fde_t *F, ACPRE * precb, ACCB * callback, void *data)
 
 /*
  * void rb_connect_tcp(rb_platform_fd_t fd, struct sockaddr *dest,
- *                       struct sockaddr *clocal, int socklen,
+ *                       struct sockaddr *clocal,
  *                       CNCB *callback, void *data, int timeout)
  * Input: An fd to connect with, a host and port to connect to,
- *        a local sockaddr to connect from + length(or NULL to use the
+ *        a local sockaddr to connect from (or NULL to use the
  *        default), a callback, the data to pass into the callback, the
  *        address family.
  * Output: None.
@@ -423,7 +423,7 @@ rb_accept_tcp(rb_fde_t *F, ACPRE * precb, ACCB * callback, void *data)
  */
 void
 rb_connect_tcp(rb_fde_t *F, struct sockaddr *dest,
-	       struct sockaddr *clocal, int socklen, CNCB * callback, void *data, int timeout)
+	       struct sockaddr *clocal, CNCB * callback, void *data, int timeout)
 {
 	if(F == NULL)
 		return;
@@ -442,7 +442,7 @@ rb_connect_tcp(rb_fde_t *F, struct sockaddr *dest,
 	 * virtual host IP, for completeness.
 	 *   -- adrian
 	 */
-	if((clocal != NULL) && (bind(F->fd, clocal, socklen) < 0))
+	if((clocal != NULL) && (bind(F->fd, clocal, GET_SS_LEN(clocal)) < 0))
 	{
 		/* Failure, call the callback with RB_ERR_BIND */
 		rb_connect_callback(F, RB_ERR_BIND);

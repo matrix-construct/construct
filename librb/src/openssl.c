@@ -575,7 +575,7 @@ rb_ssl_tryconn(rb_fde_t *F, int status, void *data)
 
 void
 rb_connect_tcp_ssl(rb_fde_t *F, struct sockaddr *dest,
-		   struct sockaddr *clocal, int socklen, CNCB * callback, void *data, int timeout)
+		   struct sockaddr *clocal, CNCB * callback, void *data, int timeout)
 {
 	struct ssl_connect *sconn;
 	if(F == NULL)
@@ -585,8 +585,7 @@ rb_connect_tcp_ssl(rb_fde_t *F, struct sockaddr *dest,
 	sconn->data = data;
 	sconn->callback = callback;
 	sconn->timeout = timeout;
-	rb_connect_tcp(F, dest, clocal, socklen, rb_ssl_tryconn, sconn, timeout);
-
+	rb_connect_tcp(F, dest, clocal, rb_ssl_tryconn, sconn, timeout);
 }
 
 void

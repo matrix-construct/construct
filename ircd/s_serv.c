@@ -1155,7 +1155,6 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	rb_connect_tcp(client_p->localClient->F,
 		(struct sockaddr *)&sa_connect,
 		GET_SS_FAMILY(&sa_bind) == AF_UNSPEC ? NULL : (struct sockaddr *)&sa_bind,
-		GET_SS_LEN(&sa_bind),
 		ServerConfSSL(server_p) ? serv_connect_ssl_callback : serv_connect_callback,
 		client_p, ConfigFileEntry.connect_timeout);
 	return 1;

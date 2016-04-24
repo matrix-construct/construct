@@ -456,13 +456,11 @@ establish_connection(struct auth_client *auth, struct opm_proxy *proxy)
 		rb_connect_tcp(scan->F,
 				(struct sockaddr *)&c_a,
 				(struct sockaddr *)&l_a,
-				GET_SS_LEN(&l_a),
 				opm_connected, scan, opm_timeout);
 	else
 		rb_connect_tcp_ssl(scan->F,
 				(struct sockaddr *)&c_a,
 				(struct sockaddr *)&l_a,
-				GET_SS_LEN(&l_a),
 				opm_connected, scan, opm_timeout);
 }
 

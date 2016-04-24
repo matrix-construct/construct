@@ -324,7 +324,7 @@ ident_start(struct auth_client *auth)
 
 	rb_connect_tcp(query->F, (struct sockaddr *)&c_addr,
 			(struct sockaddr *)&l_addr,
-			GET_SS_LEN(&l_addr), ident_connected,
+			ident_connected,
 			auth, ident_timeout);
 
 	set_provider_running(auth, SELF_PID);

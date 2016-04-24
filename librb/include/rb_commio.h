@@ -121,8 +121,8 @@ int rb_get_sockerr(rb_fde_t *);
 
 void rb_settimeout(rb_fde_t *, time_t, PF *, void *);
 void rb_checktimeouts(void *);
-void rb_connect_tcp(rb_fde_t *, struct sockaddr *, struct sockaddr *, int, CNCB *, void *, int);
-void rb_connect_tcp_ssl(rb_fde_t *, struct sockaddr *, struct sockaddr *, int, CNCB *, void *, int);
+void rb_connect_tcp(rb_fde_t *, struct sockaddr *, struct sockaddr *, CNCB *, void *, int);
+void rb_connect_tcp_ssl(rb_fde_t *, struct sockaddr *, struct sockaddr *, CNCB *, void *, int);
 int rb_connect_sockaddr(rb_fde_t *, struct sockaddr *addr, int len);
 
 const char *rb_errstr(int status);
