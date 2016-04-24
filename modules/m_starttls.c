@@ -95,6 +95,8 @@ mr_starttls(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 	sendto_one_numeric(client_p, RPL_STARTTLS, form_str(RPL_STARTTLS));
 	send_queued(client_p);
 
+	/* TODO: set localClient->ssl_callback and handle success/failure */
+
 	ctl = start_ssld_accept(client_p->localClient->F, F[1], connid_get(client_p));
 	if (ctl != NULL)
 	{

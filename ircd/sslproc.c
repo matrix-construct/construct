@@ -388,6 +388,32 @@ ssl_process_zipstats(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 }
 
 static void
+ssl_process_open_fd(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
+{
+	struct Client *client_p;
+	uint32_t fd;
+
+	if(ctl_buf->buflen < 5)
+		return; /* bogus message..drop it.. XXX should warn here */
+
+	fd = buf_to_uint32(&ctl_buf->buf[1]);
+	client_p = find_cli_connid_hash(fd);
+	if(client_p == NULL || client_p->localClient == NULL)
+		return;
+
+	if(client_p->localClient->ssl_callback)
+	{
+		CNCB *hdl = client_p->localClient->ssl_callback;
+		void *data = client_p->localClient->ssl_data;
+
+		client_p->localClient->ssl_callback = NULL;
+		client_p->localClient->ssl_data = NULL;
+
+		hdl(client_p->localClient->F, RB_OK, data);
+	}
+}
+
+static void
 ssl_process_dead_fd(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 {
 	struct Client *client_p;
@@ -400,8 +426,30 @@ ssl_process_dead_fd(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 	fd = buf_to_uint32(&ctl_buf->buf[1]);
 	rb_strlcpy(reason, &ctl_buf->buf[5], sizeof(reason));
 	client_p = find_cli_connid_hash(fd);
-	if(client_p == NULL)
+	if(client_p == NULL || client_p->localClient == NULL)
 		return;
+
+	if(IsAnyServer(client_p))
+	{
+		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) && !IsServer(client_p) ? L_NETWIDE : L_ALL, "ssld error for %s: %s", client_p->name, reason);
+		ilog(L_SERVER, "ssld error for %s: %s", log_client_name(client_p, SHOW_IP), reason);
+	}
+
+	/* if there is still a pending callback, call it now */
+	if(client_p->localClient->ssl_callback)
+	{
+		CNCB *hdl = client_p->localClient->ssl_callback;
+		void *data = client_p->localClient->ssl_data;
+
+		client_p->localClient->ssl_callback = NULL;
+		client_p->localClient->ssl_data = NULL;
+
+		hdl(client_p->localClient->F, RB_ERROR_SSL, data);
+
+		/* the callback should have exited the client */
+		return;
+	}
+
 	if(IsAnyServer(client_p) || IsRegistered(client_p))
 	{
 		/* read any last moment ERROR, QUIT or the like -- jilles */
@@ -409,11 +457,6 @@ ssl_process_dead_fd(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 			read_packet(client_p->localClient->F, client_p);
 		if (IsAnyDead(client_p))
 			return;
-	}
-	if(IsAnyServer(client_p))
-	{
-		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) && !IsServer(client_p) ? L_NETWIDE : L_ALL, "ssld error for %s: %s", client_p->name, reason);
-		ilog(L_SERVER, "ssld error for %s: %s", log_client_name(client_p, SHOW_IP), reason);
 	}
 	exit_client(client_p, client_p, &me, reason);
 }
@@ -489,6 +532,9 @@ ssl_process_cmd_recv(ssl_ctl_t * ctl)
 		{
 		case 'N':
 			ircd_ssl_ok = false;	/* ssld says it can't do ssl/tls */
+			break;
+		case 'O':
+			ssl_process_open_fd(ctl, ctl_buf);
 			break;
 		case 'D':
 			ssl_process_dead_fd(ctl, ctl_buf);

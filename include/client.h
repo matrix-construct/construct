@@ -275,6 +275,8 @@ struct LocalUser
 	struct _ssl_ctl *ssl_ctl;		/* which ssl daemon we're associate with */
 	struct _ssl_ctl *z_ctl;			/* second ctl for ssl+zlib */
 	struct ws_ctl *ws_ctl;			/* ctl for wsockd */
+	CNCB *ssl_callback;			/* ssl connection is now open */
+	void *ssl_data;				/* data for callback */
 	uint32_t localflags;
 	struct ZipStats *zipstats;		/* zipstats */
 	uint16_t cork_count;			/* used for corking/uncorking connections */

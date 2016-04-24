@@ -1166,6 +1166,8 @@ serv_connect_ssl_callback(rb_fde_t *F, int status, void *data)
 
 	}
 	client_p->localClient->F = xF[0];
+	client_p->localClient->ssl_callback = serv_connect_callback;
+	client_p->localClient->ssl_data = data;
 
 	client_p->localClient->ssl_ctl = start_ssld_connect(F, xF[1], connid_get(client_p));
 	if(!client_p->localClient->ssl_ctl)
@@ -1174,7 +1176,6 @@ serv_connect_ssl_callback(rb_fde_t *F, int status, void *data)
 		return;
 	}
 	SetSSL(client_p);
-	serv_connect_callback(client_p->localClient->F, RB_OK, client_p);
 }
 
 /*
@@ -1218,7 +1219,7 @@ serv_connect_callback(rb_fde_t *F, int status, void *data)
 		/* COMM_ERR_TIMEOUT wont have an errno associated with it,
 		 * the others will.. --fl
 		 */
-		if(status == RB_ERR_TIMEOUT)
+		if(status == RB_ERR_TIMEOUT || status == RB_ERROR_SSL)
 		{
 			sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 					"Error connecting to %s[%s]: %s",
