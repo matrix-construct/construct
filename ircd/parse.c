@@ -518,6 +518,9 @@ m_not_oper(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 void
 m_unregistered(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
+	if(IsAnyServer(client_p))
+		return;
+
 	/* bit of a hack.
 	 * I don't =really= want to waste a bit in a flag
 	 * number_of_nick_changes is only really valid after the client
