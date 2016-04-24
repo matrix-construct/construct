@@ -1257,6 +1257,18 @@ serv_connect_callback(rb_fde_t *F, int status, void *data)
 		return;
 	}
 
+	if(server_p->certfp && (!client_p->certfp || rb_strcasecmp(server_p->certfp, client_p->certfp) != 0))
+	{
+		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
+		     "Connection to %s has invalid certificate fingerprint %s",
+		     client_p->name, client_p->certfp);
+		ilog(L_SERVER, "Access denied, invalid certificate fingerprint %s from %s",
+		     client_p->certfp, log_client_name(client_p, SHOW_IP));
+
+		exit_client(client_p, client_p, &me, "Invalid fingerprint.");
+		return;
+	}
+
 	/* Next, send the initial handshake */
 	SetHandshake(client_p);
 
