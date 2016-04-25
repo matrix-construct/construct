@@ -703,7 +703,10 @@ rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
 			res == X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN ||
 			res == X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE ||
 			res == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT ||
-			res == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY)
+			res == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY ||
+			res == X509_V_ERR_CERT_UNTRUSTED ||
+			res == X509_V_ERR_CERT_NOT_YET_VALID ||
+			res == X509_V_ERR_CERT_HAS_EXPIRED)
 		{
 			const ASN1_ITEM *it;
 			const EVP_MD *evp;
