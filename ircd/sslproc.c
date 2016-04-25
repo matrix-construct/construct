@@ -393,13 +393,11 @@ ssl_process_open_fd(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 
 	if(client_p->localClient->ssl_callback)
 	{
-		CNCB *hdl = client_p->localClient->ssl_callback;
-		void *data = client_p->localClient->ssl_data;
+		SSL_OPEN_CB *hdl = client_p->localClient->ssl_callback;
 
 		client_p->localClient->ssl_callback = NULL;
-		client_p->localClient->ssl_data = NULL;
 
-		hdl(client_p->localClient->F, RB_OK, data);
+		hdl(client_p, RB_OK);
 	}
 }
 
@@ -428,16 +426,15 @@ ssl_process_dead_fd(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 	/* if there is still a pending callback, call it now */
 	if(client_p->localClient->ssl_callback)
 	{
-		CNCB *hdl = client_p->localClient->ssl_callback;
-		void *data = client_p->localClient->ssl_data;
+		SSL_OPEN_CB *hdl = client_p->localClient->ssl_callback;
 
 		client_p->localClient->ssl_callback = NULL;
-		client_p->localClient->ssl_data = NULL;
 
-		hdl(client_p->localClient->F, RB_ERROR_SSL, data);
-
-		/* the callback should have exited the client */
-		return;
+		if (hdl(client_p, RB_ERROR_SSL))
+		{
+			/* the callback has exited the client */
+			return;
+		}
 	}
 
 	if(IsAnyServer(client_p) || IsRegistered(client_p))

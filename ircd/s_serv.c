@@ -151,6 +151,7 @@ init_builtin_capabs(void)
 
 static CNCB serv_connect_callback;
 static CNCB serv_connect_ssl_callback;
+static SSL_OPEN_CB serv_connect_ssl_open_callback;
 
 /*
  * hunt_server - Do the basic thing in delivering the message (command)
@@ -1180,8 +1181,7 @@ serv_connect_ssl_callback(rb_fde_t *F, int status, void *data)
 
 	}
 	client_p->localClient->F = xF[0];
-	client_p->localClient->ssl_callback = serv_connect_callback;
-	client_p->localClient->ssl_data = data;
+	client_p->localClient->ssl_callback = serv_connect_ssl_open_callback;
 
 	client_p->localClient->ssl_ctl = start_ssld_connect(F, xF[1], connid_get(client_p));
 	if(!client_p->localClient->ssl_ctl)
@@ -1190,6 +1190,13 @@ serv_connect_ssl_callback(rb_fde_t *F, int status, void *data)
 		return;
 	}
 	SetSSL(client_p);
+}
+
+static int
+serv_connect_ssl_open_callback(struct Client *client_p, int status)
+{
+	serv_connect_callback(client_p->localClient->F, status, client_p);
+	return 1; /* suppress default exit_client handler for status != RB_OK */
 }
 
 /*
