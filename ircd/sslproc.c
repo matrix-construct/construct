@@ -344,8 +344,7 @@ start_ssldaemon(int count, const char *ssl_cert, const char *ssl_private_key, co
 
 			if(ssl_cert != NULL && ssl_private_key != NULL)
 				send_new_ssl_certs_one(ctl, ssl_cert, ssl_private_key,
-						       ssl_dh_params != NULL ? ssl_dh_params : "",
-						       ssl_cipher_list != NULL ? ssl_cipher_list : "");
+						       ssl_dh_params, ssl_cipher_list);
 		}
 		ssl_read_ctl(ctl->F, ctl);
 		ssl_do_pipe(P2, ctl);
@@ -704,7 +703,11 @@ send_new_ssl_certs_one(ssl_ctl_t * ctl, const char *ssl_cert, const char *ssl_pr
 {
 	size_t len;
 
-	len = strlen(ssl_cert) + strlen(ssl_private_key) + strlen(ssl_dh_params) + 5;
+	len = strlen(ssl_cert) + strlen(ssl_private_key) + 5;
+	if(ssl_dh_params)
+		len += strlen(ssl_dh_params);
+	if(ssl_cipher_list)
+		len += strlen(ssl_cipher_list);
 	if(len > sizeof(tmpbuf))
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
@@ -716,7 +719,7 @@ send_new_ssl_certs_one(ssl_ctl_t * ctl, const char *ssl_cert, const char *ssl_pr
 		return;
 	}
 	len = snprintf(tmpbuf, sizeof(tmpbuf), "K%c%s%c%s%c%s%c%s%c", nul, ssl_cert, nul,
-			  ssl_private_key, nul, ssl_dh_params, nul,
+			  ssl_private_key, nul, ssl_dh_params != NULL ? ssl_dh_params : "", nul,
 			  ssl_cipher_list != NULL ? ssl_cipher_list : "", nul);
 	ssl_cmd_write_queue(ctl, NULL, 0, tmpbuf, len);
 }
