@@ -69,8 +69,9 @@ struct _ssl_ctl
 	char version[256];
 };
 
+static void ssld_update_config_one(ssl_ctl_t *ctl);
 static void send_new_ssl_certs_one(ssl_ctl_t * ctl);
-static void send_certfp_method(ssl_ctl_t *ctl, int method);
+static void send_certfp_method(ssl_ctl_t *ctl);
 
 
 static rb_dlink_list ssl_daemons;
@@ -337,11 +338,7 @@ start_ssldaemon(int count)
 		rb_close(P1);
 		ctl = allocate_ssl_daemon(F1, P2, pid);
 		if(ircd_ssl_ok)
-		{
-			send_certfp_method(ctl, ConfigFileEntry.certfp_method);
-			send_new_ssl_certs_one(ctl);
-
-		}
+			ssld_update_config_one(ctl);
 		ssl_read_ctl(ctl->F, ctl);
 		ssl_do_pipe(P2, ctl);
 
@@ -723,13 +720,20 @@ send_new_ssl_certs_one(ssl_ctl_t * ctl)
 }
 
 static void
-send_certfp_method(ssl_ctl_t *ctl, int method)
+send_certfp_method(ssl_ctl_t *ctl)
 {
 	char buf[5];
 
 	buf[0] = 'F';
-	uint32_to_buf(&buf[1], method);
+	uint32_to_buf(&buf[1], ConfigFileEntry.certfp_method);
 	ssl_cmd_write_queue(ctl, NULL, 0, buf, sizeof(buf));
+}
+
+static void
+ssld_update_config_one(ssl_ctl_t *ctl)
+{
+	send_certfp_method(ctl);
+	send_new_ssl_certs_one(ctl);
 }
 
 void
@@ -740,10 +744,9 @@ ssld_update_config(void)
 	RB_DLINK_FOREACH(ptr, ssl_daemons.head)
 	{
 		ssl_ctl_t *ctl = ptr->data;
-		send_new_ssl_certs_one(ctl);
+		ssld_update_config_one(ctl);
 	}
 }
-
 
 ssl_ctl_t *
 start_ssld_accept(rb_fde_t * sslF, rb_fde_t * plainF, uint32_t id)
