@@ -614,7 +614,7 @@ general {
 	throttle_count = 4;
 	max_ratelimit_tokens = 30;
 	away_interval = 30;
-	certfp_method = sha1;
+	certfp_method = spki_sha256;
 	hide_opers_in_whois = no;
 };
 
