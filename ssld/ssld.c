@@ -686,17 +686,18 @@ ssl_send_cipher(conn_t *conn)
 static void
 ssl_send_certfp(conn_t *conn)
 {
-	uint8_t buf[9 + RB_SSL_CERTFP_LEN];
+	uint8_t buf[13 + RB_SSL_CERTFP_LEN];
 
-	int len = rb_get_ssl_certfp(conn->mod_fd, &buf[9], certfp_method);
+	int len = rb_get_ssl_certfp(conn->mod_fd, &buf[13], certfp_method);
 	if (!len)
 		return;
 
 	lrb_assert(len <= RB_SSL_CERTFP_LEN);
 	buf[0] = 'F';
 	uint32_to_buf(&buf[1], conn->id);
-	uint32_to_buf(&buf[5], len);
-	mod_cmd_write_queue(conn->ctl, buf, 9 + len);
+	uint32_to_buf(&buf[5], certfp_method);
+	uint32_to_buf(&buf[9], len);
+	mod_cmd_write_queue(conn->ctl, buf, 13 + len);
 }
 
 static void

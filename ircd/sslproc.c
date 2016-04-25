@@ -482,23 +482,48 @@ ssl_process_certfp(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 {
 	struct Client *client_p;
 	uint32_t fd;
+	uint32_t certfp_method;
 	uint32_t len;
 	uint8_t *certfp;
 	char *certfp_string;
+	const char *method_string;
+	int method_len;
 
-	if(ctl_buf->buflen > 9 + RB_SSL_CERTFP_LEN)
+	if(ctl_buf->buflen > 13 + RB_SSL_CERTFP_LEN)
 		return;		/* bogus message..drop it.. XXX should warn here */
 
 	fd = buf_to_uint32(&ctl_buf->buf[1]);
-	len = buf_to_uint32(&ctl_buf->buf[5]);
-	certfp = (uint8_t *)&ctl_buf->buf[9];
+	certfp_method = buf_to_uint32(&ctl_buf->buf[5]);
+	len = buf_to_uint32(&ctl_buf->buf[9]);
+	certfp = (uint8_t *)&ctl_buf->buf[13];
 	client_p = find_cli_connid_hash(fd);
 	if(client_p == NULL)
 		return;
+
+	switch (certfp_method) {
+	case RB_SSL_CERTFP_METH_CERT_SHA1:
+	case RB_SSL_CERTFP_METH_CERT_SHA256:
+	case RB_SSL_CERTFP_METH_CERT_SHA512:
+		method_string = "";
+		break;
+
+	/* These names are copied from RFC 7218 */
+	case RB_SSL_CERTFP_METH_SPKI_SHA256:
+		method_string = "SPKI:SHA2-256:";
+		break;
+	case RB_SSL_CERTFP_METH_SPKI_SHA512:
+		method_string = "SPKI:SHA2-512:";
+		break;
+	default:
+		return;
+	}
+	method_len = strlen(method_string);
+
 	rb_free(client_p->certfp);
-	certfp_string = rb_malloc(len * 2 + 1);
+	certfp_string = rb_malloc(method_len + len * 2 + 1);
+	strcpy(certfp_string, method_string);
 	for(uint32_t i = 0; i < len; i++)
-		snprintf(certfp_string + 2 * i, 3, "%02x",
+		snprintf(certfp_string + method_len + 2 * i, 3, "%02x",
 				certfp[i]);
 	client_p->certfp = certfp_string;
 }
