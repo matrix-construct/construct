@@ -33,11 +33,11 @@ enum ssld_status {
 
 void init_ssld(void);
 void restart_ssld(void);
-int start_ssldaemon(int count, const char *ssl_cert, const char *ssl_private_key, const char *ssl_dh_params, const char *ssl_cipher_list);
+int start_ssldaemon(int count);
 ssl_ctl_t *start_ssld_accept(rb_fde_t *sslF, rb_fde_t *plainF, uint32_t id);
 ssl_ctl_t *start_ssld_connect(rb_fde_t *sslF, rb_fde_t *plainF, uint32_t id);
 void start_zlib_session(void *data);
-void send_new_ssl_certs(const char *ssl_cert, const char *ssl_private_key, const char *ssl_dh_params, const char *ssl_cipher_list);
+void ssld_update_config(void);
 void ssld_decrement_clicount(ssl_ctl_t *ctl);
 int get_ssld_count(void);
 void ssld_foreach_info(void (*func)(void *data, pid_t pid, int cli_count, enum ssld_status status, const char *version), void *data);

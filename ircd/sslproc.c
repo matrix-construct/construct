@@ -69,9 +69,7 @@ struct _ssl_ctl
 	char version[256];
 };
 
-static void send_new_ssl_certs_one(ssl_ctl_t * ctl, const char *ssl_cert,
-				   const char *ssl_private_key, const char *ssl_dh_params,
-				   const char *ssl_cipher_list);
+static void send_new_ssl_certs_one(ssl_ctl_t * ctl);
 static void send_certfp_method(ssl_ctl_t *ctl, int method);
 
 
@@ -171,7 +169,7 @@ restart_ssld(void)
 		}
 	}
 
-	start_ssldaemon(ServerInfo.ssld_count, ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params, ServerInfo.ssl_cipher_list);
+	start_ssldaemon(ServerInfo.ssld_count);
 }
 
 static void
@@ -207,7 +205,7 @@ ssl_dead(ssl_ctl_t * ctl)
 		ssld_count--;
 		ilog(L_MAIN, "ssld helper died - attempting to restart");
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "ssld helper died - attempting to restart");
-		start_ssldaemon(1, ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params, ServerInfo.ssl_cipher_list);
+		start_ssldaemon(1);
 	}
 }
 
@@ -236,12 +234,12 @@ restart_ssld_event(void *unused)
 		int start = ServerInfo.ssld_count - get_ssld_count();
 		ilog(L_MAIN, "Attempting to restart ssld processes");
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Attempt to restart ssld processes");
-		start_ssldaemon(start, ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params, ServerInfo.ssl_cipher_list);
+		start_ssldaemon(start);
 	}
 }
 
 int
-start_ssldaemon(int count, const char *ssl_cert, const char *ssl_private_key, const char *ssl_dh_params, const char *ssl_cipher_list)
+start_ssldaemon(int count)
 {
 	rb_fde_t *F1, *F2;
 	rb_fde_t *P1, *P2;
@@ -341,10 +339,8 @@ start_ssldaemon(int count, const char *ssl_cert, const char *ssl_private_key, co
 		if(ircd_ssl_ok)
 		{
 			send_certfp_method(ctl, ConfigFileEntry.certfp_method);
+			send_new_ssl_certs_one(ctl);
 
-			if(ssl_cert != NULL && ssl_private_key != NULL)
-				send_new_ssl_certs_one(ctl, ssl_cert, ssl_private_key,
-						       ssl_dh_params, ssl_cipher_list);
 		}
 		ssl_read_ctl(ctl->F, ctl);
 		ssl_do_pipe(P2, ctl);
@@ -699,15 +695,15 @@ ssl_cmd_write_queue(ssl_ctl_t * ctl, rb_fde_t ** F, int count, const void *buf, 
 
 
 static void
-send_new_ssl_certs_one(ssl_ctl_t * ctl, const char *ssl_cert, const char *ssl_private_key, const char *ssl_dh_params, const char *ssl_cipher_list)
+send_new_ssl_certs_one(ssl_ctl_t * ctl)
 {
 	size_t len;
 
-	len = strlen(ssl_cert) + strlen(ssl_private_key) + 5;
-	if(ssl_dh_params)
-		len += strlen(ssl_dh_params);
-	if(ssl_cipher_list)
-		len += strlen(ssl_cipher_list);
+	len = strlen(ServerInfo.ssl_cert) + strlen(ServerInfo.ssl_private_key) + 5;
+	if(ServerInfo.ssl_dh_params)
+		len += strlen(ServerInfo.ssl_dh_params);
+	if(ServerInfo.ssl_cipher_list)
+		len += strlen(ServerInfo.ssl_cipher_list);
 	if(len > sizeof(tmpbuf))
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
@@ -718,9 +714,11 @@ send_new_ssl_certs_one(ssl_ctl_t * ctl, const char *ssl_cert, const char *ssl_pr
 		     len, sizeof(tmpbuf));
 		return;
 	}
-	len = snprintf(tmpbuf, sizeof(tmpbuf), "K%c%s%c%s%c%s%c%s%c", nul, ssl_cert, nul,
-			  ssl_private_key, nul, ssl_dh_params != NULL ? ssl_dh_params : "", nul,
-			  ssl_cipher_list != NULL ? ssl_cipher_list : "", nul);
+	len = snprintf(tmpbuf, sizeof(tmpbuf), "K%c%s%c%s%c%s%c%s%c", nul,
+			ServerInfo.ssl_cert, nul,
+			ServerInfo.ssl_private_key, nul,
+			ServerInfo.ssl_dh_params != NULL ? ServerInfo.ssl_dh_params : "", nul,
+			ServerInfo.ssl_cipher_list != NULL ? ServerInfo.ssl_cipher_list : "", nul);
 	ssl_cmd_write_queue(ctl, NULL, 0, tmpbuf, len);
 }
 
@@ -735,18 +733,14 @@ send_certfp_method(ssl_ctl_t *ctl, int method)
 }
 
 void
-send_new_ssl_certs(const char *ssl_cert, const char *ssl_private_key, const char *ssl_dh_params, const char *ssl_cipher_list)
+ssld_update_config(void)
 {
 	rb_dlink_node *ptr;
-	if(ssl_cert == NULL || ssl_private_key == NULL || ssl_dh_params == NULL)
-	{
-		ircd_ssl_ok = false;
-		return;
-	}
+
 	RB_DLINK_FOREACH(ptr, ssl_daemons.head)
 	{
 		ssl_ctl_t *ctl = ptr->data;
-		send_new_ssl_certs_one(ctl, ssl_cert, ssl_private_key, ssl_dh_params, ssl_cipher_list);
+		send_new_ssl_certs_one(ctl);
 	}
 }
 

@@ -869,14 +869,14 @@ validate_conf(void)
 		ircd_ssl_ok = false;
 	} else {
 		ircd_ssl_ok = true;
-		send_new_ssl_certs(ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params, ServerInfo.ssl_cipher_list);
+		ssld_update_config();
 	}
 
 	if(ServerInfo.ssld_count > get_ssld_count())
 	{
 		int start = ServerInfo.ssld_count - get_ssld_count();
 		/* start up additional ssld if needed */
-		start_ssldaemon(start, ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params, ServerInfo.ssl_cipher_list);
+		start_ssldaemon(start);
 	}
 
 	if(ServerInfo.wsockd_count > get_wsockd_count())
