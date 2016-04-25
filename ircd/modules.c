@@ -77,7 +77,7 @@ modules_init(void)
 	if(lt_dlinit())
 	{
 		ilog(L_MAIN, "lt_dlinit failed");
-		exit(0);
+		exit(EXIT_FAILURE);
 	}
 
 	/* Add the default paths we look in to the module system --nenolod */
@@ -241,7 +241,7 @@ load_core_modules(bool warn)
 			ilog(L_MAIN,
 			     "Error loading core module %s: terminating ircd",
 			     core_module_table[i]);
-			exit(0);
+			exit(EXIT_FAILURE);
 		}
 	}
 }
