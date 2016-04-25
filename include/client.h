@@ -294,6 +294,9 @@ struct LocalUser
 	time_t sasl_next_retry;
 };
 
+#define AUTHC_F_DEFERRED 0x01
+#define AUTHC_F_COMPLETE 0x02
+
 struct AuthClient
 {
 	uint32_t cid;	/* authd id */
@@ -302,6 +305,7 @@ struct AuthClient
 	char cause;	/* rejection cause */
 	char *data;	/* reason data */
 	char *reason;	/* reason we were rejected */
+	int flags;
 };
 
 struct PreClient

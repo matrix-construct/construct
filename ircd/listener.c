@@ -56,6 +56,7 @@ static const struct in6_addr in6addr_any =
 static struct Listener *ListenerPollList = NULL;
 static int accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, void *data);
 static void accept_callback(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t addrlen, void *data);
+static SSL_OPEN_CB accept_sslcallback;
 
 static struct Listener *
 make_listener(struct rb_sockaddr_storage *addr)
@@ -455,6 +456,7 @@ static void
 add_connection(struct Listener *listener, rb_fde_t *F, struct sockaddr *sai, struct sockaddr *lai)
 {
 	struct Client *new_client;
+	bool defer = false;
 	s_assert(NULL != listener);
 
 	/*
@@ -471,6 +473,8 @@ add_connection(struct Listener *listener, rb_fde_t *F, struct sockaddr *sai, str
 			free_client(new_client);
 			return;
 		}
+		new_client->localClient->ssl_callback = accept_sslcallback;
+		defer = true;
 		new_client->localClient->ssl_ctl = start_ssld_accept(F, xF[1], connid_get(new_client));        /* this will close F for us */
 		if(new_client->localClient->ssl_ctl == NULL)
 		{
@@ -516,7 +520,14 @@ add_connection(struct Listener *listener, rb_fde_t *F, struct sockaddr *sai, str
 
 	++listener->ref_count;
 
-	authd_initiate_client(new_client);
+	authd_initiate_client(new_client, defer);
+}
+
+static int
+accept_sslcallback(struct Client *client_p, int status)
+{
+	authd_deferred_client(client_p);
+	return 0; /* use default handler if status != RB_OK */
 }
 
 static const char *toofast = "ERROR :Reconnecting too fast, throttled.\r\n";

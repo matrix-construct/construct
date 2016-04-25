@@ -70,7 +70,8 @@ void restart_authd(void);
 void rehash_authd(void);
 void check_authd(void);
 
-void authd_initiate_client(struct Client *);
+void authd_initiate_client(struct Client *, bool defer);
+void authd_deferred_client(struct Client *);
 void authd_accept_client(struct Client *client_p, const char *ident, const char *host);
 void authd_reject_client(struct Client *client_p, const char *ident, const char *host, char cause, const char *data, const char *reason);
 void authd_abort_client(struct Client *);

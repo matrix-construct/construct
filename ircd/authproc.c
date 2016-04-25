@@ -417,9 +417,15 @@ generate_cid(void)
  * gonna accept the client and ignore authd's suggestion.
  *
  * --Elizafox
+ *
+ * If this is an SSL connection we must defer handing off the client for
+ * reading until it is open and we have the certificate fingerprint, otherwise
+ * it's possible for the client to immediately send data before authd completes
+ * and before the status of the connection is communicated via ssld. This data
+ * could then be processed too early by read_packet().
  */
 void
-authd_initiate_client(struct Client *client_p)
+authd_initiate_client(struct Client *client_p, bool defer)
 {
 	char client_ipaddr[HOSTIPLEN+1];
 	char listen_ipaddr[HOSTIPLEN+1];
@@ -442,15 +448,35 @@ authd_initiate_client(struct Client *client_p)
 	listen_port = ntohs(GET_SS_PORT(&client_p->preClient->lip));
 	client_port = ntohs(GET_SS_PORT(&client_p->localClient->ip));
 
+	if(defer)
+		client_p->preClient->auth.flags |= AUTHC_F_DEFERRED;
+
 	/* Add a bit of a fudge factor... */
 	client_p->preClient->auth.timeout = rb_current_time() + ConfigFileEntry.connect_timeout + 10;
 
 	rb_helper_write(authd_helper, "C %x %s %hu %s %hu", authd_cid, listen_ipaddr, listen_port, client_ipaddr, client_port);
 }
 
+static inline void
+authd_read_client(struct Client *client_p)
+{
+	/*
+	 * When a client has auth'ed, we want to start reading what it sends
+	 * us. This is what read_packet() does.
+	 *     -- adrian
+	 *
+	 * Above comment was originally in s_auth.c, but moved here with below code.
+	 * --Elizafox
+	 */
+	rb_dlinkAddTail(client_p, &client_p->node, &global_client_list);
+	read_packet(client_p->localClient->F, client_p);
+}
+
 /* When this is called we have a decision on client acceptance.
  *
- * After this point authd no longer "owns" the client.
+ * After this point authd no longer "owns" the client, but if
+ * it's flagged as deferred then we're still waiting for a call
+ * to authd_deferred_client().
  */
 static inline void
 authd_decide_client(struct Client *client_p, const char *ident, const char *host, bool accept, char cause, const char *data, const char *reason)
@@ -478,16 +504,17 @@ authd_decide_client(struct Client *client_p, const char *ident, const char *host
 	client_p->preClient->auth.reason = (reason == NULL ? NULL : rb_strdup(reason));
 	client_p->preClient->auth.cid = 0;
 
-	/*
-	 * When a client has auth'ed, we want to start reading what it sends
-	 * us. This is what read_packet() does.
-	 *     -- adrian
-	 *
-	 * Above comment was originally in s_auth.c, but moved here with below code.
-	 * --Elizafox
-	 */
-	rb_dlinkAddTail(client_p, &client_p->node, &global_client_list);
-	read_packet(client_p->localClient->F, client_p);
+	client_p->preClient->auth.flags |= AUTHC_F_COMPLETE;
+	if((client_p->preClient->auth.flags & AUTHC_F_DEFERRED) == 0)
+		authd_read_client(client_p);
+}
+
+void
+authd_deferred_client(struct Client *client_p)
+{
+	client_p->preClient->auth.flags &= ~AUTHC_F_DEFERRED;
+	if(client_p->preClient->auth.flags & AUTHC_F_COMPLETE)
+		authd_read_client(client_p);
 }
 
 /* Convenience function to accept client */
