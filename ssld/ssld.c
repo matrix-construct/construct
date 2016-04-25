@@ -896,18 +896,6 @@ zlib_process(mod_ctl_t * ctl, mod_ctl_buf_t * ctlb)
 #endif
 
 static void
-init_prng(mod_ctl_t * ctl, mod_ctl_buf_t * ctl_buf)
-{
-	char *path;
-	prng_seed_t seed_type;
-
-	seed_type = (prng_seed_t) ctl_buf->buf[1];
-	path = (char *) &ctl_buf->buf[2];
-	rb_init_prng(path, seed_type);
-}
-
-
-static void
 ssl_new_keys(mod_ctl_t * ctl, mod_ctl_buf_t * ctl_buf)
 {
 	char *buf;
@@ -1046,9 +1034,6 @@ mod_process_cmd_recv(mod_ctl_t * ctl)
 				ssl_new_keys(ctl, ctl_buf);
 				break;
 			}
-		case 'I':
-			init_prng(ctl, ctl_buf);
-			break;
 		case 'S':
 			{
 				process_stats(ctl, ctl_buf);
@@ -1219,6 +1204,7 @@ main(int argc, char **argv)
 	setup_signals();
 	rb_lib_init(NULL, NULL, NULL, 0, maxfd, 1024, 4096);
 	rb_init_rawbuffers(1024);
+	rb_init_prng(NULL, RB_PRNG_DEFAULT);
 	ssld_ssl_ok = rb_supports_ssl();
 	mod_ctl = rb_malloc(sizeof(mod_ctl_t));
 	mod_ctl->F = rb_open(ctlfd, RB_FD_SOCKET, "ircd control socket");

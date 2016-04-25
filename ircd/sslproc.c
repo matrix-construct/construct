@@ -72,7 +72,6 @@ struct _ssl_ctl
 static void send_new_ssl_certs_one(ssl_ctl_t * ctl, const char *ssl_cert,
 				   const char *ssl_private_key, const char *ssl_dh_params,
 				   const char *ssl_cipher_list);
-static void send_init_prng(ssl_ctl_t * ctl, prng_seed_t seedtype, const char *path);
 static void send_certfp_method(ssl_ctl_t *ctl, int method);
 
 
@@ -341,7 +340,6 @@ start_ssldaemon(int count, const char *ssl_cert, const char *ssl_private_key, co
 		ctl = allocate_ssl_daemon(F1, P2, pid);
 		if(ircd_ssl_ok)
 		{
-			send_init_prng(ctl, RB_PRNG_DEFAULT, NULL);
 			send_certfp_method(ctl, ConfigFileEntry.certfp_method);
 
 			if(ssl_cert != NULL && ssl_private_key != NULL)
@@ -720,34 +718,6 @@ send_new_ssl_certs_one(ssl_ctl_t * ctl, const char *ssl_cert, const char *ssl_pr
 	len = snprintf(tmpbuf, sizeof(tmpbuf), "K%c%s%c%s%c%s%c%s%c", nul, ssl_cert, nul,
 			  ssl_private_key, nul, ssl_dh_params, nul,
 			  ssl_cipher_list != NULL ? ssl_cipher_list : "", nul);
-	ssl_cmd_write_queue(ctl, NULL, 0, tmpbuf, len);
-}
-
-static void
-send_init_prng(ssl_ctl_t * ctl, prng_seed_t seedtype, const char *path)
-{
-	size_t len;
-	const char *s;
-	uint8_t seed = (uint8_t) seedtype;
-
-	if(path == NULL)
-		s = "";
-	else
-		s = path;
-
-	len = strlen(s) + 3;
-	if(len > sizeof(tmpbuf))
-	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				       "Parameters for send_init_prng too long (%zd > %zd) to pass to ssld, not sending...",
-				       len, sizeof(tmpbuf));
-		ilog(L_MAIN,
-		     "Parameters for send_init_prng too long (%zd > %zd) to pass to ssld, not sending...",
-		     len, sizeof(tmpbuf));
-		return;
-
-	}
-	len = snprintf(tmpbuf, sizeof(tmpbuf), "I%c%s%c", seed, s, nul);
 	ssl_cmd_write_queue(ctl, NULL, 0, tmpbuf, len);
 }
 
