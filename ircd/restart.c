@@ -32,7 +32,7 @@
 #include "ircd_signal.h"
 
 /* external var */
-extern char **myargv;
+extern char * const *myargv;
 
 void
 restart(const char *mesg)

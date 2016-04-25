@@ -94,7 +94,7 @@ rb_dlink_list global_serv_list;    /* global servers on the network */
 rb_dlink_list local_oper_list;     /* our opers, duplicated in lclient_list */
 rb_dlink_list oper_list;           /* network opers */
 
-char **myargv;
+char * const *myargv;
 volatile sig_atomic_t dorehash = false;
 volatile sig_atomic_t dorehashbans = false;
 volatile sig_atomic_t doremotd = false;
@@ -645,7 +645,7 @@ seed_random(void *unused)
  * Side Effects - this is where the ircd gets going right now
  */
 int
-charybdis_main(int argc, char *argv[])
+charybdis_main(int argc, char * const argv[])
 {
 	int fd;
 
