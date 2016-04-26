@@ -156,6 +156,7 @@ int rb_fd_ssl(rb_fde_t *F);
 rb_platform_fd_t rb_get_fd(rb_fde_t *F);
 const char *rb_get_ssl_strerror(rb_fde_t *F);
 int rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN], int method);
+int rb_get_ssl_certfp_file(const char *filename, uint8_t certfp[RB_SSL_CERTFP_LEN], int method);
 
 rb_fde_t *rb_get_fde(rb_platform_fd_t fd);
 

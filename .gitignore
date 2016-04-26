@@ -57,6 +57,7 @@ ssld/ssld
 wsockd/wsockd
 testsuite/ircd.pid.*
 tools/charybdis-mkpasswd
+tools/charybdis-mkfingerprint
 tools/genssl
 tools/mkpasswd
 tools/viconf

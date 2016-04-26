@@ -537,42 +537,36 @@ rb_get_ssl_strerror(rb_fde_t *F)
 #endif
 }
 
-int
-rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
+static size_t
+make_certfp(const mbedtls_x509_crt *peer_cert, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
 {
-	const mbedtls_x509_crt *peer_cert;
-	uint8_t hash[RB_SSL_CERTFP_LEN];
-	size_t hashlen;
 	const mbedtls_md_info_t *md_info;
 	mbedtls_md_type_t md_type;
-	int ret;
 	bool spki = false;
+	int ret;
+	size_t len;
 
 	switch (method)
 	{
 	case RB_SSL_CERTFP_METH_CERT_SHA1:
 		md_type = MBEDTLS_MD_SHA1;
-		hashlen = RB_SSL_CERTFP_LEN_SHA1;
+		len = RB_SSL_CERTFP_LEN_SHA1;
 		break;
 	case RB_SSL_CERTFP_METH_SPKI_SHA256:
 		spki = true;
 	case RB_SSL_CERTFP_METH_CERT_SHA256:
 		md_type = MBEDTLS_MD_SHA256;
-		hashlen = RB_SSL_CERTFP_LEN_SHA256;
+		len = RB_SSL_CERTFP_LEN_SHA256;
 		break;
 	case RB_SSL_CERTFP_METH_SPKI_SHA512:
 		spki = true;
 	case RB_SSL_CERTFP_METH_CERT_SHA512:
 		md_type = MBEDTLS_MD_SHA512;
-		hashlen = RB_SSL_CERTFP_LEN_SHA512;
+		len = RB_SSL_CERTFP_LEN_SHA512;
 		break;
 	default:
 		return 0;
 	}
-
-	peer_cert = mbedtls_ssl_get_peer_cert(SSL_P(F));
-	if (peer_cert == NULL)
-		return 0;
 
 	md_info = mbedtls_md_info_from_type(md_type);
 	if (md_info == NULL)
@@ -580,10 +574,10 @@ rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
 
 	if (!spki)
 	{
-		if ((ret = mbedtls_md(md_info, peer_cert->raw.p, peer_cert->raw.len, hash)) != 0)
+		if ((ret = mbedtls_md(md_info, peer_cert->raw.p, peer_cert->raw.len, certfp)) != 0)
 		{
 			rb_lib_log("rb_get_ssl_certfp: unable to get certfp for F: %p, -0x%x", -ret);
-			hashlen = 0;
+			len = 0;
 		}
 	}
 	else
@@ -596,21 +590,45 @@ rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
 		if (der_pubkey_len < 0)
 		{
 			rb_lib_log("rb_get_ssl_certfp: unable to get pubkey for F: %p, -0x%x", -der_pubkey_len);
-			hashlen = 0;
+			len = 0;
 		}
-		else if ((ret = mbedtls_md(md_info, der_pubkey+(der_pubkey_bufsz-der_pubkey_len), der_pubkey_len, hash)) != 0)
+		else if ((ret = mbedtls_md(md_info, der_pubkey+(der_pubkey_bufsz-der_pubkey_len), der_pubkey_len, certfp)) != 0)
 		{
 			rb_lib_log("rb_get_ssl_certfp: unable to get certfp for F: %p, -0x%x", -ret);
-			hashlen = 0;
+			len = 0;
 		}
 
 		rb_free(der_pubkey);
 	}
 
-	if (hashlen)
-		memcpy(certfp, hash, hashlen);
+	return len;
+}
 
-	return hashlen;
+int
+rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
+{
+	const mbedtls_x509_crt *peer_cert;
+
+	peer_cert = mbedtls_ssl_get_peer_cert(SSL_P(F));
+	if (peer_cert == NULL)
+		return 0;
+
+	return make_certfp(peer_cert, certfp, method);
+}
+
+int
+rb_get_ssl_certfp_file(const char *filename, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
+{
+	mbedtls_x509_crt cert;
+	int ret;
+
+	mbedtls_x509_crt_init(&cert);
+
+	ret = mbedtls_x509_crt_parse_file(&cert, filename);
+	if (ret != 0)
+		return -1;
+
+	return make_certfp(&cert, certfp, method);
 }
 
 int

@@ -602,37 +602,14 @@ rb_get_ssl_strerror(rb_fde_t *F)
 	return gnutls_strerror(F->ssl_errno);
 }
 
-int
-rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
+static unsigned int
+make_certfp(gnutls_x509_crt_t cert, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
 {
-	gnutls_x509_crt_t cert;
 	gnutls_digest_algorithm_t algo;
-	unsigned int cert_list_size;
-	const gnutls_datum_t *cert_list;
 	uint8_t digest[RB_SSL_CERTFP_LEN * 2];
 	size_t digest_size;
-	int len;
 	bool spki = false;
-
-	if (gnutls_certificate_type_get(SSL_P(F)) != GNUTLS_CRT_X509)
-		return 0;
-
-	if (gnutls_x509_crt_init(&cert) < 0)
-		return 0;
-
-	cert_list_size = 0;
-	cert_list = gnutls_certificate_get_peers(SSL_P(F), &cert_list_size);
-	if (cert_list == NULL)
-	{
-		gnutls_x509_crt_deinit(cert);
-		return 0;
-	}
-
-	if (gnutls_x509_crt_import(cert, &cert_list[0], GNUTLS_X509_FMT_DER) < 0)
-	{
-		gnutls_x509_crt_deinit(cert);
-		return 0;
-	}
+	unsigned int len;
 
 	switch(method)
 	{
@@ -701,7 +678,59 @@ rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
 
 	if (len)
 		memcpy(certfp, digest, len);
+	return len;
+}
 
+int
+rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
+{
+	gnutls_x509_crt_t cert;
+	unsigned int cert_list_size;
+	const gnutls_datum_t *cert_list;
+	int len;
+
+	if (gnutls_certificate_type_get(SSL_P(F)) != GNUTLS_CRT_X509)
+		return 0;
+
+	if (gnutls_x509_crt_init(&cert) < 0)
+		return 0;
+
+	cert_list_size = 0;
+	cert_list = gnutls_certificate_get_peers(SSL_P(F), &cert_list_size);
+	if (cert_list == NULL)
+	{
+		gnutls_x509_crt_deinit(cert);
+		return 0;
+	}
+
+	if (gnutls_x509_crt_import(cert, &cert_list[0], GNUTLS_X509_FMT_DER) < 0)
+	{
+		gnutls_x509_crt_deinit(cert);
+		return 0;
+	}
+
+	len = make_certfp(cert, certfp, method);
+	gnutls_x509_crt_deinit(cert);
+	return len;
+}
+
+int
+rb_get_ssl_certfp_file(const char *filename, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
+{
+	gnutls_x509_crt_t cert;
+	gnutls_datum_t *d_cert;
+	unsigned int len;
+
+	if ((d_cert = rb_load_file_into_datum_t(filename)) == NULL)
+		return -1;
+
+	if (gnutls_x509_crt_init(&cert) < 0)
+		return -1;
+
+	if (gnutls_x509_crt_import(cert, d_cert, GNUTLS_X509_FMT_PEM) != 0)
+		return -1;
+
+	len = make_certfp(cert, certfp, method);
 	gnutls_x509_crt_deinit(cert);
 	return len;
 }

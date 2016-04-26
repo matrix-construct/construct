@@ -98,6 +98,12 @@ rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
 	return 0;
 }
 
+int
+rb_get_ssl_certfp_file(const char *filename, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
+{
+	return 0;
+}
+
 void
 rb_ssl_start_accepted(rb_fde_t *new_F, ACCB * cb, void *data, int timeout)
 {
