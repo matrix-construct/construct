@@ -36,26 +36,31 @@ int main(int argc, char *argv[])
 
 	if (argc != 3) {
 		printf("mkfingerprint <method> <filename>\n");
-		printf("  Valid methods: sha1, sha256, sha512, spki_sha256, spki_sha512\n");
+		printf("  Valid methods: "
+			CERTFP_NAME_CERT_SHA1 ", "
+			CERTFP_NAME_CERT_SHA256 ", "
+			CERTFP_NAME_CERT_SHA512 ", "
+			CERTFP_NAME_SPKI_SHA256 ", "
+			CERTFP_NAME_SPKI_SHA512 "\n");
 		return 1;
 	}
 
 	method_str = argv[1];
 	filename = argv[2];
 
-	if (!strcmp(method_str, "sha1")) {
+	if (!strcmp(method_str, CERTFP_NAME_CERT_SHA1)) {
 		method = RB_SSL_CERTFP_METH_CERT_SHA1;
 		prefix = CERTFP_PREFIX_CERT_SHA1;
-	} else if (!strcmp(method_str, "sha256")) {
+	} else if (!strcmp(method_str, CERTFP_NAME_CERT_SHA256)) {
 		method = RB_SSL_CERTFP_METH_CERT_SHA256;
 		prefix = CERTFP_PREFIX_CERT_SHA256;
-	} else if (!strcmp(method_str, "sha512")) {
+	} else if (!strcmp(method_str, CERTFP_NAME_CERT_SHA512)) {
 		method = RB_SSL_CERTFP_METH_CERT_SHA512;
 		prefix = CERTFP_PREFIX_CERT_SHA512;
-	} else if (!strcmp(method_str, "spki_sha256")) {
+	} else if (!strcmp(method_str, CERTFP_NAME_SPKI_SHA256)) {
 		method = RB_SSL_CERTFP_METH_SPKI_SHA256;
 		prefix = CERTFP_PREFIX_SPKI_SHA256;
-	} else if (!strcmp(method_str, "spki_sha512")) {
+	} else if (!strcmp(method_str, CERTFP_NAME_SPKI_SHA512)) {
 		method = RB_SSL_CERTFP_METH_SPKI_SHA512;
 		prefix = CERTFP_PREFIX_SPKI_SHA512;
 	} else {
