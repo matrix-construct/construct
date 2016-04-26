@@ -33,6 +33,7 @@
 #include "client.h"
 #include "send.h"
 #include "packet.h"
+#include "certfp.h"
 
 #define ZIPSTATS_TIME           60
 
@@ -499,17 +500,19 @@ ssl_process_certfp(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 
 	switch (certfp_method) {
 	case RB_SSL_CERTFP_METH_CERT_SHA1:
-	case RB_SSL_CERTFP_METH_CERT_SHA256:
-	case RB_SSL_CERTFP_METH_CERT_SHA512:
-		method_string = "";
+		method_string = CERTFP_PREFIX_CERT_SHA1;
 		break;
-
-	/* These names are copied from RFC 7218 */
+	case RB_SSL_CERTFP_METH_CERT_SHA256:
+		method_string = CERTFP_PREFIX_CERT_SHA256;
+		break;
+	case RB_SSL_CERTFP_METH_CERT_SHA512:
+		method_string = CERTFP_PREFIX_CERT_SHA512;
+		break;
 	case RB_SSL_CERTFP_METH_SPKI_SHA256:
-		method_string = "SPKI:SHA2-256:";
+		method_string = CERTFP_PREFIX_SPKI_SHA256;
 		break;
 	case RB_SSL_CERTFP_METH_SPKI_SHA512:
-		method_string = "SPKI:SHA2-512:";
+		method_string = CERTFP_PREFIX_SPKI_SHA512;
 		break;
 	default:
 		return;

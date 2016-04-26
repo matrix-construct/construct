@@ -28,6 +28,7 @@
 #include "wsproc.h"
 #include "privilege.h"
 #include "chmode.h"
+#include "certfp.h"
 
 #define CF_TYPE(x) ((x) & CF_MTYPE)
 
@@ -1717,15 +1718,15 @@ conf_set_general_certfp_method(void *data)
 {
 	char *method = data;
 
-	if (!rb_strcasecmp(method, "sha1"))
+	if (!rb_strcasecmp(method, CERTFP_NAME_CERT_SHA1))
 		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_CERT_SHA1;
-	else if (!rb_strcasecmp(method, "sha256"))
+	else if (!rb_strcasecmp(method, CERTFP_NAME_CERT_SHA256))
 		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_CERT_SHA256;
-	else if (!rb_strcasecmp(method, "sha512"))
+	else if (!rb_strcasecmp(method, CERTFP_NAME_CERT_SHA512))
 		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_CERT_SHA512;
-	else if (!rb_strcasecmp(method, "spki_sha256"))
+	else if (!rb_strcasecmp(method, CERTFP_NAME_SPKI_SHA256))
 		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_SPKI_SHA256;
-	else if (!rb_strcasecmp(method, "spki_sha512"))
+	else if (!rb_strcasecmp(method, CERTFP_NAME_SPKI_SHA512))
 		ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_SPKI_SHA512;
 	else
 	{
