@@ -335,6 +335,7 @@ rb_load_file_into_datum_t(const char *file)
 	FILE *f;
 	gnutls_datum_t *datum;
 	struct stat fileinfo;
+	int count;
 	if((f = fopen(file, "r")) == NULL)
 		return NULL;
 	if(fstat(fileno(f), &fileinfo))
@@ -348,8 +349,14 @@ rb_load_file_into_datum_t(const char *file)
 		datum->size = fileinfo.st_size;
 
 	datum->data = rb_malloc(datum->size + 1);
-	fread(datum->data, datum->size, 1, f);
+	count = fread(datum->data, datum->size, 1, f);
 	fclose(f);
+
+	if(count != 1)
+	{
+		rb_free_datum_t(datum);
+		return NULL;
+	}
 	return datum;
 }
 
