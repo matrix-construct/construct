@@ -576,7 +576,7 @@ make_certfp(const mbedtls_x509_crt *peer_cert, uint8_t certfp[RB_SSL_CERTFP_LEN]
 	{
 		if ((ret = mbedtls_md(md_info, peer_cert->raw.p, peer_cert->raw.len, certfp)) != 0)
 		{
-			rb_lib_log("rb_get_ssl_certfp: unable to get certfp for F: %p, -0x%x", -ret);
+			rb_lib_log("rb_get_ssl_certfp: unable to calculate certfp: -0x%x", -ret);
 			len = 0;
 		}
 	}
@@ -589,12 +589,12 @@ make_certfp(const mbedtls_x509_crt *peer_cert, uint8_t certfp[RB_SSL_CERTFP_LEN]
 		der_pubkey_len = mbedtls_pk_write_pubkey_der((mbedtls_pk_context *)&peer_cert->pk, der_pubkey, der_pubkey_bufsz);
 		if (der_pubkey_len < 0)
 		{
-			rb_lib_log("rb_get_ssl_certfp: unable to get pubkey for F: %p, -0x%x", -der_pubkey_len);
+			rb_lib_log("rb_get_ssl_certfp: unable to retrieve pubkey: -0x%x", -der_pubkey_len);
 			len = 0;
 		}
 		else if ((ret = mbedtls_md(md_info, der_pubkey+(der_pubkey_bufsz-der_pubkey_len), der_pubkey_len, certfp)) != 0)
 		{
-			rb_lib_log("rb_get_ssl_certfp: unable to get certfp for F: %p, -0x%x", -ret);
+			rb_lib_log("rb_get_ssl_certfp: unable to calculate certfp: -0x%x", -ret);
 			len = 0;
 		}
 
