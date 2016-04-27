@@ -716,7 +716,7 @@ make_certfp(X509 *cert, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
 	const ASN1_ITEM *it;
 	const EVP_MD *evp;
 	void *data;
-	int len;
+	unsigned int len;
 
 	switch(method)
 	{
@@ -756,7 +756,7 @@ make_certfp(X509 *cert, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
 
 	if (ASN1_item_digest(it, evp, data, certfp, &len) != 1)
 		len = 0;
-	return len;
+	return (int) len;
 }
 
 int
