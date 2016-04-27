@@ -48,6 +48,18 @@
 #  endif
 #endif
 
+/*
+ * Use SSL_CTX_set_ecdh_auto() in OpenSSL 1.0.2 only
+ * Use SSL_CTX_set1_curves_list() in OpenSSL 1.0.2 and above
+ * TODO: Merge this into the block above if LibreSSL implements them
+ */
+#if !defined(LIBRESSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER >= 0x10002000L)
+#  define LRB_HAVE_TLS_SET_CURVES 1
+#  if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+#    define LRB_HAVE_TLS_ECDH_AUTO 1
+#  endif
+#endif
+
 static SSL_CTX *ssl_server_ctx;
 static SSL_CTX *ssl_client_ctx;
 static int librb_index = -1;
@@ -315,6 +327,9 @@ rb_init_ssl(void)
 	int ret = 1;
 	char librb_data[] = "librb data";
 	const char librb_ciphers[] = "kEECDH+HIGH:kEDH+HIGH:HIGH:!RC4:!aNULL";
+#ifdef LRB_HAVE_TLS_SET_CURVES
+	const char librb_curves[] = "P-521:P-384:P-256";
+#endif
 	SSL_load_error_strings();
 	SSL_library_init();
 	librb_index = SSL_get_ex_new_index(0, librb_data, NULL, NULL, NULL);
@@ -358,7 +373,16 @@ rb_init_ssl(void)
 	SSL_CTX_set_session_cache_mode(ssl_server_ctx, SSL_SESS_CACHE_OFF);
 	SSL_CTX_set_cipher_list(ssl_server_ctx, librb_ciphers);
 
-	/* Set ECDHE on OpenSSL 1.00+, but make sure it's actually available
+#ifdef LRB_HAVE_TLS_SET_CURVES
+	SSL_CTX_set1_curves_list(ssl_server_ctx, librb_curves);
+#endif
+
+#ifdef LRB_HAVE_TLS_ECDH_AUTO
+	SSL_CTX_set_ecdh_auto(ssl_server_ctx, 1);
+#endif
+
+#if !defined(LRB_HAVE_TLS_SET_CURVES) && !defined(LRB_HAVE_TLS_ECDH_AUTO)
+	/* Set ECDHE on OpenSSL 1.0.0 & 1.0.1, but make sure it's actually available
 	 * (it's not by default on Solaris or Red Hat... fuck Red Hat and Oracle)
 	 */
 	#if (OPENSSL_VERSION_NUMBER >= 0x10000000L) && !defined(OPENSSL_NO_ECDH)
@@ -368,6 +392,7 @@ rb_init_ssl(void)
 			EC_KEY_free(key);
 		}
 	#endif
+#endif
 
 #ifndef LRB_HAVE_TLS_METHOD_API
 	ssl_client_ctx = SSL_CTX_new(SSLv23_client_method());
@@ -815,4 +840,4 @@ rb_ssl_get_cipher(rb_fde_t *F)
 	return SSL_CIPHER_get_name(sslciph);
 }
 
-#endif /* HAVE_OPESSL */
+#endif /* HAVE_OPENSSL */
