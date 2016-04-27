@@ -188,6 +188,9 @@ rb_select_epoll(long delay)
 		PF *hdl;
 		rb_fde_t *F = ep_info->pfd[i].data.ptr;
 		old_flags = F->pflags;
+
+		if(!IsFDOpen(F))
+			continue;
 		if(ep_info->pfd[i].events & (EPOLLIN | EPOLLHUP | EPOLLERR))
 		{
 			hdl = F->read_handler;
