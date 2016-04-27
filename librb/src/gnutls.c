@@ -602,14 +602,14 @@ rb_get_ssl_strerror(rb_fde_t *F)
 	return gnutls_strerror(F->ssl_errno);
 }
 
-static unsigned int
+static int
 make_certfp(gnutls_x509_crt_t cert, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
 {
 	gnutls_digest_algorithm_t algo;
 	uint8_t digest[RB_SSL_CERTFP_LEN * 2];
 	size_t digest_size;
 	bool spki = false;
-	unsigned int len;
+	int len;
 
 	switch(method)
 	{

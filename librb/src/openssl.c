@@ -710,13 +710,13 @@ rb_get_ssl_strerror(rb_fde_t *F)
 	return get_ssl_error(F->ssl_errno);
 }
 
-static unsigned int
+static int
 make_certfp(X509 *cert, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
 {
 	const ASN1_ITEM *it;
 	const EVP_MD *evp;
 	void *data;
-	unsigned int len;
+	int len;
 
 	switch(method)
 	{
@@ -762,6 +762,7 @@ make_certfp(X509 *cert, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
 int
 rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
 {
+	int len = 0;
 	X509 *cert;
 	int res;
 
@@ -769,25 +770,26 @@ rb_get_ssl_certfp(rb_fde_t *F, uint8_t certfp[RB_SSL_CERTFP_LEN], int method)
 		return 0;
 
 	cert = SSL_get_peer_certificate((SSL *) F->ssl);
-	if(cert != NULL)
+	if(cert == NULL)
+		return 0;
+
+	res = SSL_get_verify_result((SSL *) F->ssl);
+	switch(res)
 	{
-		res = SSL_get_verify_result((SSL *) F->ssl);
-		if(
-			res == X509_V_OK ||
-			res == X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN ||
-			res == X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE ||
-			res == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT ||
-			res == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY ||
-			res == X509_V_ERR_CERT_UNTRUSTED)
-		{
-			unsigned int len = make_certfp(cert, certfp, method);
-			X509_free(cert);
-			return len;
-		}
-		X509_free(cert);
+	case X509_V_OK:
+	case X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN:
+	case X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE:
+	case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
+	case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY:
+	case X509_V_ERR_CERT_UNTRUSTED:
+		len = make_certfp(cert, certfp, method);
+
+	default:	/* to silence code inspectors */
+		break;
 	}
 
-	return 0;
+	X509_free(cert);
+	return len;
 }
 
 int

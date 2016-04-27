@@ -544,7 +544,7 @@ make_certfp(const mbedtls_x509_crt *peer_cert, uint8_t certfp[RB_SSL_CERTFP_LEN]
 	mbedtls_md_type_t md_type;
 	bool spki = false;
 	int ret;
-	size_t len;
+	int len;
 
 	switch (method)
 	{
