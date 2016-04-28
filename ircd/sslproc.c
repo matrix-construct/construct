@@ -171,6 +171,9 @@ restart_ssld(void)
 		}
 	}
 
+	ssld_spin_count = 0;
+	last_spin = 0;
+	ssld_wait = 0;
 	start_ssldaemon(ServerInfo.ssld_count);
 }
 
