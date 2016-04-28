@@ -110,6 +110,16 @@ free_fds(void)
 	RB_DLINK_FOREACH_SAFE(ptr, next, closed_list.head)
 	{
 		F = ptr->data;
+
+		number_fd--;
+
+#ifdef _WIN32
+		if(F->type & (RB_FD_SOCKET | RB_FD_PIPE))
+			closesocket(F->fd);
+		else
+#endif
+			close(F->fd);
+
 		rb_dlinkDelete(ptr, &closed_list);
 		rb_bh_free(fd_heap, F);
 	}
@@ -885,18 +895,6 @@ rb_close(rb_fde_t *F)
 		remove_fd(F);
 		ClearFDOpen(F);
 	}
-
-	number_fd--;
-
-#ifdef _WIN32
-	if(type & (RB_FD_SOCKET | RB_FD_PIPE))
-	{
-		closesocket(fd);
-		return;
-	}
-	else
-#endif
-		close(fd);
 }
 
 
