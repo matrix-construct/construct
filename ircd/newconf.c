@@ -881,7 +881,7 @@ conf_set_listen_port_both(void *data, int ssl)
                 {
 			if (!ssl)
 			{
-				conf_report_warning("listener 'ANY/%d': support for plaintext listeners may be removed in a future release per RFC 7194.  "
+				conf_report_warning("listener 'ANY/%d': support for plaintext listeners may be removed in a future release per RFCs 7194 & 7258.  "
                                                     "It is suggested that users be migrated to SSL/TLS connections.", args->v.number);
 			}
 			add_listener(args->v.number, listener_address, AF_INET, ssl, ssl || yy_defer_accept, yy_wsock);
@@ -901,7 +901,7 @@ conf_set_listen_port_both(void *data, int ssl)
 
 			if (!ssl)
 			{
-				conf_report_warning("listener '%s/%d': support for plaintext listeners may be removed in a future release per RFC 7194.  "
+				conf_report_warning("listener '%s/%d': support for plaintext listeners may be removed in a future release per RFCs 7194 & 7258.  "
                                                     "It is suggested that users be migrated to SSL/TLS connections.", listener_address, args->v.number);
 			}
 
