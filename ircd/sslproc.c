@@ -772,6 +772,10 @@ ssld_update_config(void)
 	RB_DLINK_FOREACH(ptr, ssl_daemons.head)
 	{
 		ssl_ctl_t *ctl = ptr->data;
+
+		if (ctl->dead || ctl->shutdown)
+			continue;
+
 		ssld_update_config_one(ctl);
 	}
 }
