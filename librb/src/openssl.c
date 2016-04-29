@@ -484,6 +484,7 @@ rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile, c
 	if (cipher_list != NULL)
 	{
 		SSL_CTX_set_cipher_list(ssl_server_ctx, cipher_list);
+		SSL_CTX_set_cipher_list(ssl_client_ctx, cipher_list);
 	}
 
 	return 1;
