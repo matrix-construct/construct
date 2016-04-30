@@ -895,6 +895,9 @@ rb_close(rb_fde_t *F)
 		remove_fd(F);
 		ClearFDOpen(F);
 	}
+
+	if(type & RB_FD_LISTEN)
+		shutdown(fd, SHUT_RDWR);
 }
 
 
