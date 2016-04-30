@@ -240,7 +240,7 @@ provider_done(struct auth_client *auth, uint32_t id)
 	if(auth->refcount == 0 && !auth->providers_starting)
 	{
 		/* All done */
-		accept_client(auth, id);
+		accept_client(auth, UINT32_MAX);
 		return;
 	}
 
