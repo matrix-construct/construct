@@ -756,6 +756,9 @@ stats_dnsbl(struct Client *source_p)
 	rb_dictionary_iter iter;
 	struct BlacklistStats *stats;
 
+	if(bl_stats == NULL)
+		return;
+
 	RB_DICTIONARY_FOREACH(stats, &iter, bl_stats)
 	{
 		/* use RPL_STATSDEBUG for now -- jilles */
