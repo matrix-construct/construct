@@ -72,18 +72,14 @@ static buf_line_t *
 rb_linebuf_new_line(buf_head_t * bufhead)
 {
 	buf_line_t *bufline;
-	rb_dlink_node *node;
 
 	bufline = rb_linebuf_allocate();
 	if(bufline == NULL)
 		return NULL;
 	++bufline_count;
 
-
-	node = rb_make_rb_dlink_node();
-
 	/* Stick it at the end of the buf list */
-	rb_dlinkAddTail(bufline, node, &bufhead->list);
+	rb_dlinkAddTailAlloc(bufline, &bufhead->list);
 	bufline->refcount++;
 
 	/* And finally, update the allocated size */
