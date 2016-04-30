@@ -196,11 +196,10 @@ read_opm_reply(rb_fde_t *F, void *data)
 static void
 accept_opm(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t len, void *data)
 {
-	struct auth_client *auth = NULL;
 	struct opm_listener *listener = data;
 	struct rb_sockaddr_storage localaddr;
 	unsigned int llen = sizeof(struct rb_sockaddr_storage);
-	rb_dictionary_iter iter;
+	rb_dlink_node *ptr;
 
 	if(status != 0 || listener == NULL)
 	{
@@ -216,8 +215,10 @@ accept_opm(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t len, voi
 	}
 
 	/* Correlate connection with client(s) */
-	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
+	RB_DLINK_FOREACH(ptr, auth_clients.head)
 	{
+		struct auth_client *auth = ptr->data;
+
 		if(GET_SS_FAMILY(&auth->c_addr) != GET_SS_FAMILY(&localaddr))
 			continue;
 
@@ -467,10 +468,9 @@ establish_connection(struct auth_client *auth, struct opm_proxy *proxy)
 static bool
 create_listener(const char *ip, uint16_t port)
 {
-	struct auth_client *auth;
 	struct opm_listener *listener;
 	struct rb_sockaddr_storage addr;
-	rb_dictionary_iter iter;
+	rb_dlink_node *ptr, *nptr;
 	rb_fde_t *F;
 	int opt = 1;
 
@@ -560,8 +560,9 @@ create_listener(const char *ip, uint16_t port)
 	/* Cancel clients that may be on old listener
 	 * XXX - should rescan clients that need it
 	 */
-	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
+	RB_DLINK_FOREACH_SAFE(ptr, nptr, auth_clients.head)
 	{
+		struct auth_client *auth = ptr->data;
 		opm_cancel(auth);
 	}
 
@@ -674,12 +675,12 @@ opm_cancel(struct auth_client *auth)
 static void
 opm_destroy(void)
 {
-	struct auth_client *auth;
-	rb_dictionary_iter iter;
+	rb_dlink_node *ptr, *nptr;
 
 	/* Nuke all opm lookups */
-	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
+	RB_DLINK_FOREACH_SAFE(ptr, nptr, auth_clients.head)
 	{
+		struct auth_client *auth = ptr->data;
 		opm_cancel(auth);
 	}
 }
@@ -708,8 +709,7 @@ set_opm_enabled(const char *key __unused, int parc __unused, const char **parv)
 	{
 		if(listeners[LISTEN_IPV4].F != NULL || listeners[LISTEN_IPV6].F != NULL)
 		{
-			struct auth_client *auth;
-			rb_dictionary_iter iter;
+			rb_dlink_node *ptr, *nptr;
 
 			/* Close the listening socket */
 			if(listeners[LISTEN_IPV4].F != NULL)
@@ -720,8 +720,9 @@ set_opm_enabled(const char *key __unused, int parc __unused, const char **parv)
 
 			listeners[LISTEN_IPV4].F = listeners[LISTEN_IPV6].F = NULL;
 
-			RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
+			RB_DLINK_FOREACH_SAFE(ptr, nptr, auth_clients.head)
 			{
+				struct auth_client *auth = ptr->data;
 				opm_cancel(auth);
 			}
 		}
@@ -814,11 +815,10 @@ create_opm_scanner(const char *key __unused, int parc __unused, const char **par
 static void
 delete_opm_scanner(const char *key __unused, int parc __unused, const char **parv)
 {
-	struct auth_client *auth;
 	struct opm_proxy *proxy;
 	protocol_t proto = get_protocol_from_string(parv[0]);
 	int iport = atoi(parv[1]);
-	rb_dictionary_iter iter;
+	rb_dlink_node *ptr, *nptr;
 
 	if(iport <= 0 || iport > 65535)
 	{
@@ -839,17 +839,18 @@ delete_opm_scanner(const char *key __unused, int parc __unused, const char **par
 	}
 
 	/* Abort remaining clients on this scanner */
-	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
+	RB_DLINK_FOREACH_SAFE(ptr, nptr, auth_clients.head)
 	{
-		rb_dlink_node *ptr;
+		struct auth_client *auth = ptr->data;
 		struct opm_lookup *lookup = get_provider_data(auth, SELF_PID);
+		rb_dlink_node *optr;
 
 		if(lookup == NULL)
 			continue;
 
-		RB_DLINK_FOREACH(ptr, lookup->scans.head)
+		RB_DLINK_FOREACH(optr, lookup->scans.head)
 		{
-			struct opm_scan *scan = ptr->data;
+			struct opm_scan *scan = optr->data;
 
 			if(scan->proxy->port == proxy->port && scan->proxy->proto == proxy->proto)
 			{
@@ -875,9 +876,7 @@ delete_opm_scanner(const char *key __unused, int parc __unused, const char **par
 static void
 delete_opm_scanner_all(const char *key __unused, int parc __unused, const char **parv __unused)
 {
-	struct auth_client *auth;
 	rb_dlink_node *ptr, *nptr;
-	rb_dictionary_iter iter;
 
 	RB_DLINK_FOREACH_SAFE(ptr, nptr, proxy_scanners.head)
 	{
@@ -885,8 +884,9 @@ delete_opm_scanner_all(const char *key __unused, int parc __unused, const char *
 		rb_dlinkDelete(ptr, &proxy_scanners);
 	}
 
-	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
+	RB_DLINK_FOREACH_SAFE(ptr, nptr, auth_clients.head)
 	{
+		struct auth_client *auth = ptr->data;
 		opm_cancel(auth);
 	}
 

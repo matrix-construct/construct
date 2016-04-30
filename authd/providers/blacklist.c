@@ -421,11 +421,11 @@ blacklists_cancel(struct auth_client *auth)
 static void
 blacklists_destroy(void)
 {
-	rb_dictionary_iter iter;
-	struct auth_client *auth;
+	rb_dlink_node *ptr, *nptr;
 
-	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
+	RB_DLINK_FOREACH_SAFE(ptr, nptr, auth_clients.head)
 	{
+		struct auth_client *auth = ptr->data;
 		blacklists_cancel(auth);
 	}
 
