@@ -304,7 +304,7 @@ opm_connected(rb_fde_t *F, int error, void *data)
 
 end:
 	rb_close(scan->F);
-	rb_dlinkFindDelete(scan, &lookup->scans);
+	rb_dlinkDelete(&scan->node, &lookup->scans);
 	rb_free(scan);
 }
 
@@ -855,7 +855,7 @@ delete_opm_scanner(const char *key __unused, int parc __unused, const char **par
 			if(scan->proxy->port == proxy->port && scan->proxy->proto == proxy->proto)
 			{
 				/* Match */
-				rb_dlinkFindDelete(scan, &lookup->scans);
+				rb_dlinkDelete(&scan->node, &lookup->scans);
 				rb_free(scan);
 
 				if(rb_dlink_list_length(&lookup->scans) == 0)
@@ -866,7 +866,7 @@ delete_opm_scanner(const char *key __unused, int parc __unused, const char **par
 		}
 	}
 
-	rb_dlinkFindDelete(proxy, &proxy_scanners);
+	rb_dlinkDelete(&proxy->node, &proxy_scanners);
 	rb_free(proxy);
 
 	if(rb_dlink_list_length(&proxy_scanners) == 0)
