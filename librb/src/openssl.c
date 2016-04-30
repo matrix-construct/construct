@@ -360,6 +360,9 @@ rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile, c
 		return 0;
 	}
 
+	if(cipher_list == NULL)
+		cipher_list = librb_ciphers;
+
 	if (ssl_server_ctx)
 		SSL_CTX_free(ssl_server_ctx);
 
@@ -368,91 +371,69 @@ rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile, c
 
 	#ifdef LRB_HAVE_TLS_METHOD_API
 	ssl_server_ctx = SSL_CTX_new(TLS_server_method());
+	ssl_client_ctx = SSL_CTX_new(TLS_client_method());
 	#else
 	ssl_server_ctx = SSL_CTX_new(SSLv23_server_method());
+	ssl_client_ctx = SSL_CTX_new(SSLv23_client_method());
 	#endif
 
 	if(ssl_server_ctx == NULL)
 	{
 		rb_lib_log("rb_init_openssl: Unable to initialize OpenSSL server context: %s",
 			   get_ssl_error(ERR_get_error()));
+		return 0;
 	}
-	else
-	{
-
-		long server_options = 0;
-
-		#ifndef LRB_HAVE_TLS_METHOD_API
-		server_options |= SSL_OP_NO_SSLv2;
-		server_options |= SSL_OP_NO_SSLv3;
-		#endif
-
-		#ifdef SSL_OP_SINGLE_DH_USE
-		server_options |= SSL_OP_SINGLE_DH_USE;
-		#endif
-
-		#ifdef SSL_OP_SINGLE_ECDH_USE
-		server_options |= SSL_OP_SINGLE_ECDH_USE;
-		#endif
-
-		#ifdef SSL_OP_NO_TICKET
-		server_options |= SSL_OP_NO_TICKET;
-		#endif
-
-		#ifdef SSL_OP_CIPHER_SERVER_PREFERENCE
-		server_options |= SSL_OP_CIPHER_SERVER_PREFERENCE;
-		#endif
-
-		SSL_CTX_set_options(ssl_server_ctx, server_options);
-
-		SSL_CTX_set_verify(ssl_server_ctx, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, verify_accept_all_cb);
-		SSL_CTX_set_session_cache_mode(ssl_server_ctx, SSL_SESS_CACHE_OFF);
-
-		#ifdef LRB_HAVE_TLS_SET_CURVES
-		SSL_CTX_set1_curves_list(ssl_server_ctx, librb_curves);
-		#endif
-
-		#ifdef LRB_HAVE_TLS_ECDH_AUTO
-		SSL_CTX_set_ecdh_auto(ssl_server_ctx, 1);
-		#endif
-
-		/*
-		 * Set manual ECDHE curve on OpenSSL 1.0.0 & 1.0.1, but make sure it's actually available
-		 */
-		#if (OPENSSL_VERSION_NUMBER >= 0x10000000L) && (OPENSSL_VERSION_NUMBER < 0x10002000L) && !defined(OPENSSL_NO_ECDH)
-		EC_KEY *key = EC_KEY_new_by_curve_name(NID_secp384r1);
-		if (key) {
-			SSL_CTX_set_tmp_ecdh(ssl_server_ctx, key);
-			EC_KEY_free(key);
-		}
-		#endif
-	}
-
-	#ifdef LRB_HAVE_TLS_METHOD_API
-	ssl_client_ctx = SSL_CTX_new(TLS_client_method());
-	#else
-	ssl_client_ctx = SSL_CTX_new(SSLv23_client_method());
-	#endif
 
 	if(ssl_client_ctx == NULL)
 	{
 		rb_lib_log("rb_init_openssl: Unable to initialize OpenSSL client context: %s",
 			   get_ssl_error(ERR_get_error()));
-	}
-	else
-	{
-
-		#ifndef LRB_HAVE_TLS_METHOD_API
-		SSL_CTX_set_options(ssl_client_ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
-		#endif
-
-		#ifdef SSL_OP_NO_TICKET
-		SSL_CTX_set_options(ssl_client_ctx, SSL_OP_NO_TICKET);
-		#endif
+		return 0;
 	}
 
-	if(cipher_list == NULL)
-		cipher_list = librb_ciphers;
+	#ifndef LRB_HAVE_TLS_METHOD_API
+	SSL_CTX_set_options(ssl_server_ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
+	SSL_CTX_set_options(ssl_client_ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
+	#endif
+
+	#ifdef SSL_OP_SINGLE_DH_USE
+	SSL_CTX_set_options(ssl_server_ctx, SSL_OP_SINGLE_DH_USE);
+	#endif
+
+	#ifdef SSL_OP_SINGLE_ECDH_USE
+	SSL_CTX_set_options(ssl_server_ctx, SSL_OP_SINGLE_ECDH_USE);
+	#endif
+
+	#ifdef SSL_OP_NO_TICKET
+	SSL_CTX_set_options(ssl_server_ctx, SSL_OP_NO_TICKET);
+	SSL_CTX_set_options(ssl_client_ctx, SSL_OP_NO_TICKET);
+	#endif
+
+	#ifdef SSL_OP_CIPHER_SERVER_PREFERENCE
+	SSL_CTX_set_options(ssl_server_ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
+	#endif
+
+	SSL_CTX_set_verify(ssl_server_ctx, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, verify_accept_all_cb);
+	SSL_CTX_set_session_cache_mode(ssl_server_ctx, SSL_SESS_CACHE_OFF);
+
+	#ifdef LRB_HAVE_TLS_SET_CURVES
+	SSL_CTX_set1_curves_list(ssl_server_ctx, librb_curves);
+	#endif
+
+	#ifdef LRB_HAVE_TLS_ECDH_AUTO
+	SSL_CTX_set_ecdh_auto(ssl_server_ctx, 1);
+	#endif
+
+	/*
+	 * Set manual ECDHE curve on OpenSSL 1.0.0 & 1.0.1, but make sure it's actually available
+	 */
+	#if (OPENSSL_VERSION_NUMBER >= 0x10000000L) && (OPENSSL_VERSION_NUMBER < 0x10002000L) && !defined(OPENSSL_NO_ECDH)
+	EC_KEY *key = EC_KEY_new_by_curve_name(NID_secp384r1);
+	if (key) {
+		SSL_CTX_set_tmp_ecdh(ssl_server_ctx, key);
+		EC_KEY_free(key);
+	}
+	#endif
 
 	SSL_CTX_set_cipher_list(ssl_server_ctx, cipher_list);
 	SSL_CTX_set_cipher_list(ssl_client_ctx, cipher_list);
