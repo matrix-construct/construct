@@ -119,9 +119,6 @@ start_authd(void)
 	if(cid_clients == NULL)
 		cid_clients = rb_dictionary_create("authd cid to uid mapping", rb_uint32cmp);
 
-	if(bl_stats == NULL)
-		bl_stats = rb_dictionary_create("blacklist statistics", rb_strcasecmp);
-
 	if(timeout_ev == NULL)
 		timeout_ev = rb_event_addish("timeout_dead_authd_clients", timeout_dead_authd_clients, NULL, 1);
 
@@ -133,6 +130,7 @@ start_authd(void)
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Unable to start authd helper: %s", strerror(errno));
 		return 1;
 	}
+
 	ilog(L_MAIN, "authd helper started");
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd helper started");
 	rb_helper_run(authd_helper);
@@ -357,6 +355,36 @@ configure_authd(void)
 }
 
 static void
+authd_free_client(struct Client *client_p)
+{
+	if(client_p == NULL || client_p->preClient == NULL)
+		return;
+
+	if(client_p->preClient->auth.cid == 0)
+		return;
+
+	if(authd_helper != NULL)
+		rb_helper_write(authd_helper, "E %x", client_p->preClient->auth.cid);
+
+	client_p->preClient->auth.accepted = true;
+	client_p->preClient->auth.cid = 0;
+}
+
+static void
+authd_free_client_cb(rb_dictionary_element *delem, void *unused)
+{
+	struct Client *client_p = delem->data;
+	authd_free_client(client_p);
+}
+
+void
+authd_abort_client(struct Client *client_p)
+{
+	rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(client_p->preClient->auth.cid));
+	authd_free_client(client_p);
+}
+
+static void
 restart_authd_cb(rb_helper * helper)
 {
 	rb_dictionary_iter iter;
@@ -371,11 +399,8 @@ restart_authd_cb(rb_helper * helper)
 		authd_helper = NULL;
 	}
 
-	RB_DICTIONARY_FOREACH(client_p, &iter, cid_clients)
-	{
-		/* Abort any existing clients */
-		authd_abort_client(client_p);
-	}
+	rb_dictionary_destroy(cid_clients, authd_free_client_cb, NULL);
+	cid_clients = NULL;
 
 	start_authd();
 	configure_authd();
@@ -531,34 +556,28 @@ authd_reject_client(struct Client *client_p, const char *ident, const char *host
 	authd_decide_client(client_p, ident, host, false, cause, data, reason);
 }
 
-void
-authd_abort_client(struct Client *client_p)
-{
-	if(client_p == NULL || client_p->preClient == NULL)
-		return;
-
-	if(client_p->preClient->auth.cid == 0)
-		return;
-
-	rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(client_p->preClient->auth.cid));
-
-	if(authd_helper != NULL)
-		rb_helper_write(authd_helper, "E %x", client_p->preClient->auth.cid);
-
-	client_p->preClient->auth.accepted = true;
-	client_p->preClient->auth.cid = 0;
-}
-
 static void
 timeout_dead_authd_clients(void *notused __unused)
 {
 	rb_dictionary_iter iter;
 	struct Client *client_p;
+	rb_dlink_list freelist = { NULL, NULL, 0 };
+	rb_dlink_node *ptr, *nptr;
 
 	RB_DICTIONARY_FOREACH(client_p, &iter, cid_clients)
 	{
 		if(client_p->preClient->auth.timeout < rb_current_time())
-			authd_abort_client(client_p);
+		{
+			authd_free_client(client_p);
+			rb_dlinkAddAlloc(client_p, &freelist);
+		}
+	}
+
+	/* RB_DICTIONARY_FOREACH is not safe for deletion, so we do this crap */
+	RB_DLINK_FOREACH_SAFE(ptr, nptr, freelist.head)
+	{
+		client_p = ptr->data;
+		rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(client_p->preClient->auth.cid));
 	}
 }
 
@@ -570,6 +589,9 @@ add_blacklist(const char *host, const char *reason, uint8_t iptype, rb_dlink_lis
 	struct BlacklistStats *stats = rb_malloc(sizeof(struct BlacklistStats));
 	char filterbuf[BUFSIZE] = "*";
 	size_t s = 0;
+
+	if(bl_stats == NULL)
+		bl_stats = rb_dictionary_create("blacklist statistics", rb_strcasecmp);
 
 	/* Build a list of comma-separated values for authd.
 	 * We don't check for validity - do it elsewhere.
@@ -605,27 +627,29 @@ del_blacklist(const char *host)
 	struct BlacklistStats *stats = rb_dictionary_retrieve(bl_stats, host);
 	if(stats != NULL)
 	{
-		rb_dictionary_delete(bl_stats, host);
 		rb_free(stats->host);
 		rb_free(stats);
+		rb_dictionary_delete(bl_stats, host);
 	}
 
 	rb_helper_write(authd_helper, "O rbl_del %s", host);
+}
+
+static void
+blacklist_delete(rb_dictionary_element *delem, void *unused)
+{
+	struct BlacklistStats *stats = delem->data;
+
+	rb_free(stats->host);
+	rb_free(stats);
 }
 
 /* Delete all the blacklists */
 void
 del_blacklist_all(void)
 {
-	struct BlacklistStats *stats;
-	rb_dictionary_iter iter;
-
-	RB_DICTIONARY_FOREACH(stats, &iter, bl_stats)
-	{
-		rb_dictionary_delete(bl_stats, stats->host);
-		rb_free(stats->host);
-		rb_free(stats);
-	}
+	rb_dictionary_destroy(bl_stats, blacklist_delete, NULL);
+	bl_stats = NULL;
 
 	rb_helper_write(authd_helper, "O rbl_del_all");
 }
