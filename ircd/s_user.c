@@ -218,8 +218,9 @@ authd_check(struct Client *client_p, struct Client *source_p)
 			struct BlacklistStats *stats;
 			char *blacklist = source_p->preClient->auth.data;
 
-			if((stats = rb_dictionary_retrieve(bl_stats, blacklist)) != NULL)
-				stats->hits++;
+			if(bl_stats != NULL)
+				if((stats = rb_dictionary_retrieve(bl_stats, blacklist)) != NULL)
+					stats->hits++;
 
 			if(IsExemptKline(source_p) || IsConfExemptDNSBL(aconf))
 			{
