@@ -648,7 +648,8 @@ blacklist_delete(rb_dictionary_element *delem, void *unused)
 void
 del_blacklist_all(void)
 {
-	rb_dictionary_destroy(bl_stats, blacklist_delete, NULL);
+	if(bl_stats != NULL)
+		rb_dictionary_destroy(bl_stats, blacklist_delete, NULL);
 	bl_stats = NULL;
 
 	rb_helper_write(authd_helper, "O rbl_del_all");
