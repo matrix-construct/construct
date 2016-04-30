@@ -144,7 +144,7 @@ rb_string_to_array(char *string, char **parv, int maxpara)
 int
 rb_strcasecmp(const char *s1, const char *s2)
 {
-	const unsigned char *us1 = (const unsigned char *)s1,
+	const unsigned char *us1 = (const unsigned char *)s1;
 	const unsigned char *us2 = (const unsigned char *)s2;
 
 	while (tolower(*us1) == tolower(*us2++))
