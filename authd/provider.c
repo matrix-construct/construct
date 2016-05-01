@@ -59,7 +59,7 @@ rb_dictionary *auth_clients;
 rb_dlink_list auth_providers;
 
 static rb_dlink_list free_pids;
-static uint32_t pid;
+static uint32_t allocated_pids;
 static struct ev_entry *timeout_ev;
 
 /* Initalise all providers */
@@ -123,15 +123,13 @@ load_provider(struct auth_provider *provider)
 	}
 	else
 	{
-		if(pid == UINT32_MAX)
+		if(allocated_pids == MAX_PROVIDERS || allocated_pids == UINT32_MAX)
 		{
-			/* If this happens, well, I don't know what to say. Probably a bug.
-			 * In any case, UINT32_MAX is a special sentinel. */
 			warn_opers(L_WARN, "Cannot load additional provider, max reached!");
 			return;
 		}
 
-		provider->id = pid++;
+		provider->id = allocated_pids++;
 	}
 
 	if(provider->opt_handlers != NULL)
@@ -215,7 +213,7 @@ provider_done(struct auth_client *auth, uint32_t id)
 
 	lrb_assert(is_provider_running(auth, id));
 	lrb_assert(id != UINT32_MAX);
-	lrb_assert(id <= pid);
+	lrb_assert(id < allocated_pids);
 
 	set_provider_done(auth, id);
 
@@ -312,11 +310,7 @@ start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_
 	rb_strlcpy(auth->hostname, "*", sizeof(auth->hostname));
 	rb_strlcpy(auth->username, "*", sizeof(auth->username));
 
-	/* FIXME this is unsafe, the list being allocated needs to
-	 * support the maximum PID allocated, not just the current
-	 * length of auth_providers */
-	auth->data = rb_malloc(rb_dlink_list_length(&auth_providers) *
-			sizeof(struct auth_client_data));
+	auth->data = rb_malloc(allocated_pids * sizeof(struct auth_client_data));
 
 	auth->providers_starting = true;
 	RB_DLINK_FOREACH(ptr, auth_providers.head)
