@@ -182,6 +182,11 @@ auth_client_free(struct auth_client *auth)
 void
 cancel_providers(struct auth_client *auth)
 {
+	if(auth->providers_cancelled)
+		return;
+
+	auth->providers_cancelled = true;
+
 	if(auth->refcount > 0)
 	{
 		rb_dlink_node *ptr;
@@ -323,6 +328,9 @@ start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_
 		if(!provider->start(auth))
 			/* Rejected immediately */
 			return;
+
+		if(auth->providers_cancelled)
+			break;
 	}
 	auth->providers_starting = false;
 

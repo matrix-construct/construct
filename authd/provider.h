@@ -58,6 +58,7 @@ struct auth_client
 	char username[USERLEN + 1];		/* Used for ident lookup */
 
 	bool providers_starting;		/* Providers are still warming up */
+	bool providers_cancelled;		/* Providers are being cancelled */
 	unsigned int refcount;			/* Held references */
 
 	struct auth_client_data *data;		/* Provider-specific data */
