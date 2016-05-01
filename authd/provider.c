@@ -204,8 +204,7 @@ cancel_providers(struct auth_client *auth)
 	}
 }
 
-/* Provider is done
- * WARNING: do not use auth instance after calling! */
+/* Provider is done */
 void
 provider_done(struct auth_client *auth, uint32_t id)
 {
@@ -234,8 +233,7 @@ provider_done(struct auth_client *auth, uint32_t id)
 	}
 }
 
-/* Reject a client and cancel any outstanding providers
- * WARNING: do not use auth instance after calling! */
+/* Reject a client and cancel any outstanding providers */
 void
 reject_client(struct auth_client *auth, uint32_t id, const char *data, const char *fmt, ...)
 {
@@ -251,7 +249,7 @@ reject_client(struct auth_client *auth, uint32_t id, const char *data, const cha
 	 * --Elizafox
 	 */
 	rb_helper_write(authd_helper, "R %x %c %s %s %s :%s",
-		auth->cid, auth->data[id].provider->letter,
+		auth->cid, id != UINT32_MAX ? auth->data[id].provider->letter : '*',
 		auth->username, auth->hostname,
 		data == NULL ? "*" : data, buf);
 
