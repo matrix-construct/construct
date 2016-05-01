@@ -279,13 +279,14 @@ accept_client(struct auth_client *auth, uint32_t id)
 static void
 start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_ip, const char *c_port)
 {
-	struct auth_client *auth = rb_malloc(sizeof(struct auth_client));
+	struct auth_client *auth;
 	long lcid = strtol(cid, NULL, 16);
 	rb_dlink_node *ptr;
 
 	if(lcid >= UINT32_MAX)
 		return;
 
+	auth = rb_malloc(sizeof(struct auth_client));
 	auth->cid = (uint32_t)lcid;
 
 	if(rb_dictionary_find(auth_clients, RB_UINT_TO_POINTER(auth->cid)) == NULL)
