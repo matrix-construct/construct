@@ -167,9 +167,15 @@ unload_provider(struct auth_provider *provider)
 	rb_dlinkAddAlloc(RB_UINT_TO_POINTER(provider->id), &free_pids);
 }
 
+void
+auth_client_free(struct auth_client *auth)
+{
+	rb_dictionary_delete(auth_clients, RB_UINT_TO_POINTER(auth->cid));
+	rb_free(auth->data);
+	rb_free(auth);
+}
 
-/* Cancel outstanding providers for a client (if any) and free the auth instance
- * WARNING: do not use auth instance after calling! */
+/* Cancel outstanding providers for a client (if any). */
 void
 cancel_providers(struct auth_client *auth)
 {
@@ -185,10 +191,6 @@ cancel_providers(struct auth_client *auth)
 				provider->cancel(auth);
 		}
 	}
-
-	rb_dictionary_delete(auth_clients, RB_UINT_TO_POINTER(auth->cid));
-	rb_free(auth->data);
-	rb_free(auth);
 }
 
 /* Provider is done

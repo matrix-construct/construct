@@ -120,7 +120,21 @@ void reject_client(struct auth_client *auth, uint32_t id, const char *data, cons
 
 void handle_new_connection(int parc, char *parv[]);
 void handle_cancel_connection(int parc, char *parv[]);
+void auth_client_free(struct auth_client *auth);
 
+static inline void
+auth_client_ref(struct auth_client *auth)
+{
+	auth->refcount++;
+}
+
+static inline void
+auth_client_unref(struct auth_client *auth)
+{
+	auth->refcount--;
+	if (auth->refcount == 0)
+		auth_client_free(auth);
+}
 
 /* Get a provider by name */
 static inline struct auth_provider *
@@ -163,7 +177,7 @@ set_provider_status(struct auth_client *auth, uint32_t provider, provider_status
 static inline void
 set_provider_running(struct auth_client *auth, uint32_t provider)
 {
-	auth->refcount++;
+	auth_client_ref(auth);
 	set_provider_status(auth, provider, PROVIDER_STATUS_RUNNING);
 }
 
@@ -172,8 +186,8 @@ set_provider_running(struct auth_client *auth, uint32_t provider)
 static inline void
 set_provider_done(struct auth_client *auth, uint32_t provider)
 {
-	auth->refcount--;
 	set_provider_status(auth, provider, PROVIDER_STATUS_DONE);
+	auth_client_unref(auth);
 }
 
 /* Check if provider is operating on this auth client */
