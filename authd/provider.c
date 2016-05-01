@@ -220,7 +220,7 @@ provider_done(struct auth_client *auth, uint32_t id)
 	if(auth->providers_active == 0 && !auth->providers_starting)
 	{
 		/* All done */
-		accept_client(auth, UINT32_MAX);
+		accept_client(auth);
 		return;
 	}
 
@@ -261,16 +261,11 @@ reject_client(struct auth_client *auth, uint32_t id, const char *data, const cha
 	cancel_providers(auth);
 }
 
-/* Accept a client and cancel outstanding providers if any
- * WARNING: do not use auth instance after calling! */
+/* Accept a client and cancel outstanding providers if any */
 void
-accept_client(struct auth_client *auth, uint32_t id)
+accept_client(struct auth_client *auth)
 {
 	rb_helper_write(authd_helper, "A %x %s %s", auth->cid, auth->username, auth->hostname);
-
-	if(id != UINT32_MAX)
-		set_provider_done(auth, id);
-
 	cancel_providers(auth);
 }
 
@@ -333,7 +328,7 @@ start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_
 
 	/* If no providers are running, accept the client */
 	if(auth->providers_active == 0)
-		accept_client(auth, UINT32_MAX);
+		accept_client(auth);
 
 done:
 	auth_client_unref(auth);
