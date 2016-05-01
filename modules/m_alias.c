@@ -113,7 +113,7 @@ m_alias(struct MsgBuf *msgbuf, struct Client *client_p, struct Client *source_p,
 {
 	struct Client *target_p;
 	struct alias_entry *aptr = rb_dictionary_retrieve(alias_dict, msgbuf->cmd);
-	char *p;
+	char *p, *str;
 
 	if(aptr == NULL)
 	{
@@ -122,14 +122,6 @@ m_alias(struct MsgBuf *msgbuf, struct Client *client_p, struct Client *source_p,
 			sendto_one(client_p, form_str(ERR_UNKNOWNCOMMAND),
 				me.name, client_p->name, msgbuf->cmd);
 
-		return;
-	}
-	else if(parc < 2)
-	{
-		sendto_one(client_p, form_str(ERR_NEEDMOREPARAMS),
-			   me.name,
-			   EmptyString(client_p->name) ? "*" : client_p->name,
-			   msgbuf->cmd);
 		return;
 	}
 
@@ -158,7 +150,8 @@ m_alias(struct MsgBuf *msgbuf, struct Client *client_p, struct Client *source_p,
 		return;
 	}
 
-	if(EmptyString(parv[1]))
+	str = reconstruct_parv(parc, parv);
+	if(EmptyString(str))
 	{
 		sendto_one(client_p, form_str(ERR_NOTEXTTOSEND), me.name, target_p->name);
 		return;
@@ -167,5 +160,5 @@ m_alias(struct MsgBuf *msgbuf, struct Client *client_p, struct Client *source_p,
 	sendto_one(target_p, ":%s PRIVMSG %s :%s",
 			get_id(client_p, target_p),
 			p != NULL ? aptr->target : get_id(target_p, target_p),
-			parv[1]);
+			str);
 }
