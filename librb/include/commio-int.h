@@ -87,6 +87,9 @@ struct acceptdata
 #define SetFDOpen(F)	(F->flags |= FLAG_OPEN)
 #define ClearFDOpen(F)	(F->flags &= ~FLAG_OPEN)
 
+#if !defined(SHUT_RDWR) && defined(_WIN32)
+# define SHUT_RDWR SD_BOTH
+#endif
 
 struct _fde
 {
