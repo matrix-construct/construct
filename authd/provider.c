@@ -280,10 +280,10 @@ static void
 start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_ip, const char *c_port)
 {
 	struct auth_client *auth;
-	long lcid = strtol(cid, NULL, 16);
+	unsigned long long lcid = strtoull(cid, NULL, 16);
 	rb_dlink_node *ptr;
 
-	if(lcid >= UINT32_MAX)
+	if(lcid == 0 || lcid > UINT32_MAX)
 		return;
 
 	auth = rb_malloc(sizeof(struct auth_client));
@@ -293,7 +293,7 @@ start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_
 		rb_dictionary_add(auth_clients, RB_UINT_TO_POINTER(auth->cid), auth);
 	else
 	{
-		warn_opers(L_CRIT, "provider: duplicate client added via start_auth: %x", auth->cid);
+		warn_opers(L_CRIT, "provider: duplicate client added via start_auth: %s", cid);
 		exit(EX_PROVIDER_ERROR);
 	}
 
@@ -357,7 +357,7 @@ void
 handle_cancel_connection(int parc, char *parv[])
 {
 	struct auth_client *auth;
-	long lcid;
+	unsigned long long lcid;
 
 	if(parc < 2)
 	{
@@ -365,9 +365,10 @@ handle_cancel_connection(int parc, char *parv[])
 		exit(EX_PROVIDER_ERROR);
 	}
 
-	if((lcid = strtol(parv[1], NULL, 16)) > UINT32_MAX)
+	lcid = strtoull(parv[1], NULL, 16);
+	if(lcid == 0 || lcid > UINT32_MAX)
 	{
-		warn_opers(L_CRIT, "provider: got a request to cancel a connection that can't exist: %lx", lcid);
+		warn_opers(L_CRIT, "provider: got a request to cancel a connection that can't exist: %s", parv[1]);
 		exit(EX_PROVIDER_ERROR);
 	}
 

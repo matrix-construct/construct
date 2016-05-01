@@ -53,7 +53,7 @@ static void
 handle_stat(int parc, char *parv[])
 {
 	authd_stat_handler handler;
-	long lrid;
+	unsigned long long rid;
 
 	if(parc < 3)
 	{
@@ -61,16 +61,16 @@ handle_stat(int parc, char *parv[])
 		return;
 	}
 
-	if((lrid = strtol(parv[1], NULL, 16)) > UINT32_MAX)
+	if((rid = strtoull(parv[1], NULL, 16)) > UINT32_MAX)
 	{
-		warn_opers(L_CRIT, "BUG: handle_stat got a rid that was too large: %lx", lrid);
+		warn_opers(L_CRIT, "BUG: handle_stat got a rid that was too large: %s", parv[1]);
 		return;
 	}
 
 	if (!(handler = authd_stat_handlers[(unsigned char)parv[2][0]]))
 		return;
 
-	handler((uint32_t)lrid, parv[2][0]);
+	handler((uint32_t)rid, parv[2][0]);
 }
 
 static void

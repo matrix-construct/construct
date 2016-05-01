@@ -44,7 +44,7 @@ struct auth_client_data
 
 struct auth_client
 {
-	uint16_t cid;				/* Client ID */
+	uint32_t cid;				/* Client ID */
 
 	char l_ip[HOSTIPLEN + 1];		/* Listener IP address */
 	uint16_t l_port;			/* Listener port */
