@@ -1,9 +1,9 @@
 # News
 
-This is charybdis 4.0-dev, Copyright (c) 2005-2016 Charybdis team.
+This is charybdis 4-dev, Copyright (c) 2005-2016 Charybdis team.
 See LICENSE for licensing details (GPL v2).
 
-## charybdis-3.6-dev
+## charybdis-4
 
 ### build
 - Build system has been converted to libtool + automake for sanity reasons.
