@@ -44,8 +44,6 @@ struct auth_client_data
 
 struct auth_client
 {
-	rb_dlink_node node;
-
 	uint16_t cid;				/* Client ID */
 
 	char l_ip[HOSTIPLEN + 1];		/* Listener IP address */
@@ -106,12 +104,8 @@ extern struct auth_provider ident_provider;
 extern struct auth_provider blacklist_provider;
 extern struct auth_provider opm_provider;
 
-extern rb_dlink_list auth_providers;
-extern rb_dlink_list auth_clients;
-
-struct auth_client * find_client(uint16_t cid);
-
-struct auth_provider * find_provider(const char *name);
+extern rb_dictionary *auth_providers;
+extern rb_dictionary *auth_clients;
 
 void load_provider(struct auth_provider *provider);
 void unload_provider(struct auth_provider *provider);
@@ -128,11 +122,18 @@ void handle_new_connection(int parc, char *parv[]);
 void handle_cancel_connection(int parc, char *parv[]);
 
 
+/* Get a provider by name */
+static inline struct auth_provider *
+get_provider(const char *name)
+{
+	return rb_dictionary_retrieve(auth_providers, name);
+}
+
 /* Get a provider's id by name */
 static inline bool
 get_provider_id(const char *name, uint32_t *id)
 {
-	struct auth_provider *provider = find_provider(name);
+	struct auth_provider *provider = get_provider(name);
 
 	if(provider != NULL)
 	{

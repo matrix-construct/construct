@@ -112,12 +112,11 @@ client_success(struct auth_client *auth)
 static void
 rdns_destroy(void)
 {
-	rb_dlink_node *ptr, *nptr;
+	struct auth_client *auth;
+	rb_dictionary_iter iter;
 
-	RB_DLINK_FOREACH_SAFE(ptr, nptr, auth_clients.head)
+	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
-		struct auth_client *auth = ptr->data;
-
 		if(get_provider_data(auth, SELF_PID) != NULL)
 			client_fail(auth, REPORT_FAIL);
 	}

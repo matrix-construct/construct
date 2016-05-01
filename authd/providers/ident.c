@@ -275,13 +275,12 @@ get_valid_ident(char *buf)
 static void
 ident_destroy(void)
 {
-	rb_dlink_node *ptr, *nptr;
+	struct auth_client *auth;
+	rb_dictionary_iter iter;
 
 	/* Nuke all ident queries */
-	RB_DLINK_FOREACH_SAFE(ptr, nptr, auth_clients.head)
+	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
-		struct auth_client *auth = ptr->data;
-
 		if(get_provider_data(auth, SELF_PID) != NULL)
 			client_fail(auth, REPORT_FAIL);
 	}
