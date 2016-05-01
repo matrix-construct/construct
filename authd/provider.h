@@ -104,7 +104,7 @@ extern struct auth_provider ident_provider;
 extern struct auth_provider blacklist_provider;
 extern struct auth_provider opm_provider;
 
-extern rb_dictionary *auth_providers;
+extern rb_dlink_list auth_providers;
 extern rb_dictionary *auth_clients;
 
 void load_provider(struct auth_provider *provider);
@@ -138,16 +138,26 @@ auth_client_unref(struct auth_client *auth)
 
 /* Get a provider by name */
 static inline struct auth_provider *
-get_provider(const char *name)
+find_provider(const char *name)
 {
-	return rb_dictionary_retrieve(auth_providers, name);
+	rb_dlink_node *ptr;
+
+	RB_DLINK_FOREACH(ptr, auth_providers.head)
+	{
+		struct auth_provider *provider = ptr->data;
+
+		if(strcasecmp(provider->name, name) == 0)
+			return provider;
+	}
+
+	return NULL;
 }
 
 /* Get a provider's id by name */
 static inline bool
 get_provider_id(const char *name, uint32_t *id)
 {
-	struct auth_provider *provider = get_provider(name);
+	struct auth_provider *provider = find_provider(name);
 
 	if(provider != NULL)
 	{

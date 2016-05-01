@@ -48,6 +48,7 @@
 
 #include "stdinc.h"
 #include "rb_dictionary.h"
+#include "rb_lib.h"
 #include "authd.h"
 #include "provider.h"
 #include "notice.h"
@@ -55,7 +56,7 @@
 static EVH provider_timeout_event;
 
 rb_dictionary *auth_clients;
-rb_dictionary *auth_providers;	/* Referenced by name */
+rb_dlink_list auth_providers;
 
 static rb_dlink_list free_pids;
 static uint32_t pid;
@@ -66,7 +67,6 @@ void
 init_providers(void)
 {
 	auth_clients = rb_dictionary_create("pending auth clients", rb_uint32cmp);
-	auth_providers = rb_dictionary_create("auth providers", strcmp);
 	timeout_ev = rb_event_addish("provider_timeout_event", provider_timeout_event, NULL, 1);
 
 	load_provider(&rdns_provider);
@@ -79,7 +79,7 @@ init_providers(void)
 void
 destroy_providers(void)
 {
-	rb_dlink_node *ptr;
+	rb_dlink_node *ptr, *nptr;
 	rb_dictionary_iter iter;
 	struct auth_client *auth;
 	struct auth_provider *provider;
@@ -92,14 +92,17 @@ destroy_providers(void)
 			"Authentication system is down... try reconnecting in a few seconds");
 	}
 
-	RB_DICTIONARY_FOREACH(provider, &iter, auth_providers)
+	RB_DLINK_FOREACH_SAFE(ptr, nptr, auth_providers.head)
 	{
+		struct auth_provider *provider = ptr->data;
+
 		if(provider->destroy)
 			provider->destroy();
+
+		rb_dlinkDelete(ptr, &auth_providers);
 	}
 
 	rb_dictionary_destroy(auth_clients, NULL, NULL);
-	rb_dictionary_destroy(auth_providers, NULL, NULL);
 	rb_event_delete(timeout_ev);
 }
 
@@ -141,7 +144,7 @@ load_provider(struct auth_provider *provider)
 	if(provider->init != NULL)
 		provider->init();
 
-	rb_dictionary_add(auth_providers, provider->name, provider);
+	rb_dlinkAdd(provider, &provider->node, &auth_providers);
 }
 
 void
@@ -161,7 +164,7 @@ unload_provider(struct auth_provider *provider)
 	if(provider->destroy != NULL)
 		provider->destroy();
 
-	rb_dictionary_delete(auth_providers, provider->name);
+	rb_dlinkDelete(&provider->node, &auth_providers);
 
 	/* Reclaim ID */
 	rb_dlinkAddAlloc(RB_UINT_TO_POINTER(provider->id), &free_pids);
@@ -181,11 +184,12 @@ cancel_providers(struct auth_client *auth)
 {
 	if(auth->refcount > 0)
 	{
-		rb_dictionary_iter iter;
-		struct auth_provider *provider;
+		rb_dlink_node *ptr;
 
-		RB_DICTIONARY_FOREACH(provider, &iter, auth_providers)
+		RB_DLINK_FOREACH(ptr, auth_providers.head)
 		{
+			struct auth_provider *provider = ptr->data;
+
 			if(provider->cancel != NULL && is_provider_running(auth, provider->id))
 				/* Cancel if required */
 				provider->cancel(auth);
@@ -198,8 +202,7 @@ cancel_providers(struct auth_client *auth)
 void
 provider_done(struct auth_client *auth, uint32_t id)
 {
-	rb_dictionary_iter iter;
-	struct auth_provider *provider;
+	rb_dlink_node *ptr;
 
 	lrb_assert(is_provider_running(auth, id));
 	lrb_assert(id != UINT32_MAX);
@@ -214,8 +217,10 @@ provider_done(struct auth_client *auth, uint32_t id)
 		return;
 	}
 
-	RB_DICTIONARY_FOREACH(provider, &iter, auth_providers)
+	RB_DLINK_FOREACH(ptr, auth_providers.head)
 	{
+		struct auth_provider *provider = ptr->data;
+
 		if(provider->completed != NULL && is_provider_running(auth, provider->id))
 			/* Notify pending clients who asked for it */
 			provider->completed(auth, id);
@@ -269,10 +274,9 @@ accept_client(struct auth_client *auth, uint32_t id)
 static void
 start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_ip, const char *c_port)
 {
-	struct auth_provider *provider;
 	struct auth_client *auth = rb_malloc(sizeof(struct auth_client));
 	long lcid = strtol(cid, NULL, 16);
-	rb_dictionary_iter iter;
+	rb_dlink_node *ptr;
 
 	if(lcid >= UINT32_MAX)
 		return;
@@ -300,12 +304,17 @@ start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_
 	rb_strlcpy(auth->hostname, "*", sizeof(auth->hostname));
 	rb_strlcpy(auth->username, "*", sizeof(auth->username));
 
-	auth->data = rb_malloc(rb_dictionary_size(auth_providers) *
+	/* FIXME this is unsafe, the list being allocated needs to
+	 * support the maximum PID allocated, not just the current
+	 * length of auth_providers */
+	auth->data = rb_malloc(rb_dlink_list_length(&auth_providers) *
 			sizeof(struct auth_client_data));
 
 	auth->providers_starting = true;
-	RB_DICTIONARY_FOREACH(provider, &iter, auth_providers)
+	RB_DLINK_FOREACH(ptr, auth_providers.head)
 	{
+		struct auth_provider *provider = ptr->data;
+
 		auth->data[provider->id].provider = provider;
 
 		lrb_assert(provider->start != NULL);
@@ -372,11 +381,11 @@ provider_timeout_event(void *notused __unused)
 
 	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
-		rb_dictionary_iter iter2;
-		struct auth_provider *provider;
+		rb_dlink_node *ptr;
 
-		RB_DICTIONARY_FOREACH(provider, &iter2, auth_providers)
+		RB_DLINK_FOREACH(ptr, auth_providers.head)
 		{
+			struct auth_provider *provider = ptr->data;
 			const time_t timeout = get_provider_timeout(auth, provider->id);
 
 			if(is_provider_running(auth, provider->id) && provider->timeout != NULL &&
