@@ -188,6 +188,8 @@ client_fail(struct auth_client *auth, ident_message report)
 
 	notice_client(auth->cid, messages[report]);
 	provider_done(auth, SELF_PID);
+
+	auth_client_unref(auth);
 }
 
 static void
@@ -206,6 +208,8 @@ client_success(struct auth_client *auth)
 
 	notice_client(auth->cid, messages[REPORT_FOUND]);
 	provider_done(auth, SELF_PID);
+
+	auth_client_unref(auth);
 }
 
 /* get_valid_ident
@@ -283,6 +287,7 @@ ident_destroy(void)
 	{
 		if(get_provider_data(auth, SELF_PID) != NULL)
 			client_fail(auth, REPORT_FAIL);
+		/* auth is now invalid as we have no reference */
 	}
 }
 
@@ -302,6 +307,8 @@ ident_start(struct auth_client *auth)
 		set_provider_done(auth, SELF_PID);
 		return true;
 	}
+
+	auth_client_ref(auth);
 
 	notice_client(auth->cid, messages[REPORT_LOOKUP]);
 

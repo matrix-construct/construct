@@ -59,6 +59,7 @@ struct auth_client
 
 	bool providers_starting;		/* Providers are still warming up */
 	bool providers_cancelled;		/* Providers are being cancelled */
+	unsigned int providers_active;		/* Number of active providers */
 	unsigned int refcount;			/* Held references */
 
 	struct auth_client_data *data;		/* Provider-specific data */
@@ -188,7 +189,7 @@ set_provider_status(struct auth_client *auth, uint32_t provider, provider_status
 static inline void
 set_provider_running(struct auth_client *auth, uint32_t provider)
 {
-	auth_client_ref(auth);
+	auth->providers_active++;
 	set_provider_status(auth, provider, PROVIDER_STATUS_RUNNING);
 }
 
@@ -198,7 +199,7 @@ static inline void
 set_provider_done(struct auth_client *auth, uint32_t provider)
 {
 	set_provider_status(auth, provider, PROVIDER_STATUS_DONE);
-	auth_client_unref(auth);
+	auth->providers_active--;
 }
 
 /* Check if provider is operating on this auth client */

@@ -90,6 +90,8 @@ client_fail(struct auth_client *auth, dns_message report)
 	set_provider_data(auth, SELF_PID, NULL);
 	set_provider_timeout_absolute(auth, SELF_PID, 0);
 	provider_done(auth, SELF_PID);
+
+	auth_client_unref(auth);
 }
 
 static void
@@ -107,6 +109,8 @@ client_success(struct auth_client *auth)
 	set_provider_data(auth, SELF_PID, NULL);
 	set_provider_timeout_absolute(auth, SELF_PID, 0);
 	provider_done(auth, SELF_PID);
+
+	auth_client_unref(auth);
 }
 
 static void
@@ -119,6 +123,7 @@ rdns_destroy(void)
 	{
 		if(get_provider_data(auth, SELF_PID) != NULL)
 			client_fail(auth, REPORT_FAIL);
+		/* auth is now invalid as we have no reference */
 	}
 }
 
@@ -126,6 +131,8 @@ static bool
 rdns_start(struct auth_client *auth)
 {
 	struct user_query *query = rb_malloc(sizeof(struct user_query));
+
+	auth_client_ref(auth);
 
 	set_provider_data(auth, SELF_PID, query);
 	set_provider_timeout_relative(auth, SELF_PID, rdns_timeout);

@@ -87,9 +87,13 @@ destroy_providers(void)
 	/* Cancel outstanding connections */
 	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
+		auth_client_ref(auth);
+
 		/* TBD - is this the right thing? */
 		reject_client(auth, UINT32_MAX, "destroy",
 			"Authentication system is down... try reconnecting in a few seconds");
+
+		auth_client_unref(auth);
 	}
 
 	RB_DLINK_FOREACH_SAFE(ptr, nptr, auth_providers.head)
@@ -187,7 +191,7 @@ cancel_providers(struct auth_client *auth)
 
 	auth->providers_cancelled = true;
 
-	if(auth->refcount > 0)
+	if(auth->providers_active > 0)
 	{
 		rb_dlink_node *ptr;
 
@@ -215,7 +219,7 @@ provider_done(struct auth_client *auth, uint32_t id)
 
 	set_provider_done(auth, id);
 
-	if(auth->refcount == 0 && !auth->providers_starting)
+	if(auth->providers_active == 0 && !auth->providers_starting)
 	{
 		/* All done */
 		accept_client(auth, UINT32_MAX);
@@ -237,7 +241,6 @@ provider_done(struct auth_client *auth, uint32_t id)
 void
 reject_client(struct auth_client *auth, uint32_t id, const char *data, const char *fmt, ...)
 {
-	unsigned int refcount = auth->refcount;
 	char buf[BUFSIZE];
 	va_list args;
 
@@ -265,8 +268,6 @@ reject_client(struct auth_client *auth, uint32_t id, const char *data, const cha
 void
 accept_client(struct auth_client *auth, uint32_t id)
 {
-	unsigned int refcount = auth->refcount;
-
 	rb_helper_write(authd_helper, "A %x %s %s", auth->cid, auth->username, auth->hostname);
 
 	if(id != UINT32_MAX)
@@ -287,6 +288,7 @@ start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_
 		return;
 
 	auth = rb_malloc(sizeof(struct auth_client));
+	auth_client_ref(auth);
 	auth->cid = (uint32_t)lcid;
 
 	if(rb_dictionary_find(auth_clients, RB_UINT_TO_POINTER(auth->cid)) == NULL)
@@ -328,7 +330,7 @@ start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_
 		/* Execute providers */
 		if(!provider->start(auth))
 			/* Rejected immediately */
-			return;
+			goto done;
 
 		if(auth->providers_cancelled)
 			break;
@@ -336,8 +338,11 @@ start_auth(const char *cid, const char *l_ip, const char *l_port, const char *c_
 	auth->providers_starting = false;
 
 	/* If no providers are running, accept the client */
-	if(auth->refcount == 0)
+	if(auth->providers_active == 0)
 		accept_client(auth, UINT32_MAX);
+
+done:
+	auth_client_unref(auth);
 }
 
 /* Callback for the initiation */
@@ -379,7 +384,9 @@ handle_cancel_connection(int parc, char *parv[])
 		return;
 	}
 
+	auth_client_ref(auth);
 	cancel_providers(auth);
+	auth_client_unref(auth);
 }
 
 static void
@@ -393,6 +400,8 @@ provider_timeout_event(void *notused __unused)
 	{
 		rb_dlink_node *ptr;
 
+		auth_client_ref(auth);
+
 		RB_DLINK_FOREACH(ptr, auth_providers.head)
 		{
 			struct auth_provider *provider = ptr->data;
@@ -404,5 +413,7 @@ provider_timeout_event(void *notused __unused)
 				provider->timeout(auth);
 			}
 		}
+
+		auth_client_unref(auth);
 	}
 }

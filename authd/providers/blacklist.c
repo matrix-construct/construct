@@ -266,6 +266,8 @@ blacklist_dns_callback(const char *result, bool status, query_type type, void *d
 		set_provider_data(auth, SELF_PID, NULL);
 		set_provider_timeout_absolute(auth, SELF_PID, 0);
 		provider_done(auth, SELF_PID);
+
+		auth_client_unref(auth);
 	}
 }
 
@@ -352,6 +354,8 @@ blacklists_start(struct auth_client *auth)
 		/* Nothing to do... */
 		return true;
 
+	auth_client_ref(auth);
+
 	set_provider_data(auth, SELF_PID, rb_malloc(sizeof(struct blacklist_user)));
 
 	if((!get_provider_id("rdns", &rdns_pid) || is_provider_done(auth, rdns_pid)) &&
@@ -416,6 +420,8 @@ blacklists_cancel(struct auth_client *auth)
 	set_provider_data(auth, SELF_PID, NULL);
 	set_provider_timeout_absolute(auth, SELF_PID, 0);
 	provider_done(auth, SELF_PID);
+
+	auth_client_unref(auth);
 }
 
 static void
@@ -427,6 +433,7 @@ blacklists_destroy(void)
 	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
 		blacklists_cancel(auth);
+		/* auth is now invalid as we have no reference */
 	}
 
 	delete_all_blacklists();

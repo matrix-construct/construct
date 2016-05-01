@@ -563,6 +563,7 @@ create_listener(const char *ip, uint16_t port)
 	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
 		opm_cancel(auth);
+		/* auth is now invalid as we have no reference */
 	}
 
 	/* Copy data */
@@ -631,6 +632,8 @@ opm_start(struct auth_client *auth)
 		/* Nothing to do... */
 		return true;
 
+	auth_client_ref(auth);
+
 	set_provider_data(auth, SELF_PID, rb_malloc(sizeof(struct opm_lookup)));
 
 	if((!get_provider_id("rdns", &rdns_pid) || is_provider_done(auth, rdns_pid)) &&
@@ -668,6 +671,8 @@ opm_cancel(struct auth_client *auth)
 		set_provider_data(auth, SELF_PID, NULL);
 		set_provider_timeout_absolute(auth, SELF_PID, 0);
 		provider_done(auth, SELF_PID);
+
+		auth_client_unref(auth);
 	}
 }
 
@@ -681,6 +686,7 @@ opm_destroy(void)
 	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
 		opm_cancel(auth);
+		/* auth is now invalid as we have no reference */
 	}
 }
 
@@ -723,6 +729,7 @@ set_opm_enabled(const char *key __unused, int parc __unused, const char **parv)
 			RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 			{
 				opm_cancel(auth);
+				/* auth is now invalid as we have no reference */
 			}
 		}
 	}
@@ -847,6 +854,8 @@ delete_opm_scanner(const char *key __unused, int parc __unused, const char **par
 		if(lookup == NULL)
 			continue;
 
+		auth_client_ref(auth);
+
 		RB_DLINK_FOREACH(ptr, lookup->scans.head)
 		{
 			struct opm_scan *scan = ptr->data;
@@ -863,6 +872,8 @@ delete_opm_scanner(const char *key __unused, int parc __unused, const char **par
 				break;
 			}
 		}
+
+		auth_client_unref(auth);
 	}
 
 	rb_dlinkDelete(&proxy->node, &proxy_scanners);
@@ -888,6 +899,7 @@ delete_opm_scanner_all(const char *key __unused, int parc __unused, const char *
 	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
 	{
 		opm_cancel(auth);
+		/* auth is now invalid as we have no reference */
 	}
 
 	opm_enable = false;
