@@ -367,9 +367,9 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 	{
 		if(!(source_p->flags & FLAGS_PINGSENT) && source_p->localClient->random_ping == 0)
 		{
-			source_p->localClient->random_ping = (unsigned long) (rand() * rand()) << 1;
-			sendto_one(source_p, "PING :%08lX",
-				   (unsigned long) source_p->localClient->random_ping);
+			source_p->localClient->random_ping = (uint32_t)(((rand() * rand()) << 1) | 1);
+			sendto_one(source_p, "PING :%08X",
+				   (unsigned int) source_p->localClient->random_ping);
 			source_p->flags |= FLAGS_PINGSENT;
 			return -1;
 		}

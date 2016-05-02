@@ -254,7 +254,7 @@ struct LocalUser
 	 */
 	int sent_parsed;	/* how many messages we've parsed in this second */
 	time_t last_knock;	/* time of last knock */
-	unsigned long random_ping;
+	uint32_t random_ping;
 
 	/* target change stuff */
 	/* targets we're aware of (fnv32(use_id(target_p))):
