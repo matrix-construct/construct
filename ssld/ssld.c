@@ -908,10 +908,10 @@ ssl_new_keys(mod_ctl_t * ctl, mod_ctl_buf_t * ctl_buf)
 	key = buf;
 	buf += strlen(key) + 1;
 	dhparam = buf;
-	if(strlen(dhparam) == 0)
-		dhparam = NULL;
 	buf += strlen(dhparam) + 1;
 	cipher_list = buf;
+	if(strlen(dhparam) == 0)
+		dhparam = NULL;
 	if(strlen(cipher_list) == 0)
 		cipher_list = NULL;
 
