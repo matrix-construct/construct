@@ -361,18 +361,22 @@ rb_load_file_into_datum_t(const char *file)
 }
 
 int
-rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile, const char *cipher_list)
+rb_setup_ssl_server(const char *certfile, const char *keyfile, const char *dhfile, const char *cipher_list)
 {
 	int ret;
 	const char *err;
 	gnutls_datum_t *d_cert, *d_key;
-	if(cert == NULL)
+
+	if(certfile == NULL)
 	{
 		rb_lib_log("rb_setup_ssl_server: No certificate file");
 		return 0;
 	}
 
-	if((d_cert = rb_load_file_into_datum_t(cert)) == NULL)
+	if(keyfile == NULL)
+		keyfile = certfile;
+
+	if((d_cert = rb_load_file_into_datum_t(certfile)) == NULL)
 	{
 		rb_lib_log("rb_setup_ssl_server: Error loading certificate: %s", strerror(errno));
 		return 0;

@@ -340,7 +340,7 @@ rb_init_ssl(void)
 }
 
 int
-rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile, const char *cipher_list)
+rb_setup_ssl_server(const char *certfile, const char *keyfile, const char *dhfile, const char *cipher_list)
 {
 	const char librb_ciphers[] = "kEECDH+HIGH:kEDH+HIGH:HIGH:!aNULL";
 
@@ -348,17 +348,14 @@ rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile, c
 	const char librb_curves[] = "P-521:P-384:P-256";
 	#endif
 
-	if(cert == NULL)
+	if(certfile == NULL)
 	{
 		rb_lib_log("rb_setup_ssl_server: No certificate file");
 		return 0;
 	}
 
 	if(keyfile == NULL)
-	{
-		rb_lib_log("rb_setup_ssl_server: No key file");
-		return 0;
-	}
+		keyfile = certfile;
 
 	if(cipher_list == NULL)
 		cipher_list = librb_ciphers;
@@ -438,9 +435,9 @@ rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile, c
 	SSL_CTX_set_cipher_list(ssl_server_ctx, cipher_list);
 	SSL_CTX_set_cipher_list(ssl_client_ctx, cipher_list);
 
-	if(!SSL_CTX_use_certificate_chain_file(ssl_server_ctx, cert) || !SSL_CTX_use_certificate_chain_file(ssl_client_ctx, cert))
+	if(!SSL_CTX_use_certificate_chain_file(ssl_server_ctx, certfile) || !SSL_CTX_use_certificate_chain_file(ssl_client_ctx, certfile))
 	{
-		rb_lib_log("rb_setup_ssl_server: Error loading certificate file [%s]: %s", cert,
+		rb_lib_log("rb_setup_ssl_server: Error loading certificate file [%s]: %s", certfile,
 			   get_ssl_error(ERR_get_error()));
 		return 0;
 	}
