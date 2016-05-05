@@ -827,7 +827,7 @@ charybdis_main(int argc, char * const argv[])
 	}
 	rb_strlcpy(me.info, ServerInfo.description, sizeof(me.info));
 
-	if(ServerInfo.ssl_cert != NULL && ServerInfo.ssl_private_key != NULL)
+	if(ServerInfo.ssl_cert != NULL)
 	{
 		/* just do the rb_setup_ssl_server to validate the config */
 		if(!rb_setup_ssl_server(ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params, ServerInfo.ssl_cipher_list))
