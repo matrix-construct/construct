@@ -13,7 +13,7 @@ matrix:
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
-          packages: ['gcc-4.8', 'automake', 'autoconf', 'libtool', 'shtool']
+          packages: ['gcc-4.8', 'automake', 'autoconf', 'libtool', 'shtool', 'libsqlite3-dev']
       env: COMPILER=gcc-4.8
 
     - os: linux
@@ -21,7 +21,7 @@ matrix:
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
-          packages: ['gcc-4.9', 'automake', 'autoconf', 'libtool', 'shtool']
+          packages: ['gcc-4.9', 'automake', 'autoconf', 'libtool', 'shtool', 'libsqlite3-dev']
       env: COMPILER=gcc-4.9
 
     - os: linux
@@ -29,7 +29,7 @@ matrix:
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
-          packages: ['gcc-5', 'automake', 'autoconf', 'libtool', 'shtool']
+          packages: ['gcc-5', 'automake', 'autoconf', 'libtool', 'shtool', 'libsqlite3-dev']
       env: COMPILER=gcc-5
 
     - os: linux
@@ -37,7 +37,7 @@ matrix:
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.7']
-          packages: ['clang-3.7', 'automake', 'autoconf', 'libtool', 'shtool']
+          packages: ['clang-3.7', 'automake', 'autoconf', 'libtool', 'shtool', 'libsqlite3-dev']
       env: COMPILER=clang-3.7
 
     - os: osx
@@ -53,6 +53,6 @@ cache:
 
 script:
   - bash autogen.sh
-  - CC=$COMPILER ./configure
+  - CC=$COMPILER ./configure --with-shared-sqlite
   - make -j4
   - make install
