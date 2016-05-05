@@ -722,13 +722,22 @@ ssl_cmd_write_queue(ssl_ctl_t * ctl, rb_fde_t ** F, int count, const void *buf, 
 static void
 send_new_ssl_certs_one(ssl_ctl_t * ctl)
 {
-	size_t len;
+	size_t len = 5;
 
-	len = strlen(ServerInfo.ssl_cert) + strlen(ServerInfo.ssl_private_key) + 5;
+	if(ServerInfo.ssl_cert)
+		len += strlen(ServerInfo.ssl_cert);
+	else
+		return;
+
+	if(ServerInfo.ssl_private_key)
+		len += strlen(ServerInfo.ssl_private_key);
+
 	if(ServerInfo.ssl_dh_params)
 		len += strlen(ServerInfo.ssl_dh_params);
+
 	if(ServerInfo.ssl_cipher_list)
 		len += strlen(ServerInfo.ssl_cipher_list);
+
 	if(len > sizeof(tmpbuf))
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
@@ -739,12 +748,15 @@ send_new_ssl_certs_one(ssl_ctl_t * ctl)
 		     len, sizeof(tmpbuf));
 		return;
 	}
-	len = snprintf(tmpbuf, sizeof(tmpbuf), "K%c%s%c%s%c%s%c%s%c", nul,
-			ServerInfo.ssl_cert, nul,
-			ServerInfo.ssl_private_key, nul,
-			ServerInfo.ssl_dh_params != NULL ? ServerInfo.ssl_dh_params : "", nul,
-			ServerInfo.ssl_cipher_list != NULL ? ServerInfo.ssl_cipher_list : "", nul);
-	ssl_cmd_write_queue(ctl, NULL, 0, tmpbuf, len);
+
+	int ret = snprintf(tmpbuf, sizeof(tmpbuf), "K%c%s%c%s%c%s%c%s%c", nul,
+	                   ServerInfo.ssl_cert, nul,
+	                   ServerInfo.ssl_private_key != NULL ? ServerInfo.ssl_private_key : "", nul,
+	                   ServerInfo.ssl_dh_params != NULL ? ServerInfo.ssl_dh_params : "", nul,
+	                   ServerInfo.ssl_cipher_list != NULL ? ServerInfo.ssl_cipher_list : "", nul);
+
+	if(ret > 5)
+		ssl_cmd_write_queue(ctl, NULL, 0, tmpbuf, (size_t) ret);
 }
 
 static void
