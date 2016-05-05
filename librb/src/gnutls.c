@@ -748,7 +748,7 @@ rb_supports_ssl(void)
 void
 rb_get_ssl_info(char *buf, size_t len)
 {
-	snprintf(buf, len, "GNUTLS: compiled (%s), library(%s)",
+	snprintf(buf, len, "GNUTLS: compiled (%s), library (%s)",
 		    LIBGNUTLS_VERSION, gnutls_check_version(NULL));
 }
 

@@ -810,9 +810,23 @@ rb_supports_ssl(void)
 void
 rb_get_ssl_info(char *buf, size_t len)
 {
-	snprintf(buf, len, "Using SSL: %s compiled: 0x%lx, library 0x%lx",
-		    SSLeay_version(SSLEAY_VERSION),
-		    (long)OPENSSL_VERSION_NUMBER, SSLeay());
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+	if (OpenSSL_version_num() == OPENSSL_VERSION_NUMBER)
+		snprintf(buf, len, "OpenSSL: 0x%lx, %s",
+		         OPENSSL_VERSION_NUMBER, OPENSSL_VERSION_TEXT);
+	else
+		snprintf(buf, len, "OpenSSL: compiled (0x%lx, %s), library (0x%lx, %s)",
+		         OPENSSL_VERSION_NUMBER, OPENSSL_VERSION_TEXT,
+		         OpenSSL_version_num(), OpenSSL_version(OPENSSL_VERSION));
+#else
+	if (SSLeay() == SSLEAY_VERSION_NUMBER)
+		snprintf(buf, len, "OpenSSL: 0x%lx, %s",
+		         SSLeay(), SSLeay_version(SSLEAY_VERSION));
+	else
+		snprintf(buf, len, "OpenSSL: compiled (0x%lx, %s), library (0x%lx, %s)",
+		         SSLEAY_VERSION_NUMBER, "???",
+		         SSLeay(), SSLeay_version(SSLEAY_VERSION));
+#endif
 }
 
 const char *
