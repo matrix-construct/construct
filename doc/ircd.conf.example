@@ -72,7 +72,9 @@ serverinfo {
 	 * However it has been reported that some clients have broken TLS implementations which may
 	 * choke on keysizes larger than 2048-bit, so we would recommend using 2048-bit DH parameters
 	 * for now if your keys are larger than 2048-bit.
-	 */
+	 *
+	 * If you do not provide parameters, some TLS backends will fail on DHE- ciphers,
+	 * and some will succeed but use weak, common DH groups! */
 	ssl_dh_params = "etc/dh.pem";
 
 	/* ssld_count: number of ssld processes you want to start, if you
