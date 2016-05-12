@@ -8,6 +8,7 @@
  */
 
 /* Extensions */
+#loadmodule "extensions/chm_nonotice";
 #loadmodule "extensions/chm_operonly_compat";
 #loadmodule "extensions/chm_quietunreg_compat";
 #loadmodule "extensions/chm_sslonly_compat";
