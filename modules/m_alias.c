@@ -150,7 +150,7 @@ m_alias(struct MsgBuf *msgbuf, struct Client *client_p, struct Client *source_p,
 		return;
 	}
 
-	str = reconstruct_parv(parc, parv);
+	str = reconstruct_parv(parc - 1, &parv[1]);
 	if(EmptyString(str))
 	{
 		sendto_one(client_p, form_str(ERR_NOTEXTTOSEND), me.name, target_p->name);
