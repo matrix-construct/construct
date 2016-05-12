@@ -171,7 +171,7 @@ rb_path_to_self(void)
 		return NULL;
 	realpath(s, path_buf);
 	return path_buf;
-#elif defined(__linux__)
+#elif defined(__linux__) || (defined(__FreeBSD__) && !defined(KERN_PROC_PATHNAME))
 	if (readlink("/proc/self/exe", path_buf, path_len) != -1)
 		return path_buf;
 	return NULL;
@@ -196,6 +196,8 @@ rb_path_to_self(void)
 
 	realpath(tmp_path, path_buf);
 	return path_buf;
+#else
+	return NULL;
 #endif
 }
 
