@@ -203,6 +203,10 @@ char *rb_strerror(int error);
 #define UINT16_MAX (65535U)
 #endif
 
+#ifndef UINT32_MAX
+#define UINT32_MAX (4294967295U)
+#endif
+
 
 typedef void log_cb(const char *buffer);
 typedef void restart_cb(const char *buffer);
