@@ -45,23 +45,16 @@ mapi_clist_av1 starttls_clist[] = { &starttls_msgtab, NULL };
 
 unsigned int CLICAP_TLS = 0;
 
-#ifdef HAVE_LIBCRYPTO
 mapi_cap_list_av2 starttls_cap_list[] = {
 	{ MAPI_CAP_CLIENT, "tls", NULL, &CLICAP_TLS },
 	{ 0, NULL, NULL, NULL }
 };
-#else /* HAVE_LIBCRYPTO */
-
-mapi_cap_list_av2 starttls_cap_list[] = { { 0, NULL, NULL, NULL } };
-
-#endif /* HAVE_LIBCRYPTO */
 
 DECLARE_MODULE_AV2(starttls, NULL, NULL, starttls_clist, NULL, NULL, starttls_cap_list, NULL, starttls_desc);
 
 static void
 mr_starttls(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-#ifdef HAVE_LIBCRYPTO
 	ssl_ctl_t *ctl;
 	rb_fde_t *F[2];
 
@@ -104,7 +97,4 @@ mr_starttls(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 		client_p->localClient->ssl_ctl = ctl;
 		SetSSL(client_p);
 	}
-#else /* HAVE_LIBCRYPTO */
-	sendto_one_numeric(client_p, ERR_STARTTLS, form_str(ERR_STARTTLS), "TLS is not configured");
-#endif /* HAVE_LIBCRYPTO */
 }
