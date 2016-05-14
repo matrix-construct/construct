@@ -842,6 +842,8 @@ conf_begin_listen(struct TopConf *tc)
 {
 	rb_free(listener_address);
 	listener_address = NULL;
+	yy_wsock = 0;
+	yy_defer_accept = 0;
 	return 0;
 }
 
@@ -850,6 +852,8 @@ conf_end_listen(struct TopConf *tc)
 {
 	rb_free(listener_address);
 	listener_address = NULL;
+	yy_wsock = 0;
+	yy_defer_accept = 0;
 	return 0;
 }
 
