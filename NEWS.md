@@ -42,6 +42,10 @@ See LICENSE for licensing details (GPL v2).
 - All core modules in charybdis have descriptions, which are shown in MODLIST.
 - Suffixes should not be used when doing /MODLOAD, /MODUNLOAD, /MODRELOAD, etc.
 
+### misc
+- Support for WebSocket has been added, use the listen::wsock option to switch
+  a listener into websocket mode.
+
 ### conf
 - Add the ability to strip color codes from topics unconditionally.
 - The obsolete hub option from server info has been removed.
