@@ -164,7 +164,13 @@ listen {
 	/* Listen on IPv6 (if you used host= above). */
 	#host = "2001:db8:2::6";
 	#port = 5000, 6665 .. 6669;
-	#sslport = 9999;
+	#sslport = 6697;
+
+	/* wsock: listeners defined with this option enabled will be websocket listeners,
+	 * and will not accept normal clients.
+	 */
+	wsock = yes;
+	sslport = 9999;
 };
 
 /* auth {}: allow users to connect to the ircd (OLD I:)
