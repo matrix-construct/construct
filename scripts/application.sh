@@ -32,5 +32,5 @@ echo "[charybdis] Generating include/serno.h for tip $MYTIP."
 cat << _EOF_ > include/serno.h
 /* Generated automatically by makepackage. Any changes made here will be lost. */
 #define SERNO "$SERNO"
-#define DATECODE "$DATECODE"
+#define DATECODE ${DATECODE}UL
 _EOF_
