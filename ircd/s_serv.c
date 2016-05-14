@@ -53,10 +53,6 @@
 #include "capability.h"
 #include "s_assert.h"
 
-#ifndef INADDR_NONE
-#define INADDR_NONE ((unsigned int) 0xffffffff)
-#endif
-
 int MaxConnectionCount = 1;
 int MaxClientCount = 1;
 int refresh_user_links = 0;

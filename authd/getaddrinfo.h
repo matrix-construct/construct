@@ -83,10 +83,6 @@ struct rb_addrinfo {
 #define NI_DGRAM        0x00000010
 #endif /* NI_DGRAM */
 
-#ifndef INADDR_NONE
-#define INADDR_NONE ((unsigned int) 0xffffffff)
-#endif /* INADDR_NONE */
-
 int rb_getaddrinfo(const char *hostname, const char *servname,
                            const struct rb_addrinfo *hints, struct rb_addrinfo **res);
 void rb_freeaddrinfo(struct rb_addrinfo *ai);

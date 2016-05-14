@@ -58,10 +58,6 @@ struct config_server_hide ConfigServerHide;
 extern int yyparse(void);		/* defined in y.tab.c */
 extern char linebuf[];
 
-#ifndef INADDR_NONE
-#define INADDR_NONE ((unsigned int) 0xffffffff)
-#endif
-
 static rb_bh *confitem_heap = NULL;
 
 rb_dlink_list prop_bans;

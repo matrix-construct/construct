@@ -36,6 +36,9 @@
 
 const char *get_windows_nameservers(void);
 
+#ifndef INADDR_NONE
+#define INADDR_NONE ((unsigned int) 0xffffffff)
+#endif /* INADDR_NONE */
 
 #define IS_NT()	       ((int)GetVersion() > 0)
 #define WIN_NS_9X      "System\\CurrentControlSet\\Services\\VxD\\MSTCP"

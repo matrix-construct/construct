@@ -53,7 +53,6 @@
 #include "ircd_getopt.h"
 #include "newconf.h"
 #include "reject.h"
-#include "s_conf.h"
 #include "s_newconf.h"
 #include "cache.h"
 #include "monitor.h"

@@ -287,8 +287,6 @@ load_one_module(const char *path, int origin, bool coremodule)
 
 static void increase_modlist(void);
 
-#define MODS_INCREMENT 10
-
 static char unknown_ver[] = "<unknown>";
 static char unknown_description[] = "<none>";
 

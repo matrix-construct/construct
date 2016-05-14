@@ -36,17 +36,12 @@
 #include "send.h"
 #include "authproc.h"
 #include "reject.h"
-#include "s_conf.h"
 #include "hostmask.h"
 #include "sslproc.h"
 #include "wsproc.h"
 #include "hash.h"
 #include "s_assert.h"
 #include "logger.h"
-
-#ifndef INADDR_NONE
-#define INADDR_NONE ((unsigned int) 0xffffffff)
-#endif
 
 #if defined(NO_IN6ADDR_ANY) && defined(RB_IPV6)
 static const struct in6_addr in6addr_any =
@@ -443,8 +438,6 @@ close_listeners()
 		close_listener(listener);
 	}
 }
-
-#define DLINE_WARNING "ERROR :You have been D-lined.\r\n"
 
 /*
  * add_connection - creates a client which has just connected to us on
