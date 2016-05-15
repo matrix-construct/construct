@@ -165,7 +165,7 @@ m_authenticate(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *
 	if(!*source_p->id)
 	{
 		/* Allocate a UID. */
-		strcpy(source_p->id, generate_uid());
+		rb_strlcpy(source_p->id, generate_uid(), sizeof(source_p->id));
 		add_to_id_hash(source_p->id, source_p);
 	}
 

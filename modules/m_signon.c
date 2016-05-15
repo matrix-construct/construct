@@ -221,13 +221,13 @@ me_svslogin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 		struct User *user_p = make_user(target_p);
 
 		if(valid & NICK_VALID)
-			strcpy(target_p->preClient->spoofnick, nick);
+			rb_strlcpy(target_p->preClient->spoofnick, nick, sizeof(target_p->preClient->spoofnick));
 
 		if(valid & USER_VALID)
-			strcpy(target_p->preClient->spoofuser, user);
+			rb_strlcpy(target_p->preClient->spoofuser, user, sizeof(target_p->preClient->spoofuser));
 
 		if(valid & HOST_VALID)
-			strcpy(target_p->preClient->spoofhost, host);
+			rb_strlcpy(target_p->preClient->spoofhost, host, sizeof(target_p->preClient->spoofhost));
 
 		rb_strlcpy(user_p->suser, login, NICKLEN + 1);
 	}
@@ -410,7 +410,7 @@ send_signon(struct Client *client_p, struct Client *target_p,
 			use_id(target_p), nick, user, host,
 			(long) target_p->tsinfo, *login ? login : "0");
 
-	strcpy(target_p->user->suser, login);
+	rb_strlcpy(target_p->user->suser, login, sizeof(target_p->user->suser));
 
 	change_nick_user_host(target_p, nick, user, host, newts, "Signing %s (%s)", *login ?  "in" : "out", nick);
 }

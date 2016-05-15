@@ -155,7 +155,7 @@ mr_nick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	if((target_p = find_named_client(nick)) == NULL)
 		set_initial_nick(client_p, source_p, nick);
 	else if(source_p == target_p)
-		strcpy(source_p->name, nick);
+		rb_strlcpy(source_p->name, nick, sizeof(source_p->name));
 	else
 		sendto_one(source_p, form_str(ERR_NICKNAMEINUSE), me.name, "*", nick);
 }
@@ -593,7 +593,7 @@ set_initial_nick(struct Client *client_p, struct Client *source_p, char *nick)
 	if(source_p->name[0])
 		del_from_client_hash(source_p->name, source_p);
 
-	strcpy(source_p->name, nick);
+	rb_strlcpy(source_p->name, nick, sizeof(source_p->name));
 	add_to_client_hash(nick, source_p);
 
 	snprintf(note, sizeof(note), "Nick: %s", nick);
@@ -680,7 +680,7 @@ change_local_nick(struct Client *client_p, struct Client *source_p,
 
 	/* Finally, add to hash */
 	del_from_client_hash(source_p->name, source_p);
-	strcpy(source_p->name, nick);
+	rb_strlcpy(source_p->name, nick, sizeof(source_p->name));
 	add_to_client_hash(nick, source_p);
 
 	if(!samenick)
@@ -743,7 +743,7 @@ change_remote_nick(struct Client *client_p, struct Client *source_p,
 	if((nd = rb_dictionary_retrieve(nd_dict, nick)))
 		free_nd_entry(nd);
 
-	strcpy(source_p->name, nick);
+	rb_strlcpy(source_p->name, nick, sizeof(source_p->name));
 	add_to_client_hash(nick, source_p);
 
 	if(!samenick)
@@ -1023,7 +1023,7 @@ register_client(struct Client *client_p, struct Client *server,
 	source_p->hopcount = atoi(parv[2]);
 	source_p->tsinfo = newts;
 
-	strcpy(source_p->name, nick);
+	rb_strlcpy(source_p->name, nick, sizeof(source_p->name));
 	rb_strlcpy(source_p->username, parv[5], sizeof(source_p->username));
 	rb_strlcpy(source_p->host, parv[6], sizeof(source_p->host));
 	rb_strlcpy(source_p->orighost, source_p->host, sizeof(source_p->orighost));

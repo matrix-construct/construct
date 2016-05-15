@@ -225,7 +225,7 @@ conf_set_serverinfo_sid(void *data)
 			return;
 		}
 
-		strcpy(ServerInfo.sid, sid);
+		rb_strlcpy(ServerInfo.sid, sid, sizeof(ServerInfo.sid));
 	}
 }
 

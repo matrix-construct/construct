@@ -636,7 +636,7 @@ ms_sid(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 
 	rb_strlcpy(target_p->name, parv[1], sizeof(target_p->name));
 	target_p->hopcount = atoi(parv[2]);
-	strcpy(target_p->id, parv[3]);
+	rb_strlcpy(target_p->id, parv[3], sizeof(target_p->id));
 	set_server_gecos(target_p, parv[4]);
 
 	target_p->servptr = source_p;

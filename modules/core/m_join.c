@@ -179,7 +179,7 @@ m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		/* join 0 parts all channels */
 		if(*name == '0' && (name[1] == ',' || name[1] == '\0') && name == chanlist)
 		{
-			(void) strcpy(jbuf, "0");
+			rb_strlcpy(jbuf, "0", sizeof(jbuf));
 			continue;
 		}
 
@@ -687,7 +687,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		if(oldmode->limit > mode.limit)
 			mode.limit = oldmode->limit;
 		if(strcmp(mode.key, oldmode->key) < 0)
-			strcpy(mode.key, oldmode->key);
+			rb_strlcpy(mode.key, oldmode->key, sizeof(mode.key));
 		if(oldmode->join_num > mode.join_num ||
 				(oldmode->join_num == mode.join_num &&
 				 oldmode->join_time > mode.join_time))
@@ -696,7 +696,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 			mode.join_time = oldmode->join_time;
 		}
 		if(irccmp(mode.forward, oldmode->forward) < 0)
-			strcpy(mode.forward, oldmode->forward);
+			rb_strlcpy(mode.forward, oldmode->forward, sizeof(mode.forward));
 	}
 	else
 	{

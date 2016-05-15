@@ -1132,7 +1132,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	 */
 	make_server(client_p);
 	if(by && IsClient(by))
-		strcpy(client_p->serv->by, by->name);
+		rb_strlcpy(client_p->serv->by, by->name, sizeof(client_p->serv->by));
 	else
 		strcpy(client_p->serv->by, "AutoConn.");
 

@@ -104,7 +104,7 @@ mr_pass(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 			   EmptyString(client_p->id))
 			{
 				client_p->localClient->caps |= CAP_TS6;
-				strcpy(client_p->id, parv[4]);
+				rb_strlcpy(client_p->id, parv[4], sizeof(client_p->id));
 			}
 		}
 	}

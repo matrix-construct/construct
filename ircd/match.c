@@ -358,8 +358,8 @@ int match_ips(const char *s1, const char *s2)
 	void *ipptr, *maskptr;
 	int cidrlen, aftype;
 
-	strcpy(mask, s1);
-	strcpy(address, s2);
+	rb_strlcpy(mask, s1, sizeof(mask));
+	rb_strlcpy(address, s2, sizeof(address));
 
 	len = strrchr(mask, '/');
 	if (len == NULL)
@@ -422,8 +422,8 @@ int match_cidr(const char *s1, const char *s2)
 	void *ipptr, *maskptr;
 	int cidrlen, aftype;
 
-	strcpy(mask, s1);
-	strcpy(address, s2);
+	rb_strlcpy(mask, s1, sizeof(mask));
+	rb_strlcpy(address, s2, sizeof(address));
 
 	ipmask = strrchr(mask, '@');
 	if (ipmask == NULL)

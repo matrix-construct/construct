@@ -815,7 +815,7 @@ charybdis_main(int argc, char * const argv[])
 		ierror("no server sid specified in serverinfo block.");
 		return -2;
 	}
-	strcpy(me.id, ServerInfo.sid);
+	rb_strlcpy(me.id, ServerInfo.sid, sizeof(me.id));
 	init_uid();
 
 	/* serverinfo{} description must exist.  If not, error out. */

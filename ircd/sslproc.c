@@ -524,7 +524,7 @@ ssl_process_certfp(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 
 	rb_free(client_p->certfp);
 	certfp_string = rb_malloc(method_len + len * 2 + 1);
-	strcpy(certfp_string, method_string);
+	rb_strlcpy(certfp_string, method_string, method_len + len * 2 + 1);
 	for(uint32_t i = 0; i < len; i++)
 		snprintf(certfp_string + method_len + 2 * i, 3, "%02x",
 				certfp[i]);

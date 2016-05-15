@@ -247,7 +247,7 @@ make_client(struct Client *from)
 	}
 
 	SetUnknown(client_p);
-	strcpy(client_p->username, "unknown");
+	rb_strlcpy(client_p->username, "unknown", sizeof(client_p->username));
 
 	return client_p;
 }
