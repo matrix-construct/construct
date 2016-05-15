@@ -94,7 +94,7 @@ include   \.include{ws}(\<.*\>|\".*\")
                     }
                   else
                     {
-                      strcpy(yylval.string, yytext + 1);
+                      rb_strlcpy(yylval.string, yytext + 1, 1024);
                       if(yylval.string[yyleng-2] != '"')
                         ilog(L_MAIN, "Unterminated character string");
                       else
@@ -134,7 +134,7 @@ include   \.include{ws}(\<.*\>|\".*\")
 
 loadmodule	{ return LOADMODULE; }
 {string}        {
-		  strcpy(yylval.string, yytext);
+		  rb_strlcpy(yylval.string, yytext, 1024);
                   yylval.string[yyleng] = '\0';
                   return STRING;
                 }
