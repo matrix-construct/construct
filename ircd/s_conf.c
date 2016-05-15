@@ -56,7 +56,7 @@
 struct config_server_hide ConfigServerHide;
 
 extern int yyparse(void);		/* defined in y.tab.c */
-extern char linebuf[];
+extern char yy_linebuf[16384];		/* defined in ircd_lexer.l */
 
 static rb_bh *confitem_heap = NULL;
 
@@ -1639,7 +1639,7 @@ yyerror(const char *msg)
 {
 	char newlinebuf[BUFSIZE];
 
-	strip_tabs(newlinebuf, linebuf, strlen(linebuf));
+	strip_tabs(newlinebuf, yy_linebuf, strlen(yy_linebuf));
 
 	ierror("\"%s\", line %d: %s at '%s'", conffilebuf, lineno + 1, msg, newlinebuf);
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "\"%s\", line %d: %s at '%s'",
