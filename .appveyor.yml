@@ -1,4 +1,4 @@
-version: 3.6-dev_{build}
+version: master_{build}
 clone_depth: 10
 install:
   - c:\msys64\usr\bin\sh.exe -lc "pacman -Sy --noconfirm git"
