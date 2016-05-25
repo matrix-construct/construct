@@ -452,26 +452,25 @@ rb_setup_ssl_server(const char *certfile, const char *keyfile, const char *dhfil
 	if(dhfile != NULL)
 	{
 		/* DH parameters aren't necessary, but they are nice..if they didn't pass one..that is their problem */
-		BIO *bio = BIO_new_file(dhfile, "r");
-		if(bio != NULL)
+		FILE *fp = fopen(dhfile, "r");
+		DH *dh = NULL;
+
+		if(fp == NULL)
 		{
-			DH *dh = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
-			if(dh == NULL)
-			{
-				rb_lib_log
-					("rb_setup_ssl_server: Error loading DH params file [%s]: %s",
-					 dhfile, get_ssl_error(ERR_get_error()));
-				BIO_free(bio);
-				return 0;
-			}
-			BIO_free(bio);
-			SSL_CTX_set_tmp_dh(ssl_server_ctx, dh);
-			DH_free(dh);
+			rb_lib_log("rb_setup_ssl_server: Error loading DH params file [%s]: %s",
+			           dhfile, strerror(errno));
+		}
+		else if(PEM_read_DHparams(fp, &dh, NULL, NULL) == NULL)
+		{
+			rb_lib_log("rb_setup_ssl_server: Error loading DH params file [%s]: %s",
+			           dhfile, get_ssl_error(ERR_get_error()));
+			fclose(fp);
 		}
 		else
 		{
-			rb_lib_log("rb_setup_ssl_server: Error loading DH params file [%s]: %s",
-				   dhfile, get_ssl_error(ERR_get_error()));
+			SSL_CTX_set_tmp_dh(ssl_server_ctx, dh);
+			DH_free(dh);
+			fclose(fp);
 		}
 	}
 
