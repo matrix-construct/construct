@@ -95,12 +95,7 @@ typedef struct _conn
 	char client_key[37];		/* maximum 36 bytes + nul */
 } conn_t;
 
-#define WEBSOCKET_OPCODE_CONTINUATION_FRAME  0
 #define WEBSOCKET_OPCODE_TEXT_FRAME          1
-#define WEBSOCKET_OPCODE_BINARY_FRAME        2
-#define WEBSOCKET_OPCODE_CLOSE_FRAME         8
-#define WEBSOCKET_OPCODE_PING_FRAME          9
-#define WEBSOCKET_OPCODE_PONG_FRAME         10
 
 #define WEBSOCKET_MASK_LENGTH 4
 
@@ -130,23 +125,11 @@ typedef struct {
 	uint64_t payload_length_extended;
 } ws_frame_ext2_t;
 
-static inline int
-ws_frame_get_opcode(ws_frame_hdr_t *header)
-{
-	return header->opcode_rsv_fin & 0xF;
-}
-
 static inline void
 ws_frame_set_opcode(ws_frame_hdr_t *header, int opcode)
 {
 	header->opcode_rsv_fin &= ~0xF;
 	header->opcode_rsv_fin |= opcode & 0xF;
-}
-
-static inline int
-ws_frame_get_fin(ws_frame_hdr_t *header)
-{
-	return (header->opcode_rsv_fin >> 7) & 0x1;
 }
 
 static inline void
@@ -168,7 +151,6 @@ static void conn_plain_process_recvq(conn_t *conn);
 
 #define IsCork(x) ((x)->flags & FLAG_CORK)
 #define IsDead(x) ((x)->flags & FLAG_DEAD)
-#define IsWS(x)   ((x)->flags & FLAG_WSOCK)
 #define IsKeyed(x) ((x)->flags & FLAG_KEYED)
 
 #define SetCork(x) ((x)->flags |= FLAG_CORK)
@@ -177,15 +159,10 @@ static void conn_plain_process_recvq(conn_t *conn);
 #define SetKeyed(x) ((x)->flags |= FLAG_KEYED)
 
 #define ClearCork(x) ((x)->flags &= ~FLAG_CORK)
-#define ClearDead(x) ((x)->flags &= ~FLAG_DEAD)
-#define ClearWS(x)   ((x)->flags &= ~FLAG_WSOCK)
-#define ClearKeyed(x) ((x)->flags &= ~FLAG_KEYED)
 
 #define NO_WAIT 0x0
 #define WAIT_PLAIN 0x1
 
-#define HASH_WALK_SAFE(i, max, ptr, next, table) for(i = 0; i < max; i++) { RB_DLINK_FOREACH_SAFE(ptr, next, table[i].head)
-#define HASH_WALK_END }
 #define CONN_HASH_SIZE 2000
 #define connid_hash(x)	(&connid_hash_table[(x % CONN_HASH_SIZE)])
 
@@ -245,21 +222,6 @@ maxconn(void)
 	}
 #endif /* RLIMIT_FD_MAX */
 	return MAXCONNECTIONS;
-}
-
-static conn_t *
-conn_find_by_id(uint32_t id)
-{
-	rb_dlink_node *ptr;
-	conn_t *conn;
-
-	RB_DLINK_FOREACH(ptr, (connid_hash(id))->head)
-	{
-		conn = ptr->data;
-		if(conn->id == id && !IsDead(conn))
-			return conn;
-	}
-	return NULL;
 }
 
 static void
@@ -398,17 +360,12 @@ conn_mod_write_frame(conn_t *conn, void *data, int len)
 		return;
 
 	if (len < 123)
-		return conn_mod_write_short_frame(conn, data, len);
+	{
+		conn_mod_write_short_frame(conn, data, len);
+		return
+	}
 
-	return conn_mod_write_long_frame(conn, data, len);
-}
-
-static void
-conn_plain_write(conn_t * conn, void *data, size_t len)
-{
-	if(IsDead(conn))	/* again no point in queueing to dead men */
-		return;
-	rb_linebuf_put(&conn->plainbuf_out, data, len);
+	conn_mod_write_long_frame(conn, data, len);
 }
 
 static void
@@ -755,7 +712,7 @@ conn_mod_read_cb(rb_fde_t *fd, void *data)
 		else
 			conn_mod_process(conn);
 
-		if (length < sizeof(inbuf))
+		if ((size_t) length < sizeof(inbuf))
 		{
 			rb_setselect(fd, RB_SELECT_READ, conn_mod_read_cb, conn);
 			return;
