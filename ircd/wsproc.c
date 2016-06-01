@@ -163,6 +163,7 @@ restart_wsockd(void)
 	start_wsockd(ServerInfo.wsockd_count);
 }
 
+#if 0
 static void
 ws_killall(void)
 {
@@ -181,6 +182,7 @@ ws_killall(void)
 			free_ws_daemon(ctl);
 	}
 }
+#endif
 
 static void
 ws_dead(ws_ctl_t * ctl)
