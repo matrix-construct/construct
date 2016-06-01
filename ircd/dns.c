@@ -174,7 +174,7 @@ lookup_ip(const char *addr, int aftype, DNSCB callback, void *data)
 	return (rid);
 }
 
-uint32_t
+static uint32_t
 get_nameservers(DNSLISTCB callback, void *data)
 {
 	struct dnsstatreq *req = rb_malloc(sizeof(struct dnsstatreq));
