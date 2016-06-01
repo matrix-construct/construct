@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 	}
 
 	printf("%s", prefix);
-	for (i = 0; i < strlen(certfp); i++) {
+	for (i = 0; i < ret; i++) {
 		printf("%02x", certfp[i]);
 	}
 	printf("\n");
