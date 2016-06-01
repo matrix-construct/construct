@@ -1259,7 +1259,7 @@ send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
 	char *pbuf;
 	const char *arg;
 	int dir;
-	int arglen;
+	int arglen = 0;
 
 	/* Now send to servers... */
 	mc = 0;
