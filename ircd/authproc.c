@@ -153,14 +153,14 @@ str_to_cid(const char *str)
 }
 
 static inline struct Client *
-cid_to_client(uint32_t cid, bool delete)
+cid_to_client(uint32_t ncid, bool del)
 {
 	struct Client *client_p;
 
-	if(delete)
-		client_p = rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(cid));
+	if(del)
+		client_p = rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(ncid));
 	else
-		client_p = rb_dictionary_retrieve(cid_clients, RB_UINT_TO_POINTER(cid));
+		client_p = rb_dictionary_retrieve(cid_clients, RB_UINT_TO_POINTER(ncid));
 
 	/* If the client's not found, that's okay, it may have already gone away.
 	 * --Elizafox */
@@ -169,14 +169,14 @@ cid_to_client(uint32_t cid, bool delete)
 }
 
 static inline struct Client *
-str_cid_to_client(const char *str, bool delete)
+str_cid_to_client(const char *str, bool del)
 {
-	uint32_t cid = str_to_cid(str);
+	uint32_t ncid = str_to_cid(str);
 
-	if(cid == 0)
+	if(ncid == 0)
 		return NULL;
 
-	return cid_to_client(cid, delete);
+	return cid_to_client(ncid, del);
 }
 
 static void
