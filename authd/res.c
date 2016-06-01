@@ -44,8 +44,6 @@
 static PF res_readreply;
 
 #define MAXPACKET      1024	/* rfc sez 512 but we expand names so ... */
-#define RES_MAXALIASES 35	/* maximum aliases allowed */
-#define RES_MAXADDRS   35	/* maximum addresses allowed */
 #define AR_TTL         600	/* TTL in seconds for dns cache entries */
 
 /* RFC 1104/1105 wasn't very helpful about what these fields
@@ -99,12 +97,6 @@ static int proc_answer(struct reslist *request, HEADER * header, char *, char *)
 static struct reslist *find_id(int id);
 static struct DNSReply *make_dnsreply(struct reslist *request);
 static uint16_t generate_random_id(void);
-
-#ifdef RES_MIN
-#undef RES_MIN
-#endif
-
-#define RES_MIN(a, b)  ((a) < (b) ? (a) : (b))
 
 /*
  * int
@@ -261,7 +253,7 @@ void restart_resolver(void)
  * add_local_domain - Add the domain to hostname, if it is missing
  * (as suggested by eps@TOASTER.SFSU.EDU)
  */
-void add_local_domain(char *hname, size_t size)
+static void add_local_domain(char *hname, size_t size)
 {
 	/* try to fix up unqualified names */
 	if (strchr(hname, '.') == NULL)
@@ -695,7 +687,6 @@ static int proc_answer(struct reslist *request, HEADER * header, char *buf, char
 			v4->sin_family = AF_INET;
 			memcpy(&v4->sin_addr, current, sizeof(struct in_addr));
 			return (1);
-			break;
 #ifdef RB_IPV6
 		case T_AAAA:
 			if (request->type != T_AAAA)
@@ -707,7 +698,6 @@ static int proc_answer(struct reslist *request, HEADER * header, char *buf, char
 			v6->sin6_family = AF_INET6;
 			memcpy(&v6->sin6_addr, current, sizeof(struct in6_addr));
 			return (1);
-			break;
 #endif
 		case T_PTR:
 			if (request->type != T_PTR)
@@ -722,7 +712,6 @@ static int proc_answer(struct reslist *request, HEADER * header, char *buf, char
 			rb_strlcpy(request->name, hostbuf, IRCD_RES_HOSTLEN + 1);
 
 			return (1);
-			break;
 		case T_CNAME:
 			/* real answer will follow */
 			current += rd_length;
