@@ -120,15 +120,10 @@ typedef struct _conn
 #define SetDead(x) ((x)->flags |= FLAG_DEAD)
 #define SetSSLWWantsR(x) ((x)->flags |= FLAG_SSL_W_WANTS_R)
 #define SetSSLRWantsW(x) ((x)->flags |= FLAG_SSL_R_WANTS_W)
-#define SetZipSSL(x)	((x)->flags |= FLAG_ZIPSSL)
 
-#define ClearSSL(x) ((x)->flags &= ~FLAG_SSL)
-#define ClearZip(x) ((x)->flags &= ~FLAG_ZIP)
 #define ClearCork(x) ((x)->flags &= ~FLAG_CORK)
-#define ClearDead(x) ((x)->flags &= ~FLAG_DEAD)
 #define ClearSSLWWantsR(x) ((x)->flags &= ~FLAG_SSL_W_WANTS_R)
 #define ClearSSLRWantsW(x) ((x)->flags &= ~FLAG_SSL_R_WANTS_W)
-#define ClearZipSSL(x)	((x)->flags &= ~FLAG_ZIPSSL)
 
 #define NO_WAIT 0x0
 #define WAIT_PLAIN 0x1
@@ -1224,7 +1219,7 @@ main(int argc, char **argv)
 		/* this is really useless... */
 		send_i_am_useless(mod_ctl);
 		/* sleep until the ircd kills us */
-		rb_sleep(2 << 30, 0);
+		rb_sleep(1 << 30, 0);
 		exit(1);
 	}
 
