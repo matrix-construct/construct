@@ -43,7 +43,6 @@
 #include "rsdb.h"
 
 #define EmptyString(x) ((x == NULL) || (*(x) == '\0'))
-#define CheckEmpty(x) EmptyString(x) ? "" : x
 
 #define BT_VERSION "0.4.1"
 
@@ -119,7 +118,7 @@ static void db_reclaim_slack(void);
 static void export_config(const char *conf, int id);
 static void import_config(const char *conf, int id);
 static void check_schema(void);
-static void print_help(int i_exit);
+static void print_help(int i_exit) __attribute__((noreturn));
 static void wipe_schema(void);
 static void drop_dupes(const char *user, const char *host, const char *t);
 
