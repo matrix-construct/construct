@@ -237,6 +237,9 @@ parse_request(rb_helper *helper)
 
 
 static void
+error_cb(rb_helper *helper) __attribute__((noreturn));
+
+static void
 error_cb(rb_helper *helper)
 {
 	if(in_transaction)
@@ -283,12 +286,15 @@ setup_signals(void)
 
 
 static void
+db_error_cb(const char *errstr) __attribute__((noreturn));
+
+static void
 db_error_cb(const char *errstr)
 {
 	char buf[256];
 	snprintf(buf, sizeof(buf), "! :%s", errstr);
 	rb_helper_write(bandb_helper, "%s", buf);
-	rb_sleep(2 << 30, 0);
+	rb_sleep(1 << 30, 0);
 	exit(1);
 }
 
