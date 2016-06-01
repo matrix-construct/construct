@@ -490,7 +490,7 @@ static bool
 check_forward(struct Client *source_p, struct Channel *chptr,
 		const char *forward)
 {
-	struct Channel *targptr;
+	struct Channel *targptr = NULL;
 	struct membership *msptr;
 
 	if(!check_channel_name(forward) ||
