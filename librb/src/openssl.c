@@ -842,15 +842,15 @@ rb_get_ssl_info(char *buf, size_t len)
 {
 #ifdef LRB_SSL_FULL_VERSION_INFO
 	if (LRB_SSL_VNUM_RUNTIME == LRB_SSL_VNUM_COMPILETIME)
-		rb_snprintf(buf, len, "OpenSSL: compiled 0x%lx, library %s",
-		            LRB_SSL_VNUM_COMPILETIME, LRB_SSL_VTEXT_COMPILETIME);
+		snprintf(buf, len, "OpenSSL: compiled 0x%lx, library %s",
+		         LRB_SSL_VNUM_COMPILETIME, LRB_SSL_VTEXT_COMPILETIME);
 	else
-		rb_snprintf(buf, len, "OpenSSL: compiled (0x%lx, %s), library (0x%lx, %s)",
-		            LRB_SSL_VNUM_COMPILETIME, LRB_SSL_VTEXT_COMPILETIME,
-		            LRB_SSL_VNUM_RUNTIME, LRB_SSL_VTEXT_RUNTIME);
+		snprintf(buf, len, "OpenSSL: compiled (0x%lx, %s), library (0x%lx, %s)",
+		         LRB_SSL_VNUM_COMPILETIME, LRB_SSL_VTEXT_COMPILETIME,
+		         LRB_SSL_VNUM_RUNTIME, LRB_SSL_VTEXT_RUNTIME);
 #else
-	rb_snprintf(buf, len, "OpenSSL: compiled 0x%lx, library %s",
-	            LRB_SSL_VNUM_COMPILETIME, LRB_SSL_VTEXT_RUNTIME);
+	snprintf(buf, len, "OpenSSL: compiled 0x%lx, library %s",
+	         LRB_SSL_VNUM_COMPILETIME, LRB_SSL_VTEXT_RUNTIME);
 #endif
 }
 
