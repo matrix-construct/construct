@@ -362,7 +362,7 @@ conn_mod_write_frame(conn_t *conn, void *data, int len)
 	if (len < 123)
 	{
 		conn_mod_write_short_frame(conn, data, len);
-		return
+		return;
 	}
 
 	conn_mod_write_long_frame(conn, data, len);
