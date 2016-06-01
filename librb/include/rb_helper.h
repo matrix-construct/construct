@@ -58,5 +58,5 @@ void rb_helper_write_flush(rb_helper *helper);
 void rb_helper_run(rb_helper *helper);
 void rb_helper_close(rb_helper *helper);
 int rb_helper_read(rb_helper *helper, void *buf, size_t bufsize);
-void rb_helper_loop(rb_helper *helper, long delay);
+void rb_helper_loop(rb_helper *helper, long delay) __attribute__((noreturn));
 #endif

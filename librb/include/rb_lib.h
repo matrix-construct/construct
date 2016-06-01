@@ -215,14 +215,14 @@ typedef void die_cb(const char *buffer);
 char *rb_ctime(const time_t, char *, size_t);
 char *rb_date(const time_t, char *, size_t);
 void rb_lib_log(const char *, ...);
-void rb_lib_restart(const char *, ...);
+void rb_lib_restart(const char *, ...) __attribute__((noreturn));
 void rb_lib_die(const char *, ...);
 void rb_set_time(void);
 const char *rb_lib_version(void);
 
 void rb_lib_init(log_cb * xilog, restart_cb * irestart, die_cb * idie, int closeall, int maxfds,
 		 size_t dh_size, size_t fd_heap_size);
-void rb_lib_loop(long delay);
+void rb_lib_loop(long delay) __attribute__((noreturn));
 
 time_t rb_current_time(void);
 const struct timeval *rb_current_time_tv(void);

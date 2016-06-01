@@ -46,16 +46,12 @@ rb_crypt(const char *key, const char *salt)
 		{
 		case '1':
 			return rb_md5_crypt(key, salt);
-			break;
 		case '5':
 			return rb_sha256_crypt(key, salt);
-			break;
 		case '6':
 			return rb_sha512_crypt(key, salt);
-			break;
 		default:
 			return NULL;
-			break;
 		};
 	}
 	else
@@ -536,7 +532,7 @@ rb_do_des(uint32_t l_in, uint32_t r_in, uint32_t *l_out, uint32_t *r_out, int co
 	 *      l_in, r_in, l_out, and r_out are in pseudo-"big-endian" format.
 	 */
 	uint32_t l, r, *kl, *kr, *kl1, *kr1;
-	uint32_t f, r48l, r48r;
+	uint32_t f = 0, r48l, r48r;
 	int round;
 
 	if(count == 0)
@@ -748,9 +744,6 @@ rb_des_crypt(const char *key, const char *setting)
  * edited for clarity and style only.
  */
 
-#define MD5_BLOCK_LENGTH                64
-#define MD5_DIGEST_LENGTH               16
-#define MD5_DIGEST_STRING_LENGTH        (MD5_DIGEST_LENGTH * 2 + 1)
 #define MD5_SIZE			16
 
 static void

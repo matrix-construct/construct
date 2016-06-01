@@ -31,10 +31,6 @@ static rb_bh *rb_linebuf_heap;
 
 static int bufline_count = 0;
 
-#ifndef LINEBUF_HEAP_SIZE
-#define LINEBUF_HEAP_SIZE 2048
-#endif
-
 /*
  * rb_linebuf_init
  *
