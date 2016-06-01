@@ -66,6 +66,9 @@
 #include "authproc.h"
 #include "operhash.h"
 
+static void
+ircd_die_cb(const char *str) __attribute__((noreturn));
+
 /* /quote set variables */
 struct SetOptions GlobalSetOptions;
 

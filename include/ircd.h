@@ -103,6 +103,6 @@ extern bool ircd_ssl_ok;
 extern bool ircd_zlib_ok;
 extern int maxconnections;
 
-void ircd_shutdown(const char *reason);
+void ircd_shutdown(const char *reason) __attribute__((noreturn));
 
 #endif
