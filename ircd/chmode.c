@@ -822,7 +822,6 @@ chm_ban(struct Client *source_p, struct Channel *chptr,
 	default:
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "chm_ban() called with unknown type!");
 		return;
-		break;
 	}
 
 	if(dir == 0 || parc <= *parn)
