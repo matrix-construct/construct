@@ -82,7 +82,6 @@ destroy_providers(void)
 	rb_dlink_node *ptr, *nptr;
 	rb_dictionary_iter iter;
 	struct auth_client *auth;
-	struct auth_provider *provider;
 
 	/* Cancel outstanding connections */
 	RB_DICTIONARY_FOREACH(auth, &iter, auth_clients)
