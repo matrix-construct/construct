@@ -60,6 +60,37 @@
 #  endif
 #endif
 
+/*
+ * More LibreSSL compatibility mess
+ * Used in rb_get_ssl_info() below.
+ */
+#if !defined(LIBRESSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+   /* OpenSSL 1.1.0+ */
+#  define LRB_SSL_VTEXT_COMPILETIME     OPENSSL_VERSION_TEXT
+#  define LRB_SSL_VTEXT_RUNTIME         OpenSSL_version(OPENSSL_VERSION)
+#  define LRB_SSL_VNUM_COMPILETIME      OPENSSL_VERSION_NUMBER
+#  define LRB_SSL_VNUM_RUNTIME          OpenSSL_version_num()
+#  define LRB_SSL_FULL_VERSION_INFO     1
+#else
+/*
+ * "Full version info" above means we have access to all 4 pieces of information.
+ *
+ * For the below, this is not the case; LibreSSL version number at runtime returns
+ * the wrong version number, and OpenSSL version text at compile time does not exist.
+ * Thus, we only reliably have version text at runtime, and version number at compile
+ * time.
+ */
+#  if defined(LIBRESSL_VERSION_NUMBER) && (LIBRESSL_VERSION_NUMBER >= 0x20200000L)
+     /* LibreSSL 2.2.0+ */
+#    define LRB_SSL_VTEXT_RUNTIME       SSLeay_version(SSLEAY_VERSION)
+#    define LRB_SSL_VNUM_COMPILETIME    LIBRESSL_VERSION_NUMBER
+#  else
+     /* OpenSSL < 1.1.0 or LibreSSL < 2.2.0 */
+#    define LRB_SSL_VTEXT_RUNTIME       SSLeay_version(SSLEAY_VERSION)
+#    define LRB_SSL_VNUM_COMPILETIME    SSLEAY_VERSION_NUMBER
+#  endif
+#endif
+
 static SSL_CTX *ssl_server_ctx = NULL;
 static SSL_CTX *ssl_client_ctx = NULL;
 static int librb_index = -1;
@@ -809,22 +840,17 @@ rb_supports_ssl(void)
 void
 rb_get_ssl_info(char *buf, size_t len)
 {
-#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
-	if (OpenSSL_version_num() == OPENSSL_VERSION_NUMBER)
-		snprintf(buf, len, "OpenSSL: 0x%lx, %s",
-		         OPENSSL_VERSION_NUMBER, OPENSSL_VERSION_TEXT);
+#ifdef LRB_SSL_FULL_VERSION_INFO
+	if (LRB_SSL_VNUM_RUNTIME == LRB_SSL_VNUM_COMPILETIME)
+		rb_snprintf(buf, len, "OpenSSL: compiled 0x%lx, library %s",
+		            LRB_SSL_VNUM_COMPILETIME, LRB_SSL_VTEXT_COMPILETIME);
 	else
-		snprintf(buf, len, "OpenSSL: compiled (0x%lx, %s), library (0x%lx, %s)",
-		         OPENSSL_VERSION_NUMBER, OPENSSL_VERSION_TEXT,
-		         OpenSSL_version_num(), OpenSSL_version(OPENSSL_VERSION));
+		rb_snprintf(buf, len, "OpenSSL: compiled (0x%lx, %s), library (0x%lx, %s)",
+		            LRB_SSL_VNUM_COMPILETIME, LRB_SSL_VTEXT_COMPILETIME,
+		            LRB_SSL_VNUM_RUNTIME, LRB_SSL_VTEXT_RUNTIME);
 #else
-	if (SSLeay() == SSLEAY_VERSION_NUMBER)
-		snprintf(buf, len, "OpenSSL: 0x%lx, %s",
-		         SSLeay(), SSLeay_version(SSLEAY_VERSION));
-	else
-		snprintf(buf, len, "OpenSSL: compiled (0x%lx, %s), library (0x%lx, %s)",
-		         SSLEAY_VERSION_NUMBER, "???",
-		         SSLeay(), SSLeay_version(SSLEAY_VERSION));
+	rb_snprintf(buf, len, "OpenSSL: compiled 0x%lx, library %s",
+	            LRB_SSL_VNUM_COMPILETIME, LRB_SSL_VTEXT_RUNTIME);
 #endif
 }
 
