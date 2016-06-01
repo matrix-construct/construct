@@ -34,9 +34,7 @@
 #include "send.h"
 #include "match.h"
 
-#define BAD_CONF_CLASS          -1
 #define BAD_PING                -2
-#define BAD_CLIENT_CLASS        -3
 
 rb_dlink_list class_list;
 struct Class *default_class;
