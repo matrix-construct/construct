@@ -25,6 +25,7 @@
 
 #define MAXPARA 10
 
+static void error_cb(rb_helper *helper) __attribute__((noreturn));
 static void handle_reload(int parc, char *parv[]);
 static void handle_stat(int parc, char *parv[]);
 static void handle_options(int parc, char *parv[]);
@@ -210,6 +211,9 @@ main(int argc, char *argv[])
 
 	rb_helper_loop(authd_helper, 0);
 
+	/*
+	 * XXX this function will never be called from here -- is it necessary?
+	 */
 	destroy_providers();
 
 	return 0;
