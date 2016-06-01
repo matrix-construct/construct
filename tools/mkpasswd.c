@@ -41,8 +41,8 @@ static char *make_bf_salt_para(int, char *);
 static char *generate_random_salt(char *, int);
 static char *generate_poor_salt(char *, int);
 
-static void full_usage(void);
-static void brief_usage(void);
+static void full_usage(void) __attribute__((noreturn));
+static void brief_usage(void) __attribute__((noreturn));
 
 static char saltChars[] = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
        /* 0 .. 63, ascii - 64 */
