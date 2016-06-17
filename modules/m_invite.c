@@ -57,7 +57,7 @@ mapi_cap_list_av2 invite_cap_list[] = {
 
 DECLARE_MODULE_AV2(invite, NULL, NULL, invite_clist, NULL, NULL, invite_cap_list, NULL, invite_desc);
 
-static void add_invite(struct Channel *, struct Client *);
+static bool add_invite(struct Channel *, struct Client *);
 
 /* m_invite()
  *      parv[1] - user to invite
@@ -221,7 +221,8 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 		if(store_invite)
 		{
-			add_invite(chptr, target_p);
+			if (!add_invite(chptr, target_p))
+				return;
 
 			sendto_channel_local_with_capability(CHFL_CHANOP, 0, CAP_INVITE_NOTIFY, chptr,
 				":%s NOTICE %s :%s is inviting %s to %s.",
@@ -240,10 +241,10 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 /* add_invite()
  *
  * input	- channel to add invite to, client to add
- * output	-
+ * output	- true if it is a new invite, else false
  * side effects - client is added to invite list.
  */
-static void
+static bool
 add_invite(struct Channel *chptr, struct Client *who)
 {
 	rb_dlink_node *ptr;
@@ -252,7 +253,7 @@ add_invite(struct Channel *chptr, struct Client *who)
 	RB_DLINK_FOREACH(ptr, who->user->invited.head)
 	{
 		if(ptr->data == chptr)
-			return;
+			return false;
 	}
 
 	/* ok, if their invite list is too long, remove the tail */
@@ -268,4 +269,6 @@ add_invite(struct Channel *chptr, struct Client *who)
 
 	/* add channel to user invite list */
 	rb_dlinkAddAlloc(chptr, &who->user->invited);
+
+	return true;
 }
