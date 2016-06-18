@@ -197,7 +197,7 @@
 #define NUMERIC_STR_501      ":%s 501 %s :Unknown MODE flag"
 #define NUMERIC_STR_502      ":%s 502 %s :Can't change mode for other users"
 #define NUMERIC_STR_504      ":%s 504 %s %s :User is not on this server"
-#define NUMERIC_STR_513      ":%s 513 %s :To connect type /QUOTE PONG %08lX"
+#define NUMERIC_STR_513      ":%s 513 %s :To connect type /QUOTE PONG %08X"
 #define NUMERIC_STR_517      "%s :This command has been administratively disabled"
 #define NUMERIC_STR_524      ":%s 524 %s %s :Help not found"
 #define NUMERIC_STR_670      ":STARTTLS successful, proceed with TLS handshake"
