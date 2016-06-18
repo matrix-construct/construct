@@ -265,7 +265,7 @@ do_modload(struct Client *source_p, const char *module)
 	char *m_bn = rb_basename(module);
 	int origin;
 
-	if(findmodule_byname(m_bn) != -1)
+	if(findmodule_byname(m_bn) != NULL)
 	{
 		sendto_one_notice(source_p, ":Module %s is already loaded", m_bn);
 		rb_free(m_bn);
@@ -281,17 +281,17 @@ do_modload(struct Client *source_p, const char *module)
 static void
 do_modunload(struct Client *source_p, const char *module)
 {
-	int modindex;
+	struct module *mod;
 	char *m_bn = rb_basename(module);
 
-	if((modindex = findmodule_byname(m_bn)) == -1)
+	if((mod = findmodule_byname(m_bn)) == NULL)
 	{
 		sendto_one_notice(source_p, ":Module %s is not loaded", m_bn);
 		rb_free(m_bn);
 		return;
 	}
 
-	if(modlist[modindex]->core)
+	if(mod->core)
 	{
 		sendto_one_notice(source_p, ":Module %s is a core module and may not be unloaded", m_bn);
 		rb_free(m_bn);
@@ -307,18 +307,18 @@ do_modunload(struct Client *source_p, const char *module)
 static void
 do_modreload(struct Client *source_p, const char *module)
 {
-	int modindex;
+	struct module *mod;
 	int check_core;
 	char *m_bn = rb_basename(module);
 
-	if((modindex = findmodule_byname(m_bn)) == -1)
+	if((mod = findmodule_byname(m_bn)) == NULL)
 	{
 		sendto_one_notice(source_p, ":Module %s is not loaded", m_bn);
 		rb_free(m_bn);
 		return;
 	}
 
-	check_core = modlist[modindex]->core;
+	check_core = mod->core;
 
 	if(unload_one_module(m_bn, true) == false)
 	{
@@ -327,7 +327,7 @@ do_modreload(struct Client *source_p, const char *module)
 		return;
 	}
 
-	if((load_one_module(m_bn, modlist[modindex]->origin, check_core) == false) && check_core)
+	if((load_one_module(m_bn, mod->origin, check_core) == false) && check_core)
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
 				     "Error reloading core module: %s: terminating ircd", m_bn);
@@ -341,33 +341,39 @@ do_modreload(struct Client *source_p, const char *module)
 static void
 do_modrestart(struct Client *source_p)
 {
-	int modnum;
+	unsigned int modnum = 0;
+	rb_dlink_node *ptr, *nptr;
 
 	sendto_one_notice(source_p, ":Reloading all modules");
 
-	modnum = num_mods;
-	while (num_mods)
-		unload_one_module(modlist[0]->name, false);
+	RB_DLINK_FOREACH_SAFE(ptr, nptr, module_list.head)
+	{
+		struct module *mod = ptr->data;
+		unload_one_module(mod->name, false);
+		modnum++;
+	}
 
 	load_all_modules(false);
 	load_core_modules(false);
 	rehash(false);
 
 	sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
-			     "Module Restart: %d modules unloaded, %d modules loaded",
-			     modnum, num_mods);
-	ilog(L_MAIN, "Module Restart: %d modules unloaded, %d modules loaded", modnum, num_mods);
+			     "Module Restart: %u modules unloaded, %lu modules loaded",
+			     modnum, rb_dlink_list_length(&module_list));
+	ilog(L_MAIN, "Module Restart: %u modules unloaded, %lu modules loaded", modnum, rb_dlink_list_length(&module_list));
 }
 
 static void
 do_modlist(struct Client *source_p, const char *pattern)
 {
+	rb_dlink_node *ptr;
 	int i;
 
-	for (i = 0; i < num_mods; i++)
+	RB_DLINK_FOREACH(ptr, module_list.head)
 	{
+		struct module *mod = ptr->data;
 		const char *origin;
-		switch (modlist[i]->origin)
+		switch (mod->origin)
 		{
 		case MAPI_ORIGIN_EXTENSION:
 			origin = "extension";
@@ -382,21 +388,21 @@ do_modlist(struct Client *source_p, const char *pattern)
 
 		if(pattern)
 		{
-			if(match(pattern, modlist[i]->name))
+			if(match(pattern, mod->name))
 			{
 				sendto_one(source_p, form_str(RPL_MODLIST),
 					   me.name, source_p->name,
-					   modlist[i]->name,
-					   (unsigned long)(uintptr_t)modlist[i]->address, origin,
-					   modlist[i]->core ? " (core)" : "", modlist[i]->version, modlist[i]->description);
+					   mod->name,
+					   (unsigned long)(uintptr_t)mod->address, origin,
+					   mod->core ? " (core)" : "", mod->version, mod->description);
 			}
 		}
 		else
 		{
 			sendto_one(source_p, form_str(RPL_MODLIST),
-				   me.name, source_p->name, modlist[i]->name,
-				   (unsigned long)(uintptr_t)modlist[i]->address, origin,
-				   modlist[i]->core ? " (core)" : "", modlist[i]->version, modlist[i]->description);
+				   me.name, source_p->name, mod->name,
+				   (unsigned long)(uintptr_t)mod->address, origin,
+				   mod->core ? " (core)" : "", mod->version, mod->description);
 		}
 	}
 
