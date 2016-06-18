@@ -416,7 +416,6 @@ initialize_server_capabs(void)
  * output       - none
  * side effects - items in ircd_paths[] array are relocated
  */
-#ifdef _WIN32
 static void
 relocate_paths(void)
 {
@@ -493,7 +492,6 @@ relocate_paths(void)
 		inotice("  %s: %s", ircd_pathnames[i], ircd_paths[i]);
 	}
 }
-#endif
 
 /*
  * write_pidfile
