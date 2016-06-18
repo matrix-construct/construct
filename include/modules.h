@@ -134,7 +134,7 @@ extern bool unload_one_module(const char *, bool);
 extern bool load_one_module(const char *, int, bool);
 extern bool load_a_module(const char *, bool, int, bool);
 extern int findmodule_byname(const char *);
-extern void modules_init(void);
+extern void init_modules(void);
 
 /* Misc externs */
 extern struct module **modlist;

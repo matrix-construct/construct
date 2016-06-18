@@ -72,13 +72,15 @@ int max_mods = MODS_INCREMENT;
 static rb_dlink_list mod_paths;
 
 void
-modules_init(void)
+init_modules(void)
 {
 	if(lt_dlinit())
 	{
 		ilog(L_MAIN, "lt_dlinit failed");
 		exit(EXIT_FAILURE);
 	}
+
+	modlist = (struct module **) rb_malloc(sizeof(struct module *) * (MODS_INCREMENT));
 
 	/* Add the default paths we look in to the module system --nenolod */
 	mod_add_path(ircd_paths[IRCD_PATH_MODULES]);
@@ -187,10 +189,6 @@ load_all_modules(bool warn)
 	struct dirent *ldirent = NULL;
 	char module_fq_name[PATH_MAX + 1];
 	size_t module_ext_len = strlen(LT_MODULE_EXT);
-
-	modules_init();
-
-	modlist = (struct module **) rb_malloc(sizeof(struct module *) * (MODS_INCREMENT));
 
 	max_mods = MODS_INCREMENT;
 
