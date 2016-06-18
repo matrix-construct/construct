@@ -409,6 +409,7 @@ initialize_server_capabs(void)
 	default_server_capabs &= ~CAP_ZIP;
 }
 
+#ifdef _WIN32
 /*
  * relocate_paths
  *
@@ -492,6 +493,7 @@ relocate_paths(void)
 		inotice("  %s: %s", ircd_pathnames[i], ircd_paths[i]);
 	}
 }
+#endif
 
 /*
  * write_pidfile
@@ -682,7 +684,9 @@ charybdis_main(int argc, char * const argv[])
 	}
 #endif
 
+#ifdef _WIN32
 	relocate_paths();
+#endif
 
 	logFileName = ircd_paths[IRCD_PATH_IRCD_LOG];
 	pidFileName = ircd_paths[IRCD_PATH_IRCD_PID];
