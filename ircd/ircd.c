@@ -136,6 +136,25 @@ const char *ircd_paths[IRCD_PATH_COUNT] = {
 	[IRCD_PATH_LIBEXEC] = PKGLIBEXECDIR,
 };
 
+const char *ircd_pathnames[IRCD_PATH_COUNT] = {
+	[IRCD_PATH_PREFIX] = "prefix",
+	[IRCD_PATH_MODULES] = "modules",
+	[IRCD_PATH_AUTOLOAD_MODULES] = "autoload modules",
+	[IRCD_PATH_ETC] = "config",
+	[IRCD_PATH_LOG] = "log",
+	[IRCD_PATH_USERHELP] = "user help",
+	[IRCD_PATH_OPERHELP] = "oper help",
+	[IRCD_PATH_IRCD_EXEC] = "ircd binary",
+	[IRCD_PATH_IRCD_CONF] = "ircd.conf",
+	[IRCD_PATH_IRCD_MOTD] = "ircd.motd",
+	[IRCD_PATH_IRCD_LOG] = "ircd.log",
+	[IRCD_PATH_IRCD_PID] = "ircd.pid",
+	[IRCD_PATH_IRCD_OMOTD] = "oper motd",
+	[IRCD_PATH_BANDB] = "bandb",
+	[IRCD_PATH_BIN] = "binary dir",
+	[IRCD_PATH_LIBEXEC] = "libexec dir",
+};
+
 const char *logFileName = NULL;
 const char *pidFileName = NULL;
 
@@ -188,7 +207,6 @@ print_startup(int pid)
 	if (fd != 1)
 		abort();
 #endif
-	inotice("runtime path: %s", rb_path_to_self());
 	inotice("now running in %s mode from %s as pid %d ...",
 	       !server_state_foreground ? "background" : "foreground",
         	ConfigFileEntry.dpath, pid);
@@ -468,6 +486,12 @@ relocate_paths(void)
 	snprintf(workbuf, sizeof workbuf, "%s%cbin", prefix, RB_PATH_SEPARATOR);
 	ircd_paths[IRCD_PATH_BIN] = rb_strdup(workbuf);
 	ircd_paths[IRCD_PATH_LIBEXEC] = rb_strdup(workbuf);
+
+	inotice("runtime paths:")
+	for (int i = 0; i < IRCD_PATH_COUNT; i++)
+	{
+		inotice("  %s: %s", ircd_pathnames[i], ircd_paths[i]);
+	}
 }
 #endif
 
