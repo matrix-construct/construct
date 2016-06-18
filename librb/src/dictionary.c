@@ -138,7 +138,6 @@ rb_dictionary_get_linear_index(rb_dictionary *dict, const void *key)
 	rb_dictionary_element *elem;
 
 	lrb_assert(dict != NULL);
-	lrb_assert(key != NULL);
 
 	elem = rb_dictionary_find(dict, key);
 	if (elem == NULL)
@@ -648,7 +647,6 @@ void rb_dictionary_foreach_next(rb_dictionary *dtree,
 rb_dictionary_element *rb_dictionary_find(rb_dictionary *dict, const void *key)
 {
 	lrb_assert(dict != NULL);
-	lrb_assert(key != NULL);
 
 	/* retune for key, key will be the tree's root if it's available */
 	rb_dictionary_retune(dict, key);
@@ -681,7 +679,6 @@ rb_dictionary_element *rb_dictionary_add(rb_dictionary *dict, const void *key, v
 	rb_dictionary_element *delem;
 
 	lrb_assert(dict != NULL);
-	lrb_assert(key != NULL);
 	lrb_assert(data != NULL);
 	lrb_assert(rb_dictionary_find(dict, key) == NULL);
 
