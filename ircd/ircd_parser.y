@@ -291,7 +291,7 @@ loadmodule:
                 char *m_bn;
                 m_bn = rb_basename((char *) $2);
 
-                if (findmodule_byname(m_bn) == -1)
+                if (findmodule_byname(m_bn) == NULL)
 	        {
 	            load_one_module($2, MAPI_ORIGIN_EXTENSION, 0);
 		}
