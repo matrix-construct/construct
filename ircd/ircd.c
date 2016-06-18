@@ -486,7 +486,7 @@ relocate_paths(void)
 	ircd_paths[IRCD_PATH_BIN] = rb_strdup(workbuf);
 	ircd_paths[IRCD_PATH_LIBEXEC] = rb_strdup(workbuf);
 
-	inotice("runtime paths:")
+	inotice("runtime paths:");
 	for (int i = 0; i < IRCD_PATH_COUNT; i++)
 	{
 		inotice("  %s: %s", ircd_pathnames[i], ircd_paths[i]);
