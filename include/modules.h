@@ -46,6 +46,7 @@ struct module
 	int origin;	/* Ditto */
 	int mapi_version;
 	void *mapi_header; /* actually struct mapi_mheader_av<mapi_version> */
+	rb_dlink_node node;
 };
 
 #define MAPI_MAGIC_HDR	0x4D410000
@@ -133,12 +134,10 @@ extern void load_core_modules(bool);
 extern bool unload_one_module(const char *, bool);
 extern bool load_one_module(const char *, int, bool);
 extern bool load_a_module(const char *, bool, int, bool);
-extern int findmodule_byname(const char *);
+extern struct module *findmodule_byname(const char *);
 extern void init_modules(void);
 
-/* Misc externs */
-extern struct module **modlist;
-extern int num_mods;
-extern int max_mods;
+extern rb_dlink_list module_list;
+extern rb_dlink_list mod_paths;
 
 #endif /* INCLUDED_modules_h */

@@ -43,7 +43,8 @@
 #	error "Charybdis requires loadable module support."
 #endif
 
-struct module **modlist = NULL;
+rb_dlink_list module_list;
+rb_dlink_list mod_paths;
 
 static const char *core_module_table[] = {
 	"m_ban",
@@ -65,12 +66,6 @@ static const char *core_module_table[] = {
 
 #define MOD_WARN_DELTA (90 * 86400)	/* time in seconds, 86400 seconds in a day */
 
-#define MODS_INCREMENT 10
-int num_mods = 0;
-int max_mods = MODS_INCREMENT;
-
-static rb_dlink_list mod_paths;
-
 void
 init_modules(void)
 {
@@ -79,8 +74,6 @@ init_modules(void)
 		ilog(L_MAIN, "lt_dlinit failed");
 		exit(EXIT_FAILURE);
 	}
-
-	modlist = (struct module **) rb_malloc(sizeof(struct module *) * (MODS_INCREMENT));
 
 	/* Add the default paths we look in to the module system --nenolod */
 	mod_add_path(ircd_paths[IRCD_PATH_MODULES]);
@@ -155,25 +148,27 @@ mod_clear_paths(void)
  * output       - index of module on success, -1 on failure
  * side effects - none
  */
-int
+struct module *
 findmodule_byname(const char *name)
 {
-	int i;
+	rb_dlink_node *ptr;
 	char name_ext[PATH_MAX + 1];
 
 	rb_strlcpy(name_ext, name, sizeof name_ext);
 	rb_strlcat(name_ext, LT_MODULE_EXT, sizeof name_ext);
 
-	for (i = 0; i < num_mods; i++)
+	RB_DLINK_FOREACH(ptr, module_list.head)
 	{
-		if(!irccmp(modlist[i]->name, name))
-			return i;
+		struct module *mod = ptr->data;
 
-		if(!irccmp(modlist[i]->name, name_ext))
-			return i;
+		if(!irccmp(mod->name, name))
+			return mod;
+
+		if(!irccmp(mod->name, name_ext))
+			return mod;
 	}
 
-	return -1;
+	return NULL;
 }
 
 /* load_all_modules()
@@ -189,8 +184,6 @@ load_all_modules(bool warn)
 	struct dirent *ldirent = NULL;
 	char module_fq_name[PATH_MAX + 1];
 	size_t module_ext_len = strlen(LT_MODULE_EXT);
-
-	max_mods = MODS_INCREMENT;
 
 	system_module_dir = opendir(ircd_paths[IRCD_PATH_AUTOLOAD_MODULES]);
 
@@ -283,8 +276,6 @@ load_one_module(const char *path, int origin, bool coremodule)
 	return false;
 }
 
-static void increase_modlist(void);
-
 static char unknown_ver[] = "<unknown>";
 static char unknown_description[] = "<none>";
 
@@ -298,9 +289,9 @@ static char unknown_description[] = "<none>";
 bool
 unload_one_module(const char *name, bool warn)
 {
-	int modindex;
+	struct module *mod;
 
-	if((modindex = findmodule_byname(name)) == -1)
+	if((mod = findmodule_byname(name)) == NULL)
 		return false;
 
 	/*
@@ -314,11 +305,11 @@ unload_one_module(const char *name, bool warn)
 	 **          -jmallett
 	 */
 	/* Left the comment in but the code isn't here any more         -larne */
-	switch (modlist[modindex]->mapi_version)
+	switch (mod->mapi_version)
 	{
 	case 1:
 		{
-			struct mapi_mheader_av1 *mheader = modlist[modindex]->mapi_header;
+			struct mapi_mheader_av1 *mheader = mod->mapi_header;
 			if(mheader->mapi_command_list)
 			{
 				struct Message **m;
@@ -342,7 +333,7 @@ unload_one_module(const char *name, bool warn)
 		}
 	case 2:
 		{
-			struct mapi_mheader_av2 *mheader = modlist[modindex]->mapi_header;
+			struct mapi_mheader_av2 *mheader = mod->mapi_header;
 
 			/* XXX duplicate code :( */
 			if(mheader->mapi_command_list)
@@ -383,10 +374,10 @@ unload_one_module(const char *name, bool warn)
 					default:
 						sendto_realops_snomask(SNO_GENERAL, L_ALL,
 							"Unknown/unsupported CAP index found of type %d on capability %s when unloading %s",
-							m->cap_index, m->cap_name, modlist[modindex]->name);
+							m->cap_index, m->cap_name, mod->name);
 						ilog(L_MAIN,
 							"Unknown/unsupported CAP index found of type %d on capability %s when unloading %s",
-							m->cap_index, m->cap_name, modlist[modindex]->name);
+							m->cap_index, m->cap_name, mod->name);
 						continue;
 					}
 
@@ -402,21 +393,17 @@ unload_one_module(const char *name, bool warn)
 	default:
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Unknown/unsupported MAPI version %d when unloading %s!",
-				     modlist[modindex]->mapi_version, modlist[modindex]->name);
+				     mod->mapi_version, mod->name);
 		ilog(L_MAIN, "Unknown/unsupported MAPI version %d when unloading %s!",
-		     modlist[modindex]->mapi_version, modlist[modindex]->name);
+		     mod->mapi_version, mod->name);
 		break;
 	}
 
-	lt_dlclose(modlist[modindex]->address);
+	lt_dlclose(mod->address);
 
-	rb_free(modlist[modindex]->name);
-	rb_free(modlist[modindex]);
-	memmove(&modlist[modindex], &modlist[modindex + 1],
-	       sizeof(struct module *) * ((num_mods - 1) - modindex));
-
-	if(num_mods != 0)
-		num_mods--;
+	rb_dlinkDelete(&mod->node, &module_list);
+	rb_free(mod->name);
+	rb_free(mod);
 
 	if(warn)
 	{
@@ -437,6 +424,7 @@ unload_one_module(const char *name, bool warn)
 bool
 load_a_module(const char *path, bool warn, int origin, bool core)
 {
+	struct module *mod;
 	lt_dlhandle tmpptr;
 	char *mod_displayname, *c;
 	const char *ver, *description = NULL;
@@ -639,18 +627,16 @@ load_a_module(const char *path, bool warn, int origin, bool core)
 	if(description == NULL)
 		description = unknown_description;
 
-	increase_modlist();
-
-	modlist[num_mods] = rb_malloc(sizeof(struct module));
-	modlist[num_mods]->address = tmpptr;
-	modlist[num_mods]->version = ver;
-	modlist[num_mods]->description = description;
-	modlist[num_mods]->core = core;
-	modlist[num_mods]->name = rb_strdup(mod_displayname);
-	modlist[num_mods]->mapi_header = mapi_version;
-	modlist[num_mods]->mapi_version = MAPI_VERSION(*mapi_version);
-	modlist[num_mods]->origin = origin;
-	num_mods++;
+	mod = rb_malloc(sizeof(struct module));
+	mod->address = tmpptr;
+	mod->version = ver;
+	mod->description = description;
+	mod->core = core;
+	mod->name = rb_strdup(mod_displayname);
+	mod->mapi_header = mapi_version;
+	mod->mapi_version = MAPI_VERSION(*mapi_version);
+	mod->origin = origin;
+	rb_dlinkAdd(mod, &mod->node, &module_list);
 
 	if(warn)
 	{
@@ -678,28 +664,4 @@ load_a_module(const char *path, bool warn, int origin, bool core)
 	}
 	rb_free(mod_displayname);
 	return true;
-}
-
-/*
- * increase_modlist
- *
- * inputs	- NONE
- * output	- NONE
- * side effects	- expand the size of modlist if necessary
- */
-static void
-increase_modlist(void)
-{
-	struct module **new_modlist = NULL;
-
-	if((num_mods + 1) < max_mods)
-		return;
-
-	new_modlist = (struct module **) rb_malloc(sizeof(struct module *) *
-						  (max_mods + MODS_INCREMENT));
-	memcpy((void *) new_modlist, (void *) modlist, sizeof(struct module *) * num_mods);
-
-	rb_free(modlist);
-	modlist = new_modlist;
-	max_mods += MODS_INCREMENT;
 }
