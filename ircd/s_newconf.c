@@ -442,13 +442,13 @@ add_server_conf(struct server_conf *server_p)
 	if(EmptyString(server_p->class_name))
 	{
 		server_p->class_name = rb_strdup("default");
-		server_p->class = default_class;
+		server_p->_class = default_class;
 		return;
 	}
 
-	server_p->class = find_class(server_p->class_name);
+	server_p->_class = find_class(server_p->class_name);
 
-	if(server_p->class == default_class)
+	if(server_p->_class == default_class)
 	{
 		conf_report_error("Warning connect::class invalid for %s",
 				server_p->name);
@@ -511,7 +511,7 @@ attach_server_conf(struct Client *client_p, struct server_conf *server_p)
 		detach_server_conf(client_p);
 	}
 
-	CurrUsers(server_p->class)++;
+	CurrUsers(server_p->_class)++;
 
 	client_p->localClient->att_sconf = server_p;
 	server_p->servers++;
@@ -527,13 +527,13 @@ detach_server_conf(struct Client *client_p)
 
 	client_p->localClient->att_sconf = NULL;
 	server_p->servers--;
-	CurrUsers(server_p->class)--;
+	CurrUsers(server_p->_class)--;
 
 	if(ServerConfIllegal(server_p) && !server_p->servers)
 	{
 		/* the class this one is using may need destroying too */
-		if(MaxUsers(server_p->class) < 0 && CurrUsers(server_p->class) <= 0)
-			free_class(server_p->class);
+		if(MaxUsers(server_p->_class) < 0 && CurrUsers(server_p->_class) <= 0)
+			free_class(server_p->_class);
 
 		rb_dlinkDelete(&server_p->node, &server_conf_list);
 		free_server_conf(server_p);

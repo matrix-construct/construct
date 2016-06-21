@@ -70,7 +70,7 @@ __attribute__((returns_nonnull))
 static inline char *
 rb_strndup(const char *x, size_t y)
 {
-	char *ret = malloc(y);
+	char *ret = (char *)malloc(y);
 	if(rb_unlikely(ret == NULL))
 		rb_outofmemory();
 	rb_strlcpy(ret, x, y);
@@ -81,7 +81,7 @@ __attribute__((returns_nonnull))
 static inline char *
 rb_strdup(const char *x)
 {
-	char *ret = malloc(strlen(x) + 1);
+	char *ret = (char *)malloc(strlen(x) + 1);
 	if(rb_unlikely(ret == NULL))
 		rb_outofmemory();
 	strcpy(ret, x);

@@ -28,7 +28,6 @@
 #include "defaults.h"
 
 struct Client;
-struct rb_dlink_list;
 
 struct SetOptions
 {

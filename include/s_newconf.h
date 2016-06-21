@@ -203,7 +203,7 @@ struct server_conf
 #endif
 
 	char *class_name;
-	struct Class *class;
+	struct Class *_class;
 	rb_dlink_node node;
 };
 

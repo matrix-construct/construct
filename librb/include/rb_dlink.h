@@ -278,7 +278,7 @@ rb_dlinkFindDestroy(void *data, rb_dlink_list *list)
 
 	if(ptr != NULL)
 	{
-		rb_free_rb_dlink_node(ptr);
+		rb_free_rb_dlink_node((rb_dlink_node *)ptr);
 		return 1;
 	}
 	return 0;

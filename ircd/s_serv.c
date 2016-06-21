@@ -272,7 +272,7 @@ try_connections(void *unused)
 		if(ServerConfSSL(tmp_p) && (!ircd_ssl_ok || !get_ssld_count()))
 			continue;
 
-		cltmp = tmp_p->class;
+		cltmp = tmp_p->_class;
 
 		/*
 		 * Skip this entry if the use of it is still on hold until

@@ -2005,7 +2005,7 @@ close_connection(struct Client *client_p)
 			server_p->hold = time(NULL);
 			server_p->hold +=
 				(server_p->hold - client_p->localClient->lasttime >
-				 HANGONGOODLINK) ? HANGONRETRYDELAY : ConFreq(server_p->class);
+				 HANGONGOODLINK) ? HANGONRETRYDELAY : ConFreq(server_p->_class);
 		}
 
 	}

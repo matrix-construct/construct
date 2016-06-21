@@ -131,7 +131,7 @@ get_client_ping(struct Client *target_p)
 	if(IsServer(target_p))
 	{
 		struct server_conf *server_p = target_p->localClient->att_sconf;
-		ping = PingFreq(server_p->class);
+		ping = PingFreq(server_p->_class);
 	}
 	else
 	{
@@ -325,7 +325,7 @@ get_sendq(struct Client *client_p)
 	{
 		struct server_conf *server_p;
 		server_p = client_p->localClient->att_sconf;
-		return MaxSendq(server_p->class);
+		return MaxSendq(server_p->_class);
 	}
 	else
 	{
