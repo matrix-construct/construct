@@ -294,6 +294,9 @@ unload_one_module(const char *name, bool warn)
 	if((mod = findmodule_byname(name)) == NULL)
 		return false;
 
+	if(mod->core)
+		return false;
+
 	/*
 	 ** XXX - The type system in C does not allow direct conversion between
 	 ** data and function pointers, but as it happens, most C compilers will

@@ -349,7 +349,19 @@ do_modrestart(struct Client *source_p)
 	RB_DLINK_FOREACH_SAFE(ptr, nptr, module_list.head)
 	{
 		struct module *mod = ptr->data;
-		unload_one_module(mod->name, false);
+		if(!unload_one_module(mod->name, false))
+		{
+			ilog(L_MAIN, "Module Restart: %s was not unloaded %s",
+			     mod->name,
+			     mod->core? "(core module)" : "");
+
+			if(!mod->core)
+				sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
+				                       "Module Restart: %s failed to unload",
+				                       mod->name);
+			continue;
+		}
+
 		modnum++;
 	}
 
