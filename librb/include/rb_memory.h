@@ -32,6 +32,8 @@
 
 #include <stdlib.h>
 
+#define RB_UNIQUE_PTR(deleter) __attribute__((cleanup(deleter)))
+#define RB_AUTO_PTR RB_UNIQUE_PTR(rb_raii_free)
 
 void rb_outofmemory(void) __attribute__((noreturn));
 
@@ -80,6 +82,20 @@ rb_free(void *ptr)
 {
 	if(rb_likely(ptr != NULL))
 		free(ptr);
+}
+
+
+static inline void
+rb_raii_free(const void *const ptr)
+{
+	if(!ptr)
+		return;
+
+	const void *const _ptr = *(const void **)ptr;
+	if(!_ptr)
+		return;
+
+	rb_free((void *)_ptr);
 }
 
 #endif /* _I_MEMORY_H */
