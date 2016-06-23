@@ -248,6 +248,7 @@ pid_t rb_getpid(void);
 
 
 #include <rb_tools.h>
+#include <rb_dlink.h>
 #include <rb_memory.h>
 #include <rb_commio.h>
 #include <rb_balloc.h>
