@@ -63,4 +63,7 @@ extern void report_operspy(struct Client *, const char *, const char *);
 extern const char *smalldate(time_t);
 extern void ilog_error(const char *);
 
+void vslog(ilogfile dest, unsigned int snomask, const char *fmt, va_list ap);
+void slog(ilogfile dest, unsigned int snomask, const char *fmt, ...) AFP(3, 4);
+
 #endif
