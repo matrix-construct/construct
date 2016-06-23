@@ -88,14 +88,17 @@ rb_strdup(const char *x)
 	return (ret);
 }
 
-
+// overrule libc's prototype and ignore the cast warning, allowing proper const
+// propagation without casting everywhere in the real code.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
 static inline void
-rb_free(void *ptr)
+rb_free(const void *const ptr)
 {
 	if(rb_likely(ptr != NULL))
-		free(ptr);
+		free((void *)ptr);
 }
-
+#pragma GCC diagnostic pop
 
 static inline void
 rb_raii_free(const void *const ptr)
@@ -103,11 +106,11 @@ rb_raii_free(const void *const ptr)
 	if(!ptr)
 		return;
 
-	const void *const _ptr = *(const void **)ptr;
+	const void *const _ptr = *(const void *const *)ptr;
 	if(!_ptr)
 		return;
 
-	rb_free((void *)_ptr);
+	rb_free(_ptr);
 }
 
 #endif /* _I_MEMORY_H */
