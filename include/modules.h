@@ -38,7 +38,8 @@
 
 struct module
 {
-	char *name;
+	const char *name;
+	const char *path;
 	const char *version;
 	const char *description;
 	lt_dlhandle address;
@@ -53,6 +54,7 @@ struct module
 
 #define MAPI_V1		(MAPI_MAGIC_HDR | 0x1)
 #define MAPI_V2		(MAPI_MAGIC_HDR | 0x2)
+#define MAPI_V3		(MAPI_MAGIC_HDR | 0x3)
 
 #define MAPI_MAGIC(x)	((x) & 0xffff0000)
 #define MAPI_VERSION(x)	((x) & 0x0000ffff)
@@ -117,6 +119,62 @@ struct mapi_mheader_av2
 
 #define DECLARE_MODULE_AV2(name, reg, unreg, cl, hl, hfnlist, caplist, v, desc) \
 	struct mapi_mheader_av2 _mheader = { MAPI_V2, reg, unreg, cl, hl, hfnlist, caplist, v, desc, DATECODE}
+
+
+/***
+Version 3 modules utilize a flexible key/value vector.
+
+Example:
+DECLARE_MODULE_AV3
+(
+	MOD_ATTR { "name",    "mymodule"                       },
+	MOD_ATTR { "mtab",    &message_foo                     },
+	MOD_ATTR { "mtab",    &message_unfoo                   },
+	MOD_ATTR { "init",    modinitfunc                      },
+	MOD_ATTR { "hook",    MOD_HOOK   { "myhook", &id }     },
+	MOD_ATTR { "hookfn",  MOD_HOOKFN { "myhook", hookfun } },
+)
+
+Notes:
+- Multiple keys with the same name will have different behavior depending on the logic for that key.
+- On load, the order in which keys are specified is the order they will be evaluated (top to bottom).
+- On unload, the evaluation is the REVERSE order (bottom to top).
+- If an init function returns false, or other error occurs, no further keys are evaluated and the
+  unload rolls back from that point.
+***/
+
+struct mapi_av3_attr
+{
+	#define MAPI_V3_KEY_MAXLEN 16                /* Maximum length for a key string */
+
+	const char *key;
+	union { const void *cvalue;  void *value;  int (*init)(void);  void (*fini)(void); };
+};
+
+struct mapi_mheader_av3
+{
+	int mapi_version;                            // Module API version
+	struct mapi_av3_attr **attrs;                // A vector of attributes, NULL terminated
+};
+
+#define MOD_ATTR    &(struct mapi_av3_attr)
+#define MOD_HOOK    &(mapi_hlist_av1)
+#define MOD_HOOKFN  &(mapi_hfn_list_av1)
+
+#define DECLARE_MODULE_AV3(...)          \
+struct mapi_mheader_av3 _mheader =       \
+{                                        \
+    MAPI_V3, (struct mapi_av3_attr *[])  \
+    {                                    \
+        MOD_ATTR { "time", DATECODE },   \
+        __VA_ARGS__,                     \
+        NULL                             \
+    }                                    \
+};
+
+
+// Prefixes your slog() message with module info
+void module_log(struct module *mod, const char *fmt, ...) AFP(2, 3);
 
 /* add a path */
 void mod_add_path(const char *path);
