@@ -33,7 +33,12 @@ typedef struct rb_dictionary_iter rb_dictionary_iter;
 
 struct rb_dictionary;
 
+// This comparator could be based on a union of function types emulating a
+// quasi-template, shutting up a lot of warnings. For now it gets The Treatment.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-prototypes"
 typedef int (*DCF)(/* const void *a, const void *b */);
+#pragma GCC diagnostic pop
 
 struct rb_dictionary_element
 {
