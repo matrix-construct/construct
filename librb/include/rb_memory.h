@@ -37,6 +37,11 @@
 
 void rb_outofmemory(void) __attribute__((noreturn));
 
+#ifdef __clang__
+__attribute__((malloc, returns_nonnull))
+#else
+__attribute__((malloc, alloc_size(1), returns_nonnull))
+#endif
 static inline void *
 rb_malloc(size_t size)
 {
@@ -46,6 +51,11 @@ rb_malloc(size_t size)
 	return (ret);
 }
 
+#ifdef __clang__
+__attribute__((returns_nonnull))
+#else
+__attribute__((alloc_size(2), returns_nonnull))
+#endif
 static inline void *
 rb_realloc(void *x, size_t y)
 {
@@ -56,6 +66,7 @@ rb_realloc(void *x, size_t y)
 	return (ret);
 }
 
+__attribute__((returns_nonnull))
 static inline char *
 rb_strndup(const char *x, size_t y)
 {
@@ -66,6 +77,7 @@ rb_strndup(const char *x, size_t y)
 	return (ret);
 }
 
+__attribute__((returns_nonnull))
 static inline char *
 rb_strdup(const char *x)
 {
