@@ -48,6 +48,7 @@ char *rb_basename(const char *);
 char *rb_dirname(const char *);
 
 int rb_string_to_array(char *string, char **parv, int maxpara);
+size_t rb_array_to_string(int parc, const char **parv, char *buf, size_t max);
 
 typedef struct _rb_zstring
 {
