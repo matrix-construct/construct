@@ -1341,7 +1341,7 @@ user_welcome(struct Client *source_p)
 	sendto_one_numeric(source_p, RPL_YOURHOST, form_str(RPL_YOURHOST),
 		   get_listener_name(source_p->localClient->listener), ircd_version);
 	sendto_one_numeric(source_p, RPL_CREATED, form_str(RPL_CREATED), creation);
-	sendto_one_numeric(source_p, RPL_MYINFO, form_str(RPL_MYINFO), me.name, ircd_version, umodebuf, cflagsmyinfo);
+	sendto_one_numeric(source_p, RPL_MYINFO, form_str(RPL_MYINFO), me.name, ircd_version, umodebuf, chmode_arity[0], chmode_arity[1]);
 
 	show_isupport(source_p);
 

@@ -835,7 +835,7 @@ read_conf(void)
 	/* Some global values are also loaded here. */
 	check_class();		/* Make sure classes are valid */
 	privilegeset_delete_all_illegal();
-	construct_cflags_strings();
+	chmode_init();
 }
 
 static void

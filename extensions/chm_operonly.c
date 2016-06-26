@@ -25,7 +25,7 @@ static unsigned int mymode;
 static int
 _modinit(void)
 {
-	mymode = cflag_add('O', chm_staff);
+	mymode = cflag_add('O', CHM_D, chm_staff);
 	if (mymode == 0)
 		return -1;
 

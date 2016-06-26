@@ -26,6 +26,7 @@ _modinit(void)
 {
 	chmode_table['R'].set_func = chm_quietunreg;
 	chmode_table['R'].mode_type = 0;
+	chmode_table['R'].mode_class = CHM_D;
 
 	return 0;
 }
@@ -35,6 +36,7 @@ _moddeinit(void)
 {
 	chmode_table['R'].set_func = chm_nosuch;
 	chmode_table['R'].mode_type = 0;
+	chmode_table['R'].mode_class = 0;
 }
 
 static void

@@ -45,7 +45,7 @@ static int
 _modinit(void)
 {
 	/* initalize the +N cmode */
-	mymode = cflag_add('N', chm_simple);
+	mymode = cflag_add('N', CHM_D, chm_simple);
 	if (mymode == 0)
 		return -1;
 

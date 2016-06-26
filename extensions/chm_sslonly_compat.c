@@ -25,6 +25,7 @@ _modinit(void)
 {
 	chmode_table['S'].set_func = chm_sslonly;
 	chmode_table['S'].mode_type = 0;
+	chmode_table['S'].mode_class = CHM_D;
 
 	return 0;
 }
@@ -34,6 +35,7 @@ _moddeinit(void)
 {
 	chmode_table['S'].set_func = chm_nosuch;
 	chmode_table['S'].mode_type = 0;
+	chmode_table['S'].mode_class = 0;
 }
 
 static void

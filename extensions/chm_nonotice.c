@@ -66,7 +66,7 @@ chm_nonotice_process(hook_data_privmsg_channel *data)
 static int
 _modinit(void)
 {
-	mode_nonotice = cflag_add('T', chm_simple);
+	mode_nonotice = cflag_add('T', CHM_D, chm_simple);
 	if (mode_nonotice == 0)
 		return -1;
 

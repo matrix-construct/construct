@@ -802,8 +802,7 @@ charybdis_main(int argc, char * const argv[])
 	init_reject();
 	init_cache();
 	init_monitor();
-
-        construct_cflags_strings();
+	chmode_init();
 
 	init_authd();		/* Start up authd. */
 	init_dns();		/* Start up DNS query system */

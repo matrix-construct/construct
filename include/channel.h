@@ -25,15 +25,20 @@
 #ifndef INCLUDED_channel_h
 #define INCLUDED_channel_h
 
-#define MODEBUFLEN      200
+#include "setup.h"
+#include "chmode.h"
 
-/* Maximum mode changes allowed per client, per server is different */
-#define MAXMODEPARAMS   4
-#define MAXMODEPARAMSSERV 10
-
-#include <setup.h>
-
-struct Client;
+/* channel status flags */
+#define CHFL_PEON		0x0000	/* normal member of channel */
+#define CHFL_VOICE      	0x0001	/* the power to speak */
+#define CHFL_CHANOP	     	0x0002	/* Channel operator */
+#define CHFL_BANNED		0x0008  /* cached as banned */
+#define CHFL_QUIETED		0x0010  /* cached as being +q victim */
+#define ONLY_SERVERS		0x0020
+#define ONLY_OPERS		0x0040
+#define ALL_MEMBERS		CHFL_PEON
+#define ONLY_CHANOPS		CHFL_CHANOP
+#define ONLY_CHANOPSVOICED	(CHFL_CHANOP|CHFL_VOICE)
 
 /* mode structure for channels */
 struct Mode
@@ -121,61 +126,15 @@ struct ChModeChange
 	int mems;
 };
 
-typedef void (*ChannelModeFunc)(struct Client *source_p, struct Channel *chptr,
-		int alevel, int parc, int *parn,
-		const char **parv, int *errors, int dir, char c, long mode_type);
-
-struct ChannelMode
-{
-	ChannelModeFunc set_func;
-	long mode_type;
-};
-
-typedef int (*ExtbanFunc)(const char *data, struct Client *client_p,
-		struct Channel *chptr, long mode_type);
-
 /* can_send results */
 #define CAN_SEND_NO	0
 #define CAN_SEND_NONOP  1
 #define CAN_SEND_OPV	2
 
-/* channel status flags */
-#define CHFL_PEON		0x0000	/* normal member of channel */
-#define CHFL_VOICE      	0x0001	/* the power to speak */
-#define CHFL_CHANOP	     	0x0002	/* Channel operator */
-
-#define CHFL_BANNED		0x0008  /* cached as banned */
-#define CHFL_QUIETED		0x0010  /* cached as being +q victim */
-#define ONLY_SERVERS		0x0020
-#define ONLY_OPERS		0x0040
-#define ALL_MEMBERS		CHFL_PEON
-#define ONLY_CHANOPS		CHFL_CHANOP
-#define ONLY_CHANOPSVOICED	(CHFL_CHANOP|CHFL_VOICE)
-
 #define is_chanop(x)	((x) && (x)->flags & CHFL_CHANOP)
 #define is_voiced(x)	((x) && (x)->flags & CHFL_VOICE)
 #define is_chanop_voiced(x) ((x) && (x)->flags & (CHFL_CHANOP|CHFL_VOICE))
 #define can_send_banned(x) ((x) && (x)->flags & (CHFL_BANNED|CHFL_QUIETED))
-
-/* channel modes ONLY */
-#define MODE_PRIVATE    0x0001
-#define MODE_SECRET     0x0002
-#define MODE_MODERATED  0x0004
-#define MODE_TOPICLIMIT 0x0008
-#define MODE_INVITEONLY 0x0010
-#define MODE_NOPRIVMSGS 0x0020
-#define MODE_REGONLY	0x0040
-#define MODE_EXLIMIT	0x0100  /* exempt from list limits, +b/+e/+I/+q */
-#define MODE_PERMANENT  0x0200  /* permanant channel, +P */
-#define MODE_OPMODERATE 0x0400  /* send rejected messages to ops */
-#define MODE_FREEINVITE 0x0800  /* allow free use of /invite */
-#define MODE_FREETARGET 0x1000  /* can be forwarded to without authorization */
-#define MODE_DISFORWARD 0x2000  /* disable channel forwarding */
-
-#define CHFL_BAN        0x10000000	/* ban channel flag */
-#define CHFL_EXCEPTION  0x20000000	/* exception to ban channel flag */
-#define CHFL_INVEX      0x40000000
-#define CHFL_QUIET      0x80000000
 
 /* mode flags for direction indication */
 #define MODE_QUERY     0
@@ -194,11 +153,6 @@ typedef int (*ExtbanFunc)(const char *data, struct Client *client_p,
                 find_channel_membership(chan, who)) ? 1 : 0)
 
 #define IsChannelName(name) ((name) && (*(name) == '#' || *(name) == '&'))
-
-/* extban function results */
-#define EXTBAN_INVALID -1  /* invalid mask, false even if negated */
-#define EXTBAN_NOMATCH  0  /* valid mask, no match */
-#define EXTBAN_MATCH    1  /* matches */
 
 extern rb_dlink_list global_channel_list;
 void init_channels(void);
@@ -262,15 +216,11 @@ extern void set_channel_mode(struct Client *client_p, struct Client *source_p,
 extern void set_channel_mlock(struct Client *client_p, struct Client *source_p,
             	struct Channel *chptr, const char *newmlock, bool propagate);
 
-extern struct ChannelMode chmode_table[256];
-
 extern bool add_id(struct Client *source_p, struct Channel *chptr, const char *banid,
 	const char *forward, rb_dlink_list * list, long mode_type);
 
 extern struct Ban * del_id(struct Channel *chptr, const char *banid, rb_dlink_list * list,
 	long mode_type);
-
-extern ExtbanFunc extban_table[256];
 
 extern int match_extban(const char *banstr, struct Client *client_p, struct Channel *chptr, long mode_type);
 extern int valid_extban(const char *banstr, struct Client *client_p, struct Channel *chptr, long mode_type);

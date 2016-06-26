@@ -66,7 +66,7 @@ chm_noctcp_process(hook_data_privmsg_channel *data)
 static int
 _modinit(void)
 {
-	mode_noctcp = cflag_add('C', chm_simple);
+	mode_noctcp = cflag_add('C', CHM_D, chm_simple);
 	if (mode_noctcp == 0)
 		return -1;
 

@@ -31,7 +31,7 @@
 #define NUMERIC_STR_1        ":Welcome to the %s Internet Relay Chat Network %s"
 #define NUMERIC_STR_2        ":Your host is %s, running version %s"
 #define NUMERIC_STR_3        ":This server was created %s"
-#define NUMERIC_STR_4        "%s %s %s %s bkloveqjfI"
+#define NUMERIC_STR_4        "%s %s %s %s %s"
 #define NUMERIC_STR_5        "%s :are supported by this server"
 #define NUMERIC_STR_8        "%s :Server notice mask"
 #define NUMERIC_STR_10       "%s %d :Please use this Server/Port instead"

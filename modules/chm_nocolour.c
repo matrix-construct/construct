@@ -66,7 +66,7 @@ chm_nocolour_process(hook_data_privmsg_channel *data)
 static int
 _modinit(void)
 {
-	mode_nocolour = cflag_add('c', chm_simple);
+	mode_nocolour = cflag_add('c', CHM_D, chm_simple);
 	if (mode_nocolour == 0)
 		return -1;
 
