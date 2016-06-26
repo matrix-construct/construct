@@ -36,8 +36,9 @@
 
 static const char modules_desc[] = "Provides module management commands";
 
+static void m_modlist(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+
 static void mo_modload(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void mo_modlist(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static void mo_modreload(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static void mo_modunload(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static void mo_modrestart(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
@@ -71,7 +72,7 @@ struct Message modreload_msgtab = {
 
 struct Message modlist_msgtab = {
 	"MODLIST", 0, 0, 0, 0,
-	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, {me_modlist, 0}, {mo_modlist, 0}}
+	{mg_unreg, {m_modlist, 0}, mg_ignore, mg_ignore, {me_modlist, 0}, {m_modlist, 0}}
 };
 
 struct Message modrestart_msgtab = {
@@ -191,7 +192,7 @@ me_modreload(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *so
 
 /* list modules .. */
 static void
-mo_modlist(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+m_modlist(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {
 	if(!IsOperAdmin(source_p))
 	{
@@ -214,13 +215,6 @@ mo_modlist(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 static void
 me_modlist(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {
-	if(!find_shared_conf(source_p->username, source_p->host, source_p->servptr->name, SHARED_MODULE))
-	{
-		sendto_one_notice(source_p, ":*** You do not have an appropriate shared block "
-				"to load modules on this server.");
-		return;
-	}
-
 	do_modlist(source_p, parv[1]);
 }
 
@@ -384,19 +378,27 @@ do_modlist(struct Client *source_p, const char *pattern)
 	RB_DLINK_FOREACH(ptr, module_list.head)
 	{
 		struct module *mod = ptr->data;
+		bool display = false;
 		const char *origin;
+
 		switch (mod->origin)
 		{
 		case MAPI_ORIGIN_EXTENSION:
 			origin = "extension";
+			display = true;
 			break;
 		case MAPI_ORIGIN_CORE:
 			origin = "builtin";
+			display = IsOper(source_p);
 			break;
 		default:
 			origin = "unknown";
+			display = IsOper(source_p);
 			break;
 		}
+
+		if(!display)
+			continue;
 
 		if(pattern)
 		{
