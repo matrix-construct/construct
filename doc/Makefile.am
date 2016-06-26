@@ -8,7 +8,7 @@ localstatedir	= @localstatedir@
 
 # Local to the etc Makefile
 
-CONFS		= ircd.conf.example reference.conf
+CONFS		= ircd.conf.example reference.conf spamfilter.conf.example
 
 install-mkdirs:
 	-@if test ! -d $(DESTDIR)$(sysconfdir); then \
