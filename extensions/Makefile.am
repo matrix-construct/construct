@@ -73,3 +73,11 @@ extension_LTLIBRARIES =		\
   spy_stats_p_notice.la		\
   spy_trace_notice.la		\
   example_module.la
+
+if PCRE
+
+extension_LTLIBRARIES += spamfilter_expr.la
+spamfilter_expr_la_CPPFLAGS = $(AM_CPPFLAGS) $(PCRE_CFLAGS)
+spamfilter_expr_la_LIBADD = $(PCRE_LIBS)
+
+endif
