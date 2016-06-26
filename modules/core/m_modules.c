@@ -194,13 +194,6 @@ me_modreload(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *so
 static void
 m_modlist(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {
-	if(!IsOperAdmin(source_p))
-	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS),
-			   me.name, source_p->name, "admin");
-		return;
-	}
-
 	if(parc > 2)
 	{
 		sendto_match_servs(source_p, parv[2], CAP_ENCAP, NOCAPS,
@@ -209,7 +202,7 @@ m_modlist(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 			return;
 	}
 
-	do_modlist(source_p, parc > 1 ? parv[1] : 0);
+	do_modlist(source_p, parc > 1 ? parv[1] : NULL);
 }
 
 static void
