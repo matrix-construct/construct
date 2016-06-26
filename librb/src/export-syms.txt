@@ -140,6 +140,7 @@ rb_radixtree_retrieve
 rb_radixtree_size
 rb_radixtree_stats
 rb_radixtree_stats_walk
+rb_radixtree_destroy
 rb_rawbuf_append
 rb_rawbuf_flush
 rb_rawbuf_get
