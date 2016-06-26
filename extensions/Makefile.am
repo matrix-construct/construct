@@ -1,7 +1,7 @@
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/librb/include $(LTDLINCL)
 AM_LDFLAGS  = -module -export-dynamic -avoid-version -no-undefined -shared
 AM_LDFLAGS += -export-symbols-regex _mheader
-LIBS += $(top_srcdir)/ircd/libircd.la
+LIBS += $(top_srcdir)/librb/src/librb.la $(top_srcdir)/ircd/libircd.la
 
 extensiondir=@moduledir@/extensions
 
@@ -64,6 +64,7 @@ extension_LTLIBRARIES =		\
   no_kill_services.la		\
   no_locops.la			\
   no_oper_invis.la		\
+  spamfilter_nicks.la		\
   spy_admin_notice.la		\
   spy_info_notice.la		\
   spy_links_notice.la		\
