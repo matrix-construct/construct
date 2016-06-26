@@ -13,6 +13,7 @@ extension_LTLIBRARIES =		\
   chm_nonotice.la		\
   chm_operpeace.la		\
   chm_quietunreg_compat.la	\
+  chm_spamfilter.la		\
   chm_sslonly.la		\
   chm_sslonly_compat.la		\
   createauthonly.la		\
