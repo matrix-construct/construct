@@ -30,6 +30,7 @@ AM_PROG_AR
 LT_INIT([dlopen disable-static])
 LT_CONFIG_LTDL_DIR([libltdl])
 LTDL_INIT
+PKG_PROG_PKG_CONFIG
 
 build_ltdl=$with_included_ltdl
 AM_CONDITIONAL([BUILD_LTDL], [test x"$build_ltdl" = x"yes"])
@@ -364,6 +365,12 @@ AC_SUBST(SQLITE_LD, "$SQLITE_LIBS")
 AC_SUBST(SQLITE_INCLUDES, "$SQLITE_CFLAGS")
 AC_SUBST(SQLITE_OBJ)
 
+dnl Check for PCRE2
+dnl ===============
+
+PKG_CHECK_MODULES(PCRE, [libpcre2-8], [have_pcre="yes"], [have_pcre="no"])
+AM_CONDITIONAL([PCRE], [test "x$have_pcre" = "xyes"])
+
 dnl **********************************************************************
 dnl Check for --with-confdir [deprecated, use --sysconfdir instead]
 dnl **********************************************************************
@@ -681,6 +688,7 @@ Configuration of ${BRANDING_NAME}-${BRANDING_VERSION}:
 
 	Ziplinks           : $zlib
 	OpenSSL            : $openssl
+	PCRE               : $have_pcre
 
 	Nickname length    : $NICKLEN
 	Topic length       : $TOPICLEN
