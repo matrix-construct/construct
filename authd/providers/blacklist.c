@@ -433,7 +433,7 @@ blacklists_cancel(struct auth_client *auth)
 static void
 blacklists_timeout(struct auth_client *auth)
 {
-	blacklists_generic_cancel(auth, "*** DNS blacklist checks timed out");
+	blacklists_generic_cancel(auth, "*** No response from DNS blacklists");
 }
 
 static void
