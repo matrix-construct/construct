@@ -324,7 +324,7 @@ lookup_all_blacklists(struct auth_client *auth)
 	{
 		struct blacklist *bl = (struct blacklist *)ptr->data;
 
-		if (!bl->delete && bl->iptype & iptype)
+		if (!bl->delete && (bl->iptype & iptype))
 			initiate_blacklist_dnsquery(bl, auth);
 	}
 
