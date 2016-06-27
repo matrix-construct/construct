@@ -257,5 +257,6 @@ pid_t rb_getpid(void);
 #include <rb_helper.h>
 #include <rb_rawbuf.h>
 #include <rb_patricia.h>
+#include <rb_dictionary.h>
 
 #endif
