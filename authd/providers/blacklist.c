@@ -392,7 +392,7 @@ blacklists_initiate(struct auth_client *auth, uint32_t provider)
 }
 
 static void
-blacklists_cancel(struct auth_client *auth)
+blacklists_generic_cancel(struct auth_client *auth, const char *message)
 {
 	rb_dlink_node *ptr, *nptr;
 	struct blacklist_user *bluser = get_provider_data(auth, SELF_PID);
@@ -402,7 +402,7 @@ blacklists_cancel(struct auth_client *auth)
 
 	if(rb_dlink_list_length(&bluser->queries))
 	{
-		notice_client(auth->cid, "*** Aborting DNS blacklist queries");
+		notice_client(auth->cid, message);
 
 		RB_DLINK_FOREACH_SAFE(ptr, nptr, bluser->queries.head)
 		{
@@ -422,6 +422,18 @@ blacklists_cancel(struct auth_client *auth)
 	provider_done(auth, SELF_PID);
 
 	auth_client_unref(auth);
+}
+
+static void
+blacklists_cancel(struct auth_client *auth)
+{
+	blacklists_generic_cancel(auth, "*** Aborting DNS blacklist checks");
+}
+
+static void
+blacklists_timeout(struct auth_client *auth)
+{
+	blacklists_generic_cancel(auth, "*** DNS blacklist checks timed out");
 }
 
 static void
@@ -568,7 +580,7 @@ struct auth_provider blacklist_provider =
 	.destroy = blacklists_destroy,
 	.start = blacklists_start,
 	.cancel = blacklists_cancel,
-	.timeout = blacklists_cancel,
+	.timeout = blacklists_timeout,
 	.completed = blacklists_initiate,
 	.opt_handlers = blacklist_options,
 	/* .stats_handler = { 'B', blacklist_stats }, */
