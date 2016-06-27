@@ -24,65 +24,67 @@
  */
 
 #ifndef RB_LIB_H
-# error "Do not use tools.h directly"
+	#error "Do not use rb_dlink.h directly"
 #endif
 
 #ifndef __DLINK_H__
 #define __DLINK_H__
 
-/*
- * double-linked-list stuff
- */
-typedef struct _rb_dlink_node rb_dlink_node;
-typedef struct _rb_dlink_list rb_dlink_list;
 
-struct _rb_dlink_node
+typedef struct rb_dlink_node
 {
 	void *data;
-	rb_dlink_node *prev;
-	rb_dlink_node *next;
+	struct rb_dlink_node *prev;
+	struct rb_dlink_node *next;
+}
+rb_dlink_node;
 
-};
-
-struct _rb_dlink_list
+typedef struct rb_dlink_list
 {
 	rb_dlink_node *head;
 	rb_dlink_node *tail;
 	unsigned long length;
-};
+}
+rb_dlink_list;
 
+
+// Utils
+#define rb_dlink_list_length(list) (list)->length
+
+// XXX I'd like to remove this interface, it's not safe.
 rb_dlink_node *rb_make_rb_dlink_node(void);
 void rb_free_rb_dlink_node(rb_dlink_node *lp);
 void rb_init_rb_dlink_nodes(size_t dh_size);
+#define rb_dlinkAddAlloc(data, list) rb_dlinkAdd(data, rb_make_rb_dlink_node(), list)
+#define rb_dlinkAddTailAlloc(data, list) rb_dlinkAddTail(data, rb_make_rb_dlink_node(), list)
+#define rb_dlinkDestroy(node, list) do { rb_dlinkDelete(node, list); rb_free_rb_dlink_node(node); } while(0)
+
+// Vintage
+static void rb_dlinkAdd(void *data, rb_dlink_node *m, rb_dlink_list *list);
+static void rb_dlinkAddBefore(rb_dlink_node *b, void *data, rb_dlink_node *m, rb_dlink_list *list);
+static void rb_dlinkAddTail(void *data, rb_dlink_node *m, rb_dlink_list *list);
+static rb_dlink_node *rb_dlinkFindDelete(void *data, rb_dlink_list *list);
+static int rb_dlinkFindDestroy(void *data, rb_dlink_list *list);
+static rb_dlink_node *rb_dlinkFind(void *data, rb_dlink_list *list);
+static void rb_dlinkMoveNode(rb_dlink_node *m, rb_dlink_list *oldlist, rb_dlink_list *newlist);
+static void rb_dlinkMoveTail(rb_dlink_node *m, rb_dlink_list *list);
+static void rb_dlinkDelete(rb_dlink_node *m, rb_dlink_list *list);
+static void rb_dlinkMoveList(rb_dlink_list *from, rb_dlink_list *to);
 
 /* This macros are basically swiped from the linux kernel
  * they are simple yet effective
  */
+// Usage: rb_dlink_node *n; RB_DLINK_FOREACH(n, list.head) { ... }
+#define RB_DLINK_FOREACH(node, head)         for(node = (head); node != NULL; node = node->next)
+#define RB_DLINK_FOREACH_PREV(node, head)    for(node = (head); node != NULL; node = node->prev)
 
-/*
- * Walks forward of a list.
- * pos is your node
- * head is your list head
- */
-#define RB_DLINK_FOREACH(pos, head) for (pos = (head); pos != NULL; pos = pos->next)
+// Allows for modifying the list during iteration.
+// Usage: rb_dlink_node *cur, *nxt; RB_DLINK_FOREACH_SAFE(cur, nxt, list.head) { ... }
+#define RB_DLINK_FOREACH_SAFE(cur, nxt, head) \
+	for(cur = (head), nxt = cur? cur->next : NULL; cur != NULL; cur = nxt, nxt = cur? cur->next : NULL)
 
-/*
- * Walks forward of a list safely while removing nodes
- * pos is your node
- * n is another list head for temporary storage
- * head is your list head
- */
-#define RB_DLINK_FOREACH_SAFE(pos, n, head) for (pos = (head), n = pos ? pos->next : NULL; pos != NULL; pos = n, n = pos ? pos->next : NULL)
-
-#define RB_DLINK_FOREACH_PREV(pos, head) for (pos = (head); pos != NULL; pos = pos->prev)
-
-
-/* Returns the list length */
-#define rb_dlink_list_length(list) (list)->length
-
-#define rb_dlinkAddAlloc(data, list) rb_dlinkAdd(data, rb_make_rb_dlink_node(), list)
-#define rb_dlinkAddTailAlloc(data, list) rb_dlinkAddTail(data, rb_make_rb_dlink_node(), list)
-#define rb_dlinkDestroy(node, list) do { rb_dlinkDelete(node, list); rb_free_rb_dlink_node(node); } while(0)
+#define RB_DLINK_FOREACH_PREV_SAFE(cur, pre, head) \
+	for(cur = (head), pre = cur? cur->prev : NULL; cur != NULL; cur = pre, pre = cur? cur->prev : NULL)
 
 
 /*
