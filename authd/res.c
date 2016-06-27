@@ -482,26 +482,33 @@ void build_rdns(char *buf, size_t size, const struct rb_sockaddr_storage *addr, 
 		const struct sockaddr_in6 *v6 = (const struct sockaddr_in6 *)addr;
 		cp = (const unsigned char *)&v6->sin6_addr.s6_addr;
 
+#define HI_NIBBLE(x) (unsigned int)((x) >> 4)
+#define LO_NIBBLE(x) (unsigned int)((x) & 0xf)
+
 		(void) snprintf(buf, size,
 			"%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%s",
-			(unsigned int)(cp[15] & 0xf), (unsigned int)(cp[15] >> 4),
-			(unsigned int)(cp[14] & 0xf), (unsigned int)(cp[14] >> 4),
-			(unsigned int)(cp[13] & 0xf), (unsigned int)(cp[13] >> 4),
-			(unsigned int)(cp[12] & 0xf), (unsigned int)(cp[12] >> 4),
-			(unsigned int)(cp[11] & 0xf), (unsigned int)(cp[11] >> 4),
-			(unsigned int)(cp[10] & 0xf), (unsigned int)(cp[10] >> 4),
-			(unsigned int)(cp[9] & 0xf), (unsigned int)(cp[9] >> 4),
-			(unsigned int)(cp[8] & 0xf), (unsigned int)(cp[8] >> 4),
-			(unsigned int)(cp[7] & 0xf), (unsigned int)(cp[7] >> 4),
-			(unsigned int)(cp[6] & 0xf), (unsigned int)(cp[6] >> 4),
-			(unsigned int)(cp[5] & 0xf), (unsigned int)(cp[5] >> 4),
-			(unsigned int)(cp[4] & 0xf), (unsigned int)(cp[4] >> 4),
-			(unsigned int)(cp[3] & 0xf), (unsigned int)(cp[3] >> 4),
-			(unsigned int)(cp[2] & 0xf), (unsigned int)(cp[2] >> 4),
-			(unsigned int)(cp[1] & 0xf), (unsigned int)(cp[1] >> 4),
-			(unsigned int)(cp[0] & 0xf), (unsigned int)(cp[0] >> 4),
+			LO_NIBBLE(cp[15]), HI_NIBBLE(cp[15]),
+			LO_NIBBLE(cp[14]), HI_NIBBLE(cp[14]),
+			LO_NIBBLE(cp[13]), HI_NIBBLE(cp[13]),
+			LO_NIBBLE(cp[12]), HI_NIBBLE(cp[12]),
+			LO_NIBBLE(cp[11]), HI_NIBBLE(cp[11]),
+			LO_NIBBLE(cp[10]), HI_NIBBLE(cp[10]),
+			LO_NIBBLE(cp[9]),  HI_NIBBLE(cp[9]),
+			LO_NIBBLE(cp[8]),  HI_NIBBLE(cp[8]),
+			LO_NIBBLE(cp[7]),  HI_NIBBLE(cp[7]),
+			LO_NIBBLE(cp[6]),  HI_NIBBLE(cp[6]),
+			LO_NIBBLE(cp[5]),  HI_NIBBLE(cp[5]),
+			LO_NIBBLE(cp[4]),  HI_NIBBLE(cp[4]),
+			LO_NIBBLE(cp[3]),  HI_NIBBLE(cp[3]),
+			LO_NIBBLE(cp[2]),  HI_NIBBLE(cp[2]),
+			LO_NIBBLE(cp[1]),  HI_NIBBLE(cp[1]),
+			LO_NIBBLE(cp[0]),  HI_NIBBLE(cp[0]),
 			suffix == NULL ? "ip6.arpa" : suffix);
 	}
+
+#undef HI_NIBBLE
+#undef LO_NIBBLE
+
 #endif
 }
 

@@ -292,7 +292,6 @@ initiate_blacklist_dnsquery(struct blacklist *bl, struct auth_client *auth)
 	}
 
 	build_rdns(buf, sizeof(buf), &auth->c_addr, bl->host);
-
 	bllookup->query = lookup_ip(buf, AF_INET, blacklist_dns_callback, bllookup);
 
 	rb_dlinkAdd(bllookup, &bllookup->node, &bluser->queries);
