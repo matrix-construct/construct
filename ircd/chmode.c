@@ -72,80 +72,34 @@ char chmode_arity[2][256];          // RPL_MYINFO (note that [0] is for 0 OR MOR
 char chmode_class[4][256];          // RPL_ISUPPORT classification
 struct Chm chmode_table[256] =
 {
-	/* 0x00 */ {},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, /* 0x0F */
-	/* 0x10 */ {},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, /* 0x1F */
-	/* 0x20 */ {},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, /* 0x2F */
-	/* 0x30 */ {},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, /* 0x3F */
-
 	// Leading tab only please:
-	// <tab>{<sp>handler,<sp>class,<sp>flag<sp>},<sp> /* X */
+	// <tab>['X'] = {<sp>handler,<sp>class,<sp>flag<sp>},
 
-	{                                             },  /* @ */
-	{                                             },  /* A */
-	{                                             },  /* B */
-	{ 0,              CHM_D,    0                 },  /* C */
-	{                                             },  /* D */
-	{                                             },  /* E */
-	{ chm_simple,     CHM_D,    MODE_FREETARGET   },  /* F */
-	{                                             },  /* G */
-	{                                             },  /* H */
-	{ chm_ban,        CHM_A,    CHFL_INVEX        },  /* I */
-	{                                             },  /* J */
-	{                                             },  /* K */
-	{ chm_staff,      CHM_D,    MODE_EXLIMIT      },  /* L */
-	{                                             },  /* M */
-	{                                             },  /* N */
-	{                                             },  /* O */
-	{ chm_staff,      CHM_D,    MODE_PERMANENT    },  /* P */
-	{ chm_simple,     CHM_D,    MODE_DISFORWARD   },  /* Q */
-	{                                             },  /* R */
-	{                                             },  /* S */
-	{                                             },  /* T */
-	{                                             },  /* U */
-	{                                             },  /* V */
-	{                                             },  /* W */
-	{                                             },  /* X */
-	{                                             },  /* Y */
-	{                                             },  /* Z */
+	['C'] = { 0,              CHM_D,    0                 },
+	['F'] = { chm_simple,     CHM_D,    MODE_FREETARGET   },
+	['I'] = { chm_ban,        CHM_A,    CHFL_INVEX        },
+	['L'] = { chm_staff,      CHM_D,    MODE_EXLIMIT      },
+	['P'] = { chm_staff,      CHM_D,    MODE_PERMANENT    },
+	['Q'] = { chm_simple,     CHM_D,    MODE_DISFORWARD   },
 
-	/* 0x5B */ {},{},{},{},{},{}, /* 0x60 */
-
-	{                                             },  /* a */
-	{ chm_ban,        CHM_A,    CHFL_BAN          },  /* b */
-	{                                             },  /* c */
-	{                                             },  /* d */
-	{ chm_ban,        CHM_A,    CHFL_EXCEPTION    },  /* e */
-	{ chm_forward,    CHM_C,    0                 },  /* f */
-	{ chm_simple,     CHM_D,    MODE_FREEINVITE   },  /* g */
-	{                                             },  /* h */
-	{ chm_simple,     CHM_D,    MODE_INVITEONLY   },  /* i */
-	{ chm_throttle,   CHM_C,    0                 },  /* j */
-	{ chm_key,        CHM_B,    0                 },  /* k */
-	{ chm_limit,      CHM_C,    0                 },  /* l */
-	{ chm_simple,     CHM_D,    MODE_MODERATED    },  /* m */
-	{ chm_simple,     CHM_D,    MODE_NOPRIVMSGS   },  /* n */
-	{ chm_op,         CHM_B,    0                 },  /* o */
-	{ chm_simple,     CHM_D,    MODE_PRIVATE      },  /* p */
-	{ chm_ban,        CHM_A,    CHFL_QUIET        },  /* q */
-	{ chm_simple,     CHM_D,    MODE_REGONLY      },  /* r */
-	{ chm_simple,     CHM_D,    MODE_SECRET       },  /* s */
-	{ chm_simple,     CHM_D,    MODE_TOPICLIMIT   },  /* t */
-	{                                             },  /* u */
-	{ chm_voice,      CHM_B,    0                 },  /* v */
-	{                                             },  /* w */
-	{                                             },  /* x */
-	{                                             },  /* y */
-	{ chm_simple,     CHM_D,    MODE_OPMODERATE   },  /* z */
-
-	/* 0x7B */ {},{},{},{},{}, /* 0x7F */
-	/* 0x80 */ {},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, /* 0x9F */
-	/* 0x90 */ {},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, /* 0x9F */
-	/* 0xA0 */ {},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, /* 0xAF */
-	/* 0xB0 */ {},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, /* 0xBF */
-	/* 0xC0 */ {},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, /* 0xCF */
-	/* 0xD0 */ {},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, /* 0xDF */
-	/* 0xE0 */ {},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, /* 0xEF */
-	/* 0xF0 */ {},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}, /* 0xFF */
+	['b'] = { chm_ban,        CHM_A,    CHFL_BAN          },
+	['e'] = { chm_ban,        CHM_A,    CHFL_EXCEPTION    },
+	['f'] = { chm_forward,    CHM_C,    0                 },
+	['g'] = { chm_simple,     CHM_D,    MODE_FREEINVITE   },
+	['i'] = { chm_simple,     CHM_D,    MODE_INVITEONLY   },
+	['j'] = { chm_throttle,   CHM_C,    0                 },
+	['k'] = { chm_key,        CHM_B,    0                 },
+	['l'] = { chm_limit,      CHM_C,    0                 },
+	['m'] = { chm_simple,     CHM_D,    MODE_MODERATED    },
+	['n'] = { chm_simple,     CHM_D,    MODE_NOPRIVMSGS   },
+	['o'] = { chm_op,         CHM_B,    0                 },
+	['p'] = { chm_simple,     CHM_D,    MODE_PRIVATE      },
+	['q'] = { chm_ban,        CHM_A,    CHFL_QUIET        },
+	['r'] = { chm_simple,     CHM_D,    MODE_REGONLY      },
+	['s'] = { chm_simple,     CHM_D,    MODE_SECRET       },
+	['t'] = { chm_simple,     CHM_D,    MODE_TOPICLIMIT   },
+	['v'] = { chm_voice,      CHM_B,    0                 },
+	['z'] = { chm_simple,     CHM_D,    MODE_OPMODERATE   },
 };
 
 
