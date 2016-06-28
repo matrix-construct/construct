@@ -100,7 +100,7 @@ struct blacklist_user
 static void blacklists_destroy(void);
 
 static bool blacklists_start(struct auth_client *);
-static inline void blacklists_generic_cancel(struct auth_client *);
+static inline void blacklists_generic_cancel(struct auth_client *, const char *);
 static void blacklists_timeout(struct auth_client *);
 static void blacklists_cancel(struct auth_client *);
 static void blacklists_cancel_none(struct auth_client *);
@@ -309,7 +309,7 @@ lookup_all_blacklists(struct auth_client *auth)
 	int iptype;
 
 	if(GET_SS_FAMILY(&auth->c_addr) == AF_INET)
-		iptype = IPTYPE_IPv4;
+		iptype = IPTYPE_IPV4;
 #ifdef RB_IPV6
 	else if(GET_SS_FAMILY(&auth->c_addr) == AF_INET6)
 		iptype = IPTYPE_IPV6;
