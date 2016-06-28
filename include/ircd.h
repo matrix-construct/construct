@@ -61,7 +61,7 @@ extern const char *creation;
 extern const char *generation;
 extern const char *infotext[];
 extern const char *serno;
-extern const unsigned long int datecode;
+extern const time_t datecode;
 extern const char *ircd_version;
 extern const char *logFileName;
 extern const char *pidFileName;

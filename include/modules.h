@@ -109,7 +109,7 @@ struct mapi_mheader_av2
 	mapi_cap_list_av2 *mapi_cap_list;	/* List of CAPs to add */
 	const char *mapi_module_version;	/* Module's version (freeform), replaced with ircd version if NULL */
 	const char *mapi_module_description;	/* Module's description (freeform) */
-	unsigned long int mapi_datecode;	/* Unix timestamp of module's build */
+	time_t mapi_datecode;	/* Unix timestamp of module's build */
 };
 
 #define DECLARE_MODULE_AV1(name, reg, unreg, cl, hl, hfnlist, v) \

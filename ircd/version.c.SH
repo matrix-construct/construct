@@ -57,7 +57,7 @@ const char *generation = "$generation";
 const char *creation = "$creation";
 const char *ircd_version = PATCHLEVEL;
 const char *serno = SERNO;
-const unsigned long int datecode = DATECODE;
+const time_t datecode = DATECODE;
 
 const char *infotext[] =
 {
