@@ -100,9 +100,10 @@ struct blacklist_user
 static void blacklists_destroy(void);
 
 static bool blacklists_start(struct auth_client *);
-static void blacklists_generic_cancel(struct auth_client *);
+static inline void blacklists_generic_cancel(struct auth_client *);
 static void blacklists_timeout(struct auth_client *);
 static void blacklists_cancel(struct auth_client *);
+static void blacklists_cancel_none(struct auth_client *);
 
 /* private interfaces */
 static void unref_blacklist(struct blacklist *);
@@ -382,7 +383,7 @@ blacklists_start(struct auth_client *auth)
 		/* Start the lookup if ident and rdns are finished, or not loaded. */
 		if(!lookup_all_blacklists(auth))
 		{
-			blacklists_generic_cancel(auth, "*** Could not do DNS blacklist checks");
+			blacklists_cancel_none(auth);
 			return true;
 		}
 	}
@@ -414,11 +415,11 @@ blacklists_initiate(struct auth_client *auth, uint32_t provider)
 	else
 	{
 		if(!lookup_all_blacklists(auth))
-			blacklists_generic_cancel(auth, "*** Could not do DNS blacklist checks");
+			blacklists_cancel_none(auth);
 	}
 }
 
-static void
+static inline void
 blacklists_generic_cancel(struct auth_client *auth, const char *message)
 {
 	rb_dlink_node *ptr, *nptr;
@@ -452,15 +453,21 @@ blacklists_generic_cancel(struct auth_client *auth, const char *message)
 }
 
 static void
+blacklists_timeout(struct auth_client *auth)
+{
+	blacklists_generic_cancel(auth, "*** No response from DNS blacklists");
+}
+
+static void
 blacklists_cancel(struct auth_client *auth)
 {
 	blacklists_generic_cancel(auth, "*** Aborting DNS blacklist checks");
 }
 
 static void
-blacklists_timeout(struct auth_client *auth)
+blacklists_cancel_none(struct auth_client *auth)
 {
-	blacklists_generic_cancel(auth, "*** No response from DNS blacklists");
+	blacklists_generic_cancel(auth, "*** Could not check DNS blacklists");
 }
 
 static void
