@@ -146,13 +146,16 @@ char *rb_strerror(int error);
 #endif
 
 #ifdef __GNUC__
-#define slrb_assert(expr)	do								\
-			if(rb_unlikely(!(expr))) {							\
-				rb_lib_log( 						\
-				"file: %s line: %d (%s): Assertion failed: (%s)",	\
-				__FILE__, __LINE__, __PRETTY_FUNCTION__, #expr); 	\
-			}								\
-			while(0)
+#define slrb_assert(expr) do                                                 \
+{                                                                            \
+    if(rb_unlikely(!(expr)))                                                 \
+    {                                                                        \
+        rb_lib_log("file: %s line: %d (%s): Assertion failed: (%s)",         \
+        __FILE__, __LINE__, __PRETTY_FUNCTION__, #expr);                     \
+        rb_backtrace_log_symbols();                                          \
+    }                                                                        \
+}                                                                            \
+while(0)
 #else
 #define slrb_assert(expr)	do								\
 			if(rb_unlikely(!(expr))) {							\
@@ -263,6 +266,10 @@ int rb_setenv(const char *, const char *, int);
 pid_t rb_waitpid(pid_t pid, int *status, int options);
 pid_t rb_getpid(void);
 //unsigned int rb_geteuid(void);
+
+void *const *rb_backtrace(int *len);                 // writes to and returns static vector (*len indicates element count)
+const char *const *rb_backtrace_symbols(int *len);   // translates rb_backtrace(), all static
+void rb_backtrace_log_symbols(void);                 // rb_backtrace_symbols piped to rb_lib_log()
 
 
 #include <rb_tools.h>

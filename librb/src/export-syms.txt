@@ -1,6 +1,9 @@
 make_and_lookup
 make_and_lookup_ip
 rb_accept_tcp
+rb_backtrace
+rb_backtrace_symbols
+rb_backtrace_log_symbols
 rb_base64_decode
 rb_base64_encode
 rb_basename
