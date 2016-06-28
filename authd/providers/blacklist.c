@@ -333,6 +333,8 @@ lookup_all_blacklists(struct auth_client *auth)
 		return false;
 
 	set_provider_timeout_relative(auth, SELF_PID, blacklist_timeout);
+
+	return true;
 }
 
 static inline void
