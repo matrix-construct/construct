@@ -11,10 +11,12 @@ AC_USE_SYSTEM_EXTENSIONS
 AC_GNU_SOURCE
 
 AC_PROG_CC_C99
-
 if test x"$ac_cv_prog_cc_c99" = "xno"; then
 	AC_ERROR([charybdis requires a C99 capable compiler])
 fi
+
+AC_PROG_CXX
+AX_CXX_COMPILE_STDCXX_14([ext], [mandatory])
 
 AC_PREFIX_DEFAULT($HOME/ircd)
 AC_CONFIG_MACRO_DIR([m4])
