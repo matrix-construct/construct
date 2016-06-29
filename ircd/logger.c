@@ -163,33 +163,38 @@ close_logfiles(void)
 	}
 }
 
-void
-ilog(ilogfile dest, const char *format, ...)
-{
-	FILE *logfile = *log_table[dest].logfile;
-	char buf[BUFSIZE];
-	char buf2[BUFSIZE];
-	va_list args;
 
-	if(logfile == NULL)
+static void
+log_va(const ilogfile dest, const unsigned int snomask, const char *const fmt, va_list ap)
+{
+	FILE *const logfile = *log_table[dest].logfile;
+	if(!logfile && !snomask)
 		return;
 
-	va_start(args, format);
-	vsnprintf(buf, sizeof(buf), format, args);
-	va_end(args);
+	char buf[BUFSIZE];
+	vsnprintf(buf, sizeof(buf), fmt, ap);
 
-	snprintf(buf2, sizeof(buf2), "%s %s\n",
-			smalldate(rb_current_time()), buf);
+	if(snomask)
+		sendto_realops_snomask(snomask, L_ALL, "%s", buf);
 
-	if(fputs(buf2, logfile) < 0)
+	if(fprintf(logfile, "%s %s\n", smalldate(rb_current_time()), buf) < 0)
 	{
 		fclose(logfile);
 		*log_table[dest].logfile = NULL;
-		return;
+	} else {
+		fflush(logfile);
 	}
-
-	fflush(logfile);
 }
+
+void
+ilog(ilogfile dest, const char *format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	log_va(dest, 0, format, args);
+	va_end(args);
+}
+
 
 static void
 _iprint(const char *domain, const char *buf)
@@ -308,4 +313,21 @@ ilog_error(const char *error)
 	ilog(L_IOERROR, "%s: %d (%s)", error, e, errstr);
 	sendto_realops_snomask(SNO_DEBUG, L_ALL, "%s: %d (%s)",
 			error, e, errstr);
+}
+
+
+void
+vslog(const ilogfile dest, const unsigned int snomask, const char *const fmt, va_list ap)
+{
+	log_va(dest, snomask, fmt, ap);
+}
+
+
+void
+slog(const ilogfile dest, const unsigned int snomask, const char *const fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	vslog(dest, snomask, fmt, ap);
+	va_end(ap);
 }

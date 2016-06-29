@@ -138,6 +138,36 @@ rb_string_to_array(char *string, char **parv, int maxpara)
 	return x;
 }
 
+
+/* rb_array_to_string()
+ *  Inverse of rb_string_to_array()
+ * - space for delim
+ * - ':' prefixed at last parameter
+ */
+size_t
+rb_array_to_string(int parc, const char **parv, char *buf, size_t max)
+{
+	size_t ret = 0;
+	if(rb_unlikely(!max))
+		return ret;
+
+	buf[0] = '\0';
+	for(int i = 0; i < parc - 1; ++i)
+	{
+		ret = rb_strlcat(buf, parv[i], max);
+		ret = rb_strlcat(buf, " ", max);
+	}
+
+	if(parc)
+	{
+		ret = rb_strlcat(buf, ":", max);
+		ret = rb_strlcat(buf, parv[parc - 1], max);
+	}
+
+	return ret;
+}
+
+
 #ifndef HAVE_STRCASECMP
 #ifndef _WIN32
 /* Fallback taken from FreeBSD. --Elizafox */

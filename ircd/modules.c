@@ -276,8 +276,564 @@ load_one_module(const char *path, int origin, bool coremodule)
 	return false;
 }
 
-static char unknown_ver[] = "<unknown>";
-static char unknown_description[] = "<none>";
+
+void module_log(struct module *const mod,
+                const char *const fmt,
+                ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+
+	char buf[BUFSIZE];
+	vsnprintf(buf, sizeof(buf), fmt, ap),
+	slog(L_MAIN, SNO_GENERAL, "Module %s: %s", mod->name, buf);
+
+	va_end(ap);
+}
+
+
+
+// ******************************************************************************
+// INTERNAL API STACK
+// driven by load_a_module() / unload_one_module() (bottom)
+
+static
+bool init_module_v1(struct module *const mod)
+{
+	struct mapi_mheader_av1 *mheader = (struct mapi_mheader_av1 *)mod->mapi_header;
+	if(mheader->mapi_register && (mheader->mapi_register() == -1))
+		return false;
+
+	if(mheader->mapi_command_list)
+	{
+		struct Message **m;
+		for (m = mheader->mapi_command_list; *m; ++m)
+			mod_add_cmd(*m);
+	}
+
+	if(mheader->mapi_hook_list)
+	{
+		mapi_hlist_av1 *m;
+		for (m = mheader->mapi_hook_list; m->hapi_name; ++m)
+			*m->hapi_id = register_hook(m->hapi_name);
+	}
+
+	if(mheader->mapi_hfn_list)
+	{
+		mapi_hfn_list_av1 *m;
+		for (m = mheader->mapi_hfn_list; m->hapi_name; ++m)
+			add_hook(m->hapi_name, m->fn);
+	}
+
+	mod->version = mheader->mapi_module_version;
+	return true;
+}
+
+
+static
+void fini_module_v1(struct module *const mod)
+{
+	struct mapi_mheader_av1 *mheader = mod->mapi_header;
+	if(mheader->mapi_command_list)
+	{
+		struct Message **m;
+		for (m = mheader->mapi_command_list; *m; ++m)
+			mod_del_cmd(*m);
+	}
+
+	/* hook events are never removed, we simply lose the
+	 * ability to call them --fl
+	 */
+	if(mheader->mapi_hfn_list)
+	{
+		mapi_hfn_list_av1 *m;
+		for (m = mheader->mapi_hfn_list; m->hapi_name; ++m)
+			remove_hook(m->hapi_name, m->fn);
+	}
+
+	if(mheader->mapi_unregister)
+		mheader->mapi_unregister();
+}
+
+
+static
+bool init_module__cap(struct module *const mod,
+                      mapi_cap_list_av2 *const m)
+{
+	struct CapabilityIndex *idx;
+	switch(m->cap_index)
+	{
+		case MAPI_CAP_CLIENT:  idx = cli_capindex;    break;
+		case MAPI_CAP_SERVER:  idx = serv_capindex;   break;
+		default:
+			slog(L_MAIN, SNO_GENERAL,
+			     "Unknown/unsupported CAP index found of type %d on capability %s when loading %s",
+			     m->cap_index,
+			     m->cap_name,
+			     mod->name);
+			return false;
+	}
+
+	if(m->cap_id)
+	{
+		*(m->cap_id) = capability_put(idx, m->cap_name, m->cap_ownerdata);
+		sendto_local_clients_with_capability(CLICAP_CAP_NOTIFY, ":%s CAP * ADD :%s", me.name, m->cap_name);
+	}
+
+	return true;
+}
+
+
+static
+void fini_module__cap(struct module *const mod,
+                      mapi_cap_list_av2 *const m)
+{
+	struct CapabilityIndex *idx;
+	switch(m->cap_index)
+	{
+		case MAPI_CAP_CLIENT:  idx = cli_capindex;    break;
+		case MAPI_CAP_SERVER:  idx = serv_capindex;   break;
+		default:
+			slog(L_MAIN, SNO_GENERAL,
+			     "Unknown/unsupported CAP index found of type %d on capability %s when unloading %s",
+			     m->cap_index,
+			     m->cap_name,
+			     mod->name);
+			return;
+	}
+
+	if(m->cap_id)
+	{
+		capability_orphan(idx, m->cap_name);
+		sendto_local_clients_with_capability(CLICAP_CAP_NOTIFY, ":%s CAP * DEL :%s", me.name, m->cap_name);
+	}
+}
+
+
+static
+bool init_module_v2(struct module *const mod)
+{
+	struct mapi_mheader_av2 *mheader = (struct mapi_mheader_av2 *)mod->mapi_header;
+	if(mheader->mapi_register && (mheader->mapi_register() == -1))
+		return false;
+
+	/* Basic date code checks
+	 *
+	 * Don't make them fatal, but do complain about differences within a certain time frame.
+	 * Later on if there are major API changes we can add fatal checks.
+	 * -- Elizafox
+	 */
+	if(mheader->mapi_datecode != datecode && mheader->mapi_datecode > 0)
+	{
+		long int delta = datecode - mheader->mapi_datecode;
+		if (delta > MOD_WARN_DELTA)
+		{
+			delta /= 86400;
+			iwarn("Module %s build date is out of sync with ircd build date by %ld days, expect problems",
+				mod->name, delta);
+			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				"Module %s build date is out of sync with ircd build date by %ld days, expect problems",
+				mod->name, delta);
+		}
+	}
+
+	if(mheader->mapi_command_list)
+	{
+		struct Message **m;
+		for (m = mheader->mapi_command_list; *m; ++m)
+			mod_add_cmd(*m);
+	}
+
+	if(mheader->mapi_hook_list)
+	{
+		mapi_hlist_av1 *m;
+		for (m = mheader->mapi_hook_list; m->hapi_name; ++m)
+			*m->hapi_id = register_hook(m->hapi_name);
+	}
+
+	if(mheader->mapi_hfn_list)
+	{
+		mapi_hfn_list_av1 *m;
+		for (m = mheader->mapi_hfn_list; m->hapi_name; ++m)
+			add_hook(m->hapi_name, m->fn);
+	}
+
+	/* New in MAPI v2 - version replacement */
+	mod->version = mheader->mapi_module_version? mheader->mapi_module_version : ircd_version;
+	mod->description = mheader->mapi_module_description;
+
+	if(mheader->mapi_cap_list)
+	{
+		mapi_cap_list_av2 *m;
+		for (m = mheader->mapi_cap_list; m->cap_name; ++m)
+			if(!init_module__cap(mod, m))
+				return false;
+	}
+
+	return true;
+}
+
+
+static
+void fini_module_v2(struct module *const mod)
+{
+	struct mapi_mheader_av2 *mheader = (struct mapi_mheader_av2 *)mod->mapi_header;
+
+	if(mheader->mapi_command_list)
+	{
+		struct Message **m;
+		for (m = mheader->mapi_command_list; *m; ++m)
+			mod_del_cmd(*m);
+	}
+
+	/* hook events are never removed, we simply lose the
+	 * ability to call them --fl
+	 */
+	if(mheader->mapi_hfn_list)
+	{
+		mapi_hfn_list_av1 *m;
+		for (m = mheader->mapi_hfn_list; m->hapi_name; ++m)
+			remove_hook(m->hapi_name, m->fn);
+	}
+
+	if(mheader->mapi_unregister)
+		mheader->mapi_unregister();
+
+	if(mheader->mapi_cap_list)
+	{
+		mapi_cap_list_av2 *m;
+		for (m = mheader->mapi_cap_list; m->cap_name; ++m)
+			fini_module__cap(mod, m);
+	}
+}
+
+
+static
+bool require_value(struct module *const mod,
+                   struct mapi_av3_attr *const attr)
+{
+	if(!attr->value)
+	{
+		module_log(mod, "key[%s] requires non-null value", attr->key);
+		return false;
+	}
+
+	return true;
+}
+
+static
+bool init_v3_module_attr(struct module *const mod,
+                         struct mapi_mheader_av3 *const h,
+                         struct mapi_av3_attr *const attr)
+{
+	if(EmptyString(attr->key))
+	{
+		module_log(mod, "Skipping a NULL or empty key (ignoring)");
+		return true;
+	}
+
+	if(strncmp(attr->key, "time", MAPI_V3_KEY_MAXLEN) == 0)
+	{
+		//TODO: elizafox's warning
+		return true;
+	}
+
+	if(strncmp(attr->key, "name", MAPI_V3_KEY_MAXLEN) == 0)
+	{
+		module_log(mod, "Changing the display unsupported (ignoring)");
+		return true;
+	}
+
+	if(strncmp(attr->key, "mtab", MAPI_V3_KEY_MAXLEN) == 0)
+	{
+		if(!require_value(mod, attr))
+			return false;
+
+		struct Message *const v = attr->value;
+		mod_add_cmd(v);
+		return true;
+	}
+
+	if(strncmp(attr->key, "hook", MAPI_V3_KEY_MAXLEN) == 0)
+	{
+		if(!require_value(mod, attr))
+			return false;
+
+		mapi_hlist_av1 *const v = attr->value;
+		*v->hapi_id = register_hook(v->hapi_name);
+		return true;
+	}
+
+	if(strncmp(attr->key, "hookfn", MAPI_V3_KEY_MAXLEN) == 0)
+	{
+		if(!require_value(mod, attr))
+			return false;
+
+		mapi_hfn_list_av1 *const v = attr->value;
+		add_hook(v->hapi_name, v->fn);
+		return true;
+	}
+
+	if(strncmp(attr->key, "cap", MAPI_V3_KEY_MAXLEN) == 0)
+	{
+		if(!require_value(mod, attr))
+			return false;
+
+		mapi_cap_list_av2 *const v = attr->value;
+		return init_module__cap(mod, v);
+	}
+
+	if(strncmp(attr->key, "description", MAPI_V3_KEY_MAXLEN) == 0)
+	{
+		mod->description = (const char *)attr->value;
+		return true;
+	}
+
+	if(strncmp(attr->key, "version", MAPI_V3_KEY_MAXLEN) == 0)
+	{
+		mod->version = (const char *)attr->value;
+		return true;
+	}
+
+	if(strncmp(attr->key, "init", MAPI_V3_KEY_MAXLEN) == 0)
+		return attr->init();
+
+	// Ignore fini on load
+	if(strncmp(attr->key, "fini", MAPI_V3_KEY_MAXLEN) == 0)
+		return true;
+
+	// TODO: analysis.
+	module_log(mod, "Unknown key [%s]. Host version does not yet support unknown keys.", attr->key);
+	return false;
+}
+
+
+static
+void fini_v3_module_attr(struct module *const mod,
+                         struct mapi_mheader_av3 *const h,
+                         struct mapi_av3_attr *const attr)
+{
+	if(EmptyString(attr->key))
+	{
+		module_log(mod, "Skipping a NULL or empty key (ignoring)");
+		return;
+	}
+
+	if(strncmp(attr->key, "mtab", MAPI_V3_KEY_MAXLEN) == 0)
+	{
+		if(attr->value)
+			mod_del_cmd(attr->value);
+
+		return;
+	}
+
+	if(strncmp(attr->key, "hook", MAPI_V3_KEY_MAXLEN) == 0)
+	{
+		// ???
+		return;
+	}
+
+	if(strncmp(attr->key, "hookfn", MAPI_V3_KEY_MAXLEN) == 0)
+	{
+		if(!attr->value)
+			return;
+
+		mapi_hfn_list_av1 *const v = attr->value;
+		remove_hook(v->hapi_name, v->fn);
+		return;
+	}
+
+	if(strncmp(attr->key, "cap", MAPI_V3_KEY_MAXLEN) == 0)
+	{
+		if(attr->value)
+			fini_module__cap(mod, attr->value);
+
+		return;
+	}
+
+	if(strncmp(attr->key, "fini", MAPI_V3_KEY_MAXLEN) == 0)
+	{
+		if(attr->value)
+			attr->fini();
+
+		return;
+	}
+}
+
+
+static
+void fini_module_v3(struct module *const mod)
+{
+	struct mapi_mheader_av3 *const h = (struct mapi_mheader_av3 *)mod->mapi_header;
+	if(!h->attrs)
+	{
+		module_log(mod, "(unload) has no attribute vector!");
+		return;
+	}
+
+	ssize_t i = -1;
+	struct mapi_av3_attr *attr;
+	for(attr = h->attrs[++i]; attr; attr = h->attrs[++i]);
+	for(attr = h->attrs[--i]; i > -1; attr = h->attrs[--i])
+		fini_v3_module_attr(mod, h, attr);
+}
+
+
+static
+bool init_module_v3(struct module *const mod)
+{
+	struct mapi_mheader_av3 *const h = (struct mapi_mheader_av3 *)mod->mapi_header;
+	if(!h->attrs)
+	{
+		module_log(mod, "has no attribute vector!");
+		return false;
+	}
+
+	size_t i = 0;
+	for(struct mapi_av3_attr *attr = h->attrs[i]; attr; attr = h->attrs[++i])
+	{
+		if(!init_v3_module_attr(mod, h, attr))
+		{
+			h->attrs[i] = NULL;
+			fini_module_v3(mod);
+			return false;
+		}
+	}
+
+	return true;
+}
+
+
+static
+bool init_module(struct module *const mod)
+{
+	mod->mapi_header = lt_dlsym(mod->address, "_mheader");
+	if(!mod->mapi_header)
+	{
+		module_log(mod, "has no MAPI header. (%s)", lt_dlerror());
+		return false;
+	}
+
+	const int version_magic = *(const int *)mod->mapi_header;
+	if(MAPI_MAGIC(version_magic) != MAPI_MAGIC_HDR)
+	{
+		module_log(mod, "has an invalid header (magic is [%x] mismatches [%x]).",
+		           MAPI_MAGIC(version_magic),
+		           MAPI_MAGIC_HDR);
+		return false;
+	}
+
+	mod->mapi_version = MAPI_VERSION(version_magic);
+	switch(mod->mapi_version)
+	{
+		case 1:  return init_module_v1(mod);
+		case 2:  return init_module_v2(mod);
+		case 3:  return init_module_v3(mod);
+		default:
+			module_log(mod, "has unknown/unsupported MAPI version %d.", mod->mapi_version);
+			return false;
+	}
+}
+
+
+static
+const char *reflect_origin(const int origin)
+{
+	switch(origin)
+	{
+		case MAPI_ORIGIN_EXTENSION:  return "extension";
+		case MAPI_ORIGIN_CORE:       return "core";
+		default:                     return "unknown";
+	}
+}
+
+
+static
+void free_module(struct module **ptr)
+{
+	if(!ptr || !*ptr)
+		return;
+
+	struct module *mod = *ptr;
+	if(mod->name)
+		rb_free(mod->name);
+
+	if(mod->path)
+		rb_free(mod->path);
+
+	rb_free(mod);
+}
+
+
+static
+void close_handle(lt_dlhandle *handle)
+{
+	if(handle && *handle)
+		lt_dlclose(*handle);
+}
+
+
+/*
+ * load_a_module()
+ *
+ * inputs	- path name of module, bool to notice, int of origin, bool if core
+ * output	- false if error true if success
+ * side effects - loads a module if successful
+ */
+bool
+load_a_module(const char *path, bool warn, int origin, bool core)
+{
+	char *const name RB_AUTO_PTR = rb_basename(path);
+
+	/* Trim off the ending for the display name if we have to */
+	char *c;
+	if((c = rb_strcasestr(name, LT_MODULE_EXT)) != NULL)
+		*c = '\0';
+
+	lt_dlhandle handle RB_UNIQUE_PTR(close_handle) = lt_dlopenext(path);
+	if(handle == NULL)
+	{
+		slog(L_MAIN, SNO_GENERAL, "Error loading module %s: %s", name, lt_dlerror());
+		return false;
+	}
+
+	struct module *mod RB_UNIQUE_PTR(free_module) = rb_malloc(sizeof(struct module));
+	mod->name = rb_strdup(name);
+	mod->path = rb_strdup(path);
+	mod->address = handle;
+	mod->origin = origin;
+	mod->core = core;
+
+	if(!init_module(mod))
+	{
+		slog(L_MAIN, SNO_GENERAL, "Loading module %s aborted.", name);
+		return false;
+	}
+
+	if(!mod->version)
+		mod->version = "<unknown>";
+
+	if(!mod->description)
+		mod->description = "<no description>";
+
+	if(warn)
+		slog(L_MAIN, SNO_GENERAL,
+		     "Module %s [version: %s; MAPI version: %d; origin: %s; description: \"%s\"] loaded from [%s] to %p",
+		     name,
+		     mod->version,
+		     mod->mapi_version,
+		     reflect_origin(mod->origin),
+		     mod->description,
+		     mod->path,
+		     (const void *)mod->address);
+
+	// NULL the acquired resources after commitment to list ownership
+	rb_dlinkAdd(mod, &mod->node, &module_list);
+	mod = NULL;
+	handle = NULL;
+	return true;
+}
+
 
 /* unload_one_module()
  *
@@ -290,7 +846,6 @@ bool
 unload_one_module(const char *name, bool warn)
 {
 	struct module *mod;
-
 	if((mod = findmodule_byname(name)) == NULL)
 		return false;
 
@@ -310,361 +865,24 @@ unload_one_module(const char *name, bool warn)
 	/* Left the comment in but the code isn't here any more         -larne */
 	switch (mod->mapi_version)
 	{
-	case 1:
-		{
-			struct mapi_mheader_av1 *mheader = mod->mapi_header;
-			if(mheader->mapi_command_list)
-			{
-				struct Message **m;
-				for (m = mheader->mapi_command_list; *m; ++m)
-					mod_del_cmd(*m);
-			}
-
-			/* hook events are never removed, we simply lose the
-			 * ability to call them --fl
-			 */
-			if(mheader->mapi_hfn_list)
-			{
-				mapi_hfn_list_av1 *m;
-				for (m = mheader->mapi_hfn_list; m->hapi_name; ++m)
-					remove_hook(m->hapi_name, m->fn);
-			}
-
-			if(mheader->mapi_unregister)
-				mheader->mapi_unregister();
-			break;
-		}
-	case 2:
-		{
-			struct mapi_mheader_av2 *mheader = mod->mapi_header;
-
-			/* XXX duplicate code :( */
-			if(mheader->mapi_command_list)
-			{
-				struct Message **m;
-				for (m = mheader->mapi_command_list; *m; ++m)
-					mod_del_cmd(*m);
-			}
-
-			/* hook events are never removed, we simply lose the
-			 * ability to call them --fl
-			 */
-			if(mheader->mapi_hfn_list)
-			{
-				mapi_hfn_list_av1 *m;
-				for (m = mheader->mapi_hfn_list; m->hapi_name; ++m)
-					remove_hook(m->hapi_name, m->fn);
-			}
-
-			if(mheader->mapi_unregister)
-				mheader->mapi_unregister();
-
-			if(mheader->mapi_cap_list)
-			{
-				mapi_cap_list_av2 *m;
-				for (m = mheader->mapi_cap_list; m->cap_name; ++m)
-				{
-					struct CapabilityIndex *idx;
-
-					switch (m->cap_index)
-					{
-					case MAPI_CAP_CLIENT:
-						idx = cli_capindex;
-						break;
-					case MAPI_CAP_SERVER:
-						idx = serv_capindex;
-						break;
-					default:
-						sendto_realops_snomask(SNO_GENERAL, L_ALL,
-							"Unknown/unsupported CAP index found of type %d on capability %s when unloading %s",
-							m->cap_index, m->cap_name, mod->name);
-						ilog(L_MAIN,
-							"Unknown/unsupported CAP index found of type %d on capability %s when unloading %s",
-							m->cap_index, m->cap_name, mod->name);
-						continue;
-					}
-
-					if (m->cap_id != NULL)
-					{
-						capability_orphan(idx, m->cap_name);
-						sendto_local_clients_with_capability(CLICAP_CAP_NOTIFY, ":%s CAP * DEL :%s", me.name, m->cap_name);
-					}
-				}
-			}
-			break;
-		}
-	default:
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "Unknown/unsupported MAPI version %d when unloading %s!",
-				     mod->mapi_version, mod->name);
-		ilog(L_MAIN, "Unknown/unsupported MAPI version %d when unloading %s!",
-		     mod->mapi_version, mod->name);
+		case 1:  fini_module_v1(mod);  break;
+		case 2:  fini_module_v2(mod);  break;
+		case 3:  fini_module_v3(mod);  break;
+		default:
+			slog(L_MAIN, SNO_GENERAL,
+			     "Unknown/unsupported MAPI version %d when unloading %s!",
+			     mod->mapi_version,
+			     mod->name);
 		break;
 	}
-
-	lt_dlclose(mod->address);
 
 	rb_dlinkDelete(&mod->node, &module_list);
-	rb_free(mod->name);
-	rb_free(mod);
+	close_handle(&mod->address);
 
 	if(warn)
-	{
-		ilog(L_MAIN, "Module %s unloaded", name);
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Module %s unloaded", name);
-	}
+		slog(L_MAIN, SNO_GENERAL, "Module %s unloaded", name);
 
-	return true;
-}
-
-/*
- * load_a_module()
- *
- * inputs	- path name of module, bool to notice, int of origin, bool if core
- * output	- false if error true if success
- * side effects - loads a module if successful
- */
-bool
-load_a_module(const char *path, bool warn, int origin, bool core)
-{
-	struct module *mod;
-	lt_dlhandle tmpptr;
-	char *mod_displayname, *c;
-	const char *ver, *description = NULL;
-	size_t module_ext_len = strlen(LT_MODULE_EXT);
-
-	int *mapi_version;
-
-	mod_displayname = rb_basename(path);
-
-	/* Trim off the ending for the display name if we have to */
-	if((c = rb_strcasestr(mod_displayname, LT_MODULE_EXT)) != NULL)
-		*c = '\0';
-
-	tmpptr = lt_dlopenext(path);
-
-	if(tmpptr == NULL)
-	{
-		const char *err = lt_dlerror();
-
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "Error loading module %s: %s", mod_displayname, err);
-		ilog(L_MAIN, "Error loading module %s: %s", mod_displayname, err);
-		rb_free(mod_displayname);
-		return false;
-	}
-
-	/*
-	 * _mheader is actually a struct mapi_mheader_*, but mapi_version
-	 * is always the first member of this structure, so we treate it
-	 * as a single int in order to determine the API version.
-	 *      -larne.
-	 */
-	mapi_version = (int *) (uintptr_t) lt_dlsym(tmpptr, "_mheader");
-	if((mapi_version == NULL
-	    && (mapi_version = (int *) (uintptr_t) lt_dlsym(tmpptr, "__mheader")) == NULL)
-	   || MAPI_MAGIC(*mapi_version) != MAPI_MAGIC_HDR)
-	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "Data format error: module %s has no MAPI header.",
-				     mod_displayname);
-		ilog(L_MAIN, "Data format error: module %s has no MAPI header.", mod_displayname);
-		(void) lt_dlclose(tmpptr);
-		rb_free(mod_displayname);
-		return false;
-	}
-
-	switch (MAPI_VERSION(*mapi_version))
-	{
-	case 1:
-		{
-			struct mapi_mheader_av1 *mheader = (struct mapi_mheader_av1 *)(void *)mapi_version;	/* see above */
-			if(mheader->mapi_register && (mheader->mapi_register() == -1))
-			{
-				ilog(L_MAIN, "Module %s indicated failure during load.",
-				     mod_displayname);
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
-						     "Module %s indicated failure during load.",
-						     mod_displayname);
-				lt_dlclose(tmpptr);
-				rb_free(mod_displayname);
-				return false;
-			}
-			if(mheader->mapi_command_list)
-			{
-				struct Message **m;
-				for (m = mheader->mapi_command_list; *m; ++m)
-					mod_add_cmd(*m);
-			}
-
-			if(mheader->mapi_hook_list)
-			{
-				mapi_hlist_av1 *m;
-				for (m = mheader->mapi_hook_list; m->hapi_name; ++m)
-					*m->hapi_id = register_hook(m->hapi_name);
-			}
-
-			if(mheader->mapi_hfn_list)
-			{
-				mapi_hfn_list_av1 *m;
-				for (m = mheader->mapi_hfn_list; m->hapi_name; ++m)
-					add_hook(m->hapi_name, m->fn);
-			}
-
-			ver = mheader->mapi_module_version;
-			break;
-		}
-	case 2:
-		{
-			struct mapi_mheader_av2 *mheader = (struct mapi_mheader_av2 *)(void *)mapi_version;     /* see above */
-
-			/* XXX duplicated code :( */
-			if(mheader->mapi_register && (mheader->mapi_register() == -1))
-			{
-				ilog(L_MAIN, "Module %s indicated failure during load.",
-					mod_displayname);
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
-						     "Module %s indicated failure during load.",
-						     mod_displayname);
-				lt_dlclose(tmpptr);
-				rb_free(mod_displayname);
-				return false;
-			}
-
-			/* Basic date code checks
-			 *
-			 * Don't make them fatal, but do complain about differences within a certain time frame.
-			 * Later on if there are major API changes we can add fatal checks.
-			 * -- Elizafox
-			 */
-			if(mheader->mapi_datecode != datecode && mheader->mapi_datecode > 0)
-			{
-				long int delta = datecode - mheader->mapi_datecode;
-				if (delta > MOD_WARN_DELTA)
-				{
-					delta /= 86400;
-					iwarn("Module %s build date is out of sync with ircd build date by %ld days, expect problems",
-						mod_displayname, delta);
-					sendto_realops_snomask(SNO_GENERAL, L_ALL,
-						"Module %s build date is out of sync with ircd build date by %ld days, expect problems",
-						mod_displayname, delta);
-				}
-			}
-
-			if(mheader->mapi_command_list)
-			{
-				struct Message **m;
-				for (m = mheader->mapi_command_list; *m; ++m)
-					mod_add_cmd(*m);
-			}
-
-			if(mheader->mapi_hook_list)
-			{
-				mapi_hlist_av1 *m;
-				for (m = mheader->mapi_hook_list; m->hapi_name; ++m)
-					*m->hapi_id = register_hook(m->hapi_name);
-			}
-
-			if(mheader->mapi_hfn_list)
-			{
-				mapi_hfn_list_av1 *m;
-				for (m = mheader->mapi_hfn_list; m->hapi_name; ++m)
-					add_hook(m->hapi_name, m->fn);
-			}
-
-			/* New in MAPI v2 - version replacement */
-			ver = mheader->mapi_module_version ? mheader->mapi_module_version : ircd_version;
-			description = mheader->mapi_module_description;
-
-			if(mheader->mapi_cap_list)
-			{
-				mapi_cap_list_av2 *m;
-				for (m = mheader->mapi_cap_list; m->cap_name; ++m)
-				{
-					struct CapabilityIndex *idx;
-					int result;
-
-					switch (m->cap_index)
-					{
-					case MAPI_CAP_CLIENT:
-						idx = cli_capindex;
-						break;
-					case MAPI_CAP_SERVER:
-						idx = serv_capindex;
-						break;
-					default:
-						sendto_realops_snomask(SNO_GENERAL, L_ALL,
-							"Unknown/unsupported CAP index found of type %d on capability %s when loading %s",
-							m->cap_index, m->cap_name, mod_displayname);
-						ilog(L_MAIN,
-							"Unknown/unsupported CAP index found of type %d on capability %s when loading %s",
-							m->cap_index, m->cap_name, mod_displayname);
-						continue;
-					}
-
-					result = capability_put(idx, m->cap_name, m->cap_ownerdata);
-					if (m->cap_id != NULL)
-					{
-						*(m->cap_id) = result;
-						sendto_local_clients_with_capability(CLICAP_CAP_NOTIFY, ":%s CAP * ADD :%s", me.name, m->cap_name);
-					}
-				}
-			}
-		}
-
-		break;
-	default:
-		ilog(L_MAIN, "Module %s has unknown/unsupported MAPI version %d.",
-		     mod_displayname, MAPI_VERSION(*mapi_version));
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "Module %s has unknown/unsupported MAPI version %d.",
-				     mod_displayname, *mapi_version);
-		lt_dlclose(tmpptr);
-		rb_free(mod_displayname);
-		return false;
-	}
-
-	if(ver == NULL)
-		ver = unknown_ver;
-
-	if(description == NULL)
-		description = unknown_description;
-
-	mod = rb_malloc(sizeof(struct module));
-	mod->address = tmpptr;
-	mod->version = ver;
-	mod->description = description;
-	mod->core = core;
-	mod->name = rb_strdup(mod_displayname);
-	mod->mapi_header = mapi_version;
-	mod->mapi_version = MAPI_VERSION(*mapi_version);
-	mod->origin = origin;
-	rb_dlinkAdd(mod, &mod->node, &module_list);
-
-	if(warn)
-	{
-		const char *o;
-
-		switch (origin)
-		{
-		case MAPI_ORIGIN_EXTENSION:
-			o = "extension";
-			break;
-		case MAPI_ORIGIN_CORE:
-			o = "core";
-			break;
-		default:
-			o = "unknown";
-			break;
-		}
-
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "Module %s [version: %s; MAPI version: %d; origin: %s; description: \"%s\"] loaded at %p",
-				     mod_displayname, ver, MAPI_VERSION(*mapi_version), o, description,
-				     (void *) tmpptr);
-		ilog(L_MAIN, "Module %s [version: %s; MAPI version: %d; origin: %s; description: \"%s\"] loaded at %p",
-		     mod_displayname, ver, MAPI_VERSION(*mapi_version), o, description, (void *) tmpptr);
-	}
-	rb_free(mod_displayname);
+	// free after the unload message in case *name came from the mod struct.
+	free_module(&mod);
 	return true;
 }

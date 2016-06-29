@@ -10,6 +10,24 @@
 #include <signal.h>
 #include <ctype.h>
 
+
+#ifdef HAVE_STDBOOL_H
+	#include <stdbool.h>
+#else
+	#ifndef HAVE__BOOL
+		#ifdef __cplusplus
+			typedef bool _Bool;
+		#else
+			#define _Bool signed char
+		#endif
+	#endif
+	#define bool _Bool
+	#define false 0
+	#define true 1
+	#define __bool_true_false_are_defined 1
+#endif
+
+
 #ifdef __GNUC__
 #undef alloca
 #define alloca __builtin_alloca
@@ -128,13 +146,16 @@ char *rb_strerror(int error);
 #endif
 
 #ifdef __GNUC__
-#define slrb_assert(expr)	do								\
-			if(rb_unlikely(!(expr))) {							\
-				rb_lib_log( 						\
-				"file: %s line: %d (%s): Assertion failed: (%s)",	\
-				__FILE__, __LINE__, __PRETTY_FUNCTION__, #expr); 	\
-			}								\
-			while(0)
+#define slrb_assert(expr) do                                                 \
+{                                                                            \
+    if(rb_unlikely(!(expr)))                                                 \
+    {                                                                        \
+        rb_lib_log("file: %s line: %d (%s): Assertion failed: (%s)",         \
+        __FILE__, __LINE__, __PRETTY_FUNCTION__, #expr);                     \
+        rb_backtrace_log_symbols();                                          \
+    }                                                                        \
+}                                                                            \
+while(0)
 #else
 #define slrb_assert(expr)	do								\
 			if(rb_unlikely(!(expr))) {							\
@@ -246,8 +267,13 @@ pid_t rb_waitpid(pid_t pid, int *status, int options);
 pid_t rb_getpid(void);
 //unsigned int rb_geteuid(void);
 
+void *const *rb_backtrace(int *len);                 // writes to and returns static vector (*len indicates element count)
+const char *const *rb_backtrace_symbols(int *len);   // translates rb_backtrace(), all static
+void rb_backtrace_log_symbols(void);                 // rb_backtrace_symbols piped to rb_lib_log()
+
 
 #include <rb_tools.h>
+#include <rb_dlink.h>
 #include <rb_memory.h>
 #include <rb_commio.h>
 #include <rb_balloc.h>
@@ -256,5 +282,6 @@ pid_t rb_getpid(void);
 #include <rb_helper.h>
 #include <rb_rawbuf.h>
 #include <rb_patricia.h>
+#include <rb_dictionary.h>
 
 #endif

@@ -23,6 +23,11 @@
  */
 
 #include <librb_config.h>
+
+#ifdef HAVE_EXECINFO_H
+#include <execinfo.h>
+#endif
+
 #include <rb_lib.h>
 #include <commio-int.h>
 #include <commio-ssl.h>
@@ -423,3 +428,68 @@ rb_base64_decode(const unsigned char *str, int length, int *ret)
 	*ret = j;
 	return result;
 }
+
+
+void *bt_stack[64];
+char bt_symbuf[64][256];
+const char *bt_symbol[64];
+
+#ifdef HAVE_EXECINFO_H
+void *const *rb_backtrace(int *const usrlen)
+{
+	int len = backtrace(bt_stack, 64);
+	if(usrlen) *usrlen = len;
+	return bt_stack;
+}
+#else
+void *const *rb_backtrace(int *const usrlen)
+{
+	if(usrlen) *usrlen = 0;
+	return bt_stack;
+}
+#endif
+
+
+#ifdef HAVE_EXECINFO_H
+const char *const *rb_backtrace_symbols(int *const usrlen)
+{
+	int len;
+	void *const *const stack = rb_backtrace(&len);
+	char *const *const symbol = backtrace_symbols(stack, len);
+	if(!symbol)
+		len = 0;
+
+	if(usrlen)
+		*usrlen = len;
+
+	for(int i = 0; i < len; i++)
+	{
+		rb_strlcpy(bt_symbuf[i], symbol[i], sizeof(bt_symbuf[i]));
+		bt_symbol[i] = bt_symbuf[i];
+	}
+
+	free((char **)symbol);
+	return bt_symbol;
+}
+#else
+const char *const *rb_backtrace_symbols(int *const usrlen)
+{
+	if(usrlen) *usrlen = 0;
+	return bt_symbol;
+}
+#endif
+
+
+#ifdef HAVE_EXECINFO_H
+void rb_backtrace_log_symbols(void)
+{
+	int len;
+	const char *const *const symbol = rb_backtrace_symbols(&len);
+	for(int i = 0; i < len; i++)
+		rb_lib_log("%2d: %s", i, symbol[i]);
+}
+#else
+void rb_backtrace_log_symbols(void)
+{
+}
+#endif
