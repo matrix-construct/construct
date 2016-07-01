@@ -37,15 +37,6 @@
 
 #include "defaults.h"
 
-/* For those unfamiliar with GNU format attributes, a is the 1 based
- * argument number of the format string, and b is the 1 based argument
- * number of the variadic ... */
-#ifdef __GNUC__
-#define AFP(a,b) __attribute__((format (printf, a, b)))
-#else
-#define AFP(a,b)
-#endif
-
 /*
  * This ensures that __attribute__((deprecated)) is not used in for example
  * sun CC, since it's a GNU-specific extension. -nenolod

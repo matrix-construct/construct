@@ -228,6 +228,15 @@ while(0)
 #define UINT32_MAX (4294967295U)
 #endif
 
+/* For those unfamiliar with GNU format attributes, a is the 1 based
+ * argument number of the format string, and b is the 1 based argument
+ * number of the variadic ... */
+#ifdef __GNUC__
+#define AFP(a,b) __attribute__((format (printf, a, b)))
+#else
+#define AFP(a,b)
+#endif
+
 
 typedef void log_cb(const char *buffer);
 typedef void restart_cb(const char *buffer);
