@@ -27,17 +27,17 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "stdinc.h"
-#include "send.h"
-#include "client.h"
-#include "modules.h"
-#include "msg.h"
-#include "hash.h"
-#include "hostmask.h"
-#include "numeric.h"
-#include "s_conf.h"
-#include "s_newconf.h"
-#include "reject.h"
+#include <ircd/stdinc.h>
+#include <ircd/send.h>
+#include <ircd/client.h>
+#include <ircd/modules.h>
+#include <ircd/msg.h>
+#include <ircd/hash.h>
+#include <ircd/hostmask.h>
+#include <ircd/numeric.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_newconf.h>
+#include <ircd/reject.h>
 
 static const char testline_desc[] = "Provides the ability to test I/K/D/X lines and RESVs";
 

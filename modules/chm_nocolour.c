@@ -21,18 +21,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdinc.h"
-#include "modules.h"
-#include "hook.h"
-#include "client.h"
-#include "ircd.h"
-#include "send.h"
-#include "s_conf.h"
-#include "s_user.h"
-#include "s_serv.h"
-#include "numeric.h"
-#include "chmode.h"
-#include "inline/stringops.h"
+#include <ircd/stdinc.h>
+#include <ircd/modules.h>
+#include <ircd/hook.h>
+#include <ircd/client.h>
+#include <ircd/ircd.h>
+#include <ircd/send.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_user.h>
+#include <ircd/s_serv.h>
+#include <ircd/numeric.h>
+#include <ircd/chmode.h>
+#include <ircd/inline/stringops.h>
 
 static const char chm_nocolour_desc[] =
 	"Enables channel mode +c that filters colours and formatting from a channel";

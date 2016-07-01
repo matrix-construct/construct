@@ -21,18 +21,18 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "client.h"
-#include "s_conf.h"
-#include "reject.h"
-#include "s_stats.h"
-#include "ircd.h"
-#include "send.h"
-#include "numeric.h"
-#include "parse.h"
-#include "hostmask.h"
-#include "match.h"
-#include "hash.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/s_conf.h>
+#include <ircd/reject.h>
+#include <ircd/s_stats.h>
+#include <ircd/ircd.h>
+#include <ircd/send.h>
+#include <ircd/numeric.h>
+#include <ircd/parse.h>
+#include <ircd/hostmask.h>
+#include <ircd/match.h>
+#include <ircd/hash.h>
 
 static rb_patricia_tree_t *reject_tree;
 static rb_dlink_list delay_exit;

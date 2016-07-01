@@ -30,15 +30,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdinc.h"
-#include "ircd_defs.h"
-#include "s_conf.h"
-#include "client.h"
-#include "hash.h"
-#include "cache.h"
-#include "rb_dictionary.h"
-#include "numeric.h"
-#include "send.h"
+#include <ircd/stdinc.h>
+#include <ircd/s_conf.h>
+#include <ircd/client.h>
+#include <ircd/hash.h>
+#include <ircd/cache.h>
+#include <ircd/numeric.h>
+#include <ircd/send.h>
 
 struct cachefile *user_motd = NULL;
 struct cachefile *oper_motd = NULL;

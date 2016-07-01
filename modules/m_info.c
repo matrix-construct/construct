@@ -22,21 +22,21 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "m_info.h"
-#include "channel.h"
-#include "client.h"
-#include "match.h"
-#include "ircd.h"
-#include "hook.h"
-#include "numeric.h"
-#include "s_serv.h"
-#include "s_user.h"
-#include "send.h"
-#include "s_conf.h"
-#include "msg.h"
-#include "parse.h"
-#include "modules.h"
+#include <ircd/stdinc.h>
+#include <ircd/m_info.h>
+#include <ircd/channel.h>
+#include <ircd/client.h>
+#include <ircd/match.h>
+#include <ircd/ircd.h>
+#include <ircd/hook.h>
+#include <ircd/numeric.h>
+#include <ircd/s_serv.h>
+#include <ircd/s_user.h>
+#include <ircd/send.h>
+#include <ircd/s_conf.h>
+#include <ircd/msg.h>
+#include <ircd/parse.h>
+#include <ircd/modules.h>
 
 static const char info_desc[] =
 	"Provides the INFO command for retrieving server copyright, credits, and other info";
@@ -748,9 +748,9 @@ static void
 send_birthdate_online_time(struct Client *source_p)
 {
 	char tbuf[26]; /* this needs to be 26 - see ctime_r manpage */
-	sendto_one(source_p, ":%s %d %s :Birth Date: %s, compile # %s",
+	sendto_one(source_p, ":%s %d %s :Birth Date: %s (%ld)",
 			get_id(&me, source_p), RPL_INFO,
-			get_id(source_p, source_p), creation, generation);
+			get_id(source_p, source_p), creation, datecode);
 
 	sendto_one(source_p, ":%s %d %s :On-line since %s",
 			get_id(&me, source_p), RPL_INFO,

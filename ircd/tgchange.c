@@ -22,16 +22,16 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "tgchange.h"
-#include "channel.h"
-#include "client.h"
-#include "s_stats.h"
-#include "hash.h"
-#include "s_conf.h"
-#include "s_newconf.h"
-#include "s_serv.h"
-#include "send.h"
+#include <ircd/stdinc.h>
+#include <ircd/tgchange.h>
+#include <ircd/channel.h>
+#include <ircd/client.h>
+#include <ircd/s_stats.h>
+#include <ircd/hash.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_newconf.h>
+#include <ircd/s_serv.h>
+#include <ircd/send.h>
 
 static int add_hashed_target(struct Client *source_p, uint32_t hashv);
 

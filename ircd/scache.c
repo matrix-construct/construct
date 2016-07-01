@@ -22,16 +22,15 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "client.h"
-#include "match.h"
-#include "ircd.h"
-#include "numeric.h"
-#include "send.h"
-#include "scache.h"
-#include "s_conf.h"
-#include "s_assert.h"
-#include "rb_radixtree.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/match.h>
+#include <ircd/ircd.h>
+#include <ircd/numeric.h>
+#include <ircd/send.h>
+#include <ircd/scache.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_assert.h>
 
 /*
  * ircd used to store full servernames in anUser as well as in the

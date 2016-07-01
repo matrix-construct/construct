@@ -22,21 +22,21 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "client.h"
-#include "hash.h"		/* for find_client() */
-#include "ircd.h"
-#include "numeric.h"
-#include "logger.h"
-#include "s_serv.h"
-#include "s_conf.h"
-#include "send.h"
-#include "whowas.h"
-#include "match.h"
-#include "msg.h"
-#include "parse.h"
-#include "modules.h"
-#include "s_newconf.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/hash.h>		/* for find_client() */
+#include <ircd/ircd.h>
+#include <ircd/numeric.h>
+#include <ircd/logger.h>
+#include <ircd/s_serv.h>
+#include <ircd/s_conf.h>
+#include <ircd/send.h>
+#include <ircd/whowas.h>
+#include <ircd/match.h>
+#include <ircd/msg.h>
+#include <ircd/parse.h>
+#include <ircd/modules.h>
+#include <ircd/s_newconf.h>
 
 static const char kill_desc[] = "Provides the KILL command to remove a user from the network";
 

@@ -22,35 +22,35 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "s_user.h"
-#include "channel.h"
-#include "class.h"
-#include "client.h"
-#include "hash.h"
-#include "match.h"
-#include "ircd.h"
-#include "listener.h"
-#include "msg.h"
-#include "numeric.h"
-#include "s_conf.h"
-#include "s_newconf.h"
-#include "logger.h"
-#include "s_serv.h"
-#include "s_stats.h"
-#include "scache.h"
-#include "send.h"
-#include "supported.h"
-#include "whowas.h"
-#include "packet.h"
-#include "reject.h"
-#include "cache.h"
-#include "hook.h"
-#include "monitor.h"
-#include "snomask.h"
-#include "substitution.h"
-#include "chmode.h"
-#include "s_assert.h"
+#include <ircd/stdinc.h>
+#include <ircd/s_user.h>
+#include <ircd/channel.h>
+#include <ircd/class.h>
+#include <ircd/client.h>
+#include <ircd/hash.h>
+#include <ircd/match.h>
+#include <ircd/ircd.h>
+#include <ircd/listener.h>
+#include <ircd/msg.h>
+#include <ircd/numeric.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_newconf.h>
+#include <ircd/logger.h>
+#include <ircd/s_serv.h>
+#include <ircd/s_stats.h>
+#include <ircd/scache.h>
+#include <ircd/send.h>
+#include <ircd/supported.h>
+#include <ircd/whowas.h>
+#include <ircd/packet.h>
+#include <ircd/reject.h>
+#include <ircd/cache.h>
+#include <ircd/hook.h>
+#include <ircd/monitor.h>
+#include <ircd/snomask.h>
+#include <ircd/substitution.h>
+#include <ircd/chmode.h>
+#include <ircd/s_assert.h>
 
 static void report_and_set_user_flags(struct Client *, struct ConfItem *);
 void user_welcome(struct Client *source_p);

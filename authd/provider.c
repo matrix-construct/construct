@@ -46,9 +46,7 @@
  * --Elizafox, 9 March 2016
  */
 
-#include "stdinc.h"
-#include "rb_dictionary.h"
-#include "rb_lib.h"
+#include <ircd/stdinc.h>
 #include "authd.h"
 #include "provider.h"
 #include "notice.h"

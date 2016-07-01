@@ -21,12 +21,7 @@
 #ifndef _AUTHD_H
 #define _AUTHD_H
 
-#include "stdinc.h"
-#include "rb_lib.h"
-#include "rb_dictionary.h"
-
-#include "setup.h"
-#include "ircd_defs.h"
+#include <ircd/stdinc.h>
 
 typedef enum exit_reasons
 {

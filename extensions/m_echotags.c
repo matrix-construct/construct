@@ -1,8 +1,8 @@
-#include "stdinc.h"
-#include "modules.h"
-#include "client.h"
-#include "ircd.h"
-#include "send.h"
+#include <ircd/stdinc.h>
+#include <ircd/modules.h>
+#include <ircd/client.h>
+#include <ircd/ircd.h>
+#include <ircd/send.h>
 
 static void m_echotags(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 

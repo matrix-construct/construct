@@ -22,30 +22,29 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "class.h"		/* report_classes */
-#include "client.h"		/* Client */
-#include "match.h"
-#include "ircd.h"		/* me */
-#include "listener.h"		/* show_ports */
-#include "msg.h"		/* Message */
-#include "hostmask.h"		/* report_mtrie_conf_links */
-#include "numeric.h"		/* ERR_xxx */
-#include "scache.h"		/* list_scache */
-#include "send.h"		/* sendto_one */
-#include "s_conf.h"		/* ConfItem */
-#include "s_serv.h"		/* hunt_server */
-#include "s_stats.h"
-#include "s_user.h"		/* show_opers */
-#include "parse.h"
-#include "modules.h"
-#include "hook.h"
-#include "s_newconf.h"
-#include "hash.h"
-#include "reject.h"
-#include "whowas.h"
-#include "rb_radixtree.h"
-#include "sslproc.h"
+#include <ircd/stdinc.h>
+#include <ircd/class.h>		/* report_classes */
+#include <ircd/client.h>		/* Client */
+#include <ircd/match.h>
+#include <ircd/ircd.h>		/* me */
+#include <ircd/listener.h>		/* show_ports */
+#include <ircd/msg.h>		/* Message */
+#include <ircd/hostmask.h>		/* report_mtrie_conf_links */
+#include <ircd/numeric.h>		/* ERR_xxx */
+#include <ircd/scache.h>		/* list_scache */
+#include <ircd/send.h>		/* sendto_one */
+#include <ircd/s_conf.h>		/* ConfItem */
+#include <ircd/s_serv.h>		/* hunt_server */
+#include <ircd/s_stats.h>
+#include <ircd/s_user.h>		/* show_opers */
+#include <ircd/parse.h>
+#include <ircd/modules.h>
+#include <ircd/hook.h>
+#include <ircd/s_newconf.h>
+#include <ircd/hash.h>
+#include <ircd/reject.h>
+#include <ircd/whowas.h>
+#include <ircd/sslproc.h>
 
 static const char stats_desc[] =
 	"Provides the STATS command to inspect various server/network information";

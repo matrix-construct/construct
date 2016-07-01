@@ -22,29 +22,29 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "client.h"
-#include "hash.h"
-#include "match.h"
-#include "ircd.h"
-#include "numeric.h"
-#include "s_conf.h"
-#include "s_stats.h"
-#include "s_user.h"
-#include "hash.h"
-#include "whowas.h"
-#include "s_serv.h"
-#include "send.h"
-#include "channel.h"
-#include "logger.h"
-#include "msg.h"
-#include "parse.h"
-#include "modules.h"
-#include "packet.h"
-#include "scache.h"
-#include "s_newconf.h"
-#include "monitor.h"
-#include "s_assert.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/hash.h>
+#include <ircd/match.h>
+#include <ircd/ircd.h>
+#include <ircd/numeric.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_stats.h>
+#include <ircd/s_user.h>
+#include <ircd/hash.h>
+#include <ircd/whowas.h>
+#include <ircd/s_serv.h>
+#include <ircd/send.h>
+#include <ircd/channel.h>
+#include <ircd/logger.h>
+#include <ircd/msg.h>
+#include <ircd/parse.h>
+#include <ircd/modules.h>
+#include <ircd/packet.h>
+#include <ircd/scache.h>
+#include <ircd/s_newconf.h>
+#include <ircd/monitor.h>
+#include <ircd/s_assert.h>
 
 /* Give all UID nicks the same TS. This ensures nick TS is always the same on
  * all servers for each nick-user pair, also if a user with a UID nick changes

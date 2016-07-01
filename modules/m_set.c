@@ -24,19 +24,19 @@
 
 /* rewritten by jdc */
 
-#include "stdinc.h"
-#include "client.h"
-#include "match.h"
-#include "ircd.h"
-#include "numeric.h"
-#include "s_serv.h"
-#include "send.h"
-#include "channel.h"
-#include "s_conf.h"
-#include "s_newconf.h"
-#include "msg.h"
-#include "parse.h"
-#include "modules.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/match.h>
+#include <ircd/ircd.h>
+#include <ircd/numeric.h>
+#include <ircd/s_serv.h>
+#include <ircd/send.h>
+#include <ircd/channel.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_newconf.h>
+#include <ircd/msg.h>
+#include <ircd/parse.h>
+#include <ircd/modules.h>
 
 static const char set_desc[] = "Provides the SET command to change server parameters";
 

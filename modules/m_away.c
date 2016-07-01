@@ -22,18 +22,18 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "client.h"
-#include "match.h"
-#include "ircd.h"
-#include "numeric.h"
-#include "send.h"
-#include "msg.h"
-#include "parse.h"
-#include "modules.h"
-#include "s_conf.h"
-#include "s_serv.h"
-#include "packet.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/match.h>
+#include <ircd/ircd.h>
+#include <ircd/numeric.h>
+#include <ircd/send.h>
+#include <ircd/msg.h>
+#include <ircd/parse.h>
+#include <ircd/modules.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_serv.h>
+#include <ircd/packet.h>
 
 static const char away_desc[] = "Provides the AWAY command to set yourself away";
 

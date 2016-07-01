@@ -9,13 +9,7 @@
  * /dev/random for salt generation added by
  * Aaron Sethman <androsyn@ratbox.org>
  */
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <time.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include "rb_lib.h"
+#include <rb/rb.h>
 #ifndef __MINGW32__
 #include <pwd.h>
 #endif

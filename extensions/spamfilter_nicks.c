@@ -29,13 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdinc.h"
-#include "modules.h"
-#include "hook.h"
-#include "client.h"
-#include "send.h"
-#include "hash.h"
-#include "newconf.h"
+#include <ircd/stdinc.h>
+#include <ircd/modules.h>
+#include <ircd/hook.h>
+#include <ircd/client.h>
+#include <ircd/send.h>
+#include <ircd/hash.h>
+#include <ircd/newconf.h>
 #include "spamfilter.h"
 
 

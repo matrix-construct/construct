@@ -22,36 +22,37 @@
  *  USA
  */
 
-#include "stdinc.h"
+#include <rb/rb.h>
 
 #ifdef HAVE_LIBCRYPTO
 #include <openssl/rsa.h>
 #endif
 
-#include "s_serv.h"
-#include "class.h"
-#include "client.h"
-#include "hash.h"
-#include "match.h"
-#include "ircd.h"
-#include "ircd_defs.h"
-#include "numeric.h"
-#include "packet.h"
-#include "s_conf.h"
-#include "s_newconf.h"
-#include "logger.h"
-#include "s_stats.h"
-#include "s_user.h"
-#include "scache.h"
-#include "send.h"
-#include "client.h"
-#include "channel.h"		/* chcap_usage_counts stuff... */
-#include "hook.h"
-#include "msg.h"
-#include "reject.h"
-#include "sslproc.h"
-#include "capability.h"
-#include "s_assert.h"
+#include <ircd/stdinc.h>
+#include <ircd/s_serv.h>
+#include <ircd/class.h>
+#include <ircd/client.h>
+#include <ircd/hash.h>
+#include <ircd/match.h>
+#include <ircd/ircd.h>
+#include <ircd/ircd_defs.h>
+#include <ircd/numeric.h>
+#include <ircd/packet.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_newconf.h>
+#include <ircd/logger.h>
+#include <ircd/s_stats.h>
+#include <ircd/s_user.h>
+#include <ircd/scache.h>
+#include <ircd/send.h>
+#include <ircd/client.h>
+#include <ircd/channel.h>		/* chcap_usage_counts stuff... */
+#include <ircd/hook.h>
+#include <ircd/msg.h>
+#include <ircd/reject.h>
+#include <ircd/sslproc.h>
+#include <ircd/capability.h>
+#include <ircd/s_assert.h>
 
 int MaxConnectionCount = 1;
 int MaxClientCount = 1;

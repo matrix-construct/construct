@@ -29,24 +29,24 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdinc.h"
-#include "class.h"
-#include "hook.h"
-#include "client.h"
-#include "hash.h"
-#include "hash.h"
-#include "match.h"
-#include "ircd.h"
-#include "numeric.h"
-#include "s_serv.h"
-#include "s_conf.h"
-#include "s_newconf.h"
-#include "s_user.h"
-#include "send.h"
-#include "msg.h"
-#include "parse.h"
-#include "modules.h"
-#include "logger.h"
+#include <ircd/stdinc.h>
+#include <ircd/class.h>
+#include <ircd/hook.h>
+#include <ircd/client.h>
+#include <ircd/hash.h>
+#include <ircd/hash.h>
+#include <ircd/match.h>
+#include <ircd/ircd.h>
+#include <ircd/numeric.h>
+#include <ircd/s_serv.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_newconf.h>
+#include <ircd/s_user.h>
+#include <ircd/send.h>
+#include <ircd/msg.h>
+#include <ircd/parse.h>
+#include <ircd/modules.h>
+#include <ircd/logger.h>
 
 static const char scan_desc[] =
 	"Provides the SCAN command to show users that have a mode set or cleared";

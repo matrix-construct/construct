@@ -32,13 +32,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdinc.h"
-#include "ircd_defs.h"
-#include "logger.h"
-#include "s_conf.h"
-#include "send.h"
-#include "client.h"
-#include "s_serv.h"
+#include <ircd/stdinc.h>
+#include <ircd/logger.h>
+#include <ircd/s_conf.h>
+#include <ircd/send.h>
+#include <ircd/client.h>
+#include <ircd/s_serv.h>
 
 static FILE *log_main;
 static FILE *log_user;

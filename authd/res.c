@@ -32,8 +32,7 @@
  * January 2016 --kaniini
  */
 
-#include <rb_lib.h>
-#include "setup.h"
+#include <rb/rb.h>
 #include "res.h"
 #include "reslib.h"
 

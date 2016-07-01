@@ -1,7 +1,7 @@
-pkglibexec_PROGRAMS = ssld
+bin_PROGRAMS = ssld
 AM_CFLAGS=$(WARNFLAGS)
-AM_CPPFLAGS = -I../include -I../librb/include 
+AM_CPPFLAGS = -I$(top_srcdir)/include
 
 
 ssld_SOURCES = ssld.c
-ssld_LDADD = ../librb/src/librb.la @ZLIB_LD@
+ssld_LDADD = $(top_srcdir)/rb/librb.la @ZLIB_LD@

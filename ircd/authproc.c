@@ -22,23 +22,22 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "rb_lib.h"
-#include "client.h"
-#include "ircd_defs.h"
-#include "parse.h"
-#include "authproc.h"
-#include "match.h"
-#include "logger.h"
-#include "s_conf.h"
-#include "s_stats.h"
-#include "client.h"
-#include "packet.h"
-#include "hash.h"
-#include "send.h"
-#include "numeric.h"
-#include "msg.h"
-#include "dns.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/ircd_defs.h>
+#include <ircd/parse.h>
+#include <ircd/authproc.h>
+#include <ircd/match.h>
+#include <ircd/logger.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_stats.h>
+#include <ircd/client.h>
+#include <ircd/packet.h>
+#include <ircd/hash.h>
+#include <ircd/send.h>
+#include <ircd/numeric.h>
+#include <ircd/msg.h>
+#include <ircd/dns.h>
 
 typedef void (*authd_cb_t)(int, char **);
 

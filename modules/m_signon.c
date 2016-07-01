@@ -27,26 +27,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdinc.h"
-
-#include "send.h"
-#include "channel.h"
-#include "client.h"
-#include "defaults.h"
-#include "ircd.h"
-#include "numeric.h"
-#include "s_conf.h"
-#include "s_serv.h"
-#include "hash.h"
-#include "msg.h"
-#include "parse.h"
-#include "modules.h"
-#include "whowas.h"
-#include "monitor.h"
-#include "s_stats.h"
-#include "snomask.h"
-#include "match.h"
-#include "s_user.h"
+#include <ircd/stdinc.h>
+#include <ircd/send.h>
+#include <ircd/channel.h>
+#include <ircd/client.h>
+#include <ircd/defaults.h>
+#include <ircd/ircd.h>
+#include <ircd/numeric.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_serv.h>
+#include <ircd/hash.h>
+#include <ircd/msg.h>
+#include <ircd/parse.h>
+#include <ircd/modules.h>
+#include <ircd/whowas.h>
+#include <ircd/monitor.h>
+#include <ircd/s_stats.h>
+#include <ircd/snomask.h>
+#include <ircd/match.h>
+#include <ircd/s_user.h>
 
 static const char signon_desc[] = "Provides account login/logout support for services";
 

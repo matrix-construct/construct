@@ -18,8 +18,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdinc.h"
-#include "rb_commio.h"
+#include <ircd/stdinc.h>
 #include "authd.h"
 #include "provider.h"
 #include "notice.h"

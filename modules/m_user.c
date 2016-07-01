@@ -22,18 +22,18 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "client.h"
-#include "match.h"
-#include "ircd.h"
-#include "numeric.h"
-#include "s_user.h"
-#include "send.h"
-#include "s_conf.h"
-#include "msg.h"
-#include "parse.h"
-#include "modules.h"
-#include "s_assert.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/match.h>
+#include <ircd/ircd.h>
+#include <ircd/numeric.h>
+#include <ircd/s_user.h>
+#include <ircd/send.h>
+#include <ircd/s_conf.h>
+#include <ircd/msg.h>
+#include <ircd/parse.h>
+#include <ircd/modules.h>
+#include <ircd/s_assert.h>
 
 static const char user_desc[] =
 	"Provides the USER command to register a new connection";

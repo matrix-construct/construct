@@ -2,12 +2,12 @@
  * Treat cmode +-S as +-b $~z.
  */
 
-#include "stdinc.h"
-#include "modules.h"
-#include "client.h"
-#include "hook.h"
-#include "ircd.h"
-#include "chmode.h"
+#include <ircd/stdinc.h>
+#include <ircd/modules.h>
+#include <ircd/client.h>
+#include <ircd/hook.h>
+#include <ircd/ircd.h>
+#include <ircd/chmode.h>
 
 static const char chm_sslonly_compat_desc[] =
 	"Adds an emulated channel mode +S which is converted into mode +b $~z";

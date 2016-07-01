@@ -27,18 +27,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdinc.h"
-#include "send.h"
-#include "channel.h"
-#include "client.h"
-#include "defaults.h"
-#include "ircd.h"
-#include "numeric.h"
-#include "s_serv.h"
-#include "hash.h"
-#include "msg.h"
-#include "parse.h"
-#include "modules.h"
+#include <ircd/stdinc.h>
+#include <ircd/send.h>
+#include <ircd/channel.h>
+#include <ircd/client.h>
+#include <ircd/defaults.h>
+#include <ircd/ircd.h>
+#include <ircd/numeric.h>
+#include <ircd/s_serv.h>
+#include <ircd/hash.h>
+#include <ircd/msg.h>
+#include <ircd/parse.h>
+#include <ircd/modules.h>
 
 static const char encap_desc[] = "Provides the TS6 ENCAP facility";
 

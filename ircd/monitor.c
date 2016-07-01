@@ -29,13 +29,12 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "stdinc.h"
-#include "client.h"
-#include "monitor.h"
-#include "hash.h"
-#include "numeric.h"
-#include "send.h"
-#include "rb_radixtree.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/monitor.h>
+#include <ircd/hash.h>
+#include <ircd/numeric.h>
+#include <ircd/send.h>
 
 static rb_radixtree *monitor_tree;
 

@@ -22,23 +22,23 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "channel.h"
-#include "client.h"
-#include "hash.h"
-#include "match.h"
-#include "ircd.h"
-#include "numeric.h"
-#include "s_user.h"
-#include "s_conf.h"
-#include "s_serv.h"
-#include "logger.h"
-#include "send.h"
-#include "msg.h"
-#include "parse.h"
-#include "modules.h"
-#include "packet.h"
-#include "s_newconf.h"
+#include <ircd/stdinc.h>
+#include <ircd/channel.h>
+#include <ircd/client.h>
+#include <ircd/hash.h>
+#include <ircd/match.h>
+#include <ircd/ircd.h>
+#include <ircd/numeric.h>
+#include <ircd/s_user.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_serv.h>
+#include <ircd/logger.h>
+#include <ircd/send.h>
+#include <ircd/msg.h>
+#include <ircd/parse.h>
+#include <ircd/modules.h>
+#include <ircd/packet.h>
+#include <ircd/s_newconf.h>
 
 static const char mode_desc[] =
 	"Provides the MODE and MLOCK client and server commands, and TS6 server-to-server TMODE and BMASK commands";

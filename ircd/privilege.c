@@ -21,13 +21,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdinc.h>
-#include "s_conf.h"
-#include "privilege.h"
-#include "numeric.h"
-#include "s_assert.h"
-#include "logger.h"
-#include "send.h"
+#include <ircd/stdinc.h>
+#include <ircd/s_conf.h>
+#include <ircd/privilege.h>
+#include <ircd/numeric.h>
+#include <ircd/s_assert.h>
+#include <ircd/logger.h>
+#include <ircd/send.h>
 
 static rb_dlink_list privilegeset_list = {NULL, NULL, 0};
 

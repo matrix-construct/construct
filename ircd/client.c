@@ -22,37 +22,36 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  */
-#include "stdinc.h"
-#include "defaults.h"
+#include <ircd/stdinc.h>
+#include <ircd/defaults.h>
 
-#include "client.h"
-#include "class.h"
-#include "hash.h"
-#include "match.h"
-#include "ircd.h"
-#include "numeric.h"
-#include "packet.h"
-#include "authproc.h"
-#include "s_conf.h"
-#include "s_newconf.h"
-#include "logger.h"
-#include "s_serv.h"
-#include "s_stats.h"
-#include "send.h"
-#include "whowas.h"
-#include "s_user.h"
-#include "hash.h"
-#include "hostmask.h"
-#include "listener.h"
-#include "hook.h"
-#include "msg.h"
-#include "monitor.h"
-#include "reject.h"
-#include "scache.h"
-#include "rb_dictionary.h"
-#include "sslproc.h"
-#include "wsproc.h"
-#include "s_assert.h"
+#include <ircd/client.h>
+#include <ircd/class.h>
+#include <ircd/hash.h>
+#include <ircd/match.h>
+#include <ircd/ircd.h>
+#include <ircd/numeric.h>
+#include <ircd/packet.h>
+#include <ircd/authproc.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_newconf.h>
+#include <ircd/logger.h>
+#include <ircd/s_serv.h>
+#include <ircd/s_stats.h>
+#include <ircd/send.h>
+#include <ircd/whowas.h>
+#include <ircd/s_user.h>
+#include <ircd/hash.h>
+#include <ircd/hostmask.h>
+#include <ircd/listener.h>
+#include <ircd/hook.h>
+#include <ircd/msg.h>
+#include <ircd/monitor.h>
+#include <ircd/reject.h>
+#include <ircd/scache.h>
+#include <ircd/sslproc.h>
+#include <ircd/wsproc.h>
+#include <ircd/s_assert.h>
 
 #define DEBUG_EXITED_CLIENTS
 

@@ -23,7 +23,7 @@
 
 #define DNS_REQ_IDLEN 10
 
-#include "stdinc.h"
+#include <ircd/stdinc.h>
 #include "res.h"
 #include "reslib.h"
 

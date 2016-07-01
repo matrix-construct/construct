@@ -22,21 +22,20 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "send.h"
-#include "channel.h"
-#include "class.h"
-#include "client.h"
-#include "match.h"
-#include "ircd.h"
-#include "numeric.h"
-#include "s_serv.h"
-#include "s_conf.h"
-#include "s_newconf.h"
-#include "logger.h"
-#include "hook.h"
-#include "monitor.h"
-#include "msgbuf.h"
+#include <ircd/send.h>
+#include <ircd/channel.h>
+#include <ircd/class.h>
+#include <ircd/client.h>
+#include <ircd/match.h>
+#include <ircd/ircd.h>
+#include <ircd/numeric.h>
+#include <ircd/s_serv.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_newconf.h>
+#include <ircd/logger.h>
+#include <ircd/hook.h>
+#include <ircd/monitor.h>
+#include <ircd/msgbuf.h>
 
 /* send the message to the link the target is attached to */
 #define send_linebuf(a,b) _send_linebuf((a->from ? a->from : a) ,b)

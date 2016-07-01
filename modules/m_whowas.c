@@ -22,21 +22,21 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "whowas.h"
-#include "client.h"
-#include "hash.h"
-#include "match.h"
-#include "ircd.h"
-#include "ircd_defs.h"
-#include "numeric.h"
-#include "s_serv.h"
-#include "s_user.h"
-#include "send.h"
-#include "s_conf.h"
-#include "msg.h"
-#include "parse.h"
-#include "modules.h"
+#include <ircd/stdinc.h>
+#include <ircd/whowas.h>
+#include <ircd/client.h>
+#include <ircd/hash.h>
+#include <ircd/match.h>
+#include <ircd/ircd.h>
+#include <ircd/ircd_defs.h>
+#include <ircd/numeric.h>
+#include <ircd/s_serv.h>
+#include <ircd/s_user.h>
+#include <ircd/send.h>
+#include <ircd/s_conf.h>
+#include <ircd/msg.h>
+#include <ircd/parse.h>
+#include <ircd/modules.h>
 
 static const char whowas_desc[] =
 	"Provides the WHOWAS command to display information on a disconnected user";

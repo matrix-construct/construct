@@ -22,14 +22,14 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "client.h"
-#include "ircd.h"
-#include "numeric.h"
-#include "send.h"
-#include "msg.h"
-#include "parse.h"
-#include "modules.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/ircd.h>
+#include <ircd/numeric.h>
+#include <ircd/send.h>
+#include <ircd/msg.h>
+#include <ircd/parse.h>
+#include <ircd/modules.h>
 
 static const char close_desc[] = "Provides the CLOSE command to clear all unfinished connections";
 

@@ -20,9 +20,9 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "channel.h"
-#include "client.h"
+#include <ircd/stdinc.h>
+#include <ircd/channel.h>
+#include <ircd/client.h>
 
 ExtbanFunc extban_table[256] = { NULL };
 

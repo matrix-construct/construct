@@ -17,12 +17,12 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  */
-#include "stdinc.h"
-#include "defaults.h"
-#include "client.h"
-#include "ircd.h"
-#include "match.h"
-#include "s_assert.h"
+#include <ircd/stdinc.h>
+#include <ircd/defaults.h>
+#include <ircd/client.h>
+#include <ircd/ircd.h>
+#include <ircd/match.h>
+#include <ircd/s_assert.h>
 
 /*
  * Compare if a given string (name) matches the given

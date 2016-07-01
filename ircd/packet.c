@@ -21,17 +21,17 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  */
-#include "stdinc.h"
-#include "s_conf.h"
-#include "s_serv.h"
-#include "client.h"
-#include "ircd.h"
-#include "parse.h"
-#include "packet.h"
-#include "match.h"
-#include "hook.h"
-#include "send.h"
-#include "s_assert.h"
+#include <ircd/stdinc.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_serv.h>
+#include <ircd/client.h>
+#include <ircd/ircd.h>
+#include <ircd/parse.h>
+#include <ircd/packet.h>
+#include <ircd/match.h>
+#include <ircd/hook.h>
+#include <ircd/send.h>
+#include <ircd/s_assert.h>
 
 static char readBuf[READBUF_SIZE];
 static void client_dopacket(struct Client *client_p, char *buffer, size_t length);

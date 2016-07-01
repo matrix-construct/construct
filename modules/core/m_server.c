@@ -22,22 +22,22 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "client.h"		/* client struct */
-#include "hash.h"		/* add_to_client_hash */
-#include "match.h"
-#include "ircd.h"		/* me */
-#include "numeric.h"		/* ERR_xxx */
-#include "s_conf.h"		/* struct ConfItem */
-#include "s_newconf.h"
-#include "logger.h"		/* log level defines */
-#include "s_serv.h"		/* server_estab, check_server */
-#include "s_stats.h"		/* ServerStats */
-#include "scache.h"
-#include "send.h"		/* sendto_one */
-#include "msg.h"
-#include "parse.h"
-#include "modules.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>		/* client struct */
+#include <ircd/hash.h>		/* add_to_client_hash */
+#include <ircd/match.h>
+#include <ircd/ircd.h>		/* me */
+#include <ircd/numeric.h>		/* ERR_xxx */
+#include <ircd/s_conf.h>		/* struct ConfItem */
+#include <ircd/s_newconf.h>
+#include <ircd/logger.h>		/* log level defines */
+#include <ircd/s_serv.h>		/* server_estab, check_server */
+#include <ircd/s_stats.h>		/* ServerStats */
+#include <ircd/scache.h>
+#include <ircd/send.h>		/* sendto_one */
+#include <ircd/msg.h>
+#include <ircd/parse.h>
+#include <ircd/modules.h>
 
 static const char server_desc[] =
 	"Provides the TS6 commands to introduce a new server to the network";

@@ -31,12 +31,12 @@
 
 #define WE_ARE_MEMORY_C
 
-#include "stdinc.h"
-#include "ircd_defs.h"
-#include "defaults.h"
-#include "logger.h"
-#include "s_conf.h"
-#include "newconf.h"
+#include <ircd/stdinc.h>
+#include <ircd/ircd_defs.h>
+#include <ircd/defaults.h>
+#include <ircd/logger.h>
+#include <ircd/s_conf.h>
+#include <ircd/newconf.h>
 
 #include "ircd_parser.h"
 

@@ -11,13 +11,11 @@
 #include <stdarg.h>
 #include <stdio.h>
 #define WE_ARE_MEMORY_C
-#include "stdinc.h"
-#include "setup.h"
-#include "ircd_defs.h"
-#include "defaults.h"
-#include "client.h"
-#include "modules.h"
-#include "newconf.h"
+#include <ircd/stdinc.h>
+#include <ircd/defaults.h>
+#include <ircd/client.h>
+#include <ircd/modules.h>
+#include <ircd/newconf.h>
 
 #define YY_NO_UNPUT
 

@@ -29,15 +29,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdinc.h"
-#include "client.h"
-#include "numeric.h"
-#include "send.h"
-#include "msg.h"
-#include "parse.h"
-#include "modules.h"
-#include "s_conf.h"
-#include "s_newconf.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/numeric.h>
+#include <ircd/send.h>
+#include <ircd/msg.h>
+#include <ircd/parse.h>
+#include <ircd/modules.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_newconf.h>
 
 static const char privs_desc[] = "Provides the PRIVS command to inspect an operator's privileges";
 

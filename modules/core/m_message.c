@@ -22,26 +22,26 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "client.h"
-#include "ircd.h"
-#include "numeric.h"
-#include "s_conf.h"
-#include "s_serv.h"
-#include "msg.h"
-#include "parse.h"
-#include "modules.h"
-#include "channel.h"
-#include "match.h"
-#include "hash.h"
-#include "class.h"
-#include "msg.h"
-#include "packet.h"
-#include "send.h"
-#include "s_newconf.h"
-#include "s_stats.h"
-#include "tgchange.h"
-#include "inline/stringops.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/ircd.h>
+#include <ircd/numeric.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_serv.h>
+#include <ircd/msg.h>
+#include <ircd/parse.h>
+#include <ircd/modules.h>
+#include <ircd/channel.h>
+#include <ircd/match.h>
+#include <ircd/hash.h>
+#include <ircd/class.h>
+#include <ircd/msg.h>
+#include <ircd/packet.h>
+#include <ircd/send.h>
+#include <ircd/s_newconf.h>
+#include <ircd/s_stats.h>
+#include <ircd/tgchange.h>
+#include <ircd/inline/stringops.h>
 
 static const char message_desc[] =
 	"Provides the PRIVMSG and NOTICE commands to send messages to users and channels";

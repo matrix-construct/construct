@@ -18,12 +18,12 @@
  */
 
 /* List of ircd includes from ../include/ */
-#include "stdinc.h"
-#include "modules.h"
-#include "hook.h"
-#include "client.h"
-#include "ircd.h"
-#include "send.h"
+#include <ircd/stdinc.h>
+#include <ircd/modules.h>
+#include <ircd/hook.h>
+#include <ircd/client.h>
+#include <ircd/ircd.h>
+#include <ircd/send.h>
 
 /* This string describes the module. Always declare it a static const char[].
  * It is preferred for stylistic reasons to put it first.

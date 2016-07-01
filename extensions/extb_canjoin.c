@@ -4,12 +4,12 @@
  *    -- nenolod/jilles
  */
 
-#include "stdinc.h"
-#include "modules.h"
-#include "client.h"
-#include "channel.h"
-#include "hash.h"
-#include "ircd.h"
+#include <ircd/stdinc.h>
+#include <ircd/modules.h>
+#include <ircd/client.h>
+#include <ircd/channel.h>
+#include <ircd/hash.h>
+#include <ircd/ircd.h>
 
 static const char extb_desc[] = "Can join ($j) extban type - matches users who are or are not banned from a specified channel";
 

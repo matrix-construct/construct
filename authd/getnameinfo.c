@@ -42,7 +42,7 @@
  */
 
 #ifdef _WIN32
-#include <rb_lib.h>
+#include <rb/rb.h>
 #include "getaddrinfo.h"
 #include "getnameinfo.h"
 

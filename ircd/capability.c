@@ -18,10 +18,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdinc.h"
-#include "capability.h"
-#include "rb_dictionary.h"
-#include "s_assert.h"
+#include <ircd/stdinc.h>
+#include <ircd/capability.h>
+#include <ircd/s_assert.h>
 
 static rb_dlink_list capability_indexes = { NULL, NULL, 0 };
 

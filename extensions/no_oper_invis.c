@@ -4,14 +4,14 @@
  * -- jilles
  */
 
-#include "stdinc.h"
-#include "modules.h"
-#include "client.h"
-#include "hook.h"
-#include "ircd.h"
-#include "send.h"
-#include "s_conf.h"
-#include "s_newconf.h"
+#include <ircd/stdinc.h>
+#include <ircd/modules.h>
+#include <ircd/client.h>
+#include <ircd/hook.h>
+#include <ircd/ircd.h>
+#include <ircd/send.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_newconf.h>
 
 static const char noi_desc[] =
 	"Disallow operators from setting user mode +i on themselves";

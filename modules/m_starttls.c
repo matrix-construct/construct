@@ -18,19 +18,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdinc.h"
-#include "client.h"
-#include "match.h"
-#include "hash.h"
-#include "ircd.h"
-#include "numeric.h"
-#include "send.h"
-#include "msg.h"
-#include "modules.h"
-#include "sslproc.h"
-#include "s_assert.h"
-#include "s_serv.h"
-#include "logger.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/match.h>
+#include <ircd/hash.h>
+#include <ircd/ircd.h>
+#include <ircd/numeric.h>
+#include <ircd/send.h>
+#include <ircd/msg.h>
+#include <ircd/modules.h>
+#include <ircd/sslproc.h>
+#include <ircd/s_assert.h>
+#include <ircd/s_serv.h>
+#include <ircd/logger.h>
 
 static const char starttls_desc[] = "Provides the tls CAP and STARTTLS command";
 

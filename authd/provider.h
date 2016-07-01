@@ -21,9 +21,8 @@
 #ifndef __CHARYBDIS_AUTHD_PROVIDER_H__
 #define __CHARYBDIS_AUTHD_PROVIDER_H__
 
-#include "stdinc.h"
+#include <ircd/stdinc.h>
 #include "authd.h"
-#include "rb_dictionary.h"
 
 #define MAX_PROVIDERS 32	/* This should be enough */
 

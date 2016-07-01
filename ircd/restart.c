@@ -22,14 +22,14 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "restart.h"
-#include "ircd.h"
-#include "send.h"
-#include "logger.h"
-#include "s_conf.h"
-#include "client.h"
-#include "ircd_signal.h"
+#include <ircd/stdinc.h>
+#include <ircd/restart.h>
+#include <ircd/ircd.h>
+#include <ircd/send.h>
+#include <ircd/logger.h>
+#include <ircd/s_conf.h>
+#include <ircd/client.h>
+#include <ircd/ircd_signal.h>
 
 /* external var */
 extern char * const *myargv;

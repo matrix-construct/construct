@@ -24,9 +24,8 @@
  * --Elizafox 13 March 2016
  */
 
-#include "stdinc.h"
-#include "defaults.h"
-#include "match.h"
+#include <ircd/stdinc.h>
+#include <ircd/match.h>
 #include "authd.h"
 #include "notice.h"
 #include "provider.h"

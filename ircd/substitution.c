@@ -31,12 +31,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdinc.h"
-#include "s_user.h"
-#include "snomask.h"
-#include "match.h"
-#include "substitution.h"
-#include "s_assert.h"
+#include <ircd/stdinc.h>
+#include <ircd/s_user.h>
+#include <ircd/snomask.h>
+#include <ircd/match.h>
+#include <ircd/substitution.h>
+#include <ircd/s_assert.h>
 
 /*
  * Simple mappings for $foo -> 'bar'.

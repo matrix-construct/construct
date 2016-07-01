@@ -18,10 +18,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdinc.h"
-#include "rb_lib.h"
-#include "defaults.h"
-#include "setup.h"
+#include <ircd/stdinc.h>
 #include "authd.h"
 #include "notice.h"
 #include "provider.h"

@@ -21,14 +21,14 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "client.h"
-#include "s_conf.h"
-#include "hostmask.h"
-#include "reject.h"
-#include "msg.h"
-#include "modules.h"
-#include "send.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/s_conf.h>
+#include <ircd/hostmask.h>
+#include <ircd/reject.h>
+#include <ircd/msg.h>
+#include <ircd/modules.h>
+#include <ircd/send.h>
 
 static const char unreject_desc[] =
 	"Provides the UNREJECT command to remove an IP from the reject cache";

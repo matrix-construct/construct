@@ -31,9 +31,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdinc.h"
-#include "client.h"
-#include "snomask.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/snomask.h>
 
 /* *INDENT-OFF* */
 int snomask_modes[256] = {

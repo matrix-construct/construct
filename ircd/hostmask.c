@@ -23,13 +23,12 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "ircd_defs.h"
-#include "s_conf.h"
-#include "hostmask.h"
-#include "numeric.h"
-#include "send.h"
-#include "match.h"
+#include <ircd/stdinc.h>
+#include <ircd/s_conf.h>
+#include <ircd/hostmask.h>
+#include <ircd/numeric.h>
+#include <ircd/send.h>
+#include <ircd/match.h>
 
 #ifdef RB_IPV6
 static unsigned long hash_ipv6(struct sockaddr *, int);

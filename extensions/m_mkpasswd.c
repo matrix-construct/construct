@@ -5,13 +5,13 @@
  * You can use this code in any way as long as these names remain.
  */
 
-#include "stdinc.h"
-#include "client.h"
-#include "numeric.h"
-#include "s_conf.h"
-#include "modules.h"
-#include "messages.h"
-#include "send.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/numeric.h>
+#include <ircd/s_conf.h>
+#include <ircd/modules.h>
+#include <ircd/messages.h>
+#include <ircd/send.h>
 
 #include <string.h>
 

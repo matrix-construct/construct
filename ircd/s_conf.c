@@ -22,36 +22,35 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "ircd_defs.h"
-#include "s_conf.h"
-#include "s_newconf.h"
-#include "newconf.h"
-#include "s_serv.h"
-#include "s_stats.h"
-#include "channel.h"
-#include "class.h"
-#include "client.h"
-#include "hash.h"
-#include "match.h"
-#include "ircd.h"
-#include "listener.h"
-#include "hostmask.h"
-#include "modules.h"
-#include "numeric.h"
-#include "logger.h"
-#include "send.h"
-#include "reject.h"
-#include "cache.h"
-#include "privilege.h"
-#include "sslproc.h"
-#include "wsproc.h"
-#include "bandbi.h"
-#include "operhash.h"
-#include "chmode.h"
-#include "hook.h"
-#include "s_assert.h"
-#include "authproc.h"
+#include <ircd/stdinc.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_newconf.h>
+#include <ircd/newconf.h>
+#include <ircd/s_serv.h>
+#include <ircd/s_stats.h>
+#include <ircd/channel.h>
+#include <ircd/class.h>
+#include <ircd/client.h>
+#include <ircd/hash.h>
+#include <ircd/match.h>
+#include <ircd/ircd.h>
+#include <ircd/listener.h>
+#include <ircd/hostmask.h>
+#include <ircd/modules.h>
+#include <ircd/numeric.h>
+#include <ircd/logger.h>
+#include <ircd/send.h>
+#include <ircd/reject.h>
+#include <ircd/cache.h>
+#include <ircd/privilege.h>
+#include <ircd/sslproc.h>
+#include <ircd/wsproc.h>
+#include <ircd/bandbi.h>
+#include <ircd/operhash.h>
+#include <ircd/chmode.h>
+#include <ircd/hook.h>
+#include <ircd/s_assert.h>
+#include <ircd/authproc.h>
 
 struct config_server_hide ConfigServerHide;
 

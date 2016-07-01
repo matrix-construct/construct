@@ -22,9 +22,8 @@
  *  USA
  */
 
-#include "stdinc.h"
-
-#include "ircd_getopt.h"
+#include <ircd/stdinc.h>
+#include <ircd/ircd_getopt.h>
 
 # define OPTCHAR '-'
 

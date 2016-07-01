@@ -27,11 +27,9 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "setup.h"
-#include <rb_lib.h>
-#include <stdio.h>
+#include <rb/rb.h>
 #include "rsdb.h"
-#include "ircd_defs.h"
+#include <ircd/ircd_defs.h>
 
 
 #define MAXPARA 10

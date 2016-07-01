@@ -23,23 +23,23 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "parse.h"
-#include "client.h"
-#include "channel.h"
-#include "hash.h"
-#include "match.h"
-#include "ircd.h"
-#include "numeric.h"
-#include "logger.h"
-#include "s_stats.h"
-#include "send.h"
-#include "msg.h"
-#include "msgbuf.h"
-#include "s_conf.h"
-#include "s_serv.h"
-#include "packet.h"
-#include "s_assert.h"
+#include <ircd/stdinc.h>
+#include <ircd/parse.h>
+#include <ircd/client.h>
+#include <ircd/channel.h>
+#include <ircd/hash.h>
+#include <ircd/match.h>
+#include <ircd/ircd.h>
+#include <ircd/numeric.h>
+#include <ircd/logger.h>
+#include <ircd/s_stats.h>
+#include <ircd/send.h>
+#include <ircd/msg.h>
+#include <ircd/msgbuf.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_serv.h>
+#include <ircd/packet.h>
+#include <ircd/s_assert.h>
 
 rb_dictionary *cmd_dict = NULL;
 rb_dictionary *alias_dict = NULL;

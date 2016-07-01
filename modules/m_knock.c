@@ -21,20 +21,20 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "channel.h"
-#include "client.h"
-#include "hash.h"
-#include "match.h"
-#include "ircd.h"
-#include "numeric.h"
-#include "send.h"
-#include "s_conf.h"
-#include "msg.h"
-#include "parse.h"
-#include "modules.h"
-#include "s_serv.h"
-#include "supported.h"
+#include <ircd/stdinc.h>
+#include <ircd/channel.h>
+#include <ircd/client.h>
+#include <ircd/hash.h>
+#include <ircd/match.h>
+#include <ircd/ircd.h>
+#include <ircd/numeric.h>
+#include <ircd/send.h>
+#include <ircd/s_conf.h>
+#include <ircd/msg.h>
+#include <ircd/parse.h>
+#include <ircd/modules.h>
+#include <ircd/s_serv.h>
+#include <ircd/supported.h>
 
 static const char knock_desc[] = "Provides the KNOCK command to ask for an invite to an invite-only channel";
 

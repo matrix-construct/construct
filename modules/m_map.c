@@ -20,13 +20,13 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "client.h"
-#include "modules.h"
-#include "numeric.h"
-#include "send.h"
-#include "s_conf.h"
-#include "scache.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/modules.h>
+#include <ircd/numeric.h>
+#include <ircd/send.h>
+#include <ircd/s_conf.h>
+#include <ircd/scache.h>
 
 #define USER_COL       50	/* display | Users: %d at col 50 */
 

@@ -18,21 +18,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdinc.h"
-#include "client.h"
-#include "parse.h"
-#include "msg.h"
-#include "modules.h"
-#include "s_newconf.h"
-#include "s_conf.h"
-#include "s_serv.h"
-#include "hash.h"
-#include "ircd.h"
-#include "match.h"
-#include "numeric.h"
-#include "send.h"
-#include "packet.h"
-#include "logger.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/parse.h>
+#include <ircd/msg.h>
+#include <ircd/modules.h>
+#include <ircd/s_newconf.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_serv.h>
+#include <ircd/hash.h>
+#include <ircd/ircd.h>
+#include <ircd/match.h>
+#include <ircd/numeric.h>
+#include <ircd/send.h>
+#include <ircd/packet.h>
+#include <ircd/logger.h>
 
 static const char modules_desc[] = "Provides module management commands";
 

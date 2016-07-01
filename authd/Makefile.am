@@ -1,6 +1,6 @@
-pkglibexec_PROGRAMS = authd
+bin_PROGRAMS = authd
 AM_CFLAGS=$(WARNFLAGS)
-AM_CPPFLAGS = -I../include -I../librb/include 
+AM_CPPFLAGS = -I$(top_srcdir)/include
 
 authd_SOURCES =	\
 	authd.c	\
@@ -17,4 +17,4 @@ authd_SOURCES =	\
 	providers/rdns.c \
 	providers/opm.c
 
-authd_LDADD = ../librb/src/librb.la
+authd_LDADD = $(top_srcdir)/rb/librb.la

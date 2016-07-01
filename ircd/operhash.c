@@ -30,12 +30,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <rb_lib.h>
-#include "stdinc.h"
-#include "match.h"
-#include "hash.h"
-#include "operhash.h"
-#include "rb_radixtree.h"
+#include <ircd/stdinc.h>
+#include <ircd/match.h>
+#include <ircd/hash.h>
+#include <ircd/operhash.h>
 
 static rb_radixtree *operhash_tree = NULL;
 

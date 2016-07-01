@@ -22,17 +22,17 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "client.h"
-#include "ircd.h"
-#include "numeric.h"
-#include "s_serv.h"
-#include "send.h"
-#include "match.h"
-#include "msg.h"
-#include "parse.h"
-#include "modules.h"
-#include "s_conf.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/ircd.h>
+#include <ircd/numeric.h>
+#include <ircd/s_serv.h>
+#include <ircd/send.h>
+#include <ircd/match.h>
+#include <ircd/msg.h>
+#include <ircd/parse.h>
+#include <ircd/modules.h>
+#include <ircd/s_conf.h>
 
 static const char userhost_desc[] =
 	"Provides the USERHOST command to show a user's host";

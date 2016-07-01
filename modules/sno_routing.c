@@ -29,12 +29,12 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdinc.h"
-#include "modules.h"
-#include "client.h"
-#include "hook.h"
-#include "ircd.h"
-#include "send.h"
+#include <ircd/stdinc.h>
+#include <ircd/modules.h>
+#include <ircd/client.h>
+#include <ircd/hook.h>
+#include <ircd/ircd.h>
+#include <ircd/send.h>
 
 static void h_nn_server_eob(struct Client *);
 static void h_nn_client_exit(hook_data_client_exit *);

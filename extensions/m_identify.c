@@ -29,19 +29,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdinc.h"
-#include "client.h"
-#include "ircd.h"
-#include "match.h"
-#include "numeric.h"
-#include "s_conf.h"
-#include "logger.h"
-#include "s_serv.h"
-#include "send.h"
-#include "msg.h"
-#include "parse.h"
-#include "modules.h"
-#include "messages.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/ircd.h>
+#include <ircd/match.h>
+#include <ircd/numeric.h>
+#include <ircd/s_conf.h>
+#include <ircd/logger.h>
+#include <ircd/s_serv.h>
+#include <ircd/send.h>
+#include <ircd/msg.h>
+#include <ircd/parse.h>
+#include <ircd/modules.h>
+#include <ircd/messages.h>
 
 #define SVS_chanserv_NICK "ChanServ"
 #define SVS_nickserv_NICK "NickServ"

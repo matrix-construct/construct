@@ -23,48 +23,45 @@
  *  USA
  */
 
-#include "rb_lib.h"
-#include "stdinc.h"
-#include "setup.h"
-#include "defaults.h"
-#include "ircd.h"
-#include "channel.h"
-#include "class.h"
-#include "client.h"
-#include "hash.h"
-#include "match.h"
-#include "ircd_signal.h"
-#include "msg.h"		/* msgtab */
-#include "hostmask.h"
-#include "numeric.h"
-#include "parse.h"
-#include "restart.h"
-#include "s_conf.h"
-#include "logger.h"
-#include "s_serv.h"		/* try_connections */
-#include "s_user.h"
-#include "s_stats.h"
-#include "scache.h"
-#include "send.h"
-#include "supported.h"
-#include "whowas.h"
-#include "modules.h"
-#include "hook.h"
-#include "ircd_getopt.h"
-#include "newconf.h"
-#include "reject.h"
-#include "s_newconf.h"
-#include "cache.h"
-#include "monitor.h"
-#include "patchlevel.h"
-#include "serno.h"
-#include "sslproc.h"
-#include "wsproc.h"
-#include "chmode.h"
-#include "privilege.h"
-#include "bandbi.h"
-#include "authproc.h"
-#include "operhash.h"
+#include <ircd/stdinc.h>
+#include <ircd/defaults.h>
+#include <ircd/ircd.h>
+#include <ircd/channel.h>
+#include <ircd/class.h>
+#include <ircd/client.h>
+#include <ircd/hash.h>
+#include <ircd/match.h>
+#include <ircd/ircd_signal.h>
+#include <ircd/msg.h>		/* msgtab */
+#include <ircd/hostmask.h>
+#include <ircd/numeric.h>
+#include <ircd/parse.h>
+#include <ircd/restart.h>
+#include <ircd/s_conf.h>
+#include <ircd/logger.h>
+#include <ircd/s_serv.h>		/* try_connections */
+#include <ircd/s_user.h>
+#include <ircd/s_stats.h>
+#include <ircd/scache.h>
+#include <ircd/send.h>
+#include <ircd/supported.h>
+#include <ircd/whowas.h>
+#include <ircd/modules.h>
+#include <ircd/hook.h>
+#include <ircd/ircd_getopt.h>
+#include <ircd/newconf.h>
+#include <ircd/reject.h>
+#include <ircd/s_newconf.h>
+#include <ircd/cache.h>
+#include <ircd/monitor.h>
+#include <ircd/patchlevel.h>
+#include <ircd/sslproc.h>
+#include <ircd/wsproc.h>
+#include <ircd/chmode.h>
+#include <ircd/privilege.h>
+#include <ircd/bandbi.h>
+#include <ircd/authproc.h>
+#include <ircd/operhash.h>
 
 static void
 ircd_die_cb(const char *str) __attribute__((noreturn));

@@ -28,18 +28,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdinc.h"
-#include "send.h"
-#include "channel.h"
-#include "client.h"
-#include "defaults.h"
-#include "ircd.h"
-#include "match.h"
-#include "s_conf.h"
-#include "msg.h"
-#include "modules.h"
-#include "hash.h"
-#include "s_serv.h"
+#include <ircd/stdinc.h>
+#include <ircd/send.h>
+#include <ircd/channel.h>
+#include <ircd/client.h>
+#include <ircd/defaults.h>
+#include <ircd/ircd.h>
+#include <ircd/match.h>
+#include <ircd/s_conf.h>
+#include <ircd/msg.h>
+#include <ircd/modules.h>
+#include <ircd/hash.h>
+#include <ircd/s_serv.h>
 
 static const char tb_desc[] =
 	"Provides TS6 TB and ETB commands for topic bursting between servers";

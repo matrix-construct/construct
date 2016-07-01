@@ -28,23 +28,22 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "stdinc.h"
-#include "rb_lib.h"
-#include "client.h"
-#include "s_conf.h"
-#include "logger.h"
-#include "match.h"
-#include "bandbi.h"
-#include "parse.h"
-#include "channel.h"
-#include "hostmask.h"
-#include "hash.h"
-#include "s_newconf.h"
-#include "reject.h"
-#include "send.h"
-#include "ircd.h"
-#include "msg.h"	/* XXX: MAXPARA */
-#include "operhash.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/s_conf.h>
+#include <ircd/logger.h>
+#include <ircd/match.h>
+#include <ircd/bandbi.h>
+#include <ircd/parse.h>
+#include <ircd/channel.h>
+#include <ircd/hostmask.h>
+#include <ircd/hash.h>
+#include <ircd/s_newconf.h>
+#include <ircd/reject.h>
+#include <ircd/send.h>
+#include <ircd/ircd.h>
+#include <ircd/msg.h>	/* XXX: MAXPARA */
+#include <ircd/operhash.h>
 
 static void
 bandb_handle_failure(rb_helper *helper, char **parv, int parc) __attribute__((noreturn));

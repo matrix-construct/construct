@@ -22,19 +22,19 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "client.h"
-#include "ircd.h"
-#include "match.h"
-#include "numeric.h"
-#include "logger.h"
-#include "s_conf.h"
-#include "send.h"
-#include "msg.h"
-#include "parse.h"
-#include "modules.h"
-#include "s_newconf.h"
-#include "hash.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/ircd.h>
+#include <ircd/match.h>
+#include <ircd/numeric.h>
+#include <ircd/logger.h>
+#include <ircd/s_conf.h>
+#include <ircd/send.h>
+#include <ircd/msg.h>
+#include <ircd/parse.h>
+#include <ircd/modules.h>
+#include <ircd/s_newconf.h>
+#include <ircd/hash.h>
 
 static const char die_desc[] = "Provides the DIE command to allow an operator to shutdown a server";
 

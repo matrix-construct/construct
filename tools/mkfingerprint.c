@@ -17,12 +17,8 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *  USA
  */
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include "rb_lib.h"
-#include "certfp.h"
+#include <rb/rb.h>
+#include <ircd/certfp.h>
 
 int main(int argc, char *argv[])
 {

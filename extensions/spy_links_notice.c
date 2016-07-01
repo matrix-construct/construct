@@ -19,12 +19,12 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  */
-#include "stdinc.h"
-#include "modules.h"
-#include "hook.h"
-#include "client.h"
-#include "ircd.h"
-#include "send.h"
+#include <ircd/stdinc.h>
+#include <ircd/modules.h>
+#include <ircd/hook.h>
+#include <ircd/client.h>
+#include <ircd/ircd.h>
+#include <ircd/send.h>
 
 static const char spy_desc[] = "Sends a notice when someone uses LINKS";
 

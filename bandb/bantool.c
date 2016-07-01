@@ -39,7 +39,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "stdinc.h"
+#include <ircd/stdinc.h>
 #include "rsdb.h"
 
 #define EmptyString(x) ((x == NULL) || (*(x) == '\0'))

@@ -4,10 +4,10 @@
  *  - nenolod
  */
 
-#include "stdinc.h"
-#include "modules.h"
-#include "client.h"
-#include "ircd.h"
+#include <ircd/stdinc.h>
+#include <ircd/modules.h>
+#include <ircd/client.h>
+#include <ircd/ircd.h>
 
 static const char extb_desc[] = "Extended mask ($x) extban type";
 

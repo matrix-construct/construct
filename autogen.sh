@@ -81,13 +81,6 @@ parse_options "$@"
 
 echo "Building librb autotools files."
 
-cd "$TOP_DIR"/librb
-sh autogen.sh
-
-echo "Building main autotools files."
-
-cd "$LAST_DIR"
-
 run_or_die $ACLOCAL -I m4
 run_or_die $LIBTOOLIZE --force --copy
 run_or_die $AUTOHEADER

@@ -17,23 +17,23 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "stdinc.h"
-#include "channel.h"
-#include "client.h"
-#include "ircd.h"
-#include "numeric.h"
-#include "logger.h"
-#include "s_serv.h"
-#include "s_conf.h"
-#include "s_newconf.h"
-#include "send.h"
-#include "whowas.h"
-#include "match.h"
-#include "hash.h"
-#include "msg.h"
-#include "parse.h"
-#include "modules.h"
-#include "messages.h"
+#include <ircd/stdinc.h>
+#include <ircd/channel.h>
+#include <ircd/client.h>
+#include <ircd/ircd.h>
+#include <ircd/numeric.h>
+#include <ircd/logger.h>
+#include <ircd/s_serv.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_newconf.h>
+#include <ircd/send.h>
+#include <ircd/whowas.h>
+#include <ircd/match.h>
+#include <ircd/hash.h>
+#include <ircd/msg.h>
+#include <ircd/parse.h>
+#include <ircd/modules.h>
+#include <ircd/messages.h>
 
 static const char ojoin_desc[] = "Allow admins to forcibly join channels with the OJOIN command";
 

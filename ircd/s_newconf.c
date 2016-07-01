@@ -30,21 +30,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdinc.h"
-#include "ircd_defs.h"
-#include "s_conf.h"
-#include "s_newconf.h"
-#include "client.h"
-#include "s_serv.h"
-#include "send.h"
-#include "hostmask.h"
-#include "newconf.h"
-#include "hash.h"
-#include "rb_dictionary.h"
-#include "rb_radixtree.h"
-#include "s_assert.h"
-#include "logger.h"
-#include "dns.h"
+#include <ircd/stdinc.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_newconf.h>
+#include <ircd/client.h>
+#include <ircd/s_serv.h>
+#include <ircd/send.h>
+#include <ircd/hostmask.h>
+#include <ircd/newconf.h>
+#include <ircd/hash.h>
+#include <ircd/s_assert.h>
+#include <ircd/logger.h>
+#include <ircd/dns.h>
 
 rb_dlink_list shared_conf_list;
 rb_dlink_list cluster_conf_list;

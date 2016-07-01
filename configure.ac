@@ -2,38 +2,623 @@ dnl TODO: clean up all the OpenSSL and shared module checking stuff;
 dnl the most major changes have already been made and it looks like
 dnl said functions need to be just about as complex as they already are.
 
-AC_PREREQ(2.60)
+AC_PREREQ(2.63)
+AUTOMAKE_OPTIONS = 1.10
 
 AC_INIT([charybdis], [5-dev])
+AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_HEADER(include/rb/config.h)
+AC_PREFIX_DEFAULT($HOME/ircd)
 
-AC_LANG(C)
-AC_USE_SYSTEM_EXTENSIONS
+AC_LANG(C++)
 AC_GNU_SOURCE
-
-AC_PROG_CC_C99
-if test x"$ac_cv_prog_cc_c99" = "xno"; then
-	AC_ERROR([charybdis requires a C99 capable compiler])
-fi
+AC_USE_SYSTEM_EXTENSIONS
+AX_CXX_COMPILE_STDCXX_14([ext], [mandatory])
+AC_ISC_POSIX
+AC_C_INLINE
+AC_C_CONST
+AC_C_BIGENDIAN
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+AC_TYPE_SSIZE_T
+AC_TYPE_UID_T
 
 AC_PROG_CXX
-AX_CXX_COMPILE_STDCXX_14([ext], [mandatory])
+AC_PROG_MAKE_SET
+AC_PROG_LIBTOOL
+AC_PATH_PROG(AUTOMAKE, automake)
+AC_PATH_PROG(ACLOCAL, aclocal)
+AC_PATH_PROG(AUTOHEADER, autoheader)
+AC_PATH_PROG(AS, as)
+AC_PATH_PROG(RM, rm)
+AC_PATH_PROG(CP, cp)
+AC_PATH_PROG(MV, mv)
+AC_PATH_PROG(LN, ln)
+AC_PATH_PROG(TOUCH, touch)
 
-AC_PREFIX_DEFAULT($HOME/ircd)
-AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_HEADER(include/setup.h)
+LT_CONFIG_LTDL_DIR([libltdl])
+LT_INIT([dlopen disable-static])
+LTDL_INIT
+#LIBTOOL="$LIBTOOL --silent"
 
-AC_CONFIG_SUBDIRS([librb])
-AC_CONFIG_AUX_DIR([libltdl/config])
+AC_CONFIG_FILES(\
+	Makefile                \
+	authd/Makefile          \
+	bandb/Makefile          \
+	charybdis/Makefile      \
+	doc/Makefile            \
+	extensions/Makefile     \
+	help/Makefile           \
+	ircd/Makefile           \
+	modules/Makefile        \
+	rb/Makefile             \
+	ssld/Makefile           \
+	tools/Makefile          \
+	tools/genssl            \
+	wsockd/Makefile         \
+)
 
 AM_INIT_AUTOMAKE([subdir-objects])
-AM_SILENT_RULES([yes])
-AM_PROG_AR
+AM_EXTRA_RECURSIVE_TARGETS([mrproper])
 
-LT_INIT([dlopen disable-static])
-LT_CONFIG_LTDL_DIR([libltdl])
-LTDL_INIT
+VERSION_CMD="git describe --tags"
+DATESTR_CMD="date -R"
+DATECODE_CMD="date +%s"
+
+RB_VERSION=`$VERSION_CMD`
+RB_DATESTR=`$DATESTR_CMD`
+RB_DATECODE=`$DATECODE_CMD`
+
+AC_DEFINE_UNQUOTED([RB_VERSION], ["$RB_VERSION"], [Version generated at configuration time.])
+AC_DEFINE_UNQUOTED([RB_DATESTR], ["$RB_DATESTR"], [Readable date string of configuration time.])
+AC_DEFINE_UNQUOTED([RB_DATECODE], [$RB_DATECODE], [UNIX epoch time at configuration time.])
+
+AC_DEFINE([NICKNAMEHISTORYLENGTH], 15000, [Size of the WHOWAS array.])
+AC_DEFINE([CHANNEL_HEAP_SIZE],     8192, [Size of the channel heap.])
+AC_DEFINE([BAN_HEAP_SIZE],         4096, [Size of the ban heap.])
+AC_DEFINE([CLIENT_HEAP_SIZE],      8192, [Size of the client heap.])
+AC_DEFINE([LCLIENT_HEAP_SIZE],     1024, [Size of the local client heap.])
+AC_DEFINE([PCLIENT_HEAP_SIZE],     256, [Size of the pre-client heap.])
+AC_DEFINE([USER_HEAP_SIZE],        8192, [Size of the user heap.])
+AC_DEFINE([DNODE_HEAP_SIZE],       8192, [Size of the dlink_node heap.])
+AC_DEFINE([TOPIC_HEAP_SIZE],       4096, [Size of the topic heap.])
+AC_DEFINE([LINEBUF_HEAP_SIZE],     2048, [Size of the linebuf heap.])
+AC_DEFINE([MEMBER_HEAP_SIZE],      32768, [Sizeof member heap.])
+AC_DEFINE([ND_HEAP_SIZE],          512, [Size of the nick delay heap.])
+AC_DEFINE([CONFITEM_HEAP_SIZE],    256, [Size of the confitem heap.])
+AC_DEFINE([MONITOR_HEAP_SIZE],     1024, [Size of the monitor heap.])
+AC_DEFINE([FD_HEAP_SIZE],          1024, [Size of fd heap.])
+AC_DEFINE([AWAY_HEAP_SIZE],        512, [Size of away heap.])
+
+dnl Checks for header files.
+AC_DEFUN([RB_CHK_SYSHEADER], \
+[
+	AC_CHECK_HEADER([$1], \
+	[
+		AC_DEFINE([HAVE_$2], [1], [ Indication $1 is available. ])
+		AC_DEFINE_UNQUOTED([RB_INC_$2], [$1>], [ The computed-include location of $1. ])
+	],[
+		AC_DEFINE_UNQUOTED([RB_INC_$2], [/dev/null>], [ The computed-include location of $1. ])
+	])
+])
+
+RB_CHK_SYSHEADER([errno.h])
+#RB_CHK_SYSHEADER([errno.h],        [ERRNO_H])
+RB_CHK_SYSHEADER([assert.h],       [ASSERT_H])
+RB_CHK_SYSHEADER([stddef.h],       [STDDEF_H])
+RB_CHK_SYSHEADER([stdarg.h],       [STDARG_H])
+RB_CHK_SYSHEADER([stdint.h],       [STDINT_H])
+RB_CHK_SYSHEADER([inttypes.h],     [INTTYPES_H])
+RB_CHK_SYSHEADER([ctype.h],        [CTYPE_H])
+RB_CHK_SYSHEADER([limits.h],       [LIMITS_H])
+RB_CHK_SYSHEADER([stdlib.h],       [STDLIB_H])
+RB_CHK_SYSHEADER([unistd.h],       [UNISTD_H])
+RB_CHK_SYSHEADER([time.h],         [TIME_H])
+RB_CHK_SYSHEADER([fcntl.h],        [FCNTL_H])
+RB_CHK_SYSHEADER([signal.h],       [SIGNAL_H])
+RB_CHK_SYSHEADER([sys/types.h],    [SYS_TYPES_H])
+RB_CHK_SYSHEADER([sys/time.h],     [SYS_TIME_H])
+RB_CHK_SYSHEADER([sys/stat.h],     [SYS_STAT_H])
+RB_CHK_SYSHEADER([sys/socket.h],   [SYS_SOCKET_H])
+RB_CHK_SYSHEADER([arpa/inet.h],    [ARPA_INET_H])
+RB_CHK_SYSHEADER([netinet/in.h],   [NETINET_IN_H])
+RB_CHK_SYSHEADER([netinet/tcp.h],  [NETINET_TCP_H])
+RB_CHK_SYSHEADER([string.h],       [STRING_H])
+RB_CHK_SYSHEADER([stdio.h],        [STDIO_H])
+RB_CHK_SYSHEADER([crypt.h],        [CRYPT_H])
+RB_CHK_SYSHEADER([sys/uio.h],      [SYS_UIO_H])
+RB_CHK_SYSHEADER([spawn.h],        [SPAWN_H])
+RB_CHK_SYSHEADER([sys/poll.h],     [SYS_POLL_H])
+RB_CHK_SYSHEADER([sys/epoll.h],    [SYS_EPOLL_H])
+RB_CHK_SYSHEADER([sys/select.h],   [SYS_SELECT_H])
+RB_CHK_SYSHEADER([sys/devpoll.h],  [SYS_DEVPOLL_H])
+RB_CHK_SYSHEADER([sys/event.h],    [SYS_EVENT_H])
+RB_CHK_SYSHEADER([port.h],         [PORT_H])
+RB_CHK_SYSHEADER([sys/signalfd.h], [SYS_SIGNALFD_H])
+RB_CHK_SYSHEADER([sys/timerfd.h],  [SYS_TIMERFD_H])
+RB_CHK_SYSHEADER([execinfo.h],     [EXECINFO_H])
+RB_CHK_SYSHEADER([windows.h],      [WINDOWS_H])
+RB_CHK_SYSHEADER([winsock2.h],     [WINSOCK2_H])
+RB_CHK_SYSHEADER([ws2tcpip.h],     [WS2TCPIP_H])
+RB_CHK_SYSHEADER([iphlpapi.h],     [IPHLPAPI_H])
+
+
+CFLAGS="$IRC_CFLAGS $CFLAGS"
+
+case "$host_os" in
+*cygwin*)
+     AC_DEFINE_UNQUOTED(CYGWIN,1,[This is a Cygwin system])
+     AC_DEFINE_UNQUOTED(WINDOWS,1,[This is a Windows system])
+     ;;
+*mingw* | *msys*)
+     AC_DEFINE_UNQUOTED(MINGW,1,[This is a MinGW system])
+     AC_DEFINE_UNQUOTED(WINDOWS,1,[This is a Windows system])
+     AC_CHECK_HEADER(windows.h, , [AC_MSG_ERROR([** MinGW and no windows.h.  I give up.])])
+     AC_CHECK_HEADER(winsock2.h, , [AC_MSG_ERROR([** MinGW and no winsock2.h.  I give up.])])
+     AC_DEFINE_UNQUOTED(HAVE_WINSOCK2_H, 1, [Have WINSOCK2_H])
+     AC_DEFINE_UNQUOTED(HAVE_WINSOCK_H, 1, [Have WINSOCK_H])
+     LIBS="$LIBS -lws2_32 -liphlpapi"
+     is_mingw="yes"
+     ;;
+*interix*)
+     CPPFLAGS="$CFLAGS -D_ALL_SOURCE -D_XOPEN_SOURCE=500"
+     ;;
+*solaris*)
+     CPPFLAGS="$CFLAGS -D_POSIX_PTHREAD_SEMANTICS -D_XPG4_2"
+     ;;
+*)
+     ;;
+esac
+
+AM_CONDITIONAL([MINGW], [test "$is_mingw" = "yes"])
+
+
+dnl use directory structure of cached as default (hack)
+if test "$libexecdir" = '${exec_prefix}/libexec' &&
+   test "$localstatedir" = '${prefix}/var'; then
+	libexecdir='${bindir}'
+	localstatedir='${prefix}'
+fi
+
+
+dnl Networking Functions
+dnl ====================
+
+AC_SEARCH_LIBS(socket, [socket],,)
+
+
+AC_CHECK_MEMBER([struct sockaddr.sa_len], [AC_DEFINE(SOCKADDR_IN_HAS_LEN, 1, [Define to 1 if sockaddr has a 'sa_len' member.])],,[[
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_WINSOCK2_H
+#include <winsock2.h>
+#endif
+]])
+
+AC_CHECK_TYPE([socklen_t], rb_cv_socklen_t=socklen_t,[
+	AC_MSG_CHECKING([for socklen_t equivalent])
+	AC_CACHE_VAL([rb_cv_socklen_t],
+	[
+	# Systems have either "struct sockaddr *" or
+	# "void *" as the second argument to getpeername
+	rb_cv_socklen_t=
+	for arg2 in "struct sockaddr" void; do
+		for t in int size_t unsigned long "unsigned long"; do
+			AC_TRY_COMPILE([
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_WINSOCK2_H
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
+int getpeername (int, $arg2 *, $t *);
+],[
+$t len;
+getpeername(0,0,&len);
+],[
+	rb_cv_socklen_t="$t"
+	break
+])
+		done
+	done
+
+	if test "x$rb_cv_socklen_t" = x; then
+		AC_MSG_WARN([Cannot find a type to use in place of socklen_t using int])
+		rb_cv_socklen_t=int
+	fi
+	])
+	AC_MSG_RESULT($rb_cv_socklen_t)],
+	[#include <sys/types.h>
+#include <sys/socket.h>])
+
+rb_socklen_t=$rb_cv_socklen_t
+
+
+
+AC_ARG_ENABLE(ipv6, AC_HELP_STRING([--disable-ipv6], [Disable IPv6 support]), [ipv6=$enableval], [ipv6=yes])
+
+dnl TODO: IPV6 CHECKS
+
+if test x$ipv6 = "Xyes"; then
+	AC_DEFINE([HAVE_IPV6], [1], [IPv6 is supported])
+else
+	AC_DEFINE([HAVE_IPV6], [0], [IPv6 not supported])
+fi
+
+
+AC_CHECK_TYPES([struct sockaddr_storage],[
+	rb_have_sockaddr_storage=yes
+        ],[], [
+		#include <sys/types.h>
+		#include <sys/socket.h>
+	])
+
+
+dnl Check for stdarg.h - if we cant find it, halt configure
+AC_CHECK_HEADER(stdarg.h, , [AC_MSG_ERROR([** stdarg.h could not be found - librb will not compile without it **])])
+
+AC_CHECK_TYPE([sa_family_t], [],
+[AC_DEFINE(sa_family_t, [u_int16_t], [If system does not define sa_family_t, define it here.])],
+[[#include <sys/types.h>
+#include <sys/socket.h>]])
+
+
+dnl check for various functions...
+AC_CHECK_FUNCS([snprintf vsnprintf socketpair gettimeofday writev sendmsg gmtime_r strtok_r usleep posix_spawn getexecname strlcpy strlcat strnlen strcasestr strcasecmp strncasecmp fstat signalfd select poll kevent port_create epoll_ctl arc4random getrusage timerfd_create])	
+
+AC_SEARCH_LIBS(dlinfo, dl, AC_DEFINE(HAVE_DLINFO, 1, [Define if you have dlinfo]))
+AC_SEARCH_LIBS(nanosleep, rt posix4, AC_DEFINE(HAVE_NANOSLEEP, 1, [Define if you have nanosleep]))
+AC_SEARCH_LIBS(timer_create, rt, AC_DEFINE(HAVE_TIMER_CREATE, 1, [Define if you have timer_create]))
+
+AC_DEFUN([RB_CHECK_TIMER_CREATE],
+  [AC_CACHE_CHECK([for a working timer_create(CLOCK_REALTIME)],
+    [rb__cv_timer_create_works],
+    [AC_TRY_RUN([
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
+#ifdef HAVE_SIGNAL_H
+#include <signal.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+int main(int argc, char *argv[])
+{
+#if HAVE_TIMER_CREATE
+    struct sigevent ev;
+    timer_t timer;
+    ev.sigev_notify = SIGEV_SIGNAL;
+    ev.sigev_signo  = SIGVTALRM;
+    if (timer_create(CLOCK_REALTIME, &ev, &timer) != 0) {
+       return 1;
+    }
+#else
+    return 1;
+#endif
+    return 0;
+}
+     ],
+     [rb__cv_timer_create_works=yes],
+     [rb__cv_timer_create_works=no],
+     [rb__cv_timer_create_works=no])
+  ])
+case $rb__cv_timer_create_works in
+    yes) AC_DEFINE([USE_TIMER_CREATE], 1,
+                   [Define to 1 if we can use timer_create(CLOCK_REALTIME,...)]);;
+esac
+])
+
+
+
+AC_DEFUN([RB_CHECK_TIMERFD_CREATE],
+  [AC_CACHE_CHECK([for a working timerfd_create(CLOCK_REALTIME)],
+    [rb__cv_timerfd_create_works],
+    [AC_TRY_RUN([
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
+#ifdef HAVE_SIGNAL_H
+#include <signal.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_SYS_TIMERFD_H
+#include <sys/timerfd.h>
+#endif
+int main(int argc, char *argv[])
+{
+#if defined(HAVE_TIMERFD_CREATE) && defined(HAVE_SYS_TIMERFD_H)
+    if (timerfd_create(CLOCK_REALTIME, 0) < 0) {
+       return 1;
+    }
+#else
+    return 1;
+#endif
+    return 0;
+}
+     ],
+     [rb__cv_timerfd_create_works=yes],
+     [rb__cv_timerfd_create_works=no],
+     [rb__cv_timerfd_create_works=no])
+  ])
+case $rb__cv_timerfd_create_works in
+    yes) AC_DEFINE([USE_TIMERFD_CREATE], 1,
+                   [Define to 1 if we can use timerfd_create(CLOCK_REALTIME,...)]);;
+esac
+])
+
+RB_CHECK_TIMER_CREATE
+RB_CHECK_TIMERFD_CREATE
+
+AC_FUNC_ALLOCA
+AC_FUNC_VFORK
+AC_FUNC_MMAP
+
+AC_MSG_CHECKING(for /dev/poll)
+if test -c "/dev/poll"; then
+        AC_MSG_RESULT(yes)
+	AC_DEFINE(HAVE_DEVPOLL, [1], [Define to 1 if you have devpoll])
+else
+	AC_MSG_RESULT(no)
+fi
+
+
+if test "$is_mingw" = "yes"; then
+	AC_DEFINE(HAVE_WIN32, [1], [Define to 1 if you are on windows])
+fi
+
+dnl OpenSSL support
+AC_MSG_CHECKING(for OpenSSL)
+AC_ARG_ENABLE(openssl,
+[AC_HELP_STRING([--enable-openssl[=DIR]],[Enable OpenSSL support (DIR optional).])
+AC_HELP_STRING([--disable-openssl],[Disable OpenSSL support.])],
+[cf_enable_openssl=$enableval],
+[cf_enable_openssl="auto"])
+
+if test "$cf_enable_openssl" != "no" ; then
+	cf_openssl_basedir=""
+	if test "$cf_enable_openssl" != "auto" &&
+	test "$cf_enable_openssl" != "yes" ; then
+		dnl Support for --enable-openssl=/some/place
+		cf_openssl_basedir="`echo ${cf_enable_openssl} | sed 's/\/$//'`"
+	else
+	dnl Do the auto-probe here.  Check some common directory paths.
+		for dirs in /usr/local/ssl /usr/pkg /usr/local \
+		/usr/local/openssl ; do
+			if test -f "${dirs}/include/openssl/opensslv.h" ; then
+				cf_openssl_basedir="${dirs}"
+			break
+			fi
+		done
+		unset dirs
+	fi
+	dnl Now check cf_openssl_found to see if we found anything.
+	if test ! -z "$cf_openssl_basedir"; then
+		if test -f "${cf_openssl_basedir}/include/openssl/opensslv.h" ; then
+			SSL_CFLAGS="-I${cf_openssl_basedir}/include"
+			SSL_LIBS="-L${cf_openssl_basedir}/lib"
+		else
+		dnl OpenSSL wasn't found in the directory specified.  Naughty
+		dnl administrator...
+		cf_openssl_basedir=""
+		fi
+	else
+	dnl Check for stock FreeBSD 4.x and 5.x systems, since their files
+	dnl are in /usr/include and /usr/lib.  In this case, we don't want to
+	dnl change INCLUDES or LIBS, but still want to enable OpenSSL.
+	dnl We can't do this check above, because some people want two versions
+	dnl of OpenSSL installed (stock FreeBSD 4.x/5.x and /usr/local/ssl)
+	dnl and they want /usr/local/ssl to have preference.
+		if test -f "/usr/include/openssl/opensslv.h" ; then
+			cf_openssl_basedir="/usr"
+		fi
+	fi
+
+	dnl If we have a basedir defined, then everything is okay.  Otherwise,
+	dnl we have a problem.
+	if test ! -z "$cf_openssl_basedir"; then
+		AC_MSG_RESULT($cf_openssl_basedir)
+		cf_enable_openssl="yes"
+	else
+		AC_MSG_RESULT([not found. Specify a correct path?])
+		cf_enable_openssl="no"
+	fi
+	unset cf_openssl_basedir
+else
+	dnl If --disable-openssl was specified
+	AC_MSG_RESULT(disabled)
+fi
+
+save_CPPFLAGS="$CPPFLAGS"
+CPPFLAGS="$CPPFLAGS $SSL_CFLAGS"
+save_LIBS="$LIBS"
+LIBS="$LIBS $SSL_LIBS"
+if test "$cf_enable_openssl" != no; then
+	dnl Check OpenSSL version (must be 0.9.7 or above!)
+	AC_MSG_CHECKING(for OpenSSL 0.9.7 or above)
+	AC_RUN_IFELSE(
+		[AC_LANG_PROGRAM(
+	    	[#include <openssl/opensslv.h>
+		#include <stdlib.h>],
+		[[if (OPENSSL_VERSION_NUMBER >= 0x00907000)
+		exit(0); else exit(1);]])],
+	cf_enable_openssl=yes,
+	cf_enable_openssl=no,
+	cf_enable_openssl=no)
+
+	if test "$cf_enable_openssl" != no; then
+		AC_MSG_RESULT(found)
+	else
+	        AC_MSG_RESULT(no - OpenSSL support disabled)
+	fi
+
+fi
+
+
+if test "$cf_enable_openssl" != no; then
+	CPPFLAGS="$CPPFLAGS $SSL_LIBS"
+	AC_CHECK_LIB(crypto, RAND_status,
+		[cf_enable_openssl=yes],
+		[cf_enable_openssl=no])
+fi
+
+if test "$cf_enable_openssl" != no; then
+	CPPFLAGS="$CPPFLAGS $SSL_LIBS"
+	AC_CHECK_LIB(ssl, SSL_read,
+		[SSL_LIBS="$SSL_LIBS -lssl -lcrypto"],
+		[cf_enable_openssl=no], [-lcrypto])
+fi
+
+
+dnl mbedTLS support
+AC_ARG_ENABLE(mbedtls,
+[AC_HELP_STRING([--enable-mbedtls], [Enable mbedTLS support.])
+AC_HELP_STRING([--disable-mbedtls], [Disable mbedTLS support.])],
+[cf_enable_mbedtls=$enableval],
+[cf_enable_mbedtls="auto"])
+
+if test "$cf_enable_mbedtls" != no; then
+	save_CPPFLAGS="$CPPFLAGS"
+	save_LIBS="$LIBS"
+	LIBS="$LIBS $MBEDTLS_LIBS"
+	AC_CHECK_LIB(mbedtls, mbedtls_ssl_init, [
+		MBEDTLS_LIBS="$MBEDTLS_LIBS -lmbedtls -lmbedx509 -lmbedcrypto"
+		cf_enable_mbedtls=yes
+	], [cf_enable_mbedtls=no], [-lmbedx509 -lmbedcrypto])
+fi
+
+dnl GnuTLS support
+AC_MSG_CHECKING(for GnuTLS)
+AC_ARG_ENABLE(gnutls,
+[AC_HELP_STRING([--enable-gnutls],[Enable GnuTLS support.])
+AC_HELP_STRING([--disable-gnutls],[Disable GnuTLS support.])],
+[cf_enable_gnutls=$enableval],
+[cf_enable_gnutls="auto"])
+
+if test "$cf_enable_gnutls" != no; then
+       PKG_CHECK_MODULES(GNUTLS, [gnutls], [
+               cf_enable_gnutls="yes"
+       ], [cf_enable_gnutls="no"])
+fi
+
+dnl mbed TLS is given highest preference when no specified TLS library is provided
+if test "$cf_enable_openssl" = "auto" -a "$cf_enable_mbedtls" = "yes"; then
+       cf_enable_openssl="no"
+fi
+
+if test "$cf_enable_gnutls" = "auto" -a "$cf_enable_openssl" = "yes" -a "$cf_enable_mbedtls" = "yes"; then
+       cf_enable_gnutls="no"
+fi
+
+if test x"$cf_enable_openssl" != xno; then
+	AC_DEFINE(HAVE_OPENSSL,1,[Has OpenSSL])
+	GNUTLS_CFLAGS=""
+	GNUTLS_LIBS=""
+	MBEDTLS_LIBS=""
+	MBEDTLS_CFLAGS=""
+	SSL_TYPE="openssl"
+elif test x"$cf_enable_mbedtls" != xno; then
+	AC_DEFINE(HAVE_MBEDTLS, 1, [Has mbedTLS])
+	SSL_LIBS=""
+	SSL_CFLAGS=""
+	GNUTLS_CFLAGS=""
+	GNUTLS_LIBS=""
+	SSL_TYPE="mbedtls"
+elif test x"$cf_enable_gnutls" != xno; then
+	AC_DEFINE(HAVE_GNUTLS, 1, [Has GnuTLS])
+	SSL_LIBS=""
+	SSL_CFLAGS=""
+	MBEDTLS_LIBS=""
+	MBEDTLS_CFLAGS=""
+	SSL_TYPE="gnutls"
+fi
+
+
+
+
+CPPFLAGS="$save_CPPFLAGS"
+LIBS="$save_LIBS"
+
+dnl End OpenSSL detection
+
+
+
+
+dnl Debug-related options
+dnl =====================
+
+AC_ARG_ENABLE(assert,
+AC_HELP_STRING([--enable-assert],[Enable assert(). Choose between soft(warnings) and hard(aborts the daemon)]),
+[assert=$enableval], [assert=no])
+
+if test "$assert" = no; then
+	AC_DEFINE(NDEBUG, 1, [Define this to disable debugging support.])
+elif test "$assert" = soft; then
+	AC_DEFINE(SOFT_ASSERT, 1, [Define this to enable soft asserts.])
+	AC_DEFINE(NDEBUG, 1, [Define this to disable debugging support.])
+elif test "$assert" = yes; then
+	assert = "hard";
+fi
+
+AC_MSG_CHECKING(if you want to do a profile build)
+AC_ARG_ENABLE(profile,
+AC_HELP_STRING([--enable-profile],[Enable profiling]),
+[profile=$enableval], [profile=no])
+
+if test "$profile" = yes; then
+	if test "$ac_cv_c_compiler_gnu" = yes; then
+		CFLAGS="$CFLAGS -pg -static"
+		AC_MSG_RESULT([yes, adding -pg -static])
+		AC_DEFINE(RB_PROFILE, 1, [Defined to mark profiling is enabled])
+	else
+		AC_MSG_RESULT([no, profile builds only work with gcc])
+	fi
+else
+	AC_MSG_RESULT(no)
+fi
+
+AC_ARG_ENABLE(warnings,
+AC_HELP_STRING([--enable-warnings],[Enable all sorts of warnings for debugging.]),
+[CFLAGS="$CFLAGS -Wall -Wcast-qual -Wmissing-declarations -Wmissing-prototypes -Wnested-externs -Wshadow -Wwrite-strings -W -Wno-unused -Wunused-function -Wunused-variable"],[])
+
+AC_SUBST(LDFLAGS)
+AC_SUBST(PICFLAGS)
+AC_SUBST(CFLAGS)
+AC_SUBST(SEDOBJ)
+AC_SUBST(SSL_CFLAGS)
+AC_SUBST(SSL_LIBS)
+AC_SUBST(GNUTLS_CFLAGS)
+AC_SUBST(GNUTLS_LIBS)
+AC_SUBST(MBEDTLS_CFLAGS)
+AC_SUBST(MBEDTLS_LIBS)
+
+if test "$prefix" = "NONE"; then
+	AC_DEFINE_UNQUOTED(RB_PREFIX, "$ac_default_prefix", [Prefix where librb is installed.])
+
+else
+
+dnl Don't get bitten by Cygwin's stupidity if the user specified
+dnl a custom prefix with a trailing slash
+
+	prefix=`echo $prefix | sed 's/\/$//'`
+	AC_DEFINE_UNQUOTED(RB_PREFIX, "$prefix", [Prefix where librb is installed.])
+
+fi
+
+AC_SUBST(RB_PREFIX)
+
+
 PKG_PROG_PKG_CONFIG
-
 build_ltdl=$with_included_ltdl
 AM_CONDITIONAL([BUILD_LTDL], [test x"$build_ltdl" = x"yes"])
 
@@ -80,20 +665,6 @@ dnl "gcc -O9 -O2" will result in -O2 getting preference.  How stupid.
 if test ! -z "$CFLAGS"; then
 	IRC_CFLAGS="$IRC_CFLAGS $CFLAGS"
 fi
-
-AC_ISC_POSIX
-AC_C_INLINE
-AC_PROG_MAKE_SET
-AC_PROG_INSTALL
-AC_PATH_PROG(RM, rm)
-AC_PATH_PROG(CP, cp)
-AC_PATH_PROG(MV, mv)
-AC_PATH_PROG(LN, ln)
-AC_PATH_PROG(SED, sed)
-AC_PATH_PROG(AR, ar)
-AC_PATH_PROG(LD, ld)
-AC_PATH_PROG(RANLIB, ranlib)
-AC_PATH_PROG(TOUCH, touch)
 
 AC_PROG_YACC
 
@@ -170,9 +741,6 @@ dnl SunOS/Solaris required libnsl for inet_ntoa()
 if test x"$SUN" = xyes; then
 	AC_SEARCH_LIBS(inet_ntoa, nsl,, [AC_MSG_ERROR([libnsl not found! Aborting.])])
 fi
-
-AC_ARG_ENABLE(ipv6,
-AC_HELP_STRING([--enable-ipv6],[Enable IPv6 support]),[ipv6=$enableval],[ipv6=no])
 
 AC_SEARCH_LIBS(crypt, [crypt descrypt],,)
 
@@ -539,23 +1107,6 @@ else
 	AC_MSG_RESULT(no)
 fi
 
-AC_DEFINE([NICKNAMEHISTORYLENGTH], 15000, [Size of the WHOWAS array.])
-AC_DEFINE([CHANNEL_HEAP_SIZE], 8192, [Size of the channel heap.])
-AC_DEFINE([BAN_HEAP_SIZE], 4096, [Size of the ban heap.])
-AC_DEFINE([CLIENT_HEAP_SIZE], 8192, [Size of the client heap.])
-AC_DEFINE([LCLIENT_HEAP_SIZE], 1024, [Size of the local client heap.])
-AC_DEFINE([PCLIENT_HEAP_SIZE], 256, [Size of the pre-client heap.])
-AC_DEFINE([USER_HEAP_SIZE], 8192, [Size of the user heap.])
-AC_DEFINE([DNODE_HEAP_SIZE], 8192, [Size of the dlink_node heap.])
-AC_DEFINE([TOPIC_HEAP_SIZE], 4096, [Size of the topic heap.])
-AC_DEFINE([LINEBUF_HEAP_SIZE], 2048, [Size of the linebuf heap.])
-AC_DEFINE([MEMBER_HEAP_SIZE], 32768, [Sizeof member heap.])
-AC_DEFINE([ND_HEAP_SIZE], 512, [Size of the nick delay heap.])
-AC_DEFINE([CONFITEM_HEAP_SIZE], 256, [Size of the confitem heap.])
-AC_DEFINE([MONITOR_HEAP_SIZE], 1024, [Size of the monitor heap.])
-AC_DEFINE([FD_HEAP_SIZE], 1024, [Size of fd heap.])
-AC_DEFINE([AWAY_HEAP_SIZE], 512, [Size of away heap.])
-
 AC_ARG_WITH(nicklen,
 AC_HELP_STRING([--with-nicklen=LENGTH],[Set the upper-bound nick length to LENGTH (default 31, max 50)]),
 [
@@ -660,40 +1211,20 @@ dnl a custom prefix with a trailing slash
 
 fi
 
-AC_CONFIG_FILES(			\
-	Makefile			\
-	authd/Makefile			\
-	bandb/Makefile			\
-	ssld/Makefile			\
-	wsockd/Makefile			\
-	extensions/Makefile		\
-	ircd/Makefile			\
-	modules/Makefile		\
-	tools/Makefile			\
-	tools/genssl			\
-	doc/Makefile			\
-	help/Makefile			\
-)
 AC_CONFIG_COMMANDS([tools/genssl_chmod], [chmod 755 tools/genssl])
 
 AC_OUTPUT
+dnl Make it look sexay!
 
-if test "$cf_openssl_version_ok" = yes; then
-	openssl="yes"
-else
-	openssl="no"
-fi
+echo
+echo "Compiling $PACKAGE_NAME $PACKAGE_VERSION"
+echo $RB_VERSION
+echo $RB_DATESTR
+echo
 
-echo "
-Configuration of ${BRANDING_NAME}-${BRANDING_VERSION}:
-	Install directory  : $prefix
+echo "Installing into: $prefix"
 
-	Ziplinks           : $zlib
-	OpenSSL            : $openssl
-	PCRE               : $have_pcre
-
-	Nickname length    : $NICKLEN
-	Topic length       : $TOPICLEN
-
-Use (g)make to compile $BRANDING_NAME, then (g)make install to install it.
-"
+echo "IPv6 support ................... $ipv6"
+echo "Assert debugging ............... $assert"
+echo "SSL Type........................ $SSL_TYPE"
+echo

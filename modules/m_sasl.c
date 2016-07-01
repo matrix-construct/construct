@@ -27,20 +27,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdinc.h"
-
-#include "client.h"
-#include "hash.h"
-#include "send.h"
-#include "msg.h"
-#include "modules.h"
-#include "numeric.h"
-#include "reject.h"
-#include "s_serv.h"
-#include "s_stats.h"
-#include "string.h"
-#include "s_newconf.h"
-#include "s_conf.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/hash.h>
+#include <ircd/send.h>
+#include <ircd/msg.h>
+#include <ircd/modules.h>
+#include <ircd/numeric.h>
+#include <ircd/reject.h>
+#include <ircd/s_serv.h>
+#include <ircd/s_stats.h>
+#include <ircd/s_newconf.h>
+#include <ircd/s_conf.h>
 
 static const char sasl_desc[] = "Provides SASL authentication support";
 

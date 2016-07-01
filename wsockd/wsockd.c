@@ -20,7 +20,7 @@
  *  USA
  */
 
-#include "stdinc.h"
+#include <ircd/stdinc.h>
 #include "sha1.h"
 
 #define MAXPASSFD 4

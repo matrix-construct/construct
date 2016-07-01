@@ -22,22 +22,19 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "ircd_defs.h"
-#include "s_conf.h"
-#include "channel.h"
-#include "client.h"
-#include "hash.h"
-#include "match.h"
-#include "ircd.h"
-#include "numeric.h"
-#include "send.h"
-#include "msg.h"
-#include "cache.h"
-#include "s_newconf.h"
-#include "s_assert.h"
-#include "rb_dictionary.h"
-#include "rb_radixtree.h"
+#include <ircd/stdinc.h>
+#include <ircd/s_conf.h>
+#include <ircd/channel.h>
+#include <ircd/client.h>
+#include <ircd/hash.h>
+#include <ircd/match.h>
+#include <ircd/ircd.h>
+#include <ircd/numeric.h>
+#include <ircd/send.h>
+#include <ircd/msg.h>
+#include <ircd/cache.h>
+#include <ircd/s_newconf.h>
+#include <ircd/s_assert.h>
 
 rb_dictionary *client_connid_tree = NULL;
 rb_radixtree *client_id_tree = NULL;

@@ -4,19 +4,19 @@
  * Copyright (C) 2006 charybdis development team
  * All rights reserved
  */
-#include "stdinc.h"
-#include "modules.h"
-#include "hook.h"
-#include "client.h"
-#include "ircd.h"
-#include "send.h"
-#include "numeric.h"
-#include "hostmask.h"
-#include "s_conf.h"
-#include "s_newconf.h"
-#include "hash.h"
-#include "messages.h"
-#include "s_assert.h"
+#include <ircd/stdinc.h>
+#include <ircd/modules.h>
+#include <ircd/hook.h>
+#include <ircd/client.h>
+#include <ircd/ircd.h>
+#include <ircd/send.h>
+#include <ircd/numeric.h>
+#include <ircd/hostmask.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_newconf.h>
+#include <ircd/hash.h>
+#include <ircd/messages.h>
+#include <ircd/s_assert.h>
 
 /* {{{ Structures */
 #define HURT_CUTOFF             (10)            /* protocol messages. */

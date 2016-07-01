@@ -38,20 +38,20 @@
  * cgiirc.config
  */
 
-#include "stdinc.h"
-#include "client.h"		/* client struct */
-#include "match.h"
-#include "hostmask.h"
-#include "send.h"		/* sendto_one */
-#include "numeric.h"		/* ERR_xxx */
-#include "ircd.h"		/* me */
-#include "msg.h"
-#include "parse.h"
-#include "modules.h"
-#include "s_serv.h"
-#include "hash.h"
-#include "s_conf.h"
-#include "reject.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>		/* client struct */
+#include <ircd/match.h>
+#include <ircd/hostmask.h>
+#include <ircd/send.h>		/* sendto_one */
+#include <ircd/numeric.h>		/* ERR_xxx */
+#include <ircd/ircd.h>		/* me */
+#include <ircd/msg.h>
+#include <ircd/parse.h>
+#include <ircd/modules.h>
+#include <ircd/s_serv.h>
+#include <ircd/hash.h>
+#include <ircd/s_conf.h>
+#include <ircd/reject.h>
 
 static const char webirc_desc[] = "Adds support for the WebIRC system";
 

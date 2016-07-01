@@ -22,26 +22,26 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "client.h"
-#include "hash.h"
-#include "channel.h"
-#include "hash.h"
-#include "ircd.h"
-#include "numeric.h"
-#include "s_conf.h"
-#include "s_serv.h"
-#include "send.h"
-#include "match.h"
-#include "s_conf.h"
-#include "logger.h"
-#include "msg.h"
-#include "parse.h"
-#include "modules.h"
-#include "hook.h"
-#include "s_newconf.h"
-#include "ratelimit.h"
-#include "s_assert.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/hash.h>
+#include <ircd/channel.h>
+#include <ircd/hash.h>
+#include <ircd/ircd.h>
+#include <ircd/numeric.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_serv.h>
+#include <ircd/send.h>
+#include <ircd/match.h>
+#include <ircd/s_conf.h>
+#include <ircd/logger.h>
+#include <ircd/msg.h>
+#include <ircd/parse.h>
+#include <ircd/modules.h>
+#include <ircd/hook.h>
+#include <ircd/s_newconf.h>
+#include <ircd/ratelimit.h>
+#include <ircd/s_assert.h>
 
 static const char whois_desc[] =
 	"Provides the WHOIS command to display information about a user";

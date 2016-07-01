@@ -19,11 +19,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdinc.h"
-#include "ircd_defs.h"
-#include "msgbuf.h"
-#include "client.h"
-#include "ircd.h"
+#include <ircd/stdinc.h>
+#include <ircd/msgbuf.h>
+#include <ircd/client.h>
+#include <ircd/ircd.h>
 
 /*
  * parse a message into a MsgBuf.

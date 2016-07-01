@@ -21,24 +21,24 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  */
-#include "stdinc.h"
-#include "client.h"
-#include "channel.h"
-#include "hash.h"
-#include "ircd.h"
-#include "numeric.h"
-#include "s_serv.h"
-#include "send.h"
-#include "match.h"
-#include "s_conf.h"
-#include "logger.h"
-#include "msg.h"
-#include "parse.h"
-#include "modules.h"
-#include "packet.h"
-#include "s_newconf.h"
-#include "ratelimit.h"
-#include "supported.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/channel.h>
+#include <ircd/hash.h>
+#include <ircd/ircd.h>
+#include <ircd/numeric.h>
+#include <ircd/s_serv.h>
+#include <ircd/send.h>
+#include <ircd/match.h>
+#include <ircd/s_conf.h>
+#include <ircd/logger.h>
+#include <ircd/msg.h>
+#include <ircd/parse.h>
+#include <ircd/modules.h>
+#include <ircd/packet.h>
+#include <ircd/s_newconf.h>
+#include <ircd/ratelimit.h>
+#include <ircd/supported.h>
 
 #define FIELD_CHANNEL    0x0001
 #define FIELD_HOP        0x0002

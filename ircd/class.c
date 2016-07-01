@@ -22,17 +22,16 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "defaults.h"
-
-#include "class.h"
-#include "client.h"
-#include "ircd.h"
-#include "numeric.h"
-#include "s_conf.h"
-#include "s_newconf.h"
-#include "send.h"
-#include "match.h"
+#include <ircd/stdinc.h>
+#include <ircd/defaults.h>
+#include <ircd/class.h>
+#include <ircd/client.h>
+#include <ircd/ircd.h>
+#include <ircd/numeric.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_newconf.h>
+#include <ircd/send.h>
+#include <ircd/match.h>
 
 #define BAD_PING                -2
 

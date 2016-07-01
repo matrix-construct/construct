@@ -14,20 +14,20 @@
  */
 
 
-#include "stdinc.h"
-#include "ircd.h"
-#include "client.h"
-#include "modules.h"
-#include "send.h"
-#include "numeric.h"
-#include "hash.h"
-#include "s_serv.h"
-#include "inline/stringops.h"
-#include "chmode.h"
-#include "tgchange.h"
-#include "channel.h"
-#include "packet.h"
-#include "messages.h"
+#include <ircd/stdinc.h>
+#include <ircd/ircd.h>
+#include <ircd/client.h>
+#include <ircd/modules.h>
+#include <ircd/send.h>
+#include <ircd/numeric.h>
+#include <ircd/hash.h>
+#include <ircd/s_serv.h>
+#include <ircd/inline/stringops.h>
+#include <ircd/chmode.h>
+#include <ircd/tgchange.h>
+#include <ircd/channel.h>
+#include <ircd/packet.h>
+#include <ircd/messages.h>
 
 static const char roleplay_desc[] =
 	"Adds a roleplaying system that allows faked nicknames to talk in a channel set +N";

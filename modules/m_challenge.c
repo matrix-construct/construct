@@ -22,7 +22,7 @@
  *  USA
  */
 
-#include "stdinc.h"
+#include <ircd/stdinc.h>
 
 #ifdef HAVE_LIBCRYPTO
 #include <openssl/pem.h>
@@ -34,19 +34,19 @@
 #include <openssl/err.h>
 #endif
 
-#include "client.h"
-#include "ircd.h"
-#include "modules.h"
-#include "numeric.h"
-#include "send.h"
-#include "s_conf.h"
-#include "msg.h"
-#include "parse.h"
-#include "match.h"
-#include "logger.h"
-#include "s_user.h"
-#include "cache.h"
-#include "s_newconf.h"
+#include <ircd/client.h>
+#include <ircd/ircd.h>
+#include <ircd/modules.h>
+#include <ircd/numeric.h>
+#include <ircd/send.h>
+#include <ircd/s_conf.h>
+#include <ircd/msg.h>
+#include <ircd/parse.h>
+#include <ircd/match.h>
+#include <ircd/logger.h>
+#include <ircd/s_user.h>
+#include <ircd/cache.h>
+#include <ircd/s_newconf.h>
 
 #define CHALLENGE_WIDTH BUFSIZE - (NICKLEN + HOSTLEN + 12)
 #define CHALLENGE_EXPIRES	180	/* 180 seconds should be more than long enough */

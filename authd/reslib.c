@@ -76,7 +76,7 @@
  * - Dianora
  */
 
-#include <rb_lib.h>
+#include <rb/rb.h>
 
 #ifndef _WIN32
 
@@ -95,13 +95,12 @@ extern const char * get_windows_nameservers(void);
 typedef struct rb_addrinfo rb_addrinfo;
 #endif
 
-#include "stdinc.h"
-#include "ircd_defs.h"
-#include "ircd.h"
+#include <ircd/stdinc.h>
+#include <ircd/ircd.h>
+#include <ircd/match.h>
+#include <ircd/logger.h>
 #include "res.h"
 #include "reslib.h"
-#include "match.h"
-#include "logger.h"
 
 #define NS_TYPE_ELT             0x40 /* EDNS0 extended label type */
 #define DNS_LABELTYPE_BITSTRING 0x41

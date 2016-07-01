@@ -22,15 +22,15 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "client.h"
-#include "ircd.h"
-#include "numeric.h"
-#include "send.h"
-#include "msg.h"
-#include "modules.h"
-#include "logger.h"
-#include "s_conf.h"
+#include <ircd/stdinc.h>
+#include <ircd/client.h>
+#include <ircd/ircd.h>
+#include <ircd/numeric.h>
+#include <ircd/send.h>
+#include <ircd/msg.h>
+#include <ircd/modules.h>
+#include <ircd/logger.h>
+#include <ircd/s_conf.h>
 
 static const char error_desc[] =
 	"Provides the ERROR command for clients and servers";

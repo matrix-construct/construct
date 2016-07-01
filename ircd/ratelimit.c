@@ -21,11 +21,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdinc.h"
-#include "s_conf.h"
-#include "s_stats.h"
-#include "ratelimit.h"
-#include "s_assert.h"
+#include <ircd/stdinc.h>
+#include <ircd/s_conf.h>
+#include <ircd/s_stats.h>
+#include <ircd/ratelimit.h>
+#include <ircd/s_assert.h>
 
 /*
  * ratelimit_client(struct Client *client_p, int penalty)

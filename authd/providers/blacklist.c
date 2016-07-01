@@ -38,10 +38,8 @@
  */
 
 #include "authd.h"
-#include "defaults.h"
 #include "provider.h"
 #include "notice.h"
-#include "stdinc.h"
 #include "dns.h"
 
 #define SELF_PID (blacklist_provider.id)

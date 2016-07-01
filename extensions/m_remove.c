@@ -22,22 +22,22 @@
  *  USA
  */
 
-#include "stdinc.h"
-#include "channel.h"
-#include "client.h"
-#include "match.h"
-#include "ircd.h"
-#include "numeric.h"
-#include "send.h"
-#include "msg.h"
-#include "modules.h"
-#include "parse.h"
-#include "hash.h"
-#include "packet.h"
-#include "s_serv.h"
-#include "s_conf.h"
-#include "hook.h"
-#include "messages.h"
+#include <ircd/stdinc.h>
+#include <ircd/channel.h>
+#include <ircd/client.h>
+#include <ircd/match.h>
+#include <ircd/ircd.h>
+#include <ircd/numeric.h>
+#include <ircd/send.h>
+#include <ircd/msg.h>
+#include <ircd/modules.h>
+#include <ircd/parse.h>
+#include <ircd/hash.h>
+#include <ircd/packet.h>
+#include <ircd/s_serv.h>
+#include <ircd/s_conf.h>
+#include <ircd/hook.h>
+#include <ircd/messages.h>
 
 static const char description[] = "Provides the REMOVE command, an alternative to KICK";
 

@@ -2,15 +2,14 @@
  * Channel creation notices
  */
 
-#include "stdinc.h"
-#include "modules.h"
-#include "client.h"
-#include "hook.h"
-#include "ircd.h"
-#include "send.h"
-#include "s_conf.h"
-#include "snomask.h"
-#include "rb_lib.h"
+#include <ircd/stdinc.h>
+#include <ircd/modules.h>
+#include <ircd/client.h>
+#include <ircd/hook.h>
+#include <ircd/ircd.h>
+#include <ircd/send.h>
+#include <ircd/s_conf.h>
+#include <ircd/snomask.h>
 
 static const char sno_desc[] =
 	"Adds server notice mask +l that allows operators to receive channel creation notices";

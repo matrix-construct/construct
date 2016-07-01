@@ -20,7 +20,7 @@
  */
 
 
-#include "stdinc.h"
+#include <ircd/stdinc.h>
 
 #ifdef HAVE_LIBZ
 #include <zlib.h>
