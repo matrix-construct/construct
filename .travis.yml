@@ -9,7 +9,7 @@ sudo: false
 matrix:
   include:
     - os: linux
-      compiler: gcc
+      compiler: gcc-4.8
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
@@ -17,7 +17,7 @@ matrix:
       env: COMPILER=gcc-4.8
 
     - os: linux
-      compiler: gcc
+      compiler: gcc-4.9
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
@@ -25,7 +25,7 @@ matrix:
       env: COMPILER=gcc-4.9
 
     - os: linux
-      compiler: gcc
+      compiler: gcc-5
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
