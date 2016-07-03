@@ -94,3 +94,8 @@ module_LTLIBRARIES = \
   core/m_quit.la \
   core/m_server.la \
   core/m_squit.la
+
+
+mrproper-local:
+	rm -rf core/.deps
+	rm -f core/.dirstamp

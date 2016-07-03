@@ -7,3 +7,7 @@ charybdis_mkpasswd_LDADD = $(top_srcdir)/rb/librb.la
 
 charybdis_mkfingerprint_SOURCES = mkfingerprint.c
 charybdis_mkfingerprint_LDADD = $(top_srcdir)/rb/librb.la
+
+
+mrproper-local:
+	rm -f genssl

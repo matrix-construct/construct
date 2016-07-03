@@ -18,3 +18,7 @@ authd_SOURCES =	\
 	providers/opm.c
 
 authd_LDADD = $(top_srcdir)/rb/librb.la
+
+mrproper-local:
+	rm -rf providers/.deps
+	rm -f providers/.dirstamp
