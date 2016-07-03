@@ -168,7 +168,7 @@ static void
 log_va(const ilogfile dest, const unsigned int snomask, const char *const fmt, va_list ap)
 {
 	FILE *const logfile = *log_table[dest].logfile;
-	if(!logfile && !snomask)
+	if(!logfile)
 		return;
 
 	char buf[BUFSIZE];
