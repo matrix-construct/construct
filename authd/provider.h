@@ -145,7 +145,7 @@ find_provider(const char *name)
 
 	RB_DLINK_FOREACH(ptr, auth_providers.head)
 	{
-		struct auth_provider *provider = ptr->data;
+		struct auth_provider *provider = (auth_provider *)ptr->data;
 
 		if(strcasecmp(provider->name, name) == 0)
 			return provider;

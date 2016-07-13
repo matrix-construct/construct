@@ -24,6 +24,9 @@
 
 #ifndef _RB_EVENT_INT_H
 #define _RB_EVENT_INT_H 1
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct ev_entry
 {
@@ -39,4 +42,7 @@ struct ev_entry
 };
 void rb_event_io_register_all(void);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 #endif // _RB_EVENT_INT_H

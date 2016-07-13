@@ -23,12 +23,11 @@
  *
  */
 
-#ifndef RB_LIB_H
-# error "Do not use event.h directly"
-#endif
-
 #ifndef INCLUDED_event_h
 #define INCLUDED_event_h
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct ev_entry;
 typedef void EVH(void *);
@@ -46,4 +45,7 @@ void rb_dump_events(void (*func) (char *, void *), void *ptr);
 void rb_run_one_event(struct ev_entry *);
 time_t rb_event_next(void);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 #endif /* INCLUDED_event_h */

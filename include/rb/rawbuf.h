@@ -22,14 +22,11 @@
  *
  */
 
-#ifndef RB_LIB_H
-# error "Do not use rawbuf.h directly"
-#endif
-
 #ifndef INCLUDED_RAWBUF_H__
 #define INCLUDED_RAWBUF_H__
-
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct _rawbuf rawbuf_t;
 typedef struct _rawbuf_head rawbuf_head_t;
@@ -42,4 +39,7 @@ void rb_rawbuf_append(rawbuf_head_t *, void *data, int len);
 int rb_rawbuf_flush(rawbuf_head_t *, rb_fde_t *F);
 int rb_rawbuf_length(rawbuf_head_t * rb);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 #endif

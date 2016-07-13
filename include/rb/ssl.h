@@ -23,6 +23,9 @@
 
 #ifndef _RB_SSL_H
 #define _RB_SSL_H 1
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int rb_setup_ssl_server(const char *cert, const char *keyfile, const char *dhfile, const char *cipher_list);
 int rb_init_ssl(void);
@@ -42,4 +45,7 @@ ssize_t rb_ssl_read(rb_fde_t *F, void *buf, size_t count);
 ssize_t rb_ssl_write(rb_fde_t *F, const void *buf, size_t count);
 void rb_get_ssl_info(char *buf, size_t length);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 #endif

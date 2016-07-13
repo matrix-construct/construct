@@ -24,6 +24,9 @@
 
 #ifndef __RB_DICTIONARY_H__
 #define __RB_DICTIONARY_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct rb_dictionary rb_dictionary;
 typedef struct rb_dictionary_element rb_dictionary_element;
@@ -31,12 +34,16 @@ typedef struct rb_dictionary_iter rb_dictionary_iter;
 
 struct rb_dictionary;
 
-// This comparator could be based on a union of function types emulating a
-// quasi-template, shutting up a lot of warnings. For now it gets The Treatment.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstrict-prototypes"
-typedef int (*DCF)(/* const void *a, const void *b */);
-#pragma GCC diagnostic pop
+#ifndef __cplusplus
+	// This comparator could be based on a union of function types emulating a
+	// quasi-template, shutting up a lot of warnings. For now it gets The Treatment.
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wstrict-prototypes"
+		typedef int (*DCF)(/* const void *a, const void *b */);
+	#pragma GCC diagnostic pop
+#else
+	typedef int (*DCF)(const void *a, const void *b);
+#endif
 
 struct rb_dictionary_element
 {
@@ -188,4 +195,7 @@ static inline int rb_uint32cmp(const void *a, const void *b)
 	return RB_POINTER_TO_UINT(b) - RB_POINTER_TO_UINT(a);
 }
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 #endif

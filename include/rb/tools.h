@@ -23,12 +23,11 @@
  *
  */
 
-#ifndef RB_LIB_H
-# error "Do not use tools.h directly"
-#endif
-
 #ifndef __TOOLS_H__
 #define __TOOLS_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int rb_strcasecmp(const char *s1, const char *s2);
 int rb_strncasecmp(const char *s1, const char *s2, size_t n);
@@ -71,4 +70,7 @@ char *rb_zstring_to_c_alloc(rb_zstring_t *zs);
 size_t rb_zstring_to_ptr(rb_zstring_t *zs, void **ptr);
 const char *rb_path_to_self(void);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 #endif /* __TOOLS_H__ */

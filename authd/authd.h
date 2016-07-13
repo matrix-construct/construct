@@ -45,9 +45,9 @@ typedef void (*authd_cmd_handler)(int parc, char *parv[]);
 typedef void (*authd_stat_handler)(uint32_t rid, const char letter);
 typedef void (*authd_reload_handler)(const char letter);
 
-extern authd_cmd_handler authd_cmd_handlers[256];
-extern authd_stat_handler authd_stat_handlers[256];
-extern authd_reload_handler authd_reload_handlers[256];
+extern std::array<authd_cmd_handler, 256> authd_cmd_handlers;
+extern std::array<authd_stat_handler, 256> authd_stat_handlers;
+extern std::array<authd_reload_handler, 256> authd_reload_handlers;
 
 extern rb_dictionary *authd_option_handlers;
 

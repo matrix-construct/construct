@@ -29,7 +29,9 @@
 
 #ifndef INCLUDED_commio_h
 #define INCLUDED_commio_h
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct sockaddr;
 struct _fde;
@@ -193,4 +195,7 @@ const char *rb_ssl_get_cipher(rb_fde_t *F);
 
 int rb_ipv4_from_ipv6(const struct sockaddr_in6 *__restrict__ ip6, struct sockaddr_in *__restrict__ ip4);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 #endif /* INCLUDED_commio_h */

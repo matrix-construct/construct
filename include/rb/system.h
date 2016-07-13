@@ -1,6 +1,8 @@
 #ifndef _RB_SYSTEM_H
 #define _RB_SYSTEM_H 1
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifdef HAVE_IPV6
 	#define RB_IPV6 1
@@ -312,4 +314,14 @@ while(0)
 #endif
 
 
+#ifdef __cplusplus
+	#define RB_EXTERN_C extern "C"
+#else
+	#define RB_EXTERN_C
+#endif
+
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 #endif  // _RB_SYSTEM_H

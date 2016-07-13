@@ -25,6 +25,9 @@
 
 #ifndef _RB_COMMIO_INT_H
 #define _RB_COMMIO_INT_H 1
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define RB_FD_HASH_BITS 12
 #define RB_FD_HASH_SIZE (1UL << RB_FD_HASH_BITS)
@@ -117,7 +120,7 @@ rb_find_fd(rb_platform_fd_t fd)
 
 	RB_DLINK_FOREACH(ptr, hlist->head)
 	{
-		rb_fde_t *F = ptr->data;
+		rb_fde_t *F = (rb_fde_t *)ptr->data;
 		if(F->fd == fd)
 			return F;
 	}
@@ -206,5 +209,8 @@ int rb_init_netio_win32(void);
 int rb_select_win32(long);
 int rb_setup_fd_win32(rb_fde_t *F);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 #endif // _RB_COMMIO_INT_H
 

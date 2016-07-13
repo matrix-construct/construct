@@ -78,8 +78,8 @@ extern int errno;
 #define LOCAL_COPY(s) strdupa(s)
 #else
 #if defined(__INTEL_COMPILER) || defined(__GNUC__)
-# define LOCAL_COPY(s) __extension__({ char *_s = alloca(strlen(s) + 1); strcpy(_s, s); _s; })
+# define LOCAL_COPY(s) __extension__({ char *_s = (char *)alloca(strlen(s) + 1); strcpy(_s, s); _s; })
 #else
-# define LOCAL_COPY(s) strcpy(alloca(strlen(s) + 1), s) /* XXX Is that allowed? */
+# define LOCAL_COPY(s) strcpy((char *)alloca(strlen(s) + 1), s)
 #endif /* defined(__INTEL_COMPILER) || defined(__GNUC__) */
 #endif /* strdupa */

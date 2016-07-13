@@ -23,13 +23,11 @@
  *
  */
 
-#ifndef RB_LIB_H
-	#error "Do not use rb_dlink.h directly"
-#endif
-
 #ifndef __DLINK_H__
 #define __DLINK_H__
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct rb_dlink_node
 {
@@ -337,4 +335,7 @@ rb_dlinkMoveList(rb_dlink_list *from, rb_dlink_list *to)
 	from->length = 0;
 }
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 #endif /* __DLINK_H__ */

@@ -21,12 +21,11 @@
  *
  */
 
-#ifndef RB_LIB_H
-# error "Do not use helper.h directly"
-#endif
-
 #ifndef INCLUDED_helper_h
 #define INCLUDED_helper_h
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct _rb_helper;
 typedef struct _rb_helper rb_helper;
@@ -59,4 +58,8 @@ void rb_helper_run(rb_helper *helper);
 void rb_helper_close(rb_helper *helper);
 int rb_helper_read(rb_helper *helper, void *buf, size_t bufsize);
 void rb_helper_loop(rb_helper *helper, long delay) __attribute__((noreturn));
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 #endif

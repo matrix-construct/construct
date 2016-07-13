@@ -1,6 +1,10 @@
 #ifndef INCLUDED_rsdb_h
 #define INCLUDED_rsdb_h
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* error handler callback */
 typedef void rsdb_error_cb(const char *);
 
@@ -37,5 +41,8 @@ void rsdb_transaction(rsdb_transtype type);
 int rs_vsnprintf(char *dest, const size_t bytes, const char *format, va_list args);
 int rs_snprintf(char *dest, const size_t bytes, const char *format, ...);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

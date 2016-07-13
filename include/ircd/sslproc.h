@@ -43,4 +43,3 @@ int get_ssld_count(void);
 void ssld_foreach_info(void (*func)(void *data, pid_t pid, int cli_count, enum ssld_status status, const char *version), void *data);
 
 #endif
-

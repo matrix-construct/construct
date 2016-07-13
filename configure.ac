@@ -3,7 +3,7 @@ dnl the most major changes have already been made and it looks like
 dnl said functions need to be just about as complex as they already are.
 
 AC_PREREQ(2.63)
-AUTOMAKE_OPTIONS = 1.10
+AUTOMAKE_OPTIONS = 1.14
 
 AC_INIT([charybdis], [5-dev])
 AC_CONFIG_MACRO_DIR([m4])
@@ -38,20 +38,22 @@ AC_PATH_PROG(TOUCH, touch)
 
 LT_CONFIG_LTDL_DIR([libltdl])
 LT_INIT([dlopen disable-static])
+LT_LANG([C++])
 LTDL_INIT
 #LIBTOOL="$LIBTOOL --silent"
 
 AC_CONFIG_FILES(\
 	Makefile                \
+	include/rb/Makefile     \
+	rb/Makefile             \
 	authd/Makefile          \
-	bandb/Makefile          \
 	charybdis/Makefile      \
+	ircd/Makefile           \
+	bandb/Makefile          \
 	doc/Makefile            \
 	extensions/Makefile     \
 	help/Makefile           \
-	ircd/Makefile           \
 	modules/Makefile        \
-	rb/Makefile             \
 	ssld/Makefile           \
 	tools/Makefile          \
 	tools/genssl            \
@@ -59,7 +61,9 @@ AC_CONFIG_FILES(\
 )
 
 AM_INIT_AUTOMAKE([subdir-objects])
-AM_EXTRA_RECURSIVE_TARGETS([mrproper])
+AM_EXTRA_RECURSIVE_TARGETS([
+	mrproper       \
+])
 
 VERSION_CMD="git describe --tags"
 DATESTR_CMD="date -R"
@@ -69,9 +73,14 @@ RB_VERSION=`$VERSION_CMD`
 RB_DATESTR=`$DATESTR_CMD`
 RB_DATECODE=`$DATECODE_CMD`
 
-AC_DEFINE_UNQUOTED([RB_VERSION], ["$RB_VERSION"], [Version generated at configuration time.])
-AC_DEFINE_UNQUOTED([RB_DATESTR], ["$RB_DATESTR"], [Readable date string of configuration time.])
-AC_DEFINE_UNQUOTED([RB_DATECODE], [$RB_DATECODE], [UNIX epoch time at configuration time.])
+AC_DEFUN([RB_DEFINE], [AC_DEFINE([RB_$1], [$2], [$3])])
+AC_DEFUN([RB_DEFINE_UNQUOTED], [AC_DEFINE_UNQUOTED([RB_$1], [$2], [$3])])
+AC_DEFUN([IRCD_DEFINE], [AC_DEFINE([IRCD_$1], [$2], [$3])])
+AC_DEFUN([IRCD_DEFINE_UNQUOTED], [AC_DEFINE_UNQUOTED([IRCD_$1], [$2], [$3])])
+
+RB_DEFINE_UNQUOTED([VERSION], ["$RB_VERSION"], [Version generated at configuration time.])
+RB_DEFINE_UNQUOTED([DATESTR], ["$RB_DATESTR"], [Readable date string of configuration time.])
+RB_DEFINE_UNQUOTED([DATECODE], [$RB_DATECODE], [UNIX epoch time at configuration time.])
 
 AC_DEFINE([NICKNAMEHISTORYLENGTH], 15000, [Size of the WHOWAS array.])
 AC_DEFINE([CHANNEL_HEAP_SIZE],     8192, [Size of the channel heap.])
@@ -90,60 +99,6 @@ AC_DEFINE([MONITOR_HEAP_SIZE],     1024, [Size of the monitor heap.])
 AC_DEFINE([FD_HEAP_SIZE],          1024, [Size of fd heap.])
 AC_DEFINE([AWAY_HEAP_SIZE],        512, [Size of away heap.])
 
-dnl Checks for header files.
-AC_DEFUN([RB_CHK_SYSHEADER], \
-[
-	AC_CHECK_HEADER([$1], \
-	[
-		AC_DEFINE([HAVE_$2], [1], [ Indication $1 is available. ])
-		AC_DEFINE_UNQUOTED([RB_INC_$2], [$1>], [ The computed-include location of $1. ])
-	],[
-		AC_DEFINE_UNQUOTED([RB_INC_$2], [/dev/null>], [ The computed-include location of $1. ])
-	])
-])
-
-RB_CHK_SYSHEADER([errno.h])
-#RB_CHK_SYSHEADER([errno.h],        [ERRNO_H])
-RB_CHK_SYSHEADER([assert.h],       [ASSERT_H])
-RB_CHK_SYSHEADER([stddef.h],       [STDDEF_H])
-RB_CHK_SYSHEADER([stdarg.h],       [STDARG_H])
-RB_CHK_SYSHEADER([stdint.h],       [STDINT_H])
-RB_CHK_SYSHEADER([inttypes.h],     [INTTYPES_H])
-RB_CHK_SYSHEADER([ctype.h],        [CTYPE_H])
-RB_CHK_SYSHEADER([limits.h],       [LIMITS_H])
-RB_CHK_SYSHEADER([stdlib.h],       [STDLIB_H])
-RB_CHK_SYSHEADER([unistd.h],       [UNISTD_H])
-RB_CHK_SYSHEADER([time.h],         [TIME_H])
-RB_CHK_SYSHEADER([fcntl.h],        [FCNTL_H])
-RB_CHK_SYSHEADER([signal.h],       [SIGNAL_H])
-RB_CHK_SYSHEADER([sys/types.h],    [SYS_TYPES_H])
-RB_CHK_SYSHEADER([sys/time.h],     [SYS_TIME_H])
-RB_CHK_SYSHEADER([sys/stat.h],     [SYS_STAT_H])
-RB_CHK_SYSHEADER([sys/socket.h],   [SYS_SOCKET_H])
-RB_CHK_SYSHEADER([arpa/inet.h],    [ARPA_INET_H])
-RB_CHK_SYSHEADER([netinet/in.h],   [NETINET_IN_H])
-RB_CHK_SYSHEADER([netinet/tcp.h],  [NETINET_TCP_H])
-RB_CHK_SYSHEADER([string.h],       [STRING_H])
-RB_CHK_SYSHEADER([stdio.h],        [STDIO_H])
-RB_CHK_SYSHEADER([crypt.h],        [CRYPT_H])
-RB_CHK_SYSHEADER([sys/uio.h],      [SYS_UIO_H])
-RB_CHK_SYSHEADER([spawn.h],        [SPAWN_H])
-RB_CHK_SYSHEADER([sys/poll.h],     [SYS_POLL_H])
-RB_CHK_SYSHEADER([sys/epoll.h],    [SYS_EPOLL_H])
-RB_CHK_SYSHEADER([sys/select.h],   [SYS_SELECT_H])
-RB_CHK_SYSHEADER([sys/devpoll.h],  [SYS_DEVPOLL_H])
-RB_CHK_SYSHEADER([sys/event.h],    [SYS_EVENT_H])
-RB_CHK_SYSHEADER([port.h],         [PORT_H])
-RB_CHK_SYSHEADER([sys/signalfd.h], [SYS_SIGNALFD_H])
-RB_CHK_SYSHEADER([sys/timerfd.h],  [SYS_TIMERFD_H])
-RB_CHK_SYSHEADER([execinfo.h],     [EXECINFO_H])
-RB_CHK_SYSHEADER([windows.h],      [WINDOWS_H])
-RB_CHK_SYSHEADER([winsock2.h],     [WINSOCK2_H])
-RB_CHK_SYSHEADER([ws2tcpip.h],     [WS2TCPIP_H])
-RB_CHK_SYSHEADER([iphlpapi.h],     [IPHLPAPI_H])
-
-
-CFLAGS="$IRC_CFLAGS $CFLAGS"
 
 case "$host_os" in
 *cygwin*)
@@ -161,16 +116,120 @@ case "$host_os" in
      is_mingw="yes"
      ;;
 *interix*)
-     CPPFLAGS="$CFLAGS -D_ALL_SOURCE -D_XOPEN_SOURCE=500"
+     CPPFLAGS="$CPPFLAGS -D_ALL_SOURCE -D_XOPEN_SOURCE=500"
      ;;
 *solaris*)
-     CPPFLAGS="$CFLAGS -D_POSIX_PTHREAD_SEMANTICS -D_XPG4_2"
+     CPPFLAGS="$CPPFLAGS -D_POSIX_PTHREAD_SEMANTICS -D_XPG4_2"
      ;;
 *)
      ;;
 esac
 
 AM_CONDITIONAL([MINGW], [test "$is_mingw" = "yes"])
+
+
+dnl Checks for system header files.
+AC_DEFUN([RB_CHK_SYSHEADER], \
+[
+	AC_CHECK_HEADER([$1], \
+	[
+		AC_DEFINE([HAVE_$2], [1], [ Indication $1 is available. ])
+		RB_DEFINE_UNQUOTED([INC_$2], [$1>], [ The computed-include location of $1. ])
+	],[
+		if test "$is_mingw" = "yes"; then
+			RB_DEFINE_UNQUOTED([INC_$2], [stdint.h>], [ The dead-header in place of $1. ])
+		else
+			RB_DEFINE_UNQUOTED([INC_$2], [/dev/null>], [ The dead-header in place of $1. ])
+		fi
+	])
+])
+
+RB_CHK_SYSHEADER([errno.h],        [ERRNO_H])
+RB_CHK_SYSHEADER([assert.h],       [ASSERT_H])
+RB_CHK_SYSHEADER([stddef.h],       [STDDEF_H])
+RB_CHK_SYSHEADER([stdarg.h],       [STDARG_H])
+RB_CHK_SYSHEADER([stdint.h],       [STDINT_H])
+RB_CHK_SYSHEADER([inttypes.h],     [INTTYPES_H])
+RB_CHK_SYSHEADER([ctype.h],        [CTYPE_H])
+RB_CHK_SYSHEADER([limits.h],       [LIMITS_H])
+RB_CHK_SYSHEADER([stdlib.h],       [STDLIB_H])
+RB_CHK_SYSHEADER([unistd.h],       [UNISTD_H])
+RB_CHK_SYSHEADER([time.h],         [TIME_H])
+RB_CHK_SYSHEADER([fcntl.h],        [FCNTL_H])
+RB_CHK_SYSHEADER([signal.h],       [SIGNAL_H])
+RB_CHK_SYSHEADER([dirent.h],       [DIRENT_H])
+RB_CHK_SYSHEADER([sys/types.h],    [SYS_TYPES_H])
+RB_CHK_SYSHEADER([sys/time.h],     [SYS_TIME_H])
+RB_CHK_SYSHEADER([sys/stat.h],     [SYS_STAT_H])
+RB_CHK_SYSHEADER([sys/file.h],     [SYS_FILE_H])
+RB_CHK_SYSHEADER([sys/param.h],    [SYS_PARAM_H])
+RB_CHK_SYSHEADER([sys/resource.h], [SYS_RESOURCE_H])
+RB_CHK_SYSHEADER([sys/socket.h],   [SYS_SOCKET_H])
+RB_CHK_SYSHEADER([arpa/inet.h],    [ARPA_INET_H])
+RB_CHK_SYSHEADER([netinet/in.h],   [NETINET_IN_H])
+RB_CHK_SYSHEADER([netinet/tcp.h],  [NETINET_TCP_H])
+RB_CHK_SYSHEADER([string.h],       [STRING_H])
+RB_CHK_SYSHEADER([strings.h],      [STRINGS_H])
+RB_CHK_SYSHEADER([stdio.h],        [STDIO_H])
+RB_CHK_SYSHEADER([crypt.h],        [CRYPT_H])
+RB_CHK_SYSHEADER([sys/uio.h],      [SYS_UIO_H])
+RB_CHK_SYSHEADER([spawn.h],        [SPAWN_H])
+RB_CHK_SYSHEADER([sys/poll.h],     [SYS_POLL_H])
+RB_CHK_SYSHEADER([sys/epoll.h],    [SYS_EPOLL_H])
+RB_CHK_SYSHEADER([sys/select.h],   [SYS_SELECT_H])
+RB_CHK_SYSHEADER([sys/devpoll.h],  [SYS_DEVPOLL_H])
+RB_CHK_SYSHEADER([sys/event.h],    [SYS_EVENT_H])
+RB_CHK_SYSHEADER([port.h],         [PORT_H])
+RB_CHK_SYSHEADER([sys/signalfd.h], [SYS_SIGNALFD_H])
+RB_CHK_SYSHEADER([sys/timerfd.h],  [SYS_TIMERFD_H])
+RB_CHK_SYSHEADER([execinfo.h],     [EXECINFO_H])
+
+RB_CHK_SYSHEADER([cstddef],        [CSTDDEF])
+RB_CHK_SYSHEADER([cstdint],        [CSTDINT])
+RB_CHK_SYSHEADER([limits],         [LIMITS])
+RB_CHK_SYSHEADER([type_traits],    [TYPE_TRAITS])
+RB_CHK_SYSHEADER([utility],        [UTILITY])
+RB_CHK_SYSHEADER([functional],     [FUNCTIONAL])
+RB_CHK_SYSHEADER([algorithm],      [ALGORITHM])
+RB_CHK_SYSHEADER([memory],         [MEMORY])
+RB_CHK_SYSHEADER([exception],      [EXCEPTION])
+RB_CHK_SYSHEADER([cerrno],         [CERRNO])
+RB_CHK_SYSHEADER([system_error],   [SYSTEM_ERROR])
+RB_CHK_SYSHEADER([map],            [MAP])
+RB_CHK_SYSHEADER([set],            [SET])
+RB_CHK_SYSHEADER([list],           [LIST])
+RB_CHK_SYSHEADER([deque],          [DEQUE])
+RB_CHK_SYSHEADER([array],          [ARRAY])
+RB_CHK_SYSHEADER([vector],         [VECTOR])
+RB_CHK_SYSHEADER([forward_list],   [FORWARD_LIST])
+RB_CHK_SYSHEADER([unordered_map],  [UNORDERED_MAP])
+RB_CHK_SYSHEADER([string],         [STRING])
+RB_CHK_SYSHEADER([sstream],        [SSTREAM])
+RB_CHK_SYSHEADER([fstream],        [FSTREAM])
+RB_CHK_SYSHEADER([iostream],       [IOSTREAM])
+RB_CHK_SYSHEADER([cstdio],         [CSTDIO])
+
+RB_CHK_SYSHEADER([windows.h],      [WINDOWS_H])
+RB_CHK_SYSHEADER([winsock2.h],     [WINSOCK2_H])
+RB_CHK_SYSHEADER([ws2tcpip.h],     [WS2TCPIP_H])
+RB_CHK_SYSHEADER([iphlpapi.h],     [IPHLPAPI_H])
+
+
+dnl todo
+AC_DEFINE([HAVE_BOOST_ASIO_HPP], [1], [ boost asio. ])
+RB_DEFINE_UNQUOTED([INC_BOOST_ASIO_HPP], [boost/asio.hpp>], [ boost asio. ])
+
+AC_DEFINE([HAVE_BOOST_CONTEXT_ALL_HPP], [1], [ boost context. ])
+RB_DEFINE_UNQUOTED([INC_BOOST_CONTEXT_ALL_HPP], [boost/context/all.hpp>], [ boost context. ])
+
+AC_DEFINE([HAVE_BOOST_ASIO_SPAWN_HPP], [1], [ boost asio spawn. ])
+RB_DEFINE_UNQUOTED([INC_BOOST_ASIO_SPAWN_HPP], [boost/asio/spawn.hpp>], [ boost asio spawn. ])
+
+AC_DEFINE([HAVE_BOOST_LEXICAL_CAST_HPP], [1], [ boost asio. ])
+RB_DEFINE_UNQUOTED([INC_BOOST_LEXICAL_CAST_HPP], [boost/lexical_cast.hpp>], [ boost lexical_cast. ])
+
+AC_DEFINE([HAVE_BOOST_TOKENIZER_HPP], [1], [ boost tokenizer. ])
+RB_DEFINE_UNQUOTED([INC_BOOST_TOKENIZER_HPP], [boost/tokenizer.hpp>], [ boost tokenizer. ])
 
 
 dnl use directory structure of cached as default (hack)
@@ -577,7 +636,7 @@ AC_HELP_STRING([--enable-profile],[Enable profiling]),
 
 if test "$profile" = yes; then
 	if test "$ac_cv_c_compiler_gnu" = yes; then
-		CFLAGS="$CFLAGS -pg -static"
+		CPPFLAGS="$CPPFLAGS -pg -static"
 		AC_MSG_RESULT([yes, adding -pg -static])
 		AC_DEFINE(RB_PROFILE, 1, [Defined to mark profiling is enabled])
 	else
@@ -589,11 +648,10 @@ fi
 
 AC_ARG_ENABLE(warnings,
 AC_HELP_STRING([--enable-warnings],[Enable all sorts of warnings for debugging.]),
-[CFLAGS="$CFLAGS -Wall -Wcast-qual -Wmissing-declarations -Wmissing-prototypes -Wnested-externs -Wshadow -Wwrite-strings -W -Wno-unused -Wunused-function -Wunused-variable"],[])
+[CPPFLAGS="$CPPFLAGS -Wall -Wcast-qual -Wmissing-declarations -Wmissing-prototypes -Wnested-externs -Wwrite-strings -W -Wno-unused -Wunused-function -Wunused-variable"],[])
 
 AC_SUBST(LDFLAGS)
 AC_SUBST(PICFLAGS)
-AC_SUBST(CFLAGS)
 AC_SUBST(SEDOBJ)
 AC_SUBST(SSL_CFLAGS)
 AC_SUBST(SSL_LIBS)
@@ -604,7 +662,6 @@ AC_SUBST(MBEDTLS_LIBS)
 
 if test "$prefix" = "NONE"; then
 	AC_DEFINE_UNQUOTED(RB_PREFIX, "$ac_default_prefix", [Prefix where librb is installed.])
-
 else
 
 dnl Don't get bitten by Cygwin's stupidity if the user specified
@@ -640,15 +697,6 @@ esac
 
 AM_CONDITIONAL([MINGW], [test "$is_mingw" = "yes"])
 
-if test "$ac_cv_c_compiler_gnu" = yes; then
-	IRC_CFLAGS="$IRC_CFLAGS -O0 -Wall"
-fi
-
-dnl If we support -g, use it!
-if test "$ac_cv_prog_cc_g" = yes; then
-	IRC_CFLAGS="$IRC_CFLAGS -g"
-fi
-
 dnl check for /dev/null so we can use it to hold evil fd's
 AC_MSG_CHECKING([for /dev/null])
 if test -c /dev/null ; then
@@ -657,13 +705,6 @@ if test -c /dev/null ; then
 else
 	AC_DEFINE(PATH_DEVNULL, "devnull.log", [Path to /dev/null])
 	AC_MSG_RESULT(no - using devnull.log)
-fi
-
-dnl jdc -- If CFLAGS is defined, best use it everywhere...
-dnl NOTE: jv says it must be added to the *END*, because things like
-dnl "gcc -O9 -O2" will result in -O2 getting preference.  How stupid.
-if test ! -z "$CFLAGS"; then
-	IRC_CFLAGS="$IRC_CFLAGS $CFLAGS"
 fi
 
 AC_PROG_YACC
@@ -949,8 +990,26 @@ AC_ARG_WITH([confdir],
 	[AC_HELP_STRING([--with-confdir=DIR],
 	       [Directory to install config files [deprecated, use --sysconfdir instead].])],
 	[ sysconfdir=`echo $withval | sed 's/\/$//'` ],
-	[ confdir='${sysconfdir}' ])
-AC_DEFINE_DIR([ETC_DIR], [sysconfdir], [Prefix where config files are installed.])
+	[ confdir='etc' ])
+RB_DEFINE_UNQUOTED([ETC_DIR], ["${prefix}/${confdir}"], [Prefix where config files are installed.])
+
+dnl **********************************************************************
+dnl Check for --with-bindir
+dnl **********************************************************************
+
+AC_MSG_CHECKING([whether to modify binary directory])
+AC_ARG_WITH(bindir,
+AC_HELP_STRING([--with-bindir=DIR],
+	       [Directory where binary executables are placed.]),
+	       [ logdir=`echo $withval | sed 's/\/$//'`
+		 AC_MSG_RESULT(yes)],
+	       [ AS_IF([test "x$enable_fhs_paths" = "xyes"],
+			[bindir="${prefix}/bin"],
+			[bindir="${prefix}/bin"])
+		 AC_MSG_RESULT(no)])
+RB_DEFINE_UNQUOTED([BIN_DIR], ["${bindir}"], [Directory where binary executables are to be found.])
+AC_SUBST_DIR([bindir])
+
 
 dnl **********************************************************************
 dnl Check for --with-logdir
@@ -963,10 +1022,10 @@ AC_HELP_STRING([--with-logdir=DIR],
 	       [ logdir=`echo $withval | sed 's/\/$//'`
 		 AC_MSG_RESULT(yes)],
 	       [ AS_IF([test "x$enable_fhs_paths" = "xyes"],
-			[logdir='${localstatedir}/log/${PACKAGE_TARNAME}'],
-			[logdir='${prefix}/logs'])
+			[logdir="${prefix}/var/log"],
+			[logdir="${prefix}/var/${PACKAGE_TARNAME}/log"])
 		 AC_MSG_RESULT(no)])
-AC_DEFINE_DIR([LOG_DIR], [logdir], [Prefix where to write logfiles.])
+RB_DEFINE_UNQUOTED([LOG_DIR], ["${logdir}"], [Prefix where to write logfiles.])
 AC_SUBST_DIR([logdir])
 
 dnl **********************************************************************
@@ -980,10 +1039,10 @@ AC_HELP_STRING([--with-helpdir=DIR],
 	       [ helpdir=`echo $withval | sed 's/\/$//'`
 		 AC_MSG_RESULT(yes) ],
 	       [ AS_IF([test "x$enable_fhs_paths" = "xyes"],
-			[helpdir='${datadir}/${PACKAGE_TARNAME}/help'],
-			[helpdir='${prefix}/help'])
+			[helpdir="${prefix}/share/help"],
+			[helpdir="${prefix}/share/${PACKAGE_TARNAME}/help"])
 		 AC_MSG_RESULT(no) ])
-AC_DEFINE_DIR([HELP_DIR], [helpdir], [Prefix where help files are installed.])
+RB_DEFINE_UNQUOTED([HELP_DIR], ["${helpdir}"], [Prefix where help files are installed.])
 AC_SUBST_DIR([helpdir])
 
 dnl **********************************************************************
@@ -997,11 +1056,11 @@ AC_ARG_WITH(moduledir,
 	       [ moduledir=`echo $withval | sed 's/\/$//'`
 		 AC_MSG_RESULT(yes)],
 	       [ AS_IF([test "x$enable_fhs_paths" = "xyes"],
-			[moduledir='${pkglibdir}/modules'],
-			[moduledir='${prefix}/modules'])
+			[moduledir="${prefix}/lib/modules"],
+			[moduledir="${prefix}/lib/${PACKAGE_TARNAME}/modules"])
 		 AC_MSG_RESULT(no)
 		])
-AC_DEFINE_DIR(MODULE_DIR, moduledir, [Prefix where modules are installed.])
+RB_DEFINE_UNQUOTED([MODULE_DIR], ["${moduledir}"], [Prefix where modules are installed.])
 AC_SUBST_DIR([moduledir])
 
 dnl Check for --with-rundir
@@ -1014,10 +1073,10 @@ AC_ARG_WITH([rundir],
 	rundir=`echo $withval | sed 's/\/$//'`],
 	[AC_MSG_RESULT([no])
 	AS_IF([test "x$enable_fhs_paths" = "xyes"],
-		[rundir='${prefix}/run'],
-		[rundir='${sysconfdir}'])])
+		[rundir="${prefix}/var/run"],
+		[rundir="${prefix}/${PACKAGE_TARNAME}/run"])])
 AC_SUBST([rundir])
-AC_DEFINE_DIR([PKGRUNDIR], [pkgrundir], [Directory to store pidfile in.])
+AC_DEFINE_DIR([PKGRUNDIR], ["${rundir}"], [Directory to store pidfile in.])
 
 dnl Installed utility program prefixes (does not affect binaries
 dnl installed into pkglibexecdir)
@@ -1097,7 +1156,7 @@ AC_HELP_STRING([--enable-profile],[Enable profiling]),
 
 if test "$profile" = yes; then
 	if test "$ac_cv_c_compiler_gnu" = yes; then
-		IRC_CFLAGS="$IRC_CFLAGS -pg"
+		CPPFLAGS="$CPPFLAGS -pg"
 		AC_MSG_RESULT([yes, adding -pg])
 		AC_DEFINE(CHARYBDIS_PROFILE, 1, [Define this if you are profiling.])
 	else
@@ -1140,14 +1199,14 @@ AC_DEFINE_UNQUOTED(NICKLEN, (${NICKLEN}+1), [Nickname length])
 
 # rpath, for finding librb.so at run time
 hold_ldflags=$LDFLAGS
-AC_MSG_CHECKING(for the ld -rpath flag)
-LDFLAGS="${LDFLAGS} -Wl,-rpath=${libdir}"
-AC_LINK_IFELSE([AC_LANG_PROGRAM([],[int i;])], found=yes, found=no)
-LDFLAGS=$hold_ldflags
-AC_MSG_RESULT($found)
-if test "$found" = yes; then
-	LDFLAGS="${LDFLAGS} -Wl,-rpath=\${libdir}"
-fi
+#AC_MSG_CHECKING(for the ld -rpath flag)
+#LDFLAGS="${LDFLAGS} -Wl,-rpath=${prefix}/${libdir}"
+#AC_LINK_IFELSE([AC_LANG_PROGRAM([],[int i;])], found=yes, found=no)
+#LDFLAGS=$hold_ldflags
+#AC_MSG_RESULT($found)
+#if test "$found" = yes; then
+#	LDFLAGS="${LDFLAGS} -Wl,-rpath=${prefix}/${libdir}"
+#fi
 
 # This must be down here, or it will mess up checks like the ones
 # for -Wl,-export-dynamic
@@ -1156,9 +1215,6 @@ CWARNS=""
 AC_ARG_ENABLE(warnings,
 AC_HELP_STRING([--enable-warnings],[Enable all sorts of warnings for debugging.]),
 [
-IRC_CFLAGS="$IRC_CFLAGS -O0"
-CFLAGS="$IRC_CFLAGS"
-
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wall], charybdis_cv_c_gcc_w_all)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wpointer-arith], charybdis_cv_c_gcc_w_pointer_arith)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wimplicit -Wnested-externs], charybdis_cv_c_gcc_w_implicit)
@@ -1178,12 +1234,11 @@ CHARYBDIS_C_GCC_TRY_FLAGS([-Wnested-externs], charybdis_cv_c_gcc_w_nested_extern
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wunused-function -Wunused-label -Wunused-value -Wunused-variable], charybdis_cv_c_gcc_w_unused)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wredundant-decls], charybdis_cv_c_gcc_w_redundant_decls)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wfloat-equal], charybdis_cv_c_gcc_w_float_equal)
+CHARYBDIS_C_GCC_TRY_FLAGS([-Winvalid-pch], charybdis_cv_c_gcc_w_invalid_pch)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wformat -Wformat-y2k -Wno-format-security], charybdis_cv_c_gcc_w_format)
-
-IRC_CFLAGS="$CFLAGS"
 ],[])
 
-IRC_CFLAGS="$IRC_CFLAGS $CWARNS"
+CPPFLAGS="$CPPFLAGS $CWARNS"
 
 AC_SUBST(MODULES_LIBS)
 AC_SUBST(MOD_TARGET)
@@ -1192,9 +1247,10 @@ AC_SUBST(SSL_SRCS_ENABLE)
 AC_SUBST(SSL_INCLUDES)
 AC_SUBST(SSL_LIBS)
 
+AC_SUBST(CFLAGS)
+AC_SUBST(CPPFLAGS)
 AC_SUBST(LDFLAGS)
 AC_SUBST(PICFLAGS)
-AC_SUBST(IRC_CFLAGS)
 AC_SUBST(SEDOBJ)
 
 

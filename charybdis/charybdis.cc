@@ -20,9 +20,10 @@
  */
 
 #include <rb/rb.h>
+#include <ircd/ircd.h>
 
 
-extern "C" int charybdis_main(int argc, char *argv[]);
+extern int charybdis_main(int argc, char *const argv[]);
 
 int main(int argc, char *argv[])
 {

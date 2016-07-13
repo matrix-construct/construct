@@ -45,5 +45,5 @@ void cache_user_motd(void);
 
 extern rb_dictionary *help_dict_oper;
 extern rb_dictionary *help_dict_user;
-#endif
 
+#endif

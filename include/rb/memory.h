@@ -23,12 +23,11 @@
  *
  */
 
-#ifndef RB_LIB_H
-#error "Do not use rb_memory.h directly"
-#endif
-
 #ifndef _RB_MEMORY_H
 #define _RB_MEMORY_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define RB_UNIQUE_PTR(deleter) __attribute__((cleanup(deleter)))
 #define RB_AUTO_PTR RB_UNIQUE_PTR(rb_raii_free)
@@ -111,4 +110,7 @@ rb_raii_free(const void *const ptr)
 	rb_free(_ptr);
 }
 
-#endif /* _I_MEMORY_H */
+#ifdef __cplusplus
+} // extern "C"
+#endif
+#endif /* _RB_MEMORY_H */

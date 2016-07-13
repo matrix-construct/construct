@@ -23,12 +23,11 @@
  *
  */
 
-#ifndef RB_LIB_H
-# error "Do not use linebuf.h directly"
-#endif
-
 #ifndef __LINEBUF_H__
 #define __LINEBUF_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define LINEBUF_COMPLETE        0
 #define LINEBUF_PARTIAL         1
@@ -79,5 +78,7 @@ void rb_linebuf_attach(buf_head_t *, buf_head_t *);
 void rb_count_rb_linebuf_memory(size_t *, size_t *);
 int rb_linebuf_flush(rb_fde_t *F, buf_head_t *);
 
-
+#ifdef __cplusplus
+} // extern "C"
+#endif
 #endif

@@ -13,6 +13,9 @@
 
 #ifndef _RB_PATRICIA_H
 #define _RB_PATRICIA_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifndef FALSE
 #define FALSE 0
@@ -137,4 +140,8 @@ do { \
 	} \
     } while (0)
 
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 #endif /* _RB_PATRICIA_H */

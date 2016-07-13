@@ -2,14 +2,13 @@
 #define _RB_H
 #define RB_LIB_H
 
+#include "config.h"
+#include "requires.h"
+#include "system.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "config.h"
-#include "include.h"
-#include "system.h"
-
 
 typedef socklen_t rb_socklen_t;
 typedef void log_cb(const char *buffer);
@@ -44,6 +43,9 @@ void *const *rb_backtrace(int *len);                 // writes to and returns st
 const char *const *rb_backtrace_symbols(int *len);   // translates rb_backtrace(), all static
 void rb_backtrace_log_symbols(void);                 // rb_backtrace_symbols piped to rb_lib_log()
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #include "tools.h"
 #include "dlink.h"
@@ -57,12 +59,5 @@ void rb_backtrace_log_symbols(void);                 // rb_backtrace_symbols pip
 #include "patricia.h"
 #include "dictionary.h"
 #include "radixtree.h"
-
-#ifdef __cplusplus
-}       // extern "C"
-#endif
-
-#include "cpp.h"
-
 
 #endif  // _RB_H

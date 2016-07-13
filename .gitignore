@@ -8,6 +8,7 @@ Makefile
 *.orig
 *.log
 *.sw?
+*.gch
 .deps
 .dirstamp
 .libs

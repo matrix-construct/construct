@@ -157,5 +157,4 @@ Info MyInformation[] = {
 	{0, 0, 0, 0}
 };
 
-
 #endif /* INCLUDED_m_info_h */

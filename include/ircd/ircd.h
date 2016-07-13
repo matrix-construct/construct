@@ -22,8 +22,8 @@
  *  USA
  */
 
-#ifndef INCLUDED_ircd_h
-#define INCLUDED_ircd_h
+#ifndef _IRCD_H
+#define _IRCD_H
 
 #include "defaults.h"
 
@@ -104,4 +104,4 @@ extern int maxconnections;
 
 void ircd_shutdown(const char *reason) __attribute__((noreturn));
 
-#endif
+#endif // _IRCD_H

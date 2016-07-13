@@ -202,5 +202,4 @@ ircd_path_t;
 
 extern const char *ircd_paths[IRCD_PATH_COUNT];
 
-
 #endif // _IRCD_SYSTEM_H

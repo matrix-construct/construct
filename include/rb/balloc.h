@@ -29,6 +29,9 @@
 
 #ifndef _RB_BALLOC_H
 #define _RB_BALLOC_H 1
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct rb_bh;
 typedef struct rb_bh rb_bh;
@@ -46,4 +49,7 @@ void rb_bh_usage(rb_bh *bh, size_t *bused, size_t *bfree, size_t *bmemusage, con
 void rb_bh_usage_all(rb_bh_usage_cb *cb, void *data);
 void rb_bh_total_usage(size_t *total_alloc, size_t *total_used);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 #endif // _RB_BALLOC_H

@@ -25,6 +25,7 @@
 
 #ifndef INCLUDE_hostmask_h
 #define INCLUDE_hostmask_h 1
+
 enum
 {
 	HM_HOST,
@@ -103,6 +104,5 @@ struct AddressRec
 	/* The next record in this hash bucket. */
 	struct AddressRec *next;
 };
-
 
 #endif /* INCLUDE_hostmask_h */

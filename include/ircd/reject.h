@@ -41,6 +41,4 @@ int is_throttle_ip(struct sockaddr *addr);
 unsigned long throttle_size(void);
 void flush_throttle(void);
 
-
 #endif
-

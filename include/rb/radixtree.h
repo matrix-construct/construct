@@ -34,6 +34,9 @@
 
 #ifndef __rb_radixtree_H__
 #define __rb_radixtree_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct rb_radixtree;		/* defined in src/rb_radixtree.c */
 
@@ -154,4 +157,7 @@ unsigned int rb_radixtree_size(rb_radixtree *dict);
 void rb_radixtree_stats(rb_radixtree *dict, void (*cb)(const char *line, void *privdata), void *privdata);
 void rb_radixtree_stats_walk(void (*cb)(const char *line, void *privdata), void *privdata);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 #endif

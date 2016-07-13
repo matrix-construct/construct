@@ -41,4 +41,3 @@ int get_wsockd_count(void);
 void wsockd_foreach_info(void (*func)(void *data, pid_t pid, int cli_count, enum wsockd_status status), void *data);
 
 #endif
-

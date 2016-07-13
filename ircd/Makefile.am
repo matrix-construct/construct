@@ -1,70 +1,78 @@
 AUTOMAKE_OPTIONS = foreign
-
-prefix		= @prefix@
 libircddir	= @libdir@
 
-AM_CPPFLAGS = @LTDLINCL@ -I$(top_srcdir)/include
-AM_LDFLAGS  = -L$(top_srcdir)/rb -export-dynamic -avoid-version -no-undefined
-AM_YFLAGS = -d
+AM_CPPFLAGS = @LTDLINCL@
+AM_CPPFLAGS += -I$(top_srcdir)/include
+AM_CPPFLAGS += -isystem $(top_srcdir)/boost/include
 
-BUILT_SOURCES = ircd_parser.h version.c
+AM_LDFLAGS = -export-dynamic -avoid-version -no-undefined
+AM_LDFLAGS += -L$(top_srcdir)/rb
+AM_LDFLAGS += -L$(top_srcdir)/boost/lib
+
+AM_YFLAGS = -d
 
 if MINGW
 EXTRA_FLAGS = -Wl,--enable-runtime-pseudo-reloc -export-symbols-regex '*'
 endif
 
+BUILT_SOURCES = ircd_parser.h
+
 libircd_la_SOURCES =                  \
-  authproc.c			\
-  bandbi.c                      \
-  cache.c                       \
-  capability.c			\
-  channel.c                     \
-  chmode.c                      \
-  class.c                       \
-  client.c                      \
-  dns.c				\
-  extban.c                      \
-  getopt.c                      \
-  hash.c                        \
-  hook.c                        \
-  hostmask.c                    \
-  ircd.c                        \
+  authproc.cc			\
+  bandbi.cc                      \
+  cache.cc                       \
+  capability.cc			\
+  channel.cc                     \
+  chmode.cc                      \
+  class.cc                       \
+  client.cc                     \
+  dns.cc				\
+  extban.cc                      \
+  getopt.cc                      \
+  hash.cc                        \
+  hook.cc                        \
+  hostmask.cc                    \
+  ircd.cc                       \
   ircd_parser.y                 \
   ircd_lexer.l                  \
-  ircd_signal.c                 \
-  listener.c                    \
-  logger.c                      \
-  match.c                       \
-  modules.c                     \
-  monitor.c                     \
-  msgbuf.c			\
-  newconf.c                     \
-  operhash.c                    \
-  packet.c                      \
-  parse.c                       \
-  privilege.c                   \
-  ratelimit.c			\
-  reject.c                      \
-  restart.c                     \
-  s_conf.c                      \
-  s_newconf.c                   \
-  s_serv.c                      \
-  s_user.c                      \
-  scache.c                      \
-  send.c                        \
-  snomask.c                     \
-  sslproc.c                     \
-  substitution.c                \
-  supported.c                   \
-  tgchange.c                    \
-  version.c                     \
-  whowas.c			\
-  wsproc.c
+  ircd_signal.cc                 \
+  listener.cc                   \
+  logger.cc                     \
+  match.cc                       \
+  modules.cc                    \
+  monitor.cc                     \
+  msgbuf.cc			\
+  newconf.cc                     \
+  operhash.cc                    \
+  packet.cc                      \
+  parse.cc                       \
+  privilege.cc                   \
+  ratelimit.cc			\
+  reject.cc                      \
+  restart.cc                     \
+  s_conf.cc                      \
+  s_newconf.cc                   \
+  s_serv.cc                      \
+  s_user.cc                      \
+  scache.cc                      \
+  send.cc                        \
+  snomask.cc                     \
+  sslproc.cc                     \
+  substitution.cc                \
+  supported.cc                   \
+  tgchange.cc                    \
+  version.cc                     \
+  whowas.cc			\
+  wsproc.cc
 libircd_la_LDFLAGS = $(EXTRA_FLAGS) -avoid-version -no-undefined
-libircd_la_LIBADD = @LIBLTDL@ -L$(top_srcdir)/rb -lrb
+
+libircd_la_LIBADD = @LIBLTDL@
 libircd_LTLIBRARIES = libircd.la
 
+install-data-local:
+	test -d $(prefix)/@logdir@ || mkdir -p $(prefix)/@logdir@
+
 clean-local:
-	rm -f ircd_lexer.c
-	rm -f ircd_parser.c
+	rm -f ircd_lexer.c ircd_lexer.cc
+	rm -f ircd_parser.c ircd_parser.cc
 	rm -f ircd_parser.h

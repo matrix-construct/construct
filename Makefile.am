@@ -1,28 +1,23 @@
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS =   rb     \
-            ircd
-
+SUBDIRS = include/rb
+SUBDIRS += rb
+SUBDIRS += ircd
 if BUILD_LTDL
 	SUBDIRS += libltdl
 endif
+SUBDIRS += charybdis
+SUBDIRS += authd
+SUBDIRS += bandb
+SUBDIRS += ssld
+SUBDIRS += wsockd
+SUBDIRS += modules
+SUBDIRS += extensions
+SUBDIRS += tools
+SUBDIRS += help
+SUBDIRS += doc
 
-SUBDIRS += tools       \
-           help        \
-           doc         \
-           ssld        \
-           wsockd      \
-           authd       \
-           bandb       \
-           modules     \
-           extensions  \
-           charybdis
-
-logdir = @prefix@/var/log
-
-install-data-hook:
-	test -d ${DESTDIR}${logdir} || mkdir -p ${DESTDIR}${logdir}
 
 mrproper-local:
 	rm -f aclocal.m4
@@ -39,6 +34,8 @@ mrproper-local:
 	rm -f ylwrap
 	rm -f */Makefile
 	rm -f */Makefile.in
+	rm -f include/*/Makefile
+	rm -f include/*/Makefile.in
 	rm -rf */.deps
 	rm -f Makefile
 	rm -f Makefile.in
