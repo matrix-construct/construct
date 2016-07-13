@@ -28,7 +28,6 @@
 #include <ircd/hash.h>
 #include <ircd/match.h>
 #include <ircd/ircd.h>
-#include <ircd/ircd_defs.h>
 #include <ircd/numeric.h>
 #include <ircd/s_serv.h>
 #include <ircd/s_user.h>

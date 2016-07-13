@@ -22,38 +22,13 @@
  *  USA
  */
 
-#ifndef INCLUDED_defaults_h
-#define INCLUDED_defaults_h
+#ifndef _IRCD_SYSTEM_H
+#define _IRCD_SYSTEM_H
 
 /* /!\ DANGER WILL ROBINSON! DANGER! /!\
  *
  * Do not mess with these values unless you know what you are doing!
  */
-
-#include "stdinc.h"
-
-/* Below are the elements for default paths. */
-typedef enum {
-	IRCD_PATH_PREFIX,
-	IRCD_PATH_MODULES,
-	IRCD_PATH_AUTOLOAD_MODULES,
-	IRCD_PATH_ETC,
-	IRCD_PATH_LOG,
-	IRCD_PATH_USERHELP,
-	IRCD_PATH_OPERHELP,
-	IRCD_PATH_IRCD_EXEC,
-	IRCD_PATH_IRCD_CONF,
-	IRCD_PATH_IRCD_MOTD,
-	IRCD_PATH_IRCD_LOG,
-	IRCD_PATH_IRCD_PID,
-	IRCD_PATH_IRCD_OMOTD,
-	IRCD_PATH_BANDB,
-	IRCD_PATH_BIN,
-	IRCD_PATH_LIBEXEC,
-	IRCD_PATH_COUNT
-} ircd_path_t;
-
-extern const char *ircd_paths[IRCD_PATH_COUNT];
 
 /* The below are used as defaults if not found in the configuration file (or on ircd warm-up).
  * Don't change these - edit the conf file instead.
@@ -87,35 +62,51 @@ extern const char *ircd_paths[IRCD_PATH_COUNT];
 #define MIN_SPAM_NUM			5
 #define MIN_SPAM_TIME			60
 
-/*
- * Directory paths and filenames for UNIX systems.
- * IRCD_PREFIX is set using ./configure --prefix, see INSTALL.
- * Do not change these without corresponding changes in the build system.
- *
- * IRCD_PREFIX = prefix for all directories,
- * DPATH       = root directory of installation,
- * BINPATH     = directory for binary files,
- * ETCPATH     = directory for configuration files,
- * LOGPATH     = directory for logfiles,
- * MODPATH     = directory for modules,
- * AUTOMODPATH = directory for autoloaded modules
- */
 
-#define DPATH		IRCD_PREFIX
-#define BINPATH		IRCD_PREFIX "/bin"
-#define MODPATH		MODULE_DIR
-#define AUTOMODPATH	MODULE_DIR "/autoload"
-#define ETCPATH		ETC_DIR
-#define LOGPATH		LOG_DIR
-#define UHPATH		HELP_DIR "/users"
-#define HPATH		HELP_DIR "/opers"
-#define SPATH		BINPATH "/" PROGRAM_PREFIX "/" BRANDING_NAME	/* ircd executable */
-#define CPATH		ETCPATH "/ircd.conf"				/* ircd.conf file */
-#define MPATH		ETCPATH "/ircd.motd"				/* MOTD file */
-#define LPATH		LOGPATH "/ircd.log"				/* ircd logfile */
-#define PPATH		PKGRUNDIR "/ircd.pid"				/* pid file */
-#define OPATH		ETCPATH "/opers.motd"				/* oper MOTD file */
-#define DBPATH		PKGLOCALSTATEDIR "/ban.db"			/* bandb file */
+
+#define HOSTLEN         63	/* Length of hostname.  Updated to         */
+				/* comply with RFC1123                     */
+
+/* Longest hostname we're willing to work with.
+ * Due to DNSBLs this is more than HOSTLEN.
+ */
+#define IRCD_RES_HOSTLEN 255
+
+#define USERLEN         10
+#define REALLEN         50
+#define CHANNELLEN      200
+#define LOC_CHANNELLEN	50
+
+/* reason length of klines, parts, quits etc */
+/* for quit messages, note that a client exit server notice
+ * :012345678901234567890123456789012345678901234567890123456789123 NOTICE * :*** Notice -- Client exiting: 012345678901234567 (0123456789@012345678901234567890123456789012345678901234567890123456789123) [] [1111:2222:3333:4444:5555:6666:7777:8888]
+ * takes at most 246 bytes (including CRLF and '\0') and together with the
+ * quit reason should fit in 512 */
+#define REASONLEN	260	/* kick/part/quit */
+#define BANREASONLEN	390	/* kline/dline */
+#define AWAYLEN		TOPICLEN
+#define KILLLEN         200	/* with Killed (nick ()) added this should fit in quit */
+
+/* 23+1 for \0 */
+#define KEYLEN          24
+#define BUFSIZE         512	/* WARNING: *DONT* CHANGE THIS!!!! */
+#define OPERNICKLEN     (NICKLEN*2)	/* Length of OPERNICKs. */
+
+#define USERHOST_REPLYLEN       (NICKLEN+HOSTLEN+USERLEN+5)
+#define MAX_DATE_STRING 32	/* maximum string length for a date string */
+
+#define HELPLEN         400
+
+/*
+ * message return values
+ */
+#define CLIENT_EXITED    -2
+#define CLIENT_PARSE_ERROR -1
+#define CLIENT_OK	1
+
+/* Read buffer size */
+#define READBUF_SIZE 16384
+
 
 /* Below are somewhat configurable settings (though it's probably a bad idea
  * to blindly mess with them). If in any doubt, leave them alone.
@@ -153,4 +144,63 @@ extern const char *ircd_paths[IRCD_PATH_COUNT];
 #	define SOMAXCONN	25
 #endif
 
-#endif				/* INCLUDED_defaults_h */
+
+/*
+ * Directory paths and filenames for UNIX systems.
+ * IRCD_PREFIX is set using ./configure --prefix, see INSTALL.
+ * Do not change these without corresponding changes in the build system.
+ *
+ * IRCD_PREFIX = prefix for all directories,
+ * DPATH       = root directory of installation,
+ * BINPATH     = directory for binary files,
+ * ETCPATH     = directory for configuration files,
+ * LOGPATH     = directory for logfiles,
+ * MODPATH     = directory for modules,
+ * AUTOMODPATH = directory for autoloaded modules
+ */
+
+#define DPATH		IRCD_PREFIX
+#define BINPATH		IRCD_PREFIX "/bin"
+#define MODPATH		RB_MODULE_DIR
+#define MODULE_DIR	RB_MODULE_DIR
+#define AUTOMODPATH	RB_MODULE_DIR "/autoload"
+#define ETCPATH		RB_ETC_DIR "/charybdis"
+#define LOGPATH		RB_LOG_DIR
+#define UHPATH		RB_HELP_DIR "/users"
+#define HPATH		RB_HELP_DIR "/opers"
+#define SPATH		RB_BIN_DIR "/" BRANDING_NAME	/* ircd executable */
+#define CPATH		ETCPATH "/ircd.conf"				/* ircd.conf file */
+#define MPATH		ETCPATH "/ircd.motd"				/* MOTD file */
+#define LPATH		LOGPATH "/ircd.log"				/* ircd logfile */
+#define PPATH		PKGRUNDIR "/ircd.pid"				/* pid file */
+#define OPATH		ETCPATH "/opers.motd"				/* oper MOTD file */
+#define DBPATH		PKGLOCALSTATEDIR "/ban.db"			/* bandb file */
+
+
+/* Below are the elements for default paths. */
+typedef enum
+{
+	IRCD_PATH_PREFIX,
+	IRCD_PATH_MODULES,
+	IRCD_PATH_AUTOLOAD_MODULES,
+	IRCD_PATH_ETC,
+	IRCD_PATH_LOG,
+	IRCD_PATH_USERHELP,
+	IRCD_PATH_OPERHELP,
+	IRCD_PATH_IRCD_EXEC,
+	IRCD_PATH_IRCD_CONF,
+	IRCD_PATH_IRCD_MOTD,
+	IRCD_PATH_IRCD_LOG,
+	IRCD_PATH_IRCD_PID,
+	IRCD_PATH_IRCD_OMOTD,
+	IRCD_PATH_BANDB,
+	IRCD_PATH_BIN,
+	IRCD_PATH_LIBEXEC,
+	IRCD_PATH_COUNT
+}
+ircd_path_t;
+
+extern const char *ircd_paths[IRCD_PATH_COUNT];
+
+
+#endif // _IRCD_SYSTEM_H

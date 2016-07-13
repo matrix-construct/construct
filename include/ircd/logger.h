@@ -32,7 +32,7 @@
 #ifndef INCLUDED_s_log_h
 #define INCLUDED_s_log_h
 
-#include "ircd_defs.h"
+#include "defaults.h"
 
 typedef enum ilogfile
 {

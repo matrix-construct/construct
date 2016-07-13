@@ -26,7 +26,6 @@
 #define INCLUDED_send_h
 
 #include <rb/rb.h>
-#include "ircd_defs.h"
 
 struct Client;
 struct Channel;

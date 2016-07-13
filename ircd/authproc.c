@@ -24,7 +24,6 @@
 
 #include <ircd/stdinc.h>
 #include <ircd/client.h>
-#include <ircd/ircd_defs.h>
 #include <ircd/parse.h>
 #include <ircd/authproc.h>
 #include <ircd/match.h>

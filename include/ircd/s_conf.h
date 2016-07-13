@@ -30,7 +30,6 @@
 #include <openssl/rsa.h>
 #endif
 
-#include "ircd_defs.h"
 #include "class.h"
 #include "client.h"
 

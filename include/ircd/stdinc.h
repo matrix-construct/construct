@@ -22,7 +22,7 @@
  */
 
 #include <rb/rb.h>
-#include "ircd_defs.h"  /* Needed for some reasons here -- dwr */
+#include "defaults.h"  /* Needed for some reasons here -- dwr */
 
 /* AIX requires this to be the first thing in the file.  */
 #ifdef __GNUC__
@@ -47,67 +47,9 @@ char *alloca ();
 # endif
 #endif
 
-
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-#ifdef STRING_WITH_STRINGS
-# include <string.h>
-# include <strings.h>
-#else
-# ifdef HAVE_STRING_H
-#  include <string.h>
-# else
-#  ifdef HAVE_STRINGS_H
-#   include <strings.h>
-#  endif
-# endif
-#endif
-
-
-#ifdef HAVE_STDDEF_H
-#include <stddef.h>
-#endif
-
-
-#include <stdio.h>
-#include <assert.h>
-#include <stdio.h>
-#include <time.h>
-#include <fcntl.h>
-#include <stdarg.h>
-#include <signal.h>
-#include <dirent.h>
-#include <ctype.h>
-
-#include <limits.h>
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/file.h>
-#ifdef HAVE_SYS_RESOURCE_H
-#include <sys/resource.h>
-#endif
-
-
-#include <sys/stat.h>
-
-#ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
-#endif
-
 #ifdef HAVE_ERRNO_H
-#include <errno.h>
 #else
 extern int errno;
-#endif
-
-#ifdef HAVE_SYS_UIO_H
-#include <sys/uio.h>
 #endif
 
 #if defined(__INTEL_COMPILER) || defined(__GNUC__)

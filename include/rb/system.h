@@ -48,6 +48,17 @@ char *alloca();
 
 #ifdef __GNUC__
 
+/*
+ * This ensures that __attribute__((deprecated)) is not used in for example
+ * sun CC, since it's a GNU-specific extension. -nenolod
+ */
+#ifdef __GNUC__
+#define IRC_DEPRECATED __attribute__((deprecated))
+#else
+#define IRC_DEPRECATED
+#endif
+
+
 #ifdef rb_likely
 #undef rb_likely
 #endif
@@ -61,6 +72,9 @@ char *alloca();
 
 #define rb_likely(x)       __builtin_expect(!!(x), 1)
 #define rb_unlikely(x)     __builtin_expect(!!(x), 0)
+
+#define likely(x)       __builtin_expect(!!(x), 1)
+#define unlikely(x)     __builtin_expect(!!(x), 0)
 
 #else /* !__GNUC__ */
 
@@ -269,5 +283,33 @@ while(0)
 #else
 #define RB_UIO_MAXIOV 16
 #endif
+
+#ifndef MAX
+#define MAX(a, b)   ((a) > (b) ? (a) : (b))
+#endif
+
+#ifndef MIN
+#define MIN(a, b)   ((a) < (b) ? (a) : (b))
+#endif
+
+#ifdef RB_IPV6
+#ifndef AF_INET6
+#error "AF_INET6 not defined"
+#endif
+
+
+#else /* #ifdef RB_IPV6 */
+
+#ifndef AF_INET6
+#define AF_INET6 AF_MAX     /* Dummy AF_INET6 declaration */
+#endif
+#endif /* #ifdef RB_IPV6 */
+
+#ifdef RB_IPV6
+#define PATRICIA_BITS   128
+#else
+#define PATRICIA_BITS   32
+#endif
+
 
 #endif  // _RB_SYSTEM_H

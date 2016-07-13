@@ -35,7 +35,6 @@
 #include <ircd/hash.h>
 #include <ircd/match.h>
 #include <ircd/ircd.h>
-#include <ircd/ircd_defs.h>
 #include <ircd/numeric.h>
 #include <ircd/packet.h>
 #include <ircd/s_conf.h>

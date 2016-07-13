@@ -32,8 +32,6 @@
 #define WE_ARE_MEMORY_C
 
 #include <ircd/stdinc.h>
-#include <ircd/ircd_defs.h>
-#include <ircd/defaults.h>
 #include <ircd/logger.h>
 #include <ircd/s_conf.h>
 #include <ircd/newconf.h>

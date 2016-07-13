@@ -24,7 +24,7 @@
 #ifndef INCLUDED_tgchange_h
 #define INCLUDED_tgchange_h
 
-#include "ircd_defs.h"
+#include "defaults.h"
 #include "client.h"
 #include "channel.h"
 
