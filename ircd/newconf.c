@@ -152,7 +152,7 @@ find_conf_item(const struct TopConf *top, const char *name)
 }
 
 int
-remove_top_conf(char *name)
+remove_top_conf(const char *name)
 {
 	struct TopConf *tc;
 	rb_dlink_node *ptr;
