@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/bash
 
 TOP_DIR=$(dirname $0)
 LAST_DIR=$PWD
@@ -45,45 +45,47 @@ parse_options ()
    done
 }
 
+
 run_or_die ()
 {
    COMMAND=$1
-   
    # check for empty commands
    if test -z "$COMMAND" ; then
-      echo "*warning* no command specified"
+      echo -e "\033[1;5;31mERROR\033[0m No command specified!"
       return 1
    fi
-   
-   shift;
 
+   shift;
    OPTIONS="$@"
-   
    # print a message
-   echo -n "*info* running $COMMAND"
    if test -n "$OPTIONS" ; then
-      echo " ($OPTIONS)"
+      echo -en "\033[1m$COMMAND $OPTIONS\033[0m ... "
    else
-      echo
+      echo -en "\033[1m$COMMAND\033[0m ... "
    fi
 
    # run or die
    $COMMAND $OPTIONS ; RESULT=$?
    if test $RESULT -ne 0 ; then
-      echo "*error* $COMMAND failed. (exit code = $RESULT)"
+      echo -e "\033[1;5;31mERROR\033[0m $COMMAND failed. (exit code = $RESULT)"
       exit 1
    fi
-   
+
+   echo -e "\033[0;32mOK\033[0m"
    return 0
 }
 
+
 parse_options "$@"
 
-echo "Building librb autotools files."
-
+echo "*** Generating Charybdis build..."
 run_or_die $ACLOCAL -I m4
 run_or_die $LIBTOOLIZE --force --copy
 run_or_die $AUTOHEADER
 run_or_die $AUTOCONF
 run_or_die $AUTOMAKE --add-missing --copy
 #run_or_die $SHTOOLIZE all
+
+echo
+echo -e "\033[1;32m*\033[0m Ready to configure Charybdis."
+echo -e "\033[1;5;33m*\033[0m Now run ./configure"
