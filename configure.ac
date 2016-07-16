@@ -26,6 +26,18 @@ AC_TYPE_UID_T
 AC_PROG_CXX
 AC_PROG_MAKE_SET
 AC_PROG_LIBTOOL
+
+AC_PROG_YACC
+dnl AC_PROG_YACC defaults to yacc unconditionally if nothing can be found
+if test "$YACC" = "yacc" -a -z "`which $YACC 2>/dev/null`"; then
+	AC_MSG_ERROR([could not locate a suitable parser generator; install bison, yacc, or byacc])
+fi
+
+AC_PROG_LEX
+if test "$LEX" = ":"; then
+	AC_MSG_ERROR([could not locate a suitable lexical generator, install flex or lex.])
+fi
+
 AC_PATH_PROG(AUTOMAKE, automake)
 AC_PATH_PROG(ACLOCAL, aclocal)
 AC_PATH_PROG(AUTOHEADER, autoheader)
@@ -701,19 +713,6 @@ if test -c /dev/null ; then
 else
 	AC_DEFINE(PATH_DEVNULL, "devnull.log", [Path to /dev/null])
 	AC_MSG_RESULT(no - using devnull.log)
-fi
-
-AC_PROG_YACC
-
-dnl AC_PROG_YACC defaults to yacc unconditionally if nothing can be found
-if test "$YACC" = "yacc" -a -z "`which $YACC 2>/dev/null`"; then
-	AC_MSG_ERROR([could not locate a suitable parser generator; install bison, yacc, or byacc])
-fi
-
-AC_PROG_LEX
-
-if test "$LEX" = ":"; then
-	AC_MSG_ERROR([could not locate a suitable lexical generator, install flex or lex.])
 fi
 
 AC_ARG_ENABLE([fhs-paths],

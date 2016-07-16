@@ -3,25 +3,18 @@
  */
 
 %{
-#include <sys/types.h>
-#include <sys/stat.h>
+#define YY_NO_UNPUT
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <stdio.h>
-#define WE_ARE_MEMORY_C
 #include <ircd/stdinc.h>
-#include <ircd/defaults.h>
 #include <ircd/client.h>
 #include <ircd/modules.h>
 #include <ircd/newconf.h>
+#include <ircd/s_conf.h>
+#include <ircd/logger.h>
+#include "ircd_parser.h"
 
-#define YY_NO_UNPUT
-
-int yyparse(void);
+int yylex();
 void yyerror(const char *);
-int yylex(void);
 
 static time_t conf_find_time(char*);
 
@@ -112,45 +105,45 @@ static void	free_cur_list(conf_parm_t* list)
 }
 
 
-conf_parm_t *	cur_list = NULL;
+conf_parm_t *	cur_list;
 
-static void	add_cur_list_cpt(conf_parm_t *new)
+static void	add_cur_list_cpt(conf_parm_t *new_)
 {
 	if (cur_list == NULL)
 	{
-		cur_list = rb_malloc(sizeof(conf_parm_t));
+		cur_list = (conf_parm_t *)rb_malloc(sizeof(conf_parm_t));
 		cur_list->type = CF_FLIST;
-		cur_list->v.list = new;
+		cur_list->v.list = new_;
 	}
 	else
 	{
-		new->next = cur_list->v.list;
-		cur_list->v.list = new;
+		new_->next = cur_list->v.list;
+		cur_list->v.list = new_;
 	}
 }
 
 static void	add_cur_list(int type, char *str, int number)
 {
-	conf_parm_t *new;
+	conf_parm_t *new_;
 
-	new = rb_malloc(sizeof(conf_parm_t));
-	new->next = NULL;
-	new->type = type;
+	new_ = (conf_parm_t *)rb_malloc(sizeof(conf_parm_t));
+	new_->next = NULL;
+	new_->type = type;
 
 	switch(type)
 	{
 	case CF_INT:
 	case CF_TIME:
 	case CF_YESNO:
-		new->v.number = number;
+		new_->v.number = number;
 		break;
 	case CF_STRING:
 	case CF_QSTRING:
-		new->v.string = rb_strdup(str);
+		new_->v.string = rb_strdup(str);
 		break;
 	}
 
-	add_cur_list_cpt(new);
+	add_cur_list_cpt(new_);
 }
 
 
@@ -246,19 +239,19 @@ single: oneitem
 
 oneitem: qstring
             {
-		$$ = rb_malloc(sizeof(conf_parm_t));
+		$$ = (conf_parm_t *)rb_malloc(sizeof(conf_parm_t));
 		$$->type = CF_QSTRING;
 		$$->v.string = rb_strdup($1);
 	    }
           | timespec
             {
-		$$ = rb_malloc(sizeof(conf_parm_t));
+		$$ = (conf_parm_t *)rb_malloc(sizeof(conf_parm_t));
 		$$->type = CF_TIME;
 		$$->v.number = $1;
 	    }
           | number
             {
-		$$ = rb_malloc(sizeof(conf_parm_t));
+		$$ = (conf_parm_t *)rb_malloc(sizeof(conf_parm_t));
 		$$->type = CF_INT;
 		$$->v.number = $1;
 	    }
@@ -268,7 +261,7 @@ oneitem: qstring
 		   so pass it as that, if so */
 		int val = conf_get_yesno_value($1);
 
-		$$ = rb_malloc(sizeof(conf_parm_t));
+		$$ = (conf_parm_t *)rb_malloc(sizeof(conf_parm_t));
 
 		if (val != -1)
 		{

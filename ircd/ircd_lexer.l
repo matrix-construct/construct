@@ -22,25 +22,18 @@
 %option nounput
 
 %{
-#include <sys/types.h>
-#include <sys/stat.h>
-
-#include <string.h>
-#include <errno.h>
-#include <limits.h>
-
-#define WE_ARE_MEMORY_C
+#define MAX_INCLUDE_DEPTH 10
 
 #include <ircd/stdinc.h>
-#include <ircd/logger.h>
-#include <ircd/s_conf.h>
+#include <ircd/client.h>
+#include <ircd/modules.h>
 #include <ircd/newconf.h>
-
+#include <ircd/s_conf.h>
+#include <ircd/logger.h>
 #include "ircd_parser.h"
 
-int yylex(void);
-
-#define MAX_INCLUDE_DEPTH 10
+int yyparse(void);
+void yyerror(const char *);
 
 YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
 int include_stack_ptr=0;
@@ -142,10 +135,11 @@ loadmodule	{ return LOADMODULE; }
 <<EOF>>         { if (ieof()) yyterminate(); }
 %%
 
+
 /* C-comment ignoring routine -kre*/
 void ccomment()
 {
-  int c;
+int c;
 
   /* log(L_NOTICE, "got comment"); */
   while (1)

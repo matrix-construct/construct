@@ -357,9 +357,9 @@ extern char *get_user_ban_reason(struct ConfItem *aconf);
 extern void get_printable_kline(struct Client *, struct ConfItem *,
 				char **, char **, char **, char **);
 
-extern void yyerror(const char *);
-extern int conf_yy_fatal_error(const char *);
-extern int conf_fgets(char *, int, FILE *);
+RB_EXTERN_C void yyerror(const char *);
+RB_EXTERN_C int conf_yy_fatal_error(const char *);
+RB_EXTERN_C int conf_fgets(char *, int, FILE *);
 
 extern int valid_wild_card(const char *, const char *);
 extern void add_temp_kline(struct ConfItem *);
@@ -378,8 +378,6 @@ extern void conf_add_d_conf(struct ConfItem *);
 extern void flush_expired_ips(void *);
 
 extern char *get_oper_name(struct Client *client_p);
-
-extern int yylex(void);
 
 extern unsigned long cidr_to_bitmask[];
 

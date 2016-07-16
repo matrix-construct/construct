@@ -54,7 +54,7 @@
 
 struct config_server_hide ConfigServerHide;
 
-extern "C" int yyparse(void);		/* defined in y.tab.c */
+RB_EXTERN_C int yyparse(void);
 extern char yy_linebuf[16384];		/* defined in ircd_lexer.l */
 
 static rb_bh *confitem_heap = NULL;

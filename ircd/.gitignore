@@ -1,3 +1,3 @@
 ircd_parser.h
-ircd_parser.cc
-ircd_lexer.cc
+ircd_parser.c
+ircd_lexer.c

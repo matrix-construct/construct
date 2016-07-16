@@ -9,7 +9,8 @@ AM_LDFLAGS = -export-dynamic -avoid-version -no-undefined
 AM_LDFLAGS += -L$(top_srcdir)/rb
 AM_LDFLAGS += -L$(top_srcdir)/boost/lib
 
-AM_YFLAGS = -d
+AM_YFLAGS = -d # --language=c++
+AM_LFLAGS = # --c++
 
 if MINGW
 EXTRA_FLAGS = -Wl,--enable-runtime-pseudo-reloc -export-symbols-regex '*'
@@ -34,7 +35,7 @@ libircd_la_SOURCES =                  \
   hostmask.cc                    \
   ircd.cc                       \
   ircd_parser.y                 \
-  ircd_lexer.l                  \
+  ircd_lexer.l                   \
   ircd_signal.cc                 \
   listener.cc                   \
   logger.cc                     \
@@ -73,6 +74,6 @@ install-data-local:
 	test -d $(prefix)/@logdir@ || mkdir -p $(prefix)/@logdir@
 
 clean-local:
-	rm -f ircd_lexer.c ircd_lexer.cc
-	rm -f ircd_parser.c ircd_parser.cc
+	rm -f ircd_lexer.c
+	rm -f ircd_parser.c
 	rm -f ircd_parser.h

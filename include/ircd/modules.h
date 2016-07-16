@@ -189,9 +189,9 @@ extern void load_all_modules(bool warn);
 extern void load_core_modules(bool);
 
 extern bool unload_one_module(const char *, bool);
-extern bool load_one_module(const char *, int, bool);
+RB_EXTERN_C bool load_one_module(const char *, int, bool);
 extern bool load_a_module(const char *, bool, int, bool);
-extern struct module *findmodule_byname(const char *);
+RB_EXTERN_C struct module *findmodule_byname(const char *);
 extern void init_modules(void);
 
 extern rb_dlink_list module_list;
