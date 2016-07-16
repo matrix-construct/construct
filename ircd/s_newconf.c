@@ -341,7 +341,7 @@ make_server_conf(void)
 
 	server_p->aftype = AF_UNSPEC;
 
-	return rb_malloc(sizeof(struct server_conf));
+	return server_p;
 }
 
 void
