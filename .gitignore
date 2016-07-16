@@ -31,9 +31,6 @@ stamp-h1
 libltdl/
 scripts/*.tar.bz2
 scripts/*.tar.gz
-ircd/ircd_parser.c
-ircd/ircd_parser.h
-ircd/ircd_lexer.c
 ssld/ssld
 wsockd/wsockd
 testsuite/ircd.pid.*
