@@ -4,7 +4,7 @@
 #
 # SYNOPSIS
 #
-#   AX_CXX_COMPILE_STDCXX(VERSION, [ext|noext], [mandatory|optional])
+#   AX_CXX_COMPILE_STDCXX(VERSION, [gnu|iso], [mandatory|optional])
 #
 # DESCRIPTION
 #
@@ -50,8 +50,8 @@ AC_DEFUN([AX_CXX_COMPILE_STDCXX], [dnl
         [$1], [17], [m4_fatal([support for C++17 not yet implemented in AX_CXX_COMPILE_STDCXX])],
         [m4_fatal([invalid first argument `$1' to AX_CXX_COMPILE_STDCXX])])dnl
   m4_if([$2], [], [],
-        [$2], [ext], [],
-        [$2], [noext], [],
+        [$2], [gnu], [],
+        [$2], [iso], [],
         [m4_fatal([invalid second argument `$2' to AX_CXX_COMPILE_STDCXX])])dnl
   m4_if([$3], [], [ax_cxx_compile_cxx$1_required=true],
         [$3], [mandatory], [ax_cxx_compile_cxx$1_required=true],
@@ -68,7 +68,7 @@ AC_DEFUN([AX_CXX_COMPILE_STDCXX], [dnl
     ac_success=yes
   fi
 
-  m4_if([$2], [noext], [], [dnl
+  m4_if([$2], [iso], [], [dnl
   if test x$ac_success = xno; then
     for switch in -std=gnu++$1 -std=gnu++0x; do
       cachevar=AS_TR_SH([ax_cv_cxx_compile_cxx$1_$switch])
@@ -91,7 +91,7 @@ AC_DEFUN([AX_CXX_COMPILE_STDCXX], [dnl
     done
   fi])
 
-  m4_if([$2], [ext], [], [dnl
+  m4_if([$2], [gnu], [], [dnl
   if test x$ac_success = xno; then
     dnl HP's aCC needs +std=c++11 according to:
     dnl http://h21007.www2.hp.com/portal/download/files/unprot/aCxx/PDF_Release_Notes/769149-001.pdf
