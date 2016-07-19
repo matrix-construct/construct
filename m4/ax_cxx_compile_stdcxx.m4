@@ -61,7 +61,7 @@ AC_DEFUN([AX_CXX_COMPILE_STDCXX], [dnl
   ac_success=no
   AC_CACHE_CHECK(whether $CXX supports C++$1 features by default,
   ax_cv_cxx_compile_cxx$1,
-  [AC_COMPILE_IFELSE([AC_LANG_SOURCE([_AX_CXX_COMPILE_STDCXX_testbody_$1])],
+  [AC_COMPILE_IFELSE([AC_LANG_SOURCE([_AX_CXX_COMPILE_STDCXX_testbody_$1($4)])],
     [ax_cv_cxx_compile_cxx$1=yes],
     [ax_cv_cxx_compile_cxx$1=no])])
   if test x$ax_cv_cxx_compile_cxx$1 = xyes; then
@@ -76,7 +76,7 @@ AC_DEFUN([AX_CXX_COMPILE_STDCXX], [dnl
                      $cachevar,
         [ac_save_CXX="$CXX"
          CXX="$CXX $switch"
-         AC_COMPILE_IFELSE([AC_LANG_SOURCE([_AX_CXX_COMPILE_STDCXX_testbody_$1])],
+         AC_COMPILE_IFELSE([AC_LANG_SOURCE([_AX_CXX_COMPILE_STDCXX_testbody_$1($4)])],
           [eval $cachevar=yes],
           [eval $cachevar=no])
          CXX="$ac_save_CXX"])
@@ -102,7 +102,7 @@ AC_DEFUN([AX_CXX_COMPILE_STDCXX], [dnl
                      $cachevar,
         [ac_save_CXX="$CXX"
          CXX="$CXX $switch"
-         AC_COMPILE_IFELSE([AC_LANG_SOURCE([_AX_CXX_COMPILE_STDCXX_testbody_$1])],
+         AC_COMPILE_IFELSE([AC_LANG_SOURCE([_AX_CXX_COMPILE_STDCXX_testbody_$1($4)])],
           [eval $cachevar=yes],
           [eval $cachevar=no])
          CXX="$ac_save_CXX"])
@@ -137,15 +137,15 @@ AC_DEFUN([AX_CXX_COMPILE_STDCXX], [dnl
 dnl  Test body for checking C++11 support
 
 m4_define([_AX_CXX_COMPILE_STDCXX_testbody_11],
-  _AX_CXX_COMPILE_STDCXX_testbody_new_in_11
+  _AX_CXX_COMPILE_STDCXX_testbody_new_in_11($1)
 )
 
 
 dnl  Test body for checking C++14 support
 
 m4_define([_AX_CXX_COMPILE_STDCXX_testbody_14],
-  _AX_CXX_COMPILE_STDCXX_testbody_new_in_11
-  _AX_CXX_COMPILE_STDCXX_testbody_new_in_14
+  _AX_CXX_COMPILE_STDCXX_testbody_new_in_11($1)
+  _AX_CXX_COMPILE_STDCXX_testbody_new_in_14($1)
 )
 
 
@@ -160,7 +160,7 @@ m4_define([_AX_CXX_COMPILE_STDCXX_testbody_new_in_11], [[
 
 #error "This is not a C++ compiler"
 
-#elif __cplusplus < 201103L
+#elif __cplusplus < $1L
 
 #error "This is not a C++11 compiler"
 
@@ -433,7 +433,7 @@ namespace cxx11
 
 }  // namespace cxx11
 
-#endif  // __cplusplus >= 201103L
+#endif  // __cplusplus >= $1L
 
 ]])
 
@@ -449,11 +449,11 @@ m4_define([_AX_CXX_COMPILE_STDCXX_testbody_new_in_14], [[
 
 #error "This is not a C++ compiler"
 
-#elif __cplusplus < 201402L
+#elif __cplusplus < $1L
 
 #error "This is not a C++14 compiler"
 
-#else
+#elif __cplusplus >= 201402L
 
 namespace cxx14
 {
@@ -557,6 +557,10 @@ namespace cxx14
 
 }  // namespace cxx14
 
-#endif  // __cplusplus >= 201402L
+#else
+
+// Add tests here if __cplusplus is not to be trusted
+
+#endif  // __cplusplus >= $1L
 
 ]])
