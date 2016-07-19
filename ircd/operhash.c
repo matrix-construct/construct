@@ -85,6 +85,13 @@ operhash_delete(const char *name)
 {
 	struct operhash_entry *ohash = rb_radixtree_retrieve(operhash_tree, name);
 
-	if (ohash != NULL)
+	if(ohash == NULL)
+		return;
+
+	ohash->refcount--;
+	if(ohash->refcount == 0)
+	{
+		rb_radixtree_delete(operhash_tree, ohash->name);
 		rb_free(ohash);
+	}
 }
