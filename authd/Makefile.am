@@ -1,9 +1,17 @@
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/include \
+	@BOOST_CPPFLAGS@
+
+AM_LDFLAGS = \
+	-L$(top_srcdir)/rb \
+	@BOOST_LDFLAGS@
+
+
 bin_PROGRAMS = authd
 
-AM_CPPFLAGS = $(WARNFLAGS)
-AM_CPPFLAGS += -I$(top_srcdir)/include
-AM_CPPFLAGS += -isystem $(top_srcdir)/boost/include
-AM_LDFLAGS = -L$(top_srcdir)/boost/lib
+authd_LDADD = \
+	$(top_srcdir)/rb/librb.la \
+	@BOOST_LIBS@
 
 authd_SOURCES =	\
 	authd.cc	\
@@ -20,8 +28,6 @@ authd_SOURCES =	\
 	providers/rdns.cc \
 	providers/opm.cc
 
-authd_LDADD = $(top_srcdir)/rb/librb.la
-authd_LDADD += -lboost_system
 
 mrproper-local:
 	rm -rf providers/.deps

@@ -1,22 +1,38 @@
 AUTOMAKE_OPTIONS = foreign
+
 libircddir	= @libdir@
-
-AM_CPPFLAGS = @LTDLINCL@
-AM_CPPFLAGS += -I$(top_srcdir)/include
-AM_CPPFLAGS += -isystem $(top_srcdir)/boost/include
-
-AM_LDFLAGS = -export-dynamic -avoid-version -no-undefined
-AM_LDFLAGS += -L$(top_srcdir)/rb
-AM_LDFLAGS += -L$(top_srcdir)/boost/lib
 
 AM_YFLAGS = -d # --language=c++
 AM_LFLAGS = # --c++
 
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/include \
+	@LTDLINCL@ \
+	@BOOST_CPPFLAGS@
+
 if MINGW
-EXTRA_FLAGS = -Wl,--enable-runtime-pseudo-reloc -export-symbols-regex '*'
+PLATFORM_LDFLAGS = -Wl,--enable-runtime-pseudo-reloc -export-symbols-regex '*'
 endif
 
+AM_LDFLAGS = \
+	-export-dynamic \
+	-avoid-version \
+	-no-undefined \
+	$(PLATFORM_LDFLAGS)
+
+AM_LDFLAGS += \
+	-L$(top_srcdir)/rb \
+	@BOOST_LDFLAGS@
+
 BUILT_SOURCES = ircd_parser.h
+
+
+libircd_LTLIBRARIES = libircd.la
+
+libircd_la_LIBADD = \
+	-lrb \
+	@LIBLTDL@ \
+	@BOOST_LIBS@
 
 libircd_la_SOURCES =                  \
   authproc.cc			\
@@ -65,10 +81,7 @@ libircd_la_SOURCES =                  \
   version.cc                     \
   whowas.cc			\
   wsproc.cc
-libircd_la_LDFLAGS = $(EXTRA_FLAGS) -avoid-version -no-undefined
 
-libircd_la_LIBADD = @LIBLTDL@
-libircd_LTLIBRARIES = libircd.la
 
 install-data-local:
 	test -d $(prefix)/@logdir@ || mkdir -p $(prefix)/@logdir@

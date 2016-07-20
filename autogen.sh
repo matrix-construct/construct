@@ -86,6 +86,9 @@ run_or_die $AUTOCONF
 run_or_die $AUTOMAKE --add-missing --copy
 #run_or_die $SHTOOLIZE all
 
+WCL_CONFIGURE=`wc -l ./configure`
+echo -e "\033[1;30m*\033[0m $WCL_CONFIGURE"
+
 echo
 echo -e "\033[1;32m*\033[0m Ready to configure Charybdis."
 echo -e "\033[1;5;33m*\033[0m Now run ./configure"

@@ -1,13 +1,29 @@
-AM_CPPFLAGS = -I$(top_srcdir)/include $(LTDLINCL)
-AM_CPPFLAGS += -isystem $(top_srcdir)/boost/include
-AM_LDFLAGS  = -module -export-dynamic -avoid-version -no-undefined -shared
-AM_LDFLAGS += -export-symbols-regex _mheader
-AM_LDFLAGS += -L$(top_srcdir)/boost/lib -lboost_system
-AM_LDFLAGS += -L$(top_srcdir)/ircd -lircd
-AM_LDFLAGS += -L$(top_srcdir)/rb -lrb
-
-
 extensiondir=@moduledir@/extensions
+
+AM_CPPFLAGS = \
+	 -I$(top_srcdir)/include \
+	$(LTDLINCL) \
+	@BOOST_CPPFLAGS@
+
+AM_LDFLAGS = \
+	-L$(top_srcdir)/ircd \
+	-L$(top_srcdir)/rb \
+	@BOOST_LDFLAGS@
+
+AM_LDFLAGS += \
+	-module \
+	-export-dynamic \
+	-avoid-version \
+	-no-undefined \
+	-shared \
+	-export-symbols-regex _mheader
+
+AM_LDFLAGS += \
+	-lircd \
+	-lrb \
+	@LIBLTDL@ \
+	@BOOST_LIBS@
+
 
 chm_adminonly_la_SOURCES = chm_adminonly.cc
 chm_operonly_la_SOURCES = chm_operonly.cc

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-TOPDIR=$1                # This should be an absolute path to the repo root
+BTOOLSET=$1              # The platform toolchain name (gcc, clang, mingw, ...)
 BLIBS=$2                 # A comma-separated list of which boost libs to build
-BTOOLSET=$3              # The platform toolchain name (gcc, clang, mingw, ...)
-BVARIANT=$4              # release optimization or debug symbols etc
-BLINK=$5                 # whether to build with shared or static linkage (we like shared)
-BTHREADING=$6            # whether to build with thread-safety (we benefit from SINGLE THREADED)
+BVARIANT=$3              # release optimization or debug symbols etc
+BLINK=$4                 # whether to build with shared or static linkage (we like shared)
+BTHREADING=$5            # whether to build with thread-safety (we benefit from SINGLE THREADED)
+TOPDIR=$6                # This should be an absolute path to the repo root
 
 
 if [ -z $TOPDIR ]; then
@@ -127,7 +127,7 @@ run git submodule update --init --recursive libs/date_time
 run git submodule update --init --recursive libs/smart_ptr
 run git submodule update --init --recursive libs/bind
 
-run ./bootstrap.sh --prefix=`pwd` --with-libraries=$BLIBS $BSFLAGS
+run ./bootstrap.sh --prefix=$PWD --libdir=$PWD/lib --with-libraries=$BLIBS $BSFLAGS
 run ./b2 threading=$BTHREADING variant=$BVARIANT link=$BLINK address-model=64
 
 ### Install should go right into this local submodule repository

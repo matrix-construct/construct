@@ -1,18 +1,32 @@
-AM_CPPFLAGS = $(WARNFLAGS)
-AM_CPPFLAGS += @LTDLINCL@
-AM_CPPFLAGS += -I$(top_srcdir)/include
-AM_CPPFLAGS += -isystem $(top_srcdir)/boost/include
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/include \
+	@LTDLINCL@ \
+	@BOOST_CPPFLAGS@ 
 
-AM_LDFLAGS = -L$(top_srcdir)/rb
-AM_LDFLAGS += -L$(top_srcdir)/boost/lib
+AM_LDFLAGS = \
+	@BOOST_LDFLAGS@ \
+	-L$(top_srcdir)/rb
 
-bin_PROGRAMS = charybdis-mkpasswd charybdis-mkfingerprint
 
-charybdis_mkpasswd_SOURCES = mkpasswd.cc
-charybdis_mkpasswd_LDADD = -lrb -lboost_system
+bin_PROGRAMS = charybdis-mkpasswd
 
-charybdis_mkfingerprint_SOURCES = mkfingerprint.cc
-charybdis_mkfingerprint_LDADD = -lrb -lboost_system
+charybdis_mkpasswd_LDADD = \
+	-lrb \
+	@BOOST_LIBS@
+
+charybdis_mkpasswd_SOURCES = \
+	mkpasswd.cc
+
+
+bin_PROGRAMS += charybdis-mkfingerprint
+
+charybdis_mkfingerprint_LDADD = \
+	-lrb \
+	@BOOST_LIBS@
+
+charybdis_mkfingerprint_SOURCES = \
+	mkfingerprint.cc
+
 
 mrproper-local:
 	rm -f genssl

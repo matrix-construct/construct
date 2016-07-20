@@ -1,12 +1,12 @@
 AUTOMAKE_OPTIONS = foreign
 
-AM_CPPFLAGS = -isystem $(top_srcdir)/boost/include
-AM_LDFLAGS = -L$(top_srcdir)/boost/lib
+AM_CPPFLAGS = @BOOST_CPPFLAGS@
+AM_LDFLAGS = @BOOST_LDFLAGS@
 
 BUILT_SOURCES = rb.h.gch
 
 rb.h.gch:
-	$(CXX) -o rb.h.gch $(CPPFLAGS) rb.h
+	$(CXX) $(CXXFLAGS) -o rb.h.gch $(DEFS) $(CPPFLAGS) rb.h
 
 clean-local:
 	rm -f rb.h.gch

@@ -1,15 +1,30 @@
 AUTOMAKE_OPTIONS = subdir-objects
-
-AM_CPPFLAGS = $(LTDLINCL)
-AM_CPPFLAGS += -I$(top_srcdir)/include
-AM_CPPFLAGS += -isystem $(top_srcdir)/boost/include
-AM_LDFLAGS  = -module -export-dynamic -avoid-version -no-undefined -shared
-AM_LDFLAGS += -export-symbols-regex _mheader
-AM_LDFLAGS += -L$(top_srcdir)/boost/lib -lboost_system
-AM_LDFLAGS += -L$(top_srcdir)/ircd -lircd
-AM_LDFLAGS += -L$(top_srcdir)/rb -lrb
-
 auto_load_moddir=@moduledir@/autoload
+
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/include \
+	$(LTDLINCL) \
+	@BOOST_CPPFLAGS@
+
+AM_LDFLAGS = \
+	-L$(top_srcdir)/ircd \
+	-L$(top_srcdir)/rb \
+	@BOOST_LDFLAGS@
+
+AM_LDFLAGS += \
+	-module \
+	-export-dynamic \
+	-avoid-version \
+	-no-undefined \
+	-shared \
+	-export-symbols-regex _mheader
+
+AM_LDFLAGS += \
+	-lircd \
+	-lrb \
+	@LIBLTDL@ \
+	@BOOST_LIBS@
+
 
 cap_account_tag_la_SOURCES = cap_account_tag.cc
 cap_server_time_la_SOURCES = cap_server_time.cc
@@ -167,7 +182,6 @@ core_m_part_la_SOURCES = core/m_part.cc
 core_m_quit_la_SOURCES = core/m_quit.cc
 core_m_server_la_SOURCES = core/m_server.cc
 core_m_squit_la_SOURCES = core/m_squit.cc
-
 
 module_LTLIBRARIES = \
   core/m_ban.la \
