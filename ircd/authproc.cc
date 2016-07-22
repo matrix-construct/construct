@@ -70,9 +70,8 @@ rb_dictionary *bl_stats;
 rb_dlink_list opm_list;
 struct OPMListener opm_listeners[LISTEN_LAST];
 
-std::array<authd_cb, 256> authd_cmd_tab
-{[]
-{
+std::array<authd_cb, 256> authd_cmd_tab =
+[]{
 	std::array<authd_cb, 256> ret {0};
 	ret['A'] = { cmd_accept_client,	4 };
 	ret['E'] = { cmd_dns_result,	5 };
@@ -83,8 +82,7 @@ std::array<authd_cb, 256> authd_cmd_tab
 	ret['Y'] = { cmd_stats_results,	3 };
 	ret['Z'] = { cmd_stats_results,	3 };
 	return ret;
-}()
-};
+}();
 
 static int
 start_authd(void)

@@ -158,9 +158,8 @@ static void stats_capability(struct Client *);
  * C initalisers so we don't have to iterate anymore
  * --Elizafox
  */
-std::array<stats_cmd, 256> stats_cmd_table
-{[]
-{
+std::array<stats_cmd, 256> stats_cmd_table =
+[]{
 	std::array<stats_cmd, 256> ret;
 
 	//letter               handler              oper      admin
@@ -214,8 +213,7 @@ std::array<stats_cmd, 256> stats_cmd_table
 	ret['?'] = stats_cmd { stats_servlinks,     false,    false };
 
 	return ret;
-}()
-};
+}();
 
 
 /*

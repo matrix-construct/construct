@@ -941,8 +941,8 @@ struct auth_opts_handler opm_options[] =
 	{ NULL, 0, NULL },
 };
 
-struct auth_provider opm_provider
-{[]{
+struct auth_provider opm_provider =
+[]{
 	auth_provider ap {0};
 	ap.name = "opm";
 	ap.letter = 'O';
@@ -953,4 +953,4 @@ struct auth_provider opm_provider
 	ap.completed = opm_initiate;
 	ap.opt_handlers = opm_options;
 	return ap;
-}()};
+}();

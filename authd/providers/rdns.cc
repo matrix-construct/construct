@@ -174,8 +174,8 @@ struct auth_opts_handler rdns_options[] =
 	{ NULL, 0, NULL },
 };
 
-struct auth_provider rdns_provider
-{[]{
+struct auth_provider rdns_provider =
+[]{
 	auth_provider ap {0};
 	ap.name = "rdns";
 	ap.letter = 'R';
@@ -185,4 +185,4 @@ struct auth_provider rdns_provider
 	ap.timeout = rdns_cancel;
 	ap.opt_handlers = rdns_options;
 	return ap;
-}()};
+}();

@@ -377,8 +377,8 @@ struct auth_opts_handler ident_options[] =
 };
 
 
-struct auth_provider ident_provider
-{[]{
+struct auth_provider ident_provider =
+[]{
 	auth_provider ap {0};
 	ap.name = "ident";
 	ap.letter = 'I';
@@ -388,4 +388,4 @@ struct auth_provider ident_provider
 	ap.timeout = ident_cancel;
 	ap.opt_handlers = ident_options;
 	return ap;
-}()};
+}();

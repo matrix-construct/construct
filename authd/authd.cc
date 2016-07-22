@@ -31,8 +31,8 @@ static void handle_stat(int parc, char *parv[]);
 static void handle_options(int parc, char *parv[]);
 
 rb_helper *authd_helper = NULL;
-std::array<authd_cmd_handler, 256> authd_cmd_handlers
-{[]{
+std::array<authd_cmd_handler, 256> authd_cmd_handlers =
+[]{
 	std::array<authd_cmd_handler, 256> ret;
 	ret['C'] = handle_new_connection;
 	ret['D'] = handle_resolve_dns;
@@ -41,21 +41,21 @@ std::array<authd_cmd_handler, 256> authd_cmd_handlers
 	ret['R'] = handle_reload;
 	ret['S'] = handle_stat;
 	return ret;
-}()};
+}();
 
-std::array<authd_stat_handler, 256> authd_stat_handlers
-{[]{
+std::array<authd_stat_handler, 256> authd_stat_handlers =
+[]{
 	std::array<authd_stat_handler, 256> ret;
 	ret['D'] = enumerate_nameservers;
 	return ret;
-}()};
+}();
 
-std::array<authd_reload_handler, 256> authd_reload_handlers
-{[]{
+std::array<authd_reload_handler, 256> authd_reload_handlers =
+[]{
 	std::array<authd_reload_handler, 256> ret;
 	ret['D'] = reload_nameservers;
 	return ret;
-}()};
+}();
 
 rb_dictionary *authd_option_handlers;
 

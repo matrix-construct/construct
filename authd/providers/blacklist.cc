@@ -608,7 +608,7 @@ struct auth_opts_handler blacklist_options[] =
 };
 
 struct auth_provider blacklist_provider =
-{[]{
+[]{
 	auth_provider ret {0};
 	ret.name = "blacklist";
 	ret.letter = 'B';
@@ -620,4 +620,4 @@ struct auth_provider blacklist_provider =
 	ret.opt_handlers = blacklist_options;
 	/* .stats_handler = { 'B', blacklist_stats }, */
 	return ret;
-}()};
+}();

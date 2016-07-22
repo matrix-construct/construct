@@ -74,7 +74,7 @@ typedef void (*provider_complete_t)(struct auth_client *, uint32_t);
 
 struct auth_stats_handler
 {
-	const char letter;
+	char letter;
 	authd_stat_handler handler;
 };
 
