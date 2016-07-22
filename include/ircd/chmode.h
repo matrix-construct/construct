@@ -86,7 +86,7 @@ struct Chm
 {
 	ChmFunc set_func;
 	ChmClass mode_class;
-	long mode_type;
+	unsigned long mode_type;
 };
 
 
