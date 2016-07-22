@@ -196,7 +196,7 @@ accept_opm(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t len, voi
 	struct auth_client *auth = NULL;
 	struct opm_listener *listener = (opm_listener *)data;
 	struct rb_sockaddr_storage localaddr;
-	unsigned int llen = sizeof(struct rb_sockaddr_storage);
+	rb_socklen_t llen = sizeof(struct rb_sockaddr_storage);
 	rb_dictionary_iter iter;
 
 	if(status != 0 || listener == NULL)

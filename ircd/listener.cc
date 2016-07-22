@@ -603,7 +603,7 @@ accept_callback(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t add
 {
 	struct Listener *listener(reinterpret_cast<struct Listener *>(data));
 	struct rb_sockaddr_storage lip;
-	unsigned int locallen = sizeof(struct rb_sockaddr_storage);
+	rb_socklen_t locallen = sizeof(struct rb_sockaddr_storage);
 
 	ServerStats.is_ac++;
 
