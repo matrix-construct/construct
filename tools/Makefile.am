@@ -1,9 +1,32 @@
-bin_PROGRAMS = charybdis-mkpasswd charybdis-mkfingerprint
-AM_CFLAGS=$(WARNFLAGS)
-AM_CPPFLAGS = $(DEFAULT_INCLUDES) -I../librb/include -I.
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/include \
+	@LTDLINCL@ \
+	@BOOST_CPPFLAGS@ 
 
-charybdis_mkpasswd_SOURCES = mkpasswd.c
-charybdis_mkpasswd_LDADD = ../librb/src/librb.la
+AM_LDFLAGS = \
+	@BOOST_LDFLAGS@ \
+	-L$(top_srcdir)/rb
 
-charybdis_mkfingerprint_SOURCES = mkfingerprint.c
-charybdis_mkfingerprint_LDADD = ../librb/src/librb.la
+
+bin_PROGRAMS = charybdis-mkpasswd
+
+charybdis_mkpasswd_LDADD = \
+	-lrb \
+	@BOOST_LIBS@
+
+charybdis_mkpasswd_SOURCES = \
+	mkpasswd.cc
+
+
+bin_PROGRAMS += charybdis-mkfingerprint
+
+charybdis_mkfingerprint_LDADD = \
+	-lrb \
+	@BOOST_LIBS@
+
+charybdis_mkfingerprint_SOURCES = \
+	mkfingerprint.cc
+
+
+mrproper-local:
+	rm -f genssl

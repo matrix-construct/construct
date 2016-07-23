@@ -1,7 +1,18 @@
-pkglibexec_PROGRAMS = wsockd
-AM_CFLAGS=$(WARNFLAGS)
-AM_CPPFLAGS = -I../include -I../librb/include 
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/include \
+	@BOOST_CPPFLAGS@
+
+AM_LDFLAGS = \
+	-L$(top_srcdir)/rb \
+	@BOOST_LDFLAGS@
 
 
-wsockd_SOURCES = wsockd.c sha1.c
-wsockd_LDADD = ../librb/src/librb.la
+bin_PROGRAMS = wsockd
+
+wsockd_LDADD = \
+	-lrb \
+	@BOOST_LIBS@
+
+wsockd_SOURCES = \
+	wsockd.cc \
+	sha1.c

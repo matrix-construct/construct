@@ -28,8 +28,8 @@ fi
 SERNO=`git log -1 --date=format:%Y%m%d --pretty=format:%cd-%h`
 DATECODE=`git log -1 --pretty=format:%ct`
 
-echo "[charybdis] Generating include/serno.h for tip $MYTIP."
-cat << _EOF_ > include/serno.h
+echo "[charybdis] Generating include/ircd/serno.h for tip $MYTIP."
+cat << _EOF_ > include/ircd/serno.h
 /* Generated automatically by makepackage. Any changes made here will be lost. */
 #define SERNO "$SERNO"
 #define DATECODE ${DATECODE}UL

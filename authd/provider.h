@@ -21,9 +21,8 @@
 #ifndef __CHARYBDIS_AUTHD_PROVIDER_H__
 #define __CHARYBDIS_AUTHD_PROVIDER_H__
 
-#include "stdinc.h"
+#include <ircd/stdinc.h>
 #include "authd.h"
-#include "rb_dictionary.h"
 
 #define MAX_PROVIDERS 32	/* This should be enough */
 
@@ -75,7 +74,7 @@ typedef void (*provider_complete_t)(struct auth_client *, uint32_t);
 
 struct auth_stats_handler
 {
-	const char letter;
+	char letter;
 	authd_stat_handler handler;
 };
 
@@ -146,7 +145,7 @@ find_provider(const char *name)
 
 	RB_DLINK_FOREACH(ptr, auth_providers.head)
 	{
-		struct auth_provider *provider = ptr->data;
+		struct auth_provider *provider = (auth_provider *)ptr->data;
 
 		if(strcasecmp(provider->name, name) == 0)
 			return provider;

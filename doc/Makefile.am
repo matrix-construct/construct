@@ -33,4 +33,3 @@ install: install-mkdirs
 	-@if test -f $(DESTDIR)$(sysconfdir)/links.txt; then \
 		$(RM) $(DESTDIR)$(sysconfdir)/links.txt; \
 	fi
-

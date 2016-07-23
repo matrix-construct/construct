@@ -1,11 +1,100 @@
 AUTOMAKE_OPTIONS = subdir-objects
-
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/librb/include $(LTDLINCL)
-AM_LDFLAGS  = -module -export-dynamic -avoid-version -no-undefined -shared
-AM_LDFLAGS += -export-symbols-regex _mheader
-LIBS += $(top_srcdir)/ircd/libircd.la
-
 auto_load_moddir=@moduledir@/autoload
+
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/include \
+	$(LTDLINCL) \
+	@BOOST_CPPFLAGS@
+
+AM_LDFLAGS = \
+	-L$(top_srcdir)/ircd \
+	-L$(top_srcdir)/rb \
+	@BOOST_LDFLAGS@
+
+AM_LDFLAGS += \
+	-module \
+	-export-dynamic \
+	-avoid-version \
+	-no-undefined \
+	-shared \
+	-export-symbols-regex _mheader
+
+AM_LDFLAGS += \
+	-lircd \
+	-lrb \
+	@LIBLTDL@ \
+	@BOOST_LIBS@
+
+
+cap_account_tag_la_SOURCES = cap_account_tag.cc
+cap_server_time_la_SOURCES = cap_server_time.cc
+chm_nocolour_la_SOURCES = chm_nocolour.cc
+chm_noctcp_la_SOURCES = chm_noctcp.cc
+m_accept_la_SOURCES = m_accept.cc
+m_admin_la_SOURCES = m_admin.cc
+m_alias_la_SOURCES = m_alias.cc
+m_away_la_SOURCES = m_away.cc
+m_cap_la_SOURCES = m_cap.cc
+m_capab_la_SOURCES = m_capab.cc
+m_certfp_la_SOURCES = m_certfp.cc
+m_challenge_la_SOURCES = m_challenge.cc
+m_chghost_la_SOURCES = m_chghost.cc
+m_close_la_SOURCES = m_close.cc
+m_connect_la_SOURCES = m_connect.cc
+m_dline_la_SOURCES = m_dline.cc
+m_encap_la_SOURCES = m_encap.cc
+m_etrace_la_SOURCES = m_etrace.cc
+m_grant_la_SOURCES = m_grant.cc
+m_help_la_SOURCES = m_help.cc
+m_info_la_SOURCES = m_info.cc
+m_invite_la_SOURCES = m_invite.cc
+m_ison_la_SOURCES = m_ison.cc
+m_kline_la_SOURCES = m_kline.cc
+m_knock_la_SOURCES = m_knock.cc
+m_links_la_SOURCES = m_links.cc
+m_list_la_SOURCES = m_list.cc
+m_lusers_la_SOURCES = m_lusers.cc
+m_map_la_SOURCES = m_map.cc
+m_monitor_la_SOURCES = m_monitor.cc
+m_motd_la_SOURCES = m_motd.cc
+m_names_la_SOURCES = m_names.cc
+m_oper_la_SOURCES = m_oper.cc
+m_operspy_la_SOURCES = m_operspy.cc
+m_pass_la_SOURCES = m_pass.cc
+m_ping_la_SOURCES = m_ping.cc
+m_pong_la_SOURCES = m_pong.cc
+m_post_la_SOURCES = m_post.cc
+m_privs_la_SOURCES = m_privs.cc
+m_rehash_la_SOURCES = m_rehash.cc
+m_restart_la_SOURCES = m_restart.cc
+m_resv_la_SOURCES = m_resv.cc
+m_sasl_la_SOURCES = m_sasl.cc
+m_scan_la_SOURCES = m_scan.cc
+m_services_la_SOURCES = m_services.cc
+m_set_la_SOURCES = m_set.cc
+m_signon_la_SOURCES = m_signon.cc
+m_snote_la_SOURCES = m_snote.cc
+m_starttls_la_SOURCES = m_starttls.cc
+m_stats_la_SOURCES = m_stats.cc
+m_svinfo_la_SOURCES = m_svinfo.cc
+m_tb_la_SOURCES = m_tb.cc
+m_testline_la_SOURCES = m_testline.cc
+m_testmask_la_SOURCES = m_testmask.cc
+m_tginfo_la_SOURCES = m_tginfo.cc
+m_time_la_SOURCES = m_time.cc
+m_topic_la_SOURCES = m_topic.cc
+m_trace_la_SOURCES = m_trace.cc
+m_unreject_la_SOURCES = m_unreject.cc
+m_user_la_SOURCES = m_user.cc
+m_userhost_la_SOURCES = m_userhost.cc
+m_users_la_SOURCES = m_users.cc
+m_version_la_SOURCES = m_version.cc
+m_wallops_la_SOURCES = m_wallops.cc
+m_who_la_SOURCES = m_who.cc
+m_whois_la_SOURCES = m_whois.cc
+m_whowas_la_SOURCES = m_whowas.cc
+m_xline_la_SOURCES = m_xline.cc
+sno_routing_la_SOURCES = sno_routing.cc
 
 auto_load_mod_LTLIBRARIES = \
   cap_account_tag.la \
@@ -78,6 +167,22 @@ auto_load_mod_LTLIBRARIES = \
   m_xline.la \
   sno_routing.la
 
+
+core_m_ban_la_SOURCES = core/m_ban.cc
+core_m_die_la_SOURCES = core/m_die.cc
+core_m_error_la_SOURCES = core/m_error.cc
+core_m_join_la_SOURCES = core/m_join.cc
+core_m_kick_la_SOURCES = core/m_kick.cc
+core_m_kill_la_SOURCES = core/m_kill.cc
+core_m_message_la_SOURCES = core/m_message.cc
+core_m_mode_la_SOURCES = core/m_mode.cc
+core_m_modules_la_SOURCES = core/m_modules.cc
+core_m_nick_la_SOURCES = core/m_nick.cc
+core_m_part_la_SOURCES = core/m_part.cc
+core_m_quit_la_SOURCES = core/m_quit.cc
+core_m_server_la_SOURCES = core/m_server.cc
+core_m_squit_la_SOURCES = core/m_squit.cc
+
 module_LTLIBRARIES = \
   core/m_ban.la \
   core/m_die.la \
@@ -93,3 +198,8 @@ module_LTLIBRARIES = \
   core/m_quit.la \
   core/m_server.la \
   core/m_squit.la
+
+
+mrproper-local:
+	rm -rf core/.deps
+	rm -f core/.dirstamp

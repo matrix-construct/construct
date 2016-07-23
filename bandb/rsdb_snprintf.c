@@ -6,7 +6,7 @@
  * do so under the terms of the GNU General Public License under which
  * this library is distributed.
  */
-#include "stdinc.h"
+#include <ircd/stdinc.h>
 #include "rsdb.h"
 
 /*

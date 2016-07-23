@@ -1,48 +1,103 @@
 # Travis-CI Build for charybdis
 # see travis-ci.org for details
 
-language: c
-
-# Use the faster container-based infrastructure.
+language: c++
 sudo: false
+
+git:
+  submodules: false
 
 matrix:
   include:
-    - os: linux
-      compiler: gcc-4.8
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: ['gcc-4.8', 'automake', 'autoconf', 'libtool', 'shtool', 'libsqlite3-dev']
-      env: COMPILER=gcc-4.8
+  - os: linux
+    dist: precise
+    group: stable
+    compiler: gcc-4.9
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages:
+        - gcc-4.9
+        - g++-4.9
+        - ['automake', 'autoconf', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
+    env:
+    - CCOMPILER=gcc-4.9
+    - CXXCOMPILER=g++-4.9
 
-    - os: linux
-      compiler: gcc-4.9
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: ['gcc-4.9', 'automake', 'autoconf', 'libtool', 'shtool', 'libsqlite3-dev']
-      env: COMPILER=gcc-4.9
+  - os: linux
+    dist: precise
+    group: stable
+    compiler: gcc-5
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages:
+        - gcc-5
+        - g++-5
+        - ['automake', 'autoconf', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
+    env:
+    - CCOMPILER=gcc-5
+    - CXXCOMPILER=g++-5
 
-    - os: linux
-      compiler: gcc-5
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: ['gcc-5', 'automake', 'autoconf', 'libtool', 'shtool', 'libsqlite3-dev']
-      env: COMPILER=gcc-5
+  - os: linux
+    dist: trusty
+    group: unstable
+    compiler: gcc-6
+    sudo: required
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages:
+        - gcc-6
+        - g++-6
+        - ['automake', 'autoconf', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
+    env:
+     - CCOMPILER=gcc-6
+     - CXXCOMPILER=g++-6
 
-#    - os: linux
-#      compiler: clang
-#      addons:
-#        apt:
-#          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.7']
-#          packages: ['clang-3.7', 'automake', 'autoconf', 'libtool', 'shtool', 'libsqlite3-dev']
-#      env: COMPILER=clang-3.7
+  - os: linux
+    dist: precise
+    group: unstable
+    sudo: false
+    compiler: clang-3.6
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        - llvm-toolchain-precise-3.6
+        packages:
+        - clang-3.6
+        - ['automake', 'autoconf', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
+    env:
+    - CCOMPILER=clang-3.6
+    - CXXCOMPILER=clang++-3.6
 
-    - os: osx
-      compiler: clang
-      env: COMPILER=clang LIBTOOLIZE=glibtoolize
+  - os: linux
+    dist: trusty
+    group: unstable
+    sudo: required
+    compiler: clang-3.8
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        - llvm-toolchain-precise-3.8
+        packages:
+        - clang-3.8
+        - ['automake', 'autoconf', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
+    env:
+    - CCOMPILER=clang-3.8
+    - CXXCOMPILER=clang++-3.8
+
+  - os: osx
+    compiler: clang
+    env:
+    - CCOMPILER=clang
+    - CXXCOMPILER=clang++
+    - LIBTOOLIZE=glibtoolize
 
 
 osx_image: xcode7.3
@@ -52,7 +107,10 @@ cache:
   ccache:
 
 script:
-  - bash autogen.sh
-  - CC=$COMPILER ./configure --with-shared-sqlite
-  - make -j4
-  - make install
+- export CC=$CCOMPILER CXX=$CXXCOMPILER
+- $CC --version
+- $CXX --version
+- time bash autogen.sh
+- time ./configure --with-shared-sqlite --with-included-boost CC=$CC CXX=$CXX
+- time make -j4
+- time make -j4 install
