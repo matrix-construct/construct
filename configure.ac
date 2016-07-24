@@ -102,8 +102,8 @@ dnl
 dnl Coarse compiler test macros
 dnl
 
-AM_CONDITIONAL([GCC],        [[[[ $CXX = *g\+\+* ]]]])
-AM_CONDITIONAL([CLANG],      [[[[ $CXX = *clang* ]]]])
+AM_CONDITIONAL([GCC],        [[[[ $CXX = g\+\+* ]]]])
+AM_CONDITIONAL([CLANG],      [[[[ $CXX = clang* ]]]])
 
 
 dnl
