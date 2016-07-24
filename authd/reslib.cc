@@ -76,12 +76,13 @@
  * - Dianora
  */
 
+#ifndef _WIN32
+#include <netdb.h>
+#endif
+
 #include <rb/rb.h>
 
 #ifndef _WIN32
-
-#include <netdb.h>
-
 typedef struct addrinfo rb_addrinfo;
 
 #else
