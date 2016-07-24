@@ -6,7 +6,9 @@ if GCC
 AM_CXXFLAGS = -fpch-deps
 endif
 
+if BUILD_PCH
 BUILT_SOURCES = rb.h.gch
+endif
 
 rb.h.gch:
 	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -o rb.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) rb.h

@@ -190,6 +190,19 @@ AC_ARG_ENABLE(profile, AC_HELP_STRING([--enable-profile], [Enable profiling]),
 ])
 
 
+AC_MSG_CHECKING(if you want to disable precompiled headers)
+AC_ARG_ENABLE(pch, AC_HELP_STRING([--disable-pch], [Disable precompiled header generation]),
+[
+	build_pch="no"
+	AC_MSG_RESULT([no])
+], [
+	build_pch="yes"
+	AC_MSG_RESULT([yes])
+])
+
+AM_CONDITIONAL([BUILD_PCH], [[[[ "$build_pch" = "yes" ]]]])
+
+
 CWARNS=""
 AC_MSG_CHECKING(if you want to disable warnings)
 AC_ARG_ENABLE(warnings,
@@ -1247,6 +1260,7 @@ echo "Compiler .......................... $CXX"
 echo "Compiler flags (CXXFLAGS) ......... $CXXFLAGS"
 echo "Building boost .................... $with_included_boost"
 echo "Building libltdl .................. $with_included_ltdl"
+echo "Precompiled headers ............... $build_pch"
 echo "Developer debug ................... $debug"
 echo "IPv6 support ...................... $ipv6"
 echo "SSL type........................... $SSL_TYPE"
