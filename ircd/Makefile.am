@@ -2,8 +2,9 @@ AUTOMAKE_OPTIONS = foreign
 
 libircddir	= @libdir@
 
-AM_YFLAGS = -d # --language=c++
-AM_LFLAGS = # --c++
+# NOTE: the c++ version has a radically different API
+#AM_YFLAGS = -d --language=c++
+AM_YFLAGS = -d
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
@@ -24,8 +25,7 @@ AM_LDFLAGS += \
 	-L$(top_srcdir)/rb \
 	@BOOST_LDFLAGS@
 
-BUILT_SOURCES = ircd_parser.h
-
+BUILT_SOURCES = ircd_lexer.cc ircd_parser.cc
 
 libircd_LTLIBRARIES = libircd.la
 
@@ -50,8 +50,8 @@ libircd_la_SOURCES =                  \
   hook.cc                        \
   hostmask.cc                    \
   ircd.cc                       \
-  ircd_parser.y                 \
-  ircd_lexer.l                   \
+  ircd_lexer.cc                \
+  ircd_parser.cc                \
   ircd_signal.cc                 \
   listener.cc                   \
   logger.cc                     \
@@ -82,11 +82,17 @@ libircd_la_SOURCES =                  \
   whowas.cc			\
   wsproc.cc
 
+ircd_lexer.cc:
+	flex $(AM_LFLAGS) -o ircd_lexer.cc ircd_lexer.ll
+
+ircd_parser.cc:
+	$(YACC) $(AM_YFLAGS) -o ircd_parser.cc ircd_parser.yy
 
 install-data-local:
 	test -d $(prefix)/@logdir@ || mkdir -p $(prefix)/@logdir@
 
 clean-local:
-	rm -f ircd_lexer.c
-	rm -f ircd_parser.c
-	rm -f ircd_parser.h
+	rm -f ircd_lexer.c ircd_lexer.cc
+	rm -f ircd_parser.c ircd_parser.cc
+	rm -f ircd_parser.h ircd_parser.hh
+	rm -f stack.hh

@@ -357,9 +357,9 @@ extern char *get_user_ban_reason(struct ConfItem *aconf);
 extern void get_printable_kline(struct Client *, struct ConfItem *,
 				char **, char **, char **, char **);
 
-RB_EXTERN_C void yyerror(const char *);
-RB_EXTERN_C int conf_yy_fatal_error(const char *);
-RB_EXTERN_C int conf_fgets(char *, int, FILE *);
+void yyerror(const char *);
+int conf_yy_fatal_error(const char *);
+int conf_fgets(char *, int, FILE *);
 
 extern int valid_wild_card(const char *, const char *);
 extern void add_temp_kline(struct ConfItem *);

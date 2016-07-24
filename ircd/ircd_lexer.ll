@@ -30,9 +30,8 @@
 #include <ircd/newconf.h>
 #include <ircd/s_conf.h>
 #include <ircd/logger.h>
-#include "ircd_parser.h"
+#include "ircd_parser.hh"
 
-int yyparse(void);
 void yyerror(const char *);
 
 YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
@@ -144,11 +143,11 @@ int c;
   /* log(L_NOTICE, "got comment"); */
   while (1)
     {
-      while ((c = input()) != '*' && c != EOF)
+      while ((c = yyinput()) != '*' && c != EOF)
         if (c == '\n') ++lineno;
       if (c == '*')
         {
-          while ((c = input()) == '*');
+          while ((c = yyinput()) == '*');
           if (c == '/')
             break;
           if (c == '\n') ++lineno;

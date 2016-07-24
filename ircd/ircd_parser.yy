@@ -11,7 +11,6 @@
 #include <ircd/newconf.h>
 #include <ircd/s_conf.h>
 #include <ircd/logger.h>
-#include "ircd_parser.h"
 
 int yylex();
 void yyerror(const char *);
