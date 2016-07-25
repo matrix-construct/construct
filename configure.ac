@@ -254,12 +254,7 @@ AC_DEFUN([RB_CHK_SYSHEADER],
 		AC_DEFINE([HAVE_$2], [1], [ Indication $1 is available. ])
 		RB_DEFINE_UNQUOTED([INC_$2], [$1>], [ The computed-include location of $1. ])
 	], [
-		AM_COND_IF([MINGW],
-		[
-			RB_DEFINE_UNQUOTED([INC_$2], [stdint.h>], [ The dead-header in place of $1. ])
-		], [
-			RB_DEFINE_UNQUOTED([INC_$2], [/dev/null>], [ The dead-header in place of $1. ])
-		])
+		RB_DEFINE_UNQUOTED([INC_$2], [stddef.h>], [ The dead-header in place of $1. ])
 	])
 ])
 
