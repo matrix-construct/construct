@@ -3,7 +3,7 @@ dnl the most major changes have already been made and it looks like
 dnl said functions need to be just about as complex as they already are.
 
 AC_PREREQ(2.63)
-AUTOMAKE_OPTIONS = 1.14
+AUTOMAKE_OPTIONS = 1.11
 
 AC_INIT([charybdis], [5-dev])
 AC_GNU_SOURCE
