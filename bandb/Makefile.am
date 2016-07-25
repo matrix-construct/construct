@@ -52,3 +52,8 @@ bantool_SOURCES = \
 	bantool.cc \
 	rsdb_sqlite3.cc \
 	rsdb_snprintf.c
+
+
+sqlite3.o:
+	echo -e "\033[1;36m***\033[0m Compiling sqlite3 may take a moment..."
+	$(COMPILE) -w -c -o sqlite3.o sqlite3.c
