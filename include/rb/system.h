@@ -92,6 +92,41 @@ char *alloca();
 #define rb_unlikely(x)	(x)
 #endif
 
+#if defined(__INTEL_COMPILER) || defined(__GNUC__)
+
+	#ifdef __unused
+		#undef __unused
+	#endif
+
+	#ifdef __printf
+		#undef __printf
+	#endif
+
+	#ifdef __noreturn
+		#undef __noreturn
+	#endif
+
+	#define __unused __attribute__((__unused__))
+	#define __printf(x) __attribute__((__format__ (__printf__, x, x + 1)))
+	#define __noreturn __attribute__((__noreturn__))
+
+#else
+
+	#ifndef __unused
+		#define __unused
+	#endif
+
+	#ifndef __printf
+		#define __printf
+	#endif
+
+	#ifndef __noreturn
+		#define __noreturn
+	#endif
+
+#endif
+
+
 #ifdef _WIN32
 #define rb_get_errno() do { errno = WSAGetLastError(); WSASetLastError(errno); } while(0)
 typedef SOCKET rb_platform_fd_t;
@@ -318,6 +353,17 @@ while(0)
 	#define RB_EXTERN_C extern "C"
 #else
 	#define RB_EXTERN_C
+#endif
+
+
+#ifdef strdupa
+	#define LOCAL_COPY(s) strdupa(s)
+#else
+	#if defined(__INTEL_COMPILER) || defined(__GNUC__)
+		#define LOCAL_COPY(s) __extension__({ char *_s = (char *)alloca(strlen(s) + 1); strcpy(_s, s); _s; })
+	#else
+		#define LOCAL_COPY(s) strcpy((char *)alloca(strlen(s) + 1), s)
+	#endif
 #endif
 
 

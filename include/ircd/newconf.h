@@ -63,11 +63,11 @@ extern struct TopConf *conf_cur_block;
 extern char *current_file;
 
 int read_config(char *);
-RB_EXTERN_C int conf_start_block(char *, char *);
-RB_EXTERN_C int conf_end_block(struct TopConf *);
-RB_EXTERN_C int conf_call_set(struct TopConf *, char *, conf_parm_t *);
-RB_EXTERN_C void conf_report_error(const char *, ...);
-RB_EXTERN_C void conf_report_warning(const char *, ...);
+int conf_start_block(char *, char *);
+int conf_end_block(struct TopConf *);
+int conf_call_set(struct TopConf *, char *, conf_parm_t *);
+void conf_report_error(const char *, ...);
+void conf_report_warning(const char *, ...);
 void newconf_init(void);
 int add_conf_item(const char *topconf, const char *name, int type, void (*func) (void *));
 int remove_conf_item(const char *topconf, const char *name);

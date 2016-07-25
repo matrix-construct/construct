@@ -5,6 +5,10 @@ AM_CPPFLAGS = \
 	$(LTDLINCL) \
 	@BOOST_CPPFLAGS@
 
+if BUILD_PCH
+AM_CPPFLAGS += -include $(top_srcdir)/include/rb/rb.pic.h
+endif
+
 AM_LDFLAGS = \
 	-L$(top_srcdir)/ircd \
 	-L$(top_srcdir)/rb \

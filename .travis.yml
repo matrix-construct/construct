@@ -108,6 +108,11 @@ cache:
 
 script:
 - export CC=$CCOMPILER CXX=$CXXCOMPILER
+- git rev-parse --verify HEAD
+- m4 --version
+- autoconf --version
+- automake --version
+- make --version
 - $CC --version
 - $CXX --version
 - time bash autogen.sh

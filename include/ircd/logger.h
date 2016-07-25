@@ -54,7 +54,7 @@ struct Client;
 extern void init_main_logfile(void);
 extern void open_logfiles(void);
 extern void close_logfiles(void);
-RB_EXTERN_C void ilog(ilogfile dest, const char *fmt, ...) AFP(2, 3);
+void ilog(ilogfile dest, const char *fmt, ...) AFP(2, 3);
 extern void idebug(const char *fmt, ...) AFP(1, 2);
 extern void inotice(const char *fmt, ...) AFP(1, 2);
 extern void iwarn(const char *fmt, ...) AFP(1, 2);

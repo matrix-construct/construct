@@ -18,6 +18,9 @@ SUBDIRS += tools
 SUBDIRS += help
 SUBDIRS += doc
 
+.PHONY:      subdirs $(SUBDIRS)
+$(SUBDIRS):
+	$(MAKE) -C $@
 
 mrproper-local:
 	rm -f aclocal.m4

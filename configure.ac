@@ -3,7 +3,7 @@ dnl the most major changes have already been made and it looks like
 dnl said functions need to be just about as complex as they already are.
 
 AC_PREREQ(2.63)
-AUTOMAKE_OPTIONS = 1.14
+AUTOMAKE_OPTIONS = 1.11
 
 AC_INIT([charybdis], [5-dev])
 AC_GNU_SOURCE
@@ -254,12 +254,7 @@ AC_DEFUN([RB_CHK_SYSHEADER],
 		AC_DEFINE([HAVE_$2], [1], [ Indication $1 is available. ])
 		RB_DEFINE_UNQUOTED([INC_$2], [$1>], [ The computed-include location of $1. ])
 	], [
-		AM_COND_IF([MINGW],
-		[
-			RB_DEFINE_UNQUOTED([INC_$2], [stdint.h>], [ The dead-header in place of $1. ])
-		], [
-			RB_DEFINE_UNQUOTED([INC_$2], [/dev/null>], [ The dead-header in place of $1. ])
-		])
+		RB_DEFINE_UNQUOTED([INC_$2], [stddef.h>], [ The dead-header in place of $1. ])
 	])
 ])
 
@@ -780,7 +775,7 @@ dnl
 
 AC_MSG_CHECKING([whether to use boost sources included here])
 AC_ARG_WITH(included-boost,
-AC_HELP_STRING([--with-included-boost], [Use the boost sources from included submodule]),
+AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from included submodule]),
 [
 	AC_MSG_RESULT([yes])
 	AC_MSG_NOTICE([Bootstrapping boost])
@@ -798,17 +793,30 @@ AC_HELP_STRING([--with-included-boost], [Use the boost sources from included sub
 		AC_MSG_ERROR([Failed to build included boost.])
 	fi
 
-	AC_MSG_NOTICE([Bootstrapping boost: done])
-
-	AC_SUBST(BOOST_CPPFLAGS, "-isystem $PWD/boost/include")
-
 	AM_COND_IF([MINGW],
 	[
-		AC_SUBST(BOOST_LDFLAGS, "-L$PWD/boost/stage/lib")
+		boost_libdir="$PWD/boost/stage/lib"
 	], [
-		AC_SUBST(BOOST_LDFLAGS, "-L$PWD/boost/lib")
+		boost_libdir="$PWD/boost/lib"
 	])
+
+	AC_SUBST(BOOST_CPPFLAGS, ["-isystem $PWD/boost/include"])
+	AC_SUBST(BOOST_LDFLAGS, ["-L$boost_libdir"])
+
+	boost_linkage="$withval"
+	AC_MSG_CHECKING([whether to use shared boost])
+	if [[ $withval = "shared" ]]; then
+		AC_MSG_RESULT([yes])
+		BOOST_LDFLAGS += " -Wl,-rpath -Wl,$boost_libdir"
+	else
+		AC_MSG_RESULT([no])
+	fi
+
+	AC_DEFINE(HAVE_LIB_BOOST_SYSTEM, 1, [Define if you have boost_system])
+	AC_MSG_NOTICE([Bootstrapping boost: done])
 ],[
+	AC_MSG_RESULT([no])
+
 	AC_SEARCH_LIBS(boost_system, boost_system,
 	[
 		AC_DEFINE(HAVE_LIB_BOOST_SYSTEM, 1, [Define if you have boost_system])
@@ -818,17 +826,23 @@ AC_HELP_STRING([--with-included-boost], [Use the boost sources from included sub
 
 	AC_SUBST(BOOST_CPPFLAGS, "")
 	AC_SUBST(BOOST_LDFLAGS, "")
-	AC_MSG_RESULT([no])
 ])
 
-AM_COND_IF([MINGW],
-[
-	dnl TODO
-	AC_SUBST(BOOST_LIBS, "-lboost_system-mgw53-1_61.dll")
-], [
-	AC_SUBST(BOOST_LIBS, "-lboost_system")
-])
-
+if [[ "$boost_linkage" = "shared" ]]; then
+	AM_COND_IF([MINGW],
+	[
+		AC_SUBST(BOOST_LIBS, ["-lboost_system-mgw53-1_61.dll"])
+	], [
+		AC_SUBST(BOOST_LIBS, ["-lboost_system"])
+	])
+else
+	AM_COND_IF([MINGW],
+	[
+		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_system-mgw53-1_61.dll.a"])
+	], [
+		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_system.a"])
+	])
+fi
 
 AC_DEFINE([HAVE_BOOST_ASIO_HPP], [1], [ boost asio. ])
 RB_DEFINE_UNQUOTED([INC_BOOST_ASIO_HPP], [boost/asio.hpp>], [ boost asio. ])
