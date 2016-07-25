@@ -29,7 +29,7 @@ EXTRA_bandb_SOURCES = \
 
 bandb_SOURCES = \
 	bandb.cc \
-	rsdb_sqlite3.c \
+	rsdb_sqlite3.cc \
 	rsdb_snprintf.c
 
 
@@ -50,5 +50,5 @@ EXTRA_bantool_SOURCES = \
 
 bantool_SOURCES = \
 	bantool.cc \
-	rsdb_sqlite3.c \
+	rsdb_sqlite3.cc \
 	rsdb_snprintf.c

@@ -37,8 +37,8 @@ struct sqlite3 *rb_bandb;
 
 rsdb_error_cb *error_cb;
 
-static void
-mlog(const char *errstr, ...)
+static void mlog(const char *errstr, ...) AFP(1, 2);
+static void mlog(const char *errstr, ...)
 {
 	if(error_cb != NULL)
 	{
@@ -227,10 +227,10 @@ rsdb_exec_fetch(struct rsdb_table *table, const char *format, ...)
 
 	/* sqlite puts the column names as the first row */
 	pos = table->col_count;
-	table->row = rb_malloc(sizeof(char **) * table->row_count);
+	table->row = (char ***)rb_malloc(sizeof(char **) * table->row_count);
 	for(i = 0; i < table->row_count; i++)
 	{
-		table->row[i] = rb_malloc(sizeof(char *) * table->col_count);
+		table->row[i] = (char **)rb_malloc(sizeof(char *) * table->col_count);
 
 		for(j = 0; j < table->col_count; j++)
 		{
