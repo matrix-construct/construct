@@ -62,8 +62,8 @@ init_cache(void)
 
 	user_motd_changed[0] = '\0';
 
-	user_motd = cache_file(ircd_paths[IRCD_PATH_IRCD_MOTD], "ircd.motd", 0);
-	oper_motd = cache_file(ircd_paths[IRCD_PATH_IRCD_OMOTD], "opers.motd", 0);
+	user_motd = cache_file(fs::paths[IRCD_PATH_IRCD_MOTD], "ircd.motd", 0);
+	oper_motd = cache_file(fs::paths[IRCD_PATH_IRCD_OMOTD], "opers.motd", 0);
 	memset(&links_cache_list, 0, sizeof(links_cache_list));
 
 	help_dict_oper = rb_dictionary_create("oper help", reinterpret_cast<int (*)(const void *, const void *)>(rb_strcasecmp));
@@ -254,7 +254,7 @@ load_help(void)
 		free_cachefile(cacheptr);
 	}
 
-	helpfile_dir = opendir(ircd_paths[IRCD_PATH_OPERHELP]);
+	helpfile_dir = opendir(fs::paths[IRCD_PATH_OPERHELP]);
 
 	if(helpfile_dir == NULL)
 		return;
@@ -263,13 +263,13 @@ load_help(void)
 	{
 		if(ldirent->d_name[0] == '.')
 			continue;
-		snprintf(filename, sizeof(filename), "%s%c%s", ircd_paths[IRCD_PATH_OPERHELP], RB_PATH_SEPARATOR, ldirent->d_name);
+		snprintf(filename, sizeof(filename), "%s%c%s", fs::paths[IRCD_PATH_OPERHELP], RB_PATH_SEPARATOR, ldirent->d_name);
 		cacheptr = cache_file(filename, ldirent->d_name, HELP_OPER);
 		rb_dictionary_add(help_dict_oper, cacheptr->name, cacheptr);
 	}
 
 	closedir(helpfile_dir);
-	helpfile_dir = opendir(ircd_paths[IRCD_PATH_USERHELP]);
+	helpfile_dir = opendir(fs::paths[IRCD_PATH_USERHELP]);
 
 	if(helpfile_dir == NULL)
 		return;
@@ -278,7 +278,7 @@ load_help(void)
 	{
 		if(ldirent->d_name[0] == '.')
 			continue;
-		snprintf(filename, sizeof(filename), "%s%c%s", ircd_paths[IRCD_PATH_USERHELP], RB_PATH_SEPARATOR, ldirent->d_name);
+		snprintf(filename, sizeof(filename), "%s%c%s", fs::paths[IRCD_PATH_USERHELP], RB_PATH_SEPARATOR, ldirent->d_name);
 
 #if defined(S_ISLNK) && defined(HAVE_LSTAT)
 		if(lstat(filename, &sb) < 0)
@@ -342,7 +342,7 @@ cache_user_motd(void)
 	struct stat sb;
 	struct tm *local_tm;
 
-	if(stat(ircd_paths[IRCD_PATH_IRCD_MOTD], &sb) == 0)
+	if(stat(fs::paths[IRCD_PATH_IRCD_MOTD], &sb) == 0)
 	{
 		local_tm = localtime(&sb.st_mtime);
 
@@ -356,7 +356,7 @@ cache_user_motd(void)
 		}
 	}
 	free_cachefile(user_motd);
-	user_motd = cache_file(ircd_paths[IRCD_PATH_IRCD_MOTD], "ircd.motd", 0);
+	user_motd = cache_file(fs::paths[IRCD_PATH_IRCD_MOTD], "ircd.motd", 0);
 }
 
 

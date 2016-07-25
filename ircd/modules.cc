@@ -74,8 +74,8 @@ init_modules(void)
 	}
 
 	/* Add the default paths we look in to the module system --nenolod */
-	mod_add_path(ircd_paths[IRCD_PATH_MODULES]);
-	mod_add_path(ircd_paths[IRCD_PATH_AUTOLOAD_MODULES]);
+	mod_add_path(fs::paths[IRCD_PATH_MODULES]);
+	mod_add_path(fs::paths[IRCD_PATH_AUTOLOAD_MODULES]);
 }
 
 /* mod_find_path()
@@ -183,11 +183,11 @@ load_all_modules(bool warn)
 	char module_fq_name[PATH_MAX + 1];
 	size_t module_ext_len = strlen(LT_MODULE_EXT);
 
-	system_module_dir = opendir(ircd_paths[IRCD_PATH_AUTOLOAD_MODULES]);
+	system_module_dir = opendir(fs::paths[IRCD_PATH_AUTOLOAD_MODULES]);
 
 	if(system_module_dir == NULL)
 	{
-		ilog(L_MAIN, "Could not load modules from %s: %s", ircd_paths[IRCD_PATH_AUTOLOAD_MODULES], strerror(errno));
+		ilog(L_MAIN, "Could not load modules from %s: %s", fs::paths[IRCD_PATH_AUTOLOAD_MODULES], strerror(errno));
 		return;
 	}
 
@@ -199,7 +199,7 @@ load_all_modules(bool warn)
 			rb_strncasecmp(ldirent->d_name + (len - module_ext_len), LT_MODULE_EXT, module_ext_len) == 0)
 		{
 			(void) snprintf(module_fq_name, sizeof(module_fq_name), "%s%c%s",
-					ircd_paths[IRCD_PATH_AUTOLOAD_MODULES], RB_PATH_SEPARATOR, ldirent->d_name);
+					fs::paths[IRCD_PATH_AUTOLOAD_MODULES], RB_PATH_SEPARATOR, ldirent->d_name);
 			(void) load_a_module(module_fq_name, warn, MAPI_ORIGIN_CORE, false);
 		}
 
@@ -222,7 +222,7 @@ load_core_modules(bool warn)
 
 	for (i = 0; core_module_table[i]; i++)
 	{
-		snprintf(module_name, sizeof(module_name), "%s%c%s", ircd_paths[IRCD_PATH_MODULES], RB_PATH_SEPARATOR,
+		snprintf(module_name, sizeof(module_name), "%s%c%s", fs::paths[IRCD_PATH_MODULES], RB_PATH_SEPARATOR,
 			    core_module_table[i]);
 
 		if(load_a_module(module_name, warn, MAPI_ORIGIN_CORE, true) == false)

@@ -32,6 +32,8 @@
 #include <ircd/logger.h>
 #include "ircd_parser.hh"
 
+using namespace ircd;
+
 void yyerror(const char *);
 
 YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
@@ -187,7 +189,7 @@ void cinclude(void)
       /* if its not found in PREFIX, look in IRCD_PATH_ETC */
       char fnamebuf[BUFSIZE];
 
-      snprintf(fnamebuf, sizeof(fnamebuf), "%s%c%s", ircd_paths[IRCD_PATH_ETC], RB_PATH_SEPARATOR, c);
+      snprintf(fnamebuf, sizeof(fnamebuf), "%s%c%s", fs::paths[IRCD_PATH_ETC], RB_PATH_SEPARATOR, c);
       tmp_fbfile_in = fopen(fnamebuf, "r");
 
       /* wasnt found there either.. error. */

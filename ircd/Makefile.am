@@ -49,6 +49,7 @@ libircd_la_SOURCES =                  \
   client.cc                     \
   dns.cc				\
   extban.cc                      \
+  fs.cc                          \
   getopt.cc                      \
   hash.cc                        \
   hook.cc                        \

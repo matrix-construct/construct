@@ -277,7 +277,7 @@ start_ssldaemon(int count)
 
 	if(ssld_path == NULL)
 	{
-		snprintf(fullpath, sizeof(fullpath), "%s%cssld%s", ircd_paths[IRCD_PATH_LIBEXEC], RB_PATH_SEPARATOR, suffix);
+		snprintf(fullpath, sizeof(fullpath), "%s%cssld%s", fs::paths[IRCD_PATH_LIBEXEC], RB_PATH_SEPARATOR, suffix);
 
 		if(access(fullpath, X_OK) == -1)
 		{
@@ -287,7 +287,7 @@ start_ssldaemon(int count)
 			{
 				ilog(L_MAIN,
 				     "Unable to execute ssld%s in %s or %s/bin",
-				     suffix, ircd_paths[IRCD_PATH_LIBEXEC], ConfigFileEntry.dpath);
+				     suffix, fs::paths[IRCD_PATH_LIBEXEC], ConfigFileEntry.dpath);
 				return 0;
 			}
 		}

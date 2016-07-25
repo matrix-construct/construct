@@ -23,3 +23,4 @@
 
 #include <rb/rb.h>
 #include "defaults.h"
+#include "fs.h"

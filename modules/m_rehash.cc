@@ -42,6 +42,8 @@
 #include <ircd/cache.h>
 #include <ircd/sslproc.h>
 
+using namespace ircd;
+
 static const char rehash_desc[] =
 	"Provides the REHASH command to reload configuration and other files";
 
@@ -116,7 +118,7 @@ rehash_omotd(struct Client *source_p)
 		remote_rehash_oper_p = source_p;
 
 	free_cachefile(oper_motd);
-	oper_motd = cache_file(ircd_paths[IRCD_PATH_IRCD_OMOTD], "opers.motd", 0);
+	oper_motd = cache_file(fs::paths[IRCD_PATH_IRCD_OMOTD], "opers.motd", 0);
 }
 
 static void

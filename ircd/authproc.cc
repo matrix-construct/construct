@@ -95,7 +95,7 @@ start_authd(void)
 #endif
 	if(authd_path == NULL)
 	{
-		snprintf(fullpath, sizeof(fullpath), "%s%cauthd%s", ircd_paths[IRCD_PATH_LIBEXEC], RB_PATH_SEPARATOR, suffix);
+		snprintf(fullpath, sizeof(fullpath), "%s%cauthd%s", fs::paths[IRCD_PATH_LIBEXEC], RB_PATH_SEPARATOR, suffix);
 
 		if(access(fullpath, X_OK) == -1)
 		{
@@ -104,10 +104,10 @@ start_authd(void)
 			if(access(fullpath, X_OK) == -1)
 			{
 				ierror("Unable to execute authd in %s or %s/bin",
-					ircd_paths[IRCD_PATH_LIBEXEC], ConfigFileEntry.dpath);
+					fs::paths[IRCD_PATH_LIBEXEC], ConfigFileEntry.dpath);
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						       "Unable to execute authd in %s or %s/bin",
-						       ircd_paths[IRCD_PATH_LIBEXEC], ConfigFileEntry.dpath);
+						       fs::paths[IRCD_PATH_LIBEXEC], ConfigFileEntry.dpath);
 				return 1;
 			}
 
