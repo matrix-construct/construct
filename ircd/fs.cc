@@ -24,6 +24,8 @@
  */
 
 #include <ircd/stdinc.h>
+#include <ircd/fs.h>
+#include <ircd/logger.h>
 
 using namespace ircd;
 

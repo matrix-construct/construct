@@ -48,6 +48,7 @@ libircd_la_SOURCES =                  \
   class.cc                       \
   client.cc                     \
   dns.cc				\
+  exception.cc                   \
   extban.cc                      \
   fs.cc                          \
   getopt.cc                      \

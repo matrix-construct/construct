@@ -22,10 +22,14 @@
  *  USA
  */
 
-#ifndef _IRCD_H
-#define _IRCD_H
+#pragma once
+#define HAVE_IRCD_H
 
-#include "defaults.h"
+#include "stdinc.h"
+#include "util.h"
+#include "exception.h"
+
+#ifdef __cplusplus
 
 struct Client;
 
@@ -104,4 +108,4 @@ extern int maxconnections;
 
 void ircd_shutdown(const char *reason) __attribute__((noreturn));
 
-#endif // _IRCD_H
+#endif // __cplusplus
