@@ -64,5 +64,6 @@ librb_la_SOURCES =			\
 	radixtree.c			\
 	arc4random.c			\
 	version.c			\
-	terminate.cc \
+	terminate.cc			\
+	format.cc			\
 	rb.cc
