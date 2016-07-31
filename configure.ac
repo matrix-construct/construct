@@ -817,6 +817,7 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 ],[
 	AC_MSG_RESULT([no])
 
+	with_included_boost="no"
 	AX_BOOST_BASE([1.60], [
 		AC_DEFINE(HAVE_LIB_BOOST_SYSTEM, 1, [Define if you have boost_system])
 	], [
@@ -824,9 +825,6 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 	])
 	AX_BOOST_ASIO
 	AX_BOOST_SYSTEM
-
-	AC_SUBST(BOOST_CPPFLAGS, "")
-	AC_SUBST(BOOST_LDFLAGS, "")
 ])
 
 if [[ "$boost_linkage" = "shared" ]]; then
@@ -1195,7 +1193,7 @@ VERSION_CMD="git describe --tags"
 RB_VERSION=`$VERSION_CMD`
 RB_DEFINE_UNQUOTED([VERSION], ["$RB_VERSION"], [Version generated at configuration time.])
 
-DATESTR_CMD="date -R"
+DATESTR_CMD="date"
 RB_DATESTR=`$DATESTR_CMD`
 RB_DEFINE_UNQUOTED([DATESTR], ["$RB_DATESTR"], [Readable date string of configuration time.])
 
