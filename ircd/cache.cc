@@ -185,7 +185,7 @@ load_help(void)
 		 */
 		if(S_ISLNK(sb.st_mode))
 		{
-			std::shared_ptr<cachefile> cacheptr = std::shared_ptr<cachefile> {help_dict_oper[ldirent->d_name]};
+			std::shared_ptr<cachefile> cacheptr = help_dict_oper[ldirent->d_name];
 
 			if(cacheptr != NULL)
 			{
