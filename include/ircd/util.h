@@ -28,7 +28,7 @@
 
 #ifdef __cplusplus
 namespace ircd {
-namespace util {
+inline namespace util {
 
 
 #define IRCD_EXPCAT(a, b)   a ## b
