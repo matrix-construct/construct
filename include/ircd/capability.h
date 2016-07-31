@@ -24,17 +24,15 @@
 #include <ircd/stdinc.h>
 #include <ircd/util.h>
 
-#define CAP_ORPHANED	0x1
-#define CAP_REQUIRED	0x2
-
 struct CapabilityEntry {
 	std::string cap;
 	unsigned int value;
-	unsigned int flags;
+	bool require;
+	bool orphan;
 	void *ownerdata;
 
 	CapabilityEntry(std::string cap_, unsigned int value_, void *ownerdata_)
-		: cap(cap_), value(value_), flags(0), ownerdata(ownerdata_) { }
+		: cap(cap_), value(value_), require(false), orphan(false), ownerdata(ownerdata_) { }
 };
 
 struct CapabilityIndex {

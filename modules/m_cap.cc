@@ -68,7 +68,7 @@ clicap_visible(struct Client *client_p, const std::shared_ptr<CapabilityEntry> c
 	struct ClientCapability *clicap;
 
 	/* orphaned caps shouldn't be visible */
-	if (cap->flags & CAP_ORPHANED)
+	if (cap->orphan)
 		return 0;
 
 	if (cap->ownerdata == NULL)

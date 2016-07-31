@@ -56,7 +56,7 @@ CapabilityIndex::get(std::string cap, void **ownerdata)
 	std::shared_ptr<CapabilityEntry> entry;
 
 	entry = find(cap);
-	if (entry != NULL && !(entry->flags & CAP_ORPHANED))
+	if (entry != NULL && !entry->orphan)
 	{
 		if (ownerdata != NULL)
 			*ownerdata = entry->ownerdata;
@@ -76,7 +76,7 @@ CapabilityIndex::put(std::string cap, void *ownerdata)
 
 	if ((entry = find(cap)) != NULL)
 	{
-		entry->flags &= ~CAP_ORPHANED;
+		entry->orphan = false;
 		return (1 << entry->value);
 	}
 
@@ -113,8 +113,8 @@ CapabilityIndex::orphan(std::string cap)
 	entry = cap_dict[cap];
 	if (entry != NULL)
 	{
-		entry->flags &= ~CAP_REQUIRED;
-		entry->flags |= CAP_ORPHANED;
+		entry->require = false;
+		entry->orphan = true;
 		entry->ownerdata = NULL;
 	}
 }
@@ -126,7 +126,7 @@ CapabilityIndex::require(std::string cap)
 
 	entry = cap_dict[cap];
 	if (entry != NULL)
-		entry->flags |= CAP_REQUIRED;
+		entry->require = true;
 }
 
 const char *
@@ -157,7 +157,7 @@ CapabilityIndex::mask()
 	for (auto it = cap_dict.begin(); it != cap_dict.end(); it++)
 	{
 		auto entry = it->second;
-		if (!(entry->flags & CAP_ORPHANED))
+		if (!entry->orphan)
 			mask |= (1 << entry->value);
 	}
 
@@ -172,7 +172,7 @@ CapabilityIndex::required()
 	for (auto it = cap_dict.begin(); it != cap_dict.end(); it++)
 	{
 		auto entry = it->second;
-		if (!(entry->flags & CAP_ORPHANED) && (entry->flags & CAP_REQUIRED))
+		if (!entry->orphan && entry->require)
 			mask |= (1 << entry->value);
 	}
 
