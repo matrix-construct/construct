@@ -122,7 +122,7 @@ cachefile::cache(const char *filename, const char *shortname, int flags_)
 			*p = '\0';
 
 		untabify(untabline, line, sizeof(untabline));
-		contents.push_back(std::string(untabline));
+		contents.push_back(untabline);
 	}
 
 	fclose(in);
