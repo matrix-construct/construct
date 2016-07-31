@@ -41,8 +41,8 @@
 #include <ircd/packet.h>
 #include <ircd/s_assert.h>
 
-rb_dictionary *cmd_dict = NULL;
 rb_dictionary *alias_dict = NULL;
+std::map<std::string, Message *, case_insensitive_less> cmd_dict;
 
 static void cancel_clients(struct Client *, struct Client *);
 static void remove_unknown(struct Client *, const char *, char *);
@@ -131,7 +131,7 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 	}
 	else
 	{
-		mptr = (Message *)rb_dictionary_retrieve(cmd_dict, msgbuf.cmd);
+		mptr = cmd_dict[msgbuf.cmd];
 
 		/* no command or its encap only, error */
 		if(!mptr || !mptr->cmd)
@@ -250,8 +250,7 @@ handle_encap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *so
 	struct MessageEntry ehandler;
 	MessageHandler handler = 0;
 
-	mptr = (Message *)rb_dictionary_retrieve(cmd_dict, command);
-
+	mptr = cmd_dict[command];
 	if(mptr == NULL || mptr->cmd == NULL)
 		return;
 
@@ -263,20 +262,6 @@ handle_encap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *so
 		return;
 
 	(*handler) (msgbuf_p, client_p, source_p, parc, parv);
-}
-
-/*
- * clear_hash_parse()
- *
- * inputs       -
- * output       - NONE
- * side effects - MUST MUST be called at startup ONCE before
- *                any other keyword hash routine is used.
- */
-void
-clear_hash_parse()
-{
-	cmd_dict = rb_dictionary_create("command", reinterpret_cast<int (*)(const void *, const void *)>(rb_strcasecmp));
 }
 
 /* mod_add_cmd
@@ -295,7 +280,8 @@ mod_add_cmd(struct Message *msg)
 	if(msg == NULL)
 		return;
 
-	if (rb_dictionary_find(cmd_dict, msg->cmd) != NULL) {
+	if (cmd_dict[msg->cmd] != NULL)
+	{
 		s_assert(0);
 		return;
 	}
@@ -304,7 +290,7 @@ mod_add_cmd(struct Message *msg)
 	msg->rcount = 0;
 	msg->bytes = 0;
 
-	rb_dictionary_add(cmd_dict, msg->cmd, msg);
+	cmd_dict[msg->cmd] = msg;
 }
 
 /* mod_del_cmd
@@ -320,8 +306,7 @@ mod_del_cmd(struct Message *msg)
 	if(msg == NULL)
 		return;
 
-	if (rb_dictionary_delete(cmd_dict, msg->cmd) == NULL)
-		s_assert(0);
+	cmd_dict.erase(msg->cmd);
 }
 
 /* cancel_clients()

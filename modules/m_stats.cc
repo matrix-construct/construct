@@ -762,14 +762,11 @@ stats_klines(struct Client *source_p)
 static void
 stats_messages(struct Client *source_p)
 {
-	rb_dictionary_iter iter;
-	struct alias_entry *amsg;
-
-	void *elem;
-	RB_DICTIONARY_FOREACH(elem, &iter, cmd_dict)
+	for (auto it = cmd_dict.begin(); it != cmd_dict.end(); it++)
 	{
-		const auto msg(reinterpret_cast<Message *>(elem));
+		const auto msg = it->second;
 		s_assert(msg->cmd != NULL);
+
 		sendto_one_numeric(source_p, RPL_STATSCOMMANDS,
 				   form_str(RPL_STATSCOMMANDS),
 				   msg->cmd, msg->count,

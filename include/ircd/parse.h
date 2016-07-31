@@ -26,6 +26,8 @@
 #define INCLUDED_parse_h_h
 
 #include <rb/dictionary.h>
+#include <ircd/util.h>
+#include <map>
 
 struct Message;
 struct Client;
@@ -34,12 +36,11 @@ struct MsgBuf;
 extern void parse(struct Client *, char *, char *);
 extern void handle_encap(struct MsgBuf *, struct Client *, struct Client *,
 		         const char *, int, const char *parv[]);
-extern void clear_hash_parse(void);
 extern void mod_add_cmd(struct Message *msg);
 extern void mod_del_cmd(struct Message *msg);
 extern char *reconstruct_parv(int parc, const char *parv[]);
 
 extern rb_dictionary *alias_dict;
-extern rb_dictionary *cmd_dict;
+extern std::map<std::string, Message *, case_insensitive_less> cmd_dict;
 
 #endif /* INCLUDED_parse_h_h */

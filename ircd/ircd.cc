@@ -668,7 +668,6 @@ charybdis_main(int argc, char * const argv[])
 	init_hash();
 	clear_scache_hash_table();	/* server cache name table */
 	init_host_hash();
-	clear_hash_parse();
 	init_client();
 	init_hook();
 	init_channels();
