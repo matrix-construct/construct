@@ -34,8 +34,8 @@
  * Don't change these - edit the conf file instead.
  */
 #ifdef __cplusplus
-inline namespace ircd     {
-inline namespace defaults {
+namespace ircd     {
+namespace defaults {
 
 enum general
 {
