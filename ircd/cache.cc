@@ -38,14 +38,16 @@
 #include <ircd/numeric.h>
 #include <ircd/send.h>
 
+#include <map>
+
 struct cachefile *user_motd = NULL;
 struct cachefile *oper_motd = NULL;
 struct cacheline *emptyline = NULL;
 rb_dlink_list links_cache_list;
 char user_motd_changed[MAX_DATE_STRING];
 
-rb_dictionary *help_dict_oper = NULL;
-rb_dictionary *help_dict_user = NULL;
+std::map<std::string, cachefile *, case_insensitive_less> help_dict_oper;
+std::map<std::string, cachefile *, case_insensitive_less> help_dict_user;
 
 /* init_cache()
  *
@@ -65,9 +67,6 @@ init_cache(void)
 	user_motd = cache_file(fs::paths[IRCD_PATH_IRCD_MOTD], "ircd.motd", 0);
 	oper_motd = cache_file(fs::paths[IRCD_PATH_IRCD_OMOTD], "opers.motd", 0);
 	memset(&links_cache_list, 0, sizeof(links_cache_list));
-
-	help_dict_oper = rb_dictionary_create("oper help", reinterpret_cast<int (*)(const void *, const void *)>(rb_strcasecmp));
-	help_dict_user = rb_dictionary_create("user help", reinterpret_cast<int (*)(const void *, const void *)>(rb_strcasecmp));
 }
 
 /*
@@ -241,17 +240,17 @@ load_help(void)
 #endif
 
 	void *elem;
-	RB_DICTIONARY_FOREACH(elem, &iter, help_dict_oper)
+
+	for (auto it = help_dict_oper.begin(); it != help_dict_oper.end(); it++)
 	{
-		const auto cacheptr(reinterpret_cast<cachefile *>(elem));
-		rb_dictionary_delete(help_dict_oper, cacheptr->name);
-		free_cachefile(cacheptr);
+		free_cachefile(it->second);
+		help_dict_oper.erase(it);
 	}
-	RB_DICTIONARY_FOREACH(elem, &iter, help_dict_user)
+
+	for (auto it = help_dict_user.begin(); it != help_dict_user.end(); it++)
 	{
-		const auto cacheptr(reinterpret_cast<cachefile *>(elem));
-		rb_dictionary_delete(help_dict_user, cacheptr->name);
-		free_cachefile(cacheptr);
+		free_cachefile(it->second);
+		help_dict_oper.erase(it);
 	}
 
 	helpfile_dir = opendir(fs::paths[IRCD_PATH_OPERHELP]);
@@ -265,7 +264,7 @@ load_help(void)
 			continue;
 		snprintf(filename, sizeof(filename), "%s%c%s", fs::paths[IRCD_PATH_OPERHELP], RB_PATH_SEPARATOR, ldirent->d_name);
 		cacheptr = cache_file(filename, ldirent->d_name, HELP_OPER);
-		rb_dictionary_add(help_dict_oper, cacheptr->name, cacheptr);
+		help_dict_oper[cacheptr->name] = cacheptr;
 	}
 
 	closedir(helpfile_dir);
@@ -300,7 +299,7 @@ load_help(void)
 #endif
 
 		cacheptr = cache_file(filename, ldirent->d_name, HELP_USER);
-		rb_dictionary_add(help_dict_user, cacheptr->name, cacheptr);
+		help_dict_user[cacheptr->name] = cacheptr;
 	}
 
 	closedir(helpfile_dir);

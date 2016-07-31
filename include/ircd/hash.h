@@ -62,7 +62,6 @@ extern rb_radixtree *channel_tree;
 struct Client;
 struct Channel;
 struct ConfItem;
-struct cachefile;
 struct nd_entry;
 
 extern uint32_t fnv_hash_upper(const unsigned char *s, int bits);

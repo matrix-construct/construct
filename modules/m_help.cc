@@ -96,7 +96,7 @@ dohelp(struct Client *source_p, int flags, const char *topic)
 	if(EmptyString(topic))
 		topic = ntopic;
 
-	hptr = (cachefile *)rb_dictionary_retrieve(flags & HELP_OPER ? help_dict_oper : help_dict_user, topic);
+	hptr = flags & HELP_OPER ? help_dict_oper[topic] : help_dict_user[topic];
 
 	if(hptr == NULL || !(hptr->flags & flags))
 	{
