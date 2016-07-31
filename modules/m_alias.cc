@@ -111,7 +111,7 @@ m_alias(struct MsgBuf *msgbuf, struct Client *client_p, struct Client *source_p,
 {
 	struct Client *target_p;
 	std::shared_ptr<alias_entry> aptr = alias_dict[msgbuf->cmd];
-	char *p, *str;
+	char *str;
 
 	if(aptr == NULL)
 	{
@@ -126,11 +126,11 @@ m_alias(struct MsgBuf *msgbuf, struct Client *client_p, struct Client *source_p,
 	if(!IsFloodDone(client_p) && client_p->localClient->receiveM > 20)
 		flood_endgrace(client_p);
 
-	p = strchr(aptr->target.c_str(), '@');
-	if(p != NULL)
+	auto pos = aptr->target.find('@');
+	if(pos != std::string::npos)
 	{
 		/* user@server */
-		target_p = find_server(NULL, p + 1);
+		target_p = find_server(NULL, aptr->target.substr(pos + 1).c_str());
 		if(target_p != NULL && IsMe(target_p))
 			target_p = NULL;
 	}
@@ -157,6 +157,6 @@ m_alias(struct MsgBuf *msgbuf, struct Client *client_p, struct Client *source_p,
 
 	sendto_one(target_p, ":%s PRIVMSG %s :%s",
 			get_id(client_p, target_p),
-			p != NULL ? aptr->target.c_str() : get_id(target_p, target_p),
+			pos != std::string::npos ? aptr->target.c_str() : get_id(target_p, target_p),
 			str);
 }
