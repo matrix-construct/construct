@@ -28,7 +28,7 @@
 
 #ifdef __cplusplus
 
-#include <unique_ptr>
+#include <memory>
 #include <functional>
 #include <map>
 
