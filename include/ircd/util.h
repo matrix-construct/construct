@@ -60,6 +60,28 @@ template<class T>
 using custom_ptr = std::unique_ptr<T, std::function<void (T *)>>;
 
 
+struct case_insensitive_less
+:std::binary_function<std::string, std::string, bool>
+{
+    bool operator() (const std::string &lhs, const std::string &rhs) const
+    {
+        return rb_strcasecmp(lhs.c_str(), rhs.c_str()) < 0;
+    }
+};
+
+
+#ifdef HAVE_IRCD_MATCH_H
+struct case_mapped_less
+:std::binary_function<std::string, std::string, bool>
+{
+    bool operator() (const std::string &lhs, const std::string &rhs) const
+    {
+        return irccmp(lhs.c_str(), rhs.c_str()) < 0;
+    }
+};
+#endif
+
+
 }        // namespace util
 }        // namespace ircd
 #endif   // __cplusplus

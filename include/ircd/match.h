@@ -22,8 +22,8 @@
  *  USA
  */
 
-#ifndef INCLUDED_match_h
-#define INCLUDED_match_h
+#pragma once
+#define HAVE_IRCD_MATCH_H
 
 #include "stdinc.h"
 
@@ -157,5 +157,3 @@ static inline void strcasecanon(char *str)
         }
         return;
 }
-
-#endif /* INCLUDED_match_h */
