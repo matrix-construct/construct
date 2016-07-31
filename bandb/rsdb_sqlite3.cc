@@ -58,7 +58,7 @@ rsdb_init(rsdb_error_cb * ecb)
 {
 	const char *bandb_dbpath_env;
 	char dbpath[PATH_MAX];
-	char errbuf[128];
+	char errbuf[1024];
 	error_cb = ecb;
 
 	/* try a path from the environment first, useful for basedir overrides */
@@ -71,14 +71,15 @@ rsdb_init(rsdb_error_cb * ecb)
 
 	if(sqlite3_open(dbpath, &rb_bandb) != SQLITE_OK)
 	{
-		snprintf(errbuf, sizeof(errbuf), "Unable to open sqlite database: %s",
-			    sqlite3_errmsg(rb_bandb));
+		snprintf(errbuf, sizeof(errbuf), "Unable to open sqlite database ('%s'): %s",
+			    dbpath, sqlite3_errmsg(rb_bandb));
 		mlog(errbuf);
 		return -1;
 	}
 	if(access(dbpath, W_OK))
 	{
-		snprintf(errbuf, sizeof(errbuf),  "Unable to open sqlite database for write: %s", strerror(errno));
+		snprintf(errbuf, sizeof(errbuf),  "Unable to open sqlite database ('%s') for write: %s",
+			    dbpath, strerror(errno));
 		mlog(errbuf);
 		return -1;
 	}
