@@ -817,12 +817,13 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 ],[
 	AC_MSG_RESULT([no])
 
-	AC_SEARCH_LIBS(boost_system, boost_system,
-	[
+	AX_BOOST_BASE([1.60], [
 		AC_DEFINE(HAVE_LIB_BOOST_SYSTEM, 1, [Define if you have boost_system])
 	], [
 		AC_MSG_ERROR([Failed to find boost_system library. (try --with-included-boost)])
 	])
+	AX_BOOST_ASIO
+	AX_BOOST_SYSTEM
 
 	AC_SUBST(BOOST_CPPFLAGS, "")
 	AC_SUBST(BOOST_LDFLAGS, "")
