@@ -48,7 +48,7 @@ inline namespace fs    {
 #define MODPATH		RB_MODULE_DIR
 #define MODULE_DIR	RB_MODULE_DIR
 #define AUTOMODPATH	RB_MODULE_DIR "/autoload"
-#define ETCPATH		RB_ETC_DIR "/charybdis"
+#define ETCPATH		RB_ETC_DIR
 #define LOGPATH		RB_LOG_DIR
 #define UHPATH		RB_HELP_DIR "/users"
 #define HPATH		RB_HELP_DIR "/opers"
