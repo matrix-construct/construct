@@ -823,6 +823,7 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 	], [
 		AC_MSG_ERROR([Failed to find boost_system library. (try --with-included-boost)])
 	])
+	boost_linkage="shared"
 	AX_BOOST_ASIO
 	AX_BOOST_SYSTEM
 ])
