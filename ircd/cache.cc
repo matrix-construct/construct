@@ -39,15 +39,14 @@
 #include <ircd/send.h>
 
 #include <map>
+#include <vector>
 
-struct cachefile *user_motd = NULL;
-struct cachefile *oper_motd = NULL;
-struct cacheline *emptyline = NULL;
-rb_dlink_list links_cache_list;
+struct cachefile user_motd {};
+struct cachefile oper_motd {};
 char user_motd_changed[MAX_DATE_STRING];
 
-std::map<std::string, cachefile *, case_insensitive_less> help_dict_oper;
-std::map<std::string, cachefile *, case_insensitive_less> help_dict_user;
+std::map<std::string, std::shared_ptr<cachefile>, case_insensitive_less> help_dict_oper;
+std::map<std::string, std::shared_ptr<cachefile>, case_insensitive_less> help_dict_user;
 
 /* init_cache()
  *
@@ -58,15 +57,10 @@ std::map<std::string, cachefile *, case_insensitive_less> help_dict_user;
 void
 init_cache(void)
 {
-	/* allocate the emptyline */
-	emptyline = (cacheline *)rb_malloc(sizeof(struct cacheline));
-	emptyline->data = rb_strdup(" ");
-
 	user_motd_changed[0] = '\0';
 
-	user_motd = cache_file(fs::paths[IRCD_PATH_IRCD_MOTD], "ircd.motd", 0);
-	oper_motd = cache_file(fs::paths[IRCD_PATH_IRCD_OMOTD], "opers.motd", 0);
-	memset(&links_cache_list, 0, sizeof(links_cache_list));
+	user_motd.cache(fs::paths[IRCD_PATH_IRCD_MOTD], "ircd.motd", 0);
+	oper_motd.cache(fs::paths[IRCD_PATH_IRCD_OMOTD], "opers.motd", 0);
 }
 
 /*
@@ -98,125 +92,40 @@ untabify(char *dest, const char *src, size_t destlen)
 	return x;
 }
 
-/* cache_file()
+/* cachefile::cache()
  *
  * inputs	- file to cache, files "shortname", flags to set
- * outputs	- pointer to file cached, else NULL
- * side effects -
+ * outputs	- none
+ * side effects - cachefile.contents is populated with the lines from the file
  */
-struct cachefile *
-cache_file(const char *filename, const char *shortname, int flags)
+void
+cachefile::cache(const char *filename, const char *shortname, int flags_)
 {
 	FILE *in;
-	struct cachefile *cacheptr;
-	struct cacheline *lineptr;
 	char line[BUFSIZE];
 	char *p;
 
 	if((in = fopen(filename, "r")) == NULL)
-		return NULL;
+		return;
 
+	contents.clear();
 
-	cacheptr = (cachefile *)rb_malloc(sizeof(struct cachefile));
-
-	rb_strlcpy(cacheptr->name, shortname, sizeof(cacheptr->name));
-	cacheptr->flags = flags;
+	name = shortname;
+	flags = flags_;
 
 	/* cache the file... */
 	while(fgets(line, sizeof(line), in) != NULL)
 	{
+		char untabline[BUFSIZE];
+
 		if((p = strpbrk(line, "\r\n")) != NULL)
 			*p = '\0';
 
-		if(!EmptyString(line))
-		{
-			char untabline[BUFSIZE];
-
-			lineptr = (cacheline *)rb_malloc(sizeof(struct cacheline));
-
-			untabify(untabline, line, sizeof(untabline));
-			lineptr->data = rb_strdup(untabline);
-
-			rb_dlinkAddTail(lineptr, &lineptr->linenode, &cacheptr->contents);
-		}
-		else
-			rb_dlinkAddTailAlloc(emptyline, &cacheptr->contents);
-	}
-
-	if (0 == rb_dlink_list_length(&cacheptr->contents))
-	{
-		/* No contents. Don't cache it after all. */
-		rb_free(cacheptr);
-		cacheptr = NULL;
+		untabify(untabline, line, sizeof(untabline));
+		contents.push_back(std::string(untabline));
 	}
 
 	fclose(in);
-	return cacheptr;
-}
-
-void
-cache_links(void *unused)
-{
-	struct Client *target_p;
-	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
-	char *links_line;
-
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, links_cache_list.head)
-	{
-		rb_free(ptr->data);
-		rb_free_rb_dlink_node(ptr);
-	}
-
-	links_cache_list.head = links_cache_list.tail = NULL;
-	links_cache_list.length = 0;
-
-	RB_DLINK_FOREACH(ptr, global_serv_list.head)
-	{
-		target_p = (Client *)ptr->data;
-
-		/* skip ourselves (done in /links) and hidden servers */
-		if(IsMe(target_p) ||
-		   (IsHidden(target_p) && !ConfigServerHide.disable_hidden))
-			continue;
-
-		/* if the below is ever modified, change LINKSLINELEN */
-		links_line = (char *)rb_malloc(LINKSLINELEN);
-		snprintf(links_line, LINKSLINELEN, "%s %s :1 %s",
-			   target_p->name, me.name,
-			   target_p->info[0] ? target_p->info :
-			    "(Unknown Location)");
-
-		rb_dlinkAddTailAlloc(links_line, &links_cache_list);
-	}
-}
-
-/* free_cachefile()
- *
- * inputs	- cachefile to free
- * outputs	-
- * side effects - cachefile and its data is free'd
- */
-void
-free_cachefile(struct cachefile *cacheptr)
-{
-	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
-
-	if(cacheptr == NULL)
-		return;
-
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, cacheptr->contents.head)
-	{
-		if(ptr->data != emptyline)
-		{
-			struct cacheline *line = (cacheline *)ptr->data;
-			rb_free(line->data);
-			rb_free(line);
-		}
-	}
-
-	rb_free(cacheptr);
 }
 
 /* load_help()
@@ -232,8 +141,6 @@ load_help(void)
 	DIR *helpfile_dir = NULL;
 	struct dirent *ldirent= NULL;
 	char filename[PATH_MAX];
-	struct cachefile *cacheptr;
-	rb_dictionary_iter iter;
 
 #if defined(S_ISLNK) && defined(HAVE_LSTAT)
 	struct stat sb;
@@ -241,17 +148,8 @@ load_help(void)
 
 	void *elem;
 
-	for (auto it = help_dict_oper.begin(); it != help_dict_oper.end(); it++)
-	{
-		free_cachefile(it->second);
-		help_dict_oper.erase(it);
-	}
-
-	for (auto it = help_dict_user.begin(); it != help_dict_user.end(); it++)
-	{
-		free_cachefile(it->second);
-		help_dict_oper.erase(it);
-	}
+	help_dict_oper.clear();
+	help_dict_user.clear();
 
 	helpfile_dir = opendir(fs::paths[IRCD_PATH_OPERHELP]);
 
@@ -263,8 +161,7 @@ load_help(void)
 		if(ldirent->d_name[0] == '.')
 			continue;
 		snprintf(filename, sizeof(filename), "%s%c%s", fs::paths[IRCD_PATH_OPERHELP], RB_PATH_SEPARATOR, ldirent->d_name);
-		cacheptr = cache_file(filename, ldirent->d_name, HELP_OPER);
-		help_dict_oper[cacheptr->name] = cacheptr;
+		help_dict_oper[ldirent->d_name] = std::make_shared<cachefile>(filename, ldirent->d_name, HELP_OPER);
 	}
 
 	closedir(helpfile_dir);
@@ -288,7 +185,7 @@ load_help(void)
 		 */
 		if(S_ISLNK(sb.st_mode))
 		{
-			cacheptr = rb_dictionary_retrieve(help_dict_oper, ldirent->d_name);
+			std::shared_ptr<cachefile> cacheptr = std::shared_ptr<cachefile> {help_dict_oper[ldirent->d_name]};
 
 			if(cacheptr != NULL)
 			{
@@ -298,8 +195,7 @@ load_help(void)
 		}
 #endif
 
-		cacheptr = cache_file(filename, ldirent->d_name, HELP_USER);
-		help_dict_user[cacheptr->name] = cacheptr;
+		help_dict_user[ldirent->d_name] = std::make_shared<cachefile>(filename, ldirent->d_name, HELP_USER);
 	}
 
 	closedir(helpfile_dir);
@@ -314,11 +210,11 @@ load_help(void)
 void
 send_user_motd(struct Client *source_p)
 {
-	struct cacheline *lineptr;
 	rb_dlink_node *ptr;
 	const char *myname = get_id(&me, source_p);
 	const char *nick = get_id(source_p, source_p);
-	if(user_motd == NULL || rb_dlink_list_length(&user_motd->contents) == 0)
+
+	if (user_motd.contents.size() == 0)
 	{
 		sendto_one(source_p, form_str(ERR_NOMOTD), myname, nick);
 		return;
@@ -326,10 +222,9 @@ send_user_motd(struct Client *source_p)
 
 	sendto_one(source_p, form_str(RPL_MOTDSTART), myname, nick, me.name);
 
-	RB_DLINK_FOREACH(ptr, user_motd->contents.head)
+	for (auto it = user_motd.contents.begin(); it != user_motd.contents.end(); it++)
 	{
-		lineptr = (cacheline *)ptr->data;
-		sendto_one(source_p, form_str(RPL_MOTD), myname, nick, lineptr->data);
+		sendto_one(source_p, form_str(RPL_MOTD), myname, nick, it->c_str());
 	}
 
 	sendto_one(source_p, form_str(RPL_ENDOFMOTD), myname, nick);
@@ -354,8 +249,8 @@ cache_user_motd(void)
 				 local_tm->tm_min);
 		}
 	}
-	free_cachefile(user_motd);
-	user_motd = cache_file(fs::paths[IRCD_PATH_IRCD_MOTD], "ircd.motd", 0);
+
+	user_motd.cache(fs::paths[IRCD_PATH_IRCD_MOTD], "ircd.motd", 0);
 }
 
 
@@ -371,17 +266,16 @@ send_oper_motd(struct Client *source_p)
 	struct cacheline *lineptr;
 	rb_dlink_node *ptr;
 
-	if(oper_motd == NULL || rb_dlink_list_length(&oper_motd->contents) == 0)
+	if (oper_motd.contents.size() == 0)
 		return;
 
 	sendto_one(source_p, form_str(RPL_OMOTDSTART),
 		   me.name, source_p->name);
 
-	RB_DLINK_FOREACH(ptr, oper_motd->contents.head)
+	for (auto it = oper_motd.contents.begin(); it != oper_motd.contents.end(); it++)
 	{
-		lineptr = (cacheline *)ptr->data;
 		sendto_one(source_p, form_str(RPL_OMOTD),
-			   me.name, source_p->name, lineptr->data);
+			   me.name, source_p->name, it->c_str());
 	}
 
 	sendto_one(source_p, form_str(RPL_ENDOFOMOTD),

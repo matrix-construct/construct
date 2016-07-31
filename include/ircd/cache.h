@@ -1,4 +1,5 @@
 #include <map>
+#include <vector>
 #include "ircd/util.h"
 
 #pragma once
@@ -15,21 +16,21 @@
 
 struct cachefile
 {
-	char name[CACHEFILELEN];
-	rb_dlink_list contents;
-	int flags;
-};
+	cachefile(const char *filename, const char *shortname, int flags) {
+		cache(filename, shortname, flags);
+	}
 
-struct cacheline
-{
-	char *data;
-	rb_dlink_node linenode;
+	cachefile() {};
+
+	std::string name;
+	std::vector<std::string> contents;
+	int flags;
+
+	void cache(const char *filename, const char *shortname, int flags);
 };
 
 void init_cache(void);
-struct cachefile *cache_file(const char *, const char *, int);
 void cache_links(void *unused);
-void free_cachefile(struct cachefile *);
 
 void load_help(void);
 
@@ -37,12 +38,10 @@ void send_user_motd(struct Client *);
 void send_oper_motd(struct Client *);
 void cache_user_motd(void);
 
-extern struct cachefile *user_motd;
-extern struct cachefile *oper_motd;
-extern struct cacheline *emptyline;
+extern struct cachefile user_motd;
+extern struct cachefile oper_motd;
 
 extern char user_motd_changed[MAX_DATE_STRING];
-extern rb_dlink_list links_cache_list;
 
-extern std::map<std::string, cachefile *, case_insensitive_less> help_dict_oper;
-extern std::map<std::string, cachefile *, case_insensitive_less> help_dict_user;
+extern std::map<std::string, std::shared_ptr<cachefile>, case_insensitive_less> help_dict_oper;
+extern std::map<std::string, std::shared_ptr<cachefile>, case_insensitive_less> help_dict_user;

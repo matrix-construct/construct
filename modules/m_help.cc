@@ -88,10 +88,8 @@ static void
 dohelp(struct Client *source_p, int flags, const char *topic)
 {
 	static const char ntopic[] = "index";
-	struct cachefile *hptr;
-	struct cacheline *lineptr;
-	rb_dlink_node *ptr;
-	rb_dlink_node *fptr;
+	std::shared_ptr<cachefile> hptr;
+	int linecnt = 0;
 
 	if(EmptyString(topic))
 		topic = ntopic;
@@ -105,19 +103,17 @@ dohelp(struct Client *source_p, int flags, const char *topic)
 		return;
 	}
 
-	fptr = hptr->contents.head;
-	lineptr = (cacheline *)fptr->data;
-
-	/* first line cant be empty */
-	sendto_one(source_p, form_str(RPL_HELPSTART),
-		   me.name, source_p->name, topic, lineptr->data);
-
-	RB_DLINK_FOREACH(ptr, fptr->next)
+	for (auto it = hptr->contents.begin(); it != hptr->contents.end(); it++, linecnt++)
 	{
-		lineptr = (cacheline *)ptr->data;
+		if (!linecnt)
+		{
+			sendto_one(source_p, form_str(RPL_HELPSTART),
+				   me.name, source_p->name, topic, it->c_str());
+			continue;
+		}
 
 		sendto_one(source_p, form_str(RPL_HELPTXT),
-			   me.name, source_p->name, topic, lineptr->data);
+			   me.name, source_p->name, topic, it->c_str());
 	}
 
 	sendto_one(source_p, form_str(RPL_ENDOFHELP),

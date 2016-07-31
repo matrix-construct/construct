@@ -117,8 +117,7 @@ rehash_omotd(struct Client *source_p)
 	if (!MyConnect(source_p))
 		remote_rehash_oper_p = source_p;
 
-	free_cachefile(oper_motd);
-	oper_motd = cache_file(fs::paths[IRCD_PATH_IRCD_OMOTD], "opers.motd", 0);
+	oper_motd.cache(fs::paths[IRCD_PATH_IRCD_OMOTD], "opers.motd", 0);
 }
 
 static void
