@@ -21,7 +21,6 @@ endif
 AM_LDFLAGS = \
 	-avoid-version \
 	-no-undefined \
-	-export-symbols export-syms.txt \
 	$(PLATFORM_LDFLAGS)
 
 AM_LDFLAGS += \
