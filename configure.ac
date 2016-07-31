@@ -572,13 +572,6 @@ dnl Installation Layout
 dnl
 
 PKG_PROG_PKG_CONFIG
-dnl use directory structure of cached as default (hack)
-if test "$libexecdir" = '${exec_prefix}/libexec' &&
-   test "$localstatedir" = '${prefix}/var'; then
-	libexecdir='${bindir}'
-	localstatedir='${prefix}'
-fi
-
 
 if test "$prefix" = "NONE"; then
 	AC_DEFINE_UNQUOTED(RB_PREFIX, "$ac_default_prefix", [Prefix where librb is installed.])
