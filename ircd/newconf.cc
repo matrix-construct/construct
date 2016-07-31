@@ -52,7 +52,7 @@ static rb_dlink_list yy_shared_list;
 static rb_dlink_list yy_cluster_list;
 static struct oper_conf *yy_oper = NULL;
 
-static struct alias_entry *yy_alias = NULL;
+static std::shared_ptr<alias_entry> yy_alias;
 
 static char *yy_blacklist_host = NULL;
 static char *yy_blacklist_reason = NULL;
@@ -1815,10 +1815,10 @@ conf_set_service_name(void *data)
 static int
 conf_begin_alias(struct TopConf *tc)
 {
-	yy_alias = (alias_entry *)rb_malloc(sizeof(struct alias_entry));
+	yy_alias = std::make_shared<alias_entry>();
 
 	if (conf_cur_block_name != NULL)
-		yy_alias->name = rb_strdup(conf_cur_block_name);
+		yy_alias->name = conf_cur_block_name;
 
 	yy_alias->flags = 0;
 
@@ -1831,25 +1831,19 @@ conf_end_alias(struct TopConf *tc)
 	if (yy_alias == NULL)
 		return -1;
 
-	if (yy_alias->name == NULL)
+	if (yy_alias->name.size() == 0)
 	{
 		conf_report_error("Ignoring alias -- must have a name.");
-
-		rb_free(yy_alias);
-
 		return -1;
 	}
 
-	if (yy_alias->target == NULL)
+	if (yy_alias->target.size() == 0)
 	{
 		conf_report_error("Ignoring alias -- must have a target.");
-
-		rb_free(yy_alias);
-
 		return -1;
 	}
 
-	rb_dictionary_add(alias_dict, yy_alias->name, yy_alias);
+	alias_dict[yy_alias->name] = std::move(yy_alias);
 
 	return 0;
 }
@@ -1860,7 +1854,7 @@ conf_set_alias_name(void *data)
 	if (data == NULL || yy_alias == NULL)	/* this shouldn't ever happen */
 		return;
 
-	yy_alias->name = rb_strdup((const char *)data);
+	yy_alias->name = (const char *) data;
 }
 
 static void
@@ -1869,7 +1863,7 @@ conf_set_alias_target(void *data)
 	if (data == NULL || yy_alias == NULL)	/* this shouldn't ever happen */
 		return;
 
-	yy_alias->target = rb_strdup((const char *)data);
+	yy_alias->target = (const char *) data;
 }
 
 static void

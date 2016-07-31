@@ -810,9 +810,6 @@ set_default_conf(void)
 	ConfigFileEntry.nicklen = NICKLEN;
 	ConfigFileEntry.certfp_method = RB_SSL_CERTFP_METH_CERT_SHA1;
 	ConfigFileEntry.hide_opers_in_whois = 0;
-
-	if (!alias_dict)
-		alias_dict = rb_dictionary_create("alias", reinterpret_cast<int (*)(const void *, const void *)>(rb_strcasecmp));
 }
 
 /*
@@ -1417,19 +1414,6 @@ read_conf_files(bool cold)
 }
 
 /*
- * free an alias{} entry.
- */
-static void
-free_alias_cb(rb_dictionary_element *ptr, void *unused)
-{
-	struct alias_entry *aptr = (alias_entry *)ptr->data;
-
-	rb_free(aptr->name);
-	rb_free(aptr->target);
-	rb_free(aptr);
-}
-
-/*
  * clear_out_old_conf
  *
  * inputs       - none
@@ -1524,11 +1508,7 @@ clear_out_old_conf(void)
 	}
 
 	/* remove any aliases... -- nenolod */
-	if (alias_dict != NULL)
-	{
-		rb_dictionary_destroy(alias_dict, free_alias_cb, NULL);
-		alias_dict = NULL;
-	}
+	alias_dict.clear();
 
 	del_blacklist_all();
 

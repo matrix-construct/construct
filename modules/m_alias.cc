@@ -53,19 +53,16 @@ static const struct MessageEntry alias_msgtab[] =
 static inline void
 create_aliases(void)
 {
-	rb_dictionary_iter iter;
-
 	s_assert(rb_dlink_list_length(&alias_messages) == 0);
 
-	void *elem;
-	RB_DICTIONARY_FOREACH(elem, &iter, alias_dict)
+	for (auto it = alias_dict.begin(); it != alias_dict.end(); it++)
 	{
-		const auto alias(reinterpret_cast<alias_entry *>(elem));
-		struct Message *message = (Message *)rb_malloc(sizeof(*message) + strlen(alias->name) + 1);
+		std::shared_ptr<alias_entry> alias = it->second;
+		struct Message *message = (Message *)rb_malloc(sizeof(*message) + alias->name.size() + 1);
 		char *cmd = (char*)message + sizeof(*message);
 
 		/* copy the alias name as it will be freed early on a rehash */
-		strcpy(cmd, alias->name);
+		strcpy(cmd, alias->name.c_str());
 		message->cmd = cmd;
 		memcpy(message->handlers, alias_msgtab, sizeof(alias_msgtab));
 
@@ -113,7 +110,7 @@ static void
 m_alias(struct MsgBuf *msgbuf, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
 {
 	struct Client *target_p;
-	struct alias_entry *aptr = (alias_entry *)rb_dictionary_retrieve(alias_dict, msgbuf->cmd);
+	std::shared_ptr<alias_entry> aptr = alias_dict[msgbuf->cmd];
 	char *p, *str;
 
 	if(aptr == NULL)
@@ -129,7 +126,7 @@ m_alias(struct MsgBuf *msgbuf, struct Client *client_p, struct Client *source_p,
 	if(!IsFloodDone(client_p) && client_p->localClient->receiveM > 20)
 		flood_endgrace(client_p);
 
-	p = strchr(aptr->target, '@');
+	p = strchr(aptr->target.c_str(), '@');
 	if(p != NULL)
 	{
 		/* user@server */
@@ -140,14 +137,14 @@ m_alias(struct MsgBuf *msgbuf, struct Client *client_p, struct Client *source_p,
 	else
 	{
 		/* nick, must be +S */
-		target_p = find_named_person(aptr->target);
+		target_p = find_named_person(aptr->target.c_str());
 		if(target_p != NULL && !IsService(target_p))
 			target_p = NULL;
 	}
 
 	if(target_p == NULL)
 	{
-		sendto_one_numeric(client_p, ERR_SERVICESDOWN, form_str(ERR_SERVICESDOWN), aptr->target);
+		sendto_one_numeric(client_p, ERR_SERVICESDOWN, form_str(ERR_SERVICESDOWN), aptr->target.c_str());
 		return;
 	}
 
@@ -160,6 +157,6 @@ m_alias(struct MsgBuf *msgbuf, struct Client *client_p, struct Client *source_p,
 
 	sendto_one(target_p, ":%s PRIVMSG %s :%s",
 			get_id(client_p, target_p),
-			p != NULL ? aptr->target : get_id(target_p, target_p),
+			p != NULL ? aptr->target.c_str() : get_id(target_p, target_p),
 			str);
 }

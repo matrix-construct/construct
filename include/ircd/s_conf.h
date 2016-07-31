@@ -304,8 +304,8 @@ struct admin_info
 
 struct alias_entry
 {
-	char *name;
-	char *target;
+	std::string name;
+	std::string target;
 	int flags;			/* reserved for later use */
 };
 
