@@ -27,7 +27,7 @@
 #define HAVE_IRCD_UTIL_H
 
 #ifdef __cplusplus
-namespace ircd {
+inline namespace ircd {
 inline namespace util {
 
 
