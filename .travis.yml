@@ -75,22 +75,22 @@ matrix:
     - CCOMPILER=clang-3.6
     - CXXCOMPILER=clang++-3.6
 
-  - os: linux
-    dist: xenial
-    group: unstable
-    sudo: required
-    compiler: clang-3.8
-    addons:
-      apt:
-        sources:
-        - ubuntu-toolchain-r-test
-        - llvm-toolchain-xenial-3.8
-        packages:
-        - clang-3.8
-        - ['automake', 'autoconf', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
-    env:
-    - CCOMPILER=clang-3.8
-    - CXXCOMPILER=clang++-3.8
+#  - os: linux
+#    dist: xenial
+#    group: unstable
+#    sudo: required
+#    compiler: clang-3.8
+#    addons:
+#      apt:
+#        sources:
+#        - ubuntu-toolchain-r-test
+#        - llvm-toolchain-xenial-3.8
+#        packages:
+#        - clang-3.8
+#        - ['automake', 'autoconf', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
+#    env:
+#    - CCOMPILER=clang-3.8
+#    - CXXCOMPILER=clang++-3.8
 
   - os: osx
     compiler: clang
