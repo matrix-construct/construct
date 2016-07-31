@@ -819,17 +819,17 @@ stats_oper(struct Client *source_p)
 }
 
 static void
-stats_capability_walk(const char *line, void *data)
+stats_capability_walk(std::string &line, void *data)
 {
 	struct Client *client_p = (Client *)data;
 
-	sendto_one_numeric(client_p, RPL_STATSDEBUG, "C :%s", line);
+	sendto_one_numeric(client_p, RPL_STATSDEBUG, "C :%s", line.c_str());
 }
 
 static void
 stats_capability(struct Client *client_p)
 {
-//	capability_index_stats(stats_capability_walk, client_p);
+	capability_stats(stats_capability_walk, client_p);
 }
 
 static void

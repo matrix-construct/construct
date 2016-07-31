@@ -22,18 +22,26 @@
 #include <ircd/capability.h>
 #include <ircd/s_assert.h>
 
+#include <rb/format.h>
 #include <list>
 
-// static std::list<CapabilityIndex *> capability_indexes;
+static std::list<CapabilityIndex *> capability_indexes;
 
 CapabilityIndex::CapabilityIndex(std::string name_) : name(name_), highest_bit(1)
 {
-//	capability_indexes.push_back(this);
+	capability_indexes.push_back(this);
 }
 
 CapabilityIndex::~CapabilityIndex()
 {
-//	capability_indexes.erase(this);
+	for (auto it = capability_indexes.begin(); it != capability_indexes.end(); it++)
+	{
+		if (*it == this)
+		{
+			capability_indexes.erase(it);
+			break;
+		}
+	}
 }
 
 std::shared_ptr<CapabilityEntry>
@@ -172,35 +180,19 @@ CapabilityIndex::required()
 }
 
 void
-capability_index_stats(void (*cb)(const char *line, void *privdata), void *privdata)
+CapabilityIndex::stats(void (*cb)(std::string &line, void *privdata), void *privdata)
 {
-#if 0
-	rb_dlink_node *node;
-	char buf[BUFSIZE];
+	std::string out = fmt::format("'{0}': {1} allocated:", name, highest_bit - 1);
 
-	RB_DLINK_FOREACH(node, capability_indexes.head)
-	{
-		struct CapabilityIndex *idx = (CapabilityIndex *)node->data;
-		rb_dictionary_iter iter;
-		struct CapabilityEntry *entry;
+	for (auto it = cap_dict.begin(); it != cap_dict.end(); it++)
+		out += fmt::format(" {0}<{1}>", it->first, it->second->value);
 
-		snprintf(buf, sizeof buf, "'%s': allocated bits - %d", idx->name, (idx->highest_bit - 1));
-		cb(buf, privdata);
+	cb(out, privdata);
+}
 
-		void *elem;
-		RB_DICTIONARY_FOREACH(elem, &iter, idx->cap_dict)
-		{
-			entry = (CapabilityEntry *)elem;
-			snprintf(buf, sizeof buf, "bit %d: '%s'", entry->value, entry->cap);
-			cb(buf, privdata);
-		}
-
-		snprintf(buf, sizeof buf, "'%s': remaining bits - %u", idx->name,
-			    (unsigned int)((sizeof(unsigned int) * 8) - (idx->highest_bit - 1)));
-		cb(buf, privdata);
-	}
-
-	snprintf(buf, sizeof buf, "%ld capability indexes", rb_dlink_list_length(&capability_indexes));
-	cb(buf, privdata);
-#endif
+void
+capability_stats(void (*cb)(std::string &line, void *privdata), void *privdata)
+{
+	for (auto it = capability_indexes.begin(); it != capability_indexes.end(); it++)
+		(*it)->stats(cb, privdata);
 }

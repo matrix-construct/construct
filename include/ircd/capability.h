@@ -54,13 +54,13 @@ struct CapabilityIndex {
 	void orphan(std::string cap_name);
 	void require(std::string cap_name);
 
-	// void stats(void (*cb)(const char *line, void *privdata), void *privdata);
+	void stats(void (*cb)(std::string &line, void *privdata), void *privdata);
 
 	const char *list(unsigned int cap_mask);
 	unsigned int mask();
 	unsigned int required();
 };
 
-extern void capability_stats(void (*cb)(const char *line, void *privdata), void *privdata);
+extern void capability_stats(void (*cb)(std::string &line, void *privdata), void *privdata);
 
 #endif
