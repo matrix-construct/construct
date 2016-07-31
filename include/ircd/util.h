@@ -27,6 +27,11 @@
 #define HAVE_IRCD_UTIL_H
 
 #ifdef __cplusplus
+
+#include <unique_ptr>
+#include <functional>
+#include <map>
+
 inline namespace ircd {
 inline namespace util {
 
