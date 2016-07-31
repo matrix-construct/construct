@@ -46,8 +46,8 @@ struct server_conf;
 struct Channel;
 
 /* Capabilities */
-extern struct CapabilityIndex *serv_capindex;
-extern struct CapabilityIndex *cli_capindex;
+extern struct CapabilityIndex serv_capindex;
+extern struct CapabilityIndex cli_capindex;
 
 /* register client capabilities with this structure for 3.2 enhanced capability negotiation */
 #define CLICAP_FLAGS_STICKY    0x001
@@ -95,7 +95,7 @@ extern unsigned int CAP_BAN;			/* supports propagated bans */
 extern unsigned int CAP_MLOCK;			/* supports MLOCK messages */
 
 /* XXX: added for backwards compatibility. --nenolod */
-#define CAP_MASK	(capability_index_mask(serv_capindex) & ~(CAP_TS6 | CAP_CAP))
+#define CAP_MASK	(serv_capindex.mask() & ~(CAP_TS6 | CAP_CAP))
 
 #ifdef HAVE_LIBZ
 #define CAP_ZIP_SUPPORTED       CAP_ZIP

@@ -829,7 +829,7 @@ stats_capability_walk(const char *line, void *data)
 static void
 stats_capability(struct Client *client_p)
 {
-	capability_index_stats(stats_capability_walk, client_p);
+//	capability_index_stats(stats_capability_walk, client_p);
 }
 
 static void

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 William Pitcock <nenolod@dereferenced.org>.
+ * Copyright (c) 2012 - 2016 William Pitcock <nenolod@dereferenced.org>.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,37 +21,46 @@
 #ifndef __CAPABILITY_H__
 #define __CAPABILITY_H__
 
-#include "stdinc.h"
-
-struct CapabilityIndex {
-	const char *name;
-	rb_dictionary *cap_dict;
-	unsigned int highest_bit;
-	rb_dlink_node node;
-};
+#include <ircd/stdinc.h>
+#include <ircd/util.h>
 
 #define CAP_ORPHANED	0x1
 #define CAP_REQUIRED	0x2
 
 struct CapabilityEntry {
-	const char *cap;
+	std::string cap;
 	unsigned int value;
 	unsigned int flags;
 	void *ownerdata;
+
+	CapabilityEntry(std::string cap_, unsigned int value_, void *ownerdata_)
+		: cap(cap_), value(value_), flags(0), ownerdata(ownerdata_) { }
 };
 
-extern struct CapabilityEntry *capability_find(struct CapabilityIndex *idx, const char *cap);
-extern unsigned int capability_get(struct CapabilityIndex *idx, const char *cap, void **ownerdata);
-extern unsigned int capability_put(struct CapabilityIndex *idx, const char *cap, void *ownerdata);
-extern unsigned int capability_put_anonymous(struct CapabilityIndex *idx);
-extern void capability_orphan(struct CapabilityIndex *idx, const char *cap);
-extern void capability_require(struct CapabilityIndex *idx, const char *cap);
+struct CapabilityIndex {
+	std::string name;
+	std::map<std::string, std::shared_ptr<CapabilityEntry>, case_insensitive_less> cap_dict;
+	unsigned int highest_bit;
 
-extern struct CapabilityIndex *capability_index_create(const char *name);
-extern void capability_index_destroy(struct CapabilityIndex *);
-extern const char *capability_index_list(struct CapabilityIndex *, unsigned int capability_mask);
-extern unsigned int capability_index_mask(struct CapabilityIndex *);
-extern unsigned int capability_index_get_required(struct CapabilityIndex *);
-extern void capability_index_stats(void (*cb)(const char *line, void *privdata), void *privdata);
+	CapabilityIndex(std::string name_);
+	~CapabilityIndex();
+
+	std::shared_ptr<CapabilityEntry> find(std::string cap_name);
+
+	unsigned int get(std::string cap_name, void **ownerdata);
+	unsigned int put(std::string cap_name, void *ownerdata);
+	unsigned int put_anonymous();
+
+	void orphan(std::string cap_name);
+	void require(std::string cap_name);
+
+	// void stats(void (*cb)(const char *line, void *privdata), void *privdata);
+
+	const char *list(unsigned int cap_mask);
+	unsigned int mask();
+	unsigned int required();
+};
+
+extern void capability_stats(void (*cb)(const char *line, void *privdata), void *privdata);
 
 #endif

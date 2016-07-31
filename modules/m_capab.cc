@@ -83,7 +83,7 @@ mr_capab(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	{
 		char *t = LOCAL_COPY(parv[i]);
 		for (s = rb_strtok_r(t, " ", &p); s; s = rb_strtok_r(NULL, " ", &p))
-			client_p->localClient->caps |= capability_get(serv_capindex, s, NULL);
+			client_p->localClient->caps |= serv_capindex.get(s, NULL);
 	}
 }
 
@@ -108,5 +108,5 @@ me_gcap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	source_p->serv->fullcaps = rb_strdup(parv[1]);
 
 	for (s = rb_strtok_r(t, " ", &p); s; s = rb_strtok_r(NULL, " ", &p))
-		source_p->serv->caps |= capability_get(serv_capindex, s, NULL);
+		source_p->serv->caps |= serv_capindex.get(s, NULL);
 }

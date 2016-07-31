@@ -63,7 +63,7 @@ DECLARE_MODULE_AV2(cap, NULL, NULL, cap_clist, NULL, NULL, NULL, NULL, cap_desc)
 #define HasCapabilityFlag(c, f)		(c->ownerdata != NULL && (((struct ClientCapability *)c->ownerdata)->flags & (f)) == f)
 
 static inline int
-clicap_visible(struct Client *client_p, const struct CapabilityEntry *cap)
+clicap_visible(struct Client *client_p, const std::shared_ptr<CapabilityEntry> cap)
 {
 	struct ClientCapability *clicap;
 
@@ -89,12 +89,12 @@ clicap_visible(struct Client *client_p, const struct CapabilityEntry *cap)
  *         int pointer to whether we finish with success
  * Ouputs: Cap entry if found, NULL otherwise.
  */
-static struct CapabilityEntry *
+static std::shared_ptr<CapabilityEntry>
 clicap_find(const char *data, int *negate, int *finished)
 {
 	static char buf[BUFSIZE];
 	static char *p;
-	struct CapabilityEntry *cap;
+	std::shared_ptr<CapabilityEntry> cap;
 	char *s;
 
 	*negate = 0;
@@ -131,7 +131,7 @@ clicap_find(const char *data, int *negate, int *finished)
 	if((s = strchr(p, ' ')))
 		*s++ = '\0';
 
-	if((cap = capability_find(cli_capindex, p)) != NULL)
+	if((cap = cli_capindex.find(p)) != NULL)
 	{
 		if(s)
 			p = s;
@@ -170,11 +170,10 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags)
 		return;
 	}
 
-	void *elem;
-	RB_DICTIONARY_FOREACH(elem, &iter, cli_capindex->cap_dict)
+	for (auto it = cli_capindex.cap_dict.begin(); it != cli_capindex.cap_dict.end(); it++)
 	{
 		size_t caplen = 0;
-		const auto entry(reinterpret_cast<CapabilityEntry *>(elem));
+		const auto entry = it->second;
 		const auto clicap(reinterpret_cast<ClientCapability *>(entry->ownerdata));
 		const char *data = NULL;
 
@@ -184,7 +183,7 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags)
 		if (!clicap_visible(source_p, entry))
 			continue;
 
-		caplen = strlen(entry->cap);
+		caplen = strlen(entry->cap.c_str());
 		if (!flags && (source_p->flags & FLAGS_CLICAP_DATA) && clicap != NULL && clicap->data != NULL)
 			data = clicap->data(source_p);
 
@@ -206,7 +205,7 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags)
 		}
 
 		buflen = rb_snprintf_append(capbuf, sizeof capbuf, "%s%s%s ",
-				entry->cap, data != NULL ? "=" : "", data != NULL ? data : "");
+				entry->cap.c_str(), data != NULL ? "=" : "", data != NULL ? data : "");
 	}
 
 	/* remove trailing space */
@@ -218,7 +217,7 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags)
 static void
 cap_ack(struct Client *source_p, const char *arg)
 {
-	struct CapabilityEntry *cap;
+	std::shared_ptr<CapabilityEntry> cap;
 	int capadd = 0, capdel = 0;
 	int finished = 0, negate;
 
@@ -291,7 +290,7 @@ cap_req(struct Client *source_p, const char *arg)
 {
 	char buf[BUFSIZE];
 	char pbuf[2][BUFSIZE];
-	struct CapabilityEntry *cap;
+	std::shared_ptr<CapabilityEntry> cap;
 	int buflen, plen;
 	int i = 0;
 	int capadd = 0, capdel = 0;
@@ -312,7 +311,7 @@ cap_req(struct Client *source_p, const char *arg)
 	for(cap = clicap_find(arg, &negate, &finished); cap;
 	    cap = clicap_find(NULL, &negate, &finished))
 	{
-		size_t namelen = strlen(cap->cap);
+		size_t namelen = strlen(cap->cap.c_str());
 
 		/* filled the first array, but cant send it in case the
 		 * request fails.  one REQ should never fill more than two
@@ -356,7 +355,7 @@ cap_req(struct Client *source_p, const char *arg)
 			plen++;
 		}
 
-		strcat(pbuf[i], cap->cap);
+		strcat(pbuf[i], cap->cap.c_str());
 		if (!finished) {
 			strcat(pbuf[i], " ");
 			plen += (namelen + 1);

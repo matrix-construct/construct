@@ -367,8 +367,8 @@ bool init_module__cap(struct module *const mod,
 	struct CapabilityIndex *idx;
 	switch(m->cap_index)
 	{
-		case MAPI_CAP_CLIENT:  idx = cli_capindex;    break;
-		case MAPI_CAP_SERVER:  idx = serv_capindex;   break;
+		case MAPI_CAP_CLIENT:  idx = &cli_capindex;    break;
+		case MAPI_CAP_SERVER:  idx = &serv_capindex;   break;
 		default:
 			slog(L_MAIN, SNO_GENERAL,
 			     "Unknown/unsupported CAP index found of type %d on capability %s when loading %s",
@@ -380,7 +380,7 @@ bool init_module__cap(struct module *const mod,
 
 	if(m->cap_id)
 	{
-		*(m->cap_id) = capability_put(idx, m->cap_name, m->cap_ownerdata);
+		*(m->cap_id) = idx->put(m->cap_name, m->cap_ownerdata);
 		sendto_local_clients_with_capability(CLICAP_CAP_NOTIFY, ":%s CAP * ADD :%s", me.name, m->cap_name);
 	}
 
@@ -395,8 +395,8 @@ void fini_module__cap(struct module *const mod,
 	struct CapabilityIndex *idx;
 	switch(m->cap_index)
 	{
-		case MAPI_CAP_CLIENT:  idx = cli_capindex;    break;
-		case MAPI_CAP_SERVER:  idx = serv_capindex;   break;
+		case MAPI_CAP_CLIENT:  idx = &cli_capindex;    break;
+		case MAPI_CAP_SERVER:  idx = &serv_capindex;   break;
 		default:
 			slog(L_MAIN, SNO_GENERAL,
 			     "Unknown/unsupported CAP index found of type %d on capability %s when unloading %s",
@@ -408,7 +408,7 @@ void fini_module__cap(struct module *const mod,
 
 	if(m->cap_id)
 	{
-		capability_orphan(idx, m->cap_name);
+		idx->orphan(m->cap_name);
 		sendto_local_clients_with_capability(CLICAP_CAP_NOTIFY, ":%s CAP * DEL :%s", me.name, m->cap_name);
 	}
 }

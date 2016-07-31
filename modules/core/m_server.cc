@@ -219,11 +219,10 @@ mr_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 	}
 
 	/* check to ensure any "required" caps are set. --nenolod */
-	required_mask = capability_index_get_required(serv_capindex);
+	required_mask = serv_capindex.required();
 	if (!IsCapable(client_p, required_mask))
 	{
-		missing = capability_index_list(serv_capindex, required_mask &
-				~client_p->localClient->caps);
+		missing = serv_capindex.list(required_mask & ~client_p->localClient->caps);
 		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 					"Link %s dropped, required CAPABs [%s] are missing",
 					name, missing);

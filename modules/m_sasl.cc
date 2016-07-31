@@ -106,14 +106,14 @@ static int
 _modinit(void)
 {
 	memset(mechlist_buf, 0, sizeof mechlist_buf);
-	CLICAP_SASL = capability_put(cli_capindex, "sasl", &capdata_sasl);
+	CLICAP_SASL = cli_capindex.put("sasl", &capdata_sasl);
 	return 0;
 }
 
 static void
 _moddeinit(void)
 {
-	capability_orphan(cli_capindex, "sasl");
+	cli_capindex.orphan("sasl");
 }
 
 DECLARE_MODULE_AV2(sasl, _modinit, _moddeinit, sasl_clist, NULL, sasl_hfnlist, NULL, NULL, sasl_desc);

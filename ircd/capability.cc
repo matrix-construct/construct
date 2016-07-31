@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 William Pitcock <nenolod@dereferenced.org>.
+ * Copyright (c) 2012 - 2016 William Pitcock <nenolod@dereferenced.org>.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,28 +22,32 @@
 #include <ircd/capability.h>
 #include <ircd/s_assert.h>
 
-static rb_dlink_list capability_indexes = { NULL, NULL, 0 };
+#include <list>
 
-struct CapabilityEntry *
-capability_find(struct CapabilityIndex *idx, const char *cap)
+// static std::list<CapabilityIndex *> capability_indexes;
+
+CapabilityIndex::CapabilityIndex(std::string name_) : name(name_), highest_bit(1)
 {
-	s_assert(idx != NULL);
-	if (cap == NULL)
-		return NULL;
+//	capability_indexes.push_back(this);
+}
 
-	return (CapabilityEntry *)rb_dictionary_retrieve(idx->cap_dict, cap);
+CapabilityIndex::~CapabilityIndex()
+{
+//	capability_indexes.erase(this);
+}
+
+std::shared_ptr<CapabilityEntry>
+CapabilityIndex::find(std::string cap)
+{
+	return cap_dict[cap];
 }
 
 unsigned int
-capability_get(struct CapabilityIndex *idx, const char *cap, void **ownerdata)
+CapabilityIndex::get(std::string cap, void **ownerdata)
 {
-	struct CapabilityEntry *entry;
+	std::shared_ptr<CapabilityEntry> entry;
 
-	s_assert(idx != NULL);
-	if (cap == NULL)
-		return 0;
-
-	entry = (CapabilityEntry *)rb_dictionary_retrieve(idx->cap_dict, cap);
+	entry = find(cap);
 	if (entry != NULL && !(entry->flags & CAP_ORPHANED))
 	{
 		if (ownerdata != NULL)
@@ -55,58 +59,50 @@ capability_get(struct CapabilityIndex *idx, const char *cap, void **ownerdata)
 }
 
 unsigned int
-capability_put(struct CapabilityIndex *idx, const char *cap, void *ownerdata)
+CapabilityIndex::put(std::string cap, void *ownerdata)
 {
-	struct CapabilityEntry *entry;
+	std::shared_ptr<CapabilityEntry> entry;
 
-	s_assert(idx != NULL);
-	if (!idx->highest_bit)
+	if (highest_bit == 0)
 		return 0xFFFFFFFF;
 
-	if ((entry = (CapabilityEntry *)rb_dictionary_retrieve(idx->cap_dict, cap)) != NULL)
+	if ((entry = find(cap)) != NULL)
 	{
 		entry->flags &= ~CAP_ORPHANED;
 		return (1 << entry->value);
 	}
 
-	entry = (CapabilityEntry *)rb_malloc(sizeof(struct CapabilityEntry));
-	entry->cap = rb_strdup(cap);
-	entry->flags = 0;
-	entry->value = idx->highest_bit;
-	entry->ownerdata = ownerdata;
+	entry = cap_dict[cap] = std::make_shared<CapabilityEntry>(cap, highest_bit, ownerdata);
 
-	rb_dictionary_add(idx->cap_dict, entry->cap, entry);
-
-	idx->highest_bit++;
-	if (idx->highest_bit % (sizeof(unsigned int) * 8) == 0)
-		idx->highest_bit = 0;
+	highest_bit++;
+	if (highest_bit % (sizeof(unsigned int) * 8) == 0)
+		highest_bit = 0;
 
 	return (1 << entry->value);
 }
 
 unsigned int
-capability_put_anonymous(struct CapabilityIndex *idx)
+CapabilityIndex::put_anonymous()
 {
 	unsigned int value;
 
-	s_assert(idx != NULL);
-	if (!idx->highest_bit)
+	if (!highest_bit)
 		return 0xFFFFFFFF;
-	value = 1 << idx->highest_bit;
-	idx->highest_bit++;
-	if (idx->highest_bit % (sizeof(unsigned int) * 8) == 0)
-		idx->highest_bit = 0;
+
+	value = 1 << highest_bit;
+	highest_bit++;
+	if (highest_bit % (sizeof(unsigned int) * 8) == 0)
+		highest_bit = 0;
+
 	return value;
 }
 
 void
-capability_orphan(struct CapabilityIndex *idx, const char *cap)
+CapabilityIndex::orphan(std::string cap)
 {
-	struct CapabilityEntry *entry;
+	std::shared_ptr<CapabilityEntry> entry;
 
-	s_assert(idx != NULL);
-
-	entry = (CapabilityEntry *)rb_dictionary_retrieve(idx->cap_dict, cap);
+	entry = cap_dict[cap];
 	if (entry != NULL)
 	{
 		entry->flags &= ~CAP_REQUIRED;
@@ -116,96 +112,43 @@ capability_orphan(struct CapabilityIndex *idx, const char *cap)
 }
 
 void
-capability_require(struct CapabilityIndex *idx, const char *cap)
+CapabilityIndex::require(std::string cap)
 {
-	struct CapabilityEntry *entry;
+	std::shared_ptr<CapabilityEntry> entry;
 
-	s_assert(idx != NULL);
-
-	entry = (CapabilityEntry *)rb_dictionary_retrieve(idx->cap_dict, cap);
+	entry = cap_dict[cap];
 	if (entry != NULL)
 		entry->flags |= CAP_REQUIRED;
 }
 
-static void
-capability_destroy(rb_dictionary_element *delem, void *privdata)
-{
-	s_assert(delem != NULL);
-
-	struct CapabilityEntry *entry = (CapabilityEntry *)delem->data;
-	rb_free((char *)entry->cap);
-	rb_free(entry);
-}
-
-struct CapabilityIndex *
-capability_index_create(const char *name)
-{
-	struct CapabilityIndex *idx;
-
-	idx = (CapabilityIndex *)rb_malloc(sizeof(struct CapabilityIndex));
-	idx->name = name;
-	idx->cap_dict = rb_dictionary_create(name, reinterpret_cast<int (*)(const void *, const void *)>(rb_strcasecmp));
-	idx->highest_bit = 1;
-
-	rb_dlinkAdd(idx, &idx->node, &capability_indexes);
-
-	return idx;
-}
-
-void
-capability_index_destroy(struct CapabilityIndex *idx)
-{
-	s_assert(idx != NULL);
-
-	rb_dlinkDelete(&idx->node, &capability_indexes);
-
-	rb_dictionary_destroy(idx->cap_dict, capability_destroy, NULL);
-	rb_free(idx);
-}
-
 const char *
-capability_index_list(struct CapabilityIndex *idx, unsigned int cap_mask)
+CapabilityIndex::list(unsigned int cap_mask)
 {
-	rb_dictionary_iter iter;
-	struct CapabilityEntry *entry;
-	static char buf[BUFSIZE];
-	char *t = buf;
-	int tl;
+	static std::string buf;
 
-	s_assert(idx != NULL);
+	buf.clear();
 
-	*t = '\0';
-
-	void *elem;
-	RB_DICTIONARY_FOREACH(elem, &iter, idx->cap_dict)
+	for (auto it = cap_dict.begin(); it != cap_dict.end(); it++)
 	{
-		entry = (CapabilityEntry *)elem;
+		auto entry = it->second;
+
 		if ((1 << entry->value) & cap_mask)
 		{
-			tl = sprintf(t, "%s ", entry->cap);
-			t += tl;
+			buf += entry->cap + " ";
 		}
 	}
 
-	t--;
-	*t = '\0';
-
-	return buf;
+	return buf.c_str();
 }
 
 unsigned int
-capability_index_mask(struct CapabilityIndex *idx)
+CapabilityIndex::mask()
 {
-	rb_dictionary_iter iter;
-	struct CapabilityEntry *entry;
 	unsigned int mask = 0;
 
-	s_assert(idx != NULL);
-
-	void *elem;
-	RB_DICTIONARY_FOREACH(elem, &iter, idx->cap_dict)
+	for (auto it = cap_dict.begin(); it != cap_dict.end(); it++)
 	{
-		entry = (CapabilityEntry *)elem;
+		auto entry = it->second;
 		if (!(entry->flags & CAP_ORPHANED))
 			mask |= (1 << entry->value);
 	}
@@ -214,18 +157,13 @@ capability_index_mask(struct CapabilityIndex *idx)
 }
 
 unsigned int
-capability_index_get_required(struct CapabilityIndex *idx)
+CapabilityIndex::required()
 {
-	rb_dictionary_iter iter;
-	struct CapabilityEntry *entry;
 	unsigned int mask = 0;
 
-	s_assert(idx != NULL);
-
-	void *elem;
-	RB_DICTIONARY_FOREACH(elem, &iter, idx->cap_dict)
+	for (auto it = cap_dict.begin(); it != cap_dict.end(); it++)
 	{
-		entry = (CapabilityEntry *)elem;
+		auto entry = it->second;
 		if (!(entry->flags & CAP_ORPHANED) && (entry->flags & CAP_REQUIRED))
 			mask |= (1 << entry->value);
 	}
@@ -236,6 +174,7 @@ capability_index_get_required(struct CapabilityIndex *idx)
 void
 capability_index_stats(void (*cb)(const char *line, void *privdata), void *privdata)
 {
+#if 0
 	rb_dlink_node *node;
 	char buf[BUFSIZE];
 
@@ -263,4 +202,5 @@ capability_index_stats(void (*cb)(const char *line, void *privdata), void *privd
 
 	snprintf(buf, sizeof buf, "%ld capability indexes", rb_dlink_list_length(&capability_indexes));
 	cb(buf, privdata);
+#endif
 }

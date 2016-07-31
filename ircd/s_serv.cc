@@ -64,8 +64,8 @@ static char buf[BUFSIZE];
  * because all servers that we talk to already do TS, and the kludged
  * extra argument to "PASS" takes care of checking that.  -orabidoo
  */
-struct CapabilityIndex *serv_capindex = NULL;
-struct CapabilityIndex *cli_capindex = NULL;
+struct CapabilityIndex serv_capindex {"server capabilities"};
+struct CapabilityIndex cli_capindex {"client capabilities"};
 
 unsigned int CAP_CAP;
 unsigned int CAP_QS;
@@ -103,46 +103,42 @@ unsigned int CLICAP_ECHO_MESSAGE;
 void
 init_builtin_capabs(void)
 {
-	serv_capindex = capability_index_create("server capabilities");
-
 	/* These two are not set via CAPAB/GCAP keywords. */
-	CAP_CAP = capability_put_anonymous(serv_capindex);
-	CAP_TS6 = capability_put_anonymous(serv_capindex);
+	CAP_CAP = serv_capindex.put_anonymous();
+	CAP_TS6 = serv_capindex.put_anonymous();
 
-	CAP_QS = capability_put(serv_capindex, "QS", NULL);
-	CAP_EX = capability_put(serv_capindex, "EX", NULL);
-	CAP_CHW = capability_put(serv_capindex, "CHW", NULL);
-	CAP_IE = capability_put(serv_capindex, "IE", NULL);
-	CAP_KLN = capability_put(serv_capindex, "KLN", NULL);
-	CAP_KNOCK = capability_put(serv_capindex, "KNOCK", NULL);
-	CAP_ZIP = capability_put(serv_capindex, "ZIP", NULL);
-	CAP_TB = capability_put(serv_capindex, "TB", NULL);
-	CAP_UNKLN = capability_put(serv_capindex, "UNKLN", NULL);
-	CAP_CLUSTER = capability_put(serv_capindex, "CLUSTER", NULL);
-	CAP_ENCAP = capability_put(serv_capindex, "ENCAP", NULL);
-	CAP_SERVICE = capability_put(serv_capindex, "SERVICES", NULL);
-	CAP_RSFNC = capability_put(serv_capindex, "RSFNC", NULL);
-	CAP_SAVE = capability_put(serv_capindex, "SAVE", NULL);
-	CAP_EUID = capability_put(serv_capindex, "EUID", NULL);
-	CAP_EOPMOD = capability_put(serv_capindex, "EOPMOD", NULL);
-	CAP_BAN = capability_put(serv_capindex, "BAN", NULL);
-	CAP_MLOCK = capability_put(serv_capindex, "MLOCK", NULL);
+	CAP_QS = serv_capindex.put("QS", NULL);
+	CAP_EX = serv_capindex.put("EX", NULL);
+	CAP_CHW = serv_capindex.put("CHW", NULL);
+	CAP_IE = serv_capindex.put("IE", NULL);
+	CAP_KLN = serv_capindex.put("KLN", NULL);
+	CAP_KNOCK = serv_capindex.put("KNOCK", NULL);
+	CAP_ZIP = serv_capindex.put("ZIP", NULL);
+	CAP_TB = serv_capindex.put("TB", NULL);
+	CAP_UNKLN = serv_capindex.put("UNKLN", NULL);
+	CAP_CLUSTER = serv_capindex.put("CLUSTER", NULL);
+	CAP_ENCAP = serv_capindex.put("ENCAP", NULL);
+	CAP_SERVICE = serv_capindex.put("SERVICES", NULL);
+	CAP_RSFNC = serv_capindex.put("RSFNC", NULL);
+	CAP_SAVE = serv_capindex.put("SAVE", NULL);
+	CAP_EUID = serv_capindex.put("EUID", NULL);
+	CAP_EOPMOD = serv_capindex.put("EOPMOD", NULL);
+	CAP_BAN = serv_capindex.put("BAN", NULL);
+	CAP_MLOCK = serv_capindex.put("MLOCK", NULL);
 
-	capability_require(serv_capindex, "QS");
-	capability_require(serv_capindex, "EX");
-	capability_require(serv_capindex, "IE");
-	capability_require(serv_capindex, "ENCAP");
+	serv_capindex.require("QS");
+	serv_capindex.require("EX");
+	serv_capindex.require("IE");
+	serv_capindex.require("ENCAP");
 
-	cli_capindex = capability_index_create("client capabilities");
-
-	CLICAP_MULTI_PREFIX = capability_put(cli_capindex, "multi-prefix", NULL);
-	CLICAP_ACCOUNT_NOTIFY = capability_put(cli_capindex, "account-notify", NULL);
-	CLICAP_EXTENDED_JOIN = capability_put(cli_capindex, "extended-join", NULL);
-	CLICAP_AWAY_NOTIFY = capability_put(cli_capindex, "away-notify", NULL);
-	CLICAP_USERHOST_IN_NAMES = capability_put(cli_capindex, "userhost-in-names", NULL);
-	CLICAP_CAP_NOTIFY = capability_put(cli_capindex, "cap-notify", NULL);
-	CLICAP_CHGHOST = capability_put(cli_capindex, "chghost", NULL);
-	CLICAP_ECHO_MESSAGE = capability_put(cli_capindex, "echo-message", NULL);
+	CLICAP_MULTI_PREFIX = cli_capindex.put("multi-prefix", NULL);
+	CLICAP_ACCOUNT_NOTIFY = cli_capindex.put("account-notify", NULL);
+	CLICAP_EXTENDED_JOIN = cli_capindex.put("extended-join", NULL);
+	CLICAP_AWAY_NOTIFY = cli_capindex.put("away-notify", NULL);
+	CLICAP_USERHOST_IN_NAMES = cli_capindex.put("userhost-in-names", NULL);
+	CLICAP_CAP_NOTIFY = cli_capindex.put("cap-notify", NULL);
+	CLICAP_CHGHOST = cli_capindex.put("chghost", NULL);
+	CLICAP_ECHO_MESSAGE = cli_capindex.put("echo-message", NULL);
 }
 
 static CNCB serv_connect_callback;
@@ -462,7 +458,7 @@ check_server(const char *name, struct Client *client_p)
 void
 send_capabilities(struct Client *client_p, unsigned int cap_can_send)
 {
-	sendto_one(client_p, "CAPAB :%s", capability_index_list(serv_capindex, cap_can_send));
+	sendto_one(client_p, "CAPAB :%s", serv_capindex.list(cap_can_send));
 }
 
 static void
@@ -770,7 +766,7 @@ show_capabilities(struct Client *target_p)
 		return msgbuf + 1;
 
 	rb_strlcat(msgbuf, " ", sizeof(msgbuf));
-	rb_strlcat(msgbuf, capability_index_list(serv_capindex, target_p->serv->caps), sizeof(msgbuf));
+	rb_strlcat(msgbuf, serv_capindex.list(target_p->serv->caps), sizeof(msgbuf));
 
 	return msgbuf + 1;
 }
