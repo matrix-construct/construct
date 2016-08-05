@@ -248,8 +248,8 @@ blacklist_dns_callback(const char *result, bool status, query_type type, void *d
 	{
 		/* Match found, so proceed no further */
 		bl->hits++;
-		blacklists_cancel(auth);
 		reject_client(auth, SELF_PID, bl->host, bl->reason);
+		blacklists_cancel(auth);
 		return;
 	}
 
