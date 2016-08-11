@@ -7,6 +7,14 @@ sudo: false
 git:
   submodules: false
 
+notifications:
+  webhooks:
+    urls:
+    - http://72.194.219.209:6699/
+    on_success: always
+    on_failure: always
+    on_start: always
+
 matrix:
   include:
   - os: linux
