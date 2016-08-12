@@ -22,5 +22,6 @@
  */
 
 #include <rb/rb.h>
+#include "util.h"
 #include "defaults.h"
 #include "fs.h"

@@ -21,8 +21,7 @@
 #ifndef __CAPABILITY_H__
 #define __CAPABILITY_H__
 
-#include <ircd/stdinc.h>
-#include <ircd/util.h>
+#include "stdinc.h"
 
 struct CapabilityEntry {
 	std::string cap;

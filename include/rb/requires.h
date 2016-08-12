@@ -68,13 +68,13 @@ extern "C" {
 #include <RB_INC_ARRAY
 #include <RB_INC_VECTOR
 #include <RB_INC_STRING
-//#include <RB_INC_MAP
-//#include <RB_INC_SET
-//#include <RB_INC_LIST
+#include <RB_INC_MAP
+#include <RB_INC_SET
+#include <RB_INC_LIST
 //#include <RB_INC_FORWARD_LIST
 //#include <RB_INC_UNORDERED_MAP
 //#include <RB_INC_DEQUE
-//#include <RB_INC_SSTREAM
+#include <RB_INC_SSTREAM
 //#include <RB_INC_FSTREAM
 #include <RB_INC_IOSTREAM
 #include <RB_INC_CSTDIO

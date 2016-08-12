@@ -1,7 +1,3 @@
-#include <map>
-#include <vector>
-#include "ircd/util.h"
-
 #pragma once
 #define HAVE_IRCD_CACHE_H
 

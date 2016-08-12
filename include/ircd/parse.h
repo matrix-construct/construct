@@ -24,10 +24,7 @@
 
 #ifndef INCLUDED_parse_h_h
 #define INCLUDED_parse_h_h
-
 #include <rb/dictionary.h>
-#include <ircd/util.h>
-#include <map>
 
 struct Message;
 struct Client;
