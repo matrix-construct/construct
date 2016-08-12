@@ -46,6 +46,8 @@
 #include <ircd/whowas.h>
 #include <ircd/sslproc.h>
 
+using namespace ircd;
+
 static const char stats_desc[] =
 	"Provides the STATS command to inspect various server/network information";
 
@@ -819,7 +821,7 @@ stats_oper(struct Client *source_p)
 }
 
 static void
-stats_capability_walk(std::string &line, void *data)
+stats_capability_walk(const std::string &line, void *data)
 {
 	struct Client *client_p = (Client *)data;
 
@@ -829,7 +831,7 @@ stats_capability_walk(std::string &line, void *data)
 static void
 stats_capability(struct Client *client_p)
 {
-	capability_stats(stats_capability_walk, client_p);
+	capability::stats(stats_capability_walk, client_p);
 }
 
 static void

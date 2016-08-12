@@ -46,8 +46,8 @@ struct server_conf;
 struct Channel;
 
 /* Capabilities */
-extern struct CapabilityIndex serv_capindex;
-extern struct CapabilityIndex cli_capindex;
+extern ircd::capability::index serv_capindex;     //TODO: namespace
+extern ircd::capability::index cli_capindex;      //TODO: namespace
 
 /* register client capabilities with this structure for 3.2 enhanced capability negotiation */
 #define CLICAP_FLAGS_STICKY    0x001

@@ -23,138 +23,127 @@
 #include <ircd/s_assert.h>
 #include <rb/format.h>
 
-static std::list<CapabilityIndex *> capability_indexes;
+using namespace ircd::capability;
 
-CapabilityIndex::CapabilityIndex(std::string name_) : name(name_), highest_bit(1)
+
+std::list<capability::index *> indexes;
+
+
+entry::entry(const std::string &cap,
+             const uint32_t &value,
+             void *const &ownerdata)
+:cap(cap)
+,value(value)
+,require(false)
+,orphan(false)
+,ownerdata(ownerdata)
 {
-	capability_indexes.push_back(this);
 }
 
-CapabilityIndex::~CapabilityIndex()
+
+index::index(const std::string &name)
+:name(name)
+,highest_bit(1)
+,indexes_it(indexes.emplace(end(indexes), this))
 {
-	for (auto it = capability_indexes.begin(); it != capability_indexes.end(); it++)
-	{
-		if (*it == this)
-		{
-			capability_indexes.erase(it);
-			break;
-		}
-	}
 }
 
-std::shared_ptr<CapabilityEntry>
-CapabilityIndex::find(std::string cap)
+index::~index()
 {
-	return cap_dict[cap];
+	indexes.erase(indexes_it);
 }
 
-unsigned int
-CapabilityIndex::get(std::string cap, void **ownerdata)
+uint32_t
+index::put(const std::string &cap,
+           void *ownerdata)
 {
-	std::shared_ptr<CapabilityEntry> entry;
-
-	entry = find(cap);
-	if (entry != NULL && !entry->orphan)
-	{
-		if (ownerdata != NULL)
-			*ownerdata = entry->ownerdata;
-		return (1 << entry->value);
-	}
-
-	return 0;
-}
-
-unsigned int
-CapabilityIndex::put(std::string cap, void *ownerdata)
-{
-	std::shared_ptr<CapabilityEntry> entry;
-
 	if (highest_bit == 0)
 		return 0xFFFFFFFF;
 
-	if ((entry = find(cap)) != NULL)
+	auto it(caps.lower_bound(cap));
+	if (it != end(caps) && it->second->cap == cap)
 	{
+		auto &entry(it->second);
 		entry->orphan = false;
-		return (1 << entry->value);
+		return 1 << entry->value;
 	}
 
-	entry = cap_dict[cap] = std::make_shared<CapabilityEntry>(cap, highest_bit, ownerdata);
+	auto entry(std::make_shared<entry>(cap, highest_bit, ownerdata));
+	caps.emplace_hint(it, cap, entry);
 
 	highest_bit++;
-	if (highest_bit % (sizeof(unsigned int) * 8) == 0)
+	if (highest_bit % (sizeof(uint32_t) * 8) == 0)
 		highest_bit = 0;
 
-	return (1 << entry->value);
+	return 1 << entry->value;
 }
 
-unsigned int
-CapabilityIndex::put_anonymous()
+uint32_t
+index::put_anonymous()
 {
-	unsigned int value;
-
 	if (!highest_bit)
 		return 0xFFFFFFFF;
 
-	value = 1 << highest_bit;
+	const uint32_t value(1 << highest_bit);
 	highest_bit++;
-	if (highest_bit % (sizeof(unsigned int) * 8) == 0)
+	if (highest_bit % (sizeof(uint32_t) * 8) == 0)
 		highest_bit = 0;
 
 	return value;
 }
 
-void
-CapabilityIndex::orphan(std::string cap)
+uint32_t
+index::get(const std::string &cap,
+           void **ownerdata)
+try
 {
-	std::shared_ptr<CapabilityEntry> entry;
+	auto &entry(caps.at(cap));
+	if (entry->orphan)
+		return 0;
 
-	entry = cap_dict[cap];
-	if (entry != NULL)
-	{
-		entry->require = false;
-		entry->orphan = true;
-		entry->ownerdata = NULL;
-	}
+	if (ownerdata != NULL)
+		*ownerdata = entry->ownerdata;
+
+	return 1 << entry->value;
+}
+catch(const std::out_of_range &e)
+{
+	return 0;
 }
 
-void
-CapabilityIndex::require(std::string cap)
+bool
+index::require(const std::string &cap)
 {
-	std::shared_ptr<CapabilityEntry> entry;
+	const auto it(caps.find(cap));
+	if (it == end(caps))
+		return false;
 
-	entry = cap_dict[cap];
-	if (entry != NULL)
-		entry->require = true;
+	auto &entry(it->second);
+	entry->require = true;
+	return true;
 }
 
-const char *
-CapabilityIndex::list(unsigned int cap_mask)
+bool
+index::orphan(const std::string &cap)
 {
-	static std::string buf;
+	const auto it(caps.find(cap));
+	if (it == end(caps))
+		return false;
 
-	buf.clear();
-
-	for (auto it = cap_dict.begin(); it != cap_dict.end(); it++)
-	{
-		auto entry = it->second;
-
-		if ((1 << entry->value) & cap_mask)
-		{
-			buf += entry->cap + " ";
-		}
-	}
-
-	return buf.c_str();
+	auto &entry(it->second);
+	entry->require = false;
+	entry->orphan = true;
+	entry->ownerdata = NULL;
+	return true;
 }
 
-unsigned int
-CapabilityIndex::mask()
+uint32_t
+index::mask()
 {
-	unsigned int mask = 0;
-
-	for (auto it = cap_dict.begin(); it != cap_dict.end(); it++)
+	uint32_t mask(0);
+	for (const auto &it : caps)
 	{
-		auto entry = it->second;
+		const auto &entry(it.second);
 		if (!entry->orphan)
 			mask |= (1 << entry->value);
 	}
@@ -162,14 +151,13 @@ CapabilityIndex::mask()
 	return mask;
 }
 
-unsigned int
-CapabilityIndex::required()
+uint32_t
+index::required()
 {
-	unsigned int mask = 0;
-
-	for (auto it = cap_dict.begin(); it != cap_dict.end(); it++)
+	uint32_t mask(0);
+	for (const auto &it : caps)
 	{
-		auto entry = it->second;
+		const auto &entry(it.second);
 		if (!entry->orphan && entry->require)
 			mask |= (1 << entry->value);
 	}
@@ -177,20 +165,34 @@ CapabilityIndex::required()
 	return mask;
 }
 
-void
-CapabilityIndex::stats(void (*cb)(std::string &line, void *privdata), void *privdata)
+std::string
+index::list(const uint32_t &cap_mask)
 {
-	std::string out = fmt::format("'{0}': {1} allocated:", name, highest_bit - 1);
+	std::stringstream buf;
+	for (const auto &it : caps)
+	{
+		const auto &entry(it.second);
+		if ((1 << entry->value) & cap_mask)
+			buf << entry->cap << " ";
+	}
 
-	for (auto it = cap_dict.begin(); it != cap_dict.end(); it++)
-		out += fmt::format(" {0}<{1}>", it->first, it->second->value);
+	return buf.str();
+}
+
+void
+index::stats(void (*cb)(const std::string &line, void *privdata), void *privdata)
+const
+{
+	std::string out(fmt::format("'{0}': {1} allocated:", name, highest_bit - 1));
+	for (const auto &it : caps)
+		out += fmt::format(" {0}<{1}>", it.first, it.second->value);
 
 	cb(out, privdata);
 }
 
 void
-capability_stats(void (*cb)(std::string &line, void *privdata), void *privdata)
+capability::stats(void (*cb)(const std::string &line, void *privdata), void *privdata)
 {
-	for (auto it = capability_indexes.begin(); it != capability_indexes.end(); it++)
-		(*it)->stats(cb, privdata);
+	for (const auto &index : indexes)
+		index->stats(cb, privdata);
 }

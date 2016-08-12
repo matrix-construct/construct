@@ -76,7 +76,6 @@ mr_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 	struct Client *target_p;
 	int hop;
 	unsigned int required_mask;
-	const char *missing;
 	int ret;
 
 	name = parv[1];
@@ -222,18 +221,18 @@ mr_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 	required_mask = serv_capindex.required();
 	if (!IsCapable(client_p, required_mask))
 	{
-		missing = serv_capindex.list(required_mask & ~client_p->localClient->caps);
+		const auto missing(serv_capindex.list(required_mask & ~client_p->localClient->caps));
 		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 					"Link %s dropped, required CAPABs [%s] are missing",
-					name, missing);
+					name, missing.c_str());
 		ilog(L_SERVER, "Link %s%s dropped, required CAPABs [%s] are missing",
 				EmptyString(client_p->name) ? name : "",
-				log_client_name(client_p, SHOW_IP), missing);
+				log_client_name(client_p, SHOW_IP), missing.c_str());
 		/* Do not use '[' in the below message because it would cause
 		 * it to be considered potentially unsafe (might disclose IP
 		 * addresses)
 		 */
-		sendto_one(client_p, "ERROR :Missing required CAPABs (%s)", missing);
+		sendto_one(client_p, "ERROR :Missing required CAPABs (%s)", missing.c_str());
 		exit_client(client_p, client_p, client_p, "Missing required CAPABs");
 
 		return;

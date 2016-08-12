@@ -364,7 +364,9 @@ static
 bool init_module__cap(struct module *const mod,
                       mapi_cap_list_av2 *const m)
 {
-	struct CapabilityIndex *idx;
+	using ircd::capability::index;
+
+	index *idx;
 	switch(m->cap_index)
 	{
 		case MAPI_CAP_CLIENT:  idx = &cli_capindex;    break;
@@ -392,7 +394,9 @@ static
 void fini_module__cap(struct module *const mod,
                       mapi_cap_list_av2 *const m)
 {
-	struct CapabilityIndex *idx;
+	using ircd::capability::index;
+
+	index *idx;
 	switch(m->cap_index)
 	{
 		case MAPI_CAP_CLIENT:  idx = &cli_capindex;    break;
