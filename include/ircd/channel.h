@@ -43,6 +43,11 @@
 /* mode structure for channels */
 struct Mode
 {
+	static constexpr size_t KEYLEN
+	{
+		24  // 23+1 for \0
+	};
+
 	unsigned int mode;
 	int limit;
 	char key[KEYLEN];

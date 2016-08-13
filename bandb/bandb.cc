@@ -29,8 +29,9 @@
  */
 #include <rb/rb.h>
 #include "rsdb.h"
-#include <ircd/defaults.h>
 
+#include <ircd/defaults.h>
+using namespace ircd;
 
 #define MAXPARA 10
 
