@@ -31,6 +31,8 @@
 #include <ircd/parse.h>
 #include <ircd/modules.h>
 
+using namespace ircd;
+
 static const char close_desc[] = "Provides the CLOSE command to clear all unfinished connections";
 
 static void mo_close(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

@@ -21,11 +21,15 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  */
-#ifndef INCLUDED_whowas_h
-#define INCLUDED_whowas_h
+
+#pragma once
+#define HAVE_IRCD_WHOWAS_H
 
 #include "stdinc.h"
 #include "client.h"
+
+#ifdef __cplusplus
+namespace ircd {
 
 struct User;
 struct Client;
@@ -94,4 +98,5 @@ rb_dlink_list *whowas_get_list(const char *name);
 void whowas_set_size(int whowas_length);
 void whowas_memory_usage(size_t *count, size_t *memused);
 
-#endif /* INCLUDED_whowas_h */
+}      // namespace ircd
+#endif // __cplusplus

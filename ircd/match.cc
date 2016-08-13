@@ -24,6 +24,8 @@
 #include <ircd/match.h>
 #include <ircd/s_assert.h>
 
+namespace ircd {
+
 /*
  * Compare if a given string (name) matches the given
  * mask (which can contain wild cards: '*' - match any
@@ -928,3 +930,6 @@ const unsigned int CharAttrs[] = {
 /* 0xFE */ CHAN_C | NONEOS_C,
 /* 0xFF */ CHAN_C | NONEOS_C
 };
+
+
+} // namespace ircd

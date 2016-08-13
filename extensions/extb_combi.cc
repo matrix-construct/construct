@@ -42,6 +42,8 @@
 #include <ircd/client.h>
 #include <ircd/ircd.h>
 
+using namespace ircd;
+
 static const char extb_desc[] = "Combination ($&, $|) extban types";
 
 // #define MOD_DEBUG(s) sendto_realops_snomask(SNO_DEBUG, L_NETWIDE, (s))

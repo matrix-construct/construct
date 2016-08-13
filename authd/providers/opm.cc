@@ -18,10 +18,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/stdinc.h>
 #include "authd.h"
 #include "notice.h"
 #include "provider.h"
+
+using namespace ircd::defaults;
 
 #define SELF_PID (opm_provider.id)
 

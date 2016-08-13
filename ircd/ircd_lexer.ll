@@ -34,19 +34,17 @@
 
 using namespace ircd;
 
-void yyerror(const char *);
-
 YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
 int include_stack_ptr=0;
-int lineno = 1;
+int ircd::lineno = 1;
 void ccomment(void);
 void cinclude(void);
 void hashcomment(void);
 int ieof(void);
 int lineno_stack[MAX_INCLUDE_DEPTH];
 char conffile_stack[MAX_INCLUDE_DEPTH][BUFSIZE];
-char conffilebuf[BUFSIZE+1];
-char *current_file = conffilebuf;
+char ircd::conffilebuf[BUFSIZE+1];
+char *ircd::current_file = ircd::conffilebuf;
 
 FILE *inc_fbfile_in[MAX_INCLUDE_DEPTH];
 
@@ -57,7 +55,7 @@ char yy_linebuf[16384];
 #define YY_FATAL_ERROR(msg) conf_yy_fatal_error(msg)
 
 #define YY_INPUT(buf,result,max_size) \
-  if (!(result = conf_fgets(buf, max_size, conf_fbfile_in))) \
+  if (!(result = ircd::conf_fgets(buf, max_size, ircd::conf_fbfile_in))) \
     YY_FATAL_ERROR("input in flex scanner failed");
 %}
 
@@ -203,7 +201,7 @@ void cinclude(void)
     lineno = 1;
     inc_fbfile_in[include_stack_ptr] = conf_fbfile_in;
     strcpy(conffile_stack[include_stack_ptr], c);
-    current_file = conffile_stack[include_stack_ptr];
+    ircd::current_file = conffile_stack[include_stack_ptr];
     include_stack[include_stack_ptr++] = YY_CURRENT_BUFFER;
     conf_fbfile_in = tmp_fbfile_in;
     yy_switch_to_buffer(yy_create_buffer(yyin, YY_BUF_SIZE));
@@ -228,9 +226,9 @@ int ieof(void)
   conf_fbfile_in = inc_fbfile_in[include_stack_ptr];
 
   if(include_stack_ptr)
-    current_file = conffile_stack[include_stack_ptr];
+    ircd::current_file = conffile_stack[include_stack_ptr];
   else
-    current_file = conffilebuf;
+    ircd::current_file = conffilebuf;
 
   yy_switch_to_buffer(include_stack[include_stack_ptr]);
   return 0;
@@ -245,5 +243,5 @@ void hashcomment(void)
     return;
 
   if (!rb_strncasecmp(yytext, INCLUDE, sizeof(INCLUDE) - 1))
-      yyerror("You probably meant '.include', skipping");
+      ircd::yyerror("You probably meant '.include', skipping");
 }

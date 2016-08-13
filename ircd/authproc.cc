@@ -38,6 +38,8 @@
 #include <ircd/msg.h>
 #include <ircd/dns.h>
 
+using namespace ircd;
+
 typedef void (*authd_cb_t)(int, char **);
 
 struct authd_cb
@@ -58,17 +60,17 @@ static void cmd_notice_client(int parc, char **parv);
 static void cmd_oper_warn(int parc, char **parv);
 static void cmd_stats_results(int parc, char **parv);
 
-rb_helper *authd_helper;
+rb_helper *ircd::authd_helper;
 static char *authd_path;
 
 uint32_t cid;
 static rb_dictionary *cid_clients;
 static struct ev_entry *timeout_ev;
 
-rb_dictionary *bl_stats;
+rb_dictionary *ircd::bl_stats;
 
-rb_dlink_list opm_list;
-struct OPMListener opm_listeners[LISTEN_LAST];
+rb_dlink_list ircd::opm_list;
+struct OPMListener ircd::opm_listeners[LISTEN_LAST];
 
 std::array<authd_cb, 256> authd_cmd_tab =
 []{
@@ -305,7 +307,7 @@ parse_authd_reply(rb_helper * helper)
 }
 
 void
-init_authd(void)
+ircd::init_authd(void)
 {
 	if(start_authd())
 	{
@@ -315,7 +317,7 @@ init_authd(void)
 }
 
 void
-configure_authd(void)
+ircd::configure_authd(void)
 {
 	/* Timeouts */
 	set_authd_timeout("ident_timeout", GlobalSetOptions.ident_timeout);
@@ -378,7 +380,7 @@ authd_free_client_cb(rb_dictionary_element *delem, void *unused)
 }
 
 void
-authd_abort_client(struct Client *client_p)
+ircd::authd_abort_client(struct Client *client_p)
 {
 	rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(client_p->preClient->auth.cid));
 	authd_free_client(client_p);
@@ -407,20 +409,20 @@ restart_authd_cb(rb_helper * helper)
 }
 
 void
-restart_authd(void)
+ircd::restart_authd(void)
 {
 	ierror("authd restarting...");
 	restart_authd_cb(authd_helper);
 }
 
 void
-rehash_authd(void)
+ircd::rehash_authd(void)
 {
 	rb_helper_write(authd_helper, "R");
 }
 
 void
-check_authd(void)
+ircd::check_authd(void)
 {
 	if(authd_helper == NULL)
 		restart_authd();
@@ -450,7 +452,7 @@ generate_cid(void)
  * could then be processed too early by read_packet().
  */
 void
-authd_initiate_client(struct Client *client_p, bool defer)
+ircd::authd_initiate_client(struct Client *client_p, bool defer)
 {
 	char client_ipaddr[HOSTIPLEN+1];
 	char listen_ipaddr[HOSTIPLEN+1];
@@ -535,7 +537,7 @@ authd_decide_client(struct Client *client_p, const char *ident, const char *host
 }
 
 void
-authd_deferred_client(struct Client *client_p)
+ircd::authd_deferred_client(struct Client *client_p)
 {
 	client_p->preClient->auth.flags &= ~AUTHC_F_DEFERRED;
 	if(client_p->preClient->auth.flags & AUTHC_F_COMPLETE)
@@ -544,14 +546,14 @@ authd_deferred_client(struct Client *client_p)
 
 /* Convenience function to accept client */
 void
-authd_accept_client(struct Client *client_p, const char *ident, const char *host)
+ircd::authd_accept_client(struct Client *client_p, const char *ident, const char *host)
 {
 	authd_decide_client(client_p, ident, host, true, '\0', NULL, NULL);
 }
 
 /* Convenience function to reject client */
 void
-authd_reject_client(struct Client *client_p, const char *ident, const char *host, char cause, const char *data, const char *reason)
+ircd::authd_reject_client(struct Client *client_p, const char *ident, const char *host, char cause, const char *data, const char *reason)
 {
 	authd_decide_client(client_p, ident, host, false, cause, data, reason);
 }
@@ -585,7 +587,7 @@ timeout_dead_authd_clients(void *notused __unused)
 
 /* Send a new blacklist to authd */
 void
-add_blacklist(const char *host, const char *reason, uint8_t iptype, rb_dlink_list *filters)
+ircd::add_blacklist(const char *host, const char *reason, uint8_t iptype, rb_dlink_list *filters)
 {
 	rb_dlink_node *ptr;
 	struct BlacklistStats *stats = (BlacklistStats *)rb_malloc(sizeof(struct BlacklistStats));
@@ -624,7 +626,7 @@ add_blacklist(const char *host, const char *reason, uint8_t iptype, rb_dlink_lis
 
 /* Delete a blacklist */
 void
-del_blacklist(const char *host)
+ircd::del_blacklist(const char *host)
 {
 	struct BlacklistStats *stats = (BlacklistStats *)rb_dictionary_retrieve(bl_stats, host);
 	if(stats != NULL)
@@ -648,7 +650,7 @@ blacklist_delete(rb_dictionary_element *delem, void *unused)
 
 /* Delete all the blacklists */
 void
-del_blacklist_all(void)
+ircd::del_blacklist_all(void)
 {
 	if(bl_stats != NULL)
 		rb_dictionary_destroy(bl_stats, blacklist_delete, NULL);
@@ -659,7 +661,7 @@ del_blacklist_all(void)
 
 /* Adjust an authd timeout value */
 bool
-set_authd_timeout(const char *key, int timeout)
+ircd::set_authd_timeout(const char *key, int timeout)
 {
 	if(timeout <= 0)
 		return false;
@@ -670,7 +672,7 @@ set_authd_timeout(const char *key, int timeout)
 
 /* Enable identd checks */
 void
-ident_check_enable(bool enabled)
+ircd::ident_check_enable(bool enabled)
 {
 	rb_helper_write(authd_helper, "O ident_enabled %d", enabled ? 1 : 0);
 }
@@ -680,7 +682,7 @@ ident_check_enable(bool enabled)
  * configure_authd() is called.
  */
 void
-conf_create_opm_listener(const char *ip, uint16_t port)
+ircd::conf_create_opm_listener(const char *ip, uint16_t port)
 {
 	char ipbuf[HOSTIPLEN];
 	struct OPMListener *listener;
@@ -699,7 +701,7 @@ conf_create_opm_listener(const char *ip, uint16_t port)
 }
 
 void
-create_opm_listener(const char *ip, uint16_t port)
+ircd::create_opm_listener(const char *ip, uint16_t port)
 {
 	char ipbuf[HOSTIPLEN];
 
@@ -716,7 +718,7 @@ create_opm_listener(const char *ip, uint16_t port)
 }
 
 void
-delete_opm_listener_all(void)
+ircd::delete_opm_listener_all(void)
 {
 	memset(&opm_listeners, 0, sizeof(opm_listeners));
 	rb_helper_write(authd_helper, "O opm_listener_del_all");
@@ -724,7 +726,7 @@ delete_opm_listener_all(void)
 
 /* Disable all OPM scans */
 void
-opm_check_enable(bool enabled)
+ircd::opm_check_enable(bool enabled)
 {
 	rb_helper_write(authd_helper, "O opm_enabled %d", enabled ? 1 : 0);
 }
@@ -734,7 +736,7 @@ opm_check_enable(bool enabled)
  * configure_authd() is called.
  */
 void
-conf_create_opm_proxy_scanner(const char *type, uint16_t port)
+ircd::conf_create_opm_proxy_scanner(const char *type, uint16_t port)
 {
 	struct OPMScanner *scanner = (OPMScanner *)rb_malloc(sizeof(struct OPMScanner));
 
@@ -744,14 +746,14 @@ conf_create_opm_proxy_scanner(const char *type, uint16_t port)
 }
 
 void
-create_opm_proxy_scanner(const char *type, uint16_t port)
+ircd::create_opm_proxy_scanner(const char *type, uint16_t port)
 {
 	conf_create_opm_proxy_scanner(type, port);
 	rb_helper_write(authd_helper, "O opm_scanner %s %hu", type, port);
 }
 
 void
-delete_opm_proxy_scanner(const char *type, uint16_t port)
+ircd::delete_opm_proxy_scanner(const char *type, uint16_t port)
 {
 	rb_dlink_node *ptr, *nptr;
 
@@ -772,7 +774,7 @@ delete_opm_proxy_scanner(const char *type, uint16_t port)
 }
 
 void
-delete_opm_proxy_scanner_all(void)
+ircd::delete_opm_proxy_scanner_all(void)
 {
 	rb_dlink_node *ptr, *nptr;
 

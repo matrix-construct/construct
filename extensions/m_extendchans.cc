@@ -31,6 +31,8 @@
 #include <ircd/send.h>
 #include <ircd/numeric.h>
 
+using namespace ircd;
+
 static const char extendchans_desc[] =
 	"Allow an oper or service to let a given user join more channels";
 

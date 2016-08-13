@@ -22,9 +22,13 @@
  *  USA
  */
 
-#ifndef INCLUDED_ircd_signal_h
-#define INCLUDED_ircd_signal_h
+#pragma once
+#define HAVE_IRCD_SIGNAL_H
+
+#ifdef __cplusplus
+namespace ircd {
 
 extern void setup_signals(void);
 
-#endif /* INCLUDED_ircd_signal_h */
+}      // namespace ircd
+#endif // __cplusplus

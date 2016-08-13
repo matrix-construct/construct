@@ -15,6 +15,8 @@
 #include <ircd/s_serv.h>
 #include <ircd/numeric.h>
 
+using namespace ircd;
+
 static const char extb_desc[] = "Usermode ($m) extban type";
 
 static int _modinit(void);

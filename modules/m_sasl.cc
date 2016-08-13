@@ -40,6 +40,8 @@
 #include <ircd/s_newconf.h>
 #include <ircd/s_conf.h>
 
+using namespace ircd;
+
 static const char sasl_desc[] = "Provides SASL authentication support";
 
 static void m_authenticate(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

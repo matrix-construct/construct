@@ -5,10 +5,14 @@
  * Copyright (C) 2005 Lee Hardy <lee -at- leeh.co.uk>
  * Copyright (C) 2005 ircd-ratbox development team
  */
-#ifndef INCLUDED_monitor_h
-#define INCLUDED_monitor_h
+
+#pragma once
+#define HAVE_IRCD_MONITOR_H
 
 struct rb_bh;
+
+#ifdef __cplusplus
+namespace ircd {
 
 struct monitor
 {
@@ -30,4 +34,5 @@ void clear_monitor(struct Client *);
 void monitor_signon(struct Client *);
 void monitor_signoff(struct Client *);
 
-#endif
+}      // namespace ircd
+#endif // __cplusplus

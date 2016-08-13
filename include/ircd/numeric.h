@@ -22,11 +22,14 @@
  *  USA
  */
 
-#ifndef INCLUDED_numeric_h
-#define INCLUDED_numeric_h
+#pragma once
+#define HAVE_IRCD_NUMERIC_H
 
 #include "defaults.h"
 #include "messages.h"
+
+#ifdef __cplusplus
+namespace ircd {
 
 /*
  * Reserve numerics 000-099 for server-client connections where the client
@@ -386,4 +389,5 @@
 
 #define ERR_LAST_ERR_MSG     999
 
-#endif /* INCLUDED_numeric_h */
+}      // namespace ircd
+#endif // __cplusplus

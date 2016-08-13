@@ -26,6 +26,8 @@
 #include <ircd/ircd.h>
 #include <ircd/send.h>
 
+using namespace ircd;
+
 static const char spy_desc[] = "Sends a notice when someone uses LINKS";
 
 void show_links(hook_data *);

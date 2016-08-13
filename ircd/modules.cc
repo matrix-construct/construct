@@ -37,6 +37,8 @@
 #include <ircd/capability.h>
 #include <ltdl.h>
 
+namespace ircd {
+
 #ifndef LT_MODULE_EXT
 #	error "Charybdis requires loadable module support."
 #endif
@@ -894,3 +896,6 @@ unload_one_module(const char *name, bool warn)
 	free_module(&mod);
 	return true;
 }
+
+
+} // namespace ircd

@@ -30,8 +30,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDED_s_newconf_h
-#define INCLUDED_s_newconf_h
+#pragma once
+#define HAVE_IRCD_S_NEWCONF_H
 
 #include "stdinc.h"
 #include "privilege.h"
@@ -39,6 +39,9 @@
 #ifdef HAVE_LIBCRYPTO
 #include <openssl/rsa.h>
 #endif
+
+#ifdef __cplusplus
+namespace ircd {
 
 struct ConfItem;
 
@@ -255,5 +258,5 @@ extern void add_nd_entry(const char *name);
 extern void free_nd_entry(struct nd_entry *);
 extern unsigned long get_nd_count(void);
 
-#endif
-
+}      // namespace ircd
+#endif // __cplusplus

@@ -43,6 +43,8 @@
 #include <ircd/logger.h>
 #include <ircd/dns.h>
 
+namespace ircd {
+
 rb_dlink_list shared_conf_list;
 rb_dlink_list cluster_conf_list;
 rb_dlink_list oper_conf_list;
@@ -899,3 +901,6 @@ find_tgchange(const char *host)
 
 	return NULL;
 }
+
+
+} // namespace ircd

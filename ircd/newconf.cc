@@ -29,6 +29,8 @@
 #include <ircd/chmode.h>
 #include <ircd/certfp.h>
 
+namespace ircd {
+
 #define CF_TYPE(x) ((x) & CF_MTYPE)
 
 static int yy_defer_accept = 1;
@@ -2921,3 +2923,5 @@ newconf_init()
 	add_conf_item("opm", "httpconnect_ports", CF_INT | CF_FLIST, conf_set_opm_scan_ports_httpconnect);
 	add_conf_item("opm", "httpsconnect_ports", CF_INT | CF_FLIST, conf_set_opm_scan_ports_httpsconnect);
 }
+
+} // namespace ircd

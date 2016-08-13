@@ -47,6 +47,8 @@
 #include <ircd/match.h>
 #include <ircd/s_user.h>
 
+using namespace ircd;
+
 static const char signon_desc[] = "Provides account login/logout support for services";
 
 static void me_svslogin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

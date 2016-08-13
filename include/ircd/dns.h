@@ -23,11 +23,14 @@
  *  USA
  */
 
-#ifndef CHARYBDIS_DNS_H
-#define CHARYBDIS_DNS_H
+#pragma once
+#define HAVE_IRCD_DNS_H
 
 #include "stdinc.h"
 #include "authproc.h"
+
+#ifdef __cplusplus
+namespace ircd {
 
 extern rb_dlink_list nameservers;
 
@@ -45,4 +48,5 @@ void dns_stats_results_callback(const char *callid, const char *status, int resc
 void init_dns(void);
 void reload_nameservers(void);
 
-#endif
+}      // namespace ircd
+#endif // __cplusplus

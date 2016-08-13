@@ -22,11 +22,15 @@
  *  USA
  */
 
-#ifndef INCLUDED_packet_h
-#define INCLUDED_packet_h
+#pragma once
+#define HAVE_IRCD_PACKET_H
+
+#ifdef __cplusplus
+namespace ircd {
 
 extern PF read_packet;
 extern EVH flood_recalc;
 extern void flood_endgrace(struct Client *);
 
-#endif /* INCLUDED_packet_h */
+}      // namespace ircd
+#endif // __cplusplus

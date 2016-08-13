@@ -22,10 +22,13 @@
  *  USA
  */
 
-#ifndef INCLUDED_listener_h
-#define INCLUDED_listener_h
+#pragma once
+#define HAVE_IRCD_LISTENER_H
 
 #include "stdinc.h"
+
+#ifdef __cplusplus
+namespace ircd {
 
 struct Client;
 
@@ -50,4 +53,5 @@ extern const char *get_listener_name(const struct Listener *listener);
 extern void show_ports(struct Client *client);
 extern void free_listener(struct Listener *);
 
-#endif /* INCLUDED_listener_h */
+}      // namespace ircd
+#endif // __cplusplus

@@ -43,6 +43,8 @@
 #include <ircd/ratelimit.h>
 #include <ircd/s_assert.h>
 
+using namespace ircd;
+
 static const char whois_desc[] =
 	"Provides the WHOIS command to display information about a user";
 

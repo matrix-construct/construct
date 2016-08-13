@@ -38,6 +38,8 @@
 #include <ircd/newconf.h>
 #include "spamfilter.h"
 
+using namespace ircd;
+
 
 /* Conf items & defaults */
 size_t conf_limit            = 5;

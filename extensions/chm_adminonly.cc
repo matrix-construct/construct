@@ -10,6 +10,8 @@
 #include <ircd/numeric.h>
 #include <ircd/chmode.h>
 
+using namespace ircd;
+
 static const char chm_adminonly_desc[] =
 	"Enables channel mode +A that blocks non-admins from joining a channel";
 

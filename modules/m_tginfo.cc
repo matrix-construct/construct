@@ -38,6 +38,8 @@
 #include <ircd/modules.h>
 #include <ircd/s_newconf.h> /* add_tgchange */
 
+using namespace ircd;
+
 static const char tginfo_desc[] = "Processes target change notifications from other servers";
 
 static void me_tginfo(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

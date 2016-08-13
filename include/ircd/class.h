@@ -22,8 +22,11 @@
  *  USA
  */
 
-#ifndef INCLUDED_class_h
-#define INCLUDED_class_h
+#pragma once
+#define HAVE_IRCD_CLASS_H
+
+#ifdef __cplusplus
+namespace ircd {
 
 struct ConfItem;
 struct Client;
@@ -95,4 +98,5 @@ extern void free_class(struct Class *);
 extern void fix_class(struct ConfItem *, struct ConfItem *);
 extern void report_classes(struct Client *);
 
-#endif /* INCLUDED_class_h */
+}      // namespace ircd
+#endif // __cplusplus

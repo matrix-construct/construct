@@ -35,6 +35,8 @@
 #include <ircd/modules.h>
 #include <ircd/messages.h>
 
+using namespace ircd;
+
 static const char ojoin_desc[] = "Allow admins to forcibly join channels with the OJOIN command";
 
 static void mo_ojoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);

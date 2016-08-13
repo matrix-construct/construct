@@ -32,6 +32,8 @@
 #include <ircd/logger.h>
 #include <ircd/s_conf.h>
 
+using namespace ircd;
+
 static const char error_desc[] =
 	"Provides the ERROR command for clients and servers";
 

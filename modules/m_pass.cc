@@ -35,6 +35,8 @@
 #include <ircd/hash.h>
 #include <ircd/s_conf.h>
 
+using namespace ircd;
+
 static const char pass_desc[] = "Provides the PASS command to authenticate clients and servers";
 
 static void mr_pass(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

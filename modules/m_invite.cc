@@ -38,6 +38,8 @@
 #include <ircd/packet.h>
 #include <ircd/tgchange.h>
 
+using namespace ircd;
+
 static const char invite_desc[] = "Provides facilities for invite and related notifications";
 
 static void m_invite(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

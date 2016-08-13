@@ -35,6 +35,8 @@
 #include <ircd/s_conf.h>
 #include <ircd/s_serv.h>
 
+using namespace ircd;
+
 static const char ping_desc[] =
 	"Provides the PING command to ensure a client or server is still alive";
 

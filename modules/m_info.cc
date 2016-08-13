@@ -38,6 +38,8 @@
 #include <ircd/parse.h>
 #include <ircd/modules.h>
 
+using namespace ircd;
+
 static const char info_desc[] =
 	"Provides the INFO command for retrieving server copyright, credits, and other info";
 

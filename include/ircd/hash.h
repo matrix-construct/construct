@@ -22,11 +22,14 @@
  *  USA
  */
 
-#ifndef INCLUDED_hash_h
-#define INCLUDED_hash_h
+#pragma once
+#define HAVE_IRCD_HASH_H
 
 #include <rb/dictionary.h>
 #include <rb/radixtree.h>
+
+#ifdef __cplusplus
+namespace ircd {
 
 extern rb_dictionary *nd_dict;
 extern rb_radixtree *resv_tree;
@@ -98,4 +101,5 @@ void add_to_cli_connid_hash(struct Client *client_p, uint32_t id);
 void del_from_cli_connid_hash(uint32_t id);
 struct Client *find_cli_connid_hash(uint32_t connid);
 
-#endif /* INCLUDED_hash_h */
+}      // namespace ircd
+#endif // __cplusplus

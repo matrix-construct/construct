@@ -38,6 +38,8 @@
 #include <ircd/modules.h>
 #include <ircd/s_newconf.h>
 
+using namespace ircd;
+
 static const char kill_desc[] = "Provides the KILL command to remove a user from the network";
 
 static int h_can_kill;

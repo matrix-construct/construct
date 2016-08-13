@@ -30,6 +30,7 @@
 #include "exception.h"
 
 #ifdef __cplusplus
+namespace ircd {
 
 struct Client;
 
@@ -108,4 +109,5 @@ extern int maxconnections;
 
 void ircd_shutdown(const char *reason) __attribute__((noreturn));
 
+}      // namespace ircd
 #endif // __cplusplus

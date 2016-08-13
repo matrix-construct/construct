@@ -34,6 +34,8 @@
 #include <ircd/packet.h>
 #include <ircd/logger.h>
 
+using namespace ircd;
+
 static const char modules_desc[] = "Provides module management commands";
 
 static void m_modlist(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

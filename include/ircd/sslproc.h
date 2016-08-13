@@ -19,8 +19,11 @@
  *  USA
  */
 
-#ifndef INCLUDED_sslproc_h
-#define INCLUDED_sslproc_h
+#pragma once
+#define HAVE_IRCD_SSLPROC_H
+
+#ifdef __cplusplus
+namespace ircd {
 
 struct _ssl_ctl;
 typedef struct _ssl_ctl ssl_ctl_t;
@@ -42,4 +45,5 @@ void ssld_decrement_clicount(ssl_ctl_t *ctl);
 int get_ssld_count(void);
 void ssld_foreach_info(void (*func)(void *data, pid_t pid, int cli_count, enum ssld_status status, const char *version), void *data);
 
-#endif
+}      // namespace ircd
+#endif // __cplusplus

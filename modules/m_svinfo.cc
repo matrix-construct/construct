@@ -34,6 +34,8 @@
 #include <ircd/parse.h>
 #include <ircd/modules.h>
 
+using namespace ircd;
+
 static const char svinfo_desc[] =
 	"Provides TS6 SVINFO command to ensure version and clock synchronisation";
 

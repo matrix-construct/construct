@@ -27,6 +27,8 @@
 #include <ircd/ratelimit.h>
 #include <ircd/s_assert.h>
 
+namespace ircd {
+
 /*
  * ratelimit_client(struct Client *client_p, int penalty)
  *
@@ -131,3 +133,6 @@ void credit_client_join(struct Client *client_p)
 
 	++client_p->localClient->join_who_credits;
 }
+
+
+} // namespace ircd

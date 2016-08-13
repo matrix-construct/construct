@@ -15,6 +15,8 @@
 #include <ircd/s_conf.h>
 #include <ircd/s_newconf.h>
 
+using namespace ircd;
+
 static const char noi_desc[] =
 	"Do not allow users to remove user mode +i unless they are operators";
 

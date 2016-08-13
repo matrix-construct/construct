@@ -41,6 +41,8 @@
 #include <ircd/hash.h>
 #include <ircd/s_serv.h>
 
+using namespace ircd;
+
 static const char tb_desc[] =
 	"Provides TS6 TB and ETB commands for topic bursting between servers";
 

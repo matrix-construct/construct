@@ -22,10 +22,13 @@
  *  USA
  */
 
-#ifndef INCLUDED_send_h
-#define INCLUDED_send_h
+#pragma once
+#define HAVE_IRCD_SEND_H
 
 #include <rb/rb.h>
+
+#ifdef __cplusplus
+namespace ircd {
 
 struct Client;
 struct Channel;
@@ -100,4 +103,5 @@ extern void kill_client_serv_butone(struct Client *one, struct Client *source_p,
 #define MATCH_SERVER  1
 #define MATCH_HOST    2
 
-#endif /* INCLUDED_send_h */
+}      // namespace ircd
+#endif // __cplusplus

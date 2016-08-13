@@ -21,12 +21,15 @@
  *  USA
  */
 
-#ifndef INCLUDED_tgchange_h
-#define INCLUDED_tgchange_h
+#pragma once
+#define HAVE_IRCD_TGCHANGE_H
 
 #include "defaults.h"
 #include "client.h"
 #include "channel.h"
+
+#ifdef __cplusplus
+namespace ircd {
 
 /* finds a channel where source_p has op or voice and target_p is a member */
 struct Channel *find_allowing_channel(struct Client *source_p, struct Client *target_p);
@@ -37,4 +40,5 @@ int add_channel_target(struct Client *source_p, struct Channel *chptr);
 /* allows source_p to send to target_p */
 void add_reply_target(struct Client *source_p, struct Client *target_p);
 
-#endif /* INCLUDED_tgchange_h */
+}      // namespace ircd
+#endif // __cplusplus

@@ -34,6 +34,8 @@
 #include <ircd/hook.h>
 #include <ircd/modules.h>
 
+using namespace ircd;
+
 const char admin_desc[] =
 	"Provides the ADMIN command to show server administrator information";
 

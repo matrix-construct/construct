@@ -18,12 +18,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/stdinc.h>
 #include "authd.h"
 #include "provider.h"
 #include "notice.h"
 #include "res.h"
 #include "dns.h"
+
+using namespace ircd::defaults;
 
 #define SELF_PID (rdns_provider.id)
 

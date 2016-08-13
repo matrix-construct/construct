@@ -43,6 +43,8 @@
 #include <ircd/bandbi.h>
 #include <ircd/operhash.h>
 
+using namespace ircd;
+
 static const char kline_desc[] = "Provides the KLINE facility to ban users via hostmask";
 
 static void mo_kline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

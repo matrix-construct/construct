@@ -30,6 +30,8 @@
 
 #define USER_COL       50	/* display | Users: %d at col 50 */
 
+using namespace ircd;
+
 static const char map_desc[] = "Provides the MAP command to view network topology information";
 
 static void m_map(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);

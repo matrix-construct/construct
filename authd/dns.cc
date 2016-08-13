@@ -23,6 +23,8 @@
 #include "notice.h"
 #include "res.h"
 
+using namespace ircd::defaults;
+
 static void handle_lookup_ip_reply(void *data, struct DNSReply *reply);
 static void handle_lookup_hostname_reply(void *data, struct DNSReply *reply);
 

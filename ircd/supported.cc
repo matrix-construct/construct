@@ -80,6 +80,8 @@
 #include <ircd/chmode.h>
 #include <ircd/send.h>
 
+namespace ircd {
+
 rb_dlink_list isupportlist;
 
 struct isupportitem
@@ -335,4 +337,6 @@ init_isupport(void)
 	add_isupport("TARGMAX", isupport_targmax, NULL);
 	add_isupport("EXTBAN", isupport_extban, NULL);
 	add_isupport("CLIENTVER", isupport_string, "3.0");
+}
+
 }

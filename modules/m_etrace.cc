@@ -49,6 +49,8 @@
 #include <ircd/logger.h>
 #include <ircd/supported.h>
 
+using namespace ircd;
+
 static const char etrace_desc[] =
     "Provides enhanced tracing facilities to opers (ETRACE, CHANTRACE, and MASKTRACE)";
 

@@ -22,6 +22,8 @@
 #include <ircd/privilege.h>
 #include <ircd/s_newconf.h>
 
+using namespace ircd;
+
 static const char override_desc[] =
 	"Adds user mode +p, an operator-only user mode that grants temporary privileges to override anything";
 

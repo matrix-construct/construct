@@ -36,6 +36,8 @@
 #include <ircd/s_newconf.h>
 #include <ircd/hash.h>
 
+using namespace ircd;
+
 static const char die_desc[] = "Provides the DIE command to allow an operator to shutdown a server";
 
 static void mo_die(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

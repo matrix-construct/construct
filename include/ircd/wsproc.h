@@ -20,8 +20,11 @@
  *  USA
  */
 
-#ifndef INCLUDED_wsproc_h
-#define INCLUDED_wsproc_h
+#pragma once
+#define HAVE_IRCD_WSPROC_H
+
+#ifdef __cplusplus
+namespace ircd {
 
 struct ws_ctl;
 typedef struct ws_ctl ws_ctl_t;
@@ -40,4 +43,5 @@ void wsockd_decrement_clicount(ws_ctl_t *ctl);
 int get_wsockd_count(void);
 void wsockd_foreach_info(void (*func)(void *data, pid_t pid, int cli_count, enum wsockd_status status), void *data);
 
-#endif
+}      // namespace ircd
+#endif // __cplusplus

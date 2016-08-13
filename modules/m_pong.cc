@@ -38,6 +38,8 @@
 #include <ircd/hash.h>
 #include <ircd/modules.h>
 
+using namespace ircd;
+
 static const char pong_desc[] = "Provides the PONG command to respond to a PING message";
 
 static void mr_pong(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

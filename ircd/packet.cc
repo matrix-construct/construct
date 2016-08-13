@@ -33,6 +33,8 @@
 #include <ircd/send.h>
 #include <ircd/s_assert.h>
 
+namespace ircd {
+
 static char readBuf[READBUF_SIZE];
 static void client_dopacket(struct Client *client_p, char *buffer, size_t length);
 
@@ -353,3 +355,6 @@ client_dopacket(struct Client *client_p, char *buffer, size_t length)
 
 	parse(client_p, buffer, buffer + length);
 }
+
+
+} // namespace ircd

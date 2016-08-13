@@ -38,6 +38,8 @@
 #include <ircd/hook.h>
 #include <ircd/match.h>
 
+namespace ircd {
+
 hook *hooks;
 
 #define HOOK_INCREMENT 1000
@@ -212,3 +214,4 @@ call_hook(int id, void *arg)
 	}
 }
 
+} // namespace ircd

@@ -42,6 +42,8 @@
 #include <ircd/s_assert.h>
 #include <ircd/parse.h>
 
+namespace ircd {
+
 /* bitmasks for error returns, so we send once per call */
 #define SM_ERR_NOTS             0x00000001	/* No TS on channel */
 #define SM_ERR_NOOPS            0x00000002	/* No chan ops */
@@ -1598,3 +1600,5 @@ set_channel_mlock(struct Client *client_p, struct Client *source_p,
 			      chptr->mode_lock ? chptr->mode_lock : "");
 	}
 }
+
+} // namespace ircd

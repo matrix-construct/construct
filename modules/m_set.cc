@@ -38,6 +38,8 @@
 #include <ircd/parse.h>
 #include <ircd/modules.h>
 
+using namespace ircd;
+
 static const char set_desc[] = "Provides the SET command to change server parameters";
 
 static void mo_set(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

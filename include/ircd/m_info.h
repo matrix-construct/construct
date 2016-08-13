@@ -22,10 +22,13 @@
  *  USA
  */
 
-#ifndef INCLUDED_m_info_h
-#define INCLUDED_m_info_h
+#pragma once
+#define HAVE_IRCD_INFO_H
 
 #include "defaults.h"
+
+#ifdef __cplusplus
+namespace ircd {
 
 typedef struct Information
 {
@@ -157,4 +160,5 @@ Info MyInformation[] = {
 	{0, 0, 0, 0}
 };
 
-#endif /* INCLUDED_m_info_h */
+}      // namespace ircd
+#endif // __cplusplus

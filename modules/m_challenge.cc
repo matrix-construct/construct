@@ -54,6 +54,8 @@
 
 #ifndef HAVE_LIBCRYPTO
 
+using namespace ircd;
+
 static const char challenge_desc[] = "Does nothing as OpenSSL was not enabled.";
 
 /* Maybe this should be an error or something?-davidt */

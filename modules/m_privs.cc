@@ -39,6 +39,8 @@
 #include <ircd/s_conf.h>
 #include <ircd/s_newconf.h>
 
+using namespace ircd;
+
 static const char privs_desc[] = "Provides the PRIVS command to inspect an operator's privileges";
 
 static void m_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);

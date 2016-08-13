@@ -53,7 +53,7 @@
 #include <ircd/capability.h>
 #include <ircd/s_assert.h>
 
-using namespace ircd;
+namespace ircd {
 
 int MaxConnectionCount = 1;
 int MaxClientCount = 1;
@@ -1316,4 +1316,6 @@ serv_connect_callback(rb_fde_t *F, int status, void *data)
 
 	/* If we get here, we're ok, so lets start reading some data */
 	read_packet(F, client_p);
+}
+
 }

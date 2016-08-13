@@ -15,6 +15,8 @@
 
 #include <string.h>
 
+using namespace ircd;
+
 const char mkpasswd_desc[] = "Hash a password for use in ircd.conf";
 
 static void m_mkpasswd(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,

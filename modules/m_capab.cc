@@ -31,6 +31,8 @@
 #include <ircd/parse.h>
 #include <ircd/modules.h>
 
+using namespace ircd;
+
 static const char capab_desc[] = "Provides the commands used for server-to-server capability negotiation";
 
 static void mr_capab(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

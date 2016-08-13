@@ -16,6 +16,8 @@
 #include <ircd/privilege.h>
 #include <ircd/s_newconf.h>
 
+using namespace ircd;
+
 static const char restrict_desc[] =
 	"Restrict unautenticated users from doing anything as channel ops";
 

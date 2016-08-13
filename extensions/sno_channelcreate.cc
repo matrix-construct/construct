@@ -11,6 +11,8 @@
 #include <ircd/s_conf.h>
 #include <ircd/snomask.h>
 
+using namespace ircd;
+
 static const char sno_desc[] =
 	"Adds server notice mask +l that allows operators to receive channel creation notices";
 

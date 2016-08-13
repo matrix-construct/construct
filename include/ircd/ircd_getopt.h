@@ -22,8 +22,11 @@
  *  USA
  */
 
-#ifndef __GETOPT_H_INCLUDED__
-#define __GETOPT_H_INCLUDED__
+#pragma once
+#define HAVE_IRCD_GETOPT_H
+
+#ifdef __cplusplus
+namespace ircd {
 
 struct lgetopt
 {
@@ -40,4 +43,5 @@ extern struct lgetopt myopts[];
 void usage(const char *) __attribute__((noreturn));
 void parseargs(int *, char * const **, struct lgetopt *);
 
-#endif /* __GETOPT_H_INCLUDED__ */
+}      // namespace ircd
+#endif // __cplusplus

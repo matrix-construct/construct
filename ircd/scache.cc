@@ -32,6 +32,8 @@
 #include <ircd/s_conf.h>
 #include <ircd/s_assert.h>
 
+namespace ircd {
+
 /*
  * ircd used to store full servernames in anUser as well as in the
  * whowas info.  there can be some 40k such structures alive at any
@@ -210,3 +212,6 @@ count_scache(size_t * number_servers_cached, size_t * mem_servers_cached)
 			sizeof(struct scache_entry);
 	}
 }
+
+
+} // namespace ircd

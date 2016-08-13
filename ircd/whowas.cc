@@ -39,6 +39,8 @@
 #include <ircd/logger.h>
 #include <ircd/scache.h>
 
+namespace ircd {
+
 struct whowas_top
 {
 	char *name;
@@ -217,4 +219,6 @@ whowas_memory_usage(size_t * count, size_t * memused)
 	*count = rb_dlink_list_length(&whowas_list);
 	*memused += *count * sizeof(struct Whowas);
 	*memused += sizeof(struct whowas_top) * rb_radixtree_size(whowas_tree);
+}
+
 }

@@ -40,12 +40,10 @@
 #include <ircd/logger.h>
 #include <ircd/s_assert.h>
 
-struct config_channel_entry ConfigChannel;
-rb_dlink_list global_channel_list;
-static rb_bh *channel_heap;
-static rb_bh *ban_heap;
-static rb_bh *topic_heap;
-static rb_bh *member_heap;
+namespace ircd {
+
+struct config_channel_entry ConfigChannel; rb_dlink_list global_channel_list; static rb_bh 
+*channel_heap; static rb_bh *ban_heap; static rb_bh *topic_heap; static rb_bh *member_heap;
 
 static void free_topic(struct Channel *chptr);
 
@@ -1396,3 +1394,5 @@ resv_chan_forcepart(const char *name, const char *reason, int temp_time)
 		}
 	}
 }
+
+} // namespace ircd

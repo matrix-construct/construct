@@ -34,6 +34,8 @@
 #include <ircd/chmode.h>
 #include <ircd/inline/stringops.h>
 
+using namespace ircd;
+
 static const char chm_noctcp_desc[] =
 	"Adds channel mode +C, which blocks CTCP messages from a channel (except ACTION)";
 

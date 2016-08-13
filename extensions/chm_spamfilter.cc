@@ -39,6 +39,7 @@
 #include <ircd/substitution.h>
 #include "spamfilter.h"
 
+using namespace ircd;
 
 int chm_spamfilter;
 int h_spamfilter_query;

@@ -19,12 +19,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#pragma once
+#define HAVE_IRCD_MSGBUF_H
+
 #include "s_assert.h"
 
-#ifndef CHARYBDIS__MSGBUF_H
-#define CHARYBDIS__MSGBUF_H
-
 #define MAXPARA		(15)
+
+#ifdef __cplusplus
+namespace ircd {
 
 /* a key-value structure for each message tag. */
 struct MsgTag {
@@ -97,4 +100,5 @@ msgbuf_append_para(struct MsgBuf *msgbuf, const char *para)
 	msgbuf->n_para++;
 }
 
-#endif
+}      // namespace ircd
+#endif // __cplusplus

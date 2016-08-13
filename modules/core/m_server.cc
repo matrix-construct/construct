@@ -39,6 +39,8 @@
 #include <ircd/parse.h>
 #include <ircd/modules.h>
 
+using namespace ircd;
+
 static const char server_desc[] =
 	"Provides the TS6 commands to introduce a new server to the network";
 

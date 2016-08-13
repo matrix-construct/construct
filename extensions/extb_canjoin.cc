@@ -11,6 +11,8 @@
 #include <ircd/hash.h>
 #include <ircd/ircd.h>
 
+using namespace ircd;
+
 static const char extb_desc[] = "Can join ($j) extban type - matches users who are or are not banned from a specified channel";
 
 static int _modinit(void);

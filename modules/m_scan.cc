@@ -48,6 +48,8 @@
 #include <ircd/modules.h>
 #include <ircd/logger.h>
 
+using namespace ircd;
+
 static const char scan_desc[] =
 	"Provides the SCAN command to show users that have a mode set or cleared";
 

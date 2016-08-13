@@ -35,6 +35,8 @@
 #include <ircd/hash.h>
 #include <ircd/cache.h>
 
+using namespace ircd;
+
 static const char help_desc[] =
 	"Provides the help facility for commands, modes, and server concepts";
 

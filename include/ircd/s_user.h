@@ -22,10 +22,13 @@
  *  USA
  */
 
-#ifndef INCLUDED_s_user_h
-#define INCLUDED_s_user_h
+#pragma once
+#define HAVE_IRCD_S_USER_H
 
 #include "defaults.h"
+
+#ifdef __cplusplus
+namespace ircd {
 
 struct Client;
 struct User;
@@ -53,4 +56,5 @@ extern void construct_umodebuf(void);
 
 extern void oper_up(struct Client *, struct oper_conf *);
 
-#endif
+}      // namespace ircd
+#endif // __cplusplus

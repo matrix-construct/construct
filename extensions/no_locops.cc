@@ -12,6 +12,8 @@
 #include <ircd/s_conf.h>
 #include <ircd/s_newconf.h>
 
+using namespace ircd;
+
 static const char no_locops_desc[] = "Disables local operators";
 
 static void h_nl_umode_changed(hook_data_umode_changed *);

@@ -25,6 +25,8 @@
 
 #define MAXPARA 10
 
+using namespace ircd::defaults;
+
 static void error_cb(rb_helper *helper) __attribute__((noreturn));
 static void handle_reload(int parc, char *parv[]);
 static void handle_stat(int parc, char *parv[]);

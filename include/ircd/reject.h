@@ -21,8 +21,12 @@
  *  USA
  *
  */
-#ifndef INCLUDED_reject_h
-#define INCLUDED_reject_h
+
+#pragma once
+#define HAVE_IRCD_REJECT_H
+
+#ifdef __cplusplus
+namespace ircd {
 
 /* amount of time to delay a rejected clients exit */
 #define DELAYED_EXIT_TIME	10
@@ -41,4 +45,5 @@ int is_throttle_ip(struct sockaddr *addr);
 unsigned long throttle_size(void);
 void flush_throttle(void);
 
-#endif
+}      // namespace ircd
+#endif // __cplusplus

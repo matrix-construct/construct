@@ -42,6 +42,8 @@
 #include <ircd/messages.h>
 #include <ircd/logger.h>
 
+using namespace ircd;
+
 static const char omode_desc[] = "Allow admins to forcibly change modes on channels with the OMODE command";
 
 static void mo_omode(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

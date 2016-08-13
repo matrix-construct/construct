@@ -28,7 +28,7 @@
 
 #ifdef __cplusplus
 
-inline namespace ircd {
+namespace ircd        {
 inline namespace util {
 
 

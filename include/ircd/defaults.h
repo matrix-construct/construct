@@ -81,15 +81,8 @@ constexpr auto AWAYLEN = TOPICLEN;
 constexpr auto KILLLEN = 200;                          // with Killed (nick ()) added this should fit in quit
 constexpr auto MAX_DATE_STRING = 32;                   // maximum string length for a date string
 constexpr auto HELPLEN = 400;
-constexpr auto OPERNICKLEN                             // Length of OPERNICKs.
-{
-	NICKLEN * 2
-};
-
-constexpr auto USERHOST_REPLYLEN
-{
-	NICKLEN + HOSTLEN + USERLEN + 5
-};
+constexpr auto OPERNICKLEN = int(NICKLEN) * 2;         // Length of OPERNICKs.
+constexpr auto USERHOST_REPLYLEN = int(NICKLEN) + HOSTLEN + USERLEN + 5;
 
 constexpr auto BUFSIZE = 512;                          // WARNING: *DONT* CHANGE THIS!!!!
 constexpr auto MAXCONNECTIONS = 65536;                 // default max connections if getrlimit doesn't work

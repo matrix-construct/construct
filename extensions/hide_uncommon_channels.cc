@@ -12,6 +12,8 @@
 #include <ircd/s_conf.h>
 #include <ircd/s_newconf.h>
 
+using namespace ircd;
+
 static const char hide_desc[] = "Hides channel memberships not shared";
 
 static void h_huc_doing_whois_channel_visibility(hook_data_client *);

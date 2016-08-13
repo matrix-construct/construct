@@ -35,6 +35,8 @@
 #include <ircd/s_serv.h>
 #include <ircd/packet.h>
 
+using namespace ircd;
+
 static const char away_desc[] = "Provides the AWAY command to set yourself away";
 
 static void m_away(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

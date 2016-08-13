@@ -24,6 +24,8 @@
 #include <ircd/channel.h>
 #include <ircd/client.h>
 
+namespace ircd {
+
 ExtbanFunc extban_table[256] = { NULL };
 
 int
@@ -103,3 +105,5 @@ get_extban_string(void)
 	e[j] = 0;
 	return e;
 }
+
+} // namespace ircd

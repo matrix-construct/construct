@@ -41,6 +41,8 @@
 #include <ircd/packet.h>
 #include <ircd/s_assert.h>
 
+namespace ircd {
+
 std::map<std::string, std::shared_ptr<alias_entry>, case_insensitive_less> alias_dict;
 std::map<std::string, Message *, case_insensitive_less> cmd_dict;
 
@@ -529,3 +531,5 @@ m_ignore(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 {
 	/* Does nothing */
 }
+
+} // namespace ircd

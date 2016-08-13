@@ -26,6 +26,8 @@
 #include <ircd/ircd.h>
 #include <ircd/send.h>
 
+using namespace ircd;
+
 static const char spy_desc[] = "Sends a notice when someone uses ADMIN";
 
 void show_admin(hook_data *);

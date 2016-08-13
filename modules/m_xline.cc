@@ -50,6 +50,8 @@
 #include <ircd/bandbi.h>
 #include <ircd/operhash.h>
 
+using namespace ircd;
+
 static const char xline_desc[] =
 	"Provides management of GECOS bans via (UN)XLINE command";
 

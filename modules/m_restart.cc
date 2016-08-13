@@ -37,6 +37,8 @@
 #include <ircd/modules.h>
 #include <ircd/hash.h>
 
+using namespace ircd;
+
 static const char restart_desc[] = "Provides the RESTART command to restart the server";
 
 static void mo_restart(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

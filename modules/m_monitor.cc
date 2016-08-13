@@ -39,6 +39,8 @@
 #include <ircd/send.h>
 #include <ircd/supported.h>
 
+using namespace ircd;
+
 static const char monitor_desc[] = "Provides the MONITOR facility for tracking user signon and signoff";
 
 static int monitor_init(void);

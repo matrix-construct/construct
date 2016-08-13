@@ -10,6 +10,8 @@
 #include <ircd/s_newconf.h>
 #include <ircd/ircd.h>
 
+using namespace ircd;
+
 static const char extb_desc[] = "Oper ($o) extban type";
 
 static int _modinit(void);

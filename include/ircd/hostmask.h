@@ -23,8 +23,11 @@
  *  USA
  */
 
-#ifndef INCLUDE_hostmask_h
-#define INCLUDE_hostmask_h 1
+#pragma once
+#define HAVE_IRCD_HOSTMASK_H
+
+#ifdef __cplusplus
+namespace ircd {
 
 enum
 {
@@ -105,4 +108,5 @@ struct AddressRec
 	struct AddressRec *next;
 };
 
-#endif /* INCLUDE_hostmask_h */
+}      // namespace ircd
+#endif // __cplusplus

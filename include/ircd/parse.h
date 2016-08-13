@@ -22,9 +22,13 @@
  *  USA
  */
 
-#ifndef INCLUDED_parse_h_h
-#define INCLUDED_parse_h_h
+#pragma once
+#define HAVE_IRCD_PARSE_H
+
 #include <rb/dictionary.h>
+
+#ifdef __cplusplus
+namespace ircd {
 
 struct Message;
 struct Client;
@@ -41,4 +45,5 @@ extern char *reconstruct_parv(int parc, const char *parv[]);
 extern std::map<std::string, std::shared_ptr<alias_entry>, case_insensitive_less> alias_dict;
 extern std::map<std::string, Message *, case_insensitive_less> cmd_dict;
 
-#endif /* INCLUDED_parse_h_h */
+}      // namespace ircd
+#endif // __cplusplus

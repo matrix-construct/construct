@@ -22,8 +22,9 @@
  *  USA
  */
 
-#ifndef INCLUDED_s_conf_h
-#define INCLUDED_s_conf_h
+#pragma once
+#define HAVE_IRCD_S_CONF_H
+
 #include "stdinc.h"
 
 #ifdef HAVE_LIBCRYPTO
@@ -32,6 +33,9 @@
 
 #include "class.h"
 #include "client.h"
+
+#ifdef __cplusplus
+namespace ircd {
 
 struct Client;
 struct DNSReply;
@@ -357,7 +361,6 @@ extern char *get_user_ban_reason(struct ConfItem *aconf);
 extern void get_printable_kline(struct Client *, struct ConfItem *,
 				char **, char **, char **, char **);
 
-void yyerror(const char *);
 int conf_yy_fatal_error(const char *);
 int conf_fgets(char *, int, FILE *);
 
@@ -384,6 +387,18 @@ extern unsigned long cidr_to_bitmask[];
 extern char conffilebuf[BUFSIZE + 1];
 extern int lineno;
 
+void yyerror(const char *);
+
+}      // namespace ircd
+
+inline
+auto yyerror(const char *const c)
+{
+	return ircd::yyerror(c);
+}
+
+#endif // __cplusplus
+
 #define NOT_AUTHORISED  (-1)
 #define I_SOCKET_ERROR  (-2)
 #define I_LINE_FULL     (-3)
@@ -391,5 +406,3 @@ extern int lineno;
 #define TOO_MANY_LOCAL	(-6)
 #define TOO_MANY_GLOBAL (-7)
 #define TOO_MANY_IDENT	(-8)
-
-#endif /* INCLUDED_s_conf_h */

@@ -38,6 +38,8 @@
 #include <ircd/messages.h>
 #include <ircd/logger.h>
 
+using namespace ircd;
+
 static const char okick_desc[] = "Allow admins to forcibly kick users from channels with the OKICK command";
 
 static void mo_okick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);

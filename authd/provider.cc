@@ -46,10 +46,11 @@
  * --Elizafox, 9 March 2016
  */
 
-#include <ircd/stdinc.h>
 #include "authd.h"
 #include "provider.h"
 #include "notice.h"
+
+using namespace ircd::defaults;
 
 static EVH provider_timeout_event;
 

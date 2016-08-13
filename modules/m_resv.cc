@@ -38,6 +38,8 @@
 #include <ircd/bandbi.h>
 #include <ircd/operhash.h>
 
+using namespace ircd;
+
 static const char resv_desc[] =
 	"Provides management of reserved nicknames and channels using (UN)RESV";
 

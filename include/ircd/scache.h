@@ -22,8 +22,11 @@
  *  USA
  */
 
-#ifndef INCLUDED_scache_h
-#define INCLUDED_scache_h
+#pragma once
+#define HAVE_IRCD_SCACHE_H
+
+#ifdef __cplusplus
+namespace ircd {
 
 struct Client;
 struct scache_entry;
@@ -36,4 +39,5 @@ extern void scache_send_flattened_links(struct Client *source_p);
 extern void scache_send_missing(struct Client *source_p);
 extern void count_scache(size_t *, size_t *);
 
-#endif
+}      // namespace ircd
+#endif // __cplusplus

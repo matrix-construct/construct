@@ -36,6 +36,8 @@
 #include <ircd/cache.h>
 #include <ircd/ratelimit.h>
 
+using namespace ircd;
+
 static const char motd_desc[] = "Provides the MOTD command to view the Message of the Day";
 
 static void m_motd(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

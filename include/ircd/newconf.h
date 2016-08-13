@@ -1,8 +1,11 @@
 /* This code is in the public domain.
  */
 
-#ifndef _NEWCONF_H_INCLUDED
-#define _NEWCONF_H_INCLUDED
+#pragma once
+#define HAVE_IRCD_NEWCONF_H
+
+#ifdef __cplusplus
+namespace ircd {
 
 struct ConfEntry
 {
@@ -58,10 +61,6 @@ typedef struct conf_parm_t_stru
 }
 conf_parm_t;
 
-extern struct TopConf *conf_cur_block;
-
-extern char *current_file;
-
 int read_config(char *);
 int conf_start_block(char *, char *);
 int conf_end_block(struct TopConf *);
@@ -76,4 +75,8 @@ int remove_top_conf(const char *name);
 struct TopConf *find_top_conf(const char *name);
 struct ConfEntry *find_conf_item(const struct TopConf *top, const char *name);
 
-#endif
+extern struct TopConf *conf_cur_block;
+extern char *current_file;
+
+}      // namespace ircd
+#endif // __cplusplus

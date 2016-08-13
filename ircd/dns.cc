@@ -35,6 +35,8 @@
 #include <ircd/msg.h>
 #include <ircd/hash.h>
 
+namespace ircd {
+
 #define DNS_HOST_IPV4		((char)'4')
 #define DNS_HOST_IPV6		((char)'6')
 #define DNS_REVERSE_IPV4	((char)'R')
@@ -334,3 +336,5 @@ submit_dns_stat(uint32_t nid)
 	}
 	rb_helper_write(authd_helper, "S %x D", nid);
 }
+
+} // namespace ircd

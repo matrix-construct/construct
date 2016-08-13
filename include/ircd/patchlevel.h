@@ -22,8 +22,17 @@
  *  USA
  */
 
+#pragma once
+#define HAVE_IRCD_PATCHLEVEL_H
+
 #include "stdinc.h"
+
+#ifdef __cplusplus
+namespace ircd {
 
 #ifndef PATCHLEVEL
 #define PATCHLEVEL   BRANDING_NAME "-" BRANDING_VERSION
 #endif
+
+}      // namespace ircd
+#endif // __cplusplus

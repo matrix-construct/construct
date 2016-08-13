@@ -21,11 +21,9 @@
  */
 
 #include <ircd/stdinc.h>
-
-extern "C"
-{
 #include "sha1.h"
-}
+
+using namespace ircd::defaults;
 
 #define MAXPASSFD 4
 #ifndef READBUF_SIZE

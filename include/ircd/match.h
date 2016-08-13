@@ -27,6 +27,9 @@
 
 #include "stdinc.h"
 
+#ifdef __cplusplus
+namespace ircd {
+
 /*
  * match - compare name with mask, mask may contain * and ? as wildcards
  * match - returns 1 on successful match, 0 otherwise
@@ -150,3 +153,6 @@ static inline void strcasecanon(char *str)
         }
         return;
 }
+
+}      // namespace ircd
+#endif // __cplusplus

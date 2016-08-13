@@ -2,8 +2,12 @@
  * Copyright (C) 2004-2005 Lee Hardy <lee -at- leeh.co.uk>
  * Copyright (C) 2004-2005 ircd-ratbox development team
  */
-#ifndef INCLUDED_HOOK_H
-#define INCLUDED_HOOK_H
+
+#pragma once
+#define HAVE_IRCD_HOOK_H
+
+#ifdef __cplusplus
+namespace ircd {
 
 typedef struct
 {
@@ -149,4 +153,5 @@ typedef struct
 	bool signal;
 } hook_data_rehash;
 
-#endif
+}      // namespace ircd
+#endif // __cplusplus

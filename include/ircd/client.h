@@ -23,8 +23,8 @@
  *  USA
  */
 
-#ifndef INCLUDED_client_h
-#define INCLUDED_client_h
+#pragma once
+#define HAVE_IRCD_CLIENT_H
 
 #include "stdinc.h"
 #include "defaults.h"
@@ -34,6 +34,9 @@
 #include "match.h"
 #include "ircd.h"
 #include "privilege.h"
+
+#ifdef __cplusplus
+namespace ircd {
 
 /* other structs */
 struct Blacklist;
@@ -622,4 +625,5 @@ uint32_t connid_get(struct Client *client_p);
 void connid_put(uint32_t id);
 void client_release_connids(struct Client *client_p);
 
-#endif /* INCLUDED_client_h */
+}      // namespace ircd
+#endif // __cplusplus

@@ -25,6 +25,8 @@
 #include <ircd/stdinc.h>
 #include <ircd/ircd_getopt.h>
 
+namespace ircd {
+
 # define OPTCHAR '-'
 
 using argtype = decltype(lgetopt::argtype);
@@ -135,3 +137,5 @@ usage(const char *name)
 
 	exit(EXIT_FAILURE);
 }
+
+} // namespace ircd

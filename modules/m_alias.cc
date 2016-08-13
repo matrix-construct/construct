@@ -32,6 +32,8 @@
 #include <ircd/send.h>
 #include <ircd/packet.h>
 
+using namespace ircd;
+
 static const char alias_desc[] = "Provides the system for services aliases";
 
 static int _modinit(void);

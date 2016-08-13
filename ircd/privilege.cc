@@ -29,6 +29,8 @@
 #include <ircd/logger.h>
 #include <ircd/send.h>
 
+namespace ircd {
+
 static rb_dlink_list privilegeset_list = {NULL, NULL, 0};
 
 int
@@ -212,3 +214,5 @@ privilegeset_report(struct Client *source_p)
 				set->privs);
 	}
 }
+
+} // namespace ircd

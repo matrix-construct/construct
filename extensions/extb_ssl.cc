@@ -5,6 +5,8 @@
 #include <ircd/client.h>
 #include <ircd/ircd.h>
 
+using namespace ircd;
+
 static const char extb_desc[] = "SSL/TLS ($z) extban type";
 
 static int _modinit(void);

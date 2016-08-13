@@ -27,11 +27,11 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <rb/rb.h>
+
+#include <ircd/stdinc.h>
 #include "rsdb.h"
 
-#include <ircd/defaults.h>
-using namespace ircd;
+using namespace ircd::defaults;
 
 #define MAXPARA 10
 

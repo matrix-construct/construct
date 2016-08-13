@@ -31,6 +31,8 @@
 #include <ircd/send.h>
 #include <ircd/packet.h>
 
+namespace ircd {
+
 static void ws_read_ctl(rb_fde_t * F, void *data);
 static int wsockd_count;
 
@@ -588,4 +590,6 @@ void
 init_wsockd(void)
 {
 	rb_event_addish("cleanup_dead_ws", cleanup_dead_ws, NULL, 60);
+}
+
 }

@@ -34,6 +34,8 @@
 #include <ircd/parse.h>
 #include <ircd/modules.h>
 
+using namespace ircd;
+
 static const char lusers_desc[] =
 	"Provides the LUSERS command to view the number of current and maximum lusers on a server";
 

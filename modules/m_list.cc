@@ -50,6 +50,8 @@
 #include <ircd/s_assert.h>
 #include <ircd/logger.h>
 
+using namespace ircd;
+
 static const char list_desc[] = "Provides the LIST command to clients to view non-hidden channels";
 
 static rb_dlink_list safelisting_clients = { NULL, NULL, 0 };

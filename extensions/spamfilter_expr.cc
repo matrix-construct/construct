@@ -65,6 +65,8 @@
 #define EXPR_ERROR_EXISTS           -255
 #define EXPR_ERROR_DICTFAIL         -254
 
+using namespace ircd;
+
 
 struct Expr
 {

@@ -14,6 +14,8 @@
 #include <ircd/s_newconf.h>
 #include <ircd/numeric.h>
 
+using namespace ircd;
+
 static const char helpops_desc[] = "The helpops system as used by freenode";
 
 static rb_dlink_list helper_list = { NULL, NULL, 0 };

@@ -21,10 +21,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __CHARYBDIS_PRIVILEGE_H
-#define __CHARYBDIS_PRIVILEGE_H
+#pragma once
+#define HAVE_IRCD_PRIVILEGE_H
 
 #include "stdinc.h"
+
+#ifdef __cplusplus
+namespace ircd {
 
 enum {
 	PRIV_NEEDOPER = 1
@@ -50,4 +53,5 @@ void privilegeset_mark_all_illegal(void);
 void privilegeset_delete_all_illegal(void);
 void privilegeset_report(struct Client *source_p);
 
-#endif
+}      // namespace ircd
+#endif // __cplusplus

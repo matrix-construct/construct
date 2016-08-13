@@ -37,6 +37,8 @@
 #include <ircd/parse.h>
 #include <ircd/modules.h>
 
+using namespace ircd;
+
 static const char whowas_desc[] =
 	"Provides the WHOWAS command to display information on a disconnected user";
 

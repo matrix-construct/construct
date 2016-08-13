@@ -37,6 +37,8 @@
 #include <ircd/s_serv.h>
 #include <ircd/messages.h>
 
+using namespace ircd;
+
 static const char adminwall_desc[] =
         "Provides the ADMINWALL command to send a message to all administrators";
 

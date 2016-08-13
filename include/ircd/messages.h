@@ -17,8 +17,11 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef INCLUDED_messages_h
-#define INCLUDED_messages_h
+#pragma once
+#define HAVE_IRCD_MESSAGES_H
+
+#ifdef __cplusplus
+namespace ircd {
 
 /*
  * form_str - return a format string for a message number
@@ -250,4 +253,5 @@
 #define NUMERIC_STR_907      ":%s 907 %s :You have already completed SASL authentication"
 #define NUMERIC_STR_908      ":%s 908 %s %s :are available SASL mechanisms"
 
-#endif
+}      // namespace ircd
+#endif // __cplusplus

@@ -36,6 +36,8 @@
 #include <ircd/modules.h>
 #include <ircd/s_serv.h>
 
+using namespace ircd;
+
 static const char wallops_desc[] =
 	"Provides the WALLOPS and OPERWALL commands to message online operators";
 

@@ -4,6 +4,8 @@
 #include <ircd/ircd.h>
 #include <ircd/send.h>
 
+using namespace ircd;
+
 static void m_echotags(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
 
 struct Message echotags_msgtab = {

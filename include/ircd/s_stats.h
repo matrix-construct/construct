@@ -22,8 +22,8 @@
  *  USA
  */
 
-#ifndef INCLUDED_s_stats_h
-#define INCLUDED_s_stats_h
+#pragma once
+#define HAVE_IRCD_S_STATS_H
 
 #define _1MEG     (1024.0)
 #define _1GIG     (1024.0*1024.0)
@@ -32,6 +32,9 @@
                   ((x > _1MEG) ? "Megabytes" : "Kilobytes")))
 #define _GMKv(x)  ( (x > _1TER) ? (float)(x/_1TER) : ((x > _1GIG) ? \
                   (float)(x/_1GIG) : ((x > _1MEG) ? (float)(x/_1MEG) : (float)x)))
+
+#ifdef __cplusplus
+namespace ircd {
 
 struct Client;
 
@@ -70,4 +73,5 @@ struct ServerStatistics
 
 extern struct ServerStatistics ServerStats;
 
-#endif /* INCLUDED_s_stats_h */
+}      // namespace ircd
+#endif // __cplusplus

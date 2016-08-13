@@ -38,6 +38,8 @@
 #include <ircd/substitution.h>
 #include <ircd/s_assert.h>
 
+namespace ircd {
+
 /*
  * Simple mappings for $foo -> 'bar'.
  * Everything is a string, so typing doesn't really matter too
@@ -146,4 +148,6 @@ char *substitution_parse(const char *fmt, rb_dlink_list *varlist)
 
 	*bptr = '\0';
 	return buf;
+}
+
 }

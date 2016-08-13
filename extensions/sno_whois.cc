@@ -16,6 +16,8 @@
 /* undefine this to allow anyone to receive whois notifications */
 #define OPERONLY
 
+using namespace ircd;
+
 static const char sno_desc[] =
 	"Adds server notice mask +W that allows "
 #ifdef OPERONLY

@@ -22,8 +22,8 @@
  *  USA
  */
 
-#ifndef INCLUDED_serv_h
-#define INCLUDED_serv_h
+#pragma once
+#define HAVE_IRCD_SERV_H
 
 #include "defaults.h"
 #include "capability.h"
@@ -41,7 +41,9 @@
  */
 #define STARTUP_CONNECTIONS_TIME 60
 
-struct Client;
+#ifdef __cplusplus
+namespace ircd {
+
 struct server_conf;
 struct Channel;
 
@@ -144,4 +146,5 @@ extern int server_estab(struct Client *client_p);
 
 extern int serv_connect(struct server_conf *, struct Client *);
 
-#endif /* INCLUDED_s_serv_h */
+}      // namespace ircd
+#endif // __cplusplus

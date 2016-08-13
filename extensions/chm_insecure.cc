@@ -10,6 +10,8 @@
 #include <ircd/numeric.h>
 #include <ircd/chmode.h>
 
+using namespace ircd;
+
 static const char chm_insecure_desc[] =
 	"Adds channel mode +U that allows non-SSL users to join a channel, "
 	"disallowing them by default";

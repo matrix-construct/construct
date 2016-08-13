@@ -39,6 +39,8 @@
 #include <ircd/client.h>
 #include <ircd/s_serv.h>
 
+namespace ircd {
+
 static FILE *log_main;
 static FILE *log_user;
 static FILE *log_fuser;
@@ -330,3 +332,6 @@ slog(const ilogfile dest, const unsigned int snomask, const char *const fmt, ...
 	vslog(dest, snomask, fmt, ap);
 	va_end(ap);
 }
+
+
+} // namespace ircd

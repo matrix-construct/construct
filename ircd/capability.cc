@@ -24,6 +24,7 @@
 #include <rb/format.h>
 
 using namespace ircd::capability;
+using namespace ircd;
 
 
 std::list<capability::index *> indexes;

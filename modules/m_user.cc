@@ -35,6 +35,8 @@
 #include <ircd/modules.h>
 #include <ircd/s_assert.h>
 
+using namespace ircd;
+
 static const char user_desc[] =
 	"Provides the USER command to register a new connection";
 

@@ -9,6 +9,8 @@
 #include <ircd/ircd.h>
 #include <ircd/chmode.h>
 
+using namespace ircd;
+
 static const char chm_operonly_compat[] =
 	"Adds an emulated channel mode +O which is converted into mode +i and +I $o";
 

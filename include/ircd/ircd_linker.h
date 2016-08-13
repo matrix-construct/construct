@@ -31,10 +31,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _CHARYBDIS_IRCD_LINKER_H
-#define _CHARYBDIS_IRCD_LINKER_H
+#pragma once
+#define HAVE_CHARYBDIS_IRCD_LINKER_H
 
 #include <dlfcn.h>
+
+#ifdef __cplusplus
+namespace ircd {
 
 struct ircd_symbol
 {
@@ -45,4 +48,5 @@ struct ircd_symbol
 extern void build_symtable(void *, struct ircd_symbol *);
 extern void report_symtable(struct ircd_symbol *);
 
-#endif
+}      // namespace ircd
+#endif // __cplusplus

@@ -30,8 +30,11 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDED_supported_h
-#define INCLUDED_supported_h
+#pragma once
+#define HAVE_IRCD_SUPPORTED_H
+
+#ifdef __cplusplus
+namespace ircd {
 
 extern void add_isupport(const char *, const char *(*)(const void *), const void *);
 extern const void *change_isupport(const char *, const char *(*)(const void *), const void *);
@@ -44,4 +47,5 @@ extern const char *isupport_boolean(const void *);
 extern const char *isupport_string(const void *);
 extern const char *isupport_stringptr(const void *);
 
-#endif /* INCLUDED_supported_h */
+}      // namespace ircd
+#endif // __cplusplus
