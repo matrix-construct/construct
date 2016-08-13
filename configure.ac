@@ -197,6 +197,7 @@ AC_ARG_ENABLE(pch, AC_HELP_STRING([--disable-pch], [Disable precompiled header g
 	AC_MSG_RESULT([no])
 ], [
 	build_pch="yes"
+	CPPDEFINE([PCH])
 	AC_MSG_RESULT([yes])
 ])
 

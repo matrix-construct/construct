@@ -11,10 +11,6 @@ AM_CPPFLAGS = \
 	@LTDLINCL@ \
 	@BOOST_CPPFLAGS@
 
-if BUILD_PCH
-AM_CPPFLAGS += -include $(top_srcdir)/include/rb/rb.pic.h
-endif
-
 if MINGW
 PLATFORM_LDFLAGS = -Wl,--enable-runtime-pseudo-reloc -export-symbols-regex '*'
 endif
