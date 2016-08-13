@@ -15,7 +15,7 @@ rb.h.gch:
 
 rb.pic.h.gch:
 	cp rb.h rb.pic.h
-	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -fPIC -o rb.pic.h.gch $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) rb.pic.h
+	$(CXX) $(CXXFLAGS) $(AM_CXXFLAGS) -fPIC -o rb.pic.h.gch -DPIC $(DEFS) $(CPPFLAGS) $(AM_CPPFLAGS) rb.pic.h
 
 clean-local:
 	rm -f rb.h.gch

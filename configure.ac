@@ -150,7 +150,7 @@ AC_DEFUN([IRCD_DEFINE_UNQUOTED],
 AC_DEFUN([CPPDEFINE],
 [
 	if [[ -z "$2" ]]; then
-		CPPFLAGS+="-D$1 $CPPFLAGS"
+		CPPFLAGS="-D$1 $CPPFLAGS"
 	else
 		CPPFLAGS="-D$1=$2 $CPPFLAGS"
 	fi
@@ -766,7 +766,9 @@ dnl
 dnl boost support
 dnl
 
-AC_MSG_CHECKING([whether to use boost sources included here])
+BOOST_VERSION_MIN="1.56"
+
+AC_MSG_CHECKING([whether you asked to use boost sources included here])
 AC_ARG_WITH(included-boost,
 AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from included submodule]),
 [
@@ -781,6 +783,16 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 		BTOOLSET=`echo $CXX | cut -d' ' -f1`
 	])
 
+	AC_MSG_CHECKING([whether to use shared boost])
+	if [[ $withval = "shared" ]]; then
+		AC_MSG_RESULT([yes])
+		BOOST_LDFLAGS += " -Wl,-rpath -Wl,$boost_libdir"
+	else
+		AC_MSG_RESULT([no])
+		withval="static"
+	fi
+
+	boost_linkage="$withval"
 	bash tools/boostrap.sh $BTOOLSET system release shared single
 	if [[ $? != 0 ]]; then
 		AC_MSG_ERROR([Failed to build included boost.])
@@ -796,29 +808,21 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 	AC_SUBST(BOOST_CPPFLAGS, ["-isystem $PWD/boost/include"])
 	AC_SUBST(BOOST_LDFLAGS, ["-L$boost_libdir"])
 
-	boost_linkage="$withval"
-	AC_MSG_CHECKING([whether to use shared boost])
-	if [[ $withval = "shared" ]]; then
-		AC_MSG_RESULT([yes])
-		BOOST_LDFLAGS += " -Wl,-rpath -Wl,$boost_libdir"
-	else
-		AC_MSG_RESULT([no])
-	fi
-
 	AC_DEFINE(HAVE_LIB_BOOST_SYSTEM, 1, [Define if you have boost_system])
 	AC_MSG_NOTICE([Bootstrapping boost: done])
 ],[
 	AC_MSG_RESULT([no])
-
-	with_included_boost="no"
-	AX_BOOST_BASE([1.60], [
-		AC_DEFINE(HAVE_LIB_BOOST_SYSTEM, 1, [Define if you have boost_system])
+	AX_BOOST_BASE([$BOOST_VERSION_MIN],
+	[
+		with_included_boost="no"
 	], [
+		with_included_boost="yes"
 		AC_MSG_ERROR([Failed to find boost_system library. (try --with-included-boost)])
 	])
-	boost_linkage="shared"
+
 	AX_BOOST_ASIO
 	AX_BOOST_SYSTEM
+	boost_linkage="shared"
 ])
 
 if [[ "$boost_linkage" = "shared" ]]; then
@@ -833,23 +837,15 @@ else
 	[
 		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_system-mgw53-1_61.dll.a"])
 	], [
-		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_system.a"])
+		AC_SUBST(BOOST_LIBS, ["-Bstatic -lboost_system"])
+dnl		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_system.a"])
 	])
 fi
 
-AC_DEFINE([HAVE_BOOST_ASIO_HPP], [1], [ boost asio. ])
 RB_DEFINE_UNQUOTED([INC_BOOST_ASIO_HPP], [boost/asio.hpp>], [ boost asio. ])
-
-AC_DEFINE([HAVE_BOOST_CONTEXT_ALL_HPP], [1], [ boost context. ])
 RB_DEFINE_UNQUOTED([INC_BOOST_CONTEXT_ALL_HPP], [boost/context/all.hpp>], [ boost context. ])
-
-AC_DEFINE([HAVE_BOOST_ASIO_SPAWN_HPP], [1], [ boost asio spawn. ])
 RB_DEFINE_UNQUOTED([INC_BOOST_ASIO_SPAWN_HPP], [boost/asio/spawn.hpp>], [ boost asio spawn. ])
-
-AC_DEFINE([HAVE_BOOST_LEXICAL_CAST_HPP], [1], [ boost asio. ])
 RB_DEFINE_UNQUOTED([INC_BOOST_LEXICAL_CAST_HPP], [boost/lexical_cast.hpp>], [ boost lexical_cast. ])
-
-AC_DEFINE([HAVE_BOOST_TOKENIZER_HPP], [1], [ boost tokenizer. ])
 RB_DEFINE_UNQUOTED([INC_BOOST_TOKENIZER_HPP], [boost/tokenizer.hpp>], [ boost tokenizer. ])
 
 
