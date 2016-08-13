@@ -1,5 +1,6 @@
 /**
  * Copyright (C) 2016 Charybdis development team
+ * Copyright (C) 2016 Jason Volk <jason@zemos.net>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,47 +22,48 @@
 #pragma once
 #define HAVE_IRCD_CACHE_H
 
-#define HELP_MAX	100
-#define CACHEFILELEN	30
-/* two servernames, a gecos, three spaces, ":1", '\0' */
-#define LINKSLINELEN	(HOSTLEN + HOSTLEN + REALLEN + 6)
-#define HELP_USER	0x001
-#define HELP_OPER	0x002
-
 #ifdef __cplusplus
-namespace ircd {
+namespace ircd  {
+namespace cache {
 
-struct cachefile
+constexpr auto CACHEFILELEN = 30;
+constexpr auto LINKSLINELEN = HOSTLEN + HOSTLEN + REALLEN + 6;  // 2 servernames, 1 gecos, 3 spaces, ":1", '\0'
+
+struct file;
+uint flags(const file &file);
+const std::string &name(const file &file);
+const std::vector<std::string> &contents(const file &file);
+
+using dict = std::map<std::string, std::shared_ptr<file>, case_insensitive_less>;
+
+namespace motd
 {
-	cachefile(const char *filename, const char *shortname, int flags) {
-		cache(filename, shortname, flags);
-	}
+	extern char user_motd_changed[MAX_DATE_STRING];
 
-	cachefile() {};
+	extern file user;
+	extern file oper;
 
-	std::string name;
-	std::vector<std::string> contents;
-	int flags;
+	void send_user(Client *);
+	void send_oper(Client *);
 
-	void cache(const char *filename, const char *shortname, int flags);
-};
+	void cache_user();
+	void cache_oper();
+}
 
-void init_cache(void);
-void cache_links(void *unused);
+namespace help
+{
+	constexpr auto MAX = 100;
+	constexpr auto USER = 0x01;
+	constexpr auto OPER = 0x02;
 
-void load_help(void);
+	extern dict user;
+	extern dict oper;
 
-void send_user_motd(struct Client *);
-void send_oper_motd(struct Client *);
-void cache_user_motd(void);
+	void load();
+}
 
-extern struct cachefile user_motd;
-extern struct cachefile oper_motd;
+void init();
 
-extern char user_motd_changed[MAX_DATE_STRING];
-
-extern std::map<std::string, std::shared_ptr<cachefile>, case_insensitive_less> help_dict_oper;
-extern std::map<std::string, std::shared_ptr<cachefile>, case_insensitive_less> help_dict_user;
-
+}       // namespace cache
 }       // namespace ircd
 #endif  // __cplusplus

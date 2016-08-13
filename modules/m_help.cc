@@ -64,7 +64,9 @@ DECLARE_MODULE_AV2(help, NULL, NULL, help_clist, NULL, NULL, NULL, NULL, help_de
 static void
 m_help(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	dohelp(source_p, HELP_USER, parc > 1 ? parv[1] : NULL);
+	using namespace ircd::cache::help;
+
+	dohelp(source_p, USER, parc > 1 ? parv[1] : NULL);
 }
 
 /*
@@ -73,7 +75,9 @@ m_help(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 static void
 mo_help(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	dohelp(source_p, HELP_OPER, parc > 1 ? parv[1] : NULL);
+	using namespace ircd::cache::help;
+
+	dohelp(source_p, OPER, parc > 1 ? parv[1] : NULL);
 }
 
 /*
@@ -83,41 +87,57 @@ mo_help(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 static void
 mo_uhelp(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	dohelp(source_p, HELP_USER, parc > 1 ? parv[1] : NULL);
+	using namespace ircd::cache::help;
+
+	dohelp(source_p, USER, parc > 1 ? parv[1] : NULL);
 }
 
 static void
-dohelp(struct Client *source_p, int flags, const char *topic)
+dohelp(Client *const source_p,
+       int type,
+       const char *topic)
+try
 {
-	static const char ntopic[] = "index";
-	std::shared_ptr<cachefile> hptr;
-	int linecnt = 0;
+	namespace help = cache::help;
 
-	if(EmptyString(topic))
+	static const char *const ntopic("index");
+	if (EmptyString(topic))
 		topic = ntopic;
 
-	hptr = flags & HELP_OPER ? help_dict_oper[topic] : help_dict_user[topic];
-
-	if(hptr == NULL || !(hptr->flags & flags))
+	std::shared_ptr<cache::file> file
 	{
-		sendto_one(source_p, form_str(ERR_HELPNOTFOUND),
-			   me.name, source_p->name, topic);
-		return;
-	}
+		type & help::OPER? help::oper.at(topic):
+		type & help::USER? help::user.at(topic):
+		                   nullptr
+	};
 
-	for (auto it = hptr->contents.begin(); it != hptr->contents.end(); it++, linecnt++)
-	{
-		if (!linecnt)
-		{
-			sendto_one(source_p, form_str(RPL_HELPSTART),
-				   me.name, source_p->name, topic, it->c_str());
-			continue;
-		}
+	if (!file || !(flags(*file) & type))
+		throw std::out_of_range(ntopic);
 
+	auto it(begin(contents(*file)));
+	if (it != end(contents(*file)))
+		sendto_one(source_p, form_str(RPL_HELPSTART),
+		           me.name,
+		           source_p->name,
+		           topic,
+		           it->c_str());
+
+	for (++it; it != end(contents(*file)); ++it)
 		sendto_one(source_p, form_str(RPL_HELPTXT),
-			   me.name, source_p->name, topic, it->c_str());
-	}
+		           me.name,
+		           source_p->name,
+		           topic,
+		           it->c_str());
 
 	sendto_one(source_p, form_str(RPL_ENDOFHELP),
-		   me.name, source_p->name, topic);
+	           me.name,
+	           source_p->name,
+	           topic);
+}
+catch(const std::out_of_range &e)
+{
+	sendto_one(source_p, form_str(ERR_HELPNOTFOUND),
+	           me.name,
+	           source_p->name,
+	           topic?: e.what());
 }

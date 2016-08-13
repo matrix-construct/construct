@@ -303,7 +303,7 @@ check_rehash(void *unused)
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Got signal SIGUSR1, reloading ircd motd file");
-		cache_user_motd();
+		cache::motd::cache_user();
 		doremotd = false;
 	}
 }
@@ -674,7 +674,7 @@ charybdis_main(int argc, char * const argv[])
 	initclass();
 	whowas_init();
 	init_reject();
-	init_cache();
+	cache::init();
 	init_monitor();
 	chmode_init();
 
@@ -759,7 +759,7 @@ charybdis_main(int argc, char * const argv[])
 
 	check_class();
 	write_pidfile(pidFileName);
-	load_help();
+	cache::help::load();
 	open_logfiles();
 
 	configure_authd();

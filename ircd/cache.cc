@@ -4,6 +4,8 @@
  *
  * Copyright (C) 2003 Lee Hardy <lee@leeh.co.uk>
  * Copyright (C) 2003-2005 ircd-ratbox development team
+ * Copyright (C) 2016 Charybdis development team
+ * Copyright (C) 2016 Jason Volk <jason@zemos.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -30,9 +32,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <map>
-#include <vector>
-
 #include <ircd/stdinc.h>
 #include <ircd/s_conf.h>
 #include <ircd/client.h>
@@ -41,14 +40,33 @@
 #include <ircd/numeric.h>
 #include <ircd/send.h>
 
-namespace ircd {
+namespace cache = ircd::cache;
+using namespace cache;
 
-struct cachefile user_motd {};
-struct cachefile oper_motd {};
-char user_motd_changed[MAX_DATE_STRING];
+static size_t untabify(char *dest, const char *src, size_t destlen);
 
-std::map<std::string, std::shared_ptr<cachefile>, case_insensitive_less> help_dict_oper;
-std::map<std::string, std::shared_ptr<cachefile>, case_insensitive_less> help_dict_user;
+struct cache::file
+{
+	std::string filename;
+	std::string shortname;
+	std::ifstream stream;
+	int flags;
+	std::vector<std::string> contents;
+
+	file(const char *const &filename, const char *const &shortname, const int &flags);
+	file() = default;
+
+	file &operator=(file &&) noexcept;
+};
+
+file motd::user;
+file motd::oper;
+
+dict help::oper;
+dict help::user;
+
+char motd::user_motd_changed[MAX_DATE_STRING];
+
 
 /* init_cache()
  *
@@ -57,12 +75,215 @@ std::map<std::string, std::shared_ptr<cachefile>, case_insensitive_less> help_di
  * side effects - inits the file/line cache blockheaps, loads motds
  */
 void
-init_cache(void)
+cache::init()
 {
-	user_motd_changed[0] = '\0';
+	motd::user = file(fs::paths[IRCD_PATH_IRCD_MOTD], "ircd.motd", 0);
+	motd::oper = file(fs::paths[IRCD_PATH_IRCD_OMOTD], "opers.motd", 0);
+}
 
-	user_motd.cache(fs::paths[IRCD_PATH_IRCD_MOTD], "ircd.motd", 0);
-	oper_motd.cache(fs::paths[IRCD_PATH_IRCD_OMOTD], "opers.motd", 0);
+/* load_help()
+ *
+ * inputs	-
+ * outputs	-
+ * side effects - old help cache deleted
+ *		- contents of help directories are loaded.
+ */
+void
+cache::help::load()
+{
+	oper.clear();
+	user.clear();
+
+	DIR *dir(opendir(fs::paths[IRCD_PATH_OPERHELP]));
+	if (!dir)
+		return;
+
+	struct dirent *ldirent(nullptr);
+	while ((ldirent = readdir(dir)) != nullptr)
+	{
+		const auto &d_name(ldirent->d_name);
+		if (d_name[0] == '.')
+			continue;
+
+		char filename[PATH_MAX];
+		snprintf(filename, sizeof(filename), "%s%c%s", fs::paths[IRCD_PATH_OPERHELP], RB_PATH_SEPARATOR, d_name);
+		oper.emplace(d_name, std::make_shared<file>(filename, d_name, OPER));
+	}
+
+	closedir(dir);
+
+	dir = opendir(fs::paths[IRCD_PATH_USERHELP]);
+	if (dir == nullptr)
+		return;
+
+	while ((ldirent = readdir(dir)) != nullptr)
+	{
+		const auto &d_name(ldirent->d_name);
+		if (d_name[0] == '.')
+			continue;
+
+		char filename[PATH_MAX];
+		snprintf(filename, sizeof(filename), "%s%c%s", fs::paths[IRCD_PATH_USERHELP], RB_PATH_SEPARATOR, d_name);
+
+		#if defined(S_ISLNK) && defined(HAVE_LSTAT)
+		struct stat sb;
+		if (lstat(filename, &sb) < 0)
+			continue;
+
+		/* ok, if its a symlink, we work on the presumption if an
+		 * oper help exists of that name, its a symlink to that --fl
+		 */
+		if (S_ISLNK(sb.st_mode))
+		{
+			const auto it(oper.find(d_name));
+			if (it != end(oper))
+			{
+				auto &file(it->second);
+				file->flags |= USER;
+				continue;
+			}
+		}
+		#endif
+
+		user.emplace(d_name, std::make_shared<file>(filename, d_name, USER));
+	}
+
+	closedir(dir);
+}
+
+void
+cache::motd::cache_user(void)
+{
+	struct stat sb;
+
+	if (stat(fs::paths[IRCD_PATH_IRCD_MOTD], &sb) == 0)
+	{
+		struct tm *const local_tm(localtime(&sb.st_mtime));
+		if (local_tm != nullptr)
+		{
+			snprintf(user_motd_changed, sizeof(user_motd_changed),
+				 "%d/%d/%d %d:%d",
+				 local_tm->tm_mday, local_tm->tm_mon + 1,
+				 1900 + local_tm->tm_year, local_tm->tm_hour,
+				 local_tm->tm_min);
+		}
+	}
+
+	user = file(fs::paths[IRCD_PATH_IRCD_MOTD], "ircd.motd", 0);
+}
+
+void
+cache::motd::cache_oper(void)
+{
+	oper = cache::file(fs::paths[IRCD_PATH_IRCD_OMOTD], "opers.motd", 0);
+}
+
+/* send_user_motd()
+ *
+ * inputs	- client to send motd to
+ * outputs	- client is sent motd if exists, else ERR_NOMOTD
+ * side effects -
+ */
+void
+cache::motd::send_user(Client *source_p)
+{
+	const char *const myname(get_id(&me, source_p));
+	const char *const nick(get_id(source_p, source_p));
+
+	if (user.contents.empty())
+	{
+		sendto_one(source_p, form_str(ERR_NOMOTD), myname, nick);
+		return;
+	}
+
+	sendto_one(source_p, form_str(RPL_MOTDSTART), myname, nick, me.name);
+
+	for (const auto &it : user.contents)
+		sendto_one(source_p, form_str(RPL_MOTD), myname, nick, it.c_str());
+
+	sendto_one(source_p, form_str(RPL_ENDOFMOTD), myname, nick);
+}
+
+/* send_oper_motd()
+ *
+ * inputs	- client to send motd to
+ * outputs	- client is sent oper motd if exists
+ * side effects -
+ */
+void
+cache::motd::send_oper(Client *source_p)
+{
+	if (oper.contents.empty())
+		return;
+
+	sendto_one(source_p, form_str(RPL_OMOTDSTART), me.name, source_p->name);
+
+	for (const auto &it : motd::oper.contents)
+		sendto_one(source_p, form_str(RPL_OMOTD), me.name, source_p->name, it.c_str());
+
+	sendto_one(source_p, form_str(RPL_ENDOFOMOTD), me.name, source_p->name);
+}
+
+/* ircd::cache::file::file()
+ *
+ * inputs	- file to cache, files "shortname", flags to set
+ * outputs	- none
+ * side effects - cachefile.contents is populated with the lines from the file
+ */
+file::file(const char *const &filename,
+           const char *const &shortname,
+           const int &flags)
+:filename(filename)
+,shortname(shortname)
+,stream(filename)
+,flags(flags)
+,contents([this]
+{
+	std::vector<std::string> contents;
+	while (stream.good())
+	{
+		char line[BUFSIZE], *p;
+		stream.getline(line, sizeof(line));
+		if ((p = strpbrk(line, "\r\n")) != nullptr)
+			*p = '\0';
+
+		char untabline[BUFSIZE];
+		untabify(untabline, line, sizeof(untabline));
+		contents.emplace_back(untabline);
+	}
+
+	stream.close();
+	return contents;
+}())
+{
+}
+
+file &file::operator=(file &&other)
+noexcept
+{
+	filename = std::move(other.filename);
+	shortname = std::move(other.shortname);
+	flags = std::move(other.flags);
+	contents = std::move(other.contents);
+	return *this;
+}
+
+uint
+cache::flags(const file &file)
+{
+	return file.flags;
+}
+
+const std::string &
+cache::name(const file &file)
+{
+	return file.shortname;
+}
+
+const std::vector<std::string> &
+cache::contents(const file &file)
+{
+	return file.contents;
 }
 
 /*
@@ -93,195 +314,3 @@ untabify(char *dest, const char *src, size_t destlen)
 	*d = '\0';
 	return x;
 }
-
-/* cachefile::cache()
- *
- * inputs	- file to cache, files "shortname", flags to set
- * outputs	- none
- * side effects - cachefile.contents is populated with the lines from the file
- */
-void
-cachefile::cache(const char *filename, const char *shortname, int flags_)
-{
-	FILE *in;
-	char line[BUFSIZE];
-	char *p;
-
-	if((in = fopen(filename, "r")) == NULL)
-		return;
-
-	contents.clear();
-
-	name = shortname;
-	flags = flags_;
-
-	/* cache the file... */
-	while(fgets(line, sizeof(line), in) != NULL)
-	{
-		char untabline[BUFSIZE];
-
-		if((p = strpbrk(line, "\r\n")) != NULL)
-			*p = '\0';
-
-		untabify(untabline, line, sizeof(untabline));
-		contents.push_back(untabline);
-	}
-
-	fclose(in);
-}
-
-/* load_help()
- *
- * inputs	-
- * outputs	-
- * side effects - old help cache deleted
- *		- contents of help directories are loaded.
- */
-void
-load_help(void)
-{
-	DIR *helpfile_dir = NULL;
-	struct dirent *ldirent= NULL;
-	char filename[PATH_MAX];
-
-#if defined(S_ISLNK) && defined(HAVE_LSTAT)
-	struct stat sb;
-#endif
-
-	void *elem;
-
-	help_dict_oper.clear();
-	help_dict_user.clear();
-
-	helpfile_dir = opendir(fs::paths[IRCD_PATH_OPERHELP]);
-
-	if(helpfile_dir == NULL)
-		return;
-
-	while((ldirent = readdir(helpfile_dir)) != NULL)
-	{
-		if(ldirent->d_name[0] == '.')
-			continue;
-		snprintf(filename, sizeof(filename), "%s%c%s", fs::paths[IRCD_PATH_OPERHELP], RB_PATH_SEPARATOR, ldirent->d_name);
-		help_dict_oper[ldirent->d_name] = std::make_shared<cachefile>(filename, ldirent->d_name, HELP_OPER);
-	}
-
-	closedir(helpfile_dir);
-	helpfile_dir = opendir(fs::paths[IRCD_PATH_USERHELP]);
-
-	if(helpfile_dir == NULL)
-		return;
-
-	while((ldirent = readdir(helpfile_dir)) != NULL)
-	{
-		if(ldirent->d_name[0] == '.')
-			continue;
-		snprintf(filename, sizeof(filename), "%s%c%s", fs::paths[IRCD_PATH_USERHELP], RB_PATH_SEPARATOR, ldirent->d_name);
-
-#if defined(S_ISLNK) && defined(HAVE_LSTAT)
-		if(lstat(filename, &sb) < 0)
-			continue;
-
-		/* ok, if its a symlink, we work on the presumption if an
-		 * oper help exists of that name, its a symlink to that --fl
-		 */
-		if(S_ISLNK(sb.st_mode))
-		{
-			std::shared_ptr<cachefile> cacheptr = help_dict_oper[ldirent->d_name];
-
-			if(cacheptr != NULL)
-			{
-				cacheptr->flags |= HELP_USER;
-				continue;
-			}
-		}
-#endif
-
-		help_dict_user[ldirent->d_name] = std::make_shared<cachefile>(filename, ldirent->d_name, HELP_USER);
-	}
-
-	closedir(helpfile_dir);
-}
-
-/* send_user_motd()
- *
- * inputs	- client to send motd to
- * outputs	- client is sent motd if exists, else ERR_NOMOTD
- * side effects -
- */
-void
-send_user_motd(struct Client *source_p)
-{
-	rb_dlink_node *ptr;
-	const char *myname = get_id(&me, source_p);
-	const char *nick = get_id(source_p, source_p);
-
-	if (user_motd.contents.size() == 0)
-	{
-		sendto_one(source_p, form_str(ERR_NOMOTD), myname, nick);
-		return;
-	}
-
-	sendto_one(source_p, form_str(RPL_MOTDSTART), myname, nick, me.name);
-
-	for (auto it = user_motd.contents.begin(); it != user_motd.contents.end(); it++)
-	{
-		sendto_one(source_p, form_str(RPL_MOTD), myname, nick, it->c_str());
-	}
-
-	sendto_one(source_p, form_str(RPL_ENDOFMOTD), myname, nick);
-}
-
-void
-cache_user_motd(void)
-{
-	struct stat sb;
-	struct tm *local_tm;
-
-	if(stat(fs::paths[IRCD_PATH_IRCD_MOTD], &sb) == 0)
-	{
-		local_tm = localtime(&sb.st_mtime);
-
-		if(local_tm != NULL)
-		{
-			snprintf(user_motd_changed, sizeof(user_motd_changed),
-				 "%d/%d/%d %d:%d",
-				 local_tm->tm_mday, local_tm->tm_mon + 1,
-				 1900 + local_tm->tm_year, local_tm->tm_hour,
-				 local_tm->tm_min);
-		}
-	}
-
-	user_motd.cache(fs::paths[IRCD_PATH_IRCD_MOTD], "ircd.motd", 0);
-}
-
-
-/* send_oper_motd()
- *
- * inputs	- client to send motd to
- * outputs	- client is sent oper motd if exists
- * side effects -
- */
-void
-send_oper_motd(struct Client *source_p)
-{
-	struct cacheline *lineptr;
-	rb_dlink_node *ptr;
-
-	if (oper_motd.contents.size() == 0)
-		return;
-
-	sendto_one(source_p, form_str(RPL_OMOTDSTART),
-		   me.name, source_p->name);
-
-	for (auto it = oper_motd.contents.begin(); it != oper_motd.contents.end(); it++)
-	{
-		sendto_one(source_p, form_str(RPL_OMOTD),
-			   me.name, source_p->name, it->c_str());
-	}
-
-	sendto_one(source_p, form_str(RPL_ENDOFOMOTD),
-		   me.name, source_p->name);
-}
-
-} // namespace ircd

@@ -105,7 +105,7 @@ rehash_motd(struct Client *source_p)
 	if (!MyConnect(source_p))
 		remote_rehash_oper_p = source_p;
 
-	cache_user_motd();
+	cache::motd::cache_user();
 }
 
 static void
@@ -117,7 +117,7 @@ rehash_omotd(struct Client *source_p)
 	if (!MyConnect(source_p))
 		remote_rehash_oper_p = source_p;
 
-	oper_motd.cache(fs::paths[IRCD_PATH_IRCD_OMOTD], "opers.motd", 0);
+	cache::motd::cache_oper();
 }
 
 static void
@@ -258,7 +258,7 @@ rehash_help(struct Client *source_p)
 			     get_oper_name(source_p));
 	if (!MyConnect(source_p))
 		remote_rehash_oper_p = source_p;
-	load_help();
+	cache::help::load();
 }
 
 static void

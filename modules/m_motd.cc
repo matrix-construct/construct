@@ -85,7 +85,7 @@ m_motd(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		return;
 
 	motd_spy(source_p);
-	send_user_motd(source_p);
+	cache::motd::send_user(source_p);
 }
 
 /*
@@ -99,7 +99,7 @@ mo_motd(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		return;
 
 	motd_spy(source_p);
-	send_user_motd(source_p);
+	cache::motd::send_user(source_p);
 }
 
 /* motd_spy()

@@ -1351,7 +1351,7 @@ user_welcome(struct Client *source_p)
 
 	if(ConfigFileEntry.short_motd)
 	{
-		sendto_one_notice(source_p, ":*** Notice -- motd was last changed at %s", user_motd_changed);
+		sendto_one_notice(source_p, ":*** Notice -- motd was last changed at %s", cache::motd::user_motd_changed);
 		sendto_one_notice(source_p, ":*** Notice -- Please read the motd if you haven't read it");
 
 		sendto_one(source_p, form_str(RPL_MOTDSTART),
@@ -1363,7 +1363,7 @@ user_welcome(struct Client *source_p)
 		sendto_one(source_p, form_str(RPL_ENDOFMOTD), me.name, source_p->name);
 	}
 	else
-		send_user_motd(source_p);
+		cache::motd::send_user(source_p);
 }
 
 /* oper_up()
@@ -1438,7 +1438,7 @@ oper_up(struct Client *source_p, struct oper_conf *oper_p)
 	sendto_one(source_p, form_str(RPL_YOUREOPER), me.name, source_p->name);
 	sendto_one_notice(source_p, ":*** Oper privilege set is %s", oper_p->privset->name);
 	sendto_one_notice(source_p, ":*** Oper privs are %s", oper_p->privset->privs);
-	send_oper_motd(source_p);
+	cache::motd::send_oper(source_p);
 }
 
 /*
