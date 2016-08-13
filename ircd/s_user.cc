@@ -52,6 +52,8 @@
 #include <ircd/chmode.h>
 #include <ircd/s_assert.h>
 
+namespace ircd {
+
 static void report_and_set_user_flags(struct Client *, struct ConfItem *);
 void user_welcome(struct Client *source_p);
 
@@ -1607,4 +1609,6 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 		monitor_signon(target_p);
 		del_all_accepts(target_p);
 	}
+}
+
 }

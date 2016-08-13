@@ -18,6 +18,8 @@
 #include <ircd/messages.h>
 #include <ircd/s_assert.h>
 
+using namespace ircd;
+
 /* {{{ Structures */
 #define HURT_CUTOFF             (10)            /* protocol messages. */
 #define HURT_DEFAULT_EXPIRE     (7 * 24 * 60)   /* minutes. */

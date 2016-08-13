@@ -30,6 +30,8 @@
 #include <ircd/modules.h>
 #include <ircd/send.h>
 
+using namespace ircd;
+
 static const char unreject_desc[] =
 	"Provides the UNREJECT command to remove an IP from the reject cache";
 

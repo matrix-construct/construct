@@ -30,6 +30,8 @@
 #include <ircd/send.h>
 #include <ircd/match.h>
 
+namespace ircd {
+
 #ifdef RB_IPV6
 static unsigned long hash_ipv6(struct sockaddr *, int);
 #endif
@@ -766,3 +768,4 @@ report_auth(struct Client *client_p)
 			}
 }
 
+} // namespace ircd

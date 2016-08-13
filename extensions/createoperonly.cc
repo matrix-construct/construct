@@ -16,6 +16,8 @@
 #include <ircd/snomask.h>
 #include <ircd/numeric.h>
 
+using namespace ircd;
+
 static const char restrict_desc[] = "Restricts channel creation to IRC operators";
 
 static void h_can_create_channel_authenticated(hook_data_client_approval *);

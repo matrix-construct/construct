@@ -21,7 +21,6 @@
 #ifndef __CHARYBDIS_AUTHD_PROVIDER_H__
 #define __CHARYBDIS_AUTHD_PROVIDER_H__
 
-#include <ircd/stdinc.h>
 #include "authd.h"
 
 #define MAX_PROVIDERS 32	/* This should be enough */
@@ -53,8 +52,8 @@ struct auth_client
 	uint16_t c_port;			/* Client port */
 	struct rb_sockaddr_storage c_addr;	/* Client address/port */
 
-	char hostname[HOSTLEN + 1];		/* Used for DNS lookup */
-	char username[USERLEN + 1];		/* Used for ident lookup */
+	char hostname[ircd::HOSTLEN + 1];		/* Used for DNS lookup */
+	char username[ircd::USERLEN + 1];		/* Used for ident lookup */
 
 	bool providers_starting;		/* Providers are still warming up */
 	bool providers_cancelled;		/* Providers are being cancelled */

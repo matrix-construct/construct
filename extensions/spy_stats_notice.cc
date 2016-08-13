@@ -26,6 +26,8 @@
 #include <ircd/ircd.h>
 #include <ircd/send.h>
 
+using namespace ircd;
+
 static const char spy_desc[] = "Sends a notice when someone uses STATS";
 
 void show_stats(hook_data_int *);

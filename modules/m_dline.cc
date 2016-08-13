@@ -42,6 +42,8 @@
 #include <ircd/bandbi.h>
 #include <ircd/operhash.h>
 
+using namespace ircd;
+
 static const char dline_desc[] = "Provides the DLINE facility to ban users via IP address";
 
 static void mo_dline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

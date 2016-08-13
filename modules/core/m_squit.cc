@@ -37,6 +37,8 @@
 #include <ircd/hash.h>
 #include <ircd/s_newconf.h>
 
+using namespace ircd;
+
 static const char squit_desc[] = "Provides the SQUIT command to cause a server to quit";
 
 static void ms_squit(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

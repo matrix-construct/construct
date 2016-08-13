@@ -34,6 +34,8 @@
 #include <ircd/chmode.h>
 #include <ircd/inline/stringops.h>
 
+using namespace ircd;
+
 static const char cap_account_tag_desc[] =
 	"Provides the account-tag client capability";
 

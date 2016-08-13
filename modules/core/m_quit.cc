@@ -34,6 +34,8 @@
 #include <ircd/s_conf.h>
 #include <ircd/inline/stringops.h>
 
+using namespace ircd;
+
 static const char quit_desc[] = "Provides the QUIT command to allow a user to leave the network";
 
 static void m_quit(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

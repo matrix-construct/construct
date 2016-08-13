@@ -38,6 +38,8 @@
 #include <ircd/modules.h>
 #include <ircd/sslproc.h>
 
+using namespace ircd;
+
 static const char connect_desc[] =
 	"Provides the CONNECT command to introduce servers to the network";
 

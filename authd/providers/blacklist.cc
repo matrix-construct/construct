@@ -42,6 +42,8 @@
 #include "notice.h"
 #include "dns.h"
 
+using namespace ircd::defaults;
+
 #define SELF_PID (blacklist_provider.id)
 
 typedef enum filter_t

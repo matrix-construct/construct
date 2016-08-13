@@ -52,10 +52,12 @@
 #include <ircd/s_assert.h>
 #include <ircd/authproc.h>
 
-struct config_server_hide ConfigServerHide;
-
 int yyparse(void);
 extern char yy_linebuf[16384];		/* defined in ircd_lexer.l */
+
+namespace ircd {
+
+struct config_server_hide ConfigServerHide;
 
 static rb_bh *confitem_heap = NULL;
 
@@ -1642,3 +1644,6 @@ conf_yy_fatal_error(const char *msg)
 {
 	return (0);
 }
+
+
+} // namespace ircd

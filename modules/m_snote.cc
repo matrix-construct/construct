@@ -47,6 +47,8 @@
 #include <ircd/parse.h>
 #include <ircd/modules.h>
 
+using namespace ircd;
+
 static const char snote_desc[] = "Provides server notices via the SNOTE command";
 
 static void me_snote(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

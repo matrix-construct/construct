@@ -30,6 +30,8 @@
 #include <ircd/numeric.h>
 #include <ircd/inline/stringops.h>
 
+using namespace ircd;
+
 static const char umode_noctcp_desc[] =
 	"Adds user mode +C which blocks CTCPs to the user.";
 

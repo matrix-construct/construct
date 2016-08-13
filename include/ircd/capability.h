@@ -1,5 +1,7 @@
 /*
+ * Copyright (c) 2016 Charybdis development team
  * Copyright (c) 2012 - 2016 William Pitcock <nenolod@dereferenced.org>.
+ * Copyright (c) 2016 Jason Volk <jason@zemos.net>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,47 +20,48 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __CAPABILITY_H__
-#define __CAPABILITY_H__
+#pragma once
+#define HAVE_IRCD_CAPABILITY_H
 
-#include <ircd/stdinc.h>
-#include <ircd/util.h>
+#ifdef __cplusplus
+namespace ircd       {
+namespace capability {
 
-struct CapabilityEntry {
+struct entry
+{
 	std::string cap;
-	unsigned int value;
+	uint32_t value;
 	bool require;
 	bool orphan;
-	void *ownerdata;
+	void *ownerdata;   //TODO: inheritance model
 
-	CapabilityEntry(std::string cap_, unsigned int value_, void *ownerdata_)
-		: cap(cap_), value(value_), require(false), orphan(false), ownerdata(ownerdata_) { }
+	entry(const std::string &cap, const uint32_t &value, void *const &ownerdata);
 };
 
-struct CapabilityIndex {
+struct index
+{
 	std::string name;
-	std::map<std::string, std::shared_ptr<CapabilityEntry>, case_insensitive_less> cap_dict;
-	unsigned int highest_bit;
+	uint32_t highest_bit;
+	std::list<index *>::iterator indexes_it;
+	std::map<std::string, std::shared_ptr<entry>, case_insensitive_less> caps;
 
-	CapabilityIndex(std::string name_);
-	~CapabilityIndex();
+	void stats(void (*cb)(const std::string &line, void *privdata), void *privdata) const;
+	std::string list(const uint32_t &cap_mask);
+	uint32_t required();
+	uint32_t mask();
 
-	std::shared_ptr<CapabilityEntry> find(std::string cap_name);
+	bool orphan(const std::string &cap_name);
+	bool require(const std::string &cap_name);
+	uint32_t get(const std::string &cap_name, void **ownerdata);
+	uint32_t put(const std::string &cap_name = "", void *ownerdata = nullptr);
+	uint32_t put_anonymous();
 
-	unsigned int get(std::string cap_name, void **ownerdata);
-	unsigned int put(std::string cap_name, void *ownerdata);
-	unsigned int put_anonymous();
-
-	void orphan(std::string cap_name);
-	void require(std::string cap_name);
-
-	void stats(void (*cb)(std::string &line, void *privdata), void *privdata);
-
-	const char *list(unsigned int cap_mask);
-	unsigned int mask();
-	unsigned int required();
+	index(const std::string &name);
+	~index();
 };
 
-extern void capability_stats(void (*cb)(std::string &line, void *privdata), void *privdata);
+void stats(void (*cb)(const std::string &line, void *privdata), void *privdata);
 
-#endif
+} // namespace capability
+} // namespace ircd
+#endif // __cplusplus

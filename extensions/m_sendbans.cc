@@ -43,6 +43,8 @@
 #include <ircd/modules.h>
 #include <ircd/messages.h>
 
+using namespace ircd;
+
 static const char sendbands_desc[] =
 	"Adds the ability to send all permanent RESVs and XLINEs to given server";
 

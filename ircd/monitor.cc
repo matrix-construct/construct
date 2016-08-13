@@ -36,6 +36,8 @@
 #include <ircd/numeric.h>
 #include <ircd/send.h>
 
+namespace ircd {
+
 static rb_radixtree *monitor_tree;
 
 void
@@ -136,3 +138,6 @@ clear_monitor(struct Client *client_p)
 	client_p->localClient->monitor_list.head = client_p->localClient->monitor_list.tail = NULL;
 	client_p->localClient->monitor_list.length = 0;
 }
+
+
+} // namespace ircd

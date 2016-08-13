@@ -31,13 +31,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#pragma once
+#define HAVE_IRCD_SUBSTITUTION_H
+
 #include "stdinc.h"
 
-#ifndef SUBSTITUTION_H
-#define SUBSTITUTION_H
+#ifdef __cplusplus
+namespace ircd {
 
 extern void substitution_append_var(rb_dlink_list *varlist, const char *name, const char *value);
 extern void substitution_free(rb_dlink_list *varlist);
 extern char *substitution_parse(const char *fmt, rb_dlink_list *varlist);
 
-#endif
+}      // namespace ircd
+#endif // __cplusplus

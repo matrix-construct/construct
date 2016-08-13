@@ -33,6 +33,8 @@
 #include <ircd/send.h>
 #include <ircd/match.h>
 
+namespace ircd {
+
 #define BAD_PING                -2
 
 rb_dlink_list class_list;
@@ -336,3 +338,5 @@ get_sendq(struct Client *client_p)
 
 	return DEFAULT_SENDQ;
 }
+
+} // namespace ircd

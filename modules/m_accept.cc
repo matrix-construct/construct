@@ -34,6 +34,8 @@
 #include <ircd/parse.h>
 #include <ircd/modules.h>
 
+using namespace ircd;
+
 static const char accept_desc[] =
 	"Provides the ACCEPT command for use with Caller ID/user mode +g";
 

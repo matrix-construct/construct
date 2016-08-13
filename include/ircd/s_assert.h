@@ -23,8 +23,8 @@
  *  USA
  */
 
-#ifndef INCLUDED_s_assert_h
-#define INCLUDED_s_assert_h
+#pragma once
+#define HAVE_IRCD_S_ASSERT_H
 
 #include "defaults.h"
 
@@ -60,5 +60,3 @@
 #else
 #define s_assert(expr)	assert(expr)
 #endif
-
-#endif /* INCLUDED_s_assert_h */

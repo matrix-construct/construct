@@ -25,6 +25,8 @@
 #include <ircd/ircd.h>
 #include <ircd/send.h>
 
+using namespace ircd;
+
 /* This string describes the module. Always declare it a static const char[].
  * It is preferred for stylistic reasons to put it first.
  *

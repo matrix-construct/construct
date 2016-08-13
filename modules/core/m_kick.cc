@@ -37,6 +37,8 @@
 #include <ircd/s_serv.h>
 #include <ircd/hook.h>
 
+using namespace ircd;
+
 static const char kick_desc[] = "Provides the KICK command to remove a user from a channel";
 
 static void m_kick(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

@@ -34,6 +34,8 @@
 #include <ircd/parse.h>
 #include <ircd/modules.h>
 
+using namespace ircd;
+
 static const char version_desc[] =
 	"Provides the VERSION command to display server version information";
 

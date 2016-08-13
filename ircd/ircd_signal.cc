@@ -28,9 +28,13 @@
 #include <ircd/send.h>
 
 #ifndef _WIN32
-
 #include <sys/types.h>
 #include <sys/wait.h>
+#endif
+
+namespace ircd {
+
+#ifndef _WIN32
 
 /*
  * dummy_handler - don't know if this is really needed but if alarm is still
@@ -181,6 +185,7 @@ setup_signals()
 }
 
 #else
+
 void
 setup_signals()
 {
@@ -192,4 +197,6 @@ setup_reboot_signals()
 {
 /* this is a stub for mingw32 */
 }
-#endif
+
+#endif // _WIN32
+} // namespace ircd

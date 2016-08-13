@@ -39,6 +39,8 @@
 #include <ircd/s_newconf.h>
 #include <ircd/reject.h>
 
+using namespace ircd;
+
 static const char testline_desc[] = "Provides the ability to test I/K/D/X lines and RESVs";
 
 static void mo_testline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

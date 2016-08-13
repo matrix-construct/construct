@@ -35,6 +35,8 @@
 #include <ircd/client.h>
 #include <ircd/snomask.h>
 
+namespace ircd {
+
 /* *INDENT-OFF* */
 int snomask_modes[256] = {
         /* 0x00 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x0F */
@@ -195,3 +197,5 @@ find_snomask_slot(void)
 	return my_umode;
 }
 
+
+}

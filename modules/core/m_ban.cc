@@ -45,6 +45,8 @@
 #include <ircd/hostmask.h>
 #include <ircd/logger.h>
 
+using namespace ircd;
+
 static const char ban_desc[] = "Provides the TS6 BAN command for propagating network-wide bans";
 
 static void m_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);

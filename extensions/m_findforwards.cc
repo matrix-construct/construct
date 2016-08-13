@@ -34,6 +34,8 @@
 #include <ircd/packet.h>
 #include <ircd/messages.h>
 
+using namespace ircd;
+
 static const char findfowards_desc[] = "Allows operators to find forwards to a given channel";
 
 static void m_findforwards(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,

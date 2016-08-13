@@ -36,6 +36,8 @@
 #include <ircd/s_newconf.h>
 #include <ircd/s_assert.h>
 
+namespace ircd {
+
 rb_dictionary *client_connid_tree = NULL;
 rb_radixtree *client_id_tree = NULL;
 rb_radixtree *client_name_tree = NULL;
@@ -506,3 +508,5 @@ find_cli_connid_hash(uint32_t connid)
 {
 	return (Client *)rb_dictionary_retrieve(client_connid_tree, RB_UINT_TO_POINTER(connid));
 }
+
+} // namespace ircd

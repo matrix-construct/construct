@@ -37,6 +37,8 @@
 #include <ircd/msg.h>
 #include <ircd/modules.h>
 
+using namespace ircd;
+
 static const char certfp_desc[] =
 	"Provides the CERTFP facility used by servers to set certificate fingerprints";
 

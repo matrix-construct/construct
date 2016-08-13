@@ -46,6 +46,8 @@
 #include <ircd/monitor.h>
 #include <ircd/s_assert.h>
 
+using namespace ircd;
+
 /* Give all UID nicks the same TS. This ensures nick TS is always the same on
  * all servers for each nick-user pair, also if a user with a UID nick changes
  * their nick but is collided again (the server detecting the collision will

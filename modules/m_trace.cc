@@ -39,6 +39,8 @@
 #include <ircd/parse.h>
 #include <ircd/modules.h>
 
+using namespace ircd;
+
 static const char trace_desc[] =
 	"Provides the TRACE command to trace the route to a client or server";
 

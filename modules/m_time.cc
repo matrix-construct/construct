@@ -34,6 +34,8 @@
 #include <ircd/modules.h>
 #include <ircd/packet.h>
 
+using namespace ircd;
+
 static const char time_desc[] =
 	"Provides the TIME command to show the current server time";
 

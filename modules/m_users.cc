@@ -33,6 +33,8 @@
 #include <ircd/parse.h>
 #include <ircd/modules.h>
 
+using namespace ircd;
+
 static const char users_desc[] =
 	"Provides the USERS command to display connection statistics locally and globally";
 

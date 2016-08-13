@@ -41,6 +41,8 @@
 #include <ircd/modules.h>
 #include <ircd/logger.h>
 
+using namespace ircd;
+
 static const char operspy_desc[] =
 	"Provides the operspy facility for viewing normally private data";
 

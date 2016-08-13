@@ -53,6 +53,8 @@
 #include <ircd/s_conf.h>
 #include <ircd/reject.h>
 
+using namespace ircd;
+
 static const char webirc_desc[] = "Adds support for the WebIRC system";
 
 static void mr_webirc(struct MsgBuf *msgbuf_p, struct Client *, struct Client *, int, const char **);

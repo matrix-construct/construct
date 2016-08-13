@@ -20,8 +20,11 @@
  *  USA
  */
 
-#ifndef INCLUDED_certfp_h
-#define INCLUDED_certfp_h
+#pragma once
+#define HAVE_IRCD_CERTFP_H
+
+#ifdef __cplusplus
+namespace ircd {
 
 #define CERTFP_NAME_CERT_SHA1		"sha1"
 #define CERTFP_PREFIX_CERT_SHA1		""
@@ -35,4 +38,5 @@
 #define CERTFP_NAME_SPKI_SHA512		"spki_sha512"
 #define CERTFP_PREFIX_SPKI_SHA512	"SPKI:SHA2-512:"
 
-#endif /* INCLUDED_certfp_h */
+}      // namespace ircd
+#endif // __cplusplus

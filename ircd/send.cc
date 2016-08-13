@@ -37,6 +37,8 @@
 #include <ircd/monitor.h>
 #include <ircd/msgbuf.h>
 
+namespace ircd {
+
 /* send the message to the link the target is attached to */
 #define send_linebuf(a,b) _send_linebuf((a->from ? a->from : a) ,b)
 
@@ -1419,3 +1421,5 @@ kill_client_serv_butone(struct Client *one, struct Client *target_p, const char 
 
 	rb_linebuf_donebuf(&rb_linebuf_id);
 }
+
+} // namespace ircd

@@ -40,8 +40,8 @@
  */
 
 #ifdef __cplusplus
-inline namespace ircd  {
-inline namespace fs    {
+namespace ircd      {
+inline namespace fs {
 
 #define DPATH		IRCD_PREFIX
 #define BINPATH		IRCD_PREFIX "/bin"

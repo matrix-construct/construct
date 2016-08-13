@@ -40,6 +40,8 @@
 #include <ircd/ratelimit.h>
 #include <ircd/supported.h>
 
+using namespace ircd;
+
 #define FIELD_CHANNEL    0x0001
 #define FIELD_HOP        0x0002
 #define FIELD_FLAGS      0x0004

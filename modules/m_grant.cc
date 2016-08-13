@@ -14,6 +14,8 @@
 #include <ircd/s_conf.h>
 #include <ircd/s_newconf.h>
 
+using namespace ircd;
+
 static const char grant_desc[] =
 	"Provides the grant facility for giving other users specific privilege sets";
 

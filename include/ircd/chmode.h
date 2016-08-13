@@ -23,8 +23,8 @@
  *  USA
  */
 
-#ifndef INCLUDED_chmode_h
-#define INCLUDED_chmode_h
+#pragma once
+#define HAVE_IRCD_CHMOD_H
 
 /* something not included in messages.tab
  * to change some hooks behaviour when needed
@@ -36,6 +36,9 @@
 #define MAXMODEPARAMS      4
 #define MAXMODEPARAMSSERV  10
 #define MODEBUFLEN         200
+
+#ifdef __cplusplus
+namespace ircd {
 
 /* Channel mode classification */
 typedef enum
@@ -120,4 +123,5 @@ void cflag_orphan(const unsigned char c);
 
 void chmode_init(void);
 
-#endif
+}      // namespace ircd
+#endif // __cplusplus

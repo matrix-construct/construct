@@ -40,6 +40,8 @@
 #include <ircd/packet.h>
 #include <ircd/s_newconf.h>
 
+using namespace ircd;
+
 static const char mode_desc[] =
 	"Provides the MODE and MLOCK client and server commands, and TS6 server-to-server TMODE and BMASK commands";
 

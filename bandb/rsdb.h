@@ -1,5 +1,5 @@
-#ifndef INCLUDED_rsdb_h
-#define INCLUDED_rsdb_h
+#pragma once
+#define HAVE_BANDB_RSDB_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,6 +43,4 @@ int rs_snprintf(char *dest, const size_t bytes, const char *format, ...);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

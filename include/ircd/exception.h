@@ -30,7 +30,7 @@
 #include "util.h"
 
 #ifdef __cplusplus
-inline namespace ircd {
+namespace ircd {
 
 
 IRCD_OVERLOAD(pass_name)

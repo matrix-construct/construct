@@ -9,6 +9,8 @@
 #include <ircd/ircd.h>
 #include <ircd/chmode.h>
 
+using namespace ircd;
+
 static const char chm_sslonly_compat_desc[] =
 	"Adds an emulated channel mode +S which is converted into mode +b $~z";
 

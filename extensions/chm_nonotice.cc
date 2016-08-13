@@ -35,6 +35,8 @@
 #include <ircd/messages.h>
 #include <ircd/inline/stringops.h>
 
+using namespace ircd;
+
 static const char chm_nonotice_desc[] =
 	"Adds channel mode +T which blocks notices to the channel.";
 

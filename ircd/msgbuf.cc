@@ -24,6 +24,8 @@
 #include <ircd/client.h>
 #include <ircd/ircd.h>
 
+namespace ircd {
+
 /*
  * parse a message into a MsgBuf.
  * returns 0 on success, 1 on error.
@@ -236,3 +238,6 @@ msgbuf_unparse_fmt(char *buf, size_t buflen, struct MsgBuf *head, unsigned int c
 
 	return res;
 }
+
+
+} // namespace ircd

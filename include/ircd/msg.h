@@ -22,11 +22,14 @@
  *  USA
  */
 
-#ifndef INCLUDED_msg_h
-#define INCLUDED_msg_h
+#pragma once
+#define HAVE_IRCD_MSG_H
 
 #include "defaults.h"
 #include "msgbuf.h"
+
+#ifdef __cplusplus
+namespace ircd {
 
 struct Client;
 
@@ -142,4 +145,5 @@ extern void m_unregistered(struct MsgBuf *, struct Client *, struct Client *, in
  *                    non-NULL pointers.
  */
 
-#endif /* INCLUDED_msg_h */
+}      // namespace ircd
+#endif // __cplusplus

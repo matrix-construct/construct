@@ -18,6 +18,8 @@
 #include <ircd/s_newconf.h>
 #include <ircd/chmode.h>
 
+using namespace ircd;
+
 static const char chm_operpeace_desc[] =
 	"Adds channel mode +M which prohibits operators from being kicked";
 

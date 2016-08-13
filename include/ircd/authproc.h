@@ -23,11 +23,14 @@
  *  USA
  */
 
-#ifndef CHARYBDIS_AUTHD_H
-#define CHARYBDIS_AUTHD_H
+#pragma once
+#define HAVE_CHARYBDIS_AUTHD_H
 
 #include "stdinc.h"
 #include "client.h"
+
+#ifdef __cplusplus
+namespace ircd {
 
 struct BlacklistStats
 {
@@ -91,4 +94,5 @@ void delete_opm_proxy_scanner_all(void);
 void delete_opm_listener_all(void);
 void opm_check_enable(bool enabled);
 
-#endif
+}       // namespace ircd
+#endif  // __cplusplus

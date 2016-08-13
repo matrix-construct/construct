@@ -43,6 +43,8 @@
 #include <ircd/tgchange.h>
 #include <ircd/inline/stringops.h>
 
+using namespace ircd;
+
 static const char message_desc[] =
 	"Provides the PRIVMSG and NOTICE commands to send messages to users and channels";
 

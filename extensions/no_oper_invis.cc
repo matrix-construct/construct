@@ -13,6 +13,8 @@
 #include <ircd/s_conf.h>
 #include <ircd/s_newconf.h>
 
+using namespace ircd;
+
 static const char noi_desc[] =
 	"Disallow operators from setting user mode +i on themselves";
 

@@ -36,6 +36,8 @@
 #include <ircd/ircd.h>
 #include <ircd/send.h>
 
+using namespace ircd;
+
 static void h_nn_server_eob(struct Client *);
 static void h_nn_client_exit(hook_data_client_exit *);
 

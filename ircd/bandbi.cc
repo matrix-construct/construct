@@ -45,6 +45,8 @@
 #include <ircd/msg.h>	/* XXX: MAXPARA */
 #include <ircd/operhash.h>
 
+namespace ircd {
+
 static void
 bandb_handle_failure(rb_helper *helper, char **parv, int parc) __attribute__((noreturn));
 
@@ -452,3 +454,6 @@ bandb_restart_cb(rb_helper *helper)
 	start_bandb();
 	return;
 }
+
+
+} // namespace ircd

@@ -44,6 +44,8 @@
 #include <ircd/s_conf.h>
 #include <ircd/hash.h>
 
+using namespace ircd;
+
 static const char cap_desc[] = "Provides the commands used for client capability negotiation";
 
 typedef int (*bqcmp)(const void *, const void *);
@@ -63,7 +65,7 @@ DECLARE_MODULE_AV2(cap, NULL, NULL, cap_clist, NULL, NULL, NULL, NULL, cap_desc)
 #define HasCapabilityFlag(c, f)		(c->ownerdata != NULL && (((struct ClientCapability *)c->ownerdata)->flags & (f)) == f)
 
 static inline int
-clicap_visible(struct Client *client_p, const std::shared_ptr<CapabilityEntry> cap)
+clicap_visible(struct Client *client_p, const std::shared_ptr<capability::entry> cap)
 {
 	struct ClientCapability *clicap;
 
@@ -89,12 +91,11 @@ clicap_visible(struct Client *client_p, const std::shared_ptr<CapabilityEntry> c
  *         int pointer to whether we finish with success
  * Ouputs: Cap entry if found, NULL otherwise.
  */
-static std::shared_ptr<CapabilityEntry>
+static std::shared_ptr<capability::entry>
 clicap_find(const char *data, int *negate, int *finished)
 {
 	static char buf[BUFSIZE];
 	static char *p;
-	std::shared_ptr<CapabilityEntry> cap;
 	char *s;
 
 	*negate = 0;
@@ -131,15 +132,16 @@ clicap_find(const char *data, int *negate, int *finished)
 	if((s = strchr(p, ' ')))
 		*s++ = '\0';
 
-	if((cap = cli_capindex.find(p)) != NULL)
-	{
-		if(s)
-			p = s;
-		else
-			*finished = 1;
-	}
+	const auto it(cli_capindex.caps.find(p));
+	if (it == end(cli_capindex.caps))
+		return {};
 
-	return cap;
+	if (s)
+		p = s;
+	else
+		*finished = 1;
+
+	return it->second;
 }
 
 /* clicap_generate()
@@ -170,10 +172,10 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags)
 		return;
 	}
 
-	for (auto it = cli_capindex.cap_dict.begin(); it != cli_capindex.cap_dict.end(); it++)
+	for (const auto &it : cli_capindex.caps)
 	{
 		size_t caplen = 0;
-		const auto entry = it->second;
+		const auto &entry(it.second);
 		const auto clicap(reinterpret_cast<ClientCapability *>(entry->ownerdata));
 		const char *data = NULL;
 
@@ -217,7 +219,7 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags)
 static void
 cap_ack(struct Client *source_p, const char *arg)
 {
-	std::shared_ptr<CapabilityEntry> cap;
+	std::shared_ptr<capability::entry> cap;
 	int capadd = 0, capdel = 0;
 	int finished = 0, negate;
 
@@ -290,7 +292,7 @@ cap_req(struct Client *source_p, const char *arg)
 {
 	char buf[BUFSIZE];
 	char pbuf[2][BUFSIZE];
-	std::shared_ptr<CapabilityEntry> cap;
+	std::shared_ptr<capability::entry> cap;
 	int buflen, plen;
 	int i = 0;
 	int capadd = 0, capdel = 0;

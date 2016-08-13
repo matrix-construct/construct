@@ -63,7 +63,7 @@
 #include <ircd/authproc.h>
 #include <ircd/operhash.h>
 
-using namespace ircd;
+namespace ircd {
 
 static void
 ircd_die_cb(const char *str) __attribute__((noreturn));
@@ -785,3 +785,5 @@ charybdis_main(int argc, char * const argv[])
 
 	return 0;
 }
+
+} // namespace ircd

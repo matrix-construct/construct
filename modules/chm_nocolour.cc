@@ -34,6 +34,8 @@
 #include <ircd/chmode.h>
 #include <ircd/inline/stringops.h>
 
+using namespace ircd;
+
 static const char chm_nocolour_desc[] =
 	"Enables channel mode +c that filters colours and formatting from a channel";
 

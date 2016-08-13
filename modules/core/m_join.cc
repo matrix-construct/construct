@@ -41,6 +41,8 @@
 #include <ircd/ratelimit.h>
 #include <ircd/s_assert.h>
 
+using namespace ircd;
+
 static const char join_desc[] = "Provides the JOIN and TS6 SJOIN commands to facilitate joining and creating channels";
 
 static void m_join(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

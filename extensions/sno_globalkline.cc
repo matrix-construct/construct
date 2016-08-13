@@ -15,6 +15,8 @@
 #include <ircd/send.h>
 #include <ircd/s_conf.h>
 
+using namespace ircd;
+
 static const char sno_desc[] =
 	"Adds server notices for global XLINEs, KLINEs, and DLINEs";
 

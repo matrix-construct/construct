@@ -197,6 +197,7 @@ AC_ARG_ENABLE(pch, AC_HELP_STRING([--disable-pch], [Disable precompiled header g
 	AC_MSG_RESULT([no])
 ], [
 	build_pch="yes"
+	CPPDEFINE([PCH])
 	AC_MSG_RESULT([yes])
 ])
 
@@ -216,7 +217,6 @@ CHARYBDIS_C_GCC_TRY_FLAGS([-Wcast-align], charybdis_cv_c_gcc_w_cast_align)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wcast-qual], charybdis_cv_c_gcc_w_cast_qual)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wfloat-equal], charybdis_cv_c_gcc_w_float_equal)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wwrite-strings], charybdis_cv_c_gcc_w_write_strings)
-CHARYBDIS_C_GCC_TRY_FLAGS([-Wmissing-declarations], charybdis_cv_c_gcc_w_prototypes)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-missing-field-initializers], charybdis_cv_c_gcc_w_missing_field_initializers)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wparentheses], charybdis_cv_c_gcc_parentheses)
 CHARYBDIS_C_GCC_TRY_FLAGS([-Wmissing-noreturn], charybdis_cv_c_gcc_w_missing_noreturn)

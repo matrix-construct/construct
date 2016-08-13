@@ -34,6 +34,8 @@
 #include <ircd/s_newconf.h>
 #include <ircd/messages.h>
 
+using namespace ircd;
+
 static const char opme_desc[] = "Allow admins to op themselves on opless channels";
 
 static void mo_opme(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);

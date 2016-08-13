@@ -37,6 +37,8 @@
 #include <ircd/scache.h>
 #include <ircd/s_assert.h>
 
+using namespace ircd;
+
 static const char links_desc[] =
 	"Provides the LINKS command to view servers linked to the host server";
 

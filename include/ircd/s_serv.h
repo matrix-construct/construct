@@ -22,8 +22,8 @@
  *  USA
  */
 
-#ifndef INCLUDED_serv_h
-#define INCLUDED_serv_h
+#pragma once
+#define HAVE_IRCD_SERV_H
 
 #include "defaults.h"
 #include "capability.h"
@@ -41,13 +41,15 @@
  */
 #define STARTUP_CONNECTIONS_TIME 60
 
-struct Client;
+#ifdef __cplusplus
+namespace ircd {
+
 struct server_conf;
 struct Channel;
 
 /* Capabilities */
-extern struct CapabilityIndex serv_capindex;
-extern struct CapabilityIndex cli_capindex;
+extern ircd::capability::index serv_capindex;     //TODO: namespace
+extern ircd::capability::index cli_capindex;      //TODO: namespace
 
 /* register client capabilities with this structure for 3.2 enhanced capability negotiation */
 #define CLICAP_FLAGS_STICKY    0x001
@@ -144,4 +146,5 @@ extern int server_estab(struct Client *client_p);
 
 extern int serv_connect(struct server_conf *, struct Client *);
 
-#endif /* INCLUDED_s_serv_h */
+}      // namespace ircd
+#endif // __cplusplus

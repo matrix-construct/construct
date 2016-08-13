@@ -33,6 +33,8 @@
 #include <ircd/modules.h>
 #include <ircd/s_conf.h>
 
+using namespace ircd;
+
 static const char post_desc[] =
 	"Ensure Web forms/proxies cannot connect by disconnecting on POST, GET, and PUT";
 

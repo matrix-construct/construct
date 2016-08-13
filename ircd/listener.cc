@@ -41,6 +41,8 @@
 #include <ircd/s_assert.h>
 #include <ircd/logger.h>
 
+namespace ircd {
+
 #if defined(NO_IN6ADDR_ANY) && defined(RB_IPV6)
 static const struct in6_addr in6addr_any =
 { { { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 } } };
@@ -615,4 +617,6 @@ accept_callback(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t add
 	}
 
 	add_connection(listener, F, addr, (struct sockaddr *)&lip);
+}
+
 }

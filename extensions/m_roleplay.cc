@@ -29,6 +29,8 @@
 #include <ircd/packet.h>
 #include <ircd/messages.h>
 
+using namespace ircd;
+
 static const char roleplay_desc[] =
 	"Adds a roleplaying system that allows faked nicknames to talk in a channel set +N";
 

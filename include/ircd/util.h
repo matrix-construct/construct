@@ -28,11 +28,7 @@
 
 #ifdef __cplusplus
 
-#include <memory>
-#include <functional>
-#include <map>
-
-inline namespace ircd {
+namespace ircd        {
 inline namespace util {
 
 

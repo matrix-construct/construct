@@ -40,6 +40,8 @@
 #include <ircd/parse.h>
 #include <ircd/modules.h>
 
+using namespace ircd;
+
 static const char encap_desc[] = "Provides the TS6 ENCAP facility";
 
 static void ms_encap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,

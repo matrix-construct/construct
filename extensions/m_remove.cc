@@ -39,6 +39,8 @@
 #include <ircd/hook.h>
 #include <ircd/messages.h>
 
+using namespace ircd;
+
 static const char description[] = "Provides the REMOVE command, an alternative to KICK";
 
 static void m_remove(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

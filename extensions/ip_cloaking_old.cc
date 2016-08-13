@@ -10,6 +10,8 @@
 #include <ircd/s_serv.h>
 #include <ircd/numeric.h>
 
+using namespace ircd;
+
 static const char ip_cloaking_desc[] = "Very old IP cloaking mechanism";
 
 /* if you're modifying this module, you'll probably want to change this */

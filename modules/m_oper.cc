@@ -38,6 +38,8 @@
 #include <ircd/packet.h>
 #include <ircd/cache.h>
 
+using namespace ircd;
+
 static const char oper_desc[] = "Provides the OPER command to become an IRC operator";
 
 static void m_oper(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

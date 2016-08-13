@@ -22,10 +22,12 @@
 #include <rb/rb.h>
 #include <ircd/ircd.h>
 
-
-extern int charybdis_main(int argc, char *const argv[]);
+namespace ircd
+{
+	extern int charybdis_main(int argc, char *const argv[]);
+}
 
 int main(int argc, char *argv[])
 {
-	return charybdis_main(argc, argv);
+	return ircd::charybdis_main(argc, argv);
 }

@@ -41,6 +41,8 @@
 #include <ircd/logger.h>
 #include <ircd/inline/stringops.h>
 
+using namespace ircd;
+
 static const char topic_desc[] =
 	"Provides the TOPIC command to set, remove, and inspect channel topics";
 

@@ -35,12 +35,10 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-
 #include <ircd/stdinc.h>
 #include "rsdb.h"
+
+using namespace ircd::defaults;
 
 #define EmptyString(x) ((x == NULL) || (*(x) == '\0'))
 

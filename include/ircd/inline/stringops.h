@@ -20,8 +20,11 @@
  *  USA
  */
 
-#ifndef __INLINE_STRINGOPS_H
-#define __INLINE_STRINGOPS_H
+#pragma once
+#define HAVE_IRCD_STRINGOPS_H
+
+#ifdef __cplusplus
+namespace ircd {
 
 /*
  * strip_colour - remove colour codes from a string
@@ -124,4 +127,5 @@ strip_unprintable(char *string)
 	return string;
 }
 
-#endif
+}      // namespace ircd
+#endif // __cplusplus

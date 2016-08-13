@@ -20,11 +20,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INCLUDED_ratelimit_h
-#define INCLUDED_ratelimit_h
+#pragma once
+#define HAVE_IRCD_RATELIMIT_H
+
+#ifdef __cplusplus
+namespace ircd {
 
 int ratelimit_client(struct Client *client_p, unsigned int penalty);
 int ratelimit_client_who(struct Client *client_p, unsigned int penalty);
 void credit_client_join(struct Client *client_p);
 
-#endif /* INCLUDED_ratelimit_h */
+}      // namespace ircd
+#endif // __cplusplus

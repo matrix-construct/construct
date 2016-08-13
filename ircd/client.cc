@@ -23,7 +23,6 @@
  *  USA
  */
 #include <ircd/stdinc.h>
-
 #include <ircd/client.h>
 #include <ircd/class.h>
 #include <ircd/hash.h>
@@ -51,6 +50,8 @@
 #include <ircd/sslproc.h>
 #include <ircd/wsproc.h>
 #include <ircd/s_assert.h>
+
+namespace ircd {
 
 #define DEBUG_EXITED_CLIENTS
 
@@ -2086,3 +2087,5 @@ error_exit_client(struct Client *client_p, int error)
 
 	exit_client(client_p, client_p, &me, errmsg);
 }
+
+} // namespace ircd

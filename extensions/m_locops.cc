@@ -37,6 +37,8 @@
 #include <ircd/modules.h>
 #include <ircd/s_serv.h>
 
+using namespace ircd;
+
 static const char locops_desc[] =
 	"Provides the LOCOPS command to send a message to all local operators";
 

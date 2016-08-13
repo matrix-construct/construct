@@ -28,10 +28,11 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sqlite3.h>
 #include <ircd/stdinc.h>
 #include "rsdb.h"
 
-#include <sqlite3.h>
+using namespace ircd::defaults;
 
 struct sqlite3 *rb_bandb;
 

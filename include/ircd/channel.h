@@ -22,11 +22,14 @@
  *  USA
  */
 
-#ifndef INCLUDED_channel_h
-#define INCLUDED_channel_h
+#pragma once
+#define HAVE_IRCD_CHANNEL_H
 
 #include "stdinc.h"
 #include "chmode.h"
+
+#ifdef __cplusplus
+namespace ircd {
 
 /* channel status flags */
 #define CHFL_PEON		0x0000	/* normal member of channel */
@@ -43,6 +46,11 @@
 /* mode structure for channels */
 struct Mode
 {
+	static constexpr size_t KEYLEN
+	{
+		24  // 23+1 for \0
+	};
+
 	unsigned int mode;
 	int limit;
 	char key[KEYLEN];
@@ -230,4 +238,5 @@ extern int get_channel_access(struct Client *source_p, struct Channel *chptr, st
 
 extern void send_channel_join(struct Channel *chptr, struct Client *client_p);
 
-#endif /* INCLUDED_channel_h */
+}      // namespace ircd
+#endif // __cplusplus

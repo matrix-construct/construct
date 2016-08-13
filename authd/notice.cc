@@ -21,6 +21,9 @@
 #include "authd.h"
 #include "notice.h"
 
+using namespace ircd::defaults;
+
+
 /* Send a notice to a client */
 void
 notice_client(uint32_t cid, const char *fmt, ...)

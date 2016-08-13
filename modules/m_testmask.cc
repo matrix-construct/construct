@@ -45,6 +45,8 @@
 #include <ircd/parse.h>
 #include <ircd/modules.h>
 
+using namespace ircd;
+
 static const char testmask_desc[] =
 	"Provides the TESTMASK command to show the number of clients matching a hostmask or GECOS";
 

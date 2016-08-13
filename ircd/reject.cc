@@ -34,6 +34,8 @@
 #include <ircd/match.h>
 #include <ircd/hash.h>
 
+namespace ircd {
+
 static rb_patricia_tree_t *reject_tree;
 static rb_dlink_list delay_exit;
 static rb_dlink_list reject_list;
@@ -393,3 +395,5 @@ throttle_expires(void *unused)
 	}
 }
 
+
+} // namespace ircd

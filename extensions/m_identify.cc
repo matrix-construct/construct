@@ -46,6 +46,8 @@
 #define SVS_chanserv_NICK "ChanServ"
 #define SVS_nickserv_NICK "NickServ"
 
+using namespace ircd;
+
 static const char identify_desc[] = "Adds the IDENTIFY alias that forwards to NickServ or ChanServ";
 
 static void m_identify(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);

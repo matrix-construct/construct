@@ -33,6 +33,8 @@
 #include <ircd/s_serv.h>
 #include <ircd/send.h>
 
+namespace ircd {
+
 static int add_hashed_target(struct Client *source_p, uint32_t hashv);
 
 struct Channel *
@@ -196,4 +198,6 @@ add_reply_target(struct Client *source_p, struct Client *target_p)
 	for(i = TGCHANGE_NUM + TGCHANGE_REPLY - 1; i > TGCHANGE_NUM; i--)
 		targets[i] = targets[i - 1];
 	targets[TGCHANGE_NUM] = hashv;
+}
+
 }

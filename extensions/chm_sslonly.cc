@@ -10,6 +10,8 @@
 #include <ircd/numeric.h>
 #include <ircd/chmode.h>
 
+using namespace ircd;
+
 static const char chm_sslonly_desc[] =
 	"Adds channel mode +S that bans non-SSL users from joing a channel";
 

@@ -31,6 +31,8 @@
 #include <ircd/client.h>
 #include <ircd/ircd_signal.h>
 
+namespace ircd {
+
 /* external var */
 extern char * const *myargv;
 
@@ -80,3 +82,6 @@ server_reboot(void)
 	execv(path, (char *const *)myargv);
 	exit(-1);
 }
+
+
+} // namespace ircd

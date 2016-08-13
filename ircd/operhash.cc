@@ -35,6 +35,8 @@
 #include <ircd/hash.h>
 #include <ircd/operhash.h>
 
+namespace ircd {
+
 static rb_radixtree *operhash_tree = NULL;
 
 struct operhash_entry
@@ -93,3 +95,5 @@ operhash_delete(const char *name)
 		rb_free(ohash);
 	}
 }
+
+} // namespace ircd

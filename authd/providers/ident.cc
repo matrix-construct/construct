@@ -24,12 +24,12 @@
  * --Elizafox 13 March 2016
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/match.h>
 #include "authd.h"
 #include "notice.h"
 #include "provider.h"
 #include "res.h"
+
+using namespace ircd::defaults;
 
 #define SELF_PID (ident_provider.id)
 

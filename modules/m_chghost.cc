@@ -27,6 +27,8 @@
 #include <ircd/whowas.h>
 #include <ircd/monitor.h>
 
+using namespace ircd;
+
 static const char chghost_desc[] = "Provides commands used to change and retrieve client hostnames";
 
 static void me_realhost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

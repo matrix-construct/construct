@@ -26,6 +26,8 @@
 #include <zlib.h>
 #endif
 
+using namespace ircd;
+
 #define MAXPASSFD 4
 #ifndef READBUF_SIZE
 #define READBUF_SIZE 16384

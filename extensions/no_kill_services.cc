@@ -20,6 +20,8 @@
 #include <ircd/privilege.h>
 #include <ircd/s_newconf.h>
 
+using namespace ircd;
+
 static const char nokill_desc[] = "Prevents operators from killing services";
 
 static void block_services_kill(void *data);

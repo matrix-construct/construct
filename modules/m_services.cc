@@ -45,6 +45,8 @@
 #include <ircd/monitor.h>
 #include <ircd/supported.h>
 
+using namespace ircd;
+
 static const char services_desc[] = "Provides support for running a services daemon";
 
 static int _modinit(void);

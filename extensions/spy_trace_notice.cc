@@ -26,6 +26,8 @@
 #include <ircd/ircd.h>
 #include <ircd/send.h>
 
+using namespace ircd;
+
 static const char spy_desc[] = "Sends a notice when someone uses TRACE or LTRACE";
 
 void show_trace(hook_data_client *);

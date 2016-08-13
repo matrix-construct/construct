@@ -36,6 +36,8 @@
 #include <ircd/s_serv.h>
 #include <ircd/supported.h>
 
+using namespace ircd;
+
 static const char knock_desc[] = "Provides the KNOCK command to ask for an invite to an invite-only channel";
 
 static void m_knock(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

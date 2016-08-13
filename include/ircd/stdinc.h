@@ -21,6 +21,12 @@
  *
  */
 
+#if defined(PIC) && defined(PCH)
+#include <rb/rb.pic.h>
+#else
 #include <rb/rb.h>
+#endif
+
+#include "util.h"
 #include "defaults.h"
 #include "fs.h"

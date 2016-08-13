@@ -29,10 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _IRCD_LOGGER_H
-#define _IRCD_LOGGER_H
+#pragma once
+#define HAVE_IRCD_LOGGER_H
 
 #include "defaults.h"
+
+#ifdef __cplusplus
+namespace ircd {
 
 typedef enum ilogfile
 {
@@ -66,4 +69,5 @@ extern void ilog_error(const char *);
 void vslog(ilogfile dest, unsigned int snomask, const char *fmt, va_list ap);
 void slog(ilogfile dest, unsigned int snomask, const char *fmt, ...) AFP(3, 4);
 
-#endif // _IRCD_LOGGER_H
+}      // namespace ircd
+#endif // __cplusplus

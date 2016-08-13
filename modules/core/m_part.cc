@@ -39,6 +39,8 @@
 #include <ircd/inline/stringops.h>
 #include <ircd/hook.h>
 
+using namespace ircd;
+
 static const char part_desc[] = "Provides the PART command to leave a channel";
 
 static void m_part(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

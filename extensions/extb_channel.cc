@@ -10,6 +10,8 @@
 #include <ircd/hash.h>
 #include <ircd/ircd.h>
 
+using namespace ircd;
+
 static const char extb_desc[] = "Channel ($c) extban type";
 
 static int _modinit(void);

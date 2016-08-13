@@ -31,10 +31,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SNOMASK_H
-#define SNOMASK_H
+#pragma once
+#define HAVE_IRCD_SNOMASK_H
 
 #include "client.h"
+
+#ifdef __cplusplus
+namespace ircd {
 
 #define SNO_ADD			1
 #define SNO_DEL			2
@@ -59,4 +62,5 @@ unsigned int find_snomask_slot(void);
 
 extern int snomask_modes[];
 
-#endif
+}      // namespace ircd
+#endif // __cplusplus

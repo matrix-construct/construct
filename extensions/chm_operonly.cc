@@ -10,6 +10,8 @@
 #include <ircd/numeric.h>
 #include <ircd/chmode.h>
 
+using namespace ircd;
+
 static const char chm_operonly_desc[] =
 	"Adds channel mode +O which makes a channel operator-only";
 

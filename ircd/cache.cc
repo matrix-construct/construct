@@ -30,6 +30,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <map>
+#include <vector>
+
 #include <ircd/stdinc.h>
 #include <ircd/s_conf.h>
 #include <ircd/client.h>
@@ -38,8 +41,7 @@
 #include <ircd/numeric.h>
 #include <ircd/send.h>
 
-#include <map>
-#include <vector>
+namespace ircd {
 
 struct cachefile user_motd {};
 struct cachefile oper_motd {};
@@ -281,3 +283,5 @@ send_oper_motd(struct Client *source_p)
 	sendto_one(source_p, form_str(RPL_ENDOFOMOTD),
 		   me.name, source_p->name);
 }
+
+} // namespace ircd

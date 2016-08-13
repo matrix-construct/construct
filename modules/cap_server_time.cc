@@ -34,6 +34,8 @@
 #include <ircd/chmode.h>
 #include <ircd/inline/stringops.h>
 
+using namespace ircd;
+
 static const char cap_server_time_desc[] =
 	"Provides the server-time client capability";
 

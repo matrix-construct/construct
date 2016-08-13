@@ -22,8 +22,9 @@
  *  USA
  */
 
-#ifndef INCLUDED_modules_h
-#define INCLUDED_modules_h
+#pragma once
+#define HAVE_IRCD_MODULES_H
+
 #include "stdinc.h"
 #include "defaults.h"
 #include "parse.h"
@@ -34,6 +35,9 @@
 
 #include "msg.h"
 #include "hook.h"
+
+#ifdef __cplusplus
+namespace ircd {
 
 struct module
 {
@@ -197,4 +201,5 @@ extern void init_modules(void);
 extern rb_dlink_list module_list;
 extern rb_dlink_list mod_paths;
 
-#endif /* INCLUDED_modules_h */
+}      // namespace ircd
+#endif // __cplusplus

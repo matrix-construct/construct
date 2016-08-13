@@ -23,6 +23,8 @@
 #include <rb/rb.h>
 #include <ircd/ircd.h>
 
+namespace ircd {
+
 const char *ircd_version = RB_VERSION;
 const char *ircd_datestr = RB_DATESTR;
 const time_t ircd_datecode = RB_DATECODE;
@@ -48,3 +50,5 @@ const char *infotext[] =
   "",
   NULL,
 };
+
+}

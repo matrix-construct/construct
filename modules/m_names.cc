@@ -36,6 +36,8 @@
 #include <ircd/parse.h>
 #include <ircd/modules.h>
 
+using namespace ircd;
+
 static const char names_desc[] = "Provides the NAMES command to view users on a channel";
 
 static void m_names(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

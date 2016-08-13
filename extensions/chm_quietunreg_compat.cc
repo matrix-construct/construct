@@ -10,6 +10,8 @@
 #include <ircd/ircd.h>
 #include <ircd/chmode.h>
 
+using namespace ircd;
+
 static const char chm_quietunreg_compat_desc[] =
 	"Adds an emulated channel mode +R which is converted into mode +q $~a";
 

@@ -34,6 +34,8 @@
 #include <ircd/modules.h>
 #include <ircd/s_conf.h>
 
+using namespace ircd;
+
 static const char userhost_desc[] =
 	"Provides the USERHOST command to show a user's host";
 

@@ -37,6 +37,8 @@
 
 #include <string.h>
 
+using namespace ircd;
+
 static const char ison_desc[] = "Provides the ISON command to check if a set of users is online";
 
 static void m_ison(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

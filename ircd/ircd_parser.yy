@@ -13,7 +13,8 @@
 #include <ircd/logger.h>
 
 int yylex();
-void yyerror(const char *);
+
+namespace ircd {
 
 static time_t conf_find_time(char*);
 
@@ -145,13 +146,14 @@ static void	add_cur_list(int type, char *str, int number)
 	add_cur_list_cpt(new_);
 }
 
+} // namespace ircd
 
 %}
 
 %union {
 	int		number;
 	char		string[1024];
-	conf_parm_t *	conf_parm;
+	ircd::conf_parm_t *	conf_parm;
 }
 
 %token LOADMODULE TWODOTS
@@ -178,21 +180,21 @@ conf_item: block
 
 block: string
          {
-           conf_start_block($1, NULL);
+           ircd::conf_start_block($1, NULL);
          }
        '{' block_items '}' ';'
          {
-	   if (conf_cur_block)
-	           conf_end_block(conf_cur_block);
+	   if (ircd::conf_cur_block)
+	           ircd::conf_end_block(ircd::conf_cur_block);
          }
      | string qstring
          {
-           conf_start_block($1, $2);
+           ircd::conf_start_block($1, $2);
          }
        '{' block_items '}' ';'
          {
-	   if (conf_cur_block)
-	           conf_end_block(conf_cur_block);
+	   if (ircd::conf_cur_block)
+	           ircd::conf_end_block(ircd::conf_cur_block);
          }
      ;
 
@@ -202,9 +204,9 @@ block_items: block_items block_item
 
 block_item:	string '=' itemlist ';'
 		{
-			conf_call_set(conf_cur_block, $1, cur_list);
-			free_cur_list(cur_list);
-			cur_list = NULL;
+			ircd::conf_call_set(ircd::conf_cur_block, $1, ircd::cur_list);
+			ircd::free_cur_list(ircd::cur_list);
+			ircd::cur_list = NULL;
 		}
 		;
 
@@ -214,14 +216,14 @@ itemlist: itemlist ',' single
 
 single: oneitem
 	{
-		add_cur_list_cpt($1);
+		ircd::add_cur_list_cpt($1);
 	}
 	| oneitem TWODOTS oneitem
 	{
 		/* "1 .. 5" meaning 1,2,3,4,5 - only valid for integers */
 		if ($1->type != CF_INT || $3->type != CF_INT)
 		{
-			conf_report_error("Both arguments in '..' notation must be integers.");
+			ircd::conf_report_error("Both arguments in '..' notation must be integers.");
 			break;
 		}
 		else
@@ -230,7 +232,7 @@ single: oneitem
 
 			for (i = $1->v.number; i <= $3->v.number; i++)
 			{
-				add_cur_list(CF_INT, 0, i);
+				ircd::add_cur_list(CF_INT, 0, i);
 			}
 		}
 	}
@@ -238,19 +240,19 @@ single: oneitem
 
 oneitem: qstring
             {
-		$$ = (conf_parm_t *)rb_malloc(sizeof(conf_parm_t));
+		$$ = (ircd::conf_parm_t *)rb_malloc(sizeof(ircd::conf_parm_t));
 		$$->type = CF_QSTRING;
 		$$->v.string = rb_strdup($1);
 	    }
           | timespec
             {
-		$$ = (conf_parm_t *)rb_malloc(sizeof(conf_parm_t));
+		$$ = (ircd::conf_parm_t *)rb_malloc(sizeof(ircd::conf_parm_t));
 		$$->type = CF_TIME;
 		$$->v.number = $1;
 	    }
           | number
             {
-		$$ = (conf_parm_t *)rb_malloc(sizeof(conf_parm_t));
+		$$ = (ircd::conf_parm_t *)rb_malloc(sizeof(ircd::conf_parm_t));
 		$$->type = CF_INT;
 		$$->v.number = $1;
 	    }
@@ -258,9 +260,9 @@ oneitem: qstring
             {
 		/* a 'string' could also be a yes/no value ..
 		   so pass it as that, if so */
-		int val = conf_get_yesno_value($1);
+		int val = ircd::conf_get_yesno_value($1);
 
-		$$ = (conf_parm_t *)rb_malloc(sizeof(conf_parm_t));
+		$$ = (ircd::conf_parm_t *)rb_malloc(sizeof(ircd::conf_parm_t));
 
 		if (val != -1)
 		{
@@ -281,9 +283,9 @@ loadmodule:
                 char *m_bn;
                 m_bn = rb_basename((char *) $2);
 
-                if (findmodule_byname(m_bn) == NULL)
+                if (ircd::findmodule_byname(m_bn) == NULL)
 	        {
-	            load_one_module($2, MAPI_ORIGIN_EXTENSION, 0);
+	            ircd::load_one_module($2, MAPI_ORIGIN_EXTENSION, 0);
 		}
 
                 rb_free(m_bn);
@@ -299,9 +301,9 @@ timespec:	number string
 		{
 			time_t t;
 
-			if ((t = conf_find_time($2)) == 0)
+			if ((t = ircd::conf_find_time($2)) == 0)
 			{
-				conf_report_error("Unrecognised time type/size '%s'", $2);
+				ircd::conf_report_error("Unrecognised time type/size '%s'", $2);
 				t = 1;
 			}
 

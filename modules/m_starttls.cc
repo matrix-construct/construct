@@ -32,6 +32,8 @@
 #include <ircd/s_serv.h>
 #include <ircd/logger.h>
 
+using namespace ircd;
+
 static const char starttls_desc[] = "Provides the tls CAP and STARTTLS command";
 
 static void mr_starttls(struct MsgBuf *, struct Client *, struct Client *, int, const char **);

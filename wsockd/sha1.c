@@ -11,15 +11,15 @@
  *   34AA973C D4C4DAA4 F61EEB2B DBAD2731 6534016F
  */
 
-#include <ircd/stdinc.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include "sha1.h"
 
 #ifdef _WIN32
 	#include <winsock2.h> // for htonl()
 #else
 	#include <netinet/in.h> // for htonl()
 #endif
-
-#include "sha1.h"
 
 #define rol(value, bits) (((value) << (bits)) | ((value) >> (32 - (bits))))
 

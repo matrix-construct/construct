@@ -53,6 +53,8 @@
 #include <ircd/capability.h>
 #include <ircd/s_assert.h>
 
+namespace ircd {
+
 int MaxConnectionCount = 1;
 int MaxClientCount = 1;
 int refresh_user_links = 0;
@@ -64,8 +66,8 @@ static char buf[BUFSIZE];
  * because all servers that we talk to already do TS, and the kludged
  * extra argument to "PASS" takes care of checking that.  -orabidoo
  */
-struct CapabilityIndex serv_capindex {"server capabilities"};
-struct CapabilityIndex cli_capindex {"client capabilities"};
+capability::index serv_capindex {"server capabilities"};
+capability::index cli_capindex {"client capabilities"};
 
 unsigned int CAP_CAP;
 unsigned int CAP_QS;
@@ -458,7 +460,7 @@ check_server(const char *name, struct Client *client_p)
 void
 send_capabilities(struct Client *client_p, unsigned int cap_can_send)
 {
-	sendto_one(client_p, "CAPAB :%s", serv_capindex.list(cap_can_send));
+	sendto_one(client_p, "CAPAB :%s", serv_capindex.list(cap_can_send).c_str());
 }
 
 static void
@@ -766,7 +768,7 @@ show_capabilities(struct Client *target_p)
 		return msgbuf + 1;
 
 	rb_strlcat(msgbuf, " ", sizeof(msgbuf));
-	rb_strlcat(msgbuf, serv_capindex.list(target_p->serv->caps), sizeof(msgbuf));
+	rb_strlcat(msgbuf, serv_capindex.list(target_p->serv->caps).c_str(), sizeof(msgbuf));
 
 	return msgbuf + 1;
 }
@@ -1314,4 +1316,6 @@ serv_connect_callback(rb_fde_t *F, int status, void *data)
 
 	/* If we get here, we're ok, so lets start reading some data */
 	read_packet(F, client_p);
+}
+
 }
