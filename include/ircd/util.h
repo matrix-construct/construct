@@ -78,6 +78,17 @@ struct scope
 };
 
 
+// For conforming enums include a _NUM_ as the last element,
+// then num_of<my_enum>() works
+template<class Enum>
+constexpr
+typename std::underlying_type<Enum>::type
+num_of()
+{
+    return static_cast<typename std::underlying_type<Enum>::type>(Enum::_NUM_);
+}
+
+
 struct case_insensitive_less
 :std::binary_function<std::string, std::string, bool>
 {
