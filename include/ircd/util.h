@@ -61,6 +61,23 @@ template<class T>
 using custom_ptr = std::unique_ptr<T, std::function<void (T *)>>;
 
 
+struct scope
+{
+	const std::function<void ()> func;
+
+	template<class F>
+	scope(F &&func)
+	:func(std::forward<F>(func))
+	{
+	}
+
+	~scope()
+	{
+		func();
+	}
+};
+
+
 struct case_insensitive_less
 :std::binary_function<std::string, std::string, bool>
 {
