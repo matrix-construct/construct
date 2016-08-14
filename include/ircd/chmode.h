@@ -24,7 +24,7 @@
  */
 
 #pragma once
-#define HAVE_IRCD_CHMOD_H
+#define HAVE_IRCD_CHMODE_H
 
 /* something not included in messages.tab
  * to change some hooks behaviour when needed

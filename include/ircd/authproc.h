@@ -24,7 +24,7 @@
  */
 
 #pragma once
-#define HAVE_CHARYBDIS_AUTHD_H
+#define HAVE_CHARYBDIS_AUTHPROC_H
 
 #include "stdinc.h"
 #include "client.h"
