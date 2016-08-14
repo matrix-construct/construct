@@ -40,52 +40,56 @@
  */
 
 #ifdef __cplusplus
-namespace ircd      {
-inline namespace fs {
+namespace ircd {
+namespace fs   {
 
-#define DPATH		IRCD_PREFIX
-#define BINPATH		IRCD_PREFIX "/bin"
-#define MODPATH		RB_MODULE_DIR
-#define MODULE_DIR	RB_MODULE_DIR
-#define AUTOMODPATH	RB_MODULE_DIR "/autoload"
-#define ETCPATH		RB_ETC_DIR
-#define LOGPATH		RB_LOG_DIR
-#define UHPATH		RB_HELP_DIR "/users"
-#define HPATH		RB_HELP_DIR "/opers"
-#define SPATH		RB_BIN_DIR "/" BRANDING_NAME	/* ircd executable */
-#define CPATH		ETCPATH "/ircd.conf"				/* ircd.conf file */
-#define MPATH		ETCPATH "/ircd.motd"				/* MOTD file */
-#define LPATH		LOGPATH "/ircd.log"				/* ircd logfile */
-#define PPATH		PKGRUNDIR "/ircd.pid"				/* pid file */
-#define OPATH		ETCPATH "/opers.motd"				/* oper MOTD file */
-#define DBPATH		PKGLOCALSTATEDIR "/ban.db"			/* bandb file */
+constexpr auto DPATH = IRCD_PREFIX;
+constexpr auto BINPATH = IRCD_PREFIX "/bin";
+constexpr auto MODPATH = RB_MODULE_DIR;
+constexpr auto MODULE_DIR = RB_MODULE_DIR;
+constexpr auto AUTOMODPATH = RB_MODULE_DIR "/autoload";
+constexpr auto ETCPATH = RB_ETC_DIR;
+constexpr auto LOGPATH = RB_LOG_DIR;
+constexpr auto UHPATH = RB_HELP_DIR "/users";
+constexpr auto HPATH = RB_HELP_DIR "/opers";
+constexpr auto SPATH = RB_BIN_DIR "/" BRANDING_NAME;         // ircd executable
+constexpr auto CPATH = RB_ETC_DIR "/ircd.conf";              // ircd.conf file
+constexpr auto MPATH = RB_ETC_DIR "/ircd.motd";              // MOTD file
+constexpr auto LPATH = RB_LOG_DIR "/ircd.log";               // ircd logfile
+constexpr auto PPATH = PKGRUNDIR "/ircd.pid";                // pid file
+constexpr auto OPATH = RB_ETC_DIR "/opers.motd";             // oper MOTD file
+constexpr auto DBPATH = PKGLOCALSTATEDIR "/ban.db";          // bandb file
 
-/* Below are the elements for default paths. */
-enum path_index
+// Below are the elements for default paths.
+namespace path
 {
-	IRCD_PATH_PREFIX,
-	IRCD_PATH_MODULES,
-	IRCD_PATH_AUTOLOAD_MODULES,
-	IRCD_PATH_ETC,
-	IRCD_PATH_LOG,
-	IRCD_PATH_USERHELP,
-	IRCD_PATH_OPERHELP,
-	IRCD_PATH_IRCD_EXEC,
-	IRCD_PATH_IRCD_CONF,
-	IRCD_PATH_IRCD_MOTD,
-	IRCD_PATH_IRCD_LOG,
-	IRCD_PATH_IRCD_PID,
-	IRCD_PATH_IRCD_OMOTD,
-	IRCD_PATH_BANDB,
-	IRCD_PATH_BIN,
-	IRCD_PATH_LIBEXEC,
-	IRCD_PATH_COUNT
+	enum index
+	{
+		PREFIX,
+		BIN,
+		ETC,
+		LOG,
+		LIBEXEC,
+		MODULES,
+		AUTOLOAD_MODULES,
+		USERHELP,
+		OPERHELP,
+		IRCD_CONF,
+		IRCD_EXEC,
+		IRCD_MOTD,
+		IRCD_LOG,
+		IRCD_PID,
+		IRCD_OMOTD,
+		BANDB,
+
+		_NUM_
+	};
+
+	const char *get(index) noexcept;
+	const char *name(index) noexcept;
 };
 
-extern const char *paths[IRCD_PATH_COUNT];
-extern const char *pathnames[IRCD_PATH_COUNT];
-
-void relocate_paths();
+void init();
 
 } // namespace fs
 } // namespace ircd

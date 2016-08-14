@@ -74,7 +74,7 @@ server_reboot(void)
 		close(i);
 
 	unlink(pidFileName);
-	execv(fs::paths[IRCD_PATH_IRCD_EXEC], (char *const *)myargv);
+	execv(fs::path::get(fs::path::IRCD_EXEC), (char *const *)myargv);
 
 	/* use this if execv of SPATH fails */
 	snprintf(path, sizeof(path), "%s%cbin%circd", ConfigFileEntry.dpath, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);

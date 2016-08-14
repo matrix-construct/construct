@@ -77,6 +77,8 @@ init_bandb(void)
 static int
 start_bandb(void)
 {
+	using namespace fs;
+
 	char fullpath[PATH_MAX + 1];
 #ifdef _WIN32
 	const char *suffix = ".exe";
@@ -84,10 +86,10 @@ start_bandb(void)
 	const char *suffix = "";
 #endif
 
-	rb_setenv("BANDB_DBPATH", fs::paths[IRCD_PATH_BANDB], 1);
+	rb_setenv("BANDB_DBPATH", path::get(path::BANDB), 1);
 	if(bandb_path == NULL)
 	{
-		snprintf(fullpath, sizeof(fullpath), "%s%cbandb%s", fs::paths[IRCD_PATH_LIBEXEC], RB_PATH_SEPARATOR, suffix);
+		snprintf(fullpath, sizeof(fullpath), "%s%cbandb%s", path::get(path::LIBEXEC), RB_PATH_SEPARATOR, suffix);
 
 		if(access(fullpath, X_OK) == -1)
 		{
@@ -98,7 +100,7 @@ start_bandb(void)
 			{
 				ilog(L_MAIN,
 				     "Unable to execute bandb%s in %s or %s/bin",
-				     suffix, fs::paths[IRCD_PATH_LIBEXEC], ConfigFileEntry.dpath);
+				     suffix, path::get(path::LIBEXEC), ConfigFileEntry.dpath);
 				return 0;
 			}
 		}

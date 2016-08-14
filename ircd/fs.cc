@@ -24,69 +24,99 @@
  */
 
 #include <ircd/stdinc.h>
-#include <ircd/fs.h>
 #include <ircd/logger.h>
 
-using namespace ircd;
+namespace fs = ircd::fs;
+using namespace fs;
 
-
-const char *fs::paths[IRCD_PATH_COUNT] =
+auto paths = []
 {
-	[IRCD_PATH_PREFIX] = DPATH,
-	[IRCD_PATH_MODULES] = MODPATH,
-	[IRCD_PATH_AUTOLOAD_MODULES] = AUTOMODPATH,
-	[IRCD_PATH_ETC] = ETCPATH,
-	[IRCD_PATH_LOG] = LOGPATH,
-	[IRCD_PATH_USERHELP] = UHPATH,
-	[IRCD_PATH_OPERHELP] = HPATH,
-	[IRCD_PATH_IRCD_EXEC] = SPATH,
-	[IRCD_PATH_IRCD_CONF] = CPATH,
-	[IRCD_PATH_IRCD_MOTD] = MPATH,
-	[IRCD_PATH_IRCD_LOG] = LPATH,
-	[IRCD_PATH_IRCD_PID] = PPATH,
-	[IRCD_PATH_IRCD_OMOTD] = OPATH,
-	[IRCD_PATH_BANDB] = DBPATH,
-	[IRCD_PATH_BIN] = BINPATH,
-	[IRCD_PATH_LIBEXEC] = PKGLIBEXECDIR,
-};
+	using ircd::util::num_of;
+	using namespace fs::path;
 
-const char *fs::pathnames[IRCD_PATH_COUNT] =
+	std::array<const char *, num_of<fs::path::index>()> paths;
+
+	paths[PREFIX]             = DPATH;
+	paths[MODULES]            = MODPATH;
+	paths[AUTOLOAD_MODULES]   = AUTOMODPATH;
+	paths[ETC]                = ETCPATH;
+	paths[LOG]                = LOGPATH;
+	paths[USERHELP]           = UHPATH;
+	paths[OPERHELP]           = HPATH;
+	paths[IRCD_EXEC]          = SPATH;
+	paths[IRCD_CONF]          = CPATH;
+	paths[IRCD_MOTD]          = MPATH;
+	paths[IRCD_LOG]           = LPATH;
+	paths[IRCD_PID]           = PPATH;
+	paths[IRCD_OMOTD]         = OPATH;
+	paths[BANDB]              = DBPATH;
+	paths[BIN]                = BINPATH;
+	paths[LIBEXEC]            = PKGLIBEXECDIR;
+
+	return paths;
+}();
+
+auto pathnames = []
 {
-	[IRCD_PATH_PREFIX] = "prefix",
-	[IRCD_PATH_MODULES] = "modules",
-	[IRCD_PATH_AUTOLOAD_MODULES] = "autoload modules",
-	[IRCD_PATH_ETC] = "config",
-	[IRCD_PATH_LOG] = "log",
-	[IRCD_PATH_USERHELP] = "user help",
-	[IRCD_PATH_OPERHELP] = "oper help",
-	[IRCD_PATH_IRCD_EXEC] = "ircd binary",
-	[IRCD_PATH_IRCD_CONF] = "ircd.conf",
-	[IRCD_PATH_IRCD_MOTD] = "ircd.motd",
-	[IRCD_PATH_IRCD_LOG] = "ircd.log",
-	[IRCD_PATH_IRCD_PID] = "ircd.pid",
-	[IRCD_PATH_IRCD_OMOTD] = "oper motd",
-	[IRCD_PATH_BANDB] = "bandb",
-	[IRCD_PATH_BIN] = "binary dir",
-	[IRCD_PATH_LIBEXEC] = "libexec dir",
-};
+	using ircd::util::num_of;
+	using namespace fs::path;
 
+	std::array<const char *, num_of<fs::path::index>()> names;
 
-/*
- * relocate_paths
- *
- * inputs       - none
- * output       - none
- * side effects - items in paths[] array are relocated
- */
+	names[PREFIX]             = "prefix";
+	names[MODULES]            = "modules";
+	names[AUTOLOAD_MODULES]   = "autoload modules";
+	names[ETC]                = "config";
+	names[LOG]                = "log";
+	names[USERHELP]           = "user help";
+	names[OPERHELP]           = "oper help";
+	names[IRCD_EXEC]          = "ircd binary";
+	names[IRCD_CONF]          = "ircd.conf";
+	names[IRCD_MOTD]          = "ircd.motd";
+	names[IRCD_LOG]           = "ircd.log";
+	names[IRCD_PID]           = "ircd.pid";
+	names[IRCD_OMOTD]         = "oper motd";
+	names[BANDB]              = "bandb";
+	names[BIN]                = "binary dir";
+	names[LIBEXEC]            = "libexec dir";
+
+	return names;
+}();
+
+const char *
+fs::path::get(index index)
+noexcept try
+{
+	return paths.at(index);
+}
+catch(const std::out_of_range &e)
+{
+	return nullptr;
+}
+
+const char *
+fs::path::name(index index)
+noexcept try
+{
+	return pathnames.at(index);
+}
+catch(const std::out_of_range &e)
+{
+	return nullptr;
+}
+
 #ifdef _WIN32
-void fs::relocate_paths()
+static
+void relocate()
 {
+	using namespace fs::path;
+
 	char prefix[PATH_MAX], workbuf[PATH_MAX];
 	char *p;
 
 	rb_strlcpy(prefix, rb_path_to_self(), sizeof prefix);
 
-	paths[IRCD_PATH_IRCD_EXEC] = rb_strdup(prefix);
+	paths[IRCD_EXEC] = rb_strdup(prefix);
 
 	/* if we're running from inside the source tree, we probably do not want to relocate any other paths */
 	if (strstr(prefix, ".libs") != NULL)
@@ -105,57 +135,61 @@ void fs::relocate_paths()
 	*p = 0;
 
 	/* prefix = /home/kaniini/ircd */
-	paths[IRCD_PATH_PREFIX] = rb_strdup(prefix);
+	paths[PREFIX] = rb_strdup(prefix);
 
 	/* now that we have our prefix, we can relocate the other paths... */
 	snprintf(workbuf, sizeof workbuf, "%s%cmodules", prefix, RB_PATH_SEPARATOR);
-	paths[IRCD_PATH_MODULES] = rb_strdup(workbuf);
+	paths[MODULES] = rb_strdup(workbuf);
 
 	snprintf(workbuf, sizeof workbuf, "%s%cmodules%cautoload", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
-	paths[IRCD_PATH_AUTOLOAD_MODULES] = rb_strdup(workbuf);
+	paths[AUTOLOAD_MODULES] = rb_strdup(workbuf);
 
 	snprintf(workbuf, sizeof workbuf, "%s%cetc", prefix, RB_PATH_SEPARATOR);
-	paths[IRCD_PATH_ETC] = rb_strdup(workbuf);
+	paths[ETC] = rb_strdup(workbuf);
 
 	snprintf(workbuf, sizeof workbuf, "%s%clog", prefix, RB_PATH_SEPARATOR);
-	paths[IRCD_PATH_LOG] = rb_strdup(workbuf);
+	paths[LOG] = rb_strdup(workbuf);
 
 	snprintf(workbuf, sizeof workbuf, "%s%chelp%cusers", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
-	paths[IRCD_PATH_USERHELP] = rb_strdup(workbuf);
+	paths[USERHELP] = rb_strdup(workbuf);
 
 	snprintf(workbuf, sizeof workbuf, "%s%chelp%copers", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
-	paths[IRCD_PATH_OPERHELP] = rb_strdup(workbuf);
+	paths[OPERHELP] = rb_strdup(workbuf);
 
 	snprintf(workbuf, sizeof workbuf, "%s%cetc%circd.conf", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
-	paths[IRCD_PATH_IRCD_CONF] = rb_strdup(workbuf);
+	paths[IRCD_CONF] = rb_strdup(workbuf);
 
 	snprintf(workbuf, sizeof workbuf, "%s%cetc%circd.motd", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
-	paths[IRCD_PATH_IRCD_MOTD] = rb_strdup(workbuf);
+	paths[IRCD_MOTD] = rb_strdup(workbuf);
 
 	snprintf(workbuf, sizeof workbuf, "%s%cetc%copers.motd", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
-	paths[IRCD_PATH_IRCD_OMOTD] = rb_strdup(workbuf);
+	paths[IRCD_OMOTD] = rb_strdup(workbuf);
 
 	snprintf(workbuf, sizeof workbuf, "%s%cetc%cban.db", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
-	paths[IRCD_PATH_BANDB] = rb_strdup(workbuf);
+	paths[BANDB] = rb_strdup(workbuf);
 
 	snprintf(workbuf, sizeof workbuf, "%s%cetc%circd.pid", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
-	paths[IRCD_PATH_IRCD_PID] = rb_strdup(workbuf);
+	paths[IRCD_PID] = rb_strdup(workbuf);
 
 	snprintf(workbuf, sizeof workbuf, "%s%clogs%circd.log", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
-	paths[IRCD_PATH_IRCD_LOG] = rb_strdup(workbuf);
+	paths[IRCD_LOG] = rb_strdup(workbuf);
 
 	snprintf(workbuf, sizeof workbuf, "%s%cbin", prefix, RB_PATH_SEPARATOR);
-	paths[IRCD_PATH_BIN] = rb_strdup(workbuf);
-	paths[IRCD_PATH_LIBEXEC] = rb_strdup(workbuf);
+	paths[BIN] = rb_strdup(workbuf);
+	paths[LIBEXEC] = rb_strdup(workbuf);
 
 	inotice("runtime paths:");
-	for (int i = 0; i < IRCD_PATH_COUNT; i++)
-	{
+	for (size_t i(0); i < paths.size() && i < pathnames.size(); ++i)
 		inotice("  %s: %s", pathnames[i], paths[i]);
-	}
 }
 #else
-void fs::relocate_paths()
+static
+void relocate()
 {
 }
 #endif
+
+void fs::init()
+{
+	relocate();
+}

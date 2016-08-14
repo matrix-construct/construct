@@ -89,6 +89,8 @@ std::array<authd_cb, 256> authd_cmd_tab =
 static int
 start_authd(void)
 {
+	using namespace fs;
+
 	char fullpath[PATH_MAX + 1];
 #ifdef _WIN32
 	const char *suffix = ".exe";
@@ -97,7 +99,7 @@ start_authd(void)
 #endif
 	if(authd_path == NULL)
 	{
-		snprintf(fullpath, sizeof(fullpath), "%s%cauthd%s", fs::paths[IRCD_PATH_LIBEXEC], RB_PATH_SEPARATOR, suffix);
+		snprintf(fullpath, sizeof(fullpath), "%s%cauthd%s", path::get(path::LIBEXEC), RB_PATH_SEPARATOR, suffix);
 
 		if(access(fullpath, X_OK) == -1)
 		{
@@ -105,11 +107,16 @@ start_authd(void)
 				 ConfigFileEntry.dpath, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR, suffix);
 			if(access(fullpath, X_OK) == -1)
 			{
+				// TODO: double dipping
 				ierror("Unable to execute authd in %s or %s/bin",
-					fs::paths[IRCD_PATH_LIBEXEC], ConfigFileEntry.dpath);
+				       path::get(path::LIBEXEC),
+				       ConfigFileEntry.dpath);
+
+				// TODO: double dipping
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
-						       "Unable to execute authd in %s or %s/bin",
-						       fs::paths[IRCD_PATH_LIBEXEC], ConfigFileEntry.dpath);
+				                       "Unable to execute authd in %s or %s/bin",
+				                       path::get(path::LIBEXEC),
+				                       ConfigFileEntry.dpath);
 				return 1;
 			}
 

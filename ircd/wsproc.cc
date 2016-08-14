@@ -267,7 +267,7 @@ start_wsockd(int count)
 
 	if(wsockd_path == NULL)
 	{
-		snprintf(fullpath, sizeof(fullpath), "%s%cwsockd%s", fs::paths[IRCD_PATH_LIBEXEC], RB_PATH_SEPARATOR, suffix);
+		snprintf(fullpath, sizeof(fullpath), "%s%cwsockd%s", fs::path::get(fs::path::LIBEXEC), RB_PATH_SEPARATOR, suffix);
 
 		if(access(fullpath, X_OK) == -1)
 		{
@@ -277,7 +277,7 @@ start_wsockd(int count)
 			{
 				ilog(L_MAIN,
 				     "Unable to execute wsockd%s in %s or %s/bin",
-				     suffix, fs::paths[IRCD_PATH_LIBEXEC], ConfigFileEntry.dpath);
+				     suffix, fs::path::get(fs::path::LIBEXEC), ConfigFileEntry.dpath);
 				return 0;
 			}
 		}

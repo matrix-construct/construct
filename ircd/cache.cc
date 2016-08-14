@@ -77,8 +77,10 @@ char motd::user_motd_changed[MAX_DATE_STRING];
 void
 cache::init()
 {
-	motd::user = file(fs::paths[IRCD_PATH_IRCD_MOTD], "ircd.motd", 0);
-	motd::oper = file(fs::paths[IRCD_PATH_IRCD_OMOTD], "opers.motd", 0);
+	using namespace fs::path;
+
+	motd::user = file(get(IRCD_MOTD), "ircd.motd", 0);
+	motd::oper = file(get(IRCD_OMOTD), "opers.motd", 0);
 }
 
 /* load_help()
@@ -91,10 +93,12 @@ cache::init()
 void
 cache::help::load()
 {
+	using namespace fs;
+
 	oper.clear();
 	user.clear();
 
-	DIR *dir(opendir(fs::paths[IRCD_PATH_OPERHELP]));
+	DIR *dir(opendir(path::get(path::OPERHELP)));
 	if (!dir)
 		return;
 
@@ -106,13 +110,14 @@ cache::help::load()
 			continue;
 
 		char filename[PATH_MAX];
-		snprintf(filename, sizeof(filename), "%s%c%s", fs::paths[IRCD_PATH_OPERHELP], RB_PATH_SEPARATOR, d_name);
+		const auto &ophelp_path(path::get(path::OPERHELP));
+		snprintf(filename, sizeof(filename), "%s%c%s", ophelp_path, RB_PATH_SEPARATOR, d_name);
 		oper.emplace(d_name, std::make_shared<file>(filename, d_name, OPER));
 	}
 
 	closedir(dir);
 
-	dir = opendir(fs::paths[IRCD_PATH_USERHELP]);
+	dir = opendir(path::get(path::USERHELP));
 	if (dir == nullptr)
 		return;
 
@@ -123,7 +128,8 @@ cache::help::load()
 			continue;
 
 		char filename[PATH_MAX];
-		snprintf(filename, sizeof(filename), "%s%c%s", fs::paths[IRCD_PATH_USERHELP], RB_PATH_SEPARATOR, d_name);
+		const auto &userhelp_path(path::get(path::USERHELP));
+		snprintf(filename, sizeof(filename), "%s%c%s", userhelp_path, RB_PATH_SEPARATOR, d_name);
 
 		#if defined(S_ISLNK) && defined(HAVE_LSTAT)
 		struct stat sb;
@@ -156,7 +162,8 @@ cache::motd::cache_user(void)
 {
 	struct stat sb;
 
-	if (stat(fs::paths[IRCD_PATH_IRCD_MOTD], &sb) == 0)
+	const auto &path(fs::path::get(fs::path::IRCD_MOTD));
+	if (stat(path, &sb) == 0)
 	{
 		struct tm *const local_tm(localtime(&sb.st_mtime));
 		if (local_tm != nullptr)
@@ -169,13 +176,13 @@ cache::motd::cache_user(void)
 		}
 	}
 
-	user = file(fs::paths[IRCD_PATH_IRCD_MOTD], "ircd.motd", 0);
+	user = file(path, "ircd.motd", 0);
 }
 
 void
 cache::motd::cache_oper(void)
 {
-	oper = cache::file(fs::paths[IRCD_PATH_IRCD_OMOTD], "opers.motd", 0);
+	oper = cache::file(fs::path::get(fs::path::IRCD_OMOTD), "opers.motd", 0);
 }
 
 /* send_user_motd()

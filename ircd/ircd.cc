@@ -559,15 +559,13 @@ charybdis_main(int argc, char * const argv[])
 	}
 #endif
 
-#ifdef _WIN32
-	fs::relocate_paths();
-#endif
+	fs::init();
 
-	logFileName = fs::paths[IRCD_PATH_IRCD_LOG];
-	pidFileName = fs::paths[IRCD_PATH_IRCD_PID];
+	logFileName = fs::path::get(fs::path::IRCD_LOG);
+	pidFileName = fs::path::get(fs::path::IRCD_PID);
 
-	ConfigFileEntry.dpath = fs::paths[IRCD_PATH_PREFIX];
-	ConfigFileEntry.configfile = fs::paths[IRCD_PATH_IRCD_CONF];	/* Server configuration file */
+	ConfigFileEntry.dpath = fs::path::get(fs::path::PREFIX);
+	ConfigFileEntry.configfile = fs::path::get(fs::path::IRCD_CONF); // Server configuration file
 	ConfigFileEntry.connect_timeout = 30;	/* Default to 30 */
 
 	init_sys();

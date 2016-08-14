@@ -1444,8 +1444,8 @@ clear_out_old_conf(void)
 
 	/* clean out module paths */
 	mod_clear_paths();
-	mod_add_path(MODULE_DIR);
-	mod_add_path(MODULE_DIR  "/autoload");
+	mod_add_path(fs::MODULE_DIR);
+	mod_add_path(fs::AUTOMODPATH);
 
 	/* clean out ServerInfo */
 	rb_free(ServerInfo.description);
