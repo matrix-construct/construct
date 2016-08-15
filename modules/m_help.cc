@@ -51,7 +51,7 @@ DECLARE_MODULE_AV2(help, NULL, NULL, help_clist, NULL, NULL, NULL, NULL, help_de
 static void
 m_help(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	using namespace ircd::cache::help;
+	using namespace cache::help;
 
 	dohelp(source_p, USER, parc > 1 ? parv[1] : NULL);
 }
@@ -62,7 +62,7 @@ m_help(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 static void
 mo_help(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	using namespace ircd::cache::help;
+	using namespace cache::help;
 
 	dohelp(source_p, OPER, parc > 1 ? parv[1] : NULL);
 }
@@ -74,7 +74,7 @@ mo_help(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 static void
 mo_uhelp(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	using namespace ircd::cache::help;
+	using namespace cache::help;
 
 	dohelp(source_p, USER, parc > 1 ? parv[1] : NULL);
 }

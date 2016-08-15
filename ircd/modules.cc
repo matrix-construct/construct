@@ -353,7 +353,7 @@ static
 bool init_module__cap(struct module *const mod,
                       mapi_cap_list_av2 *const m)
 {
-	using ircd::capability::index;
+	using capability::index;
 
 	index *idx;
 	switch(m->cap_index)
@@ -383,7 +383,7 @@ static
 void fini_module__cap(struct module *const mod,
                       mapi_cap_list_av2 *const m)
 {
-	using ircd::capability::index;
+	using capability::index;
 
 	index *idx;
 	switch(m->cap_index)

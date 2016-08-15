@@ -387,9 +387,9 @@ void yyerror(const char *);
 }      // namespace ircd
 
 inline
-auto yyerror(const char *const c)
+void yyerror(const char *const c)
 {
-	return ircd::yyerror(c);
+	ircd::yyerror(c);
 }
 
 #endif // __cplusplus
