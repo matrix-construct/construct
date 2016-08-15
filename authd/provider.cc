@@ -377,7 +377,7 @@ handle_cancel_connection(int parc, char *parv[])
 }
 
 static void
-provider_timeout_event(void *notused __unused)
+provider_timeout_event(void *notused)
 {
 	struct auth_client *auth;
 	rb_dictionary_iter iter;

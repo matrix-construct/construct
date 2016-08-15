@@ -696,7 +696,7 @@ opm_destroy(void)
 
 
 static void
-add_conf_opm_timeout(const char *key __unused, int parc __unused, const char **parv)
+add_conf_opm_timeout(const char *key, int parc, const char **parv)
 {
 	int timeout = atoi(parv[0]);
 
@@ -710,7 +710,7 @@ add_conf_opm_timeout(const char *key __unused, int parc __unused, const char **p
 }
 
 static void
-set_opm_enabled(const char *key __unused, int parc __unused, const char **parv)
+set_opm_enabled(const char *key, int parc, const char **parv)
 {
 	bool enable = (*parv[0] == '1');
 
@@ -760,7 +760,7 @@ set_opm_enabled(const char *key __unused, int parc __unused, const char **parv)
 }
 
 static void
-set_opm_listener(const char *key __unused, int parc __unused, const char **parv)
+set_opm_listener(const char *key, int parc, const char **parv)
 {
 	const char *ip = parv[0];
 	int iport = atoi(parv[1]);
@@ -775,7 +775,7 @@ set_opm_listener(const char *key __unused, int parc __unused, const char **parv)
 }
 
 static void
-create_opm_scanner(const char *key __unused, int parc __unused, const char **parv)
+create_opm_scanner(const char *key, int parc, const char **parv)
 {
 	int iport = atoi(parv[1]);
 	struct opm_proxy *proxy = (opm_proxy *)rb_malloc(sizeof(struct opm_proxy));
@@ -825,7 +825,7 @@ create_opm_scanner(const char *key __unused, int parc __unused, const char **par
 }
 
 static void
-delete_opm_scanner(const char *key __unused, int parc __unused, const char **parv)
+delete_opm_scanner(const char *key, int parc, const char **parv)
 {
 	struct auth_client *auth;
 	struct opm_proxy *proxy;
@@ -892,7 +892,7 @@ delete_opm_scanner(const char *key __unused, int parc __unused, const char **par
 }
 
 static void
-delete_opm_scanner_all(const char *key __unused, int parc __unused, const char **parv __unused)
+delete_opm_scanner_all(const char *key, int parc, const char **parv)
 {
 	struct auth_client *auth;
 	rb_dlink_node *ptr, *nptr;
@@ -916,7 +916,7 @@ delete_opm_scanner_all(const char *key __unused, int parc __unused, const char *
 }
 
 static void
-delete_opm_listener_all(const char *key __unused, int parc __unused, const char **parv __unused)
+delete_opm_listener_all(const char *key, int parc, const char **parv)
 {
 	if(listeners[LISTEN_IPV4].F != NULL)
 		rb_close(listeners[LISTEN_IPV4].F);

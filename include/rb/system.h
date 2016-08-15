@@ -94,10 +94,6 @@ char *alloca();
 
 #if defined(__INTEL_COMPILER) || defined(__GNUC__)
 
-	#ifdef __unused
-		#undef __unused
-	#endif
-
 	#ifdef __printf
 		#undef __printf
 	#endif
@@ -106,15 +102,10 @@ char *alloca();
 		#undef __noreturn
 	#endif
 
-	#define __unused __attribute__((__unused__))
 	#define __printf(x) __attribute__((__format__ (__printf__, x, x + 1)))
 	#define __noreturn __attribute__((__noreturn__))
 
 #else
-
-	#ifndef __unused
-		#define __unused
-	#endif
 
 	#ifndef __printf
 		#define __printf

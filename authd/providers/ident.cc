@@ -82,7 +82,7 @@ static bool ident_enable = true;
  * problems arise. -avalon
  */
 static void
-ident_connected(rb_fde_t *F __unused, int error, void *data)
+ident_connected(rb_fde_t *F, int error, void *data)
 {
 	struct auth_client *auth = (auth_client *)data;
 	struct ident_query *query;
@@ -350,7 +350,7 @@ ident_cancel(struct auth_client *auth)
 }
 
 static void
-add_conf_ident_timeout(const char *key __unused, int parc __unused, const char **parv)
+add_conf_ident_timeout(const char *key, int parc, const char **parv)
 {
 	int timeout = atoi(parv[0]);
 
@@ -364,7 +364,7 @@ add_conf_ident_timeout(const char *key __unused, int parc __unused, const char *
 }
 
 static void
-set_ident_enabled(const char *key __unused, int parc __unused, const char **parv)
+set_ident_enabled(const char *key, int parc, const char **parv)
 {
 	ident_enable = (*parv[0] == '1');
 }

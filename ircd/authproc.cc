@@ -550,7 +550,7 @@ ircd::authd_reject_client(struct Client *client_p, const char *ident, const char
 }
 
 static void
-timeout_dead_authd_clients(void *notused __unused)
+timeout_dead_authd_clients(void *notused)
 {
 	rb_dictionary_iter iter;
 	struct Client *client_p;
