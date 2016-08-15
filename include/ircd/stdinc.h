@@ -27,6 +27,13 @@
 #include <rb/rb.h>
 #endif
 
+namespace ircd
+{
+	using std::begin;
+	using std::end;
+	using std::get;
+}
+
 #include "util.h"
 #include "defaults.h"
 #include "exception.h"
