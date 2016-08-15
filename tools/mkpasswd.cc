@@ -384,7 +384,7 @@ generate_random_salt(char *salt, int length)
 
 	for(i = 0; i < length; i++)
 	{
-		salt[i] = saltChars[abs(buf[i]) % 64];
+		salt[i] = saltChars[int(abs(buf[i])) % 64];
 	}
 	free(buf);
 	return (salt);
