@@ -6,16 +6,6 @@
  *    -- nenolod
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/modules.h>
-#include <ircd/client.h>
-#include <ircd/hook.h>
-#include <ircd/ircd.h>
-#include <ircd/send.h>
-#include <ircd/s_conf.h>
-#include <ircd/snomask.h>
-#include <ircd/numeric.h>
-
 using namespace ircd;
 
 static const char restrict_desc[] = "Restricts channel creation to authenticated users and IRC operators only";

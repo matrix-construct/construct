@@ -19,11 +19,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/msgbuf.h>
-#include <ircd/client.h>
-#include <ircd/ircd.h>
-
 namespace ircd {
 
 /*

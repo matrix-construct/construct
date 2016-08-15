@@ -25,8 +25,6 @@
 #pragma once
 #define HAVE_IRCD_PARSE_H
 
-#include <rb/dictionary.h>
-
 #ifdef __cplusplus
 namespace ircd {
 

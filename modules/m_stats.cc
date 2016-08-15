@@ -22,30 +22,6 @@
  *  USA
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/class.h>		/* report_classes */
-#include <ircd/client.h>		/* Client */
-#include <ircd/match.h>
-#include <ircd/ircd.h>		/* me */
-#include <ircd/listener.h>		/* show_ports */
-#include <ircd/msg.h>		/* Message */
-#include <ircd/hostmask.h>		/* report_mtrie_conf_links */
-#include <ircd/numeric.h>		/* ERR_xxx */
-#include <ircd/scache.h>		/* list_scache */
-#include <ircd/send.h>		/* sendto_one */
-#include <ircd/s_conf.h>		/* ConfItem */
-#include <ircd/s_serv.h>		/* hunt_server */
-#include <ircd/s_stats.h>
-#include <ircd/s_user.h>		/* show_opers */
-#include <ircd/parse.h>
-#include <ircd/modules.h>
-#include <ircd/hook.h>
-#include <ircd/s_newconf.h>
-#include <ircd/hash.h>
-#include <ircd/reject.h>
-#include <ircd/whowas.h>
-#include <ircd/sslproc.h>
-
 using namespace ircd;
 
 static const char stats_desc[] =

@@ -32,13 +32,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/logger.h>
-#include <ircd/s_conf.h>
-#include <ircd/send.h>
-#include <ircd/client.h>
-#include <ircd/s_serv.h>
-
 namespace ircd {
 
 static FILE *log_main;

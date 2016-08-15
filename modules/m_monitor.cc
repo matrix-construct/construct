@@ -28,17 +28,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/client.h>
-#include <ircd/msg.h>
-#include <ircd/parse.h>
-#include <ircd/modules.h>
-#include <ircd/monitor.h>
-#include <ircd/numeric.h>
-#include <ircd/s_conf.h>
-#include <ircd/send.h>
-#include <ircd/supported.h>
-
 using namespace ircd;
 
 static const char monitor_desc[] = "Provides the MONITOR facility for tracking user signon and signoff";

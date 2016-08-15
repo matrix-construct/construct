@@ -22,25 +22,6 @@
  *  USA
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/channel.h>
-#include <ircd/client.h>
-#include <ircd/hash.h>
-#include <ircd/match.h>
-#include <ircd/ircd.h>
-#include <ircd/numeric.h>
-#include <ircd/send.h>
-#include <ircd/s_serv.h>
-#include <ircd/s_conf.h>
-#include <ircd/s_newconf.h>
-#include <ircd/msg.h>
-#include <ircd/parse.h>
-#include <ircd/modules.h>
-#include <ircd/packet.h>
-#include <ircd/chmode.h>
-#include <ircd/ratelimit.h>
-#include <ircd/s_assert.h>
-
 using namespace ircd;
 
 static const char join_desc[] = "Provides the JOIN and TS6 SJOIN commands to facilitate joining and creating channels";

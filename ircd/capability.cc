@@ -18,9 +18,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/capability.h>
-#include <ircd/s_assert.h>
 #include <rb/format.h>
 
 using namespace ircd::capability;

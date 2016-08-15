@@ -22,16 +22,6 @@
  *  USA
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/client.h>
-#include <ircd/match.h>
-#include <ircd/ircd.h>
-#include <ircd/numeric.h>
-#include <ircd/send.h>
-#include <ircd/scache.h>
-#include <ircd/s_conf.h>
-#include <ircd/s_assert.h>
-
 namespace ircd {
 
 /*

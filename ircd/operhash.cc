@@ -30,11 +30,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/match.h>
-#include <ircd/hash.h>
-#include <ircd/operhash.h>
-
 namespace ircd {
 
 static rb_radixtree *operhash_tree = NULL;

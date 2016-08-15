@@ -22,20 +22,6 @@
  *  USA
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/client.h>
-#include <ircd/ircd.h>
-#include <ircd/send.h>
-#include <ircd/numeric.h>
-#include <ircd/hook.h>
-#include <ircd/msg.h>
-#include <ircd/s_serv.h>		/* hunt_server */
-#include <ircd/parse.h>
-#include <ircd/modules.h>
-#include <ircd/s_conf.h>
-#include <ircd/cache.h>
-#include <ircd/ratelimit.h>
-
 using namespace ircd;
 
 static const char motd_desc[] = "Provides the MOTD command to view the Message of the Day";

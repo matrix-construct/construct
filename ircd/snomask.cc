@@ -31,10 +31,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/client.h>
-#include <ircd/snomask.h>
-
 namespace ircd {
 
 /* *INDENT-OFF* */

@@ -5,16 +5,6 @@
  * You can use this code in any way as long as these names remain.
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/client.h>
-#include <ircd/numeric.h>
-#include <ircd/s_conf.h>
-#include <ircd/modules.h>
-#include <ircd/messages.h>
-#include <ircd/send.h>
-
-#include <string.h>
-
 using namespace ircd;
 
 const char mkpasswd_desc[] = "Hash a password for use in ircd.conf";

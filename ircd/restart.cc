@@ -22,15 +22,6 @@
  *  USA
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/restart.h>
-#include <ircd/ircd.h>
-#include <ircd/send.h>
-#include <ircd/logger.h>
-#include <ircd/s_conf.h>
-#include <ircd/client.h>
-#include <ircd/ircd_signal.h>
-
 namespace ircd {
 
 /* external var */

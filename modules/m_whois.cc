@@ -22,27 +22,6 @@
  *  USA
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/client.h>
-#include <ircd/hash.h>
-#include <ircd/channel.h>
-#include <ircd/hash.h>
-#include <ircd/ircd.h>
-#include <ircd/numeric.h>
-#include <ircd/s_conf.h>
-#include <ircd/s_serv.h>
-#include <ircd/send.h>
-#include <ircd/match.h>
-#include <ircd/s_conf.h>
-#include <ircd/logger.h>
-#include <ircd/msg.h>
-#include <ircd/parse.h>
-#include <ircd/modules.h>
-#include <ircd/hook.h>
-#include <ircd/s_newconf.h>
-#include <ircd/ratelimit.h>
-#include <ircd/s_assert.h>
-
 using namespace ircd;
 
 static const char whois_desc[] =

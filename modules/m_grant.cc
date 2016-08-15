@@ -3,17 +3,6 @@
  * Copyright (C) 2006 Stephen Bennett <spb@gentoo.org>
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/modules.h>
-#include <ircd/numeric.h>
-#include <ircd/client.h>
-#include <ircd/ircd.h>
-#include <ircd/send.h>
-#include <ircd/s_user.h>
-#include <ircd/s_serv.h>
-#include <ircd/s_conf.h>
-#include <ircd/s_newconf.h>
-
 using namespace ircd;
 
 static const char grant_desc[] =

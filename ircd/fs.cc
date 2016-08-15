@@ -23,9 +23,6 @@
  *  USA
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/logger.h>
-
 namespace fs = ircd::fs;
 using namespace fs;
 

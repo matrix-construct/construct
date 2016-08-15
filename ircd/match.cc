@@ -17,12 +17,6 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  */
-#include <ircd/stdinc.h>
-#include <ircd/defaults.h>
-#include <ircd/client.h>
-#include <ircd/ircd.h>
-#include <ircd/match.h>
-#include <ircd/s_assert.h>
 
 namespace ircd {
 

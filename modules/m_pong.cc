@@ -22,22 +22,6 @@
  *  USA
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/ircd.h>
-#include <ircd/s_user.h>
-#include <ircd/client.h>
-#include <ircd/hash.h>		/* for find_client() */
-#include <ircd/hook.h>
-#include <ircd/numeric.h>
-#include <ircd/s_conf.h>
-#include <ircd/send.h>
-#include <ircd/channel.h>
-#include <ircd/match.h>
-#include <ircd/msg.h>
-#include <ircd/parse.h>
-#include <ircd/hash.h>
-#include <ircd/modules.h>
-
 using namespace ircd;
 
 static const char pong_desc[] = "Provides the PONG command to respond to a PING message";

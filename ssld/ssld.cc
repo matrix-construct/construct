@@ -33,7 +33,7 @@ using namespace ircd;
 #define READBUF_SIZE 16384
 #endif
 
-static void setup_signals(void);
+static void _setup_signals(void);
 static pid_t ppid;
 
 static inline uint32_t
@@ -1201,7 +1201,7 @@ main(int argc, char **argv)
 			close(x);
 	}
 #endif
-	setup_signals();
+	_setup_signals();
 	rb_lib_init(NULL, NULL, NULL, 0, maxfd, 1024, 4096);
 	rb_init_rawbuffers(1024);
 	rb_init_prng(NULL, RB_PRNG_DEFAULT);
@@ -1243,7 +1243,7 @@ dummy_handler(int sig)
 #endif
 
 static void
-setup_signals()
+_setup_signals()
 {
 #ifndef _WIN32
 	struct sigaction act;

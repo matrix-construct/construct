@@ -22,15 +22,6 @@
  *  USA
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/client.h>
-#include <ircd/match.h>
-#include <ircd/s_serv.h>
-#include <ircd/s_conf.h>
-#include <ircd/msg.h>
-#include <ircd/parse.h>
-#include <ircd/modules.h>
-
 using namespace ircd;
 
 static const char capab_desc[] = "Provides the commands used for server-to-server capability negotiation";

@@ -22,24 +22,6 @@
  *  USA
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/listener.h>
-#include <ircd/client.h>
-#include <ircd/match.h>
-#include <ircd/ircd.h>
-#include <ircd/numeric.h>
-#include <ircd/s_conf.h>
-#include <ircd/s_newconf.h>
-#include <ircd/s_stats.h>
-#include <ircd/send.h>
-#include <ircd/authproc.h>
-#include <ircd/reject.h>
-#include <ircd/hostmask.h>
-#include <ircd/sslproc.h>
-#include <ircd/wsproc.h>
-#include <ircd/hash.h>
-#include <ircd/s_assert.h>
-#include <ircd/logger.h>
 
 namespace ircd {
 

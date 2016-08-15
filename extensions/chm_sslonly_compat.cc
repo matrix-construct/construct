@@ -2,13 +2,6 @@
  * Treat cmode +-S as +-b $~z.
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/modules.h>
-#include <ircd/client.h>
-#include <ircd/hook.h>
-#include <ircd/ircd.h>
-#include <ircd/chmode.h>
-
 using namespace ircd;
 
 static const char chm_sslonly_compat_desc[] =

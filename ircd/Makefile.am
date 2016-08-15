@@ -9,7 +9,8 @@ AM_YFLAGS = -d
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	@LTDLINCL@ \
-	@BOOST_CPPFLAGS@
+	@BOOST_CPPFLAGS@ \
+	-include ircd/ircd.h
 
 if MINGW
 PLATFORM_LDFLAGS = -Wl,--enable-runtime-pseudo-reloc -export-symbols-regex '*'

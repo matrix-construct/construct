@@ -5,13 +5,6 @@
 %{
 #define YY_NO_UNPUT
 
-#include <ircd/stdinc.h>
-#include <ircd/client.h>
-#include <ircd/modules.h>
-#include <ircd/newconf.h>
-#include <ircd/s_conf.h>
-#include <ircd/logger.h>
-
 int yylex();
 
 namespace ircd {

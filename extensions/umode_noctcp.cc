@@ -20,16 +20,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/modules.h>
-#include <ircd/hook.h>
-#include <ircd/client.h>
-#include <ircd/ircd.h>
-#include <ircd/send.h>
-#include <ircd/s_user.h>
-#include <ircd/numeric.h>
-#include <ircd/inline/stringops.h>
-
 using namespace ircd;
 
 static const char umode_noctcp_desc[] =

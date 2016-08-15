@@ -2,6 +2,7 @@ AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = include/rb
+SUBDIRS += include/ircd
 if BUILD_LTDL
 SUBDIRS += libltdl
 endif

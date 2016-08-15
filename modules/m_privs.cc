@@ -29,16 +29,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/client.h>
-#include <ircd/numeric.h>
-#include <ircd/send.h>
-#include <ircd/msg.h>
-#include <ircd/parse.h>
-#include <ircd/modules.h>
-#include <ircd/s_conf.h>
-#include <ircd/s_newconf.h>
-
 using namespace ircd;
 
 static const char privs_desc[] = "Provides the PRIVS command to inspect an operator's privileges";

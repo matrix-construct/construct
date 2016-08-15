@@ -32,8 +32,6 @@
 #pragma once
 #define HAVE_IRCD_LOGGER_H
 
-#include "defaults.h"
-
 #ifdef __cplusplus
 namespace ircd {
 

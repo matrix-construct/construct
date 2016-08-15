@@ -20,9 +20,6 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <rb/rb.h>
-#include <ircd/ircd.h>
-
 namespace ircd {
 
 const char *ircd_version = RB_VERSION;

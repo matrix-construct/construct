@@ -22,22 +22,6 @@
  *  USA
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/client.h>
-#include <ircd/parse.h>
-#include <ircd/authproc.h>
-#include <ircd/match.h>
-#include <ircd/logger.h>
-#include <ircd/s_conf.h>
-#include <ircd/s_stats.h>
-#include <ircd/client.h>
-#include <ircd/packet.h>
-#include <ircd/hash.h>
-#include <ircd/send.h>
-#include <ircd/numeric.h>
-#include <ircd/msg.h>
-#include <ircd/dns.h>
-
 using namespace ircd;
 
 typedef void (*authd_cb_t)(int, char **);

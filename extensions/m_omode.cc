@@ -23,25 +23,6 @@
  *  USA
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/channel.h>
-#include <ircd/client.h>
-#include <ircd/hash.h>
-#include <ircd/match.h>
-#include <ircd/ircd.h>
-#include <ircd/numeric.h>
-#include <ircd/s_user.h>
-#include <ircd/s_conf.h>
-#include <ircd/s_newconf.h>
-#include <ircd/s_serv.h>
-#include <ircd/send.h>
-#include <ircd/msg.h>
-#include <ircd/parse.h>
-#include <ircd/modules.h>
-#include <ircd/packet.h>
-#include <ircd/messages.h>
-#include <ircd/logger.h>
-
 using namespace ircd;
 
 static const char omode_desc[] = "Allow admins to forcibly change modes on channels with the OMODE command";

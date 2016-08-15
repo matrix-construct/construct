@@ -4,19 +4,6 @@
  * Copyright (C) 2006 charybdis development team
  * All rights reserved
  */
-#include <ircd/stdinc.h>
-#include <ircd/modules.h>
-#include <ircd/hook.h>
-#include <ircd/client.h>
-#include <ircd/ircd.h>
-#include <ircd/send.h>
-#include <ircd/numeric.h>
-#include <ircd/hostmask.h>
-#include <ircd/s_conf.h>
-#include <ircd/s_newconf.h>
-#include <ircd/hash.h>
-#include <ircd/messages.h>
-#include <ircd/s_assert.h>
 
 using namespace ircd;
 

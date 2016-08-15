@@ -29,13 +29,6 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/modules.h>
-#include <ircd/client.h>
-#include <ircd/hook.h>
-#include <ircd/ircd.h>
-#include <ircd/send.h>
-
 using namespace ircd;
 
 static void h_nn_server_eob(struct Client *);

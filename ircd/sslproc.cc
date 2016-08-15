@@ -19,19 +19,6 @@
  *  USA
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/s_conf.h>
-#include <ircd/logger.h>
-#include <ircd/listener.h>
-#include <ircd/sslproc.h>
-#include <ircd/s_serv.h>
-#include <ircd/ircd.h>
-#include <ircd/hash.h>
-#include <ircd/client.h>
-#include <ircd/send.h>
-#include <ircd/packet.h>
-#include <ircd/certfp.h>
-
 namespace ircd {
 
 #define ZIPSTATS_TIME           60

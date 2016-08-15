@@ -3,17 +3,6 @@
  *   -- kaniini
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/modules.h>
-#include <ircd/client.h>
-#include <ircd/hook.h>
-#include <ircd/ircd.h>
-#include <ircd/send.h>
-#include <ircd/s_conf.h>
-#include <ircd/s_user.h>
-#include <ircd/s_newconf.h>
-#include <ircd/numeric.h>
-
 using namespace ircd;
 
 static const char helpops_desc[] = "The helpops system as used by freenode";

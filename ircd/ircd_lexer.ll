@@ -24,12 +24,6 @@
 %{
 #define MAX_INCLUDE_DEPTH 10
 
-#include <ircd/stdinc.h>
-#include <ircd/client.h>
-#include <ircd/modules.h>
-#include <ircd/newconf.h>
-#include <ircd/s_conf.h>
-#include <ircd/logger.h>
 #include "ircd_parser.hh"
 
 using namespace ircd;

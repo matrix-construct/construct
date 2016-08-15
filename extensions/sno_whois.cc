@@ -6,13 +6,6 @@
  * (you need to put ~servnotice in oper_only_umodes for this to work).
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/modules.h>
-#include <ircd/hook.h>
-#include <ircd/client.h>
-#include <ircd/ircd.h>
-#include <ircd/send.h>
-
 /* undefine this to allow anyone to receive whois notifications */
 #define OPERONLY
 

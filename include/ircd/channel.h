@@ -25,9 +25,6 @@
 #pragma once
 #define HAVE_IRCD_CHANNEL_H
 
-#include "stdinc.h"
-#include "chmode.h"
-
 #ifdef __cplusplus
 namespace ircd {
 

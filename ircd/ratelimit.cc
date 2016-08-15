@@ -21,12 +21,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/s_conf.h>
-#include <ircd/s_stats.h>
-#include <ircd/ratelimit.h>
-#include <ircd/s_assert.h>
-
 namespace ircd {
 
 /*

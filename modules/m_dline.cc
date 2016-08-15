@@ -22,26 +22,6 @@
  *  USA
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/channel.h>
-#include <ircd/class.h>
-#include <ircd/client.h>
-#include <ircd/match.h>
-#include <ircd/ircd.h>
-#include <ircd/hostmask.h>
-#include <ircd/numeric.h>
-#include <ircd/s_conf.h>
-#include <ircd/s_newconf.h>
-#include <ircd/logger.h>
-#include <ircd/send.h>
-#include <ircd/hash.h>
-#include <ircd/s_serv.h>
-#include <ircd/msg.h>
-#include <ircd/parse.h>
-#include <ircd/modules.h>
-#include <ircd/bandbi.h>
-#include <ircd/operhash.h>
-
 using namespace ircd;
 
 static const char dline_desc[] = "Provides the DLINE facility to ban users via IP address";

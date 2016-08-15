@@ -28,19 +28,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/send.h>
-#include <ircd/channel.h>
-#include <ircd/client.h>
-#include <ircd/defaults.h>
-#include <ircd/ircd.h>
-#include <ircd/match.h>
-#include <ircd/s_conf.h>
-#include <ircd/msg.h>
-#include <ircd/modules.h>
-#include <ircd/hash.h>
-#include <ircd/s_serv.h>
-
 using namespace ircd;
 
 static const char tb_desc[] =

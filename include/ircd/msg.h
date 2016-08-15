@@ -25,9 +25,6 @@
 #pragma once
 #define HAVE_IRCD_MSG_H
 
-#include "defaults.h"
-#include "msgbuf.h"
-
 #ifdef __cplusplus
 namespace ircd {
 

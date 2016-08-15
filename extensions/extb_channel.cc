@@ -3,13 +3,6 @@
  * -- jilles
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/modules.h>
-#include <ircd/client.h>
-#include <ircd/channel.h>
-#include <ircd/hash.h>
-#include <ircd/ircd.h>
-
 using namespace ircd;
 
 static const char extb_desc[] = "Channel ($c) extban type";

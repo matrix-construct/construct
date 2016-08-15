@@ -23,8 +23,6 @@
  *
  */
 
-#include <ircd/exception.h>
-
 using namespace ircd;
 
 ssize_t

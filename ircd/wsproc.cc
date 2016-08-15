@@ -19,18 +19,6 @@
  *  USA
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/s_conf.h>
-#include <ircd/logger.h>
-#include <ircd/listener.h>
-#include <ircd/wsproc.h>
-#include <ircd/s_serv.h>
-#include <ircd/ircd.h>
-#include <ircd/hash.h>
-#include <ircd/client.h>
-#include <ircd/send.h>
-#include <ircd/packet.h>
-
 namespace ircd {
 
 static void ws_read_ctl(rb_fde_t * F, void *data);

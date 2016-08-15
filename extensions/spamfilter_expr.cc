@@ -29,15 +29,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/s_conf.h>
-#include <ircd/numeric.h>
-#include <ircd/modules.h>
-#include <ircd/hook.h>
-#include <ircd/send.h>
-#include <ircd/s_serv.h>
-#include <ircd/hash.h>
-#include <ircd/newconf.h>
 #include "spamfilter.h"
 
 #define PCRE2_STATIC 1

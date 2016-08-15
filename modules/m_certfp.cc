@@ -27,16 +27,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/client.h>
-#include <ircd/match.h>
-#include <ircd/hash.h>
-#include <ircd/ircd.h>
-#include <ircd/numeric.h>
-#include <ircd/send.h>
-#include <ircd/msg.h>
-#include <ircd/modules.h>
-
 using namespace ircd;
 
 static const char certfp_desc[] =

@@ -27,17 +27,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/client.h>
-#include <ircd/match.h>
-#include <ircd/hash.h>
-#include <ircd/ircd.h>
-#include <ircd/numeric.h>
-#include <ircd/send.h>
-#include <ircd/msg.h>
-#include <ircd/modules.h>
-#include <ircd/s_newconf.h> /* add_tgchange */
-
 using namespace ircd;
 
 static const char tginfo_desc[] = "Processes target change notifications from other servers";

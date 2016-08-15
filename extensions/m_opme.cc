@@ -16,23 +16,6 @@
  *   along with this program; if not, write to the Free Software
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#include <ircd/stdinc.h>
-#include <ircd/channel.h>
-#include <ircd/client.h>
-#include <ircd/ircd.h>
-#include <ircd/numeric.h>
-#include <ircd/logger.h>
-#include <ircd/s_serv.h>
-#include <ircd/send.h>
-#include <ircd/whowas.h>
-#include <ircd/match.h>
-#include <ircd/hash.h>
-#include <ircd/msg.h>
-#include <ircd/parse.h>
-#include <ircd/modules.h>
-#include <ircd/s_conf.h>
-#include <ircd/s_newconf.h>
-#include <ircd/messages.h>
 
 using namespace ircd;
 

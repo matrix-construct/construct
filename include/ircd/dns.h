@@ -26,9 +26,6 @@
 #pragma once
 #define HAVE_IRCD_DNS_H
 
-#include "stdinc.h"
-#include "authproc.h"
-
 #ifdef __cplusplus
 namespace ircd {
 

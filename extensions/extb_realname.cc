@@ -3,11 +3,6 @@
  * -- jilles
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/modules.h>
-#include <ircd/client.h>
-#include <ircd/ircd.h>
-
 using namespace ircd;
 
 static const char extb_desc[] = "Realname/GECOS ($r) extban type";

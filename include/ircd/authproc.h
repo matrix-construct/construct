@@ -26,9 +26,6 @@
 #pragma once
 #define HAVE_CHARYBDIS_AUTHPROC_H
 
-#include "stdinc.h"
-#include "client.h"
-
 #ifdef __cplusplus
 namespace ircd {
 

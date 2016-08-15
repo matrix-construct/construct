@@ -21,15 +21,6 @@
  *  USA
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/client.h>
-#include <ircd/s_conf.h>
-#include <ircd/hostmask.h>
-#include <ircd/reject.h>
-#include <ircd/msg.h>
-#include <ircd/modules.h>
-#include <ircd/send.h>
-
 using namespace ircd;
 
 static const char unreject_desc[] =

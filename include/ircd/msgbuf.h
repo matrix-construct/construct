@@ -22,8 +22,6 @@
 #pragma once
 #define HAVE_IRCD_MSGBUF_H
 
-#include "s_assert.h"
-
 #define MAXPARA		(15)
 
 #ifdef __cplusplus

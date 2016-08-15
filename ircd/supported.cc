@@ -70,16 +70,6 @@
  *  All unknown/unlisted modes are treated as type D.
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/client.h>
-#include <ircd/numeric.h>
-#include <ircd/ircd.h>
-#include <ircd/s_conf.h>
-#include <ircd/s_user.h>
-#include <ircd/supported.h>
-#include <ircd/chmode.h>
-#include <ircd/send.h>
-
 namespace ircd {
 
 rb_dlink_list isupportlist;

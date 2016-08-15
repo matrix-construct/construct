@@ -25,8 +25,6 @@
 #pragma once
 #define HAVE_IRCD_LISTENER_H
 
-#include "stdinc.h"
-
 #ifdef __cplusplus
 namespace ircd {
 

@@ -23,13 +23,6 @@
  *  USA
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/s_conf.h>
-#include <ircd/hostmask.h>
-#include <ircd/numeric.h>
-#include <ircd/send.h>
-#include <ircd/match.h>
-
 namespace ircd {
 
 #ifdef RB_IPV6

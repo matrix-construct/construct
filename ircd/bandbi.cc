@@ -28,22 +28,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <ircd/stdinc.h>
-#include <ircd/client.h>
-#include <ircd/s_conf.h>
-#include <ircd/logger.h>
-#include <ircd/match.h>
-#include <ircd/bandbi.h>
-#include <ircd/parse.h>
-#include <ircd/channel.h>
-#include <ircd/hostmask.h>
-#include <ircd/hash.h>
-#include <ircd/s_newconf.h>
-#include <ircd/reject.h>
-#include <ircd/send.h>
-#include <ircd/ircd.h>
-#include <ircd/msg.h>	/* XXX: MAXPARA */
-#include <ircd/operhash.h>
 
 namespace ircd {
 

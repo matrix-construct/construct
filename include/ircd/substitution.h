@@ -34,8 +34,6 @@
 #pragma once
 #define HAVE_IRCD_SUBSTITUTION_H
 
-#include "stdinc.h"
-
 #ifdef __cplusplus
 namespace ircd {
 

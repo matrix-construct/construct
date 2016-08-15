@@ -26,13 +26,7 @@
 #pragma once
 #define HAVE_IRCD_S_ASSERT_H
 
-#include "defaults.h"
-
 #ifdef SOFT_ASSERT
-
-#include "logger.h"
-#include "send.h"
-#include "snomask.h"
 
 #ifdef __GNUC__
 #define s_assert(expr)	do								\

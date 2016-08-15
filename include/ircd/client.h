@@ -26,15 +26,6 @@
 #pragma once
 #define HAVE_IRCD_CLIENT_H
 
-#include "stdinc.h"
-#include "defaults.h"
-#include "channel.h"
-#include "dns.h"
-#include "snomask.h"
-#include "match.h"
-#include "ircd.h"
-#include "privilege.h"
-
 #ifdef __cplusplus
 namespace ircd {
 

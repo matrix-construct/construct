@@ -30,19 +30,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/s_conf.h>
-#include <ircd/s_newconf.h>
-#include <ircd/client.h>
-#include <ircd/s_serv.h>
-#include <ircd/send.h>
-#include <ircd/hostmask.h>
-#include <ircd/newconf.h>
-#include <ircd/hash.h>
-#include <ircd/s_assert.h>
-#include <ircd/logger.h>
-#include <ircd/dns.h>
-
 namespace ircd {
 
 rb_dlink_list shared_conf_list;

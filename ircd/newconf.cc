@@ -1,33 +1,10 @@
 /* This code is in the public domain.
  */
 
-#include <rb/rb.h>
-
 #ifdef HAVE_LIBCRYPTO
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 #endif
-
-#include <ircd/stdinc.h>
-#include <ircd/newconf.h>
-#include <ircd/logger.h>
-#include <ircd/s_conf.h>
-#include <ircd/s_user.h>
-#include <ircd/s_newconf.h>
-#include <ircd/send.h>
-#include <ircd/modules.h>
-#include <ircd/listener.h>
-#include <ircd/hostmask.h>
-#include <ircd/s_serv.h>
-#include <ircd/hash.h>
-#include <ircd/cache.h>
-#include <ircd/ircd.h>
-#include <ircd/snomask.h>
-#include <ircd/sslproc.h>
-#include <ircd/wsproc.h>
-#include <ircd/privilege.h>
-#include <ircd/chmode.h>
-#include <ircd/certfp.h>
 
 namespace ircd {
 

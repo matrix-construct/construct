@@ -25,8 +25,6 @@
 #pragma once
 #define HAVE_IRCD_SEND_H
 
-#include <rb/rb.h>
-
 #ifdef __cplusplus
 namespace ircd {
 

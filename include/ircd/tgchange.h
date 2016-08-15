@@ -24,10 +24,6 @@
 #pragma once
 #define HAVE_IRCD_TGCHANGE_H
 
-#include "defaults.h"
-#include "client.h"
-#include "channel.h"
-
 #ifdef __cplusplus
 namespace ircd {
 

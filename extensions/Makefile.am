@@ -3,10 +3,10 @@ extensiondir=@moduledir@/extensions
 AM_CPPFLAGS = \
 	 -I$(top_srcdir)/include \
 	$(LTDLINCL) \
-	@BOOST_CPPFLAGS@
+	@BOOST_CPPFLAGS@ \
+	-include $(top_srcdir)/include/ircd/ircd.h
 
 if BUILD_PCH
-AM_CPPFLAGS += -include $(top_srcdir)/include/rb/rb.pic.h
 endif
 
 AM_LDFLAGS = \

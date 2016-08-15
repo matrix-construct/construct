@@ -24,45 +24,6 @@
  */
 
 
-#include <ircd/stdinc.h>
-#include <ircd/ircd.h>
-#include <ircd/channel.h>
-#include <ircd/class.h>
-#include <ircd/client.h>
-#include <ircd/hash.h>
-#include <ircd/match.h>
-#include <ircd/ircd_signal.h>
-#include <ircd/msg.h>		/* msgtab */
-#include <ircd/hostmask.h>
-#include <ircd/numeric.h>
-#include <ircd/parse.h>
-#include <ircd/restart.h>
-#include <ircd/s_conf.h>
-#include <ircd/logger.h>
-#include <ircd/s_serv.h>		/* try_connections */
-#include <ircd/s_user.h>
-#include <ircd/s_stats.h>
-#include <ircd/scache.h>
-#include <ircd/send.h>
-#include <ircd/supported.h>
-#include <ircd/whowas.h>
-#include <ircd/modules.h>
-#include <ircd/hook.h>
-#include <ircd/ircd_getopt.h>
-#include <ircd/newconf.h>
-#include <ircd/reject.h>
-#include <ircd/s_newconf.h>
-#include <ircd/cache.h>
-#include <ircd/monitor.h>
-#include <ircd/patchlevel.h>
-#include <ircd/sslproc.h>
-#include <ircd/wsproc.h>
-#include <ircd/chmode.h>
-#include <ircd/privilege.h>
-#include <ircd/bandbi.h>
-#include <ircd/authproc.h>
-#include <ircd/operhash.h>
-
 namespace ircd {
 
 static void

@@ -25,9 +25,11 @@
 #pragma once
 #define HAVE_IRCD_H
 
+#if defined(PIC) && defined(PCH)
+#include "stdinc.pic.h"
+#else
 #include "stdinc.h"
-#include "util.h"
-#include "exception.h"
+#endif
 
 #ifdef __cplusplus
 namespace ircd {

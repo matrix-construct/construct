@@ -13,22 +13,6 @@
  * is the nickname of the user running the commands.
  */
 
-
-#include <ircd/stdinc.h>
-#include <ircd/ircd.h>
-#include <ircd/client.h>
-#include <ircd/modules.h>
-#include <ircd/send.h>
-#include <ircd/numeric.h>
-#include <ircd/hash.h>
-#include <ircd/s_serv.h>
-#include <ircd/inline/stringops.h>
-#include <ircd/chmode.h>
-#include <ircd/tgchange.h>
-#include <ircd/channel.h>
-#include <ircd/packet.h>
-#include <ircd/messages.h>
-
 using namespace ircd;
 
 static const char roleplay_desc[] =

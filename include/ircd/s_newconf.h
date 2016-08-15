@@ -33,9 +33,6 @@
 #pragma once
 #define HAVE_IRCD_S_NEWCONF_H
 
-#include "stdinc.h"
-#include "privilege.h"
-
 #ifdef HAVE_LIBCRYPTO
 #include <openssl/rsa.h>
 #endif

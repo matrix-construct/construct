@@ -29,13 +29,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/modules.h>
-#include <ircd/hook.h>
-#include <ircd/client.h>
-#include <ircd/send.h>
-#include <ircd/hash.h>
-#include <ircd/newconf.h>
 #include "spamfilter.h"
 
 using namespace ircd;

@@ -58,6 +58,7 @@ dnl
 AC_CONFIG_FILES(\
 	Makefile                \
 	include/rb/Makefile     \
+	include/ircd/Makefile   \
 	rb/Makefile             \
 	authd/Makefile          \
 	charybdis/Makefile      \

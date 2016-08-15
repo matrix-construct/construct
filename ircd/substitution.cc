@@ -31,13 +31,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/s_user.h>
-#include <ircd/snomask.h>
-#include <ircd/match.h>
-#include <ircd/substitution.h>
-#include <ircd/s_assert.h>
-
 namespace ircd {
 
 /*

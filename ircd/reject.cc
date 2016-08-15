@@ -21,19 +21,6 @@
  *  USA
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/client.h>
-#include <ircd/s_conf.h>
-#include <ircd/reject.h>
-#include <ircd/s_stats.h>
-#include <ircd/ircd.h>
-#include <ircd/send.h>
-#include <ircd/numeric.h>
-#include <ircd/parse.h>
-#include <ircd/hostmask.h>
-#include <ircd/match.h>
-#include <ircd/hash.h>
-
 namespace ircd {
 
 static rb_patricia_tree_t *reject_tree;

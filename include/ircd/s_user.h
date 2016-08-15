@@ -25,8 +25,6 @@
 #pragma once
 #define HAVE_IRCD_S_USER_H
 
-#include "defaults.h"
-
 #ifdef __cplusplus
 namespace ircd {
 

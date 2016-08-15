@@ -26,9 +26,6 @@
 #pragma once
 #define HAVE_IRCD_EXCEPTION_H
 
-#include "stdinc.h"
-#include "util.h"
-
 #ifdef __cplusplus
 namespace ircd {
 

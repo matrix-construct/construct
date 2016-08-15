@@ -24,8 +24,6 @@
 #pragma once
 #define HAVE_IRCD_PRIVILEGE_H
 
-#include "stdinc.h"
-
 #ifdef __cplusplus
 namespace ircd {
 

@@ -25,9 +25,6 @@
 #pragma once
 #define HAVE_IRCD_HASH_H
 
-#include <rb/dictionary.h>
-#include <rb/radixtree.h>
-
 #ifdef __cplusplus
 namespace ircd {
 

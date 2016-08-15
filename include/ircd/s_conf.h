@@ -25,14 +25,9 @@
 #pragma once
 #define HAVE_IRCD_S_CONF_H
 
-#include "stdinc.h"
-
 #ifdef HAVE_LIBCRYPTO
 #include <openssl/rsa.h>
 #endif
-
-#include "class.h"
-#include "client.h"
 
 #ifdef __cplusplus
 namespace ircd {

@@ -18,15 +18,6 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/ircd_signal.h>
-#include <ircd/ircd.h>		/* dorehash */
-#include <ircd/restart.h>		/* server_reboot */
-#include <ircd/logger.h>
-#include <ircd/s_conf.h>
-#include <ircd/client.h>
-#include <ircd/send.h>
-
 #ifndef _WIN32
 #include <sys/types.h>
 #include <sys/wait.h>

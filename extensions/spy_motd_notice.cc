@@ -19,12 +19,6 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  */
-#include <ircd/stdinc.h>
-#include <ircd/modules.h>
-#include <ircd/hook.h>
-#include <ircd/client.h>
-#include <ircd/ircd.h>
-#include <ircd/send.h>
 
 using namespace ircd;
 

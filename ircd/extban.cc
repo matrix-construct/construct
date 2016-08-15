@@ -20,10 +20,6 @@
  *  USA
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/channel.h>
-#include <ircd/client.h>
-
 namespace ircd {
 
 ExtbanFunc extban_table[256] = { NULL };

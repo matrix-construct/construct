@@ -25,9 +25,6 @@
 #pragma once
 #define HAVE_IRCD_WHOWAS_H
 
-#include "stdinc.h"
-#include "client.h"
-
 #ifdef __cplusplus
 namespace ircd {
 

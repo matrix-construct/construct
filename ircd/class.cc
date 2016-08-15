@@ -22,17 +22,6 @@
  *  USA
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/defaults.h>
-#include <ircd/class.h>
-#include <ircd/client.h>
-#include <ircd/ircd.h>
-#include <ircd/numeric.h>
-#include <ircd/s_conf.h>
-#include <ircd/s_newconf.h>
-#include <ircd/send.h>
-#include <ircd/match.h>
-
 namespace ircd {
 
 #define BAD_PING                -2

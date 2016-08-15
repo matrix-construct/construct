@@ -25,16 +25,9 @@
 #pragma once
 #define HAVE_IRCD_MODULES_H
 
-#include "stdinc.h"
-#include "defaults.h"
-#include "parse.h"
-
 #define MAPI_CHARYBDIS 2
 
 #include <ltdl.h>
-
-#include "msg.h"
-#include "hook.h"
 
 #ifdef __cplusplus
 namespace ircd {

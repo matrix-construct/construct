@@ -22,22 +22,6 @@
  *  USA
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/m_info.h>
-#include <ircd/channel.h>
-#include <ircd/client.h>
-#include <ircd/match.h>
-#include <ircd/ircd.h>
-#include <ircd/hook.h>
-#include <ircd/numeric.h>
-#include <ircd/s_serv.h>
-#include <ircd/s_user.h>
-#include <ircd/send.h>
-#include <ircd/s_conf.h>
-#include <ircd/msg.h>
-#include <ircd/parse.h>
-#include <ircd/modules.h>
-
 using namespace ircd;
 
 static const char info_desc[] =

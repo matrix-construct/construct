@@ -22,27 +22,6 @@
  *  USA
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/client.h>
-#include <ircd/ircd.h>
-#include <ircd/numeric.h>
-#include <ircd/s_conf.h>
-#include <ircd/s_serv.h>
-#include <ircd/msg.h>
-#include <ircd/parse.h>
-#include <ircd/modules.h>
-#include <ircd/channel.h>
-#include <ircd/match.h>
-#include <ircd/hash.h>
-#include <ircd/class.h>
-#include <ircd/msg.h>
-#include <ircd/packet.h>
-#include <ircd/send.h>
-#include <ircd/s_newconf.h>
-#include <ircd/s_stats.h>
-#include <ircd/tgchange.h>
-#include <ircd/inline/stringops.h>
-
 using namespace ircd;
 
 static const char message_desc[] =

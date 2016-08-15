@@ -22,19 +22,6 @@
  *  USA
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/modules.h>
-#include <ircd/logger.h>
-#include <ircd/ircd.h>
-#include <ircd/client.h>
-#include <ircd/send.h>
-#include <ircd/s_conf.h>
-#include <ircd/s_newconf.h>
-#include <ircd/numeric.h>
-#include <ircd/parse.h>
-#include <ircd/match.h>
-#include <ircd/s_serv.h>
-#include <ircd/capability.h>
 #include <ltdl.h>
 
 namespace ircd {

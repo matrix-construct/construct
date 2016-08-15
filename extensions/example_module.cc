@@ -18,12 +18,6 @@
  */
 
 /* List of ircd includes from ../include/ */
-#include <ircd/stdinc.h>
-#include <ircd/modules.h>
-#include <ircd/hook.h>
-#include <ircd/client.h>
-#include <ircd/ircd.h>
-#include <ircd/send.h>
 
 using namespace ircd;
 

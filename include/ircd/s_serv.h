@@ -25,9 +25,6 @@
 #pragma once
 #define HAVE_IRCD_SERV_H
 
-#include "defaults.h"
-#include "capability.h"
-
 /*
  * The number of seconds between calls to try_connections(). Fiddle with
  * this ONLY if you KNOW what you're doing!

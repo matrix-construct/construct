@@ -4,15 +4,6 @@
  * -- jilles
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/modules.h>
-#include <ircd/client.h>
-#include <ircd/hook.h>
-#include <ircd/ircd.h>
-#include <ircd/send.h>
-#include <ircd/s_conf.h>
-#include <ircd/s_newconf.h>
-
 using namespace ircd;
 
 static const char noi_desc[] =

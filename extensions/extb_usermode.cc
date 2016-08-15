@@ -3,18 +3,6 @@
  * -- nenolod
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/modules.h>
-#include <ircd/hook.h>
-#include <ircd/client.h>
-#include <ircd/ircd.h>
-#include <ircd/send.h>
-#include <ircd/hash.h>
-#include <ircd/s_conf.h>
-#include <ircd/s_user.h>
-#include <ircd/s_serv.h>
-#include <ircd/numeric.h>
-
 using namespace ircd;
 
 static const char extb_desc[] = "Usermode ($m) extban type";

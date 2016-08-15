@@ -4,11 +4,8 @@ auto_load_moddir=@moduledir@/autoload
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	$(LTDLINCL) \
-	@BOOST_CPPFLAGS@
-
-if BUILD_PCH
-AM_CPPFLAGS += -include $(top_srcdir)/include/rb/rb.pic.h
-endif
+	@BOOST_CPPFLAGS@ \
+	-include $(top_srcdir)/include/ircd/ircd.h
 
 AM_LDFLAGS = \
 	-L$(top_srcdir)/ircd \

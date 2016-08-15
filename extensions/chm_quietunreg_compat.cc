@@ -3,13 +3,6 @@
  * -- jilles
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/modules.h>
-#include <ircd/client.h>
-#include <ircd/hook.h>
-#include <ircd/ircd.h>
-#include <ircd/chmode.h>
-
 using namespace ircd;
 
 static const char chm_quietunreg_compat_desc[] =

@@ -27,19 +27,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/client.h>
-#include <ircd/hash.h>
-#include <ircd/send.h>
-#include <ircd/msg.h>
-#include <ircd/modules.h>
-#include <ircd/numeric.h>
-#include <ircd/reject.h>
-#include <ircd/s_serv.h>
-#include <ircd/s_stats.h>
-#include <ircd/s_newconf.h>
-#include <ircd/s_conf.h>
-
 using namespace ircd;
 
 static const char sasl_desc[] = "Provides SASL authentication support";

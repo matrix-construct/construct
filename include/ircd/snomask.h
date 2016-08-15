@@ -34,8 +34,6 @@
 #pragma once
 #define HAVE_IRCD_SNOMASK_H
 
-#include "client.h"
-
 #ifdef __cplusplus
 namespace ircd {
 

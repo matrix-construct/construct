@@ -22,34 +22,6 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
  *  USA
  */
-#include <ircd/stdinc.h>
-#include <ircd/client.h>
-#include <ircd/class.h>
-#include <ircd/hash.h>
-#include <ircd/match.h>
-#include <ircd/ircd.h>
-#include <ircd/numeric.h>
-#include <ircd/packet.h>
-#include <ircd/authproc.h>
-#include <ircd/s_conf.h>
-#include <ircd/s_newconf.h>
-#include <ircd/logger.h>
-#include <ircd/s_serv.h>
-#include <ircd/s_stats.h>
-#include <ircd/send.h>
-#include <ircd/whowas.h>
-#include <ircd/s_user.h>
-#include <ircd/hash.h>
-#include <ircd/hostmask.h>
-#include <ircd/listener.h>
-#include <ircd/hook.h>
-#include <ircd/msg.h>
-#include <ircd/monitor.h>
-#include <ircd/reject.h>
-#include <ircd/scache.h>
-#include <ircd/sslproc.h>
-#include <ircd/wsproc.h>
-#include <ircd/s_assert.h>
 
 namespace ircd {
 

@@ -25,8 +25,6 @@
 #pragma once
 #define HAVE_IRCD_INFO_H
 
-#include "defaults.h"
-
 #ifdef __cplusplus
 namespace ircd {
 
@@ -39,6 +37,7 @@ typedef struct Information
 }
 Info;
 
+static
 Info MyInformation[] = {
 
 #ifdef CPATH

@@ -22,24 +22,6 @@
  *  USA
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/channel.h>
-#include <ircd/chmode.h>
-#include <ircd/client.h>
-#include <ircd/hash.h>
-#include <ircd/hook.h>
-#include <ircd/match.h>
-#include <ircd/ircd.h>
-#include <ircd/numeric.h>
-#include <ircd/s_serv.h>		/* captab */
-#include <ircd/s_user.h>
-#include <ircd/send.h>
-#include <ircd/whowas.h>
-#include <ircd/s_conf.h>		/* ConfigFileEntry, ConfigChannel */
-#include <ircd/s_newconf.h>
-#include <ircd/logger.h>
-#include <ircd/s_assert.h>
-
 namespace ircd {
 
 struct config_channel_entry ConfigChannel; rb_dlink_list global_channel_list; static rb_bh 

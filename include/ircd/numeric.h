@@ -25,9 +25,6 @@
 #pragma once
 #define HAVE_IRCD_NUMERIC_H
 
-#include "defaults.h"
-#include "messages.h"
-
 #ifdef __cplusplus
 namespace ircd {
 

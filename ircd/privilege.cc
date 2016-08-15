@@ -21,14 +21,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/s_conf.h>
-#include <ircd/privilege.h>
-#include <ircd/numeric.h>
-#include <ircd/s_assert.h>
-#include <ircd/logger.h>
-#include <ircd/send.h>
-
 namespace ircd {
 
 static rb_dlink_list privilegeset_list = {NULL, NULL, 0};

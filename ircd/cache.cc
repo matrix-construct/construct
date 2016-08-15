@@ -32,14 +32,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/s_conf.h>
-#include <ircd/client.h>
-#include <ircd/hash.h>
-#include <ircd/cache.h>
-#include <ircd/numeric.h>
-#include <ircd/send.h>
-
 namespace cache = ircd::cache;
 using namespace cache;
 

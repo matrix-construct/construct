@@ -22,36 +22,6 @@
  *  USA
  */
 
-#include <ircd/stdinc.h>
-#include <ircd/s_conf.h>
-#include <ircd/s_newconf.h>
-#include <ircd/newconf.h>
-#include <ircd/s_serv.h>
-#include <ircd/s_stats.h>
-#include <ircd/channel.h>
-#include <ircd/class.h>
-#include <ircd/client.h>
-#include <ircd/hash.h>
-#include <ircd/match.h>
-#include <ircd/ircd.h>
-#include <ircd/listener.h>
-#include <ircd/hostmask.h>
-#include <ircd/modules.h>
-#include <ircd/numeric.h>
-#include <ircd/logger.h>
-#include <ircd/send.h>
-#include <ircd/reject.h>
-#include <ircd/cache.h>
-#include <ircd/privilege.h>
-#include <ircd/sslproc.h>
-#include <ircd/wsproc.h>
-#include <ircd/bandbi.h>
-#include <ircd/operhash.h>
-#include <ircd/chmode.h>
-#include <ircd/hook.h>
-#include <ircd/s_assert.h>
-#include <ircd/authproc.h>
-
 int yyparse(void);
 extern char yy_linebuf[16384];		/* defined in ircd_lexer.l */
 

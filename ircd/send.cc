@@ -22,21 +22,6 @@
  *  USA
  */
 
-#include <ircd/send.h>
-#include <ircd/channel.h>
-#include <ircd/class.h>
-#include <ircd/client.h>
-#include <ircd/match.h>
-#include <ircd/ircd.h>
-#include <ircd/numeric.h>
-#include <ircd/s_serv.h>
-#include <ircd/s_conf.h>
-#include <ircd/s_newconf.h>
-#include <ircd/logger.h>
-#include <ircd/hook.h>
-#include <ircd/monitor.h>
-#include <ircd/msgbuf.h>
-
 namespace ircd {
 
 /* send the message to the link the target is attached to */
