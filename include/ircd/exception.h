@@ -32,9 +32,6 @@
 #ifdef __cplusplus
 namespace ircd {
 
-
-IRCD_OVERLOAD(pass_name)
-
 /** The root exception type.
  *
  *  All exceptions in the project inherit from this type.
@@ -57,15 +54,23 @@ IRCD_OVERLOAD(pass_name)
 struct exception
 :std::exception
 {
-	char buf[1024];
+  protected:
+	char buf[BUFSIZE];
 
-	const char *what() const noexcept override   { return buf;                                     }
+	ssize_t generate(const char *const &name, const char *const &fmt, va_list ap) noexcept;
+	ssize_t generate(const char *const &fmt, va_list ap) noexcept;
 
-	exception(const pass_name_t, const char *const &name = "exception", const char *fmt = " ", ...) noexcept AFP(4, 5);
+  public:
+	const char *what() const noexcept override
+	{
+		return buf;
+	}
+
+	exception() noexcept
+	{
+		buf[0] = '\0';
+	}
 };
-
-
-// Disambiguates the constructors in the macro below.
 
 /** Exception generator convenience macro
  *
@@ -98,30 +103,40 @@ struct exception
  *
  *  Remember: the order of the catch blocks is important.
  */
-#define IRCD_EXCEPTION(parent, name)                       \
-struct name                                                \
-:parent                                                    \
-{                                                          \
-    template<class... A>                                   \
-    name(const pass_name_t &, A&&... a):                   \
-    parent { pass_name, std::forward<A>(a)... } {}         \
-                                                           \
-    template<class... A>                                   \
-    name(A&&... a):                                        \
-    parent { pass_name, #name, std::forward<A>(a)... } {}  \
+
+#define IRCD_EXCEPTION(parent, name)                                          \
+struct name                                                                   \
+:parent                                                                       \
+{                                                                             \
+    name(const char *const fmt = " ", ...) noexcept AFP(2, 3)                 \
+    {                                                                         \
+        va_list ap;                                                           \
+        va_start(ap, fmt);                                                    \
+        generate(#name, fmt, ap);                                             \
+        va_end(ap);                                                           \
+    }                                                                         \
 };
 
+#define IRCD_EXCEPTION_HIDENAME(parent, name)                                 \
+struct name                                                                   \
+:parent                                                                       \
+{                                                                             \
+    name(const char *const fmt = " ", ...) noexcept AFP(2, 3)                 \
+    {                                                                         \
+        va_list ap;                                                           \
+        va_start(ap, fmt);                                                    \
+        generate(fmt, ap);                                                    \
+        va_end(ap);                                                           \
+    }                                                                         \
+};
 
-/** Generic base exceptions.
+/** Root error exception type. Inherit from this.
  *  List your own exception somewhere else (unless you're overhauling libircd).
+ *  example, in your namespace:
  *
- *  These are useful for random places and spare you the effort of having to
- *  redefine them. You can also inherit from these if appropriate.
+ *  IRCD_EXCEPTION(ircd::error, error)
  */
-IRCD_EXCEPTION(exception,    error)             // throw ircd::error("something bad")
-IRCD_EXCEPTION(error,        not_found)         // throw ircd::not_found("looks like a 404")
-IRCD_EXCEPTION(error,        access_denied)     // throw ircd::access_denied("you didn't say the magic word")
-
+IRCD_EXCEPTION(exception, error)             // throw ircd::error("something bad")
 
 }       // namespace ircd
 #endif  // __cplusplus

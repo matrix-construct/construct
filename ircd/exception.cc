@@ -27,22 +27,26 @@
 
 using namespace ircd;
 
-
-exception::exception(const pass_name_t,
-                     const char *const &name,
-                     const char *const fmt,
-                     ...)
+ssize_t
+exception::generate(const char *const &fmt,
+                    va_list ap)
 noexcept
 {
-	va_list ap;
-	va_start(ap, fmt);
+	return vsnprintf(buf, sizeof(buf), fmt, ap);
+}
 
+ssize_t
+exception::generate(const char *const &name,
+                    const char *const &fmt,
+                    va_list ap)
+noexcept
+{
 	size_t size(0);
 	const bool empty(!fmt || !fmt[0] || fmt[0] == ' ');
 	size = rb_strlcpy(buf, name, sizeof(buf));
 	size = rb_strlcat(buf, empty? "." : ": ", sizeof(buf));
 	if(size < sizeof(buf))
-		vsnprintf(buf + size, sizeof(buf) - size, fmt, ap);
+		size += vsnprintf(buf + size, sizeof(buf) - size, fmt, ap);
 
-	va_end(ap);
+	return size;
 }
