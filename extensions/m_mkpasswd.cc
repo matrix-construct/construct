@@ -191,36 +191,31 @@ char *
 generate_poor_salt(char *salt, int length)
 {
 	int i;
+
 	srand(time(NULL));
 	for(i = 0; i < length; i++)
-	{
 		salt[i] = saltChars[rand() % 64];
-	}
+
 	return (salt);
 }
 
 char *
 generate_random_salt(char *salt, int length)
 {
-	char *buf;
 	int fd, i;
-	if((fd = open("/dev/random", O_RDONLY)) < 0)
-	{
+
+	if((fd = open("/dev/urandom", O_RDONLY)) < 0)
 		return (generate_poor_salt(salt, length));
-	}
-	buf = (char *)calloc(1, length);
-	if(read(fd, buf, length) != length)
+
+	if(read(fd, salt, (size_t)length) != length)
 	{
-		free(buf);
 		close(fd);
 		return (generate_poor_salt(salt, length));
 	}
 
 	for(i = 0; i < length; i++)
-	{
-		salt[i] = saltChars[abs(buf[i]) % 64];
-	}
-	free(buf);
+		salt[i] = saltChars[abs(salt[i]) % 64];
+
 	close(fd);
 	return (salt);
 }
