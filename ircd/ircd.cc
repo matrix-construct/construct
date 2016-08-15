@@ -67,7 +67,7 @@ bool ircd_ssl_ok = false;
 bool ircd_zlib_ok = true;
 
 int testing_conf = 0;
-time_t startup_time;
+//time_t startup_time;
 
 int default_server_capabs;
 
@@ -573,7 +573,7 @@ charybdis_main(int argc, char * const argv[])
 
 	if(printVersion)
 	{
-		printf("ircd: version %s(%s)\n", ircd_version, serno);
+		printf("ircd: version %s(%s)\n", info::version.c_str(), info::serno.c_str());
 #ifdef CUSTOM_BRANDING
 		printf("ircd: based on %s-%s\n", PACKAGE_NAME, PACKAGE_VERSION);
 #endif
@@ -605,7 +605,7 @@ charybdis_main(int argc, char * const argv[])
 
 		if(!server_state_foreground)
 			make_daemon();
-		inotice("starting %s ...", ircd_version);
+		inotice("starting %s ...", info::version.c_str());
 		inotice("%s", rb_lib_version());
 	}
 
@@ -707,7 +707,6 @@ charybdis_main(int argc, char * const argv[])
 	me.servptr = &me;
 	SetMe(&me);
 	make_server(&me);
-	startup_time = rb_current_time();
 	add_to_client_hash(me.name, &me);
 	add_to_id_hash(me.id, &me);
 	me.serv->nameinfo = scache_connect(me.name, me.info, 0);

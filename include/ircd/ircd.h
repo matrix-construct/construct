@@ -63,12 +63,6 @@ struct Counter
 
 extern struct SetOptions GlobalSetOptions;	/* defined in ircd.c */
 
-extern const char *creation;
-extern const char *generation;
-extern const char *infotext[];
-extern const char *serno;
-extern const time_t datecode;
-extern const char *ircd_version;
 extern const char *logFileName;
 extern const char *pidFileName;
 extern volatile sig_atomic_t dorehash;
@@ -84,8 +78,6 @@ extern rb_dlink_list global_client_list;
 extern struct Client *local[];
 extern struct Counter Count;
 extern int default_server_capabs;
-
-extern time_t startup_time;
 
 extern int splitmode;
 extern int splitchecking;

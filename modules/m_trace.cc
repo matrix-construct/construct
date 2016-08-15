@@ -114,7 +114,7 @@ m_trace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 			   !ConfigServerHide.flatten_links)
 				sendto_one_numeric(source_p, RPL_TRACELINK,
 						   form_str(RPL_TRACELINK),
-						   ircd_version,
+						   info::version.c_str(),
 						   ac2ptr ? ac2ptr->name : tname,
 						   ac2ptr ? ac2ptr->from->name : "EEK!");
 

@@ -67,7 +67,7 @@ m_version(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 	}
 
 	sendto_one_numeric(source_p, RPL_VERSION, form_str(RPL_VERSION),
-			   ircd_version, serno,
+			   info::version.c_str(), info::serno.c_str(),
 #ifdef CUSTOM_BRANDING
 			   PACKAGE_NAME "-" PACKAGE_VERSION,
 #endif
@@ -87,7 +87,7 @@ mo_version(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 	if(hunt_server(client_p, source_p, ":%s VERSION :%s", 1, parc, parv) == HUNTED_ISME)
 	{
 		sendto_one_numeric(source_p, RPL_VERSION, form_str(RPL_VERSION),
-				   ircd_version, serno,
+				   info::version.c_str(), info::serno.c_str(),
 #ifdef CUSTOM_BRANDING
 				   PACKAGE_NAME "-" PACKAGE_VERSION,
 #endif

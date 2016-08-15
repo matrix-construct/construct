@@ -964,7 +964,7 @@ stats_usage (struct Client *source_p)
 	if(0 == secs)
 		secs = 1;
 
-	rup = (rb_current_time() - startup_time) * hzz;
+	rup = (rb_current_time() - info::startup_time) * hzz;
 	if(0 == rup)
 		rup = 1;
 
@@ -1082,7 +1082,7 @@ stats_uptime (struct Client *source_p)
 {
 	time_t now;
 
-	now = rb_current_time() - startup_time;
+	now = rb_current_time() - info::startup_time;
 	sendto_one_numeric(source_p, RPL_STATSUPTIME,
 			   form_str (RPL_STATSUPTIME),
 			   (int)(now / 86400), (int)((now / 3600) % 24),
@@ -1575,7 +1575,7 @@ stats_servlinks (struct Client *source_p)
 			   "? :Recv total : %s %s",
 			   buf, _GMKs (receiveK));
 
-	uptime = (rb_current_time() - startup_time);
+	uptime = rb_current_time() - info::startup_time;
 	snprintf(buf, sizeof buf, "%7.2f %s (%4.1f K/s)",
 			   _GMKv (me.localClient->sendK),
 			   _GMKs (me.localClient->sendK),

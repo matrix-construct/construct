@@ -420,9 +420,9 @@ bool init_module_v2(struct module *const mod)
 	 * Later on if there are major API changes we can add fatal checks.
 	 * -- Elizafox
 	 */
-	if(mheader->mapi_datecode != datecode && mheader->mapi_datecode > 0)
+	if(mheader->mapi_datecode != info::configured_time && mheader->mapi_datecode > 0)
 	{
-		long int delta = datecode - mheader->mapi_datecode;
+		long int delta = info::configured_time - mheader->mapi_datecode;
 		if (delta > MOD_WARN_DELTA)
 		{
 			delta /= 86400;
@@ -456,7 +456,7 @@ bool init_module_v2(struct module *const mod)
 	}
 
 	/* New in MAPI v2 - version replacement */
-	mod->version = mheader->mapi_module_version? mheader->mapi_module_version : ircd_version;
+	mod->version = mheader->mapi_module_version? mheader->mapi_module_version : info::ircd_version;
 	mod->description = mheader->mapi_module_description;
 
 	if(mheader->mapi_cap_list)

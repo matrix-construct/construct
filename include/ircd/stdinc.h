@@ -60,7 +60,7 @@ namespace ircd
 #include "logger.h"
 #include "match.h"
 #include "messages.h"
-#include "m_info.h"
+#include "info.h"
 #include "modules.h"
 #include "monitor.h"
 #include "msgbuf.h"

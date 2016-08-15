@@ -713,12 +713,8 @@ mo_info(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 static void
 send_info_text(struct Client *source_p)
 {
-	const char **text = infotext;
-
-	while (*text)
-	{
-		sendto_one_numeric(source_p, RPL_INFO, form_str(RPL_INFO), *text++);
-	}
+	for (const auto &text : info::credits)
+		sendto_one_numeric(source_p, RPL_INFO, form_str(RPL_INFO), text.c_str());
 
 	sendto_one_numeric(source_p, RPL_INFO, form_str(RPL_INFO), "");
 }
@@ -736,11 +732,11 @@ send_birthdate_online_time(struct Client *source_p)
 	char tbuf[26]; /* this needs to be 26 - see ctime_r manpage */
 	sendto_one(source_p, ":%s %d %s :Birth Date: %s (%ld)",
 			get_id(&me, source_p), RPL_INFO,
-			get_id(source_p, source_p), creation, datecode);
+			get_id(source_p, source_p), info::compiled.c_str(), info::compiled_time);
 
 	sendto_one(source_p, ":%s %d %s :On-line since %s",
 			get_id(&me, source_p), RPL_INFO,
-			get_id(source_p, source_p), rb_ctime(startup_time, tbuf, sizeof(tbuf)));
+			get_id(source_p, source_p), info::startup.c_str());
 }
 
 /*
@@ -753,37 +749,34 @@ send_birthdate_online_time(struct Client *source_p)
 static void
 send_conf_options(struct Client *source_p)
 {
-	Info *infoptr;
-	int i = 0;
-
 	/*
 	 * Now send them a list of all our configuration options
 	 * (mostly from defaults.h)
 	 */
-	for (infoptr = MyInformation; infoptr->name; infoptr++)
+	for (const auto &line : info::myinfo)
 	{
-		if(infoptr->intvalue)
+		if (line.valnum)
 		{
 			sendto_one(source_p, ":%s %d %s :%-30s %-16d [%s]",
 					get_id(&me, source_p), RPL_INFO,
 					get_id(source_p, source_p),
-					infoptr->name, infoptr->intvalue,
-					infoptr->desc);
+					line.key.c_str(), line.valnum,
+					line.desc.c_str());
 		}
 		else
 		{
 			sendto_one(source_p, ":%s %d %s :%-30s %-16s [%s]",
 					get_id(&me, source_p), RPL_INFO,
 					get_id(source_p, source_p),
-					infoptr->name, infoptr->strvalue,
-					infoptr->desc);
+					line.key.c_str(), line.valstr.c_str(),
+					line.desc.c_str());
 		}
 	}
 
 	/*
 	 * Parse the info_table[] and do the magic.
 	 */
-	for (i = 0; info_table[i].name; i++)
+	for (int i(0); info_table[i].name; i++)
 	{
 		switch (info_table[i].output_type)
 		{

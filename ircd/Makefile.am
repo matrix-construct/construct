@@ -52,6 +52,7 @@ libircd_la_SOURCES =                  \
   hash.cc                        \
   hook.cc                        \
   hostmask.cc                    \
+  info.cc                        \
   ircd.cc                       \
   ircd_lexer.cc                \
   ircd_parser.cc                \
@@ -81,7 +82,6 @@ libircd_la_SOURCES =                  \
   substitution.cc                \
   supported.cc                   \
   tgchange.cc                    \
-  version.cc                     \
   whowas.cc			\
   wsproc.cc
 
