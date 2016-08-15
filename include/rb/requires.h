@@ -77,7 +77,10 @@ extern "C" {
 #include <RB_INC_SSTREAM
 #include <RB_INC_FSTREAM
 #include <RB_INC_IOSTREAM
+//#include <RB_INC_IOMANIP
 #include <RB_INC_CSTDIO
+//#include <RB_INC_CHRONO
+#include <RB_INC_CTIME
 
 //#include <RB_INC_BOOST_LEXICAL_CAST_HPP
 #endif
