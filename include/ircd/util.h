@@ -111,6 +111,16 @@ struct case_mapped_less
 #endif
 
 
+#ifdef BOOST_LEXICAL_CAST_INCLUDED
+template<class T = std::string,
+         class... Args>
+auto lex_cast(Args&&... args)
+{
+	return boost::lexical_cast<T>(std::forward<Args>(args)...);
+}
+#endif
+
+
 }        // namespace util
 }        // namespace ircd
 #endif   // __cplusplus

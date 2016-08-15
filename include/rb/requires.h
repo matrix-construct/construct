@@ -78,6 +78,8 @@ extern "C" {
 #include <RB_INC_FSTREAM
 #include <RB_INC_IOSTREAM
 #include <RB_INC_CSTDIO
+
+//#include <RB_INC_BOOST_LEXICAL_CAST_HPP
 #endif
 
 #endif /* _RB_REQUIRES_H */
