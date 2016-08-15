@@ -11,17 +11,18 @@ You will need to run `autogen.sh` to build the autotools files prior to building
 
  * For SSL/TLS client and server connections, one of:
 
-   * OpenSSL 1.0 or newer
-   * LibreSSL
-   * mbedTLS
-   * GnuTLS
+   * OpenSSL 1.0.0 or newer (--enable-openssl)
+   * LibreSSL (--enable-openssl)
+   * mbedTLS (--enable-mbedtls)
+   * GnuTLS (--enable-gnutls)
 
- * For certificate-based oper CHALLENGE, OpenSSL 1.0 or newer.
+ * For certificate-based oper CHALLENGE, OpenSSL 1.0.0 or newer.
    (Using CHALLENGE is not recommended for new deployments, so if you want to use a different TLS library,
     feel free.)
 
- * For ECDHE, OpenSSL 1.0.0 or newer is required. Solaris; and RHEL/Fedora and its derivatives such as CentOS
-   have removed support for ECC/ECDHE. You will need to compile your own OpenSSL on these systems.
+ * For ECDHE under OpenSSL, on Solaris and RHEL/Fedora (and its derivatives such as CentOS) you will
+   need to compile your own OpenSSL on these systems, as they have removed support for ECC/ECDHE.
+   Alternatively, consider using another library (see above).
 
 ## platforms
 
