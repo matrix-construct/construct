@@ -121,7 +121,7 @@ ms_whois(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHSERVER,
 				   form_str(ERR_NOSUCHSERVER),
-				   IsDigit(parv[1][0]) ? "*" : parv[1]);
+				   rfc1459::is_digit(parv[1][0]) ? "*" : parv[1]);
 		return;
 	}
 

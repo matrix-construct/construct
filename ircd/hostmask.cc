@@ -171,7 +171,7 @@ hash_text(const char *start)
 
 	while(*p)
 	{
-		h = (h << 4) - (h + (unsigned char) irctolower(*p++));
+		h = (h << 4) - (h + (unsigned char) rfc1459::tolower(*p++));
 	}
 
 	return (h & (ATABLE_SIZE - 1));

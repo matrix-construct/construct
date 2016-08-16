@@ -66,7 +66,7 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		target_p = find_person(parv[1]);
 	if(target_p == NULL)
 	{
-		if(!MyClient(source_p) && IsDigit(parv[1][0]))
+		if(!MyClient(source_p) && rfc1459::is_digit(parv[1][0]))
 			sendto_one_numeric(source_p, ERR_NOSUCHNICK,
 					   "* :Target left IRC. Failed to invite to %s",
 					   parv[2]);

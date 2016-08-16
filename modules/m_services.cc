@@ -158,7 +158,7 @@ me_rsfnc(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	if(!MyClient(target_p))
 		return;
 
-	if(!clean_nick(parv[2], 0) || IsDigit(parv[2][0]))
+	if(!clean_nick(parv[2], 0) || rfc1459::is_digit(parv[2][0]))
 		return;
 
 	curts = atol(parv[4]);
@@ -300,7 +300,7 @@ h_svc_whois(hook_data_client *data)
 		 * store both an ID number and an account name in one field.
 		 * If only digits are present, leave as is.
 		 */
-		while(IsDigit(*p))
+		while(rfc1459::is_digit(*p))
 			p++;
 		if(*p == '\0')
 			p = data->target->user->suser;

@@ -62,7 +62,7 @@ ms_pong(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 				   get_id(target_p, target_p));
 		else
 		{
-			if(!IsDigit(*destination))
+			if(!rfc1459::is_digit(*destination))
 				sendto_one_numeric(source_p, ERR_NOSUCHSERVER,
 						   form_str(ERR_NOSUCHSERVER), destination);
 			return;

@@ -357,7 +357,7 @@ check_string(char *s)
 
 	for(; *s; ++s)
 	{
-		if(IsSpace(*s))
+		if(rfc1459::is_space(*s))
 		{
 			*s = '\0';
 			break;
@@ -411,7 +411,7 @@ pretty_mask(const char *idmask)
 			*t = '~';
 		if (*t == '~')
 			t++;
-		*t = irctolower(*t);
+		*t = rfc1459::tolower(*t);
 		return mask_buf + old_mask_pos;
 	}
 

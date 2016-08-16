@@ -64,7 +64,7 @@ clean_username(const char *username)
 	{
 		len++;
 
-		if(!IsUserChar(*username))
+		if(!rfc1459::is_user(*username))
 			return false;
 	}
 
@@ -83,7 +83,7 @@ clean_host(const char *host)
 	{
 		len++;
 
-		if(!IsHostChar(*host))
+		if(!rfc1459::is_host(*host))
 			return false;
 	}
 
@@ -185,7 +185,7 @@ me_svslogin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 	{
 		/* Strip leading digits, unless it's purely numeric. */
 		const char *p = login;
-		while(IsDigit(*p))
+		while(rfc1459::is_digit(*p))
 			p++;
 		if(!*p)
 			p = login;

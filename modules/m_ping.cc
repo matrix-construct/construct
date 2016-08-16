@@ -89,7 +89,7 @@ ms_ping(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 				   get_id(source_p, target_p), source_p->name,
 				   get_id(target_p, target_p));
 		/* not directed at an id.. */
-		else if(!IsDigit(*destination))
+		else if(!rfc1459::is_digit(*destination))
 			sendto_one_numeric(source_p, ERR_NOSUCHSERVER,
 					   form_str(ERR_NOSUCHSERVER),
 					   destination);

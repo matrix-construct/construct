@@ -978,18 +978,13 @@ valid_wild_card(const char *luser, const char *lhost)
 	/* check there are enough non wildcard chars */
 	p = luser;
 	while((tmpch = *p++))
-	{
-		if(!IsKWildChar(tmpch))
-		{
-			/* found enough chars, return */
+		if(!rfc1459::is_kwild(tmpch))
 			if(++nonwild >= ConfigFileEntry.min_nonwildcard)
-				return 1;
-		}
-	}
+				return 1; // found enough chars, return
 
 	/* try host, as user didnt contain enough */
 	/* special case for cidr masks -- jilles */
-	if((p = strrchr(lhost, '/')) != NULL && IsDigit(p[1]))
+	if((p = strrchr(lhost, '/')) != NULL && rfc1459::is_digit(p[1]))
 	{
 		bitlen = atoi(p + 1);
 		/* much like non-cidr for ipv6, rather arbitrary for ipv4 */
@@ -1003,11 +998,9 @@ valid_wild_card(const char *luser, const char *lhost)
 	{
 		p = lhost;
 		while((tmpch = *p++))
-		{
-			if(!IsKWildChar(tmpch))
+			if(!rfc1459::is_kwild(tmpch))
 				if(++nonwild >= ConfigFileEntry.min_nonwildcard)
 					return 1;
-		}
 	}
 
 	return 0;

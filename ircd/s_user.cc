@@ -792,7 +792,7 @@ valid_hostname(const char *hostname)
 
 	while (*p)
 	{
-		if(!IsHostChar(*p))
+		if(!rfc1459::is_host(*p))
 			return false;
                 if(*p == '.' || *p == ':')
   			found_sep++;
@@ -807,7 +807,7 @@ valid_hostname(const char *hostname)
 	if(found_sep == 0)
 		return false;
 
-	if(last_slash && IsDigit(last_slash[1]))
+	if(last_slash && rfc1459::is_digit(last_slash[1]))
 		return false;
 
 	return true;
@@ -843,7 +843,7 @@ valid_username(const char *username)
 	 * i.e. reject jokers who have '-@somehost' or '.@somehost'
 	 * or "-hi-@somehost", "h-----@somehost" would still be accepted.
 	 */
-	if(!IsAlNum(*p))
+	if(!rfc1459::is_alnum(*p))
 		return false;
 
 	while (*++p)
@@ -853,10 +853,10 @@ valid_username(const char *username)
 			dots++;
 			if(dots > ConfigFileEntry.dots_in_ident)
 				return false;
-			if(!IsUserChar(p[1]))
+			if(!rfc1459::is_user(p[1]))
 				return false;
 		}
-		else if(!IsUserChar(*p))
+		else if(!rfc1459::is_user(*p))
 			return false;
 	}
 	return true;

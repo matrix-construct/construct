@@ -88,8 +88,10 @@ mr_pass(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		if(parc == 5 && atoi(parv[3]) >= 6)
 		{
 			/* only mark as TS6 if the SID is valid.. */
-			if(IsDigit(parv[4][0]) && IsIdChar(parv[4][1]) &&
-			   IsIdChar(parv[4][2]) && parv[4][3] == '\0' &&
+			if(rfc1459::is_digit(parv[4][0]) &&
+			   rfc1459::is_id(parv[4][1]) &&
+			   rfc1459::is_id(parv[4][2]) &&
+			   parv[4][3] == '\0' &&
 			   EmptyString(client_p->id))
 			{
 				client_p->localClient->caps |= CAP_TS6;

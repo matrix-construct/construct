@@ -669,7 +669,7 @@ resv_nick_fnc(const char *mask, const char *reason, int temp_time)
 			continue;
 
 		/* Skip users that already have UID nicks. */
-		if(IsDigit(client_p->name[0]))
+		if(rfc1459::is_digit(client_p->name[0]))
 			continue;
 
 		if(match_esc(mask, client_p->name))
@@ -831,13 +831,13 @@ clean_nick(const char *nick, int loc_client)
 	if(*nick == '-' || *nick == '\0')
 		return 0;
 
-	if(loc_client && IsDigit(*nick))
+	if(loc_client && rfc1459::is_digit(*nick))
 		return 0;
 
 	for(; *nick; nick++)
 	{
 		len++;
-		if(!IsNickChar(*nick))
+		if(!rfc1459::is_nick(*nick))
 			return 0;
 	}
 
@@ -898,7 +898,7 @@ find_chasing(struct Client *source_p, const char *user, int *chasing)
 	if(chasing)
 		*chasing = 0;
 
-	if(who || IsDigit(*user))
+	if(who || rfc1459::is_digit(*user))
 		return who;
 
 	if(!(who = whowas_get_history(user, (long) KILLCHASETIMELIMIT)))

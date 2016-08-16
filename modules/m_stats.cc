@@ -1727,7 +1727,7 @@ stats_l_client(struct Client *source_p, struct Client *target_p,
 	{
 		sendto_one_numeric(source_p, RPL_STATSLINKINFO, Lformat,
 				   show_ip(source_p, target_p) ?
-				    (IsUpper(statchar) ?
+				    (rfc1459::is_upper(statchar) ?
 				     get_client_name(target_p, SHOW_IP) :
 				     get_client_name(target_p, HIDE_IP)) :
 				    get_client_name(target_p, MASK_IP),

@@ -134,7 +134,7 @@ clean_string(char *dest, const unsigned char *src, size_t len)
 			if(len <= 1)
 				break;
 		}
-		else if(!IsPrint(*src))	/* if NOT printable */
+		else if(!rfc1459::is_print(*src)) // if NOT printable
 		{
 			*d++ = '^';
 			--len;

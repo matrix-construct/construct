@@ -327,7 +327,7 @@ check_channel_name(const char *name)
 
 	for (; *name; ++name)
 	{
-		if(!IsChanChar(*name))
+		if(!rfc1459::is_chan(*name))
 			return false;
 	}
 

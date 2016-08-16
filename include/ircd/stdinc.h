@@ -37,6 +37,7 @@ namespace ircd
 #include "util.h"
 #include "defaults.h"
 #include "exception.h"
+#include "rfc1459.h"
 #include "fs.h"
 #include "listener.h"
 #include "s_assert.h"

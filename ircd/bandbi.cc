@@ -230,16 +230,12 @@ bandb_check_kline(struct ConfItem *aconf)
 		return 0;
 
 	for(p = aconf->user; *p; p++)
-	{
-		if(!IsUserChar(*p) && !IsKWildChar(*p))
+		if(!rfc1459::is_user(*p) && !rfc1459::is_kwild(*p))
 			return 0;
-	}
 
 	for(p = aconf->host; *p; p++)
-	{
-		if(!IsHostChar(*p) && !IsKWildChar(*p))
+		if(!rfc1459::is_host(*p) && !rfc1459::is_kwild(*p))
 			return 0;
-	}
 
 	return 1;
 }
@@ -278,10 +274,8 @@ bandb_check_resv_channel(struct ConfItem *aconf)
 		return 0;
 
 	for(p = aconf->host; *p; p++)
-	{
-		if(!IsChanChar(*p))
+		if(!rfc1459::is_chan(*p))
 			return 0;
-	}
 
 	return 1;
 }

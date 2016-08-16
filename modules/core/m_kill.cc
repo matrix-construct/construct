@@ -205,10 +205,10 @@ ms_kill(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		 * not an uid, automatically rewrite the KILL for this new nickname.
 		 * --this keeps servers in synch when nick change and kill collide
 		 */
-		if(IsDigit(*user) || (!(target_p = whowas_get_history(user, (long) KILLCHASETIMELIMIT))))
+		if(rfc1459::is_digit(*user) || (!(target_p = whowas_get_history(user, (long) KILLCHASETIMELIMIT))))
 		{
 			sendto_one_numeric(source_p, ERR_NOSUCHNICK,
-					   form_str(ERR_NOSUCHNICK), IsDigit(*user) ? "*" : user);
+					   form_str(ERR_NOSUCHNICK), rfc1459::is_digit(*user) ? "*" : user);
 			return;
 		}
 		sendto_one_notice(source_p, ":KILL changed from %s to %s", user, target_p->name);

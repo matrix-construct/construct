@@ -250,7 +250,7 @@ build_target_list(enum message_type msgtype, struct Client *client_p,
 		 * here plain old channel msg?
 		 */
 
-		if(IsChanPrefix(*nick))
+		if(rfc1459::is_chan_prefix(*nick))
 		{
 			/* ignore send of local channel to a server (should not happen) */
 			if(IsServer(client_p) && *nick == '&')
@@ -407,7 +407,7 @@ build_target_list(enum message_type msgtype, struct Client *client_p,
 			/* dont give this numeric when source is local,
 			 * because its misleading --anfl
 			 */
-			if(!MyClient(source_p) && IsDigit(*nick))
+			if(!MyClient(source_p) && rfc1459::is_digit(*nick))
 				sendto_one(source_p, ":%s %d %s * :Target left IRC. "
 					   "Failed to deliver: [%.20s]",
 					   get_id(&me, source_p), ERR_NOSUCHNICK,

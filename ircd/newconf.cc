@@ -158,7 +158,7 @@ conf_set_serverinfo_name(void *data)
 
 		for(s = (char *)data; *s != '\0'; s++)
 		{
-			if(!IsServChar(*s))
+			if(!rfc1459::is_serv(*s))
 			{
 				conf_report_error("Ignoring serverinfo::name "
 						  "-- bogus servername.");
@@ -176,7 +176,7 @@ conf_set_serverinfo_name(void *data)
 
 		s = (char *)data;
 
-		if(IsDigit(*s))
+		if(rfc1459::is_digit(*s))
 		{
 			conf_report_error("Ignoring serverinfo::name -- cannot begin with digit.");
 			return;
@@ -195,8 +195,10 @@ conf_set_serverinfo_sid(void *data)
 
 	if(ServerInfo.sid[0] == '\0')
 	{
-		if(!IsDigit(sid[0]) || !IsIdChar(sid[1]) ||
-		   !IsIdChar(sid[2]) || sid[3] != '\0')
+		if(!rfc1459::is_digit(sid[0]) ||
+		   !rfc1459::is_id(sid[1]) ||
+		   !rfc1459::is_id(sid[2]) ||
+		   sid[3] != '\0')
 		{
 			conf_report_error("Ignoring serverinfo::sid "
 					  "-- bogus sid.");
@@ -1771,7 +1773,7 @@ conf_set_service_name(void *data)
 
 	for(s = (char *)data; *s != '\0'; s++)
 	{
-		if(!IsServChar(*s))
+		if(!rfc1459::is_serv(*s))
 		{
 			conf_report_error("Ignoring service::name "
 					 "-- bogus servername.");

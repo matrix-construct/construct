@@ -200,7 +200,7 @@ mo_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 			if (*args == '<')
 			{
 				args++;
-				if (IsDigit(*args))
+				if (rfc1459::is_digit(*args))
 				{
 					params->users_max = atoi(args);
 					if (params->users_max == 0)
@@ -212,7 +212,7 @@ mo_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 			else if (*args == '>')
 			{
 				args++;
-				if (IsDigit(*args))
+				if (rfc1459::is_digit(*args))
 					params->users_min = atoi(args) + 1;
 				else
 					params->users_min = 0;
@@ -224,7 +224,7 @@ mo_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 				{
 					/* Creation time earlier than last x minutes. */
 					args++;
-					if (IsDigit(*args))
+					if (rfc1459::is_digit(*args))
 					{
 						params->created_max = rb_current_time() - (60 * atoi(args));
 					}
@@ -233,7 +233,7 @@ mo_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 				{
 					/* Creation time within last x minutes. */
 					args++;
-					if (IsDigit(*args))
+					if (rfc1459::is_digit(*args))
 					{
 						params->created_min = rb_current_time() - (60 * atoi(args));
 					}
@@ -246,7 +246,7 @@ mo_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 				{
 					/* Topic change time earlier than last x minutes. */
 					args++;
-					if (IsDigit(*args))
+					if (rfc1459::is_digit(*args))
 					{
 						params->topic_max = rb_current_time() - (60 * atoi(args));
 					}
@@ -255,7 +255,7 @@ mo_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 				{
 					/* Topic change time within last x minutes. */
 					args++;
-					if (IsDigit(*args))
+					if (rfc1459::is_digit(*args))
 					{
 						params->topic_min = rb_current_time() - (60 * atoi(args));
 					}

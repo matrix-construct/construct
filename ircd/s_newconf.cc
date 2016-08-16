@@ -653,7 +653,7 @@ clean_resv_nick(const char *nick)
 	int q = 0;
 	int ch = 0;
 
-	if(*nick == '-' || IsDigit(*nick))
+	if(*nick == '-' || rfc1459::is_digit(*nick))
 		return 0;
 
 	while ((tmpch = *nick++))
@@ -662,7 +662,7 @@ clean_resv_nick(const char *nick)
 			q++;
 		else if(tmpch == '*')
 			as++;
-		else if(IsNickChar(tmpch))
+		else if(rfc1459::is_nick(tmpch))
 			ch++;
 		else
 			return 0;
@@ -702,7 +702,7 @@ valid_wild_card_simple(const char *data)
 			if(++nonwild >= ConfigFileEntry.min_nonwildcard_simple)
 				return 1;
 		}
-		else if(!IsMWildChar(tmpch))
+		else if(!rfc1459::is_mwild(tmpch))
 		{
 			/* if we have enough nonwildchars, return */
 			if(++nonwild >= ConfigFileEntry.min_nonwildcard_simple)
@@ -723,7 +723,7 @@ valid_temp_time(const char *p)
 
 	while(*p)
 	{
-		if(IsDigit(*p))
+		if(rfc1459::is_digit(*p))
 		{
 			result *= 10;
 			result += ((*p) & 0xF);

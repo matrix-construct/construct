@@ -51,7 +51,7 @@ clean_host(const char *host)
 	{
 		len++;
 
-		if(!IsHostChar(*host))
+		if(!rfc1459::is_host(*host))
 			return false;
 		if(*host == '/')
 			last_slash = host;
@@ -60,7 +60,7 @@ clean_host(const char *host)
 	if(len > HOSTLEN)
 		return false;
 
-	if(last_slash && IsDigit(last_slash[1]))
+	if(last_slash && rfc1459::is_digit(last_slash[1]))
 		return false;
 
 	return true;

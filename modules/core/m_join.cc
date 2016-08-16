@@ -963,26 +963,18 @@ check_channel_name_loc(struct Client *source_p, const char *name)
 	if(ConfigFileEntry.disable_fake_channels && !IsOper(source_p))
 	{
 		for(p = name; *p; ++p)
-		{
-			if(!IsChanChar(*p) || IsFakeChanChar(*p))
+			if(!rfc1459::is_chan(*p) || rfc1459::is_fake_chan(*p))
 				return false;
-		}
 	}
 	else
-	{
 		for(p = name; *p; ++p)
-		{
-			if(!IsChanChar(*p))
+			if(!rfc1459::is_chan(*p))
 				return false;
-		}
-	}
 
 	if(ConfigChannel.only_ascii_channels)
-	{
 		for(p = name; *p; ++p)
 			if(*p < 33 || *p > 126)
 				return false;
-	}
 
 	return true;
 }

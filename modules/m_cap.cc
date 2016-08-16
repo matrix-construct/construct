@@ -95,7 +95,7 @@ clicap_find(const char *data, int *negate, int *finished)
 		return NULL;
 
 	/* skip any whitespace */
-	while(*p && IsSpace(*p))
+	while(*p && rfc1459::is_space(*p))
 		p++;
 
 	if(EmptyString(p))

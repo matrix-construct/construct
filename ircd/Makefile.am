@@ -71,6 +71,7 @@ libircd_la_SOURCES =                  \
   ratelimit.cc			\
   reject.cc                      \
   restart.cc                     \
+  rfc1459.cc                     \
   s_conf.cc                      \
   s_newconf.cc                   \
   s_serv.cc                      \

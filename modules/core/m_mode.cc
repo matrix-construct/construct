@@ -83,7 +83,7 @@ m_mode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 	}
 
 	/* Now, try to find the channel in question */
-	if(!IsChanPrefix(*dest))
+	if(!rfc1459::is_chan_prefix(*dest))
 	{
 		/* if here, it has to be a non-channel name */
 		user_mode(client_p, source_p, parc, parv);
@@ -157,7 +157,7 @@ ms_tmode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	struct membership *msptr;
 
 	/* Now, try to find the channel in question */
-	if(!IsChanPrefix(parv[2][0]) || !check_channel_name(parv[2]))
+	if(!rfc1459::is_chan_prefix(parv[2][0]) || !check_channel_name(parv[2]))
 	{
 		sendto_one_numeric(source_p, ERR_BADCHANNAME, form_str(ERR_BADCHANNAME), parv[2]);
 		return;
@@ -194,7 +194,7 @@ ms_mlock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	struct Channel *chptr = NULL;
 
 	/* Now, try to find the channel in question */
-	if(!IsChanPrefix(parv[2][0]) || !check_channel_name(parv[2]))
+	if(!rfc1459::is_chan_prefix(parv[2][0]) || !check_channel_name(parv[2]))
 	{
 		sendto_one_numeric(source_p, ERR_BADCHANNAME, form_str(ERR_BADCHANNAME), parv[2]);
 		return;
@@ -267,7 +267,7 @@ ms_bmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	int mems;
 	struct Client *fakesource_p;
 
-	if(!IsChanPrefix(parv[2][0]) || !check_channel_name(parv[2]))
+	if(!rfc1459::is_chan_prefix(parv[2][0]) || !check_channel_name(parv[2]))
 		return;
 
 	if((chptr = find_channel(parv[2])) == NULL)

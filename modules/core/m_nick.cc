@@ -474,7 +474,7 @@ ms_save(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				"Ignored SAVE message for non-person %s from %s",
 				target_p->name, source_p->name);
-	else if (IsDigit(target_p->name[0]))
+	else if (rfc1459::is_digit(target_p->name[0]))
 		sendto_realops_snomask(SNO_DEBUG, L_ALL,
 				"Ignored noop SAVE message for %s from %s",
 				target_p->name, source_p->name);
@@ -501,7 +501,7 @@ clean_username(const char *username)
 	{
 		len++;
 
-		if(!IsUserChar(*username))
+		if(!rfc1459::is_user(*username))
 			return false;
 	}
 
@@ -526,7 +526,7 @@ clean_host(const char *host)
 	{
 		len++;
 
-		if(!IsHostChar(*host))
+		if(!rfc1459::is_host(*host))
 			return false;
 	}
 
@@ -544,14 +544,14 @@ clean_uid(const char *uid, const char *sid)
 	if(strncmp(uid, sid, strlen(sid)))
 		return false;
 
-	if(!IsDigit(*uid++))
+	if(!rfc1459::is_digit(*uid++))
 		return false;
 
 	for(; *uid; uid++)
 	{
 		len++;
 
-		if(!IsIdChar(*uid))
+		if(!rfc1459::is_id(*uid))
 			return false;
 	}
 
@@ -874,7 +874,7 @@ perform_nickchange_collides(struct Client *source_p, struct Client *client_p,
 			sendto_one(client_p, ":%s SAVE %s %ld", me.id,
 					source_p->id, (long)newts);
 			/* don't send a redundant nick change */
-			if (!IsDigit(source_p->name[0]))
+			if (!rfc1459::is_digit(source_p->name[0]))
 				change_remote_nick(client_p, source_p, SAVE_NICKTS, source_p->id, 1);
 		}
 		else
@@ -924,7 +924,7 @@ perform_nickchange_collides(struct Client *source_p, struct Client *client_p,
 				sendto_one(client_p, ":%s SAVE %s %ld", me.id,
 						source_p->id, (long)newts);
 				/* send a :<id> NICK <id> <ts> (!) */
-				if (!IsDigit(source_p->name[0]))
+				if (!rfc1459::is_digit(source_p->name[0]))
 					change_remote_nick(client_p, source_p, SAVE_NICKTS, source_p->id, 1);
 			}
 			else

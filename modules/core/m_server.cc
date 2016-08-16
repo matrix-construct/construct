@@ -550,8 +550,10 @@ ms_sid(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		return;
 	}
 
-	if(!IsDigit(parv[3][0]) || !IsIdChar(parv[3][1]) ||
-	   !IsIdChar(parv[3][2]) || parv[3][3] != '\0')
+	if(!rfc1459::is_digit(parv[3][0]) ||
+	   !rfc1459::is_id(parv[3][1]) ||
+	   !rfc1459::is_id(parv[3][2]) ||
+	   parv[3][3] != '\0')
 	{
 		sendto_one(client_p, "ERROR :Invalid SID");
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
@@ -734,7 +736,7 @@ bogus_host(const char *host)
 
 	for(s = host; *s; s++)
 	{
-		if(!IsServChar(*s))
+		if(!rfc1459::is_serv(*s))
 		{
 			bogus_server = true;
 			break;

@@ -42,15 +42,15 @@ strip_colour(char *string)
 		switch (*c)
 		{
 		case 3:
-			if(IsDigit(c[1]))
+			if(rfc1459::is_digit(c[1]))
 			{
 				c++;
-				if(IsDigit(c[1]))
+				if(rfc1459::is_digit(c[1]))
 					c++;
-				if(c[1] == ',' && IsDigit(c[2]))
+				if(c[1] == ',' && rfc1459::is_digit(c[2]))
 				{
 					c += 2;
-					if(IsDigit(c[1]))
+					if(rfc1459::is_digit(c[1]))
 						c++;
 				}
 			}
@@ -95,15 +95,15 @@ strip_unprintable(char *string)
 		switch (*c)
 		{
 		case 3:
-			if(IsDigit(c[1]))
+			if(rfc1459::is_digit(c[1]))
 			{
 				c++;
-				if(IsDigit(c[1]))
+				if(rfc1459::is_digit(c[1]))
 					c++;
-				if(c[1] == ',' && IsDigit(c[2]))
+				if(c[1] == ',' && rfc1459::is_digit(c[2]))
 				{
 					c += 2;
-					if(IsDigit(c[1]))
+					if(rfc1459::is_digit(c[1]))
 						c++;
 				}
 			}

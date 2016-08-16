@@ -518,7 +518,7 @@ do_who(struct Client *source_p, struct Client *target_p, struct membership *mspt
 			q = target_p->user->suser;
 			if (!EmptyString(q))
 			{
-				while(IsDigit(*q))
+				while(rfc1459::is_digit(*q))
 					q++;
 				if(*q == '\0')
 					q = target_p->user->suser;

@@ -208,7 +208,7 @@ hunt_server(struct Client *client_p, struct Client *source_p,
 		return (HUNTED_PASS);
 	}
 
-	if(MyClient(source_p) || !IsDigit(parv[server][0]))
+	if(MyClient(source_p) || !rfc1459::is_digit(parv[server][0]))
 		sendto_one_numeric(source_p, ERR_NOSUCHSERVER,
 				   form_str(ERR_NOSUCHSERVER), parv[server]);
 	return (HUNTED_NOSUCH);

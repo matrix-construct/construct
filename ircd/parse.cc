@@ -107,7 +107,7 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
 		}
 	}
 
-	if(IsDigit(*msgbuf.cmd) && IsDigit(*(msgbuf.cmd + 1)) && IsDigit(*(msgbuf.cmd + 2)))
+	if(rfc1459::is_digit(*msgbuf.cmd) && rfc1459::is_digit(*(msgbuf.cmd + 1)) && rfc1459::is_digit(*(msgbuf.cmd + 2)))
 	{
 		mptr = NULL;
 		numeric = atoi(msgbuf.cmd);
@@ -344,7 +344,7 @@ remove_unknown(struct Client *client_p, const char *lsender, char *lbuffer)
 	 * #XX		is a SID (SQUIT)
 	 * meep.foo	is a server (SQUIT)
 	 */
-	if((IsDigit(lsender[0]) && slen == 3) ||
+	if((rfc1459::is_digit(lsender[0]) && slen == 3) ||
 	   (strchr(lsender, '.') != NULL))
 	{
 		sendto_realops_snomask(SNO_DEBUG, L_ALL,
@@ -356,7 +356,7 @@ remove_unknown(struct Client *client_p, const char *lsender, char *lbuffer)
 			   get_id(&me, client_p), lsender,
 			   lbuffer, client_p->name);
 	}
-	else if(!IsDigit(lsender[0]))
+	else if(!rfc1459::is_digit(lsender[0]))
 		;
 	else if(slen != 9)
 		sendto_realops_snomask(SNO_DEBUG, L_ALL,

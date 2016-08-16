@@ -60,7 +60,7 @@ fnv_hash_upper(const unsigned char *s, int bits)
 
 	while (*s)
 	{
-         	h ^= irctoupper(*s++);
+		h ^= rfc1459::toupper(*s++);
 		h += (h<<1) + (h<<4) + (h<<7) + (h << 8) + (h << 24);
 	}
 	if (bits < 32)
@@ -105,7 +105,7 @@ fnv_hash_upper_len(const unsigned char *s, int bits, int len)
 	const unsigned char *x = s + len;
 	while (*s && s < x)
 	{
-         	h ^= irctoupper(*s++);
+		h ^= rfc1459::toupper(*s++);
 		h += (h<<1) + (h<<4) + (h<<7) + (h << 8) + (h << 24);
 	}
 	if (bits < 32)
@@ -294,7 +294,7 @@ find_client(const char *name)
 		return NULL;
 
 	/* hunting for an id, not a nick */
-	if(IsDigit(*name))
+	if(rfc1459::is_digit(*name))
 		return (find_id(name));
 
 	return (Client *)rb_radixtree_retrieve(client_name_tree, name);
@@ -327,7 +327,7 @@ find_server(struct Client *source_p, const char *name)
 		return NULL;
 
 	if((source_p == NULL || !MyClient(source_p)) &&
-	   IsDigit(*name) && strlen(name) == 3)
+	   rfc1459::is_digit(*name) && strlen(name) == 3)
 	{
 		target_p = find_id(name);
       		return(target_p);
