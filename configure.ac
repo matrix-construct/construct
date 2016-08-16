@@ -238,6 +238,11 @@ AM_COND_IF([GCC],
 	CHARYBDIS_C_GCC_TRY_FLAGS([-Wsuggest-attribute=format], charybdis_cv_c_gcc_w_suggest_attribute_format)
 ],[])
 
+AM_COND_IF([CLANG],
+[
+	CHARYBDIS_C_GCC_TRY_FLAGS([-Wno-mismatched-tags], charybdis_cv_c_gcc_w_mismatched_tags)
+],[])
+
 ])
 
 CPPFLAGS+="$CWARNS"
