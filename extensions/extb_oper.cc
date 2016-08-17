@@ -3,20 +3,23 @@
  * -- jilles
  */
 
+namespace chan = ircd::chan;
+namespace mode = chan::mode;
+namespace ext = mode::ext;
 using namespace ircd;
 
 static const char extb_desc[] = "Oper ($o) extban type";
 
 static int _modinit(void);
 static void _moddeinit(void);
-static int eb_oper(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type);
+static int eb_oper(const char *data, struct Client *client_p, struct Channel *chptr, mode::type);
 
 DECLARE_MODULE_AV2(extb_oper, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, extb_desc);
 
 static int
 _modinit(void)
 {
-	extban_table['o'] = eb_oper;
+	ext::table['o'] = eb_oper;
 
 	return 0;
 }
@@ -24,25 +27,25 @@ _modinit(void)
 static void
 _moddeinit(void)
 {
-	extban_table['o'] = NULL;
+	ext::table['o'] = NULL;
 }
 
 static int eb_oper(const char *data, struct Client *client_p,
-		struct Channel *chptr, long mode_type)
+		struct Channel *chptr, mode::type type)
 {
+	using namespace ext;
 
 	(void)chptr;
-	(void)mode_type;
 
 	if (data != NULL)
 	{
 		struct PrivilegeSet *set = privilegeset_get(data);
 		if (set != NULL && client_p->localClient->privset == set)
-			return EXTBAN_MATCH;
+			return MATCH;
 
 		/* $o:admin or whatever */
-		return HasPrivilege(client_p, data) ? EXTBAN_MATCH : EXTBAN_NOMATCH;
+		return HasPrivilege(client_p, data) ? MATCH : NOMATCH;
 	}
 
-	return IsOper(client_p) ? EXTBAN_MATCH : EXTBAN_NOMATCH;
+	return IsOper(client_p) ? MATCH : NOMATCH;
 }

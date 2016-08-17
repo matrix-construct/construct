@@ -96,7 +96,7 @@ m_knock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		return;
 	}
 
-	if(!((chptr->mode.mode & MODE_INVITEONLY) || (*chptr->mode.key) ||
+	if(!((chptr->mode.mode & chan::mode::INVITEONLY) || (*chptr->mode.key) ||
 	     (chptr->mode.limit &&
 	      rb_dlink_list_length(&chptr->members) >= (unsigned long)chptr->mode.limit)))
 	{
@@ -153,7 +153,7 @@ m_knock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	chptr->last_knock = rb_current_time();
 
 	if(ConfigChannel.use_knock)
-		sendto_channel_local(chptr->mode.mode & MODE_FREEINVITE ? ALL_MEMBERS : ONLY_CHANOPS,
+		sendto_channel_local(chptr->mode.mode & chan::mode::FREEINVITE ? ALL_MEMBERS : ONLY_CHANOPS,
 				     chptr, form_str(RPL_KNOCK),
 				     me.name, name, name, source_p->name,
 				     source_p->username, source_p->host);

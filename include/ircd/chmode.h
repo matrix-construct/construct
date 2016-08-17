@@ -26,102 +26,121 @@
 #pragma once
 #define HAVE_IRCD_CHMODE_H
 
-/* something not included in messages.tab
- * to change some hooks behaviour when needed
- * -- dwr
- */
-#define ERR_CUSTOM 1000
-
-/* Maximum mode changes allowed per client, per server is different */
-#define MAXMODEPARAMS      4
-#define MAXMODEPARAMSSERV  10
-#define MODEBUFLEN         200
-
 #ifdef __cplusplus
 namespace ircd {
 
-/* Channel mode classification */
-typedef enum
-{
-	CHM_A,    // Mode has a parameter apropos a list (or no param for xfer)
-	CHM_B,    // Always has a parameter
-	CHM_C,    // Only has a parameter on MODE_ADD
-	CHM_D,    // Never has a parameter
-}
-ChmClass;
-
-/* Channel mode mask */
-#define MODE_PRIVATE        0x00000001
-#define MODE_SECRET         0x00000002
-#define MODE_MODERATED      0x00000004
-#define MODE_TOPICLIMIT     0x00000008
-#define MODE_INVITEONLY     0x00000010
-#define MODE_NOPRIVMSGS     0x00000020
-#define MODE_REGONLY        0x00000040
-#define MODE_EXLIMIT        0x00000100  /* exempt from list limits, +b/+e/+I/+q */
-#define MODE_PERMANENT      0x00000200  /* permanant channel, +P */
-#define MODE_OPMODERATE     0x00000400  /* send rejected messages to ops */
-#define MODE_FREEINVITE     0x00000800  /* allow free use of /invite */
-#define MODE_FREETARGET     0x00001000  /* can be forwarded to without authorization */
-#define MODE_DISFORWARD     0x00002000  /* disable channel forwarding */
-
-#define CHFL_BAN        0x10000000	/* ban channel flag */
-#define CHFL_EXCEPTION  0x20000000	/* exception to ban channel flag */
-#define CHFL_INVEX      0x40000000
-#define CHFL_QUIET      0x80000000
-
-/* extban function results */
-#define EXTBAN_INVALID -1   /* invalid mask, false even if negated */
-#define EXTBAN_NOMATCH  0   /* valid mask, no match */
-#define EXTBAN_MATCH    1   /* matches */
-
-struct Client;
 struct Channel;
+struct Client;
 
-typedef int (*ExtbanFunc)
-        (const char *data, struct Client *client_p, struct Channel *chptr, long mode_type);
+namespace chan {
+namespace mode {
 
-typedef void (*ChmFunc)
-        (struct Client *source_p, struct Channel *chptr,
-        int alevel, int parc, int *parn, const char **parv, int *errors, int dir, char c, long mode_type);
+// Maximum mode changes allowed per client, per server is different
+constexpr auto MAXPARAMS = 4;
+constexpr auto MAXPARAMSSERV = 10;
+constexpr auto BUFLEN = 200;
 
-struct Chm
+// something not included in messages.tab to change some hooks behaviour when needed -- dwr
+constexpr auto ERR_CUSTOM = 1000;
+
+// Channel mode classification
+enum class category
 {
-	ChmFunc set_func;
-	ChmClass mode_class;
-	unsigned long mode_type;
+	A,    // Mode has a parameter apropos a list (or no param for xfer)
+	B,    // Always has a parameter
+	C,    // Only has a parameter on MODE_ADD
+	D,    // Never has a parameter
 };
 
+enum type : uint
+{
+	PRIVATE     = 0x00000001,
+	SECRET      = 0x00000002,
+	MODERATED   = 0x00000004,
+	TOPICLIMIT  = 0x00000008,
+	INVITEONLY  = 0x00000010,
+	NOPRIVMSGS  = 0x00000020,
+	REGONLY     = 0x00000040,
+	EXLIMIT     = 0x00000100,  // exempt from list limits, +b/+e/+I/+q
+	PERMANENT   = 0x00000200,  // permanant channel, +P
+	OPMODERATE  = 0x00000400,  // send rejected messages to ops
+	FREEINVITE  = 0x00000800,  // allow free use of /invite
+	FREETARGET  = 0x00001000,  // can be forwarded to without authorization
+	DISFORWARD  = 0x00002000,  // disable channel forwarding
+	BAN         = 0x10000000,
+	EXCEPTION   = 0x20000000,
+	INVEX       = 0x40000000,
+	QUIET       = 0x80000000,
+};
 
-extern struct Chm chmode_table[256];
-extern ExtbanFunc extban_table[256];
-extern char chmode_arity[2][256];
-extern char chmode_class[4][256];
-extern int chmode_flags[256];
+struct letter
+{
+	enum type type;
+	char letter;
+};
 
+struct change
+{
+	char letter;
+	const char *arg;
+	const char *id;
+	int dir;
+	int mems;
+};
+
+using func = void (*)(Client *, Channel *, int alevel, int parc, int *parn, const char **parv, int *errors, int dir, char c, type type);
+
+struct mode
+{
+	enum type type;
+	enum category category;
+	func set_func;
+};
+
+extern mode table[256];
+extern char arity[2][256];
+extern char categories[4][256];
+
+namespace ext
+{
+	// extban function results
+	enum result
+	{
+		INVALID   = -1,  // invalid mask, false even if negated
+		NOMATCH   = 0,   // valid mask, no match
+		MATCH     = 1,   // matches
+	};
+
+	using func = int (*)(const char *data, Client *, Channel *, type type);
+	extern func table[256];
+}
 
 #define CHM_FUNCTION(_NAME_)                                      \
-void _NAME_(struct Client *source_p, struct Channel *chptr,       \
+void _NAME_(Client *source_p, Channel *chptr,                     \
             int alevel, int parc, int *parn, const char **parv,   \
-            int *errors, int dir, char c, long mode_type);
+            int *errors, int dir, char c, type type);
 
-CHM_FUNCTION(chm_nosuch)
-CHM_FUNCTION(chm_orphaned)
-CHM_FUNCTION(chm_simple)
-CHM_FUNCTION(chm_ban)
-CHM_FUNCTION(chm_hidden)
-CHM_FUNCTION(chm_staff)
-CHM_FUNCTION(chm_forward)
-CHM_FUNCTION(chm_throttle)
-CHM_FUNCTION(chm_key)
-CHM_FUNCTION(chm_limit)
-CHM_FUNCTION(chm_op)
-CHM_FUNCTION(chm_voice)
+namespace functor
+{
+	CHM_FUNCTION(nosuch)
+	CHM_FUNCTION(orphaned)
+	CHM_FUNCTION(simple)
+	CHM_FUNCTION(ban)
+	CHM_FUNCTION(hidden)
+	CHM_FUNCTION(staff)
+	CHM_FUNCTION(forward)
+	CHM_FUNCTION(throttle)
+	CHM_FUNCTION(key)
+	CHM_FUNCTION(limit)
+	CHM_FUNCTION(op)
+	CHM_FUNCTION(voice)
+}
 
-unsigned int cflag_add(const unsigned char c, const ChmClass chmclass, const ChmFunc function);
-void cflag_orphan(const unsigned char c);
+type add(const uint8_t &c, const category &category, const func &set_func);
+void orphan(const uint8_t &c);
+void init(void);
 
-void chmode_init(void);
-
+}      // namespace mode
+}      // namespace chan
 }      // namespace ircd
 #endif // __cplusplus

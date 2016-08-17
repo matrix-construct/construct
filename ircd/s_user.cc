@@ -1313,7 +1313,7 @@ user_welcome(struct Client *source_p)
 	sendto_one_numeric(source_p, RPL_YOURHOST, form_str(RPL_YOURHOST),
 		   get_listener_name(source_p->localClient->listener), info::version.c_str());
 	sendto_one_numeric(source_p, RPL_CREATED, form_str(RPL_CREATED), info::compiled.c_str());
-	sendto_one_numeric(source_p, RPL_MYINFO, form_str(RPL_MYINFO), me.name, info::version.c_str(), umodebuf, chmode_arity[0], chmode_arity[1]);
+	sendto_one_numeric(source_p, RPL_MYINFO, form_str(RPL_MYINFO), me.name, info::version.c_str(), umodebuf, chan::mode::arity[0], chan::mode::arity[1]);
 
 	show_isupport(source_p);
 

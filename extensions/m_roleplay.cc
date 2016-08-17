@@ -30,8 +30,10 @@ static unsigned int mymode;
 static int
 _modinit(void)
 {
+	using namespace chan::mode;
+
 	/* initalize the +N cmode */
-	mymode = cflag_add('N', CHM_D, chm_simple);
+	mymode = add('N', category::D, functor::simple);
 	if (mymode == 0)
 		return -1;
 
@@ -42,7 +44,7 @@ static void
 _moddeinit(void)
 {
 	/* orphan the +N cmode on modunload */
-	cflag_orphan('N');
+	chan::mode::orphan('N');
 }
 
 
@@ -145,7 +147,7 @@ m_displaymsg(struct MsgBuf *msgbuf_p, struct Client *source_p, const char *chann
 		return;
 	}
 
-	if(!(chptr->mode.mode & chmode_flags['N']))
+	if(!(chptr->mode.mode & chan::mode::table['N'].type))
 	{
 		sendto_one_numeric(source_p, 573, "%s :Roleplay commands are not enabled on this channel.", chptr->chname);
 		return;

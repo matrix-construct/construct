@@ -26,7 +26,7 @@ using namespace ircd;
 static const char chm_noctcp_desc[] =
 	"Adds channel mode +C, which blocks CTCP messages from a channel (except ACTION)";
 
-static unsigned int mode_noctcp;
+static chan::mode::type mode_noctcp;
 
 static void chm_noctcp_process(hook_data_privmsg_channel *);
 
@@ -55,7 +55,9 @@ chm_noctcp_process(hook_data_privmsg_channel *data)
 static int
 _modinit(void)
 {
-	mode_noctcp = cflag_add('C', CHM_D, chm_simple);
+	using namespace chan::mode;
+
+	mode_noctcp = add('C', category::D, functor::simple);
 	if (mode_noctcp == 0)
 		return -1;
 
@@ -65,7 +67,9 @@ _modinit(void)
 static void
 _moddeinit(void)
 {
-	cflag_orphan('C');
+	using namespace chan::mode;
+
+	orphan('C');
 }
 
 DECLARE_MODULE_AV2(chm_noctcp, _modinit, _moddeinit, NULL, NULL, chm_noctcp_hfnlist, NULL, NULL, chm_noctcp_desc);

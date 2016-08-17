@@ -42,13 +42,14 @@ namespace ircd
 #include "listener.h"
 #include "s_assert.h"
 
+#include "chmode.h"
+#include "channel.h"
+
 #include "authproc.h"
 #include "bandbi.h"
 #include "cache.h"
 #include "capability.h"
 #include "certfp.h"
-#include "channel.h"
-#include "chmode.h"
 #include "class.h"
 #include "client.h"
 #include "dns.h"

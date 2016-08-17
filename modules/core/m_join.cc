@@ -63,9 +63,9 @@ static void remove_our_modes(struct Channel *chptr, struct Client *source_p);
 static void remove_ban_list(struct Channel *chptr, struct Client *source_p,
 			    rb_dlink_list * list, char c, int mems);
 
-static char modebuf[MODEBUFLEN];
-static char parabuf[MODEBUFLEN];
-static const char *para[MAXMODEPARAMS];
+static char modebuf[chan::mode::BUFLEN];
+static char parabuf[chan::mode::BUFLEN];
+static const char *para[chan::mode::MAXPARAMS];
 static char *mbuf;
 static int pargs;
 
@@ -112,7 +112,7 @@ check_forward(struct Client *source_p, struct Channel *chptr,
 		if (hash_find_resv(chptr->chname))
 			return NULL;
 		/* Don't forward to +Q channel */
-		if (chptr->mode.mode & MODE_DISFORWARD)
+		if (chptr->mode.mode & chan::mode::DISFORWARD)
 			return NULL;
 
 		i = can_join(source_p, chptr, key, &next);
@@ -249,7 +249,7 @@ m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 
 			if(moduledata.approved != 0)
 			{
-				if(moduledata.approved != ERR_CUSTOM)
+				if(moduledata.approved != chan::mode::ERR_CUSTOM)
 					send_join_error(source_p,
 							moduledata.approved,
 							name);
@@ -297,7 +297,7 @@ m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 			 * see extensions/chm_operonly.c for other comments on this
 			 * -- dwr
 			 */
-			if(i != ERR_CUSTOM)
+			if(i != chan::mode::ERR_CUSTOM)
 				send_join_error(source_p, i, name);
 			continue;
 		}
@@ -570,10 +570,8 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 				return;
 			break;
 		default:
-			if(chmode_flags[(int) *s] != 0)
-			{
-				mode.mode |= chmode_flags[(int) *s];
-			}
+			if(chan::mode::table[uint8_t(*s)].type != 0)
+				mode.mode |= chan::mode::table[uint8_t(*s)].type;
 		}
 	}
 
@@ -625,7 +623,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		 * -- jilles */
 		if (ConfigChannel.kick_on_split_riding &&
 				((!HasSentEob(source_p) &&
-				mode.mode & MODE_INVITEONLY) ||
+				mode.mode & chan::mode::INVITEONLY) ||
 		    (mode.key[0] != 0 && irccmp(mode.key, oldmode->key) != 0)))
 		{
 			struct membership *msptr;
@@ -827,10 +825,10 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 			/* a +ov user.. bleh */
 			if(fl & CHFL_VOICE)
 			{
-				/* its possible the +o has filled up MAXMODEPARAMS, if so, start
+				/* its possible the +o has filled up chan::mode::MAXPARAMS, if so, start
 				 * a new buffer
 				 */
-				if(pargs >= MAXMODEPARAMS)
+				if(pargs >= chan::mode::MAXPARAMS)
 				{
 					*mbuf = '\0';
 					sendto_channel_local(ALL_MEMBERS, chptr,
@@ -854,7 +852,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 			para[pargs++] = target_p->name;
 		}
 
-		if(pargs >= MAXMODEPARAMS)
+		if(pargs >= chan::mode::MAXPARAMS)
 		{
 			*mbuf = '\0';
 			sendto_channel_local(ALL_MEMBERS, chptr,
@@ -899,7 +897,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 				     CheckEmpty(para[2]), CheckEmpty(para[3]));
 	}
 
-	if(!joins && !(chptr->mode.mode & MODE_PERMANENT) && isnew)
+	if(!joins && !(chptr->mode.mode & chan::mode::PERMANENT) && isnew)
 	{
 		destroy_channel(chptr);
 
@@ -1024,7 +1022,7 @@ set_final_mode(struct Mode *mode, struct Mode *oldmode)
 	/* ok, first get a list of modes we need to add */
 	for (i = 0; i < 256; i++)
 	{
-		if((mode->mode & chmode_flags[i]) && !(oldmode->mode & chmode_flags[i]))
+		if((mode->mode & chan::mode::table[i].type) && !(oldmode->mode & chan::mode::table[i].type))
 		{
 			if(dir != MODE_ADD)
 			{
@@ -1038,7 +1036,7 @@ set_final_mode(struct Mode *mode, struct Mode *oldmode)
 	/* now the ones we need to remove. */
 	for (i = 0; i < 256; i++)
 	{
-		if((oldmode->mode & chmode_flags[i]) && !(mode->mode & chmode_flags[i]))
+		if((oldmode->mode & chan::mode::table[i].type) && !(mode->mode & chan::mode::table[i].type))
 		{
 			if(dir != MODE_DEL)
 			{
@@ -1147,15 +1145,15 @@ remove_our_modes(struct Channel *chptr, struct Client *source_p)
 {
 	struct membership *msptr;
 	rb_dlink_node *ptr;
-	char lmodebuf[MODEBUFLEN];
-	char *lpara[MAXMODEPARAMS];
+	char lmodebuf[chan::mode::BUFLEN];
+	char *lpara[chan::mode::MAXPARAMS];
 	int count = 0;
 	int i;
 
 	mbuf = lmodebuf;
 	*mbuf++ = '-';
 
-	for(i = 0; i < MAXMODEPARAMS; i++)
+	for(i = 0; i < chan::mode::MAXPARAMS; i++)
 		lpara[i] = NULL;
 
 	RB_DLINK_FOREACH(ptr, chptr->members.head)
@@ -1171,7 +1169,7 @@ remove_our_modes(struct Channel *chptr, struct Client *source_p)
 			/* +ov, might not fit so check. */
 			if(is_voiced(msptr))
 			{
-				if(count >= MAXMODEPARAMS)
+				if(count >= chan::mode::MAXPARAMS)
 				{
 					*mbuf = '\0';
 					sendto_channel_local(ALL_MEMBERS, chptr,
@@ -1185,7 +1183,7 @@ remove_our_modes(struct Channel *chptr, struct Client *source_p)
 					*mbuf++ = '-';
 					count = 0;
 
-					for(i = 0; i < MAXMODEPARAMS; i++)
+					for(i = 0; i < chan::mode::MAXPARAMS; i++)
 						lpara[i] = NULL;
 				}
 
@@ -1203,7 +1201,7 @@ remove_our_modes(struct Channel *chptr, struct Client *source_p)
 		else
 			continue;
 
-		if(count >= MAXMODEPARAMS)
+		if(count >= chan::mode::MAXPARAMS)
 		{
 			*mbuf = '\0';
 			sendto_channel_local(ALL_MEMBERS, chptr,
@@ -1214,7 +1212,7 @@ remove_our_modes(struct Channel *chptr, struct Client *source_p)
 			*mbuf++ = '-';
 			count = 0;
 
-			for(i = 0; i < MAXMODEPARAMS; i++)
+			for(i = 0; i < chan::mode::MAXPARAMS; i++)
 				lpara[i] = NULL;
 		}
 	}
@@ -1265,7 +1263,7 @@ remove_ban_list(struct Channel *chptr, struct Client *source_p,
 		plen = strlen(banptr->banstr) +
 			(banptr->forward ? strlen(banptr->forward) + 1 : 0) + 2;
 
-		if(count >= MAXMODEPARAMS || (cur_len + plen) > BUFSIZE - 4)
+		if(count >= chan::mode::MAXPARAMS || (cur_len + plen) > BUFSIZE - 4)
 		{
 			/* remove trailing space */
 			*mbuf = '\0';

@@ -344,7 +344,7 @@ void hook_spamfilter_query(hook_data_privmsg_channel *const hook)
 static
 void hook_channel_join(hook_data_channel_approval *const data)
 {
-	if(~data->chptr->mode.mode & chmode_table[(uint8_t)MODE_SPAMFILTER].mode_type)
+	if(~data->chptr->mode.mode & chan::mode::table[uint8_t(MODE_SPAMFILTER)].type)
 		return;
 
 	if(!bloom[0])

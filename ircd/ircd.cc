@@ -635,7 +635,7 @@ charybdis_main(int argc, char * const argv[])
 	init_reject();
 	cache::init();
 	init_monitor();
-	chmode_init();
+	chan::mode::init();
 
 	init_authd();		/* Start up authd. */
 	init_dns();		/* Start up DNS query system */

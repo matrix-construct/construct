@@ -24,6 +24,8 @@
 
 namespace ircd {
 
+using namespace chan;
+
 struct config_channel_entry ConfigChannel; rb_dlink_list global_channel_list; static rb_bh 
 *channel_heap; static rb_bh *ban_heap; static rb_bh *topic_heap; static rb_bh *member_heap;
 
@@ -243,7 +245,7 @@ remove_user_from_channel(struct membership *msptr)
 	if(client_p->servptr == &me)
 		rb_dlinkDelete(&msptr->locchannode, &chptr->locmembers);
 
-	if(!(chptr->mode.mode & MODE_PERMANENT) && rb_dlink_list_length(&chptr->members) <= 0)
+	if(!(chptr->mode.mode & mode::PERMANENT) && rb_dlink_list_length(&chptr->members) <= 0)
 		destroy_channel(chptr);
 
 	rb_bh_free(member_heap, msptr);
@@ -278,7 +280,7 @@ remove_user_from_channels(struct Client *client_p)
 		if(client_p->servptr == &me)
 			rb_dlinkDelete(&msptr->locchannode, &chptr->locmembers);
 
-		if(!(chptr->mode.mode & MODE_PERMANENT) && rb_dlink_list_length(&chptr->members) <= 0)
+		if(!(chptr->mode.mode & mode::PERMANENT) && rb_dlink_list_length(&chptr->members) <= 0)
 			destroy_channel(chptr);
 
 		rb_bh_free(member_heap, msptr);
@@ -747,7 +749,7 @@ can_join(struct Client *source_p, struct Channel *chptr, const char *key, const 
 	if(forward)
 		*forward = chptr->mode.forward;
 
-	if(chptr->mode.mode & MODE_INVITEONLY)
+	if(chptr->mode.mode & mode::INVITEONLY)
 	{
 		RB_DLINK_FOREACH(invite, source_p->user->invited.head)
 		{
@@ -776,7 +778,7 @@ can_join(struct Client *source_p, struct Channel *chptr, const char *key, const 
 	if(chptr->mode.limit &&
 	   rb_dlink_list_length(&chptr->members) >= (unsigned long) chptr->mode.limit)
 		i = ERR_CHANNELISFULL;
-	if(chptr->mode.mode & MODE_REGONLY && EmptyString(source_p->user->suser))
+	if(chptr->mode.mode & mode::REGONLY && EmptyString(source_p->user->suser))
 		i = ERR_NEEDREGGEDNICK;
 	/* join throttling stuff --nenolod */
 	else if(chptr->mode.join_num > 0 && chptr->mode.join_time > 0)
@@ -836,7 +838,7 @@ can_send(struct Channel *chptr, struct Client *source_p, struct membership *mspt
 			 * they cant send.  we dont check bans here because
 			 * theres no possibility of caching them --fl
 			 */
-			if(chptr->mode.mode & MODE_NOPRIVMSGS || chptr->mode.mode & MODE_MODERATED)
+			if(chptr->mode.mode & mode::NOPRIVMSGS || chptr->mode.mode & mode::MODERATED)
 				moduledata.approved = CAN_SEND_NO;
 			else
 				moduledata.approved = CAN_SEND_NONOP;
@@ -845,7 +847,7 @@ can_send(struct Channel *chptr, struct Client *source_p, struct membership *mspt
 		}
 	}
 
-	if(chptr->mode.mode & MODE_MODERATED)
+	if(chptr->mode.mode & mode::MODERATED)
 		moduledata.approved = CAN_SEND_NO;
 
 	if(MyClient(source_p))
@@ -1167,9 +1169,9 @@ channel_modes(struct Channel *chptr, struct Client *client_p)
 
 	for (i = 0; i < 256; i++)
 	{
-		if(chmode_table[i].set_func == chm_hidden && (!IsOper(client_p) || !IsClient(client_p)))
+		if(mode::table[i].set_func == mode::functor::hidden && (!IsOper(client_p) || !IsClient(client_p)))
 			continue;
-		if(chptr->mode.mode & chmode_flags[i])
+		if(chptr->mode.mode & mode::table[i].type)
 			*mbuf++ = i;
 	}
 
@@ -1231,7 +1233,7 @@ channel_modes(struct Channel *chptr, struct Client *client_p)
  */
 void
 send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
-		      struct Channel *chptr, struct ChModeChange mode_changes[], int mode_count)
+		      struct Channel *chptr, chan::mode::change mode_changes[], int mode_count)
 {
 	static char modebuf[BUFSIZE];
 	static char parabuf[BUFSIZE];
@@ -1273,7 +1275,7 @@ send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
 			arglen = strlen(arg);
 
 			/* dont even think about it! --fl */
-			if(arglen > MODEBUFLEN - 5)
+			if(arglen > mode::BUFLEN - 5)
 				continue;
 		}
 
@@ -1284,7 +1286,7 @@ send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
 		 * them as if they were the longest of the nick or uid at all times,
 		 * which even then won't work as we don't always know the uid -A1kmm.
 		 */
-		if(arg && ((mc == MAXMODEPARAMSSERV) ||
+		if(arg && ((mc == mode::MAXPARAMSSERV) ||
 			   ((mbl + pbl + arglen + 4) > (BUFSIZE - 3))))
 		{
 			if(nc != 0)

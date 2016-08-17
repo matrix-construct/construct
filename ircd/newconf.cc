@@ -1866,12 +1866,12 @@ conf_set_channel_autochanmodes(void *data)
 			break;
 
 		default:
-			if (chmode_table[(unsigned char) *pm].set_func == chm_simple)
+			if (chan::mode::table[uint8_t(*pm)].set_func == chan::mode::functor::simple)
 			{
 				if (what == MODE_ADD)
-					ConfigChannel.autochanmodes |= chmode_table[(unsigned char) *pm].mode_type;
+					ConfigChannel.autochanmodes |= chan::mode::table[uint8_t(*pm)].type;
 				else
-					ConfigChannel.autochanmodes &= ~chmode_table[(unsigned char) *pm].mode_type;
+					ConfigChannel.autochanmodes &= ~chan::mode::table[uint8_t(*pm)].type;
 			}
 			else
 			{

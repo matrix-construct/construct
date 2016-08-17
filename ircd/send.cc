@@ -593,7 +593,7 @@ sendto_channel_opmod(struct Client *one, struct Client *source_p,
 			       source_p->name, source_p->username,
 			       source_p->host, command, chptr->chname, text);
 
-	if (chptr->mode.mode & MODE_MODERATED)
+	if (chptr->mode.mode & chan::mode::MODERATED)
 		rb_linebuf_putmsg(&rb_linebuf_old, NULL, NULL,
 			       ":%s %s %s :%s",
 			       use_id(source_p), command, chptr->chname, text);

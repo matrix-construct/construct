@@ -26,7 +26,7 @@ using namespace ircd;
 static const char chm_nonotice_desc[] =
 	"Adds channel mode +T which blocks notices to the channel.";
 
-static unsigned int mode_nonotice;
+static chan::mode::type mode_nonotice;
 
 static void chm_nonotice_process(hook_data_privmsg_channel *);
 
@@ -54,7 +54,9 @@ chm_nonotice_process(hook_data_privmsg_channel *data)
 static int
 _modinit(void)
 {
-	mode_nonotice = cflag_add('T', CHM_D, chm_simple);
+	using namespace chan::mode;
+
+	mode_nonotice = add('T', category::D, functor::simple);
 	if (mode_nonotice == 0)
 		return -1;
 
@@ -64,7 +66,7 @@ _modinit(void)
 static void
 _moddeinit(void)
 {
-	cflag_orphan('T');
+	chan::mode::orphan('T');
 }
 
 DECLARE_MODULE_AV2(chm_nonotice, _modinit, _moddeinit, NULL, NULL, chm_nonotice_hfnlist, NULL, NULL, chm_nonotice_desc);

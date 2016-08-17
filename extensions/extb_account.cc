@@ -3,20 +3,23 @@
  * -- jilles
  */
 
+namespace chan = ircd::chan;
+namespace mode = chan::mode;
+namespace ext = mode::ext;
 using namespace ircd;
 
 static const char extb_desc[] = "Account ($a) extban type";
 
 static int _modinit(void);
 static void _moddeinit(void);
-static int eb_account(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type);
+static int eb_account(const char *data, struct Client *client_p, struct Channel *chptr, mode::type);
 
 DECLARE_MODULE_AV2(extb_account, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, extb_desc);
 
 static int
 _modinit(void)
 {
-	extban_table['a'] = eb_account;
+	ext::table['a'] = eb_account;
 
 	return 0;
 }
@@ -24,17 +27,18 @@ _modinit(void)
 static void
 _moddeinit(void)
 {
-	extban_table['a'] = NULL;
+	ext::table['a'] = NULL;
 }
 
 static int eb_account(const char *data, struct Client *client_p,
-		struct Channel *chptr, long mode_type)
+		struct Channel *chptr, mode::type type)
 {
+	using namespace ext;
 
 	(void)chptr;
 	/* $a alone matches any logged in user */
 	if (data == NULL)
-		return EmptyString(client_p->user->suser) ? EXTBAN_NOMATCH : EXTBAN_MATCH;
+		return EmptyString(client_p->user->suser) ? NOMATCH : MATCH;
 	/* $a:MASK matches users logged in under matching account */
-	return match(data, client_p->user->suser) ? EXTBAN_MATCH : EXTBAN_NOMATCH;
+	return match(data, client_p->user->suser) ? MATCH : NOMATCH;
 }

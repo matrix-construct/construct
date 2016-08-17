@@ -4,20 +4,23 @@
  *  - nenolod
  */
 
+namespace chan = ircd::chan;
+namespace mode = chan::mode;
+namespace ext = mode::ext;
 using namespace ircd;
 
 static const char extb_desc[] = "Extended mask ($x) extban type";
 
 static int _modinit(void);
 static void _moddeinit(void);
-static int eb_extended(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type);
+static int eb_extended(const char *data, struct Client *client_p, struct Channel *chptr, mode::type);
 
 DECLARE_MODULE_AV2(extb_extended, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, extb_desc);
 
 static int
 _modinit(void)
 {
-	extban_table['x'] = eb_extended;
+	ext::table['x'] = eb_extended;
 
 	return 0;
 }
@@ -25,31 +28,33 @@ _modinit(void)
 static void
 _moddeinit(void)
 {
-	extban_table['x'] = NULL;
+	ext::table['x'] = NULL;
 }
 
 static int eb_extended(const char *data, struct Client *client_p,
-		struct Channel *chptr, long mode_type)
+		struct Channel *chptr, mode::type type)
 {
+	using namespace ext;
+
 	char buf[BUFSIZE];
 	int ret;
 
 	(void)chptr;
 
 	if (data == NULL)
-		return EXTBAN_INVALID;
+		return INVALID;
 
 	snprintf(buf, BUFSIZE, "%s!%s@%s#%s",
 		client_p->name, client_p->username, client_p->host, client_p->info);
 
-	ret = match(data, buf) ? EXTBAN_MATCH : EXTBAN_NOMATCH;
+	ret = match(data, buf) ? MATCH : NOMATCH;
 
-	if (ret == EXTBAN_NOMATCH && IsDynSpoof(client_p))
+	if (ret == NOMATCH && IsDynSpoof(client_p))
 	{
 		snprintf(buf, BUFSIZE, "%s!%s@%s#%s",
 			client_p->name, client_p->username, client_p->orighost, client_p->info);
 
-		ret = match(data, buf) ? EXTBAN_MATCH : EXTBAN_NOMATCH;
+		ret = match(data, buf) ? MATCH : NOMATCH;
 	}
 
 	return ret;

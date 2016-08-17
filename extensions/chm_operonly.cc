@@ -1,4 +1,3 @@
-
 using namespace ircd;
 
 static const char chm_operonly_desc[] =
@@ -11,12 +10,14 @@ mapi_hfn_list_av1 operonly_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-static unsigned int mymode;
+static chan::mode::type mymode;
 
 static int
 _modinit(void)
 {
-	mymode = cflag_add('O', CHM_D, chm_staff);
+	using namespace chan::mode;
+
+	mymode = add('O', category::D, functor::staff);
 	if (mymode == 0)
 		return -1;
 
@@ -27,7 +28,7 @@ _modinit(void)
 static void
 _moddeinit(void)
 {
-	cflag_orphan('O');
+	chan::mode::orphan('O');
 }
 
 DECLARE_MODULE_AV2(chm_operonly, _modinit, _moddeinit, NULL, NULL, operonly_hfnlist, NULL, NULL, chm_operonly_desc);
@@ -40,7 +41,7 @@ h_can_join(hook_data_channel *data)
 
 	if((chptr->mode.mode & mymode) && !IsOper(source_p)) {
 		sendto_one_numeric(source_p, 520, "%s :Cannot join channel (+O) - you are not an IRC operator", chptr->chname);
-		data->approved = ERR_CUSTOM;
+		data->approved = chan::mode::ERR_CUSTOM;
 	}
 }
 

@@ -37,19 +37,22 @@
  *   I suspect it is, but have done no load testing.
  */
 
+namespace chan = ircd::chan;
+namespace mode = chan::mode;
+namespace ext = mode::ext;
 using namespace ircd;
 
 static const char extb_desc[] = "Combination ($&, $|) extban types";
 
 // #define MOD_DEBUG(s) sendto_realops_snomask(SNO_DEBUG, L_NETWIDE, (s))
 #define MOD_DEBUG(s)
-#define RETURN_INVALID	{ recursion_depth--; return EXTBAN_INVALID; }
+#define RETURN_INVALID	{ recursion_depth--; return INVALID; }
 
 static int _modinit(void);
 static void _moddeinit(void);
-static int eb_or(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type);
-static int eb_and(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type);
-static int eb_combi(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type, bool is_and);
+static int eb_or(const char *data, struct Client *client_p, struct Channel *chptr, mode::type);
+static int eb_and(const char *data, struct Client *client_p, struct Channel *chptr, mode::type);
+static int eb_combi(const char *data, struct Client *client_p, struct Channel *chptr, mode::type, bool is_and);
 static int recursion_depth = 0;
 
 DECLARE_MODULE_AV2(extb_extended, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, extb_desc);
@@ -57,8 +60,8 @@ DECLARE_MODULE_AV2(extb_extended, _modinit, _moddeinit, NULL, NULL, NULL, NULL, 
 static int
 _modinit(void)
 {
-	extban_table['&'] = eb_and;
-	extban_table['|'] = eb_or;
+	ext::table['&'] = eb_and;
+	ext::table['|'] = eb_or;
 
 	return 0;
 }
@@ -66,25 +69,27 @@ _modinit(void)
 static void
 _moddeinit(void)
 {
-	extban_table['&'] = NULL;
-	extban_table['|'] = NULL;
+	ext::table['&'] = NULL;
+	ext::table['|'] = NULL;
 }
 
 static int eb_or(const char *data, struct Client *client_p,
-				 struct Channel *chptr, long mode_type)
+				 struct Channel *chptr, mode::type type)
 {
-	return eb_combi(data, client_p, chptr, mode_type, false);
+	return eb_combi(data, client_p, chptr, type, false);
 }
 
 static int eb_and(const char *data, struct Client *client_p,
-				  struct Channel *chptr, long mode_type)
+				  struct Channel *chptr, mode::type type)
 {
-	return eb_combi(data, client_p, chptr, mode_type, true);
+	return eb_combi(data, client_p, chptr, type, true);
 }
 
 static int eb_combi(const char *data, struct Client *client_p,
-					struct Channel *chptr, long mode_type, bool is_and)
+					struct Channel *chptr, mode::type type, bool is_and)
 {
+	using namespace ext;
+
 	const char *p, *banend;
 	bool have_result = false;
 	int allowed_nodes = 11;
@@ -92,12 +97,12 @@ static int eb_combi(const char *data, struct Client *client_p,
 
 	if (recursion_depth >= 5) {
 		MOD_DEBUG("combo invalid: recursion depth too high");
-		return EXTBAN_INVALID;
+		return INVALID;
 	}
 
 	if (EmptyString(data)) {
 		MOD_DEBUG("combo invalid: empty data");
-		return EXTBAN_INVALID;
+		return INVALID;
 	}
 
 	datalen = strlen(data);
@@ -106,7 +111,7 @@ static int eb_combi(const char *data, struct Client *client_p,
 		 * could overflow the buffer used below, so...
 		 */
 		MOD_DEBUG("combo invalid: > BANLEN");
-		return EXTBAN_INVALID;
+		return INVALID;
 	}
 	banend = data + datalen;
 
@@ -115,7 +120,7 @@ static int eb_combi(const char *data, struct Client *client_p,
 		banend--;
 		if (*banend != ')') {
 			MOD_DEBUG("combo invalid: starting but no closing paren");
-			return EXTBAN_INVALID;
+			return INVALID;
 		}
 	} else {
 		p = data;
@@ -124,7 +129,7 @@ static int eb_combi(const char *data, struct Client *client_p,
 	/* Empty combibans are invalid. */
 	if (banend == p) {
 		MOD_DEBUG("combo invalid: no data (after removing parens)");
-		return EXTBAN_INVALID;
+		return INVALID;
 	}
 
 	/* Implementation note:
@@ -142,7 +147,7 @@ static int eb_combi(const char *data, struct Client *client_p,
 	while (--allowed_nodes) {
 		bool invert = false;
 		char *child_data, child_data_buf[BANLEN];
-		ExtbanFunc f;
+		ext::func f;
 
 		if (*p == '~') {
 			invert = true;
@@ -153,7 +158,7 @@ static int eb_combi(const char *data, struct Client *client_p,
 			}
 		}
 
-		f = extban_table[(unsigned char) *p++];
+		f = ext::table[uint8_t(*p++)];
 		if (!f) {
 			MOD_DEBUG("combo invalid: non-existant child extban");
 			RETURN_INVALID;
@@ -222,18 +227,18 @@ static int eb_combi(const char *data, struct Client *client_p,
 		}
 
 		if (!have_result) {
-			int child_result = f(child_data, client_p, chptr, mode_type);
+			int child_result = f(child_data, client_p, chptr, type);
 
-			if (child_result == EXTBAN_INVALID) {
+			if (child_result == INVALID) {
 				MOD_DEBUG("combo invalid: child invalid");
 				RETURN_INVALID;
 			}
 
 			/* Convert child_result to a plain boolean result */
 			if (invert)
-				child_result = child_result == EXTBAN_NOMATCH;
+				child_result = child_result == NOMATCH;
 			else
-				child_result = child_result == EXTBAN_MATCH;
+				child_result = child_result == MATCH;
 
 			if (is_and ? !child_result : child_result)
 				have_result = true;
@@ -262,7 +267,7 @@ static int eb_combi(const char *data, struct Client *client_p,
 	recursion_depth--;
 
 	if (is_and)
-		return have_result ? EXTBAN_NOMATCH : EXTBAN_MATCH;
+		return have_result ? NOMATCH : MATCH;
 	else
-		return have_result ? EXTBAN_MATCH : EXTBAN_NOMATCH;
+		return have_result ? MATCH : NOMATCH;
 }

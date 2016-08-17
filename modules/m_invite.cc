@@ -131,7 +131,7 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	/* unconditionally require ops, unless the channel is +g */
 	/* treat remote clients as chanops */
 	if(MyClient(source_p) && !is_chanop(msptr) &&
-			!(chptr->mode.mode & MODE_FREEINVITE))
+			!(chptr->mode.mode & chan::mode::FREEINVITE))
 	{
 		sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
 			   me.name, source_p->name, parv[2]);
@@ -141,8 +141,8 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	/* store invites when they could affect the ability to join
 	 * for +l/+j just check if the mode is set, this varies over time
 	 */
-	if(chptr->mode.mode & MODE_INVITEONLY ||
-			(chptr->mode.mode & MODE_REGONLY && EmptyString(target_p->user->suser)) ||
+	if(chptr->mode.mode & chan::mode::INVITEONLY ||
+			(chptr->mode.mode & chan::mode::REGONLY && EmptyString(target_p->user->suser)) ||
 			chptr->mode.limit || chptr->mode.join_num)
 		store_invite = 1;
 

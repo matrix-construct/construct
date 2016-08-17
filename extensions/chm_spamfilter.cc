@@ -108,7 +108,9 @@ struct ConfEntry conf_spamfilter[] =
 static
 int modinit(void)
 {
-	chm_spamfilter = cflag_add(MODE_SPAMFILTER, CHM_D, chm_simple);
+	using namespace chan::mode;
+
+	chm_spamfilter = add(MODE_SPAMFILTER, category::D, functor::simple);
 	if(!chm_spamfilter)
 		return -1;
 
@@ -121,7 +123,7 @@ static
 void modfini(void)
 {
 	remove_top_conf("spamfilter");
-	cflag_orphan(MODE_SPAMFILTER);
+	chan::mode::orphan(MODE_SPAMFILTER);
 }
 
 

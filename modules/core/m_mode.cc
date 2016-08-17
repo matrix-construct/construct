@@ -345,7 +345,7 @@ ms_bmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		tlen = strlen(s);
 
 		/* I dont even want to begin parsing this.. */
-		if(tlen > MODEBUFLEN)
+		if(tlen > chan::mode::BUFLEN)
 			break;
 
 		if((forward = strchr(s+1, '$')) != NULL)
@@ -362,8 +362,8 @@ ms_bmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		if(add_id(fakesource_p, chptr, s, forward, banlist, mode_type))
 		{
 			/* this new one wont fit.. */
-			if(mlen + MAXMODEPARAMS + plen + tlen > BUFSIZE - 5 ||
-			   modecount >= MAXMODEPARAMS)
+			if(mlen + chan::mode::MAXPARAMS + plen + tlen > BUFSIZE - 5 ||
+			   modecount >= chan::mode::MAXPARAMS)
 			{
 				*mbuf = '\0';
 				*(pbuf - 1) = '\0';

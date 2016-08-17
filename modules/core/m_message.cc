@@ -521,8 +521,8 @@ msg_channel(enum message_type msgtype,
 					     "%s %s :%s", cmdname[msgtype], chptr->chname, text);
 		}
 	}
-	else if(chptr->mode.mode & MODE_OPMODERATE &&
-			(!(chptr->mode.mode & MODE_NOPRIVMSGS) ||
+	else if(chptr->mode.mode & chan::mode::OPMODERATE &&
+			(!(chptr->mode.mode & chan::mode::NOPRIVMSGS) ||
 			 IsMember(source_p, chptr)))
 	{
 		if(MyClient(source_p) && !IsOper(source_p) &&
@@ -589,8 +589,8 @@ msg_channel_opmod(enum message_type msgtype,
 		return;
 	}
 
-	if(chptr->mode.mode & MODE_OPMODERATE &&
-			(!(chptr->mode.mode & MODE_NOPRIVMSGS) ||
+	if(chptr->mode.mode & chan::mode::OPMODERATE &&
+			(!(chptr->mode.mode & chan::mode::NOPRIVMSGS) ||
 			 IsMember(source_p, chptr)))
 	{
 		if(!flood_attack_channel(msgtype, source_p, chptr, chptr->chname))

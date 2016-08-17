@@ -227,13 +227,15 @@ isupport_umode(const void *ptr)
 static const char *
 isupport_chanmodes(const void *ptr)
 {
+	using namespace chan::mode;
+
 	static char result[80];
 
 	snprintf(result, sizeof result, "%s,%s,%s,%s",
-	            chmode_class[CHM_A],
-	            chmode_class[CHM_B],
-	            chmode_class[CHM_C],
-	            chmode_class[CHM_D]);
+	            categories[uint(category::A)],
+	            categories[uint(category::B)],
+	            categories[uint(category::C)],
+	            categories[uint(category::D)]);
 
 	return result;
 }
@@ -302,7 +304,7 @@ isupport_nicklen(const void *ptr)
 void
 init_isupport(void)
 {
-	static int maxmodes = MAXMODEPARAMS;
+	static int maxmodes = chan::mode::MAXPARAMS;
 	static int channellen = LOC_CHANNELLEN;
 	static int topiclen = TOPICLEN;
 	static int maxnicklen = NICKLEN - 1;

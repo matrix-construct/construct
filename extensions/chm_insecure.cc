@@ -11,12 +11,14 @@ mapi_hfn_list_av1 sslonly_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-static unsigned int mymode;
+static chan::mode::type mymode;
 
 static int
 _modinit(void)
 {
-	mymode = cflag_add('U', CHM_D, chm_simple);
+	using namespace chan::mode;
+
+	mymode = add('U', category::D, functor::simple);
 	if (mymode == 0)
 		return -1;
 
@@ -27,7 +29,7 @@ _modinit(void)
 static void
 _moddeinit(void)
 {
-	cflag_orphan('U');
+	chan::mode::orphan('U');
 }
 
 DECLARE_MODULE_AV2(chm_insecure, _modinit, _moddeinit, NULL, NULL, sslonly_hfnlist, NULL, NULL, chm_insecure_desc);
@@ -41,7 +43,7 @@ h_can_join(hook_data_channel *data)
 	if(!(chptr->mode.mode & mymode) && !IsSSLClient(source_p)) {
 		/* XXX This is equal to ERR_THROTTLE */
 		sendto_one_numeric(source_p, 480, "%s :Cannot join channel (-U) - SSL/TLS required", chptr->chname);
-		data->approved = ERR_CUSTOM;
+		data->approved = chan::mode::ERR_CUSTOM;
 	}
 }
 

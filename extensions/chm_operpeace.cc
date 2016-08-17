@@ -15,12 +15,14 @@ mapi_hfn_list_av1 chm_operpeace_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-static unsigned int mymode;
+static chan::mode::type mymode;
 
 static int
 _modinit(void)
 {
-	mymode = cflag_add('M', CHM_D, chm_hidden);
+	using namespace chan::mode;
+
+	mymode = add('M', category::D, functor::hidden);
 	if (mymode == 0)
 		return -1;
 
@@ -30,7 +32,7 @@ _modinit(void)
 static void
 _moddeinit(void)
 {
-	cflag_orphan('M');
+	chan::mode::orphan('M');
 }
 
 DECLARE_MODULE_AV2(chm_operpeace, _modinit, _moddeinit, NULL, NULL, chm_operpeace_hfnlist, NULL, NULL, chm_operpeace_desc);

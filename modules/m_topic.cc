@@ -103,7 +103,7 @@ m_topic(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 			return;
 		}
 
-		if(((chptr->mode.mode & MODE_TOPICLIMIT) == 0 ||
+		if(((chptr->mode.mode & chan::mode::TOPICLIMIT) == 0 ||
 					get_channel_access(source_p, chptr, msptr, MODE_ADD, NULL) >= CHFL_CHANOP) &&
 				(!MyClient(source_p) ||
 				 can_send(chptr, source_p, msptr)))

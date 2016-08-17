@@ -27,7 +27,7 @@ static const char chm_nocolour_desc[] =
 	"Enables channel mode +c that filters colours and formatting from a channel";
 
 static char buf[BUFSIZE];
-static unsigned int mode_nocolour;
+static chan::mode::type mode_nocolour;
 
 static void chm_nocolour_process(hook_data_privmsg_channel *);
 
@@ -55,7 +55,9 @@ chm_nocolour_process(hook_data_privmsg_channel *data)
 static int
 _modinit(void)
 {
-	mode_nocolour = cflag_add('c', CHM_D, chm_simple);
+	using namespace chan::mode;
+
+	mode_nocolour = add('c', category::D, functor::simple);
 	if (mode_nocolour == 0)
 		return -1;
 
@@ -65,7 +67,9 @@ _modinit(void)
 static void
 _moddeinit(void)
 {
-	cflag_orphan('c');
+	using namespace chan::mode;
+
+	orphan('c');
 }
 
 DECLARE_MODULE_AV2(chm_nocolour, _modinit, _moddeinit, NULL, NULL, chm_nocolour_hfnlist, NULL, NULL, chm_nocolour_desc);

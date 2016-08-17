@@ -10,12 +10,14 @@ mapi_hfn_list_av1 adminonly_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-static unsigned int mymode;
+static chan::mode::type mymode;
 
 static int
 _modinit(void)
 {
-	mymode = cflag_add('A', CHM_D, chm_staff);
+	using namespace chan::mode;
+
+	mymode = add('A', category::D, functor::staff);
 	if (mymode == 0)
 		return -1;
 
@@ -25,7 +27,7 @@ _modinit(void)
 static void
 _moddeinit(void)
 {
-	cflag_orphan('A');
+	chan::mode::orphan('A');
 }
 
 DECLARE_MODULE_AV2(chm_adminonly, _modinit, _moddeinit, NULL, NULL, adminonly_hfnlist, NULL, NULL, chm_adminonly_desc);
@@ -38,7 +40,7 @@ h_can_join(hook_data_channel *data)
 
 	if((chptr->mode.mode & mymode) && !IsAdmin(source_p)) {
 		sendto_one_numeric(source_p, 519, "%s :Cannot join channel (+A) - you are not an IRC server administrator", chptr->chname);
-		data->approved = ERR_CUSTOM;
+		data->approved = chan::mode::ERR_CUSTOM;
 	}
 }
 

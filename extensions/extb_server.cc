@@ -3,20 +3,23 @@
  * -- jilles
  */
 
+namespace chan = ircd::chan;
+namespace mode = chan::mode;
+namespace ext = mode::ext;
 using namespace ircd;
 
 static const char extb_desc[] = "Server ($s) extban type";
 
 static int _modinit(void);
 static void _moddeinit(void);
-static int eb_server(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type);
+static int eb_server(const char *data, struct Client *client_p, struct Channel *chptr, mode::type);
 
 DECLARE_MODULE_AV2(extb_server, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, extb_desc);
 
 static int
 _modinit(void)
 {
-	extban_table['s'] = eb_server;
+	ext::table['s'] = eb_server;
 
 	return 0;
 }
@@ -24,18 +27,19 @@ _modinit(void)
 static void
 _moddeinit(void)
 {
-	extban_table['s'] = NULL;
+	ext::table['s'] = NULL;
 }
 
 static int eb_server(const char *data, struct Client *client_p,
-		struct Channel *chptr, long mode_type)
+		struct Channel *chptr, mode::type type)
 {
+	using namespace ext;
 
 	(void)chptr;
 	/* This type is not safe for exceptions */
-	if (mode_type == CHFL_EXCEPTION || mode_type == CHFL_INVEX)
-		return EXTBAN_INVALID;
+	if (type == CHFL_EXCEPTION || type == CHFL_INVEX)
+		return INVALID;
 	if (data == NULL)
-		return EXTBAN_INVALID;
-	return match(data, me.name) ? EXTBAN_MATCH : EXTBAN_NOMATCH;
+		return INVALID;
+	return match(data, me.name) ? MATCH : NOMATCH;
 }

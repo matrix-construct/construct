@@ -3,20 +3,23 @@
  * -- nenolod
  */
 
+namespace chan = ircd::chan;
+namespace mode = chan::mode;
+namespace ext = mode::ext;
 using namespace ircd;
 
 static const char extb_desc[] = "Usermode ($m) extban type";
 
 static int _modinit(void);
 static void _moddeinit(void);
-static int eb_usermode(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type);
+static int eb_usermode(const char *data, struct Client *client_p, struct Channel *chptr, mode::type);
 
 DECLARE_MODULE_AV2(extb_usermode, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, extb_desc);
 
 static int
 _modinit(void)
 {
-	extban_table['u'] = eb_usermode;
+	ext::table['u'] = eb_usermode;
 
 	return 0;
 }
@@ -24,12 +27,14 @@ _modinit(void)
 static void
 _moddeinit(void)
 {
-	extban_table['u'] = NULL;
+	ext::table['u'] = NULL;
 }
 
 static int eb_usermode(const char *data, struct Client *client_p,
-		struct Channel *chptr, long mode_type)
+		struct Channel *chptr, mode::type type)
 {
+	using namespace ext;
+
 	int dir = MODE_ADD;
 	unsigned int modes_ack = 0, modes_nak = 0;
 	const char *p;
@@ -38,7 +43,7 @@ static int eb_usermode(const char *data, struct Client *client_p,
 
 	/* $m must have a specified mode */
 	if (data == NULL)
-		return EXTBAN_INVALID;
+		return INVALID;
 
 	for (p = data; *p != '\0'; p++)
 	{
@@ -67,5 +72,5 @@ static int eb_usermode(const char *data, struct Client *client_p,
 
 	return ((client_p->umodes & modes_ack) == modes_ack &&
 			!(client_p->umodes & modes_nak)) ?
-		EXTBAN_MATCH : EXTBAN_NOMATCH;
+		MATCH : NOMATCH;
 }

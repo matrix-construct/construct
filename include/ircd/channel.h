@@ -40,7 +40,13 @@ namespace ircd {
 #define ONLY_CHANOPS		CHFL_CHANOP
 #define ONLY_CHANOPSVOICED	(CHFL_CHANOP|CHFL_VOICE)
 
-/* mode structure for channels */
+//TODO: will rm
+#define CHFL_BAN        0x10000000  /* ban channel flag */
+#define CHFL_EXCEPTION  0x20000000  /* exception to ban channel flag */
+#define CHFL_INVEX      0x40000000
+#define CHFL_QUIET      0x80000000
+
+// mode structure for channels
 struct Mode
 {
 	static constexpr size_t KEYLEN
@@ -60,7 +66,7 @@ struct Mode
 struct Channel
 {
 	rb_dlink_node node;
-	struct Mode mode;
+	Mode mode;
 	char *mode_lock;
 	char *topic;
 	char *topic_info;
@@ -116,21 +122,6 @@ struct Ban
 	rb_dlink_node node;
 };
 
-struct mode_letter
-{
-	int mode;
-	char letter;
-};
-
-struct ChModeChange
-{
-	char letter;
-	const char *arg;
-	const char *id;
-	int dir;
-	int mems;
-};
-
 /* can_send results */
 #define CAN_SEND_NO	0
 #define CAN_SEND_NONOP  1
@@ -146,10 +137,11 @@ struct ChModeChange
 #define MODE_ADD       1
 #define MODE_DEL       -1
 
-#define SecretChannel(x)        ((x) && ((x)->mode.mode & MODE_SECRET))
-#define HiddenChannel(x)        ((x) && ((x)->mode.mode & MODE_PRIVATE))
+//TODO: will inline
+#define SecretChannel(x)        ((x) && ((x)->mode.mode & ircd::chan::mode::SECRET))
+#define HiddenChannel(x)        ((x) && ((x)->mode.mode & ircd::chan::mode::PRIVATE))
 #define PubChannel(x)           ((!x) || ((x)->mode.mode &\
-                                 (MODE_PRIVATE | MODE_SECRET)) == 0)
+                                 (ircd::chan::mode::PRIVATE | ircd::chan::mode::SECRET)) == 0)
 
 /* channel visible */
 #define ShowChannel(v,c)        (PubChannel(c) || IsMember((v),(c)))
@@ -212,7 +204,7 @@ extern void init_chcap_usage_counts(void);
 extern void set_chcap_usage_counts(struct Client *serv_p);
 extern void unset_chcap_usage_counts(struct Client *serv_p);
 extern void send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
-				  struct Channel *chptr, struct ChModeChange foo[], int);
+				  struct Channel *chptr, chan::mode::change foo[], int);
 
 void resv_chan_forcepart(const char *name, const char *reason, int temp_time);
 

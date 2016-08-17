@@ -3,32 +3,37 @@
  * -- kaniini
  */
 
+namespace chan = ircd::chan;
+namespace mode = chan::mode;
+namespace ext = mode::ext;
 using namespace ircd;
 
 static const char extb_desc[] = "Hostmask ($m) extban type";
 
 static int _modinit(void);
 static void _moddeinit(void);
-static int eb_hostmask(const char *data, struct Client *client_p, struct Channel *chptr, long mode_type);
+static int eb_hostmask(const char *data, struct Client *client_p, struct Channel *chptr, mode::type);
 
 DECLARE_MODULE_AV2(extb_hostmask, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, extb_desc);
 
 static int
 _modinit(void)
 {
-	extban_table['m'] = eb_hostmask;
+	ext::table['m'] = eb_hostmask;
 	return 0;
 }
 
 static void
 _moddeinit(void)
 {
-	extban_table['m'] = NULL;
+	ext::table['m'] = NULL;
 }
 
 static int
-eb_hostmask(const char *banstr, struct Client *client_p, struct Channel *chptr, long mode_type)
+eb_hostmask(const char *banstr, struct Client *client_p, struct Channel *chptr, mode::type type)
 {
+	using namespace ext;
+
 	char src_host[NICKLEN + USERLEN + HOSTLEN + 6];
 	char src_iphost[NICKLEN + USERLEN + HOSTLEN + 6];
 	char src_althost[NICKLEN + USERLEN + HOSTLEN + 6];
@@ -62,5 +67,5 @@ eb_hostmask(const char *banstr, struct Client *client_p, struct Channel *chptr, 
 	}
 #endif
 
-	return match(banstr, s) || match(banstr, s2) || (s3 != NULL && match(banstr, s3)) || (s4 != NULL && match(banstr, s4)) ? EXTBAN_MATCH : EXTBAN_NOMATCH;
+	return match(banstr, s) || match(banstr, s2) || (s3 != NULL && match(banstr, s3)) || (s4 != NULL && match(banstr, s4)) ? MATCH : NOMATCH;
 }

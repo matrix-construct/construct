@@ -752,7 +752,7 @@ set_default_conf(void)
 	ConfigChannel.disable_local_channels = false;
 	ConfigChannel.displayed_usercount = 3;
 
-	ConfigChannel.autochanmodes = MODE_TOPICLIMIT | MODE_NOPRIVMSGS;
+	ConfigChannel.autochanmodes = chan::mode::TOPICLIMIT | chan::mode::NOPRIVMSGS;
 
 	ConfigServerHide.flatten_links = 0;
 	ConfigServerHide.links_delay = 300;
@@ -803,7 +803,7 @@ read_conf(void)
 	/* Some global values are also loaded here. */
 	check_class();		/* Make sure classes are valid */
 	privilegeset_delete_all_illegal();
-	chmode_init();
+	chan::mode::init();
 }
 
 static void

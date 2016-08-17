@@ -20,16 +20,19 @@
  *  USA
  */
 
-namespace ircd {
+namespace chan = ircd::chan;
+namespace mode = chan::mode;
+namespace ext = mode::ext;
+using namespace ext;
 
-ExtbanFunc extban_table[256] = { NULL };
+ext::func ext::table[256] = { NULL };
 
 int
-match_extban(const char *banstr, struct Client *client_p, struct Channel *chptr, long mode_type)
+ircd::match_extban(const char *banstr, struct Client *client_p, struct Channel *chptr, long mode_type)
 {
 	const char *p;
-	int invert = 0, result = EXTBAN_INVALID;
-	ExtbanFunc f;
+	int invert(0), result(INVALID);
+	func f;
 
 	if (*banstr != '$')
 		return 0;
@@ -39,7 +42,7 @@ match_extban(const char *banstr, struct Client *client_p, struct Channel *chptr,
 		invert = 1;
 		p++;
 	}
-	f = extban_table[(unsigned char) rfc1459::tolower(*p)];
+	f = table[uint8_t(rfc1459::tolower(*p))];
 	if (*p != '\0')
 	{
 		p++;
@@ -49,29 +52,29 @@ match_extban(const char *banstr, struct Client *client_p, struct Channel *chptr,
 			p = NULL;
 	}
 	if (f != NULL)
-		result = f(p, client_p, chptr, mode_type);
+		result = f(p, client_p, chptr, mode::type(mode_type));
 	else
-		result = EXTBAN_INVALID;
+		result = INVALID;
 
 	if (invert)
-		return result == EXTBAN_NOMATCH;
+		return result == NOMATCH;
 	else
-		return result == EXTBAN_MATCH;
+		return result == MATCH;
 }
 
 int
-valid_extban(const char *banstr, struct Client *client_p, struct Channel *chptr, long mode_type)
+ircd::valid_extban(const char *banstr, struct Client *client_p, struct Channel *chptr, long mode_type)
 {
 	const char *p;
-	int result = EXTBAN_INVALID;
-	ExtbanFunc f;
+	int result(INVALID);
+	func f;
 
 	if (*banstr != '$')
 		return 0;
 	p = banstr + 1;
 	if (*p == '~')
 		p++;
-	f = extban_table[(unsigned char) rfc1459::tolower(*p)];
+	f = table[uint8_t(rfc1459::tolower(*p))];
 	if (*p != '\0')
 	{
 		p++;
@@ -81,25 +84,23 @@ valid_extban(const char *banstr, struct Client *client_p, struct Channel *chptr,
 			p = NULL;
 	}
 	if (f != NULL)
-		result = f(p, client_p, chptr, mode_type);
+		result = f(p, client_p, chptr, mode::type(mode_type));
 	else
-		result = EXTBAN_INVALID;
+		result = INVALID;
 
-	return result != EXTBAN_INVALID;
+	return result != INVALID;
 }
 
 const char *
-get_extban_string(void)
+ircd::get_extban_string(void)
 {
 	static char e[256];
 	int i, j;
 
 	j = 0;
 	for (i = 1; i < 256; i++)
-		if (i == rfc1459::tolower(i) && extban_table[i])
+		if (i == rfc1459::tolower(i) && table[i])
 			e[j++] = i;
 	e[j] = 0;
 	return e;
 }
-
-} // namespace ircd
