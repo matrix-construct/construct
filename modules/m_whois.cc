@@ -206,8 +206,8 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 {
 	char buf[BUFSIZE];
 	rb_dlink_node *ptr;
-	struct membership *msptr;
-	struct Channel *chptr;
+	chan::membership *msptr;
+	chan::chan *chptr;
 	int cur_len = 0;
 	int mlen;
 	char *t;
@@ -254,17 +254,17 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 	{
 		RB_DLINK_FOREACH(ptr, target_p->user->channel.head)
 		{
-			msptr = (membership *)ptr->data;
-			chptr = msptr->chptr;
+			msptr = (chan::membership *)ptr->data;
+			chptr = msptr->chan;
 
 			hdata.chptr = chptr;
 
-			hdata.approved = ShowChannel(source_p, chptr);
+			hdata.approved = can_show(chptr, source_p);
 			call_hook(doing_whois_channel_visibility_hook, &hdata);
 
 			if(hdata.approved || operspy)
 			{
-				if((cur_len + strlen(chptr->chname) + 3) > (BUFSIZE - 5))
+				if((cur_len + strlen(chptr->name.c_str()) + 3) > (BUFSIZE - 5))
 				{
 					sendto_one(source_p, "%s", buf);
 					cur_len = mlen + extra_space;
@@ -273,8 +273,8 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 
 				tlen = sprintf(t, "%s%s%s ",
 						hdata.approved ? "" : "!",
-						find_channel_status(msptr, 1),
-						chptr->chname);
+						find_status(msptr, 1),
+						chptr->name.c_str());
 				t += tlen;
 				cur_len += tlen;
 			}

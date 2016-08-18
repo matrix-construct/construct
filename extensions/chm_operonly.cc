@@ -37,10 +37,10 @@ static void
 h_can_join(hook_data_channel *data)
 {
 	struct Client *source_p = data->client;
-	struct Channel *chptr = data->chptr;
+	const auto &chptr(data->chptr);
 
 	if((chptr->mode.mode & mymode) && !IsOper(source_p)) {
-		sendto_one_numeric(source_p, 520, "%s :Cannot join channel (+O) - you are not an IRC operator", chptr->chname);
+		sendto_one_numeric(source_p, 520, "%s :Cannot join channel (+O) - you are not an IRC operator", chptr->name.c_str());
 		data->approved = chan::mode::ERR_CUSTOM;
 	}
 }

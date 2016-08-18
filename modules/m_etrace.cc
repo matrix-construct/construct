@@ -211,8 +211,8 @@ static void
 m_chantrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
-	struct Channel *chptr;
-	struct membership *msptr;
+	chan::chan *chptr;
+	chan::membership *msptr;
 	const char *sockhost;
 	const char *name;
 	rb_dlink_node *ptr;
@@ -242,19 +242,19 @@ m_chantrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 
 	/* dont report operspys for nonexistant channels. */
 	if(operspy)
-		report_operspy(source_p, "CHANTRACE", chptr->chname);
+		report_operspy(source_p, "CHANTRACE", chptr->name.c_str());
 
-	if(!operspy && !IsMember(client_p, chptr))
+	if(!operspy && !is_member(chptr, client_p))
 	{
 		sendto_one_numeric(source_p, ERR_NOTONCHANNEL, form_str(ERR_NOTONCHANNEL),
-				chptr->chname);
+				chptr->name.c_str());
 		return;
 	}
 
 	RB_DLINK_FOREACH(ptr, chptr->members.head)
 	{
-		msptr = (membership *)ptr->data;
-		target_p = msptr->client_p;
+		msptr = (chan::membership *)ptr->data;
+		target_p = msptr->client;
 
 		if(EmptyString(target_p->sockhost))
 			sockhost = empty_sockhost;

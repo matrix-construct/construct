@@ -68,7 +68,7 @@ mo_testline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 
 	mask = LOCAL_COPY(parv[1]);
 
-	if (IsChannelName(mask))
+	if (chan::is_name(mask))
 	{
 		resv_p = hash_find_resv(mask);
 		if (resv_p != NULL)

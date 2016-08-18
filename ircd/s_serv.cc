@@ -504,25 +504,24 @@ burst_ban(struct Client *client_p)
  * side effects - client is sent a list of +b, +e, or +I modes
  */
 static void
-burst_modes_TS6(struct Client *client_p, struct Channel *chptr,
+burst_modes_TS6(struct Client *client_p, chan::chan *chptr,
 		rb_dlink_list *list, char flag)
 {
 	rb_dlink_node *ptr;
-	struct Ban *banptr;
 	char *t;
 	int tlen;
 	int mlen;
 	int cur_len;
 
 	cur_len = mlen = sprintf(buf, ":%s BMASK %ld %s %c :",
-				    me.id, (long) chptr->channelts, chptr->chname, flag);
+				    me.id, (long) chptr->channelts, chptr->name.c_str(), flag);
 	t = buf + mlen;
 
 	RB_DLINK_FOREACH(ptr, list->head)
 	{
-		banptr = (Ban *)ptr->data;
+		auto *const banptr(reinterpret_cast<chan::ban *>(ptr->data));
 
-		tlen = strlen(banptr->banstr) + (banptr->forward ? strlen(banptr->forward) + 1 : 0) + 1;
+		tlen = banptr->banstr.size() + (banptr->forward.size() ? strlen(banptr->forward.c_str()) + 1 : 0) + 1;
 
 		/* uh oh */
 		if(cur_len + tlen > BUFSIZE - 3)
@@ -541,10 +540,10 @@ burst_modes_TS6(struct Client *client_p, struct Channel *chptr,
 			t = buf + mlen;
 		}
 
-		if (banptr->forward)
-			sprintf(t, "%s$%s ", banptr->banstr, banptr->forward);
+		if (banptr->forward.size())
+			sprintf(t, "%s$%s ", banptr->banstr.c_str(), banptr->forward.c_str());
 		else
-			sprintf(t, "%s ", banptr->banstr);
+			sprintf(t, "%s ", banptr->banstr.c_str());
 		t += tlen;
 		cur_len += tlen;
 	}
@@ -569,8 +568,8 @@ burst_TS6(struct Client *client_p)
 {
 	char ubuf[BUFSIZE];
 	struct Client *target_p;
-	struct Channel *chptr;
-	struct membership *msptr;
+	chan::chan *chptr;
+	chan::membership *msptr;
 	hook_data_client hclientinfo;
 	hook_data_channel hchaninfo;
 	rb_dlink_node *ptr;
@@ -638,24 +637,24 @@ burst_TS6(struct Client *client_p)
 		call_hook(h_burst_client, &hclientinfo);
 	}
 
-	RB_DLINK_FOREACH(ptr, global_channel_list.head)
+	RB_DLINK_FOREACH(ptr, chan::global_channel_list.head)
 	{
-		chptr = (Channel *)ptr->data;
+		chptr = (chan::chan *)ptr->data;
 
-		if(*chptr->chname != '#')
+		if(chptr->name[0] != '#')
 			continue;
 
 		cur_len = mlen = sprintf(buf, ":%s SJOIN %ld %s %s :", me.id,
-				(long) chptr->channelts, chptr->chname,
+				(long) chptr->channelts, chptr->name.c_str(),
 				channel_modes(chptr, client_p));
 
 		t = buf + mlen;
 
 		RB_DLINK_FOREACH(uptr, chptr->members.head)
 		{
-			msptr = (membership *)uptr->data;
+			msptr = (chan::membership *)uptr->data;
 
-			tlen = strlen(use_id(msptr->client_p)) + 1;
+			tlen = strlen(use_id(msptr->client)) + 1;
 			if(is_chanop(msptr))
 				tlen++;
 			if(is_voiced(msptr))
@@ -669,8 +668,7 @@ burst_TS6(struct Client *client_p)
 				t = buf + mlen;
 			}
 
-			sprintf(t, "%s%s ", find_channel_status(msptr, 1),
-				   use_id(msptr->client_p));
+			sprintf(t, "%s%s ", chan::find_status(msptr, 1), use_id(msptr->client));
 
 			cur_len += tlen;
 			t += tlen;
@@ -697,17 +695,19 @@ burst_TS6(struct Client *client_p)
 		if(rb_dlink_list_length(&chptr->quietlist) > 0)
 			burst_modes_TS6(client_p, chptr, &chptr->quietlist, 'q');
 
-		if(IsCapable(client_p, CAP_TB) && chptr->topic != NULL)
+		if(IsCapable(client_p, CAP_TB) && chptr->topic)
 			sendto_one(client_p, ":%s TB %s %ld %s%s:%s",
-				   me.id, chptr->chname, (long) chptr->topic_time,
-				   ConfigChannel.burst_topicwho ? chptr->topic_info : "",
-				   ConfigChannel.burst_topicwho ? " " : "",
-				   chptr->topic);
+			           me.id,
+			           chptr->name.c_str(),
+			           long(chptr->topic.time),
+			           ConfigChannel.burst_topicwho? chptr->topic.info.c_str() : "",
+			           ConfigChannel.burst_topicwho? " " : "",
+			           chptr->topic.text.c_str());
 
 		if(IsCapable(client_p, CAP_MLOCK))
 			sendto_one(client_p, ":%s MLOCK %ld %s :%s",
-				   me.id, (long) chptr->channelts, chptr->chname,
-				   EmptyString(chptr->mode_lock) ? "" : chptr->mode_lock);
+				   me.id, (long) chptr->channelts, chptr->name.c_str(),
+				   chptr->mode_lock.c_str());
 
 		hchaninfo.chptr = chptr;
 		call_hook(h_burst_channel, &hchaninfo);

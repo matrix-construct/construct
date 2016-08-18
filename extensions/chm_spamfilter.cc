@@ -71,7 +71,7 @@ void hook_privmsg_channel(hook_data_privmsg_channel *const hook)
 	                       hook->source_p->username,
 	                       hook->source_p->orighost,
 	                       hook->source_p->servptr->name,
-	                       hook->chptr->chname,
+	                       hook->chptr->name.c_str(),
 	                       hook->reason?: "filter gave no reason");
 
 	hook->reason = reject_reason;

@@ -218,7 +218,7 @@ del_from_client_hash(const char *name, struct Client *client_p)
  * removes a channel from the channel hash table
  */
 void
-del_from_channel_hash(const char *name, struct Channel *chptr)
+del_from_channel_hash(const char *name, chan::chan *chptr)
 {
 	s_assert(name != NULL);
 	s_assert(chptr != NULL);
@@ -368,14 +368,14 @@ find_hostname(const char *hostname)
  *
  * finds a channel from the channel hash table
  */
-struct Channel *
+chan::chan *
 find_channel(const char *name)
 {
 	s_assert(name != NULL);
 	if(EmptyString(name))
 		return NULL;
 
-	return (Channel *)rb_radixtree_retrieve(channel_tree, name);
+	return (chan::chan *)rb_radixtree_retrieve(channel_tree, name);
 }
 
 /*
@@ -389,10 +389,10 @@ find_channel(const char *name)
  *  Get Channel block for chname (and allocate a new channel
  *  block, if it didn't exist before).
  */
-struct Channel *
+chan::chan *
 get_or_create_channel(struct Client *client_p, const char *chname, bool *isnew)
 {
-	struct Channel *chptr;
+	chan::chan *chptr;
 	int len;
 	const char *s = chname;
 
@@ -415,7 +415,7 @@ get_or_create_channel(struct Client *client_p, const char *chname, bool *isnew)
 		s = t;
 	}
 
-	chptr = (Channel *)rb_radixtree_retrieve(channel_tree, s);
+	chptr = (chan::chan *)rb_radixtree_retrieve(channel_tree, s);
 	if (chptr != NULL)
 	{
 		if (isnew != NULL)
@@ -426,11 +426,11 @@ get_or_create_channel(struct Client *client_p, const char *chname, bool *isnew)
 	if(isnew != NULL)
 		*isnew = true;
 
-	chptr = allocate_channel(s);
+	chptr = new chan::chan(s);
 	chptr->channelts = rb_current_time();	/* doesn't hurt to set it here */
 
-	rb_dlinkAdd(chptr, &chptr->node, &global_channel_list);
-	rb_radixtree_add(channel_tree, chptr->chname, chptr);
+	rb_dlinkAdd(chptr, &chptr->node, &chan::global_channel_list);
+	rb_radixtree_add(channel_tree, chptr->name.c_str(), chptr);
 
 	return chptr;
 }

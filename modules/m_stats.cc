@@ -1275,7 +1275,7 @@ static void
 stats_memory (struct Client *source_p)
 {
 	struct Client *target_p;
-	struct Channel *chptr;
+	chan::chan *chptr;
 	rb_dlink_node *rb_dlink;
 	rb_dlink_node *ptr;
 	int channel_count = 0;
@@ -1346,11 +1346,11 @@ stats_memory (struct Client *source_p)
 	}
 
 	/* Count up all channels, ban lists, except lists, Invex lists */
-	RB_DLINK_FOREACH(ptr, global_channel_list.head)
+	RB_DLINK_FOREACH(ptr, chan::global_channel_list.head)
 	{
-		chptr = (Channel *)ptr->data;
+		chptr = (chan::chan *)ptr->data;
 		channel_count++;
-		channel_memory += (strlen(chptr->chname) + sizeof(struct Channel));
+		channel_memory += (strlen(chptr->name.c_str()) + sizeof(chan::chan));
 
 		channel_users += rb_dlink_list_length(&chptr->members);
 		channel_invites += rb_dlink_list_length(&chptr->invites);
@@ -1359,28 +1359,28 @@ stats_memory (struct Client *source_p)
 		{
 			channel_bans++;
 
-			channel_ban_memory += sizeof(rb_dlink_node) + sizeof(struct Ban);
+			channel_ban_memory += sizeof(rb_dlink_node) + sizeof(chan::ban);
 		}
 
 		RB_DLINK_FOREACH(rb_dlink, chptr->exceptlist.head)
 		{
 			channel_except++;
 
-			channel_except_memory += (sizeof(rb_dlink_node) + sizeof(struct Ban));
+			channel_except_memory += (sizeof(rb_dlink_node) + sizeof(chan::ban));
 		}
 
 		RB_DLINK_FOREACH(rb_dlink, chptr->invexlist.head)
 		{
 			channel_invex++;
 
-			channel_invex_memory += (sizeof(rb_dlink_node) + sizeof(struct Ban));
+			channel_invex_memory += (sizeof(rb_dlink_node) + sizeof(chan::ban));
 		}
 
 		RB_DLINK_FOREACH(rb_dlink, chptr->quietlist.head)
 		{
 			channel_quiets++;
 
-			channel_quiet_memory += (sizeof(rb_dlink_node) + sizeof(struct Ban));
+			channel_quiet_memory += (sizeof(rb_dlink_node) + sizeof(chan::ban));
 		}
 	}
 

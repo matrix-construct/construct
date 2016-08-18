@@ -39,7 +39,7 @@ DECLARE_MODULE_AV2(ojoin, NULL, NULL, ojoin_clist, NULL, NULL, NULL, NULL, ojoin
 static void
 mo_ojoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	struct Channel *chptr;
+	chan::chan *chptr;
 	int move_me = 0;
 
 	/* admins only */
@@ -62,7 +62,7 @@ mo_ojoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		return;
 	}
 
-	if(IsMember(source_p, chptr))
+	if(is_member(chptr, source_p))
 	{
 		sendto_one_notice(source_p, ":Please part %s before using OJOIN", parv[1]);
 		return;
@@ -84,41 +84,41 @@ mo_ojoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 	if(*parv[1] == '@')
 	{
-		add_user_to_channel(chptr, source_p, CHFL_CHANOP);
+		add_user_to_channel(chptr, source_p, chan::CHANOP);
 		sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
 			      ":%s SJOIN %ld %s + :@%s",
-			      me.id, (long) chptr->channelts, chptr->chname, source_p->id);
-		send_channel_join(chptr, source_p);
-		sendto_channel_local(ALL_MEMBERS, chptr, ":%s MODE %s +o %s",
-				     me.name, chptr->chname, source_p->name);
+			      me.id, (long) chptr->channelts, chptr->name.c_str(), source_p->id);
+		send_join(*chptr, *source_p);
+		sendto_channel_local(chan::ALL_MEMBERS, chptr, ":%s MODE %s +o %s",
+				     me.name, chptr->name.c_str(), source_p->name);
 
 	}
 	else if(*parv[1] == '+')
 	{
-		add_user_to_channel(chptr, source_p, CHFL_VOICE);
+		add_user_to_channel(chptr, source_p, chan::VOICE);
 		sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
 			      ":%s SJOIN %ld %s + :+%s",
-			      me.id, (long) chptr->channelts, chptr->chname, source_p->id);
-		send_channel_join(chptr, source_p);
-		sendto_channel_local(ALL_MEMBERS, chptr, ":%s MODE %s +v %s",
-				     me.name, chptr->chname, source_p->name);
+			      me.id, (long) chptr->channelts, chptr->name.c_str(), source_p->id);
+		send_join(*chptr, *source_p);
+		sendto_channel_local(chan::ALL_MEMBERS, chptr, ":%s MODE %s +v %s",
+				     me.name, chptr->name.c_str(), source_p->name);
 	}
 	else
 	{
-		add_user_to_channel(chptr, source_p, CHFL_PEON);
+		add_user_to_channel(chptr, source_p, chan::PEON);
 		sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
 			      ":%s JOIN %ld %s +",
-			      source_p->id, (long) chptr->channelts, chptr->chname);
-		send_channel_join(chptr, source_p);
+			      source_p->id, (long) chptr->channelts, chptr->name.c_str());
+		send_join(*chptr, *source_p);
 	}
 
 	/* send the topic... */
-	if(chptr->topic != NULL)
+	if(chptr->topic)
 	{
 		sendto_one(source_p, form_str(RPL_TOPIC), me.name,
-			   source_p->name, chptr->chname, chptr->topic);
+			   source_p->name, chptr->name.c_str(), chptr->topic.text.c_str());
 		sendto_one(source_p, form_str(RPL_TOPICWHOTIME), me.name,
-			   source_p->name, chptr->chname, chptr->topic_info, chptr->topic_time);
+			   source_p->name, chptr->name.c_str(), chptr->topic.info.c_str(), chptr->topic.time);
 	}
 
 	source_p->localClient->last_join_time = rb_current_time();

@@ -184,7 +184,7 @@ parse_resv(struct Client *source_p, const char *name, const char *reason, int te
 			     (temp_time > 0) ? SHARED_TRESV : SHARED_PRESV))
 		return;
 
-	if(IsChannelName(name))
+	if(chan::is_name(name))
 	{
 		if(hash_find_resv(name))
 		{
@@ -257,7 +257,7 @@ parse_resv(struct Client *source_p, const char *name, const char *reason, int te
 		}
 
 		add_to_resv_hash(aconf->host, aconf);
-		resv_chan_forcepart(aconf->host, aconf->passwd, temp_time);
+		chan::resv_chan_forcepart(aconf->host, aconf->passwd, temp_time);
 	}
 	else if(clean_resv_nick(name))
 	{
@@ -490,7 +490,7 @@ remove_resv(struct Client *source_p, const char *name, int propagated)
 	rb_dlink_node *ptr;
 	time_t now;
 
-	if(IsChannelName(name))
+	if(chan::is_name(name))
 	{
 		if((aconf = hash_find_resv(name)) == NULL)
 		{

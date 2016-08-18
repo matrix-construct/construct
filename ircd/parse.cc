@@ -392,7 +392,7 @@ static void
 do_numeric(int numeric, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
-	struct Channel *chptr;
+	chan::chan *chptr;
 
 	if(parc < 2 || !IsServer(source_p))
 		return;
@@ -473,9 +473,9 @@ do_numeric(int numeric, struct Client *client_p, struct Client *source_p, int pa
 		return;
 	}
 	else if((chptr = find_channel(parv[1])) != NULL)
-		sendto_channel_flags(client_p, ALL_MEMBERS, source_p, chptr,
+		sendto_channel_flags(client_p, chan::ALL_MEMBERS, source_p, chptr,
 				     "%03d %s%s",
-				     numeric, chptr->chname, buffer);
+				     numeric, chptr->name.c_str(), buffer);
 }
 
 void

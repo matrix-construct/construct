@@ -45,8 +45,8 @@ DECLARE_MODULE_AV2(omode, NULL, NULL, omode_clist, NULL, NULL, NULL, NULL, omode
 static void
 mo_omode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	struct Channel *chptr = NULL;
-	struct membership *msptr;
+	chan::chan *chptr = NULL;
+	chan::membership *msptr;
 	char params[512];
 	int i;
 	int wasonchannel;
@@ -59,7 +59,7 @@ mo_omode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	}
 
 	/* Now, try to find the channel in question */
-	if(!rfc1459::is_chan_prefix(parv[1][0]) || !check_channel_name(parv[1]))
+	if(!rfc1459::is_chan_prefix(parv[1][0]) || !chan::check_channel_name(parv[1]))
 	{
 		sendto_one_numeric(source_p, ERR_BADCHANNAME,
 				form_str(ERR_BADCHANNAME), parv[1]);
@@ -99,7 +99,7 @@ mo_omode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	ilog(L_MAIN, "OMODE called for [%s] [%s] by %s",
 	     parv[1], params, get_oper_name(source_p));
 
-	if(*chptr->chname != '&')
+	if(chptr->name[0] != '&')
 		sendto_server(NULL, NULL, NOCAPS, NOCAPS,
 			      ":%s WALLOPS :OMODE called for [%s] [%s] by %s!%s@%s",
 			      me.name, parv[1], params, source_p->name, source_p->username,
@@ -115,25 +115,25 @@ mo_omode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		if (!wasonchannel)
 		{
 			sendto_one_numeric(source_p, ERR_USERNOTINCHANNEL,
-					   form_str(ERR_USERNOTINCHANNEL), parv[3], chptr->chname);
+					   form_str(ERR_USERNOTINCHANNEL), parv[3], chptr->name.c_str());
 			return;
 		}
-		sendto_channel_local(ALL_MEMBERS, chptr, ":%s MODE %s +o %s",
+		sendto_channel_local(chan::ALL_MEMBERS, chptr, ":%s MODE %s +o %s",
 				me.name, parv[1], source_p->name);
 		sendto_server(NULL, chptr, CAP_TS6, NOCAPS,
 				":%s TMODE %ld %s +o %s",
 				me.id, (long) chptr->channelts, parv[1],
 				source_p->id);
-		msptr->flags |= CHFL_CHANOP;
+		msptr->flags |= chan::CHANOP;
 	}
 	else
 	{
 		/* Hack it so set_channel_mode() will accept */
 		if (wasonchannel)
-			msptr->flags |= CHFL_CHANOP;
+			msptr->flags |= chan::CHANOP;
 		else
 		{
-			add_user_to_channel(chptr, source_p, CHFL_CHANOP);
+			add_user_to_channel(chptr, source_p, chan::CHANOP);
 			msptr = find_channel_membership(chptr, source_p);
 		}
 		set_channel_mode(client_p, source_p, chptr, msptr,
@@ -142,7 +142,7 @@ mo_omode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		 * themselves as set_channel_mode() does not allow that
 		 * -- jilles */
 		if (wasonchannel)
-			msptr->flags &= ~CHFL_CHANOP;
+			msptr->flags &= ~chan::CHANOP;
 		else
 			remove_user_from_channel(msptr);
 	}

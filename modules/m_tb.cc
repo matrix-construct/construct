@@ -59,7 +59,7 @@ DECLARE_MODULE_AV2(tb, NULL, NULL, tb_clist, NULL, NULL, NULL, NULL, tb_desc);
 static void
 ms_tb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	struct Channel *chptr;
+	chan::chan *chptr;
 	const char *newtopic;
 	const char *newtopicwho;
 	time_t newtopicts;
@@ -92,23 +92,23 @@ ms_tb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	if (EmptyString(newtopic))
 		return;
 
-	if(chptr->topic == NULL || chptr->topic_time > newtopicts)
+	if(!chptr->topic || chptr->topic.time > newtopicts)
 	{
 		/* its possible the topicts is a few seconds out on some
 		 * servers, due to lag when propagating it, so if theyre the
 		 * same topic just drop the message --fl
 		 */
-		if(chptr->topic != NULL && strcmp(chptr->topic, newtopic) == 0)
+		if(chptr->topic && strcmp(chptr->topic.text.c_str(), newtopic) == 0)
 			return;
 
 		set_channel_topic(chptr, newtopic, newtopicwho, newtopicts);
-		sendto_channel_local(ALL_MEMBERS, chptr, ":%s TOPIC %s :%s",
-				     fakesource_p->name, chptr->chname, newtopic);
+		sendto_channel_local(chan::ALL_MEMBERS, chptr, ":%s TOPIC %s :%s",
+				     fakesource_p->name, chptr->name.c_str(), newtopic);
 		sendto_server(client_p, chptr, CAP_TB|CAP_TS6, NOCAPS,
 			      ":%s TB %s %ld %s%s:%s",
-			      use_id(source_p), chptr->chname, (long) chptr->topic_time,
-			      ConfigChannel.burst_topicwho ? chptr->topic_info : "",
-			      ConfigChannel.burst_topicwho ? " " : "", chptr->topic);
+			      use_id(source_p), chptr->name.c_str(), (long) chptr->topic.time,
+			      ConfigChannel.burst_topicwho ? chptr->topic.info.c_str() : "",
+			      ConfigChannel.burst_topicwho ? " " : "", chptr->topic.text.c_str());
 	}
 }
 
@@ -123,7 +123,7 @@ ms_tb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 static void
 ms_etb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	struct Channel *chptr;
+	chan::chan *chptr;
 	const char *newtopic;
 	const char *newtopicwho;
 	time_t channelts, newtopicts;
@@ -148,17 +148,17 @@ ms_etb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 	newtopicwho = parv[4];
 	newtopic = parv[parc - 1];
 
-	if(chptr->topic == NULL || chptr->channelts > channelts ||
-			(chptr->channelts == channelts && chptr->topic_time < newtopicts))
+	if(!chptr->topic || chptr->channelts > channelts ||
+			(chptr->channelts == channelts && chptr->topic.time < newtopicts))
 	{
-		textchange = chptr->topic == NULL || strcmp(chptr->topic, newtopic);
+		textchange = chptr->topic.text.empty() || strcmp(chptr->topic.text.c_str(), newtopic);
 		can_use_tb = textchange && !EmptyString(newtopic) &&
-			(chptr->topic == NULL || chptr->topic_time > newtopicts);
+			(chptr->topic.text.empty() || chptr->topic.time > newtopicts);
 
 		set_channel_topic(chptr, newtopic, newtopicwho, newtopicts);
-		newtopic = chptr->topic ? chptr->topic : "";
-		if (chptr->topic_info)
-			newtopicwho = chptr->topic_info;
+		newtopic = !chptr->topic.text.empty()? chptr->topic.text.c_str() : "";
+		if (!chptr->topic.info.empty())
+			newtopicwho = chptr->topic.info.c_str();  //TODO: XXX: ??
 
 		/* Do not send a textually identical topic to clients,
 		 * but do propagate the new topicts/topicwho to servers.
@@ -166,65 +166,65 @@ ms_etb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		if(textchange)
 		{
 			if (IsPerson(fakesource_p))
-				sendto_channel_local(ALL_MEMBERS, chptr,
+				sendto_channel_local(chan::ALL_MEMBERS, chptr,
 						":%s!%s@%s TOPIC %s :%s",
 						fakesource_p->name,
 						fakesource_p->username,
 						fakesource_p->host,
-						chptr->chname,
+						chptr->name.c_str(),
 						newtopic);
 			else
-				sendto_channel_local(ALL_MEMBERS, chptr,
+				sendto_channel_local(chan::ALL_MEMBERS, chptr,
 						":%s TOPIC %s :%s",
 						fakesource_p->name,
-						chptr->chname, newtopic);
+						chptr->name.c_str(), newtopic);
 		}
 		/* Propagate channelts as given, because an older channelts
 		 * forces any change.
 		 */
 		sendto_server(client_p, chptr, CAP_EOPMOD|CAP_TS6, NOCAPS,
 			      ":%s ETB %ld %s %ld %s :%s",
-			      use_id(source_p), (long)channelts, chptr->chname,
+			      use_id(source_p), (long)channelts, chptr->name.c_str(),
 			      (long)newtopicts, newtopicwho, newtopic);
 		source_server_p = IsServer(source_p) ? source_p : source_p->servptr;
 		if (can_use_tb)
 			sendto_server(client_p, chptr, CAP_TB|CAP_TS6, CAP_EOPMOD,
 				      ":%s TB %s %ld %s :%s",
 				      use_id(source_server_p),
-				      chptr->chname, (long)newtopicts,
+				      chptr->name.c_str(), (long)newtopicts,
 				      newtopicwho, newtopic);
 		else if (IsPerson(source_p) && textchange)
 		{
-			member = IsMember(source_p, chptr);
+			member = is_member(chptr, source_p);
 			if (!member)
 				sendto_server(client_p, chptr, CAP_TS6, CAP_EOPMOD,
 					      ":%s SJOIN %ld %s + :@%s",
 					      use_id(source_server_p),
 					      (long)chptr->channelts,
-					      chptr->chname, use_id(source_p));
+					      chptr->name.c_str(), use_id(source_p));
 			if (EmptyString(newtopic) ||
 					newtopicts >= rb_current_time() - 60)
 				sendto_server(client_p, chptr, CAP_TS6, CAP_EOPMOD,
 					      ":%s TOPIC %s :%s",
 					      use_id(source_p),
-					      chptr->chname, newtopic);
+					      chptr->name.c_str(), newtopic);
 			else
 			{
 				sendto_server(client_p, chptr, CAP_TS6, CAP_EOPMOD,
 					      ":%s TOPIC %s :%s",
 					      use_id(source_p),
-					      chptr->chname, "");
+					      chptr->name.c_str(), "");
 				sendto_server(client_p, chptr, CAP_TB|CAP_TS6, CAP_EOPMOD,
 					      ":%s TB %s %ld %s :%s",
 					      use_id(source_server_p),
-					      chptr->chname, (long)newtopicts,
+					      chptr->name.c_str(), (long)newtopicts,
 					      newtopicwho, newtopic);
 			}
 			if (!member)
 				sendto_server(client_p, chptr, CAP_TS6, CAP_EOPMOD,
 					      ":%s PART %s :Topic set for %s",
 					      use_id(source_p),
-					      chptr->chname, newtopicwho);
+					      chptr->name.c_str(), newtopicwho);
 		}
 		else if (textchange)
 		{
@@ -233,7 +233,7 @@ ms_etb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 			 */
 			sendto_server(client_p, chptr, CAP_TS6, CAP_EOPMOD,
 				      ":%s NOTICE %s :*** Notice -- Dropping topic change for %s",
-				      me.id, chptr->chname, chptr->chname);
+				      me.id, chptr->name.c_str(), chptr->name.c_str());
 		}
 	}
 }

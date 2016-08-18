@@ -51,7 +51,7 @@ static void
 m_names(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
-	struct Channel *chptr = NULL;
+	chan::chan *chptr = NULL;
 	char *s;
 
 	if(parc > 1 && !EmptyString(parv[1]))
@@ -60,7 +60,7 @@ m_names(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		if((s = strchr(p, ',')))
 			*s = '\0';
 
-		if(!check_channel_name(p))
+		if(!chan::check_channel_name(p))
 		{
 			sendto_one_numeric(source_p, ERR_BADCHANNAME,
 					   form_str(ERR_BADCHANNAME),
@@ -112,15 +112,15 @@ names_global(struct Client *source_p)
 	bool dont_show = false;
 	rb_dlink_node *lp, *ptr;
 	struct Client *target_p;
-	struct Channel *chptr = NULL;
-	struct membership *msptr;
+	chan::chan *chptr = NULL;
+	chan::membership *msptr;
 	char buf[BUFSIZE];
 	char *t;
 
 	/* first do all visible channels */
-	RB_DLINK_FOREACH(ptr, global_channel_list.head)
+	RB_DLINK_FOREACH(ptr, chan::global_channel_list.head)
 	{
-		chptr = (Channel *)ptr->data;
+		chptr = (chan::chan *)ptr->data;
 		channel_member_names(chptr, source_p, 0);
 	}
 	cur_len = mlen = sprintf(buf, form_str(RPL_NAMREPLY),
@@ -145,11 +145,10 @@ names_global(struct Client *source_p)
 		 */
 		RB_DLINK_FOREACH(lp, target_p->user->channel.head)
 		{
-			msptr = (membership *)lp->data;
-			chptr = msptr->chptr;
+			msptr = (chan::membership *)lp->data;
+			chptr = msptr->chan;
 
-			if(PubChannel(chptr) || IsMember(source_p, chptr) ||
-			   SecretChannel(chptr))
+			if(pub(chptr) || is_member(chptr, source_p) || secret(chptr))
 			{
 				dont_show = true;
 				break;

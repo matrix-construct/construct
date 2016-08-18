@@ -27,76 +27,56 @@
 
 #ifdef __cplusplus
 namespace ircd {
+namespace chan {
 
-/* channel status flags */
-#define CHFL_PEON		0x0000	/* normal member of channel */
-#define CHFL_VOICE      	0x0001	/* the power to speak */
-#define CHFL_CHANOP	     	0x0002	/* Channel operator */
-#define CHFL_BANNED		0x0008  /* cached as banned */
-#define CHFL_QUIETED		0x0010  /* cached as being +q victim */
-#define ONLY_SERVERS		0x0020
-#define ONLY_OPERS		0x0040
-#define ALL_MEMBERS		CHFL_PEON
-#define ONLY_CHANOPS		CHFL_CHANOP
-#define ONLY_CHANOPSVOICED	(CHFL_CHANOP|CHFL_VOICE)
-
-//TODO: will rm
-#define CHFL_BAN        0x10000000  /* ban channel flag */
-#define CHFL_EXCEPTION  0x20000000  /* exception to ban channel flag */
-#define CHFL_INVEX      0x40000000
-#define CHFL_QUIET      0x80000000
-
-// mode structure for channels
-struct Mode
+enum status
 {
-	static constexpr size_t KEYLEN
-	{
-		24  // 23+1 for \0
-	};
-
-	unsigned int mode;
-	int limit;
-	char key[KEYLEN];
-	unsigned int join_num;
-	unsigned int join_time;
-	char forward[LOC_CHANNELLEN + 1];
+	PEON                = 0x0000,          // normal member of channel
+	VOICE               = 0x0001,	       // the power to speak
+	CHANOP              = 0x0002,          // Channel operator
+	BANNED              = 0x0008,          // cached as banned
+	QUIETED             = 0x0010,          // cached as being +q victim
+	ONLY_OPERS          = 0x0020,
+	ONLY_SERVERS        = 0x0040,
+	ONLY_CHANOPS        = CHANOP,
+	ONLY_CHANOPSVOICED  = CHANOP | VOICE,
+	ALL_MEMBERS         = PEON,
 };
 
-/* channel structure */
-struct Channel
+struct topic
 {
-	rb_dlink_node node;
-	Mode mode;
-	char *mode_lock;
-	char *topic;
-	char *topic_info;
-	time_t topic_time;
-	time_t last_knock;	/* don't allow knock to flood */
+	std::string text;
+	std::string info;
+	time_t time = 0;
 
-	rb_dlink_list members;	/* channel members */
-	rb_dlink_list locmembers;	/* local channel members */
+	operator bool() const;
+};
 
-	rb_dlink_list invites;
-	rb_dlink_list banlist;
-	rb_dlink_list exceptlist;
-	rb_dlink_list invexlist;
-	rb_dlink_list quietlist;
+struct ban
+{
+	static constexpr auto LEN = 195;
 
-	time_t first_received_message_time;	/* channel flood control */
-	int received_number_of_privmsgs;
-	int flood_noticed;
+	std::string banstr;
+	std::string who;
+	std::string forward;
+	time_t when;
+	rb_dlink_node node = {0};
 
-	unsigned int join_count;  /* joins within delta */
-	unsigned int join_delta;  /* last ts of join */
+	ban(const std::string &banstr, const std::string &who, const std::string &forward);
+};
 
-	time_t bants;
-	time_t channelts;
-	char *chname;
+struct modes
+{
+	static constexpr size_t KEYLEN = 24; // 23+1 for \0
 
-	struct Client *last_checked_client;
-	time_t last_checked_ts;
-	unsigned int last_checked_type;
-	int last_checked_result;
+	uint mode;
+	int limit;
+	char key[KEYLEN];
+	uint join_num;
+	uint join_time;
+	char forward[LOC_CHANNELLEN + 1];
+
+	modes();
 };
 
 struct membership
@@ -105,127 +85,249 @@ struct membership
 	rb_dlink_node locchannode;
 	rb_dlink_node usernode;
 
-	struct Channel *chptr;
-	struct Client *client_p;
+	struct chan *chan;
+	Client *client;
 	unsigned int flags;
 
 	time_t bants;
+
+	membership();
+	~membership() noexcept;
 };
 
-#define BANLEN 195
-struct Ban
+bool is_chanop(const membership &);
+bool is_chanop(const membership *const &);
+bool is_voiced(const membership &);
+bool is_voiced(const membership *const &);
+bool is_chanop_voiced(const membership &);
+bool is_chanop_voiced(const membership *const &);
+bool can_send_banned(const membership &);
+bool can_send_banned(const membership *const &);
+const char *find_status(const membership *const &msptr, const int &combine);
+
+struct chan
 {
-	char *banstr;
-	char *who;
-	time_t when;
-	char *forward;
-	rb_dlink_node node;
+	std::string name;
+	struct modes mode;
+	std::string mode_lock;
+	struct topic topic;
+
+	rb_dlink_list members;
+	rb_dlink_list locmembers;
+
+	rb_dlink_list invites;
+	rb_dlink_list banlist;
+	rb_dlink_list exceptlist;
+	rb_dlink_list invexlist;
+	rb_dlink_list quietlist;
+
+	uint join_count;                     // joins within delta
+	uint join_delta;                     // last ts of join
+	uint flood_noticed;
+	int received_number_of_privmsgs;
+	time_t first_received_message_time;  // channel flood control
+	time_t last_knock;                   // don't allow knock to flood
+	time_t bants;
+	time_t channelts;
+	time_t last_checked_ts;
+	client *last_checked_client;
+	uint last_checked_type;
+	int last_checked_result;
+
+	rb_dlink_node node = {0};
+
+	chan(const std::string &name);
+	~chan() noexcept;
 };
 
-/* can_send results */
-#define CAN_SEND_NO	0
-#define CAN_SEND_NONOP  1
-#define CAN_SEND_OPV	2
+bool secret(const chan &);
+bool secret(const chan *const &);
+bool hidden(const chan &);
+bool hidden(const chan *const &);
+bool pub(const chan &);
+bool pub(const chan *const &);
+bool can_show(const chan &, const client &);
+bool can_show(const chan *const &, const client *const &);
+bool is_member(const chan &c, const client &);
+bool is_member(const chan *const &, const client *const &);
+bool is_name(const char *const &name);
 
-#define is_chanop(x)	((x) && (x)->flags & CHFL_CHANOP)
-#define is_voiced(x)	((x) && (x)->flags & CHFL_VOICE)
-#define is_chanop_voiced(x) ((x) && (x)->flags & (CHFL_CHANOP|CHFL_VOICE))
-#define can_send_banned(x) ((x) && (x)->flags & (CHFL_BANNED|CHFL_QUIETED))
+enum : int
+{
+	CAN_SEND_NO     = 0,
+	CAN_SEND_NONOP  = 1,
+	CAN_SEND_OPV    = 2,
+};
+int can_send(chan *, client *, membership *);
 
-/* mode flags for direction indication */
-#define MODE_QUERY     0
-#define MODE_ADD       1
-#define MODE_DEL       -1
-
-//TODO: will inline
-#define SecretChannel(x)        ((x) && ((x)->mode.mode & ircd::chan::mode::SECRET))
-#define HiddenChannel(x)        ((x) && ((x)->mode.mode & ircd::chan::mode::PRIVATE))
-#define PubChannel(x)           ((!x) || ((x)->mode.mode &\
-                                 (ircd::chan::mode::PRIVATE | ircd::chan::mode::SECRET)) == 0)
-
-/* channel visible */
-#define ShowChannel(v,c)        (PubChannel(c) || IsMember((v),(c)))
-
-#define IsMember(who, chan) ((who && who->user && \
-                find_channel_membership(chan, who)) ? 1 : 0)
-
-#define IsChannelName(name) ((name) && (*(name) == '#' || *(name) == '&'))
-
-extern rb_dlink_list global_channel_list;
-void init_channels(void);
-
-struct Channel *allocate_channel(const char *chname);
-void free_channel(struct Channel *chptr);
-struct Ban *allocate_ban(const char *, const char *, const char *);
-void free_ban(struct Ban *bptr);
-
-
-extern void destroy_channel(struct Channel *);
-
-extern int can_send(struct Channel *chptr, struct Client *who,
-		    struct membership *);
-extern bool flood_attack_channel(int p_or_n, struct Client *source_p,
-				struct Channel *chptr, char *chname);
-extern int is_banned(struct Channel *chptr, struct Client *who,
-		    struct membership *msptr, const char *, const char *, const char **);
-extern int is_quieted(struct Channel *chptr, struct Client *who,
-		     struct membership *msptr, const char *, const char *);
-extern int can_join(struct Client *source_p, struct Channel *chptr,
-		    const char *key, const char **forward);
-
-extern struct membership *find_channel_membership(struct Channel *, struct Client *);
-extern const char *find_channel_status(struct membership *msptr, int combine);
-extern void add_user_to_channel(struct Channel *, struct Client *, int flags);
-extern void remove_user_from_channel(struct membership *);
-extern void remove_user_from_channels(struct Client *);
-extern void invalidate_bancache_user(struct Client *);
-
-extern void free_channel_list(rb_dlink_list *);
-
-extern bool check_channel_name(const char *name);
-
-extern void channel_member_names(struct Channel *chptr, struct Client *,
-				 int show_eon);
-
-extern void del_invite(struct Channel *chptr, struct Client *who);
-
-const char *channel_modes(struct Channel *chptr, struct Client *who);
-
-extern struct Channel *find_bannickchange_channel(struct Client *client_p);
-
-extern void check_spambot_warning(struct Client *source_p, const char *name);
-
-extern void check_splitmode(void *);
-
-void set_channel_topic(struct Channel *chptr, const char *topic,
-		       const char *topic_info, time_t topicts);
-
-extern void init_chcap_usage_counts(void);
-extern void set_chcap_usage_counts(struct Client *serv_p);
-extern void unset_chcap_usage_counts(struct Client *serv_p);
-extern void send_cap_mode_changes(struct Client *client_p, struct Client *source_p,
-				  struct Channel *chptr, chan::mode::change foo[], int);
-
+bool flood_attack_channel(int p_or_n, client *source, chan *);
+int is_banned(chan *, client *who, membership *, const char *, const char *, const char **);
+int is_quieted(chan *, client *who, membership *, const char *, const char *);
+int can_join(client *source, chan *, const char *key, const char **forward);
+void add_user_to_channel(chan *, client *, int flags);
+void remove_user_from_channel(membership *);
+void remove_user_from_channels(client *);
+void invalidate_bancache_user(client *);
+void free_channel_list(rb_dlink_list *);
+bool check_channel_name(const char *name);
+void channel_member_names(chan *, client *, int show_eon);
+void del_invite(chan *, client *who);
+const char *channel_modes(chan *, client *who);
+chan *find_bannickchange_channel(client *);
+void check_spambot_warning(client *source, const char *name);
+void check_splitmode(void *);
+void set_channel_topic(chan *, const char *topic, const char *topic_info, time_t topicts);
+void init_chcap_usage_counts(void);
+void set_chcap_usage_counts(client *serv_p);
+void unset_chcap_usage_counts(client *serv_p);
+void send_cap_mode_changes(client *, client *source, chan *, mode::change foo[], int);
 void resv_chan_forcepart(const char *name, const char *reason, int temp_time);
-
-extern void set_channel_mode(struct Client *client_p, struct Client *source_p,
-            	struct Channel *chptr, struct membership *msptr, int parc, const char *parv[]);
-extern void set_channel_mlock(struct Client *client_p, struct Client *source_p,
-            	struct Channel *chptr, const char *newmlock, bool propagate);
-
-extern bool add_id(struct Client *source_p, struct Channel *chptr, const char *banid,
-	const char *forward, rb_dlink_list * list, long mode_type);
-
-extern struct Ban * del_id(struct Channel *chptr, const char *banid, rb_dlink_list * list,
-	long mode_type);
-
-extern int match_extban(const char *banstr, struct Client *client_p, struct Channel *chptr, long mode_type);
-extern int valid_extban(const char *banstr, struct Client *client_p, struct Channel *chptr, long mode_type);
+void set_channel_mode(client *, client *source, chan *, membership *, int parc, const char *parv[]);
+void set_channel_mlock(client *, client *source, chan *, const char *newmlock, bool propagate);
+bool add_id(client *source, chan *, const char *banid, const char *forward, rb_dlink_list * list, long mode_type);
+ban *del_id(chan *, const char *banid, rb_dlink_list * list, long mode_type);
+int match_extban(const char *banstr, client *, chan *, long mode_type);
+int valid_extban(const char *banstr, client *, chan *, long mode_type);
 const char * get_extban_string(void);
+int get_channel_access(client *source, chan *, membership *, int dir, const char *modestr);
+membership *find_channel_membership(chan *chptr, client *client_p);
+void send_join(chan &, client &);
 
-extern int get_channel_access(struct Client *source_p, struct Channel *chptr, struct membership *msptr, int dir, const char *modestr);
+//extern std::map<std::string, std::unique_ptr<chan>> chans;
+extern rb_dlink_list global_channel_list;
 
-extern void send_channel_join(struct Channel *chptr, struct Client *client_p);
 
+void init();
+
+
+inline bool
+secret(const chan &c)
+{
+	return c.mode.mode & mode::SECRET;
+}
+
+inline bool
+secret(const chan *const &c)
+{
+	return c && secret(*c);
+}
+
+inline bool
+hidden(const chan &c)
+{
+	return c.mode.mode & mode::PRIVATE;
+}
+
+inline bool
+hidden(const chan *const &c)
+{
+	return c && hidden(*c);
+}
+
+inline bool
+pub(const chan &c)
+{
+	return ~c.mode.mode & (mode::PRIVATE | mode::SECRET);
+}
+
+inline bool
+pub(const chan *const &c)
+{
+	return !c || pub(*c);
+}
+
+inline bool
+is_member(const chan &c, const client &client)
+{
+	//return client.user && get(c, client, std::nothrow) != nullptr;
+	return find_channel_membership(const_cast<struct chan *>(&c), const_cast<Client *>(&client)) != nullptr;
+}
+
+inline bool
+is_member(const chan *const &c, const client *const &client)
+{
+	return c && client && is_member(*c, *client);
+}
+
+inline bool
+can_show(const chan &c, const client &client)
+{
+	return pub(c) || is_member(c, client);
+}
+
+inline bool
+can_show(const chan *const &c, const client *const &client)
+{
+	return pub(c) || is_member(c, client);
+}
+
+inline bool
+is_name(const char *const &name)
+{
+	return name && (*name == '#' || *name == '&');
+}
+
+inline bool
+is_chanop(const membership &m)
+{
+	return m.flags & CHANOP;
+}
+
+inline bool
+is_chanop(const membership *const &m)
+{
+	return m && is_chanop(*m);
+}
+
+inline bool
+is_voiced(const membership &m)
+{
+	return m.flags & VOICE;
+}
+
+inline bool
+is_voiced(const membership *const &m)
+{
+	return m && is_voiced(*m);
+}
+
+inline bool
+is_chanop_voiced(const membership &m)
+{
+	return m.flags & (VOICE | CHANOP);
+}
+
+inline bool
+is_chanop_voiced(const membership *const &m)
+{
+	return m && is_chanop_voiced(*m);
+}
+
+inline bool
+can_send_banned(const membership &m)
+{
+	return m.flags & (BANNED | QUIETED);
+}
+
+inline bool
+can_send_banned(const membership *const &m)
+{
+	return m && can_send_banned(*m);
+}
+
+inline bool
+operator!(const topic &topic)
+{
+	return !bool(topic);
+}
+
+inline
+topic::operator bool()
+const
+{
+	return !text.empty();
+}
+
+}      // namespace chan
 }      // namespace ircd
 #endif // __cplusplus

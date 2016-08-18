@@ -629,7 +629,7 @@ charybdis_main(int argc, char * const argv[])
 	init_host_hash();
 	init_client();
 	init_hook();
-	init_channels();
+	chan::init();
 	initclass();
 	whowas_init();
 	init_reject();
@@ -735,7 +735,7 @@ charybdis_main(int argc, char * const argv[])
 	rb_event_addish("reseed_srand", seed_random, NULL, 300); /* reseed every 10 minutes */
 
 	if(splitmode)
-		check_splitmode_ev = rb_event_add("check_splitmode", check_splitmode, NULL, 5);
+		check_splitmode_ev = rb_event_add("check_splitmode", chan::check_splitmode, NULL, 5);
 
 	print_startup(getpid());
 

@@ -134,10 +134,10 @@ show_lusers(struct Client *source_p)
 				   form_str(RPL_LUSERUNKNOWN),
 				   (int)rb_dlink_list_length(&unknown_list));
 
-	if(rb_dlink_list_length(&global_channel_list) > 0)
+	if(rb_dlink_list_length(&chan::global_channel_list) > 0)
 		sendto_one_numeric(source_p, RPL_LUSERCHANNELS,
 				   form_str(RPL_LUSERCHANNELS),
-				   rb_dlink_list_length(&global_channel_list));
+				   rb_dlink_list_length(&chan::global_channel_list));
 
 	sendto_one_numeric(source_p, RPL_LUSERME, form_str(RPL_LUSERME),
 			   (int)rb_dlink_list_length(&lclient_list),
@@ -1472,8 +1472,8 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 		      const char *host, int newts, const char *format, ...)
 {
 	rb_dlink_node *ptr;
-	struct Channel *chptr;
-	struct membership *mscptr;
+	chan::chan *chptr;
+	chan::membership *mscptr;
 	int changed = irccmp(target_p->name, nick);
 	int changed_case = strcmp(target_p->name, nick);
 	int do_qjm = irccmp(target_p->username, user) || irccmp(target_p->host, host);
@@ -1487,7 +1487,7 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 		target_p->tsinfo = newts;
 		monitor_signoff(target_p);
 	}
-	invalidate_bancache_user(target_p);
+	chan::invalidate_bancache_user(target_p);
 
 	if(do_qjm)
 	{
@@ -1501,8 +1501,8 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 
 		RB_DLINK_FOREACH(ptr, target_p->user->channel.head)
 		{
-			mscptr = (membership *)ptr->data;
-			chptr = mscptr->chptr;
+			mscptr = (chan::membership *)ptr->data;
+			chptr = mscptr->chan;
 			mptr = mode;
 
 			if(is_chanop(mscptr))
@@ -1520,16 +1520,16 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 
 			*mptr = '\0';
 
-			sendto_channel_local_with_capability_butone(target_p, ALL_MEMBERS, NOCAPS, CLICAP_EXTENDED_JOIN | CLICAP_CHGHOST, chptr,
-								    ":%s!%s@%s JOIN %s", nick, user, host, chptr->chname);
-			sendto_channel_local_with_capability_butone(target_p, ALL_MEMBERS, CLICAP_EXTENDED_JOIN, CLICAP_CHGHOST, chptr,
-								    ":%s!%s@%s JOIN %s %s :%s", nick, user, host, chptr->chname,
+			sendto_channel_local_with_capability_butone(target_p, chan::ALL_MEMBERS, NOCAPS, CLICAP_EXTENDED_JOIN | CLICAP_CHGHOST, chptr,
+								    ":%s!%s@%s JOIN %s", nick, user, host, chptr->name.c_str());
+			sendto_channel_local_with_capability_butone(target_p, chan::ALL_MEMBERS, CLICAP_EXTENDED_JOIN, CLICAP_CHGHOST, chptr,
+								    ":%s!%s@%s JOIN %s %s :%s", nick, user, host, chptr->name.c_str(),
 								    EmptyString(target_p->user->suser) ? "*" : target_p->user->suser,
 								    target_p->info);
 
 			if(*mode)
-				sendto_channel_local_with_capability_butone(target_p, ALL_MEMBERS, NOCAPS, CLICAP_CHGHOST, chptr,
-						":%s MODE %s +%s %s", target_p->servptr->name, chptr->chname, mode, modeval);
+				sendto_channel_local_with_capability_butone(target_p, chan::ALL_MEMBERS, NOCAPS, CLICAP_CHGHOST, chptr,
+						":%s MODE %s +%s %s", target_p->servptr->name, chptr->name.c_str(), mode, modeval);
 
 			*modeval = '\0';
 		}

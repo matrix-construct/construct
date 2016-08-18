@@ -90,17 +90,17 @@ static bool duplicate_ptr(void *);
 
 static void msg_channel(enum message_type msgtype,
 			struct Client *client_p,
-			struct Client *source_p, struct Channel *chptr, const char *text);
+			struct Client *source_p, chan::chan *chptr, const char *text);
 
 static void msg_channel_opmod(enum message_type msgtype,
 			      struct Client *client_p,
-			      struct Client *source_p, struct Channel *chptr,
+			      struct Client *source_p, chan::chan *chptr,
 			      const char *text);
 
 static void msg_channel_flags(enum message_type msgtype,
 			      struct Client *client_p,
 			      struct Client *source_p,
-			      struct Channel *chptr, int flags, const char *text);
+			      chan::chan *chptr, int flags, const char *text);
 
 static void msg_client(enum message_type msgtype,
 		       struct Client *source_p, struct Client *target_p, const char *text);
@@ -190,17 +190,17 @@ m_message(enum message_type msgtype, struct MsgBuf *msgbuf_p,
 		{
 		case ENTITY_CHANNEL:
 			msg_channel(msgtype, client_p, source_p,
-				    (struct Channel *) targets[i].ptr, parv[2]);
+				    (chan::chan *) targets[i].ptr, parv[2]);
 			break;
 
 		case ENTITY_CHANNEL_OPMOD:
 			msg_channel_opmod(msgtype, client_p, source_p,
-				   (struct Channel *) targets[i].ptr, parv[2]);
+				   (chan::chan *) targets[i].ptr, parv[2]);
 			break;
 
 		case ENTITY_CHANOPS_ON_CHANNEL:
 			msg_channel_flags(msgtype, client_p, source_p,
-					  (struct Channel *) targets[i].ptr,
+					  (chan::chan *) targets[i].ptr,
 					  targets[i].flags, parv[2]);
 			break;
 
@@ -235,7 +235,7 @@ build_target_list(enum message_type msgtype, struct Client *client_p,
 {
 	int type;
 	char *p, *nick, *target_list;
-	struct Channel *chptr = NULL;
+	chan::chan *chptr = NULL;
 	struct Client *target_p;
 
 	target_list = LOCAL_COPY(nicks_channels);	/* skip strcpy for non-lazyleafs */
@@ -310,9 +310,9 @@ build_target_list(enum message_type msgtype, struct Client *client_p,
 		for(;;)
 		{
 			if(*nick == '@')
-				type |= CHFL_CHANOP;
+				type |= chan::CHANOP;
 			else if(*nick == '+')
-				type |= CHFL_CHANOP | CHFL_VOICE;
+				type |= chan::CHANOP | chan::VOICE;
 			else
 				break;
 			nick++;
@@ -334,7 +334,7 @@ build_target_list(enum message_type msgtype, struct Client *client_p,
 
 			if((chptr = find_channel(nick)) != NULL)
 			{
-				struct membership *msptr;
+				chan::membership *msptr;
 
 				msptr = find_channel_membership(chptr, source_p);
 
@@ -455,7 +455,7 @@ duplicate_ptr(void *ptr)
  */
 static void
 msg_channel(enum message_type msgtype,
-	    struct Client *client_p, struct Client *source_p, struct Channel *chptr,
+	    struct Client *client_p, struct Client *source_p, chan::chan *chptr,
 	    const char *text)
 {
 	int result;
@@ -485,9 +485,14 @@ msg_channel(enum message_type msgtype,
 		if (msgtype == MESSAGE_TYPE_PRIVMSG)
 		{
 			if (!EmptyString(hdata.reason))
-				sendto_one_numeric(source_p, ERR_CANNOTSENDTOCHAN,form_str(ERR_CANNOTSENDTOCHAN)" (%s).",chptr->chname,hdata.reason);
+				sendto_one_numeric(source_p, ERR_CANNOTSENDTOCHAN,
+				                   form_str(ERR_CANNOTSENDTOCHAN)" (%s).",
+				                   chptr->name.c_str(),
+				                   hdata.reason);
 			else
-				sendto_one_numeric(source_p, ERR_CANNOTSENDTOCHAN,form_str(ERR_CANNOTSENDTOCHAN),chptr->chname);
+				sendto_one_numeric(source_p, ERR_CANNOTSENDTOCHAN,
+				                   form_str(ERR_CANNOTSENDTOCHAN),
+				                   chptr->name.c_str());
 		}
 
 		return;
@@ -506,43 +511,46 @@ msg_channel(enum message_type msgtype,
 	/* chanops and voiced can flood their own channel with impunity */
 	if((result = can_send(chptr, source_p, NULL)))
 	{
-		if(result != CAN_SEND_OPV && MyClient(source_p) &&
+		if(result != chan::CAN_SEND_OPV && MyClient(source_p) &&
 		   !IsOper(source_p) &&
 		   !add_channel_target(source_p, chptr))
 		{
 			sendto_one(source_p, form_str(ERR_TARGCHANGE),
-				   me.name, source_p->name, chptr->chname);
+			           me.name,
+			           source_p->name,
+			           chptr->name.c_str());
 			return;
 		}
-		if(result == CAN_SEND_OPV ||
-		   !flood_attack_channel(msgtype, source_p, chptr, chptr->chname))
+		if(result == chan::CAN_SEND_OPV ||
+		   !flood_attack_channel(msgtype, source_p, chptr))
 		{
-			sendto_channel_flags(client_p, ALL_MEMBERS, source_p, chptr,
-					     "%s %s :%s", cmdname[msgtype], chptr->chname, text);
+			sendto_channel_flags(client_p, chan::ALL_MEMBERS, source_p, chptr,
+			                     "%s %s :%s",
+			                     cmdname[msgtype],
+			                     chptr->name.c_str(),
+			                     text);
 		}
 	}
 	else if(chptr->mode.mode & chan::mode::OPMODERATE &&
-			(!(chptr->mode.mode & chan::mode::NOPRIVMSGS) ||
-			 IsMember(source_p, chptr)))
+	        (!(chptr->mode.mode & chan::mode::NOPRIVMSGS) || is_member(chptr, source_p)))
 	{
-		if(MyClient(source_p) && !IsOper(source_p) &&
-		   !add_channel_target(source_p, chptr))
+		if(MyClient(source_p) && !IsOper(source_p) && !add_channel_target(source_p, chptr))
 		{
 			sendto_one(source_p, form_str(ERR_TARGCHANGE),
-				   me.name, source_p->name, chptr->chname);
+			           me.name,
+			           source_p->name,
+			           chptr->name.c_str());
 			return;
 		}
-		if(!flood_attack_channel(msgtype, source_p, chptr, chptr->chname))
-		{
-			sendto_channel_opmod(client_p, source_p, chptr,
-					     cmdname[msgtype], text);
-		}
+
+		if(!flood_attack_channel(msgtype, source_p, chptr))
+			sendto_channel_opmod(client_p, source_p, chptr, cmdname[msgtype], text);
 	}
 	else
 	{
 		if(msgtype != MESSAGE_TYPE_NOTICE)
 			sendto_one_numeric(source_p, ERR_CANNOTSENDTOCHAN,
-					   form_str(ERR_CANNOTSENDTOCHAN), chptr->chname);
+					   form_str(ERR_CANNOTSENDTOCHAN), chptr->name.c_str());
 	}
 }
 /*
@@ -560,7 +568,7 @@ msg_channel(enum message_type msgtype,
 static void
 msg_channel_opmod(enum message_type msgtype,
 		  struct Client *client_p, struct Client *source_p,
-		  struct Channel *chptr, const char *text)
+		  chan::chan *chptr, const char *text)
 {
 	hook_data_privmsg_channel hdata;
 
@@ -584,26 +592,24 @@ msg_channel_opmod(enum message_type msgtype,
 	{
 		/* could be empty after colour stripping and
 		 * that would cause problems later */
-		if(msgtype != MESSAGE_TYPE_NOTICE)
-			sendto_one(source_p, form_str(ERR_NOTEXTTOSEND), me.name, source_p->name);
+		if (msgtype != MESSAGE_TYPE_NOTICE)
+			sendto_one(source_p, form_str(ERR_NOTEXTTOSEND),
+			           me.name,
+			           source_p->name);
 		return;
 	}
 
-	if(chptr->mode.mode & chan::mode::OPMODERATE &&
-			(!(chptr->mode.mode & chan::mode::NOPRIVMSGS) ||
-			 IsMember(source_p, chptr)))
+	if (chptr->mode.mode & chan::mode::OPMODERATE &&
+	   (!(chptr->mode.mode & chan::mode::NOPRIVMSGS) || is_member(chptr, source_p)))
 	{
-		if(!flood_attack_channel(msgtype, source_p, chptr, chptr->chname))
-		{
-			sendto_channel_opmod(client_p, source_p, chptr,
-					     cmdname[msgtype], text);
-		}
+		if (!flood_attack_channel(msgtype, source_p, chptr))
+			sendto_channel_opmod(client_p, source_p, chptr, cmdname[msgtype], text);
 	}
 	else
 	{
-		if(msgtype != MESSAGE_TYPE_NOTICE)
-			sendto_one_numeric(source_p, ERR_CANNOTSENDTOCHAN,
-					   form_str(ERR_CANNOTSENDTOCHAN), chptr->chname);
+		if (msgtype != MESSAGE_TYPE_NOTICE)
+			sendto_one_numeric(source_p, ERR_CANNOTSENDTOCHAN, form_str(ERR_CANNOTSENDTOCHAN),
+			                   chptr->name.c_str());
 	}
 }
 
@@ -622,20 +628,20 @@ msg_channel_opmod(enum message_type msgtype,
  */
 static void
 msg_channel_flags(enum message_type msgtype, struct Client *client_p,
-		  struct Client *source_p, struct Channel *chptr, int flags, const char *text)
+		  struct Client *source_p, chan::chan *chptr, int flags, const char *text)
 {
 	int type;
 	char c;
 	hook_data_privmsg_channel hdata;
 
-	if(flags & CHFL_VOICE)
+	if(flags & chan::VOICE)
 	{
-		type = ONLY_CHANOPSVOICED;
+		type = chan::ONLY_CHANOPSVOICED;
 		c = '+';
 	}
 	else
 	{
-		type = ONLY_CHANOPS;
+		type = chan::ONLY_CHANOPS;
 		c = '@';
 	}
 
@@ -671,7 +677,7 @@ msg_channel_flags(enum message_type msgtype, struct Client *client_p,
 	}
 
 	sendto_channel_flags(client_p, type, source_p, chptr, "%s %c%s :%s",
-			     cmdname[msgtype], c, chptr->chname, text);
+			     cmdname[msgtype], c, chptr->name.c_str(), text);
 }
 
 static void

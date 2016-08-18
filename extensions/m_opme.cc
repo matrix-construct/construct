@@ -39,8 +39,8 @@ DECLARE_MODULE_AV2(opme, NULL, NULL, opme_clist, NULL, NULL, NULL, NULL, opme_de
 static void
 mo_opme(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	struct Channel *chptr;
-	struct membership *msptr;
+	chan::chan *chptr;
+	chan::membership *msptr;
 	rb_dlink_node *ptr;
 
 	/* admins only */
@@ -59,7 +59,7 @@ mo_opme(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 
 	RB_DLINK_FOREACH(ptr, chptr->members.head)
 	{
-		msptr = (membership *)ptr->data;
+		msptr = (chan::membership *)ptr->data;
 
 		if(is_chanop(msptr))
 		{
@@ -73,7 +73,7 @@ mo_opme(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	if(msptr == NULL)
 		return;
 
-	msptr->flags |= CHFL_CHANOP;
+	msptr->flags |= chan::CHANOP;
 
 	sendto_wallops_flags(UMODE_WALLOP, &me,
 			     "OPME called for [%s] by %s!%s@%s",
@@ -82,7 +82,7 @@ mo_opme(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	     parv[1], get_oper_name(source_p));
 
 	/* dont send stuff for local channels remotely. */
-	if(*chptr->chname != '&')
+	if(chptr->name[0] != '&')
 	{
 		sendto_server(NULL, NULL, NOCAPS, NOCAPS,
 			      ":%s WALLOPS :OPME called for [%s] by %s!%s@%s",
@@ -93,6 +93,6 @@ mo_opme(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 			      me.id, (long) chptr->channelts, parv[1], source_p->id);
 	}
 
-	sendto_channel_local(ALL_MEMBERS, chptr,
+	sendto_channel_local(chan::ALL_MEMBERS, chptr,
 			     ":%s MODE %s +o %s", me.name, parv[1], source_p->name);
 }

@@ -391,7 +391,7 @@ quote_splitmode(struct Client *source_p, const char *charval, int intval)
 					     get_oper_name(source_p));
 
 			splitchecking = true;
-			check_splitmode(NULL);
+			chan::check_splitmode(NULL);
 		}
 	}
 	else
@@ -414,7 +414,7 @@ quote_splitnum(struct Client *source_p, const char *arg, int newval)
 		split_servers = newval;
 
 		if(splitchecking)
-			check_splitmode(NULL);
+			chan::check_splitmode(NULL);
 	}
 	else
 		sendto_one_notice(source_p, ":SPLITNUM is currently %i", split_servers);
@@ -431,7 +431,7 @@ quote_splitusers(struct Client *source_p, const char *arg, int newval)
 		split_users = newval;
 
 		if(splitchecking)
-			check_splitmode(NULL);
+			chan::check_splitmode(NULL);
 	}
 	else
 		sendto_one_notice(source_p, ":SPLITUSERS is currently %i", split_users);

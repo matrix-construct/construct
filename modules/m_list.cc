@@ -45,9 +45,9 @@ static void _moddeinit(void);
 static void m_list(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 static void mo_list(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
 
-static void list_one_channel(struct Client *source_p, struct Channel *chptr, int visible);
+static void list_one_channel(struct Client *source_p, chan::chan *chptr, int visible);
 
-static void safelist_one_channel(struct Client *source_p, struct Channel *chptr, struct ListClient *params);
+static void safelist_one_channel(struct Client *source_p, chan::chan *chptr, struct ListClient *params);
 static void safelist_check_cliexit(hook_data_client_exit * hdata);
 static void safelist_client_instantiate(struct Client *, struct ListClient *);
 static void safelist_client_release(struct Client *);
@@ -124,7 +124,7 @@ m_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		return;
 	}
 
-	if (parc < 2 || !IsChannelName(parv[1]))
+	if (parc < 2 || chan::is_name(parv[1]))
 	{
 		/* pace this due to the sheer traffic involved */
 		if (((last_used + ConfigFileEntry.pace_wait) > rb_current_time()))
@@ -172,7 +172,7 @@ mo_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	}
 
 	/* Single channel. */
-	if (args && IsChannelName(args))
+	if (args && chan::is_name(args))
 	{
 		safelist_channel_named(source_p, args, operspy);
 		return;
@@ -279,19 +279,19 @@ mo_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
  * outputs      - none
  * side effects - a channel is listed
  */
-static void list_one_channel(struct Client *source_p, struct Channel *chptr,
+static void list_one_channel(struct Client *source_p, chan::chan *chptr,
 		int visible)
 {
 	char topic[TOPICLEN + 1];
 
-	if (chptr->topic != NULL)
-		rb_strlcpy(topic, chptr->topic, sizeof topic);
+	if (!chptr->topic.text.empty())
+		rb_strlcpy(topic, chptr->topic.text.c_str(), sizeof topic);
 	else
 		topic[0] = '\0';
 	strip_colour(topic);
 	sendto_one(source_p, form_str(RPL_LIST), me.name, source_p->name,
 		   visible ? "" : "!",
-		   chptr->chname, rb_dlink_list_length(&chptr->members),
+		   chptr->name.c_str(), rb_dlink_list_length(&chptr->members),
 		   topic);
 }
 
@@ -373,7 +373,7 @@ static void safelist_client_release(struct Client *client_p)
  */
 static void safelist_channel_named(struct Client *source_p, const char *name, int operspy)
 {
-	struct Channel *chptr;
+	chan::chan *chptr;
 	char *p;
 	int visible;
 
@@ -398,7 +398,7 @@ static void safelist_channel_named(struct Client *source_p, const char *name, in
 		return;
 	}
 
-	visible = !SecretChannel(chptr) || IsMember(source_p, chptr);
+	visible = !secret(chptr) || is_member(chptr, source_p);
 	if (visible || operspy)
 		list_one_channel(source_p, chptr, visible);
 
@@ -414,11 +414,11 @@ static void safelist_channel_named(struct Client *source_p, const char *name, in
  * side effects - a channel is listed if it meets the
  *                requirements
  */
-static void safelist_one_channel(struct Client *source_p, struct Channel *chptr, struct ListClient *params)
+static void safelist_one_channel(struct Client *source_p, chan::chan *chptr, struct ListClient *params)
 {
 	int visible;
 
-	visible = !SecretChannel(chptr) || IsMember(source_p, chptr);
+	visible = !secret(chptr) || is_member(chptr, source_p);
 	if (!visible && !params->operspy)
 		return;
 
@@ -426,12 +426,11 @@ static void safelist_one_channel(struct Client *source_p, struct Channel *chptr,
 	    || (unsigned int)chptr->members.length > params->users_max)
 		return;
 
-	if (params->topic_min && chptr->topic_time < params->topic_min)
+	if (params->topic_min && chptr->topic.time < params->topic_min)
 		return;
 
 	/* If a topic TS is provided, don't show channels without a topic set. */
-	if (params->topic_max && (chptr->topic_time > params->topic_max
-		|| chptr->topic_time == 0))
+	if (params->topic_max && (chptr->topic.time > params->topic_max || chptr->topic.time == 0))
 		return;
 
 	if (params->created_min && chptr->channelts < params->created_min)
@@ -457,11 +456,11 @@ static void safelist_iterate_client(struct Client *source_p)
 	void *elem;
 	RB_RADIXTREE_FOREACH_FROM(elem, &iter, channel_tree, source_p->localClient->safelist_data->chname)
 	{
-		const auto chptr(reinterpret_cast<Channel *>(elem));
+		const auto chptr(reinterpret_cast<chan::chan *>(elem));
 		if (safelist_sendq_exceeded(source_p->from))
 		{
 			rb_free(source_p->localClient->safelist_data->chname);
-			source_p->localClient->safelist_data->chname = rb_strdup(chptr->chname);
+			source_p->localClient->safelist_data->chname = rb_strdup(chptr->name.c_str());
 
 			return;
 		}

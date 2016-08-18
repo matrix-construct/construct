@@ -29,7 +29,6 @@
 namespace ircd {
 
 struct Client;
-struct Channel;
 struct monitor;
 
 /* The nasty global also used in s_serv.c for server bursts */
@@ -48,21 +47,21 @@ extern void sendto_one_prefix(struct Client *target_p, struct Client *source_p,
 extern void sendto_one_numeric(struct Client *target_p,
 			       int numeric, const char *, ...) AFP(3, 4);
 
-extern void sendto_server(struct Client *one, struct Channel *chptr,
+extern void sendto_server(struct Client *one, chan::chan *chptr,
 			  unsigned long caps, unsigned long nocaps,
 			  const char *format, ...) AFP(5, 6);
 
 extern void sendto_channel_flags(struct Client *one, int type, struct Client *source_p,
-				 struct Channel *chptr, const char *, ...) AFP(5, 6);
+				 chan::chan *chptr, const char *, ...) AFP(5, 6);
 extern void sendto_channel_opmod(struct Client *one, struct Client *source_p,
-				 struct Channel *chptr, const char *command,
+				 chan::chan *chptr, const char *command,
 				 const char *text);
 
-extern void sendto_channel_local(int type, struct Channel *, const char *, ...) AFP(3, 4);
-extern void sendto_channel_local_butone(struct Client *, int type, struct Channel *, const char *, ...) AFP(4, 5);
+extern void sendto_channel_local(int type, chan::chan *, const char *, ...) AFP(3, 4);
+extern void sendto_channel_local_butone(struct Client *, int type, chan::chan *, const char *, ...) AFP(4, 5);
 
-extern void sendto_channel_local_with_capability(int type, int caps, int negcaps, struct Channel *, const char *, ...) AFP(5, 6);
-extern void sendto_channel_local_with_capability_butone(struct Client *, int type, int caps, int negcaps, struct Channel *,
+extern void sendto_channel_local_with_capability(int type, int caps, int negcaps, chan::chan *, const char *, ...) AFP(5, 6);
+extern void sendto_channel_local_with_capability_butone(struct Client *, int type, int caps, int negcaps, chan::chan *,
 							const char *, ...) AFP(6, 7);
 
 extern void sendto_common_channels_local(struct Client *, int cap, int negcap, const char *, ...) AFP(4, 5);

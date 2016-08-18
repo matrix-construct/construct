@@ -150,7 +150,7 @@ hack_channel_access(void *vdata)
 	if (data->dir == MODE_QUERY)
 		return;
 
-	if (data->approved == CHFL_CHANOP)
+	if (data->approved == chan::CHANOP)
 		return;
 
 	if (data->client->umodes & user_modes['p'])
@@ -161,7 +161,7 @@ hack_channel_access(void *vdata)
 		/* we only want to report modehacks, which are always non-NULL */
 		if (data->modestr)
 			sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s is using oper-override on %s (modehacking: %s)",
-					       get_oper_name(data->client), data->chptr->chname, data->modestr);
+					       get_oper_name(data->client), data->chptr->name.c_str(), data->modestr);
 	}
 }
 
@@ -179,7 +179,7 @@ hack_can_join(void *vdata)
 		data->approved = 0;
 
 		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s is using oper-override on %s (banwalking)",
-				       get_oper_name(data->client), data->chptr->chname);
+				       get_oper_name(data->client), data->chptr->name.c_str());
 	}
 }
 
@@ -197,7 +197,7 @@ hack_can_kick(void *vdata)
 	{
 		update_session_deadline(data->client, NULL);
 		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s is using oper-override on %s (KICK %s)",
-				       get_oper_name(data->client), data->chptr->chname, data->target->name);
+				       get_oper_name(data->client), data->chptr->name.c_str(), data->target->name);
 	}
 }
 
@@ -209,18 +209,18 @@ hack_can_send(void *vdata)
 	if (data->dir == MODE_QUERY)
 		return;
 
-	if (data->approved == CAN_SEND_NONOP || data->approved == CAN_SEND_OPV)
+	if (data->approved == chan::CAN_SEND_NONOP || data->approved == chan::CAN_SEND_OPV)
 		return;
 
 	if (data->client->umodes & user_modes['p'])
 	{
-		data->approved = CAN_SEND_NONOP;
+		data->approved = chan::CAN_SEND_NONOP;
 
 		if (MyClient(data->client))
 		{
 			update_session_deadline(data->client, NULL);
 			sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s is using oper-override on %s (forcing message)",
-					       get_oper_name(data->client), data->chptr->chname);
+					       get_oper_name(data->client), data->chptr->name.c_str());
 		}
 	}
 }

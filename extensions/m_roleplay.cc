@@ -121,8 +121,8 @@ m_npca(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 static void
 m_displaymsg(struct MsgBuf *msgbuf_p, struct Client *source_p, const char *channel, int underline, int action, const char *nick, const char *text)
 {
-	struct Channel *chptr;
-	struct membership *msptr;
+	chan::chan *chptr;
+	chan::membership *msptr;
 	char nick2[NICKLEN+1];
 	char nick3[NICKLEN+1];
 	char text3[BUFSIZE];
@@ -143,31 +143,31 @@ m_displaymsg(struct MsgBuf *msgbuf_p, struct Client *source_p, const char *chann
 	if(!(msptr = find_channel_membership(chptr, source_p)))
 	{
 		sendto_one_numeric(source_p, ERR_NOTONCHANNEL,
-				   form_str(ERR_NOTONCHANNEL), chptr->chname);
+				   form_str(ERR_NOTONCHANNEL), chptr->name.c_str());
 		return;
 	}
 
 	if(!(chptr->mode.mode & chan::mode::table['N'].type))
 	{
-		sendto_one_numeric(source_p, 573, "%s :Roleplay commands are not enabled on this channel.", chptr->chname);
+		sendto_one_numeric(source_p, 573, "%s :Roleplay commands are not enabled on this channel.", chptr->name.c_str());
 		return;
 	}
 
 	if(!can_send(chptr, source_p, msptr))
 	{
-		sendto_one_numeric(source_p, 573, "%s :Cannot send to channel.", chptr->chname);
+		sendto_one_numeric(source_p, 573, "%s :Cannot send to channel.", chptr->name.c_str());
 		return;
 	}
 
 	/* enforce flood stuff on roleplay commands */
-	if(flood_attack_channel(0, source_p, chptr, chptr->chname))
+	if(flood_attack_channel(0, source_p, chptr))
 		return;
 
 	/* enforce target change on roleplay commands */
 	if(!is_chanop_voiced(msptr) && !IsOper(source_p) && !add_channel_target(source_p, chptr))
 	{
 		sendto_one(source_p, form_str(ERR_TARGCHANGE),
-			   me.name, source_p->name, chptr->chname);
+			   me.name, source_p->name, chptr->name.c_str());
 		return;
 	}
 
@@ -180,7 +180,7 @@ m_displaymsg(struct MsgBuf *msgbuf_p, struct Client *source_p, const char *chann
 	 * this prevents nastiness like fake factions, etc. */
 	if(EmptyString(nick3))
 	{
-		sendto_one_numeric(source_p, 573, "%s :No visible non-stripped characters in nick.", chptr->chname);
+		sendto_one_numeric(source_p, 573, "%s :No visible non-stripped characters in nick.", chptr->name.c_str());
 		return;
 	}
 
@@ -191,7 +191,7 @@ m_displaymsg(struct MsgBuf *msgbuf_p, struct Client *source_p, const char *chann
 	else
 		snprintf(text2, sizeof(text2), "%s", text3);
 
-	sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@npc.fakeuser.invalid PRIVMSG %s :%s", nick2, source_p->name, channel, text2);
+	sendto_channel_local(chan::ALL_MEMBERS, chptr, ":%s!%s@npc.fakeuser.invalid PRIVMSG %s :%s", nick2, source_p->name, channel, text2);
 	sendto_match_servs(source_p, "*", CAP_ENCAP, NOCAPS, "ENCAP * ROLEPLAY %s %s :%s",
 			channel, nick2, text2);
 }
@@ -199,12 +199,12 @@ m_displaymsg(struct MsgBuf *msgbuf_p, struct Client *source_p, const char *chann
 static void
 me_roleplay(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	struct Channel *chptr;
+	chan::chan *chptr;
 
 	/* Don't segfault if we get ROLEPLAY with an invalid channel.
 	 * This shouldn't happen but it's best to be on the safe side. */
 	if((chptr = find_channel(parv[1])) == NULL)
 		return;
 
-	sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@npc.fakeuser.invalid PRIVMSG %s :%s", parv[2], source_p->name, parv[1], parv[3]);
+	sendto_channel_local(chan::ALL_MEMBERS, chptr, ":%s!%s@npc.fakeuser.invalid PRIVMSG %s :%s", parv[2], source_p->name, parv[1], parv[3]);
 }

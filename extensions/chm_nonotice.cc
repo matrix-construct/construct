@@ -45,7 +45,7 @@ chm_nonotice_process(hook_data_privmsg_channel *data)
 	/* block all notices except CTCPs; use chm_noctcp to block CTCPs. */
 	if (data->chptr->mode.mode & mode_nonotice && *data->text != '\001')
 	{
-		sendto_one_numeric(data->source_p, ERR_CANNOTSENDTOCHAN, form_str(ERR_CANNOTSENDTOCHAN), data->chptr->chname);
+		sendto_one_numeric(data->source_p, ERR_CANNOTSENDTOCHAN, form_str(ERR_CANNOTSENDTOCHAN), data->chptr->name.c_str());
 		data->approved = ERR_CANNOTSENDTOCHAN;
 		return;
 	}

@@ -3,8 +3,7 @@
  * -- jilles
  */
 
-namespace chan = ircd::chan;
-namespace mode = chan::mode;
+namespace mode = ircd::chan::mode;
 namespace ext = mode::ext;
 using namespace ircd;
 
@@ -12,7 +11,7 @@ static const char extb_desc[] = "Account ($a) extban type";
 
 static int _modinit(void);
 static void _moddeinit(void);
-static int eb_account(const char *data, struct Client *client_p, struct Channel *chptr, mode::type);
+static int eb_account(const char *data, struct Client *client_p, chan::chan *chptr, mode::type);
 
 DECLARE_MODULE_AV2(extb_account, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, extb_desc);
 
@@ -31,7 +30,7 @@ _moddeinit(void)
 }
 
 static int eb_account(const char *data, struct Client *client_p,
-		struct Channel *chptr, mode::type type)
+		chan::chan *chptr, mode::type type)
 {
 	using namespace ext;
 

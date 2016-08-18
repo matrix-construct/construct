@@ -42,7 +42,7 @@ hdl_can_kick(hook_data_channel_approval *data)
 {
 	struct Client *source_p = data->client;
 	struct Client *who = data->target;
-	struct Channel *chptr = data->chptr;
+	const auto &chptr(data->chptr);
 
 	if(IsOper(source_p))
 		return;
@@ -50,9 +50,9 @@ hdl_can_kick(hook_data_channel_approval *data)
 	if((chptr->mode.mode & mymode) && IsOper(who))
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s attempted to kick %s from %s (which is +M)",
-			source_p->name, who->name, chptr->chname);
+			source_p->name, who->name, chptr->name.c_str());
 		sendto_one_numeric(source_p, ERR_ISCHANSERVICE, "%s %s :Cannot kick IRC operators from that channel.",
-			who->name, chptr->chname);
+			who->name, chptr->name.c_str());
 		data->approved = 0;
 	}
 }

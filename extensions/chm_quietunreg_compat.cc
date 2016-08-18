@@ -3,8 +3,7 @@
  * -- jilles
  */
 
-namespace chan = ircd::chan;
-namespace mode = chan::mode;
+namespace mode = ircd::chan::mode;
 using namespace mode;
 using namespace ircd;
 
@@ -13,7 +12,7 @@ static const char chm_quietunreg_compat_desc[] =
 
 static int _modinit(void);
 static void _moddeinit(void);
-static void chm_quietunreg(struct Client *source_p, struct Channel *chptr,
+static void chm_quietunreg(struct Client *source_p, chan::chan *chptr,
 	int alevel, int parc, int *parn,
 	const char **parv, int *errors, int dir, char c, type type);
 
@@ -38,7 +37,7 @@ _moddeinit(void)
 }
 
 static void
-chm_quietunreg(struct Client *source_p, struct Channel *chptr,
+chm_quietunreg(struct Client *source_p, chan::chan *chptr,
 	int alevel, int parc, int *parn,
 	const char **parv, int *errors, int dir, char c, type type)
 {

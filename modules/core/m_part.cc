@@ -40,8 +40,8 @@ DECLARE_MODULE_AV2(part, NULL, NULL, part_clist, NULL, NULL, NULL, NULL, part_de
 static void part_one_client(struct Client *client_p,
 			    struct Client *source_p, char *name,
 			    const char *reason);
-static bool can_send_part(struct Client *source_p, struct Channel *chptr, struct membership *msptr);
-static bool do_message_hook(struct Client *source_p, struct Channel *chptr, const char **reason);
+static bool can_send_part(struct Client *source_p, chan::chan *chptr, chan::membership *msptr);
+static bool do_message_hook(struct Client *source_p, chan::chan *chptr, const char **reason);
 
 
 /*
@@ -86,8 +86,8 @@ m_part(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 static void
 part_one_client(struct Client *client_p, struct Client *source_p, char *name, const char *reason)
 {
-	struct Channel *chptr;
-	struct membership *msptr;
+	chan::chan *chptr;
+	chan::membership *msptr;
 
 	if((chptr = find_channel(name)) == NULL)
 	{
@@ -103,7 +103,7 @@ part_one_client(struct Client *client_p, struct Client *source_p, char *name, co
 	}
 
 	if(MyConnect(source_p) && !IsOper(source_p) && !IsExemptSpambot(source_p))
-		check_spambot_warning(source_p, NULL);
+		chan::check_spambot_warning(source_p, NULL);
 
 	/*
 	 *  Remove user from the old channel (if any)
@@ -117,19 +117,34 @@ part_one_client(struct Client *client_p, struct Client *source_p, char *name, co
 	{
 
 		sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
-			      ":%s PART %s :%s", use_id(source_p), chptr->chname, reason);
-		sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@%s PART %s :%s",
-				     source_p->name, source_p->username,
-				     source_p->host, chptr->chname, reason);
+		              ":%s PART %s :%s",
+		              use_id(source_p),
+		              chptr->name.c_str(),
+		              reason);
+
+		sendto_channel_local(chan::ALL_MEMBERS, chptr,
+		                     ":%s!%s@%s PART %s :%s",
+		                     source_p->name,
+		                     source_p->username,
+		                     source_p->host,
+		                     chptr->name.c_str(),
+		                     reason);
 	}
 	else
 	{
 		sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
-			      ":%s PART %s", use_id(source_p), chptr->chname);
-		sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@%s PART %s",
-				     source_p->name, source_p->username,
-				     source_p->host, chptr->chname);
+		              ":%s PART %s",
+		              use_id(source_p),
+		              chptr->name.c_str());
+
+		sendto_channel_local(chan::ALL_MEMBERS, chptr,
+		                     ":%s!%s@%s PART %s",
+		                     source_p->name,
+		                     source_p->username,
+		                     source_p->host,
+		                     chptr->name.c_str());
 	}
+
 	remove_user_from_channel(msptr);
 }
 
@@ -147,7 +162,7 @@ part_one_client(struct Client *client_p, struct Client *source_p, char *name, co
  *    - none.
  */
 static bool
-can_send_part(struct Client *source_p, struct Channel *chptr, struct membership *msptr)
+can_send_part(struct Client *source_p, chan::chan *chptr, chan::membership *msptr)
 {
 	if (!can_send(chptr, source_p, msptr))
 		return false;
@@ -171,7 +186,7 @@ can_send_part(struct Client *source_p, struct Channel *chptr, struct membership 
  *    - reason may be modified.
  */
 static bool
-do_message_hook(struct Client *source_p, struct Channel *chptr, const char **reason)
+do_message_hook(struct Client *source_p, chan::chan *chptr, const char **reason)
 {
 	hook_data_privmsg_channel hdata;
 

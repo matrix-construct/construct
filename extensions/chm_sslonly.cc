@@ -36,11 +36,11 @@ static void
 h_can_join(hook_data_channel *data)
 {
 	struct Client *source_p = data->client;
-	struct Channel *chptr = data->chptr;
+	const auto &chptr(data->chptr);
 
 	if((chptr->mode.mode & mymode) && !IsSSLClient(source_p)) {
 		/* XXX This is equal to ERR_THROTTLE */
-		sendto_one_numeric(source_p, 480, "%s :Cannot join channel (+S) - SSL/TLS required", chptr->chname);
+		sendto_one_numeric(source_p, 480, "%s :Cannot join channel (+S) - SSL/TLS required", chptr->name.c_str());
 		data->approved = chan::mode::ERR_CUSTOM;
 	}
 }

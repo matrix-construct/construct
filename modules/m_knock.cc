@@ -65,7 +65,7 @@ DECLARE_MODULE_AV2(knock, _modinit, _moddeinit, knock_clist, NULL, NULL, NULL, N
 static void
 m_knock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	struct Channel *chptr;
+	chan::chan *chptr;
 	char *p, *name;
 
 	if(MyClient(source_p) && ConfigChannel.use_knock == 0)
@@ -88,7 +88,7 @@ m_knock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		return;
 	}
 
-	if(IsMember(source_p, chptr))
+	if(is_member(chptr, source_p))
 	{
 		if(MyClient(source_p))
 			sendto_one(source_p, form_str(ERR_KNOCKONCHAN),
@@ -106,7 +106,7 @@ m_knock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	}
 
 	/* cant knock to a +p channel */
-	if(HiddenChannel(chptr))
+	if(hidden(chptr))
 	{
 		sendto_one_numeric(source_p, ERR_CANNOTSENDTOCHAN,
 				   form_str(ERR_CANNOTSENDTOCHAN), name);
@@ -117,8 +117,8 @@ m_knock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	if(MyClient(source_p))
 	{
 		/* don't allow a knock if the user is banned */
-		if(is_banned(chptr, source_p, NULL, NULL, NULL, NULL) == CHFL_BAN ||
-			is_quieted(chptr, source_p, NULL, NULL, NULL) == CHFL_BAN)
+		if(is_banned(chptr, source_p, NULL, NULL, NULL, NULL) == chan::mode::BAN ||
+			is_quieted(chptr, source_p, NULL, NULL, NULL) == chan::mode::BAN)
 		{
 			sendto_one_numeric(source_p, ERR_CANNOTSENDTOCHAN,
 					   form_str(ERR_CANNOTSENDTOCHAN), name);
@@ -153,7 +153,7 @@ m_knock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	chptr->last_knock = rb_current_time();
 
 	if(ConfigChannel.use_knock)
-		sendto_channel_local(chptr->mode.mode & chan::mode::FREEINVITE ? ALL_MEMBERS : ONLY_CHANOPS,
+		sendto_channel_local(chptr->mode.mode & chan::mode::FREEINVITE ? chan::ALL_MEMBERS : chan::ONLY_CHANOPS,
 				     chptr, form_str(RPL_KNOCK),
 				     me.name, name, name, source_p->name,
 				     source_p->username, source_p->host);

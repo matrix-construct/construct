@@ -57,11 +57,9 @@ static void do_join_0(struct Client *client_p, struct Client *source_p);
 static bool check_channel_name_loc(struct Client *source_p, const char *name);
 static void send_join_error(struct Client *source_p, int numeric, const char *name);
 
-static void set_final_mode(struct Mode *mode, struct Mode *oldmode);
-static void remove_our_modes(struct Channel *chptr, struct Client *source_p);
-
-static void remove_ban_list(struct Channel *chptr, struct Client *source_p,
-			    rb_dlink_list * list, char c, int mems);
+static void set_final_mode(chan::modes *mode, chan::modes *oldmode);
+static void remove_our_modes(chan::chan *chptr, struct Client *source_p);
+static void remove_ban_list(chan::chan *chptr, struct Client *source_p, rb_dlink_list * list, char c, int mems);
 
 static char modebuf[chan::mode::BUFLEN];
 static char parabuf[chan::mode::BUFLEN];
@@ -72,8 +70,8 @@ static int pargs;
 /* Check what we will forward to, without sending any notices to the user
  * -- jilles
  */
-static struct Channel *
-check_forward(struct Client *source_p, struct Channel *chptr,
+static chan::chan *
+check_forward(struct Client *source_p, chan::chan *chptr,
 	     char *key, int *err)
 {
 	int depth = 0, i;
@@ -103,13 +101,13 @@ check_forward(struct Client *source_p, struct Channel *chptr,
 		 * on the channel, and it looks hostile otherwise.
 		 * --Elizafox
 		 */
-		if (IsMember(source_p, chptr))
+		if (is_member(chptr, source_p))
 		{
 			*err = ERR_USERONCHANNEL; /* I'm borrowing this for now. --Elizafox */
 			return NULL;
 		}
 		/* Juped. Sending a warning notice would be unfair */
-		if (hash_find_resv(chptr->chname))
+		if (hash_find_resv(chptr->name.c_str()))
 			return NULL;
 		/* Don't forward to +Q channel */
 		if (chptr->mode.mode & chan::mode::DISFORWARD)
@@ -133,7 +131,7 @@ static void
 m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static char jbuf[BUFSIZE];
-	struct Channel *chptr = NULL, *chptr2 = NULL;
+	chan::chan *chptr = NULL, *chptr2 = NULL;
 	struct ConfItem *aconf;
 	char *name;
 	char *key = NULL;
@@ -167,7 +165,7 @@ m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		}
 
 		/* check it begins with # or &, and local chans are disabled */
-		else if(!IsChannelName(name) ||
+		else if(!chan::is_name(name) ||
 			( ConfigChannel.disable_local_channels && name[0] == '&'))
 		{
 			sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
@@ -233,7 +231,7 @@ m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		/* look for the channel */
 		if((chptr = find_channel(name)) != NULL)
 		{
-			if(IsMember(source_p, chptr))
+			if(is_member(chptr, source_p))
 				continue;
 
 			flags = 0;
@@ -264,7 +262,7 @@ m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 				continue;
 			}
 
-			flags = CHFL_CHANOP;
+			flags = chan::CHANOP;
 		}
 
 		if((rb_dlink_list_length(&source_p->user->channel) >=
@@ -302,13 +300,13 @@ m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 			continue;
 		}
 		else if(chptr != chptr2)
-			sendto_one_numeric(source_p, ERR_LINKCHANNEL, form_str(ERR_LINKCHANNEL), name, chptr2->chname);
+			sendto_one_numeric(source_p, ERR_LINKCHANNEL, form_str(ERR_LINKCHANNEL), name, chptr2->name.c_str());
 
 		chptr = chptr2;
 
 		if(flags == 0 &&
 				!IsOper(source_p) && !IsExemptSpambot(source_p))
-			check_spambot_warning(source_p, name);
+			chan::check_spambot_warning(source_p, name);
 
 		/* add the user to the channel */
 		add_user_to_channel(chptr, source_p, flags);
@@ -326,42 +324,47 @@ m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		/* we send the user their join here, because we could have to
 		 * send a mode out next.
 		 */
-		send_channel_join(chptr, source_p);
+		chan::send_join(*chptr, *source_p);
 
 		/* its a new channel, set +nt and burst. */
-		if(flags & CHFL_CHANOP)
+		if(flags & chan::CHANOP)
 		{
 			chptr->channelts = rb_current_time();
 			chptr->mode.mode |= ConfigChannel.autochanmodes;
 			modes = channel_modes(chptr, &me);
 
-			sendto_channel_local(ONLY_CHANOPS, chptr, ":%s MODE %s %s",
-					     me.name, chptr->chname, modes);
+			sendto_channel_local(chan::ONLY_CHANOPS, chptr, ":%s MODE %s %s",
+					     me.name, chptr->name.c_str(), modes);
 
 			sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
 				      ":%s SJOIN %ld %s %s :@%s",
 				      me.id, (long) chptr->channelts,
-				      chptr->chname, modes, source_p->id);
+				      chptr->name.c_str(), modes, source_p->id);
 		}
 		else
 		{
 			sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
 				      ":%s JOIN %ld %s +",
 				      use_id(source_p), (long) chptr->channelts,
-				      chptr->chname);
+				      chptr->name.c_str());
 		}
 
 		del_invite(chptr, source_p);
 
-		if(chptr->topic != NULL)
+		if(chptr->topic)
 		{
-			sendto_one(source_p, form_str(RPL_TOPIC), me.name,
-				   source_p->name, chptr->chname, chptr->topic);
+			sendto_one(source_p, form_str(RPL_TOPIC),
+			           me.name,
+			           source_p->name,
+			           chptr->name.c_str(),
+			           chptr->topic.text.c_str());
 
 			sendto_one(source_p, form_str(RPL_TOPICWHOTIME),
-				   me.name, source_p->name, chptr->chname,
-				   chptr->topic_info,
-				   (unsigned long)chptr->topic_time);
+			           me.name,
+			           source_p->name,
+			           chptr->name.c_str(),
+			           chptr->topic.info.c_str(),
+			           ulong(chptr->topic.time));
 		}
 
 		channel_member_names(chptr, source_p, 1);
@@ -383,8 +386,8 @@ m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 static void
 ms_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	struct Channel *chptr;
-	static struct Mode mode;
+	chan::chan *chptr;
+	static chan::modes mode;
 	time_t oldts;
 	time_t newts;
 	bool isnew;
@@ -401,7 +404,7 @@ ms_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	if(parc < 4)
 		return;
 
-	if(!IsChannelName(parv[2]) || !check_channel_name(parv[2]))
+	if(!chan::is_name(parv[2]) || !chan::check_channel_name(parv[2]))
 		return;
 
 	/* joins for local channels cant happen. */
@@ -421,12 +424,12 @@ ms_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	/* making a channel TS0 */
 	if(!isnew && !newts && oldts)
 	{
-		sendto_channel_local(ALL_MEMBERS, chptr,
+		sendto_channel_local(chan::ALL_MEMBERS, chptr,
 				     ":%s NOTICE %s :*** Notice -- TS for %s changed from %ld to 0",
-				     me.name, chptr->chname, chptr->chname, (long) oldts);
+				     me.name, chptr->name.c_str(), chptr->name.c_str(), (long) oldts);
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Server %s changing TS on %s from %ld to 0",
-				     source_p->name, chptr->chname, (long) oldts);
+				     source_p->name, chptr->name.c_str(), (long) oldts);
 	}
 
 	if(isnew)
@@ -448,32 +451,39 @@ ms_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		chptr->mode = mode;
 		remove_our_modes(chptr, source_p);
 		RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->invites.head)
-		{
 			del_invite(chptr, (Client *)ptr->data);
-		}
+
 		/* If setting -j, clear join throttle state -- jilles */
 		chptr->join_count = chptr->join_delta = 0;
-		sendto_channel_local(ALL_MEMBERS, chptr,
-				     ":%s NOTICE %s :*** Notice -- TS for %s changed from %ld to %ld",
-				     me.name, chptr->chname, chptr->chname,
-				     (long) oldts, (long) newts);
+		sendto_channel_local(chan::ALL_MEMBERS, chptr,
+		                     ":%s NOTICE %s :*** Notice -- TS for %s changed from %ld to %ld",
+		                     me.name,
+		                     chptr->name.c_str(),
+		                     chptr->name.c_str(),
+		                     long(oldts),
+		                     long(newts));
+
 		/* Update capitalization in channel name, this makes the
 		 * capitalization timestamped like modes are -- jilles */
-		strcpy(chptr->chname, parv[2]);
+		chptr->name = parv[2];
+
 		if(*modebuf != '\0')
-			sendto_channel_local(ALL_MEMBERS, chptr,
-					     ":%s MODE %s %s %s",
-					     source_p->servptr->name,
-					     chptr->chname, modebuf, parabuf);
+			sendto_channel_local(chan::ALL_MEMBERS, chptr,
+			                     ":%s MODE %s %s %s",
+			                     source_p->servptr->name,
+			                     chptr->name.c_str(),
+			                     modebuf,
+			                     parabuf);
+
 		*modebuf = *parabuf = '\0';
 
 		/* since we're dropping our modes, we want to clear the mlock as well. --nenolod */
 		set_channel_mlock(client_p, source_p, chptr, NULL, false);
 	}
 
-	if(!IsMember(source_p, chptr))
+	if(!is_member(chptr, source_p))
 	{
-		add_user_to_channel(chptr, source_p, CHFL_PEON);
+		add_user_to_channel(chptr, source_p, chan::PEON);
 		if (chptr->mode.join_num &&
 			rb_current_time() - chptr->join_delta >= chptr->mode.join_time)
 		{
@@ -481,12 +491,12 @@ ms_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 			chptr->join_delta = rb_current_time();
 		}
 		chptr->join_count++;
-		send_channel_join(chptr, source_p);
+		send_join(*chptr, *source_p);
 	}
 
 	sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
 		      ":%s JOIN %ld %s +",
-		      source_p->id, (long) chptr->channelts, chptr->chname);
+		      source_p->id, (long) chptr->channelts, chptr->name.c_str());
 }
 
 static void
@@ -494,11 +504,11 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 {
 	static char buf_uid[BUFSIZE];
 	static const char empty_modes[] = "0";
-	struct Channel *chptr;
+	chan::chan *chptr;
 	struct Client *target_p, *fakesource_p;
 	time_t newts;
 	time_t oldts;
-	static struct Mode mode, *oldmode;
+	static chan::modes mode, *oldmode;
 	const char *modes;
 	int args = 0;
 	bool keep_our_modes = true;
@@ -519,7 +529,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	if(parc < 5)
 		return;
 
-	if(!IsChannelName(parv[2]) || !check_channel_name(parv[2]))
+	if(!chan::is_name(parv[2]) || !chan::check_channel_name(parv[2]))
 		return;
 
 	/* SJOIN's for local channels can't happen. */
@@ -595,13 +605,13 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 	if(!isnew && !newts && oldts)
 	{
-		sendto_channel_local(ALL_MEMBERS, chptr,
+		sendto_channel_local(chan::ALL_MEMBERS, chptr,
 				     ":%s NOTICE %s :*** Notice -- TS for %s "
 				     "changed from %ld to 0",
-				     me.name, chptr->chname, chptr->chname, (long) oldts);
+				     me.name, chptr->name.c_str(), chptr->name.c_str(), (long) oldts);
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Server %s changing TS on %s from %ld to 0",
-				     source_p->name, chptr->chname, (long) oldts);
+				     source_p->name, chptr->name.c_str(), (long) oldts);
 	}
 
 	if(isnew)
@@ -626,20 +636,20 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 				mode.mode & chan::mode::INVITEONLY) ||
 		    (mode.key[0] != 0 && irccmp(mode.key, oldmode->key) != 0)))
 		{
-			struct membership *msptr;
+			chan::membership *msptr;
 			struct Client *who;
 			int l = rb_dlink_list_length(&chptr->members);
 
 			RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->locmembers.head)
 			{
-				msptr = (membership *)ptr->data;
-				who = msptr->client_p;
+				msptr = (chan::membership *)ptr->data;
+				who = msptr->client;
 				sendto_one(who, ":%s KICK %s %s :Net Rider",
-						     me.name, chptr->chname, who->name);
+						     me.name, chptr->name.c_str(), who->name);
 
 				sendto_server(NULL, chptr, CAP_TS6, NOCAPS,
 					      ":%s KICK %s %s :Net Rider",
-					      me.id, chptr->chname,
+					      me.id, chptr->name.c_str(),
 					      who->id);
 				remove_user_from_channel(msptr);
 				if (--l == 0)
@@ -699,33 +709,33 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		}
 
 		if(rb_dlink_list_length(&chptr->banlist) > 0)
-			remove_ban_list(chptr, fakesource_p, &chptr->banlist, 'b', ALL_MEMBERS);
+			remove_ban_list(chptr, fakesource_p, &chptr->banlist, 'b', chan::ALL_MEMBERS);
 		if(rb_dlink_list_length(&chptr->exceptlist) > 0)
 			remove_ban_list(chptr, fakesource_p, &chptr->exceptlist,
-					'e', ONLY_CHANOPS);
+					'e', chan::ONLY_CHANOPS);
 		if(rb_dlink_list_length(&chptr->invexlist) > 0)
 			remove_ban_list(chptr, fakesource_p, &chptr->invexlist,
-					'I', ONLY_CHANOPS);
+					'I', chan::ONLY_CHANOPS);
 		if(rb_dlink_list_length(&chptr->quietlist) > 0)
 			remove_ban_list(chptr, fakesource_p, &chptr->quietlist,
-					'q', ALL_MEMBERS);
+					'q', chan::ALL_MEMBERS);
 		chptr->bants++;
 
-		sendto_channel_local(ALL_MEMBERS, chptr,
+		sendto_channel_local(chan::ALL_MEMBERS, chptr,
 				     ":%s NOTICE %s :*** Notice -- TS for %s changed from %ld to %ld",
-				     me.name, chptr->chname, chptr->chname,
+				     me.name, chptr->name.c_str(), chptr->name.c_str(),
 				     (long) oldts, (long) newts);
 		/* Update capitalization in channel name, this makes the
 		 * capitalization timestamped like modes are -- jilles */
-		strcpy(chptr->chname, parv[2]);
+		chptr->name = parv[2];
 
 		/* since we're dropping our modes, we want to clear the mlock as well. --nenolod */
 		set_channel_mlock(client_p, source_p, chptr, NULL, false);
 	}
 
 	if(*modebuf != '\0')
-		sendto_channel_local(ALL_MEMBERS, chptr, ":%s MODE %s %s %s",
-				     fakesource_p->name, chptr->chname, modebuf, parabuf);
+		sendto_channel_local(chan::ALL_MEMBERS, chptr, ":%s MODE %s %s %s",
+				     fakesource_p->name, chptr->name.c_str(), modebuf, parabuf);
 
 	*modebuf = *parabuf = '\0';
 
@@ -762,12 +772,12 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		{
 			if(*s == '@')
 			{
-				fl |= CHFL_CHANOP;
+				fl |= chan::CHANOP;
 				s++;
 			}
 			else if(*s == '+')
 			{
-				fl |= CHFL_VOICE;
+				fl |= chan::VOICE;
 				s++;
 			}
 		}
@@ -790,12 +800,12 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 		if(keep_new_modes)
 		{
-			if(fl & CHFL_CHANOP)
+			if(fl & chan::CHANOP)
 			{
 				*ptr_uid++ = '@';
 				len_uid++;
 			}
-			if(fl & CHFL_VOICE)
+			if(fl & chan::VOICE)
 			{
 				*ptr_uid++ = '+';
 				len_uid++;
@@ -810,20 +820,20 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		if(!keep_new_modes)
 			fl = 0;
 
-		if(!IsMember(target_p, chptr))
+		if(!is_member(chptr, target_p))
 		{
 			add_user_to_channel(chptr, target_p, fl);
-			send_channel_join(chptr, target_p);
+			send_join(*chptr, *target_p);
 			joins++;
 		}
 
-		if(fl & CHFL_CHANOP)
+		if(fl & chan::CHANOP)
 		{
 			*mbuf++ = 'o';
 			para[pargs++] = target_p->name;
 
 			/* a +ov user.. bleh */
-			if(fl & CHFL_VOICE)
+			if(fl & chan::VOICE)
 			{
 				/* its possible the +o has filled up chan::mode::MAXPARAMS, if so, start
 				 * a new buffer
@@ -831,9 +841,9 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 				if(pargs >= chan::mode::MAXPARAMS)
 				{
 					*mbuf = '\0';
-					sendto_channel_local(ALL_MEMBERS, chptr,
+					sendto_channel_local(chan::ALL_MEMBERS, chptr,
 							     ":%s MODE %s %s %s %s %s %s",
-							     fakesource_p->name, chptr->chname,
+							     fakesource_p->name, chptr->name.c_str(),
 							     modebuf,
 							     para[0], para[1], para[2], para[3]);
 					mbuf = modebuf;
@@ -846,7 +856,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 				para[pargs++] = target_p->name;
 			}
 		}
-		else if(fl & CHFL_VOICE)
+		else if(fl & chan::VOICE)
 		{
 			*mbuf++ = 'v';
 			para[pargs++] = target_p->name;
@@ -855,10 +865,10 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		if(pargs >= chan::mode::MAXPARAMS)
 		{
 			*mbuf = '\0';
-			sendto_channel_local(ALL_MEMBERS, chptr,
+			sendto_channel_local(chan::ALL_MEMBERS, chptr,
 					     ":%s MODE %s %s %s %s %s %s",
 					     fakesource_p->name,
-					     chptr->chname,
+					     chptr->name.c_str(),
 					     modebuf, para[0], para[1], para[2], para[3]);
 			mbuf = modebuf;
 			*mbuf++ = '+';
@@ -890,17 +900,16 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	*mbuf = '\0';
 	if(pargs)
 	{
-		sendto_channel_local(ALL_MEMBERS, chptr,
+		sendto_channel_local(chan::ALL_MEMBERS, chptr,
 				     ":%s MODE %s %s %s %s %s %s",
-				     fakesource_p->name, chptr->chname, modebuf,
+				     fakesource_p->name, chptr->name.c_str(), modebuf,
 				     para[0], CheckEmpty(para[1]),
 				     CheckEmpty(para[2]), CheckEmpty(para[3]));
 	}
 
 	if(!joins && !(chptr->mode.mode & chan::mode::PERMANENT) && isnew)
 	{
-		destroy_channel(chptr);
-
+		delete chptr;
 		return;
 	}
 
@@ -924,8 +933,8 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 static void
 do_join_0(struct Client *client_p, struct Client *source_p)
 {
-	struct membership *msptr;
-	struct Channel *chptr = NULL;
+	chan::membership *msptr;
+	chan::chan *chptr = NULL;
 	rb_dlink_node *ptr;
 
 	/* Finish the flood grace period... */
@@ -938,13 +947,13 @@ do_join_0(struct Client *client_p, struct Client *source_p)
 	{
 		if(MyConnect(source_p) &&
 		   !IsOper(source_p) && !IsExemptSpambot(source_p))
-			check_spambot_warning(source_p, NULL);
+			chan::check_spambot_warning(source_p, NULL);
 
-		msptr = (membership *)ptr->data;
-		chptr = msptr->chptr;
-		sendto_channel_local(ALL_MEMBERS, chptr, ":%s!%s@%s PART %s",
+		msptr = (chan::membership *)ptr->data;
+		chptr = msptr->chan;
+		sendto_channel_local(chan::ALL_MEMBERS, chptr, ":%s!%s@%s PART %s",
 				     source_p->name,
-				     source_p->username, source_p->host, chptr->chname);
+				     source_p->username, source_p->host, chptr->name.c_str());
 		remove_user_from_channel(msptr);
 	}
 }
@@ -1012,7 +1021,7 @@ send_join_error(struct Client *source_p, int numeric, const char *name)
 }
 
 static void
-set_final_mode(struct Mode *mode, struct Mode *oldmode)
+set_final_mode(chan::modes *mode, chan::modes *oldmode)
 {
 	int dir = MODE_QUERY;
 	char *pbuf = parabuf;
@@ -1141,9 +1150,9 @@ set_final_mode(struct Mode *mode, struct Mode *oldmode)
  * side effects	-
  */
 static void
-remove_our_modes(struct Channel *chptr, struct Client *source_p)
+remove_our_modes(chan::chan *chptr, struct Client *source_p)
 {
-	struct membership *msptr;
+	chan::membership *msptr;
 	rb_dlink_node *ptr;
 	char lmodebuf[chan::mode::BUFLEN];
 	char *lpara[chan::mode::MAXPARAMS];
@@ -1158,12 +1167,12 @@ remove_our_modes(struct Channel *chptr, struct Client *source_p)
 
 	RB_DLINK_FOREACH(ptr, chptr->members.head)
 	{
-		msptr = (membership *)ptr->data;
+		msptr = (chan::membership *)ptr->data;
 
 		if(is_chanop(msptr))
 		{
-			msptr->flags &= ~CHFL_CHANOP;
-			lpara[count++] = msptr->client_p->name;
+			msptr->flags &= ~chan::CHANOP;
+			lpara[count++] = msptr->client->name;
 			*mbuf++ = 'o';
 
 			/* +ov, might not fit so check. */
@@ -1172,9 +1181,9 @@ remove_our_modes(struct Channel *chptr, struct Client *source_p)
 				if(count >= chan::mode::MAXPARAMS)
 				{
 					*mbuf = '\0';
-					sendto_channel_local(ALL_MEMBERS, chptr,
+					sendto_channel_local(chan::ALL_MEMBERS, chptr,
 							     ":%s MODE %s %s %s %s %s %s",
-							     source_p->name, chptr->chname,
+							     source_p->name, chptr->name.c_str(),
 							     lmodebuf, lpara[0], lpara[1],
 							     lpara[2], lpara[3]);
 
@@ -1187,15 +1196,15 @@ remove_our_modes(struct Channel *chptr, struct Client *source_p)
 						lpara[i] = NULL;
 				}
 
-				msptr->flags &= ~CHFL_VOICE;
-				lpara[count++] = msptr->client_p->name;
+				msptr->flags &= ~chan::VOICE;
+				lpara[count++] = msptr->client->name;
 				*mbuf++ = 'v';
 			}
 		}
 		else if(is_voiced(msptr))
 		{
-			msptr->flags &= ~CHFL_VOICE;
-			lpara[count++] = msptr->client_p->name;
+			msptr->flags &= ~chan::VOICE;
+			lpara[count++] = msptr->client->name;
 			*mbuf++ = 'v';
 		}
 		else
@@ -1204,9 +1213,9 @@ remove_our_modes(struct Channel *chptr, struct Client *source_p)
 		if(count >= chan::mode::MAXPARAMS)
 		{
 			*mbuf = '\0';
-			sendto_channel_local(ALL_MEMBERS, chptr,
+			sendto_channel_local(chan::ALL_MEMBERS, chptr,
 					     ":%s MODE %s %s %s %s %s %s",
-					     source_p->name, chptr->chname, lmodebuf,
+					     source_p->name, chptr->name.c_str(), lmodebuf,
 					     lpara[0], lpara[1], lpara[2], lpara[3]);
 			mbuf = lmodebuf;
 			*mbuf++ = '-';
@@ -1220,9 +1229,9 @@ remove_our_modes(struct Channel *chptr, struct Client *source_p)
 	if(count != 0)
 	{
 		*mbuf = '\0';
-		sendto_channel_local(ALL_MEMBERS, chptr,
+		sendto_channel_local(chan::ALL_MEMBERS, chptr,
 				     ":%s MODE %s %s %s %s %s %s",
-				     source_p->name, chptr->chname, lmodebuf,
+				     source_p->name, chptr->name.c_str(), lmodebuf,
 				     EmptyString(lpara[0]) ? "" : lpara[0],
 				     EmptyString(lpara[1]) ? "" : lpara[1],
 				     EmptyString(lpara[2]) ? "" : lpara[2],
@@ -1238,12 +1247,11 @@ remove_our_modes(struct Channel *chptr, struct Client *source_p)
  * side effects - given list is removed, with modes issued to local clients
  */
 static void
-remove_ban_list(struct Channel *chptr, struct Client *source_p,
+remove_ban_list(chan::chan *chptr, struct Client *source_p,
 		rb_dlink_list * list, char c, int mems)
 {
 	static char lmodebuf[BUFSIZE];
 	static char lparabuf[BUFSIZE];
-	struct Ban *banptr;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 	char *pbuf;
@@ -1252,16 +1260,15 @@ remove_ban_list(struct Channel *chptr, struct Client *source_p,
 
 	pbuf = lparabuf;
 
-	cur_len = mlen = sprintf(lmodebuf, ":%s MODE %s -", source_p->name, chptr->chname);
+	cur_len = mlen = sprintf(lmodebuf, ":%s MODE %s -", source_p->name, chptr->name.c_str());
 	mbuf = lmodebuf + mlen;
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, list->head)
 	{
-		banptr = (Ban *)ptr->data;
+		const auto banptr((chan::ban *)ptr->data);
 
 		/* trailing space, and the mode letter itself */
-		plen = strlen(banptr->banstr) +
-			(banptr->forward ? strlen(banptr->forward) + 1 : 0) + 2;
+		plen = banptr->banstr.size() + (!banptr->forward.empty()? banptr->forward.size() + 1 : 0) + 2;
 
 		if(count >= chan::mode::MAXPARAMS || (cur_len + plen) > BUFSIZE - 4)
 		{
@@ -1279,13 +1286,13 @@ remove_ban_list(struct Channel *chptr, struct Client *source_p,
 
 		*mbuf++ = c;
 		cur_len += plen;
-		if (banptr->forward)
-			pbuf += sprintf(pbuf, "%s$%s ", banptr->banstr, banptr->forward);
+		if (!banptr->forward.empty())
+			pbuf += sprintf(pbuf, "%s$%s ", banptr->banstr.c_str(), banptr->forward.c_str());
 		else
-			pbuf += sprintf(pbuf, "%s ", banptr->banstr);
+			pbuf += sprintf(pbuf, "%s ", banptr->banstr.c_str());
 		count++;
 
-		free_ban(banptr);
+		delete banptr;
 	}
 
 	*mbuf = '\0';

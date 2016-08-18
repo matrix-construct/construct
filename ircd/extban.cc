@@ -28,7 +28,7 @@ using namespace ext;
 ext::func ext::table[256] = { NULL };
 
 int
-ircd::match_extban(const char *banstr, struct Client *client_p, struct Channel *chptr, long mode_type)
+chan::match_extban(const char *banstr, client *client_p, chan *chptr, long mode_type)
 {
 	const char *p;
 	int invert(0), result(INVALID);
@@ -63,7 +63,7 @@ ircd::match_extban(const char *banstr, struct Client *client_p, struct Channel *
 }
 
 int
-ircd::valid_extban(const char *banstr, struct Client *client_p, struct Channel *chptr, long mode_type)
+chan::valid_extban(const char *banstr, client *client_p, chan *chptr, long mode_type)
 {
 	const char *p;
 	int result(INVALID);
@@ -92,7 +92,7 @@ ircd::valid_extban(const char *banstr, struct Client *client_p, struct Channel *
 }
 
 const char *
-ircd::get_extban_string(void)
+chan::get_extban_string(void)
 {
 	static char e[256];
 	int i, j;

@@ -4,8 +4,7 @@
  *    -- nenolod/jilles
  */
 
-namespace chan = ircd::chan;
-namespace mode = chan::mode;
+namespace mode = ircd::chan::mode;
 namespace ext = mode::ext;
 using namespace ircd;
 
@@ -13,7 +12,7 @@ static const char extb_desc[] = "Can join ($j) extban type - matches users who a
 
 static int _modinit(void);
 static void _moddeinit(void);
-static int eb_canjoin(const char *data, struct Client *client_p, struct Channel *chptr, mode::type type);
+static int eb_canjoin(const char *data, struct Client *client_p, chan::chan *chptr, mode::type type);
 
 DECLARE_MODULE_AV2(extb_canjoin, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, extb_desc);
 
@@ -31,12 +30,12 @@ _moddeinit(void)
 	ext::table['j'] = NULL;
 }
 
-static int eb_canjoin(const char *data, struct Client *client_p,
-		struct Channel *chptr, mode::type type)
+static int
+eb_canjoin(const char *data, struct Client *client_p, chan::chan *chptr, mode::type type)
 {
 	using namespace ext;
 
-	struct Channel *chptr2;
+	chan::chan *chptr2;
 	int ret;
 	static int recurse = 0;
 
@@ -50,7 +49,7 @@ static int eb_canjoin(const char *data, struct Client *client_p,
 	if (chptr2 == NULL || chptr2 == chptr)
 		return INVALID;
 	/* require consistent target */
-	if (chptr->chname[0] == '#' && data[0] == '&')
+	if (chptr->name[0] == '#' && data[0] == '&')
 		return INVALID;
 	/* this allows getting some information about ban exceptions
 	 * but +s/+p doesn't seem the right criterion */
@@ -60,7 +59,7 @@ static int eb_canjoin(const char *data, struct Client *client_p,
 		return INVALID;
 #endif
 	recurse = 1;
-	ret = is_banned(chptr2, client_p, NULL, NULL, NULL, NULL) == CHFL_BAN ? MATCH : NOMATCH;
+	ret = is_banned(chptr2, client_p, NULL, NULL, NULL, NULL) == mode::BAN ? MATCH : NOMATCH;
 	recurse = 0;
 	return ret;
 }

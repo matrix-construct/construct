@@ -60,7 +60,6 @@ extern rb_radixtree *channel_tree;
 #define HASH_WALK_END }
 
 struct Client;
-struct Channel;
 struct ConfItem;
 struct nd_entry;
 
@@ -81,9 +80,9 @@ extern void add_to_id_hash(const char *, struct Client *);
 extern void del_from_id_hash(const char *name, struct Client *client);
 extern struct Client *find_id(const char *name);
 
-extern struct Channel *get_or_create_channel(struct Client *client_p, const char *chname, bool *isnew);
-extern void del_from_channel_hash(const char *name, struct Channel *chan);
-extern struct Channel *find_channel(const char *name);
+extern chan::chan *get_or_create_channel(struct Client *client_p, const char *chname, bool *isnew);
+extern void del_from_channel_hash(const char *name, chan::chan *chan);
+extern chan::chan *find_channel(const char *name);
 
 extern void add_to_hostname_hash(const char *, struct Client *);
 extern void del_from_hostname_hash(const char *, struct Client *);

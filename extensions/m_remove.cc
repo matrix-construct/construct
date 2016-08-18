@@ -52,9 +52,9 @@ DECLARE_MODULE_AV2(remove, NULL, NULL, remove_clist, NULL, remove_hfnlist, remov
 static void
 m_remove(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	struct membership *msptr;
+	chan::membership *msptr;
 	struct Client *who;
-	struct Channel *chptr;
+	chan::chan *chptr;
 	int chasing = 0;
 	char *comment;
 	const char *name;
@@ -89,7 +89,7 @@ m_remove(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 			return;
 		}
 
-		if(get_channel_access(source_p, chptr, msptr, MODE_ADD, NULL) < CHFL_CHANOP)
+		if(get_channel_access(source_p, chptr, msptr, MODE_ADD, NULL) < chan::CHANOP)
 		{
 			if(MyConnect(source_p))
 			{
@@ -146,7 +146,7 @@ m_remove(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		if(MyClient(source_p) && IsService(who))
 		{
 			sendto_one(source_p, form_str(ERR_ISCHANSERVICE),
-				   me.name, source_p->name, who->name, chptr->chname);
+				   me.name, source_p->name, who->name, chptr->name.c_str());
 			return;
 		}
 
@@ -178,17 +178,17 @@ m_remove(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		 * - Personally, flame and I believe that server kicks shouldn't
 		 *   be sent anyways.  Just waiting for some oper to abuse it...
 		 */
-		sendto_channel_local(ALL_MEMBERS, chptr,
+		sendto_channel_local(chan::ALL_MEMBERS, chptr,
 				     ":%s!%s@%s PART %s :requested by %s (%s)",
 				     who->name, who->username,
 				     who->host, name, source_p->name, comment);
 
 		sendto_server(client_p, chptr, CAP_REMOVE, NOCAPS,
 			      ":%s REMOVE %s %s :%s",
-			      use_id(source_p), chptr->chname, use_id(who), comment);
+			      use_id(source_p), chptr->name.c_str(), use_id(who), comment);
 		sendto_server(client_p, chptr, NOCAPS, CAP_REMOVE,
 			      ":%s KICK %s %s :%s",
-			      use_id(source_p), chptr->chname, use_id(who), comment);
+			      use_id(source_p), chptr->name.c_str(), use_id(who), comment);
 
 		remove_user_from_channel(msptr);
 	}

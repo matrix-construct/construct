@@ -42,8 +42,8 @@ static void
 m_findforwards(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
-	struct Channel *chptr;
-	struct membership *msptr;
+	chan::chan *chptr;
+	chan::membership *msptr;
 	rb_dlink_node *ptr;
 	char buf[414];
 	char *p = buf, *end = buf + sizeof buf - 1;
@@ -76,19 +76,19 @@ m_findforwards(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *
 			last_used = rb_current_time();
 	}
 
-	RB_DLINK_FOREACH(ptr, global_channel_list.head)
+	RB_DLINK_FOREACH(ptr, chan::global_channel_list.head)
 	{
-		chptr = (Channel *)ptr->data;
+		chptr = (chan::chan *)ptr->data;
 		if(!irccmp(chptr->mode.forward, parv[1]))
 		{
-			if(p + strlen(chptr->chname) >= end - 13)
+			if(p + chptr->name.size() >= end - 13)
 			{
 				strcpy(p, "<truncated> ");
 				p += 12;
 				break;
 			}
-			strcpy(p, chptr->chname);
-			p += strlen(chptr->chname);
+			strcpy(p, chptr->name.c_str());
+			p += chptr->name.size();
 			*p++ = ' ';
 		}
 	}

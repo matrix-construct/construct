@@ -43,7 +43,7 @@ mapi_cap_list_av2 invite_cap_list[] = {
 
 DECLARE_MODULE_AV2(invite, NULL, NULL, invite_clist, NULL, NULL, invite_cap_list, NULL, invite_desc);
 
-static bool add_invite(struct Channel *, struct Client *);
+static bool add_invite(chan::chan *, struct Client *);
 
 /* m_invite()
  *      parv[1] - user to invite
@@ -53,8 +53,8 @@ static void
 m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
 	struct Client *target_p;
-	struct Channel *chptr;
-	struct membership *msptr;
+	chan::chan *chptr;
+	chan::membership *msptr;
 	int store_invite = 0;
 
 	if(MyClient(source_p) && !IsFloodDone(source_p))
@@ -77,7 +77,7 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		return;
 	}
 
-	if(check_channel_name(parv[2]) == 0)
+	if(chan::check_channel_name(parv[2]) == 0)
 	{
 		sendto_one_numeric(source_p, ERR_BADCHANNAME,
 				   form_str(ERR_BADCHANNAME),
@@ -120,7 +120,7 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		return;
 	}
 
-	if(IsMember(target_p, chptr))
+	if(is_member(chptr, target_p))
 	{
 		sendto_one_numeric(source_p, ERR_USERONCHANNEL,
 				   form_str(ERR_USERONCHANNEL),
@@ -203,25 +203,25 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		add_reply_target(target_p, source_p);
 		sendto_one(target_p, ":%s!%s@%s INVITE %s :%s",
 			   source_p->name, source_p->username, source_p->host,
-			   target_p->name, chptr->chname);
+			   target_p->name, chptr->name.c_str());
 
 		if(store_invite)
 		{
 			if (!add_invite(chptr, target_p))
 				return;
 
-			sendto_channel_local_with_capability(CHFL_CHANOP, 0, CAP_INVITE_NOTIFY, chptr,
+			sendto_channel_local_with_capability(chan::CHANOP, 0, CAP_INVITE_NOTIFY, chptr,
 				":%s NOTICE %s :%s is inviting %s to %s.",
-				me.name, chptr->chname, source_p->name, target_p->name, chptr->chname);
-			sendto_channel_local_with_capability(CHFL_CHANOP, CAP_INVITE_NOTIFY, 0, chptr,
+				me.name, chptr->name.c_str(), source_p->name, target_p->name, chptr->name.c_str());
+			sendto_channel_local_with_capability(chan::CHANOP, CAP_INVITE_NOTIFY, 0, chptr,
 				":%s!%s@%s INVITE %s %s", source_p->name, source_p->username,
-				source_p->host, target_p->name, chptr->chname);
+				source_p->host, target_p->name, chptr->name.c_str());
 		}
 	}
 
 	sendto_server(source_p, chptr, CAP_TS6, 0, ":%s INVITE %s %s %lu",
 		      use_id(source_p), use_id(target_p),
-		      chptr->chname, (unsigned long) chptr->channelts);
+		      chptr->name.c_str(), (unsigned long) chptr->channelts);
 }
 
 /* add_invite()
@@ -231,7 +231,7 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
  * side effects - client is added to invite list.
  */
 static bool
-add_invite(struct Channel *chptr, struct Client *who)
+add_invite(chan::chan *chptr, struct Client *who)
 {
 	rb_dlink_node *ptr;
 
@@ -247,7 +247,7 @@ add_invite(struct Channel *chptr, struct Client *who)
 	   ConfigChannel.max_chans_per_user)
 	{
 		ptr = who->user->invited.tail;
-		del_invite((Channel *)ptr->data, who);
+		del_invite((chan::chan *)ptr->data, who);
 	}
 
 	/* add user to channel invite list */

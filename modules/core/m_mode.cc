@@ -61,8 +61,8 @@ DECLARE_MODULE_AV2(mode, NULL, NULL, mode_clist, NULL, NULL, NULL, NULL, mode_de
 static void
 m_mode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	struct Channel *chptr = NULL;
-	struct membership *msptr;
+	chan::chan *chptr = NULL;
+	chan::membership *msptr;
 	int n = 2;
 	const char *dest;
 	int operspy = 0;
@@ -90,7 +90,7 @@ m_mode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		return;
 	}
 
-	if(!check_channel_name(dest))
+	if(!chan::check_channel_name(dest))
 	{
 		sendto_one_numeric(source_p, ERR_BADCHANNAME, form_str(ERR_BADCHANNAME), parv[1]);
 		return;
@@ -109,7 +109,7 @@ m_mode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 	if(parc < n + 1)
 	{
 		if(operspy)
-			report_operspy(source_p, "MODE", chptr->chname);
+			report_operspy(source_p, "MODE", chptr->name.c_str());
 
 		sendto_one(source_p, form_str(RPL_CHANNELMODEIS),
 			   me.name, source_p->name, parv[1],
@@ -136,7 +136,7 @@ m_mode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 static void
 ms_mode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	struct Channel *chptr;
+	chan::chan *chptr;
 
 	chptr = find_channel(parv[1]);
 
@@ -153,11 +153,11 @@ ms_mode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 static void
 ms_tmode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	struct Channel *chptr = NULL;
-	struct membership *msptr;
+	chan::chan *chptr = NULL;
+	chan::membership *msptr;
 
 	/* Now, try to find the channel in question */
-	if(!rfc1459::is_chan_prefix(parv[2][0]) || !check_channel_name(parv[2]))
+	if(!rfc1459::is_chan_prefix(parv[2][0]) || !chan::check_channel_name(parv[2]))
 	{
 		sendto_one_numeric(source_p, ERR_BADCHANNAME, form_str(ERR_BADCHANNAME), parv[2]);
 		return;
@@ -191,10 +191,10 @@ ms_tmode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 static void
 ms_mlock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	struct Channel *chptr = NULL;
+	chan::chan *chptr = NULL;
 
 	/* Now, try to find the channel in question */
-	if(!rfc1459::is_chan_prefix(parv[2][0]) || !check_channel_name(parv[2]))
+	if(!rfc1459::is_chan_prefix(parv[2][0]) || !chan::check_channel_name(parv[2]))
 	{
 		sendto_one_numeric(source_p, ERR_BADCHANNAME, form_str(ERR_BADCHANNAME), parv[2]);
 		return;
@@ -218,29 +218,33 @@ ms_mlock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 }
 
 static void
-possibly_remove_lower_forward(struct Client *fakesource_p, int mems,
-		struct Channel *chptr, rb_dlink_list *banlist, int mchar,
-		const char *mask, const char *forward)
+possibly_remove_lower_forward(struct Client *fakesource_p,
+                              int mems,
+                              chan::chan *chptr,
+                              rb_dlink_list *banlist,
+                              int mchar,
+                              const char *mask,
+                              const char *forward)
 {
-	struct Ban *actualBan;
 	rb_dlink_node *ptr;
-
 	RB_DLINK_FOREACH(ptr, banlist->head)
 	{
-		actualBan = (Ban *)ptr->data;
-		if(!irccmp(actualBan->banstr, mask) &&
-				(actualBan->forward == NULL ||
-				 irccmp(actualBan->forward, forward) < 0))
+		const auto actualBan((chan::ban *)ptr->data);
+		if(!irccmp(actualBan->banstr.c_str(), mask) &&
+				(actualBan->forward.empty() ||
+				 irccmp(actualBan->forward.c_str(), forward) < 0))
 		{
-			sendto_channel_local(mems, chptr, ":%s MODE %s -%c %s%s%s",
-					fakesource_p->name,
-					chptr->chname,
-					mchar,
-					actualBan->banstr,
-					actualBan->forward ? "$" : "",
-					actualBan->forward ? actualBan->forward : "");
+			sendto_channel_local(mems, chptr,
+			                     ":%s MODE %s -%c %s%s%s",
+			                     fakesource_p->name,
+			                     chptr->name.c_str(),
+			                     mchar,
+			                     actualBan->banstr.c_str(),
+			                     actualBan->forward.size()? "$" : "",
+			                     actualBan->forward.size()? actualBan->forward.c_str() : "");
+
 			rb_dlinkDelete(&actualBan->node, banlist);
-			free_ban(actualBan);
+			delete actualBan;
 			return;
 		}
 	}
@@ -251,7 +255,7 @@ ms_bmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 {
 	static char modebuf[BUFSIZE];
 	static char parabuf[BUFSIZE];
-	struct Channel *chptr;
+	chan::chan *chptr;
 	rb_dlink_list *banlist;
 	char *s, *forward;
 	char *t;
@@ -267,7 +271,7 @@ ms_bmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	int mems;
 	struct Client *fakesource_p;
 
-	if(!rfc1459::is_chan_prefix(parv[2][0]) || !check_channel_name(parv[2]))
+	if(!rfc1459::is_chan_prefix(parv[2][0]) || !chan::check_channel_name(parv[2]))
 		return;
 
 	if((chptr = find_channel(parv[2])) == NULL)
@@ -281,28 +285,28 @@ ms_bmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	{
 	case 'b':
 		banlist = &chptr->banlist;
-		mode_type = CHFL_BAN;
-		mems = ALL_MEMBERS;
+		mode_type = chan::mode::BAN;
+		mems = chan::ALL_MEMBERS;
 		break;
 
 	case 'e':
 		banlist = &chptr->exceptlist;
-		mode_type = CHFL_EXCEPTION;
+		mode_type = chan::mode::EXCEPTION;
 		needcap = CAP_EX;
-		mems = ONLY_CHANOPS;
+		mems = chan::ONLY_CHANOPS;
 		break;
 
 	case 'I':
 		banlist = &chptr->invexlist;
-		mode_type = CHFL_INVEX;
+		mode_type = chan::mode::INVEX;
 		needcap = CAP_IE;
-		mems = ONLY_CHANOPS;
+		mems = chan::ONLY_CHANOPS;
 		break;
 
 	case 'q':
 		banlist = &chptr->quietlist;
-		mode_type = CHFL_QUIET;
-		mems = ALL_MEMBERS;
+		mode_type = chan::mode::QUIET;
+		mems = chan::ALL_MEMBERS;
 		break;
 
 		/* maybe we should just blindly propagate this? */
@@ -318,7 +322,7 @@ ms_bmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		fakesource_p = &me;
 	else
 		fakesource_p = source_p;
-	mlen = sprintf(modebuf, ":%s MODE %s +", fakesource_p->name, chptr->chname);
+	mlen = sprintf(modebuf, ":%s MODE %s +", fakesource_p->name, chptr->name.c_str());
 	mbuf = modebuf + mlen;
 	pbuf = parabuf;
 
@@ -407,5 +411,5 @@ ms_bmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	}
 
 	sendto_server(client_p, chptr, CAP_TS6 | needcap, NOCAPS, ":%s BMASK %ld %s %s :%s",
-		      source_p->id, (long) chptr->channelts, chptr->chname, parv[3], parv[4]);
+		      source_p->id, (long) chptr->channelts, chptr->name.c_str(), parv[3], parv[4]);
 }

@@ -123,7 +123,7 @@ me_su(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 					    target_p->name, target_p->username, target_p->host,
 					    EmptyString(target_p->user->suser) ? "*" : target_p->user->suser);
 
-	invalidate_bancache_user(target_p);
+	chan::invalidate_bancache_user(target_p);
 }
 
 static void
@@ -212,7 +212,7 @@ doit:
 
 	monitor_signoff(target_p);
 
-	invalidate_bancache_user(target_p);
+	chan::invalidate_bancache_user(target_p);
 
 	sendto_realops_snomask(SNO_NCHANGE, L_ALL,
 			"Nick change: From %s to %s [%s@%s]",

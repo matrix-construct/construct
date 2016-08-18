@@ -705,7 +705,7 @@ resv_nick_fnc(const char *mask, const char *reason, int temp_time)
 
 			monitor_signoff(client_p);
 
-			invalidate_bancache_user(client_p);
+			chan::invalidate_bancache_user(client_p);
 
 			sendto_common_channels_local(client_p, NOCAPS, NOCAPS, ":%s!%s@%s NICK :%s",
 				client_p->name, client_p->username, client_p->host, nick);
@@ -759,7 +759,7 @@ update_client_exit_stats(struct Client *client_p)
 	}
 
 	if(splitchecking && !splitmode)
-		check_splitmode(NULL);
+		chan::check_splitmode(NULL);
 }
 
 /*
@@ -1261,7 +1261,7 @@ exit_generic_client(struct Client *client_p, struct Client *source_p, struct Cli
 				     source_p->name,
 				     source_p->username, source_p->host, comment);
 
-	remove_user_from_channels(source_p);
+	chan::remove_user_from_channels(source_p);
 
 	/* Should not be in any channels now */
 	s_assert(source_p->user->channel.head == NULL);
@@ -1269,7 +1269,7 @@ exit_generic_client(struct Client *client_p, struct Client *source_p, struct Cli
 	/* Clean up invitefield */
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, source_p->user->invited.head)
 	{
-		del_invite(reinterpret_cast<Channel *>(ptr->data), source_p);
+		del_invite(reinterpret_cast<chan::chan *>(ptr->data), source_p);
 	}
 
 	/* Clean up allow lists */

@@ -47,8 +47,8 @@ mo_okick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 {
 	struct Client *who;
 	struct Client *target_p;
-	struct Channel *chptr;
-	struct membership *msptr;
+	chan::chan *chptr;
+	chan::membership *msptr;
 	int chasing = 0;
 	char *comment;
 	char *name;
@@ -105,20 +105,20 @@ mo_okick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 	sendto_wallops_flags(UMODE_WALLOP, &me,
 			     "OKICK called for %s %s by %s!%s@%s",
-			     chptr->chname, target_p->name,
+			     chptr->name.c_str(), target_p->name,
 			     source_p->name, source_p->username, source_p->host);
 	ilog(L_MAIN, "OKICK called for %s %s by %s",
-	     chptr->chname, target_p->name,
+	     chptr->name.c_str(), target_p->name,
 	     get_oper_name(source_p));
 	/* only sends stuff for #channels remotely */
 	sendto_server(NULL, chptr, NOCAPS, NOCAPS,
 			":%s WALLOPS :OKICK called for %s %s by %s!%s@%s",
-			me.name, chptr->chname, target_p->name,
+			me.name, chptr->name.c_str(), target_p->name,
 			source_p->name, source_p->username, source_p->host);
 
-	sendto_channel_local(ALL_MEMBERS, chptr, ":%s KICK %s %s :%s",
-			     me.name, chptr->chname, who->name, comment);
+	sendto_channel_local(chan::ALL_MEMBERS, chptr, ":%s KICK %s %s :%s",
+			     me.name, chptr->name.c_str(), who->name, comment);
 	sendto_server(&me, chptr, CAP_TS6, NOCAPS,
-		      ":%s KICK %s %s :%s", me.id, chptr->chname, who->id, comment);
+		      ":%s KICK %s %s :%s", me.id, chptr->name.c_str(), who->id, comment);
 	remove_user_from_channel(msptr);
 }

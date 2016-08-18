@@ -182,7 +182,7 @@ bandb_handle_ban(char *parv[], int parc)
 		break;
 
 	case 'R':
-		if(IsChannelName(aconf->host))
+		if(chan::is_name(aconf->host))
 			aconf->status = CONF_RESV_CHANNEL;
 		else
 			aconf->status = CONF_RESV_NICK;

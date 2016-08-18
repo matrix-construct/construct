@@ -47,9 +47,9 @@ DECLARE_MODULE_AV2(kick, NULL, NULL, kick_clist, NULL, NULL, NULL, NULL, kick_de
 static void
 m_kick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
 {
-	struct membership *msptr;
+	chan::membership *msptr;
 	struct Client *who;
-	struct Channel *chptr;
+	chan::chan *chptr;
 	int chasing = 0;
 	char *comment;
 	const char *name;
@@ -84,7 +84,7 @@ m_kick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 			return;
 		}
 
-		if(get_channel_access(source_p, chptr, msptr, MODE_ADD, NULL) < CHFL_CHANOP)
+		if(get_channel_access(source_p, chptr, msptr, MODE_ADD, NULL) < chan::CHANOP)
 		{
 			if(MyConnect(source_p))
 			{
@@ -121,7 +121,10 @@ m_kick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		if(MyClient(source_p) && IsService(who))
 		{
 			sendto_one(source_p, form_str(ERR_ISCHANSERVICE),
-				   me.name, source_p->name, who->name, chptr->chname);
+			           me.name,
+			           source_p->name,
+			           who->name,
+			           chptr->name.c_str());
 			return;
 		}
 
@@ -154,17 +157,17 @@ m_kick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		 *   be sent anyways.  Just waiting for some oper to abuse it...
 		 */
 		if(IsServer(source_p))
-			sendto_channel_local(ALL_MEMBERS, chptr, ":%s KICK %s %s :%s",
+			sendto_channel_local(chan::ALL_MEMBERS, chptr, ":%s KICK %s %s :%s",
 					     source_p->name, name, who->name, comment);
 		else
-			sendto_channel_local(ALL_MEMBERS, chptr,
+			sendto_channel_local(chan::ALL_MEMBERS, chptr,
 					     ":%s!%s@%s KICK %s %s :%s",
 					     source_p->name, source_p->username,
 					     source_p->host, name, who->name, comment);
 
 		sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
 			      ":%s KICK %s %s :%s",
-			      use_id(source_p), chptr->chname, use_id(who), comment);
+			      use_id(source_p), chptr->name.c_str(), use_id(who), comment);
 		remove_user_from_channel(msptr);
 	}
 	else if (MyClient(source_p))

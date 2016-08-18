@@ -29,10 +29,19 @@
 #ifdef __cplusplus
 namespace ircd {
 
-struct Channel;
-struct Client;
+//TODO: XXX: is actually used for umode and chmode etc
+enum : int
+{
+	MODE_DEL    = -1,
+	MODE_QUERY  = 0,
+	MODE_ADD    = 1,
+};
 
 namespace chan {
+
+struct chan;
+using client = Client; //TODO: XXX: temp
+
 namespace mode {
 
 // Maximum mode changes allowed per client, per server is different
@@ -75,20 +84,20 @@ enum type : uint
 
 struct letter
 {
-	enum type type;
-	char letter;
+	enum type type  = (enum type)0;
+	char letter     = '\0';
 };
 
 struct change
 {
-	char letter;
-	const char *arg;
-	const char *id;
-	int dir;
-	int mems;
+	char letter      = '\0';
+	const char *arg  = nullptr;
+	const char *id   = nullptr;
+	int dir          = 0;
+	int mems         = 0;
 };
 
-using func = void (*)(Client *, Channel *, int alevel, int parc, int *parn, const char **parv, int *errors, int dir, char c, type type);
+using func = void (*)(client *, struct chan *, int alevel, int parc, int *parn, const char **parv, int *errors, int dir, char c, type type);
 
 struct mode
 {
@@ -111,12 +120,12 @@ namespace ext
 		MATCH     = 1,   // matches
 	};
 
-	using func = int (*)(const char *data, Client *, Channel *, type type);
+	using func = int (*)(const char *data, client *, chan *, type type);
 	extern func table[256];
 }
 
 #define CHM_FUNCTION(_NAME_)                                      \
-void _NAME_(Client *source_p, Channel *chptr,                     \
+void _NAME_(client *source_p, chan *chptr,                     \
             int alevel, int parc, int *parn, const char **parv,   \
             int *errors, int dir, char c, type type);
 

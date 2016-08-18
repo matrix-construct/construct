@@ -42,7 +42,6 @@
 namespace ircd {
 
 struct server_conf;
-struct Channel;
 
 /* Capabilities */
 extern ircd::capability::index serv_capindex;     //TODO: namespace

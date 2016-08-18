@@ -71,29 +71,29 @@ typedef struct
 {
 	struct Client *client;
 	struct Client *target;
-	struct Channel *chptr;
+	chan::chan *chptr;
 	int approved;
 } hook_data_client;
 
 typedef struct
 {
 	struct Client *client;
-	struct Channel *chptr;
+	chan::chan *chptr;
 	int approved;
 } hook_data_channel;
 
 typedef struct
 {
 	struct Client *client;
-	struct Channel *chptr;
+	chan::chan *chptr;
 	char *key;
 } hook_data_channel_activity;
 
 typedef struct
 {
 	struct Client *client;
-	struct Channel *chptr;
-	struct membership *msptr;
+	chan::chan *chptr;
+	chan::membership *msptr;
 	struct Client *target;
 	int approved;
 	int dir;
@@ -133,7 +133,7 @@ typedef struct
 {
 	enum message_type msgtype;
 	struct Client *source_p;
-	struct Channel *chptr;
+	chan::chan *chptr;
 	const char *text;
 	int approved;
 	const char *reason;

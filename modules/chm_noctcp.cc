@@ -44,7 +44,7 @@ chm_noctcp_process(hook_data_privmsg_channel *data)
 
 	if (*data->text == '\001' && rb_strncasecmp(data->text + 1, "ACTION ", 7) && data->chptr->mode.mode & mode_noctcp)
 	{
-		sendto_one_numeric(data->source_p, ERR_CANNOTSENDTOCHAN, form_str(ERR_CANNOTSENDTOCHAN), data->chptr->chname);
+		sendto_one_numeric(data->source_p, ERR_CANNOTSENDTOCHAN, form_str(ERR_CANNOTSENDTOCHAN), data->chptr->name.c_str());
 		data->approved = ERR_CANNOTSENDTOCHAN;
 		return;
 	}

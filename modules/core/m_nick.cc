@@ -590,18 +590,19 @@ change_local_nick(struct Client *client_p, struct Client *source_p,
 {
 	struct Client *target_p;
 	rb_dlink_node *ptr, *next_ptr;
-	struct Channel *chptr;
+	chan::chan *chptr;
 	char note[NICKLEN + 10];
 	int samenick;
 
 	if (dosend)
 	{
-		chptr = find_bannickchange_channel(source_p);
+		chptr = chan::find_bannickchange_channel(source_p);
 		if (chptr != NULL)
 		{
 			sendto_one_numeric(source_p, ERR_BANNICKCHANGE,
-					form_str(ERR_BANNICKCHANGE),
-					nick, chptr->chname);
+			                   form_str(ERR_BANNICKCHANGE),
+			                   nick,
+			                   chptr->name.c_str());
 			return;
 		}
 		if((source_p->localClient->last_nick_change + ConfigFileEntry.max_nick_time) < rb_current_time())
@@ -633,7 +634,7 @@ change_local_nick(struct Client *client_p, struct Client *source_p,
 		monitor_signoff(source_p);
 		/* we only do bancache for local users -- jilles */
 		if(source_p->user)
-			invalidate_bancache_user(source_p);
+			chan::invalidate_bancache_user(source_p);
 	}
 
 	sendto_realops_snomask(SNO_NCHANGE, L_ALL,

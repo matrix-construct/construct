@@ -196,18 +196,18 @@ mode::orphan(const uint8_t &c)
 namespace ircd {
 
 int
-get_channel_access(struct Client *source_p, struct Channel *chptr, struct membership *msptr, int dir, const char *modestr)
+chan::get_channel_access(client *source_p, chan *chptr, membership *msptr, int dir, const char *modestr)
 {
 	hook_data_channel_approval moduledata;
 
 	if(!MyClient(source_p))
-		return CHFL_CHANOP;
+		return CHANOP;
 
 	moduledata.client = source_p;
 	moduledata.chptr = chptr;
 	moduledata.msptr = msptr;
 	moduledata.target = NULL;
-	moduledata.approved = (msptr != NULL && is_chanop(msptr)) ? CHFL_CHANOP : CHFL_PEON;
+	moduledata.approved = (msptr != NULL && is_chanop(msptr)) ? CHANOP : PEON;
 	moduledata.dir = dir;
 	moduledata.modestr = modestr;
 
@@ -225,27 +225,27 @@ get_channel_access(struct Client *source_p, struct Channel *chptr, struct member
  * side effects - error message sent on failure
  */
 static bool
-allow_mode_change(struct Client *source_p, struct Channel *chptr, int alevel,
+allow_mode_change(struct Client *source_p, chan::chan *chptr, int alevel,
 		int *errors, char c)
 {
 	/* If this mode char is locked, don't allow local users to change it. */
-	if (MyClient(source_p) && chptr->mode_lock && strchr(chptr->mode_lock, c))
+	if (MyClient(source_p) && !chptr->mode_lock.empty() && strchr(chptr->mode_lock.c_str(), c))
 	{
 		if (!(*errors & SM_ERR_MLOCK))
 			sendto_one_numeric(source_p,
 					ERR_MLOCKRESTRICTED,
 					form_str(ERR_MLOCKRESTRICTED),
-					chptr->chname,
+					chptr->name.c_str(),
 					c,
-					chptr->mode_lock);
+					chptr->mode_lock.c_str());
 		*errors |= SM_ERR_MLOCK;
 		return false;
 	}
-	if(alevel < CHFL_CHANOP)
+	if(alevel < chan::CHANOP)
 	{
 		if(!(*errors & SM_ERR_NOOPS))
 			sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
-				   me.name, source_p->name, chptr->chname);
+				   me.name, source_p->name, chptr->name.c_str());
 		*errors |= SM_ERR_NOOPS;
 		return false;
 	}
@@ -259,10 +259,10 @@ allow_mode_change(struct Client *source_p, struct Channel *chptr, int alevel,
  * side effects - given id is added to the appropriate list
  */
 bool
-add_id(struct Client *source_p, struct Channel *chptr, const char *banid, const char *forward,
+chan::add_id(client *source_p, chan *chptr, const char *banid, const char *forward,
        rb_dlink_list * list, long mode_type)
 {
-	struct Ban *actualBan;
+	ban *actualBan;
 	static char who[USERHOST_REPLYLEN];
 	char *realban = LOCAL_COPY(banid);
 	rb_dlink_node *ptr;
@@ -275,14 +275,14 @@ add_id(struct Client *source_p, struct Channel *chptr, const char *banid, const 
 		if((rb_dlink_list_length(&chptr->banlist) + rb_dlink_list_length(&chptr->exceptlist) + rb_dlink_list_length(&chptr->invexlist) + rb_dlink_list_length(&chptr->quietlist)) >= (unsigned long)(chptr->mode.mode & mode::EXLIMIT ? ConfigChannel.max_bans_large : ConfigChannel.max_bans))
 		{
 			sendto_one(source_p, form_str(ERR_BANLISTFULL),
-				   me.name, source_p->name, chptr->chname, realban);
+				   me.name, source_p->name, chptr->name.c_str(), realban);
 			return false;
 		}
 
 		RB_DLINK_FOREACH(ptr, list->head)
 		{
-			actualBan = (Ban *)ptr->data;
-			if(mask_match(actualBan->banstr, realban))
+			actualBan = (ban *)ptr->data;
+			if(mask_match(actualBan->banstr.c_str(), realban))
 				return false;
 		}
 	}
@@ -291,8 +291,8 @@ add_id(struct Client *source_p, struct Channel *chptr, const char *banid, const 
 	{
 		RB_DLINK_FOREACH(ptr, list->head)
 		{
-			actualBan = (Ban *)ptr->data;
-			if(!irccmp(actualBan->banstr, realban))
+			actualBan = (ban *)ptr->data;
+			if(!irccmp(actualBan->banstr.c_str(), realban))
 				return false;
 		}
 	}
@@ -303,7 +303,7 @@ add_id(struct Client *source_p, struct Channel *chptr, const char *banid, const 
 	else
 		rb_strlcpy(who, source_p->name, sizeof(who));
 
-	actualBan = allocate_ban(realban, who, forward);
+	actualBan = new ban(realban, who, forward?: std::string{});
 	actualBan->when = rb_current_time();
 
 	rb_dlinkAdd(actualBan, &actualBan->node, list);
@@ -321,20 +321,19 @@ add_id(struct Client *source_p, struct Channel *chptr, const char *banid, const 
  * outputs	- pointer to ban that was removed, if any
  * side effects - given id is removed from the appropriate list and returned
  */
-struct Ban *
-del_id(struct Channel *chptr, const char *banid, rb_dlink_list * list, long mode_type)
+chan::ban *
+chan::del_id(chan *chptr, const char *banid, rb_dlink_list * list, long mode_type)
 {
 	rb_dlink_node *ptr;
-	struct Ban *banptr;
 
 	if(EmptyString(banid))
 		return NULL;
 
 	RB_DLINK_FOREACH(ptr, list->head)
 	{
-		banptr = (Ban *)ptr->data;
+		auto *const banptr(reinterpret_cast<ban *>(ptr->data));
 
-		if(irccmp(banid, banptr->banstr) == 0)
+		if(irccmp(banid, banptr->banstr.c_str()) == 0)
 		{
 			rb_dlinkDelete(&banptr->node, list);
 
@@ -506,20 +505,20 @@ pretty_mask(const char *idmask)
  * side effects - numeric sent if not allowed
  */
 static bool
-check_forward(struct Client *source_p, struct Channel *chptr,
+check_forward(struct Client *source_p, chan::chan *chptr,
 		const char *forward)
 {
-	struct Channel *targptr = NULL;
-	struct membership *msptr;
+	chan::chan *targptr = NULL;
+	chan::membership *msptr;
 
-	if(!check_channel_name(forward) ||
+	if(!chan::check_channel_name(forward) ||
 			(MyClient(source_p) && (strlen(forward) > LOC_CHANNELLEN || hash_find_resv(forward))))
 	{
 		sendto_one_numeric(source_p, ERR_BADCHANNAME, form_str(ERR_BADCHANNAME), forward);
 		return false;
 	}
 	/* don't forward to inconsistent target -- jilles */
-	if(chptr->chname[0] == '#' && forward[0] == '&')
+	if(chptr->name[0] == '#' && forward[0] == '&')
 	{
 		sendto_one_numeric(source_p, ERR_BADCHANNAME,
 				   form_str(ERR_BADCHANNAME), forward);
@@ -534,10 +533,10 @@ check_forward(struct Client *source_p, struct Channel *chptr,
 	if(MyClient(source_p) && !(targptr->mode.mode & mode::FREETARGET))
 	{
 		if((msptr = find_channel_membership(targptr, source_p)) == NULL ||
-			get_channel_access(source_p, targptr, msptr, MODE_QUERY, NULL) < CHFL_CHANOP)
+			chan::get_channel_access(source_p, targptr, msptr, MODE_QUERY, NULL) < chan::CHANOP)
 		{
 			sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
-				   me.name, source_p->name, targptr->chname);
+				   me.name, source_p->name, targptr->name.c_str());
 			return false;
 		}
 	}
@@ -595,7 +594,7 @@ fix_key_remote(char *arg)
  * The handlers for each specific mode.
  */
 void
-mode::functor::nosuch(struct Client *source_p, struct Channel *chptr,
+mode::functor::nosuch(struct Client *source_p, chan *chptr,
 	   int alevel, int parc, int *parn,
 	   const char **parv, int *errors, int dir, char c, type mode_type)
 {
@@ -606,7 +605,7 @@ mode::functor::nosuch(struct Client *source_p, struct Channel *chptr,
 }
 
 void
-mode::functor::simple(struct Client *source_p, struct Channel *chptr,
+mode::functor::simple(struct Client *source_p, chan *chptr,
 	   int alevel, int parc, int *parn,
 	   const char **parv, int *errors, int dir, char c, type mode_type)
 {
@@ -645,7 +644,7 @@ mode::functor::simple(struct Client *source_p, struct Channel *chptr,
 }
 
 void
-mode::functor::orphaned(struct Client *source_p, struct Channel *chptr,
+mode::functor::orphaned(struct Client *source_p, chan *chptr,
 	   int alevel, int parc, int *parn,
 	   const char **parv, int *errors, int dir, char c, type mode_type)
 {
@@ -675,7 +674,7 @@ mode::functor::orphaned(struct Client *source_p, struct Channel *chptr,
 }
 
 void
-mode::functor::hidden(struct Client *source_p, struct Channel *chptr,
+mode::functor::hidden(struct Client *source_p, chan *chptr,
 	  int alevel, int parc, int *parn,
 	  const char **parv, int *errors, int dir, char c, type mode_type)
 {
@@ -722,7 +721,7 @@ mode::functor::hidden(struct Client *source_p, struct Channel *chptr,
 }
 
 void
-mode::functor::staff(struct Client *source_p, struct Channel *chptr,
+mode::functor::staff(struct Client *source_p, chan *chptr,
 	  int alevel, int parc, int *parn,
 	  const char **parv, int *errors, int dir, char c, type mode_type)
 {
@@ -742,7 +741,7 @@ mode::functor::staff(struct Client *source_p, struct Channel *chptr,
 		return;
 	}
 
-	if(!allow_mode_change(source_p, chptr, CHFL_CHANOP, errors, c))
+	if(!allow_mode_change(source_p, chptr, CHANOP, errors, c))
 		return;
 
 	if(MyClient(source_p) && (++mode_limit_simple > MAXMODES_SIMPLE))
@@ -772,7 +771,7 @@ mode::functor::staff(struct Client *source_p, struct Channel *chptr,
 }
 
 void
-mode::functor::ban(struct Client *source_p, struct Channel *chptr,
+mode::functor::ban(client *source_p, chan *chptr,
 	int alevel, int parc, int *parn,
 	const char **parv, int *errors, int dir, char c, type mode_type)
 {
@@ -780,7 +779,6 @@ mode::functor::ban(struct Client *source_p, struct Channel *chptr,
 	char *forward;
 	rb_dlink_list *list;
 	rb_dlink_node *ptr;
-	struct Ban *banptr;
 	int errorval;
 	const char *rpl_list_p;
 	const char *rpl_endlist_p;
@@ -788,7 +786,7 @@ mode::functor::ban(struct Client *source_p, struct Channel *chptr,
 
 	switch (mode_type)
 	{
-	case CHFL_BAN:
+	case BAN:
 		list = &chptr->banlist;
 		errorval = SM_ERR_RPL_B;
 		rpl_list_p = form_str(RPL_BANLIST);
@@ -796,7 +794,7 @@ mode::functor::ban(struct Client *source_p, struct Channel *chptr,
 		mems = ALL_MEMBERS;
 		break;
 
-	case CHFL_EXCEPTION:
+	case EXCEPTION:
 		/* if +e is disabled, allow all but +e locally */
 		if(!ConfigChannel.use_except && MyClient(source_p) &&
 		   ((dir == MODE_ADD) && (parc > *parn)))
@@ -813,7 +811,7 @@ mode::functor::ban(struct Client *source_p, struct Channel *chptr,
 			mems = ONLY_SERVERS;
 		break;
 
-	case CHFL_INVEX:
+	case INVEX:
 		/* if +I is disabled, allow all but +I locally */
 		if(!ConfigChannel.use_invex && MyClient(source_p) &&
 		   (dir == MODE_ADD) && (parc > *parn))
@@ -830,7 +828,7 @@ mode::functor::ban(struct Client *source_p, struct Channel *chptr,
 			mems = ONLY_SERVERS;
 		break;
 
-	case CHFL_QUIET:
+	case QUIET:
 		list = &chptr->quietlist;
 		errorval = SM_ERR_RPL_Q;
 		rpl_list_p = form_str(RPL_QUIETLIST);
@@ -851,30 +849,30 @@ mode::functor::ban(struct Client *source_p, struct Channel *chptr,
 
 		/* non-ops cant see +eI lists.. */
 		/* note that this is still permitted if +e/+I are mlocked. */
-		if(alevel < CHFL_CHANOP && mode_type != BAN &&
+		if(alevel < CHANOP && mode_type != BAN &&
 				mode_type != QUIET)
 		{
 			if(!(*errors & SM_ERR_NOOPS))
 				sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
-					   me.name, source_p->name, chptr->chname);
+					   me.name, source_p->name, chptr->name.c_str());
 			*errors |= SM_ERR_NOOPS;
 			return;
 		}
 
 		RB_DLINK_FOREACH(ptr, list->head)
 		{
-			char buf[BANLEN];
-			banptr = (Ban *)ptr->data;
-			if(banptr->forward)
-				snprintf(buf, sizeof(buf), "%s$%s", banptr->banstr, banptr->forward);
+			char buf[ban::LEN];
+			auto *const banptr(reinterpret_cast<struct ban *>(ptr->data));
+			if(!banptr->forward.empty())
+				snprintf(buf, sizeof(buf), "%s$%s", banptr->banstr.c_str(), banptr->forward.c_str());
 			else
-				rb_strlcpy(buf, banptr->banstr, sizeof(buf));
+				rb_strlcpy(buf, banptr->banstr.c_str(), sizeof(buf));
 
 			sendto_one(source_p, rpl_list_p,
-				   me.name, source_p->name, chptr->chname,
-				   buf, banptr->who, banptr->when);
+				   me.name, source_p->name, chptr->name.c_str(),
+				   buf, banptr->who.c_str(), banptr->when);
 		}
-		sendto_one(source_p, rpl_endlist_p, me.name, source_p->name, chptr->chname);
+		sendto_one(source_p, rpl_endlist_p, me.name, source_p->name, chptr->name.c_str());
 		return;
 	}
 
@@ -906,11 +904,11 @@ mode::functor::ban(struct Client *source_p, struct Channel *chptr,
 	 * also make sure it will always fit on a line with channel
 	 * name etc.
 	 */
-	if(strlen(mask) > MIN(BANLEN, BUFLEN - 5))
+	if(strlen(mask) > MIN(ban::LEN, BUFLEN - 5))
 	{
 		sendto_one_numeric(source_p, ERR_INVALIDBAN,
 				form_str(ERR_INVALIDBAN),
-				chptr->chname, c, raw_mask);
+				chptr->name.c_str(), c, raw_mask);
 		return;
 	}
 
@@ -934,7 +932,7 @@ mode::functor::ban(struct Client *source_p, struct Channel *chptr,
 			{
 				sendto_one_numeric(source_p, ERR_INVALIDBAN,
 						form_str(ERR_INVALIDBAN),
-						chptr->chname, c, raw_mask);
+						chptr->name.c_str(), c, raw_mask);
 				return;
 			}
 		}
@@ -952,18 +950,18 @@ mode::functor::ban(struct Client *source_p, struct Channel *chptr,
 			{
 				sendto_one_numeric(source_p, ERR_INVALIDBAN,
 						form_str(ERR_INVALIDBAN),
-						chptr->chname, c, raw_mask);
+						chptr->name.c_str(), c, raw_mask);
 				return;
 			}
 			/* check_forward() sends its own error message */
 			if(!check_forward(source_p, chptr, forward))
 				return;
 			/* Forwards only make sense for bans. */
-			if(mode_type != CHFL_BAN)
+			if(mode_type != BAN)
 			{
 				sendto_one_numeric(source_p, ERR_INVALIDBAN,
 						form_str(ERR_INVALIDBAN),
-						chptr->chname, c, raw_mask);
+						chptr->name.c_str(), c, raw_mask);
 				return;
 			}
 		}
@@ -985,8 +983,8 @@ mode::functor::ban(struct Client *source_p, struct Channel *chptr,
 	}
 	else if(dir == MODE_DEL)
 	{
-		struct Ban *removed;
-		static char buf[BANLEN * MAXPARAMS];
+		struct ban *removed;
+		static char buf[ban::LEN * MAXPARAMS];
 		int old_removed_mask_pos = removed_mask_pos;
 		if((removed = del_id(chptr, mask, list, mode_type)) == NULL)
 		{
@@ -995,13 +993,13 @@ mode::functor::ban(struct Client *source_p, struct Channel *chptr,
 				mask = raw_mask;
 		}
 
-		if(removed && removed->forward)
-			removed_mask_pos += snprintf(buf + old_removed_mask_pos, sizeof(buf), "%s$%s", removed->banstr, removed->forward) + 1;
+		if(removed && !removed->forward.empty())
+			removed_mask_pos += snprintf(buf + old_removed_mask_pos, sizeof(buf), "%s$%s", removed->banstr.c_str(), removed->forward.c_str()) + 1;
 		else
 			removed_mask_pos += rb_strlcpy(buf + old_removed_mask_pos, mask, sizeof(buf)) + 1;
 		if(removed)
 		{
-			free_ban(removed);
+			delete removed;
 			removed = NULL;
 		}
 
@@ -1014,13 +1012,13 @@ mode::functor::ban(struct Client *source_p, struct Channel *chptr,
 }
 
 void
-mode::functor::op(struct Client *source_p, struct Channel *chptr,
+mode::functor::op(client *source_p, chan *chptr,
        int alevel, int parc, int *parn,
        const char **parv, int *errors, int dir, char c, type mode_type)
 {
-	struct membership *mstptr;
+	membership *mstptr;
 	const char *opnick;
-	struct Client *targ_p;
+	client *targ_p;
 
 	if(!allow_mode_change(source_p, chptr, alevel, errors, c))
 		return;
@@ -1049,7 +1047,7 @@ mode::functor::op(struct Client *source_p, struct Channel *chptr,
 	{
 		if(!(*errors & SM_ERR_NOTONCHANNEL) && MyClient(source_p))
 			sendto_one_numeric(source_p, ERR_USERNOTINCHANNEL,
-					   form_str(ERR_USERNOTINCHANNEL), opnick, chptr->chname);
+					   form_str(ERR_USERNOTINCHANNEL), opnick, chptr->name.c_str());
 		*errors |= SM_ERR_NOTONCHANNEL;
 		return;
 	}
@@ -1059,7 +1057,7 @@ mode::functor::op(struct Client *source_p, struct Channel *chptr,
 
 	if(dir == MODE_ADD)
 	{
-		if(targ_p == source_p && mstptr->flags & CHFL_CHANOP)
+		if(targ_p == source_p && mstptr->flags & CHANOP)
 			return;
 
 		mode_changes[mode_count].letter = c;
@@ -1068,14 +1066,14 @@ mode::functor::op(struct Client *source_p, struct Channel *chptr,
 		mode_changes[mode_count].id = targ_p->id;
 		mode_changes[mode_count++].arg = targ_p->name;
 
-		mstptr->flags |= CHFL_CHANOP;
+		mstptr->flags |= CHANOP;
 	}
 	else
 	{
 		if(MyClient(source_p) && IsService(targ_p))
 		{
 			sendto_one(source_p, form_str(ERR_ISCHANSERVICE),
-				   me.name, source_p->name, targ_p->name, chptr->chname);
+				   me.name, source_p->name, targ_p->name, chptr->name.c_str());
 			return;
 		}
 
@@ -1085,18 +1083,18 @@ mode::functor::op(struct Client *source_p, struct Channel *chptr,
 		mode_changes[mode_count].id = targ_p->id;
 		mode_changes[mode_count++].arg = targ_p->name;
 
-		mstptr->flags &= ~CHFL_CHANOP;
+		mstptr->flags &= ~CHANOP;
 	}
 }
 
 void
-mode::functor::voice(struct Client *source_p, struct Channel *chptr,
+mode::functor::voice(client *source_p, chan *chptr,
 	  int alevel, int parc, int *parn,
 	  const char **parv, int *errors, int dir, char c, type mode_type)
 {
-	struct membership *mstptr;
+	membership *mstptr;
 	const char *opnick;
-	struct Client *targ_p;
+	client *targ_p;
 
 	if(!allow_mode_change(source_p, chptr, alevel, errors, c))
 		return;
@@ -1125,7 +1123,7 @@ mode::functor::voice(struct Client *source_p, struct Channel *chptr,
 	{
 		if(!(*errors & SM_ERR_NOTONCHANNEL) && MyClient(source_p))
 			sendto_one_numeric(source_p, ERR_USERNOTINCHANNEL,
-					   form_str(ERR_USERNOTINCHANNEL), opnick, chptr->chname);
+					   form_str(ERR_USERNOTINCHANNEL), opnick, chptr->name.c_str());
 		*errors |= SM_ERR_NOTONCHANNEL;
 		return;
 	}
@@ -1141,7 +1139,7 @@ mode::functor::voice(struct Client *source_p, struct Channel *chptr,
 		mode_changes[mode_count].id = targ_p->id;
 		mode_changes[mode_count++].arg = targ_p->name;
 
-		mstptr->flags |= CHFL_VOICE;
+		mstptr->flags |= VOICE;
 	}
 	else
 	{
@@ -1151,12 +1149,12 @@ mode::functor::voice(struct Client *source_p, struct Channel *chptr,
 		mode_changes[mode_count].id = targ_p->id;
 		mode_changes[mode_count++].arg = targ_p->name;
 
-		mstptr->flags &= ~CHFL_VOICE;
+		mstptr->flags &= ~VOICE;
 	}
 }
 
 void
-mode::functor::limit(struct Client *source_p, struct Channel *chptr,
+mode::functor::limit(client *source_p, chan *chptr,
 	  int alevel, int parc, int *parn,
 	  const char **parv, int *errors, int dir, char c, type mode_type)
 {
@@ -1207,7 +1205,7 @@ mode::functor::limit(struct Client *source_p, struct Channel *chptr,
 }
 
 void
-mode::functor::throttle(struct Client *source_p, struct Channel *chptr,
+mode::functor::throttle(client *source_p, chan *chptr,
 	     int alevel, int parc, int *parn,
 	     const char **parv, int *errors, int dir, char c, type mode_type)
 {
@@ -1260,7 +1258,7 @@ mode::functor::throttle(struct Client *source_p, struct Channel *chptr,
 }
 
 void
-mode::functor::forward(struct Client *source_p, struct Channel *chptr,
+mode::functor::forward(client *source_p, chan *chptr,
 	int alevel, int parc, int *parn,
 	const char **parv, int *errors, int dir, char c, type mode_type)
 {
@@ -1276,9 +1274,9 @@ mode::functor::forward(struct Client *source_p, struct Channel *chptr,
 		if (!(*errors & SM_ERR_RPL_F))
 		{
 			if (*chptr->mode.forward == '\0')
-				sendto_one_notice(source_p, ":%s has no forward channel", chptr->chname);
+				sendto_one_notice(source_p, ":%s has no forward channel", chptr->name.c_str());
 			else
-				sendto_one_notice(source_p, ":%s forward channel is %s", chptr->chname, chptr->mode.forward);
+				sendto_one_notice(source_p, ":%s forward channel is %s", chptr->name.c_str(), chptr->mode.forward);
 			*errors |= SM_ERR_RPL_F;
 		}
 		return;
@@ -1336,7 +1334,7 @@ mode::functor::forward(struct Client *source_p, struct Channel *chptr,
 }
 
 void
-mode::functor::key(struct Client *source_p, struct Channel *chptr,
+mode::functor::key(client *source_p, chan *chptr,
 	int alevel, int parc, int *parn,
 	const char **parv, int *errors, int dir, char c, type mode_type)
 {
@@ -1413,8 +1411,8 @@ mode::functor::key(struct Client *source_p, struct Channel *chptr,
  * Extensively modified to be hotpluggable, 03/09/06 -- nenolod
  */
 void
-set_channel_mode(Client *client_p, Client *source_p,
-                 Channel *chptr, membership *msptr, int parc, const char *parv[])
+chan::set_channel_mode(client *client_p, client *source_p,
+                 chan *chptr, membership *msptr, int parc, const char *parv[])
 {
 	static char modebuf[BUFSIZE];
 	static char parabuf[BUFSIZE];
@@ -1428,7 +1426,7 @@ set_channel_mode(Client *client_p, Client *source_p,
 	int alevel;
 	const char *ml = parv[0];
 	char c;
-	Client *fakesource_p;
+	client *fakesource_p;
 	int reauthorized = 0;	/* if we change from MODE_QUERY to MODE_ADD/MODE_DEL, then reauth once, ugly but it works */
 	int flags_list[3] = { ALL_MEMBERS, ONLY_CHANOPS, ONLY_OPERS };
 
@@ -1480,11 +1478,11 @@ set_channel_mode(Client *client_p, Client *source_p,
 		return;
 
 	if(IsServer(source_p))
-		mlen = sprintf(modebuf, ":%s MODE %s ", fakesource_p->name, chptr->chname);
+		mlen = sprintf(modebuf, ":%s MODE %s ", fakesource_p->name, chptr->name.c_str());
 	else
 		mlen = sprintf(modebuf, ":%s!%s@%s MODE %s ",
 				  source_p->name, source_p->username,
-				  source_p->host, chptr->chname);
+				  source_p->host, chptr->name.c_str());
 
 	for(j = 0; j < 3; j++)
 	{
@@ -1573,17 +1571,16 @@ set_channel_mode(Client *client_p, Client *source_p,
  * side effects - channel mlock is changed / MLOCK is propagated
  */
 void
-set_channel_mlock(struct Client *client_p, struct Client *source_p,
-		  struct Channel *chptr, const char *newmlock, bool propagate)
+chan::set_channel_mlock(client *client_p, client *source_p,
+		  chan *chptr, const char *newmlock, bool propagate)
 {
-	rb_free(chptr->mode_lock);
-	chptr->mode_lock = newmlock ? rb_strdup(newmlock) : NULL;
+	chptr->mode_lock = newmlock?: std::string{};
 
 	if (propagate)
 	{
 		sendto_server(client_p, NULL, CAP_TS6 | CAP_MLOCK, NOCAPS, ":%s MLOCK %ld %s :%s",
-			      source_p->id, (long) chptr->channelts, chptr->chname,
-			      chptr->mode_lock ? chptr->mode_lock : "");
+			      source_p->id, (long) chptr->channelts, chptr->name.c_str(),
+			      chptr->mode_lock.c_str());
 	}
 }
 

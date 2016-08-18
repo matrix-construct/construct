@@ -94,7 +94,7 @@ ms_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 			stype = "X-Line";
 			break;
 		case 'R':
-			ntype = IsChannelName(parv[3]) ? CONF_RESV_CHANNEL :
+			ntype = chan::is_name(parv[3]) ? CONF_RESV_CHANNEL :
 				CONF_RESV_NICK;
 			stype = "RESV";
 			break;
@@ -299,7 +299,7 @@ ms_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 			if (!(aconf->status & CONF_ILLEGAL))
 			{
 				add_to_resv_hash(aconf->host, aconf);
-				resv_chan_forcepart(aconf->host, aconf->passwd, hold - now);
+				chan::resv_chan_forcepart(aconf->host, aconf->passwd, hold - now);
 			}
 			break;
 		case CONF_RESV_NICK:

@@ -32,6 +32,8 @@
 #include "spamfilter.h"
 
 using namespace ircd;
+using chan::membership;
+using chan::chan;
 
 
 /* Conf items & defaults */
@@ -152,22 +154,22 @@ int bloom_test_str(const char *const str)
 
 
 static
-int chans_has(const struct Channel *const chptr)
+int chans_has(const struct chan *const chptr)
 {
-	return rb_radixtree_retrieve(chans, chptr->chname) != NULL;
+	return rb_radixtree_retrieve(chans, chptr->name.c_str()) != NULL;
 }
 
 static
-int chans_add(struct Channel *const chptr)
+int chans_add(struct chan *const chan)
 {
-	if(!rb_radixtree_add(chans, chptr->chname, chptr))
+	if(!rb_radixtree_add(chans, chan->name.c_str(), chan))
 		return 0;
 
 	rb_dlink_node *ptr;
-	RB_DLINK_FOREACH(ptr, chptr->members.head)
+	RB_DLINK_FOREACH(ptr, chan->members.head)
 	{
 		const auto msptr(reinterpret_cast<membership *>(ptr->data));
-		bloom_add_str(msptr->client_p->name);
+		bloom_add_str(msptr->client->name);
 	}
 
 	return 1;
@@ -210,10 +212,10 @@ int prob_test_token(const char *const token)
 
 static
 int real_test_token(const char *const token,
-                    struct Channel *const chptr)
+                    struct chan *const chan)
 {
 	struct Client *const client = find_named_client(token);
-	return client && IsMember(client, chptr);
+	return client && is_member(chan, client);
 }
 
 
@@ -286,7 +288,7 @@ int is_delim(const uint8_t *const ptr,
 
 static unsigned int
 count_nicks(const char *const text,
-            struct Channel *const chptr)
+            struct chan *const chan)
 {
 	unsigned int ret = 0;
 	const size_t len = strlen(text);
@@ -305,7 +307,7 @@ count_nicks(const char *const text,
 			rb_strlcpy(token, text+i-j, j+1);
 			if(prob_test_token(token))
 			{
-				if(rb_likely(real_test_token(token, chptr)))
+				if(rb_likely(real_test_token(token, chan)))
 					ret++;
 				else
 					false_positive_message();
@@ -344,7 +346,9 @@ void hook_spamfilter_query(hook_data_privmsg_channel *const hook)
 static
 void hook_channel_join(hook_data_channel_approval *const data)
 {
-	if(~data->chptr->mode.mode & chan::mode::table[uint8_t(MODE_SPAMFILTER)].type)
+	namespace mode = ircd::chan::mode;
+
+	if(~data->chptr->mode.mode & mode::table[uint8_t(MODE_SPAMFILTER)].type)
 		return;
 
 	if(!bloom[0])

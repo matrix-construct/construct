@@ -428,7 +428,7 @@ sendto_one_numeric(struct Client *target_p, int numeric, const char *pattern, ..
  * -davidt
  */
 void
-sendto_server(struct Client *one, struct Channel *chptr, unsigned long caps,
+sendto_server(struct Client *one, chan::chan *chptr, unsigned long caps,
 	      unsigned long nocaps, const char *format, ...)
 {
 	va_list args;
@@ -441,7 +441,7 @@ sendto_server(struct Client *one, struct Channel *chptr, unsigned long caps,
 	if(rb_dlink_list_length(&serv_list) == 0)
 		return;
 
-	if(chptr != NULL && *chptr->chname != '#')
+	if(chptr != NULL && chptr->name[0] != '#')
 			return;
 
 	rb_linebuf_newbuf(&linebuf);
@@ -479,14 +479,14 @@ sendto_server(struct Client *one, struct Channel *chptr, unsigned long caps,
  */
 void
 sendto_channel_flags(struct Client *one, int type, struct Client *source_p,
-		     struct Channel *chptr, const char *pattern, ...)
+		     chan::chan *chptr, const char *pattern, ...)
 {
 	char buf[BUFSIZE];
 	va_list args;
 	buf_head_t rb_linebuf_local;
 	buf_head_t rb_linebuf_id;
 	struct Client *target_p;
-	struct membership *msptr;
+	chan::membership *msptr;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 	int current_capmask = 0;
@@ -508,8 +508,8 @@ sendto_channel_flags(struct Client *one, int type, struct Client *source_p,
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->members.head)
 	{
-		msptr = (membership *)ptr->data;
-		target_p = msptr->client_p;
+		msptr = (chan::membership *)ptr->data;
+		target_p = msptr->client;
 
 		if(!MyClient(source_p) && (IsIOError(target_p->from) || target_p->from == one))
 			continue;
@@ -566,14 +566,14 @@ sendto_channel_flags(struct Client *one, int type, struct Client *source_p,
  */
 void
 sendto_channel_opmod(struct Client *one, struct Client *source_p,
-		     struct Channel *chptr, const char *command,
+		     chan::chan *chptr, const char *command,
 		     const char *text)
 {
 	buf_head_t rb_linebuf_local;
 	buf_head_t rb_linebuf_old;
 	buf_head_t rb_linebuf_new;
 	struct Client *target_p;
-	struct membership *msptr;
+	chan::membership *msptr;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 
@@ -586,30 +586,30 @@ sendto_channel_opmod(struct Client *one, struct Client *source_p,
 	if(IsServer(source_p))
 		rb_linebuf_putmsg(&rb_linebuf_local, NULL, NULL,
 			       ":%s %s %s :%s",
-			       source_p->name, command, chptr->chname, text);
+			       source_p->name, command, chptr->name.c_str(), text);
 	else
 		rb_linebuf_putmsg(&rb_linebuf_local, NULL, NULL,
 			       ":%s!%s@%s %s %s :%s",
 			       source_p->name, source_p->username,
-			       source_p->host, command, chptr->chname, text);
+			       source_p->host, command, chptr->name.c_str(), text);
 
 	if (chptr->mode.mode & chan::mode::MODERATED)
 		rb_linebuf_putmsg(&rb_linebuf_old, NULL, NULL,
 			       ":%s %s %s :%s",
-			       use_id(source_p), command, chptr->chname, text);
+			       use_id(source_p), command, chptr->name.c_str(), text);
 	else
 		rb_linebuf_putmsg(&rb_linebuf_old, NULL, NULL,
 			       ":%s NOTICE @%s :<%s:%s> %s",
-			       use_id(source_p->servptr), chptr->chname,
-			       source_p->name, chptr->chname, text);
+			       use_id(source_p->servptr), chptr->name.c_str(),
+			       source_p->name, chptr->name.c_str(), text);
 	rb_linebuf_putmsg(&rb_linebuf_new, NULL, NULL,
 		       ":%s %s =%s :%s",
-		       use_id(source_p), command, chptr->chname, text);
+		       use_id(source_p), command, chptr->name.c_str(), text);
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->members.head)
 	{
-		msptr = (membership *)ptr->data;
-		target_p = msptr->client_p;
+		msptr = (chan::membership *)ptr->data;
+		target_p = msptr->client;
 
 		if(!MyClient(source_p) && (IsIOError(target_p->from) || target_p->from == one))
 			continue;
@@ -617,7 +617,7 @@ sendto_channel_opmod(struct Client *one, struct Client *source_p,
 		if(MyClient(source_p) && !IsCapable(source_p, CLICAP_ECHO_MESSAGE) && target_p == one)
 			continue;
 
-		if((msptr->flags & CHFL_CHANOP) == 0)
+		if((msptr->flags & chan::CHANOP) == 0)
 			continue;
 
 		if(IsDeaf(target_p))
@@ -656,11 +656,11 @@ sendto_channel_opmod(struct Client *one, struct Client *source_p,
  * side effects -
  */
 void
-sendto_channel_local(int type, struct Channel *chptr, const char *pattern, ...)
+sendto_channel_local(int type, chan::chan *chptr, const char *pattern, ...)
 {
 	va_list args;
 	buf_head_t linebuf;
-	struct membership *msptr;
+	chan::membership *msptr;
 	struct Client *target_p;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
@@ -673,13 +673,13 @@ sendto_channel_local(int type, struct Channel *chptr, const char *pattern, ...)
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->locmembers.head)
 	{
-		msptr = (membership *)ptr->data;
-		target_p = msptr->client_p;
+		msptr = (chan::membership *)ptr->data;
+		target_p = msptr->client;
 
 		if(IsIOError(target_p))
 			continue;
 
-		if(type == ONLY_OPERS)
+		if(type == chan::ONLY_OPERS)
 		{
 			if (!IsOper(target_p))
 				continue;
@@ -699,11 +699,11 @@ sendto_channel_local(int type, struct Channel *chptr, const char *pattern, ...)
  * Shared implementation of sendto_channel_local_with_capability and sendto_channel_local_with_capability_butone
  */
 static void
-_sendto_channel_local_with_capability_butone(struct Client *one, int type, int caps, int negcaps, struct Channel *chptr,
+_sendto_channel_local_with_capability_butone(struct Client *one, int type, int caps, int negcaps, chan::chan *chptr,
 	const char *pattern, va_list * args)
 {
 	buf_head_t linebuf;
-	struct membership *msptr;
+	chan::membership *msptr;
 	struct Client *target_p;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
@@ -713,8 +713,8 @@ _sendto_channel_local_with_capability_butone(struct Client *one, int type, int c
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->locmembers.head)
 	{
-		msptr = (membership *)ptr->data;
-		target_p = msptr->client_p;
+		msptr = (chan::membership *)ptr->data;
+		target_p = msptr->client;
 
 		if (target_p == one)
 			continue;
@@ -740,7 +740,7 @@ _sendto_channel_local_with_capability_butone(struct Client *one, int type, int c
  * side effects -
  */
 void
-sendto_channel_local_with_capability(int type, int caps, int negcaps, struct Channel *chptr, const char *pattern, ...)
+sendto_channel_local_with_capability(int type, int caps, int negcaps, chan::chan *chptr, const char *pattern, ...)
 {
 	va_list args;
 
@@ -757,7 +757,7 @@ sendto_channel_local_with_capability(int type, int caps, int negcaps, struct Cha
  * side effects -
  */
 void
-sendto_channel_local_with_capability_butone(struct Client *one, int type, int caps, int negcaps, struct Channel *chptr,
+sendto_channel_local_with_capability_butone(struct Client *one, int type, int caps, int negcaps, chan::chan *chptr,
 		const char *pattern, ...)
 {
 	va_list args;
@@ -776,11 +776,11 @@ sendto_channel_local_with_capability_butone(struct Client *one, int type, int ca
  * side effects -
  */
 void
-sendto_channel_local_butone(struct Client *one, int type, struct Channel *chptr, const char *pattern, ...)
+sendto_channel_local_butone(struct Client *one, int type, chan::chan *chptr, const char *pattern, ...)
 {
 	va_list args;
 	buf_head_t linebuf;
-	struct membership *msptr;
+	chan::membership *msptr;
 	struct Client *target_p;
 	struct MsgBuf msgbuf;
 	rb_dlink_node *ptr;
@@ -796,8 +796,8 @@ sendto_channel_local_butone(struct Client *one, int type, struct Channel *chptr,
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->locmembers.head)
 	{
-		msptr = (membership *)ptr->data;
-		target_p = msptr->client_p;
+		msptr = (chan::membership *)ptr->data;
+		target_p = msptr->client;
 
 		if(target_p == one)
 			continue;
@@ -835,10 +835,10 @@ sendto_common_channels_local(struct Client *user, int cap, int negcap, const cha
 	rb_dlink_node *next_ptr;
 	rb_dlink_node *uptr;
 	rb_dlink_node *next_uptr;
-	struct Channel *chptr;
+	chan::chan *chptr;
 	struct Client *target_p;
-	struct membership *msptr;
-	struct membership *mscptr;
+	chan::membership *msptr;
+	chan::membership *mscptr;
 	buf_head_t linebuf;
 
 	rb_linebuf_newbuf(&linebuf);
@@ -850,13 +850,13 @@ sendto_common_channels_local(struct Client *user, int cap, int negcap, const cha
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, user->user->channel.head)
 	{
-		mscptr = (membership *)ptr->data;
-		chptr = mscptr->chptr;
+		mscptr = (chan::membership *)ptr->data;
+		chptr = mscptr->chan;
 
 		RB_DLINK_FOREACH_SAFE(uptr, next_uptr, chptr->locmembers.head)
 		{
-			msptr = (membership *)uptr->data;
-			target_p = msptr->client_p;
+			msptr = (chan::membership *)uptr->data;
+			target_p = msptr->client;
 
 			if(IsIOError(target_p) ||
 			   target_p->serial == current_serial ||
@@ -892,15 +892,17 @@ sendto_common_channels_local(struct Client *user, int cap, int negcap, const cha
 void
 sendto_common_channels_local_butone(struct Client *user, int cap, int negcap, const char *pattern, ...)
 {
+	using chan::membership;
+
 	va_list args;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 	rb_dlink_node *uptr;
 	rb_dlink_node *next_uptr;
-	struct Channel *chptr;
+	chan::chan *chptr;
 	struct Client *target_p;
-	struct membership *msptr;
-	struct membership *mscptr;
+	membership *msptr;
+	membership *mscptr;
 	buf_head_t linebuf;
 
 	rb_linebuf_newbuf(&linebuf);
@@ -916,12 +918,12 @@ sendto_common_channels_local_butone(struct Client *user, int cap, int negcap, co
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, user->user->channel.head)
 	{
 		mscptr = (membership *)ptr->data;
-		chptr = mscptr->chptr;
+		chptr = mscptr->chan;
 
 		RB_DLINK_FOREACH_SAFE(uptr, next_uptr, chptr->locmembers.head)
 		{
 			msptr = (membership *)uptr->data;
-			target_p = msptr->client_p;
+			target_p = msptr->client;
 
 			if(IsIOError(target_p) ||
 			   target_p->serial == current_serial ||

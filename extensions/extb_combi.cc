@@ -37,8 +37,7 @@
  *   I suspect it is, but have done no load testing.
  */
 
-namespace chan = ircd::chan;
-namespace mode = chan::mode;
+namespace mode = ircd::chan::mode;
 namespace ext = mode::ext;
 using namespace ircd;
 
@@ -50,9 +49,9 @@ static const char extb_desc[] = "Combination ($&, $|) extban types";
 
 static int _modinit(void);
 static void _moddeinit(void);
-static int eb_or(const char *data, struct Client *client_p, struct Channel *chptr, mode::type);
-static int eb_and(const char *data, struct Client *client_p, struct Channel *chptr, mode::type);
-static int eb_combi(const char *data, struct Client *client_p, struct Channel *chptr, mode::type, bool is_and);
+static int eb_or(const char *data, struct Client *client_p, chan::chan *chptr, mode::type);
+static int eb_and(const char *data, struct Client *client_p, chan::chan *chptr, mode::type);
+static int eb_combi(const char *data, struct Client *client_p, chan::chan *chptr, mode::type, bool is_and);
 static int recursion_depth = 0;
 
 DECLARE_MODULE_AV2(extb_extended, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, extb_desc);
@@ -74,19 +73,19 @@ _moddeinit(void)
 }
 
 static int eb_or(const char *data, struct Client *client_p,
-				 struct Channel *chptr, mode::type type)
+				 chan::chan *chptr, mode::type type)
 {
 	return eb_combi(data, client_p, chptr, type, false);
 }
 
 static int eb_and(const char *data, struct Client *client_p,
-				  struct Channel *chptr, mode::type type)
+				  chan::chan *chptr, mode::type type)
 {
 	return eb_combi(data, client_p, chptr, type, true);
 }
 
 static int eb_combi(const char *data, struct Client *client_p,
-					struct Channel *chptr, mode::type type, bool is_and)
+					chan::chan *chptr, mode::type type, bool is_and)
 {
 	using namespace ext;
 
@@ -106,7 +105,7 @@ static int eb_combi(const char *data, struct Client *client_p,
 	}
 
 	datalen = strlen(data);
-	if (datalen > BANLEN) {
+	if (datalen > chan::ban::LEN) {
 		/* I'd be sad if this ever happened, but if it does we
 		 * could overflow the buffer used below, so...
 		 */
@@ -146,7 +145,7 @@ static int eb_combi(const char *data, struct Client *client_p,
 
 	while (--allowed_nodes) {
 		bool invert = false;
-		char *child_data, child_data_buf[BANLEN];
+		char *child_data, child_data_buf[chan::ban::LEN];
 		ext::func f;
 
 		if (*p == '~') {
