@@ -40,8 +40,6 @@
 
 using namespace ircd::defaults;
 
-#define EmptyString(x) ((x == NULL) || (*(x) == '\0'))
-
 #define BT_VERSION "0.4.1"
 
 typedef enum
