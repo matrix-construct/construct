@@ -139,7 +139,7 @@ m_topic(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		if(operspy)
 			report_operspy(source_p, "TOPIC", chptr->name.c_str());
 
-		if(!is_member(chptr, source_p) && secret(chptr) && !operspy)
+		if(!is_member(chptr, source_p) && is_secret(chptr) && !operspy)
 		{
 			sendto_one_numeric(source_p, ERR_NOTONCHANNEL, form_str(ERR_NOTONCHANNEL), name);
 			return;

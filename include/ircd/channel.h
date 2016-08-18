@@ -140,17 +140,18 @@ struct chan
 	~chan() noexcept;
 };
 
-bool secret(const chan &);
-bool secret(const chan *const &);
-bool hidden(const chan &);
-bool hidden(const chan *const &);
-bool pub(const chan &);
-bool pub(const chan *const &);
-bool can_show(const chan &, const client &);
-bool can_show(const chan *const &, const client *const &);
+bool is_name(const char *const &name);
+
+bool is_secret(const chan &);
+bool is_secret(const chan *const &);
+bool is_hidden(const chan &);
+bool is_hidden(const chan *const &);
+bool is_public(const chan &);
+bool is_public(const chan *const &);
 bool is_member(const chan &c, const client &);
 bool is_member(const chan *const &, const client *const &);
-bool is_name(const char *const &name);
+bool can_show(const chan &, const client &);
+bool can_show(const chan *const &, const client *const &);
 
 enum : int
 {
@@ -201,39 +202,39 @@ void init();
 
 
 inline bool
-secret(const chan &c)
+is_secret(const chan &c)
 {
 	return c.mode.mode & mode::SECRET;
 }
 
 inline bool
-secret(const chan *const &c)
+is_secret(const chan *const &c)
 {
-	return c && secret(*c);
+	return c && is_secret(*c);
 }
 
 inline bool
-hidden(const chan &c)
+is_hidden(const chan &c)
 {
 	return c.mode.mode & mode::PRIVATE;
 }
 
 inline bool
-hidden(const chan *const &c)
+is_hidden(const chan *const &c)
 {
-	return c && hidden(*c);
+	return c && is_hidden(*c);
 }
 
 inline bool
-pub(const chan &c)
+is_public(const chan &c)
 {
 	return ~c.mode.mode & (mode::PRIVATE | mode::SECRET);
 }
 
 inline bool
-pub(const chan *const &c)
+is_public(const chan *const &c)
 {
-	return !c || pub(*c);
+	return !c || is_public(*c);
 }
 
 inline bool
@@ -252,13 +253,13 @@ is_member(const chan *const &c, const client *const &client)
 inline bool
 can_show(const chan &c, const client &client)
 {
-	return pub(c) || is_member(c, client);
+	return is_public(c) || is_member(c, client);
 }
 
 inline bool
 can_show(const chan *const &c, const client *const &client)
 {
-	return pub(c) || is_member(c, client);
+	return is_public(c) || is_member(c, client);
 }
 
 inline bool

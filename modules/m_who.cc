@@ -190,7 +190,7 @@ m_who(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 
 			if(is_member(chptr, source_p) || operspy)
 				do_who_on_channel(source_p, chptr, server_oper, true, &fmt);
-			else if(!secret(chptr))
+			else if(!is_secret(chptr))
 				do_who_on_channel(source_p, chptr, server_oper, false, &fmt);
 		}
 
@@ -217,7 +217,7 @@ m_who(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 			if(isinvis && !member)
 				continue;
 
-			if(member || (!isinvis && pub(chptr)))
+			if(member || (!isinvis && is_public(chptr)))
 				break;
 		}
 

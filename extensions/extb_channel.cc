@@ -48,7 +48,7 @@ static int eb_channel(const char *data, struct Client *client_p,
 	if (chptr->name[0] == '#' && data[0] == '&')
 		return INVALID;
 	/* privacy! don't allow +s/+p channels to influence another channel */
-	if (!pub(chptr2) && chptr2 != chptr)
+	if (!is_public(chptr2) && chptr2 != chptr)
 		return INVALID;
 
 	return is_member(chptr2, client_p)? MATCH : NOMATCH;

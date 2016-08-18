@@ -106,7 +106,7 @@ m_knock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	}
 
 	/* cant knock to a +p channel */
-	if(hidden(chptr))
+	if(is_hidden(chptr))
 	{
 		sendto_one_numeric(source_p, ERR_CANNOTSENDTOCHAN,
 				   form_str(ERR_CANNOTSENDTOCHAN), name);

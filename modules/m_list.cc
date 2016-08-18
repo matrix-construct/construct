@@ -398,7 +398,7 @@ static void safelist_channel_named(struct Client *source_p, const char *name, in
 		return;
 	}
 
-	visible = !secret(chptr) || is_member(chptr, source_p);
+	visible = !is_secret(chptr) || is_member(chptr, source_p);
 	if (visible || operspy)
 		list_one_channel(source_p, chptr, visible);
 
@@ -418,7 +418,7 @@ static void safelist_one_channel(struct Client *source_p, chan::chan *chptr, str
 {
 	int visible;
 
-	visible = !secret(chptr) || is_member(chptr, source_p);
+	visible = !is_secret(chptr) || is_member(chptr, source_p);
 	if (!visible && !params->operspy)
 		return;
 

@@ -148,7 +148,7 @@ names_global(struct Client *source_p)
 			msptr = (chan::membership *)lp->data;
 			chptr = msptr->chan;
 
-			if(pub(chptr) || is_member(chptr, source_p) || secret(chptr))
+			if(is_public(chptr) || is_member(chptr, source_p) || is_secret(chptr))
 			{
 				dont_show = true;
 				break;

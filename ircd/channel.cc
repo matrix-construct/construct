@@ -397,9 +397,9 @@ chan::free_channel_list(rb_dlink_list * list)
 static const char *
 channel_pub_or_secret(chan::chan *const &chptr)
 {
-	return chan::pub(chptr)?     "=":
-	       chan::secret(chptr)?  "@":
-	                             "*";
+	return chan::is_public(chptr)?  "=":
+	       chan::is_secret(chptr)?  "@":
+	                                "*";
 }
 
 /* channel_member_names()
