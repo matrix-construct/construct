@@ -18,8 +18,6 @@
  *
  */
 
-namespace ircd {
-
 /*
  * Compare if a given string (name) matches the given
  * mask (which can contain wild cards: '*' - match any
@@ -41,7 +39,9 @@ namespace ircd {
  * @param[in] name String to check against \a mask.
  * @return Zero if \a mask matches \a name, non-zero if no match.
  */
-int match(const char *mask, const char *name)
+bool
+ircd::match(const char *const &mask,
+            const char *const &name)
 {
 	const char *m = mask, *n = name;
 	const char *m_tmp = mask, *n_tmp = name;
@@ -100,6 +100,13 @@ int match(const char *mask, const char *name)
 	}
 }
 
+bool
+ircd::match(const std::string &mask,
+            const std::string &name)
+{
+	return match(mask.c_str(), name.c_str());
+}
+
 /** Check a mask against a mask.
  * This test checks using traditional IRC wildcards only: '*' means
  * match zero or more characters of any type; '?' means match exactly
@@ -111,7 +118,9 @@ int match(const char *mask, const char *name)
  * @param[in] name New wildcard-containing mask.
  * @return 1 if \a name is equal to or more specific than \a mask, 0 otherwise.
  */
-int match_mask(const char *mask, const char *name)
+bool
+ircd::match_mask(const char *const &mask,
+                 const char *const &name)
 {
 	const char *m = mask, *n = name;
 	const char *m_tmp = mask, *n_tmp = name;
@@ -172,9 +181,16 @@ int match_mask(const char *mask, const char *name)
 	}
 }
 
+bool
+ircd::match_mask(const std::string &mask,
+                 const std::string &name)
+{
+	return match_mask(mask.c_str(), name.c_str());
+}
 
-#define MATCH_MAX_CALLS 512	/* ACK! This dies when it's less that this
-				   and we have long lines to parse */
+// ACK! This dies when it's less that this and we have long lines to parse
+#define MATCH_MAX_CALLS 512
+
 /** Check a string against a mask.
  * This test checks using extended wildcards: '*' means match zero
  * or more characters of any type; '?' means match exactly one
@@ -190,7 +206,8 @@ int match_mask(const char *mask, const char *name)
  * @return Zero if \a mask matches \a name, non-zero if no match.
  */
 int
-match_esc(const char *mask, const char *name)
+ircd::match_esc(const char *const &mask,
+                const char *const &name)
 {
 	const unsigned char *m = (const unsigned char *)mask;
 	const unsigned char *n = (const unsigned char *)name;
@@ -304,40 +321,11 @@ match_esc(const char *mask, const char *name)
 	return 0;
 }
 
-int comp_with_mask(void *addr, void *dest, unsigned int mask)
+int
+ircd::match_esc(const std::string &mask,
+                const std::string &name)
 {
-	if (memcmp(addr, dest, mask / 8) == 0)
-	{
-		int n = mask / 8;
-		int m = ((-1) << (8 - (mask % 8)));
-		if (mask % 8 == 0 || (((unsigned char *) addr)[n] & m) == (((unsigned char *) dest)[n] & m))
-		{
-			return (1);
-		}
-	}
-	return (0);
-}
-
-int comp_with_mask_sock(struct sockaddr *addr, struct sockaddr *dest, unsigned int mask)
-{
-	void *iaddr = NULL;
-	void *idest = NULL;
-
-	if (addr->sa_family == AF_INET)
-	{
-		iaddr = &((struct sockaddr_in *)(void *)addr)->sin_addr;
-		idest = &((struct sockaddr_in *)(void *)dest)->sin_addr;
-	}
-#ifdef RB_IPV6
-	else
-	{
-		iaddr = &((struct sockaddr_in6 *)(void *)addr)->sin6_addr;
-		idest = &((struct sockaddr_in6 *)(void *)dest)->sin6_addr;
-
-	}
-#endif
-
-	return (comp_with_mask(iaddr, idest, mask));
+	return match_esc(mask.c_str(), name.c_str());
 }
 
 /*
@@ -345,7 +333,9 @@ int comp_with_mask_sock(struct sockaddr *addr, struct sockaddr *dest, unsigned i
  *
  * Input - cidr ip mask, address
  */
-int match_ips(const char *s1, const char *s2)
+bool
+ircd::match_ips(const char *const &s1,
+                const char *const &s2)
 {
 	struct rb_sockaddr_storage ipaddr, maskaddr;
 	char mask[BUFSIZE];
@@ -401,13 +391,21 @@ int match_ips(const char *s1, const char *s2)
 		return 0;
 }
 
+bool
+ircd::match_ips(const std::string &s1,
+                const std::string &s2)
+{
+	return match_ips(s1.c_str(), s2.c_str());
+}
+
 /* match_cidr()
  *
  * Input - mask, address
  * Ouput - 1 = Matched 0 = Did not match
  */
-
-int match_cidr(const char *s1, const char *s2)
+bool
+ircd::match_cidr(const char *const &s1,
+                 const char *const &s2)
 {
 	struct rb_sockaddr_storage ipaddr, maskaddr;
 	char mask[BUFSIZE];
@@ -477,11 +475,57 @@ int match_cidr(const char *s1, const char *s2)
 		return 0;
 }
 
+bool
+ircd::match_cidr(const std::string &s1,
+                 const std::string &s2)
+{
+	return match_cidr(s1.c_str(), s2.c_str());
+}
+
+int
+ircd::comp_with_mask(void *addr, void *dest, unsigned int mask)
+{
+	if (memcmp(addr, dest, mask / 8) == 0)
+	{
+		int n = mask / 8;
+		int m = ((-1) << (8 - (mask % 8)));
+		if (mask % 8 == 0 || (((unsigned char *) addr)[n] & m) == (((unsigned char *) dest)[n] & m))
+		{
+			return (1);
+		}
+	}
+	return (0);
+}
+
+int
+ircd::comp_with_mask_sock(struct sockaddr *addr, struct sockaddr *dest, unsigned int mask)
+{
+	void *iaddr = NULL;
+	void *idest = NULL;
+
+	if (addr->sa_family == AF_INET)
+	{
+		iaddr = &((struct sockaddr_in *)(void *)addr)->sin_addr;
+		idest = &((struct sockaddr_in *)(void *)dest)->sin_addr;
+	}
+#ifdef RB_IPV6
+	else
+	{
+		iaddr = &((struct sockaddr_in6 *)(void *)addr)->sin6_addr;
+		idest = &((struct sockaddr_in6 *)(void *)dest)->sin6_addr;
+
+	}
+#endif
+
+	return (comp_with_mask(iaddr, idest, mask));
+}
+
 /* collapse()
  *
  * collapses a string containing multiple *'s.
  */
-char *collapse(char *pattern)
+char *
+ircd::collapse(char *const &pattern)
 {
 	char *p = pattern, *po = pattern;
 	char c;
@@ -513,7 +557,8 @@ char *collapse(char *pattern)
  *
  * The collapse() function with support for escaping characters
  */
-char *collapse_esc(char *pattern)
+char *
+ircd::collapse_esc(char *const &pattern)
 {
 	char *p = pattern, *po = pattern;
 	char c;
@@ -552,7 +597,9 @@ char *collapse_esc(char *pattern)
  *              <0, if s1 lexicographically less than s2
  *              >0, if s1 lexicographically greater than s2
  */
-int irccmp(const char *s1, const char *s2)
+int
+ircd::irccmp(const char *const &s1,
+             const char *const &s2)
 {
 	const unsigned char *str1 = (const unsigned char *)s1;
 	const unsigned char *str2 = (const unsigned char *)s2;
@@ -571,7 +618,17 @@ int irccmp(const char *s1, const char *s2)
 	return (res);
 }
 
-int ircncmp(const char *s1, const char *s2, int n)
+int
+ircd::irccmp(const std::string &s1,
+             const std::string &s2)
+{
+	return irccmp(s1.c_str(), s2.c_str());
+}
+
+int
+ircd::ircncmp(const char *const &s1,
+              const char *const &s2,
+              size_t n)
 {
 	const unsigned char *str1 = (const unsigned char *)s1;
 	const unsigned char *str2 = (const unsigned char *)s2;
@@ -588,7 +645,4 @@ int ircncmp(const char *s1, const char *s2, int n)
 			return 0;
 	}
 	return (res);
-}
-
-
 }

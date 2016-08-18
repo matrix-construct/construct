@@ -39,11 +39,16 @@ namespace ircd {
  * match_cidr - compares u!h@addr with u!h@addr/cidr
  * match_ips - compares addr with addr/cidr in ascii form
  */
-extern int match(const char *mask, const char *name);
-extern int match_mask(const char *oldmask, const char *newmask);
-extern int match_esc(const char *mask, const char *name);
-extern int match_cidr(const char *mask, const char *name);
-extern int match_ips(const char *mask, const char *name);
+bool match(const char *const &mask, const char *const &name);
+bool match(const std::string &mask, const std::string &name);
+bool match_mask(const char *const &mask, const char *const &name);
+bool match_mask(const std::string &mask, const std::string &name);
+bool match_cidr(const char *const &mask, const char *const &name);
+bool match_cidr(const std::string &mask, const std::string &name);
+bool match_ips(const char *const &mask, const char *const &name);
+bool match_ips(const std::string &mask, const std::string &name);
+int match_esc(const char *const &mask, const char *const &name);
+int match_esc(const std::string &mask, const std::string &name);
 
 /*
  * comp_with_mask - compares to IP address
@@ -58,37 +63,29 @@ int comp_with_mask_sock(struct sockaddr *addr, struct sockaddr *dest, unsigned i
  *
  * collapse_esc() - collapse with support for escaping chars
  */
-extern char *collapse(char *pattern);
-extern char *collapse_esc(char *pattern);
+char *collapse(char *const &pattern);
+char *collapse_esc(char *const &pattern);
 
 /*
  * irccmp - case insensitive comparison of s1 and s2
  */
-extern int irccmp(const char *s1, const char *s2);
-/*
- * ircncmp - counted case insensitive comparison of s1 and s2
- */
-extern int ircncmp(const char *s1, const char *s2, int n);
+int irccmp(const char *const &s1, const char *const &s2);
+int irccmp(const std::string &s1, const std::string &s2);
+int ircncmp(const char *const &s1, const char *const &s2, size_t n);
 
 /* Below are used for radix trees and the like */
-static inline void irccasecanon(char *str)
+inline void
+irccasecanon(char *str)
 {
-        while (*str)
-        {
-                *str = rfc1459::toupper(*str);
-                str++;
-        }
-        return;
+	for (; *str; ++str)
+		*str = rfc1459::toupper(*str);
 }
 
-static inline void strcasecanon(char *str)
+inline void
+strcasecanon(char *str)
 {
-        while (*str)
-        {
-                *str = toupper((unsigned char)*str);
-                str++;
-        }
-        return;
+	for (; *str; ++str)
+		*str = toupper(uint8_t(*str));
 }
 
 }      // namespace ircd
