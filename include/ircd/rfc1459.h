@@ -61,13 +61,18 @@ namespace character
 
 	bool is(const unsigned char &c, const attr &attr);
 	bool is(const char &c, const attr &attr);
-	auto &tolower(const unsigned char &c);
-	auto &toupper(const unsigned char &c);
+	const unsigned char &tolower(const unsigned char &c);
+	const unsigned char &toupper(const unsigned char &c);
 }
 
 using character::is;
 using character::toupper;
 using character::tolower;
+
+struct less
+{
+	bool operator()(const std::string &a, const std::string &b) const;
+};
 
 inline bool is_print(const char &c)              { return is(c, character::PRINT);                 }
 inline bool is_host(const char &c)               { return is(c, character::HOST);                  }
@@ -98,13 +103,25 @@ inline bool is_xdigit(const char &c)
 	return is_digit(c) || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F');
 }
 
-inline auto &
+inline bool
+less::operator()(const std::string &a,
+                 const std::string &b)
+const
+{
+	return std::lexicographical_compare(begin(a), end(a), begin(b), end(b), []
+	(const char &a, const char &b)
+	{
+		return tolower(a) < tolower(b);
+	});
+}
+
+inline const unsigned char &
 character::tolower(const unsigned char &c)
 {
 	return tolower_tab[c];
 }
 
-inline auto &
+inline const unsigned char &
 character::toupper(const unsigned char &c)
 {
 	return toupper_tab[c];

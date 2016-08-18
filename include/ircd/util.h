@@ -90,25 +90,16 @@ num_of()
 
 
 struct case_insensitive_less
-:std::binary_function<std::string, std::string, bool>
 {
-    bool operator() (const std::string &lhs, const std::string &rhs) const
-    {
-        return rb_strcasecmp(lhs.c_str(), rhs.c_str()) < 0;
-    }
+	bool operator()(const std::string &a, const std::string &b) const
+	{
+		return std::lexicographical_compare(begin(a), end(a), begin(b), end(b), []
+		(const char &a, const char &b)
+		{
+			return tolower(a) < tolower(b);
+		});
+	}
 };
-
-
-#ifdef HAVE_IRCD_MATCH_H
-struct case_mapped_less
-:std::binary_function<std::string, std::string, bool>
-{
-    bool operator() (const std::string &lhs, const std::string &rhs) const
-    {
-        return irccmp(lhs.c_str(), rhs.c_str()) < 0;
-    }
-};
-#endif
 
 
 #ifdef BOOST_LEXICAL_CAST_INCLUDED
