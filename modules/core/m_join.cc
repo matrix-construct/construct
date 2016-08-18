@@ -900,11 +900,21 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	*mbuf = '\0';
 	if(pargs)
 	{
+		static const auto check_empty([]
+		(const char *const &str)
+		{
+			 return EmptyString(str)? "" : str;
+		});
+
 		sendto_channel_local(chan::ALL_MEMBERS, chptr,
-				     ":%s MODE %s %s %s %s %s %s",
-				     fakesource_p->name, chptr->name.c_str(), modebuf,
-				     para[0], CheckEmpty(para[1]),
-				     CheckEmpty(para[2]), CheckEmpty(para[3]));
+		                     ":%s MODE %s %s %s %s %s %s",
+		                     fakesource_p->name,
+		                     chptr->name.c_str(),
+		                     modebuf,
+		                     para[0],
+		                     check_empty(para[1]),
+		                     check_empty(para[2]),
+		                     check_empty(para[3]));
 	}
 
 	if(!joins && !(chptr->mode.mode & chan::mode::PERMANENT) && isnew)

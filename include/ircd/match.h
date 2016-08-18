@@ -25,6 +25,8 @@
 #pragma once
 #define HAVE_IRCD_MATCH_H
 
+#define EmptyString(x) ((x) == NULL || *(x) == '\0')
+
 #ifdef __cplusplus
 namespace ircd {
 
@@ -67,9 +69,6 @@ extern int irccmp(const char *s1, const char *s2);
  * ircncmp - counted case insensitive comparison of s1 and s2
  */
 extern int ircncmp(const char *s1, const char *s2, int n);
-
-#define EmptyString(x) ((x) == NULL || *(x) == '\0')
-#define CheckEmpty(x) EmptyString(x) ? "" : x
 
 /* Below are used for radix trees and the like */
 static inline void irccasecanon(char *str)
