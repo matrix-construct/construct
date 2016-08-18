@@ -32,13 +32,13 @@ namespace ircd {
  * match - compare name with mask, mask may contain * and ? as wildcards
  * match - returns 1 on successful match, 0 otherwise
  *
- * mask_match - compare one mask to another
+ * match_mask - like match() but a '?' in mask does not match a '*' in name
  * match_esc - compare with support for escaping chars
  * match_cidr - compares u!h@addr with u!h@addr/cidr
  * match_ips - compares addr with addr/cidr in ascii form
  */
 extern int match(const char *mask, const char *name);
-extern int mask_match(const char *oldmask, const char *newmask);
+extern int match_mask(const char *oldmask, const char *newmask);
 extern int match_esc(const char *mask, const char *name);
 extern int match_cidr(const char *mask, const char *name);
 extern int match_ips(const char *mask, const char *name);

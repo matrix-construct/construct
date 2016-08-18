@@ -104,14 +104,14 @@ int match(const char *mask, const char *name)
  * This test checks using traditional IRC wildcards only: '*' means
  * match zero or more characters of any type; '?' means match exactly
  * one character of any type.
- * The difference between mask_match() and match() is that in mask_match()
+ * The difference between match_mask() and match() is that in match_mask()
  * a '?' in mask does not match a '*' in name.
  *
  * @param[in] mask Existing wildcard-containing mask.
  * @param[in] name New wildcard-containing mask.
  * @return 1 if \a name is equal to or more specific than \a mask, 0 otherwise.
  */
-int mask_match(const char *mask, const char *name)
+int match_mask(const char *mask, const char *name)
 {
 	const char *m = mask, *n = name;
 	const char *m_tmp = mask, *n_tmp = name;
@@ -141,7 +141,7 @@ int mask_match(const char *mask, const char *name)
 					  star_p = 1;
 				  else if (*m == '?')
 				  {
-					  /* changed for mask_match() */
+					  /* changed for match_mask() */
 					  if (*n == '*' || !*n)
 						  goto backtrack;
 					  n++;

@@ -282,7 +282,7 @@ chan::add_id(client *source_p, chan *chptr, const char *banid, const char *forwa
 		RB_DLINK_FOREACH(ptr, list->head)
 		{
 			actualBan = (ban *)ptr->data;
-			if(mask_match(actualBan->banstr.c_str(), realban))
+			if(match_mask(actualBan->banstr.c_str(), realban))
 				return false;
 		}
 	}
