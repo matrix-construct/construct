@@ -94,7 +94,7 @@ ms_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 			stype = "X-Line";
 			break;
 		case 'R':
-			ntype = chan::is_name(parv[3]) ? CONF_RESV_CHANNEL :
+			ntype = chan::has_prefix(parv[3]) ? CONF_RESV_CHANNEL :
 				CONF_RESV_NICK;
 			stype = "RESV";
 			break;

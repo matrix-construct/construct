@@ -345,28 +345,6 @@ chan::invalidate_bancache_user(client *client_p)
 	}
 }
 
-/* check_channel_name()
- *
- * input	- channel name
- * output	- true if valid channel name, else false
- * side effects -
- */
-bool
-chan::check_channel_name(const char *name)
-{
-	s_assert(name != NULL);
-	if(name == NULL)
-		return false;
-
-	for (; *name; ++name)
-	{
-		if(!rfc1459::is_chan(*name))
-			return false;
-	}
-
-	return true;
-}
-
 /* free_channel_list()
  *
  * input	- rb_dlink list to free

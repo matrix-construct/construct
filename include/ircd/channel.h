@@ -105,6 +105,11 @@ bool can_send_banned(const membership &);
 bool can_send_banned(const membership *const &);
 const char *find_status(const membership *const &msptr, const int &combine);
 
+bool has_prefix(const char *const &name);
+bool has_prefix(const std::string &name);
+bool valid_name(const char *const &name);
+bool valid_name(const std::string &name);
+
 struct chan
 {
 	std::string name;
@@ -140,8 +145,6 @@ struct chan
 	~chan() noexcept;
 };
 
-bool is_name(const char *const &name);
-
 bool is_secret(const chan &);
 bool is_secret(const chan *const &);
 bool is_hidden(const chan &);
@@ -170,7 +173,6 @@ void remove_user_from_channel(membership *);
 void remove_user_from_channels(client *);
 void invalidate_bancache_user(client *);
 void free_channel_list(rb_dlink_list *);
-bool check_channel_name(const char *name);
 void channel_member_names(chan *, client *, int show_eon);
 void del_invite(chan *, client *who);
 const char *channel_modes(chan *, client *who);
@@ -263,9 +265,27 @@ can_show(const chan *const &c, const client *const &client)
 }
 
 inline bool
-is_name(const char *const &name)
+has_prefix(const char *const &name)
 {
-	return name && (*name == '#' || *name == '&');
+	return name && rfc1459::is_chan_prefix(name[0]);
+}
+
+inline bool
+has_prefix(const std::string &name)
+{
+	return !name.empty() && rfc1459::is_chan_prefix(name[0]);
+}
+
+inline bool
+valid_name(const char *const &name)
+{
+	return name && name[0] && std::all_of(name, name + strlen(name), rfc1459::is_chan);
+}
+
+inline bool
+valid_name(const std::string &name)
+{
+	return !name.empty() && std::all_of(begin(name), end(name), rfc1459::is_chan);
 }
 
 inline bool

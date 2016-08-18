@@ -60,7 +60,7 @@ m_names(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		if((s = strchr(p, ',')))
 			*s = '\0';
 
-		if(!chan::check_channel_name(p))
+		if(!chan::valid_name(p))
 		{
 			sendto_one_numeric(source_p, ERR_BADCHANNAME,
 					   form_str(ERR_BADCHANNAME),

@@ -165,7 +165,7 @@ m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		}
 
 		/* check it begins with # or &, and local chans are disabled */
-		else if(!chan::is_name(name) ||
+		else if(!chan::has_prefix(name) ||
 			( ConfigChannel.disable_local_channels && name[0] == '&'))
 		{
 			sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
@@ -404,7 +404,7 @@ ms_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	if(parc < 4)
 		return;
 
-	if(!chan::is_name(parv[2]) || !chan::check_channel_name(parv[2]))
+	if(!chan::has_prefix(parv[2]) || !chan::valid_name(parv[2]))
 		return;
 
 	/* joins for local channels cant happen. */
@@ -529,7 +529,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	if(parc < 5)
 		return;
 
-	if(!chan::is_name(parv[2]) || !chan::check_channel_name(parv[2]))
+	if(!chan::has_prefix(parv[2]) || !chan::valid_name(parv[2]))
 		return;
 
 	/* SJOIN's for local channels can't happen. */

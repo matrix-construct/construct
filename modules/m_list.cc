@@ -124,7 +124,7 @@ m_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		return;
 	}
 
-	if (parc < 2 || chan::is_name(parv[1]))
+	if (parc < 2 || chan::has_prefix(parv[1]))
 	{
 		/* pace this due to the sheer traffic involved */
 		if (((last_used + ConfigFileEntry.pace_wait) > rb_current_time()))
@@ -172,7 +172,7 @@ mo_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	}
 
 	/* Single channel. */
-	if (args && chan::is_name(args))
+	if (args && chan::has_prefix(args))
 	{
 		safelist_channel_named(source_p, args, operspy);
 		return;

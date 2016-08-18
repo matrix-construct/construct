@@ -59,7 +59,7 @@ mo_omode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	}
 
 	/* Now, try to find the channel in question */
-	if(!rfc1459::is_chan_prefix(parv[1][0]) || !chan::check_channel_name(parv[1]))
+	if(!rfc1459::is_chan_prefix(parv[1][0]) || !chan::valid_name(parv[1]))
 	{
 		sendto_one_numeric(source_p, ERR_BADCHANNAME,
 				form_str(ERR_BADCHANNAME), parv[1]);

@@ -511,7 +511,7 @@ check_forward(struct Client *source_p, chan::chan *chptr,
 	chan::chan *targptr = NULL;
 	chan::membership *msptr;
 
-	if(!chan::check_channel_name(forward) ||
+	if(!chan::valid_name(forward) ||
 			(MyClient(source_p) && (strlen(forward) > LOC_CHANNELLEN || hash_find_resv(forward))))
 	{
 		sendto_one_numeric(source_p, ERR_BADCHANNAME, form_str(ERR_BADCHANNAME), forward);

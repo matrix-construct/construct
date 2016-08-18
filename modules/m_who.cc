@@ -169,7 +169,7 @@ m_who(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	}
 
 	/* '/who #some_channel' */
-	if(chan::is_name(mask))
+	if(chan::has_prefix(mask))
 	{
 		/* List all users on a given channel */
 		chptr = find_channel(parv[1] + operspy);

@@ -77,7 +77,7 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		return;
 	}
 
-	if(chan::check_channel_name(parv[2]) == 0)
+	if(chan::valid_name(parv[2]) == 0)
 	{
 		sendto_one_numeric(source_p, ERR_BADCHANNAME,
 				   form_str(ERR_BADCHANNAME),
