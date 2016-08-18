@@ -97,7 +97,11 @@ init_client(void)
 	rb_event_addish("exit_aborted_clients", exit_aborted_clients, NULL, 1);
 	rb_event_add("flood_recalc", flood_recalc, NULL, 1);
 
-	nd_dict = rb_dictionary_create("nickdelay", reinterpret_cast<int (*)(const void *, const void *)>(irccmp));
+	nd_dict = rb_dictionary_create("nickdelay", []
+	(const void *a, const void *b) -> int
+	{
+		return irccmp((const char *)a, (const char *)b);
+	});
 }
 
 /*
