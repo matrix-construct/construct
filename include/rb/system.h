@@ -22,6 +22,9 @@ extern "C" {
 	#endif
 #endif
 
+#ifndef ulong
+	typedef unsigned long ulong;
+#endif
 
 #ifdef __GNUC__
 #undef alloca
