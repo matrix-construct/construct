@@ -79,6 +79,10 @@ struct modes
 	modes();
 };
 
+uint operator&(const modes &, const mode::type &);
+uint operator|(const modes &, const mode::type &);
+uint operator~(const modes &);
+
 struct membership
 {
 	rb_dlink_node channode;
@@ -334,6 +338,24 @@ inline bool
 can_send_banned(const membership *const &m)
 {
 	return m && can_send_banned(*m);
+}
+
+inline uint
+operator~(const modes &modes)
+{
+	return ~modes.mode;
+}
+
+inline uint
+operator&(const modes &modes, const mode::type &value)
+{
+	return modes.mode & value;
+}
+
+inline uint
+operator|(const modes &modes, const mode::type &value)
+{
+	return modes.mode | value;
 }
 
 inline bool
