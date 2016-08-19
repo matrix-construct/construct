@@ -5,6 +5,8 @@
  *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center
  *  Copyright (C) 1996-2002 Hybrid Development Team
  *  Copyright (C) 2002-2004 ircd-ratbox development team
+ *  Copyright (C) 2004-2016 Charybdis Development Team
+ *  Copyright (C) 2016 Jason Volk <jason@zemos.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,6 +30,10 @@
 #ifdef __cplusplus
 namespace ircd {
 namespace chan {
+
+IRCD_EXCEPTION(ircd::error,  error)
+IRCD_EXCEPTION(error,        not_found)
+IRCD_EXCEPTION(error,        invalid_list)
 
 enum status
 {
@@ -60,10 +66,15 @@ struct ban
 	std::string who;
 	std::string forward;
 	time_t when;
-	rb_dlink_node node = {0};
 
-	ban(const std::string &banstr, const std::string &who, const std::string &forward);
+	ban(const std::string &banstr,
+	    const std::string &who      = {},
+	    const std::string &forward  = {},
+	    const time_t &when          = 0);
 };
+
+bool operator<(const ban &a, const ban &b);
+using list = std::set<ban, std::less<ban>>;
 
 struct modes
 {
@@ -123,12 +134,12 @@ struct chan
 
 	rb_dlink_list members;
 	rb_dlink_list locmembers;
-
 	rb_dlink_list invites;
-	rb_dlink_list banlist;
-	rb_dlink_list exceptlist;
-	rb_dlink_list invexlist;
-	rb_dlink_list quietlist;
+
+	list bans;
+	list excepts;
+	list invexs;
+	list quiets;
 
 	uint join_count;                     // joins within delta
 	uint join_delta;                     // last ts of join
@@ -139,9 +150,9 @@ struct chan
 	time_t bants;
 	time_t channelts;
 	time_t last_checked_ts;
-	client *last_checked_client;
-	uint last_checked_type;
-	int last_checked_result;
+	const client *last_checked_client;
+	mode::type last_checked_type;
+	bool last_checked_result;
 
 	rb_dlink_node node = {0};
 
@@ -167,16 +178,35 @@ enum : int
 	CAN_SEND_OPV    = 2,
 };
 int can_send(chan *, client *, membership *);
+int can_join(client *source, chan *, const char *key, const char **forward);
+
+bool cache_check(const chan &, const mode::type &, const client &, bool &result);
+void cache_result(chan &, const mode::type &, const client &, const bool &result, membership *const &msptr = nullptr);
+void cache_invalidate(chan &, const mode::type &, time_t time = 0);
+
+const list &get(const chan &, const mode::type &);
+list &get(chan &, const mode::type &);
+size_t size(const chan &, const mode::type &);
+bool empty(const chan &, const mode::type &);
+size_t lists_size(const chan &);
+
+struct check_data
+{
+	membership *msptr;
+	const char *host;
+	const char *iphost;
+	const char **forward;
+};
+bool check(chan &, const mode::type &, const client &, check_data *const &data = nullptr);
+const ban &get(const chan &, const mode::type &, const std::string &mask);
+bool add(chan &, const mode::type &, const std::string &mask, client &source, const std::string &forward = {});
+bool del(chan &, const mode::type &, const std::string &mask);
 
 bool flood_attack_channel(int p_or_n, client *source, chan *);
-int is_banned(chan *, client *who, membership *, const char *, const char *, const char **);
-int is_quieted(chan *, client *who, membership *, const char *, const char *);
-int can_join(client *source, chan *, const char *key, const char **forward);
 void add_user_to_channel(chan *, client *, int flags);
 void remove_user_from_channel(membership *);
 void remove_user_from_channels(client *);
 void invalidate_bancache_user(client *);
-void free_channel_list(rb_dlink_list *);
 void channel_member_names(chan *, client *, int show_eon);
 void del_invite(chan *, client *who);
 const char *channel_modes(chan *, client *who);
@@ -191,8 +221,6 @@ void send_cap_mode_changes(client *, client *source, chan *, mode::change foo[],
 void resv_chan_forcepart(const char *name, const char *reason, int temp_time);
 void set_channel_mode(client *, client *source, chan *, membership *, int parc, const char *parv[]);
 void set_channel_mlock(client *, client *source, chan *, const char *newmlock, bool propagate);
-bool add_id(client *source, chan *, const char *banid, const char *forward, rb_dlink_list * list, long mode_type);
-ban *del_id(chan *, const char *banid, rb_dlink_list * list, long mode_type);
 int match_extban(const char *banstr, client *, chan *, long mode_type);
 int valid_extban(const char *banstr, client *, chan *, long mode_type);
 const char * get_extban_string(void);
@@ -356,6 +384,12 @@ inline uint
 operator|(const modes &modes, const mode::type &value)
 {
 	return modes.mode | value;
+}
+
+inline bool
+operator<(const ban &a, const ban &b)
+{
+	return irccmp(a.banstr, b.banstr);
 }
 
 inline bool

@@ -252,102 +252,6 @@ allow_mode_change(struct Client *source_p, chan::chan *chptr, int alevel,
 	return true;
 }
 
-/* add_id()
- *
- * inputs	- client, channel, id to add, type, forward
- * outputs	- false on failure, true on success
- * side effects - given id is added to the appropriate list
- */
-bool
-chan::add_id(client *source_p, chan *chptr, const char *banid, const char *forward,
-       rb_dlink_list * list, long mode_type)
-{
-	ban *actualBan;
-	static char who[USERHOST_REPLYLEN];
-	char *realban = LOCAL_COPY(banid);
-	rb_dlink_node *ptr;
-
-	/* dont let local clients overflow the banlist, or set redundant
-	 * bans
-	 */
-	if(MyClient(source_p))
-	{
-		if((rb_dlink_list_length(&chptr->banlist) + rb_dlink_list_length(&chptr->exceptlist) + rb_dlink_list_length(&chptr->invexlist) + rb_dlink_list_length(&chptr->quietlist)) >= (unsigned long)(chptr->mode.mode & mode::EXLIMIT ? ConfigChannel.max_bans_large : ConfigChannel.max_bans))
-		{
-			sendto_one(source_p, form_str(ERR_BANLISTFULL),
-				   me.name, source_p->name, chptr->name.c_str(), realban);
-			return false;
-		}
-
-		RB_DLINK_FOREACH(ptr, list->head)
-		{
-			actualBan = (ban *)ptr->data;
-			if(match_mask(actualBan->banstr.c_str(), realban))
-				return false;
-		}
-	}
-	/* dont let remotes set duplicates */
-	else
-	{
-		RB_DLINK_FOREACH(ptr, list->head)
-		{
-			actualBan = (ban *)ptr->data;
-			if(!irccmp(actualBan->banstr.c_str(), realban))
-				return false;
-		}
-	}
-
-
-	if(IsPerson(source_p))
-		sprintf(who, "%s!%s@%s", source_p->name, source_p->username, source_p->host);
-	else
-		rb_strlcpy(who, source_p->name, sizeof(who));
-
-	actualBan = new ban(realban, who, forward?: std::string{});
-	actualBan->when = rb_current_time();
-
-	rb_dlinkAdd(actualBan, &actualBan->node, list);
-
-	/* invalidate the can_send() cache */
-	if(mode_type == mode::BAN || mode_type == mode::QUIET || mode_type == mode::EXCEPTION)
-		chptr->bants = rb_current_time();
-
-	return true;
-}
-
-/* del_id()
- *
- * inputs	- channel, id to remove, type
- * outputs	- pointer to ban that was removed, if any
- * side effects - given id is removed from the appropriate list and returned
- */
-chan::ban *
-chan::del_id(chan *chptr, const char *banid, rb_dlink_list * list, long mode_type)
-{
-	rb_dlink_node *ptr;
-
-	if(EmptyString(banid))
-		return NULL;
-
-	RB_DLINK_FOREACH(ptr, list->head)
-	{
-		auto *const banptr(reinterpret_cast<ban *>(ptr->data));
-
-		if(irccmp(banid, banptr->banstr.c_str()) == 0)
-		{
-			rb_dlinkDelete(&banptr->node, list);
-
-			/* invalidate the can_send() cache */
-			if(mode_type == mode::BAN || mode_type == mode::QUIET || mode_type == mode::EXCEPTION)
-				chptr->bants = rb_current_time();
-
-			return banptr;
-		}
-	}
-
-	return NULL;
-}
-
 /* check_string()
  *
  * input	- string to check
@@ -775,10 +679,11 @@ mode::functor::ban(client *source_p, chan *chptr,
 	int alevel, int parc, int *parn,
 	const char **parv, int *errors, int dir, char c, type mode_type)
 {
+	namespace chan = ircd::chan;
+
 	const char *mask, *raw_mask;
 	char *forward;
-	rb_dlink_list *list;
-	rb_dlink_node *ptr;
+	chan::list *list;
 	int errorval;
 	const char *rpl_list_p;
 	const char *rpl_endlist_p;
@@ -787,7 +692,7 @@ mode::functor::ban(client *source_p, chan *chptr,
 	switch (mode_type)
 	{
 	case BAN:
-		list = &chptr->banlist;
+		list = &get(*chptr, mode_type);
 		errorval = SM_ERR_RPL_B;
 		rpl_list_p = form_str(RPL_BANLIST);
 		rpl_endlist_p = form_str(RPL_ENDOFBANLIST);
@@ -800,7 +705,7 @@ mode::functor::ban(client *source_p, chan *chptr,
 		   ((dir == MODE_ADD) && (parc > *parn)))
 			return;
 
-		list = &chptr->exceptlist;
+		list = &get(*chptr, mode_type);
 		errorval = SM_ERR_RPL_E;
 		rpl_list_p = form_str(RPL_EXCEPTLIST);
 		rpl_endlist_p = form_str(RPL_ENDOFEXCEPTLIST);
@@ -817,7 +722,7 @@ mode::functor::ban(client *source_p, chan *chptr,
 		   (dir == MODE_ADD) && (parc > *parn))
 			return;
 
-		list = &chptr->invexlist;
+		list = &get(*chptr, mode_type);
 		errorval = SM_ERR_RPL_I;
 		rpl_list_p = form_str(RPL_INVITELIST);
 		rpl_endlist_p = form_str(RPL_ENDOFINVITELIST);
@@ -829,7 +734,7 @@ mode::functor::ban(client *source_p, chan *chptr,
 		break;
 
 	case QUIET:
-		list = &chptr->quietlist;
+		list = &get(*chptr, mode_type);
 		errorval = SM_ERR_RPL_Q;
 		rpl_list_p = form_str(RPL_QUIETLIST);
 		rpl_endlist_p = form_str(RPL_ENDOFQUIETLIST);
@@ -859,19 +764,23 @@ mode::functor::ban(client *source_p, chan *chptr,
 			return;
 		}
 
-		RB_DLINK_FOREACH(ptr, list->head)
+		for (const auto &ban : *list)
 		{
 			char buf[ban::LEN];
-			auto *const banptr(reinterpret_cast<struct ban *>(ptr->data));
-			if(!banptr->forward.empty())
-				snprintf(buf, sizeof(buf), "%s$%s", banptr->banstr.c_str(), banptr->forward.c_str());
+			if(!ban.forward.empty())
+				snprintf(buf, sizeof(buf), "%s$%s", ban.banstr.c_str(), ban.forward.c_str());
 			else
-				rb_strlcpy(buf, banptr->banstr.c_str(), sizeof(buf));
+				rb_strlcpy(buf, ban.banstr.c_str(), sizeof(buf));
 
 			sendto_one(source_p, rpl_list_p,
-				   me.name, source_p->name, chptr->name.c_str(),
-				   buf, banptr->who.c_str(), banptr->when);
+			           me.name,
+			           source_p->name,
+			           chptr->name.c_str(),
+			           buf,
+			           ban.who.c_str(),
+			           ban.when);
 		}
+
 		sendto_one(source_p, rpl_endlist_p, me.name, source_p->name, chptr->name.c_str());
 		return;
 	}
@@ -969,7 +878,7 @@ mode::functor::ban(client *source_p, chan *chptr,
 		/* dont allow local clients to overflow the banlist, dont
 		 * let remote servers set duplicate bans
 		 */
-		if(!add_id(source_p, chptr, mask, forward, list, mode_type))
+		if(!add(*chptr, mode_type, mask, *source_p, forward?: std::string{}))
 			return;
 
 		if(forward)
@@ -983,24 +892,28 @@ mode::functor::ban(client *source_p, chan *chptr,
 	}
 	else if(dir == MODE_DEL)
 	{
-		struct ban *removed;
+		// When this whole function gets hosed all of this will be better
+
 		static char buf[ban::LEN * MAXPARAMS];
-		int old_removed_mask_pos = removed_mask_pos;
-		if((removed = del_id(chptr, mask, list, mode_type)) == NULL)
+		const int old_removed_mask_pos(removed_mask_pos);
+		std::string _mask(mask);
+
+		auto it(list->find(_mask));
+		if (it == end(*list))
 		{
-			/* mask isn't a valid ban, check raw_mask */
-			if((removed = del_id(chptr, raw_mask, list, mode_type)) != NULL)
-				mask = raw_mask;
+			_mask = raw_mask;
+			it = list->find(_mask);
 		}
 
-		if(removed && !removed->forward.empty())
-			removed_mask_pos += snprintf(buf + old_removed_mask_pos, sizeof(buf), "%s$%s", removed->banstr.c_str(), removed->forward.c_str()) + 1;
-		else
-			removed_mask_pos += rb_strlcpy(buf + old_removed_mask_pos, mask, sizeof(buf)) + 1;
-		if(removed)
+		if (it != end(*list))
 		{
-			delete removed;
-			removed = NULL;
+			const auto &ban(*it);
+			if (!ban.forward.empty())
+				removed_mask_pos += snprintf(buf + old_removed_mask_pos, sizeof(buf), "%s$%s", ban.banstr.c_str(), ban.forward.c_str()) + 1;
+			else
+				removed_mask_pos += rb_strlcpy(buf + old_removed_mask_pos, mask, sizeof(buf)) + 1;
+
+			del(*chptr, mode_type, _mask);
 		}
 
 		mode_changes[mode_count].letter = c;

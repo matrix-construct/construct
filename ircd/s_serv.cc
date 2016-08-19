@@ -504,29 +504,24 @@ burst_ban(struct Client *client_p)
  * side effects - client is sent a list of +b, +e, or +I modes
  */
 static void
-burst_modes_TS6(struct Client *client_p, chan::chan *chptr,
-		rb_dlink_list *list, char flag)
+burst_modes_TS6(Client &client,
+                chan::chan &chan,
+                chan::list &list,
+                const char &flag)
 {
-	rb_dlink_node *ptr;
-	char *t;
-	int tlen;
-	int mlen;
-	int cur_len;
-
-	cur_len = mlen = sprintf(buf, ":%s BMASK %ld %s %c :",
-				    me.id, (long) chptr->channelts, chptr->name.c_str(), flag);
-	t = buf + mlen;
-
-	RB_DLINK_FOREACH(ptr, list->head)
+	auto mlen(sprintf(buf, ":%s BMASK %ld %s %c :", me.id, long(chan.channelts), chan.name.c_str(), flag));
+	auto cur_len(mlen);
+	auto t(buf + mlen);
+	for (const auto &ban : list)
 	{
-		auto *const banptr(reinterpret_cast<chan::ban *>(ptr->data));
+		const auto &mask(ban.banstr);
+		const auto &forward(ban.forward);
+		const auto tlen(mask.size() + 1 + (forward.empty()? 0 : forward.size() + 1));
 
-		tlen = banptr->banstr.size() + (banptr->forward.size() ? strlen(banptr->forward.c_str()) + 1 : 0) + 1;
-
-		/* uh oh */
-		if(cur_len + tlen > BUFSIZE - 3)
+		// uh oh
+		if (cur_len + tlen > BUFSIZE - 3)
 		{
-			/* the one we're trying to send doesnt fit at all! */
+			// the one we're trying to send doesnt fit at all!
 			if(cur_len == mlen)
 			{
 				s_assert(0);
@@ -535,15 +530,16 @@ burst_modes_TS6(struct Client *client_p, chan::chan *chptr,
 
 			/* chop off trailing space and send.. */
 			*(t-1) = '\0';
-			sendto_one(client_p, "%s", buf);
+			sendto_one(&client, "%s", buf);
 			cur_len = mlen;
 			t = buf + mlen;
 		}
 
-		if (banptr->forward.size())
-			sprintf(t, "%s$%s ", banptr->banstr.c_str(), banptr->forward.c_str());
+		if (forward.size())
+			sprintf(t, "%s$%s ", mask.c_str(), forward.c_str());
 		else
-			sprintf(t, "%s ", banptr->banstr.c_str());
+			sprintf(t, "%s ", mask.c_str());
+
 		t += tlen;
 		cur_len += tlen;
 	}
@@ -552,7 +548,7 @@ burst_modes_TS6(struct Client *client_p, chan::chan *chptr,
 	 * chop off trailing space and send.
 	 */
 	*(t-1) = '\0';
-	sendto_one(client_p, "%s", buf);
+	sendto_one(&client, "%s", buf);
 }
 
 /*
@@ -681,21 +677,21 @@ burst_TS6(struct Client *client_p)
 		}
 		sendto_one(client_p, "%s", buf);
 
-		if(rb_dlink_list_length(&chptr->banlist) > 0)
-			burst_modes_TS6(client_p, chptr, &chptr->banlist, 'b');
+		namespace mode = chan::mode;
 
-		if(IsCapable(client_p, CAP_EX) &&
-		   rb_dlink_list_length(&chptr->exceptlist) > 0)
-			burst_modes_TS6(client_p, chptr, &chptr->exceptlist, 'e');
+		if (!empty(*chptr, mode::BAN))
+			burst_modes_TS6(*client_p, *chptr, get(*chptr, mode::BAN), 'b');
 
-		if(IsCapable(client_p, CAP_IE) &&
-		   rb_dlink_list_length(&chptr->invexlist) > 0)
-			burst_modes_TS6(client_p, chptr, &chptr->invexlist, 'I');
+		if (IsCapable(client_p, CAP_EX) && !empty(*chptr, mode::EXCEPTION))
+			burst_modes_TS6(*client_p, *chptr, get(*chptr, mode::EXCEPTION), 'e');
 
-		if(rb_dlink_list_length(&chptr->quietlist) > 0)
-			burst_modes_TS6(client_p, chptr, &chptr->quietlist, 'q');
+		if (IsCapable(client_p, CAP_IE) && !empty(*chptr, mode::INVEX))
+			burst_modes_TS6(*client_p, *chptr, get(*chptr, mode::INVEX), 'I');
 
-		if(IsCapable(client_p, CAP_TB) && chptr->topic)
+		if (!empty(*chptr, mode::QUIET))
+			burst_modes_TS6(*client_p, *chptr, get(*chptr, mode::QUIET), 'q');
+
+		if (IsCapable(client_p, CAP_TB) && chptr->topic)
 			sendto_one(client_p, ":%s TB %s %ld %s%s:%s",
 			           me.id,
 			           chptr->name.c_str(),
@@ -704,7 +700,7 @@ burst_TS6(struct Client *client_p)
 			           ConfigChannel.burst_topicwho? " " : "",
 			           chptr->topic.text.c_str());
 
-		if(IsCapable(client_p, CAP_MLOCK))
+		if (IsCapable(client_p, CAP_MLOCK))
 			sendto_one(client_p, ":%s MLOCK %ld %s :%s",
 				   me.id, (long) chptr->channelts, chptr->name.c_str(),
 				   chptr->mode_lock.c_str());

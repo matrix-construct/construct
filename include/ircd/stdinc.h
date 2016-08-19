@@ -42,6 +42,7 @@ namespace ircd
 #include "listener.h"
 #include "s_assert.h"
 
+#include "match.h"
 #include "chmode.h"
 #include "channel.h"
 
@@ -60,7 +61,6 @@ namespace ircd
 #include "ircd_linker.h"
 #include "ircd_signal.h"
 #include "logger.h"
-#include "match.h"
 #include "messages.h"
 #include "info.h"
 #include "modules.h"

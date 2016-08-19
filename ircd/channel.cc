@@ -5,6 +5,8 @@
  * Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center
  * Copyright (C) 1996-2002 Hybrid Development Team
  * Copyright (C) 2002-2005 ircd-ratbox development team
+ * Copyright (C) 2005-2016 Charybdis Development Team
+ * Copyright (C) 2016 Jason Volk <jason@zemos.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,6 +32,7 @@ int h_get_channel_access;
 
 struct config_channel_entry ircd::ConfigChannel;
 
+
 rb_dlink_list chan::global_channel_list;
 //std::map<std::string, std::unique_ptr<chan::chan>> chan::chans;
 
@@ -49,10 +52,6 @@ chan::chan::chan(const std::string &name)
 ,members{0}
 ,locmembers{0}
 ,invites{0}
-,banlist{0}
-,exceptlist{0}
-,invexlist{0}
-,quietlist{0}
 ,join_count{0}
 ,join_delta{0}
 ,flood_noticed{0}
@@ -63,7 +62,7 @@ chan::chan::chan(const std::string &name)
 ,channelts{0}
 ,last_checked_ts{0}
 ,last_checked_client{nullptr}
-,last_checked_type{0}
+,last_checked_type{mode::type(0)}
 ,last_checked_result{0}
 {
 }
@@ -74,12 +73,6 @@ noexcept
 	rb_dlink_node *ptr, *next_ptr;
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, invites.head)
 		del_invite(this, reinterpret_cast<client *>(ptr->data));
-
-	/* free all bans/exceptions/denies */
-	free_channel_list(&banlist);
-	free_channel_list(&exceptlist);
-	free_channel_list(&invexlist);
-	free_channel_list(&quietlist);
 
 	rb_dlinkDelete(&node, &global_channel_list);
 	del_from_channel_hash(name.c_str(), this);
@@ -113,11 +106,12 @@ chan::modes::modes()
 
 chan::ban::ban(const std::string &banstr,
                const std::string &who,
-               const std::string &forward)
+               const std::string &forward,
+               const time_t &when)
 :banstr{banstr}
 ,who{who}
 ,forward{forward}
-,when{0}
+,when{when}
 {
 }
 
@@ -345,27 +339,6 @@ chan::invalidate_bancache_user(client *client_p)
 	}
 }
 
-/* free_channel_list()
- *
- * input	- rb_dlink list to free
- * output	-
- * side effects - list of b/e/I modes is cleared
- */
-void
-chan::free_channel_list(rb_dlink_list * list)
-{
-	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, list->head)
-	{
-		const auto actualBan(reinterpret_cast<ban *>(ptr->data));
-		delete actualBan;
-	}
-
-	list->head = list->tail = NULL;
-	list->length = 0;
-}
-
 /* channel_pub_or_secret()
  *
  * input	- channel
@@ -480,186 +453,183 @@ chan::del_invite(chan *chptr, client *who)
 	rb_dlinkFindDestroy(chptr, &who->user->invited);
 }
 
-/* is_banned_list()
- *
- * input	- channel to check bans for, ban list (banlist or quietlist),
- *                user to check bans against, optional prebuilt buffers,
- *                optional forward channel pointer
- * output	- 1 if banned, else 0
- * side effects -
- */
-static int
-is_banned_list(chan::chan *chptr, rb_dlink_list *list,
-	       Client *who, chan::membership *msptr,
-	       const char *s, const char *s2, const char **forward)
+bool
+chan::cache_check(const chan &chan,
+                  const mode::type &type,
+                  const client &who,
+                  bool &result)
 {
-	using namespace chan;
+	using namespace mode;
 
-	char src_host[NICKLEN + USERLEN + HOSTLEN + 6];
-	char src_iphost[NICKLEN + USERLEN + HOSTLEN + 6];
-	char src_althost[NICKLEN + USERLEN + HOSTLEN + 6];
-	char src_ip4host[NICKLEN + USERLEN + HOSTLEN + 6];
-	char *s3 = NULL;
-	char *s4 = NULL;
-	struct sockaddr_in ip4;
-	rb_dlink_node *ptr;
-	ban *actualBan = NULL;
-	ban *actualExcept = NULL;
+	if (chan.last_checked_client != &who)
+		return false;
 
-	if(!MyClient(who))
-		return 0;
+	if (chan.last_checked_ts <= chan.bants)
+		return false;
 
-	/* if the buffers havent been built, do it here */
-	if(s == NULL)
+	switch (type)
 	{
-		sprintf(src_host, "%s!%s@%s", who->name, who->username, who->host);
-		sprintf(src_iphost, "%s!%s@%s", who->name, who->username, who->sockhost);
+		case BAN:
+		case QUIET:
+			result = chan.last_checked_result;
+			return true;
 
-		s = src_host;
-		s2 = src_iphost;
+		default:
+			return false;
 	}
-	if(who->localClient->mangledhost != NULL)
-	{
-		/* if host mangling mode enabled, also check their real host */
-		if(!strcmp(who->host, who->localClient->mangledhost))
-		{
-			sprintf(src_althost, "%s!%s@%s", who->name, who->username, who->orighost);
-			s3 = src_althost;
-		}
-		/* if host mangling mode not enabled and no other spoof,
-		 * also check the mangled form of their host */
-		else if (!IsDynSpoof(who))
-		{
-			sprintf(src_althost, "%s!%s@%s", who->name, who->username, who->localClient->mangledhost);
-			s3 = src_althost;
-		}
-	}
-#ifdef RB_IPV6
-	if(GET_SS_FAMILY(&who->localClient->ip) == AF_INET6 &&
-			rb_ipv4_from_ipv6((const struct sockaddr_in6 *)&who->localClient->ip, &ip4))
-	{
-		sprintf(src_ip4host, "%s!%s@", who->name, who->username);
-		s4 = src_ip4host + strlen(src_ip4host);
-		rb_inet_ntop_sock((struct sockaddr *)&ip4,
-				s4, src_ip4host + sizeof src_ip4host - s4);
-		s4 = src_ip4host;
-	}
-#endif
+}
 
-	RB_DLINK_FOREACH(ptr, list->head)
+void
+chan::cache_result(chan &chan,
+                   const mode::type &type,
+                   const client &client,
+                   const bool &result,
+                   membership *const &membership)
+{
+	using namespace mode;
+
+	switch (type)
 	{
-		actualBan = (ban *)ptr->data;
-		if(match(actualBan->banstr.c_str(), s) ||
-		   match(actualBan->banstr.c_str(), s2) ||
-		   match_cidr(actualBan->banstr.c_str(), s2) ||
-		   match_extban(actualBan->banstr.c_str(), who, chptr, mode::BAN) ||
-		   (s3 != NULL && match(actualBan->banstr.c_str(), s3))
-#ifdef RB_IPV6
-		   ||
-		   (s4 != NULL && (match(actualBan->banstr.c_str(), s4) || match_cidr(actualBan->banstr.c_str(), s4)))
-#endif
-		   )
+		case BAN:
+		case QUIET:
 			break;
-		else
-			actualBan = NULL;
+
+		default:
+			return;
 	}
 
-	if((actualBan != NULL) && ircd::ConfigChannel.use_except)
+	chan.last_checked_client = &client;
+	chan.last_checked_type = type;
+	chan.last_checked_result = result;
+	chan.last_checked_ts = rb_current_time();
+
+	if (membership)
 	{
-		RB_DLINK_FOREACH(ptr, chptr->exceptlist.head)
-		{
-			actualExcept = (ban *)ptr->data;
+		membership->bants = chan.bants;
 
-			/* theyre exempted.. */
-			if(match(actualExcept->banstr.c_str(), s) ||
-			   match(actualExcept->banstr.c_str(), s2) ||
-			   match_cidr(actualExcept->banstr.c_str(), s2) ||
-			   match_extban(actualExcept->banstr.c_str(), who, chptr, mode::EXCEPTION) ||
-			   (s3 != NULL && match(actualExcept->banstr.c_str(), s3)))
-			{
-				/* cache the fact theyre not banned */
-				if(msptr != NULL)
-				{
-					msptr->bants = chptr->bants;
-					msptr->flags &= ~BANNED;
-				}
-
-				return mode::EXCEPTION;
-			}
-		}
-	}
-
-	/* cache the banned/not banned status */
-	if(msptr != NULL)
-	{
-		msptr->bants = chptr->bants;
-
-		if(actualBan != NULL)
-		{
-			msptr->flags |= BANNED;
-			return mode::BAN;
-		}
+		if (result)
+			membership->flags |= BANNED;
 		else
-		{
-			msptr->flags &= ~BANNED;
-			return 0;
-		}
+			membership->flags &= ~BANNED;
 	}
-
-	if (actualBan && !actualBan->forward.empty() && forward)
-		*forward = actualBan->forward.c_str();   //TODO: XXX: ???
-
-	return actualBan? mode::BAN : mode::type(0);
 }
 
-/* is_banned()
- *
- * input	- channel to check bans for, user to check bans against
- *                optional prebuilt buffers, optional forward channel pointer
- * output	- 1 if banned, else 0
- * side effects -
- */
-int
-chan::is_banned(chan *chptr, client *who, membership *msptr,
-	  const char *s, const char *s2, const char **forward)
+bool
+chan::check(chan &chan,
+            const mode::type &type,
+            const client &client,
+            check_data *const &data)
 {
-	if (chptr->last_checked_client != NULL &&
-		who == chptr->last_checked_client &&
-		chptr->last_checked_type == mode::BAN &&
-		chptr->last_checked_ts > chptr->bants)
-		return chptr->last_checked_result;
+	bool result;
+	if (cache_check(chan, type, client, result))
+		return result;
 
-	chptr->last_checked_client = who;
-	chptr->last_checked_type = mode::BAN;
-	chptr->last_checked_result = is_banned_list(chptr, &chptr->banlist, who, msptr, s, s2, forward);
-	chptr->last_checked_ts = rb_current_time();
+	if (!my(client))
+		return false;
 
-	return chptr->last_checked_result;
-}
+	enum srcs { HOST, IPHOST, ALTHOST, IP4HOST, _NUM_ };
+	char src[num_of<srcs>()][NICKLEN + USERLEN + HOSTLEN + 6];
+	const char *s[num_of<srcs>()]
+	{
+		data? data->host : nullptr,
+		data? data->iphost : nullptr
+	};
 
-/* is_quieted()
- *
- * input	- channel to check bans for, user to check bans against
- *                optional prebuilt buffers
- * output	- 1 if banned, else 0
- * side effects -
- */
-int
-chan::is_quieted(chan *chptr, client *who, membership *msptr,
-	   const char *s, const char *s2)
-{
-	if (chptr->last_checked_client != NULL &&
-		who == chptr->last_checked_client &&
-		chptr->last_checked_type == mode::QUIET &&
-		chptr->last_checked_ts > chptr->bants)
-		return chptr->last_checked_result;
+	// if the buffers havent been built, do it here
+	if (!s[HOST])
+	{
+		sprintf(src[HOST], "%s!%s@%s", client.name, client.username, client.host);
+		s[HOST] = src[HOST];
+	}
 
-	chptr->last_checked_client = who;
-	chptr->last_checked_type = mode::QUIET;
-	chptr->last_checked_result = is_banned_list(chptr, &chptr->quietlist, who, msptr, s, s2, NULL);
-	chptr->last_checked_ts = rb_current_time();
+	if (!s[IPHOST])
+	{
+		sprintf(src[IPHOST], "%s!%s@%s", client.name, client.username, client.sockhost);
+		s[IPHOST] = src[IPHOST];
+	}
 
-	return chptr->last_checked_result;
+	if (client.localClient->mangledhost)
+	{
+		// if host mangling mode enabled, also check their real host
+		if (strcmp(client.host, client.localClient->mangledhost) == 0)
+		{
+			sprintf(src[ALTHOST], "%s!%s@%s", client.name, client.username, client.orighost);
+			s[ALTHOST] = src[ALTHOST];
+		}
+		// if host mangling mode not enabled and no other spoof, check the mangled form of their host
+		else if (!IsDynSpoof(&client))
+		{
+			sprintf(src[ALTHOST], "%s!%s@%s", client.name, client.username, client.localClient->mangledhost);
+			s[ALTHOST] = src[ALTHOST];
+		}
+	}
+
+#ifdef RB_IPV6
+	struct sockaddr_in ip4;
+	if (GET_SS_FAMILY(&client.localClient->ip) == AF_INET6 &&
+			rb_ipv4_from_ipv6((const struct sockaddr_in6 *)&client.localClient->ip, &ip4))
+	{
+		sprintf(src[IP4HOST], "%s!%s@", client.name, client.username);
+		char *const pos(src[IP4HOST] + strlen(src[IP4HOST]));
+		rb_inet_ntop_sock((struct sockaddr *)&ip4, pos, src[IP4HOST] + sizeof(src[IP4HOST]) - pos);
+		s[IP4HOST] = src[IP4HOST];
+	}
+#endif
+
+	const auto matched([&s, &chan, &client]
+	(const ban &ban)
+	{
+		const auto &mask(ban.banstr);
+		if (match(mask, s[HOST]))
+			return true;
+
+		if (match(mask, s[IPHOST]))
+			return true;
+
+		if (match_cidr(mask, s[IPHOST]))
+			return true;
+
+		if (s[ALTHOST] && match(mask, s[ALTHOST]))
+			return true;
+
+		if (match_extban(mask.c_str(), const_cast<Client *>(&client), &chan, mode::BAN))
+			return true;
+
+		#ifdef RB_IPV6
+		if (s[IP4HOST] && match(mask, s[IP4HOST]))
+			return true;
+
+		if (s[IP4HOST] && match_cidr(mask, s[IP4HOST]))
+			return true;
+		#endif
+
+		return false;
+	});
+
+	const auto &list(get(chan, type));
+	const auto it(std::find_if(begin(list), end(list), matched));
+	const auto msptr(data? data->msptr : nullptr);
+	result = it != end(list);
+
+	if (result && ircd::ConfigChannel.use_except)
+	{
+		const auto &list(get(chan, mode::EXCEPTION));
+		if (std::any_of(begin(list), end(list), matched))
+		{
+			cache_result(chan, type, client, false, msptr);
+			return false;
+		}
+	}
+
+	if (result && data && data->forward)
+	{
+		const auto &ban(*it);
+		if (!ban.forward.empty())
+			*data->forward = ban.forward.c_str();   //TODO: XXX: ???
+	}
+
+	cache_result(chan, type, client, result, msptr);
+	return result;
 }
 
 /* can_join()
@@ -707,44 +677,65 @@ chan::can_join(client *source_p, chan *chptr, const char *key, const char **forw
 		}
 	}
 
-	if((is_banned(chptr, source_p, NULL, src_host, src_iphost, forward)) == mode::BAN)
+	check_data data
+	{
+		nullptr,
+		src_host,
+		src_iphost,
+		forward
+	};
+
+	if (check(*chptr, mode::BAN, *source_p, &data))
 	{
 		moduledata.approved = ERR_BANNEDFROMCHAN;
 		goto finish_join_check;
 	}
 
-	if(*chptr->mode.key && (EmptyString(key) || irccmp(chptr->mode.key, key)))
+	if (*chptr->mode.key && (EmptyString(key) || irccmp(chptr->mode.key, key)))
 	{
 		moduledata.approved = ERR_BADCHANNELKEY;
 		goto finish_join_check;
 	}
 
 	/* All checks from this point on will forward... */
-	if(forward)
+	if (forward)
 		*forward = chptr->mode.forward;
 
-	if(chptr->mode.mode & mode::INVITEONLY)
+	if (chptr->mode.mode & mode::INVITEONLY)
 	{
 		RB_DLINK_FOREACH(invite, source_p->user->invited.head)
-		{
-			if(invite->data == chptr)
+			if (invite->data == chptr)
 				break;
-		}
-		if(invite == NULL)
+
+		if (!invite)
 		{
-			if(!ConfigChannel.use_invex)
+			if (!ConfigChannel.use_invex)
 				moduledata.approved = ERR_INVITEONLYCHAN;
-			RB_DLINK_FOREACH(ptr, chptr->invexlist.head)
+
+			const auto &list(get(*chptr, mode::INVEX));
+			const bool matched(std::any_of(begin(list), end(list), [&]
+			(const auto &ban)
 			{
-				invex = (ban *)ptr->data;
-				if(match(invex->banstr.c_str(), src_host)
-				   || match(invex->banstr.c_str(), src_iphost)
-				   || match_cidr(invex->banstr.c_str(), src_iphost)
-			   	   || match_extban(invex->banstr.c_str(), source_p, chptr, mode::INVEX)
-				   || (use_althost && match(invex->banstr.c_str(), src_althost)))
-					break;
-			}
-			if(ptr == NULL)
+				const auto &mask(ban.banstr);
+				if (match(mask, src_host))
+					return true;
+
+				if (match(mask, src_iphost))
+					return true;
+
+				if (match_cidr(mask, src_iphost))
+					return true;
+
+				if (match_extban(mask.c_str(), source_p, chptr, mode::INVEX))
+					return true;
+
+				if (use_althost && match(mask, src_althost))
+					return true;
+
+				return false;
+			}));
+
+			if (!matched)
 				moduledata.approved = ERR_INVITEONLYCHAN;
 		}
 	}
@@ -831,10 +822,18 @@ chan::can_send(chan *chptr, client *source_p, membership *msptr)
 		{
 			if(can_send_banned(msptr))
 				moduledata.approved = CAN_SEND_NO;
+		} else {
+			check_data data
+			{
+				msptr
+			};
+
+			if (check(*chptr, mode::BAN, *source_p, &data))
+				moduledata.approved = CAN_SEND_NO;
+
+			if (check(*chptr, mode::QUIET, *source_p, &data))
+				moduledata.approved = CAN_SEND_NO;
 		}
-		else if(is_banned(chptr, source_p, msptr, NULL, NULL, NULL) == mode::BAN
-			|| is_quieted(chptr, source_p, msptr, NULL, NULL) == mode::BAN)
-			moduledata.approved = CAN_SEND_NO;
 	}
 
 	if(is_chanop_voiced(msptr))
@@ -937,11 +936,22 @@ chan::find_bannickchange_channel(client *client_p)
 		{
 			if (can_send_banned(msptr))
 				return chptr;
+		} else {
+			check_data data
+			{
+				msptr,
+				src_host,
+				src_iphost,
+			};
+
+			if (check(*chptr, mode::BAN, *client_p, &data))
+				return chptr;
+
+			if (check(*chptr, mode::QUIET, *client_p, &data))
+				return chptr;
 		}
-		else if (is_banned(chptr, client_p, msptr, src_host, src_iphost, NULL) == mode::BAN
-			|| is_quieted(chptr, client_p, msptr, src_host, src_iphost) == mode::BAN)
-			return chptr;
 	}
+
 	return NULL;
 }
 
@@ -1302,5 +1312,169 @@ chan::resv_chan_forcepart(const char *name, const char *reason, int temp_time)
 				sendto_one_notice(target_p, ":*** Channel %s is no longer available on this server.",
 				           name);
 		}
+	}
+}
+
+bool
+chan::add(chan &chan,
+          const mode::type &type,
+          const std::string &mask,
+          client &source,
+          const std::string &forward)
+
+{
+	// dont let local clients overflow the banlist, or set redundant bans
+	if (my(source))
+	{
+		const bool large(chan.mode & mode::EXLIMIT);
+		const size_t &max(large? ConfigChannel.max_bans_large : ConfigChannel.max_bans);
+		if (lists_size(chan) > max)
+		{
+			sendto_one(&source, form_str(ERR_BANLISTFULL),
+			           me.name,
+			           source.name,
+			           chan.name.c_str(),
+			           mask.c_str());
+
+			return false;
+		}
+
+		const auto matches([&mask](const ban &ban)
+		{
+			return match_mask(ban.banstr, mask);
+		});
+
+		const auto &list(get(chan, type));
+		if (std::any_of(begin(list), end(list), matches))
+			return false;
+    }
+
+	auto &list(get(chan, type));
+	auto insertion(list.emplace(mask, std::string{}, forward, rb_current_time()));
+	if (!insertion.second)
+		return false;
+
+	auto &ban(const_cast<struct ban &>(*insertion.first));
+	if (is_person(source))
+	{
+		static char who[USERHOST_REPLYLEN];
+		snprintf(who, sizeof(who), "%s!%s@%s", source.name, source.username, source.host);
+		ban.who = who;
+	}
+	else ban.who = source.name;
+
+	cache_invalidate(chan, type, ban.when);
+	return true;
+}
+
+bool
+chan::del(chan &chan,
+          const mode::type &type,
+          const std::string &mask)
+
+{
+	if (mask.empty())
+		return false;
+
+	auto &list(get(chan, type));
+	if (!list.erase(mask))
+		return false;
+
+	cache_invalidate(chan, type);
+	return true;
+}
+
+const chan::ban &
+chan::get(const chan &chan,
+          const mode::type &type,
+          const std::string &mask)
+{
+	const auto &list(get(chan, type));
+	const auto &it(list.find(mask));
+	if (it == end(list))
+		throw not_found();
+
+	return *it;
+}
+
+void
+chan::cache_invalidate(chan &chan,
+                       const mode::type &type,
+                       time_t time)
+{
+	using namespace mode;
+
+	if (!time)
+		time = rb_current_time();
+
+	switch (type)
+	{
+		case BAN:
+		case QUIET:
+		case EXCEPTION:
+			chan.bants = time;
+			break;
+
+		default:
+			break;
+	}
+}
+
+size_t
+chan::lists_size(const chan &chan)
+{
+	using namespace mode;
+
+	return size(chan, BAN) +
+	       size(chan, EXCEPTION) +
+	       size(chan, INVEX) +
+	       size(chan, QUIET);
+}
+
+size_t
+chan::size(const chan &chan,
+           const mode::type &type)
+{
+	return get(chan, type).size();
+}
+
+bool
+chan::empty(const chan &chan,
+            const mode::type &type)
+{
+	return get(chan, type).empty();
+}
+
+chan::list &
+chan::get(chan &chan,
+          const mode::type &type)
+{
+	using namespace mode;
+
+	switch (type)
+	{
+		case BAN:           return chan.bans;
+		case EXCEPTION:     return chan.excepts;
+		case INVEX:         return chan.invexs;
+		case QUIET:         return chan.quiets;
+		default:
+			throw invalid_list();
+	}
+}
+
+const chan::list &
+chan::get(const chan &chan,
+          const mode::type &type)
+{
+	using namespace mode;
+
+	switch (type)
+	{
+		case BAN:           return chan.bans;
+		case EXCEPTION:     return chan.excepts;
+		case INVEX:         return chan.invexs;
+		case QUIET:         return chan.quiets;
+		default:
+			throw invalid_list();
 	}
 }

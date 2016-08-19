@@ -116,12 +116,11 @@ m_knock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 
 	if(MyClient(source_p))
 	{
-		/* don't allow a knock if the user is banned */
-		if(is_banned(chptr, source_p, NULL, NULL, NULL, NULL) == chan::mode::BAN ||
-			is_quieted(chptr, source_p, NULL, NULL, NULL) == chan::mode::BAN)
+		// don't allow a knock if the user is banned
+		if (check(*chptr, chan::mode::BAN, *source_p) ||
+		    check(*chptr, chan::mode::QUIET, *source_p))
 		{
-			sendto_one_numeric(source_p, ERR_CANNOTSENDTOCHAN,
-					   form_str(ERR_CANNOTSENDTOCHAN), name);
+			sendto_one_numeric(source_p, ERR_CANNOTSENDTOCHAN, form_str(ERR_CANNOTSENDTOCHAN), name);
 			return;
 		}
 

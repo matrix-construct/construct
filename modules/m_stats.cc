@@ -1355,33 +1355,17 @@ stats_memory (struct Client *source_p)
 		channel_users += rb_dlink_list_length(&chptr->members);
 		channel_invites += rb_dlink_list_length(&chptr->invites);
 
-		RB_DLINK_FOREACH(rb_dlink, chptr->banlist.head)
-		{
-			channel_bans++;
+		channel_bans += size(*chptr, chan::mode::BAN);
+		channel_ban_memory += size(*chptr, chan::mode::BAN) * sizeof(chan::ban);
 
-			channel_ban_memory += sizeof(rb_dlink_node) + sizeof(chan::ban);
-		}
+		channel_except += size(*chptr, chan::mode::EXCEPTION);
+		channel_except_memory += size(*chptr, chan::mode::EXCEPTION) * sizeof(chan::ban);
 
-		RB_DLINK_FOREACH(rb_dlink, chptr->exceptlist.head)
-		{
-			channel_except++;
+		channel_invex += size(*chptr, chan::mode::INVEX);
+		channel_invex_memory += size(*chptr, chan::mode::INVEX) * sizeof(chan::ban);
 
-			channel_except_memory += (sizeof(rb_dlink_node) + sizeof(chan::ban));
-		}
-
-		RB_DLINK_FOREACH(rb_dlink, chptr->invexlist.head)
-		{
-			channel_invex++;
-
-			channel_invex_memory += (sizeof(rb_dlink_node) + sizeof(chan::ban));
-		}
-
-		RB_DLINK_FOREACH(rb_dlink, chptr->quietlist.head)
-		{
-			channel_quiets++;
-
-			channel_quiet_memory += (sizeof(rb_dlink_node) + sizeof(chan::ban));
-		}
+		channel_quiets += size(*chptr, chan::mode::QUIET);
+		channel_quiet_memory += size(*chptr, chan::mode::QUIET) * sizeof(chan::ban);
 	}
 
 	/* count up all classes */

@@ -59,7 +59,7 @@ eb_canjoin(const char *data, struct Client *client_p, chan::chan *chptr, mode::t
 		return INVALID;
 #endif
 	recurse = 1;
-	ret = is_banned(chptr2, client_p, NULL, NULL, NULL, NULL) == mode::BAN ? MATCH : NOMATCH;
+	ret = check(*chptr2, mode::BAN, *client_p)? MATCH : NOMATCH;
 	recurse = 0;
 	return ret;
 }

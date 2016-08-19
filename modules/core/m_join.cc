@@ -59,7 +59,7 @@ static void send_join_error(struct Client *source_p, int numeric, const char *na
 
 static void set_final_mode(chan::modes *mode, chan::modes *oldmode);
 static void remove_our_modes(chan::chan *chptr, struct Client *source_p);
-static void remove_ban_list(chan::chan *chptr, struct Client *source_p, rb_dlink_list * list, char c, int mems);
+static void remove_ban_list(chan::chan &chan, Client &source, chan::list &list, const char &c, const int &mems);
 
 static char modebuf[chan::mode::BUFLEN];
 static char parabuf[chan::mode::BUFLEN];
@@ -702,23 +702,25 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	/* Lost the TS, other side wins, so remove modes on this side */
 	if(!keep_our_modes)
 	{
+		namespace mode = chan::mode;
+		using chan::empty;
+
 		remove_our_modes(chptr, fakesource_p);
 		RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->invites.head)
-		{
 			del_invite(chptr, (Client *)ptr->data);
-		}
 
-		if(rb_dlink_list_length(&chptr->banlist) > 0)
-			remove_ban_list(chptr, fakesource_p, &chptr->banlist, 'b', chan::ALL_MEMBERS);
-		if(rb_dlink_list_length(&chptr->exceptlist) > 0)
-			remove_ban_list(chptr, fakesource_p, &chptr->exceptlist,
-					'e', chan::ONLY_CHANOPS);
-		if(rb_dlink_list_length(&chptr->invexlist) > 0)
-			remove_ban_list(chptr, fakesource_p, &chptr->invexlist,
-					'I', chan::ONLY_CHANOPS);
-		if(rb_dlink_list_length(&chptr->quietlist) > 0)
-			remove_ban_list(chptr, fakesource_p, &chptr->quietlist,
-					'q', chan::ALL_MEMBERS);
+		if (!empty(*chptr, chan::mode::BAN))
+			remove_ban_list(*chptr, *fakesource_p, get(*chptr, mode::BAN), 'b', chan::ALL_MEMBERS);
+
+		if (!empty(*chptr, mode::EXCEPTION))
+			remove_ban_list(*chptr, *fakesource_p, get(*chptr, mode::EXCEPTION), 'e', chan::ONLY_CHANOPS);
+
+		if (!empty(*chptr, mode::INVEX))
+			remove_ban_list(*chptr, *fakesource_p, get(*chptr, mode::INVEX), 'I', chan::ONLY_CHANOPS);
+
+		if (!empty(*chptr, mode::QUIET))
+			remove_ban_list(*chptr, *fakesource_p, get(*chptr, mode::QUIET), 'q', chan::ALL_MEMBERS);
+
 		chptr->bants++;
 
 		sendto_channel_local(chan::ALL_MEMBERS, chptr,
@@ -1257,36 +1259,35 @@ remove_our_modes(chan::chan *chptr, struct Client *source_p)
  * side effects - given list is removed, with modes issued to local clients
  */
 static void
-remove_ban_list(chan::chan *chptr, struct Client *source_p,
-		rb_dlink_list * list, char c, int mems)
+remove_ban_list(chan::chan &chan,
+                Client &source,
+                chan::list &list,
+                const char &c,
+                const int &mems)
 {
-	static char lmodebuf[BUFSIZE];
-	static char lparabuf[BUFSIZE];
-	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
-	char *pbuf;
-	int count = 0;
-	int cur_len, mlen, plen;
+	static char lmodebuf[BUFSIZE], lparabuf[BUFSIZE];
 
-	pbuf = lparabuf;
+	int count (0);
+	char *pbuf(lparabuf);
 
-	cur_len = mlen = sprintf(lmodebuf, ":%s MODE %s -", source_p->name, chptr->name.c_str());
-	mbuf = lmodebuf + mlen;
+	int cur_len, mlen;
+	cur_len = mlen = sprintf(lmodebuf, ":%s MODE %s -", source.name, chan.name.c_str());
+	char *mbuf(lmodebuf + mlen);
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, list->head)
+	for (const auto &ban : list)
 	{
-		const auto banptr((chan::ban *)ptr->data);
+		const auto &mask(ban.banstr);
+		const auto &fwd(ban.forward);
 
-		/* trailing space, and the mode letter itself */
-		plen = banptr->banstr.size() + (!banptr->forward.empty()? banptr->forward.size() + 1 : 0) + 2;
-
-		if(count >= chan::mode::MAXPARAMS || (cur_len + plen) > BUFSIZE - 4)
+		//trailing space, and the mode letter itself
+		const auto plen(mask.size() + 2 + (!fwd.empty()? fwd.size() + 1 : 0));
+		if (count >= chan::mode::MAXPARAMS || (cur_len + plen) > BUFSIZE - 4)
 		{
-			/* remove trailing space */
+			// remove trailing space
 			*mbuf = '\0';
 			*(pbuf - 1) = '\0';
 
-			sendto_channel_local(mems, chptr, "%s %s", lmodebuf, lparabuf);
+			sendto_channel_local(mems, &chan, "%s %s", lmodebuf, lparabuf);
 
 			cur_len = mlen;
 			mbuf = lmodebuf + mlen;
@@ -1296,19 +1297,18 @@ remove_ban_list(chan::chan *chptr, struct Client *source_p,
 
 		*mbuf++ = c;
 		cur_len += plen;
-		if (!banptr->forward.empty())
-			pbuf += sprintf(pbuf, "%s$%s ", banptr->banstr.c_str(), banptr->forward.c_str());
-		else
-			pbuf += sprintf(pbuf, "%s ", banptr->banstr.c_str());
-		count++;
 
-		delete banptr;
+		if (!fwd.empty())
+			pbuf += sprintf(pbuf, "%s$%s ", mask.c_str(), fwd.c_str());
+		else
+			pbuf += sprintf(pbuf, "%s ", mask.c_str());
+
+		count++;
 	}
 
 	*mbuf = '\0';
 	*(pbuf - 1) = '\0';
-	sendto_channel_local(mems, chptr, "%s %s", lmodebuf, lparabuf);
 
-	list->head = list->tail = NULL;
-	list->length = 0;
+	sendto_channel_local(mems, &chan, "%s %s", lmodebuf, lparabuf);
+	list.clear();
 }

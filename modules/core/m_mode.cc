@@ -219,34 +219,33 @@ ms_mlock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 static void
 possibly_remove_lower_forward(struct Client *fakesource_p,
-                              int mems,
-                              chan::chan *chptr,
-                              rb_dlink_list *banlist,
-                              int mchar,
+                              const int &mems,
+                              chan::chan &chan,
+                              chan::list &list,
+                              const int &mchar,
                               const char *mask,
                               const char *forward)
 {
-	rb_dlink_node *ptr;
-	RB_DLINK_FOREACH(ptr, banlist->head)
+	for (auto it(begin(list)); it != end(list); ++it)
 	{
-		const auto actualBan((chan::ban *)ptr->data);
-		if(!irccmp(actualBan->banstr.c_str(), mask) &&
-				(actualBan->forward.empty() ||
-				 irccmp(actualBan->forward.c_str(), forward) < 0))
-		{
-			sendto_channel_local(mems, chptr,
-			                     ":%s MODE %s -%c %s%s%s",
-			                     fakesource_p->name,
-			                     chptr->name.c_str(),
-			                     mchar,
-			                     actualBan->banstr.c_str(),
-			                     actualBan->forward.size()? "$" : "",
-			                     actualBan->forward.size()? actualBan->forward.c_str() : "");
+		const auto &ban(*it);
 
-			rb_dlinkDelete(&actualBan->node, banlist);
-			delete actualBan;
-			return;
-		}
+		if (irccmp(ban.banstr, mask) != 0)
+			continue;
+
+		if (ban.forward.size() && irccmp(ban.forward, forward) >= 0)
+			continue;
+
+		sendto_channel_local(mems, &chan,
+		                     ":%s MODE %s -%c %s%s%s",
+		                     fakesource_p->name,
+		                     chan.name.c_str(),
+		                     mchar,
+		                     ban.banstr.c_str(),
+		                     ban.forward.size()? "$" : "",
+		                     ban.forward.size()? ban.forward.c_str() : "");
+		list.erase(it);
+		break;
 	}
 }
 
@@ -256,12 +255,12 @@ ms_bmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	static char modebuf[BUFSIZE];
 	static char parabuf[BUFSIZE];
 	chan::chan *chptr;
-	rb_dlink_list *banlist;
+	chan::list *list;
+	chan::mode::type mode_type;
 	char *s, *forward;
 	char *t;
 	char *mbuf;
 	char *pbuf;
-	long mode_type;
 	int mlen;
 	int plen = 0;
 	int tlen;
@@ -284,27 +283,23 @@ ms_bmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	switch (parv[3][0])
 	{
 	case 'b':
-		banlist = &chptr->banlist;
 		mode_type = chan::mode::BAN;
 		mems = chan::ALL_MEMBERS;
 		break;
 
 	case 'e':
-		banlist = &chptr->exceptlist;
 		mode_type = chan::mode::EXCEPTION;
 		needcap = CAP_EX;
 		mems = chan::ONLY_CHANOPS;
 		break;
 
 	case 'I':
-		banlist = &chptr->invexlist;
 		mode_type = chan::mode::INVEX;
 		needcap = CAP_IE;
 		mems = chan::ONLY_CHANOPS;
 		break;
 
 	case 'q':
-		banlist = &chptr->quietlist;
 		mode_type = chan::mode::QUIET;
 		mems = chan::ALL_MEMBERS;
 		break;
@@ -313,6 +308,8 @@ ms_bmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	default:
 		return;
 	}
+
+	list = &get(*chptr, mode_type);
 
 	parabuf[0] = '\0';
 	s = LOCAL_COPY(parv[4]);
@@ -359,11 +356,11 @@ ms_bmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 				tlen--, forward = NULL;
 			else
 				possibly_remove_lower_forward(fakesource_p,
-						mems, chptr, banlist,
+						mems, *chptr, *list,
 						parv[3][0], s, forward);
 		}
 
-		if(add_id(fakesource_p, chptr, s, forward, banlist, mode_type))
+		if (add(*chptr, mode_type, s, *fakesource_p, forward))
 		{
 			/* this new one wont fit.. */
 			if(mlen + chan::mode::MAXPARAMS + plen + tlen > BUFSIZE - 5 ||
