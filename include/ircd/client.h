@@ -339,6 +339,13 @@ struct ListClient
 #define IsMe(x)                 ((x)->status == STAT_ME)
 #define IsUnknown(x)            ((x)->status == STAT_UNKNOWN)
 #define IsServer(x)             ((x)->status == STAT_SERVER)
+
+inline bool
+is_client(const Client &client)
+{
+	return client.status == STAT_CLIENT;
+}
+
 #define IsClient(x)             ((x)->status == STAT_CLIENT)
 #define IsReject(x)		((x)->status == STAT_REJECT)
 
@@ -462,8 +469,20 @@ struct ListClient
 #define MyConnect(x)		((x)->flags & FLAGS_MYCONNECT)
 #define SetMyConnect(x)		((x)->flags |= FLAGS_MYCONNECT)
 #define ClearMyConnect(x)	((x)->flags &= ~FLAGS_MYCONNECT)
-
 #define MyClient(x)             (MyConnect(x) && IsClient(x))
+
+inline bool
+my(const Client &client)
+{
+	return MyClient(&client);
+}
+
+inline bool
+is_person(const Client &client)
+{
+	return IsPerson(&client);
+}
+
 #define SetMark(x)		((x)->flags |= FLAGS_MARK)
 #define ClearMark(x)		((x)->flags &= ~FLAGS_MARK)
 #define IsMarked(x)		((x)->flags & FLAGS_MARK)
