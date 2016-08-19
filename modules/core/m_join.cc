@@ -349,7 +349,7 @@ m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 				      chptr->name.c_str());
 		}
 
-		del_invite(chptr, source_p);
+		del_invite(*chptr, *source_p);
 
 		if(chptr->topic)
 		{
@@ -450,8 +450,7 @@ ms_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		set_final_mode(&mode, &chptr->mode);
 		chptr->mode = mode;
 		remove_our_modes(chptr, source_p);
-		RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->invites.head)
-			del_invite(chptr, (Client *)ptr->data);
+		clear_invites(*chptr);
 
 		/* If setting -j, clear join throttle state -- jilles */
 		chptr->join_count = chptr->join_delta = 0;
@@ -706,8 +705,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		using chan::empty;
 
 		remove_our_modes(chptr, fakesource_p);
-		RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->invites.head)
-			del_invite(chptr, (Client *)ptr->data);
+		clear_invites(*chptr);
 
 		if (!empty(*chptr, chan::mode::BAN))
 			remove_ban_list(*chptr, *fakesource_p, get(*chptr, mode::BAN), 'b', chan::ALL_MEMBERS);

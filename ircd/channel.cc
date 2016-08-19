@@ -51,7 +51,6 @@ chan::chan::chan(const std::string &name)
 ,topic{}
 ,members{0}
 ,locmembers{0}
-,invites{0}
 ,join_count{0}
 ,join_delta{0}
 ,flood_noticed{0}
@@ -70,10 +69,7 @@ chan::chan::chan(const std::string &name)
 chan::chan::~chan()
 noexcept
 {
-	rb_dlink_node *ptr, *next_ptr;
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, invites.head)
-		del_invite(this, reinterpret_cast<client *>(ptr->data));
-
+	clear_invites(*this);
 	rb_dlinkDelete(&node, &global_channel_list);
 	del_from_channel_hash(name.c_str(), this);
 }
@@ -440,17 +436,18 @@ chan::channel_member_names(chan *chptr, client *client_p, int show_eon)
 			   me.name, client_p->name, chptr->name.c_str());
 }
 
-/* del_invite()
- *
- * input	- channel to remove invite from, client to remove
- * output	-
- * side effects - user is removed from invite list, if exists
- */
 void
-chan::del_invite(chan *chptr, client *who)
+chan::clear_invites(chan &chan)
 {
-	rb_dlinkFindDestroy(who, &chptr->invites);
-	rb_dlinkFindDestroy(chptr, &who->user->invited);
+	for (auto &client : chan.invites)
+		client->user->invited.erase(&chan);
+}
+
+void
+chan::del_invite(chan &chan, client &client)
+{
+	chan.invites.erase(&client);
+	client.user->invited.erase(&chan);
 }
 
 bool
@@ -642,8 +639,8 @@ chan::check(chan &chan,
 int
 chan::can_join(client *source_p, chan *chptr, const char *key, const char **forward)
 {
-	rb_dlink_node *invite = NULL;
 	rb_dlink_node *ptr;
+	bool invited(false);
 	ban *invex = NULL;
 	char src_host[NICKLEN + USERLEN + HOSTLEN + 6];
 	char src_iphost[NICKLEN + USERLEN + HOSTLEN + 6];
@@ -703,11 +700,7 @@ chan::can_join(client *source_p, chan *chptr, const char *key, const char **forw
 
 	if (chptr->mode.mode & mode::INVITEONLY)
 	{
-		RB_DLINK_FOREACH(invite, source_p->user->invited.head)
-			if (invite->data == chptr)
-				break;
-
-		if (!invite)
+		if (!(invited = chptr->invites.count(source_p)))
 		{
 			if (!ConfigChannel.use_invex)
 				moduledata.approved = ERR_INVITEONLYCHAN;
@@ -755,14 +748,9 @@ chan::can_join(client *source_p, chan *chptr, const char *key, const char **forw
 	}
 
 	/* allow /invite to override +l/+r/+j also -- jilles */
-	if (i != 0 && invite == NULL)
+	if (i != 0 && !invited)
 	{
-		RB_DLINK_FOREACH(invite, source_p->user->invited.head)
-		{
-			if(invite->data == chptr)
-				break;
-		}
-		if (invite == NULL)
+		if (!(invited = chptr->invites.count(source_p)))
 			moduledata.approved = i;
 	}
 

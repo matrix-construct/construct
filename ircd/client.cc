@@ -1270,11 +1270,9 @@ exit_generic_client(struct Client *client_p, struct Client *source_p, struct Cli
 	/* Should not be in any channels now */
 	s_assert(source_p->user->channel.head == NULL);
 
-	/* Clean up invitefield */
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, source_p->user->invited.head)
-	{
-		del_invite(reinterpret_cast<chan::chan *>(ptr->data), source_p);
-	}
+	// Clean up invitefield
+	for (auto &chan : source_p->user->invited)
+		chan->invites.erase(source_p);
 
 	/* Clean up allow lists */
 	del_all_accepts(source_p);
@@ -1841,22 +1839,22 @@ free_user(struct User *user, struct Client *client_p)
 		/*
 		 * sanity check
 		 */
-		if(user->refcnt < 0 || user->invited.head || user->channel.head)
+		if(user->refcnt < 0 || !user->invited.empty() || user->channel.head)
 		{
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
-					     "* %p user (%s!%s@%s) %p %p %p %lu %d *",
+					     "* %p user (%s!%s@%s) %p %lu %p %lu %d *",
 					     client_p,
 					     client_p ? client_p->
 					     name : "<noname>",
 					     client_p->username,
 					     client_p->host,
 					     user,
-					     user->invited.head,
+					     user->invited.size(),
 					     user->channel.head,
 					     rb_dlink_list_length(&user->channel),
 					     user->refcnt);
 			s_assert(!user->refcnt);
-			s_assert(!user->invited.head);
+			s_assert(user->invited.empty());
 			s_assert(!user->channel.head);
 		}
 

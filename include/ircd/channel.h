@@ -134,7 +134,7 @@ struct chan
 
 	rb_dlink_list members;
 	rb_dlink_list locmembers;
-	rb_dlink_list invites;
+	std::set<client *> invites;
 
 	list bans;
 	list excepts;
@@ -202,13 +202,15 @@ const ban &get(const chan &, const mode::type &, const std::string &mask);
 bool add(chan &, const mode::type &, const std::string &mask, client &source, const std::string &forward = {});
 bool del(chan &, const mode::type &, const std::string &mask);
 
+void del_invite(chan &, client &);
+void clear_invites(chan &);
+
 bool flood_attack_channel(int p_or_n, client *source, chan *);
 void add_user_to_channel(chan *, client *, int flags);
 void remove_user_from_channel(membership *);
 void remove_user_from_channels(client *);
 void invalidate_bancache_user(client *);
 void channel_member_names(chan *, client *, int show_eon);
-void del_invite(chan *, client *who);
 const char *channel_modes(chan *, client *who);
 chan *find_bannickchange_channel(client *);
 void check_spambot_warning(client *source, const char *name);

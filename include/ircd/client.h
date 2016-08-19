@@ -69,7 +69,7 @@ typedef int SSL_OPEN_CB(struct Client *, int status);
 struct User
 {
 	rb_dlink_list channel;	/* chain of channel pointer blocks */
-	rb_dlink_list invited;	/* chain of invite pointer blocks */
+	std::set<chan::chan *> invited;
 	char *away;		/* pointer to away message */
 	int refcnt;		/* Number of times this block is referenced */
 

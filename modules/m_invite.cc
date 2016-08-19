@@ -43,7 +43,7 @@ mapi_cap_list_av2 invite_cap_list[] = {
 
 DECLARE_MODULE_AV2(invite, NULL, NULL, invite_clist, NULL, NULL, invite_cap_list, NULL, invite_desc);
 
-static bool add_invite(chan::chan *, struct Client *);
+static bool add_invite(chan::chan &, Client &);
 
 /* m_invite()
  *      parv[1] - user to invite
@@ -207,7 +207,7 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 		if(store_invite)
 		{
-			if (!add_invite(chptr, target_p))
+			if (!add_invite(*chptr, *target_p))
 				return;
 
 			sendto_channel_local_with_capability(chan::CHANOP, 0, CAP_INVITE_NOTIFY, chptr,
@@ -231,30 +231,15 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
  * side effects - client is added to invite list.
  */
 static bool
-add_invite(chan::chan *chptr, struct Client *who)
+add_invite(chan::chan &chan, Client &client)
 {
-	rb_dlink_node *ptr;
+	if (client.user->invited.size() >= ConfigChannel.max_chans_per_user)
+		return false;
 
-	/* already invited? */
-	RB_DLINK_FOREACH(ptr, who->user->invited.head)
-	{
-		if(ptr->data == chptr)
-			return false;
-	}
+	if (chan.invites.size() >= ConfigChannel.max_chans_per_user)
+		return false;
 
-	/* ok, if their invite list is too long, remove the tail */
-	if((int)rb_dlink_list_length(&who->user->invited) >=
-	   ConfigChannel.max_chans_per_user)
-	{
-		ptr = who->user->invited.tail;
-		del_invite((chan::chan *)ptr->data, who);
-	}
-
-	/* add user to channel invite list */
-	rb_dlinkAddAlloc(who, &chptr->invites);
-
-	/* add channel to user invite list */
-	rb_dlinkAddAlloc(chptr, &who->user->invited);
-
+	chan.invites.emplace(&client);
+	client.user->invited.emplace(&chan);
 	return true;
 }
