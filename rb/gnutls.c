@@ -752,11 +752,26 @@ rb_ssl_get_cipher(rb_fde_t *F)
 {
 	static char buf[1024];
 
-	snprintf(buf, sizeof(buf), "%s-%s-%s-%s",
-		gnutls_protocol_get_name(gnutls_protocol_get_version(SSL_P(F))),
-		gnutls_kx_get_name(gnutls_kx_get(SSL_P(F))),
-		gnutls_cipher_get_name(gnutls_cipher_get(SSL_P(F))),
-		gnutls_mac_get_name(gnutls_mac_get(SSL_P(F))));
+	const char* proto_name =
+	    gnutls_protocol_get_name(gnutls_protocol_get_version(SSL_P(F)));
+
+	const char* kex_alg_name =
+	    gnutls_kx_get_name(gnutls_kx_get(SSL_P(F)));
+
+	const char* cipher_alg_name =
+	    gnutls_cipher_get_name(gnutls_cipher_get(SSL_P(F)));
+
+	const char* mac_alg_name =
+	    gnutls_mac_get_name(gnutls_mac_get(SSL_P(F)));
+
+	(void) snprintf(buf, sizeof buf, "%s%s%s%s%s%s%s",
+	                proto_name ? proto_name : "",
+	                proto_name ? ", " : "",
+	                kex_alg_name ? kex_alg_name : "",
+	                kex_alg_name ? "-" : "",
+	                cipher_alg_name ? cipher_alg_name : "",
+	                cipher_alg_name ? "-" : "",
+	                mac_alg_name ? mac_alg_name : "");
 
 	return buf;
 }
