@@ -31,10 +31,10 @@
 namespace ircd {
 namespace chan {
 
-IRCD_EXCEPTION(ircd::error,  error)
-IRCD_EXCEPTION(error,        not_found)
-IRCD_EXCEPTION(error,        invalid_list)
-IRCD_EXCEPTION(error,        invalid_argument)
+IRCD_EXCEPTION(ircd::error,       error)
+IRCD_EXCEPTION(error,             not_found)
+IRCD_EXCEPTION(error,             invalid_argument)
+IRCD_EXCEPTION(invalid_argument,  invalid_list)
 
 enum status
 {

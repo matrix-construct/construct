@@ -133,7 +133,7 @@ struct name                                                                   \
  *
  *  IRCD_EXCEPTION(ircd::error, error)
  */
-IRCD_EXCEPTION(exception, error)             // throw ircd::error("something bad")
+IRCD_EXCEPTION(exception,  error)            // throw ircd::error("something bad")
 
 }       // namespace ircd
 #endif  // __cplusplus

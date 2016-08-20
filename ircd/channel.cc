@@ -58,7 +58,7 @@ chan::add(const std::string &name,
           client &client)
 {
 	if (name.empty())
-		throw invalid_argument();
+		throw err::BADCHANNAME("");
 
 	if (name.size() > CHANNELLEN && IsServer(&client))
 		sendto_realops_snomask(SNO_DEBUG, L_ALL,
@@ -69,7 +69,7 @@ chan::add(const std::string &name,
 		                       name.c_str());
 
 	if (name.size() > CHANNELLEN)
-		throw invalid_argument();
+		throw err::BADCHANNAME(name.c_str());
 
 	const auto it(chans.lower_bound(&name));
 	if (it != end(chans))
@@ -93,7 +93,7 @@ try
 }
 catch(const std::out_of_range &e)
 {
-	throw not_found();
+	throw err::NOSUCHCHANNEL(name.c_str());
 }
 
 chan::chan *
@@ -315,7 +315,7 @@ chan::get(members &members,
 	const auto key(const_cast<ircd::chan::client *>(&client)); //TODO: temp elaborated
 	const auto it(members.global.find(key));
 	if (it == end(members.global))
-		throw not_found();
+		throw err::NOTONCHANNEL(client.name);
 
 	return it->second;
 }
@@ -330,7 +330,7 @@ chan::get(const members &members,
 	const auto key(const_cast<ircd::chan::client *>(&client)); //TODO: temp elaborated
 	const auto it(members.global.find(key));
 	if (it == end(members.global))
-		throw not_found();
+		throw err::NOTONCHANNEL(client.name);
 
 	return it->second;
 }
