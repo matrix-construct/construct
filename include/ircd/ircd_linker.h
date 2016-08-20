@@ -32,6 +32,7 @@
  */
 
 #pragma once
+#ifndef _WIN32
 #define HAVE_CHARYBDIS_IRCD_LINKER_H
 
 #include <dlfcn.h>
@@ -50,3 +51,4 @@ extern void report_symtable(struct ircd_symbol *);
 
 }      // namespace ircd
 #endif // __cplusplus
+#endif // _WIN32
