@@ -472,7 +472,7 @@ do_numeric(int numeric, struct Client *client_p, struct Client *source_p, int pa
 			   get_id(target_p, target_p), buffer);
 		return;
 	}
-	else if((chptr = find_channel(parv[1])) != NULL)
+	else if((chptr = chan::get(parv[1], std::nothrow)) != NULL)
 		sendto_channel_flags(client_p, chan::ALL_MEMBERS, source_p, chptr,
 				     "%03d %s%s",
 				     numeric, chptr->name.c_str(), buffer);

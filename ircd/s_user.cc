@@ -134,10 +134,10 @@ show_lusers(struct Client *source_p)
 				   form_str(RPL_LUSERUNKNOWN),
 				   (int)rb_dlink_list_length(&unknown_list));
 
-	if(rb_dlink_list_length(&chan::global_channel_list) > 0)
+	if(!chan::chans.empty())
 		sendto_one_numeric(source_p, RPL_LUSERCHANNELS,
 				   form_str(RPL_LUSERCHANNELS),
-				   rb_dlink_list_length(&chan::global_channel_list));
+				   chan::chans.size());
 
 	sendto_one_numeric(source_p, RPL_LUSERME, form_str(RPL_LUSERME),
 			   (int)rb_dlink_list_length(&lclient_list),

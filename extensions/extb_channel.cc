@@ -41,7 +41,7 @@ static int eb_channel(const char *data, struct Client *client_p,
 	if (data == NULL)
 		return INVALID;
 
-	chptr2 = find_channel(data);
+	chptr2 = chan::get(data, std::nothrow);
 	if (chptr2 == NULL)
 		return INVALID;
 	/* require consistent target */

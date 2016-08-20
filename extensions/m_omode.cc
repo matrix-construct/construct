@@ -66,7 +66,7 @@ mo_omode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		return;
 	}
 
-	chptr = find_channel(parv[1]);
+	chptr = chan::get(parv[1], std::nothrow);
 
 	if(chptr == NULL)
 	{

@@ -65,7 +65,7 @@ ms_tb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 	time_t newtopicts;
 	struct Client *fakesource_p;
 
-	chptr = find_channel(parv[1]);
+	chptr = chan::get(parv[1], std::nothrow);
 
 	if(chptr == NULL)
 		return;
@@ -131,7 +131,7 @@ ms_etb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 	int textchange, can_use_tb, member;
 
 	channelts = atol(parv[1]);
-	chptr = find_channel(parv[2]);
+	chptr = chan::get(parv[2], std::nothrow);
 
 	if(chptr == NULL)
 		return;

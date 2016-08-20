@@ -44,7 +44,7 @@ eb_canjoin(const char *data, struct Client *client_p, chan::chan *chptr, mode::t
 		return INVALID;
 	if (data == NULL)
 		return INVALID;
-	chptr2 = find_channel(data);
+	chptr2 = chan::get(data, std::nothrow);
 	/* must exist, and no point doing this with the same channel */
 	if (chptr2 == NULL || chptr2 == chptr)
 		return INVALID;

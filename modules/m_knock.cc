@@ -81,7 +81,7 @@ m_knock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	if((p = strchr(name, ',')))
 		*p = '\0';
 
-	if((chptr = find_channel(name)) == NULL)
+	if((chptr = chan::get(name, std::nothrow)) == NULL)
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
 				   form_str(ERR_NOSUCHCHANNEL), name);

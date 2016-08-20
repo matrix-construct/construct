@@ -633,9 +633,10 @@ burst_TS6(struct Client *client_p)
 		call_hook(h_burst_client, &hclientinfo);
 	}
 
-	RB_DLINK_FOREACH(ptr, chan::global_channel_list.head)
+
+	for(const auto &pit : chan::chans)
 	{
-		chptr = (chan::chan *)ptr->data;
+		const auto &chptr(pit.second.get());
 
 		if(chptr->name[0] != '#')
 			continue;

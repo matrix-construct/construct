@@ -68,7 +68,7 @@ m_names(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 			return;
 		}
 
-		if((chptr = find_channel(p)) != NULL)
+		if((chptr = chan::get(p, std::nothrow)) != NULL)
 			channel_member_names(chptr, source_p, 1);
 		else
 			sendto_one(source_p, form_str(RPL_ENDOFNAMES),
@@ -117,9 +117,9 @@ names_global(struct Client *source_p)
 	char *t;
 
 	/* first do all visible channels */
-	RB_DLINK_FOREACH(ptr, chan::global_channel_list.head)
+	for(const auto &pit : chan::chans)
 	{
-		chptr = (chan::chan *)ptr->data;
+		chptr = pit.second.get();
 		channel_member_names(chptr, source_p, 0);
 	}
 	cur_len = mlen = sprintf(buf, form_str(RPL_NAMREPLY),

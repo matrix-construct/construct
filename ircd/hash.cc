@@ -28,7 +28,6 @@ rb_dictionary *client_connid_tree = NULL;
 rb_radixtree *client_id_tree = NULL;
 rb_radixtree *client_name_tree = NULL;
 
-rb_radixtree *channel_tree = NULL;
 rb_radixtree *resv_tree = NULL;
 rb_radixtree *hostname_tree = NULL;
 
@@ -47,7 +46,6 @@ init_hash(void)
 	client_id_tree = rb_radixtree_create("client id", NULL);
 	client_name_tree = rb_radixtree_create("client name", irccasecanon);
 
-	channel_tree = rb_radixtree_create("channel", irccasecanon);
 	resv_tree = rb_radixtree_create("resv", irccasecanon);
 
 	hostname_tree = rb_radixtree_create("hostname", irccasecanon);
@@ -213,22 +211,6 @@ del_from_client_hash(const char *name, struct Client *client_p)
 	rb_radixtree_delete(client_name_tree, name);
 }
 
-/* del_from_channel_hash()
- *
- * removes a channel from the channel hash table
- */
-void
-del_from_channel_hash(const char *name, chan::chan *chptr)
-{
-	s_assert(name != NULL);
-	s_assert(chptr != NULL);
-
-	if(EmptyString(name) || chptr == NULL)
-		return;
-
-	rb_radixtree_delete(channel_tree, name);
-}
-
 /* del_from_hostname_hash()
  *
  * removes a client entry from the hostname hash table
@@ -364,76 +346,6 @@ find_hostname(const char *hostname)
 	return hlist->head;
 }
 
-/* find_channel()
- *
- * finds a channel from the channel hash table
- */
-chan::chan *
-find_channel(const char *name)
-{
-	s_assert(name != NULL);
-	if(EmptyString(name))
-		return NULL;
-
-	return (chan::chan *)rb_radixtree_retrieve(channel_tree, name);
-}
-
-/*
- * get_or_create_channel
- * inputs       - client pointer
- *              - channel name
- *              - pointer to int flag whether channel was newly created or not
- * output       - returns channel block or NULL if illegal name
- *		- also modifies *isnew
- *
- *  Get Channel block for chname (and allocate a new channel
- *  block, if it didn't exist before).
- */
-chan::chan *
-get_or_create_channel(struct Client *client_p, const char *chname, bool *isnew)
-{
-	chan::chan *chptr;
-	int len;
-	const char *s = chname;
-
-	if(EmptyString(s))
-		return NULL;
-
-	len = strlen(s);
-	if(len > CHANNELLEN)
-	{
-		char *t;
-		if(IsServer(client_p))
-		{
-			sendto_realops_snomask(SNO_DEBUG, L_ALL,
-					     "*** Long channel name from %s (%d > %d): %s",
-					     client_p->name, len, CHANNELLEN, s);
-		}
-		len = CHANNELLEN;
-		t = LOCAL_COPY(s);
-		*(t + CHANNELLEN) = '\0';
-		s = t;
-	}
-
-	chptr = (chan::chan *)rb_radixtree_retrieve(channel_tree, s);
-	if (chptr != NULL)
-	{
-		if (isnew != NULL)
-			*isnew = false;
-		return chptr;
-	}
-
-	if(isnew != NULL)
-		*isnew = true;
-
-	chptr = new chan::chan(s);
-	chptr->channelts = rb_current_time();	/* doesn't hurt to set it here */
-
-	rb_dlinkAdd(chptr, &chptr->node, &chan::global_channel_list);
-	rb_radixtree_add(channel_tree, chptr->name.c_str(), chptr);
-
-	return chptr;
-}
 
 /* hash_find_resv()
  *

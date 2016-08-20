@@ -29,12 +29,9 @@ using namespace ircd;
 int h_can_join;
 int h_can_send;
 int h_get_channel_access;
-
 struct config_channel_entry ircd::ConfigChannel;
 
-
-rb_dlink_list chan::global_channel_list;
-//std::map<std::string, std::unique_ptr<chan::chan>> chan::chans;
+std::map<const std::string *, std::unique_ptr<chan::chan>, rfc1459::less> chan::chans;
 
 void
 chan::init()
@@ -42,6 +39,79 @@ chan::init()
 	h_can_join = register_hook("can_join");
 	h_can_send = register_hook("can_send");
 	h_get_channel_access = register_hook("get_channel_access");
+}
+
+bool
+chan::del(const chan &chan)
+{
+	return del(name(chan));
+}
+
+bool
+chan::del(const std::string &name)
+{
+	return chans.erase(&name);
+}
+
+chan::chan &
+chan::add(const std::string &name,
+          client &client)
+{
+	if (name.empty())
+		throw invalid_argument();
+
+	if (name.size() > CHANNELLEN && IsServer(&client))
+		sendto_realops_snomask(SNO_DEBUG, L_ALL,
+		                       "*** Long channel name from %s (%lu > %d): %s",
+		                       client.name,
+		                       name.size(),
+		                       CHANNELLEN,
+		                       name.c_str());
+
+	if (name.size() > CHANNELLEN)
+		throw invalid_argument();
+
+	const auto it(chans.lower_bound(&name));
+	if (it != end(chans))
+	{
+		auto &chan(*it->second);
+		if (irccmp(chan.name, name) == 0)
+			return chan;
+	}
+
+	auto chan(std::make_unique<chan>(name));
+	const auto name_p(&chan->name);
+	const auto iit(chans.emplace_hint(it, name_p, std::move(chan)));
+	return *iit->second;
+}
+
+chan::chan &
+chan::get(const std::string &name)
+try
+{
+	return *chans.at(&name);
+}
+catch(const std::out_of_range &e)
+{
+	throw not_found();
+}
+
+chan::chan *
+chan::get(const std::string &name,
+          std::nothrow_t)
+{
+	const auto it(chans.find(&name));
+	if (it == end(chans))
+		return nullptr;
+
+	const auto &ptr(it->second);
+	return ptr.get();
+}
+
+bool
+chan::exists(const std::string &name)
+{
+	return chans.count(&name);
 }
 
 chan::chan::chan(const std::string &name)
@@ -57,7 +127,7 @@ chan::chan::chan(const std::string &name)
 ,first_received_message_time{0}
 ,last_knock{0}
 ,bants{0}
-,channelts{0}
+,channelts{rb_current_time()}
 ,last_checked_ts{0}
 ,last_checked_client{nullptr}
 ,last_checked_type{mode::type(0)}
@@ -69,8 +139,6 @@ chan::chan::~chan()
 noexcept
 {
 	clear_invites(*this);
-	rb_dlinkDelete(&node, &global_channel_list);
-	del_from_channel_hash(name.c_str(), this);
 }
 
 /* remove_user_from_channels()
@@ -94,8 +162,8 @@ chan::del(client &client)
 		chan.members.global.erase(member.git);
 		chan.invites.erase(&client);
 
-		if (empty(chan.members) && ~chan.mode & mode::PERMANENT)
-			delete &chan;
+		if (empty(chan) && ~chan.mode & mode::PERMANENT)
+			del(chan);
 	}
 
 	client_chans.clear();
@@ -123,8 +191,8 @@ chan::del(chan &chan,
 	chan.members.global.erase(member.git);      // The member is destroyed at this point.
 	client_chans.erase(it);
 
-	if (empty(chan.members) && ~chan.mode & mode::PERMANENT)
-		delete &chan;
+	if (empty(chan) && ~chan.mode & mode::PERMANENT)
+		del(chan);
 }
 
 void
@@ -154,13 +222,12 @@ chan::add(chan &chan,
 	// Add iterator (pointer to the element) for constant time lookup/removal
 	member.git = iit.first;
 
-	// Add channel to client's channel map, pointing to the membership;
-	client_chans.emplace(&chan, &member);
-
 	// Add membership to a local list which can be iterated for local IO;
-	// iterator to this element is saved more crucially here to prevent linear removal
 	if (my(client))
 		member.lit = local.emplace(end(local), &member);
+
+	// Add channel to client's channel map, pointing to the membership;
+	client_chans.emplace(&chan, &member);
 }
 
 
@@ -1282,7 +1349,7 @@ chan::resv_chan_forcepart(const char *name, const char *reason, int temp_time)
 	/* for each user on our server in the channel list
 	 * send them a PART, and notify opers.
 	 */
-	chptr = find_channel(name);
+	chptr = get(name, std::nothrow);
 	if(chptr != NULL)
 	{
 		// Iterate a copy of the local list while all of this is going on

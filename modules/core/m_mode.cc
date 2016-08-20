@@ -96,7 +96,7 @@ m_mode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		return;
 	}
 
-	chptr = find_channel(dest);
+	chptr = chan::get(dest, std::nothrow);
 
 	if(chptr == NULL)
 	{
@@ -138,7 +138,7 @@ ms_mode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 {
 	chan::chan *chptr;
 
-	chptr = find_channel(parv[1]);
+	chptr = chan::get(parv[1], std::nothrow);
 
 	if(chptr == NULL)
 	{
@@ -163,7 +163,7 @@ ms_tmode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		return;
 	}
 
-	chptr = find_channel(parv[2]);
+	chptr = chan::get(parv[2], std::nothrow);
 
 	if(chptr == NULL)
 	{
@@ -200,7 +200,7 @@ ms_mlock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		return;
 	}
 
-	chptr = find_channel(parv[2]);
+	chptr = chan::get(parv[2], std::nothrow);
 
 	if(chptr == NULL)
 	{
@@ -273,7 +273,7 @@ ms_bmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	if(!rfc1459::is_chan_prefix(parv[2][0]) || !chan::valid_name(parv[2]))
 		return;
 
-	if((chptr = find_channel(parv[2])) == NULL)
+	if((chptr = chan::get(parv[2], std::nothrow)) == NULL)
 		return;
 
 	/* TS is higher, drop it. */

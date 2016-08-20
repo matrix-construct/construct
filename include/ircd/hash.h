@@ -30,7 +30,6 @@ namespace ircd {
 
 extern rb_dictionary *nd_dict;
 extern rb_radixtree *resv_tree;
-extern rb_radixtree *channel_tree;
 
 /* Magic value for FNV hash functions */
 #define FNV1_32_INIT 0x811c9dc5UL
@@ -79,10 +78,6 @@ extern struct Client *find_server(struct Client *source_p, const char *name);
 extern void add_to_id_hash(const char *, struct Client *);
 extern void del_from_id_hash(const char *name, struct Client *client);
 extern struct Client *find_id(const char *name);
-
-extern chan::chan *get_or_create_channel(struct Client *client_p, const char *chname, bool *isnew);
-extern void del_from_channel_hash(const char *name, chan::chan *chan);
-extern chan::chan *find_channel(const char *name);
 
 extern void add_to_hostname_hash(const char *, struct Client *);
 extern void del_from_hostname_hash(const char *, struct Client *);

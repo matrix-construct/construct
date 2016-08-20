@@ -92,7 +92,7 @@ check_forward(struct Client *source_p, chan::chan *chptr,
 		if (next == NULL)
 			return NULL;
 
-		chptr = find_channel(next);
+		chptr = chan::get(next, std::nothrow);
 		/* Can only forward to existing channels */
 		if (chptr == NULL)
 			return NULL;
@@ -229,7 +229,7 @@ m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		}
 
 		/* look for the channel */
-		if((chptr = find_channel(name)) != NULL)
+		if((chptr = chan::get(name, std::nothrow)) != NULL)
 		{
 			if(is_member(chptr, source_p))
 				continue;
@@ -276,16 +276,17 @@ m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 			continue;
 		}
 
-		if(chptr == NULL)	/* If I already have a chptr, no point doing this */
+		if(chptr == NULL) try  // If I already have a chptr, no point doing this
 		{
-			chptr = get_or_create_channel(source_p, name, NULL);
-
-			if(chptr == NULL)
-			{
-				sendto_one(source_p, form_str(ERR_UNAVAILRESOURCE),
-					   me.name, source_p->name, name);
-				continue;
-			}
+			chptr = &chan::add(name, *source_p);
+		}
+		catch(const chan::error &e)
+		{
+			sendto_one(source_p, form_str(ERR_UNAVAILRESOURCE),
+			           me.name,
+			           source_p->name,
+			           name);
+			continue;
 		}
 
 		/* If check_forward returns NULL, they couldn't join and there wasn't a usable forward channel. */
@@ -415,8 +416,15 @@ ms_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	mode.key[0] = mode.forward[0] = '\0';
 	mode.mode = mode.limit = mode.join_num = mode.join_time = 0;
 
-	if((chptr = get_or_create_channel(source_p, parv[2], &isnew)) == NULL)
+	try
+	{
+		chptr = &chan::add(parv[2], *source_p);
+		isnew = size(*chptr) == 0;
+	}
+	catch(chan::error &e)
+	{
 		return;
+	}
 
 	newts = atol(parv[1]);
 	oldts = chptr->channelts;
@@ -595,9 +603,15 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	else
 		s = "";
 
-	if((chptr = get_or_create_channel(source_p, parv[2], &isnew)) == NULL)
+	try
+	{
+		chptr = &chan::add(parv[2], *source_p);
+		isnew = size(*chptr) == 0;
+	}
+	catch(chan::error &e)
+	{
 		return;	/* channel name too long? */
-
+	}
 
 	oldts = chptr->channelts;
 	oldmode = &chptr->mode;
@@ -656,8 +670,15 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 			if (l == 0)
 			{
 				/* Channel was emptied, create a new one */
-				if((chptr = get_or_create_channel(source_p, parv[2], &isnew)) == NULL)
+				try
+				{
+					chptr = &chan::add(parv[2], *source_p);
+					isnew = size(*chptr) == 0;
+				}
+				catch(chan::error &e)
+				{
 					return;		/* oops! */
+				}
 
 				oldmode = &chptr->mode;
 			}

@@ -171,8 +171,6 @@ struct chan
 	mode::type last_checked_type;
 	bool last_checked_result;
 
-	rb_dlink_node node = {0};
-
 	chan(const std::string &name);
 	~chan() noexcept;
 };
@@ -244,17 +242,44 @@ const char * get_extban_string(void);
 int get_channel_access(client *source, chan *, membership *, int dir, const char *modestr);
 void send_join(chan &, client &);
 
-//extern std::map<std::string, std::unique_ptr<chan>> chans;
-extern rb_dlink_list global_channel_list;
-
-// Add and remove clients from channels
+auto empty(const chan &);
+auto local_size(const chan &);
+auto size(const chan &);
 void add(chan &, client &, const int &flags = PEON);
 void del(chan &, client &);
 void del(client &);             // remove from all channels
 
+// Channels
+extern std::map<const std::string *, std::unique_ptr<chan>, rfc1459::less> chans;
+
+bool exists(const std::string &name);
+chan *get(const std::string &name, std::nothrow_t);
+chan &get(const std::string &name);
+chan &add(const std::string &name, client &);         // get or add (but does not join the client)
+bool del(const std::string &name);
+bool del(const chan &);
+
 // Initialize subsystem
 void init();
 
+
+inline auto
+size(const chan &chan)
+{
+	return size(chan.members);
+}
+
+inline auto
+local_size(const chan &chan)
+{
+	return local_size(chan.members);
+}
+
+inline auto
+empty(const chan &chan)
+{
+	return empty(chan.members);
+}
 
 inline bool
 is_secret(const chan &c)

@@ -75,7 +75,7 @@ mo_okick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 	name = LOCAL_COPY(parv[1]);
 
-	chptr = find_channel(name);
+	chptr = chan::get(name, std::nothrow);
 	if(!chptr)
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL, form_str(ERR_NOSUCHCHANNEL), name);

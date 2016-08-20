@@ -105,7 +105,7 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		return;
 	}
 
-	if((chptr = find_channel(parv[2])) == NULL)
+	if((chptr = chan::get(parv[2], std::nothrow)) == NULL)
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
 				   form_str(ERR_NOSUCHCHANNEL), parv[2]);

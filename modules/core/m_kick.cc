@@ -66,7 +66,7 @@ m_kick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 
 	name = parv[1];
 
-	chptr = find_channel(name);
+	chptr = chan::get(name, std::nothrow);
 	if(chptr == NULL)
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL, form_str(ERR_NOSUCHCHANNEL), name);

@@ -89,7 +89,7 @@ part_one_client(struct Client *client_p, struct Client *source_p, char *name, co
 	chan::chan *chptr;
 	chan::membership *msptr;
 
-	if((chptr = find_channel(name)) == NULL)
+	if((chptr = chan::get(name, std::nothrow)) == NULL)
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL, form_str(ERR_NOSUCHCHANNEL), name);
 		return;

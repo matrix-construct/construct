@@ -73,7 +73,7 @@ m_topic(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	if(MyClient(source_p) && !IsFloodDone(source_p))
 		flood_endgrace(source_p);
 
-	chptr = find_channel(name);
+	chptr = chan::get(name, std::nothrow);
 
 	if(chptr == NULL)
 	{
@@ -182,7 +182,7 @@ ms_topic(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 {
 	chan::chan *chptr = NULL;
 
-	if((chptr = find_channel(parv[1])) == NULL)
+	if((chptr = chan::get(parv[1], std::nothrow)) == NULL)
 		return;
 
 	set_channel_topic(chptr, parv[4], parv[2], atoi(parv[3]));

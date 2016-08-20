@@ -1346,9 +1346,9 @@ stats_memory (struct Client *source_p)
 	}
 
 	/* Count up all channels, ban lists, except lists, Invex lists */
-	RB_DLINK_FOREACH(ptr, chan::global_channel_list.head)
+	for(const auto &pit : chan::chans)
 	{
-		chptr = (chan::chan *)ptr->data;
+		chptr = pit.second.get();
 		channel_count++;
 		channel_memory += (strlen(chptr->name.c_str()) + sizeof(chan::chan));
 

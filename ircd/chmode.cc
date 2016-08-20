@@ -427,7 +427,7 @@ check_forward(Client *source_p, chan::chan *chptr, const char *forward)
 				   form_str(ERR_BADCHANNAME), forward);
 		return false;
 	}
-	if(MyClient(source_p) && (targptr = find_channel(forward)) == NULL)
+	if(MyClient(source_p) && (targptr = chan::get(forward, std::nothrow)) == NULL)
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
 				   form_str(ERR_NOSUCHCHANNEL), forward);

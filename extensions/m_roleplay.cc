@@ -133,7 +133,7 @@ m_displaymsg(struct MsgBuf *msgbuf_p, struct Client *source_p, const char *chann
 	if(!IsFloodDone(source_p))
 		flood_endgrace(source_p);
 
-	if((chptr = find_channel(channel)) == NULL)
+	if((chptr = chan::get(channel, std::nothrow)) == NULL)
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
 				form_str(ERR_NOSUCHCHANNEL), channel);
@@ -203,7 +203,7 @@ me_roleplay(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 
 	/* Don't segfault if we get ROLEPLAY with an invalid channel.
 	 * This shouldn't happen but it's best to be on the safe side. */
-	if((chptr = find_channel(parv[1])) == NULL)
+	if((chptr = chan::get(parv[1], std::nothrow)) == NULL)
 		return;
 
 	sendto_channel_local(chan::ALL_MEMBERS, chptr, ":%s!%s@npc.fakeuser.invalid PRIVMSG %s :%s", parv[2], source_p->name, parv[1], parv[3]);

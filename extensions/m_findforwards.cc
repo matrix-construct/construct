@@ -52,7 +52,7 @@ m_findforwards(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *
 	/* Allow ircops to search for forwards to nonexistent channels */
 	if(!IsOper(source_p))
 	{
-		if((chptr = find_channel(parv[1])) == NULL || (msptr = get(chptr->members, *source_p, std::nothrow)) == NULL)
+		if((chptr = chan::get(parv[1], std::nothrow)) == NULL || (msptr = get(chptr->members, *source_p, std::nothrow)) == NULL)
 		{
 			sendto_one_numeric(source_p, ERR_NOTONCHANNEL,
 					form_str(ERR_NOTONCHANNEL), parv[1]);
@@ -76,9 +76,9 @@ m_findforwards(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *
 			last_used = rb_current_time();
 	}
 
-	RB_DLINK_FOREACH(ptr, chan::global_channel_list.head)
+	for(const auto &pit : chan::chans)
 	{
-		chptr = (chan::chan *)ptr->data;
+		chptr = pit.second.get();
 		if(!irccmp(chptr->mode.forward, parv[1]))
 		{
 			if(p + chptr->name.size() >= end - 13)

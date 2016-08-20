@@ -389,7 +389,7 @@ static void safelist_channel_named(struct Client *source_p, const char *name, in
 		return;
 	}
 
-	chptr = find_channel(name);
+	chptr = chan::get(name, std::nothrow);
 
 	if (chptr == NULL)
 	{
@@ -450,21 +450,19 @@ static void safelist_one_channel(struct Client *source_p, chan::chan *chptr, str
  */
 static void safelist_iterate_client(struct Client *source_p)
 {
-	rb_radixtree_iteration_state iter;
-
-	void *elem;
-	RB_RADIXTREE_FOREACH_FROM(elem, &iter, channel_tree, source_p->localClient->safelist_data->chname)
+	std::string chname(source_p->localClient->safelist_data->chname);
+	auto it(chan::chans.lower_bound(&chname));
+	for (; it != end(chan::chans); ++it)
 	{
-		const auto chptr(reinterpret_cast<chan::chan *>(elem));
+		auto &chan(*it->second);
 		if (safelist_sendq_exceeded(source_p->from))
 		{
 			rb_free(source_p->localClient->safelist_data->chname);
-			source_p->localClient->safelist_data->chname = rb_strdup(chptr->name.c_str());
-
+			chname = rb_strdup(name(chan).c_str());
 			return;
 		}
 
-		safelist_one_channel(source_p, chptr, source_p->localClient->safelist_data);
+		safelist_one_channel(source_p, &chan, source_p->localClient->safelist_data);
 	}
 
 	safelist_client_release(source_p);

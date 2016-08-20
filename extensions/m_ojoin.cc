@@ -55,7 +55,7 @@ mo_ojoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		move_me = 1;
 	}
 
-	if((chptr = find_channel(parv[1])) == NULL)
+	if((chptr = chan::get(parv[1], std::nothrow)) == NULL)
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
 				   form_str(ERR_NOSUCHCHANNEL), parv[1]);

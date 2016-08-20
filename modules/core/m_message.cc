@@ -256,7 +256,7 @@ build_target_list(enum message_type msgtype, struct Client *client_p,
 			if(IsServer(client_p) && *nick == '&')
 				continue;
 
-			if((chptr = find_channel(nick)) != NULL)
+			if((chptr = chan::get(nick, std::nothrow)) != NULL)
 			{
 				if(!duplicate_ptr(chptr))
 				{
@@ -332,7 +332,7 @@ build_target_list(enum message_type msgtype, struct Client *client_p,
 			 * if the channel is found, fine, if not report an error
 			 */
 
-			if((chptr = find_channel(nick)) != NULL)
+			if((chptr = chan::get(nick, std::nothrow)) != NULL)
 			{
 				chan::membership *msptr;
 
@@ -372,7 +372,7 @@ build_target_list(enum message_type msgtype, struct Client *client_p,
 		if(IsServer(client_p) && *nick == '=' && nick[1] == '#')
 		{
 			nick++;
-			if((chptr = find_channel(nick)) != NULL)
+			if((chptr = chan::get(nick, std::nothrow)) != NULL)
 			{
 				if(!duplicate_ptr(chptr))
 				{
