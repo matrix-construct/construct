@@ -26,6 +26,10 @@ extern "C" {
 	typedef unsigned long ulong;
 #endif
 
+#ifndef uint
+	typedef unsigned int uint;
+#endif
+
 #ifdef __GNUC__
 #undef alloca
 #define alloca __builtin_alloca
