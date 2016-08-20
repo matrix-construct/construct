@@ -72,6 +72,7 @@ using character::tolower;
 struct less
 {
 	bool operator()(const std::string &a, const std::string &b) const;
+	bool operator()(const std::string *const &a, const std::string *const &b) const;
 };
 
 inline bool is_print(const char &c)              { return is(c, character::PRINT);                 }
@@ -101,6 +102,14 @@ inline bool is_ascii(const char &c)              { return uint8_t(c) < 0x80;    
 inline bool is_xdigit(const char &c)
 {
 	return is_digit(c) || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F');
+}
+
+inline bool
+less::operator()(const std::string *const &a,
+                 const std::string *const &b)
+const
+{
+	return operator()(*a, *b);
 }
 
 inline bool
