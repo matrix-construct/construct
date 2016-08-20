@@ -107,6 +107,7 @@ static
 void relocate()
 {
 	using namespace fs::path;
+	using ircd::inotice;
 
 	char prefix[PATH_MAX], workbuf[PATH_MAX];
 	char *p;
