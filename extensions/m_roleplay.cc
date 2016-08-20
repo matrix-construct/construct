@@ -164,7 +164,7 @@ m_displaymsg(struct MsgBuf *msgbuf_p, struct Client *source_p, const char *chann
 		return;
 
 	/* enforce target change on roleplay commands */
-	if(!is_chanop_voiced(msptr) && !IsOper(source_p) && !add_channel_target(source_p, chptr))
+	if(!is_chanop(msptr) && !is_voiced(msptr) && !IsOper(source_p) && !add_channel_target(source_p, chptr))
 	{
 		sendto_one(source_p, form_str(ERR_TARGCHANGE),
 			   me.name, source_p->name, chptr->name.c_str());

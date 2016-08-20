@@ -113,8 +113,6 @@ bool is_chanop(const membership &);
 bool is_chanop(const membership *const &);
 bool is_voiced(const membership &);
 bool is_voiced(const membership *const &);
-bool is_chanop_voiced(const membership &);
-bool is_chanop_voiced(const membership *const &);
 bool can_send_banned(const membership &);
 bool can_send_banned(const membership *const &);
 const char *find_status(const membership *const &msptr, const int &combine);
@@ -401,42 +399,6 @@ exists(const members &m, const client &c)
 	return m.global.count(const_cast<client *>(&c));
 }
 
-inline bool
-is_chanop(const membership &m)
-{
-	return m.flags & CHANOP;
-}
-
-inline bool
-is_chanop(const membership *const &m)
-{
-	return m && is_chanop(*m);
-}
-
-inline bool
-is_voiced(const membership &m)
-{
-	return m.flags & VOICE;
-}
-
-inline bool
-is_voiced(const membership *const &m)
-{
-	return m && is_voiced(*m);
-}
-
-inline bool
-is_chanop_voiced(const membership &m)
-{
-	return m.flags & (VOICE | CHANOP);
-}
-
-inline bool
-is_chanop_voiced(const membership *const &m)
-{
-	return m && is_chanop_voiced(*m);
-}
-
 inline client &
 get_client(membership &m)
 {
@@ -450,15 +412,39 @@ get_client(const membership &m)
 }
 
 inline bool
+can_send_banned(const membership *const &m)
+{
+	return m && can_send_banned(*m);
+}
+
+inline bool
 can_send_banned(const membership &m)
 {
 	return m.flags & (BANNED | QUIETED);
 }
 
 inline bool
-can_send_banned(const membership *const &m)
+is_voiced(const membership *const &m)
 {
-	return m && can_send_banned(*m);
+	return m && is_voiced(*m);
+}
+
+inline bool
+is_voiced(const membership &m)
+{
+	return m.flags & VOICE;
+}
+
+inline bool
+is_chanop(const membership *const &m)
+{
+	return m && is_chanop(*m);
+}
+
+inline bool
+is_chanop(const membership &m)
+{
+	return m.flags & CHANOP;
 }
 
 inline uint

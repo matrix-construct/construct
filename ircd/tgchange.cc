@@ -34,7 +34,7 @@ find_allowing_channel(struct Client *source, struct Client *target)
 		auto &chan(*pit.first);
 		auto &member(*pit.second);
 
-		if (is_chanop_voiced(member) && is_member(chan, *target))
+		if ((is_chanop(member) || is_voiced(member)) && is_member(chan, *target))
 			return &chan;
 	}
 

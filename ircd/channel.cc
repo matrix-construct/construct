@@ -905,7 +905,7 @@ chan::can_send(chan *chptr, client *source_p, membership *msptr)
 		}
 	}
 
-	if(is_chanop_voiced(msptr))
+	if (is_chanop(msptr) || is_voiced(msptr))
 		moduledata.approved = CAN_SEND_OPV;
 
 	moduledata.client = source_p;
@@ -999,7 +999,7 @@ chan::find_bannickchange_channel(client *client_p)
 		auto &chptr(pit.first);
 		auto &msptr(pit.second);
 
-		if (is_chanop_voiced(msptr))
+		if (is_chanop(msptr) || is_voiced(msptr))
 			continue;
 		/* cached can_send */
 		if (msptr->bants == chptr->bants)

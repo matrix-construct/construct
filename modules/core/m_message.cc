@@ -338,7 +338,7 @@ build_target_list(enum message_type msgtype, struct Client *client_p,
 
 				msptr = get(chptr->members, *source_p, std::nothrow);
 
-				if(!IsServer(source_p) && !IsService(source_p) && !is_chanop_voiced(msptr))
+				if(!IsServer(source_p) && !IsService(source_p) && !is_chanop(msptr) && !is_voiced(msptr))
 				{
 					sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
 						   get_id(&me, source_p),

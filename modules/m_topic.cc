@@ -94,9 +94,11 @@ m_topic(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 			return;
 		}
 
-		if(MyClient(source_p) && !is_chanop_voiced(msptr) &&
-				!IsOper(source_p) &&
-				!add_channel_target(source_p, chptr))
+		if (MyClient(source_p) &&
+		    !is_chanop(msptr) &&
+		    !is_voiced(msptr) &&
+		    !IsOper(source_p) &&
+		    !add_channel_target(source_p, chptr))
 		{
 			sendto_one(source_p, form_str(ERR_TARGCHANGE),
 				   me.name, source_p->name, chptr->name.c_str());
