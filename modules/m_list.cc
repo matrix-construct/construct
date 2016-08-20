@@ -291,7 +291,7 @@ static void list_one_channel(struct Client *source_p, chan::chan *chptr,
 	strip_colour(topic);
 	sendto_one(source_p, form_str(RPL_LIST), me.name, source_p->name,
 		   visible ? "" : "!",
-		   chptr->name.c_str(), rb_dlink_list_length(&chptr->members),
+		   chptr->name.c_str(), size(chptr->members),
 		   topic);
 }
 
@@ -422,8 +422,7 @@ static void safelist_one_channel(struct Client *source_p, chan::chan *chptr, str
 	if (!visible && !params->operspy)
 		return;
 
-	if ((unsigned int)chptr->members.length < params->users_min
-	    || (unsigned int)chptr->members.length > params->users_max)
+	if (size(chptr->members) < params->users_min || size(chptr->members) > params->users_max)
 		return;
 
 	if (params->topic_min && chptr->topic.time < params->topic_min)

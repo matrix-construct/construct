@@ -80,7 +80,7 @@ m_remove(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 	if(!IsServer(source_p))
 	{
-		msptr = find_channel_membership(chptr, source_p);
+		msptr = get(chptr->members, *source_p, std::nothrow);
 
 		if((msptr == NULL) && MyConnect(source_p))
 		{
@@ -139,7 +139,7 @@ m_remove(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		return;
 	}
 
-	msptr = find_channel_membership(chptr, who);
+	msptr = get(chptr->members, *who, std::nothrow);
 
 	if(msptr != NULL)
 	{
@@ -190,7 +190,7 @@ m_remove(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 			      ":%s KICK %s %s :%s",
 			      use_id(source_p), chptr->name.c_str(), use_id(who), comment);
 
-		remove_user_from_channel(msptr);
+		del(*chptr, get_client(*msptr));
 	}
 	else if (MyClient(source_p))
 		sendto_one_numeric(source_p, ERR_USERNOTINCHANNEL,

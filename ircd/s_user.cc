@@ -1473,11 +1473,10 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 {
 	rb_dlink_node *ptr;
 	chan::chan *chptr;
-	chan::membership *mscptr;
 	int changed = irccmp(target_p->name, nick);
 	int changed_case = strcmp(target_p->name, nick);
 	int do_qjm = irccmp(target_p->username, user) || irccmp(target_p->host, host);
-	char mode[10], modeval[NICKLEN * 2 + 2], reason[256], *mptr;
+	char mode[10], modeval[NICKLEN * 2 + 2], reason[256];
 	va_list ap;
 
 	modeval[0] = '\0';
@@ -1499,20 +1498,20 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 				target_p->name, target_p->username, target_p->host,
 				reason);
 
-		RB_DLINK_FOREACH(ptr, target_p->user->channel.head)
+		for(const auto &pit : target_p->user->channel)
 		{
-			mscptr = (chan::membership *)ptr->data;
-			chptr = mscptr->chan;
-			mptr = mode;
+			auto &chan(*pit.first);
+			auto &member(*pit.second);
+			char *mptr(mode);
 
-			if(is_chanop(mscptr))
+			if(is_chanop(member))
 			{
 				*mptr++ = 'o';
 				strcat(modeval, nick);
 				strcat(modeval, " ");
 			}
 
-			if(is_voiced(mscptr))
+			if(is_voiced(member))
 			{
 				*mptr++ = 'v';
 				strcat(modeval, nick);
@@ -1520,16 +1519,16 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 
 			*mptr = '\0';
 
-			sendto_channel_local_with_capability_butone(target_p, chan::ALL_MEMBERS, NOCAPS, CLICAP_EXTENDED_JOIN | CLICAP_CHGHOST, chptr,
-								    ":%s!%s@%s JOIN %s", nick, user, host, chptr->name.c_str());
-			sendto_channel_local_with_capability_butone(target_p, chan::ALL_MEMBERS, CLICAP_EXTENDED_JOIN, CLICAP_CHGHOST, chptr,
-								    ":%s!%s@%s JOIN %s %s :%s", nick, user, host, chptr->name.c_str(),
+			sendto_channel_local_with_capability_butone(target_p, chan::ALL_MEMBERS, NOCAPS, CLICAP_EXTENDED_JOIN | CLICAP_CHGHOST, &chan,
+								    ":%s!%s@%s JOIN %s", nick, user, host, chan.name.c_str());
+			sendto_channel_local_with_capability_butone(target_p, chan::ALL_MEMBERS, CLICAP_EXTENDED_JOIN, CLICAP_CHGHOST, &chan,
+								    ":%s!%s@%s JOIN %s %s :%s", nick, user, host, chan.name.c_str(),
 								    EmptyString(target_p->user->suser) ? "*" : target_p->user->suser,
 								    target_p->info);
 
 			if(*mode)
-				sendto_channel_local_with_capability_butone(target_p, chan::ALL_MEMBERS, NOCAPS, CLICAP_CHGHOST, chptr,
-						":%s MODE %s +%s %s", target_p->servptr->name, chptr->name.c_str(), mode, modeval);
+				sendto_channel_local_with_capability_butone(target_p, chan::ALL_MEMBERS, NOCAPS, CLICAP_CHGHOST, &chan,
+						":%s MODE %s +%s %s", target_p->servptr->name, chan.name.c_str(), mode, modeval);
 
 			*modeval = '\0';
 		}

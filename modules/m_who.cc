@@ -54,7 +54,7 @@ static void do_who_on_channel(struct Client *source_p, chan::chan *chptr,
 			      struct who_format *fmt);
 static void who_global(struct Client *source_p, const char *mask, int server_oper, int operspy, struct who_format *fmt);
 static void do_who(struct Client *source_p,
-		   struct Client *target_p, chan::membership *msptr,
+		   struct Client *target_p, chan::chan *, chan::membership *msptr,
 		   struct who_format *fmt);
 
 struct Message who_msgtab = {
@@ -144,10 +144,10 @@ m_who(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 		if(source_p->user == NULL)
 			return;
 
-		if((lp = source_p->user->channel.head) != NULL)
+		if (!source_p->user->channel.empty())
 		{
-			msptr = (chan::membership *)lp->data;
-			do_who_on_channel(source_p, msptr->chan, server_oper, true, &fmt);
+			auto *const chan(begin(source_p->user->channel)->first);
+			do_who_on_channel(source_p, chan, server_oper, true, &fmt);
 		}
 
 		sendto_one(source_p, form_str(RPL_ENDOFWHO),
@@ -176,7 +176,7 @@ m_who(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 
 		if(chptr != NULL)
 		{
-			if (!IsOper(source_p) && !ratelimit_client_who(source_p, rb_dlink_list_length(&chptr->members)/50))
+			if (!IsOper(source_p) && !ratelimit_client_who(source_p, size(chptr->members)/50))
 			{
 				sendto_one(source_p, form_str(RPL_LOAD2HI),
 						me.name, source_p->name, "WHO");
@@ -207,27 +207,27 @@ m_who(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 		int isinvis = 0;
 
 		isinvis = IsInvisible(target_p);
-		RB_DLINK_FOREACH(lp, target_p->user->channel.head)
+		for(const auto &pit : target_p->user->channel)
 		{
-			msptr = (chan::membership *)lp->data;
-			chptr = msptr->chan;
-
-			member = is_member(chptr, source_p);
+			chptr = pit.first;
+			msptr = get(chptr->members, *source_p, std::nothrow);
 
 			if(isinvis && !member)
+			{
+				msptr = nullptr;
 				continue;
+			}
 
 			if(member || (!isinvis && is_public(chptr)))
 				break;
+
+			msptr = nullptr;
 		}
 
-		/* if we stopped midlist, lp->data is the membership for
+		/* if we stopped midlist, msptr is the membership for
 		 * target_p of chptr
 		 */
-		if(lp != NULL)
-			do_who(source_p, target_p, (chan::membership *)lp->data, &fmt);
-		else
-			do_who(source_p, target_p, NULL, &fmt);
+		do_who(source_p, target_p, chptr, msptr, &fmt);
 
 		sendto_one(source_p, form_str(RPL_ENDOFWHO),
 			   me.name, source_p->name, mask);
@@ -286,32 +286,28 @@ who_common_channel(struct Client *source_p, chan::chan *chptr,
 		   const char *mask, int server_oper, int *maxmatches,
 		   struct who_format *fmt)
 {
-	chan::membership *msptr;
-	struct Client *target_p;
-	rb_dlink_node *ptr;
-
-	RB_DLINK_FOREACH(ptr, chptr->members.head)
+	for(const auto &pit : chptr->members.global)
 	{
-		msptr = (chan::membership *)ptr->data;
-		target_p = msptr->client;
+		const auto &target(pit.first);
+		const auto &member(pit.second);
 
-		if(!IsInvisible(target_p) || IsMarked(target_p))
+		if(!IsInvisible(target) || IsMarked(target))
 			continue;
 
-		if(server_oper && !IsOper(target_p))
+		if(server_oper && !IsOper(target))
 			continue;
 
-		SetMark(target_p);
+		SetMark(target);
 
 		if(*maxmatches > 0)
 		{
 			if((mask == NULL) ||
-					match(mask, target_p->name) || match(mask, target_p->username) ||
-					match(mask, target_p->host) || match(mask, target_p->servptr->name) ||
-					(IsOper(source_p) && match(mask, target_p->orighost)) ||
-					match(mask, target_p->info))
+					match(mask, target->name) || match(mask, target->username) ||
+					match(mask, target->host) || match(mask, target->servptr->name) ||
+					(IsOper(source_p) && match(mask, target->orighost)) ||
+					match(mask, target->info))
 			{
-				do_who(source_p, target_p, NULL, fmt);
+				do_who(source_p, target, chptr, nullptr, fmt);
 				--(*maxmatches);
 			}
 		}
@@ -345,10 +341,10 @@ who_global(struct Client *source_p, const char *mask, int server_oper, int opers
 	 */
 	if(!operspy)
 	{
-		RB_DLINK_FOREACH(lp, source_p->user->channel.head)
+		for(const auto &pit : source_p->user->channel)
 		{
-			msptr = (chan::membership *)lp->data;
-			who_common_channel(source_p, msptr->chan, mask, server_oper, &maxmatches, fmt);
+			auto &chan(pit.first);
+			who_common_channel(source_p, chan, mask, server_oper, &maxmatches, fmt);
 		}
 	}
 	else if (!ConfigFileEntry.operspy_dont_care_user_info)
@@ -382,7 +378,7 @@ who_global(struct Client *source_p, const char *mask, int server_oper, int opers
 					(IsOper(source_p) && match(mask, target_p->orighost)) ||
 					match(mask, target_p->info))
 			{
-				do_who(source_p, target_p, NULL, fmt);
+				do_who(source_p, target_p, nullptr, nullptr, fmt);
 				--maxmatches;
 			}
 		}
@@ -408,22 +404,18 @@ who_global(struct Client *source_p, const char *mask, int server_oper, int opers
  */
 static void
 do_who_on_channel(struct Client *source_p, chan::chan *chptr,
-		  int server_oper, int member, struct who_format *fmt)
+		  int server_oper, int source_member, struct who_format *fmt)
 {
-	struct Client *target_p;
-	chan::membership *msptr;
-	rb_dlink_node *ptr;
-
-	RB_DLINK_FOREACH(ptr, chptr->members.head)
+	for(auto &pit : chptr->members.global)
 	{
-		msptr = (chan::membership *)ptr->data;
-		target_p = msptr->client;
+		const auto &target(pit.first);
+		auto &member(pit.second);
 
-		if(server_oper && !IsOper(target_p))
+		if(server_oper && !IsOper(target))
 			continue;
 
-		if(member || !IsInvisible(target_p))
-			do_who(source_p, target_p, msptr, fmt);
+		if(source_member || !IsInvisible(target))
+			do_who(source_p, target, chptr, &member, fmt);
 	}
 }
 
@@ -464,7 +456,7 @@ append_format(char *buf, size_t bufsize, size_t *pos, const char *fmt, ...)
  */
 
 static void
-do_who(struct Client *source_p, struct Client *target_p, chan::membership *msptr, struct who_format *fmt)
+do_who(struct Client *source_p, struct Client *target_p, chan::chan *chan, chan::membership *msptr, struct who_format *fmt)
 {
 	char status[16];
 	char str[510 + 1]; /* linebuf.c will add \r\n */
@@ -476,7 +468,7 @@ do_who(struct Client *source_p, struct Client *target_p, chan::membership *msptr
 
 	if (fmt->fields == 0)
 		sendto_one(source_p, form_str(RPL_WHOREPLY), me.name,
-			   source_p->name, msptr ? msptr->chan->name.c_str() : "*",
+			   source_p->name, msptr ? chan->name.c_str() : "*",
 			   target_p->username, target_p->host,
 			   target_p->servptr->name, target_p->name, status,
 			   ConfigServerHide.flatten_links && !IsOper(source_p) && !IsExemptShide(source_p) ? 0 : target_p->hopcount,
@@ -490,7 +482,7 @@ do_who(struct Client *source_p, struct Client *target_p, chan::membership *msptr
 		if (fmt->fields & FIELD_QUERYTYPE)
 			append_format(str, sizeof str, &pos, " %s", fmt->querytype);
 		if (fmt->fields & FIELD_CHANNEL)
-			append_format(str, sizeof str, &pos, " %s", msptr? msptr->chan->name.c_str() : "*");
+			append_format(str, sizeof str, &pos, " %s", msptr? name(*chan).c_str() : "*");
 		if (fmt->fields & FIELD_USER)
 			append_format(str, sizeof str, &pos, " %s", target_p->username);
 		if (fmt->fields & FIELD_IP)

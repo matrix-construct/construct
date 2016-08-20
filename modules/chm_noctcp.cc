@@ -48,7 +48,7 @@ chm_noctcp_process(hook_data_privmsg_channel *data)
 		data->approved = ERR_CANNOTSENDTOCHAN;
 		return;
 	}
-	else if (rb_dlink_list_length(&data->chptr->locmembers) > (unsigned)(GlobalSetOptions.floodcount / 2))
+	else if (local_size(data->chptr->members) > (unsigned)(GlobalSetOptions.floodcount / 2))
 		data->source_p->large_ctcp_sent = rb_current_time();
 }
 

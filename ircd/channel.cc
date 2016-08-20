@@ -49,8 +49,7 @@ chan::chan::chan(const std::string &name)
 ,mode{}
 ,mode_lock{}
 ,topic{}
-,members{0}
-,locmembers{0}
+,members{}
 ,join_count{0}
 ,join_delta{0}
 ,flood_noticed{0}
@@ -74,13 +73,108 @@ noexcept
 	del_from_channel_hash(name.c_str(), this);
 }
 
-chan::membership::membership()
-:channode{0}
-,locchannode{0}
-,usernode{0}
-,chan{nullptr}
-,client{nullptr}
-,flags{0}
+/* remove_user_from_channels()
+ *
+ * input        - user to remove from all channels
+ * output       -
+ * side effects - user is removed from all channels
+ */
+void
+chan::del(client &client)
+{
+	auto &client_chans(client.user->channel);
+	for(const auto &pit : client_chans)
+	{
+		auto &chan(*pit.first);
+		auto &member(*pit.second);
+
+		if (my(client))
+			chan.members.local.erase(member.lit);
+
+		chan.members.global.erase(member.git);
+		chan.invites.erase(&client);
+
+		if (empty(chan.members) && ~chan.mode & mode::PERMANENT)
+			delete &chan;
+	}
+
+	client_chans.clear();
+	client.user->invited.clear();
+}
+
+void
+chan::del(chan &chan,
+          client &client)
+{
+	// These are the relevant containers.
+	auto &global(chan.members.global);
+	auto &local(chan.members.local);
+	auto &client_chans(client.user->channel);
+
+	const auto it(client_chans.find(&chan));
+	if (it == end(client_chans))
+		return;
+
+	auto &member(*it->second);
+
+	if (my(client))
+		chan.members.local.erase(member.lit);
+
+	chan.members.global.erase(member.git);      // The member is destroyed at this point.
+	client_chans.erase(it);
+
+	if (empty(chan.members) && ~chan.mode & mode::PERMANENT)
+		delete &chan;
+}
+
+void
+chan::add(chan &chan,
+          client &client,
+          const int &flags)
+{
+	if (!client.user)
+	{
+		s_assert(0);
+		return;
+	}
+
+	// These are the relevant containers.
+	auto &global(chan.members.global);
+	auto &local(chan.members.local);
+	auto &client_chans(client.user->channel);
+
+	// Add client to channel's global map
+	const auto iit(global.emplace(&client, flags));
+	if (!iit.second)
+		return;
+
+	// The global map hosts the membership structure.
+	auto &member(iit.first->second);
+
+	// Add iterator (pointer to the element) for constant time lookup/removal
+	member.git = iit.first;
+
+	// Add channel to client's channel map, pointing to the membership;
+	client_chans.emplace(&chan, &member);
+
+	// Add membership to a local list which can be iterated for local IO;
+	// iterator to this element is saved more crucially here to prevent linear removal
+	if (my(client))
+		member.lit = local.emplace(end(local), &member);
+}
+
+
+chan::members::members()
+{
+}
+
+chan::members::~members()
+noexcept
+{
+}
+
+chan::membership::membership(const uint &flags)
+:flags{flags}
 ,bants{0}
 {
 }
@@ -144,46 +238,66 @@ chan::send_join(chan &chan,
 		                                            client.user->away);
 }
 
-/* find_channel_membership()
- *
- * input	- channel to find them in, client to find
- * output	- membership of client in channel, else NULL
- * side effects	-
- */
-chan::membership *
-chan::find_channel_membership(chan *chptr, client *client_p)
+chan::membership &
+chan::get(members &members,
+          const client &client)
 {
-	struct membership *msptr;
-	rb_dlink_node *ptr;
+	if (!is_client(client))
+		throw invalid_argument();
 
-	if(!IsClient(client_p))
-		return NULL;
+	const auto key(const_cast<ircd::chan::client *>(&client)); //TODO: temp elaborated
+	const auto it(members.global.find(key));
+	if (it == end(members.global))
+		throw not_found();
 
-	/* Pick the most efficient list to use to be nice to things like
-	 * CHANSERV which could be in a large number of channels
-	 */
-	if(rb_dlink_list_length(&chptr->members) < rb_dlink_list_length(&client_p->user->channel))
-	{
-		RB_DLINK_FOREACH(ptr, chptr->members.head)
-		{
-			msptr = (membership *)ptr->data;
+	return it->second;
+}
 
-			if(msptr->client == client_p)
-				return msptr;
-		}
-	}
-	else
-	{
-		RB_DLINK_FOREACH(ptr, client_p->user->channel.head)
-		{
-			msptr = (membership *)ptr->data;
+const chan::membership &
+chan::get(const members &members,
+          const client &client)
+{
+	if (!is_client(client))
+		throw invalid_argument();
 
-			if(msptr->chan == chptr)
-				return msptr;
-		}
-	}
+	const auto key(const_cast<ircd::chan::client *>(&client)); //TODO: temp elaborated
+	const auto it(members.global.find(key));
+	if (it == end(members.global))
+		throw not_found();
 
-	return NULL;
+	return it->second;
+}
+
+chan::membership *
+chan::get(members &members,
+          const client &client,
+          std::nothrow_t)
+{
+	if (!is_client(client))
+		return nullptr;
+
+	const auto key(const_cast<ircd::chan::client *>(&client)); //TODO: temp elaborated
+	const auto it(members.global.find(key));
+	if (it == end(members.global))
+		return nullptr;
+
+	return &it->second;
+}
+
+const chan::membership *
+chan::get(const members &members,
+          const client &client,
+          std::nothrow_t)
+{
+	if (!is_client(client))
+		return nullptr;
+
+	const auto key(const_cast<ircd::chan::client *>(&client)); //TODO: temp elaborated
+	const auto it(members.global.find(key));
+	if (it == end(members.global))
+		return nullptr;
+
+	return &it->second;
 }
 
 /* find_channel_status()
@@ -215,102 +329,6 @@ chan::find_status(const membership *const &msptr,
 	return buffer;
 }
 
-/* add_user_to_channel()
- *
- * input	- channel to add client to, client to add, channel flags
- * output	-
- * side effects - user is added to channel
- */
-void
-chan::add_user_to_channel(chan *chptr, client *client_p, int flags)
-{
-	membership *msptr;
-
-	s_assert(client_p->user != NULL);
-	if(client_p->user == NULL)
-		return;
-
-	msptr = new membership;
-
-	msptr->chan = chptr;
-	msptr->client = client_p;
-	msptr->flags = flags;
-
-	rb_dlinkAdd(msptr, &msptr->usernode, &client_p->user->channel);
-	rb_dlinkAdd(msptr, &msptr->channode, &chptr->members);
-
-	if(MyClient(client_p))
-		rb_dlinkAdd(msptr, &msptr->locchannode, &chptr->locmembers);
-}
-
-/* remove_user_from_channel()
- *
- * input	- membership pointer to remove from channel
- * output	-
- * side effects - membership (thus user) is removed from channel
- */
-void
-chan::remove_user_from_channel(membership *msptr)
-{
-	client *client_p;
-	chan *chptr;
-	s_assert(msptr != NULL);
-	if(msptr == NULL)
-		return;
-
-	client_p = msptr->client;
-	chptr = msptr->chan;
-
-	rb_dlinkDelete(&msptr->usernode, &client_p->user->channel);
-	rb_dlinkDelete(&msptr->channode, &chptr->members);
-
-	if(client_p->servptr == &me)
-		rb_dlinkDelete(&msptr->locchannode, &chptr->locmembers);
-
-	if(!(chptr->mode.mode & mode::PERMANENT) && rb_dlink_list_length(&chptr->members) <= 0)
-		delete chptr;
-
-	delete msptr;
-	return;
-}
-
-/* remove_user_from_channels()
- *
- * input        - user to remove from all channels
- * output       -
- * side effects - user is removed from all channels
- */
-void
-chan::remove_user_from_channels(client *client_p)
-{
-	chan *chptr;
-	membership *msptr;
-	rb_dlink_node *ptr;
-	rb_dlink_node *next_ptr;
-
-	if(client_p == NULL)
-		return;
-
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, client_p->user->channel.head)
-	{
-		msptr = (membership *)ptr->data;
-		chptr = msptr->chan;
-
-		rb_dlinkDelete(&msptr->channode, &chptr->members);
-
-		if(client_p->servptr == &me)
-			rb_dlinkDelete(&msptr->locchannode, &chptr->locmembers);
-
-		if(!(chptr->mode.mode & mode::PERMANENT) && rb_dlink_list_length(&chptr->members) <= 0)
-			delete chptr;
-
-		delete msptr;
-	}
-
-	client_p->user->channel.head = client_p->user->channel.tail = NULL;
-	client_p->user->channel.length = 0;
-}
-
 /* invalidate_bancache_user()
  *
  * input	- user to invalidate ban cache for
@@ -319,19 +337,17 @@ chan::remove_user_from_channels(client *client_p)
  *                to be used after a nick change
  */
 void
-chan::invalidate_bancache_user(client *client_p)
+chan::invalidate_bancache_user(client *client)
 {
-	membership *msptr;
-	rb_dlink_node *ptr;
-
-	if(client_p == NULL)
+	if(!client)
 		return;
 
-	RB_DLINK_FOREACH(ptr, client_p->user->channel.head)
+	for(const auto &pair : client->user->channel)
 	{
-		msptr = (membership *)ptr->data;
-		msptr->bants = 0;
-		msptr->flags &= ~BANNED;
+		auto &chan(*pair.first);
+		auto &member(*pair.second);
+		member.bants = 0;
+		member.flags &= ~BANNED;
 	}
 }
 
@@ -358,7 +374,6 @@ channel_pub_or_secret(chan::chan *const &chptr)
 void
 chan::channel_member_names(chan *chptr, client *client_p, int show_eon)
 {
-	membership *msptr;
 	client *target_p;
 	rb_dlink_node *ptr;
 	char lbuf[BUFSIZE];
@@ -376,10 +391,10 @@ chan::channel_member_names(chan *chptr, client *client_p, int show_eon)
 
 		t = lbuf + cur_len;
 
-		RB_DLINK_FOREACH(ptr, chptr->members.head)
+		for(const auto &pair : chptr->members.global)
 		{
-			msptr = (membership *)ptr->data;
-			target_p = msptr->client;
+			auto *const target_p(pair.first);
+			const auto &member(pair.second);
 
 			if(IsInvisible(target_p) && !is_member(chptr, client_p))
 				continue;
@@ -395,7 +410,7 @@ chan::channel_member_names(chan *chptr, client *client_p, int show_eon)
 					t = lbuf + mlen;
 				}
 
-				tlen = sprintf(t, "%s%s!%s@%s ", find_status(msptr, stack),
+				tlen = sprintf(t, "%s%s!%s@%s ", find_status(&member, stack),
 						  target_p->name, target_p->username, target_p->host);
 			}
 			else
@@ -409,7 +424,7 @@ chan::channel_member_names(chan *chptr, client *client_p, int show_eon)
 					t = lbuf + mlen;
 				}
 
-				tlen = sprintf(t, "%s%s ", find_status(msptr, stack),
+				tlen = sprintf(t, "%s%s ", find_status(&member, stack),
 						  target_p->name);
 			}
 
@@ -733,8 +748,7 @@ chan::can_join(client *source_p, chan *chptr, const char *key, const char **forw
 		}
 	}
 
-	if(chptr->mode.limit &&
-	   rb_dlink_list_length(&chptr->members) >= (unsigned long) chptr->mode.limit)
+	if(chptr->mode.limit && size(chptr->members) >= ulong(chptr->mode.limit))
 		i = ERR_CHANNELISFULL;
 	if(chptr->mode.mode & mode::REGONLY && EmptyString(source_p->user->suser))
 		i = ERR_NEEDREGGEDNICK;
@@ -783,7 +797,7 @@ chan::can_send(chan *chptr, client *source_p, membership *msptr)
 
 	if(msptr == NULL)
 	{
-		msptr = find_channel_membership(chptr, source_p);
+		msptr = get(chptr->members, *source_p, std::nothrow);
 
 		if(msptr == NULL)
 		{
@@ -828,7 +842,7 @@ chan::can_send(chan *chptr, client *source_p, membership *msptr)
 		moduledata.approved = CAN_SEND_OPV;
 
 	moduledata.client = source_p;
-	moduledata.chptr = msptr->chan;
+	moduledata.chptr = chptr;
 	moduledata.msptr = msptr;
 	moduledata.target = NULL;
 	moduledata.dir = moduledata.approved == CAN_SEND_NO? MODE_ADD : MODE_QUERY;
@@ -913,10 +927,11 @@ chan::find_bannickchange_channel(client *client_p)
 	sprintf(src_host, "%s!%s@%s", client_p->name, client_p->username, client_p->host);
 	sprintf(src_iphost, "%s!%s@%s", client_p->name, client_p->username, client_p->sockhost);
 
-	RB_DLINK_FOREACH(ptr, client_p->user->channel.head)
+	for(const auto &pit : client_p->user->channel)
 	{
-		msptr = (membership *)ptr->data;
-		chptr = msptr->chan;
+		auto &chptr(pit.first);
+		auto &msptr(pit.second);
+
 		if (is_chanop_voiced(msptr))
 			continue;
 		/* cached can_send */
@@ -1270,10 +1285,11 @@ chan::resv_chan_forcepart(const char *name, const char *reason, int temp_time)
 	chptr = find_channel(name);
 	if(chptr != NULL)
 	{
-		RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->locmembers.head)
+		// Iterate a copy of the local list while all of this is going on
+		auto local(chptr->members.local);
+		for(auto &msptr : local)
 		{
-			msptr = (membership *)ptr->data;
-			target_p = msptr->client;
+			const auto target_p(msptr->git->first);
 
 			if(IsExemptResv(target_p))
 				continue;
@@ -1285,7 +1301,7 @@ chan::resv_chan_forcepart(const char *name, const char *reason, int temp_time)
 			                     target_p->name, target_p->username,
 			                     target_p->host, chptr->name.c_str(), target_p->name);
 
-			remove_user_from_channel(msptr);
+			del(*chptr, *target_p);
 
 			/* notify opers & user they were removed from the channel */
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,

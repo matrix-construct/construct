@@ -1265,10 +1265,10 @@ exit_generic_client(struct Client *client_p, struct Client *source_p, struct Cli
 				     source_p->name,
 				     source_p->username, source_p->host, comment);
 
-	chan::remove_user_from_channels(source_p);
+	chan::del(*source_p);
 
 	/* Should not be in any channels now */
-	s_assert(source_p->user->channel.head == NULL);
+	s_assert(source_p->user->channel.empty());
 
 	// Clean up invitefield
 	for (auto &chan : source_p->user->invited)
@@ -1839,10 +1839,10 @@ free_user(struct User *user, struct Client *client_p)
 		/*
 		 * sanity check
 		 */
-		if(user->refcnt < 0 || !user->invited.empty() || user->channel.head)
+		if(user->refcnt < 0 || !user->invited.empty() || !user->channel.empty())
 		{
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
-					     "* %p user (%s!%s@%s) %p %lu %p %lu %d *",
+					     "* %p user (%s!%s@%s) %p %lu %lu %d *",
 					     client_p,
 					     client_p ? client_p->
 					     name : "<noname>",
@@ -1850,12 +1850,11 @@ free_user(struct User *user, struct Client *client_p)
 					     client_p->host,
 					     user,
 					     user->invited.size(),
-					     user->channel.head,
-					     rb_dlink_list_length(&user->channel),
+					     user->channel.size(),
 					     user->refcnt);
 			s_assert(!user->refcnt);
 			s_assert(user->invited.empty());
-			s_assert(!user->channel.head);
+			s_assert(user->channel.empty());
 		}
 
 		rb_bh_free(user_heap, user);

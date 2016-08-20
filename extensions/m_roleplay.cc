@@ -140,7 +140,7 @@ m_displaymsg(struct MsgBuf *msgbuf_p, struct Client *source_p, const char *chann
 		return;
 	}
 
-	if(!(msptr = find_channel_membership(chptr, source_p)))
+	if(!(msptr = get(chptr->members, *source_p, std::nothrow)))
 	{
 		sendto_one_numeric(source_p, ERR_NOTONCHANNEL,
 				   form_str(ERR_NOTONCHANNEL), chptr->name.c_str());

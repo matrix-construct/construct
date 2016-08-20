@@ -95,7 +95,7 @@ part_one_client(struct Client *client_p, struct Client *source_p, char *name, co
 		return;
 	}
 
-	msptr = find_channel_membership(chptr, source_p);
+	msptr = get(chptr->members, *source_p, std::nothrow);
 	if(msptr == NULL)
 	{
 		sendto_one_numeric(source_p, ERR_NOTONCHANNEL, form_str(ERR_NOTONCHANNEL), name);
@@ -145,7 +145,7 @@ part_one_client(struct Client *client_p, struct Client *source_p, char *name, co
 		                     chptr->name.c_str());
 	}
 
-	remove_user_from_channel(msptr);
+	del(*chptr, *source_p);
 }
 
 /*

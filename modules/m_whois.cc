@@ -252,10 +252,10 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 
 	if (!IsService(target_p))
 	{
-		RB_DLINK_FOREACH(ptr, target_p->user->channel.head)
+		for(const auto &pit : target_p->user->channel)
 		{
-			msptr = (chan::membership *)ptr->data;
-			chptr = msptr->chan;
+			auto &chptr(pit.first);
+			auto &msptr(pit.second);
 
 			hdata.chptr = chptr;
 

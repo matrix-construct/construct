@@ -113,7 +113,6 @@ names_global(struct Client *source_p)
 	rb_dlink_node *lp, *ptr;
 	struct Client *target_p;
 	chan::chan *chptr = NULL;
-	chan::membership *msptr;
 	char buf[BUFSIZE];
 	char *t;
 
@@ -143,10 +142,9 @@ names_global(struct Client *source_p)
 		 * both were missed out above.  if the target is on a
 		 * common channel with source, its already been shown.
 		 */
-		RB_DLINK_FOREACH(lp, target_p->user->channel.head)
+		for(const auto &pit : target_p->user->channel)
 		{
-			msptr = (chan::membership *)lp->data;
-			chptr = msptr->chan;
+			auto &chptr(pit.first);
 
 			if(is_public(chptr) || is_member(chptr, source_p) || is_secret(chptr))
 			{

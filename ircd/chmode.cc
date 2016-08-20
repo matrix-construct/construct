@@ -409,8 +409,7 @@ pretty_mask(const char *idmask)
  * side effects - numeric sent if not allowed
  */
 static bool
-check_forward(struct Client *source_p, chan::chan *chptr,
-		const char *forward)
+check_forward(Client *source_p, chan::chan *chptr, const char *forward)
 {
 	chan::chan *targptr = NULL;
 	chan::membership *msptr;
@@ -436,11 +435,13 @@ check_forward(struct Client *source_p, chan::chan *chptr,
 	}
 	if(MyClient(source_p) && !(targptr->mode.mode & mode::FREETARGET))
 	{
-		if((msptr = find_channel_membership(targptr, source_p)) == NULL ||
-			chan::get_channel_access(source_p, targptr, msptr, MODE_QUERY, NULL) < chan::CHANOP)
+		auto *const msptr(get(targptr->members, *source_p, std::nothrow));
+		if(!msptr || get_channel_access(source_p, targptr, msptr, MODE_QUERY, NULL) < chan::CHANOP)
 		{
 			sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
-				   me.name, source_p->name, targptr->name.c_str());
+			           me.name,
+			           source_p->name,
+			           targptr->name.c_str());
 			return false;
 		}
 	}
@@ -954,7 +955,7 @@ mode::functor::op(client *source_p, chan *chptr,
 		return;
 	}
 
-	mstptr = find_channel_membership(chptr, targ_p);
+	mstptr = get(chptr->members, *targ_p, std::nothrow);
 
 	if(mstptr == NULL)
 	{
@@ -1030,7 +1031,7 @@ mode::functor::voice(client *source_p, chan *chptr,
 		return;
 	}
 
-	mstptr = find_channel_membership(chptr, targ_p);
+	mstptr = get(chptr->members, *targ_p, std::nothrow);
 
 	if(mstptr == NULL)
 	{

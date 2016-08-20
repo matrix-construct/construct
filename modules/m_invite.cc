@@ -112,7 +112,7 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		return;
 	}
 
-	msptr = find_channel_membership(chptr, source_p);
+	msptr = get(chptr->members, *source_p, std::nothrow);
 	if(MyClient(source_p) && (msptr == NULL))
 	{
 		sendto_one_numeric(source_p, ERR_NOTONCHANNEL,

@@ -120,7 +120,7 @@ m_mode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 	}
 	else
 	{
-		msptr = find_channel_membership(chptr, source_p);
+		msptr = get(chptr->members, *source_p, std::nothrow);
 
 		/* Finish the flood grace period... */
 		if(MyClient(source_p) && !IsFloodDone(source_p))
@@ -182,7 +182,7 @@ ms_tmode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	}
 	else
 	{
-		msptr = find_channel_membership(chptr, source_p);
+		msptr = get(chptr->members, *source_p, std::nothrow);
 
 		set_channel_mode(client_p, source_p, chptr, msptr, parc - 3, parv + 3);
 	}

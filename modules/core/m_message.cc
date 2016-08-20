@@ -336,7 +336,7 @@ build_target_list(enum message_type msgtype, struct Client *client_p,
 			{
 				chan::membership *msptr;
 
-				msptr = find_channel_membership(chptr, source_p);
+				msptr = get(chptr->members, *source_p, std::nothrow);
 
 				if(!IsServer(source_p) && !IsService(source_p) && !is_chanop_voiced(msptr))
 				{

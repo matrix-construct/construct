@@ -212,7 +212,6 @@ m_chantrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 {
 	struct Client *target_p;
 	chan::chan *chptr;
-	chan::membership *msptr;
 	const char *sockhost;
 	const char *name;
 	rb_dlink_node *ptr;
@@ -251,10 +250,10 @@ m_chantrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 		return;
 	}
 
-	RB_DLINK_FOREACH(ptr, chptr->members.head)
+	for(const auto &pit : chptr->members.global)
 	{
-		msptr = (chan::membership *)ptr->data;
-		target_p = msptr->client;
+		auto &target_p(pit.first);
+		auto &member(pit.second);
 
 		if(EmptyString(target_p->sockhost))
 			sockhost = empty_sockhost;

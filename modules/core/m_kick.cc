@@ -75,7 +75,7 @@ m_kick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 
 	if(!IsServer(source_p))
 	{
-		msptr = find_channel_membership(chptr, source_p);
+		msptr = get(chptr->members, *source_p, std::nothrow);
 
 		if((msptr == NULL) && MyConnect(source_p))
 		{
@@ -114,7 +114,7 @@ m_kick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		return;
 	}
 
-	msptr = find_channel_membership(chptr, who);
+	msptr = get(chptr->members, *who, std::nothrow);
 
 	if(msptr != NULL)
 	{
@@ -168,7 +168,8 @@ m_kick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
 			      ":%s KICK %s %s :%s",
 			      use_id(source_p), chptr->name.c_str(), use_id(who), comment);
-		remove_user_from_channel(msptr);
+
+		del(*chptr, *who);
 	}
 	else if (MyClient(source_p))
 		sendto_one_numeric(source_p, ERR_USERNOTINCHANNEL,

@@ -85,7 +85,7 @@ m_topic(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	/* setting topic */
 	if(parc > 2)
 	{
-		msptr = find_channel_membership(chptr, source_p);
+		msptr = get(chptr->members, *source_p, std::nothrow);
 
 		if(msptr == NULL)
 		{

@@ -646,11 +646,12 @@ burst_TS6(struct Client *client_p)
 
 		t = buf + mlen;
 
-		RB_DLINK_FOREACH(uptr, chptr->members.head)
+		for (auto &pair : chptr->members.global)
 		{
-			msptr = (chan::membership *)uptr->data;
+			msptr = &pair.second;
+			auto *const client(pair.first);
 
-			tlen = strlen(use_id(msptr->client)) + 1;
+			tlen = strlen(use_id(client)) + 1;
 			if(is_chanop(msptr))
 				tlen++;
 			if(is_voiced(msptr))
@@ -664,13 +665,13 @@ burst_TS6(struct Client *client_p)
 				t = buf + mlen;
 			}
 
-			sprintf(t, "%s%s ", chan::find_status(msptr, 1), use_id(msptr->client));
+			sprintf(t, "%s%s ", chan::find_status(msptr, 1), use_id(client));
 
 			cur_len += tlen;
 			t += tlen;
 		}
 
-		if (rb_dlink_list_length(&chptr->members) > 0)
+		if (!empty(chptr->members))
 		{
 			/* remove trailing space */
 			*(t-1) = '\0';

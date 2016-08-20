@@ -97,7 +97,7 @@ mo_okick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		return;
 	}
 
-	if((msptr = find_channel_membership(chptr, target_p)) == NULL)
+	if((msptr = get(chptr->members, *target_p, std::nothrow)) == NULL)
 	{
 		sendto_one(source_p, form_str(ERR_USERNOTINCHANNEL), parv[1], parv[2]);
 		return;
@@ -120,5 +120,6 @@ mo_okick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 			     me.name, chptr->name.c_str(), who->name, comment);
 	sendto_server(&me, chptr, CAP_TS6, NOCAPS,
 		      ":%s KICK %s %s :%s", me.id, chptr->name.c_str(), who->id, comment);
-	remove_user_from_channel(msptr);
+
+	del(*chptr, *target_p);
 }

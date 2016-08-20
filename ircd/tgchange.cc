@@ -27,18 +27,18 @@ namespace ircd {
 static int add_hashed_target(struct Client *source_p, uint32_t hashv);
 
 chan::chan *
-find_allowing_channel(struct Client *source_p, struct Client *target_p)
+find_allowing_channel(struct Client *source, struct Client *target)
 {
-	rb_dlink_node *ptr;
-	chan::membership *msptr;
-
-	RB_DLINK_FOREACH(ptr, source_p->user->channel.head)
+	for(const auto &pit : source->user->channel)
 	{
-		msptr = (chan::membership *)ptr->data;
-		if (is_chanop_voiced(msptr) && is_member(msptr->chan, target_p))
-			return msptr->chan;
+		auto &chan(*pit.first);
+		auto &member(*pit.second);
+
+		if (is_chanop_voiced(member) && is_member(chan, *target))
+			return &chan;
 	}
-	return NULL;
+
+	return nullptr;
 }
 
 int

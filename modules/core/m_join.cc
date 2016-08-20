@@ -221,7 +221,7 @@ m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		/* JOIN 0 simply parts all channels the user is in */
 		if(*name == '0' && !atoi(name))
 		{
-			if(source_p->user->channel.head == NULL)
+			if(source_p->user->channel.empty())
 				continue;
 
 			do_join_0(&me, source_p);
@@ -265,10 +265,10 @@ m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 			flags = chan::CHANOP;
 		}
 
-		if((rb_dlink_list_length(&source_p->user->channel) >=
+		if(((source_p->user->channel.size()) >=
 		    (unsigned long) ConfigChannel.max_chans_per_user) &&
 		   (!IsExtendChans(source_p) ||
-		    (rb_dlink_list_length(&source_p->user->channel) >=
+		    (source_p->user->channel.size() >=
 		     (unsigned long) ConfigChannel.max_chans_per_user_large)))
 		{
 			sendto_one(source_p, form_str(ERR_TOOMANYCHANNELS),
@@ -309,7 +309,7 @@ m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 			chan::check_spambot_warning(source_p, name);
 
 		/* add the user to the channel */
-		add_user_to_channel(chptr, source_p, flags);
+		add(*chptr, *source_p, flags);
 		if (chptr->mode.join_num &&
 			rb_current_time() - chptr->join_delta >= chptr->mode.join_time)
 		{
@@ -482,7 +482,7 @@ ms_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 
 	if(!is_member(chptr, source_p))
 	{
-		add_user_to_channel(chptr, source_p, chan::PEON);
+		add(*chptr, *source_p, chan::PEON);
 		if (chptr->mode.join_num &&
 			rb_current_time() - chptr->join_delta >= chptr->mode.join_time)
 		{
@@ -637,12 +637,11 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		{
 			chan::membership *msptr;
 			struct Client *who;
-			int l = rb_dlink_list_length(&chptr->members);
+			int l = size(chptr->members);
 
-			RB_DLINK_FOREACH_SAFE(ptr, next_ptr, chptr->locmembers.head)
+			for(const auto &msptr : chptr->members.local)
 			{
-				msptr = (chan::membership *)ptr->data;
-				who = msptr->client;
+				who = &get_client(*msptr);
 				sendto_one(who, ":%s KICK %s %s :Net Rider",
 						     me.name, chptr->name.c_str(), who->name);
 
@@ -650,7 +649,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 					      ":%s KICK %s %s :Net Rider",
 					      me.id, chptr->name.c_str(),
 					      who->id);
-				remove_user_from_channel(msptr);
+				del(*chptr, *who);
 				if (--l == 0)
 					break;
 			}
@@ -822,7 +821,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 		if(!is_member(chptr, target_p))
 		{
-			add_user_to_channel(chptr, target_p, fl);
+			add(*chptr, *target_p, fl);
 			send_join(*chptr, *target_p);
 			joins++;
 		}
@@ -953,18 +952,19 @@ do_join_0(struct Client *client_p, struct Client *source_p)
 
 	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s JOIN 0", use_id(source_p));
 
-	while((ptr = source_p->user->channel.head))
+	for(const auto &pit : source_p->user->channel)
 	{
 		if(MyConnect(source_p) &&
 		   !IsOper(source_p) && !IsExemptSpambot(source_p))
 			chan::check_spambot_warning(source_p, NULL);
 
-		msptr = (chan::membership *)ptr->data;
-		chptr = msptr->chan;
+		auto &msptr(pit.second);
+		auto &chptr(pit.first);
 		sendto_channel_local(chan::ALL_MEMBERS, chptr, ":%s!%s@%s PART %s",
 				     source_p->name,
 				     source_p->username, source_p->host, chptr->name.c_str());
-		remove_user_from_channel(msptr);
+
+		del(*chptr, get_client(*msptr));
 	}
 }
 
@@ -1162,7 +1162,6 @@ set_final_mode(chan::modes *mode, chan::modes *oldmode)
 static void
 remove_our_modes(chan::chan *chptr, struct Client *source_p)
 {
-	chan::membership *msptr;
 	rb_dlink_node *ptr;
 	char lmodebuf[chan::mode::BUFLEN];
 	char *lpara[chan::mode::MAXPARAMS];
@@ -1175,14 +1174,15 @@ remove_our_modes(chan::chan *chptr, struct Client *source_p)
 	for(i = 0; i < chan::mode::MAXPARAMS; i++)
 		lpara[i] = NULL;
 
-	RB_DLINK_FOREACH(ptr, chptr->members.head)
+	for(auto &pit : chptr->members.global)
 	{
-		msptr = (chan::membership *)ptr->data;
+		auto &client(pit.first);
+		auto &msptr(pit.second);
 
 		if(is_chanop(msptr))
 		{
-			msptr->flags &= ~chan::CHANOP;
-			lpara[count++] = msptr->client->name;
+			msptr.flags &= ~chan::CHANOP;
+			lpara[count++] = client->name;
 			*mbuf++ = 'o';
 
 			/* +ov, might not fit so check. */
@@ -1206,15 +1206,15 @@ remove_our_modes(chan::chan *chptr, struct Client *source_p)
 						lpara[i] = NULL;
 				}
 
-				msptr->flags &= ~chan::VOICE;
-				lpara[count++] = msptr->client->name;
+				msptr.flags &= ~chan::VOICE;
+				lpara[count++] = client->name;
 				*mbuf++ = 'v';
 			}
 		}
 		else if(is_voiced(msptr))
 		{
-			msptr->flags &= ~chan::VOICE;
-			lpara[count++] = msptr->client->name;
+			msptr.flags &= ~chan::VOICE;
+			lpara[count++] = client->name;
 			*mbuf++ = 'v';
 		}
 		else

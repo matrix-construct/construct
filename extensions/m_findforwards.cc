@@ -52,7 +52,7 @@ m_findforwards(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *
 	/* Allow ircops to search for forwards to nonexistent channels */
 	if(!IsOper(source_p))
 	{
-		if((chptr = find_channel(parv[1])) == NULL || (msptr = find_channel_membership(chptr, source_p)) == NULL)
+		if((chptr = find_channel(parv[1])) == NULL || (msptr = get(chptr->members, *source_p, std::nothrow)) == NULL)
 		{
 			sendto_one_numeric(source_p, ERR_NOTONCHANNEL,
 					form_str(ERR_NOTONCHANNEL), parv[1]);

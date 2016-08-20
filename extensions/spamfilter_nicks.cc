@@ -165,11 +165,10 @@ int chans_add(struct chan *const chan)
 	if(!rb_radixtree_add(chans, chan->name.c_str(), chan))
 		return 0;
 
-	rb_dlink_node *ptr;
-	RB_DLINK_FOREACH(ptr, chan->members.head)
+	for(const auto &pit : chan->members.global)
 	{
-		const auto msptr(reinterpret_cast<membership *>(ptr->data));
-		bloom_add_str(msptr->client->name);
+		const auto &client(pit.first);
+		bloom_add_str(client->name);
 	}
 
 	return 1;

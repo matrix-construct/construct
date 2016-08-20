@@ -43,7 +43,7 @@ h_scc_channel_join(void *vdata)
 	struct Client *source_p = data->client;
 
 	/* If they just joined a channel, and it only has one member, then they just created it. */
-	if(rb_dlink_list_length(&chptr->members) == 1 && is_chanop(find_channel_membership(chptr, source_p)))
+	if(size(chptr->members) == 1 && is_chanop(get(chptr->members, *source_p, std::nothrow)))
 	{
 		sendto_realops_snomask(snomask_modes['l'], L_NETWIDE, "%s is creating new channel %s",
 					source_p->name, chptr->name.c_str());

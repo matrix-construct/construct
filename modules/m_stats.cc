@@ -1336,7 +1336,7 @@ stats_memory (struct Client *source_p)
 		{
 			users_counted++;
 			users_invited_count += target_p->user->invited.size();
-			user_channels += rb_dlink_list_length(&target_p->user->channel);
+			user_channels += target_p->user->channel.size();
 			if(target_p->user->away)
 			{
 				aways_counted++;
@@ -1352,7 +1352,7 @@ stats_memory (struct Client *source_p)
 		channel_count++;
 		channel_memory += (strlen(chptr->name.c_str()) + sizeof(chan::chan));
 
-		channel_users += rb_dlink_list_length(&chptr->members);
+		channel_users += size(chptr->members);
 		channel_invites += chptr->invites.size();
 
 		channel_bans += size(*chptr, chan::mode::BAN);

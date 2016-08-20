@@ -57,9 +57,9 @@ mo_opme(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		return;
 	}
 
-	RB_DLINK_FOREACH(ptr, chptr->members.head)
+	for(auto &pit : chptr->members.global)
 	{
-		msptr = (chan::membership *)ptr->data;
+		msptr = &pit.second;
 
 		if(is_chanop(msptr))
 		{
@@ -68,7 +68,7 @@ mo_opme(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		}
 	}
 
-	msptr = find_channel_membership(chptr, source_p);
+	msptr = get(chptr->members, *source_p, std::nothrow);
 
 	if(msptr == NULL)
 		return;

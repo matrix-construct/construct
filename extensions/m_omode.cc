@@ -76,7 +76,7 @@ mo_omode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	}
 
 	/* Now know the channel exists */
-	msptr = find_channel_membership(chptr, source_p);
+	msptr = get(chptr->members, *source_p, std::nothrow);
 	wasonchannel = msptr != NULL;
 
 	if (is_chanop(msptr))
@@ -133,8 +133,8 @@ mo_omode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 			msptr->flags |= chan::CHANOP;
 		else
 		{
-			add_user_to_channel(chptr, source_p, chan::CHANOP);
-			msptr = find_channel_membership(chptr, source_p);
+			add(*chptr, *source_p, chan::CHANOP);
+			msptr = get(chptr->members, *source_p, std::nothrow);
 		}
 		set_channel_mode(client_p, source_p, chptr, msptr,
 				parc - 2, parv + 2);
@@ -144,7 +144,7 @@ mo_omode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		if (wasonchannel)
 			msptr->flags &= ~chan::CHANOP;
 		else
-			remove_user_from_channel(msptr);
+			del(*chptr, get_client(*msptr));
 	}
 #endif
 }

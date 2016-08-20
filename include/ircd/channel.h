@@ -34,6 +34,7 @@ namespace chan {
 IRCD_EXCEPTION(ircd::error,  error)
 IRCD_EXCEPTION(error,        not_found)
 IRCD_EXCEPTION(error,        invalid_list)
+IRCD_EXCEPTION(error,        invalid_argument)
 
 enum status
 {
@@ -96,17 +97,15 @@ uint operator~(const modes &);
 
 struct membership
 {
-	rb_dlink_node channode;
-	rb_dlink_node locchannode;
-	rb_dlink_node usernode;
+	using global = std::map<client *, membership>;
+	using local = std::list<membership *>;
 
-	struct chan *chan;
-	Client *client;
-	unsigned int flags;
-
+	uint flags;
 	time_t bants;
+	global::iterator git;
+	local::iterator lit;
 
-	membership();
+	membership(const uint &flags = 0);
 	~membership() noexcept;
 };
 
@@ -119,6 +118,27 @@ bool is_chanop_voiced(const membership *const &);
 bool can_send_banned(const membership &);
 bool can_send_banned(const membership *const &);
 const char *find_status(const membership *const &msptr, const int &combine);
+const client &get_client(const membership &);
+client &get_client(membership &);
+
+struct members
+{
+	membership::global global;
+	membership::local local;
+
+	members();
+	~members() noexcept;
+};
+
+bool empty(const members &);
+size_t size(const members &);
+bool local_empty(const members &);
+size_t local_size(const members &);
+bool exists(const members &, const client &);
+const membership *get(const members &, const client &, std::nothrow_t);
+const membership &get(const members &, const client &);
+membership *get(members &, const client &, std::nothrow_t);
+membership &get(members &, const client &);
 
 bool has_prefix(const char *const &name);
 bool has_prefix(const std::string &name);
@@ -131,11 +151,8 @@ struct chan
 	struct modes mode;
 	std::string mode_lock;
 	struct topic topic;
-
-	rb_dlink_list members;
-	rb_dlink_list locmembers;
+	struct members members;
 	std::set<client *> invites;
-
 	list bans;
 	list excepts;
 	list invexs;
@@ -160,6 +177,7 @@ struct chan
 	~chan() noexcept;
 };
 
+const auto &name(const chan &);
 bool is_secret(const chan &);
 bool is_secret(const chan *const &);
 bool is_hidden(const chan &);
@@ -206,9 +224,6 @@ void del_invite(chan &, client &);
 void clear_invites(chan &);
 
 bool flood_attack_channel(int p_or_n, client *source, chan *);
-void add_user_to_channel(chan *, client *, int flags);
-void remove_user_from_channel(membership *);
-void remove_user_from_channels(client *);
 void invalidate_bancache_user(client *);
 void channel_member_names(chan *, client *, int show_eon);
 const char *channel_modes(chan *, client *who);
@@ -227,13 +242,17 @@ int match_extban(const char *banstr, client *, chan *, long mode_type);
 int valid_extban(const char *banstr, client *, chan *, long mode_type);
 const char * get_extban_string(void);
 int get_channel_access(client *source, chan *, membership *, int dir, const char *modestr);
-membership *find_channel_membership(chan *chptr, client *client_p);
 void send_join(chan &, client &);
 
 //extern std::map<std::string, std::unique_ptr<chan>> chans;
 extern rb_dlink_list global_channel_list;
 
+// Add and remove clients from channels
+void add(chan &, client &, const int &flags = PEON);
+void del(chan &, client &);
+void del(client &);             // remove from all channels
 
+// Initialize subsystem
 void init();
 
 
@@ -276,8 +295,7 @@ is_public(const chan *const &c)
 inline bool
 is_member(const chan &c, const client &client)
 {
-	//return client.user && get(c, client, std::nothrow) != nullptr;
-	return find_channel_membership(const_cast<struct chan *>(&c), const_cast<Client *>(&client)) != nullptr;
+	return exists(c.members, client);
 }
 
 inline bool
@@ -322,6 +340,42 @@ valid_name(const std::string &name)
 	return !name.empty() && std::all_of(begin(name), end(name), rfc1459::is_chan);
 }
 
+inline const auto &
+name(const chan &chan)
+{
+	return chan.name;
+}
+
+inline size_t
+local_size(const members &m)
+{
+	return std::distance(begin(m.local), end(m.local));
+}
+
+inline bool
+local_empty(const members &m)
+{
+	return m.local.empty();
+}
+
+inline size_t
+size(const members &m)
+{
+	return m.global.size();
+}
+
+inline bool
+empty(const members &m)
+{
+	return m.global.empty();
+}
+
+inline bool
+exists(const members &m, const client &c)
+{
+	return m.global.count(const_cast<client *>(&c));
+}
+
 inline bool
 is_chanop(const membership &m)
 {
@@ -356,6 +410,18 @@ inline bool
 is_chanop_voiced(const membership *const &m)
 {
 	return m && is_chanop_voiced(*m);
+}
+
+inline client &
+get_client(membership &m)
+{
+	return *m.git->first;
+}
+
+inline const client &
+get_client(const membership &m)
+{
+	return *m.git->first;
 }
 
 inline bool

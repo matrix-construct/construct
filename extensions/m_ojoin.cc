@@ -84,7 +84,7 @@ mo_ojoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 	if(*parv[1] == '@')
 	{
-		add_user_to_channel(chptr, source_p, chan::CHANOP);
+		add(*chptr, *source_p, chan::CHANOP);
 		sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
 			      ":%s SJOIN %ld %s + :@%s",
 			      me.id, (long) chptr->channelts, chptr->name.c_str(), source_p->id);
@@ -95,7 +95,7 @@ mo_ojoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	}
 	else if(*parv[1] == '+')
 	{
-		add_user_to_channel(chptr, source_p, chan::VOICE);
+		add(*chptr, *source_p, chan::VOICE);
 		sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
 			      ":%s SJOIN %ld %s + :+%s",
 			      me.id, (long) chptr->channelts, chptr->name.c_str(), source_p->id);
@@ -105,7 +105,7 @@ mo_ojoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	}
 	else
 	{
-		add_user_to_channel(chptr, source_p, chan::PEON);
+		add(*chptr, *source_p, chan::PEON);
 		sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
 			      ":%s JOIN %ld %s +",
 			      source_p->id, (long) chptr->channelts, chptr->name.c_str());
