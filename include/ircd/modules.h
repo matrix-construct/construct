@@ -26,8 +26,7 @@
 #define HAVE_IRCD_MODULES_H
 
 #define MAPI_CHARYBDIS 2
-
-#include <ltdl.h>
+typedef struct lt__handle *lt_dlhandle;
 
 #ifdef __cplusplus
 namespace ircd {
