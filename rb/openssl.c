@@ -869,15 +869,17 @@ rb_get_ssl_info(char *buf, size_t len)
 const char *
 rb_ssl_get_cipher(rb_fde_t *F)
 {
-	const SSL_CIPHER *sslciph;
-
 	if(F == NULL || F->ssl == NULL)
 		return NULL;
 
-	if((sslciph = SSL_get_current_cipher(F->ssl)) == NULL)
-		return NULL;
+	static char buf[512];
 
-	return SSL_CIPHER_get_name(sslciph);
+	const char *version = SSL_get_version(F->ssl);
+	const char *cipher = SSL_get_cipher_name(F->ssl);
+
+	(void) snprintf(buf, sizeof buf, "%s, %s", version, cipher);
+
+	return buf;
 }
 
 #endif /* HAVE_OPENSSL */

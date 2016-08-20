@@ -733,8 +733,8 @@ rb_get_ssl_info(char *buf, size_t len)
 	char version_str[512];
 	mbedtls_version_get_string(version_str);
 
-	snprintf(buf, len, "ARM mbedTLS: compiled (v%s), library (v%s)",
-	         MBEDTLS_VERSION_STRING, version_str);
+	(void) snprintf(buf, len, "ARM mbedTLS: compiled (v%s), library (v%s)",
+	                MBEDTLS_VERSION_STRING, version_str);
 }
 
 const char *
@@ -742,7 +742,15 @@ rb_ssl_get_cipher(rb_fde_t *F)
 {
 	if(F == NULL || F->ssl == NULL || SSL_P(F) == NULL)
 		return NULL;
-	return mbedtls_ssl_get_ciphersuite(SSL_P(F));
+
+	static char buf[512];
+
+	const char *version = mbedtls_ssl_get_version(SSL_P(F));
+	const char *cipher = mbedtls_ssl_get_ciphersuite(SSL_P(F));
+
+	(void) snprintf(buf, sizeof buf, "%s, %s", version, cipher);
+
+	return buf;
 }
 
 #endif /* HAVE_MBEDTLS */
