@@ -42,8 +42,8 @@ cap_account_tag_process(hook_data *data)
 {
 	struct MsgBuf *msgbuf = (MsgBuf *)data->arg1;
 
-	if (data->client != NULL && IsPerson(data->client) && *data->client->user->suser)
-		msgbuf_append_tag(msgbuf, "account", data->client->user->suser, CLICAP_ACCOUNT_TAG);
+	if (data->client != NULL && IsPerson(data->client) && !data->client->user->suser.empty())
+		msgbuf_append_tag(msgbuf, "account", data->client->user->suser.c_str(), CLICAP_ACCOUNT_TAG);
 }
 
 DECLARE_MODULE_AV2(cap_account_tag, NULL, NULL, NULL, NULL, cap_account_tag_hfnlist, cap_account_tag_cap_list, NULL, cap_account_tag_desc);

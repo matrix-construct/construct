@@ -115,13 +115,13 @@ me_su(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 		return;
 
 	if(EmptyString(parv[2]))
-		target_p->user->suser[0] = '\0';
+		target_p->user->suser.clear();
 	else
-		rb_strlcpy(target_p->user->suser, parv[2], sizeof(target_p->user->suser));
+		target_p->user->suser = parv[2];
 
 	sendto_common_channels_local_butone(target_p, CLICAP_ACCOUNT_NOTIFY, NOCAPS, ":%s!%s@%s ACCOUNT %s",
 					    target_p->name, target_p->username, target_p->host,
-					    EmptyString(target_p->user->suser) ? "*" : target_p->user->suser);
+					    target_p->user->suser.empty()? "*" : target_p->user->suser.c_str());
 
 	chan::invalidate_bancache_user(target_p);
 }
@@ -133,7 +133,7 @@ me_login(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	if(!IsPerson(source_p))
 		return;
 
-	rb_strlcpy(source_p->user->suser, parv[1], sizeof(source_p->user->suser));
+	source_p->user->suser = parv[1];
 }
 
 static void
@@ -293,22 +293,25 @@ h_svc_server_introduced(hook_data_client *hdata)
 static void
 h_svc_whois(hook_data_client *data)
 {
-	char *p = data->target->user->suser;
-	if(!EmptyString(p))
-	{
-		/* Try to strip off any leading digits as this may be used to
-		 * store both an ID number and an account name in one field.
-		 * If only digits are present, leave as is.
-		 */
-		while(rfc1459::is_digit(*p))
-			p++;
-		if(*p == '\0')
-			p = data->target->user->suser;
+	const auto &suser(data->target->user->suser);
+	if (suser.empty())
+		return;
 
-		sendto_one_numeric(data->client, RPL_WHOISLOGGEDIN,
-				form_str(RPL_WHOISLOGGEDIN),
-				data->target->name, p);
-	}
+	/* Try to strip off any leading digits as this may be used to
+	 * store both an ID number and an account name in one field.
+	 * If only digits are present, leave as is.
+	 */
+	const char *p(suser.c_str());
+	while(rfc1459::is_digit(*p))
+		p++;
+
+	if(*p == '\0')
+		p = suser.c_str();
+
+	sendto_one_numeric(data->client, RPL_WHOISLOGGEDIN,
+	                   form_str(RPL_WHOISLOGGEDIN),
+	                   data->target->name,
+	                   p);
 }
 
 static void

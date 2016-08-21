@@ -144,7 +144,7 @@ me_svslogin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 	if(*parv[5] == '*')
 	{
 		if(target_p->user)
-			rb_strlcpy(login, target_p->user->suser, NICKLEN + 1);
+			rb_strlcpy(login, target_p->user->suser.c_str(), NICKLEN + 1);
 		else
 			login[0] = '\0';
 	}
@@ -199,8 +199,6 @@ me_svslogin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 
 	if(IsUnknown(target_p))
 	{
-		struct User *user_p = make_user(target_p);
-
 		if(valid & NICK_VALID)
 			rb_strlcpy(target_p->preClient->spoofnick, nick, sizeof(target_p->preClient->spoofnick));
 
@@ -210,7 +208,7 @@ me_svslogin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 		if(valid & HOST_VALID)
 			rb_strlcpy(target_p->preClient->spoofhost, host, sizeof(target_p->preClient->spoofhost));
 
-		rb_strlcpy(user_p->suser, login, NICKLEN + 1);
+		target_p->user = std::make_unique<struct user>(login);
 	}
 	else
 	{
@@ -391,7 +389,7 @@ send_signon(struct Client *client_p, struct Client *target_p,
 			use_id(target_p), nick, user, host,
 			(long) target_p->tsinfo, *login ? login : "0");
 
-	rb_strlcpy(target_p->user->suser, login, sizeof(target_p->user->suser));
+	target_p->user->suser = login;
 
 	change_nick_user_host(target_p, nick, user, host, newts, "Signing %s (%s)", *login ?  "in" : "out", nick);
 }

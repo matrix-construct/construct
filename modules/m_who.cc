@@ -464,7 +464,7 @@ do_who(struct Client *source_p, struct Client *target_p, chan::chan *chan, chan:
 	const char *q;
 
 	sprintf(status, "%c%s%s",
-		   target_p->user->away ? 'G' : 'H', IsOper(target_p) ? "*" : "", msptr ? find_status(msptr, fmt->fields || IsCapable(source_p, CLICAP_MULTI_PREFIX)) : "");
+		   target_p->user->away.size()? 'G' : 'H', IsOper(target_p) ? "*" : "", msptr ? find_status(msptr, fmt->fields || IsCapable(source_p, CLICAP_MULTI_PREFIX)) : "");
 
 	if (fmt->fields == 0)
 		sendto_one(source_p, form_str(RPL_WHOREPLY), me.name,
@@ -507,13 +507,13 @@ do_who(struct Client *source_p, struct Client *target_p, chan::chan *chan, chan:
 		if (fmt->fields & FIELD_ACCOUNT)
 		{
 			/* display as in whois */
-			q = target_p->user->suser;
+			q = target_p->user->suser.c_str();
 			if (!EmptyString(q))
 			{
 				while(rfc1459::is_digit(*q))
 					q++;
 				if(*q == '\0')
-					q = target_p->user->suser;
+					q = target_p->user->suser.c_str();
 			}
 			else
 				q = "0";

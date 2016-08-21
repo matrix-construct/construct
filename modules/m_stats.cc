@@ -836,7 +836,7 @@ stats_operedup (struct Client *source_p)
 		if(IsOperInvis(target_p) && !IsOper(source_p))
 			continue;
 
-		if(target_p->user->away)
+		if(target_p->user->away.size())
 			continue;
 
 		count++;
@@ -1337,10 +1337,10 @@ stats_memory (struct Client *source_p)
 			users_counted++;
 			users_invited_count += target_p->user->invited.size();
 			user_channels += target_p->user->channel.size();
-			if(target_p->user->away)
+			if(target_p->user->away.size())
 			{
 				aways_counted++;
-				away_memory += (strlen(target_p->user->away) + 1);
+				away_memory += target_p->user->away.size() + 1;
 			}
 		}
 	}
@@ -1377,7 +1377,7 @@ stats_memory (struct Client *source_p)
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			   "z :Users %u(%lu) Invites %u(%lu)",
 			   users_counted,
-			   (unsigned long) users_counted * sizeof(struct User),
+			   (unsigned long) users_counted * sizeof(struct user),
 			   users_invited_count,
 			   (unsigned long) users_invited_count * sizeof(rb_dlink_node));
 

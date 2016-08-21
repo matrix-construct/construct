@@ -599,7 +599,7 @@ burst_TS6(struct Client *client_p)
 				   IsIPSpoof(target_p) ? "0" : target_p->sockhost,
 				   target_p->id,
 				   IsDynSpoof(target_p) ? target_p->orighost : "*",
-				   EmptyString(target_p->user->suser) ? "*" : target_p->user->suser,
+				   target_p->user->suser.empty() ? "*" : target_p->user->suser.c_str(),
 				   target_p->info);
 		else
 			sendto_one(client_p, ":%s UID %s %d %ld %s %s %s %s %s :%s",
@@ -619,15 +619,17 @@ burst_TS6(struct Client *client_p)
 			if(IsDynSpoof(target_p))
 				sendto_one(client_p, ":%s ENCAP * REALHOST %s",
 						use_id(target_p), target_p->orighost);
-			if(!EmptyString(target_p->user->suser))
+
+			if (!target_p->user->suser.empty())
 				sendto_one(client_p, ":%s ENCAP * LOGIN %s",
-						use_id(target_p), target_p->user->suser);
+				           use_id(target_p),
+				           target_p->user->suser.c_str());
 		}
 
-		if(ConfigFileEntry.burst_away && !EmptyString(target_p->user->away))
+		if(ConfigFileEntry.burst_away && !target_p->user->away.empty())
 			sendto_one(client_p, ":%s AWAY :%s",
 				   use_id(target_p),
-				   target_p->user->away);
+				   target_p->user->away.c_str());
 
 		hclientinfo.target = target_p;
 		call_hook(h_burst_client, &hclientinfo);

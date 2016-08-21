@@ -24,6 +24,6 @@ h_can_create_channel_authenticated(hook_data_client_approval *data)
 {
 	struct Client *source_p = data->client;
 
-	if (*source_p->user->suser == '\0' && !IsOper(source_p))
+	if (source_p->user->suser.empty() && !IsOper(source_p))
 		data->approved = ERR_NEEDREGGEDNICK;
 }

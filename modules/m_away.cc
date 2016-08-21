@@ -68,12 +68,11 @@ m_away(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 	if(parc < 2 || EmptyString(parv[1]))
 	{
 		/* Marking as not away */
-		if(source_p->user->away != NULL)
+		if(source_p->user->away.size())
 		{
 			/* we now send this only if they were away before --is */
 			sendto_server(client_p, NULL, CAP_TS6, NOCAPS,
 				      ":%s AWAY", use_id(source_p));
-			free_away(source_p);
 
 			sendto_common_channels_local_butone(source_p, CLICAP_AWAY_NOTIFY, NOCAPS, ":%s!%s@%s AWAY",
 							    source_p->name, source_p->username, source_p->host);
@@ -101,20 +100,25 @@ m_away(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 				ConfigFileEntry.away_interval;
 	}
 
-	if(source_p->user->away == NULL)
-		allocate_away(source_p);
-	if(strncmp(source_p->user->away, parv[1], AWAYLEN - 1))
+	std::string p1(parv[1]);
+	if (p1.size() >= AWAYLEN)
+		p1.resize(AWAYLEN-1);
+
+	if (source_p->user->away != p1)
 	{
-		rb_strlcpy(source_p->user->away, parv[1], AWAYLEN);
+		source_p->user->away = std::move(p1);
 		sendto_server(client_p, NULL, CAP_TS6, NOCAPS,
-			      ":%s AWAY :%s", use_id(source_p), source_p->user->away);
+		              ":%s AWAY :%s",
+		              use_id(source_p),
+		              source_p->user->away.c_str());
+
 		sendto_common_channels_local_butone(source_p,
 					            CLICAP_AWAY_NOTIFY, NOCAPS,
 						    ":%s!%s@%s AWAY :%s",
 						    source_p->name,
 						    source_p->username,
 						    source_p->host,
-						    source_p->user->away);
+						    source_p->user->away.c_str());
 	}
 
 	if(MyConnect(source_p))

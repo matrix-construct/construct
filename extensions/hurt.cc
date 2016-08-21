@@ -380,7 +380,7 @@ hurt_check_event(void *arg)
 
 	RB_DLINK_FOREACH_SAFE (ptr, next_ptr, hurt_state.hurt_clients.head) {
 		client_p = (Client *)ptr->data;
-		if (!EmptyString(client_p->user->suser))
+		if (client_p->user->suser.size())
 		{
 			rb_dlinkDestroy(ptr, &hurt_state.hurt_clients);
 			sendto_one_notice(client_p, ":HURT restriction removed for this session");
@@ -431,7 +431,7 @@ client_exit_hook(hook_data_client_exit *data)
 static void
 new_local_user_hook(struct Client *source_p)
 {
-	if (IsAnyDead(source_p) || !EmptyString(source_p->user->suser) ||
+	if (IsAnyDead(source_p) || source_p->user->suser.size() ||
 			IsExemptKline(source_p))
 		return;
 

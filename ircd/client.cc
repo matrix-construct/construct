@@ -41,11 +41,8 @@ static int qs_server(struct Client *, struct Client *, struct Client *, const ch
 
 static EVH check_pings;
 
-static rb_bh *client_heap = NULL;
 static rb_bh *lclient_heap = NULL;
 static rb_bh *pclient_heap = NULL;
-static rb_bh *user_heap = NULL;
-static rb_bh *away_heap = NULL;
 static char current_uid[IDLEN];
 static uint32_t current_connid = 0;
 
@@ -86,11 +83,8 @@ init_client(void)
 	 * start off the check ping event ..  -- adrian
 	 * Every 30 seconds is plenty -- db
 	 */
-	client_heap = rb_bh_create(sizeof(struct Client), CLIENT_HEAP_SIZE, "client_heap");
 	lclient_heap = rb_bh_create(sizeof(struct LocalUser), LCLIENT_HEAP_SIZE, "lclient_heap");
 	pclient_heap = rb_bh_create(sizeof(struct PreClient), PCLIENT_HEAP_SIZE, "pclient_heap");
-	user_heap = rb_bh_create(sizeof(struct User), USER_HEAP_SIZE, "user_heap");
-	away_heap = rb_bh_create(AWAYLEN, AWAY_HEAP_SIZE, "away_heap");
 
 	rb_event_addish("check_pings", check_pings, NULL, 30);
 	rb_event_addish("free_exited_clients", &free_exited_clients, NULL, 4);
@@ -193,7 +187,7 @@ struct Client *
 make_client(struct Client *from)
 {
 	struct LocalUser *localClient;
-	struct Client *client_p(reinterpret_cast<Client *>(rb_bh_alloc(client_heap)));
+	struct Client *client_p = new Client;
 
 	if(from == NULL)
 	{
@@ -305,7 +299,7 @@ free_client(struct Client *client_p)
 	free_local_client(client_p);
 	free_pre_client(client_p);
 	rb_free(client_p->certfp);
-	rb_bh_free(client_heap, client_p);
+	delete client_p;
 }
 
 /*
@@ -776,14 +770,14 @@ update_client_exit_stats(struct Client *client_p)
 static void
 release_client_state(struct Client *client_p)
 {
-	if(client_p->user != NULL)
+	if (client_p->user)
+		client_p->user.reset();
+
+	if (client_p->serv)
 	{
-		free_user(client_p->user, client_p);	/* try this here */
-	}
-	if(client_p->serv)
-	{
-		if(client_p->serv->user != NULL)
-			free_user(client_p->serv->user, client_p);
+		if (client_p->serv->user)
+			client_p->serv->user.reset();
+
 		if(client_p->serv->fullcaps)
 			rb_free(client_p->serv->fullcaps);
 		rb_free(client_p->serv);
@@ -1653,9 +1647,8 @@ count_local_client_memory(size_t * count, size_t * local_client_memory_used)
 void
 count_remote_client_memory(size_t * count, size_t * remote_client_memory_used)
 {
-	size_t lcount, rcount;
+	size_t lcount(0), rcount(0);
 	rb_bh_usage(lclient_heap, &lcount, NULL, NULL, NULL);
-	rb_bh_usage(client_heap, &rcount, NULL, NULL, NULL);
 	*count = rcount - lcount;
 	*remote_client_memory_used = *count * (sizeof(void *) + sizeof(struct Client));
 }
@@ -1775,29 +1768,6 @@ show_ip_whowas(struct Whowas *whowas, struct Client *source_p)
 }
 
 /*
- * make_user
- *
- * inputs	- pointer to client struct
- * output	- pointer to struct User
- * side effects - add's an User information block to a client
- *                if it was not previously allocated.
- */
-struct User *
-make_user(struct Client *client_p)
-{
-	struct User *user;
-
-	user = client_p->user;
-	if(!user)
-	{
-		user = (struct User *) rb_bh_alloc(user_heap);
-		user->refcnt = 1;
-		client_p->user = user;
-	}
-	return user;
-}
-
-/*
  * make_server
  *
  * inputs	- pointer to client struct
@@ -1816,66 +1786,6 @@ make_server(struct Client *client_p)
 		client_p->serv = serv;
 	}
 	return client_p->serv;
-}
-
-/*
- * free_user
- *
- * inputs	- pointer to user struct
- *		- pointer to client struct
- * output	- none
- * side effects - Decrease user reference count by one and release block,
- *                if count reaches 0
- */
-void
-free_user(struct User *user, struct Client *client_p)
-{
-	free_away(client_p);
-
-	if(--user->refcnt <= 0)
-	{
-		if(user->away)
-			rb_free((char *) user->away);
-		/*
-		 * sanity check
-		 */
-		if(user->refcnt < 0 || !user->invited.empty() || !user->channel.empty())
-		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
-					     "* %p user (%s!%s@%s) %p %lu %lu %d *",
-					     client_p,
-					     client_p ? client_p->
-					     name : "<noname>",
-					     client_p->username,
-					     client_p->host,
-					     user,
-					     user->invited.size(),
-					     user->channel.size(),
-					     user->refcnt);
-			s_assert(!user->refcnt);
-			s_assert(user->invited.empty());
-			s_assert(user->channel.empty());
-		}
-
-		rb_bh_free(user_heap, user);
-	}
-}
-
-void
-allocate_away(struct Client *client_p)
-{
-	if(client_p->user->away == NULL)
-		client_p->user->away = reinterpret_cast<char *>(rb_bh_alloc(away_heap));
-}
-
-
-void
-free_away(struct Client *client_p)
-{
-	if(client_p->user != NULL && client_p->user->away != NULL) {
-		rb_bh_free(away_heap, client_p->user->away);
-		client_p->user->away = NULL;
-	}
 }
 
 void

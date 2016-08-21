@@ -125,7 +125,7 @@ h_hdl_stats_request(hook_data_int *hdata)
 	{
 		target_p = (Client *)helper_ptr->data;
 
-		if(target_p->user->away)
+		if (target_p->user->away.size())
 			continue;
 
 		count++;
@@ -186,7 +186,7 @@ h_hdl_whois(hook_data_client *hdata)
 	struct Client *source_p = hdata->client;
 	struct Client *target_p = hdata->target;
 
-	if ((target_p->umodes & UMODE_HELPOPS) && EmptyString(target_p->user->away))
+	if ((target_p->umodes & UMODE_HELPOPS) && target_p->user->away.empty())
 	{
 		sendto_one_numeric(source_p, RPL_WHOISHELPOP, form_str(RPL_WHOISHELPOP), target_p->name);
 	}

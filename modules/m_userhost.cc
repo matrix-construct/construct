@@ -76,7 +76,7 @@ m_userhost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 				rl = sprintf(response, "%s%s=%c%s@%s ",
 						target_p->name,
 						IsOper(target_p) ? "*" : "",
-						(target_p->user->away) ? '-' : '+',
+						(target_p->user->away.size())? '-' : '+',
 						target_p->username,
 						target_p->sockhost);
 			}
@@ -85,7 +85,7 @@ m_userhost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 				rl = sprintf(response, "%s%s=%c%s@%s ",
 						target_p->name,
 						IsOper(target_p) ? "*" : "",
-						(target_p->user->away) ? '-' : '+',
+						(target_p->user->away.size())? '-' : '+',
 						target_p->username, target_p->host);
 			}
 

@@ -990,13 +990,12 @@ register_client(struct Client *client_p, struct Client *server,
 		const char *nick, time_t newts, int parc, const char *parv[])
 {
 	struct Client *source_p;
-	struct User *user;
 	struct nd_entry *nd;
 	const char *m;
 	int flag;
 
 	source_p = make_client(client_p);
-	user = make_user(source_p);
+	source_p->user.reset(new user);
 	rb_dlinkAddTail(source_p, &source_p->node, &global_client_list);
 
 	source_p->hopcount = atoi(parv[2]);
@@ -1020,7 +1019,7 @@ register_client(struct Client *client_p, struct Client *server,
 				SetDynSpoof(source_p);
 		}
 		if (strcmp(parv[10], "*"))
-			rb_strlcpy(source_p->user->suser, parv[10], sizeof(source_p->user->suser));
+			source_p->user->suser = parv[10];
 	}
 	else if(parc == 10)
 	{
@@ -1094,7 +1093,7 @@ register_client(struct Client *client_p, struct Client *server,
 
 	call_hook(h_new_remote_user, source_p);
 
-	introduce_client(client_p, source_p, user, nick, parc == 12);
+	introduce_client(client_p, source_p, *source_p->user, nick, parc == 12);
 }
 
 /* Check if we can do SAVE. target_p can be a client to save or a

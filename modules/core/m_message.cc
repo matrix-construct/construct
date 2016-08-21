@@ -787,9 +787,9 @@ msg_client(enum message_type msgtype,
 		return;
 	}
 
-	if(MyConnect(source_p) && (msgtype != MESSAGE_TYPE_NOTICE) && target_p->user && target_p->user->away)
+	if(MyConnect(source_p) && (msgtype != MESSAGE_TYPE_NOTICE) && target_p->user && target_p->user->away.size())
 		sendto_one_numeric(source_p, RPL_AWAY, form_str(RPL_AWAY),
-				   target_p->name, target_p->user->away);
+				   target_p->name, target_p->user->away.c_str());
 
 	if(MyClient(target_p))
 	{
@@ -818,7 +818,7 @@ msg_client(enum message_type msgtype,
 
 		/* XXX Controversial? allow opers always to send through a +g */
 		if(!IsServer(source_p) && (IsSetCallerId(target_p) ||
-					(IsSetRegOnlyMsg(target_p) && !source_p->user->suser[0])))
+					(IsSetRegOnlyMsg(target_p) && source_p->user->suser.empty())))
 		{
 			/* Here is the anti-flood bot/spambot code -db */
 			if(accept_message(source_p, target_p) || IsOper(source_p))
@@ -829,7 +829,7 @@ msg_client(enum message_type msgtype,
 					   source_p->username,
 					   source_p->host, cmdname[msgtype], target_p->name, text);
 			}
-			else if (IsSetRegOnlyMsg(target_p) && !source_p->user->suser[0])
+			else if (IsSetRegOnlyMsg(target_p) && source_p->user->suser.empty())
 			{
 				if (msgtype != MESSAGE_TYPE_NOTICE)
 					sendto_one_numeric(source_p, ERR_NONONREG,

@@ -292,17 +292,17 @@ chan::send_join(chan &chan,
 	                                     client.username,
 	                                     client.host,
 	                                     chan.name.c_str(),
-	                                     EmptyString(client.user->suser)? "*" : client.user->suser,
+	                                     client.user->suser.empty()? "*" : client.user->suser.c_str(),
 	                                     client.info);
 
 	// Send away message to away-notify enabled clients.
-	if (client.user->away)
+	if (!client.user->away.empty())
 		sendto_channel_local_with_capability_butone(&client, ALL_MEMBERS, CLICAP_AWAY_NOTIFY, NOCAPS, &chan,
 		                                            ":%s!%s@%s AWAY :%s",
 		                                            client.name,
 		                                            client.username,
 		                                            client.host,
-		                                            client.user->away);
+		                                            client.user->away.c_str());
 }
 
 chan::membership &
@@ -817,7 +817,7 @@ chan::can_join(client *source_p, chan *chptr, const char *key, const char **forw
 
 	if(chptr->mode.limit && size(chptr->members) >= ulong(chptr->mode.limit))
 		i = ERR_CHANNELISFULL;
-	if(chptr->mode.mode & mode::REGONLY && EmptyString(source_p->user->suser))
+	if(chptr->mode.mode & mode::REGONLY && source_p->user->suser.empty())
 		i = ERR_NEEDREGGEDNICK;
 	/* join throttling stuff --nenolod */
 	else if(chptr->mode.join_num > 0 && chptr->mode.join_time > 0)

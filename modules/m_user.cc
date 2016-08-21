@@ -78,7 +78,7 @@ do_local_user(struct Client *client_p, struct Client *source_p,
 	s_assert(NULL != source_p);
 	s_assert(source_p->username != username);
 
-	make_user(source_p);
+	source_p->user.reset(new user);
 
 	source_p->flags |= FLAGS_SENTUSER;
 

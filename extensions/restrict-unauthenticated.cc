@@ -22,7 +22,7 @@ hack_channel_access(void *vdata)
 	if (!MyClient(data->client))
 		return;
 
-	if (EmptyString(data->client->user->suser))
+	if (data->client->user->suser.empty())
 		data->approved = 0;
 }
 

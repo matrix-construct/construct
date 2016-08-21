@@ -53,7 +53,6 @@ struct Whowas;
 struct DNSReply;
 struct Listener;
 struct Client;
-struct User;
 struct Server;
 struct LocalUser;
 struct PreClient;
@@ -63,22 +62,19 @@ struct ws_ctl;
 
 typedef int SSL_OPEN_CB(struct Client *, int status);
 
-/*
- * Client structures
- */
-struct User
+struct user
 {
 	std::map<chan::chan *, chan::membership *> channel;
 	std::set<chan::chan *> invited;
-	char *away;		/* pointer to away message */
-	int refcnt;		/* Number of times this block is referenced */
+	std::string away;
+	std::string suser;
 
-	char suser[NICKLEN+1];
+	user(const std::string &suser = {}): suser(suser) {}
 };
 
 struct Server
 {
-	struct User *user;	/* who activated this connection */
+	std::unique_ptr<struct user> user;   // who activated this connection
 	char by[NICKLEN];
 	rb_dlink_list servers;
 	rb_dlink_list users;
@@ -101,7 +97,7 @@ struct Client
 {
 	rb_dlink_node node;
 	rb_dlink_node lnode;
-	struct User *user;	/* ...defined, if this is a User */
+	std::unique_ptr<struct user> user;    // ...defined, if this is a user
 	struct Server *serv;	/* ...defined, if this is a server */
 	struct Client *servptr;	/* Points to server this Client is on */
 	struct Client *from;	/* == self, if Local Client, *NEVER* NULL! */
@@ -621,15 +617,10 @@ extern int show_ip(struct Client *source_p, struct Client *target_p);
 extern int show_ip_conf(struct ConfItem *aconf, struct Client *source_p);
 extern int show_ip_whowas(struct Whowas *whowas, struct Client *source_p);
 
-extern void free_user(struct User *, struct Client *);
-extern struct User *make_user(struct Client *);
 extern struct Server *make_server(struct Client *);
 extern void close_connection(struct Client *);
 extern void init_uid(void);
 extern char *generate_uid(void);
-
-void allocate_away(struct Client *);
-void free_away(struct Client *);
 
 uint32_t connid_get(struct Client *client_p);
 void connid_put(uint32_t id);

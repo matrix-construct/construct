@@ -320,7 +320,7 @@ int
 register_local_user(struct Client *client_p, struct Client *source_p)
 {
 	struct ConfItem *aconf, *xconf;
-	struct User *user = source_p->user;
+	const auto user(source_p->user.get());
 	char tmpstr2[BUFSIZE];
 	char ipaddr[HOSTIPLEN];
 	char myusername[USERLEN+1];
@@ -452,7 +452,7 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 		}
 	}
 
-	if(IsNeedSasl(aconf) && !*user->suser)
+	if(IsNeedSasl(aconf) && user->suser.empty())
 	{
 		ServerStats.is_ref++;
 		sendto_one_notice(source_p, ":*** Notice -- You need to identify via SASL to use this server");
@@ -637,7 +637,7 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 
 	free_pre_client(source_p);
 
-	introduce_client(client_p, source_p, user, source_p->name, 1);
+	introduce_client(client_p, source_p, *user, source_p->name, 1);
 	return 0;
 }
 
@@ -651,7 +651,7 @@ register_local_user(struct Client *client_p, struct Client *source_p)
  *		  from a remote connect.
  */
 void
-introduce_client(struct Client *client_p, struct Client *source_p, struct User *user, const char *nick, int use_euid)
+introduce_client(struct Client *client_p, struct Client *source_p, user &user, const char *nick, int use_euid)
 {
 	char ubuf[BUFSIZE];
 	struct Client *identifyservice_p;
@@ -682,7 +682,7 @@ introduce_client(struct Client *client_p, struct Client *source_p, struct User *
 				IsIPSpoof(source_p) ? "0" : source_p->sockhost,
 				source_p->id,
 				IsDynSpoof(source_p) ? source_p->orighost : "*",
-				EmptyString(source_p->user->suser) ? "*" : source_p->user->suser,
+				source_p->user->suser.empty()? "*" : source_p->user->suser.c_str(),
 				source_p->info);
 
 	sendto_server(client_p, NULL, CAP_TS6, use_euid ? CAP_EUID : NOCAPS,
@@ -705,10 +705,10 @@ introduce_client(struct Client *client_p, struct Client *source_p, struct User *
 				use_id(source_p), source_p->orighost);
 	}
 
-	if (!EmptyString(source_p->user->suser))
+	if (!source_p->user->suser.empty())
 	{
 		sendto_server(client_p, NULL, CAP_TS6, use_euid ? CAP_EUID : NOCAPS, ":%s ENCAP * LOGIN %s",
-				use_id(source_p), source_p->user->suser);
+				use_id(source_p), source_p->user->suser.c_str());
 	}
 
 	if(MyConnect(source_p) && source_p->localClient->passwd)
@@ -1523,7 +1523,7 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 								    ":%s!%s@%s JOIN %s", nick, user, host, chan.name.c_str());
 			sendto_channel_local_with_capability_butone(target_p, chan::ALL_MEMBERS, CLICAP_EXTENDED_JOIN, CLICAP_CHGHOST, &chan,
 								    ":%s!%s@%s JOIN %s %s :%s", nick, user, host, chan.name.c_str(),
-								    EmptyString(target_p->user->suser) ? "*" : target_p->user->suser,
+								    target_p->user->suser.empty()? "*" : target_p->user->suser.c_str(),
 								    target_p->info);
 
 			if(*mode)
@@ -1534,10 +1534,10 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 		}
 
 		/* Resend away message to away-notify enabled clients. */
-		if (target_p->user->away)
+		if (!target_p->user->away.empty())
 			sendto_common_channels_local_butone(target_p, CLICAP_AWAY_NOTIFY, CLICAP_CHGHOST, ":%s!%s@%s AWAY :%s",
 							    nick, user, host,
-							    target_p->user->away);
+							    target_p->user->away.c_str());
 
 		sendto_common_channels_local_butone(target_p, CLICAP_CHGHOST, NOCAPS,
 						    ":%s!%s@%s CHGHOST %s %s",

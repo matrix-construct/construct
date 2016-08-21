@@ -142,7 +142,7 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	 * for +l/+j just check if the mode is set, this varies over time
 	 */
 	if(chptr->mode.mode & chan::mode::INVITEONLY ||
-			(chptr->mode.mode & chan::mode::REGONLY && EmptyString(target_p->user->suser)) ||
+			(chptr->mode.mode & chan::mode::REGONLY && target_p->user->suser.empty()) ||
 			chptr->mode.limit || chptr->mode.join_num)
 		store_invite = 1;
 
@@ -159,9 +159,9 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		sendto_one(source_p, form_str(RPL_INVITING),
 			   me.name, source_p->name,
 			   target_p->name, parv[2]);
-		if(target_p->user->away)
+		if(target_p->user->away.size())
 			sendto_one_numeric(source_p, RPL_AWAY, form_str(RPL_AWAY),
-					   target_p->name, target_p->user->away);
+					   target_p->name, target_p->user->away.c_str());
 	}
 	/* invite timestamp */
 	else if(parc > 3 && !EmptyString(parv[3]))

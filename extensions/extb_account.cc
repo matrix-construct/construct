@@ -37,7 +37,7 @@ static int eb_account(const char *data, struct Client *client_p,
 	(void)chptr;
 	/* $a alone matches any logged in user */
 	if (data == NULL)
-		return EmptyString(client_p->user->suser) ? NOMATCH : MATCH;
+		return client_p->user->suser.empty()? NOMATCH : MATCH;
 	/* $a:MASK matches users logged in under matching account */
 	return match(data, client_p->user->suser) ? MATCH : NOMATCH;
 }

@@ -288,9 +288,9 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 			   target_p->name, target_p->servptr->name,
 			   target_p->servptr->info);
 
-	if(target_p->user->away)
+	if(target_p->user->away.size())
 		sendto_one_numeric(source_p, RPL_AWAY, form_str(RPL_AWAY),
-				   target_p->name, target_p->user->away);
+				   target_p->name, target_p->user->away.c_str());
 
 	if(IsOper(target_p) && (!ConfigFileEntry.hide_opers_in_whois || IsOper(source_p)))
 	{
