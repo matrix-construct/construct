@@ -33,28 +33,28 @@ using namespace ircd;
 static const char xline_desc[] =
 	"Provides management of GECOS bans via (UN)XLINE command";
 
-static void mo_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static void ms_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static void me_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static void mo_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
+static void mo_xline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
+static void ms_xline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
+static void me_xline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
+static void mo_unxline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc,
 		      const char *parv[]);
-static void ms_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
+static void ms_unxline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc,
 		      const char *parv[]);
-static void me_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
+static void me_unxline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc,
 		      const char *parv[]);
 
-static bool valid_xline(struct Client *, const char *, const char *);
-static void apply_xline(struct Client *client_p, const char *name,
+static bool valid_xline(client::client *, const char *, const char *);
+static void apply_xline(client::client *client_p, const char *name,
 			const char *reason, int temp_time, bool propagated);
-static void propagate_xline(struct Client *source_p, const char *target,
+static void propagate_xline(client::client *source_p, const char *target,
 			    int temp_time, const char *name, const char *type, const char *reason);
-static void cluster_xline(struct Client *source_p, int temp_time,
+static void cluster_xline(client::client *source_p, int temp_time,
 			  const char *name, const char *reason);
 
-static void handle_remote_xline(struct Client *source_p, int temp_time,
+static void handle_remote_xline(client::client *source_p, int temp_time,
 				const char *name, const char *reason);
-static void handle_remote_unxline(struct Client *source_p, const char *name);
-static void remove_xline(struct Client *source_p, const char *name,
+static void handle_remote_unxline(client::client *source_p, const char *name);
+static void remove_xline(client::client *source_p, const char *name,
 			 bool propagated);
 
 struct Message xline_msgtab = {
@@ -78,7 +78,7 @@ DECLARE_MODULE_AV2(xline, NULL, NULL, xline_clist, NULL, NULL, NULL, NULL, xline
  * parv[3] - reason
  */
 static void
-mo_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_xline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	struct ConfItem *aconf;
 	const char *name;
@@ -163,7 +163,7 @@ mo_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
  * handles a remote xline
  */
 static void
-ms_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_xline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	/* parv[0]  parv[1]      parv[2]  parv[3]  parv[4]
 	 * oper     target serv  xline    type     reason
@@ -181,7 +181,7 @@ ms_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 }
 
 static void
-me_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_xline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	/* time name type :reason */
 	if(!IsPerson(source_p))
@@ -191,7 +191,7 @@ me_xline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 }
 
 static void
-handle_remote_xline(struct Client *source_p, int temp_time, const char *name, const char *reason)
+handle_remote_xline(client::client *source_p, int temp_time, const char *name, const char *reason)
 {
 	struct ConfItem *aconf;
 
@@ -221,7 +221,7 @@ handle_remote_xline(struct Client *source_p, int temp_time, const char *name, co
  * side effects - checks the xline for validity, erroring if needed
  */
 static bool
-valid_xline(struct Client *source_p, const char *gecos, const char *reason)
+valid_xline(client::client *source_p, const char *gecos, const char *reason)
 {
 	if(EmptyString(reason))
 	{
@@ -243,7 +243,7 @@ valid_xline(struct Client *source_p, const char *gecos, const char *reason)
 }
 
 void
-apply_xline(struct Client *source_p, const char *name, const char *reason, int temp_time, bool propagated)
+apply_xline(client::client *source_p, const char *name, const char *reason, int temp_time, bool propagated)
 {
 	struct ConfItem *aconf;
 
@@ -306,11 +306,11 @@ apply_xline(struct Client *source_p, const char *name, const char *reason, int t
 	}
 
 	rb_dlinkAddAlloc(aconf, &xline_conf_list);
-	check_xlines();
+	client::check_xlines();
 }
 
 static void
-propagate_xline(struct Client *source_p, const char *target,
+propagate_xline(client::client *source_p, const char *target,
 		int temp_time, const char *name, const char *type, const char *reason)
 {
 	if(!temp_time)
@@ -327,7 +327,7 @@ propagate_xline(struct Client *source_p, const char *target,
 }
 
 static void
-cluster_xline(struct Client *source_p, int temp_time, const char *name, const char *reason)
+cluster_xline(client::client *source_p, int temp_time, const char *name, const char *reason)
 {
 	struct remote_conf *shared_p;
 	rb_dlink_node *ptr;
@@ -362,7 +362,7 @@ cluster_xline(struct Client *source_p, int temp_time, const char *name, const ch
  * parv[1] - thing to unxline
  */
 static void
-mo_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_unxline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	bool propagated = true;
 
@@ -398,7 +398,7 @@ mo_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
  * handles a remote unxline
  */
 static void
-ms_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_unxline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	/* parv[0]  parv[1]        parv[2]
 	 * oper     target server  gecos
@@ -415,7 +415,7 @@ ms_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 }
 
 static void
-me_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_unxline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	/* name */
 	if(!IsPerson(source_p))
@@ -425,7 +425,7 @@ me_unxline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 }
 
 static void
-handle_remote_unxline(struct Client *source_p, const char *name)
+handle_remote_unxline(client::client *source_p, const char *name)
 {
 	if(!find_shared_conf(source_p->username, source_p->host,
 			     source_p->servptr->name, SHARED_UNXLINE))
@@ -435,7 +435,7 @@ handle_remote_unxline(struct Client *source_p, const char *name)
 }
 
 static void
-remove_xline(struct Client *source_p, const char *name, bool propagated)
+remove_xline(client::client *source_p, const char *name, bool propagated)
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;

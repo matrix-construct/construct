@@ -27,8 +27,8 @@ using namespace ircd;
 static const char connect_desc[] =
 	"Provides the CONNECT command to introduce servers to the network";
 
-static void mo_connect(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_connect(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_connect(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_connect(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message connect_msgtab = {
 	"CONNECT", 0, 0, 0, 0,
@@ -50,12 +50,12 @@ DECLARE_MODULE_AV2(connect, NULL, NULL, connect_clist, NULL, NULL, NULL, NULL, c
  *      parv[3] = remote server
  */
 static void
-mo_connect(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_connect(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	int port;
 	int tmpport;
 	struct server_conf *server_p;
-	struct Client *target_p;
+	client::client *target_p;
 
 	/* always privileged with handlers */
 
@@ -151,12 +151,12 @@ mo_connect(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
  *      parv[3] = remote server
  */
 static void
-ms_connect(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_connect(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	int port;
 	int tmpport;
 	struct server_conf *server_p;
-	struct Client *target_p;
+	client::client *target_p;
 
 	if(hunt_server(client_p, source_p, ":%s CONNECT %s %s :%s", 3, parc, parv) != HUNTED_ISME)
 		return;

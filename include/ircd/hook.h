@@ -47,21 +47,21 @@ void call_hook(int id, void *arg);
 
 typedef struct
 {
-	struct Client *client;
+	client::client *client;
 	void *arg1;
 	void *arg2;
 } hook_data;
 
 typedef struct
 {
-	struct Client *client;
+	client::client *client;
 	const void *arg1;
 	const void *arg2;
 } hook_cdata;
 
 typedef struct
 {
-	struct Client *client;
+	client::client *client;
 	const void *arg1;
 	int arg2;
 	int result;
@@ -69,32 +69,32 @@ typedef struct
 
 typedef struct
 {
-	struct Client *client;
-	struct Client *target;
+	client::client *client;
+	client::client *target;
 	chan::chan *chptr;
 	int approved;
 } hook_data_client;
 
 typedef struct
 {
-	struct Client *client;
+	client::client *client;
 	chan::chan *chptr;
 	int approved;
 } hook_data_channel;
 
 typedef struct
 {
-	struct Client *client;
+	client::client *client;
 	chan::chan *chptr;
 	char *key;
 } hook_data_channel_activity;
 
 typedef struct
 {
-	struct Client *client;
+	client::client *client;
 	chan::chan *chptr;
 	chan::membership *msptr;
-	struct Client *target;
+	client::client *target;
 	int approved;
 	int dir;
 	const char *modestr;
@@ -102,22 +102,22 @@ typedef struct
 
 typedef struct
 {
-	struct Client *client;
-	struct Client *target;
+	client::client *client;
+	client::client *target;
 	int approved;
 } hook_data_client_approval;
 
 typedef struct
 {
-	struct Client *local_link; /* local client originating this, or NULL */
-	struct Client *target; /* dying client */
-	struct Client *from; /* causing client (could be &me or target) */
+	client::client *local_link; /* local client originating this, or NULL */
+	client::client *target; /* dying client */
+	client::client *from; /* causing client (could be &me or target) */
 	const char *comment;
 } hook_data_client_exit;
 
 typedef struct
 {
-	struct Client *client;
+	client::client *client;
 	unsigned int oldumodes;
 	unsigned int oldsnomask;
 } hook_data_umode_changed;
@@ -132,7 +132,7 @@ enum message_type {
 typedef struct
 {
 	enum message_type msgtype;
-	struct Client *source_p;
+	client::client *source_p;
 	chan::chan *chptr;
 	const char *text;
 	int approved;
@@ -142,8 +142,8 @@ typedef struct
 typedef struct
 {
 	enum message_type msgtype;
-	struct Client *source_p;
-	struct Client *target_p;
+	client::client *source_p;
+	client::client *target_p;
 	const char *text;
 	int approved;
 } hook_data_privmsg_user;

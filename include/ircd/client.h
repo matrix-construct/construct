@@ -25,12 +25,84 @@
 
 #pragma once
 #define HAVE_IRCD_CLIENT_H
-
 #ifdef __cplusplus
-namespace ircd {
 
-/* other structs */
-struct Blacklist;
+namespace ircd
+{
+	namespace client
+	{
+		struct client;
+		struct LocalUser;
+		struct PreClient;
+		struct ListClient;
+	}
+
+	namespace chan
+	{
+		struct chan;
+		struct membership;
+	}
+
+	struct ConfItem;
+	struct Whowas;
+	struct DNSReply;
+	struct Listener;
+	struct Blacklist;
+	struct PrivilegeSet;
+	struct _ssl_ctl;
+	struct ev_ctl;
+	struct ws_ctl;
+	struct scache_entry;
+	struct server_conf;
+}
+
+
+namespace ircd   {
+namespace client {
+namespace user
+{
+	using invites_t = std::set<chan::chan *>;
+	using chans_t = std::map<chan::chan *, chan::membership *>;
+
+	struct user;
+
+	std::string &away(user &);
+	std::string &suser(user &);
+	invites_t &invites(user &);
+	chans_t &chans(user &);
+}
+} // namespace client
+} // namespace ircd
+
+
+namespace ircd   {
+namespace client {
+namespace serv
+{
+	using list = std::list<struct client *>;
+	using user::user;
+
+	struct serv;
+
+	list &users(serv &);
+	list &servers(serv &);
+
+	// who activated this connection
+	std::shared_ptr<struct user> &user(serv &);
+	std::string &by(serv &);
+
+	// capabilities bit-field
+	int &caps(serv &);
+	std::string &fullcaps(serv &);
+
+	struct scache_entry *&nameinfo(serv &);
+}
+} // namespace client
+} // namespace ircd
+
+
+namespace ircd   {
+namespace client {
 
 /* we store ipv6 ips for remote clients, so this needs to be v6 always */
 #define HOSTIPLEN	53	/* sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255.ipv6") */
@@ -45,44 +117,6 @@ struct Blacklist;
 #define TGCHANGE_INITIAL	10	/* initial free targets (normal) */
 #define TGCHANGE_INITIAL_LOW	4	/* initial free targets (possible spambot) */
 
-/*
- * pre declare structs
- */
-struct ConfItem;
-struct Whowas;
-struct DNSReply;
-struct Listener;
-struct Client;
-struct Server;
-struct LocalUser;
-struct PreClient;
-struct ListClient;
-struct scache_entry;
-struct ws_ctl;
-
-typedef int SSL_OPEN_CB(struct Client *, int status);
-
-struct user
-{
-	std::map<chan::chan *, chan::membership *> channel;
-	std::set<chan::chan *> invited;
-	std::string away;
-	std::string suser;
-
-	user(const std::string &suser = {}): suser(suser) {}
-};
-
-struct Server
-{
-	std::unique_ptr<struct user> user;   // who activated this connection
-	char by[NICKLEN];
-	rb_dlink_list servers;
-	rb_dlink_list users;
-	int caps;		/* capabilities bit-field */
-	char *fullcaps;
-	struct scache_entry *nameinfo;
-};
-
 struct ZipStats
 {
 	unsigned long long in;
@@ -93,14 +127,14 @@ struct ZipStats
 	double out_ratio;
 };
 
-struct Client
+struct client
 {
 	rb_dlink_node node;
-	rb_dlink_node lnode;
-	std::unique_ptr<struct user> user;    // ...defined, if this is a user
-	struct Server *serv;	/* ...defined, if this is a server */
-	struct Client *servptr;	/* Points to server this Client is on */
-	struct Client *from;	/* == self, if Local Client, *NEVER* NULL! */
+	serv::list::iterator lnode;
+	std::shared_ptr<user::user> user;   // ...defined, if this is a user
+	std::shared_ptr<serv::serv> serv;   // ...defined, if this is a server
+	struct client *servptr;	/* Points to server this Client is on */
+	struct client *from;	/* == self, if Local Client, *NEVER* NULL! */
 
 	rb_dlink_list whowas_clist;
 
@@ -152,7 +186,12 @@ struct Client
 
 	time_t large_ctcp_sent; /* ctcp to large group sent, relax flood checks */
 	char *certfp; /* client certificate fingerprint */
+
+	client();
+	~client() noexcept;
 };
+
+typedef int SSL_OPEN_CB(client *, int status);
 
 struct LocalUser
 {
@@ -283,6 +322,7 @@ struct LocalUser
 	time_t sasl_next_retry;
 };
 
+
 #define AUTHC_F_DEFERRED 0x01
 #define AUTHC_F_COMPLETE 0x02
 
@@ -337,7 +377,7 @@ struct ListClient
 #define IsServer(x)             ((x)->status == STAT_SERVER)
 
 inline bool
-is_client(const Client &client)
+is_client(const client &client)
 {
 	return client.status == STAT_CLIENT;
 }
@@ -468,13 +508,13 @@ is_client(const Client &client)
 #define MyClient(x)             (MyConnect(x) && IsClient(x))
 
 inline bool
-my(const Client &client)
+my(const client &client)
 {
 	return MyClient(&client);
 }
 
 inline bool
-is_person(const Client &client)
+is_person(const client &client)
 {
 	return IsPerson(&client);
 }
@@ -587,44 +627,58 @@ extern void check_dlines(void);
 extern void check_xlines(void);
 extern void resv_nick_fnc(const char *mask, const char *reason, int temp_time);
 
-extern const char *get_client_name(struct Client *client, int show_ip);
-extern const char *log_client_name(struct Client *, int);
-extern int is_remote_connect(struct Client *);
-extern void init_client(void);
-extern struct Client *make_client(struct Client *from);
-extern void free_pre_client(struct Client *client);
-extern void free_client(struct Client *client);
+extern const char *get_client_name(client *client, int show_ip);
+extern const char *log_client_name(client *, int);
+extern int is_remote_connect(client *);
+void init(void);
+extern client *make_client(client *from);
+extern void free_pre_client(client *client);
+extern void free_client(client *client);
 
-extern int exit_client(struct Client *, struct Client *, struct Client *, const char *);
+extern int exit_client(client *, client *, client *, const char *);
 
-extern void error_exit_client(struct Client *, int);
+extern void error_exit_client(client *, int);
 
 extern void count_local_client_memory(size_t * count, size_t * memory);
 extern void count_remote_client_memory(size_t * count, size_t * memory);
 
 extern int clean_nick(const char *, int loc_client);
 
-extern struct Client *find_chasing(struct Client *, const char *, int *);
-extern struct Client *find_person(const char *);
-extern struct Client *find_named_person(const char *);
-extern struct Client *next_client(struct Client *, const char *);
+extern client *find_chasing(client *, const char *, int *);
+extern client *find_person(const char *);
+
+extern client *find_named_person(const char *);
+client *find_named_person(const std::string &);
+
+extern client *next_client(client *, const char *);
 
 #define accept_message(s, t) ((s) == (t) || (rb_dlinkFind((s), &((t)->localClient->allow_list))))
-extern void del_all_accepts(struct Client *client_p);
+extern void del_all_accepts(client *client_p);
 
-extern void dead_link(struct Client *client_p, int sendqex);
-extern int show_ip(struct Client *source_p, struct Client *target_p);
-extern int show_ip_conf(struct ConfItem *aconf, struct Client *source_p);
-extern int show_ip_whowas(struct Whowas *whowas, struct Client *source_p);
+extern void dead_link(client *client_p, int sendqex);
+extern int show_ip(client *source_p, client *target_p);
+extern int show_ip_conf(struct ConfItem *aconf, client *source_p);
+extern int show_ip_whowas(struct Whowas *whowas, client *source_p);
 
-extern struct Server *make_server(struct Client *);
-extern void close_connection(struct Client *);
+extern void close_connection(client *);
 extern void init_uid(void);
 extern char *generate_uid(void);
 
-uint32_t connid_get(struct Client *client_p);
+uint32_t connid_get(client *client_p);
 void connid_put(uint32_t id);
-void client_release_connids(struct Client *client_p);
+void client_release_connids(client *client_p);
+
+user::user &make_user(client &, const std::string &login = {});
+serv::serv &make_serv(client &);
+
+}      // namespace client
+
+using client::ZipStats;
+using client::LocalUser;
+using client::ListClient;
+
+client::user::user &user(client::client &client);
+client::serv::serv &serv(client::client &client);
 
 }      // namespace ircd
 #endif // __cplusplus

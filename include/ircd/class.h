@@ -29,7 +29,6 @@
 namespace ircd {
 
 struct ConfItem;
-struct Client;
 struct _patricia_tree_t;
 
 struct Class
@@ -87,16 +86,16 @@ void add_class(struct Class *);
 
 struct Class *make_class(void);
 
-extern long get_sendq(struct Client *);
+extern long get_sendq(client::client *);
 extern int get_con_freq(struct Class *);
 extern struct Class *find_class(const char *);
-extern const char *get_client_class(struct Client *);
-extern int get_client_ping(struct Client *);
+extern const char *get_client_class(client::client *);
+extern int get_client_ping(client::client *);
 extern void check_class(void);
 extern void initclass(void);
 extern void free_class(struct Class *);
 extern void fix_class(struct ConfItem *, struct ConfItem *);
-extern void report_classes(struct Client *);
+extern void report_classes(client::client *);
 
 }      // namespace ircd
 #endif // __cplusplus

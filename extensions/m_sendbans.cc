@@ -34,7 +34,7 @@ using namespace ircd;
 static const char sendbands_desc[] =
 	"Adds the ability to send all permanent RESVs and XLINEs to given server";
 
-static void mo_sendbans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void mo_sendbans(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
 
 struct Message sendbans_msgtab = {
 	"SENDBANS", 0, 0, 0, 0,
@@ -73,13 +73,13 @@ static const char *expand_xline(const char *mask)
 }
 
 static void
-mo_sendbans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_sendbans(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
 	int count;
 	const char *target, *mask2;
-	struct Client *server_p;
+	client::client *server_p;
 	struct rb_radixtree_iteration_state state;
 
 	if (!IsOperRemoteBan(source_p))
@@ -105,7 +105,7 @@ mo_sendbans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 	count = 0;
 	RB_DLINK_FOREACH(ptr, global_serv_list.head)
 	{
-		server_p = (Client *)ptr->data;
+		server_p = (client::client *)ptr->data;
 		if (IsMe(server_p))
 			continue;
 		if (match(target, server_p->name))

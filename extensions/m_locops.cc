@@ -27,9 +27,9 @@ using namespace ircd;
 static const char locops_desc[] =
 	"Provides the LOCOPS command to send a message to all local operators";
 
-static void m_locops(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_locops(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void me_locops(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_locops(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_locops(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void me_locops(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message locops_msgtab = {
 	"LOCOPS", 0, 0, 0, 0,
@@ -46,7 +46,7 @@ DECLARE_MODULE_AV2(locops, NULL, NULL, locops_clist, NULL, NULL, NULL, NULL, loc
  *      parv[1] = message text
  */
 static void
-m_locops(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_locops(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	sendto_wallops_flags(UMODE_LOCOPS, source_p, "LOCOPS - %s", parv[1]);
 
@@ -56,7 +56,7 @@ m_locops(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 }
 
 static void
-ms_locops(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_locops(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	/* source_p  parv[1]      parv[2]
 	 * oper      target serv  message
@@ -72,7 +72,7 @@ ms_locops(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 }
 
 static void
-me_locops(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+me_locops(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 		int parc, const char *parv[])
 {
 	if(!IsPerson(source_p))

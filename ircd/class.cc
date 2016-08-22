@@ -80,7 +80,7 @@ get_conf_ping(struct ConfItem *aconf)
  * side effects - NONE
  */
 const char *
-get_client_class(struct Client *target_p)
+get_client_class(client::client *target_p)
 {
 	const char *retc = "unknown";
 
@@ -114,7 +114,7 @@ get_client_class(struct Client *target_p)
  * side effects - NONE
  */
 int
-get_client_ping(struct Client *target_p)
+get_client_ping(client::client *target_p)
 {
 	int ping = 0;
 
@@ -269,7 +269,7 @@ initclass()
  * side effects	- class report is done to this client
  */
 void
-report_classes(struct Client *source_p)
+report_classes(client::client *source_p)
 {
 	struct Class *cltmp;
 	rb_dlink_node *ptr;
@@ -306,7 +306,7 @@ report_classes(struct Client *source_p)
  * side effects	- NONE
  */
 long
-get_sendq(struct Client *client_p)
+get_sendq(client::client *client_p)
 {
 	if(client_p == NULL || IsMe(client_p))
 		return DEFAULT_SENDQ;

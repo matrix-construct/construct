@@ -52,8 +52,8 @@ extern ircd::capability::index cli_capindex;      //TODO: namespace
 #define CLICAP_FLAGS_REQACK    0x002
 
 struct ClientCapability {
-	bool (*visible)(struct Client *);		/* whether or not to display the capability.  set to NULL or true return value = displayed */
-	const char *(*data)(struct Client *);		/* any custom data for the capability.  set to NULL or return NULL = no data */
+	bool (*visible)(client::client *);		/* whether or not to display the capability.  set to NULL or true return value = displayed */
+	const char *(*data)(client::client *);		/* any custom data for the capability.  set to NULL or return NULL = no data */
 	unsigned int flags;
 };
 
@@ -130,17 +130,17 @@ extern int refresh_user_links;
 
 extern void init_builtin_capabs(void);
 
-extern int hunt_server(struct Client *client_pt,
-		       struct Client *source_pt,
+extern int hunt_server(client::client *client_pt,
+		       client::client *source_pt,
 		       const char *command, int server, int parc, const char **parv);
-extern void send_capabilities(struct Client *, unsigned int);
-extern const char *show_capabilities(struct Client *client);
+extern void send_capabilities(client::client *, unsigned int);
+extern const char *show_capabilities(client::client *client);
 extern void try_connections(void *unused);
 
-extern int check_server(const char *name, struct Client *server);
-extern int server_estab(struct Client *client_p);
+extern int check_server(const char *name, client::client *server);
+extern int server_estab(client::client *client_p);
 
-extern int serv_connect(struct server_conf *, struct Client *);
+extern int serv_connect(struct server_conf *, client::client *);
 
 }      // namespace ircd
 #endif // __cplusplus

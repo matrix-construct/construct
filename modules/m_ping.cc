@@ -27,8 +27,8 @@ using namespace ircd;
 static const char ping_desc[] =
 	"Provides the PING command to ensure a client or server is still alive";
 
-static void m_ping(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_ping(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_ping(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_ping(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message ping_msgtab = {
 	"PING", 0, 0, 0, 0,
@@ -45,9 +45,9 @@ DECLARE_MODULE_AV2(ping, NULL, NULL, ping_clist, NULL, NULL, NULL, NULL, ping_de
 **      parv[2] = destination
 */
 static void
-m_ping(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_ping(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 	const char *destination;
 
 	destination = parv[2];	/* Will get NULL or pointer (parc >= 2!!) */
@@ -74,9 +74,9 @@ m_ping(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 }
 
 static void
-ms_ping(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_ping(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 	const char *destination;
 
 	destination = parv[2];	/* Will get NULL or pointer (parc >= 2!!) */

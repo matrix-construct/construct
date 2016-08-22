@@ -31,8 +31,8 @@ using namespace ircd;
 
 static const char ban_desc[] = "Provides the TS6 BAN command for propagating network-wide bans";
 
-static void m_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static void ms_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void m_ban(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
+static void ms_ban(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
 
 struct Message ban_msgtab = {
 	"BAN", 0, 0, 0, 0,
@@ -44,7 +44,7 @@ mapi_clist_av1 ban_clist[] =  { &ban_msgtab, NULL };
 DECLARE_MODULE_AV2(ban, NULL, NULL, ban_clist, NULL, NULL, NULL, NULL, ban_desc);
 
 static void
-m_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_ban(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	sendto_one_notice(source_p, ":The BAN command is not user-accessible.");
 	sendto_one_notice(source_p, ":To ban a user from a channel, see /QUOTE HELP CMODE");
@@ -64,7 +64,7 @@ m_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
  * parv[8] - reason (possibly with |operreason)
  */
 static void
-ms_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_ban(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	rb_dlink_node *ptr;
 	struct ConfItem *aconf;
@@ -276,14 +276,14 @@ ms_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 				{
 					if(kline_queued == 0)
 					{
-						rb_event_addonce("check_klines", check_klines_event, NULL,
+						rb_event_addonce("check_klines", client::check_klines_event, NULL,
 							ConfigFileEntry.kline_delay ?
 								ConfigFileEntry.kline_delay : 1);
 						kline_queued = 1;
 					}
 				}
 				else
-					check_klines();
+					client::check_klines();
 			}
 			break;
 		case CONF_XLINE:
@@ -292,7 +292,7 @@ ms_ban(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 			else
 			{
 				rb_dlinkAddAlloc(aconf, &xline_conf_list);
-				check_xlines();
+				client::check_xlines();
 			}
 			break;
 		case CONF_RESV_CHANNEL:

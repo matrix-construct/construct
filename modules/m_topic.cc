@@ -27,8 +27,8 @@ using namespace ircd;
 static const char topic_desc[] =
 	"Provides the TOPIC command to set, remove, and inspect channel topics";
 
-static void m_topic(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_topic(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_topic(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_topic(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message topic_msgtab = {
 	"TOPIC", 0, 0, 0, 0,
@@ -44,7 +44,7 @@ DECLARE_MODULE_AV2(topic, NULL, NULL, topic_clist, NULL, NULL, NULL, NULL, topic
  *	parv[2] = new topic, if setting topic
  */
 static void
-m_topic(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_topic(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	chan::chan *chptr = NULL;
 	chan::membership *msptr;
@@ -180,7 +180,7 @@ m_topic(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
  * Let servers always set a topic
  */
 static void
-ms_topic(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_topic(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	chan::chan *chptr = NULL;
 

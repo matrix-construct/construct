@@ -36,7 +36,7 @@ using namespace ircd;
 static const char testmask_desc[] =
 	"Provides the TESTMASK command to show the number of clients matching a hostmask or GECOS";
 
-static void mo_testmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+static void mo_testmask(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 			int parc, const char *parv[]);
 
 struct Message testmask_msgtab = {
@@ -51,10 +51,10 @@ static const char *empty_sockhost = "255.255.255.255";
 static const char *spoofed_sockhost = "0";
 
 static void
-mo_testmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+mo_testmask(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
                         int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 	int lcount = 0;
 	int gcount = 0;
 	char *name, *username, *hostname;
@@ -97,7 +97,7 @@ mo_testmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 
 	RB_DLINK_FOREACH(ptr, global_client_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		if(!IsPerson(target_p))
 			continue;

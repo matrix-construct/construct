@@ -58,7 +58,7 @@ DECLARE_MODULE_AV2(challenge, challenge_load, NULL, NULL, NULL, NULL, NULL, NULL
 static const char challenge_desc[] =
 	"Provides the challenge-response facility used for becoming an IRC operator";
 
-static void m_challenge(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_challenge(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 /* We have openssl support, so include /CHALLENGE */
 struct Message challenge_msgtab = {
@@ -73,7 +73,7 @@ DECLARE_MODULE_AV2(challenge, NULL, NULL, challenge_clist, NULL, NULL, NULL, NUL
 static bool generate_challenge(char **r_challenge, char **r_response, RSA * key);
 
 static void
-cleanup_challenge(struct Client *target_p)
+cleanup_challenge(client::client *target_p)
 {
 	if(target_p->localClient == NULL)
 		return;
@@ -90,7 +90,7 @@ cleanup_challenge(struct Client *target_p)
  * parv[1] = operator to challenge for, or +response
  */
 static void
-m_challenge(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_challenge(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	struct oper_conf *oper_p;
 	char *challenge = NULL; /* to placate gcc */

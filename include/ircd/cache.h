@@ -43,8 +43,8 @@ namespace motd
 	extern file user;
 	extern file oper;
 
-	void send_user(Client *);
-	void send_oper(Client *);
+	void send_user(client::client *);
+	void send_oper(client::client *);
 
 	void cache_user();
 	void cache_oper();

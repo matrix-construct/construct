@@ -31,10 +31,10 @@ using namespace ircd;
 
 static const char signon_desc[] = "Provides account login/logout support for services";
 
-static void me_svslogin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_signon(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_svslogin(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_signon(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
-static void send_signon(struct Client *, struct Client *, const char *, const char *, const char *, unsigned int, const char *);
+static void send_signon(client::client *, client::client *, const char *, const char *, const char *, unsigned int, const char *);
 
 struct Message svslogin_msgtab = {
 	"SVSLOGIN", 0, 0, 0, 0,
@@ -94,10 +94,10 @@ clean_host(const char *host)
 }
 
 static void
-me_svslogin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+me_svslogin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 	int parc, const char *parv[])
 {
-	struct Client *target_p, *exist_p;
+	client::client *target_p, *exist_p;
 	char nick[NICKLEN+1], login[NICKLEN+1];
 	char user[USERLEN+1], host[HOSTLEN+1];
 	int valid = 0;
@@ -115,7 +115,7 @@ me_svslogin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 	if(!MyClient(target_p) && !IsUnknown(target_p))
 		return;
 
-	if(clean_nick(parv[2], 0))
+	if(client::clean_nick(parv[2], 0))
 	{
 		rb_strlcpy(nick, parv[2], NICKLEN + 1);
 		valid |= NICK_VALID;
@@ -144,7 +144,7 @@ me_svslogin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 	if(*parv[5] == '*')
 	{
 		if(target_p->user)
-			rb_strlcpy(login, target_p->user->suser.c_str(), NICKLEN + 1);
+			rb_strlcpy(login, suser(ircd::user(*target_p)).c_str(), NICKLEN + 1);
 		else
 			login[0] = '\0';
 	}
@@ -154,10 +154,10 @@ me_svslogin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 		rb_strlcpy(login, parv[5], NICKLEN + 1);
 
 	/* Login (mostly) follows nick rules. */
-	if(*login && !clean_nick(login, 0))
+	if(*login && !client::clean_nick(login, 0))
 		return;
 
-	if((exist_p = find_person(nick)) && target_p != exist_p)
+	if((exist_p = client::find_person(nick)) && target_p != exist_p)
 	{
 		char buf[BUFSIZE];
 
@@ -208,7 +208,7 @@ me_svslogin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 		if(valid & HOST_VALID)
 			rb_strlcpy(target_p->preClient->spoofhost, host, sizeof(target_p->preClient->spoofhost));
 
-		target_p->user = std::make_unique<struct user>(login);
+		make_user(*target_p);
 	}
 	else
 	{
@@ -222,14 +222,14 @@ me_svslogin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 }
 
 static void
-ms_signon(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+ms_signon(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 	int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 	int newts, sameuser;
 	char login[NICKLEN+1];
 
-	if(!clean_nick(parv[1], 0))
+	if(!client::clean_nick(parv[1], 0))
 	{
 		ServerStats.is_kill++;
 		sendto_realops_snomask(SNO_DEBUG, L_ALL,
@@ -271,7 +271,7 @@ ms_signon(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 		login[0] = '\0';
 	else if(*parv[5] != '*')
 	{
-		if (clean_nick(parv[5], 0))
+		if (client::clean_nick(parv[5], 0))
 			rb_strlcpy(login, parv[5], NICKLEN + 1);
 		else
 			return;
@@ -381,15 +381,15 @@ ms_signon(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 }
 
 static void
-send_signon(struct Client *client_p, struct Client *target_p,
-		const char *nick, const char *user, const char *host,
+send_signon(client::client *client_p, client::client *target_p,
+		const char *nick, const char *username, const char *host,
 		unsigned int newts, const char *login)
 {
 	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s SIGNON %s %s %s %ld %s",
-			use_id(target_p), nick, user, host,
+			use_id(target_p), nick, username, host,
 			(long) target_p->tsinfo, *login ? login : "0");
 
-	target_p->user->suser = login;
+	suser(user(*target_p)) = login;
 
-	change_nick_user_host(target_p, nick, user, host, newts, "Signing %s (%s)", *login ?  "in" : "out", nick);
+	change_nick_user_host(target_p, nick, username, host, newts, "Signing %s (%s)", *login ?  "in" : "out", nick);
 }

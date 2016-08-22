@@ -20,7 +20,7 @@ static void
 h_sgo_umode_changed(void *vdata)
 {
 	hook_data_umode_changed *data = (hook_data_umode_changed *)vdata;
-	struct Client *source_p = data->client;
+	client::client *source_p = data->client;
 
 	if (MyConnect(source_p) || !HasSentEob(source_p->servptr))
 		return;

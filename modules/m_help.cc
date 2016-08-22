@@ -27,10 +27,10 @@ using namespace ircd;
 static const char help_desc[] =
 	"Provides the help facility for commands, modes, and server concepts";
 
-static void m_help(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void mo_help(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void mo_uhelp(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void dohelp(struct Client *, int, const char *);
+static void m_help(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mo_help(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mo_uhelp(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void dohelp(client::client *, int, const char *);
 
 struct Message help_msgtab = {
 	"HELP", 0, 0, 0, 0,
@@ -49,7 +49,7 @@ DECLARE_MODULE_AV2(help, NULL, NULL, help_clist, NULL, NULL, NULL, NULL, help_de
  * m_help - HELP message handler
  */
 static void
-m_help(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_help(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	using namespace cache::help;
 
@@ -60,7 +60,7 @@ m_help(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
  * mo_help - HELP message handler
  */
 static void
-mo_help(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_help(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	using namespace cache::help;
 
@@ -72,7 +72,7 @@ mo_help(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
  * This is used so that opers can view the user help file without deopering
  */
 static void
-mo_uhelp(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_uhelp(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	using namespace cache::help;
 
@@ -80,7 +80,7 @@ mo_uhelp(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 }
 
 static void
-dohelp(Client *const source_p,
+dohelp(client::client *const source_p,
        int type,
        const char *topic)
 try

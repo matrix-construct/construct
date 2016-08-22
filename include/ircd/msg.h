@@ -28,8 +28,6 @@
 #ifdef __cplusplus
 namespace ircd {
 
-struct Client;
-
 /* MessageHandler */
 typedef enum HandlerType
 {
@@ -44,12 +42,12 @@ typedef enum HandlerType
 HandlerType;
 
 /* struct MsgBuf* msgbuf_p   - message buffer (including tags)
- * struct Client* client_p   - connection message originated from
- * struct Client* source_p   - source of message, may be different from client_p
+ * client::client* client_p   - connection message originated from
+ * client::client* source_p   - source of message, may be different from client_p
  * int            parc   - parameter count (from msgbuf_p)
  * char*          parv[] - parameter vector (from msgbuf_p)
  */
-typedef void (*MessageHandler) (struct MsgBuf *, struct Client *, struct Client *, int, const char *[]);
+typedef void (*MessageHandler) (struct MsgBuf *, client::client *, client::client *, int, const char *[]);
 
 struct MessageEntry
 {
@@ -73,10 +71,10 @@ struct Message
 };
 
 /* generic handlers */
-extern void m_ignore(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-extern void m_not_oper(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-extern void m_registered(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-extern void m_unregistered(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+extern void m_ignore(struct MsgBuf *, client::client *, client::client *, int, const char **);
+extern void m_not_oper(struct MsgBuf *, client::client *, client::client *, int, const char **);
+extern void m_registered(struct MsgBuf *, client::client *, client::client *, int, const char **);
+extern void m_unregistered(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 #define mg_ignore { m_ignore, 0 }
 #define mg_not_oper { m_not_oper, 0 }
@@ -85,7 +83,7 @@ extern void m_unregistered(struct MsgBuf *, struct Client *, struct Client *, in
 
 /*
  * m_functions execute protocol messages on this server:
- * void m_func(struct MsgBuf *, struct Client* client_p, struct Client* source_p, int parc, char* parv[]);
+ * void m_func(struct MsgBuf *, client::client* client_p, client::client* source_p, int parc, char* parv[]);
  *
  *    client_p    is always NON-NULL, pointing to a *LOCAL* client
  *            structure (with an open socket connected!). This

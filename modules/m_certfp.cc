@@ -32,7 +32,7 @@ using namespace ircd;
 static const char certfp_desc[] =
 	"Provides the CERTFP facility used by servers to set certificate fingerprints";
 
-static void me_certfp(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_certfp(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message certfp_msgtab = {
 	"CERTFP", 0, 0, 0, 0,
@@ -48,7 +48,7 @@ DECLARE_MODULE_AV2(certfp, NULL, NULL, certfp_clist, NULL, NULL, NULL, NULL, cer
 **      parv[1] = certfp string
 */
 static void
-me_certfp(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_certfp(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	if (!IsPerson(source_p))
 		return;

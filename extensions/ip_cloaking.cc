@@ -39,7 +39,7 @@ DECLARE_MODULE_AV2(ip_cloaking, _modinit, _moddeinit, NULL, NULL,
 			ip_cloaking_hfnlist, NULL, NULL, ip_cloaking_desc);
 
 static void
-distribute_hostchange(struct Client *client_p, char *newhost)
+distribute_hostchange(client::client *client_p, char *newhost)
 {
 	if (newhost != client_p->orighost)
 		sendto_one_numeric(client_p, RPL_HOSTHIDDEN, "%s :is now your hidden host",
@@ -156,7 +156,7 @@ static void
 check_umode_change(void *vdata)
 {
 	hook_data_umode_changed *data = (hook_data_umode_changed *)vdata;
-	struct Client *source_p = data->client;
+	client::client *source_p = data->client;
 
 	if (!MyClient(source_p))
 		return;
@@ -193,7 +193,7 @@ check_umode_change(void *vdata)
 static void
 check_new_user(void *vdata)
 {
-	struct Client *source_p = (Client *)vdata;
+	client::client *source_p = (client::client *)vdata;
 
 	if (IsIPSpoof(source_p))
 	{

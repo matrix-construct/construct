@@ -26,7 +26,7 @@ using namespace ircd;
 
 static const char part_desc[] = "Provides the PART command to leave a channel";
 
-static void m_part(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_part(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message part_msgtab = {
 	"PART", 0, 0, 0, 0,
@@ -37,11 +37,11 @@ mapi_clist_av1 part_clist[] = { &part_msgtab, NULL };
 
 DECLARE_MODULE_AV2(part, NULL, NULL, part_clist, NULL, NULL, NULL, NULL, part_desc);
 
-static void part_one_client(struct Client *client_p,
-			    struct Client *source_p, char *name,
+static void part_one_client(client::client *client_p,
+			    client::client *source_p, char *name,
 			    const char *reason);
-static bool can_send_part(struct Client *source_p, chan::chan *chptr, chan::membership *msptr);
-static bool do_message_hook(struct Client *source_p, chan::chan *chptr, const char **reason);
+static bool can_send_part(client::client *source_p, chan::chan *chptr, chan::membership *msptr);
+static bool do_message_hook(client::client *source_p, chan::chan *chptr, const char **reason);
 
 
 /*
@@ -50,7 +50,7 @@ static bool do_message_hook(struct Client *source_p, chan::chan *chptr, const ch
 **      parv[2] = reason
 */
 static void
-m_part(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_part(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	char *p, *name;
 	char reason[REASONLEN + 1];
@@ -84,7 +84,7 @@ m_part(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
  * side effects	- remove ONE client given the channel name
  */
 static void
-part_one_client(struct Client *client_p, struct Client *source_p, char *name, const char *reason)
+part_one_client(client::client *client_p, client::client *source_p, char *name, const char *reason)
 {
 	chan::chan *chptr;
 	chan::membership *msptr;
@@ -162,7 +162,7 @@ part_one_client(struct Client *client_p, struct Client *source_p, char *name, co
  *    - none.
  */
 static bool
-can_send_part(struct Client *source_p, chan::chan *chptr, chan::membership *msptr)
+can_send_part(client::client *source_p, chan::chan *chptr, chan::membership *msptr)
 {
 	if (!can_send(chptr, source_p, msptr))
 		return false;
@@ -186,7 +186,7 @@ can_send_part(struct Client *source_p, chan::chan *chptr, chan::membership *mspt
  *    - reason may be modified.
  */
 static bool
-do_message_hook(struct Client *source_p, chan::chan *chptr, const char **reason)
+do_message_hook(client::client *source_p, chan::chan *chptr, const char **reason)
 {
 	hook_data_privmsg_channel hdata;
 

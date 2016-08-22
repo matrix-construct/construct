@@ -74,7 +74,7 @@ whowas_get_list(const char *name)
 }
 
 void
-whowas_add_history(struct Client *client_p, int online)
+whowas_add_history(client::client *client_p, int online)
 {
 	struct whowas_top *wtop;
 	struct Whowas *who;
@@ -102,7 +102,7 @@ whowas_add_history(struct Client *client_p, int online)
 		(IsDynSpoof(client_p) ? WHOWAS_DYNSPOOF : 0);
 
 	/* this is safe do to with the servername cache */
-	who->servername = scache_get_name(client_p->servptr->serv->nameinfo);
+	who->servername = scache_get_name(nameinfo(serv(*client_p)));
 
 	if(online)
 	{
@@ -118,7 +118,7 @@ whowas_add_history(struct Client *client_p, int online)
 
 
 void
-whowas_off_history(struct Client *client_p)
+whowas_off_history(client::client *client_p)
 {
 	rb_dlink_node *ptr, *next;
 
@@ -130,7 +130,7 @@ whowas_off_history(struct Client *client_p)
 	}
 }
 
-struct Client *
+client::client *
 whowas_get_history(const char *nick, time_t timelimit)
 {
 	struct whowas_top *wtop;

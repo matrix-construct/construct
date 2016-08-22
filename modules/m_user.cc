@@ -27,7 +27,7 @@ using namespace ircd;
 static const char user_desc[] =
 	"Provides the USER command to register a new connection";
 
-static void mr_user(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mr_user(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message user_msgtab = {
 	"USER", 0, 0, 0, 0,
@@ -37,7 +37,7 @@ struct Message user_msgtab = {
 mapi_clist_av1 user_clist[] = { &user_msgtab, NULL };
 DECLARE_MODULE_AV2(user, NULL, NULL, user_clist, NULL, NULL, NULL, NULL, user_desc);
 
-static void do_local_user(struct Client *client_p, struct Client *source_p,
+static void do_local_user(client::client *client_p, client::client *source_p,
 		const char *username, const char *realname);
 
 /* mr_user()
@@ -47,7 +47,7 @@ static void do_local_user(struct Client *client_p, struct Client *source_p,
  *      parv[4] = users gecos
  */
 static void
-mr_user(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mr_user(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	static char buf[BUFSIZE];
 	char *p;
@@ -72,13 +72,13 @@ mr_user(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 }
 
 static void
-do_local_user(struct Client *client_p, struct Client *source_p,
+do_local_user(client::client *client_p, client::client *source_p,
 	      const char *username, const char *realname)
 {
 	s_assert(NULL != source_p);
 	s_assert(source_p->username != username);
 
-	source_p->user.reset(new user);
+	make_user(*source_p);
 
 	source_p->flags |= FLAGS_SENTUSER;
 

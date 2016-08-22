@@ -37,7 +37,7 @@ DECLARE_MODULE_AV2(chm_insecure, _modinit, _moddeinit, NULL, NULL, sslonly_hfnli
 static void
 h_can_join(hook_data_channel *data)
 {
-	struct Client *source_p = data->client;
+	client::client *source_p = data->client;
 	const auto &chptr(data->chptr);
 
 	if(!(chptr->mode.mode & mymode) && !IsSSLClient(source_p)) {

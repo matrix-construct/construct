@@ -42,7 +42,7 @@ using namespace ircd;
 
 static const char webirc_desc[] = "Adds support for the WebIRC system";
 
-static void mr_webirc(struct MsgBuf *msgbuf_p, struct Client *, struct Client *, int, const char **);
+static void mr_webirc(struct MsgBuf *msgbuf_p, client::client *, client::client *, int, const char **);
 
 struct Message webirc_msgtab = {
 	"WEBIRC", 0, 0, 0, 0,
@@ -61,7 +61,7 @@ DECLARE_MODULE_AV2(webirc, NULL, NULL, webirc_clist, NULL, NULL, NULL, NULL, web
  *	parv[4] = fake ip
  */
 static void
-mr_webirc(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mr_webirc(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	struct ConfItem *aconf;
 	const char *encr;

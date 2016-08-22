@@ -26,8 +26,8 @@ using namespace ircd;
 
 static const char pong_desc[] = "Provides the PONG command to respond to a PING message";
 
-static void mr_pong(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_pong(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mr_pong(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_pong(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message pong_msgtab = {
 	"PONG", 0, 0, 0, 0,
@@ -39,9 +39,9 @@ mapi_clist_av1 pong_clist[] = { &pong_msgtab, NULL };
 DECLARE_MODULE_AV2(pong, NULL, NULL, pong_clist, NULL, NULL, NULL, NULL, pong_desc);
 
 static void
-ms_pong(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_pong(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 	const char *destination;
 
 	destination = parv[2];
@@ -84,7 +84,7 @@ ms_pong(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 }
 
 static void
-mr_pong(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mr_pong(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	if(parc == 2 && !EmptyString(parv[1]))
 	{

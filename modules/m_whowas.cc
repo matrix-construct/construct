@@ -27,7 +27,7 @@ using namespace ircd;
 static const char whowas_desc[] =
 	"Provides the WHOWAS command to display information on a disconnected user";
 
-static void m_whowas(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_whowas(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message whowas_msgtab = {
 	"WHOWAS", 0, 0, 0, 0,
@@ -43,7 +43,7 @@ DECLARE_MODULE_AV2(whowas, NULL, NULL, whowas_clist, NULL, NULL, NULL, NULL, who
 **      parv[1] = nickname queried
 */
 static void
-m_whowas(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_whowas(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	rb_dlink_list *whowas_list;
 	rb_dlink_node *ptr;

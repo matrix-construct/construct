@@ -18,13 +18,13 @@ using namespace ircd;
 static const char roleplay_desc[] =
 	"Adds a roleplaying system that allows faked nicknames to talk in a channel set +N";
 
-static void m_scene(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static void m_fsay(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static void m_faction(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static void m_npc(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static void m_npca(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static void m_displaymsg(struct MsgBuf *msgbuf_p, struct Client *source_p, const char *channel, int underline, int action, const char *nick, const char *text);
-static void me_roleplay(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void m_scene(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
+static void m_fsay(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
+static void m_faction(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
+static void m_npc(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
+static void m_npca(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
+static void m_displaymsg(struct MsgBuf *msgbuf_p, client::client *source_p, const char *channel, int underline, int action, const char *nick, const char *text);
+static void me_roleplay(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
 static unsigned int mymode;
 
 static int
@@ -89,37 +89,37 @@ mapi_clist_av1 roleplay_clist[] = { &scene_msgtab, &ambiance_msgtab, &fsay_msgta
 DECLARE_MODULE_AV2(roleplay, _modinit, _moddeinit, roleplay_clist, NULL, NULL, NULL, NULL, roleplay_desc);
 
 static void
-m_scene(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_scene(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	m_displaymsg(msgbuf_p, source_p, parv[1], 0, 0, "=Scene=", parv[2]);
 }
 
 static void
-m_fsay(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_fsay(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	m_displaymsg(msgbuf_p, source_p, parv[1], 0, 0, parv[2], parv[3]);
 }
 
 static void
-m_faction(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_faction(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	m_displaymsg(msgbuf_p, source_p, parv[1], 0, 1, parv[2], parv[3]);
 }
 
 static void
-m_npc(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_npc(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	m_displaymsg(msgbuf_p, source_p, parv[1], 1, 0, parv[2], parv[3]);
 }
 
 static void
-m_npca(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_npca(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	m_displaymsg(msgbuf_p, source_p, parv[1], 1, 1, parv[2], parv[3]);
 }
 
 static void
-m_displaymsg(struct MsgBuf *msgbuf_p, struct Client *source_p, const char *channel, int underline, int action, const char *nick, const char *text)
+m_displaymsg(struct MsgBuf *msgbuf_p, client::client *source_p, const char *channel, int underline, int action, const char *nick, const char *text)
 {
 	chan::chan *chptr;
 	chan::membership *msptr;
@@ -197,7 +197,7 @@ m_displaymsg(struct MsgBuf *msgbuf_p, struct Client *source_p, const char *chann
 }
 
 static void
-me_roleplay(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_roleplay(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	chan::chan *chptr;
 

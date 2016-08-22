@@ -27,7 +27,7 @@ using namespace ircd;
 
 static const char omode_desc[] = "Allow admins to forcibly change modes on channels with the OMODE command";
 
-static void mo_omode(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_omode(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message omode_msgtab = {
 	"OMODE", 0, 0, 0, 0,
@@ -43,7 +43,7 @@ DECLARE_MODULE_AV2(omode, NULL, NULL, omode_clist, NULL, NULL, NULL, NULL, omode
  * parv[1] - channel
  */
 static void
-mo_omode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_omode(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	chan::chan *chptr = NULL;
 	chan::membership *msptr;

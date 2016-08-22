@@ -34,8 +34,8 @@ using namespace ircd;
 static const char scan_desc[] =
 	"Provides the SCAN command to show users that have a mode set or cleared";
 
-static void mo_scan(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void scan_umodes(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_scan(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void scan_umodes(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message scan_msgtab = {
 	"SCAN", 0, 0, 0, 0,
@@ -46,7 +46,7 @@ mapi_clist_av1 scan_clist[] = { &scan_msgtab, NULL };
 
 DECLARE_MODULE_AV2(scan, NULL, NULL, scan_clist, NULL, NULL, NULL, NULL, scan_desc);
 
-typedef void (*scan_handler)(struct MsgBuf *, struct Client *, struct Client *, int,
+typedef void (*scan_handler)(struct MsgBuf *, client::client *, client::client *, int,
 	const char **);
 
 struct scan_cmd {
@@ -67,7 +67,7 @@ static const char *spoofed_sockhost = "0";
  *	parv[2] = [target]
  */
 static void
-mo_scan(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
+mo_scan(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc,
 	const char *parv[])
 {
 	struct scan_cmd *sptr;
@@ -88,7 +88,7 @@ mo_scan(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 }
 
 static void
-scan_umodes(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
+scan_umodes(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc,
 	const char *parv[])
 {
 	unsigned int allowed_umodes = 0, disallowed_umodes = 0;
@@ -99,7 +99,7 @@ scan_umodes(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 	int list_count = 0, count = 0;
 	const char *mask = NULL;
 	const char *c;
-	struct Client *target_p;
+	client::client *target_p;
 	rb_dlink_list *target_list = &lclient_list;	/* local clients only by default */
 	rb_dlink_node *tn;
 	int i;
@@ -196,7 +196,7 @@ scan_umodes(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 		unsigned int working_umodes = 0;
 		char maskbuf[BUFSIZE];
 
-		target_p = (Client *)tn->data;
+		target_p = (client::client *)tn->data;
 
 		if (!IsClient(target_p))
 			continue;

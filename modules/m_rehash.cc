@@ -27,8 +27,8 @@ using namespace ircd;
 static const char rehash_desc[] =
 	"Provides the REHASH command to reload configuration and other files";
 
-static void mo_rehash(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void me_rehash(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_rehash(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void me_rehash(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message rehash_msgtab = {
 	"REHASH", 0, 0, 0, 0,
@@ -42,11 +42,11 @@ DECLARE_MODULE_AV2(rehash, NULL, NULL, rehash_clist, NULL, NULL, NULL, NULL, reh
 struct hash_commands
 {
 	const char *cmd;
-	void (*handler) (struct Client * source_p);
+	void (*handler) (client::client * source_p);
 };
 
 static void
-rehash_bans_loc(struct Client *source_p)
+rehash_bans_loc(client::client *source_p)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is rehashing bans",
 				get_oper_name(source_p));
@@ -57,7 +57,7 @@ rehash_bans_loc(struct Client *source_p)
 }
 
 static void
-rehash_dns(struct Client *source_p)
+rehash_dns(client::client *source_p)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is rehashing DNS",
 			     get_oper_name(source_p));
@@ -68,7 +68,7 @@ rehash_dns(struct Client *source_p)
 }
 
 static void
-rehash_ssld(struct Client *source_p)
+rehash_ssld(client::client *source_p)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is restarting ssld",
 				get_oper_name(source_p));
@@ -77,7 +77,7 @@ rehash_ssld(struct Client *source_p)
 }
 
 static void
-rehash_motd(struct Client *source_p)
+rehash_motd(client::client *source_p)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "%s is forcing re-reading of MOTD file",
@@ -89,7 +89,7 @@ rehash_motd(struct Client *source_p)
 }
 
 static void
-rehash_omotd(struct Client *source_p)
+rehash_omotd(client::client *source_p)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "%s is forcing re-reading of OPER MOTD file",
@@ -101,7 +101,7 @@ rehash_omotd(struct Client *source_p)
 }
 
 static void
-rehash_tklines(struct Client *source_p)
+rehash_tklines(client::client *source_p)
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr, *next_ptr;
@@ -125,7 +125,7 @@ rehash_tklines(struct Client *source_p)
 }
 
 static void
-rehash_tdlines(struct Client *source_p)
+rehash_tdlines(client::client *source_p)
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr, *next_ptr;
@@ -149,7 +149,7 @@ rehash_tdlines(struct Client *source_p)
 }
 
 static void
-rehash_txlines(struct Client *source_p)
+rehash_txlines(client::client *source_p)
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
@@ -173,7 +173,7 @@ rehash_txlines(struct Client *source_p)
 }
 
 static void
-rehash_tresvs(struct Client *source_p)
+rehash_tresvs(client::client *source_p)
 {
 	struct ConfItem *aconf;
 	rb_radixtree_iteration_state iter;
@@ -209,7 +209,7 @@ rehash_tresvs(struct Client *source_p)
 }
 
 static void
-rehash_rejectcache(struct Client *source_p)
+rehash_rejectcache(client::client *source_p)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing reject cache",
 				get_oper_name(source_p));
@@ -220,7 +220,7 @@ rehash_rejectcache(struct Client *source_p)
 }
 
 static void
-rehash_throttles(struct Client *source_p)
+rehash_throttles(client::client *source_p)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing throttles",
 				get_oper_name(source_p));
@@ -231,7 +231,7 @@ rehash_throttles(struct Client *source_p)
 }
 
 static void
-rehash_help(struct Client *source_p)
+rehash_help(client::client *source_p)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "%s is forcing re-reading of HELP files",
@@ -242,7 +242,7 @@ rehash_help(struct Client *source_p)
 }
 
 static void
-rehash_nickdelay(struct Client *source_p)
+rehash_nickdelay(client::client *source_p)
 {
 	struct nd_entry *nd;
 	rb_dlink_node *ptr;
@@ -283,7 +283,7 @@ static struct hash_commands rehash_commands[] =
 /* *INDENT-ON* */
 
 static void
-do_rehash(struct Client *source_p, const char *type)
+do_rehash(client::client *source_p, const char *type)
 {
 	if (type != NULL)
 	{
@@ -337,7 +337,7 @@ do_rehash(struct Client *source_p, const char *type)
  * parv[2] = destination
  */
 static void
-mo_rehash(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_rehash(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	const char *type = NULL, *target_server = NULL;
 
@@ -377,7 +377,7 @@ mo_rehash(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 }
 
 static void
-me_rehash(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_rehash(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 
 	if (!IsPerson(source_p))

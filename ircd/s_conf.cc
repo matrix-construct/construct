@@ -50,9 +50,9 @@ static void reorganise_temp_kd(void *list);
 FILE *conf_fbfile_in;
 extern char yytext[];
 
-static int verify_access(struct Client *client_p, const char *username);
-static struct ConfItem *find_address_conf_by_client(struct Client *client_p, const char *username);
-static int attach_iline(struct Client *, struct ConfItem *);
+static int verify_access(client::client *client_p, const char *username);
+static struct ConfItem *find_address_conf_by_client(client::client *client_p, const char *username);
+static int attach_iline(client::client *, struct ConfItem *);
 
 void
 init_s_conf(void)
@@ -144,7 +144,7 @@ free_conf(struct ConfItem *aconf)
  * 		  status as the flags passed.
  */
 int
-check_client(struct Client *client_p, struct Client *source_p, const char *username)
+check_client(client::client *client_p, client::client *source_p, const char *username)
 {
 	int i;
 
@@ -275,7 +275,7 @@ check_client(struct Client *client_p, struct Client *source_p, const char *usern
  * side effect	- find the first (best) I line to attach.
  */
 static int
-verify_access(struct Client *client_p, const char *username)
+verify_access(client::client *client_p, const char *username)
 {
 	struct ConfItem *aconf;
 
@@ -345,7 +345,7 @@ verify_access(struct Client *client_p, const char *username)
  * find_address_conf_by_client
  */
 static struct ConfItem *
-find_address_conf_by_client(struct Client *client_p, const char *username)
+find_address_conf_by_client(client::client *client_p, const char *username)
 {
 	struct ConfItem *aconf;
 	char non_ident[USERLEN + 1];
@@ -382,7 +382,7 @@ find_address_conf_by_client(struct Client *client_p, const char *username)
  */
 
 static int
-add_ip_limit(struct Client *client_p, struct ConfItem *aconf)
+add_ip_limit(client::client *client_p, struct ConfItem *aconf)
 {
 	rb_patricia_node_t *pnode;
 	int bitlen;
@@ -422,7 +422,7 @@ add_ip_limit(struct Client *client_p, struct ConfItem *aconf)
 }
 
 static void
-remove_ip_limit(struct Client *client_p, struct ConfItem *aconf)
+remove_ip_limit(client::client *client_p, struct ConfItem *aconf)
 {
 	rb_patricia_node_t *pnode;
 
@@ -452,9 +452,9 @@ remove_ip_limit(struct Client *client_p, struct ConfItem *aconf)
  * side effects	- do actual attach
  */
 static int
-attach_iline(struct Client *client_p, struct ConfItem *aconf)
+attach_iline(client::client *client_p, struct ConfItem *aconf)
 {
-	struct Client *target_p;
+	client::client *target_p;
 	rb_dlink_node *ptr;
 	int local_count = 0;
 	int global_count = 0;
@@ -470,7 +470,7 @@ attach_iline(struct Client *client_p, struct ConfItem *aconf)
 	/* find_hostname() returns the head of the list to search */
 	RB_DLINK_FOREACH(ptr, find_hostname(client_p->host))
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		if(irccmp(client_p->host, target_p->orighost) != 0)
 			continue;
@@ -509,7 +509,7 @@ attach_iline(struct Client *client_p, struct ConfItem *aconf)
  *		  Also removes a class from the list if marked for deleting.
  */
 int
-detach_conf(struct Client *client_p)
+detach_conf(client::client *client_p)
 {
 	struct ConfItem *aconf;
 
@@ -555,7 +555,7 @@ detach_conf(struct Client *client_p)
  *                attachment if there was an old one...
  */
 int
-attach_conf(struct Client *client_p, struct ConfItem *aconf)
+attach_conf(client::client *client_p, struct ConfItem *aconf)
 {
 	if(IsIllegal(aconf))
 		return (NOT_AUTHORISED);
@@ -1209,14 +1209,14 @@ reorganise_temp_kd(void *list_)
 }
 
 
-/* const char* get_oper_name(struct Client *client_p)
+/* const char* get_oper_name(client::client *client_p)
  * Input: A client to find the active oper{} name for.
  * Output: The nick!user@host{oper} of the oper.
  *         "oper" is server name for remote opers
  * Side effects: None.
  */
 char *
-get_oper_name(struct Client *client_p)
+get_oper_name(client::client *client_p)
 {
 	/* +5 for !,@,{,} and null */
 	static char buffer[NICKLEN + USERLEN + HOSTLEN + HOSTLEN + 5];
@@ -1294,7 +1294,7 @@ get_user_ban_reason(struct ConfItem *aconf)
 }
 
 void
-get_printable_kline(struct Client *source_p, struct ConfItem *aconf,
+get_printable_kline(client::client *source_p, struct ConfItem *aconf,
 		    char **host, char **reason,
 		    char **user, char **oper_reason)
 {

@@ -27,9 +27,9 @@ using namespace ircd;
 static const char message_desc[] =
 	"Provides the PRIVMSG and NOTICE commands to send messages to users and channels";
 
-static void m_message(enum message_type, struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void m_privmsg(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void m_notice(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_message(enum message_type, struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_privmsg(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_notice(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 static void expire_tgchange(void *unused);
 static struct ev_entry *expire_tgchange_event;
@@ -69,10 +69,10 @@ struct entity
 };
 
 static int build_target_list(enum message_type msgtype,
-			     struct Client *client_p,
-			     struct Client *source_p, const char *nicks_channels, const char *text);
+			     client::client *client_p,
+			     client::client *source_p, const char *nicks_channels, const char *text);
 
-static bool flood_attack_client(enum message_type msgtype, struct Client *source_p, struct Client *target_p);
+static bool flood_attack_client(enum message_type msgtype, client::client *source_p, client::client *target_p);
 
 /* Fifteen seconds should be plenty for a client to reply a ctcp */
 #define LARGE_CTCP_TIME 15
@@ -89,24 +89,24 @@ static int ntargets = 0;
 static bool duplicate_ptr(void *);
 
 static void msg_channel(enum message_type msgtype,
-			struct Client *client_p,
-			struct Client *source_p, chan::chan *chptr, const char *text);
+			client::client *client_p,
+			client::client *source_p, chan::chan *chptr, const char *text);
 
 static void msg_channel_opmod(enum message_type msgtype,
-			      struct Client *client_p,
-			      struct Client *source_p, chan::chan *chptr,
+			      client::client *client_p,
+			      client::client *source_p, chan::chan *chptr,
 			      const char *text);
 
 static void msg_channel_flags(enum message_type msgtype,
-			      struct Client *client_p,
-			      struct Client *source_p,
+			      client::client *client_p,
+			      client::client *source_p,
 			      chan::chan *chptr, int flags, const char *text);
 
 static void msg_client(enum message_type msgtype,
-		       struct Client *source_p, struct Client *target_p, const char *text);
+		       client::client *source_p, client::client *target_p, const char *text);
 
 static void handle_special(enum message_type msgtype,
-			   struct Client *client_p, struct Client *source_p, const char *nick,
+			   client::client *client_p, client::client *source_p, const char *nick,
 			   const char *text);
 
 /*
@@ -135,13 +135,13 @@ const char *cmdname[MESSAGE_TYPE_COUNT]
 };
 
 static void
-m_privmsg(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_privmsg(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	m_message(MESSAGE_TYPE_PRIVMSG, msgbuf_p, client_p, source_p, parc, parv);
 }
 
 static void
-m_notice(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_notice(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	m_message(MESSAGE_TYPE_NOTICE, msgbuf_p, client_p, source_p, parc, parv);
 }
@@ -154,7 +154,7 @@ m_notice(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
  */
 static void
 m_message(enum message_type msgtype, struct MsgBuf *msgbuf_p,
-	  struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+	  client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	int i;
 
@@ -206,7 +206,7 @@ m_message(enum message_type msgtype, struct MsgBuf *msgbuf_p,
 
 		case ENTITY_CLIENT:
 			msg_client(msgtype, source_p,
-				   (struct Client *) targets[i].ptr, parv[2]);
+				   (client::client *) targets[i].ptr, parv[2]);
 			break;
 		}
 	}
@@ -230,13 +230,13 @@ m_message(enum message_type msgtype, struct MsgBuf *msgbuf_p,
  */
 
 static int
-build_target_list(enum message_type msgtype, struct Client *client_p,
-		  struct Client *source_p, const char *nicks_channels, const char *text)
+build_target_list(enum message_type msgtype, client::client *client_p,
+		  client::client *source_p, const char *nicks_channels, const char *text)
 {
 	int type;
 	char *p, *nick, *target_list;
 	chan::chan *chptr = NULL;
-	struct Client *target_p;
+	client::client *target_p;
 
 	target_list = LOCAL_COPY(nicks_channels);	/* skip strcpy for non-lazyleafs */
 
@@ -280,9 +280,9 @@ build_target_list(enum message_type msgtype, struct Client *client_p,
 		}
 
 		if(MyClient(source_p))
-			target_p = find_named_person(nick);
+			target_p = client::find_named_person(nick);
 		else
-			target_p = find_person(nick);
+			target_p = client::find_person(nick);
 
 		/* look for a privmsg to another client */
 		if(target_p)
@@ -455,7 +455,7 @@ duplicate_ptr(void *ptr)
  */
 static void
 msg_channel(enum message_type msgtype,
-	    struct Client *client_p, struct Client *source_p, chan::chan *chptr,
+	    client::client *client_p, client::client *source_p, chan::chan *chptr,
 	    const char *text)
 {
 	int result;
@@ -567,7 +567,7 @@ msg_channel(enum message_type msgtype,
  */
 static void
 msg_channel_opmod(enum message_type msgtype,
-		  struct Client *client_p, struct Client *source_p,
+		  client::client *client_p, client::client *source_p,
 		  chan::chan *chptr, const char *text)
 {
 	hook_data_privmsg_channel hdata;
@@ -627,8 +627,8 @@ msg_channel_opmod(enum message_type msgtype,
  * side effects	- message given channel either chanop or voice
  */
 static void
-msg_channel_flags(enum message_type msgtype, struct Client *client_p,
-		  struct Client *source_p, chan::chan *chptr, int flags, const char *text)
+msg_channel_flags(enum message_type msgtype, client::client *client_p,
+		  client::client *source_p, chan::chan *chptr, int flags, const char *text)
 {
 	int type;
 	char c;
@@ -705,15 +705,15 @@ expire_tgchange(void *unused)
  *
  * inputs	- flag 0 if PRIVMSG 1 if NOTICE. RFC
  *		  say NOTICE must not auto reply
- * 		- pointer to source_p source (struct Client *)
- *		- pointer to target_p target (struct Client *)
+ * 		- pointer to source_p source (client::client *)
+ *		- pointer to target_p target (client::client *)
  *		- pointer to text
  * output	- NONE
  * side effects	- message given channel either chanop or voice
  */
 static void
 msg_client(enum message_type msgtype,
-	   struct Client *source_p, struct Client *target_p, const char *text)
+	   client::client *source_p, client::client *target_p, const char *text)
 {
 	int do_floodcount = 0;
 	hook_data_privmsg_user hdata;
@@ -728,7 +728,7 @@ msg_client(enum message_type msgtype,
 		 */
 		if(msgtype != MESSAGE_TYPE_NOTICE &&
 				(IsSetCallerId(source_p) ||
-				 (IsSetRegOnlyMsg(source_p) && !target_p->user->suser[0])) &&
+				 (IsSetRegOnlyMsg(source_p) && suser(user(*target_p)).empty())) &&
 				!accept_message(target_p, source_p) &&
 				!IsOper(target_p))
 		{
@@ -787,9 +787,9 @@ msg_client(enum message_type msgtype,
 		return;
 	}
 
-	if(MyConnect(source_p) && (msgtype != MESSAGE_TYPE_NOTICE) && target_p->user && target_p->user->away.size())
+	if(MyConnect(source_p) && (msgtype != MESSAGE_TYPE_NOTICE) && target_p->user && away(user(*target_p)).size())
 		sendto_one_numeric(source_p, RPL_AWAY, form_str(RPL_AWAY),
-				   target_p->name, target_p->user->away.c_str());
+				   target_p->name, away(user(*target_p)).c_str());
 
 	if(MyClient(target_p))
 	{
@@ -818,7 +818,7 @@ msg_client(enum message_type msgtype,
 
 		/* XXX Controversial? allow opers always to send through a +g */
 		if(!IsServer(source_p) && (IsSetCallerId(target_p) ||
-					(IsSetRegOnlyMsg(target_p) && source_p->user->suser.empty())))
+					(IsSetRegOnlyMsg(target_p) && suser(user(*source_p)).empty())))
 		{
 			/* Here is the anti-flood bot/spambot code -db */
 			if(accept_message(source_p, target_p) || IsOper(source_p))
@@ -829,7 +829,7 @@ msg_client(enum message_type msgtype,
 					   source_p->username,
 					   source_p->host, cmdname[msgtype], target_p->name, text);
 			}
-			else if (IsSetRegOnlyMsg(target_p) && source_p->user->suser.empty())
+			else if (IsSetRegOnlyMsg(target_p) && suser(user(*source_p)).empty())
 			{
 				if (msgtype != MESSAGE_TYPE_NOTICE)
 					sendto_one_numeric(source_p, ERR_NONONREG,
@@ -885,7 +885,7 @@ msg_client(enum message_type msgtype,
  * side effects	- check for flood attack on target target_p
  */
 static bool
-flood_attack_client(enum message_type msgtype, struct Client *source_p, struct Client *target_p)
+flood_attack_client(enum message_type msgtype, client::client *source_p, client::client *target_p)
 {
 	int delta;
 
@@ -952,10 +952,10 @@ flood_attack_client(enum message_type msgtype, struct Client *source_p, struct C
  *		  This disambiguates the syntax.
  */
 static void
-handle_special(enum message_type msgtype, struct Client *client_p,
-	       struct Client *source_p, const char *nick, const char *text)
+handle_special(enum message_type msgtype, client::client *client_p,
+	       client::client *source_p, const char *nick, const char *text)
 {
-	struct Client *target_p;
+	client::client *target_p;
 	char *server;
 	char *s;
 

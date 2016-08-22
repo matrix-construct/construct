@@ -28,12 +28,12 @@ namespace ircd {
 std::map<std::string, std::shared_ptr<alias_entry>, case_insensitive_less> alias_dict;
 std::map<std::string, Message *, case_insensitive_less> cmd_dict;
 
-static void cancel_clients(struct Client *, struct Client *);
-static void remove_unknown(struct Client *, const char *, char *);
+static void cancel_clients(client::client *, client::client *);
+static void remove_unknown(client::client *, const char *, char *);
 
-static void do_numeric(int, struct Client *, struct Client *, int, const char **);
+static void do_numeric(int, client::client *, client::client *, int, const char **);
 
-static int handle_command(struct Message *, struct MsgBuf *, struct Client *, struct Client *);
+static int handle_command(struct Message *, struct MsgBuf *, client::client *, client::client *);
 
 static char buffer[1024];
 
@@ -57,9 +57,9 @@ char *reconstruct_parv(int parc, const char *parv[])
  * given a raw buffer, parses it and generates parv and parc
  */
 void
-parse(struct Client *client_p, char *pbuffer, char *bufend)
+parse(client::client *client_p, char *pbuffer, char *bufend)
 {
-	struct Client *from = client_p;
+	client::client *from = client_p;
 	char *end;
 	int res;
 	int numeric = 0;
@@ -175,7 +175,7 @@ parse(struct Client *client_p, char *pbuffer, char *bufend)
  * side effects	-
  */
 static int
-handle_command(struct Message *mptr, struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *from)
+handle_command(struct Message *mptr, struct MsgBuf *msgbuf_p, client::client *client_p, client::client *from)
 {
 	struct MessageEntry ehandler;
 	MessageHandler handler = 0;
@@ -227,7 +227,7 @@ handle_command(struct Message *mptr, struct MsgBuf *msgbuf_p, struct Client *cli
 }
 
 void
-handle_encap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+handle_encap(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 	     const char *command, int parc, const char *parv[])
 {
 	struct Message *mptr;
@@ -301,7 +301,7 @@ mod_del_cmd(struct Message *msg)
  * side effects -
  */
 static void
-cancel_clients(struct Client *client_p, struct Client *source_p)
+cancel_clients(client::client *client_p, client::client *source_p)
 {
 	/* ok, fake prefix happens naturally during a burst on a nick
 	 * collision with TS5, we cant kill them because one client has to
@@ -333,11 +333,11 @@ cancel_clients(struct Client *client_p, struct Client *source_p)
  * side effects	- kills issued for clients, squits for servers
  */
 static void
-remove_unknown(struct Client *client_p, const char *lsender, char *lbuffer)
+remove_unknown(client::client *client_p, const char *lsender, char *lbuffer)
 {
 	int slen = strlen(lsender);
 	char sid[4];
-	struct Client *server;
+	client::client *server;
 
 	/* meepfoo	is a nickname (ignore)
 	 * #XXXXXXXX	is a UID (KILL)
@@ -389,9 +389,9 @@ remove_unknown(struct Client *client_p, const char *lsender, char *lbuffer)
  *      a ping pong error message...
  */
 static void
-do_numeric(int numeric, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+do_numeric(int numeric, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 	chan::chan *chptr;
 
 	if(parc < 2 || !IsServer(source_p))
@@ -479,13 +479,13 @@ do_numeric(int numeric, struct Client *client_p, struct Client *source_p, int pa
 }
 
 void
-m_not_oper(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_not_oper(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	sendto_one_numeric(source_p, ERR_NOPRIVILEGES, form_str(ERR_NOPRIVILEGES));
 }
 
 void
-m_unregistered(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_unregistered(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	if(IsAnyServer(client_p))
 		return;
@@ -503,13 +503,13 @@ m_unregistered(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *
 }
 
 void
-m_registered(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_registered(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	sendto_one(client_p, form_str(ERR_ALREADYREGISTRED), me.name, source_p->name);
 }
 
 void
-m_ignore(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_ignore(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	/* Does nothing */
 }

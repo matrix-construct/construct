@@ -35,10 +35,10 @@ using namespace ircd;
 static const char etrace_desc[] =
     "Provides enhanced tracing facilities to opers (ETRACE, CHANTRACE, and MASKTRACE)";
 
-static void mo_etrace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void me_etrace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void m_chantrace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void mo_masktrace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_etrace(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void me_etrace(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_chantrace(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mo_masktrace(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message etrace_msgtab = {
 	"ETRACE", 0, 0, 0, 0,
@@ -71,9 +71,9 @@ mapi_clist_av1 etrace_clist[] = { &etrace_msgtab, &chantrace_msgtab, &masktrace_
 
 DECLARE_MODULE_AV2(etrace, _modinit, _moddeinit, etrace_clist, NULL, NULL, NULL, NULL, etrace_desc);
 
-static void do_etrace(struct Client *source_p, int ipv4, int ipv6);
-static void do_etrace_full(struct Client *source_p);
-static void do_single_etrace(struct Client *source_p, struct Client *target_p);
+static void do_etrace(client::client *source_p, int ipv4, int ipv6);
+static void do_etrace_full(client::client *source_p);
+static void do_single_etrace(client::client *source_p, client::client *target_p);
 
 static const char *empty_sockhost = "255.255.255.255";
 static const char *spoofed_sockhost = "0";
@@ -84,7 +84,7 @@ static const char *spoofed_sockhost = "0";
  *	parv[2] = [target]
  */
 static void
-mo_etrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_etrace(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	if(parc > 1 && !EmptyString(parv[1]))
 	{
@@ -98,7 +98,7 @@ mo_etrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 #endif
 		else
 		{
-			struct Client *target_p = find_named_person(parv[1]);
+			client::client *target_p = client::find_named_person(parv[1]);
 
 			if(target_p)
 			{
@@ -120,15 +120,15 @@ mo_etrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 }
 
 static void
-me_etrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_etrace(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 
 	if(!IsOper(source_p) || parc < 2 || EmptyString(parv[1]))
 		return;
 
 	/* we cant etrace remote clients.. we shouldnt even get sent them */
-	if((target_p = find_person(parv[1])) && MyClient(target_p))
+	if((target_p = client::find_person(parv[1])) && MyClient(target_p))
 		do_single_etrace(source_p, target_p);
 
         sendto_one_numeric(source_p, RPL_ENDOFTRACE, form_str(RPL_ENDOFTRACE),
@@ -136,15 +136,15 @@ me_etrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 }
 
 static void
-do_etrace(struct Client *source_p, int ipv4, int ipv6)
+do_etrace(client::client *source_p, int ipv4, int ipv6)
 {
-	struct Client *target_p;
+	client::client *target_p;
 	rb_dlink_node *ptr;
 
 	/* report all direct connections */
 	RB_DLINK_FOREACH(ptr, lclient_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 #ifdef RB_IPV6
 		if((!ipv4 && GET_SS_FAMILY(&target_p->localClient->ip) == AF_INET) ||
@@ -165,13 +165,13 @@ do_etrace(struct Client *source_p, int ipv4, int ipv6)
 }
 
 static void
-do_etrace_full(struct Client *source_p)
+do_etrace_full(client::client *source_p)
 {
 	rb_dlink_node *ptr;
 
 	RB_DLINK_FOREACH(ptr, lclient_list.head)
 	{
-		do_single_etrace(source_p, (Client *)ptr->data);
+		do_single_etrace(source_p, (client::client *)ptr->data);
 	}
 
 	sendto_one_numeric(source_p, RPL_ENDOFTRACE, form_str(RPL_ENDOFTRACE), me.name);
@@ -185,7 +185,7 @@ do_etrace_full(struct Client *source_p)
  * side effects	     - etrace results are displayed
  */
 static void
-do_single_etrace(struct Client *source_p, struct Client *target_p)
+do_single_etrace(client::client *source_p, client::client *target_p)
 {
 	/* note, we hide fullcaps for spoofed users, as mirc can often
 	 * advertise its internal ip address in the field --fl
@@ -208,9 +208,9 @@ do_single_etrace(struct Client *source_p, struct Client *target_p)
 }
 
 static void
-m_chantrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_chantrace(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 	chan::chan *chptr;
 	const char *sockhost;
 	const char *name;
@@ -275,17 +275,17 @@ m_chantrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 }
 
 static void
-match_masktrace(struct Client *source_p, rb_dlink_list *list,
+match_masktrace(client::client *source_p, rb_dlink_list *list,
 	const char *username, const char *hostname, const char *name,
 	const char *gecos)
 {
-	struct Client *target_p;
+	client::client *target_p;
 	rb_dlink_node *ptr;
 	const char *sockhost;
 
 	RB_DLINK_FOREACH(ptr, list->head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 		if(!IsPerson(target_p))
 			continue;
 
@@ -319,7 +319,7 @@ match_masktrace(struct Client *source_p, rb_dlink_list *list,
 }
 
 static void
-mo_masktrace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
+mo_masktrace(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc,
 	const char *parv[])
 {
 	char *name, *username, *hostname, *gecos;

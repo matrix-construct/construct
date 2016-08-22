@@ -140,7 +140,7 @@ delete_isupport(const char *name)
 
 /* XXX caching? */
 void
-show_isupport(struct Client *client_p)
+show_isupport(client::client *client_p)
 {
 	rb_dlink_node *ptr;
 	struct isupportitem *item;

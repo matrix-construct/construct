@@ -50,8 +50,6 @@ typedef enum ilogfile
 	LAST_LOGFILE
 } ilogfile;
 
-struct Client;
-
 extern void init_main_logfile(void);
 extern void open_logfiles(void);
 extern void close_logfiles(void);
@@ -60,7 +58,7 @@ extern void idebug(const char *fmt, ...) AFP(1, 2);
 extern void inotice(const char *fmt, ...) AFP(1, 2);
 extern void iwarn(const char *fmt, ...) AFP(1, 2);
 extern void ierror(const char *fmt, ...) AFP(1, 2);
-extern void report_operspy(struct Client *, const char *, const char *);
+extern void report_operspy(client::client *, const char *, const char *);
 extern const char *smalldate(time_t);
 extern void ilog_error(const char *);
 

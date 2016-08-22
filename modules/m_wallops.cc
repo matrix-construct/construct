@@ -27,9 +27,9 @@ using namespace ircd;
 static const char wallops_desc[] =
 	"Provides the WALLOPS and OPERWALL commands to message online operators";
 
-static void mo_operwall(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_operwall(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_wallops(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_operwall(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_operwall(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_wallops(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message wallops_msgtab = {
 	"WALLOPS", 0, 0, 0, 0,
@@ -49,7 +49,7 @@ DECLARE_MODULE_AV2(wallops, NULL, NULL, wallops_clist, NULL, NULL, NULL, NULL, w
  *      parv[1] = message text
  */
 static void
-mo_operwall(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_operwall(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	if(!IsOperOperwall(source_p))
 	{
@@ -69,7 +69,7 @@ mo_operwall(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
  *      parv[1] = message text
  */
 static void
-ms_operwall(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_operwall(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s OPERWALL :%s",
 		      use_id(source_p), parv[1]);
@@ -81,7 +81,7 @@ ms_operwall(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
  *      parv[1] = message text
  */
 static void
-ms_wallops(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_wallops(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	const char *prefix = "";
 

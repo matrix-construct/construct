@@ -24,7 +24,7 @@
 namespace ircd {
 
 /*
- * ratelimit_client(struct Client *client_p, int penalty)
+ * ratelimit_client(client::client *client_p, int penalty)
  *
  * Applies a penalty to a client for executing a rate-limited command.
  *
@@ -44,7 +44,7 @@ namespace ircd {
  *    - The ratelimit for the user will be initialized if it hasn't
  *      been initialized yet.
  */
-int ratelimit_client(struct Client *client_p, unsigned int penalty)
+int ratelimit_client(client::client *client_p, unsigned int penalty)
 {
 	s_assert(client_p);
 	s_assert(MyClient(client_p));
@@ -77,7 +77,7 @@ int ratelimit_client(struct Client *client_p, unsigned int penalty)
 }
 
 /*
- * ratelimit_client_who(struct Client *client_p, int penalty)
+ * ratelimit_client_who(client::client *client_p, int penalty)
  *
  * Rate-limits a client for a WHO query if they have no remaining "free"
  * WHO queries to execute.
@@ -92,7 +92,7 @@ int ratelimit_client(struct Client *client_p, unsigned int penalty)
  *   - A "free who" token will be removed from the user if one exists.
  *     If one doesn't exist, the user will be ratelimited as normal.
  */
-int ratelimit_client_who(struct Client *client_p, unsigned int penalty)
+int ratelimit_client_who(client::client *client_p, unsigned int penalty)
 {
 	s_assert(client_p);
 	s_assert(MyClient(client_p));
@@ -107,7 +107,7 @@ int ratelimit_client_who(struct Client *client_p, unsigned int penalty)
 }
 
 /*
- * credit_client_join(struct Client *client_p)
+ * credit_client_join(client::client *client_p)
  *
  * Gives a user a credit to execute a WHO for joining a channel.
  *
@@ -120,7 +120,7 @@ int ratelimit_client_who(struct Client *client_p, unsigned int penalty)
  * Side effects:
  *   - (none)
  */
-void credit_client_join(struct Client *client_p)
+void credit_client_join(client::client *client_p)
 {
 	s_assert(client_p);
 	s_assert(MyClient(client_p));

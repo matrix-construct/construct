@@ -26,7 +26,7 @@ using namespace ircd;
 
 static const char close_desc[] = "Provides the CLOSE command to clear all unfinished connections";
 
-static void mo_close(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_close(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message close_msgtab = {
 	"CLOSE", 0, 0, 0, 0,
@@ -42,16 +42,16 @@ DECLARE_MODULE_AV2(close, NULL, NULL, close_clist, NULL, NULL, NULL, NULL, close
  *  - added by Darren Reed Jul 13 1992.
  */
 static void
-mo_close(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_close(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 	rb_dlink_node *ptr;
 	rb_dlink_node *ptr_next;
 	int closed = 0;
 
 	RB_DLINK_FOREACH_SAFE(ptr, ptr_next, unknown_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		sendto_one(source_p, form_str(RPL_CLOSING), me.name, source_p->name,
 			   get_client_name(target_p, SHOW_IP), target_p->status);

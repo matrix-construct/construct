@@ -60,7 +60,7 @@ struct ConfItem *find_dline(struct sockaddr *, int);
 			 (struct sockaddr *)&(x)->localClient->ip, CONF_KILL,\
 			 GET_SS_FAMILY(&(x)->localClient->ip), (x)->username, NULL))
 
-void report_auth(struct Client *);
+void report_auth(client::client *);
 #ifdef RB_IPV6
 int match_ipv6(struct sockaddr *, struct sockaddr *, int);
 #endif

@@ -36,7 +36,7 @@ using namespace ircd;
 
 static const char identify_desc[] = "Adds the IDENTIFY alias that forwards to NickServ or ChanServ";
 
-static void m_identify(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void m_identify(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
 
 struct Message identify_msgtab = {
 	"IDENTIFY", 0, 0, 0, 0,
@@ -51,10 +51,10 @@ mapi_clist_av1 identify_clist[] = {
 DECLARE_MODULE_AV2(identify, NULL, NULL, identify_clist, NULL, NULL, NULL, NULL, identify_desc);
 
 static void
-m_identify(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_identify(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	const char *nick;
-	struct Client *target_p;
+	client::client *target_p;
 
 	if (parc < 2 || EmptyString(parv[1]))
 	{
@@ -63,7 +63,7 @@ m_identify(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 	}
 
 	nick = parv[1][0] == '#' ? SVS_chanserv_NICK : SVS_nickserv_NICK;
-	if ((target_p = find_named_person(nick)) && IsService(target_p))
+	if ((target_p = client::find_named_person(nick)) && IsService(target_p))
 	{
 		sendto_one(target_p, ":%s PRIVMSG %s :IDENTIFY %s", get_id(source_p, target_p), get_id(target_p, target_p), reconstruct_parv(parc - 1, &parv[1]));
 	}

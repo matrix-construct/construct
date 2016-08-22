@@ -58,7 +58,6 @@ extern rb_radixtree *resv_tree;
 #define HASH_WALK_SAFE(i, max, ptr, nptr, table) for (i = 0; i < max; i++) { RB_DLINK_FOREACH_SAFE(ptr, nptr, table[i].head)
 #define HASH_WALK_END }
 
-struct Client;
 struct ConfItem;
 struct nd_entry;
 
@@ -69,18 +68,18 @@ extern uint32_t fnv_hash_upper_len(const unsigned char *s, int bits, int len);
 
 extern void init_hash(void);
 
-extern void add_to_client_hash(const char *name, struct Client *client);
-extern void del_from_client_hash(const char *name, struct Client *client);
-extern struct Client *find_client(const char *name);
-extern struct Client *find_named_client(const char *name);
-extern struct Client *find_server(struct Client *source_p, const char *name);
+extern void add_to_client_hash(const char *name, client::client *client);
+extern void del_from_client_hash(const char *name, client::client *client);
+extern client::client *find_client(const char *name);
+extern client::client *find_named_client(const char *name);
+extern client::client *find_server(client::client *source_p, const char *name);
 
-extern void add_to_id_hash(const char *, struct Client *);
-extern void del_from_id_hash(const char *name, struct Client *client);
-extern struct Client *find_id(const char *name);
+extern void add_to_id_hash(const char *, client::client *);
+extern void del_from_id_hash(const char *name, client::client *client);
+extern client::client *find_id(const char *name);
 
-extern void add_to_hostname_hash(const char *, struct Client *);
-extern void del_from_hostname_hash(const char *, struct Client *);
+extern void add_to_hostname_hash(const char *, client::client *);
+extern void del_from_hostname_hash(const char *, client::client *);
 extern rb_dlink_node *find_hostname(const char *);
 
 extern void add_to_resv_hash(const char *name, struct ConfItem *aconf);
@@ -88,9 +87,9 @@ extern void del_from_resv_hash(const char *name, struct ConfItem *aconf);
 extern struct ConfItem *hash_find_resv(const char *name);
 extern void clear_resv_hash(void);
 
-void add_to_cli_connid_hash(struct Client *client_p, uint32_t id);
+void add_to_cli_connid_hash(client::client *client_p, uint32_t id);
 void del_from_cli_connid_hash(uint32_t id);
-struct Client *find_cli_connid_hash(uint32_t connid);
+client::client *find_cli_connid_hash(uint32_t connid);
 
 }      // namespace ircd
 #endif // __cplusplus

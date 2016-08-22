@@ -196,7 +196,7 @@ mode::orphan(const uint8_t &c)
 namespace ircd {
 
 int
-chan::get_channel_access(client *source_p, chan *chptr, membership *msptr, int dir, const char *modestr)
+chan::get_channel_access(client::client *source_p, chan *chptr, membership *msptr, int dir, const char *modestr)
 {
 	hook_data_channel_approval moduledata;
 
@@ -225,7 +225,7 @@ chan::get_channel_access(client *source_p, chan *chptr, membership *msptr, int d
  * side effects - error message sent on failure
  */
 static bool
-allow_mode_change(struct Client *source_p, chan::chan *chptr, int alevel,
+allow_mode_change(client::client *source_p, chan::chan *chptr, int alevel,
 		int *errors, char c)
 {
 	/* If this mode char is locked, don't allow local users to change it. */
@@ -409,7 +409,7 @@ pretty_mask(const char *idmask)
  * side effects - numeric sent if not allowed
  */
 static bool
-check_forward(Client *source_p, chan::chan *chptr, const char *forward)
+check_forward(client::client *source_p, chan::chan *chptr, const char *forward)
 {
 	chan::chan *targptr = NULL;
 	chan::membership *msptr;
@@ -499,7 +499,7 @@ fix_key_remote(char *arg)
  * The handlers for each specific mode.
  */
 void
-mode::functor::nosuch(struct Client *source_p, chan *chptr,
+mode::functor::nosuch(client::client *source_p, chan *chptr,
 	   int alevel, int parc, int *parn,
 	   const char **parv, int *errors, int dir, char c, type mode_type)
 {
@@ -510,7 +510,7 @@ mode::functor::nosuch(struct Client *source_p, chan *chptr,
 }
 
 void
-mode::functor::simple(struct Client *source_p, chan *chptr,
+mode::functor::simple(client::client *source_p, chan *chptr,
 	   int alevel, int parc, int *parn,
 	   const char **parv, int *errors, int dir, char c, type mode_type)
 {
@@ -549,7 +549,7 @@ mode::functor::simple(struct Client *source_p, chan *chptr,
 }
 
 void
-mode::functor::orphaned(struct Client *source_p, chan *chptr,
+mode::functor::orphaned(client::client *source_p, chan *chptr,
 	   int alevel, int parc, int *parn,
 	   const char **parv, int *errors, int dir, char c, type mode_type)
 {
@@ -579,7 +579,7 @@ mode::functor::orphaned(struct Client *source_p, chan *chptr,
 }
 
 void
-mode::functor::hidden(struct Client *source_p, chan *chptr,
+mode::functor::hidden(client::client *source_p, chan *chptr,
 	  int alevel, int parc, int *parn,
 	  const char **parv, int *errors, int dir, char c, type mode_type)
 {
@@ -626,7 +626,7 @@ mode::functor::hidden(struct Client *source_p, chan *chptr,
 }
 
 void
-mode::functor::staff(struct Client *source_p, chan *chptr,
+mode::functor::staff(client::client *source_p, chan *chptr,
 	  int alevel, int parc, int *parn,
 	  const char **parv, int *errors, int dir, char c, type mode_type)
 {
@@ -676,7 +676,7 @@ mode::functor::staff(struct Client *source_p, chan *chptr,
 }
 
 void
-mode::functor::ban(client *source_p, chan *chptr,
+mode::functor::ban(client::client *source_p, chan *chptr,
 	int alevel, int parc, int *parn,
 	const char **parv, int *errors, int dir, char c, type mode_type)
 {
@@ -926,13 +926,13 @@ mode::functor::ban(client *source_p, chan *chptr,
 }
 
 void
-mode::functor::op(client *source_p, chan *chptr,
+mode::functor::op(client::client *source_p, chan *chptr,
        int alevel, int parc, int *parn,
        const char **parv, int *errors, int dir, char c, type mode_type)
 {
 	membership *mstptr;
 	const char *opnick;
-	client *targ_p;
+	client::client *targ_p;
 
 	if(!allow_mode_change(source_p, chptr, alevel, errors, c))
 		return;
@@ -1002,13 +1002,13 @@ mode::functor::op(client *source_p, chan *chptr,
 }
 
 void
-mode::functor::voice(client *source_p, chan *chptr,
+mode::functor::voice(client::client *source_p, chan *chptr,
 	  int alevel, int parc, int *parn,
 	  const char **parv, int *errors, int dir, char c, type mode_type)
 {
 	membership *mstptr;
 	const char *opnick;
-	client *targ_p;
+	client::client *targ_p;
 
 	if(!allow_mode_change(source_p, chptr, alevel, errors, c))
 		return;
@@ -1068,7 +1068,7 @@ mode::functor::voice(client *source_p, chan *chptr,
 }
 
 void
-mode::functor::limit(client *source_p, chan *chptr,
+mode::functor::limit(client::client *source_p, chan *chptr,
 	  int alevel, int parc, int *parn,
 	  const char **parv, int *errors, int dir, char c, type mode_type)
 {
@@ -1119,7 +1119,7 @@ mode::functor::limit(client *source_p, chan *chptr,
 }
 
 void
-mode::functor::throttle(client *source_p, chan *chptr,
+mode::functor::throttle(client::client *source_p, chan *chptr,
 	     int alevel, int parc, int *parn,
 	     const char **parv, int *errors, int dir, char c, type mode_type)
 {
@@ -1172,7 +1172,7 @@ mode::functor::throttle(client *source_p, chan *chptr,
 }
 
 void
-mode::functor::forward(client *source_p, chan *chptr,
+mode::functor::forward(client::client *source_p, chan *chptr,
 	int alevel, int parc, int *parn,
 	const char **parv, int *errors, int dir, char c, type mode_type)
 {
@@ -1248,7 +1248,7 @@ mode::functor::forward(client *source_p, chan *chptr,
 }
 
 void
-mode::functor::key(client *source_p, chan *chptr,
+mode::functor::key(client::client *source_p, chan *chptr,
 	int alevel, int parc, int *parn,
 	const char **parv, int *errors, int dir, char c, type mode_type)
 {
@@ -1325,7 +1325,7 @@ mode::functor::key(client *source_p, chan *chptr,
  * Extensively modified to be hotpluggable, 03/09/06 -- nenolod
  */
 void
-chan::set_channel_mode(client *client_p, client *source_p,
+chan::set_channel_mode(client::client *client_p, client::client *source_p,
                  chan *chptr, membership *msptr, int parc, const char *parv[])
 {
 	static char modebuf[BUFSIZE];
@@ -1340,7 +1340,7 @@ chan::set_channel_mode(client *client_p, client *source_p,
 	int alevel;
 	const char *ml = parv[0];
 	char c;
-	client *fakesource_p;
+	client::client *fakesource_p;
 	int reauthorized = 0;	/* if we change from MODE_QUERY to MODE_ADD/MODE_DEL, then reauth once, ugly but it works */
 	int flags_list[3] = { ALL_MEMBERS, ONLY_CHANOPS, ONLY_OPERS };
 
@@ -1485,7 +1485,7 @@ chan::set_channel_mode(client *client_p, client *source_p,
  * side effects - channel mlock is changed / MLOCK is propagated
  */
 void
-chan::set_channel_mlock(client *client_p, client *source_p,
+chan::set_channel_mlock(client::client *client_p, client::client *source_p,
 		  chan *chptr, const char *newmlock, bool propagate)
 {
 	chptr->mode_lock = newmlock?: std::string{};

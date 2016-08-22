@@ -8,10 +8,10 @@ using namespace ircd;
 static const char grant_desc[] =
 	"Provides the grant facility for giving other users specific privilege sets";
 
-static void mo_grant(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static void me_grant(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void mo_grant(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
+static void me_grant(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
 
-static void do_grant(struct Client *source_p, struct Client *target_p, const char *new_privset);
+static void do_grant(client::client *source_p, client::client *target_p, const char *new_privset);
 
 struct Message grant_msgtab = {
 	"GRANT", 0, 0, 0, 0,
@@ -23,9 +23,9 @@ mapi_clist_av1 grant_clist[] = { &grant_msgtab, NULL };
 DECLARE_MODULE_AV2(grant, NULL, NULL, grant_clist, NULL, NULL, NULL, NULL, grant_desc);
 
 static void
-mo_grant(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_grant(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 
 	if(!HasPrivilege(source_p, "oper:grant"))
 	{
@@ -33,7 +33,7 @@ mo_grant(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		return;
 	}
 
-	target_p = find_named_person(parv[1]);
+	target_p = client::find_named_person(parv[1]);
 	if (target_p == NULL)
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHNICK,
@@ -54,11 +54,11 @@ mo_grant(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 }
 
 static void
-me_grant(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_grant(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 
-	target_p = find_person(parv[1]);
+	target_p = client::find_person(parv[1]);
 	if (target_p == NULL)
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHNICK,
@@ -79,7 +79,7 @@ me_grant(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 
 static void
-do_grant(struct Client *source_p, struct Client *target_p, const char *new_privset)
+do_grant(client::client *source_p, client::client *target_p, const char *new_privset)
 {
 	int dooper = 0, dodeoper = 0;
 	struct PrivilegeSet *privset = 0;

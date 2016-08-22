@@ -27,11 +27,11 @@ using namespace ircd;
 static const char accept_desc[] =
 	"Provides the ACCEPT command for use with Caller ID/user mode +g";
 
-static void m_accept(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void build_nicklist(struct Client *, char *, char *, const char *);
+static void m_accept(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void build_nicklist(client::client *, char *, char *, const char *);
 
-static void add_accept(struct Client *, struct Client *);
-static void list_accepts(struct Client *);
+static void add_accept(client::client *, client::client *);
+static void list_accepts(client::client *);
 
 struct Message accept_msgtab = {
 	"ACCEPT", 0, 0, 0, 0,
@@ -49,13 +49,13 @@ DECLARE_MODULE_AV2(accept, NULL, NULL, accept_clist, NULL, NULL, NULL, NULL, acc
  *      parv[1] = servername
  */
 static void
-m_accept(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_accept(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	char *nick;
 	char *p = NULL;
 	static char addbuf[BUFSIZE];
 	static char delbuf[BUFSIZE];
-	struct Client *target_p;
+	client::client *target_p;
 	int accept_num;
 
 	if(*parv[1] == '*')
@@ -70,7 +70,7 @@ m_accept(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	for (nick = rb_strtok_r(delbuf, ",", &p); nick != NULL; nick = rb_strtok_r(NULL, ",", &p))
 	{
 		/* shouldnt happen, but lets be paranoid */
-		if((target_p = find_named_person(nick)) == NULL)
+		if((target_p = client::find_named_person(nick)) == NULL)
 		{
 			sendto_one_numeric(source_p, ERR_NOSUCHNICK,
 					   form_str(ERR_NOSUCHNICK), nick);
@@ -96,7 +96,7 @@ m_accept(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	for (nick = rb_strtok_r(addbuf, ",", &p); nick; nick = rb_strtok_r(NULL, ",", &p), accept_num++)
 	{
 		/* shouldnt happen, but lets be paranoid */
-		if((target_p = find_named_person(nick)) == NULL)
+		if((target_p = client::find_named_person(nick)) == NULL)
 		{
 			sendto_one_numeric(source_p, ERR_NOSUCHNICK,
 					   form_str(ERR_NOSUCHNICK), nick);
@@ -134,7 +134,7 @@ m_accept(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
  * side effects - addbuf/delbuf are modified to give valid nicks
  */
 static void
-build_nicklist(struct Client *source_p, char *addbuf, char *delbuf, const char *nicks)
+build_nicklist(client::client *source_p, char *addbuf, char *delbuf, const char *nicks)
 {
 	char *name;
 	char *p;
@@ -155,7 +155,7 @@ build_nicklist(struct Client *source_p, char *addbuf, char *delbuf, const char *
 			name++;
 		}
 
-		if(find_named_person(name) == NULL)
+		if(client::find_named_person(name) == NULL)
 		{
 			sendto_one_numeric(source_p, ERR_NOSUCHNICK,
 					   form_str(ERR_NOSUCHNICK), name);
@@ -192,7 +192,7 @@ build_nicklist(struct Client *source_p, char *addbuf, char *delbuf, const char *
  * side effects - target is added to clients list
  */
 static void
-add_accept(struct Client *source_p, struct Client *target_p)
+add_accept(client::client *source_p, client::client *target_p)
 {
 	rb_dlinkAddAlloc(target_p, &source_p->localClient->allow_list);
 	rb_dlinkAddAlloc(source_p, &target_p->on_allow_list);
@@ -207,10 +207,10 @@ add_accept(struct Client *source_p, struct Client *target_p)
  * side effects	- print accept list to client
  */
 static void
-list_accepts(struct Client *source_p)
+list_accepts(client::client *source_p)
 {
 	rb_dlink_node *ptr;
-	struct Client *target_p;
+	client::client *target_p;
 	char nicks[BUFSIZE];
 	int len = 0;
 	int len2 = 0;
@@ -221,7 +221,7 @@ list_accepts(struct Client *source_p)
 
 	RB_DLINK_FOREACH(ptr, source_p->localClient->allow_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		if(target_p)
 		{

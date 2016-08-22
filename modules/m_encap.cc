@@ -31,7 +31,7 @@ using namespace ircd;
 
 static const char encap_desc[] = "Provides the TS6 ENCAP facility";
 
-static void ms_encap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+static void ms_encap(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 		int parc, const char *parv[]);
 
 struct Message encap_msgtab = {
@@ -50,7 +50,7 @@ DECLARE_MODULE_AV2(encap, NULL, NULL, encap_clist, NULL, NULL, NULL, NULL, encap
  * parv[3] - parameters
  */
 static void
-ms_encap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_encap(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	char buffer[BUFSIZE];
 	char *ptr;

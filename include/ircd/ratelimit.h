@@ -26,9 +26,9 @@
 #ifdef __cplusplus
 namespace ircd {
 
-int ratelimit_client(struct Client *client_p, unsigned int penalty);
-int ratelimit_client_who(struct Client *client_p, unsigned int penalty);
-void credit_client_join(struct Client *client_p);
+int ratelimit_client(client::client *client_p, unsigned int penalty);
+int ratelimit_client_who(client::client *client_p, unsigned int penalty);
+void credit_client_join(client::client *client_p);
 
 }      // namespace ircd
 #endif // __cplusplus

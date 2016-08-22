@@ -28,8 +28,6 @@
 #ifdef __cplusplus
 namespace ircd {
 
-struct Client;
-
 struct Listener
 {
 	struct Listener *next;	/* list node pointer */
@@ -48,7 +46,7 @@ extern void add_listener(int port, const char *vaddr_ip, int family, int ssl, in
 extern void close_listener(struct Listener *listener);
 extern void close_listeners(void);
 extern const char *get_listener_name(const struct Listener *listener);
-extern void show_ports(struct Client *client);
+extern void show_ports(client::client *client);
 extern void free_listener(struct Listener *);
 
 }      // namespace ircd

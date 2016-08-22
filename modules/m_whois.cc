@@ -27,11 +27,11 @@ using namespace ircd;
 static const char whois_desc[] =
 	"Provides the WHOIS command to display information about a user";
 
-static void do_whois(struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static void single_whois(struct Client *source_p, struct Client *target_p, int operspy);
+static void do_whois(client::client *client_p, client::client *source_p, int parc, const char *parv[]);
+static void single_whois(client::client *source_p, client::client *target_p, int operspy);
 
-static void m_whois(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_whois(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_whois(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_whois(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message whois_msgtab = {
 	"WHOIS", 0, 0, 0, 0,
@@ -57,7 +57,7 @@ DECLARE_MODULE_AV2(whois, NULL, NULL, whois_clist, whois_hlist, NULL, NULL, NULL
  *      parv[1] = nickname masklist
  */
 static void
-m_whois(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_whois(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
 
@@ -101,9 +101,9 @@ m_whois(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
  *      parv[2] = nickname to whois
  */
 static void
-ms_whois(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_whois(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 
 	/* note: early versions of ratbox allowed users to issue a remote
 	 * whois with a blank parv[2], so we cannot treat it as a protocol
@@ -151,9 +151,9 @@ ms_whois(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
  * side effects -
  */
 static void
-do_whois(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+do_whois(client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 	char *nick;
 	char *p = NULL;
 	int operspy = 0;
@@ -168,7 +168,7 @@ do_whois(struct Client *client_p, struct Client *source_p, int parc, const char 
 		nick++;
 	}
 
-	target_p = find_named_person(nick);
+	target_p = client::find_named_person(nick);
 	if(target_p != NULL)
 	{
 		if(operspy)
@@ -202,7 +202,7 @@ do_whois(struct Client *client_p, struct Client *source_p, int parc, const char 
  * 		  writing results to source_p
  */
 static void
-single_whois(struct Client *source_p, struct Client *target_p, int operspy)
+single_whois(client::client *source_p, client::client *target_p, int operspy)
 {
 	char buf[BUFSIZE];
 	rb_dlink_node *ptr;
@@ -252,7 +252,7 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 
 	if (!IsService(target_p))
 	{
-		for(const auto &pit : target_p->user->channel)
+		for(const auto &pit : chans(user(*target_p)))
 		{
 			auto &chptr(pit.first);
 			auto &msptr(pit.second);
@@ -288,9 +288,9 @@ single_whois(struct Client *source_p, struct Client *target_p, int operspy)
 			   target_p->name, target_p->servptr->name,
 			   target_p->servptr->info);
 
-	if(target_p->user->away.size())
+	if(away(user(*target_p)).size())
 		sendto_one_numeric(source_p, RPL_AWAY, form_str(RPL_AWAY),
-				   target_p->name, target_p->user->away.c_str());
+				   target_p->name, away(user(*target_p)).c_str());
 
 	if(IsOper(target_p) && (!ConfigFileEntry.hide_opers_in_whois || IsOper(source_p)))
 	{

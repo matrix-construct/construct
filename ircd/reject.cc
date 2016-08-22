@@ -130,7 +130,7 @@ throttle_size(void)
 }
 
 void
-add_reject(struct Client *client_p, const char *mask1, const char *mask2)
+add_reject(client::client *client_p, const char *mask1, const char *mask2)
 {
 	rb_patricia_node_t *pnode;
 	reject_t *rdata;

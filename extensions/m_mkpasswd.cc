@@ -9,9 +9,9 @@ using namespace ircd;
 
 const char mkpasswd_desc[] = "Hash a password for use in ircd.conf";
 
-static void m_mkpasswd(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+static void m_mkpasswd(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 		      int parc, const char *parv[]);
-static void mo_mkpasswd(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+static void mo_mkpasswd(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 		       int parc, const char *parv[]);
 
 static char *make_md5_salt(int);
@@ -38,7 +38,7 @@ DECLARE_MODULE_AV2(mkpasswd, NULL, NULL, mkpasswd_clist, NULL, NULL, NULL, NULL,
  *	parv[2] = type
  */
 static void
-m_mkpasswd(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_mkpasswd(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
 	char *salt;
@@ -88,7 +88,7 @@ m_mkpasswd(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
  *	parv[2] = type
  */
 static void
-mo_mkpasswd(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_mkpasswd(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	char *salt;
 	const char *crypted;

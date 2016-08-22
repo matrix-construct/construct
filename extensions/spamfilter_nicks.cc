@@ -213,7 +213,7 @@ static
 int real_test_token(const char *const token,
                     struct chan *const chan)
 {
-	struct Client *const client = find_named_client(token);
+	client::client *const client = find_named_client(token);
 	return client && is_member(chan, client);
 }
 

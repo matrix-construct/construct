@@ -12,7 +12,7 @@ static const char extb_desc[] = "Can join ($j) extban type - matches users who a
 
 static int _modinit(void);
 static void _moddeinit(void);
-static int eb_canjoin(const char *data, struct Client *client_p, chan::chan *chptr, mode::type type);
+static int eb_canjoin(const char *data, client::client *client_p, chan::chan *chptr, mode::type type);
 
 DECLARE_MODULE_AV2(extb_canjoin, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, extb_desc);
 
@@ -31,7 +31,7 @@ _moddeinit(void)
 }
 
 static int
-eb_canjoin(const char *data, struct Client *client_p, chan::chan *chptr, mode::type type)
+eb_canjoin(const char *data, client::client *client_p, chan::chan *chptr, mode::type type)
 {
 	using namespace ext;
 

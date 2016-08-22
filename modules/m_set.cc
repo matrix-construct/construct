@@ -28,7 +28,7 @@ using namespace ircd;
 
 static const char set_desc[] = "Provides the SET command to change server parameters";
 
-static void mo_set(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_set(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message set_msgtab = {
 	"SET", 0, 0, 0, 0,
@@ -42,7 +42,7 @@ DECLARE_MODULE_AV2(set, NULL, NULL, set_clist, NULL, NULL, NULL, NULL, set_desc)
 struct SetStruct
 {
 	const char *name;
-	void (*handler)(struct Client *source_p, const char *chararg, int intarg);
+	void (*handler)(client::client *source_p, const char *chararg, int intarg);
 	bool wants_char;	/* true if it expects (char *, [int]) */
 	bool wants_int;		/* true if it expects ([char *], int) */
 
@@ -51,20 +51,20 @@ struct SetStruct
 };
 
 
-static void quote_adminstring(struct Client *, const char *, int);
-static void quote_autoconn(struct Client *, const char *, int);
-static void quote_autoconnall(struct Client *, const char *, int);
-static void quote_floodcount(struct Client *, const char *, int);
-static void quote_identtimeout(struct Client *, const char *, int);
-static void quote_max(struct Client *, const char *, int);
-static void quote_operstring(struct Client *, const char *, int);
-static void quote_spamnum(struct Client *, const char *, int);
-static void quote_spamtime(struct Client *, const char *, int);
-static void quote_splitmode(struct Client *, const char *, int);
-static void quote_splitnum(struct Client *, const char *, int);
-static void quote_splitusers(struct Client *, const char *, int);
+static void quote_adminstring(client::client *, const char *, int);
+static void quote_autoconn(client::client *, const char *, int);
+static void quote_autoconnall(client::client *, const char *, int);
+static void quote_floodcount(client::client *, const char *, int);
+static void quote_identtimeout(client::client *, const char *, int);
+static void quote_max(client::client *, const char *, int);
+static void quote_operstring(client::client *, const char *, int);
+static void quote_spamnum(client::client *, const char *, int);
+static void quote_spamtime(client::client *, const char *, int);
+static void quote_splitmode(client::client *, const char *, int);
+static void quote_splitnum(client::client *, const char *, int);
+static void quote_splitusers(client::client *, const char *, int);
 
-static void list_quote_commands(struct Client *);
+static void list_quote_commands(client::client *);
 
 
 /*
@@ -101,7 +101,7 @@ static struct SetStruct set_cmd_table[] = {
  * Four to a line for now.
  */
 static void
-list_quote_commands(struct Client *source_p)
+list_quote_commands(client::client *source_p)
 {
 	int i;
 	int j = 0;
@@ -131,14 +131,14 @@ list_quote_commands(struct Client *source_p)
 
 /* SET AUTOCONN */
 static void
-quote_autoconn(struct Client *source_p, const char *arg, int newval)
+quote_autoconn(client::client *source_p, const char *arg, int newval)
 {
 	set_server_conf_autoconn(source_p, arg, newval);
 }
 
 /* SET AUTOCONNALL */
 static void
-quote_autoconnall(struct Client *source_p, const char *arg, int newval)
+quote_autoconnall(client::client *source_p, const char *arg, int newval)
 {
 	if(newval >= 0)
 	{
@@ -157,7 +157,7 @@ quote_autoconnall(struct Client *source_p, const char *arg, int newval)
 
 /* SET FLOODCOUNT */
 static void
-quote_floodcount(struct Client *source_p, const char *arg, int newval)
+quote_floodcount(client::client *source_p, const char *arg, int newval)
 {
 	if(newval >= 0)
 	{
@@ -175,7 +175,7 @@ quote_floodcount(struct Client *source_p, const char *arg, int newval)
 
 /* SET IDENTTIMEOUT */
 static void
-quote_identtimeout(struct Client *source_p, const char *arg, int newval)
+quote_identtimeout(client::client *source_p, const char *arg, int newval)
 {
 	if(!IsOperAdmin(source_p))
 	{
@@ -199,7 +199,7 @@ quote_identtimeout(struct Client *source_p, const char *arg, int newval)
 
 /* SET MAX */
 static void
-quote_max(struct Client *source_p, const char *arg, int newval)
+quote_max(client::client *source_p, const char *arg, int newval)
 {
 	if(newval > 0)
 	{
@@ -237,7 +237,7 @@ quote_max(struct Client *source_p, const char *arg, int newval)
 
 /* SET OPERSTRING */
 static void
-quote_operstring(struct Client *source_p, const char *arg, int newval)
+quote_operstring(client::client *source_p, const char *arg, int newval)
 {
 	if(EmptyString(arg))
 	{
@@ -256,7 +256,7 @@ quote_operstring(struct Client *source_p, const char *arg, int newval)
 
 /* SET ADMINSTRING */
 static void
-quote_adminstring(struct Client *source_p, const char *arg, int newval)
+quote_adminstring(client::client *source_p, const char *arg, int newval)
 {
 	if(EmptyString(arg))
 	{
@@ -275,7 +275,7 @@ quote_adminstring(struct Client *source_p, const char *arg, int newval)
 
 /* SET SPAMNUM */
 static void
-quote_spamnum(struct Client *source_p, const char *arg, int newval)
+quote_spamnum(client::client *source_p, const char *arg, int newval)
 {
 	if(newval > 0)
 	{
@@ -305,7 +305,7 @@ quote_spamnum(struct Client *source_p, const char *arg, int newval)
 
 /* SET SPAMTIME */
 static void
-quote_spamtime(struct Client *source_p, const char *arg, int newval)
+quote_spamtime(client::client *source_p, const char *arg, int newval)
 {
 	if(newval > 0)
 	{
@@ -345,7 +345,7 @@ static const char *splitmode_status[] = {
 
 /* SET SPLITMODE */
 static void
-quote_splitmode(struct Client *source_p, const char *charval, int intval)
+quote_splitmode(client::client *source_p, const char *charval, int intval)
 {
 	if(charval)
 	{
@@ -405,7 +405,7 @@ quote_splitmode(struct Client *source_p, const char *charval, int intval)
 
 /* SET SPLITNUM */
 static void
-quote_splitnum(struct Client *source_p, const char *arg, int newval)
+quote_splitnum(client::client *source_p, const char *arg, int newval)
 {
 	if(newval >= 0)
 	{
@@ -422,7 +422,7 @@ quote_splitnum(struct Client *source_p, const char *arg, int newval)
 
 /* SET SPLITUSERS */
 static void
-quote_splitusers(struct Client *source_p, const char *arg, int newval)
+quote_splitusers(client::client *source_p, const char *arg, int newval)
 {
 	if(newval >= 0)
 	{
@@ -442,7 +442,7 @@ quote_splitusers(struct Client *source_p, const char *arg, int newval)
  * set options while running
  */
 static void
-mo_set(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_set(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	int newval;
 	int i, n;

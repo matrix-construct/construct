@@ -27,11 +27,11 @@ using namespace ircd;
 static const char mode_desc[] =
 	"Provides the MODE and MLOCK client and server commands, and TS6 server-to-server TMODE and BMASK commands";
 
-static void m_mode(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_mode(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_tmode(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_mlock(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_bmask(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_mode(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_mode(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_tmode(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_mlock(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_bmask(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message mode_msgtab = {
 	"MODE", 0, 0, 0, 0,
@@ -59,7 +59,7 @@ DECLARE_MODULE_AV2(mode, NULL, NULL, mode_clist, NULL, NULL, NULL, NULL, mode_de
  * parv[1] - channel
  */
 static void
-m_mode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_mode(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	chan::chan *chptr = NULL;
 	chan::membership *msptr;
@@ -134,7 +134,7 @@ m_mode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 }
 
 static void
-ms_mode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_mode(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	chan::chan *chptr;
 
@@ -151,7 +151,7 @@ ms_mode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 }
 
 static void
-ms_tmode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_tmode(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	chan::chan *chptr = NULL;
 	chan::membership *msptr;
@@ -189,7 +189,7 @@ ms_tmode(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 }
 
 static void
-ms_mlock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_mlock(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	chan::chan *chptr = NULL;
 
@@ -218,7 +218,7 @@ ms_mlock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 }
 
 static void
-possibly_remove_lower_forward(struct Client *fakesource_p,
+possibly_remove_lower_forward(client::client *fakesource_p,
                               const int &mems,
                               chan::chan &chan,
                               chan::list &list,
@@ -250,7 +250,7 @@ possibly_remove_lower_forward(struct Client *fakesource_p,
 }
 
 static void
-ms_bmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_bmask(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	static char modebuf[BUFSIZE];
 	static char parabuf[BUFSIZE];
@@ -268,7 +268,7 @@ ms_bmask(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	int modecount = 0;
 	int needcap = NOCAPS;
 	int mems;
-	struct Client *fakesource_p;
+	client::client *fakesource_p;
 
 	if(!rfc1459::is_chan_prefix(parv[2][0]) || !chan::valid_name(parv[2]))
 		return;

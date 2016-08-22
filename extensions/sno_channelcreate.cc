@@ -40,7 +40,7 @@ h_scc_channel_join(void *vdata)
 {
 	hook_data_channel_activity *data = (hook_data_channel_activity *)vdata;
 	const auto chptr(data->chptr);
-	struct Client *source_p = data->client;
+	client::client *source_p = data->client;
 
 	/* If they just joined a channel, and it only has one member, then they just created it. */
 	if(size(chptr->members) == 1 && is_chanop(get(chptr->members, *source_p, std::nothrow)))

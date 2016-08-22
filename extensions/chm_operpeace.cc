@@ -40,8 +40,8 @@ DECLARE_MODULE_AV2(chm_operpeace, _modinit, _moddeinit, NULL, NULL, chm_operpeac
 static void
 hdl_can_kick(hook_data_channel_approval *data)
 {
-	struct Client *source_p = data->client;
-	struct Client *who = data->target;
+	client::client *source_p = data->client;
+	client::client *who = data->target;
 	const auto &chptr(data->chptr);
 
 	if(IsOper(source_p))

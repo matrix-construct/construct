@@ -36,16 +36,16 @@ typedef struct _hurt {
 /* }}} */
 
 /* {{{ Prototypes */
-static void mo_hurt(struct MsgBuf *msgbuf_p, struct Client *, struct Client *, int, const char **);
-static void me_hurt(struct MsgBuf *msgbuf_p, struct Client *, struct Client *, int, const char **);
-static void mo_heal(struct MsgBuf *msgbuf_p, struct Client *, struct Client *, int, const char **);
-static void me_heal(struct MsgBuf *msgbuf_p, struct Client *, struct Client *, int, const char **);
+static void mo_hurt(struct MsgBuf *msgbuf_p, client::client *, client::client *, int, const char **);
+static void me_hurt(struct MsgBuf *msgbuf_p, client::client *, client::client *, int, const char **);
+static void mo_heal(struct MsgBuf *msgbuf_p, client::client *, client::client *, int, const char **);
+static void me_heal(struct MsgBuf *msgbuf_p, client::client *, client::client *, int, const char **);
 
 static int modinit(void);
 static void modfini(void);
 
 static void client_exit_hook(hook_data_client_exit *);
-static void new_local_user_hook(struct Client *);
+static void new_local_user_hook(client::client *);
 static void doing_stats_hook(hook_data_int *hdata);
 
 static void hurt_check_event(void *);
@@ -53,13 +53,13 @@ static void hurt_expire_event(void *);
 
 static hurt_t *hurt_new(time_t, const char *, const char *);
 static void hurt_add(hurt_t *);
-static void hurt_propagate(struct Client *, struct Client *, hurt_t *);
+static void hurt_propagate(client::client *, client::client *, hurt_t *);
 static hurt_t *hurt_find(const char *ip);
 static hurt_t *hurt_find_exact(const char *ip);
 static void hurt_remove(const char *ip);
 static void hurt_destroy(void *hurt);
 
-static void heal_nick(struct Client *, struct Client *);
+static void heal_nick(client::client *, client::client *);
 
 /* }}} */
 
@@ -171,13 +171,13 @@ modfini(void)
  * parv[3] - reason or NULL
  */
 static void
-mo_hurt(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+mo_hurt(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 		int parc, const char **parv)
 {
 	const char			*ip, *expire, *reason;
 	int				expire_time;
 	hurt_t				*hurt;
-	struct Client			*target_p;
+	client::client			*target_p;
 
 	if (!IsOperK(source_p)) {
 		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name,
@@ -204,7 +204,7 @@ mo_hurt(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	/* Is this a client? */
 	if (strchr(ip, '.') == NULL && strchr(ip, ':') == NULL)
 	{
-		target_p = find_named_person(ip);
+		target_p = client::find_named_person(ip);
 		if (target_p == NULL)
 		{
 			sendto_one_numeric(source_p, ERR_NOSUCHNICK,
@@ -253,7 +253,7 @@ mo_hurt(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
  * parv[3] - reason
  */
 static void
-me_hurt(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+me_hurt(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 		int parc, const char **parv)
 {
 	time_t				expire_time;
@@ -288,10 +288,10 @@ me_hurt(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
  * parv[1] - nick or ip
  */
 static void
-mo_heal(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+mo_heal(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 		int parc, const char **parv)
 {
-	struct Client *target_p;
+	client::client *target_p;
 
 	if (!IsOperUnkline(source_p))
 	{
@@ -300,9 +300,9 @@ mo_heal(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		return;
 	}
 
-	if (clean_nick(parv[1], 0))
+	if (client::clean_nick(parv[1], 0))
 	{
-		target_p = find_named_person(parv[1]);
+		target_p = client::find_named_person(parv[1]);
 		if (target_p == NULL)
 		{
 			sendto_one_numeric(source_p, ERR_NOSUCHNICK,
@@ -339,10 +339,10 @@ mo_heal(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 /* }}} */
 
 static void
-me_heal(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+me_heal(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 		int parc, const char **parv)
 {
-	struct Client *target_p;
+	client::client *target_p;
 
 	/* as noted in me_hurt(), if we don't get sufficient arguments...
 	 * *poof*, it's dropped...
@@ -350,9 +350,9 @@ me_heal(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	if (parc < 2)
 		return;
 
-	if (clean_nick(parv[1], 0))
+	if (client::clean_nick(parv[1], 0))
 	{
-		target_p = find_person(parv[1]);
+		target_p = client::find_person(parv[1]);
 		if (target_p != NULL && MyConnect(target_p))
 			heal_nick(source_p, target_p);
 	}
@@ -376,11 +376,11 @@ static void
 hurt_check_event(void *arg)
 {
 	rb_dlink_node	*ptr, *next_ptr;
-	struct Client	*client_p;
+	client::client	*client_p;
 
 	RB_DLINK_FOREACH_SAFE (ptr, next_ptr, hurt_state.hurt_clients.head) {
-		client_p = (Client *)ptr->data;
-		if (client_p->user->suser.size())
+		client_p = (client::client *)ptr->data;
+		if (suser(user(*client_p)).size())
 		{
 			rb_dlinkDestroy(ptr, &hurt_state.hurt_clients);
 			sendto_one_notice(client_p, ":HURT restriction removed for this session");
@@ -429,9 +429,9 @@ client_exit_hook(hook_data_client_exit *data)
 
 /* {{{ static void new_local_user_hook() */
 static void
-new_local_user_hook(struct Client *source_p)
+new_local_user_hook(client::client *source_p)
 {
-	if (IsAnyDead(source_p) || source_p->user->suser.size() ||
+	if (IsAnyDead(source_p) || suser(user(*source_p)).size() ||
 			IsExemptKline(source_p))
 		return;
 
@@ -451,7 +451,7 @@ doing_stats_hook(hook_data_int *hdata)
 {
 	rb_dlink_node	*ptr;
 	hurt_t		*hurt;
-	struct Client	*source_p;
+	client::client	*source_p;
 
 	s_assert(hdata);
 	s_assert(hdata->client);
@@ -500,7 +500,7 @@ doing_stats_hook(hook_data_int *hdata)
  * hurt   - HURT to be propagated
  */
 static void
-hurt_propagate(struct Client *client_p, struct Client *source_p, hurt_t *hurt)
+hurt_propagate(client::client *client_p, client::client *source_p, hurt_t *hurt)
 {
 	if (client_p)
 		sendto_one(client_p,
@@ -600,7 +600,7 @@ hurt_remove(const char *ip)
 
 /* {{{ static void heal_nick() */
 static void
-heal_nick(struct Client *source_p, struct Client *target_p)
+heal_nick(client::client *source_p, client::client *target_p)
 {
 	if (rb_dlinkFindDestroy(target_p, &hurt_state.hurt_clients))
 	{

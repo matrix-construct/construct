@@ -35,7 +35,7 @@ static const char cap_desc[] = "Provides the commands used for client capability
 
 typedef int (*bqcmp)(const void *, const void *);
 
-static void m_cap(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_cap(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message cap_msgtab = {
 	"CAP", 0, 0, 0, 0,
@@ -50,7 +50,7 @@ DECLARE_MODULE_AV2(cap, NULL, NULL, cap_clist, NULL, NULL, NULL, NULL, cap_desc)
 #define HasCapabilityFlag(c, f)		(c->ownerdata != NULL && (((struct ClientCapability *)c->ownerdata)->flags & (f)) == f)
 
 static inline int
-clicap_visible(struct Client *client_p, const std::shared_ptr<capability::entry> cap)
+clicap_visible(client::client *client_p, const std::shared_ptr<capability::entry> cap)
 {
 	struct ClientCapability *clicap;
 
@@ -137,7 +137,7 @@ clicap_find(const char *data, int *negate, int *finished)
  * Outputs: None
  */
 static void
-clicap_generate(struct Client *source_p, const char *subcmd, int flags)
+clicap_generate(client::client *source_p, const char *subcmd, int flags)
 {
 	char buf[BUFSIZE] = { 0 };
 	char capbuf[BUFSIZE] = { 0 };
@@ -202,7 +202,7 @@ clicap_generate(struct Client *source_p, const char *subcmd, int flags)
 }
 
 static void
-cap_ack(struct Client *source_p, const char *arg)
+cap_ack(client::client *source_p, const char *arg)
 {
 	std::shared_ptr<capability::entry> cap;
 	int capadd = 0, capdel = 0;
@@ -235,7 +235,7 @@ cap_ack(struct Client *source_p, const char *arg)
 }
 
 static void
-cap_end(struct Client *source_p, const char *arg)
+cap_end(client::client *source_p, const char *arg)
 {
 	if(IsRegistered(source_p))
 		return;
@@ -249,7 +249,7 @@ cap_end(struct Client *source_p, const char *arg)
 }
 
 static void
-cap_list(struct Client *source_p, const char *arg)
+cap_list(client::client *source_p, const char *arg)
 {
 	/* list of what theyre currently using */
 	clicap_generate(source_p, "LIST",
@@ -257,7 +257,7 @@ cap_list(struct Client *source_p, const char *arg)
 }
 
 static void
-cap_ls(struct Client *source_p, const char *arg)
+cap_ls(client::client *source_p, const char *arg)
 {
 	if(!IsRegistered(source_p))
 		source_p->flags |= FLAGS_CLICAP;
@@ -273,7 +273,7 @@ cap_ls(struct Client *source_p, const char *arg)
 }
 
 static void
-cap_req(struct Client *source_p, const char *arg)
+cap_req(client::client *source_p, const char *arg)
 {
 	char buf[BUFSIZE];
 	char pbuf[2][BUFSIZE];
@@ -371,7 +371,7 @@ cap_req(struct Client *source_p, const char *arg)
 static struct clicap_cmd
 {
 	const char *cmd;
-	void (*func)(struct Client *source_p, const char *arg);
+	void (*func)(client::client *source_p, const char *arg);
 } clicap_cmdlist[] = {
 	/* This list *MUST* be in alphabetical order */
 	{ "ACK",	cap_ack		},
@@ -388,7 +388,7 @@ clicap_cmd_search(const char *command, struct clicap_cmd *entry)
 }
 
 static void
-m_cap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_cap(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	struct clicap_cmd *cmd;
 

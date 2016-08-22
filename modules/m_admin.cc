@@ -27,12 +27,12 @@ using namespace ircd;
 const char admin_desc[] =
 	"Provides the ADMIN command to show server administrator information";
 
-static void m_admin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void mr_admin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_admin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void do_admin(struct Client *source_p);
+static void m_admin(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mr_admin(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_admin(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void do_admin(client::client *source_p);
 
-static void admin_spy(struct Client *);
+static void admin_spy(client::client *);
 
 struct Message admin_msgtab = {
 	"ADMIN", 0, 0, 0, 0,
@@ -54,7 +54,7 @@ DECLARE_MODULE_AV2(admin, NULL, NULL, admin_clist, admin_hlist, NULL, NULL, NULL
  *      parv[1] = servername
  */
 static void
-mr_admin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mr_admin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0L;
 
@@ -77,7 +77,7 @@ mr_admin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
  *      parv[1] = servername
  */
 static void
-m_admin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_admin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0L;
 
@@ -105,7 +105,7 @@ m_admin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
  *      parv[1] = servername
  */
 static void
-ms_admin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_admin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	if(hunt_server(client_p, source_p, ":%s ADMIN :%s", 1, parc, parv) != HUNTED_ISME)
 		return;
@@ -122,7 +122,7 @@ ms_admin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
  * side effects	- admin info is sent to client given
  */
 static void
-do_admin(struct Client *source_p)
+do_admin(client::client *source_p)
 {
 	if(IsPerson(source_p))
 		admin_spy(source_p);
@@ -143,7 +143,7 @@ do_admin(struct Client *source_p)
  * side effects - event doing_admin is called
  */
 static void
-admin_spy(struct Client *source_p)
+admin_spy(client::client *source_p)
 {
 	hook_data hd;
 

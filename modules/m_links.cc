@@ -27,8 +27,8 @@ using namespace ircd;
 static const char links_desc[] =
 	"Provides the LINKS command to view servers linked to the host server";
 
-static void m_links(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void mo_links(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_links(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mo_links(struct MsgBuf *, client::client *, client::client *, int, const char **);
 static char * clean_string(char *dest, const unsigned char *src, size_t len);
 
 struct Message links_msgtab = {
@@ -54,7 +54,7 @@ DECLARE_MODULE_AV2(links, NULL, NULL, links_clist, links_hlist, NULL, NULL, NULL
  *      parv[2] = servername mask
  */
 static void
-m_links(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_links(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	if(ConfigServerHide.flatten_links && !IsExemptShide(source_p))
 		scache_send_flattened_links(source_p);
@@ -63,10 +63,10 @@ m_links(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 }
 
 static void
-mo_links(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_links(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	const char *mask = "";
-	struct Client *target_p;
+	client::client *target_p;
 	char clean_mask[2 * HOSTLEN + 4];
 	hook_cdata hd;
 
@@ -97,7 +97,7 @@ mo_links(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 	RB_DLINK_FOREACH(ptr, global_serv_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		if(*mask && !match(mask, target_p->name))
 			continue;

@@ -31,14 +31,14 @@ using namespace ircd;
 
 static const char sasl_desc[] = "Provides SASL authentication support";
 
-static void m_authenticate(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void me_sasl(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void me_mechlist(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_authenticate(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void me_sasl(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void me_mechlist(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
-static void abort_sasl(struct Client *);
+static void abort_sasl(client::client *);
 static void abort_sasl_exit(hook_data_client_exit *);
 
-static void advertise_sasl(struct Client *);
+static void advertise_sasl(client::client *);
 static void advertise_sasl_exit(hook_data_client_exit *);
 
 static unsigned int CLICAP_SASL = 0;
@@ -69,9 +69,9 @@ mapi_hfn_list_av1 sasl_hfnlist[] = {
 };
 
 static bool
-sasl_visible(struct Client *client_p)
+sasl_visible(client::client *client_p)
 {
-	struct Client *agent_p = NULL;
+	client::client *agent_p = NULL;
 
 	if (ConfigFileEntry.sasl_service)
 		agent_p = find_named_client(ConfigFileEntry.sasl_service);
@@ -80,7 +80,7 @@ sasl_visible(struct Client *client_p)
 }
 
 static const char *
-sasl_data(struct Client *client_p)
+sasl_data(client::client *client_p)
 {
 	return *mechlist_buf != 0 ? mechlist_buf : NULL;
 }
@@ -108,11 +108,11 @@ _moddeinit(void)
 DECLARE_MODULE_AV2(sasl, _modinit, _moddeinit, sasl_clist, NULL, sasl_hfnlist, NULL, NULL, sasl_desc);
 
 static void
-m_authenticate(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+m_authenticate(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 	int parc, const char *parv[])
 {
-	struct Client *agent_p = NULL;
-	struct Client *saslserv_p = NULL;
+	client::client *agent_p = NULL;
+	client::client *saslserv_p = NULL;
 
 	/* They really should use CAP for their own sake. */
 	if(!IsCapable(source_p, CLICAP_SASL))
@@ -152,7 +152,7 @@ m_authenticate(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *
 	if(!*source_p->id)
 	{
 		/* Allocate a UID. */
-		rb_strlcpy(source_p->id, generate_uid(), sizeof(source_p->id));
+		rb_strlcpy(source_p->id, client::generate_uid(), sizeof(source_p->id));
 		add_to_id_hash(source_p->id, source_p);
 	}
 
@@ -184,10 +184,10 @@ m_authenticate(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *
 }
 
 static void
-me_sasl(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+me_sasl(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 	int parc, const char *parv[])
 {
-	struct Client *target_p, *agent_p;
+	client::client *target_p, *agent_p;
 
 	/* Let propagate if not addressed to us, or if broadcast.
 	 * Only SASL agents can answer global requests.
@@ -256,7 +256,7 @@ me_sasl(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 }
 
 static void
-me_mechlist(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+me_mechlist(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 	    int parc, const char *parv[])
 {
 	rb_strlcpy(mechlist_buf, parv[1], sizeof mechlist_buf);
@@ -266,7 +266,7 @@ me_mechlist(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
  * registering anyway, abort the exchange.
  */
 static void
-abort_sasl(struct Client *data)
+abort_sasl(client::client *data)
 {
 	if(data->localClient->sasl_out == 0 || data->localClient->sasl_complete)
 		return;
@@ -279,7 +279,7 @@ abort_sasl(struct Client *data)
 
 	if(*data->localClient->sasl_agent)
 	{
-		struct Client *agent_p = find_id(data->localClient->sasl_agent);
+		client::client *agent_p = find_id(data->localClient->sasl_agent);
 		if(agent_p)
 		{
 			sendto_one(agent_p, ":%s ENCAP %s SASL %s %s D A", me.id, agent_p->servptr->name,
@@ -300,7 +300,7 @@ abort_sasl_exit(hook_data_client_exit *data)
 }
 
 static void
-advertise_sasl(struct Client *client_p)
+advertise_sasl(client::client *client_p)
 {
 	if (!ConfigFileEntry.sasl_service)
 		return;

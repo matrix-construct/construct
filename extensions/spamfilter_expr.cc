@@ -619,7 +619,7 @@ struct Expr *match_any_expr(const char *const text,
  */
 
 static
-int dump_pcre_config(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+int dump_pcre_config(client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	union
 	{
@@ -702,7 +702,7 @@ int dump_pcre_config(struct Client *client_p, struct Client *source_p, int parc,
 
 
 static
-int spamexpr_info(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+int spamexpr_info(client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	if(parc > 0 && !IsOper(source_p))
 	{
@@ -752,7 +752,7 @@ int spamexpr_info(struct Client *client_p, struct Client *source_p, int parc, co
 
 
 static
-int spamexpr_list(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+int spamexpr_list(client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	if(parc > 0 && !IsOper(source_p))
 	{
@@ -788,7 +788,7 @@ int spamexpr_list(struct Client *client_p, struct Client *source_p, int parc, co
  * example:  CASELESS|ANCHORED|DOTALL
  */
 static
-int spamexpr_add(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+int spamexpr_add(client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	if(!IsOper(source_p) && !IsServer(source_p))
 	{
@@ -844,7 +844,7 @@ int spamexpr_add(struct Client *client_p, struct Client *source_p, int parc, con
 
 
 static
-int spamexpr_del(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+int spamexpr_del(client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	if(!IsOper(source_p) && !IsServer(source_p))
 	{
@@ -884,7 +884,7 @@ int spamexpr_del(struct Client *client_p, struct Client *source_p, int parc, con
 
 
 static
-int spamexpr_test(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+int spamexpr_test(client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	if(!IsOper(source_p))
 	{
@@ -935,7 +935,7 @@ int spamexpr_test(struct Client *client_p, struct Client *source_p, int parc, co
 
 
 static
-int spamexpr_sync(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+int spamexpr_sync(client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	if(!IsOper(source_p) && !IsServer(source_p))
 	{
@@ -966,7 +966,7 @@ int spamexpr_sync(struct Client *client_p, struct Client *source_p, int parc, co
 
 
 static void
-m_spamexpr(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_spamexpr(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	if(parc <= 1)
 	{

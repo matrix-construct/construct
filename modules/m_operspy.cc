@@ -32,7 +32,7 @@ using namespace ircd;
 static const char operspy_desc[] =
 	"Provides the operspy facility for viewing normally private data";
 
-static void ms_operspy(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+static void ms_operspy(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 		       int parc, const char *parv[]);
 
 struct Message operspy_msgtab = {
@@ -50,7 +50,7 @@ DECLARE_MODULE_AV2(operspy, NULL, NULL, operspy_clist, NULL, NULL, NULL, NULL, o
  * parv[2] - optional params
  */
 static void
-ms_operspy(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+ms_operspy(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 	   int parc, const char *parv[])
 {
 	static char buffer[BUFSIZE];

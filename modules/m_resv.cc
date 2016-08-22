@@ -26,12 +26,12 @@ using namespace ircd;
 static const char resv_desc[] =
 	"Provides management of reserved nicknames and channels using (UN)RESV";
 
-static void mo_resv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_resv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void me_resv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void mo_unresv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_unresv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void me_unresv(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_resv(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_resv(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void me_resv(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mo_unresv(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_unresv(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void me_unresv(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message resv_msgtab = {
 	"RESV", 0, 0, 0, 0,
@@ -47,15 +47,15 @@ mapi_clist_av1 resv_clist[] = { &resv_msgtab, &unresv_msgtab, NULL };
 
 DECLARE_MODULE_AV2(resv, NULL, NULL, resv_clist, NULL, NULL, NULL, NULL, resv_desc);
 
-static void parse_resv(struct Client *source_p, const char *name,
+static void parse_resv(client::client *source_p, const char *name,
 		       const char *reason, int temp_time, int propagated);
-static void propagate_resv(struct Client *source_p, const char *target,
+static void propagate_resv(client::client *source_p, const char *target,
 			   int temp_time, const char *name, const char *reason);
-static void cluster_resv(struct Client *source_p, int temp_time,
+static void cluster_resv(client::client *source_p, int temp_time,
 			 const char *name, const char *reason);
 
-static void handle_remote_unresv(struct Client *source_p, const char *name);
-static void remove_resv(struct Client *source_p, const char *name, int propagated);
+static void handle_remote_unresv(client::client *source_p, const char *name);
+static void remove_resv(client::client *source_p, const char *name, int propagated);
 
 /*
  * mo_resv()
@@ -63,7 +63,7 @@ static void remove_resv(struct Client *source_p, const char *name, int propagate
  *      parv[2] = reason
  */
 static void
-mo_resv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_resv(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	const char *name;
 	const char *reason;
@@ -139,7 +139,7 @@ mo_resv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
  *     parv[3] = reason
  */
 static void
-ms_resv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_resv(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	/* parv[0]  parv[1]        parv[2]  parv[3]
 	 * oper     target server  resv     reason
@@ -156,7 +156,7 @@ ms_resv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 }
 
 static void
-me_resv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_resv(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	/* time name 0 :reason */
 	if(!IsPerson(source_p))
@@ -174,7 +174,7 @@ me_resv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
  * side effects - will parse the resv and create it if valid
  */
 static void
-parse_resv(struct Client *source_p, const char *name, const char *reason, int temp_time, int propagated)
+parse_resv(client::client *source_p, const char *name, const char *reason, int temp_time, int propagated)
 {
 	struct ConfItem *aconf;
 
@@ -341,14 +341,14 @@ parse_resv(struct Client *source_p, const char *name, const char *reason, int te
 		}
 
 		rb_dlinkAddAlloc(aconf, &resv_conf_list);
-		resv_nick_fnc(aconf->host, aconf->passwd, temp_time);
+		client::resv_nick_fnc(aconf->host, aconf->passwd, temp_time);
 	}
 	else
 		sendto_one_notice(source_p, ":You have specified an invalid resv: [%s]", name);
 }
 
 static void
-propagate_resv(struct Client *source_p, const char *target,
+propagate_resv(client::client *source_p, const char *target,
 	       int temp_time, const char *name, const char *reason)
 {
 	if(!temp_time)
@@ -366,7 +366,7 @@ propagate_resv(struct Client *source_p, const char *target,
 }
 
 static void
-cluster_resv(struct Client *source_p, int temp_time, const char *name, const char *reason)
+cluster_resv(client::client *source_p, int temp_time, const char *name, const char *reason)
 {
 	struct remote_conf *shared_p;
 	rb_dlink_node *ptr;
@@ -405,7 +405,7 @@ cluster_resv(struct Client *source_p, int temp_time, const char *name, const cha
  *     parv[1] = channel/nick to unforbid
  */
 static void
-mo_unresv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_unresv(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	int propagated = 1;
 
@@ -445,7 +445,7 @@ mo_unresv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
  *     parv[2] = resv to remove
  */
 static void
-ms_unresv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_unresv(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	/* parv[0]  parv[1]        parv[2]
 	 * oper     target server  resv to remove
@@ -462,7 +462,7 @@ ms_unresv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 }
 
 static void
-me_unresv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_unresv(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	/* name */
 	if(!IsPerson(source_p))
@@ -472,7 +472,7 @@ me_unresv(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 }
 
 static void
-handle_remote_unresv(struct Client *source_p, const char *name)
+handle_remote_unresv(client::client *source_p, const char *name)
 {
 	if(!find_shared_conf(source_p->username, source_p->host,
 			     source_p->servptr->name, SHARED_UNRESV))
@@ -484,7 +484,7 @@ handle_remote_unresv(struct Client *source_p, const char *name)
 }
 
 static void
-remove_resv(struct Client *source_p, const char *name, int propagated)
+remove_resv(client::client *source_p, const char *name, int propagated)
 {
 	struct ConfItem *aconf = NULL;
 	rb_dlink_node *ptr;

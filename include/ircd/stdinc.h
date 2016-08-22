@@ -43,10 +43,12 @@ namespace ircd
 #include "err.h"
 
 #include "fs.h"
-#include "listener.h"
 #include "s_assert.h"
 
 #include "match.h"
+
+#include "client.h"
+
 #include "chmode.h"
 #include "channel.h"
 
@@ -56,7 +58,6 @@ namespace ircd
 #include "capability.h"
 #include "certfp.h"
 #include "class.h"
-#include "client.h"
 #include "dns.h"
 #include "hash.h"
 #include "hook.h"
@@ -64,6 +65,7 @@ namespace ircd
 #include "ircd_getopt.h"
 #include "ircd_linker.h"
 #include "ircd_signal.h"
+#include "listener.h"
 #include "logger.h"
 #include "info.h"
 #include "modules.h"

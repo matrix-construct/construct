@@ -47,14 +47,14 @@ struct who_format
 	const char *querytype;
 };
 
-static void m_who(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_who(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
-static void do_who_on_channel(struct Client *source_p, chan::chan *chptr,
+static void do_who_on_channel(client::client *source_p, chan::chan *chptr,
 			      int server_oper, int member,
 			      struct who_format *fmt);
-static void who_global(struct Client *source_p, const char *mask, int server_oper, int operspy, struct who_format *fmt);
-static void do_who(struct Client *source_p,
-		   struct Client *target_p, chan::chan *, chan::membership *msptr,
+static void who_global(client::client *source_p, const char *mask, int server_oper, int operspy, struct who_format *fmt);
+static void do_who(client::client *source_p,
+		   client::client *target_p, chan::chan *, chan::membership *msptr,
 		   struct who_format *fmt);
 
 struct Message who_msgtab = {
@@ -84,10 +84,10 @@ DECLARE_MODULE_AV2(who, _modinit, _moddeinit, who_clist, NULL, NULL, NULL, NULL,
 **      parv[2] = additional selection flag and format options
 */
 static void
-m_who(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_who(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
-	struct Client *target_p;
+	client::client *target_p;
 	chan::membership *msptr;
 	char *mask;
 	rb_dlink_node *lp;
@@ -144,9 +144,9 @@ m_who(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 		if(source_p->user == NULL)
 			return;
 
-		if (!source_p->user->channel.empty())
+		if (!chans(user(*source_p)).empty())
 		{
-			auto *const chan(begin(source_p->user->channel)->first);
+			auto *const chan(begin(chans(user(*source_p)))->first);
 			do_who_on_channel(source_p, chan, server_oper, true, &fmt);
 		}
 
@@ -201,13 +201,13 @@ m_who(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 
 	/* '/who nick' */
 
-	if(((target_p = find_named_person(mask)) != NULL) &&
+	if(((target_p = client::find_named_person(mask)) != NULL) &&
 	   (!server_oper || IsOper(target_p)))
 	{
 		int isinvis = 0;
 
 		isinvis = IsInvisible(target_p);
-		for(const auto &pit : target_p->user->channel)
+		for(const auto &pit : chans(user(*target_p)))
 		{
 			chptr = pit.first;
 			msptr = get(chptr->members, *source_p, std::nothrow);
@@ -282,7 +282,7 @@ m_who(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
  * 		  marks matched clients.
  */
 static void
-who_common_channel(struct Client *source_p, chan::chan *chptr,
+who_common_channel(client::client *source_p, chan::chan *chptr,
 		   const char *mask, int server_oper, int *maxmatches,
 		   struct who_format *fmt)
 {
@@ -329,10 +329,10 @@ who_common_channel(struct Client *source_p, chan::chan *chptr,
  *		  and will be left cleared on return
  */
 static void
-who_global(struct Client *source_p, const char *mask, int server_oper, int operspy, struct who_format *fmt)
+who_global(client::client *source_p, const char *mask, int server_oper, int operspy, struct who_format *fmt)
 {
 	chan::membership *msptr;
-	struct Client *target_p;
+	client::client *target_p;
 	rb_dlink_node *lp, *ptr;
 	int maxmatches = 500;
 
@@ -341,7 +341,7 @@ who_global(struct Client *source_p, const char *mask, int server_oper, int opers
 	 */
 	if(!operspy)
 	{
-		for(const auto &pit : source_p->user->channel)
+		for(const auto &pit : chans(user(*source_p)))
 		{
 			auto &chan(pit.first);
 			who_common_channel(source_p, chan, mask, server_oper, &maxmatches, fmt);
@@ -357,7 +357,7 @@ who_global(struct Client *source_p, const char *mask, int server_oper, int opers
 	 */
 	RB_DLINK_FOREACH(ptr, global_client_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 		if(!IsPerson(target_p))
 			continue;
 
@@ -403,7 +403,7 @@ who_global(struct Client *source_p, const char *mask, int server_oper, int opers
  * side effects - do a who on given channel
  */
 static void
-do_who_on_channel(struct Client *source_p, chan::chan *chptr,
+do_who_on_channel(client::client *source_p, chan::chan *chptr,
 		  int server_oper, int source_member, struct who_format *fmt)
 {
 	for(auto &pit : chptr->members.global)
@@ -456,7 +456,7 @@ append_format(char *buf, size_t bufsize, size_t *pos, const char *fmt, ...)
  */
 
 static void
-do_who(struct Client *source_p, struct Client *target_p, chan::chan *chan, chan::membership *msptr, struct who_format *fmt)
+do_who(client::client *source_p, client::client *target_p, chan::chan *chan, chan::membership *msptr, struct who_format *fmt)
 {
 	char status[16];
 	char str[510 + 1]; /* linebuf.c will add \r\n */
@@ -464,7 +464,7 @@ do_who(struct Client *source_p, struct Client *target_p, chan::chan *chan, chan:
 	const char *q;
 
 	sprintf(status, "%c%s%s",
-		   target_p->user->away.size()? 'G' : 'H', IsOper(target_p) ? "*" : "", msptr ? find_status(msptr, fmt->fields || IsCapable(source_p, CLICAP_MULTI_PREFIX)) : "");
+		   away(user(*target_p)).size()? 'G' : 'H', IsOper(target_p) ? "*" : "", msptr ? find_status(msptr, fmt->fields || IsCapable(source_p, CLICAP_MULTI_PREFIX)) : "");
 
 	if (fmt->fields == 0)
 		sendto_one(source_p, form_str(RPL_WHOREPLY), me.name,
@@ -507,13 +507,13 @@ do_who(struct Client *source_p, struct Client *target_p, chan::chan *chan, chan:
 		if (fmt->fields & FIELD_ACCOUNT)
 		{
 			/* display as in whois */
-			q = target_p->user->suser.c_str();
+			q = suser(user(*target_p)).c_str();
 			if (!EmptyString(q))
 			{
 				while(rfc1459::is_digit(*q))
 					q++;
 				if(*q == '\0')
-					q = target_p->user->suser.c_str();
+					q = suser(user(*target_p)).c_str();
 			}
 			else
 				q = "0";

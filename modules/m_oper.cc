@@ -26,7 +26,7 @@ using namespace ircd;
 
 static const char oper_desc[] = "Provides the OPER command to become an IRC operator";
 
-static void m_oper(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_oper(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 static bool match_oper_password(const char *password, struct oper_conf *oper_p);
 
@@ -45,7 +45,7 @@ DECLARE_MODULE_AV2(oper, NULL, NULL, oper_clist, NULL, NULL, NULL, NULL, oper_de
  *      parv[2] = oper password
  */
 static void
-m_oper(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_oper(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	struct oper_conf *oper_p;
 	const char *name;

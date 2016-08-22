@@ -29,9 +29,9 @@ static const char kill_desc[] = "Provides the KILL command to remove a user from
 static int h_can_kill;
 static char buf[BUFSIZE];
 
-static void ms_kill(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void mo_kill(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void relay_kill(struct Client *, struct Client *, struct Client *,
+static void ms_kill(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mo_kill(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void relay_kill(client::client *, client::client *, client::client *,
 		       const char *, const char *);
 
 struct Message kill_msgtab = {
@@ -54,9 +54,9 @@ DECLARE_MODULE_AV2(kill, NULL, NULL, kill_clist, kill_hlist, NULL, NULL, NULL, k
 **      parv[2] = kill path
 */
 static void
-mo_kill(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_kill(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 	const char *inpath = client_p->name;
 	const char *user;
 	const char *reason;
@@ -81,7 +81,7 @@ mo_kill(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	else
 		reason = "<No reason given>";
 
-	if((target_p = find_named_person(user)) == NULL)
+	if((target_p = client::find_named_person(user)) == NULL)
 	{
 		/*
 		 ** If the user has recently changed nick, automatically
@@ -162,9 +162,9 @@ mo_kill(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
  *      parv[2] = kill path and reason
  */
 static void
-ms_kill(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_kill(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 	const char *user;
 	const char *reason;
 	char default_reason[] = "<No reason given>";
@@ -198,7 +198,7 @@ ms_kill(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		path = s;
 	}
 
-	if((target_p = find_person(user)) == NULL)
+	if((target_p = client::find_person(user)) == NULL)
 	{
 		/*
 		 * If the user has recently changed nick, but only if its
@@ -274,10 +274,10 @@ ms_kill(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 }
 
 static void
-relay_kill(struct Client *one, struct Client *source_p,
-	   struct Client *target_p, const char *inpath, const char *reason)
+relay_kill(client::client *one, client::client *source_p,
+	   client::client *target_p, const char *inpath, const char *reason)
 {
-	struct Client *client_p;
+	client::client *client_p;
 	rb_dlink_node *ptr;
 	char buffer[BUFSIZE];
 
@@ -290,7 +290,7 @@ relay_kill(struct Client *one, struct Client *source_p,
 
 	RB_DLINK_FOREACH(ptr, serv_list.head)
 	{
-		client_p = (Client *)ptr->data;
+		client_p = (client::client *)ptr->data;
 
 		if(!client_p || client_p == one)
 			continue;

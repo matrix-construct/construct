@@ -33,9 +33,9 @@ using namespace ircd;
 
 static const char privs_desc[] = "Provides the PRIVS command to inspect an operator's privileges";
 
-static void m_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static void me_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static void mo_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void m_privs(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
+static void me_privs(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
+static void mo_privs(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
 
 struct Message privs_msgtab = {
 	"PRIVS", 0, 0, 0, 0,
@@ -72,7 +72,7 @@ static struct mode_table auth_client_table[] = {
 
 DECLARE_MODULE_AV2(privs, NULL, NULL, privs_clist, NULL, NULL, NULL, NULL, privs_desc);
 
-static void show_privs(struct Client *source_p, struct Client *target_p)
+static void show_privs(client::client *source_p, client::client *target_p)
 {
 	char buf[512];
 	struct mode_table *p;
@@ -111,28 +111,28 @@ static void show_privs(struct Client *source_p, struct Client *target_p)
 }
 
 static void
-me_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_privs(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 
 	if (!IsOper(source_p) || parc < 2 || EmptyString(parv[1]))
 		return;
 
 	/* we cannot show privs for remote clients */
-	if((target_p = find_person(parv[1])) && MyClient(target_p))
+	if((target_p = client::find_person(parv[1])) && MyClient(target_p))
 		show_privs(source_p, target_p);
 }
 
 static void
-mo_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_privs(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 
 	if (parc < 2 || EmptyString(parv[1]))
 		target_p = source_p;
 	else
 	{
-		target_p = find_named_person(parv[1]);
+		target_p = client::find_named_person(parv[1]);
 		if (target_p == NULL)
 		{
 			sendto_one_numeric(source_p, ERR_NOSUCHNICK,
@@ -151,7 +151,7 @@ mo_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 }
 
 static void
-m_privs(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_privs(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	if (parc >= 2 && !EmptyString(parv[1]) &&
 			irccmp(parv[1], source_p->name)) {

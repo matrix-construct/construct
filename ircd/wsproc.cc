@@ -327,7 +327,7 @@ start_wsockd(int count)
 static void
 ws_process_dead_fd(ws_ctl_t * ctl, ws_ctl_buf_t * ctl_buf)
 {
-	struct Client *client_p;
+	client::client *client_p;
 	char reason[256];
 	uint32_t fd;
 

@@ -30,7 +30,7 @@ namespace ircd {
 
 extern PF read_packet;
 extern EVH flood_recalc;
-extern void flood_endgrace(struct Client *);
+extern void flood_endgrace(client::client *);
 
 }      // namespace ircd
 #endif // __cplusplus

@@ -22,8 +22,8 @@ DECLARE_MODULE_AV2(createauthonly, NULL, NULL, NULL, NULL, restrict_hfnlist, NUL
 static void
 h_can_create_channel_authenticated(hook_data_client_approval *data)
 {
-	struct Client *source_p = data->client;
+	client::client *source_p = data->client;
 
-	if (source_p->user->suser.empty() && !IsOper(source_p))
+	if (suser(user(*source_p)).empty() && !IsOper(source_p))
 		data->approved = ERR_NEEDREGGEDNICK;
 }

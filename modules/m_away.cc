@@ -26,7 +26,7 @@ using namespace ircd;
 
 static const char away_desc[] = "Provides the AWAY command to set yourself away";
 
-static void m_away(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_away(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message away_msgtab = {
 	"AWAY", 0, 0, 0, 0,
@@ -56,7 +56,7 @@ DECLARE_MODULE_AV2(away, NULL, NULL, away_clist, NULL, NULL, NULL, NULL, away_de
 **      parv[1] = away message
 */
 static void
-m_away(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_away(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	if(MyClient(source_p) && source_p->localClient->next_away &&
 			!IsFloodDone(source_p))
@@ -68,7 +68,7 @@ m_away(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 	if(parc < 2 || EmptyString(parv[1]))
 	{
 		/* Marking as not away */
-		if(source_p->user->away.size())
+		if(away(user(*source_p)).size())
 		{
 			/* we now send this only if they were away before --is */
 			sendto_server(client_p, NULL, CAP_TS6, NOCAPS,
@@ -104,13 +104,13 @@ m_away(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 	if (p1.size() >= AWAYLEN)
 		p1.resize(AWAYLEN-1);
 
-	if (source_p->user->away != p1)
+	if (away(user(*source_p)) != p1)
 	{
-		source_p->user->away = std::move(p1);
+		away(user(*source_p)) = std::move(p1);
 		sendto_server(client_p, NULL, CAP_TS6, NOCAPS,
 		              ":%s AWAY :%s",
 		              use_id(source_p),
-		              source_p->user->away.c_str());
+		              away(user(*source_p)).c_str());
 
 		sendto_common_channels_local_butone(source_p,
 					            CLICAP_AWAY_NOTIFY, NOCAPS,
@@ -118,7 +118,7 @@ m_away(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 						    source_p->name,
 						    source_p->username,
 						    source_p->host,
-						    source_p->user->away.c_str());
+						    away(user(*source_p)).c_str());
 	}
 
 	if(MyConnect(source_p))

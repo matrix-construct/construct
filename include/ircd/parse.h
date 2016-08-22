@@ -29,12 +29,11 @@
 namespace ircd {
 
 struct Message;
-struct Client;
 struct MsgBuf;
 struct alias_entry;
 
-extern void parse(struct Client *, char *, char *);
-extern void handle_encap(struct MsgBuf *, struct Client *, struct Client *,
+extern void parse(client::client *, char *, char *);
+extern void handle_encap(struct MsgBuf *, client::client *, client::client *,
 		         const char *, int, const char *parv[]);
 extern void mod_add_cmd(struct Message *msg);
 extern void mod_del_cmd(struct Message *msg);

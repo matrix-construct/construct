@@ -26,8 +26,8 @@ using namespace ircd;
 
 static const char capab_desc[] = "Provides the commands used for server-to-server capability negotiation";
 
-static void mr_capab(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void me_gcap(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mr_capab(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void me_gcap(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message capab_msgtab = {
 	"CAPAB", 0, 0, 0, 0,
@@ -47,7 +47,7 @@ DECLARE_MODULE_AV2(capab, NULL, NULL, capab_clist, NULL, NULL, NULL, NULL, capab
  *      parv[1] = space-separated list of capabilities
  */
 static void
-mr_capab(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mr_capab(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	int i;
 	char *p;
@@ -81,7 +81,7 @@ mr_capab(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 }
 
 static void
-me_gcap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+me_gcap(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 		int parc, const char *parv[])
 {
 	char *t = LOCAL_COPY(parv[1]);
@@ -92,14 +92,11 @@ me_gcap(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		return;
 
 	/* already had GCAPAB?! */
-	if(!EmptyString(source_p->serv->fullcaps))
-	{
-		source_p->serv->caps = 0;
-		rb_free(source_p->serv->fullcaps);
-	}
+	if (fullcaps(serv(*source_p)).size())
+		caps(serv(*source_p)) = 0;
 
-	source_p->serv->fullcaps = rb_strdup(parv[1]);
+	fullcaps(serv(*source_p)) = parv[1];
 
 	for (s = rb_strtok_r(t, " ", &p); s; s = rb_strtok_r(NULL, " ", &p))
-		source_p->serv->caps |= serv_capindex.get(s, NULL);
+		caps(serv(*source_p)) |= serv_capindex.get(s, NULL);
 }

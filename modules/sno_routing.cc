@@ -31,7 +31,7 @@
 
 using namespace ircd;
 
-static void h_nn_server_eob(struct Client *);
+static void h_nn_server_eob(client::client *);
 static void h_nn_client_exit(hook_data_client_exit *);
 
 mapi_hfn_list_av1 nn_hfnlist[] = {
@@ -54,21 +54,19 @@ DECLARE_MODULE_AV2(networknotice, NULL, NULL, NULL, NULL, nn_hfnlist, NULL, NULL
  * 		- server and user counts are added to given values
  */
 static void
-count_mark_downlinks(struct Client *server_p, int *pservcount, int *pusercount)
+count_mark_downlinks(client::client *server_p, int *pservcount, int *pusercount)
 {
 	rb_dlink_node *ptr;
 
 	SetFloodDone(server_p);
 	(*pservcount)++;
-	*pusercount += rb_dlink_list_length(&server_p->serv->users);
-	RB_DLINK_FOREACH(ptr, server_p->serv->servers.head)
-	{
-		count_mark_downlinks((Client *)ptr->data, pservcount, pusercount);
-	}
+	*pusercount += users(serv(*server_p)).size();
+	for(auto &client : servers(serv(*server_p)))
+		count_mark_downlinks(client, pservcount, pusercount);
 }
 
 static void
-h_nn_server_eob(struct Client *source_p)
+h_nn_server_eob(client::client *source_p)
 {
 	int s = 0, u = 0;
 
@@ -83,7 +81,7 @@ h_nn_server_eob(struct Client *source_p)
 static void
 h_nn_client_exit(hook_data_client_exit *hdata)
 {
-	struct Client *source_p;
+	client::client *source_p;
 	int s = 0, u = 0;
 	char *fromnick;
 

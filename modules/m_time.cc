@@ -27,7 +27,7 @@ using namespace ircd;
 static const char time_desc[] =
 	"Provides the TIME command to show the current server time";
 
-static void m_time(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_time(struct MsgBuf *, client::client *, client::client *, int, const char **);
 static char *date(void);
 
 struct Message time_msgtab = {
@@ -54,7 +54,7 @@ static const char *weekdays[] = {
  *      parv[1] = servername
  */
 static void
-m_time(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_time(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	/* this is not rate limited, so end the grace period */
 	if(MyClient(source_p) && !IsFloodDone(source_p))

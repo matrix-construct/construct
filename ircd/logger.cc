@@ -262,7 +262,7 @@ ierror(const char *format, ...)
 }
 
 void
-report_operspy(struct Client *source_p, const char *token, const char *arg)
+report_operspy(client::client *source_p, const char *token, const char *arg)
 {
 	/* if its not my client its already propagated */
 	if(MyClient(source_p))

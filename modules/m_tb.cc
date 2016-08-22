@@ -33,8 +33,8 @@ using namespace ircd;
 static const char tb_desc[] =
 	"Provides TS6 TB and ETB commands for topic bursting between servers";
 
-static void ms_tb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
-static void ms_etb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void ms_tb(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
+static void ms_etb(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
 
 struct Message tb_msgtab = {
 	"TB", 0, 0, 0, 0,
@@ -57,13 +57,13 @@ DECLARE_MODULE_AV2(tb, NULL, NULL, tb_clist, NULL, NULL, NULL, NULL, tb_desc);
  * parv[4] - topic
  */
 static void
-ms_tb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_tb(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	chan::chan *chptr;
 	const char *newtopic;
 	const char *newtopicwho;
 	time_t newtopicts;
-	struct Client *fakesource_p;
+	client::client *fakesource_p;
 
 	chptr = chan::get(parv[1], std::nothrow);
 
@@ -121,13 +121,13 @@ ms_tb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
  * parv[5] - topic
  */
 static void
-ms_etb(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_etb(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	chan::chan *chptr;
 	const char *newtopic;
 	const char *newtopicwho;
 	time_t channelts, newtopicts;
-	struct Client *fakesource_p, *source_server_p;
+	client::client *fakesource_p, *source_server_p;
 	int textchange, can_use_tb, member;
 
 	channelts = atol(parv[1]);

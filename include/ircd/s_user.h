@@ -28,7 +28,6 @@
 #ifdef __cplusplus
 namespace ircd {
 
-struct Client;
 struct User;
 struct oper_conf;
 extern time_t LastUsedWallops;
@@ -36,22 +35,22 @@ extern time_t LastUsedWallops;
 extern bool valid_hostname(const char *hostname);
 extern bool valid_username(const char *username);
 
-extern int user_mode(struct Client *, struct Client *, int, const char **);
-extern void send_umode(struct Client *, struct Client *, int, char *);
-extern void send_umode_out(struct Client *, struct Client *, int);
-extern void show_lusers(struct Client *source_p);
-extern int register_local_user(struct Client *, struct Client *);
+extern int user_mode(client::client *, client::client *, int, const char **);
+extern void send_umode(client::client *, client::client *, int, char *);
+extern void send_umode_out(client::client *, client::client *, int);
+extern void show_lusers(client::client *source_p);
+extern int register_local_user(client::client *, client::client *);
 
-void introduce_client(struct Client *client_p, struct Client *source_p, user &user, const char *nick, int use_euid);
+void introduce_client(client::client *client_p, client::client *source_p, const char *nick, int use_euid);
 
-extern void change_nick_user_host(struct Client *target_p, const char *nick, const char *user,
+extern void change_nick_user_host(client::client *target_p, const char *nick, const char *user,
 				  const char *host, int newts, const char *format, ...);
 
 extern int user_modes[256];
 extern unsigned int find_umode_slot(void);
 extern void construct_umodebuf(void);
 
-extern void oper_up(struct Client *, struct oper_conf *);
+extern void oper_up(client::client *, struct oper_conf *);
 
 }      // namespace ircd
 #endif // __cplusplus

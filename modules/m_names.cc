@@ -26,7 +26,7 @@ using namespace ircd;
 
 static const char names_desc[] = "Provides the NAMES command to view users on a channel";
 
-static void m_names(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_names(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message names_msgtab = {
 	"NAMES", 0, 0, 0, 0,
@@ -37,7 +37,7 @@ mapi_clist_av1 names_clist[] = { &names_msgtab, NULL };
 
 DECLARE_MODULE_AV2(names, NULL, NULL, names_clist, NULL, NULL, NULL, NULL, names_desc);
 
-static void names_global(struct Client *source_p);
+static void names_global(client::client *source_p);
 
 /************************************************************************
  * m_names() - Added by Jto 27 Apr 1989
@@ -48,7 +48,7 @@ static void names_global(struct Client *source_p);
  *      parv[1] = channel
  */
 static void
-m_names(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_names(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
 	chan::chan *chptr = NULL;
@@ -104,14 +104,14 @@ m_names(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
  * side effects - lists all non public non secret channels
  */
 static void
-names_global(struct Client *source_p)
+names_global(client::client *source_p)
 {
 	int mlen;
 	int tlen;
 	int cur_len;
 	bool dont_show = false;
 	rb_dlink_node *lp, *ptr;
-	struct Client *target_p;
+	client::client *target_p;
 	chan::chan *chptr = NULL;
 	char buf[BUFSIZE];
 	char *t;
@@ -129,7 +129,7 @@ names_global(struct Client *source_p)
 	/* Second, do all clients in one big sweep */
 	RB_DLINK_FOREACH(ptr, global_client_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 		dont_show = false;
 
 		if(!IsPerson(target_p) || IsInvisible(target_p))
@@ -142,7 +142,7 @@ names_global(struct Client *source_p)
 		 * both were missed out above.  if the target is on a
 		 * common channel with source, its already been shown.
 		 */
-		for(const auto &pit : target_p->user->channel)
+		for(const auto &pit : chans(user(*target_p)))
 		{
 			auto &chptr(pit.first);
 

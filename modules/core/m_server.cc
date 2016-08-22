@@ -27,12 +27,12 @@ using namespace ircd;
 static const char server_desc[] =
 	"Provides the TS6 commands to introduce a new server to the network";
 
-static void mr_server(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_server(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_sid(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mr_server(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_server(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_sid(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 static bool bogus_host(const char *host);
-static void set_server_gecos(struct Client *, const char *);
+static void set_server_gecos(client::client *, const char *);
 
 struct Message server_msgtab = {
 	"SERVER", 0, 0, 0, 0,
@@ -54,11 +54,11 @@ DECLARE_MODULE_AV2(server, NULL, NULL, server_clist, NULL, NULL, NULL, NULL, ser
  *      parv[3] = serverinfo
  */
 static void
-mr_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mr_server(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	char info[REALLEN + 1];
 	const char *name;
-	struct Client *target_p;
+	client::client *target_p;
 	int hop;
 	unsigned int required_mask;
 	int ret;
@@ -294,12 +294,12 @@ mr_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
  *      parv[3] = serverinfo
  */
 static void
-ms_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_server(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	char info[REALLEN + 1];
 	/* same size as in s_misc.c */
 	const char *name;
-	struct Client *target_p;
+	client::client *target_p;
 	struct remote_conf *hub_p;
 	hook_data_client hdata;
 	int hop;
@@ -460,7 +460,7 @@ ms_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 	}
 
 	target_p = make_client(client_p);
-	make_server(target_p);
+	make_serv(*target_p);
 	target_p->hopcount = hop;
 
 	rb_strlcpy(target_p->name, name, sizeof(target_p->name));
@@ -474,9 +474,9 @@ ms_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 	rb_dlinkAddTail(target_p, &target_p->node, &global_client_list);
 	rb_dlinkAddTailAlloc(target_p, &global_serv_list);
 	add_to_client_hash(target_p->name, target_p);
-	rb_dlinkAdd(target_p, &target_p->lnode, &target_p->servptr->serv->servers);
+	target_p->lnode = servers(serv(*target_p)).emplace(end(servers(serv(*target_p))), target_p);
 
-	target_p->serv->nameinfo = scache_connect(target_p->name, target_p->info, IsHidden(target_p));
+	nameinfo(serv(*target_p)) = scache_connect(target_p->name, target_p->info, IsHidden(target_p));
 
 	sendto_server(client_p, NULL, NOCAPS, NOCAPS,
 		      ":%s SERVER %s %d :%s%s",
@@ -495,9 +495,9 @@ ms_server(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sourc
 }
 
 static void
-ms_sid(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_sid(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 	struct remote_conf *hub_p;
 	hook_data_client hdata;
 	rb_dlink_node *ptr;
@@ -617,7 +617,7 @@ ms_sid(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 
 	/* ok, alls good */
 	target_p = make_client(client_p);
-	make_server(target_p);
+	make_serv(*target_p);
 
 	rb_strlcpy(target_p->name, parv[1], sizeof(target_p->name));
 	target_p->hopcount = atoi(parv[2]);
@@ -631,9 +631,9 @@ ms_sid(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 	rb_dlinkAddTailAlloc(target_p, &global_serv_list);
 	add_to_client_hash(target_p->name, target_p);
 	add_to_id_hash(target_p->id, target_p);
-	rb_dlinkAdd(target_p, &target_p->lnode, &target_p->servptr->serv->servers);
+	target_p->lnode = servers(serv(*target_p)).emplace(end(servers(serv(*target_p))), target_p);
 
-	target_p->serv->nameinfo = scache_connect(target_p->name, target_p->info, IsHidden(target_p));
+	nameinfo(serv(*target_p)) = scache_connect(target_p->name, target_p->info, IsHidden(target_p));
 
 	sendto_server(client_p, NULL, CAP_TS6, NOCAPS,
 		      ":%s SID %s %d %s :%s%s",
@@ -659,7 +659,7 @@ ms_sid(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
  * side effects - servers gecos field is set
  */
 static void
-set_server_gecos(struct Client *client_p, const char *info)
+set_server_gecos(client::client *client_p, const char *info)
 {
 	/* check the info for [IP] */
 	if(info[0])

@@ -107,7 +107,7 @@ start_bandb(void)
 }
 
 void
-bandb_add(bandb_type type, struct Client *source_p, const char *mask1,
+bandb_add(bandb_type type, client::client *source_p, const char *mask1,
 	  const char *mask2, const char *reason, const char *oper_reason, int perm)
 {
 	if(bandb_helper == NULL)
@@ -363,7 +363,7 @@ bandb_handle_finish(void)
 		}
 	}
 
-	check_banned_lines();
+	client::check_banned_lines();
 }
 
 static void

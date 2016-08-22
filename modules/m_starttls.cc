@@ -22,7 +22,7 @@ using namespace ircd;
 
 static const char starttls_desc[] = "Provides the tls CAP and STARTTLS command";
 
-static void mr_starttls(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mr_starttls(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message starttls_msgtab = {
 	"STARTTLS", 0, 0, 0, 0,
@@ -41,7 +41,7 @@ mapi_cap_list_av2 starttls_cap_list[] = {
 DECLARE_MODULE_AV2(starttls, NULL, NULL, starttls_clist, NULL, NULL, starttls_cap_list, NULL, starttls_desc);
 
 static void
-mr_starttls(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mr_starttls(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	ssl_ctl_t *ctl;
 	rb_fde_t *F[2];

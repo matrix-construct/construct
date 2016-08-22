@@ -36,8 +36,6 @@
 #ifdef __cplusplus
 namespace ircd {
 
-struct Client;
-
 /*
  * statistics structures
  */

@@ -27,9 +27,9 @@ using namespace ircd;
 static const char trace_desc[] =
 	"Provides the TRACE command to trace the route to a client or server";
 
-static void m_trace(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_trace(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
-static void trace_spy(struct Client *, struct Client *);
+static void trace_spy(client::client *, client::client *);
 
 struct Message trace_msgtab = {
 	"TRACE", 0, 0, 0, 0,
@@ -45,8 +45,8 @@ mapi_hlist_av1 trace_hlist[] = {
 };
 DECLARE_MODULE_AV2(trace, NULL, NULL, trace_clist, trace_hlist, NULL, NULL, NULL, trace_desc);
 
-static void count_downlinks(struct Client *server_p, int *pservcount, int *pusercount);
-static int report_this_status(struct Client *source_p, struct Client *target_p);
+static void count_downlinks(client::client *server_p, int *pservcount, int *pusercount);
+static int report_this_status(client::client *source_p, client::client *target_p);
 
 static const char *empty_sockhost = "255.255.255.255";
 
@@ -55,9 +55,9 @@ static const char *empty_sockhost = "255.255.255.255";
  *      parv[1] = servername
  */
 static void
-m_trace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_trace(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p = NULL;
+	client::client *target_p = NULL;
 	struct Class *cltmp;
 	const char *tname;
 	bool doall = false, wilds, dow;
@@ -87,7 +87,7 @@ m_trace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		{
 		case HUNTED_PASS:	/* note: gets here only if parv[1] exists */
 		{
-			struct Client *ac2ptr;
+			client::client *ac2ptr;
 
 			if(MyClient(source_p))
 				ac2ptr = find_named_client(tname);
@@ -98,7 +98,7 @@ m_trace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 			{
 				RB_DLINK_FOREACH(ptr, global_serv_list.head)
 				{
-					ac2ptr = (Client *)ptr->data;
+					ac2ptr = (client::client *)ptr->data;
 
 					if(match(tname, ac2ptr->name))
 						break;
@@ -149,9 +149,9 @@ m_trace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	if(!dow)
 	{
 		if(MyClient(source_p) || parc > 2)
-			target_p = find_named_person(tname);
+			target_p = client::find_named_person(tname);
 		else
-			target_p = find_person(tname);
+			target_p = client::find_person(tname);
 
 		/* tname could be pointing to an ID at this point, so reset
 		 * it to target_p->name if we have a target --fl
@@ -184,7 +184,7 @@ m_trace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 
 		RB_DLINK_FOREACH(ptr, local_oper_list.head)
 		{
-			target_p = (Client *)ptr->data;
+			target_p = (client::client *)ptr->data;
 
 			if(!doall && wilds && (match(tname, target_p->name) == 0))
 				continue;
@@ -196,7 +196,7 @@ m_trace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 		{
 			RB_DLINK_FOREACH(ptr, serv_list.head)
 			{
-				target_p = (Client *)ptr->data;
+				target_p = (client::client *)ptr->data;
 
 				if(!doall && wilds && !match(tname, target_p->name))
 					continue;
@@ -215,7 +215,7 @@ m_trace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	/* report all direct connections */
 	RB_DLINK_FOREACH(ptr, lclient_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		/* dont show invisible users to remote opers */
 		if(IsInvisible(target_p) && dow && !MyConnect(source_p) && !IsOper(target_p))
@@ -234,7 +234,7 @@ m_trace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 
 	RB_DLINK_FOREACH(ptr, serv_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		if(!doall && wilds && !match(tname, target_p->name))
 			continue;
@@ -246,7 +246,7 @@ m_trace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	{
 		RB_DLINK_FOREACH(ptr, unknown_list.head)
 		{
-			target_p = (Client *)ptr->data;
+			target_p = (client::client *)ptr->data;
 
 			if(!doall && wilds && !match(tname, target_p->name))
 				continue;
@@ -293,16 +293,14 @@ m_trace(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
  * side effects - server and user counts are added to given values
  */
 static void
-count_downlinks(struct Client *server_p, int *pservcount, int *pusercount)
+count_downlinks(client::client *server_p, int *pservcount, int *pusercount)
 {
 	rb_dlink_node *ptr;
 
 	(*pservcount)++;
-	*pusercount += rb_dlink_list_length(&server_p->serv->users);
-	RB_DLINK_FOREACH(ptr, server_p->serv->servers.head)
-	{
-		count_downlinks((Client *)ptr->data, pservcount, pusercount);
-	}
+	*pusercount += users(serv(*server_p)).size();
+	for(auto &client : servers(serv(*server_p)))
+		count_downlinks(client, pservcount, pusercount);
 }
 
 /*
@@ -314,7 +312,7 @@ count_downlinks(struct Client *server_p, int *pservcount, int *pusercount)
  * side effects - NONE
  */
 static int
-report_this_status(struct Client *source_p, struct Client *target_p)
+report_this_status(client::client *source_p, client::client *target_p)
 {
 	const char *name;
 	const char *class_name;
@@ -384,7 +382,7 @@ report_this_status(struct Client *source_p, struct Client *target_p)
 
 			sendto_one_numeric(source_p, RPL_TRACESERVER, form_str(RPL_TRACESERVER),
 				   class_name, servcount, usercount, name,
-				   *(target_p->serv->by) ? target_p->serv->by : "*", "*",
+				   by(serv(*target_p)).empty()? by(serv(*target_p)).c_str() : "*", "*",
 				   me.name,
 				   (unsigned long)(rb_current_time() - target_p->localClient->lasttime));
 			cnt++;
@@ -409,7 +407,7 @@ report_this_status(struct Client *source_p, struct Client *target_p)
  * side effects - hook event doing_trace is called
  */
 static void
-trace_spy(struct Client *source_p, struct Client *target_p)
+trace_spy(client::client *source_p, client::client *target_p)
 {
 	hook_data_client hdata;
 

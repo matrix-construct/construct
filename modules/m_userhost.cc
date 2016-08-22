@@ -29,7 +29,7 @@ static const char userhost_desc[] =
 
 static char buf[BUFSIZE];
 
-static void m_userhost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_userhost(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message userhost_msgtab = {
 	"USERHOST", 0, 0, 0, 0,
@@ -46,9 +46,9 @@ DECLARE_MODULE_AV2(userhost, NULL, NULL, userhost_clist, NULL, NULL, NULL, NULL,
  * information only (no spurious AWAY labels or channels).
  */
 static void
-m_userhost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_userhost(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 	char response[NICKLEN * 2 + USERLEN + HOSTLEN + 30];
 	char *t;
 	int i;			/* loop counter */
@@ -63,7 +63,7 @@ m_userhost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 		if(parc < i + 1)
 			break;
 
-		if((target_p = find_person(parv[i])) != NULL)
+		if((target_p = client::find_person(parv[i])) != NULL)
 		{
 			/*
 			 * Show real IP for USERHOST on yourself.
@@ -76,7 +76,7 @@ m_userhost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 				rl = sprintf(response, "%s%s=%c%s@%s ",
 						target_p->name,
 						IsOper(target_p) ? "*" : "",
-						(target_p->user->away.size())? '-' : '+',
+						(away(user(*target_p)).size())? '-' : '+',
 						target_p->username,
 						target_p->sockhost);
 			}
@@ -85,7 +85,7 @@ m_userhost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 				rl = sprintf(response, "%s%s=%c%s@%s ",
 						target_p->name,
 						IsOper(target_p) ? "*" : "",
-						(target_p->user->away.size())? '-' : '+',
+						(away(user(*target_p)).size())? '-' : '+',
 						target_p->username, target_p->host);
 			}
 

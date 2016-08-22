@@ -691,14 +691,14 @@ clear_out_address_conf_bans(void)
 /*
  * show_iline_prefix()
  *
- * inputs       - pointer to struct Client requesting output
+ * inputs       - pointer to client::client requesting output
  *              - pointer to struct ConfItem
  *              - name to which iline prefix will be prefixed to
  * output       - pointer to static string with prefixes listed in ascii form
  * side effects - NONE
  */
 char *
-show_iline_prefix(struct Client *sptr, struct ConfItem *aconf, char *name)
+show_iline_prefix(client::client *sptr, struct ConfItem *aconf, char *name)
 {
 	static char prefix_of_host[USERLEN + 15];
 	char *prefix_ptr;
@@ -730,7 +730,7 @@ show_iline_prefix(struct Client *sptr, struct ConfItem *aconf, char *name)
  * Side effects: Reports configured auth{} blocks to client_p
  */
 void
-report_auth(struct Client *client_p)
+report_auth(client::client *client_p)
 {
 	char *name, *host, *user, *classname;
 	const char *pass;

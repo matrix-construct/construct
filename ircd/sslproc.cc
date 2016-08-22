@@ -339,7 +339,7 @@ start_ssldaemon(int count)
 static void
 ssl_process_zipstats(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 {
-	struct Client *server;
+	client::client *server;
 	struct ZipStats *zips;
 	char *parv[7];
 	(void) rb_string_to_array(ctl_buf->buf, parv, 6);
@@ -370,7 +370,7 @@ ssl_process_zipstats(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 static void
 ssl_process_open_fd(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 {
-	struct Client *client_p;
+	client::client *client_p;
 	uint32_t fd;
 
 	if(ctl_buf->buflen < 5)
@@ -383,7 +383,7 @@ ssl_process_open_fd(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 
 	if(client_p->localClient->ssl_callback)
 	{
-		SSL_OPEN_CB *hdl = client_p->localClient->ssl_callback;
+		client::SSL_OPEN_CB *hdl = client_p->localClient->ssl_callback;
 
 		client_p->localClient->ssl_callback = NULL;
 
@@ -394,7 +394,7 @@ ssl_process_open_fd(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 static void
 ssl_process_dead_fd(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 {
-	struct Client *client_p;
+	client::client *client_p;
 	char reason[256];
 	uint32_t fd;
 
@@ -416,7 +416,7 @@ ssl_process_dead_fd(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 	/* if there is still a pending callback, call it now */
 	if(client_p->localClient->ssl_callback)
 	{
-		SSL_OPEN_CB *hdl = client_p->localClient->ssl_callback;
+		client::SSL_OPEN_CB *hdl = client_p->localClient->ssl_callback;
 
 		client_p->localClient->ssl_callback = NULL;
 
@@ -442,7 +442,7 @@ ssl_process_dead_fd(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 static void
 ssl_process_cipher_string(ssl_ctl_t *ctl, ssl_ctl_buf_t *ctl_buf)
 {
-	struct Client *client_p;
+	client::client *client_p;
 	const char *cstring;
 	uint32_t fd;
 
@@ -467,7 +467,7 @@ ssl_process_cipher_string(ssl_ctl_t *ctl, ssl_ctl_buf_t *ctl_buf)
 static void
 ssl_process_certfp(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 {
-	struct Client *client_p;
+	client::client *client_p;
 	uint32_t fd;
 	uint32_t certfp_method;
 	uint32_t len;
@@ -847,7 +847,7 @@ ssld_decrement_clicount(ssl_ctl_t * ctl)
 void
 start_zlib_session(void *data)
 {
-	struct Client *server = (struct Client *) data;
+	client::client *server = (client::client *) data;
 	uint16_t recvqlen;
 	uint8_t level;
 	void *xbuf;
@@ -930,7 +930,7 @@ static void
 collect_zipstats(void *unused)
 {
 	rb_dlink_node *ptr;
-	struct Client *target_p;
+	client::client *target_p;
 	char buf[sizeof(uint8_t) + sizeof(uint32_t) + HOSTLEN];
 	void *odata;
 	size_t len;
@@ -941,7 +941,7 @@ collect_zipstats(void *unused)
 
 	RB_DLINK_FOREACH(ptr, serv_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 		if(IsCapable(target_p, CAP_ZIP))
 		{
 			len = sizeof(uint8_t) + sizeof(uint32_t);

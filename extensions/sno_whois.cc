@@ -47,8 +47,8 @@ DECLARE_MODULE_AV2(sno_whois, init, fini, NULL, NULL, whois_hfnlist, NULL, NULL,
 void
 show_whois(hook_data_client *data)
 {
-	struct Client *source_p = data->client;
-	struct Client *target_p = data->target;
+	client::client *source_p = data->client;
+	client::client *target_p = data->target;
 
 	if(MyClient(target_p) &&
 #ifdef OPERONLY

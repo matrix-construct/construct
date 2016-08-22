@@ -49,9 +49,9 @@ static const char extb_desc[] = "Combination ($&, $|) extban types";
 
 static int _modinit(void);
 static void _moddeinit(void);
-static int eb_or(const char *data, struct Client *client_p, chan::chan *chptr, mode::type);
-static int eb_and(const char *data, struct Client *client_p, chan::chan *chptr, mode::type);
-static int eb_combi(const char *data, struct Client *client_p, chan::chan *chptr, mode::type, bool is_and);
+static int eb_or(const char *data, client::client *client_p, chan::chan *chptr, mode::type);
+static int eb_and(const char *data, client::client *client_p, chan::chan *chptr, mode::type);
+static int eb_combi(const char *data, client::client *client_p, chan::chan *chptr, mode::type, bool is_and);
 static int recursion_depth = 0;
 
 DECLARE_MODULE_AV2(extb_extended, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, extb_desc);
@@ -72,19 +72,19 @@ _moddeinit(void)
 	ext::table['|'] = NULL;
 }
 
-static int eb_or(const char *data, struct Client *client_p,
+static int eb_or(const char *data, client::client *client_p,
 				 chan::chan *chptr, mode::type type)
 {
 	return eb_combi(data, client_p, chptr, type, false);
 }
 
-static int eb_and(const char *data, struct Client *client_p,
+static int eb_and(const char *data, client::client *client_p,
 				  chan::chan *chptr, mode::type type)
 {
 	return eb_combi(data, client_p, chptr, type, true);
 }
 
-static int eb_combi(const char *data, struct Client *client_p,
+static int eb_combi(const char *data, client::client *client_p,
 					chan::chan *chptr, mode::type type, bool is_and)
 {
 	using namespace ext;

@@ -26,7 +26,7 @@ using namespace ircd;
 
 static const char kick_desc[] = "Provides the KICK command to remove a user from a channel";
 
-static void m_kick(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_kick(struct MsgBuf *, client::client *, client::client *, int, const char **);
 #define mg_kick { m_kick, 3 }
 
 struct Message kick_msgtab = {
@@ -45,10 +45,10 @@ DECLARE_MODULE_AV2(kick, NULL, NULL, kick_clist, NULL, NULL, NULL, NULL, kick_de
 **      parv[3] = kick comment
 */
 static void
-m_kick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_kick(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	chan::membership *msptr;
-	struct Client *who;
+	client::client *who;
 	chan::chan *chptr;
 	int chasing = 0;
 	char *comment;

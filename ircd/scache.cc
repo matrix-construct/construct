@@ -121,7 +121,7 @@ const char *scache_get_name(struct scache_entry *ptr)
  * side effects	-
  */
 void
-scache_send_flattened_links(struct Client *source_p)
+scache_send_flattened_links(client::client *source_p)
 {
 	struct scache_entry *scache_ptr;
 	rb_radixtree_iteration_state iter;
@@ -160,7 +160,7 @@ scache_send_flattened_links(struct Client *source_p)
  * side effects	-
  */
 void
-scache_send_missing(struct Client *source_p)
+scache_send_missing(client::client *source_p)
 {
 	struct scache_entry *scache_ptr;
 	rb_radixtree_iteration_state iter;

@@ -29,7 +29,6 @@
 namespace ircd {
 
 struct User;
-struct Client;
 
 /*
   lets speed this up...
@@ -51,7 +50,7 @@ struct Whowas
 	unsigned char flags;
 	const char *servername;
 	time_t logoff;
-	struct Client *online;	/* Pointer to new nickname for chasing or NULL */
+	client::client *online;	/* Pointer to new nickname for chasing or NULL */
 };
 
 /* Flags */
@@ -70,7 +69,7 @@ extern void whowas_init(void);
 **      Client must be a fully registered user (specifically,
 **      the user structure must have been allocated).
 */
-void whowas_add_history(struct Client *, int);
+void whowas_add_history(client::client *, int);
 
 /*
 ** off_history
@@ -79,7 +78,7 @@ void whowas_add_history(struct Client *, int);
 **      structures and it must know when they cease to exist. This
 **      also implicitly calls AddHistory.
 */
-void whowas_off_history(struct Client *);
+void whowas_off_history(client::client *);
 
 /*
 ** get_history
@@ -87,7 +86,7 @@ void whowas_off_history(struct Client *);
 **      nickname within the timelimit. Returns NULL, if no
 **      one found...
 */
-struct Client *whowas_get_history(const char *, time_t);
+client::client *whowas_get_history(const char *, time_t);
 					/* Nick name */
 					/* Time limit in seconds */
 

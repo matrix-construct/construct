@@ -13,7 +13,7 @@ static const char sno_desc[] =
 
 static int _modinit(void);
 static void _moddeinit(void);
-static void h_gcn_new_remote_user(struct Client *);
+static void h_gcn_new_remote_user(client::client *);
 static void h_gcn_client_exit(hook_data_client_exit *);
 
 mapi_hfn_list_av1 gcn_hfnlist[] = {
@@ -44,7 +44,7 @@ _moddeinit(void)
 }
 
 static void
-h_gcn_new_remote_user(struct Client *source_p)
+h_gcn_new_remote_user(client::client *source_p)
 {
 
 	if (!HasSentEob(source_p->servptr))
@@ -59,7 +59,7 @@ h_gcn_new_remote_user(struct Client *source_p)
 static void
 h_gcn_client_exit(hook_data_client_exit *hdata)
 {
-	struct Client *source_p;
+	client::client *source_p;
 
 	source_p = hdata->target;
 

@@ -33,7 +33,7 @@ static const struct in6_addr in6addr_any =
 static struct Listener *ListenerPollList = NULL;
 static int accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, void *data);
 static void accept_callback(rb_fde_t *F, int status, struct sockaddr *addr, rb_socklen_t addrlen, void *data);
-static SSL_OPEN_CB accept_sslcallback;
+static client::SSL_OPEN_CB accept_sslcallback;
 
 static struct Listener *
 make_listener(struct rb_sockaddr_storage *addr)
@@ -112,7 +112,7 @@ get_listener_name(const struct Listener *listener)
  * side effects - show ports
  */
 void
-show_ports(struct Client *source_p)
+show_ports(client::client *source_p)
 {
 	struct Listener *listener = 0;
 
@@ -430,7 +430,7 @@ close_listeners()
 static void
 add_connection(struct Listener *listener, rb_fde_t *F, struct sockaddr *sai, struct sockaddr *lai)
 {
-	struct Client *new_client;
+	client::client *new_client;
 	bool defer = false;
 	s_assert(NULL != listener);
 
@@ -438,7 +438,7 @@ add_connection(struct Listener *listener, rb_fde_t *F, struct sockaddr *sai, str
 	 * get the client socket name from the socket
 	 * the client has already been checked out in accept_connection
 	 */
-	new_client = make_client(NULL);
+	new_client = client::make_client(NULL);
 
 	if (listener->ssl)
 	{
@@ -499,7 +499,7 @@ add_connection(struct Listener *listener, rb_fde_t *F, struct sockaddr *sai, str
 }
 
 static int
-accept_sslcallback(struct Client *client_p, int status)
+accept_sslcallback(client::client *client_p, int status)
 {
 	authd_deferred_client(client_p);
 	return 0; /* use default handler if status != RB_OK */

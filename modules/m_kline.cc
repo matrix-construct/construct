@@ -26,12 +26,12 @@ using namespace ircd;
 
 static const char kline_desc[] = "Provides the KLINE facility to ban users via hostmask";
 
-static void mo_kline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_kline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void me_kline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void mo_unkline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_unkline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void me_unkline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_kline(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_kline(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void me_kline(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mo_unkline(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_unkline(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void me_unkline(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message kline_msgtab = {
 	"KLINE", 0, 0, 0, 0,
@@ -48,23 +48,23 @@ mapi_clist_av1 kline_clist[] = { &kline_msgtab, &unkline_msgtab, NULL };
 DECLARE_MODULE_AV2(kline, NULL, NULL, kline_clist, NULL, NULL, NULL, NULL, kline_desc);
 
 /* Local function prototypes */
-static bool find_user_host(struct Client *source_p, const char *userhost, char *user, char *host);
-static bool valid_user_host(struct Client *source_p, const char *user, const char *host);
+static bool find_user_host(client::client *source_p, const char *userhost, char *user, char *host);
+static bool valid_user_host(client::client *source_p, const char *user, const char *host);
 
-static void handle_remote_kline(struct Client *source_p, int tkline_time,
+static void handle_remote_kline(client::client *source_p, int tkline_time,
 				const char *user, const char *host, const char *reason);
-static void apply_kline(struct Client *source_p, struct ConfItem *aconf,
+static void apply_kline(client::client *source_p, struct ConfItem *aconf,
 			const char *reason, const char *oper_reason);
-static void apply_tkline(struct Client *source_p, struct ConfItem *aconf,
+static void apply_tkline(client::client *source_p, struct ConfItem *aconf,
 			 const char *, const char *, int);
-static void apply_prop_kline(struct Client *source_p, struct ConfItem *aconf,
+static void apply_prop_kline(client::client *source_p, struct ConfItem *aconf,
 			 const char *, const char *, int);
-static bool already_placed_kline(struct Client *, const char *, const char *, int);
+static bool already_placed_kline(client::client *, const char *, const char *, int);
 
-static void handle_remote_unkline(struct Client *source_p, const char *user, const char *host);
-static void remove_permkline_match(struct Client *, struct ConfItem *);
-static bool remove_temp_kline(struct Client *, struct ConfItem *);
-static void remove_prop_kline(struct Client *, struct ConfItem *);
+static void handle_remote_unkline(client::client *source_p, const char *user, const char *host);
+static void remove_permkline_match(client::client *, struct ConfItem *);
+static bool remove_temp_kline(client::client *, struct ConfItem *);
+static void remove_prop_kline(client::client *, struct ConfItem *);
 
 /* mo_kline()
  *
@@ -75,7 +75,7 @@ static void remove_prop_kline(struct Client *, struct ConfItem *);
  *   parv[5] - reason
  */
 static void
-mo_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+mo_kline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char **parv)
 {
 	char def[] = "No Reason";
 	char user[USERLEN + 2];
@@ -200,13 +200,12 @@ mo_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	{
 		if(!kline_queued)
 		{
-			rb_event_addonce("check_klines", check_klines_event, NULL,
+			rb_event_addonce("check_klines", client::check_klines_event, NULL,
 					 ConfigFileEntry.kline_delay);
 			kline_queued = true;
 		}
 	}
-	else
-		check_klines();
+	else client::check_klines();
 }
 
 /* ms_kline()
@@ -218,7 +217,7 @@ mo_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
  *   parv[5] - reason
  */
 static void
-ms_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_kline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	int tkline_time = atoi(parv[2]);
 
@@ -242,7 +241,7 @@ ms_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 }
 
 static void
-me_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_kline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	/* <tkline_time> <user> <host> :<reason> */
 	if(!IsPerson(source_p))
@@ -252,7 +251,7 @@ me_kline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 }
 
 static void
-handle_remote_kline(struct Client *source_p, int tkline_time,
+handle_remote_kline(client::client *source_p, int tkline_time,
 		    const char *user, const char *host, const char *kreason)
 {
 	char *reason = LOCAL_COPY(kreason);
@@ -310,13 +309,13 @@ handle_remote_kline(struct Client *source_p, int tkline_time,
 	{
 		if(!kline_queued)
 		{
-			rb_event_addonce("check_klines", check_klines_event, NULL,
+			rb_event_addonce("check_klines", client::check_klines_event, NULL,
 					 ConfigFileEntry.kline_delay);
 			kline_queued = true;
 		}
 	}
 	else
-		check_klines();
+		client::check_klines();
 }
 
 /* mo_unkline()
@@ -326,7 +325,7 @@ handle_remote_kline(struct Client *source_p, int tkline_time,
  *   parv[3] - optional target server
  */
 static void
-mo_unkline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_unkline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	const char *user;
 	char *host;
@@ -425,7 +424,7 @@ mo_unkline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
  *   parv[3] - host to unkline
  */
 static void
-ms_unkline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_unkline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	/* parv[0]  parv[1]        parv[2]  parv[3]
 	 * oper     target server  user     host    */
@@ -441,7 +440,7 @@ ms_unkline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 }
 
 static void
-me_unkline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_unkline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	/* user host */
 	if(!IsPerson(source_p))
@@ -451,7 +450,7 @@ me_unkline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 }
 
 static void
-handle_remote_unkline(struct Client *source_p, const char *user, const char *host)
+handle_remote_unkline(client::client *source_p, const char *user, const char *host)
 {
 	struct ConfItem *aconf;
 
@@ -485,7 +484,7 @@ handle_remote_unkline(struct Client *source_p, const char *user, const char *hos
  *		  and conf file
  */
 static void
-apply_kline(struct Client *source_p, struct ConfItem *aconf,
+apply_kline(client::client *source_p, struct ConfItem *aconf,
 	    const char *reason, const char *oper_reason)
 {
 	add_conf_by_address(aconf->host, CONF_KILL, aconf->user, NULL, aconf);
@@ -522,7 +521,7 @@ apply_kline(struct Client *source_p, struct ConfItem *aconf,
  * side effects	- tkline as given is placed
  */
 static void
-apply_tkline(struct Client *source_p, struct ConfItem *aconf,
+apply_tkline(client::client *source_p, struct ConfItem *aconf,
 	     const char *reason, const char *oper_reason, int tkline_time)
 {
 	aconf->hold = rb_current_time() + tkline_time;
@@ -554,7 +553,7 @@ apply_tkline(struct Client *source_p, struct ConfItem *aconf,
 }
 
 static void
-apply_prop_kline(struct Client *source_p, struct ConfItem *aconf,
+apply_prop_kline(client::client *source_p, struct ConfItem *aconf,
 	     const char *reason, const char *oper_reason, int tkline_time)
 {
 	aconf->flags |= CONF_FLAGS_MYOPER | CONF_FLAGS_TEMPORARY;
@@ -608,7 +607,7 @@ apply_prop_kline(struct Client *source_p, struct ConfItem *aconf,
  * side effects -
  */
 static bool
-find_user_host(struct Client *source_p, const char *userhost, char *luser, char *lhost)
+find_user_host(client::client *source_p, const char *userhost, char *luser, char *lhost)
 {
 	char *hostp;
 
@@ -659,7 +658,7 @@ find_user_host(struct Client *source_p, const char *userhost, char *luser, char 
  * side effects -
  */
 static bool
-valid_user_host(struct Client *source_p, const char *luser, const char *lhost)
+valid_user_host(client::client *source_p, const char *luser, const char *lhost)
 {
 	/* # is invalid, as are '!' (n!u@h kline) and '@' (u@@h kline) */
 	if(strchr(lhost, '#') || strchr(luser, '#') || strchr(luser, '!') || strchr(lhost, '@'))
@@ -683,7 +682,7 @@ valid_user_host(struct Client *source_p, const char *luser, const char *lhost)
  *       have to walk the hash and check every existing K-line. -A1kmm.
  */
 static bool
-already_placed_kline(struct Client *source_p, const char *luser, const char *lhost, int tkline)
+already_placed_kline(client::client *source_p, const char *luser, const char *lhost, int tkline)
 {
 	const char *reason, *p;
 	struct rb_sockaddr_storage iphost, *piphost;
@@ -744,7 +743,7 @@ already_placed_kline(struct Client *source_p, const char *luser, const char *lho
  * hunts for a permanent kline, and removes it.
  */
 static void
-remove_permkline_match(struct Client *source_p, struct ConfItem *aconf)
+remove_permkline_match(client::client *source_p, struct ConfItem *aconf)
 {
 	sendto_one_notice(source_p, ":K-Line for [%s@%s] is removed", aconf->user, aconf->host);
 
@@ -766,7 +765,7 @@ remove_permkline_match(struct Client *source_p, struct ConfItem *aconf)
  * side effects - tries to unkline anything that matches
  */
 static bool
-remove_temp_kline(struct Client *source_p, struct ConfItem *aconf)
+remove_temp_kline(client::client *source_p, struct ConfItem *aconf)
 {
 	rb_dlink_node *ptr;
 	int i;
@@ -799,7 +798,7 @@ remove_temp_kline(struct Client *source_p, struct ConfItem *aconf)
 }
 
 static void
-remove_prop_kline(struct Client *source_p, struct ConfItem *aconf)
+remove_prop_kline(client::client *source_p, struct ConfItem *aconf)
 {
 	rb_dlink_node *ptr;
 	time_t now;

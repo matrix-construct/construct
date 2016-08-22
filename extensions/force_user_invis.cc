@@ -23,7 +23,7 @@ DECLARE_MODULE_AV2(force_user_invis, NULL, NULL, NULL, NULL, noi_hfnlist, NULL, 
 static void
 h_noi_umode_changed(hook_data_umode_changed *hdata)
 {
-	struct Client *source_p = hdata->client;
+	client::client *source_p = hdata->client;
 
 	if (MyClient(source_p) && !IsOper(source_p) && !IsInvisible(source_p)) {
 		SetInvisible(source_p);

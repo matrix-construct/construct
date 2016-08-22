@@ -184,7 +184,7 @@ cache::motd::cache_oper(void)
  * side effects -
  */
 void
-cache::motd::send_user(Client *source_p)
+cache::motd::send_user(client::client *source_p)
 {
 	const char *const myname(get_id(&me, source_p));
 	const char *const nick(get_id(source_p, source_p));
@@ -210,7 +210,7 @@ cache::motd::send_user(Client *source_p)
  * side effects -
  */
 void
-cache::motd::send_oper(Client *source_p)
+cache::motd::send_oper(client::client *source_p)
 {
 	if (oper.contents.empty())
 		return;

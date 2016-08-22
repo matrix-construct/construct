@@ -27,8 +27,8 @@ using namespace ircd;
 static const char error_desc[] =
 	"Provides the ERROR command for clients and servers";
 
-static void m_error(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_error(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_error(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_error(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message error_msgtab = {
 	"ERROR", 0, 0, 0, 0,
@@ -80,7 +80,7 @@ is_safe_error(const char *message)
  *      parv[*] = parameters
  */
 static void
-m_error(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_error(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	const char *para;
 	int hideit = ConfigFileEntry.hide_error_messages;
@@ -111,7 +111,7 @@ m_error(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 }
 
 static void
-ms_error(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_error(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	const char *para;
 	int hideit = ConfigFileEntry.hide_error_messages;

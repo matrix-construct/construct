@@ -29,7 +29,7 @@ _modinit(void)
 static void
 h_gnc_nick_change(hook_data *data)
 {
-	struct Client *source_p = data->client;
+	client::client *source_p = data->client;
 	const char *oldnick = (const char *)data->arg1;
 	const char *newnick = (const char *)data->arg2;
 

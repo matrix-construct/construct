@@ -25,7 +25,7 @@ using namespace ircd;
 
 static const char okick_desc[] = "Allow admins to forcibly kick users from channels with the OKICK command";
 
-static void mo_okick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void mo_okick(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
 
 struct Message okick_msgtab = {
 	"OKICK", 0, 0, 0, 0,
@@ -43,10 +43,10 @@ DECLARE_MODULE_AV2(okick, NULL, NULL, okick_clist, NULL, NULL, NULL, NULL, okick
 **      parv[3] = kick comment
 */
 static void
-mo_okick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_okick(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *who;
-	struct Client *target_p;
+	client::client *who;
+	client::client *target_p;
 	chan::chan *chptr;
 	chan::membership *msptr;
 	int chasing = 0;

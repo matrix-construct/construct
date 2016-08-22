@@ -55,7 +55,7 @@ chan::del(const std::string &name)
 
 chan::chan &
 chan::add(const std::string &name,
-          client &client)
+          client::client &client)
 {
 	if (name.empty())
 		throw err::BADCHANNAME("");
@@ -148,10 +148,11 @@ noexcept
  * side effects - user is removed from all channels
  */
 void
-chan::del(client &client)
+chan::del(client::client &client)
 {
-	auto &client_chans(client.user->channel);
-	for(const auto &pit : client_chans)
+	using client::user::chans;
+
+	for(const auto &pit : chans(user(client)))
 	{
 		auto &chan(*pit.first);
 		auto &member(*pit.second);
@@ -166,21 +167,21 @@ chan::del(client &client)
 			del(chan);
 	}
 
-	client_chans.clear();
-	client.user->invited.clear();
+	chans(user(client)).clear();
+	invites(user(client)).clear();
 }
 
 void
 chan::del(chan &chan,
-          client &client)
+          client::client &client)
 {
-	// These are the relevant containers.
+	using client::user::chans;
+
 	auto &global(chan.members.global);
 	auto &local(chan.members.local);
-	auto &client_chans(client.user->channel);
 
-	const auto it(client_chans.find(&chan));
-	if (it == end(client_chans))
+	const auto it(chans(user(client)).find(&chan));
+	if (it == end(chans(user(client))))
 		return;
 
 	auto &member(*it->second);
@@ -189,7 +190,7 @@ chan::del(chan &chan,
 		chan.members.local.erase(member.lit);
 
 	chan.members.global.erase(member.git);      // The member is destroyed at this point.
-	client_chans.erase(it);
+	chans(user(client)).erase(it);
 
 	if (empty(chan) && ~chan.mode & mode::PERMANENT)
 		del(chan);
@@ -197,9 +198,11 @@ chan::del(chan &chan,
 
 void
 chan::add(chan &chan,
-          client &client,
+          client::client &client,
           const int &flags)
 {
+	using client::user::chans;
+
 	if (!client.user)
 	{
 		s_assert(0);
@@ -209,7 +212,6 @@ chan::add(chan &chan,
 	// These are the relevant containers.
 	auto &global(chan.members.global);
 	auto &local(chan.members.local);
-	auto &client_chans(client.user->channel);
 
 	// Add client to channel's global map
 	const auto iit(global.emplace(&client, flags));
@@ -227,7 +229,7 @@ chan::add(chan &chan,
 		member.lit = local.emplace(end(local), &member);
 
 	// Add channel to client's channel map, pointing to the membership;
-	client_chans.emplace(&chan, &member);
+	chans(user(client)).emplace(&chan, &member);
 }
 
 
@@ -274,7 +276,7 @@ chan::ban::ban(const std::string &banstr,
 
 void
 chan::send_join(chan &chan,
-                Client &client)
+                client::client &client)
 {
 	if (!IsClient(&client))
 		return;
@@ -292,27 +294,27 @@ chan::send_join(chan &chan,
 	                                     client.username,
 	                                     client.host,
 	                                     chan.name.c_str(),
-	                                     client.user->suser.empty()? "*" : client.user->suser.c_str(),
+	                                     suser(user(client)).empty()? "*" : suser(user(client)).c_str(),
 	                                     client.info);
 
 	// Send away message to away-notify enabled clients.
-	if (!client.user->away.empty())
+	if (!away(user(client)).empty())
 		sendto_channel_local_with_capability_butone(&client, ALL_MEMBERS, CLICAP_AWAY_NOTIFY, NOCAPS, &chan,
 		                                            ":%s!%s@%s AWAY :%s",
 		                                            client.name,
 		                                            client.username,
 		                                            client.host,
-		                                            client.user->away.c_str());
+		                                            away(user(client)).c_str());
 }
 
 chan::membership &
 chan::get(members &members,
-          const client &client)
+          const client::client &client)
 {
 	if (!is_client(client))
 		throw invalid_argument();
 
-	const auto key(const_cast<ircd::chan::client *>(&client)); //TODO: temp elaborated
+	const auto key(const_cast<client::client *>(&client));
 	const auto it(members.global.find(key));
 	if (it == end(members.global))
 		throw err::NOTONCHANNEL(client.name);
@@ -322,12 +324,12 @@ chan::get(members &members,
 
 const chan::membership &
 chan::get(const members &members,
-          const client &client)
+          const client::client &client)
 {
 	if (!is_client(client))
 		throw invalid_argument();
 
-	const auto key(const_cast<ircd::chan::client *>(&client)); //TODO: temp elaborated
+	const auto key(const_cast<client::client *>(&client));
 	const auto it(members.global.find(key));
 	if (it == end(members.global))
 		throw err::NOTONCHANNEL(client.name);
@@ -337,13 +339,13 @@ chan::get(const members &members,
 
 chan::membership *
 chan::get(members &members,
-          const client &client,
+          const client::client &client,
           std::nothrow_t)
 {
 	if (!is_client(client))
 		return nullptr;
 
-	const auto key(const_cast<ircd::chan::client *>(&client)); //TODO: temp elaborated
+	const auto key(const_cast<client::client *>(&client));
 	const auto it(members.global.find(key));
 	if (it == end(members.global))
 		return nullptr;
@@ -353,13 +355,13 @@ chan::get(members &members,
 
 const chan::membership *
 chan::get(const members &members,
-          const client &client,
+          const client::client &client,
           std::nothrow_t)
 {
 	if (!is_client(client))
 		return nullptr;
 
-	const auto key(const_cast<ircd::chan::client *>(&client)); //TODO: temp elaborated
+	const auto key(const_cast<client::client *>(&client));
 	const auto it(members.global.find(key));
 	if (it == end(members.global))
 		return nullptr;
@@ -404,12 +406,14 @@ chan::find_status(const membership *const &msptr,
  *                to be used after a nick change
  */
 void
-chan::invalidate_bancache_user(client *client)
+chan::invalidate_bancache_user(client::client *client)
 {
+	using client::user::chans;
+
 	if(!client)
 		return;
 
-	for(const auto &pair : client->user->channel)
+	for(const auto &pair : chans(user(*client)))
 	{
 		auto &chan(*pair.first);
 		auto &member(*pair.second);
@@ -439,9 +443,9 @@ channel_pub_or_secret(chan::chan *const &chptr)
  * side effects - client is given list of users on channel
  */
 void
-chan::channel_member_names(chan *chptr, client *client_p, int show_eon)
+chan::channel_member_names(chan *chptr, client::client *client_p, int show_eon)
 {
-	client *target_p;
+	client::client *target_p;
 	rb_dlink_node *ptr;
 	char lbuf[BUFSIZE];
 	char *t;
@@ -522,20 +526,20 @@ void
 chan::clear_invites(chan &chan)
 {
 	for (auto &client : chan.invites)
-		client->user->invited.erase(&chan);
+		invites(user(*client)).erase(&chan);
 }
 
 void
-chan::del_invite(chan &chan, client &client)
+chan::del_invite(chan &chan, client::client &client)
 {
 	chan.invites.erase(&client);
-	client.user->invited.erase(&chan);
+	invites(user(client)).erase(&chan);
 }
 
 bool
 chan::cache_check(const chan &chan,
                   const mode::type &type,
-                  const client &who,
+                  const client::client &who,
                   bool &result)
 {
 	using namespace mode;
@@ -561,7 +565,7 @@ chan::cache_check(const chan &chan,
 void
 chan::cache_result(chan &chan,
                    const mode::type &type,
-                   const client &client,
+                   const client::client &client,
                    const bool &result,
                    membership *const &membership)
 {
@@ -596,7 +600,7 @@ chan::cache_result(chan &chan,
 bool
 chan::check(chan &chan,
             const mode::type &type,
-            const client &client,
+            const client::client &client,
             check_data *const &data)
 {
 	bool result;
@@ -671,7 +675,7 @@ chan::check(chan &chan,
 		if (s[ALTHOST] && match(mask, s[ALTHOST]))
 			return true;
 
-		if (match_extban(mask.c_str(), const_cast<Client *>(&client), &chan, mode::BAN))
+		if (match_extban(mask.c_str(), const_cast<client::client *>(&client), &chan, mode::BAN))
 			return true;
 
 		#ifdef RB_IPV6
@@ -719,7 +723,7 @@ chan::check(chan &chan,
  * caveats      - this function should only be called on a local user.
  */
 int
-chan::can_join(client *source_p, chan *chptr, const char *key, const char **forward)
+chan::can_join(client::client *source_p, chan *chptr, const char *key, const char **forward)
 {
 	rb_dlink_node *ptr;
 	bool invited(false);
@@ -817,7 +821,7 @@ chan::can_join(client *source_p, chan *chptr, const char *key, const char **forw
 
 	if(chptr->mode.limit && size(chptr->members) >= ulong(chptr->mode.limit))
 		i = ERR_CHANNELISFULL;
-	if(chptr->mode.mode & mode::REGONLY && source_p->user->suser.empty())
+	if(chptr->mode.mode & mode::REGONLY && suser(user(*source_p)).empty())
 		i = ERR_NEEDREGGEDNICK;
 	/* join throttling stuff --nenolod */
 	else if(chptr->mode.join_num > 0 && chptr->mode.join_time > 0)
@@ -848,7 +852,7 @@ finish_join_check:
  * side effects -
  */
 int
-chan::can_send(chan *chptr, client *source_p, membership *msptr)
+chan::can_send(chan *chptr, client::client *source_p, membership *msptr)
 {
 	hook_data_channel_approval moduledata;
 
@@ -929,7 +933,7 @@ chan::can_send(chan *chptr, client *source_p, membership *msptr)
  * side effects	- check for flood attack on target chptr
  */
 bool
-chan::flood_attack_channel(int p_or_n, client *source_p, chan *chptr)
+chan::flood_attack_channel(int p_or_n, client::client *source_p, chan *chptr)
 {
 	int delta;
 
@@ -980,8 +984,10 @@ chan::flood_attack_channel(int p_or_n, client *source_p, chan *chptr)
  * Output: channel preventing nick change
  */
 chan::chan *
-chan::find_bannickchange_channel(client *client_p)
+chan::find_bannickchange_channel(client::client *client_p)
 {
+	using client::user::chans;
+
 	chan *chptr;
 	membership *msptr;
 	rb_dlink_node *ptr;
@@ -994,7 +1000,7 @@ chan::find_bannickchange_channel(client *client_p)
 	sprintf(src_host, "%s!%s@%s", client_p->name, client_p->username, client_p->host);
 	sprintf(src_iphost, "%s!%s@%s", client_p->name, client_p->username, client_p->sockhost);
 
-	for(const auto &pit : client_p->user->channel)
+	for(const auto &pit : chans(user(*client_p)))
 	{
 		auto &chptr(pit.first);
 		auto &msptr(pit.second);
@@ -1025,7 +1031,7 @@ chan::find_bannickchange_channel(client *client_p)
 	return NULL;
 }
 
-/* void check_spambot_warning(client *source_p)
+/* void check_spambot_warning(client::client *source_p)
  * Input: Client to check, channel name or NULL if this is a part.
  * Output: none
  * Side-effects: Updates the client's oper_warn_count_down, warns the
@@ -1033,7 +1039,7 @@ chan::find_bannickchange_channel(client *client_p)
  *    needed.
  */
 void
-chan::check_spambot_warning(client *source_p, const char *name)
+chan::check_spambot_warning(client::client *source_p, const char *name)
 {
 	int t_delta;
 	int decrement_count;
@@ -1161,7 +1167,7 @@ chan::set_channel_topic(chan *chptr, const char *topic, const char *topic_info, 
  * Stolen from ShadowIRCd 4 --nenolod
  */
 const char *
-chan::channel_modes(chan *chptr, client *client_p)
+chan::channel_modes(chan *chptr, client::client *client_p)
 {
 	int i;
 	char buf1[BUFSIZE];
@@ -1222,8 +1228,8 @@ chan::channel_modes(chan *chptr, client *client_p)
 	return final;
 }
 
-/* void send_cap_mode_changes(client *client_p,
- *                        client *source_p,
+/* void send_cap_mode_changes(client::client *client_p,
+ *                        client::client *source_p,
  *                        chan *chptr, int cap, int nocap)
  * Input: The client sending(client_p), the source client(source_p),
  *        the channel to send mode changes for(chptr)
@@ -1238,7 +1244,7 @@ chan::channel_modes(chan *chptr, client *client_p)
  * 2.8.21+CSr and stuff.  --nenolod
  */
 void
-chan::send_cap_mode_changes(client *client_p, client *source_p,
+chan::send_cap_mode_changes(client::client *client_p, client::client *source_p,
 		      chan *chptr, mode::change mode_changes[], int mode_count)
 {
 	static char modebuf[BUFSIZE];
@@ -1341,7 +1347,7 @@ chan::resv_chan_forcepart(const char *name, const char *reason, int temp_time)
 	rb_dlink_node *next_ptr;
 	chan *chptr;
 	membership *msptr;
-	client *target_p;
+	client::client *target_p;
 
 	if(!ConfigChannel.resv_forcepart)
 		return;
@@ -1390,7 +1396,7 @@ bool
 chan::add(chan &chan,
           const mode::type &type,
           const std::string &mask,
-          client &source,
+          client::client &source,
           const std::string &forward)
 
 {

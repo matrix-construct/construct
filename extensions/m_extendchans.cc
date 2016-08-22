@@ -29,8 +29,8 @@ using namespace ircd;
 static const char extendchans_desc[] =
 	"Allow an oper or service to let a given user join more channels";
 
-static void mo_extendchans(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void me_extendchans(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_extendchans(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void me_extendchans(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message extendchans_msgtab = {
 	"EXTENDCHANS", 0, 0, 0, 0,
@@ -42,9 +42,9 @@ mapi_clist_av1 extendchans_clist[] = { &extendchans_msgtab, NULL };
 DECLARE_MODULE_AV2(extendchans, NULL, NULL, extendchans_clist, NULL, NULL, NULL, NULL, extendchans_desc);
 
 static void
-mo_extendchans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_extendchans(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 
 	if(!HasPrivilege(source_p, "oper:extendchans"))
 	{
@@ -70,7 +70,7 @@ mo_extendchans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *
 	}
 	else /* Target user isn't local, so pass it on. */
 	{
-		struct Client *cptr = target_p->servptr;
+		client::client *cptr = target_p->servptr;
 		sendto_one(cptr, ":%s ENCAP %s EXTENDCHANS %s",
 			get_id(source_p, cptr), cptr->name, get_id(target_p, cptr));
 	}
@@ -80,11 +80,11 @@ mo_extendchans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *
 }
 
 static void
-me_extendchans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_extendchans(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 
-	target_p = find_person(parv[1]);
+	target_p = client::find_person(parv[1]);
 	if(target_p == NULL)
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHNICK, form_str(ERR_NOSUCHNICK), parv[1]);
@@ -94,7 +94,7 @@ me_extendchans(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *
 	/* Is the target user local?  If not, pass it on. */
 	if(!MyClient(target_p))
 	{
-		struct Client *cptr = target_p->servptr;
+		client::client *cptr = target_p->servptr;
 		sendto_one(cptr, ":%s ENCAP %s EXTENDCHANS %s",
 			get_id(source_p, cptr), cptr->name, get_id(target_p, cptr));
 		return;

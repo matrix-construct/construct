@@ -185,7 +185,7 @@ find_shared_conf(const char *username, const char *host,
 }
 
 void
-propagate_generic(struct Client *source_p, const char *command,
+propagate_generic(client::client *source_p, const char *command,
 		const char *target, int cap, const char *format, ...)
 {
 	char buffer[BUFSIZE];
@@ -204,7 +204,7 @@ propagate_generic(struct Client *source_p, const char *command,
 }
 
 void
-cluster_generic(struct Client *source_p, const char *command,
+cluster_generic(client::client *source_p, const char *command,
 		int cltype, int cap, const char *format, ...)
 {
 	char buffer[BUFSIZE];
@@ -485,7 +485,7 @@ find_server_conf(const char *name)
 }
 
 void
-attach_server_conf(struct Client *client_p, struct server_conf *server_p)
+attach_server_conf(client::client *client_p, struct server_conf *server_p)
 {
 	/* already have an attached conf */
 	if(client_p->localClient->att_sconf)
@@ -504,7 +504,7 @@ attach_server_conf(struct Client *client_p, struct server_conf *server_p)
 }
 
 void
-detach_server_conf(struct Client *client_p)
+detach_server_conf(client::client *client_p)
 {
 	struct server_conf *server_p = client_p->localClient->att_sconf;
 
@@ -527,7 +527,7 @@ detach_server_conf(struct Client *client_p)
 }
 
 void
-set_server_conf_autoconn(struct Client *source_p, const char *name, int newval)
+set_server_conf_autoconn(client::client *source_p, const char *name, int newval)
 {
 	struct server_conf *server_p;
 

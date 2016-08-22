@@ -11,7 +11,7 @@ static const char extb_desc[] = "Usermode ($m) extban type";
 
 static int _modinit(void);
 static void _moddeinit(void);
-static int eb_usermode(const char *data, struct Client *client_p, chan::chan *chptr, mode::type);
+static int eb_usermode(const char *data, client::client *client_p, chan::chan *chptr, mode::type);
 
 DECLARE_MODULE_AV2(extb_usermode, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, extb_desc);
 
@@ -29,7 +29,7 @@ _moddeinit(void)
 	ext::table['u'] = NULL;
 }
 
-static int eb_usermode(const char *data, struct Client *client_p,
+static int eb_usermode(const char *data, client::client *client_p,
 		chan::chan *chptr, mode::type type)
 {
 	using namespace ext;

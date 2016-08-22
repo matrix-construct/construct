@@ -36,7 +36,7 @@ DECLARE_MODULE_AV2(chm_operonly, _modinit, _moddeinit, NULL, NULL, operonly_hfnl
 static void
 h_can_join(hook_data_channel *data)
 {
-	struct Client *source_p = data->client;
+	client::client *source_p = data->client;
 	const auto &chptr(data->chptr);
 
 	if((chptr->mode.mode & mymode) && !IsOper(source_p)) {

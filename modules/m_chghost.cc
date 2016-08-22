@@ -13,10 +13,10 @@ using namespace ircd;
 
 static const char chghost_desc[] = "Provides commands used to change and retrieve client hostnames";
 
-static void me_realhost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_chghost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void me_chghost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void mo_chghost(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_realhost(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_chghost(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void me_chghost(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mo_chghost(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message realhost_msgtab = {
 	"REALHOST", 0, 0, 0, 0,
@@ -76,7 +76,7 @@ clean_host(const char *host)
  * race condition.
  */
 static void
-me_realhost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+me_realhost(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 	int parc, const char *parv[])
 {
 	if (!IsPerson(source_p))
@@ -92,7 +92,7 @@ me_realhost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 }
 
 static bool
-do_chghost(struct Client *source_p, struct Client *target_p,
+do_chghost(client::client *source_p, client::client *target_p,
 		const char *newhost, int is_encap)
 {
 	if (!clean_host(newhost))
@@ -133,12 +133,12 @@ do_chghost(struct Client *source_p, struct Client *target_p,
  * parv[2] = host
  */
 static void
-ms_chghost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+ms_chghost(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 	int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 
-	if (!(target_p = find_person(parv[1])))
+	if (!(target_p = client::find_person(parv[1])))
 		return;
 
 	if (do_chghost(source_p, target_p, parv[2], 0))
@@ -160,12 +160,12 @@ ms_chghost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
  * parv[2] = host
  */
 static void
-me_chghost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+me_chghost(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 	int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 
-	if (!(target_p = find_person(parv[1])))
+	if (!(target_p = client::find_person(parv[1])))
 		return;
 
 	do_chghost(source_p, target_p, parv[2], 1);
@@ -180,11 +180,11 @@ me_chghost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
  * No, make it toggleable via ./configure. --nenolod
  */
 static void
-mo_chghost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+mo_chghost(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 	int parc, const char *parv[])
 {
 #ifdef ENABLE_OPER_CHGHOST
-	struct Client *target_p;
+	client::client *target_p;
 
 	if(!IsOperAdmin(source_p))
 	{
@@ -193,7 +193,7 @@ mo_chghost(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 		return;
 	}
 
-	if (!(target_p = find_named_person(parv[1])))
+	if (!(target_p = client::find_named_person(parv[1])))
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHNICK,
 				form_str(ERR_NOSUCHNICK), parv[1]);

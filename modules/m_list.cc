@@ -42,18 +42,18 @@ static struct ev_entry *iterate_clients_ev = NULL;
 static int _modinit(void);
 static void _moddeinit(void);
 
-static void m_list(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void mo_list(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_list(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mo_list(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
-static void list_one_channel(struct Client *source_p, chan::chan *chptr, int visible);
+static void list_one_channel(client::client *source_p, chan::chan *chptr, int visible);
 
-static void safelist_one_channel(struct Client *source_p, chan::chan *chptr, struct ListClient *params);
+static void safelist_one_channel(client::client *source_p, chan::chan *chptr, struct ListClient *params);
 static void safelist_check_cliexit(hook_data_client_exit * hdata);
-static void safelist_client_instantiate(struct Client *, struct ListClient *);
-static void safelist_client_release(struct Client *);
-static void safelist_iterate_client(struct Client *source_p);
+static void safelist_client_instantiate(client::client *, struct ListClient *);
+static void safelist_client_release(client::client *);
+static void safelist_iterate_client(client::client *source_p);
 static void safelist_iterate_clients(void *unused);
-static void safelist_channel_named(struct Client *source_p, const char *name, int operspy);
+static void safelist_channel_named(client::client *source_p, const char *name, int operspy);
 
 struct Message list_msgtab = {
 	"LIST", 0, 0, 0, 0,
@@ -113,7 +113,7 @@ static void safelist_check_cliexit(hook_data_client_exit * hdata)
  *       In theory, the server cannot be lagged by this. --nenolod
  */
 static void
-m_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_list(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0L;
 
@@ -144,7 +144,7 @@ m_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
  *      parv[1] = channel
  */
 static void
-mo_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_list(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	struct ListClient *params;
 	char *p;
@@ -279,7 +279,7 @@ mo_list(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
  * outputs      - none
  * side effects - a channel is listed
  */
-static void list_one_channel(struct Client *source_p, chan::chan *chptr,
+static void list_one_channel(client::client *source_p, chan::chan *chptr,
 		int visible)
 {
 	char topic[TOPICLEN + 1];
@@ -306,7 +306,7 @@ static void list_one_channel(struct Client *source_p, chan::chan *chptr,
  * When safelisting, we only use half of the SendQ at any
  * given time.
  */
-static bool safelist_sendq_exceeded(struct Client *client_p)
+static bool safelist_sendq_exceeded(client::client *client_p)
 {
 	return rb_linebuf_len(&client_p->localClient->buf_sendq) > (get_sendq(client_p) / 2);
 }
@@ -323,7 +323,7 @@ static bool safelist_sendq_exceeded(struct Client *client_p)
  * Please do not ever call this on a non-local client.
  * If you do, you will get SIGSEGV.
  */
-static void safelist_client_instantiate(struct Client *client_p, struct ListClient *params)
+static void safelist_client_instantiate(client::client *client_p, struct ListClient *params)
 {
 	s_assert(MyClient(client_p));
 	s_assert(params != NULL);
@@ -347,7 +347,7 @@ static void safelist_client_instantiate(struct Client *client_p, struct ListClie
  * side effects - the client is no longer being
  *                listed
  */
-static void safelist_client_release(struct Client *client_p)
+static void safelist_client_release(client::client *client_p)
 {
 	if(!MyClient(client_p))
 		return;
@@ -371,7 +371,7 @@ static void safelist_client_release(struct Client *client_p)
  * outputs      - none
  * side effects - a named channel is listed
  */
-static void safelist_channel_named(struct Client *source_p, const char *name, int operspy)
+static void safelist_channel_named(client::client *source_p, const char *name, int operspy)
 {
 	chan::chan *chptr;
 	char *p;
@@ -414,7 +414,7 @@ static void safelist_channel_named(struct Client *source_p, const char *name, in
  * side effects - a channel is listed if it meets the
  *                requirements
  */
-static void safelist_one_channel(struct Client *source_p, chan::chan *chptr, struct ListClient *params)
+static void safelist_one_channel(client::client *source_p, chan::chan *chptr, struct ListClient *params)
 {
 	int visible;
 
@@ -448,7 +448,7 @@ static void safelist_one_channel(struct Client *source_p, chan::chan *chptr, str
  * outputs      - none
  * side effects - the client's sendq is filled up again
  */
-static void safelist_iterate_client(struct Client *source_p)
+static void safelist_iterate_client(client::client *source_p)
 {
 	std::string chname(source_p->localClient->safelist_data->chname);
 	auto it(chan::chans.lower_bound(&chname));
@@ -473,5 +473,5 @@ static void safelist_iterate_clients(void *unused)
 	rb_dlink_node *n, *n2;
 
 	RB_DLINK_FOREACH_SAFE(n, n2, safelisting_clients.head)
-		safelist_iterate_client((struct Client *)n->data);
+		safelist_iterate_client((client::client *)n->data);
 }

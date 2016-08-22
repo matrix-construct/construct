@@ -118,7 +118,7 @@ init_builtin_capabs(void)
 
 static CNCB serv_connect_callback;
 static CNCB serv_connect_ssl_callback;
-static SSL_OPEN_CB serv_connect_ssl_open_callback;
+static client::SSL_OPEN_CB serv_connect_ssl_open_callback;
 
 /*
  * hunt_server - Do the basic thing in delivering the message (command)
@@ -140,10 +140,10 @@ static SSL_OPEN_CB serv_connect_ssl_open_callback;
  *      returns: (see #defines)
  */
 int
-hunt_server(struct Client *client_p, struct Client *source_p,
+hunt_server(client::client *client_p, client::client *source_p,
 	    const char *command, int server, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 	int wilds;
 	rb_dlink_node *ptr;
 	const char *old;
@@ -183,9 +183,9 @@ hunt_server(struct Client *client_p, struct Client *source_p,
 	{
 		RB_DLINK_FOREACH(ptr, global_serv_list.head)
 		{
-			if(match(new_, ((struct Client *) (ptr->data))->name))
+			if(match(new_, ((client::client *) (ptr->data))->name))
 			{
-				target_p = (Client *)ptr->data;
+				target_p = (client::client *)ptr->data;
 				break;
 			}
 		}
@@ -223,7 +223,7 @@ hunt_server(struct Client *client_p, struct Client *source_p,
 void
 try_connections(void *unused)
 {
-	struct Client *client_p;
+	client::client *client_p;
 	struct server_conf *server_p = NULL;
 	struct server_conf *tmp_p;
 	struct Class *cltmp;
@@ -308,7 +308,7 @@ try_connections(void *unused)
 }
 
 int
-check_server(const char *name, struct Client *client_p)
+check_server(const char *name, client::client *client_p)
 {
 	struct server_conf *server_p = NULL;
 	struct server_conf *tmp_p;
@@ -431,13 +431,13 @@ check_server(const char *name, struct Client *client_p)
  * side effects	- send the CAPAB line to a server  -orabidoo
  */
 void
-send_capabilities(struct Client *client_p, unsigned int cap_can_send)
+send_capabilities(client::client *client_p, unsigned int cap_can_send)
 {
 	sendto_one(client_p, "CAPAB :%s", serv_capindex.list(cap_can_send).c_str());
 }
 
 static void
-burst_ban(struct Client *client_p)
+burst_ban(client::client *client_p)
 {
 	rb_dlink_node *ptr;
 	struct ConfItem *aconf;
@@ -504,7 +504,7 @@ burst_ban(struct Client *client_p)
  * side effects - client is sent a list of +b, +e, or +I modes
  */
 static void
-burst_modes_TS6(Client &client,
+burst_modes_TS6(client::client &client,
                 chan::chan &chan,
                 chan::list &list,
                 const char &flag)
@@ -560,10 +560,10 @@ burst_modes_TS6(Client &client,
  * side effects	- NICK message is sent towards given client_p
  */
 static void
-burst_TS6(struct Client *client_p)
+burst_TS6(client::client *client_p)
 {
 	char ubuf[BUFSIZE];
-	struct Client *target_p;
+	client::client *target_p;
 	chan::chan *chptr;
 	chan::membership *msptr;
 	hook_data_client hclientinfo;
@@ -578,7 +578,7 @@ burst_TS6(struct Client *client_p)
 
 	RB_DLINK_FOREACH(ptr, global_client_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		if(!IsPerson(target_p))
 			continue;
@@ -599,7 +599,7 @@ burst_TS6(struct Client *client_p)
 				   IsIPSpoof(target_p) ? "0" : target_p->sockhost,
 				   target_p->id,
 				   IsDynSpoof(target_p) ? target_p->orighost : "*",
-				   target_p->user->suser.empty() ? "*" : target_p->user->suser.c_str(),
+				   suser(user(*target_p)).empty() ? "*" : suser(user(*target_p)).c_str(),
 				   target_p->info);
 		else
 			sendto_one(client_p, ":%s UID %s %d %ld %s %s %s %s %s :%s",
@@ -620,16 +620,16 @@ burst_TS6(struct Client *client_p)
 				sendto_one(client_p, ":%s ENCAP * REALHOST %s",
 						use_id(target_p), target_p->orighost);
 
-			if (!target_p->user->suser.empty())
+			if (!suser(user(*target_p)).empty())
 				sendto_one(client_p, ":%s ENCAP * LOGIN %s",
 				           use_id(target_p),
-				           target_p->user->suser.c_str());
+				           suser(user(*target_p)).c_str());
 		}
 
-		if(ConfigFileEntry.burst_away && !target_p->user->away.empty())
+		if(ConfigFileEntry.burst_away && !away(user(*target_p)).empty())
 			sendto_one(client_p, ":%s AWAY :%s",
 				   use_id(target_p),
-				   target_p->user->away.c_str());
+				   away(user(*target_p)).c_str());
 
 		hclientinfo.target = target_p;
 		call_hook(h_burst_client, &hclientinfo);
@@ -720,12 +720,12 @@ burst_TS6(struct Client *client_p)
 /*
  * show_capabilities - show current server capabilities
  *
- * inputs       - pointer to an struct Client
+ * inputs       - pointer to an client::client
  * output       - pointer to static string
  * side effects - build up string representing capabilities of server listed
  */
 const char *
-show_capabilities(struct Client *target_p)
+show_capabilities(client::client *target_p)
 {
 	static char msgbuf[BUFSIZE];
 
@@ -737,11 +737,11 @@ show_capabilities(struct Client *target_p)
 	if(IsSSL(target_p))
 		rb_strlcat(msgbuf, " SSL", sizeof(msgbuf));
 
-	if(!IsServer(target_p) || !target_p->serv->caps)	/* short circuit if no caps */
+	if(!IsServer(target_p) || !caps(serv(*target_p))) // short circuit if no caps
 		return msgbuf + 1;
 
 	rb_strlcat(msgbuf, " ", sizeof(msgbuf));
-	rb_strlcat(msgbuf, serv_capindex.list(target_p->serv->caps).c_str(), sizeof(msgbuf));
+	rb_strlcat(msgbuf, serv_capindex.list(caps(serv(*target_p))).c_str(), sizeof(msgbuf));
 
 	return msgbuf + 1;
 }
@@ -749,14 +749,14 @@ show_capabilities(struct Client *target_p)
 /*
  * server_estab
  *
- * inputs       - pointer to a struct Client
+ * inputs       - pointer to a client::client
  * output       -
  * side effects -
  */
 int
-server_estab(struct Client *client_p)
+server_estab(client::client *client_p)
 {
-	struct Client *target_p;
+	client::client *target_p;
 	struct server_conf *server_p;
 	hook_data_client hdata;
 	char *host;
@@ -824,7 +824,7 @@ server_estab(struct Client *client_p)
 
 	SetServer(client_p);
 
-	rb_dlinkAdd(client_p, &client_p->lnode, &me.serv->servers);
+	client_p->lnode = servers(serv(me)).emplace(end(servers(serv(me))), client_p);
 	rb_dlinkMoveNode(&client_p->localClient->tnode, &unknown_list, &serv_list);
 	rb_dlinkAddTailAlloc(client_p, &global_serv_list);
 
@@ -833,18 +833,18 @@ server_estab(struct Client *client_p)
 
 	add_to_client_hash(client_p->name, client_p);
 	/* doesnt duplicate client_p->serv if allocated this struct already */
-	make_server(client_p);
+	make_serv(*client_p);
 
-	client_p->serv->caps = client_p->localClient->caps;
+	caps(serv(*client_p)) = client_p->localClient->caps;
 
 	if(client_p->localClient->fullcaps)
 	{
-		client_p->serv->fullcaps = rb_strdup(client_p->localClient->fullcaps);
+		fullcaps(serv(*client_p)) = client_p->localClient->fullcaps;
 		rb_free(client_p->localClient->fullcaps);
 		client_p->localClient->fullcaps = NULL;
 	}
 
-	client_p->serv->nameinfo = scache_connect(client_p->name, client_p->info, IsHidden(client_p));
+	nameinfo(serv(*client_p)) = scache_connect(client_p->name, client_p->info, IsHidden(client_p));
 	client_p->localClient->firsttime = rb_current_time();
 	/* fixing eob timings.. -gnp */
 
@@ -876,7 +876,7 @@ server_estab(struct Client *client_p)
 	 */
 	RB_DLINK_FOREACH(ptr, serv_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		if(target_p == client_p)
 			continue;
@@ -887,9 +887,9 @@ server_estab(struct Client *client_p)
 				   me.id, client_p->name, client_p->id,
 				   IsHidden(client_p) ? "(H) " : "", client_p->info);
 
-			if(!EmptyString(client_p->serv->fullcaps))
+			if(fullcaps(serv(*client_p)).size())
 				sendto_one(target_p, ":%s ENCAP * GCAP :%s",
-					client_p->id, client_p->serv->fullcaps);
+					client_p->id, fullcaps(serv(*client_p)).c_str());
 		}
 		else
 		{
@@ -897,9 +897,9 @@ server_estab(struct Client *client_p)
 				   me.name, client_p->name,
 				   IsHidden(client_p) ? "(H) " : "", client_p->info);
 
-			if(!EmptyString(client_p->serv->fullcaps))
+			if(fullcaps(serv(*client_p)).size())
 				sendto_one(target_p, ":%s ENCAP * GCAP :%s",
-					client_p->name, client_p->serv->fullcaps);
+					client_p->name, fullcaps(serv(*client_p)).c_str());
 		}
 	}
 
@@ -923,7 +923,7 @@ server_estab(struct Client *client_p)
 	 */
 	RB_DLINK_FOREACH(ptr, global_serv_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		/* target_p->from == target_p for target_p == client_p */
 		if(IsMe(target_p) || target_p->from == client_p)
@@ -941,10 +941,10 @@ server_estab(struct Client *client_p)
 				   target_p->name, target_p->hopcount + 1,
 				   IsHidden(target_p) ? "(H) " : "", target_p->info);
 
-		if(!EmptyString(target_p->serv->fullcaps))
+		if(fullcaps(serv(*target_p)).size())
 			sendto_one(client_p, ":%s ENCAP * GCAP :%s",
 					get_id(target_p, client_p),
-					target_p->serv->fullcaps);
+					fullcaps(serv(*target_p)).c_str());
 	}
 
 	if(IsCapable(client_p, CAP_BAN))
@@ -986,9 +986,9 @@ server_estab(struct Client *client_p)
  * it suceeded or not, and 0 if it fails in here somewhere.
  */
 int
-serv_connect(struct server_conf *server_p, struct Client *by)
+serv_connect(struct server_conf *server_p, client::client *by)
 {
-	struct Client *client_p;
+	client::client *client_p;
 	struct rb_sockaddr_storage sa_connect;
 	struct rb_sockaddr_storage sa_bind;
 	char note[HOSTLEN + 10];
@@ -1064,7 +1064,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	rb_note(F, note);
 
 	/* Create a local client */
-	client_p = make_client(NULL);
+	client_p = client::make_client(NULL);
 
 	/* Copy in the server, hostname, fd */
 	rb_strlcpy(client_p->name, server_p->name, sizeof(client_p->name));
@@ -1101,11 +1101,11 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 	 *
 	 * The socket has been connected or connect is in progress.
 	 */
-	make_server(client_p);
+	make_serv(*client_p);
 	if(by && IsClient(by))
-		rb_strlcpy(client_p->serv->by, by->name, sizeof(client_p->serv->by));
+		client::serv::by(serv(*client_p)) = by->name;
 	else
-		strcpy(client_p->serv->by, "AutoConn.");
+		client::serv::by(serv(*client_p)) = "AutoConn.";
 
 	SetConnecting(client_p);
 	rb_dlinkAddTail(client_p, &client_p->node, &global_client_list);
@@ -1131,7 +1131,7 @@ serv_connect(struct server_conf *server_p, struct Client *by)
 static void
 serv_connect_ssl_callback(rb_fde_t *F, int status, void *data)
 {
-	struct Client *client_p = (Client *)data;
+	client::client *client_p = (client::client *)data;
 	rb_fde_t *xF[2];
 	rb_connect_sockaddr(F, (struct sockaddr *)&client_p->localClient->ip, sizeof(client_p->localClient->ip));
 	if(status != RB_OK)
@@ -1160,7 +1160,7 @@ serv_connect_ssl_callback(rb_fde_t *F, int status, void *data)
 }
 
 static int
-serv_connect_ssl_open_callback(struct Client *client_p, int status)
+serv_connect_ssl_open_callback(client::client *client_p, int status)
 {
 	serv_connect_callback(client_p->localClient->F, status, client_p);
 	return 1; /* suppress default exit_client handler for status != RB_OK */
@@ -1178,7 +1178,7 @@ serv_connect_ssl_open_callback(struct Client *client_p, int status)
 static void
 serv_connect_callback(rb_fde_t *F, int status, void *data)
 {
-	struct Client *client_p = (Client *)data;
+	client::client *client_p = (client::client *)data;
 	struct server_conf *server_p;
 	char *errstr;
 

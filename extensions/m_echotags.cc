@@ -1,6 +1,6 @@
 using namespace ircd;
 
-static void m_echotags(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void m_echotags(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
 
 struct Message echotags_msgtab = {
 	"ECHOTAGS", 0, 0, 0, 0,
@@ -14,7 +14,7 @@ static const char echotags_desc[] = "A test module for tags";
 DECLARE_MODULE_AV2(echotags, NULL, NULL, echotags_clist, NULL, NULL, NULL, NULL, echotags_desc);
 
 static void
-m_echotags(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_echotags(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	sendto_one_notice(source_p, ":*** You sent %zu tags.", msgbuf_p->n_tags);
 

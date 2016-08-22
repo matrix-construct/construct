@@ -26,9 +26,9 @@ using namespace ircd;
 
 static const char restart_desc[] = "Provides the RESTART command to restart the server";
 
-static void mo_restart(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void me_restart(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void do_restart(struct Client *source_p, const char *servername);
+static void mo_restart(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void me_restart(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void do_restart(client::client *source_p, const char *servername);
 
 struct Message restart_msgtab = {
 	"RESTART", 0, 0, 0, 0,
@@ -43,7 +43,7 @@ DECLARE_MODULE_AV2(restart, NULL, NULL, restart_clist, NULL, NULL, NULL, NULL, r
  * mo_restart
  */
 static void
-mo_restart(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_restart(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	if(!IsOperDie(source_p))
 	{
@@ -61,7 +61,7 @@ mo_restart(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 	if(parc > 2)
 	{
 		/* Remote restart. Pass it along. */
-		struct Client *server_p = find_server(NULL, parv[2]);
+		client::client *server_p = find_server(NULL, parv[2]);
 		if (!server_p)
 		{
 			sendto_one_numeric(source_p, ERR_NOSUCHSERVER, form_str(ERR_NOSUCHSERVER), parv[2]);
@@ -79,7 +79,7 @@ mo_restart(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 }
 
 static void
-me_restart(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_restart(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	if(!find_shared_conf(source_p->username, source_p->host, source_p->servptr->name, SHARED_DIE))
 	{
@@ -92,11 +92,11 @@ me_restart(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 }
 
 static void
-do_restart(struct Client *source_p, const char *servername)
+do_restart(client::client *source_p, const char *servername)
 {
 	char buf[BUFSIZE];
 	rb_dlink_node *ptr;
-	struct Client *target_p;
+	client::client *target_p;
 
 	if(irccmp(servername, me.name))
 	{
@@ -106,14 +106,14 @@ do_restart(struct Client *source_p, const char *servername)
 
 	RB_DLINK_FOREACH(ptr, lclient_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		sendto_one_notice(target_p, ":Server Restarting. %s", get_client_name(source_p, HIDE_IP));
 	}
 
 	RB_DLINK_FOREACH(ptr, serv_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		sendto_one(target_p, ":%s ERROR :Restart by %s",
 			   me.name, get_client_name(source_p, HIDE_IP));

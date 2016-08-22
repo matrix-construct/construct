@@ -9,13 +9,13 @@ static const char helpops_desc[] = "The helpops system as used by freenode";
 
 static rb_dlink_list helper_list = { NULL, NULL, 0 };
 static void h_hdl_stats_request(hook_data_int *hdata);
-static void h_hdl_new_remote_user(struct Client *client_p);
+static void h_hdl_new_remote_user(client::client *client_p);
 static void h_hdl_client_exit(hook_data_client_exit *hdata);
 static void h_hdl_umode_changed(hook_data_umode_changed *hdata);
 static void h_hdl_whois(hook_data_client *hdata);
-static void mo_dehelper(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void me_dehelper(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void do_dehelper(struct Client *source_p, struct Client *target_p);
+static void mo_dehelper(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void me_dehelper(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void do_dehelper(client::client *source_p, client::client *target_p);
 
 mapi_hfn_list_av1 helpops_hfnlist[] = {
 	{ "doing_stats", (hookfn) h_hdl_stats_request },
@@ -37,9 +37,9 @@ struct Message dehelper_msgtab = {
 mapi_clist_av1 helpops_clist[] = { &dehelper_msgtab, NULL };
 
 static void
-mo_dehelper(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+mo_dehelper(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char **parv)
 {
-	struct Client *target_p;
+	client::client *target_p;
 
 	if (!IsOperAdmin(source_p))
 	{
@@ -47,7 +47,7 @@ mo_dehelper(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 		return;
 	}
 
-	if(!(target_p = find_named_person(parv[1])))
+	if(!(target_p = client::find_named_person(parv[1])))
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHNICK, form_str(ERR_NOSUCHNICK), parv[1]);
 		return;
@@ -61,9 +61,9 @@ mo_dehelper(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 }
 
 static void
-me_dehelper(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+me_dehelper(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char **parv)
 {
-	struct Client *target_p = find_person(parv[1]);
+	client::client *target_p = client::find_person(parv[1]);
 	if(!target_p)
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHNICK, form_str(ERR_NOSUCHNICK), parv[1]);
@@ -76,7 +76,7 @@ me_dehelper(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 }
 
 static void
-do_dehelper(struct Client *source_p, struct Client *target_p)
+do_dehelper(client::client *source_p, client::client *target_p)
 {
 	const char *fakeparv[4];
 
@@ -114,7 +114,7 @@ _moddeinit(void)
 static void
 h_hdl_stats_request(hook_data_int *hdata)
 {
-	struct Client *target_p;
+	client::client *target_p;
 	rb_dlink_node *helper_ptr;
 	unsigned int count = 0;
 
@@ -123,9 +123,9 @@ h_hdl_stats_request(hook_data_int *hdata)
 
 	RB_DLINK_FOREACH (helper_ptr, helper_list.head)
 	{
-		target_p = (Client *)helper_ptr->data;
+		target_p = (client::client *)helper_ptr->data;
 
-		if (target_p->user->away.size())
+		if (away(user(*target_p)).size())
 			continue;
 
 		count++;
@@ -143,7 +143,7 @@ h_hdl_stats_request(hook_data_int *hdata)
 }
 
 static void
-h_hdl_new_remote_user(struct Client *client_p)
+h_hdl_new_remote_user(client::client *client_p)
 {
 	if (client_p->umodes & UMODE_HELPOPS)
 		rb_dlinkAddAlloc(client_p, &helper_list);
@@ -159,7 +159,7 @@ h_hdl_client_exit(hook_data_client_exit *hdata)
 static void
 h_hdl_umode_changed(hook_data_umode_changed *hdata)
 {
-	struct Client *source_p = hdata->client;
+	client::client *source_p = hdata->client;
 
 	/* didn't change +H umode, we don't need to do anything */
 	if (!((hdata->oldumodes ^ source_p->umodes) & UMODE_HELPOPS))
@@ -183,10 +183,10 @@ h_hdl_umode_changed(hook_data_umode_changed *hdata)
 static void
 h_hdl_whois(hook_data_client *hdata)
 {
-	struct Client *source_p = hdata->client;
-	struct Client *target_p = hdata->target;
+	client::client *source_p = hdata->client;
+	client::client *target_p = hdata->target;
 
-	if ((target_p->umodes & UMODE_HELPOPS) && target_p->user->away.empty())
+	if ((target_p->umodes & UMODE_HELPOPS) && away(user(*target_p)).empty())
 	{
 		sendto_one_numeric(source_p, RPL_WHOISHELPOP, form_str(RPL_WHOISHELPOP), target_p->name);
 	}

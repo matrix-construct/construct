@@ -21,7 +21,7 @@ using namespace ircd;
 
 static const char ojoin_desc[] = "Allow admins to forcibly join channels with the OJOIN command";
 
-static void mo_ojoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void mo_ojoin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
 
 struct Message ojoin_msgtab = {
 	"OJOIN", 0, 0, 0, 0,
@@ -37,7 +37,7 @@ DECLARE_MODULE_AV2(ojoin, NULL, NULL, ojoin_clist, NULL, NULL, NULL, NULL, ojoin
 **      parv[1] = channel
 */
 static void
-mo_ojoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_ojoin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	chan::chan *chptr;
 	int move_me = 0;

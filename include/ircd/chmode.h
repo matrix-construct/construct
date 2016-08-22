@@ -41,7 +41,6 @@ enum : int
 namespace chan {
 
 struct chan;
-using client = Client; //TODO: XXX: temp
 
 namespace mode {
 
@@ -98,7 +97,7 @@ struct change
 	int mems         = 0;
 };
 
-using func = void (*)(client *, struct chan *, int alevel, int parc, int *parn, const char **parv, int *errors, int dir, char c, type type);
+using func = void (*)(client::client *, struct chan *, int alevel, int parc, int *parn, const char **parv, int *errors, int dir, char c, type type);
 
 struct mode
 {
@@ -121,12 +120,12 @@ namespace ext
 		MATCH     = 1,   // matches
 	};
 
-	using func = int (*)(const char *data, client *, chan *, type type);
+	using func = int (*)(const char *data, client::client *, chan *, type type);
 	extern func table[256];
 }
 
 #define CHM_FUNCTION(_NAME_)                                      \
-void _NAME_(client *source_p, chan *chptr,                     \
+void _NAME_(client::client *source_p, chan *chptr,                     \
             int alevel, int parc, int *parn, const char **parv,   \
             int *errors, int dir, char c, type type);
 

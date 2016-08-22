@@ -26,8 +26,8 @@ using namespace ircd;
 
 static const char motd_desc[] = "Provides the MOTD command to view the Message of the Day";
 
-static void m_motd(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void mo_motd(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_motd(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mo_motd(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message motd_msgtab = {
 	"MOTD", 0, 0, 0, 0,
@@ -44,14 +44,14 @@ mapi_hlist_av1 motd_hlist[] = {
 
 DECLARE_MODULE_AV2(motd, NULL, NULL, motd_clist, motd_hlist, NULL, NULL, NULL, motd_desc);
 
-static void motd_spy(struct Client *);
+static void motd_spy(client::client *);
 
 /*
 ** m_motd
 **      parv[1] = servername
 */
 static void
-m_motd(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_motd(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
 
@@ -79,7 +79,7 @@ m_motd(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 **      parv[1] = servername
 */
 static void
-mo_motd(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_motd(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	if(hunt_server(client_p, source_p, ":%s MOTD :%s", 1, parc, parv) != HUNTED_ISME)
 		return;
@@ -95,7 +95,7 @@ mo_motd(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
  * side effects - hook doing_motd is called
  */
 static void
-motd_spy(struct Client *source_p)
+motd_spy(client::client *source_p)
 {
 	hook_data data;
 

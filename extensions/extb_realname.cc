@@ -11,7 +11,7 @@ static const char extb_desc[] = "Realname/GECOS ($r) extban type";
 
 static int _modinit(void);
 static void _moddeinit(void);
-static int eb_realname(const char *data, struct Client *client_p, chan::chan *chptr, mode::type);
+static int eb_realname(const char *data, client::client *client_p, chan::chan *chptr, mode::type);
 
 DECLARE_MODULE_AV2(extb_realname, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, extb_desc);
 
@@ -30,7 +30,7 @@ _moddeinit(void)
 }
 
 static int
-eb_realname(const char *data, struct Client *client_p, chan::chan *chptr, mode::type type)
+eb_realname(const char *data, client::client *client_p, chan::chan *chptr, mode::type type)
 {
 	using namespace ext;
 	using namespace mode;

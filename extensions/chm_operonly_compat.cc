@@ -10,7 +10,7 @@ static const char chm_operonly_compat[] =
 
 static int _modinit(void);
 static void _moddeinit(void);
-static void chm_operonly(struct Client *source_p, chan::chan *chptr,
+static void chm_operonly(client::client *source_p, chan::chan *chptr,
 	int alevel, int parc, int *parn,
 	const char **parv, int *errors, int dir, char c, type type);
 
@@ -35,7 +35,7 @@ _moddeinit(void)
 }
 
 static void
-chm_operonly(struct Client *source_p, chan::chan *chptr,
+chm_operonly(client::client *source_p, chan::chan *chptr,
 	int alevel, int parc, int *parn,
 	const char **parv, int *errors, int dir, char c, type type)
 {

@@ -31,7 +31,7 @@ using namespace ircd;
 
 static const char tginfo_desc[] = "Processes target change notifications from other servers";
 
-static void me_tginfo(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_tginfo(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message tginfo_msgtab = {
 	"TGINFO", 0, 0, 0, 0,
@@ -47,7 +47,7 @@ DECLARE_MODULE_AV2(tginfo, NULL, NULL, tginfo_clist, NULL, NULL, NULL, NULL, tgi
 **      parv[1] = 0, reserved for future use (number of remaining targets)
 */
 static void
-me_tginfo(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_tginfo(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	if (!IsPerson(source_p))
 		return;

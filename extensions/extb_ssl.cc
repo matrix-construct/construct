@@ -8,7 +8,7 @@ static const char extb_desc[] = "SSL/TLS ($z) extban type";
 
 static int _modinit(void);
 static void _moddeinit(void);
-static int eb_ssl(const char *data, struct Client *client_p, chan::chan *chptr, mode::type);
+static int eb_ssl(const char *data, client::client *client_p, chan::chan *chptr, mode::type);
 
 DECLARE_MODULE_AV2(extb_ssl, _modinit, _moddeinit, NULL, NULL, NULL, NULL, NULL, extb_desc);
 
@@ -26,7 +26,7 @@ _moddeinit(void)
 	ext::table['z'] = NULL;
 }
 
-static int eb_ssl(const char *data, struct Client *client_p,
+static int eb_ssl(const char *data, client::client *client_p,
 		chan::chan *chptr, mode::type type)
 {
 	using namespace ext;

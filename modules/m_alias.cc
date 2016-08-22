@@ -25,7 +25,7 @@ static const char alias_desc[] = "Provides the system for services aliases";
 static int _modinit(void);
 static void _moddeinit(void);
 static int reload_aliases(hook_data *);
-static void m_alias(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_alias(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 mapi_hfn_list_av1 alias_hfnlist[] = {
 	{ "rehash", (hookfn)reload_aliases },
@@ -95,9 +95,9 @@ reload_aliases(hook_data *data)
 
 /* The below was mostly taken from the old do_alias */
 static void
-m_alias(struct MsgBuf *msgbuf, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+m_alias(struct MsgBuf *msgbuf, client::client *client_p, client::client *source_p, int parc, const char **parv)
 {
-	struct Client *target_p;
+	client::client *target_p;
 	std::shared_ptr<alias_entry> aptr = alias_dict[msgbuf->cmd];
 	char *str;
 
@@ -125,7 +125,7 @@ m_alias(struct MsgBuf *msgbuf, struct Client *client_p, struct Client *source_p,
 	else
 	{
 		/* nick, must be +S */
-		target_p = find_named_person(aptr->target.c_str());
+		target_p = client::find_named_person(aptr->target.c_str());
 		if(target_p != NULL && !IsService(target_p))
 			target_p = NULL;
 	}

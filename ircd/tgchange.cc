@@ -24,12 +24,12 @@
 
 namespace ircd {
 
-static int add_hashed_target(struct Client *source_p, uint32_t hashv);
+static int add_hashed_target(client::client *source_p, uint32_t hashv);
 
 chan::chan *
-find_allowing_channel(struct Client *source, struct Client *target)
+find_allowing_channel(client::client *source, client::client *target)
 {
-	for(const auto &pit : source->user->channel)
+	for(const auto &pit : chans(user(*source)))
 	{
 		auto &chan(*pit.first);
 		auto &member(*pit.second);
@@ -42,7 +42,7 @@ find_allowing_channel(struct Client *source, struct Client *target)
 }
 
 int
-add_target(struct Client *source_p, struct Client *target_p)
+add_target(client::client *source_p, client::client *target_p)
 {
 	uint32_t hashv;
 
@@ -63,7 +63,7 @@ add_target(struct Client *source_p, struct Client *target_p)
 }
 
 int
-add_channel_target(struct Client *source_p, chan::chan *chptr)
+add_channel_target(client::client *source_p, chan::chan *chptr)
 {
 	uint32_t hashv;
 
@@ -75,7 +75,7 @@ add_channel_target(struct Client *source_p, chan::chan *chptr)
 }
 
 static int
-add_hashed_target(struct Client *source_p, uint32_t hashv)
+add_hashed_target(client::client *source_p, uint32_t hashv)
 {
 	int i, j;
 	uint32_t *targets;
@@ -155,7 +155,7 @@ add_hashed_target(struct Client *source_p, uint32_t hashv)
 }
 
 void
-add_reply_target(struct Client *source_p, struct Client *target_p)
+add_reply_target(client::client *source_p, client::client *target_p)
 {
 	int i, j;
 	uint32_t hashv;

@@ -22,7 +22,7 @@ DECLARE_MODULE_AV2(createoperonly, NULL, NULL, NULL, NULL, restrict_hfnlist, NUL
 static void
 h_can_create_channel_authenticated(hook_data_client_approval *data)
 {
-	struct Client *source_p = data->client;
+	client::client *source_p = data->client;
 
 	if (!IsOper(source_p))
 	{

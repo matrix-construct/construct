@@ -39,7 +39,7 @@ namespace ircd {
 extern void add_isupport(const char *, const char *(*)(const void *), const void *);
 extern const void *change_isupport(const char *, const char *(*)(const void *), const void *);
 extern void delete_isupport(const char *);
-extern void show_isupport(struct Client *);
+extern void show_isupport(client::client *);
 extern void init_isupport(void);
 
 extern const char *isupport_intptr(const void *);

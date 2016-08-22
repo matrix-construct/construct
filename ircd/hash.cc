@@ -116,7 +116,7 @@ fnv_hash_upper_len(const unsigned char *s, int bits, int len)
  * adds an entry to the id hash table
  */
 void
-add_to_id_hash(const char *name, struct Client *client_p)
+add_to_id_hash(const char *name, client::client *client_p)
 {
 	if(EmptyString(name) || (client_p == NULL))
 		return;
@@ -129,7 +129,7 @@ add_to_id_hash(const char *name, struct Client *client_p)
  * adds an entry (client/server) to the client hash table
  */
 void
-add_to_client_hash(const char *name, struct Client *client_p)
+add_to_client_hash(const char *name, client::client *client_p)
 {
 	s_assert(name != NULL);
 	s_assert(client_p != NULL);
@@ -144,7 +144,7 @@ add_to_client_hash(const char *name, struct Client *client_p)
  * adds a client entry to the hostname hash table
  */
 void
-add_to_hostname_hash(const char *hostname, struct Client *client_p)
+add_to_hostname_hash(const char *hostname, client::client *client_p)
 {
 	rb_dlink_list *list;
 
@@ -185,7 +185,7 @@ add_to_resv_hash(const char *name, struct ConfItem *aconf)
  * removes an id from the id hash table
  */
 void
-del_from_id_hash(const char *id, struct Client *client_p)
+del_from_id_hash(const char *id, client::client *client_p)
 {
 	s_assert(id != NULL);
 	s_assert(client_p != NULL);
@@ -200,7 +200,7 @@ del_from_id_hash(const char *id, struct Client *client_p)
  * removes a client/server from the client hash table
  */
 void
-del_from_client_hash(const char *name, struct Client *client_p)
+del_from_client_hash(const char *name, client::client *client_p)
 {
 	/* no s_asserts, this can happen when removing a client that
 	 * is unregistered.
@@ -216,7 +216,7 @@ del_from_client_hash(const char *name, struct Client *client_p)
  * removes a client entry from the hostname hash table
  */
 void
-del_from_hostname_hash(const char *hostname, struct Client *client_p)
+del_from_hostname_hash(const char *hostname, client::client *client_p)
 {
 	rb_dlink_list *list;
 
@@ -255,20 +255,20 @@ del_from_resv_hash(const char *name, struct ConfItem *aconf)
  *
  * finds a client entry from the id hash table
  */
-struct Client *
+client::client *
 find_id(const char *name)
 {
 	if(EmptyString(name))
 		return NULL;
 
-	return (Client *)rb_radixtree_retrieve(client_id_tree, name);
+	return (client::client *)rb_radixtree_retrieve(client_id_tree, name);
 }
 
 /* find_client()
  *
  * finds a client/server entry from the client hash table
  */
-struct Client *
+client::client *
 find_client(const char *name)
 {
 	s_assert(name != NULL);
@@ -279,31 +279,31 @@ find_client(const char *name)
 	if(rfc1459::is_digit(*name))
 		return (find_id(name));
 
-	return (Client *)rb_radixtree_retrieve(client_name_tree, name);
+	return (client::client *)rb_radixtree_retrieve(client_name_tree, name);
 }
 
 /* find_named_client()
  *
  * finds a client/server entry from the client hash table
  */
-struct Client *
+client::client *
 find_named_client(const char *name)
 {
 	s_assert(name != NULL);
 	if(EmptyString(name))
 		return NULL;
 
-	return (Client *)rb_radixtree_retrieve(client_name_tree, name);
+	return (client::client *)rb_radixtree_retrieve(client_name_tree, name);
 }
 
 /* find_server()
  *
  * finds a server from the client hash table
  */
-struct Client *
-find_server(struct Client *source_p, const char *name)
+client::client *
+find_server(client::client *source_p, const char *name)
 {
-	struct Client *target_p;
+	client::client *target_p;
 
 	if(EmptyString(name))
 		return NULL;
@@ -315,7 +315,7 @@ find_server(struct Client *source_p, const char *name)
       		return(target_p);
 	}
 
-	target_p = (Client *)rb_radixtree_retrieve(client_name_tree, name);
+	target_p = (client::client *)rb_radixtree_retrieve(client_name_tree, name);
 	if (target_p != NULL)
 	{
 		if(IsServer(target_p) || IsMe(target_p))
@@ -390,7 +390,7 @@ clear_resv_hash(void)
 }
 
 void
-add_to_cli_connid_hash(struct Client *client_p, uint32_t id)
+add_to_cli_connid_hash(client::client *client_p, uint32_t id)
 {
 	rb_dictionary_add(client_connid_tree, RB_UINT_TO_POINTER(id), client_p);
 }
@@ -401,10 +401,10 @@ del_from_cli_connid_hash(uint32_t id)
 	rb_dictionary_delete(client_connid_tree, RB_UINT_TO_POINTER(id));
 }
 
-struct Client *
+client::client *
 find_cli_connid_hash(uint32_t connid)
 {
-	return (Client *)rb_dictionary_retrieve(client_connid_tree, RB_UINT_TO_POINTER(connid));
+	return (client::client *)rb_dictionary_retrieve(client_connid_tree, RB_UINT_TO_POINTER(connid));
 }
 
 } // namespace ircd

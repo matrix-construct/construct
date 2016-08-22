@@ -25,7 +25,7 @@ using namespace ircd;
 
 static const char knock_desc[] = "Provides the KNOCK command to ask for an invite to an invite-only channel";
 
-static void m_knock(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_knock(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message knock_msgtab = {
 	"KNOCK", 0, 0, 0, 0,
@@ -63,7 +63,7 @@ DECLARE_MODULE_AV2(knock, _modinit, _moddeinit, knock_clist, NULL, NULL, NULL, N
  *  <anonymous>
  */
 static void
-m_knock(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_knock(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	chan::chan *chptr;
 	char *p, *name;

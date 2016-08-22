@@ -22,7 +22,7 @@ using namespace ircd;
 
 static const char findfowards_desc[] = "Allows operators to find forwards to a given channel";
 
-static void m_findforwards(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+static void m_findforwards(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 			int parc, const char *parv[]);
 
 struct Message findforwards_msgtab = {
@@ -39,7 +39,7 @@ DECLARE_MODULE_AV2(findforwards, NULL, NULL, findforwards_clist, NULL, NULL, NUL
 **      parv[1] = channel
 */
 static void
-m_findforwards(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_findforwards(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
 	chan::chan *chptr;

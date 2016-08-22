@@ -34,7 +34,7 @@ static const char monitor_desc[] = "Provides the MONITOR facility for tracking u
 
 static int monitor_init(void);
 static void monitor_deinit(void);
-static void m_monitor(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_monitor(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message monitor_msgtab = {
 	"MONITOR", 0, 0, 0, 0,
@@ -57,10 +57,10 @@ static void monitor_deinit(void)
 }
 
 static void
-add_monitor(struct Client *client_p, const char *nicks)
+add_monitor(client::client *client_p, const char *nicks)
 {
 	char onbuf[BUFSIZE], offbuf[BUFSIZE];
-	struct Client *target_p;
+	client::client *target_p;
 	struct monitor *monptr;
 	const char *name;
 	char *tmp;
@@ -106,7 +106,7 @@ add_monitor(struct Client *client_p, const char *nicks)
 			return;
 		}
 
-		if (!clean_nick(name, 0))
+		if (!client::clean_nick(name, 0))
 			continue;
 
 		monptr = find_monitor(name, 1);
@@ -118,7 +118,7 @@ add_monitor(struct Client *client_p, const char *nicks)
 		rb_dlinkAddAlloc(client_p, &monptr->users);
 		rb_dlinkAddAlloc(monptr, &client_p->localClient->monitor_list);
 
-		if((target_p = find_named_person(name)) != NULL)
+		if((target_p = client::find_named_person(name)) != NULL)
 		{
 			if(cur_onlen + strlen(target_p->name) +
 			   strlen(target_p->username) + strlen(target_p->host) + 3 >= BUFSIZE-3)
@@ -168,7 +168,7 @@ add_monitor(struct Client *client_p, const char *nicks)
 }
 
 static void
-del_monitor(struct Client *client_p, const char *nicks)
+del_monitor(client::client *client_p, const char *nicks)
 {
 	struct monitor *monptr;
 	const char *name;
@@ -197,7 +197,7 @@ del_monitor(struct Client *client_p, const char *nicks)
 }
 
 static void
-list_monitor(struct Client *client_p)
+list_monitor(client::client *client_p)
 {
 	char buf[BUFSIZE];
 	struct monitor *monptr;
@@ -244,10 +244,10 @@ list_monitor(struct Client *client_p)
 }
 
 static void
-show_monitor_status(struct Client *client_p)
+show_monitor_status(client::client *client_p)
 {
 	char onbuf[BUFSIZE], offbuf[BUFSIZE];
-	struct Client *target_p;
+	client::client *target_p;
 	struct monitor *monptr;
 	char *onptr, *offptr;
 	int cur_onlen, cur_offlen;
@@ -266,7 +266,7 @@ show_monitor_status(struct Client *client_p)
 	{
 		monptr = (monitor *)ptr->data;
 
-		if((target_p = find_named_person(monptr->name)) != NULL)
+		if((target_p = client::find_named_person(monptr->name)) != NULL)
 		{
 			if(cur_onlen + strlen(target_p->name) +
 			   strlen(target_p->username) + strlen(target_p->host) + 3 >= BUFSIZE-3)
@@ -316,7 +316,7 @@ show_monitor_status(struct Client *client_p)
 }
 
 static void
-m_monitor(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_monitor(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	switch(parv[1][0])
 	{

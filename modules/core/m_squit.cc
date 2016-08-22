@@ -26,8 +26,8 @@ using namespace ircd;
 
 static const char squit_desc[] = "Provides the SQUIT command to cause a server to quit";
 
-static void ms_squit(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void mo_squit(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_squit(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mo_squit(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message squit_msgtab = {
 	"SQUIT", 0, 0, 0, 0,
@@ -41,11 +41,11 @@ DECLARE_MODULE_AV2(squit, NULL, NULL, squit_clist, NULL, NULL, NULL, NULL, squit
 struct squit_parms
 {
 	const char *server_name;
-	struct Client *target_p;
+	client::client *target_p;
 };
 
-static struct squit_parms *find_squit(struct Client *client_p,
-				      struct Client *source_p, const char *server);
+static struct squit_parms *find_squit(client::client *client_p,
+				      client::client *source_p, const char *server);
 
 
 /*
@@ -54,7 +54,7 @@ static struct squit_parms *find_squit(struct Client *client_p,
  *      parv[2] = comment
  */
 static void
-mo_squit(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_squit(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	struct squit_parms *found_squit;
 	const char *comment = (parc > 2 && parv[2]) ? parv[2] : client_p->name;
@@ -93,9 +93,9 @@ mo_squit(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
  *      parv[2] = comment
  */
 static void
-ms_squit(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_squit(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 	const char *comment = (parc > 2 && parv[2]) ? parv[2] : client_p->name;
 
 	if(parc < 2)
@@ -145,11 +145,11 @@ ms_squit(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
  * side effects	-
  */
 static struct squit_parms *
-find_squit(struct Client *client_p, struct Client *source_p, const char *server)
+find_squit(client::client *client_p, client::client *source_p, const char *server)
 {
 	static struct squit_parms found_squit;
-	struct Client *target_p = NULL;
-	struct Client *p;
+	client::client *target_p = NULL;
+	client::client *p;
 	rb_dlink_node *ptr;
 
 	/* must ALWAYS be reset */
@@ -164,7 +164,7 @@ find_squit(struct Client *client_p, struct Client *source_p, const char *server)
 
 	RB_DLINK_FOREACH(ptr, global_serv_list.head)
 	{
-		p = (Client *)ptr->data;
+		p = (client::client *)ptr->data;
 		if(IsServer(p) || IsMe(p))
 		{
 			if(match(server, p->name))

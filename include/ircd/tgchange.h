@@ -28,13 +28,13 @@
 namespace ircd {
 
 /* finds a channel where source_p has op or voice and target_p is a member */
-chan::chan *find_allowing_channel(struct Client *source_p, struct Client *target_p);
+chan::chan *find_allowing_channel(client::client *source_p, client::client *target_p);
 /* checks if source_p is allowed to send to target_p */
-int add_target(struct Client *source_p, struct Client *target_p);
+int add_target(client::client *source_p, client::client *target_p);
 /* checks if source_p is allowed to send to chptr */
-int add_channel_target(struct Client *source_p, chan::chan *chptr);
+int add_channel_target(client::client *source_p, chan::chan *chptr);
 /* allows source_p to send to target_p */
-void add_reply_target(struct Client *source_p, struct Client *target_p);
+void add_reply_target(client::client *source_p, client::client *target_p);
 
 }      // namespace ircd
 #endif // __cplusplus

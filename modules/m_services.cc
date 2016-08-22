@@ -37,10 +37,10 @@ static void _moddeinit(void);
 static void mark_services(void);
 static void unmark_services(void);
 
-static void me_su(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void me_login(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void me_rsfnc(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void me_nickdelay(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_su(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void me_login(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void me_rsfnc(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void me_nickdelay(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 static void h_svc_server_introduced(hook_data_client *);
 static void h_svc_whois(hook_data_client *);
@@ -96,10 +96,10 @@ _moddeinit(void)
 }
 
 static void
-me_su(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+me_su(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 	int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 
 	if(!(source_p->flags & FLAGS_SERVICE))
 	{
@@ -115,33 +115,33 @@ me_su(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
 		return;
 
 	if(EmptyString(parv[2]))
-		target_p->user->suser.clear();
+		suser(user(*target_p)).clear();
 	else
-		target_p->user->suser = parv[2];
+		suser(user(*target_p)) = parv[2];
 
 	sendto_common_channels_local_butone(target_p, CLICAP_ACCOUNT_NOTIFY, NOCAPS, ":%s!%s@%s ACCOUNT %s",
 					    target_p->name, target_p->username, target_p->host,
-					    target_p->user->suser.empty()? "*" : target_p->user->suser.c_str());
+					    suser(user(*target_p)).empty()? "*" : suser(user(*target_p)).c_str());
 
 	chan::invalidate_bancache_user(target_p);
 }
 
 static void
-me_login(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+me_login(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 	int parc, const char *parv[])
 {
 	if(!IsPerson(source_p))
 		return;
 
-	source_p->user->suser = parv[1];
+	suser(user(*source_p)) = parv[1];
 }
 
 static void
-me_rsfnc(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p,
+me_rsfnc(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
 	int parc, const char *parv[])
 {
-	struct Client *target_p;
-	struct Client *exist_p;
+	client::client *target_p;
+	client::client *exist_p;
 	time_t newts, curts;
 	char note[NICKLEN + 10];
 
@@ -152,13 +152,13 @@ me_rsfnc(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		return;
 	}
 
-	if((target_p = find_person(parv[1])) == NULL)
+	if((target_p = client::find_person(parv[1])) == NULL)
 		return;
 
 	if(!MyClient(target_p))
 		return;
 
-	if(!clean_nick(parv[2], 0) || rfc1459::is_digit(parv[2][0]))
+	if(!client::clean_nick(parv[2], 0) || rfc1459::is_digit(parv[2][0]))
 		return;
 
 	curts = atol(parv[4]);
@@ -245,7 +245,7 @@ doit:
 **      parv[2] = nick
 */
 static void
-me_nickdelay(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_nickdelay(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	int duration;
 	struct nd_entry *nd;
@@ -293,20 +293,21 @@ h_svc_server_introduced(hook_data_client *hdata)
 static void
 h_svc_whois(hook_data_client *data)
 {
-	const auto &suser(data->target->user->suser);
-	if (suser.empty())
+	auto &target(*data->target);
+
+	if (suser(user(target)).empty())
 		return;
 
 	/* Try to strip off any leading digits as this may be used to
 	 * store both an ID number and an account name in one field.
 	 * If only digits are present, leave as is.
 	 */
-	const char *p(suser.c_str());
+	const char *p(suser(user(target)).c_str());
 	while(rfc1459::is_digit(*p))
 		p++;
 
 	if(*p == '\0')
-		p = suser.c_str();
+		p = suser(user(target)).c_str();
 
 	sendto_one_numeric(data->client, RPL_WHOISLOGGEDIN,
 	                   form_str(RPL_WHOISLOGGEDIN),
@@ -340,12 +341,12 @@ h_svc_conf_read_start(void *dummy)
 static void
 unmark_services(void)
 {
-	struct Client *target_p;
+	client::client *target_p;
 	rb_dlink_node *ptr;
 
 	RB_DLINK_FOREACH(ptr, global_serv_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		target_p->flags &= ~FLAGS_SERVICE;
 	}
@@ -360,7 +361,7 @@ h_svc_conf_read_end(void *dummy)
 static void
 mark_services(void)
 {
-	struct Client *target_p;
+	client::client *target_p;
 	rb_dlink_node *ptr;
 
 	RB_DLINK_FOREACH(ptr, service_list.head)

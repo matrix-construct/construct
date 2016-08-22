@@ -26,9 +26,9 @@ using namespace ircd;
 
 static const char join_desc[] = "Provides the JOIN and TS6 SJOIN commands to facilitate joining and creating channels";
 
-static void m_join(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_join(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_sjoin(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_join(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_join(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_sjoin(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 static int h_can_create_channel;
 static int h_channel_join;
@@ -53,13 +53,13 @@ mapi_hlist_av1 join_hlist[] = {
 
 DECLARE_MODULE_AV2(join, NULL, NULL, join_clist, join_hlist, NULL, NULL, NULL, join_desc);
 
-static void do_join_0(struct Client *client_p, struct Client *source_p);
-static bool check_channel_name_loc(struct Client *source_p, const char *name);
-static void send_join_error(struct Client *source_p, int numeric, const char *name);
+static void do_join_0(client::client *client_p, client::client *source_p);
+static bool check_channel_name_loc(client::client *source_p, const char *name);
+static void send_join_error(client::client *source_p, int numeric, const char *name);
 
 static void set_final_mode(chan::modes *mode, chan::modes *oldmode);
-static void remove_our_modes(chan::chan *chptr, struct Client *source_p);
-static void remove_ban_list(chan::chan &chan, Client &source, chan::list &list, const char &c, const int &mems);
+static void remove_our_modes(chan::chan *chptr, client::client *source_p);
+static void remove_ban_list(chan::chan &chan, client::client &source, chan::list &list, const char &c, const int &mems);
 
 static char modebuf[chan::mode::BUFLEN];
 static char parabuf[chan::mode::BUFLEN];
@@ -71,7 +71,7 @@ static int pargs;
  * -- jilles
  */
 static chan::chan *
-check_forward(struct Client *source_p, chan::chan *chptr,
+check_forward(client::client *source_p, chan::chan *chptr,
 	     char *key, int *err)
 {
 	int depth = 0, i;
@@ -128,7 +128,7 @@ check_forward(struct Client *source_p, chan::chan *chptr,
  *      parv[2] = channel password (key)
  */
 static void
-m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_join(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	static char jbuf[BUFSIZE];
 	chan::chan *chptr = NULL, *chptr2 = NULL;
@@ -221,7 +221,7 @@ m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 		/* JOIN 0 simply parts all channels the user is in */
 		if(*name == '0' && !atoi(name))
 		{
-			if(source_p->user->channel.empty())
+			if(chans(user(*source_p)).empty())
 				continue;
 
 			do_join_0(&me, source_p);
@@ -265,10 +265,10 @@ m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 			flags = chan::CHANOP;
 		}
 
-		if(((source_p->user->channel.size()) >=
+		if(((chans(user(*source_p)).size()) >=
 		    (unsigned long) ConfigChannel.max_chans_per_user) &&
 		   (!IsExtendChans(source_p) ||
-		    (source_p->user->channel.size() >=
+		    (chans(user(*source_p)).size() >=
 		     (unsigned long) ConfigChannel.max_chans_per_user_large)))
 		{
 			sendto_one(source_p, form_str(ERR_TOOMANYCHANNELS),
@@ -385,7 +385,7 @@ m_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
  * alternatively, a single "0" parameter parts all channels
  */
 static void
-ms_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_join(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	chan::chan *chptr;
 	static chan::modes mode;
@@ -507,12 +507,12 @@ ms_join(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 }
 
 static void
-ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_sjoin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	static char buf_uid[BUFSIZE];
 	static const char empty_modes[] = "0";
 	chan::chan *chptr;
-	struct Client *target_p, *fakesource_p;
+	client::client *target_p, *fakesource_p;
 	time_t newts;
 	time_t oldts;
 	static chan::modes mode, *oldmode;
@@ -650,7 +650,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		    (mode.key[0] != 0 && irccmp(mode.key, oldmode->key) != 0)))
 		{
 			chan::membership *msptr;
-			struct Client *who;
+			client::client *who;
 			int l = size(chptr->members);
 
 			for(const auto &msptr : chptr->members.local)
@@ -961,7 +961,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
  *		  from the days when channels were numbers not names. *sigh*
  */
 static void
-do_join_0(struct Client *client_p, struct Client *source_p)
+do_join_0(client::client *client_p, client::client *source_p)
 {
 	chan::membership *msptr;
 	chan::chan *chptr = NULL;
@@ -973,7 +973,7 @@ do_join_0(struct Client *client_p, struct Client *source_p)
 
 	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s JOIN 0", use_id(source_p));
 
-	for(const auto &pit : source_p->user->channel)
+	for(const auto &pit : chans(user(*source_p)))
 	{
 		if(MyConnect(source_p) &&
 		   !IsOper(source_p) && !IsExemptSpambot(source_p))
@@ -990,7 +990,7 @@ do_join_0(struct Client *client_p, struct Client *source_p)
 }
 
 static bool
-check_channel_name_loc(struct Client *source_p, const char *name)
+check_channel_name_loc(client::client *source_p, const char *name)
 {
 	const char *p;
 
@@ -1024,7 +1024,7 @@ check_channel_name_loc(struct Client *source_p, const char *name)
  * side effects - error message sent to client
  */
 static void
-send_join_error(struct Client *source_p, int numeric, const char *name)
+send_join_error(client::client *source_p, int numeric, const char *name)
 {
 	/* This stuff is necessary because the form_str macro only
 	 * accepts constants.
@@ -1181,7 +1181,7 @@ set_final_mode(chan::modes *mode, chan::modes *oldmode)
  * side effects	-
  */
 static void
-remove_our_modes(chan::chan *chptr, struct Client *source_p)
+remove_our_modes(chan::chan *chptr, client::client *source_p)
 {
 	rb_dlink_node *ptr;
 	char lmodebuf[chan::mode::BUFLEN];
@@ -1279,7 +1279,7 @@ remove_our_modes(chan::chan *chptr, struct Client *source_p)
  */
 static void
 remove_ban_list(chan::chan &chan,
-                Client &source,
+                client::client &source,
                 chan::list &list,
                 const char &c,
                 const int &mems)

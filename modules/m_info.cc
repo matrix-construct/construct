@@ -27,13 +27,13 @@ using namespace ircd;
 static const char info_desc[] =
 	"Provides the INFO command for retrieving server copyright, credits, and other info";
 
-static void send_conf_options(struct Client *source_p);
-static void send_birthdate_online_time(struct Client *source_p);
-static void send_info_text(struct Client *source_p);
-static void info_spy(struct Client *);
+static void send_conf_options(client::client *source_p);
+static void send_birthdate_online_time(client::client *source_p);
+static void send_info_text(client::client *source_p);
+static void info_spy(client::client *);
 
-static void m_info(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void mo_info(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_info(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mo_info(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message info_msgtab = {
 	"INFO", 0, 0, 0, 0,
@@ -652,7 +652,7 @@ static struct InfoStruct info_table[] = {
  **  parv[1] = servername
  */
 static void
-m_info(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_info(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0L;
 
@@ -683,7 +683,7 @@ m_info(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
  **  parv[1] = servername
  */
 static void
-mo_info(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_info(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	if(hunt_server(client_p, source_p, ":%s INFO :%s", 1, parc, parv) == HUNTED_ISME)
 	{
@@ -711,7 +711,7 @@ mo_info(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
  * side effects	- info text is sent to client
  */
 static void
-send_info_text(struct Client *source_p)
+send_info_text(client::client *source_p)
 {
 	for (const auto &text : info::credits)
 		sendto_one_numeric(source_p, RPL_INFO, form_str(RPL_INFO), text.c_str());
@@ -727,7 +727,7 @@ send_info_text(struct Client *source_p)
  * side effects	- birthdate and online time are sent
  */
 static void
-send_birthdate_online_time(struct Client *source_p)
+send_birthdate_online_time(client::client *source_p)
 {
 	char tbuf[26]; /* this needs to be 26 - see ctime_r manpage */
 	sendto_one(source_p, ":%s %d %s :Birth Date: %s (%ld)",
@@ -747,7 +747,7 @@ send_birthdate_online_time(struct Client *source_p)
  * side effects	- send config options to client
  */
 static void
-send_conf_options(struct Client *source_p)
+send_conf_options(client::client *source_p)
 {
 	/*
 	 * Now send them a list of all our configuration options
@@ -890,7 +890,7 @@ send_conf_options(struct Client *source_p)
  * side effects - hook doing_info is called
  */
 static void
-info_spy(struct Client *source_p)
+info_spy(client::client *source_p)
 {
 	hook_data hd;
 

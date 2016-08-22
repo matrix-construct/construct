@@ -32,8 +32,8 @@ using namespace ircd;
 
 static const char testline_desc[] = "Provides the ability to test I/K/D/X lines and RESVs";
 
-static void mo_testline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void mo_testgecos(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_testline(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mo_testgecos(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message testline_msgtab = {
 	"TESTLINE", 0, 0, 0, 0,
@@ -49,7 +49,7 @@ mapi_clist_av1 testline_clist[] = { &testline_msgtab, &testgecos_msgtab, NULL };
 DECLARE_MODULE_AV2(testline, NULL, NULL, testline_clist, NULL, NULL, NULL, NULL, testline_desc);
 
 static void
-mo_testline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_testline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	struct ConfItem *aconf;
 	struct ConfItem *resv_p;
@@ -222,7 +222,7 @@ mo_testline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sou
 }
 
 static void
-mo_testgecos(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_testgecos(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	struct ConfItem *aconf;
 

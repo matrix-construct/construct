@@ -26,9 +26,9 @@ using namespace ircd;
 
 static const char die_desc[] = "Provides the DIE command to allow an operator to shutdown a server";
 
-static void mo_die(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void me_die(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void do_die(struct Client *, const char *);
+static void mo_die(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void me_die(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void do_die(client::client *, const char *);
 
 static struct Message die_msgtab = {
 	"DIE", 0, 0, 0, 0,
@@ -43,7 +43,7 @@ DECLARE_MODULE_AV2(die, NULL, NULL, die_clist, NULL, NULL, NULL, NULL, die_desc)
  * mo_die - DIE command handler
  */
 static void
-mo_die(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_die(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	if(!IsOperDie(source_p))
 	{
@@ -60,7 +60,7 @@ mo_die(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 	if(parc > 2)
 	{
 		/* Remote die. Pass it along. */
-		struct Client *server_p = find_server(NULL, parv[2]);
+		client::client *server_p = find_server(NULL, parv[2]);
 		if (!server_p)
 		{
 			sendto_one_numeric(source_p, ERR_NOSUCHSERVER, form_str(ERR_NOSUCHSERVER), parv[2]);
@@ -78,7 +78,7 @@ mo_die(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 }
 
 static void
-me_die(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+me_die(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	if(!find_shared_conf(source_p->username, source_p->host, source_p->servptr->name, SHARED_DIE))
 	{
@@ -91,7 +91,7 @@ me_die(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 }
 
 static void
-do_die(struct Client *source_p, const char *servername)
+do_die(client::client *source_p, const char *servername)
 {
 	if(irccmp(servername, me.name))
 	{

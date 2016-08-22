@@ -145,15 +145,15 @@ str_to_cid(const char *str)
 	return (uint32_t)lcid;
 }
 
-static inline struct Client *
+static inline client::client *
 cid_to_client(uint32_t ncid, bool del)
 {
-	struct Client *client_p;
+	client::client *client_p;
 
 	if(del)
-		client_p = (Client *)rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(ncid));
+		client_p = (client::client *)rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(ncid));
 	else
-		client_p = (Client *)rb_dictionary_retrieve(cid_clients, RB_UINT_TO_POINTER(ncid));
+		client_p = (client::client *)rb_dictionary_retrieve(cid_clients, RB_UINT_TO_POINTER(ncid));
 
 	/* If the client's not found, that's okay, it may have already gone away.
 	 * --Elizafox */
@@ -161,7 +161,7 @@ cid_to_client(uint32_t ncid, bool del)
 	return client_p;
 }
 
-static inline struct Client *
+static inline client::client *
 str_cid_to_client(const char *str, bool del)
 {
 	uint32_t ncid = str_to_cid(str);
@@ -175,7 +175,7 @@ str_cid_to_client(const char *str, bool del)
 static void
 cmd_accept_client(int parc, char **parv)
 {
-	struct Client *client_p;
+	client::client *client_p;
 
 	/* cid to uid (retrieve and delete) */
 	if((client_p = str_cid_to_client(parv[1], true)) == NULL)
@@ -193,7 +193,7 @@ cmd_dns_result(int parc, char **parv)
 static void
 cmd_notice_client(int parc, char **parv)
 {
-	struct Client *client_p;
+	client::client *client_p;
 
 	if((client_p = str_cid_to_client(parv[1], false)) == NULL)
 		return;
@@ -204,7 +204,7 @@ cmd_notice_client(int parc, char **parv)
 static void
 cmd_reject_client(int parc, char **parv)
 {
-	struct Client *client_p;
+	client::client *client_p;
 
 	/* cid to uid (retrieve and delete) */
 	if((client_p = str_cid_to_client(parv[1], true)) == NULL)
@@ -348,7 +348,7 @@ configure_authd(void)
 }
 
 static void
-authd_free_client(struct Client *client_p)
+authd_free_client(client::client *client_p)
 {
 	if(client_p == NULL || client_p->preClient == NULL)
 		return;
@@ -366,12 +366,12 @@ authd_free_client(struct Client *client_p)
 static void
 authd_free_client_cb(rb_dictionary_element *delem, void *unused)
 {
-	struct Client *client_p = (Client *)delem->data;
+	client::client *client_p = (client::client *)delem->data;
 	authd_free_client(client_p);
 }
 
 void
-authd_abort_client(struct Client *client_p)
+authd_abort_client(client::client *client_p)
 {
 	rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(client_p->preClient->auth.cid));
 	authd_free_client(client_p);
@@ -381,7 +381,7 @@ static void
 restart_authd_cb(rb_helper * helper)
 {
 	rb_dictionary_iter iter;
-	struct Client *client_p;
+	client::client *client_p;
 
 	iwarn("authd: restart_authd_cb called, authd died?");
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd: restart_authd_cb called, authd died?");
@@ -443,7 +443,7 @@ generate_cid(void)
  * could then be processed too early by read_packet().
  */
 void
-authd_initiate_client(struct Client *client_p, bool defer)
+authd_initiate_client(client::client *client_p, bool defer)
 {
 	char client_ipaddr[HOSTIPLEN+1];
 	char listen_ipaddr[HOSTIPLEN+1];
@@ -476,7 +476,7 @@ authd_initiate_client(struct Client *client_p, bool defer)
 }
 
 static inline void
-authd_read_client(struct Client *client_p)
+authd_read_client(client::client *client_p)
 {
 	/*
 	 * When a client has auth'ed, we want to start reading what it sends
@@ -497,7 +497,7 @@ authd_read_client(struct Client *client_p)
  * to authd_deferred_client().
  */
 static inline void
-authd_decide_client(struct Client *client_p, const char *ident, const char *host, bool accept, char cause, const char *data, const char *reason)
+authd_decide_client(client::client *client_p, const char *ident, const char *host, bool accept, char cause, const char *data, const char *reason)
 {
 	if(client_p->preClient == NULL || client_p->preClient->auth.cid == 0)
 		return;
@@ -528,7 +528,7 @@ authd_decide_client(struct Client *client_p, const char *ident, const char *host
 }
 
 void
-authd_deferred_client(struct Client *client_p)
+authd_deferred_client(client::client *client_p)
 {
 	client_p->preClient->auth.flags &= ~AUTHC_F_DEFERRED;
 	if(client_p->preClient->auth.flags & AUTHC_F_COMPLETE)
@@ -537,14 +537,14 @@ authd_deferred_client(struct Client *client_p)
 
 /* Convenience function to accept client */
 void
-authd_accept_client(struct Client *client_p, const char *ident, const char *host)
+authd_accept_client(client::client *client_p, const char *ident, const char *host)
 {
 	authd_decide_client(client_p, ident, host, true, '\0', NULL, NULL);
 }
 
 /* Convenience function to reject client */
 void
-authd_reject_client(struct Client *client_p, const char *ident, const char *host, char cause, const char *data, const char *reason)
+authd_reject_client(client::client *client_p, const char *ident, const char *host, char cause, const char *data, const char *reason)
 {
 	authd_decide_client(client_p, ident, host, false, cause, data, reason);
 }
@@ -553,14 +553,14 @@ static void
 timeout_dead_authd_clients(void *notused)
 {
 	rb_dictionary_iter iter;
-	struct Client *client_p;
+	client::client *client_p;
 	rb_dlink_list freelist = { NULL, NULL, 0 };
 	rb_dlink_node *ptr, *nptr;
 
 	void *elem;
 	RB_DICTIONARY_FOREACH(elem, &iter, cid_clients)
 	{
-		client_p = (Client *)elem;
+		client_p = (client::client *)elem;
 		if(client_p->preClient->auth.timeout < rb_current_time())
 		{
 			authd_free_client(client_p);
@@ -571,7 +571,7 @@ timeout_dead_authd_clients(void *notused)
 	/* RB_DICTIONARY_FOREACH is not safe for deletion, so we do this crap */
 	RB_DLINK_FOREACH_SAFE(ptr, nptr, freelist.head)
 	{
-		client_p = (Client *)ptr->data;
+		client_p = (client::client *)ptr->data;
 		rb_dictionary_delete(cid_clients, RB_UINT_TO_POINTER(client_p->preClient->auth.cid));
 	}
 }

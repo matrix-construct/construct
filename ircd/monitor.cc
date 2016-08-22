@@ -79,7 +79,7 @@ free_monitor(struct monitor *monptr)
  * 		  connected to the network
  */
 void
-monitor_signon(struct Client *client_p)
+monitor_signon(client::client *client_p)
 {
 	char buf[USERHOST_REPLYLEN];
 	struct monitor *monptr = find_monitor(client_p->name, 0);
@@ -101,7 +101,7 @@ monitor_signon(struct Client *client_p)
  * 		  left the network
  */
 void
-monitor_signoff(struct Client *client_p)
+monitor_signoff(client::client *client_p)
 {
 	struct monitor *monptr = find_monitor(client_p->name, 0);
 
@@ -114,7 +114,7 @@ monitor_signoff(struct Client *client_p)
 }
 
 void
-clear_monitor(struct Client *client_p)
+clear_monitor(client::client *client_p)
 {
 	struct monitor *monptr;
 	rb_dlink_node *ptr, *next_ptr;

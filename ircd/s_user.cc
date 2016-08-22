@@ -24,8 +24,8 @@
 
 namespace ircd {
 
-static void report_and_set_user_flags(struct Client *, struct ConfItem *);
-void user_welcome(struct Client *source_p);
+static void report_and_set_user_flags(client::client *, struct ConfItem *);
+void user_welcome(client::client *source_p);
 
 char umodebuf[128];
 
@@ -109,7 +109,7 @@ int user_modes[256] = {
  * side effects	- display to client user counts etc.
  */
 void
-show_lusers(struct Client *source_p)
+show_lusers(client::client *source_p)
 {
 	if(rb_dlink_list_length(&lclient_list) > (unsigned long)MaxClientCount)
 		MaxClientCount = rb_dlink_list_length(&lclient_list);
@@ -166,7 +166,7 @@ show_lusers(struct Client *source_p)
  * side effects	- messages/exits client if authd rejected and not exempt
  */
 static bool
-authd_check(struct Client *client_p, struct Client *source_p)
+authd_check(client::client *client_p, client::client *source_p)
 {
 	struct ConfItem *aconf = source_p->localClient->att_conf;
 	rb_dlink_list varlist = { NULL, NULL, 0 };
@@ -317,10 +317,9 @@ authd_check(struct Client *client_p, struct Client *source_p)
 **         nick from local user or kill him/her...
  */
 int
-register_local_user(struct Client *client_p, struct Client *source_p)
+register_local_user(client::client *client_p, client::client *source_p)
 {
 	struct ConfItem *aconf, *xconf;
-	const auto user(source_p->user.get());
 	char tmpstr2[BUFSIZE];
 	char ipaddr[HOSTIPLEN];
 	char myusername[USERLEN+1];
@@ -452,7 +451,7 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 		}
 	}
 
-	if(IsNeedSasl(aconf) && user->suser.empty())
+	if(IsNeedSasl(aconf) && suser(user(*source_p)).empty())
 	{
 		ServerStats.is_ref++;
 		sendto_one_notice(source_p, ":*** Notice -- You need to identify via SASL to use this server");
@@ -593,7 +592,7 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 	 */
 	if(!*source_p->id)
 	{
-		rb_strlcpy(source_p->id, generate_uid(), sizeof(source_p->id));
+		rb_strlcpy(source_p->id, client::generate_uid(), sizeof(source_p->id));
 		add_to_id_hash(source_p->id, source_p);
 	}
 
@@ -608,7 +607,7 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 	SetClient(source_p);
 
 	source_p->servptr = &me;
-	rb_dlinkAdd(source_p, &source_p->lnode, &source_p->servptr->serv->users);
+	source_p->lnode = users(serv(*source_p)).emplace(end(users(serv(*source_p))), source_p);
 
 	/* Increment our total user count here */
 	if(++Count.total > Count.max_tot)
@@ -637,7 +636,7 @@ register_local_user(struct Client *client_p, struct Client *source_p)
 
 	free_pre_client(source_p);
 
-	introduce_client(client_p, source_p, *user, source_p->name, 1);
+	introduce_client(client_p, source_p, source_p->name, 1);
 	return 0;
 }
 
@@ -651,10 +650,10 @@ register_local_user(struct Client *client_p, struct Client *source_p)
  *		  from a remote connect.
  */
 void
-introduce_client(struct Client *client_p, struct Client *source_p, user &user, const char *nick, int use_euid)
+introduce_client(client::client *client_p, client::client *source_p, const char *nick, int use_euid)
 {
 	char ubuf[BUFSIZE];
-	struct Client *identifyservice_p;
+	client::client *identifyservice_p;
 	char *p;
 	hook_data_umode_changed hdata;
 	hook_data_client hdata2;
@@ -682,7 +681,7 @@ introduce_client(struct Client *client_p, struct Client *source_p, user &user, c
 				IsIPSpoof(source_p) ? "0" : source_p->sockhost,
 				source_p->id,
 				IsDynSpoof(source_p) ? source_p->orighost : "*",
-				source_p->user->suser.empty()? "*" : source_p->user->suser.c_str(),
+				suser(user(*source_p)).empty()? "*" : suser(user(*source_p)).c_str(),
 				source_p->info);
 
 	sendto_server(client_p, NULL, CAP_TS6, use_euid ? CAP_EUID : NOCAPS,
@@ -705,10 +704,10 @@ introduce_client(struct Client *client_p, struct Client *source_p, user &user, c
 				use_id(source_p), source_p->orighost);
 	}
 
-	if (!source_p->user->suser.empty())
+	if (!suser(user(*source_p)).empty())
 	{
 		sendto_server(client_p, NULL, CAP_TS6, use_euid ? CAP_EUID : NOCAPS, ":%s ENCAP * LOGIN %s",
-				use_id(source_p), source_p->user->suser.c_str());
+				use_id(source_p), suser(user(*source_p)).c_str());
 	}
 
 	if(MyConnect(source_p) && source_p->localClient->passwd)
@@ -872,7 +871,7 @@ valid_username(const char *username)
  */
 
 static void
-report_and_set_user_flags(struct Client *source_p, struct ConfItem *aconf)
+report_and_set_user_flags(client::client *source_p, struct ConfItem *aconf)
 {
 	/* If this user is being spoofed, tell them so */
 	if(IsConfDoSpoofIp(aconf))
@@ -936,7 +935,7 @@ report_and_set_user_flags(struct Client *source_p, struct ConfItem *aconf)
 }
 
 static void
-show_other_user_mode(struct Client *source_p, struct Client *target_p)
+show_other_user_mode(client::client *source_p, client::client *target_p)
 {
 	int i;
 	char buf[BUFSIZE];
@@ -967,13 +966,13 @@ show_other_user_mode(struct Client *source_p, struct Client *target_p)
  * parv[2] - modes to change
  */
 int
-user_mode(struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+user_mode(client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	int flag;
 	int i;
 	char *m;
 	const char *pm;
-	struct Client *target_p;
+	client::client *target_p;
 	int what, setflags;
 	bool badflag = false;	/* Only send one bad flag notice */
 	bool showsnomask = false;
@@ -989,7 +988,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
 		return 0;
 	}
 
-	if((target_p = MyClient(source_p) ? find_named_person(parv[1]) : find_person(parv[1])) == NULL)
+	if((target_p = MyClient(source_p) ? client::find_named_person(parv[1]) : client::find_person(parv[1])) == NULL)
 	{
 		if(MyConnect(source_p))
 			sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
@@ -1220,7 +1219,7 @@ user_mode(struct Client *client_p, struct Client *source_p, int parc, const char
  * -avalon
  */
 void
-send_umode(struct Client *client_p, struct Client *source_p, int old, char *umode_buf)
+send_umode(client::client *client_p, client::client *source_p, int old, char *umode_buf)
 {
 	int i;
 	int flag;
@@ -1275,9 +1274,9 @@ send_umode(struct Client *client_p, struct Client *source_p, int old, char *umod
  * side effects -
  */
 void
-send_umode_out(struct Client *client_p, struct Client *source_p, int old)
+send_umode_out(client::client *client_p, client::client *source_p, int old)
 {
-	struct Client *target_p;
+	client::client *target_p;
 	char buf[BUFSIZE];
 	rb_dlink_node *ptr;
 
@@ -1285,7 +1284,7 @@ send_umode_out(struct Client *client_p, struct Client *source_p, int old)
 
 	RB_DLINK_FOREACH(ptr, serv_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		if((target_p != client_p) && (target_p != source_p) && (*buf))
 		{
@@ -1307,7 +1306,7 @@ send_umode_out(struct Client *client_p, struct Client *source_p, int old)
  * side effects	-
  */
 void
-user_welcome(struct Client *source_p)
+user_welcome(client::client *source_p)
 {
 	sendto_one_numeric(source_p, RPL_WELCOME, form_str(RPL_WELCOME), ServerInfo.network_name, source_p->name);
 	sendto_one_numeric(source_p, RPL_YOURHOST, form_str(RPL_YOURHOST),
@@ -1344,7 +1343,7 @@ user_welcome(struct Client *source_p)
  * side effects	- opers up source_p using aconf for reference
  */
 void
-oper_up(struct Client *source_p, struct oper_conf *oper_p)
+oper_up(client::client *source_p, struct oper_conf *oper_p)
 {
 	unsigned int old = source_p->umodes, oldsnomask = source_p->snomask;
 	hook_data_umode_changed hdata;
@@ -1468,14 +1467,14 @@ construct_umodebuf(void)
 }
 
 void
-change_nick_user_host(struct Client *target_p,	const char *nick, const char *user,
+change_nick_user_host(client::client *target_p,	const char *nick, const char *username,
 		      const char *host, int newts, const char *format, ...)
 {
 	rb_dlink_node *ptr;
 	chan::chan *chptr;
 	int changed = irccmp(target_p->name, nick);
 	int changed_case = strcmp(target_p->name, nick);
-	int do_qjm = irccmp(target_p->username, user) || irccmp(target_p->host, host);
+	int do_qjm = irccmp(target_p->username, username) || irccmp(target_p->host, host);
 	char mode[10], modeval[NICKLEN * 2 + 2], reason[256];
 	va_list ap;
 
@@ -1498,7 +1497,7 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 				target_p->name, target_p->username, target_p->host,
 				reason);
 
-		for(const auto &pit : target_p->user->channel)
+		for(const auto &pit : chans(user(*target_p)))
 		{
 			auto &chan(*pit.first);
 			auto &member(*pit.second);
@@ -1520,10 +1519,10 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 			*mptr = '\0';
 
 			sendto_channel_local_with_capability_butone(target_p, chan::ALL_MEMBERS, NOCAPS, CLICAP_EXTENDED_JOIN | CLICAP_CHGHOST, &chan,
-								    ":%s!%s@%s JOIN %s", nick, user, host, chan.name.c_str());
+								    ":%s!%s@%s JOIN %s", nick, username, host, chan.name.c_str());
 			sendto_channel_local_with_capability_butone(target_p, chan::ALL_MEMBERS, CLICAP_EXTENDED_JOIN, CLICAP_CHGHOST, &chan,
-								    ":%s!%s@%s JOIN %s %s :%s", nick, user, host, chan.name.c_str(),
-								    target_p->user->suser.empty()? "*" : target_p->user->suser.c_str(),
+								    ":%s!%s@%s JOIN %s %s :%s", nick, username, host, chan.name.c_str(),
+								    suser(user(*target_p)).empty()? "*" : suser(user(*target_p)).c_str(),
 								    target_p->info);
 
 			if(*mode)
@@ -1534,25 +1533,25 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 		}
 
 		/* Resend away message to away-notify enabled clients. */
-		if (!target_p->user->away.empty())
+		if (away(user(*target_p)).size())
 			sendto_common_channels_local_butone(target_p, CLICAP_AWAY_NOTIFY, CLICAP_CHGHOST, ":%s!%s@%s AWAY :%s",
-							    nick, user, host,
-							    target_p->user->away.c_str());
+							    nick, username, host,
+							    away(user(*target_p)).c_str());
 
 		sendto_common_channels_local_butone(target_p, CLICAP_CHGHOST, NOCAPS,
 						    ":%s!%s@%s CHGHOST %s %s",
-						    target_p->name, target_p->username, target_p->host, user, host);
+						    target_p->name, target_p->username, target_p->host, username, host);
 
 		if(MyClient(target_p) && changed_case)
 			sendto_one(target_p, ":%s!%s@%s NICK %s",
-					target_p->name, user, host, nick);
+					target_p->name, username, host, nick);
 
 		/* TODO: send some snotes to SNO_NCHANGE/SNO_CCONN/SNO_CCONNEXT? */
 	}
 	else if(changed_case)
 	{
 		sendto_common_channels_local(target_p, NOCAPS, NOCAPS, ":%s!%s@%s NICK :%s",
-				target_p->name, user, host, nick);
+				target_p->name, username, host, nick);
 
 		if(MyConnect(target_p))
 			sendto_realops_snomask(SNO_NCHANGE, L_ALL,
@@ -1561,8 +1560,8 @@ change_nick_user_host(struct Client *target_p,	const char *nick, const char *use
 					target_p->username, target_p->host);
 	}
 
-	if (user != target_p->username)
-		rb_strlcpy(target_p->username, user, sizeof target_p->username);
+	if (username != target_p->username)
+		rb_strlcpy(target_p->username, username, sizeof target_p->username);
 
 	rb_strlcpy(target_p->host, host, sizeof target_p->host);
 

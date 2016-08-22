@@ -21,7 +21,7 @@ using namespace ircd;
 
 static const char opme_desc[] = "Allow admins to op themselves on opless channels";
 
-static void mo_opme(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[]);
+static void mo_opme(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
 
 struct Message opme_msgtab = {
 	"OPME", 0, 0, 0, 0,
@@ -37,7 +37,7 @@ DECLARE_MODULE_AV2(opme, NULL, NULL, opme_clist, NULL, NULL, NULL, NULL, opme_de
 **      parv[1] = channel
 */
 static void
-mo_opme(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_opme(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	chan::chan *chptr;
 	chan::membership *msptr;

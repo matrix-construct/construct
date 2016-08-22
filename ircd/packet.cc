@@ -25,13 +25,13 @@
 namespace ircd {
 
 static char readBuf[READBUF_SIZE];
-static void client_dopacket(struct Client *client_p, char *buffer, size_t length);
+static void client_dopacket(client::client *client_p, char *buffer, size_t length);
 
 /*
  * parse_client_queued - parse client queued messages
  */
 static void
-parse_client_queued(struct Client *client_p)
+parse_client_queued(client::client *client_p)
 {
 	int dolen = 0;
 	int allow_read;
@@ -152,7 +152,7 @@ parse_client_queued(struct Client *client_p)
  * marks the end of the clients grace period
  */
 void
-flood_endgrace(struct Client *client_p)
+flood_endgrace(client::client *client_p)
 {
 	SetFloodDone(client_p);
 
@@ -172,11 +172,11 @@ void
 flood_recalc(void *unused)
 {
 	rb_dlink_node *ptr, *next;
-	struct Client *client_p;
+	client::client *client_p;
 
 	RB_DLINK_FOREACH_SAFE(ptr, next, lclient_list.head)
 	{
-		client_p = (Client *)ptr->data;
+		client_p = (client::client *)ptr->data;
 
 		if(rb_unlikely(IsMe(client_p)))
 			continue;
@@ -201,7 +201,7 @@ flood_recalc(void *unused)
 
 	RB_DLINK_FOREACH_SAFE(ptr, next, unknown_list.head)
 	{
-		client_p = (Client *)ptr->data;
+		client_p = (client::client *)ptr->data;
 
 		if(client_p->localClient == NULL)
 			continue;
@@ -221,7 +221,7 @@ flood_recalc(void *unused)
 void
 read_packet(rb_fde_t * F, void *data)
 {
-	struct Client *client_p = (Client *)data;
+	client::client *client_p = (client::client *)data;
 	int length = 0;
 	int binary = 0;
 
@@ -308,7 +308,7 @@ read_packet(rb_fde_t * F, void *data)
  *      necessary fields (buffer etc..)
  */
 void
-client_dopacket(struct Client *client_p, char *buffer, size_t length)
+client_dopacket(client::client *client_p, char *buffer, size_t length)
 {
 	s_assert(client_p != NULL);
 	s_assert(buffer != NULL);

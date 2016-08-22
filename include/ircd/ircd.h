@@ -34,8 +34,6 @@
 #ifdef __cplusplus
 namespace ircd {
 
-struct Client;
-
 struct SetOptions
 {
 	int maxclients;		/* max clients allowed */
@@ -73,9 +71,9 @@ extern bool server_state_foreground;
 extern bool opers_see_all_users; /* sno_farconnect.so loaded, operspy without
 				    accountability, etc */
 
-extern struct Client me;
+extern client::client me;
 extern rb_dlink_list global_client_list;
-extern struct Client *local[];
+extern client::client *local[];
 extern struct Counter Count;
 extern int default_server_capabs;
 

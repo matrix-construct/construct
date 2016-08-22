@@ -19,7 +19,7 @@ DECLARE_MODULE_AV2(no_locops, NULL, NULL, NULL, NULL, nl_hfnlist, NULL, NULL, no
 static void
 h_nl_umode_changed(hook_data_umode_changed *hdata)
 {
-	struct Client *source_p = hdata->client;
+	client::client *source_p = hdata->client;
 
 	if (MyClient(source_p) && source_p->umodes & UMODE_LOCOPS)
 	{

@@ -133,9 +133,9 @@ extern void free_remote_conf(struct remote_conf *);
 
 extern bool find_shared_conf(const char *username, const char *host,
 			const char *server, int flags);
-extern void propagate_generic(struct Client *source_p, const char *command,
+extern void propagate_generic(client::client *source_p, const char *command,
 		const char *target, int cap, const char *format, ...);
-extern void cluster_generic(struct Client *, const char *, int cltype,
+extern void cluster_generic(client::client *, const char *, int cltype,
 			int cap, const char *format, ...);
 
 #define OPER_ENCRYPTED	0x00001
@@ -228,9 +228,9 @@ extern void add_server_conf(struct server_conf *);
 
 extern struct server_conf *find_server_conf(const char *name);
 
-extern void attach_server_conf(struct Client *, struct server_conf *);
-extern void detach_server_conf(struct Client *);
-extern void set_server_conf_autoconn(struct Client *source_p, const char *name,
+extern void attach_server_conf(client::client *, struct server_conf *);
+extern void detach_server_conf(client::client *);
+extern void set_server_conf_autoconn(client::client *source_p, const char *name,
 					int newval);
 extern void disable_server_conf_autoconn(const char *name);
 

@@ -33,7 +33,7 @@ using namespace ircd;
 
 static const char snote_desc[] = "Provides server notices via the SNOTE command";
 
-static void me_snote(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void me_snote(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message snote_msgtab = {
 	"SNOTE", 0, 0, 0, 0,
@@ -50,7 +50,7 @@ DECLARE_MODULE_AV2(snote, NULL, NULL, snote_clist, NULL, NULL, NULL, NULL, snote
  *	parv[2] = message
  */
 static void
-me_snote(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc,
+me_snote(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc,
 	const char *parv[])
 {
 	/* if there's more than just two params, this is a protocol

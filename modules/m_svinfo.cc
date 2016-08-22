@@ -27,7 +27,7 @@ using namespace ircd;
 static const char svinfo_desc[] =
 	"Provides TS6 SVINFO command to ensure version and clock synchronisation";
 
-static void ms_svinfo(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void ms_svinfo(struct MsgBuf *, client::client *, client::client *, int, const char **);
 struct Message svinfo_msgtab = {
 	"SVINFO", 0, 0, 0, 0,
 	{mg_unreg, mg_ignore, mg_ignore, {ms_svinfo, 5}, mg_ignore, mg_ignore}
@@ -44,7 +44,7 @@ DECLARE_MODULE_AV2(svinfo, NULL, NULL, svinfo_clist, NULL, NULL, NULL, NULL, svi
  *      parv[4] = server's idea of UTC time
  */
 static void
-ms_svinfo(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_svinfo(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	signed long deltat;
 	time_t theirtime;

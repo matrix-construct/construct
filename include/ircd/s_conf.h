@@ -32,7 +32,6 @@
 #ifdef __cplusplus
 namespace ircd {
 
-struct Client;
 struct DNSReply;
 struct hostent;
 
@@ -343,17 +342,17 @@ extern void replace_old_ban(struct ConfItem *);
 
 extern void read_conf_files(bool cold);
 
-extern int attach_conf(struct Client *, struct ConfItem *);
-extern int check_client(struct Client *client_p, struct Client *source_p, const char *);
+extern int attach_conf(client::client *, struct ConfItem *);
+extern int check_client(client::client *client_p, client::client *source_p, const char *);
 
-extern int detach_conf(struct Client *);
+extern int detach_conf(client::client *);
 
 extern struct ConfItem *find_tkline(const char *, const char *, struct sockaddr *);
-extern char *show_iline_prefix(struct Client *, struct ConfItem *, char *);
+extern char *show_iline_prefix(client::client *, struct ConfItem *, char *);
 extern void get_printable_conf(struct ConfItem *,
 			       char **, char **, const char **, char **, int *, char **);
 extern char *get_user_ban_reason(struct ConfItem *aconf);
-extern void get_printable_kline(struct Client *, struct ConfItem *,
+extern void get_printable_kline(client::client *, struct ConfItem *,
 				char **, char **, char **, char **);
 
 int conf_yy_fatal_error(const char *);
@@ -362,8 +361,8 @@ int conf_fgets(char *, int, FILE *);
 extern int valid_wild_card(const char *, const char *);
 extern void add_temp_kline(struct ConfItem *);
 extern void add_temp_dline(struct ConfItem *);
-extern void report_temp_klines(struct Client *);
-extern void show_temp_klines(struct Client *, rb_dlink_list *);
+extern void report_temp_klines(client::client *);
+extern void show_temp_klines(client::client *, rb_dlink_list *);
 
 extern bool rehash(bool);
 extern void rehash_bans(void);
@@ -375,7 +374,7 @@ extern void conf_add_class(struct ConfItem *, int);
 extern void conf_add_d_conf(struct ConfItem *);
 extern void flush_expired_ips(void *);
 
-extern char *get_oper_name(struct Client *client_p);
+extern char *get_oper_name(client::client *client_p);
 
 extern unsigned long cidr_to_bitmask[];
 

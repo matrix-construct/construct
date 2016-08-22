@@ -36,14 +36,14 @@ mapi_hfn_list_av1 override_hfnlist[] = {
 struct OverrideSession {
 	rb_dlink_node node;
 
-	struct Client *client;
+	client::client *client;
 	time_t deadline;
 };
 
 rb_dlink_list overriding_opers = { NULL, NULL, 0 };
 
 static void
-update_session_deadline(struct Client *source_p, struct OverrideSession *session_p)
+update_session_deadline(client::client *source_p, struct OverrideSession *session_p)
 {
 	if (session_p == NULL)
 	{
@@ -96,7 +96,7 @@ static void
 check_umode_change(void *vdata)
 {
 	hook_data_umode_changed *data = (hook_data_umode_changed *)vdata;
-	struct Client *source_p = data->client;
+	client::client *source_p = data->client;
 
 	if (!MyClient(source_p))
 		return;
@@ -230,7 +230,7 @@ handle_client_exit(void *vdata)
 {
 	hook_data_client_exit *data = (hook_data_client_exit *) vdata;
 	rb_dlink_node *n, *tn;
-	struct Client *source_p = data->target;
+	client::client *source_p = data->target;
 
 	RB_DLINK_FOREACH_SAFE(n, tn, overriding_opers.head)
 	{

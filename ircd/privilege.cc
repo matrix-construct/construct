@@ -191,7 +191,7 @@ privilegeset_delete_all_illegal(void)
 }
 
 void
-privilegeset_report(struct Client *source_p)
+privilegeset_report(client::client *source_p)
 {
 	rb_dlink_node *ptr;
 

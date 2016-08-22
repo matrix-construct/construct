@@ -43,7 +43,7 @@ struct Counter Count;
 struct ServerStatistics ServerStats;
 
 int maxconnections;
-struct Client me;		/* That's me */
+client::client me;		/* That's me */
 struct LocalUser meLocalUser;	/* That's also part of me */
 
 rb_dlink_list global_client_list;
@@ -83,12 +83,12 @@ const char *pidFileName = NULL;
 void
 ircd_shutdown(const char *reason)
 {
-	struct Client *target_p;
+	client::client *target_p;
 	rb_dlink_node *ptr;
 
 	RB_DLINK_FOREACH(ptr, lclient_list.head)
 	{
-		target_p = (struct Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		sendto_one(target_p, ":%s NOTICE %s :Server Terminating. %s",
 			me.name, target_p->name, reason);
@@ -96,7 +96,7 @@ ircd_shutdown(const char *reason)
 
 	RB_DLINK_FOREACH(ptr, serv_list.head)
 	{
-		target_p = (struct Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		sendto_one(target_p, ":%s ERROR :Terminated by %s",
 			me.name, reason);
@@ -627,7 +627,7 @@ charybdis_main(int argc, char * const argv[])
 	init_hash();
 	clear_scache_hash_table();	/* server cache name table */
 	init_host_hash();
-	init_client();
+	client::init();
 	init_hook();
 	chan::init();
 	initclass();
@@ -674,7 +674,7 @@ charybdis_main(int argc, char * const argv[])
 		return -2;
 	}
 	rb_strlcpy(me.id, ServerInfo.sid, sizeof(me.id));
-	init_uid();
+	client::init_uid();
 
 	/* serverinfo{} description must exist.  If not, error out. */
 	if(ServerInfo.description == NULL)
@@ -706,10 +706,10 @@ charybdis_main(int argc, char * const argv[])
 	me.from = &me;
 	me.servptr = &me;
 	SetMe(&me);
-	make_server(&me);
+	make_serv(me);
 	add_to_client_hash(me.name, &me);
 	add_to_id_hash(me.id, &me);
-	me.serv->nameinfo = scache_connect(me.name, me.info, 0);
+	nameinfo(serv(me)) = scache_connect(me.name, me.info, 0);
 
 	rb_dlinkAddAlloc(&me, &global_serv_list);
 

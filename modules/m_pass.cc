@@ -26,7 +26,7 @@ using namespace ircd;
 
 static const char pass_desc[] = "Provides the PASS command to authenticate clients and servers";
 
-static void mr_pass(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mr_pass(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message pass_msgtab = {
 	"PASS", 0, 0, 0, 0,
@@ -47,7 +47,7 @@ DECLARE_MODULE_AV2(pass, NULL, NULL, pass_clist, NULL, NULL, NULL, NULL, pass_de
  *      parv[3] = optional TS version field -- needed for TS6
  */
 static void
-mr_pass(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mr_pass(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	char *auth_user, *pass, *buf;
 	buf = LOCAL_COPY(parv[1]);

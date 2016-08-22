@@ -26,7 +26,7 @@ using namespace ircd;
 
 static const char invite_desc[] = "Provides facilities for invite and related notifications";
 
-static void m_invite(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_invite(struct MsgBuf *, client::client *, client::client *, int, const char **);
 static unsigned int CAP_INVITE_NOTIFY = 0;
 
 struct Message invite_msgtab = {
@@ -43,16 +43,16 @@ mapi_cap_list_av2 invite_cap_list[] = {
 
 DECLARE_MODULE_AV2(invite, NULL, NULL, invite_clist, NULL, NULL, invite_cap_list, NULL, invite_desc);
 
-static bool add_invite(chan::chan &, Client &);
+static bool add_invite(chan::chan &, client::client &);
 
 /* m_invite()
  *      parv[1] - user to invite
  *      parv[2] - channel name
  */
 static void
-m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_invite(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 	chan::chan *chptr;
 	chan::membership *msptr;
 	int store_invite = 0;
@@ -61,9 +61,9 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		flood_endgrace(source_p);
 
 	if(MyClient(source_p))
-		target_p = find_named_person(parv[1]);
+		target_p = client::find_named_person(parv[1]);
 	else
-		target_p = find_person(parv[1]);
+		target_p = client::find_person(parv[1]);
 	if(target_p == NULL)
 	{
 		if(!MyClient(source_p) && rfc1459::is_digit(parv[1][0]))
@@ -142,7 +142,7 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	 * for +l/+j just check if the mode is set, this varies over time
 	 */
 	if(chptr->mode.mode & chan::mode::INVITEONLY ||
-			(chptr->mode.mode & chan::mode::REGONLY && target_p->user->suser.empty()) ||
+			(chptr->mode.mode & chan::mode::REGONLY && suser(user(*target_p)).empty()) ||
 			chptr->mode.limit || chptr->mode.join_num)
 		store_invite = 1;
 
@@ -159,9 +159,9 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 		sendto_one(source_p, form_str(RPL_INVITING),
 			   me.name, source_p->name,
 			   target_p->name, parv[2]);
-		if(target_p->user->away.size())
+		if(away(user(*target_p)).size())
 			sendto_one_numeric(source_p, RPL_AWAY, form_str(RPL_AWAY),
-					   target_p->name, target_p->user->away.c_str());
+					   target_p->name, away(user(*target_p)).c_str());
 	}
 	/* invite timestamp */
 	else if(parc > 3 && !EmptyString(parv[3]))
@@ -174,10 +174,10 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 	if(MyConnect(target_p))
 	{
 		if(!IsOper(source_p) && (IsSetCallerId(target_p) ||
-					(IsSetRegOnlyMsg(target_p) && !source_p->user->suser[0])) &&
+					(IsSetRegOnlyMsg(target_p) && !suser(user(*source_p))[0])) &&
 				!accept_message(source_p, target_p))
 		{
-			if (IsSetRegOnlyMsg(target_p) && !source_p->user->suser[0])
+			if (IsSetRegOnlyMsg(target_p) && !suser(user(*source_p))[0])
 			{
 				sendto_one_numeric(source_p, ERR_NONONREG,
 						form_str(ERR_NONONREG),
@@ -231,15 +231,15 @@ m_invite(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
  * side effects - client is added to invite list.
  */
 static bool
-add_invite(chan::chan &chan, Client &client)
+add_invite(chan::chan &chan, client::client &client)
 {
-	if (client.user->invited.size() >= ConfigChannel.max_chans_per_user)
+	if (invites(user(client)).size() >= ConfigChannel.max_chans_per_user)
 		return false;
 
 	if (chan.invites.size() >= ConfigChannel.max_chans_per_user)
 		return false;
 
 	chan.invites.emplace(&client);
-	client.user->invited.emplace(&chan);
+	invites(user(client)).emplace(&chan);
 	return true;
 }

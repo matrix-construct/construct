@@ -31,31 +31,31 @@ using namespace ircd;
  */
 #define SAVE_NICKTS 100
 
-static void mr_nick(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void m_nick(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void mc_nick(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_nick(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_uid(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_euid(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_save(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static bool can_save(struct Client *);
-static void save_user(struct Client *, struct Client *, struct Client *);
-static void bad_nickname(struct Client *, const char *);
-static void change_remote_nick(struct Client *, struct Client *, time_t,
+static void mr_nick(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_nick(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mc_nick(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_nick(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_uid(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_euid(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_save(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static bool can_save(client::client *);
+static void save_user(client::client *, client::client *, client::client *);
+static void bad_nickname(client::client *, const char *);
+static void change_remote_nick(client::client *, client::client *, time_t,
 			      const char *, int);
 static bool clean_username(const char *);
 static bool clean_host(const char *);
 static bool clean_uid(const char *uid, const char *sid);
 
-static void set_initial_nick(struct Client *client_p, struct Client *source_p, char *nick);
-static void change_local_nick(struct Client *client_p, struct Client *source_p, char *nick, int);
-static void register_client(struct Client *client_p, struct Client *server,
+static void set_initial_nick(client::client *client_p, client::client *source_p, char *nick);
+static void change_local_nick(client::client *client_p, client::client *source_p, char *nick, int);
+static void register_client(client::client *client_p, client::client *server,
 			   const char *nick, time_t newts, int parc, const char *parv[]);
-static void perform_nick_collides(struct Client *, struct Client *,
-				  struct Client *, int, const char **,
+static void perform_nick_collides(client::client *, client::client *,
+				  client::client *, int, const char **,
 				  time_t, const char *, const char *);
-static void perform_nickchange_collides(struct Client *, struct Client *,
-					struct Client *, int, const char **, time_t, const char *);
+static void perform_nickchange_collides(client::client *, client::client *,
+					client::client *, int, const char **, time_t, const char *);
 
 struct Message nick_msgtab = {
 	"NICK", 0, 0, 0, 0,
@@ -86,9 +86,9 @@ DECLARE_MODULE_AV2(nick, NULL, NULL, nick_clist, NULL, NULL, NULL, NULL, nick_de
  *       parv[1] = nickname
  */
 static void
-mr_nick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mr_nick(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 	char nick[NICKLEN];
 
 	if (strlen(client_p->id) == 3)
@@ -108,7 +108,7 @@ mr_nick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	rb_strlcpy(nick, parv[1], ConfigFileEntry.nicklen);
 
 	/* check the nickname is ok */
-	if(!clean_nick(nick, 1))
+	if(!client::clean_nick(nick, 1))
 	{
 		sendto_one(source_p, form_str(ERR_ERRONEUSNICKNAME),
 			   me.name, EmptyString(source_p->name) ? "*" : source_p->name, parv[1]);
@@ -142,9 +142,9 @@ mr_nick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
  *     parv[1] = nickname
  */
 static void
-m_nick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_nick(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 	char nick[NICKLEN];
 
 	if(parc < 2 || EmptyString(parv[1]))
@@ -157,11 +157,11 @@ m_nick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 	if(!IsFloodDone(source_p))
 		flood_endgrace(source_p);
 
-	/* terminate nick to NICKLEN, we dont want clean_nick() to error! */
+	/* terminate nick to NICKLEN, we dont want client::clean_nick() to error! */
 	rb_strlcpy(nick, parv[1], ConfigFileEntry.nicklen);
 
 	/* check the nickname is ok */
-	if(!clean_nick(nick, 1))
+	if(!client::clean_nick(nick, 1))
 	{
 		sendto_one(source_p, form_str(ERR_ERRONEUSNICKNAME), me.name, source_p->name, nick);
 		return;
@@ -215,13 +215,13 @@ m_nick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
  *    parv[2] = TS when nick change
  */
 static void
-mc_nick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mc_nick(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 	time_t newts = 0;
 
 	/* if nicks erroneous, or too long, kill */
-	if(!clean_nick(parv[1], 0))
+	if(!client::clean_nick(parv[1], 0))
 	{
 		bad_nickname(client_p, parv[1]);
 		return;
@@ -253,7 +253,7 @@ mc_nick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 }
 
 static void
-ms_nick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_nick(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	const char *nick, *server;
 
@@ -284,9 +284,9 @@ ms_nick(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
  *     parv[9] - gecos
  */
 static void
-ms_uid(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_uid(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 	time_t newts = 0;
 	char squitreason[120];
 
@@ -307,7 +307,7 @@ ms_uid(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
 	}
 
 	/* if nicks erroneous, or too long, kill */
-	if(!clean_nick(parv[1], 0))
+	if(!client::clean_nick(parv[1], 0))
 	{
 		bad_nickname(client_p, parv[1]);
 		return;
@@ -373,9 +373,9 @@ ms_uid(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p
  *     parv[11] - gecos
  */
 static void
-ms_euid(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_euid(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 	time_t newts = 0;
 	char squitreason[120];
 
@@ -396,7 +396,7 @@ ms_euid(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
 	}
 
 	/* if nicks erroneous, or too long, kill */
-	if(!clean_nick(parv[1], 0))
+	if(!client::clean_nick(parv[1], 0))
 	{
 		bad_nickname(client_p, parv[1]);
 		return;
@@ -463,9 +463,9 @@ ms_euid(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_
  *   parv[2] - TS
  */
 static void
-ms_save(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_save(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
-	struct Client *target_p;
+	client::client *target_p;
 
 	target_p = find_id(parv[1]);
 	if (target_p == NULL)
@@ -562,7 +562,7 @@ clean_uid(const char *uid, const char *sid)
 }
 
 static void
-set_initial_nick(struct Client *client_p, struct Client *source_p, char *nick)
+set_initial_nick(client::client *client_p, client::client *source_p, char *nick)
 {
 	char note[NICKLEN + 10];
 
@@ -585,10 +585,10 @@ set_initial_nick(struct Client *client_p, struct Client *source_p, char *nick)
 }
 
 static void
-change_local_nick(struct Client *client_p, struct Client *source_p,
+change_local_nick(client::client *client_p, client::client *source_p,
 		char *nick, int dosend)
 {
-	struct Client *target_p;
+	client::client *target_p;
 	rb_dlink_node *ptr, *next_ptr;
 	chan::chan *chptr;
 	char note[NICKLEN + 10];
@@ -674,7 +674,7 @@ change_local_nick(struct Client *client_p, struct Client *source_p,
 	 */
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, source_p->on_allow_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		rb_dlinkFindDestroy(source_p, &target_p->localClient->allow_list);
 		rb_dlinkDestroy(ptr, &source_p->on_allow_list);
@@ -690,7 +690,7 @@ change_local_nick(struct Client *client_p, struct Client *source_p,
  * change_remote_nick()
  */
 static void
-change_remote_nick(struct Client *client_p, struct Client *source_p,
+change_remote_nick(client::client *client_p, client::client *source_p,
 		   time_t newts, const char *nick, int dosend)
 {
 	struct nd_entry *nd;
@@ -733,8 +733,8 @@ change_remote_nick(struct Client *client_p, struct Client *source_p,
 }
 
 static void
-perform_nick_collides(struct Client *source_p, struct Client *client_p,
-		      struct Client *target_p, int parc, const char *parv[],
+perform_nick_collides(client::client *source_p, client::client *client_p,
+		      client::client *target_p, int parc, const char *parv[],
 		      time_t newts, const char *nick, const char *uid)
 {
 	int sameuser;
@@ -848,8 +848,8 @@ perform_nick_collides(struct Client *source_p, struct Client *client_p,
 
 
 static void
-perform_nickchange_collides(struct Client *source_p, struct Client *client_p,
-			    struct Client *target_p, int parc,
+perform_nickchange_collides(client::client *source_p, client::client *client_p,
+			    client::client *target_p, int parc,
 			    const char *parv[], time_t newts, const char *nick)
 {
 	int sameuser;
@@ -986,16 +986,16 @@ perform_nickchange_collides(struct Client *source_p, struct Client *client_p,
 }
 
 static void
-register_client(struct Client *client_p, struct Client *server,
+register_client(client::client *client_p, client::client *server,
 		const char *nick, time_t newts, int parc, const char *parv[])
 {
-	struct Client *source_p;
+	client::client *source_p;
 	struct nd_entry *nd;
 	const char *m;
 	int flag;
 
 	source_p = make_client(client_p);
-	source_p->user.reset(new user);
+	make_user(*source_p);
 	rb_dlinkAddTail(source_p, &source_p->node, &global_client_list);
 
 	source_p->hopcount = atoi(parv[2]);
@@ -1019,7 +1019,7 @@ register_client(struct Client *client_p, struct Client *server,
 				SetDynSpoof(source_p);
 		}
 		if (strcmp(parv[10], "*"))
-			source_p->user->suser = parv[10];
+			suser(user(*source_p)) = parv[10];
 	}
 	else if(parc == 10)
 	{
@@ -1089,19 +1089,19 @@ register_client(struct Client *client_p, struct Client *server,
 
 	source_p->servptr = server;
 
-	rb_dlinkAdd(source_p, &source_p->lnode, &source_p->servptr->serv->users);
+	source_p->lnode = users(serv(*source_p)).emplace(end(users(serv(*source_p))), source_p);
 
 	call_hook(h_new_remote_user, source_p);
 
-	introduce_client(client_p, source_p, *source_p->user, nick, parc == 12);
+	introduce_client(client_p, source_p, nick, parc == 12);
 }
 
 /* Check if we can do SAVE. target_p can be a client to save or a
  * server introducing a client -- jilles */
 static bool
-can_save(struct Client *target_p)
+can_save(client::client *target_p)
 {
-	struct Client *serv_p;
+	client::client *serv_p;
 
 	if (MyClient(target_p))
 		return true;
@@ -1110,7 +1110,7 @@ can_save(struct Client *target_p)
 	serv_p = IsServer(target_p) ? target_p : target_p->servptr;
 	while (serv_p != NULL && serv_p != &me)
 	{
-		if (!(serv_p->serv->caps & CAP_SAVE))
+		if (~caps(serv(*serv_p)) & CAP_SAVE)
 			return false;
 		serv_p = serv_p->servptr;
 	}
@@ -1118,8 +1118,8 @@ can_save(struct Client *target_p)
 }
 
 static void
-save_user(struct Client *client_p, struct Client *source_p,
-		struct Client *target_p)
+save_user(client::client *client_p, client::client *source_p,
+		client::client *target_p)
 {
 	if (!MyConnect(target_p) && (!has_id(target_p) || !IsCapable(target_p->from, CAP_SAVE)))
 	{
@@ -1154,7 +1154,7 @@ save_user(struct Client *client_p, struct Client *source_p,
 		change_remote_nick(target_p, target_p, SAVE_NICKTS, target_p->id, 0);
 }
 
-static void bad_nickname(struct Client *client_p, const char *nick)
+static void bad_nickname(client::client *client_p, const char *nick)
 {
 	char squitreason[100];
 

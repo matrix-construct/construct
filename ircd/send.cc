@@ -31,7 +31,7 @@ static void send_queued_write(rb_fde_t *F, void *data);
 
 unsigned long current_serial = 0L;
 
-struct Client *remote_rehash_oper_p;
+client::client *remote_rehash_oper_p;
 
 /* send_linebuf()
  *
@@ -40,7 +40,7 @@ struct Client *remote_rehash_oper_p;
  * side effects - linebuf is attached to client
  */
 static int
-_send_linebuf(struct Client *to, buf_head_t *linebuf)
+_send_linebuf(client::client *to, buf_head_t *linebuf)
 {
 	if(IsMe(to))
 	{
@@ -97,7 +97,7 @@ _send_linebuf(struct Client *to, buf_head_t *linebuf)
  * side effects - client has linebuf attached
  */
 static void
-send_linebuf_remote(struct Client *to, struct Client *from, buf_head_t *linebuf)
+send_linebuf_remote(client::client *to, client::client *from, buf_head_t *linebuf)
 {
 	if(to->from)
 		to = to->from;
@@ -113,7 +113,7 @@ send_linebuf_remote(struct Client *to, struct Client *from, buf_head_t *linebuf)
  * side effects - write is rescheduled if queue isnt emptied
  */
 void
-send_queued(struct Client *to)
+send_queued(client::client *to)
 {
 	int retlen;
 
@@ -169,7 +169,7 @@ send_queued(struct Client *to)
 }
 
 void
-send_pop_queue(struct Client *to)
+send_pop_queue(client::client *to)
 {
 	if(to->from != NULL)
 		to = to->from;
@@ -188,7 +188,7 @@ send_pop_queue(struct Client *to)
 static void
 send_queued_write(rb_fde_t *F, void *data)
 {
-	struct Client *to = (Client *)data;
+	client::client *to = (client::client *)data;
 	ClearFlush(to);
 	send_queued(to);
 }
@@ -234,7 +234,7 @@ linebuf_put_msgbuf(struct MsgBuf *msgbuf, buf_head_t *linebuf, unsigned int capm
  * notes        - to make this reentrant, find a solution for `buf` below
  */
 static void
-build_msgbuf_from(struct MsgBuf *msgbuf, struct Client *from, const char *cmd)
+build_msgbuf_from(struct MsgBuf *msgbuf, client::client *from, const char *cmd)
 {
 	static char buf[BUFSIZE];
 	hook_data hdata;
@@ -264,7 +264,7 @@ build_msgbuf_from(struct MsgBuf *msgbuf, struct Client *from, const char *cmd)
  * side effects -
  */
 void
-sendto_one(struct Client *target_p, const char *pattern, ...)
+sendto_one(client::client *target_p, const char *pattern, ...)
 {
 	va_list args;
 	buf_head_t linebuf;
@@ -294,10 +294,10 @@ sendto_one(struct Client *target_p, const char *pattern, ...)
  * side effects - source(us)/target is chosen based on TS6 capability
  */
 void
-sendto_one_prefix(struct Client *target_p, struct Client *source_p,
+sendto_one_prefix(client::client *target_p, client::client *source_p,
 		  const char *command, const char *pattern, ...)
 {
-	struct Client *dest_p;
+	client::client *dest_p;
 	va_list args;
 	buf_head_t linebuf;
 
@@ -335,9 +335,9 @@ sendto_one_prefix(struct Client *target_p, struct Client *source_p,
  * side effects - source(us)/target is chosen based on TS6 capability
  */
 void
-sendto_one_notice(struct Client *target_p, const char *pattern, ...)
+sendto_one_notice(client::client *target_p, const char *pattern, ...)
 {
-	struct Client *dest_p;
+	client::client *dest_p;
 	va_list args;
 	buf_head_t linebuf;
 	char *to;
@@ -376,9 +376,9 @@ sendto_one_notice(struct Client *target_p, const char *pattern, ...)
  * side effects - source/target is chosen based on TS6 capability
  */
 void
-sendto_one_numeric(struct Client *target_p, int numeric, const char *pattern, ...)
+sendto_one_numeric(client::client *target_p, int numeric, const char *pattern, ...)
 {
-	struct Client *dest_p;
+	client::client *dest_p;
 	va_list args;
 	buf_head_t linebuf;
 	char *to;
@@ -428,11 +428,11 @@ sendto_one_numeric(struct Client *target_p, int numeric, const char *pattern, ..
  * -davidt
  */
 void
-sendto_server(struct Client *one, chan::chan *chptr, unsigned long caps,
+sendto_server(client::client *one, chan::chan *chptr, unsigned long caps,
 	      unsigned long nocaps, const char *format, ...)
 {
 	va_list args;
-	struct Client *target_p;
+	client::client *target_p;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 	buf_head_t linebuf;
@@ -451,7 +451,7 @@ sendto_server(struct Client *one, chan::chan *chptr, unsigned long caps,
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, serv_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		/* check against 'one' */
 		if(one != NULL && (target_p == one->from))
@@ -478,7 +478,7 @@ sendto_server(struct Client *one, chan::chan *chptr, unsigned long caps,
  * side effects -
  */
 void
-sendto_channel_flags(struct Client *one, int type, struct Client *source_p,
+sendto_channel_flags(client::client *one, int type, client::client *source_p,
 		     chan::chan *chptr, const char *pattern, ...)
 {
 	char buf[BUFSIZE];
@@ -563,7 +563,7 @@ sendto_channel_flags(struct Client *one, int type, struct Client *source_p,
  * side effects -
  */
 void
-sendto_channel_opmod(struct Client *one, struct Client *source_p,
+sendto_channel_opmod(client::client *one, client::client *source_p,
 		     chan::chan *chptr, const char *command,
 		     const char *text)
 {
@@ -691,7 +691,7 @@ sendto_channel_local(int type, chan::chan *chptr, const char *pattern, ...)
  * Shared implementation of sendto_channel_local_with_capability and sendto_channel_local_with_capability_butone
  */
 static void
-_sendto_channel_local_with_capability_butone(struct Client *one, int type, int caps, int negcaps, chan::chan *chptr,
+_sendto_channel_local_with_capability_butone(client::client *one, int type, int caps, int negcaps, chan::chan *chptr,
 	const char *pattern, va_list * args)
 {
 	buf_head_t linebuf;
@@ -744,7 +744,7 @@ sendto_channel_local_with_capability(int type, int caps, int negcaps, chan::chan
  * side effects -
  */
 void
-sendto_channel_local_with_capability_butone(struct Client *one, int type, int caps, int negcaps, chan::chan *chptr,
+sendto_channel_local_with_capability_butone(client::client *one, int type, int caps, int negcaps, chan::chan *chptr,
 		const char *pattern, ...)
 {
 	va_list args;
@@ -763,7 +763,7 @@ sendto_channel_local_with_capability_butone(struct Client *one, int type, int ca
  * side effects -
  */
 void
-sendto_channel_local_butone(struct Client *one, int type, chan::chan *chptr, const char *pattern, ...)
+sendto_channel_local_butone(client::client *one, int type, chan::chan *chptr, const char *pattern, ...)
 {
 	va_list args;
 	buf_head_t linebuf;
@@ -812,7 +812,7 @@ sendto_channel_local_butone(struct Client *one, int type, chan::chan *chptr, con
  *		  used by m_nick.c and exit_one_client.
  */
 void
-sendto_common_channels_local(struct Client *user, int cap, int negcap, const char *pattern, ...)
+sendto_common_channels_local(client::client *client, int cap, int negcap, const char *pattern, ...)
 {
 	va_list args;
 	rb_dlink_node *ptr;
@@ -820,7 +820,7 @@ sendto_common_channels_local(struct Client *user, int cap, int negcap, const cha
 	rb_dlink_node *uptr;
 	rb_dlink_node *next_uptr;
 	chan::chan *chptr;
-	struct Client *target_p;
+	client::client *target_p;
 	chan::membership *msptr;
 	chan::membership *mscptr;
 	buf_head_t linebuf;
@@ -832,7 +832,7 @@ sendto_common_channels_local(struct Client *user, int cap, int negcap, const cha
 
 	++current_serial;
 
-	for(const auto &pit : user->user->channel)
+	for(const auto &pit : chans(user(*client)))
 	{
 		auto &chptr(pit.first);
 		auto &mscptr(pit.second);
@@ -855,8 +855,8 @@ sendto_common_channels_local(struct Client *user, int cap, int negcap, const cha
 	/* this can happen when the user isnt in any channels, but we still
 	 * need to send them the data, ie a nick change
 	 */
-	if(MyConnect(user) && (user->serial != current_serial))
-		send_linebuf(user, &linebuf);
+	if(MyConnect(client) && (client->serial != current_serial))
+		send_linebuf(client, &linebuf);
 
 	rb_linebuf_donebuf(&linebuf);
 }
@@ -873,7 +873,7 @@ sendto_common_channels_local(struct Client *user, int cap, int negcap, const cha
  * 		  in same channel with user, except for user itself.
  */
 void
-sendto_common_channels_local_butone(struct Client *user, int cap, int negcap, const char *pattern, ...)
+sendto_common_channels_local_butone(client::client *client, int cap, int negcap, const char *pattern, ...)
 {
 	using chan::membership;
 
@@ -883,7 +883,7 @@ sendto_common_channels_local_butone(struct Client *user, int cap, int negcap, co
 	rb_dlink_node *uptr;
 	rb_dlink_node *next_uptr;
 	chan::chan *chptr;
-	struct Client *target_p;
+	client::client *target_p;
 	membership *msptr;
 	membership *mscptr;
 	buf_head_t linebuf;
@@ -896,9 +896,9 @@ sendto_common_channels_local_butone(struct Client *user, int cap, int negcap, co
 
 	++current_serial;
 	/* Skip them -- jilles */
-	user->serial = current_serial;
+	client->serial = current_serial;
 
-	for(const auto &pit : user->user->channel)
+	for(const auto &pit : chans(user(*client)))
 	{
 		auto &chptr(pit.first);
 		auto &mscptr(pit.second);
@@ -928,12 +928,12 @@ sendto_common_channels_local_butone(struct Client *user, int cap, int negcap, co
  * side effects - message is sent to matching clients
  */
 void
-sendto_match_butone(struct Client *one, struct Client *source_p,
+sendto_match_butone(client::client *one, client::client *source_p,
 		    const char *mask, int what, const char *pattern, ...)
 {
 	static char buf[BUFSIZE];
 	va_list args;
-	struct Client *target_p;
+	client::client *target_p;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 	buf_head_t rb_linebuf_local;
@@ -961,7 +961,7 @@ sendto_match_butone(struct Client *one, struct Client *source_p,
 	{
 		RB_DLINK_FOREACH_SAFE(ptr, next_ptr, lclient_list.head)
 		{
-			target_p = (Client *)ptr->data;
+			target_p = (client::client *)ptr->data;
 
 			if(match(mask, target_p->host))
 				_send_linebuf(target_p, &rb_linebuf_local);
@@ -972,14 +972,14 @@ sendto_match_butone(struct Client *one, struct Client *source_p,
 	{
 		RB_DLINK_FOREACH_SAFE(ptr, next_ptr, lclient_list.head)
 		{
-			target_p = (Client *)ptr->data;
+			target_p = (client::client *)ptr->data;
 			_send_linebuf(target_p, &rb_linebuf_local);
 		}
 	}
 
 	RB_DLINK_FOREACH(ptr, serv_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		if(target_p == one)
 			continue;
@@ -998,13 +998,13 @@ sendto_match_butone(struct Client *one, struct Client *source_p,
  * side effects - message is sent to matching servers with caps.
  */
 void
-sendto_match_servs(struct Client *source_p, const char *mask, int cap,
+sendto_match_servs(client::client *source_p, const char *mask, int cap,
 			int nocap, const char *pattern, ...)
 {
 	static char buf[BUFSIZE];
 	va_list args;
 	rb_dlink_node *ptr;
-	struct Client *target_p;
+	client::client *target_p;
 	buf_head_t rb_linebuf_id;
 
 	if(EmptyString(mask))
@@ -1023,7 +1023,7 @@ sendto_match_servs(struct Client *source_p, const char *mask, int cap,
 
 	RB_DLINK_FOREACH(ptr, global_serv_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		/* dont send to ourselves, or back to where it came from.. */
 		if(IsMe(target_p) || target_p->from == source_p->from)
@@ -1063,7 +1063,7 @@ sendto_local_clients_with_capability(int cap, const char *pattern, ...)
 {
 	va_list args;
 	rb_dlink_node *ptr;
-	struct Client *target_p;
+	client::client *target_p;
 	buf_head_t linebuf;
 
 	rb_linebuf_newbuf(&linebuf);
@@ -1074,7 +1074,7 @@ sendto_local_clients_with_capability(int cap, const char *pattern, ...)
 
 	RB_DLINK_FOREACH(ptr, lclient_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		if(IsIOError(target_p) || !IsCapable(target_p, cap))
 			continue;
@@ -1096,7 +1096,7 @@ sendto_monitor(struct monitor *monptr, const char *pattern, ...)
 {
 	va_list args;
 	buf_head_t linebuf;
-	struct Client *target_p;
+	client::client *target_p;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 
@@ -1108,7 +1108,7 @@ sendto_monitor(struct monitor *monptr, const char *pattern, ...)
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, monptr->users.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		if(IsIOError(target_p))
 			continue;
@@ -1126,7 +1126,7 @@ sendto_monitor(struct monitor *monptr, const char *pattern, ...)
  * side effects - client is sent message with correct prefix.
  */
 void
-sendto_anywhere(struct Client *target_p, struct Client *source_p,
+sendto_anywhere(client::client *target_p, client::client *source_p,
 		const char *command, const char *pattern, ...)
 {
 	va_list args;
@@ -1177,7 +1177,7 @@ sendto_realops_snomask(int flags, int level, const char *pattern, ...)
 {
 	static char buf[BUFSIZE];
 	char *snobuf;
-	struct Client *client_p;
+	client::client *client_p;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 	va_list args;
@@ -1222,7 +1222,7 @@ sendto_realops_snomask(int flags, int level, const char *pattern, ...)
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, local_oper_list.head)
 	{
-		client_p = (Client *)ptr->data;
+		client_p = (client::client *)ptr->data;
 
 		/* If we're sending it to opers and theyre an admin, skip.
 		 * If we're sending it to admins, and theyre not, skip.
@@ -1244,10 +1244,10 @@ sendto_realops_snomask(int flags, int level, const char *pattern, ...)
  * side effects - message is sent to opers with matching snomask
  */
 void
-sendto_realops_snomask_from(int flags, int level, struct Client *source_p,
+sendto_realops_snomask_from(int flags, int level, client::client *source_p,
 		const char *pattern, ...)
 {
-	struct Client *client_p;
+	client::client *client_p;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 	va_list args;
@@ -1262,7 +1262,7 @@ sendto_realops_snomask_from(int flags, int level, struct Client *source_p,
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, local_oper_list.head)
 	{
-		client_p = (Client *)ptr->data;
+		client_p = (client::client *)ptr->data;
 
 		/* If we're sending it to opers and theyre an admin, skip.
 		 * If we're sending it to admins, and theyre not, skip.
@@ -1288,9 +1288,9 @@ sendto_realops_snomask_from(int flags, int level, struct Client *source_p,
  * side effects - Send a wallops to local opers
  */
 void
-sendto_wallops_flags(int flags, struct Client *source_p, const char *pattern, ...)
+sendto_wallops_flags(int flags, client::client *source_p, const char *pattern, ...)
 {
-	struct Client *client_p;
+	client::client *client_p;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 	va_list args;
@@ -1311,7 +1311,7 @@ sendto_wallops_flags(int flags, struct Client *source_p, const char *pattern, ..
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, IsPerson(source_p) && flags == UMODE_WALLOP ? lclient_list.head : local_oper_list.head)
 	{
-		client_p = (Client *)ptr->data;
+		client_p = (client::client *)ptr->data;
 
 		if(client_p->umodes & flags)
 			_send_linebuf(client_p, &linebuf);
@@ -1327,7 +1327,7 @@ sendto_wallops_flags(int flags, struct Client *source_p, const char *pattern, ..
  * side effects - we issue a kill for the client
  */
 void
-kill_client(struct Client *target_p, struct Client *diedie, const char *pattern, ...)
+kill_client(client::client *target_p, client::client *diedie, const char *pattern, ...)
 {
 	va_list args;
 	buf_head_t linebuf;
@@ -1356,11 +1356,11 @@ kill_client(struct Client *target_p, struct Client *diedie, const char *pattern,
  *		  client being unknown to leaf, as in lazylink...
  */
 void
-kill_client_serv_butone(struct Client *one, struct Client *target_p, const char *pattern, ...)
+kill_client_serv_butone(client::client *one, client::client *target_p, const char *pattern, ...)
 {
 	static char buf[BUFSIZE];
 	va_list args;
-	struct Client *client_p;
+	client::client *client_p;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 	buf_head_t rb_linebuf_id;
@@ -1376,7 +1376,7 @@ kill_client_serv_butone(struct Client *one, struct Client *target_p, const char 
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, serv_list.head)
 	{
-		client_p = (Client *)ptr->data;
+		client_p = (client::client *)ptr->data;
 
 		/* ok, if the client we're supposed to not send to has an
 		 * ID, then we still want to issue the kill there..

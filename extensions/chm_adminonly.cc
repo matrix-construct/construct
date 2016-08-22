@@ -35,7 +35,7 @@ DECLARE_MODULE_AV2(chm_adminonly, _modinit, _moddeinit, NULL, NULL, adminonly_hf
 static void
 h_can_join(hook_data_channel *data)
 {
-	struct Client *source_p = data->client;
+	client::client *source_p = data->client;
 	const auto &chptr(data->chptr);
 
 	if((chptr->mode.mode & mymode) && !IsAdmin(source_p)) {

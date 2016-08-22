@@ -26,10 +26,10 @@ using namespace ircd;
 
 static const char dline_desc[] = "Provides the DLINE facility to ban users via IP address";
 
-static void mo_dline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void me_dline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void mo_undline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void me_undline(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void mo_dline(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void me_dline(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mo_undline(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void me_undline(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message dline_msgtab = {
 	"DLINE", 0, 0, 0, 0,
@@ -46,8 +46,8 @@ mapi_clist_av1 dline_clist[] = { &dline_msgtab, &undline_msgtab, NULL };
 DECLARE_MODULE_AV2(dline, NULL, NULL, dline_clist, NULL, NULL, NULL, NULL, dline_desc);
 
 static bool remove_temp_dline(struct ConfItem *);
-static void apply_dline(struct Client *, const char *, int, char *);
-static void apply_undline(struct Client *, const char *);
+static void apply_dline(client::client *, const char *, int, char *);
+static void apply_undline(client::client *, const char *);
 
 /* mo_dline()
  *
@@ -55,7 +55,7 @@ static void apply_undline(struct Client *, const char *);
  *   parv[2] - reason
  */
 static void
-mo_dline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_dline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	char def[] = "No Reason";
 	const char *dlhost;
@@ -114,7 +114,7 @@ mo_dline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 	apply_dline(source_p, dlhost, tdline_time, reason);
 
-	check_dlines();
+	client::check_dlines();
 }
 
 /* mo_undline()
@@ -122,7 +122,7 @@ mo_dline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
  *      parv[1] = dline to remove
  */
 static void
-mo_undline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+mo_undline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	const char *cidr;
 	const char *target_server = NULL;
@@ -156,7 +156,7 @@ mo_undline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 }
 
 static void
-me_dline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+me_dline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char **parv)
 {
 	int tdline_time = atoi(parv[1]);
 	/* Since this is coming over a server link, assume that the originating
@@ -173,11 +173,11 @@ me_dline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
 
 	apply_dline(source_p, parv[2], tdline_time, LOCAL_COPY(parv[3]));
 
-	check_dlines();
+	client::check_dlines();
 }
 
 static void
-me_undline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char **parv)
+me_undline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char **parv)
 {
 	if(!IsPerson(source_p))
 		return;
@@ -190,7 +190,7 @@ me_undline(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *sour
 }
 
 static void
-apply_dline(struct Client *source_p, const char *dlhost, int tdline_time, char *reason)
+apply_dline(client::client *source_p, const char *dlhost, int tdline_time, char *reason)
 {
 	struct ConfItem *aconf;
 	char *oper_reason;
@@ -333,7 +333,7 @@ apply_dline(struct Client *source_p, const char *dlhost, int tdline_time, char *
 }
 
 static void
-apply_undline(struct Client *source_p, const char *cidr)
+apply_undline(client::client *source_p, const char *cidr)
 {
 	char buf[BUFSIZE];
 	struct ConfItem *aconf;

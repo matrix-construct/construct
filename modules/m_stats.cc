@@ -27,7 +27,7 @@ using namespace ircd;
 static const char stats_desc[] =
 	"Provides the STATS command to inspect various server/network information";
 
-static void m_stats (struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_stats (struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message stats_msgtab = {
 	"STATS", false, false, false, false,
@@ -48,16 +48,16 @@ DECLARE_MODULE_AV2(stats, NULL, NULL, stats_clist, stats_hlist, NULL, NULL, NULL
 
 const char *Lformat = "%s %u %u %u %u %u :%u %u %s";
 
-static void stats_l_list(struct Client *s, const char *, bool, bool, rb_dlink_list *, char,
-				bool (*check_fn)(struct Client *target_p));
-static void stats_l_client(struct Client *source_p, struct Client *target_p,
+static void stats_l_list(client::client *s, const char *, bool, bool, rb_dlink_list *, char,
+				bool (*check_fn)(client::client *target_p));
+static void stats_l_client(client::client *source_p, client::client *target_p,
 				char statchar);
 
-static int stats_spy(struct Client *, char, const char *);
-static void stats_p_spy(struct Client *);
+static int stats_spy(client::client *, char, const char *);
+static void stats_p_spy(client::client *);
 
-typedef void (*handler_t)(struct Client *source_p);
-typedef void (*handler_parv_t)(struct Client *source_p, int parc, const char *parv[]);
+typedef void (*handler_t)(client::client *source_p);
+typedef void (*handler_parv_t)(client::client *source_p, int parc, const char *parv[]);
 
 struct stats_cmd
 {
@@ -91,42 +91,42 @@ struct stats_cmd
 	}
 };
 
-static void stats_dns_servers(struct Client *);
-static void stats_delay(struct Client *);
-static void stats_hash(struct Client *);
-static void stats_connect(struct Client *);
-static void stats_tdeny(struct Client *);
-static void stats_deny(struct Client *);
-static void stats_exempt(struct Client *);
-static void stats_events(struct Client *);
-static void stats_prop_klines(struct Client *);
-static void stats_hubleaf(struct Client *);
-static void stats_auth(struct Client *);
-static void stats_tklines(struct Client *);
-static void stats_klines(struct Client *);
-static void stats_messages(struct Client *);
-static void stats_dnsbl(struct Client *);
-static void stats_oper(struct Client *);
-static void stats_privset(struct Client *);
-static void stats_operedup(struct Client *);
-static void stats_ports(struct Client *);
-static void stats_tresv(struct Client *);
-static void stats_resv(struct Client *);
-static void stats_ssld(struct Client *);
-static void stats_usage(struct Client *);
-static void stats_tstats(struct Client *);
-static void stats_uptime(struct Client *);
-static void stats_shared(struct Client *);
-static void stats_servers(struct Client *);
-static void stats_tgecos(struct Client *);
-static void stats_gecos(struct Client *);
-static void stats_class(struct Client *);
-static void stats_memory(struct Client *);
-static void stats_servlinks(struct Client *);
-static void stats_ltrace(struct Client *, int, const char **);
-static void stats_ziplinks(struct Client *);
-static void stats_comm(struct Client *);
-static void stats_capability(struct Client *);
+static void stats_dns_servers(client::client *);
+static void stats_delay(client::client *);
+static void stats_hash(client::client *);
+static void stats_connect(client::client *);
+static void stats_tdeny(client::client *);
+static void stats_deny(client::client *);
+static void stats_exempt(client::client *);
+static void stats_events(client::client *);
+static void stats_prop_klines(client::client *);
+static void stats_hubleaf(client::client *);
+static void stats_auth(client::client *);
+static void stats_tklines(client::client *);
+static void stats_klines(client::client *);
+static void stats_messages(client::client *);
+static void stats_dnsbl(client::client *);
+static void stats_oper(client::client *);
+static void stats_privset(client::client *);
+static void stats_operedup(client::client *);
+static void stats_ports(client::client *);
+static void stats_tresv(client::client *);
+static void stats_resv(client::client *);
+static void stats_ssld(client::client *);
+static void stats_usage(client::client *);
+static void stats_tstats(client::client *);
+static void stats_uptime(client::client *);
+static void stats_shared(client::client *);
+static void stats_servers(client::client *);
+static void stats_tgecos(client::client *);
+static void stats_gecos(client::client *);
+static void stats_class(client::client *);
+static void stats_memory(client::client *);
+static void stats_servlinks(client::client *);
+static void stats_ltrace(client::client *, int, const char **);
+static void stats_ziplinks(client::client *);
+static void stats_comm(client::client *);
+static void stats_capability(client::client *);
 
 
 /* This table contains the possible stats items, in order:
@@ -204,7 +204,7 @@ std::array<stats_cmd, 256> stats_cmd_table =
  * if found execute it.
  */
 static void
-m_stats(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_stats(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
 	struct stats_cmd *cmd;
@@ -274,7 +274,7 @@ stats_out:
 }
 
 static void
-stats_dns_servers (struct Client *source_p)
+stats_dns_servers (client::client *source_p)
 {
 	rb_dlink_node *n;
 
@@ -285,7 +285,7 @@ stats_dns_servers (struct Client *source_p)
 }
 
 static void
-stats_delay(struct Client *source_p)
+stats_delay(client::client *source_p)
 {
 	struct nd_entry *nd;
 	rb_dictionary_iter iter;
@@ -302,11 +302,11 @@ stats_delay(struct Client *source_p)
 static void
 stats_hash_cb(const char *buf, void *client_p)
 {
-	sendto_one_numeric((Client *)client_p, RPL_STATSDEBUG, "B :%s", buf);
+	sendto_one_numeric((client::client *)client_p, RPL_STATSDEBUG, "B :%s", buf);
 }
 
 static void
-stats_hash(struct Client *source_p)
+stats_hash(client::client *source_p)
 {
 	sendto_one_numeric(source_p, RPL_STATSDEBUG, "B :%-30s %-15s %-10s %-10s %-10s %-10s",
 		"NAME", "TYPE", "OBJECTS", "DEPTH SUM", "AVG DEPTH", "MAX DEPTH");
@@ -316,7 +316,7 @@ stats_hash(struct Client *source_p)
 }
 
 static void
-stats_connect(struct Client *source_p)
+stats_connect(client::client *source_p)
 {
 	static char buf[5];
 	struct server_conf *server_p;
@@ -374,7 +374,7 @@ stats_connect(struct Client *source_p)
  * side effects - client is given temp dline list.
  */
 static void
-stats_tdeny (struct Client *source_p)
+stats_tdeny (client::client *source_p)
 {
 	char *host, *pass, *user, *oper_reason;
 	struct AddressRec *arec;
@@ -411,7 +411,7 @@ stats_tdeny (struct Client *source_p)
  * side effects - client is given dline list.
  */
 static void
-stats_deny (struct Client *source_p)
+stats_deny (client::client *source_p)
 {
 	char *host, *pass, *user, *oper_reason;
 	struct AddressRec *arec;
@@ -449,7 +449,7 @@ stats_deny (struct Client *source_p)
  * side effects - client is given list of exempt blocks
  */
 static void
-stats_exempt(struct Client *source_p)
+stats_exempt(client::client *source_p)
 {
 	char *name, *host, *user, *classname;
 	const char *pass;
@@ -485,17 +485,17 @@ stats_exempt(struct Client *source_p)
 static void
 stats_events_cb(char *str, void *ptr)
 {
-	sendto_one_numeric((Client *)ptr, RPL_STATSDEBUG, "E :%s", str);
+	sendto_one_numeric((client::client *)ptr, RPL_STATSDEBUG, "E :%s", str);
 }
 
 static void
-stats_events (struct Client *source_p)
+stats_events (client::client *source_p)
 {
 	rb_dump_events(stats_events_cb, source_p);
 }
 
 static void
-stats_prop_klines(struct Client *source_p)
+stats_prop_klines(client::client *source_p)
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
@@ -521,7 +521,7 @@ stats_prop_klines(struct Client *source_p)
 }
 
 static void
-stats_hubleaf(struct Client *source_p)
+stats_hubleaf(client::client *source_p)
 {
 	struct remote_conf *hub_p;
 	rb_dlink_node *ptr;
@@ -552,7 +552,7 @@ stats_hubleaf(struct Client *source_p)
 
 
 static void
-stats_auth (struct Client *source_p)
+stats_auth (client::client *source_p)
 {
 	/* Oper only, if unopered, return ERR_NOPRIVS */
 	if((ConfigFileEntry.stats_i_oper_only == 2) && !IsOper (source_p))
@@ -596,7 +596,7 @@ stats_auth (struct Client *source_p)
 
 
 static void
-stats_tklines(struct Client *source_p)
+stats_tklines(client::client *source_p)
 {
 	/* Oper only, if unopered, return ERR_NOPRIVS */
 	if((ConfigFileEntry.stats_k_oper_only == 2) && !IsOper (source_p))
@@ -667,7 +667,7 @@ stats_tklines(struct Client *source_p)
  * side effects - Reports configured K-lines to client_p.
  */
 static void
-report_Klines(struct Client *source_p)
+report_Klines(client::client *source_p)
 {
 	char *host, *pass, *user, *oper_reason;
 	struct AddressRec *arec;
@@ -698,7 +698,7 @@ report_Klines(struct Client *source_p)
 }
 
 static void
-stats_klines(struct Client *source_p)
+stats_klines(client::client *source_p)
 {
 	/* Oper only, if unopered, return ERR_NOPRIVS */
 	if((ConfigFileEntry.stats_k_oper_only == 2) && !IsOper (source_p))
@@ -738,7 +738,7 @@ stats_klines(struct Client *source_p)
 }
 
 static void
-stats_messages(struct Client *source_p)
+stats_messages(client::client *source_p)
 {
 	for (auto it = cmd_dict.begin(); it != cmd_dict.end(); it++)
 	{
@@ -753,7 +753,7 @@ stats_messages(struct Client *source_p)
 }
 
 static void
-stats_dnsbl(struct Client *source_p)
+stats_dnsbl(client::client *source_p)
 {
 	rb_dictionary_iter iter;
 	struct BlacklistStats *stats;
@@ -773,7 +773,7 @@ stats_dnsbl(struct Client *source_p)
 }
 
 static void
-stats_oper(struct Client *source_p)
+stats_oper(client::client *source_p)
 {
 	struct oper_conf *oper_p;
 	rb_dlink_node *ptr;
@@ -799,19 +799,19 @@ stats_oper(struct Client *source_p)
 static void
 stats_capability_walk(const std::string &line, void *data)
 {
-	struct Client *client_p = (Client *)data;
+	client::client *client_p = (client::client *)data;
 
 	sendto_one_numeric(client_p, RPL_STATSDEBUG, "C :%s", line.c_str());
 }
 
 static void
-stats_capability(struct Client *client_p)
+stats_capability(client::client *client_p)
 {
 	capability::stats(stats_capability_walk, client_p);
 }
 
 static void
-stats_privset(struct Client *source_p)
+stats_privset(client::client *source_p)
 {
 	privilegeset_report(source_p);
 }
@@ -823,20 +823,20 @@ stats_privset(struct Client *source_p)
  * side effects - client is shown a list of active opers
  */
 static void
-stats_operedup (struct Client *source_p)
+stats_operedup (client::client *source_p)
 {
-	struct Client *target_p;
+	client::client *target_p;
 	rb_dlink_node *oper_ptr;
 	unsigned int count = 0;
 
 	RB_DLINK_FOREACH (oper_ptr, oper_list.head)
 	{
-		target_p = (Client *)oper_ptr->data;
+		target_p = (client::client *)oper_ptr->data;
 
 		if(IsOperInvis(target_p) && !IsOper(source_p))
 			continue;
 
-		if(target_p->user->away.size())
+		if(away(user(*target_p)).size())
 			continue;
 
 		count++;
@@ -854,7 +854,7 @@ stats_operedup (struct Client *source_p)
 }
 
 static void
-stats_ports (struct Client *source_p)
+stats_ports (client::client *source_p)
 {
 	if(!IsOper (source_p) && ConfigFileEntry.stats_P_oper_only)
 		sendto_one_numeric(source_p, ERR_NOPRIVILEGES,
@@ -864,7 +864,7 @@ stats_ports (struct Client *source_p)
 }
 
 static void
-stats_tresv(struct Client *source_p)
+stats_tresv(client::client *source_p)
 {
 	struct ConfItem *aconf;
 	rb_radixtree_iteration_state state;
@@ -892,7 +892,7 @@ stats_tresv(struct Client *source_p)
 
 
 static void
-stats_resv(struct Client *source_p)
+stats_resv(client::client *source_p)
 {
 	struct ConfItem *aconf;
 	rb_radixtree_iteration_state state;
@@ -921,7 +921,7 @@ stats_resv(struct Client *source_p)
 static void
 stats_ssld_foreach(void *data, pid_t pid, int cli_count, enum ssld_status status, const char *version)
 {
-	struct Client *source_p = (Client *)data;
+	client::client *source_p = (client::client *)data;
 
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			"S :%u %c %u :%s",
@@ -932,13 +932,13 @@ stats_ssld_foreach(void *data, pid_t pid, int cli_count, enum ssld_status status
 }
 
 static void
-stats_ssld(struct Client *source_p)
+stats_ssld(client::client *source_p)
 {
 	ssld_foreach_info(stats_ssld_foreach, source_p);
 }
 
 static void
-stats_usage (struct Client *source_p)
+stats_usage (client::client *source_p)
 {
 #ifndef _WIN32
 	struct rusage rus;
@@ -996,9 +996,9 @@ stats_usage (struct Client *source_p)
 }
 
 static void
-stats_tstats (struct Client *source_p)
+stats_tstats (client::client *source_p)
 {
-	struct Client *target_p;
+	client::client *target_p;
 	struct ServerStatistics sp;
 	rb_dlink_node *ptr;
 
@@ -1006,7 +1006,7 @@ stats_tstats (struct Client *source_p)
 
 	RB_DLINK_FOREACH(ptr, serv_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		sp.is_sbs += target_p->localClient->sendB;
 		sp.is_sbr += target_p->localClient->receiveB;
@@ -1016,7 +1016,7 @@ stats_tstats (struct Client *source_p)
 
 	RB_DLINK_FOREACH(ptr, lclient_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		sp.is_cbs += target_p->localClient->sendB;
 		sp.is_cbr += target_p->localClient->receiveB;
@@ -1078,7 +1078,7 @@ stats_tstats (struct Client *source_p)
 }
 
 static void
-stats_uptime (struct Client *source_p)
+stats_uptime (client::client *source_p)
 {
 	time_t now;
 
@@ -1121,7 +1121,7 @@ static struct shared_flags shared_flagtable[] =
 
 
 static void
-stats_shared (struct Client *source_p)
+stats_shared (client::client *source_p)
 {
 	struct remote_conf *shared_p;
 	rb_dlink_node *ptr;
@@ -1180,9 +1180,9 @@ stats_shared (struct Client *source_p)
  * side effects - client is shown lists of who connected servers
  */
 static void
-stats_servers (struct Client *source_p)
+stats_servers (client::client *source_p)
 {
-	struct Client *target_p;
+	client::client *target_p;
 	rb_dlink_node *ptr;
 	time_t seconds;
 	int days, hours, minutes;
@@ -1198,7 +1198,7 @@ stats_servers (struct Client *source_p)
 
 	RB_DLINK_FOREACH (ptr, serv_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		j++;
 		seconds = rb_current_time() - target_p->localClient->firsttime;
@@ -1214,7 +1214,7 @@ stats_servers (struct Client *source_p)
 				   "V :%s (%s!*@*) Idle: %d SendQ: %d "
 				   "Connected: %d day%s, %d:%02d:%02d",
 				   target_p->name,
-				   (target_p->serv->by[0] ? target_p->serv->by : "Remote."),
+				   (by(serv(*target_p)).size()? by(serv(*target_p)).c_str() : "Remote."),
 				   (int) (rb_current_time() - target_p->localClient->lasttime),
 				   (int) rb_linebuf_len (&target_p->localClient->buf_sendq),
 				   days, (days == 1) ? "" : "s", hours, minutes,
@@ -1226,7 +1226,7 @@ stats_servers (struct Client *source_p)
 }
 
 static void
-stats_tgecos(struct Client *source_p)
+stats_tgecos(client::client *source_p)
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
@@ -1244,7 +1244,7 @@ stats_tgecos(struct Client *source_p)
 }
 
 static void
-stats_gecos(struct Client *source_p)
+stats_gecos(client::client *source_p)
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
@@ -1262,7 +1262,7 @@ stats_gecos(struct Client *source_p)
 }
 
 static void
-stats_class(struct Client *source_p)
+stats_class(client::client *source_p)
 {
 	if(ConfigFileEntry.stats_y_oper_only && !IsOper(source_p))
 		sendto_one_numeric(source_p, ERR_NOPRIVILEGES,
@@ -1272,9 +1272,9 @@ stats_class(struct Client *source_p)
 }
 
 static void
-stats_memory (struct Client *source_p)
+stats_memory (client::client *source_p)
 {
-	struct Client *target_p;
+	client::client *target_p;
 	chan::chan *chptr;
 	rb_dlink_node *rb_dlink;
 	rb_dlink_node *ptr;
@@ -1326,7 +1326,7 @@ stats_memory (struct Client *source_p)
 
 	RB_DLINK_FOREACH(ptr, global_client_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 		if(MyConnect(target_p))
 		{
 			local_client_conf_count++;
@@ -1335,12 +1335,12 @@ stats_memory (struct Client *source_p)
 		if(target_p->user)
 		{
 			users_counted++;
-			users_invited_count += target_p->user->invited.size();
-			user_channels += target_p->user->channel.size();
-			if(target_p->user->away.size())
+			users_invited_count += invites(user(*target_p)).size();
+			user_channels += chans(user(*target_p)).size();
+			if(away(user(*target_p)).size())
 			{
 				aways_counted++;
-				away_memory += target_p->user->away.size() + 1;
+				away_memory += away(user(*target_p)).size() + 1;
 			}
 		}
 	}
@@ -1377,7 +1377,7 @@ stats_memory (struct Client *source_p)
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
 			   "z :Users %u(%lu) Invites %u(%lu)",
 			   users_counted,
-			   (unsigned long) users_counted * sizeof(struct user),
+			   (unsigned long) users_counted * 1,  //TODO: XXX:
 			   users_invited_count,
 			   (unsigned long) users_invited_count * sizeof(rb_dlink_node));
 
@@ -1456,7 +1456,7 @@ stats_memory (struct Client *source_p)
 			   (int) totww, (int) total_channel_memory,
 			   (int) conf_memory);
 
-	count_local_client_memory(&local_client_count, &local_client_memory_used);
+	client::count_local_client_memory(&local_client_count, &local_client_memory_used);
 	total_memory += local_client_memory_used;
 
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
@@ -1464,7 +1464,7 @@ stats_memory (struct Client *source_p)
 			   (long)local_client_count, (long)local_client_memory_used);
 
 
-	count_remote_client_memory(&remote_client_count, &remote_client_memory_used);
+	client::count_remote_client_memory(&remote_client_count, &remote_client_memory_used);
 	total_memory += remote_client_memory_used;
 
 	sendto_one_numeric(source_p, RPL_STATSDEBUG,
@@ -1474,16 +1474,16 @@ stats_memory (struct Client *source_p)
 }
 
 static void
-stats_ziplinks (struct Client *source_p)
+stats_ziplinks (client::client *source_p)
 {
 	rb_dlink_node *ptr;
-	struct Client *target_p;
+	client::client *target_p;
 	struct ZipStats *zipstats;
 	int sent_data = 0;
 	char buf[128], buf1[128];
 	RB_DLINK_FOREACH (ptr, serv_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 		if(IsCapable (target_p, CAP_ZIP))
 		{
 			zipstats = target_p->localClient->zipstats;
@@ -1506,11 +1506,11 @@ stats_ziplinks (struct Client *source_p)
 }
 
 static void
-stats_servlinks (struct Client *source_p)
+stats_servlinks (client::client *source_p)
 {
 	static char Sformat[] = ":%s %d %s %s %u %u %u %u %u :%u %u %s";
 	long uptime, sendK, receiveK;
-	struct Client *target_p;
+	client::client *target_p;
 	rb_dlink_node *ptr;
 	int j = 0;
 	char buf[128];
@@ -1527,7 +1527,7 @@ stats_servlinks (struct Client *source_p)
 
 	RB_DLINK_FOREACH (ptr, serv_list.head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		j++;
 		sendK += target_p->localClient->sendK;
@@ -1573,13 +1573,13 @@ stats_servlinks (struct Client *source_p)
 }
 
 static inline bool
-stats_l_should_show_oper(struct Client *target_p)
+stats_l_should_show_oper(client::client *target_p)
 {
 	return (!IsOperInvis(target_p));
 }
 
 static void
-stats_ltrace(struct Client *source_p, int parc, const char *parv[])
+stats_ltrace(client::client *source_p, int parc, const char *parv[])
 {
 	bool doall = false;
 	bool wilds = false;
@@ -1605,12 +1605,12 @@ stats_ltrace(struct Client *source_p, int parc, const char *parv[])
 		/* must be directed at a specific person thats not us */
 		if(!doall && !wilds)
 		{
-			struct Client *target_p;
+			client::client *target_p;
 
 			if(MyClient(source_p))
-				target_p = find_named_person(name);
+				target_p = client::find_named_person(name);
 			else
-				target_p = find_person(name);
+				target_p = client::find_person(name);
 
 			if(target_p != NULL)
 			{
@@ -1666,11 +1666,11 @@ stats_ltrace(struct Client *source_p, int parc, const char *parv[])
 }
 
 static void
-stats_l_list(struct Client *source_p, const char *name, bool doall, bool wilds,
-	     rb_dlink_list * list, char statchar, bool (*check_fn)(struct Client *target_p))
+stats_l_list(client::client *source_p, const char *name, bool doall, bool wilds,
+	     rb_dlink_list * list, char statchar, bool (*check_fn)(client::client *target_p))
 {
 	rb_dlink_node *ptr;
-	struct Client *target_p;
+	client::client *target_p;
 
 	/* send information about connections which match.  note, we
 	 * dont need tests for IsInvisible(), because non-opers will
@@ -1678,7 +1678,7 @@ stats_l_list(struct Client *source_p, const char *name, bool doall, bool wilds,
 	 */
 	RB_DLINK_FOREACH(ptr, list->head)
 	{
-		target_p = (Client *)ptr->data;
+		target_p = (client::client *)ptr->data;
 
 		if(!doall && wilds && !match(name, target_p->name))
 			continue;
@@ -1689,7 +1689,7 @@ stats_l_list(struct Client *source_p, const char *name, bool doall, bool wilds,
 }
 
 void
-stats_l_client(struct Client *source_p, struct Client *target_p,
+stats_l_client(client::client *source_p, client::client *target_p,
 		char statchar)
 {
 	if(IsAnyServer(target_p))
@@ -1730,12 +1730,12 @@ stats_l_client(struct Client *source_p, struct Client *target_p,
 static void
 rb_dump_fd_callback(int fd, const char *desc, void *data)
 {
-	struct Client *source_p = (Client *)data;
+	client::client *source_p = (client::client *)data;
 	sendto_one_numeric(source_p, RPL_STATSDEBUG, "F :fd %-3d desc '%s'", fd, desc);
 }
 
 static void
-stats_comm(struct Client *source_p)
+stats_comm(client::client *source_p)
 {
 	rb_dump_fd(rb_dump_fd_callback, source_p);
 }
@@ -1750,7 +1750,7 @@ stats_comm(struct Client *source_p)
  * This little helper function reports to opers if configured.
  */
 static int
-stats_spy(struct Client *source_p, char statchar, const char *name)
+stats_spy(client::client *source_p, char statchar, const char *name)
 {
 	hook_data_int data;
 
@@ -1771,7 +1771,7 @@ stats_spy(struct Client *source_p, char statchar, const char *name)
  * side effects - call hook doing_stats_p
  */
 static void
-stats_p_spy (struct Client *source_p)
+stats_p_spy (client::client *source_p)
 {
 	hook_data data;
 

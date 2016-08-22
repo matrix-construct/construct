@@ -26,7 +26,7 @@ using namespace ircd;
 
 static const char description[] = "Provides the REMOVE command, an alternative to KICK";
 
-static void m_remove(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_remove(struct MsgBuf *, client::client *, client::client *, int, const char **);
 static void remove_quote_part(hook_data_privmsg_channel *);
 
 unsigned int CAP_REMOVE;
@@ -50,10 +50,10 @@ mapi_cap_list_av2 remove_cap_list[] = {
 DECLARE_MODULE_AV2(remove, NULL, NULL, remove_clist, NULL, remove_hfnlist, remove_cap_list, NULL, description);
 
 static void
-m_remove(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_remove(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	chan::membership *msptr;
-	struct Client *who;
+	client::client *who;
 	chan::chan *chptr;
 	int chasing = 0;
 	char *comment;

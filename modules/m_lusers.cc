@@ -27,8 +27,8 @@ using namespace ircd;
 static const char lusers_desc[] =
 	"Provides the LUSERS command to view the number of current and maximum lusers on a server";
 
-static void m_lusers(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
-static void ms_lusers(struct MsgBuf *, struct Client *, struct Client *, int, const char **);
+static void m_lusers(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_lusers(struct MsgBuf *, client::client *, client::client *, int, const char **);
 
 struct Message lusers_msgtab = {
 	"LUSERS", 0, 0, 0, 0,
@@ -48,7 +48,7 @@ DECLARE_MODULE_AV2(lusers, NULL, NULL, lusers_clist, NULL, NULL, NULL, NULL, lus
  * to cause a force
  */
 static void
-m_lusers(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+m_lusers(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
 
@@ -81,7 +81,7 @@ m_lusers(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source
  * to cause a force
  */
 static void
-ms_lusers(struct MsgBuf *msgbuf_p, struct Client *client_p, struct Client *source_p, int parc, const char *parv[])
+ms_lusers(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
 {
 	if(parc > 2)
 	{

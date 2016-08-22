@@ -29,10 +29,10 @@ void free_monitor(struct monitor *);
 
 void init_monitor(void);
 struct monitor *find_monitor(const char *name, int add);
-void clear_monitor(struct Client *);
+void clear_monitor(client::client *);
 
-void monitor_signon(struct Client *);
-void monitor_signoff(struct Client *);
+void monitor_signon(client::client *);
+void monitor_signoff(client::client *);
 
 }      // namespace ircd
 #endif // __cplusplus
