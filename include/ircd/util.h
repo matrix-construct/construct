@@ -112,6 +112,88 @@ auto lex_cast(Args&&... args)
 #endif
 
 
+/**
+ * flag-enum utilities
+ *
+ * This relaxes the strong typing of enums to allow bitflags with operations on the elements
+ * with intuitive behavior.
+ *
+ * If the project desires absolute guarantees on the strong enum typing then this can be tucked
+ * away in some namespace and imported into select scopes instead.
+ */
+
+template<class Enum>
+typename std::enable_if<std::is_enum<Enum>::value, Enum>::type
+operator~(const Enum &a)
+{
+	using enum_t = typename std::underlying_type<Enum>::type;
+
+	return static_cast<Enum>(~static_cast<enum_t>(a));
+}
+
+template<class Enum>
+typename std::enable_if<std::is_enum<Enum>::value, bool>::type
+operator!(const Enum &a)
+{
+	using enum_t = typename std::underlying_type<Enum>::type;
+
+	return !static_cast<enum_t>(a);
+}
+
+template<class Enum>
+typename std::enable_if<std::is_enum<Enum>::value, Enum>::type
+operator|(const Enum &a, const Enum &b)
+{
+	using enum_t = typename std::underlying_type<Enum>::type;
+
+	return static_cast<Enum>(static_cast<enum_t>(a) | static_cast<enum_t>(b));
+}
+
+template<class Enum>
+typename std::enable_if<std::is_enum<Enum>::value, Enum>::type
+operator&(const Enum &a, const Enum &b)
+{
+	using enum_t = typename std::underlying_type<Enum>::type;
+
+	return static_cast<Enum>(static_cast<enum_t>(a) & static_cast<enum_t>(b));
+}
+
+template<class Enum>
+typename std::enable_if<std::is_enum<Enum>::value, Enum>::type
+operator^(const Enum &a, const Enum &b)
+{
+	using enum_t = typename std::underlying_type<Enum>::type;
+
+	return static_cast<Enum>(static_cast<enum_t>(a) ^ static_cast<enum_t>(b));
+}
+
+template<class Enum>
+typename std::enable_if<std::is_enum<Enum>::value, Enum &>::type
+operator|=(Enum &a, const Enum &b)
+{
+	using enum_t = typename std::underlying_type<Enum>::type;
+
+	return (a = (a | b));
+}
+
+template<class Enum>
+typename std::enable_if<std::is_enum<Enum>::value, Enum &>::type
+operator&=(Enum &a, const Enum &b)
+{
+	using enum_t = typename std::underlying_type<Enum>::type;
+
+	return (a = (a & b));
+}
+
+template<class Enum>
+typename std::enable_if<std::is_enum<Enum>::value, Enum &>::type
+operator^=(Enum &a, const Enum &b)
+{
+	using enum_t = typename std::underlying_type<Enum>::type;
+
+	return (a = (a ^ b));
+}
+
 }        // namespace util
 }        // namespace ircd
 #endif   // __cplusplus
