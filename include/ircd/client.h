@@ -339,7 +339,6 @@ struct LocalUser
 	SSL_OPEN_CB *ssl_callback;		/* ssl connection is now open */
 	uint32_t localflags;
 	struct ZipStats *zipstats;		/* zipstats */
-	uint16_t cork_count;			/* used for corking/uncorking connections */
 	struct ev_entry *event;			/* used for associated events */
 
 	struct PrivilegeSet *privset;		/* privset... */
@@ -698,7 +697,6 @@ inline auto get_id(const client &source, const client &target)
 /* flags for local clients, this needs stuff moved from above to here at some point */
 #define LFLAGS_SSL		0x00000001
 #define LFLAGS_FLUSH		0x00000002
-#define LFLAGS_CORK		0x00000004
 
 
 inline bool
@@ -903,11 +901,6 @@ is_flood_done(const client &client)
 #define IsFlush(x)		((x)->localClient->localflags & LFLAGS_FLUSH)
 #define SetFlush(x)		((x)->localClient->localflags |= LFLAGS_FLUSH)
 #define ClearFlush(x)		((x)->localClient->localflags &= ~LFLAGS_FLUSH)
-
-/* These also operate on the uplink from which it came */
-#define IsCork(x)		(my_connect(x) ? (x)->localClient->cork_count : (x)->from->localClient->cork_count)
-#define SetCork(x)		(my_connect(x) ? (x)->localClient->cork_count++ : (x)->from->localClient->cork_count++ )
-#define ClearCork(x)		(my_connect(x) ? (x)->localClient->cork_count-- : (x)->from->localClient->cork_count--)
 
 /*
  * definitions for get_client_name
