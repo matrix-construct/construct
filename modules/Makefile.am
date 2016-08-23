@@ -14,10 +14,11 @@ AM_LDFLAGS = \
 
 AM_LDFLAGS += \
 	-module \
+	-shared \
 	-export-dynamic \
 	-avoid-version \
 	-no-undefined \
-	-shared \
+	--no-allow-shlib-undefined \
 	-export-symbols-regex _mheader
 
 AM_LDFLAGS += \
