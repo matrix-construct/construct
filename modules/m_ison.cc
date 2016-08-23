@@ -26,7 +26,7 @@ using namespace ircd;
 
 static const char ison_desc[] = "Provides the ISON command to check if a set of users is online";
 
-static void m_ison(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_ison(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message ison_msgtab = {
 	"ISON", 0, 0, 0, 0,
@@ -51,7 +51,7 @@ static char buf2[BUFSIZE];
  * ISON :nicklist
  */
 static void
-m_ison(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_ison(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	client::client *target_p;
 	char *nick;
@@ -64,7 +64,7 @@ m_ison(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 	current_insert_point2 = buf2;
 	*buf2 = '\0';
 
-	sprintf(buf, form_str(RPL_ISON), me.name, source_p->name);
+	sprintf(buf, form_str(RPL_ISON), me.name, source.name);
 	len = strlen(buf);
 	current_insert_point = buf + len;
 
@@ -106,5 +106,5 @@ m_ison(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 	*current_insert_point = '\0';
 	*current_insert_point2 = '\0';
 
-	sendto_one(source_p, "%s", buf);
+	sendto_one(&source, "%s", buf);
 }

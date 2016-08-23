@@ -619,7 +619,7 @@ struct Expr *match_any_expr(const char *const text,
  */
 
 static
-int dump_pcre_config(client::client *client_p, client::client *source_p, int parc, const char *parv[])
+int dump_pcre_config(client::client &client, client::client &source, int parc, const char *parv[])
 {
 	union
 	{
@@ -633,18 +633,18 @@ int dump_pcre_config(client::client *client_p, client::client *source_p, int par
 		v.v_ulong *= (PCRE2_CODE_UNIT_WIDTH / 8);
 		v.v_buf = (char *)rb_malloc(v.v_ulong);
 		pcre2_config(PCRE2_CONFIG_VERSION, v.v_buf);
-		sendto_one_notice(source_p, ":\2%-30s\2: (%s)", "PCRE2 VERSION", v.v_buf);
+		sendto_one_notice(&source, ":\2%-30s\2: (%s)", "PCRE2 VERSION", v.v_buf);
 		rb_free(v.v_buf);
 	}
 
 	if(pcre2_config(PCRE2_CONFIG_BSR, &v) == 0)
-		sendto_one_notice(source_p, ":\2%-30s\2: %d (%s)", "PCRE2 BSR", v.v_uint,
+		sendto_one_notice(&source, ":\2%-30s\2: %d (%s)", "PCRE2 BSR", v.v_uint,
 		                  v.v_uint == PCRE2_BSR_UNICODE? "all Unicode line endings":
 		                  v.v_uint == PCRE2_BSR_ANYCRLF? "CR, LF, or CRLF only":
 		                                                 "???");
 
 	if(pcre2_config(PCRE2_CONFIG_JIT, &v) == 0)
-		sendto_one_notice(source_p, ":\2%-30s\2: %d (%s)", "PCRE2 JIT", v.v_uint,
+		sendto_one_notice(&source, ":\2%-30s\2: %d (%s)", "PCRE2 JIT", v.v_uint,
 		                  v.v_uint == 0? "UNAVAILABLE":
 		                  v.v_uint == 1? "AVAILABLE":
 		                                 "???");
@@ -654,24 +654,24 @@ int dump_pcre_config(client::client *client_p, client::client *source_p, int par
 		v.v_ulong *= (PCRE2_CODE_UNIT_WIDTH / 8);
 		v.v_buf = (char *)rb_malloc(v.v_ulong);
 		pcre2_config(PCRE2_CONFIG_JITTARGET, v.v_buf);
-		sendto_one_notice(source_p, ":\2%-30s\2: (%s)", "PCRE2 JITTARGET", v.v_buf);
+		sendto_one_notice(&source, ":\2%-30s\2: (%s)", "PCRE2 JITTARGET", v.v_buf);
 		rb_free(v.v_buf);
 	}
 
 	if(pcre2_config(PCRE2_CONFIG_LINKSIZE, &v) == 0)
-		sendto_one_notice(source_p, ":\2%-30s\2: %d", "PCRE2 LINKSIZE", v.v_uint);
+		sendto_one_notice(&source, ":\2%-30s\2: %d", "PCRE2 LINKSIZE", v.v_uint);
 
 	if(pcre2_config(PCRE2_CONFIG_MATCHLIMIT, &v) == 0)
-		sendto_one_notice(source_p, ":\2%-30s\2: %u", "PCRE2 MATCHLIMIT", v.v_uint);
+		sendto_one_notice(&source, ":\2%-30s\2: %u", "PCRE2 MATCHLIMIT", v.v_uint);
 
 	if(pcre2_config(PCRE2_CONFIG_PARENSLIMIT, &v) == 0)
-		sendto_one_notice(source_p, ":\2%-30s\2: %u", "PCRE2 PARENSLIMIT", v.v_uint);
+		sendto_one_notice(&source, ":\2%-30s\2: %u", "PCRE2 PARENSLIMIT", v.v_uint);
 
 	if(pcre2_config(PCRE2_CONFIG_RECURSIONLIMIT, &v) == 0)
-		sendto_one_notice(source_p, ":\2%-30s\2: %u", "PCRE2 RECURSIONLIMIT", v.v_uint);
+		sendto_one_notice(&source, ":\2%-30s\2: %u", "PCRE2 RECURSIONLIMIT", v.v_uint);
 
 	if(pcre2_config(PCRE2_CONFIG_NEWLINE, &v) == 0)
-		sendto_one_notice(source_p, ":\2%-30s\2: %d (%s)", "PCRE2 NEWLINE", v.v_uint,
+		sendto_one_notice(&source, ":\2%-30s\2: %d (%s)", "PCRE2 NEWLINE", v.v_uint,
 		                  v.v_uint == PCRE2_NEWLINE_CR?       "CR":
 		                  v.v_uint == PCRE2_NEWLINE_LF?       "LF":
 		                  v.v_uint == PCRE2_NEWLINE_CRLF?     "CRLF":
@@ -680,10 +680,10 @@ int dump_pcre_config(client::client *client_p, client::client *source_p, int par
 		                                                      "???");
 
 	if(pcre2_config(PCRE2_CONFIG_STACKRECURSE, &v) == 0)
-		sendto_one_notice(source_p, ":\2%-30s\2: %d", "PCRE2 STACKRECURSE", v.v_uint);
+		sendto_one_notice(&source, ":\2%-30s\2: %d", "PCRE2 STACKRECURSE", v.v_uint);
 
 	if(pcre2_config(PCRE2_CONFIG_UNICODE, &v) == 0)
-		sendto_one_notice(source_p, ":\2%-30s\2: %d (%s)", "PCRE2 UNICODE", v.v_uint,
+		sendto_one_notice(&source, ":\2%-30s\2: %d (%s)", "PCRE2 UNICODE", v.v_uint,
 		                  v.v_uint == 0? "UNAVAILABLE":
 		                  v.v_uint == 1? "AVAILABLE":
 		                                 "???");
@@ -693,7 +693,7 @@ int dump_pcre_config(client::client *client_p, client::client *source_p, int par
 		v.v_ulong *= (PCRE2_CODE_UNIT_WIDTH / 8);
 		v.v_buf = (char *)rb_malloc(v.v_ulong);
 		pcre2_config(PCRE2_CONFIG_UNICODE_VERSION, v.v_buf);
-		sendto_one_notice(source_p, ":\2%-30s\2: (%s)", "PCRE2 UNICODE_VERSION", v.v_buf);
+		sendto_one_notice(&source, ":\2%-30s\2: (%s)", "PCRE2 UNICODE_VERSION", v.v_buf);
 		rb_free(v.v_buf);
 	}
 
@@ -702,18 +702,18 @@ int dump_pcre_config(client::client *client_p, client::client *source_p, int par
 
 
 static
-int spamexpr_info(client::client *client_p, client::client *source_p, int parc, const char *parv[])
+int spamexpr_info(client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(parc > 0 && !IsOper(source_p))
+	if(parc > 0 && !IsOper(&source))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "SPAMEXPR INFO");
-		sendto_one_notice(source_p, ":Only operators can give arguments to this command.");
+		sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "SPAMEXPR INFO");
+		sendto_one_notice(&source, ":Only operators can give arguments to this command.");
 		return 0;
 	}
 
-	if(parc < 1 && IsOper(source_p))
+	if(parc < 1 && IsOper(&source))
 	{
-		dump_pcre_config(client_p, source_p, parc, parv);
+		dump_pcre_config(client, source, parc, parv);
 		return 0;
 	}
 
@@ -721,7 +721,7 @@ int spamexpr_info(client::client *client_p, client::client *source_p, int parc, 
 	struct Expr *const expr = find_expr(id);
 	if(!expr)
 	{
-		sendto_one_notice(source_p, ":Failed to find any expression with ID %u.", id);
+		sendto_one_notice(&source, ":Failed to find any expression with ID %u.", id);
 		return 0;
 	}
 
@@ -737,7 +737,7 @@ int spamexpr_info(client::client *client_p, client::client *source_p, int parc, 
 	strlcat_pcre_opts(expr->comp_opts, comp_opts, sizeof(comp_opts), str_pcre_comp);
 	strlcat_pcre_opts(expr->match_opts, match_opts, sizeof(match_opts), str_pcre_match);
 	strlcat_pcre_opts(expr->jit_opts, jit_opts, sizeof(jit_opts), str_pcre_jit);
-	sendto_one_notice(source_p, ":#%u time[%lu] last[%lu] hits[%d] [%s][%s][%s] %s %s",
+	sendto_one_notice(&source, ":#%u time[%lu] last[%lu] hits[%d] [%s][%s][%s] %s %s",
 	                  expr->id,
 	                  expr->added,
 	                  expr->last,
@@ -752,12 +752,12 @@ int spamexpr_info(client::client *client_p, client::client *source_p, int parc, 
 
 
 static
-int spamexpr_list(client::client *client_p, client::client *source_p, int parc, const char *parv[])
+int spamexpr_list(client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(parc > 0 && !IsOper(source_p))
+	if(parc > 0 && !IsOper(&source))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "SPAMEXPR LIST");
-		sendto_one_notice(source_p, ":Only operators can give arguments to this command.");
+		sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "SPAMEXPR LIST");
+		sendto_one_notice(&source, ":Only operators can give arguments to this command.");
 		return 0;
 	}
 
@@ -774,10 +774,10 @@ int spamexpr_list(client::client *client_p, client::client *source_p, int parc, 
 	{
 		auto *const expr(reinterpret_cast<Expr *>(elem));
 		snprintf(id, sizeof(id), "%u", expr->id);
-		spamexpr_info(client_p, source_p, parc+1, nparv);
+		spamexpr_info(client, source, parc+1, nparv);
 	}
 
-	sendto_one_notice(source_p, ":End of expression list.");
+	sendto_one_notice(&source, ":End of expression list.");
 	return 0;
 }
 
@@ -788,17 +788,17 @@ int spamexpr_list(client::client *client_p, client::client *source_p, int parc, 
  * example:  CASELESS|ANCHORED|DOTALL
  */
 static
-int spamexpr_add(client::client *client_p, client::client *source_p, int parc, const char *parv[])
+int spamexpr_add(client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(!IsOper(source_p) && !IsServer(source_p))
+	if(!IsOper(&source) && !IsServer(&source))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "SPAMEXPR ADD");
+		sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "SPAMEXPR ADD");
 		return 0;
 	}
 
 	if(parc < 4)
 	{
-		sendto_one_notice(source_p, ":Usage: ADD <compile opts|0> <match opts|0> <jit opts|0> <expression>");
+		sendto_one_notice(&source, ":Usage: ADD <compile opts|0> <match opts|0> <jit opts|0> <expression>");
 		return 0;
 	}
 
@@ -813,19 +813,19 @@ int spamexpr_add(client::client *client_p, client::client *source_p, int parc, c
 	struct Expr *const expr = activate_new_expr(pattern, comp_opts, match_opts, jit_opts, NULL, &errcode, &erroff, errbuf, sizeof(errbuf));
 	if(!expr)
 	{
-		if(IsPerson(source_p))
-			sendto_one_notice(source_p, ":Invalid expression (%d) @%zu: %s.",
+		if(IsPerson(&source))
+			sendto_one_notice(&source, ":Invalid expression (%d) @%zu: %s.",
 			                  errcode,
 			                  erroff,
 			                  errbuf);
 		return 0;
 	}
 
-	if(MyClient(source_p) && IsPerson(source_p))
+	if(MyClient(&source) && IsPerson(&source))
 	{
-		sendto_server(client_p, NULL, CAP_ENCAP, NOCAPS,
+		sendto_server(&client, NULL, CAP_ENCAP, NOCAPS,
 		              ":%s ENCAP * SPAMEXPR ADD %s %s %s :%s",
-		              client_p->id,
+		              client.id,
 		              parv[0],
 		              parv[1],
 		              parv[2],
@@ -836,7 +836,7 @@ int spamexpr_add(client::client *client_p, client::client *source_p, int parc, c
 		                       expr->id,
 		                       expr->pattern);
 
-		sendto_one_notice(source_p, ":Added expression #%u.", expr->id);
+		sendto_one_notice(&source, ":Added expression #%u.", expr->id);
 	}
 
 	return 0;
@@ -844,39 +844,39 @@ int spamexpr_add(client::client *client_p, client::client *source_p, int parc, c
 
 
 static
-int spamexpr_del(client::client *client_p, client::client *source_p, int parc, const char *parv[])
+int spamexpr_del(client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(!IsOper(source_p) && !IsServer(source_p))
+	if(!IsOper(&source) && !IsServer(&source))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "SPAMEXPR DEL");
+		sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "SPAMEXPR DEL");
 		return 0;
 	}
 
 	if(parc < 1)
 	{
-		sendto_one_notice(source_p, ":Must specify an expression id number.");
+		sendto_one_notice(&source, ":Must specify an expression id number.");
 		return 0;
 	}
 
 	const unsigned int id = atol(parv[0]);
 	if(!deactivate_and_free_expr(id))
 	{
-		sendto_one_notice(source_p, ":Failed to deactivate any expression with ID #%u.", id);
+		sendto_one_notice(&source, ":Failed to deactivate any expression with ID #%u.", id);
 		return 0;
 	}
 
-	if(MyClient(source_p) && IsPerson(source_p))
+	if(MyClient(&source) && IsPerson(&source))
 	{
-		sendto_server(client_p, NULL, CAP_ENCAP, NOCAPS,
+		sendto_server(&client, NULL, CAP_ENCAP, NOCAPS,
 		              ":%s ENCAP * SPAMEXPR DEL %u",
-		              client_p->id,
+		              client.id,
 		              id);
 
 		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
 		                       "spamfilter: Expression #%u removed.",
 		                       id);
 
-		sendto_one_notice(source_p, ":Removed expression #%u.", id);
+		sendto_one_notice(&source, ":Removed expression #%u.", id);
 	}
 
 	return 0;
@@ -884,23 +884,23 @@ int spamexpr_del(client::client *client_p, client::client *source_p, int parc, c
 
 
 static
-int spamexpr_test(client::client *client_p, client::client *source_p, int parc, const char *parv[])
+int spamexpr_test(client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(!IsOper(source_p))
+	if(!IsOper(&source))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "SPAMEXPR TEST");
+		sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "SPAMEXPR TEST");
 		return 0;
 	}
 
 	if(parc < 2)
 	{
-		sendto_one_notice(source_p, ":Specify an ID and text argument, or ID -1 for all.");
+		sendto_one_notice(&source, ":Specify an ID and text argument, or ID -1 for all.");
 		return 0;
 	}
 
 	if(!rb_dictionary_size(exprs))
 	{
-		sendto_one_notice(source_p, ":No expressions have been added to test.");
+		sendto_one_notice(&source, ":No expressions have been added to test.");
 		return 0;
 	}
 
@@ -912,12 +912,12 @@ int spamexpr_test(client::client *client_p, client::client *source_p, int parc, 
 		struct Expr *expr = find_expr(id);
 		if(!expr)
 		{
-			sendto_one_notice(source_p, ":Failed to find expression with ID #%u", id);
+			sendto_one_notice(&source, ":Failed to find expression with ID #%u", id);
 			return 0;
 		}
 
 		const int ret = match_expr(expr, parv[1], len, 0, 0);
-		sendto_one_notice(source_p, ":#%-2d: (%d) %s", id, ret, ret > 0? "POSITIVE" : "NEGATIVE");
+		sendto_one_notice(&source, ":#%-2d: (%d) %s", id, ret, ret > 0? "POSITIVE" : "NEGATIVE");
 		return 0;
 	}
 
@@ -927,7 +927,7 @@ int spamexpr_test(client::client *client_p, client::client *source_p, int parc, 
 	{
 		auto *const expr(reinterpret_cast<Expr *>(elem));
 		const int ret = match_expr(expr, parv[1], len, 0, 0);
-		sendto_one_notice(source_p, ":#%-2d: (%d) %s", id, ret, ret > 0? "POSITIVE" : "NEGATIVE");
+		sendto_one_notice(&source, ":#%-2d: (%d) %s", id, ret, ret > 0? "POSITIVE" : "NEGATIVE");
 	}
 
 	return 0;
@@ -935,11 +935,11 @@ int spamexpr_test(client::client *client_p, client::client *source_p, int parc, 
 
 
 static
-int spamexpr_sync(client::client *client_p, client::client *source_p, int parc, const char *parv[])
+int spamexpr_sync(client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(!IsOper(source_p) && !IsServer(source_p))
+	if(!IsOper(&source) && !IsServer(&source))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "SPAMEXPR SYNC");
+		sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "SPAMEXPR SYNC");
 		return 0;
 	}
 
@@ -966,51 +966,51 @@ int spamexpr_sync(client::client *client_p, client::client *source_p, int parc, 
 
 
 static void
-m_spamexpr(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_spamexpr(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	if(parc <= 1)
 	{
-		sendto_one_notice(source_p, ":Insufficient parameters.");
+		sendto_one_notice(&source, ":Insufficient parameters.");
 		return;
 	}
 
 	if(rb_strcasecmp(parv[1], "LIST") == 0)
 	{
-		spamexpr_list(client_p, source_p, parc - 2, parv + 2);
+		spamexpr_list(client, source, parc - 2, parv + 2);
 		return;
 	}
 
 	if(rb_strcasecmp(parv[1], "INFO") == 0)
 	{
-		spamexpr_info(client_p, source_p, parc - 2, parv + 2);
+		spamexpr_info(client, source, parc - 2, parv + 2);
 		return;
 	}
 
 	if(rb_strcasecmp(parv[1], "ADD") == 0)
 	{
-		spamexpr_add(client_p, source_p, parc - 2, parv + 2);
+		spamexpr_add(client, source, parc - 2, parv + 2);
 		return;
 	}
 
 	if(rb_strcasecmp(parv[1], "DEL") == 0)
 	{
-		spamexpr_del(client_p, source_p, parc - 2, parv + 2);
+		spamexpr_del(client, source, parc - 2, parv + 2);
 		return;
 	}
 
 	if(rb_strcasecmp(parv[1], "TEST") == 0)
 	{
-		spamexpr_test(client_p, source_p, parc - 2, parv + 2);
+		spamexpr_test(client, source, parc - 2, parv + 2);
 		return;
 	}
 
 	if(rb_strcasecmp(parv[1], "SYNC") == 0)
 	{
-		spamexpr_sync(client_p, source_p, parc - 2, parv + 2);
+		spamexpr_sync(client, source, parc - 2, parv + 2);
 		return;
 	}
 
-	sendto_one_notice(source_p, ":Command not found.");
+	sendto_one_notice(&source, ":Command not found.");
 }
 
 struct Message msgtab =
@@ -1083,7 +1083,7 @@ void hook_server_introduced(hook_data_client *const data)
 {
 	if(data && data->target)
 	{
-		spamexpr_sync(data->target, data->target, 0,NULL);
+		spamexpr_sync(*data->target, *data->target, 0,NULL);
 		sendto_server(&me, NULL, CAP_ENCAP, NOCAPS,
 		              ":%s ENCAP %s SPAMEXPR SYNC",
 		              me.id,

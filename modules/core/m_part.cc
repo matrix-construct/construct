@@ -26,7 +26,7 @@ using namespace ircd;
 
 static const char part_desc[] = "Provides the PART command to leave a channel";
 
-static void m_part(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_part(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message part_msgtab = {
 	"PART", 0, 0, 0, 0,
@@ -37,11 +37,11 @@ mapi_clist_av1 part_clist[] = { &part_msgtab, NULL };
 
 DECLARE_MODULE_AV2(part, NULL, NULL, part_clist, NULL, NULL, NULL, NULL, part_desc);
 
-static void part_one_client(client::client *client_p,
-			    client::client *source_p, char *name,
+static void part_one_client(client::client &client,
+			    client::client &source, char *name,
 			    const char *reason);
-static bool can_send_part(client::client *source_p, chan::chan *chptr, chan::membership *msptr);
-static bool do_message_hook(client::client *source_p, chan::chan *chptr, const char **reason);
+static bool can_send_part(client::client &source, chan::chan *chptr, chan::membership *msptr);
+static bool do_message_hook(client::client &source, chan::chan *chptr, const char **reason);
 
 
 /*
@@ -50,7 +50,7 @@ static bool do_message_hook(client::client *source_p, chan::chan *chptr, const c
 **      parv[2] = reason
 */
 static void
-m_part(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_part(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	char *p, *name;
 	char reason[REASONLEN + 1];
@@ -64,12 +64,12 @@ m_part(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 	name = rb_strtok_r(s, ",", &p);
 
 	/* Finish the flood grace period... */
-	if(MyClient(source_p) && !IsFloodDone(source_p))
-		flood_endgrace(source_p);
+	if(MyClient(&source) && !IsFloodDone(&source))
+		flood_endgrace(&source);
 
 	while(name)
 	{
-		part_one_client(client_p, source_p, name, reason);
+		part_one_client(client, source, name, reason);
 		name = rb_strtok_r(NULL, ",", &p);
 	}
 }
@@ -84,68 +84,68 @@ m_part(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
  * side effects	- remove ONE client given the channel name
  */
 static void
-part_one_client(client::client *client_p, client::client *source_p, char *name, const char *reason)
+part_one_client(client::client &client, client::client &source, char *name, const char *reason)
 {
 	chan::chan *chptr;
 	chan::membership *msptr;
 
 	if((chptr = chan::get(name, std::nothrow)) == NULL)
 	{
-		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL, form_str(ERR_NOSUCHCHANNEL), name);
+		sendto_one_numeric(&source, ERR_NOSUCHCHANNEL, form_str(ERR_NOSUCHCHANNEL), name);
 		return;
 	}
 
-	msptr = get(chptr->members, *source_p, std::nothrow);
+	msptr = get(chptr->members, source, std::nothrow);
 	if(msptr == NULL)
 	{
-		sendto_one_numeric(source_p, ERR_NOTONCHANNEL, form_str(ERR_NOTONCHANNEL), name);
+		sendto_one_numeric(&source, ERR_NOTONCHANNEL, form_str(ERR_NOTONCHANNEL), name);
 		return;
 	}
 
-	if(MyConnect(source_p) && !IsOper(source_p) && !IsExemptSpambot(source_p))
-		chan::check_spambot_warning(source_p, NULL);
+	if(MyConnect(&source) && !IsOper(&source) && !IsExemptSpambot(&source))
+		chan::check_spambot_warning(&source, NULL);
 
 	/*
 	 *  Remove user from the old channel (if any)
 	 *  only allow /part reasons in -m chans
 	 */
 	if(!EmptyString(reason) &&
-		(!MyConnect(source_p) ||
-		 (can_send_part(source_p, chptr, msptr) && do_message_hook(source_p, chptr, &reason))
+		(!MyConnect(&source) ||
+		 (can_send_part(source, chptr, msptr) && do_message_hook(source, chptr, &reason))
 		)
 	  )
 	{
 
-		sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
+		sendto_server(&client, chptr, CAP_TS6, NOCAPS,
 		              ":%s PART %s :%s",
-		              use_id(source_p),
+		              use_id(&source),
 		              chptr->name.c_str(),
 		              reason);
 
 		sendto_channel_local(chan::ALL_MEMBERS, chptr,
 		                     ":%s!%s@%s PART %s :%s",
-		                     source_p->name,
-		                     source_p->username,
-		                     source_p->host,
+		                     source.name,
+		                     source.username,
+		                     source.host,
 		                     chptr->name.c_str(),
 		                     reason);
 	}
 	else
 	{
-		sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
+		sendto_server(&client, chptr, CAP_TS6, NOCAPS,
 		              ":%s PART %s",
-		              use_id(source_p),
+		              use_id(&source),
 		              chptr->name.c_str());
 
 		sendto_channel_local(chan::ALL_MEMBERS, chptr,
 		                     ":%s!%s@%s PART %s",
-		                     source_p->name,
-		                     source_p->username,
-		                     source_p->host,
+		                     source.name,
+		                     source.username,
+		                     source.host,
 		                     chptr->name.c_str());
 	}
 
-	del(*chptr, *source_p);
+	del(*chptr, source);
 }
 
 /*
@@ -162,14 +162,14 @@ part_one_client(client::client *client_p, client::client *source_p, char *name, 
  *    - none.
  */
 static bool
-can_send_part(client::client *source_p, chan::chan *chptr, chan::membership *msptr)
+can_send_part(client::client &source, chan::chan *chptr, chan::membership *msptr)
 {
-	if (!can_send(chptr, source_p, msptr))
+	if (!can_send(chptr, &source, msptr))
 		return false;
 	/* Allow chanops to bypass anti_spam_exit_message_time for part messages. */
 	if (is_chanop(msptr))
 		return true;
-	return (source_p->localClient->firsttime + ConfigFileEntry.anti_spam_exit_message_time) < rb_current_time();
+	return (source.localClient->firsttime + ConfigFileEntry.anti_spam_exit_message_time) < rb_current_time();
 }
 
 /*
@@ -186,12 +186,12 @@ can_send_part(client::client *source_p, chan::chan *chptr, chan::membership *msp
  *    - reason may be modified.
  */
 static bool
-do_message_hook(client::client *source_p, chan::chan *chptr, const char **reason)
+do_message_hook(client::client &source, chan::chan *chptr, const char **reason)
 {
 	hook_data_privmsg_channel hdata;
 
 	hdata.msgtype = MESSAGE_TYPE_PART;
-	hdata.source_p = source_p;
+	hdata.source_p = &source;
 	hdata.chptr = chptr;
 	hdata.text = *reason;
 	hdata.approved = 0;

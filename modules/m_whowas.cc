@@ -27,7 +27,7 @@ using namespace ircd;
 static const char whowas_desc[] =
 	"Provides the WHOWAS command to display information on a disconnected user";
 
-static void m_whowas(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_whowas(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message whowas_msgtab = {
 	"WHOWAS", 0, 0, 0, 0,
@@ -43,7 +43,7 @@ DECLARE_MODULE_AV2(whowas, NULL, NULL, whowas_clist, NULL, NULL, NULL, NULL, who
 **      parv[1] = nickname queried
 */
 static void
-m_whowas(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_whowas(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	rb_dlink_list *whowas_list;
 	rb_dlink_node *ptr;
@@ -56,15 +56,15 @@ m_whowas(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 
 	static time_t last_used = 0L;
 
-	if(MyClient(source_p) && !IsOper(source_p))
+	if(MyClient(&source) && !IsOper(&source))
 	{
 		if(last_used + (parc > 3 ? ConfigFileEntry.pace_wait :
 						ConfigFileEntry.pace_wait_simple
 				) > rb_current_time())
 		{
-			sendto_one(source_p, form_str(RPL_LOAD2HI),
-				   me.name, source_p->name, "WHOWAS");
-			sendto_one_numeric(source_p, RPL_ENDOFWHOWAS, form_str(RPL_ENDOFWHOWAS),
+			sendto_one(&source, form_str(RPL_LOAD2HI),
+				   me.name, source.name, "WHOWAS");
+			sendto_one_numeric(&source, RPL_ENDOFWHOWAS, form_str(RPL_ENDOFWHOWAS),
 				   parv[1]);
 			return;
 		}
@@ -77,10 +77,10 @@ m_whowas(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 		max = atoi(parv[2]);
 
 	if(parc > 3)
-		if(hunt_server(client_p, source_p, ":%s WHOWAS %s %s :%s", 3, parc, parv))
+		if(hunt_server(&client, &source, ":%s WHOWAS %s %s :%s", 3, parc, parv))
 			return;
 
-	if(!MyClient(source_p) && (max <= 0 || max > 20))
+	if(!MyClient(&source) && (max <= 0 || max > 20))
 		max = 20;
 
 	if((p = (char *)strchr(parv[1], ',')))
@@ -88,42 +88,42 @@ m_whowas(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 
 	nick = parv[1];
 
-	sendq_limit = get_sendq(client_p) * 9 / 10;
+	sendq_limit = get_sendq(&client) * 9 / 10;
 	whowas_list = whowas_get_list(nick);
 
 	if(whowas_list == NULL)
 	{
-		sendto_one_numeric(source_p, ERR_WASNOSUCHNICK, form_str(ERR_WASNOSUCHNICK), nick);
-		sendto_one_numeric(source_p, RPL_ENDOFWHOWAS, form_str(RPL_ENDOFWHOWAS), parv[1]);
+		sendto_one_numeric(&source, ERR_WASNOSUCHNICK, form_str(ERR_WASNOSUCHNICK), nick);
+		sendto_one_numeric(&source, RPL_ENDOFWHOWAS, form_str(RPL_ENDOFWHOWAS), parv[1]);
 		return;
 	}
 
 	RB_DLINK_FOREACH(ptr, whowas_list->head)
 	{
 		struct Whowas *temp = (Whowas *)ptr->data;
-		if(cur > 0 && rb_linebuf_len(&client_p->localClient->buf_sendq) > sendq_limit)
+		if(cur > 0 && rb_linebuf_len(&client.localClient->buf_sendq) > sendq_limit)
 		{
-			sendto_one(source_p, form_str(ERR_TOOMANYMATCHES),
-				   me.name, source_p->name, "WHOWAS");
+			sendto_one(&source, form_str(ERR_TOOMANYMATCHES),
+				   me.name, source.name, "WHOWAS");
 			break;
 		}
 
-		sendto_one(source_p, form_str(RPL_WHOWASUSER),
-			   me.name, source_p->name, temp->name,
+		sendto_one(&source, form_str(RPL_WHOWASUSER),
+			   me.name, source.name, temp->name,
 			   temp->username, temp->hostname, temp->realname);
 		if (!EmptyString(temp->sockhost) &&
 				strcmp(temp->sockhost, "0") &&
-				show_ip_whowas(temp, source_p))
-			sendto_one_numeric(source_p, RPL_WHOISACTUALLY,
+				show_ip_whowas(temp, &source))
+			sendto_one_numeric(&source, RPL_WHOISACTUALLY,
 					   form_str(RPL_WHOISACTUALLY),
 					   temp->name, temp->sockhost);
 
 		if (!EmptyString(temp->suser))
-			sendto_one_numeric(source_p, RPL_WHOISLOGGEDIN,
+			sendto_one_numeric(&source, RPL_WHOISLOGGEDIN,
 					   "%s %s :was logged in as",
 					   temp->name, temp->suser);
 
-		sendto_one_numeric(source_p, RPL_WHOISSERVER,
+		sendto_one_numeric(&source, RPL_WHOISSERVER,
 				   form_str(RPL_WHOISSERVER),
 				   temp->name, temp->servername,
 				   rb_ctime(temp->logoff, tbuf, sizeof(tbuf)));
@@ -133,5 +133,5 @@ m_whowas(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 			break;
 	}
 
-	sendto_one_numeric(source_p, RPL_ENDOFWHOWAS, form_str(RPL_ENDOFWHOWAS), parv[1]);
+	sendto_one_numeric(&source, RPL_ENDOFWHOWAS, form_str(RPL_ENDOFWHOWAS), parv[1]);
 }

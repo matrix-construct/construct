@@ -27,9 +27,9 @@ using namespace ircd;
 static const char wallops_desc[] =
 	"Provides the WALLOPS and OPERWALL commands to message online operators";
 
-static void mo_operwall(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void ms_operwall(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void ms_wallops(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mo_operwall(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void ms_operwall(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void ms_wallops(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message wallops_msgtab = {
 	"WALLOPS", 0, 0, 0, 0,
@@ -49,18 +49,18 @@ DECLARE_MODULE_AV2(wallops, NULL, NULL, wallops_clist, NULL, NULL, NULL, NULL, w
  *      parv[1] = message text
  */
 static void
-mo_operwall(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mo_operwall(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(!IsOperOperwall(source_p))
+	if(!IsOperOperwall(&source))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS),
-			   me.name, source_p->name, "operwall");
+		sendto_one(&source, form_str(ERR_NOPRIVS),
+			   me.name, source.name, "operwall");
 		return;
 	}
 
-	sendto_wallops_flags(UMODE_OPERWALL, source_p, "OPERWALL - %s", parv[1]);
-	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s OPERWALL :%s",
-		      use_id(source_p), parv[1]);
+	sendto_wallops_flags(UMODE_OPERWALL, &source, "OPERWALL - %s", parv[1]);
+	sendto_server(&client, NULL, CAP_TS6, NOCAPS, ":%s OPERWALL :%s",
+		      use_id(&source), parv[1]);
 }
 
 /*
@@ -69,11 +69,11 @@ mo_operwall(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
  *      parv[1] = message text
  */
 static void
-ms_operwall(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+ms_operwall(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s OPERWALL :%s",
-		      use_id(source_p), parv[1]);
-	sendto_wallops_flags(UMODE_OPERWALL, source_p, "OPERWALL - %s", parv[1]);
+	sendto_server(&client, NULL, CAP_TS6, NOCAPS, ":%s OPERWALL :%s",
+		      use_id(&source), parv[1]);
+	sendto_wallops_flags(UMODE_OPERWALL, &source, "OPERWALL - %s", parv[1]);
 }
 
 /*
@@ -81,18 +81,18 @@ ms_operwall(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
  *      parv[1] = message text
  */
 static void
-ms_wallops(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+ms_wallops(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	const char *prefix = "";
 
-	if (MyClient(source_p) && !IsOperMassNotice(source_p))
+	if (MyClient(&source) && !IsOperMassNotice(&source))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS),
-			   me.name, source_p->name, "mass_notice");
+		sendto_one(&source, form_str(ERR_NOPRIVS),
+			   me.name, source.name, "mass_notice");
 		return;
 	}
 
-	if (IsPerson(source_p))
+	if (IsPerson(&source))
 	{
 		if (!strncmp(parv[1], "OPERWALL - ", 11) ||
 				!strncmp(parv[1], "LOCOPS - ", 9) ||
@@ -101,9 +101,9 @@ ms_wallops(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *so
 			prefix = "WALLOPS - ";
 	}
 
-	sendto_wallops_flags(UMODE_WALLOP, source_p, "%s%s", prefix, parv[1]);
+	sendto_wallops_flags(UMODE_WALLOP, &source, "%s%s", prefix, parv[1]);
 
-	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s WALLOPS :%s",
-		      use_id(source_p), parv[1]);
+	sendto_server(&client, NULL, CAP_TS6, NOCAPS, ":%s WALLOPS :%s",
+		      use_id(&source), parv[1]);
 }
 

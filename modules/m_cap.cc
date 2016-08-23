@@ -35,7 +35,7 @@ static const char cap_desc[] = "Provides the commands used for client capability
 
 typedef int (*bqcmp)(const void *, const void *);
 
-static void m_cap(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_cap(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message cap_msgtab = {
 	"CAP", 0, 0, 0, 0,
@@ -50,7 +50,7 @@ DECLARE_MODULE_AV2(cap, NULL, NULL, cap_clist, NULL, NULL, NULL, NULL, cap_desc)
 #define HasCapabilityFlag(c, f)		(c->ownerdata != NULL && (((struct ClientCapability *)c->ownerdata)->flags & (f)) == f)
 
 static inline int
-clicap_visible(client::client *client_p, const std::shared_ptr<capability::entry> cap)
+clicap_visible(client::client &client, const std::shared_ptr<capability::entry> cap)
 {
 	struct ClientCapability *clicap;
 
@@ -65,7 +65,7 @@ clicap_visible(client::client *client_p, const std::shared_ptr<capability::entry
 	if (clicap->visible == NULL)
 		return 1;
 
-	return clicap->visible(client_p);
+	return clicap->visible(&client);
 }
 
 /* clicap_find()
@@ -137,7 +137,7 @@ clicap_find(const char *data, int *negate, int *finished)
  * Outputs: None
  */
 static void
-clicap_generate(client::client *source_p, const char *subcmd, int flags)
+clicap_generate(client::client &source, const char *subcmd, int flags)
 {
 	char buf[BUFSIZE] = { 0 };
 	char capbuf[BUFSIZE] = { 0 };
@@ -147,13 +147,13 @@ clicap_generate(client::client *source_p, const char *subcmd, int flags)
 
 	mlen = snprintf(buf, sizeof buf, ":%s CAP %s %s",
 			me.name,
-			EmptyString(source_p->name) ? "*" : source_p->name,
+			EmptyString(source.name) ? "*" : source.name,
 			subcmd);
 
 	/* shortcut, nothing to do */
 	if(flags == -1)
 	{
-		sendto_one(source_p, "%s :", buf);
+		sendto_one(&source, "%s :", buf);
 		return;
 	}
 
@@ -164,15 +164,15 @@ clicap_generate(client::client *source_p, const char *subcmd, int flags)
 		const auto clicap(reinterpret_cast<ClientCapability *>(entry->ownerdata));
 		const char *data = NULL;
 
-		if(flags && !IsCapableEntry(source_p, entry))
+		if(flags && !IsCapableEntry(&source, entry))
 			continue;
 
-		if (!clicap_visible(source_p, entry))
+		if (!clicap_visible(source, entry))
 			continue;
 
 		caplen = strlen(entry->cap.c_str());
-		if (!flags && (source_p->flags & FLAGS_CLICAP_DATA) && clicap != NULL && clicap->data != NULL)
-			data = clicap->data(source_p);
+		if (!flags && (source.flags & FLAGS_CLICAP_DATA) && clicap != NULL && clicap->data != NULL)
+			data = clicap->data(&source);
 
 		if (data != NULL)
 			caplen += strlen(data) + 1;
@@ -185,7 +185,7 @@ clicap_generate(client::client *source_p, const char *subcmd, int flags)
 			 */
 			capbuf[buflen] = '\0';
 
-			sendto_one(source_p, "%s * :%s", buf, capbuf);
+			sendto_one(&source, "%s * :%s", buf, capbuf);
 
 			buflen = mlen;
 			memset(capbuf, 0, sizeof capbuf);
@@ -198,11 +198,11 @@ clicap_generate(client::client *source_p, const char *subcmd, int flags)
 	/* remove trailing space */
 	capbuf[buflen] = '\0';
 
-	sendto_one(source_p, "%s :%s", buf, capbuf);
+	sendto_one(&source, "%s :%s", buf, capbuf);
 }
 
 static void
-cap_ack(client::client *source_p, const char *arg)
+cap_ack(client::client &source, const char *arg)
 {
 	std::shared_ptr<capability::entry> cap;
 	int capadd = 0, capdel = 0;
@@ -215,7 +215,7 @@ cap_ack(client::client *source_p, const char *arg)
 	    cap = clicap_find(NULL, &negate, &finished))
 	{
 		/* sent an ACK for something they havent REQd */
-		if(!IsCapableEntry(source_p, cap))
+		if(!IsCapableEntry(&source, cap))
 			continue;
 
 		if(negate)
@@ -230,50 +230,50 @@ cap_ack(client::client *source_p, const char *arg)
 			capadd |= (1 << cap->value);
 	}
 
-	source_p->localClient->caps |= capadd;
-	source_p->localClient->caps &= ~capdel;
+	source.localClient->caps |= capadd;
+	source.localClient->caps &= ~capdel;
 }
 
 static void
-cap_end(client::client *source_p, const char *arg)
+cap_end(client::client &source, const char *arg)
 {
-	if(IsRegistered(source_p))
+	if(IsRegistered(&source))
 		return;
 
-	source_p->flags &= ~FLAGS_CLICAP;
+	source.flags &= ~FLAGS_CLICAP;
 
-	if(source_p->name[0] && source_p->flags & FLAGS_SENTUSER)
+	if(source.name[0] && source.flags & FLAGS_SENTUSER)
 	{
-		register_local_user(source_p, source_p);
+		register_local_user(&source, &source);
 	}
 }
 
 static void
-cap_list(client::client *source_p, const char *arg)
+cap_list(client::client &source, const char *arg)
 {
 	/* list of what theyre currently using */
-	clicap_generate(source_p, "LIST",
-			source_p->localClient->caps ? source_p->localClient->caps : -1);
+	clicap_generate(source, "LIST",
+			source.localClient->caps ? source.localClient->caps : -1);
 }
 
 static void
-cap_ls(client::client *source_p, const char *arg)
+cap_ls(client::client &source, const char *arg)
 {
-	if(!IsRegistered(source_p))
-		source_p->flags |= FLAGS_CLICAP;
+	if(!IsRegistered(&source))
+		source.flags |= FLAGS_CLICAP;
 
 	if (arg != NULL && !strcmp(arg, "302"))
 	{
-		source_p->flags |= FLAGS_CLICAP_DATA;
-		source_p->localClient->caps |= CLICAP_CAP_NOTIFY;
+		source.flags |= FLAGS_CLICAP_DATA;
+		source.localClient->caps |= CLICAP_CAP_NOTIFY;
 	}
 
 	/* list of what we support */
-	clicap_generate(source_p, "LS", 0);
+	clicap_generate(source, "LS", 0);
 }
 
 static void
-cap_req(client::client *source_p, const char *arg)
+cap_req(client::client &source, const char *arg)
 {
 	char buf[BUFSIZE];
 	char pbuf[2][BUFSIZE];
@@ -283,14 +283,14 @@ cap_req(client::client *source_p, const char *arg)
 	int capadd = 0, capdel = 0;
 	int finished = 0, negate;
 
-	if(!IsRegistered(source_p))
-		source_p->flags |= FLAGS_CLICAP;
+	if(!IsRegistered(&source))
+		source.flags |= FLAGS_CLICAP;
 
 	if(EmptyString(arg))
 		return;
 
 	buflen = snprintf(buf, sizeof(buf), ":%s CAP %s ACK",
-			me.name, EmptyString(source_p->name) ? "*" : source_p->name);
+			me.name, EmptyString(source.name) ? "*" : source.name);
 
 	pbuf[0][0] = '\0';
 	plen = 0;
@@ -326,7 +326,7 @@ cap_req(client::client *source_p, const char *arg)
 		}
 		else
 		{
-			if (!clicap_visible(source_p, cap))
+			if (!clicap_visible(source, cap))
 			{
 				finished = 0;
 				break;
@@ -351,27 +351,27 @@ cap_req(client::client *source_p, const char *arg)
 
 	if(!finished)
 	{
-		sendto_one(source_p, ":%s CAP %s NAK :%s",
-			me.name, EmptyString(source_p->name) ? "*" : source_p->name, arg);
+		sendto_one(&source, ":%s CAP %s NAK :%s",
+			me.name, EmptyString(source.name) ? "*" : source.name, arg);
 		return;
 	}
 
 	if(i)
 	{
-		sendto_one(source_p, "%s * :%s", buf, pbuf[0]);
-		sendto_one(source_p, "%s :%s", buf, pbuf[1]);
+		sendto_one(&source, "%s * :%s", buf, pbuf[0]);
+		sendto_one(&source, "%s :%s", buf, pbuf[1]);
 	}
 	else
-		sendto_one(source_p, "%s :%s", buf, pbuf[0]);
+		sendto_one(&source, "%s :%s", buf, pbuf[0]);
 
-	source_p->localClient->caps |= capadd;
-	source_p->localClient->caps &= ~capdel;
+	source.localClient->caps |= capadd;
+	source.localClient->caps &= ~capdel;
 }
 
 static struct clicap_cmd
 {
 	const char *cmd;
-	void (*func)(client::client *source_p, const char *arg);
+	void (*func)(client::client &source, const char *arg);
 } clicap_cmdlist[] = {
 	/* This list *MUST* be in alphabetical order */
 	{ "ACK",	cap_ack		},
@@ -388,7 +388,7 @@ clicap_cmd_search(const char *command, struct clicap_cmd *entry)
 }
 
 static void
-m_cap(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_cap(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	struct clicap_cmd *cmd;
 
@@ -396,11 +396,11 @@ m_cap(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_
 				sizeof(clicap_cmdlist) / sizeof(struct clicap_cmd),
 				sizeof(struct clicap_cmd), (bqcmp) clicap_cmd_search)))
 	{
-		sendto_one(source_p, form_str(ERR_INVALIDCAPCMD),
-				me.name, EmptyString(source_p->name) ? "*" : source_p->name,
+		sendto_one(&source, form_str(ERR_INVALIDCAPCMD),
+				me.name, EmptyString(source.name) ? "*" : source.name,
 				parv[1]);
 		return;
 	}
 
-	(cmd->func)(source_p, parv[2]);
+	(cmd->func)(source, parv[2]);
 }

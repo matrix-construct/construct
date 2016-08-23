@@ -27,8 +27,8 @@ using namespace ircd;
 static const char links_desc[] =
 	"Provides the LINKS command to view servers linked to the host server";
 
-static void m_links(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void mo_links(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_links(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void mo_links(struct MsgBuf *, client::client &, client::client &, int, const char **);
 static char * clean_string(char *dest, const unsigned char *src, size_t len);
 
 struct Message links_msgtab = {
@@ -54,16 +54,16 @@ DECLARE_MODULE_AV2(links, NULL, NULL, links_clist, links_hlist, NULL, NULL, NULL
  *      parv[2] = servername mask
  */
 static void
-m_links(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_links(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(ConfigServerHide.flatten_links && !IsExemptShide(source_p))
-		scache_send_flattened_links(source_p);
+	if(ConfigServerHide.flatten_links && !IsExemptShide(&source))
+		scache_send_flattened_links(&source);
 	else
-		mo_links(msgbuf_p, client_p, source_p, parc, parv);
+		mo_links(msgbuf_p, client, source, parc, parv);
 }
 
 static void
-mo_links(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mo_links(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	const char *mask = "";
 	client::client *target_p;
@@ -76,7 +76,7 @@ mo_links(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 	{
 		if(strlen(parv[2]) > HOSTLEN)
 			return;
-		if(hunt_server(client_p, source_p, ":%s LINKS %s :%s", 1, parc, parv)
+		if(hunt_server(&client, &source, ":%s LINKS %s :%s", 1, parc, parv)
 		   != HUNTED_ISME)
 			return;
 
@@ -89,7 +89,7 @@ mo_links(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 		mask = collapse(clean_string
 				(clean_mask, (const unsigned char *) mask, 2 * HOSTLEN));
 
-	hd.client = source_p;
+	hd.client = &source;
 	hd.arg1 = mask;
 	hd.arg2 = NULL;
 
@@ -105,13 +105,13 @@ mo_links(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 		/* We just send the reply, as if theyre here theres either no SHIDE,
 		 * or theyre an oper..
 		 */
-		sendto_one_numeric(source_p, RPL_LINKS, form_str(RPL_LINKS),
+		sendto_one_numeric(&source, RPL_LINKS, form_str(RPL_LINKS),
 				   target_p->name, target_p->servptr->name,
 				   target_p->hopcount,
 				   target_p->info[0] ? target_p->info : "(Unknown Location)");
 	}
 
-	sendto_one_numeric(source_p, RPL_ENDOFLINKS, form_str(RPL_ENDOFLINKS),
+	sendto_one_numeric(&source, RPL_ENDOFLINKS, form_str(RPL_ENDOFLINKS),
 			   EmptyString(mask) ? "*" : mask);
 }
 

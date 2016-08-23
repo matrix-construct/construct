@@ -33,7 +33,7 @@ using namespace ircd;
 
 static const char snote_desc[] = "Provides server notices via the SNOTE command";
 
-static void me_snote(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void me_snote(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message snote_msgtab = {
 	"SNOTE", 0, 0, 0, 0,
@@ -50,7 +50,7 @@ DECLARE_MODULE_AV2(snote, NULL, NULL, snote_clist, NULL, NULL, NULL, NULL, snote
  *	parv[2] = message
  */
 static void
-me_snote(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc,
+me_snote(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc,
 	const char *parv[])
 {
 	/* if there's more than just two params, this is a protocol
@@ -59,9 +59,9 @@ me_snote(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 	 */
 	if (parc > 3)
 		return;
-	if (!IsServer(source_p))
+	if (!IsServer(&source))
 		return;
 
 	sendto_realops_snomask_from(snomask_modes[(unsigned char) *parv[1]],
-		L_ALL, source_p, "%s", parv[2]);
+		L_ALL, &source, "%s", parv[2]);
 }

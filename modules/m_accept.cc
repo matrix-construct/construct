@@ -27,8 +27,8 @@ using namespace ircd;
 static const char accept_desc[] =
 	"Provides the ACCEPT command for use with Caller ID/user mode +g";
 
-static void m_accept(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void build_nicklist(client::client *, char *, char *, const char *);
+static void m_accept(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void build_nicklist(client::client &, char *, char *, const char *);
 
 static void add_accept(client::client *, client::client *);
 static void list_accepts(client::client *);
@@ -49,7 +49,7 @@ DECLARE_MODULE_AV2(accept, NULL, NULL, accept_clist, NULL, NULL, NULL, NULL, acc
  *      parv[1] = servername
  */
 static void
-m_accept(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_accept(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	char *nick;
 	char *p = NULL;
@@ -60,11 +60,11 @@ m_accept(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 
 	if(*parv[1] == '*')
 	{
-		list_accepts(source_p);
+		list_accepts(&source);
 		return;
 	}
 
-	build_nicklist(source_p, addbuf, delbuf, parv[1]);
+	build_nicklist(source, addbuf, delbuf, parv[1]);
 
 	/* parse the delete list */
 	for (nick = rb_strtok_r(delbuf, ",", &p); nick != NULL; nick = rb_strtok_r(NULL, ",", &p))
@@ -72,25 +72,25 @@ m_accept(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 		/* shouldnt happen, but lets be paranoid */
 		if((target_p = client::find_named_person(nick)) == NULL)
 		{
-			sendto_one_numeric(source_p, ERR_NOSUCHNICK,
+			sendto_one_numeric(&source, ERR_NOSUCHNICK,
 					   form_str(ERR_NOSUCHNICK), nick);
 			continue;
 		}
 
 		/* user isnt on clients accept list */
-		if(!accept_message(target_p, source_p))
+		if(!accept_message(target_p, &source))
 		{
-			sendto_one(source_p, form_str(ERR_ACCEPTNOT),
-				   me.name, source_p->name, target_p->name);
+			sendto_one(&source, form_str(ERR_ACCEPTNOT),
+				   me.name, source.name, target_p->name);
 			continue;
 		}
 
-		rb_dlinkFindDestroy(target_p, &source_p->localClient->allow_list);
-		rb_dlinkFindDestroy(source_p, &target_p->on_allow_list);
+		rb_dlinkFindDestroy(target_p, &source.localClient->allow_list);
+		rb_dlinkFindDestroy(&source, &target_p->on_allow_list);
 	}
 
 	/* get the number of accepts they have */
-	accept_num = rb_dlink_list_length(&source_p->localClient->allow_list);
+	accept_num = rb_dlink_list_length(&source.localClient->allow_list);
 
 	/* parse the add list */
 	for (nick = rb_strtok_r(addbuf, ",", &p); nick; nick = rb_strtok_r(NULL, ",", &p), accept_num++)
@@ -98,28 +98,28 @@ m_accept(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 		/* shouldnt happen, but lets be paranoid */
 		if((target_p = client::find_named_person(nick)) == NULL)
 		{
-			sendto_one_numeric(source_p, ERR_NOSUCHNICK,
+			sendto_one_numeric(&source, ERR_NOSUCHNICK,
 					   form_str(ERR_NOSUCHNICK), nick);
 			continue;
 		}
 
 		/* user is already on clients accept list */
-		if(accept_message(target_p, source_p))
+		if(accept_message(target_p, &source))
 		{
-			sendto_one(source_p, form_str(ERR_ACCEPTEXIST),
-				   me.name, source_p->name, target_p->name);
+			sendto_one(&source, form_str(ERR_ACCEPTEXIST),
+				   me.name, source.name, target_p->name);
 			continue;
 		}
 
 		if(accept_num >= ConfigFileEntry.max_accept)
 		{
-			sendto_one(source_p, form_str(ERR_ACCEPTFULL), me.name, source_p->name);
+			sendto_one(&source, form_str(ERR_ACCEPTFULL), me.name, source.name);
 			return;
 		}
 
 		/* why is this here? */
-		/* del_from accept(target_p, source_p); */
-		add_accept(source_p, target_p);
+		/* del_from accept(target_p, &source); */
+		add_accept(&source, target_p);
 	}
 }
 
@@ -134,7 +134,7 @@ m_accept(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
  * side effects - addbuf/delbuf are modified to give valid nicks
  */
 static void
-build_nicklist(client::client *source_p, char *addbuf, char *delbuf, const char *nicks)
+build_nicklist(client::client &source, char *addbuf, char *delbuf, const char *nicks)
 {
 	char *name;
 	char *p;
@@ -157,7 +157,7 @@ build_nicklist(client::client *source_p, char *addbuf, char *delbuf, const char 
 
 		if(client::find_named_person(name) == NULL)
 		{
-			sendto_one_numeric(source_p, ERR_NOSUCHNICK,
+			sendto_one_numeric(&source, ERR_NOSUCHNICK,
 					   form_str(ERR_NOSUCHNICK), name);
 			continue;
 		}
@@ -192,10 +192,10 @@ build_nicklist(client::client *source_p, char *addbuf, char *delbuf, const char 
  * side effects - target is added to clients list
  */
 static void
-add_accept(client::client *source_p, client::client *target_p)
+add_accept(client::client *source, client::client *target_p)
 {
-	rb_dlinkAddAlloc(target_p, &source_p->localClient->allow_list);
-	rb_dlinkAddAlloc(source_p, &target_p->on_allow_list);
+	rb_dlinkAddAlloc(target_p, &source->localClient->allow_list);
+	rb_dlinkAddAlloc(&source, &target_p->on_allow_list);
 }
 
 
@@ -207,7 +207,7 @@ add_accept(client::client *source_p, client::client *target_p)
  * side effects	- print accept list to client
  */
 static void
-list_accepts(client::client *source_p)
+list_accepts(client::client *source)
 {
 	rb_dlink_node *ptr;
 	client::client *target_p;
@@ -217,9 +217,9 @@ list_accepts(client::client *source_p)
 	int count = 0;
 
 	*nicks = '\0';
-	len2 = strlen(source_p->name) + 10;
+	len2 = strlen(source->name) + 10;
 
-	RB_DLINK_FOREACH(ptr, source_p->localClient->allow_list.head)
+	RB_DLINK_FOREACH(ptr, source->localClient->allow_list.head)
 	{
 		target_p = (client::client *)ptr->data;
 
@@ -228,8 +228,8 @@ list_accepts(client::client *source_p)
 
 			if((len + strlen(target_p->name) + len2 > BUFSIZE) || count > 14)
 			{
-				sendto_one(source_p, form_str(RPL_ACCEPTLIST),
-					   me.name, source_p->name, nicks);
+				sendto_one(source, form_str(RPL_ACCEPTLIST),
+					   me.name, source->name, nicks);
 
 				len = count = 0;
 				*nicks = '\0';
@@ -241,10 +241,10 @@ list_accepts(client::client *source_p)
 	}
 
 	if(*nicks)
-		sendto_one(source_p, form_str(RPL_ACCEPTLIST),
-			   me.name, source_p->name, nicks);
+		sendto_one(source, form_str(RPL_ACCEPTLIST),
+			   me.name, source->name, nicks);
 
-	sendto_one(source_p, form_str(RPL_ENDOFACCEPT),
-		   me.name, source_p->name);
+	sendto_one(source, form_str(RPL_ENDOFACCEPT),
+		   me.name, source->name);
 
 }

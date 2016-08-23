@@ -222,7 +222,7 @@ handle_command(struct Message *mptr, struct MsgBuf *msgbuf_p, client::client *cl
 		return (-1);
 	}
 
-	(*handler) (msgbuf_p, client_p, from, msgbuf_p->n_para, msgbuf_p->para);
+	handler(msgbuf_p, *client_p, *from, msgbuf_p->n_para, msgbuf_p->para);
 	return (1);
 }
 
@@ -245,7 +245,7 @@ handle_encap(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *
 	   (ehandler.min_para && EmptyString(parv[ehandler.min_para - 1])))
 		return;
 
-	(*handler) (msgbuf_p, client_p, source_p, parc, parv);
+	handler(msgbuf_p, *client_p, *source_p, parc, parv);
 }
 
 /* mod_add_cmd
@@ -479,15 +479,15 @@ do_numeric(int numeric, client::client *client_p, client::client *source_p, int 
 }
 
 void
-m_not_oper(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_not_oper(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	sendto_one_numeric(source_p, ERR_NOPRIVILEGES, form_str(ERR_NOPRIVILEGES));
+	sendto_one_numeric(&source, ERR_NOPRIVILEGES, form_str(ERR_NOPRIVILEGES));
 }
 
 void
-m_unregistered(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_unregistered(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(IsAnyServer(client_p))
+	if(IsAnyServer(&client))
 		return;
 
 	/* bit of a hack.
@@ -495,21 +495,21 @@ m_unregistered(struct MsgBuf *msgbuf_p, client::client *client_p, client::client
 	 * number_of_nick_changes is only really valid after the client
 	 * is fully registered..
 	 */
-	if(client_p->localClient->number_of_nick_changes == 0)
+	if(client.localClient->number_of_nick_changes == 0)
 	{
-		sendto_one(client_p, form_str(ERR_NOTREGISTERED), me.name);
-		client_p->localClient->number_of_nick_changes++;
+		sendto_one(&client, form_str(ERR_NOTREGISTERED), me.name);
+		client.localClient->number_of_nick_changes++;
 	}
 }
 
 void
-m_registered(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_registered(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	sendto_one(client_p, form_str(ERR_ALREADYREGISTRED), me.name, source_p->name);
+	sendto_one(&client, form_str(ERR_ALREADYREGISTRED), me.name, source.name);
 }
 
 void
-m_ignore(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_ignore(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	/* Does nothing */
 }

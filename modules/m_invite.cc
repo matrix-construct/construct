@@ -26,7 +26,7 @@ using namespace ircd;
 
 static const char invite_desc[] = "Provides facilities for invite and related notifications";
 
-static void m_invite(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_invite(struct MsgBuf *, client::client &, client::client &, int, const char **);
 static unsigned int CAP_INVITE_NOTIFY = 0;
 
 struct Message invite_msgtab = {
@@ -50,28 +50,28 @@ static bool add_invite(chan::chan &, client::client &);
  *      parv[2] - channel name
  */
 static void
-m_invite(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_invite(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	client::client *target_p;
 	chan::chan *chptr;
 	chan::membership *msptr;
 	int store_invite = 0;
 
-	if(MyClient(source_p) && !IsFloodDone(source_p))
-		flood_endgrace(source_p);
+	if(MyClient(&source) && !IsFloodDone(&source))
+		flood_endgrace(&source);
 
-	if(MyClient(source_p))
+	if(MyClient(&source))
 		target_p = client::find_named_person(parv[1]);
 	else
 		target_p = client::find_person(parv[1]);
 	if(target_p == NULL)
 	{
-		if(!MyClient(source_p) && rfc1459::is_digit(parv[1][0]))
-			sendto_one_numeric(source_p, ERR_NOSUCHNICK,
+		if(!MyClient(&source) && rfc1459::is_digit(parv[1][0]))
+			sendto_one_numeric(&source, ERR_NOSUCHNICK,
 					   "* :Target left IRC. Failed to invite to %s",
 					   parv[2]);
 		else
-			sendto_one_numeric(source_p, ERR_NOSUCHNICK,
+			sendto_one_numeric(&source, ERR_NOSUCHNICK,
 					   form_str(ERR_NOSUCHNICK),
 					   parv[1]);
 		return;
@@ -79,7 +79,7 @@ m_invite(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 
 	if(chan::valid_name(parv[2]) == 0)
 	{
-		sendto_one_numeric(source_p, ERR_BADCHANNAME,
+		sendto_one_numeric(&source, ERR_BADCHANNAME,
 				   form_str(ERR_BADCHANNAME),
 				   parv[2]);
 		return;
@@ -90,16 +90,16 @@ m_invite(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 	 */
 	if(parv[2][0] == '&' && !MyConnect(target_p))
 	{
-		sendto_one(source_p, form_str(ERR_USERNOTONSERV),
-			   me.name, source_p->name, target_p->name);
+		sendto_one(&source, form_str(ERR_USERNOTONSERV),
+			   me.name, source.name, target_p->name);
 		return;
 	}
 
-	if(((MyConnect(source_p) && !IsExemptResv(source_p)) ||
+	if(((MyConnect(&source) && !IsExemptResv(&source)) ||
 			(MyConnect(target_p) && !IsExemptResv(target_p))) &&
 		hash_find_resv(parv[2]))
 	{
-		sendto_one_numeric(source_p, ERR_BADCHANNAME,
+		sendto_one_numeric(&source, ERR_BADCHANNAME,
 				   form_str(ERR_BADCHANNAME),
 				   parv[2]);
 		return;
@@ -107,22 +107,22 @@ m_invite(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 
 	if((chptr = chan::get(parv[2], std::nothrow)) == NULL)
 	{
-		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
+		sendto_one_numeric(&source, ERR_NOSUCHCHANNEL,
 				   form_str(ERR_NOSUCHCHANNEL), parv[2]);
 		return;
 	}
 
-	msptr = get(chptr->members, *source_p, std::nothrow);
-	if(MyClient(source_p) && (msptr == NULL))
+	msptr = get(chptr->members, source, std::nothrow);
+	if(MyClient(&source) && (msptr == NULL))
 	{
-		sendto_one_numeric(source_p, ERR_NOTONCHANNEL,
+		sendto_one_numeric(&source, ERR_NOTONCHANNEL,
 				   form_str(ERR_NOTONCHANNEL), parv[2]);
 		return;
 	}
 
 	if(is_member(chptr, target_p))
 	{
-		sendto_one_numeric(source_p, ERR_USERONCHANNEL,
+		sendto_one_numeric(&source, ERR_USERONCHANNEL,
 				   form_str(ERR_USERONCHANNEL),
 				   target_p->name, parv[2]);
 		return;
@@ -130,11 +130,11 @@ m_invite(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 
 	/* unconditionally require ops, unless the channel is +g */
 	/* treat remote clients as chanops */
-	if(MyClient(source_p) && !is_chanop(msptr) &&
+	if(MyClient(&source) && !is_chanop(msptr) &&
 			!(chptr->mode.mode & chan::mode::FREEINVITE))
 	{
-		sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
-			   me.name, source_p->name, parv[2]);
+		sendto_one(&source, form_str(ERR_CHANOPRIVSNEEDED),
+			   me.name, source.name, parv[2]);
 		return;
 	}
 
@@ -146,21 +146,21 @@ m_invite(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 			chptr->mode.limit || chptr->mode.join_num)
 		store_invite = 1;
 
-	if(MyConnect(source_p))
+	if(MyConnect(&source))
 	{
-		if (ConfigFileEntry.target_change && !IsOper(source_p) &&
-				!find_allowing_channel(source_p, target_p) &&
-				!add_target(source_p, target_p))
+		if (ConfigFileEntry.target_change && !IsOper(&source) &&
+				!find_allowing_channel(&source, target_p) &&
+				!add_target(&source, target_p))
 		{
-			sendto_one(source_p, form_str(ERR_TARGCHANGE),
-				   me.name, source_p->name, target_p->name);
+			sendto_one(&source, form_str(ERR_TARGCHANGE),
+				   me.name, source.name, target_p->name);
 			return;
 		}
-		sendto_one(source_p, form_str(RPL_INVITING),
-			   me.name, source_p->name,
+		sendto_one(&source, form_str(RPL_INVITING),
+			   me.name, source.name,
 			   target_p->name, parv[2]);
 		if(away(user(*target_p)).size())
-			sendto_one_numeric(source_p, RPL_AWAY, form_str(RPL_AWAY),
+			sendto_one_numeric(&source, RPL_AWAY, form_str(RPL_AWAY),
 					   target_p->name, away(user(*target_p)).c_str());
 	}
 	/* invite timestamp */
@@ -173,13 +173,13 @@ m_invite(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 
 	if(MyConnect(target_p))
 	{
-		if(!IsOper(source_p) && (IsSetCallerId(target_p) ||
-					(IsSetRegOnlyMsg(target_p) && !suser(user(*source_p))[0])) &&
-				!accept_message(source_p, target_p))
+		if(!IsOper(&source) && (IsSetCallerId(target_p) ||
+					(IsSetRegOnlyMsg(target_p) && !suser(user(source))[0])) &&
+				!accept_message(&source, target_p))
 		{
-			if (IsSetRegOnlyMsg(target_p) && !suser(user(*source_p))[0])
+			if (IsSetRegOnlyMsg(target_p) && !suser(user(source))[0])
 			{
-				sendto_one_numeric(source_p, ERR_NONONREG,
+				sendto_one_numeric(&source, ERR_NONONREG,
 						form_str(ERR_NONONREG),
 						target_p->name);
 				return;
@@ -192,7 +192,7 @@ m_invite(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 				if((target_p->localClient->last_caller_id_time +
 				    ConfigFileEntry.caller_id_wait) >= rb_current_time())
 				{
-					sendto_one_numeric(source_p, ERR_TARGUMODEG,
+					sendto_one_numeric(&source, ERR_TARGUMODEG,
 							   form_str(ERR_TARGUMODEG),
 							   target_p->name);
 					return;
@@ -200,9 +200,9 @@ m_invite(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 				target_p->localClient->last_caller_id_time = rb_current_time();
 			}
 		}
-		add_reply_target(target_p, source_p);
+		add_reply_target(target_p, &source);
 		sendto_one(target_p, ":%s!%s@%s INVITE %s :%s",
-			   source_p->name, source_p->username, source_p->host,
+			   source.name, source.username, source.host,
 			   target_p->name, chptr->name.c_str());
 
 		if(store_invite)
@@ -212,15 +212,15 @@ m_invite(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 
 			sendto_channel_local_with_capability(chan::CHANOP, 0, CAP_INVITE_NOTIFY, chptr,
 				":%s NOTICE %s :%s is inviting %s to %s.",
-				me.name, chptr->name.c_str(), source_p->name, target_p->name, chptr->name.c_str());
+				me.name, chptr->name.c_str(), source.name, target_p->name, chptr->name.c_str());
 			sendto_channel_local_with_capability(chan::CHANOP, CAP_INVITE_NOTIFY, 0, chptr,
-				":%s!%s@%s INVITE %s %s", source_p->name, source_p->username,
-				source_p->host, target_p->name, chptr->name.c_str());
+				":%s!%s@%s INVITE %s %s", source.name, source.username,
+				source.host, target_p->name, chptr->name.c_str());
 		}
 	}
 
-	sendto_server(source_p, chptr, CAP_TS6, 0, ":%s INVITE %s %s %lu",
-		      use_id(source_p), use_id(target_p),
+	sendto_server(&source, chptr, CAP_TS6, 0, ":%s INVITE %s %s %lu",
+		      use_id(&source), use_id(target_p),
 		      chptr->name.c_str(), (unsigned long) chptr->channelts);
 }
 

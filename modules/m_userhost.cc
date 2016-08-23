@@ -29,7 +29,7 @@ static const char userhost_desc[] =
 
 static char buf[BUFSIZE];
 
-static void m_userhost(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_userhost(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message userhost_msgtab = {
 	"USERHOST", 0, 0, 0, 0,
@@ -46,7 +46,7 @@ DECLARE_MODULE_AV2(userhost, NULL, NULL, userhost_clist, NULL, NULL, NULL, NULL,
  * information only (no spurious AWAY labels or channels).
  */
 static void
-m_userhost(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_userhost(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	client::client *target_p;
 	char response[NICKLEN * 2 + USERLEN + HOSTLEN + 30];
@@ -55,7 +55,7 @@ m_userhost(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *so
 	int cur_len;
 	int rl;
 
-	cur_len = sprintf(buf, form_str(RPL_USERHOST), me.name, source_p->name, "");
+	cur_len = sprintf(buf, form_str(RPL_USERHOST), me.name, source.name, "");
 	t = buf + cur_len;
 
 	for (i = 1; i <= 5; i++)
@@ -71,7 +71,7 @@ m_userhost(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *so
 			 * lookup (USERHOST) to figure out what the clients' local IP
 			 * is.  Useful for things like NAT, and dynamic dial-up users.
 			 */
-			if(MyClient(target_p) && (target_p == source_p))
+			if(MyClient(target_p) && (target_p == &source))
 			{
 				rl = sprintf(response, "%s%s=%c%s@%s ",
 						target_p->name,
@@ -100,5 +100,5 @@ m_userhost(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *so
 		}
 	}
 
-	sendto_one(source_p, "%s", buf);
+	sendto_one(&source, "%s", buf);
 }

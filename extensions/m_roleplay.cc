@@ -18,13 +18,13 @@ using namespace ircd;
 static const char roleplay_desc[] =
 	"Adds a roleplaying system that allows faked nicknames to talk in a channel set +N";
 
-static void m_scene(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
-static void m_fsay(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
-static void m_faction(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
-static void m_npc(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
-static void m_npca(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
-static void m_displaymsg(struct MsgBuf *msgbuf_p, client::client *source_p, const char *channel, int underline, int action, const char *nick, const char *text);
-static void me_roleplay(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
+static void m_scene(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[]);
+static void m_fsay(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[]);
+static void m_faction(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[]);
+static void m_npc(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[]);
+static void m_npca(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[]);
+static void m_displaymsg(struct MsgBuf *msgbuf_p, client::client &source, const char *channel, int underline, int action, const char *nick, const char *text);
+static void me_roleplay(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[]);
 static unsigned int mymode;
 
 static int
@@ -89,37 +89,37 @@ mapi_clist_av1 roleplay_clist[] = { &scene_msgtab, &ambiance_msgtab, &fsay_msgta
 DECLARE_MODULE_AV2(roleplay, _modinit, _moddeinit, roleplay_clist, NULL, NULL, NULL, NULL, roleplay_desc);
 
 static void
-m_scene(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_scene(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	m_displaymsg(msgbuf_p, source_p, parv[1], 0, 0, "=Scene=", parv[2]);
+	m_displaymsg(msgbuf_p, source, parv[1], 0, 0, "=Scene=", parv[2]);
 }
 
 static void
-m_fsay(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_fsay(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	m_displaymsg(msgbuf_p, source_p, parv[1], 0, 0, parv[2], parv[3]);
+	m_displaymsg(msgbuf_p, source, parv[1], 0, 0, parv[2], parv[3]);
 }
 
 static void
-m_faction(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_faction(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	m_displaymsg(msgbuf_p, source_p, parv[1], 0, 1, parv[2], parv[3]);
+	m_displaymsg(msgbuf_p, source, parv[1], 0, 1, parv[2], parv[3]);
 }
 
 static void
-m_npc(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_npc(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	m_displaymsg(msgbuf_p, source_p, parv[1], 1, 0, parv[2], parv[3]);
+	m_displaymsg(msgbuf_p, source, parv[1], 1, 0, parv[2], parv[3]);
 }
 
 static void
-m_npca(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_npca(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	m_displaymsg(msgbuf_p, source_p, parv[1], 1, 1, parv[2], parv[3]);
+	m_displaymsg(msgbuf_p, source, parv[1], 1, 1, parv[2], parv[3]);
 }
 
 static void
-m_displaymsg(struct MsgBuf *msgbuf_p, client::client *source_p, const char *channel, int underline, int action, const char *nick, const char *text)
+m_displaymsg(struct MsgBuf *msgbuf_p, client::client &source, const char *channel, int underline, int action, const char *nick, const char *text)
 {
 	chan::chan *chptr;
 	chan::membership *msptr;
@@ -130,44 +130,44 @@ m_displaymsg(struct MsgBuf *msgbuf_p, client::client *source_p, const char *chan
 
 	rb_strlcpy(nick3, nick, sizeof nick3);
 
-	if(!IsFloodDone(source_p))
-		flood_endgrace(source_p);
+	if(!IsFloodDone(&source))
+		flood_endgrace(&source);
 
 	if((chptr = chan::get(channel, std::nothrow)) == NULL)
 	{
-		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
+		sendto_one_numeric(&source, ERR_NOSUCHCHANNEL,
 				form_str(ERR_NOSUCHCHANNEL), channel);
 		return;
 	}
 
-	if(!(msptr = get(chptr->members, *source_p, std::nothrow)))
+	if(!(msptr = get(chptr->members, source, std::nothrow)))
 	{
-		sendto_one_numeric(source_p, ERR_NOTONCHANNEL,
+		sendto_one_numeric(&source, ERR_NOTONCHANNEL,
 				   form_str(ERR_NOTONCHANNEL), chptr->name.c_str());
 		return;
 	}
 
 	if(!(chptr->mode.mode & chan::mode::table['N'].type))
 	{
-		sendto_one_numeric(source_p, 573, "%s :Roleplay commands are not enabled on this channel.", chptr->name.c_str());
+		sendto_one_numeric(&source, 573, "%s :Roleplay commands are not enabled on this channel.", chptr->name.c_str());
 		return;
 	}
 
-	if(!can_send(chptr, source_p, msptr))
+	if(!can_send(chptr, &source, msptr))
 	{
-		sendto_one_numeric(source_p, 573, "%s :Cannot send to channel.", chptr->name.c_str());
+		sendto_one_numeric(&source, 573, "%s :Cannot send to channel.", chptr->name.c_str());
 		return;
 	}
 
 	/* enforce flood stuff on roleplay commands */
-	if(flood_attack_channel(0, source_p, chptr))
+	if(flood_attack_channel(0, &source, chptr))
 		return;
 
 	/* enforce target change on roleplay commands */
-	if(!is_chanop(msptr) && !is_voiced(msptr) && !IsOper(source_p) && !add_channel_target(source_p, chptr))
+	if(!is_chanop(msptr) && !is_voiced(msptr) && !IsOper(&source) && !add_channel_target(&source, chptr))
 	{
-		sendto_one(source_p, form_str(ERR_TARGCHANGE),
-			   me.name, source_p->name, chptr->name.c_str());
+		sendto_one(&source, form_str(ERR_TARGCHANGE),
+			   me.name, source.name, chptr->name.c_str());
 		return;
 	}
 
@@ -180,24 +180,24 @@ m_displaymsg(struct MsgBuf *msgbuf_p, client::client *source_p, const char *chan
 	 * this prevents nastiness like fake factions, etc. */
 	if(EmptyString(nick3))
 	{
-		sendto_one_numeric(source_p, 573, "%s :No visible non-stripped characters in nick.", chptr->name.c_str());
+		sendto_one_numeric(&source, 573, "%s :No visible non-stripped characters in nick.", chptr->name.c_str());
 		return;
 	}
 
-	snprintf(text3, sizeof(text3), "%s (%s)", text, source_p->name);
+	snprintf(text3, sizeof(text3), "%s (%s)", text, source.name);
 
 	if(action)
 		snprintf(text2, sizeof(text2), "\1ACTION %s\1", text3);
 	else
 		snprintf(text2, sizeof(text2), "%s", text3);
 
-	sendto_channel_local(chan::ALL_MEMBERS, chptr, ":%s!%s@npc.fakeuser.invalid PRIVMSG %s :%s", nick2, source_p->name, channel, text2);
-	sendto_match_servs(source_p, "*", CAP_ENCAP, NOCAPS, "ENCAP * ROLEPLAY %s %s :%s",
+	sendto_channel_local(chan::ALL_MEMBERS, chptr, ":%s!%s@npc.fakeuser.invalid PRIVMSG %s :%s", nick2, source.name, channel, text2);
+	sendto_match_servs(&source, "*", CAP_ENCAP, NOCAPS, "ENCAP * ROLEPLAY %s %s :%s",
 			channel, nick2, text2);
 }
 
 static void
-me_roleplay(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+me_roleplay(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	chan::chan *chptr;
 
@@ -206,5 +206,5 @@ me_roleplay(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 	if((chptr = chan::get(parv[1], std::nothrow)) == NULL)
 		return;
 
-	sendto_channel_local(chan::ALL_MEMBERS, chptr, ":%s!%s@npc.fakeuser.invalid PRIVMSG %s :%s", parv[2], source_p->name, parv[1], parv[3]);
+	sendto_channel_local(chan::ALL_MEMBERS, chptr, ":%s!%s@npc.fakeuser.invalid PRIVMSG %s :%s", parv[2], source.name, parv[1], parv[3]);
 }

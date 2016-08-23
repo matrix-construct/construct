@@ -27,9 +27,9 @@ using namespace ircd;
 static const char message_desc[] =
 	"Provides the PRIVMSG and NOTICE commands to send messages to users and channels";
 
-static void m_message(enum message_type, struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void m_privmsg(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void m_notice(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_message(enum message_type, struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void m_privmsg(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void m_notice(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 static void expire_tgchange(void *unused);
 static struct ev_entry *expire_tgchange_event;
@@ -69,10 +69,10 @@ struct entity
 };
 
 static int build_target_list(enum message_type msgtype,
-			     client::client *client_p,
-			     client::client *source_p, const char *nicks_channels, const char *text);
+			     client::client &client,
+			     client::client &source, const char *nicks_channels, const char *text);
 
-static bool flood_attack_client(enum message_type msgtype, client::client *source_p, client::client *target_p);
+static bool flood_attack_client(enum message_type msgtype, client::client &source, client::client *target_p);
 
 /* Fifteen seconds should be plenty for a client to reply a ctcp */
 #define LARGE_CTCP_TIME 15
@@ -89,24 +89,24 @@ static int ntargets = 0;
 static bool duplicate_ptr(void *);
 
 static void msg_channel(enum message_type msgtype,
-			client::client *client_p,
-			client::client *source_p, chan::chan *chptr, const char *text);
+			client::client &client,
+			client::client &source, chan::chan *chptr, const char *text);
 
 static void msg_channel_opmod(enum message_type msgtype,
-			      client::client *client_p,
-			      client::client *source_p, chan::chan *chptr,
+			      client::client &client,
+			      client::client &source, chan::chan *chptr,
 			      const char *text);
 
 static void msg_channel_flags(enum message_type msgtype,
-			      client::client *client_p,
-			      client::client *source_p,
+			      client::client &client,
+			      client::client &source,
 			      chan::chan *chptr, int flags, const char *text);
 
 static void msg_client(enum message_type msgtype,
-		       client::client *source_p, client::client *target_p, const char *text);
+		       client::client &source, client::client *target_p, const char *text);
 
 static void handle_special(enum message_type msgtype,
-			   client::client *client_p, client::client *source_p, const char *nick,
+			   client::client &client, client::client &source, const char *nick,
 			   const char *text);
 
 /*
@@ -135,51 +135,51 @@ const char *cmdname[MESSAGE_TYPE_COUNT]
 };
 
 static void
-m_privmsg(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_privmsg(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	m_message(MESSAGE_TYPE_PRIVMSG, msgbuf_p, client_p, source_p, parc, parv);
+	m_message(MESSAGE_TYPE_PRIVMSG, msgbuf_p, client, source, parc, parv);
 }
 
 static void
-m_notice(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_notice(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	m_message(MESSAGE_TYPE_NOTICE, msgbuf_p, client_p, source_p, parc, parv);
+	m_message(MESSAGE_TYPE_NOTICE, msgbuf_p, client, source, parc, parv);
 }
 
 /*
  * inputs	- flag privmsg or notice
- *		- pointer to client_p
- *		- pointer to source_p
+ *		- pointer to &client
+ *		- pointer to &source
  *		- pointer to channel
  */
 static void
 m_message(enum message_type msgtype, struct MsgBuf *msgbuf_p,
-	  client::client *client_p, client::client *source_p, int parc, const char *parv[])
+	  client::client &client, client::client &source, int parc, const char *parv[])
 {
 	int i;
 
 	if(parc < 2 || EmptyString(parv[1]))
 	{
 		if(msgtype != MESSAGE_TYPE_NOTICE)
-			sendto_one(source_p, form_str(ERR_NORECIPIENT), me.name,
-				   source_p->name, cmdname[msgtype]);
+			sendto_one(&source, form_str(ERR_NORECIPIENT), me.name,
+				   source.name, cmdname[msgtype]);
 		return;
 	}
 
 	if(parc < 3 || EmptyString(parv[2]))
 	{
 		if(msgtype != MESSAGE_TYPE_NOTICE)
-			sendto_one(source_p, form_str(ERR_NOTEXTTOSEND), me.name, source_p->name);
+			sendto_one(&source, form_str(ERR_NOTEXTTOSEND), me.name, source.name);
 		return;
 	}
 
 	/* Finish the flood grace period if theyre not messaging themselves
 	 * as some clients (ircN) do this as a "lag check"
 	 */
-	if(MyClient(source_p) && !IsFloodDone(source_p) && irccmp(source_p->name, parv[1]))
-		flood_endgrace(source_p);
+	if(MyClient(&source) && !IsFloodDone(&source) && irccmp(source.name, parv[1]))
+		flood_endgrace(&source);
 
-	if(build_target_list(msgtype, client_p, source_p, parv[1], parv[2]) < 0)
+	if(build_target_list(msgtype, client, source, parv[1], parv[2]) < 0)
 	{
 		return;
 	}
@@ -189,23 +189,23 @@ m_message(enum message_type msgtype, struct MsgBuf *msgbuf_p,
 		switch (targets[i].type)
 		{
 		case ENTITY_CHANNEL:
-			msg_channel(msgtype, client_p, source_p,
+			msg_channel(msgtype, client, source,
 				    (chan::chan *) targets[i].ptr, parv[2]);
 			break;
 
 		case ENTITY_CHANNEL_OPMOD:
-			msg_channel_opmod(msgtype, client_p, source_p,
+			msg_channel_opmod(msgtype, client, source,
 				   (chan::chan *) targets[i].ptr, parv[2]);
 			break;
 
 		case ENTITY_CHANOPS_ON_CHANNEL:
-			msg_channel_flags(msgtype, client_p, source_p,
+			msg_channel_flags(msgtype, client, source,
 					  (chan::chan *) targets[i].ptr,
 					  targets[i].flags, parv[2]);
 			break;
 
 		case ENTITY_CLIENT:
-			msg_client(msgtype, source_p,
+			msg_client(msgtype, source,
 				   (client::client *) targets[i].ptr, parv[2]);
 			break;
 		}
@@ -215,11 +215,11 @@ m_message(enum message_type msgtype, struct MsgBuf *msgbuf_p,
 /*
  * build_target_list
  *
- * inputs	- pointer to given client_p (server)
+ * inputs	- pointer to given &client (server)
  *		- pointer to given source (oper/client etc.)
  *		- pointer to list of nicks/channels
  *		- pointer to table to place results
- *		- pointer to text (only used if source_p is an oper)
+ *		- pointer to text (only used if &source is an oper)
  * output	- number of valid entities
  * side effects	- target_table is modified to contain a list of
  *		  pointers to channels or clients
@@ -230,8 +230,8 @@ m_message(enum message_type msgtype, struct MsgBuf *msgbuf_p,
  */
 
 static int
-build_target_list(enum message_type msgtype, client::client *client_p,
-		  client::client *source_p, const char *nicks_channels, const char *text)
+build_target_list(enum message_type msgtype, client::client &client,
+		  client::client &source, const char *nicks_channels, const char *text)
 {
 	int type;
 	char *p, *nick, *target_list;
@@ -253,7 +253,7 @@ build_target_list(enum message_type msgtype, client::client *client_p,
 		if(rfc1459::is_chan_prefix(*nick))
 		{
 			/* ignore send of local channel to a server (should not happen) */
-			if(IsServer(client_p) && *nick == '&')
+			if(IsServer(&client) && *nick == '&')
 				continue;
 
 			if((chptr = chan::get(nick, std::nothrow)) != NULL)
@@ -262,8 +262,8 @@ build_target_list(enum message_type msgtype, client::client *client_p,
 				{
 					if(ntargets >= ConfigFileEntry.max_targets)
 					{
-						sendto_one(source_p, form_str(ERR_TOOMANYTARGETS),
-							   me.name, source_p->name, nick);
+						sendto_one(&source, form_str(ERR_TOOMANYTARGETS),
+							   me.name, source.name, nick);
 						return (1);
 					}
 					targets[ntargets].ptr = (void *) chptr;
@@ -273,13 +273,13 @@ build_target_list(enum message_type msgtype, client::client *client_p,
 
 			/* non existant channel */
 			else if(msgtype != MESSAGE_TYPE_NOTICE)
-				sendto_one_numeric(source_p, ERR_NOSUCHNICK,
+				sendto_one_numeric(&source, ERR_NOSUCHNICK,
 						   form_str(ERR_NOSUCHNICK), nick);
 
 			continue;
 		}
 
-		if(MyClient(source_p))
+		if(MyClient(&source))
 			target_p = client::find_named_person(nick);
 		else
 			target_p = client::find_person(nick);
@@ -291,8 +291,8 @@ build_target_list(enum message_type msgtype, client::client *client_p,
 			{
 				if(ntargets >= ConfigFileEntry.max_targets)
 				{
-					sendto_one(source_p, form_str(ERR_TOOMANYTARGETS),
-						   me.name, source_p->name, nick);
+					sendto_one(&source, form_str(ERR_TOOMANYTARGETS),
+						   me.name, source.name, nick);
 					return (1);
 				}
 				targets[ntargets].ptr = (void *) target_p;
@@ -323,8 +323,8 @@ build_target_list(enum message_type msgtype, client::client *client_p,
 			/* no recipient.. */
 			if(EmptyString(nick))
 			{
-				sendto_one(source_p, form_str(ERR_NORECIPIENT),
-					   me.name, source_p->name, cmdname[msgtype]);
+				sendto_one(&source, form_str(ERR_NORECIPIENT),
+					   me.name, source.name, cmdname[msgtype]);
 				continue;
 			}
 
@@ -336,13 +336,13 @@ build_target_list(enum message_type msgtype, client::client *client_p,
 			{
 				chan::membership *msptr;
 
-				msptr = get(chptr->members, *source_p, std::nothrow);
+				msptr = get(chptr->members, source, std::nothrow);
 
-				if(!IsServer(source_p) && !IsService(source_p) && !is_chanop(msptr) && !is_voiced(msptr))
+				if(!IsServer(&source) && !IsService(&source) && !is_chanop(msptr) && !is_voiced(msptr))
 				{
-					sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
-						   get_id(&me, source_p),
-						   get_id(source_p, source_p),
+					sendto_one(&source, form_str(ERR_CHANOPRIVSNEEDED),
+						   get_id(&me, &source),
+						   get_id(&source, &source),
 						   with_prefix);
 					continue;
 				}
@@ -351,8 +351,8 @@ build_target_list(enum message_type msgtype, client::client *client_p,
 				{
 					if(ntargets >= ConfigFileEntry.max_targets)
 					{
-						sendto_one(source_p, form_str(ERR_TOOMANYTARGETS),
-							   me.name, source_p->name, nick);
+						sendto_one(&source, form_str(ERR_TOOMANYTARGETS),
+							   me.name, source.name, nick);
 						return (1);
 					}
 					targets[ntargets].ptr = (void *) chptr;
@@ -362,14 +362,14 @@ build_target_list(enum message_type msgtype, client::client *client_p,
 			}
 			else if(msgtype != MESSAGE_TYPE_NOTICE)
 			{
-				sendto_one_numeric(source_p, ERR_NOSUCHNICK,
+				sendto_one_numeric(&source, ERR_NOSUCHNICK,
 						   form_str(ERR_NOSUCHNICK), nick);
 			}
 
 			continue;
 		}
 
-		if(IsServer(client_p) && *nick == '=' && nick[1] == '#')
+		if(IsServer(&client) && *nick == '=' && nick[1] == '#')
 		{
 			nick++;
 			if((chptr = chan::get(nick, std::nothrow)) != NULL)
@@ -378,8 +378,8 @@ build_target_list(enum message_type msgtype, client::client *client_p,
 				{
 					if(ntargets >= ConfigFileEntry.max_targets)
 					{
-						sendto_one(source_p, form_str(ERR_TOOMANYTARGETS),
-							   me.name, source_p->name, nick);
+						sendto_one(&source, form_str(ERR_TOOMANYTARGETS),
+							   me.name, source.name, nick);
 						return (1);
 					}
 					targets[ntargets].ptr = (void *) chptr;
@@ -389,15 +389,15 @@ build_target_list(enum message_type msgtype, client::client *client_p,
 
 			/* non existant channel */
 			else if(msgtype != MESSAGE_TYPE_NOTICE)
-				sendto_one_numeric(source_p, ERR_NOSUCHNICK,
+				sendto_one_numeric(&source, ERR_NOSUCHNICK,
 						   form_str(ERR_NOSUCHNICK), nick);
 
 			continue;
 		}
 
-		if(strchr(nick, '@') || (IsOper(source_p) && (*nick == '$')))
+		if(strchr(nick, '@') || (IsOper(&source) && (*nick == '$')))
 		{
-			handle_special(msgtype, client_p, source_p, nick, text);
+			handle_special(msgtype, client, source, nick, text);
 			continue;
 		}
 
@@ -407,13 +407,13 @@ build_target_list(enum message_type msgtype, client::client *client_p,
 			/* dont give this numeric when source is local,
 			 * because its misleading --anfl
 			 */
-			if(!MyClient(source_p) && rfc1459::is_digit(*nick))
-				sendto_one(source_p, ":%s %d %s * :Target left IRC. "
+			if(!MyClient(&source) && rfc1459::is_digit(*nick))
+				sendto_one(&source, ":%s %d %s * :Target left IRC. "
 					   "Failed to deliver: [%.20s]",
-					   get_id(&me, source_p), ERR_NOSUCHNICK,
-					   get_id(source_p, source_p), text);
+					   get_id(&me, &source), ERR_NOSUCHNICK,
+					   get_id(&source, &source), text);
 			else
-				sendto_one_numeric(source_p, ERR_NOSUCHNICK,
+				sendto_one_numeric(&source, ERR_NOSUCHNICK,
 						   form_str(ERR_NOSUCHNICK), nick);
 		}
 
@@ -445,8 +445,8 @@ duplicate_ptr(void *ptr)
  * msg_channel
  *
  * inputs	- flag privmsg or notice
- *		- pointer to client_p
- *		- pointer to source_p
+ *		- pointer to &client
+ *		- pointer to &source
  *		- pointer to channel
  * output	- NONE
  * side effects	- message given channel
@@ -455,21 +455,21 @@ duplicate_ptr(void *ptr)
  */
 static void
 msg_channel(enum message_type msgtype,
-	    client::client *client_p, client::client *source_p, chan::chan *chptr,
+	    client::client &client, client::client &source, chan::chan *chptr,
 	    const char *text)
 {
 	int result;
 	hook_data_privmsg_channel hdata;
 
-	if(MyClient(source_p))
+	if(MyClient(&source))
 	{
 		/* idle time shouldnt be reset by notices --fl */
 		if(msgtype != MESSAGE_TYPE_NOTICE)
-			source_p->localClient->last = rb_current_time();
+			source.localClient->last = rb_current_time();
 	}
 
 	hdata.msgtype = msgtype;
-	hdata.source_p = source_p;
+	hdata.source_p = &source;
 	hdata.chptr = chptr;
 	hdata.text = text;
 	hdata.approved = 0;
@@ -485,12 +485,12 @@ msg_channel(enum message_type msgtype,
 		if (msgtype == MESSAGE_TYPE_PRIVMSG)
 		{
 			if (!EmptyString(hdata.reason))
-				sendto_one_numeric(source_p, ERR_CANNOTSENDTOCHAN,
+				sendto_one_numeric(&source, ERR_CANNOTSENDTOCHAN,
 				                   form_str(ERR_CANNOTSENDTOCHAN)" (%s).",
 				                   chptr->name.c_str(),
 				                   hdata.reason);
 			else
-				sendto_one_numeric(source_p, ERR_CANNOTSENDTOCHAN,
+				sendto_one_numeric(&source, ERR_CANNOTSENDTOCHAN,
 				                   form_str(ERR_CANNOTSENDTOCHAN),
 				                   chptr->name.c_str());
 		}
@@ -504,27 +504,27 @@ msg_channel(enum message_type msgtype,
 		/* could be empty after colour stripping and
 		 * that would cause problems later */
 		if(msgtype != MESSAGE_TYPE_NOTICE)
-			sendto_one(source_p, form_str(ERR_NOTEXTTOSEND), me.name, source_p->name);
+			sendto_one(&source, form_str(ERR_NOTEXTTOSEND), me.name, source.name);
 		return;
 	}
 
 	/* chanops and voiced can flood their own channel with impunity */
-	if((result = can_send(chptr, source_p, NULL)))
+	if((result = can_send(chptr, &source, NULL)))
 	{
-		if(result != chan::CAN_SEND_OPV && MyClient(source_p) &&
-		   !IsOper(source_p) &&
-		   !add_channel_target(source_p, chptr))
+		if(result != chan::CAN_SEND_OPV && MyClient(&source) &&
+		   !IsOper(&source) &&
+		   !add_channel_target(&source, chptr))
 		{
-			sendto_one(source_p, form_str(ERR_TARGCHANGE),
+			sendto_one(&source, form_str(ERR_TARGCHANGE),
 			           me.name,
-			           source_p->name,
+			           source.name,
 			           chptr->name.c_str());
 			return;
 		}
 		if(result == chan::CAN_SEND_OPV ||
-		   !flood_attack_channel(msgtype, source_p, chptr))
+		   !flood_attack_channel(msgtype, &source, chptr))
 		{
-			sendto_channel_flags(client_p, chan::ALL_MEMBERS, source_p, chptr,
+			sendto_channel_flags(&client, chan::ALL_MEMBERS, &source, chptr,
 			                     "%s %s :%s",
 			                     cmdname[msgtype],
 			                     chptr->name.c_str(),
@@ -532,24 +532,24 @@ msg_channel(enum message_type msgtype,
 		}
 	}
 	else if(chptr->mode.mode & chan::mode::OPMODERATE &&
-	        (!(chptr->mode.mode & chan::mode::NOPRIVMSGS) || is_member(chptr, source_p)))
+	        (!(chptr->mode.mode & chan::mode::NOPRIVMSGS) || is_member(chptr, &source)))
 	{
-		if(MyClient(source_p) && !IsOper(source_p) && !add_channel_target(source_p, chptr))
+		if(MyClient(&source) && !IsOper(&source) && !add_channel_target(&source, chptr))
 		{
-			sendto_one(source_p, form_str(ERR_TARGCHANGE),
+			sendto_one(&source, form_str(ERR_TARGCHANGE),
 			           me.name,
-			           source_p->name,
+			           source.name,
 			           chptr->name.c_str());
 			return;
 		}
 
-		if(!flood_attack_channel(msgtype, source_p, chptr))
-			sendto_channel_opmod(client_p, source_p, chptr, cmdname[msgtype], text);
+		if(!flood_attack_channel(msgtype, &source, chptr))
+			sendto_channel_opmod(&client, &source, chptr, cmdname[msgtype], text);
 	}
 	else
 	{
 		if(msgtype != MESSAGE_TYPE_NOTICE)
-			sendto_one_numeric(source_p, ERR_CANNOTSENDTOCHAN,
+			sendto_one_numeric(&source, ERR_CANNOTSENDTOCHAN,
 					   form_str(ERR_CANNOTSENDTOCHAN), chptr->name.c_str());
 	}
 }
@@ -557,8 +557,8 @@ msg_channel(enum message_type msgtype,
  * msg_channel_opmod
  *
  * inputs	- flag privmsg or notice
- *		- pointer to client_p
- *		- pointer to source_p
+ *		- pointer to &client
+ *		- pointer to &source
  *		- pointer to channel
  * output	- NONE
  * side effects	- message given channel ops
@@ -567,13 +567,13 @@ msg_channel(enum message_type msgtype,
  */
 static void
 msg_channel_opmod(enum message_type msgtype,
-		  client::client *client_p, client::client *source_p,
+		  client::client &client, client::client &source,
 		  chan::chan *chptr, const char *text)
 {
 	hook_data_privmsg_channel hdata;
 
 	hdata.msgtype = msgtype;
-	hdata.source_p = source_p;
+	hdata.source_p = &source;
 	hdata.chptr = chptr;
 	hdata.text = text;
 	hdata.approved = 0;
@@ -593,22 +593,22 @@ msg_channel_opmod(enum message_type msgtype,
 		/* could be empty after colour stripping and
 		 * that would cause problems later */
 		if (msgtype != MESSAGE_TYPE_NOTICE)
-			sendto_one(source_p, form_str(ERR_NOTEXTTOSEND),
+			sendto_one(&source, form_str(ERR_NOTEXTTOSEND),
 			           me.name,
-			           source_p->name);
+			           source.name);
 		return;
 	}
 
 	if (chptr->mode.mode & chan::mode::OPMODERATE &&
-	   (!(chptr->mode.mode & chan::mode::NOPRIVMSGS) || is_member(chptr, source_p)))
+	   (!(chptr->mode.mode & chan::mode::NOPRIVMSGS) || is_member(chptr, &source)))
 	{
-		if (!flood_attack_channel(msgtype, source_p, chptr))
-			sendto_channel_opmod(client_p, source_p, chptr, cmdname[msgtype], text);
+		if (!flood_attack_channel(msgtype, &source, chptr))
+			sendto_channel_opmod(&client, &source, chptr, cmdname[msgtype], text);
 	}
 	else
 	{
 		if (msgtype != MESSAGE_TYPE_NOTICE)
-			sendto_one_numeric(source_p, ERR_CANNOTSENDTOCHAN, form_str(ERR_CANNOTSENDTOCHAN),
+			sendto_one_numeric(&source, ERR_CANNOTSENDTOCHAN, form_str(ERR_CANNOTSENDTOCHAN),
 			                   chptr->name.c_str());
 	}
 }
@@ -618,8 +618,8 @@ msg_channel_opmod(enum message_type msgtype,
  *
  * inputs	- flag 0 if PRIVMSG 1 if NOTICE. RFC
  *		  say NOTICE must not auto reply
- *		- pointer to client_p
- *		- pointer to source_p
+ *		- pointer to &client
+ *		- pointer to &source
  *		- pointer to channel
  *		- flags
  *		- pointer to text to send
@@ -627,8 +627,8 @@ msg_channel_opmod(enum message_type msgtype,
  * side effects	- message given channel either chanop or voice
  */
 static void
-msg_channel_flags(enum message_type msgtype, client::client *client_p,
-		  client::client *source_p, chan::chan *chptr, int flags, const char *text)
+msg_channel_flags(enum message_type msgtype, client::client &client,
+		  client::client &source, chan::chan *chptr, int flags, const char *text)
 {
 	int type;
 	char c;
@@ -645,15 +645,15 @@ msg_channel_flags(enum message_type msgtype, client::client *client_p,
 		c = '@';
 	}
 
-	if(MyClient(source_p))
+	if(MyClient(&source))
 	{
 		/* idletime shouldnt be reset by notice --fl */
 		if(msgtype != MESSAGE_TYPE_NOTICE)
-			source_p->localClient->last = rb_current_time();
+			source.localClient->last = rb_current_time();
 	}
 
 	hdata.msgtype = msgtype;
-	hdata.source_p = source_p;
+	hdata.source_p = &source;
 	hdata.chptr = chptr;
 	hdata.text = text;
 	hdata.approved = 0;
@@ -672,11 +672,11 @@ msg_channel_flags(enum message_type msgtype, client::client *client_p,
 		/* could be empty after colour stripping and
 		 * that would cause problems later */
 		if(msgtype != MESSAGE_TYPE_NOTICE)
-			sendto_one(source_p, form_str(ERR_NOTEXTTOSEND), me.name, source_p->name);
+			sendto_one(&source, form_str(ERR_NOTEXTTOSEND), me.name, source.name);
 		return;
 	}
 
-	sendto_channel_flags(client_p, type, source_p, chptr, "%s %c%s :%s",
+	sendto_channel_flags(&client, type, &source, chptr, "%s %c%s :%s",
 			     cmdname[msgtype], c, chptr->name.c_str(), text);
 }
 
@@ -705,7 +705,7 @@ expire_tgchange(void *unused)
  *
  * inputs	- flag 0 if PRIVMSG 1 if NOTICE. RFC
  *		  say NOTICE must not auto reply
- * 		- pointer to source_p source (client::client *)
+ * 		- pointer to &source source (client::client *)
  *		- pointer to target_p target (client::client *)
  *		- pointer to text
  * output	- NONE
@@ -713,12 +713,12 @@ expire_tgchange(void *unused)
  */
 static void
 msg_client(enum message_type msgtype,
-	   client::client *source_p, client::client *target_p, const char *text)
+	   client::client &source, client::client *target_p, const char *text)
 {
 	int do_floodcount = 0;
 	hook_data_privmsg_user hdata;
 
-	if(MyClient(source_p))
+	if(MyClient(&source))
 	{
 		/*
 		 * XXX: Controversial? Allow target users to send replies
@@ -727,20 +727,20 @@ msg_client(enum message_type msgtype,
 		 * as a way of griefing.  --nenolod
 		 */
 		if(msgtype != MESSAGE_TYPE_NOTICE &&
-				(IsSetCallerId(source_p) ||
-				 (IsSetRegOnlyMsg(source_p) && suser(user(*target_p)).empty())) &&
-				!accept_message(target_p, source_p) &&
+				(IsSetCallerId(&source) ||
+				 (IsSetRegOnlyMsg(&source) && suser(user(*target_p)).empty())) &&
+				!accept_message(target_p, &source) &&
 				!IsOper(target_p))
 		{
-			if(rb_dlink_list_length(&source_p->localClient->allow_list) <
+			if(rb_dlink_list_length(&source.localClient->allow_list) <
 					(unsigned long)ConfigFileEntry.max_accept)
 			{
-				rb_dlinkAddAlloc(target_p, &source_p->localClient->allow_list);
-				rb_dlinkAddAlloc(source_p, &target_p->on_allow_list);
+				rb_dlinkAddAlloc(target_p, &source.localClient->allow_list);
+				rb_dlinkAddAlloc(&source, &target_p->on_allow_list);
 			}
 			else
 			{
-				sendto_one_numeric(source_p, ERR_OWNMODE,
+				sendto_one_numeric(&source, ERR_OWNMODE,
 						form_str(ERR_OWNMODE),
 						target_p->name, "+g");
 				return;
@@ -750,11 +750,11 @@ msg_client(enum message_type msgtype,
 		/* reset idle time for message only if its not to self
 		 * and its not a notice */
 		if(msgtype != MESSAGE_TYPE_NOTICE)
-			source_p->localClient->last = rb_current_time();
+			source.localClient->last = rb_current_time();
 
 		/* auto cprivmsg/cnotice */
-		do_floodcount = !IsOper(source_p) &&
-			!find_allowing_channel(source_p, target_p);
+		do_floodcount = !IsOper(&source) &&
+			!find_allowing_channel(&source, target_p);
 
 		/* target change stuff, dont limit ctcp replies as that
 		 * would allow people to start filling up random users
@@ -763,10 +763,10 @@ msg_client(enum message_type msgtype,
 		if((msgtype != MESSAGE_TYPE_NOTICE || *text != '\001') &&
 		   ConfigFileEntry.target_change && do_floodcount)
 		{
-			if(!add_target(source_p, target_p))
+			if(!add_target(&source, target_p))
 			{
-				sendto_one(source_p, form_str(ERR_TARGCHANGE),
-					   me.name, source_p->name, target_p->name);
+				sendto_one(&source, form_str(ERR_TARGCHANGE),
+					   me.name, source.name, target_p->name);
 				return;
 			}
 		}
@@ -776,25 +776,25 @@ msg_client(enum message_type msgtype,
 			do_floodcount = 0;
 
 		if (do_floodcount &&
-				flood_attack_client(msgtype, source_p, target_p))
+				flood_attack_client(msgtype, source, target_p))
 			return;
 	}
-	else if(source_p->from == target_p->from)
+	else if(source.from == target_p->from)
 	{
 		sendto_realops_snomask(SNO_DEBUG, L_ALL,
 				     "Send message to %s[%s] dropped from %s(Fake Dir)",
-				     target_p->name, target_p->from->name, source_p->name);
+				     target_p->name, target_p->from->name, source.name);
 		return;
 	}
 
-	if(MyConnect(source_p) && (msgtype != MESSAGE_TYPE_NOTICE) && target_p->user && away(user(*target_p)).size())
-		sendto_one_numeric(source_p, RPL_AWAY, form_str(RPL_AWAY),
+	if(MyConnect(&source) && (msgtype != MESSAGE_TYPE_NOTICE) && target_p->user && away(user(*target_p)).size())
+		sendto_one_numeric(&source, RPL_AWAY, form_str(RPL_AWAY),
 				   target_p->name, away(user(*target_p)).c_str());
 
 	if(MyClient(target_p))
 	{
 		hdata.msgtype = msgtype;
-		hdata.source_p = source_p;
+		hdata.source_p = &source;
 		hdata.target_p = target_p;
 		hdata.text = text;
 		hdata.approved = 0;
@@ -812,27 +812,27 @@ msg_client(enum message_type msgtype,
 			/* could be empty after colour stripping and
 			 * that would cause problems later */
 			if(msgtype != MESSAGE_TYPE_NOTICE)
-				sendto_one(source_p, form_str(ERR_NOTEXTTOSEND), me.name, source_p->name);
+				sendto_one(&source, form_str(ERR_NOTEXTTOSEND), me.name, source.name);
 			return;
 		}
 
 		/* XXX Controversial? allow opers always to send through a +g */
-		if(!IsServer(source_p) && (IsSetCallerId(target_p) ||
-					(IsSetRegOnlyMsg(target_p) && suser(user(*source_p)).empty())))
+		if(!IsServer(&source) && (IsSetCallerId(target_p) ||
+					(IsSetRegOnlyMsg(target_p) && suser(user(source)).empty())))
 		{
 			/* Here is the anti-flood bot/spambot code -db */
-			if(accept_message(source_p, target_p) || IsOper(source_p))
+			if(accept_message(&source, target_p) || IsOper(&source))
 			{
-				add_reply_target(target_p, source_p);
+				add_reply_target(target_p, &source);
 				sendto_one(target_p, ":%s!%s@%s %s %s :%s",
-					   source_p->name,
-					   source_p->username,
-					   source_p->host, cmdname[msgtype], target_p->name, text);
+					   source.name,
+					   source.username,
+					   source.host, cmdname[msgtype], target_p->name, text);
 			}
-			else if (IsSetRegOnlyMsg(target_p) && suser(user(*source_p)).empty())
+			else if (IsSetRegOnlyMsg(target_p) && suser(user(source)).empty())
 			{
 				if (msgtype != MESSAGE_TYPE_NOTICE)
-					sendto_one_numeric(source_p, ERR_NONONREG,
+					sendto_one_numeric(&source, ERR_NONONREG,
 							form_str(ERR_NONONREG),
 							target_p->name);
 			}
@@ -841,7 +841,7 @@ msg_client(enum message_type msgtype,
 				/* check for accept, flag recipient incoming message */
 				if(msgtype != MESSAGE_TYPE_NOTICE)
 				{
-					sendto_one_numeric(source_p, ERR_TARGUMODEG,
+					sendto_one_numeric(&source, ERR_TARGUMODEG,
 							   form_str(ERR_TARGUMODEG),
 							   target_p->name);
 				}
@@ -850,14 +850,14 @@ msg_client(enum message_type msgtype,
 				    ConfigFileEntry.caller_id_wait) < rb_current_time())
 				{
 					if(msgtype != MESSAGE_TYPE_NOTICE)
-						sendto_one_numeric(source_p, RPL_TARGNOTIFY,
+						sendto_one_numeric(&source, RPL_TARGNOTIFY,
 								   form_str(RPL_TARGNOTIFY),
 								   target_p->name);
 
-					add_reply_target(target_p, source_p);
+					add_reply_target(target_p, &source);
 					sendto_one(target_p, form_str(RPL_UMODEGMSG),
-						   me.name, target_p->name, source_p->name,
-						   source_p->username, source_p->host);
+						   me.name, target_p->name, source.name,
+						   source.username, source.host);
 
 					target_p->localClient->last_caller_id_time = rb_current_time();
 				}
@@ -865,12 +865,12 @@ msg_client(enum message_type msgtype,
 		}
 		else
 		{
-			add_reply_target(target_p, source_p);
-			sendto_anywhere(target_p, source_p, cmdname[msgtype], ":%s", text);
+			add_reply_target(target_p, &source);
+			sendto_anywhere(target_p, &source, cmdname[msgtype], ":%s", text);
 		}
 	}
 	else
-		sendto_anywhere(target_p, source_p, cmdname[msgtype], ":%s", text);
+		sendto_anywhere(target_p, &source, cmdname[msgtype], ":%s", text);
 
 	return;
 }
@@ -885,7 +885,7 @@ msg_client(enum message_type msgtype,
  * side effects	- check for flood attack on target target_p
  */
 static bool
-flood_attack_client(enum message_type msgtype, client::client *source_p, client::client *target_p)
+flood_attack_client(enum message_type msgtype, client::client &source, client::client *target_p)
 {
 	int delta;
 
@@ -894,7 +894,7 @@ flood_attack_client(enum message_type msgtype, client::client *source_p, client:
 	 * and msg user@server.
 	 * -- jilles
 	 */
-	if(GlobalSetOptions.floodcount && IsClient(source_p) && source_p != target_p && !IsService(target_p))
+	if(GlobalSetOptions.floodcount && IsClient(&source) && &source != target_p && !IsService(target_p))
 	{
 		if((target_p->first_received_message_time + 1) < rb_current_time())
 		{
@@ -915,17 +915,17 @@ flood_attack_client(enum message_type msgtype, client::client *source_p, client:
 			{
 				sendto_realops_snomask(SNO_BOTS, L_NETWIDE,
 						     "Possible Flooder %s[%s@%s] on %s target: %s",
-						     source_p->name, source_p->username,
-						     source_p->orighost,
-						     source_p->servptr->name, target_p->name);
+						     source.name, source.username,
+						     source.orighost,
+						     source.servptr->name, target_p->name);
 				target_p->flood_noticed = 1;
 				/* add a bit of penalty */
 				target_p->received_number_of_privmsgs += 2;
 			}
-			if(MyClient(source_p) && (msgtype != MESSAGE_TYPE_NOTICE))
-				sendto_one(source_p,
+			if(MyClient(&source) && (msgtype != MESSAGE_TYPE_NOTICE))
+				sendto_one(&source,
 					   ":%s NOTICE %s :*** Message to %s throttled due to flooding",
-					   me.name, source_p->name, target_p->name);
+					   me.name, source.name, target_p->name);
 			return true;
 		}
 		else
@@ -952,8 +952,8 @@ flood_attack_client(enum message_type msgtype, client::client *source_p, client:
  *		  This disambiguates the syntax.
  */
 static void
-handle_special(enum message_type msgtype, client::client *client_p,
-	       client::client *source_p, const char *nick, const char *text)
+handle_special(enum message_type msgtype, client::client &client,
+	       client::client &source, const char *nick, const char *text)
 {
 	client::client *target_p;
 	char *server;
@@ -965,18 +965,18 @@ handle_special(enum message_type msgtype, client::client *client_p,
 	 */
 	if((server = (char *)strchr(nick, '@')) != NULL)
 	{
-		if((target_p = find_server(source_p, server + 1)) == NULL)
+		if((target_p = find_server(&source, server + 1)) == NULL)
 		{
-			sendto_one_numeric(source_p, ERR_NOSUCHSERVER,
+			sendto_one_numeric(&source, ERR_NOSUCHSERVER,
 					   form_str(ERR_NOSUCHSERVER), server + 1);
 			return;
 		}
 
-		if(!IsOper(source_p))
+		if(!IsOper(&source))
 		{
 			if(strchr(nick, '%') || (strncmp(nick, "opers", 5) == 0))
 			{
-				sendto_one_numeric(source_p, ERR_NOSUCHNICK,
+				sendto_one_numeric(&source, ERR_NOSUCHNICK,
 						   form_str(ERR_NOSUCHNICK), nick);
 				return;
 			}
@@ -986,7 +986,7 @@ handle_special(enum message_type msgtype, client::client *client_p,
 		if(!IsMe(target_p))
 		{
 			sendto_one(target_p, ":%s %s %s :%s",
-				   get_id(source_p, target_p), cmdname[msgtype], nick, text);
+				   get_id(&source, target_p), cmdname[msgtype], nick, text);
 			return;
 		}
 
@@ -994,7 +994,7 @@ handle_special(enum message_type msgtype, client::client *client_p,
 		if(strncmp(nick, "opers@", 6) == 0)
 		{
 			sendto_realops_snomask(SNO_GENERAL, L_ALL, "To opers: From: %s: %s",
-					     source_p->name, text);
+					     source.name, text);
 			return;
 		}
 
@@ -1004,7 +1004,7 @@ handle_special(enum message_type msgtype, client::client *client_p,
 		 * securely whether they have a service{} block or not.
 		 * -- jilles
 		 */
-		sendto_one_numeric(source_p, ERR_NOSUCHNICK,
+		sendto_one_numeric(&source, ERR_NOSUCHNICK,
 				   form_str(ERR_NOSUCHNICK), nick);
 		return;
 	}
@@ -1015,28 +1015,28 @@ handle_special(enum message_type msgtype, client::client *client_p,
 	 *
 	 * Armin, 8Jun90 (gruner@informatik.tu-muenchen.de)
 	 */
-	if(IsOper(source_p) && *nick == '$')
+	if(IsOper(&source) && *nick == '$')
 	{
 		if((*(nick + 1) == '$' || *(nick + 1) == '#'))
 			nick++;
-		else if(MyOper(source_p))
+		else if(MyOper(&source))
 		{
-			sendto_one(source_p,
+			sendto_one(&source,
 				   ":%s NOTICE %s :The command %s %s is no longer supported, please use $%s",
-				   me.name, source_p->name, cmdname[msgtype], nick, nick);
+				   me.name, source.name, cmdname[msgtype], nick, nick);
 			return;
 		}
 
-		if(MyClient(source_p) && !IsOperMassNotice(source_p))
+		if(MyClient(&source) && !IsOperMassNotice(&source))
 		{
-			sendto_one(source_p, form_str(ERR_NOPRIVS),
-				   me.name, source_p->name, "mass_notice");
+			sendto_one(&source, form_str(ERR_NOPRIVS),
+				   me.name, source.name, "mass_notice");
 			return;
 		}
 
 		if((s = (char *)strrchr(nick, '.')) == NULL)
 		{
-			sendto_one_numeric(source_p, ERR_NOTOPLEVEL,
+			sendto_one_numeric(&source, ERR_NOTOPLEVEL,
 					   form_str(ERR_NOTOPLEVEL), nick);
 			return;
 		}
@@ -1045,17 +1045,17 @@ handle_special(enum message_type msgtype, client::client *client_p,
 				break;
 		if(*s == '*' || *s == '?')
 		{
-			sendto_one_numeric(source_p, ERR_WILDTOPLEVEL,
+			sendto_one_numeric(&source, ERR_WILDTOPLEVEL,
 					   form_str(ERR_WILDTOPLEVEL), nick);
 			return;
 		}
 
-		sendto_match_butone(IsServer(client_p) ? client_p : NULL, source_p,
+		sendto_match_butone(IsServer(&client) ? &client : NULL, &source,
 				    nick + 1,
 				    (*nick == '#') ? MATCH_HOST : MATCH_SERVER,
 				    "%s $%s :%s", cmdname[msgtype], nick, text);
 		if (msgtype != MESSAGE_TYPE_NOTICE && *text == '\001')
-			source_p->large_ctcp_sent = rb_current_time();
+			source.large_ctcp_sent = rb_current_time();
 		return;
 	}
 }

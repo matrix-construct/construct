@@ -26,7 +26,7 @@ using namespace ircd;
 
 static const char names_desc[] = "Provides the NAMES command to view users on a channel";
 
-static void m_names(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_names(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message names_msgtab = {
 	"NAMES", 0, 0, 0, 0,
@@ -37,7 +37,7 @@ mapi_clist_av1 names_clist[] = { &names_msgtab, NULL };
 
 DECLARE_MODULE_AV2(names, NULL, NULL, names_clist, NULL, NULL, NULL, NULL, names_desc);
 
-static void names_global(client::client *source_p);
+static void names_global(client::client &source);
 
 /************************************************************************
  * m_names() - Added by Jto 27 Apr 1989
@@ -48,7 +48,7 @@ static void names_global(client::client *source_p);
  *      parv[1] = channel
  */
 static void
-m_names(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_names(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
 	chan::chan *chptr = NULL;
@@ -62,37 +62,37 @@ m_names(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 
 		if(!chan::valid_name(p))
 		{
-			sendto_one_numeric(source_p, ERR_BADCHANNAME,
+			sendto_one_numeric(&source, ERR_BADCHANNAME,
 					   form_str(ERR_BADCHANNAME),
 					   (unsigned char *) p);
 			return;
 		}
 
 		if((chptr = chan::get(p, std::nothrow)) != NULL)
-			channel_member_names(chptr, source_p, 1);
+			channel_member_names(chptr, &source, 1);
 		else
-			sendto_one(source_p, form_str(RPL_ENDOFNAMES),
-				   me.name, source_p->name, p);
+			sendto_one(&source, form_str(RPL_ENDOFNAMES),
+				   me.name, source.name, p);
 	}
 	else
 	{
-		if(!IsOper(source_p))
+		if(!IsOper(&source))
 		{
 			if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
 			{
-				sendto_one(source_p, form_str(RPL_LOAD2HI),
-					   me.name, source_p->name, "NAMES");
-				sendto_one(source_p, form_str(RPL_ENDOFNAMES),
-					   me.name, source_p->name, "*");
+				sendto_one(&source, form_str(RPL_LOAD2HI),
+					   me.name, source.name, "NAMES");
+				sendto_one(&source, form_str(RPL_ENDOFNAMES),
+					   me.name, source.name, "*");
 				return;
 			}
 			else
 				last_used = rb_current_time();
 		}
 
-		names_global(source_p);
-		sendto_one(source_p, form_str(RPL_ENDOFNAMES),
-			   me.name, source_p->name, "*");
+		names_global(source);
+		sendto_one(&source, form_str(RPL_ENDOFNAMES),
+			   me.name, source.name, "*");
 	}
 }
 
@@ -104,7 +104,7 @@ m_names(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
  * side effects - lists all non public non secret channels
  */
 static void
-names_global(client::client *source_p)
+names_global(client::client &source)
 {
 	int mlen;
 	int tlen;
@@ -120,10 +120,10 @@ names_global(client::client *source_p)
 	for(const auto &pit : chan::chans)
 	{
 		chptr = pit.second.get();
-		channel_member_names(chptr, source_p, 0);
+		channel_member_names(chptr, &source, 0);
 	}
 	cur_len = mlen = sprintf(buf, form_str(RPL_NAMREPLY),
-				    me.name, source_p->name, "*", "*");
+				    me.name, source.name, "*", "*");
 	t = buf + mlen;
 
 	/* Second, do all clients in one big sweep */
@@ -146,7 +146,7 @@ names_global(client::client *source_p)
 		{
 			auto &chptr(pit.first);
 
-			if(is_public(chptr) || is_member(chptr, source_p) || is_secret(chptr))
+			if(is_public(chptr) || is_member(chptr, &source) || is_secret(chptr))
 			{
 				dont_show = true;
 				break;
@@ -158,7 +158,7 @@ names_global(client::client *source_p)
 
 		if((cur_len + NICKLEN + 2) > (BUFSIZE - 3))
 		{
-			sendto_one(source_p, "%s", buf);
+			sendto_one(&source, "%s", buf);
 			cur_len = mlen;
 			t = buf + mlen;
 		}
@@ -169,5 +169,5 @@ names_global(client::client *source_p)
 	}
 
 	if(cur_len > mlen)
-		sendto_one(source_p, "%s", buf);
+		sendto_one(&source, "%s", buf);
 }

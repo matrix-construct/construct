@@ -37,10 +37,10 @@ static void _moddeinit(void);
 static void mark_services(void);
 static void unmark_services(void);
 
-static void me_su(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void me_login(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void me_rsfnc(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void me_nickdelay(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void me_su(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void me_login(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void me_rsfnc(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void me_nickdelay(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 static void h_svc_server_introduced(hook_data_client *);
 static void h_svc_whois(hook_data_client *);
@@ -96,15 +96,15 @@ _moddeinit(void)
 }
 
 static void
-me_su(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
+me_su(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	int parc, const char *parv[])
 {
 	client::client *target_p;
 
-	if(!(source_p->flags & FLAGS_SERVICE))
+	if(!(source.flags & FLAGS_SERVICE))
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-			"Non-service server %s attempting to execute services-only command SU", source_p->name);
+			"Non-service server %s attempting to execute services-only command SU", source.name);
 		return;
 	}
 
@@ -127,17 +127,17 @@ me_su(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_
 }
 
 static void
-me_login(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
+me_login(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	int parc, const char *parv[])
 {
-	if(!IsPerson(source_p))
+	if(!IsPerson(&source))
 		return;
 
-	suser(user(*source_p)) = parv[1];
+	suser(user(source)) = parv[1];
 }
 
 static void
-me_rsfnc(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
+me_rsfnc(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	int parc, const char *parv[])
 {
 	client::client *target_p;
@@ -145,10 +145,10 @@ me_rsfnc(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 	time_t newts, curts;
 	char note[NICKLEN + 10];
 
-	if(!(source_p->flags & FLAGS_SERVICE))
+	if(!(source.flags & FLAGS_SERVICE))
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-			"Non-service server %s attempting to execute services-only command RSFNC", source_p->name);
+			"Non-service server %s attempting to execute services-only command RSFNC", source.name);
 		return;
 	}
 
@@ -245,15 +245,15 @@ doit:
 **      parv[2] = nick
 */
 static void
-me_nickdelay(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+me_nickdelay(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	int duration;
 	struct nd_entry *nd;
 
-	if(!(source_p->flags & FLAGS_SERVICE))
+	if(!(source.flags & FLAGS_SERVICE))
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-			"Non-service server %s attempting to execute services-only command NICKDELAY", source_p->name);
+			"Non-service server %s attempting to execute services-only command NICKDELAY", source.name);
 		return;
 	}
 

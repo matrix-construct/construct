@@ -29,8 +29,8 @@ using namespace ircd;
 static const char extendchans_desc[] =
 	"Allow an oper or service to let a given user join more channels";
 
-static void mo_extendchans(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void me_extendchans(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mo_extendchans(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void me_extendchans(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message extendchans_msgtab = {
 	"EXTENDCHANS", 0, 0, 0, 0,
@@ -42,52 +42,52 @@ mapi_clist_av1 extendchans_clist[] = { &extendchans_msgtab, NULL };
 DECLARE_MODULE_AV2(extendchans, NULL, NULL, extendchans_clist, NULL, NULL, NULL, NULL, extendchans_desc);
 
 static void
-mo_extendchans(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mo_extendchans(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	client::client *target_p;
 
-	if(!HasPrivilege(source_p, "oper:extendchans"))
+	if(!HasPrivilege(&source, "oper:extendchans"))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "extendchans");
+		sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "extendchans");
 		return;
 	}
 
 	if(EmptyString(parv[1]))
 	{
-		sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS), me.name, source_p->name, "EXTENDCHANS");
+		sendto_one(&source, form_str(ERR_NEEDMOREPARAMS), me.name, source.name, "EXTENDCHANS");
 		return;
 	}
 
-	if((target_p = find_chasing(source_p, parv[1], NULL)) == NULL)
+	if((target_p = find_chasing(&source, parv[1], NULL)) == NULL)
 		return;
 
 	/* Is the target user local? */
 	if(MyClient(target_p))
 	{
 		sendto_one_notice(target_p, ":*** %s (%s@%s) is extending your channel limit",
-			source_p->name, source_p->username, source_p->host);
+			source.name, source.username, source.host);
 		SetExtendChans(target_p);
 	}
 	else /* Target user isn't local, so pass it on. */
 	{
 		client::client *cptr = target_p->servptr;
 		sendto_one(cptr, ":%s ENCAP %s EXTENDCHANS %s",
-			get_id(source_p, cptr), cptr->name, get_id(target_p, cptr));
+			get_id(&source, cptr), cptr->name, get_id(target_p, cptr));
 	}
 
-	sendto_one_notice(source_p, ":You have extended the channel limit on: %s (%s@%s)",
+	sendto_one_notice(&source, ":You have extended the channel limit on: %s (%s@%s)",
 		target_p->name, target_p->username, target_p->orighost);
 }
 
 static void
-me_extendchans(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+me_extendchans(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	client::client *target_p;
 
 	target_p = client::find_person(parv[1]);
 	if(target_p == NULL)
 	{
-		sendto_one_numeric(source_p, ERR_NOSUCHNICK, form_str(ERR_NOSUCHNICK), parv[1]);
+		sendto_one_numeric(&source, ERR_NOSUCHNICK, form_str(ERR_NOSUCHNICK), parv[1]);
 		return;
 	}
 
@@ -96,11 +96,11 @@ me_extendchans(struct MsgBuf *msgbuf_p, client::client *client_p, client::client
 	{
 		client::client *cptr = target_p->servptr;
 		sendto_one(cptr, ":%s ENCAP %s EXTENDCHANS %s",
-			get_id(source_p, cptr), cptr->name, get_id(target_p, cptr));
+			get_id(&source, cptr), cptr->name, get_id(target_p, cptr));
 		return;
 	}
 
 	sendto_one_notice(target_p, ":*** %s (%s@%s) is extending your channel limit",
-		source_p->name, source_p->username, source_p->host);
+		source.name, source.username, source.host);
 	SetExtendChans(target_p);
 }

@@ -27,12 +27,11 @@ using namespace ircd;
 const char admin_desc[] =
 	"Provides the ADMIN command to show server administrator information";
 
-static void m_admin(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void mr_admin(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void ms_admin(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void do_admin(client::client *source_p);
-
-static void admin_spy(client::client *);
+static void m_admin(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void mr_admin(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void ms_admin(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void do_admin(client::client &source);
+static void admin_spy(client::client &);
 
 struct Message admin_msgtab = {
 	"ADMIN", 0, 0, 0, 0,
@@ -54,22 +53,22 @@ DECLARE_MODULE_AV2(admin, NULL, NULL, admin_clist, admin_hlist, NULL, NULL, NULL
  *      parv[1] = servername
  */
 static void
-mr_admin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mr_admin(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	static time_t last_used = 0L;
 
 	if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
 	{
-		sendto_one(source_p, form_str(RPL_LOAD2HI),
+		sendto_one(&source, form_str(RPL_LOAD2HI),
 			   me.name,
-			   EmptyString(source_p->name) ? "*" : source_p->name,
+			   EmptyString(source.name) ? "*" : source.name,
 			   "ADMIN");
 		return;
 	}
 	else
 		last_used = rb_current_time();
 
-	do_admin(source_p);
+	do_admin(source);
 }
 
 /*
@@ -77,7 +76,7 @@ mr_admin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
  *      parv[1] = servername
  */
 static void
-m_admin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_admin(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	static time_t last_used = 0L;
 
@@ -85,18 +84,18 @@ m_admin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 	{
 		if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
 		{
-			sendto_one(source_p, form_str(RPL_LOAD2HI),
-				   me.name, source_p->name, "ADMIN");
+			sendto_one(&source, form_str(RPL_LOAD2HI),
+				   me.name, source.name, "ADMIN");
 			return;
 		}
 		else
 			last_used = rb_current_time();
 
-		if(hunt_server(client_p, source_p, ":%s ADMIN :%s", 1, parc, parv) != HUNTED_ISME)
+		if(hunt_server(&client, &source, ":%s ADMIN :%s", 1, parc, parv) != HUNTED_ISME)
 			return;
 	}
 
-	do_admin(source_p);
+	do_admin(source);
 }
 
 
@@ -105,12 +104,12 @@ m_admin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
  *      parv[1] = servername
  */
 static void
-ms_admin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+ms_admin(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(hunt_server(client_p, source_p, ":%s ADMIN :%s", 1, parc, parv) != HUNTED_ISME)
+	if(hunt_server(&client, &source, ":%s ADMIN :%s", 1, parc, parv) != HUNTED_ISME)
 		return;
 
-	do_admin(source_p);
+	do_admin(source);
 }
 
 
@@ -122,18 +121,18 @@ ms_admin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
  * side effects	- admin info is sent to client given
  */
 static void
-do_admin(client::client *source_p)
+do_admin(client::client &source)
 {
-	if(IsPerson(source_p))
-		admin_spy(source_p);
+	if(IsPerson(&source))
+		admin_spy(source);
 
-	sendto_one_numeric(source_p, RPL_ADMINME, form_str(RPL_ADMINME), me.name);
+	sendto_one_numeric(&source, RPL_ADMINME, form_str(RPL_ADMINME), me.name);
 	if(AdminInfo.name != NULL)
-		sendto_one_numeric(source_p, RPL_ADMINLOC1, form_str(RPL_ADMINLOC1), AdminInfo.name);
+		sendto_one_numeric(&source, RPL_ADMINLOC1, form_str(RPL_ADMINLOC1), AdminInfo.name);
 	if(AdminInfo.description != NULL)
-		sendto_one_numeric(source_p, RPL_ADMINLOC2, form_str(RPL_ADMINLOC2), AdminInfo.description);
+		sendto_one_numeric(&source, RPL_ADMINLOC2, form_str(RPL_ADMINLOC2), AdminInfo.description);
 	if(AdminInfo.email != NULL)
-		sendto_one_numeric(source_p, RPL_ADMINEMAIL, form_str(RPL_ADMINEMAIL), AdminInfo.email);
+		sendto_one_numeric(&source, RPL_ADMINEMAIL, form_str(RPL_ADMINEMAIL), AdminInfo.email);
 }
 
 /* admin_spy()
@@ -143,11 +142,11 @@ do_admin(client::client *source_p)
  * side effects - event doing_admin is called
  */
 static void
-admin_spy(client::client *source_p)
+admin_spy(client::client &source)
 {
 	hook_data hd;
 
-	hd.client = source_p;
+	hd.client = &source;
 	hd.arg1 = hd.arg2 = NULL;
 
 	call_hook(doing_admin_hook, &hd);

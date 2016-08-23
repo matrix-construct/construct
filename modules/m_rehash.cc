@@ -27,8 +27,8 @@ using namespace ircd;
 static const char rehash_desc[] =
 	"Provides the REHASH command to reload configuration and other files";
 
-static void mo_rehash(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void me_rehash(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mo_rehash(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void me_rehash(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message rehash_msgtab = {
 	"REHASH", 0, 0, 0, 0,
@@ -42,75 +42,75 @@ DECLARE_MODULE_AV2(rehash, NULL, NULL, rehash_clist, NULL, NULL, NULL, NULL, reh
 struct hash_commands
 {
 	const char *cmd;
-	void (*handler) (client::client * source_p);
+	void (*handler) (client::client &source);
 };
 
 static void
-rehash_bans_loc(client::client *source_p)
+rehash_bans_loc(client::client &source)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is rehashing bans",
-				get_oper_name(source_p));
-	if (!MyConnect(source_p))
-		remote_rehash_oper_p = source_p;
+				get_oper_name(&source));
+	if (!MyConnect(&source))
+		remote_rehash_oper_p = &source;
 
 	rehash_bans();
 }
 
 static void
-rehash_dns(client::client *source_p)
+rehash_dns(client::client &source)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is rehashing DNS",
-			     get_oper_name(source_p));
-	if (!MyConnect(source_p))
-		remote_rehash_oper_p = source_p;
+			     get_oper_name(&source));
+	if (!MyConnect(&source))
+		remote_rehash_oper_p = &source;
 
 	reload_nameservers();
 }
 
 static void
-rehash_ssld(client::client *source_p)
+rehash_ssld(client::client &source)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is restarting ssld",
-				get_oper_name(source_p));
+				get_oper_name(&source));
 
 	restart_ssld();
 }
 
 static void
-rehash_motd(client::client *source_p)
+rehash_motd(client::client &source)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "%s is forcing re-reading of MOTD file",
-			     get_oper_name(source_p));
-	if (!MyConnect(source_p))
-		remote_rehash_oper_p = source_p;
+			     get_oper_name(&source));
+	if (!MyConnect(&source))
+		remote_rehash_oper_p = &source;
 
 	cache::motd::cache_user();
 }
 
 static void
-rehash_omotd(client::client *source_p)
+rehash_omotd(client::client &source)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "%s is forcing re-reading of OPER MOTD file",
-			     get_oper_name(source_p));
-	if (!MyConnect(source_p))
-		remote_rehash_oper_p = source_p;
+			     get_oper_name(&source));
+	if (!MyConnect(&source))
+		remote_rehash_oper_p = &source;
 
 	cache::motd::cache_oper();
 }
 
 static void
-rehash_tklines(client::client *source_p)
+rehash_tklines(client::client &source)
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr, *next_ptr;
 	int i;
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing temp klines",
-				get_oper_name(source_p));
-	if (!MyConnect(source_p))
-		remote_rehash_oper_p = source_p;
+				get_oper_name(&source));
+	if (!MyConnect(&source))
+		remote_rehash_oper_p = &source;
 
 	for(i = 0; i < LAST_TEMP_TYPE; i++)
 	{
@@ -125,16 +125,16 @@ rehash_tklines(client::client *source_p)
 }
 
 static void
-rehash_tdlines(client::client *source_p)
+rehash_tdlines(client::client &source)
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr, *next_ptr;
 	int i;
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing temp dlines",
-				get_oper_name(source_p));
-	if (!MyConnect(source_p))
-		remote_rehash_oper_p = source_p;
+				get_oper_name(&source));
+	if (!MyConnect(&source))
+		remote_rehash_oper_p = &source;
 
 	for(i = 0; i < LAST_TEMP_TYPE; i++)
 	{
@@ -149,16 +149,16 @@ rehash_tdlines(client::client *source_p)
 }
 
 static void
-rehash_txlines(client::client *source_p)
+rehash_txlines(client::client &source)
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing temp xlines",
-				get_oper_name(source_p));
-	if (!MyConnect(source_p))
-		remote_rehash_oper_p = source_p;
+				get_oper_name(&source));
+	if (!MyConnect(&source))
+		remote_rehash_oper_p = &source;
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, xline_conf_list.head)
 	{
@@ -173,7 +173,7 @@ rehash_txlines(client::client *source_p)
 }
 
 static void
-rehash_tresvs(client::client *source_p)
+rehash_tresvs(client::client &source)
 {
 	struct ConfItem *aconf;
 	rb_radixtree_iteration_state iter;
@@ -181,9 +181,9 @@ rehash_tresvs(client::client *source_p)
 	rb_dlink_node *next_ptr;
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing temp resvs",
-				get_oper_name(source_p));
-	if (!MyConnect(source_p))
-		remote_rehash_oper_p = source_p;
+				get_oper_name(&source));
+	if (!MyConnect(&source))
+		remote_rehash_oper_p = &source;
 
 	void *elem;
 	RB_RADIXTREE_FOREACH(elem, &iter, resv_tree)
@@ -209,40 +209,40 @@ rehash_tresvs(client::client *source_p)
 }
 
 static void
-rehash_rejectcache(client::client *source_p)
+rehash_rejectcache(client::client &source)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing reject cache",
-				get_oper_name(source_p));
-	if (!MyConnect(source_p))
-		remote_rehash_oper_p = source_p;
+				get_oper_name(&source));
+	if (!MyConnect(&source))
+		remote_rehash_oper_p = &source;
 	flush_reject();
 
 }
 
 static void
-rehash_throttles(client::client *source_p)
+rehash_throttles(client::client &source)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing throttles",
-				get_oper_name(source_p));
-	if (!MyConnect(source_p))
-		remote_rehash_oper_p = source_p;
+				get_oper_name(&source));
+	if (!MyConnect(&source))
+		remote_rehash_oper_p = &source;
 	flush_throttle();
 
 }
 
 static void
-rehash_help(client::client *source_p)
+rehash_help(client::client &source)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "%s is forcing re-reading of HELP files",
-			     get_oper_name(source_p));
-	if (!MyConnect(source_p))
-		remote_rehash_oper_p = source_p;
+			     get_oper_name(&source));
+	if (!MyConnect(&source))
+		remote_rehash_oper_p = &source;
 	cache::help::load();
 }
 
 static void
-rehash_nickdelay(client::client *source_p)
+rehash_nickdelay(client::client &source)
 {
 	struct nd_entry *nd;
 	rb_dlink_node *ptr;
@@ -250,9 +250,9 @@ rehash_nickdelay(client::client *source_p)
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "%s is clearing the nick delay table",
-			     get_oper_name(source_p));
-	if (!MyConnect(source_p))
-		remote_rehash_oper_p = source_p;
+			     get_oper_name(&source));
+	if (!MyConnect(&source))
+		remote_rehash_oper_p = &source;
 
 	RB_DLINK_FOREACH_SAFE(ptr, safe_ptr, nd_list.head)
 	{
@@ -283,7 +283,7 @@ static struct hash_commands rehash_commands[] =
 /* *INDENT-ON* */
 
 static void
-do_rehash(client::client *source_p, const char *type)
+do_rehash(client::client &source, const char *type)
 {
 	if (type != NULL)
 	{
@@ -295,11 +295,11 @@ do_rehash(client::client *source_p, const char *type)
 		{
 			if(irccmp(type, rehash_commands[x].cmd) == 0)
 			{
-				sendto_one(source_p, form_str(RPL_REHASHING), me.name,
-					   source_p->name, rehash_commands[x].cmd);
+				sendto_one(&source, form_str(RPL_REHASHING), me.name,
+					   source.name, rehash_commands[x].cmd);
 				ilog(L_MAIN, "REHASH %s From %s[%s]", type,
-				     get_oper_name(source_p), source_p->sockhost);
-				rehash_commands[x].handler(source_p);
+				     get_oper_name(&source), source.sockhost);
+				rehash_commands[x].handler(source);
 				remote_rehash_oper_p = NULL;
 				return;
 			}
@@ -313,18 +313,18 @@ do_rehash(client::client *source_p, const char *type)
 			rb_strlcat(cmdbuf, " ", sizeof(cmdbuf));
 			rb_strlcat(cmdbuf, rehash_commands[x].cmd, sizeof(cmdbuf));
 		}
-		sendto_one_notice(source_p, ":rehash one of:%s", cmdbuf);
+		sendto_one_notice(&source, ":rehash one of:%s", cmdbuf);
 	}
 	else
 	{
-		sendto_one(source_p, form_str(RPL_REHASHING), me.name, source_p->name,
+		sendto_one(&source, form_str(RPL_REHASHING), me.name, source.name,
 			   ConfigFileEntry.configfile);
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "%s is rehashing server config file", get_oper_name(source_p));
-		if (!MyConnect(source_p))
-			remote_rehash_oper_p = source_p;
-		ilog(L_MAIN, "REHASH From %s[%s]", get_oper_name(source_p),
-		     source_p->sockhost);
+				     "%s is rehashing server config file", get_oper_name(&source));
+		if (!MyConnect(&source))
+			remote_rehash_oper_p = &source;
+		ilog(L_MAIN, "REHASH From %s[%s]", get_oper_name(&source),
+		     source.sockhost);
 		rehash(false);
 		remote_rehash_oper_p = NULL;
 	}
@@ -337,14 +337,14 @@ do_rehash(client::client *source_p, const char *type)
  * parv[2] = destination
  */
 static void
-mo_rehash(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mo_rehash(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	const char *type = NULL, *target_server = NULL;
 
-	if(!IsOperRehash(source_p))
+	if(!IsOperRehash(&source))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS),
-			   me.name, source_p->name, "rehash");
+		sendto_one(&source, form_str(ERR_NOPRIVS),
+			   me.name, source.name, "rehash");
 		return;
 	}
 
@@ -359,13 +359,13 @@ mo_rehash(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sou
 
 	if (target_server != NULL)
 	{
-		if(!IsOperRemoteBan(source_p))
+		if(!IsOperRemoteBan(&source))
 		{
-			sendto_one(source_p, form_str(ERR_NOPRIVS),
-				me.name, source_p->name, "remoteban");
+			sendto_one(&source, form_str(ERR_NOPRIVS),
+				me.name, source.name, "remoteban");
 			return;
 		}
-		sendto_match_servs(source_p, target_server,
+		sendto_match_servs(&source, target_server,
 				CAP_ENCAP, NOCAPS,
 				"ENCAP %s REHASH %s",
 				target_server, type != NULL ? type : "");
@@ -373,19 +373,19 @@ mo_rehash(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sou
 			return;
 	}
 
-	do_rehash(source_p, type);
+	do_rehash(source, type);
 }
 
 static void
-me_rehash(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+me_rehash(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 
-	if (!IsPerson(source_p))
+	if (!IsPerson(&source))
 		return;
 
-	if (!find_shared_conf(source_p->username, source_p->host,
-				source_p->servptr->name, SHARED_REHASH))
+	if (!find_shared_conf(source.username, source.host,
+				source.servptr->name, SHARED_REHASH))
 		return;
 
-	do_rehash(source_p, parc > 1 ? parv[1] : NULL);
+	do_rehash(source, parc > 1 ? parv[1] : NULL);
 }

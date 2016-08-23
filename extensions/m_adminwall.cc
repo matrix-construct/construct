@@ -27,8 +27,8 @@ using namespace ircd;
 static const char adminwall_desc[] =
         "Provides the ADMINWALL command to send a message to all administrators";
 
-static void mo_adminwall(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void me_adminwall(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mo_adminwall(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void me_adminwall(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message adminwall_msgtab = {
 	"ADMINWALL", 0, 0, 0, 0,
@@ -45,20 +45,20 @@ DECLARE_MODULE_AV2(adminwall, NULL, NULL, adminwall_clist, NULL, NULL, NULL, NUL
  */
 
 static void
-mo_adminwall(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mo_adminwall(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-        if(!IsAdmin(source_p))
+        if(!IsAdmin(&source))
         {
-                sendto_one(source_p, form_str(ERR_NOPRIVS),
-                           me.name, source_p->name, "adminwall");
+                sendto_one(&source, form_str(ERR_NOPRIVS),
+                           me.name, source.name, "adminwall");
                 return;
         }
-        sendto_wallops_flags(UMODE_ADMIN, source_p, "ADMINWALL - %s", parv[1]);
-        sendto_match_servs(source_p, "*", CAP_ENCAP, NOCAPS, "ENCAP * ADMINWALL :%s", parv[1]);
+        sendto_wallops_flags(UMODE_ADMIN, &source, "ADMINWALL - %s", parv[1]);
+        sendto_match_servs(&source, "*", CAP_ENCAP, NOCAPS, "ENCAP * ADMINWALL :%s", parv[1]);
 }
 
 static void
-me_adminwall(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+me_adminwall(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-        sendto_wallops_flags(UMODE_ADMIN, source_p, "ADMINWALL - %s", parv[1]);
+        sendto_wallops_flags(UMODE_ADMIN, &source, "ADMINWALL - %s", parv[1]);
 }

@@ -27,13 +27,13 @@ using namespace ircd;
 static const char info_desc[] =
 	"Provides the INFO command for retrieving server copyright, credits, and other info";
 
-static void send_conf_options(client::client *source_p);
-static void send_birthdate_online_time(client::client *source_p);
-static void send_info_text(client::client *source_p);
-static void info_spy(client::client *);
+static void send_conf_options(client::client &source);
+static void send_birthdate_online_time(client::client &source);
+static void send_info_text(client::client &source);
+static void info_spy(client::client &);
 
-static void m_info(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void mo_info(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_info(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void mo_info(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message info_msgtab = {
 	"INFO", 0, 0, 0, 0,
@@ -652,30 +652,30 @@ static struct InfoStruct info_table[] = {
  **  parv[1] = servername
  */
 static void
-m_info(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_info(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	static time_t last_used = 0L;
 
 	if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
 	{
 		/* safe enough to give this on a local connect only */
-		sendto_one(source_p, form_str(RPL_LOAD2HI),
-				me.name, source_p->name, "INFO");
-		sendto_one_numeric(source_p, RPL_ENDOFINFO, form_str(RPL_ENDOFINFO));
+		sendto_one(&source, form_str(RPL_LOAD2HI),
+				me.name, source.name, "INFO");
+		sendto_one_numeric(&source, RPL_ENDOFINFO, form_str(RPL_ENDOFINFO));
 		return;
 	}
 	else
 		last_used = rb_current_time();
 
-	if(hunt_server(client_p, source_p, ":%s INFO :%s", 1, parc, parv) != HUNTED_ISME)
+	if(hunt_server(&client, &source, ":%s INFO :%s", 1, parc, parv) != HUNTED_ISME)
 		return;
 
-	info_spy(source_p);
+	info_spy(source);
 
-	send_info_text(source_p);
-	send_birthdate_online_time(source_p);
+	send_info_text(source);
+	send_birthdate_online_time(source);
 
-	sendto_one_numeric(source_p, RPL_ENDOFINFO, form_str(RPL_ENDOFINFO));
+	sendto_one_numeric(&source, RPL_ENDOFINFO, form_str(RPL_ENDOFINFO));
 }
 
 /*
@@ -683,23 +683,23 @@ m_info(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
  **  parv[1] = servername
  */
 static void
-mo_info(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mo_info(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(hunt_server(client_p, source_p, ":%s INFO :%s", 1, parc, parv) == HUNTED_ISME)
+	if(hunt_server(&client, &source, ":%s INFO :%s", 1, parc, parv) == HUNTED_ISME)
 	{
-		info_spy(source_p);
-		send_info_text(source_p);
+		info_spy(source);
+		send_info_text(source);
 
-		if(IsOper(source_p))
+		if(IsOper(&source))
 		{
-			send_conf_options(source_p);
-			sendto_one_numeric(source_p, RPL_INFO, ":%s",
+			send_conf_options(source);
+			sendto_one_numeric(&source, RPL_INFO, ":%s",
 					rb_lib_version());
 		}
 
-		send_birthdate_online_time(source_p);
+		send_birthdate_online_time(source);
 
-		sendto_one_numeric(source_p, RPL_ENDOFINFO, form_str(RPL_ENDOFINFO));
+		sendto_one_numeric(&source, RPL_ENDOFINFO, form_str(RPL_ENDOFINFO));
 	}
 }
 
@@ -711,12 +711,12 @@ mo_info(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
  * side effects	- info text is sent to client
  */
 static void
-send_info_text(client::client *source_p)
+send_info_text(client::client &source)
 {
 	for (const auto &text : info::credits)
-		sendto_one_numeric(source_p, RPL_INFO, form_str(RPL_INFO), text.c_str());
+		sendto_one_numeric(&source, RPL_INFO, form_str(RPL_INFO), text.c_str());
 
-	sendto_one_numeric(source_p, RPL_INFO, form_str(RPL_INFO), "");
+	sendto_one_numeric(&source, RPL_INFO, form_str(RPL_INFO), "");
 }
 
 /*
@@ -727,16 +727,16 @@ send_info_text(client::client *source_p)
  * side effects	- birthdate and online time are sent
  */
 static void
-send_birthdate_online_time(client::client *source_p)
+send_birthdate_online_time(client::client &source)
 {
 	char tbuf[26]; /* this needs to be 26 - see ctime_r manpage */
-	sendto_one(source_p, ":%s %d %s :Birth Date: %s (%ld)",
-			get_id(&me, source_p), RPL_INFO,
-			get_id(source_p, source_p), info::compiled.c_str(), info::compiled_time);
+	sendto_one(&source, ":%s %d %s :Birth Date: %s (%ld)",
+			get_id(&me, &source), RPL_INFO,
+			get_id(&source, &source), info::compiled.c_str(), info::compiled_time);
 
-	sendto_one(source_p, ":%s %d %s :On-line since %s",
-			get_id(&me, source_p), RPL_INFO,
-			get_id(source_p, source_p), info::startup.c_str());
+	sendto_one(&source, ":%s %d %s :On-line since %s",
+			get_id(&me, &source), RPL_INFO,
+			get_id(&source, &source), info::startup.c_str());
 }
 
 /*
@@ -747,7 +747,7 @@ send_birthdate_online_time(client::client *source_p)
  * side effects	- send config options to client
  */
 static void
-send_conf_options(client::client *source_p)
+send_conf_options(client::client &source)
 {
 	/*
 	 * Now send them a list of all our configuration options
@@ -757,17 +757,17 @@ send_conf_options(client::client *source_p)
 	{
 		if (line.valnum)
 		{
-			sendto_one(source_p, ":%s %d %s :%-30s %-16d [%s]",
-					get_id(&me, source_p), RPL_INFO,
-					get_id(source_p, source_p),
+			sendto_one(&source, ":%s %d %s :%-30s %-16d [%s]",
+					get_id(&me, &source), RPL_INFO,
+					get_id(&source, &source),
 					line.key.c_str(), line.valnum,
 					line.desc.c_str());
 		}
 		else
 		{
-			sendto_one(source_p, ":%s %d %s :%-30s %-16s [%s]",
-					get_id(&me, source_p), RPL_INFO,
-					get_id(source_p, source_p),
+			sendto_one(&source, ":%s %d %s :%-30s %-16s [%s]",
+					get_id(&me, &source), RPL_INFO,
+					get_id(&source, &source),
 					line.key.c_str(), line.valstr.c_str(),
 					line.desc.c_str());
 		}
@@ -787,9 +787,9 @@ send_conf_options(client::client *source_p)
 				{
 					char *option = *((char **) info_table[i].option);
 
-					sendto_one(source_p, ":%s %d %s :%-30s %-16s [%s]",
-							get_id(&me, source_p), RPL_INFO,
-							get_id(source_p, source_p),
+					sendto_one(&source, ":%s %d %s :%-30s %-16s [%s]",
+							get_id(&me, &source), RPL_INFO,
+							get_id(&source, &source),
 							info_table[i].name,
 							option ? option : "NONE",
 							info_table[i].desc ? info_table[i].desc : "<none>");
@@ -803,9 +803,9 @@ send_conf_options(client::client *source_p)
 				{
 					char *option = (char *) info_table[i].option;
 
-					sendto_one(source_p, ":%s %d %s :%-30s %-16s [%s]",
-							get_id(&me, source_p), RPL_INFO,
-							get_id(source_p, source_p),
+					sendto_one(&source, ":%s %d %s :%-30s %-16s [%s]",
+							get_id(&me, &source), RPL_INFO,
+							get_id(&source, &source),
 							info_table[i].name,
 							EmptyString(option) ? "NONE" : option,
 							info_table[i].desc ? info_table[i].desc : "<none>");
@@ -819,9 +819,9 @@ send_conf_options(client::client *source_p)
 				{
 					int option = *((int *) info_table[i].option);
 
-					sendto_one(source_p, ":%s %d %s :%-30s %-16d [%s]",
-							get_id(&me, source_p), RPL_INFO,
-							get_id(source_p, source_p),
+					sendto_one(&source, ":%s %d %s :%-30s %-16d [%s]",
+							get_id(&me, &source), RPL_INFO,
+							get_id(&source, &source),
 							info_table[i].name,
 							option,
 							info_table[i].desc ? info_table[i].desc : "<none>");
@@ -836,9 +836,9 @@ send_conf_options(client::client *source_p)
 				{
 					int option = *((int *) info_table[i].option);
 
-					sendto_one(source_p, ":%s %d %s :%-30s %-16s [%s]",
-							get_id(&me, source_p), RPL_INFO,
-							get_id(source_p, source_p),
+					sendto_one(&source, ":%s %d %s :%-30s %-16s [%s]",
+							get_id(&me, &source), RPL_INFO,
+							get_id(&source, &source),
 							info_table[i].name,
 							option ? "ON" : "OFF",
 							info_table[i].desc ? info_table[i].desc : "<none>");
@@ -852,9 +852,9 @@ send_conf_options(client::client *source_p)
 				{
 					int option = *((int *) info_table[i].option);
 
-					sendto_one(source_p, ":%s %d %s :%-30s %-16s [%s]",
-							get_id(&me, source_p), RPL_INFO,
-							get_id(source_p, source_p),
+					sendto_one(&source, ":%s %d %s :%-30s %-16s [%s]",
+							get_id(&me, &source), RPL_INFO,
+							get_id(&source, &source),
 							info_table[i].name,
 							option ? "YES" : "NO",
 							info_table[i].desc ? info_table[i].desc : "<none>");
@@ -866,8 +866,8 @@ send_conf_options(client::client *source_p)
 				{
 					int option = *((int *) info_table[i].option);
 
-					sendto_one(source_p, ":%s %d %s :%-30s %-16s [%s]",
-							me.name, RPL_INFO, source_p->name,
+					sendto_one(&source, ":%s %d %s :%-30s %-16s [%s]",
+							me.name, RPL_INFO, source.name,
 							info_table[i].name,
 							option ? ((option == 1) ? "MASK" : "YES") : "NO",
 							info_table[i].desc ? info_table[i].desc : "<none>");
@@ -880,7 +880,7 @@ send_conf_options(client::client *source_p)
 	 ** in order for it to show up properly to opers who issue INFO
 	 */
 
-	sendto_one_numeric(source_p, RPL_INFO, form_str(RPL_INFO), "");
+	sendto_one_numeric(&source, RPL_INFO, form_str(RPL_INFO), "");
 }
 
 /* info_spy()
@@ -890,11 +890,11 @@ send_conf_options(client::client *source_p)
  * side effects - hook doing_info is called
  */
 static void
-info_spy(client::client *source_p)
+info_spy(client::client &source)
 {
 	hook_data hd;
 
-	hd.client = source_p;
+	hd.client = &source;
 	hd.arg1 = hd.arg2 = NULL;
 
 	call_hook(doing_info_hook, &hd);

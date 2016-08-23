@@ -27,9 +27,9 @@ using namespace ircd;
 static const char locops_desc[] =
 	"Provides the LOCOPS command to send a message to all local operators";
 
-static void m_locops(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void ms_locops(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void me_locops(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_locops(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void ms_locops(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void me_locops(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message locops_msgtab = {
 	"LOCOPS", 0, 0, 0, 0,
@@ -46,39 +46,39 @@ DECLARE_MODULE_AV2(locops, NULL, NULL, locops_clist, NULL, NULL, NULL, NULL, loc
  *      parv[1] = message text
  */
 static void
-m_locops(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_locops(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	sendto_wallops_flags(UMODE_LOCOPS, source_p, "LOCOPS - %s", parv[1]);
+	sendto_wallops_flags(UMODE_LOCOPS, &source, "LOCOPS - %s", parv[1]);
 
 	if(rb_dlink_list_length(&cluster_conf_list) > 0)
-		cluster_generic(source_p, "LOCOPS", SHARED_LOCOPS, CAP_CLUSTER,
+		cluster_generic(&source, "LOCOPS", SHARED_LOCOPS, CAP_CLUSTER,
 				":%s", parv[1]);
 }
 
 static void
-ms_locops(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+ms_locops(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	/* source_p  parv[1]      parv[2]
+	/* &source  parv[1]      parv[2]
 	 * oper      target serv  message
 	 */
-	propagate_generic(source_p, "LOCOPS", parv[1], CAP_CLUSTER,
+	propagate_generic(&source, "LOCOPS", parv[1], CAP_CLUSTER,
 				":%s", parv[2]);
 
 	if(!match(parv[1], me.name))
 		return;
 
-	if(find_shared_conf("*", "*", source_p->servptr->name, SHARED_LOCOPS))
-		sendto_wallops_flags(UMODE_LOCOPS, source_p, "SLOCOPS - %s", parv[2]);
+	if(find_shared_conf("*", "*", source.servptr->name, SHARED_LOCOPS))
+		sendto_wallops_flags(UMODE_LOCOPS, &source, "SLOCOPS - %s", parv[2]);
 }
 
 static void
-me_locops(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
+me_locops(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 		int parc, const char *parv[])
 {
-	if(!IsPerson(source_p))
+	if(!IsPerson(&source))
 		return;
 
-	if(find_shared_conf("*", "*", source_p->servptr->name, SHARED_LOCOPS))
-		sendto_wallops_flags(UMODE_LOCOPS, source_p, "SLOCOPS - %s", parv[1]);
+	if(find_shared_conf("*", "*", source.servptr->name, SHARED_LOCOPS))
+		sendto_wallops_flags(UMODE_LOCOPS, &source, "SLOCOPS - %s", parv[1]);
 }
 

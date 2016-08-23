@@ -26,8 +26,8 @@ using namespace ircd;
 
 static const char pong_desc[] = "Provides the PONG command to respond to a PING message";
 
-static void mr_pong(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void ms_pong(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mr_pong(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void ms_pong(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message pong_msgtab = {
 	"PONG", 0, 0, 0, 0,
@@ -39,13 +39,13 @@ mapi_clist_av1 pong_clist[] = { &pong_msgtab, NULL };
 DECLARE_MODULE_AV2(pong, NULL, NULL, pong_clist, NULL, NULL, NULL, NULL, pong_desc);
 
 static void
-ms_pong(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+ms_pong(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	client::client *target_p;
 	const char *destination;
 
 	destination = parv[2];
-	source_p->flags &= ~FLAGS_PINGSENT;
+	source.flags &= ~FLAGS_PINGSENT;
 
 	/* Now attempt to route the PONG, comstud pointed out routable PING
 	 * is used for SPING.  routable PING should also probably be left in
@@ -58,51 +58,51 @@ ms_pong(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 	{
 		if((target_p = find_client(destination)))
 			sendto_one(target_p, ":%s PONG %s %s",
-				   get_id(source_p, target_p), parv[1],
+				   get_id(&source, target_p), parv[1],
 				   get_id(target_p, target_p));
 		else
 		{
 			if(!rfc1459::is_digit(*destination))
-				sendto_one_numeric(source_p, ERR_NOSUCHSERVER,
+				sendto_one_numeric(&source, ERR_NOSUCHSERVER,
 						   form_str(ERR_NOSUCHSERVER), destination);
 			return;
 		}
 	}
 
 	/* destination is us, emulate EOB */
-	if(IsServer(source_p) && !HasSentEob(source_p))
+	if(IsServer(&source) && !HasSentEob(&source))
 	{
-		if(MyConnect(source_p))
+		if(MyConnect(&source))
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					     "End of burst (emulated) from %s (%d seconds)",
-					     source_p->name,
-					     (signed int) (rb_current_time() - source_p->localClient->firsttime));
-		SetEob(source_p);
+					     source.name,
+					     (signed int) (rb_current_time() - source.localClient->firsttime));
+		SetEob(&source);
 		eob_count++;
-		call_hook(h_server_eob, source_p);
+		call_hook(h_server_eob, &source);
 	}
 }
 
 static void
-mr_pong(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mr_pong(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	if(parc == 2 && !EmptyString(parv[1]))
 	{
-		if(ConfigFileEntry.ping_cookie && source_p->flags & FLAGS_SENTUSER && source_p->name[0])
+		if(ConfigFileEntry.ping_cookie && source.flags & FLAGS_SENTUSER && source.name[0])
 		{
 			uint32_t incoming_ping = strtoul(parv[1], NULL, 16);
 			if(incoming_ping)
 			{
-				if(source_p->localClient->random_ping == incoming_ping)
+				if(source.localClient->random_ping == incoming_ping)
 				{
-					source_p->flags |= FLAGS_PING_COOKIE;
-					register_local_user(client_p, source_p);
+					source.flags |= FLAGS_PING_COOKIE;
+					register_local_user(&client, &source);
 				}
 				else
 				{
-					sendto_one(source_p, form_str(ERR_WRONGPONG),
-						   me.name, source_p->name,
-						   source_p->localClient->random_ping);
+					sendto_one(&source, form_str(ERR_WRONGPONG),
+						   me.name, source.name,
+						   source.localClient->random_ping);
 					return;
 				}
 			}
@@ -110,7 +110,7 @@ mr_pong(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 
 	}
 	else
-		sendto_one(source_p, form_str(ERR_NOORIGIN), me.name, source_p->name);
+		sendto_one(&source, form_str(ERR_NOORIGIN), me.name, source.name);
 
-	source_p->flags &= ~FLAGS_PINGSENT;
+	source.flags &= ~FLAGS_PINGSENT;
 }

@@ -27,7 +27,7 @@ using namespace ircd;
 static const char users_desc[] =
 	"Provides the USERS command to display connection statistics locally and globally";
 
-static void m_users(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_users(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message users_msgtab = {
 	"USERS", 0, 0, 0, 0,
@@ -43,18 +43,18 @@ DECLARE_MODULE_AV2(users, NULL, NULL, users_clist, NULL, NULL, NULL, NULL, users
  *      parv[1] = servername
  */
 static void
-m_users(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_users(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(hunt_server(client_p, source_p, ":%s USERS :%s", 1, parc, parv) == HUNTED_ISME)
+	if(hunt_server(&client, &source, ":%s USERS :%s", 1, parc, parv) == HUNTED_ISME)
 	{
-		sendto_one_numeric(source_p, RPL_LOCALUSERS,
+		sendto_one_numeric(&source, RPL_LOCALUSERS,
 				   form_str(RPL_LOCALUSERS),
 				   (int)rb_dlink_list_length(&lclient_list),
 				   Count.max_loc,
 				   (int)rb_dlink_list_length(&lclient_list),
 				   Count.max_loc);
 
-		sendto_one_numeric(source_p, RPL_GLOBALUSERS,
+		sendto_one_numeric(&source, RPL_GLOBALUSERS,
 				   form_str(RPL_GLOBALUSERS),
 				   Count.total, Count.max_tot,
 				   Count.total, Count.max_tot);

@@ -27,8 +27,8 @@ using namespace ircd;
 static const char ping_desc[] =
 	"Provides the PING command to ensure a client or server is still alive";
 
-static void m_ping(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void ms_ping(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_ping(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void ms_ping(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message ping_msgtab = {
 	"PING", 0, 0, 0, 0,
@@ -45,7 +45,7 @@ DECLARE_MODULE_AV2(ping, NULL, NULL, ping_clist, NULL, NULL, NULL, NULL, ping_de
 **      parv[2] = destination
 */
 static void
-m_ping(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_ping(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	client::client *target_p;
 	const char *destination;
@@ -54,27 +54,27 @@ m_ping(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 
 	if(!EmptyString(destination) && !match(destination, me.name))
 	{
-		if((target_p = find_server(source_p, destination)))
+		if((target_p = find_server(&source, destination)))
 		{
 			sendto_one(target_p, ":%s PING %s :%s",
-				   get_id(source_p, target_p),
-				   source_p->name, get_id(target_p, target_p));
+				   get_id(&source, target_p),
+				   source.name, get_id(target_p, target_p));
 		}
 		else
 		{
-			sendto_one_numeric(source_p, ERR_NOSUCHSERVER,
+			sendto_one_numeric(&source, ERR_NOSUCHSERVER,
 					   form_str(ERR_NOSUCHSERVER),
 					   destination);
 			return;
 		}
 	}
 	else
-		sendto_one(source_p, ":%s PONG %s :%s", me.name,
+		sendto_one(&source, ":%s PONG %s :%s", me.name,
 			   (destination) ? destination : me.name, parv[1]);
 }
 
 static void
-ms_ping(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+ms_ping(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	client::client *target_p;
 	const char *destination;
@@ -86,16 +86,16 @@ ms_ping(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 	{
 		if((target_p = find_client(destination)) && IsServer(target_p))
 			sendto_one(target_p, ":%s PING %s :%s",
-				   get_id(source_p, target_p), source_p->name,
+				   get_id(&source, target_p), source.name,
 				   get_id(target_p, target_p));
 		/* not directed at an id.. */
 		else if(!rfc1459::is_digit(*destination))
-			sendto_one_numeric(source_p, ERR_NOSUCHSERVER,
+			sendto_one_numeric(&source, ERR_NOSUCHSERVER,
 					   form_str(ERR_NOSUCHSERVER),
 					   destination);
 	}
 	else
-		sendto_one(source_p, ":%s PONG %s :%s",
-			   get_id(&me, source_p), me.name,
-			   get_id(source_p, source_p));
+		sendto_one(&source, ":%s PONG %s :%s",
+			   get_id(&me, &source), me.name,
+			   get_id(&source, &source));
 }

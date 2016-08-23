@@ -66,36 +66,37 @@ count_mark_downlinks(client::client *server_p, int *pservcount, int *pusercount)
 }
 
 static void
-h_nn_server_eob(client::client *source_p)
+h_nn_server_eob(client::client *source)
 {
 	int s = 0, u = 0;
 
-	if (IsFloodDone(source_p))
+	if (IsFloodDone(source))
 		return;
-	count_mark_downlinks(source_p, &s, &u);
+
+	count_mark_downlinks(source, &s, &u);
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "Netjoin %s <-> %s (%dS %dC)",
-			source_p->servptr ? source_p->servptr->name : "?",
-			source_p->name, s, u);
+			source->servptr ? source->servptr->name : "?",
+			source->name, s, u);
 }
 
 static void
 h_nn_client_exit(hook_data_client_exit *hdata)
 {
-	client::client *source_p;
+	client::client *source;
 	int s = 0, u = 0;
 	char *fromnick;
 
-	source_p = hdata->target;
+	source = hdata->target;
 	fromnick = IsClient(hdata->from) ? hdata->from->name : NULL;
 
-	if (!IsServer(source_p))
+	if (!IsServer(source))
 		return;
-	if (HasSentEob(source_p))
+	if (HasSentEob(source))
 	{
-		count_mark_downlinks(source_p, &s, &u);
+		count_mark_downlinks(source, &s, &u);
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Netsplit %s <-> %s (%dS %dC) (%s%s%s%s)",
-				source_p->servptr ? source_p->servptr->name : "?",
-				source_p->name, s, u,
+				source->servptr ? source->servptr->name : "?",
+				source->name, s, u,
 				fromnick ? "by " : "",
 				fromnick ? fromnick : "",
 				fromnick ? ": " : "",
@@ -103,8 +104,8 @@ h_nn_client_exit(hook_data_client_exit *hdata)
 	}
 	else
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Netsplit %s <-> %s (during burst) (%s%s%s%s)",
-				source_p->servptr ? source_p->servptr->name : "?",
-				source_p->name,
+				source->servptr ? source->servptr->name : "?",
+				source->name,
 				fromnick ? "by " : "",
 				fromnick ? fromnick : "",
 				fromnick ? ": " : "",

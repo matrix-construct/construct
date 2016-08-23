@@ -26,7 +26,7 @@ using namespace ircd;
 
 static const char pass_desc[] = "Provides the PASS command to authenticate clients and servers";
 
-static void mr_pass(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mr_pass(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message pass_msgtab = {
 	"PASS", 0, 0, 0, 0,
@@ -47,12 +47,12 @@ DECLARE_MODULE_AV2(pass, NULL, NULL, pass_clist, NULL, NULL, NULL, NULL, pass_de
  *      parv[3] = optional TS version field -- needed for TS6
  */
 static void
-mr_pass(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mr_pass(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	char *auth_user, *pass, *buf;
 	buf = LOCAL_COPY(parv[1]);
 
-	if(client_p->localClient->passwd || client_p->localClient->auth_user)
+	if(client.localClient->passwd || client.localClient->auth_user)
 		return;
 
 	if ((pass = strchr(buf, ':')) != NULL)
@@ -66,13 +66,13 @@ mr_pass(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 		auth_user = NULL;
 	}
 
-	client_p->localClient->passwd = *pass ? rb_strndup(pass, PASSWDLEN) : NULL;
+	client.localClient->passwd = *pass ? rb_strndup(pass, PASSWDLEN) : NULL;
 
 	if(auth_user && *auth_user)
-		client_p->localClient->auth_user = rb_strndup(auth_user, PASSWDLEN);
+		client.localClient->auth_user = rb_strndup(auth_user, PASSWDLEN);
 
 	/* These are for servers only */
-	if(parc > 2 && client_p->user == NULL)
+	if(parc > 2 && client.user == NULL)
 	{
 		/*
 		 * It looks to me as if orabidoo wanted to have more
@@ -82,8 +82,8 @@ mr_pass(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 		 * safely assume if there is a ":TS" then its a TS server
 		 * -Dianora
 		 */
-		if(irccmp(parv[2], "TS") == 0 && client_p->tsinfo == 0)
-			client_p->tsinfo = TS_DOESTS;
+		if(irccmp(parv[2], "TS") == 0 && client.tsinfo == 0)
+			client.tsinfo = TS_DOESTS;
 
 		if(parc == 5 && atoi(parv[3]) >= 6)
 		{
@@ -92,10 +92,10 @@ mr_pass(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 			   rfc1459::is_id(parv[4][1]) &&
 			   rfc1459::is_id(parv[4][2]) &&
 			   parv[4][3] == '\0' &&
-			   EmptyString(client_p->id))
+			   EmptyString(client.id))
 			{
-				client_p->localClient->caps |= CAP_TS6;
-				rb_strlcpy(client_p->id, parv[4], sizeof(client_p->id));
+				client.localClient->caps |= CAP_TS6;
+				rb_strlcpy(client.id, parv[4], sizeof(client.id));
 			}
 		}
 	}

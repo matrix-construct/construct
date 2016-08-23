@@ -26,8 +26,8 @@ using namespace ircd;
 
 static const char quit_desc[] = "Provides the QUIT command to allow a user to leave the network";
 
-static void m_quit(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void ms_quit(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_quit(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void ms_quit(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message quit_msgtab = {
 	"QUIT", 0, 0, 0, 0,
@@ -43,12 +43,12 @@ DECLARE_MODULE_AV2(quit, NULL, NULL, quit_clist, NULL, NULL, NULL, NULL, quit_de
 **      parv[1] = comment
 */
 static void
-m_quit(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_quit(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	char *comment = LOCAL_COPY((parc > 1 && parv[1]) ? parv[1] : client_p->name);
+	char *comment = LOCAL_COPY((parc > 1 && parv[1]) ? parv[1] : client.name);
 	char reason[REASONLEN + 1];
 
-	source_p->flags |= FLAGS_NORMALEX;
+	source.flags |= FLAGS_NORMALEX;
 
 	if(strlen(comment) > (size_t) REASONLEN)
 		comment[REASONLEN] = '\0';
@@ -61,15 +61,15 @@ m_quit(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 		comment = reason;
 	}
 
-	if(!IsOper(source_p) &&
-	   (source_p->localClient->firsttime + ConfigFileEntry.anti_spam_exit_message_time) >
+	if(!IsOper(&source) &&
+	   (source.localClient->firsttime + ConfigFileEntry.anti_spam_exit_message_time) >
 	   rb_current_time())
 	{
-		exit_client(client_p, source_p, source_p, "Client Quit");
+		exit_client(&client, &source, &source, "Client Quit");
 		return;
 	}
 
-	exit_client(client_p, source_p, source_p, comment);
+	exit_client(&client, &source, &source, comment);
 }
 
 /*
@@ -77,13 +77,13 @@ m_quit(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 **      parv[1] = comment
 */
 static void
-ms_quit(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+ms_quit(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	char *comment = LOCAL_COPY((parc > 1 && parv[1]) ? parv[1] : client_p->name);
+	char *comment = LOCAL_COPY((parc > 1 && parv[1]) ? parv[1] : client.name);
 
-	source_p->flags |= FLAGS_NORMALEX;
+	source.flags |= FLAGS_NORMALEX;
 	if(strlen(comment) > (size_t) REASONLEN)
 		comment[REASONLEN] = '\0';
 
-	exit_client(client_p, source_p, source_p, comment);
+	exit_client(&client, &source, &source, comment);
 }

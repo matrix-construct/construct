@@ -27,7 +27,7 @@ using namespace ircd;
 static const char post_desc[] =
 	"Ensure Web forms/proxies cannot connect by disconnecting on POST, GET, and PUT";
 
-static void mr_dumb_proxy(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mr_dumb_proxy(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message post_msgtab = {
 	"POST", 0, 0, 0, 0,
@@ -53,7 +53,7 @@ DECLARE_MODULE_AV2(post, NULL, NULL, post_clist, NULL, NULL, NULL, NULL, post_de
 **      parv[1] = comment
 */
 static void
-mr_dumb_proxy(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mr_dumb_proxy(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	exit_client(client_p, source_p, source_p, "Client Exit");
+	exit_client(&client, &source, &source, "Client Exit");
 }

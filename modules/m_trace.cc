@@ -27,9 +27,9 @@ using namespace ircd;
 static const char trace_desc[] =
 	"Provides the TRACE command to trace the route to a client or server";
 
-static void m_trace(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_trace(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
-static void trace_spy(client::client *, client::client *);
+static void trace_spy(client::client &, client::client *);
 
 struct Message trace_msgtab = {
 	"TRACE", 0, 0, 0, 0,
@@ -46,7 +46,7 @@ mapi_hlist_av1 trace_hlist[] = {
 DECLARE_MODULE_AV2(trace, NULL, NULL, trace_clist, trace_hlist, NULL, NULL, NULL, trace_desc);
 
 static void count_downlinks(client::client *server_p, int *pservcount, int *pusercount);
-static int report_this_status(client::client *source_p, client::client *target_p);
+static int report_this_status(client::client &source, client::client *target_p);
 
 static const char *empty_sockhost = "255.255.255.255";
 
@@ -55,7 +55,7 @@ static const char *empty_sockhost = "255.255.255.255";
  *      parv[1] = servername
  */
 static void
-m_trace(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_trace(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	client::client *target_p = NULL;
 	struct Class *cltmp;
@@ -70,7 +70,7 @@ m_trace(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 
 		if(parc > 2)
 		{
-			if(hunt_server(client_p, source_p, ":%s TRACE %s :%s", 2, parc, parv) !=
+			if(hunt_server(&client, &source, ":%s TRACE %s :%s", 2, parc, parv) !=
 					HUNTED_ISME)
 				return;
 		}
@@ -83,13 +83,13 @@ m_trace(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 	 */
 	if(parc < 3)
 	{
-		switch (hunt_server(client_p, source_p, ":%s TRACE :%s", 1, parc, parv))
+		switch (hunt_server(&client, &source, ":%s TRACE :%s", 1, parc, parv))
 		{
 		case HUNTED_PASS:	/* note: gets here only if parv[1] exists */
 		{
 			client::client *ac2ptr;
 
-			if(MyClient(source_p))
+			if(MyClient(&source))
 				ac2ptr = find_named_client(tname);
 			else
 				ac2ptr = find_client(tname);
@@ -110,9 +110,9 @@ m_trace(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 			/* giving this out with flattened links defeats the
 			 * object --fl
 			 */
-			if(IsOper(source_p) || IsExemptShide(source_p) ||
+			if(IsOper(&source) || IsExemptShide(&source) ||
 			   !ConfigServerHide.flatten_links)
-				sendto_one_numeric(source_p, RPL_TRACELINK,
+				sendto_one_numeric(&source, RPL_TRACELINK,
 						   form_str(RPL_TRACELINK),
 						   info::version.c_str(),
 						   ac2ptr ? ac2ptr->name : tname,
@@ -136,7 +136,7 @@ m_trace(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 	/* if theyre tracing our SID, we need to move tname to our name so
 	 * we dont give the sid in ENDOFTRACE
 	 */
-	else if(!MyClient(source_p) && !strcmp(tname, me.id))
+	else if(!MyClient(&source) && !strcmp(tname, me.id))
 	{
 		doall = true;
 		tname = me.name;
@@ -148,7 +148,7 @@ m_trace(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 	/* specific trace */
 	if(!dow)
 	{
-		if(MyClient(source_p) || parc > 2)
+		if(MyClient(&source) || parc > 2)
 			target_p = client::find_named_person(tname);
 		else
 			target_p = client::find_person(tname);
@@ -158,28 +158,28 @@ m_trace(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 		 */
 		if(target_p != NULL)
 		{
-			report_this_status(source_p, target_p);
+			report_this_status(source, target_p);
 			tname = target_p->name;
 		}
 
-		trace_spy(source_p, target_p);
+		trace_spy(source, target_p);
 
-		sendto_one_numeric(source_p, RPL_ENDOFTRACE,
+		sendto_one_numeric(&source, RPL_ENDOFTRACE,
 				   form_str(RPL_ENDOFTRACE), tname);
 		return;
 	}
 
-	trace_spy(source_p, NULL);
+	trace_spy(source, NULL);
 
 	/* give non-opers a limited trace output of themselves (if local),
 	 * opers and servers (if no shide) --fl
 	 */
-	if(!IsOper(source_p))
+	if(!IsOper(&source))
 	{
-		if(MyClient(source_p))
+		if(MyClient(&source))
 		{
-			if(doall || (wilds && match(tname, source_p->name)))
-				report_this_status(source_p, source_p);
+			if(doall || (wilds && match(tname, source.name)))
+				report_this_status(source, &source);
 		}
 
 		RB_DLINK_FOREACH(ptr, local_oper_list.head)
@@ -189,10 +189,10 @@ m_trace(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 			if(!doall && wilds && (match(tname, target_p->name) == 0))
 				continue;
 
-			report_this_status(source_p, target_p);
+			report_this_status(source, target_p);
 		}
 
-		if (IsExemptShide(source_p) || !ConfigServerHide.flatten_links)
+		if (IsExemptShide(&source) || !ConfigServerHide.flatten_links)
 		{
 			RB_DLINK_FOREACH(ptr, serv_list.head)
 			{
@@ -201,16 +201,16 @@ m_trace(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 				if(!doall && wilds && !match(tname, target_p->name))
 					continue;
 
-				report_this_status(source_p, target_p);
+				report_this_status(source, target_p);
 			}
 		}
 
-		sendto_one_numeric(source_p, RPL_ENDOFTRACE,
+		sendto_one_numeric(&source, RPL_ENDOFTRACE,
 				   form_str(RPL_ENDOFTRACE), tname);
 		return;
 	}
 
-	/* source_p is opered */
+	/* &source is opered */
 
 	/* report all direct connections */
 	RB_DLINK_FOREACH(ptr, lclient_list.head)
@@ -218,18 +218,18 @@ m_trace(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 		target_p = (client::client *)ptr->data;
 
 		/* dont show invisible users to remote opers */
-		if(IsInvisible(target_p) && dow && !MyConnect(source_p) && !IsOper(target_p))
+		if(IsInvisible(target_p) && dow && !MyConnect(&source) && !IsOper(target_p))
 			continue;
 
 		if(!doall && wilds && !match(tname, target_p->name))
 			continue;
 
 		/* remote opers may not see invisible normal users */
-		if(dow && !MyConnect(source_p) && !IsOper(target_p) &&
+		if(dow && !MyConnect(&source) && !IsOper(target_p) &&
 				IsInvisible(target_p))
 			continue;
 
-		cnt = report_this_status(source_p, target_p);
+		cnt = report_this_status(source, target_p);
 	}
 
 	RB_DLINK_FOREACH(ptr, serv_list.head)
@@ -239,10 +239,10 @@ m_trace(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 		if(!doall && wilds && !match(tname, target_p->name))
 			continue;
 
-		cnt = report_this_status(source_p, target_p);
+		cnt = report_this_status(source, target_p);
 	}
 
-	if(MyConnect(source_p))
+	if(MyConnect(&source))
 	{
 		RB_DLINK_FOREACH(ptr, unknown_list.head)
 		{
@@ -251,19 +251,19 @@ m_trace(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 			if(!doall && wilds && !match(tname, target_p->name))
 				continue;
 
-			cnt = report_this_status(source_p, target_p);
+			cnt = report_this_status(source, target_p);
 		}
 	}
 
 	if(!cnt)
 	{
-		sendto_one_numeric(source_p, ERR_NOSUCHSERVER, form_str(ERR_NOSUCHSERVER),
+		sendto_one_numeric(&source, ERR_NOSUCHSERVER, form_str(ERR_NOSUCHSERVER),
 					tname);
 
 		/* let the user have some idea that its at the end of the
 		 * trace
 		 */
-		sendto_one_numeric(source_p, RPL_ENDOFTRACE,
+		sendto_one_numeric(&source, RPL_ENDOFTRACE,
 				   form_str(RPL_ENDOFTRACE), tname);
 		return;
 	}
@@ -275,13 +275,13 @@ m_trace(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 			cltmp = (Class *)ptr->data;
 
 			if(CurrUsers(cltmp) > 0)
-				sendto_one_numeric(source_p, RPL_TRACECLASS,
+				sendto_one_numeric(&source, RPL_TRACECLASS,
 						   form_str(RPL_TRACECLASS),
 						   ClassName(cltmp), CurrUsers(cltmp));
 		}
 	}
 
-	sendto_one_numeric(source_p, RPL_ENDOFTRACE, form_str(RPL_ENDOFTRACE), tname);
+	sendto_one_numeric(&source, RPL_ENDOFTRACE, form_str(RPL_ENDOFTRACE), tname);
 }
 
 /*
@@ -312,7 +312,7 @@ count_downlinks(client::client *server_p, int *pservcount, int *pusercount)
  * side effects - NONE
  */
 static int
-report_this_status(client::client *source_p, client::client *target_p)
+report_this_status(client::client &source, client::client *target_p)
 {
 	const char *name;
 	const char *class_name;
@@ -334,14 +334,14 @@ report_this_status(client::client *source_p, client::client *target_p)
 	switch (target_p->status)
 	{
 	case STAT_CONNECTING:
-		sendto_one_numeric(source_p, RPL_TRACECONNECTING,
+		sendto_one_numeric(&source, RPL_TRACECONNECTING,
 				form_str(RPL_TRACECONNECTING),
 				class_name, name);
 		cnt++;
 		break;
 
 	case STAT_HANDSHAKE:
-		sendto_one_numeric(source_p, RPL_TRACEHANDSHAKE,
+		sendto_one_numeric(&source, RPL_TRACEHANDSHAKE,
 				form_str(RPL_TRACEHANDSHAKE),
 				class_name, name);
 		cnt++;
@@ -352,7 +352,7 @@ report_this_status(client::client *source_p, client::client *target_p)
 
 	case STAT_UNKNOWN:
 		/* added time -Taner */
-		sendto_one_numeric(source_p, RPL_TRACEUNKNOWN,
+		sendto_one_numeric(&source, RPL_TRACEUNKNOWN,
 				   form_str(RPL_TRACEUNKNOWN),
 				   class_name, name, ip,
 				   (unsigned long)(rb_current_time() - target_p->localClient->firsttime));
@@ -361,11 +361,11 @@ report_this_status(client::client *source_p, client::client *target_p)
 
 	case STAT_CLIENT:
 		{
-			sendto_one_numeric(source_p,
+			sendto_one_numeric(&source,
 					IsOper(target_p) ? RPL_TRACEOPERATOR : RPL_TRACEUSER,
 					IsOper(target_p) ? form_str(RPL_TRACEOPERATOR) : form_str(RPL_TRACEUSER),
 					class_name, name,
-					show_ip(source_p, target_p) ? ip : empty_sockhost,
+					show_ip(&source, target_p) ? ip : empty_sockhost,
 					(unsigned long)(rb_current_time() - target_p->localClient->lasttime),
 					(unsigned long)(rb_current_time() - target_p->localClient->last));
 
@@ -380,7 +380,7 @@ report_this_status(client::client *source_p, client::client *target_p)
 
 			count_downlinks(target_p, &servcount, &usercount);
 
-			sendto_one_numeric(source_p, RPL_TRACESERVER, form_str(RPL_TRACESERVER),
+			sendto_one_numeric(&source, RPL_TRACESERVER, form_str(RPL_TRACESERVER),
 				   class_name, servcount, usercount, name,
 				   by(serv(*target_p)).empty()? by(serv(*target_p)).c_str() : "*", "*",
 				   me.name,
@@ -391,7 +391,7 @@ report_this_status(client::client *source_p, client::client *target_p)
 		break;
 
 	default:		/* ...we actually shouldn't come here... --msa */
-		sendto_one_numeric(source_p, RPL_TRACENEWTYPE,
+		sendto_one_numeric(&source, RPL_TRACENEWTYPE,
 				   form_str(RPL_TRACENEWTYPE), name);
 		cnt++;
 		break;
@@ -407,11 +407,11 @@ report_this_status(client::client *source_p, client::client *target_p)
  * side effects - hook event doing_trace is called
  */
 static void
-trace_spy(client::client *source_p, client::client *target_p)
+trace_spy(client::client &source, client::client *target_p)
 {
 	hook_data_client hdata;
 
-	hdata.client = source_p;
+	hdata.client = &source;
 	hdata.target = target_p;
 
 	call_hook(doing_trace_hook, &hdata);

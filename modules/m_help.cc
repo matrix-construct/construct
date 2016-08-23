@@ -27,10 +27,10 @@ using namespace ircd;
 static const char help_desc[] =
 	"Provides the help facility for commands, modes, and server concepts";
 
-static void m_help(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void mo_help(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void mo_uhelp(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void dohelp(client::client *, int, const char *);
+static void m_help(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void mo_help(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void mo_uhelp(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void dohelp(client::client &, int, const char *);
 
 struct Message help_msgtab = {
 	"HELP", 0, 0, 0, 0,
@@ -49,22 +49,22 @@ DECLARE_MODULE_AV2(help, NULL, NULL, help_clist, NULL, NULL, NULL, NULL, help_de
  * m_help - HELP message handler
  */
 static void
-m_help(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_help(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	using namespace cache::help;
 
-	dohelp(source_p, USER, parc > 1 ? parv[1] : NULL);
+	dohelp(source, USER, parc > 1 ? parv[1] : NULL);
 }
 
 /*
  * mo_help - HELP message handler
  */
 static void
-mo_help(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mo_help(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	using namespace cache::help;
 
-	dohelp(source_p, OPER, parc > 1 ? parv[1] : NULL);
+	dohelp(source, OPER, parc > 1 ? parv[1] : NULL);
 }
 
 /*
@@ -72,15 +72,15 @@ mo_help(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
  * This is used so that opers can view the user help file without deopering
  */
 static void
-mo_uhelp(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mo_uhelp(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	using namespace cache::help;
 
-	dohelp(source_p, USER, parc > 1 ? parv[1] : NULL);
+	dohelp(source, USER, parc > 1 ? parv[1] : NULL);
 }
 
 static void
-dohelp(client::client *const source_p,
+dohelp(client::client &source,
        int type,
        const char *topic)
 try
@@ -103,28 +103,28 @@ try
 
 	auto it(begin(contents(*file)));
 	if (it != end(contents(*file)))
-		sendto_one(source_p, form_str(RPL_HELPSTART),
+		sendto_one(&source, form_str(RPL_HELPSTART),
 		           me.name,
-		           source_p->name,
+		           source.name,
 		           topic,
 		           it->c_str());
 
 	for (++it; it != end(contents(*file)); ++it)
-		sendto_one(source_p, form_str(RPL_HELPTXT),
+		sendto_one(&source, form_str(RPL_HELPTXT),
 		           me.name,
-		           source_p->name,
+		           source.name,
 		           topic,
 		           it->c_str());
 
-	sendto_one(source_p, form_str(RPL_ENDOFHELP),
+	sendto_one(&source, form_str(RPL_ENDOFHELP),
 	           me.name,
-	           source_p->name,
+	           source.name,
 	           topic);
 }
 catch(const std::out_of_range &e)
 {
-	sendto_one(source_p, form_str(ERR_HELPNOTFOUND),
+	sendto_one(&source, form_str(ERR_HELPNOTFOUND),
 	           me.name,
-	           source_p->name,
+	           source.name,
 	           topic?: e.what());
 }

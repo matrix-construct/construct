@@ -34,7 +34,7 @@ static const char monitor_desc[] = "Provides the MONITOR facility for tracking u
 
 static int monitor_init(void);
 static void monitor_deinit(void);
-static void m_monitor(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_monitor(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message monitor_msgtab = {
 	"MONITOR", 0, 0, 0, 0,
@@ -57,7 +57,7 @@ static void monitor_deinit(void)
 }
 
 static void
-add_monitor(client::client *client_p, const char *nicks)
+add_monitor(client::client &client, const char *nicks)
 {
 	char onbuf[BUFSIZE], offbuf[BUFSIZE];
 	client::client *target_p;
@@ -71,9 +71,9 @@ add_monitor(client::client *client_p, const char *nicks)
 
 	/* these two are same length, just diff numeric */
 	cur_offlen = cur_onlen = mlen = sprintf(onbuf, form_str(RPL_MONONLINE),
-						me.name, client_p->name, "");
+						me.name, client.name, "");
 	sprintf(offbuf, form_str(RPL_MONOFFLINE),
-			me.name, client_p->name, "");
+			me.name, client.name, "");
 
 	onptr = onbuf + mlen;
 	offptr = offbuf + mlen;
@@ -85,23 +85,23 @@ add_monitor(client::client *client_p, const char *nicks)
 		if(EmptyString(name) || strlen(name) > NICKLEN-1)
 			continue;
 
-		if(rb_dlink_list_length(&client_p->localClient->monitor_list) >=
+		if(rb_dlink_list_length(&client.localClient->monitor_list) >=
 			(unsigned long)ConfigFileEntry.max_monitor)
 		{
 			char buf[100];
 
 			if(cur_onlen != mlen)
-				sendto_one(client_p, "%s", onbuf);
+				sendto_one(&client, "%s", onbuf);
 			if(cur_offlen != mlen)
-				sendto_one(client_p, "%s", offbuf);
+				sendto_one(&client, "%s", offbuf);
 
 			if(p)
 				snprintf(buf, sizeof(buf), "%s,%s", name, p);
 			else
 				snprintf(buf, sizeof(buf), "%s", name);
 
-			sendto_one(client_p, form_str(ERR_MONLISTFULL),
-					me.name, client_p->name,
+			sendto_one(&client, form_str(ERR_MONLISTFULL),
+					me.name, client.name,
 					ConfigFileEntry.max_monitor, buf);
 			return;
 		}
@@ -112,18 +112,18 @@ add_monitor(client::client *client_p, const char *nicks)
 		monptr = find_monitor(name, 1);
 
 		/* already monitoring this nick */
-		if(rb_dlinkFind(client_p, &monptr->users))
+		if(rb_dlinkFind(&client, &monptr->users))
 			continue;
 
-		rb_dlinkAddAlloc(client_p, &monptr->users);
-		rb_dlinkAddAlloc(monptr, &client_p->localClient->monitor_list);
+		rb_dlinkAddAlloc(&client, &monptr->users);
+		rb_dlinkAddAlloc(monptr, &client.localClient->monitor_list);
 
 		if((target_p = client::find_named_person(name)) != NULL)
 		{
 			if(cur_onlen + strlen(target_p->name) +
 			   strlen(target_p->username) + strlen(target_p->host) + 3 >= BUFSIZE-3)
 			{
-				sendto_one(client_p, "%s", onbuf);
+				sendto_one(&client, "%s", onbuf);
 				cur_onlen = mlen;
 				onptr = onbuf + mlen;
 			}
@@ -144,7 +144,7 @@ add_monitor(client::client *client_p, const char *nicks)
 		{
 			if(cur_offlen + strlen(name) + 1 >= BUFSIZE-3)
 			{
-				sendto_one(client_p, "%s", offbuf);
+				sendto_one(&client, "%s", offbuf);
 				cur_offlen = mlen;
 				offptr = offbuf + mlen;
 			}
@@ -162,20 +162,20 @@ add_monitor(client::client *client_p, const char *nicks)
 	}
 
 	if(cur_onlen != mlen)
-		sendto_one(client_p, "%s", onbuf);
+		sendto_one(&client, "%s", onbuf);
 	if(cur_offlen != mlen)
-		sendto_one(client_p, "%s", offbuf);
+		sendto_one(&client, "%s", offbuf);
 }
 
 static void
-del_monitor(client::client *client_p, const char *nicks)
+del_monitor(client::client &client, const char *nicks)
 {
 	struct monitor *monptr;
 	const char *name;
 	char *tmp;
 	char *p;
 
-	if(!rb_dlink_list_length(&client_p->localClient->monitor_list))
+	if(!rb_dlink_list_length(&client.localClient->monitor_list))
 		return;
 
 	tmp = LOCAL_COPY(nicks);
@@ -189,15 +189,15 @@ del_monitor(client::client *client_p, const char *nicks)
 		if((monptr = find_monitor(name, 0)) == NULL)
 			continue;
 
-		rb_dlinkFindDestroy(client_p, &monptr->users);
-		rb_dlinkFindDestroy(monptr, &client_p->localClient->monitor_list);
+		rb_dlinkFindDestroy(&client, &monptr->users);
+		rb_dlinkFindDestroy(monptr, &client.localClient->monitor_list);
 
 		free_monitor(monptr);
 	}
 }
 
 static void
-list_monitor(client::client *client_p)
+list_monitor(client::client &client)
 {
 	char buf[BUFSIZE];
 	struct monitor *monptr;
@@ -205,24 +205,24 @@ list_monitor(client::client *client_p)
 	rb_dlink_node *ptr;
 	int mlen, arglen, cur_len;
 
-	if(!rb_dlink_list_length(&client_p->localClient->monitor_list))
+	if(!rb_dlink_list_length(&client.localClient->monitor_list))
 	{
-		sendto_one(client_p, form_str(RPL_ENDOFMONLIST),
-				me.name, client_p->name);
+		sendto_one(&client, form_str(RPL_ENDOFMONLIST),
+				me.name, client.name);
 		return;
 	}
 
 	cur_len = mlen = sprintf(buf, form_str(RPL_MONLIST),
-				me.name, client_p->name, "");
+				me.name, client.name, "");
 	nbuf = buf + mlen;
 
-	RB_DLINK_FOREACH(ptr, client_p->localClient->monitor_list.head)
+	RB_DLINK_FOREACH(ptr, client.localClient->monitor_list.head)
 	{
 		monptr = (monitor *)ptr->data;
 
 		if(cur_len + strlen(monptr->name) + 1 >= BUFSIZE-3)
 		{
-			sendto_one(client_p, "%s", buf);
+			sendto_one(&client, "%s", buf);
 			nbuf = buf + mlen;
 			cur_len = mlen;
 		}
@@ -238,13 +238,13 @@ list_monitor(client::client *client_p)
 		nbuf += arglen;
 	}
 
-	sendto_one(client_p, "%s", buf);
-	sendto_one(client_p, form_str(RPL_ENDOFMONLIST),
-			me.name, client_p->name);
+	sendto_one(&client, "%s", buf);
+	sendto_one(&client, form_str(RPL_ENDOFMONLIST),
+			me.name, client.name);
 }
 
 static void
-show_monitor_status(client::client *client_p)
+show_monitor_status(client::client &client)
 {
 	char onbuf[BUFSIZE], offbuf[BUFSIZE];
 	client::client *target_p;
@@ -255,14 +255,14 @@ show_monitor_status(client::client *client_p)
 	rb_dlink_node *ptr;
 
 	mlen = cur_onlen = sprintf(onbuf, form_str(RPL_MONONLINE),
-					me.name, client_p->name, "");
+					me.name, client.name, "");
 	cur_offlen = sprintf(offbuf, form_str(RPL_MONOFFLINE),
-				me.name, client_p->name, "");
+				me.name, client.name, "");
 
 	onptr = onbuf + mlen;
 	offptr = offbuf + mlen;
 
-	RB_DLINK_FOREACH(ptr, client_p->localClient->monitor_list.head)
+	RB_DLINK_FOREACH(ptr, client.localClient->monitor_list.head)
 	{
 		monptr = (monitor *)ptr->data;
 
@@ -271,7 +271,7 @@ show_monitor_status(client::client *client_p)
 			if(cur_onlen + strlen(target_p->name) +
 			   strlen(target_p->username) + strlen(target_p->host) + 3 >= BUFSIZE-3)
 			{
-				sendto_one(client_p, "%s", onbuf);
+				sendto_one(&client, "%s", onbuf);
 				cur_onlen = mlen;
 				onptr = onbuf + mlen;
 			}
@@ -292,7 +292,7 @@ show_monitor_status(client::client *client_p)
 		{
 			if(cur_offlen + strlen(monptr->name) + 1 >= BUFSIZE-3)
 			{
-				sendto_one(client_p, "%s", offbuf);
+				sendto_one(&client, "%s", offbuf);
 				cur_offlen = mlen;
 				offptr = offbuf + mlen;
 			}
@@ -310,50 +310,50 @@ show_monitor_status(client::client *client_p)
 	}
 
 	if(cur_onlen != mlen)
-		sendto_one(client_p, "%s", onbuf);
+		sendto_one(&client, "%s", onbuf);
 	if(cur_offlen != mlen)
-		sendto_one(client_p, "%s", offbuf);
+		sendto_one(&client, "%s", offbuf);
 }
 
 static void
-m_monitor(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_monitor(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	switch(parv[1][0])
 	{
 		case '+':
 			if(parc < 3 || EmptyString(parv[2]))
 			{
-				sendto_one(client_p, form_str(ERR_NEEDMOREPARAMS),
-						me.name, source_p->name, "MONITOR");
+				sendto_one(&client, form_str(ERR_NEEDMOREPARAMS),
+						me.name, source.name, "MONITOR");
 				return;
 			}
 
-			add_monitor(source_p, parv[2]);
+			add_monitor(source, parv[2]);
 			break;
 		case '-':
 			if(parc < 3 || EmptyString(parv[2]))
 			{
-				sendto_one(client_p, form_str(ERR_NEEDMOREPARAMS),
-						me.name, source_p->name, "MONITOR");
+				sendto_one(&client, form_str(ERR_NEEDMOREPARAMS),
+						me.name, source.name, "MONITOR");
 				return;
 			}
 
-			del_monitor(source_p, parv[2]);
+			del_monitor(source, parv[2]);
 			break;
 
 		case 'C':
 		case 'c':
-			clear_monitor(source_p);
+			clear_monitor(&source);
 			break;
 
 		case 'L':
 		case 'l':
-			list_monitor(source_p);
+			list_monitor(source);
 			break;
 
 		case 'S':
 		case 's':
-			show_monitor_status(source_p);
+			show_monitor_status(source);
 			break;
 
 		default:

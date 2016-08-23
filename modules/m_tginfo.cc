@@ -31,7 +31,7 @@ using namespace ircd;
 
 static const char tginfo_desc[] = "Processes target change notifications from other servers";
 
-static void me_tginfo(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void me_tginfo(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message tginfo_msgtab = {
 	"TGINFO", 0, 0, 0, 0,
@@ -47,26 +47,26 @@ DECLARE_MODULE_AV2(tginfo, NULL, NULL, tginfo_clist, NULL, NULL, NULL, NULL, tgi
 **      parv[1] = 0, reserved for future use (number of remaining targets)
 */
 static void
-me_tginfo(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+me_tginfo(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if (!IsPerson(source_p))
+	if (!IsPerson(&source))
 		return;
 
 	int remaining = atoi(parv[1]);
 	if (remaining != 0)
 		return; /* not implemented */
 
-	if (!EmptyString(source_p->sockhost) && strcmp(source_p->sockhost, "0"))
+	if (!EmptyString(source.sockhost) && strcmp(source.sockhost, "0"))
 	{
 		/* We can't really add the tgchange if we don't have their IP... */
-		add_tgchange(source_p->sockhost);
+		add_tgchange(source.sockhost);
 	}
 
-	if (!IsTGExcessive(source_p))
+	if (!IsTGExcessive(&source))
 	{
-		SetTGExcessive(source_p);
-		sendto_realops_snomask_from(SNO_BOTS, L_ALL, source_p->servptr,
+		SetTGExcessive(&source);
+		sendto_realops_snomask_from(SNO_BOTS, L_ALL, source.servptr,
 			"Excessive target change from %s (%s@%s)",
-			source_p->name, source_p->username, source_p->orighost);
+			source.name, source.username, source.orighost);
 	}
 }

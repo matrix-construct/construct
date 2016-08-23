@@ -27,11 +27,11 @@ using namespace ircd;
 static const char mode_desc[] =
 	"Provides the MODE and MLOCK client and server commands, and TS6 server-to-server TMODE and BMASK commands";
 
-static void m_mode(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void ms_mode(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void ms_tmode(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void ms_mlock(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void ms_bmask(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_mode(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void ms_mode(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void ms_tmode(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void ms_mlock(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void ms_bmask(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message mode_msgtab = {
 	"MODE", 0, 0, 0, 0,
@@ -59,7 +59,7 @@ DECLARE_MODULE_AV2(mode, NULL, NULL, mode_clist, NULL, NULL, NULL, NULL, mode_de
  * parv[1] - channel
  */
 static void
-m_mode(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_mode(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	chan::chan *chptr = NULL;
 	chan::membership *msptr;
@@ -69,15 +69,15 @@ m_mode(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 
 	dest = parv[1];
 
-	if(IsOperSpy(source_p) && *dest == '!')
+	if(IsOperSpy(&source) && *dest == '!')
 	{
 		dest++;
 		operspy = 1;
 
 		if(EmptyString(dest))
 		{
-			sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS),
-				   me.name, source_p->name, "MODE");
+			sendto_one(&source, form_str(ERR_NEEDMOREPARAMS),
+				   me.name, source.name, "MODE");
 			return;
 		}
 	}
@@ -86,13 +86,13 @@ m_mode(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 	if(!rfc1459::is_chan_prefix(*dest))
 	{
 		/* if here, it has to be a non-channel name */
-		user_mode(client_p, source_p, parc, parv);
+		user_mode(&client, &source, parc, parv);
 		return;
 	}
 
 	if(!chan::valid_name(dest))
 	{
-		sendto_one_numeric(source_p, ERR_BADCHANNAME, form_str(ERR_BADCHANNAME), parv[1]);
+		sendto_one_numeric(&source, ERR_BADCHANNAME, form_str(ERR_BADCHANNAME), parv[1]);
 		return;
 	}
 
@@ -100,7 +100,7 @@ m_mode(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 
 	if(chptr == NULL)
 	{
-		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
+		sendto_one_numeric(&source, ERR_NOSUCHCHANNEL,
 				   form_str(ERR_NOSUCHCHANNEL), parv[1]);
 		return;
 	}
@@ -109,32 +109,32 @@ m_mode(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 	if(parc < n + 1)
 	{
 		if(operspy)
-			report_operspy(source_p, "MODE", chptr->name.c_str());
+			report_operspy(&source, "MODE", chptr->name.c_str());
 
-		sendto_one(source_p, form_str(RPL_CHANNELMODEIS),
-			   me.name, source_p->name, parv[1],
-			   operspy ? channel_modes(chptr, &me) : channel_modes(chptr, source_p));
+		sendto_one(&source, form_str(RPL_CHANNELMODEIS),
+			   me.name, source.name, parv[1],
+			   operspy ? channel_modes(chptr, &me) : channel_modes(chptr, &source));
 
-		sendto_one(source_p, form_str(RPL_CREATIONTIME),
-			   me.name, source_p->name, parv[1], chptr->channelts);
+		sendto_one(&source, form_str(RPL_CREATIONTIME),
+			   me.name, source.name, parv[1], chptr->channelts);
 	}
 	else
 	{
-		msptr = get(chptr->members, *source_p, std::nothrow);
+		msptr = get(chptr->members, source, std::nothrow);
 
 		/* Finish the flood grace period... */
-		if(MyClient(source_p) && !IsFloodDone(source_p))
+		if(MyClient(&source) && !IsFloodDone(&source))
 		{
 			if(!((parc == 3) && (parv[2][0] == 'b' || parv[2][0] == 'q') && (parv[2][1] == '\0')))
-				flood_endgrace(source_p);
+				flood_endgrace(&source);
 		}
 
-		set_channel_mode(client_p, source_p, chptr, msptr, parc - n, parv + n);
+		set_channel_mode(&client, &source, chptr, msptr, parc - n, parv + n);
 	}
 }
 
 static void
-ms_mode(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+ms_mode(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	chan::chan *chptr;
 
@@ -142,16 +142,16 @@ ms_mode(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 
 	if(chptr == NULL)
 	{
-		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
+		sendto_one_numeric(&source, ERR_NOSUCHCHANNEL,
 				   form_str(ERR_NOSUCHCHANNEL), parv[1]);
 		return;
 	}
 
-	set_channel_mode(client_p, source_p, chptr, NULL, parc - 2, parv + 2);
+	set_channel_mode(&client, &source, chptr, NULL, parc - 2, parv + 2);
 }
 
 static void
-ms_tmode(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+ms_tmode(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	chan::chan *chptr = NULL;
 	chan::membership *msptr;
@@ -159,7 +159,7 @@ ms_tmode(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 	/* Now, try to find the channel in question */
 	if(!rfc1459::is_chan_prefix(parv[2][0]) || !chan::valid_name(parv[2]))
 	{
-		sendto_one_numeric(source_p, ERR_BADCHANNAME, form_str(ERR_BADCHANNAME), parv[2]);
+		sendto_one_numeric(&source, ERR_BADCHANNAME, form_str(ERR_BADCHANNAME), parv[2]);
 		return;
 	}
 
@@ -167,7 +167,7 @@ ms_tmode(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 
 	if(chptr == NULL)
 	{
-		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
+		sendto_one_numeric(&source, ERR_NOSUCHCHANNEL,
 				   form_str(ERR_NOSUCHCHANNEL), parv[2]);
 		return;
 	}
@@ -176,27 +176,27 @@ ms_tmode(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 	if(atol(parv[1]) > chptr->channelts)
 		return;
 
-	if(IsServer(source_p))
+	if(IsServer(&source))
 	{
-		set_channel_mode(client_p, source_p, chptr, NULL, parc - 3, parv + 3);
+		set_channel_mode(&client, &source, chptr, NULL, parc - 3, parv + 3);
 	}
 	else
 	{
-		msptr = get(chptr->members, *source_p, std::nothrow);
+		msptr = get(chptr->members, source, std::nothrow);
 
-		set_channel_mode(client_p, source_p, chptr, msptr, parc - 3, parv + 3);
+		set_channel_mode(&client, &source, chptr, msptr, parc - 3, parv + 3);
 	}
 }
 
 static void
-ms_mlock(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+ms_mlock(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	chan::chan *chptr = NULL;
 
 	/* Now, try to find the channel in question */
 	if(!rfc1459::is_chan_prefix(parv[2][0]) || !chan::valid_name(parv[2]))
 	{
-		sendto_one_numeric(source_p, ERR_BADCHANNAME, form_str(ERR_BADCHANNAME), parv[2]);
+		sendto_one_numeric(&source, ERR_BADCHANNAME, form_str(ERR_BADCHANNAME), parv[2]);
 		return;
 	}
 
@@ -204,7 +204,7 @@ ms_mlock(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 
 	if(chptr == NULL)
 	{
-		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
+		sendto_one_numeric(&source, ERR_NOSUCHCHANNEL,
 				   form_str(ERR_NOSUCHCHANNEL), parv[2]);
 		return;
 	}
@@ -213,12 +213,12 @@ ms_mlock(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 	if(atol(parv[1]) > chptr->channelts)
 		return;
 
-	if(IsServer(source_p))
-		set_channel_mlock(client_p, source_p, chptr, parv[3], true);
+	if(IsServer(&source))
+		set_channel_mlock(&client, &source, chptr, parv[3], true);
 }
 
 static void
-possibly_remove_lower_forward(client::client *fakesource_p,
+possibly_remove_lower_forward(client::client *fakesource,
                               const int &mems,
                               chan::chan &chan,
                               chan::list &list,
@@ -238,7 +238,7 @@ possibly_remove_lower_forward(client::client *fakesource_p,
 
 		sendto_channel_local(mems, &chan,
 		                     ":%s MODE %s -%c %s%s%s",
-		                     fakesource_p->name,
+		                     fakesource->name,
 		                     chan.name.c_str(),
 		                     mchar,
 		                     ban.banstr.c_str(),
@@ -250,7 +250,7 @@ possibly_remove_lower_forward(client::client *fakesource_p,
 }
 
 static void
-ms_bmask(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+ms_bmask(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	static char modebuf[BUFSIZE];
 	static char parabuf[BUFSIZE];
@@ -268,7 +268,7 @@ ms_bmask(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 	int modecount = 0;
 	int needcap = NOCAPS;
 	int mems;
-	client::client *fakesource_p;
+	client::client *fakesource;
 
 	if(!rfc1459::is_chan_prefix(parv[2][0]) || !chan::valid_name(parv[2]))
 		return;
@@ -315,11 +315,11 @@ ms_bmask(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 	s = LOCAL_COPY(parv[4]);
 
 	/* Hide connecting server on netburst -- jilles */
-	if (ConfigServerHide.flatten_links && !HasSentEob(source_p))
-		fakesource_p = &me;
+	if (ConfigServerHide.flatten_links && !HasSentEob(&source))
+		fakesource = &me;
 	else
-		fakesource_p = source_p;
-	mlen = sprintf(modebuf, ":%s MODE %s +", fakesource_p->name, chptr->name.c_str());
+		fakesource = &source;
+	mlen = sprintf(modebuf, ":%s MODE %s +", fakesource->name, chptr->name.c_str());
 	mbuf = modebuf + mlen;
 	pbuf = parabuf;
 
@@ -355,12 +355,12 @@ ms_bmask(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 			if(*forward == '\0')
 				tlen--, forward = NULL;
 			else
-				possibly_remove_lower_forward(fakesource_p,
+				possibly_remove_lower_forward(fakesource,
 						mems, *chptr, *list,
 						parv[3][0], s, forward);
 		}
 
-		if (add(*chptr, mode_type, s, *fakesource_p, forward))
+		if (add(*chptr, mode_type, s, *fakesource, forward))
 		{
 			/* this new one wont fit.. */
 			if(mlen + chan::mode::MAXPARAMS + plen + tlen > BUFSIZE - 5 ||
@@ -407,6 +407,6 @@ ms_bmask(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 		sendto_channel_local(mems, chptr, "%s %s", modebuf, parabuf);
 	}
 
-	sendto_server(client_p, chptr, CAP_TS6 | needcap, NOCAPS, ":%s BMASK %ld %s %s :%s",
-		      source_p->id, (long) chptr->channelts, chptr->name.c_str(), parv[3], parv[4]);
+	sendto_server(&client, chptr, CAP_TS6 | needcap, NOCAPS, ":%s BMASK %ld %s %s :%s",
+		      source.id, (long) chptr->channelts, chptr->name.c_str(), parv[3], parv[4]);
 }

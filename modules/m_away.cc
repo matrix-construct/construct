@@ -26,7 +26,7 @@ using namespace ircd;
 
 static const char away_desc[] = "Provides the AWAY command to set yourself away";
 
-static void m_away(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_away(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message away_msgtab = {
 	"AWAY", 0, 0, 0, 0,
@@ -56,47 +56,47 @@ DECLARE_MODULE_AV2(away, NULL, NULL, away_clist, NULL, NULL, NULL, NULL, away_de
 **      parv[1] = away message
 */
 static void
-m_away(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_away(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(MyClient(source_p) && source_p->localClient->next_away &&
-			!IsFloodDone(source_p))
-		flood_endgrace(source_p);
+	if(MyClient(&source) && source.localClient->next_away &&
+			!IsFloodDone(&source))
+		flood_endgrace(&source);
 
-	if(!IsClient(source_p))
+	if(!IsClient(&source))
 		return;
 
 	if(parc < 2 || EmptyString(parv[1]))
 	{
 		/* Marking as not away */
-		if(away(user(*source_p)).size())
+		if(away(user(source)).size())
 		{
 			/* we now send this only if they were away before --is */
-			sendto_server(client_p, NULL, CAP_TS6, NOCAPS,
-				      ":%s AWAY", use_id(source_p));
+			sendto_server(&client, NULL, CAP_TS6, NOCAPS,
+				      ":%s AWAY", use_id(&source));
 
-			sendto_common_channels_local_butone(source_p, CLICAP_AWAY_NOTIFY, NOCAPS, ":%s!%s@%s AWAY",
-							    source_p->name, source_p->username, source_p->host);
+			sendto_common_channels_local_butone(&source, CLICAP_AWAY_NOTIFY, NOCAPS, ":%s!%s@%s AWAY",
+							    source.name, source.username, source.host);
 		}
-		if(MyConnect(source_p))
-			sendto_one_numeric(source_p, RPL_UNAWAY, form_str(RPL_UNAWAY));
+		if(MyConnect(&source))
+			sendto_one_numeric(&source, RPL_UNAWAY, form_str(RPL_UNAWAY));
 		return;
 	}
 
 	/* Rate limit this because it is sent to common channels. */
-	if (MyClient(source_p))
+	if (MyClient(&source))
 	{
-		if(!IsOper(source_p) &&
-				source_p->localClient->next_away > rb_current_time())
+		if(!IsOper(&source) &&
+				source.localClient->next_away > rb_current_time())
 		{
-			sendto_one(source_p, form_str(RPL_LOAD2HI),
-					me.name, source_p->name, "AWAY");
+			sendto_one(&source, form_str(RPL_LOAD2HI),
+					me.name, source.name, "AWAY");
 			return;
 		}
-		if(source_p->localClient->next_away < rb_current_time() -
+		if(source.localClient->next_away < rb_current_time() -
 				ConfigFileEntry.away_interval)
-			source_p->localClient->next_away = rb_current_time();
+			source.localClient->next_away = rb_current_time();
 		else
-			source_p->localClient->next_away = rb_current_time() +
+			source.localClient->next_away = rb_current_time() +
 				ConfigFileEntry.away_interval;
 	}
 
@@ -104,23 +104,23 @@ m_away(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 	if (p1.size() >= AWAYLEN)
 		p1.resize(AWAYLEN-1);
 
-	if (away(user(*source_p)) != p1)
+	if (away(user(source)) != p1)
 	{
-		away(user(*source_p)) = std::move(p1);
-		sendto_server(client_p, NULL, CAP_TS6, NOCAPS,
+		away(user(source)) = std::move(p1);
+		sendto_server(&client, NULL, CAP_TS6, NOCAPS,
 		              ":%s AWAY :%s",
-		              use_id(source_p),
-		              away(user(*source_p)).c_str());
+		              use_id(&source),
+		              away(user(source)).c_str());
 
-		sendto_common_channels_local_butone(source_p,
+		sendto_common_channels_local_butone(&source,
 					            CLICAP_AWAY_NOTIFY, NOCAPS,
 						    ":%s!%s@%s AWAY :%s",
-						    source_p->name,
-						    source_p->username,
-						    source_p->host,
-						    away(user(*source_p)).c_str());
+						    source.name,
+						    source.username,
+						    source.host,
+						    away(user(source)).c_str());
 	}
 
-	if(MyConnect(source_p))
-		sendto_one_numeric(source_p, RPL_NOWAWAY, form_str(RPL_NOWAWAY));
+	if(MyConnect(&source))
+		sendto_one_numeric(&source, RPL_NOWAWAY, form_str(RPL_NOWAWAY));
 }

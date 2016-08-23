@@ -25,7 +25,7 @@ using namespace ircd;
 
 static const char okick_desc[] = "Allow admins to forcibly kick users from channels with the OKICK command";
 
-static void mo_okick(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
+static void mo_okick(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[]);
 
 struct Message okick_msgtab = {
 	"OKICK", 0, 0, 0, 0,
@@ -43,7 +43,7 @@ DECLARE_MODULE_AV2(okick, NULL, NULL, okick_clist, NULL, NULL, NULL, NULL, okick
 **      parv[3] = kick comment
 */
 static void
-mo_okick(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mo_okick(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	client::client *who;
 	client::client *target_p;
@@ -58,12 +58,12 @@ mo_okick(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 
 	if(*parv[2] == '\0')
 	{
-		sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS), me.name, source_p->name, "KICK");
+		sendto_one(&source, form_str(ERR_NEEDMOREPARAMS), me.name, source.name, "KICK");
 		return;
 	}
 
-	if(MyClient(source_p) && !IsFloodDone(source_p))
-		flood_endgrace(source_p);
+	if(MyClient(&source) && !IsFloodDone(&source))
+		flood_endgrace(&source);
 
 	comment = (EmptyString(LOCAL_COPY(parv[3]))) ? LOCAL_COPY(parv[2]) : LOCAL_COPY(parv[3]);
 	if(strlen(comment) > (size_t) TOPICLEN)
@@ -78,7 +78,7 @@ mo_okick(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 	chptr = chan::get(name, std::nothrow);
 	if(!chptr)
 	{
-		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL, form_str(ERR_NOSUCHCHANNEL), name);
+		sendto_one_numeric(&source, ERR_NOSUCHCHANNEL, form_str(ERR_NOSUCHCHANNEL), name);
 		return;
 	}
 
@@ -86,35 +86,35 @@ mo_okick(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 	if((p = (char *)strchr(parv[2], ',')))
 		*p = '\0';
 	user = LOCAL_COPY(parv[2]);	// strtoken(&p2, parv[2], ",");
-	if(!(who = find_chasing(source_p, user, &chasing)))
+	if(!(who = find_chasing(&source, user, &chasing)))
 	{
 		return;
 	}
 
 	if((target_p = find_client(user)) == NULL)
 	{
-		sendto_one(source_p, form_str(ERR_NOSUCHNICK), user);
+		sendto_one(&source, form_str(ERR_NOSUCHNICK), user);
 		return;
 	}
 
 	if((msptr = get(chptr->members, *target_p, std::nothrow)) == NULL)
 	{
-		sendto_one(source_p, form_str(ERR_USERNOTINCHANNEL), parv[1], parv[2]);
+		sendto_one(&source, form_str(ERR_USERNOTINCHANNEL), parv[1], parv[2]);
 		return;
 	}
 
 	sendto_wallops_flags(UMODE_WALLOP, &me,
 			     "OKICK called for %s %s by %s!%s@%s",
 			     chptr->name.c_str(), target_p->name,
-			     source_p->name, source_p->username, source_p->host);
+			     source.name, source.username, source.host);
 	ilog(L_MAIN, "OKICK called for %s %s by %s",
 	     chptr->name.c_str(), target_p->name,
-	     get_oper_name(source_p));
+	     get_oper_name(&source));
 	/* only sends stuff for #channels remotely */
 	sendto_server(NULL, chptr, NOCAPS, NOCAPS,
 			":%s WALLOPS :OKICK called for %s %s by %s!%s@%s",
 			me.name, chptr->name.c_str(), target_p->name,
-			source_p->name, source_p->username, source_p->host);
+			source.name, source.username, source.host);
 
 	sendto_channel_local(chan::ALL_MEMBERS, chptr, ":%s KICK %s %s :%s",
 			     me.name, chptr->name.c_str(), who->name, comment);

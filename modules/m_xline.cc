@@ -33,28 +33,28 @@ using namespace ircd;
 static const char xline_desc[] =
 	"Provides management of GECOS bans via (UN)XLINE command";
 
-static void mo_xline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
-static void ms_xline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
-static void me_xline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
-static void mo_unxline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc,
+static void mo_xline(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[]);
+static void ms_xline(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[]);
+static void me_xline(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[]);
+static void mo_unxline(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc,
 		      const char *parv[]);
-static void ms_unxline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc,
+static void ms_unxline(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc,
 		      const char *parv[]);
-static void me_unxline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc,
+static void me_unxline(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc,
 		      const char *parv[]);
 
-static bool valid_xline(client::client *, const char *, const char *);
-static void apply_xline(client::client *client_p, const char *name,
+static bool valid_xline(client::client &, const char *, const char *);
+static void apply_xline(client::client &client, const char *name,
 			const char *reason, int temp_time, bool propagated);
-static void propagate_xline(client::client *source_p, const char *target,
+static void propagate_xline(client::client &source, const char *target,
 			    int temp_time, const char *name, const char *type, const char *reason);
-static void cluster_xline(client::client *source_p, int temp_time,
+static void cluster_xline(client::client &source, int temp_time,
 			  const char *name, const char *reason);
 
-static void handle_remote_xline(client::client *source_p, int temp_time,
+static void handle_remote_xline(client::client &source, int temp_time,
 				const char *name, const char *reason);
-static void handle_remote_unxline(client::client *source_p, const char *name);
-static void remove_xline(client::client *source_p, const char *name,
+static void handle_remote_unxline(client::client &source, const char *name);
+static void remove_xline(client::client &source, const char *name,
 			 bool propagated);
 
 struct Message xline_msgtab = {
@@ -78,7 +78,7 @@ DECLARE_MODULE_AV2(xline, NULL, NULL, xline_clist, NULL, NULL, NULL, NULL, xline
  * parv[3] - reason
  */
 static void
-mo_xline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mo_xline(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	struct ConfItem *aconf;
 	const char *name;
@@ -88,9 +88,9 @@ mo_xline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 	int loc = 1;
 	bool propagated = ConfigFileEntry.use_propagated_bans;
 
-	if(!IsOperXline(source_p))
+	if(!IsOperXline(&source))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "xline");
+		sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "xline");
 		return;
 	}
 
@@ -106,10 +106,10 @@ mo_xline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 	/* XLINE <gecos> ON <server> :<reason> */
 	if(parc >= loc + 2 && !irccmp(parv[loc], "ON"))
 	{
-		if(!IsOperRemoteBan(source_p))
+		if(!IsOperRemoteBan(&source))
 		{
-			sendto_one(source_p, form_str(ERR_NOPRIVS),
-				   me.name, source_p->name, "remoteban");
+			sendto_one(&source, form_str(ERR_NOPRIVS),
+				   me.name, source.name, "remoteban");
 			return;
 		}
 
@@ -119,8 +119,8 @@ mo_xline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 
 	if(parc <= loc || EmptyString(parv[loc]))
 	{
-		sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS),
-			   me.name, source_p->name, "XLINE");
+		sendto_one(&source, form_str(ERR_NEEDMOREPARAMS),
+			   me.name, source.name, "XLINE");
 		return;
 	}
 
@@ -128,7 +128,7 @@ mo_xline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 
 	if(target_server != NULL)
 	{
-		propagate_xline(source_p, target_server, temp_time, name, "2", reason);
+		propagate_xline(source, target_server, temp_time, name, "2", reason);
 
 		if(!match(target_server, me.name))
 			return;
@@ -137,25 +137,25 @@ mo_xline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 		propagated = false;
 	}
 	else if(!propagated && rb_dlink_list_length(&cluster_conf_list) > 0)
-		cluster_xline(source_p, temp_time, name, reason);
+		cluster_xline(source, temp_time, name, reason);
 
 	if((aconf = find_xline_mask(name)) != NULL)
 	{
-		sendto_one(source_p, ":%s NOTICE %s :[%s] already X-Lined by [%s] - %s",
-			   me.name, source_p->name, name, aconf->host, aconf->passwd);
+		sendto_one(&source, ":%s NOTICE %s :[%s] already X-Lined by [%s] - %s",
+			   me.name, source.name, name, aconf->host, aconf->passwd);
 		return;
 	}
 
-	if(!valid_xline(source_p, name, reason))
+	if(!valid_xline(source, name, reason))
 		return;
 
 	if(propagated && temp_time == 0)
 	{
-		sendto_one_notice(source_p, ":Cannot set a permanent global ban");
+		sendto_one_notice(&source, ":Cannot set a permanent global ban");
 		return;
 	}
 
-	apply_xline(source_p, name, reason, temp_time, propagated);
+	apply_xline(source, name, reason, temp_time, propagated);
 }
 
 /* ms_xline()
@@ -163,55 +163,55 @@ mo_xline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
  * handles a remote xline
  */
 static void
-ms_xline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+ms_xline(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	/* parv[0]  parv[1]      parv[2]  parv[3]  parv[4]
 	 * oper     target serv  xline    type     reason
 	 */
-	propagate_xline(source_p, parv[1], 0, parv[2], parv[3], parv[4]);
+	propagate_xline(source, parv[1], 0, parv[2], parv[3], parv[4]);
 
-	if(!IsPerson(source_p))
+	if(!IsPerson(&source))
 		return;
 
 	/* destined for me? */
 	if(!match(parv[1], me.name))
 		return;
 
-	handle_remote_xline(source_p, 0, parv[2], parv[4]);
+	handle_remote_xline(source, 0, parv[2], parv[4]);
 }
 
 static void
-me_xline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+me_xline(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	/* time name type :reason */
-	if(!IsPerson(source_p))
+	if(!IsPerson(&source))
 		return;
 
-	handle_remote_xline(source_p, atoi(parv[1]), parv[2], parv[4]);
+	handle_remote_xline(source, atoi(parv[1]), parv[2], parv[4]);
 }
 
 static void
-handle_remote_xline(client::client *source_p, int temp_time, const char *name, const char *reason)
+handle_remote_xline(client::client &source, int temp_time, const char *name, const char *reason)
 {
 	struct ConfItem *aconf;
 
-	if(!find_shared_conf(source_p->username, source_p->host,
-			     source_p->servptr->name,
+	if(!find_shared_conf(source.username, source.host,
+			     source.servptr->name,
 			     (temp_time > 0) ? SHARED_TXLINE : SHARED_PXLINE))
 		return;
 
-	if(!valid_xline(source_p, name, reason))
+	if(!valid_xline(source, name, reason))
 		return;
 
 	/* already xlined */
 	if((aconf = find_xline_mask(name)) != NULL)
 	{
-		sendto_one_notice(source_p, ":[%s] already X-Lined by [%s] - %s", name, aconf->host,
+		sendto_one_notice(&source, ":[%s] already X-Lined by [%s] - %s", name, aconf->host,
 				  aconf->passwd);
 		return;
 	}
 
-	apply_xline(source_p, name, reason, temp_time, false);
+	apply_xline(source, name, reason, temp_time, false);
 }
 
 /* valid_xline()
@@ -221,18 +221,18 @@ handle_remote_xline(client::client *source_p, int temp_time, const char *name, c
  * side effects - checks the xline for validity, erroring if needed
  */
 static bool
-valid_xline(client::client *source_p, const char *gecos, const char *reason)
+valid_xline(client::client &source, const char *gecos, const char *reason)
 {
 	if(EmptyString(reason))
 	{
-		sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS),
-			   get_id(&me, source_p), get_id(source_p, source_p), "XLINE");
+		sendto_one(&source, form_str(ERR_NEEDMOREPARAMS),
+			   get_id(&me, &source), get_id(&source, &source), "XLINE");
 		return false;
 	}
 
 	if(!valid_wild_card_simple(gecos))
 	{
-		sendto_one_notice(source_p,
+		sendto_one_notice(&source,
 				  ":Please include at least %d non-wildcard "
 				  "characters with the xline",
 				  ConfigFileEntry.min_nonwildcard_simple);
@@ -243,7 +243,7 @@ valid_xline(client::client *source_p, const char *gecos, const char *reason)
 }
 
 void
-apply_xline(client::client *source_p, const char *name, const char *reason, int temp_time, bool propagated)
+apply_xline(client::client &source, const char *name, const char *reason, int temp_time, bool propagated)
 {
 	struct ConfItem *aconf;
 
@@ -254,7 +254,7 @@ apply_xline(client::client *source_p, const char *name, const char *reason, int 
 	aconf->passwd = rb_strdup(reason);
 	collapse(aconf->host);
 
-	aconf->info.oper = operhash_add(get_oper_name(source_p));
+	aconf->info.oper = operhash_add(get_oper_name(&source));
 
 	if(propagated)
 	{
@@ -267,15 +267,15 @@ apply_xline(client::client *source_p, const char *name, const char *reason, int 
 
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				       "%s added global %d min. X-Line for [%s] [%s]",
-				       get_oper_name(source_p), temp_time / 60,
+				       get_oper_name(&source), temp_time / 60,
 				       aconf->host, reason);
 		ilog(L_KLINE, "X %s %d %s %s",
-		     get_oper_name(source_p), temp_time / 60, name, reason);
-		sendto_one_notice(source_p, ":Added global %d min. X-Line [%s]",
+		     get_oper_name(&source), temp_time / 60, name, reason);
+		sendto_one_notice(&source, ":Added global %d min. X-Line [%s]",
 				  temp_time / 60, aconf->host);
 		sendto_server(NULL, NULL, CAP_BAN|CAP_TS6, NOCAPS,
 				":%s BAN X * %s %lu %d %d * :%s",
-				source_p->id, aconf->host,
+				source.id, aconf->host,
 				(unsigned long)aconf->created,
 				(int)(aconf->hold - aconf->created),
 				(int)(aconf->lifetime - aconf->created),
@@ -287,22 +287,22 @@ apply_xline(client::client *source_p, const char *name, const char *reason, int 
 
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				       "%s added temporary %d min. X-Line for [%s] [%s]",
-				       get_oper_name(source_p), temp_time / 60,
+				       get_oper_name(&source), temp_time / 60,
 				       aconf->host, reason);
 		ilog(L_KLINE, "X %s %d %s %s",
-		     get_oper_name(source_p), temp_time / 60, name, reason);
-		sendto_one_notice(source_p, ":Added temporary %d min. X-Line [%s]",
+		     get_oper_name(&source), temp_time / 60, name, reason);
+		sendto_one_notice(&source, ":Added temporary %d min. X-Line [%s]",
 				  temp_time / 60, aconf->host);
 	}
 	else
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s added X-Line for [%s] [%s]",
-				       get_oper_name(source_p), aconf->host, aconf->passwd);
-		sendto_one_notice(source_p, ":Added X-Line for [%s] [%s]",
+				       get_oper_name(&source), aconf->host, aconf->passwd);
+		sendto_one_notice(&source, ":Added X-Line for [%s] [%s]",
 				  aconf->host, aconf->passwd);
 
-		bandb_add(BANDB_XLINE, source_p, aconf->host, NULL, aconf->passwd, NULL, 0);
-		ilog(L_KLINE, "X %s 0 %s %s", get_oper_name(source_p), name, aconf->passwd);
+		bandb_add(BANDB_XLINE, &source, aconf->host, NULL, aconf->passwd, NULL, 0);
+		ilog(L_KLINE, "X %s 0 %s %s", get_oper_name(&source), name, aconf->passwd);
 	}
 
 	rb_dlinkAddAlloc(aconf, &xline_conf_list);
@@ -310,24 +310,24 @@ apply_xline(client::client *source_p, const char *name, const char *reason, int 
 }
 
 static void
-propagate_xline(client::client *source_p, const char *target,
+propagate_xline(client::client &source, const char *target,
 		int temp_time, const char *name, const char *type, const char *reason)
 {
 	if(!temp_time)
 	{
-		sendto_match_servs(source_p, target, CAP_CLUSTER, NOCAPS,
+		sendto_match_servs(&source, target, CAP_CLUSTER, NOCAPS,
 				   "XLINE %s %s %s :%s", target, name, type, reason);
-		sendto_match_servs(source_p, target, CAP_ENCAP, CAP_CLUSTER,
+		sendto_match_servs(&source, target, CAP_ENCAP, CAP_CLUSTER,
 				   "ENCAP %s XLINE %d %s 2 :%s", target, temp_time, name, reason);
 	}
 	else
-		sendto_match_servs(source_p, target, CAP_ENCAP, NOCAPS,
+		sendto_match_servs(&source, target, CAP_ENCAP, NOCAPS,
 				   "ENCAP %s XLINE %d %s %s :%s",
 				   target, temp_time, name, type, reason);
 }
 
 static void
-cluster_xline(client::client *source_p, int temp_time, const char *name, const char *reason)
+cluster_xline(client::client &source, int temp_time, const char *name, const char *reason)
 {
 	struct remote_conf *shared_p;
 	rb_dlink_node *ptr;
@@ -344,14 +344,14 @@ cluster_xline(client::client *source_p, int temp_time, const char *name, const c
 			if(!(shared_p->flags & SHARED_PXLINE))
 				continue;
 
-			sendto_match_servs(source_p, shared_p->server, CAP_CLUSTER, NOCAPS,
+			sendto_match_servs(&source, shared_p->server, CAP_CLUSTER, NOCAPS,
 					   "XLINE %s %s 2 :%s", shared_p->server, name, reason);
-			sendto_match_servs(source_p, shared_p->server, CAP_ENCAP, CAP_CLUSTER,
+			sendto_match_servs(&source, shared_p->server, CAP_ENCAP, CAP_CLUSTER,
 					   "ENCAP %s XLINE 0 %s 2 :%s",
 					   shared_p->server, name, reason);
 		}
 		else if(shared_p->flags & SHARED_TXLINE)
-			sendto_match_servs(source_p, shared_p->server, CAP_ENCAP, NOCAPS,
+			sendto_match_servs(&source, shared_p->server, CAP_ENCAP, NOCAPS,
 					   "ENCAP %s XLINE %d %s 2 :%s",
 					   shared_p->server, temp_time, name, reason);
 	}
@@ -362,26 +362,26 @@ cluster_xline(client::client *source_p, int temp_time, const char *name, const c
  * parv[1] - thing to unxline
  */
 static void
-mo_unxline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mo_unxline(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	bool propagated = true;
 
-	if(!IsOperXline(source_p))
+	if(!IsOperXline(&source))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "xline");
+		sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "xline");
 		return;
 	}
 
 	if(parc == 4 && !(irccmp(parv[2], "ON")))
 	{
-		if(!IsOperRemoteBan(source_p))
+		if(!IsOperRemoteBan(&source))
 		{
-			sendto_one(source_p, form_str(ERR_NOPRIVS),
-				   me.name, source_p->name, "remoteban");
+			sendto_one(&source, form_str(ERR_NOPRIVS),
+				   me.name, source.name, "remoteban");
 			return;
 		}
 
-		propagate_generic(source_p, "UNXLINE", parv[3], CAP_CLUSTER, "%s", parv[1]);
+		propagate_generic(&source, "UNXLINE", parv[3], CAP_CLUSTER, "%s", parv[1]);
 
 		if(match(parv[3], me.name) == 0)
 			return;
@@ -390,7 +390,7 @@ mo_unxline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *so
 	}
 	/* cluster{} moved to remove_xline */
 
-	remove_xline(source_p, parv[1], propagated);
+	remove_xline(source, parv[1], propagated);
 }
 
 /* ms_unxline()
@@ -398,44 +398,44 @@ mo_unxline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *so
  * handles a remote unxline
  */
 static void
-ms_unxline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+ms_unxline(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	/* parv[0]  parv[1]        parv[2]
 	 * oper     target server  gecos
 	 */
-	propagate_generic(source_p, "UNXLINE", parv[1], CAP_CLUSTER, "%s", parv[2]);
+	propagate_generic(&source, "UNXLINE", parv[1], CAP_CLUSTER, "%s", parv[2]);
 
 	if(!match(parv[1], me.name))
 		return;
 
-	if(!IsPerson(source_p))
+	if(!IsPerson(&source))
 		return;
 
-	handle_remote_unxline(source_p, parv[2]);
+	handle_remote_unxline(source, parv[2]);
 }
 
 static void
-me_unxline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+me_unxline(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	/* name */
-	if(!IsPerson(source_p))
+	if(!IsPerson(&source))
 		return;
 
-	handle_remote_unxline(source_p, parv[1]);
+	handle_remote_unxline(source, parv[1]);
 }
 
 static void
-handle_remote_unxline(client::client *source_p, const char *name)
+handle_remote_unxline(client::client &source, const char *name)
 {
-	if(!find_shared_conf(source_p->username, source_p->host,
-			     source_p->servptr->name, SHARED_UNXLINE))
+	if(!find_shared_conf(source.username, source.host,
+			     source.servptr->name, SHARED_UNXLINE))
 		return;
 
-	remove_xline(source_p, name, false);
+	remove_xline(source, name, false);
 }
 
 static void
-remove_xline(client::client *source_p, const char *name, bool propagated)
+remove_xline(client::client &source, const char *name, bool propagated)
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
@@ -451,17 +451,17 @@ remove_xline(client::client *source_p, const char *name, bool propagated)
 			{
 				if(!propagated)
 				{
-					sendto_one_notice(source_p, ":Cannot remove global X-Line %s on specific servers", name);
+					sendto_one_notice(&source, ":Cannot remove global X-Line %s on specific servers", name);
 					return;
 				}
 				ptr = rb_dlinkFind(aconf, &prop_bans);
 				if(ptr == NULL)
 					return;
-				sendto_one_notice(source_p, ":X-Line for [%s] is removed", name);
+				sendto_one_notice(&source, ":X-Line for [%s] is removed", name);
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						       "%s has removed the global X-Line for: [%s]",
-						       get_oper_name(source_p), name);
-				ilog(L_KLINE, "UX %s %s", get_oper_name(source_p), name);
+						       get_oper_name(&source), name);
+				ilog(L_KLINE, "UX %s %s", get_oper_name(&source), name);
 				now = rb_current_time();
 				if(aconf->created < now)
 					aconf->created = now;
@@ -469,11 +469,11 @@ remove_xline(client::client *source_p, const char *name, bool propagated)
 					aconf->created++;
 				aconf->hold = aconf->created;
 				operhash_delete(aconf->info.oper);
-				aconf->info.oper = operhash_add(get_oper_name(source_p));
+				aconf->info.oper = operhash_add(get_oper_name(&source));
 				aconf->flags |= CONF_FLAGS_MYOPER | CONF_FLAGS_TEMPORARY;
 				sendto_server(NULL, NULL, CAP_BAN|CAP_TS6, NOCAPS,
 						":%s BAN X * %s %lu %d %d * :*",
-						source_p->id, aconf->host,
+						source.id, aconf->host,
 						(unsigned long)aconf->created,
 						0,
 						(int)(aconf->lifetime - aconf->created));
@@ -482,24 +482,24 @@ remove_xline(client::client *source_p, const char *name, bool propagated)
 				return;
 			}
 			else if(propagated && rb_dlink_list_length(&cluster_conf_list))
-				cluster_generic(source_p, "UNXLINE", SHARED_UNXLINE, CAP_CLUSTER, "%s", name);
+				cluster_generic(&source, "UNXLINE", SHARED_UNXLINE, CAP_CLUSTER, "%s", name);
 			if(!aconf->hold)
 			{
 				bandb_del(BANDB_XLINE, aconf->host, NULL);
 
-				sendto_one_notice(source_p, ":X-Line for [%s] is removed", aconf->host);
+				sendto_one_notice(&source, ":X-Line for [%s] is removed", aconf->host);
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						       "%s has removed the X-Line for: [%s]",
-						       get_oper_name(source_p), aconf->host);
-				ilog(L_KLINE, "UX %s %s", get_oper_name(source_p), aconf->host);
+						       get_oper_name(&source), aconf->host);
+				ilog(L_KLINE, "UX %s %s", get_oper_name(&source), aconf->host);
 			}
 			else
 			{
-				sendto_one_notice(source_p, ":X-Line for [%s] is removed", name);
+				sendto_one_notice(&source, ":X-Line for [%s] is removed", name);
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						       "%s has removed the temporary X-Line for: [%s]",
-						       get_oper_name(source_p), name);
-				ilog(L_KLINE, "UX %s %s", get_oper_name(source_p), name);
+						       get_oper_name(&source), name);
+				ilog(L_KLINE, "UX %s %s", get_oper_name(&source), name);
 			}
 
 			remove_reject_mask(aconf->host, NULL);
@@ -510,7 +510,7 @@ remove_xline(client::client *source_p, const char *name, bool propagated)
 	}
 
 	if(propagated && rb_dlink_list_length(&cluster_conf_list))
-		cluster_generic(source_p, "UNXLINE", SHARED_UNXLINE, CAP_CLUSTER, "%s", name);
+		cluster_generic(&source, "UNXLINE", SHARED_UNXLINE, CAP_CLUSTER, "%s", name);
 
-	sendto_one_notice(source_p, ":No X-Line for %s", name);
+	sendto_one_notice(&source, ":No X-Line for %s", name);
 }

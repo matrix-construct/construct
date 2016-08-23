@@ -26,8 +26,8 @@ using namespace ircd;
 
 static const char map_desc[] = "Provides the MAP command to view network topology information";
 
-static void m_map(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
-static void mo_map(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
+static void m_map(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[]);
+static void mo_map(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[]);
 
 struct Message map_msgtab = {
 	"MAP", 0, 0, 0, 0,
@@ -38,37 +38,37 @@ mapi_clist_av1 map_clist[] = { &map_msgtab, NULL };
 
 DECLARE_MODULE_AV2(map, NULL, NULL, map_clist, NULL, NULL, NULL, NULL, map_desc);
 
-static void dump_map(client::client *client_p, client::client *root, char *pbuf);
-static void flattened_map(client::client *client_p);
+static void dump_map(client::client &client, client::client *root, char *pbuf);
+static void flattened_map(client::client &client);
 
 static char buf[BUFSIZE];
 
 /* m_map
 */
 static void
-m_map(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_map(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if((!IsExemptShide(source_p) && ConfigServerHide.flatten_links) ||
+	if((!IsExemptShide(&source) && ConfigServerHide.flatten_links) ||
 	   ConfigFileEntry.map_oper_only)
 	{
-		flattened_map(client_p);
-		sendto_one_numeric(client_p, RPL_MAPEND, form_str(RPL_MAPEND));
+		flattened_map(client);
+		sendto_one_numeric(&client, RPL_MAPEND, form_str(RPL_MAPEND));
 		return;
 	}
 
-	dump_map(client_p, &me, buf);
-	sendto_one_numeric(client_p, RPL_MAPEND, form_str(RPL_MAPEND));
+	dump_map(client, &me, buf);
+	sendto_one_numeric(&client, RPL_MAPEND, form_str(RPL_MAPEND));
 }
 
 /*
 ** mo_map
 */
 static void
-mo_map(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mo_map(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	dump_map(client_p, &me, buf);
-	scache_send_missing(client_p);
-	sendto_one_numeric(client_p, RPL_MAPEND, form_str(RPL_MAPEND));
+	dump_map(client, &me, buf);
+	scache_send_missing(&client);
+	sendto_one_numeric(&client, RPL_MAPEND, form_str(RPL_MAPEND));
 }
 
 /*
@@ -76,7 +76,7 @@ mo_map(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 **   dumps server map, called recursively.
 */
 static void
-dump_map(client::client *client_p, client::client *root_p, char *pbuf)
+dump_map(client::client &client, client::client *root_p, char *pbuf)
 {
 	int cnt = 0, i = 0, len, frac;
 	client::client *server_p;
@@ -106,7 +106,7 @@ dump_map(client::client *client_p, client::client *root_p, char *pbuf)
 		 " | Users: %5lu (%2d.%1d%%)", users(serv(*root_p)).size(),
 		 frac / 10, frac % 10);
 
-	sendto_one_numeric(client_p, RPL_MAP, form_str(RPL_MAP), buf);
+	sendto_one_numeric(&client, RPL_MAP, form_str(RPL_MAP), buf);
 
 	if(!servers(serv(*root_p)).empty())
 	{
@@ -133,7 +133,7 @@ dump_map(client::client *client_p, client::client *root_p, char *pbuf)
 
 		*(pbuf + 2) = '-';
 		*(pbuf + 3) = ' ';
-		dump_map(client_p, server_p, pbuf + 4);
+		dump_map(client, server_p, pbuf + 4);
 
 		i++;
 	}
@@ -144,7 +144,7 @@ dump_map(client::client *client_p, client::client *root_p, char *pbuf)
  *                 information to users when flattened links is enabled.
  */
 static void
-flattened_map(client::client *client_p)
+flattened_map(client::client &client)
 {
 	char buf[BUFSIZE];
 	rb_dlink_node *ptr;
@@ -169,7 +169,7 @@ flattened_map(client::client *client_p)
 		" | Users: %5lu (%4.1f%%)", users(serv(me)).size(),
 		100 * (float) users(serv(me)).size() / (float) Count.total);
 
-	sendto_one_numeric(client_p, RPL_MAP, form_str(RPL_MAP), buf);
+	sendto_one_numeric(&client, RPL_MAP, form_str(RPL_MAP), buf);
 
 	/* Next, we run through every other server and list them */
 	RB_DLINK_FOREACH(ptr, global_serv_list.head)
@@ -207,6 +207,6 @@ flattened_map(client::client *client_p)
 			" | Users: %5lu (%4.1f%%)", users(serv(*target_p)).size(),
 			100 * (float) users(serv(*target_p)).size() / (float) Count.total);
 
-		sendto_one_numeric(client_p, RPL_MAP, form_str(RPL_MAP), buf);
+		sendto_one_numeric(&client, RPL_MAP, form_str(RPL_MAP), buf);
 	}
 }

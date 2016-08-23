@@ -31,8 +31,8 @@ using namespace ircd;
 
 static const char ban_desc[] = "Provides the TS6 BAN command for propagating network-wide bans";
 
-static void m_ban(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
-static void ms_ban(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
+static void m_ban(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[]);
+static void ms_ban(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[]);
 
 struct Message ban_msgtab = {
 	"BAN", 0, 0, 0, 0,
@@ -44,12 +44,12 @@ mapi_clist_av1 ban_clist[] =  { &ban_msgtab, NULL };
 DECLARE_MODULE_AV2(ban, NULL, NULL, ban_clist, NULL, NULL, NULL, NULL, ban_desc);
 
 static void
-m_ban(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_ban(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	sendto_one_notice(source_p, ":The BAN command is not user-accessible.");
-	sendto_one_notice(source_p, ":To ban a user from a channel, see /QUOTE HELP CMODE");
-	if (IsOper(source_p))
-		sendto_one_notice(source_p, ":To ban a user from a server or from the network, see /QUOTE HELP KLINE");
+	sendto_one_notice(&source, ":The BAN command is not user-accessible.");
+	sendto_one_notice(&source, ":To ban a user from a channel, see /QUOTE HELP CMODE");
+	if (IsOper(&source))
+		sendto_one_notice(&source, ":To ban a user from a server or from the network, see /QUOTE HELP KLINE");
 }
 
 /* ms_ban()
@@ -64,7 +64,7 @@ m_ban(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_
  * parv[8] - reason (possibly with |operreason)
  */
 static void
-ms_ban(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+ms_ban(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	rb_dlink_node *ptr;
 	struct ConfItem *aconf;
@@ -80,7 +80,7 @@ ms_ban(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
 				"Unknown BAN type %s from %s",
-				parv[1], source_p->name);
+				parv[1], source.name);
 		return;
 	}
 	switch (parv[1][0])
@@ -101,14 +101,14 @@ ms_ban(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 		default:
 			sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
 					"Unknown BAN type %s from %s",
-					parv[1], source_p->name);
+					parv[1], source.name);
 			return;
 	}
 	created = atol(parv[4]);
 	hold = created + atoi(parv[5]);
 	lifetime = created + atoi(parv[6]);
 	if (!strcmp(parv[7], "*"))
-		oper = IsServer(source_p) ? source_p->name : get_oper_name(source_p);
+		oper = IsServer(&source) ? source.name : get_oper_name(&source);
 	else
 		oper = parv[7];
 	ptr = find_prop_ban(ntype, parv[2], parv[3]);
@@ -120,8 +120,8 @@ ms_ban(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 				(aconf->created == created &&
 				 aconf->lifetime >= lifetime))
 		{
-			if (IsPerson(source_p))
-				sendto_one_notice(source_p,
+			if (IsPerson(&source))
+				sendto_one_notice(&source,
 						":Your %s [%s%s%s] has been superseded",
 						stype,
 						aconf->user ? aconf->user : "",
@@ -202,14 +202,14 @@ ms_ban(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 				       "Ignoring global %d min. %s from %s%s%s for [%s%s%s]: too few non-wildcard characters",
 				       (int)((hold - now) / 60),
 				       stype,
-				       IsServer(source_p) ? source_p->name : get_oper_name(source_p),
+				       IsServer(&source) ? source.name : get_oper_name(&source),
 				       strcmp(parv[7], "*") ? " on behalf of " : "",
 				       strcmp(parv[7], "*") ? parv[7] : "",
 				       aconf->user ? aconf->user : "",
 				       aconf->user ? "@" : "",
 				       aconf->host);
-		if(IsPerson(source_p))
-			sendto_one_notice(source_p,
+		if(IsPerson(&source))
+			sendto_one_notice(&source,
 					":Your %s [%s%s%s] has too few non-wildcard characters",
 					stype,
 					aconf->user ? aconf->user : "",
@@ -222,7 +222,7 @@ ms_ban(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 		/* Keep the notices in sync with modules/m_kline.c etc. */
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				       "%s added global %d min. %s%s%s for [%s%s%s] [%s]",
-				       IsServer(source_p) ? source_p->name : get_oper_name(source_p),
+				       IsServer(&source) ? source.name : get_oper_name(&source),
 				       (int)((hold - now) / 60),
 				       stype,
 				       strcmp(parv[7], "*") ? " from " : "",
@@ -232,7 +232,7 @@ ms_ban(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 				       aconf->host,
 				       parv[parc - 1]);
 		ilog(L_KLINE, "%s %s %d %s%s%s %s", parv[1],
-				IsServer(source_p) ? source_p->name : get_oper_name(source_p),
+				IsServer(&source) ? source.name : get_oper_name(&source),
 				(int)((hold - now) / 60),
 				aconf->user ? aconf->user : "",
 				aconf->user ? " " : "",
@@ -244,7 +244,7 @@ ms_ban(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				"%s has removed the global %s for: [%s%s%s]%s%s",
-				IsServer(source_p) ? source_p->name : get_oper_name(source_p),
+				IsServer(&source) ? source.name : get_oper_name(&source),
 				stype,
 				aconf->user ? aconf->user : "",
 				aconf->user ? "@" : "",
@@ -252,7 +252,7 @@ ms_ban(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 				strcmp(parv[7], "*") ? " on behalf of " : "",
 				strcmp(parv[7], "*") ? parv[7] : "");
 		ilog(L_KLINE, "U%s %s %s%s %s", parv[1],
-				IsServer(source_p) ? source_p->name : get_oper_name(source_p),
+				IsServer(&source) ? source.name : get_oper_name(&source),
 				aconf->user ? aconf->user : "",
 				aconf->user ? " " : "",
 				aconf->host);
@@ -271,8 +271,8 @@ ms_ban(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 			{
 				add_conf_by_address(aconf->host, CONF_KILL, aconf->user, NULL, aconf);
 				if(ConfigFileEntry.kline_delay ||
-						(IsServer(source_p) &&
-						 !HasSentEob(source_p)))
+						(IsServer(&source) &&
+						 !HasSentEob(&source)))
 				{
 					if(kline_queued == 0)
 					{
@@ -307,9 +307,9 @@ ms_ban(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 				rb_dlinkAddAlloc(aconf, &resv_conf_list);
 			break;
 	}
-	sendto_server(client_p, NULL, CAP_BAN|CAP_TS6, NOCAPS,
+	sendto_server(&client, NULL, CAP_BAN|CAP_TS6, NOCAPS,
 			":%s BAN %s %s %s %s %s %s %s :%s",
-			source_p->id,
+			source.id,
 			parv[1],
 			parv[2],
 			parv[3],

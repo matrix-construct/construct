@@ -26,8 +26,8 @@ using namespace ircd;
 
 static const char capab_desc[] = "Provides the commands used for server-to-server capability negotiation";
 
-static void mr_capab(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void me_gcap(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mr_capab(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void me_gcap(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message capab_msgtab = {
 	"CAPAB", 0, 0, 0, 0,
@@ -47,56 +47,56 @@ DECLARE_MODULE_AV2(capab, NULL, NULL, capab_clist, NULL, NULL, NULL, NULL, capab
  *      parv[1] = space-separated list of capabilities
  */
 static void
-mr_capab(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mr_capab(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	int i;
 	char *p;
 	char *s;
 
 	/* ummm, this shouldn't happen. Could argue this should be logged etc. */
-	if(client_p->localClient == NULL)
+	if(client.localClient == NULL)
 		return;
 
-	if(client_p->user)
+	if(client.user)
 		return;
 
 	/* CAP_TS6 is set in PASS, so is valid.. */
-	if((client_p->localClient->caps & ~CAP_TS6) != 0)
+	if((client.localClient->caps & ~CAP_TS6) != 0)
 	{
-		exit_client(client_p, client_p, client_p, "CAPAB received twice");
+		exit_client(&client, &client, &client, "CAPAB received twice");
 		return;
 	}
 	else
-		client_p->localClient->caps |= CAP_CAP;
+		client.localClient->caps |= CAP_CAP;
 
-	rb_free(client_p->localClient->fullcaps);
-	client_p->localClient->fullcaps = rb_strdup(parv[1]);
+	rb_free(client.localClient->fullcaps);
+	client.localClient->fullcaps = rb_strdup(parv[1]);
 
 	for (i = 1; i < parc; i++)
 	{
 		char *t = LOCAL_COPY(parv[i]);
 		for (s = rb_strtok_r(t, " ", &p); s; s = rb_strtok_r(NULL, " ", &p))
-			client_p->localClient->caps |= serv_capindex.get(s, NULL);
+			client.localClient->caps |= serv_capindex.get(s, NULL);
 	}
 }
 
 static void
-me_gcap(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
+me_gcap(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 		int parc, const char *parv[])
 {
 	char *t = LOCAL_COPY(parv[1]);
 	char *s;
 	char *p;
 
-	if(!IsServer(source_p))
+	if(!IsServer(&source))
 		return;
 
 	/* already had GCAPAB?! */
-	if (fullcaps(serv(*source_p)).size())
-		caps(serv(*source_p)) = 0;
+	if (fullcaps(serv(source)).size())
+		caps(serv(source)) = 0;
 
-	fullcaps(serv(*source_p)) = parv[1];
+	fullcaps(serv(source)) = parv[1];
 
 	for (s = rb_strtok_r(t, " ", &p); s; s = rb_strtok_r(NULL, " ", &p))
-		caps(serv(*source_p)) |= serv_capindex.get(s, NULL);
+		caps(serv(source)) |= serv_capindex.get(s, NULL);
 }

@@ -27,8 +27,8 @@ using namespace ircd;
 static const char lusers_desc[] =
 	"Provides the LUSERS command to view the number of current and maximum lusers on a server";
 
-static void m_lusers(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void ms_lusers(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_lusers(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void ms_lusers(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message lusers_msgtab = {
 	"LUSERS", 0, 0, 0, 0,
@@ -48,7 +48,7 @@ DECLARE_MODULE_AV2(lusers, NULL, NULL, lusers_clist, NULL, NULL, NULL, NULL, lus
  * to cause a force
  */
 static void
-m_lusers(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_lusers(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
 
@@ -57,19 +57,19 @@ m_lusers(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 		if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
 		{
 			/* safe enough to give this on a local connect only */
-			sendto_one(source_p, form_str(RPL_LOAD2HI),
-				   me.name, source_p->name, "LUSERS");
+			sendto_one(&source, form_str(RPL_LOAD2HI),
+				   me.name, source.name, "LUSERS");
 			return;
 		}
 		else
 			last_used = rb_current_time();
 
-		if(hunt_server(client_p, source_p, ":%s LUSERS %s :%s", 2, parc, parv) !=
+		if(hunt_server(&client, &source, ":%s LUSERS %s :%s", 2, parc, parv) !=
 			   HUNTED_ISME)
 			return;
 	}
 
-	show_lusers(source_p);
+	show_lusers(&source);
 }
 
 /*
@@ -81,14 +81,14 @@ m_lusers(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
  * to cause a force
  */
 static void
-ms_lusers(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+ms_lusers(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	if(parc > 2)
 	{
-		if(hunt_server(client_p, source_p, ":%s LUSERS %s :%s", 2, parc, parv)
+		if(hunt_server(&client, &source, ":%s LUSERS %s :%s", 2, parc, parv)
 		   != HUNTED_ISME)
 			return;
 	}
 
-	show_lusers(source_p);
+	show_lusers(&source);
 }

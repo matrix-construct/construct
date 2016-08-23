@@ -27,7 +27,7 @@ using namespace ircd;
 static const char svinfo_desc[] =
 	"Provides TS6 SVINFO command to ensure version and clock synchronisation";
 
-static void ms_svinfo(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void ms_svinfo(struct MsgBuf *, client::client &, client::client &, int, const char **);
 struct Message svinfo_msgtab = {
 	"SVINFO", 0, 0, 0, 0,
 	{mg_unreg, mg_ignore, mg_ignore, {ms_svinfo, 5}, mg_ignore, mg_ignore}
@@ -44,14 +44,14 @@ DECLARE_MODULE_AV2(svinfo, NULL, NULL, svinfo_clist, NULL, NULL, NULL, NULL, svi
  *      parv[4] = server's idea of UTC time
  */
 static void
-ms_svinfo(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+ms_svinfo(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	signed long deltat;
 	time_t theirtime;
 	char squitreason[120];
 
 	/* SVINFO isnt remote. */
-	if(source_p != client_p)
+	if(&source != &client)
 		return;
 
 	if(TS_CURRENT < atoi(parv[2]) || atoi(parv[1]) < TS_MIN)
@@ -59,10 +59,10 @@ ms_svinfo(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sou
 		/* TS version is too low on one of the sides, drop the link */
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Link %s dropped, wrong TS protocol version (%s,%s)",
-				     source_p->name, parv[1], parv[2]);
+				     source.name, parv[1], parv[2]);
 		snprintf(squitreason, sizeof squitreason, "Incompatible TS version (%s,%s)",
 				parv[1], parv[2]);
-		exit_client(source_p, source_p, source_p, squitreason);
+		exit_client(&source, &source, &source, squitreason);
 		return;
 	}
 
@@ -78,16 +78,16 @@ ms_svinfo(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sou
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Link %s dropped, excessive TS delta"
 				     " (my TS=%ld, their TS=%ld, delta=%ld)",
-				     source_p->name,
+				     source.name,
 				     (long) rb_current_time(), (long) theirtime, deltat);
 		ilog(L_SERVER,
 		     "Link %s dropped, excessive TS delta"
 		     " (my TS=%ld, their TS=%ld, delta=%ld)",
-		     log_client_name(source_p, SHOW_IP), (long) rb_current_time(), (long) theirtime, deltat);
+		     log_client_name(&source, SHOW_IP), (long) rb_current_time(), (long) theirtime, deltat);
 		snprintf(squitreason, sizeof squitreason, "Excessive TS delta (my TS=%ld, their TS=%ld, delta=%ld)",
 				(long) rb_current_time(), (long) theirtime, deltat);
-		disable_server_conf_autoconn(source_p->name);
-		exit_client(source_p, source_p, source_p, squitreason);
+		disable_server_conf_autoconn(source.name);
+		exit_client(&source, &source, &source, squitreason);
 		return;
 	}
 
@@ -96,6 +96,6 @@ ms_svinfo(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sou
 		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
 				     "Link %s notable TS delta"
 				     " (my TS=%ld, their TS=%ld, delta=%ld)",
-				     source_p->name, (long) rb_current_time(), (long) theirtime, deltat);
+				     source.name, (long) rb_current_time(), (long) theirtime, deltat);
 	}
 }

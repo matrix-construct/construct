@@ -26,7 +26,7 @@ using namespace ircd;
 
 static const char kick_desc[] = "Provides the KICK command to remove a user from a channel";
 
-static void m_kick(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_kick(struct MsgBuf *, client::client &, client::client &, int, const char **);
 #define mg_kick { m_kick, 3 }
 
 struct Message kick_msgtab = {
@@ -45,7 +45,7 @@ DECLARE_MODULE_AV2(kick, NULL, NULL, kick_clist, NULL, NULL, NULL, NULL, kick_de
 **      parv[3] = kick comment
 */
 static void
-m_kick(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_kick(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	chan::membership *msptr;
 	client::client *who;
@@ -57,8 +57,8 @@ m_kick(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 	const char *user;
 	static char buf[BUFSIZE];
 
-	if(MyClient(source_p) && !IsFloodDone(source_p))
-		flood_endgrace(source_p);
+	if(MyClient(&source) && !IsFloodDone(&source))
+		flood_endgrace(&source);
 
 	*buf = '\0';
 	if((p = (char *)strchr(parv[1], ',')))
@@ -69,35 +69,35 @@ m_kick(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 	chptr = chan::get(name, std::nothrow);
 	if(chptr == NULL)
 	{
-		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL, form_str(ERR_NOSUCHCHANNEL), name);
+		sendto_one_numeric(&source, ERR_NOSUCHCHANNEL, form_str(ERR_NOSUCHCHANNEL), name);
 		return;
 	}
 
-	if(!IsServer(source_p))
+	if(!IsServer(&source))
 	{
-		msptr = get(chptr->members, *source_p, std::nothrow);
+		msptr = get(chptr->members, source, std::nothrow);
 
-		if((msptr == NULL) && MyConnect(source_p))
+		if((msptr == NULL) && MyConnect(&source))
 		{
-			sendto_one_numeric(source_p, ERR_NOTONCHANNEL,
+			sendto_one_numeric(&source, ERR_NOTONCHANNEL,
 					   form_str(ERR_NOTONCHANNEL), name);
 			return;
 		}
 
-		if(get_channel_access(source_p, chptr, msptr, MODE_ADD, NULL) < chan::CHANOP)
+		if(get_channel_access(&source, chptr, msptr, MODE_ADD, NULL) < chan::CHANOP)
 		{
-			if(MyConnect(source_p))
+			if(MyConnect(&source))
 			{
-				sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
-					   me.name, source_p->name, name);
+				sendto_one(&source, form_str(ERR_CHANOPRIVSNEEDED),
+					   me.name, source.name, name);
 				return;
 			}
 
 			/* If its a TS 0 channel, do it the old way */
 			if(chptr->channelts == 0)
 			{
-				sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
-					   get_id(&me, source_p), get_id(source_p, source_p), name);
+				sendto_one(&source, form_str(ERR_CHANOPRIVSNEEDED),
+					   get_id(&me, &source), get_id(&source, &source), name);
 				return;
 			}
 		}
@@ -109,7 +109,7 @@ m_kick(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 
 	user = parv[2];		/* strtoken(&p2, parv[2], ","); */
 
-	if(!(who = find_chasing(source_p, user, &chasing)))
+	if(!(who = find_chasing(&source, user, &chasing)))
 	{
 		return;
 	}
@@ -118,21 +118,21 @@ m_kick(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 
 	if(msptr != NULL)
 	{
-		if(MyClient(source_p) && IsService(who))
+		if(MyClient(&source) && IsService(who))
 		{
-			sendto_one(source_p, form_str(ERR_ISCHANSERVICE),
+			sendto_one(&source, form_str(ERR_ISCHANSERVICE),
 			           me.name,
-			           source_p->name,
+			           source.name,
 			           who->name,
 			           chptr->name.c_str());
 			return;
 		}
 
-		if(MyClient(source_p))
+		if(MyClient(&source))
 		{
 			hook_data_channel_approval hookdata;
 
-			hookdata.client = source_p;
+			hookdata.client = &source;
 			hookdata.chptr = chptr;
 			hookdata.msptr = msptr;
 			hookdata.target = who;
@@ -156,22 +156,22 @@ m_kick(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 		 * - Personally, flame and I believe that server kicks shouldn't
 		 *   be sent anyways.  Just waiting for some oper to abuse it...
 		 */
-		if(IsServer(source_p))
+		if(IsServer(&source))
 			sendto_channel_local(chan::ALL_MEMBERS, chptr, ":%s KICK %s %s :%s",
-					     source_p->name, name, who->name, comment);
+					     source.name, name, who->name, comment);
 		else
 			sendto_channel_local(chan::ALL_MEMBERS, chptr,
 					     ":%s!%s@%s KICK %s %s :%s",
-					     source_p->name, source_p->username,
-					     source_p->host, name, who->name, comment);
+					     source.name, source.username,
+					     source.host, name, who->name, comment);
 
-		sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
+		sendto_server(&client, chptr, CAP_TS6, NOCAPS,
 			      ":%s KICK %s %s :%s",
-			      use_id(source_p), chptr->name.c_str(), use_id(who), comment);
+			      use_id(&source), chptr->name.c_str(), use_id(who), comment);
 
 		del(*chptr, *who);
 	}
-	else if (MyClient(source_p))
-		sendto_one_numeric(source_p, ERR_USERNOTINCHANNEL,
+	else if (MyClient(&source))
+		sendto_one_numeric(&source, ERR_USERNOTINCHANNEL,
 				   form_str(ERR_USERNOTINCHANNEL), user, name);
 }

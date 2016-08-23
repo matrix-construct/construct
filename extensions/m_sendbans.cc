@@ -34,7 +34,7 @@ using namespace ircd;
 static const char sendbands_desc[] =
 	"Adds the ability to send all permanent RESVs and XLINEs to given server";
 
-static void mo_sendbans(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
+static void mo_sendbans(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[]);
 
 struct Message sendbans_msgtab = {
 	"SENDBANS", 0, 0, 0, 0,
@@ -73,7 +73,7 @@ static const char *expand_xline(const char *mask)
 }
 
 static void
-mo_sendbans(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mo_sendbans(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	struct ConfItem *aconf;
 	rb_dlink_node *ptr;
@@ -82,22 +82,22 @@ mo_sendbans(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 	client::client *server_p;
 	struct rb_radixtree_iteration_state state;
 
-	if (!IsOperRemoteBan(source_p))
+	if (!IsOperRemoteBan(&source))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS),
-			me.name, source_p->name, "remoteban");
+		sendto_one(&source, form_str(ERR_NOPRIVS),
+			me.name, source.name, "remoteban");
 		return;
 	}
-	if (!IsOperXline(source_p))
+	if (!IsOperXline(&source))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS),
-			me.name, source_p->name, "xline");
+		sendto_one(&source, form_str(ERR_NOPRIVS),
+			me.name, source.name, "xline");
 		return;
 	}
-	if (!IsOperResv(source_p))
+	if (!IsOperResv(&source))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS),
-			me.name, source_p->name, "resv");
+		sendto_one(&source, form_str(ERR_NOPRIVS),
+			me.name, source.name, "resv");
 		return;
 	}
 
@@ -113,14 +113,14 @@ mo_sendbans(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 	}
 	if (count == 0)
 	{
-		sendto_one_numeric(source_p, ERR_NOSUCHSERVER,
+		sendto_one_numeric(&source, ERR_NOSUCHSERVER,
 				form_str(ERR_NOSUCHSERVER), target);
 		return;
 	}
 
 	sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
 			"%s!%s@%s is sending resvs and xlines to %s",
-			source_p->name, source_p->username, source_p->host,
+			source.name, source.username, source.host,
 			target);
 
 	RB_DLINK_FOREACH(ptr, resv_conf_list.head)
@@ -128,7 +128,7 @@ mo_sendbans(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 		aconf = (ConfItem *)ptr->data;
 		if (aconf->hold)
 			continue;
-		sendto_match_servs(source_p, target,
+		sendto_match_servs(&source, target,
 				CAP_ENCAP, NOCAPS,
 				"ENCAP %s RESV 0 %s 0 :%s",
 				target, aconf->host, aconf->passwd);
@@ -140,7 +140,7 @@ mo_sendbans(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 		aconf = (ConfItem *)elem;
 		if (aconf->hold)
 			continue;
-		sendto_match_servs(source_p, target,
+		sendto_match_servs(&source, target,
 				CAP_ENCAP, NOCAPS,
 				"ENCAP %s RESV 0 %s 0 :%s",
 				target, aconf->host, aconf->passwd);
@@ -154,11 +154,11 @@ mo_sendbans(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 		mask2 = expand_xline(aconf->host);
 		if (mask2 == NULL)
 		{
-			sendto_one_notice(source_p, ":Skipping xline [%s]",
+			sendto_one_notice(&source, ":Skipping xline [%s]",
 					aconf->host);
 			continue;
 		}
-		sendto_match_servs(source_p, target,
+		sendto_match_servs(&source, target,
 				CAP_ENCAP, NOCAPS,
 				"ENCAP %s XLINE 0 %s 2 :%s",
 				target, mask2, aconf->passwd);

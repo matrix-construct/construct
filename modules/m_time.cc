@@ -27,7 +27,7 @@ using namespace ircd;
 static const char time_desc[] =
 	"Provides the TIME command to show the current server time";
 
-static void m_time(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_time(struct MsgBuf *, client::client &, client::client &, int, const char **);
 static char *date(void);
 
 struct Message time_msgtab = {
@@ -54,14 +54,14 @@ static const char *weekdays[] = {
  *      parv[1] = servername
  */
 static void
-m_time(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_time(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	/* this is not rate limited, so end the grace period */
-	if(MyClient(source_p) && !IsFloodDone(source_p))
-		flood_endgrace(source_p);
+	if(MyClient(&source) && !IsFloodDone(&source))
+		flood_endgrace(&source);
 
-	if(hunt_server(client_p, source_p, ":%s TIME :%s", 1, parc, parv) == HUNTED_ISME)
-		sendto_one_numeric(source_p, RPL_TIME, form_str(RPL_TIME),
+	if(hunt_server(&client, &source, ":%s TIME :%s", 1, parc, parv) == HUNTED_ISME)
+		sendto_one_numeric(&source, RPL_TIME, form_str(RPL_TIME),
 				   me.name, date());
 }
 

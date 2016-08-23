@@ -13,9 +13,9 @@ static void h_hdl_new_remote_user(client::client *client_p);
 static void h_hdl_client_exit(hook_data_client_exit *hdata);
 static void h_hdl_umode_changed(hook_data_umode_changed *hdata);
 static void h_hdl_whois(hook_data_client *hdata);
-static void mo_dehelper(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void me_dehelper(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void do_dehelper(client::client *source_p, client::client *target_p);
+static void mo_dehelper(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void me_dehelper(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void do_dehelper(client::client &source, client::client &target_p);
 
 mapi_hfn_list_av1 helpops_hfnlist[] = {
 	{ "doing_stats", (hookfn) h_hdl_stats_request },
@@ -37,60 +37,60 @@ struct Message dehelper_msgtab = {
 mapi_clist_av1 helpops_clist[] = { &dehelper_msgtab, NULL };
 
 static void
-mo_dehelper(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char **parv)
+mo_dehelper(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char **parv)
 {
 	client::client *target_p;
 
-	if (!IsOperAdmin(source_p))
+	if (!IsOperAdmin(&source))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "admin");
+		sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "admin");
 		return;
 	}
 
 	if(!(target_p = client::find_named_person(parv[1])))
 	{
-		sendto_one_numeric(source_p, ERR_NOSUCHNICK, form_str(ERR_NOSUCHNICK), parv[1]);
+		sendto_one_numeric(&source, ERR_NOSUCHNICK, form_str(ERR_NOSUCHNICK), parv[1]);
 		return;
 	}
 
 	if(MyClient(target_p))
-		do_dehelper(source_p, target_p);
+		do_dehelper(source, *target_p);
 	else
 		sendto_one(target_p, ":%s ENCAP %s DEHELPER %s",
-				use_id(source_p), target_p->servptr->name, use_id(target_p));
+				use_id(&source), target_p->servptr->name, use_id(target_p));
 }
 
 static void
-me_dehelper(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char **parv)
+me_dehelper(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char **parv)
 {
 	client::client *target_p = client::find_person(parv[1]);
 	if(!target_p)
 	{
-		sendto_one_numeric(source_p, ERR_NOSUCHNICK, form_str(ERR_NOSUCHNICK), parv[1]);
+		sendto_one_numeric(&source, ERR_NOSUCHNICK, form_str(ERR_NOSUCHNICK), parv[1]);
 		return;
 	}
 	if(!MyClient(target_p))
 		return;
 
-	do_dehelper(source_p, target_p);
+	do_dehelper(source, *target_p);
 }
 
 static void
-do_dehelper(client::client *source_p, client::client *target_p)
+do_dehelper(client::client &source, client::client &target)
 {
 	const char *fakeparv[4];
 
-	if(!(target_p->umodes & UMODE_HELPOPS))
+	if(!(target.umodes & UMODE_HELPOPS))
 		return;
 
 	sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s is using DEHELPER on %s",
-			source_p->name, target_p->name);
-	sendto_one_notice(target_p, ":*** %s is using DEHELPER on you", source_p->name);
+			source.name, target.name);
+	sendto_one_notice(&target, ":*** %s is using DEHELPER on you", source.name);
 
-	fakeparv[0] = fakeparv[1] = target_p->name;
+	fakeparv[0] = fakeparv[1] = target.name;
 	fakeparv[2] = "-H";
 	fakeparv[3] = NULL;
-	user_mode(target_p, target_p, 3, fakeparv);
+	user_mode(&target, &target, 3, fakeparv);
 }
 
 static int
@@ -159,36 +159,36 @@ h_hdl_client_exit(hook_data_client_exit *hdata)
 static void
 h_hdl_umode_changed(hook_data_umode_changed *hdata)
 {
-	client::client *source_p = hdata->client;
+	client::client &source = *hdata->client;
 
 	/* didn't change +H umode, we don't need to do anything */
-	if (!((hdata->oldumodes ^ source_p->umodes) & UMODE_HELPOPS))
+	if (!((hdata->oldumodes ^ source.umodes) & UMODE_HELPOPS))
 		return;
 
-	if (source_p->umodes & UMODE_HELPOPS)
+	if (source.umodes & UMODE_HELPOPS)
 	{
-		if (MyClient(source_p) && !HasPrivilege(source_p, "usermode:helpops"))
+		if (MyClient(&source) && !HasPrivilege(&source, "usermode:helpops"))
 		{
-			source_p->umodes &= ~UMODE_HELPOPS;
-			sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "usermode:helpops");
+			source.umodes &= ~UMODE_HELPOPS;
+			sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "usermode:helpops");
 			return;
 		}
 
-		rb_dlinkAddAlloc(source_p, &helper_list);
+		rb_dlinkAddAlloc(&source, &helper_list);
 	}
-	else if (!(source_p->umodes & UMODE_HELPOPS))
-		rb_dlinkFindDestroy(source_p, &helper_list);
+	else if (!(source.umodes & UMODE_HELPOPS))
+		rb_dlinkFindDestroy(&source, &helper_list);
 }
 
 static void
 h_hdl_whois(hook_data_client *hdata)
 {
-	client::client *source_p = hdata->client;
+	client::client &source = *hdata->client;
 	client::client *target_p = hdata->target;
 
 	if ((target_p->umodes & UMODE_HELPOPS) && away(user(*target_p)).empty())
 	{
-		sendto_one_numeric(source_p, RPL_WHOISHELPOP, form_str(RPL_WHOISHELPOP), target_p->name);
+		sendto_one_numeric(&source, RPL_WHOISHELPOP, form_str(RPL_WHOISHELPOP), target_p->name);
 	}
 }
 

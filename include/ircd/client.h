@@ -434,8 +434,17 @@ is_client(const client &client)
 #define use_id(source)	((source)->id[0] != '\0' ? (source)->id : (source)->name)
 
 /* if target is TS6, use id if it has one, else name */
-#define get_id(source, target) ((IsServer(target->from) && has_id(target->from)) ? \
-				use_id(source) : (source)->name)
+
+inline char *get_id(const client *const &source, const client *const &target)
+{
+	return const_cast<char *>(IsServer(target->from) && has_id(target->from) ? use_id(source) : (source)->name);
+}
+
+inline auto get_id(const client &source, const client &target)
+{
+	return get_id(&source, &target);
+}
+
 
 /* housekeeping flags */
 

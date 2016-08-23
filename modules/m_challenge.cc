@@ -58,7 +58,7 @@ DECLARE_MODULE_AV2(challenge, challenge_load, NULL, NULL, NULL, NULL, NULL, NULL
 static const char challenge_desc[] =
 	"Provides the challenge-response facility used for becoming an IRC operator";
 
-static void m_challenge(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_challenge(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 /* We have openssl support, so include /CHALLENGE */
 struct Message challenge_msgtab = {
@@ -90,7 +90,7 @@ cleanup_challenge(client::client *target_p)
  * parv[1] = operator to challenge for, or +response
  */
 static void
-m_challenge(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_challenge(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	struct oper_conf *oper_p;
 	char *challenge = NULL; /* to placate gcc */
@@ -100,32 +100,32 @@ m_challenge(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 	int len = 0;
 
 	/* if theyre an oper, reprint oper motd and ignore */
-	if(IsOper(source_p))
+	if(IsOper(&source))
 	{
-		sendto_one(source_p, form_str(RPL_YOUREOPER), me.name, source_p->name);
-		send_oper_motd(source_p);
+		sendto_one(&source, form_str(RPL_YOUREOPER), me.name, source.name);
+		send_oper_motd(&source);
 		return;
 	}
 
 	if(*parv[1] == '+')
 	{
 		/* Ignore it if we aren't expecting this... -A1kmm */
-		if(!source_p->localClient->challenge)
+		if(!source.localClient->challenge)
 			return;
 
-		if((rb_current_time() - source_p->localClient->chal_time) > CHALLENGE_EXPIRES)
+		if((rb_current_time() - source.localClient->chal_time) > CHALLENGE_EXPIRES)
 		{
-			sendto_one(source_p, form_str(ERR_PASSWDMISMATCH), me.name, source_p->name);
+			sendto_one(&source, form_str(ERR_PASSWDMISMATCH), me.name, source.name);
 			ilog(L_FOPER, "EXPIRED CHALLENGE (%s) by (%s!%s@%s) (%s)",
-			     source_p->localClient->opername, source_p->name,
-			     source_p->username, source_p->host, source_p->sockhost);
+			     source.localClient->opername, source.name,
+			     source.username, source.host, source.sockhost);
 
 			if(ConfigFileEntry.failed_oper_notice)
 				sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
 						     "Expired CHALLENGE attempt by %s (%s@%s)",
-						     source_p->name, source_p->username,
-						     source_p->host);
-			cleanup_challenge(source_p);
+						     source.name, source.username,
+						     source.host);
+			cleanup_challenge(&source);
 			return;
 		}
 
@@ -133,137 +133,137 @@ m_challenge(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 		b_response = rb_base64_decode((const unsigned char *)parv[1], strlen(parv[1]), &len);
 
 		if(len != SHA_DIGEST_LENGTH ||
-		   memcmp(source_p->localClient->challenge, b_response, SHA_DIGEST_LENGTH))
+		   memcmp(source.localClient->challenge, b_response, SHA_DIGEST_LENGTH))
 		{
-			sendto_one(source_p, form_str(ERR_PASSWDMISMATCH), me.name, source_p->name);
+			sendto_one(&source, form_str(ERR_PASSWDMISMATCH), me.name, source.name);
 			ilog(L_FOPER, "FAILED CHALLENGE (%s) by (%s!%s@%s) (%s)",
-			     source_p->localClient->opername, source_p->name,
-			     source_p->username, source_p->host, source_p->sockhost);
+			     source.localClient->opername, source.name,
+			     source.username, source.host, source.sockhost);
 
 			if(ConfigFileEntry.failed_oper_notice)
 				sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
 						     "Failed CHALLENGE attempt by %s (%s@%s)",
-						     source_p->name, source_p->username,
-						     source_p->host);
+						     source.name, source.username,
+						     source.host);
 
 			rb_free(b_response);
-			cleanup_challenge(source_p);
+			cleanup_challenge(&source);
 			return;
 		}
 
 		rb_free(b_response);
 
-		oper_p = find_oper_conf(source_p->username, source_p->orighost,
-					source_p->sockhost,
-					source_p->localClient->opername);
+		oper_p = find_oper_conf(source.username, source.orighost,
+					source.sockhost,
+					source.localClient->opername);
 
 		if(oper_p == NULL)
 		{
-			sendto_one_numeric(source_p, ERR_NOOPERHOST, form_str(ERR_NOOPERHOST));
+			sendto_one_numeric(&source, ERR_NOOPERHOST, form_str(ERR_NOOPERHOST));
 			ilog(L_FOPER, "FAILED OPER (%s) by (%s!%s@%s) (%s)",
-			     source_p->localClient->opername, source_p->name,
-			     source_p->username, source_p->host,
-			     source_p->sockhost);
+			     source.localClient->opername, source.name,
+			     source.username, source.host,
+			     source.sockhost);
 
 			if(ConfigFileEntry.failed_oper_notice)
 				sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
 						     "Failed CHALLENGE attempt - host mismatch by %s (%s@%s)",
-						     source_p->name, source_p->username,
-						     source_p->host);
+						     source.name, source.username,
+						     source.host);
 			return;
 		}
 
-		cleanup_challenge(source_p);
+		cleanup_challenge(&source);
 
-		oper_up(source_p, oper_p);
+		oper_up(&source, oper_p);
 
 		ilog(L_OPERED, "OPER %s by %s!%s@%s (%s)",
-		     source_p->localClient->opername, source_p->name,
-		     source_p->username, source_p->host, source_p->sockhost);
+		     source.localClient->opername, source.name,
+		     source.username, source.host, source.sockhost);
 		return;
 	}
 
-	cleanup_challenge(source_p);
+	cleanup_challenge(&source);
 
-	oper_p = find_oper_conf(source_p->username, source_p->orighost,
-				source_p->sockhost, parv[1]);
+	oper_p = find_oper_conf(source.username, source.orighost,
+				source.sockhost, parv[1]);
 
 	if(oper_p == NULL)
 	{
-		sendto_one_numeric(source_p, ERR_NOOPERHOST, form_str(ERR_NOOPERHOST));
+		sendto_one_numeric(&source, ERR_NOOPERHOST, form_str(ERR_NOOPERHOST));
 		ilog(L_FOPER, "FAILED OPER (%s) by (%s!%s@%s) (%s)",
-		     parv[1], source_p->name,
-		     source_p->username, source_p->host, source_p->sockhost);
+		     parv[1], source.name,
+		     source.username, source.host, source.sockhost);
 
 		if(ConfigFileEntry.failed_oper_notice)
 			sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
 					     "Failed CHALLENGE attempt - host mismatch by %s (%s@%s)",
-					     source_p->name, source_p->username, source_p->host);
+					     source.name, source.username, source.host);
 		return;
 	}
 
 	if(!oper_p->rsa_pubkey)
 	{
-		sendto_one_notice(source_p, ":I'm sorry, PK authentication is not enabled for your oper{} block.");
+		sendto_one_notice(&source, ":I'm sorry, PK authentication is not enabled for your oper{} block.");
 		return;
 	}
 
-	if(IsOperConfNeedSSL(oper_p) && !IsSSLClient(source_p))
+	if(IsOperConfNeedSSL(oper_p) && !IsSSLClient(&source))
 	{
-		sendto_one_numeric(source_p, ERR_NOOPERHOST, form_str(ERR_NOOPERHOST));
+		sendto_one_numeric(&source, ERR_NOOPERHOST, form_str(ERR_NOOPERHOST));
 		ilog(L_FOPER, "FAILED CHALLENGE (%s) by (%s!%s@%s) (%s) -- requires SSL/TLS",
-		     parv[1], source_p->name, source_p->username, source_p->host,
-		     source_p->sockhost);
+		     parv[1], source.name, source.username, source.host,
+		     source.sockhost);
 
 		if(ConfigFileEntry.failed_oper_notice)
 		{
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					     "Failed CHALLENGE attempt - missing SSL/TLS by %s (%s@%s)",
-					     source_p->name, source_p->username, source_p->host);
+					     source.name, source.username, source.host);
 		}
 		return;
 	}
 
 	if (oper_p->certfp != NULL)
 	{
-		if (source_p->certfp == NULL || rb_strcasecmp(source_p->certfp, oper_p->certfp))
+		if (source.certfp == NULL || rb_strcasecmp(source.certfp, oper_p->certfp))
 		{
-			sendto_one_numeric(source_p, ERR_NOOPERHOST, form_str(ERR_NOOPERHOST));
+			sendto_one_numeric(&source, ERR_NOOPERHOST, form_str(ERR_NOOPERHOST));
 			ilog(L_FOPER, "FAILED OPER (%s) by (%s!%s@%s) (%s) -- client certificate fingerprint mismatch",
-			     parv[1], source_p->name,
-			     source_p->username, source_p->host, source_p->sockhost);
+			     parv[1], source.name,
+			     source.username, source.host, source.sockhost);
 
 			if(ConfigFileEntry.failed_oper_notice)
 			{
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						     "Failed OPER attempt - client certificate fingerprint mismatch by %s (%s@%s)",
-						     source_p->name, source_p->username, source_p->host);
+						     source.name, source.username, source.host);
 			}
 			return;
 		}
 	}
 
-	if(generate_challenge(&challenge, &(source_p->localClient->challenge), oper_p->rsa_pubkey))
+	if(generate_challenge(&challenge, &(source.localClient->challenge), oper_p->rsa_pubkey))
 	{
 		char *chal = challenge;
-		source_p->localClient->chal_time = rb_current_time();
+		source.localClient->chal_time = rb_current_time();
 		for(;;)
 		{
 			cnt = rb_strlcpy(chal_line, chal, CHALLENGE_WIDTH);
-			sendto_one(source_p, form_str(RPL_RSACHALLENGE2), me.name, source_p->name, chal_line);
+			sendto_one(&source, form_str(RPL_RSACHALLENGE2), me.name, source.name, chal_line);
 			if(cnt > CHALLENGE_WIDTH)
 				chal += CHALLENGE_WIDTH - 1;
 			else
 				break;
 
 		}
-		sendto_one(source_p, form_str(RPL_ENDOFRSACHALLENGE2),
-			   me.name, source_p->name);
+		sendto_one(&source, form_str(RPL_ENDOFRSACHALLENGE2),
+			   me.name, source.name);
 		rb_free(challenge);
-		source_p->localClient->opername = rb_strdup(oper_p->name);
+		source.localClient->opername = rb_strdup(oper_p->name);
 	}
 	else
-		sendto_one_notice(source_p, ":Failed to generate challenge.");
+		sendto_one_notice(&source, ":Failed to generate challenge.");
 }
 
 static bool

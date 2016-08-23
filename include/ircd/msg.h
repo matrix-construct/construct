@@ -47,7 +47,7 @@ HandlerType;
  * int            parc   - parameter count (from msgbuf_p)
  * char*          parv[] - parameter vector (from msgbuf_p)
  */
-typedef void (*MessageHandler) (struct MsgBuf *, client::client *, client::client *, int, const char *[]);
+using MessageHandler = std::function<void (struct MsgBuf *, client::client &, client::client &, int, const char *[])>;
 
 struct MessageEntry
 {
@@ -71,10 +71,10 @@ struct Message
 };
 
 /* generic handlers */
-extern void m_ignore(struct MsgBuf *, client::client *, client::client *, int, const char **);
-extern void m_not_oper(struct MsgBuf *, client::client *, client::client *, int, const char **);
-extern void m_registered(struct MsgBuf *, client::client *, client::client *, int, const char **);
-extern void m_unregistered(struct MsgBuf *, client::client *, client::client *, int, const char **);
+extern void m_ignore(struct MsgBuf *, client::client &, client::client &, int, const char **);
+extern void m_not_oper(struct MsgBuf *, client::client &, client::client &, int, const char **);
+extern void m_registered(struct MsgBuf *, client::client &, client::client &, int, const char **);
+extern void m_unregistered(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 #define mg_ignore { m_ignore, 0 }
 #define mg_not_oper { m_not_oper, 0 }

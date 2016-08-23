@@ -9,9 +9,9 @@ using namespace ircd;
 
 const char mkpasswd_desc[] = "Hash a password for use in ircd.conf";
 
-static void m_mkpasswd(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
+static void m_mkpasswd(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 		      int parc, const char *parv[]);
-static void mo_mkpasswd(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
+static void mo_mkpasswd(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 		       int parc, const char *parv[]);
 
 static char *make_md5_salt(int);
@@ -38,7 +38,7 @@ DECLARE_MODULE_AV2(mkpasswd, NULL, NULL, mkpasswd_clist, NULL, NULL, NULL, NULL,
  *	parv[2] = type
  */
 static void
-m_mkpasswd(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_mkpasswd(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
 	char *salt;
@@ -48,7 +48,7 @@ m_mkpasswd(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *so
 
 	if(EmptyString(parv[1]))
 	{
-		sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS), me.name, source_p->name, "MKPASSWD");
+		sendto_one(&source, form_str(ERR_NEEDMOREPARAMS), me.name, source.name, "MKPASSWD");
 		return;
 	}
 
@@ -60,7 +60,7 @@ m_mkpasswd(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *so
 	if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
 	{
 		/* safe enough to give this on a local connect only */
-		sendto_one(source_p, form_str(RPL_LOAD2HI), me.name, source_p->name, "MKPASSWD");
+		sendto_one(&source, form_str(RPL_LOAD2HI), me.name, source.name, "MKPASSWD");
 		return;
 	}
 	else
@@ -74,13 +74,13 @@ m_mkpasswd(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *so
 		salt = make_md5_salt(8);
 	else
 	{
-		sendto_one_notice(source_p,
+		sendto_one_notice(&source,
 				  ":MKPASSWD syntax error:  MKPASSWD pass [SHA256|SHA512|MD5]");
 		return;
 	}
 
 	crypted = rb_crypt(parv[1], salt);
-	sendto_one_notice(source_p, ":Hash [%s] for %s: %s", hashtype, parv[1], crypted ? crypted : "???");
+	sendto_one_notice(&source, ":Hash [%s] for %s: %s", hashtype, parv[1], crypted ? crypted : "???");
 }
 
 /* mo_mkpasswd - mkpasswd message handler
@@ -88,7 +88,7 @@ m_mkpasswd(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *so
  *	parv[2] = type
  */
 static void
-mo_mkpasswd(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mo_mkpasswd(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	char *salt;
 	const char *crypted;
@@ -97,7 +97,7 @@ mo_mkpasswd(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 
 	if(EmptyString(parv[1]))
 	{
-		sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS), me.name, source_p->name, "MKPASSWD");
+		sendto_one(&source, form_str(ERR_NEEDMOREPARAMS), me.name, source.name, "MKPASSWD");
 		return;
 	}
 
@@ -114,13 +114,13 @@ mo_mkpasswd(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 		salt = make_md5_salt(8);
 	else
 	{
-		sendto_one_notice(source_p,
+		sendto_one_notice(&source,
 				  ":MKPASSWD syntax error:  MKPASSWD pass [SHA256|SHA512|MD5]");
 		return;
 	}
 
 	crypted = rb_crypt(parv[1], salt);
-	sendto_one_notice(source_p, ":Hash [%s] for %s: %s", hashtype, parv[1], crypted ? crypted : "???");
+	sendto_one_notice(&source, ":Hash [%s] for %s: %s", hashtype, parv[1], crypted ? crypted : "???");
 }
 
 char *

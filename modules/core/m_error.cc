@@ -27,8 +27,8 @@ using namespace ircd;
 static const char error_desc[] =
 	"Provides the ERROR command for clients and servers";
 
-static void m_error(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void ms_error(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_error(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void ms_error(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message error_msgtab = {
 	"ERROR", 0, 0, 0, 0,
@@ -80,38 +80,38 @@ is_safe_error(const char *message)
  *      parv[*] = parameters
  */
 static void
-m_error(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_error(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	const char *para;
 	int hideit = ConfigFileEntry.hide_error_messages;
 
 	para = (parc > 1 && *parv[1] != '\0') ? parv[1] : "<>";
 
-	if (IsAnyServer(client_p))
+	if (IsAnyServer(&client))
 	{
 		ilog(L_SERVER, "Received ERROR message from %s: %s",
-		     log_client_name(source_p, SHOW_IP), para);
+		     log_client_name(&source, SHOW_IP), para);
 	}
 
 	if(is_safe_error(para))
 		hideit = 0;
-	if(IsAnyServer(client_p))
+	if(IsAnyServer(&client))
 	{
 		if (hideit < 2)
-			sendto_realops_snomask(SNO_GENERAL, hideit ? L_ADMIN : (is_remote_connect(client_p) ? L_NETWIDE : L_ALL),
+			sendto_realops_snomask(SNO_GENERAL, hideit ? L_ADMIN : (is_remote_connect(&client) ? L_NETWIDE : L_ALL),
 					"ERROR :from %s -- %s",
-					client_p->name, para);
+					client.name, para);
 		if (hideit > 0)
-			sendto_realops_snomask(SNO_GENERAL, (hideit == 1 ? L_OPER : L_ALL) | (is_remote_connect(client_p) ? L_NETWIDE : L_ALL),
+			sendto_realops_snomask(SNO_GENERAL, (hideit == 1 ? L_OPER : L_ALL) | (is_remote_connect(&client) ? L_NETWIDE : L_ALL),
 					"ERROR :from %s -- <hidden>",
-					client_p->name);
+					client.name);
 	}
 
-	exit_client(client_p, source_p, source_p, "ERROR");
+	exit_client(&client, &source, &source, "ERROR");
 }
 
 static void
-ms_error(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+ms_error(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	const char *para;
 	int hideit = ConfigFileEntry.hide_error_messages;
@@ -119,21 +119,21 @@ ms_error(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 	para = (parc > 1 && *parv[1] != '\0') ? parv[1] : "<>";
 
 	ilog(L_SERVER, "Received ERROR message from %s: %s",
-	     log_client_name(source_p, SHOW_IP), para);
+	     log_client_name(&source, SHOW_IP), para);
 
 	if(is_safe_error(para))
 		hideit = 0;
 	if(hideit == 2)
 		return;
 
-	if(client_p == source_p)
+	if(&client == &source)
 	{
 		sendto_realops_snomask(SNO_GENERAL, hideit ? L_ADMIN : L_ALL, "ERROR :from %s -- %s",
-				     client_p->name, para);
+				     client.name, para);
 	}
 	else
 	{
 		sendto_realops_snomask(SNO_GENERAL, hideit ? L_ADMIN : L_ALL, "ERROR :from %s via %s -- %s",
-				     source_p->name, client_p->name, para);
+				     source.name, client.name, para);
 	}
 }

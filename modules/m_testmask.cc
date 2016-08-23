@@ -36,7 +36,7 @@ using namespace ircd;
 static const char testmask_desc[] =
 	"Provides the TESTMASK command to show the number of clients matching a hostmask or GECOS";
 
-static void mo_testmask(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
+static void mo_testmask(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 			int parc, const char *parv[]);
 
 struct Message testmask_msgtab = {
@@ -51,7 +51,7 @@ static const char *empty_sockhost = "255.255.255.255";
 static const char *spoofed_sockhost = "0";
 
 static void
-mo_testmask(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
+mo_testmask(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
                         int parc, const char *parv[])
 {
 	client::client *target_p;
@@ -68,7 +68,7 @@ mo_testmask(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 	/* username is required */
 	if((hostname = strchr(name, '@')) == NULL)
 	{
-		sendto_one_notice(source_p, ":Invalid parameters");
+		sendto_one_notice(&source, ":Invalid parameters");
 		return;
 	}
 
@@ -85,7 +85,7 @@ mo_testmask(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 
 	if(EmptyString(username) || EmptyString(hostname))
 	{
-		sendto_one_notice(source_p, ":Invalid parameters");
+		sendto_one_notice(&source, ":Invalid parameters");
 		return;
 	}
 
@@ -104,7 +104,7 @@ mo_testmask(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 
 		if(EmptyString(target_p->sockhost))
 			sockhost = empty_sockhost;
-		else if(!show_ip(source_p, target_p))
+		else if(!show_ip(&source, target_p))
 			sockhost = spoofed_sockhost;
 		else
 			sockhost = target_p->sockhost;
@@ -127,8 +127,8 @@ mo_testmask(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 		}
 	}
 
-	sendto_one(source_p, form_str(RPL_TESTMASKGECOS),
-			me.name, source_p->name,
+	sendto_one(&source, form_str(RPL_TESTMASKGECOS),
+			me.name, source.name,
 			lcount, gcount, name ? name : "*",
 			username, hostname, gecos ? gecos : "*");
 }

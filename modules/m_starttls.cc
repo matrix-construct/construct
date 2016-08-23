@@ -22,7 +22,7 @@ using namespace ircd;
 
 static const char starttls_desc[] = "Provides the tls CAP and STARTTLS command";
 
-static void mr_starttls(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mr_starttls(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message starttls_msgtab = {
 	"STARTTLS", 0, 0, 0, 0,
@@ -41,48 +41,48 @@ mapi_cap_list_av2 starttls_cap_list[] = {
 DECLARE_MODULE_AV2(starttls, NULL, NULL, starttls_clist, NULL, NULL, starttls_cap_list, NULL, starttls_desc);
 
 static void
-mr_starttls(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mr_starttls(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	ssl_ctl_t *ctl;
 	rb_fde_t *F[2];
 
-	if (!MyConnect(client_p))
+	if (!MyConnect(&client))
 		return;
 
-	if (IsSSL(client_p))
+	if (IsSSL(&client))
 	{
-		sendto_one_numeric(client_p, ERR_STARTTLS, form_str(ERR_STARTTLS), "Nested TLS handshake not allowed");
+		sendto_one_numeric(&client, ERR_STARTTLS, form_str(ERR_STARTTLS), "Nested TLS handshake not allowed");
 		return;
 	}
 
 	if (!ircd_ssl_ok || !get_ssld_count())
 	{
-		sendto_one_numeric(client_p, ERR_STARTTLS, form_str(ERR_STARTTLS), "TLS is not configured");
+		sendto_one_numeric(&client, ERR_STARTTLS, form_str(ERR_STARTTLS), "TLS is not configured");
 		return;
 	}
 
 	if (rb_socketpair(AF_UNIX, SOCK_STREAM, 0, &F[0], &F[1], "STARTTLS ssld session") == -1)
 	{
 		ilog_error("error creating SSL/TLS socketpair for ssld slave");
-		sendto_one_numeric(client_p, ERR_STARTTLS, form_str(ERR_STARTTLS), "Unable to create SSL/TLS socketpair for ssld offload slave");
+		sendto_one_numeric(&client, ERR_STARTTLS, form_str(ERR_STARTTLS), "Unable to create SSL/TLS socketpair for ssld offload slave");
 		return;
 	}
 
-	s_assert(client_p->localClient != NULL);
+	s_assert(client.localClient != NULL);
 
 	/* clear out any remaining plaintext lines */
-	rb_linebuf_donebuf(&client_p->localClient->buf_recvq);
+	rb_linebuf_donebuf(&client.localClient->buf_recvq);
 
-	sendto_one_numeric(client_p, RPL_STARTTLS, form_str(RPL_STARTTLS));
-	send_queued(client_p);
+	sendto_one_numeric(&client, RPL_STARTTLS, form_str(RPL_STARTTLS));
+	send_queued(&client);
 
 	/* TODO: set localClient->ssl_callback and handle success/failure */
 
-	ctl = start_ssld_accept(client_p->localClient->F, F[1], connid_get(client_p));
+	ctl = start_ssld_accept(client.localClient->F, F[1], connid_get(&client));
 	if (ctl != NULL)
 	{
-		client_p->localClient->F = F[0];
-		client_p->localClient->ssl_ctl = ctl;
-		SetSSL(client_p);
+		client.localClient->F = F[0];
+		client.localClient->ssl_ctl = ctl;
+		SetSSL(&client);
 	}
 }

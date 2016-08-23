@@ -34,8 +34,8 @@ using namespace ircd;
 static const char scan_desc[] =
 	"Provides the SCAN command to show users that have a mode set or cleared";
 
-static void mo_scan(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void scan_umodes(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mo_scan(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void scan_umodes(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message scan_msgtab = {
 	"SCAN", 0, 0, 0, 0,
@@ -46,7 +46,7 @@ mapi_clist_av1 scan_clist[] = { &scan_msgtab, NULL };
 
 DECLARE_MODULE_AV2(scan, NULL, NULL, scan_clist, NULL, NULL, NULL, NULL, scan_desc);
 
-typedef void (*scan_handler)(struct MsgBuf *, client::client *, client::client *, int,
+typedef void (*scan_handler)(struct MsgBuf *, client::client &, client::client &, int,
 	const char **);
 
 struct scan_cmd {
@@ -67,7 +67,7 @@ static const char *spoofed_sockhost = "0";
  *	parv[2] = [target]
  */
 static void
-mo_scan(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc,
+mo_scan(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc,
 	const char *parv[])
 {
 	struct scan_cmd *sptr;
@@ -76,19 +76,19 @@ mo_scan(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 	{
 		if (!irccmp(sptr->name, parv[1]))
 		{
-			if (!(sptr->operlevel == L_ADMIN && !IsOperAdmin(source_p)))
-				sptr->handler(msgbuf_p, client_p, source_p, parc, parv);
+			if (!(sptr->operlevel == L_ADMIN && !IsOperAdmin(&source)))
+				sptr->handler(msgbuf_p, client, source, parc, parv);
 
 			return;
 		}
 	}
 
-	sendto_one_notice(source_p, ":*** %s is not an implemented SCAN target",
+	sendto_one_notice(&source, ":*** %s is not an implemented SCAN target",
 			  parv[1]);
 }
 
 static void
-scan_umodes(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc,
+scan_umodes(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc,
 	const char *parv[])
 {
 	unsigned int allowed_umodes = 0, disallowed_umodes = 0;
@@ -108,16 +108,16 @@ scan_umodes(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 
 	if (parc < 3)
 	{
-		if (MyClient(source_p))
-			sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS),
-				me.name, source_p->name, "SCAN UMODES");
+		if (MyClient(&source))
+			sendto_one(&source, form_str(ERR_NEEDMOREPARAMS),
+				me.name, source.name, "SCAN UMODES");
 
 		return;
 	}
 
 	if (parv[2][0] != '+' && parv[2][0] != '-')
 	{
-		sendto_one_notice(source_p, ":SCAN UMODES: umodes parameter must start with '+' or '-'");
+		sendto_one_notice(&source, ":SCAN UMODES: umodes parameter must start with '+' or '-'");
 		return;
 	}
 
@@ -158,19 +158,19 @@ scan_umodes(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 				mask = parv[++i];
 			else
 			{
-				sendto_one_notice(source_p, ":SCAN UMODES: invalid parameters");
+				sendto_one_notice(&source, ":SCAN UMODES: invalid parameters");
 				return;
 			}
 		}
 		else
 		{
-			sendto_one_notice(source_p, ":SCAN UMODES: invalid parameters");
+			sendto_one_notice(&source, ":SCAN UMODES: invalid parameters");
 			return;
 		}
 	}
 	if (target_list == &global_client_list && list_users)
 	{
-		if (IsOperSpy(source_p))
+		if (IsOperSpy(&source))
 		{
 			if (!ConfigFileEntry.operspy_dont_care_user_info)
 			{
@@ -180,13 +180,13 @@ scan_umodes(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 					rb_strlcat(buf, " ", sizeof buf);
 					rb_strlcat(buf, parv[i], sizeof buf);
 				}
-				report_operspy(source_p, "SCAN", buf);
+				report_operspy(&source, "SCAN", buf);
 			}
 		}
 		else
 		{
-			sendto_one(source_p, form_str(ERR_NOPRIVS),
-				   me.name, source_p->name, "oper_spy");
+			sendto_one(&source, form_str(ERR_NOPRIVS),
+				   me.name, source.name, "oper_spy");
 			return;
 		}
 	}
@@ -203,7 +203,7 @@ scan_umodes(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 
 		if(EmptyString(target_p->sockhost))
 			sockhost = empty_sockhost;
-		else if(!show_ip(source_p, target_p))
+		else if(!show_ip(&source, target_p))
 			sockhost = spoofed_sockhost;
 		else
 			sockhost = target_p->sockhost;
@@ -244,7 +244,7 @@ scan_umodes(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 
 			list_count++;
 
-			sendto_one_numeric(source_p, RPL_SCANUMODES,
+			sendto_one_numeric(&source, RPL_SCANUMODES,
 						form_str(RPL_SCANUMODES),
 						target_p->name, target_p->username,
 						target_p->host, sockhost,
@@ -254,6 +254,6 @@ scan_umodes(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 		count++;
 	}
 
-	sendto_one_numeric(source_p, RPL_SCANMATCHED,
+	sendto_one_numeric(&source, RPL_SCANMATCHED,
 			form_str(RPL_SCANMATCHED), count);
 }

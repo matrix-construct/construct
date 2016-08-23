@@ -38,11 +38,11 @@ static const char example_desc[] = "This is an example Charybdis module.";
  * parv     == an array of the parameters
  */
 
-static void munreg_test(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
-static void mclient_test(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
-static void mserver_test(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
-static void mrclient_test(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
-static void moper_test(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
+static void munreg_test(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[]);
+static void mclient_test(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[]);
+static void mserver_test(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[]);
+static void mrclient_test(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[]);
+static void moper_test(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[]);
 
 /* Show the commands this module can handle in a msgtab
  * and give the msgtab a name, here its test_msgtab
@@ -176,15 +176,15 @@ DECLARE_MODULE_AV2(
  * and the fairly normal C coding
  */
 static void
-munreg_test(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+munreg_test(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	if(parc < 2)
 	{
-		sendto_one_notice(source_p, ":You are unregistered and sent no parameters");
+		sendto_one_notice(&source, ":You are unregistered and sent no parameters");
 	}
 	else
 	{
-		sendto_one_notice(source_p, ":You are unregistered and sent parameter: %s", parv[1]);
+		sendto_one_notice(&source, ":You are unregistered and sent parameter: %s", parv[1]);
 	}
 
 	/* illustration of how to call a hook function */
@@ -196,15 +196,15 @@ munreg_test(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
  *      parv[1] = parameter
  */
 static void
-mclient_test(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mclient_test(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	if(parc < 2)
 	{
-		sendto_one_notice(source_p, ":You are a normal user, and sent no parameters");
+		sendto_one_notice(&source, ":You are a normal user, and sent no parameters");
 	}
 	else
 	{
-		sendto_one_notice(source_p, ":You are a normal user, and send parameters: %s", parv[1]);
+		sendto_one_notice(&source, ":You are a normal user, and send parameters: %s", parv[1]);
 	}
 
 	/* illustration of how to call a hook function */
@@ -216,15 +216,15 @@ mclient_test(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *
  *      parv[1] = parameter
  */
 static void
-mrclient_test(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mrclient_test(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	if(parc < 2)
 	{
-		sendto_one_notice(source_p, ":You are a remote client, and sent no parameters");
+		sendto_one_notice(&source, ":You are a remote client, and sent no parameters");
 	}
 	else
 	{
-		sendto_one_notice(source_p, ":You are a remote client, and sent parameters: %s", parv[1]);
+		sendto_one_notice(&source, ":You are a remote client, and sent parameters: %s", parv[1]);
 	}
 }
 
@@ -233,15 +233,15 @@ mrclient_test(struct MsgBuf *msgbuf_p, client::client *client_p, client::client 
  *      parv[1] = parameter
  */
 static void
-mserver_test(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mserver_test(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	if(parc < 2)
 	{
-		sendto_one_notice(source_p, ":You are a server, and sent no parameters");
+		sendto_one_notice(&source, ":You are a server, and sent no parameters");
 	}
 	else
 	{
-		sendto_one_notice(source_p, ":You are a server, and sent parameters: %s", parv[1]);
+		sendto_one_notice(&source, ":You are a server, and sent parameters: %s", parv[1]);
 	}
 }
 
@@ -250,15 +250,15 @@ mserver_test(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *
  *      parv[1] = parameter
  */
 static void
-moper_test(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+moper_test(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	if(parc < 2)
 	{
-		sendto_one_notice(source_p, ":You are an operator, and sent no parameters");
+		sendto_one_notice(&source, ":You are an operator, and sent no parameters");
 	}
 	else
 	{
-		sendto_one_notice(source_p, ":You are an operator, and sent parameters: %s", parv[1]);
+		sendto_one_notice(&source, ":You are an operator, and sent parameters: %s", parv[1]);
 	}
 }
 

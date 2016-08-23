@@ -26,8 +26,8 @@ using namespace ircd;
 
 static const char motd_desc[] = "Provides the MOTD command to view the Message of the Day";
 
-static void m_motd(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void mo_motd(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_motd(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void mo_motd(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message motd_msgtab = {
 	"MOTD", 0, 0, 0, 0,
@@ -44,34 +44,34 @@ mapi_hlist_av1 motd_hlist[] = {
 
 DECLARE_MODULE_AV2(motd, NULL, NULL, motd_clist, motd_hlist, NULL, NULL, NULL, motd_desc);
 
-static void motd_spy(client::client *);
+static void motd_spy(client::client &);
 
 /*
 ** m_motd
 **      parv[1] = servername
 */
 static void
-m_motd(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_motd(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
 
-	if((last_used + ConfigFileEntry.pace_wait) > rb_current_time() || !ratelimit_client(source_p, 6))
+	if((last_used + ConfigFileEntry.pace_wait) > rb_current_time() || !ratelimit_client(&source, 6))
 	{
 		/* safe enough to give this on a local connect only */
-		sendto_one(source_p, form_str(RPL_LOAD2HI),
-			   me.name, source_p->name, "MOTD");
-		sendto_one(source_p, form_str(RPL_ENDOFMOTD),
-			   me.name, source_p->name);
+		sendto_one(&source, form_str(RPL_LOAD2HI),
+			   me.name, source.name, "MOTD");
+		sendto_one(&source, form_str(RPL_ENDOFMOTD),
+			   me.name, source.name);
 		return;
 	}
 	else
 		last_used = rb_current_time();
 
-	if(hunt_server(client_p, source_p, ":%s MOTD :%s", 1, parc, parv) != HUNTED_ISME)
+	if(hunt_server(&client, &source, ":%s MOTD :%s", 1, parc, parv) != HUNTED_ISME)
 		return;
 
-	motd_spy(source_p);
-	cache::motd::send_user(source_p);
+	motd_spy(source);
+	cache::motd::send_user(&source);
 }
 
 /*
@@ -79,13 +79,13 @@ m_motd(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 **      parv[1] = servername
 */
 static void
-mo_motd(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mo_motd(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(hunt_server(client_p, source_p, ":%s MOTD :%s", 1, parc, parv) != HUNTED_ISME)
+	if(hunt_server(&client, &source, ":%s MOTD :%s", 1, parc, parv) != HUNTED_ISME)
 		return;
 
-	motd_spy(source_p);
-	cache::motd::send_user(source_p);
+	motd_spy(source);
+	cache::motd::send_user(&source);
 }
 
 /* motd_spy()
@@ -95,11 +95,11 @@ mo_motd(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
  * side effects - hook doing_motd is called
  */
 static void
-motd_spy(client::client *source_p)
+motd_spy(client::client &source)
 {
 	hook_data data;
 
-	data.client = source_p;
+	data.client = &source;
 	data.arg1 = data.arg2 = NULL;
 
 	call_hook(doing_motd_hook, &data);

@@ -28,7 +28,7 @@ using namespace ircd;
 
 static const char set_desc[] = "Provides the SET command to change server parameters";
 
-static void mo_set(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mo_set(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message set_msgtab = {
 	"SET", 0, 0, 0, 0,
@@ -42,7 +42,7 @@ DECLARE_MODULE_AV2(set, NULL, NULL, set_clist, NULL, NULL, NULL, NULL, set_desc)
 struct SetStruct
 {
 	const char *name;
-	void (*handler)(client::client *source_p, const char *chararg, int intarg);
+	void (*handler)(client::client &source, const char *chararg, int intarg);
 	bool wants_char;	/* true if it expects (char *, [int]) */
 	bool wants_int;		/* true if it expects ([char *], int) */
 
@@ -51,20 +51,20 @@ struct SetStruct
 };
 
 
-static void quote_adminstring(client::client *, const char *, int);
-static void quote_autoconn(client::client *, const char *, int);
-static void quote_autoconnall(client::client *, const char *, int);
-static void quote_floodcount(client::client *, const char *, int);
-static void quote_identtimeout(client::client *, const char *, int);
-static void quote_max(client::client *, const char *, int);
-static void quote_operstring(client::client *, const char *, int);
-static void quote_spamnum(client::client *, const char *, int);
-static void quote_spamtime(client::client *, const char *, int);
-static void quote_splitmode(client::client *, const char *, int);
-static void quote_splitnum(client::client *, const char *, int);
-static void quote_splitusers(client::client *, const char *, int);
+static void quote_adminstring(client::client &, const char *, int);
+static void quote_autoconn(client::client &, const char *, int);
+static void quote_autoconnall(client::client &, const char *, int);
+static void quote_floodcount(client::client &, const char *, int);
+static void quote_identtimeout(client::client &, const char *, int);
+static void quote_max(client::client &, const char *, int);
+static void quote_operstring(client::client &, const char *, int);
+static void quote_spamnum(client::client &, const char *, int);
+static void quote_spamtime(client::client &, const char *, int);
+static void quote_splitmode(client::client &, const char *, int);
+static void quote_splitnum(client::client &, const char *, int);
+static void quote_splitusers(client::client &, const char *, int);
 
-static void list_quote_commands(client::client *);
+static void list_quote_commands(client::client &);
 
 
 /*
@@ -101,13 +101,13 @@ static struct SetStruct set_cmd_table[] = {
  * Four to a line for now.
  */
 static void
-list_quote_commands(client::client *source_p)
+list_quote_commands(client::client &source)
 {
 	int i;
 	int j = 0;
 	const char *names[4];
 
-	sendto_one_notice(source_p, ":Available QUOTE SET commands:");
+	sendto_one_notice(&source, ":Available QUOTE SET commands:");
 
 	names[0] = names[1] = names[2] = names[3] = "";
 
@@ -117,7 +117,7 @@ list_quote_commands(client::client *source_p)
 
 		if(j > 3)
 		{
-			sendto_one_notice(source_p, ":%s %s %s %s",
+			sendto_one_notice(&source, ":%s %s %s %s",
 				   names[0], names[1], names[2], names[3]);
 			j = 0;
 			names[0] = names[1] = names[2] = names[3] = "";
@@ -125,31 +125,31 @@ list_quote_commands(client::client *source_p)
 
 	}
 	if(j)
-		sendto_one_notice(source_p, ":%s %s %s %s",
+		sendto_one_notice(&source, ":%s %s %s %s",
 			   names[0], names[1], names[2], names[3]);
 }
 
 /* SET AUTOCONN */
 static void
-quote_autoconn(client::client *source_p, const char *arg, int newval)
+quote_autoconn(client::client &source, const char *arg, int newval)
 {
-	set_server_conf_autoconn(source_p, arg, newval);
+	set_server_conf_autoconn(&source, arg, newval);
 }
 
 /* SET AUTOCONNALL */
 static void
-quote_autoconnall(client::client *source_p, const char *arg, int newval)
+quote_autoconnall(client::client &source, const char *arg, int newval)
 {
 	if(newval >= 0)
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s has changed AUTOCONNALL to %i",
-				     source_p->name, newval);
+				     source.name, newval);
 
 		GlobalSetOptions.autoconn = newval;
 	}
 	else
 	{
-		sendto_one_notice(source_p, ":AUTOCONNALL is currently %i",
+		sendto_one_notice(&source, ":AUTOCONNALL is currently %i",
 			   GlobalSetOptions.autoconn);
 	}
 }
@@ -157,30 +157,30 @@ quote_autoconnall(client::client *source_p, const char *arg, int newval)
 
 /* SET FLOODCOUNT */
 static void
-quote_floodcount(client::client *source_p, const char *arg, int newval)
+quote_floodcount(client::client &source, const char *arg, int newval)
 {
 	if(newval >= 0)
 	{
 		GlobalSetOptions.floodcount = newval;
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "%s has changed FLOODCOUNT to %i", source_p->name,
+				     "%s has changed FLOODCOUNT to %i", source.name,
 				     GlobalSetOptions.floodcount);
 	}
 	else
 	{
-		sendto_one_notice(source_p, ":FLOODCOUNT is currently %i",
+		sendto_one_notice(&source, ":FLOODCOUNT is currently %i",
 			   GlobalSetOptions.floodcount);
 	}
 }
 
 /* SET IDENTTIMEOUT */
 static void
-quote_identtimeout(client::client *source_p, const char *arg, int newval)
+quote_identtimeout(client::client &source, const char *arg, int newval)
 {
-	if(!IsOperAdmin(source_p))
+	if(!IsOperAdmin(&source))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS),
-			   me.name, source_p->name, "admin");
+		sendto_one(&source, form_str(ERR_NOPRIVS),
+			   me.name, source.name, "admin");
 		return;
 	}
 
@@ -188,24 +188,24 @@ quote_identtimeout(client::client *source_p, const char *arg, int newval)
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "%s has changed IDENTTIMEOUT to %d",
-				     get_oper_name(source_p), newval);
+				     get_oper_name(&source), newval);
 		GlobalSetOptions.ident_timeout = newval;
 		set_authd_timeout("ident_timeout", newval);
 	}
 	else
-		sendto_one_notice(source_p, ":IDENTTIMEOUT is currently %d",
+		sendto_one_notice(&source, ":IDENTTIMEOUT is currently %d",
 			   GlobalSetOptions.ident_timeout);
 }
 
 /* SET MAX */
 static void
-quote_max(client::client *source_p, const char *arg, int newval)
+quote_max(client::client &source, const char *arg, int newval)
 {
 	if(newval > 0)
 	{
 		if(newval > maxconnections - MAX_BUFFER)
 		{
-			sendto_one_notice(source_p,
+			sendto_one_notice(&source,
 					  ":You cannot set MAXCLIENTS to > %d",
 					  maxconnections - MAX_BUFFER);
 			return;
@@ -213,7 +213,7 @@ quote_max(client::client *source_p, const char *arg, int newval)
 
 		if(newval < 32)
 		{
-			sendto_one_notice(source_p, ":You cannot set MAXCLIENTS to < 32 (%d:%d)",
+			sendto_one_notice(&source, ":You cannot set MAXCLIENTS to < 32 (%d:%d)",
 				   GlobalSetOptions.maxclients, rb_getmaxconnect());
 			return;
 		}
@@ -222,7 +222,7 @@ quote_max(client::client *source_p, const char *arg, int newval)
 
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "%s!%s@%s set new MAXCLIENTS to %d (%lu current)",
-				     source_p->name, source_p->username, source_p->host,
+				     source.name, source.username, source.host,
 				     GlobalSetOptions.maxclients,
 				     rb_dlink_list_length(&lclient_list));
 
@@ -230,18 +230,18 @@ quote_max(client::client *source_p, const char *arg, int newval)
 	}
 	else
 	{
-		sendto_one_notice(source_p, ":Current Maxclients = %d (%lu)",
+		sendto_one_notice(&source, ":Current Maxclients = %d (%lu)",
 			   GlobalSetOptions.maxclients, rb_dlink_list_length(&lclient_list));
 	}
 }
 
 /* SET OPERSTRING */
 static void
-quote_operstring(client::client *source_p, const char *arg, int newval)
+quote_operstring(client::client &source, const char *arg, int newval)
 {
 	if(EmptyString(arg))
 	{
-		sendto_one_notice(source_p, ":OPERSTRING is currently '%s'", GlobalSetOptions.operstring);
+		sendto_one_notice(&source, ":OPERSTRING is currently '%s'", GlobalSetOptions.operstring);
 	}
 	else
 	{
@@ -250,17 +250,17 @@ quote_operstring(client::client *source_p, const char *arg, int newval)
 
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "%s has changed OPERSTRING to '%s'",
-				     get_oper_name(source_p), arg);
+				     get_oper_name(&source), arg);
 	}
 }
 
 /* SET ADMINSTRING */
 static void
-quote_adminstring(client::client *source_p, const char *arg, int newval)
+quote_adminstring(client::client &source, const char *arg, int newval)
 {
 	if(EmptyString(arg))
 	{
-		sendto_one_notice(source_p, ":ADMINSTRING is currently '%s'", GlobalSetOptions.adminstring);
+		sendto_one_notice(&source, ":ADMINSTRING is currently '%s'", GlobalSetOptions.adminstring);
 	}
 	else
 	{
@@ -269,20 +269,20 @@ quote_adminstring(client::client *source_p, const char *arg, int newval)
 
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "%s has changed ADMINSTRING to '%s'",
-				     get_oper_name(source_p), arg);
+				     get_oper_name(&source), arg);
 	}
 }
 
 /* SET SPAMNUM */
 static void
-quote_spamnum(client::client *source_p, const char *arg, int newval)
+quote_spamnum(client::client &source, const char *arg, int newval)
 {
 	if(newval > 0)
 	{
 		if(newval == 0)
 		{
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
-					     "%s has disabled ANTI_SPAMBOT", source_p->name);
+					     "%s has disabled ANTI_SPAMBOT", source.name);
 			GlobalSetOptions.spam_num = newval;
 			return;
 		}
@@ -295,17 +295,17 @@ quote_spamnum(client::client *source_p, const char *arg, int newval)
 			GlobalSetOptions.spam_num = newval;
 		}
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s has changed SPAMNUM to %i",
-				     source_p->name, GlobalSetOptions.spam_num);
+				     source.name, GlobalSetOptions.spam_num);
 	}
 	else
 	{
-		sendto_one_notice(source_p, ":SPAMNUM is currently %i", GlobalSetOptions.spam_num);
+		sendto_one_notice(&source, ":SPAMNUM is currently %i", GlobalSetOptions.spam_num);
 	}
 }
 
 /* SET SPAMTIME */
 static void
-quote_spamtime(client::client *source_p, const char *arg, int newval)
+quote_spamtime(client::client &source, const char *arg, int newval)
 {
 	if(newval > 0)
 	{
@@ -318,11 +318,11 @@ quote_spamtime(client::client *source_p, const char *arg, int newval)
 			GlobalSetOptions.spam_time = newval;
 		}
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s has changed SPAMTIME to %i",
-				     source_p->name, GlobalSetOptions.spam_time);
+				     source.name, GlobalSetOptions.spam_time);
 	}
 	else
 	{
-		sendto_one_notice(source_p, ":SPAMTIME is currently %i", GlobalSetOptions.spam_time);
+		sendto_one_notice(&source, ":SPAMTIME is currently %i", GlobalSetOptions.spam_time);
 	}
 }
 
@@ -345,7 +345,7 @@ static const char *splitmode_status[] = {
 
 /* SET SPLITMODE */
 static void
-quote_splitmode(client::client *source_p, const char *charval, int intval)
+quote_splitmode(client::client &source, const char *charval, int intval)
 {
 	if(charval)
 	{
@@ -361,7 +361,7 @@ quote_splitmode(client::client *source_p, const char *charval, int intval)
 		if(newval == 0)
 		{
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
-					     "%s is disabling splitmode", get_oper_name(source_p));
+					     "%s is disabling splitmode", get_oper_name(&source));
 
 			splitmode = false;
 			splitchecking = false;
@@ -374,7 +374,7 @@ quote_splitmode(client::client *source_p, const char *charval, int intval)
 		{
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					     "%s is enabling and activating splitmode",
-					     get_oper_name(source_p));
+					     get_oper_name(&source));
 
 			splitmode = true;
 			splitchecking = false;
@@ -388,7 +388,7 @@ quote_splitmode(client::client *source_p, const char *charval, int intval)
 		{
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					     "%s is enabling automatic splitmode",
-					     get_oper_name(source_p));
+					     get_oper_name(&source));
 
 			splitchecking = true;
 			chan::check_splitmode(NULL);
@@ -399,42 +399,42 @@ quote_splitmode(client::client *source_p, const char *charval, int intval)
 		 * pull values back out of, splitmode can be four states - but you can
 		 * only set to three, which means we cant use the same table --fl_
 		 */
-		sendto_one_notice(source_p, ":SPLITMODE is currently %s",
+		sendto_one_notice(&source, ":SPLITMODE is currently %s",
 			   splitmode_status[(splitchecking + (splitmode * 2))]);
 }
 
 /* SET SPLITNUM */
 static void
-quote_splitnum(client::client *source_p, const char *arg, int newval)
+quote_splitnum(client::client &source, const char *arg, int newval)
 {
 	if(newval >= 0)
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "%s has changed SPLITNUM to %i", source_p->name, newval);
+				     "%s has changed SPLITNUM to %i", source.name, newval);
 		split_servers = newval;
 
 		if(splitchecking)
 			chan::check_splitmode(NULL);
 	}
 	else
-		sendto_one_notice(source_p, ":SPLITNUM is currently %i", split_servers);
+		sendto_one_notice(&source, ":SPLITNUM is currently %i", split_servers);
 }
 
 /* SET SPLITUSERS */
 static void
-quote_splitusers(client::client *source_p, const char *arg, int newval)
+quote_splitusers(client::client &source, const char *arg, int newval)
 {
 	if(newval >= 0)
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-				     "%s has changed SPLITUSERS to %i", source_p->name, newval);
+				     "%s has changed SPLITUSERS to %i", source.name, newval);
 		split_users = newval;
 
 		if(splitchecking)
 			chan::check_splitmode(NULL);
 	}
 	else
-		sendto_one_notice(source_p, ":SPLITUSERS is currently %i", split_users);
+		sendto_one_notice(&source, ":SPLITUSERS is currently %i", split_users);
 }
 
 /*
@@ -442,7 +442,7 @@ quote_splitusers(client::client *source_p, const char *arg, int newval)
  * set options while running
  */
 static void
-mo_set(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mo_set(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	int newval;
 	int i, n;
@@ -478,7 +478,7 @@ mo_set(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 
 				if((n - 1) > parc)
 				{
-					sendto_one_notice(source_p,
+					sendto_one_notice(&source,
 						   ":SET %s expects (\"%s%s\") args",
 						   set_cmd_table[i].name,
 						   (set_cmd_table[i].
@@ -513,7 +513,7 @@ mo_set(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 
 					if(newval < 0)
 					{
-						sendto_one_notice(source_p,
+						sendto_one_notice(&source,
 							   ":Value less than 0 illegal for %s",
 							   set_cmd_table[i].name);
 
@@ -523,7 +523,7 @@ mo_set(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 				else
 					newval = -1;
 
-				set_cmd_table[i].handler(source_p, arg, newval);
+				set_cmd_table[i].handler(source, arg, newval);
 				return;
 			}
 		}
@@ -532,9 +532,9 @@ mo_set(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 		 * Code here will be executed when a /QUOTE SET command is not
 		 * found within set_cmd_table.
 		 */
-		sendto_one_notice(source_p, ":Variable not found.");
+		sendto_one_notice(&source, ":Variable not found.");
 		return;
 	}
 
-	list_quote_commands(source_p);
+	list_quote_commands(source);
 }

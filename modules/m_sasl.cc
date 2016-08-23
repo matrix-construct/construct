@@ -31,9 +31,9 @@ using namespace ircd;
 
 static const char sasl_desc[] = "Provides SASL authentication support";
 
-static void m_authenticate(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void me_sasl(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void me_mechlist(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_authenticate(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void me_sasl(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void me_mechlist(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 static void abort_sasl(client::client *);
 static void abort_sasl_exit(hook_data_client_exit *);
@@ -69,7 +69,7 @@ mapi_hfn_list_av1 sasl_hfnlist[] = {
 };
 
 static bool
-sasl_visible(client::client *client_p)
+sasl_visible(client::client *client)
 {
 	client::client *agent_p = NULL;
 
@@ -80,7 +80,7 @@ sasl_visible(client::client *client_p)
 }
 
 static const char *
-sasl_data(client::client *client_p)
+sasl_data(client::client *client)
 {
 	return *mechlist_buf != 0 ? mechlist_buf : NULL;
 }
@@ -108,83 +108,83 @@ _moddeinit(void)
 DECLARE_MODULE_AV2(sasl, _modinit, _moddeinit, sasl_clist, NULL, sasl_hfnlist, NULL, NULL, sasl_desc);
 
 static void
-m_authenticate(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
+m_authenticate(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	int parc, const char *parv[])
 {
 	client::client *agent_p = NULL;
 	client::client *saslserv_p = NULL;
 
 	/* They really should use CAP for their own sake. */
-	if(!IsCapable(source_p, CLICAP_SASL))
+	if(!IsCapable(&source, CLICAP_SASL))
 		return;
 
-	if(source_p->localClient->sasl_next_retry > rb_current_time())
+	if(source.localClient->sasl_next_retry > rb_current_time())
 	{
-		sendto_one(source_p, form_str(RPL_LOAD2HI), me.name, EmptyString(source_p->name) ? "*" : source_p->name, msgbuf_p->cmd);
+		sendto_one(&source, form_str(RPL_LOAD2HI), me.name, EmptyString(source.name) ? "*" : source.name, msgbuf_p->cmd);
 		return;
 	}
 
-	if(strlen(client_p->id) == 3)
+	if(strlen(client.id) == 3)
 	{
-		exit_client(client_p, client_p, client_p, "Mixing client and server protocol");
+		exit_client(&client, &client, &client, "Mixing client and server protocol");
 		return;
 	}
 
 	saslserv_p = find_named_client(ConfigFileEntry.sasl_service);
 	if(saslserv_p == NULL || !IsService(saslserv_p))
 	{
-		sendto_one(source_p, form_str(ERR_SASLABORTED), me.name, EmptyString(source_p->name) ? "*" : source_p->name);
+		sendto_one(&source, form_str(ERR_SASLABORTED), me.name, EmptyString(source.name) ? "*" : source.name);
 		return;
 	}
 
-	if(source_p->localClient->sasl_complete)
+	if(source.localClient->sasl_complete)
 	{
-		*source_p->localClient->sasl_agent = '\0';
-		source_p->localClient->sasl_complete = 0;
+		*source.localClient->sasl_agent = '\0';
+		source.localClient->sasl_complete = 0;
 	}
 
 	if(strlen(parv[1]) > 400)
 	{
-		sendto_one(source_p, form_str(ERR_SASLTOOLONG), me.name, EmptyString(source_p->name) ? "*" : source_p->name);
+		sendto_one(&source, form_str(ERR_SASLTOOLONG), me.name, EmptyString(source.name) ? "*" : source.name);
 		return;
 	}
 
-	if(!*source_p->id)
+	if(!*source.id)
 	{
 		/* Allocate a UID. */
-		rb_strlcpy(source_p->id, client::generate_uid(), sizeof(source_p->id));
-		add_to_id_hash(source_p->id, source_p);
+		rb_strlcpy(source.id, client::generate_uid(), sizeof(source.id));
+		add_to_id_hash(source.id, &source);
 	}
 
-	if(*source_p->localClient->sasl_agent)
-		agent_p = find_id(source_p->localClient->sasl_agent);
+	if(*source.localClient->sasl_agent)
+		agent_p = find_id(source.localClient->sasl_agent);
 
 	if(agent_p == NULL)
 	{
 		sendto_one(saslserv_p, ":%s ENCAP %s SASL %s %s H %s %s",
-					me.id, saslserv_p->servptr->name, source_p->id, saslserv_p->id,
-					source_p->host, source_p->sockhost);
+					me.id, saslserv_p->servptr->name, source.id, saslserv_p->id,
+					source.host, source.sockhost);
 
-		if (source_p->certfp != NULL)
+		if (source.certfp != NULL)
 			sendto_one(saslserv_p, ":%s ENCAP %s SASL %s %s S %s %s",
-						me.id, saslserv_p->servptr->name, source_p->id, saslserv_p->id,
-						parv[1], source_p->certfp);
+						me.id, saslserv_p->servptr->name, source.id, saslserv_p->id,
+						parv[1], source.certfp);
 		else
 			sendto_one(saslserv_p, ":%s ENCAP %s SASL %s %s S %s",
-						me.id, saslserv_p->servptr->name, source_p->id, saslserv_p->id,
+						me.id, saslserv_p->servptr->name, source.id, saslserv_p->id,
 						parv[1]);
 
-		rb_strlcpy(source_p->localClient->sasl_agent, saslserv_p->id, IDLEN);
+		rb_strlcpy(source.localClient->sasl_agent, saslserv_p->id, IDLEN);
 	}
 	else
 		sendto_one(agent_p, ":%s ENCAP %s SASL %s %s C %s",
-				me.id, agent_p->servptr->name, source_p->id, agent_p->id,
+				me.id, agent_p->servptr->name, source.id, agent_p->id,
 				parv[1]);
-	source_p->localClient->sasl_out++;
+	source.localClient->sasl_out++;
 }
 
 static void
-me_sasl(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
+me_sasl(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	int parc, const char *parv[])
 {
 	client::client *target_p, *agent_p;
@@ -201,7 +201,7 @@ me_sasl(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 	if((agent_p = find_id(parv[1])) == NULL)
 		return;
 
-	if(source_p != agent_p->servptr) /* WTF?! */
+	if(&source != agent_p->servptr) /* WTF?! */
 		return;
 
 	/* We only accept messages from SASL agents; these must have umode +S
@@ -256,7 +256,7 @@ me_sasl(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 }
 
 static void
-me_mechlist(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
+me_mechlist(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	    int parc, const char *parv[])
 {
 	rb_strlcpy(mechlist_buf, parv[1], sizeof mechlist_buf);
@@ -300,12 +300,12 @@ abort_sasl_exit(hook_data_client_exit *data)
 }
 
 static void
-advertise_sasl(client::client *client_p)
+advertise_sasl(client::client *client)
 {
 	if (!ConfigFileEntry.sasl_service)
 		return;
 
-	if (irccmp(client_p->name, ConfigFileEntry.sasl_service))
+	if (irccmp(client->name, ConfigFileEntry.sasl_service))
 		return;
 
 	sendto_local_clients_with_capability(CLICAP_CAP_NOTIFY, ":%s CAP * NEW :sasl", me.name);

@@ -22,7 +22,7 @@ using namespace ircd;
 
 static const char findfowards_desc[] = "Allows operators to find forwards to a given channel";
 
-static void m_findforwards(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
+static void m_findforwards(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 			int parc, const char *parv[]);
 
 struct Message findforwards_msgtab = {
@@ -39,7 +39,7 @@ DECLARE_MODULE_AV2(findforwards, NULL, NULL, findforwards_clist, NULL, NULL, NUL
 **      parv[1] = channel
 */
 static void
-m_findforwards(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_findforwards(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
 	chan::chan *chptr;
@@ -50,26 +50,26 @@ m_findforwards(struct MsgBuf *msgbuf_p, client::client *client_p, client::client
 	*p = '\0';
 
 	/* Allow ircops to search for forwards to nonexistent channels */
-	if(!IsOper(source_p))
+	if(!IsOper(&source))
 	{
-		if((chptr = chan::get(parv[1], std::nothrow)) == NULL || (msptr = get(chptr->members, *source_p, std::nothrow)) == NULL)
+		if((chptr = chan::get(parv[1], std::nothrow)) == NULL || (msptr = get(chptr->members, source, std::nothrow)) == NULL)
 		{
-			sendto_one_numeric(source_p, ERR_NOTONCHANNEL,
+			sendto_one_numeric(&source, ERR_NOTONCHANNEL,
 					form_str(ERR_NOTONCHANNEL), parv[1]);
 			return;
 		}
 
 		if(!is_chanop(msptr))
 		{
-			sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
-					me.name, source_p->name, parv[1]);
+			sendto_one(&source, form_str(ERR_CHANOPRIVSNEEDED),
+					me.name, source.name, parv[1]);
 			return;
 		}
 
 		if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
 		{
-			sendto_one(source_p, form_str(RPL_LOAD2HI),
-					me.name, source_p->name, "FINDFORWARDS");
+			sendto_one(&source, form_str(RPL_LOAD2HI),
+					me.name, source.name, "FINDFORWARDS");
 			return;
 		}
 		else
@@ -96,5 +96,5 @@ m_findforwards(struct MsgBuf *msgbuf_p, client::client *client_p, client::client
 	if(buf[0])
 		*(--p) = '\0';
 
-	sendto_one_notice(source_p, ":Forwards for %s: %s", parv[1], buf);
+	sendto_one_notice(&source, ":Forwards for %s: %s", parv[1], buf);
 }

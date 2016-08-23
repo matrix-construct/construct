@@ -29,8 +29,8 @@ static const char version_desc[] =
 
 static char *confopts(void);
 
-static void m_version(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void mo_version(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_version(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void mo_version(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message version_msgtab = {
 	"VERSION", 0, 0, 0, 0,
@@ -46,7 +46,7 @@ DECLARE_MODULE_AV2(version, NULL, NULL, version_clist, NULL, NULL, NULL, NULL, v
  *      parv[1] = remote server
  */
 static void
-m_version(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_version(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	static time_t last_used = 0L;
 
@@ -55,18 +55,18 @@ m_version(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sou
 		if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
 		{
 			/* safe enough to give this on a local connect only */
-			sendto_one(source_p, form_str(RPL_LOAD2HI),
-				   me.name, source_p->name, "VERSION");
+			sendto_one(&source, form_str(RPL_LOAD2HI),
+				   me.name, source.name, "VERSION");
 			return;
 		}
 		else
 			last_used = rb_current_time();
 
-		if(hunt_server(client_p, source_p, ":%s VERSION :%s", 1, parc, parv) != HUNTED_ISME)
+		if(hunt_server(&client, &source, ":%s VERSION :%s", 1, parc, parv) != HUNTED_ISME)
 			return;
 	}
 
-	sendto_one_numeric(source_p, RPL_VERSION, form_str(RPL_VERSION),
+	sendto_one_numeric(&source, RPL_VERSION, form_str(RPL_VERSION),
 			   info::version.c_str(), info::serno.c_str(),
 #ifdef CUSTOM_BRANDING
 			   PACKAGE_NAME "-" PACKAGE_VERSION,
@@ -74,7 +74,7 @@ m_version(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sou
 			   me.name, confopts(), TS_CURRENT,
 			   ServerInfo.sid);
 
-	show_isupport(source_p);
+	show_isupport(&source);
 }
 
 /*
@@ -82,18 +82,18 @@ m_version(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sou
  *      parv[1] = remote server
  */
 static void
-mo_version(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mo_version(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(hunt_server(client_p, source_p, ":%s VERSION :%s", 1, parc, parv) == HUNTED_ISME)
+	if(hunt_server(&client, &source, ":%s VERSION :%s", 1, parc, parv) == HUNTED_ISME)
 	{
-		sendto_one_numeric(source_p, RPL_VERSION, form_str(RPL_VERSION),
+		sendto_one_numeric(&source, RPL_VERSION, form_str(RPL_VERSION),
 				   info::version.c_str(), info::serno.c_str(),
 #ifdef CUSTOM_BRANDING
 				   PACKAGE_NAME "-" PACKAGE_VERSION,
 #endif
 				   me.name, confopts(), TS_CURRENT,
 				   ServerInfo.sid);
-		show_isupport(source_p);
+		show_isupport(&source);
 	}
 }
 

@@ -27,7 +27,7 @@ using namespace ircd;
 
 static const char omode_desc[] = "Allow admins to forcibly change modes on channels with the OMODE command";
 
-static void mo_omode(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mo_omode(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message omode_msgtab = {
 	"OMODE", 0, 0, 0, 0,
@@ -43,7 +43,7 @@ DECLARE_MODULE_AV2(omode, NULL, NULL, omode_clist, NULL, NULL, NULL, NULL, omode
  * parv[1] - channel
  */
 static void
-mo_omode(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mo_omode(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	chan::chan *chptr = NULL;
 	chan::membership *msptr;
@@ -52,16 +52,16 @@ mo_omode(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 	int wasonchannel;
 
 	/* admins only */
-	if(!IsOperAdmin(source_p))
+	if(!IsOperAdmin(&source))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "admin");
+		sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "admin");
 		return;
 	}
 
 	/* Now, try to find the channel in question */
 	if(!rfc1459::is_chan_prefix(parv[1][0]) || !chan::valid_name(parv[1]))
 	{
-		sendto_one_numeric(source_p, ERR_BADCHANNAME,
+		sendto_one_numeric(&source, ERR_BADCHANNAME,
 				form_str(ERR_BADCHANNAME), parv[1]);
 		return;
 	}
@@ -70,18 +70,18 @@ mo_omode(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 
 	if(chptr == NULL)
 	{
-		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
+		sendto_one_numeric(&source, ERR_NOSUCHCHANNEL,
 				form_str(ERR_NOSUCHCHANNEL), parv[1]);
 		return;
 	}
 
 	/* Now know the channel exists */
-	msptr = get(chptr->members, *source_p, std::nothrow);
+	msptr = get(chptr->members, source, std::nothrow);
 	wasonchannel = msptr != NULL;
 
 	if (is_chanop(msptr))
 	{
-		sendto_one_notice(source_p, ":Use a normal MODE you idiot");
+		sendto_one_notice(&source, ":Use a normal MODE you idiot");
 		return;
 	}
 
@@ -95,35 +95,35 @@ mo_omode(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 
 	sendto_wallops_flags(UMODE_WALLOP, &me,
 			     "OMODE called for [%s] [%s] by %s!%s@%s",
-			     parv[1], params, source_p->name, source_p->username, source_p->host);
+			     parv[1], params, source.name, source.username, source.host);
 	ilog(L_MAIN, "OMODE called for [%s] [%s] by %s",
-	     parv[1], params, get_oper_name(source_p));
+	     parv[1], params, get_oper_name(&source));
 
 	if(chptr->name[0] != '&')
 		sendto_server(NULL, NULL, NOCAPS, NOCAPS,
 			      ":%s WALLOPS :OMODE called for [%s] [%s] by %s!%s@%s",
-			      me.name, parv[1], params, source_p->name, source_p->username,
-			      source_p->host);
+			      me.name, parv[1], params, source.name, source.username,
+			      source.host);
 
 #if 0
-	set_channel_mode(client_p, source_p->servptr, chptr, msptr,
+	set_channel_mode(&client, source.servptr, chptr, msptr,
 			 parc - 2, parv + 2);
 #else
-	if (parc == 4 && !strcmp(parv[2], "+o") && !irccmp(parv[3], source_p->name))
+	if (parc == 4 && !strcmp(parv[2], "+o") && !irccmp(parv[3], source.name))
 	{
 		/* Opping themselves */
 		if (!wasonchannel)
 		{
-			sendto_one_numeric(source_p, ERR_USERNOTINCHANNEL,
+			sendto_one_numeric(&source, ERR_USERNOTINCHANNEL,
 					   form_str(ERR_USERNOTINCHANNEL), parv[3], chptr->name.c_str());
 			return;
 		}
 		sendto_channel_local(chan::ALL_MEMBERS, chptr, ":%s MODE %s +o %s",
-				me.name, parv[1], source_p->name);
+				me.name, parv[1], source.name);
 		sendto_server(NULL, chptr, CAP_TS6, NOCAPS,
 				":%s TMODE %ld %s +o %s",
 				me.id, (long) chptr->channelts, parv[1],
-				source_p->id);
+				source.id);
 		msptr->flags |= chan::CHANOP;
 	}
 	else
@@ -133,10 +133,10 @@ mo_omode(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 			msptr->flags |= chan::CHANOP;
 		else
 		{
-			add(*chptr, *source_p, chan::CHANOP);
-			msptr = get(chptr->members, *source_p, std::nothrow);
+			add(*chptr, source, chan::CHANOP);
+			msptr = get(chptr->members, source, std::nothrow);
 		}
-		set_channel_mode(client_p, source_p, chptr, msptr,
+		set_channel_mode(&client, &source, chptr, msptr,
 				parc - 2, parv + 2);
 		/* We know they were not opped before and they can't have opped
 		 * themselves as set_channel_mode() does not allow that

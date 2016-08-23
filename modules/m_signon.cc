@@ -31,10 +31,10 @@ using namespace ircd;
 
 static const char signon_desc[] = "Provides account login/logout support for services";
 
-static void me_svslogin(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void ms_signon(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void me_svslogin(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void ms_signon(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
-static void send_signon(client::client *, client::client *, const char *, const char *, const char *, unsigned int, const char *);
+static void send_signon(client::client *, client::client &, const char *, const char *, const char *, unsigned int, const char *);
 
 struct Message svslogin_msgtab = {
 	"SVSLOGIN", 0, 0, 0, 0,
@@ -94,7 +94,7 @@ clean_host(const char *host)
 }
 
 static void
-me_svslogin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
+me_svslogin(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	int parc, const char *parv[])
 {
 	client::client *target_p, *exist_p;
@@ -102,10 +102,10 @@ me_svslogin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 	char user[USERLEN+1], host[HOSTLEN+1];
 	int valid = 0;
 
-	if(!(source_p->flags & FLAGS_SERVICE))
+	if(!(source.flags & FLAGS_SERVICE))
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
-			"Non-service server %s attempting to execute services-only command SVSLOGIN", source_p->name);
+			"Non-service server %s attempting to execute services-only command SVSLOGIN", source.name);
 		return;
 	}
 
@@ -214,7 +214,7 @@ me_svslogin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 	{
 		char note[NICKLEN + 10];
 
-		send_signon(NULL, target_p, nick, user, host, rb_current_time(), login);
+		send_signon(NULL, *target_p, nick, user, host, rb_current_time(), login);
 
 		snprintf(note, NICKLEN + 10, "Nick: %s", target_p->name);
 		rb_note(target_p->localClient->F, note);
@@ -222,7 +222,7 @@ me_svslogin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 }
 
 static void
-ms_signon(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p,
+ms_signon(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	int parc, const char *parv[])
 {
 	client::client *target_p;
@@ -234,16 +234,16 @@ ms_signon(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sou
 		ServerStats.is_kill++;
 		sendto_realops_snomask(SNO_DEBUG, L_ALL,
 				"Bad Nick from SIGNON: %s From: %s(via %s)",
-				parv[1], source_p->servptr->name, client_p->name);
-		/* if source_p has an id, kill_client_serv_butone() will
-		 * send a kill to client_p, otherwise do it here */
-		if (!has_id(source_p))
-			sendto_one(client_p, ":%s KILL %s :%s (Bad nickname from SIGNON)",
-				get_id(&me, client_p), parv[1], me.name);
-		kill_client_serv_butone(client_p, source_p, "%s (Bad nickname from SIGNON)",
+				parv[1], source.servptr->name, client.name);
+		/* if &source has an id, kill_client_serv_butone() will
+		 * send a kill to &client, otherwise do it here */
+		if (!has_id(&source))
+			sendto_one(&client, ":%s KILL %s :%s (Bad nickname from SIGNON)",
+				get_id(&me, &client), parv[1], me.name);
+		kill_client_serv_butone(&client, &source, "%s (Bad nickname from SIGNON)",
 				me.name);
-		source_p->flags |= FLAGS_KILLED;
-		exit_client(NULL, source_p, &me, "Bad nickname from SIGNON");
+		source.flags |= FLAGS_KILLED;
+		exit_client(NULL, &source, &me, "Bad nickname from SIGNON");
 		return;
 	}
 
@@ -252,16 +252,16 @@ ms_signon(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sou
 		ServerStats.is_kill++;
 		sendto_realops_snomask(SNO_DEBUG, L_ALL,
 				"Bad user@host from SIGNON: %s@%s From: %s(via %s)",
-				parv[2], parv[3], source_p->servptr->name, client_p->name);
-		/* if source_p has an id, kill_client_serv_butone() will
-		 * send a kill to client_p, otherwise do it here */
-		if (!has_id(source_p))
-			sendto_one(client_p, ":%s KILL %s :%s (Bad user@host from SIGNON)",
-				get_id(&me, client_p), parv[1], me.name);
-		kill_client_serv_butone(client_p, source_p, "%s (Bad user@host from SIGNON)",
+				parv[2], parv[3], source.servptr->name, client.name);
+		/* if &source has an id, kill_client_serv_butone() will
+		 * send a kill to &client, otherwise do it here */
+		if (!has_id(&source))
+			sendto_one(&client, ":%s KILL %s :%s (Bad user@host from SIGNON)",
+				get_id(&me, &client), parv[1], me.name);
+		kill_client_serv_butone(&client, &source, "%s (Bad user@host from SIGNON)",
 				me.name);
-		source_p->flags |= FLAGS_KILLED;
-		exit_client(NULL, source_p, &me, "Bad user@host from SIGNON");
+		source.flags |= FLAGS_KILLED;
+		exit_client(NULL, &source, &me, "Bad user@host from SIGNON");
 		return;
 	}
 
@@ -280,7 +280,7 @@ ms_signon(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sou
 		login[0] = '\0';
 
 	target_p = find_named_client(parv[1]);
-	if(target_p != NULL && target_p != source_p)
+	if(target_p != NULL && target_p != &source)
 	{
  		/* In case of collision, follow NICK rules. */
 		/* XXX this is duplicated code and does not do SAVE */
@@ -288,18 +288,18 @@ ms_signon(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sou
 			exit_client(NULL, target_p, &me, "Overridden");
 		else
 		{
-			if(!newts || !target_p->tsinfo || (newts == target_p->tsinfo) || !source_p->user)
+			if(!newts || !target_p->tsinfo || (newts == target_p->tsinfo) || !source.user)
 			{
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						     "Nick change collision from SIGNON from %s to %s(%s <- %s)(both killed)",
-						     source_p->name, target_p->name, target_p->from->name,
-						     client_p->name);
+						     source.name, target_p->name, target_p->from->name,
+						     client.name);
 
 				ServerStats.is_kill++;
 				sendto_one_numeric(target_p, ERR_NICKCOLLISION,
 						   form_str(ERR_NICKCOLLISION), target_p->name);
 
-				kill_client_serv_butone(NULL, source_p, "%s (Nick change collision)", me.name);
+				kill_client_serv_butone(NULL, &source, "%s (Nick change collision)", me.name);
 
 				ServerStats.is_kill++;
 
@@ -307,14 +307,14 @@ ms_signon(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sou
 
 				target_p->flags |= FLAGS_KILLED;
 				exit_client(NULL, target_p, &me, "Nick collision(new)");
-				source_p->flags |= FLAGS_KILLED;
-				exit_client(client_p, source_p, &me, "Nick collision(old)");
+				source.flags |= FLAGS_KILLED;
+				exit_client(&client, &source, &me, "Nick collision(old)");
 				return;
 			}
 			else
 			{
-				sameuser = !irccmp(target_p->username, source_p->username) &&
-					!irccmp(target_p->host, source_p->host);
+				sameuser = !irccmp(target_p->username, source.username) &&
+					!irccmp(target_p->host, source.host);
 
 				if((sameuser && newts < target_p->tsinfo) ||
 				   (!sameuser && newts > target_p->tsinfo))
@@ -322,13 +322,13 @@ ms_signon(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sou
 					if(sameuser)
 						sendto_realops_snomask(SNO_GENERAL, L_ALL,
 								     "Nick change collision from SIGNON from %s to %s(%s <- %s)(older killed)",
-								     source_p->name, target_p->name,
-								     target_p->from->name, client_p->name);
+								     source.name, target_p->name,
+								     target_p->from->name, client.name);
 					else
 						sendto_realops_snomask(SNO_GENERAL, L_ALL,
 								     "Nick change collision from SIGNON from %s to %s(%s <- %s)(newer killed)",
-								     source_p->name, target_p->name,
-								     target_p->from->name, client_p->name);
+								     source.name, target_p->name,
+								     target_p->from->name, client.name);
 
 					ServerStats.is_kill++;
 
@@ -336,15 +336,15 @@ ms_signon(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sou
 							   form_str(ERR_NICKCOLLISION), target_p->name);
 
 					/* kill the client issuing the nickchange */
-					kill_client_serv_butone(client_p, source_p,
+					kill_client_serv_butone(&client, &source,
 								"%s (Nick change collision)", me.name);
 
-					source_p->flags |= FLAGS_KILLED;
+					source.flags |= FLAGS_KILLED;
 
 					if(sameuser)
-						exit_client(client_p, source_p, &me, "Nick collision(old)");
+						exit_client(&client, &source, &me, "Nick collision(old)");
 					else
-						exit_client(client_p, source_p, &me, "Nick collision(new)");
+						exit_client(&client, &source, &me, "Nick collision(new)");
 					return;
 				}
 				else
@@ -353,43 +353,43 @@ ms_signon(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sou
 						sendto_realops_snomask(SNO_GENERAL, L_ALL,
 								     "Nick collision from SIGNON on %s(%s <- %s)(older killed)",
 								     target_p->name, target_p->from->name,
-								     client_p->name);
+								     client.name);
 					else
 						sendto_realops_snomask(SNO_GENERAL, L_ALL,
 								     "Nick collision from SIGNON on %s(%s <- %s)(newer killed)",
 								     target_p->name, target_p->from->name,
-								     client_p->name);
+								     client.name);
 
 					sendto_one_numeric(target_p, ERR_NICKCOLLISION,
 							   form_str(ERR_NICKCOLLISION), target_p->name);
 
 					/* kill the client who existed before hand */
-					kill_client_serv_butone(client_p, target_p,
+					kill_client_serv_butone(&client, target_p,
 							"%s (Nick collision)", me.name);
 
 					ServerStats.is_kill++;
 
 					target_p->flags |= FLAGS_KILLED;
-					(void) exit_client(client_p, target_p, &me, "Nick collision");
+					(void) exit_client(&client, target_p, &me, "Nick collision");
 				}
 			}
 
 		}
 	}
 
-	send_signon(client_p, source_p, parv[1], parv[2], parv[3], newts, login);
+	send_signon(&client, source, parv[1], parv[2], parv[3], newts, login);
 }
 
 static void
-send_signon(client::client *client_p, client::client *target_p,
+send_signon(client::client *client, client::client &target,
 		const char *nick, const char *username, const char *host,
 		unsigned int newts, const char *login)
 {
-	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s SIGNON %s %s %s %ld %s",
-			use_id(target_p), nick, username, host,
-			(long) target_p->tsinfo, *login ? login : "0");
+	sendto_server(client, NULL, CAP_TS6, NOCAPS, ":%s SIGNON %s %s %s %ld %s",
+			use_id(&target), nick, username, host,
+			long(target.tsinfo), *login ? login : "0");
 
-	suser(user(*target_p)) = login;
+	suser(user(target)) = login;
 
-	change_nick_user_host(target_p, nick, username, host, newts, "Signing %s (%s)", *login ?  "in" : "out", nick);
+	change_nick_user_host(&target, nick, username, host, newts, "Signing %s (%s)", *login ?  "in" : "out", nick);
 }

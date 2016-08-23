@@ -26,12 +26,12 @@ using namespace ircd;
 static const char resv_desc[] =
 	"Provides management of reserved nicknames and channels using (UN)RESV";
 
-static void mo_resv(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void ms_resv(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void me_resv(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void mo_unresv(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void ms_unresv(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void me_unresv(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mo_resv(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void ms_resv(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void me_resv(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void mo_unresv(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void ms_unresv(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void me_unresv(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message resv_msgtab = {
 	"RESV", 0, 0, 0, 0,
@@ -47,15 +47,15 @@ mapi_clist_av1 resv_clist[] = { &resv_msgtab, &unresv_msgtab, NULL };
 
 DECLARE_MODULE_AV2(resv, NULL, NULL, resv_clist, NULL, NULL, NULL, NULL, resv_desc);
 
-static void parse_resv(client::client *source_p, const char *name,
+static void parse_resv(client::client &source, const char *name,
 		       const char *reason, int temp_time, int propagated);
-static void propagate_resv(client::client *source_p, const char *target,
+static void propagate_resv(client::client &source, const char *target,
 			   int temp_time, const char *name, const char *reason);
-static void cluster_resv(client::client *source_p, int temp_time,
+static void cluster_resv(client::client &source, int temp_time,
 			 const char *name, const char *reason);
 
-static void handle_remote_unresv(client::client *source_p, const char *name);
-static void remove_resv(client::client *source_p, const char *name, int propagated);
+static void handle_remote_unresv(client::client &source, const char *name);
+static void remove_resv(client::client &source, const char *name, int propagated);
 
 /*
  * mo_resv()
@@ -63,7 +63,7 @@ static void remove_resv(client::client *source_p, const char *name, int propagat
  *      parv[2] = reason
  */
 static void
-mo_resv(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mo_resv(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	const char *name;
 	const char *reason;
@@ -72,9 +72,9 @@ mo_resv(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 	int loc = 1;
 	int propagated = ConfigFileEntry.use_propagated_bans;
 
-	if(!IsOperResv(source_p))
+	if(!IsOperResv(&source))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "resv");
+		sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "resv");
 		return;
 	}
 
@@ -91,10 +91,10 @@ mo_resv(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 
 	if((parc >= loc + 2) && (irccmp(parv[loc], "ON") == 0))
 	{
-		if(!IsOperRemoteBan(source_p))
+		if(!IsOperRemoteBan(&source))
 		{
-			sendto_one(source_p, form_str(ERR_NOPRIVS),
-				   me.name, source_p->name, "remoteban");
+			sendto_one(&source, form_str(ERR_NOPRIVS),
+				   me.name, source.name, "remoteban");
 			return;
 		}
 
@@ -107,7 +107,7 @@ mo_resv(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 
 	if(parc <= loc || EmptyString(parv[loc]))
 	{
-		sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS), me.name, source_p->name, "RESV");
+		sendto_one(&source, form_str(ERR_NEEDMOREPARAMS), me.name, source.name, "RESV");
 		return;
 	}
 
@@ -116,21 +116,21 @@ mo_resv(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 	/* remote resv.. */
 	if(target_server)
 	{
-		propagate_resv(source_p, target_server, temp_time, name, reason);
+		propagate_resv(source, target_server, temp_time, name, reason);
 
 		if(match(target_server, me.name) == 0)
 			return;
 	}
 	else if(!propagated && rb_dlink_list_length(&cluster_conf_list) > 0)
-		cluster_resv(source_p, temp_time, name, reason);
+		cluster_resv(source, temp_time, name, reason);
 
 	if(propagated && temp_time == 0)
 	{
-		sendto_one_notice(source_p, ":Cannot set a permanent global ban");
+		sendto_one_notice(&source, ":Cannot set a permanent global ban");
 		return;
 	}
 
-	parse_resv(source_p, name, reason, temp_time, propagated);
+	parse_resv(source, name, reason, temp_time, propagated);
 }
 
 /* ms_resv()
@@ -139,48 +139,48 @@ mo_resv(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
  *     parv[3] = reason
  */
 static void
-ms_resv(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+ms_resv(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	/* parv[0]  parv[1]        parv[2]  parv[3]
 	 * oper     target server  resv     reason
 	 */
-	propagate_resv(source_p, parv[1], 0, parv[2], parv[3]);
+	propagate_resv(source, parv[1], 0, parv[2], parv[3]);
 
 	if(!match(parv[1], me.name))
 		return;
 
-	if(!IsPerson(source_p))
+	if(!IsPerson(&source))
 		return;
 
-	parse_resv(source_p, parv[2], parv[3], 0, 0);
+	parse_resv(source, parv[2], parv[3], 0, 0);
 }
 
 static void
-me_resv(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+me_resv(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	/* time name 0 :reason */
-	if(!IsPerson(source_p))
+	if(!IsPerson(&source))
 		return;
 
-	parse_resv(source_p, parv[2], parv[4], atoi(parv[1]), 0);
+	parse_resv(source, parv[2], parv[4], atoi(parv[1]), 0);
 }
 
 /* parse_resv()
  *
- * inputs       - source_p if error messages wanted
+ * inputs       - &source if error messages wanted
  * 		- thing to resv
  * 		- reason for resv
  * outputs	-
  * side effects - will parse the resv and create it if valid
  */
 static void
-parse_resv(client::client *source_p, const char *name, const char *reason, int temp_time, int propagated)
+parse_resv(client::client &source, const char *name, const char *reason, int temp_time, int propagated)
 {
 	struct ConfItem *aconf;
 
-	if(!MyClient(source_p) &&
-	   !find_shared_conf(source_p->username, source_p->host,
-			     source_p->servptr->name,
+	if(!MyClient(&source) &&
+	   !find_shared_conf(source.username, source.host,
+			     source.servptr->name,
 			     (temp_time > 0) ? SHARED_TRESV : SHARED_PRESV))
 		return;
 
@@ -188,14 +188,14 @@ parse_resv(client::client *source_p, const char *name, const char *reason, int t
 	{
 		if(hash_find_resv(name))
 		{
-			sendto_one_notice(source_p,
+			sendto_one_notice(&source,
 					  ":A RESV has already been placed on channel: %s", name);
 			return;
 		}
 
 		if(strlen(name) > CHANNELLEN)
 		{
-			sendto_one_notice(source_p, ":Invalid RESV length: %s", name);
+			sendto_one_notice(&source, ":Invalid RESV length: %s", name);
 			return;
 		}
 
@@ -205,7 +205,7 @@ parse_resv(client::client *source_p, const char *name, const char *reason, int t
 		aconf->created = rb_current_time();
 		aconf->host = rb_strdup(name);
 		aconf->passwd = rb_strdup(reason);
-		aconf->info.oper = operhash_add(get_oper_name(source_p));
+		aconf->info.oper = operhash_add(get_oper_name(&source));
 
 		if(propagated)
 		{
@@ -217,15 +217,15 @@ parse_resv(client::client *source_p, const char *name, const char *reason, int t
 
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					       "%s added global %d min. RESV for [%s] [%s]",
-					       get_oper_name(source_p), temp_time / 60,
+					       get_oper_name(&source), temp_time / 60,
 					       name, reason);
 			ilog(L_KLINE, "R %s %d %s %s",
-			     get_oper_name(source_p), temp_time / 60, name, reason);
-			sendto_one_notice(source_p, ":Added global %d min. RESV [%s]",
+			     get_oper_name(&source), temp_time / 60, name, reason);
+			sendto_one_notice(&source, ":Added global %d min. RESV [%s]",
 					  temp_time / 60, name);
 			sendto_server(NULL, NULL, CAP_BAN|CAP_TS6, NOCAPS,
 					":%s BAN R * %s %lu %d %d * :%s",
-					source_p->id, aconf->host,
+					source.id, aconf->host,
 					(unsigned long)aconf->created,
 					(int)(aconf->hold - aconf->created),
 					(int)(aconf->lifetime - aconf->created),
@@ -237,23 +237,23 @@ parse_resv(client::client *source_p, const char *name, const char *reason, int t
 
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					       "%s added temporary %d min. RESV for [%s] [%s]",
-					       get_oper_name(source_p), temp_time / 60,
+					       get_oper_name(&source), temp_time / 60,
 					       name, reason);
 			ilog(L_KLINE, "R %s %d %s %s",
-			     get_oper_name(source_p), temp_time / 60, name, reason);
-			sendto_one_notice(source_p, ":Added temporary %d min. RESV [%s]",
+			     get_oper_name(&source), temp_time / 60, name, reason);
+			sendto_one_notice(&source, ":Added temporary %d min. RESV [%s]",
 					  temp_time / 60, name);
 		}
 		else
 		{
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					       "%s added RESV for [%s] [%s]",
-					       get_oper_name(source_p), name, reason);
+					       get_oper_name(&source), name, reason);
 			ilog(L_KLINE, "R %s 0 %s %s",
-			     get_oper_name(source_p), name, reason);
-			sendto_one_notice(source_p, ":Added RESV [%s]", name);
+			     get_oper_name(&source), name, reason);
+			sendto_one_notice(&source, ":Added RESV [%s]", name);
 
-			bandb_add(BANDB_RESV, source_p, aconf->host, NULL, aconf->passwd, NULL, 0);
+			bandb_add(BANDB_RESV, &source, aconf->host, NULL, aconf->passwd, NULL, 0);
 		}
 
 		add_to_resv_hash(aconf->host, aconf);
@@ -263,13 +263,13 @@ parse_resv(client::client *source_p, const char *name, const char *reason, int t
 	{
 		if(strlen(name) > NICKLEN * 2)
 		{
-			sendto_one_notice(source_p, ":Invalid RESV length: %s", name);
+			sendto_one_notice(&source, ":Invalid RESV length: %s", name);
 			return;
 		}
 
 		if(!valid_wild_card_simple(name))
 		{
-			sendto_one_notice(source_p,
+			sendto_one_notice(&source,
 					  ":Please include at least %d non-wildcard "
 					  "characters with the resv",
 					  ConfigFileEntry.min_nonwildcard_simple);
@@ -278,7 +278,7 @@ parse_resv(client::client *source_p, const char *name, const char *reason, int t
 
 		if(find_nick_resv_mask(name))
 		{
-			sendto_one_notice(source_p,
+			sendto_one_notice(&source,
 					  ":A RESV has already been placed on nick: %s", name);
 			return;
 		}
@@ -289,7 +289,7 @@ parse_resv(client::client *source_p, const char *name, const char *reason, int t
 		aconf->created = rb_current_time();
 		aconf->host = rb_strdup(name);
 		aconf->passwd = rb_strdup(reason);
-		aconf->info.oper = operhash_add(get_oper_name(source_p));
+		aconf->info.oper = operhash_add(get_oper_name(&source));
 
 		if(propagated)
 		{
@@ -301,15 +301,15 @@ parse_resv(client::client *source_p, const char *name, const char *reason, int t
 
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					       "%s added global %d min. RESV for [%s] [%s]",
-					       get_oper_name(source_p), temp_time / 60,
+					       get_oper_name(&source), temp_time / 60,
 					       name, reason);
 			ilog(L_KLINE, "R %s %d %s %s",
-			     get_oper_name(source_p), temp_time / 60, name, reason);
-			sendto_one_notice(source_p, ":Added global %d min. RESV [%s]",
+			     get_oper_name(&source), temp_time / 60, name, reason);
+			sendto_one_notice(&source, ":Added global %d min. RESV [%s]",
 					  temp_time / 60, name);
 			sendto_server(NULL, NULL, CAP_BAN|CAP_TS6, NOCAPS,
 					":%s BAN R * %s %lu %d %d * :%s",
-					source_p->id, aconf->host,
+					source.id, aconf->host,
 					(unsigned long)aconf->created,
 					(int)(aconf->hold - aconf->created),
 					(int)(aconf->lifetime - aconf->created),
@@ -321,52 +321,52 @@ parse_resv(client::client *source_p, const char *name, const char *reason, int t
 
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					       "%s added temporary %d min. RESV for [%s] [%s]",
-					       get_oper_name(source_p), temp_time / 60,
+					       get_oper_name(&source), temp_time / 60,
 					       name, reason);
 			ilog(L_KLINE, "R %s %d %s %s",
-			     get_oper_name(source_p), temp_time / 60, name, reason);
-			sendto_one_notice(source_p, ":Added temporary %d min. RESV [%s]",
+			     get_oper_name(&source), temp_time / 60, name, reason);
+			sendto_one_notice(&source, ":Added temporary %d min. RESV [%s]",
 					  temp_time / 60, name);
 		}
 		else
 		{
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					       "%s added RESV for [%s] [%s]",
-					       get_oper_name(source_p), name, reason);
+					       get_oper_name(&source), name, reason);
 			ilog(L_KLINE, "R %s 0 %s %s",
-			     get_oper_name(source_p), name, reason);
-			sendto_one_notice(source_p, ":Added RESV [%s]", name);
+			     get_oper_name(&source), name, reason);
+			sendto_one_notice(&source, ":Added RESV [%s]", name);
 
-			bandb_add(BANDB_RESV, source_p, aconf->host, NULL, aconf->passwd, NULL, 0);
+			bandb_add(BANDB_RESV, &source, aconf->host, NULL, aconf->passwd, NULL, 0);
 		}
 
 		rb_dlinkAddAlloc(aconf, &resv_conf_list);
 		client::resv_nick_fnc(aconf->host, aconf->passwd, temp_time);
 	}
 	else
-		sendto_one_notice(source_p, ":You have specified an invalid resv: [%s]", name);
+		sendto_one_notice(&source, ":You have specified an invalid resv: [%s]", name);
 }
 
 static void
-propagate_resv(client::client *source_p, const char *target,
+propagate_resv(client::client &source, const char *target,
 	       int temp_time, const char *name, const char *reason)
 {
 	if(!temp_time)
 	{
-		sendto_match_servs(source_p, target,
+		sendto_match_servs(&source, target,
 				   CAP_CLUSTER, NOCAPS, "RESV %s %s :%s", target, name, reason);
-		sendto_match_servs(source_p, target,
+		sendto_match_servs(&source, target,
 				   CAP_ENCAP, CAP_CLUSTER,
 				   "ENCAP %s RESV %d %s 0 :%s", target, temp_time, name, reason);
 	}
 	else
-		sendto_match_servs(source_p, target,
+		sendto_match_servs(&source, target,
 				   CAP_ENCAP, NOCAPS,
 				   "ENCAP %s RESV %d %s 0 :%s", target, temp_time, name, reason);
 }
 
 static void
-cluster_resv(client::client *source_p, int temp_time, const char *name, const char *reason)
+cluster_resv(client::client &source, int temp_time, const char *name, const char *reason)
 {
 	struct remote_conf *shared_p;
 	rb_dlink_node *ptr;
@@ -383,16 +383,16 @@ cluster_resv(client::client *source_p, int temp_time, const char *name, const ch
 			if(!(shared_p->flags & SHARED_PRESV))
 				continue;
 
-			sendto_match_servs(source_p, shared_p->server,
+			sendto_match_servs(&source, shared_p->server,
 					   CAP_CLUSTER, NOCAPS,
 					   "RESV %s %s :%s", shared_p->server, name, reason);
-			sendto_match_servs(source_p, shared_p->server,
+			sendto_match_servs(&source, shared_p->server,
 					   CAP_ENCAP, CAP_CLUSTER,
 					   "ENCAP %s RESV 0 %s 0 :%s",
 					   shared_p->server, name, reason);
 		}
 		else if(shared_p->flags & SHARED_TRESV)
-			sendto_match_servs(source_p, shared_p->server,
+			sendto_match_servs(&source, shared_p->server,
 					   CAP_ENCAP, NOCAPS,
 					   "ENCAP %s RESV %d %s 0 :%s",
 					   shared_p->server, temp_time, name, reason);
@@ -405,26 +405,26 @@ cluster_resv(client::client *source_p, int temp_time, const char *name, const ch
  *     parv[1] = channel/nick to unforbid
  */
 static void
-mo_unresv(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mo_unresv(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	int propagated = 1;
 
-	if(!IsOperResv(source_p))
+	if(!IsOperResv(&source))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "resv");
+		sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "resv");
 		return;
 	}
 
 	if((parc == 4) && (irccmp(parv[2], "ON") == 0))
 	{
-		if(!IsOperRemoteBan(source_p))
+		if(!IsOperRemoteBan(&source))
 		{
-			sendto_one(source_p, form_str(ERR_NOPRIVS),
-				   me.name, source_p->name, "remoteban");
+			sendto_one(&source, form_str(ERR_NOPRIVS),
+				   me.name, source.name, "remoteban");
 			return;
 		}
 
-		propagate_generic(source_p, "UNRESV", parv[3], CAP_CLUSTER, "%s", parv[1]);
+		propagate_generic(&source, "UNRESV", parv[3], CAP_CLUSTER, "%s", parv[1]);
 
 		if(match(parv[3], me.name) == 0)
 			return;
@@ -433,11 +433,11 @@ mo_unresv(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sou
 	}
 #if 0
 	else if(rb_dlink_list_length(&cluster_conf_list) > 0)
-		cluster_generic(source_p, "UNRESV", SHARED_UNRESV, CAP_CLUSTER, "%s", parv[1]);
+		cluster_generic(&source, "UNRESV", SHARED_UNRESV, CAP_CLUSTER, "%s", parv[1]);
 #endif
 	/* cluster{} moved to remove_resv */
 
-	remove_resv(source_p, parv[1], propagated);
+	remove_resv(source, parv[1], propagated);
 }
 
 /* ms_unresv()
@@ -445,46 +445,46 @@ mo_unresv(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sou
  *     parv[2] = resv to remove
  */
 static void
-ms_unresv(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+ms_unresv(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	/* parv[0]  parv[1]        parv[2]
 	 * oper     target server  resv to remove
 	 */
-	propagate_generic(source_p, "UNRESV", parv[1], CAP_CLUSTER, "%s", parv[2]);
+	propagate_generic(&source, "UNRESV", parv[1], CAP_CLUSTER, "%s", parv[2]);
 
 	if(!match(parv[1], me.name))
 		return;
 
-	if(!IsPerson(source_p))
+	if(!IsPerson(&source))
 		return;
 
-	handle_remote_unresv(source_p, parv[2]);
+	handle_remote_unresv(source, parv[2]);
 }
 
 static void
-me_unresv(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+me_unresv(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	/* name */
-	if(!IsPerson(source_p))
+	if(!IsPerson(&source))
 		return;
 
-	handle_remote_unresv(source_p, parv[1]);
+	handle_remote_unresv(source, parv[1]);
 }
 
 static void
-handle_remote_unresv(client::client *source_p, const char *name)
+handle_remote_unresv(client::client &source, const char *name)
 {
-	if(!find_shared_conf(source_p->username, source_p->host,
-			     source_p->servptr->name, SHARED_UNRESV))
+	if(!find_shared_conf(source.username, source.host,
+			     source.servptr->name, SHARED_UNRESV))
 		return;
 
-	remove_resv(source_p, name, 0);
+	remove_resv(source, name, 0);
 
 	return;
 }
 
 static void
-remove_resv(client::client *source_p, const char *name, int propagated)
+remove_resv(client::client &source, const char *name, int propagated)
 {
 	struct ConfItem *aconf = NULL;
 	rb_dlink_node *ptr;
@@ -495,9 +495,9 @@ remove_resv(client::client *source_p, const char *name, int propagated)
 		if((aconf = hash_find_resv(name)) == NULL)
 		{
 			if(propagated && rb_dlink_list_length(&cluster_conf_list))
-				cluster_generic(source_p, "UNRESV", SHARED_UNRESV, CAP_CLUSTER, "%s", name);
+				cluster_generic(&source, "UNRESV", SHARED_UNRESV, CAP_CLUSTER, "%s", name);
 
-			sendto_one_notice(source_p, ":No RESV for %s", name);
+			sendto_one_notice(&source, ":No RESV for %s", name);
 			return;
 		}
 
@@ -505,17 +505,17 @@ remove_resv(client::client *source_p, const char *name, int propagated)
 		{
 			if(!propagated)
 			{
-				sendto_one_notice(source_p, ":Cannot remove global RESV %s on specific servers", name);
+				sendto_one_notice(&source, ":Cannot remove global RESV %s on specific servers", name);
 				return;
 			}
 			ptr = rb_dlinkFind(aconf, &prop_bans);
 			if(ptr == NULL)
 				return;
-			sendto_one_notice(source_p, ":RESV for [%s] is removed", name);
+			sendto_one_notice(&source, ":RESV for [%s] is removed", name);
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					       "%s has removed the global RESV for: [%s]",
-					       get_oper_name(source_p), name);
-			ilog(L_KLINE, "UR %s %s", get_oper_name(source_p), name);
+					       get_oper_name(&source), name);
+			ilog(L_KLINE, "UR %s %s", get_oper_name(&source), name);
 			now = rb_current_time();
 			if(aconf->created < now)
 				aconf->created = now;
@@ -523,11 +523,11 @@ remove_resv(client::client *source_p, const char *name, int propagated)
 				aconf->created++;
 			aconf->hold = aconf->created;
 			operhash_delete(aconf->info.oper);
-			aconf->info.oper = operhash_add(get_oper_name(source_p));
+			aconf->info.oper = operhash_add(get_oper_name(&source));
 			aconf->flags |= CONF_FLAGS_MYOPER | CONF_FLAGS_TEMPORARY;
 			sendto_server(NULL, NULL, CAP_BAN|CAP_TS6, NOCAPS,
 					":%s BAN R * %s %lu %d %d * :*",
-					source_p->id, aconf->host,
+					source.id, aconf->host,
 					(unsigned long)aconf->created,
 					0,
 					(int)(aconf->lifetime - aconf->created));
@@ -535,22 +535,22 @@ remove_resv(client::client *source_p, const char *name, int propagated)
 			return;
 		}
 		else if(propagated && rb_dlink_list_length(&cluster_conf_list) > 0)
-			cluster_generic(source_p, "UNRESV", SHARED_UNRESV, CAP_CLUSTER, "%s", name);
+			cluster_generic(&source, "UNRESV", SHARED_UNRESV, CAP_CLUSTER, "%s", name);
 
-		sendto_one_notice(source_p, ":RESV for [%s] is removed", name);
-		ilog(L_KLINE, "UR %s %s", get_oper_name(source_p), name);
+		sendto_one_notice(&source, ":RESV for [%s] is removed", name);
+		ilog(L_KLINE, "UR %s %s", get_oper_name(&source), name);
 		if(!aconf->hold)
 		{
 			bandb_del(BANDB_RESV, aconf->host, NULL);
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					       "%s has removed the RESV for: [%s]",
-					       get_oper_name(source_p), name);
+					       get_oper_name(&source), name);
 		}
 		else
 		{
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					       "%s has removed the temporary RESV for: [%s]",
-					       get_oper_name(source_p), name);
+					       get_oper_name(&source), name);
 		}
 		del_from_resv_hash(name, aconf);
 	}
@@ -569,9 +569,9 @@ remove_resv(client::client *source_p, const char *name, int propagated)
 		if(aconf == NULL)
 		{
 			if(propagated && rb_dlink_list_length(&cluster_conf_list))
-				cluster_generic(source_p, "UNRESV", SHARED_UNRESV, CAP_CLUSTER, "%s", name);
+				cluster_generic(&source, "UNRESV", SHARED_UNRESV, CAP_CLUSTER, "%s", name);
 
-			sendto_one_notice(source_p, ":No RESV for %s", name);
+			sendto_one_notice(&source, ":No RESV for %s", name);
 			return;
 		}
 
@@ -579,17 +579,17 @@ remove_resv(client::client *source_p, const char *name, int propagated)
 		{
 			if(!propagated)
 			{
-				sendto_one_notice(source_p, ":Cannot remove global RESV %s on specific servers", name);
+				sendto_one_notice(&source, ":Cannot remove global RESV %s on specific servers", name);
 				return;
 			}
 			ptr = rb_dlinkFind(aconf, &prop_bans);
 			if(ptr == NULL)
 				return;
-			sendto_one_notice(source_p, ":RESV for [%s] is removed", name);
+			sendto_one_notice(&source, ":RESV for [%s] is removed", name);
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					       "%s has removed the global RESV for: [%s]",
-					       get_oper_name(source_p), name);
-			ilog(L_KLINE, "UR %s %s", get_oper_name(source_p), name);
+					       get_oper_name(&source), name);
+			ilog(L_KLINE, "UR %s %s", get_oper_name(&source), name);
 			now = rb_current_time();
 			if(aconf->created < now)
 				aconf->created = now;
@@ -597,11 +597,11 @@ remove_resv(client::client *source_p, const char *name, int propagated)
 				aconf->created++;
 			aconf->hold = aconf->created;
 			operhash_delete(aconf->info.oper);
-			aconf->info.oper = operhash_add(get_oper_name(source_p));
+			aconf->info.oper = operhash_add(get_oper_name(&source));
 			aconf->flags |= CONF_FLAGS_MYOPER | CONF_FLAGS_TEMPORARY;
 			sendto_server(NULL, NULL, CAP_BAN|CAP_TS6, NOCAPS,
 					":%s BAN R * %s %lu %d %d * :*",
-					source_p->id, aconf->host,
+					source.id, aconf->host,
 					(unsigned long)aconf->created,
 					0,
 					(int)(aconf->lifetime - aconf->created));
@@ -609,22 +609,22 @@ remove_resv(client::client *source_p, const char *name, int propagated)
 			return;
 		}
 		else if(propagated && rb_dlink_list_length(&cluster_conf_list) > 0)
-			cluster_generic(source_p, "UNRESV", SHARED_UNRESV, CAP_CLUSTER, "%s", name);
+			cluster_generic(&source, "UNRESV", SHARED_UNRESV, CAP_CLUSTER, "%s", name);
 
-		sendto_one_notice(source_p, ":RESV for [%s] is removed", name);
-		ilog(L_KLINE, "UR %s %s", get_oper_name(source_p), name);
+		sendto_one_notice(&source, ":RESV for [%s] is removed", name);
+		ilog(L_KLINE, "UR %s %s", get_oper_name(&source), name);
 		if(!aconf->hold)
 		{
 			bandb_del(BANDB_RESV, aconf->host, NULL);
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					       "%s has removed the RESV for: [%s]",
-					       get_oper_name(source_p), name);
+					       get_oper_name(&source), name);
 		}
 		else
 		{
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					       "%s has removed the temporary RESV for: [%s]",
-					       get_oper_name(source_p), name);
+					       get_oper_name(&source), name);
 		}
 		/* already have ptr from the loop above.. */
 		rb_dlinkDestroy(ptr, &resv_conf_list);

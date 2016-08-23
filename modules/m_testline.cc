@@ -32,8 +32,8 @@ using namespace ircd;
 
 static const char testline_desc[] = "Provides the ability to test I/K/D/X lines and RESVs";
 
-static void mo_testline(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void mo_testgecos(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mo_testline(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void mo_testgecos(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message testline_msgtab = {
 	"TESTLINE", 0, 0, 0, 0,
@@ -49,7 +49,7 @@ mapi_clist_av1 testline_clist[] = { &testline_msgtab, &testgecos_msgtab, NULL };
 DECLARE_MODULE_AV2(testline, NULL, NULL, testline_clist, NULL, NULL, NULL, NULL, testline_desc);
 
 static void
-mo_testline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mo_testline(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	struct ConfItem *aconf;
 	struct ConfItem *resv_p;
@@ -73,8 +73,8 @@ mo_testline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 		resv_p = hash_find_resv(mask);
 		if (resv_p != NULL)
 		{
-			sendto_one(source_p, form_str(RPL_TESTLINE),
-					me.name, source_p->name,
+			sendto_one(&source, form_str(RPL_TESTLINE),
+					me.name, source.name,
 					resv_p->hold ? 'q' : 'Q',
 					resv_p->hold ? (long) ((resv_p->hold - rb_current_time()) / 60) : 0L,
 					resv_p->host, resv_p->passwd);
@@ -84,8 +84,8 @@ mo_testline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 			resv_p->port--;
 		}
 		else
-			sendto_one(source_p, form_str(RPL_NOTESTLINE),
-					me.name, source_p->name, parv[1]);
+			sendto_one(&source, form_str(RPL_NOTESTLINE),
+					me.name, source.name, parv[1]);
 		return;
 	}
 
@@ -123,11 +123,11 @@ mo_testline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 
 		if(aconf && aconf->status & CONF_DLINE)
 		{
-			get_printable_kline(source_p, aconf, &phost, &reason, &puser, &operreason);
+			get_printable_kline(&source, aconf, &phost, &reason, &puser, &operreason);
 			snprintf(reasonbuf, sizeof(reasonbuf), "%s%s%s", reason,
 				operreason ? "|" : "", operreason ? operreason : "");
-			sendto_one(source_p, form_str(RPL_TESTLINE),
-				me.name, source_p->name,
+			sendto_one(&source, form_str(RPL_TESTLINE),
+				me.name, source.name,
 				(aconf->flags & CONF_FLAGS_TEMPORARY) ? 'd' : 'D',
 				(aconf->flags & CONF_FLAGS_TEMPORARY) ?
 				 (long) ((aconf->hold - rb_current_time()) / 60) : 0L,
@@ -138,15 +138,15 @@ mo_testline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 		/* Otherwise, aconf is an exempt{} */
 		if(aconf == NULL &&
 				(duration = is_reject_ip((struct sockaddr *)&ip)))
-			sendto_one(source_p, form_str(RPL_TESTLINE),
-					me.name, source_p->name,
+			sendto_one(&source, form_str(RPL_TESTLINE),
+					me.name, source.name,
 					'!',
 					duration / 60L,
 					host, "Reject cache");
 		if(aconf == NULL &&
 				(duration = is_throttle_ip((struct sockaddr *)&ip)))
-			sendto_one(source_p, form_str(RPL_TESTLINE),
-					me.name, source_p->name,
+			sendto_one(&source, form_str(RPL_TESTLINE),
+					me.name, source.name,
 					'!',
 					duration / 60L,
 					host, "Throttled");
@@ -175,13 +175,13 @@ mo_testline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 
 		if(aconf->status & CONF_KILL)
 		{
-			get_printable_kline(source_p, aconf, &phost, &reason, &puser, &operreason);
+			get_printable_kline(&source, aconf, &phost, &reason, &puser, &operreason);
 			snprintf(buf, sizeof(buf), "%s@%s",
 					puser, phost);
 			snprintf(reasonbuf, sizeof(reasonbuf), "%s%s%s", reason,
 				operreason ? "|" : "", operreason ? operreason : "");
-			sendto_one(source_p, form_str(RPL_TESTLINE),
-				me.name, source_p->name,
+			sendto_one(&source, form_str(RPL_TESTLINE),
+				me.name, source.name,
 				(aconf->flags & CONF_FLAGS_TEMPORARY) ? 'k' : 'K',
 				(aconf->flags & CONF_FLAGS_TEMPORARY) ?
 				 (long) ((aconf->hold - rb_current_time()) / 60) : 0L,
@@ -193,8 +193,8 @@ mo_testline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 	/* they asked us to check a nick, so hunt for resvs.. */
 	if(name && (resv_p = find_nick_resv(name)))
 	{
-		sendto_one(source_p, form_str(RPL_TESTLINE),
-				me.name, source_p->name,
+		sendto_one(&source, form_str(RPL_TESTLINE),
+				me.name, source.name,
 				resv_p->hold ? 'q' : 'Q',
 				resv_p->hold ? (long) ((resv_p->hold - rb_current_time()) / 60) : 0L,
 				resv_p->host, resv_p->passwd);
@@ -209,32 +209,32 @@ mo_testline(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *s
 	/* no matching resv, we can print the I: if it exists */
 	if(aconf && aconf->status & CONF_CLIENT)
 	{
-		sendto_one_numeric(source_p, RPL_STATSILINE, form_str(RPL_STATSILINE),
+		sendto_one_numeric(&source, RPL_STATSILINE, form_str(RPL_STATSILINE),
 				aconf->info.name, EmptyString(aconf->spasswd) ? "<NULL>" : aconf->spasswd,
-				show_iline_prefix(source_p, aconf, aconf->user),
+				show_iline_prefix(&source, aconf, aconf->user),
 				aconf->host, aconf->port, aconf->className);
 		return;
 	}
 
 	/* nothing matches.. */
-	sendto_one(source_p, form_str(RPL_NOTESTLINE),
-			me.name, source_p->name, parv[1]);
+	sendto_one(&source, form_str(RPL_NOTESTLINE),
+			me.name, source.name, parv[1]);
 }
 
 static void
-mo_testgecos(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mo_testgecos(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	struct ConfItem *aconf;
 
 	if(!(aconf = find_xline(parv[1], 0)))
 	{
-		sendto_one(source_p, form_str(RPL_NOTESTLINE),
-				me.name, source_p->name, parv[1]);
+		sendto_one(&source, form_str(RPL_NOTESTLINE),
+				me.name, source.name, parv[1]);
 		return;
 	}
 
-	sendto_one(source_p, form_str(RPL_TESTLINE),
-			me.name, source_p->name,
+	sendto_one(&source, form_str(RPL_TESTLINE),
+			me.name, source.name,
 			aconf->hold ? 'x' : 'X',
 			aconf->hold ? (long) ((aconf->hold - rb_current_time()) / 60) : 0L,
 			aconf->host, aconf->passwd);

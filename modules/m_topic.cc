@@ -27,8 +27,8 @@ using namespace ircd;
 static const char topic_desc[] =
 	"Provides the TOPIC command to set, remove, and inspect channel topics";
 
-static void m_topic(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void ms_topic(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_topic(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void ms_topic(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message topic_msgtab = {
 	"TOPIC", 0, 0, 0, 0,
@@ -44,7 +44,7 @@ DECLARE_MODULE_AV2(topic, NULL, NULL, topic_clist, NULL, NULL, NULL, NULL, topic
  *	parv[2] = new topic, if setting topic
  */
 static void
-m_topic(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_topic(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	chan::chan *chptr = NULL;
 	chan::membership *msptr;
@@ -57,27 +57,27 @@ m_topic(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 
 	name = parv[1];
 
-	if(IsOperSpy(source_p) && parv[1][0] == '!')
+	if(IsOperSpy(&source) && parv[1][0] == '!')
 	{
 		name++;
 		operspy = 1;
 
 		if(EmptyString(name))
 		{
-			sendto_one(source_p, form_str(ERR_NEEDMOREPARAMS),
-					me.name, source_p->name, "TOPIC");
+			sendto_one(&source, form_str(ERR_NEEDMOREPARAMS),
+					me.name, source.name, "TOPIC");
 			return;
 		}
 	}
 
-	if(MyClient(source_p) && !IsFloodDone(source_p))
-		flood_endgrace(source_p);
+	if(MyClient(&source) && !IsFloodDone(&source))
+		flood_endgrace(&source);
 
 	chptr = chan::get(name, std::nothrow);
 
 	if(chptr == NULL)
 	{
-		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
+		sendto_one_numeric(&source, ERR_NOSUCHCHANNEL,
 				form_str(ERR_NOSUCHCHANNEL), name);
 		return;
 	}
@@ -85,84 +85,84 @@ m_topic(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 	/* setting topic */
 	if(parc > 2)
 	{
-		msptr = get(chptr->members, *source_p, std::nothrow);
+		msptr = get(chptr->members, source, std::nothrow);
 
 		if(msptr == NULL)
 		{
-			sendto_one_numeric(source_p, ERR_NOTONCHANNEL,
+			sendto_one_numeric(&source, ERR_NOTONCHANNEL,
 					form_str(ERR_NOTONCHANNEL), name);
 			return;
 		}
 
-		if (MyClient(source_p) &&
+		if (MyClient(&source) &&
 		    !is_chanop(msptr) &&
 		    !is_voiced(msptr) &&
-		    !IsOper(source_p) &&
-		    !add_channel_target(source_p, chptr))
+		    !IsOper(&source) &&
+		    !add_channel_target(&source, chptr))
 		{
-			sendto_one(source_p, form_str(ERR_TARGCHANGE),
-				   me.name, source_p->name, chptr->name.c_str());
+			sendto_one(&source, form_str(ERR_TARGCHANGE),
+				   me.name, source.name, chptr->name.c_str());
 			return;
 		}
 
 		if(((chptr->mode.mode & chan::mode::TOPICLIMIT) == 0 ||
-					get_channel_access(source_p, chptr, msptr, MODE_ADD, NULL) >= chan::CHANOP) &&
-				(!MyClient(source_p) ||
-				 can_send(chptr, source_p, msptr)))
+					get_channel_access(&source, chptr, msptr, MODE_ADD, NULL) >= chan::CHANOP) &&
+				(!MyClient(&source) ||
+				 can_send(chptr, &source, msptr)))
 		{
 			char topic[TOPICLEN + 1];
 			char topic_info[USERHOST_REPLYLEN];
 			rb_strlcpy(topic, parv[2], sizeof(topic));
 			sprintf(topic_info, "%s!%s@%s",
-					source_p->name, source_p->username, source_p->host);
+					source.name, source.username, source.host);
 
 			if (ConfigChannel.strip_topic_colors)
 				strip_colour(topic);
 
 			set_channel_topic(chptr, topic, topic_info, rb_current_time());
 
-			sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
+			sendto_server(&client, chptr, CAP_TS6, NOCAPS,
 					":%s TOPIC %s :%s",
-					use_id(source_p), chptr->name.c_str(),
+					use_id(&source), chptr->name.c_str(),
 					chptr->topic? "" : chptr->topic.text.c_str());
 			sendto_channel_local(chan::ALL_MEMBERS,
 					chptr, ":%s!%s@%s TOPIC %s :%s",
-					source_p->name, source_p->username,
-					source_p->host, chptr->name.c_str(),
+					source.name, source.username,
+					source.host, chptr->name.c_str(),
 					chptr->topic? "" : chptr->topic.text.c_str());
 		}
 		else
-			sendto_one(source_p, form_str(ERR_CHANOPRIVSNEEDED),
-					get_id(&me, source_p),
-					get_id(source_p, source_p), name);
+			sendto_one(&source, form_str(ERR_CHANOPRIVSNEEDED),
+					get_id(&me, &source),
+					get_id(&source, &source), name);
 	}
-	else if(MyClient(source_p))
+	else if(MyClient(&source))
 	{
 		if(operspy)
-			report_operspy(source_p, "TOPIC", chptr->name.c_str());
+			report_operspy(&source, "TOPIC", chptr->name.c_str());
 
-		if(!is_member(chptr, source_p) && is_secret(chptr) && !operspy)
+		if(!is_member(chptr, &source) && is_secret(chptr) && !operspy)
 		{
-			sendto_one_numeric(source_p, ERR_NOTONCHANNEL, form_str(ERR_NOTONCHANNEL), name);
+			sendto_one_numeric(&source, ERR_NOTONCHANNEL, form_str(ERR_NOTONCHANNEL), name);
 			return;
 		}
 
 		if(!chptr->topic)
-			sendto_one(source_p, form_str(RPL_NOTOPIC),
+			sendto_one(&source, form_str(RPL_NOTOPIC),
 			           me.name,
-			           source_p->name,
+			           source.name,
 			           name);
 		else
 		{
-			sendto_one(source_p, form_str(RPL_TOPIC),
+			sendto_one(&source, form_str(RPL_TOPIC),
 			           me.name,
-			           source_p->name,
+			           source.name,
 			           chptr->name.c_str(),
 			           chptr->topic.text.c_str());
 
-			sendto_one(source_p, form_str(RPL_TOPICWHOTIME),
+			sendto_one(&source, form_str(RPL_TOPICWHOTIME),
 			           me.name,
-			           source_p->name,
+			           source.name,
 			           chptr->name.c_str(),
 			           chptr->topic.info.c_str(),
 			           ulong(chptr->topic.time));
@@ -180,7 +180,7 @@ m_topic(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
  * Let servers always set a topic
  */
 static void
-ms_topic(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+ms_topic(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	chan::chan *chptr = NULL;
 
@@ -191,7 +191,7 @@ ms_topic(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 
 	sendto_channel_local(chan::ALL_MEMBERS, chptr,
 	                     ":%s TOPIC %s :%s",
-	                     source_p->name,
+	                     source.name,
 	                     parv[1],
 	                     chptr->topic.text.c_str());
 }

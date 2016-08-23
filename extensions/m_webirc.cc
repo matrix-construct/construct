@@ -42,7 +42,7 @@ using namespace ircd;
 
 static const char webirc_desc[] = "Adds support for the WebIRC system";
 
-static void mr_webirc(struct MsgBuf *msgbuf_p, client::client *, client::client *, int, const char **);
+static void mr_webirc(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 struct Message webirc_msgtab = {
 	"WEBIRC", 0, 0, 0, 0,
@@ -61,7 +61,7 @@ DECLARE_MODULE_AV2(webirc, NULL, NULL, webirc_clist, NULL, NULL, NULL, NULL, web
  *	parv[4] = fake ip
  */
 static void
-mr_webirc(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mr_webirc(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	struct ConfItem *aconf;
 	const char *encr;
@@ -69,28 +69,28 @@ mr_webirc(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sou
 
 	if ((!strchr(parv[4], '.') && !strchr(parv[4], ':')) ||
 			strlen(parv[4]) + (*parv[4] == ':') >=
-			sizeof(source_p->sockhost))
+			sizeof(source.sockhost))
 	{
-		sendto_one(source_p, "NOTICE * :Invalid IP");
+		sendto_one(&source, "NOTICE * :Invalid IP");
 		return;
 	}
 
-	aconf = find_address_conf(client_p->host, client_p->sockhost,
-				IsGotId(client_p) ? client_p->username : "webirc",
-				IsGotId(client_p) ? client_p->username : "webirc",
-				(struct sockaddr *) &client_p->localClient->ip,
-				GET_SS_FAMILY(&client_p->localClient->ip), NULL);
+	aconf = find_address_conf(client.host, client.sockhost,
+				IsGotId(&client) ? client.username : "webirc",
+				IsGotId(&client) ? client.username : "webirc",
+				(struct sockaddr *) &client.localClient->ip,
+				GET_SS_FAMILY(&client.localClient->ip), NULL);
 	if (aconf == NULL || !(aconf->status & CONF_CLIENT))
 		return;
 	if (!IsConfDoSpoofIp(aconf) || irccmp(aconf->info.name, "webirc."))
 	{
 		/* XXX */
-		sendto_one(source_p, "NOTICE * :Not a CGI:IRC auth block");
+		sendto_one(&source, "NOTICE * :Not a CGI:IRC auth block");
 		return;
 	}
 	if (EmptyString(aconf->passwd))
 	{
-		sendto_one(source_p, "NOTICE * :CGI:IRC auth blocks must have a password");
+		sendto_one(&source, "NOTICE * :CGI:IRC auth blocks must have a password");
 		return;
 	}
 
@@ -103,43 +103,43 @@ mr_webirc(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sou
 
 	if (encr == NULL || strcmp(encr, aconf->passwd))
 	{
-		sendto_one(source_p, "NOTICE * :CGI:IRC password incorrect");
+		sendto_one(&source, "NOTICE * :CGI:IRC password incorrect");
 		return;
 	}
 
 	if (rb_inet_pton_sock(parv[4], (struct sockaddr *)&addr) <= 0)
 	{
-		sendto_one(source_p, "NOTICE * :Invalid IP");
+		sendto_one(&source, "NOTICE * :Invalid IP");
 		return;
 	}
 
 	if (*parv[4] == ':')
 	{
-		source_p->sockhost[0] = '0';
-		rb_strlcpy(source_p->sockhost + 1, parv[4],
-				sizeof(source_p->sockhost) - 1);
+		source.sockhost[0] = '0';
+		rb_strlcpy(source.sockhost + 1, parv[4],
+				sizeof(source.sockhost) - 1);
 	}
 	else
-		rb_strlcpy(source_p->sockhost, parv[4],
-				sizeof(source_p->sockhost));
+		rb_strlcpy(source.sockhost, parv[4],
+				sizeof(source.sockhost));
 
 	if(strlen(parv[3]) <= HOSTLEN)
-		rb_strlcpy(source_p->host, parv[3], sizeof(source_p->host));
+		rb_strlcpy(source.host, parv[3], sizeof(source.host));
 	else
-		rb_strlcpy(source_p->host, source_p->sockhost, sizeof(source_p->host));
+		rb_strlcpy(source.host, source.sockhost, sizeof(source.host));
 
-	source_p->localClient->ip = addr;
+	source.localClient->ip = addr;
 
 	/* Check dlines now, klines will be checked on registration */
-	if((aconf = find_dline((struct sockaddr *)&source_p->localClient->ip,
-			       GET_SS_FAMILY(&source_p->localClient->ip))))
+	if((aconf = find_dline((struct sockaddr *)&source.localClient->ip,
+			       GET_SS_FAMILY(&source.localClient->ip))))
 	{
 		if(!(aconf->status & CONF_EXEMPTDLINE))
 		{
-			exit_client(client_p, source_p, &me, "D-lined");
+			exit_client(&client, &source, &me, "D-lined");
 			return;
 		}
 	}
 
-	sendto_one(source_p, "NOTICE * :CGI:IRC host/IP set to %s %s", parv[3], parv[4]);
+	sendto_one(&source, "NOTICE * :CGI:IRC host/IP set to %s %s", parv[3], parv[4]);
 }

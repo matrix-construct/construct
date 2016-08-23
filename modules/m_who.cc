@@ -47,13 +47,13 @@ struct who_format
 	const char *querytype;
 };
 
-static void m_who(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_who(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
-static void do_who_on_channel(client::client *source_p, chan::chan *chptr,
+static void do_who_on_channel(client::client &source, chan::chan *chptr,
 			      int server_oper, int member,
 			      struct who_format *fmt);
-static void who_global(client::client *source_p, const char *mask, int server_oper, int operspy, struct who_format *fmt);
-static void do_who(client::client *source_p,
+static void who_global(client::client &source, const char *mask, int server_oper, int operspy, struct who_format *fmt);
+static void do_who(client::client &source,
 		   client::client *target_p, chan::chan *, chan::membership *msptr,
 		   struct who_format *fmt);
 
@@ -84,7 +84,7 @@ DECLARE_MODULE_AV2(who, _modinit, _moddeinit, who_clist, NULL, NULL, NULL, NULL,
 **      parv[2] = additional selection flag and format options
 */
 static void
-m_who(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_who(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	static time_t last_used = 0;
 	client::client *target_p;
@@ -141,29 +141,29 @@ m_who(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_
 	/* '/who *' */
 	if((*(mask + 1) == '\0') && (*mask == '*'))
 	{
-		if(source_p->user == NULL)
+		if(source.user == NULL)
 			return;
 
-		if (!chans(user(*source_p)).empty())
+		if (!chans(user(source)).empty())
 		{
-			auto *const chan(begin(chans(user(*source_p)))->first);
-			do_who_on_channel(source_p, chan, server_oper, true, &fmt);
+			auto *const chan(begin(chans(user(source)))->first);
+			do_who_on_channel(source, chan, server_oper, true, &fmt);
 		}
 
-		sendto_one(source_p, form_str(RPL_ENDOFWHO),
-			   me.name, source_p->name, "*");
+		sendto_one(&source, form_str(RPL_ENDOFWHO),
+			   me.name, source.name, "*");
 		return;
 	}
 
-	if(IsOperSpy(source_p) && *mask == '!')
+	if(IsOperSpy(&source) && *mask == '!')
 	{
 		mask++;
 		operspy = 1;
 
 		if(EmptyString(mask))
 		{
-			sendto_one(source_p, form_str(RPL_ENDOFWHO),
-					me.name, source_p->name, parv[1]);
+			sendto_one(&source, form_str(RPL_ENDOFWHO),
+					me.name, source.name, parv[1]);
 			return;
 		}
 	}
@@ -176,26 +176,26 @@ m_who(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_
 
 		if(chptr != NULL)
 		{
-			if (!IsOper(source_p) && !ratelimit_client_who(source_p, size(chptr->members)/50))
+			if (!IsOper(&source) && !ratelimit_client_who(&source, size(chptr->members)/50))
 			{
-				sendto_one(source_p, form_str(RPL_LOAD2HI),
-						me.name, source_p->name, "WHO");
-				sendto_one(source_p, form_str(RPL_ENDOFWHO),
-					   me.name, source_p->name, "*");
+				sendto_one(&source, form_str(RPL_LOAD2HI),
+						me.name, source.name, "WHO");
+				sendto_one(&source, form_str(RPL_ENDOFWHO),
+					   me.name, source.name, "*");
 				return;
 			}
 
 			if(operspy)
-				report_operspy(source_p, "WHO", chptr->name.c_str());
+				report_operspy(&source, "WHO", chptr->name.c_str());
 
-			if(is_member(chptr, source_p) || operspy)
-				do_who_on_channel(source_p, chptr, server_oper, true, &fmt);
+			if(is_member(chptr, &source) || operspy)
+				do_who_on_channel(source, chptr, server_oper, true, &fmt);
 			else if(!is_secret(chptr))
-				do_who_on_channel(source_p, chptr, server_oper, false, &fmt);
+				do_who_on_channel(source, chptr, server_oper, false, &fmt);
 		}
 
-		sendto_one(source_p, form_str(RPL_ENDOFWHO),
-			   me.name, source_p->name, parv[1] + operspy);
+		sendto_one(&source, form_str(RPL_ENDOFWHO),
+			   me.name, source.name, parv[1] + operspy);
 		return;
 	}
 
@@ -210,7 +210,7 @@ m_who(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_
 		for(const auto &pit : chans(user(*target_p)))
 		{
 			chptr = pit.first;
-			msptr = get(chptr->members, *source_p, std::nothrow);
+			msptr = get(chptr->members, source, std::nothrow);
 
 			if(isinvis && !member)
 			{
@@ -227,25 +227,25 @@ m_who(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_
 		/* if we stopped midlist, msptr is the membership for
 		 * target_p of chptr
 		 */
-		do_who(source_p, target_p, chptr, msptr, &fmt);
+		do_who(source, target_p, chptr, msptr, &fmt);
 
-		sendto_one(source_p, form_str(RPL_ENDOFWHO),
-			   me.name, source_p->name, mask);
+		sendto_one(&source, form_str(RPL_ENDOFWHO),
+			   me.name, source.name, mask);
 		return;
 	}
 
-	if(!IsFloodDone(source_p))
-		flood_endgrace(source_p);
+	if(!IsFloodDone(&source))
+		flood_endgrace(&source);
 
 	/* it has to be a global who at this point, limit it */
-	if(!IsOper(source_p))
+	if(!IsOper(&source))
 	{
-		if((last_used + ConfigFileEntry.pace_wait) > rb_current_time() || !ratelimit_client(source_p, 1))
+		if((last_used + ConfigFileEntry.pace_wait) > rb_current_time() || !ratelimit_client(&source, 1))
 		{
-			sendto_one(source_p, form_str(RPL_LOAD2HI),
-					me.name, source_p->name, "WHO");
-			sendto_one(source_p, form_str(RPL_ENDOFWHO),
-				   me.name, source_p->name, "*");
+			sendto_one(&source, form_str(RPL_LOAD2HI),
+					me.name, source.name, "WHO");
+			sendto_one(&source, form_str(RPL_ENDOFWHO),
+				   me.name, source.name, "*");
 			return;
 		}
 		else
@@ -254,7 +254,7 @@ m_who(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_
 
 	/* Note: operspy_dont_care_user_info does not apply to
 	 * who on channels */
-	if(IsOperSpy(source_p) && ConfigFileEntry.operspy_dont_care_user_info)
+	if(IsOperSpy(&source) && ConfigFileEntry.operspy_dont_care_user_info)
 		operspy = 1;
 
 	/* '/who 0' for a global list.  this forces clients to actually
@@ -262,12 +262,12 @@ m_who(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_
 	 * with "/who" ;) --fl
 	 */
 	if((*(mask + 1) == '\0') && (*mask == '0'))
-		who_global(source_p, NULL, server_oper, 0, &fmt);
+		who_global(source, NULL, server_oper, 0, &fmt);
 	else
-		who_global(source_p, mask, server_oper, operspy, &fmt);
+		who_global(source, mask, server_oper, operspy, &fmt);
 
-	sendto_one(source_p, form_str(RPL_ENDOFWHO),
-		   me.name, source_p->name, mask);
+	sendto_one(&source, form_str(RPL_ENDOFWHO),
+		   me.name, source.name, mask);
 }
 
 /* who_common_channel
@@ -282,7 +282,7 @@ m_who(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_
  * 		  marks matched clients.
  */
 static void
-who_common_channel(client::client *source_p, chan::chan *chptr,
+who_common_channel(client::client &source, chan::chan *chptr,
 		   const char *mask, int server_oper, int *maxmatches,
 		   struct who_format *fmt)
 {
@@ -304,10 +304,10 @@ who_common_channel(client::client *source_p, chan::chan *chptr,
 			if((mask == NULL) ||
 					match(mask, target->name) || match(mask, target->username) ||
 					match(mask, target->host) || match(mask, target->servptr->name) ||
-					(IsOper(source_p) && match(mask, target->orighost)) ||
+					(IsOper(&source) && match(mask, target->orighost)) ||
 					match(mask, target->info))
 			{
-				do_who(source_p, target, chptr, nullptr, fmt);
+				do_who(source, target, chptr, nullptr, fmt);
 				--(*maxmatches);
 			}
 		}
@@ -329,7 +329,7 @@ who_common_channel(client::client *source_p, chan::chan *chptr,
  *		  and will be left cleared on return
  */
 static void
-who_global(client::client *source_p, const char *mask, int server_oper, int operspy, struct who_format *fmt)
+who_global(client::client &source, const char *mask, int server_oper, int operspy, struct who_format *fmt)
 {
 	chan::membership *msptr;
 	client::client *target_p;
@@ -341,14 +341,14 @@ who_global(client::client *source_p, const char *mask, int server_oper, int oper
 	 */
 	if(!operspy)
 	{
-		for(const auto &pit : chans(user(*source_p)))
+		for(const auto &pit : chans(user(source)))
 		{
 			auto &chan(pit.first);
-			who_common_channel(source_p, chan, mask, server_oper, &maxmatches, fmt);
+			who_common_channel(source, chan, mask, server_oper, &maxmatches, fmt);
 		}
 	}
 	else if (!ConfigFileEntry.operspy_dont_care_user_info)
-		report_operspy(source_p, "WHO", mask);
+		report_operspy(&source, "WHO", mask);
 
 	/* second, list all matching visible clients and clear all marks
 	 * on invisible clients
@@ -375,19 +375,19 @@ who_global(client::client *source_p, const char *mask, int server_oper, int oper
 			if(!mask ||
 					match(mask, target_p->name) || match(mask, target_p->username) ||
 					match(mask, target_p->host) || match(mask, target_p->servptr->name) ||
-					(IsOper(source_p) && match(mask, target_p->orighost)) ||
+					(IsOper(&source) && match(mask, target_p->orighost)) ||
 					match(mask, target_p->info))
 			{
-				do_who(source_p, target_p, nullptr, nullptr, fmt);
+				do_who(source, target_p, nullptr, nullptr, fmt);
 				--maxmatches;
 			}
 		}
 	}
 
 	if (maxmatches <= 0)
-		sendto_one(source_p,
+		sendto_one(&source,
 			form_str(ERR_TOOMANYMATCHES),
-			me.name, source_p->name, "WHO");
+			me.name, source.name, "WHO");
 }
 
 /*
@@ -396,14 +396,14 @@ who_global(client::client *source_p, const char *mask, int server_oper, int oper
  * inputs	- pointer to client requesting who
  *		- pointer to channel to do who on
  *		- The "real name" of this channel
- *		- int if source_p is a server oper or not
+ *		- int if &source is a server oper or not
  *		- int if client is member or not
  *		- format options
  * output	- NONE
  * side effects - do a who on given channel
  */
 static void
-do_who_on_channel(client::client *source_p, chan::chan *chptr,
+do_who_on_channel(client::client &source, chan::chan *chptr,
 		  int server_oper, int source_member, struct who_format *fmt)
 {
 	for(auto &pit : chptr->members.global)
@@ -415,7 +415,7 @@ do_who_on_channel(client::client *source_p, chan::chan *chptr,
 			continue;
 
 		if(source_member || !IsInvisible(target))
-			do_who(source_p, target, chptr, &member, fmt);
+			do_who(source, target, chptr, &member, fmt);
 	}
 }
 
@@ -456,7 +456,7 @@ append_format(char *buf, size_t bufsize, size_t *pos, const char *fmt, ...)
  */
 
 static void
-do_who(client::client *source_p, client::client *target_p, chan::chan *chan, chan::membership *msptr, struct who_format *fmt)
+do_who(client::client &source, client::client *target_p, chan::chan *chan, chan::membership *msptr, struct who_format *fmt)
 {
 	char status[16];
 	char str[510 + 1]; /* linebuf.c will add \r\n */
@@ -464,21 +464,21 @@ do_who(client::client *source_p, client::client *target_p, chan::chan *chan, cha
 	const char *q;
 
 	sprintf(status, "%c%s%s",
-		   away(user(*target_p)).size()? 'G' : 'H', IsOper(target_p) ? "*" : "", msptr ? find_status(msptr, fmt->fields || IsCapable(source_p, CLICAP_MULTI_PREFIX)) : "");
+		   away(user(*target_p)).size()? 'G' : 'H', IsOper(target_p) ? "*" : "", msptr ? find_status(msptr, fmt->fields || IsCapable(&source, CLICAP_MULTI_PREFIX)) : "");
 
 	if (fmt->fields == 0)
-		sendto_one(source_p, form_str(RPL_WHOREPLY), me.name,
-			   source_p->name, msptr ? chan->name.c_str() : "*",
+		sendto_one(&source, form_str(RPL_WHOREPLY), me.name,
+			   source.name, msptr ? chan->name.c_str() : "*",
 			   target_p->username, target_p->host,
 			   target_p->servptr->name, target_p->name, status,
-			   ConfigServerHide.flatten_links && !IsOper(source_p) && !IsExemptShide(source_p) ? 0 : target_p->hopcount,
+			   ConfigServerHide.flatten_links && !IsOper(&source) && !IsExemptShide(&source) ? 0 : target_p->hopcount,
 			   target_p->info);
 	else
 	{
 		str[0] = '\0';
 		pos = 0;
 		append_format(str, sizeof str, &pos, ":%s %d %s",
-				me.name, RPL_WHOSPCRPL, source_p->name);
+				me.name, RPL_WHOSPCRPL, source.name);
 		if (fmt->fields & FIELD_QUERYTYPE)
 			append_format(str, sizeof str, &pos, " %s", fmt->querytype);
 		if (fmt->fields & FIELD_CHANNEL)
@@ -487,7 +487,7 @@ do_who(client::client *source_p, client::client *target_p, chan::chan *chan, cha
 			append_format(str, sizeof str, &pos, " %s", target_p->username);
 		if (fmt->fields & FIELD_IP)
 		{
-			if (show_ip(source_p, target_p) && !EmptyString(target_p->sockhost) && strcmp(target_p->sockhost, "0"))
+			if (show_ip(&source, target_p) && !EmptyString(target_p->sockhost) && strcmp(target_p->sockhost, "0"))
 				append_format(str, sizeof str, &pos, " %s", target_p->sockhost);
 			else
 				append_format(str, sizeof str, &pos, " %s", "255.255.255.255");
@@ -501,7 +501,7 @@ do_who(client::client *source_p, client::client *target_p, chan::chan *chan, cha
 		if (fmt->fields & FIELD_FLAGS)
 			append_format(str, sizeof str, &pos, " %s", status);
 		if (fmt->fields & FIELD_HOP)
-			append_format(str, sizeof str, &pos, " %d", ConfigServerHide.flatten_links && !IsOper(source_p) && !IsExemptShide(source_p) ? 0 : target_p->hopcount);
+			append_format(str, sizeof str, &pos, " %d", ConfigServerHide.flatten_links && !IsOper(&source) && !IsExemptShide(&source) ? 0 : target_p->hopcount);
 		if (fmt->fields & FIELD_IDLE)
 			append_format(str, sizeof str, &pos, " %d", (int)(MyClient(target_p) ? rb_current_time() - target_p->localClient->last : 0));
 		if (fmt->fields & FIELD_ACCOUNT)
@@ -530,9 +530,9 @@ do_who(client::client *source_p, client::client *target_p, chan::chan *chan, cha
 			if (!warned)
 				sendto_realops_snomask(SNO_DEBUG, L_NETWIDE,
 						"WHOX overflow while sending information about %s to %s",
-						target_p->name, source_p->name);
+						target_p->name, source.name);
 			warned = true;
 		}
-		sendto_one(source_p, "%s", str);
+		sendto_one(&source, "%s", str);
 	}
 }

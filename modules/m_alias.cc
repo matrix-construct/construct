@@ -25,7 +25,7 @@ static const char alias_desc[] = "Provides the system for services aliases";
 static int _modinit(void);
 static void _moddeinit(void);
 static int reload_aliases(hook_data *);
-static void m_alias(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_alias(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 mapi_hfn_list_av1 alias_hfnlist[] = {
 	{ "rehash", (hookfn)reload_aliases },
@@ -95,7 +95,7 @@ reload_aliases(hook_data *data)
 
 /* The below was mostly taken from the old do_alias */
 static void
-m_alias(struct MsgBuf *msgbuf, client::client *client_p, client::client *source_p, int parc, const char **parv)
+m_alias(struct MsgBuf *msgbuf, client::client &client, client::client &source, int parc, const char **parv)
 {
 	client::client *target_p;
 	std::shared_ptr<alias_entry> aptr = alias_dict[msgbuf->cmd];
@@ -104,15 +104,15 @@ m_alias(struct MsgBuf *msgbuf, client::client *client_p, client::client *source_
 	if(aptr == NULL)
 	{
 		/* This shouldn't happen... */
-		if(IsPerson(client_p))
-			sendto_one(client_p, form_str(ERR_UNKNOWNCOMMAND),
-				me.name, client_p->name, msgbuf->cmd);
+		if(IsPerson(&client))
+			sendto_one(&client, form_str(ERR_UNKNOWNCOMMAND),
+				me.name, client.name, msgbuf->cmd);
 
 		return;
 	}
 
-	if(!IsFloodDone(client_p) && client_p->localClient->receiveM > 20)
-		flood_endgrace(client_p);
+	if(!IsFloodDone(&client) && client.localClient->receiveM > 20)
+		flood_endgrace(&client);
 
 	auto pos = aptr->target.find('@');
 	if(pos != std::string::npos)
@@ -132,19 +132,19 @@ m_alias(struct MsgBuf *msgbuf, client::client *client_p, client::client *source_
 
 	if(target_p == NULL)
 	{
-		sendto_one_numeric(client_p, ERR_SERVICESDOWN, form_str(ERR_SERVICESDOWN), aptr->target.c_str());
+		sendto_one_numeric(&client, ERR_SERVICESDOWN, form_str(ERR_SERVICESDOWN), aptr->target.c_str());
 		return;
 	}
 
 	str = reconstruct_parv(parc - 1, &parv[1]);
 	if(EmptyString(str))
 	{
-		sendto_one(client_p, form_str(ERR_NOTEXTTOSEND), me.name, target_p->name);
+		sendto_one(&client, form_str(ERR_NOTEXTTOSEND), me.name, target_p->name);
 		return;
 	}
 
 	sendto_one(target_p, ":%s PRIVMSG %s :%s",
-			get_id(client_p, target_p),
+			get_id(&client, target_p),
 			pos != std::string::npos ? aptr->target.c_str() : get_id(target_p, target_p),
 			str);
 }

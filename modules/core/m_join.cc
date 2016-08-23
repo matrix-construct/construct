@@ -26,9 +26,9 @@ using namespace ircd;
 
 static const char join_desc[] = "Provides the JOIN and TS6 SJOIN commands to facilitate joining and creating channels";
 
-static void m_join(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void ms_join(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void ms_sjoin(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_join(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void ms_join(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void ms_sjoin(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 static int h_can_create_channel;
 static int h_channel_join;
@@ -53,12 +53,12 @@ mapi_hlist_av1 join_hlist[] = {
 
 DECLARE_MODULE_AV2(join, NULL, NULL, join_clist, join_hlist, NULL, NULL, NULL, join_desc);
 
-static void do_join_0(client::client *client_p, client::client *source_p);
-static bool check_channel_name_loc(client::client *source_p, const char *name);
-static void send_join_error(client::client *source_p, int numeric, const char *name);
+static void do_join_0(client::client &client, client::client &source);
+static bool check_channel_name_loc(client::client &source, const char *name);
+static void send_join_error(client::client &source, int numeric, const char *name);
 
 static void set_final_mode(chan::modes *mode, chan::modes *oldmode);
-static void remove_our_modes(chan::chan *chptr, client::client *source_p);
+static void remove_our_modes(chan::chan *chptr, client::client &source);
 static void remove_ban_list(chan::chan &chan, client::client &source, chan::list &list, const char &c, const int &mems);
 
 static char modebuf[chan::mode::BUFLEN];
@@ -71,7 +71,7 @@ static int pargs;
  * -- jilles
  */
 static chan::chan *
-check_forward(client::client *source_p, chan::chan *chptr,
+check_forward(client::client &source, chan::chan *chptr,
 	     char *key, int *err)
 {
 	int depth = 0, i;
@@ -80,11 +80,11 @@ check_forward(client::client *source_p, chan::chan *chptr,
 	/* The caller (m_join) is only interested in the reason
 	 * for the original channel.
 	 */
-	if ((*err = can_join(source_p, chptr, key, &next)) == 0)
+	if ((*err = can_join(&source, chptr, key, &next)) == 0)
 		return chptr;
 
 	/* User is +Q, or forwarding disabled */
-	if (IsNoForward(source_p) || !ConfigChannel.use_forward)
+	if (IsNoForward(&source) || !ConfigChannel.use_forward)
 		return NULL;
 
 	while (depth < 16)
@@ -101,7 +101,7 @@ check_forward(client::client *source_p, chan::chan *chptr,
 		 * on the channel, and it looks hostile otherwise.
 		 * --Elizafox
 		 */
-		if (is_member(chptr, source_p))
+		if (is_member(chptr, &source))
 		{
 			*err = ERR_USERONCHANNEL; /* I'm borrowing this for now. --Elizafox */
 			return NULL;
@@ -113,7 +113,7 @@ check_forward(client::client *source_p, chan::chan *chptr,
 		if (chptr->mode.mode & chan::mode::DISFORWARD)
 			return NULL;
 
-		i = can_join(source_p, chptr, key, &next);
+		i = can_join(&source, chptr, key, &next);
 		if (i == 0)
 			return chptr;
 		depth++;
@@ -128,7 +128,7 @@ check_forward(client::client *source_p, chan::chan *chptr,
  *      parv[2] = channel password (key)
  */
 static void
-m_join(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_join(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	static char jbuf[BUFSIZE];
 	chan::chan *chptr = NULL, *chptr2 = NULL;
@@ -150,9 +150,9 @@ m_join(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 	for(name = rb_strtok_r(chanlist, ",", &p); name; name = rb_strtok_r(NULL, ",", &p))
 	{
 		/* check the length and name of channel is ok */
-		if(!check_channel_name_loc(source_p, name) || (strlen(name) > LOC_CHANNELLEN))
+		if(!check_channel_name_loc(source, name) || (strlen(name) > LOC_CHANNELLEN))
 		{
-			sendto_one_numeric(source_p, ERR_BADCHANNAME,
+			sendto_one_numeric(&source, ERR_BADCHANNAME,
 					   form_str(ERR_BADCHANNAME), (unsigned char *) name);
 			continue;
 		}
@@ -168,37 +168,37 @@ m_join(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 		else if(!chan::has_prefix(name) ||
 			( ConfigChannel.disable_local_channels && name[0] == '&'))
 		{
-			sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
+			sendto_one_numeric(&source, ERR_NOSUCHCHANNEL,
 					   form_str(ERR_NOSUCHCHANNEL), name);
 			continue;
 		}
 
 		/* see if its resv'd */
-		if(!IsExemptResv(source_p) && (aconf = hash_find_resv(name)))
+		if(!IsExemptResv(&source) && (aconf = hash_find_resv(name)))
 		{
-			sendto_one_numeric(source_p, ERR_BADCHANNAME,
+			sendto_one_numeric(&source, ERR_BADCHANNAME,
 					   form_str(ERR_BADCHANNAME), name);
 
 			/* dont warn for opers */
-			if(!IsExemptJupe(source_p) && !IsOper(source_p))
+			if(!IsExemptJupe(&source) && !IsOper(&source))
 				sendto_realops_snomask(SNO_SPY, L_NETWIDE,
 						     "User %s (%s@%s) is attempting to join locally juped channel %s (%s)",
-						     source_p->name, source_p->username,
-						     source_p->orighost, name, aconf->passwd);
+						     source.name, source.username,
+						     source.orighost, name, aconf->passwd);
 			/* dont update tracking for jupe exempt users, these
 			 * are likely to be spamtrap leaves
 			 */
-			else if(IsExemptJupe(source_p))
+			else if(IsExemptJupe(&source))
 				aconf->port--;
 
 			continue;
 		}
 
-		if(splitmode && !IsOper(source_p) && (*name != '&') &&
+		if(splitmode && !IsOper(&source) && (*name != '&') &&
 		   ConfigChannel.no_join_on_split)
 		{
-			sendto_one(source_p, form_str(ERR_UNAVAILRESOURCE),
-				   me.name, source_p->name, name);
+			sendto_one(&source, form_str(ERR_UNAVAILRESOURCE),
+				   me.name, source.name, name);
 			continue;
 		}
 
@@ -221,17 +221,17 @@ m_join(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 		/* JOIN 0 simply parts all channels the user is in */
 		if(*name == '0' && !atoi(name))
 		{
-			if(chans(user(*source_p)).empty())
+			if(chans(user(source)).empty())
 				continue;
 
-			do_join_0(&me, source_p);
+			do_join_0(me, source);
 			continue;
 		}
 
 		/* look for the channel */
 		if((chptr = chan::get(name, std::nothrow)) != NULL)
 		{
-			if(is_member(chptr, source_p))
+			if(is_member(chptr, &source))
 				continue;
 
 			flags = 0;
@@ -240,7 +240,7 @@ m_join(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 		{
 			hook_data_client_approval moduledata;
 
-			moduledata.client = source_p;
+			moduledata.client = &source;
 			moduledata.approved = 0;
 
 			call_hook(h_can_create_channel, &moduledata);
@@ -248,69 +248,69 @@ m_join(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 			if(moduledata.approved != 0)
 			{
 				if(moduledata.approved != chan::mode::ERR_CUSTOM)
-					send_join_error(source_p,
+					send_join_error(source,
 							moduledata.approved,
 							name);
 				continue;
 			}
 
-			if(splitmode && !IsOper(source_p) && (*name != '&') &&
+			if(splitmode && !IsOper(&source) && (*name != '&') &&
 			   ConfigChannel.no_create_on_split)
 			{
-				sendto_one(source_p, form_str(ERR_UNAVAILRESOURCE),
-					   me.name, source_p->name, name);
+				sendto_one(&source, form_str(ERR_UNAVAILRESOURCE),
+					   me.name, source.name, name);
 				continue;
 			}
 
 			flags = chan::CHANOP;
 		}
 
-		if(((chans(user(*source_p)).size()) >=
+		if(((chans(user(source)).size()) >=
 		    (unsigned long) ConfigChannel.max_chans_per_user) &&
-		   (!IsExtendChans(source_p) ||
-		    (chans(user(*source_p)).size() >=
+		   (!IsExtendChans(&source) ||
+		    (chans(user(source)).size() >=
 		     (unsigned long) ConfigChannel.max_chans_per_user_large)))
 		{
-			sendto_one(source_p, form_str(ERR_TOOMANYCHANNELS),
-				   me.name, source_p->name, name);
+			sendto_one(&source, form_str(ERR_TOOMANYCHANNELS),
+				   me.name, source.name, name);
 			continue;
 		}
 
 		if(chptr == NULL) try  // If I already have a chptr, no point doing this
 		{
-			chptr = &chan::add(name, *source_p);
+			chptr = &chan::add(name, source);
 		}
 		catch(const chan::error &e)
 		{
-			sendto_one(source_p, form_str(ERR_UNAVAILRESOURCE),
+			sendto_one(&source, form_str(ERR_UNAVAILRESOURCE),
 			           me.name,
-			           source_p->name,
+			           source.name,
 			           name);
 			continue;
 		}
 
 		/* If check_forward returns NULL, they couldn't join and there wasn't a usable forward channel. */
-		if((chptr2 = check_forward(source_p, chptr, key, &i)) == NULL)
+		if((chptr2 = check_forward(source, chptr, key, &i)) == NULL)
 		{
 			/* might be wrong, but is there any other better location for such?
 			 * see extensions/chm_operonly.c for other comments on this
 			 * -- dwr
 			 */
 			if(i != chan::mode::ERR_CUSTOM)
-				send_join_error(source_p, i, name);
+				send_join_error(source, i, name);
 			continue;
 		}
 		else if(chptr != chptr2)
-			sendto_one_numeric(source_p, ERR_LINKCHANNEL, form_str(ERR_LINKCHANNEL), name, chptr2->name.c_str());
+			sendto_one_numeric(&source, ERR_LINKCHANNEL, form_str(ERR_LINKCHANNEL), name, chptr2->name.c_str());
 
 		chptr = chptr2;
 
 		if(flags == 0 &&
-				!IsOper(source_p) && !IsExemptSpambot(source_p))
-			chan::check_spambot_warning(source_p, name);
+				!IsOper(&source) && !IsExemptSpambot(&source))
+			chan::check_spambot_warning(&source, name);
 
 		/* add the user to the channel */
-		add(*chptr, *source_p, flags);
+		add(*chptr, source, flags);
 		if (chptr->mode.join_num &&
 			rb_current_time() - chptr->join_delta >= chptr->mode.join_time)
 		{
@@ -320,12 +320,12 @@ m_join(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 		chptr->join_count++;
 
 		/* credit user for join */
-		credit_client_join(source_p);
+		credit_client_join(&source);
 
 		/* we send the user their join here, because we could have to
 		 * send a mode out next.
 		 */
-		chan::send_join(*chptr, *source_p);
+		chan::send_join(*chptr, source);
 
 		/* its a new channel, set +nt and burst. */
 		if(flags & chan::CHANOP)
@@ -337,40 +337,40 @@ m_join(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 			sendto_channel_local(chan::ONLY_CHANOPS, chptr, ":%s MODE %s %s",
 					     me.name, chptr->name.c_str(), modes);
 
-			sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
+			sendto_server(&client, chptr, CAP_TS6, NOCAPS,
 				      ":%s SJOIN %ld %s %s :@%s",
 				      me.id, (long) chptr->channelts,
-				      chptr->name.c_str(), modes, source_p->id);
+				      chptr->name.c_str(), modes, source.id);
 		}
 		else
 		{
-			sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
+			sendto_server(&client, chptr, CAP_TS6, NOCAPS,
 				      ":%s JOIN %ld %s +",
-				      use_id(source_p), (long) chptr->channelts,
+				      use_id(&source), (long) chptr->channelts,
 				      chptr->name.c_str());
 		}
 
-		del_invite(*chptr, *source_p);
+		del_invite(*chptr, source);
 
 		if(chptr->topic)
 		{
-			sendto_one(source_p, form_str(RPL_TOPIC),
+			sendto_one(&source, form_str(RPL_TOPIC),
 			           me.name,
-			           source_p->name,
+			           source.name,
 			           chptr->name.c_str(),
 			           chptr->topic.text.c_str());
 
-			sendto_one(source_p, form_str(RPL_TOPICWHOTIME),
+			sendto_one(&source, form_str(RPL_TOPICWHOTIME),
 			           me.name,
-			           source_p->name,
+			           source.name,
 			           chptr->name.c_str(),
 			           chptr->topic.info.c_str(),
 			           ulong(chptr->topic.time));
 		}
 
-		channel_member_names(chptr, source_p, 1);
+		channel_member_names(chptr, &source, 1);
 
-		hook_info.client = source_p;
+		hook_info.client = &source;
 		hook_info.chptr = chptr;
 		hook_info.key = key;
 		call_hook(h_channel_join, &hook_info);
@@ -385,7 +385,7 @@ m_join(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
  * alternatively, a single "0" parameter parts all channels
  */
 static void
-ms_join(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+ms_join(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	chan::chan *chptr;
 	static chan::modes mode;
@@ -398,7 +398,7 @@ ms_join(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 	/* special case for join 0 */
 	if((parv[1][0] == '0') && (parv[1][1] == '\0') && parc == 2)
 	{
-		do_join_0(client_p, source_p);
+		do_join_0(client, source);
 		return;
 	}
 
@@ -418,7 +418,7 @@ ms_join(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 
 	try
 	{
-		chptr = &chan::add(parv[2], *source_p);
+		chptr = &chan::add(parv[2], source);
 		isnew = size(*chptr) == 0;
 	}
 	catch(chan::error &e)
@@ -437,7 +437,7 @@ ms_join(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 				     me.name, chptr->name.c_str(), chptr->name.c_str(), (long) oldts);
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Server %s changing TS on %s from %ld to 0",
-				     source_p->name, chptr->name.c_str(), (long) oldts);
+				     source.name, chptr->name.c_str(), (long) oldts);
 	}
 
 	if(isnew)
@@ -457,7 +457,7 @@ ms_join(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 	{
 		set_final_mode(&mode, &chptr->mode);
 		chptr->mode = mode;
-		remove_our_modes(chptr, source_p);
+		remove_our_modes(chptr, source);
 		clear_invites(*chptr);
 
 		/* If setting -j, clear join throttle state -- jilles */
@@ -477,7 +477,7 @@ ms_join(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 		if(*modebuf != '\0')
 			sendto_channel_local(chan::ALL_MEMBERS, chptr,
 			                     ":%s MODE %s %s %s",
-			                     source_p->servptr->name,
+			                     source.servptr->name,
 			                     chptr->name.c_str(),
 			                     modebuf,
 			                     parabuf);
@@ -485,12 +485,12 @@ ms_join(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 		*modebuf = *parabuf = '\0';
 
 		/* since we're dropping our modes, we want to clear the mlock as well. --nenolod */
-		set_channel_mlock(client_p, source_p, chptr, NULL, false);
+		set_channel_mlock(&client, &source, chptr, NULL, false);
 	}
 
-	if(!is_member(chptr, source_p))
+	if(!is_member(chptr, &source))
 	{
-		add(*chptr, *source_p, chan::PEON);
+		add(*chptr, source, chan::PEON);
 		if (chptr->mode.join_num &&
 			rb_current_time() - chptr->join_delta >= chptr->mode.join_time)
 		{
@@ -498,21 +498,21 @@ ms_join(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 			chptr->join_delta = rb_current_time();
 		}
 		chptr->join_count++;
-		send_join(*chptr, *source_p);
+		send_join(*chptr, source);
 	}
 
-	sendto_server(client_p, chptr, CAP_TS6, NOCAPS,
+	sendto_server(&client, chptr, CAP_TS6, NOCAPS,
 		      ":%s JOIN %ld %s +",
-		      source_p->id, (long) chptr->channelts, chptr->name.c_str());
+		      source.id, (long) chptr->channelts, chptr->name.c_str());
 }
 
 static void
-ms_sjoin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+ms_sjoin(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	static char buf_uid[BUFSIZE];
 	static const char empty_modes[] = "0";
 	chan::chan *chptr;
-	client::client *target_p, *fakesource_p;
+	client::client *target_p, *fakesource;
 	time_t newts;
 	time_t oldts;
 	static chan::modes mode, *oldmode;
@@ -547,10 +547,10 @@ ms_sjoin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 	pargs = mode.mode = mode.limit = mode.join_num = mode.join_time = 0;
 
 	/* Hide connecting server on netburst -- jilles */
-	if (ConfigServerHide.flatten_links && !HasSentEob(source_p))
-		fakesource_p = &me;
+	if (ConfigServerHide.flatten_links && !HasSentEob(&source))
+		fakesource = &me;
 	else
-		fakesource_p = source_p;
+		fakesource = &source;
 
 	mbuf = modebuf;
 	newts = atol(parv[1]);
@@ -605,7 +605,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 
 	try
 	{
-		chptr = &chan::add(parv[2], *source_p);
+		chptr = &chan::add(parv[2], source);
 		isnew = size(*chptr) == 0;
 	}
 	catch(chan::error &e)
@@ -624,7 +624,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 				     me.name, chptr->name.c_str(), chptr->name.c_str(), (long) oldts);
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Server %s changing TS on %s from %ld to 0",
-				     source_p->name, chptr->name.c_str(), (long) oldts);
+				     source.name, chptr->name.c_str(), (long) oldts);
 	}
 
 	if(isnew)
@@ -645,7 +645,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 		 * manner so do so here.
 		 * -- jilles */
 		if (ConfigChannel.kick_on_split_riding &&
-				((!HasSentEob(source_p) &&
+				((!HasSentEob(&source) &&
 				mode.mode & chan::mode::INVITEONLY) ||
 		    (mode.key[0] != 0 && irccmp(mode.key, oldmode->key) != 0)))
 		{
@@ -672,7 +672,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 				/* Channel was emptied, create a new one */
 				try
 				{
-					chptr = &chan::add(parv[2], *source_p);
+					chptr = &chan::add(parv[2], source);
 					isnew = size(*chptr) == 0;
 				}
 				catch(chan::error &e)
@@ -724,20 +724,20 @@ ms_sjoin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 		namespace mode = chan::mode;
 		using chan::empty;
 
-		remove_our_modes(chptr, fakesource_p);
+		remove_our_modes(chptr, *fakesource);
 		clear_invites(*chptr);
 
 		if (!empty(*chptr, chan::mode::BAN))
-			remove_ban_list(*chptr, *fakesource_p, get(*chptr, mode::BAN), 'b', chan::ALL_MEMBERS);
+			remove_ban_list(*chptr, *fakesource, get(*chptr, mode::BAN), 'b', chan::ALL_MEMBERS);
 
 		if (!empty(*chptr, mode::EXCEPTION))
-			remove_ban_list(*chptr, *fakesource_p, get(*chptr, mode::EXCEPTION), 'e', chan::ONLY_CHANOPS);
+			remove_ban_list(*chptr, *fakesource, get(*chptr, mode::EXCEPTION), 'e', chan::ONLY_CHANOPS);
 
 		if (!empty(*chptr, mode::INVEX))
-			remove_ban_list(*chptr, *fakesource_p, get(*chptr, mode::INVEX), 'I', chan::ONLY_CHANOPS);
+			remove_ban_list(*chptr, *fakesource, get(*chptr, mode::INVEX), 'I', chan::ONLY_CHANOPS);
 
 		if (!empty(*chptr, mode::QUIET))
-			remove_ban_list(*chptr, *fakesource_p, get(*chptr, mode::QUIET), 'q', chan::ALL_MEMBERS);
+			remove_ban_list(*chptr, *fakesource, get(*chptr, mode::QUIET), 'q', chan::ALL_MEMBERS);
 
 		chptr->bants++;
 
@@ -750,22 +750,22 @@ ms_sjoin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 		chptr->name = parv[2];
 
 		/* since we're dropping our modes, we want to clear the mlock as well. --nenolod */
-		set_channel_mlock(client_p, source_p, chptr, NULL, false);
+		set_channel_mlock(&client, &source, chptr, NULL, false);
 	}
 
 	if(*modebuf != '\0')
 		sendto_channel_local(chan::ALL_MEMBERS, chptr, ":%s MODE %s %s %s",
-				     fakesource_p->name, chptr->name.c_str(), modebuf, parabuf);
+				     fakesource->name, chptr->name.c_str(), modebuf, parabuf);
 
 	*modebuf = *parabuf = '\0';
 
 	if(parv[3][0] != '0' && keep_new_modes)
-		modes = channel_modes(chptr, source_p);
+		modes = channel_modes(chptr, &source);
 	else
 		modes = empty_modes;
 
 	mlen_uid = sprintf(buf_uid, ":%s SJOIN %ld %s %s :",
-			      use_id(source_p), (long) chptr->channelts, parv[2], modes);
+			      use_id(&source), (long) chptr->channelts, parv[2], modes);
 	ptr_uid = buf_uid + mlen_uid;
 
 	mbuf = modebuf;
@@ -804,7 +804,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 
 		/* if the client doesnt exist or is fake direction, skip. */
 		if(!(target_p = find_client(s)) ||
-		   (target_p->from != client_p) || !IsPerson(target_p))
+		   (target_p->from != &client) || !IsPerson(target_p))
 			goto nextnick;
 
 		/* we assume for these we can fit at least one nick/uid in.. */
@@ -813,7 +813,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 		if((mlen_uid + len_uid + IDLEN + 3) > (BUFSIZE - 3))
 		{
 			*(ptr_uid - 1) = '\0';
-			sendto_server(client_p->from, NULL, CAP_TS6, NOCAPS, "%s", buf_uid);
+			sendto_server(client.from, NULL, CAP_TS6, NOCAPS, "%s", buf_uid);
 			ptr_uid = buf_uid + mlen_uid;
 			len_uid = 0;
 		}
@@ -863,7 +863,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 					*mbuf = '\0';
 					sendto_channel_local(chan::ALL_MEMBERS, chptr,
 							     ":%s MODE %s %s %s %s %s %s",
-							     fakesource_p->name, chptr->name.c_str(),
+							     fakesource->name, chptr->name.c_str(),
 							     modebuf,
 							     para[0], para[1], para[2], para[3]);
 					mbuf = modebuf;
@@ -887,7 +887,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 			*mbuf = '\0';
 			sendto_channel_local(chan::ALL_MEMBERS, chptr,
 					     ":%s MODE %s %s %s %s %s %s",
-					     fakesource_p->name,
+					     fakesource->name,
 					     chptr->name.c_str(),
 					     modebuf, para[0], para[1], para[2], para[3]);
 			mbuf = modebuf;
@@ -928,7 +928,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 
 		sendto_channel_local(chan::ALL_MEMBERS, chptr,
 		                     ":%s MODE %s %s %s %s %s %s",
-		                     fakesource_p->name,
+		                     fakesource->name,
 		                     chptr->name.c_str(),
 		                     modebuf,
 		                     para[0],
@@ -949,7 +949,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
 		*(ptr_uid - 1) = '\0';
 	}
 
-	sendto_server(client_p->from, NULL, CAP_TS6, NOCAPS, "%s", buf_uid);
+	sendto_server(client.from, NULL, CAP_TS6, NOCAPS, "%s", buf_uid);
 }
 
 /*
@@ -961,36 +961,36 @@ ms_sjoin(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sour
  *		  from the days when channels were numbers not names. *sigh*
  */
 static void
-do_join_0(client::client *client_p, client::client *source_p)
+do_join_0(client::client &client, client::client &source)
 {
 	chan::membership *msptr;
 	chan::chan *chptr = NULL;
 	rb_dlink_node *ptr;
 
 	/* Finish the flood grace period... */
-	if(MyClient(source_p) && !IsFloodDone(source_p))
-		flood_endgrace(source_p);
+	if(MyClient(&source) && !IsFloodDone(&source))
+		flood_endgrace(&source);
 
-	sendto_server(client_p, NULL, CAP_TS6, NOCAPS, ":%s JOIN 0", use_id(source_p));
+	sendto_server(&client, NULL, CAP_TS6, NOCAPS, ":%s JOIN 0", use_id(&source));
 
-	for(const auto &pit : chans(user(*source_p)))
+	for(const auto &pit : chans(user(source)))
 	{
-		if(MyConnect(source_p) &&
-		   !IsOper(source_p) && !IsExemptSpambot(source_p))
-			chan::check_spambot_warning(source_p, NULL);
+		if(MyConnect(&source) &&
+		   !IsOper(&source) && !IsExemptSpambot(&source))
+			chan::check_spambot_warning(&source, NULL);
 
 		auto &msptr(pit.second);
 		auto &chptr(pit.first);
 		sendto_channel_local(chan::ALL_MEMBERS, chptr, ":%s!%s@%s PART %s",
-				     source_p->name,
-				     source_p->username, source_p->host, chptr->name.c_str());
+				     source.name,
+				     source.username, source.host, chptr->name.c_str());
 
 		del(*chptr, get_client(*msptr));
 	}
 }
 
 static bool
-check_channel_name_loc(client::client *source_p, const char *name)
+check_channel_name_loc(client::client &source, const char *name)
 {
 	const char *p;
 
@@ -998,7 +998,7 @@ check_channel_name_loc(client::client *source_p, const char *name)
 	if(EmptyString(name))
 		return false;
 
-	if(ConfigFileEntry.disable_fake_channels && !IsOper(source_p))
+	if(ConfigFileEntry.disable_fake_channels && !IsOper(&source))
 	{
 		for(p = name; *p; ++p)
 			if(!rfc1459::is_chan(*p) || rfc1459::is_fake_chan(*p))
@@ -1024,7 +1024,7 @@ check_channel_name_loc(client::client *source_p, const char *name)
  * side effects - error message sent to client
  */
 static void
-send_join_error(client::client *source_p, int numeric, const char *name)
+send_join_error(client::client &source, int numeric, const char *name)
 {
 	/* This stuff is necessary because the form_str macro only
 	 * accepts constants.
@@ -1033,8 +1033,8 @@ send_join_error(client::client *source_p, int numeric, const char *name)
 	{
 #define NORMAL_NUMERIC(i)						\
 		case i:							\
-			sendto_one(source_p, form_str(i),		\
-					me.name, source_p->name, name);	\
+			sendto_one(&source, form_str(i),		\
+					me.name, source.name, name);	\
 			break
 
 		NORMAL_NUMERIC(ERR_BANNEDFROMCHAN);
@@ -1045,7 +1045,7 @@ send_join_error(client::client *source_p, int numeric, const char *name)
 		NORMAL_NUMERIC(ERR_THROTTLE);
 
 		default:
-			sendto_one_numeric(source_p, numeric,
+			sendto_one_numeric(&source, numeric,
 					"%s :Cannot join channel", name);
 			break;
 	}
@@ -1181,7 +1181,7 @@ set_final_mode(chan::modes *mode, chan::modes *oldmode)
  * side effects	-
  */
 static void
-remove_our_modes(chan::chan *chptr, client::client *source_p)
+remove_our_modes(chan::chan *chptr, client::client &source)
 {
 	rb_dlink_node *ptr;
 	char lmodebuf[chan::mode::BUFLEN];
@@ -1214,7 +1214,7 @@ remove_our_modes(chan::chan *chptr, client::client *source_p)
 					*mbuf = '\0';
 					sendto_channel_local(chan::ALL_MEMBERS, chptr,
 							     ":%s MODE %s %s %s %s %s %s",
-							     source_p->name, chptr->name.c_str(),
+							     source.name, chptr->name.c_str(),
 							     lmodebuf, lpara[0], lpara[1],
 							     lpara[2], lpara[3]);
 
@@ -1246,7 +1246,7 @@ remove_our_modes(chan::chan *chptr, client::client *source_p)
 			*mbuf = '\0';
 			sendto_channel_local(chan::ALL_MEMBERS, chptr,
 					     ":%s MODE %s %s %s %s %s %s",
-					     source_p->name, chptr->name.c_str(), lmodebuf,
+					     source.name, chptr->name.c_str(), lmodebuf,
 					     lpara[0], lpara[1], lpara[2], lpara[3]);
 			mbuf = lmodebuf;
 			*mbuf++ = '-';
@@ -1262,7 +1262,7 @@ remove_our_modes(chan::chan *chptr, client::client *source_p)
 		*mbuf = '\0';
 		sendto_channel_local(chan::ALL_MEMBERS, chptr,
 				     ":%s MODE %s %s %s %s %s %s",
-				     source_p->name, chptr->name.c_str(), lmodebuf,
+				     source.name, chptr->name.c_str(), lmodebuf,
 				     EmptyString(lpara[0]) ? "" : lpara[0],
 				     EmptyString(lpara[1]) ? "" : lpara[1],
 				     EmptyString(lpara[2]) ? "" : lpara[2],

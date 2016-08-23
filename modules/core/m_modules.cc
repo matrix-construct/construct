@@ -22,24 +22,24 @@ using namespace ircd;
 
 static const char modules_desc[] = "Provides module management commands";
 
-static void m_modlist(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_modlist(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
-static void mo_modload(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void mo_modreload(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void mo_modunload(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void mo_modrestart(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void mo_modload(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void mo_modreload(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void mo_modunload(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void mo_modrestart(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
-static void me_modload(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void me_modlist(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void me_modreload(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void me_modunload(struct MsgBuf *, client::client *, client::client *, int, const char **);
-static void me_modrestart(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void me_modload(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void me_modlist(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void me_modreload(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void me_modunload(struct MsgBuf *, client::client &, client::client &, int, const char **);
+static void me_modrestart(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
-static void do_modload(client::client *, const char *);
-static void do_modunload(client::client *, const char *);
-static void do_modreload(client::client *, const char *);
-static void do_modlist(client::client *, const char *);
-static void do_modrestart(client::client *);
+static void do_modload(client::client &, const char *);
+static void do_modunload(client::client &, const char *);
+static void do_modreload(client::client &, const char *);
+static void do_modlist(client::client &, const char *);
+static void do_modrestart(client::client &);
 
 struct Message modload_msgtab = {
 	"MODLOAD", 0, 0, 0, 0,
@@ -72,175 +72,175 @@ DECLARE_MODULE_AV2(modules, NULL, NULL, modules_clist, NULL, NULL, NULL, NULL, m
 
 /* load a module .. */
 static void
-mo_modload(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char **parv)
+mo_modload(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char **parv)
 {
-	if(!IsOperAdmin(source_p))
+	if(!IsOperAdmin(&source))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS),
-			   me.name, source_p->name, "admin");
+		sendto_one(&source, form_str(ERR_NOPRIVS),
+			   me.name, source.name, "admin");
 		return;
 	}
 
 	if(parc > 2)
 	{
-		sendto_match_servs(source_p, parv[2], CAP_ENCAP, NOCAPS,
+		sendto_match_servs(&source, parv[2], CAP_ENCAP, NOCAPS,
 				"ENCAP %s MODLOAD %s", parv[2], parv[1]);
 		if(match(parv[2], me.name) == 0)
 			return;
 	}
 
-	do_modload(source_p, parv[1]);
+	do_modload(source, parv[1]);
 }
 
 static void
-me_modload(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char **parv)
+me_modload(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char **parv)
 {
-	if(!find_shared_conf(source_p->username, source_p->host, source_p->servptr->name, SHARED_MODULE))
+	if(!find_shared_conf(source.username, source.host, source.servptr->name, SHARED_MODULE))
 	{
-		sendto_one_notice(source_p, ":*** You do not have an appropriate shared block "
+		sendto_one_notice(&source, ":*** You do not have an appropriate shared block "
 				"to load modules on this server.");
 		return;
 	}
 
-	do_modload(source_p, parv[1]);
+	do_modload(source, parv[1]);
 }
 
 
 /* unload a module .. */
 static void
-mo_modunload(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char **parv)
+mo_modunload(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char **parv)
 {
-	if(!IsOperAdmin(source_p))
+	if(!IsOperAdmin(&source))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS),
-			   me.name, source_p->name, "admin");
+		sendto_one(&source, form_str(ERR_NOPRIVS),
+			   me.name, source.name, "admin");
 		return;
 	}
 
 	if(parc > 2)
 	{
-		sendto_match_servs(source_p, parv[2], CAP_ENCAP, NOCAPS,
+		sendto_match_servs(&source, parv[2], CAP_ENCAP, NOCAPS,
 				"ENCAP %s MODUNLOAD %s", parv[2], parv[1]);
 		if(match(parv[2], me.name) == 0)
 			return;
 	}
 
-	do_modunload(source_p, parv[1]);
+	do_modunload(source, parv[1]);
 }
 
 static void
-me_modunload(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char **parv)
+me_modunload(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char **parv)
 {
-	if(!find_shared_conf(source_p->username, source_p->host, source_p->servptr->name, SHARED_MODULE))
+	if(!find_shared_conf(source.username, source.host, source.servptr->name, SHARED_MODULE))
 	{
-		sendto_one_notice(source_p, ":*** You do not have an appropriate shared block "
+		sendto_one_notice(&source, ":*** You do not have an appropriate shared block "
 				"to load modules on this server.");
 		return;
 	}
 
-	do_modunload(source_p, parv[1]);
+	do_modunload(source, parv[1]);
 }
 
 /* unload and load in one! */
 static void
-mo_modreload(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char **parv)
+mo_modreload(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char **parv)
 {
-	if(!IsOperAdmin(source_p))
+	if(!IsOperAdmin(&source))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS),
-			   me.name, source_p->name, "admin");
+		sendto_one(&source, form_str(ERR_NOPRIVS),
+			   me.name, source.name, "admin");
 		return;
 	}
 
 	if(parc > 2)
 	{
-		sendto_match_servs(source_p, parv[2], CAP_ENCAP, NOCAPS,
+		sendto_match_servs(&source, parv[2], CAP_ENCAP, NOCAPS,
 				"ENCAP %s MODRELOAD %s", parv[2], parv[1]);
 		if(match(parv[2], me.name) == 0)
 			return;
 	}
 
-	do_modreload(source_p, parv[1]);
+	do_modreload(source, parv[1]);
 }
 
 static void
-me_modreload(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char **parv)
+me_modreload(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char **parv)
 {
-	if(!find_shared_conf(source_p->username, source_p->host, source_p->servptr->name, SHARED_MODULE))
+	if(!find_shared_conf(source.username, source.host, source.servptr->name, SHARED_MODULE))
 	{
-		sendto_one_notice(source_p, ":*** You do not have an appropriate shared block "
+		sendto_one_notice(&source, ":*** You do not have an appropriate shared block "
 				"to load modules on this server.");
 		return;
 	}
 
-	do_modreload(source_p, parv[1]);
+	do_modreload(source, parv[1]);
 }
 
 /* list modules .. */
 static void
-m_modlist(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char **parv)
+m_modlist(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char **parv)
 {
 	if(parc > 2)
 	{
-		sendto_match_servs(source_p, parv[2], CAP_ENCAP, NOCAPS,
+		sendto_match_servs(&source, parv[2], CAP_ENCAP, NOCAPS,
 				"ENCAP %s MODLIST %s", parv[2], parv[1]);
 		if(match(parv[2], me.name) == 0)
 			return;
 	}
 
-	do_modlist(source_p, parc > 1 ? parv[1] : NULL);
+	do_modlist(source, parc > 1 ? parv[1] : NULL);
 }
 
 static void
-me_modlist(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char **parv)
+me_modlist(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char **parv)
 {
-	do_modlist(source_p, parv[1]);
+	do_modlist(source, parv[1]);
 }
 
 /* unload and reload all modules */
 static void
-mo_modrestart(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char **parv)
+mo_modrestart(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char **parv)
 {
-	if(!IsOperAdmin(source_p))
+	if(!IsOperAdmin(&source))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS),
-			   me.name, source_p->name, "admin");
+		sendto_one(&source, form_str(ERR_NOPRIVS),
+			   me.name, source.name, "admin");
 		return;
 	}
 
 	if(parc > 1)
 	{
-		sendto_match_servs(source_p, parv[1], CAP_ENCAP, NOCAPS,
+		sendto_match_servs(&source, parv[1], CAP_ENCAP, NOCAPS,
 				"ENCAP %s MODRESTART", parv[1]);
 		if(match(parv[1], me.name) == 0)
 			return;
 	}
 
-	do_modrestart(source_p);
+	do_modrestart(source);
 }
 
 static void
-me_modrestart(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char **parv)
+me_modrestart(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char **parv)
 {
-	if(!find_shared_conf(source_p->username, source_p->host, source_p->servptr->name, SHARED_MODULE))
+	if(!find_shared_conf(source.username, source.host, source.servptr->name, SHARED_MODULE))
 	{
-		sendto_one_notice(source_p, ":*** You do not have an appropriate shared block "
+		sendto_one_notice(&source, ":*** You do not have an appropriate shared block "
 				"to load modules on this server.");
 		return;
 	}
 
-	do_modrestart(source_p);
+	do_modrestart(source);
 }
 
 static void
-do_modload(client::client *source_p, const char *module)
+do_modload(client::client &source, const char *module)
 {
 	char *m_bn = rb_basename(module);
 	int origin;
 
 	if(findmodule_byname(m_bn) != NULL)
 	{
-		sendto_one_notice(source_p, ":Module %s is already loaded", m_bn);
+		sendto_one_notice(&source, ":Module %s is already loaded", m_bn);
 		rb_free(m_bn);
 		return;
 	}
@@ -252,33 +252,33 @@ do_modload(client::client *source_p, const char *module)
 }
 
 static void
-do_modunload(client::client *source_p, const char *module)
+do_modunload(client::client &source, const char *module)
 {
 	struct module *mod;
 	char *m_bn = rb_basename(module);
 
 	if((mod = findmodule_byname(m_bn)) == NULL)
 	{
-		sendto_one_notice(source_p, ":Module %s is not loaded", m_bn);
+		sendto_one_notice(&source, ":Module %s is not loaded", m_bn);
 		rb_free(m_bn);
 		return;
 	}
 
 	if(mod->core)
 	{
-		sendto_one_notice(source_p, ":Module %s is a core module and may not be unloaded", m_bn);
+		sendto_one_notice(&source, ":Module %s is a core module and may not be unloaded", m_bn);
 		rb_free(m_bn);
 		return;
 	}
 
 	if(unload_one_module(m_bn, true) == false)
-		sendto_one_notice(source_p, ":Module %s is not loaded", m_bn);
+		sendto_one_notice(&source, ":Module %s is not loaded", m_bn);
 
 	rb_free(m_bn);
 }
 
 static void
-do_modreload(client::client *source_p, const char *module)
+do_modreload(client::client &source, const char *module)
 {
 	struct module *mod;
 	int check_core;
@@ -286,7 +286,7 @@ do_modreload(client::client *source_p, const char *module)
 
 	if((mod = findmodule_byname(m_bn)) == NULL)
 	{
-		sendto_one_notice(source_p, ":Module %s is not loaded", m_bn);
+		sendto_one_notice(&source, ":Module %s is not loaded", m_bn);
 		rb_free(m_bn);
 		return;
 	}
@@ -295,7 +295,7 @@ do_modreload(client::client *source_p, const char *module)
 
 	if(unload_one_module(m_bn, true) == false)
 	{
-		sendto_one_notice(source_p, ":Module %s is not loaded", m_bn);
+		sendto_one_notice(&source, ":Module %s is not loaded", m_bn);
 		rb_free(m_bn);
 		return;
 	}
@@ -312,12 +312,12 @@ do_modreload(client::client *source_p, const char *module)
 }
 
 static void
-do_modrestart(client::client *source_p)
+do_modrestart(client::client &source)
 {
 	unsigned int modnum = 0;
 	rb_dlink_node *ptr, *nptr;
 
-	sendto_one_notice(source_p, ":Reloading all modules");
+	sendto_one_notice(&source, ":Reloading all modules");
 
 	RB_DLINK_FOREACH_SAFE(ptr, nptr, module_list.head)
 	{
@@ -349,7 +349,7 @@ do_modrestart(client::client *source_p)
 }
 
 static void
-do_modlist(client::client *source_p, const char *pattern)
+do_modlist(client::client &source, const char *pattern)
 {
 	rb_dlink_node *ptr;
 	int i;
@@ -368,11 +368,11 @@ do_modlist(client::client *source_p, const char *pattern)
 			break;
 		case MAPI_ORIGIN_CORE:
 			origin = "builtin";
-			display = IsOper(source_p);
+			display = IsOper(&source);
 			break;
 		default:
 			origin = "unknown";
-			display = IsOper(source_p);
+			display = IsOper(&source);
 			break;
 		}
 
@@ -383,8 +383,8 @@ do_modlist(client::client *source_p, const char *pattern)
 		{
 			if(match(pattern, mod->name))
 			{
-				sendto_one(source_p, form_str(RPL_MODLIST),
-					   me.name, source_p->name,
+				sendto_one(&source, form_str(RPL_MODLIST),
+					   me.name, source.name,
 					   mod->name,
 					   (unsigned long)(uintptr_t)mod->address, origin,
 					   mod->core ? " (core)" : "", mod->version, mod->description);
@@ -392,12 +392,12 @@ do_modlist(client::client *source_p, const char *pattern)
 		}
 		else
 		{
-			sendto_one(source_p, form_str(RPL_MODLIST),
-				   me.name, source_p->name, mod->name,
+			sendto_one(&source, form_str(RPL_MODLIST),
+				   me.name, source.name, mod->name,
 				   (unsigned long)(uintptr_t)mod->address, origin,
 				   mod->core ? " (core)" : "", mod->version, mod->description);
 		}
 	}
 
-	sendto_one(source_p, form_str(RPL_ENDOFMODLIST), me.name, source_p->name);
+	sendto_one(&source, form_str(RPL_ENDOFMODLIST), me.name, source.name);
 }

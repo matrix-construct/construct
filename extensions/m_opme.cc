@@ -21,7 +21,7 @@ using namespace ircd;
 
 static const char opme_desc[] = "Allow admins to op themselves on opless channels";
 
-static void mo_opme(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[]);
+static void mo_opme(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[]);
 
 struct Message opme_msgtab = {
 	"OPME", 0, 0, 0, 0,
@@ -37,22 +37,22 @@ DECLARE_MODULE_AV2(opme, NULL, NULL, opme_clist, NULL, NULL, NULL, NULL, opme_de
 **      parv[1] = channel
 */
 static void
-mo_opme(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+mo_opme(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	chan::chan *chptr;
 	chan::membership *msptr;
 	rb_dlink_node *ptr;
 
 	/* admins only */
-	if(!IsOperAdmin(source_p))
+	if(!IsOperAdmin(&source))
 	{
-		sendto_one(source_p, form_str(ERR_NOPRIVS), me.name, source_p->name, "admin");
+		sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "admin");
 		return;
 	}
 
 	if((chptr = chan::get(parv[1], std::nothrow)) == NULL)
 	{
-		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
+		sendto_one_numeric(&source, ERR_NOSUCHCHANNEL,
 				   form_str(ERR_NOSUCHCHANNEL), parv[1]);
 		return;
 	}
@@ -63,12 +63,12 @@ mo_opme(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 
 		if(is_chanop(msptr))
 		{
-			sendto_one_notice(source_p, ":%s Channel is not opless", parv[1]);
+			sendto_one_notice(&source, ":%s Channel is not opless", parv[1]);
 			return;
 		}
 	}
 
-	msptr = get(chptr->members, *source_p, std::nothrow);
+	msptr = get(chptr->members, source, std::nothrow);
 
 	if(msptr == NULL)
 		return;
@@ -77,22 +77,22 @@ mo_opme(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *sourc
 
 	sendto_wallops_flags(UMODE_WALLOP, &me,
 			     "OPME called for [%s] by %s!%s@%s",
-			     parv[1], source_p->name, source_p->username, source_p->host);
+			     parv[1], source.name, source.username, source.host);
 	ilog(L_MAIN, "OPME called for [%s] by %s",
-	     parv[1], get_oper_name(source_p));
+	     parv[1], get_oper_name(&source));
 
 	/* dont send stuff for local channels remotely. */
 	if(chptr->name[0] != '&')
 	{
 		sendto_server(NULL, NULL, NOCAPS, NOCAPS,
 			      ":%s WALLOPS :OPME called for [%s] by %s!%s@%s",
-			      me.name, parv[1], source_p->name, source_p->username, source_p->host);
-		sendto_server(NULL, chptr, CAP_TS6, NOCAPS, ":%s PART %s", source_p->id, parv[1]);
+			      me.name, parv[1], source.name, source.username, source.host);
+		sendto_server(NULL, chptr, CAP_TS6, NOCAPS, ":%s PART %s", source.id, parv[1]);
 		sendto_server(NULL, chptr, CAP_TS6, NOCAPS,
 			      ":%s SJOIN %ld %s + :@%s",
-			      me.id, (long) chptr->channelts, parv[1], source_p->id);
+			      me.id, (long) chptr->channelts, parv[1], source.id);
 	}
 
 	sendto_channel_local(chan::ALL_MEMBERS, chptr,
-			     ":%s MODE %s +o %s", me.name, parv[1], source_p->name);
+			     ":%s MODE %s +o %s", me.name, parv[1], source.name);
 }

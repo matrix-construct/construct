@@ -26,7 +26,7 @@ using namespace ircd;
 
 static const char oper_desc[] = "Provides the OPER command to become an IRC operator";
 
-static void m_oper(struct MsgBuf *, client::client *, client::client *, int, const char **);
+static void m_oper(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 static bool match_oper_password(const char *password, struct oper_conf *oper_p);
 
@@ -45,7 +45,7 @@ DECLARE_MODULE_AV2(oper, NULL, NULL, oper_clist, NULL, NULL, NULL, NULL, oper_de
  *      parv[2] = oper password
  */
 static void
-m_oper(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source_p, int parc, const char *parv[])
+m_oper(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	struct oper_conf *oper_p;
 	const char *name;
@@ -54,67 +54,67 @@ m_oper(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 	name = parv[1];
 	password = parv[2];
 
-	if(IsOper(source_p))
+	if(IsOper(&source))
 	{
-		sendto_one(source_p, form_str(RPL_YOUREOPER), me.name, source_p->name);
-		cache::motd::send_oper(source_p);
+		sendto_one(&source, form_str(RPL_YOUREOPER), me.name, source.name);
+		cache::motd::send_oper(&source);
 		return;
 	}
 
 	/* end the grace period */
-	if(!IsFloodDone(source_p))
-		flood_endgrace(source_p);
+	if(!IsFloodDone(&source))
+		flood_endgrace(&source);
 
-	oper_p = find_oper_conf(source_p->username, source_p->orighost,
-				source_p->sockhost, name);
+	oper_p = find_oper_conf(source.username, source.orighost,
+				source.sockhost, name);
 
 	if(oper_p == NULL)
 	{
-		sendto_one_numeric(source_p, ERR_NOOPERHOST, form_str(ERR_NOOPERHOST));
+		sendto_one_numeric(&source, ERR_NOOPERHOST, form_str(ERR_NOOPERHOST));
 		ilog(L_FOPER, "FAILED OPER (%s) by (%s!%s@%s) (%s)",
-		     name, source_p->name,
-		     source_p->username, source_p->host, source_p->sockhost);
+		     name, source.name,
+		     source.username, source.host, source.sockhost);
 
 		if(ConfigFileEntry.failed_oper_notice)
 		{
 			sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
 					     "Failed OPER attempt - host mismatch by %s (%s@%s)",
-					     source_p->name, source_p->username, source_p->host);
+					     source.name, source.username, source.host);
 		}
 
 		return;
 	}
 
-	if(IsOperConfNeedSSL(oper_p) && !IsSSLClient(source_p))
+	if(IsOperConfNeedSSL(oper_p) && !IsSSLClient(&source))
 	{
-		sendto_one_numeric(source_p, ERR_NOOPERHOST, form_str(ERR_NOOPERHOST));
+		sendto_one_numeric(&source, ERR_NOOPERHOST, form_str(ERR_NOOPERHOST));
 		ilog(L_FOPER, "FAILED OPER (%s) by (%s!%s@%s) (%s) -- requires SSL/TLS",
-		     name, source_p->name,
-		     source_p->username, source_p->host, source_p->sockhost);
+		     name, source.name,
+		     source.username, source.host, source.sockhost);
 
 		if(ConfigFileEntry.failed_oper_notice)
 		{
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					     "Failed OPER attempt - missing SSL/TLS by %s (%s@%s)",
-					     source_p->name, source_p->username, source_p->host);
+					     source.name, source.username, source.host);
 		}
 		return;
 	}
 
 	if (oper_p->certfp != NULL)
 	{
-		if (source_p->certfp == NULL || rb_strcasecmp(source_p->certfp, oper_p->certfp))
+		if (source.certfp == NULL || rb_strcasecmp(source.certfp, oper_p->certfp))
 		{
-			sendto_one_numeric(source_p, ERR_NOOPERHOST, form_str(ERR_NOOPERHOST));
+			sendto_one_numeric(&source, ERR_NOOPERHOST, form_str(ERR_NOOPERHOST));
 			ilog(L_FOPER, "FAILED OPER (%s) by (%s!%s@%s) (%s) -- client certificate fingerprint mismatch",
-			     name, source_p->name,
-			     source_p->username, source_p->host, source_p->sockhost);
+			     name, source.name,
+			     source.username, source.host, source.sockhost);
 
 			if(ConfigFileEntry.failed_oper_notice)
 			{
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						     "Failed OPER attempt - client certificate fingerprint mismatch by %s (%s@%s)",
-						     source_p->name, source_p->username, source_p->host);
+						     source.name, source.username, source.host);
 			}
 			return;
 		}
@@ -122,27 +122,27 @@ m_oper(struct MsgBuf *msgbuf_p, client::client *client_p, client::client *source
 
 	if(match_oper_password(password, oper_p))
 	{
-		oper_up(source_p, oper_p);
+		oper_up(&source, oper_p);
 
 		ilog(L_OPERED, "OPER %s by %s!%s@%s (%s)",
-		     name, source_p->name, source_p->username, source_p->host,
-		     source_p->sockhost);
+		     name, source.name, source.username, source.host,
+		     source.sockhost);
 		return;
 	}
 	else
 	{
-		sendto_one(source_p, form_str(ERR_PASSWDMISMATCH),
-			   me.name, source_p->name);
+		sendto_one(&source, form_str(ERR_PASSWDMISMATCH),
+			   me.name, source.name);
 
 		ilog(L_FOPER, "FAILED OPER (%s) by (%s!%s@%s) (%s)",
-		     name, source_p->name, source_p->username, source_p->host,
-		     source_p->sockhost);
+		     name, source.name, source.username, source.host,
+		     source.sockhost);
 
 		if(ConfigFileEntry.failed_oper_notice)
 		{
 			sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
 					     "Failed OPER attempt by %s (%s@%s)",
-					     source_p->name, source_p->username, source_p->host);
+					     source.name, source.username, source.host);
 		}
 	}
 }
