@@ -219,6 +219,8 @@ struct client
 	char *certfp; /* client certificate fingerprint */
 
 	client();
+	client(const client &) = delete;
+	client &operator=(const client &) = delete;
 	~client() noexcept;
 };
 
