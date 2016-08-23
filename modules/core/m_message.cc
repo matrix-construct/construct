@@ -513,7 +513,7 @@ msg_channel(enum message_type msgtype,
 	{
 		if(result != chan::CAN_SEND_OPV && my(source) &&
 		   !is(source, umode::OPER) &&
-		   !add_channel_target(&source, chptr))
+		   !tgchange::add_target(source, *chptr))
 		{
 			sendto_one(&source, form_str(ERR_TARGCHANGE),
 			           me.name,
@@ -534,7 +534,7 @@ msg_channel(enum message_type msgtype,
 	else if(chptr->mode.mode & chan::mode::OPMODERATE &&
 	        (!(chptr->mode.mode & chan::mode::NOPRIVMSGS) || is_member(chptr, &source)))
 	{
-		if(my(source) && !is(source, umode::OPER) && !add_channel_target(&source, chptr))
+		if(my(source) && !is(source, umode::OPER) && !tgchange::add_target(source, *chptr))
 		{
 			sendto_one(&source, form_str(ERR_TARGCHANGE),
 			           me.name,
@@ -683,12 +683,12 @@ msg_channel_flags(enum message_type msgtype, client::client &client,
 static void
 expire_tgchange(void *unused)
 {
-	tgchange *target;
+	tgchange::tgchange *target;
 	rb_dlink_node *ptr, *next_ptr;
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, tgchange_list.head)
 	{
-		target = (tgchange *)ptr->data;
+		target = (tgchange::tgchange *)ptr->data;
 
 		if(target->expiry < rb_current_time())
 		{
@@ -754,7 +754,7 @@ msg_client(enum message_type msgtype,
 
 		/* auto cprivmsg/cnotice */
 		do_floodcount = !is(source, umode::OPER) &&
-			!find_allowing_channel(&source, target_p);
+			!tgchange::find_allowing_channel(source, *target_p);
 
 		/* target change stuff, dont limit ctcp replies as that
 		 * would allow people to start filling up random users
@@ -763,7 +763,7 @@ msg_client(enum message_type msgtype,
 		if((msgtype != MESSAGE_TYPE_NOTICE || *text != '\001') &&
 		   ConfigFileEntry.target_change && do_floodcount)
 		{
-			if(!add_target(&source, target_p))
+			if(!tgchange::add_target(source, *target_p))
 			{
 				sendto_one(&source, form_str(ERR_TARGCHANGE),
 					   me.name, source.name, target_p->name);
@@ -823,7 +823,7 @@ msg_client(enum message_type msgtype,
 			/* Here is the anti-flood bot/spambot code -db */
 			if(accept_message(&source, target_p) || is(source, umode::OPER))
 			{
-				add_reply_target(target_p, &source);
+				tgchange::add_reply_target(*target_p, source);
 				sendto_one(target_p, ":%s!%s@%s %s %s :%s",
 					   source.name,
 					   source.username,
@@ -854,7 +854,7 @@ msg_client(enum message_type msgtype,
 								   form_str(RPL_TARGNOTIFY),
 								   target_p->name);
 
-					add_reply_target(target_p, &source);
+					tgchange::add_reply_target(*target_p, source);
 					sendto_one(target_p, form_str(RPL_UMODEGMSG),
 						   me.name, target_p->name, source.name,
 						   source.username, source.host);
@@ -865,7 +865,7 @@ msg_client(enum message_type msgtype,
 		}
 		else
 		{
-			add_reply_target(target_p, &source);
+			tgchange::add_reply_target(*target_p, source);
 			sendto_anywhere(target_p, &source, cmdname[msgtype], ":%s", text);
 		}
 	}

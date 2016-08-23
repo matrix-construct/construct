@@ -77,6 +77,7 @@ namespace ircd
 
 #include "match.h"
 
+#include "tgchange.h"
 #include "msgbuf.h"
 #include "msg.h"
 #include "client.h"
@@ -122,7 +123,6 @@ namespace ircd
 #include "substitution.h"
 #include "supported.h"
 #include "s_user.h"
-#include "tgchange.h"
 #include "whowas.h"
 #include "wsproc.h"
 

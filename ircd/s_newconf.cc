@@ -860,13 +860,13 @@ expire_nd_entries(void *unused)
 void
 add_tgchange(const char *host)
 {
-	tgchange *target;
+	tgchange::tgchange *target;
 	rb_patricia_node_t *pnode;
 
 	if(find_tgchange(host))
 		return;
 
-	target = (tgchange *)rb_malloc(sizeof(tgchange));
+	target = (tgchange::tgchange *)rb_malloc(sizeof(tgchange::tgchange));
 	pnode = make_and_lookup(tgchange_tree, host);
 
 	pnode->data = target;
@@ -878,13 +878,13 @@ add_tgchange(const char *host)
 	rb_dlinkAdd(target, &target->node, &tgchange_list);
 }
 
-tgchange *
+tgchange::tgchange *
 find_tgchange(const char *host)
 {
 	rb_patricia_node_t *pnode;
 
 	if((pnode = rb_match_exact_string(tgchange_tree, host)))
-		return (tgchange *)pnode->data;
+		return (tgchange::tgchange *)pnode->data;
 
 	return NULL;
 }

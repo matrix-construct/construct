@@ -149,8 +149,8 @@ m_invite(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 	if(my_connect(source))
 	{
 		if (ConfigFileEntry.target_change && !is(source, umode::OPER) &&
-				!find_allowing_channel(&source, target_p) &&
-				!add_target(&source, target_p))
+				!tgchange::find_allowing_channel(source, *target_p) &&
+				!tgchange::add_target(source, *target_p))
 		{
 			sendto_one(&source, form_str(ERR_TARGCHANGE),
 				   me.name, source.name, target_p->name);
@@ -200,7 +200,7 @@ m_invite(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 				target_p->localClient->last_caller_id_time = rb_current_time();
 			}
 		}
-		add_reply_target(target_p, &source);
+		tgchange::add_reply_target(*target_p, source);
 		sendto_one(target_p, ":%s!%s@%s INVITE %s :%s",
 			   source.name, source.username, source.host,
 			   target_p->name, chptr->name.c_str());

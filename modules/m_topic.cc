@@ -98,7 +98,7 @@ m_topic(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 		    !is_chanop(msptr) &&
 		    !is_voiced(msptr) &&
 		    !is(source, umode::OPER) &&
-		    !add_channel_target(&source, chptr))
+		    !tgchange::add_target(source, *chptr))
 		{
 			sendto_one(&source, form_str(ERR_TARGCHANGE),
 				   me.name, source.name, chptr->name.c_str());

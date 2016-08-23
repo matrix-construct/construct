@@ -628,9 +628,9 @@ register_local_user(client::client *client_p, client::client *source_p)
 
 	/* they get a reduced limit */
 	if(find_tgchange(source_p->sockhost))
-		source_p->localClient->targets_free = uint(client::tgchange::INITIAL_LOW);
+		source_p->localClient->targets_free = tgchange::INITIAL_LOW;
 	else
-		source_p->localClient->targets_free = uint(client::tgchange::INITIAL);
+		source_p->localClient->targets_free = tgchange::INITIAL;
 
 	monitor_signon(source_p);
 	user_welcome(source_p);

@@ -79,14 +79,6 @@ enum flags
 	EXEMPTJUPE     = 0x08000000,
 };
 
-enum class tgchange
-{
-	NUM = 10,          // how many targets we keep track of
-	REPLY = 5,         // how many reply targets
-	INITIAL =  10,     // initial free targets (normal)
-	INITIAL_LOW = 4,   // initial free targets (possible spambot)
-};
-
 // we store ipv6 ips for remote clients, so this needs to be v6 always
 constexpr auto PASSWDLEN = 128;
 constexpr auto CIPHERKEYLEN = 64; // 512bit
@@ -267,7 +259,7 @@ struct LocalUser
 	 * 0..TGCHANGE_NUM-1 regular slots
 	 * TGCHANGE_NUM..TGCHANGE_NUM+TGCHANGE_REPLY-1 reply slots
 	 */
-	uint32_t targets[int(tgchange::NUM) + int(tgchange::REPLY)];
+	uint32_t targets[tgchange::NUM + tgchange::REPLY];
 	unsigned int targets_free;	/* free targets */
 	time_t target_last;		/* last time we cleared a slot */
 

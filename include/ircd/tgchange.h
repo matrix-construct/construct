@@ -4,6 +4,7 @@
  * Copyright (C) 2004-2005 Lee Hardy <lee@leeh.co.uk>
  * Copyright (C) 2005-2010 Jilles Tjoelker <jilles@stack.nl>
  * Copyright (C) 2004-2005 ircd-ratbox development team
+ * Copyright (C) 2016 Charybdis Development Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,16 +26,38 @@
 #define HAVE_IRCD_TGCHANGE_H
 
 #ifdef __cplusplus
-namespace ircd {
+namespace ircd     {
+namespace tgchange {
 
-/* finds a channel where source_p has op or voice and target_p is a member */
-chan::chan *find_allowing_channel(client::client *source_p, client::client *target_p);
-/* checks if source_p is allowed to send to target_p */
-int add_target(client::client *source_p, client::client *target_p);
-/* checks if source_p is allowed to send to chptr */
-int add_channel_target(client::client *source_p, chan::chan *chptr);
-/* allows source_p to send to target_p */
-void add_reply_target(client::client *source_p, client::client *target_p);
+using client::client;
+using chan::chan;
 
+const auto NUM = 10;          // how many targets we keep track of
+const auto REPLY = 5;         // how many reply targets
+const auto INITIAL = 10;      // initial free targets (normal)
+const auto INITIAL_LOW = 4;   // initial free targets (possible spambot)
+
+struct tgchange
+{
+    char *ip;
+    time_t expiry;
+    rb_patricia_node_t *pnode;
+    rb_dlink_node node;
+};
+
+// finds a channel where source_p has op or voice and target_p is a member
+const chan *find_allowing_channel(const client &source, const client &target);
+chan *find_allowing_channel(client &source, const client &target);
+
+// allows source_p to send to target_p
+void add_reply_target(client &source, const client &target);
+
+// checks if source_p is allowed to send to chptr
+bool add_target(client &source, const chan &target);
+
+// checks if source_p is allowed to send to target_p
+bool add_target(client &source, const client &target);
+
+}      // namespace tgchange
 }      // namespace ircd
 #endif // __cplusplus

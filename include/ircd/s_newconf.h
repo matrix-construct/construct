@@ -58,16 +58,8 @@ extern void init_s_newconf(void);
 extern void clear_s_newconf(void);
 extern void clear_s_newconf_bans(void);
 
-typedef struct
-{
-	char *ip;
-	time_t expiry;
-	rb_patricia_node_t *pnode;
-	rb_dlink_node node;
-} tgchange;
-
 void add_tgchange(const char *host);
-tgchange *find_tgchange(const char *host);
+tgchange::tgchange *find_tgchange(const char *host);
 
 /* shared/cluster/hub/leaf confs */
 struct remote_conf
