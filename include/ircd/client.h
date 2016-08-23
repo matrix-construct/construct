@@ -6,6 +6,7 @@
  *  Copyright (C) 1996-2002 Hybrid Development Team
  *  Copyright (C) 2002-2004 ircd-ratbox development team
  *  Copyright (C) 2005 William Pitcock and Jilles Tjoelker
+ *  Copyright (C) 2005-2016 Charybdis Development Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,106 +26,12 @@
 
 #pragma once
 #define HAVE_IRCD_CLIENT_H
+
+#include "client_user.h"
+#include "client_serv.h"
+#include "client_mode.h"
+
 #ifdef __cplusplus
-
-namespace ircd   {
-namespace client {
-namespace user
-{
-	using invites_t = std::set<chan::chan *>;
-	using chans_t = std::map<chan::chan *, chan::membership *>;
-
-	struct user;
-
-	std::string &away(user &);
-	std::string &suser(user &);
-	invites_t &invites(user &);
-	chans_t &chans(user &);
-}
-} // namespace client
-} // namespace ircd
-
-
-namespace ircd   {
-namespace client {
-namespace serv
-{
-	using list = std::list<struct client *>;
-	using user::user;
-
-	struct serv;
-
-	list &users(serv &);
-	list &servers(serv &);
-
-	// who activated this connection
-	std::shared_ptr<struct user> &user(serv &);
-	std::string &by(serv &);
-
-	// capabilities bit-field
-	int &caps(serv &);
-	std::string &fullcaps(serv &);
-
-	struct scache_entry *&nameinfo(serv &);
-}
-} // namespace client
-} // namespace ircd
-
-
-namespace ircd   {
-namespace client {
-namespace mode   {
-
-enum mode : uint
-{
-	SERVNOTICE   = 0x0001, // server notices
-	WALLOP       = 0x0002, // send wallops to them
-	OPERWALL     = 0x0004, // operwalls
-	INVISIBLE    = 0x0008, // makes user invisible
-	CALLERID     = 0x0010, // block unless caller id's
-	LOCOPS       = 0x0020, // show locops
-	SERVICE      = 0x0040,
-	DEAF         = 0x0080,
-	NOFORWARD    = 0x0100, // don't forward
-	REGONLYMSG   = 0x0200, // only allow logged in users to msg
-	OPER         = 0x1000, // operator
-	ADMIN        = 0x2000, // admin on server
-	SSLCLIENT    = 0x4000, // using SSL
-};
-
-const mode DEFAULT_OPER_UMODES
-{
-	SERVNOTICE   |
-	OPERWALL     |
-	WALLOP       |
-	LOCOPS
-};
-
-inline bool
-is(const mode &mask, const mode &bits)
-{
-	return (mask & bits) == bits;
-}
-
-inline void
-set(mode &mask, const mode &bits)
-{
-	mask |= bits;
-}
-
-inline void
-clear(mode &mask, const mode &bits)
-{
-	mask &= ~bits;
-}
-
-} // namespace mode
-} // namespace client
-
-using umode = client::mode::mode;
-
-} // namespace ircd
-
 
 namespace ircd   {
 namespace client {
@@ -185,16 +92,6 @@ constexpr auto PASSWDLEN = 128;
 constexpr auto CIPHERKEYLEN = 64; // 512bit
 constexpr auto CLIENT_BUFSIZE = 512; // must be at least 512 bytes
 constexpr auto IDLEN = 10;
-
-struct ZipStats
-{
-	unsigned long long in;
-	unsigned long long in_wire;
-	unsigned long long out;
-	unsigned long long out_wire;
-	double in_ratio;
-	double out_ratio;
-};
 
 struct client
 {
@@ -260,6 +157,16 @@ struct client
 	client(const client &) = delete;
 	client &operator=(const client &) = delete;
 	~client() noexcept;
+};
+
+struct ZipStats
+{
+	unsigned long long in;
+	unsigned long long in_wire;
+	unsigned long long out;
+	unsigned long long out_wire;
+	double in_ratio;
+	double out_ratio;
 };
 
 typedef int SSL_OPEN_CB(client *, int status);
@@ -695,8 +602,30 @@ parse_as_server(const client &client)
 
 /* if target is TS6, use id if it has one, else name */
 
-#define has_id(source)	((source)->id[0] != '\0')
-#define use_id(source)	((source)->id[0] != '\0' ? (source)->id : (source)->name)
+inline bool
+has_id(const client &client)
+{
+	return client.id[0] != '\0';
+}
+
+inline bool
+has_id(const client *const &client)
+{
+	return has_id(*client);
+}
+
+inline const char *
+use_id(const client &client)
+{
+	return has_id(client)? client.id : client.name;
+}
+
+inline const char *
+use_id(const client *const &client)
+{
+	return use_id(*client);
+}
+
 bool is_server(const client &client);
 inline char *get_id(const client *const &source, const client *const &target)
 {
@@ -936,6 +865,12 @@ is_flood_done(const client &client)
 	return client.flags & flags::FLOODDONE;
 }
 
+inline bool
+operator==(const client &a, const client &b)
+{
+	return &a == &b;
+}
+
 
 /* local flags */
 
@@ -1011,7 +946,10 @@ using client::ZipStats;
 using client::LocalUser;
 using client::ListClient;
 
+const client::user::user &user(const client::client &client);
 client::user::user &user(client::client &client);
+
+const client::serv::serv &serv(const client::client &client);
 client::serv::serv &serv(client::client &client);
 
 }      // namespace ircd

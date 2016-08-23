@@ -608,7 +608,7 @@ register_local_user(client::client *client_p, client::client *source_p)
 	set_client(*source_p);
 
 	source_p->servptr = &me;
-	source_p->lnode = users(serv(*source_p)).emplace(end(users(serv(*source_p))), source_p);
+	source_p->lnode = users(serv(*source_p->servptr)).emplace(end(users(serv(*source_p->servptr))), source_p);
 
 	/* Increment our total user count here */
 	if(++Count.total > Count.max_tot)

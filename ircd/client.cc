@@ -25,6 +25,11 @@
 
 #define DEBUG_EXITED_CLIENTS
 
+using namespace ircd;
+
+#include "client_user.h"
+#include "client_serv.h"
+
 namespace ircd   {
 namespace client {
 
@@ -84,115 +89,6 @@ static rb_dlink_list abort_list;
 using namespace ircd;
 
 
-struct client::user::user
-{
-	chans_t chans;
-	invites_t invites;
-	std::string suser;
-	std::string away;
-
-	user(const std::string &suser = {});
-};
-
-client::user::user::user(const std::string &suser)
-:suser(suser)
-{
-}
-
-client::user::invites_t &
-client::user::invites(user &user)
-{
-	return user.invites;
-}
-
-client::user::chans_t &
-client::user::chans(user &user)
-{
-	return user.chans;
-}
-
-std::string &
-client::user::away(user &user)
-{
-	return user.away;
-}
-
-std::string &
-client::user::suser(user &user)
-{
-	return user.suser;
-}
-
-
-struct client::serv::serv
-{
-	list users;
-	list servers;
-
-	std::shared_ptr<struct user> user;   // who activated this connection
-	std::string by;
-
-	int caps;       /* capabilities bit-field */
-	std::string fullcaps;
-
-	struct scache_entry *nameinfo;
-
-	serv();
-	~serv() noexcept;
-};
-
-client::serv::serv::serv()
-{
-}
-
-client::serv::serv::~serv()
-noexcept
-{
-}
-
-std::shared_ptr<struct client::serv::user> &
-client::serv::user(serv &serv)
-{
-	return serv.user;
-}
-
-std::string &
-client::serv::by(serv &serv)
-{
-	return serv.by;
-}
-
-int &
-client::serv::caps(serv &serv)
-{
-	return serv.caps;
-}
-
-std::string &
-client::serv::fullcaps(serv &serv)
-{
-	return serv.fullcaps;
-}
-
-client::serv::list &
-client::serv::users(serv &serv)
-{
-	return serv.users;
-}
-
-client::serv::list &
-client::serv::servers(serv &serv)
-{
-	return serv.servers;
-}
-
-struct scache_entry *&
-client::serv::nameinfo(serv &serv)
-{
-	return serv.nameinfo;
-}
-
-
 client::client::client()
 {
 }
@@ -229,8 +125,20 @@ ircd::user(client::client &client)
 	return *client.user;
 }
 
+const client::user::user &
+ircd::user(const client::client &client)
+{
+	return *client.user;
+}
+
 client::serv::serv &
 ircd::serv(client::client &client)
+{
+	return *client.serv;
+}
+
+const client::serv::serv &
+ircd::serv(const client::client &client)
 {
 	return *client.serv;
 }
