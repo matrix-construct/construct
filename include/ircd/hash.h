@@ -66,6 +66,30 @@ extern uint32_t fnv_hash(const unsigned char *s, int bits);
 extern uint32_t fnv_hash_len(const unsigned char *s, int bits, int len);
 extern uint32_t fnv_hash_upper_len(const unsigned char *s, int bits, int len);
 
+inline auto
+fnv_hash_upper(const char *const &s, const int &bits)
+{
+	return fnv_hash_upper(reinterpret_cast<const uint8_t *>(s), bits);
+}
+
+inline auto
+fnv_hash(const char *const &s, const int &bits)
+{
+	return fnv_hash(reinterpret_cast<const uint8_t *>(s), bits);
+}
+
+inline auto
+fnv_hash_len(const char *const &s, const int &bits, const int &len)
+{
+	return fnv_hash_len(reinterpret_cast<const uint8_t *>(s), bits, len);
+}
+
+inline auto
+fnv_hash_upper_len(const char *const &s, const int &bits, const int &len)
+{
+	return fnv_hash_upper_len(reinterpret_cast<const uint8_t *>(s), bits, len);
+}
+
 extern void init_hash(void);
 
 extern void add_to_client_hash(const char *name, client::client *client);
