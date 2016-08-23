@@ -48,7 +48,7 @@ m_quit(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 	char *comment = LOCAL_COPY((parc > 1 && parv[1]) ? parv[1] : client.name);
 	char reason[REASONLEN + 1];
 
-	source.flags |= FLAGS_NORMALEX;
+	source.flags |= client::flags::NORMALEX;
 
 	if(strlen(comment) > (size_t) REASONLEN)
 		comment[REASONLEN] = '\0';
@@ -81,7 +81,7 @@ ms_quit(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 {
 	char *comment = LOCAL_COPY((parc > 1 && parv[1]) ? parv[1] : client.name);
 
-	source.flags |= FLAGS_NORMALEX;
+	source.flags |= client::flags::NORMALEX;
 	if(strlen(comment) > (size_t) REASONLEN)
 		comment[REASONLEN] = '\0';
 

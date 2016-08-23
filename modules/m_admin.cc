@@ -123,7 +123,7 @@ ms_admin(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 static void
 do_admin(client::client &source)
 {
-	if(IsPerson(&source))
+	if(is_person(source))
 		admin_spy(source);
 
 	sendto_one_numeric(&source, RPL_ADMINME, form_str(RPL_ADMINME), me.name);

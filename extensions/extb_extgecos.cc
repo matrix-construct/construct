@@ -48,7 +48,7 @@ static int eb_extended(const char *data, client::client *client_p,
 
 	ret = match(data, buf) ? MATCH : NOMATCH;
 
-	if (ret == NOMATCH && IsDynSpoof(client_p))
+	if (ret == NOMATCH && is_dyn_spoof(*client_p))
 	{
 		snprintf(buf, BUFSIZE, "%s!%s@%s#%s",
 			client_p->name, client_p->username, client_p->orighost, client_p->info);

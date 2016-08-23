@@ -60,7 +60,7 @@ chan::add(const std::string &name,
 	if (name.empty())
 		throw err::BADCHANNAME("");
 
-	if (name.size() > CHANNELLEN && IsServer(&client))
+	if (name.size() > CHANNELLEN && is_server(client))
 		sendto_realops_snomask(SNO_DEBUG, L_ALL,
 		                       "*** Long channel name from %s (%lu > %d): %s",
 		                       client.name,
@@ -278,7 +278,7 @@ void
 chan::send_join(chan &chan,
                 client::client &client)
 {
-	if (!IsClient(&client))
+	if (!is_client(client))
 		return;
 
 	sendto_channel_local_with_capability(ALL_MEMBERS, NOCAPS, CLICAP_EXTENDED_JOIN, &chan,
@@ -467,7 +467,7 @@ chan::channel_member_names(chan *chptr, client::client *client_p, int show_eon)
 			auto *const target_p(pair.first);
 			const auto &member(pair.second);
 
-			if(IsInvisible(target_p) && !is_member(chptr, client_p))
+			if(is_invisible(*target_p) && !is_member(chptr, client_p))
 				continue;
 
 			if (IsCapable(client_p, CLICAP_USERHOST_IN_NAMES))
@@ -640,7 +640,7 @@ chan::check(chan &chan,
 			s[ALTHOST] = src[ALTHOST];
 		}
 		// if host mangling mode not enabled and no other spoof, check the mangled form of their host
-		else if (!IsDynSpoof(&client))
+		else if (!is_dyn_spoof(client))
 		{
 			sprintf(src[ALTHOST], "%s!%s@%s", client.name, client.username, client.localClient->mangledhost);
 			s[ALTHOST] = src[ALTHOST];
@@ -753,7 +753,7 @@ chan::can_join(client::client *source_p, chan *chptr, const char *key, const cha
 		}
 		/* if host mangling mode not enabled and no other spoof,
 		 * also check the mangled form of their host */
-		else if (!IsDynSpoof(source_p))
+		else if (!is_dyn_spoof(*source_p))
 		{
 			sprintf(src_althost, "%s!%s@%s", source_p->name, source_p->username, source_p->localClient->mangledhost);
 			use_althost = 1;
@@ -859,11 +859,11 @@ chan::can_send(chan *chptr, client::client *source_p, membership *msptr)
 	moduledata.approved = CAN_SEND_NONOP;
 	moduledata.dir = MODE_QUERY;
 
-	if(IsServer(source_p) || IsService(source_p))
+	if(is_server(*source_p) || IsService(source_p))
 		return CAN_SEND_OPV;
 
-	if(MyClient(source_p) && hash_find_resv(chptr->name.c_str()) &&
-	   !IsOper(source_p) && !IsExemptResv(source_p))
+	if(my(*source_p) && hash_find_resv(chptr->name.c_str()) &&
+	   !IsOper(source_p) && !is_exempt_resv(*source_p))
 		moduledata.approved = CAN_SEND_NO;
 
 	if(msptr == NULL)
@@ -888,7 +888,7 @@ chan::can_send(chan *chptr, client::client *source_p, membership *msptr)
 	if(chptr->mode.mode & mode::MODERATED)
 		moduledata.approved = CAN_SEND_NO;
 
-	if(MyClient(source_p))
+	if(my(*source_p))
 	{
 		/* cached can_send */
 		if(msptr->bants == chptr->bants)
@@ -937,7 +937,7 @@ chan::flood_attack_channel(int p_or_n, client::client *source_p, chan *chptr)
 {
 	int delta;
 
-	if(GlobalSetOptions.floodcount && MyClient(source_p))
+	if(GlobalSetOptions.floodcount && my(*source_p))
 	{
 		if((chptr->first_received_message_time + 1) < rb_current_time())
 		{
@@ -966,7 +966,7 @@ chan::flood_attack_channel(int p_or_n, client::client *source_p, chan *chptr)
 				/* Add a bit of penalty */
 				chptr->received_number_of_privmsgs += 2;
 			}
-			if(MyClient(source_p) && (p_or_n != 1))
+			if(my(*source_p) && (p_or_n != 1))
 				sendto_one(source_p,
 					   ":%s NOTICE %s :*** Message to %s throttled due to flooding",
 					   me.name, source_p->name, chptr->name.c_str());
@@ -994,7 +994,7 @@ chan::find_bannickchange_channel(client::client *client_p)
 	char src_host[NICKLEN + USERLEN + HOSTLEN + 6];
 	char src_iphost[NICKLEN + USERLEN + HOSTLEN + 6];
 
-	if (!MyClient(client_p))
+	if (!my(*client_p))
 		return NULL;
 
 	sprintf(src_host, "%s!%s@%s", client_p->name, client_p->username, client_p->host);
@@ -1181,7 +1181,7 @@ chan::channel_modes(chan *chptr, client::client *client_p)
 
 	for (i = 0; i < 256; i++)
 	{
-		if(mode::table[i].set_func == mode::functor::hidden && (!IsOper(client_p) || !IsClient(client_p)))
+		if(mode::table[i].set_func == mode::functor::hidden && (!IsOper(client_p) || !is_client(*client_p)))
 			continue;
 		if(chptr->mode.mode & mode::table[i].type)
 			*mbuf++ = i;
@@ -1191,7 +1191,7 @@ chan::channel_modes(chan *chptr, client::client *client_p)
 	{
 		*mbuf++ = 'l';
 
-		if(!IsClient(client_p) || is_member(chptr, client_p))
+		if(!is_client(*client_p) || is_member(chptr, client_p))
 			pbuf += sprintf(pbuf, " %d", chptr->mode.limit);
 	}
 
@@ -1199,7 +1199,7 @@ chan::channel_modes(chan *chptr, client::client *client_p)
 	{
 		*mbuf++ = 'k';
 
-		if(pbuf > buf2 || !IsClient(client_p) || is_member(chptr, client_p))
+		if(pbuf > buf2 || !is_client(*client_p) || is_member(chptr, client_p))
 			pbuf += sprintf(pbuf, " %s", chptr->mode.key);
 	}
 
@@ -1207,17 +1207,17 @@ chan::channel_modes(chan *chptr, client::client *client_p)
 	{
 		*mbuf++ = 'j';
 
-		if(pbuf > buf2 || !IsClient(client_p) || is_member(chptr, client_p))
+		if(pbuf > buf2 || !is_client(*client_p) || is_member(chptr, client_p))
 			pbuf += sprintf(pbuf, " %d:%d", chptr->mode.join_num,
 					   chptr->mode.join_time);
 	}
 
 	if(*chptr->mode.forward &&
-			(ConfigChannel.use_forward || !IsClient(client_p)))
+			(ConfigChannel.use_forward || !is_client(*client_p)))
 	{
 		*mbuf++ = 'f';
 
-		if(pbuf > buf2 || !IsClient(client_p) || is_member(chptr, client_p))
+		if(pbuf > buf2 || !is_client(*client_p) || is_member(chptr, client_p))
 			pbuf += sprintf(pbuf, " %s", chptr->mode.forward);
 	}
 
@@ -1364,7 +1364,7 @@ chan::resv_chan_forcepart(const char *name, const char *reason, int temp_time)
 		{
 			const auto target_p(msptr->git->first);
 
-			if(IsExemptResv(target_p))
+			if(is_exempt_resv(*target_p))
 				continue;
 
 			sendto_server(target_p, chptr, CAP_TS6, NOCAPS,

@@ -88,7 +88,7 @@ me_gcap(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	char *s;
 	char *p;
 
-	if(!IsServer(&source))
+	if(!is_server(source))
 		return;
 
 	/* already had GCAPAB?! */

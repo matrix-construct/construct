@@ -46,7 +46,7 @@ mr_starttls(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 	ssl_ctl_t *ctl;
 	rb_fde_t *F[2];
 
-	if (!MyConnect(&client))
+	if (!my_connect(client))
 		return;
 
 	if (IsSSL(&client))

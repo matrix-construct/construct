@@ -48,7 +48,7 @@ eb_hostmask(const char *banstr, client::client *client_p, chan::chan *chptr, mod
 	{
 		if (!strcmp(client_p->host, client_p->localClient->mangledhost))
 			sprintf(src_althost, "%s!%s@%s", client_p->name, client_p->username, client_p->orighost);
-		else if (!IsDynSpoof(client_p))
+		else if (!is_dyn_spoof(*client_p))
 			sprintf(src_althost, "%s!%s@%s", client_p->name, client_p->username, client_p->localClient->mangledhost);
 
 		s3 = src_althost;

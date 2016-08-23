@@ -206,7 +206,7 @@ m_who(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, i
 	{
 		int isinvis = 0;
 
-		isinvis = IsInvisible(target_p);
+		isinvis = is_invisible(*target_p);
 		for(const auto &pit : chans(user(*target_p)))
 		{
 			chptr = pit.first;
@@ -234,7 +234,7 @@ m_who(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, i
 		return;
 	}
 
-	if(!IsFloodDone(&source))
+	if(!is_flood_done(source))
 		flood_endgrace(&source);
 
 	/* it has to be a global who at this point, limit it */
@@ -291,13 +291,13 @@ who_common_channel(client::client &source, chan::chan *chptr,
 		const auto &target(pit.first);
 		const auto &member(pit.second);
 
-		if(!IsInvisible(target) || IsMarked(target))
+		if(!is_invisible(*target) || is_marked(*target))
 			continue;
 
 		if(server_oper && !IsOper(target))
 			continue;
 
-		SetMark(target);
+		set_mark(*target);
 
 		if(*maxmatches > 0)
 		{
@@ -358,12 +358,12 @@ who_global(client::client &source, const char *mask, int server_oper, int opersp
 	RB_DLINK_FOREACH(ptr, global_client_list.head)
 	{
 		target_p = (client::client *)ptr->data;
-		if(!IsPerson(target_p))
+		if(!is_person(*target_p))
 			continue;
 
-		if(IsInvisible(target_p) && !operspy)
+		if(is_invisible(*target_p) && !operspy)
 		{
-			ClearMark(target_p);
+			clear_mark(*target_p);
 			continue;
 		}
 
@@ -414,7 +414,7 @@ do_who_on_channel(client::client &source, chan::chan *chptr,
 		if(server_oper && !IsOper(target))
 			continue;
 
-		if(source_member || !IsInvisible(target))
+		if(source_member || !is_invisible(*target))
 			do_who(source, target, chptr, &member, fmt);
 	}
 }
@@ -471,7 +471,7 @@ do_who(client::client &source, client::client *target_p, chan::chan *chan, chan:
 			   source.name, msptr ? chan->name.c_str() : "*",
 			   target_p->username, target_p->host,
 			   target_p->servptr->name, target_p->name, status,
-			   ConfigServerHide.flatten_links && !IsOper(&source) && !IsExemptShide(&source) ? 0 : target_p->hopcount,
+			   ConfigServerHide.flatten_links && !IsOper(&source) && !is_exempt_shide(source) ? 0 : target_p->hopcount,
 			   target_p->info);
 	else
 	{
@@ -501,9 +501,9 @@ do_who(client::client &source, client::client *target_p, chan::chan *chan, chan:
 		if (fmt->fields & FIELD_FLAGS)
 			append_format(str, sizeof str, &pos, " %s", status);
 		if (fmt->fields & FIELD_HOP)
-			append_format(str, sizeof str, &pos, " %d", ConfigServerHide.flatten_links && !IsOper(&source) && !IsExemptShide(&source) ? 0 : target_p->hopcount);
+			append_format(str, sizeof str, &pos, " %d", ConfigServerHide.flatten_links && !IsOper(&source) && !is_exempt_shide(source) ? 0 : target_p->hopcount);
 		if (fmt->fields & FIELD_IDLE)
-			append_format(str, sizeof str, &pos, " %d", (int)(MyClient(target_p) ? rb_current_time() - target_p->localClient->last : 0));
+			append_format(str, sizeof str, &pos, " %d", (int)(my(*target_p) ? rb_current_time() - target_p->localClient->last : 0));
 		if (fmt->fields & FIELD_ACCOUNT)
 		{
 			/* display as in whois */

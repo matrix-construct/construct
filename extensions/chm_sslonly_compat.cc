@@ -42,7 +42,7 @@ chm_sslonly(client::client *source_p, chan::chan *chptr,
 	int newparn = 0;
 	const char *newparv[] = { "$~z" };
 
-	if (MyClient(source_p))
+	if (my(*source_p))
 		functor::ban(source_p, chptr, alevel, 1, &newparn, newparv, errors, dir, 'b', BAN);
 	else
 		functor::nosuch(source_p, chptr, alevel, parc, parn, parv, errors, dir, c, type);

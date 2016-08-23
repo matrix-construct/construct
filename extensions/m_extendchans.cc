@@ -62,11 +62,11 @@ mo_extendchans(struct MsgBuf *msgbuf_p, client::client &client, client::client &
 		return;
 
 	/* Is the target user local? */
-	if(MyClient(target_p))
+	if(my(*target_p))
 	{
 		sendto_one_notice(target_p, ":*** %s (%s@%s) is extending your channel limit",
 			source.name, source.username, source.host);
-		SetExtendChans(target_p);
+		set_extend_chans(*target_p);
 	}
 	else /* Target user isn't local, so pass it on. */
 	{
@@ -92,7 +92,7 @@ me_extendchans(struct MsgBuf *msgbuf_p, client::client &client, client::client &
 	}
 
 	/* Is the target user local?  If not, pass it on. */
-	if(!MyClient(target_p))
+	if(!my(*target_p))
 	{
 		client::client *cptr = target_p->servptr;
 		sendto_one(cptr, ":%s ENCAP %s EXTENDCHANS %s",
@@ -102,5 +102,5 @@ me_extendchans(struct MsgBuf *msgbuf_p, client::client &client, client::client &
 
 	sendto_one_notice(target_p, ":*** %s (%s@%s) is extending your channel limit",
 		source.name, source.username, source.host);
-	SetExtendChans(target_p);
+	set_extend_chans(*target_p);
 }

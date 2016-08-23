@@ -22,7 +22,7 @@ block_services_kill(void *vdata)
 {
 	hook_data_client_approval *data = (hook_data_client_approval *) vdata;
 
-	if (!MyClient(data->client))
+	if (!my(*data->client))
 		return;
 
 	if (!data->approved)

@@ -213,7 +213,7 @@ m_stats(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 
 	statchar = parv[1][0];
 
-	if(MyClient(&source) && !IsOper(&source))
+	if(my(source) && !IsOper(&source))
 	{
 		/* Check the user is actually allowed to do /stats, and isnt flooding */
 		if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
@@ -324,7 +324,7 @@ stats_connect(client::client &source)
 	rb_dlink_node *ptr;
 
 	if((ConfigFileEntry.stats_c_oper_only ||
-	    (ConfigServerHide.flatten_links && !IsExemptShide(&source))) &&
+	    (ConfigServerHide.flatten_links && !is_exempt_shide(source))) &&
 	    !IsOper(&source))
 	{
 		sendto_one_numeric(&source, ERR_NOPRIVILEGES,
@@ -527,7 +527,7 @@ stats_hubleaf(client::client &source)
 	rb_dlink_node *ptr;
 
 	if((ConfigFileEntry.stats_h_oper_only ||
-	    (ConfigServerHide.flatten_links && !IsExemptShide(&source))) &&
+	    (ConfigServerHide.flatten_links && !is_exempt_shide(source))) &&
 	    !IsOper(&source))
 	{
 		sendto_one_numeric(&source, ERR_NOPRIVILEGES,
@@ -567,7 +567,7 @@ stats_auth (client::client &source)
 		const char *pass = "*";
 		int port;
 
-		if(MyConnect (&source))
+		if(my_connect(source))
 			aconf = find_conf_by_address (source.host, source.sockhost, NULL,
 						      (struct sockaddr *)&source.localClient->ip,
 						      CONF_CLIENT,
@@ -609,7 +609,7 @@ stats_tklines(client::client &source)
 		struct ConfItem *aconf;
 		char *host, *pass, *user, *oper_reason;
 
-		if(MyConnect (&source))
+		if(my_connect(source))
 			aconf = find_conf_by_address (source.host, source.sockhost, NULL,
 						      (struct sockaddr *)&source.localClient->ip,
 						      CONF_KILL,
@@ -712,7 +712,7 @@ stats_klines(client::client &source)
 		char *host, *pass, *user, *oper_reason;
 
 		/* search for a kline */
-		if(MyConnect (&source))
+		if(my_connect(source))
 			aconf = find_conf_by_address (source.host, source.sockhost, NULL,
 						      (struct sockaddr *)&source.localClient->ip,
 						      CONF_KILL,
@@ -1189,7 +1189,7 @@ stats_servers (client::client &source)
 	int j = 0;
 
 	if(ConfigServerHide.flatten_links && !IsOper(&source) &&
-	   !IsExemptShide(&source))
+	   !is_exempt_shide(source))
 	{
 		sendto_one_numeric(&source, ERR_NOPRIVILEGES,
 				   form_str (ERR_NOPRIVILEGES));
@@ -1327,7 +1327,7 @@ stats_memory (client::client &source)
 	RB_DLINK_FOREACH(ptr, global_client_list.head)
 	{
 		target_p = (client::client *)ptr->data;
-		if(MyConnect(target_p))
+		if(my_connect(*target_p))
 		{
 			local_client_conf_count++;
 		}
@@ -1516,7 +1516,7 @@ stats_servlinks (client::client &source)
 	char buf[128];
 
 	if(ConfigServerHide.flatten_links && !IsOper (&source) &&
-	   !IsExemptShide(&source))
+	   !is_exempt_shide(source))
 	{
 		sendto_one_numeric(&source, ERR_NOPRIVILEGES,
 				   form_str (ERR_NOPRIVILEGES));
@@ -1591,7 +1591,7 @@ stats_ltrace(client::client &source, int parc, const char *parv[])
 	{
 		/* directed at us generically? */
 		if(match(parv[2], me.name) ||
-		   (!MyClient(&source) && !irccmp(parv[2], me.id)))
+		   (!my(source) && !irccmp(parv[2], me.id)))
 		{
 			name = me.name;
 			doall = true;
@@ -1607,7 +1607,7 @@ stats_ltrace(client::client &source, int parc, const char *parv[])
 		{
 			client::client *target_p;
 
-			if(MyClient(&source))
+			if(my(source))
 				target_p = client::find_named_person(name);
 			else
 				target_p = client::find_person(name);
@@ -1644,14 +1644,14 @@ stats_ltrace(client::client &source, int parc, const char *parv[])
 		else
 		{
 			/* they still need themselves if theyre local.. */
-			if(MyClient(&source))
+			if(my(source))
 				stats_l_client(source, &source, statchar);
 
 			stats_l_list(source, name, doall, wilds, &local_oper_list, statchar, stats_l_should_show_oper);
 		}
 
 		if (!ConfigServerHide.flatten_links || IsOper(&source) ||
-				IsExemptShide(&source))
+				is_exempt_shide(source))
 			stats_l_list(source, name, doall, wilds, &serv_list, statchar, NULL);
 
 		return;
@@ -1673,7 +1673,7 @@ stats_l_list(client::client &source, const char *name, bool doall, bool wilds,
 	client::client *target_p;
 
 	/* send information about connections which match.  note, we
-	 * dont need tests for IsInvisible(), because non-opers will
+	 * dont need tests for is_invisible(*), because non-opers will
 	 * never get here for normal clients --fl
 	 */
 	RB_DLINK_FOREACH(ptr, list->head)
@@ -1692,7 +1692,7 @@ void
 stats_l_client(client::client &source, client::client *target_p,
 		char statchar)
 {
-	if(IsAnyServer(target_p))
+	if(is_any_server(*target_p))
 	{
 		sendto_one_numeric(&source, RPL_STATSLINKINFO, Lformat,
 				target_p->name,

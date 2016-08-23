@@ -174,13 +174,13 @@ m_join(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 		}
 
 		/* see if its resv'd */
-		if(!IsExemptResv(&source) && (aconf = hash_find_resv(name)))
+		if(!is_exempt_resv(source) && (aconf = hash_find_resv(name)))
 		{
 			sendto_one_numeric(&source, ERR_BADCHANNAME,
 					   form_str(ERR_BADCHANNAME), name);
 
 			/* dont warn for opers */
-			if(!IsExemptJupe(&source) && !IsOper(&source))
+			if(!is_exempt_jupe(source) && !IsOper(&source))
 				sendto_realops_snomask(SNO_SPY, L_NETWIDE,
 						     "User %s (%s@%s) is attempting to join locally juped channel %s (%s)",
 						     source.name, source.username,
@@ -188,7 +188,7 @@ m_join(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 			/* dont update tracking for jupe exempt users, these
 			 * are likely to be spamtrap leaves
 			 */
-			else if(IsExemptJupe(&source))
+			else if(is_exempt_jupe(source))
 				aconf->port--;
 
 			continue;
@@ -267,7 +267,7 @@ m_join(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 
 		if(((chans(user(source)).size()) >=
 		    (unsigned long) ConfigChannel.max_chans_per_user) &&
-		   (!IsExtendChans(&source) ||
+		   (!is_extend_chans(source) ||
 		    (chans(user(source)).size() >=
 		     (unsigned long) ConfigChannel.max_chans_per_user_large)))
 		{
@@ -306,7 +306,7 @@ m_join(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 		chptr = chptr2;
 
 		if(flags == 0 &&
-				!IsOper(&source) && !IsExemptSpambot(&source))
+				!IsOper(&source) && !is_exempt_spambot(source))
 			chan::check_spambot_warning(&source, name);
 
 		/* add the user to the channel */
@@ -547,7 +547,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 	pargs = mode.mode = mode.limit = mode.join_num = mode.join_time = 0;
 
 	/* Hide connecting server on netburst -- jilles */
-	if (ConfigServerHide.flatten_links && !HasSentEob(&source))
+	if (ConfigServerHide.flatten_links && !has_sent_eob(source))
 		fakesource = &me;
 	else
 		fakesource = &source;
@@ -645,7 +645,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 		 * manner so do so here.
 		 * -- jilles */
 		if (ConfigChannel.kick_on_split_riding &&
-				((!HasSentEob(&source) &&
+				((!has_sent_eob(source) &&
 				mode.mode & chan::mode::INVITEONLY) ||
 		    (mode.key[0] != 0 && irccmp(mode.key, oldmode->key) != 0)))
 		{
@@ -804,13 +804,13 @@ ms_sjoin(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 
 		/* if the client doesnt exist or is fake direction, skip. */
 		if(!(target_p = find_client(s)) ||
-		   (target_p->from != &client) || !IsPerson(target_p))
+		   (target_p->from != &client) || !is_person(*target_p))
 			goto nextnick;
 
 		/* we assume for these we can fit at least one nick/uid in.. */
 
 		/* check we can fit another status+nick+space into a buffer */
-		if((mlen_uid + len_uid + IDLEN + 3) > (BUFSIZE - 3))
+		if((mlen_uid + len_uid + client::IDLEN + 3) > (BUFSIZE - 3))
 		{
 			*(ptr_uid - 1) = '\0';
 			sendto_server(client.from, NULL, CAP_TS6, NOCAPS, "%s", buf_uid);
@@ -968,15 +968,15 @@ do_join_0(client::client &client, client::client &source)
 	rb_dlink_node *ptr;
 
 	/* Finish the flood grace period... */
-	if(MyClient(&source) && !IsFloodDone(&source))
+	if(my(source) && !is_flood_done(source))
 		flood_endgrace(&source);
 
 	sendto_server(&client, NULL, CAP_TS6, NOCAPS, ":%s JOIN 0", use_id(&source));
 
 	for(const auto &pit : chans(user(source)))
 	{
-		if(MyConnect(&source) &&
-		   !IsOper(&source) && !IsExemptSpambot(&source))
+		if(my_connect(source) &&
+		   !IsOper(&source) && !is_exempt_spambot(source))
 			chan::check_spambot_warning(&source, NULL);
 
 		auto &msptr(pit.second);

@@ -62,7 +62,7 @@ m_oper(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 	}
 
 	/* end the grace period */
-	if(!IsFloodDone(&source))
+	if(!is_flood_done(source))
 		flood_endgrace(&source);
 
 	oper_p = find_oper_conf(source.username, source.orighost,

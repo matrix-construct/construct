@@ -85,14 +85,14 @@ ms_wallops(struct MsgBuf *msgbuf_p, client::client &client, client::client &sour
 {
 	const char *prefix = "";
 
-	if (MyClient(&source) && !IsOperMassNotice(&source))
+	if (my(source) && !IsOperMassNotice(&source))
 	{
 		sendto_one(&source, form_str(ERR_NOPRIVS),
 			   me.name, source.name, "mass_notice");
 		return;
 	}
 
-	if (IsPerson(&source))
+	if (is_person(source))
 	{
 		if (!strncmp(parv[1], "OPERWALL - ", 11) ||
 				!strncmp(parv[1], "LOCOPS - ", 9) ||

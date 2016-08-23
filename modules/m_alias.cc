@@ -104,14 +104,14 @@ m_alias(struct MsgBuf *msgbuf, client::client &client, client::client &source, i
 	if(aptr == NULL)
 	{
 		/* This shouldn't happen... */
-		if(IsPerson(&client))
+		if(is_person(client))
 			sendto_one(&client, form_str(ERR_UNKNOWNCOMMAND),
 				me.name, client.name, msgbuf->cmd);
 
 		return;
 	}
 
-	if(!IsFloodDone(&client) && client.localClient->receiveM > 20)
+	if(!is_flood_done(client) && client.localClient->receiveM > 20)
 		flood_endgrace(&client);
 
 	auto pos = aptr->target.find('@');
@@ -119,7 +119,7 @@ m_alias(struct MsgBuf *msgbuf, client::client &client, client::client &source, i
 	{
 		/* user@server */
 		target_p = find_server(NULL, aptr->target.substr(pos + 1).c_str());
-		if(target_p != NULL && IsMe(target_p))
+		if(target_p != NULL && is_me(*target_p))
 			target_p = NULL;
 	}
 	else

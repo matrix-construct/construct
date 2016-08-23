@@ -102,7 +102,7 @@ mo_etrace(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 
 			if(target_p)
 			{
-				if(!MyClient(target_p))
+				if(!my(*target_p))
 					sendto_one(target_p, ":%s ENCAP %s ETRACE %s",
 						get_id(&source, target_p),
 						target_p->servptr->name,
@@ -128,7 +128,7 @@ me_etrace(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 		return;
 
 	/* we cant etrace remote clients.. we shouldnt even get sent them */
-	if((target_p = client::find_person(parv[1])) && MyClient(target_p))
+	if((target_p = client::find_person(parv[1])) && my(*target_p))
 		do_single_etrace(source, target_p);
 
         sendto_one_numeric(&source, RPL_ENDOFTRACE, form_str(RPL_ENDOFTRACE),
@@ -284,7 +284,7 @@ match_masktrace(client::client &source, rb_dlink_list *list,
 	RB_DLINK_FOREACH(ptr, list->head)
 	{
 		target_p = (client::client *)ptr->data;
-		if(!IsPerson(target_p))
+		if(!is_person(*target_p))
 			continue;
 
 		if(EmptyString(target_p->sockhost))

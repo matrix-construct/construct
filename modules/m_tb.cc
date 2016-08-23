@@ -73,7 +73,7 @@ ms_tb(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, i
 	newtopicts = atol(parv[2]);
 
 	/* Hide connecting server on netburst -- jilles */
-	if (ConfigServerHide.flatten_links && !HasSentEob(&source))
+	if (ConfigServerHide.flatten_links && !has_sent_eob(source))
 		fake_source = &me;
 	else
 		fake_source = &source;
@@ -139,8 +139,8 @@ ms_etb(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 	newtopicts = atol(parv[3]);
 
 	/* Hide connecting server on netburst -- jilles */
-	if (IsServer(&source) && ConfigServerHide.flatten_links &&
-			!HasSentEob(&source))
+	if (is_server(source) && ConfigServerHide.flatten_links &&
+			!has_sent_eob(source))
 		fake_source = &me;
 	else
 		fake_source = &source;
@@ -165,7 +165,7 @@ ms_etb(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 		 */
 		if(textchange)
 		{
-			if (IsPerson(fake_source))
+			if (is_person(*fake_source))
 				sendto_channel_local(chan::ALL_MEMBERS, chptr,
 						":%s!%s@%s TOPIC %s :%s",
 						fake_source->name,
@@ -186,14 +186,14 @@ ms_etb(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 			      ":%s ETB %ld %s %ld %s :%s",
 			      use_id(&source), (long)channelts, chptr->name.c_str(),
 			      (long)newtopicts, newtopicwho, newtopic);
-		source_server_p = IsServer(&source) ? &source : source.servptr;
+		source_server_p = is_server(source) ? &source : source.servptr;
 		if (can_use_tb)
 			sendto_server(&client, chptr, CAP_TB|CAP_TS6, CAP_EOPMOD,
 				      ":%s TB %s %ld %s :%s",
 				      use_id(source_server_p),
 				      chptr->name.c_str(), (long)newtopicts,
 				      newtopicwho, newtopic);
-		else if (IsPerson(&source) && textchange)
+		else if (is_person(source) && textchange)
 		{
 			member = is_member(chptr, &source);
 			if (!member)

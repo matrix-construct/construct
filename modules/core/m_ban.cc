@@ -108,7 +108,7 @@ ms_ban(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 	hold = created + atoi(parv[5]);
 	lifetime = created + atoi(parv[6]);
 	if (!strcmp(parv[7], "*"))
-		oper = IsServer(&source) ? source.name : get_oper_name(&source);
+		oper = is_server(source) ? source.name : get_oper_name(&source);
 	else
 		oper = parv[7];
 	ptr = find_prop_ban(ntype, parv[2], parv[3]);
@@ -120,7 +120,7 @@ ms_ban(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 				(aconf->created == created &&
 				 aconf->lifetime >= lifetime))
 		{
-			if (IsPerson(&source))
+			if (is_person(source))
 				sendto_one_notice(&source,
 						":Your %s [%s%s%s] has been superseded",
 						stype,
@@ -202,13 +202,13 @@ ms_ban(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 				       "Ignoring global %d min. %s from %s%s%s for [%s%s%s]: too few non-wildcard characters",
 				       (int)((hold - now) / 60),
 				       stype,
-				       IsServer(&source) ? source.name : get_oper_name(&source),
+				       is_server(source) ? source.name : get_oper_name(&source),
 				       strcmp(parv[7], "*") ? " on behalf of " : "",
 				       strcmp(parv[7], "*") ? parv[7] : "",
 				       aconf->user ? aconf->user : "",
 				       aconf->user ? "@" : "",
 				       aconf->host);
-		if(IsPerson(&source))
+		if(is_person(source))
 			sendto_one_notice(&source,
 					":Your %s [%s%s%s] has too few non-wildcard characters",
 					stype,
@@ -222,7 +222,7 @@ ms_ban(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 		/* Keep the notices in sync with modules/m_kline.c etc. */
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				       "%s added global %d min. %s%s%s for [%s%s%s] [%s]",
-				       IsServer(&source) ? source.name : get_oper_name(&source),
+				       is_server(source) ? source.name : get_oper_name(&source),
 				       (int)((hold - now) / 60),
 				       stype,
 				       strcmp(parv[7], "*") ? " from " : "",
@@ -232,7 +232,7 @@ ms_ban(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 				       aconf->host,
 				       parv[parc - 1]);
 		ilog(L_KLINE, "%s %s %d %s%s%s %s", parv[1],
-				IsServer(&source) ? source.name : get_oper_name(&source),
+				is_server(source) ? source.name : get_oper_name(&source),
 				(int)((hold - now) / 60),
 				aconf->user ? aconf->user : "",
 				aconf->user ? " " : "",
@@ -244,7 +244,7 @@ ms_ban(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				"%s has removed the global %s for: [%s%s%s]%s%s",
-				IsServer(&source) ? source.name : get_oper_name(&source),
+				is_server(source) ? source.name : get_oper_name(&source),
 				stype,
 				aconf->user ? aconf->user : "",
 				aconf->user ? "@" : "",
@@ -252,7 +252,7 @@ ms_ban(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 				strcmp(parv[7], "*") ? " on behalf of " : "",
 				strcmp(parv[7], "*") ? parv[7] : "");
 		ilog(L_KLINE, "U%s %s %s%s %s", parv[1],
-				IsServer(&source) ? source.name : get_oper_name(&source),
+				is_server(source) ? source.name : get_oper_name(&source),
 				aconf->user ? aconf->user : "",
 				aconf->user ? " " : "",
 				aconf->host);
@@ -271,8 +271,8 @@ ms_ban(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 			{
 				add_conf_by_address(aconf->host, CONF_KILL, aconf->user, NULL, aconf);
 				if(ConfigFileEntry.kline_delay ||
-						(IsServer(&source) &&
-						 !HasSentEob(&source)))
+						(is_server(source) &&
+						 !has_sent_eob(source)))
 				{
 					if(kline_queued == 0)
 					{

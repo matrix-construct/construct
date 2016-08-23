@@ -339,12 +339,12 @@ ws_process_dead_fd(ws_ctl_t * ctl, ws_ctl_buf_t * ctl_buf)
 	client_p = find_cli_connid_hash(fd);
 	if(client_p == NULL)
 		return;
-	if(IsAnyServer(client_p) || IsRegistered(client_p))
+	if(is_any_server(*client_p) || is_registered(*client_p))
 	{
 		/* read any last moment ERROR, QUIT or the like -- jilles */
 		if (!strcmp(reason, "Remote host closed the connection"))
 			read_packet(client_p->localClient->F, client_p);
-		if (IsAnyDead(client_p))
+		if (is_any_dead(*client_p))
 			return;
 	}
 	exit_client(client_p, client_p, &me, reason);

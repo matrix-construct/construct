@@ -57,7 +57,7 @@ m_kick(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 	const char *user;
 	static char buf[BUFSIZE];
 
-	if(MyClient(&source) && !IsFloodDone(&source))
+	if(my(source) && !is_flood_done(source))
 		flood_endgrace(&source);
 
 	*buf = '\0';
@@ -73,11 +73,11 @@ m_kick(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 		return;
 	}
 
-	if(!IsServer(&source))
+	if(!is_server(source))
 	{
 		msptr = get(chptr->members, source, std::nothrow);
 
-		if((msptr == NULL) && MyConnect(&source))
+		if((msptr == NULL) && my_connect(source))
 		{
 			sendto_one_numeric(&source, ERR_NOTONCHANNEL,
 					   form_str(ERR_NOTONCHANNEL), name);
@@ -86,7 +86,7 @@ m_kick(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 
 		if(get_channel_access(&source, chptr, msptr, MODE_ADD, NULL) < chan::CHANOP)
 		{
-			if(MyConnect(&source))
+			if(my_connect(source))
 			{
 				sendto_one(&source, form_str(ERR_CHANOPRIVSNEEDED),
 					   me.name, source.name, name);
@@ -118,7 +118,7 @@ m_kick(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 
 	if(msptr != NULL)
 	{
-		if(MyClient(&source) && IsService(who))
+		if(my(source) && IsService(who))
 		{
 			sendto_one(&source, form_str(ERR_ISCHANSERVICE),
 			           me.name,
@@ -128,7 +128,7 @@ m_kick(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 			return;
 		}
 
-		if(MyClient(&source))
+		if(my(source))
 		{
 			hook_data_channel_approval hookdata;
 
@@ -156,7 +156,7 @@ m_kick(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 		 * - Personally, flame and I believe that server kicks shouldn't
 		 *   be sent anyways.  Just waiting for some oper to abuse it...
 		 */
-		if(IsServer(&source))
+		if(is_server(source))
 			sendto_channel_local(chan::ALL_MEMBERS, chptr, ":%s KICK %s %s :%s",
 					     source.name, name, who->name, comment);
 		else
@@ -171,7 +171,7 @@ m_kick(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 
 		del(*chptr, *who);
 	}
-	else if (MyClient(&source))
+	else if (my(source))
 		sendto_one_numeric(&source, ERR_USERNOTINCHANNEL,
 				   form_str(ERR_USERNOTINCHANNEL), user, name);
 }

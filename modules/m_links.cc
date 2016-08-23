@@ -56,7 +56,7 @@ DECLARE_MODULE_AV2(links, NULL, NULL, links_clist, links_hlist, NULL, NULL, NULL
 static void
 m_links(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(ConfigServerHide.flatten_links && !IsExemptShide(&source))
+	if(ConfigServerHide.flatten_links && !is_exempt_shide(source))
 		scache_send_flattened_links(&source);
 	else
 		mo_links(msgbuf_p, client, source, parc, parv);

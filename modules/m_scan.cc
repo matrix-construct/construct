@@ -108,7 +108,7 @@ scan_umodes(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 
 	if (parc < 3)
 	{
-		if (MyClient(&source))
+		if (my(source))
 			sendto_one(&source, form_str(ERR_NEEDMOREPARAMS),
 				me.name, source.name, "SCAN UMODES");
 
@@ -198,7 +198,7 @@ scan_umodes(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 
 		target_p = (client::client *)tn->data;
 
-		if (!IsClient(target_p))
+		if (!is_client(*target_p))
 			continue;
 
 		if(EmptyString(target_p->sockhost))

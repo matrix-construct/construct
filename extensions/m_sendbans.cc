@@ -106,7 +106,7 @@ mo_sendbans(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 	RB_DLINK_FOREACH(ptr, global_serv_list.head)
 	{
 		server_p = (client::client *)ptr->data;
-		if (IsMe(server_p))
+		if (is_me(*server_p))
 			continue;
 		if (match(target, server_p->name))
 			count++;

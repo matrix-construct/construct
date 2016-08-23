@@ -128,7 +128,7 @@ ms_whois(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 	/* if parv[1] isnt my client, or me, someone else is supposed
 	 * to be handling the request.. so send it to them
 	 */
-	if(!MyClient(target_p) && !IsMe(target_p))
+	if(!my(*target_p) && !is_me(*target_p))
 	{
 		sendto_one(target_p, ":%s WHOIS %s :%s",
 			   get_id(&source, target_p),
@@ -236,7 +236,7 @@ single_whois(client::client &source, client::client *target_p, int operspy)
 	 * in full names; note that serverhiding may require more space
 	 * for a different server name (not done here) -- jilles
 	 */
-	if (!MyConnect(&source))
+	if (!my_connect(source))
 	{
 		extra_space = strlen(source.name) - 9;
 		if (extra_space < 0)
@@ -301,7 +301,7 @@ single_whois(client::client &source, client::client *target_p, int operspy)
 				    GlobalSetOptions.operstring));
 	}
 
-	if(MyClient(target_p) && !EmptyString(target_p->localClient->opername) && IsOper(&source))
+	if(my(*target_p) && !EmptyString(target_p->localClient->opername) && IsOper(&source))
 	{
 		char buf[512];
 		snprintf(buf, sizeof(buf), "is opered as %s, privset %s",
@@ -314,7 +314,7 @@ single_whois(client::client &source, client::client *target_p, int operspy)
 	{
 		char cbuf[256] = "is using a secure connection";
 
-		if (MyClient(target_p) && target_p->localClient->cipher_string != NULL)
+		if (my(*target_p) && target_p->localClient->cipher_string != NULL)
 			rb_snprintf_append(cbuf, sizeof(cbuf), " [%s]", target_p->localClient->cipher_string);
 
 		sendto_one_numeric(&source, RPL_WHOISSECURE, form_str(RPL_WHOISSECURE),
@@ -326,19 +326,19 @@ single_whois(client::client &source, client::client *target_p, int operspy)
 					target_p->name, target_p->certfp);
 	}
 
-	if(MyClient(target_p))
+	if(my(*target_p))
 	{
-		if (IsDynSpoof(target_p) && (IsOper(&source) || &source == target_p))
+		if (is_dyn_spoof(*target_p) && (IsOper(&source) || &source == target_p))
 		{
 			/* trick here: show a nonoper their own IP if
 			 * dynamic spoofed but not if auth{} spoofed
 			 * -- jilles */
-			ClearDynSpoof(target_p);
+			clear_dyn_spoof(*target_p);
 			sendto_one_numeric(&source, RPL_WHOISHOST,
 					   form_str(RPL_WHOISHOST),
 					   target_p->name, target_p->orighost,
 					   show_ip(&source, target_p) ? target_p->sockhost : "255.255.255.255");
-			SetDynSpoof(target_p);
+			set_dyn_spoof(*target_p);
 		}
 		else if(ConfigFileEntry.use_whois_actually && show_ip(&source, target_p))
 			sendto_one_numeric(&source, RPL_WHOISACTUALLY,
@@ -348,7 +348,7 @@ single_whois(client::client &source, client::client *target_p, int operspy)
 #ifdef RB_IPV6
 		if (GET_SS_FAMILY(&target_p->localClient->ip) == AF_INET6 &&
 				(show_ip(&source, target_p) ||
-				 (&source == target_p && !IsIPSpoof(target_p))) &&
+				 (&source == target_p && !is_ip_spoof(*target_p))) &&
 				rb_ipv4_from_ipv6((struct sockaddr_in6 *)&target_p->localClient->ip, &ip4))
 		{
 			rb_inet_ntop_sock((struct sockaddr *)&ip4,
@@ -366,14 +366,14 @@ single_whois(client::client &source, client::client *target_p, int operspy)
 	}
 	else
 	{
-		if (IsDynSpoof(target_p) && (IsOper(&source) || &source == target_p))
+		if (is_dyn_spoof(*target_p) && (IsOper(&source) || &source == target_p))
 		{
-			ClearDynSpoof(target_p);
+			clear_dyn_spoof(*target_p);
 			sendto_one_numeric(&source, RPL_WHOISHOST,
 					   form_str(RPL_WHOISHOST),
 					   target_p->name, target_p->orighost,
 					   show_ip(&source, target_p) && !EmptyString(target_p->sockhost) && strcmp(target_p->sockhost, "0")? target_p->sockhost : "255.255.255.255");
-			SetDynSpoof(target_p);
+			set_dyn_spoof(*target_p);
 		}
 		else if(ConfigFileEntry.use_whois_actually && show_ip(&source, target_p) &&
 		   !EmptyString(target_p->sockhost) && strcmp(target_p->sockhost, "0"))
@@ -391,7 +391,7 @@ single_whois(client::client &source, client::client *target_p, int operspy)
 	/* it is important that these are called *before* RPL_ENDOFWHOIS is
 	 * sent, services compatibility code depends on it. --anfl
 	 */
-	if(MyClient(&source))
+	if(my(source))
 		call_hook(doing_whois_hook, &hdata);
 	else
 		call_hook(doing_whois_global_hook, &hdata);

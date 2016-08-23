@@ -100,7 +100,7 @@ static void safelist_check_cliexit(hook_data_client_exit * hdata)
 	/* Cancel the safelist request if we are disconnecting
 	 * from the server. That way it doesn't core. :P --nenolod
 	 */
-	if (MyClient(hdata->target) && hdata->target->localClient->safelist_data != NULL)
+	if (my(*hdata->target) && hdata->target->localClient->safelist_data != NULL)
 		safelist_client_release(*hdata->target);
 }
 
@@ -323,7 +323,7 @@ static bool safelist_sendq_exceeded(client::client &client)
  */
 static void safelist_client_instantiate(client::client &client, struct ListClient *params)
 {
-	s_assert(MyClient(&client));
+	s_assert(my(client));
 	s_assert(params != NULL);
 
 	client.localClient->safelist_data = params;
@@ -347,10 +347,10 @@ static void safelist_client_instantiate(client::client &client, struct ListClien
  */
 static void safelist_client_release(client::client &client)
 {
-	if(!MyClient(&client))
+	if(!my(client))
 		return;
 
-	s_assert(MyClient(&client));
+	s_assert(my(client));
 
 	rb_dlinkFindDestroy(&client, &safelisting_clients);
 

@@ -59,7 +59,7 @@ mo_connect(struct MsgBuf *msgbuf_p, client::client &client, client::client &sour
 
 	/* always privileged with handlers */
 
-	if(MyConnect(&source) && !IsOperRemote(&source) && parc > 3)
+	if(my_connect(source) && !IsOperRemote(&source) && parc > 3)
 	{
 		sendto_one(&source, form_str(ERR_NOPRIVS),
 			   me.name, source.name, "remote");

@@ -47,7 +47,7 @@ namespace ircd {
 int ratelimit_client(client::client *client_p, unsigned int penalty)
 {
 	s_assert(client_p);
-	s_assert(MyClient(client_p));
+	s_assert(my(*client_p));
 
 	if (!client_p->localClient->ratelimit)
 	{
@@ -95,7 +95,7 @@ int ratelimit_client(client::client *client_p, unsigned int penalty)
 int ratelimit_client_who(client::client *client_p, unsigned int penalty)
 {
 	s_assert(client_p);
-	s_assert(MyClient(client_p));
+	s_assert(my(*client_p));
 
 	if (client_p->localClient->join_who_credits)
 	{
@@ -123,7 +123,7 @@ int ratelimit_client_who(client::client *client_p, unsigned int penalty)
 void credit_client_join(client::client *client_p)
 {
 	s_assert(client_p);
-	s_assert(MyClient(client_p));
+	s_assert(my(*client_p));
 
 	++client_p->localClient->join_who_credits;
 }

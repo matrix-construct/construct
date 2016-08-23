@@ -194,7 +194,7 @@ authd_check(client::client *client_p, client::client *source_p)
 				if((stats = (BlacklistStats *)rb_dictionary_retrieve(bl_stats, blacklist)) != NULL)
 					stats->hits++;
 
-			if(IsExemptKline(source_p) || IsConfExemptDNSBL(aconf))
+			if(is_exempt_kline(*source_p) || IsConfExemptDNSBL(aconf))
 			{
 				sendto_one_notice(source_p, ":*** Your IP address %s is listed in %s, but you are exempt",
 						source_p->sockhost, blacklist);
@@ -204,7 +204,7 @@ authd_check(client::client *client_p, client::client *source_p)
 			sendto_realops_snomask(SNO_REJ, L_NETWIDE,
 				"Listed on DNSBL %s: %s (%s@%s) [%s] [%s]",
 				blacklist, source_p->name, source_p->username, source_p->host,
-				IsIPSpoof(source_p) ? "255.255.255.255" : source_p->sockhost,
+				is_ip_spoof(*source_p) ? "255.255.255.255" : source_p->sockhost,
 				source_p->info);
 
 			sendto_one(source_p, form_str(ERR_YOUREBANNEDCREEP),
@@ -234,7 +234,7 @@ authd_check(client::client *client_p, client::client *source_p)
 			/* Terminate the proxy type */
 			*(port++) = '\0';
 
-			if(IsExemptKline(source_p) || IsConfExemptProxy(aconf))
+			if(is_exempt_kline(*source_p) || IsConfExemptProxy(aconf))
 			{
 				sendto_one_notice(source_p,
 					":*** Your IP address %s has been detected as an open proxy (type %s, port %s), but you are exempt",
@@ -246,7 +246,7 @@ authd_check(client::client *client_p, client::client *source_p)
 				proxy, port,
 				source_p->name,
 				source_p->username, source_p->host,
-				IsIPSpoof(source_p) ? "255.255.255.255" : source_p->sockhost,
+				is_ip_spoof(*source_p) ? "255.255.255.255" : source_p->sockhost,
 				source_p->info);
 
 			sendto_one(source_p, form_str(ERR_YOUREBANNEDCREEP),
@@ -261,7 +261,7 @@ authd_check(client::client *client_p, client::client *source_p)
 		}
 		break;
 	default:	/* Unknown, but handle the case properly */
-		if(IsExemptKline(source_p))
+		if(is_exempt_kline(*source_p))
 		{
 			sendto_one_notice(source_p,
 				":*** You were rejected, but you are exempt (reason: %s)",
@@ -271,7 +271,7 @@ authd_check(client::client *client_p, client::client *source_p)
 		sendto_realops_snomask(SNO_REJ, L_NETWIDE,
 			"Rejected by authentication system (reason %s): %s (%s@%s) [%s] [%s]",
 			reason, source_p->name, source_p->username, source_p->host,
-			IsIPSpoof(source_p) ? "255.255.255.255" : source_p->sockhost,
+			is_ip_spoof(*source_p) ? "255.255.255.255" : source_p->sockhost,
 			source_p->info);
 
 		sendto_one(source_p, form_str(ERR_YOUREBANNEDCREEP),
@@ -326,32 +326,32 @@ register_local_user(client::client *client_p, client::client *source_p)
 	int status;
 
 	s_assert(NULL != source_p);
-	s_assert(MyConnect(source_p));
+	s_assert(my_connect(*source_p));
 
 	if(source_p == NULL)
 		return -1;
 
-	if(IsAnyDead(source_p))
+	if(is_any_dead(*source_p))
 		return -1;
 
 	if(ConfigFileEntry.ping_cookie)
 	{
-		if(!(source_p->flags & FLAGS_PINGSENT) && source_p->localClient->random_ping == 0)
+		if(!(source_p->flags & client::flags::PINGSENT) && source_p->localClient->random_ping == 0)
 		{
 			source_p->localClient->random_ping = (uint32_t)(((rand() * rand()) << 1) | 1);
 			sendto_one(source_p, "PING :%08X",
 				   (unsigned int) source_p->localClient->random_ping);
-			source_p->flags |= FLAGS_PINGSENT;
+			source_p->flags |= client::flags::PINGSENT;
 			return -1;
 		}
-		if(!(source_p->flags & FLAGS_PING_COOKIE))
+		if(!(source_p->flags & client::flags::PING_COOKIE))
 		{
 			return -1;
 		}
 	}
 
 	/* hasnt finished client cap negotiation */
-	if(source_p->flags & FLAGS_CLICAP)
+	if(source_p->flags & client::flags::CLICAP)
 		return -1;
 
 	/* Waiting on authd */
@@ -361,7 +361,7 @@ register_local_user(client::client *client_p, client::client *source_p)
 	client_p->localClient->last = rb_current_time();
 
 	/* XXX - fixme. we shouldnt have to build a users buffer twice.. */
-	if(!IsGotId(source_p) && (strchr(source_p->username, '[') != NULL))
+	if(!is_got_id(*source_p) && (strchr(source_p->username, '[') != NULL))
 	{
 		const char *p;
 		int i = 0;
@@ -419,7 +419,7 @@ register_local_user(client::client *client_p, client::client *source_p)
 		return (CLIENT_EXITED);
 	}
 
-	if(!IsGotId(source_p))
+	if(!is_got_id(*source_p))
 	{
 		const char *p;
 		int i = 0;
@@ -513,7 +513,7 @@ register_local_user(client::client *client_p, client::client *source_p)
 	}
 
 	/* kline exemption extends to xline too */
-	if(!IsExemptKline(source_p) &&
+	if(!is_exempt_kline(*source_p) &&
 	   (xconf = find_xline(source_p->info, 1)) != NULL)
 	{
 		ServerStats.is_ref++;
@@ -553,7 +553,7 @@ register_local_user(client::client *client_p, client::client *source_p)
 	{
 		rb_strlcpy(source_p->host, source_p->preClient->spoofhost, HOSTLEN + 1);
 		if (irccmp(source_p->host, source_p->orighost))
-			SetDynSpoof(source_p);
+			set_dyn_spoof(*source_p);
 	}
 
 	source_p->umodes |= ConfigFileEntry.default_umodes & ~ConfigFileEntry.oper_only_umodes & ~orphaned_umodes;
@@ -562,7 +562,7 @@ register_local_user(client::client *client_p, client::client *source_p)
 
 	/* If they have died in send_* or were thrown out by the
 	 * new_local_user hook don't do anything. */
-	if(IsAnyDead(source_p))
+	if(is_any_dead(*source_p))
 		return CLIENT_EXITED;
 
 	/* To avoid inconsistencies, do not abort the registration
@@ -602,9 +602,9 @@ register_local_user(client::client *client_p, client::client *source_p)
 	if (source_p->umodes & UMODE_INVISIBLE)
 		Count.invisi++;
 
-	s_assert(!IsClient(source_p));
+	s_assert(!is_client(*source_p));
 	rb_dlinkMoveNode(&source_p->localClient->tnode, &unknown_list, &lclient_list);
-	SetClient(source_p);
+	set_client(*source_p);
 
 	source_p->servptr = &me;
 	source_p->lnode = users(serv(*source_p)).emplace(end(users(serv(*source_p))), source_p);
@@ -627,9 +627,9 @@ register_local_user(client::client *client_p, client::client *source_p)
 
 	/* they get a reduced limit */
 	if(find_tgchange(source_p->sockhost))
-		source_p->localClient->targets_free = TGCHANGE_INITIAL_LOW;
+		source_p->localClient->targets_free = uint(client::tgchange::INITIAL_LOW);
 	else
-		source_p->localClient->targets_free = TGCHANGE_INITIAL;
+		source_p->localClient->targets_free = uint(client::tgchange::INITIAL);
 
 	monitor_signon(source_p);
 	user_welcome(source_p);
@@ -658,7 +658,7 @@ introduce_client(client::client *client_p, client::client *source_p, const char 
 	hook_data_umode_changed hdata;
 	hook_data_client hdata2;
 
-	if(MyClient(source_p))
+	if(my(*source_p))
 		send_umode(source_p, source_p, 0, ubuf);
 	else
 		send_umode(NULL, source_p, 0, ubuf);
@@ -678,9 +678,9 @@ introduce_client(client::client *client_p, client::client *source_p, const char 
 				source_p->hopcount + 1,
 				(long) source_p->tsinfo, ubuf,
 				source_p->username, source_p->host,
-				IsIPSpoof(source_p) ? "0" : source_p->sockhost,
+				is_ip_spoof(*source_p) ? "0" : source_p->sockhost,
 				source_p->id,
-				IsDynSpoof(source_p) ? source_p->orighost : "*",
+				is_dyn_spoof(*source_p) ? source_p->orighost : "*",
 				suser(user(*source_p)).empty()? "*" : suser(user(*source_p)).c_str(),
 				source_p->info);
 
@@ -690,7 +690,7 @@ introduce_client(client::client *client_p, client::client *source_p, const char 
 		      source_p->hopcount + 1,
 		      (long) source_p->tsinfo, ubuf,
 		      source_p->username, source_p->host,
-		      IsIPSpoof(source_p) ? "0" : source_p->sockhost,
+		      is_ip_spoof(*source_p) ? "0" : source_p->sockhost,
 		      source_p->id, source_p->info);
 
 	if(!EmptyString(source_p->certfp))
@@ -698,7 +698,7 @@ introduce_client(client::client *client_p, client::client *source_p, const char 
 				":%s ENCAP * CERTFP :%s",
 				use_id(source_p), source_p->certfp);
 
-	if (IsDynSpoof(source_p))
+	if (is_dyn_spoof(*source_p))
 	{
 		sendto_server(client_p, NULL, CAP_TS6, use_euid ? CAP_EUID : NOCAPS, ":%s ENCAP * REALHOST %s",
 				use_id(source_p), source_p->orighost);
@@ -710,7 +710,7 @@ introduce_client(client::client *client_p, client::client *source_p, const char 
 				use_id(source_p), suser(user(*source_p)).c_str());
 	}
 
-	if(MyConnect(source_p) && source_p->localClient->passwd)
+	if(my_connect(*source_p) && source_p->localClient->passwd)
 	{
 		if (!EmptyString(ConfigFileEntry.identifyservice) &&
 				!EmptyString(ConfigFileEntry.identifycommand))
@@ -882,7 +882,7 @@ report_and_set_user_flags(client::client *source_p, struct ConfItem *aconf)
 	/* If this user is in the exception class, Set it "E lined" */
 	if(IsConfExemptKline(aconf))
 	{
-		SetExemptKline(source_p);
+		set_exempt_kline(*source_p);
 		sendto_one_notice(source_p, ":*** You are exempt from K/X lines");
 	}
 
@@ -899,37 +899,37 @@ report_and_set_user_flags(client::client *source_p, struct ConfItem *aconf)
 
 	if(IsConfExemptFlood(aconf))
 	{
-		SetExemptFlood(source_p);
+		set_exempt_flood(*source_p);
 		sendto_one_notice(source_p, ":*** You are exempt from flood limits");
 	}
 
 	if(IsConfExemptSpambot(aconf))
 	{
-		SetExemptSpambot(source_p);
+		set_exempt_spambot(*source_p);
 		sendto_one_notice(source_p, ":*** You are exempt from spambot checks");
 	}
 
 	if(IsConfExemptJupe(aconf))
 	{
-		SetExemptJupe(source_p);
+		set_exempt_jupe(*source_p);
 		sendto_one_notice(source_p, ":*** You are exempt from juped channel warnings");
 	}
 
 	if(IsConfExemptResv(aconf))
 	{
-		SetExemptResv(source_p);
+		set_exempt_resv(*source_p);
 		sendto_one_notice(source_p, ":*** You are exempt from resvs");
 	}
 
 	if(IsConfExemptShide(aconf))
 	{
-		SetExemptShide(source_p);
+		set_exempt_shide(*source_p);
 		sendto_one_notice(source_p, ":*** You are exempt from serverhiding");
 	}
 
 	if(IsConfExtendChans(aconf))
 	{
-		SetExtendChans(source_p);
+		set_extend_chans(*source_p);
 		sendto_one_notice(source_p, ":*** You are exempt from normal channel limits");
 	}
 }
@@ -949,7 +949,7 @@ show_other_user_mode(client::client *source_p, client::client *target_p)
 			*m++ = (char) i;
 	*m = '\0';
 
-	if (MyConnect(target_p) && target_p->snomask != 0)
+	if (my_connect(*target_p) && target_p->snomask != 0)
 		sendto_one_notice(source_p, ":Modes for %s are %s %s",
 				target_p->name, buf,
 				construct_snobuf(target_p->snomask));
@@ -988,9 +988,9 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 		return 0;
 	}
 
-	if((target_p = MyClient(source_p) ? client::find_named_person(parv[1]) : client::find_person(parv[1])) == NULL)
+	if((target_p = my(*source_p) ? client::find_named_person(parv[1]) : client::find_person(parv[1])) == NULL)
 	{
-		if(MyConnect(source_p))
+		if(my_connect(*source_p))
 			sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
 					   form_str(ERR_NOSUCHCHANNEL), parv[1]);
 		return 0;
@@ -1000,7 +1000,7 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 	 * put them back using new sendto() funcs
 	 */
 
-	if(IsServer(source_p))
+	if(is_server(*source_p))
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ADMIN,
 				     "*** Mode for User %s from %s", parv[1], source_p->name);
@@ -1055,7 +1055,7 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 		case 'o':
 			if(what == MODE_ADD)
 			{
-				if(IsServer(client_p) && !IsOper(source_p))
+				if(is_server(*client_p) && !IsOper(source_p))
 				{
 					++Count.oper;
 					SetOper(source_p);
@@ -1075,7 +1075,7 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 
 				Count.oper--;
 
-				if(MyConnect(source_p))
+				if(my_connect(*source_p))
 				{
 					source_p->umodes &= ~ConfigFileEntry.oper_only_umodes;
 					if (!(source_p->umodes & UMODE_SERVNOTICE) && source_p->snomask != 0)
@@ -1111,7 +1111,7 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 			break;
 
 		case 's':
-			if (MyConnect(source_p))
+			if (my_connect(*source_p))
 			{
 				if(!IsOper(source_p)
 						&& (ConfigFileEntry.oper_only_umodes & UMODE_SERVNOTICE))
@@ -1138,7 +1138,7 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 			}
 			/* FALLTHROUGH */
 		default:
-			if (MyConnect(source_p) && *pm == 'Q' && !ConfigChannel.use_forward)
+			if (my_connect(*source_p) && *pm == 'Q' && !ConfigChannel.use_forward)
 			{
 				badflag = true;
 				break;
@@ -1146,7 +1146,7 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 
 			if((flag = user_modes[(unsigned char) *pm]))
 			{
-				if(MyConnect(source_p)
+				if(my_connect(*source_p)
 						&& ((!IsOper(source_p)
 							&& (ConfigFileEntry.oper_only_umodes & flag))
 						|| (orphaned_umodes & flag)))
@@ -1164,7 +1164,7 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 			}
 			else
 			{
-				if(MyConnect(source_p))
+				if(my_connect(*source_p))
 					badflag = true;
 			}
 			break;
@@ -1173,19 +1173,19 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 	if(badflag)
 		sendto_one(source_p, form_str(ERR_UMODEUNKNOWNFLAG), me.name, source_p->name);
 
-	if(MyClient(source_p) && (source_p->snomask & SNO_NCHANGE) && !IsOperN(source_p))
+	if(my(*source_p) && (source_p->snomask & SNO_NCHANGE) && !IsOperN(source_p))
 	{
 		sendto_one_notice(source_p, ":*** You need oper and nick_changes flag for +s +n");
 		source_p->snomask &= ~SNO_NCHANGE;	/* only tcm's really need this */
 	}
 
-	if(MyClient(source_p) && (source_p->umodes & UMODE_OPERWALL) && !IsOperOperwall(source_p))
+	if(my(*source_p) && (source_p->umodes & UMODE_OPERWALL) && !IsOperOperwall(source_p))
 	{
 		sendto_one_notice(source_p, ":*** You need oper and operwall flag for +z");
 		source_p->umodes &= ~UMODE_OPERWALL;
 	}
 
-	if(MyConnect(source_p) && (source_p->umodes & UMODE_ADMIN) &&
+	if(my_connect(*source_p) && (source_p->umodes & UMODE_ADMIN) &&
 	   (!IsOperAdmin(source_p) || IsOperHiddenAdmin(source_p)))
 	{
 		sendto_one_notice(source_p, ":*** You need oper and admin flag for +a");
@@ -1198,16 +1198,16 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 	hdata.oldsnomask = setsnomask;
 	call_hook(h_umode_changed, &hdata);
 
-	if(!(setflags & UMODE_INVISIBLE) && IsInvisible(source_p))
+	if(!(setflags & UMODE_INVISIBLE) && is_invisible(*source_p))
 		++Count.invisi;
-	if((setflags & UMODE_INVISIBLE) && !IsInvisible(source_p))
+	if((setflags & UMODE_INVISIBLE) && !is_invisible(*source_p))
 		--Count.invisi;
 	/*
 	 * compare new flags with old flags and send string which
 	 * will cause servers to update correctly.
 	 */
 	send_umode_out(client_p, source_p, setflags);
-	if (showsnomask && MyConnect(source_p))
+	if (showsnomask && my_connect(*source_p))
 		sendto_one_numeric(source_p, RPL_SNOMASK, form_str(RPL_SNOMASK),
 			construct_snobuf(source_p->snomask));
 
@@ -1294,7 +1294,7 @@ send_umode_out(client::client *client_p, client::client *source_p, int old)
 		}
 	}
 
-	if(client_p && MyClient(client_p))
+	if(client_p && my(*client_p))
 		send_umode(client_p, source_p, old, buf);
 }
 
@@ -1373,8 +1373,8 @@ oper_up(client::client *source_p, struct oper_conf *oper_p)
 
 	Count.oper++;
 
-	SetExtendChans(source_p);
-	SetExemptKline(source_p);
+	set_extend_chans(*source_p);
+	set_exempt_kline(*source_p);
 
 	source_p->flags |= oper_p->flags;
 	source_p->localClient->opername = rb_strdup(oper_p->name);
@@ -1397,9 +1397,9 @@ oper_up(client::client *source_p, struct oper_conf *oper_p)
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "%s (%s!%s@%s) is now an operator", oper_p->name, source_p->name,
 			     source_p->username, source_p->host);
-	if(!(old & UMODE_INVISIBLE) && IsInvisible(source_p))
+	if(!(old & UMODE_INVISIBLE) && is_invisible(*source_p))
 		++Count.invisi;
-	if((old & UMODE_INVISIBLE) && !IsInvisible(source_p))
+	if((old & UMODE_INVISIBLE) && !is_invisible(*source_p))
 		--Count.invisi;
 	send_umode_out(source_p, source_p, old);
 	sendto_one_numeric(source_p, RPL_SNOMASK, form_str(RPL_SNOMASK),
@@ -1542,7 +1542,7 @@ change_nick_user_host(client::client *target_p,	const char *nick, const char *us
 						    ":%s!%s@%s CHGHOST %s %s",
 						    target_p->name, target_p->username, target_p->host, username, host);
 
-		if(MyClient(target_p) && changed_case)
+		if(my(*target_p) && changed_case)
 			sendto_one(target_p, ":%s!%s@%s NICK %s",
 					target_p->name, username, host, nick);
 
@@ -1553,7 +1553,7 @@ change_nick_user_host(client::client *target_p,	const char *nick, const char *us
 		sendto_common_channels_local(target_p, NOCAPS, NOCAPS, ":%s!%s@%s NICK :%s",
 				target_p->name, username, host, nick);
 
-		if(MyConnect(target_p))
+		if(my_connect(*target_p))
 			sendto_realops_snomask(SNO_NCHANGE, L_ALL,
 					"Nick change: From %s to %s [%s@%s]",
 					target_p->name, nick,

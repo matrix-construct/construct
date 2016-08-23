@@ -265,7 +265,7 @@ void
 report_operspy(client::client *source_p, const char *token, const char *arg)
 {
 	/* if its not my client its already propagated */
-	if(MyClient(source_p))
+	if(my(*source_p))
 		sendto_match_servs(source_p, "*", CAP_ENCAP, NOCAPS,
 				   "ENCAP * OPERSPY %s %s",
 				   token, arg ? arg : "");

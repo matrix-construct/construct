@@ -123,7 +123,7 @@ m_mode(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 		msptr = get(chptr->members, source, std::nothrow);
 
 		/* Finish the flood grace period... */
-		if(MyClient(&source) && !IsFloodDone(&source))
+		if(my(source) && !is_flood_done(source))
 		{
 			if(!((parc == 3) && (parv[2][0] == 'b' || parv[2][0] == 'q') && (parv[2][1] == '\0')))
 				flood_endgrace(&source);
@@ -176,7 +176,7 @@ ms_tmode(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 	if(atol(parv[1]) > chptr->channelts)
 		return;
 
-	if(IsServer(&source))
+	if(is_server(source))
 	{
 		set_channel_mode(&client, &source, chptr, NULL, parc - 3, parv + 3);
 	}
@@ -213,7 +213,7 @@ ms_mlock(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 	if(atol(parv[1]) > chptr->channelts)
 		return;
 
-	if(IsServer(&source))
+	if(is_server(source))
 		set_channel_mlock(&client, &source, chptr, parv[3], true);
 }
 
@@ -315,7 +315,7 @@ ms_bmask(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 	s = LOCAL_COPY(parv[4]);
 
 	/* Hide connecting server on netburst -- jilles */
-	if (ConfigServerHide.flatten_links && !HasSentEob(&source))
+	if (ConfigServerHide.flatten_links && !has_sent_eob(source))
 		fakesource = &me;
 	else
 		fakesource = &source;

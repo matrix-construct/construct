@@ -68,7 +68,7 @@ m_knock(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	chan::chan *chptr;
 	char *p, *name;
 
-	if(MyClient(&source) && ConfigChannel.use_knock == 0)
+	if(my(source) && ConfigChannel.use_knock == 0)
 	{
 		sendto_one(&source, form_str(ERR_KNOCKDISABLED),
 			   me.name, source.name);
@@ -90,7 +90,7 @@ m_knock(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 
 	if(is_member(chptr, &source))
 	{
-		if(MyClient(&source))
+		if(my(source))
 			sendto_one(&source, form_str(ERR_KNOCKONCHAN),
 				   me.name, source.name, name);
 		return;
@@ -114,7 +114,7 @@ m_knock(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	}
 
 
-	if(MyClient(&source))
+	if(my(source))
 	{
 		// don't allow a knock if the user is banned
 		if (check(*chptr, chan::mode::BAN, source) ||

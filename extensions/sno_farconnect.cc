@@ -47,7 +47,7 @@ static void
 h_gcn_new_remote_user(client::client *source_p)
 {
 
-	if (!HasSentEob(source_p->servptr))
+	if (!has_sent_eob(*source_p->servptr))
 		return;
 	sendto_realops_snomask_from(snomask_modes['F'], L_ALL, source_p->servptr,
 			"Client connecting: %s (%s@%s) [%s] {%s} [%s]",
@@ -63,9 +63,9 @@ h_gcn_client_exit(hook_data_client_exit *hdata)
 
 	source_p = hdata->target;
 
-	if (MyConnect(source_p) || !IsClient(source_p))
+	if (my_connect(*source_p) || !is_client(*source_p))
 		return;
-	if (!HasSentEob(source_p->servptr))
+	if (!has_sent_eob(*source_p->servptr))
 		return;
 	sendto_realops_snomask_from(snomask_modes['F'], L_ALL, source_p->servptr,
 			     "Client exiting: %s (%s@%s) [%s] [%s]",

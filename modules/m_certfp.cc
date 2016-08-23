@@ -50,7 +50,7 @@ DECLARE_MODULE_AV2(certfp, NULL, NULL, certfp_clist, NULL, NULL, NULL, NULL, cer
 static void
 me_certfp(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if (!IsPerson(&source))
+	if (!is_person(source))
 		return;
 
 	rb_free(source.certfp);

@@ -61,7 +61,7 @@ mo_squit(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 
 	if((found_squit = find_squit(client, source, parv[1])))
 	{
-		if(MyConnect(found_squit->target_p))
+		if(my_connect(*found_squit->target_p))
 		{
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					     "Received SQUIT %s from %s (%s)",
@@ -105,9 +105,9 @@ ms_squit(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 		if((target_p = find_server(NULL, parv[1])) == NULL)
 			return;
 
-		if(IsMe(target_p))
+		if(is_me(*target_p))
 			target_p = &client;
-		if(!IsServer(target_p))
+		if(!is_server(*target_p))
 			return;
 	}
 
@@ -120,7 +120,7 @@ ms_squit(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 	/*
 	 **  Notify all opers, if my local link is remotely squitted
 	 */
-	else if(MyConnect(target_p))
+	else if(my_connect(*target_p))
 	{
 		sendto_wallops_flags(UMODE_WALLOP, &me,
 				     "Remote SQUIT %s from %s (%s)",
@@ -165,7 +165,7 @@ find_squit(client::client &client, client::client &source, const char *server)
 	RB_DLINK_FOREACH(ptr, global_serv_list.head)
 	{
 		p = (client::client *)ptr->data;
-		if(IsServer(p) || IsMe(p))
+		if(is_server(*p) || is_me(*p))
 		{
 			if(match(server, p->name))
 			{
@@ -181,11 +181,11 @@ find_squit(client::client &client, client::client &source, const char *server)
 	found_squit.target_p = target_p;
 	found_squit.server_name = server;
 
-	if(IsMe(target_p))
+	if(is_me(*target_p))
 	{
-		if(IsClient(&client))
+		if(is_client(client))
 		{
-			if(MyClient(&client))
+			if(my(client))
 				sendto_one_notice(&source, ":You are trying to squit me.");
 
 			return NULL;

@@ -176,7 +176,7 @@ m_message(enum message_type msgtype, struct MsgBuf *msgbuf_p,
 	/* Finish the flood grace period if theyre not messaging themselves
 	 * as some clients (ircN) do this as a "lag check"
 	 */
-	if(MyClient(&source) && !IsFloodDone(&source) && irccmp(source.name, parv[1]))
+	if(my(source) && !is_flood_done(source) && irccmp(source.name, parv[1]))
 		flood_endgrace(&source);
 
 	if(build_target_list(msgtype, client, source, parv[1], parv[2]) < 0)
@@ -253,7 +253,7 @@ build_target_list(enum message_type msgtype, client::client &client,
 		if(rfc1459::is_chan_prefix(*nick))
 		{
 			/* ignore send of local channel to a server (should not happen) */
-			if(IsServer(&client) && *nick == '&')
+			if(is_server(client) && *nick == '&')
 				continue;
 
 			if((chptr = chan::get(nick, std::nothrow)) != NULL)
@@ -279,7 +279,7 @@ build_target_list(enum message_type msgtype, client::client &client,
 			continue;
 		}
 
-		if(MyClient(&source))
+		if(my(source))
 			target_p = client::find_named_person(nick);
 		else
 			target_p = client::find_person(nick);
@@ -338,7 +338,7 @@ build_target_list(enum message_type msgtype, client::client &client,
 
 				msptr = get(chptr->members, source, std::nothrow);
 
-				if(!IsServer(&source) && !IsService(&source) && !is_chanop(msptr) && !is_voiced(msptr))
+				if(!is_server(source) && !IsService(&source) && !is_chanop(msptr) && !is_voiced(msptr))
 				{
 					sendto_one(&source, form_str(ERR_CHANOPRIVSNEEDED),
 						   get_id(&me, &source),
@@ -369,7 +369,7 @@ build_target_list(enum message_type msgtype, client::client &client,
 			continue;
 		}
 
-		if(IsServer(&client) && *nick == '=' && nick[1] == '#')
+		if(is_server(client) && *nick == '=' && nick[1] == '#')
 		{
 			nick++;
 			if((chptr = chan::get(nick, std::nothrow)) != NULL)
@@ -407,7 +407,7 @@ build_target_list(enum message_type msgtype, client::client &client,
 			/* dont give this numeric when source is local,
 			 * because its misleading --anfl
 			 */
-			if(!MyClient(&source) && rfc1459::is_digit(*nick))
+			if(!my(source) && rfc1459::is_digit(*nick))
 				sendto_one(&source, ":%s %d %s * :Target left IRC. "
 					   "Failed to deliver: [%.20s]",
 					   get_id(&me, &source), ERR_NOSUCHNICK,
@@ -461,7 +461,7 @@ msg_channel(enum message_type msgtype,
 	int result;
 	hook_data_privmsg_channel hdata;
 
-	if(MyClient(&source))
+	if(my(source))
 	{
 		/* idle time shouldnt be reset by notices --fl */
 		if(msgtype != MESSAGE_TYPE_NOTICE)
@@ -511,7 +511,7 @@ msg_channel(enum message_type msgtype,
 	/* chanops and voiced can flood their own channel with impunity */
 	if((result = can_send(chptr, &source, NULL)))
 	{
-		if(result != chan::CAN_SEND_OPV && MyClient(&source) &&
+		if(result != chan::CAN_SEND_OPV && my(source) &&
 		   !IsOper(&source) &&
 		   !add_channel_target(&source, chptr))
 		{
@@ -534,7 +534,7 @@ msg_channel(enum message_type msgtype,
 	else if(chptr->mode.mode & chan::mode::OPMODERATE &&
 	        (!(chptr->mode.mode & chan::mode::NOPRIVMSGS) || is_member(chptr, &source)))
 	{
-		if(MyClient(&source) && !IsOper(&source) && !add_channel_target(&source, chptr))
+		if(my(source) && !IsOper(&source) && !add_channel_target(&source, chptr))
 		{
 			sendto_one(&source, form_str(ERR_TARGCHANGE),
 			           me.name,
@@ -645,7 +645,7 @@ msg_channel_flags(enum message_type msgtype, client::client &client,
 		c = '@';
 	}
 
-	if(MyClient(&source))
+	if(my(source))
 	{
 		/* idletime shouldnt be reset by notice --fl */
 		if(msgtype != MESSAGE_TYPE_NOTICE)
@@ -718,7 +718,7 @@ msg_client(enum message_type msgtype,
 	int do_floodcount = 0;
 	hook_data_privmsg_user hdata;
 
-	if(MyClient(&source))
+	if(my(source))
 	{
 		/*
 		 * XXX: Controversial? Allow target users to send replies
@@ -787,11 +787,11 @@ msg_client(enum message_type msgtype,
 		return;
 	}
 
-	if(MyConnect(&source) && (msgtype != MESSAGE_TYPE_NOTICE) && target_p->user && away(user(*target_p)).size())
+	if(my_connect(source) && (msgtype != MESSAGE_TYPE_NOTICE) && target_p->user && away(user(*target_p)).size())
 		sendto_one_numeric(&source, RPL_AWAY, form_str(RPL_AWAY),
 				   target_p->name, away(user(*target_p)).c_str());
 
-	if(MyClient(target_p))
+	if(my(*target_p))
 	{
 		hdata.msgtype = msgtype;
 		hdata.source_p = &source;
@@ -817,7 +817,7 @@ msg_client(enum message_type msgtype,
 		}
 
 		/* XXX Controversial? allow opers always to send through a +g */
-		if(!IsServer(&source) && (IsSetCallerId(target_p) ||
+		if(!is_server(source) && (IsSetCallerId(target_p) ||
 					(IsSetRegOnlyMsg(target_p) && suser(user(source)).empty())))
 		{
 			/* Here is the anti-flood bot/spambot code -db */
@@ -894,7 +894,7 @@ flood_attack_client(enum message_type msgtype, client::client &source, client::c
 	 * and msg user@server.
 	 * -- jilles
 	 */
-	if(GlobalSetOptions.floodcount && IsClient(&source) && &source != target_p && !IsService(target_p))
+	if(GlobalSetOptions.floodcount && is_client(source) && &source != target_p && !IsService(target_p))
 	{
 		if((target_p->first_received_message_time + 1) < rb_current_time())
 		{
@@ -922,7 +922,7 @@ flood_attack_client(enum message_type msgtype, client::client &source, client::c
 				/* add a bit of penalty */
 				target_p->received_number_of_privmsgs += 2;
 			}
-			if(MyClient(&source) && (msgtype != MESSAGE_TYPE_NOTICE))
+			if(my(source) && (msgtype != MESSAGE_TYPE_NOTICE))
 				sendto_one(&source,
 					   ":%s NOTICE %s :*** Message to %s throttled due to flooding",
 					   me.name, source.name, target_p->name);
@@ -983,7 +983,7 @@ handle_special(enum message_type msgtype, client::client &client,
 		}
 
 		/* somewhere else.. */
-		if(!IsMe(target_p))
+		if(!is_me(*target_p))
 		{
 			sendto_one(target_p, ":%s %s %s :%s",
 				   get_id(&source, target_p), cmdname[msgtype], nick, text);
@@ -1027,7 +1027,7 @@ handle_special(enum message_type msgtype, client::client &client,
 			return;
 		}
 
-		if(MyClient(&source) && !IsOperMassNotice(&source))
+		if(my(source) && !IsOperMassNotice(&source))
 		{
 			sendto_one(&source, form_str(ERR_NOPRIVS),
 				   me.name, source.name, "mass_notice");
@@ -1050,7 +1050,7 @@ handle_special(enum message_type msgtype, client::client &client,
 			return;
 		}
 
-		sendto_match_butone(IsServer(&client) ? &client : NULL, &source,
+		sendto_match_butone(is_server(client) ? &client : NULL, &source,
 				    nick + 1,
 				    (*nick == '#') ? MATCH_HOST : MATCH_SERVER,
 				    "%s $%s :%s", cmdname[msgtype], nick, text);

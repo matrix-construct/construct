@@ -34,6 +34,36 @@ namespace ircd
 	using std::get;
 }
 
+// Temp fwd decl scaffold
+namespace ircd
+{
+	namespace client
+	{
+		struct client;
+		struct LocalUser;
+		struct PreClient;
+		struct ListClient;
+	}
+
+	namespace chan
+	{
+		struct chan;
+		struct membership;
+	}
+
+	struct ConfItem;
+	struct Whowas;
+	struct DNSReply;
+	struct Listener;
+	struct Blacklist;
+	struct PrivilegeSet;
+	struct _ssl_ctl;
+	struct ev_ctl;
+	struct ws_ctl;
+	struct scache_entry;
+	struct server_conf;
+}
+
 #include "util.h"
 #include "defaults.h"
 #include "exception.h"
@@ -47,6 +77,8 @@ namespace ircd
 
 #include "match.h"
 
+#include "msgbuf.h"
+#include "msg.h"
 #include "client.h"
 
 #include "chmode.h"
@@ -70,8 +102,6 @@ namespace ircd
 #include "info.h"
 #include "modules.h"
 #include "monitor.h"
-#include "msgbuf.h"
-#include "msg.h"
 #include "newconf.h"
 #include "operhash.h"
 #include "packet.h"

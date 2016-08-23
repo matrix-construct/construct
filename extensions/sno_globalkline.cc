@@ -28,7 +28,7 @@ h_gla_client_exit(hook_data_client_exit *hdata)
 
 	source_p = hdata->target;
 
-	if (MyConnect(source_p) || !IsClient(source_p))
+	if (my_connect(*source_p) || !is_client(*source_p))
 		return;
 	if (!strcmp(hdata->comment, "Bad user info"))
 	{

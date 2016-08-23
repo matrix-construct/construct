@@ -705,7 +705,7 @@ charybdis_main(int argc, char * const argv[])
 
 	me.from = &me;
 	me.servptr = &me;
-	SetMe(&me);
+	set_me(me);
 	make_serv(me);
 	add_to_client_hash(me.name, &me);
 	add_to_id_hash(me.id, &me);

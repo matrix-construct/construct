@@ -264,7 +264,7 @@ me_hurt(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	 * arguments, just ignore this request - shit happens, and it's not worth
 	 * dropping a server over.
 	 */
-	if (parc < 4 || !IsPerson(&source))
+	if (parc < 4 || !is_person(source))
 		return;
 	if ((expire_time = atoi(parv[1])) < 1)
 		return;
@@ -309,7 +309,7 @@ mo_heal(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 					form_str(ERR_NOSUCHNICK), parv[1]);
 			return;
 		}
-		if (MyConnect(target_p))
+		if (my_connect(*target_p))
 			heal_nick(source, target_p);
 		else
 			sendto_one(target_p, ":%s ENCAP %s HEAL %s",
@@ -353,7 +353,7 @@ me_heal(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	if (client::clean_nick(parv[1], 0))
 	{
 		target_p = client::find_person(parv[1]);
-		if (target_p != NULL && MyConnect(target_p))
+		if (target_p != NULL && my_connect(*target_p))
 			heal_nick(source, target_p);
 	}
 	else if (strchr(parv[1], '.'))	/* host or mask to remove ban for */
@@ -431,13 +431,13 @@ client_exit_hook(hook_data_client_exit *data)
 static void
 new_local_user_hook(client::client *const source)
 {
-	if (IsAnyDead(source) || suser(user(*source)).size() || IsExemptKline(source))
+	if (is_any_dead(*source) || suser(user(*source)).size() || is_exempt_kline(*source))
 		return;
 
 	if (hurt_find(source->sockhost) || hurt_find(source->orighost))
 	{
-		source.localClient->target_last = rb_current_time() + 600;		/* don't ask --nenolod */
-		SetTGChange(source);
+		source->localClient->target_last = rb_current_time() + 600;		/* don't ask --nenolod */
+		set_tg_change(*source);
 		rb_dlinkAddAlloc(source, &hurt_state.hurt_clients);
 		sendto_one_notice(source, ":You are hurt. Please identify to services immediately, or use /stats p for assistance.");
 	}

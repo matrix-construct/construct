@@ -407,9 +407,9 @@ ssl_process_dead_fd(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 	if(client_p == NULL || client_p->localClient == NULL)
 		return;
 
-	if(IsAnyServer(client_p))
+	if(is_any_server(*client_p))
 	{
-		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) && !IsServer(client_p) ? L_NETWIDE : L_ALL, "ssld error for %s: %s", client_p->name, reason);
+		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) && !is_server(*client_p) ? L_NETWIDE : L_ALL, "ssld error for %s: %s", client_p->name, reason);
 		ilog(L_SERVER, "ssld error for %s: %s", log_client_name(client_p, SHOW_IP), reason);
 	}
 
@@ -427,12 +427,12 @@ ssl_process_dead_fd(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 		}
 	}
 
-	if(IsAnyServer(client_p) || IsRegistered(client_p))
+	if(is_any_server(*client_p) || is_registered(*client_p))
 	{
 		/* read any last moment ERROR, QUIT or the like -- jilles */
 		if (!strcmp(reason, "Remote host closed the connection"))
 			read_packet(client_p->localClient->F, client_p);
-		if (IsAnyDead(client_p))
+		if (is_any_dead(*client_p))
 			return;
 	}
 	exit_client(client_p, client_p, &me, reason);

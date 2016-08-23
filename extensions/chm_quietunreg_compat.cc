@@ -44,7 +44,7 @@ chm_quietunreg(client::client *source_p, chan::chan *chptr,
 	int newparn = 0;
 	const char *newparv[] = { "$~a" };
 
-	if (MyClient(source_p))
+	if (my(*source_p))
 		functor::ban(source_p, chptr, alevel, 1, &newparn, newparv, errors, dir, 'q', QUIET);
 	else
 		functor::nosuch(source_p, chptr, alevel, parc, parn, parv, errors, dir, c, type);

@@ -64,7 +64,7 @@ m_part(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 	name = rb_strtok_r(s, ",", &p);
 
 	/* Finish the flood grace period... */
-	if(MyClient(&source) && !IsFloodDone(&source))
+	if(my(source) && !is_flood_done(source))
 		flood_endgrace(&source);
 
 	while(name)
@@ -102,7 +102,7 @@ part_one_client(client::client &client, client::client &source, char *name, cons
 		return;
 	}
 
-	if(MyConnect(&source) && !IsOper(&source) && !IsExemptSpambot(&source))
+	if(my_connect(source) && !IsOper(&source) && !is_exempt_spambot(source))
 		chan::check_spambot_warning(&source, NULL);
 
 	/*
@@ -110,7 +110,7 @@ part_one_client(client::client &client, client::client &source, char *name, cons
 	 *  only allow /part reasons in -m chans
 	 */
 	if(!EmptyString(reason) &&
-		(!MyConnect(&source) ||
+		(!my_connect(source) ||
 		 (can_send_part(source, chptr, msptr) && do_message_hook(source, chptr, &reason))
 		)
 	  )

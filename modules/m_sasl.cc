@@ -174,7 +174,7 @@ m_authenticate(struct MsgBuf *msgbuf_p, client::client &client, client::client &
 						me.id, saslserv_p->servptr->name, source.id, saslserv_p->id,
 						parv[1]);
 
-		rb_strlcpy(source.localClient->sasl_agent, saslserv_p->id, IDLEN);
+		rb_strlcpy(source.localClient->sasl_agent, saslserv_p->id, client::IDLEN);
 	}
 	else
 		sendto_one(agent_p, ":%s ENCAP %s SASL %s %s C %s",
@@ -211,10 +211,10 @@ me_sasl(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 		return;
 
 	/* Reject if someone has already answered. */
-	if(*target_p->localClient->sasl_agent && strncmp(parv[1], target_p->localClient->sasl_agent, IDLEN))
+	if(*target_p->localClient->sasl_agent && strncmp(parv[1], target_p->localClient->sasl_agent, client::IDLEN))
 		return;
 	else if(!*target_p->localClient->sasl_agent)
-		rb_strlcpy(target_p->localClient->sasl_agent, parv[1], IDLEN);
+		rb_strlcpy(target_p->localClient->sasl_agent, parv[1], client::IDLEN);
 
 	if(*parv[3] == 'C')
 	{
@@ -274,7 +274,7 @@ abort_sasl(client::client *data)
 	data->localClient->sasl_out = data->localClient->sasl_complete = 0;
 	ServerStats.is_sbad++;
 
-	if(!IsClosing(data))
+	if(!is_closing(*data))
 		sendto_one(data, form_str(ERR_SASLABORTED), me.name, EmptyString(data->name) ? "*" : data->name);
 
 	if(*data->localClient->sasl_agent)

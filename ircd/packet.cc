@@ -36,10 +36,10 @@ parse_client_queued(client::client *client_p)
 	int dolen = 0;
 	int allow_read;
 
-	if(IsAnyDead(client_p))
+	if(is_any_dead(*client_p))
 		return;
 
-	if(IsUnknown(client_p))
+	if(is_unknown(*client_p))
 	{
 		allow_read = ConfigFileEntry.client_flood_burst_max;
 		for (;;)
@@ -51,19 +51,19 @@ parse_client_queued(client::client *client_p)
 					    buf_recvq, readBuf, READBUF_SIZE,
 					    LINEBUF_COMPLETE, LINEBUF_PARSED);
 
-			if(dolen <= 0 || IsDead(client_p))
+			if(dolen <= 0 || is_dead(*client_p))
 				break;
 
 			client_dopacket(client_p, readBuf, dolen);
 			client_p->localClient->sent_parsed++;
 
 			/* He's dead cap'n */
-			if(IsAnyDead(client_p))
+			if(is_any_dead(*client_p))
 				return;
 			/* if theyve dropped out of the unknown state, break and move
 			 * to the parsing for their appropriate status.  --fl
 			 */
-			if(!IsUnknown(client_p))
+			if(!is_unknown(*client_p))
 			{
 				/* reset their flood limits, they're now
 				 * graced to flood
@@ -80,18 +80,18 @@ parse_client_queued(client::client *client_p)
 			client_p->localClient->sent_parsed = allow_read;
 	}
 
-	if(IsAnyServer(client_p) || IsExemptFlood(client_p))
+	if(is_any_server(*client_p) || is_exempt_flood(*client_p))
 	{
-		while (!IsAnyDead(client_p) && (dolen = rb_linebuf_get(&client_p->localClient->buf_recvq,
+		while (!is_any_dead(*client_p) && (dolen = rb_linebuf_get(&client_p->localClient->buf_recvq,
 					   readBuf, READBUF_SIZE, LINEBUF_COMPLETE,
 					   LINEBUF_PARSED)) > 0)
 		{
 			client_dopacket(client_p, readBuf, dolen);
 		}
 	}
-	else if(IsClient(client_p))
+	else if(is_client(*client_p))
 	{
-		if(IsFloodDone(client_p))
+		if(is_flood_done(*client_p))
 			allow_read = ConfigFileEntry.client_flood_burst_max;
 		else
 			allow_read = ConfigFileEntry.client_flood_burst_rate;
@@ -132,7 +132,7 @@ parse_client_queued(client::client *client_p)
 				break;
 
 			client_dopacket(client_p, readBuf, dolen);
-			if(IsAnyDead(client_p))
+			if(is_any_dead(*client_p))
 				return;
 
 			client_p->localClient->sent_parsed += ConfigFileEntry.client_flood_message_time;
@@ -154,7 +154,7 @@ parse_client_queued(client::client *client_p)
 void
 flood_endgrace(client::client *client_p)
 {
-	SetFloodDone(client_p);
+	set_flood_done(*client_p);
 
 	/* sent_parsed could be way over client_flood_burst_max but under
 	 * client_flood_burst_rate so reset it.
@@ -178,13 +178,13 @@ flood_recalc(void *unused)
 	{
 		client_p = (client::client *)ptr->data;
 
-		if(rb_unlikely(IsMe(client_p)))
+		if(rb_unlikely(is_me(*client_p)))
 			continue;
 
 		if(rb_unlikely(client_p->localClient == NULL))
 			continue;
 
-		if(IsFloodDone(client_p))
+		if(is_flood_done(*client_p))
 			client_p->localClient->sent_parsed -= ConfigFileEntry.client_flood_message_num;
 		else
 			client_p->localClient->sent_parsed = 0;
@@ -194,7 +194,7 @@ flood_recalc(void *unused)
 
 		parse_client_queued(client_p);
 
-		if(rb_unlikely(IsAnyDead(client_p)))
+		if(rb_unlikely(is_any_dead(*client_p)))
 			continue;
 
 	}
@@ -227,7 +227,7 @@ read_packet(rb_fde_t * F, void *data)
 
 	while(1)
 	{
-		if(IsAnyDead(client_p))
+		if(is_any_dead(*client_p))
 			return;
 
 		/*
@@ -254,29 +254,29 @@ read_packet(rb_fde_t * F, void *data)
 
 		if(client_p->localClient->lasttime < rb_current_time())
 			client_p->localClient->lasttime = rb_current_time();
-		client_p->flags &= ~FLAGS_PINGSENT;
+		client_p->flags &= ~client::flags::PINGSENT;
 
 		/*
 		 * Before we even think of parsing what we just read, stick
 		 * it on the end of the receive queue and do it when its
 		 * turn comes around.
 		 */
-		if(IsHandshake(client_p) || IsUnknown(client_p))
+		if(is_handshake(*client_p) || is_unknown(*client_p))
 			binary = 1;
 
 		(void) rb_linebuf_parse(&client_p->localClient->buf_recvq, readBuf, length, binary);
 
-		if(IsAnyDead(client_p))
+		if(is_any_dead(*client_p))
 			return;
 
 		/* Attempt to parse what we have */
 		parse_client_queued(client_p);
 
-		if(IsAnyDead(client_p))
+		if(is_any_dead(*client_p))
 			return;
 
 		/* Check to make sure we're not flooding */
-		if(!IsAnyServer(client_p) &&
+		if(!is_any_server(*client_p) &&
 		   (rb_linebuf_alloclen(&client_p->localClient->buf_recvq) > ConfigFileEntry.client_flood_max_lines))
 		{
 			if(!(ConfigFileEntry.no_oper_flood && IsOper(client_p)))
@@ -315,7 +315,7 @@ client_dopacket(client::client *client_p, char *buffer, size_t length)
 
 	if(client_p == NULL || buffer == NULL)
 		return;
-	if(IsAnyDead(client_p))
+	if(is_any_dead(*client_p))
 		return;
 	/*
 	 * Update messages received

@@ -98,7 +98,7 @@ check_umode_change(void *vdata)
 	hook_data_umode_changed *data = (hook_data_umode_changed *)vdata;
 	client::client *source_p = data->client;
 
-	if (!MyClient(source_p))
+	if (!my(*source_p))
 		return;
 
 	if (data->oldumodes & UMODE_OPER && !IsOper(source_p))
@@ -216,7 +216,7 @@ hack_can_send(void *vdata)
 	{
 		data->approved = chan::CAN_SEND_NONOP;
 
-		if (MyClient(data->client))
+		if (my(*data->client))
 		{
 			update_session_deadline(data->client, NULL);
 			sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s is using oper-override on %s (forcing message)",

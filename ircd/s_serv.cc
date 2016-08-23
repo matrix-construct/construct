@@ -163,13 +163,13 @@ hunt_server(client::client *client_p, client::client *source_p,
 	 * message to go in the wrong direction while doing quick fast
 	 * non-matching lookups.
 	 */
-	if(MyClient(source_p))
+	if(my(*source_p))
 		target_p = find_named_client(new_);
 	else
 		target_p = find_client(new_);
 
 	if(target_p)
-		if(target_p->from == source_p->from && !MyConnect(target_p))
+		if(target_p->from == source_p->from && !my_connect(*target_p))
 			target_p = NULL;
 
 	collapse(new_);
@@ -191,12 +191,12 @@ hunt_server(client::client *client_p, client::client *source_p,
 		}
 	}
 
-	if(target_p && !IsRegistered(target_p))
+	if(target_p && !is_registered(*target_p))
 		target_p = NULL;
 
 	if(target_p)
 	{
-		if(IsMe(target_p) || MyClient(target_p))
+		if(is_me(*target_p) || my(*target_p))
 			return HUNTED_ISME;
 
 		old = parv[server];
@@ -208,7 +208,7 @@ hunt_server(client::client *client_p, client::client *source_p,
 		return (HUNTED_PASS);
 	}
 
-	if(MyClient(source_p) || !rfc1459::is_digit(parv[server][0]))
+	if(my(*source_p) || !rfc1459::is_digit(parv[server][0]))
 		sendto_one_numeric(source_p, ERR_NOSUCHSERVER,
 				   form_str(ERR_NOSUCHSERVER), parv[server]);
 	return (HUNTED_NOSUCH);
@@ -580,7 +580,7 @@ burst_TS6(client::client *client_p)
 	{
 		target_p = (client::client *)ptr->data;
 
-		if(!IsPerson(target_p))
+		if(!is_person(*target_p))
 			continue;
 
 		send_umode(NULL, target_p, 0, ubuf);
@@ -596,9 +596,9 @@ burst_TS6(client::client *client_p)
 				   target_p->hopcount + 1,
 				   (long) target_p->tsinfo, ubuf,
 				   target_p->username, target_p->host,
-				   IsIPSpoof(target_p) ? "0" : target_p->sockhost,
+				   is_ip_spoof(*target_p) ? "0" : target_p->sockhost,
 				   target_p->id,
-				   IsDynSpoof(target_p) ? target_p->orighost : "*",
+				   is_dyn_spoof(*target_p) ? target_p->orighost : "*",
 				   suser(user(*target_p)).empty() ? "*" : suser(user(*target_p)).c_str(),
 				   target_p->info);
 		else
@@ -607,7 +607,7 @@ burst_TS6(client::client *client_p)
 				   target_p->hopcount + 1,
 				   (long) target_p->tsinfo, ubuf,
 				   target_p->username, target_p->host,
-				   IsIPSpoof(target_p) ? "0" : target_p->sockhost,
+				   is_ip_spoof(*target_p) ? "0" : target_p->sockhost,
 				   target_p->id, target_p->info);
 
 		if(!EmptyString(target_p->certfp))
@@ -616,7 +616,7 @@ burst_TS6(client::client *client_p)
 
 		if(!IsCapable(client_p, CAP_EUID))
 		{
-			if(IsDynSpoof(target_p))
+			if(is_dyn_spoof(*target_p))
 				sendto_one(client_p, ":%s ENCAP * REALHOST %s",
 						use_id(target_p), target_p->orighost);
 
@@ -737,7 +737,7 @@ show_capabilities(client::client *target_p)
 	if(IsSSL(target_p))
 		rb_strlcat(msgbuf, " SSL", sizeof(msgbuf));
 
-	if(!IsServer(target_p) || !caps(serv(*target_p))) // short circuit if no caps
+	if(!is_server(*target_p) || !caps(serv(*target_p))) // short circuit if no caps
 		return msgbuf + 1;
 
 	rb_strlcat(msgbuf, " ", sizeof(msgbuf));
@@ -788,9 +788,9 @@ server_estab(client::client *client_p)
 	}
 
 	/* Its got identd , since its a server */
-	SetGotId(client_p);
+	set_got_id(*client_p);
 
-	if(IsUnknown(client_p))
+	if(is_unknown(*client_p))
 	{
 		/* the server may be linking based on certificate fingerprint now. --nenolod */
 		sendto_one(client_p, "PASS %s TS %d :%s",
@@ -819,10 +819,10 @@ server_estab(client::client *client_p)
 
 	client_p->servptr = &me;
 
-	if(IsAnyDead(client_p))
+	if(is_any_dead(*client_p))
 		return CLIENT_EXITED;
 
-	SetServer(client_p);
+	set_server(*client_p);
 
 	client_p->lnode = servers(serv(me)).emplace(end(servers(serv(me))), client_p);
 	rb_dlinkMoveNode(&client_p->localClient->tnode, &unknown_list, &serv_list);
@@ -844,7 +844,7 @@ server_estab(client::client *client_p)
 		client_p->localClient->fullcaps = NULL;
 	}
 
-	nameinfo(serv(*client_p)) = scache_connect(client_p->name, client_p->info, IsHidden(client_p));
+	nameinfo(serv(*client_p)) = scache_connect(client_p->name, client_p->info, is_hidden(*client_p));
 	client_p->localClient->firsttime = rb_current_time();
 	/* fixing eob timings.. -gnp */
 
@@ -885,7 +885,7 @@ server_estab(client::client *client_p)
 		{
 			sendto_one(target_p, ":%s SID %s 2 %s :%s%s",
 				   me.id, client_p->name, client_p->id,
-				   IsHidden(client_p) ? "(H) " : "", client_p->info);
+				   is_hidden(*client_p) ? "(H) " : "", client_p->info);
 
 			if(fullcaps(serv(*client_p)).size())
 				sendto_one(target_p, ":%s ENCAP * GCAP :%s",
@@ -895,7 +895,7 @@ server_estab(client::client *client_p)
 		{
 			sendto_one(target_p, ":%s SERVER %s 2 :%s%s",
 				   me.name, client_p->name,
-				   IsHidden(client_p) ? "(H) " : "", client_p->info);
+				   is_hidden(*client_p) ? "(H) " : "", client_p->info);
 
 			if(fullcaps(serv(*client_p)).size())
 				sendto_one(target_p, ":%s ENCAP * GCAP :%s",
@@ -926,7 +926,7 @@ server_estab(client::client *client_p)
 		target_p = (client::client *)ptr->data;
 
 		/* target_p->from == target_p for target_p == client_p */
-		if(IsMe(target_p) || target_p->from == client_p)
+		if(is_me(*target_p) || target_p->from == client_p)
 			continue;
 
 		/* presumption, if target has an id, so does its uplink */
@@ -934,12 +934,12 @@ server_estab(client::client *client_p)
 			sendto_one(client_p, ":%s SID %s %d %s :%s%s",
 				   target_p->servptr->id, target_p->name,
 				   target_p->hopcount + 1, target_p->id,
-				   IsHidden(target_p) ? "(H) " : "", target_p->info);
+				   is_hidden(*target_p) ? "(H) " : "", target_p->info);
 		else
 			sendto_one(client_p, ":%s SERVER %s %d :%s%s",
 				   target_p->servptr->name,
 				   target_p->name, target_p->hopcount + 1,
-				   IsHidden(target_p) ? "(H) " : "", target_p->info);
+				   is_hidden(*target_p) ? "(H) " : "", target_p->info);
 
 		if(fullcaps(serv(*target_p)).size())
 			sendto_one(client_p, ":%s ENCAP * GCAP :%s",
@@ -1041,7 +1041,7 @@ serv_connect(struct server_conf *server_p, client::client *by)
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "Server %s already present from %s",
 				     server_p->name, client_p->name);
-		if(by && IsPerson(by) && !MyClient(by))
+		if(by && is_person(*by) && !my(*by))
 			sendto_one_notice(by, ":Server %s already present from %s",
 					  server_p->name, client_p->name);
 		return 0;
@@ -1102,12 +1102,12 @@ serv_connect(struct server_conf *server_p, client::client *by)
 	 * The socket has been connected or connect is in progress.
 	 */
 	make_serv(*client_p);
-	if(by && IsClient(by))
+	if(by && is_client(*by))
 		client::serv::by(serv(*client_p)) = by->name;
 	else
 		client::serv::by(serv(*client_p)) = "AutoConn.";
 
-	SetConnecting(client_p);
+	set_connecting(*client_p);
 	rb_dlinkAddTail(client_p, &client_p->node, &global_client_list);
 
 	if(GET_SS_FAMILY(&sa_bind) == AF_UNSPEC)
@@ -1258,7 +1258,7 @@ serv_connect_callback(rb_fde_t *F, int status, void *data)
 	}
 
 	/* Next, send the initial handshake */
-	SetHandshake(client_p);
+	set_handshake(*client_p);
 
 	/* the server may be linking based on certificate fingerprint now. --nenolod */
 	sendto_one(client_p, "PASS %s TS %d :%s",
@@ -1277,7 +1277,7 @@ serv_connect_callback(rb_fde_t *F, int status, void *data)
 	 * If we've been marked dead because a send failed, just exit
 	 * here now and save everyone the trouble of us ever existing.
 	 */
-	if(IsAnyDead(client_p))
+	if(is_any_dead(*client_p))
 	{
 		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 				     "%s went dead during handshake", client_p->name);

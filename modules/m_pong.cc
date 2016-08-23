@@ -45,7 +45,7 @@ ms_pong(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	const char *destination;
 
 	destination = parv[2];
-	source.flags &= ~FLAGS_PINGSENT;
+	source.flags &= ~client::flags::PINGSENT;
 
 	/* Now attempt to route the PONG, comstud pointed out routable PING
 	 * is used for SPING.  routable PING should also probably be left in
@@ -70,14 +70,14 @@ ms_pong(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	}
 
 	/* destination is us, emulate EOB */
-	if(IsServer(&source) && !HasSentEob(&source))
+	if(is_server(source) && !has_sent_eob(source))
 	{
-		if(MyConnect(&source))
+		if(my_connect(source))
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					     "End of burst (emulated) from %s (%d seconds)",
 					     source.name,
 					     (signed int) (rb_current_time() - source.localClient->firsttime));
-		SetEob(&source);
+		set_eob(source);
 		eob_count++;
 		call_hook(h_server_eob, &source);
 	}
@@ -88,14 +88,14 @@ mr_pong(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 {
 	if(parc == 2 && !EmptyString(parv[1]))
 	{
-		if(ConfigFileEntry.ping_cookie && source.flags & FLAGS_SENTUSER && source.name[0])
+		if(ConfigFileEntry.ping_cookie && source.flags & client::flags::SENTUSER && source.name[0])
 		{
 			uint32_t incoming_ping = strtoul(parv[1], NULL, 16);
 			if(incoming_ping)
 			{
 				if(source.localClient->random_ping == incoming_ping)
 				{
-					source.flags |= FLAGS_PING_COOKIE;
+					source.flags |= client::flags::PING_COOKIE;
 					register_local_user(&client, &source);
 				}
 				else
@@ -112,5 +112,5 @@ mr_pong(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	else
 		sendto_one(&source, form_str(ERR_NOORIGIN), me.name, source.name);
 
-	source.flags &= ~FLAGS_PINGSENT;
+	source.flags &= ~client::flags::PINGSENT;
 }

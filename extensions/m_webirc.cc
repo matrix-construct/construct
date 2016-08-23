@@ -76,8 +76,8 @@ mr_webirc(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 	}
 
 	aconf = find_address_conf(client.host, client.sockhost,
-				IsGotId(&client) ? client.username : "webirc",
-				IsGotId(&client) ? client.username : "webirc",
+				is_got_id(client) ? client.username : "webirc",
+				is_got_id(client) ? client.username : "webirc",
 				(struct sockaddr *) &client.localClient->ip,
 				GET_SS_FAMILY(&client.localClient->ip), NULL);
 	if (aconf == NULL || !(aconf->status & CONF_CLIENT))

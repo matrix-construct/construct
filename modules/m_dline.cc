@@ -163,7 +163,7 @@ me_dline(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 	 * server did the relevant permission/sanity checks...
 	 */
 
-	if(!IsPerson(&source))
+	if(!is_person(source))
 		return;
 
 	if(!find_shared_conf(source.username, source.host,
@@ -179,7 +179,7 @@ me_dline(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 static void
 me_undline(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char **parv)
 {
-	if(!IsPerson(&source))
+	if(!is_person(source))
 		return;
 
 	if(!find_shared_conf(source.username, source.host,

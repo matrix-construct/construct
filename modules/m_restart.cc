@@ -68,7 +68,7 @@ mo_restart(struct MsgBuf *msgbuf_p, client::client &client, client::client &sour
 			return;
 		}
 
-		if (!IsMe(server_p))
+		if (!is_me(*server_p))
 		{
 			sendto_one(server_p, ":%s ENCAP %s RESTART %s", source.name, parv[2], parv[1]);
 			return;

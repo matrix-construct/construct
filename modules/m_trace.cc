@@ -89,7 +89,7 @@ m_trace(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 		{
 			client::client *ac2ptr;
 
-			if(MyClient(&source))
+			if(my(source))
 				ac2ptr = find_named_client(tname);
 			else
 				ac2ptr = find_client(tname);
@@ -110,7 +110,7 @@ m_trace(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 			/* giving this out with flattened links defeats the
 			 * object --fl
 			 */
-			if(IsOper(&source) || IsExemptShide(&source) ||
+			if(IsOper(&source) || is_exempt_shide(source) ||
 			   !ConfigServerHide.flatten_links)
 				sendto_one_numeric(&source, RPL_TRACELINK,
 						   form_str(RPL_TRACELINK),
@@ -136,7 +136,7 @@ m_trace(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	/* if theyre tracing our SID, we need to move tname to our name so
 	 * we dont give the sid in ENDOFTRACE
 	 */
-	else if(!MyClient(&source) && !strcmp(tname, me.id))
+	else if(!my(source) && !strcmp(tname, me.id))
 	{
 		doall = true;
 		tname = me.name;
@@ -148,7 +148,7 @@ m_trace(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	/* specific trace */
 	if(!dow)
 	{
-		if(MyClient(&source) || parc > 2)
+		if(my(source) || parc > 2)
 			target_p = client::find_named_person(tname);
 		else
 			target_p = client::find_person(tname);
@@ -176,7 +176,7 @@ m_trace(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	 */
 	if(!IsOper(&source))
 	{
-		if(MyClient(&source))
+		if(my(source))
 		{
 			if(doall || (wilds && match(tname, source.name)))
 				report_this_status(source, &source);
@@ -192,7 +192,7 @@ m_trace(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 			report_this_status(source, target_p);
 		}
 
-		if (IsExemptShide(&source) || !ConfigServerHide.flatten_links)
+		if (is_exempt_shide(source) || !ConfigServerHide.flatten_links)
 		{
 			RB_DLINK_FOREACH(ptr, serv_list.head)
 			{
@@ -218,15 +218,15 @@ m_trace(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 		target_p = (client::client *)ptr->data;
 
 		/* dont show invisible users to remote opers */
-		if(IsInvisible(target_p) && dow && !MyConnect(&source) && !IsOper(target_p))
+		if(is_invisible(*target_p) && dow && !my_connect(source) && !IsOper(target_p))
 			continue;
 
 		if(!doall && wilds && !match(tname, target_p->name))
 			continue;
 
 		/* remote opers may not see invisible normal users */
-		if(dow && !MyConnect(&source) && !IsOper(target_p) &&
-				IsInvisible(target_p))
+		if(dow && !my_connect(source) && !IsOper(target_p) &&
+				is_invisible(*target_p))
 			continue;
 
 		cnt = report_this_status(source, target_p);
@@ -242,7 +242,7 @@ m_trace(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 		cnt = report_this_status(source, target_p);
 	}
 
-	if(MyConnect(&source))
+	if(my_connect(source))
 	{
 		RB_DLINK_FOREACH(ptr, unknown_list.head)
 		{
@@ -320,37 +320,37 @@ report_this_status(client::client &source, client::client *target_p)
 	int cnt = 0;
 
 	/* sanity check - should never happen */
-	if(!MyConnect(target_p))
+	if(!my_connect(*target_p))
 		return 0;
 
 	rb_inet_ntop_sock((struct sockaddr *)&target_p->localClient->ip, ip, sizeof(ip));
 	class_name = get_client_class(target_p);
 
-	if(IsAnyServer(target_p))
+	if(is_any_server(*target_p))
 		name = target_p->name;
 	else
 		name = get_client_name(target_p, HIDE_IP);
 
 	switch (target_p->status)
 	{
-	case STAT_CONNECTING:
+	case client::status::CONNECTING:
 		sendto_one_numeric(&source, RPL_TRACECONNECTING,
 				form_str(RPL_TRACECONNECTING),
 				class_name, name);
 		cnt++;
 		break;
 
-	case STAT_HANDSHAKE:
+	case client::status::HANDSHAKE:
 		sendto_one_numeric(&source, RPL_TRACEHANDSHAKE,
 				form_str(RPL_TRACEHANDSHAKE),
 				class_name, name);
 		cnt++;
 		break;
 
-	case STAT_ME:
+	case client::status::ME:
 		break;
 
-	case STAT_UNKNOWN:
+	case client::status::UNKNOWN:
 		/* added time -Taner */
 		sendto_one_numeric(&source, RPL_TRACEUNKNOWN,
 				   form_str(RPL_TRACEUNKNOWN),
@@ -359,7 +359,7 @@ report_this_status(client::client &source, client::client *target_p)
 		cnt++;
 		break;
 
-	case STAT_CLIENT:
+	case client::status::CLIENT:
 		{
 			sendto_one_numeric(&source,
 					IsOper(target_p) ? RPL_TRACEOPERATOR : RPL_TRACEUSER,
@@ -373,7 +373,7 @@ report_this_status(client::client &source, client::client *target_p)
 		}
 		break;
 
-	case STAT_SERVER:
+	case client::status::SERVER:
 		{
 			int usercount = 0;
 			int servcount = 0;

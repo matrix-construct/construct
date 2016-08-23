@@ -234,7 +234,7 @@ ms_kline(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 	if(!match(parv[1], me.name))
 		return;
 
-	if(!IsPerson(&source))
+	if(!is_person(source))
 		return;
 
 	handle_remote_kline(source, tkline_time, parv[3], parv[4], parv[5]);
@@ -244,7 +244,7 @@ static void
 me_kline(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	/* <tkline_time> <user> <host> :<reason> */
-	if(!IsPerson(&source))
+	if(!is_person(source))
 		return;
 
 	handle_remote_kline(source, atoi(parv[1]), parv[2], parv[3], parv[4]);
@@ -433,7 +433,7 @@ ms_unkline(struct MsgBuf *msgbuf_p, client::client &client, client::client &sour
 	if(!match(parv[1], me.name))
 		return;
 
-	if(!IsPerson(&source))
+	if(!is_person(source))
 		return;
 
 	handle_remote_unkline(source, parv[2], parv[3]);
@@ -443,7 +443,7 @@ static void
 me_unkline(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	/* user host */
-	if(!IsPerson(&source))
+	if(!is_person(source))
 		return;
 
 	handle_remote_unkline(source, parv[1], parv[2]);

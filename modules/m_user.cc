@@ -58,7 +58,7 @@ mr_user(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 		return;
 	}
 
-	if(source.flags & FLAGS_SENTUSER)
+	if(source.flags & client::flags::SENTUSER)
 		return;
 
 	if((p = (char *)strchr(parv[1], '@')))
@@ -80,11 +80,11 @@ do_local_user(client::client &client, client::client &source,
 
 	make_user(source);
 
-	source.flags |= FLAGS_SENTUSER;
+	source.flags |= client::flags::SENTUSER;
 
 	rb_strlcpy(source.info, realname, sizeof(source.info));
 
-	if(!IsGotId(&source))
+	if(!is_got_id(source))
 		rb_strlcpy(source.username, username, sizeof(source.username));
 
 	if(source.name[0])

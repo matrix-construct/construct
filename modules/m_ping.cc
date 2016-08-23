@@ -84,7 +84,7 @@ ms_ping(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	if(!EmptyString(destination) && irccmp(destination, me.name) &&
 	   irccmp(destination, me.id))
 	{
-		if((target_p = find_client(destination)) && IsServer(target_p))
+		if((target_p = find_client(destination)) && is_server(*target_p))
 			sendto_one(target_p, ":%s PING %s :%s",
 				   get_id(&source, target_p), source.name,
 				   get_id(target_p, target_p));

@@ -505,7 +505,7 @@ authd_decide_client(client::client *client_p, const char *ident, const char *hos
 	if(*ident != '*')
 	{
 		rb_strlcpy(client_p->username, ident, sizeof(client_p->username));
-		SetGotId(client_p);
+		set_got_id(*client_p);
 		ServerStats.is_asuc++;
 	}
 	else

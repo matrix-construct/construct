@@ -102,7 +102,7 @@ me_svslogin(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 	char user[USERLEN+1], host[HOSTLEN+1];
 	int valid = 0;
 
-	if(!(source.flags & FLAGS_SERVICE))
+	if(!(source.flags & client::flags::SERVICE))
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			"Non-service server %s attempting to execute services-only command SVSLOGIN", source.name);
@@ -112,7 +112,7 @@ me_svslogin(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 	if((target_p = find_client(parv[1])) == NULL)
 		return;
 
-	if(!MyClient(target_p) && !IsUnknown(target_p))
+	if(!my(*target_p) && !is_unknown(*target_p))
 		return;
 
 	if(client::clean_nick(parv[2], 0))
@@ -161,11 +161,11 @@ me_svslogin(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 	{
 		char buf[BUFSIZE];
 
-		if(MyClient(exist_p))
+		if(my(*exist_p))
 			sendto_one(exist_p, ":%s KILL %s :(Nickname regained by services)",
 				me.name, exist_p->name);
 
-		exist_p->flags |= FLAGS_KILLED;
+		exist_p->flags |= client::flags::KILLED;
 		kill_client_serv_butone(NULL, exist_p, "%s (Nickname regained by services)",
 					me.name);
 		sendto_realops_snomask(SNO_SKILL, L_ALL,
@@ -176,7 +176,7 @@ me_svslogin(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 			me.name);
 		exit_client(NULL, exist_p, &me, buf);
 	}
-	else if((exist_p = find_client(nick)) && IsUnknown(exist_p) && exist_p != target_p)
+	else if((exist_p = find_client(nick)) && is_unknown(*exist_p) && exist_p != target_p)
 	{
 		exit_client(NULL, exist_p, &me, "Overridden");
 	}
@@ -197,7 +197,7 @@ me_svslogin(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 		sendto_one(target_p, form_str(RPL_LOGGEDOUT), me.name, EmptyString(target_p->name) ? "*" : target_p->name,
 				nick, user, host);
 
-	if(IsUnknown(target_p))
+	if(is_unknown(*target_p))
 	{
 		if(valid & NICK_VALID)
 			rb_strlcpy(target_p->preClient->spoofnick, nick, sizeof(target_p->preClient->spoofnick));
@@ -242,7 +242,7 @@ ms_signon(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 				get_id(&me, &client), parv[1], me.name);
 		kill_client_serv_butone(&client, &source, "%s (Bad nickname from SIGNON)",
 				me.name);
-		source.flags |= FLAGS_KILLED;
+		source.flags |= client::flags::KILLED;
 		exit_client(NULL, &source, &me, "Bad nickname from SIGNON");
 		return;
 	}
@@ -260,7 +260,7 @@ ms_signon(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 				get_id(&me, &client), parv[1], me.name);
 		kill_client_serv_butone(&client, &source, "%s (Bad user@host from SIGNON)",
 				me.name);
-		source.flags |= FLAGS_KILLED;
+		source.flags |= client::flags::KILLED;
 		exit_client(NULL, &source, &me, "Bad user@host from SIGNON");
 		return;
 	}
@@ -284,7 +284,7 @@ ms_signon(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 	{
  		/* In case of collision, follow NICK rules. */
 		/* XXX this is duplicated code and does not do SAVE */
-		if(IsUnknown(target_p))
+		if(is_unknown(*target_p))
 			exit_client(NULL, target_p, &me, "Overridden");
 		else
 		{
@@ -305,9 +305,9 @@ ms_signon(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 
 				kill_client_serv_butone(NULL, target_p, "%s (Nick change collision)", me.name);
 
-				target_p->flags |= FLAGS_KILLED;
+				target_p->flags |= client::flags::KILLED;
 				exit_client(NULL, target_p, &me, "Nick collision(new)");
-				source.flags |= FLAGS_KILLED;
+				source.flags |= client::flags::KILLED;
 				exit_client(&client, &source, &me, "Nick collision(old)");
 				return;
 			}
@@ -339,7 +339,7 @@ ms_signon(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 					kill_client_serv_butone(&client, &source,
 								"%s (Nick change collision)", me.name);
 
-					source.flags |= FLAGS_KILLED;
+					source.flags |= client::flags::KILLED;
 
 					if(sameuser)
 						exit_client(&client, &source, &me, "Nick collision(old)");
@@ -369,7 +369,7 @@ ms_signon(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 
 					ServerStats.is_kill++;
 
-					target_p->flags |= FLAGS_KILLED;
+					target_p->flags |= client::flags::KILLED;
 					(void) exit_client(&client, target_p, &me, "Nick collision");
 				}
 			}

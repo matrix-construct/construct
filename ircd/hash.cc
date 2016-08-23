@@ -308,7 +308,7 @@ find_server(client::client *source_p, const char *name)
 	if(EmptyString(name))
 		return NULL;
 
-	if((source_p == NULL || !MyClient(source_p)) &&
+	if((source_p == NULL || !my(*source_p)) &&
 	   rfc1459::is_digit(*name) && strlen(name) == 3)
 	{
 		target_p = find_id(name);
@@ -318,7 +318,7 @@ find_server(client::client *source_p, const char *name)
 	target_p = (client::client *)rb_radixtree_retrieve(client_name_tree, name);
 	if (target_p != NULL)
 	{
-		if(IsServer(target_p) || IsMe(target_p))
+		if(is_server(*target_p) || is_me(*target_p))
 			return target_p;
 	}
 

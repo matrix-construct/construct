@@ -75,7 +75,7 @@ static void
 me_locops(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 		int parc, const char *parv[])
 {
-	if(!IsPerson(&source))
+	if(!is_person(source))
 		return;
 
 	if(find_shared_conf("*", "*", source.servptr->name, SHARED_LOCOPS))

@@ -98,8 +98,8 @@ whowas_add_history(client::client *client_p, int online)
 	rb_strlcpy(who->realname, client_p->info, sizeof(who->realname));
 	rb_strlcpy(who->sockhost, client_p->sockhost, sizeof(who->sockhost));
 
-	who->flags = (IsIPSpoof(client_p) ? WHOWAS_IP_SPOOFING : 0) |
-		(IsDynSpoof(client_p) ? WHOWAS_DYNSPOOF : 0);
+	who->flags = (is_ip_spoof(*client_p) ? WHOWAS_IP_SPOOFING : 0) |
+		(is_dyn_spoof(*client_p) ? WHOWAS_DYNSPOOF : 0);
 
 	/* this is safe do to with the servername cache */
 	who->servername = scache_get_name(nameinfo(serv(*client_p)));

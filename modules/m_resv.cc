@@ -149,7 +149,7 @@ ms_resv(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	if(!match(parv[1], me.name))
 		return;
 
-	if(!IsPerson(&source))
+	if(!is_person(source))
 		return;
 
 	parse_resv(source, parv[2], parv[3], 0, 0);
@@ -159,7 +159,7 @@ static void
 me_resv(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	/* time name 0 :reason */
-	if(!IsPerson(&source))
+	if(!is_person(source))
 		return;
 
 	parse_resv(source, parv[2], parv[4], atoi(parv[1]), 0);
@@ -178,7 +178,7 @@ parse_resv(client::client &source, const char *name, const char *reason, int tem
 {
 	struct ConfItem *aconf;
 
-	if(!MyClient(&source) &&
+	if(!my(source) &&
 	   !find_shared_conf(source.username, source.host,
 			     source.servptr->name,
 			     (temp_time > 0) ? SHARED_TRESV : SHARED_PRESV))
@@ -455,7 +455,7 @@ ms_unresv(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 	if(!match(parv[1], me.name))
 		return;
 
-	if(!IsPerson(&source))
+	if(!is_person(source))
 		return;
 
 	handle_remote_unresv(source, parv[2]);
@@ -465,7 +465,7 @@ static void
 me_unresv(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	/* name */
-	if(!IsPerson(&source))
+	if(!is_person(source))
 		return;
 
 	handle_remote_unresv(source, parv[1]);

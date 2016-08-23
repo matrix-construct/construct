@@ -79,15 +79,15 @@ static void
 me_realhost(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	int parc, const char *parv[])
 {
-	if (!IsPerson(&source))
+	if (!is_person(source))
 		return;
 
 	del_from_hostname_hash(source.orighost, &source);
 	rb_strlcpy(source.orighost, parv[1], sizeof source.orighost);
 	if (irccmp(source.host, source.orighost))
-		SetDynSpoof(&source);
+		set_dyn_spoof(source);
 	else
-		ClearDynSpoof(&source);
+		clear_dyn_spoof(source);
 	add_to_hostname_hash(source.orighost, &source);
 }
 
@@ -98,11 +98,11 @@ do_chghost(client::client &source, client::client *target_p,
 	if (!clean_host(newhost))
 	{
 		sendto_realops_snomask(SNO_GENERAL, is_encap ? L_ALL : L_NETWIDE, "%s attempted to change hostname for %s to %s (invalid)",
-				IsServer(&source) ? source.name : get_oper_name(&source),
+				is_server(source) ? source.name : get_oper_name(&source),
 				target_p->name, newhost);
 		/* sending this remotely may disclose important
 		 * routing information -- jilles */
-		if (is_encap ? MyClient(target_p) : !ConfigServerHide.flatten_links)
+		if (is_encap ? my(*target_p) : !ConfigServerHide.flatten_links)
 			sendto_one_notice(target_p, ":*** Notice -- %s attempted to change your hostname to %s (invalid)",
 					source.name, newhost);
 		return false;
@@ -110,19 +110,19 @@ do_chghost(client::client &source, client::client *target_p,
 	change_nick_user_host(target_p, target_p->name, target_p->username, newhost, 0, "Changing host");
 	if (irccmp(target_p->host, target_p->orighost))
 	{
-		SetDynSpoof(target_p);
-		if (MyClient(target_p))
+		set_dyn_spoof(*target_p);
+		if (my(*target_p))
 			sendto_one_numeric(target_p, RPL_HOSTHIDDEN, "%s :is now your hidden host (set by %s)", target_p->host, source.name);
 	}
 	else
 	{
-		ClearDynSpoof(target_p);
-		if (MyClient(target_p))
+		clear_dyn_spoof(*target_p);
+		if (my(*target_p))
 			sendto_one_numeric(target_p, RPL_HOSTHIDDEN, "%s :hostname reset by %s", target_p->host, source.name);
 	}
-	if (MyClient(&source))
+	if (my(source))
 		sendto_one_notice(&source, ":Changed hostname for %s to %s", target_p->name, target_p->host);
-	if (!IsServer(&source) && !IsService(&source))
+	if (!is_server(source) && !IsService(&source))
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s changed hostname for %s to %s", get_oper_name(&source), target_p->name, target_p->host);
 	return true;
 }

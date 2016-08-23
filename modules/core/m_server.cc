@@ -67,7 +67,7 @@ mr_server(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 	hop = atoi(parv[2]);
 	rb_strlcpy(info, parv[3], sizeof(info));
 
-	if (IsHandshake(&client) && irccmp(client.name, name))
+	if (is_handshake(client) && irccmp(client.name, name))
 	{
 		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(&client) ? L_NETWIDE : L_ALL,
 				"Server %s has unexpected name %s",
@@ -236,7 +236,7 @@ mr_server(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 		 * Definitely don't do that here. This is from an unregistered
 		 * connect - A1kmm.
 		 */
-		if (target_p->servptr->flags & FLAGS_SERVICE)
+		if (target_p->servptr->flags & client::flags::SERVICE)
 		{
 			/* Assume any servers introduced by services
 			 * are jupes.
@@ -469,19 +469,19 @@ ms_server(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 
 	target_p->servptr = &source;
 
-	SetServer(target_p);
+	set_server(*target_p);
 
 	rb_dlinkAddTail(target_p, &target_p->node, &global_client_list);
 	rb_dlinkAddTailAlloc(target_p, &global_serv_list);
 	add_to_client_hash(target_p->name, target_p);
 	target_p->lnode = servers(serv(*target_p)).emplace(end(servers(serv(*target_p))), target_p);
 
-	nameinfo(serv(*target_p)) = scache_connect(target_p->name, target_p->info, IsHidden(target_p));
+	nameinfo(serv(*target_p)) = scache_connect(target_p->name, target_p->info, is_hidden(*target_p));
 
 	sendto_server(&client, NULL, NOCAPS, NOCAPS,
 		      ":%s SERVER %s %d :%s%s",
 		      source.name, target_p->name, target_p->hopcount + 1,
-		      IsHidden(target_p) ? "(H) " : "", target_p->info);
+		      is_hidden(*target_p) ? "(H) " : "", target_p->info);
 
 	sendto_realops_snomask(SNO_EXTERNAL, L_ALL,
 			     "Server %s being introduced by %s", target_p->name, source.name);
@@ -625,7 +625,7 @@ ms_sid(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 	set_server_gecos(*target_p, parv[4]);
 
 	target_p->servptr = &source;
-	SetServer(target_p);
+	set_server(*target_p);
 
 	rb_dlinkAddTail(target_p, &target_p->node, &global_client_list);
 	rb_dlinkAddTailAlloc(target_p, &global_serv_list);
@@ -633,12 +633,12 @@ ms_sid(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 	add_to_id_hash(target_p->id, target_p);
 	target_p->lnode = servers(serv(*target_p)).emplace(end(servers(serv(*target_p))), target_p);
 
-	nameinfo(serv(*target_p)) = scache_connect(target_p->name, target_p->info, IsHidden(target_p));
+	nameinfo(serv(*target_p)) = scache_connect(target_p->name, target_p->info, is_hidden(*target_p));
 
 	sendto_server(&client, NULL, CAP_TS6, NOCAPS,
 		      ":%s SID %s %d %s :%s%s",
 		      source.id, target_p->name, target_p->hopcount + 1,
-		      target_p->id, IsHidden(target_p) ? "(H) " : "", target_p->info);
+		      target_p->id, is_hidden(*target_p) ? "(H) " : "", target_p->info);
 
 	sendto_realops_snomask(SNO_EXTERNAL, L_ALL,
 			     "Server %s being introduced by %s", target_p->name, source.name);
@@ -697,7 +697,7 @@ set_server_gecos(client::client &client, const char *info)
 			/* check for (H) which is a hidden server */
 			if(!strcmp(s, "(H)"))
 			{
-				SetHidden(&client);
+				set_hidden(client);
 
 				/* if there was no space.. theres nothing to set info to */
 				if(p)

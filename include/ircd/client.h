@@ -27,36 +27,6 @@
 #define HAVE_IRCD_CLIENT_H
 #ifdef __cplusplus
 
-namespace ircd
-{
-	namespace client
-	{
-		struct client;
-		struct LocalUser;
-		struct PreClient;
-		struct ListClient;
-	}
-
-	namespace chan
-	{
-		struct chan;
-		struct membership;
-	}
-
-	struct ConfItem;
-	struct Whowas;
-	struct DNSReply;
-	struct Listener;
-	struct Blacklist;
-	struct PrivilegeSet;
-	struct _ssl_ctl;
-	struct ev_ctl;
-	struct ws_ctl;
-	struct scache_entry;
-	struct server_conf;
-}
-
-
 namespace ircd   {
 namespace client {
 namespace user
@@ -104,18 +74,79 @@ namespace serv
 namespace ircd   {
 namespace client {
 
-/* we store ipv6 ips for remote clients, so this needs to be v6 always */
-#define HOSTIPLEN	53	/* sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255.ipv6") */
-#define PASSWDLEN	128
-#define CIPHERKEYLEN	64	/* 512bit */
-#define CLIENT_BUFSIZE	512	/* must be at least 512 bytes */
+enum class status : uint8_t
+{
+	CONNECTING     = 0x01,
+	HANDSHAKE      = 0x02,
+	ME             = 0x04,
+	UNKNOWN        = 0x08,
+	REJECT         = 0x10,
+	SERVER         = 0x20,
+	CLIENT         = 0x40,
+};
 
-#define IDLEN		10
 
-#define TGCHANGE_NUM		10	/* how many targets we keep track of */
-#define TGCHANGE_REPLY		5	/* how many reply targets */
-#define TGCHANGE_INITIAL	10	/* initial free targets (normal) */
-#define TGCHANGE_INITIAL_LOW	4	/* initial free targets (possible spambot) */
+#define UMODE_SERVNOTICE   0x0001	/* server notices */
+#define UMODE_WALLOP       0x0002	/* send wallops to them */
+#define UMODE_OPERWALL     0x0004	/* Operwalls */
+#define UMODE_INVISIBLE    0x0008	/* makes user invisible */
+#define UMODE_CALLERID     0x0010	/* block unless caller id's */
+#define UMODE_LOCOPS       0x0020	/* show locops */
+#define UMODE_SERVICE      0x0040
+#define UMODE_DEAF	   0x0080
+#define UMODE_NOFORWARD    0x0100	/* don't forward */
+#define UMODE_REGONLYMSG   0x0200	/* only allow logged in users to msg */
+
+/* user information flags, only settable by remote mode or local oper */
+#define UMODE_OPER         0x1000	/* Operator */
+#define UMODE_ADMIN        0x2000	/* Admin on server */
+#define UMODE_SSLCLIENT    0x4000	/* using SSL */
+
+enum flags
+{
+	PINGSENT       = 0x00000001, // Unreplied ping sent
+	DEAD           = 0x00000002, // Local socket is dead--Exiting soon
+	KILLED         = 0x00000004, // Prevents "QUIT" from being sent for this
+	SENTUSER       = 0x00000008, // Client sent a USER command.
+	CLICAP         = 0x00000010, // In CAP negotiation, wait for CAP END
+	CLOSING        = 0x00000020, // set when closing to suppress errors
+	PING_COOKIE    = 0x00000040, // has sent ping cookie
+	GOTID          = 0x00000080, // successful ident lookup achieved
+	FLOODDONE      = 0x00000100, // flood grace period over / reported
+	NORMALEX       = 0x00000200, // Client exited normally
+	MARK           = 0x00000400, // marked client
+	HIDDEN         = 0x00000800, // hidden server
+	EOB            = 0x00001000, // EOB
+	MYCONNECT      = 0x00002000, // MyConnect
+	IOERROR        = 0x00004000, // IO error
+	SERVICE        = 0x00008000, // network service
+	TGCHANGE       = 0x00010000, // we're allowed to clear something
+	DYNSPOOF       = 0x00020000, // dynamic spoof, only opers see ip
+	TGEXCESSIVE    = 0x00040000, // whether the client has attemped to change targets excessively fast
+	CLICAP_DATA    = 0x00080000, // requested CAP LS 302
+	EXTENDCHANS    = 0x00100000,
+	EXEMPTRESV     = 0x00200000,
+	EXEMPTKLINE    = 0x00400000,
+	EXEMPTFLOOD    = 0x00800000,
+	IP_SPOOFING    = 0x01000000,
+	EXEMPTSPAMBOT  = 0x02000000,
+	EXEMPTSHIDE    = 0x04000000,
+	EXEMPTJUPE     = 0x08000000,
+};
+
+enum class tgchange
+{
+	NUM = 10,          // how many targets we keep track of
+	REPLY = 5,         // how many reply targets
+	INITIAL =  10,     // initial free targets (normal)
+	INITIAL_LOW = 4,   // initial free targets (possible spambot)
+};
+
+// we store ipv6 ips for remote clients, so this needs to be v6 always
+constexpr auto PASSWDLEN = 128;
+constexpr auto CIPHERKEYLEN = 64; // 512bit
+constexpr auto CLIENT_BUFSIZE = 512; // must be at least 512 bytes
+constexpr auto IDLEN = 10;
 
 struct ZipStats
 {
@@ -145,7 +176,7 @@ struct client
 	unsigned int snomask;	/* server notice mask */
 
 	int hopcount;		/* number of servers to this 0 = local */
-	unsigned short status;	/* Client type */
+	enum status status;     // Client type
 	unsigned char handler;	/* Handler index */
 	unsigned long serial;	/* used to enforce 1 send per nick */
 
@@ -289,7 +320,7 @@ struct LocalUser
 	 * 0..TGCHANGE_NUM-1 regular slots
 	 * TGCHANGE_NUM..TGCHANGE_NUM+TGCHANGE_REPLY-1 reply slots
 	 */
-	uint32_t targets[TGCHANGE_NUM + TGCHANGE_REPLY];
+	uint32_t targets[int(tgchange::NUM) + int(tgchange::REPLY)];
 	unsigned int targets_free;	/* free targets */
 	time_t target_last;		/* last time we cleared a slot */
 
@@ -356,226 +387,30 @@ struct ListClient
 	int operspy;
 };
 
-/*
- * status macros.
- */
-#define STAT_CONNECTING         0x01
-#define STAT_HANDSHAKE          0x02
-#define STAT_ME                 0x04
-#define STAT_UNKNOWN            0x08
-#define STAT_REJECT		0x10
-#define STAT_SERVER             0x20
-#define STAT_CLIENT             0x40
+/* oper flags */
+#define MyOper(x)               (my_connect(*x) && IsOper(x))
 
+#define SetOper(x)              {(x)->umodes |= UMODE_OPER; \
+				 if (my(*(x))) (x)->handler = OPER_HANDLER;}
 
-#define IsRegisteredUser(x)     ((x)->status == STAT_CLIENT)
-#define IsRegistered(x)         (((x)->status  > STAT_UNKNOWN) && ((x)->status != STAT_REJECT))
-#define IsConnecting(x)         ((x)->status == STAT_CONNECTING)
-#define IsHandshake(x)          ((x)->status == STAT_HANDSHAKE)
-#define IsMe(x)                 ((x)->status == STAT_ME)
-#define IsUnknown(x)            ((x)->status == STAT_UNKNOWN)
-#define IsServer(x)             ((x)->status == STAT_SERVER)
+#define ClearOper(x)            {(x)->umodes &= ~(UMODE_OPER|UMODE_ADMIN); \
+				 if (my(*(x)) && !IsOper((x)) && !is_server(*(x))) \
+				  (x)->handler = CLIENT_HANDLER; }
 
-inline bool
-is_client(const client &client)
-{
-	return client.status == STAT_CLIENT;
-}
-
-#define IsClient(x)             ((x)->status == STAT_CLIENT)
-#define IsReject(x)		((x)->status == STAT_REJECT)
-
-#define IsAnyServer(x)          (IsServer(x) || IsHandshake(x) || IsConnecting(x))
-
-#define IsOper(x)		((x)->umodes & UMODE_OPER)
-#define IsAdmin(x)		((x)->umodes & UMODE_ADMIN)
-
-#define SetReject(x)		{(x)->status = STAT_REJECT; \
-				 (x)->handler = UNREGISTERED_HANDLER; }
-
-#define SetConnecting(x)        {(x)->status = STAT_CONNECTING; \
-				 (x)->handler = UNREGISTERED_HANDLER; }
-
-#define SetHandshake(x)         {(x)->status = STAT_HANDSHAKE; \
-				 (x)->handler = UNREGISTERED_HANDLER; }
-
-#define SetMe(x)                {(x)->status = STAT_ME; \
-				 (x)->handler = UNREGISTERED_HANDLER; }
-
-#define SetUnknown(x)           {(x)->status = STAT_UNKNOWN; \
-				 (x)->handler = UNREGISTERED_HANDLER; }
-
-#define SetServer(x)            {(x)->status = STAT_SERVER; \
-				 (x)->handler = SERVER_HANDLER; }
-
-#define SetClient(x)            {(x)->status = STAT_CLIENT; \
-				 (x)->handler = IsOper((x)) ? \
-					OPER_HANDLER : CLIENT_HANDLER; }
-#define SetRemoteClient(x)	{(x)->status = STAT_CLIENT; \
-				 (x)->handler = RCLIENT_HANDLER; }
-
-#define STAT_CLIENT_PARSE (STAT_UNKNOWN | STAT_CLIENT)
-#define STAT_SERVER_PARSE (STAT_CONNECTING | STAT_HANDSHAKE | STAT_SERVER)
-
-#define PARSE_AS_CLIENT(x)      ((x)->status & STAT_CLIENT_PARSE)
-#define PARSE_AS_SERVER(x)      ((x)->status & STAT_SERVER_PARSE)
-
-
-/*
- * ts stuff
- */
-#define TS_CURRENT	6
-#define TS_MIN          6
-
-#define TS_DOESTS       0x10000000
-#define DoesTS(x)       ((x)->tsinfo & TS_DOESTS)
-
-#define has_id(source)	((source)->id[0] != '\0')
-#define use_id(source)	((source)->id[0] != '\0' ? (source)->id : (source)->name)
-
-/* if target is TS6, use id if it has one, else name */
-
-inline char *get_id(const client *const &source, const client *const &target)
-{
-	return const_cast<char *>(IsServer(target->from) && has_id(target->from) ? use_id(source) : (source)->name);
-}
-
-inline auto get_id(const client &source, const client &target)
-{
-	return get_id(&source, &target);
-}
-
-
-/* housekeeping flags */
-
-#define FLAGS_PINGSENT		0x00000001	/* Unreplied ping sent */
-#define FLAGS_DEAD		0x00000002	/* Local socket is dead--Exiting soon */
-#define FLAGS_KILLED		0x00000004	/* Prevents "QUIT" from being sent for this */
-#define FLAGS_SENTUSER		0x00000008	/* Client sent a USER command. */
-#define FLAGS_CLICAP		0x00000010	/* In CAP negotiation, wait for CAP END */
-#define FLAGS_CLOSING		0x00000020	/* set when closing to suppress errors */
-#define FLAGS_PING_COOKIE	0x00000040	/* has sent ping cookie */
-#define FLAGS_GOTID		0x00000080	/* successful ident lookup achieved */
-#define FLAGS_FLOODDONE		0x00000100	/* flood grace period over / reported */
-#define FLAGS_NORMALEX		0x00000200	/* Client exited normally */
-#define FLAGS_MARK		0x00000400	/* marked client */
-#define FLAGS_HIDDEN		0x00000800	/* hidden server */
-#define FLAGS_EOB		0x00001000	/* EOB */
-#define FLAGS_MYCONNECT		0x00002000	/* MyConnect */
-#define FLAGS_IOERROR		0x00004000	/* IO error */
-#define FLAGS_SERVICE		0x00008000	/* network service */
-#define FLAGS_TGCHANGE		0x00010000	/* we're allowed to clear something */
-#define FLAGS_DYNSPOOF		0x00020000	/* dynamic spoof, only opers see ip */
-#define FLAGS_TGEXCESSIVE	0x00040000	/* whether the client has attemped to change targets excessively fast */
-#define FLAGS_CLICAP_DATA	0x00080000	/* requested CAP LS 302 */
-#define FLAGS_EXTENDCHANS	0x00100000
-#define FLAGS_EXEMPTRESV	0x00200000
-#define FLAGS_EXEMPTKLINE	0x00400000
-#define FLAGS_EXEMPTFLOOD	0x00800000
-#define FLAGS_IP_SPOOFING	0x01000000
-#define FLAGS_EXEMPTSPAMBOT	0x02000000
-#define FLAGS_EXEMPTSHIDE	0x04000000
-#define FLAGS_EXEMPTJUPE	0x08000000
-
-
-/* flags for local clients, this needs stuff moved from above to here at some point */
-#define LFLAGS_SSL		0x00000001
-#define LFLAGS_FLUSH		0x00000002
-#define LFLAGS_CORK		0x00000004
-
-/* umodes, settable flags */
-/* lots of this moved to snomask -- jilles */
-#define UMODE_SERVNOTICE   0x0001	/* server notices */
-#define UMODE_WALLOP       0x0002	/* send wallops to them */
-#define UMODE_OPERWALL     0x0004	/* Operwalls */
-#define UMODE_INVISIBLE    0x0008	/* makes user invisible */
-#define UMODE_CALLERID     0x0010	/* block unless caller id's */
-#define UMODE_LOCOPS       0x0020	/* show locops */
-#define UMODE_SERVICE      0x0040
-#define UMODE_DEAF	   0x0080
-#define UMODE_NOFORWARD    0x0100	/* don't forward */
-#define UMODE_REGONLYMSG   0x0200	/* only allow logged in users to msg */
-
-/* user information flags, only settable by remote mode or local oper */
-#define UMODE_OPER         0x1000	/* Operator */
-#define UMODE_ADMIN        0x2000	/* Admin on server */
-#define UMODE_SSLCLIENT    0x4000	/* using SSL */
 
 #define DEFAULT_OPER_UMODES (UMODE_SERVNOTICE | UMODE_OPERWALL | \
                              UMODE_WALLOP | UMODE_LOCOPS)
 #define DEFAULT_OPER_SNOMASK SNO_GENERAL
 
-/*
- * flags macros.
- */
-#define IsPerson(x)             (IsClient(x) && (x)->user != NULL)
-#define HasServlink(x)          ((x)->flags &  FLAGS_SERVLINK)
-#define SetServlink(x)          ((x)->flags |= FLAGS_SERVLINK)
-#define MyConnect(x)		((x)->flags & FLAGS_MYCONNECT)
-#define SetMyConnect(x)		((x)->flags |= FLAGS_MYCONNECT)
-#define ClearMyConnect(x)	((x)->flags &= ~FLAGS_MYCONNECT)
-#define MyClient(x)             (MyConnect(x) && IsClient(x))
+#define IsOper(x)		((x)->umodes & UMODE_OPER)
+#define IsAdmin(x)		((x)->umodes & UMODE_ADMIN)
 
 inline bool
-my(const client &client)
+is_invisible(const client &client)
 {
-	return MyClient(&client);
+	return client.umodes & UMODE_INVISIBLE;
 }
 
-inline bool
-is_person(const client &client)
-{
-	return IsPerson(&client);
-}
-
-#define SetMark(x)		((x)->flags |= FLAGS_MARK)
-#define ClearMark(x)		((x)->flags &= ~FLAGS_MARK)
-#define IsMarked(x)		((x)->flags & FLAGS_MARK)
-#define SetHidden(x)		((x)->flags |= FLAGS_HIDDEN)
-#define ClearHidden(x)		((x)->flags &= ~FLAGS_HIDDEN)
-#define IsHidden(x)		((x)->flags & FLAGS_HIDDEN)
-#define ClearEob(x)		((x)->flags &= ~FLAGS_EOB)
-#define SetEob(x)		((x)->flags |= FLAGS_EOB)
-#define HasSentEob(x)		((x)->flags & FLAGS_EOB)
-#define IsDead(x)          	((x)->flags &  FLAGS_DEAD)
-#define SetDead(x)         	((x)->flags |= FLAGS_DEAD)
-#define IsClosing(x)		((x)->flags & FLAGS_CLOSING)
-#define SetClosing(x)		((x)->flags |= FLAGS_CLOSING)
-#define IsIOError(x)		((x)->flags & FLAGS_IOERROR)
-#define SetIOError(x)		((x)->flags |= FLAGS_IOERROR)
-#define IsAnyDead(x)		(IsIOError(x) || IsDead(x) || IsClosing(x))
-#define IsTGChange(x)		((x)->flags & FLAGS_TGCHANGE)
-#define SetTGChange(x)		((x)->flags |= FLAGS_TGCHANGE)
-#define ClearTGChange(x)	((x)->flags &= ~FLAGS_TGCHANGE)
-#define IsDynSpoof(x)		((x)->flags & FLAGS_DYNSPOOF)
-#define SetDynSpoof(x)		((x)->flags |= FLAGS_DYNSPOOF)
-#define ClearDynSpoof(x)	((x)->flags &= ~FLAGS_DYNSPOOF)
-#define IsTGExcessive(x)	((x)->flags & FLAGS_TGEXCESSIVE)
-#define SetTGExcessive(x)	((x)->flags |= FLAGS_TGEXCESSIVE)
-#define ClearTGExcessive(x)	((x)->flags &= ~FLAGS_TGEXCESSIVE)
-
-/* local flags */
-
-#define IsSSL(x)		((x)->localClient->localflags & LFLAGS_SSL)
-#define SetSSL(x)		((x)->localClient->localflags |= LFLAGS_SSL)
-#define ClearSSL(x)		((x)->localClient->localflags &= ~LFLAGS_SSL)
-
-#define IsFlush(x)		((x)->localClient->localflags & LFLAGS_FLUSH)
-#define SetFlush(x)		((x)->localClient->localflags |= LFLAGS_FLUSH)
-#define ClearFlush(x)		((x)->localClient->localflags &= ~LFLAGS_FLUSH)
-
-/* oper flags */
-#define MyOper(x)               (MyConnect(x) && IsOper(x))
-
-#define SetOper(x)              {(x)->umodes |= UMODE_OPER; \
-				 if (MyClient((x))) (x)->handler = OPER_HANDLER;}
-
-#define ClearOper(x)            {(x)->umodes &= ~(UMODE_OPER|UMODE_ADMIN); \
-				 if (MyClient((x)) && !IsOper((x)) && !IsServer((x))) \
-				  (x)->handler = CLIENT_HANDLER; }
-
-/* umode flags */
-#define IsInvisible(x)          ((x)->umodes & UMODE_INVISIBLE)
 #define SetInvisible(x)         ((x)->umodes |= UMODE_INVISIBLE)
 #define ClearInvisible(x)       ((x)->umodes &= ~UMODE_INVISIBLE)
 #define IsSSLClient(x)		((x)->umodes & UMODE_SSLCLIENT)
@@ -591,36 +426,488 @@ is_person(const client &client)
 #define IsNoForward(x)		((x)->umodes & UMODE_NOFORWARD)
 #define IsSetRegOnlyMsg(x)	((x)->umodes & UMODE_REGONLYMSG)
 
-#define SetGotId(x)             ((x)->flags |= FLAGS_GOTID)
-#define IsGotId(x)              (((x)->flags & FLAGS_GOTID) != 0)
+inline void
+set_got_id(client &client)
+{
+	client.flags |= flags::GOTID;
+}
 
-#define IsExemptKline(x)        ((x)->flags & FLAGS_EXEMPTKLINE)
-#define SetExemptKline(x)       ((x)->flags |= FLAGS_EXEMPTKLINE)
-#define IsExemptFlood(x)        ((x)->flags & FLAGS_EXEMPTFLOOD)
-#define SetExemptFlood(x)       ((x)->flags |= FLAGS_EXEMPTFLOOD)
-#define IsExemptSpambot(x)	((x)->flags & FLAGS_EXEMPTSPAMBOT)
-#define SetExemptSpambot(x)	((x)->flags |= FLAGS_EXEMPTSPAMBOT)
-#define IsExemptShide(x)	((x)->flags & FLAGS_EXEMPTSHIDE)
-#define SetExemptShide(x)	((x)->flags |= FLAGS_EXEMPTSHIDE)
-#define IsExemptJupe(x)		((x)->flags & FLAGS_EXEMPTJUPE)
-#define SetExemptJupe(x)	((x)->flags |= FLAGS_EXEMPTJUPE)
-#define IsExemptResv(x)		((x)->flags & FLAGS_EXEMPTRESV)
-#define SetExemptResv(x)	((x)->flags |= FLAGS_EXEMPTRESV)
-#define IsIPSpoof(x)            ((x)->flags & FLAGS_IP_SPOOFING)
-#define SetIPSpoof(x)           ((x)->flags |= FLAGS_IP_SPOOFING)
-#define IsExtendChans(x)	((x)->flags & FLAGS_EXTENDCHANS)
-#define SetExtendChans(x)	((x)->flags |= FLAGS_EXTENDCHANS)
+inline bool
+is_got_id(const client &client)
+{
+	return (client.flags & flags::GOTID) != 0;
+}
 
-/* for local users: flood grace period is over
- * for servers: mentioned in networknotice.c notice
+
+inline bool
+is_exempt_kline(const client &client)
+{
+	return client.flags & flags::EXEMPTKLINE;
+}
+
+inline void
+set_exempt_kline(client &client)
+{
+	client.flags |= flags::EXEMPTKLINE;
+}
+
+inline bool
+is_exempt_flood(const client &client)
+{
+	return client.flags & flags::EXEMPTFLOOD;
+}
+
+inline void
+set_exempt_flood(client &client)
+{
+	client.flags |= flags::EXEMPTFLOOD;
+}
+
+inline bool
+is_exempt_spambot(const client &client)
+{
+	return client.flags & flags::EXEMPTSPAMBOT;
+}
+
+inline void
+set_exempt_spambot(client &client)
+{
+	client.flags |= flags::EXEMPTSPAMBOT;
+}
+
+inline bool
+is_exempt_shide(const client &client)
+{
+	return client.flags & flags::EXEMPTSHIDE;
+}
+
+inline void
+set_exempt_shide(client &client)
+{
+	client.flags |= flags::EXEMPTSHIDE;
+}
+
+inline bool
+is_exempt_jupe(const client &client)
+{
+	return client.flags & flags::EXEMPTJUPE;
+}
+
+inline void
+set_exempt_jupe(client &client)
+{
+	client.flags |= flags::EXEMPTJUPE;
+}
+
+inline bool
+is_exempt_resv(const client &client)
+{
+	return client.flags & flags::EXEMPTRESV;
+}
+
+inline void
+set_exempt_resv(client &client)
+{
+	client.flags |= flags::EXEMPTRESV;
+}
+
+inline bool
+is_ip_spoof(const client &client)
+{
+	return client.flags & flags::IP_SPOOFING;
+}
+
+inline void
+set_ip_spoof(client &client)
+{
+	client.flags |= flags::IP_SPOOFING;
+}
+
+inline bool
+is_extend_chans(const client &client)
+{
+	return client.flags & flags::EXTENDCHANS;
+}
+
+inline void
+set_extend_chans(client &client)
+{
+	client.flags |= flags::EXTENDCHANS;
+}
+
+inline bool
+is_client(const client &client)
+{
+	return client.status == status::CLIENT;
+}
+
+inline bool
+is_registered_user(const client &client)
+{
+	return client.status == status::CLIENT;
+}
+
+inline bool
+is_registered(const client &client)
+{
+	return client.status > status::UNKNOWN && client.status != status::REJECT;
+}
+
+inline bool
+is_connecting(const client &client)
+{
+	return client.status == status::CONNECTING;
+}
+
+inline bool
+is_handshake(const client &client)
+{
+	return client.status == status::HANDSHAKE;
+}
+
+inline bool
+is_me(const client &client)
+{
+	return client.status == status::ME;
+}
+
+inline bool
+is_unknown(const client &client)
+{
+	return client.status == status::UNKNOWN;
+}
+
+inline bool
+is_server(const client &client)
+{
+	return client.status == status::SERVER;
+}
+
+inline bool
+is_reject(const client &client)
+{
+	return client.status == status::REJECT;
+}
+
+inline bool
+is_any_server(const client &client)
+{
+	return is_server(client) || is_handshake(client) || is_connecting(client);
+}
+
+inline void
+set_reject(client &client)
+{
+	client.status = status::REJECT;
+	client.handler = UNREGISTERED_HANDLER;
+}
+
+inline void
+set_connecting(client &client)
+{
+	client.status = status::CONNECTING;
+	client.handler = UNREGISTERED_HANDLER;
+}
+
+inline void
+set_handshake(client &client)
+{
+	client.status = status::HANDSHAKE;
+	client.handler = UNREGISTERED_HANDLER;
+}
+
+inline void
+set_me(client &client)
+{
+	client.status = status::ME;
+	client.handler = UNREGISTERED_HANDLER;
+}
+
+inline void
+set_unknown(client &client)
+{
+	client.status = status::UNKNOWN;
+	client.handler = UNREGISTERED_HANDLER;
+}
+
+inline void
+set_server(client &client)
+{
+	client.status = status::SERVER;
+	client.handler = SERVER_HANDLER;
+}
+
+inline bool
+is_oper(const client &client)
+{
+	return client.umodes & UMODE_OPER;
+}
+
+inline void
+set_client(client &client)
+{
+	client.status = status::CLIENT;
+	client.handler = is_oper(client)? OPER_HANDLER : CLIENT_HANDLER;
+}
+
+inline void
+set_remote_client(client &client)
+{
+	client.status = status::CLIENT;
+	client.handler = RCLIENT_HANDLER;
+}
+
+inline bool
+parse_as_client(const client &client)
+{
+	return bool(client.status & (status::UNKNOWN | status::CLIENT));
+}
+
+inline bool
+parse_as_server(const client &client)
+{
+	return bool(client.status & (status::CONNECTING | status::HANDSHAKE | status::SERVER));
+}
+
+/*
+ * ts stuff
  */
-#define IsFloodDone(x)          ((x)->flags & FLAGS_FLOODDONE)
-#define SetFloodDone(x)         ((x)->flags |= FLAGS_FLOODDONE)
+#define TS_CURRENT	6
+#define TS_MIN          6
+
+#define TS_DOESTS       0x10000000
+#define DoesTS(x)       ((x)->tsinfo & TS_DOESTS)
+
+/* if target is TS6, use id if it has one, else name */
+
+#define has_id(source)	((source)->id[0] != '\0')
+#define use_id(source)	((source)->id[0] != '\0' ? (source)->id : (source)->name)
+bool is_server(const client &client);
+inline char *get_id(const client *const &source, const client *const &target)
+{
+	return const_cast<char *>(is_server(*target->from) && has_id(target->from) ? use_id(source) : (source)->name);
+}
+
+inline auto get_id(const client &source, const client &target)
+{
+	return get_id(&source, &target);
+}
+
+
+
+/* flags for local clients, this needs stuff moved from above to here at some point */
+#define LFLAGS_SSL		0x00000001
+#define LFLAGS_FLUSH		0x00000002
+#define LFLAGS_CORK		0x00000004
+
+
+inline bool
+is_person(const client &client)
+{
+	return is_client(client) && client.user;
+}
+
+inline bool
+my_connect(const client &client)
+{
+	return client.flags & flags::MYCONNECT;
+}
+
+inline void
+set_my_connect(client &client)
+{
+	client.flags |= flags::MYCONNECT;
+}
+
+inline void
+clear_my_connect(client &client)
+{
+	client.flags &= ~flags::MYCONNECT;
+}
+
+inline bool
+my(const client &client)
+{
+	return my_connect(client) && is_client(client);
+}
+
+inline void
+set_mark(client &client)
+{
+	client.flags |= flags::MARK;
+}
+
+inline void
+clear_mark(client &client)
+{
+	client.flags &= ~flags::MARK;
+}
+
+inline bool
+is_marked(const client &client)
+{
+	return client.flags & flags::MARK;
+}
+
+inline void
+set_hidden(client &client)
+{
+	client.flags |= flags::HIDDEN;
+}
+
+inline void
+clear_hidden(client &client)
+{
+	client.flags &= ~flags::HIDDEN;
+}
+
+inline bool
+is_hidden(const client &client)
+{
+	return client.flags & flags::HIDDEN;
+}
+
+inline void
+clear_eob(client &client)
+{
+	client.flags &= ~flags::EOB;
+}
+
+inline void
+set_eob(client &client)
+{
+	client.flags |= flags::EOB;
+}
+
+inline bool
+has_sent_eob(const client &client)
+{
+	return client.flags & flags::EOB;
+}
+
+inline void
+set_dead(client &client)
+{
+	client.flags |= flags::DEAD;
+}
+
+inline bool
+is_dead(const client &client)
+{
+	return client.flags &  flags::DEAD;
+}
+
+inline void
+set_closing(client &client)
+{
+	client.flags |= flags::CLOSING;
+}
+
+inline bool
+is_closing(const client &client)
+{
+	return client.flags & flags::CLOSING;
+}
+
+inline void
+set_io_error(client &client)
+{
+	client.flags |= flags::IOERROR;
+}
+
+inline bool
+is_io_error(const client &client)
+{
+	return client.flags & flags::IOERROR;
+}
+
+inline bool
+is_any_dead(const client &client)
+{
+	return is_io_error(client) || is_dead(client) || is_closing(client);
+}
+
+inline void
+set_tg_change(client &client)
+{
+	client.flags |= flags::TGCHANGE;
+}
+
+inline void
+clear_tg_change(client &client)
+{
+	client.flags &= ~flags::TGCHANGE;
+}
+
+inline bool
+is_tg_change(const client &client)
+{
+	return client.flags & flags::TGCHANGE;
+}
+
+inline void
+set_dyn_spoof(client &client)
+{
+	client.flags |= flags::DYNSPOOF;
+}
+
+inline void
+clear_dyn_spoof(client &client)
+{
+	client.flags &= ~flags::DYNSPOOF;
+}
+
+inline bool
+is_dyn_spoof(const client &client)
+{
+	return client.flags & flags::DYNSPOOF;
+}
+
+inline void
+set_tg_excessive(client &client)
+{
+	client.flags|= flags::TGEXCESSIVE;
+}
+
+inline void
+clear_tg_excessive(client &client)
+{
+	client.flags &= ~flags::TGEXCESSIVE;
+}
+
+inline bool
+is_tg_excessive(const client &client)
+{
+	return client.flags & flags::TGEXCESSIVE;
+}
+
+inline void
+set_flood_done(client &client)
+{
+	client.flags |= flags::FLOODDONE;
+}
+
+inline bool
+is_flood_done(const client &client)
+{
+	return client.flags & flags::FLOODDONE;
+}
+
+
+/* local flags */
+
+#define IsSSL(x)		((x)->localClient->localflags & LFLAGS_SSL)
+#define SetSSL(x)		((x)->localClient->localflags |= LFLAGS_SSL)
+#define ClearSSL(x)		((x)->localClient->localflags &= ~LFLAGS_SSL)
+
+#define IsFlush(x)		((x)->localClient->localflags & LFLAGS_FLUSH)
+#define SetFlush(x)		((x)->localClient->localflags |= LFLAGS_FLUSH)
+#define ClearFlush(x)		((x)->localClient->localflags &= ~LFLAGS_FLUSH)
 
 /* These also operate on the uplink from which it came */
-#define IsCork(x)		(MyConnect(x) ? (x)->localClient->cork_count : (x)->from->localClient->cork_count)
-#define SetCork(x)		(MyConnect(x) ? (x)->localClient->cork_count++ : (x)->from->localClient->cork_count++ )
-#define ClearCork(x)		(MyConnect(x) ? (x)->localClient->cork_count-- : (x)->from->localClient->cork_count--)
+#define IsCork(x)		(my_connect(x) ? (x)->localClient->cork_count : (x)->from->localClient->cork_count)
+#define SetCork(x)		(my_connect(x) ? (x)->localClient->cork_count++ : (x)->from->localClient->cork_count++ )
+#define ClearCork(x)		(my_connect(x) ? (x)->localClient->cork_count-- : (x)->from->localClient->cork_count--)
 
 /*
  * definitions for get_client_name

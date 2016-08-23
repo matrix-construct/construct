@@ -70,7 +70,7 @@ m_topic(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 		}
 	}
 
-	if(MyClient(&source) && !IsFloodDone(&source))
+	if(my(source) && !is_flood_done(source))
 		flood_endgrace(&source);
 
 	chptr = chan::get(name, std::nothrow);
@@ -94,7 +94,7 @@ m_topic(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 			return;
 		}
 
-		if (MyClient(&source) &&
+		if (my(source) &&
 		    !is_chanop(msptr) &&
 		    !is_voiced(msptr) &&
 		    !IsOper(&source) &&
@@ -107,7 +107,7 @@ m_topic(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 
 		if(((chptr->mode.mode & chan::mode::TOPICLIMIT) == 0 ||
 					get_channel_access(&source, chptr, msptr, MODE_ADD, NULL) >= chan::CHANOP) &&
-				(!MyClient(&source) ||
+				(!my(source) ||
 				 can_send(chptr, &source, msptr)))
 		{
 			char topic[TOPICLEN + 1];
@@ -136,7 +136,7 @@ m_topic(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 					get_id(&me, &source),
 					get_id(&source, &source), name);
 	}
-	else if(MyClient(&source))
+	else if(my(source))
 	{
 		if(operspy)
 			report_operspy(&source, "TOPIC", chptr->name.c_str());

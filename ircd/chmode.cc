@@ -200,7 +200,7 @@ chan::get_channel_access(client::client *source_p, chan *chptr, membership *mspt
 {
 	hook_data_channel_approval moduledata;
 
-	if(!MyClient(source_p))
+	if(!my(*source_p))
 		return CHANOP;
 
 	moduledata.client = source_p;
@@ -229,7 +229,7 @@ allow_mode_change(client::client *source_p, chan::chan *chptr, int alevel,
 		int *errors, char c)
 {
 	/* If this mode char is locked, don't allow local users to change it. */
-	if (MyClient(source_p) && !chptr->mode_lock.empty() && strchr(chptr->mode_lock.c_str(), c))
+	if (my(*source_p) && !chptr->mode_lock.empty() && strchr(chptr->mode_lock.c_str(), c))
 	{
 		if (!(*errors & SM_ERR_MLOCK))
 			sendto_one_numeric(source_p,
@@ -415,7 +415,7 @@ check_forward(client::client *source_p, chan::chan *chptr, const char *forward)
 	chan::membership *msptr;
 
 	if(!chan::valid_name(forward) ||
-			(MyClient(source_p) && (strlen(forward) > LOC_CHANNELLEN || hash_find_resv(forward))))
+			(my(*source_p) && (strlen(forward) > LOC_CHANNELLEN || hash_find_resv(forward))))
 	{
 		sendto_one_numeric(source_p, ERR_BADCHANNAME, form_str(ERR_BADCHANNAME), forward);
 		return false;
@@ -427,13 +427,13 @@ check_forward(client::client *source_p, chan::chan *chptr, const char *forward)
 				   form_str(ERR_BADCHANNAME), forward);
 		return false;
 	}
-	if(MyClient(source_p) && (targptr = chan::get(forward, std::nothrow)) == NULL)
+	if(my(*source_p) && (targptr = chan::get(forward, std::nothrow)) == NULL)
 	{
 		sendto_one_numeric(source_p, ERR_NOSUCHCHANNEL,
 				   form_str(ERR_NOSUCHCHANNEL), forward);
 		return false;
 	}
-	if(MyClient(source_p) && !(targptr->mode.mode & mode::FREETARGET))
+	if(my(*source_p) && !(targptr->mode.mode & mode::FREETARGET))
 	{
 		auto *const msptr(get(targptr->members, *source_p, std::nothrow));
 		if(!msptr || get_channel_access(source_p, targptr, msptr, MODE_QUERY, NULL) < chan::CHANOP)
@@ -517,14 +517,14 @@ mode::functor::simple(client::client *source_p, chan *chptr,
 	if(!allow_mode_change(source_p, chptr, alevel, errors, c))
 		return;
 
-	if(MyClient(source_p) && (++mode_limit_simple > MAXMODES_SIMPLE))
+	if(my(*source_p) && (++mode_limit_simple > MAXMODES_SIMPLE))
 		return;
 
 	/* setting + */
 	if((dir == MODE_ADD) && !(chptr->mode.mode & mode_type))
 	{
 		/* if +f is disabled, ignore an attempt to set +QF locally */
-		if(!ConfigChannel.use_forward && MyClient(source_p) &&
+		if(!ConfigChannel.use_forward && my(*source_p) &&
 				(c == 'Q' || c == 'F'))
 			return;
 
@@ -553,7 +553,7 @@ mode::functor::orphaned(client::client *source_p, chan *chptr,
 	   int alevel, int parc, int *parn,
 	   const char **parv, int *errors, int dir, char c, type mode_type)
 {
-	if(MyClient(source_p))
+	if(my(*source_p))
 		return;
 
 	if((dir == MODE_ADD) && !(chptr->mode.mode & mode_type))
@@ -583,14 +583,14 @@ mode::functor::hidden(client::client *source_p, chan *chptr,
 	  int alevel, int parc, int *parn,
 	  const char **parv, int *errors, int dir, char c, type mode_type)
 {
-	if(!IsOper(source_p) && !IsServer(source_p))
+	if(!IsOper(source_p) && !is_server(*source_p))
 	{
 		if(!(*errors & SM_ERR_NOPRIVS))
 			sendto_one_numeric(source_p, ERR_NOPRIVILEGES, form_str(ERR_NOPRIVILEGES));
 		*errors |= SM_ERR_NOPRIVS;
 		return;
 	}
-	if(MyClient(source_p) && !IsOperAdmin(source_p))
+	if(my(*source_p) && !IsOperAdmin(source_p))
 	{
 		if(!(*errors & SM_ERR_NOPRIVS))
 			sendto_one(source_p, form_str(ERR_NOPRIVS), me.name,
@@ -599,7 +599,7 @@ mode::functor::hidden(client::client *source_p, chan *chptr,
 		return;
 	}
 
-	if(MyClient(source_p) && (++mode_limit_simple > MAXMODES_SIMPLE))
+	if(my(*source_p) && (++mode_limit_simple > MAXMODES_SIMPLE))
 		return;
 
 	/* setting + */
@@ -630,14 +630,14 @@ mode::functor::staff(client::client *source_p, chan *chptr,
 	  int alevel, int parc, int *parn,
 	  const char **parv, int *errors, int dir, char c, type mode_type)
 {
-	if(!IsOper(source_p) && !IsServer(source_p))
+	if(!IsOper(source_p) && !is_server(*source_p))
 	{
 		if(!(*errors & SM_ERR_NOPRIVS))
 			sendto_one_numeric(source_p, ERR_NOPRIVILEGES, form_str(ERR_NOPRIVILEGES));
 		*errors |= SM_ERR_NOPRIVS;
 		return;
 	}
-	if(MyClient(source_p) && !IsOperResv(source_p))
+	if(my(*source_p) && !IsOperResv(source_p))
 	{
 		if(!(*errors & SM_ERR_NOPRIVS))
 			sendto_one(source_p, form_str(ERR_NOPRIVS), me.name,
@@ -649,7 +649,7 @@ mode::functor::staff(client::client *source_p, chan *chptr,
 	if(!allow_mode_change(source_p, chptr, CHANOP, errors, c))
 		return;
 
-	if(MyClient(source_p) && (++mode_limit_simple > MAXMODES_SIMPLE))
+	if(my(*source_p) && (++mode_limit_simple > MAXMODES_SIMPLE))
 		return;
 
 	/* setting + */
@@ -702,7 +702,7 @@ mode::functor::ban(client::client *source_p, chan *chptr,
 
 	case EXCEPTION:
 		/* if +e is disabled, allow all but +e locally */
-		if(!ConfigChannel.use_except && MyClient(source_p) &&
+		if(!ConfigChannel.use_except && my(*source_p) &&
 		   ((dir == MODE_ADD) && (parc > *parn)))
 			return;
 
@@ -719,7 +719,7 @@ mode::functor::ban(client::client *source_p, chan *chptr,
 
 	case INVEX:
 		/* if +I is disabled, allow all but +I locally */
-		if(!ConfigChannel.use_invex && MyClient(source_p) &&
+		if(!ConfigChannel.use_invex && my(*source_p) &&
 		   (dir == MODE_ADD) && (parc > *parn))
 			return;
 
@@ -790,7 +790,7 @@ mode::functor::ban(client::client *source_p, chan *chptr,
 		return;
 
 
-	if(MyClient(source_p) && (++mode_limit > MAXPARAMS))
+	if(my(*source_p) && (++mode_limit > MAXPARAMS))
 		return;
 
 	raw_mask = parv[(*parn)];
@@ -800,7 +800,7 @@ mode::functor::ban(client::client *source_p, chan *chptr,
 	if(EmptyString(raw_mask) || *raw_mask == ':')
 		return;
 
-	if(!MyClient(source_p))
+	if(!my(*source_p))
 	{
 		if(strchr(raw_mask, ' '))
 			return;
@@ -836,7 +836,7 @@ mode::functor::ban(client::client *source_p, chan *chptr,
 	/* if we're adding a NEW id */
 	if(dir == MODE_ADD)
 	{
-		if (*mask == '$' && MyClient(source_p))
+		if (*mask == '$' && my(*source_p))
 		{
 			if (!valid_extban(mask, source_p, chptr, mode_type))
 			{
@@ -850,7 +850,7 @@ mode::functor::ban(client::client *source_p, chan *chptr,
 		/* For compatibility, only check the forward channel from
 		 * local clients. Accept any forward channel from servers.
 		 */
-		if(forward != NULL && MyClient(source_p))
+		if(forward != NULL && my(*source_p))
 		{
 			/* For simplicity and future flexibility, do not
 			 * allow '$' in forwarding targets.
@@ -959,14 +959,14 @@ mode::functor::op(client::client *source_p, chan *chptr,
 
 	if(mstptr == NULL)
 	{
-		if(!(*errors & SM_ERR_NOTONCHANNEL) && MyClient(source_p))
+		if(!(*errors & SM_ERR_NOTONCHANNEL) && my(*source_p))
 			sendto_one_numeric(source_p, ERR_USERNOTINCHANNEL,
 					   form_str(ERR_USERNOTINCHANNEL), opnick, chptr->name.c_str());
 		*errors |= SM_ERR_NOTONCHANNEL;
 		return;
 	}
 
-	if(MyClient(source_p) && (++mode_limit > MAXPARAMS))
+	if(my(*source_p) && (++mode_limit > MAXPARAMS))
 		return;
 
 	if(dir == MODE_ADD)
@@ -984,7 +984,7 @@ mode::functor::op(client::client *source_p, chan *chptr,
 	}
 	else
 	{
-		if(MyClient(source_p) && IsService(targ_p))
+		if(my(*source_p) && IsService(targ_p))
 		{
 			sendto_one(source_p, form_str(ERR_ISCHANSERVICE),
 				   me.name, source_p->name, targ_p->name, chptr->name.c_str());
@@ -1035,14 +1035,14 @@ mode::functor::voice(client::client *source_p, chan *chptr,
 
 	if(mstptr == NULL)
 	{
-		if(!(*errors & SM_ERR_NOTONCHANNEL) && MyClient(source_p))
+		if(!(*errors & SM_ERR_NOTONCHANNEL) && my(*source_p))
 			sendto_one_numeric(source_p, ERR_USERNOTINCHANNEL,
 					   form_str(ERR_USERNOTINCHANNEL), opnick, chptr->name.c_str());
 		*errors |= SM_ERR_NOTONCHANNEL;
 		return;
 	}
 
-	if(MyClient(source_p) && (++mode_limit > MAXPARAMS))
+	if(my(*source_p) && (++mode_limit > MAXPARAMS))
 		return;
 
 	if(dir == MODE_ADD)
@@ -1082,7 +1082,7 @@ mode::functor::limit(client::client *source_p, chan *chptr,
 	if(dir == MODE_QUERY)
 		return;
 
-	if(MyClient(source_p) && (++mode_limit_simple > MAXMODES_SIMPLE))
+	if(my(*source_p) && (++mode_limit_simple > MAXMODES_SIMPLE))
 		return;
 
 	if((dir == MODE_ADD) && parc > *parn)
@@ -1131,7 +1131,7 @@ mode::functor::throttle(client::client *source_p, chan *chptr,
 	if(dir == MODE_QUERY)
 		return;
 
-	if(MyClient(source_p) && (++mode_limit_simple > MAXMODES_SIMPLE))
+	if(my(*source_p) && (++mode_limit_simple > MAXMODES_SIMPLE))
 		return;
 
 	if((dir == MODE_ADD) && parc > *parn)
@@ -1179,7 +1179,7 @@ mode::functor::forward(client::client *source_p, chan *chptr,
 	const char *forward;
 
 	/* if +f is disabled, ignore local attempts to set it */
-	if(!ConfigChannel.use_forward && MyClient(source_p) &&
+	if(!ConfigChannel.use_forward && my(*source_p) &&
 	   (dir == MODE_ADD) && (parc > *parn))
 		return;
 
@@ -1200,7 +1200,7 @@ mode::functor::forward(client::client *source_p, chan *chptr,
 	if(!allow_mode_change(source_p, chptr, alevel, errors, c))
 		return;
 #else
-	if(!IsOper(source_p) && !IsServer(source_p))
+	if(!IsOper(source_p) && !is_server(*source_p))
 	{
 		if(!(*errors & SM_ERR_NOPRIVS))
 			sendto_one_numeric(source_p, ERR_NOPRIVILEGES, form_str(ERR_NOPRIVILEGES));
@@ -1209,7 +1209,7 @@ mode::functor::forward(client::client *source_p, chan *chptr,
 	}
 #endif
 
-	if(MyClient(source_p) && (++mode_limit_simple > MAXMODES_SIMPLE))
+	if(my(*source_p) && (++mode_limit_simple > MAXMODES_SIMPLE))
 		return;
 
 	if(dir == MODE_ADD && parc > *parn)
@@ -1260,7 +1260,7 @@ mode::functor::key(client::client *source_p, chan *chptr,
 	if(dir == MODE_QUERY)
 		return;
 
-	if(MyClient(source_p) && (++mode_limit_simple > MAXMODES_SIMPLE))
+	if(my(*source_p) && (++mode_limit_simple > MAXMODES_SIMPLE))
 		return;
 
 	if((dir == MODE_ADD) && parc > *parn)
@@ -1268,7 +1268,7 @@ mode::functor::key(client::client *source_p, chan *chptr,
 		key = LOCAL_COPY(parv[(*parn)]);
 		(*parn)++;
 
-		if(MyClient(source_p))
+		if(my(*source_p))
 			fix_key(key);
 		else
 			fix_key_remote(key);
@@ -1351,7 +1351,7 @@ chan::set_channel_mode(client::client *client_p, client::client *source_p,
 	mode_limit_simple = 0;
 
 	/* Hide connecting server on netburst -- jilles */
-	if (ConfigServerHide.flatten_links && IsServer(source_p) && !has_id(source_p) && !HasSentEob(source_p))
+	if (ConfigServerHide.flatten_links && is_server(*source_p) && !has_id(source_p) && !has_sent_eob(*source_p))
 		fakesource_p = &me;
 	else
 		fakesource_p = source_p;
@@ -1391,7 +1391,7 @@ chan::set_channel_mode(client::client *client_p, client::client *source_p,
 	if(!mode_count)
 		return;
 
-	if(IsServer(source_p))
+	if(is_server(*source_p))
 		mlen = sprintf(modebuf, ":%s MODE %s ", fakesource_p->name, chptr->name.c_str());
 	else
 		mlen = sprintf(modebuf, ":%s!%s@%s MODE %s ",
@@ -1474,7 +1474,7 @@ chan::set_channel_mode(client::client *client_p, client::client *source_p,
 	}
 
 	/* only propagate modes originating locally, or if we're hubbing */
-	if(MyClient(source_p) || rb_dlink_list_length(&serv_list) > 1)
+	if(my(*source_p) || rb_dlink_list_length(&serv_list) > 1)
 		send_cap_mode_changes(client_p, source_p, chptr, mode_changes, mode_count);
 }
 

@@ -67,7 +67,7 @@ mo_die(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 			return;
 		}
 
-		if (!IsMe(server_p))
+		if (!is_me(*server_p))
 		{
 			sendto_one(server_p, ":%s ENCAP %s DIE %s", source.name, parv[2], parv[1]);
 			return;

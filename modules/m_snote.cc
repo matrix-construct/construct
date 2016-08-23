@@ -59,7 +59,7 @@ me_snote(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 	 */
 	if (parc > 3)
 		return;
-	if (!IsServer(&source))
+	if (!is_server(source))
 		return;
 
 	sendto_realops_snomask_from(snomask_modes[(unsigned char) *parv[1]],

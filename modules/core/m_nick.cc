@@ -154,7 +154,7 @@ m_nick(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 	}
 
 	/* mark end of grace period, to prevent nickflooding */
-	if(!IsFloodDone(&source))
+	if(!is_flood_done(source))
 		flood_endgrace(&source);
 
 	/* terminate nick to NICKLEN, we dont want client::clean_nick() to error! */
@@ -167,7 +167,7 @@ m_nick(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 		return;
 	}
 
-	if(!IsExemptResv(&source) && find_nick_resv(nick))
+	if(!is_exempt_resv(source) && find_nick_resv(nick))
 	{
 		sendto_one(&source, form_str(ERR_ERRONEUSNICKNAME), me.name, source.name, nick);
 		return;
@@ -194,7 +194,7 @@ m_nick(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 		}
 
 		/* drop unregged client */
-		else if(IsUnknown(target_p))
+		else if(is_unknown(*target_p))
 		{
 			exit_client(NULL, target_p, &me, "Overridden");
 			change_local_nick(client, source, nick, 1);
@@ -235,7 +235,7 @@ mc_nick(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	{
 		change_remote_nick(client, source, newts, parv[1], 1);
 	}
-	else if(IsUnknown(target_p))
+	else if(is_unknown(*target_p))
 	{
 		exit_client(NULL, target_p, &me, "Overridden");
 		change_remote_nick(client, source, newts, parv[1], 1);
@@ -348,7 +348,7 @@ ms_uid(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 	{
 		register_client(client, &source, parv[1], newts, parc, parv);
 	}
-	else if(IsUnknown(target_p))
+	else if(is_unknown(*target_p))
 	{
 		exit_client(NULL, target_p, &me, "Overridden");
 		register_client(client, &source, parv[1], newts, parc, parv);
@@ -447,7 +447,7 @@ ms_euid(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	{
 		register_client(client, &source, parv[1], newts, parc, parv);
 	}
-	else if(IsUnknown(target_p))
+	else if(is_unknown(*target_p))
 	{
 		exit_client(NULL, target_p, &me, "Overridden");
 		register_client(client, &source, parv[1], newts, parc, parv);
@@ -470,7 +470,7 @@ ms_save(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	target_p = find_id(parv[1]);
 	if (target_p == NULL)
 		return;
-	if (!IsPerson(target_p))
+	if (!is_person(*target_p))
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				"Ignored SAVE message for non-person %s from %s",
 				target_p->name, source.name);
@@ -555,7 +555,7 @@ clean_uid(const char *uid, const char *sid)
 			return false;
 	}
 
-	if(len != IDLEN - 1)
+	if(len != client::IDLEN - 1)
 		return false;
 
 	return true;
@@ -577,7 +577,7 @@ set_initial_nick(client::client &client, client::client &source, char *nick)
 	snprintf(note, sizeof(note), "Nick: %s", nick);
 	rb_note(client.localClient->F, note);
 
-	if(source.flags & FLAGS_SENTUSER)
+	if(source.flags & client::flags::SENTUSER)
 	{
 		/* got user, heres nick. */
 		register_local_user(&client, &source);
@@ -777,7 +777,7 @@ perform_nick_collides(client::client &source, client::client &client,
 			kill_client_serv_butone(NULL, target_p, "%s (Nick collision (new))", me.name);
 			ServerStats.is_kill++;
 
-			target_p->flags |= FLAGS_KILLED;
+			target_p->flags |= client::flags::KILLED;
 			exit_client(&client, target_p, &me, "Nick collision (new)");
 		}
 		return;
@@ -836,7 +836,7 @@ perform_nick_collides(client::client &source, client::client &client,
 				kill_client_serv_butone(&client, target_p,
 						"%s (Nick collision (new))", me.name);
 
-				target_p->flags |= FLAGS_KILLED;
+				target_p->flags |= client::flags::KILLED;
 				(void) exit_client(&client, target_p, &me, "Nick collision");
 			}
 
@@ -890,9 +890,9 @@ perform_nickchange_collides(client::client &source, client::client &client,
 
 			kill_client_serv_butone(NULL, target_p, "%s (Nick change collision)", me.name);
 
-			target_p->flags |= FLAGS_KILLED;
+			target_p->flags |= client::flags::KILLED;
 			exit_client(NULL, target_p, &me, "Nick collision(new)");
-			source.flags |= FLAGS_KILLED;
+			source.flags |= client::flags::KILLED;
 			exit_client(&client, &source, &me, "Nick collision(old)");
 		}
 		return;
@@ -939,7 +939,7 @@ perform_nickchange_collides(client::client &source, client::client &client,
 				kill_client_serv_butone(&client, &source,
 						"%s (Nick change collision)", me.name);
 
-				source.flags |= FLAGS_KILLED;
+				source.flags |= client::flags::KILLED;
 
 				if(sameuser)
 					exit_client(&client, &source, &me, "Nick collision(old)");
@@ -976,7 +976,7 @@ perform_nickchange_collides(client::client &source, client::client &client,
 
 				ServerStats.is_kill++;
 
-				target_p->flags |= FLAGS_KILLED;
+				target_p->flags |= client::flags::KILLED;
 				(void) exit_client(&client, target_p, &me, "Nick collision");
 			}
 		}
@@ -1016,7 +1016,7 @@ register_client(client::client &client, client::client *server,
 		{
 			rb_strlcpy(source->orighost, parv[9], sizeof(source->orighost));
 			if (irccmp(source->host, source->orighost))
-				SetDynSpoof(source);
+				set_dyn_spoof(*source);
 		}
 		if (strcmp(parv[10], "*"))
 			suser(user(*source)) = parv[10];
@@ -1082,7 +1082,7 @@ register_client(client::client &client, client::client *server,
 	if(IsOper(source) && !IsService(source))
 		rb_dlinkAddAlloc(source, &oper_list);
 
-	SetRemoteClient(source);
+	set_remote_client(*source);
 
 	if(++Count.total > Count.max_tot)
 		Count.max_tot = Count.total;
@@ -1103,11 +1103,11 @@ can_save(client::client *target_p)
 {
 	client::client *serv_p;
 
-	if (MyClient(target_p))
+	if (my(*target_p))
 		return true;
 	if (!has_id(target_p))
 		return false;
-	serv_p = IsServer(target_p) ? target_p : target_p->servptr;
+	serv_p = is_server(*target_p) ? target_p : target_p->servptr;
 	while (serv_p != NULL && serv_p != &me)
 	{
 		if (~caps(serv(*serv_p)) & CAP_SAVE)
@@ -1121,7 +1121,7 @@ static void
 save_user(client::client &client, client::client &source,
 		client::client *target_p)
 {
-	if (!MyConnect(target_p) && (!has_id(target_p) || !IsCapable(target_p->from, CAP_SAVE)))
+	if (!my_connect(*target_p) && (!has_id(target_p) || !IsCapable(target_p->from, CAP_SAVE)))
 	{
 		/* This shouldn't happen */
 		/* Note we only need SAVE support in this direction */
@@ -1131,7 +1131,7 @@ save_user(client::client &client, client::client &source,
 		kill_client_serv_butone(NULL, target_p, "%s (Nick collision (no SAVE support))", me.name);
 		ServerStats.is_kill++;
 
-		target_p->flags |= FLAGS_KILLED;
+		target_p->flags |= client::flags::KILLED;
 		(void) exit_client(NULL, target_p, &me, "Nick collision (no SAVE support)");
 		return;
 	}
@@ -1139,11 +1139,11 @@ save_user(client::client &client, client::client &source,
 			source.id, target_p->id, (long)target_p->tsinfo);
 	sendto_server(&client, NULL, CAP_TS6, CAP_SAVE, ":%s NICK %s :%ld",
 			target_p->id, target_p->id, (long)SAVE_NICKTS);
-	if (!IsMe(&client))
+	if (!is_me(client))
 		sendto_realops_snomask(SNO_SKILL, L_ALL,
 				"Received SAVE message for %s from %s",
 				target_p->name, source.name);
-	if (MyClient(target_p))
+	if (my(*target_p))
 	{
 		sendto_one_numeric(target_p, RPL_SAVENICK,
 				form_str(RPL_SAVENICK), target_p->id);

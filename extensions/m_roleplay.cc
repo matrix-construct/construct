@@ -130,7 +130,7 @@ m_displaymsg(struct MsgBuf *msgbuf_p, client::client &source, const char *channe
 
 	rb_strlcpy(nick3, nick, sizeof nick3);
 
-	if(!IsFloodDone(&source))
+	if(!is_flood_done(source))
 		flood_endgrace(&source);
 
 	if((chptr = chan::get(channel, std::nothrow)) == NULL)

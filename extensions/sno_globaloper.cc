@@ -22,7 +22,7 @@ h_sgo_umode_changed(void *vdata)
 	hook_data_umode_changed *data = (hook_data_umode_changed *)vdata;
 	client::client *source_p = data->client;
 
-	if (MyConnect(source_p) || !HasSentEob(source_p->servptr))
+	if (my_connect(*source_p) || !has_sent_eob(*source_p->servptr))
 		return;
 
 	if (!(data->oldumodes & UMODE_OPER) && IsOper(source_p))

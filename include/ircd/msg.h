@@ -95,24 +95,24 @@ extern void m_unregistered(struct MsgBuf *, client::client &, client::client &, 
  *            prefix part of the message if present. If not
  *            or prefix not found, then source_p==client_p.
  *
- *            (!IsServer(client_p)) => (client_p == source_p), because
+ *            (!is_server(*client_p)) => (client_p == source_p), because
  *            prefixes are taken *only* from servers...
  *
- *            (IsServer(client_p))
+ *            (is_server(*client_p))
  *                    (source_p == client_p) => the message didn't
  *                    have the prefix.
  *
- *                    (source_p != client_p && IsServer(source_p) means
+ *                    (source_p != client_p && is_server(*source_p) means
  *                    the prefix specified servername. (?)
  *
- *                    (source_p != client_p && !IsServer(source_p) means
+ *                    (source_p != client_p && !is_server(*source_p) means
  *                    that message originated from a remote
  *                    user (not local).
  *
  *
  *            combining
  *
- *            (!IsServer(source_p)) means that, source_p can safely
+ *            (!is_server(*source_p)) means that, source_p can safely
  *            taken as defining the target structure of the
  *            message in this server.
  *

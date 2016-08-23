@@ -87,7 +87,7 @@ m_error(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 
 	para = (parc > 1 && *parv[1] != '\0') ? parv[1] : "<>";
 
-	if (IsAnyServer(&client))
+	if (is_any_server(client))
 	{
 		ilog(L_SERVER, "Received ERROR message from %s: %s",
 		     log_client_name(&source, SHOW_IP), para);
@@ -95,7 +95,7 @@ m_error(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 
 	if(is_safe_error(para))
 		hideit = 0;
-	if(IsAnyServer(&client))
+	if(is_any_server(client))
 	{
 		if (hideit < 2)
 			sendto_realops_snomask(SNO_GENERAL, hideit ? L_ADMIN : (is_remote_connect(&client) ? L_NETWIDE : L_ALL),

@@ -53,7 +53,7 @@ static EVH check_pings;
 
 static rb_bh *lclient_heap = NULL;
 static rb_bh *pclient_heap = NULL;
-static char current_uid[IDLEN];
+static char current_uid[client::IDLEN];
 static uint32_t current_connid = 0;
 
 rb_dictionary *nd_dict = NULL;
@@ -276,8 +276,8 @@ client::init()
 uint32_t
 client::connid_get(client *client_p)
 {
-	s_assert(MyConnect(client_p));
-	if (!MyConnect(client_p))
+	s_assert(my_connect(*client_p));
+	if (!my_connect(*client_p))
 		return 0;
 
 	/* find a connid that is available */
@@ -331,9 +331,9 @@ client::client_release_connids(client *client_p)
 	rb_dlink_node *ptr, *ptr2;
 
 	if (client_p->localClient->connids.head)
-		s_assert(MyConnect(client_p));
+		s_assert(my_connect(*client_p));
 
-	if (!MyConnect(client_p))
+	if (!my_connect(*client_p))
 		return;
 
 	RB_DLINK_FOREACH_SAFE(ptr, ptr2, client_p->localClient->connids.head)
@@ -361,7 +361,7 @@ client::make_client(client *from)
 		client_p->from = client_p;	/* 'from' of local client is self! */
 
 		localClient = reinterpret_cast<LocalUser *>(rb_bh_alloc(lclient_heap));
-		SetMyConnect(client_p);
+		set_my_connect(*client_p);
 		client_p->localClient = localClient;
 
 		client_p->localClient->lasttime = client_p->localClient->firsttime = rb_current_time();
@@ -380,7 +380,7 @@ client::make_client(client *from)
 		client_p->from = from;	/* 'from' of local client is self! */
 	}
 
-	SetUnknown(client_p);
+	set_unknown(*client_p);
 	rb_strlcpy(client_p->username, "unknown", sizeof(client_p->username));
 
 	return client_p;
@@ -521,7 +521,7 @@ client::check_pings_list(rb_dlink_list * list)
 	{
 		client_p = reinterpret_cast<client *>(ptr->data);
 
-		if(!MyConnect(client_p) || IsDead(client_p))
+		if(!my_connect(*client_p) || is_dead(*client_p))
 			continue;
 
 		ping = get_client_ping(client_p);
@@ -533,9 +533,9 @@ client::check_pings_list(rb_dlink_list * list)
 			 * and it has a ping time, then close its connection.
 			 */
 			if(((rb_current_time() - client_p->localClient->lasttime) >= (2 * ping)
-			    && (client_p->flags & FLAGS_PINGSENT)))
+			    && (client_p->flags & flags::PINGSENT)))
 			{
-				if(IsServer(client_p))
+				if(is_server(*client_p))
 				{
 					sendto_realops_snomask(SNO_GENERAL, L_ALL,
 							     "No response from %s, closing link",
@@ -551,14 +551,14 @@ client::check_pings_list(rb_dlink_list * list)
 				exit_client(client_p, client_p, &me, scratch);
 				continue;
 			}
-			else if((client_p->flags & FLAGS_PINGSENT) == 0)
+			else if((client_p->flags & flags::PINGSENT) == 0)
 			{
 				/*
 				 * if we havent PINGed the connection and we havent
 				 * heard from it in a while, PING it to make sure
 				 * it is still alive.
 				 */
-				client_p->flags |= FLAGS_PINGSENT;
+				client_p->flags |= flags::PINGSENT;
 				/* not nice but does the job */
 				client_p->localClient->lasttime = rb_current_time() - ping;
 				sendto_one(client_p, "PING :%s", me.name);
@@ -587,7 +587,7 @@ client::check_unknowns_list(rb_dlink_list * list)
 	{
 		client_p = reinterpret_cast<client *>(ptr->data);
 
-		if(IsDead(client_p) || IsClosing(client_p))
+		if(is_dead(*client_p) || is_closing(*client_p))
 			continue;
 
 		/* Still querying with authd */
@@ -599,10 +599,10 @@ client::check_unknowns_list(rb_dlink_list * list)
 		 * for > 30s, close them.
 		 */
 
-		timeout = IsAnyServer(client_p) ? ConfigFileEntry.connect_timeout : 30;
+		timeout = is_any_server(*client_p) ? ConfigFileEntry.connect_timeout : 30;
 		if((rb_current_time() - client_p->localClient->firsttime) > timeout)
 		{
-			if(IsAnyServer(client_p))
+			if(is_any_server(*client_p))
 			{
 				sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 						     "No response from %s, closing link",
@@ -635,7 +635,7 @@ client::notify_banned_client(client *client_p, struct ConfItem *aconf, int ban)
 		reason = aconf->status == D_LINED ? d_lined : k_lined;
 	}
 
-	if(ban == D_LINED && !IsPerson(client_p))
+	if(ban == D_LINED && !is_person(*client_p))
 		sendto_one(client_p, "NOTICE DLINE :*** You have been D-lined");
 	else
 		sendto_one(client_p, form_str(ERR_YOUREBANNEDCREEP),
@@ -692,12 +692,12 @@ client::check_klines(void)
 	{
 		client_p = reinterpret_cast<client *>(ptr->data);
 
-		if(IsMe(client_p) || !IsPerson(client_p))
+		if(is_me(*client_p) || !is_person(*client_p))
 			continue;
 
 		if((aconf = find_kline(client_p)) != NULL)
 		{
-			if(IsExemptKline(client_p))
+			if(is_exempt_kline(*client_p))
 			{
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						     "KLINE over-ruled for %s, client is kline_exempt [%s@%s]",
@@ -734,7 +734,7 @@ client::check_dlines(void)
 	{
 		client_p = reinterpret_cast<client *>(ptr->data);
 
-		if(IsMe(client_p))
+		if(is_me(*client_p))
 			continue;
 
 		if((aconf = find_dline((struct sockaddr *)&client_p->localClient->ip, GET_SS_FAMILY(&client_p->localClient->ip))) != NULL)
@@ -784,12 +784,12 @@ client::check_xlines(void)
 	{
 		client_p = reinterpret_cast<client *>(ptr->data);
 
-		if(IsMe(client_p) || !IsPerson(client_p))
+		if(is_me(*client_p) || !is_person(*client_p))
 			continue;
 
 		if((aconf = find_xline(client_p->info, 1)) != NULL)
 		{
-			if(IsExemptKline(client_p))
+			if(is_exempt_kline(*client_p))
 			{
 				sendto_realops_snomask(SNO_GENERAL, L_ALL,
 						     "XLINE over-ruled for %s, client is kline_exempt [%s]",
@@ -829,7 +829,7 @@ client::resv_nick_fnc(const char *mask, const char *reason, int temp_time)
 	{
 		client_p = reinterpret_cast<client *>(ptr->data);
 
-		if(IsMe(client_p) || !IsPerson(client_p) || IsExemptResv(client_p))
+		if(is_me(*client_p) || !is_person(*client_p) || is_exempt_resv(*client_p))
 			continue;
 
 		/* Skip users that already have UID nicks. */
@@ -905,20 +905,20 @@ client::resv_nick_fnc(const char *mask, const char *reason, int temp_time)
 void
 client::update_client_exit_stats(client *client_p)
 {
-	if(IsServer(client_p))
+	if(is_server(*client_p))
 	{
 		sendto_realops_snomask(SNO_EXTERNAL, L_ALL,
 				     "Server %s split from %s",
 				     client_p->name, client_p->servptr->name);
-		if(HasSentEob(client_p))
+		if(has_sent_eob(*client_p))
 			eob_count--;
 	}
-	else if(IsClient(client_p))
+	else if(is_client(*client_p))
 	{
 		--Count.total;
 		if(IsOper(client_p))
 			--Count.oper;
-		if(IsInvisible(client_p))
+		if(is_invisible(*client_p))
 			--Count.invisi;
 	}
 
@@ -1001,7 +1001,7 @@ client::find_person(const char *name)
 
 	c2ptr = find_client(name);
 
-	if(c2ptr && IsPerson(c2ptr))
+	if(c2ptr && is_person(*c2ptr))
 		return (c2ptr);
 	return (NULL);
 }
@@ -1013,7 +1013,7 @@ client::find_named_person(const char *name)
 
 	c2ptr = find_named_client(name);
 
-	if(c2ptr && IsPerson(c2ptr))
+	if(c2ptr && is_person(*c2ptr))
 		return (c2ptr);
 	return (NULL);
 }
@@ -1035,7 +1035,7 @@ client::find_chasing(client *source_p, const char *user, int *chasing)
 {
 	client *who;
 
-	if(MyClient(source_p))
+	if(my(*source_p))
 		who = find_named_person(user);
 	else
 		who = find_person(user);
@@ -1085,15 +1085,15 @@ client::get_client_name(client *client, int showip)
 	if(client == NULL)
 		return NULL;
 
-	if(MyConnect(client))
+	if(my_connect(*client))
 	{
 		if(!irccmp(client->name, client->host))
 			return client->name;
 
 		if(ConfigFileEntry.hide_spoof_ips &&
-		   showip == SHOW_IP && IsIPSpoof(client))
+		   showip == SHOW_IP && is_ip_spoof(*client))
 			showip = MASK_IP;
-		if(IsAnyServer(client))
+		if(is_any_server(*client))
 			showip = MASK_IP;
 
 		/* And finally, let's get the host information, ip or name */
@@ -1134,7 +1134,7 @@ client::log_client_name(client *target_p, int showip)
 	if(target_p == NULL)
 		return NULL;
 
-	if(MyConnect(target_p))
+	if(my_connect(*target_p))
 	{
 		if(irccmp(target_p->name, target_p->host) == 0)
 			return target_p->name;
@@ -1168,7 +1168,7 @@ client::is_remote_connect(client *client_p)
 		return FALSE;
 
 	oper = find_named_person(client_p->serv->by);
-	return oper != NULL && IsOper(oper) && !MyConnect(oper);
+	return oper != NULL && IsOper(oper) && !my_connect(*oper);
 }
 
 void
@@ -1257,7 +1257,7 @@ client::recurse_remove_clients(client *source_p, const char *comment)
 {
 	using ircd::serv;
 
-	if (IsMe(source_p))
+	if (is_me(*source_p))
 		return;
 
 	if (!source_p->serv)
@@ -1268,9 +1268,9 @@ client::recurse_remove_clients(client *source_p, const char *comment)
 	{
 		for (const auto &user : users(serv(*source_p)))
 		{
-			user->flags |= FLAGS_KILLED;
+			user->flags |= flags::KILLED;
 			add_nd_entry(user->name);
-			if (!IsDead(user) && !IsClosing(user))
+			if (!is_dead(*user) && !is_closing(*user))
 				exit_remote_client(NULL, user, &me, comment);
 		}
 	}
@@ -1278,8 +1278,8 @@ client::recurse_remove_clients(client *source_p, const char *comment)
 	{
 		for (const auto &user : users(serv(*source_p)))
 		{
-			user->flags |= FLAGS_KILLED;
-			if (!IsDead(user) && !IsClosing(user))
+			user->flags |= flags::KILLED;
+			if (!is_dead(*user) && !is_closing(*user))
 				exit_remote_client(NULL, user, &me, comment);
 		}
 	}
@@ -1308,7 +1308,7 @@ client::remove_dependents(client *client_p,
 	{
 		to = reinterpret_cast<client *>(ptr->data);
 
-		if(IsMe(to) || to == source_p->from || to == client_p)
+		if(is_me(*to) || to == source_p->from || to == client_p)
 			continue;
 
 		sendto_one(to, "SQUIT %s :%s", get_id(source_p, to), comment);
@@ -1345,7 +1345,7 @@ client::exit_aborted_clients(void *unused)
  		s_assert(*((unsigned long*)abt->client) != 0xdeadbeef); /* This is lame but its a debug thing */
  	 	rb_dlinkDelete(ptr, &abort_list);
 
- 	 	if(IsAnyServer(abt->client))
+ 	 	if(is_any_server(*abt->client))
  	 	 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
   	 	 	                     "Closing link to %s: %s",
    	 	 	                      abt->client->name, abt->notice);
@@ -1353,7 +1353,7 @@ client::exit_aborted_clients(void *unused)
 		/* its no longer on abort list - we *must* remove
 		 * FLAGS_CLOSING otherwise exit_client() will not run --fl
 		 */
-		abt->client->flags &= ~FLAGS_CLOSING;
+		abt->client->flags &= ~flags::CLOSING;
  	 	exit_client(abt->client, abt->client, &me, abt->notice);
  	 	rb_free(abt);
  	}
@@ -1368,8 +1368,8 @@ client::dead_link(client *client_p, int sendqex)
 {
 	struct abort_client *abt;
 
-	s_assert(!IsMe(client_p));
-	if(IsDead(client_p) || IsClosing(client_p) || IsMe(client_p))
+	s_assert(!is_me(*client_p));
+	if(is_dead(*client_p) || is_closing(*client_p) || is_me(*client_p))
 		return;
 
 	abt = (struct abort_client *) rb_malloc(sizeof(struct abort_client));
@@ -1380,9 +1380,9 @@ client::dead_link(client *client_p, int sendqex)
 		snprintf(abt->notice, sizeof(abt->notice), "Write error: %s", strerror(errno));
 
     	abt->client = client_p;
-	SetIOError(client_p);
-	SetDead(client_p);
-	SetClosing(client_p);
+	set_io_error(*client_p);
+	set_dead(*client_p);
+	set_closing(*client_p);
 	rb_dlinkAdd(abt, &abt->node, &abort_list);
 }
 
@@ -1429,7 +1429,7 @@ client::exit_generic_client(client *client_p, client *source_p, client *from,
 }
 
 /*
- * Assumes IsPerson(source_p) && !MyConnect(source_p)
+ * Assumes is_person(*source_p) && !my_connect(*source_p)
  */
 
 int
@@ -1441,13 +1441,13 @@ client::exit_remote_client(client *client_p, client *source_p, client *from,
 	if(source_p->servptr && source_p->servptr->serv)
 		source_p->servptr->serv->users.erase(source_p->lnode);
 
-	if((source_p->flags & FLAGS_KILLED) == 0)
+	if((source_p->flags & flags::KILLED) == 0)
 	{
 		sendto_server(client_p, NULL, CAP_TS6, NOCAPS,
 			      ":%s QUIT :%s", use_id(source_p), comment);
 	}
 
-	SetDead(source_p);
+	set_dead(*source_p);
 #ifdef DEBUG_EXITED_CLIENTS
 	rb_dlinkAddAlloc(source_p, &dead_remote_list);
 #else
@@ -1457,7 +1457,7 @@ client::exit_remote_client(client *client_p, client *source_p, client *from,
 }
 
 /*
- * This assumes IsUnknown(source_p) == true and MyConnect(source_p) == true
+ * This assumes is_unknown(*source_p) == true and my_connect(*source_p) == true
  */
 
 int
@@ -1475,7 +1475,7 @@ client::exit_unknown_client(client *client_p, /* The local client originating th
 	authd_abort_client(source_p);
 	rb_dlinkDelete(&source_p->localClient->tnode, &unknown_list);
 
-	if(!IsIOError(source_p))
+	if(!is_io_error(*source_p))
 		sendto_one(source_p, "ERROR :Closing Link: %s (%s)",
 			source_p->user != NULL ? source_p->host : "127.0.0.1",
 			comment);
@@ -1488,7 +1488,7 @@ client::exit_unknown_client(client *client_p, /* The local client originating th
 	del_from_hostname_hash(source_p->host, source_p);
 	del_from_client_hash(source_p->name, source_p);
 	remove_client_from_list(source_p);
-	SetDead(source_p);
+	set_dead(*source_p);
 	rb_dlinkAddAlloc(source_p, &dead_list);
 
 	/* Note that we don't need to add unknowns to the dead_list */
@@ -1511,12 +1511,12 @@ client::exit_remote_server(client *client_p, client *source_p, client *from,
 		strcat(comment1, " ");
 		strcat(comment1, source_p->name);
 	}
-	if (IsPerson(from))
+	if (is_person(*from))
 		snprintf(newcomment, sizeof(newcomment), "by %s: %s",
 				from->name, comment);
 
 	if(source_p->serv != NULL)
-		remove_dependents(client_p, source_p, from, IsPerson(from) ? newcomment : comment, comment1);
+		remove_dependents(client_p, source_p, from, is_person(*from) ? newcomment : comment, comment1);
 
 	if(source_p->servptr && source_p->servptr->serv)
 		source_p->servptr->serv->servers.erase(source_p->lnode);
@@ -1526,8 +1526,8 @@ client::exit_remote_server(client *client_p, client *source_p, client *from,
 	rb_dlinkFindDestroy(source_p, &global_serv_list);
 	target_p = source_p->from;
 
-	if(target_p != NULL && IsServer(target_p) && target_p != client_p &&
-	   !IsMe(target_p) && (source_p->flags & FLAGS_KILLED) == 0)
+	if(target_p != NULL && is_server(*target_p) && target_p != client_p &&
+	   !is_me(*target_p) && (source_p->flags & flags::KILLED) == 0)
 	{
 		sendto_one(target_p, ":%s SQUIT %s :%s",
 			   get_id(from, target_p), get_id(source_p, target_p),
@@ -1541,7 +1541,7 @@ client::exit_remote_server(client *client_p, client *source_p, client *from,
 	remove_client_from_list(source_p);
 	scache_split(source_p->serv->nameinfo);
 
-	SetDead(source_p);
+	set_dead(*source_p);
 #ifdef DEBUG_EXITED_CLIENTS
 	rb_dlinkAddAlloc(source_p, &dead_remote_list);
 #else
@@ -1568,7 +1568,7 @@ client::qs_server(client *client_p, client *source_p, client *from,
 	remove_client_from_list(source_p);
 	scache_split(source_p->serv->nameinfo);
 
-	SetDead(source_p);
+	set_dead(*source_p);
 	rb_dlinkAddAlloc(source_p, &dead_list);
 	return 0;
 }
@@ -1592,10 +1592,10 @@ client::exit_local_server(client *client_p, client *source_p, client *from,
 	 */
 	snprintf(newcomment, sizeof(newcomment), "by %s: %s",
 			from == source_p ? me.name : from->name, comment);
-	if (!IsIOError(source_p))
+	if (!is_io_error(*source_p))
 		sendto_one(source_p, "SQUIT %s :%s", use_id(source_p),
 				newcomment);
-	if(client_p != NULL && source_p != client_p && !IsIOError(source_p))
+	if(client_p != NULL && source_p != client_p && !is_io_error(*source_p))
 	{
 		sendto_one(source_p, "ERROR :Closing Link: 127.0.0.1 %s (%s)",
 			   source_p->name, comment);
@@ -1619,7 +1619,7 @@ client::exit_local_server(client *client_p, client *source_p, client *from,
 	}
 
 	if(source_p->serv != NULL)
-		remove_dependents(client_p, source_p, from, IsPerson(from) ? newcomment : comment, comment1);
+		remove_dependents(client_p, source_p, from, is_person(*from) ? newcomment : comment, comment1);
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s was connected"
 			     " for %ld seconds.  %d/%d sendK/recvK.",
@@ -1635,14 +1635,14 @@ client::exit_local_server(client *client_p, client *source_p, client *from,
 	remove_client_from_list(source_p);
 	scache_split(source_p->serv->nameinfo);
 
-	SetDead(source_p);
+	set_dead(*source_p);
 	rb_dlinkAddAlloc(source_p, &dead_list);
 	return 0;
 }
 
 
 /*
- * This assumes IsPerson(source_p) == true && MyConnect(source_p) == true
+ * This assumes is_person(*source_p) == true && my_connect(*source_p) == true
  */
 
 int
@@ -1655,7 +1655,7 @@ client::exit_local_client(client *client_p, client *source_p, client *from,
 	exit_generic_client(client_p, source_p, from, comment);
 	clear_monitor(source_p);
 
-	s_assert(IsPerson(source_p));
+	s_assert(is_person(*source_p));
 	rb_dlinkDelete(&source_p->localClient->tnode, &lclient_list);
 	me.serv->users.erase(source_p->lnode);
 
@@ -1686,13 +1686,13 @@ client::exit_local_client(client *client_p, client *source_p, client *from,
 	sendto_one(source_p, "ERROR :Closing Link: %s (%s)", source_p->host, comment);
 	close_connection(source_p);
 
-	if((source_p->flags & FLAGS_KILLED) == 0)
+	if((source_p->flags & flags::KILLED) == 0)
 	{
 		sendto_server(client_p, NULL, CAP_TS6, NOCAPS,
 			      ":%s QUIT :%s", use_id(source_p), comment);
 	}
 
-	SetDead(source_p);
+	set_dead(*source_p);
 	rb_dlinkAddAlloc(source_p, &dead_list);
 	return(CLIENT_EXITED);
 }
@@ -1732,14 +1732,14 @@ client::exit_client(client *client_p,	/* The local client originating the
 	)
 {
 	hook_data_client_exit hdata;
-	if(IsClosing(source_p))
+	if(is_closing(*source_p))
 		return -1;
 
 	/* note, this HAS to be here, when we exit a client we attempt to
 	 * send them data, if this generates a write error we must *not* add
 	 * them to the abort list --fl
 	 */
-	SetClosing(source_p);
+	set_closing(*source_p);
 
 	hdata.local_link = client_p;
 	hdata.target = source_p;
@@ -1747,23 +1747,23 @@ client::exit_client(client *client_p,	/* The local client originating the
 	hdata.comment = comment;
 	call_hook(h_client_exit, &hdata);
 
-	if(MyConnect(source_p))
+	if(my_connect(*source_p))
 	{
 		/* Local clients of various types */
-		if(IsPerson(source_p))
+		if(is_person(*source_p))
 			return exit_local_client(client_p, source_p, from, comment);
-		else if(IsServer(source_p))
+		else if(is_server(*source_p))
 			return exit_local_server(client_p, source_p, from, comment);
 		/* IsUnknown || IsConnecting || IsHandShake */
-		else if(!IsReject(source_p))
+		else if(!is_reject(*source_p))
 			return exit_unknown_client(client_p, source_p, from, comment);
 	}
 	else
 	{
 		/* Remotes */
-		if(IsPerson(source_p))
+		if(is_person(*source_p))
 			return exit_remote_client(client_p, source_p, from, comment);
-		else if(IsServer(source_p))
+		else if(is_server(*source_p))
 			return exit_remote_server(client_p, source_p, from, comment);
 	}
 
@@ -1828,7 +1828,7 @@ client::del_all_accepts(client *client_p)
 	rb_dlink_node *next_ptr;
 	client *target_p;
 
-	if(MyClient(client_p) && client_p->localClient->allow_list.head)
+	if(my(*client_p) && client_p->localClient->allow_list.head)
 	{
 		/* clear this clients accept list, and remove them from
 		 * everyones on_accept_list
@@ -1863,11 +1863,11 @@ client::del_all_accepts(client *client_p)
 int
 client::show_ip(client *source_p, client *target_p)
 {
-	if(IsAnyServer(target_p))
+	if(is_any_server(*target_p))
 	{
 		return 0;
 	}
-	else if(IsIPSpoof(target_p))
+	else if(is_ip_spoof(*target_p))
 	{
 		/* source == NULL indicates message is being sent
 		 * to local opers.
@@ -1877,7 +1877,7 @@ client::show_ip(client *source_p, client *target_p)
 			return 1;
 		return 0;
 	}
-	else if(IsDynSpoof(target_p) && (source_p != NULL && !IsOper(source_p)))
+	else if(is_dyn_spoof(*target_p) && (source_p != NULL && !IsOper(source_p)))
 		return 0;
 	else
 		return 1;
@@ -1969,7 +1969,7 @@ out:
 /*
  * close_connection
  *        Close the physical connection. This function must make
- *        MyConnect(client_p) == FALSE, and set client_p->from == NULL.
+ *        my_connect(*client_p) == FALSE, and set client_p->from == NULL.
  */
 void
 client::close_connection(client *client_p)
@@ -1978,11 +1978,11 @@ client::close_connection(client *client_p)
 	if(client_p == NULL)
 		return;
 
-	s_assert(MyConnect(client_p));
-	if(!MyConnect(client_p))
+	s_assert(my_connect(*client_p));
+	if(!my_connect(*client_p))
 		return;
 
-	if(IsServer(client_p))
+	if(is_server(*client_p))
 	{
 		struct server_conf *server_p;
 
@@ -2010,7 +2010,7 @@ client::close_connection(client *client_p)
 		}
 
 	}
-	else if(IsClient(client_p))
+	else if(is_client(*client_p))
 	{
 		ServerStats.is_cl++;
 		ServerStats.is_cbs += client_p->localClient->sendB;
@@ -2025,7 +2025,7 @@ client::close_connection(client *client_p)
 	if(client_p->localClient->F != NULL)
 	{
 		/* attempt to flush any pending dbufs. Evil, but .. -- adrian */
-		if(!IsIOError(client_p))
+		if(!is_io_error(*client_p))
 			send_queued(client_p);
 
 		rb_close(client_p->localClient->F);
@@ -2040,8 +2040,8 @@ client::close_connection(client *client_p)
 	detach_server_conf(client_p);
 
 	client_p->from = NULL;	/* ...this should catch them! >:) --msa */
-	ClearMyConnect(client_p);
-	SetIOError(client_p);
+	clear_my_connect(*client_p);
+	set_io_error(*client_p);
 }
 
 
@@ -2061,13 +2061,13 @@ client::error_exit_client(client *client_p, int error)
 	char errmsg[255];
 	int current_error = rb_get_sockerr(client_p->localClient->F);
 
-	SetIOError(client_p);
+	set_io_error(*client_p);
 
-	if(IsServer(client_p) || IsHandshake(client_p))
+	if(is_server(*client_p) || is_handshake(*client_p))
 	{
 		if(error == 0)
 		{
-			sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) && !IsServer(client_p) ? L_NETWIDE : L_ALL,
+			sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) && !is_server(*client_p) ? L_NETWIDE : L_ALL,
 					     "Server %s closed the connection",
 					     client_p->name);
 
@@ -2076,7 +2076,7 @@ client::error_exit_client(client *client_p, int error)
 		}
 		else
 		{
-			sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) && !IsServer(client_p) ? L_NETWIDE : L_ALL,
+			sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) && !is_server(*client_p) ? L_NETWIDE : L_ALL,
 					"Lost connection to %s: %s",
 					client_p->name, strerror(current_error));
 			ilog(L_SERVER, "Lost connection to %s: %s",

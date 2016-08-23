@@ -152,7 +152,7 @@ show_isupport(client::client *client_p)
 
 	extra_space = strlen(client_p->name);
 	/* UID */
-	if (!MyClient(client_p) && extra_space < 9)
+	if (!my(*client_p) && extra_space < 9)
 		extra_space = 9;
 	/* :<me.name> 005 <nick> <params> :are supported by this server */
 	/* form_str(RPL_ISUPPORT) is %s :are supported by this server */

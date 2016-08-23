@@ -57,7 +57,7 @@ static void
 m_time(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	/* this is not rate limited, so end the grace period */
-	if(MyClient(&source) && !IsFloodDone(&source))
+	if(my(source) && !is_flood_done(source))
 		flood_endgrace(&source);
 
 	if(hunt_server(&client, &source, ":%s TIME :%s", 1, parc, parv) == HUNTED_ISME)

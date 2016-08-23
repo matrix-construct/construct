@@ -100,7 +100,7 @@ mo_kill(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 		sendto_one_notice(&source, ":KILL changed from %s to %s", user, target_p->name);
 	}
 
-	if(!MyConnect(target_p) && (!IsOperGlobalKill(&source)))
+	if(!my_connect(*target_p) && (!IsOperGlobalKill(&source)))
 	{
 		sendto_one_notice(&source, ":Nick %s is not on your server "
 				            "and you do not have the global_kill flag",
@@ -118,7 +118,7 @@ mo_kill(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 		/* The callee should have sent a message. */
 		return;
 
-	if(MyConnect(target_p))
+	if(my_connect(*target_p))
 		sendto_one(target_p, ":%s!%s@%s KILL %s :%s",
 			   source.name, source.username, source.host,
 			   target_p->name, reason);
@@ -131,7 +131,7 @@ mo_kill(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 			     source.name, me.name, reason);
 
 	ilog(L_KILL, "%c %s %s!%s@%s %s %s",
-	     MyConnect(target_p) ? 'L' : 'G', get_oper_name(&source),
+	     my_connect(*target_p) ? 'L' : 'G', get_oper_name(&source),
 	     target_p->name, target_p->username, target_p->host, target_p->servptr->name, reason);
 
 	/*
@@ -140,7 +140,7 @@ mo_kill(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	 ** back.
 	 ** Suicide kills are NOT passed on --SRB
 	 */
-	if(!MyConnect(target_p))
+	if(!my_connect(*target_p))
 	{
 		relay_kill(client, source, target_p, inpath, reason);
 		/*
@@ -148,7 +148,7 @@ mo_kill(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 		 ** the unnecessary QUIT for this. (This flag should never be
 		 ** set in any other place)
 		 */
-		target_p->flags |= FLAGS_KILLED;
+		target_p->flags |= client::flags::KILLED;
 	}
 
 	sprintf(buf, "Killed (%s (%s))", source.name, reason);
@@ -214,15 +214,15 @@ ms_kill(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 		sendto_one_notice(&source, ":KILL changed from %s to %s", user, target_p->name);
 	}
 
-	if(IsServer(target_p) || IsMe(target_p))
+	if(is_server(*target_p) || is_me(*target_p))
 	{
 		sendto_one_numeric(&source, ERR_CANTKILLSERVER, form_str(ERR_CANTKILLSERVER));
 		return;
 	}
 
-	if(MyConnect(target_p))
+	if(my_connect(*target_p))
 	{
-		if(IsServer(&source))
+		if(is_server(source))
 		{
 			sendto_one(target_p, ":%s KILL %s :%s",
 				   source.name, target_p->name, reason);
@@ -247,7 +247,7 @@ ms_kill(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 				     source.name, reason);
 
 		ilog(L_KILL, "%c %s %s!%s@%s %s %s",
-		     MyConnect(target_p) ? 'O' : 'R', get_oper_name(&source),
+		     my_connect(*target_p) ? 'O' : 'R', get_oper_name(&source),
 		     target_p->name, target_p->username, target_p->host,
 		     target_p->servptr->name, reason);
 	}
@@ -266,7 +266,7 @@ ms_kill(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	relay_kill(client, source, target_p, path, reason);
 
 	/* FLAGS_KILLED prevents a quit being sent out */
-	target_p->flags |= FLAGS_KILLED;
+	target_p->flags |= client::flags::KILLED;
 
 	sprintf(buf, "Killed (%s %s)", source.name, reason);
 
@@ -281,7 +281,7 @@ relay_kill(client::client &one, client::client &source,
 	rb_dlink_node *ptr;
 	char buffer[BUFSIZE];
 
-	if(MyClient(&source))
+	if(my(source))
 		snprintf(buffer, sizeof(buffer),
 			    "%s!%s!%s!%s (%s)",
 			    me.name, source.host, source.username, source.name, reason);

@@ -49,7 +49,7 @@ DECLARE_MODULE_AV2(tginfo, NULL, NULL, tginfo_clist, NULL, NULL, NULL, NULL, tgi
 static void
 me_tginfo(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if (!IsPerson(&source))
+	if (!is_person(source))
 		return;
 
 	int remaining = atoi(parv[1]);
@@ -62,9 +62,9 @@ me_tginfo(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 		add_tgchange(source.sockhost);
 	}
 
-	if (!IsTGExcessive(&source))
+	if (!is_tg_excessive(source))
 	{
-		SetTGExcessive(&source);
+		set_tg_excessive(source);
 		sendto_realops_snomask_from(SNO_BOTS, L_ALL, source.servptr,
 			"Excessive target change from %s (%s@%s)",
 			source.name, source.username, source.orighost);

@@ -50,7 +50,7 @@ rehash_bans_loc(client::client &source)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is rehashing bans",
 				get_oper_name(&source));
-	if (!MyConnect(&source))
+	if (!my_connect(source))
 		remote_rehash_oper_p = &source;
 
 	rehash_bans();
@@ -61,7 +61,7 @@ rehash_dns(client::client &source)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is rehashing DNS",
 			     get_oper_name(&source));
-	if (!MyConnect(&source))
+	if (!my_connect(source))
 		remote_rehash_oper_p = &source;
 
 	reload_nameservers();
@@ -82,7 +82,7 @@ rehash_motd(client::client &source)
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "%s is forcing re-reading of MOTD file",
 			     get_oper_name(&source));
-	if (!MyConnect(&source))
+	if (!my_connect(source))
 		remote_rehash_oper_p = &source;
 
 	cache::motd::cache_user();
@@ -94,7 +94,7 @@ rehash_omotd(client::client &source)
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "%s is forcing re-reading of OPER MOTD file",
 			     get_oper_name(&source));
-	if (!MyConnect(&source))
+	if (!my_connect(source))
 		remote_rehash_oper_p = &source;
 
 	cache::motd::cache_oper();
@@ -109,7 +109,7 @@ rehash_tklines(client::client &source)
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing temp klines",
 				get_oper_name(&source));
-	if (!MyConnect(&source))
+	if (!my_connect(source))
 		remote_rehash_oper_p = &source;
 
 	for(i = 0; i < LAST_TEMP_TYPE; i++)
@@ -133,7 +133,7 @@ rehash_tdlines(client::client &source)
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing temp dlines",
 				get_oper_name(&source));
-	if (!MyConnect(&source))
+	if (!my_connect(source))
 		remote_rehash_oper_p = &source;
 
 	for(i = 0; i < LAST_TEMP_TYPE; i++)
@@ -157,7 +157,7 @@ rehash_txlines(client::client &source)
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing temp xlines",
 				get_oper_name(&source));
-	if (!MyConnect(&source))
+	if (!my_connect(source))
 		remote_rehash_oper_p = &source;
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, xline_conf_list.head)
@@ -182,7 +182,7 @@ rehash_tresvs(client::client &source)
 
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing temp resvs",
 				get_oper_name(&source));
-	if (!MyConnect(&source))
+	if (!my_connect(source))
 		remote_rehash_oper_p = &source;
 
 	void *elem;
@@ -213,7 +213,7 @@ rehash_rejectcache(client::client &source)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing reject cache",
 				get_oper_name(&source));
-	if (!MyConnect(&source))
+	if (!my_connect(source))
 		remote_rehash_oper_p = &source;
 	flush_reject();
 
@@ -224,7 +224,7 @@ rehash_throttles(client::client &source)
 {
 	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing throttles",
 				get_oper_name(&source));
-	if (!MyConnect(&source))
+	if (!my_connect(source))
 		remote_rehash_oper_p = &source;
 	flush_throttle();
 
@@ -236,7 +236,7 @@ rehash_help(client::client &source)
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "%s is forcing re-reading of HELP files",
 			     get_oper_name(&source));
-	if (!MyConnect(&source))
+	if (!my_connect(source))
 		remote_rehash_oper_p = &source;
 	cache::help::load();
 }
@@ -251,7 +251,7 @@ rehash_nickdelay(client::client &source)
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "%s is clearing the nick delay table",
 			     get_oper_name(&source));
-	if (!MyConnect(&source))
+	if (!my_connect(source))
 		remote_rehash_oper_p = &source;
 
 	RB_DLINK_FOREACH_SAFE(ptr, safe_ptr, nd_list.head)
@@ -321,7 +321,7 @@ do_rehash(client::client &source, const char *type)
 			   ConfigFileEntry.configfile);
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 				     "%s is rehashing server config file", get_oper_name(&source));
-		if (!MyConnect(&source))
+		if (!my_connect(source))
 			remote_rehash_oper_p = &source;
 		ilog(L_MAIN, "REHASH From %s[%s]", get_oper_name(&source),
 		     source.sockhost);
@@ -380,7 +380,7 @@ static void
 me_rehash(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 
-	if (!IsPerson(&source))
+	if (!is_person(source))
 		return;
 
 	if (!find_shared_conf(source.username, source.host,

@@ -99,7 +99,7 @@ mo_testmask(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 	{
 		target_p = (client::client *)ptr->data;
 
-		if(!IsPerson(target_p))
+		if(!is_person(*target_p))
 			continue;
 
 		if(EmptyString(target_p->sockhost))
@@ -120,7 +120,7 @@ mo_testmask(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 			if(gecos && !match_esc(gecos, target_p->info))
 				continue;
 
-			if(MyClient(target_p))
+			if(my(*target_p))
 				lcount++;
 			else
 				gcount++;

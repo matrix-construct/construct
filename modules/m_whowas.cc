@@ -56,7 +56,7 @@ m_whowas(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 
 	static time_t last_used = 0L;
 
-	if(MyClient(&source) && !IsOper(&source))
+	if(my(source) && !IsOper(&source))
 	{
 		if(last_used + (parc > 3 ? ConfigFileEntry.pace_wait :
 						ConfigFileEntry.pace_wait_simple
@@ -80,7 +80,7 @@ m_whowas(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 		if(hunt_server(&client, &source, ":%s WHOWAS %s %s :%s", 3, parc, parv))
 			return;
 
-	if(!MyClient(&source) && (max <= 0 || max > 20))
+	if(!my(source) && (max <= 0 || max > 20))
 		max = 20;
 
 	if((p = (char *)strchr(parv[1], ',')))

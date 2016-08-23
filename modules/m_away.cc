@@ -58,11 +58,11 @@ DECLARE_MODULE_AV2(away, NULL, NULL, away_clist, NULL, NULL, NULL, NULL, away_de
 static void
 m_away(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(MyClient(&source) && source.localClient->next_away &&
-			!IsFloodDone(&source))
+	if(my(source) && source.localClient->next_away &&
+			!is_flood_done(source))
 		flood_endgrace(&source);
 
-	if(!IsClient(&source))
+	if(!is_client(source))
 		return;
 
 	if(parc < 2 || EmptyString(parv[1]))
@@ -77,13 +77,13 @@ m_away(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 			sendto_common_channels_local_butone(&source, CLICAP_AWAY_NOTIFY, NOCAPS, ":%s!%s@%s AWAY",
 							    source.name, source.username, source.host);
 		}
-		if(MyConnect(&source))
+		if(my_connect(source))
 			sendto_one_numeric(&source, RPL_UNAWAY, form_str(RPL_UNAWAY));
 		return;
 	}
 
 	/* Rate limit this because it is sent to common channels. */
-	if (MyClient(&source))
+	if (my(source))
 	{
 		if(!IsOper(&source) &&
 				source.localClient->next_away > rb_current_time())
@@ -121,6 +121,6 @@ m_away(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 						    away(user(source)).c_str());
 	}
 
-	if(MyConnect(&source))
+	if(my_connect(source))
 		sendto_one_numeric(&source, RPL_NOWAWAY, form_str(RPL_NOWAWAY));
 }

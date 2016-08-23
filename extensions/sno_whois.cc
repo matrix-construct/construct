@@ -50,7 +50,7 @@ show_whois(hook_data_client *data)
 	client::client *source_p = data->client;
 	client::client *target_p = data->target;
 
-	if(MyClient(target_p) &&
+	if(my(*target_p) &&
 #ifdef OPERONLY
 	   IsOper(target_p) &&
 #endif

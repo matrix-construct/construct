@@ -101,7 +101,7 @@ me_su(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 {
 	client::client *target_p;
 
-	if(!(source.flags & FLAGS_SERVICE))
+	if(!(source.flags & client::flags::SERVICE))
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			"Non-service server %s attempting to execute services-only command SU", source.name);
@@ -130,7 +130,7 @@ static void
 me_login(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	int parc, const char *parv[])
 {
-	if(!IsPerson(&source))
+	if(!is_person(source))
 		return;
 
 	suser(user(source)) = parv[1];
@@ -145,7 +145,7 @@ me_rsfnc(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 	time_t newts, curts;
 	char note[NICKLEN + 10];
 
-	if(!(source.flags & FLAGS_SERVICE))
+	if(!(source.flags & client::flags::SERVICE))
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			"Non-service server %s attempting to execute services-only command RSFNC", source.name);
@@ -155,7 +155,7 @@ me_rsfnc(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 	if((target_p = client::find_person(parv[1])) == NULL)
 		return;
 
-	if(!MyClient(target_p))
+	if(!my(*target_p))
 		return;
 
 	if(!client::clean_nick(parv[2], 0) || rfc1459::is_digit(parv[2][0]))
@@ -181,13 +181,13 @@ me_rsfnc(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 		if(target_p == exist_p)
 			goto doit;
 
-		if(MyClient(exist_p))
+		if(my(*exist_p))
 			sendto_one(exist_p, ":%s KILL %s :(Nickname regained by services)",
 				me.name, exist_p->name);
 
-		exist_p->flags |= FLAGS_KILLED;
+		exist_p->flags |= client::flags::KILLED;
 		/* Do not send kills to servers for unknowns -- jilles */
-		if(IsClient(exist_p))
+		if(is_client(*exist_p))
 		{
 			kill_client_serv_butone(NULL, exist_p, "%s (Nickname regained by services)",
 						me.name);
@@ -250,7 +250,7 @@ me_nickdelay(struct MsgBuf *msgbuf_p, client::client &client, client::client &so
 	int duration;
 	struct nd_entry *nd;
 
-	if(!(source.flags & FLAGS_SERVICE))
+	if(!(source.flags & client::flags::SERVICE))
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			"Non-service server %s attempting to execute services-only command NICKDELAY", source.name);
@@ -284,7 +284,7 @@ h_svc_server_introduced(hook_data_client *hdata)
 	{
 		if(!irccmp((const char *) ptr->data, hdata->target->name))
 		{
-			hdata->target->flags |= FLAGS_SERVICE;
+			hdata->target->flags |= client::flags::SERVICE;
 			return;
 		}
 	}
@@ -348,7 +348,7 @@ unmark_services(void)
 	{
 		target_p = (client::client *)ptr->data;
 
-		target_p->flags &= ~FLAGS_SERVICE;
+		target_p->flags &= ~client::flags::SERVICE;
 	}
 }
 
@@ -369,6 +369,6 @@ mark_services(void)
 		target_p = find_server(NULL, (const char *)ptr->data);
 
 		if (target_p)
-			target_p->flags |= FLAGS_SERVICE;
+			target_p->flags |= client::flags::SERVICE;
 	}
 }

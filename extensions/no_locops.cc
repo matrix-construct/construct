@@ -21,7 +21,7 @@ h_nl_umode_changed(hook_data_umode_changed *hdata)
 {
 	client::client *source_p = hdata->client;
 
-	if (MyClient(source_p) && source_p->umodes & UMODE_LOCOPS)
+	if (my(*source_p) && source_p->umodes & UMODE_LOCOPS)
 	{
 		source_p->umodes &= ~UMODE_LOCOPS;
 	}

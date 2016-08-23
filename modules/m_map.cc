@@ -48,7 +48,7 @@ static char buf[BUFSIZE];
 static void
 m_map(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if((!IsExemptShide(&source) && ConfigServerHide.flatten_links) ||
+	if((!is_exempt_shide(source) && ConfigServerHide.flatten_links) ||
 	   ConfigFileEntry.map_oper_only)
 	{
 		flattened_map(client);
@@ -179,11 +179,11 @@ flattened_map(client::client &client)
 		cnt++;
 
 		/* Skip ourselves, it's already counted */
-		if(IsMe(target_p))
+		if(is_me(*target_p))
 			continue;
 
 		/* if we're hidden, go on to the next leaf */
-		if(!ConfigServerHide.disable_hidden && IsHidden(target_p))
+		if(!ConfigServerHide.disable_hidden && is_hidden(*target_p))
 			continue;
 
 		if (cnt == rb_dlink_list_length(&global_serv_list))

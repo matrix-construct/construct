@@ -71,7 +71,7 @@ m_userhost(struct MsgBuf *msgbuf_p, client::client &client, client::client &sour
 			 * lookup (USERHOST) to figure out what the clients' local IP
 			 * is.  Useful for things like NAT, and dynamic dial-up users.
 			 */
-			if(MyClient(target_p) && (target_p == &source))
+			if(my(*target_p) && (target_p == &source))
 			{
 				rl = sprintf(response, "%s%s=%c%s@%s ",
 						target_p->name,

@@ -41,7 +41,7 @@ mo_grant(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 		return;
 	}
 
-	if (MyClient(target_p))
+	if (my(*target_p))
 	{
 		do_grant(source, target_p, parv[2]);
 	}

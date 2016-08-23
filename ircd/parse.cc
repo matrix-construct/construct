@@ -66,9 +66,9 @@ parse(client::client *client_p, char *pbuffer, char *bufend)
 	struct Message *mptr;
 	struct MsgBuf msgbuf;
 
-	s_assert(MyConnect(client_p));
+	s_assert(my_connect(*client_p));
 	s_assert(client_p->localClient->F != NULL);
-	if(IsAnyDead(client_p))
+	if(is_any_dead(*client_p))
 		return;
 
 	end = bufend - 1;
@@ -86,7 +86,7 @@ parse(client::client *client_p, char *pbuffer, char *bufend)
 		return;
 	}
 
-	if (msgbuf.origin != NULL && IsServer(client_p))
+	if (msgbuf.origin != NULL && is_server(*client_p))
 	{
 		from = find_client(msgbuf.origin);
 
@@ -120,7 +120,7 @@ parse(client::client *client_p, char *pbuffer, char *bufend)
 		/* no command or its encap only, error */
 		if(!mptr || !mptr->cmd)
 		{
-			if(IsPerson(from))
+			if(is_person(*from))
 			{
 				sendto_one(from, form_str(ERR_UNKNOWNCOMMAND),
 					   me.name, from->name, msgbuf.cmd);
@@ -181,10 +181,10 @@ handle_command(struct Message *mptr, struct MsgBuf *msgbuf_p, client::client *cl
 	MessageHandler handler = 0;
 	char squitreason[80];
 
-	if(IsAnyDead(client_p))
+	if(is_any_dead(*client_p))
 		return -1;
 
-	if(IsServer(client_p))
+	if(is_server(*client_p))
 		mptr->rcount++;
 
 	mptr->count++;
@@ -196,13 +196,13 @@ handle_command(struct Message *mptr, struct MsgBuf *msgbuf_p, client::client *cl
 	if(msgbuf_p->n_para < ehandler.min_para ||
 	   (ehandler.min_para && EmptyString(msgbuf_p->para[ehandler.min_para - 1])))
 	{
-		if(!IsServer(client_p))
+		if(!is_server(*client_p))
 		{
 			sendto_one(client_p, form_str(ERR_NEEDMOREPARAMS),
 				   me.name,
 				   EmptyString(client_p->name) ? "*" : client_p->name,
 				   mptr->cmd);
-			if(MyClient(client_p))
+			if(my(*client_p))
 				return (1);
 			else
 				return (-1);
@@ -307,7 +307,7 @@ cancel_clients(client::client *client_p, client::client *source_p)
 	 * collision with TS5, we cant kill them because one client has to
 	 * survive, so we just send an error.
 	 */
-	if(IsServer(source_p) || IsMe(source_p))
+	if(is_server(*source_p) || is_me(*source_p))
 	{
 		sendto_realops_snomask(SNO_DEBUG, L_ALL,
 				     "Message for %s[%s] from %s",
@@ -394,7 +394,7 @@ do_numeric(int numeric, client::client *client_p, client::client *source_p, int 
 	client::client *target_p;
 	chan::chan *chptr;
 
-	if(parc < 2 || !IsServer(source_p))
+	if(parc < 2 || !is_server(*source_p))
 		return;
 
 	/* Remap low number numerics. */
@@ -423,7 +423,7 @@ do_numeric(int numeric, client::client *client_p, client::client *source_p, int 
 
 	if((target_p = find_client(parv[1])) != NULL)
 	{
-		if(IsMe(target_p))
+		if(is_me(*target_p))
 		{
 			/*
 			 * We shouldn't get numerics sent to us,
@@ -463,7 +463,7 @@ do_numeric(int numeric, client::client *client_p, client::client *source_p, int 
 		}
 
 		/* csircd will send out unknown umode flag for +a (admin), drop it here. */
-		if(numeric == ERR_UMODEUNKNOWNFLAG && MyClient(target_p))
+		if(numeric == ERR_UMODEUNKNOWNFLAG && my(*target_p))
 			return;
 
 		/* Fake it for server hiding, if its our client */
@@ -487,7 +487,7 @@ m_not_oper(struct MsgBuf *msgbuf_p, client::client &client, client::client &sour
 void
 m_unregistered(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(IsAnyServer(&client))
+	if(is_any_server(client))
 		return;
 
 	/* bit of a hack.

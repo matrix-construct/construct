@@ -54,9 +54,9 @@ distribute_hostchange(client::client *client_p, char *newhost)
 	change_nick_user_host(client_p, client_p->name, client_p->username, newhost, 0, "Changing host");
 
 	if (newhost != client_p->orighost)
-		SetDynSpoof(client_p);
+		set_dyn_spoof(*client_p);
 	else
-		ClearDynSpoof(client_p);
+		clear_dyn_spoof(*client_p);
 }
 
 static void
@@ -106,7 +106,7 @@ check_umode_change(void *vdata)
 	hook_data_umode_changed *data = (hook_data_umode_changed *)vdata;
 	client::client *source_p = data->client;
 
-	if (!MyClient(source_p))
+	if (!my(*source_p))
 		return;
 
 	/* didn't change +h umode, we don't need to do anything */
@@ -115,7 +115,7 @@ check_umode_change(void *vdata)
 
 	if (source_p->umodes & user_modes['h'])
 	{
-		if (IsIPSpoof(source_p) || source_p->localClient->mangledhost == NULL || (IsDynSpoof(source_p) && strcmp(source_p->host, source_p->localClient->mangledhost)))
+		if (is_ip_spoof(*source_p) || source_p->localClient->mangledhost == NULL || (is_dyn_spoof(*source_p) && strcmp(source_p->host, source_p->localClient->mangledhost)))
 		{
 			source_p->umodes &= ~user_modes['h'];
 			return;
@@ -143,7 +143,7 @@ check_new_user(void *vdata)
 {
 	client::client *source_p = (client::client *)vdata;
 
-	if (IsIPSpoof(source_p))
+	if (is_ip_spoof(*source_p))
 	{
 		source_p->umodes &= ~user_modes['h'];
 		return;
@@ -153,12 +153,12 @@ check_new_user(void *vdata)
 		do_host_cloak(source_p->orighost, source_p->localClient->mangledhost, 1);
 	else
 		do_host_cloak(source_p->orighost, source_p->localClient->mangledhost, 0);
-	if (IsDynSpoof(source_p))
+	if (is_dyn_spoof(*source_p))
 		source_p->umodes &= ~user_modes['h'];
 	if (source_p->umodes & user_modes['h'])
 	{
 		rb_strlcpy(source_p->host, source_p->localClient->mangledhost, sizeof(source_p->host));
 		if (irccmp(source_p->host, source_p->orighost))
-			SetDynSpoof(source_p);
+			set_dyn_spoof(*source_p);
 	}
 }

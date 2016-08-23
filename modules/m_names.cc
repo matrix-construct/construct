@@ -132,7 +132,7 @@ names_global(client::client &source)
 		target_p = (client::client *)ptr->data;
 		dont_show = false;
 
-		if(!IsPerson(target_p) || IsInvisible(target_p))
+		if(!is_person(*target_p) || is_invisible(*target_p))
 			continue;
 
 		/* we want to show -i clients that are either:

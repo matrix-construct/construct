@@ -53,7 +53,7 @@ mo_dehelper(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 		return;
 	}
 
-	if(MyClient(target_p))
+	if(my(*target_p))
 		do_dehelper(source, *target_p);
 	else
 		sendto_one(target_p, ":%s ENCAP %s DEHELPER %s",
@@ -69,7 +69,7 @@ me_dehelper(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 		sendto_one_numeric(&source, ERR_NOSUCHNICK, form_str(ERR_NOSUCHNICK), parv[1]);
 		return;
 	}
-	if(!MyClient(target_p))
+	if(!my(*target_p))
 		return;
 
 	do_dehelper(source, *target_p);
@@ -167,7 +167,7 @@ h_hdl_umode_changed(hook_data_umode_changed *hdata)
 
 	if (source.umodes & UMODE_HELPOPS)
 	{
-		if (MyClient(&source) && !HasPrivilege(&source, "usermode:helpops"))
+		if (my(source) && !HasPrivilege(&source, "usermode:helpops"))
 		{
 			source.umodes &= ~UMODE_HELPOPS;
 			sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "usermode:helpops");

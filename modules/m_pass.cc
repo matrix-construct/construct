@@ -66,10 +66,10 @@ mr_pass(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 		auth_user = NULL;
 	}
 
-	client.localClient->passwd = *pass ? rb_strndup(pass, PASSWDLEN) : NULL;
+	client.localClient->passwd = *pass ? rb_strndup(pass, client::PASSWDLEN) : NULL;
 
 	if(auth_user && *auth_user)
-		client.localClient->auth_user = rb_strndup(auth_user, PASSWDLEN);
+		client.localClient->auth_user = rb_strndup(auth_user, client::PASSWDLEN);
 
 	/* These are for servers only */
 	if(parc > 2 && client.user == NULL)

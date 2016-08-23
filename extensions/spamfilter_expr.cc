@@ -790,7 +790,7 @@ int spamexpr_list(client::client &client, client::client &source, int parc, cons
 static
 int spamexpr_add(client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(!IsOper(&source) && !IsServer(&source))
+	if(!IsOper(&source) && !is_server(source))
 	{
 		sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "SPAMEXPR ADD");
 		return 0;
@@ -813,7 +813,7 @@ int spamexpr_add(client::client &client, client::client &source, int parc, const
 	struct Expr *const expr = activate_new_expr(pattern, comp_opts, match_opts, jit_opts, NULL, &errcode, &erroff, errbuf, sizeof(errbuf));
 	if(!expr)
 	{
-		if(IsPerson(&source))
+		if(is_person(source))
 			sendto_one_notice(&source, ":Invalid expression (%d) @%zu: %s.",
 			                  errcode,
 			                  erroff,
@@ -821,7 +821,7 @@ int spamexpr_add(client::client &client, client::client &source, int parc, const
 		return 0;
 	}
 
-	if(MyClient(&source) && IsPerson(&source))
+	if(my(source) && is_person(source))
 	{
 		sendto_server(&client, NULL, CAP_ENCAP, NOCAPS,
 		              ":%s ENCAP * SPAMEXPR ADD %s %s %s :%s",
@@ -846,7 +846,7 @@ int spamexpr_add(client::client &client, client::client &source, int parc, const
 static
 int spamexpr_del(client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(!IsOper(&source) && !IsServer(&source))
+	if(!IsOper(&source) && !is_server(source))
 	{
 		sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "SPAMEXPR DEL");
 		return 0;
@@ -865,7 +865,7 @@ int spamexpr_del(client::client &client, client::client &source, int parc, const
 		return 0;
 	}
 
-	if(MyClient(&source) && IsPerson(&source))
+	if(my(source) && is_person(source))
 	{
 		sendto_server(&client, NULL, CAP_ENCAP, NOCAPS,
 		              ":%s ENCAP * SPAMEXPR DEL %u",
@@ -937,7 +937,7 @@ int spamexpr_test(client::client &client, client::client &source, int parc, cons
 static
 int spamexpr_sync(client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(!IsOper(&source) && !IsServer(&source))
+	if(!IsOper(&source) && !is_server(source))
 	{
 		sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "SPAMEXPR SYNC");
 		return 0;

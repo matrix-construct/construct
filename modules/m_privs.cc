@@ -60,13 +60,13 @@ struct mode_table
 
 /* there is no such table like this anywhere else */
 static struct mode_table auth_client_table[] = {
-	{"resv_exempt",		FLAGS_EXEMPTRESV	},
-	{"kline_exempt",	FLAGS_EXEMPTKLINE	},
-	{"flood_exempt",	FLAGS_EXEMPTFLOOD	},
-	{"spambot_exempt",	FLAGS_EXEMPTSPAMBOT	},
-	{"shide_exempt",	FLAGS_EXEMPTSHIDE	},
-	{"jupe_exempt",		FLAGS_EXEMPTJUPE	},
-	{"extend_chans",	FLAGS_EXTENDCHANS	},
+	{"resv_exempt",		client::flags::EXEMPTRESV	},
+	{"kline_exempt",	client::flags::EXEMPTKLINE	},
+	{"flood_exempt",	client::flags::EXEMPTFLOOD	},
+	{"spambot_exempt",	client::flags::EXEMPTSPAMBOT	},
+	{"shide_exempt",	client::flags::EXEMPTSHIDE	},
+	{"jupe_exempt",		client::flags::EXEMPTJUPE	},
+	{"extend_chans",	client::flags::EXTENDCHANS	},
 	{NULL, 0}
 };
 
@@ -119,7 +119,7 @@ me_privs(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 		return;
 
 	/* we cannot show privs for remote clients */
-	if((target_p = client::find_person(parv[1])) && MyClient(target_p))
+	if((target_p = client::find_person(parv[1])) && my(*target_p))
 		show_privs(source, target_p);
 }
 
@@ -141,7 +141,7 @@ mo_privs(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 		}
 	}
 
-	if (MyClient(target_p))
+	if (my(*target_p))
 		show_privs(source, target_p);
 	else
 		sendto_one(target_p, ":%s ENCAP %s PRIVS %s",

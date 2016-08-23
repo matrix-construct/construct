@@ -42,18 +42,18 @@ client::client *remote_rehash_oper_p;
 static int
 _send_linebuf(client::client *to, buf_head_t *linebuf)
 {
-	if(IsMe(to))
+	if(is_me(*to))
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Trying to send message to myself!");
 		return 0;
 	}
 
-	if(!MyConnect(to) || IsIOError(to))
+	if(!my_connect(*to) || is_io_error(*to))
 		return 0;
 
 	if(rb_linebuf_len(&to->localClient->buf_sendq) > get_sendq(to))
 	{
-		if(IsServer(to))
+		if(is_server(*to))
 		{
 			sendto_realops_snomask(SNO_GENERAL, L_ALL,
 					     "Max SendQ limit exceeded for %s: %u > %lu",
@@ -122,7 +122,7 @@ send_queued(client::client *to)
 		return;
 
 	/* cant write anything to a dead socket. */
-	if(IsIOError(to))
+	if(is_io_error(*to))
 		return;
 
 	/* try to flush later when the write event resets this */
@@ -173,7 +173,7 @@ send_pop_queue(client::client *to)
 {
 	if(to->from != NULL)
 		to = to->from;
-	if(!MyConnect(to) || IsIOError(to))
+	if(!my_connect(*to) || is_io_error(*to))
 		return;
 	if(rb_linebuf_len(&to->localClient->buf_sendq) > 0)
 		send_queued(to);
@@ -244,7 +244,7 @@ build_msgbuf_from(struct MsgBuf *msgbuf, client::client *from, const char *cmd)
 	msgbuf->origin = buf;
 	msgbuf->cmd = cmd;
 
-	if (from != NULL && IsPerson(from))
+	if (from != NULL && is_person(*from))
 		snprintf(buf, sizeof buf, "%s!%s@%s", from->name, from->username, from->host);
 	else if (from != NULL)
 		rb_strlcpy(buf, from->name, sizeof buf);
@@ -273,7 +273,7 @@ sendto_one(client::client *target_p, const char *pattern, ...)
 	if(target_p->from != NULL)
 		target_p = target_p->from;
 
-	if(IsIOError(target_p))
+	if(is_io_error(*target_p))
 		return;
 
 	rb_linebuf_newbuf(&linebuf);
@@ -307,10 +307,10 @@ sendto_one_prefix(client::client *target_p, client::client *source_p,
 	else
 		dest_p = target_p;
 
-	if(IsIOError(dest_p))
+	if(is_io_error(*dest_p))
 		return;
 
-	if(IsMe(dest_p))
+	if(is_me(*dest_p))
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Trying to send to myself!");
 		return;
@@ -348,10 +348,10 @@ sendto_one_notice(client::client *target_p, const char *pattern, ...)
 	else
 		dest_p = target_p;
 
-	if(IsIOError(dest_p))
+	if(is_io_error(*dest_p))
 		return;
 
-	if(IsMe(dest_p))
+	if(is_me(*dest_p))
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Trying to send to myself!");
 		return;
@@ -389,10 +389,10 @@ sendto_one_numeric(client::client *target_p, int numeric, const char *pattern, .
 	else
 		dest_p = target_p;
 
-	if(IsIOError(dest_p))
+	if(is_io_error(*dest_p))
 		return;
 
-	if(IsMe(dest_p))
+	if(is_me(*dest_p))
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Trying to send to myself!");
 		return;
@@ -509,10 +509,10 @@ sendto_channel_flags(client::client *one, int type, client::client *source_p,
 		auto *const target_p(pair.first);
 		const auto &member(pair.second);
 
-		if(!MyClient(source_p) && (IsIOError(target_p->from) || target_p->from == one))
+		if(!my(*source_p) && (is_io_error(*target_p->from) || target_p->from == one))
 			continue;
 
-		if(MyClient(source_p) && !IsCapable(source_p, CLICAP_ECHO_MESSAGE) && target_p == one)
+		if(my(*source_p) && !IsCapable(source_p, CLICAP_ECHO_MESSAGE) && target_p == one)
 			continue;
 
 		if(type && ((member.flags & type) == 0))
@@ -521,7 +521,7 @@ sendto_channel_flags(client::client *one, int type, client::client *source_p,
 		if(IsDeaf(target_p))
 			continue;
 
-		if(!MyClient(target_p))
+		if(!my(*target_p))
 		{
 			/* if we've got a specific type, target must support
 			 * CHW.. --fl
@@ -579,7 +579,7 @@ sendto_channel_opmod(client::client *one, client::client *source_p,
 
 	current_serial++;
 
-	if(IsServer(source_p))
+	if(is_server(*source_p))
 		rb_linebuf_putmsg(&rb_linebuf_local, NULL, NULL,
 			       ":%s %s %s :%s",
 			       source_p->name, command, chptr->name.c_str(), text);
@@ -607,10 +607,10 @@ sendto_channel_opmod(client::client *one, client::client *source_p,
 		auto *const target_p(pair.first);
 		const auto &member(pair.second);
 
-		if(!MyClient(source_p) && (IsIOError(target_p->from) || target_p->from == one))
+		if(!my(*source_p) && (is_io_error(*target_p->from) || target_p->from == one))
 			continue;
 
-		if(MyClient(source_p) && !IsCapable(source_p, CLICAP_ECHO_MESSAGE) && target_p == one)
+		if(my(*source_p) && !IsCapable(source_p, CLICAP_ECHO_MESSAGE) && target_p == one)
 			continue;
 
 		if((member.flags & chan::CHANOP) == 0)
@@ -619,7 +619,7 @@ sendto_channel_opmod(client::client *one, client::client *source_p,
 		if(IsDeaf(target_p))
 			continue;
 
-		if(!MyClient(target_p))
+		if(!my(*target_p))
 		{
 			/* if we've got a specific type, target must support
 			 * CHW.. --fl
@@ -668,7 +668,7 @@ sendto_channel_local(int type, chan::chan *chptr, const char *pattern, ...)
 		auto *const target_p(pair.first);
 		const auto &member(pair.second);
 
-		if(IsIOError(target_p))
+		if(is_io_error(*target_p))
 			continue;
 
 		if(type == chan::ONLY_OPERS)
@@ -706,7 +706,7 @@ _sendto_channel_local_with_capability_butone(client::client *one, int type, int 
 		if (target_p == one)
 			continue;
 
-		if(IsIOError(target_p) ||
+		if(is_io_error(*target_p) ||
 		   !IsCapable(target_p, caps) ||
  		   !NotCapable(target_p, negcaps))
 			continue;
@@ -786,7 +786,7 @@ sendto_channel_local_butone(client::client *one, int type, chan::chan *chptr, co
 		if(target_p == one)
 			continue;
 
-		if(IsIOError(target_p))
+		if(is_io_error(*target_p))
 			continue;
 
 		if(type && ((member->flags & type) == 0))
@@ -841,7 +841,7 @@ sendto_common_channels_local(client::client *client, int cap, int negcap, const 
 		{
 			const auto target_p(msptr->git->first);
 
-			if(IsIOError(target_p) ||
+			if(is_io_error(*target_p) ||
 			   target_p->serial == current_serial ||
 			   !IsCapable(target_p, cap) ||
 			   !NotCapable(target_p, negcap))
@@ -855,7 +855,7 @@ sendto_common_channels_local(client::client *client, int cap, int negcap, const 
 	/* this can happen when the user isnt in any channels, but we still
 	 * need to send them the data, ie a nick change
 	 */
-	if(MyConnect(client) && (client->serial != current_serial))
+	if(my_connect(*client) && (client->serial != current_serial))
 		send_linebuf(client, &linebuf);
 
 	rb_linebuf_donebuf(&linebuf);
@@ -907,7 +907,7 @@ sendto_common_channels_local_butone(client::client *client, int cap, int negcap,
 		{
 			const auto target_p(msptr->git->first);
 
-			if(IsIOError(target_p) ||
+			if(is_io_error(*target_p) ||
 			   target_p->serial == current_serial ||
 			   !IsCapable(target_p, cap) ||
 			   !NotCapable(target_p, negcap))
@@ -946,7 +946,7 @@ sendto_match_butone(client::client *one, client::client *source_p,
 	vsnprintf(buf, sizeof(buf), pattern, args);
 	va_end(args);
 
-	if(IsServer(source_p))
+	if(is_server(*source_p))
 		rb_linebuf_putmsg(&rb_linebuf_local, NULL, NULL,
 			       ":%s %s", source_p->name, buf);
 	else
@@ -1026,7 +1026,7 @@ sendto_match_servs(client::client *source_p, const char *mask, int cap,
 		target_p = (client::client *)ptr->data;
 
 		/* dont send to ourselves, or back to where it came from.. */
-		if(IsMe(target_p) || target_p->from == source_p->from)
+		if(is_me(*target_p) || target_p->from == source_p->from)
 			continue;
 
 		if(target_p->from->serial == current_serial)
@@ -1076,7 +1076,7 @@ sendto_local_clients_with_capability(int cap, const char *pattern, ...)
 	{
 		target_p = (client::client *)ptr->data;
 
-		if(IsIOError(target_p) || !IsCapable(target_p, cap))
+		if(is_io_error(*target_p) || !IsCapable(target_p, cap))
 			continue;
 
 		send_linebuf(target_p, &linebuf);
@@ -1110,7 +1110,7 @@ sendto_monitor(struct monitor *monptr, const char *pattern, ...)
 	{
 		target_p = (client::client *)ptr->data;
 
-		if(IsIOError(target_p))
+		if(is_io_error(*target_p))
 			continue;
 
 		_send_linebuf(target_p, &linebuf);
@@ -1136,9 +1136,9 @@ sendto_anywhere(client::client *target_p, client::client *source_p,
 
 	va_start(args, pattern);
 
-	if(MyClient(target_p))
+	if(my(*target_p))
 	{
-		if(IsServer(source_p))
+		if(is_server(*source_p))
 			rb_linebuf_putmsg(&linebuf, pattern, &args, ":%s %s %s ",
 				       source_p->name, command,
 				       target_p->name);
@@ -1158,7 +1158,7 @@ sendto_anywhere(client::client *target_p, client::client *source_p,
 			       get_id(target_p, target_p));
 	va_end(args);
 
-	if(MyClient(target_p))
+	if(my(*target_p))
 		_send_linebuf(target_p, &linebuf);
 	else
 		send_linebuf_remote(target_p, source_p, &linebuf);
@@ -1300,7 +1300,7 @@ sendto_wallops_flags(int flags, client::client *source_p, const char *pattern, .
 
 	va_start(args, pattern);
 
-	if(IsPerson(source_p))
+	if(is_person(*source_p))
 		rb_linebuf_putmsg(&linebuf, pattern, &args,
 			       ":%s!%s@%s WALLOPS :", source_p->name,
 			       source_p->username, source_p->host);
@@ -1309,7 +1309,7 @@ sendto_wallops_flags(int flags, client::client *source_p, const char *pattern, .
 
 	va_end(args);
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, IsPerson(source_p) && flags == UMODE_WALLOP ? lclient_list.head : local_oper_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, is_person(*source_p) && flags == UMODE_WALLOP ? lclient_list.head : local_oper_list.head)
 	{
 		client_p = (client::client *)ptr->data;
 

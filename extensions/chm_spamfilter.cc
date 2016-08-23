@@ -52,7 +52,7 @@ void hook_privmsg_channel(hook_data_privmsg_channel *const hook)
 		return;
 
 	// Assess client related
-	if(IsExemptSpambot(hook->source_p))
+	if(is_exempt_spambot(*hook->source_p))
 		return;
 
 	// Assess type related

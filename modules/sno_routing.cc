@@ -58,7 +58,7 @@ count_mark_downlinks(client::client *server_p, int *pservcount, int *pusercount)
 {
 	rb_dlink_node *ptr;
 
-	SetFloodDone(server_p);
+	set_flood_done(*server_p);
 	(*pservcount)++;
 	*pusercount += users(serv(*server_p)).size();
 	for(auto &client : servers(serv(*server_p)))
@@ -70,7 +70,7 @@ h_nn_server_eob(client::client *source)
 {
 	int s = 0, u = 0;
 
-	if (IsFloodDone(source))
+	if (is_flood_done(*source))
 		return;
 
 	count_mark_downlinks(source, &s, &u);
@@ -87,11 +87,11 @@ h_nn_client_exit(hook_data_client_exit *hdata)
 	char *fromnick;
 
 	source = hdata->target;
-	fromnick = IsClient(hdata->from) ? hdata->from->name : NULL;
+	fromnick = is_client(*hdata->from) ? hdata->from->name : NULL;
 
-	if (!IsServer(source))
+	if (!is_server(*source))
 		return;
-	if (HasSentEob(source))
+	if (has_sent_eob(*source))
 	{
 		count_mark_downlinks(source, &s, &u);
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Netsplit %s <-> %s (%dS %dC) (%s%s%s%s)",

@@ -42,7 +42,7 @@ chm_operonly(client::client *source_p, chan::chan *chptr,
 	int newparn = 0;
 	const char *newparv[] = { "$o" };
 
-	if (MyClient(source_p))
+	if (my(*source_p))
 	{
 		functor::simple(source_p, chptr, alevel, parc, parn, parv, errors, dir, 'i', INVITEONLY);
 		functor::ban(source_p, chptr, alevel, 1, &newparn, newparv, errors, dir, 'I', INVEX);

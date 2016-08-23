@@ -170,7 +170,7 @@ ms_xline(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 	 */
 	propagate_xline(source, parv[1], 0, parv[2], parv[3], parv[4]);
 
-	if(!IsPerson(&source))
+	if(!is_person(source))
 		return;
 
 	/* destined for me? */
@@ -184,7 +184,7 @@ static void
 me_xline(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	/* time name type :reason */
-	if(!IsPerson(&source))
+	if(!is_person(source))
 		return;
 
 	handle_remote_xline(source, atoi(parv[1]), parv[2], parv[4]);
@@ -408,7 +408,7 @@ ms_unxline(struct MsgBuf *msgbuf_p, client::client &client, client::client &sour
 	if(!match(parv[1], me.name))
 		return;
 
-	if(!IsPerson(&source))
+	if(!is_person(source))
 		return;
 
 	handle_remote_unxline(source, parv[2]);
@@ -418,7 +418,7 @@ static void
 me_unxline(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	/* name */
-	if(!IsPerson(&source))
+	if(!is_person(source))
 		return;
 
 	handle_remote_unxline(source, parv[1]);

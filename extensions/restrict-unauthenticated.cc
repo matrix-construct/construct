@@ -19,7 +19,7 @@ hack_channel_access(void *vdata)
 {
 	hook_data_channel_approval *data = (hook_data_channel_approval *) vdata;
 
-	if (!MyClient(data->client))
+	if (!my(*data->client))
 		return;
 
 	if (suser(user(*data->client)).empty())

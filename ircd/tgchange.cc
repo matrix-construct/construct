@@ -83,7 +83,7 @@ add_hashed_target(client::client *source_p, uint32_t hashv)
 	targets = source_p->localClient->targets;
 
 	/* check for existing target, and move it to the head */
-	for(i = 0; i < TGCHANGE_NUM + TGCHANGE_REPLY; i++)
+	for(i = 0; i < int(client::tgchange::NUM) + int(client::tgchange::REPLY); i++)
 	{
 		if(targets[i] == hashv)
 		{
@@ -94,21 +94,21 @@ add_hashed_target(client::client *source_p, uint32_t hashv)
 		}
 	}
 
-	if(source_p->localClient->targets_free < TGCHANGE_NUM)
+	if(source_p->localClient->targets_free < int(client::tgchange::NUM))
 	{
 		/* first message after connect, we may only start clearing
 		 * slots after this message --anfl
 		 */
-		if(!IsTGChange(source_p))
+		if(!is_tg_change(*source_p))
 		{
-			SetTGChange(source_p);
+			set_tg_change(*source_p);
 			source_p->localClient->target_last = rb_current_time();
 		}
 		/* clear as many targets as we can */
 		else if((i = (rb_current_time() - source_p->localClient->target_last) / 60))
 		{
-			if(i + source_p->localClient->targets_free > TGCHANGE_NUM)
-				source_p->localClient->targets_free = TGCHANGE_NUM;
+			if(i + source_p->localClient->targets_free > int(client::tgchange::NUM))
+				source_p->localClient->targets_free = int(client::tgchange::NUM);
 			else
 				source_p->localClient->targets_free += i;
 
@@ -120,9 +120,9 @@ add_hashed_target(client::client *source_p, uint32_t hashv)
 			ServerStats.is_tgch++;
 			add_tgchange(source_p->sockhost);
 
-			if (!IsTGExcessive(source_p))
+			if (!is_tg_excessive(*source_p))
 			{
-				SetTGExcessive(source_p);
+				set_tg_excessive(*source_p);
 				/* This is sent to L_ALL because it's regenerated on all servers
 				 * that have the TGINFO module loaded.
 				 */
@@ -144,10 +144,10 @@ add_hashed_target(client::client *source_p, uint32_t hashv)
 	else
 	{
 		source_p->localClient->target_last = rb_current_time();
-		SetTGChange(source_p);
+		set_tg_change(*source_p);
 	}
 
-	for(i = TGCHANGE_NUM + TGCHANGE_REPLY - 1; i > 0; i--)
+	for(i = int(client::tgchange::NUM) + int(client::tgchange::REPLY) - 1; i > 0; i--)
 		targets[i] = targets[i - 1];
 	targets[0] = hashv;
 	source_p->localClient->targets_free--;
@@ -171,22 +171,22 @@ add_reply_target(client::client *source_p, client::client *target_p)
 	/* check for existing target, and move it to the first reply slot
 	 * if it is in a reply slot
 	 */
-	for(i = 0; i < TGCHANGE_NUM + TGCHANGE_REPLY; i++)
+	for(i = 0; i < int(client::tgchange::NUM) + int(client::tgchange::REPLY); i++)
 	{
 		if(targets[i] == hashv)
 		{
-			if(i > TGCHANGE_NUM)
+			if(i > int(client::tgchange::NUM))
 			{
-				for(j = i; j > TGCHANGE_NUM; j--)
+				for(j = i; j > int(client::tgchange::NUM); j--)
 					targets[j] = targets[j - 1];
-				targets[TGCHANGE_NUM] = hashv;
+				targets[int(client::tgchange::NUM)] = hashv;
 			}
 			return;
 		}
 	}
-	for(i = TGCHANGE_NUM + TGCHANGE_REPLY - 1; i > TGCHANGE_NUM; i--)
+	for(i = int(client::tgchange::NUM) + int(client::tgchange::REPLY) - 1; i > int(client::tgchange::NUM); i--)
 		targets[i] = targets[i - 1];
-	targets[TGCHANGE_NUM] = hashv;
+	targets[int(client::tgchange::NUM)] = hashv;
 }
 
 }

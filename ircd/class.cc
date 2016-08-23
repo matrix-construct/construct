@@ -84,10 +84,10 @@ get_client_class(client::client *target_p)
 {
 	const char *retc = "unknown";
 
-	if(target_p == NULL || IsMe(target_p))
+	if(target_p == NULL || is_me(*target_p))
 		return retc;
 
-	if(IsServer(target_p))
+	if(is_server(*target_p))
 	{
 		struct server_conf *server_p = target_p->localClient->att_sconf;
 		return server_p->class_name;
@@ -118,7 +118,7 @@ get_client_ping(client::client *target_p)
 {
 	int ping = 0;
 
-	if(IsServer(target_p))
+	if(is_server(*target_p))
 	{
 		struct server_conf *server_p = target_p->localClient->att_sconf;
 		ping = PingFreq(server_p->_class);
@@ -308,10 +308,10 @@ report_classes(client::client *source_p)
 long
 get_sendq(client::client *client_p)
 {
-	if(client_p == NULL || IsMe(client_p))
+	if(client_p == NULL || is_me(*client_p))
 		return DEFAULT_SENDQ;
 
-	if(IsServer(client_p))
+	if(is_server(*client_p))
 	{
 		struct server_conf *server_p;
 		server_p = client_p->localClient->att_sconf;

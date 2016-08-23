@@ -57,16 +57,16 @@ m_invite(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 	chan::membership *msptr;
 	int store_invite = 0;
 
-	if(MyClient(&source) && !IsFloodDone(&source))
+	if(my(source) && !is_flood_done(source))
 		flood_endgrace(&source);
 
-	if(MyClient(&source))
+	if(my(source))
 		target_p = client::find_named_person(parv[1]);
 	else
 		target_p = client::find_person(parv[1]);
 	if(target_p == NULL)
 	{
-		if(!MyClient(&source) && rfc1459::is_digit(parv[1][0]))
+		if(!my(source) && rfc1459::is_digit(parv[1][0]))
 			sendto_one_numeric(&source, ERR_NOSUCHNICK,
 					   "* :Target left IRC. Failed to invite to %s",
 					   parv[2]);
@@ -88,15 +88,15 @@ m_invite(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 	/* Do not send local channel invites to users if they are not on the
 	 * same server as the person sending the INVITE message.
 	 */
-	if(parv[2][0] == '&' && !MyConnect(target_p))
+	if(parv[2][0] == '&' && !my_connect(*target_p))
 	{
 		sendto_one(&source, form_str(ERR_USERNOTONSERV),
 			   me.name, source.name, target_p->name);
 		return;
 	}
 
-	if(((MyConnect(&source) && !IsExemptResv(&source)) ||
-			(MyConnect(target_p) && !IsExemptResv(target_p))) &&
+	if(((my_connect(source) && !is_exempt_resv(source)) ||
+			(my_connect(*target_p) && !is_exempt_resv(*target_p))) &&
 		hash_find_resv(parv[2]))
 	{
 		sendto_one_numeric(&source, ERR_BADCHANNAME,
@@ -113,7 +113,7 @@ m_invite(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 	}
 
 	msptr = get(chptr->members, source, std::nothrow);
-	if(MyClient(&source) && (msptr == NULL))
+	if(my(source) && (msptr == NULL))
 	{
 		sendto_one_numeric(&source, ERR_NOTONCHANNEL,
 				   form_str(ERR_NOTONCHANNEL), parv[2]);
@@ -130,7 +130,7 @@ m_invite(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 
 	/* unconditionally require ops, unless the channel is +g */
 	/* treat remote clients as chanops */
-	if(MyClient(&source) && !is_chanop(msptr) &&
+	if(my(source) && !is_chanop(msptr) &&
 			!(chptr->mode.mode & chan::mode::FREEINVITE))
 	{
 		sendto_one(&source, form_str(ERR_CHANOPRIVSNEEDED),
@@ -146,7 +146,7 @@ m_invite(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 			chptr->mode.limit || chptr->mode.join_num)
 		store_invite = 1;
 
-	if(MyConnect(&source))
+	if(my_connect(source))
 	{
 		if (ConfigFileEntry.target_change && !IsOper(&source) &&
 				!find_allowing_channel(&source, target_p) &&
@@ -171,7 +171,7 @@ m_invite(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 			return;
 	}
 
-	if(MyConnect(target_p))
+	if(my_connect(*target_p))
 	{
 		if(!IsOper(&source) && (IsSetCallerId(target_p) ||
 					(IsSetRegOnlyMsg(target_p) && !suser(user(source))[0])) &&

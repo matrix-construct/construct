@@ -62,7 +62,7 @@ mo_okick(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 		return;
 	}
 
-	if(MyClient(&source) && !IsFloodDone(&source))
+	if(my(source) && !is_flood_done(source))
 		flood_endgrace(&source);
 
 	comment = (EmptyString(LOCAL_COPY(parv[3]))) ? LOCAL_COPY(parv[2]) : LOCAL_COPY(parv[3]);

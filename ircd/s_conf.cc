@@ -167,12 +167,12 @@ check_client(client::client *client_p, client::client *source_p, const char *use
 		 */
 		sendto_realops_snomask(SNO_FULL, L_NETWIDE,
 				"Too many local connections for %s!%s%s@%s",
-				source_p->name, IsGotId(source_p) ? "" : "~",
+				source_p->name, is_got_id(*source_p) ? "" : "~",
 				source_p->username,
-				show_ip(NULL, source_p) && !IsIPSpoof(source_p) ? source_p->sockhost : source_p->host);
+				show_ip(NULL, source_p) && !is_ip_spoof(*source_p) ? source_p->sockhost : source_p->host);
 
 		ilog(L_FUSER, "Too many local connections from %s!%s%s@%s",
-			source_p->name, IsGotId(source_p) ? "" : "~",
+			source_p->name, is_got_id(*source_p) ? "" : "~",
 			source_p->username, source_p->sockhost);
 
 		ServerStats.is_ref++;
@@ -182,11 +182,11 @@ check_client(client::client *client_p, client::client *source_p, const char *use
 	case TOO_MANY_GLOBAL:
 		sendto_realops_snomask(SNO_FULL, L_NETWIDE,
 				"Too many global connections for %s!%s%s@%s",
-				source_p->name, IsGotId(source_p) ? "" : "~",
+				source_p->name, is_got_id(*source_p) ? "" : "~",
 				source_p->username,
-				show_ip(NULL, source_p) && !IsIPSpoof(source_p) ? source_p->sockhost : source_p->host);
+				show_ip(NULL, source_p) && !is_ip_spoof(*source_p) ? source_p->sockhost : source_p->host);
 		ilog(L_FUSER, "Too many global connections from %s!%s%s@%s",
-			source_p->name, IsGotId(source_p) ? "" : "~",
+			source_p->name, is_got_id(*source_p) ? "" : "~",
 			source_p->username, source_p->sockhost);
 
 		ServerStats.is_ref++;
@@ -196,11 +196,11 @@ check_client(client::client *client_p, client::client *source_p, const char *use
 	case TOO_MANY_IDENT:
 		sendto_realops_snomask(SNO_FULL, L_NETWIDE,
 				"Too many user connections for %s!%s%s@%s",
-				source_p->name, IsGotId(source_p) ? "" : "~",
+				source_p->name, is_got_id(*source_p) ? "" : "~",
 				source_p->username,
-				show_ip(NULL, source_p) && !IsIPSpoof(source_p) ? source_p->sockhost : source_p->host);
+				show_ip(NULL, source_p) && !is_ip_spoof(*source_p) ? source_p->sockhost : source_p->host);
 		ilog(L_FUSER, "Too many user connections from %s!%s%s@%s",
-			source_p->name, IsGotId(source_p) ? "" : "~",
+			source_p->name, is_got_id(*source_p) ? "" : "~",
 			source_p->username, source_p->sockhost);
 
 		ServerStats.is_ref++;
@@ -210,12 +210,12 @@ check_client(client::client *client_p, client::client *source_p, const char *use
 	case I_LINE_FULL:
 		sendto_realops_snomask(SNO_FULL, L_NETWIDE,
 				"I-line is full for %s!%s%s@%s (%s).",
-				source_p->name, IsGotId(source_p) ? "" : "~",
+				source_p->name, is_got_id(*source_p) ? "" : "~",
 				source_p->username, source_p->host,
-				show_ip(NULL, source_p) && !IsIPSpoof(source_p) ? source_p->sockhost : "255.255.255.255");
+				show_ip(NULL, source_p) && !is_ip_spoof(*source_p) ? source_p->sockhost : "255.255.255.255");
 
 		ilog(L_FUSER, "Too many connections from %s!%s%s@%s.",
-			source_p->name, IsGotId(source_p) ? "" : "~",
+			source_p->name, is_got_id(*source_p) ? "" : "~",
 			source_p->username, source_p->sockhost);
 
 		ServerStats.is_ref++;
@@ -239,14 +239,14 @@ check_client(client::client *client_p, client::client *source_p, const char *use
 			sendto_realops_snomask(SNO_UNAUTH, L_ALL,
 					"Unauthorised client connection from "
 					"%s!%s%s@%s [%s] on [%s/%u].",
-					source_p->name, IsGotId(source_p) ? "" : "~",
+					source_p->name, is_got_id(*source_p) ? "" : "~",
 					source_p->username, source_p->host,
 					source_p->sockhost,
 					source_p->localClient->listener->name, port);
 
 			ilog(L_FUSER,
 				"Unauthorised client connection from %s!%s%s@%s on [%s/%u].",
-				source_p->name, IsGotId(source_p) ? "" : "~",
+				source_p->name, is_got_id(*source_p) ? "" : "~",
 				source_p->username, source_p->sockhost,
 				source_p->localClient->listener->name, port);
 			add_reject(client_p, NULL, NULL);
@@ -298,7 +298,7 @@ verify_access(client::client *client_p, const char *username)
 			char *p;
 
 			/* show_ip() depends on this --fl */
-			SetIPSpoof(client_p);
+			set_ip_spoof(*client_p);
 
 			if(IsConfSpoofNotice(aconf))
 			{
@@ -350,7 +350,7 @@ find_address_conf_by_client(client::client *client_p, const char *username)
 	struct ConfItem *aconf;
 	char non_ident[USERLEN + 1];
 
-	if(IsGotId(client_p))
+	if(is_got_id(*client_p))
 	{
 		aconf = find_address_conf(client_p->host, client_p->sockhost,
 					client_p->username, client_p->username,
@@ -464,7 +464,7 @@ attach_iline(client::client *client_p, struct ConfItem *aconf)
 	if(IsConfExemptLimits(aconf))
 		return (attach_conf(client_p, aconf));
 
-	unidented = !IsGotId(client_p) && !IsNoTilde(aconf) &&
+	unidented = !is_got_id(*client_p) && !IsNoTilde(aconf) &&
 		(!IsConfDoSpoofIp(aconf) || !strchr(aconf->info.name, '@'));
 
 	/* find_hostname() returns the head of the list to search */
@@ -475,7 +475,7 @@ attach_iline(client::client *client_p, struct ConfItem *aconf)
 		if(irccmp(client_p->host, target_p->orighost) != 0)
 			continue;
 
-		if(MyConnect(target_p))
+		if(my_connect(*target_p))
 			local_count++;
 
 		global_count++;

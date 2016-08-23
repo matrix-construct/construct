@@ -171,7 +171,7 @@ clicap_generate(client::client &source, const char *subcmd, int flags)
 			continue;
 
 		caplen = strlen(entry->cap.c_str());
-		if (!flags && (source.flags & FLAGS_CLICAP_DATA) && clicap != NULL && clicap->data != NULL)
+		if (!flags && (source.flags & client::flags::CLICAP_DATA) && clicap != NULL && clicap->data != NULL)
 			data = clicap->data(&source);
 
 		if (data != NULL)
@@ -237,12 +237,12 @@ cap_ack(client::client &source, const char *arg)
 static void
 cap_end(client::client &source, const char *arg)
 {
-	if(IsRegistered(&source))
+	if(is_registered(source))
 		return;
 
-	source.flags &= ~FLAGS_CLICAP;
+	source.flags &= ~client::flags::CLICAP;
 
-	if(source.name[0] && source.flags & FLAGS_SENTUSER)
+	if(source.name[0] && source.flags & client::flags::SENTUSER)
 	{
 		register_local_user(&source, &source);
 	}
@@ -259,12 +259,12 @@ cap_list(client::client &source, const char *arg)
 static void
 cap_ls(client::client &source, const char *arg)
 {
-	if(!IsRegistered(&source))
-		source.flags |= FLAGS_CLICAP;
+	if(!is_registered(source))
+		source.flags |= client::flags::CLICAP;
 
 	if (arg != NULL && !strcmp(arg, "302"))
 	{
-		source.flags |= FLAGS_CLICAP_DATA;
+		source.flags |= client::flags::CLICAP_DATA;
 		source.localClient->caps |= CLICAP_CAP_NOTIFY;
 	}
 
@@ -283,8 +283,8 @@ cap_req(client::client &source, const char *arg)
 	int capadd = 0, capdel = 0;
 	int finished = 0, negate;
 
-	if(!IsRegistered(&source))
-		source.flags |= FLAGS_CLICAP;
+	if(!is_registered(source))
+		source.flags |= client::flags::CLICAP;
 
 	if(EmptyString(arg))
 		return;
