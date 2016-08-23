@@ -110,7 +110,7 @@ m_trace(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 			/* giving this out with flattened links defeats the
 			 * object --fl
 			 */
-			if(IsOper(&source) || is_exempt_shide(source) ||
+			if(is(source, umode::OPER) || is_exempt_shide(source) ||
 			   !ConfigServerHide.flatten_links)
 				sendto_one_numeric(&source, RPL_TRACELINK,
 						   form_str(RPL_TRACELINK),
@@ -174,7 +174,7 @@ m_trace(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	/* give non-opers a limited trace output of themselves (if local),
 	 * opers and servers (if no shide) --fl
 	 */
-	if(!IsOper(&source))
+	if(!is(source, umode::OPER))
 	{
 		if(my(source))
 		{
@@ -218,15 +218,15 @@ m_trace(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 		target_p = (client::client *)ptr->data;
 
 		/* dont show invisible users to remote opers */
-		if(is_invisible(*target_p) && dow && !my_connect(source) && !IsOper(target_p))
+		if(is(*target_p, umode::INVISIBLE) && dow && !my_connect(source) && !is(*target_p, umode::OPER))
 			continue;
 
 		if(!doall && wilds && !match(tname, target_p->name))
 			continue;
 
 		/* remote opers may not see invisible normal users */
-		if(dow && !my_connect(source) && !IsOper(target_p) &&
-				is_invisible(*target_p))
+		if(dow && !my_connect(source) && !is(*target_p, umode::OPER) &&
+				is(*target_p, umode::INVISIBLE))
 			continue;
 
 		cnt = report_this_status(source, target_p);
@@ -362,8 +362,8 @@ report_this_status(client::client &source, client::client *target_p)
 	case client::status::CLIENT:
 		{
 			sendto_one_numeric(&source,
-					IsOper(target_p) ? RPL_TRACEOPERATOR : RPL_TRACEUSER,
-					IsOper(target_p) ? form_str(RPL_TRACEOPERATOR) : form_str(RPL_TRACEUSER),
+					is(*target_p, umode::OPER) ? RPL_TRACEOPERATOR : RPL_TRACEUSER,
+					is(*target_p, umode::OPER) ? form_str(RPL_TRACEOPERATOR) : form_str(RPL_TRACEUSER),
 					class_name, name,
 					show_ip(&source, target_p) ? ip : empty_sockhost,
 					(unsigned long)(rb_current_time() - target_p->localClient->lasttime),

@@ -44,10 +44,10 @@ hdl_can_kick(hook_data_channel_approval *data)
 	client::client *who = data->target;
 	const auto &chptr(data->chptr);
 
-	if(IsOper(source_p))
+	if(is(*source_p, umode::OPER))
 		return;
 
-	if((chptr->mode.mode & mymode) && IsOper(who))
+	if((chptr->mode.mode & mymode) && is(*who, umode::OPER))
 	{
 		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s attempted to kick %s from %s (which is +M)",
 			source_p->name, who->name, chptr->name.c_str());

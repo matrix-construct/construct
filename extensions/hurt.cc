@@ -457,9 +457,9 @@ doing_stats_hook(hook_data_int *hdata)
 	client::client &source = *hdata->client;
 	if(hdata->arg2 != (int) 's')
 		return;
-	if((ConfigFileEntry.stats_k_oper_only == 2) && !IsOper(&source))
+	if((ConfigFileEntry.stats_k_oper_only == 2) && !is(source, umode::OPER))
 		return;
-	if ((ConfigFileEntry.stats_k_oper_only == 1) && !IsOper(&source))
+	if ((ConfigFileEntry.stats_k_oper_only == 1) && !is(source, umode::OPER))
 	{
 		hurt = hurt_find(source.sockhost);
 		if (hurt != NULL)

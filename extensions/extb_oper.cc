@@ -44,5 +44,5 @@ eb_oper(const char *data, client::client *client_p, chan::chan *chptr, mode::typ
 		return HasPrivilege(client_p, data) ? MATCH : NOMATCH;
 	}
 
-	return IsOper(client_p) ? MATCH : NOMATCH;
+	return is(*client_p, umode::OPER) ? MATCH : NOMATCH;
 }

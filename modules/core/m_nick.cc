@@ -260,7 +260,7 @@ ms_nick(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	nick = parc > 1 ? parv[1] : "?";
 	server = parc > 7 ? parv[7] : "?";
 
-	sendto_wallops_flags(UMODE_WALLOP, &me,
+	sendto_wallops_flags(umode::WALLOP, &me,
 			"Link %s cancelled, TS5 nickname %s on %s introduced (old server?)",
 			client.name, nick, server);
 	sendto_server(NULL, NULL, CAP_TS6, NOCAPS,
@@ -611,7 +611,7 @@ change_local_nick(client::client &client, client::client &source,
 		source.localClient->last_nick_change = rb_current_time();
 		source.localClient->number_of_nick_changes++;
 
-		if(ConfigFileEntry.anti_nick_flood && !IsOper(&source) &&
+		if(ConfigFileEntry.anti_nick_flood && !is(source, umode::OPER) &&
 				source.localClient->number_of_nick_changes > ConfigFileEntry.max_nick_changes)
 		{
 			sendto_one(&source, form_str(ERR_NICKTOOFAST),
@@ -1046,7 +1046,7 @@ register_client(client::client &client, client::client *server,
 	{
 		flag = user_modes[(unsigned char) *m];
 
-		if(flag & UMODE_SERVICE)
+		if(flag & umode::SERVICE)
 		{
 			int hit = 0;
 			rb_dlink_node *ptr;
@@ -1068,18 +1068,18 @@ register_client(client::client &client, client::client *server,
 		}
 
 		/* increment +i count if theyre invis */
-		if(!(source->umodes & UMODE_INVISIBLE) && (flag & UMODE_INVISIBLE))
+		if(!(source->mode & umode::INVISIBLE) && (flag & umode::INVISIBLE))
 			Count.invisi++;
 
 		/* increment opered count if theyre opered */
-		if(!(source->umodes & UMODE_OPER) && (flag & UMODE_OPER))
+		if(!(source->mode & umode::OPER) && (flag & umode::OPER))
 			Count.oper++;
 
-		source->umodes |= flag;
+		source->mode |= umode(flag);
 		m++;
 	}
 
-	if(IsOper(source) && !IsService(source))
+	if(is(*source, umode::OPER) && !is(*source, umode::SERVICE))
 		rb_dlinkAddAlloc(source, &oper_list);
 
 	set_remote_client(*source);
@@ -1158,7 +1158,7 @@ static void bad_nickname(client::client &client, const char *nick)
 {
 	char squitreason[100];
 
-	sendto_wallops_flags(UMODE_WALLOP, &me,
+	sendto_wallops_flags(umode::WALLOP, &me,
 			"Squitting %s because of bad nickname %s (NICKLEN mismatch?)",
 			client.name, nick);
 	sendto_server(NULL, NULL, CAP_TS6, NOCAPS,

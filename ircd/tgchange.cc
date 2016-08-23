@@ -47,7 +47,7 @@ add_target(client::client *source_p, client::client *target_p)
 	uint32_t hashv;
 
 	/* can msg themselves or services without using any target slots */
-	if(source_p == target_p || IsService(target_p))
+	if(source_p == target_p || is(*target_p, umode::SERVICE))
 		return 1;
 
 	/* special condition for those who have had PRIVMSG crippled to allow them
@@ -55,7 +55,7 @@ add_target(client::client *source_p, client::client *target_p)
 	 *
 	 * XXX: is this controversial?
 	 */
-	if(source_p->localClient->target_last > rb_current_time() && IsOper(target_p))
+	if(source_p->localClient->target_last > rb_current_time() && is(*target_p, umode::OPER))
 		return 1;
 
 	hashv = fnv_hash_upper((const unsigned char *)use_id(target_p), 32);
@@ -162,7 +162,7 @@ add_reply_target(client::client *source_p, client::client *target_p)
 	uint32_t *targets;
 
 	/* can msg themselves or services without using any target slots */
-	if(source_p == target_p || IsService(target_p))
+	if(source_p == target_p || is(*target_p, umode::SERVICE))
 		return;
 
 	hashv = fnv_hash_upper((const unsigned char *)use_id(target_p), 32);

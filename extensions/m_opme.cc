@@ -75,7 +75,7 @@ mo_opme(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 
 	msptr->flags |= chan::CHANOP;
 
-	sendto_wallops_flags(UMODE_WALLOP, &me,
+	sendto_wallops_flags(umode::WALLOP, &me,
 			     "OPME called for [%s] by %s!%s@%s",
 			     parv[1], source.name, source.username, source.host);
 	ilog(L_MAIN, "OPME called for [%s] by %s",

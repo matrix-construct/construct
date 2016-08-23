@@ -80,7 +80,7 @@ do_dehelper(client::client &source, client::client &target)
 {
 	const char *fakeparv[4];
 
-	if(!(target.umodes & UMODE_HELPOPS))
+	if(!(target.mode & UMODE_HELPOPS))
 		return;
 
 	sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s is using DEHELPER on %s",
@@ -145,14 +145,14 @@ h_hdl_stats_request(hook_data_int *hdata)
 static void
 h_hdl_new_remote_user(client::client *client_p)
 {
-	if (client_p->umodes & UMODE_HELPOPS)
+	if (client_p->mode & UMODE_HELPOPS)
 		rb_dlinkAddAlloc(client_p, &helper_list);
 }
 
 static void
 h_hdl_client_exit(hook_data_client_exit *hdata)
 {
-	if (hdata->target->umodes & UMODE_HELPOPS)
+	if (hdata->target->mode & UMODE_HELPOPS)
 		rb_dlinkFindDestroy(hdata->target, &helper_list);
 }
 
@@ -162,21 +162,21 @@ h_hdl_umode_changed(hook_data_umode_changed *hdata)
 	client::client &source = *hdata->client;
 
 	/* didn't change +H umode, we don't need to do anything */
-	if (!((hdata->oldumodes ^ source.umodes) & UMODE_HELPOPS))
+	if (!((hdata->oldumodes ^ source.mode) & UMODE_HELPOPS))
 		return;
 
-	if (source.umodes & UMODE_HELPOPS)
+	if (source.mode & UMODE_HELPOPS)
 	{
 		if (my(source) && !HasPrivilege(&source, "usermode:helpops"))
 		{
-			source.umodes &= ~UMODE_HELPOPS;
+			source.mode &= umode(~UMODE_HELPOPS);
 			sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "usermode:helpops");
 			return;
 		}
 
 		rb_dlinkAddAlloc(&source, &helper_list);
 	}
-	else if (!(source.umodes & UMODE_HELPOPS))
+	else if (!(source.mode & UMODE_HELPOPS))
 		rb_dlinkFindDestroy(&source, &helper_list);
 }
 
@@ -186,7 +186,7 @@ h_hdl_whois(hook_data_client *hdata)
 	client::client &source = *hdata->client;
 	client::client *target_p = hdata->target;
 
-	if ((target_p->umodes & UMODE_HELPOPS) && away(user(*target_p)).empty())
+	if ((target_p->mode & UMODE_HELPOPS) && away(user(*target_p)).empty())
 	{
 		sendto_one_numeric(&source, RPL_WHOISHELPOP, form_str(RPL_WHOISHELPOP), target_p->name);
 	}

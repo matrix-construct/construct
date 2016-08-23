@@ -87,7 +87,7 @@ do_grant(client::client &source, client::client *target_p, const char *new_privs
 
 	if (!strcmp(new_privset, "deoper"))
 	{
-		if (!IsOper(target_p))
+		if (!is(*target_p, umode::OPER))
 		{
 			sendto_one_notice(&source, ":You can't deoper someone who isn't an oper.");
 			return;
@@ -115,7 +115,7 @@ do_grant(client::client &source, client::client *target_p, const char *new_privs
 
 	if (!dodeoper)
 	{
-		if (!IsOper(target_p))
+		if (!is(*target_p, umode::OPER))
 		{
 			sendto_one_notice(target_p, ":%s is opering you with privilege set %s", source.name, privset->name);
 			sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s is opering %s with privilege set %s", get_oper_name(&source), target_p->name, privset->name);

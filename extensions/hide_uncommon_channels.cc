@@ -19,5 +19,5 @@ DECLARE_MODULE_AV2(hide_uncommon_channels, NULL, NULL, NULL, NULL, huc_hfnlist, 
 static void
 h_huc_doing_whois_channel_visibility(hook_data_client *hdata)
 {
-	hdata->approved = (is_public(hdata->chptr) && !is_invisible(*hdata->target)) || is_member(hdata->chptr, hdata->client);
+	hdata->approved = (is_public(hdata->chptr) && !is(*hdata->target, umode::INVISIBLE)) || is_member(hdata->chptr, hdata->client);
 }

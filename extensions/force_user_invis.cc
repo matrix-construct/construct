@@ -25,7 +25,7 @@ h_noi_umode_changed(hook_data_umode_changed *hdata)
 {
 	client::client *source_p = hdata->client;
 
-	if (my(*source_p) && !IsOper(source_p) && !is_invisible(*source_p)) {
-		SetInvisible(source_p);
+	if (my(*source_p) && !is(*source_p, umode::OPER) && !is(*source_p, umode::INVISIBLE)) {
+		set(*source_p, umode::INVISIBLE);
 	}
 }

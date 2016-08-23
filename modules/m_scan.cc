@@ -208,7 +208,7 @@ scan_umodes(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 		else
 			sockhost = target_p->sockhost;
 
-		working_umodes = target_p->umodes;
+		working_umodes = target_p->mode;
 
 		/* require that we have the allowed umodes... */
 		if ((working_umodes & allowed_umodes) != allowed_umodes)
@@ -236,7 +236,7 @@ scan_umodes(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 
 			for (i = 0; i < 128; i++)
 			{
-				if (target_p->umodes & user_modes[i])
+				if (is(*target_p, umode(user_modes[i])))
 					*m++ = (char) i;
 			}
 

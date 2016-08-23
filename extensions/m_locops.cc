@@ -48,7 +48,7 @@ DECLARE_MODULE_AV2(locops, NULL, NULL, locops_clist, NULL, NULL, NULL, NULL, loc
 static void
 m_locops(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-	sendto_wallops_flags(UMODE_LOCOPS, &source, "LOCOPS - %s", parv[1]);
+	sendto_wallops_flags(umode::LOCOPS, &source, "LOCOPS - %s", parv[1]);
 
 	if(rb_dlink_list_length(&cluster_conf_list) > 0)
 		cluster_generic(&source, "LOCOPS", SHARED_LOCOPS, CAP_CLUSTER,
@@ -68,7 +68,7 @@ ms_locops(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 		return;
 
 	if(find_shared_conf("*", "*", source.servptr->name, SHARED_LOCOPS))
-		sendto_wallops_flags(UMODE_LOCOPS, &source, "SLOCOPS - %s", parv[2]);
+		sendto_wallops_flags(umode::LOCOPS, &source, "SLOCOPS - %s", parv[2]);
 }
 
 static void
@@ -79,6 +79,6 @@ me_locops(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 		return;
 
 	if(find_shared_conf("*", "*", source.servptr->name, SHARED_LOCOPS))
-		sendto_wallops_flags(UMODE_LOCOPS, &source, "SLOCOPS - %s", parv[1]);
+		sendto_wallops_flags(umode::LOCOPS, &source, "SLOCOPS - %s", parv[1]);
 }
 

@@ -102,7 +102,7 @@ part_one_client(client::client &client, client::client &source, char *name, cons
 		return;
 	}
 
-	if(my_connect(source) && !IsOper(&source) && !is_exempt_spambot(source))
+	if(my_connect(source) && !is(source, umode::OPER) && !is_exempt_spambot(source))
 		chan::check_spambot_warning(&source, NULL);
 
 	/*

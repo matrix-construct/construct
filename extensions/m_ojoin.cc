@@ -71,7 +71,7 @@ mo_ojoin(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 	if(move_me == 1)
 		parv[1]--;
 
-	sendto_wallops_flags(UMODE_WALLOP, &me,
+	sendto_wallops_flags(umode::WALLOP, &me,
 			     "OJOIN called for %s by %s!%s@%s",
 			     parv[1], source.name, source.username, source.host);
 	ilog(L_MAIN, "OJOIN called for %s by %s",

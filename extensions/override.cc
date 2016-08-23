@@ -101,19 +101,19 @@ check_umode_change(void *vdata)
 	if (!my(*source_p))
 		return;
 
-	if (data->oldumodes & UMODE_OPER && !IsOper(source_p))
-		source_p->umodes &= ~user_modes['p'];
+	if (data->oldumodes & umode::OPER && !is(*source_p, umode::OPER))
+		source_p->mode &= umode(~user_modes['p']);
 
 	/* didn't change +p umode, we don't need to do anything */
-	if (!((data->oldumodes ^ source_p->umodes) & user_modes['p']))
+	if (!((data->oldumodes ^ source_p->mode) & user_modes['p']))
 		return;
 
-	if (source_p->umodes & user_modes['p'])
+	if (source_p->mode & user_modes['p'])
 	{
 		if (!IsOperOverride(source_p))
 		{
 			sendto_one_notice(source_p, ":*** You need oper:override privilege for +p");
-			source_p->umodes &= ~user_modes['p'];
+			source_p->mode &= umode(~user_modes['p']);
 			return;
 		}
 
@@ -122,7 +122,7 @@ check_umode_change(void *vdata)
 		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s has enabled oper-override (+p)",
 				       get_oper_name(source_p));
 	}
-	else if (!(source_p->umodes & user_modes['p']))
+	else if (!(source_p->mode & user_modes['p']))
 	{
 		rb_dlink_node *n, *tn;
 
@@ -153,7 +153,7 @@ hack_channel_access(void *vdata)
 	if (data->approved == chan::CHANOP)
 		return;
 
-	if (data->client->umodes & user_modes['p'])
+	if (data->client->mode & user_modes['p'])
 	{
 		update_session_deadline(data->client, NULL);
 		data->approved = CHFL_OVERRIDE;
@@ -173,7 +173,7 @@ hack_can_join(void *vdata)
 	if (data->approved == 0)
 		return;
 
-	if (data->client->umodes & user_modes['p'])
+	if (data->client->mode & user_modes['p'])
 	{
 		update_session_deadline(data->client, NULL);
 		data->approved = 0;
@@ -193,7 +193,7 @@ hack_can_kick(void *vdata)
 	if (alevel != CHFL_OVERRIDE)
 		return;
 
-	if (data->client->umodes & user_modes['p'])
+	if (data->client->mode & user_modes['p'])
 	{
 		update_session_deadline(data->client, NULL);
 		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s is using oper-override on %s (KICK %s)",
@@ -212,7 +212,7 @@ hack_can_send(void *vdata)
 	if (data->approved == chan::CAN_SEND_NONOP || data->approved == chan::CAN_SEND_OPV)
 		return;
 
-	if (data->client->umodes & user_modes['p'])
+	if (data->client->mode & user_modes['p'])
 	{
 		data->approved = chan::CAN_SEND_NONOP;
 

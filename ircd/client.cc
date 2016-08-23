@@ -916,9 +916,9 @@ client::update_client_exit_stats(client *client_p)
 	else if(is_client(*client_p))
 	{
 		--Count.total;
-		if(IsOper(client_p))
+		if(is(*client_p, umode::OPER))
 			--Count.oper;
-		if(is_invisible(*client_p))
+		if(is(*client_p, umode::INVISIBLE))
 			--Count.invisi;
 	}
 
@@ -1168,7 +1168,7 @@ client::is_remote_connect(client *client_p)
 		return FALSE;
 
 	oper = find_named_person(client_p->serv->by);
-	return oper != NULL && IsOper(oper) && !my_connect(*oper);
+	return oper != NULL && my_oper(*oper);
 }
 
 void
@@ -1396,7 +1396,7 @@ client::exit_generic_client(client *client_p, client *source_p, client *from,
 
 	rb_dlink_node *ptr, *next_ptr;
 
-	if(IsOper(source_p))
+	if(is(*source_p, umode::OPER))
 		rb_dlinkFindDestroy(source_p, &oper_list);
 
 	sendto_common_channels_local(source_p, NOCAPS, NOCAPS, ":%s!%s@%s QUIT :%s",
@@ -1659,7 +1659,7 @@ client::exit_local_client(client *client_p, client *source_p, client *from,
 	rb_dlinkDelete(&source_p->localClient->tnode, &lclient_list);
 	me.serv->users.erase(source_p->lnode);
 
-	if(IsOper(source_p))
+	if(is(*source_p, umode::OPER))
 		rb_dlinkFindDestroy(source_p, &local_oper_list);
 
 	sendto_realops_snomask(SNO_CCONN, L_ALL,
@@ -1873,11 +1873,11 @@ client::show_ip(client *source_p, client *target_p)
 		 * to local opers.
 		 */
 		if(!ConfigFileEntry.hide_spoof_ips &&
-		   (source_p == NULL || MyOper(source_p)))
+		   (source_p == NULL || my_oper(*source_p)))
 			return 1;
 		return 0;
 	}
-	else if(is_dyn_spoof(*target_p) && (source_p != NULL && !IsOper(source_p)))
+	else if(is_dyn_spoof(*target_p) && (source_p != NULL && !is(*source_p, umode::OPER)))
 		return 0;
 	else
 		return 1;
@@ -1888,7 +1888,7 @@ client::show_ip_conf(struct ConfItem *aconf, client *source_p)
 {
 	if(IsConfDoSpoofIp(aconf))
 	{
-		if(!ConfigFileEntry.hide_spoof_ips && MyOper(source_p))
+		if(!ConfigFileEntry.hide_spoof_ips && my_oper(*source_p))
 			return 1;
 
 		return 0;
@@ -1901,10 +1901,10 @@ int
 client::show_ip_whowas(struct Whowas *whowas, client *source_p)
 {
 	if(whowas->flags & WHOWAS_IP_SPOOFING)
-		if(ConfigFileEntry.hide_spoof_ips || !MyOper(source_p))
+		if(ConfigFileEntry.hide_spoof_ips || !my_oper(*source_p))
 			return 0;
 	if(whowas->flags & WHOWAS_DYNSPOOF)
-		if(!IsOper(source_p))
+		if(!is(*source_p, umode::OPER))
 			return 0;
 	return 1;
 }

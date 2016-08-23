@@ -38,7 +38,7 @@ h_can_join(hook_data_channel *data)
 	client::client *source_p = data->client;
 	const auto &chptr(data->chptr);
 
-	if((chptr->mode.mode & mymode) && !IsAdmin(source_p)) {
+	if((chptr->mode.mode & mymode) && !is(*source_p, umode::ADMIN)) {
 		sendto_one_numeric(source_p, 519, "%s :Cannot join channel (+A) - you are not an IRC server administrator", chptr->name.c_str());
 		data->approved = chan::mode::ERR_CUSTOM;
 	}

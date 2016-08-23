@@ -124,7 +124,7 @@ me_etrace(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 {
 	client::client *target_p;
 
-	if(!IsOper(&source) || parc < 2 || EmptyString(parv[1]))
+	if(!is(source, umode::OPER) || parc < 2 || EmptyString(parv[1]))
 		return;
 
 	/* we cant etrace remote clients.. we shouldnt even get sent them */
@@ -154,7 +154,7 @@ do_etrace(client::client &source, int ipv4, int ipv6)
 
 		sendto_one(&source, form_str(RPL_ETRACE),
 			   me.name, source.name,
-			   IsOper(target_p) ? "Oper" : "User",
+			   is(*target_p, umode::OPER) ? "Oper" : "User",
 			   get_client_class(target_p),
 			   target_p->name, target_p->username, target_p->host,
 			   show_ip(&source, target_p) ? target_p->sockhost : "255.255.255.255",
@@ -191,14 +191,14 @@ do_single_etrace(client::client &source, client::client *target_p)
 	if(!show_ip(&source, target_p))
 		sendto_one(&source, form_str(RPL_ETRACEFULL),
 				me.name, source.name,
-				IsOper(target_p) ? "Oper" : "User",
+				is(*target_p, umode::OPER) ? "Oper" : "User",
 				get_client_class(target_p),
 				target_p->name, target_p->username, target_p->host,
 				"255.255.255.255", "<hidden> <hidden>", target_p->info);
 	else
 		sendto_one(&source, form_str(RPL_ETRACEFULL),
 				me.name, source.name,
-				IsOper(target_p) ? "Oper" : "User",
+				is(*target_p, umode::OPER) ? "Oper" : "User",
 				get_client_class(target_p),
 				target_p->name, target_p->username,
 				target_p->host, target_p->sockhost,
@@ -262,7 +262,7 @@ m_chantrace(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 
 		sendto_one(&source, form_str(RPL_ETRACE),
 				me.name, source.name,
-				IsOper(target_p) ? "Oper" : "User",
+				is(*target_p, umode::OPER) ? "Oper" : "User",
 				/* class field -- pretend its server.. */
 				target_p->servptr->name,
 				target_p->name, target_p->username, target_p->host,
@@ -307,7 +307,7 @@ match_masktrace(client::client &source, rb_dlink_list *list,
 
 			sendto_one(&source, form_str(RPL_ETRACE),
 				me.name, source.name,
-				IsOper(target_p) ? "Oper" : "User",
+				is(*target_p, umode::OPER) ? "Oper" : "User",
 				/* class field -- pretend its server.. */
 				target_p->servptr->name,
 				target_p->name, target_p->username, target_p->host,

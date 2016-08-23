@@ -143,7 +143,7 @@ m_remove(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 
 	if(msptr != NULL)
 	{
-		if(my(source) && IsService(who))
+		if(my(source) && is(*who, umode::SERVICE))
 		{
 			sendto_one(&source, form_str(ERR_ISCHANSERVICE),
 				   me.name, source.name, who->name, chptr->name.c_str());

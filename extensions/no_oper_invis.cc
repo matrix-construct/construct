@@ -23,13 +23,13 @@ h_noi_umode_changed(hook_data_umode_changed *hdata)
 {
 	client::client *source_p = hdata->client;
 
-	if (my(*source_p) && IsOper(source_p) && !IsOperInvis(source_p) &&
-			is_invisible(*source_p))
+	if (my(*source_p) && is(*source_p, umode::OPER) && !IsOperInvis(source_p) &&
+			is(*source_p, umode::INVISIBLE))
 	{
-		ClearInvisible(source_p);
+		clear(*source_p, umode::INVISIBLE);
 		/* If they tried /umode +i, complain; do not complain
 		 * if they opered up while invisible -- jilles */
-		if (hdata->oldumodes & UMODE_OPER)
+		if (hdata->oldumodes & umode::OPER)
 			sendto_one_notice(source_p, ":*** Opers may not set themselves invisible");
 	}
 }

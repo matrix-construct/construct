@@ -56,7 +56,7 @@ m_whowas(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 
 	static time_t last_used = 0L;
 
-	if(my(source) && !IsOper(&source))
+	if(my(source) && !is(source, umode::OPER))
 	{
 		if(last_used + (parc > 3 ? ConfigFileEntry.pace_wait :
 						ConfigFileEntry.pace_wait_simple

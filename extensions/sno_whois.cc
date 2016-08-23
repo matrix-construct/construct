@@ -52,7 +52,7 @@ show_whois(hook_data_client *data)
 
 	if(my(*target_p) &&
 #ifdef OPERONLY
-	   IsOper(target_p) &&
+	   is(*target_p, umode::OPER) &&
 #endif
 	   (source_p != target_p) &&
 	   (target_p->snomask & snomask_modes['W']))

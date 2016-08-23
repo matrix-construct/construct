@@ -213,7 +213,7 @@ m_stats(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 
 	statchar = parv[1][0];
 
-	if(my(source) && !IsOper(&source))
+	if(my(source) && !is(source, umode::OPER))
 	{
 		/* Check the user is actually allowed to do /stats, and isnt flooding */
 		if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
@@ -254,7 +254,7 @@ m_stats(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 				   me.name, source.name, "admin");
 			goto stats_out;
 		}
-		if(cmd->need_oper && !IsOper(&source))
+		if(cmd->need_oper && !is(source, umode::OPER))
 		{
 			sendto_one_numeric(&source, ERR_NOPRIVILEGES,
 					   form_str (ERR_NOPRIVILEGES));
@@ -325,7 +325,7 @@ stats_connect(client::client &source)
 
 	if((ConfigFileEntry.stats_c_oper_only ||
 	    (ConfigServerHide.flatten_links && !is_exempt_shide(source))) &&
-	    !IsOper(&source))
+	    !is(source, umode::OPER))
 	{
 		sendto_one_numeric(&source, ERR_NOPRIVILEGES,
 				   form_str(ERR_NOPRIVILEGES));
@@ -341,7 +341,7 @@ stats_connect(client::client &source)
 
 		s = buf;
 
-		if(IsOper(&source))
+		if(is(source, umode::OPER))
 		{
 			if(ServerConfAutoconn(server_p))
 				*s++ = 'A';
@@ -528,7 +528,7 @@ stats_hubleaf(client::client &source)
 
 	if((ConfigFileEntry.stats_h_oper_only ||
 	    (ConfigServerHide.flatten_links && !is_exempt_shide(source))) &&
-	    !IsOper(&source))
+	    !is(source, umode::OPER))
 	{
 		sendto_one_numeric(&source, ERR_NOPRIVILEGES,
 				   form_str (ERR_NOPRIVILEGES));
@@ -555,12 +555,12 @@ static void
 stats_auth (client::client &source)
 {
 	/* Oper only, if unopered, return ERR_NOPRIVS */
-	if((ConfigFileEntry.stats_i_oper_only == 2) && !IsOper (&source))
+	if((ConfigFileEntry.stats_i_oper_only == 2) && !is(source, umode::OPER))
 		sendto_one_numeric(&source, ERR_NOPRIVILEGES,
 				   form_str (ERR_NOPRIVILEGES));
 
 	/* If unopered, Only return matching auth blocks */
-	else if((ConfigFileEntry.stats_i_oper_only == 1) && !IsOper (&source))
+	else if((ConfigFileEntry.stats_i_oper_only == 1) && !is(source, umode::OPER))
 	{
 		struct ConfItem *aconf;
 		char *name, *host, *user, *classname;
@@ -599,12 +599,12 @@ static void
 stats_tklines(client::client &source)
 {
 	/* Oper only, if unopered, return ERR_NOPRIVS */
-	if((ConfigFileEntry.stats_k_oper_only == 2) && !IsOper (&source))
+	if((ConfigFileEntry.stats_k_oper_only == 2) && !is(source, umode::OPER))
 		sendto_one_numeric(&source, ERR_NOPRIVILEGES,
 				   form_str (ERR_NOPRIVILEGES));
 
 	/* If unopered, Only return matching klines */
-	else if((ConfigFileEntry.stats_k_oper_only == 1) && !IsOper (&source))
+	else if((ConfigFileEntry.stats_k_oper_only == 1) && !is(source, umode::OPER))
 	{
 		struct ConfItem *aconf;
 		char *host, *pass, *user, *oper_reason;
@@ -701,12 +701,12 @@ static void
 stats_klines(client::client &source)
 {
 	/* Oper only, if unopered, return ERR_NOPRIVS */
-	if((ConfigFileEntry.stats_k_oper_only == 2) && !IsOper (&source))
+	if((ConfigFileEntry.stats_k_oper_only == 2) && !is(source, umode::OPER))
 		sendto_one_numeric(&source, ERR_NOPRIVILEGES,
 				   form_str (ERR_NOPRIVILEGES));
 
 	/* If unopered, Only return matching klines */
-	else if((ConfigFileEntry.stats_k_oper_only == 1) && !IsOper (&source))
+	else if((ConfigFileEntry.stats_k_oper_only == 1) && !is(source, umode::OPER))
 	{
 		struct ConfItem *aconf;
 		char *host, *pass, *user, *oper_reason;
@@ -778,7 +778,7 @@ stats_oper(client::client &source)
 	struct oper_conf *oper_p;
 	rb_dlink_node *ptr;
 
-	if(!IsOper(&source) && ConfigFileEntry.stats_o_oper_only)
+	if(!is(source, umode::OPER) && ConfigFileEntry.stats_o_oper_only)
 	{
 		sendto_one_numeric(&source, ERR_NOPRIVILEGES,
 				   form_str (ERR_NOPRIVILEGES));
@@ -792,7 +792,7 @@ stats_oper(client::client &source)
 		sendto_one_numeric(&source, RPL_STATSOLINE,
 				form_str(RPL_STATSOLINE),
 				oper_p->username, oper_p->host, oper_p->name,
-				IsOper(&source) ? oper_p->privset->name : "0", "-1");
+				is(source, umode::OPER) ? oper_p->privset->name : "0", "-1");
 	}
 }
 
@@ -833,7 +833,7 @@ stats_operedup (client::client &source)
 	{
 		target_p = (client::client *)oper_ptr->data;
 
-		if(IsOperInvis(target_p) && !IsOper(&source))
+		if(IsOperInvis(target_p) && !is(source, umode::OPER))
 			continue;
 
 		if(away(user(*target_p)).size())
@@ -856,7 +856,7 @@ stats_operedup (client::client &source)
 static void
 stats_ports (client::client &source)
 {
-	if(!IsOper (&source) && ConfigFileEntry.stats_P_oper_only)
+	if(!is(source, umode::OPER) && ConfigFileEntry.stats_P_oper_only)
 		sendto_one_numeric(&source, ERR_NOPRIVILEGES,
 				   form_str (ERR_NOPRIVILEGES));
 	else
@@ -1188,7 +1188,7 @@ stats_servers (client::client &source)
 	int days, hours, minutes;
 	int j = 0;
 
-	if(ConfigServerHide.flatten_links && !IsOper(&source) &&
+	if(ConfigServerHide.flatten_links && !is(source, umode::OPER) &&
 	   !is_exempt_shide(source))
 	{
 		sendto_one_numeric(&source, ERR_NOPRIVILEGES,
@@ -1264,7 +1264,7 @@ stats_gecos(client::client &source)
 static void
 stats_class(client::client &source)
 {
-	if(ConfigFileEntry.stats_y_oper_only && !IsOper(&source))
+	if(ConfigFileEntry.stats_y_oper_only && !is(source, umode::OPER))
 		sendto_one_numeric(&source, ERR_NOPRIVILEGES,
 				   form_str (ERR_NOPRIVILEGES));
 	else
@@ -1515,7 +1515,7 @@ stats_servlinks (client::client &source)
 	int j = 0;
 	char buf[128];
 
-	if(ConfigServerHide.flatten_links && !IsOper (&source) &&
+	if(ConfigServerHide.flatten_links && !is(source, umode::OPER) &&
 	   !is_exempt_shide(source))
 	{
 		sendto_one_numeric(&source, ERR_NOPRIVILEGES,
@@ -1544,7 +1544,7 @@ stats_servlinks (client::client &source)
 			rb_current_time() - target_p->localClient->firsttime,
 			(rb_current_time() > target_p->localClient->lasttime) ?
 			 (rb_current_time() - target_p->localClient->lasttime) : 0,
-			IsOper (&source) ? show_capabilities (target_p) : "TS");
+			is(source, umode::OPER) ? show_capabilities (target_p) : "TS");
 	}
 
 	sendto_one_numeric(&source, RPL_STATSDEBUG,
@@ -1636,7 +1636,7 @@ stats_ltrace(client::client &source, int parc, const char *parv[])
 	if(doall)
 	{
 		/* local opers get everyone */
-		if(MyOper(&source))
+		if(my_oper(source))
 		{
 			stats_l_list(source, name, doall, wilds, &unknown_list, statchar, NULL);
 			stats_l_list(source, name, doall, wilds, &lclient_list, statchar, NULL);
@@ -1650,7 +1650,7 @@ stats_ltrace(client::client &source, int parc, const char *parv[])
 			stats_l_list(source, name, doall, wilds, &local_oper_list, statchar, stats_l_should_show_oper);
 		}
 
-		if (!ConfigServerHide.flatten_links || IsOper(&source) ||
+		if (!ConfigServerHide.flatten_links || is(source, umode::OPER) ||
 				is_exempt_shide(source))
 			stats_l_list(source, name, doall, wilds, &serv_list, statchar, NULL);
 
@@ -1704,7 +1704,7 @@ stats_l_client(client::client &source, client::client *target_p,
 				rb_current_time() - target_p->localClient->firsttime,
 				(rb_current_time() > target_p->localClient->lasttime) ?
 				 (rb_current_time() - target_p->localClient->lasttime) : 0,
-				IsOper(&source) ? show_capabilities(target_p) : "-");
+				is(source, umode::OPER) ? show_capabilities(target_p) : "-");
 	}
 
 	else

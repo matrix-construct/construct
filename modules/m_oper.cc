@@ -54,7 +54,7 @@ m_oper(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 	name = parv[1];
 	password = parv[2];
 
-	if(IsOper(&source))
+	if(is(source, umode::OPER))
 	{
 		sendto_one(&source, form_str(RPL_YOUREOPER), me.name, source.name);
 		cache::motd::send_oper(&source);
@@ -85,7 +85,7 @@ m_oper(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 		return;
 	}
 
-	if(IsOperConfNeedSSL(oper_p) && !IsSSLClient(&source))
+	if(IsOperConfNeedSSL(oper_p) && !is(source, umode::SSLCLIENT))
 	{
 		sendto_one_numeric(&source, ERR_NOOPERHOST, form_str(ERR_NOOPERHOST));
 		ilog(L_FOPER, "FAILED OPER (%s) by (%s!%s@%s) (%s) -- requires SSL/TLS",

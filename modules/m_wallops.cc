@@ -58,7 +58,7 @@ mo_operwall(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 		return;
 	}
 
-	sendto_wallops_flags(UMODE_OPERWALL, &source, "OPERWALL - %s", parv[1]);
+	sendto_wallops_flags(umode::OPERWALL, &source, "OPERWALL - %s", parv[1]);
 	sendto_server(&client, NULL, CAP_TS6, NOCAPS, ":%s OPERWALL :%s",
 		      use_id(&source), parv[1]);
 }
@@ -73,7 +73,7 @@ ms_operwall(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 {
 	sendto_server(&client, NULL, CAP_TS6, NOCAPS, ":%s OPERWALL :%s",
 		      use_id(&source), parv[1]);
-	sendto_wallops_flags(UMODE_OPERWALL, &source, "OPERWALL - %s", parv[1]);
+	sendto_wallops_flags(umode::OPERWALL, &source, "OPERWALL - %s", parv[1]);
 }
 
 /*
@@ -101,7 +101,7 @@ ms_wallops(struct MsgBuf *msgbuf_p, client::client &client, client::client &sour
 			prefix = "WALLOPS - ";
 	}
 
-	sendto_wallops_flags(UMODE_WALLOP, &source, "%s%s", prefix, parv[1]);
+	sendto_wallops_flags(umode::WALLOP, &source, "%s%s", prefix, parv[1]);
 
 	sendto_server(&client, NULL, CAP_TS6, NOCAPS, ":%s WALLOPS :%s",
 		      use_id(&source), parv[1]);

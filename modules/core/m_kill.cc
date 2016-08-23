@@ -238,9 +238,9 @@ ms_kill(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	/* path must contain at least 2 !'s, or bitchx falsely declares it
 	 * local --fl
 	 */
-	if(IsOper(&source))	/* send it normally */
+	if(is(source, umode::OPER))	/* send it normally */
 	{
-		sendto_realops_snomask(IsService(&source) ? SNO_SKILL : SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(is(source, umode::SERVICE) ? SNO_SKILL : SNO_GENERAL, L_ALL,
 				     "Received KILL message for %s!%s@%s. From %s Path: %s!%s!%s!%s %s",
 				     target_p->name, target_p->username, target_p->orighost, source.name,
 				     source.servptr->name, source.host, source.username,

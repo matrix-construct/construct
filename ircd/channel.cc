@@ -467,7 +467,7 @@ chan::channel_member_names(chan *chptr, client::client *client_p, int show_eon)
 			auto *const target_p(pair.first);
 			const auto &member(pair.second);
 
-			if(is_invisible(*target_p) && !is_member(chptr, client_p))
+			if(is(*target_p, umode::INVISIBLE) && !is_member(chptr, client_p))
 				continue;
 
 			if (IsCapable(client_p, CLICAP_USERHOST_IN_NAMES))
@@ -859,11 +859,11 @@ chan::can_send(chan *chptr, client::client *source_p, membership *msptr)
 	moduledata.approved = CAN_SEND_NONOP;
 	moduledata.dir = MODE_QUERY;
 
-	if(is_server(*source_p) || IsService(source_p))
+	if(is_server(*source_p) || is(*source_p, umode::SERVICE))
 		return CAN_SEND_OPV;
 
 	if(my(*source_p) && hash_find_resv(chptr->name.c_str()) &&
-	   !IsOper(source_p) && !is_exempt_resv(*source_p))
+	   !is(*source_p, umode::OPER) && !is_exempt_resv(*source_p))
 		moduledata.approved = CAN_SEND_NO;
 
 	if(msptr == NULL)
@@ -1181,7 +1181,7 @@ chan::channel_modes(chan *chptr, client::client *client_p)
 
 	for (i = 0; i < 256; i++)
 	{
-		if(mode::table[i].set_func == mode::functor::hidden && (!IsOper(client_p) || !is_client(*client_p)))
+		if(mode::table[i].set_func == mode::functor::hidden && (!is(*client_p, umode::OPER) || !is_client(*client_p)))
 			continue;
 		if(chptr->mode.mode & mode::table[i].type)
 			*mbuf++ = i;

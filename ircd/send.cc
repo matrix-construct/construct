@@ -518,7 +518,7 @@ sendto_channel_flags(client::client *one, int type, client::client *source_p,
 		if(type && ((member.flags & type) == 0))
 			continue;
 
-		if(IsDeaf(target_p))
+		if(is(*target_p, umode::DEAF))
 			continue;
 
 		if(!my(*target_p))
@@ -616,7 +616,7 @@ sendto_channel_opmod(client::client *one, client::client *source_p,
 		if((member.flags & chan::CHANOP) == 0)
 			continue;
 
-		if(IsDeaf(target_p))
+		if(is(*target_p, umode::DEAF))
 			continue;
 
 		if(!my(*target_p))
@@ -673,7 +673,7 @@ sendto_channel_local(int type, chan::chan *chptr, const char *pattern, ...)
 
 		if(type == chan::ONLY_OPERS)
 		{
-			if (!IsOper(target_p))
+			if (!is(*target_p, umode::OPER))
 				continue;
 		}
 		else if(type && ((member.flags & type) == 0))
@@ -1309,11 +1309,11 @@ sendto_wallops_flags(int flags, client::client *source_p, const char *pattern, .
 
 	va_end(args);
 
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, is_person(*source_p) && flags == UMODE_WALLOP ? lclient_list.head : local_oper_list.head)
+	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, is_person(*source_p) && flags == umode::WALLOP ? lclient_list.head : local_oper_list.head)
 	{
 		client_p = (client::client *)ptr->data;
 
-		if(client_p->umodes & flags)
+		if (is(*client_p, umode(flags)))
 			_send_linebuf(client_p, &linebuf);
 	}
 

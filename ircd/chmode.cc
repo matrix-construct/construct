@@ -583,7 +583,7 @@ mode::functor::hidden(client::client *source_p, chan *chptr,
 	  int alevel, int parc, int *parn,
 	  const char **parv, int *errors, int dir, char c, type mode_type)
 {
-	if(!IsOper(source_p) && !is_server(*source_p))
+	if(!is(*source_p, umode::OPER) && !is_server(*source_p))
 	{
 		if(!(*errors & SM_ERR_NOPRIVS))
 			sendto_one_numeric(source_p, ERR_NOPRIVILEGES, form_str(ERR_NOPRIVILEGES));
@@ -630,7 +630,7 @@ mode::functor::staff(client::client *source_p, chan *chptr,
 	  int alevel, int parc, int *parn,
 	  const char **parv, int *errors, int dir, char c, type mode_type)
 {
-	if(!IsOper(source_p) && !is_server(*source_p))
+	if(!is(*source_p, umode::OPER) && !is_server(*source_p))
 	{
 		if(!(*errors & SM_ERR_NOPRIVS))
 			sendto_one_numeric(source_p, ERR_NOPRIVILEGES, form_str(ERR_NOPRIVILEGES));
@@ -984,7 +984,7 @@ mode::functor::op(client::client *source_p, chan *chptr,
 	}
 	else
 	{
-		if(my(*source_p) && IsService(targ_p))
+		if(my(*source_p) && is(*targ_p, umode::SERVICE))
 		{
 			sendto_one(source_p, form_str(ERR_ISCHANSERVICE),
 				   me.name, source_p->name, targ_p->name, chptr->name.c_str());
@@ -1200,7 +1200,7 @@ mode::functor::forward(client::client *source_p, chan *chptr,
 	if(!allow_mode_change(source_p, chptr, alevel, errors, c))
 		return;
 #else
-	if(!IsOper(source_p) && !is_server(*source_p))
+	if(!is(*source_p, umode::OPER) && !is_server(*source_p))
 	{
 		if(!(*errors & SM_ERR_NOPRIVS))
 			sendto_one_numeric(source_p, ERR_NOPRIVILEGES, form_str(ERR_NOPRIVILEGES));

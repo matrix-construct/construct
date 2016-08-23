@@ -162,14 +162,14 @@ check_umode_change(void *vdata)
 		return;
 
 	/* didn't change +h umode, we don't need to do anything */
-	if (!((data->oldumodes ^ source_p->umodes) & user_modes['h']))
+	if (!((data->oldumodes ^ source_p->mode) & user_modes['h']))
 		return;
 
-	if (source_p->umodes & user_modes['h'])
+	if (source_p->mode & user_modes['h'])
 	{
 		if (is_ip_spoof(*source_p) || source_p->localClient->mangledhost == NULL || (is_dyn_spoof(*source_p) && strcmp(source_p->host, source_p->localClient->mangledhost)))
 		{
-			source_p->umodes &= ~user_modes['h'];
+			source_p->mode &= umode(~user_modes['h']);
 			return;
 		}
 		if (strcmp(source_p->host, source_p->localClient->mangledhost))
@@ -180,7 +180,7 @@ check_umode_change(void *vdata)
 			sendto_one_numeric(source_p, RPL_HOSTHIDDEN, "%s :is now your hidden host",
 				source_p->host);
 	}
-	else if (!(source_p->umodes & user_modes['h']))
+	else if (!(source_p->mode & user_modes['h']))
 	{
 		if (source_p->localClient->mangledhost != NULL &&
 				!strcmp(source_p->host, source_p->localClient->mangledhost))
@@ -197,7 +197,7 @@ check_new_user(void *vdata)
 
 	if (is_ip_spoof(*source_p))
 	{
-		source_p->umodes &= ~user_modes['h'];
+		source_p->mode &= umode(~user_modes['h']);
 		return;
 	}
 	source_p->localClient->mangledhost = (char *)rb_malloc(HOSTLEN + 1);
@@ -206,8 +206,8 @@ check_new_user(void *vdata)
 	else
 		do_host_cloak_host(source_p->orighost, source_p->localClient->mangledhost);
 	if (is_dyn_spoof(*source_p))
-		source_p->umodes &= ~user_modes['h'];
-	if (source_p->umodes & user_modes['h'])
+		source_p->mode &= umode(~user_modes['h']);
+	if (source_p->mode & user_modes['h'])
 	{
 		rb_strlcpy(source_p->host, source_p->localClient->mangledhost, sizeof(source_p->host));
 		if (irccmp(source_p->host, source_p->orighost))

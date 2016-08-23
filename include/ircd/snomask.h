@@ -54,6 +54,8 @@ namespace ircd {
 #define SNO_SPY			0x00000800
 #define SNO_OPERSPY		0x00001000
 
+#define DEFAULT_OPER_SNOMASK SNO_GENERAL
+
 char *construct_snobuf(unsigned int val);
 unsigned int parse_snobuf_to_mask(unsigned int val, const char *sno);
 unsigned int find_snomask_slot(void);

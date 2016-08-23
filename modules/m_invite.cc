@@ -148,7 +148,7 @@ m_invite(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 
 	if(my_connect(source))
 	{
-		if (ConfigFileEntry.target_change && !IsOper(&source) &&
+		if (ConfigFileEntry.target_change && !is(source, umode::OPER) &&
 				!find_allowing_channel(&source, target_p) &&
 				!add_target(&source, target_p))
 		{
@@ -173,11 +173,11 @@ m_invite(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 
 	if(my_connect(*target_p))
 	{
-		if(!IsOper(&source) && (IsSetCallerId(target_p) ||
-					(IsSetRegOnlyMsg(target_p) && !suser(user(source))[0])) &&
+		if(!is(source, umode::OPER) && (is(*target_p, umode::CALLERID) ||
+					(is(*target_p, umode::REGONLYMSG) && !suser(user(source))[0])) &&
 				!accept_message(&source, target_p))
 		{
-			if (IsSetRegOnlyMsg(target_p) && !suser(user(source))[0])
+			if (is(*target_p, umode::REGONLYMSG) && !suser(user(source))[0])
 			{
 				sendto_one_numeric(&source, ERR_NONONREG,
 						form_str(ERR_NONONREG),

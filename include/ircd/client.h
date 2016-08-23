@@ -73,6 +73,61 @@ namespace serv
 
 namespace ircd   {
 namespace client {
+namespace mode   {
+
+enum mode : uint
+{
+	SERVNOTICE   = 0x0001, // server notices
+	WALLOP       = 0x0002, // send wallops to them
+	OPERWALL     = 0x0004, // operwalls
+	INVISIBLE    = 0x0008, // makes user invisible
+	CALLERID     = 0x0010, // block unless caller id's
+	LOCOPS       = 0x0020, // show locops
+	SERVICE      = 0x0040,
+	DEAF         = 0x0080,
+	NOFORWARD    = 0x0100, // don't forward
+	REGONLYMSG   = 0x0200, // only allow logged in users to msg
+	OPER         = 0x1000, // operator
+	ADMIN        = 0x2000, // admin on server
+	SSLCLIENT    = 0x4000, // using SSL
+};
+
+const mode DEFAULT_OPER_UMODES
+{
+	SERVNOTICE   |
+	OPERWALL     |
+	WALLOP       |
+	LOCOPS
+};
+
+inline bool
+is(const mode &mask, const mode &bits)
+{
+	return (mask & bits) == bits;
+}
+
+inline void
+set(mode &mask, const mode &bits)
+{
+	mask |= bits;
+}
+
+inline void
+clear(mode &mask, const mode &bits)
+{
+	mask &= ~bits;
+}
+
+} // namespace mode
+} // namespace client
+
+using umode = client::mode::mode;
+
+} // namespace ircd
+
+
+namespace ircd   {
+namespace client {
 
 enum class status : uint8_t
 {
@@ -84,23 +139,6 @@ enum class status : uint8_t
 	SERVER         = 0x20,
 	CLIENT         = 0x40,
 };
-
-
-#define UMODE_SERVNOTICE   0x0001	/* server notices */
-#define UMODE_WALLOP       0x0002	/* send wallops to them */
-#define UMODE_OPERWALL     0x0004	/* Operwalls */
-#define UMODE_INVISIBLE    0x0008	/* makes user invisible */
-#define UMODE_CALLERID     0x0010	/* block unless caller id's */
-#define UMODE_LOCOPS       0x0020	/* show locops */
-#define UMODE_SERVICE      0x0040
-#define UMODE_DEAF	   0x0080
-#define UMODE_NOFORWARD    0x0100	/* don't forward */
-#define UMODE_REGONLYMSG   0x0200	/* only allow logged in users to msg */
-
-/* user information flags, only settable by remote mode or local oper */
-#define UMODE_OPER         0x1000	/* Operator */
-#define UMODE_ADMIN        0x2000	/* Admin on server */
-#define UMODE_SSLCLIENT    0x4000	/* using SSL */
 
 enum flags
 {
@@ -170,7 +208,7 @@ struct client
 	rb_dlink_list whowas_clist;
 
 	time_t tsinfo;		/* TS on the nick, SVINFO on server */
-	unsigned int umodes;	/* opers, normal users subset */
+	mode::mode mode;
 	uint64_t flags;		/* client flags */
 
 	unsigned int snomask;	/* server notice mask */
@@ -388,44 +426,24 @@ struct ListClient
 	int operspy;
 };
 
-/* oper flags */
-#define MyOper(x)               (my_connect(*x) && IsOper(x))
-
-#define SetOper(x)              {(x)->umodes |= UMODE_OPER; \
-				 if (my(*(x))) (x)->handler = OPER_HANDLER;}
-
-#define ClearOper(x)            {(x)->umodes &= ~(UMODE_OPER|UMODE_ADMIN); \
-				 if (my(*(x)) && !IsOper((x)) && !is_server(*(x))) \
-				  (x)->handler = CLIENT_HANDLER; }
-
-
-#define DEFAULT_OPER_UMODES (UMODE_SERVNOTICE | UMODE_OPERWALL | \
-                             UMODE_WALLOP | UMODE_LOCOPS)
-#define DEFAULT_OPER_SNOMASK SNO_GENERAL
-
-#define IsOper(x)		((x)->umodes & UMODE_OPER)
-#define IsAdmin(x)		((x)->umodes & UMODE_ADMIN)
 
 inline bool
-is_invisible(const client &client)
+is(const client &client, const mode::mode &mode)
 {
-	return client.umodes & UMODE_INVISIBLE;
+	return is(client.mode, mode);
 }
 
-#define SetInvisible(x)         ((x)->umodes |= UMODE_INVISIBLE)
-#define ClearInvisible(x)       ((x)->umodes &= ~UMODE_INVISIBLE)
-#define IsSSLClient(x)		((x)->umodes & UMODE_SSLCLIENT)
-#define SetSSLClient(x)		((x)->umodes |= UMODE_SSLCLIENT)
-#define ClearSSLClient(x)	((x)->umodes &= ~UMODE_SSLCLIENT)
-#define SendWallops(x)          ((x)->umodes & UMODE_WALLOP)
-#define SendLocops(x)           ((x)->umodes & UMODE_LOCOPS)
-#define SendServNotice(x)       ((x)->umodes & UMODE_SERVNOTICE)
-#define SendOperwall(x)         ((x)->umodes & UMODE_OPERWALL)
-#define IsSetCallerId(x)	((x)->umodes & UMODE_CALLERID)
-#define IsService(x)		((x)->umodes & UMODE_SERVICE)
-#define IsDeaf(x)		((x)->umodes & UMODE_DEAF)
-#define IsNoForward(x)		((x)->umodes & UMODE_NOFORWARD)
-#define IsSetRegOnlyMsg(x)	((x)->umodes & UMODE_REGONLYMSG)
+inline void
+set(client &client, const mode::mode &mode)
+{
+	return set(client.mode, mode);
+}
+
+inline void
+clear(client &client, const mode::mode &mode)
+{
+	return clear(client.mode, mode);
+}
 
 inline void
 set_got_id(client &client)
@@ -638,11 +656,7 @@ set_server(client &client)
 	client.handler = SERVER_HANDLER;
 }
 
-inline bool
-is_oper(const client &client)
-{
-	return client.umodes & UMODE_OPER;
-}
+bool is_oper(const client &);
 
 inline void
 set_client(client &client)
@@ -729,6 +743,35 @@ inline bool
 my(const client &client)
 {
 	return my_connect(client) && is_client(client);
+}
+
+inline bool
+my_oper(const client &client)
+{
+	return my_connect(client) && is_oper(client);
+}
+
+inline bool
+is_oper(const client &client)
+{
+	return is(client, mode::OPER);
+}
+
+inline void
+set_oper(client &client)
+{
+	set(client, mode::OPER);
+	if (my(client))
+		client.handler = OPER_HANDLER;
+}
+
+inline void
+clear_oper(client &client)
+{
+	clear(client, mode::OPER);
+	clear(client, mode::ADMIN);
+	if (my(client) && !is_server(client))
+		client.handler = CLIENT_HANDLER;
 }
 
 inline void

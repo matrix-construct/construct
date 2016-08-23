@@ -100,7 +100,7 @@ m_challenge(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 	int len = 0;
 
 	/* if theyre an oper, reprint oper motd and ignore */
-	if(IsOper(&source))
+	if(is(source, umode::OPER))
 	{
 		sendto_one(&source, form_str(RPL_YOUREOPER), me.name, source.name);
 		send_oper_motd(&source);

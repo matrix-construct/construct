@@ -85,7 +85,7 @@ m_away(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 	/* Rate limit this because it is sent to common channels. */
 	if (my(source))
 	{
-		if(!IsOper(&source) &&
+		if(!is(source, umode::OPER) &&
 				source.localClient->next_away > rb_current_time())
 		{
 			sendto_one(&source, form_str(RPL_LOAD2HI),

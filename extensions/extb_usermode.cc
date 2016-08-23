@@ -69,7 +69,7 @@ static int eb_usermode(const char *data, client::client *client_p,
 		}
 	}
 
-	return ((client_p->umodes & modes_ack) == modes_ack &&
-			!(client_p->umodes & modes_nak)) ?
+	return ((client_p->mode & modes_ack) == modes_ack &&
+			!(client_p->mode & modes_nak)) ?
 		MATCH : NOMATCH;
 }

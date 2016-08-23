@@ -28,7 +28,7 @@ block_services_kill(void *vdata)
 	if (!data->approved)
 		return;
 
-	if (IsService(data->target))
+	if (is(*data->target, umode::SERVICE))
 	{
 		sendto_one_numeric(data->client, ERR_ISCHANSERVICE,
 				"KILL %s :Cannot kill a network service",

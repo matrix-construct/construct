@@ -61,7 +61,7 @@ m_quit(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 		comment = reason;
 	}
 
-	if(!IsOper(&source) &&
+	if(!is(source, umode::OPER) &&
 	   (source.localClient->firsttime + ConfigFileEntry.anti_spam_exit_message_time) >
 	   rb_current_time())
 	{

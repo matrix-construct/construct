@@ -35,5 +35,5 @@ static int eb_ssl(const char *data, client::client *client_p,
 	if (data != NULL)
 		return INVALID;
 
-	return IsSSLClient(client_p) ? MATCH : NOMATCH;
+	return is(*client_p, umode::SSLCLIENT) ? MATCH : NOMATCH;
 }

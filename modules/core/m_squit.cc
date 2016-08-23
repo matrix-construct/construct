@@ -122,7 +122,7 @@ ms_squit(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 	 */
 	else if(my_connect(*target_p))
 	{
-		sendto_wallops_flags(UMODE_WALLOP, &me,
+		sendto_wallops_flags(umode::WALLOP, &me,
 				     "Remote SQUIT %s from %s (%s)",
 				     target_p->name, source.name, comment);
 

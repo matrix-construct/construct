@@ -80,7 +80,7 @@ static void show_privs(client::client &source, client::client *target_p)
 	buf[0] = '\0';
 	if (target_p->localClient->privset)
 		rb_strlcat(buf, target_p->localClient->privset->privs, sizeof buf);
-	if (IsOper(target_p))
+	if (is(*target_p, umode::OPER))
 	{
 		if (buf[0] != '\0')
 			rb_strlcat(buf, " ", sizeof buf);
@@ -115,7 +115,7 @@ me_privs(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 {
 	client::client *target_p;
 
-	if (!IsOper(&source) || parc < 2 || EmptyString(parv[1]))
+	if (!is(source, umode::OPER) || parc < 2 || EmptyString(parv[1]))
 		return;
 
 	/* we cannot show privs for remote clients */

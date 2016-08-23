@@ -47,18 +47,18 @@ DECLARE_MODULE_AV2(adminwall, NULL, NULL, adminwall_clist, NULL, NULL, NULL, NUL
 static void
 mo_adminwall(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-        if(!IsAdmin(&source))
+        if(!is(source, umode::ADMIN))
         {
                 sendto_one(&source, form_str(ERR_NOPRIVS),
                            me.name, source.name, "adminwall");
                 return;
         }
-        sendto_wallops_flags(UMODE_ADMIN, &source, "ADMINWALL - %s", parv[1]);
+        sendto_wallops_flags(umode::ADMIN, &source, "ADMINWALL - %s", parv[1]);
         sendto_match_servs(&source, "*", CAP_ENCAP, NOCAPS, "ENCAP * ADMINWALL :%s", parv[1]);
 }
 
 static void
 me_adminwall(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
-        sendto_wallops_flags(UMODE_ADMIN, &source, "ADMINWALL - %s", parv[1]);
+        sendto_wallops_flags(umode::ADMIN, &source, "ADMINWALL - %s", parv[1]);
 }

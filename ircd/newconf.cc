@@ -300,15 +300,15 @@ struct mode_table
 
 /* *INDENT-OFF* */
 static struct mode_table umode_table[] = {
-	{"callerid",	UMODE_CALLERID	},
-	{"deaf",	UMODE_DEAF	},
-	{"invisible",	UMODE_INVISIBLE	},
-	{"locops",	UMODE_LOCOPS	},
-	{"noforward",	UMODE_NOFORWARD	},
-	{"regonlymsg",	UMODE_REGONLYMSG},
-	{"servnotice",	UMODE_SERVNOTICE},
-	{"wallop",	UMODE_WALLOP	},
-	{"operwall",	UMODE_OPERWALL	},
+	{"callerid",	umode::CALLERID	},
+	{"deaf",	umode::DEAF	},
+	{"invisible",	umode::INVISIBLE	},
+	{"locops",	umode::LOCOPS	},
+	{"noforward",	umode::NOFORWARD	},
+	{"regonlymsg",	umode::REGONLYMSG},
+	{"servnotice",	umode::SERVNOTICE},
+	{"wallop",	umode::WALLOP	},
+	{"operwall",	umode::OPERWALL	},
 	{NULL, 0}
 };
 

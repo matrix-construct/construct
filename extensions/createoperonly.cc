@@ -24,7 +24,7 @@ h_can_create_channel_authenticated(hook_data_client_approval *data)
 {
 	client::client *source_p = data->client;
 
-	if (!IsOper(source_p))
+	if (!is(*source_p, umode::OPER))
 	{
 		sendto_one_notice(source_p, ":*** Channel creation is restricted to network staff only.");
 		data->approved = ERR_NEEDREGGEDNICK;

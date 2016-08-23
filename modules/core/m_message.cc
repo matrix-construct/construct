@@ -338,7 +338,7 @@ build_target_list(enum message_type msgtype, client::client &client,
 
 				msptr = get(chptr->members, source, std::nothrow);
 
-				if(!is_server(source) && !IsService(&source) && !is_chanop(msptr) && !is_voiced(msptr))
+				if(!is_server(source) && !is(source, umode::SERVICE) && !is_chanop(msptr) && !is_voiced(msptr))
 				{
 					sendto_one(&source, form_str(ERR_CHANOPRIVSNEEDED),
 						   get_id(&me, &source),
@@ -395,7 +395,7 @@ build_target_list(enum message_type msgtype, client::client &client,
 			continue;
 		}
 
-		if(strchr(nick, '@') || (IsOper(&source) && (*nick == '$')))
+		if(strchr(nick, '@') || (is(source, umode::OPER) && (*nick == '$')))
 		{
 			handle_special(msgtype, client, source, nick, text);
 			continue;
@@ -512,7 +512,7 @@ msg_channel(enum message_type msgtype,
 	if((result = can_send(chptr, &source, NULL)))
 	{
 		if(result != chan::CAN_SEND_OPV && my(source) &&
-		   !IsOper(&source) &&
+		   !is(source, umode::OPER) &&
 		   !add_channel_target(&source, chptr))
 		{
 			sendto_one(&source, form_str(ERR_TARGCHANGE),
@@ -534,7 +534,7 @@ msg_channel(enum message_type msgtype,
 	else if(chptr->mode.mode & chan::mode::OPMODERATE &&
 	        (!(chptr->mode.mode & chan::mode::NOPRIVMSGS) || is_member(chptr, &source)))
 	{
-		if(my(source) && !IsOper(&source) && !add_channel_target(&source, chptr))
+		if(my(source) && !is(source, umode::OPER) && !add_channel_target(&source, chptr))
 		{
 			sendto_one(&source, form_str(ERR_TARGCHANGE),
 			           me.name,
@@ -727,10 +727,10 @@ msg_client(enum message_type msgtype,
 		 * as a way of griefing.  --nenolod
 		 */
 		if(msgtype != MESSAGE_TYPE_NOTICE &&
-				(IsSetCallerId(&source) ||
-				 (IsSetRegOnlyMsg(&source) && suser(user(*target_p)).empty())) &&
+				(is(source, umode::CALLERID) ||
+				 (is(source, umode::REGONLYMSG) && suser(user(*target_p)).empty())) &&
 				!accept_message(target_p, &source) &&
-				!IsOper(target_p))
+				!is(*target_p, umode::OPER))
 		{
 			if(rb_dlink_list_length(&source.localClient->allow_list) <
 					(unsigned long)ConfigFileEntry.max_accept)
@@ -753,7 +753,7 @@ msg_client(enum message_type msgtype,
 			source.localClient->last = rb_current_time();
 
 		/* auto cprivmsg/cnotice */
-		do_floodcount = !IsOper(&source) &&
+		do_floodcount = !is(source, umode::OPER) &&
 			!find_allowing_channel(&source, target_p);
 
 		/* target change stuff, dont limit ctcp replies as that
@@ -817,11 +817,11 @@ msg_client(enum message_type msgtype,
 		}
 
 		/* XXX Controversial? allow opers always to send through a +g */
-		if(!is_server(source) && (IsSetCallerId(target_p) ||
-					(IsSetRegOnlyMsg(target_p) && suser(user(source)).empty())))
+		if(!is_server(source) && (is(*target_p, umode::CALLERID) ||
+					(is(*target_p, umode::REGONLYMSG) && suser(user(source)).empty())))
 		{
 			/* Here is the anti-flood bot/spambot code -db */
-			if(accept_message(&source, target_p) || IsOper(&source))
+			if(accept_message(&source, target_p) || is(source, umode::OPER))
 			{
 				add_reply_target(target_p, &source);
 				sendto_one(target_p, ":%s!%s@%s %s %s :%s",
@@ -829,7 +829,7 @@ msg_client(enum message_type msgtype,
 					   source.username,
 					   source.host, cmdname[msgtype], target_p->name, text);
 			}
-			else if (IsSetRegOnlyMsg(target_p) && suser(user(source)).empty())
+			else if (is(*target_p, umode::REGONLYMSG) && suser(user(source)).empty())
 			{
 				if (msgtype != MESSAGE_TYPE_NOTICE)
 					sendto_one_numeric(&source, ERR_NONONREG,
@@ -894,7 +894,7 @@ flood_attack_client(enum message_type msgtype, client::client &source, client::c
 	 * and msg user@server.
 	 * -- jilles
 	 */
-	if(GlobalSetOptions.floodcount && is_client(source) && &source != target_p && !IsService(target_p))
+	if(GlobalSetOptions.floodcount && is_client(source) && &source != target_p && !is(*target_p, umode::SERVICE))
 	{
 		if((target_p->first_received_message_time + 1) < rb_current_time())
 		{
@@ -972,7 +972,7 @@ handle_special(enum message_type msgtype, client::client &client,
 			return;
 		}
 
-		if(!IsOper(&source))
+		if(!is(source, umode::OPER))
 		{
 			if(strchr(nick, '%') || (strncmp(nick, "opers", 5) == 0))
 			{
@@ -1015,11 +1015,11 @@ handle_special(enum message_type msgtype, client::client &client,
 	 *
 	 * Armin, 8Jun90 (gruner@informatik.tu-muenchen.de)
 	 */
-	if(IsOper(&source) && *nick == '$')
+	if(is(source, umode::OPER) && *nick == '$')
 	{
 		if((*(nick + 1) == '$' || *(nick + 1) == '#'))
 			nick++;
-		else if(MyOper(&source))
+		else if(my_oper(source))
 		{
 			sendto_one(&source,
 				   ":%s NOTICE %s :The command %s %s is no longer supported, please use $%s",

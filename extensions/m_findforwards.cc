@@ -50,7 +50,7 @@ m_findforwards(struct MsgBuf *msgbuf_p, client::client &client, client::client &
 	*p = '\0';
 
 	/* Allow ircops to search for forwards to nonexistent channels */
-	if(!IsOper(&source))
+	if(!is(source, umode::OPER))
 	{
 		if((chptr = chan::get(parv[1], std::nothrow)) == NULL || (msptr = get(chptr->members, source, std::nothrow)) == NULL)
 		{

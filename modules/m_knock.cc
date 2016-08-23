@@ -128,7 +128,7 @@ m_knock(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 		 * allow one knock per user per knock_delay
 		 * allow one knock per channel per knock_delay_channel
 		 */
-		if(!IsOper(&source) &&
+		if(!is(source, umode::OPER) &&
 		   (source.localClient->last_knock + ConfigChannel.knock_delay) > rb_current_time())
 		{
 			sendto_one(&source, form_str(ERR_TOOMANYKNOCK),

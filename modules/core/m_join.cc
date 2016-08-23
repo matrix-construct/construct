@@ -84,7 +84,7 @@ check_forward(client::client &source, chan::chan *chptr,
 		return chptr;
 
 	/* User is +Q, or forwarding disabled */
-	if (IsNoForward(&source) || !ConfigChannel.use_forward)
+	if (is(source, umode::NOFORWARD) || !ConfigChannel.use_forward)
 		return NULL;
 
 	while (depth < 16)
@@ -180,7 +180,7 @@ m_join(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 					   form_str(ERR_BADCHANNAME), name);
 
 			/* dont warn for opers */
-			if(!is_exempt_jupe(source) && !IsOper(&source))
+			if(!is_exempt_jupe(source) && !is(source, umode::OPER))
 				sendto_realops_snomask(SNO_SPY, L_NETWIDE,
 						     "User %s (%s@%s) is attempting to join locally juped channel %s (%s)",
 						     source.name, source.username,
@@ -194,7 +194,7 @@ m_join(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 			continue;
 		}
 
-		if(splitmode && !IsOper(&source) && (*name != '&') &&
+		if(splitmode && !is(source, umode::OPER) && (*name != '&') &&
 		   ConfigChannel.no_join_on_split)
 		{
 			sendto_one(&source, form_str(ERR_UNAVAILRESOURCE),
@@ -254,7 +254,7 @@ m_join(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 				continue;
 			}
 
-			if(splitmode && !IsOper(&source) && (*name != '&') &&
+			if(splitmode && !is(source, umode::OPER) && (*name != '&') &&
 			   ConfigChannel.no_create_on_split)
 			{
 				sendto_one(&source, form_str(ERR_UNAVAILRESOURCE),
@@ -306,7 +306,7 @@ m_join(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 		chptr = chptr2;
 
 		if(flags == 0 &&
-				!IsOper(&source) && !is_exempt_spambot(source))
+				!is(source, umode::OPER) && !is_exempt_spambot(source))
 			chan::check_spambot_warning(&source, name);
 
 		/* add the user to the channel */
@@ -976,7 +976,7 @@ do_join_0(client::client &client, client::client &source)
 	for(const auto &pit : chans(user(source)))
 	{
 		if(my_connect(source) &&
-		   !IsOper(&source) && !is_exempt_spambot(source))
+		   !is(source, umode::OPER) && !is_exempt_spambot(source))
 			chan::check_spambot_warning(&source, NULL);
 
 		auto &msptr(pit.second);
@@ -998,7 +998,7 @@ check_channel_name_loc(client::client &source, const char *name)
 	if(EmptyString(name))
 		return false;
 
-	if(ConfigFileEntry.disable_fake_channels && !IsOper(&source))
+	if(ConfigFileEntry.disable_fake_channels && !is(source, umode::OPER))
 	{
 		for(p = name; *p; ++p)
 			if(!rfc1459::is_chan(*p) || rfc1459::is_fake_chan(*p))

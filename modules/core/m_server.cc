@@ -521,7 +521,7 @@ ms_sid(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 	/* collision on the SID? */
 	if((target_p = find_id(parv[3])) != NULL)
 	{
-		sendto_wallops_flags(UMODE_WALLOP, &me,
+		sendto_wallops_flags(umode::WALLOP, &me,
 				     "Link %s cancelled, SID %s for server %s already in use by %s",
 				     client.name, parv[3], parv[1], target_p->name);
 		sendto_server(NULL, NULL, CAP_TS6, NOCAPS,

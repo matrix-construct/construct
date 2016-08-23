@@ -704,14 +704,14 @@ int dump_pcre_config(client::client &client, client::client &source, int parc, c
 static
 int spamexpr_info(client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(parc > 0 && !IsOper(&source))
+	if(parc > 0 && !is(source, umode::OPER))
 	{
 		sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "SPAMEXPR INFO");
 		sendto_one_notice(&source, ":Only operators can give arguments to this command.");
 		return 0;
 	}
 
-	if(parc < 1 && IsOper(&source))
+	if(parc < 1 && is(source, umode::OPER))
 	{
 		dump_pcre_config(client, source, parc, parv);
 		return 0;
@@ -754,7 +754,7 @@ int spamexpr_info(client::client &client, client::client &source, int parc, cons
 static
 int spamexpr_list(client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(parc > 0 && !IsOper(&source))
+	if(parc > 0 && !is(source, umode::OPER))
 	{
 		sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "SPAMEXPR LIST");
 		sendto_one_notice(&source, ":Only operators can give arguments to this command.");
@@ -790,7 +790,7 @@ int spamexpr_list(client::client &client, client::client &source, int parc, cons
 static
 int spamexpr_add(client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(!IsOper(&source) && !is_server(source))
+	if(!is(source, umode::OPER) && !is_server(source))
 	{
 		sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "SPAMEXPR ADD");
 		return 0;
@@ -846,7 +846,7 @@ int spamexpr_add(client::client &client, client::client &source, int parc, const
 static
 int spamexpr_del(client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(!IsOper(&source) && !is_server(source))
+	if(!is(source, umode::OPER) && !is_server(source))
 	{
 		sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "SPAMEXPR DEL");
 		return 0;
@@ -886,7 +886,7 @@ int spamexpr_del(client::client &client, client::client &source, int parc, const
 static
 int spamexpr_test(client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(!IsOper(&source))
+	if(!is(source, umode::OPER))
 	{
 		sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "SPAMEXPR TEST");
 		return 0;
@@ -937,7 +937,7 @@ int spamexpr_test(client::client &client, client::client &source, int parc, cons
 static
 int spamexpr_sync(client::client &client, client::client &source, int parc, const char *parv[])
 {
-	if(!IsOper(&source) && !is_server(source))
+	if(!is(source, umode::OPER) && !is_server(source))
 	{
 		sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "SPAMEXPR SYNC");
 		return 0;

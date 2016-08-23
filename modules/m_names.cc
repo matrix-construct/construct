@@ -76,7 +76,7 @@ m_names(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	}
 	else
 	{
-		if(!IsOper(&source))
+		if(!is(source, umode::OPER))
 		{
 			if((last_used + ConfigFileEntry.pace_wait) > rb_current_time())
 			{
@@ -132,7 +132,7 @@ names_global(client::client &source)
 		target_p = (client::client *)ptr->data;
 		dont_show = false;
 
-		if(!is_person(*target_p) || is_invisible(*target_p))
+		if(!is_person(*target_p) || is(*target_p, umode::INVISIBLE))
 			continue;
 
 		/* we want to show -i clients that are either:

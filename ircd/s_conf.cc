@@ -663,7 +663,7 @@ set_default_conf(void)
 	ConfigFileEntry.servicestring = NULL;
 	ConfigFileEntry.sasl_service = NULL;
 
-	ConfigFileEntry.default_umodes = UMODE_INVISIBLE;
+	ConfigFileEntry.default_umodes = umode::INVISIBLE;
 	ConfigFileEntry.failed_oper_notice = true;
 	ConfigFileEntry.anti_nick_flood = false;
 	ConfigFileEntry.disable_fake_channels = false;
@@ -724,9 +724,9 @@ set_default_conf(void)
 	ConfigFileEntry.compression_level = 4;
 #endif
 
-	ConfigFileEntry.oper_umodes = UMODE_LOCOPS | UMODE_SERVNOTICE |
-		UMODE_OPERWALL | UMODE_WALLOP;
-	ConfigFileEntry.oper_only_umodes = UMODE_SERVNOTICE;
+	ConfigFileEntry.oper_umodes = umode::LOCOPS | umode::SERVNOTICE |
+		umode::OPERWALL | umode::WALLOP;
+	ConfigFileEntry.oper_only_umodes = umode::SERVNOTICE;
 	ConfigFileEntry.oper_snomask = SNO_GENERAL;
 
 	ConfigChannel.use_except = true;
@@ -1221,7 +1221,7 @@ get_oper_name(client::client *client_p)
 	/* +5 for !,@,{,} and null */
 	static char buffer[NICKLEN + USERLEN + HOSTLEN + HOSTLEN + 5];
 
-	if(MyOper(client_p))
+	if(my_oper(*client_p))
 	{
 		snprintf(buffer, sizeof(buffer), "%s!%s@%s{%s}",
 				client_p->name, client_p->username,
@@ -1305,7 +1305,7 @@ get_printable_kline(client::client *source_p, struct ConfItem *aconf,
 	*user = EmptyString(aconf->user) ? null : aconf->user;
 	*reason = get_user_ban_reason(aconf);
 
-	if(!IsOper(source_p))
+	if(!is(*source_p, umode::OPER))
 		*oper_reason = NULL;
 	else
 	{

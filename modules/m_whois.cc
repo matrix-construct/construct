@@ -70,7 +70,7 @@ m_whois(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 			return;
 		}
 
-		if(!IsOper(&source))
+		if(!is(source, umode::OPER))
 		{
 			/* seeing as this is going across servers, we should limit it */
 			if((last_used + ConfigFileEntry.pace_wait_simple) > rb_current_time() || !ratelimit_client(&source, 2))
@@ -250,7 +250,7 @@ single_whois(client::client &source, client::client *target_p, int operspy)
 	hdata.client = &source;
 	hdata.target = target_p;
 
-	if (!IsService(target_p))
+	if (!is(*target_p, umode::SERVICE))
 	{
 		for(const auto &pit : chans(user(*target_p)))
 		{
@@ -292,16 +292,16 @@ single_whois(client::client &source, client::client *target_p, int operspy)
 		sendto_one_numeric(&source, RPL_AWAY, form_str(RPL_AWAY),
 				   target_p->name, away(user(*target_p)).c_str());
 
-	if(IsOper(target_p) && (!ConfigFileEntry.hide_opers_in_whois || IsOper(&source)))
+	if(is(*target_p, umode::OPER) && (!ConfigFileEntry.hide_opers_in_whois || is(source, umode::OPER)))
 	{
 		sendto_one_numeric(&source, RPL_WHOISOPERATOR, form_str(RPL_WHOISOPERATOR),
 				   target_p->name,
-				   IsService(target_p) ? ConfigFileEntry.servicestring :
-				   (IsAdmin(target_p) ? GlobalSetOptions.adminstring :
+				   is(*target_p, umode::SERVICE) ? ConfigFileEntry.servicestring :
+				   (is(*target_p, umode::ADMIN) ? GlobalSetOptions.adminstring :
 				    GlobalSetOptions.operstring));
 	}
 
-	if(my(*target_p) && !EmptyString(target_p->localClient->opername) && IsOper(&source))
+	if(my(*target_p) && !EmptyString(target_p->localClient->opername) && is(source, umode::OPER))
 	{
 		char buf[512];
 		snprintf(buf, sizeof(buf), "is opered as %s, privset %s",
@@ -310,7 +310,7 @@ single_whois(client::client &source, client::client *target_p, int operspy)
 				   target_p->name, buf);
 	}
 
-	if(IsSSLClient(target_p))
+	if(is(*target_p, umode::SSLCLIENT))
 	{
 		char cbuf[256] = "is using a secure connection";
 
@@ -319,7 +319,7 @@ single_whois(client::client &source, client::client *target_p, int operspy)
 
 		sendto_one_numeric(&source, RPL_WHOISSECURE, form_str(RPL_WHOISSECURE),
 				   target_p->name, cbuf);
-		if((&source == target_p || IsOper(&source)) &&
+		if((&source == target_p || is(source, umode::OPER)) &&
 				target_p->certfp != NULL)
 			sendto_one_numeric(&source, RPL_WHOISCERTFP,
 					form_str(RPL_WHOISCERTFP),
@@ -328,7 +328,7 @@ single_whois(client::client &source, client::client *target_p, int operspy)
 
 	if(my(*target_p))
 	{
-		if (is_dyn_spoof(*target_p) && (IsOper(&source) || &source == target_p))
+		if (is_dyn_spoof(*target_p) && (is(source, umode::OPER) || &source == target_p))
 		{
 			/* trick here: show a nonoper their own IP if
 			 * dynamic spoofed but not if auth{} spoofed
@@ -366,7 +366,7 @@ single_whois(client::client &source, client::client *target_p, int operspy)
 	}
 	else
 	{
-		if (is_dyn_spoof(*target_p) && (IsOper(&source) || &source == target_p))
+		if (is_dyn_spoof(*target_p) && (is(source, umode::OPER) || &source == target_p))
 		{
 			clear_dyn_spoof(*target_p);
 			sendto_one_numeric(&source, RPL_WHOISHOST,

@@ -103,7 +103,7 @@ mo_okick(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 		return;
 	}
 
-	sendto_wallops_flags(UMODE_WALLOP, &me,
+	sendto_wallops_flags(umode::WALLOP, &me,
 			     "OKICK called for %s %s by %s!%s@%s",
 			     chptr->name.c_str(), target_p->name,
 			     source.name, source.username, source.host);

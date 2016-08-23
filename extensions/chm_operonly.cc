@@ -39,7 +39,7 @@ h_can_join(hook_data_channel *data)
 	client::client *source_p = data->client;
 	const auto &chptr(data->chptr);
 
-	if((chptr->mode.mode & mymode) && !IsOper(source_p)) {
+	if((chptr->mode.mode & mymode) && !is(*source_p, umode::OPER)) {
 		sendto_one_numeric(source_p, 520, "%s :Cannot join channel (+O) - you are not an IRC operator", chptr->name.c_str());
 		data->approved = chan::mode::ERR_CUSTOM;
 	}

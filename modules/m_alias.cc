@@ -126,7 +126,7 @@ m_alias(struct MsgBuf *msgbuf, client::client &client, client::client &source, i
 	{
 		/* nick, must be +S */
 		target_p = client::find_named_person(aptr->target.c_str());
-		if(target_p != NULL && !IsService(target_p))
+		if(target_p != NULL && !is(*target_p, umode::SERVICE))
 			target_p = NULL;
 	}
 

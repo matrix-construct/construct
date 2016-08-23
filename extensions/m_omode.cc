@@ -93,7 +93,7 @@ mo_omode(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 		rb_strlcat(params, parv[i], sizeof params);
 	}
 
-	sendto_wallops_flags(UMODE_WALLOP, &me,
+	sendto_wallops_flags(umode::WALLOP, &me,
 			     "OMODE called for [%s] [%s] by %s!%s@%s",
 			     parv[1], params, source.name, source.username, source.host);
 	ilog(L_MAIN, "OMODE called for [%s] [%s] by %s",

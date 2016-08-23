@@ -710,13 +710,13 @@ show_iline_prefix(client::client *sptr, struct ConfItem *aconf, char *name)
 		*prefix_ptr++ = '+';
 	if(IsConfDoSpoofIp(aconf))
 		*prefix_ptr++ = '=';
-	if(IsOper(sptr) && IsConfExemptFlood(aconf))
+	if(is(*sptr, umode::OPER) && IsConfExemptFlood(aconf))
 		*prefix_ptr++ = '|';
-	if(IsOper(sptr) && IsConfExemptDNSBL(aconf) && !IsConfExemptKline(aconf))
+	if(is(*sptr, umode::OPER) && IsConfExemptDNSBL(aconf) && !IsConfExemptKline(aconf))
 		*prefix_ptr++ = '$';
-	if(IsOper(sptr) && IsConfExemptKline(aconf))
+	if(is(*sptr, umode::OPER) && IsConfExemptKline(aconf))
 		*prefix_ptr++ = '^';
-	if(IsOper(sptr) && IsConfExemptLimits(aconf))
+	if(is(*sptr, umode::OPER) && IsConfExemptLimits(aconf))
 		*prefix_ptr++ = '>';
 	*prefix_ptr = '\0';
 	strncpy(prefix_ptr, name, USERLEN);
@@ -744,7 +744,7 @@ report_auth(client::client *client_p)
 			{
 				aconf = arec->aconf;
 
-				if(!IsOper(client_p) && IsConfDoSpoofIp(aconf))
+				if(!is(*client_p, umode::OPER) && IsConfDoSpoofIp(aconf))
 					continue;
 
 				get_printable_conf(aconf, &name, &host, &pass, &user, &port,

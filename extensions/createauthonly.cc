@@ -24,6 +24,6 @@ h_can_create_channel_authenticated(hook_data_client_approval *data)
 {
 	client::client *source_p = data->client;
 
-	if (suser(user(*source_p)).empty() && !IsOper(source_p))
+	if (suser(user(*source_p)).empty() && !is(*source_p, umode::OPER))
 		data->approved = ERR_NEEDREGGEDNICK;
 }

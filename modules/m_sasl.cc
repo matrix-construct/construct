@@ -76,7 +76,7 @@ sasl_visible(client::client *client)
 	if (ConfigFileEntry.sasl_service)
 		agent_p = find_named_client(ConfigFileEntry.sasl_service);
 
-	return agent_p != NULL && IsService(agent_p);
+	return agent_p != NULL && is(*agent_p, umode::SERVICE);
 }
 
 static const char *
@@ -131,7 +131,7 @@ m_authenticate(struct MsgBuf *msgbuf_p, client::client &client, client::client &
 	}
 
 	saslserv_p = find_named_client(ConfigFileEntry.sasl_service);
-	if(saslserv_p == NULL || !IsService(saslserv_p))
+	if(saslserv_p == NULL || !is(*saslserv_p, umode::SERVICE))
 	{
 		sendto_one(&source, form_str(ERR_SASLABORTED), me.name, EmptyString(source.name) ? "*" : source.name);
 		return;
@@ -207,7 +207,7 @@ me_sasl(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	/* We only accept messages from SASL agents; these must have umode +S
 	 * (so the server must be listed in a service{} block).
 	 */
-	if(!IsService(agent_p))
+	if(!is(*agent_p, umode::SERVICE))
 		return;
 
 	/* Reject if someone has already answered. */

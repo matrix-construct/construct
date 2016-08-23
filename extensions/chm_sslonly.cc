@@ -38,7 +38,7 @@ h_can_join(hook_data_channel *data)
 	client::client *source_p = data->client;
 	const auto &chptr(data->chptr);
 
-	if((chptr->mode.mode & mymode) && !IsSSLClient(source_p)) {
+	if((chptr->mode.mode & mymode) && !is(*source_p, umode::SSLCLIENT)) {
 		/* XXX This is equal to ERR_THROTTLE */
 		sendto_one_numeric(source_p, 480, "%s :Cannot join channel (+S) - SSL/TLS required", chptr->name.c_str());
 		data->approved = chan::mode::ERR_CUSTOM;

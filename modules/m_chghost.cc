@@ -122,7 +122,7 @@ do_chghost(client::client &source, client::client *target_p,
 	}
 	if (my(source))
 		sendto_one_notice(&source, ":Changed hostname for %s to %s", target_p->name, target_p->host);
-	if (!is_server(source) && !IsService(&source))
+	if (!is_server(source) && !is(source, umode::SERVICE))
 		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s changed hostname for %s to %s", get_oper_name(&source), target_p->name, target_p->host);
 	return true;
 }

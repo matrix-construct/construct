@@ -690,7 +690,7 @@ mo_info(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 		info_spy(source);
 		send_info_text(source);
 
-		if(IsOper(&source))
+		if(is(source, umode::OPER))
 		{
 			send_conf_options(source);
 			sendto_one_numeric(&source, RPL_INFO, ":%s",

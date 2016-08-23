@@ -207,7 +207,7 @@ ms_connect(struct MsgBuf *msgbuf_p, client::client &client, client::client &sour
 	/*
 	 * Notify all operators about remote connect requests
 	 */
-	sendto_wallops_flags(UMODE_WALLOP, &me,
+	sendto_wallops_flags(umode::WALLOP, &me,
 			     "Remote CONNECT %s %d from %s",
 			     parv[1], port, source.name);
 	sendto_server(NULL, NULL, CAP_TS6, NOCAPS,

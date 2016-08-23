@@ -368,11 +368,11 @@ do_modlist(client::client &source, const char *pattern)
 			break;
 		case MAPI_ORIGIN_CORE:
 			origin = "builtin";
-			display = IsOper(&source);
+			display = is(source, umode::OPER);
 			break;
 		default:
 			origin = "unknown";
-			display = IsOper(&source);
+			display = is(source, umode::OPER);
 			break;
 		}
 

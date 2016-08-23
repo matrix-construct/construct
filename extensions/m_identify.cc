@@ -63,7 +63,7 @@ m_identify(struct MsgBuf *msgbuf_p, client::client &client, client::client &sour
 	}
 
 	nick = parv[1][0] == '#' ? SVS_chanserv_NICK : SVS_nickserv_NICK;
-	if ((target_p = client::find_named_person(nick)) && IsService(target_p))
+	if ((target_p = client::find_named_person(nick)) && is(*target_p, umode::SERVICE))
 	{
 		sendto_one(target_p, ":%s PRIVMSG %s :IDENTIFY %s", get_id(&source, target_p), get_id(target_p, target_p), reconstruct_parv(parc - 1, &parv[1]));
 	}

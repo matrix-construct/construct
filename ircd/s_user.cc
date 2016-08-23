@@ -30,6 +30,7 @@ void user_welcome(client::client *source_p);
 char umodebuf[128];
 
 static int orphaned_umodes = 0;
+
 int user_modes[256] = {
 	/* 0x00 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x0F */
 	/* 0x10 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x1F */
@@ -39,7 +40,7 @@ int user_modes[256] = {
 	0,			/* A */
 	0,			/* B */
 	0,			/* C */
-	UMODE_DEAF,		/* D */
+	umode::DEAF,		/* D */
 	0,			/* E */
 	0,			/* F */
 	0,			/* G */
@@ -52,43 +53,43 @@ int user_modes[256] = {
 	0,			/* N */
 	0,			/* O */
 	0,			/* P */
-	UMODE_NOFORWARD,	/* Q */
-	UMODE_REGONLYMSG,	/* R */
-	UMODE_SERVICE,		/* S */
+	umode::NOFORWARD,	/* Q */
+	umode::REGONLYMSG,	/* R */
+	umode::SERVICE,		/* S */
 	0,			/* T */
 	0,			/* U */
 	0,			/* V */
 	0,			/* W */
 	0,			/* X */
 	0,			/* Y */
-	UMODE_SSLCLIENT,	/* Z */
+	umode::SSLCLIENT,	/* Z */
 	/* 0x5B */ 0, 0, 0, 0, 0, 0, /* 0x60 */
-	UMODE_ADMIN,		/* a */
+	umode::ADMIN,		/* a */
 	0,			/* b */
 	0,			/* c */
 	0,			/* d */
 	0,			/* e */
 	0,			/* f */
-	UMODE_CALLERID,		/* g */
+	umode::CALLERID,		/* g */
 	0,			/* h */
-	UMODE_INVISIBLE,	/* i */
+	umode::INVISIBLE,	/* i */
 	0,			/* j */
 	0,			/* k */
-	UMODE_LOCOPS,		/* l */
+	umode::LOCOPS,		/* l */
 	0,			/* m */
 	0,			/* n */
-	UMODE_OPER,		/* o */
+	umode::OPER,		/* o */
 	0,			/* p */
 	0,			/* q */
 	0,			/* r */
-	UMODE_SERVNOTICE,	/* s */
+	umode::SERVNOTICE,	/* s */
 	0,			/* t */
 	0,			/* u */
 	0,			/* v */
-	UMODE_WALLOP,		/* w */
+	umode::WALLOP,		/* w */
 	0,			/* x */
 	0,			/* y */
-	UMODE_OPERWALL,		/* z */
+	umode::OPERWALL,		/* z */
 	/* 0x7B */ 0, 0, 0, 0, 0, /* 0x7F */
 	/* 0x80 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x9F */
 	/* 0x90 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0x9F */
@@ -556,7 +557,7 @@ register_local_user(client::client *client_p, client::client *source_p)
 			set_dyn_spoof(*source_p);
 	}
 
-	source_p->umodes |= ConfigFileEntry.default_umodes & ~ConfigFileEntry.oper_only_umodes & ~orphaned_umodes;
+	source_p->mode |= umode(ConfigFileEntry.default_umodes & ~ConfigFileEntry.oper_only_umodes & ~orphaned_umodes);
 
 	call_hook(h_new_local_user, source_p);
 
@@ -597,9 +598,9 @@ register_local_user(client::client *client_p, client::client *source_p)
 	}
 
 	if (IsSSL(source_p))
-		source_p->umodes |= UMODE_SSLCLIENT;
+		source_p->mode |= umode::SSLCLIENT;
 
-	if (source_p->umodes & UMODE_INVISIBLE)
+	if (source_p->mode & umode::INVISIBLE)
 		Count.invisi++;
 
 	s_assert(!is_client(*source_p));
@@ -945,7 +946,7 @@ show_other_user_mode(client::client *source_p, client::client *target_p)
 	*m++ = '+';
 
 	for (i = 0; i < 128; i++) /* >= 127 is extended ascii */
-		if (target_p->umodes & user_modes[i])
+		if (target_p->mode & user_modes[i])
 			*m++ = (char) i;
 	*m = '\0';
 
@@ -1009,7 +1010,7 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 
 	if(source_p != target_p)
 	{
-		if (MyOper(source_p) && parc < 3)
+		if (my_oper(*source_p) && parc < 3)
 			show_other_user_mode(source_p, target_p);
 		else
 			sendto_one(source_p, form_str(ERR_USERSDONTMATCH), me.name, source_p->name);
@@ -1022,7 +1023,7 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 		*m++ = '+';
 
 		for (i = 0; i < 128; i++) /* >= 127 is extended ascii */
-			if (source_p->umodes & user_modes[i])
+			if (source_p->mode & user_modes[i])
 				*m++ = (char) i;
 
 		*m = '\0';
@@ -1036,7 +1037,7 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 	}
 
 	/* find flags already set for user */
-	setflags = source_p->umodes;
+	setflags = source_p->mode;
 	setsnomask = source_p->snomask;
 
 	/*
@@ -1055,10 +1056,10 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 		case 'o':
 			if(what == MODE_ADD)
 			{
-				if(is_server(*client_p) && !IsOper(source_p))
+				if(is_server(*client_p) && !is_oper(*source_p))
 				{
 					++Count.oper;
-					SetOper(source_p);
+					set_oper(*source_p);
 					rb_dlinkAddAlloc(source_p, &oper_list);
 				}
 			}
@@ -1068,17 +1069,17 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 				 * found by Pat Szuta, Perly , perly@xnet.com
 				 */
 
-				if(!IsOper(source_p))
+				if(!is_oper(*source_p))
 					break;
 
-				ClearOper(source_p);
+				clear_oper(*source_p);
 
 				Count.oper--;
 
 				if(my_connect(*source_p))
 				{
-					source_p->umodes &= ~ConfigFileEntry.oper_only_umodes;
-					if (!(source_p->umodes & UMODE_SERVNOTICE) && source_p->snomask != 0)
+					clear(*source_p, umode(ConfigFileEntry.oper_only_umodes));
+					if (!is(*source_p, umode::SERVNOTICE) && source_p->snomask != 0)
 					{
 						source_p->snomask = 0;
 						showsnomask = true;
@@ -1113,10 +1114,10 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 		case 's':
 			if (my_connect(*source_p))
 			{
-				if(!IsOper(source_p)
-						&& (ConfigFileEntry.oper_only_umodes & UMODE_SERVNOTICE))
+				if(!is_oper(*source_p)
+						&& (ConfigFileEntry.oper_only_umodes & umode::SERVNOTICE))
 				{
-					if (what == MODE_ADD || source_p->umodes & UMODE_SERVNOTICE)
+					if (what == MODE_ADD || is(*source_p, umode::SERVNOTICE))
 						badflag = true;
 					continue;
 				}
@@ -1131,9 +1132,9 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 				else
 					source_p->snomask = 0;
 				if (source_p->snomask != 0)
-					source_p->umodes |= UMODE_SERVNOTICE;
+					set(*source_p, umode::SERVNOTICE);
 				else
-					source_p->umodes &= ~UMODE_SERVNOTICE;
+					clear(*source_p, umode::SERVNOTICE);
 				break;
 			}
 			/* FALLTHROUGH */
@@ -1147,19 +1148,19 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 			if((flag = user_modes[(unsigned char) *pm]))
 			{
 				if(my_connect(*source_p)
-						&& ((!IsOper(source_p)
+						&& ((!is_oper(*source_p)
 							&& (ConfigFileEntry.oper_only_umodes & flag))
 						|| (orphaned_umodes & flag)))
 				{
-					if (what == MODE_ADD || source_p->umodes & flag)
+					if (what == MODE_ADD || source_p->mode & flag)
 						badflag = true;
 				}
 				else
 				{
 					if(what == MODE_ADD)
-						source_p->umodes |= flag;
+						set(*source_p, umode(flag));
 					else
-						source_p->umodes &= ~flag;
+						clear(*source_p, umode(flag));
 				}
 			}
 			else
@@ -1179,17 +1180,17 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 		source_p->snomask &= ~SNO_NCHANGE;	/* only tcm's really need this */
 	}
 
-	if(my(*source_p) && (source_p->umodes & UMODE_OPERWALL) && !IsOperOperwall(source_p))
+	if(my(*source_p) && is(*source_p, umode::OPERWALL) && !IsOperOperwall(source_p))
 	{
 		sendto_one_notice(source_p, ":*** You need oper and operwall flag for +z");
-		source_p->umodes &= ~UMODE_OPERWALL;
+		source_p->mode &= ~umode::OPERWALL;
 	}
 
-	if(my_connect(*source_p) && (source_p->umodes & UMODE_ADMIN) &&
+	if(my_connect(*source_p) && (source_p->mode & umode::ADMIN) &&
 	   (!IsOperAdmin(source_p) || IsOperHiddenAdmin(source_p)))
 	{
 		sendto_one_notice(source_p, ":*** You need oper and admin flag for +a");
-		source_p->umodes &= ~UMODE_ADMIN;
+		clear(*source_p, umode::ADMIN);
 	}
 
 	/* let modules providing usermodes know that we've changed our usermode --nenolod */
@@ -1198,9 +1199,9 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 	hdata.oldsnomask = setsnomask;
 	call_hook(h_umode_changed, &hdata);
 
-	if(!(setflags & UMODE_INVISIBLE) && is_invisible(*source_p))
+	if(!(setflags & umode::INVISIBLE) && is(*source_p, umode::INVISIBLE))
 		++Count.invisi;
-	if((setflags & UMODE_INVISIBLE) && !is_invisible(*source_p))
+	if((setflags & umode::INVISIBLE) && !is(*source_p, umode::INVISIBLE))
 		--Count.invisi;
 	/*
 	 * compare new flags with old flags and send string which
@@ -1237,7 +1238,7 @@ send_umode(client::client *client_p, client::client *source_p, int old, char *um
 	{
 		flag = user_modes[i];
 
-		if((flag & old) && !(source_p->umodes & flag))
+		if((flag & old) && !(source_p->mode & flag))
 		{
 			if(what == MODE_DEL)
 				*m++ = (char) i;
@@ -1248,7 +1249,7 @@ send_umode(client::client *client_p, client::client *source_p, int old, char *um
 				*m++ = (char) i;
 			}
 		}
-		else if(!(flag & old) && (source_p->umodes & flag))
+		else if(!(flag & old) && (source_p->mode & flag))
 		{
 			if(what == MODE_ADD)
 				*m++ = (char) i;
@@ -1345,24 +1346,26 @@ user_welcome(client::client *source_p)
 void
 oper_up(client::client *source_p, struct oper_conf *oper_p)
 {
-	unsigned int old = source_p->umodes, oldsnomask = source_p->snomask;
+	using umode = client::mode::mode;
+
+	unsigned int old = source_p->mode, oldsnomask = source_p->snomask;
 	hook_data_umode_changed hdata;
 
-	SetOper(source_p);
+	set_oper(*source_p);
 
 	if(oper_p->umodes)
-		source_p->umodes |= oper_p->umodes;
+		source_p->mode |= umode(oper_p->umodes);
 	else if(ConfigFileEntry.oper_umodes)
-		source_p->umodes |= ConfigFileEntry.oper_umodes;
+		source_p->mode |= umode(ConfigFileEntry.oper_umodes);
 	else
-		source_p->umodes |= DEFAULT_OPER_UMODES;
+		source_p->mode |= client::mode::DEFAULT_OPER_UMODES;
 
 	if (oper_p->snomask)
 	{
 		source_p->snomask |= oper_p->snomask;
-		source_p->umodes |= UMODE_SERVNOTICE;
+		source_p->mode |= umode::SERVNOTICE;
 	}
-	else if (source_p->umodes & UMODE_SERVNOTICE)
+	else if (source_p->mode & umode::SERVNOTICE)
 	{
 		/* Only apply these if +s is already set -- jilles */
 		if (ConfigFileEntry.oper_snomask)
@@ -1384,11 +1387,11 @@ oper_up(client::client *source_p, struct oper_conf *oper_p)
 	rb_dlinkAddAlloc(source_p, &oper_list);
 
 	if(IsOperAdmin(source_p) && !IsOperHiddenAdmin(source_p))
-		source_p->umodes |= UMODE_ADMIN;
+		source_p->mode |= umode::ADMIN;
 	if(!IsOperN(source_p))
 		source_p->snomask &= ~SNO_NCHANGE;
 	if(!IsOperOperwall(source_p))
-		source_p->umodes &= ~UMODE_OPERWALL;
+		source_p->mode &= ~umode::OPERWALL;
 	hdata.client = source_p;
 	hdata.oldumodes = old;
 	hdata.oldsnomask = oldsnomask;
@@ -1397,9 +1400,9 @@ oper_up(client::client *source_p, struct oper_conf *oper_p)
 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
 			     "%s (%s!%s@%s) is now an operator", oper_p->name, source_p->name,
 			     source_p->username, source_p->host);
-	if(!(old & UMODE_INVISIBLE) && is_invisible(*source_p))
+	if(!(old & umode::INVISIBLE) && is(*source_p, umode::INVISIBLE))
 		++Count.invisi;
-	if((old & UMODE_INVISIBLE) && !is_invisible(*source_p))
+	if((old & umode::INVISIBLE) && !is(*source_p, umode::INVISIBLE))
 		--Count.invisi;
 	send_umode_out(source_p, source_p, old);
 	sendto_one_numeric(source_p, RPL_SNOMASK, form_str(RPL_SNOMASK),
