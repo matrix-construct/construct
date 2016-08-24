@@ -125,5 +125,4 @@ namespace ircd
 #include "s_user.h"
 #include "whowas.h"
 #include "wsproc.h"
-
-#include "inline/stringops.h"
+#include "stringops.h"
