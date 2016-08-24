@@ -338,6 +338,10 @@ RB_CHK_SYSHEADER([cstdio],         [CSTDIO])
 RB_CHK_SYSHEADER([chrono],         [CHRONO])
 RB_CHK_SYSHEADER([ctime],          [CTIME])
 
+dnl experimental
+RB_CHK_SYSHEADER([string_view],                 [STRING_VIEW])
+RB_CHK_SYSHEADER([experimental/string_view],    [EXPERIMENTAL_STRING_VIEW])
+
 RB_CHK_SYSHEADER([windows.h],      [WINDOWS_H])
 RB_CHK_SYSHEADER([winsock2.h],     [WINSOCK2_H])
 RB_CHK_SYSHEADER([ws2tcpip.h],     [WS2TCPIP_H])
