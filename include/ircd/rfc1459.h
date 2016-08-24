@@ -71,6 +71,7 @@ using character::tolower;
 
 struct less
 {
+	bool operator()(const char *const &a, const char *const &b) const;
 	bool operator()(const std::string &a, const std::string &b) const;
 	bool operator()(const std::string *const &a, const std::string *const &b) const;
 };
@@ -118,6 +119,18 @@ less::operator()(const std::string &a,
 const
 {
 	return std::lexicographical_compare(begin(a), end(a), begin(b), end(b), []
+	(const char &a, const char &b)
+	{
+		return tolower(a) < tolower(b);
+	});
+}
+
+inline bool
+less::operator()(const char *const &a,
+                 const char *const &b)
+const
+{
+	return std::lexicographical_compare(a, a + strlen(a), b, b + strlen(b), []
 	(const char &a, const char &b)
 	{
 		return tolower(a) < tolower(b);
