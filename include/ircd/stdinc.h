@@ -60,7 +60,6 @@ namespace ircd
 	struct _ssl_ctl;
 	struct ev_ctl;
 	struct ws_ctl;
-	struct scache_entry;
 	struct server_conf;
 }
 
@@ -71,12 +70,11 @@ namespace ircd
 #include "messages.h"
 #include "rfc1459.h"
 #include "err.h"
-
 #include "fs.h"
 #include "s_assert.h"
-
 #include "match.h"
 
+#include "cache.h"
 #include "tgchange.h"
 #include "msgbuf.h"
 #include "msg.h"
@@ -87,7 +85,6 @@ namespace ircd
 
 #include "authproc.h"
 #include "bandbi.h"
-#include "cache.h"
 #include "capability.h"
 #include "certfp.h"
 #include "class.h"
@@ -112,7 +109,6 @@ namespace ircd
 #include "ratelimit.h"
 #include "reject.h"
 #include "restart.h"
-#include "scache.h"
 #include "s_conf.h"
 #include "send.h"
 #include "s_newconf.h"

@@ -28,7 +28,6 @@
 #ifdef __cplusplus
 namespace ircd {
 
-struct User;
 struct oper_conf;
 extern time_t LastUsedWallops;
 

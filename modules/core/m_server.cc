@@ -476,7 +476,7 @@ ms_server(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 	add_to_client_hash(target_p->name, target_p);
 	target_p->lnode = servers(serv(*target_p)).emplace(end(servers(serv(*target_p))), target_p);
 
-	nameinfo(serv(*target_p)) = scache_connect(target_p->name, target_p->info, is_hidden(*target_p));
+	nameinfo(serv(*target_p)) = cache::serv::connect(target_p->name, target_p->info, is_hidden(*target_p));
 
 	sendto_server(&client, NULL, NOCAPS, NOCAPS,
 		      ":%s SERVER %s %d :%s%s",
@@ -633,7 +633,7 @@ ms_sid(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 	add_to_id_hash(target_p->id, target_p);
 	target_p->lnode = servers(serv(*target_p)).emplace(end(servers(serv(*target_p))), target_p);
 
-	nameinfo(serv(*target_p)) = scache_connect(target_p->name, target_p->info, is_hidden(*target_p));
+	nameinfo(serv(*target_p)) = cache::serv::connect(target_p->name, target_p->info, is_hidden(*target_p));
 
 	sendto_server(&client, NULL, CAP_TS6, NOCAPS,
 		      ":%s SID %s %d %s :%s%s",

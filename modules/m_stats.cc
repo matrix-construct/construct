@@ -1437,7 +1437,8 @@ stats_memory (client::client &source)
 			   "z :linebuf %ld(%ld)",
 			   (long)linebuf_count, (long)linebuf_memory_used);
 
-	count_scache(&number_servers_cached, &mem_servers_cached);
+	number_servers_cached = cache::serv::count_servers();
+	mem_servers_cached = cache::serv::count_bytes();
 
 	sendto_one_numeric(&source, RPL_STATSDEBUG,
 			   "z :scache %ld(%ld)",

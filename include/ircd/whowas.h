@@ -48,7 +48,7 @@ struct Whowas
 	char realname[REALLEN + 1];
 	char suser[NICKLEN + 1];
 	unsigned char flags;
-	const char *servername;
+	std::shared_ptr<cache::serv::entry> scache;
 	time_t logoff;
 	client::client *online;	/* Pointer to new nickname for chasing or NULL */
 };

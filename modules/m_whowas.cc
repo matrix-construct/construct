@@ -123,10 +123,10 @@ m_whowas(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 					   "%s %s :was logged in as",
 					   temp->name, temp->suser);
 
-		sendto_one_numeric(&source, RPL_WHOISSERVER,
-				   form_str(RPL_WHOISSERVER),
-				   temp->name, temp->servername,
-				   rb_ctime(temp->logoff, tbuf, sizeof(tbuf)));
+		sendto_one_numeric(&source, RPL_WHOISSERVER, form_str(RPL_WHOISSERVER),
+		                   temp->name,
+		                   temp->scache? name(*temp->scache).c_str() : "*",
+		                   rb_ctime(temp->logoff, tbuf, sizeof(tbuf)));
 
 		cur++;
 		if(max > 0 && cur >= max)

@@ -62,6 +62,42 @@ namespace help
 	void load();
 }
 
+namespace serv
+{
+	using client::client;  //TODO: move up for motd::send_user/send_oper
+
+	enum flag
+	{
+		HIDDEN = 0x01,
+		ONLINE = 0x02,
+	};
+
+	struct entry;
+
+	const std::string &name(const entry &entry);
+	const flag &flags(const entry &entry);
+
+	void split(entry &entry);
+	void split(std::shared_ptr<entry> &entry);     // safe if null
+
+	void send_flattened_links(client &source);
+	void send_missing(client &source);
+	size_t count_servers();
+	size_t count_bytes();
+	void clear();
+
+	// flag |= ONLINE whether or not passed in the argument
+	std::shared_ptr<entry>
+	connect(const std::string &name,
+	        const std::string &info,
+	        const flag &flag);
+
+	std::shared_ptr<entry>
+	connect(const std::string &name,
+	        const std::string &info,
+	        const bool &hidden = false);
+}
+
 void init();
 
 }       // namespace cache

@@ -34,7 +34,7 @@ struct serv
 	int caps;       /* capabilities bit-field */
 	std::string fullcaps;
 
-	struct scache_entry *nameinfo;
+	std::shared_ptr<cache::serv::entry> nameinfo;
 
 	serv();
 	~serv() noexcept;
@@ -85,8 +85,14 @@ servers(serv &serv)
 	return serv.servers;
 }
 
-struct scache_entry *&
+std::shared_ptr<cache::serv::entry> &
 nameinfo(serv &serv)
+{
+	return serv.nameinfo;
+}
+
+const std::shared_ptr<cache::serv::entry> &
+nameinfo(const serv &serv)
 {
 	return serv.nameinfo;
 }

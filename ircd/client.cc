@@ -1447,7 +1447,7 @@ client::exit_remote_server(client *client_p, client *source_p, client *from,
 
 	del_from_client_hash(source_p->name, source_p);
 	remove_client_from_list(source_p);
-	scache_split(source_p->serv->nameinfo);
+	split(nameinfo(*source_p->serv));
 
 	set_dead(*source_p);
 #ifdef DEBUG_EXITED_CLIENTS
@@ -1474,7 +1474,7 @@ client::qs_server(client *client_p, client *source_p, client *from,
 
 	del_from_client_hash(source_p->name, source_p);
 	remove_client_from_list(source_p);
-	scache_split(source_p->serv->nameinfo);
+	split(nameinfo(*source_p->serv));
 
 	set_dead(*source_p);
 	rb_dlinkAddAlloc(source_p, &dead_list);
@@ -1541,7 +1541,7 @@ client::exit_local_server(client *client_p, client *source_p, client *from,
 
 	del_from_client_hash(source_p->name, source_p);
 	remove_client_from_list(source_p);
-	scache_split(source_p->serv->nameinfo);
+	split(nameinfo(*source_p->serv));
 
 	set_dead(*source_p);
 	rb_dlinkAddAlloc(source_p, &dead_list);

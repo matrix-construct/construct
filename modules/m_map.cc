@@ -67,7 +67,7 @@ static void
 mo_map(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	dump_map(client, &me, buf);
-	scache_send_missing(&client);
+	cache::serv::send_missing(client);
 	sendto_one_numeric(&client, RPL_MAPEND, form_str(RPL_MAPEND));
 }
 

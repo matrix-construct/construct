@@ -625,7 +625,6 @@ charybdis_main(int argc, char * const argv[])
 	init_s_conf();
 	init_s_newconf();
 	init_hash();
-	clear_scache_hash_table();	/* server cache name table */
 	init_host_hash();
 	client::init();
 	init_hook();
@@ -709,7 +708,7 @@ charybdis_main(int argc, char * const argv[])
 	make_serv(me);
 	add_to_client_hash(me.name, &me);
 	add_to_id_hash(me.id, &me);
-	nameinfo(serv(me)) = scache_connect(me.name, me.info, 0);
+	nameinfo(serv(me)) = cache::serv::connect(me.name, me.info);
 
 	rb_dlinkAddAlloc(&me, &global_serv_list);
 

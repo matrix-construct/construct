@@ -101,8 +101,7 @@ whowas_add_history(client::client *client_p, int online)
 	who->flags = (is_ip_spoof(*client_p) ? WHOWAS_IP_SPOOFING : 0) |
 		(is_dyn_spoof(*client_p) ? WHOWAS_DYNSPOOF : 0);
 
-	/* this is safe do to with the servername cache */
-	who->servername = scache_get_name(nameinfo(serv(*client_p)));
+	who->scache = nameinfo(serv(*client_p));
 
 	if(online)
 	{

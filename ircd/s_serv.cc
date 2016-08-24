@@ -844,7 +844,7 @@ server_estab(client::client *client_p)
 		client_p->localClient->fullcaps = NULL;
 	}
 
-	nameinfo(serv(*client_p)) = scache_connect(client_p->name, client_p->info, is_hidden(*client_p));
+	nameinfo(serv(*client_p)) = cache::serv::connect(client_p->name, client_p->info, is_hidden(*client_p));
 	client_p->localClient->firsttime = rb_current_time();
 	/* fixing eob timings.. -gnp */
 

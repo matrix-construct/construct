@@ -43,7 +43,9 @@ namespace serv
 	int &caps(serv &);
 	std::string &fullcaps(serv &);
 
-	struct scache_entry *&nameinfo(serv &);
+	using entry = cache::serv::entry;
+	const std::shared_ptr<entry> &nameinfo(const serv &);
+	std::shared_ptr<entry> &nameinfo(serv &);
 }
 } // namespace client
 } // namespace ircd

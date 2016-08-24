@@ -57,7 +57,7 @@ static void
 m_links(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char *parv[])
 {
 	if(ConfigServerHide.flatten_links && !is_exempt_shide(source))
-		scache_send_flattened_links(&source);
+		cache::serv::send_flattened_links(source);
 	else
 		mo_links(msgbuf_p, client, source, parc, parv);
 }

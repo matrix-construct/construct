@@ -619,14 +619,22 @@ use_id(const client *const &client)
 }
 
 bool is_server(const client &client);
+
 inline char *get_id(const client *const &source, const client *const &target)
 {
 	return const_cast<char *>(is_server(*target->from) && has_id(target->from) ? use_id(source) : (source)->name);
 }
 
-inline auto get_id(const client &source, const client &target)
+inline auto
+get_id(const client &source, const client &target)
 {
 	return get_id(&source, &target);
+}
+
+inline auto
+id(const client &source, const client &target)
+{
+	return is_server(*target.from) && has_id(*target.from)? use_id(source) : source.name;
 }
 
 

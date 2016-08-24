@@ -39,6 +39,7 @@ libircd_la_SOURCES =                  \
   authproc.cc			\
   bandbi.cc                      \
   cache.cc                       \
+  cache_serv.cc                       \
   capability.cc			\
   channel.cc                     \
   chmode.cc                      \
@@ -76,7 +77,6 @@ libircd_la_SOURCES =                  \
   s_newconf.cc                   \
   s_serv.cc                      \
   s_user.cc                      \
-  scache.cc                      \
   send.cc                        \
   snomask.cc                     \
   sslproc.cc                     \
