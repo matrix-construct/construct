@@ -99,6 +99,7 @@ extern bool ircd_ssl_ok;
 extern bool ircd_zlib_ok;
 extern int maxconnections;
 
+void setup_signals();
 void ircd_shutdown(const char *reason) __attribute__((noreturn));
 
 }      // namespace ircd
