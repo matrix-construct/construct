@@ -108,7 +108,6 @@ namespace ircd
 #include "privilege.h"
 #include "ratelimit.h"
 #include "reject.h"
-#include "restart.h"
 #include "s_conf.h"
 #include "send.h"
 #include "s_newconf.h"

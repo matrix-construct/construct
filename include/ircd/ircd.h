@@ -99,6 +99,9 @@ extern bool ircd_ssl_ok;
 extern bool ircd_zlib_ok;
 extern int maxconnections;
 
+void restart(const char *) __attribute__((noreturn));
+void server_reboot(void) __attribute__((noreturn));
+
 void setup_signals();
 void ircd_shutdown(const char *reason) __attribute__((noreturn));
 
