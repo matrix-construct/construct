@@ -95,7 +95,6 @@ namespace ircd
 #include "hook.h"
 #include "hostmask.h"
 #include "ircd_getopt.h"
-#include "ircd_linker.h"
 #include "listener.h"
 #include "logger.h"
 #include "info.h"
