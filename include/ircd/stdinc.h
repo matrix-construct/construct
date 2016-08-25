@@ -104,7 +104,6 @@ namespace ircd
 #include "operhash.h"
 #include "packet.h"
 #include "parse.h"
-#include "patchlevel.h"
 #include "privilege.h"
 #include "ratelimit.h"
 #include "reject.h"
