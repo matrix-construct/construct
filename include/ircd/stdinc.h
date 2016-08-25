@@ -52,7 +52,6 @@ namespace ircd
 	}
 
 	struct ConfItem;
-	struct Whowas;
 	struct DNSReply;
 	struct Listener;
 	struct Blacklist;
@@ -75,6 +74,7 @@ namespace ircd
 #include "match.h"
 
 #include "cache.h"
+#include "whowas.h"
 #include "tgchange.h"
 #include "msgbuf.h"
 #include "msg.h"
@@ -119,6 +119,5 @@ namespace ircd
 #include "substitution.h"
 #include "supported.h"
 #include "s_user.h"
-#include "whowas.h"
 #include "wsproc.h"
 #include "stringops.h"

@@ -94,8 +94,8 @@ struct client
 	struct client *servptr;	/* Points to server this Client is on */
 	struct client *from;	/* == self, if Local Client, *NEVER* NULL! */
 
-	rb_dlink_list whowas_clist;
-
+	// unique whowas id associating any history to *this (TODO: replace with connid)
+	whowas::id_t wwid;
 	time_t tsinfo;		/* TS on the nick, SVINFO on server */
 	mode::mode mode;
 	uint64_t flags;		/* client flags */
@@ -927,7 +927,7 @@ extern void del_all_accepts(client *client_p);
 extern void dead_link(client *client_p, int sendqex);
 extern int show_ip(client *source_p, client *target_p);
 extern int show_ip_conf(struct ConfItem *aconf, client *source_p);
-extern int show_ip_whowas(struct Whowas *whowas, client *source_p);
+extern int show_ip_whowas(const whowas::whowas &, client &source);
 
 extern void close_connection(client *);
 extern void init_uid(void);

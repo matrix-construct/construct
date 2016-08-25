@@ -223,7 +223,7 @@ doit:
 				target_p->name, target_p->username,
 				target_p->host, parv[2]);
 
-	whowas_add_history(target_p, 1);
+	whowas::add(*target_p);
 	sendto_server(NULL, NULL, CAP_TS6, NOCAPS, ":%s NICK %s :%ld",
 			use_id(target_p), parv[2], (long) target_p->tsinfo);
 

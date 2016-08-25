@@ -1322,7 +1322,7 @@ stats_memory (client::client &source)
 
 	size_t total_memory = 0;
 
-	whowas_memory_usage(&ww, &wwm);
+	whowas::memory_usage(&ww, &wwm);
 
 	RB_DLINK_FOREACH(ptr, global_client_list.head)
 	{

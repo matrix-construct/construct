@@ -89,44 +89,47 @@ m_whowas(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 	nick = parv[1];
 
 	sendq_limit = get_sendq(&client) * 9 / 10;
-	whowas_list = whowas_get_list(nick);
-
-	if(whowas_list == NULL)
+	const auto history(whowas::history(nick));
+	if(history.empty())
 	{
 		sendto_one_numeric(&source, ERR_WASNOSUCHNICK, form_str(ERR_WASNOSUCHNICK), nick);
 		sendto_one_numeric(&source, RPL_ENDOFWHOWAS, form_str(RPL_ENDOFWHOWAS), parv[1]);
 		return;
 	}
 
-	RB_DLINK_FOREACH(ptr, whowas_list->head)
+	for(const auto &ww : history)
 	{
-		struct Whowas *temp = (Whowas *)ptr->data;
 		if(cur > 0 && rb_linebuf_len(&client.localClient->buf_sendq) > sendq_limit)
 		{
 			sendto_one(&source, form_str(ERR_TOOMANYMATCHES),
-				   me.name, source.name, "WHOWAS");
+			           me.name,
+			           source.name,
+			           "WHOWAS");
 			break;
 		}
 
 		sendto_one(&source, form_str(RPL_WHOWASUSER),
-			   me.name, source.name, temp->name,
-			   temp->username, temp->hostname, temp->realname);
-		if (!EmptyString(temp->sockhost) &&
-				strcmp(temp->sockhost, "0") &&
-				show_ip_whowas(temp, &source))
-			sendto_one_numeric(&source, RPL_WHOISACTUALLY,
-					   form_str(RPL_WHOISACTUALLY),
-					   temp->name, temp->sockhost);
+		           me.name,
+		           source.name,
+		           ww->name,
+		           ww->username,
+		           ww->hostname,
+		           ww->realname);
 
-		if (!EmptyString(temp->suser))
-			sendto_one_numeric(&source, RPL_WHOISLOGGEDIN,
-					   "%s %s :was logged in as",
-					   temp->name, temp->suser);
+		if(!EmptyString(ww->sockhost) && strcmp(ww->sockhost, "0") && show_ip_whowas(*ww, source))
+			sendto_one_numeric(&source, RPL_WHOISACTUALLY, form_str(RPL_WHOISACTUALLY),
+			                   ww->name,
+			                   ww->sockhost);
+
+		if(!EmptyString(ww->suser))
+			sendto_one_numeric(&source, RPL_WHOISLOGGEDIN, "%s %s :was logged in as",
+			                   ww->name,
+			                   ww->suser);
 
 		sendto_one_numeric(&source, RPL_WHOISSERVER, form_str(RPL_WHOISSERVER),
-		                   temp->name,
-		                   temp->scache? name(*temp->scache).c_str() : "*",
-		                   rb_ctime(temp->logoff, tbuf, sizeof(tbuf)));
+		                   ww->name,
+		                   ww->scache? name(*ww->scache).c_str() : "*",
+		                   rb_ctime(ww->logoff, tbuf, sizeof(tbuf)));
 
 		cur++;
 		if(max > 0 && cur >= max)

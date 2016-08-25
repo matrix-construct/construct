@@ -88,16 +88,21 @@ mo_kill(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 		 ** rewrite the KILL for this new nickname--this keeps
 		 ** servers in synch when nick change and kill collide
 		 */
-		if((target_p = whowas_get_history(user, (long) KILLCHASETIMELIMIT)) == NULL)
+		const auto history(whowas::history(user, KILLCHASETIMELIMIT, true));
+		if(history.empty())
 		{
 			if (strchr(user, '.'))
 				sendto_one_numeric(&source, ERR_CANTKILLSERVER, form_str(ERR_CANTKILLSERVER));
 			else
-				sendto_one_numeric(&source, ERR_NOSUCHNICK,
-						   form_str(ERR_NOSUCHNICK), user);
+				sendto_one_numeric(&source, ERR_NOSUCHNICK, form_str(ERR_NOSUCHNICK),
+				                   user);
 			return;
 		}
-		sendto_one_notice(&source, ":KILL changed from %s to %s", user, target_p->name);
+
+		target_p = history.back()->online;
+		sendto_one_notice(&source, ":KILL changed from %s to %s",
+		                  user,
+		                  target_p->name);
 	}
 
 	if(!my_connect(*target_p) && (!IsOperGlobalKill(&source)))
@@ -205,12 +210,20 @@ ms_kill(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 		 * not an uid, automatically rewrite the KILL for this new nickname.
 		 * --this keeps servers in synch when nick change and kill collide
 		 */
-		if(rfc1459::is_digit(*user) || (!(target_p = whowas_get_history(user, (long) KILLCHASETIMELIMIT))))
+		if(rfc1459::is_digit(*user))
 		{
-			sendto_one_numeric(&source, ERR_NOSUCHNICK,
-					   form_str(ERR_NOSUCHNICK), rfc1459::is_digit(*user) ? "*" : user);
+			sendto_one_numeric(&source, ERR_NOSUCHNICK, form_str(ERR_NOSUCHNICK), "*");
 			return;
 		}
+
+		const auto history(whowas::history(user, KILLCHASETIMELIMIT, true));
+		if(history.empty())
+		{
+			sendto_one_numeric(&source, ERR_NOSUCHNICK, form_str(ERR_NOSUCHNICK), user);
+			return;
+		}
+
+		target_p = history.back()->online;
 		sendto_one_notice(&source, ":KILL changed from %s to %s", user, target_p->name);
 	}
 

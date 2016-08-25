@@ -1569,7 +1569,7 @@ change_nick_user_host(client::client *target_p,	const char *nick, const char *us
 	rb_strlcpy(target_p->host, host, sizeof target_p->host);
 
 	if (changed)
-		whowas_add_history(target_p, 1);
+		whowas::add(*target_p);
 
 	del_from_client_hash(target_p->name, target_p);
 	rb_strlcpy(target_p->name, nick, NICKLEN);

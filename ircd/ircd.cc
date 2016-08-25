@@ -630,7 +630,7 @@ charybdis_main(int argc, char * const argv[])
 	init_hook();
 	chan::init();
 	initclass();
-	whowas_init();
+	whowas::init();
 	init_reject();
 	cache::init();
 	init_monitor();

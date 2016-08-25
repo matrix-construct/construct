@@ -5,6 +5,7 @@
  *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center
  *  Copyright (C) 1996-2002 Hybrid Development Team
  *  Copyright (C) 2002-2004 ircd-ratbox development team
+ *  Copyright (C) 2016 Charybdis Development Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,73 +27,60 @@
 #define HAVE_IRCD_WHOWAS_H
 
 #ifdef __cplusplus
-namespace ircd {
+namespace ircd    {
+namespace whowas  {
 
-struct User;
+using client::client;
+using id_t = uint64_t;
 
-/*
-  lets speed this up...
-  also removed away information. *tough*
-  - Dianora
+/* lets speed this up... also removed away information. *tough*
+ * - Dianora
  */
-struct Whowas
+struct whowas
 {
-	struct whowas_top *wtop;
-	rb_dlink_node wnode;		/* for the wtop linked list */
-	rb_dlink_node cnode;		/* node for online clients */
-	rb_dlink_node whowas_node;	/* node for the whowas linked list */
+	enum flag
+	{
+		IP_SPOOFING  = 0x01,
+		DYNSPOOF     = 0x02,
+	};
+
+	id_t wwid;                                    // Unique whowas index ID 
+	client *online;                               // Pointer to online client or nullptr
+	time_t logoff;
+	std::shared_ptr<cache::serv::entry> scache;
 	char name[NICKLEN + 1];
 	char username[USERLEN + 1];
 	char hostname[HOSTLEN + 1];
 	char sockhost[HOSTIPLEN + 1];
 	char realname[REALLEN + 1];
 	char suser[NICKLEN + 1];
-	unsigned char flags;
-	std::shared_ptr<cache::serv::entry> scache;
-	time_t logoff;
-	client::client *online;	/* Pointer to new nickname for chasing or NULL */
+	enum flag flag;
+
+	whowas(client &client);
 };
 
-/* Flags */
-#define WHOWAS_IP_SPOOFING	0x1
-#define WHOWAS_DYNSPOOF		0x2
+// Get a full history for nickname (may contain different users!)
+std::vector<std::shared_ptr<whowas>> history(const std::string &name, const time_t &limit = 0, const bool &online = false);
 
-/*
-** initwhowas
-*/
-extern void whowas_init(void);
+// Get a full history for this unique whowas ID. This is effectively similar to
+// a lookup by a client pointer address; allocators may reuse the same address,
+// so this ID is used as the index instead.
+std::vector<std::shared_ptr<whowas>> history(const id_t &wwid);
 
-/*
-** add_history
-**      Add the currently defined name of the client to history.
-**      usually called before changing to a new name (nick).
-**      Client must be a fully registered user (specifically,
-**      the user structure must have been allocated).
-*/
-void whowas_add_history(client::client *, int);
+// Get a full history for this client (must be online);
+std::vector<std::shared_ptr<whowas>> history(const client &);
 
-/*
-** off_history
-**      This must be called when the client structure is about to
-**      be released. History mechanism keeps pointers to client
-**      structures and it must know when they cease to exist. This
-**      also implicitly calls AddHistory.
-*/
-void whowas_off_history(client::client *);
+// Add whowas information about client *before* a nick change or logoff.
+void add(client &);
 
-/*
-** get_history
-**      Return the current client that was using the given
-**      nickname within the timelimit. Returns NULL, if no
-**      one found...
-*/
-client::client *whowas_get_history(const char *, time_t);
-					/* Nick name */
-					/* Time limit in seconds */
+// Notify this subsystem the client pointer is about to be invalidated (does not call add())
+void off(client &);
 
-rb_dlink_list *whowas_get_list(const char *name);
-void whowas_set_size(int whowas_length);
-void whowas_memory_usage(size_t *count, size_t *memused);
+// Util
+void memory_usage(size_t *const &count, size_t *const &memused);
+void set_size(const size_t &max);
+void init();
 
+}      // namespace whowas
 }      // namespace ircd
 #endif // __cplusplus

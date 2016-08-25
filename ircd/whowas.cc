@@ -5,7 +5,9 @@
  *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center
  *  Copyright (C) 1996-2002 Hybrid Development Team
  *  Copyright (C) 2002-2012 ircd-ratbox development team
+ *  Copyright (C) 2016 Charybdis Development Team
  *  Copyright (C) 2016 William Pitcock <nenolod@dereferenced.org>
+ *  Copyright (C) 2016 Jason Volk <jason@zemos.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,185 +25,175 @@
  *  USA
  */
 
-namespace ircd {
+namespace ircd   {
+namespace whowas {
 
-struct whowas_top
+id_t id_ctr = 1;
+size_t list_max;
+std::multimap<id_t, std::shared_ptr<struct whowas>> ids;
+std::multimap<std::string, std::shared_ptr<struct whowas>, rfc1459::less> nicks;
+
+void trim();
+
+} // namespace whowas
+} // namespace ircd
+
+using namespace ircd;
+
+void
+whowas::init()
 {
-	char *name;
-	rb_dlink_list wwlist;
-};
-
-static rb_radixtree *whowas_tree = NULL;
-static rb_dlink_list whowas_list = {NULL, NULL, 0};
-static unsigned int whowas_list_length = NICKNAMEHISTORYLENGTH;
-static void whowas_trim(void *unused);
-
-static void
-whowas_free_wtop(struct whowas_top *wtop)
-{
-	if(rb_dlink_list_length(&wtop->wwlist) == 0)
-	{
-		rb_radixtree_delete(whowas_tree, wtop->name);
-		rb_free(wtop->name);
-		rb_free(wtop);
-	}
-}
-
-static struct whowas_top *
-whowas_get_top(const char *name)
-{
-	struct whowas_top *wtop;
-
-	wtop = (whowas_top *)rb_radixtree_retrieve(whowas_tree, name);
-	if (wtop != NULL)
-		return wtop;
-
-	wtop = (whowas_top *)rb_malloc(sizeof(struct whowas_top));
-	wtop->name = rb_strdup(name);
-	rb_radixtree_add(whowas_tree, wtop->name, wtop);
-
-	return wtop;
-}
-
-rb_dlink_list *
-whowas_get_list(const char *name)
-{
-	struct whowas_top *wtop;
-	wtop = (whowas_top *)rb_radixtree_retrieve(whowas_tree, name);
-	if(wtop == NULL)
-		return NULL;
-	return &wtop->wwlist;
+	if(!list_max)
+		list_max = NICKNAMEHISTORYLENGTH;
 }
 
 void
-whowas_add_history(client::client *client_p, int online)
+whowas::set_size(const size_t &max)
 {
-	struct whowas_top *wtop;
-	struct Whowas *who;
-	s_assert(NULL != client_p);
-
-	if(client_p == NULL)
-		return;
-
-	/* trim some of the entries if we're getting well over our history length */
-	if(rb_dlink_list_length(&whowas_list) > whowas_list_length + 100)
-		whowas_trim(NULL);
-
-	wtop = whowas_get_top(client_p->name);
-	who = (Whowas *)rb_malloc(sizeof(struct Whowas));
-	who->wtop = wtop;
-	who->logoff = rb_current_time();
-
-	rb_strlcpy(who->name, client_p->name, sizeof(who->name));
-	rb_strlcpy(who->username, client_p->username, sizeof(who->username));
-	rb_strlcpy(who->hostname, client_p->host, sizeof(who->hostname));
-	rb_strlcpy(who->realname, client_p->info, sizeof(who->realname));
-	rb_strlcpy(who->sockhost, client_p->sockhost, sizeof(who->sockhost));
-
-	who->flags = (is_ip_spoof(*client_p) ? WHOWAS_IP_SPOOFING : 0) |
-		(is_dyn_spoof(*client_p) ? WHOWAS_DYNSPOOF : 0);
-
-	who->scache = nameinfo(serv(*client_p));
-
-	if(online)
-	{
-		who->online = client_p;
-		rb_dlinkAdd(who, &who->cnode, &client_p->whowas_clist);
-	}
-	else
-		who->online = NULL;
-
-	rb_dlinkAdd(who, &who->wnode, &wtop->wwlist);
-	rb_dlinkAdd(who, &who->whowas_node, &whowas_list);
+	list_max = max;
+	trim();
 }
-
 
 void
-whowas_off_history(client::client *client_p)
+whowas::memory_usage(size_t *const &count,
+                     size_t *const &memused)
 {
-	rb_dlink_node *ptr, *next;
-
-	RB_DLINK_FOREACH_SAFE(ptr, next, client_p->whowas_clist.head)
-	{
-		struct Whowas *who = (Whowas *)ptr->data;
-		who->online = NULL;
-		rb_dlinkDelete(&who->cnode, &client_p->whowas_clist);
-	}
+	*count = ids.size();
+	*memused = ids.size() * sizeof(struct whowas);
 }
 
-client::client *
-whowas_get_history(const char *nick, time_t timelimit)
+void
+whowas::off(client &client)
 {
-	struct whowas_top *wtop;
-	rb_dlink_node *ptr;
-
-	wtop = (whowas_top *)rb_radixtree_retrieve(whowas_tree, nick);
-	if(wtop == NULL)
-		return NULL;
-
-	timelimit = rb_current_time() - timelimit;
-
-	RB_DLINK_FOREACH_PREV(ptr, wtop->wwlist.tail)
+	const auto &id(client.wwid);
+	const auto ppit(ids.equal_range(id));
+	std::for_each(ppit.first, ppit.second, []
+	(const auto &pit)
 	{
-		struct Whowas *who = (Whowas *)ptr->data;
-		if(who->logoff >= timelimit)
+		auto &whowas(pit.second);
+		whowas->online = nullptr;
+	});
+}
+
+void
+whowas::add(client &client)
+{
+	// trim some of the entries if we're getting well over our history length
+	trim();
+
+	// Client's wwid will be 0 if never seen before
+	auto &id(client.wwid);
+	if(!id)
+		id = id_ctr++;
+
+	// This is an unconditional add to both maps.
+	auto it(ids.lower_bound(id));
+	it = ids.emplace_hint(it, id, std::make_shared<struct whowas>(client));
+	nicks.emplace(client.name, it->second);
+}
+
+std::vector<std::shared_ptr<whowas::whowas>>
+whowas::history(const std::string &nick,
+                const time_t &limit,
+                const bool &online)
+{
+	const auto ppit(nicks.equal_range(nick));
+	const auto num(std::distance(ppit.first, ppit.second));
+	std::vector<std::shared_ptr<struct whowas>> ret(num);
+	std::transform(ppit.first, ppit.second, begin(ret), []
+	(const auto &pit)
+	{
+		return pit.second;
+	});
+
+	// C++11 says the multimap has stronger ordering and preserves
+	// the insert order, which should already be the logoff time, so stuff below
+	// this comment can be optimized at a later pass.
+	std::sort(begin(ret), end(ret), []
+	(const auto &a, const auto &b)
+	{
+		return a->logoff < b->logoff;
+	});
+
+	const auto e(std::remove_if(begin(ret), end(ret), [&limit, &online]
+	(const auto &whowas)
+	{
+		if(online && !whowas->online)
+			return true;
+
+		if(limit && whowas->logoff + limit < rb_current_time())
+			return true;
+
+		return false;
+	}));
+
+	ret.erase(e, end(ret));
+	return ret;
+}
+
+std::vector<std::shared_ptr<whowas::whowas>>
+whowas::history(const client &client)
+{
+	return history(client.wwid);
+}
+
+std::vector<std::shared_ptr<whowas::whowas>>
+whowas::history(const id_t &wwid)
+{
+	const auto ppit(ids.equal_range(wwid));
+	const auto num(std::distance(ppit.first, ppit.second));
+	std::vector<std::shared_ptr<struct whowas>> ret(num);
+	std::transform(ppit.first, ppit.second, begin(ret), []
+	(const auto &pit)
+	{
+		return pit.second;
+	});
+
+	return ret;
+}
+
+void
+whowas::trim()
+{
+	// Trims by oldest ID until satisfied.
+
+	auto it(begin(ids));
+	while(it != end(ids) && nicks.size() > list_max)
+	{
+		const auto &id(it->first);
+		const auto &whowas(it->second);
+		const auto nick_ppit(nicks.equal_range(whowas->name));
+		for(auto pit(nick_ppit.first); pit != nick_ppit.second; )
 		{
-			return who->online;
+			const auto &nick_whowas(pit->second);
+			if(nick_whowas->wwid == whowas->wwid)
+				nicks.erase(pit++);
+			else
+				++pit;
 		}
-	}
 
-	return NULL;
-}
-
-static void
-whowas_trim(void *unused)
-{
-	long over;
-
-	if(rb_dlink_list_length(&whowas_list) < whowas_list_length)
-		return;
-	over = rb_dlink_list_length(&whowas_list) - whowas_list_length;
-
-	/* remove whowas entries over the configured length */
-	for(long i = 0; i < over; i++)
-	{
-		if(whowas_list.tail != NULL && whowas_list.tail->data != NULL)
-		{
-			struct Whowas *twho = (Whowas *)whowas_list.tail->data;
-			if(twho->online != NULL)
-				rb_dlinkDelete(&twho->cnode, &twho->online->whowas_clist);
-			rb_dlinkDelete(&twho->wnode, &twho->wtop->wwlist);
-			rb_dlinkDelete(&twho->whowas_node, &whowas_list);
-			whowas_free_wtop(twho->wtop);
-			rb_free(twho);
-		}
+		ids.erase(it++);
 	}
 }
 
-void
-whowas_init(void)
+whowas::whowas::whowas(client &client)
+:wwid{client.wwid}
+,online{&client}
+,logoff{rb_current_time()}
+,scache
 {
-	whowas_tree = rb_radixtree_create("whowas", irccasecanon);
-	if(whowas_list_length == 0)
-	{
-		whowas_list_length = NICKNAMEHISTORYLENGTH;
-	}
-	rb_event_add("whowas_trim", whowas_trim, NULL, 10);
+	client.serv? nameinfo(serv(client)) : nullptr
 }
-
-void
-whowas_set_size(int len)
+,flag
 {
-	whowas_list_length = len;
-	whowas_trim(NULL);
+	is_ip_spoof(client)?   IP_SPOOFING   : (enum flag)0 |
+	is_dyn_spoof(client)?  DYNSPOOF      : (enum flag)0
 }
-
-void
-whowas_memory_usage(size_t * count, size_t * memused)
 {
-	*count = rb_dlink_list_length(&whowas_list);
-	*memused += *count * sizeof(struct Whowas);
-	*memused += sizeof(struct whowas_top) * rb_radixtree_size(whowas_tree);
-}
-
+	rb_strlcpy(name, client.name, sizeof(name));
+	rb_strlcpy(username, client.username, sizeof(username));
+	rb_strlcpy(hostname, client.host, sizeof(hostname));
+	rb_strlcpy(realname, client.info, sizeof(realname));
+	rb_strlcpy(sockhost, client.sockhost, sizeof(sockhost));
+	assert(wwid);
 }

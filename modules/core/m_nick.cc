@@ -648,7 +648,7 @@ change_local_nick(client::client &client, client::client &source,
 	/* send the nick change to servers.. */
 	if(source.user)
 	{
-		whowas_add_history(&source, 1);
+		whowas::add(source);
 
 		if (dosend)
 		{
@@ -708,7 +708,7 @@ change_remote_nick(client::client &client, client::client &source,
 
 	if(source.user)
 	{
-		whowas_add_history(&source, 1);
+		whowas::add(source);
 		if (dosend)
 		{
 			sendto_server(&client, NULL, CAP_TS6, NOCAPS, ":%s NICK %s :%ld",

@@ -90,6 +90,24 @@ using namespace ircd;
 
 
 client::client::client()
+:servptr{0}
+,from{nullptr}
+,wwid{0}
+,tsinfo{0}
+,mode{(umode)0}
+,flags{(enum flags)0}
+,snomask{0}
+,hopcount{0}
+,status{(enum status)0}
+,handler{0}
+,serial{0}
+,first_received_message_time{0}
+,received_number_of_privmsgs{0}
+,flood_noticed{0}
+,localClient{nullptr}
+,preClient{nullptr}
+,large_ctcp_sent{0}
+,certfp{nullptr}
 {
 }
 
@@ -773,7 +791,7 @@ client::resv_nick_fnc(const char *mask, const char *reason, int temp_time)
 
 			/* Do all of the nick-changing gymnastics. */
 			client_p->tsinfo = rb_current_time();
-			whowas_add_history(client_p, 1);
+			whowas::add(*client_p);
 
 			monitor_signoff(client_p);
 
@@ -954,15 +972,17 @@ client::find_chasing(client *source_p, const char *user, int *chasing)
 	if(who || rfc1459::is_digit(*user))
 		return who;
 
-	if(!(who = whowas_get_history(user, (long) KILLCHASETIMELIMIT)))
+	const auto history(whowas::history(user, KILLCHASETIMELIMIT));
+	if(history.empty())
 	{
-		sendto_one_numeric(source_p, ERR_NOSUCHNICK,
-				   form_str(ERR_NOSUCHNICK), user);
-		return (NULL);
+		sendto_one_numeric(source_p, ERR_NOSUCHNICK, form_str(ERR_NOSUCHNICK), user);
+		return nullptr;
 	}
+
 	if(chasing)
 		*chasing = 1;
-	return who;
+
+	return history.back()->online;
 }
 
 /*
@@ -1323,8 +1343,8 @@ client::exit_generic_client(client *client_p, client *source_p, client *from,
 	/* Clean up allow lists */
 	del_all_accepts(source_p);
 
-	whowas_add_history(source_p, 0);
-	whowas_off_history(source_p);
+	whowas::add(*source_p);
+	whowas::off(*source_p);
 
 	monitor_signoff(source_p);
 
@@ -1806,14 +1826,16 @@ client::show_ip_conf(struct ConfItem *aconf, client *source_p)
 }
 
 int
-client::show_ip_whowas(struct Whowas *whowas, client *source_p)
+client::show_ip_whowas(const whowas::whowas &whowas, client &source)
 {
-	if(whowas->flags & WHOWAS_IP_SPOOFING)
-		if(ConfigFileEntry.hide_spoof_ips || !my_oper(*source_p))
+	if(whowas.flag & whowas.IP_SPOOFING)
+		if(ConfigFileEntry.hide_spoof_ips || !my_oper(source))
 			return 0;
-	if(whowas->flags & WHOWAS_DYNSPOOF)
-		if(!is(*source_p, umode::OPER))
+
+	if(whowas.flag & whowas.DYNSPOOF)
+		if(!is(source, umode::OPER))
 			return 0;
+
 	return 1;
 }
 
