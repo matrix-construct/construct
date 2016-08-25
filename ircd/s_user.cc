@@ -1333,7 +1333,7 @@ user_welcome(client::client *source_p)
 		sendto_one(source_p, form_str(RPL_ENDOFMOTD), me.name, source_p->name);
 	}
 	else
-		cache::motd::send_user(source_p);
+		cache::motd::send_user(*source_p);
 }
 
 /* oper_up()
@@ -1410,7 +1410,7 @@ oper_up(client::client *source_p, struct oper_conf *oper_p)
 	sendto_one(source_p, form_str(RPL_YOUREOPER), me.name, source_p->name);
 	sendto_one_notice(source_p, ":*** Oper privilege set is %s", oper_p->privset->name);
 	sendto_one_notice(source_p, ":*** Oper privs are %s", oper_p->privset->privs);
-	cache::motd::send_oper(source_p);
+	cache::motd::send_oper(*source_p);
 }
 
 /*

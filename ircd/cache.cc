@@ -184,23 +184,23 @@ cache::motd::cache_oper(void)
  * side effects -
  */
 void
-cache::motd::send_user(client::client *source_p)
+cache::motd::send_user(client &source)
 {
-	const char *const myname(get_id(&me, source_p));
-	const char *const nick(get_id(source_p, source_p));
+	const char *const myname(get_id(me, source));
+	const char *const nick(get_id(source, source));
 
 	if (user.contents.empty())
 	{
-		sendto_one(source_p, form_str(ERR_NOMOTD), myname, nick);
+		sendto_one(&source, form_str(ERR_NOMOTD), myname, nick);
 		return;
 	}
 
-	sendto_one(source_p, form_str(RPL_MOTDSTART), myname, nick, me.name);
+	sendto_one(&source, form_str(RPL_MOTDSTART), myname, nick, me.name);
 
 	for (const auto &it : user.contents)
-		sendto_one(source_p, form_str(RPL_MOTD), myname, nick, it.c_str());
+		sendto_one(&source, form_str(RPL_MOTD), myname, nick, it.c_str());
 
-	sendto_one(source_p, form_str(RPL_ENDOFMOTD), myname, nick);
+	sendto_one(&source, form_str(RPL_ENDOFMOTD), myname, nick);
 }
 
 /* send_oper_motd()
@@ -210,17 +210,17 @@ cache::motd::send_user(client::client *source_p)
  * side effects -
  */
 void
-cache::motd::send_oper(client::client *source_p)
+cache::motd::send_oper(client &source)
 {
 	if (oper.contents.empty())
 		return;
 
-	sendto_one(source_p, form_str(RPL_OMOTDSTART), me.name, source_p->name);
+	sendto_one(&source, form_str(RPL_OMOTDSTART), me.name, source.name);
 
 	for (const auto &it : motd::oper.contents)
-		sendto_one(source_p, form_str(RPL_OMOTD), me.name, source_p->name, it.c_str());
+		sendto_one(&source, form_str(RPL_OMOTD), me.name, source.name, it.c_str());
 
-	sendto_one(source_p, form_str(RPL_ENDOFOMOTD), me.name, source_p->name);
+	sendto_one(&source, form_str(RPL_ENDOFOMOTD), me.name, source.name);
 }
 
 /* ircd::cache::file::file()

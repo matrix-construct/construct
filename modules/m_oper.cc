@@ -57,7 +57,7 @@ m_oper(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 	if(is(source, umode::OPER))
 	{
 		sendto_one(&source, form_str(RPL_YOUREOPER), me.name, source.name);
-		cache::motd::send_oper(&source);
+		cache::motd::send_oper(source);
 		return;
 	}
 

@@ -26,6 +26,7 @@
 namespace ircd  {
 namespace cache {
 
+using client::client;
 constexpr auto CACHEFILELEN = 30;
 constexpr auto LINKSLINELEN = HOSTLEN + HOSTLEN + REALLEN + 6;  // 2 servernames, 1 gecos, 3 spaces, ":1", '\0'
 
@@ -43,8 +44,8 @@ namespace motd
 	extern file user;
 	extern file oper;
 
-	void send_user(client::client *);
-	void send_oper(client::client *);
+	void send_user(client &);
+	void send_oper(client &);
 
 	void cache_user();
 	void cache_oper();
@@ -64,8 +65,6 @@ namespace help
 
 namespace serv
 {
-	using client::client;  //TODO: move up for motd::send_user/send_oper
-
 	enum flag
 	{
 		HIDDEN = 0x01,
