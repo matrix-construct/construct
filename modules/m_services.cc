@@ -84,14 +84,14 @@ static int
 _modinit(void)
 {
 	mark_services();
-	add_isupport("FNC", isupport_string, "");
+	supported::add("FNC");
 	return 0;
 }
 
 static void
 _moddeinit(void)
 {
-	delete_isupport("FNC");
+	supported::del("FNC");
 	unmark_services();
 }
 

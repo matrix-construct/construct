@@ -60,6 +60,8 @@ namespace ircd
 	struct ev_ctl;
 	struct ws_ctl;
 	struct server_conf;
+
+	using ostream = std::ostream;
 }
 
 #include "util.h"

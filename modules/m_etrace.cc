@@ -56,15 +56,14 @@ struct Message masktrace_msgtab = {
 static int
 _modinit(void)
 {
-    add_isupport("ETRACE", isupport_string, "");
-
-    return 0;
+	supported::add("ETRACE");
+	return 0;
 }
 
 static void
 _moddeinit(void)
 {
-    delete_isupport("ETRACE");
+	supported::del("ETRACE");
 }
 
 mapi_clist_av1 etrace_clist[] = { &etrace_msgtab, &chantrace_msgtab, &masktrace_msgtab, NULL };

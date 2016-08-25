@@ -65,14 +65,14 @@ struct Message who_msgtab = {
 static int
 _modinit(void)
 {
-	add_isupport("WHOX", isupport_string, "");
+	supported::add("WHOX");
 	return 0;
 }
 
 static void
 _moddeinit(void)
 {
-	delete_isupport("WHOX");
+	supported::del("WHOX");
 }
 
 mapi_clist_av1 who_clist[] = { &who_msgtab, NULL };

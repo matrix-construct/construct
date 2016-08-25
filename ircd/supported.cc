@@ -3,6 +3,8 @@
  *  supported.c: isupport (005) numeric
  *
  * Copyright (C) 2006 Jilles Tjoelker
+ *  Copyright (C) 2016 Charybdis Development Team
+ *  Copyright (C) 2016 Jason Volk <jason@zemos.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -70,265 +72,234 @@
  *  All unknown/unlisted modes are treated as type D.
  */
 
-namespace ircd {
+using namespace ircd;
 
-rb_dlink_list isupportlist;
-
-struct isupportitem
-{
-	const char *name;
-	const char *(*func)(const void *);
-	const void *param;
-	rb_dlink_node node;
-};
+std::map<std::string, supported::value> supported::map;
 
 void
-add_isupport(const char *name, const char *(*func)(const void *), const void *param)
+supported::init()
 {
-	struct isupportitem *item;
+	// These should all eventually get filed away into their own
+	// subsystem's namespace
 
-	item = (isupportitem *)rb_malloc(sizeof(struct isupportitem));
-	item->name = name;
-	item->func = func;
-	item->param = param;
-	rb_dlinkAddTail(item, &item->node, &isupportlist);
-}
-
-const void *
-change_isupport(const char *name, const char *(*func)(const void *), const void *param)
-{
-	rb_dlink_node *ptr;
-	struct isupportitem *item;
-	const void *oldvalue = NULL;
-
-	RB_DLINK_FOREACH(ptr, isupportlist.head)
+	add("CHANTYPES", [](ostream &s)
 	{
-		item = (isupportitem *)ptr->data;
+		s << ConfigChannel.disable_local_channels? "#" : "&#";
+	});
 
-		if (!strcmp(item->name, name))
-		{
-			oldvalue = item->param;
-
-			// item->name = name;
-			item->func = func;
-			item->param = param;
-
-			break;
-		}
-	}
-
-	return oldvalue;
-}
-
-void
-delete_isupport(const char *name)
-{
-	rb_dlink_node *ptr, *next_ptr;
-	struct isupportitem *item;
-
-	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, isupportlist.head)
+	add("EXCEPTS", []
 	{
-		item = (isupportitem *)ptr->data;
+		return ConfigChannel.use_except;
+	});
 
-		if (!strcmp(item->name, name))
-		{
-			rb_dlinkDelete(ptr, &isupportlist);
-			rb_free(item);
-		}
-	}
+	add("INVEX", []
+	{
+		return ConfigChannel.use_invex;
+	});
+
+	add("CHANMODES", [](ostream &s)
+	{
+		using namespace chan::mode;
+
+		s << categories[uint(category::A)] << ',';
+		s << categories[uint(category::B)] << ',';
+		s << categories[uint(category::C)] << ',';
+		s << categories[uint(category::D)];
+	});
+
+	add("CHANLIMIT", [](ostream &s)
+	{
+		char result[30];
+		snprintf(result, sizeof(result), "%s:%i",
+		         ConfigChannel.disable_local_channels? "#" : "&#",
+		         ConfigChannel.max_chans_per_user);
+
+		s << result;
+	});
+
+	add("PREFIX", "(ov)@+");
+
+	add("MAXLIST", [](ostream &s)
+	{
+		char result[30];
+		snprintf(result, sizeof result, "bq%s%s:%i",
+		         ConfigChannel.use_except ? "e" : "",
+		         ConfigChannel.use_invex ? "I" : "",
+		         ConfigChannel.max_bans);
+
+		s << result;
+	});
+
+	add("MODES", chan::mode::MAXPARAMS);
+
+	add("NETWORK", [](ostream &s)
+	{
+		s << ServerInfo.network_name;
+	});
+
+	add("STATUSMSG", "@+");
+	add("CALLERID", [](ostream &s)
+	{
+		if(ConfigFileEntry.oper_only_umodes & user_modes['g'])
+			return;
+
+		s << 'g';
+	});
+
+	add("CASEMAPPING", "rfc1459");
+	add("NICKLEN", [](ostream &s)
+	{
+		char result[200];
+		snprintf(result, sizeof(result), "%u", ConfigFileEntry.nicklen - 1);
+		s << result;
+	});
+
+	add("MAXNICKLEN", NICKLEN - 1);
+
+	add("CHANNELLEN", LOC_CHANNELLEN);
+
+	add("TOPICLEN", TOPICLEN);
+
+	add("DEAF", [](ostream &s)
+	{
+		if(ConfigFileEntry.oper_only_umodes & user_modes['D'])
+			return;
+
+		s << 'D';
+	});
+
+	add("TARGMAX", [](ostream &s)
+	{
+		char result[200];
+		snprintf(result, sizeof result, "NAMES:1,LIST:1,KICK:1,WHOIS:1,PRIVMSG:%d,NOTICE:%d,ACCEPT:,MONITOR:",
+		         ConfigFileEntry.max_targets,
+		         ConfigFileEntry.max_targets);
+
+		s << result;
+	});
+
+	add("EXTBAN", [](ostream &s)
+	{
+		const char *const p(chan::get_extban_string());
+		if(!EmptyString(p))
+			s << "$," << p;
+	});
+
+	add("CLIENTVER", "3.0");
 }
 
-/* XXX caching? */
-void
-show_isupport(client::client *client_p)
+bool
+supported::del(const std::string &key)
 {
-	rb_dlink_node *ptr;
-	struct isupportitem *item;
-	const char *value;
-	char buf[512];
-	int extra_space;
-	unsigned int nchars, nparams;
-	int l;
+	return map.erase(key);
+}
 
-	extra_space = strlen(client_p->name);
-	/* UID */
-	if (!my(*client_p) && extra_space < 9)
-		extra_space = 9;
+void
+supported::show(client &client)
+{
+	uint leading(strlen(client.name));
+
+	// UID
+	if(!my(client) && leading < 9)
+		leading = 9;
+
 	/* :<me.name> 005 <nick> <params> :are supported by this server */
 	/* form_str(RPL_ISUPPORT) is %s :are supported by this server */
-	extra_space += strlen(me.name) + 1 + strlen(form_str(RPL_ISUPPORT));
+	leading += strlen(me.name) + 1 + strlen(form_str(RPL_ISUPPORT));
 
-	nchars = extra_space, nparams = 0, buf[0] = '\0';
-	RB_DLINK_FOREACH(ptr, isupportlist.head)
+	//TODO: XXX: It's almost time for the ircstream
+	uint nparams(3);
+	std::ostringstream buf;
+	for(const auto &pit : map)
 	{
-		item = (isupportitem *)ptr->data;
-		value = (*item->func)(item->param);
-		if (value == NULL)
-			continue;
-		l = strlen(item->name) + (EmptyString(value) ? 0 : 1 + strlen(value));
-		if (nchars + l + (nparams > 0) >= sizeof buf || nparams + 1 > 12)
+		const auto &key(pit.first);
+		const auto &val(pit.second);
+		const auto len(size(buf));
+		val(key, buf);
+		buf << ' ';
+		++nparams;
+
+		if(size(buf) + leading >= 510 || nparams > 14)
 		{
-			sendto_one_numeric(client_p, RPL_ISUPPORT, form_str(RPL_ISUPPORT), buf);
-			nchars = extra_space, nparams = 0, buf[0] = '\0';
+			buf.seekp(len, std::ios::beg);
+			sendto_one_numeric(&client, RPL_ISUPPORT, form_str(RPL_ISUPPORT), buf.str().c_str());
+			buf.str(std::string{});
+			nparams = 3;
 		}
-		if (nparams > 0)
-			rb_strlcat(buf, " ", sizeof buf), nchars++;
-		rb_strlcat(buf, item->name, sizeof buf);
-		if (!EmptyString(value))
-		{
-			rb_strlcat(buf, "=", sizeof buf);
-			rb_strlcat(buf, value, sizeof buf);
-		}
-		nchars += l;
-		nparams++;
+		else continue;
+
+		val(key, buf);
+		buf << ' ';
+		++nparams;
 	}
-	if (nparams > 0)
-		sendto_one_numeric(client_p, RPL_ISUPPORT, form_str(RPL_ISUPPORT), buf);
+
+	if(nparams > 3)
+		sendto_one_numeric(&client, RPL_ISUPPORT, form_str(RPL_ISUPPORT), buf.str().c_str());
 }
 
-const char *
-isupport_intptr(const void *ptr)
+ostream &
+supported::value::operator()(const std::string &key, ostream &s)
+const
 {
-	static char buf[15];
-	snprintf(buf, sizeof buf, "%d", *(const int *)ptr);
-	return buf;
+	using type = supported::type;
+	switch(this->type)
+	{
+		case type::FUNC_STREAM:
+			s << key << '=';
+			func_stream(s);
+			break;
+
+		case type::FUNC_BOOLEAN:
+			if(func_boolean())
+				s << key;
+			break;
+
+		case type::STRING:
+			s << key << '=' << string;
+			break;
+
+		case type::INTEGER:
+			s << key << '=' << integer;
+			break;
+
+		case type::BOOLEAN:
+			s << key;
+			break;
+	};
+
+	return s;
 }
 
-const char *
-isupport_boolean(const void *ptr)
+supported::value::value(const std::function<void (ostream &)> &val)
+:type{supported::type::FUNC_STREAM}
+,func_stream{val}
 {
-
-	return *(const int *)ptr ? "" : NULL;
 }
 
-const char *
-isupport_string(const void *ptr)
+supported::value::value(const std::function<bool ()> &val)
+:type{supported::type::FUNC_BOOLEAN}
+,func_boolean{val}
 {
-
-	return (const char *)ptr;
 }
 
-const char *
-isupport_stringptr(const void *ptr)
+supported::value::value(const std::string &val)
+:type{supported::type::STRING}
+,string{val}
 {
-	return *(char * const *)ptr;
 }
 
-static const char *
-isupport_umode(const void *ptr)
+supported::value::value(const int64_t &val)
+:type{supported::type::INTEGER}
+,integer{val}
 {
-	const char *str;
-
-	str = (const char *)ptr;
-	return ConfigFileEntry.oper_only_umodes &
-		user_modes[(unsigned char)*str] ? NULL : str;
 }
 
-static const char *
-isupport_chanmodes(const void *ptr)
+supported::value::value()
+:type{supported::type::BOOLEAN}
 {
-	using namespace chan::mode;
-
-	static char result[80];
-
-	snprintf(result, sizeof result, "%s,%s,%s,%s",
-	            categories[uint(category::A)],
-	            categories[uint(category::B)],
-	            categories[uint(category::C)],
-	            categories[uint(category::D)]);
-
-	return result;
 }
 
-static const char *
-isupport_chantypes(const void *ptr)
+supported::value::~value()
+noexcept
 {
-	return ConfigChannel.disable_local_channels ? "#" : "&#";
-}
-
-static const char *
-isupport_chanlimit(const void *ptr)
-{
-	static char result[30];
-
-	snprintf(result, sizeof result, "%s:%i",
-		ConfigChannel.disable_local_channels ? "#" : "&#", ConfigChannel.max_chans_per_user);
-	return result;
-}
-
-static const char *
-isupport_maxlist(const void *ptr)
-{
-	static char result[30];
-
-	snprintf(result, sizeof result, "bq%s%s:%i",
-			ConfigChannel.use_except ? "e" : "",
-			ConfigChannel.use_invex ? "I" : "",
-			ConfigChannel.max_bans);
-	return result;
-}
-
-static const char *
-isupport_targmax(const void *ptr)
-{
-	static char result[200];
-
-	snprintf(result, sizeof result, "NAMES:1,LIST:1,KICK:1,WHOIS:1,PRIVMSG:%d,NOTICE:%d,ACCEPT:,MONITOR:",
-			ConfigFileEntry.max_targets,
-			ConfigFileEntry.max_targets);
-	return result;
-}
-
-static const char *
-isupport_extban(const void *ptr)
-{
-	const char *p;
-	static char result[200];
-
-	p = chan::get_extban_string();
-	if (EmptyString(p))
-		return NULL;
-	snprintf(result, sizeof result, "$,%s", p);
-	return result;
-}
-
-static const char *
-isupport_nicklen(const void *ptr)
-{
-	static char result[200];
-
-	snprintf(result, sizeof result, "%u", ConfigFileEntry.nicklen - 1);
-	return result;
-}
-
-void
-init_isupport(void)
-{
-	static int maxmodes = chan::mode::MAXPARAMS;
-	static int channellen = LOC_CHANNELLEN;
-	static int topiclen = TOPICLEN;
-	static int maxnicklen = NICKLEN - 1;
-
-	add_isupport("CHANTYPES", isupport_chantypes, NULL);
-	add_isupport("EXCEPTS", isupport_boolean, &ConfigChannel.use_except);
-	add_isupport("INVEX", isupport_boolean, &ConfigChannel.use_invex);
-	add_isupport("CHANMODES", isupport_chanmodes, NULL);
-	add_isupport("CHANLIMIT", isupport_chanlimit, NULL);
-	add_isupport("PREFIX", isupport_string, "(ov)@+");
-	add_isupport("MAXLIST", isupport_maxlist, NULL);
-	add_isupport("MODES", isupport_intptr, &maxmodes);
-	add_isupport("NETWORK", isupport_stringptr, &ServerInfo.network_name);
-	add_isupport("STATUSMSG", isupport_string, "@+");
-	add_isupport("CALLERID", isupport_umode, "g");
-	add_isupport("CASEMAPPING", isupport_string, "rfc1459");
-	add_isupport("NICKLEN", isupport_nicklen, NULL);
-	add_isupport("MAXNICKLEN", isupport_intptr, &maxnicklen);
-	add_isupport("CHANNELLEN", isupport_intptr, &channellen);
-	add_isupport("TOPICLEN", isupport_intptr, &topiclen);
-	add_isupport("DEAF", isupport_umode, "D");
-	add_isupport("TARGMAX", isupport_targmax, NULL);
-	add_isupport("EXTBAN", isupport_extban, NULL);
-	add_isupport("CLIENTVER", isupport_string, "3.0");
-}
-
 }

@@ -1315,7 +1315,7 @@ user_welcome(client::client *source_p)
 	sendto_one_numeric(source_p, RPL_CREATED, form_str(RPL_CREATED), info::compiled.c_str());
 	sendto_one_numeric(source_p, RPL_MYINFO, form_str(RPL_MYINFO), me.name, info::version.c_str(), umodebuf, chan::mode::arity[0], chan::mode::arity[1]);
 
-	show_isupport(source_p);
+	supported::show(*source_p);
 
 	show_lusers(source_p);
 

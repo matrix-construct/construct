@@ -47,13 +47,17 @@ DECLARE_MODULE_AV2(monitor, monitor_init, monitor_deinit, monitor_clist, NULL, N
 
 static int monitor_init(void)
 {
-	add_isupport("MONITOR", isupport_intptr, &ConfigFileEntry.max_monitor);
+	supported::add("MONITOR", [](ostream &s)
+	{
+		s << ConfigFileEntry.max_monitor;
+	});
+
 	return 0;
 }
 
 static void monitor_deinit(void)
 {
-	delete_isupport("MONITOR");
+	supported::del("MONITOR");
 }
 
 static void

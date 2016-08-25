@@ -35,14 +35,18 @@ struct Message knock_msgtab = {
 static int
 _modinit(void)
 {
-	add_isupport("KNOCK", isupport_boolean, &ConfigChannel.use_knock);
+	supported::add("KNOCK", []
+	{
+		return ConfigChannel.use_knock;
+	});
+
 	return 0;
 }
 
 static void
 _moddeinit(void)
 {
-	delete_isupport("KNOCK");
+	supported::del("KNOCK");
 }
 
 mapi_clist_av1 knock_clist[] = { &knock_msgtab, NULL };

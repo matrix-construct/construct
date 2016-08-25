@@ -649,7 +649,7 @@ charybdis_main(int argc, char * const argv[])
 	load_all_modules(1);
 	load_core_modules(1);
 
-	init_isupport();
+	supported::init();
 
 	init_bandb();
 	init_ssld();

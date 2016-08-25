@@ -81,8 +81,8 @@ static int _modinit(void)
 	 * C = creation time search (C> C<)
 	 * T = topic search (T> T<)
 	 */
-	add_isupport("SAFELIST", isupport_string, "");
-	add_isupport("ELIST", isupport_string, "CTU");
+	supported::add("SAFELIST");
+	supported::add("ELIST", "CTU");
 
 	return 0;
 }
@@ -91,8 +91,8 @@ static void _moddeinit(void)
 {
 	rb_event_delete(iterate_clients_ev);
 
-	delete_isupport("SAFELIST");
-	delete_isupport("ELIST");
+	supported::del("SAFELIST");
+	supported::del("ELIST");
 }
 
 static void safelist_check_cliexit(hook_data_client_exit * hdata)

@@ -194,6 +194,18 @@ operator^=(Enum &a, const Enum &b)
 	return (a = (a ^ b));
 }
 
+
+inline size_t
+size(std::ostream &s)
+{
+	const auto cur(s.tellp());
+	s.seekp(0, std::ios::end);
+	const auto ret(s.tellp());
+	s.seekp(cur, std::ios::beg);
+	return ret;
+}
+
+
 }        // namespace util
 }        // namespace ircd
 #endif   // __cplusplus

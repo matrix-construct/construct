@@ -74,7 +74,7 @@ m_version(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 			   me.name, confopts(), TS_CURRENT,
 			   ServerInfo.sid);
 
-	show_isupport(&source);
+	supported::show(source);
 }
 
 /*
@@ -93,7 +93,8 @@ mo_version(struct MsgBuf *msgbuf_p, client::client &client, client::client &sour
 #endif
 				   me.name, confopts(), TS_CURRENT,
 				   ServerInfo.sid);
-		show_isupport(&source);
+
+		supported::show(source);
 	}
 }
 
