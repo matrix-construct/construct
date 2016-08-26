@@ -52,14 +52,14 @@ mapi_clist_av1 privs_clist[] = {
  * Sort of... it's int in newconf.c since oper confs don't need 64-bit wide flags.
  * --Elizafox
  */
-struct mode_table
+struct mode_table_
 {
 	const char *name;
 	uint64_t mode;
 };
 
 /* there is no such table like this anywhere else */
-static struct mode_table auth_client_table[] = {
+static struct mode_table_ auth_client_table[] = {
 	{"resv_exempt",		client::flags::EXEMPTRESV	},
 	{"kline_exempt",	client::flags::EXEMPTKLINE	},
 	{"flood_exempt",	client::flags::EXEMPTFLOOD	},
@@ -75,7 +75,7 @@ DECLARE_MODULE_AV2(privs, NULL, NULL, privs_clist, NULL, NULL, NULL, NULL, privs
 static void show_privs(client::client &source, client::client *target_p)
 {
 	char buf[512];
-	struct mode_table *p;
+	struct mode_table_ *p;
 
 	buf[0] = '\0';
 	if (target_p->localClient->privset)

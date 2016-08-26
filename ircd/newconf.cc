@@ -292,14 +292,14 @@ conf_set_modules_path(void *data)
 	mod_add_path((char *) data);
 }
 
-struct mode_table
+struct mode_table_
 {
 	const char *name;
 	int mode;
 };
 
 /* *INDENT-OFF* */
-static struct mode_table umode_table[] = {
+static struct mode_table_ umode_table[] = {
 	{"callerid",	umode::CALLERID	},
 	{"deaf",	umode::DEAF	},
 	{"invisible",	umode::INVISIBLE	},
@@ -312,13 +312,13 @@ static struct mode_table umode_table[] = {
 	{NULL, 0}
 };
 
-static struct mode_table oper_table[] = {
+static struct mode_table_ oper_table[] = {
 	{"encrypted",		OPER_ENCRYPTED		},
 	{"need_ssl",		OPER_NEEDSSL		},
 	{NULL, 0}
 };
 
-static struct mode_table auth_table[] = {
+static struct mode_table_ auth_table[] = {
 	{"encrypted",		CONF_FLAGS_ENCRYPTED		},
 	{"spoof_notice",	CONF_FLAGS_SPOOF_NOTICE		},
 	{"exceed_limit",	CONF_FLAGS_NOLIMIT		},
@@ -339,7 +339,7 @@ static struct mode_table auth_table[] = {
 	{NULL, 0}
 };
 
-static struct mode_table connect_table[] = {
+static struct mode_table_ connect_table[] = {
 	{ "autoconn",	SERVER_AUTOCONN		},
 	{ "compressed",	SERVER_COMPRESSED	},
 	{ "encrypted",	SERVER_ENCRYPTED	},
@@ -348,7 +348,7 @@ static struct mode_table connect_table[] = {
 	{ NULL,		0			},
 };
 
-static struct mode_table cluster_table[] = {
+static struct mode_table_ cluster_table[] = {
 	{ "kline",	SHARED_PKLINE	},
 	{ "tkline",	SHARED_TKLINE	},
 	{ "unkline",	SHARED_UNKLINE	},
@@ -363,7 +363,7 @@ static struct mode_table cluster_table[] = {
 	{NULL, 0}
 };
 
-static struct mode_table shared_table[] =
+static struct mode_table_ shared_table[] =
 {
 	{ "kline",	SHARED_PKLINE|SHARED_TKLINE	},
 	{ "xline",	SHARED_PXLINE|SHARED_TXLINE	},
@@ -390,7 +390,7 @@ static struct mode_table shared_table[] =
 /* *INDENT-ON* */
 
 static int
-find_umode(struct mode_table *tab, const char *name)
+find_umode(struct mode_table_ *tab, const char *name)
 {
 	int i;
 
@@ -404,7 +404,7 @@ find_umode(struct mode_table *tab, const char *name)
 }
 
 static void
-set_modes_from_table(int *modes, const char *whatis, struct mode_table *tab, conf_parm_t * args)
+set_modes_from_table(int *modes, const char *whatis, struct mode_table_ *tab, conf_parm_t * args)
 {
 	for (; args; args = args->next)
 	{
