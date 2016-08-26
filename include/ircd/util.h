@@ -215,6 +215,23 @@ size(std::ostream &s)
 }
 
 
+inline std::pair<time_t, int32_t>
+microtime()
+{
+	struct timeval tv;
+	gettimeofday(&tv, nullptr);
+	return { tv.tv_sec, tv.tv_usec };
+}
+
+inline ssize_t
+microtime(char *const &buf,
+          const size_t &size)
+{
+	const auto mt(microtime());
+	return snprintf(buf, size, "%zd.%06d", mt.first, mt.second);
+}
+
+
 }        // namespace util
 }        // namespace ircd
 #endif   // __cplusplus
