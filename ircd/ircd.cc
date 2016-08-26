@@ -61,7 +61,7 @@ volatile sig_atomic_t dorehash = false;
 volatile sig_atomic_t dorehashbans = false;
 volatile sig_atomic_t doremotd = false;
 bool kline_queued = false;
-bool server_state_foreground = false;
+bool server_state_foreground = true;
 bool opers_see_all_users = false;
 bool ircd_ssl_ok = false;
 bool ircd_zlib_ok = true;
@@ -113,44 +113,11 @@ ircd_shutdown(const char *reason)
  * print_startup - print startup information
  */
 static void
-print_startup(int pid)
+print_startup(const pid_t &pid)
 {
-	int fd;
-
-#ifndef _WIN32
-	close(1);
-	fd = open("/dev/null", O_RDWR);
-	if (fd == -1) {
-		perror("open /dev/null");
-		exit(EXIT_FAILURE);
-	}
-	if (fd == 0)
-		fd = dup(fd);
-	if (fd != 1)
-		abort();
-#endif
-	inotice("now running in %s mode from %s as pid %d ...",
-	       !server_state_foreground ? "background" : "foreground",
-        	ConfigFileEntry.dpath, pid);
-
-#ifndef _WIN32
-	/* let the parent process know the initialization was successful
-	 * -- jilles */
-	if (!server_state_foreground)
-	{
-		/* GCC complains on Linux if we don't check the value of write pedantically.
-		 * Technically you're supposed to check the value, yes, but it probably can't fail.
-		 * No, casting to void is of no use to shut the warning up. You HAVE to use the value.
-		 * --Elizfaox
-		 */
-		if(write(0, ".", 1) < 1)
-			abort();
-	}
-	if (dup2(1, 0) == -1)
-		abort();
-	if (dup2(1, 2) == -1)
-		abort();
-#endif
+	log::notice("Server started @ %s pid[%d]",
+	            ConfigFileEntry.dpath,
+	            pid);
 }
 
 /*
@@ -181,48 +148,6 @@ init_sys(void)
 	maxconnections = MAXCONNECTIONS;
 }
 
-static int
-make_daemon(void)
-{
-#ifndef _WIN32
-	int pid;
-	int pip[2];
-	char c;
-
-	if (pipe(pip) < 0)
-	{
-		perror("pipe");
-		exit(EXIT_FAILURE);
-	}
-	dup2(pip[1], 0);
-	close(pip[1]);
-	if((pid = fork()) < 0)
-	{
-		perror("fork");
-		exit(EXIT_FAILURE);
-	}
-	else if(pid > 0)
-	{
-		close(0);
-		/* Wait for initialization to finish, successfully or
-		 * unsuccessfully. Until this point the child may still
-		 * write to stdout/stderr.
-		 * -- jilles */
-		if (read(pip[0], &c, 1) > 0)
-			exit(EXIT_SUCCESS);
-		else
-			exit(EXIT_FAILURE);
-	}
-
-	close(pip[0]);
-	setsid();
-/*	fclose(stdin);
-	fclose(stdout);
-	fclose(stderr); */
-#endif
-	return 0;
-}
-
 static int printVersion = 0;
 
 struct lgetopt myopts[] = {
@@ -232,8 +157,6 @@ struct lgetopt myopts[] = {
 	 lgetopt::STRING, "File to use for ircd.log"},
 	{"pidfile", &pidFileName,
 	 lgetopt::STRING, "File to use for process ID"},
-	{"foreground", &server_state_foreground,
-	 lgetopt::YESNO, "Run in foreground (don't detach)"},
 	{"version", &printVersion,
 	 lgetopt::YESNO, "Print version and exit"},
 	{"conftest", &testing_conf,
@@ -583,34 +506,19 @@ charybdis_main(int argc, char * const argv[])
 
 	setup_signals();
 
-	if (testing_conf)
-		server_state_foreground = true;
-
-#ifndef _WIN32
-	/* Make sure fd 0, 1 and 2 are in use -- jilles */
-	do
-	{
-		fd = open("/dev/null", O_RDWR);
-	} while (fd < 2 && fd != -1);
-	if (fd > 2)
-		close(fd);
-	else if (fd == -1)
-		exit(1);
-#endif
+	server_state_foreground = true;
 
 	/* Check if there is pidfile and daemon already running */
 	if(!testing_conf)
 	{
 		check_pidfile(pidFileName);
 
-		if(!server_state_foreground)
-			make_daemon();
 		inotice("starting %s ...", info::version.c_str());
 		inotice("%s", rb_lib_version());
 	}
 
 	/* Init the event subsystem */
-	rb_lib_init(ircd_log_cb, ircd_restart_cb, ircd_die_cb, !server_state_foreground, maxconnections, DNODE_HEAP_SIZE, FD_HEAP_SIZE);
+	rb_lib_init(ircd_log_cb, ircd_restart_cb, ircd_die_cb, false, maxconnections, DNODE_HEAP_SIZE, FD_HEAP_SIZE);
 	rb_linebuf_init(LINEBUF_HEAP_SIZE);
 
 	rb_init_prng(NULL, RB_PRNG_DEFAULT);
