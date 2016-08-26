@@ -265,7 +265,7 @@ apply_xline(client::client &source, const char *name, const char *reason, int te
 		replace_old_ban(aconf);
 		rb_dlinkAddAlloc(aconf, &prop_bans);
 
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				       "%s added global %d min. X-Line for [%s] [%s]",
 				       get_oper_name(&source), temp_time / 60,
 				       aconf->host, reason);
@@ -285,7 +285,7 @@ apply_xline(client::client &source, const char *name, const char *reason, int te
 	{
 		aconf->hold = rb_current_time() + temp_time;
 
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				       "%s added temporary %d min. X-Line for [%s] [%s]",
 				       get_oper_name(&source), temp_time / 60,
 				       aconf->host, reason);
@@ -296,7 +296,7 @@ apply_xline(client::client &source, const char *name, const char *reason, int te
 	}
 	else
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s added X-Line for [%s] [%s]",
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "%s added X-Line for [%s] [%s]",
 				       get_oper_name(&source), aconf->host, aconf->passwd);
 		sendto_one_notice(&source, ":Added X-Line for [%s] [%s]",
 				  aconf->host, aconf->passwd);
@@ -458,7 +458,7 @@ remove_xline(client::client &source, const char *name, bool propagated)
 				if(ptr == NULL)
 					return;
 				sendto_one_notice(&source, ":X-Line for [%s] is removed", name);
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				sendto_realops_snomask(sno::GENERAL, L_ALL,
 						       "%s has removed the global X-Line for: [%s]",
 						       get_oper_name(&source), name);
 				ilog(L_KLINE, "UX %s %s", get_oper_name(&source), name);
@@ -488,7 +488,7 @@ remove_xline(client::client &source, const char *name, bool propagated)
 				bandb_del(BANDB_XLINE, aconf->host, NULL);
 
 				sendto_one_notice(&source, ":X-Line for [%s] is removed", aconf->host);
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				sendto_realops_snomask(sno::GENERAL, L_ALL,
 						       "%s has removed the X-Line for: [%s]",
 						       get_oper_name(&source), aconf->host);
 				ilog(L_KLINE, "UX %s %s", get_oper_name(&source), aconf->host);
@@ -496,7 +496,7 @@ remove_xline(client::client &source, const char *name, bool propagated)
 			else
 			{
 				sendto_one_notice(&source, ":X-Line for [%s] is removed", name);
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				sendto_realops_snomask(sno::GENERAL, L_ALL,
 						       "%s has removed the temporary X-Line for: [%s]",
 						       get_oper_name(&source), name);
 				ilog(L_KLINE, "UX %s %s", get_oper_name(&source), name);

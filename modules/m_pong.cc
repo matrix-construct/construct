@@ -73,7 +73,7 @@ ms_pong(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	if(is_server(source) && !has_sent_eob(source))
 	{
 		if(my_connect(source))
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					     "End of burst (emulated) from %s (%d seconds)",
 					     source.name,
 					     (signed int) (rb_current_time() - source.localClient->firsttime));

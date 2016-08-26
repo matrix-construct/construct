@@ -97,7 +97,7 @@ start_bandb(void)
 	if(bandb_helper == NULL)
 	{
 		ilog(L_MAIN, "Unable to start bandb: %s", strerror(errno));
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Unable to start bandb: %s",
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "Unable to start bandb: %s",
 				     strerror(errno));
 		return 1;
 	}
@@ -373,7 +373,7 @@ bandb_handle_failure(rb_helper *helper, char **parv, int parc)
 		fprintf(stderr, "bandb - bandb failure: %s\n", parv[1]);
 
 	ilog(L_MAIN, "bandb - bandb failure: %s", parv[1]);
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, "bandb - bandb failure: %s", parv[1]);
+	sendto_realops_snomask(sno::GENERAL, L_ALL, "bandb - bandb failure: %s", parv[1]);
 	exit(1);
 }
 
@@ -424,7 +424,7 @@ static void
 bandb_restart_cb(rb_helper *helper)
 {
 	ilog(L_MAIN, "bandb - bandb_restart_cb called, bandb helper died?");
-	sendto_realops_snomask(SNO_GENERAL, L_ALL,
+	sendto_realops_snomask(sno::GENERAL, L_ALL,
 			     "bandb - bandb_restart_cb called, bandb helper died?");
 	if(helper != NULL)
 	{

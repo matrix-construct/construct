@@ -74,7 +74,7 @@ h_nn_server_eob(client::client *source)
 		return;
 
 	count_mark_downlinks(source, &s, &u);
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, "Netjoin %s <-> %s (%dS %dC)",
+	sendto_realops_snomask(sno::GENERAL, L_ALL, "Netjoin %s <-> %s (%dS %dC)",
 			source->servptr ? source->servptr->name : "?",
 			source->name, s, u);
 }
@@ -94,7 +94,7 @@ h_nn_client_exit(hook_data_client_exit *hdata)
 	if (has_sent_eob(*source))
 	{
 		count_mark_downlinks(source, &s, &u);
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Netsplit %s <-> %s (%dS %dC) (%s%s%s%s)",
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "Netsplit %s <-> %s (%dS %dC) (%s%s%s%s)",
 				source->servptr ? source->servptr->name : "?",
 				source->name, s, u,
 				fromnick ? "by " : "",
@@ -103,7 +103,7 @@ h_nn_client_exit(hook_data_client_exit *hdata)
 				hdata->comment);
 	}
 	else
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Netsplit %s <-> %s (during burst) (%s%s%s%s)",
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "Netsplit %s <-> %s (during burst) (%s%s%s%s)",
 				source->servptr ? source->servptr->name : "?",
 				source->name,
 				fromnick ? "by " : "",

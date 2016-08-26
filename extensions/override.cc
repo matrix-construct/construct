@@ -119,7 +119,7 @@ check_umode_change(void *vdata)
 
 		update_session_deadline(source_p, NULL);
 
-		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s has enabled oper-override (+p)",
+		sendto_realops_snomask(sno::GENERAL, L_NETWIDE, "%s has enabled oper-override (+p)",
 				       get_oper_name(source_p));
 	}
 	else if (!(source_p->mode & user_modes['p']))
@@ -133,7 +133,7 @@ check_umode_change(void *vdata)
 			if (session_p->client != source_p)
 				continue;
 
-			sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s has disabled oper-override (+p)",
+			sendto_realops_snomask(sno::GENERAL, L_NETWIDE, "%s has disabled oper-override (+p)",
 					       get_oper_name(session_p->client));
 
 			rb_dlinkDelete(n, &overriding_opers);
@@ -160,7 +160,7 @@ hack_channel_access(void *vdata)
 
 		/* we only want to report modehacks, which are always non-NULL */
 		if (data->modestr)
-			sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s is using oper-override on %s (modehacking: %s)",
+			sendto_realops_snomask(sno::GENERAL, L_NETWIDE, "%s is using oper-override on %s (modehacking: %s)",
 					       get_oper_name(data->client), data->chptr->name.c_str(), data->modestr);
 	}
 }
@@ -178,7 +178,7 @@ hack_can_join(void *vdata)
 		update_session_deadline(data->client, NULL);
 		data->approved = 0;
 
-		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s is using oper-override on %s (banwalking)",
+		sendto_realops_snomask(sno::GENERAL, L_NETWIDE, "%s is using oper-override on %s (banwalking)",
 				       get_oper_name(data->client), data->chptr->name.c_str());
 	}
 }
@@ -196,7 +196,7 @@ hack_can_kick(void *vdata)
 	if (data->client->mode & user_modes['p'])
 	{
 		update_session_deadline(data->client, NULL);
-		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s is using oper-override on %s (KICK %s)",
+		sendto_realops_snomask(sno::GENERAL, L_NETWIDE, "%s is using oper-override on %s (KICK %s)",
 				       get_oper_name(data->client), data->chptr->name.c_str(), data->target->name);
 	}
 }
@@ -219,7 +219,7 @@ hack_can_send(void *vdata)
 		if (my(*data->client))
 		{
 			update_session_deadline(data->client, NULL);
-			sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s is using oper-override on %s (forcing message)",
+			sendto_realops_snomask(sno::GENERAL, L_NETWIDE, "%s is using oper-override on %s (forcing message)",
 					       get_oper_name(data->client), data->chptr->name.c_str());
 		}
 	}

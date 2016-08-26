@@ -97,7 +97,7 @@ start_authd(void)
 				       ConfigFileEntry.dpath);
 
 				// TODO: double dipping
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				sendto_realops_snomask(sno::GENERAL, L_ALL,
 				                       "Unable to execute authd in %s or %s/bin",
 				                       path::get(path::LIBEXEC),
 				                       ConfigFileEntry.dpath);
@@ -120,12 +120,12 @@ start_authd(void)
 	if(authd_helper == NULL)
 	{
 		ierror("Unable to start authd helper: %s", strerror(errno));
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Unable to start authd helper: %s", strerror(errno));
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "Unable to start authd helper: %s", strerror(errno));
 		return 1;
 	}
 
 	ilog(L_MAIN, "authd helper started");
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd helper started");
+	sendto_realops_snomask(sno::GENERAL, L_ALL, "authd helper started");
 	rb_helper_run(authd_helper);
 	return 0;
 }
@@ -219,23 +219,23 @@ cmd_oper_warn(int parc, char **parv)
 	switch(*parv[1])
 	{
 	case 'D':	/* Debug */
-		sendto_realops_snomask(SNO_DEBUG, L_ALL, "authd debug: %s", parv[2]);
+		sendto_realops_snomask(sno::DEBUG, L_ALL, "authd debug: %s", parv[2]);
 		idebug("authd: %s", parv[2]);
 		break;
 	case 'I':	/* Info */
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd info: %s", parv[2]);
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "authd info: %s", parv[2]);
 		inotice("authd: %s", parv[2]);
 		break;
 	case 'W':	/* Warning */
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd WARNING: %s", parv[2]);
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "authd WARNING: %s", parv[2]);
 		iwarn("authd: %s", parv[2]);
 		break;
 	case 'C':	/* Critical (error) */
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd CRITICAL: %s", parv[2]);
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "authd CRITICAL: %s", parv[2]);
 		ierror("authd: %s", parv[2]);
 		break;
 	default:	/* idk */
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd sent us an unknown oper notice type (%s): %s", parv[1], parv[2]);
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "authd sent us an unknown oper notice type (%s): %s", parv[1], parv[2]);
 		ilog(L_MAIN, "authd unknown oper notice type (%s): %s", parv[1], parv[2]);
 		break;
 	}
@@ -384,7 +384,7 @@ restart_authd_cb(rb_helper * helper)
 	client::client *client_p;
 
 	iwarn("authd: restart_authd_cb called, authd died?");
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, "authd: restart_authd_cb called, authd died?");
+	sendto_realops_snomask(sno::GENERAL, L_ALL, "authd: restart_authd_cb called, authd died?");
 
 	if(helper != NULL)
 	{

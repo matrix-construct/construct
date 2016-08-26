@@ -61,7 +61,7 @@ chan::add(const std::string &name,
 		throw err::BADCHANNAME("");
 
 	if (name.size() > CHANNELLEN && is_server(client))
-		sendto_realops_snomask(SNO_DEBUG, L_ALL,
+		sendto_realops_snomask(sno::DEBUG, L_ALL,
 		                       "*** Long channel name from %s (%lu > %d): %s",
 		                       client.name,
 		                       name.size(),
@@ -956,7 +956,7 @@ chan::flood_attack_channel(int p_or_n, client::client *source_p, chan *chptr)
 		{
 			if(chptr->flood_noticed == 0)
 			{
-				sendto_realops_snomask(SNO_BOTS, chptr->name[0] == '&' ? L_ALL : L_NETWIDE,
+				sendto_realops_snomask(sno::BOTS, chptr->name[0] == '&' ? L_ALL : L_NETWIDE,
 						     "Possible Flooder %s[%s@%s] on %s target: %s",
 						     source_p->name, source_p->username,
 						     source_p->orighost,
@@ -1054,7 +1054,7 @@ chan::check_spambot_warning(client::client *source_p, const char *name)
 				name != NULL)
 		{
 			/* Its already known as a possible spambot */
-			sendto_realops_snomask(SNO_BOTS, L_NETWIDE,
+			sendto_realops_snomask(sno::BOTS, L_NETWIDE,
 					     "User %s (%s@%s) trying to join %s is a possible spambot",
 					     source_p->name,
 					     source_p->username, source_p->orighost, name);
@@ -1111,7 +1111,7 @@ chan::check_splitmode(void *unused)
 			if(eob_count < split_servers || Count.total < split_users)
 			{
 				splitmode = 1;
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				sendto_realops_snomask(sno::GENERAL, L_ALL,
 						     "Network split, activating splitmode");
 				check_splitmode_ev = rb_event_addish("check_splitmode", check_splitmode, NULL, 2);
 			}
@@ -1121,7 +1121,7 @@ chan::check_splitmode(void *unused)
 		{
 			splitmode = 0;
 
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					     "Network rejoined, deactivating splitmode");
 
 			rb_event_delete(check_splitmode_ev);
@@ -1377,7 +1377,7 @@ chan::resv_chan_forcepart(const char *name, const char *reason, int temp_time)
 			del(*chptr, *target_p);
 
 			/* notify opers & user they were removed from the channel */
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 			                     "Forced PART for %s!%s@%s from %s (%s)",
 			                     target_p->name, target_p->username,
 			                     target_p->host, name, reason);

@@ -78,7 +78,7 @@ ms_ban(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 	now = rb_current_time();
 	if (strlen(parv[1]) != 1)
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
+		sendto_realops_snomask(sno::GENERAL, L_NETWIDE,
 				"Unknown BAN type %s from %s",
 				parv[1], source.name);
 		return;
@@ -99,7 +99,7 @@ ms_ban(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 			stype = "RESV";
 			break;
 		default:
-			sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
+			sendto_realops_snomask(sno::GENERAL, L_NETWIDE,
 					"Unknown BAN type %s from %s",
 					parv[1], source.name);
 			return;
@@ -198,7 +198,7 @@ ms_ban(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 	}
 	if (act && hold != created && !valid)
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				       "Ignoring global %d min. %s from %s%s%s for [%s%s%s]: too few non-wildcard characters",
 				       (int)((hold - now) / 60),
 				       stype,
@@ -220,7 +220,7 @@ ms_ban(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 	else if (act && hold != created)
 	{
 		/* Keep the notices in sync with modules/m_kline.c etc. */
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				       "%s added global %d min. %s%s%s for [%s%s%s] [%s]",
 				       is_server(source) ? source.name : get_oper_name(&source),
 				       (int)((hold - now) / 60),
@@ -242,7 +242,7 @@ ms_ban(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 	}
 	else if (act)
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				"%s has removed the global %s for: [%s%s%s]%s%s",
 				is_server(source) ? source.name : get_oper_name(&source),
 				stype,

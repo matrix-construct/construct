@@ -265,7 +265,7 @@ load_one_module(const char *path, int origin, bool coremodule)
 		}
 	}
 
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, "Cannot locate module %s", path);
+	sendto_realops_snomask(sno::GENERAL, L_ALL, "Cannot locate module %s", path);
 	return false;
 }
 
@@ -279,7 +279,7 @@ void module_log(struct module *const mod,
 
 	char buf[BUFSIZE];
 	vsnprintf(buf, sizeof(buf), fmt, ap),
-	slog(L_MAIN, SNO_GENERAL, "Module %s: %s", mod->name, buf);
+	slog(L_MAIN, sno::GENERAL, "Module %s: %s", mod->name, buf);
 
 	va_end(ap);
 }
@@ -361,7 +361,7 @@ bool init_module__cap(struct module *const mod,
 		case MAPI_CAP_CLIENT:  idx = &cli_capindex;    break;
 		case MAPI_CAP_SERVER:  idx = &serv_capindex;   break;
 		default:
-			slog(L_MAIN, SNO_GENERAL,
+			slog(L_MAIN, sno::GENERAL,
 			     "Unknown/unsupported CAP index found of type %d on capability %s when loading %s",
 			     m->cap_index,
 			     m->cap_name,
@@ -391,7 +391,7 @@ void fini_module__cap(struct module *const mod,
 		case MAPI_CAP_CLIENT:  idx = &cli_capindex;    break;
 		case MAPI_CAP_SERVER:  idx = &serv_capindex;   break;
 		default:
-			slog(L_MAIN, SNO_GENERAL,
+			slog(L_MAIN, sno::GENERAL,
 			     "Unknown/unsupported CAP index found of type %d on capability %s when unloading %s",
 			     m->cap_index,
 			     m->cap_name,
@@ -428,7 +428,7 @@ bool init_module_v2(struct module *const mod)
 			delta /= 86400;
 			iwarn("Module %s build date is out of sync with ircd build date by %ld days, expect problems",
 				mod->name, delta);
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 				"Module %s build date is out of sync with ircd build date by %ld days, expect problems",
 				mod->name, delta);
 		}
@@ -790,7 +790,7 @@ load_a_module(const char *path, bool warn, int origin, bool core)
 	lt_dlhandle handle RB_UNIQUE_PTR(close_handle) = lt_dlopenext(path);
 	if(handle == NULL)
 	{
-		slog(L_MAIN, SNO_GENERAL, "Error loading module %s: %s", name, lt_dlerror());
+		slog(L_MAIN, sno::GENERAL, "Error loading module %s: %s", name, lt_dlerror());
 		return false;
 	}
 
@@ -803,7 +803,7 @@ load_a_module(const char *path, bool warn, int origin, bool core)
 
 	if(!init_module(mod))
 	{
-		slog(L_MAIN, SNO_GENERAL, "Loading module %s aborted.", name);
+		slog(L_MAIN, sno::GENERAL, "Loading module %s aborted.", name);
 		return false;
 	}
 
@@ -814,7 +814,7 @@ load_a_module(const char *path, bool warn, int origin, bool core)
 		mod->description = "<no description>";
 
 	if(warn)
-		slog(L_MAIN, SNO_GENERAL,
+		slog(L_MAIN, sno::GENERAL,
 		     "Module %s [version: %s; MAPI version: %d; origin: %s; description: \"%s\"] loaded from [%s] to %p",
 		     name,
 		     mod->version,
@@ -866,7 +866,7 @@ unload_one_module(const char *name, bool warn)
 		case 2:  fini_module_v2(mod);  break;
 		case 3:  fini_module_v3(mod);  break;
 		default:
-			slog(L_MAIN, SNO_GENERAL,
+			slog(L_MAIN, sno::GENERAL,
 			     "Unknown/unsupported MAPI version %d when unloading %s!",
 			     mod->mapi_version,
 			     mod->name);
@@ -877,7 +877,7 @@ unload_one_module(const char *name, bool warn)
 	close_handle(&mod->address);
 
 	if(warn)
-		slog(L_MAIN, SNO_GENERAL, "Module %s unloaded", name);
+		slog(L_MAIN, sno::GENERAL, "Module %s unloaded", name);
 
 	// free after the unload message in case *name came from the mod struct.
 	free_module(&mod);

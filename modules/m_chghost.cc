@@ -97,7 +97,7 @@ do_chghost(client::client &source, client::client *target_p,
 {
 	if (!clean_host(newhost))
 	{
-		sendto_realops_snomask(SNO_GENERAL, is_encap ? L_ALL : L_NETWIDE, "%s attempted to change hostname for %s to %s (invalid)",
+		sendto_realops_snomask(sno::GENERAL, is_encap ? L_ALL : L_NETWIDE, "%s attempted to change hostname for %s to %s (invalid)",
 				is_server(source) ? source.name : get_oper_name(&source),
 				target_p->name, newhost);
 		/* sending this remotely may disclose important
@@ -123,7 +123,7 @@ do_chghost(client::client &source, client::client *target_p,
 	if (my(source))
 		sendto_one_notice(&source, ":Changed hostname for %s to %s", target_p->name, target_p->host);
 	if (!is_server(source) && !is(source, umode::SERVICE))
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s changed hostname for %s to %s", get_oper_name(&source), target_p->name, target_p->host);
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "%s changed hostname for %s to %s", get_oper_name(&source), target_p->name, target_p->host);
 	return true;
 }
 

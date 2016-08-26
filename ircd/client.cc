@@ -463,7 +463,7 @@ client::check_pings_list(rb_dlink_list * list)
 			{
 				if(is_server(*client_p))
 				{
-					sendto_realops_snomask(SNO_GENERAL, L_ALL,
+					sendto_realops_snomask(sno::GENERAL, L_ALL,
 							     "No response from %s, closing link",
 							     client_p->name);
 					ilog(L_SERVER,
@@ -530,7 +530,7 @@ client::check_unknowns_list(rb_dlink_list * list)
 		{
 			if(is_any_server(*client_p))
 			{
-				sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
+				sendto_realops_snomask(sno::GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 						     "No response from %s, closing link",
 						     client_p->name);
 				ilog(L_SERVER,
@@ -625,14 +625,14 @@ client::check_klines(void)
 		{
 			if(is_exempt_kline(*client_p))
 			{
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				sendto_realops_snomask(sno::GENERAL, L_ALL,
 						     "KLINE over-ruled for %s, client is kline_exempt [%s@%s]",
 						     get_client_name(client_p, HIDE_IP),
 						     aconf->user, aconf->host);
 				continue;
 			}
 
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					     "KLINE active for %s",
 					     get_client_name(client_p, HIDE_IP));
 
@@ -668,7 +668,7 @@ client::check_dlines(void)
 			if(aconf->status & CONF_EXEMPTDLINE)
 				continue;
 
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					     "DLINE active for %s",
 					     get_client_name(client_p, HIDE_IP));
 
@@ -717,14 +717,14 @@ client::check_xlines(void)
 		{
 			if(is_exempt_kline(*client_p))
 			{
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				sendto_realops_snomask(sno::GENERAL, L_ALL,
 						     "XLINE over-ruled for %s, client is kline_exempt [%s]",
 						     get_client_name(client_p, HIDE_IP),
 						     aconf->host);
 				continue;
 			}
 
-			sendto_realops_snomask(SNO_GENERAL, L_ALL, "XLINE active for %s",
+			sendto_realops_snomask(sno::GENERAL, L_ALL, "XLINE active for %s",
 					     get_client_name(client_p, HIDE_IP));
 
 			(void) exit_client(client_p, client_p, &me, "Bad user info");
@@ -767,11 +767,11 @@ client::resv_nick_fnc(const char *mask, const char *reason, int temp_time)
 			nick = client_p->id;
 
 			/* Tell opers. */
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 				"RESV forced nick change for %s!%s@%s to %s; nick matched [%s] (%s)",
 				client_p->name, client_p->username, client_p->host, nick, mask, reason);
 
-			sendto_realops_snomask(SNO_NCHANGE, L_ALL,
+			sendto_realops_snomask(sno::NCHANGE, L_ALL,
 				"Nick change: From %s to %s [%s@%s]",
 				client_p->name, nick, client_p->username, client_p->host);
 
@@ -833,7 +833,7 @@ client::update_client_exit_stats(client *client_p)
 {
 	if(is_server(*client_p))
 	{
-		sendto_realops_snomask(SNO_EXTERNAL, L_ALL,
+		sendto_realops_snomask(sno::EXTERNAL, L_ALL,
 				     "Server %s split from %s",
 				     client_p->name, client_p->servptr->name);
 		if(has_sent_eob(*client_p))
@@ -1121,11 +1121,11 @@ client::free_exited_clients(void *unused)
 				if(abt->client == target_p)
 				{
 					s_assert(0);
-					sendto_realops_snomask(SNO_GENERAL, L_ALL,
+					sendto_realops_snomask(sno::GENERAL, L_ALL,
 						"On abort_list: %s stat: %u flags: %llu handler: %c",
 						target_p->name, (unsigned int) target_p->status,
 						(unsigned long long)target_p->flags,  target_p->handler);
-					sendto_realops_snomask(SNO_GENERAL, L_ALL,
+					sendto_realops_snomask(sno::GENERAL, L_ALL,
 						"Please report this to the charybdis developers!");
 					found++;
 				}
@@ -1141,7 +1141,7 @@ client::free_exited_clients(void *unused)
 
 		if(ptr->data == NULL)
 		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					     "Warning: null client on dead_list!");
 			rb_dlinkDestroy(ptr, &dead_list);
 			continue;
@@ -1158,7 +1158,7 @@ client::free_exited_clients(void *unused)
 
 		if(ptr->data == NULL)
 		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					     "Warning: null client on dead_list!");
 			rb_dlinkDestroy(ptr, &dead_list);
 			continue;
@@ -1259,11 +1259,11 @@ client::exit_aborted_clients(void *unused)
 			if(rb_dlinkFind(abt->client, &dead_list))
 			{
 				s_assert(0);
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				sendto_realops_snomask(sno::GENERAL, L_ALL,
 					"On dead_list: %s stat: %u flags: %llu handler: %c",
 					abt->client->name, (unsigned int) abt->client->status,
 					(unsigned long long)abt->client->flags, abt->client->handler);
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				sendto_realops_snomask(sno::GENERAL, L_ALL,
 					"Please report this to the charybdis developers!");
 				continue;
 			}
@@ -1274,7 +1274,7 @@ client::exit_aborted_clients(void *unused)
  	 	rb_dlinkDelete(ptr, &abort_list);
 
  	 	if(is_any_server(*abt->client))
- 	 	 	sendto_realops_snomask(SNO_GENERAL, L_ALL,
+ 	 	 	sendto_realops_snomask(sno::GENERAL, L_ALL,
   	 	 	                     "Closing link to %s: %s",
    	 	 	                      abt->client->name, abt->notice);
 
@@ -1549,7 +1549,7 @@ client::exit_local_server(client *client_p, client *source_p, client *from,
 	if(source_p->serv != NULL)
 		remove_dependents(client_p, source_p, from, is_person(*from) ? newcomment : comment, comment1);
 
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s was connected"
+	sendto_realops_snomask(sno::GENERAL, L_ALL, "%s was connected"
 			     " for %ld seconds.  %d/%d sendK/recvK.",
 			     source_p->name, (long) rb_current_time() - source_p->localClient->firsttime, sendk, recvk);
 
@@ -1590,13 +1590,13 @@ client::exit_local_client(client *client_p, client *source_p, client *from,
 	if(is(*source_p, umode::OPER))
 		rb_dlinkFindDestroy(source_p, &local_oper_list);
 
-	sendto_realops_snomask(SNO_CCONN, L_ALL,
+	sendto_realops_snomask(sno::CCONN, L_ALL,
 			     "Client exiting: %s (%s@%s) [%s] [%s]",
 			     source_p->name,
 			     source_p->username, source_p->host, comment,
                              show_ip(NULL, source_p) ? source_p->sockhost : "255.255.255.255");
 
-	sendto_realops_snomask(SNO_CCONNEXT, L_ALL,
+	sendto_realops_snomask(sno::CCONNEXT, L_ALL,
 			"CLIEXIT %s %s %s %s 0 %s",
 			source_p->name, source_p->username, source_p->host,
                         show_ip(NULL, source_p) ? source_p->sockhost : "255.255.255.255",
@@ -1997,7 +1997,7 @@ client::error_exit_client(client *client_p, int error)
 	{
 		if(error == 0)
 		{
-			sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) && !is_server(*client_p) ? L_NETWIDE : L_ALL,
+			sendto_realops_snomask(sno::GENERAL, is_remote_connect(client_p) && !is_server(*client_p) ? L_NETWIDE : L_ALL,
 					     "Server %s closed the connection",
 					     client_p->name);
 
@@ -2006,7 +2006,7 @@ client::error_exit_client(client *client_p, int error)
 		}
 		else
 		{
-			sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) && !is_server(*client_p) ? L_NETWIDE : L_ALL,
+			sendto_realops_snomask(sno::GENERAL, is_remote_connect(client_p) && !is_server(*client_p) ? L_NETWIDE : L_ALL,
 					"Lost connection to %s: %s",
 					client_p->name, strerror(current_error));
 			ilog(L_SERVER, "Lost connection to %s: %s",

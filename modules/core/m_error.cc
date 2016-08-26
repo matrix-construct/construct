@@ -98,11 +98,11 @@ m_error(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	if(is_any_server(client))
 	{
 		if (hideit < 2)
-			sendto_realops_snomask(SNO_GENERAL, hideit ? L_ADMIN : (is_remote_connect(&client) ? L_NETWIDE : L_ALL),
+			sendto_realops_snomask(sno::GENERAL, hideit ? L_ADMIN : (is_remote_connect(&client) ? L_NETWIDE : L_ALL),
 					"ERROR :from %s -- %s",
 					client.name, para);
 		if (hideit > 0)
-			sendto_realops_snomask(SNO_GENERAL, (hideit == 1 ? L_OPER : L_ALL) | (is_remote_connect(&client) ? L_NETWIDE : L_ALL),
+			sendto_realops_snomask(sno::GENERAL, (hideit == 1 ? L_OPER : L_ALL) | (is_remote_connect(&client) ? L_NETWIDE : L_ALL),
 					"ERROR :from %s -- <hidden>",
 					client.name);
 	}
@@ -128,12 +128,12 @@ ms_error(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 
 	if(&client == &source)
 	{
-		sendto_realops_snomask(SNO_GENERAL, hideit ? L_ADMIN : L_ALL, "ERROR :from %s -- %s",
+		sendto_realops_snomask(sno::GENERAL, hideit ? L_ADMIN : L_ALL, "ERROR :from %s -- %s",
 				     client.name, para);
 	}
 	else
 	{
-		sendto_realops_snomask(SNO_GENERAL, hideit ? L_ADMIN : L_ALL, "ERROR :from %s via %s -- %s",
+		sendto_realops_snomask(sno::GENERAL, hideit ? L_ADMIN : L_ALL, "ERROR :from %s via %s -- %s",
 				     source.name, client.name, para);
 	}
 }

@@ -592,7 +592,7 @@ mode::functor::ban(client::client *source_p, chan *chptr,
 		break;
 
 	default:
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "chm_ban() called with unknown type!");
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "chm_ban() called with unknown type!");
 		return;
 	}
 

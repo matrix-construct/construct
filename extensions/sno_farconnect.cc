@@ -28,7 +28,7 @@ static int
 _modinit(void)
 {
 	/* add the snomask to the available slot */
-	snomask_modes['F'] = find_snomask_slot();
+	sno::table['F'] = sno::mask(find_slot(sno::table));
 
 	/* show the fact that we are showing user information in /version */
 	opers_see_all_users = true;
@@ -40,7 +40,7 @@ static void
 _moddeinit(void)
 {
 	/* disable the snomask and remove it from the available list */
-	snomask_modes['F'] = 0;
+	sno::table['F'] = sno::mask(0);
 }
 
 static void
@@ -49,7 +49,7 @@ h_gcn_new_remote_user(client::client *source_p)
 
 	if (!has_sent_eob(*source_p->servptr))
 		return;
-	sendto_realops_snomask_from(snomask_modes['F'], L_ALL, source_p->servptr,
+	sendto_realops_snomask_from(sno::table['F'], L_ALL, source_p->servptr,
 			"Client connecting: %s (%s@%s) [%s] {%s} [%s]",
 			source_p->name, source_p->username, source_p->orighost,
 			show_ip(NULL, source_p) ? source_p->sockhost : "255.255.255.255",
@@ -67,7 +67,7 @@ h_gcn_client_exit(hook_data_client_exit *hdata)
 		return;
 	if (!has_sent_eob(*source_p->servptr))
 		return;
-	sendto_realops_snomask_from(snomask_modes['F'], L_ALL, source_p->servptr,
+	sendto_realops_snomask_from(sno::table['F'], L_ALL, source_p->servptr,
 			     "Client exiting: %s (%s@%s) [%s] [%s]",
 			     source_p->name,
 			     source_p->username, source_p->host, hdata->comment,

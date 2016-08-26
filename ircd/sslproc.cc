@@ -195,7 +195,7 @@ ssl_dead(ssl_ctl_t * ctl)
 	{
 		ssld_count--;
 		ilog(L_MAIN, "ssld helper died - attempting to restart");
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "ssld helper died - attempting to restart");
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "ssld helper died - attempting to restart");
 		start_ssldaemon(1);
 	}
 }
@@ -224,7 +224,7 @@ restart_ssld_event(void *unused)
 	{
 		int start = ServerInfo.ssld_count - get_ssld_count();
 		ilog(L_MAIN, "Attempting to restart ssld processes");
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Attempt to restart ssld processes");
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "Attempt to restart ssld processes");
 		start_ssldaemon(start);
 	}
 }
@@ -254,7 +254,7 @@ start_ssldaemon(int count)
 	if(ssld_spin_count > 20 && (rb_current_time() - last_spin < 5))
 	{
 		ilog(L_MAIN, "ssld helper is spinning - will attempt to restart in 1 minute");
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				       "ssld helper is spinning - will attempt to restart in 1 minute");
 		rb_event_add("restart_ssld_event", restart_ssld_event, NULL, 60);
 		ssld_wait = 1;
@@ -409,7 +409,7 @@ ssl_process_dead_fd(ssl_ctl_t * ctl, ssl_ctl_buf_t * ctl_buf)
 
 	if(is_any_server(*client_p))
 	{
-		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) && !is_server(*client_p) ? L_NETWIDE : L_ALL, "ssld error for %s: %s", client_p->name, reason);
+		sendto_realops_snomask(sno::GENERAL, is_remote_connect(client_p) && !is_server(*client_p) ? L_NETWIDE : L_ALL, "ssld error for %s: %s", client_p->name, reason);
 		ilog(L_SERVER, "ssld error for %s: %s", log_client_name(client_p, SHOW_IP), reason);
 	}
 
@@ -555,13 +555,13 @@ ssl_process_cmd_recv(ssl_ctl_t * ctl)
 		case 'I':
 			ircd_ssl_ok = false;
 			ilog(L_MAIN, "%s", cannot_setup_ssl);
-			sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s", cannot_setup_ssl);
+			sendto_realops_snomask(sno::GENERAL, L_ALL, "%s", cannot_setup_ssl);
 			break;
 		case 'U':
 			ircd_zlib_ok = 0;
 			ircd_ssl_ok = false;
 			ilog(L_MAIN, "%s", no_ssl_or_zlib);
-			sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s", no_ssl_or_zlib);
+			sendto_realops_snomask(sno::GENERAL, L_ALL, "%s", no_ssl_or_zlib);
 			ssl_killall();
 			return;
 		case 'V':
@@ -574,7 +574,7 @@ ssl_process_cmd_recv(ssl_ctl_t * ctl)
 			break;
 		default:
 			ilog(L_MAIN, "Received invalid command from ssld: %s", ctl_buf->buf);
-			sendto_realops_snomask(SNO_GENERAL, L_ALL, "Received invalid command from ssld");
+			sendto_realops_snomask(sno::GENERAL, L_ALL, "Received invalid command from ssld");
 			break;
 		}
 		rb_dlinkDelete(ptr, &ctl->readq);
@@ -726,7 +726,7 @@ send_new_ssl_certs_one(ssl_ctl_t * ctl)
 
 	if(len > sizeof(tmpbuf))
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				       "Parameters for send_new_ssl_certs_one too long (%zu > %zu) to pass to ssld, not sending...",
 				       len, sizeof(tmpbuf));
 		ilog(L_MAIN,
@@ -869,7 +869,7 @@ start_zlib_session(void *data)
 
 	if(len > READBUF_SIZE)
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				       "ssld - attempted to pass message of %zd len, max len %d, giving up",
 				       len, READBUF_SIZE);
 		ilog(L_MAIN, "ssld - attempted to pass message of %zd len, max len %d, giving up", len, READBUF_SIZE);
@@ -901,7 +901,7 @@ start_zlib_session(void *data)
 	*buf = 'Z';
 	if(rb_socketpair(AF_UNIX, SOCK_STREAM, 0, &xF1, &xF2, "Initial zlib socketpairs") == -1)
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Error creating zlib socketpair - %s", strerror(errno));
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "Error creating zlib socketpair - %s", strerror(errno));
 		ilog(L_MAIN, "Error creating zlib socketpairs - %s", strerror(errno));
 		exit_client(server, server, server, "Error creating zlib socketpair");
 		rb_free(buf);

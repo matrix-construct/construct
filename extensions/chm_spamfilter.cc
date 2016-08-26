@@ -65,7 +65,7 @@ void hook_privmsg_channel(hook_data_privmsg_channel *const hook)
 		return;
 
 	call_hook(h_spamfilter_reject, hook);
-	sendto_realops_snomask(SNO_REJ|SNO_BOTS, L_NETWIDE,
+	sendto_realops_snomask(sno::REJ|sno::BOTS, L_NETWIDE,
 	                       "spamfilter: REJECT %s[%s@%s] on %s to %s (%s)",
 	                       hook->source_p->name,
 	                       hook->source_p->username,

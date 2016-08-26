@@ -184,7 +184,7 @@ tgchange::add_target(client &source,
 				/* This is sent to L_ALL because it's regenerated on all servers
 				 * that have the TGINFO module loaded.
 				 */
-				sendto_realops_snomask(SNO_BOTS, L_ALL,
+				sendto_realops_snomask(sno::BOTS, L_ALL,
 					"Excessive target change from %s (%s@%s)",
 					source.name, source.username,
 					source.orighost);

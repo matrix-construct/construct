@@ -36,7 +36,7 @@ DECLARE_MODULE_AV2(motd_spy, NULL, NULL, NULL, NULL, motd_hfnlist, NULL, NULL, s
 void
 show_motd(hook_data *data)
 {
-	sendto_realops_snomask(SNO_SPY, L_ALL,
+	sendto_realops_snomask(sno::SPY, L_ALL,
 			     "motd requested by %s (%s@%s) [%s]",
 			     data->client->name, data->client->username,
 			     data->client->host, data->client->servptr->name);

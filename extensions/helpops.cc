@@ -83,7 +83,7 @@ do_dehelper(client::client &source, client::client &target)
 	if(!(target.mode & UMODE_HELPOPS))
 		return;
 
-	sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s is using DEHELPER on %s",
+	sendto_realops_snomask(sno::GENERAL, L_NETWIDE, "%s is using DEHELPER on %s",
 			source.name, target.name);
 	sendto_one_notice(&target, ":*** %s is using DEHELPER on you", source.name);
 

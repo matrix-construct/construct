@@ -300,7 +300,7 @@ try_connections(void *unused)
 	 * error afterwards if it fails.
 	 *   -- adrian
 	 */
-	sendto_realops_snomask(SNO_GENERAL, L_ALL,
+	sendto_realops_snomask(sno::GENERAL, L_ALL,
 			"Connection to %s activated",
 			server_p->name);
 
@@ -772,7 +772,7 @@ server_estab(client::client *client_p)
 	if((server_p = client_p->localClient->att_sconf) == NULL)
 	{
 		/* This shouldn't happen, better tell the ops... -A1kmm */
-		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
+		sendto_realops_snomask(sno::GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 				     "Warning: Lost connect{} block for server %s!", host);
 		return exit_client(client_p, client_p, client_p, "Lost connect{} block!");
 	}
@@ -854,7 +854,7 @@ server_estab(client::client *client_p)
 					rb_dlink_list_length(&serv_list);
 
 	/* Show the real host/IP to admins */
-	sendto_realops_snomask(SNO_GENERAL, L_ALL,
+	sendto_realops_snomask(sno::GENERAL, L_ALL,
 			"Link with %s established: (%s) link",
 			client_p->name,
 			show_capabilities(client_p));
@@ -1038,7 +1038,7 @@ serv_connect(struct server_conf *server_p, client::client *by)
 	 */
 	if((client_p = find_server(NULL, server_p->name)))
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				     "Server %s already present from %s",
 				     server_p->name, client_p->name);
 		if(by && is_person(*by) && !my(*by))
@@ -1209,7 +1209,7 @@ serv_connect_callback(rb_fde_t *F, int status, void *data)
 		 */
 		if(status == RB_ERR_TIMEOUT || status == RB_ERROR_SSL)
 		{
-			sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
+			sendto_realops_snomask(sno::GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 					"Error connecting to %s[%s]: %s",
 					client_p->name,
 					"255.255.255.255",
@@ -1221,7 +1221,7 @@ serv_connect_callback(rb_fde_t *F, int status, void *data)
 		else
 		{
 			errstr = strerror(rb_get_sockerr(F));
-			sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
+			sendto_realops_snomask(sno::GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 					"Error connecting to %s[%s]: %s (%s)",
 					client_p->name,
 					"255.255.255.255",
@@ -1239,7 +1239,7 @@ serv_connect_callback(rb_fde_t *F, int status, void *data)
 	/* Get the C/N lines */
 	if((server_p = client_p->localClient->att_sconf) == NULL)
 	{
-		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL, "Lost connect{} block for %s",
+		sendto_realops_snomask(sno::GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL, "Lost connect{} block for %s",
 				client_p->name);
 		exit_client(client_p, client_p, &me, "Lost connect{} block");
 		return;
@@ -1247,7 +1247,7 @@ serv_connect_callback(rb_fde_t *F, int status, void *data)
 
 	if(server_p->certfp && (!client_p->certfp || rb_strcasecmp(server_p->certfp, client_p->certfp) != 0))
 	{
-		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
+		sendto_realops_snomask(sno::GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 		     "Connection to %s has invalid certificate fingerprint %s",
 		     client_p->name, client_p->certfp);
 		ilog(L_SERVER, "Access denied, invalid certificate fingerprint %s from %s",
@@ -1279,7 +1279,7 @@ serv_connect_callback(rb_fde_t *F, int status, void *data)
 	 */
 	if(is_any_dead(*client_p))
 	{
-		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
+		sendto_realops_snomask(sno::GENERAL, is_remote_connect(client_p) ? L_NETWIDE : L_ALL,
 				     "%s went dead during handshake", client_p->name);
 		exit_client(client_p, client_p, &me, "Went dead during handshake");
 		return;

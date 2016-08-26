@@ -538,7 +538,7 @@ set_server_conf_autoconn(client::client *source_p, const char *name, int newval)
 		else
 			server_p->flags &= ~SERVER_AUTOCONN;
 
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				"%s has changed AUTOCONN for %s to %i",
 				get_oper_name(source_p), name, newval);
 	}
@@ -556,7 +556,7 @@ disable_server_conf_autoconn(const char *name)
 	{
 		server_p->flags &= ~SERVER_AUTOCONN;
 
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				"Disabling AUTOCONN for %s because of error",
 				name);
 		ilog(L_SERVER, "Disabling AUTOCONN for %s because of error",
@@ -758,7 +758,7 @@ expire_temp_rxlines(void *unused)
 		if(aconf->hold && aconf->hold <= rb_current_time())
 		{
 			if(ConfigFileEntry.tkline_expire_notices)
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				sendto_realops_snomask(sno::GENERAL, L_ALL,
 						"Temporary RESV for [%s] expired",
 						aconf->host);
 
@@ -776,7 +776,7 @@ expire_temp_rxlines(void *unused)
 		if(aconf->hold && aconf->hold <= rb_current_time())
 		{
 			if(ConfigFileEntry.tkline_expire_notices)
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				sendto_realops_snomask(sno::GENERAL, L_ALL,
 						"Temporary RESV for [%s] expired",
 						aconf->host);
 			free_conf(aconf);
@@ -793,7 +793,7 @@ expire_temp_rxlines(void *unused)
 		if(aconf->hold && aconf->hold <= rb_current_time())
 		{
 			if(ConfigFileEntry.tkline_expire_notices)
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				sendto_realops_snomask(sno::GENERAL, L_ALL,
 						"Temporary X-line for [%s] expired",
 						aconf->host);
 			free_conf(aconf);

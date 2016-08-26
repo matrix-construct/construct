@@ -43,14 +43,14 @@ show_stats(hook_data_int *data)
 		const char *name = (const char *)data->arg1;
 
 		if(!EmptyString(name))
-			sendto_realops_snomask(SNO_SPY, L_ALL,
+			sendto_realops_snomask(sno::SPY, L_ALL,
 					"STATS %c requested by %s (%s@%s) [%s] on %s",
 					statchar, data->client->name,
 					data->client->username,
 					data->client->host,
 					data->client->servptr->name, name);
 		else
-			sendto_realops_snomask(SNO_SPY, L_ALL,
+			sendto_realops_snomask(sno::SPY, L_ALL,
 					"STATS %c requested by %s (%s@%s) [%s]",
 					statchar, data->client->name,
 					data->client->username,
@@ -58,7 +58,7 @@ show_stats(hook_data_int *data)
 	}
 	else
 	{
-		sendto_realops_snomask(SNO_SPY, L_ALL,
+		sendto_realops_snomask(sno::SPY, L_ALL,
 				"STATS %c requested by %s (%s@%s) [%s]",
 				statchar, data->client->name, data->client->username,
 				data->client->host, data->client->servptr->name);

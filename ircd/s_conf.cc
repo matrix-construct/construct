@@ -165,7 +165,7 @@ check_client(client::client *client_p, client::client *source_p, const char *use
 		 * servers also, so even if local opers are allowed to
 		 * see the IP, we still cannot send it.
 		 */
-		sendto_realops_snomask(SNO_FULL, L_NETWIDE,
+		sendto_realops_snomask(sno::FULL, L_NETWIDE,
 				"Too many local connections for %s!%s%s@%s",
 				source_p->name, is_got_id(*source_p) ? "" : "~",
 				source_p->username,
@@ -180,7 +180,7 @@ check_client(client::client *client_p, client::client *source_p, const char *use
 		break;
 
 	case TOO_MANY_GLOBAL:
-		sendto_realops_snomask(SNO_FULL, L_NETWIDE,
+		sendto_realops_snomask(sno::FULL, L_NETWIDE,
 				"Too many global connections for %s!%s%s@%s",
 				source_p->name, is_got_id(*source_p) ? "" : "~",
 				source_p->username,
@@ -194,7 +194,7 @@ check_client(client::client *client_p, client::client *source_p, const char *use
 		break;
 
 	case TOO_MANY_IDENT:
-		sendto_realops_snomask(SNO_FULL, L_NETWIDE,
+		sendto_realops_snomask(sno::FULL, L_NETWIDE,
 				"Too many user connections for %s!%s%s@%s",
 				source_p->name, is_got_id(*source_p) ? "" : "~",
 				source_p->username,
@@ -208,7 +208,7 @@ check_client(client::client *client_p, client::client *source_p, const char *use
 		break;
 
 	case I_LINE_FULL:
-		sendto_realops_snomask(SNO_FULL, L_NETWIDE,
+		sendto_realops_snomask(sno::FULL, L_NETWIDE,
 				"I-line is full for %s!%s%s@%s (%s).",
 				source_p->name, is_got_id(*source_p) ? "" : "~",
 				source_p->username, source_p->host,
@@ -236,7 +236,7 @@ check_client(client::client *client_p, client::client *source_p, const char *use
 			static char ipaddr[HOSTIPLEN];
 			rb_inet_ntop_sock(&source_p->localClient->ip, ipaddr, sizeof(ipaddr));
 #endif
-			sendto_realops_snomask(SNO_UNAUTH, L_ALL,
+			sendto_realops_snomask(sno::UNAUTH, L_ALL,
 					"Unauthorised client connection from "
 					"%s!%s%s@%s [%s] on [%s/%u].",
 					source_p->name, is_got_id(*source_p) ? "" : "~",
@@ -302,7 +302,7 @@ verify_access(client::client *client_p, const char *username)
 
 			if(IsConfSpoofNotice(aconf))
 			{
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				sendto_realops_snomask(sno::GENERAL, L_ALL,
 						"%s spoofing: %s as %s",
 						client_p->name,
 						show_ip(NULL, client_p) ? client_p->host : aconf->info.name,
@@ -603,7 +603,7 @@ rehash(bool sig)
 	hook_data_rehash hdata = { sig };
 
 	if(sig)
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				     "Got signal SIGHUP, reloading ircd conf. file");
 
 	rehash_authd();
@@ -727,7 +727,7 @@ set_default_conf(void)
 	ConfigFileEntry.oper_umodes = umode::LOCOPS | umode::SERVNOTICE |
 		umode::OPERWALL | umode::WALLOP;
 	ConfigFileEntry.oper_only_umodes = umode::SERVNOTICE;
-	ConfigFileEntry.oper_snomask = SNO_GENERAL;
+	ConfigFileEntry.oper_snomask = sno::GENERAL;
 
 	ConfigChannel.use_except = true;
 	ConfigChannel.use_invex = true;
@@ -1126,7 +1126,7 @@ expire_prop_bans(void *list)
 			/* XXX show what type of ban it is */
 			if(ConfigFileEntry.tkline_expire_notices &&
 					!(aconf->status & CONF_ILLEGAL))
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				sendto_realops_snomask(sno::GENERAL, L_ALL,
 						     "Propagated ban for [%s%s%s] expired",
 						     aconf->user ? aconf->user : "",
 						     aconf->user ? "@" : "",
@@ -1161,7 +1161,7 @@ expire_temp_kd(void *list_)
 		{
 			/* Alert opers that a TKline expired - Hwy */
 			if(ConfigFileEntry.tkline_expire_notices)
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				sendto_realops_snomask(sno::GENERAL, L_ALL,
 						     "Temporary K-line for [%s@%s] expired",
 						     (aconf->user) ? aconf->
 						     user : "*", (aconf->host) ? aconf->host : "*");
@@ -1360,7 +1360,7 @@ read_conf_files(bool cold)
 		}
 		else
 		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					     "Can't open file '%s' - aborting rehash!", filename);
 			return;
 		}
@@ -1588,7 +1588,7 @@ yyerror(const char *msg)
 	strip_tabs(newlinebuf, yy_linebuf, strlen(yy_linebuf));
 
 	ierror("\"%s\", line %d: %s at '%s'", conffilebuf, lineno + 1, msg, newlinebuf);
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, "\"%s\", line %d: %s at '%s'",
+	sendto_realops_snomask(sno::GENERAL, L_ALL, "\"%s\", line %d: %s at '%s'",
 			     conffilebuf, lineno + 1, msg, newlinebuf);
 
 }

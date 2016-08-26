@@ -32,26 +32,26 @@ h_gla_client_exit(hook_data_client_exit *hdata)
 		return;
 	if (!strcmp(hdata->comment, "Bad user info"))
 	{
-		sendto_realops_snomask_from(SNO_GENERAL, L_ALL, source_p->servptr,
+		sendto_realops_snomask_from(sno::GENERAL, L_ALL, source_p->servptr,
 				"XLINE active for %s[%s@%s]",
 				source_p->name, source_p->username, source_p->host);
 	}
 	else if (ConfigFileEntry.kline_reason != NULL &&
 			!strcmp(hdata->comment, ConfigFileEntry.kline_reason))
 	{
-		sendto_realops_snomask_from(SNO_GENERAL, L_ALL, source_p->servptr,
+		sendto_realops_snomask_from(sno::GENERAL, L_ALL, source_p->servptr,
 				"K/DLINE active for %s[%s@%s]",
 				source_p->name, source_p->username, source_p->host);
 	}
 	else if (!strncmp(hdata->comment, "Temporary K-line ", 17))
 	{
-		sendto_realops_snomask_from(SNO_GENERAL, L_ALL, source_p->servptr,
+		sendto_realops_snomask_from(sno::GENERAL, L_ALL, source_p->servptr,
 				"K/DLINE active for %s[%s@%s]",
 				source_p->name, source_p->username, source_p->host);
 	}
 	else if (!strncmp(hdata->comment, "Temporary D-line ", 17))
 	{
-		sendto_realops_snomask_from(SNO_GENERAL, L_ALL, source_p->servptr,
+		sendto_realops_snomask_from(sno::GENERAL, L_ALL, source_p->servptr,
 				"K/DLINE active for %s[%s@%s]",
 				source_p->name, source_p->username, source_p->host);
 	}

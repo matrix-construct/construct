@@ -528,7 +528,7 @@ do_who(client::client &source, client::client *target_p, chan::chan *chan, chan:
 		{
 			static bool warned = false;
 			if (!warned)
-				sendto_realops_snomask(SNO_DEBUG, L_NETWIDE,
+				sendto_realops_snomask(sno::DEBUG, L_NETWIDE,
 						"WHOX overflow while sending information about %s to %s",
 						target_p->name, source.name);
 			warned = true;

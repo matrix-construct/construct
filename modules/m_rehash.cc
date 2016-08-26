@@ -48,7 +48,7 @@ struct hash_commands
 static void
 rehash_bans_loc(client::client &source)
 {
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is rehashing bans",
+	sendto_realops_snomask(sno::GENERAL, L_ALL, "%s is rehashing bans",
 				get_oper_name(&source));
 	if (!my_connect(source))
 		remote_rehash_oper_p = &source;
@@ -59,7 +59,7 @@ rehash_bans_loc(client::client &source)
 static void
 rehash_dns(client::client &source)
 {
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is rehashing DNS",
+	sendto_realops_snomask(sno::GENERAL, L_ALL, "%s is rehashing DNS",
 			     get_oper_name(&source));
 	if (!my_connect(source))
 		remote_rehash_oper_p = &source;
@@ -70,7 +70,7 @@ rehash_dns(client::client &source)
 static void
 rehash_ssld(client::client &source)
 {
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is restarting ssld",
+	sendto_realops_snomask(sno::GENERAL, L_ALL, "%s is restarting ssld",
 				get_oper_name(&source));
 
 	restart_ssld();
@@ -79,7 +79,7 @@ rehash_ssld(client::client &source)
 static void
 rehash_motd(client::client &source)
 {
-	sendto_realops_snomask(SNO_GENERAL, L_ALL,
+	sendto_realops_snomask(sno::GENERAL, L_ALL,
 			     "%s is forcing re-reading of MOTD file",
 			     get_oper_name(&source));
 	if (!my_connect(source))
@@ -91,7 +91,7 @@ rehash_motd(client::client &source)
 static void
 rehash_omotd(client::client &source)
 {
-	sendto_realops_snomask(SNO_GENERAL, L_ALL,
+	sendto_realops_snomask(sno::GENERAL, L_ALL,
 			     "%s is forcing re-reading of OPER MOTD file",
 			     get_oper_name(&source));
 	if (!my_connect(source))
@@ -107,7 +107,7 @@ rehash_tklines(client::client &source)
 	rb_dlink_node *ptr, *next_ptr;
 	int i;
 
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing temp klines",
+	sendto_realops_snomask(sno::GENERAL, L_ALL, "%s is clearing temp klines",
 				get_oper_name(&source));
 	if (!my_connect(source))
 		remote_rehash_oper_p = &source;
@@ -131,7 +131,7 @@ rehash_tdlines(client::client &source)
 	rb_dlink_node *ptr, *next_ptr;
 	int i;
 
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing temp dlines",
+	sendto_realops_snomask(sno::GENERAL, L_ALL, "%s is clearing temp dlines",
 				get_oper_name(&source));
 	if (!my_connect(source))
 		remote_rehash_oper_p = &source;
@@ -155,7 +155,7 @@ rehash_txlines(client::client &source)
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing temp xlines",
+	sendto_realops_snomask(sno::GENERAL, L_ALL, "%s is clearing temp xlines",
 				get_oper_name(&source));
 	if (!my_connect(source))
 		remote_rehash_oper_p = &source;
@@ -180,7 +180,7 @@ rehash_tresvs(client::client &source)
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
 
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing temp resvs",
+	sendto_realops_snomask(sno::GENERAL, L_ALL, "%s is clearing temp resvs",
 				get_oper_name(&source));
 	if (!my_connect(source))
 		remote_rehash_oper_p = &source;
@@ -211,7 +211,7 @@ rehash_tresvs(client::client &source)
 static void
 rehash_rejectcache(client::client &source)
 {
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing reject cache",
+	sendto_realops_snomask(sno::GENERAL, L_ALL, "%s is clearing reject cache",
 				get_oper_name(&source));
 	if (!my_connect(source))
 		remote_rehash_oper_p = &source;
@@ -222,7 +222,7 @@ rehash_rejectcache(client::client &source)
 static void
 rehash_throttles(client::client &source)
 {
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s is clearing throttles",
+	sendto_realops_snomask(sno::GENERAL, L_ALL, "%s is clearing throttles",
 				get_oper_name(&source));
 	if (!my_connect(source))
 		remote_rehash_oper_p = &source;
@@ -233,7 +233,7 @@ rehash_throttles(client::client &source)
 static void
 rehash_help(client::client &source)
 {
-	sendto_realops_snomask(SNO_GENERAL, L_ALL,
+	sendto_realops_snomask(sno::GENERAL, L_ALL,
 			     "%s is forcing re-reading of HELP files",
 			     get_oper_name(&source));
 	if (!my_connect(source))
@@ -248,7 +248,7 @@ rehash_nickdelay(client::client &source)
 	rb_dlink_node *ptr;
 	rb_dlink_node *safe_ptr;
 
-	sendto_realops_snomask(SNO_GENERAL, L_ALL,
+	sendto_realops_snomask(sno::GENERAL, L_ALL,
 			     "%s is clearing the nick delay table",
 			     get_oper_name(&source));
 	if (!my_connect(source))
@@ -319,7 +319,7 @@ do_rehash(client::client &source, const char *type)
 	{
 		sendto_one(&source, form_str(RPL_REHASHING), me.name, source.name,
 			   ConfigFileEntry.configfile);
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				     "%s is rehashing server config file", get_oper_name(&source));
 		if (!my_connect(source))
 			remote_rehash_oper_p = &source;

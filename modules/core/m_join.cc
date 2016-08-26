@@ -181,7 +181,7 @@ m_join(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 
 			/* dont warn for opers */
 			if(!is_exempt_jupe(source) && !is(source, umode::OPER))
-				sendto_realops_snomask(SNO_SPY, L_NETWIDE,
+				sendto_realops_snomask(sno::SPY, L_NETWIDE,
 						     "User %s (%s@%s) is attempting to join locally juped channel %s (%s)",
 						     source.name, source.username,
 						     source.orighost, name, aconf->passwd);
@@ -435,7 +435,7 @@ ms_join(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 		sendto_channel_local(chan::ALL_MEMBERS, chptr,
 				     ":%s NOTICE %s :*** Notice -- TS for %s changed from %ld to 0",
 				     me.name, chptr->name.c_str(), chptr->name.c_str(), (long) oldts);
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				     "Server %s changing TS on %s from %ld to 0",
 				     source.name, chptr->name.c_str(), (long) oldts);
 	}
@@ -622,7 +622,7 @@ ms_sjoin(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 				     ":%s NOTICE %s :*** Notice -- TS for %s "
 				     "changed from %ld to 0",
 				     me.name, chptr->name.c_str(), chptr->name.c_str(), (long) oldts);
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				     "Server %s changing TS on %s from %ld to 0",
 				     source.name, chptr->name.c_str(), (long) oldts);
 	}

@@ -46,7 +46,7 @@ static const char challenge_desc[] = "Does nothing as OpenSSL was not enabled.";
 /* now it is	-larne	*/
 static int challenge_load(void)
 {
-	sendto_realops_snomask(SNO_GENERAL, L_ALL,
+	sendto_realops_snomask(sno::GENERAL, L_ALL,
 		"Challenge module not loaded because OpenSSL is not available.");
 	ilog(L_MAIN, "Challenge module not loaded because OpenSSL is not available.");
 	return -1;
@@ -121,7 +121,7 @@ m_challenge(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 			     source.username, source.host, source.sockhost);
 
 			if(ConfigFileEntry.failed_oper_notice)
-				sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
+				sendto_realops_snomask(sno::GENERAL, L_NETWIDE,
 						     "Expired CHALLENGE attempt by %s (%s@%s)",
 						     source.name, source.username,
 						     source.host);
@@ -141,7 +141,7 @@ m_challenge(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 			     source.username, source.host, source.sockhost);
 
 			if(ConfigFileEntry.failed_oper_notice)
-				sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
+				sendto_realops_snomask(sno::GENERAL, L_NETWIDE,
 						     "Failed CHALLENGE attempt by %s (%s@%s)",
 						     source.name, source.username,
 						     source.host);
@@ -166,7 +166,7 @@ m_challenge(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 			     source.sockhost);
 
 			if(ConfigFileEntry.failed_oper_notice)
-				sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
+				sendto_realops_snomask(sno::GENERAL, L_NETWIDE,
 						     "Failed CHALLENGE attempt - host mismatch by %s (%s@%s)",
 						     source.name, source.username,
 						     source.host);
@@ -196,7 +196,7 @@ m_challenge(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 		     source.username, source.host, source.sockhost);
 
 		if(ConfigFileEntry.failed_oper_notice)
-			sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
+			sendto_realops_snomask(sno::GENERAL, L_NETWIDE,
 					     "Failed CHALLENGE attempt - host mismatch by %s (%s@%s)",
 					     source.name, source.username, source.host);
 		return;
@@ -217,7 +217,7 @@ m_challenge(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 
 		if(ConfigFileEntry.failed_oper_notice)
 		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					     "Failed CHALLENGE attempt - missing SSL/TLS by %s (%s@%s)",
 					     source.name, source.username, source.host);
 		}
@@ -235,7 +235,7 @@ m_challenge(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 
 			if(ConfigFileEntry.failed_oper_notice)
 			{
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				sendto_realops_snomask(sno::GENERAL, L_ALL,
 						     "Failed OPER attempt - client certificate fingerprint mismatch by %s (%s@%s)",
 						     source.name, source.username, source.host);
 			}

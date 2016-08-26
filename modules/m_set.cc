@@ -142,7 +142,7 @@ quote_autoconnall(client::client &source, const char *arg, int newval)
 {
 	if(newval >= 0)
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s has changed AUTOCONNALL to %i",
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "%s has changed AUTOCONNALL to %i",
 				     source.name, newval);
 
 		GlobalSetOptions.autoconn = newval;
@@ -162,7 +162,7 @@ quote_floodcount(client::client &source, const char *arg, int newval)
 	if(newval >= 0)
 	{
 		GlobalSetOptions.floodcount = newval;
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				     "%s has changed FLOODCOUNT to %i", source.name,
 				     GlobalSetOptions.floodcount);
 	}
@@ -186,7 +186,7 @@ quote_identtimeout(client::client &source, const char *arg, int newval)
 
 	if(newval > 0)
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				     "%s has changed IDENTTIMEOUT to %d",
 				     get_oper_name(&source), newval);
 		GlobalSetOptions.ident_timeout = newval;
@@ -220,7 +220,7 @@ quote_max(client::client &source, const char *arg, int newval)
 
 		GlobalSetOptions.maxclients = newval;
 
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				     "%s!%s@%s set new MAXCLIENTS to %d (%lu current)",
 				     source.name, source.username, source.host,
 				     GlobalSetOptions.maxclients,
@@ -248,7 +248,7 @@ quote_operstring(client::client &source, const char *arg, int newval)
 		rb_strlcpy(GlobalSetOptions.operstring, arg,
 			sizeof(GlobalSetOptions.operstring));
 
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				     "%s has changed OPERSTRING to '%s'",
 				     get_oper_name(&source), arg);
 	}
@@ -267,7 +267,7 @@ quote_adminstring(client::client &source, const char *arg, int newval)
 		rb_strlcpy(GlobalSetOptions.adminstring, arg,
 			sizeof(GlobalSetOptions.adminstring));
 
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				     "%s has changed ADMINSTRING to '%s'",
 				     get_oper_name(&source), arg);
 	}
@@ -281,7 +281,7 @@ quote_spamnum(client::client &source, const char *arg, int newval)
 	{
 		if(newval == 0)
 		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					     "%s has disabled ANTI_SPAMBOT", source.name);
 			GlobalSetOptions.spam_num = newval;
 			return;
@@ -294,7 +294,7 @@ quote_spamnum(client::client &source, const char *arg, int newval)
 		{
 			GlobalSetOptions.spam_num = newval;
 		}
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s has changed SPAMNUM to %i",
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "%s has changed SPAMNUM to %i",
 				     source.name, GlobalSetOptions.spam_num);
 	}
 	else
@@ -317,7 +317,7 @@ quote_spamtime(client::client &source, const char *arg, int newval)
 		{
 			GlobalSetOptions.spam_time = newval;
 		}
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s has changed SPAMTIME to %i",
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "%s has changed SPAMTIME to %i",
 				     source.name, GlobalSetOptions.spam_time);
 	}
 	else
@@ -360,7 +360,7 @@ quote_splitmode(client::client &source, const char *charval, int intval)
 		/* OFF */
 		if(newval == 0)
 		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					     "%s is disabling splitmode", get_oper_name(&source));
 
 			splitmode = false;
@@ -372,7 +372,7 @@ quote_splitmode(client::client &source, const char *charval, int intval)
 		/* ON */
 		else if(newval == 1)
 		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					     "%s is enabling and activating splitmode",
 					     get_oper_name(&source));
 
@@ -386,7 +386,7 @@ quote_splitmode(client::client &source, const char *charval, int intval)
 		/* AUTO */
 		else if(newval == 2)
 		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					     "%s is enabling automatic splitmode",
 					     get_oper_name(&source));
 
@@ -409,7 +409,7 @@ quote_splitnum(client::client &source, const char *arg, int newval)
 {
 	if(newval >= 0)
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				     "%s has changed SPLITNUM to %i", source.name, newval);
 		split_servers = newval;
 
@@ -426,7 +426,7 @@ quote_splitusers(client::client &source, const char *arg, int newval)
 {
 	if(newval >= 0)
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				     "%s has changed SPLITUSERS to %i", source.name, newval);
 		split_users = newval;
 

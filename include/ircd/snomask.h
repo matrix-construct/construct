@@ -3,6 +3,8 @@
  * snomask.h: Management for user server-notice masks.
  *
  * Copyright (c) 2006 William Pitcock <nenolod@nenolod.net>
+ * Copyright (c) 2016 Charybdis Development Team
+ * Copyright (c) 2016 Jason Volk <jason@zemos.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -36,31 +38,28 @@
 
 #ifdef __cplusplus
 namespace ircd {
+namespace sno  {
 
-#define SNO_ADD			1
-#define SNO_DEL			2
+using mask = uint64_t;
+extern mode_table<mask> table;
 
-#define SNO_CCONNEXT		0x00000001
-#define SNO_BOTS		0x00000002
-#define SNO_CCONN		0x00000004
-#define SNO_DEBUG		0x00000008
-#define SNO_FULL		0x00000010
-#define SNO_SKILL		0x00000020
-#define SNO_NCHANGE		0x00000040
-#define SNO_REJ			0x00000080
-#define SNO_GENERAL		0x00000100
-#define SNO_UNAUTH		0x00000200
-#define SNO_EXTERNAL		0x00000400
-#define SNO_SPY			0x00000800
-#define SNO_OPERSPY		0x00001000
+using mode = mode_lease<mask, table>;
+extern const mode CCONNEXT;
+extern const mode OPERSPY;
+extern const mode BOTS;
+extern const mode CCONN;
+extern const mode DEBUG;
+extern const mode FULL;
+extern const mode SKILL;
+extern const mode NCHANGE;
+extern const mode REJ;
+extern const mode GENERAL;
+extern const mode UNAUTH;
+extern const mode EXTERNAL;
+extern const mode SPY;
 
-#define DEFAULT_OPER_SNOMASK SNO_GENERAL
+extern const mask DEFAULT_OPER_SNOMASK;
 
-char *construct_snobuf(unsigned int val);
-unsigned int parse_snobuf_to_mask(unsigned int val, const char *sno);
-unsigned int find_snomask_slot(void);
-
-extern int snomask_modes[];
-
+}      // namespace snote
 }      // namespace ircd
 #endif // __cplusplus

@@ -26,7 +26,7 @@ h_sgo_umode_changed(void *vdata)
 		return;
 
 	if (!(data->oldumodes & umode::OPER) && is(*source_p, umode::OPER))
-		sendto_realops_snomask_from(SNO_GENERAL, L_ALL, source_p->servptr,
+		sendto_realops_snomask_from(sno::GENERAL, L_ALL, source_p->servptr,
 				"%s (%s@%s) is now an operator",
 				source_p->name, source_p->username, source_p->host);
 }

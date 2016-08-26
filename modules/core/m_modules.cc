@@ -302,7 +302,7 @@ do_modreload(client::client &source, const char *module)
 
 	if((load_one_module(m_bn, mod->origin, check_core) == false) && check_core)
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
+		sendto_realops_snomask(sno::GENERAL, L_NETWIDE,
 				     "Error reloading core module: %s: terminating ircd", m_bn);
 		ilog(L_MAIN, "Error loading core module %s: terminating ircd", m_bn);
 		exit(0);
@@ -329,7 +329,7 @@ do_modrestart(client::client &source)
 			     mod->core? "(core module)" : "");
 
 			if(!mod->core)
-				sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
+				sendto_realops_snomask(sno::GENERAL, L_NETWIDE,
 				                       "Module Restart: %s failed to unload",
 				                       mod->name);
 			continue;
@@ -342,7 +342,7 @@ do_modrestart(client::client &source)
 	load_core_modules(false);
 	rehash(false);
 
-	sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
+	sendto_realops_snomask(sno::GENERAL, L_NETWIDE,
 			     "Module Restart: %u modules unloaded, %lu modules loaded",
 			     modnum, rb_dlink_list_length(&module_list));
 	ilog(L_MAIN, "Module Restart: %u modules unloaded, %lu modules loaded", modnum, rb_dlink_list_length(&module_list));

@@ -96,7 +96,7 @@ do_grant(client::client &source, client::client *target_p, const char *new_privs
 		dodeoper = 1;
 
 		sendto_one_notice(target_p, ":%s is deopering you.", source.name);
-		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s is deopering %s.", get_oper_name(&source), target_p->name);
+		sendto_realops_snomask(sno::GENERAL, L_NETWIDE, "%s is deopering %s.", get_oper_name(&source), target_p->name);
 	}
 	else
 	{
@@ -118,13 +118,13 @@ do_grant(client::client &source, client::client *target_p, const char *new_privs
 		if (!is(*target_p, umode::OPER))
 		{
 			sendto_one_notice(target_p, ":%s is opering you with privilege set %s", source.name, privset->name);
-			sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s is opering %s with privilege set %s", get_oper_name(&source), target_p->name, privset->name);
+			sendto_realops_snomask(sno::GENERAL, L_NETWIDE, "%s is opering %s with privilege set %s", get_oper_name(&source), target_p->name, privset->name);
 			dooper = 1;
 		}
 		else
 		{
 			sendto_one_notice(target_p, ":%s is changing your privilege set to %s", source.name, privset->name);
-			sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "%s is changing the privilege set of %s to %s", get_oper_name(&source), target_p->name, privset->name);
+			sendto_realops_snomask(sno::GENERAL, L_NETWIDE, "%s is changing the privilege set of %s to %s", get_oper_name(&source), target_p->name, privset->name);
 		}
 	}
 

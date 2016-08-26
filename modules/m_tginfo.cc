@@ -65,7 +65,7 @@ me_tginfo(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 	if (!is_tg_excessive(source))
 	{
 		set_tg_excessive(source);
-		sendto_realops_snomask_from(SNO_BOTS, L_ALL, source.servptr,
+		sendto_realops_snomask_from(sno::BOTS, L_ALL, source.servptr,
 			"Excessive target change from %s (%s@%s)",
 			source.name, source.username, source.orighost);
 	}

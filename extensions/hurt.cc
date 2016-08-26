@@ -234,7 +234,7 @@ mo_hurt(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	 * okay, we've got this far, now it's time to add the the HURT locally
 	 * and propagate it to other servers on the network.
 	 */
-	sendto_realops_snomask(SNO_GENERAL, L_ALL,
+	sendto_realops_snomask(sno::GENERAL, L_ALL,
 			"%s added HURT on [%s] for %ld minutes with reason [%s]",
 			get_oper_name(&source), ip, (long) expire_time / 60, reason);
 
@@ -273,7 +273,7 @@ me_hurt(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	if (EmptyString(parv[3]))
 		return;
 
-	sendto_realops_snomask(SNO_GENERAL, L_ALL,
+	sendto_realops_snomask(sno::GENERAL, L_ALL,
 			"%s added HURT on [%s] for %ld minutes with reason [%s]",
 			get_oper_name(&source), parv[2], (long) expire_time / 60, parv[3]);
 	hurt = hurt_new(expire_time, parv[2], parv[3]);
@@ -325,7 +325,7 @@ mo_heal(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 			return;
 		}
 		hurt_remove(parv[1]);
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s removed HURT on %s",
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "%s removed HURT on %s",
 				get_oper_name(&source), parv[1]);
 		sendto_server(NULL, NULL, NOCAPS, NOCAPS, ":%s ENCAP * HEAL %s",
 			source.name, parv[1]);
@@ -362,7 +362,7 @@ me_heal(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 			return;
 
 		hurt_remove(parv[1]);
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s removed HURT on %s",
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "%s removed HURT on %s",
 				get_oper_name(&source), parv[1]);
 	}
 }
@@ -602,7 +602,7 @@ heal_nick(client::client &source, client::client *target_p)
 {
 	if (rb_dlinkFindDestroy(target_p, &hurt_state.hurt_clients))
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s used HEAL on %s",
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "%s used HEAL on %s",
 				get_oper_name(&source), get_client_name(target_p, HIDE_IP));
 		sendto_one_notice(target_p, ":HURT restriction temporarily removed by operator");
 		sendto_one_notice(&source, ":HURT restriction on %s temporarily removed", target_p->name);

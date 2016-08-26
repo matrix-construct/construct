@@ -494,7 +494,7 @@ apply_kline(client::client &source, struct ConfItem *aconf,
 	/* no oper reason.. */
 	if(EmptyString(oper_reason))
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				       "%s added K-Line for [%s@%s] [%s]",
 				       get_oper_name(&source), aconf->user, aconf->host, reason);
 		ilog(L_KLINE, "K %s 0 %s %s %s",
@@ -502,7 +502,7 @@ apply_kline(client::client &source, struct ConfItem *aconf,
 	}
 	else
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				       "%s added K-Line for [%s@%s] [%s|%s]",
 				       get_oper_name(&source), aconf->user, aconf->host,
 				       reason, oper_reason);
@@ -530,7 +530,7 @@ apply_tkline(client::client &source, struct ConfItem *aconf,
 	/* no oper reason.. */
 	if(EmptyString(oper_reason))
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				       "%s added temporary %d min. K-Line for [%s@%s] [%s]",
 				       get_oper_name(&source), tkline_time / 60,
 				       aconf->user, aconf->host, reason);
@@ -539,7 +539,7 @@ apply_tkline(client::client &source, struct ConfItem *aconf,
 	}
 	else
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				       "%s added temporary %d min. K-Line for [%s@%s] [%s|%s]",
 				       get_oper_name(&source), tkline_time / 60,
 				       aconf->user, aconf->host, reason, oper_reason);
@@ -568,7 +568,7 @@ apply_prop_kline(client::client &source, struct ConfItem *aconf,
 	/* no oper reason.. */
 	if(EmptyString(oper_reason))
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				       "%s added global %d min. K-Line for [%s@%s] [%s]",
 				       get_oper_name(&source), tkline_time / 60,
 				       aconf->user, aconf->host, reason);
@@ -577,7 +577,7 @@ apply_prop_kline(client::client &source, struct ConfItem *aconf,
 	}
 	else
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				       "%s added global %d min. K-Line for [%s@%s] [%s|%s]",
 				       get_oper_name(&source), tkline_time / 60,
 				       aconf->user, aconf->host, reason, oper_reason);
@@ -747,7 +747,7 @@ remove_permkline_match(client::client &source, struct ConfItem *aconf)
 {
 	sendto_one_notice(&source, ":K-Line for [%s@%s] is removed", aconf->user, aconf->host);
 
-	sendto_realops_snomask(SNO_GENERAL, L_ALL,
+	sendto_realops_snomask(sno::GENERAL, L_ALL,
 			       "%s has removed the K-Line for: [%s@%s]",
 			       get_oper_name(&source), aconf->user, aconf->host);
 
@@ -779,7 +779,7 @@ remove_temp_kline(client::client &source, struct ConfItem *aconf)
 				sendto_one_notice(&source,
 						  ":Un-klined [%s@%s] from temporary k-lines",
 						  aconf->user, aconf->host);
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				sendto_realops_snomask(sno::GENERAL, L_ALL,
 						       "%s has removed the temporary K-Line for: [%s@%s]",
 						       get_oper_name(&source), aconf->user,
 						       aconf->host);
@@ -809,7 +809,7 @@ remove_prop_kline(client::client &source, struct ConfItem *aconf)
 	sendto_one_notice(&source,
 			  ":Un-klined [%s@%s] from global k-lines",
 			  aconf->user, aconf->host);
-	sendto_realops_snomask(SNO_GENERAL, L_ALL,
+	sendto_realops_snomask(sno::GENERAL, L_ALL,
 			       "%s has removed the global K-Line for: [%s@%s]",
 			       get_oper_name(&source), aconf->user,
 			       aconf->host);

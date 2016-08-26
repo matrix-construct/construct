@@ -57,7 +57,7 @@ ms_svinfo(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 	if(TS_CURRENT < atoi(parv[2]) || atoi(parv[1]) < TS_MIN)
 	{
 		/* TS version is too low on one of the sides, drop the link */
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				     "Link %s dropped, wrong TS protocol version (%s,%s)",
 				     source.name, parv[1], parv[2]);
 		snprintf(squitreason, sizeof squitreason, "Incompatible TS version (%s,%s)",
@@ -75,7 +75,7 @@ ms_svinfo(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 
 	if(deltat > ConfigFileEntry.ts_max_delta)
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				     "Link %s dropped, excessive TS delta"
 				     " (my TS=%ld, their TS=%ld, delta=%ld)",
 				     source.name,
@@ -93,7 +93,7 @@ ms_svinfo(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 
 	if(deltat > ConfigFileEntry.ts_warn_delta)
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
+		sendto_realops_snomask(sno::GENERAL, L_NETWIDE,
 				     "Link %s notable TS delta"
 				     " (my TS=%ld, their TS=%ld, delta=%ld)",
 				     source.name, (long) rb_current_time(), (long) theirtime, deltat);

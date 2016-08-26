@@ -265,7 +265,7 @@ moper_test(struct MsgBuf *msgbuf_p, client::client &client, client::client &sour
 static void
 show_example_hook(void *unused)
 {
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, "Called example hook!");
+	sendto_realops_snomask(sno::GENERAL, L_ALL, "Called example hook!");
 }
 
 /* END OF EXAMPLE MODULE */

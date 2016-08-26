@@ -215,7 +215,7 @@ parse_resv(client::client &source, const char *name, const char *reason, int tem
 			replace_old_ban(aconf);
 			rb_dlinkAddAlloc(aconf, &prop_bans);
 
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					       "%s added global %d min. RESV for [%s] [%s]",
 					       get_oper_name(&source), temp_time / 60,
 					       name, reason);
@@ -235,7 +235,7 @@ parse_resv(client::client &source, const char *name, const char *reason, int tem
 		{
 			aconf->hold = rb_current_time() + temp_time;
 
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					       "%s added temporary %d min. RESV for [%s] [%s]",
 					       get_oper_name(&source), temp_time / 60,
 					       name, reason);
@@ -246,7 +246,7 @@ parse_resv(client::client &source, const char *name, const char *reason, int tem
 		}
 		else
 		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					       "%s added RESV for [%s] [%s]",
 					       get_oper_name(&source), name, reason);
 			ilog(L_KLINE, "R %s 0 %s %s",
@@ -299,7 +299,7 @@ parse_resv(client::client &source, const char *name, const char *reason, int tem
 			replace_old_ban(aconf);
 			rb_dlinkAddAlloc(aconf, &prop_bans);
 
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					       "%s added global %d min. RESV for [%s] [%s]",
 					       get_oper_name(&source), temp_time / 60,
 					       name, reason);
@@ -319,7 +319,7 @@ parse_resv(client::client &source, const char *name, const char *reason, int tem
 		{
 			aconf->hold = rb_current_time() + temp_time;
 
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					       "%s added temporary %d min. RESV for [%s] [%s]",
 					       get_oper_name(&source), temp_time / 60,
 					       name, reason);
@@ -330,7 +330,7 @@ parse_resv(client::client &source, const char *name, const char *reason, int tem
 		}
 		else
 		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					       "%s added RESV for [%s] [%s]",
 					       get_oper_name(&source), name, reason);
 			ilog(L_KLINE, "R %s 0 %s %s",
@@ -512,7 +512,7 @@ remove_resv(client::client &source, const char *name, int propagated)
 			if(ptr == NULL)
 				return;
 			sendto_one_notice(&source, ":RESV for [%s] is removed", name);
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					       "%s has removed the global RESV for: [%s]",
 					       get_oper_name(&source), name);
 			ilog(L_KLINE, "UR %s %s", get_oper_name(&source), name);
@@ -542,13 +542,13 @@ remove_resv(client::client &source, const char *name, int propagated)
 		if(!aconf->hold)
 		{
 			bandb_del(BANDB_RESV, aconf->host, NULL);
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					       "%s has removed the RESV for: [%s]",
 					       get_oper_name(&source), name);
 		}
 		else
 		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					       "%s has removed the temporary RESV for: [%s]",
 					       get_oper_name(&source), name);
 		}
@@ -586,7 +586,7 @@ remove_resv(client::client &source, const char *name, int propagated)
 			if(ptr == NULL)
 				return;
 			sendto_one_notice(&source, ":RESV for [%s] is removed", name);
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					       "%s has removed the global RESV for: [%s]",
 					       get_oper_name(&source), name);
 			ilog(L_KLINE, "UR %s %s", get_oper_name(&source), name);
@@ -616,13 +616,13 @@ remove_resv(client::client &source, const char *name, int propagated)
 		if(!aconf->hold)
 		{
 			bandb_del(BANDB_RESV, aconf->host, NULL);
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					       "%s has removed the RESV for: [%s]",
 					       get_oper_name(&source), name);
 		}
 		else
 		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					       "%s has removed the temporary RESV for: [%s]",
 					       get_oper_name(&source), name);
 		}

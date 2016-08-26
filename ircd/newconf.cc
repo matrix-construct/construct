@@ -708,7 +708,7 @@ conf_set_oper_umodes(void *data)
 static void
 conf_set_oper_snomask(void *data)
 {
-	yy_oper->snomask = parse_snobuf_to_mask(0, (const char *) data);
+	yy_oper->snomask = mask(sno::table, (const char *)data);
 }
 
 static int
@@ -1728,32 +1728,7 @@ conf_set_general_oper_only_umodes(void *data)
 static void
 conf_set_general_oper_snomask(void *data)
 {
-	char *pm;
-	int what = MODE_ADD, flag;
-
-	ConfigFileEntry.oper_snomask = 0;
-	for (pm = (char *) data; *pm; pm++)
-	{
-		switch (*pm)
-		{
-		case '+':
-			what = MODE_ADD;
-			break;
-		case '-':
-			what = MODE_DEL;
-			break;
-
-		default:
-			if ((flag = snomask_modes[(unsigned char) *pm]))
-			{
-				if (what == MODE_ADD)
-					ConfigFileEntry.oper_snomask |= flag;
-				else
-					ConfigFileEntry.oper_snomask &= ~flag;
-			}
-			break;
-		}
-	}
+	ConfigFileEntry.oper_snomask = mask(sno::table, (const char *)data);
 }
 
 static void
@@ -2380,7 +2355,7 @@ conf_report_error(const char *fmt, ...)
 	}
 
 	ierror("\"%s\", line %d: %s", current_file, lineno + 1, msg);
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, "error: \"%s\", line %d: %s", current_file, lineno + 1, msg);
+	sendto_realops_snomask(sno::GENERAL, L_ALL, "error: \"%s\", line %d: %s", current_file, lineno + 1, msg);
 }
 
 void
@@ -2400,7 +2375,7 @@ conf_report_warning(const char *fmt, ...)
 	}
 
 	iwarn("\"%s\", line %d: %s", current_file, lineno + 1, msg);
-	sendto_realops_snomask(SNO_GENERAL, L_ALL, "warning: \"%s\", line %d: %s", current_file, lineno + 1, msg);
+	sendto_realops_snomask(sno::GENERAL, L_ALL, "warning: \"%s\", line %d: %s", current_file, lineno + 1, msg);
 }
 
 int

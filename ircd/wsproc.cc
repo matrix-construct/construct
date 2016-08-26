@@ -184,7 +184,7 @@ ws_dead(ws_ctl_t * ctl)
 	{
 		wsockd_count--;
 		ilog(L_MAIN, "wsockd helper died - attempting to restart");
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "wsockd helper died - attempting to restart");
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "wsockd helper died - attempting to restart");
 		start_wsockd(1);
 	}
 }
@@ -213,7 +213,7 @@ restart_wsockd_event(void *unused)
 	{
 		int start = ServerInfo.wsockd_count - get_wsockd_count();
 		ilog(L_MAIN, "Attempting to restart wsockd processes");
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Attempting to restart wsockd processes");
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "Attempting to restart wsockd processes");
 		start_wsockd(start);
 	}
 }
@@ -243,7 +243,7 @@ start_wsockd(int count)
 	if(wsockd_spin_count > 20 && (rb_current_time() - last_spin < 5))
 	{
 		ilog(L_MAIN, "wsockd helper is spinning - will attempt to restart in 1 minute");
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				       "wsockd helper is spinning - will attempt to restart in 1 minute");
 		rb_event_add("restart_wsockd_event", restart_wsockd_event, NULL, 60);
 		wsockd_wait = 1;
@@ -371,7 +371,7 @@ ws_process_cmd_recv(ws_ctl_t * ctl)
 			break;
 		default:
 			ilog(L_MAIN, "Received invalid command from wsockd: %s", ctl_buf->buf);
-			sendto_realops_snomask(SNO_GENERAL, L_ALL, "Received invalid command from wsockd");
+			sendto_realops_snomask(sno::GENERAL, L_ALL, "Received invalid command from wsockd");
 			break;
 		}
 		rb_dlinkDelete(ptr, &ctl->readq);

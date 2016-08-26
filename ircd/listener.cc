@@ -168,7 +168,7 @@ inetport(struct Listener *listener)
 
 	if(F == NULL)
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				"Cannot open socket for listener on port %d",
 				get_listener_port(listener));
 		ilog(L_MAIN, "Cannot open socket for listener %s",
@@ -178,7 +178,7 @@ inetport(struct Listener *listener)
 	else if((maxconnections - 10) < rb_get_fd(F)) /* XXX this is kinda bogus*/
 	{
 		ilog_error("no more connections left for listener");
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				"No more connections left for listener on port %d",
 				get_listener_port(listener));
 		ilog(L_MAIN, "No more connections left for listener %s",
@@ -196,7 +196,7 @@ inetport(struct Listener *listener)
 	if(setsockopt(rb_get_fd(F), SOL_SOCKET, SO_REUSEADDR, (char *) &opt, sizeof(opt)))
 	{
 		errstr = strerror(rb_get_sockerr(F));
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				"Cannot set SO_REUSEADDR for listener on port %d: %s",
 				get_listener_port(listener), errstr);
 		ilog(L_MAIN, "Cannot set SO_REUSEADDR for listener %s: %s",
@@ -209,7 +209,7 @@ inetport(struct Listener *listener)
 	if(bind(rb_get_fd(F), (struct sockaddr *) &listener->addr, GET_SS_LEN(&listener->addr)))
 	{
 		errstr = strerror(rb_get_sockerr(F));
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				"Cannot bind for listener on port %d: %s",
 				get_listener_port(listener), errstr);
 		ilog(L_MAIN, "Cannot bind for listener %s: %s",
@@ -221,7 +221,7 @@ inetport(struct Listener *listener)
 	if(rb_listen(F, SOMAXCONN, listener->defer_accept))
 	{
 		errstr = strerror(rb_get_sockerr(F));
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				"Cannot listen() for listener on port %d: %s",
 				get_listener_port(listener), errstr);
 		ilog(L_MAIN, "Cannot listen() for listener %s: %s",
@@ -530,7 +530,7 @@ accept_precallback(rb_fde_t *F, struct sockaddr *addr, rb_socklen_t addrlen, voi
 		 */
 		if((last_oper_notice + 20) <= rb_current_time())
 		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					     "All connections in use. (%s)",
 					     get_listener_name(listener));
 			last_oper_notice = rb_current_time();

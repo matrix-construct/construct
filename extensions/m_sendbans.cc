@@ -118,7 +118,7 @@ mo_sendbans(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 		return;
 	}
 
-	sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
+	sendto_realops_snomask(sno::GENERAL, L_NETWIDE,
 			"%s!%s@%s is sending resvs and xlines to %s",
 			source.name, source.username, source.host,
 			target);

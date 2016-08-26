@@ -185,7 +185,7 @@ check_rehash(void *unused)
 
 	if(doremotd)
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				     "Got signal SIGUSR1, reloading ircd motd file");
 		cache::motd::cache_user();
 		doremotd = false;
@@ -366,7 +366,7 @@ ircd_die_cb(const char *str)
 	if(str != NULL)
 	{
 		/* Try to get the message out to currently logged in operators. */
-		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE, "librb has called the die callback..aborting: %s", str);
+		sendto_realops_snomask(sno::GENERAL, L_NETWIDE, "librb has called the die callback..aborting: %s", str);
 		inotice("librb has called the die callback..aborting: %s", str);
 	}
 	else

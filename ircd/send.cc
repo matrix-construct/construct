@@ -44,7 +44,7 @@ _send_linebuf(client::client *to, buf_head_t *linebuf)
 {
 	if(is_me(*to))
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Trying to send message to myself!");
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "Trying to send message to myself!");
 		return 0;
 	}
 
@@ -55,7 +55,7 @@ _send_linebuf(client::client *to, buf_head_t *linebuf)
 	{
 		if(is_server(*to))
 		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					     "Max SendQ limit exceeded for %s: %u > %lu",
 					     to->name,
 					     rb_linebuf_len(&to->localClient->buf_sendq),
@@ -312,7 +312,7 @@ sendto_one_prefix(client::client *target_p, client::client *source_p,
 
 	if(is_me(*dest_p))
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Trying to send to myself!");
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "Trying to send to myself!");
 		return;
 	}
 
@@ -353,7 +353,7 @@ sendto_one_notice(client::client *target_p, const char *pattern, ...)
 
 	if(is_me(*dest_p))
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Trying to send to myself!");
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "Trying to send to myself!");
 		return;
 	}
 
@@ -394,7 +394,7 @@ sendto_one_numeric(client::client *target_p, int numeric, const char *pattern, .
 
 	if(is_me(*dest_p))
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Trying to send to myself!");
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "Trying to send to myself!");
 		return;
 	}
 
@@ -1176,7 +1176,6 @@ void
 sendto_realops_snomask(int flags, int level, const char *pattern, ...)
 {
 	static char buf[BUFSIZE];
-	char *snobuf;
 	client::client *client_p;
 	rb_dlink_node *ptr;
 	rb_dlink_node *next_ptr;
@@ -1195,11 +1194,14 @@ sendto_realops_snomask(int flags, int level, const char *pattern, ...)
 		va_end(args);
 		rb_linebuf_putmsg(&linebuf, pattern, NULL,
 				":%s NOTICE * :*** Notice -- %s", me.name, buf);
-		snobuf = construct_snobuf(flags);
-		if (snobuf[1] != '\0')
+
+		static char snobuf[128];
+		if(*delta(sno::table, 0, flags, snobuf))
 			sendto_server(NULL, NULL, CAP_ENCAP|CAP_TS6, NOCAPS,
-					":%s ENCAP * SNOTE %c :%s",
-					me.id, snobuf[1], buf);
+			              ":%s ENCAP * SNOTE %c :%s",
+			              me.id,
+			              snobuf[1],
+			              buf);
 	}
 	else if (remote_rehash_oper_p != NULL)
 	{

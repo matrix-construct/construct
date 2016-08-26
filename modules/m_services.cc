@@ -103,7 +103,7 @@ me_su(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 
 	if(!(source.flags & client::flags::SERVICE))
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 			"Non-service server %s attempting to execute services-only command SU", source.name);
 		return;
 	}
@@ -147,7 +147,7 @@ me_rsfnc(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 
 	if(!(source.flags & client::flags::SERVICE))
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 			"Non-service server %s attempting to execute services-only command RSFNC", source.name);
 		return;
 	}
@@ -191,7 +191,7 @@ me_rsfnc(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 		{
 			kill_client_serv_butone(NULL, exist_p, "%s (Nickname regained by services)",
 						me.name);
-			sendto_realops_snomask(SNO_SKILL, L_ALL,
+			sendto_realops_snomask(sno::SKILL, L_ALL,
 					"Nick collision due to services forced nick change on %s",
 					parv[2]);
 		}
@@ -214,7 +214,7 @@ doit:
 
 	chan::invalidate_bancache_user(target_p);
 
-	sendto_realops_snomask(SNO_NCHANGE, L_ALL,
+	sendto_realops_snomask(sno::NCHANGE, L_ALL,
 			"Nick change: From %s to %s [%s@%s]",
 			target_p->name, parv[2], target_p->username,
 			target_p->host);
@@ -252,7 +252,7 @@ me_nickdelay(struct MsgBuf *msgbuf_p, client::client &client, client::client &so
 
 	if(!(source.flags & client::flags::SERVICE))
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 			"Non-service server %s attempting to execute services-only command NICKDELAY", source.name);
 		return;
 	}

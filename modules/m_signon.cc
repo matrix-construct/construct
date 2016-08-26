@@ -104,7 +104,7 @@ me_svslogin(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 
 	if(!(source.flags & client::flags::SERVICE))
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 			"Non-service server %s attempting to execute services-only command SVSLOGIN", source.name);
 		return;
 	}
@@ -168,7 +168,7 @@ me_svslogin(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 		exist_p->flags |= client::flags::KILLED;
 		kill_client_serv_butone(NULL, exist_p, "%s (Nickname regained by services)",
 					me.name);
-		sendto_realops_snomask(SNO_SKILL, L_ALL,
+		sendto_realops_snomask(sno::SKILL, L_ALL,
 				"Nick collision due to SVSLOGIN on %s",
 				nick);
 
@@ -232,7 +232,7 @@ ms_signon(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 	if(!client::clean_nick(parv[1], 0))
 	{
 		ServerStats.is_kill++;
-		sendto_realops_snomask(SNO_DEBUG, L_ALL,
+		sendto_realops_snomask(sno::DEBUG, L_ALL,
 				"Bad Nick from SIGNON: %s From: %s(via %s)",
 				parv[1], source.servptr->name, client.name);
 		/* if &source has an id, kill_client_serv_butone() will
@@ -250,7 +250,7 @@ ms_signon(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 	if(!clean_username(parv[2]) || !clean_host(parv[3]))
 	{
 		ServerStats.is_kill++;
-		sendto_realops_snomask(SNO_DEBUG, L_ALL,
+		sendto_realops_snomask(sno::DEBUG, L_ALL,
 				"Bad user@host from SIGNON: %s@%s From: %s(via %s)",
 				parv[2], parv[3], source.servptr->name, client.name);
 		/* if &source has an id, kill_client_serv_butone() will
@@ -290,7 +290,7 @@ ms_signon(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 		{
 			if(!newts || !target_p->tsinfo || (newts == target_p->tsinfo) || !source.user)
 			{
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				sendto_realops_snomask(sno::GENERAL, L_ALL,
 						     "Nick change collision from SIGNON from %s to %s(%s <- %s)(both killed)",
 						     source.name, target_p->name, target_p->from->name,
 						     client.name);
@@ -320,12 +320,12 @@ ms_signon(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 				   (!sameuser && newts > target_p->tsinfo))
 				{
 					if(sameuser)
-						sendto_realops_snomask(SNO_GENERAL, L_ALL,
+						sendto_realops_snomask(sno::GENERAL, L_ALL,
 								     "Nick change collision from SIGNON from %s to %s(%s <- %s)(older killed)",
 								     source.name, target_p->name,
 								     target_p->from->name, client.name);
 					else
-						sendto_realops_snomask(SNO_GENERAL, L_ALL,
+						sendto_realops_snomask(sno::GENERAL, L_ALL,
 								     "Nick change collision from SIGNON from %s to %s(%s <- %s)(newer killed)",
 								     source.name, target_p->name,
 								     target_p->from->name, client.name);
@@ -350,12 +350,12 @@ ms_signon(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 				else
 				{
 					if(sameuser)
-						sendto_realops_snomask(SNO_GENERAL, L_ALL,
+						sendto_realops_snomask(sno::GENERAL, L_ALL,
 								     "Nick collision from SIGNON on %s(%s <- %s)(older killed)",
 								     target_p->name, target_p->from->name,
 								     client.name);
 					else
-						sendto_realops_snomask(SNO_GENERAL, L_ALL,
+						sendto_realops_snomask(sno::GENERAL, L_ALL,
 								     "Nick collision from SIGNON on %s(%s <- %s)(newer killed)",
 								     target_p->name, target_p->from->name,
 								     client.name);

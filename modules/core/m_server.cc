@@ -69,7 +69,7 @@ mr_server(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 
 	if (is_handshake(client) && irccmp(client.name, name))
 	{
-		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(&client) ? L_NETWIDE : L_ALL,
+		sendto_realops_snomask(sno::GENERAL, is_remote_connect(&client) ? L_NETWIDE : L_ALL,
 				"Server %s has unexpected name %s",
 				client.name, name);
 		ilog(L_SERVER, "Server %s has unexpected name %s",
@@ -83,7 +83,7 @@ mr_server(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 	 */
 	if(!DoesTS(&client))
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Link %s dropped, non-TS server",
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "Link %s dropped, non-TS server",
 				     client.name);
 		exit_client(&client, &client, &client, "Non-TS server");
 		return;
@@ -106,7 +106,7 @@ mr_server(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 	case -1:
 		if(ConfigFileEntry.warn_no_nline)
 		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					     "Unauthorised server connection attempt from %s: "
 					     "No entry for servername %s",
 					     "[@255.255.255.255]", name);
@@ -122,7 +122,7 @@ mr_server(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 		break;
 
 	case -2:
-		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(&client) ? L_NETWIDE : L_ALL,
+		sendto_realops_snomask(sno::GENERAL, is_remote_connect(&client) ? L_NETWIDE : L_ALL,
 				     "Unauthorised server connection attempt from %s: "
 				     "Bad credentials for server %s",
 				     "[@255.255.255.255]", name);
@@ -137,7 +137,7 @@ mr_server(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 		break;
 
 	case -3:
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				     "Unauthorised server connection attempt from %s: "
 				     "Invalid host for server %s",
 				     "[@255.255.255.255]", name);
@@ -153,7 +153,7 @@ mr_server(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 
 		/* servername is > HOSTLEN */
 	case -4:
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				     "Invalid servername %s from %s",
 				     name, "[@255.255.255.255]");
 		ilog(L_SERVER, "Access denied, invalid servername from %s",
@@ -164,7 +164,7 @@ mr_server(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 		/* NOT REACHED */
 		break;
 	case -5:
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 		     "Connection from servername %s requires SSL/TLS but is plaintext",
 		     name);
 		ilog(L_SERVER, "Access denied, requires SSL/TLS but is plaintext from %s",
@@ -173,7 +173,7 @@ mr_server(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 		exit_client(&client, &client, &client, "Access denied, requires SSL/TLS but is plaintext");
 		return;
 	case -6:
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 		     "Connection from servername %s has invalid certificate fingerprint %s",
 		     name, client.certfp);
 		ilog(L_SERVER, "Access denied, invalid certificate fingerprint %s from %s",
@@ -182,7 +182,7 @@ mr_server(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 		exit_client(&client, &client, &client, "Invalid fingerprint.");
 		return;
 	default:
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 		     "Connection from servername %s rejected, unknown error %d",
 		     name, ret);
 		ilog(L_SERVER, "Access denied, unknown error %d for server %s%s", ret,
@@ -196,7 +196,7 @@ mr_server(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 	/* require TS6 for direct links */
 	if(!IsCapable(&client, CAP_TS6))
 	{
-		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(&client) ? L_NETWIDE : L_ALL,
+		sendto_realops_snomask(sno::GENERAL, is_remote_connect(&client) ? L_NETWIDE : L_ALL,
 					"Link %s dropped, TS6 protocol is required", name);
 		exit_client(&client, &client, &client, "Incompatible TS version");
 		return;
@@ -207,7 +207,7 @@ mr_server(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 	if (!IsCapable(&client, required_mask))
 	{
 		const auto missing(serv_capindex.list(required_mask & ~client.localClient->caps));
-		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(&client) ? L_NETWIDE : L_ALL,
+		sendto_realops_snomask(sno::GENERAL, is_remote_connect(&client) ? L_NETWIDE : L_ALL,
 					"Link %s dropped, required CAPABs [%s] are missing",
 					name, missing.c_str());
 		ilog(L_SERVER, "Link %s%s dropped, required CAPABs [%s] are missing",
@@ -246,7 +246,7 @@ mr_server(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 		}
 		else
 		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					     "Attempt to re-introduce server %s from %s",
 					     name, "[@255.255.255.255]");
 			ilog(L_SERVER, "Attempt to re-introduce server %s from %s",
@@ -260,7 +260,7 @@ mr_server(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 
 	if(has_id(&client) && (target_p = find_id(client.id)) != NULL)
 	{
-		sendto_realops_snomask(SNO_GENERAL, is_remote_connect(&client) ? L_NETWIDE : L_ALL,
+		sendto_realops_snomask(sno::GENERAL, is_remote_connect(&client) ? L_NETWIDE : L_ALL,
 				     "Attempt to re-introduce SID %s from %s%s (already in use by %s)",
 				     client.id,
 				     EmptyString(client.name) ? name : "",
@@ -354,7 +354,7 @@ ms_server(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 		 * for a while and servers to send stuff to the wrong place.
 		 */
 		sendto_one(&client, "ERROR :Nickname %s already exists!", name);
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				     "Link %s cancelled: Server/nick collision on %s",
 				     client.name, name);
 		ilog(L_SERVER, "Link %s cancelled: Server/nick collision on %s",
@@ -416,7 +416,7 @@ ms_server(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 	if(!hlined)
 	{
 		/* OOOPs nope can't HUB */
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "Non-Hub link %s introduced %s.",
+		sendto_realops_snomask(sno::GENERAL, L_ALL, "Non-Hub link %s introduced %s.",
 				     client.name, name);
 		ilog(L_SERVER, "Non-Hub link %s introduced %s.",
 			client.name, name);
@@ -432,7 +432,7 @@ ms_server(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 	if(llined)
 	{
 		/* OOOPs nope can't HUB this leaf */
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				     "Link %s introduced leafed server %s.",
 				     client.name, name);
 		ilog(L_SERVER, "Link %s introduced leafed server %s.",
@@ -449,7 +449,7 @@ ms_server(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 
 	if(strlen(name) > HOSTLEN)
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				     "Link %s introduced server with invalid servername %s",
 				     client.name, name);
 		ilog(L_SERVER, "Link %s introduced server with invalid servername %s",
@@ -483,7 +483,7 @@ ms_server(struct MsgBuf *msgbuf_p, client::client &client, client::client &sourc
 		      source.name, target_p->name, target_p->hopcount + 1,
 		      is_hidden(*target_p) ? "(H) " : "", target_p->info);
 
-	sendto_realops_snomask(SNO_EXTERNAL, L_ALL,
+	sendto_realops_snomask(sno::EXTERNAL, L_ALL,
 			     "Server %s being introduced by %s", target_p->name, source.name);
 
 	/* quick, dirty EOB.  you know you love it. */
@@ -540,7 +540,7 @@ ms_sid(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 	if(bogus_host(parv[1]) || strlen(parv[1]) > HOSTLEN)
 	{
 		sendto_one(&client, "ERROR :Invalid servername");
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				     "Link %s cancelled, servername %s invalid",
 				     client.name, parv[1]);
 		ilog(L_SERVER, "Link %s cancelled, servername %s invalid",
@@ -556,7 +556,7 @@ ms_sid(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 	   parv[3][3] != '\0')
 	{
 		sendto_one(&client, "ERROR :Invalid SID");
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				     "Link %s cancelled, SID %s invalid",
 				     client.name, parv[3]);
 		ilog(L_SERVER, "Link %s cancelled, SID %s invalid",
@@ -586,7 +586,7 @@ ms_sid(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 	/* no matching hub_mask */
 	if(!hlined)
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				     "Non-Hub link %s introduced %s.",
 				     client.name, parv[1]);
 		ilog(L_SERVER, "Non-Hub link %s introduced %s.",
@@ -602,7 +602,7 @@ ms_sid(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 	/* matching leaf_mask */
 	if(llined)
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				     "Link %s introduced leafed server %s.",
 				     client.name, parv[1]);
 		ilog(L_SERVER, "Link %s introduced leafed server %s.",
@@ -640,7 +640,7 @@ ms_sid(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 		      source.id, target_p->name, target_p->hopcount + 1,
 		      target_p->id, is_hidden(*target_p) ? "(H) " : "", target_p->info);
 
-	sendto_realops_snomask(SNO_EXTERNAL, L_ALL,
+	sendto_realops_snomask(sno::EXTERNAL, L_ALL,
 			     "Server %s being introduced by %s", target_p->name, source.name);
 
 	/* quick, dirty EOB.  you know you love it. */

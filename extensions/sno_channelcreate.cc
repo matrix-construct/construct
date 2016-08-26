@@ -22,7 +22,7 @@ static int
 _modinit(void)
 {
 	/* add the snomask to the available slot */
-	snomask_modes['l'] = find_snomask_slot();
+	sno::table['l'] = sno::mask(find_slot(sno::table));
 
 	return 0;
 }
@@ -31,7 +31,7 @@ static void
 _moddeinit(void)
 {
 	/* disable the snomask and remove it from the available list */
-	snomask_modes['l'] = 0;
+	sno::table['l'] = sno::mask(0);
 }
 
 
@@ -45,7 +45,7 @@ h_scc_channel_join(void *vdata)
 	/* If they just joined a channel, and it only has one member, then they just created it. */
 	if(size(chptr->members) == 1 && is_chanop(get(chptr->members, *source_p, std::nothrow)))
 	{
-		sendto_realops_snomask(snomask_modes['l'], L_NETWIDE, "%s is creating new channel %s",
+		sendto_realops_snomask(sno::table['l'], L_NETWIDE, "%s is creating new channel %s",
 					source_p->name, chptr->name.c_str());
 	}
 }

@@ -130,7 +130,7 @@ mo_kill(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 
 	/* Do not change the format of this message.  There's no point in changing messages
 	 * that have been around for ever, for no reason.. */
-	sendto_realops_snomask(SNO_GENERAL, L_ALL,
+	sendto_realops_snomask(sno::GENERAL, L_ALL,
 			     "Received KILL message for %s!%s@%s. From %s Path: %s (%s)",
 			     target_p->name, target_p->username, target_p->orighost,
 			     source.name, me.name, reason);
@@ -253,7 +253,7 @@ ms_kill(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	 */
 	if(is(source, umode::OPER))	/* send it normally */
 	{
-		sendto_realops_snomask(is(source, umode::SERVICE) ? SNO_SKILL : SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(is(source, umode::SERVICE) ? sno::SKILL : sno::GENERAL, L_ALL,
 				     "Received KILL message for %s!%s@%s. From %s Path: %s!%s!%s!%s %s",
 				     target_p->name, target_p->username, target_p->orighost, source.name,
 				     source.servptr->name, source.host, source.username,
@@ -266,7 +266,7 @@ ms_kill(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	}
 	else
 	{
-		sendto_realops_snomask(SNO_SKILL, L_ALL,
+		sendto_realops_snomask(sno::SKILL, L_ALL,
 				     "Received KILL message for %s!%s@%s. From %s %s",
 				     target_p->name, target_p->username, target_p->orighost,
 				     source.name, reason);

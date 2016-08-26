@@ -202,7 +202,7 @@ authd_check(client::client *client_p, client::client *source_p)
 				break;
 			}
 
-			sendto_realops_snomask(SNO_REJ, L_NETWIDE,
+			sendto_realops_snomask(sno::REJ, L_NETWIDE,
 				"Listed on DNSBL %s: %s (%s@%s) [%s] [%s]",
 				blacklist, source_p->name, source_p->username, source_p->host,
 				is_ip_spoof(*source_p) ? "255.255.255.255" : source_p->sockhost,
@@ -227,7 +227,7 @@ authd_check(client::client *client_p, client::client *source_p)
 			{
 				/* This shouldn't happen, better tell the ops... */
 				ierror("authd sent us a malformed OPM string %s", proxy);
-				sendto_realops_snomask(SNO_GENERAL, L_ALL,
+				sendto_realops_snomask(sno::GENERAL, L_ALL,
 					"authd sent us a malformed OPM string %s", proxy);
 				break;
 			}
@@ -242,7 +242,7 @@ authd_check(client::client *client_p, client::client *source_p)
 					source_p->sockhost, proxy, port);
 				break;
 			}
-			sendto_realops_snomask(SNO_REJ, L_NETWIDE,
+			sendto_realops_snomask(sno::REJ, L_NETWIDE,
 				"Open proxy %s/%s: %s (%s@%s) [%s] [%s]",
 				proxy, port,
 				source_p->name,
@@ -269,7 +269,7 @@ authd_check(client::client *client_p, client::client *source_p)
 				reason);
 			break;
 		}
-		sendto_realops_snomask(SNO_REJ, L_NETWIDE,
+		sendto_realops_snomask(sno::REJ, L_NETWIDE,
 			"Rejected by authentication system (reason %s): %s (%s@%s) [%s] [%s]",
 			reason, source_p->name, source_p->username, source_p->host,
 			is_ip_spoof(*source_p) ? "255.255.255.255" : source_p->sockhost,
@@ -505,7 +505,7 @@ register_local_user(client::client *client_p, client::client *source_p)
 	if(rb_dlink_list_length(&lclient_list) >=
 	    (unsigned long)GlobalSetOptions.maxclients && !IsConfExemptLimits(aconf))
 	{
-		sendto_realops_snomask(SNO_FULL, L_ALL,
+		sendto_realops_snomask(sno::FULL, L_ALL,
 				     "Too many clients, rejecting %s[%s].", source_p->name, source_p->host);
 
 		ServerStats.is_ref++;
@@ -531,7 +531,7 @@ register_local_user(client::client *client_p, client::client *source_p)
 
 	if(!valid_username(source_p->username))
 	{
-		sendto_realops_snomask(SNO_REJ, L_ALL,
+		sendto_realops_snomask(sno::REJ, L_ALL,
 				     "Invalid username: %s (%s@%s)",
 				     source_p->name, source_p->username, source_p->host);
 		ServerStats.is_ref++;
@@ -571,13 +571,13 @@ register_local_user(client::client *client_p, client::client *source_p)
 	 */
 	rb_inet_ntop_sock((struct sockaddr *)&source_p->localClient->ip, ipaddr, sizeof(ipaddr));
 
-	sendto_realops_snomask(SNO_CCONN, L_ALL,
+	sendto_realops_snomask(sno::CCONN, L_ALL,
 			     "Client connecting: %s (%s@%s) [%s] {%s} [%s]",
 			     source_p->name, source_p->username, source_p->orighost,
 			     show_ip(NULL, source_p) ? ipaddr : "255.255.255.255",
 			     get_client_class(source_p), source_p->info);
 
-	sendto_realops_snomask(SNO_CCONNEXT, L_ALL,
+	sendto_realops_snomask(sno::CCONNEXT, L_ALL,
 			"CLICONN %s %s %s %s %s %s 0 %s",
 			source_p->name, source_p->username, source_p->orighost,
 			show_ip(NULL, source_p) ? ipaddr : "255.255.255.255",
@@ -622,7 +622,7 @@ register_local_user(client::client *client_p, client::client *source_p)
 	{
 		Count.max_loc = rb_dlink_list_length(&lclient_list);
 		if(!(Count.max_loc % 10))
-			sendto_realops_snomask(SNO_GENERAL, L_ALL,
+			sendto_realops_snomask(sno::GENERAL, L_ALL,
 					     "New Max Local Clients: %d", Count.max_loc);
 	}
 
@@ -951,9 +951,12 @@ show_other_user_mode(client::client *source_p, client::client *target_p)
 	*m = '\0';
 
 	if (my_connect(*target_p) && target_p->snomask != 0)
+	{
+		char snobuf[128];
 		sendto_one_notice(source_p, ":Modes for %s are %s %s",
-				target_p->name, buf,
-				construct_snobuf(target_p->snomask));
+		                  target_p->name, buf,
+		                  mask(sno::table, target_p->snomask, snobuf));
+	}
 	else
 		sendto_one_notice(source_p, ":Modes for %s are %s",
 				target_p->name, buf);
@@ -1003,7 +1006,7 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 
 	if(is_server(*source_p))
 	{
-		sendto_realops_snomask(SNO_GENERAL, L_ADMIN,
+		sendto_realops_snomask(sno::GENERAL, L_ADMIN,
 				     "*** Mode for User %s from %s", parv[1], source_p->name);
 		return 0;
 	}
@@ -1030,8 +1033,11 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 		sendto_one_numeric(source_p, RPL_UMODEIS, form_str(RPL_UMODEIS), buf);
 
 		if (source_p->snomask != 0)
+		{
+			char snobuf[128];
 			sendto_one_numeric(source_p, RPL_SNOMASK, form_str(RPL_SNOMASK),
-				construct_snobuf(source_p->snomask));
+			                   mask(sno::table, source_p->snomask, snobuf));
+		}
 
 		return 0;
 	}
@@ -1125,9 +1131,9 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 				if(what == MODE_ADD)
 				{
 					if (parc > 3)
-						source_p->snomask = parse_snobuf_to_mask(source_p->snomask, parv[3]);
+						source_p->snomask = delta(sno::table, source_p->snomask, parv[3]);
 					else
-						source_p->snomask |= SNO_GENERAL;
+						source_p->snomask |= sno::GENERAL;
 				}
 				else
 					source_p->snomask = 0;
@@ -1174,10 +1180,10 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 	if(badflag)
 		sendto_one(source_p, form_str(ERR_UMODEUNKNOWNFLAG), me.name, source_p->name);
 
-	if(my(*source_p) && (source_p->snomask & SNO_NCHANGE) && !IsOperN(source_p))
+	if(my(*source_p) && (source_p->snomask & sno::NCHANGE) && !IsOperN(source_p))
 	{
 		sendto_one_notice(source_p, ":*** You need oper and nick_changes flag for +s +n");
-		source_p->snomask &= ~SNO_NCHANGE;	/* only tcm's really need this */
+		source_p->snomask &= ~sno::NCHANGE;	/* only tcm's really need this */
 	}
 
 	if(my(*source_p) && is(*source_p, umode::OPERWALL) && !IsOperOperwall(source_p))
@@ -1209,8 +1215,11 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 	 */
 	send_umode_out(client_p, source_p, setflags);
 	if (showsnomask && my_connect(*source_p))
+	{
+		char snobuf[128];
 		sendto_one_numeric(source_p, RPL_SNOMASK, form_str(RPL_SNOMASK),
-			construct_snobuf(source_p->snomask));
+		                   mask(sno::table, source_p->snomask, snobuf));
+	}
 
 	return (0);
 }
@@ -1371,7 +1380,7 @@ oper_up(client::client *source_p, struct oper_conf *oper_p)
 		if (ConfigFileEntry.oper_snomask)
 			source_p->snomask |= ConfigFileEntry.oper_snomask;
 		else
-			source_p->snomask |= DEFAULT_OPER_SNOMASK;
+			source_p->snomask |= sno::DEFAULT_OPER_SNOMASK;
 	}
 
 	Count.oper++;
@@ -1389,7 +1398,7 @@ oper_up(client::client *source_p, struct oper_conf *oper_p)
 	if(IsOperAdmin(source_p) && !IsOperHiddenAdmin(source_p))
 		source_p->mode |= umode::ADMIN;
 	if(!IsOperN(source_p))
-		source_p->snomask &= ~SNO_NCHANGE;
+		source_p->snomask &= ~sno::NCHANGE;
 	if(!IsOperOperwall(source_p))
 		source_p->mode &= ~umode::OPERWALL;
 	hdata.client = source_p;
@@ -1397,7 +1406,7 @@ oper_up(client::client *source_p, struct oper_conf *oper_p)
 	hdata.oldsnomask = oldsnomask;
 	call_hook(h_umode_changed, &hdata);
 
-	sendto_realops_snomask(SNO_GENERAL, L_ALL,
+	sendto_realops_snomask(sno::GENERAL, L_ALL,
 			     "%s (%s!%s@%s) is now an operator", oper_p->name, source_p->name,
 			     source_p->username, source_p->host);
 	if(!(old & umode::INVISIBLE) && is(*source_p, umode::INVISIBLE))
@@ -1405,8 +1414,11 @@ oper_up(client::client *source_p, struct oper_conf *oper_p)
 	if((old & umode::INVISIBLE) && !is(*source_p, umode::INVISIBLE))
 		--Count.invisi;
 	send_umode_out(source_p, source_p, old);
+
+	char snobuf[128];
 	sendto_one_numeric(source_p, RPL_SNOMASK, form_str(RPL_SNOMASK),
-		   construct_snobuf(source_p->snomask));
+	                   mask(sno::table, source_p->snomask, snobuf));
+
 	sendto_one(source_p, form_str(RPL_YOUREOPER), me.name, source_p->name);
 	sendto_one_notice(source_p, ":*** Oper privilege set is %s", oper_p->privset->name);
 	sendto_one_notice(source_p, ":*** Oper privs are %s", oper_p->privset->privs);
@@ -1451,12 +1463,12 @@ construct_umodebuf(void)
 			if (user_modes[i] == 0)
 			{
 				orphaned_umodes |= prev_user_modes[i];
-				sendto_realops_snomask(SNO_DEBUG, L_ALL, "Umode +%c is now orphaned", i);
+				sendto_realops_snomask(sno::DEBUG, L_ALL, "Umode +%c is now orphaned", i);
 			}
 			else
 			{
 				orphaned_umodes &= ~prev_user_modes[i];
-				sendto_realops_snomask(SNO_DEBUG, L_ALL, "Orphaned umode +%c is picked up by module", i);
+				sendto_realops_snomask(sno::DEBUG, L_ALL, "Orphaned umode +%c is picked up by module", i);
 			}
 			user_modes[i] = prev_user_modes[i];
 		}
@@ -1549,7 +1561,7 @@ change_nick_user_host(client::client *target_p,	const char *nick, const char *us
 			sendto_one(target_p, ":%s!%s@%s NICK %s",
 					target_p->name, username, host, nick);
 
-		/* TODO: send some snotes to SNO_NCHANGE/SNO_CCONN/SNO_CCONNEXT? */
+		/* TODO: send some snotes to sno::NCHANGE/sno::CCONN/sno::CCONNEXT? */
 	}
 	else if(changed_case)
 	{
@@ -1557,7 +1569,7 @@ change_nick_user_host(client::client *target_p,	const char *nick, const char *us
 				target_p->name, username, host, nick);
 
 		if(my_connect(*target_p))
-			sendto_realops_snomask(SNO_NCHANGE, L_ALL,
+			sendto_realops_snomask(sno::NCHANGE, L_ALL,
 					"Nick change: From %s to %s [%s@%s]",
 					target_p->name, nick,
 					target_p->username, target_p->host);

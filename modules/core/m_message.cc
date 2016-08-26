@@ -781,7 +781,7 @@ msg_client(enum message_type msgtype,
 	}
 	else if(source.from == target_p->from)
 	{
-		sendto_realops_snomask(SNO_DEBUG, L_ALL,
+		sendto_realops_snomask(sno::DEBUG, L_ALL,
 				     "Send message to %s[%s] dropped from %s(Fake Dir)",
 				     target_p->name, target_p->from->name, source.name);
 		return;
@@ -913,7 +913,7 @@ flood_attack_client(enum message_type msgtype, client::client &source, client::c
 		{
 			if(target_p->flood_noticed == 0)
 			{
-				sendto_realops_snomask(SNO_BOTS, L_NETWIDE,
+				sendto_realops_snomask(sno::BOTS, L_NETWIDE,
 						     "Possible Flooder %s[%s@%s] on %s target: %s",
 						     source.name, source.username,
 						     source.orighost,
@@ -993,7 +993,7 @@ handle_special(enum message_type msgtype, client::client &client,
 		/* Check if someones msg'ing opers@our.server */
 		if(strncmp(nick, "opers@", 6) == 0)
 		{
-			sendto_realops_snomask(SNO_GENERAL, L_ALL, "To opers: From: %s: %s",
+			sendto_realops_snomask(sno::GENERAL, L_ALL, "To opers: From: %s: %s",
 					     source.name, text);
 			return;
 		}

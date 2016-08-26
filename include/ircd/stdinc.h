@@ -76,6 +76,7 @@ namespace ircd
 #include "match.h"
 #include "mode_table.h"
 #include "mode_lease.h"
+#include "snomask.h"
 
 #include "cache.h"
 #include "whowas.h"
@@ -112,7 +113,6 @@ namespace ircd
 #include "s_conf.h"
 #include "send.h"
 #include "s_newconf.h"
-#include "snomask.h"
 #include "s_serv.h"
 #include "sslproc.h"
 #include "s_stats.h"

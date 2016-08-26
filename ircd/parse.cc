@@ -208,7 +208,7 @@ handle_command(struct Message *mptr, struct MsgBuf *msgbuf_p, client::client *cl
 				return (-1);
 		}
 
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				     "Dropping server %s due to (invalid) command '%s'"
 				     " with only %zu arguments (expecting %zu).",
 				     client_p->name, mptr->cmd, msgbuf_p->n_para, ehandler.min_para);
@@ -309,14 +309,14 @@ cancel_clients(client::client *client_p, client::client *source_p)
 	 */
 	if(is_server(*source_p) || is_me(*source_p))
 	{
-		sendto_realops_snomask(SNO_DEBUG, L_ALL,
+		sendto_realops_snomask(sno::DEBUG, L_ALL,
 				     "Message for %s[%s] from %s",
 				     source_p->name, source_p->from->name,
 				     client_p->name);
 	}
 	else
 	{
-		sendto_realops_snomask(SNO_DEBUG, L_ALL,
+		sendto_realops_snomask(sno::DEBUG, L_ALL,
 				     "Message for %s[%s@%s!%s] from %s (TS, ignored)",
 				     source_p->name,
 				     source_p->username,
@@ -347,7 +347,7 @@ remove_unknown(client::client *client_p, const char *lsender, char *lbuffer)
 	if((rfc1459::is_digit(lsender[0]) && slen == 3) ||
 	   (strchr(lsender, '.') != NULL))
 	{
-		sendto_realops_snomask(SNO_DEBUG, L_ALL,
+		sendto_realops_snomask(sno::DEBUG, L_ALL,
 				     "Unknown prefix (%s) from %s, Squitting %s",
 				     lbuffer, client_p->name, lsender);
 
@@ -359,7 +359,7 @@ remove_unknown(client::client *client_p, const char *lsender, char *lbuffer)
 	else if(!rfc1459::is_digit(lsender[0]))
 		;
 	else if(slen != 9)
-		sendto_realops_snomask(SNO_DEBUG, L_ALL,
+		sendto_realops_snomask(sno::DEBUG, L_ALL,
 				     "Invalid prefix (%s) from %s",
 				     lbuffer, client_p->name);
 	else
@@ -448,7 +448,7 @@ do_numeric(int numeric, client::client *client_p, client::client *source_p, int 
 			 */
 			if(numeric != ERR_NOSUCHNICK &&
 			   numeric != ERR_NOSUCHSERVER)
-				sendto_realops_snomask(SNO_GENERAL, L_ADMIN,
+				sendto_realops_snomask(sno::GENERAL, L_ADMIN,
 						     "*** %s(via %s) sent a %03d numeric to me: %s",
 						     source_p->name,
 						     client_p->name, numeric, buffer);

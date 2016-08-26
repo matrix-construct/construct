@@ -62,6 +62,5 @@ me_snote(struct MsgBuf *msgbuf_p, client::client &client, client::client &source
 	if (!is_server(source))
 		return;
 
-	sendto_realops_snomask_from(snomask_modes[(unsigned char) *parv[1]],
-		L_ALL, &source, "%s", parv[2]);
+	sendto_realops_snomask_from(sno::table[*parv[1]], L_ALL, &source, "%s", parv[2]);
 }

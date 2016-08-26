@@ -583,7 +583,7 @@ int match_expr(struct Expr *const expr,
 	{
 		static char errbuf[BUFSIZE];
 		pcre2_get_error_message(ret, (unsigned char *const) errbuf, sizeof(errbuf));
-		sendto_realops_snomask(SNO_GENERAL, L_ALL,
+		sendto_realops_snomask(sno::GENERAL, L_ALL,
 		                       "spamfilter: Expression #%u error (%d): %s",
 		                       expr->id,
 		                       ret,
@@ -831,7 +831,7 @@ int spamexpr_add(client::client &client, client::client &source, int parc, const
 		              parv[2],
 		              parv[3]);
 
-		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
+		sendto_realops_snomask(sno::GENERAL, L_NETWIDE,
 		                       "spamfilter: Expression #%u added: \"%s\".",
 		                       expr->id,
 		                       expr->pattern);
@@ -872,7 +872,7 @@ int spamexpr_del(client::client &client, client::client &source, int parc, const
 		              client.id,
 		              id);
 
-		sendto_realops_snomask(SNO_GENERAL, L_NETWIDE,
+		sendto_realops_snomask(sno::GENERAL, L_NETWIDE,
 		                       "spamfilter: Expression #%u removed.",
 		                       id);
 

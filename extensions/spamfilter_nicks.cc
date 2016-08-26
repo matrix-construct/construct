@@ -221,7 +221,7 @@ int real_test_token(const char *const token,
 static
 void false_positive_message(void)
 {
-	sendto_realops_snomask(SNO_GENERAL, L_ALL,
+	sendto_realops_snomask(sno::GENERAL, L_ALL,
 	                       "spamfilter: Nickname bloom filter false positive (size: %zu members: %zu channels: %u flushed: %lu ago)",
 	                       bloom_size,
 	                       bloom_members,
