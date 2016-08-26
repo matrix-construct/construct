@@ -88,6 +88,15 @@ num_of()
     return static_cast<typename std::underlying_type<Enum>::type>(Enum::_NUM_);
 }
 
+// Iteration of a num_of() conforming enum
+template<class Enum>
+typename std::enable_if<std::is_enum<Enum>::value, void>::type
+for_each(const std::function<void (const Enum &)> &func)
+{
+    for(size_t i(0); i < num_of<Enum>(); ++i)
+        func(static_cast<Enum>(i));
+}
+
 
 struct case_insensitive_less
 {
