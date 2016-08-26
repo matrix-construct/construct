@@ -95,12 +95,12 @@ sigint_handler(int sig)
 
 	if(server_state_foreground)
 	{
-		ilog(L_MAIN, "Server exiting on SIGINT");
+		log::critical("Server exiting on SIGINT");
 		exit(0);
 	}
 	else
 	{
-		ilog(L_MAIN, "Server Restarting on SIGINT");
+		log::critical("Server Restarting on SIGINT");
 		if(!restarting)
 		{
 			restarting = true;

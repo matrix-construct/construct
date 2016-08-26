@@ -108,8 +108,8 @@ m_mode(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, 
 	/* Now know the channel exists */
 	if(parc < n + 1)
 	{
-		if(operspy)
-			report_operspy(&source, "MODE", chptr->name.c_str());
+//		if(operspy)
+//			report_operspy(&source, "MODE", chptr->name.c_str());
 
 		sendto_one(&source, form_str(RPL_CHANNELMODEIS),
 			   me.name, source.name, parv[1],

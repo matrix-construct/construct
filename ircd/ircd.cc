@@ -102,8 +102,8 @@ ircd_shutdown(const char *reason)
 			me.name, reason);
 	}
 
-	ilog(L_MAIN, "Server Terminating. %s", reason);
-	close_logfiles();
+	log::critical("Server Terminating. %s", reason);
+	log::close();
 
 	unlink(pidFileName);
 	exit(0);
@@ -528,10 +528,13 @@ charybdis_main(int argc, char * const argv[])
 	init_builtin_capabs();
 	default_server_capabs = CAP_MASK;
 
-	init_main_logfile();
 	newconf_init();
 	init_s_conf();
 	init_s_newconf();
+
+	log::init();
+	log::mark("log started");
+
 	init_hash();
 	init_host_hash();
 	client::init();
@@ -625,11 +628,10 @@ charybdis_main(int argc, char * const argv[])
 	check_class();
 	write_pidfile(pidFileName);
 	cache::help::load();
-	open_logfiles();
+
+	log::open();
 
 	configure_authd();
-
-	ilog(L_MAIN, "Server Ready");
 
 	/* We want try_connections to be called as soon as possible now! -- adrian */
 	/* No, 'cause after a restart it would cause all sorts of nick collides */

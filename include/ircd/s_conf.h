@@ -149,16 +149,6 @@ struct config_file_entry
 
 	char *sasl_service;
 
-	char *fname_userlog;
-	char *fname_fuserlog;
-	char *fname_operlog;
-	char *fname_foperlog;
-	char *fname_serverlog;
-	char *fname_killlog;
-	char *fname_klinelog;
-	char *fname_operspylog;
-	char *fname_ioerrorlog;
-
 	unsigned char compression_level;
 	int disable_fake_channels;
 	int dots_in_ident;

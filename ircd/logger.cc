@@ -4,6 +4,8 @@
  * Copyright (C) 2003 Lee H <lee@leeh.co.uk>
  * Copyright (C) 2003-2005 ircd-ratbox development team
  * Copyright (C) 2008 William Pitcock <nenolod@sacredspiral.co.uk>
+ * Copyright (C) 2016 Charybdis Development Team
+ * Copyright (C) 2016 Jason Volk <jason@zemos.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -32,299 +34,489 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+using namespace ircd;
+
 namespace ircd {
+namespace log  {
 
-static FILE *log_main;
-static FILE *log_user;
-static FILE *log_fuser;
-static FILE *log_oper;
-static FILE *log_foper;
-static FILE *log_server;
-static FILE *log_kill;
-static FILE *log_kline;
-static FILE *log_operspy;
-static FILE *log_ioerror;
+// Option toggles
+std::array<bool, num_of<facility>()> file_flush;
+std::array<bool, num_of<facility>()> console_flush;
+std::array<const char *, num_of<facility>()> console_ansi;
 
-struct log_struct
+// Console device toggle
+std::array<bool, num_of<facility>()> console_out;
+std::array<bool, num_of<facility>()> console_err;
+
+// Logfile name and device
+std::array<const char *, num_of<facility>()> fname;
+std::array<std::ofstream, num_of<facility>()> file;
+
+ConfEntry conf_log_table[] =
 {
-	char **name;
-	FILE **logfile;
+	{ "file_critical",  CF_QSTRING, NULL, PATH_MAX, &fname[CRITICAL]  },
+	{ "file_error",     CF_QSTRING, NULL, PATH_MAX, &fname[ERROR]     },
+	{ "file_warning",   CF_QSTRING, NULL, PATH_MAX, &fname[WARNING]   },
+	{ "file_notice",    CF_QSTRING, NULL, PATH_MAX, &fname[NOTICE]    },
+	{ "file_info",      CF_QSTRING, NULL, PATH_MAX, &fname[INFO]      },
+	{ "file_debug",     CF_QSTRING, NULL, PATH_MAX, &fname[DEBUG]     },
 };
 
-static struct log_struct log_table[LAST_LOGFILE] =
+static void open(const facility &fac);
+static void prefix(const facility &fac, const char *const &date);
+static void suffix(const facility &fac);
+
+} // namespace log
+} // namespace ircd
+
+void
+log::init()
 {
-	{ NULL, 				&log_main	},
-	{ &ConfigFileEntry.fname_userlog,	&log_user	},
-	{ &ConfigFileEntry.fname_fuserlog,	&log_fuser	},
-	{ &ConfigFileEntry.fname_operlog,	&log_oper	},
-	{ &ConfigFileEntry.fname_foperlog,	&log_foper	},
-	{ &ConfigFileEntry.fname_serverlog,	&log_server	},
-	{ &ConfigFileEntry.fname_killlog,	&log_kill	},
-	{ &ConfigFileEntry.fname_klinelog,	&log_kline	},
-	{ &ConfigFileEntry.fname_operspylog,	&log_operspy	},
-	{ &ConfigFileEntry.fname_ioerrorlog,	&log_ioerror	}
-};
+	//TODO: XXX: config + cmd control + other fancy stuff
 
-static void
-verify_logfile_access(const char *filename)
-{
-	char *dirname, *d;
-	char buf[512];
-	d = rb_dirname(filename);
-	dirname = LOCAL_COPY(d);
-	rb_free(d);
+	add_top_conf("log", NULL, NULL, conf_log_table);
 
-	if(access(dirname, F_OK) == -1)
-	{
-		snprintf(buf, sizeof(buf), "WARNING: Unable to access logfile %s - parent directory %s does not exist", filename, dirname);
-		if(testing_conf || server_state_foreground)
-			fprintf(stderr, "%s\n", buf);
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s", buf);
-		return;
-	}
+	console_err[CRITICAL]    = true;
+	console_err[ERROR]       = true;
+	console_err[WARNING]     = true;
+	console_err[NOTICE]      = true;
+	console_out[INFO]        = true;
+	console_out[DEBUG]       = true;
 
-	if(access(filename, F_OK) == -1)
-	{
-		if(access(dirname, W_OK) == -1)
-		{
-			snprintf(buf, sizeof(buf), "WARNING: Unable to access logfile %s - access to parent directory %s failed: %s",
-				    filename, dirname, strerror(errno));
-			if(testing_conf || server_state_foreground)
-				fprintf(stderr, "%s\n", buf);
-			sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s", buf);
-		}
-		return;
-	}
+	console_flush[CRITICAL]  = true;
+	console_flush[ERROR]     = true;
+	console_flush[WARNING]   = true;
+	console_flush[NOTICE]    = false;
+	console_flush[INFO]      = false;
+	console_flush[DEBUG]     = false;
 
-	if(access(filename, W_OK) == -1)
-	{
-		snprintf(buf, sizeof(buf), "WARNING: Access denied for logfile %s: %s", filename, strerror(errno));
-		if(testing_conf || server_state_foreground)
-			fprintf(stderr, "%s\n", buf);
-		sendto_realops_snomask(SNO_GENERAL, L_ALL, "%s", buf);
-		return;
-	}
-	return;
+	file_flush[CRITICAL]     = true;
+	file_flush[ERROR]        = true;
+	file_flush[WARNING]      = true;
+	file_flush[NOTICE]       = false;
+	file_flush[INFO]         = false;
+	file_flush[DEBUG]        = false;
+
+	console_flush[CRITICAL]  = true;
+	console_flush[ERROR]     = true;
+	console_flush[WARNING]   = true;
+	console_flush[NOTICE]    = false;
+	console_flush[INFO]      = false;
+	console_flush[DEBUG]     = true;
+
+	console_ansi[CRITICAL]  = "\033[1;5;37;45m";
+	console_ansi[ERROR]     = "\033[1;37;41m";
+	console_ansi[WARNING]   = "\033[0;30;43m";
+	console_ansi[NOTICE]    = "\033[1;37;46m";
+	console_ansi[INFO]      = "\033[1;37;42m";
+	console_ansi[DEBUG]     = "\033[1;30;47m";
 }
 
 void
-init_main_logfile(void)
+log::fini()
 {
-	verify_logfile_access(logFileName);
-	if(log_main == NULL)
+	remove_top_conf("log");
+}
+
+void
+log::open()
+{
+	for_each<facility>([](const facility &fac)
 	{
-		log_main = fopen(logFileName, "a");
-	}
+		if(!fname[fac])
+			return;
+
+		if(file[fac].is_open())
+			file[fac].close();
+
+		file[fac].clear();
+		file[fac].exceptions(std::ios::badbit | std::ios::failbit);
+		open(fac);
+	});
 }
 
 void
-open_logfiles(void)
+log::close()
 {
-	int i;
-
-	close_logfiles();
-
-	log_main = fopen(logFileName, "a");
-
-	/* log_main is handled above, so just do the rest */
-	for(i = 1; i < LAST_LOGFILE; i++)
+	for_each<facility>([](const facility &fac)
 	{
-		/* reopen those with paths */
-		if(!EmptyString(*log_table[i].name))
-		{
-			verify_logfile_access(*log_table[i].name);
-			*log_table[i].logfile = fopen(*log_table[i].name, "a");
-		}
-	}
+		file[fac].close();
+	});
 }
 
 void
-close_logfiles(void)
+log::flush()
 {
-	int i;
-
-	if(log_main != NULL)
-		fclose(log_main);
-
-	/* log_main is handled above, so just do the rest */
-	for(i = 1; i < LAST_LOGFILE; i++)
+	for_each<facility>([](const facility &fac)
 	{
-		if(*log_table[i].logfile != NULL)
-		{
-			fclose(*log_table[i].logfile);
-			*log_table[i].logfile = NULL;
-		}
-	}
-}
-
-
-static void
-log_va(const ilogfile dest, const unsigned int snomask, const char *const fmt, va_list ap)
-{
-	FILE *const logfile = *log_table[dest].logfile;
-	if(!logfile)
-		return;
-
-	char buf[BUFSIZE];
-	vsnprintf(buf, sizeof(buf), fmt, ap);
-
-	if(snomask)
-		sendto_realops_snomask(snomask, L_ALL, "%s", buf);
-
-	if(fprintf(logfile, "%s %s\n", smalldate(rb_current_time()), buf) < 0)
-	{
-		fclose(logfile);
-		*log_table[dest].logfile = NULL;
-	} else {
-		fflush(logfile);
-	}
+		file[fac].flush();
+	});
 }
 
 void
-ilog(ilogfile dest, const char *format, ...)
+log::open(const facility &fac)
+try
 {
-	va_list args;
-	va_start(args, format);
-	log_va(dest, 0, format, args);
-	va_end(args);
+	const auto &mode(std::ios::app);
+	file[fac].open(fname[fac], mode);
 }
-
-
-static void
-_iprint(const char *domain, const char *buf)
-{
-	if (domain == NULL || buf == NULL)
-		return;
-
-	fprintf(stderr, "%8s: %s\n", domain, buf);
-}
-
-void
-idebug(const char *format, ...)
-{
-#ifndef NDEBUG
-	char buf[BUFSIZE];
-	va_list args;
-
-	va_start(args, format);
-	vsnprintf(buf, sizeof(buf), format, args);
-	va_end(args);
-
-	_iprint("debug", buf);
-
-	ilog(L_MAIN, "%s", buf);
-#endif
-}
-
-void
-inotice(const char *format, ...)
+catch(const std::exception &e)
 {
 	char buf[BUFSIZE];
-	va_list args;
+	snprintf(buf, sizeof(buf), "!!! Opening log file [%s] failed: %s",
+	         fname[fac],
+	         e.what());
 
-	va_start(args, format);
-	vsnprintf(buf, sizeof(buf), format, args);
-	va_end(args);
-
-	_iprint("notice", buf);
-
-	ilog(L_MAIN, "%s", buf);
+	std::cerr << buf << std::endl;
+	throw;
 }
 
 void
-iwarn(const char *format, ...)
+log::debug(const char *const fmt,
+           ...)
 {
-	char buf[BUFSIZE];
-	va_list args;
-
-	va_start(args, format);
-	vsnprintf(buf, sizeof(buf), format, args);
-	va_end(args);
-
-	_iprint("warning", buf);
-
-	ilog(L_MAIN, "%s", buf);
+	#ifndef NDEBUG
+	va_list ap;
+	va_start(ap, fmt);
+	vlog(facility::DEBUG, fmt, ap);
+	va_end(ap);
+	#endif
 }
 
 void
-ierror(const char *format, ...)
-{
-	char buf[BUFSIZE];
-	va_list args;
-
-	va_start(args, format);
-	vsnprintf(buf, sizeof(buf), format, args);
-	va_end(args);
-
-	_iprint("error", buf);
-
-	ilog(L_MAIN, "%s", buf);
-}
-
-void
-report_operspy(client::client *source_p, const char *token, const char *arg)
-{
-	/* if its not my client its already propagated */
-	if(my(*source_p))
-		sendto_match_servs(source_p, "*", CAP_ENCAP, NOCAPS,
-				   "ENCAP * OPERSPY %s %s",
-				   token, arg ? arg : "");
-
-	sendto_realops_snomask(SNO_OPERSPY,
-			     ConfigFileEntry.operspy_admin_only ? L_ADMIN : L_ALL,
-			     "OPERSPY %s %s %s",
-			     get_oper_name(source_p), token,
-			     arg ? arg : "");
-
-	ilog(L_OPERSPY, "OPERSPY %s %s %s",
-	     get_oper_name(source_p), token, arg ? arg : "");
-}
-
-const char *
-smalldate(time_t ltime)
-{
-	static char buf[MAX_DATE_STRING];
-	struct tm *lt;
-
-	lt = localtime(&ltime);
-
-	snprintf(buf, sizeof(buf), "%d/%d/%d %02d.%02d",
-		    lt->tm_year + 1900, lt->tm_mon + 1,
-		    lt->tm_mday, lt->tm_hour, lt->tm_min);
-
-	return buf;
-}
-
-void
-ilog_error(const char *error)
-{
-	int e;
-	const char *errstr;
-
-	e = errno;
-	errstr = strerror(e);
-
-	ilog(L_IOERROR, "%s: %d (%s)", error, e, errstr);
-	sendto_realops_snomask(SNO_DEBUG, L_ALL, "%s: %d (%s)",
-			error, e, errstr);
-}
-
-
-void
-vslog(const ilogfile dest, const unsigned int snomask, const char *const fmt, va_list ap)
-{
-	log_va(dest, snomask, fmt, ap);
-}
-
-
-void
-slog(const ilogfile dest, const unsigned int snomask, const char *const fmt, ...)
+log::info(const char *const fmt,
+          ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
-	vslog(dest, snomask, fmt, ap);
+	vlog(facility::INFO, fmt, ap);
 	va_end(ap);
 }
 
+void
+log::notice(const char *const fmt,
+            ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	vlog(facility::NOTICE, fmt, ap);
+	va_end(ap);
+}
 
-} // namespace ircd
+void
+log::warning(const char *const fmt,
+             ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	vlog(facility::WARNING, fmt, ap);
+	va_end(ap);
+}
+
+void
+log::error(const char *const fmt,
+           ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	vlog(facility::ERROR, fmt, ap);
+	va_end(ap);
+}
+
+void
+log::critical(const char *const fmt,
+              ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	vlog(facility::CRITICAL, fmt, ap);
+	va_end(ap);
+}
+
+log::log::log(const std::string &name)
+:name{name}
+{
+}
+
+log::log::log(const std::string &name,
+              const char &snote)
+:log
+{
+	name, std::make_shared<sno::mode>(snote)
+}
+{
+}
+
+log::log::log(const std::string &name,
+              const lease_ptr &lease)
+:name{name}
+,snote{lease}
+{
+}
+
+void
+log::log::debug(const char *const fmt,
+                ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	vlog(DEBUG, name, snote? sno::mask(*snote) : sno::mask(0), fmt, ap);
+	va_end(ap);
+}
+
+void
+log::log::info(const char *const fmt,
+               ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	vlog(INFO, name, snote? sno::mask(*snote) : sno::mask(0), fmt, ap);
+	va_end(ap);
+}
+
+void
+log::log::notice(const char *const fmt,
+                 ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	vlog(NOTICE, name, snote? sno::mask(*snote) : sno::mask(0), fmt, ap);
+	va_end(ap);
+}
+
+void
+log::log::warning(const char *const fmt,
+                  ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	vlog(WARNING, name, snote? sno::mask(*snote) : sno::mask(0), fmt, ap);
+	va_end(ap);
+}
+
+void
+log::log::error(const char *const fmt,
+                ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	vlog(ERROR, name, snote? sno::mask(*snote) : sno::mask(0), fmt, ap);
+	va_end(ap);
+}
+
+void
+log::log::critical(const char *const fmt,
+                   ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	vlog(CRITICAL, name, snote? sno::mask(*snote) : sno::mask(0), fmt, ap);
+	va_end(ap);
+}
+
+void
+log::mark(const char *const &msg)
+{
+	for_each<facility>([&msg]
+	(const auto &fac)
+	{
+		mark(fac, msg);
+	});
+}
+
+void
+log::mark(const facility &fac,
+          const char *const &msg)
+{
+	slog(fac, [&msg]
+	(std::ostream &s)
+	{
+		s << "*** " << (msg? msg : "mark") << " ***";
+	});
+}
+
+void
+log::logf(const facility &fac,
+          const char *const fmt,
+          ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	vlog(fac, fmt, ap);
+	va_end(ap);
+}
+
+void
+log::vlog(const facility &fac,
+          const char *const &fmt,
+          va_list ap)
+{
+	char buf[1024];
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	slog(fac, [&buf]
+	(std::ostream &s)
+	{
+		s << "ircd :" << buf;
+	});
+}
+
+void
+log::vlog(const facility &fac,
+          const std::string &name,
+          const char *const &fmt,
+          va_list ap)
+{
+	char buf[1024];
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	slog(fac, [&buf, &name]
+	(std::ostream &s)
+	{
+		s << name << " :" << buf;
+	});
+}
+
+void
+log::vlog(const facility &fac,
+          const std::string &name,
+          const sno::mask &snomask,
+          const char *const &fmt,
+          va_list ap)
+{
+	char buf[1024];
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+
+	if(snomask)
+		sendto_realops_snomask(snomask, L_NETWIDE, "%s %s :%s",
+		                       reflect(fac),
+		                       name.size()? name.c_str() : "*",
+		                       buf);
+
+	slog(fac, [&buf, &name]
+	(std::ostream &s)
+	{
+		s << name << " :" << buf;
+	});
+}
+
+void
+log::slog(const facility &fac,
+          const std::function<void (std::ostream &)> &closure)
+{
+	if(!file[fac].is_open() && !console_out[fac] && !console_err[fac])
+		return;
+
+	const scope always_newline([&fac]
+	{
+		suffix(fac);
+	});
+
+	//TODO: XXX: Add option toggle for smalldate()
+	char date[64];
+	microtime(date, sizeof(date));
+	prefix(fac, date);
+
+	if(console_err[fac])
+		closure(std::cerr);
+
+	if(console_out[fac])
+		closure(std::cout);
+
+	if(file[fac].is_open())
+		closure(file[fac]);
+}
+
+void
+log::prefix(const facility &fac,
+            const char *const &date)
+{
+	const auto console_prefix([&fac, &date]
+	(auto &stream)
+	{
+		stream << date << ' ';
+
+		if(console_ansi[fac])
+			stream << console_ansi[fac];
+
+		stream << std::setw(8) << std::right << reflect(fac);
+
+		if(console_ansi[fac])
+			stream << "\033[0m ";
+		else
+			stream << ' ';
+	});
+
+	if(console_err[fac])
+		console_prefix(std::cerr);
+
+	if(console_out[fac])
+		console_prefix(std::cout);
+
+	file[fac] << date << ' ' << reflect(fac) << ' ';
+}
+
+void
+log::suffix(const facility &fac)
+{
+	const auto console_newline([&fac]
+	(auto &stream)
+	{
+		if(console_flush[fac])
+			stream << std::endl;
+		else
+			stream << '\n';
+	});
+
+	if(console_err[fac])
+		console_newline(std::cerr);
+
+	if(console_out[fac])
+		console_newline(std::cout);
+
+	// If the user's own code triggered an exception while streaming we still want to
+	// provide a newline. But if the exception is an actual log file exception don't
+	// touch the stream anymore.
+	if(unlikely(std::current_exception() && !file[fac].good()))
+		return;
+
+	if(!file[fac].is_open())
+		return;
+
+	if(file_flush[fac])
+		file[fac] << std::endl;
+	else
+		file[fac] << '\n';
+}
+
+const char *
+log::reflect(const facility &f)
+{
+	switch(f)
+	{
+		case facility::DEBUG:      return "DEBUG";
+		case facility::INFO:       return "INFO";
+		case facility::NOTICE:     return "NOTICE";
+		case facility::WARNING:    return "WARNING";
+		case facility::ERROR:      return "ERROR";
+		case facility::CRITICAL:   return "CRITICAL";
+		case facility::_NUM_:      break; // Allows -Wswitch to remind developer to add reflection here
+	};
+
+	return "??????";
+}
+
+
+const char *
+ircd::smalldate(const time_t &ltime)
+{
+	static char buf[MAX_DATE_STRING];
+
+	struct tm *const lt(localtime(&ltime));
+	snprintf(buf, sizeof(buf), "%d/%d/%d %02d.%02d",
+	         lt->tm_year + 1900,
+	         lt->tm_mon + 1,
+	         lt->tm_mday,
+	         lt->tm_hour,
+	         lt->tm_min);
+
+	return buf;
+}

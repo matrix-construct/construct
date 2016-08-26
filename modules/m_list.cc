@@ -165,7 +165,7 @@ mo_list(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	if (args && *args == '!' && IsOperSpy(&source))
 	{
 		args++;
-		report_operspy(&source, "LIST", args);
+		//report_operspy(&source, "LIST", args);
 		operspy = 1;
 	}
 

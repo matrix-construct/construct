@@ -60,8 +60,7 @@ ms_operspy(struct MsgBuf *msgbuf_p, client::client &client, client::client &sour
 
 	if(parc < 4)
 	{
-		report_operspy(&source, parv[1],
-			    parc < 3 ? NULL : parv[2]);
+//		report_operspy(&source, parv[1], parc < 3 ? NULL : parv[2]);
 	}
 	/* buffer all remaining into one param */
 	else
@@ -82,6 +81,6 @@ ms_operspy(struct MsgBuf *msgbuf_p, client::client &client, client::client &sour
 			cur_len += len;
 		}
 
-		report_operspy(&source, parv[1], buffer);
+		//report_operspy(&source, parv[1], buffer);
 	}
 }

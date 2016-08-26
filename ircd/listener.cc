@@ -177,7 +177,7 @@ inetport(struct Listener *listener)
 	}
 	else if((maxconnections - 10) < rb_get_fd(F)) /* XXX this is kinda bogus*/
 	{
-		ilog_error("no more connections left for listener");
+		log::error("no more connections left for listener");
 		sendto_realops_snomask(sno::GENERAL, L_ALL,
 				"No more connections left for listener on port %d",
 				get_listener_port(listener));

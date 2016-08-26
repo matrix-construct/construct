@@ -178,7 +178,7 @@ do_whois(client::client &client, client::client &source, int parc, const char *p
 			snprintf(buffer, sizeof(buffer), "%s!%s@%s %s",
 				target_p->name, target_p->username,
 				target_p->host, target_p->servptr->name);
-			report_operspy(&source, "WHOIS", buffer);
+//			report_operspy(&source, "WHOIS", buffer);
 		}
 
 		single_whois(source, target_p, operspy);

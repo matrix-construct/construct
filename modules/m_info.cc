@@ -197,6 +197,7 @@ static struct InfoStruct info_table[] = {
 		&ConfigFileEntry.failed_oper_notice,
 		"Inform opers if someone /oper's with the wrong password"
 	},
+/*
 	{
 		"fname_userlog",
 		OUTPUT_STRING,
@@ -252,6 +253,7 @@ static struct InfoStruct info_table[] = {
 		&ConfigFileEntry.fname_ioerrorlog,
 		"IO error log file"
 	},
+*/
 	{
 		"global_snotices",
 		OUTPUT_BOOLEAN_YN,

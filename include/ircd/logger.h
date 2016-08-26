@@ -3,6 +3,8 @@
  *
  * Copyright (C) 2003 Lee Hardy <lee@leeh.co.uk>
  * Copyright (C) 2003-2004 ircd-ratbox development team
+ * Copyright (C) 2016 Charybdis Development Team
+ * Copyright (C) 2016 Jason Volk <jason@zemos.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -35,35 +37,125 @@
 #ifdef __cplusplus
 namespace ircd {
 
-typedef enum ilogfile
+const char *smalldate(const time_t &);
+
+}       // namespace ircd
+#endif  // __cplusplus
+
+// windows.h #define conflicts with our facility
+#ifdef HAVE_WINDOWS_H
+#undef ERROR
+#endif
+
+#ifdef __cplusplus
+namespace ircd  {
+namespace log   {
+
+enum facility
 {
-	L_MAIN,
-	L_USER,
-	L_FUSER,
-	L_OPERED,
-	L_FOPER,
-	L_SERVER,
-	L_KILL,
-	L_KLINE,
-	L_OPERSPY,
-	L_IOERROR,
-	LAST_LOGFILE
-} ilogfile;
+	CRITICAL = 0,
+	ERROR    = 1,
+	WARNING  = 2,
+	NOTICE   = 3,
+	INFO     = 4,
+	DEBUG    = 5,
 
-extern void init_main_logfile(void);
-extern void open_logfiles(void);
-extern void close_logfiles(void);
-void ilog(ilogfile dest, const char *fmt, ...) AFP(2, 3);
-extern void idebug(const char *fmt, ...) AFP(1, 2);
-extern void inotice(const char *fmt, ...) AFP(1, 2);
-extern void iwarn(const char *fmt, ...) AFP(1, 2);
-extern void ierror(const char *fmt, ...) AFP(1, 2);
-extern void report_operspy(client::client *, const char *, const char *);
-extern const char *smalldate(time_t);
-extern void ilog_error(const char *);
+	_NUM_
+};
 
-void vslog(ilogfile dest, unsigned int snomask, const char *fmt, va_list ap);
-void slog(ilogfile dest, unsigned int snomask, const char *fmt, ...) AFP(3, 4);
+const char *reflect(const facility &);
+void slog(const facility &, const std::function<void (std::ostream &)> &);
+void vlog(const facility &, const std::string &name, const sno::mask &, const char *const &fmt, va_list ap);
+void vlog(const facility &, const std::string &name, const char *const &fmt, va_list ap);
+void vlog(const facility &, const char *const &fmt, va_list ap);
+void logf(const facility &, const char *fmt, ...) AFP(2, 3);
+void mark(const facility &, const char *const &msg = nullptr);
+void mark(const char *const &msg = nullptr);
+
+class log
+{
+	using lease_ptr = std::shared_ptr<mode_lease<sno::mask, sno::table>>;
+
+	std::string name;
+	lease_ptr snote;
+
+  public:
+	void critical(const char *fmt, ...) AFP(2, 3);
+	void error(const char *fmt, ...) AFP(2, 3);
+	void warning(const char *fmt, ...) AFP(2, 3);
+	void notice(const char *fmt, ...) AFP(2, 3);
+	void info(const char *fmt, ...) AFP(2, 3);
+	void debug(const char *fmt, ...) AFP(2, 3);
+
+	log(const std::string &name, const lease_ptr &lease);
+	log(const std::string &name, const char &snote);
+	log(const std::string &name);
+};
+
+void critical(const char *fmt, ...) AFP(1, 2);
+void error(const char *fmt, ...) AFP(1, 2);
+void warning(const char *fmt, ...) AFP(1, 2);
+void notice(const char *fmt, ...) AFP(1, 2);
+void info(const char *fmt, ...) AFP(1, 2);
+void debug(const char *fmt, ...) AFP(1, 2);
+
+void flush();
+void close();
+void open();
+
+void init();
+void fini();
+
+}      // namespace log
+
+
+enum ilogfile
+{
+       L_MAIN,
+       L_USER,
+       L_FUSER,
+       L_OPERED,
+       L_FOPER,
+       L_SERVER,
+       L_KILL,
+       L_KLINE,
+       L_OPERSPY,
+       L_IOERROR,
+       LAST_LOGFILE
+};
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+#pragma GCC diagnostic ignored "-Wformat-security"
+template<class... A> void ilog(ilogfile dest, A&&... a)
+{
+	log::logf(log::INFO, std::forward<A>(a)...);
+}
+template<class... A> void idebug(A&&... a)
+{
+	log::debug(std::forward<A>(a)...);
+}
+template<class... A> void inotice(A&&... a)
+{
+	log::notice(std::forward<A>(a)...);
+}
+template<class... A> void iwarn(A&&... a)
+{
+	log::warning(std::forward<A>(a)...);
+}
+template<class... A> void ierror(A&&... a)
+{
+	log::error(std::forward<A>(a)...);
+}
+template<class... A> void ilog_error(A&&... a)
+{
+	log::error(std::forward<A>(a)...);
+}
+template<class... A> void slog(const ilogfile, const uint sno, const char *fmt, A&&... a)
+{
+	log::info(fmt, std::forward<A>(a)...);
+}
+#pragma GCC diagnostic pop
 
 }      // namespace ircd
 #endif // __cplusplus

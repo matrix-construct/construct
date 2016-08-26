@@ -2606,20 +2606,6 @@ static struct ConfEntry conf_admin_table[] =
 	{ "\0",	0, NULL, 0, NULL }
 };
 
-static struct ConfEntry conf_log_table[] =
-{
-	{ "fname_userlog", 	CF_QSTRING, NULL, PATH_MAX, &ConfigFileEntry.fname_userlog	},
-	{ "fname_fuserlog", 	CF_QSTRING, NULL, PATH_MAX, &ConfigFileEntry.fname_fuserlog	},
-	{ "fname_operlog", 	CF_QSTRING, NULL, PATH_MAX, &ConfigFileEntry.fname_operlog	},
-	{ "fname_foperlog", 	CF_QSTRING, NULL, PATH_MAX, &ConfigFileEntry.fname_foperlog	},
-	{ "fname_serverlog", 	CF_QSTRING, NULL, PATH_MAX, &ConfigFileEntry.fname_serverlog	},
-	{ "fname_killlog", 	CF_QSTRING, NULL, PATH_MAX, &ConfigFileEntry.fname_killlog	},
-	{ "fname_klinelog", 	CF_QSTRING, NULL, PATH_MAX, &ConfigFileEntry.fname_klinelog	},
-	{ "fname_operspylog", 	CF_QSTRING, NULL, PATH_MAX, &ConfigFileEntry.fname_operspylog	},
-	{ "fname_ioerrorlog", 	CF_QSTRING, NULL, PATH_MAX, &ConfigFileEntry.fname_ioerrorlog },
-	{ "\0",			0,	    NULL, 0,          NULL }
-};
-
 static struct ConfEntry conf_operator_table[] =
 {
 	{ "rsa_public_key_file",  CF_QSTRING, conf_set_oper_rsa_public_key_file, 0, NULL },
@@ -2820,7 +2806,6 @@ newconf_init()
 
 	add_top_conf("serverinfo", NULL, NULL, conf_serverinfo_table);
 	add_top_conf("admin", NULL, NULL, conf_admin_table);
-	add_top_conf("log", NULL, NULL, conf_log_table);
 	add_top_conf("operator", conf_begin_oper, conf_end_oper, conf_operator_table);
 	add_top_conf("class", conf_begin_class, conf_end_class, conf_class_table);
 	add_top_conf("privset", NULL, NULL, conf_privset_table);

@@ -180,7 +180,7 @@ scan_umodes(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 					rb_strlcat(buf, " ", sizeof buf);
 					rb_strlcat(buf, parv[i], sizeof buf);
 				}
-				report_operspy(&source, "SCAN", buf);
+				//report_operspy(&source, "SCAN", buf);
 			}
 		}
 		else

@@ -138,8 +138,8 @@ m_topic(struct MsgBuf *msgbuf_p, client::client &client, client::client &source,
 	}
 	else if(my(source))
 	{
-		if(operspy)
-			report_operspy(&source, "TOPIC", chptr->name.c_str());
+//		if(operspy)
+//			report_operspy(&source, "TOPIC", chptr->name.c_str());
 
 		if(!is_member(chptr, &source) && is_secret(chptr) && !operspy)
 		{

@@ -616,7 +616,8 @@ rehash(bool sig)
 	else
 		rb_strlcpy(me.info, "unknown", sizeof(me.info));
 
-	open_logfiles();
+	log::close();
+	log::open();
 
 	call_hook(h_rehash, &hdata);
 	return false;
@@ -697,15 +698,6 @@ set_default_conf(void)
 	ConfigFileEntry.pace_wait_simple = 1;
 	ConfigFileEntry.short_motd = false;
 	ConfigFileEntry.no_oper_flood = false;
-	ConfigFileEntry.fname_userlog = NULL;
-	ConfigFileEntry.fname_fuserlog = NULL;
-	ConfigFileEntry.fname_operlog = NULL;
-	ConfigFileEntry.fname_foperlog = NULL;
-	ConfigFileEntry.fname_serverlog = NULL;
-	ConfigFileEntry.fname_killlog = NULL;
-	ConfigFileEntry.fname_klinelog = NULL;
-	ConfigFileEntry.fname_operspylog = NULL;
-	ConfigFileEntry.fname_ioerrorlog = NULL;
 	ConfigFileEntry.hide_spoof_ips = true;
 	ConfigFileEntry.hide_error_messages = 1;
 	ConfigFileEntry.dots_in_ident = 0;
@@ -1447,6 +1439,8 @@ clear_out_old_conf(void)
 	ConfigFileEntry.sasl_service = NULL;
 
 	/* clean out log */
+//TODO: XXX: here
+/*
 	rb_free(ConfigFileEntry.fname_userlog);
 	ConfigFileEntry.fname_userlog = NULL;
 	rb_free(ConfigFileEntry.fname_fuserlog);
@@ -1465,6 +1459,7 @@ clear_out_old_conf(void)
 	ConfigFileEntry.fname_operspylog = NULL;
 	rb_free(ConfigFileEntry.fname_ioerrorlog);
 	ConfigFileEntry.fname_ioerrorlog = NULL;
+*/
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, service_list.head)
 	{

@@ -237,8 +237,8 @@ m_chantrace(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 	}
 
 	/* dont report operspys for nonexistant channels. */
-	if(operspy)
-		report_operspy(&source, "CHANTRACE", chptr->name.c_str());
+//	if(operspy)
+//		report_operspy(&source, "CHANTRACE", chptr->name.c_str());
 
 	if(!operspy && !is_member(chptr, &client))
 	{
@@ -373,7 +373,7 @@ mo_masktrace(struct MsgBuf *msgbuf_p, client::client &client, client::client &so
 				rb_strlcat(buf, gecos, sizeof(buf));
 			}
 
-			report_operspy(&source, "MASKTRACE", buf);
+//			report_operspy(&source, "MASKTRACE", buf);
 		}
 		match_masktrace(source, &global_client_list, username, hostname, name, gecos);
 	} else

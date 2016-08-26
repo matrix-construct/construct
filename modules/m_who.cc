@@ -185,8 +185,8 @@ m_who(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, i
 				return;
 			}
 
-			if(operspy)
-				report_operspy(&source, "WHO", chptr->name.c_str());
+//			if(operspy)
+//				report_operspy(&source, "WHO", chptr->name.c_str());
 
 			if(is_member(chptr, &source) || operspy)
 				do_who_on_channel(source, chptr, server_oper, true, &fmt);
@@ -347,8 +347,8 @@ who_global(client::client &source, const char *mask, int server_oper, int opersp
 			who_common_channel(source, chan, mask, server_oper, &maxmatches, fmt);
 		}
 	}
-	else if (!ConfigFileEntry.operspy_dont_care_user_info)
-		report_operspy(&source, "WHO", mask);
+//	else if (!ConfigFileEntry.operspy_dont_care_user_info)
+//		report_operspy(&source, "WHO", mask);
 
 	/* second, list all matching visible clients and clear all marks
 	 * on invisible clients
