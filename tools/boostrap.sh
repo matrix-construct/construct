@@ -127,6 +127,13 @@ run git submodule update --init --recursive libs/date_time
 run git submodule update --init --recursive libs/smart_ptr
 run git submodule update --init --recursive libs/bind
 
+run git submodule update --init --recursive libs/filesystem
+run git submodule update --init --recursive libs/io
+
+run git submodule update --init --recursive libs/dll
+run git submodule update --init --recursive libs/align
+run git submodule update --init --recursive libs/winapi
+
 run ./bootstrap.sh --prefix=$PWD --libdir=$PWD/lib --with-libraries=$BLIBS $BSFLAGS
 run ./b2 threading=$BTHREADING variant=$BVARIANT link=$BLINK address-model=64
 

@@ -784,6 +784,7 @@ dnl boost support
 dnl
 
 BOOST_VERSION_MIN="1.56"
+BOOST_BUILT_LIBS="system,filesystem"
 
 AC_MSG_CHECKING([whether you asked to use boost sources included here])
 AC_ARG_WITH(included-boost,
@@ -810,7 +811,7 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 	fi
 
 	boost_linkage="$withval"
-	bash tools/boostrap.sh $BTOOLSET system release shared single
+	bash tools/boostrap.sh $BTOOLSET $BOOST_BUILT_LIBS release shared single
 	if [[ $? != 0 ]]; then
 		AC_MSG_ERROR([Failed to build included boost.])
 	fi
@@ -839,22 +840,24 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 
 	AX_BOOST_ASIO
 	AX_BOOST_SYSTEM
+	AX_BOOST_FILESYSTEM
 	boost_linkage="shared"
 ])
 
 if [[ "$boost_linkage" = "shared" ]]; then
 	AM_COND_IF([MINGW],
 	[
-		AC_SUBST(BOOST_LIBS, ["-lboost_system-mgw53-1_61.dll"])
+		AC_SUBST(BOOST_LIBS, ["-lboost_filesystem-mgw53-1_61.dll -lboost_system-mgw53-1_61.dll"])
 	], [
-		AC_SUBST(BOOST_LIBS, ["-lboost_system"])
+		AC_SUBST(BOOST_LIBS, ["-lboost_filesystem -lboost_system"])
 	])
 else
 	AM_COND_IF([MINGW],
 	[
-		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_system-mgw53-1_61.dll.a"])
+		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_filesystem-mgw53-1_61.dll.a $boost_libdir/libboost_system-mgw53-1_61.dll.a"])
 	], [
-		AC_SUBST(BOOST_LIBS, ["-Bstatic -lboost_system"])
+		AC_SUBST(BOOST_LIBS, ["-lboost_filesystem -lboost_system"])
+dnl		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_filesystem.a"])
 dnl		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_system.a"])
 	])
 fi
@@ -864,6 +867,8 @@ RB_DEFINE_UNQUOTED([INC_BOOST_CONTEXT_ALL_HPP], [boost/context/all.hpp>], [ boos
 RB_DEFINE_UNQUOTED([INC_BOOST_ASIO_SPAWN_HPP], [boost/asio/spawn.hpp>], [ boost asio spawn. ])
 RB_DEFINE_UNQUOTED([INC_BOOST_LEXICAL_CAST_HPP], [boost/lexical_cast.hpp>], [ boost lexical_cast. ])
 RB_DEFINE_UNQUOTED([INC_BOOST_TOKENIZER_HPP], [boost/tokenizer.hpp>], [ boost tokenizer. ])
+RB_DEFINE_UNQUOTED([INC_BOOST_FILESYSTEM_HPP], [boost/filesystem.hpp>], [ boost filesystem. ])
+RB_DEFINE_UNQUOTED([INC_BOOST_DLL_HPP], [boost/dll.hpp>], [ boost DLL. ])
 
 
 
