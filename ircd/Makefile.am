@@ -52,7 +52,7 @@ libircd_la_SOURCES =                  \
   getopt.cc                      \
   hash.cc                        \
   hook.cc                        \
-  hostmask.cc                    \
+  mask.cc                        \
   info.cc                        \
   ircd.cc                       \
   ircd_lexer.cc                \

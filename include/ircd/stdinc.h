@@ -82,6 +82,7 @@ namespace ircd
 #include "msg.h"
 #include "client.h"
 
+#include "mask.h"
 #include "chmode.h"
 #include "channel.h"
 
@@ -93,7 +94,6 @@ namespace ircd
 #include "dns.h"
 #include "hash.h"
 #include "hook.h"
-#include "hostmask.h"
 #include "ircd_getopt.h"
 #include "listener.h"
 #include "logger.h"

@@ -46,7 +46,6 @@ using namespace ircd;
 static int mode_count;
 static int mode_limit;
 static int mode_limit_simple;
-static int mask_pos;
 static int removed_mask_pos;
 static int h_get_channel_access;
 mode::change mode_changes[BUFSIZE];
@@ -250,156 +249,6 @@ allow_mode_change(client::client *source_p, chan::chan *chptr, int alevel,
 		return false;
 	}
 	return true;
-}
-
-/* check_string()
- *
- * input	- string to check
- * output	- pointer to 'fixed' string, or "*" if empty
- * side effects - any white space found becomes \0
- */
-static char *
-check_string(char *s)
-{
-	char *str = s;
-	static char splat[] = "*";
-	if(!(s && *s))
-		return splat;
-
-	for(; *s; ++s)
-	{
-		if(rfc1459::is_space(*s))
-		{
-			*s = '\0';
-			break;
-		}
-	}
-	return str;
-}
-
-/* pretty_mask()
- *
- * inputs	- mask to pretty
- * outputs	- better version of the mask
- * side effects - mask is chopped to limits, and transformed:
- *                x!y@z => x!y@z
- *                y@z   => *!y@z
- *                x!y   => x!y@*
- *                x     => x!*@*
- *                z.d   => *!*@z.d
- */
-static char *
-pretty_mask(const char *idmask)
-{
-	static char mask_buf[BUFSIZE];
-	int old_mask_pos;
-	const char *nick, *user, *host, *forward = NULL;
-	char *t, *at, *ex;
-	int nl, ul, hl, fl;
-	char *mask;
-	size_t masklen;
-
-	mask = LOCAL_COPY(idmask);
-	mask = check_string(mask);
-	collapse(mask);
-	masklen = strlen(mask);
-
-	nick = user = host = "*";
-	nl = ul = hl = 1;
-	fl = 0;
-
-	if((size_t) BUFSIZE - mask_pos < masklen + 5)
-		return NULL;
-
-	old_mask_pos = mask_pos;
-
-	if (*mask == '$')
-	{
-		memcpy(mask_buf + mask_pos, mask, masklen + 1);
-		mask_pos += masklen + 1;
-		t = mask_buf + old_mask_pos + 1;
-		if (*t == '!')
-			*t = '~';
-		if (*t == '~')
-			t++;
-		*t = rfc1459::tolower(*t);
-		return mask_buf + old_mask_pos;
-	}
-
-	at = ex = NULL;
-	if((t = (char *)memchr(mask, '@', masklen)) != NULL)
-	{
-		at = t;
-		t++;
-		if(*t != '\0')
-			host = t, hl = strlen(t);
-
-		if((t = (char *)memchr(mask, '!', at - mask)) != NULL)
-		{
-			ex = t;
-			t++;
-			if(at != t)
-				user = t, ul = at - t;
-			if(ex != mask)
-				nick = mask, nl = ex - mask;
-		}
-		else
-		{
-			if(at != mask)
-				user = mask, ul = at - mask;
-		}
-
-		if((t = (char *)memchr(host, '!', hl)) != NULL ||
-				(t = (char *)memchr(host, '$', hl)) != NULL)
-		{
-			t++;
-			if (host + hl != t)
-				forward = t, fl = host + hl - t;
-			hl = t - 1 - host;
-		}
-	}
-	else if((t = (char *)memchr(mask, '!', masklen)) != NULL)
-	{
-		ex = t;
-		t++;
-		if(ex != mask)
-			nick = mask, nl = ex - mask;
-		if(*t != '\0')
-			user = t, ul = strlen(t);
-	}
-	else if(memchr(mask, '.', masklen) != NULL ||
-			memchr(mask, ':', masklen) != NULL)
-	{
-		host = mask, hl = masklen;
-	}
-	else
-	{
-		if(masklen > 0)
-			nick = mask, nl = masklen;
-	}
-
-	/* truncate values to max lengths */
-	if(nl > NICKLEN - 1)
-		nl = NICKLEN - 1;
-	if(ul > USERLEN)
-		ul = USERLEN;
-	if(hl > HOSTLEN)
-		hl = HOSTLEN;
-	if(fl > CHANNELLEN)
-		fl = CHANNELLEN;
-
-	memcpy(mask_buf + mask_pos, nick, nl), mask_pos += nl;
-	mask_buf[mask_pos++] = '!';
-	memcpy(mask_buf + mask_pos, user, ul), mask_pos += ul;
-	mask_buf[mask_pos++] = '@';
-	memcpy(mask_buf + mask_pos, host, hl), mask_pos += hl;
-	if (forward) {
-		mask_buf[mask_pos++] = '$';
-		memcpy(mask_buf + mask_pos, forward, fl), mask_pos += fl;
-	}
-	mask_buf[mask_pos++] = '\0';
-
-	return mask_buf + old_mask_pos;
 }
 
 /* check_forward()
@@ -1344,7 +1193,6 @@ chan::set_channel_mode(client::client *client_p, client::client *source_p,
 	int reauthorized = 0;	/* if we change from MODE_QUERY to MODE_ADD/MODE_DEL, then reauth once, ugly but it works */
 	int flags_list[3] = { ALL_MEMBERS, ONLY_CHANOPS, ONLY_OPERS };
 
-	mask_pos = 0;
 	removed_mask_pos = 0;
 	mode_count = 0;
 	mode_limit = 0;
