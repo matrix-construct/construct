@@ -80,6 +80,7 @@ libircd_la_SOURCES =                  \
   send.cc                        \
   snomask.cc                     \
   sslproc.cc                     \
+  stringops.cc                   \
   substitution.cc                \
   supported.cc                   \
   tgchange.cc                    \
