@@ -1193,7 +1193,7 @@ sendto_realops_snomask(int flags, int level, const char *pattern, ...)
 		vsnprintf(buf, sizeof(buf), pattern, args);
 		va_end(args);
 		rb_linebuf_putmsg(&linebuf, pattern, NULL,
-				":%s NOTICE * :*** Notice -- %s", me.name, buf);
+				":%s NOTICE * :%s", me.name, buf);
 
 		static char snobuf[128];
 		if(*delta(sno::table, 0, flags, snobuf))
@@ -1210,14 +1210,14 @@ sendto_realops_snomask(int flags, int level, const char *pattern, ...)
 		vsnprintf(buf, sizeof(buf), pattern, args);
 		va_end(args);
 		rb_linebuf_putmsg(&linebuf, pattern, NULL,
-				":%s NOTICE * :*** Notice -- %s", me.name, buf);
-		sendto_one_notice(remote_rehash_oper_p, ":*** Notice -- %s", buf);
+				":%s NOTICE * :%s", me.name, buf);
+		sendto_one_notice(remote_rehash_oper_p, ":%s", buf);
 	}
 	else
 	{
 		va_start(args, pattern);
 		rb_linebuf_putmsg(&linebuf, pattern, &args,
-				":%s NOTICE * :*** Notice -- ", me.name);
+				":%s NOTICE * :", me.name);
 		va_end(args);
 	}
 	level &= ~L_NETWIDE;
@@ -1259,7 +1259,7 @@ sendto_realops_snomask_from(int flags, int level, client::client *source_p,
 
 	va_start(args, pattern);
 	rb_linebuf_putmsg(&linebuf, pattern, &args,
-		       ":%s NOTICE * :*** Notice -- ", source_p->name);
+		       ":%s NOTICE * :", source_p->name);
 	va_end(args);
 
 	RB_DLINK_FOREACH_SAFE(ptr, next_ptr, local_oper_list.head)
