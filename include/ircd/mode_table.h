@@ -25,6 +25,8 @@
 #ifdef __cplusplus
 namespace ircd  {
 
+IRCD_EXCEPTION(error, mode_filled)
+
 /* The mode_table is a generic template to replace the arrays mapping characters to mode flags
  * (or other structures) like `extern uint umode_table[256]` or `struct chm chmode_table[256]`.
  * Instead an `mode_table<uint>` or `mode_table<chm>` etc can be used.

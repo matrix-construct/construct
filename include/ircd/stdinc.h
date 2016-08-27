@@ -75,6 +75,7 @@ namespace ircd
 #include "s_assert.h"
 #include "match.h"
 #include "mode_table.h"
+#include "mode_lease.h"
 
 #include "cache.h"
 #include "whowas.h"
