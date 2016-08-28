@@ -562,7 +562,6 @@ burst_modes_TS6(client::client &client,
 static void
 burst_TS6(client::client *client_p)
 {
-	char ubuf[BUFSIZE];
 	client::client *target_p;
 	chan::chan *chptr;
 	chan::membership *msptr;
@@ -578,17 +577,13 @@ burst_TS6(client::client *client_p)
 
 	RB_DLINK_FOREACH(ptr, global_client_list.head)
 	{
+		char ubuf[BUFSIZE];
 		target_p = (client::client *)ptr->data;
 
 		if(!is_person(*target_p))
 			continue;
 
-		send_umode(NULL, target_p, 0, ubuf);
-		if(!*ubuf)
-		{
-			ubuf[0] = '+';
-			ubuf[1] = '\0';
-		}
+		delta(umode::table, 0, target_p->mode, ubuf);
 
 		if(IsCapable(client_p, CAP_EUID))
 			sendto_one(client_p, ":%s EUID %s %d %ld %s %s %s %s %s %s %s :%s",

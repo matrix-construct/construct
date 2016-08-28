@@ -35,8 +35,11 @@ extern bool valid_hostname(const char *hostname);
 extern bool valid_username(const char *username);
 
 extern int user_mode(client::client *, client::client *, int, const char **);
-extern void send_umode(client::client *, client::client *, int, char *);
-extern void send_umode_out(client::client *, client::client *, int);
+
+void send_umode_out(client::client &client, const client::client &after, const umode::mask &before = 0);
+void send_umode(client::client &to, const client::client &after, const umode::mask &before = 0);
+void send_umode(client::client &to, const client::client &source, const char *const &buf);
+
 extern void show_lusers(client::client *source_p);
 extern int register_local_user(client::client *, client::client *);
 

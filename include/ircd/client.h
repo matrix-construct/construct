@@ -871,6 +871,12 @@ operator==(const client &a, const client &b)
 	return &a == &b;
 }
 
+inline bool
+operator!=(const client &a, const client &b)
+{
+	return !(a == b);
+}
+
 
 /* local flags */
 

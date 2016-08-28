@@ -584,16 +584,10 @@ introduce_client(client::client *client_p, client::client *source_p, const char 
 	hook_data_umode_changed hdata;
 	hook_data_client hdata2;
 
-	if(my(*source_p))
-		send_umode(source_p, source_p, 0, ubuf);
-	else
-		send_umode(NULL, source_p, 0, ubuf);
+	delta(umode::table, 0, source_p->mode, ubuf);
 
-	if(!*ubuf)
-	{
-		ubuf[0] = '+';
-		ubuf[1] = '\0';
-	}
+	if(my(*source_p))
+		send_umode(*source_p, *source_p, ubuf);
 
 	s_assert(has_id(source_p));
 
@@ -861,30 +855,25 @@ report_and_set_user_flags(client::client *source_p, struct ConfItem *aconf)
 }
 
 static void
-show_other_user_mode(client::client *source_p, client::client *target_p)
+show_other_user_mode(client::client &source,
+                     client::client &target)
 {
-	int i;
-	char buf[BUFSIZE];
-	char *m;
+	char ubuf[128];
+	mask(umode::table, target.mode, ubuf);
 
-	m = buf;
-	*m++ = '+';
-
-	for (i = 0; i < 128; i++) /* >= 127 is extended ascii */
-		if (target_p->mode & umode::table[i])
-			*m++ = (char) i;
-	*m = '\0';
-
-	if (my_connect(*target_p) && target_p->snomask != 0)
+	if(my_connect(target) && target.snomask)
 	{
-		char snobuf[128];
-		sendto_one_notice(source_p, ":Modes for %s are %s %s",
-		                  target_p->name, buf,
-		                  mask(sno::table, target_p->snomask, snobuf));
+		char sbuf[128];
+		mask(sno::table, target.snomask, sbuf);
+		sendto_one_notice(&source, ":Modes for %s are %s %s",
+		                  target.name,
+		                  ubuf,
+		                  sbuf);
 	}
 	else
-		sendto_one_notice(source_p, ":Modes for %s are %s",
-				target_p->name, buf);
+		sendto_one_notice(&source, ":Modes for %s are %s",
+		                  target.name,
+		                  ubuf);
 }
 
 /*
@@ -939,7 +928,7 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 	if(source_p != target_p)
 	{
 		if (my_oper(*source_p) && parc < 3)
-			show_other_user_mode(source_p, target_p);
+			show_other_user_mode(*source_p, *target_p);
 		else
 			sendto_one(source_p, form_str(ERR_USERSDONTMATCH), me.name, source_p->name);
 		return 0;
@@ -947,21 +936,14 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 
 	if(parc < 3)
 	{
-		m = buf;
-		*m++ = '+';
-
-		for (i = 0; i < 128; i++) /* >= 127 is extended ascii */
-			if (source_p->mode & umode::table[i])
-				*m++ = (char) i;
-
-		*m = '\0';
+		mask(umode::table, source_p->mode, buf);
 		sendto_one_numeric(source_p, RPL_UMODEIS, form_str(RPL_UMODEIS), buf);
 
-		if (source_p->snomask != 0)
+		if(source_p->snomask)
 		{
-			char snobuf[128];
-			sendto_one_numeric(source_p, RPL_SNOMASK, form_str(RPL_SNOMASK),
-			                   mask(sno::table, source_p->snomask, snobuf));
+			char buf[128];
+			mask(sno::table, source_p->snomask, buf);
+			sendto_one_numeric(source_p, RPL_SNOMASK, form_str(RPL_SNOMASK), buf);
 		}
 
 		return 0;
@@ -1137,7 +1119,7 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
 	 * compare new flags with old flags and send string which
 	 * will cause servers to update correctly.
 	 */
-	send_umode_out(client_p, source_p, setflags);
+	send_umode_out(*client_p, *source_p, setflags);
 	if (showsnomask && my_connect(*source_p))
 	{
 		char snobuf[128];
@@ -1153,51 +1135,24 @@ user_mode(client::client *client_p, client::client *source_p, int parc, const ch
  * -avalon
  */
 void
-send_umode(client::client *client_p, client::client *source_p, int old, char *umode_buf)
+send_umode(client::client &to,
+           const client::client &source,
+           const char *const &buf)
 {
-	int i;
-	int flag;
-	char *m;
-	int what = 0;
+	sendto_one(&to, ":%s MODE %s :%s",
+	           source.name,
+	           source.name,
+	           buf);
+}
 
-	/*
-	 * build a string in umode_buf to represent the change in the user's
-	 * mode between the new (source_p->flag) and 'old'.
-	 */
-	m = umode_buf;
-	*m = '\0';
-
-	for (i = 0; i < 128; i++)
-	{
-		flag = umode::table[i];
-
-		if((flag & old) && !(source_p->mode & flag))
-		{
-			if(what == MODE_DEL)
-				*m++ = (char) i;
-			else
-			{
-				what = MODE_DEL;
-				*m++ = '-';
-				*m++ = (char) i;
-			}
-		}
-		else if(!(flag & old) && (source_p->mode & flag))
-		{
-			if(what == MODE_ADD)
-				*m++ = (char) i;
-			else
-			{
-				what = MODE_ADD;
-				*m++ = '+';
-				*m++ = (char) i;
-			}
-		}
-	}
-	*m = '\0';
-
-	if(*umode_buf && client_p)
-		sendto_one(client_p, ":%s MODE %s :%s", source_p->name, source_p->name, umode_buf);
+void
+send_umode(client::client &to,
+           const client::client &after,
+           const umode::mask &before)
+{
+	char buf[128];
+	delta(umode::table, before, after.mode, buf);
+	send_umode(to, after, buf);
 }
 
 /*
@@ -1208,28 +1163,26 @@ send_umode(client::client *client_p, client::client *source_p, int old, char *um
  * side effects -
  */
 void
-send_umode_out(client::client *client_p, client::client *source_p, int old)
+send_umode_out(client::client &client,
+               const client::client &source,
+               const umode::mask &before)
 {
-	client::client *target_p;
 	char buf[BUFSIZE];
+	delta(umode::table, before, source.mode, buf);
+
 	rb_dlink_node *ptr;
-
-	send_umode(NULL, source_p, old, buf);
-
 	RB_DLINK_FOREACH(ptr, serv_list.head)
 	{
-		target_p = (client::client *)ptr->data;
-
-		if((target_p != client_p) && (target_p != source_p) && (*buf))
-		{
-			sendto_one(target_p, ":%s MODE %s :%s",
-				   get_id(source_p, target_p),
-				   get_id(source_p, target_p), buf);
-		}
+		auto &target(*reinterpret_cast<client::client *>(ptr->data));
+		if((target != client) && (target != source))
+			sendto_one(&target, ":%s MODE %s :%s",
+			           get_id(source, target),
+			           get_id(source, target),
+			           buf);
 	}
 
-	if(client_p && my(*client_p))
-		send_umode(client_p, source_p, old, buf);
+	if(my(client))
+		send_umode(client, source, buf);
 }
 
 /*
@@ -1341,7 +1294,7 @@ oper_up(client::client *source_p, struct oper_conf *oper_p)
 		++Count.invisi;
 	if((old & umode::INVISIBLE) && !is(*source_p, umode::INVISIBLE))
 		--Count.invisi;
-	send_umode_out(source_p, source_p, old);
+	send_umode_out(*source_p, *source_p, old);
 
 	char snobuf[128];
 	sendto_one_numeric(source_p, RPL_SNOMASK, form_str(RPL_SNOMASK),

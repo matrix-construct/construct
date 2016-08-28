@@ -60,7 +60,6 @@ bool is(const mask &, const mask &);
 void clear(mask &, const mask &);
 void set(mask &, const mask &);
 
-
 } // namespace mode
 } // namespace client
 
