@@ -57,6 +57,8 @@ mask(const mode_table<T> &table,
      const char *buf,
      mask_t &val)
 {
+	static_assert(std::is_unsigned<mask_t>(), "");
+
 	mask_t add(-1);
 	if(buf) for(; *buf; ++buf) switch(*buf)
 	{
@@ -227,6 +229,7 @@ find_slot(const mode_table<T> &table,
           const std::nothrow_t)
 {
 	using mask_t = typename mode_table<T>::mask_t;
+	static_assert(std::is_unsigned<mask_t>(), "");
 
 	const auto mask(mask_table(table));
 	for(mask_t i(1); i; i <<= 1)
