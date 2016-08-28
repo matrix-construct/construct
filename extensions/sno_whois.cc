@@ -28,21 +28,15 @@ mapi_hfn_list_av1 whois_hfnlist[] = {
 	{NULL, NULL}
 };
 
+sno::mode SNO_WHOIS { 'W' };
+
 static int
 init(void)
 {
-	sno::table['W'] = sno::mask(find_slot(sno::table));
-
 	return 0;
 }
 
-static void
-fini(void)
-{
-	sno::table['W'] = sno::mask(0);
-}
-
-DECLARE_MODULE_AV2(sno_whois, init, fini, NULL, NULL, whois_hfnlist, NULL, NULL, sno_desc);
+DECLARE_MODULE_AV2(sno_whois, init, nullptr, NULL, NULL, whois_hfnlist, NULL, NULL, sno_desc);
 
 void
 show_whois(hook_data_client *data)
@@ -55,7 +49,7 @@ show_whois(hook_data_client *data)
 	   is(*target_p, umode::OPER) &&
 #endif
 	   (source_p != target_p) &&
-	   (target_p->snomask & sno::table['W']))
+	   (target_p->snomask & SNO_WHOIS))
 	{
 		sendto_one_notice(target_p,
 				":*** Notice -- %s (%s@%s) is doing a whois on you [%s]",
