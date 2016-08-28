@@ -57,9 +57,6 @@ force_user_invis_la_SOURCES = force_user_invis.cc
 helpops_la_SOURCES = helpops.cc
 hurt_la_SOURCES = hurt.cc
 ip_cloaking_la_SOURCES = ip_cloaking.cc
-ip_cloaking_old_la_SOURCES = ip_cloaking_old.cc
-ip_cloaking_3_0_la_SOURCES = ip_cloaking_3.0.cc
-ip_cloaking_4_0_la_SOURCES = ip_cloaking_4.0.cc
 override_la_SOURCES = override.cc
 restrict_unauthenticated_la_SOURCES = restrict-unauthenticated.cc
 sno_channelcreate_la_SOURCES = sno_channelcreate.cc
@@ -127,9 +124,6 @@ extension_LTLIBRARIES =		\
   helpops.la			\
   hurt.la			\
   ip_cloaking.la		\
-  ip_cloaking_old.la		\
-  ip_cloaking_3.0.la		\
-  ip_cloaking_4.0.la		\
   override.la			\
   restrict-unauthenticated.la    \
   sno_channelcreate.la		\

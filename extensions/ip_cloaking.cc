@@ -7,13 +7,13 @@
 
 using namespace ircd;
 
-static const char ip_cloaking_desc[] = "IP cloaking module that uses user mode +h";
+static const char ip_cloaking_desc[] = "New IP cloaking module that uses user mode +x instead of +h";
 
 static int
 _modinit(void)
 {
 	/* add the usermode to the available slot */
-	user_modes['h'] = find_umode_slot();
+	user_modes['x'] = find_umode_slot();
 	construct_umodebuf();
 
 	return 0;
@@ -23,7 +23,7 @@ static void
 _moddeinit(void)
 {
 	/* disable the umode and remove it from the available list */
-	user_modes['h'] = 0;
+	user_modes['x'] = 0;
 	construct_umodebuf();
 }
 
@@ -162,14 +162,14 @@ check_umode_change(void *vdata)
 		return;
 
 	/* didn't change +h umode, we don't need to do anything */
-	if (!((data->oldumodes ^ source_p->mode) & user_modes['h']))
+	if (!((data->oldumodes ^ source_p->mode) & user_modes['x']))
 		return;
 
-	if (source_p->mode & user_modes['h'])
+	if (source_p->mode & user_modes['x'])
 	{
 		if (is_ip_spoof(*source_p) || source_p->localClient->mangledhost == NULL || (is_dyn_spoof(*source_p) && strcmp(source_p->host, source_p->localClient->mangledhost)))
 		{
-			source_p->mode &= umode(~user_modes['h']);
+			source_p->mode &= umode(~user_modes['x']);
 			return;
 		}
 		if (strcmp(source_p->host, source_p->localClient->mangledhost))
@@ -180,7 +180,7 @@ check_umode_change(void *vdata)
 			sendto_one_numeric(source_p, RPL_HOSTHIDDEN, "%s :is now your hidden host",
 				source_p->host);
 	}
-	else if (!(source_p->mode & user_modes['h']))
+	else if (!(source_p->mode & user_modes['x']))
 	{
 		if (source_p->localClient->mangledhost != NULL &&
 				!strcmp(source_p->host, source_p->localClient->mangledhost))
@@ -197,7 +197,7 @@ check_new_user(void *vdata)
 
 	if (is_ip_spoof(*source_p))
 	{
-		source_p->mode &= umode(~user_modes['h']);
+		source_p->mode &= umode(~user_modes['x']);
 		return;
 	}
 	source_p->localClient->mangledhost = (char *)rb_malloc(HOSTLEN + 1);
@@ -206,11 +206,12 @@ check_new_user(void *vdata)
 	else
 		do_host_cloak_host(source_p->orighost, source_p->localClient->mangledhost);
 	if (is_dyn_spoof(*source_p))
-		source_p->mode &= umode(~user_modes['h']);
-	if (source_p->mode & user_modes['h'])
+		source_p->mode &= umode(~user_modes['x']);
+	if (source_p->mode & user_modes['x'])
 	{
 		rb_strlcpy(source_p->host, source_p->localClient->mangledhost, sizeof(source_p->host));
 		if (irccmp(source_p->host, source_p->orighost))
 			set_dyn_spoof(*source_p);
 	}
 }
+
