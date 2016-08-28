@@ -45,6 +45,7 @@ libircd_la_SOURCES =                  \
   chmode.cc                      \
   class.cc                       \
   client.cc                     \
+  client_mode.cc                \
   dns.cc				\
   exception.cc                   \
   extban.cc                      \

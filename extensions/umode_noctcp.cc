@@ -32,13 +32,15 @@ mapi_hfn_list_av1 umode_noctcp_hfnlist[] = {
 	{ NULL, NULL }
 };
 
+umode::mode UMODE_NOCTCP { 'C' };
+
 static void
 umode_noctcp_process(hook_data_privmsg_user *data) {
 	if (data->approved || data->msgtype == MESSAGE_TYPE_NOTICE) {
 		return;
 	}
 
-	if (data->target_p->mode & user_modes['C'] && *data->text == '\001' && rb_strncasecmp(data->text + 1, "ACTION", 6)) {
+	if (data->target_p->mode & UMODE_NOCTCP && *data->text == '\001' && rb_strncasecmp(data->text + 1, "ACTION", 6)) {
 		sendto_one_numeric(data->source_p, ERR_CANNOTSENDTOUSER, form_str(ERR_CANNOTSENDTOUSER), data->target_p->name, "+C set");
 		data->approved = ERR_CANNOTSENDTOUSER;
 		return;
@@ -48,17 +50,7 @@ umode_noctcp_process(hook_data_privmsg_user *data) {
 static int
 _modinit(void)
 {
-	user_modes['C'] = find_umode_slot();
-	construct_umodebuf();
-
 	return 0;
 }
 
-static void
-_moddeinit(void)
-{
-	user_modes['C'] = 0;
-	construct_umodebuf();
-}
-
-DECLARE_MODULE_AV2(umode_noctcp, _modinit, _moddeinit, NULL, NULL, umode_noctcp_hfnlist, NULL, NULL, umode_noctcp_desc);
+DECLARE_MODULE_AV2(umode_noctcp, _modinit, nullptr, NULL, NULL, umode_noctcp_hfnlist, NULL, NULL, umode_noctcp_desc);

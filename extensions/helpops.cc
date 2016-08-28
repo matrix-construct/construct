@@ -27,14 +27,14 @@ mapi_hfn_list_av1 helpops_hfnlist[] = {
 	{ NULL, NULL }
 };
 
-static int UMODE_HELPOPS = 0;
-
 struct Message dehelper_msgtab = {
 	"DEHELPER", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, mg_not_oper, mg_ignore, {me_dehelper, 2}, {mo_dehelper, 2}}
 };
 
 mapi_clist_av1 helpops_clist[] = { &dehelper_msgtab, NULL };
+
+umode::mode UMODE_HELPOPS { 'H' };
 
 static void
 mo_dehelper(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char **parv)
@@ -96,19 +96,7 @@ do_dehelper(client::client &source, client::client &target)
 static int
 _modinit(void)
 {
-	/* add the usermode to the available slot */
-	user_modes['H'] = UMODE_HELPOPS = find_umode_slot();
-	construct_umodebuf();
-
 	return 0;
-}
-
-static void
-_moddeinit(void)
-{
-	/* disable the umode and remove it from the available list */
-	user_modes['H'] = UMODE_HELPOPS = 0;
-	construct_umodebuf();
 }
 
 static void
@@ -169,7 +157,7 @@ h_hdl_umode_changed(hook_data_umode_changed *hdata)
 	{
 		if (my(source) && !HasPrivilege(&source, "usermode:helpops"))
 		{
-			source.mode &= umode(~UMODE_HELPOPS);
+			source.mode &= ~UMODE_HELPOPS;
 			sendto_one(&source, form_str(ERR_NOPRIVS), me.name, source.name, "usermode:helpops");
 			return;
 		}
@@ -192,4 +180,4 @@ h_hdl_whois(hook_data_client *hdata)
 	}
 }
 
-DECLARE_MODULE_AV2(helpops, _modinit, _moddeinit, helpops_clist, NULL, helpops_hfnlist, NULL, NULL, helpops_desc);
+DECLARE_MODULE_AV2(helpops, _modinit, nullptr, helpops_clist, NULL, helpops_hfnlist, NULL, NULL, helpops_desc);

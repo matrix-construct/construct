@@ -295,7 +295,7 @@ conf_set_modules_path(void *data)
 struct mode_table_
 {
 	const char *name;
-	int mode;
+	umode::mask mode;
 };
 
 /* *INDENT-OFF* */
@@ -1677,7 +1677,7 @@ conf_set_general_default_umodes(void *data)
 			break;
 
 		default:
-			if ((flag = user_modes[(unsigned char) *pm]))
+			if ((flag = umode::table[(unsigned char) *pm]))
 			{
 				/* Proper value has probably not yet been set
 				 * so don't check oper_only_umodes -- jilles */

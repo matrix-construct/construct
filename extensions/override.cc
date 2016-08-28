@@ -30,6 +30,8 @@ mapi_hfn_list_av1 override_hfnlist[] = {
 	{ NULL, NULL }
 };
 
+umode::mode UMODE_OVERRIDE { 'p' };
+
 #define CHFL_OVERRIDE		0x0004
 #define IsOperOverride(x)	(HasPrivilege((x), "oper:override"))
 
@@ -102,18 +104,18 @@ check_umode_change(void *vdata)
 		return;
 
 	if (data->oldumodes & umode::OPER && !is(*source_p, umode::OPER))
-		source_p->mode &= umode(~user_modes['p']);
+		source_p->mode &= ~UMODE_OVERRIDE;
 
 	/* didn't change +p umode, we don't need to do anything */
-	if (!((data->oldumodes ^ source_p->mode) & user_modes['p']))
+	if (!((data->oldumodes ^ source_p->mode) & UMODE_OVERRIDE))
 		return;
 
-	if (source_p->mode & user_modes['p'])
+	if (source_p->mode & UMODE_OVERRIDE)
 	{
 		if (!IsOperOverride(source_p))
 		{
 			sendto_one_notice(source_p, ":*** You need oper:override privilege for +p");
-			source_p->mode &= umode(~user_modes['p']);
+			source_p->mode &= ~UMODE_OVERRIDE;
 			return;
 		}
 
@@ -122,7 +124,7 @@ check_umode_change(void *vdata)
 		sendto_realops_snomask(sno::GENERAL, L_NETWIDE, "%s has enabled oper-override (+p)",
 				       get_oper_name(source_p));
 	}
-	else if (!(source_p->mode & user_modes['p']))
+	else if (!(source_p->mode & UMODE_OVERRIDE))
 	{
 		rb_dlink_node *n, *tn;
 
@@ -153,7 +155,7 @@ hack_channel_access(void *vdata)
 	if (data->approved == chan::CHANOP)
 		return;
 
-	if (data->client->mode & user_modes['p'])
+	if (data->client->mode & UMODE_OVERRIDE)
 	{
 		update_session_deadline(data->client, NULL);
 		data->approved = CHFL_OVERRIDE;
@@ -173,7 +175,7 @@ hack_can_join(void *vdata)
 	if (data->approved == 0)
 		return;
 
-	if (data->client->mode & user_modes['p'])
+	if (data->client->mode & UMODE_OVERRIDE)
 	{
 		update_session_deadline(data->client, NULL);
 		data->approved = 0;
@@ -193,7 +195,7 @@ hack_can_kick(void *vdata)
 	if (alevel != CHFL_OVERRIDE)
 		return;
 
-	if (data->client->mode & user_modes['p'])
+	if (data->client->mode & UMODE_OVERRIDE)
 	{
 		update_session_deadline(data->client, NULL);
 		sendto_realops_snomask(sno::GENERAL, L_NETWIDE, "%s is using oper-override on %s (KICK %s)",
@@ -212,7 +214,7 @@ hack_can_send(void *vdata)
 	if (data->approved == chan::CAN_SEND_NONOP || data->approved == chan::CAN_SEND_OPV)
 		return;
 
-	if (data->client->mode & user_modes['p'])
+	if (data->client->mode & UMODE_OVERRIDE)
 	{
 		data->approved = chan::CAN_SEND_NONOP;
 
@@ -249,22 +251,13 @@ struct ev_entry *expire_override_deadlines_ev = NULL;
 static int
 _modinit(void)
 {
-	/* add the usermode to the available slot */
-	user_modes['p'] = find_umode_slot();
-	construct_umodebuf();
-
-        expire_override_deadlines_ev = rb_event_add("expire_override_deadlines", expire_override_deadlines, NULL, 60);
-
+	expire_override_deadlines_ev = rb_event_add("expire_override_deadlines", expire_override_deadlines, NULL, 60);
 	return 0;
 }
 
 static void
 _moddeinit(void)
 {
-	/* disable the umode and remove it from the available list */
-	user_modes['p'] = 0;
-	construct_umodebuf();
-
 	rb_event_delete(expire_override_deadlines_ev);
 }
 

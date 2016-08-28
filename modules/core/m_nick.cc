@@ -1044,7 +1044,7 @@ register_client(client::client &client, client::client *server,
 	m = &parv[4][1];
 	while(*m)
 	{
-		flag = user_modes[(unsigned char) *m];
+		flag = umode::table[(unsigned char) *m];
 
 		if(flag & umode::SERVICE)
 		{
@@ -1075,7 +1075,7 @@ register_client(client::client &client, client::client *server,
 		if(!(source->mode & umode::OPER) && (flag & umode::OPER))
 			Count.oper++;
 
-		source->mode |= umode(flag);
+		source->mode |= flag;
 		m++;
 	}
 

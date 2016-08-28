@@ -132,7 +132,7 @@ scan_umodes(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 				what = MODE_DEL;
 				break;
 			default:
-				if ((mode = user_modes[(unsigned char) *c]) != 0)
+				if ((mode = umode::table[(unsigned char) *c]) != 0)
 				{
 					if (what == MODE_ADD)
 						allowed_umodes |= mode;
@@ -236,7 +236,7 @@ scan_umodes(struct MsgBuf *msgbuf_p, client::client &client, client::client &sou
 
 			for (i = 0; i < 128; i++)
 			{
-				if (is(*target_p, umode(user_modes[i])))
+				if (is(*target_p, umode::table[i]))
 					*m++ = (char) i;
 			}
 

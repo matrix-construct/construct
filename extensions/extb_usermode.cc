@@ -58,11 +58,11 @@ static int eb_usermode(const char *data, client::client *client_p,
 			switch (dir)
 			{
 			case MODE_DEL:
-				modes_nak |= user_modes[(unsigned char) *p];
+				modes_nak |= umode::table[(unsigned char) *p];
 				break;
 			case MODE_ADD:
 			default:
-				modes_ack |= user_modes[(unsigned char) *p];
+				modes_ack |= umode::table[(unsigned char) *p];
 				break;
 			}
 			break;

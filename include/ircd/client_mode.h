@@ -27,63 +27,68 @@ namespace ircd   {
 namespace client {
 namespace mode   {
 
-enum mode : uint
+using mask = uint64_t;
+extern mode_table<mask> table;
+extern char available[64];
+
+class mode
+:public mode_lease<mask, table>
 {
-	SERVNOTICE   = 0x0001, // server notices
-	WALLOP       = 0x0002, // send wallops to them
-	OPERWALL     = 0x0004, // operwalls
-	INVISIBLE    = 0x0008, // makes user invisible
-	CALLERID     = 0x0010, // block unless caller id's
-	LOCOPS       = 0x0020, // show locops
-	SERVICE      = 0x0040,
-	DEAF         = 0x0080,
-	NOFORWARD    = 0x0100, // don't forward
-	REGONLYMSG   = 0x0200, // only allow logged in users to msg
-	OPER         = 0x1000, // operator
-	ADMIN        = 0x2000, // admin on server
-	SSLCLIENT    = 0x4000, // using SSL
+	void release() noexcept override;
+
+  public:
+	explicit mode(const char &c);
 };
 
-const mode DEFAULT_OPER_UMODES
-{
-	SERVNOTICE   |
-	OPERWALL     |
-	WALLOP       |
-	LOCOPS
-};
+extern mode SERVNOTICE;   // server notices
+extern mode WALLOP;       // send wallops to them
+extern mode OPERWALL;     // operwalls
+extern mode INVISIBLE;    // makes user invisible
+extern mode CALLERID;     // block unless caller id's
+extern mode LOCOPS;       // show locops
+extern mode SERVICE;
+extern mode DEAF;
+extern mode NOFORWARD;    // don't forward
+extern mode REGONLYMSG;   // only allow logged in users to msg
+extern mode OPER;         // operator
+extern mode ADMIN;        // admin on server
+extern mode SSLCLIENT;    // using SSL
 
-bool is(const mode &mask, const mode &bits);
-void clear(mode &mask, const mode &bits);
-void set(mode &mask, const mode &bits);
+extern const mask DEFAULT_OPER_UMODES;
+
+bool is(const mask &, const mask &);
+void clear(mask &, const mask &);
+void set(mask &, const mask &);
+
 
 } // namespace mode
 } // namespace client
 
 // Import `umode` type into ircd:: namespace
-using umode = client::mode::mode;
+namespace umode = client::mode;
 
 } // namespace ircd
 
 
 inline void
-ircd::client::mode::set(mode &mask,
-                        const mode &bits)
+ircd::client::mode::set(mask &cur,
+                        const mask &bit)
 {
-	mask |= bits;
+	cur |= bit;
 }
 
 inline void
-ircd::client::mode::clear(mode &mask,
-                          const mode &bits)
+ircd::client::mode::clear(mask &cur,
+                          const mask &bit)
 {
-	mask &= ~bits;
+	cur &= ~bit;
 }
 
 inline bool
-ircd::client::mode::is(const mode &mask,
-                       const mode &bits)
+ircd::client::mode::is(const mask &cur,
+                       const mask &bit)
 {
-	return (mask & bits) == bits;
+	return (cur & bit) == bit;
 }
 
 #endif // __cplusplus

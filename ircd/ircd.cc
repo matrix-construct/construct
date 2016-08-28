@@ -623,8 +623,6 @@ charybdis_main(int argc, char * const argv[])
 
 	rb_dlinkAddAlloc(&me, &global_serv_list);
 
-	construct_umodebuf();
-
 	check_class();
 	write_pidfile(pidFileName);
 	cache::help::load();

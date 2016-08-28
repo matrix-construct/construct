@@ -97,7 +97,7 @@ struct client
 	// unique whowas id associating any history to *this (TODO: replace with connid)
 	whowas::id_t wwid;
 	time_t tsinfo;		/* TS on the nick, SVINFO on server */
-	mode::mode mode;
+	mode::mask mode;
 	uint64_t flags;		/* client flags */
 
 	unsigned int snomask;	/* server notice mask */
@@ -327,21 +327,21 @@ struct ListClient
 
 
 inline bool
-is(const client &client, const mode::mode &mode)
+is(const client &client, const mode::mask &mask)
 {
-	return is(client.mode, mode);
+	return mode::is(client.mode, mask);
 }
 
 inline void
-set(client &client, const mode::mode &mode)
+set(client &client, const mode::mask &mask)
 {
-	return set(client.mode, mode);
+	return mode::set(client.mode, mask);
 }
 
 inline void
-clear(client &client, const mode::mode &mode)
+clear(client &client, const mode::mask &mask)
 {
-	return clear(client.mode, mode);
+	return mode::clear(client.mode, mask);
 }
 
 inline void

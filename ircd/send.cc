@@ -1315,7 +1315,7 @@ sendto_wallops_flags(int flags, client::client *source_p, const char *pattern, .
 	{
 		client_p = (client::client *)ptr->data;
 
-		if (is(*client_p, umode(flags)))
+		if (is(*client_p, flags))
 			_send_linebuf(client_p, &linebuf);
 	}
 

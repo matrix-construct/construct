@@ -62,6 +62,7 @@ extern "C" {
 #include <RB_INC_UTILITY
 #include <RB_INC_FUNCTIONAL
 #include <RB_INC_ALGORITHM
+#include <RB_INC_NUMERIC
 #include <RB_INC_MEMORY
 #include <RB_INC_EXCEPTION
 #include <RB_INC_SYSTEM_ERROR

@@ -140,7 +140,7 @@ supported::init()
 	add("STATUSMSG", "@+");
 	add("CALLERID", [](ostream &s)
 	{
-		if(ConfigFileEntry.oper_only_umodes & user_modes['g'])
+		if(ConfigFileEntry.oper_only_umodes & umode::table['g'])
 			return;
 
 		s << 'g';
@@ -162,7 +162,7 @@ supported::init()
 
 	add("DEAF", [](ostream &s)
 	{
-		if(ConfigFileEntry.oper_only_umodes & user_modes['D'])
+		if(ConfigFileEntry.oper_only_umodes & umode::table['D'])
 			return;
 
 		s << 'D';

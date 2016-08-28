@@ -196,18 +196,39 @@ find(const mode_table<T> &table,
 
 template<class T>
 auto
+mask_table(const mode_table<T> &table)
+{
+	using mask_t = typename mode_table<T>::mask_t;
+
+	return std::accumulate(begin(table), end(table), mask_t(0), []
+	(auto mask, const T &elem)
+	{
+		return mask |= static_cast<const mask_t &>(elem);
+	});
+}
+
+template<class T>
+char *
+mask_table(const mode_table<T> &table,
+           char *const &buf)
+{
+	char *p(buf);
+	for(size_t i(0); i < table.size(); ++i)
+		if(!!table[i])
+			*p++ = i;
+
+	*p = '\0';
+	return buf;
+}
+
+template<class T>
+auto
 find_slot(const mode_table<T> &table,
           const std::nothrow_t)
 {
 	using mask_t = typename mode_table<T>::mask_t;
 
-	mask_t mask(0);
-	std::for_each(begin(table), end(table), [&mask]
-	(const T &elem)
-	{
-		mask |= elem;
-	});
-
+	const auto mask(mask_table(table));
 	for(mask_t i(1); i; i <<= 1)
 		if(~mask & i)
 			return i;

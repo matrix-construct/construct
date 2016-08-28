@@ -94,7 +94,7 @@ client::client::client()
 ,from{nullptr}
 ,wwid{0}
 ,tsinfo{0}
-,mode{(umode)0}
+,mode{0}
 ,flags{(enum flags)0}
 ,snomask{0}
 ,hopcount{0}

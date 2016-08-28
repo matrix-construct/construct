@@ -33,7 +33,7 @@ class mode_lease
 
 	char c = '\0';
 
-	virtual void release()                       { table[c] = { 0 };                               }
+	virtual void release() noexcept              { table[c] = { 0 };                               }
 
   public:
 	explicit operator const char &() const       { return c;                                       }
@@ -44,7 +44,7 @@ class mode_lease
 	mode_lease() = default;
 	mode_lease(mode_lease &&) noexcept;
 	mode_lease(const mode_lease &) = delete;
-	~mode_lease() noexcept;
+	virtual ~mode_lease() noexcept;
 };
 
 template<class T,
@@ -54,6 +54,9 @@ mode_lease<T, table>::mode_lease(const char &c,
                                  args&&... a)
 :c(c)
 {
+	if(!c)
+		return;
+
 	if(!!table[c])
 		throw mode_filled("Character [%c] is already leased", c);
 
@@ -74,8 +77,10 @@ template<class T,
 mode_lease<T, table>::~mode_lease()
 noexcept
 {
-	if(c)
-		release();
+	if(!c)
+		return;
+
+	release();
 }
 
 }      // namespace ircd
