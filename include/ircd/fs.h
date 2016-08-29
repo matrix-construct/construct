@@ -46,8 +46,6 @@ namespace fs   {
 constexpr auto DPATH = IRCD_PREFIX;
 constexpr auto BINPATH = IRCD_PREFIX "/bin";
 constexpr auto MODPATH = RB_MODULE_DIR;
-constexpr auto MODULE_DIR = RB_MODULE_DIR;
-constexpr auto AUTOMODPATH = RB_MODULE_DIR "/autoload";
 constexpr auto ETCPATH = RB_ETC_DIR;
 constexpr auto LOGPATH = RB_LOG_DIR;
 constexpr auto UHPATH = RB_HELP_DIR "/users";
@@ -71,7 +69,6 @@ namespace path
 		LOG,
 		LIBEXEC,
 		MODULES,
-		AUTOLOAD_MODULES,
 		USERHELP,
 		OPERHELP,
 		IRCD_CONF,

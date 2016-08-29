@@ -35,7 +35,6 @@ auto paths = []
 
 	paths[PREFIX]             = DPATH;
 	paths[MODULES]            = MODPATH;
-	paths[AUTOLOAD_MODULES]   = AUTOMODPATH;
 	paths[ETC]                = ETCPATH;
 	paths[LOG]                = LOGPATH;
 	paths[USERHELP]           = UHPATH;
@@ -62,7 +61,6 @@ auto pathnames = []
 
 	names[PREFIX]             = "prefix";
 	names[MODULES]            = "modules";
-	names[AUTOLOAD_MODULES]   = "autoload modules";
 	names[ETC]                = "config";
 	names[LOG]                = "log";
 	names[USERHELP]           = "user help";
@@ -138,9 +136,6 @@ void relocate()
 	/* now that we have our prefix, we can relocate the other paths... */
 	snprintf(workbuf, sizeof workbuf, "%s%cmodules", prefix, RB_PATH_SEPARATOR);
 	paths[MODULES] = rb_strdup(workbuf);
-
-	snprintf(workbuf, sizeof workbuf, "%s%cmodules%cautoload", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
-	paths[AUTOLOAD_MODULES] = rb_strdup(workbuf);
 
 	snprintf(workbuf, sizeof workbuf, "%s%cetc", prefix, RB_PATH_SEPARATOR);
 	paths[ETC] = rb_strdup(workbuf);

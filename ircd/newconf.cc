@@ -276,20 +276,17 @@ conf_set_serverinfo_nicklen(void *data)
 static void
 conf_set_modules_module(void *data)
 {
-	char *m_bn;
+	char *const m_bn = rb_basename((char *) data);
+	const scope free([&m_bn] { rb_free(m_bn); });
 
-	m_bn = rb_basename((char *) data);
-
-	if(findmodule_byname(m_bn) == NULL)
-		load_one_module((char *) data, MAPI_ORIGIN_EXTENSION, false);
-
-	rb_free(m_bn);
+	if(!mods::loaded(m_bn))
+		mods::load((const char *)data);
 }
 
 static void
 conf_set_modules_path(void *data)
 {
-	mod_add_path((char *) data);
+	mods::path_add((char *) data, std::nothrow);
 }
 
 struct mode_table_

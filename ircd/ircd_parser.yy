@@ -276,9 +276,9 @@ loadmodule:
                 char *m_bn;
                 m_bn = rb_basename((char *) $2);
 
-                if (ircd::findmodule_byname(m_bn) == NULL)
+                if (!ircd::mods::loaded(m_bn))
 	        {
-	            ircd::load_one_module($2, MAPI_ORIGIN_EXTENSION, 0);
+	            ircd::mods::load($2);
 		}
 
                 rb_free(m_bn);

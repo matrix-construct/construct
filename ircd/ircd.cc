@@ -549,7 +549,6 @@ charybdis_main(int argc, char * const argv[])
 
 	init_authd();		/* Start up authd. */
 	init_dns();		/* Start up DNS query system */
-	init_modules();		/* Start up modules system */
 
 	privilegeset_set_new("default", "", 0);
 
@@ -557,8 +556,7 @@ charybdis_main(int argc, char * const argv[])
 		fprintf(stderr, "\nBeginning config test\n");
 	read_conf_files(true);	/* cold start init conf files */
 
-	load_all_modules(1);
-	load_core_modules(1);
+	mods::autoload();
 
 	supported::init();
 

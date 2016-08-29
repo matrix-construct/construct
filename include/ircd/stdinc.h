@@ -32,6 +32,8 @@ namespace ircd
 	using std::begin;
 	using std::end;
 	using std::get;
+	using ostream = std::ostream;
+	using namespace std::string_literals;
 }
 
 // Temp fwd decl scaffold
@@ -60,8 +62,6 @@ namespace ircd
 	struct ev_ctl;
 	struct ws_ctl;
 	struct server_conf;
-
-	using ostream = std::ostream;
 }
 
 #include "util.h"

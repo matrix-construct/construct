@@ -23,6 +23,23 @@
  *  USA
  */
 
+/*
+    make_index<Message>(),
+    {
+        [](mod &mod, const std::string &name)
+        {
+            auto &tab(get<Message>(mod, name));
+            mod_add_cmd(&tab);
+        },
+        [](mod &mod, const std::string &name)
+        {
+            auto &tab(get<Message>(mod, name));
+            mod_del_cmd(&tab);
+        }
+    }
+*/
+
+
 namespace ircd {
 
 std::map<std::string, std::shared_ptr<alias_entry>, case_insensitive_less> alias_dict;

@@ -58,6 +58,7 @@ extern "C" {
 #include <RB_INC_CSTDINT
 #include <RB_INC_LIMITS
 #include <RB_INC_TYPE_TRAITS
+#include <RB_INC_TYPEINDEX
 #include <RB_INC_CERRNO
 #include <RB_INC_UTILITY
 #include <RB_INC_FUNCTIONAL
@@ -72,7 +73,7 @@ extern "C" {
 #include <RB_INC_MAP
 #include <RB_INC_SET
 #include <RB_INC_LIST
-//#include <RB_INC_FORWARD_LIST
+#include <RB_INC_FORWARD_LIST
 //#include <RB_INC_UNORDERED_MAP
 //#include <RB_INC_DEQUE
 #include <RB_INC_SSTREAM

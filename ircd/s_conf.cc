@@ -1398,9 +1398,8 @@ clear_out_old_conf(void)
 	clear_s_newconf();
 
 	/* clean out module paths */
-	mod_clear_paths();
-	mod_add_path(fs::MODULE_DIR);
-	mod_add_path(fs::AUTOMODPATH);
+	mods::path_clear();
+	mods::path_add(fs::MODPATH);
 
 	/* clean out ServerInfo */
 	rb_free(ServerInfo.description);

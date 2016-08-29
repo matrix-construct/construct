@@ -1,5 +1,8 @@
 /* modules/m_modules.c - module for module loading
+ *
+ * Copyright (c) 2016 Charybdis Development Team
  * Copyright (c) 2016 Elizabeth Myers <elizabeth@interlinked.me>
+ * Copyright (c) 2016 Jason Volk <jason@zemos.net>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,8 +23,6 @@
 
 using namespace ircd;
 
-static const char modules_desc[] = "Provides module management commands";
-
 static void m_modlist(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
 static void mo_modload(struct MsgBuf *, client::client &, client::client &, int, const char **);
@@ -35,10 +36,10 @@ static void me_modreload(struct MsgBuf *, client::client &, client::client &, in
 static void me_modunload(struct MsgBuf *, client::client &, client::client &, int, const char **);
 static void me_modrestart(struct MsgBuf *, client::client &, client::client &, int, const char **);
 
-static void do_modload(client::client &, const char *);
-static void do_modunload(client::client &, const char *);
-static void do_modreload(client::client &, const char *);
-static void do_modlist(client::client &, const char *);
+static void do_modload(client::client &, const std::string &);
+static void do_modunload(client::client &, const std::string &);
+static void do_modreload(client::client &, const std::string &);
+static void do_modlist(client::client &, const std::string &);
 static void do_modrestart(client::client &);
 
 struct Message modload_msgtab = {
@@ -66,11 +67,19 @@ struct Message modrestart_msgtab = {
 	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, {me_modrestart, 0}, {mo_modrestart, 0}}
 };
 
-mapi_clist_av1 modules_clist[] = { &modload_msgtab, &modunload_msgtab, &modreload_msgtab, &modlist_msgtab, &modrestart_msgtab, NULL };
 
-DECLARE_MODULE_AV2(modules, NULL, NULL, modules_clist, NULL, NULL, NULL, NULL, modules_desc);
+mapi::header IRCD_MODULE
+{
+	"Provides module management commands",
+	mapi::NO_FLAGS,
+	&modload_msgtab,
+	&modunload_msgtab,
+	&modreload_msgtab,
+	&modlist_msgtab,
+	&modrestart_msgtab,
+};
 
-/* load a module .. */
+// load a module ..
 static void
 mo_modload(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char **parv)
 {
@@ -106,7 +115,7 @@ me_modload(struct MsgBuf *msgbuf_p, client::client &client, client::client &sour
 }
 
 
-/* unload a module .. */
+// unload a module ..
 static void
 mo_modunload(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char **parv)
 {
@@ -141,7 +150,7 @@ me_modunload(struct MsgBuf *msgbuf_p, client::client &client, client::client &so
 	do_modunload(source, parv[1]);
 }
 
-/* unload and load in one! */
+// unload and load in one!
 static void
 mo_modreload(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char **parv)
 {
@@ -176,7 +185,7 @@ me_modreload(struct MsgBuf *msgbuf_p, client::client &client, client::client &so
 	do_modreload(source, parv[1]);
 }
 
-/* list modules .. */
+// list modules ..
 static void
 m_modlist(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char **parv)
 {
@@ -197,7 +206,7 @@ me_modlist(struct MsgBuf *msgbuf_p, client::client &client, client::client &sour
 	do_modlist(source, parv[1]);
 }
 
-/* unload and reload all modules */
+// unload and reload all modules
 static void
 mo_modrestart(struct MsgBuf *msgbuf_p, client::client &client, client::client &source, int parc, const char **parv)
 {
@@ -233,87 +242,46 @@ me_modrestart(struct MsgBuf *msgbuf_p, client::client &client, client::client &s
 }
 
 static void
-do_modload(client::client &source, const char *module)
+do_modload(client::client &source,
+           const std::string &name)
+try
 {
-	char *m_bn = rb_basename(module);
-	int origin;
-
-	if(findmodule_byname(m_bn) != NULL)
-	{
-		sendto_one_notice(&source, ":Module %s is already loaded", m_bn);
-		rb_free(m_bn);
-		return;
-	}
-
-	origin = strcmp(module, m_bn) == 0 ? MAPI_ORIGIN_CORE : MAPI_ORIGIN_EXTENSION;
-	load_one_module(module, origin, false);
-
-	rb_free(m_bn);
+	mods::load(name);
+}
+catch(const std::exception &e)
+{
+	sendto_one_notice(&source, "%s", e.what());
 }
 
 static void
-do_modunload(client::client &source, const char *module)
+do_modunload(client::client &source,
+             const std::string &name)
+try
 {
-	struct module *mod;
-	char *m_bn = rb_basename(module);
-
-	if((mod = findmodule_byname(m_bn)) == NULL)
+	if(!mods::loaded(name))
 	{
-		sendto_one_notice(&source, ":Module %s is not loaded", m_bn);
-		rb_free(m_bn);
+		sendto_one_notice(&source, ":%s is not loaded", name.c_str());
 		return;
 	}
 
-	if(mod->core)
-	{
-		sendto_one_notice(&source, ":Module %s is a core module and may not be unloaded", m_bn);
-		rb_free(m_bn);
-		return;
-	}
-
-	if(unload_one_module(m_bn, true) == false)
-		sendto_one_notice(&source, ":Module %s is not loaded", m_bn);
-
-	rb_free(m_bn);
+	mods::unload(name);
+}
+catch(const std::exception &e)
+{
+	sendto_one_notice(&source, "%s", e.what());
 }
 
 static void
-do_modreload(client::client &source, const char *module)
+do_modreload(client::client &source,
+             const std::string &name)
 {
-	struct module *mod;
-	int check_core;
-	char *m_bn = rb_basename(module);
 
-	if((mod = findmodule_byname(m_bn)) == NULL)
-	{
-		sendto_one_notice(&source, ":Module %s is not loaded", m_bn);
-		rb_free(m_bn);
-		return;
-	}
-
-	check_core = mod->core;
-
-	if(unload_one_module(m_bn, true) == false)
-	{
-		sendto_one_notice(&source, ":Module %s is not loaded", m_bn);
-		rb_free(m_bn);
-		return;
-	}
-
-	if((load_one_module(m_bn, mod->origin, check_core) == false) && check_core)
-	{
-		sendto_realops_snomask(sno::GENERAL, L_NETWIDE,
-				     "Error reloading core module: %s: terminating ircd", m_bn);
-		ilog(L_MAIN, "Error loading core module %s: terminating ircd", m_bn);
-		exit(0);
-	}
-
-	rb_free(m_bn);
 }
 
 static void
 do_modrestart(client::client &source)
 {
+/*
 	unsigned int modnum = 0;
 	rb_dlink_node *ptr, *nptr;
 
@@ -339,65 +307,36 @@ do_modrestart(client::client &source)
 	}
 
 	load_all_modules(false);
-	load_core_modules(false);
 	rehash(false);
 
 	sendto_realops_snomask(sno::GENERAL, L_NETWIDE,
 			     "Module Restart: %u modules unloaded, %lu modules loaded",
 			     modnum, rb_dlink_list_length(&module_list));
 	ilog(L_MAIN, "Module Restart: %u modules unloaded, %lu modules loaded", modnum, rb_dlink_list_length(&module_list));
+*/
 }
 
 static void
-do_modlist(client::client &source, const char *pattern)
+do_modlist(client::client &source, const std::string &pattern)
 {
-	rb_dlink_node *ptr;
-	int i;
-
-	RB_DLINK_FOREACH(ptr, module_list.head)
+	for(const auto &pit : mods::loaded())
 	{
-		struct module *mod = (module *)ptr->data;
-		bool display = false;
-		const char *origin;
-
-		switch (mod->origin)
-		{
-		case MAPI_ORIGIN_EXTENSION:
-			origin = "extension";
-			display = true;
-			break;
-		case MAPI_ORIGIN_CORE:
-			origin = "builtin";
-			display = is(source, umode::OPER);
-			break;
-		default:
-			origin = "unknown";
-			display = is(source, umode::OPER);
-			break;
-		}
-
-		if(!display)
-			continue;
-
-		if(pattern)
-		{
-			if(match(pattern, mod->name))
-			{
-				sendto_one(&source, form_str(RPL_MODLIST),
-					   me.name, source.name,
-					   mod->name,
-					   (unsigned long)(uintptr_t)mod->address, origin,
-					   mod->core ? " (core)" : "", mod->version, mod->description);
-			}
-		}
-		else
+		const auto &mod(*pit.second);
+		if(pattern.empty() || match(pattern, name(mod)))
 		{
 			sendto_one(&source, form_str(RPL_MODLIST),
-				   me.name, source.name, mod->name,
-				   (unsigned long)(uintptr_t)mod->address, origin,
-				   mod->core ? " (core)" : "", mod->version, mod->description);
+			           me.name,
+			           source.name,
+			           name(mod).c_str(),
+			           ulong(0),
+			           "*",
+			           "*",
+			           "*", //version(mod),
+			           desc(mod));
 		}
 	}
 
-	sendto_one(&source, form_str(RPL_ENDOFMODLIST), me.name, source.name);
+	sendto_one(&source, form_str(RPL_ENDOFMODLIST),
+	           me.name,
+	           source.name);
 }
