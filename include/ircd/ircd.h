@@ -34,6 +34,8 @@
 #ifdef __cplusplus
 namespace ircd {
 
+extern bool debugmode;
+
 struct SetOptions
 {
 	int maxclients;		/* max clients allowed */
@@ -61,7 +63,6 @@ struct Counter
 
 extern struct SetOptions GlobalSetOptions;	/* defined in ircd.c */
 
-extern const char *logFileName;
 extern volatile sig_atomic_t dorehash;
 extern volatile sig_atomic_t dorehashbans;
 extern volatile sig_atomic_t doremotd;
@@ -103,6 +104,8 @@ void server_reboot(void) __attribute__((noreturn));
 
 void setup_signals();
 void ircd_shutdown(const char *reason) __attribute__((noreturn));
+
+int run();
 
 }      // namespace ircd
 #endif // __cplusplus

@@ -72,7 +72,7 @@ parseargs(int *argc, char * const **argv, struct lgetopt *opts)
 						fprintf(stderr,
 							"Error: option '%c%s' requires an argument\n",
 							OPTCHAR, opts[i].opt);
-						usage(progname);
+						usage(progname, opts);
 					}
 
 					*((int *) opts[i].argloc) = atoi((*argv)[1]);
@@ -86,7 +86,7 @@ parseargs(int *argc, char * const **argv, struct lgetopt *opts)
 						fprintf(stderr,
 							"error: option '%c%s' requires an argument\n",
 							OPTCHAR, opts[i].opt);
-						usage(progname);
+						usage(progname, opts);
 					}
 
 					*((char **) opts[i].argloc) =
@@ -98,7 +98,7 @@ parseargs(int *argc, char * const **argv, struct lgetopt *opts)
 					break;
 
 				case argtype::USAGE:
-					usage(progname);
+					usage(progname, opts);
 				 /*NOTREACHED*/ default:
 					fprintf(stderr,
 						"Error: internal error in parseargs() at %s:%d\n",
@@ -110,13 +110,13 @@ parseargs(int *argc, char * const **argv, struct lgetopt *opts)
 		if(!found)
 		{
 			fprintf(stderr, "error: unknown argument '%c%s'\n", OPTCHAR, &(*argv)[0][1]);
-			usage(progname);
+			usage(progname, opts);
 		}
 	}
 }
 
 void
-usage(const char *name)
+usage(const char *name, struct lgetopt *myopts)
 {
 	int i = 0;
 

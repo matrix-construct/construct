@@ -38,9 +38,7 @@ struct lgetopt
 	const char *desc;	/* description of the argument, usage for printing help */
 };
 
-extern struct lgetopt myopts[];
-
-void usage(const char *) __attribute__((noreturn));
+void usage(const char *, struct lgetopt *opts) __attribute__((noreturn));
 void parseargs(int *, char * const **, struct lgetopt *);
 
 }      // namespace ircd

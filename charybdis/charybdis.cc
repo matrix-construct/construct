@@ -19,15 +19,98 @@
  *
  */
 
-#include <rb/rb.h>
 #include <ircd/ircd.h>
 
-namespace ircd
+using namespace ircd;
+
+bool printversion;
+lgetopt opts[] =
 {
-	extern int charybdis_main(int argc, char *const argv[]);
+	{ "help", NULL, lgetopt::USAGE, "Print this text" },
+	{ "version", &printversion, lgetopt::BOOL, "Print version and exit" },
+	{ "configfile", &ConfigFileEntry.configfile, lgetopt::STRING, "File to use for ircd.conf" },
+	{ "conftest", &testing_conf, lgetopt::YESNO, "Test the configuration files and exit" },
+	{ "debug", &ircd::debugmode, lgetopt::BOOL, "Enable options for debugging" },
+	{ NULL, NULL, lgetopt::STRING, NULL },
+};
+
+const char *const fatalerrstr
+{R"(
+***
+*** A fatal error has occurred. Please contact the developer with the message below.
+*** Create a coredump by reproducing the error using the -debug command-line option.
+***
+%s
+)"};
+
+const char *const usererrstr
+{R"(
+***
+*** A fatal startup error has occurred. Please fix the problem to continue. ***
+***
+%s
+)"};
+
+static void print_version();
+static bool startup_checks();
+
+int main(int argc, char *const *argv)
+try
+{
+	umask(077);       // better safe than sorry --SRB
+
+	ConfigFileEntry.dpath = path::get(path::PREFIX);
+	ConfigFileEntry.configfile = path::get(path::IRCD_CONF); // Server configuration file
+	ConfigFileEntry.connect_timeout = 30; // Default to 30
+
+	parseargs(&argc, &argv, opts);
+	if(!startup_checks())
+		return 1;
+
+	if(printversion)
+	{
+		print_version();
+		return 0;
+	}
+
+	return ircd::run();
+}
+catch(const std::exception &e)
+{
+	if(ircd::debugmode)
+		throw;
+
+	fprintf(stderr, fatalerrstr, e.what());
+	return 1;
 }
 
-int main(int argc, char *argv[])
+void print_version()
 {
-	return ircd::charybdis_main(argc, argv);
+	printf("VERSION :%s\n",
+	       info::version.c_str());
+
+	#ifdef CUSTOM_BRANDING
+	printf("VERSION :based on %s-%s\n",
+	       PACKAGE_NAME,
+	       PACKAGE_VERSION);
+	#endif
+
+	printf("VERSION :%s\n", rb_lib_version());
+}
+
+bool startup_checks()
+try
+{
+	#ifndef _WIN32
+	if(geteuid() == 0)
+		throw error("Don't run ircd as root!!!");
+	#endif
+
+	path::chdir(ConfigFileEntry.dpath);
+	return true;
+}
+catch(const std::exception &e)
+{
+	fprintf(stderr, usererrstr, e.what());
+	return false;
 }

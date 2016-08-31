@@ -23,6 +23,8 @@
  *  USA
  */
 
+bool ircd::debugmode;
+
 
 namespace ircd {
 
@@ -76,8 +78,6 @@ int splitchecking;
 int split_users;
 int split_servers;
 int eob_count;
-
-const char *logFileName = NULL;
 
 void
 ircd_shutdown(const char *reason)
@@ -145,21 +145,6 @@ init_sys(void)
 #endif /* RLIMIT_FD_MAX */
 	maxconnections = MAXCONNECTIONS;
 }
-
-static int printVersion = 0;
-
-struct lgetopt myopts[] = {
-	{"configfile", &ConfigFileEntry.configfile,
-	 lgetopt::STRING, "File to use for ircd.conf"},
-	{"logfile", &logFileName,
-	 lgetopt::STRING, "File to use for ircd.log"},
-	{"version", &printVersion,
-	 lgetopt::YESNO, "Print version and exit"},
-	{"conftest", &testing_conf,
-	 lgetopt::YESNO, "Test the configuration files and exit"},
-	{"help", NULL, lgetopt::USAGE, "Print this text"},
-	{NULL, NULL, lgetopt::STRING, NULL},
-};
 
 static void
 check_rehash(void *unused)
@@ -363,38 +348,9 @@ seed_random(void *unused)
  * Side Effects - this is where the ircd gets going right now
  */
 int
-charybdis_main(int argc, char * const argv[])
+run()
 {
-	int fd;
-
-#ifndef _WIN32
-	/* Check to see if the user is running us as root, which is a nono */
-	if(geteuid() == 0)
-	{
-		fprintf(stderr, "Don't run ircd as root!!!\n");
-		return -1;
-	}
-#endif
-
-	logFileName = path::get(path::IRCD_LOG);
-
-	ConfigFileEntry.dpath = path::get(path::PREFIX);
-	ConfigFileEntry.configfile = path::get(path::IRCD_CONF); // Server configuration file
-	ConfigFileEntry.connect_timeout = 30;	/* Default to 30 */
-
 	init_sys();
-
-	umask(077);		/* better safe than sorry --SRB */
-
-	myargv = argv;
-	parseargs(&argc, &argv, myopts);
-
-	if(chdir(ConfigFileEntry.dpath))
-	{
-		fprintf(stderr, "Unable to chdir to %s: %s\n", ConfigFileEntry.dpath, strerror(errno));
-		exit(EXIT_FAILURE);
-	}
-
 	rb_set_time();
 
 	/*
@@ -405,34 +361,13 @@ charybdis_main(int argc, char * const argv[])
 	/* initialise operhash fairly early. */
 	init_operhash();
 
-	memset(&me, 0, sizeof(me));
-	memset(&meLocalUser, 0, sizeof(meLocalUser));
 	me.localClient = &meLocalUser;
-
-	/* Make sure all lists are zeroed */
-	memset(&unknown_list, 0, sizeof(unknown_list));
-	memset(&lclient_list, 0, sizeof(lclient_list));
-	memset(&serv_list, 0, sizeof(serv_list));
-	memset(&global_serv_list, 0, sizeof(global_serv_list));
-	memset(&local_oper_list, 0, sizeof(local_oper_list));
-	memset(&oper_list, 0, sizeof(oper_list));
-
 	rb_dlinkAddTail(&me, &me.node, &global_client_list);
 
 	memset(&Count, 0, sizeof(Count));
 	memset(&ServerInfo, 0, sizeof(ServerInfo));
 	memset(&AdminInfo, 0, sizeof(AdminInfo));
 	memset(&ServerStats, 0, sizeof(struct ServerStatistics));
-
-	if(printVersion)
-	{
-		printf("ircd: version %s(%s)\n", info::version.c_str(), info::serno.c_str());
-#ifdef CUSTOM_BRANDING
-		printf("ircd: based on %s-%s\n", PACKAGE_NAME, PACKAGE_VERSION);
-#endif
-		printf("ircd: %s\n", rb_lib_version());
-		exit(EXIT_SUCCESS);
-	}
 
 	setup_signals();
 
