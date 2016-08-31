@@ -185,7 +185,7 @@ void cinclude(void)
       /* if its not found in PREFIX, look in IRCD_PATH_ETC */
       char fnamebuf[BUFSIZE];
 
-      snprintf(fnamebuf, sizeof(fnamebuf), "%s%c%s", fs::path::get(fs::path::ETC), RB_PATH_SEPARATOR, c);
+      snprintf(fnamebuf, sizeof(fnamebuf), "%s%c%s", path::get(path::ETC), RB_PATH_SEPARATOR, c);
       tmp_fbfile_in = fopen(fnamebuf, "r");
 
       /* wasnt found there either.. error. */

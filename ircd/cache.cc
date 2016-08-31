@@ -69,7 +69,7 @@ char motd::user_motd_changed[MAX_DATE_STRING];
 void
 cache::init()
 {
-	using namespace fs::path;
+	using namespace path;
 
 	motd::user = file(get(IRCD_MOTD), "ircd.motd", 0);
 	motd::oper = file(get(IRCD_OMOTD), "opers.motd", 0);
@@ -85,8 +85,6 @@ cache::init()
 void
 cache::help::load()
 {
-	using namespace fs;
-
 	oper.clear();
 	user.clear();
 
@@ -154,7 +152,7 @@ cache::motd::cache_user(void)
 {
 	struct stat sb;
 
-	const auto &path(fs::path::get(fs::path::IRCD_MOTD));
+	const auto &path(path::get(path::IRCD_MOTD));
 	if (stat(path, &sb) == 0)
 	{
 		struct tm *const local_tm(localtime(&sb.st_mtime));
@@ -174,7 +172,7 @@ cache::motd::cache_user(void)
 void
 cache::motd::cache_oper(void)
 {
-	oper = cache::file(fs::path::get(fs::path::IRCD_OMOTD), "opers.motd", 0);
+	oper = cache::file(path::get(path::IRCD_OMOTD), "opers.motd", 0);
 }
 
 /* send_user_motd()

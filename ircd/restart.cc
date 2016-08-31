@@ -64,7 +64,7 @@ server_reboot(void)
 	for (i = 0; i < maxconnections; ++i)
 		close(i);
 
-	execv(fs::path::get(fs::path::IRCD_EXEC), (char *const *)myargv);
+	execv(path::get(path::IRCD_EXEC), (char *const *)myargv);
 
 	/* use this if execv of SPATH fails */
 	snprintf(path, sizeof(path), "%s%cbin%circd", ConfigFileEntry.dpath, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);

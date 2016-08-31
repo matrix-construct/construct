@@ -61,8 +61,6 @@ init_bandb(void)
 static int
 start_bandb(void)
 {
-	using namespace fs;
-
 	char fullpath[PATH_MAX + 1];
 #ifdef _WIN32
 	const char *suffix = ".exe";

@@ -73,8 +73,6 @@ std::array<authd_cb, 256> authd_cmd_tab =
 static int
 start_authd(void)
 {
-	using namespace fs;
-
 	char fullpath[PATH_MAX + 1];
 #ifdef _WIN32
 	const char *suffix = ".exe";

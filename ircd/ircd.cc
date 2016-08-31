@@ -376,10 +376,10 @@ charybdis_main(int argc, char * const argv[])
 	}
 #endif
 
-	logFileName = fs::path::get(fs::path::IRCD_LOG);
+	logFileName = path::get(path::IRCD_LOG);
 
-	ConfigFileEntry.dpath = fs::path::get(fs::path::PREFIX);
-	ConfigFileEntry.configfile = fs::path::get(fs::path::IRCD_CONF); // Server configuration file
+	ConfigFileEntry.dpath = path::get(path::PREFIX);
+	ConfigFileEntry.configfile = path::get(path::IRCD_CONF); // Server configuration file
 	ConfigFileEntry.connect_timeout = 30;	/* Default to 30 */
 
 	init_sys();

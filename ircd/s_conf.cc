@@ -1399,7 +1399,7 @@ clear_out_old_conf(void)
 
 	/* clean out module paths */
 	mods::path_clear();
-	mods::path_add(fs::MODPATH);
+	mods::path_add(path::get(path::MODULES));
 
 	/* clean out ServerInfo */
 	rb_free(ServerInfo.description);

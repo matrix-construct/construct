@@ -68,7 +68,7 @@ rsdb_init(rsdb_error_cb * ecb)
 	if(bandb_dbpath_env != NULL)
 		rb_strlcpy(dbpath, bandb_dbpath_env, sizeof(dbpath));
 	else
-		rb_strlcpy(dbpath, ircd::fs::DBPATH, sizeof(dbpath));
+		rb_strlcpy(dbpath, ircd::path::DBPATH, sizeof(dbpath));
 
 	if(sqlite3_open(dbpath, &rb_bandb) != SQLITE_OK)
 	{

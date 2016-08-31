@@ -189,7 +189,7 @@ main(int argc, char *argv[])
 	if(argv[optind] != NULL)
 		rb_strlcpy(etc, argv[optind], sizeof(etc));
 	else
-		rb_strlcpy(etc, ircd::fs::ETCPATH, sizeof(ircd::fs::ETCPATH));
+		rb_strlcpy(etc, ircd::path::ETCPATH, sizeof(ircd::path::ETCPATH));
 
 	fprintf(stdout,
 		"* charybdis bantool v.%s\n", BT_VERSION);

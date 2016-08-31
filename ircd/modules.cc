@@ -43,7 +43,7 @@ struct log::log log
 
 const filesystem::path modroot
 {
-	fs::path::get(fs::path::MODULES)
+	path::get(path::MODULES)
 };
 
 std::forward_list<filesystem::path> _paths
@@ -642,7 +642,7 @@ ircd::mods::add(const std::type_index &type,
 	using boost::filesystem::path;
 	using boost::filesystem::directory_iterator;
 
-	const path modpath(fs::path::get(fs::path::MODULES));
+	const path modpath(path::get(path::MODULES));
 	if(!exists(modpath) || !is_directory(modpath))
 	{
 		ilog(L_MAIN, "Could not load modules from %s", modpath.string().c_str());
@@ -677,7 +677,7 @@ try
 	if(coremodule)
 		origin = MAPI_ORIGIN_CORE;
 
-	const path dirpath(fs::path::get(fs::path::MODULES));
+	const path dirpath(path::get(path::MODULES));
 	if(!is_directory(dirpath))
 		throw error("%s is not a valid directory containing modules.", dirpath.string().c_str());
 

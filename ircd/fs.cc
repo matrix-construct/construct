@@ -23,64 +23,40 @@
  *  USA
  */
 
-namespace fs = ircd::fs;
-using namespace fs;
+namespace ircd {
+namespace path {
 
-auto paths = []
+enum
 {
-	using ircd::util::num_of;
-	using namespace fs::path;
+	NAME  = 0,
+	PATH  = 1,
+};
 
-	std::array<const char *, num_of<fs::path::index>()> paths;
+using ent = std::pair<std::string, std::string>;
 
-	paths[PREFIX]             = DPATH;
-	paths[MODULES]            = MODPATH;
-	paths[ETC]                = ETCPATH;
-	paths[LOG]                = LOGPATH;
-	paths[USERHELP]           = UHPATH;
-	paths[OPERHELP]           = HPATH;
-	paths[IRCD_EXEC]          = SPATH;
-	paths[IRCD_CONF]          = CPATH;
-	paths[IRCD_MOTD]          = MPATH;
-	paths[IRCD_LOG]           = LPATH;
-	paths[IRCD_OMOTD]         = OPATH;
-	paths[BANDB]              = DBPATH;
-	paths[BIN]                = BINPATH;
-	paths[LIBEXEC]            = PKGLIBEXECDIR;
-
-	return paths;
-}();
-
-auto pathnames = []
-{
-	using ircd::util::num_of;
-	using namespace fs::path;
-
-	std::array<const char *, num_of<fs::path::index>()> names;
-
-	names[PREFIX]             = "prefix";
-	names[MODULES]            = "modules";
-	names[ETC]                = "config";
-	names[LOG]                = "log";
-	names[USERHELP]           = "user help";
-	names[OPERHELP]           = "oper help";
-	names[IRCD_EXEC]          = "ircd binary";
-	names[IRCD_CONF]          = "ircd.conf";
-	names[IRCD_MOTD]          = "ircd.motd";
-	names[IRCD_LOG]           = "ircd.log";
-	names[IRCD_OMOTD]         = "oper motd";
-	names[BANDB]              = "bandb";
-	names[BIN]                = "binary dir";
-	names[LIBEXEC]            = "libexec dir";
-
-	return names;
-}();
+std::array<ent, num_of<index>()> paths
+{{
+	{ "prefix",            DPATH         },
+	{ "binary dir",        BINPATH       },
+	{ "config",            ETCPATH       },
+	{ "log",               LOGPATH       },
+	{ "libexec dir",       PKGLIBEXECDIR },
+	{ "modules",           MODPATH       },
+	{ "user help",         UHPATH        },
+	{ "oper help",         HPATH         },
+	{ "ircd.conf",         CPATH         },
+	{ "ircd binary",       SPATH         },
+	{ "ircd.motd",         MPATH         },
+	{ "ircd.log",          LPATH         },
+	{ "oper motd",         OPATH         },
+	{ "bandb",             DBPATH        },
+}};
 
 const char *
-fs::path::get(index index)
+get(index index)
 noexcept try
 {
-	return paths.at(index);
+	return std::get<PATH>(paths.at(index)).c_str();
 }
 catch(const std::out_of_range &e)
 {
@@ -88,12 +64,15 @@ catch(const std::out_of_range &e)
 }
 
 const char *
-fs::path::name(index index)
+name(index index)
 noexcept try
 {
-	return pathnames.at(index);
+	return std::get<NAME>(paths.at(index)).c_str();
 }
 catch(const std::out_of_range &e)
 {
 	return nullptr;
 }
+
+} // namespace path
+} // namespace ircd

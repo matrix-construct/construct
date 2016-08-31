@@ -41,7 +41,7 @@
 
 #ifdef __cplusplus
 namespace ircd {
-namespace fs   {
+namespace path {
 
 constexpr auto DPATH = IRCD_PREFIX;
 constexpr auto BINPATH = IRCD_PREFIX "/bin";
@@ -58,32 +58,29 @@ constexpr auto OPATH = RB_ETC_DIR "/opers.motd";             // oper MOTD file
 constexpr auto DBPATH = PKGLOCALSTATEDIR "/ban.db";          // bandb file
 
 // Below are the elements for default paths.
-namespace path
+enum index
 {
-	enum index
-	{
-		PREFIX,
-		BIN,
-		ETC,
-		LOG,
-		LIBEXEC,
-		MODULES,
-		USERHELP,
-		OPERHELP,
-		IRCD_CONF,
-		IRCD_EXEC,
-		IRCD_MOTD,
-		IRCD_LOG,
-		IRCD_OMOTD,
-		BANDB,
+	PREFIX,
+	BIN,
+	ETC,
+	LOG,
+	LIBEXEC,
+	MODULES,
+	USERHELP,
+	OPERHELP,
+	IRCD_CONF,
+	IRCD_EXEC,
+	IRCD_MOTD,
+	IRCD_LOG,
+	IRCD_OMOTD,
+	BANDB,
 
-		_NUM_
-	};
-
-	const char *get(index) noexcept;
-	const char *name(index) noexcept;
+	_NUM_
 };
 
-} // namespace fs
+const char *get(index) noexcept;
+const char *name(index) noexcept;
+
+} // namespace path
 } // namespace ircd
 #endif // __cplusplus
