@@ -20,6 +20,20 @@
  *  USA
  */
 
+#include <RB_INC_BOOST_TOKENIZER_HPP
+
+void
+ircd::tokens(const std::string &str,
+             const char *const &sep,
+             const token_closure_string &closure)
+{
+	using delim = boost::char_separator<char>;
+
+	const delim d(sep);
+	const boost::tokenizer<delim> view(str, d);
+	std::for_each(begin(view), end(view), closure);
+}
+
 /*
  * strip_colour - remove colour codes from a string
  * -asuffield (?)

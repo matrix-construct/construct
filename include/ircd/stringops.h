@@ -2,7 +2,7 @@
  *  charybdis: an advanced ircd.
  *  inline/stringops.h: inlined string operations used in a few places
  *
- *  Copyright (c) 2005-2008 charybdis development team
+ *  Copyright (C) 2005-2016 Charybdis Development Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,8 +26,93 @@
 #ifdef __cplusplus
 namespace ircd {
 
+using token_closure_string = std::function<void (const std::string &)>;
+void tokens(const std::string &str, const char *const &sep, const token_closure_string &);
+
+std::string chomp(const std::string &str, const std::string &c = " "s);
+std::pair<std::string, std::string> split(const std::string &str, const std::string &delim = " "s);
+std::string between(const std::string &str, const std::string &a = "("s, const std::string &b = ")"s);
+bool endswith(const std::string &str, const char *const &val);
+bool endswith(const std::string &str, const std::string &val);
+template<class It> bool endswith_any(const std::string &str, const It &begin, const It &end);
+bool startswith(const std::string &str, const char *const &val);
+bool startswith(const std::string &str, const std::string &val);
+
 char *strip_colour(char *string);
 char *strip_unprintable(char *string);
 
-}      // namespace ircd
+} // namespace ircd
+
+inline bool
+ircd::startswith(const std::string &str,
+                 const std::string &val)
+{
+	const auto pos(str.find(val, 0));
+	return pos == 0;
+}
+
+inline bool
+ircd::startswith(const std::string &str,
+                 const char *const &val)
+{
+	const auto pos(str.find(val, 0, strlen(val)));
+	return pos == 0;
+}
+
+template<class It>
+bool
+ircd::endswith_any(const std::string &str,
+                   const It &begin,
+                   const It &end)
+{
+	return std::any_of(begin, end, [&str](const auto &val)
+	{
+		return endswith(str, val);
+	});
+}
+
+inline bool
+ircd::endswith(const std::string &str,
+               const std::string &val)
+{
+	const auto vlen(std::min(str.size(), val.size()));
+	const auto pos(str.find(val, vlen));
+	return pos == str.size() - vlen;
+}
+
+inline bool
+ircd::endswith(const std::string &str,
+               const char *const &val)
+{
+	const auto vlen(std::min(str.size(), strlen(val)));
+	const auto pos(str.find(val, str.size() - vlen));
+	return pos == str.size() - vlen;
+}
+
+inline std::string
+ircd::between(const std::string &str,
+              const std::string &a,
+              const std::string &b)
+{
+	return split(split(str, a).second, b).first;
+}
+
+
+inline std::pair<std::string, std::string>
+ircd::split(const std::string &str,
+            const std::string &delim)
+{
+	const auto pos(str.find(delim));
+	return pos == std::string::npos? std::make_pair(str, std::string{}):
+	                                 std::make_pair(str.substr(0, pos), str.substr(pos+delim.size()));
+}
+
+inline std::string
+ircd::chomp(const std::string &str,
+            const std::string &c)
+{
+	const auto pos(str.find_last_not_of(c));
+	return pos == std::string::npos? str : str.substr(0, pos+1);
+}
+
 #endif // __cplusplus
