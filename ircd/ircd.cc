@@ -376,8 +376,6 @@ charybdis_main(int argc, char * const argv[])
 	}
 #endif
 
-	fs::init();
-
 	logFileName = fs::path::get(fs::path::IRCD_LOG);
 
 	ConfigFileEntry.dpath = fs::path::get(fs::path::PREFIX);

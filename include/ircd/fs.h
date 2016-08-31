@@ -84,8 +84,6 @@ namespace path
 	const char *name(index) noexcept;
 };
 
-void init();
-
 } // namespace fs
 } // namespace ircd
 #endif // __cplusplus
