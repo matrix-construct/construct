@@ -134,6 +134,19 @@ run git submodule update --init --recursive libs/dll
 run git submodule update --init --recursive libs/align
 run git submodule update --init --recursive libs/winapi
 
+run git submodule update --init --recursive libs/spirit
+run git submodule update --init --recursive libs/phoenix
+run git submodule update --init --recursive libs/proto
+run git submodule update --init --recursive libs/fusion
+run git submodule update --init --recursive libs/typeof
+run git submodule update --init --recursive libs/variant
+run git submodule update --init --recursive libs/type_index
+run git submodule update --init --recursive libs/foreach
+run git submodule update --init --recursive libs/optional
+run git submodule update --init --recursive libs/function
+run git submodule update --init --recursive libs/function_types
+run git submodule update --init --recursive libs/iostreams
+
 run ./bootstrap.sh --prefix=$PWD --libdir=$PWD/lib --with-libraries=$BLIBS $BSFLAGS
 run ./b2 threading=$BTHREADING variant=$BVARIANT link=$BLINK address-model=64
 
