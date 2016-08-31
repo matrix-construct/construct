@@ -23,6 +23,10 @@
  *  USA
  */
 
+#include <boost/filesystem.hpp>
+
+namespace fs = boost::filesystem;
+
 namespace ircd {
 namespace path {
 
@@ -52,8 +56,107 @@ std::array<ent, num_of<index>()> paths
 	{ "bandb",             DBPATH        },
 }};
 
+} // namespace path
+} // namespace ircd
+
+
+void
+ircd::path::chdir(const std::string &path)
+try
+{
+	fs::current_path(path);
+}
+catch(const fs::filesystem_error &e)
+{
+	throw filesystem_error("%s", e.what());
+}
+
+std::string
+ircd::path::cwd()
+try
+{
+	return fs::current_path().string();
+}
+catch(const fs::filesystem_error &e)
+{
+	throw filesystem_error("%s", e.what());
+}
+
+std::vector<std::string>
+ircd::path::ls_recursive(const std::string &path)
+try
+{
+	fs::recursive_directory_iterator it(path);
+	const fs::recursive_directory_iterator end;
+	std::vector<std::string> ret(std::distance(it, end));
+	std::transform(it, end, begin(ret), []
+	(const auto &ent)
+	{
+		return ent.path().string();
+	});
+
+	return ret;
+}
+catch(const fs::filesystem_error &e)
+{
+	throw filesystem_error("%s", e.what());
+}
+
+std::vector<std::string>
+ircd::path::ls(const std::string &path)
+try
+{
+	fs::directory_iterator it(path);
+	const fs::directory_iterator end;
+	std::vector<std::string> ret(std::distance(it, end));
+	std::transform(it, end, begin(ret), []
+	(const auto &ent)
+	{
+		return ent.path().string();
+	});
+
+	return ret;
+}
+catch(const fs::filesystem_error &e)
+{
+	throw filesystem_error("%s", e.what());
+}
+
+bool
+ircd::path::is_reg(const std::string &path)
+try
+{
+	return fs::is_regular_file(path);
+}
+catch(const fs::filesystem_error &e)
+{
+	throw filesystem_error("%s", e.what());
+}
+
+bool
+ircd::path::is_dir(const std::string &path)
+try
+{
+	return fs::is_directory(path);
+}
+catch(const fs::filesystem_error &e)
+{
+	throw filesystem_error("%s", e.what());
+}
+
+bool
+ircd::path::exists(const std::string &path)
+try
+{
+	return fs::exists(path);
+}
+catch(const fs::filesystem_error &e)
+{
+	throw filesystem_error("%s", e.what());
+}
+
 const char *
-get(index index)
+ircd::path::get(index index)
 noexcept try
 {
 	return std::get<PATH>(paths.at(index)).c_str();
@@ -64,7 +167,7 @@ catch(const std::out_of_range &e)
 }
 
 const char *
-name(index index)
+ircd::path::name(index index)
 noexcept try
 {
 	return std::get<NAME>(paths.at(index)).c_str();
@@ -73,6 +176,3 @@ catch(const std::out_of_range &e)
 {
 	return nullptr;
 }
-
-} // namespace path
-} // namespace ircd

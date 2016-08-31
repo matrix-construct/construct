@@ -43,6 +43,9 @@
 namespace ircd {
 namespace path {
 
+IRCD_EXCEPTION(ircd::error, error)
+IRCD_EXCEPTION(error, filesystem_error)
+
 constexpr auto DPATH = IRCD_PREFIX;
 constexpr auto BINPATH = IRCD_PREFIX "/bin";
 constexpr auto MODPATH = RB_MODULE_DIR;
@@ -80,6 +83,16 @@ enum index
 
 const char *get(index) noexcept;
 const char *name(index) noexcept;
+
+bool exists(const std::string &path);
+bool is_dir(const std::string &path);
+bool is_reg(const std::string &path);
+
+std::vector<std::string> ls(const std::string &path);
+std::vector<std::string> ls_recursive(const std::string &path);
+
+std::string cwd();
+void chdir(const std::string &path);
 
 } // namespace path
 } // namespace ircd
