@@ -58,7 +58,6 @@ libircd_la_SOURCES =                  \
   ircd.cc                       \
   ircd_lexer.cc                \
   ircd_parser.cc                \
-  ircd_signal.cc                 \
   listener.cc                   \
   logger.cc                     \
   match.cc                       \

@@ -23,13 +23,9 @@
  *  USA
  */
 
-bool ircd::debugmode;
-
+#include <boost/asio.hpp>
 
 namespace ircd {
-
-static void
-ircd_die_cb(const char *str) __attribute__((noreturn));
 
 /* /quote set variables */
 struct SetOptions GlobalSetOptions;
@@ -43,6 +39,8 @@ struct admin_info AdminInfo;
 
 struct Counter Count;
 struct ServerStatistics ServerStats;
+
+struct ev_entry *check_splitmode_ev;
 
 int maxconnections;
 client::client me;		/* That's me */
@@ -78,73 +76,6 @@ int splitchecking;
 int split_users;
 int split_servers;
 int eob_count;
-
-void
-ircd_shutdown(const char *reason)
-{
-	client::client *target_p;
-	rb_dlink_node *ptr;
-
-	RB_DLINK_FOREACH(ptr, lclient_list.head)
-	{
-		target_p = (client::client *)ptr->data;
-
-		sendto_one(target_p, ":%s NOTICE %s :Server Terminating. %s",
-			me.name, target_p->name, reason);
-	}
-
-	RB_DLINK_FOREACH(ptr, serv_list.head)
-	{
-		target_p = (client::client *)ptr->data;
-
-		sendto_one(target_p, ":%s ERROR :Terminated by %s",
-			me.name, reason);
-	}
-
-	log::critical("Server Terminating. %s", reason);
-	log::close();
-
-	exit(0);
-}
-
-/*
- * print_startup - print startup information
- */
-static void
-print_startup(const pid_t &pid)
-{
-	log::notice("Server started @ %s pid[%d]",
-	            ConfigFileEntry.dpath,
-	            pid);
-}
-
-/*
- * init_sys
- *
- * inputs	- boot_daemon flag
- * output	- none
- * side effects	- if boot_daemon flag is not set, don't daemonize
- */
-static void
-init_sys(void)
-{
-#if !defined(_WIN32) && defined(RLIMIT_NOFILE) && defined(HAVE_SYS_RESOURCE_H)
-	struct rlimit limit;
-
-	if(!getrlimit(RLIMIT_NOFILE, &limit))
-	{
-		maxconnections = limit.rlim_cur;
-		if(maxconnections <= MAX_BUFFER)
-		{
-			fprintf(stderr, "ERROR: Shell FD limits are too low.\n");
-			fprintf(stderr, "ERROR: charybdis reserves %d FDs, shell limits must be above this\n", MAX_BUFFER);
-			exit(EXIT_FAILURE);
-		}
-		return;
-	}
-#endif /* RLIMIT_FD_MAX */
-	maxconnections = MAXCONNECTIONS;
-}
 
 static void
 check_rehash(void *unused)
@@ -220,84 +151,182 @@ initialize_global_set_options(void)
 	/* memset( &ConfigChannel, 0, sizeof(ConfigChannel)); */
 
 	/* End of global set options */
-
-}
-
-/*
- * initialize_server_capabs
- *
- * inputs       - none
- * output       - none
- */
-static void
-initialize_server_capabs(void)
-{
-	default_server_capabs &= ~CAP_ZIP;
 }
 
 
-/*
- * setup_corefile
- *
- * inputs       - nothing
- * output       - nothing
- * side effects - setups corefile to system limits.
- * -kre
- */
-static void
-setup_corefile(void)
-{
-#ifdef HAVE_SYS_RESOURCE_H
-	struct rlimit rlim;	/* resource limits */
+bool debugmode;
+boost::asio::io_service *ios;
 
-	/* Set corefilesize to maximum */
-	if(!getrlimit(RLIMIT_CORE, &rlim))
+static void sigfd_handler(const boost::system::error_code &, int);
+std::unique_ptr<boost::asio::signal_set> sigfd;
+
+static void seed_random();
+static void init_sigs();
+static void init_sys();
+
+} // namespace ircd
+
+/*
+ * This function sets up the IRCd, handlers, and then returns without blocking.
+ * Pass your io_service instance, it will share it with the rest of your program.
+ * An exception will be thrown on error.
+ */
+void
+ircd::init(boost::asio::io_service &io_service)
+{
+	ircd::ios = &io_service;
+
+	init_sys();
+	init_sigs();
+
+	// The log is available, but it is console-only until conf opens files.
+	log::init();
+	log::mark("log started");
+
+	// initialise operhash fairly early.
+	//init_operhash();
+
+	me.localClient = &meLocalUser;
+	//rb_dlinkAddTail(&me, &me.node, &global_client_list);
+
+	//init_builtin_capabs();
+	//default_server_capabs = CAP_MASK;
+	//newconf_init();
+	//init_s_conf();
+	//init_s_newconf();
+	//init_hash();
+	//init_host_hash();
+	//client::init();
+	//init_hook();
+	//chan::init();
+	//initclass();
+	//whowas::init();
+	//init_reject();
+	//cache::init();
+	//init_monitor();
+	//chan::mode::init();
+	//init_authd();		/* Start up authd. */
+	//init_dns();		/* Start up DNS query system */
+
+	//privilegeset_set_new("default", "", 0);
+
+	//read_conf_files(true);	/* cold start init conf files */
+
+	//mods::autoload();
+	//supported::init();
+	//init_bandb();
+	//init_ssld();
+	//init_wsockd();
+	//rehash_bans();
+
+	//default_server_capabs &= ~CAP_ZIP;  // Set up default_server_capabs
+	//initialize_global_set_options();
+/*
+	if(ServerInfo.name == NULL)
+		throw error("no server name specified in serverinfo block.");
+
+	rb_strlcpy(me.name, ServerInfo.name, sizeof(me.name));
+
+	if(ServerInfo.sid[0] == '\0')
+		throw error("no server sid specified in serverinfo block.");
+
+	rb_strlcpy(me.id, ServerInfo.sid, sizeof(me.id));
+	//client::init_uid();
+
+	// serverinfo{} description must exist.  If not, error out.
+	if(ServerInfo.description == NULL)
+		throw error("no server description specified in serverinfo block.");
+
+	rb_strlcpy(me.info, ServerInfo.description, sizeof(me.info));
+*/
+	/*
+	if(ServerInfo.ssl_cert != NULL)
 	{
-		rlim.rlim_cur = rlim.rlim_max;
-		setrlimit(RLIMIT_CORE, &rlim);
+		// just do the rb_setup_ssl_server to validate the config
+		if(!rb_setup_ssl_server(ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params, ServerInfo.ssl_cipher_list))
+		{
+			ilog(L_MAIN, "WARNING: Unable to setup SSL.");
+			ircd_ssl_ok = false;
+		}
+		else
+			ircd_ssl_ok = true;
 	}
-#endif
-}
+	*/
 
-static void
-ircd_log_cb(const char *str)
-{
-	ilog(L_MAIN, "librb reports: %s", str);
-}
+	//me.from = &me;
+	//me.servptr = &me;
+	//set_me(me);
+	//make_serv(me);
+	//add_to_client_hash(me.name, &me);
+	//add_to_id_hash(me.id, &me);
+	//nameinfo(serv(me)) = cache::serv::connect(me.name, me.info);
 
-static void
-ircd_restart_cb(const char *str)
-{
-	inotice("librb has called the restart callback: %s", str);
-	restart(str);
+	//rb_dlinkAddAlloc(&me, &global_serv_list);
+
+	//check_class();
+	//cache::help::load();
+
+	//configure_authd();
+
+	/* We want try_connections to be called as soon as possible now! -- adrian */
+	/* No, 'cause after a restart it would cause all sorts of nick collides */
+	/* um.  by waiting even longer, that just means we have even *more*
+	 * nick collisions.  what a stupid idea. set an event for the IO loop --fl
+	 */
+	// rb_event_addish("try_connections", try_connections, NULL, STARTUP_CONNECTIONS_TIME);
+	// rb_event_addonce("try_connections_startup", try_connections, NULL, 2);
+	// rb_event_add("check_rehash", check_rehash, NULL, 3);
+	// rb_event_addish("reseed_srand", seed_random, NULL, 300); /* reseed every 10 minutes */
+
+	// if(splitmode)
+	//	check_splitmode_ev = rb_event_add("check_splitmode", chan::check_splitmode, NULL, 5);
+
+	log::info("IRCd initialization completed successfully.");
 }
 
 /*
- * Why EXIT_FAILURE here?
- * Because if ircd_die_cb() is called it's because of a fatal
- * error inside libcharybdis, and we don't know how to handle the
- * exception, so it is logical to return a FAILURE exit code here.
- *    --nenolod
+ * init_sys
+ *
+ * inputs	- boot_daemon flag
+ * output	- none
+ * side effects	- if boot_daemon flag is not set, don't daemonize
  */
-static void
-ircd_die_cb(const char *str)
+void
+ircd::init_sys()
 {
-	if(str != NULL)
-	{
-		/* Try to get the message out to currently logged in operators. */
-		sendto_realops_snomask(sno::GENERAL, L_NETWIDE, "librb has called the die callback..aborting: %s", str);
-		inotice("librb has called the die callback..aborting: %s", str);
-	}
-	else
-		inotice("librb has called the die callback..aborting");
 
-	exit(EXIT_FAILURE);
+	/*
+	 * Setup corefile size immediately after boot -kre
+	 */
+	#ifdef HAVE_SYS_RESOURCE_H
+		struct rlimit rlim;	/* resource limits */
+
+		/* Set corefilesize to maximum */
+		if(!getrlimit(RLIMIT_CORE, &rlim))
+		{
+			rlim.rlim_cur = rlim.rlim_max;
+			setrlimit(RLIMIT_CORE, &rlim);
+		}
+	#endif
+
+	#if !defined(_WIN32) && defined(RLIMIT_NOFILE) && defined(HAVE_SYS_RESOURCE_H)
+		struct rlimit limit;
+
+		if(!getrlimit(RLIMIT_NOFILE, &limit))
+			maxconnections = limit.rlim_cur;
+		else
+			maxconnections = MAXCONNECTIONS;
+	#else
+		maxconnections = MAXCONNECTIONS;
+	#endif
+
+	rb_set_time();
+	rb_init_prng(NULL, RB_PRNG_DEFAULT);
+	seed_random();
 }
 
-struct ev_entry *check_splitmode_ev = NULL;
-
-static int
-seed_with_urandom(void)
+static bool
+seed_with_urandom()
 {
 	unsigned int seed;
 	int fd;
@@ -309,15 +338,15 @@ seed_with_urandom(void)
 		{
 			close(fd);
 			srand(seed);
-			return 1;
+			return true;
 		}
 		close(fd);
 	}
-	return 0;
+	return false;
 }
 
 static void
-seed_with_clock(void)
+seed_with_clock()
 {
  	const struct timeval *tv;
 	rb_set_time();
@@ -325,8 +354,8 @@ seed_with_clock(void)
 	srand(tv->tv_sec ^ (tv->tv_usec | (getpid() << 20)));
 }
 
-static void
-seed_random(void *unused)
+void
+ircd::seed_random()
 {
 	unsigned int seed;
 	if(rb_get_random(&seed, sizeof(seed)) == -1)
@@ -338,177 +367,67 @@ seed_random(void *unused)
 	srand(seed);
 }
 
-/*
- * main
- *
- * Initializes the IRCd.
- *
- * Inputs       - number of commandline args, args themselves
- * Outputs      - none
- * Side Effects - this is where the ircd gets going right now
- */
-int
-run()
+static void
+sigfd_handle_sigusr2()
 {
-	init_sys();
-	rb_set_time();
-
-	/*
-	 * Setup corefile size immediately after boot -kre
-	 */
-	setup_corefile();
-
-	/* initialise operhash fairly early. */
-	init_operhash();
-
-	me.localClient = &meLocalUser;
-	rb_dlinkAddTail(&me, &me.node, &global_client_list);
-
-	memset(&Count, 0, sizeof(Count));
-	memset(&ServerInfo, 0, sizeof(ServerInfo));
-	memset(&AdminInfo, 0, sizeof(AdminInfo));
-	memset(&ServerStats, 0, sizeof(struct ServerStatistics));
-
-	setup_signals();
-
-	server_state_foreground = true;
-
-	/* Check if there is pidfile and daemon already running */
-	if(!testing_conf)
-	{
-		inotice("starting %s ...", info::version.c_str());
-		inotice("%s", rb_lib_version());
-	}
-
-	/* Init the event subsystem */
-	rb_lib_init(ircd_log_cb, ircd_restart_cb, ircd_die_cb, false, maxconnections, DNODE_HEAP_SIZE, FD_HEAP_SIZE);
-	rb_linebuf_init(LINEBUF_HEAP_SIZE);
-
-	rb_init_prng(NULL, RB_PRNG_DEFAULT);
-
-	seed_random(NULL);
-
-	init_builtin_capabs();
-	default_server_capabs = CAP_MASK;
-
-	newconf_init();
-	init_s_conf();
-	init_s_newconf();
-
-	log::init();
-	log::mark("log started");
-
-	init_hash();
-	init_host_hash();
-	client::init();
-	init_hook();
-	chan::init();
-	initclass();
-	whowas::init();
-	init_reject();
-	cache::init();
-	init_monitor();
-	chan::mode::init();
-
-	init_authd();		/* Start up authd. */
-	init_dns();		/* Start up DNS query system */
-
-	privilegeset_set_new("default", "", 0);
-
-	if (testing_conf)
-		fprintf(stderr, "\nBeginning config test\n");
-	read_conf_files(true);	/* cold start init conf files */
-
-	mods::autoload();
-
-	supported::init();
-
-	init_bandb();
-	init_ssld();
-	init_wsockd();
-
-	rehash_bans();
-
-	initialize_server_capabs();	/* Set up default_server_capabs */
-	initialize_global_set_options();
-
-	if(ServerInfo.name == NULL)
-	{
-		ierror("no server name specified in serverinfo block.");
-		return -1;
-	}
-	rb_strlcpy(me.name, ServerInfo.name, sizeof(me.name));
-
-	if(ServerInfo.sid[0] == '\0')
-	{
-		ierror("no server sid specified in serverinfo block.");
-		return -2;
-	}
-	rb_strlcpy(me.id, ServerInfo.sid, sizeof(me.id));
-	client::init_uid();
-
-	/* serverinfo{} description must exist.  If not, error out. */
-	if(ServerInfo.description == NULL)
-	{
-		ierror("no server description specified in serverinfo block.");
-		return -3;
-	}
-	rb_strlcpy(me.info, ServerInfo.description, sizeof(me.info));
-
-	if(ServerInfo.ssl_cert != NULL)
-	{
-		/* just do the rb_setup_ssl_server to validate the config */
-		if(!rb_setup_ssl_server(ServerInfo.ssl_cert, ServerInfo.ssl_private_key, ServerInfo.ssl_dh_params, ServerInfo.ssl_cipher_list))
-		{
-			ilog(L_MAIN, "WARNING: Unable to setup SSL.");
-			ircd_ssl_ok = false;
-		}
-		else
-			ircd_ssl_ok = true;
-	}
-
-	if (testing_conf)
-	{
-		fprintf(stderr, "\nConfig testing complete.\n");
-		fflush(stderr);
-		return 0;	/* Why? We want the launcher to exit out. */
-	}
-
-	me.from = &me;
-	me.servptr = &me;
-	set_me(me);
-	make_serv(me);
-	add_to_client_hash(me.name, &me);
-	add_to_id_hash(me.id, &me);
-	nameinfo(serv(me)) = cache::serv::connect(me.name, me.info);
-
-	rb_dlinkAddAlloc(&me, &global_serv_list);
-
-	check_class();
-	cache::help::load();
-
-	log::open();
-
-	configure_authd();
-
-	/* We want try_connections to be called as soon as possible now! -- adrian */
-	/* No, 'cause after a restart it would cause all sorts of nick collides */
-	/* um.  by waiting even longer, that just means we have even *more*
-	 * nick collisions.  what a stupid idea. set an event for the IO loop --fl
-	 */
-	rb_event_addish("try_connections", try_connections, NULL, STARTUP_CONNECTIONS_TIME);
-	rb_event_addonce("try_connections_startup", try_connections, NULL, 2);
-	rb_event_add("check_rehash", check_rehash, NULL, 3);
-	rb_event_addish("reseed_srand", seed_random, NULL, 300); /* reseed every 10 minutes */
-
-	if(splitmode)
-		check_splitmode_ev = rb_event_add("check_splitmode", chan::check_splitmode, NULL, 5);
-
-	print_startup(getpid());
-
-	rb_lib_loop(0);
-
-	return 0;
+	// dorehashbans
+	// doremotd
 }
 
-} // namespace ircd
+static void
+sigfd_handle_sigusr1()
+{
+	// dorehash (no longer hangup!)
+}
+
+static void
+sigfd_handle_sigquit()
+{
+
+}
+
+static void
+sigfd_handle_sigterm()
+{
+
+}
+
+void
+ircd::sigfd_handler(const boost::system::error_code &ec,
+                    int signum)
+{
+	switch(ec.value())
+	{
+		using namespace boost::system::errc;
+
+		case success:             break;
+		case operation_canceled:  return;
+		default:
+			throw error("Signal handler (%d): %s",
+			            signum,
+			            ec.message().c_str());
+	}
+
+	switch(signum)
+	{
+		case SIGTERM:  sigfd_handle_sigterm();  return;
+		case SIGQUIT:  sigfd_handle_sigquit();  return;
+		case SIGUSR1:  sigfd_handle_sigusr1();  break;
+		case SIGUSR2:  sigfd_handle_sigusr2();  break;
+		default:                                break;
+	}
+
+	if(sigfd)
+		sigfd->async_wait(sigfd_handler);
+}
+
+void
+ircd::init_sigs()
+{
+	sigfd.reset(new boost::asio::signal_set(*ios));
+	sigfd->add(SIGTERM);
+	sigfd->add(SIGQUIT);
+	sigfd->add(SIGUSR1);
+	sigfd->add(SIGUSR2);
+	sigfd->async_wait(sigfd_handler);
+}

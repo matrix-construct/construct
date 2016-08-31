@@ -32,9 +32,19 @@
 #endif
 
 #ifdef __cplusplus
+
+// Allow a reference to an ios to be passed to ircd
+namespace boost {
+namespace asio  {
+
+	struct io_service;
+}
+}
+
 namespace ircd {
 
 extern bool debugmode;
+extern boost::asio::io_service *ios;
 
 struct SetOptions
 {
@@ -100,12 +110,10 @@ extern bool ircd_zlib_ok;
 extern int maxconnections;
 
 void restart(const char *) __attribute__((noreturn));
+void ircd_shutdown() __attribute__((noreturn));
 void server_reboot(void) __attribute__((noreturn));
 
-void setup_signals();
-void ircd_shutdown(const char *reason) __attribute__((noreturn));
-
-int run();
+void init(boost::asio::io_service &ios);
 
 }      // namespace ircd
 #endif // __cplusplus

@@ -850,14 +850,14 @@ if [[ "$boost_linkage" = "shared" ]]; then
 	[
 		AC_SUBST(BOOST_LIBS, ["-lboost_filesystem-mgw53-1_61.dll -lboost_system-mgw53-1_61.dll"])
 	], [
-		AC_SUBST(BOOST_LIBS, ["-lboost_filesystem -lboost_system"])
+		AC_SUBST(BOOST_LIBS, ["-lboost_filesystem -lboost_system -lpthread"])
 	])
 else
 	AM_COND_IF([MINGW],
 	[
 		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_filesystem-mgw53-1_61.dll.a $boost_libdir/libboost_system-mgw53-1_61.dll.a"])
 	], [
-		AC_SUBST(BOOST_LIBS, ["-lboost_filesystem -lboost_system"])
+		AC_SUBST(BOOST_LIBS, ["-lboost_filesystem -lboost_system -lpthread"])
 dnl		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_filesystem.a"])
 dnl		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_system.a"])
 	])

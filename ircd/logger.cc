@@ -74,7 +74,7 @@ log::init()
 {
 	//TODO: XXX: config + cmd control + other fancy stuff
 
-	add_top_conf("log", NULL, NULL, conf_log_table);
+	//add_top_conf("log", NULL, NULL, conf_log_table);
 
 	console_err[CRITICAL]    = true;
 	console_err[ERROR]       = true;
@@ -115,7 +115,7 @@ log::init()
 void
 log::fini()
 {
-	remove_top_conf("log");
+	//remove_top_conf("log");
 }
 
 void

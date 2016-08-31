@@ -73,5 +73,32 @@ server_reboot(void)
 	exit(-1);
 }
 
+void
+ircd_shutdown(const char *reason)
+{
+	client::client *target_p;
+	rb_dlink_node *ptr;
+
+	RB_DLINK_FOREACH(ptr, lclient_list.head)
+	{
+		target_p = (client::client *)ptr->data;
+
+		sendto_one(target_p, ":%s NOTICE %s :Server Terminating. %s",
+			me.name, target_p->name, reason);
+	}
+
+	RB_DLINK_FOREACH(ptr, serv_list.head)
+	{
+		target_p = (client::client *)ptr->data;
+
+		sendto_one(target_p, ":%s ERROR :Terminated by %s",
+			me.name, reason);
+	}
+
+	log::critical("Server Terminating. %s", reason);
+	log::close();
+
+	exit(0);
+}
 
 } // namespace ircd
