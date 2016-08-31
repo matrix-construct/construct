@@ -43,7 +43,6 @@ auto paths = []
 	paths[IRCD_CONF]          = CPATH;
 	paths[IRCD_MOTD]          = MPATH;
 	paths[IRCD_LOG]           = LPATH;
-	paths[IRCD_PID]           = PPATH;
 	paths[IRCD_OMOTD]         = OPATH;
 	paths[BANDB]              = DBPATH;
 	paths[BIN]                = BINPATH;
@@ -69,7 +68,6 @@ auto pathnames = []
 	names[IRCD_CONF]          = "ircd.conf";
 	names[IRCD_MOTD]          = "ircd.motd";
 	names[IRCD_LOG]           = "ircd.log";
-	names[IRCD_PID]           = "ircd.pid";
 	names[IRCD_OMOTD]         = "oper motd";
 	names[BANDB]              = "bandb";
 	names[BIN]                = "binary dir";
@@ -160,9 +158,6 @@ void relocate()
 
 	snprintf(workbuf, sizeof workbuf, "%s%cetc%cban.db", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
 	paths[BANDB] = rb_strdup(workbuf);
-
-	snprintf(workbuf, sizeof workbuf, "%s%cetc%circd.pid", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
-	paths[IRCD_PID] = rb_strdup(workbuf);
 
 	snprintf(workbuf, sizeof workbuf, "%s%clogs%circd.log", prefix, RB_PATH_SEPARATOR, RB_PATH_SEPARATOR);
 	paths[IRCD_LOG] = rb_strdup(workbuf);

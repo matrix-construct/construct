@@ -64,7 +64,6 @@ server_reboot(void)
 	for (i = 0; i < maxconnections; ++i)
 		close(i);
 
-	unlink(pidFileName);
 	execv(fs::path::get(fs::path::IRCD_EXEC), (char *const *)myargv);
 
 	/* use this if execv of SPATH fails */

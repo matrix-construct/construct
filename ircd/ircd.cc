@@ -78,7 +78,6 @@ int split_servers;
 int eob_count;
 
 const char *logFileName = NULL;
-const char *pidFileName = NULL;
 
 void
 ircd_shutdown(const char *reason)
@@ -105,7 +104,6 @@ ircd_shutdown(const char *reason)
 	log::critical("Server Terminating. %s", reason);
 	log::close();
 
-	unlink(pidFileName);
 	exit(0);
 }
 
@@ -155,8 +153,6 @@ struct lgetopt myopts[] = {
 	 lgetopt::STRING, "File to use for ircd.conf"},
 	{"logfile", &logFileName,
 	 lgetopt::STRING, "File to use for ircd.log"},
-	{"pidfile", &pidFileName,
-	 lgetopt::STRING, "File to use for process ID"},
 	{"version", &printVersion,
 	 lgetopt::YESNO, "Print version and exit"},
 	{"conftest", &testing_conf,
@@ -254,68 +250,6 @@ initialize_server_capabs(void)
 	default_server_capabs &= ~CAP_ZIP;
 }
 
-/*
- * write_pidfile
- *
- * inputs       - filename+path of pid file
- * output       - none
- * side effects - write the pid of the ircd to filename
- */
-static void
-write_pidfile(const char *filename)
-{
-	FILE *fb;
-	char buff[32];
-	if((fb = fopen(filename, "w")))
-	{
-		unsigned int pid = (unsigned int) getpid();
-
-		snprintf(buff, sizeof(buff), "%u\n", pid);
-		if((fputs(buff, fb) == -1))
-		{
-			ilog(L_MAIN, "Error writing %u to pid file %s (%s)",
-			     pid, filename, strerror(errno));
-		}
-		fclose(fb);
-		return;
-	}
-	else
-	{
-		ilog(L_MAIN, "Error opening pid file %s", filename);
-	}
-}
-
-/*
- * check_pidfile
- *
- * inputs       - filename+path of pid file
- * output       - none
- * side effects - reads pid from pidfile and checks if ircd is in process
- *                list. if it is, gracefully exits
- * -kre
- */
-static void
-check_pidfile(const char *filename)
-{
-	FILE *fb;
-	char buff[32];
-	pid_t pidfromfile;
-
-	/* Don't do logging here, since we don't have log() initialised */
-	if((fb = fopen(filename, "r")))
-	{
-		if(fgets(buff, 20, fb) != NULL)
-		{
-			pidfromfile = atoi(buff);
-			if(!rb_kill(pidfromfile, 0))
-			{
-				printf("ircd: daemon is already running\n");
-				exit(-1);
-			}
-		}
-		fclose(fb);
-	}
-}
 
 /*
  * setup_corefile
@@ -372,7 +306,6 @@ ircd_die_cb(const char *str)
 	else
 		inotice("librb has called the die callback..aborting");
 
-	unlink(pidFileName);
 	exit(EXIT_FAILURE);
 }
 
@@ -446,7 +379,6 @@ charybdis_main(int argc, char * const argv[])
 	fs::init();
 
 	logFileName = fs::path::get(fs::path::IRCD_LOG);
-	pidFileName = fs::path::get(fs::path::IRCD_PID);
 
 	ConfigFileEntry.dpath = fs::path::get(fs::path::PREFIX);
 	ConfigFileEntry.configfile = fs::path::get(fs::path::IRCD_CONF); // Server configuration file
@@ -511,8 +443,6 @@ charybdis_main(int argc, char * const argv[])
 	/* Check if there is pidfile and daemon already running */
 	if(!testing_conf)
 	{
-		check_pidfile(pidFileName);
-
 		inotice("starting %s ...", info::version.c_str());
 		inotice("%s", rb_lib_version());
 	}
@@ -622,7 +552,6 @@ charybdis_main(int argc, char * const argv[])
 	rb_dlinkAddAlloc(&me, &global_serv_list);
 
 	check_class();
-	write_pidfile(pidFileName);
 	cache::help::load();
 
 	log::open();

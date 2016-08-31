@@ -62,7 +62,6 @@ struct Counter
 extern struct SetOptions GlobalSetOptions;	/* defined in ircd.c */
 
 extern const char *logFileName;
-extern const char *pidFileName;
 extern volatile sig_atomic_t dorehash;
 extern volatile sig_atomic_t dorehashbans;
 extern volatile sig_atomic_t doremotd;
