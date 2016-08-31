@@ -63,6 +63,9 @@ parseargs(int *argc, char * const **argv, struct lgetopt *opts)
 
 				switch (opts[i].argtype)
 				{
+				case argtype::BOOL:
+					*((bool *) opts[i].argloc) = true;
+					break;
 				case argtype::YESNO:
 					*((int *) opts[i].argloc) = 1;
 					break;
@@ -126,7 +129,7 @@ usage(const char *name, struct lgetopt *myopts)
 	for (i = 0; myopts[i].opt; i++)
 	{
 		fprintf(stderr, "\t%c%-10s %-20s%s\n", OPTCHAR,
-			myopts[i].opt, (myopts[i].argtype == argtype::YESNO
+			myopts[i].opt, (myopts[i].argtype == argtype::YESNO || myopts[i].argtype == argtype::BOOL
 					|| myopts[i].argtype ==
 					argtype::USAGE) ? "" : myopts[i].argtype ==
 			argtype::INTEGER ? "<number>" : "<string>", myopts[i].desc);
