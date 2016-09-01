@@ -27,55 +27,57 @@ libircd_la_LIBADD = \
 	-lrb \
 	@BOOST_LIBS@
 
-libircd_la_SOURCES =                  \
-  authproc.cc			\
-  bandbi.cc                      \
-  cache.cc                       \
-  cache_serv.cc                       \
-  capability.cc			\
-  channel.cc                     \
-  chmode.cc                      \
-  class.cc                       \
-  client.cc                     \
-  client_mode.cc                \
-  dns.cc				\
-  exception.cc                   \
-  extban.cc                      \
-  fs.cc                          \
-  getopt.cc                      \
-  hash.cc                        \
-  hook.cc                        \
-  mask.cc                        \
-  info.cc                        \
-  ircd.cc                       \
-  listener.cc                   \
-  logger.cc                     \
-  match.cc                       \
-  modules.cc                    \
-  monitor.cc                     \
-  msgbuf.cc			\
-  newconf.cc                     \
-  operhash.cc                    \
-  packet.cc                      \
-  parse.cc                       \
-  privilege.cc                   \
-  ratelimit.cc			\
-  reject.cc                      \
-  restart.cc                     \
-  rfc1459.cc                     \
-  s_conf.cc                      \
-  s_newconf.cc                   \
-  s_serv.cc                      \
-  s_user.cc                      \
-  send.cc                        \
-  snomask.cc                     \
-  sslproc.cc                     \
-  stringops.cc                   \
-  substitution.cc                \
-  supported.cc                   \
-  tgchange.cc                    \
-  whowas.cc			\
-  wsproc.cc
+libircd_la_SOURCES =   \
+	ircd.cc            \
+	exception.cc       \
+	rfc1459.cc         \
+	stringops.cc       \
+	match.cc           \
+	getopt.cc          \
+	logger.cc          \
+	fs.cc              \
+	conf.cc            \
+	newconf.cc         \
+	modules.cc         \
+	snomask.cc         \
+	info.cc
+
+#authproc.cc			\
+#bandbi.cc                      \
+#cache.cc                       \
+#cache_serv.cc                       \
+#capability.cc			\
+#channel.cc                     \
+#client.cc \
+#client_mode.cc \
+#chmode.cc                      \
+#class.cc                       \
+#dns.cc				\
+#extban.cc                      \
+#hash.cc                        \
+#hook.cc                        \
+#mask.cc                        \
+#ircd.cc                       \
+#listener.cc                   \
+#monitor.cc                     \
+#msgbuf.cc			\
+#operhash.cc                    \
+#packet.cc                      \
+#parse.cc                       \
+#privilege.cc                   \
+#ratelimit.cc			\
+#reject.cc                      \
+#restart.cc                     \
+#s_conf.cc                      \
+#s_newconf.cc                   \
+#s_serv.cc                      \
+#s_user.cc                      \
+#sslproc.cc                     \
+#substitution.cc                \
+#supported.cc                   \
+#tgchange.cc                    \
+#whowas.cc			\
+#wsproc.cc
 
 install-data-local:
 	test -d $(prefix)/@logdir@ || mkdir -p $(prefix)/@logdir@

@@ -30,20 +30,13 @@ namespace ircd {
 /* /quote set variables */
 struct SetOptions GlobalSetOptions;
 
-/* configuration set from ircd.conf */
-struct config_file_entry ConfigFileEntry;
-/* server info set from ircd.conf */
-struct server_info ServerInfo;
-/* admin info set from ircd.conf */
-struct admin_info AdminInfo;
-
 struct Counter Count;
 struct ServerStatistics ServerStats;
 
 struct ev_entry *check_splitmode_ev;
 
 int maxconnections;
-client::client me;		/* That's me */
+//client::client me;		/* That's me */
 struct LocalUser meLocalUser;	/* That's also part of me */
 
 rb_dlink_list global_client_list;
@@ -77,12 +70,10 @@ int split_users;
 int split_servers;
 int eob_count;
 
+/*
 static void
 check_rehash(void *unused)
 {
-	/*
-	 * Check to see whether we have to rehash the configuration ..
-	 */
 	if(dorehash)
 	{
 		rehash(true);
@@ -103,6 +94,7 @@ check_rehash(void *unused)
 		doremotd = false;
 	}
 }
+*/
 
 /*
  * initalialize_global_set_options
@@ -114,8 +106,9 @@ check_rehash(void *unused)
 static void
 initialize_global_set_options(void)
 {
+/*
 	memset(&GlobalSetOptions, 0, sizeof(GlobalSetOptions));
-	/* memset( &ConfigFileEntry, 0, sizeof(ConfigFileEntry)); */
+	// memset( &ConfigFileEntry, 0, sizeof(ConfigFileEntry));
 
 	GlobalSetOptions.maxclients = ServerInfo.default_max_clients;
 
@@ -147,10 +140,7 @@ initialize_global_set_options(void)
 	rb_strlcpy(GlobalSetOptions.adminstring,
 		ConfigFileEntry.default_adminstring,
 		sizeof(GlobalSetOptions.adminstring));
-
-	/* memset( &ConfigChannel, 0, sizeof(ConfigChannel)); */
-
-	/* End of global set options */
+*/
 }
 
 
@@ -172,7 +162,8 @@ static void init_sys();
  * An exception will be thrown on error.
  */
 void
-ircd::init(boost::asio::io_service &io_service)
+ircd::init(boost::asio::io_service &io_service,
+           const std::string &configfile)
 {
 	ircd::ios = &io_service;
 
@@ -183,10 +174,12 @@ ircd::init(boost::asio::io_service &io_service)
 	log::init();
 	log::mark("log started");
 
+	conf::newconf::parse_file(configfile);
+
 	// initialise operhash fairly early.
 	//init_operhash();
 
-	me.localClient = &meLocalUser;
+	//me.localClient = &meLocalUser;
 	//rb_dlinkAddTail(&me, &me.node, &global_client_list);
 
 	//init_builtin_capabs();

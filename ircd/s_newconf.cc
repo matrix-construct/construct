@@ -436,8 +436,10 @@ add_server_conf(struct server_conf *server_p)
 
 	if(server_p->_class == default_class)
 	{
+/*
 		conf_report_error("Warning connect::class invalid for %s",
 				server_p->name);
+*/
 
 		rb_free(server_p->class_name);
 		server_p->class_name = rb_strdup("default");

@@ -27,14 +27,15 @@ using ircd::lgetopt;
 
 bool printversion;
 bool testing_conf;
+const char *configfile;
 lgetopt opts[] =
 {
-	{ "help", NULL, lgetopt::USAGE, "Print this text" },
-	{ "version", &printversion, lgetopt::BOOL, "Print version and exit" },
-	{ "configfile", &ircd::ConfigFileEntry.configfile, lgetopt::STRING, "File to use for ircd.conf" },
-	{ "conftest", &testing_conf, lgetopt::YESNO, "Test the configuration files and exit" },
-	{ "debug", &ircd::debugmode, lgetopt::BOOL, "Enable options for debugging" },
-	{ NULL, NULL, lgetopt::STRING, NULL },
+	{ "help",       nullptr,          lgetopt::USAGE,   "Print this text" },
+	{ "version",    &printversion,    lgetopt::BOOL,    "Print version and exit" },
+	{ "configfile", &configfile,      lgetopt::STRING,  "File to use for ircd.conf" },
+	{ "conftest",   &testing_conf,    lgetopt::YESNO,   "Test the configuration files and exit" },
+	{ "debug",      &ircd::debugmode, lgetopt::BOOL,    "Enable options for debugging" },
+	{ nullptr,      nullptr,          lgetopt::STRING,  nullptr },
 };
 
 const char *const fatalerrstr
@@ -67,10 +68,6 @@ try
 {
 	umask(077);       // better safe than sorry --SRB
 
-	ircd::ConfigFileEntry.dpath = path::get(path::PREFIX);
-	ircd::ConfigFileEntry.configfile = path::get(path::IRCD_CONF); // Server configuration file
-	ircd::ConfigFileEntry.connect_timeout = 30; // Default to 30
-
 	parseargs(&argc, &argv, opts);
 	if(!startup_checks())
 		return 1;
@@ -84,7 +81,9 @@ try
 	sigs.add(SIGINT);
 	sigs.add(SIGQUIT);
 	sigs.async_wait(sigfd_handler);
-	ircd::init(ios);
+
+	const std::string confpath(configfile?: path::get(path::IRCD_CONF));
+	ircd::init(ios, confpath);
 	ios.run();  // Blocks until a clean exit or an exception comes out of it.
 }
 catch(const std::exception &e)
@@ -127,7 +126,7 @@ try
 		throw ircd::error("Don't run ircd as root!!!");
 	#endif
 
-	path::chdir(ircd::ConfigFileEntry.dpath);
+	path::chdir(path::get(path::PREFIX));
 	return true;
 }
 catch(const std::exception &e)

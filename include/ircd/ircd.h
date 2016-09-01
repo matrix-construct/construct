@@ -113,7 +113,7 @@ void restart(const char *) __attribute__((noreturn));
 void ircd_shutdown() __attribute__((noreturn));
 void server_reboot(void) __attribute__((noreturn));
 
-void init(boost::asio::io_service &ios);
+void init(boost::asio::io_service &ios, const std::string &newconf_path);
 
 }      // namespace ircd
 #endif // __cplusplus

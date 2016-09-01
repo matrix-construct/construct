@@ -33,10 +33,6 @@
 #pragma once
 #define HAVE_IRCD_S_NEWCONF_H
 
-#ifdef HAVE_LIBCRYPTO
-#include <openssl/rsa.h>
-#endif
-
 #ifdef __cplusplus
 namespace ircd {
 

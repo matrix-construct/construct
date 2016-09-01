@@ -22,9 +22,6 @@
  *  USA
  */
 
-int yyparse(void);
-extern char yy_linebuf[16384];		/* defined in ircd_lexer.l */
-
 namespace ircd {
 
 struct config_server_hide ConfigServerHide;
@@ -787,10 +784,10 @@ set_default_conf(void)
 static void
 read_conf(void)
 {
-	lineno = 0;
+	//lineno = 0;
 
 	set_default_conf();	/* Set default values prior to conf parsing */
-	yyparse();		/* Load the values from the conf */
+	//yyparse();		/* Load the values from the conf */
 	validate_conf();	/* Check to make sure some values are still okay. */
 	/* Some global values are also loaded here. */
 	check_class();		/* Make sure classes are valid */
@@ -1333,7 +1330,7 @@ read_conf_files(bool cold)
 
 
 	 */
-	rb_strlcpy(conffilebuf, filename, sizeof(conffilebuf));
+	//rb_strlcpy(conffilebuf, filename, sizeof(conffilebuf));
 
 	if((conf_fbfile_in = fopen(filename, "r")) == NULL)
 	{
@@ -1500,9 +1497,11 @@ conf_add_class_to_conf(struct ConfItem *aconf)
 	{
 		if(aconf->status == CONF_CLIENT)
 		{
+		/*
 			conf_report_error(
 					     "Using default class for missing class \"%s\" in auth{} for %s@%s",
 					     aconf->className, aconf->user, aconf->host);
+		*/
 		}
 
 		rb_free(aconf->className);
@@ -1579,12 +1578,12 @@ yyerror(const char *msg)
 {
 	char newlinebuf[BUFSIZE];
 
+/*
 	strip_tabs(newlinebuf, yy_linebuf, strlen(yy_linebuf));
-
 	ierror("\"%s\", line %d: %s at '%s'", conffilebuf, lineno + 1, msg, newlinebuf);
 	sendto_realops_snomask(sno::GENERAL, L_ALL, "\"%s\", line %d: %s at '%s'",
 			     conffilebuf, lineno + 1, msg, newlinebuf);
-
+*/
 }
 
 int

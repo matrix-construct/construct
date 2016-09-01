@@ -52,6 +52,7 @@ std::array<bool, num_of<facility>()> console_err;
 std::array<const char *, num_of<facility>()> fname;
 std::array<std::ofstream, num_of<facility>()> file;
 
+/*
 ConfEntry conf_log_table[] =
 {
 	{ "file_critical",  CF_QSTRING, NULL, PATH_MAX, &fname[CRITICAL]  },
@@ -61,6 +62,7 @@ ConfEntry conf_log_table[] =
 	{ "file_info",      CF_QSTRING, NULL, PATH_MAX, &fname[INFO]      },
 	{ "file_debug",     CF_QSTRING, NULL, PATH_MAX, &fname[DEBUG]     },
 };
+*/
 
 static void open(const facility &fac);
 static void prefix(const facility &fac, const char *const &date);
@@ -384,12 +386,13 @@ log::vlog(const facility &fac,
 {
 	char buf[1024];
 	vsnprintf(buf, sizeof(buf), fmt, ap);
-
+/*
 	if(snomask)
 		sendto_realops_snomask(snomask, L_NETWIDE, "%s %s :%s",
 		                       reflect(fac),
 		                       name.size()? name.c_str() : "*",
 		                       buf);
+*/
 
 	slog(fac, [&buf, &name]
 	(std::ostream &s)

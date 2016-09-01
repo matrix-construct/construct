@@ -1,75 +1,39 @@
 /*
- *  charybdis: Advanced, scalable Internet Relay Chat.
- *  s_conf.h: A header for the configuration functions.
+ * Copyright (C) 2016 Charybdis Development Team
+ * Copyright (C) 2016 Jason Volk <jason@zemos.net>
  *
- *  Copyright (C) 1990 Jarkko Oikarinen and University of Oulu, Co Center
- *  Copyright (C) 1996-2002 Hybrid Development Team
- *  Copyright (C) 2002-2004 ircd-ratbox development team
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice is present in all copies.
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
- *  USA
  */
 
 #pragma once
-#define HAVE_IRCD_S_CONF_H
-
-#ifdef HAVE_LIBCRYPTO
-#include <openssl/rsa.h>
-#endif
+#define HAVE_IRCD_CONF_H
 
 #ifdef __cplusplus
 namespace ircd {
+namespace conf {
 
-struct DNSReply;
-struct hostent;
-
-/* used by new parser */
-/* yacc/lex love globals!!! */
-
-struct ip_value
-{
-	struct rb_sockaddr_storage ip;
-	int ip_mask;
-	int type;
-};
-
-extern FILE *conf_fbfile_in;
-extern char conf_line_in[256];
-
-struct ConfItem
-{
-	unsigned int status;	/* If CONF_ILLEGAL, delete when no clients */
-	unsigned int flags;
-	int clients;		/* Number of *LOCAL* clients using this */
-	union
-	{
-		char *name;	/* IRC name, nick, server name, or original u@h */
-		const char *oper;
-	} info;
-	char *host;		/* host part of user@host */
-	char *passwd;		/* doubles as kline reason *ugh* */
-	char *spasswd;		/* Password to send. */
-	char *user;		/* user part of user@host */
-	int port;
-	time_t hold;		/* Hold action until this time (calendar time) */
-	time_t created;		/* Creation time (for klines etc) */
-	time_t lifetime;	/* Propagated lines: remember until this time */
-	char *className;	/* Name of class */
-	struct Class *c_class;	/* Class of connection */
-	rb_patricia_node_t *pnode;	/* Our patricia node */
-};
+#define NOT_AUTHORISED  (-1)
+#define I_SOCKET_ERROR  (-2)
+#define I_LINE_FULL     (-3)
+#define BANNED_CLIENT   (-4)
+#define TOO_MANY_LOCAL	(-6)
+#define TOO_MANY_GLOBAL (-7)
+#define TOO_MANY_IDENT	(-8)
 
 #define CONF_ILLEGAL		0x80000000
 #define CONF_CLIENT		0x0002
@@ -109,6 +73,29 @@ struct ConfItem
 #define CONF_FLAGS_EXEMPTDNSBL		0x04000000
 #define CONF_FLAGS_EXEMPTPROXY		0x08000000
 
+
+struct ConfItem
+{
+	unsigned int status;	/* If CONF_ILLEGAL, delete when no clients */
+	unsigned int flags;
+	int clients;		/* Number of *LOCAL* clients using this */
+	union
+	{
+		char *name;	/* IRC name, nick, server name, or original u@h */
+		const char *oper;
+	} info;
+	char *host;		/* host part of user@host */
+	char *passwd;		/* doubles as kline reason *ugh* */
+	char *spasswd;		/* Password to send. */
+	char *user;		/* user part of user@host */
+	int port;
+	time_t hold;		/* Hold action until this time (calendar time) */
+	time_t created;		/* Creation time (for klines etc) */
+	time_t lifetime;	/* Propagated lines: remember until this time */
+	char *className;	/* Name of class */
+	struct Class *c_class;	/* Class of connection */
+	rb_patricia_node_t *pnode;	/* Our patricia node */
+};
 
 /* Macros for struct ConfItem */
 #define IsConfBan(x)		((x)->status & (CONF_KILL|CONF_XLINE|CONF_DLINE|\
@@ -320,73 +307,53 @@ typedef enum temp_list
 
 extern rb_dlink_list temp_klines[LAST_TEMP_TYPE];
 extern rb_dlink_list temp_dlines[LAST_TEMP_TYPE];
+extern unsigned long cidr_to_bitmask[];
 
-extern void init_s_conf(void);
+void init_s_conf(void);
 
-extern struct ConfItem *make_conf(void);
-extern void free_conf(struct ConfItem *);
+struct ConfItem *make_conf(void);
+void free_conf(struct ConfItem *);
 
-extern rb_dlink_node *find_prop_ban(unsigned int status, const char *user, const char *host);
-extern void deactivate_conf(struct ConfItem *, rb_dlink_node *, time_t);
-extern void replace_old_ban(struct ConfItem *);
+rb_dlink_node *find_prop_ban(unsigned int status, const char *user, const char *host);
+void deactivate_conf(struct ConfItem *, rb_dlink_node *, time_t);
+void replace_old_ban(struct ConfItem *);
 
-extern void read_conf_files(bool cold);
+void read_conf_files(bool cold);
 
-extern int attach_conf(client::client *, struct ConfItem *);
-extern int check_client(client::client *client_p, client::client *source_p, const char *);
+int attach_conf(client::client *, struct ConfItem *);
+int check_client(client::client *client_p, client::client *source_p, const char *);
 
-extern int detach_conf(client::client *);
+int detach_conf(client::client *);
 
-extern struct ConfItem *find_tkline(const char *, const char *, struct sockaddr *);
-extern char *show_iline_prefix(client::client *, struct ConfItem *, char *);
-extern void get_printable_conf(struct ConfItem *,
+struct ConfItem *find_tkline(const char *, const char *, struct sockaddr *);
+char *show_iline_prefix(client::client *, struct ConfItem *, char *);
+void get_printable_conf(struct ConfItem *,
 			       char **, char **, const char **, char **, int *, char **);
-extern char *get_user_ban_reason(struct ConfItem *aconf);
-extern void get_printable_kline(client::client *, struct ConfItem *,
+char *get_user_ban_reason(struct ConfItem *aconf);
+void get_printable_kline(client::client *, struct ConfItem *,
 				char **, char **, char **, char **);
 
 int conf_yy_fatal_error(const char *);
 int conf_fgets(char *, int, FILE *);
 
-extern int valid_wild_card(const char *, const char *);
-extern void add_temp_kline(struct ConfItem *);
-extern void add_temp_dline(struct ConfItem *);
-extern void report_temp_klines(client::client *);
-extern void show_temp_klines(client::client *, rb_dlink_list *);
+int valid_wild_card(const char *, const char *);
+void add_temp_kline(struct ConfItem *);
+void add_temp_dline(struct ConfItem *);
+void report_temp_klines(client::client *);
+void show_temp_klines(client::client *, rb_dlink_list *);
 
-extern bool rehash(bool);
-extern void rehash_bans(void);
+bool rehash(bool);
+void rehash_bans(void);
 
-extern int conf_add_server(struct ConfItem *, int);
-extern void conf_add_class_to_conf(struct ConfItem *);
-extern void conf_add_me(struct ConfItem *);
-extern void conf_add_class(struct ConfItem *, int);
-extern void conf_add_d_conf(struct ConfItem *);
-extern void flush_expired_ips(void *);
+int conf_add_server(struct ConfItem *, int);
+void conf_add_class_to_conf(struct ConfItem *);
+void conf_add_me(struct ConfItem *);
+void conf_add_class(struct ConfItem *, int);
+void conf_add_d_conf(struct ConfItem *);
+void flush_expired_ips(void *);
 
-extern char *get_oper_name(client::client *client_p);
+char *get_oper_name(client::client *client_p);
 
-extern unsigned long cidr_to_bitmask[];
-
-extern char conffilebuf[BUFSIZE + 1];
-extern int lineno;
-
-void yyerror(const char *);
-
+}      // namespace conf
 }      // namespace ircd
-
-inline
-void yyerror(const char *const c)
-{
-	ircd::yyerror(c);
-}
-
 #endif // __cplusplus
-
-#define NOT_AUTHORISED  (-1)
-#define I_SOCKET_ERROR  (-2)
-#define I_LINE_FULL     (-3)
-#define BANNED_CLIENT   (-4)
-#define TOO_MANY_LOCAL	(-6)
-#define TOO_MANY_GLOBAL (-7)
-#define TOO_MANY_IDENT	(-8)

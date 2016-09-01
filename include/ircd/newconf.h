@@ -1,82 +1,50 @@
-/* This code is in the public domain.
+/*
+ * Copyright (C) 2016 Charybdis Development Team
+ * Copyright (C) 2016 Jason Volk <jason@zemos.net>
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice is present in all copies.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #pragma once
 #define HAVE_IRCD_NEWCONF_H
 
 #ifdef __cplusplus
-namespace ircd {
+namespace ircd    {
+namespace conf    {
+namespace newconf {
 
-struct ConfEntry
-{
-	const char *cf_name;
-	int cf_type;
-	void (*cf_func) (void *);
-	int cf_len;
-	void *cf_arg;
-};
+using key = std::string;                             // before the equals sign in an item
+using val = std::vector<std::string>;                // Either one or more elems after '='
+using item = std::pair<key, val>;                    // Pairing of key/vals
+using block = std::pair<key, std::vector<item>>;     // key is optional "label" { items };
+using topconf = std::multimap<key, block>;           // key is type of block i.e admin { ... };
 
-struct TopConf
-{
-	const char *tc_name;
-	int (*tc_sfunc) (struct TopConf *);
-	int (*tc_efunc) (struct TopConf *);
-	rb_dlink_list tc_items;
-	struct ConfEntry *tc_entries;
-};
-
-
-#define CF_QSTRING	0x01 /* quoted string */
-#define CF_INT		0x02
-#define CF_STRING	0x03 /* unquoted string */
-#define CF_TIME		0x04
-#define CF_YESNO	0x05
-
-#define CF_MTYPE	0xFF /* mask for type */
-
-/* CF_FLIST is used to allow specifying that an option accepts a list of (type)
- * values. conf_parm_t.type will never actually have another type & CF_FLIST;
- * it's only used as a true flag in newconf.c (which only consumes conf_parm_t
- * structures and doesn't create them itself).
+/* Notes:
+ * Some topconf entries are not blocks, but just key/values like "loadmodule." For this, the
+ * topconf multimap contains keys of "loadmodule," and a block entry containing an empty key,
+ * a vector of one item, with the item key also being "loadmodule" and the value being the
+ * module to load.
  */
-#define CF_FLIST	0x0100 /* flag for list */
-#define CF_MFLAG	0xFF00 /* mask for flags */
 
-/* conf_parm_t.type must be either one type OR one flag. this is pretty easy to
- * enforce because lists always contain nested conf_parm_t structures whose
- * .type is the real type, so it doesn't need to be stored in the top-level one
- * anyway.
- */
-typedef struct conf_parm_t_stru
-{
-	struct conf_parm_t_stru *next;
-	int type;
-	union
-	{
-		char *string;
-		int number;
-		struct conf_parm_t_stru *list;
-	}
-	v;
-}
-conf_parm_t;
+topconf parse(const std::string &str);
+topconf parse(std::ifstream &file);
+topconf parse_file(const std::string &path);
 
-int read_config(char *);
-int conf_start_block(char *, char *);
-int conf_end_block(struct TopConf *);
-int conf_call_set(struct TopConf *, char *, conf_parm_t *);
-void conf_report_error(const char *, ...);
-void conf_report_warning(const char *, ...);
-void newconf_init(void);
-int add_conf_item(const char *topconf, const char *name, int type, void (*func) (void *));
-int remove_conf_item(const char *topconf, const char *name);
-int add_top_conf(const char *name, int (*sfunc) (struct TopConf *), int (*efunc) (struct TopConf *), struct ConfEntry *items);
-int remove_top_conf(const char *name);
-struct TopConf *find_top_conf(const char *name);
-struct ConfEntry *find_conf_item(const struct TopConf *top, const char *name);
-
-extern struct TopConf *conf_cur_block;
-extern char *current_file;
-
+}      // namespace newconf
+}      // namespace conf
 }      // namespace ircd
 #endif // __cplusplus
