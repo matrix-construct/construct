@@ -9,7 +9,6 @@ AC_INIT([charybdis], [5-dev])
 AC_GNU_SOURCE
 AC_USE_SYSTEM_EXTENSIONS
 AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_AUX_DIR([libltdl/config])
 AC_PREFIX_DEFAULT($HOME/ircd)
 
 AC_PATH_PROG(AUTOMAKE, automake)
@@ -34,9 +33,6 @@ AC_PROG_CXX_C_O
 AC_LANG(C++)
 AC_CONFIG_HEADER(include/rb/config.h)
 AX_CXX_COMPILE_STDCXX([14], [gnu], [mandatory], 201300)
-
-LT_CONFIG_LTDL_DIR([libltdl])
-LTDL_INIT([subproject])
 
 AC_PROG_YACC
 dnl AC_PROG_YACC defaults to yacc unconditionally if nothing can be found
@@ -772,13 +768,6 @@ dnl Third party
 dnl
 
 
-dnl
-dnl ltdl support
-dnl
-
-AM_CONDITIONAL([BUILD_LTDL], [[[ "$with_included_ltdl" = "yes" ]]])
-
-
 
 dnl
 dnl boost support
@@ -1290,7 +1279,6 @@ echo "Configuration time ................ $RB_DATESTR"
 echo "Compiler .......................... $CXX"
 echo "Compiler flags (CXXFLAGS) ......... $CXXFLAGS"
 echo "Building boost .................... $with_included_boost"
-echo "Building libltdl .................. $with_included_ltdl"
 echo "Precompiled headers ............... $build_pch"
 echo "Developer debug ................... $debug"
 echo "IPv6 support ...................... $ipv6"

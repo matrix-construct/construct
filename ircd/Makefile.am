@@ -8,7 +8,6 @@ AM_YFLAGS = -d
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
-	@LTDLINCL@ \
 	@BOOST_CPPFLAGS@ \
 	-include ircd/ircd.h
 
@@ -32,7 +31,6 @@ libircd_LTLIBRARIES = libircd.la
 
 libircd_la_LIBADD = \
 	-lrb \
-	@LIBLTDL@ \
 	@BOOST_LIBS@
 
 libircd_la_SOURCES =                  \

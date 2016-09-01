@@ -3,9 +3,6 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = include/rb
 SUBDIRS += include/ircd
-if BUILD_LTDL
-SUBDIRS += libltdl
-endif
 SUBDIRS += rb
 SUBDIRS += ircd
 SUBDIRS += charybdis
@@ -32,7 +29,6 @@ mrproper-local:
 	rm -f depcomp
 	rm -f ltmain.sh
 	rm -f install-sh
-	rm -rf libltdl
 	rm -f libtool
 	rm -f missing
 	rm -f ylwrap
@@ -46,7 +42,6 @@ mrproper-local:
 	rm -f m4/argz.m4
 	rm -f m4/libtool.m4
 	rm -f m4/ltargz.m4
-	rm -f m4/ltdl.m4
 	rm -f m4/ltoptions.m4
 	rm -f m4/ltsugar.m4
 	rm -f m4/ltversion.m4

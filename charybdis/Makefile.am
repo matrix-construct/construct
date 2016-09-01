@@ -2,7 +2,6 @@ prefix = @prefix@
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
-	@LTDLINCL@ \
 	@BOOST_CPPFLAGS@
 
 AM_LDFLAGS = \
@@ -22,5 +21,4 @@ charybdis_SOURCES = \
 charybdis_LDADD = \
 	-lircd \
 	-lrb \
-	@LIBLTDL@ \
 	@BOOST_LIBS@

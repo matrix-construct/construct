@@ -2,7 +2,6 @@ moduledir=@moduledir@
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
-	$(LTDLINCL) \
 	@BOOST_CPPFLAGS@ \
 	-include $(top_srcdir)/include/ircd/ircd.h \
 	-include $(top_srcdir)/include/ircd/mapi.h
@@ -25,7 +24,6 @@ AM_LDFLAGS += \
 AM_LDFLAGS += \
 	-lircd \
 	-lrb \
-	@LIBLTDL@ \
 	@BOOST_LIBS@
 
 #m_ban_la_SOURCES = m_ban.cc

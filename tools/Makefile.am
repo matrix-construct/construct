@@ -1,6 +1,5 @@
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
-	@LTDLINCL@ \
 	@BOOST_CPPFLAGS@ 
 
 AM_LDFLAGS = \
