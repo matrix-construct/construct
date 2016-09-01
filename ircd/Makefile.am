@@ -2,10 +2,6 @@ AUTOMAKE_OPTIONS = foreign
 
 libircddir	= @libdir@
 
-# NOTE: the c++ version has a radically different API
-#AM_YFLAGS = -d --language=c++
-AM_YFLAGS = -d
-
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	@BOOST_CPPFLAGS@ \
@@ -24,8 +20,6 @@ AM_LDFLAGS = \
 AM_LDFLAGS += \
 	-L$(top_srcdir)/rb \
 	@BOOST_LDFLAGS@
-
-BUILT_SOURCES = ircd_lexer.cc ircd_parser.cc
 
 libircd_LTLIBRARIES = libircd.la
 
@@ -54,8 +48,6 @@ libircd_la_SOURCES =                  \
   mask.cc                        \
   info.cc                        \
   ircd.cc                       \
-  ircd_lexer.cc                \
-  ircd_parser.cc                \
   listener.cc                   \
   logger.cc                     \
   match.cc                       \
@@ -84,12 +76,6 @@ libircd_la_SOURCES =                  \
   tgchange.cc                    \
   whowas.cc			\
   wsproc.cc
-
-ircd_lexer.cc:
-	flex $(AM_LFLAGS) -o ircd_lexer.cc ircd_lexer.ll
-
-ircd_parser.cc:
-	$(YACC) $(AM_YFLAGS) -o ircd_parser.cc ircd_parser.yy
 
 install-data-local:
 	test -d $(prefix)/@logdir@ || mkdir -p $(prefix)/@logdir@
