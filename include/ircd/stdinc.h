@@ -89,6 +89,7 @@ namespace ircd
 #include "chmode.h"
 #include "channel.h"
 
+#include "logger.h"
 #include "newconf.h"
 #include "conf.h"
 
@@ -102,7 +103,6 @@ namespace ircd
 #include "hook.h"
 #include "ircd_getopt.h"
 #include "listener.h"
-#include "logger.h"
 #include "info.h"
 #include "modules.h"
 #include "monitor.h"

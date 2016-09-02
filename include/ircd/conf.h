@@ -27,6 +27,39 @@
 namespace ircd {
 namespace conf {
 
+IRCD_EXCEPTION(ircd::error, error)
+
+extern struct log::log log;
+
+namespace newconf
+{
+	IRCD_EXCEPTION(conf::error, error)
+	IRCD_EXCEPTION(error, unknown_block)
+
+	using letters = std::array<std::string, 256>;
+
+	extern topconf current;    // The latest newconf parse map after startup or rehash
+	extern topconf last;       // The current is moved to last for differentiation
+	extern letters registry;   // Translates newconf block names into characters
+
+	uint8_t find_letter(const std::string &name);
+	std::forward_list<std::string> translate(const topconf &);
+}
+
+void init(const std::string &path);
+
+}      // namespace conf
+}      // namespace ircd
+#endif // __cplusplus
+
+
+
+#ifdef __cplusplus
+namespace ircd {
+namespace conf {
+
+
+
 #define NOT_AUTHORISED  (-1)
 #define I_SOCKET_ERROR  (-2)
 #define I_LINE_FULL     (-3)

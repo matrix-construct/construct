@@ -174,7 +174,7 @@ ircd::init(boost::asio::io_service &io_service,
 	log::init();
 	log::mark("log started");
 
-	conf::newconf::parse_file(configfile);
+	conf::init(configfile);
 
 	// initialise operhash fairly early.
 	//init_operhash();

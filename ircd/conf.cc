@@ -20,7 +20,101 @@
  *
  */
 
+namespace ircd {
+namespace conf {
+
+	struct log::log log
+	{
+		"conf", 'w'  // both C's unavailable :/
+	};
+
+	newconf::topconf newconf::current;
+	newconf::topconf newconf::last;
+	newconf::letters newconf::registry;
+
+	void parse_newconf(const std::string &path);
+
+} // namespace conf
+} // namespace ircd
+
 using namespace ircd;
+
+void conf::init(const std::string &path)
+{
+	newconf::registry['A'] = "admin";
+	newconf::registry['B'] = "blacklist";
+	newconf::registry['C'] = "connect";
+	newconf::registry['I'] = "auth";
+	newconf::registry['M'] = "serverinfo";
+	newconf::registry['O'] = "operator";
+	newconf::registry['P'] = "listen";
+	newconf::registry['U'] = "service";
+	newconf::registry['Y'] = "class";
+	newconf::registry['a'] = "alias";
+	newconf::registry['d'] = "exempt";
+	newconf::registry['g'] = "general";
+	newconf::registry['l'] = "log";
+	newconf::registry['m'] = "loadmodule";
+
+	parse_newconf(path);
+	const auto oldconf(newconf::translate(newconf::current));
+}
+
+void
+conf::parse_newconf(const std::string &path)
+{
+	newconf::last = std::move(newconf::current);
+	newconf::current = newconf::parse_file(path);
+}
+
+std::forward_list<std::string>
+conf::newconf::translate(const newconf::topconf &top)
+{
+	std::forward_list<std::string> ret;
+	for(const auto &pair : top) try
+	{
+		const auto &type(pair.first);
+		const auto &block(pair.second);
+		const auto &label(block.first);
+		const auto &items(block.second);
+		const auto &letter(find_letter(type));
+		for(const auto &item : items)
+		{
+			const auto &key(item.first);
+			const auto &vals(item.second);
+			std::stringstream buf;
+			buf << letter << " "
+			    << label << " "
+			    << key << " :";
+
+			for(auto i(0); i < int(vals.size()) - 1; ++i)
+				buf << vals.at(i) << " ";
+
+			if(!vals.empty())
+				buf << vals.back();
+
+			ret.emplace_front(buf.str());
+		}
+	}
+	catch(const error &e)
+	{
+		log.warning("%s", e.what());
+	}
+
+	return ret;
+}
+
+uint8_t
+conf::newconf::find_letter(const std::string &name)
+{
+	const auto &registry(newconf::registry);
+	const auto it(std::find(begin(registry), end(registry), name));
+	if(it == end(registry))
+		throw unknown_block("%s is not registered to a letter", name.c_str());
+
+	return std::distance(begin(registry), it);
+}
+
 
 /*
 #define CF_TYPE(x) ((x) & CF_MTYPE)
