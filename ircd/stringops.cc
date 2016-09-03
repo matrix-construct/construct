@@ -134,3 +134,18 @@ ircd::strip_unprintable(char *string)
 
 	return string;
 }
+
+char *
+ircd::reconstruct_parv(int parc, const char *parv[])
+{
+	static char tmpbuf[BUFSIZE];
+
+	rb_strlcpy(tmpbuf, parv[0], BUFSIZE);
+	for (int i = 1; i < parc; i++)
+	{
+		rb_strlcat(tmpbuf, " ", BUFSIZE);
+		rb_strlcat(tmpbuf, parv[i], BUFSIZE);
+	}
+
+	return tmpbuf;
+}

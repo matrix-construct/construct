@@ -40,6 +40,7 @@ bool startswith(const std::string &str, const std::string &val);
 
 char *strip_colour(char *string);
 char *strip_unprintable(char *string);
+char *reconstruct_parv(int parc, const char **parv);
 
 } // namespace ircd
 
