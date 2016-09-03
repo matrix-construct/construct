@@ -27,6 +27,7 @@ using ircd::lgetopt;
 
 bool printversion;
 bool testing_conf;
+bool cmdline;
 const char *configfile;
 lgetopt opts[] =
 {
@@ -35,6 +36,7 @@ lgetopt opts[] =
 	{ "configfile", &configfile,      lgetopt::STRING,  "File to use for ircd.conf" },
 	{ "conftest",   &testing_conf,    lgetopt::YESNO,   "Test the configuration files and exit" },
 	{ "debug",      &ircd::debugmode, lgetopt::BOOL,    "Enable options for debugging" },
+	{ "cmd",        &cmdline,         lgetopt::BOOL,    "Interrupt to a command line immediately after startup" },
 	{ nullptr,      nullptr,          lgetopt::STRING,  nullptr },
 };
 
@@ -84,6 +86,10 @@ try
 
 	const std::string confpath(configfile?: path::get(path::IRCD_CONF));
 	ircd::init(ios, confpath);
+
+	if(cmdline)
+		raise(SIGINT);
+
 	ios.run();  // Blocks until a clean exit or an exception comes out of it.
 }
 catch(const std::exception &e)
