@@ -56,13 +56,15 @@ namespace character
 	using attr_t = std::underlying_type<attr>::type;
 
 	extern const std::array<attr_t, 256> attrs;
-	extern const std::array<unsigned char, 256> tolower_tab;
-	extern const std::array<unsigned char, 256> toupper_tab;
+	extern const std::array<uint8_t, 256> tolower_tab;
+	extern const std::array<uint8_t, 256> toupper_tab;
 
-	bool is(const unsigned char &c, const attr &attr);
-	bool is(const char &c, const attr &attr);
-	const unsigned char &tolower(const unsigned char &c);
-	const unsigned char &toupper(const unsigned char &c);
+	// Tests
+	bool is(const uint8_t &c, const attr &attr);
+
+	// Transforms
+	const uint8_t &tolower(const uint8_t &c);
+	const uint8_t &toupper(const uint8_t &c);
 }
 
 using character::is;
@@ -137,27 +139,20 @@ const
 	});
 }
 
-inline const unsigned char &
-character::tolower(const unsigned char &c)
+inline const uint8_t &
+character::tolower(const uint8_t &c)
 {
 	return tolower_tab[c];
 }
 
-inline const unsigned char &
-character::toupper(const unsigned char &c)
+inline const uint8_t &
+character::toupper(const uint8_t &c)
 {
 	return toupper_tab[c];
 }
 
 inline bool
-character::is(const char &c,
-              const attr &attr)
-{
-	return is(reinterpret_cast<const unsigned char &>(c), attr);
-}
-
-inline bool
-character::is(const unsigned char &c,
+character::is(const uint8_t &c,
               const attr &attr)
 {
 	return (attrs[c] & attr) == attr;
