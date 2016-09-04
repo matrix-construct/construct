@@ -65,11 +65,16 @@ namespace character
 	// Transforms
 	const uint8_t &tolower(const uint8_t &c);
 	const uint8_t &toupper(const uint8_t &c);
+
+	// Get all characters for an attribute mask
+	size_t gather(const attr &attr, uint8_t *const &buf, const size_t &max);
+	std::string gather(const attr &attr);
 }
 
 using character::is;
 using character::toupper;
 using character::tolower;
+using character::gather;
 
 struct less
 {

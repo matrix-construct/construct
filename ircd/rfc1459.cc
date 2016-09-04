@@ -23,6 +23,27 @@
 
 using namespace ircd;
 
+std::string
+rfc1459::character::gather(const attr &attr)
+{
+	uint8_t buf[256];
+	const size_t len(gather(attr, buf, sizeof(buf)));
+	return { reinterpret_cast<const char *>(buf), len };
+}
+
+size_t
+rfc1459::character::gather(const attr &attr,
+                           uint8_t *const &buf,
+                           const size_t &max)
+{
+	size_t ret(0);
+	for(ssize_t i(attrs.size() - 1); i >= 0 && ret < max; --i)
+		if(is(i, attr))
+			buf[ret++] = i;
+
+	return ret;
+}
+
 decltype(rfc1459::character::tolower_tab)
 rfc1459::character::tolower_tab
 {
