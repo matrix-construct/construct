@@ -859,7 +859,8 @@ RB_DEFINE_UNQUOTED([INC_BOOST_LEXICAL_CAST_HPP], [boost/lexical_cast.hpp>], [ bo
 RB_DEFINE_UNQUOTED([INC_BOOST_TOKENIZER_HPP], [boost/tokenizer.hpp>], [ boost tokenizer. ])
 RB_DEFINE_UNQUOTED([INC_BOOST_FILESYSTEM_HPP], [boost/filesystem.hpp>], [ boost filesystem. ])
 RB_DEFINE_UNQUOTED([INC_BOOST_DLL_HPP], [boost/dll.hpp>], [ boost DLL. ])
-RB_DEFINE_UNQUOTED([INC_BOOST_SPIRIT_HPP], [boost/spirit.hpp>], [ boost spirit parser. ])
+RB_DEFINE_UNQUOTED([INC_BOOST_SPIRIT_QI_HPP], [boost/spirit/include/qi.hpp>], [ spirit qi parser. ])
+RB_DEFINE_UNQUOTED([INC_BOOST_SPIRIT_KARMA_HPP], [boost/spirit/include/karma.hpp>], [ spirit karma generator. ])
 
 
 
