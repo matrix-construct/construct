@@ -132,6 +132,7 @@ auto lex_cast(Args&&... args)
  */
 
 template<class Enum>
+constexpr
 typename std::enable_if<std::is_enum<Enum>::value, Enum>::type
 operator~(const Enum &a)
 {
@@ -141,6 +142,7 @@ operator~(const Enum &a)
 }
 
 template<class Enum>
+constexpr
 typename std::enable_if<std::is_enum<Enum>::value, bool>::type
 operator!(const Enum &a)
 {
@@ -150,6 +152,7 @@ operator!(const Enum &a)
 }
 
 template<class Enum>
+constexpr
 typename std::enable_if<std::is_enum<Enum>::value, Enum>::type
 operator|(const Enum &a, const Enum &b)
 {
@@ -159,6 +162,7 @@ operator|(const Enum &a, const Enum &b)
 }
 
 template<class Enum>
+constexpr
 typename std::enable_if<std::is_enum<Enum>::value, Enum>::type
 operator&(const Enum &a, const Enum &b)
 {
@@ -168,6 +172,7 @@ operator&(const Enum &a, const Enum &b)
 }
 
 template<class Enum>
+constexpr
 typename std::enable_if<std::is_enum<Enum>::value, Enum>::type
 operator^(const Enum &a, const Enum &b)
 {
@@ -177,6 +182,7 @@ operator^(const Enum &a, const Enum &b)
 }
 
 template<class Enum>
+constexpr
 typename std::enable_if<std::is_enum<Enum>::value, Enum &>::type
 operator|=(Enum &a, const Enum &b)
 {
@@ -186,6 +192,7 @@ operator|=(Enum &a, const Enum &b)
 }
 
 template<class Enum>
+constexpr
 typename std::enable_if<std::is_enum<Enum>::value, Enum &>::type
 operator&=(Enum &a, const Enum &b)
 {
@@ -195,6 +202,7 @@ operator&=(Enum &a, const Enum &b)
 }
 
 template<class Enum>
+constexpr
 typename std::enable_if<std::is_enum<Enum>::value, Enum &>::type
 operator^=(Enum &a, const Enum &b)
 {
