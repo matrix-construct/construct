@@ -240,6 +240,15 @@ microtime(char *const &buf,
 }
 
 
+template<class T>
+std::string
+string(const T &s)
+{
+	using std::stringstream;
+	return static_cast<stringstream &>(stringstream{} << s).str();
+}
+
+
 }        // namespace util
 }        // namespace ircd
 #endif   // __cplusplus
