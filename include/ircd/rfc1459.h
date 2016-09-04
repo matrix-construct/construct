@@ -29,6 +29,9 @@
 #ifdef __cplusplus
 namespace ircd      {
 namespace rfc1459   {
+
+IRCD_EXCEPTION(ircd::error, syntax_error)
+
 namespace character
 {
 	enum attr : uint
@@ -76,13 +79,6 @@ using character::toupper;
 using character::tolower;
 using character::gather;
 
-struct less
-{
-	bool operator()(const char *const &a, const char *const &b) const;
-	bool operator()(const std::string &a, const std::string &b) const;
-	bool operator()(const std::string *const &a, const std::string *const &b) const;
-};
-
 inline bool is_print(const char &c)              { return is(c, character::PRINT);                 }
 inline bool is_host(const char &c)               { return is(c, character::HOST);                  }
 inline bool is_user(const char &c)               { return is(c, character::USER);                  }
@@ -111,6 +107,66 @@ inline bool is_xdigit(const char &c)
 {
 	return is_digit(c) || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F');
 }
+
+struct less
+{
+	bool operator()(const char *const &a, const char *const &b) const;
+	bool operator()(const std::string &a, const std::string &b) const;
+	bool operator()(const std::string *const &a, const std::string *const &b) const;
+};
+
+struct nick
+:std::string
+{
+	using std::string::string;
+};
+
+struct user
+:std::string
+{
+	using std::string::string;
+};
+
+struct host
+:std::string
+{
+	using std::string::string;
+};
+
+struct cmd
+:std::string
+{
+	using std::string::string;
+};
+
+struct parv
+:std::vector<std::string>
+{
+	using std::vector<std::string>::vector;
+};
+
+struct pfx
+{
+	struct nick nick;
+	struct user user;
+	struct host host;
+};
+
+struct line
+{
+	struct pfx pfx;
+	struct cmd cmd;
+	struct parv parv;
+
+	line(const uint8_t *const &buf, const size_t &len);
+	line(const std::string &line);
+	line() = default;
+};
+
+std::ostream &operator<<(std::ostream &, const pfx &);
+std::ostream &operator<<(std::ostream &, const parv &);
+std::ostream &operator<<(std::ostream &, const line &);   // unterminated
+
 
 inline bool
 less::operator()(const std::string *const &a,

@@ -21,7 +21,241 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <boost/spirit/include/qi.hpp>
+
+BOOST_FUSION_ADAPT_STRUCT
+(
+	ircd::rfc1459::pfx,
+	( ircd::rfc1459::nick,  nick )
+	( ircd::rfc1459::user,  user )
+	( ircd::rfc1459::host,  host )
+)
+
+BOOST_FUSION_ADAPT_STRUCT
+(
+	ircd::rfc1459::line,
+	( ircd::rfc1459::pfx,   pfx  )
+	( ircd::rfc1459::cmd,   cmd  )
+	( ircd::rfc1459::parv,  parv )
+)
+
+namespace qi = boost::spirit::qi;
 using namespace ircd;
+
+namespace ircd    {
+namespace rfc1459 {
+
+using qi::lit;
+using qi::char_;
+using qi::repeat;
+using qi::attr;
+using qi::eps;
+
+template<class it>
+struct parser
+:qi::grammar<it, rfc1459::line>
+{
+	qi::rule<it> space;
+	qi::rule<it> colon;
+	qi::rule<it> nulcrlf;
+	qi::rule<it> spnulcrlf;
+	qi::rule<it> terminator;
+
+	qi::rule<it, std::string()> hostname;
+	qi::rule<it, std::string()> user;
+	qi::rule<it, std::string()> server;
+	qi::rule<it, std::string()> nick;
+	qi::rule<it, rfc1459::pfx> prefix;
+
+	qi::rule<it, std::string()> trailing;
+	qi::rule<it, std::string()> middle;
+	qi::rule<it, rfc1459::parv> params;
+
+	qi::rule<it, rfc1459::cmd> command;
+	qi::rule<it, rfc1459::line> frame;
+
+	parser();
+};
+
+const parser<const uint8_t *> head;
+
+} // namespace rfc1459
+} // namespace ircd
+
+
+// Informal stream (for now)
+// NOTE: unterminated
+std::ostream &
+rfc1459::operator<<(std::ostream &s, const line &line)
+{
+	const auto &pfx(line.pfx);
+	if(!pfx.nick.empty() || !pfx.user.empty() || !pfx.host.empty())
+		s << pfx << ' ';
+
+	s << line.cmd;
+
+	const auto &parv(line.parv);
+	if(!parv.empty())
+		s << ' ' << parv;
+
+	return s;
+}
+
+// Informal stream (for now)
+std::ostream &
+rfc1459::operator<<(std::ostream &s, const parv &parv)
+{
+	ssize_t i(0);
+	for(; i < ssize_t(parv.size()) - 1; ++i)
+		s << parv[i] << ' ';
+
+	if(!parv.empty())
+		s << ':' << parv[parv.size() - 1];
+
+	return s;
+}
+
+// Informal stream (for now)
+std::ostream &
+rfc1459::operator<<(std::ostream &s, const pfx &pfx)
+{
+	s << ':';
+	if(!pfx.nick.empty())
+		s << pfx.nick;
+	else
+		s << '*';
+
+	s << '!';
+	if(!pfx.user.empty())
+		s << pfx.user;
+	else
+		s << '*';
+
+	s << '@';
+	if(!pfx.host.empty())
+		s << pfx.host;
+	else
+		s << '*';
+
+	return s;
+}
+
+rfc1459::line::line(const std::string &str)
+:line
+{
+	reinterpret_cast<const uint8_t *>(str.data()),
+	str.size()
+}
+{
+}
+
+rfc1459::line::line(const uint8_t *const &buf,
+                    const size_t &size)
+try
+{
+	const uint8_t *start(buf);
+	const uint8_t *stop(buf + size);
+	qi::parse(start, stop, head, *this);
+}
+catch(const boost::spirit::qi::expectation_failure<const uint8_t *> &e)
+{
+	throw syntax_error("@%d expecting :%s",
+	                   int(e.last - e.first),
+	                   string(e.what_).c_str());
+}
+
+template<class it>
+rfc1459::parser<it>::parser()
+:parser<it>::base_type
+{
+	frame
+}
+,space // A single space character
+{
+	/* TODO: RFC says:
+	 *   1) <SPACE> is consists only of SPACE character(s) (0x20).
+	 *      Specially notice that TABULATION, and all other control
+	 *      characters are considered NON-WHITE-SPACE.
+	 * But our table in this namespace has control characters labeled as SPACE.
+	 * This needs to be fixed.
+	 */
+
+	//char_(gather(character::SPACE))
+	lit(' ')
+	,"space"
+}
+,colon // A single colon character
+{
+	lit(':')
+	,"colon"
+}
+,nulcrlf // Match on NUL or CR or LF
+{
+	lit('\0') | lit('\r') | lit('\n')
+	,"nulcrlf"
+}
+,spnulcrlf // Match on space or nulcrlf
+{
+	space | nulcrlf
+	,"spnulcrlf"
+}
+,terminator // The message terminator
+{
+	lit('\r') >> lit('\n')
+	,"terminator"
+}
+,hostname // A valid hostname
+{
+	+char_(gather(character::HOST)) // TODO: https://tools.ietf.org/html/rfc952
+	,"hostname"
+}
+,user // A valid username
+{
+	+char_(gather(character::USER))
+	,"user"
+}
+,server // A valid servername
+{
+	hostname
+	,"server"
+}
+,nick // A valid nickname, leading letter followed by any NICK chars
+{
+	char_(gather(character::ALPHA)) >> *char_(gather(character::NICK))
+	,"nick"
+}
+,prefix // A valid prefix, required name, optional user and host (or empty placeholders)
+{
+	colon >> (nick | server) >> -(lit('!') >> user) >> -(lit('@') >> hostname)
+	,"prefix"
+}
+,trailing // Trailing string pinch
+{
+	colon >> +(char_ - nulcrlf)
+	,"trailing"
+}
+,middle // Spaced parameters
+{
+	!colon >> +(char_ - spnulcrlf)
+	,"middle"
+}
+,params // Parameter vector
+{
+	*(+space >> middle) >> -(+space >> trailing)
+	,"params"
+}
+,command // A command, or \d\d\d numeric
+{
+	+char_(gather(character::ALPHA)) | repeat(3)[char_(gather(character::DIGIT))]
+	,"command"
+}
+,frame // A message frame
+{
+	eps > (-(prefix >> +space) >> command >> params >> terminator)
+	,"frame"
+}
+{
+}
 
 std::string
 rfc1459::character::gather(const attr &attr)
