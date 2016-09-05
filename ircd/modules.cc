@@ -80,6 +80,9 @@ std::map<std::type_index, struct type_handlers> type_handlers
 std::map<std::string, std::unique_ptr<mod>> mods;
 
 filesystem::path prefix_if_relative(const filesystem::path &path);
+filesystem::path postfixed(const filesystem::path &path);
+std::string postfixed(const std::string &name);
+
 std::vector<std::string> sections(const filesystem::path &path);
 std::vector<std::string> symbols(const filesystem::path &path);
 std::vector<std::string> symbols(const filesystem::path &path, const std::string &section);
@@ -131,9 +134,10 @@ try
 		return false;
 	}
 
-	auto it(mods.lower_bound(name));
-	if(it != end(mods) && mods::name(*it->second) == name)
-		throw error("Module '%s' is already loaded", name.c_str());
+	const auto filename(postfixed(name));
+	auto it(mods.lower_bound(filename));
+	if(it != end(mods) && mods::name(*it->second) == filename)
+		throw error("Module '%s' is already loaded", filename.c_str());
 
 	static const load_mode::type flags
 	{
@@ -170,7 +174,8 @@ catch(const std::exception &e)
 bool
 ircd::mods::unload(const std::string name)
 {
-	const auto it(mods.find(name));
+	const auto filename(postfixed(name));
+	const auto it(mods.find(filename));
 	if(it == end(mods))
 		return false;
 
@@ -183,7 +188,7 @@ ircd::mods::unload(const std::string name)
 	}
 
 	mods.erase(it);
-	log.info("Module '%s' unloaded", name.c_str());
+	log.info("Module '%s' unloaded", filename.c_str());
 	return true;
 }
 
@@ -254,7 +259,7 @@ ircd::mods::mod &
 ircd::mods::get(const std::string &name)
 try
 {
-	return *mods.at(name);
+	return *mods.at(postfixed(name));
 }
 catch(const std::out_of_range &e)
 {
@@ -264,7 +269,7 @@ catch(const std::out_of_range &e)
 bool
 ircd::mods::loaded(const std::string &name)
 {
-	return mods.count(name);
+	return mods.count(postfixed(name));
 }
 
 const decltype(ircd::mods::mods) &
@@ -321,7 +326,7 @@ ircd::mods::search(const std::string &name,
 {
 	using filesystem::path;
 
-	const path path(name);
+	const path path(postfixed(name));
 	if(!path.is_relative())
 	{
 		why.resize(why.size() + 1);
@@ -577,6 +582,24 @@ ircd::mods::paths()
 	});
 
 	return ret;
+}
+
+std::string
+ircd::mods::postfixed(const std::string &name)
+{
+	return postfixed(filesystem::path(name)).string();
+}
+
+filesystem::path
+ircd::mods::postfixed(const filesystem::path &path)
+{
+	static const auto suffix(boost::dll::shared_library::suffix());
+
+	if(extension(path) == suffix)
+		return path;
+
+	filesystem::path ret(path);
+	return ret += suffix;
 }
 
 filesystem::path
