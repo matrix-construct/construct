@@ -27,22 +27,36 @@ namespace ircd    {
 namespace conf    {
 namespace newconf {
 
+IRCD_EXCEPTION(ircd::error, error)
+IRCD_EXCEPTION(error, unknown_block)
+
 using key = std::string;                             // before the equals sign in an item
 using val = std::vector<std::string>;                // Either one or more elems after '='
 using item = std::pair<key, val>;                    // Pairing of key/vals
 using block = std::pair<key, std::vector<item>>;     // key is optional "label" { items };
-using topconf = std::multimap<key, block>;           // key is type of block i.e admin { ... };
+using topconf = std::list<std::pair<key, block>>;    // key is type of block i.e admin { ... };
 
 /* Notes:
  * Some topconf entries are not blocks, but just key/values like "loadmodule." For this, the
  * topconf multimap contains keys of "loadmodule," and a block entry containing an empty key,
  * a vector of one item, with the item key also being "loadmodule" and the value being the
  * module to load.
+ *
+ * topconf is not an real multimap, but a vector preserving the important order of the config.
  */
 
+// Parse newconf syntax into tree
 topconf parse(const std::string &str);
 topconf parse(std::ifstream &file);
 topconf parse_file(const std::string &path);
+
+// Translates newconf block names into characters
+using letters = std::array<std::string, 256>;
+extern letters registry;
+
+uint8_t find_letter(const std::string &name);
+void translate(const topconf &, const std::function<void (std::string)> &closure);
+std::list<std::string> translate(const topconf &);
 
 }      // namespace newconf
 }      // namespace conf

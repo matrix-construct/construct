@@ -28,29 +28,128 @@ namespace ircd {
 namespace conf {
 
 IRCD_EXCEPTION(ircd::error, error)
+IRCD_EXCEPTION(error, already_exists)
+IRCD_EXCEPTION(error, bad_topconf)
+IRCD_EXCEPTION(error, not_found)
+IRCD_EXCEPTION(error, bad_cast)
 
-extern struct log::log log;
+struct item
+{
+	uint8_t *ptr;
+	std::type_index type;
+
+	template<class T> item(T *ptr);
+};
+
+struct top
+:cmd
+{
+	using items = std::initializer_list<std::pair<std::string, item>>;
+
+	char letter;
+	std::string name;
+	std::unordered_map<std::string, item> map;
+
+	// Override to provide custom type handling
+	virtual void assign(item &item, std::string val) const;
+
+	// Override to provide operations on singleton blocks
+	virtual const uint8_t *get(client::client &, const std::string &key) const;
+	virtual void set(client::client &, std::string key, std::string val);
+	virtual void del(client::client &, const std::string &key);
+	virtual void enu(client::client &, const std::string &key);
+
+	// Override to provide operations on named blocks
+	virtual const uint8_t *get(client::client &, const std::string &label, const std::string &key) const;
+	virtual void set(client::client &, std::string label, std::string key, std::string val);
+	virtual void del(client::client &, const std::string &label, const std::string &key);
+	virtual void enu(client::client &, const std::string &label, const std::string &key);
+
+	// Override to handle the raw line
+	virtual void operator()(client::client &, line) override;
+
+	top(const char &letter, const std::string &name, const items & = {});
+	~top() noexcept;
+};
 
 namespace newconf
 {
-	IRCD_EXCEPTION(conf::error, error)
-	IRCD_EXCEPTION(error, unknown_block)
-
-	using letters = std::array<std::string, 256>;
-
 	extern topconf current;    // The latest newconf parse map after startup or rehash
 	extern topconf last;       // The current is moved to last for differentiation
-	extern letters registry;   // Translates newconf block names into characters
-
-	uint8_t find_letter(const std::string &name);
-	std::forward_list<std::string> translate(const topconf &);
 }
 
+extern struct log::log log;
+extern std::array<top *, 256> confs;
+
+// Dynamic casting closure
+using type_handler = std::function<void (uint8_t *const &ptr, std::string text)>;
+extern std::map<std::type_index, type_handler> type_handlers;
+
+template<class T> std::type_index make_index();
+template<class T = std::string> const T &get(client::client &, const char &, const std::string &label, const std::string &key);
+template<class T = std::string> const T &get(client::client &, const char &, const std::string &key);
+
 void init(const std::string &path);
+
+
+template<class T>
+const T &
+get(client::client &client,
+    const char &letter,
+    const std::string &key)
+{
+	const uint8_t &idx(letter);
+	const auto &conf(confs[idx]);
+	if(unlikely(!conf))
+		throw not_found("conf[%c] is not registered", letter);
+
+	return *reinterpret_cast<const T *>(conf->get(client, key));
+}
+
+template<class T>
+const T &
+get(client::client &client,
+    const char &letter,
+    const std::string &label,
+    const std::string &key)
+{
+	const uint8_t &idx(letter);
+	const auto &conf(confs[idx]);
+	if(unlikely(!conf))
+		throw not_found("conf[%c] is not registered", letter);
+
+	return *reinterpret_cast<const T *>(conf->get(client, label, key));
+}
+
+template<class T>
+std::type_index
+make_index()
+{
+	return typeid(typename std::add_pointer<T>::type);
+}
+
+template<class T>
+item::item(T *ptr):
+ptr{reinterpret_cast<uint8_t *>(ptr)},
+type{typeid(ptr)}
+{
+}
 
 }      // namespace conf
 }      // namespace ircd
 #endif // __cplusplus
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -280,27 +379,6 @@ struct config_server_hide
 	int links_delay;
 	int hidden;
 	int disable_hidden;
-};
-
-struct server_info
-{
-	char *name;
-	char sid[4];
-	char *description;
-	char *network_name;
-	int hub;
-	struct rb_sockaddr_storage bind4;
-	int default_max_clients;
-#ifdef RB_IPV6
-	struct rb_sockaddr_storage bind6;
-#endif
-	char *ssl_private_key;
-	char *ssl_ca_cert;
-	char *ssl_cert;
-	char *ssl_dh_params;
-	char *ssl_cipher_list;
-	int ssld_count;
-	int wsockd_count;
 };
 
 struct admin_info

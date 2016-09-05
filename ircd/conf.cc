@@ -20,44 +20,60 @@
  *
  */
 
+#include <boost/lexical_cast.hpp>
+
 namespace ircd {
 namespace conf {
+
+	newconf::topconf newconf::current;
+	newconf::topconf newconf::last;
 
 	struct log::log log
 	{
 		"conf", 'w'  // both C's unavailable :/
 	};
 
-	newconf::topconf newconf::current;
-	newconf::topconf newconf::last;
-	newconf::letters newconf::registry;
+	std::array<top *, 256> confs;
+	std::map<std::type_index, type_handler> type_handlers
+	{
+		{
+			make_index<std::string>(), [](uint8_t *const &ptr, std::string text)
+			{
+				*reinterpret_cast<std::string *>(ptr) = std::move(text);
+			}
+		}
+	};
 
+	void reg(top *const &top);
+	void unreg(top *const &top);
+	bool execute(const std::string &line);
 	void parse_newconf(const std::string &path);
+	void bootstrap();
 
 } // namespace conf
 } // namespace ircd
 
 using namespace ircd;
 
-void conf::init(const std::string &path)
+void
+conf::init(const std::string &path)
 {
-	newconf::registry['A'] = "admin";
-	newconf::registry['B'] = "blacklist";
-	newconf::registry['C'] = "connect";
-	newconf::registry['I'] = "auth";
-	newconf::registry['M'] = "serverinfo";
-	newconf::registry['O'] = "operator";
-	newconf::registry['P'] = "listen";
-	newconf::registry['U'] = "service";
-	newconf::registry['Y'] = "class";
-	newconf::registry['a'] = "alias";
-	newconf::registry['d'] = "exempt";
-	newconf::registry['g'] = "general";
-	newconf::registry['l'] = "log";
-	newconf::registry['m'] = "loadmodule";
-
+	bootstrap();
 	parse_newconf(path);
-	const auto oldconf(newconf::translate(newconf::current));
+
+	// Translate to oldconf and linefeed
+	newconf::translate(newconf::current, []
+	(const std::string &line)
+	{
+		execute(line);
+	});
+}
+
+void
+conf::bootstrap()
+{
+	log.debug("Bootstrapping L-Line module to load more modules...");
+	mods::load("conf_loadmodule");
 }
 
 void
@@ -67,54 +83,202 @@ conf::parse_newconf(const std::string &path)
 	newconf::current = newconf::parse_file(path);
 }
 
-std::forward_list<std::string>
-conf::newconf::translate(const newconf::topconf &top)
+bool
+conf::execute(const std::string &line)
+try
 {
-	std::forward_list<std::string> ret;
-	for(const auto &pair : top) try
-	{
-		const auto &type(pair.first);
-		const auto &block(pair.second);
-		const auto &label(block.first);
-		const auto &items(block.second);
-		const auto &letter(find_letter(type));
-		for(const auto &item : items)
-		{
-			const auto &key(item.first);
-			const auto &vals(item.second);
-			std::stringstream buf;
-			buf << letter << " "
-			    << label << " "
-			    << key << " :";
-
-			for(auto i(0); i < int(vals.size()) - 1; ++i)
-				buf << vals.at(i) << " ";
-
-			if(!vals.empty())
-				buf << vals.back();
-
-			ret.emplace_front(buf.str());
-		}
-	}
-	catch(const error &e)
-	{
-		log.warning("%s", e.what());
-	}
-
-	return ret;
+	log.debug("%s", line.c_str());
+	ircd::execute(me, line + "\r\n");
+	return true;
+}
+catch(const std::exception &e)
+{
+	log.error("%s", e.what());
+	//return false;
+	throw;
 }
 
-uint8_t
-conf::newconf::find_letter(const std::string &name)
+conf::top::top(const char &letter,
+               const std::string &name,
+               const items &list)
+:cmd{std::string{letter}}
+,letter{letter}
+,name{name}
+,map{begin(list), end(list)}
 {
-	const auto &registry(newconf::registry);
-	const auto it(std::find(begin(registry), end(registry), name));
-	if(it == end(registry))
-		throw unknown_block("%s is not registered to a letter", name.c_str());
-
-	return std::distance(begin(registry), it);
+	reg(this);
 }
 
+conf::top::~top()
+noexcept
+{
+	unreg(this);
+}
+
+void
+conf::top::operator()(client::client &client,
+                      line line)
+try
+{
+	if(line[0] == "*")
+		set(client, std::move(line[1]), std::move(line[2]));
+	else
+		set(client, std::move(line[0]), std::move(line[1]), std::move(line[2]));
+}
+catch(const std::out_of_range &e)
+{
+	//throw err::NEEDMOREPARAMS(me.id, id(me, client), command(line).c_str());
+	throw error("NEEDMOREPARAMS");
+}
+catch(const boost::bad_lexical_cast &e)
+{
+	throw bad_cast("conf[%c]: %s", letter, e.what());
+}
+
+__attribute__((noreturn))
+void
+conf::top::enu(client::client &client,
+               const std::string &label,
+               const std::string &key)
+{
+	throw bad_topconf("conf[%c] is a singleton and the label must be '*'", letter);
+}
+
+__attribute__((noreturn))
+void
+conf::top::del(client::client &client,
+               const std::string &label,
+               const std::string &key)
+{
+	throw bad_topconf("conf[%c] is a singleton and the label must be '*'", letter);
+}
+
+void
+conf::top::set(client::client &client,
+               std::string label,
+               std::string key,
+               std::string val)
+{
+	throw bad_topconf("conf[%c] is a singleton and the label must be '*'", letter);
+}
+
+__attribute__((noreturn))
+const uint8_t *
+conf::top::get(client::client &client,
+               const std::string &label,
+               const std::string &key)
+const
+{
+	throw bad_topconf("conf[%c] is a singleton and the label must be '*'", letter);
+}
+
+void
+conf::top::enu(client::client &client,
+               const std::string &key)
+{
+
+}
+
+void
+conf::top::del(client::client &client,
+               const std::string &key)
+{
+	if(!map.erase(key))
+		log.warning("conf[%c] tried to erase non-existent key \"%s\"",
+		            letter,
+		            key.c_str());
+}
+
+void
+conf::top::set(client::client &client,
+               std::string key,
+               std::string val)
+try
+{
+	auto &item(map.at(key));
+	assign(item, std::move(val));
+}
+catch(const std::out_of_range &e)
+{
+	throw not_found("key \"%s\"", key.c_str());
+}
+catch(const boost::bad_lexical_cast &e)
+{
+	throw bad_cast("conf[%c]: failed to set key \"%s\": %s",
+	               letter,
+	               key.c_str(),
+	               e.what());
+}
+
+const uint8_t *
+conf::top::get(client::client &client,
+               const std::string &key)
+const
+try
+{
+	const auto &item(map.at(key));
+	return item.ptr;
+}
+catch(const std::out_of_range &e)
+{
+	throw not_found("key \"%s\"", key.c_str());
+}
+
+void
+conf::top::assign(item &item,
+                  std::string val)
+const
+try
+{
+	const auto &handler(type_handlers.at(item.type));
+	handler(item.ptr, std::move(val));
+}
+catch(const std::out_of_range &e)
+{
+	throw bad_cast("No handler to assign to value type \"%s\" @ %p",
+	               item.type.name(),
+	               item.ptr);
+}
+
+void
+conf::unreg(top *const &top)
+{
+	const auto &name(top->name);
+	const auto &letter(top->letter);
+	const uint8_t &idx(letter);
+
+	confs[idx] = nullptr;
+	newconf::registry[idx].clear();
+
+	log.info("Unregistered configuration letter '%c' (%s)",
+	         letter,
+	         name.c_str());
+}
+
+void
+conf::reg(top *const &top)
+{
+	const auto &name(top->name);
+	const auto &letter(top->letter);
+	const uint8_t &idx(letter);
+	if(!newconf::registry[idx].empty())
+		throw already_exists("Configuration letter '%c' already registered for \"%s\"",
+		                     letter,
+		                     newconf::registry[idx].c_str());
+
+	const auto it(std::find(begin(newconf::registry), end(newconf::registry), name));
+	if(it != end(newconf::registry))
+		throw already_exists("Configuration letter '%c' already registered topconf \"%s\"",
+		                     char(std::distance(begin(newconf::registry), it)),
+		                     it->c_str());
+
+	newconf::registry[idx] = name;
+	confs[idx] = top;
+
+	log.info("Registered configuration letter '%c' to conf type '%s'",
+	         letter,
+	         name.c_str());
+}
 
 /*
 #define CF_TYPE(x) ((x) & CF_MTYPE)

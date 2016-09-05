@@ -1,5 +1,3 @@
-moduledir=@moduledir@
-
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	@BOOST_CPPFLAGS@ \
@@ -26,6 +24,20 @@ AM_LDFLAGS += \
 	-lrb \
 	@BOOST_LIBS@
 
+
+# This puts the source in conf/ but the installed
+# library is conf_X.so in the main modules dir.
+conf_moduledir=@moduledir@
+conf_conf_loadmodule_la_SOURCES  = conf/loadmodule.cc
+conf_conf_serverinfo_la_SOURCES  = conf/serverinfo.cc
+conf_conf_listen_la_SOURCES      = conf/listen.cc
+conf_module_LTLIBRARIES =     \
+	conf/conf_loadmodule.la   \
+	conf/conf_serverinfo.la   \
+	conf/conf_listen.la
+
+
+moduledir=@moduledir@
 #m_ban_la_SOURCES = m_ban.cc
 #m_die_la_SOURCES = m_die.cc
 #m_error_la_SOURCES = m_error.cc

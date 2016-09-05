@@ -21,8 +21,40 @@
 
 #include <boost/spirit/include/qi.hpp>
 
+namespace ircd    {
+namespace conf    {
+namespace newconf {
+
+	letters registry;
+
+} // namespace newconf
+} // namespace conf
+} // namespace ircd
+
+using namespace ircd;
+
+/*
+	registry['A'] = "admin";
+	registry['B'] = "blacklist";
+	registry['C'] = "connect";
+	registry['I'] = "auth";
+	registry['O'] = "operator";
+	registry['P'] = "listen";
+	registry['U'] = "service";
+	registry['Y'] = "class";
+	registry['a'] = "alias";
+	registry['d'] = "exempt";
+	registry['g'] = "general";
+	registry['l'] = "log";
+*/
+
 namespace qi = boost::spirit::qi;
-using namespace qi;
+namespace ascii = qi::ascii;
+using qi::lexeme;
+using qi::char_;
+using qi::lit;
+using qi::eol;
+using qi::blank;
 
 using str = std::string;
 using strvec = std::vector<str>;
@@ -31,7 +63,7 @@ using strvecvecvec = std::vector<strvecvec>;
 
 template<class iter>
 struct ignores
-:grammar<iter>
+:qi::grammar<iter>
 {
 	using rule = qi::rule<iter>;
 
@@ -46,7 +78,7 @@ struct ignores
 template<class iter,
          class ignores>
 struct newconf_parser
-:grammar<iter, strvecvecvec(), ignores>
+:qi::grammar<iter, strvecvecvec(), ignores>
 {
 	template<class ret> using rule = qi::rule<iter, ret, ignores>;
 
@@ -185,8 +217,66 @@ ircd::conf::newconf::parse(const std::string &str)
 				b.second.emplace_back(i);
 		}
 
-		top.emplace(k, b);
+		top.emplace_back(k, b);
 	}
 
 	return top;
+}
+
+std::list<std::string>
+conf::newconf::translate(const topconf &top)
+{
+	std::list<std::string> ret;
+	translate(top, [&ret](std::string line)
+	{
+		ret.emplace_back(std::move(line));
+	});
+
+	return ret;
+}
+
+void
+conf::newconf::translate(const topconf &top,
+                         const std::function<void (std::string)> &closure)
+{
+	for(const auto &pair : top) try
+	{
+		const auto &type(pair.first);
+		const auto &block(pair.second);
+		const auto &label(block.first);
+		const auto &items(block.second);
+		const auto &letter(find_letter(type));
+		for(const auto &item : items)
+		{
+			const auto &key(item.first);
+			const auto &vals(item.second);
+			std::stringstream buf;
+			buf << letter << " "
+			    << label << " "
+			    << key << " :";
+
+			for(auto i(0); i < int(vals.size()) - 1; ++i)
+				buf << vals.at(i) << " ";
+
+			if(!vals.empty())
+				buf << vals.back();
+
+			closure(buf.str());
+		}
+	}
+	catch(const error &e)
+	{
+		log.warning("%s", e.what());
+	}
+}
+
+uint8_t
+conf::newconf::find_letter(const std::string &name)
+{
+	const auto &registry(newconf::registry);
+	const auto it(std::find(begin(registry), end(registry), name));
+	if(it == end(registry))
+		throw unknown_block("%s is not registered to a letter", name.c_str());
+
+	return std::distance(begin(registry), it);
 }
