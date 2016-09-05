@@ -248,6 +248,11 @@ string(const T &s)
 	return static_cast<stringstream &>(stringstream{} << s).str();
 }
 
+inline auto
+operator!(const std::string &str)
+{
+	return str.empty();
+}
 
 }        // namespace util
 }        // namespace ircd
