@@ -145,10 +145,10 @@ struct client
 	time_t large_ctcp_sent; /* ctcp to large group sent, relax flood checks */
 	char *certfp; /* client certificate fingerprint */
 
-	client();
+	client() {}
 	client(const client &) = delete;
 	client &operator=(const client &) = delete;
-	~client() noexcept;
+	~client() noexcept {}
 };
 
 struct ZipStats
@@ -517,42 +517,42 @@ inline void
 set_reject(client &client)
 {
 	client.status = status::REJECT;
-	client.handler = UNREGISTERED_HANDLER;
+	//client.handler = UNREGISTERED_HANDLER;
 }
 
 inline void
 set_connecting(client &client)
 {
 	client.status = status::CONNECTING;
-	client.handler = UNREGISTERED_HANDLER;
+	//client.handler = UNREGISTERED_HANDLER;
 }
 
 inline void
 set_handshake(client &client)
 {
 	client.status = status::HANDSHAKE;
-	client.handler = UNREGISTERED_HANDLER;
+	//client.handler = UNREGISTERED_HANDLER;
 }
 
 inline void
 set_me(client &client)
 {
 	client.status = status::ME;
-	client.handler = UNREGISTERED_HANDLER;
+	//client.handler = UNREGISTERED_HANDLER;
 }
 
 inline void
 set_unknown(client &client)
 {
 	client.status = status::UNKNOWN;
-	client.handler = UNREGISTERED_HANDLER;
+	//client.handler = UNREGISTERED_HANDLER;
 }
 
 inline void
 set_server(client &client)
 {
 	client.status = status::SERVER;
-	client.handler = SERVER_HANDLER;
+	//client.handler = SERVER_HANDLER;
 }
 
 bool is_oper(const client &);
@@ -561,14 +561,14 @@ inline void
 set_client(client &client)
 {
 	client.status = status::CLIENT;
-	client.handler = is_oper(client)? OPER_HANDLER : CLIENT_HANDLER;
+	//client.handler = is_oper(client)? OPER_HANDLER : CLIENT_HANDLER;
 }
 
 inline void
 set_remote_client(client &client)
 {
 	client.status = status::CLIENT;
-	client.handler = RCLIENT_HANDLER;
+	//client.handler = RCLIENT_HANDLER;
 }
 
 inline bool
@@ -690,8 +690,8 @@ inline void
 set_oper(client &client)
 {
 	set(client, mode::OPER);
-	if (my(client))
-		client.handler = OPER_HANDLER;
+//	if (my(client))
+//		client.handler = OPER_HANDLER;
 }
 
 inline void
@@ -699,8 +699,8 @@ clear_oper(client &client)
 {
 	clear(client, mode::OPER);
 	clear(client, mode::ADMIN);
-	if (my(client) && !is_server(client))
-		client.handler = CLIENT_HANDLER;
+//	if (my(client) && !is_server(client))
+//		client.handler = CLIENT_HANDLER;
 }
 
 inline void

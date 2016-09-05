@@ -188,6 +188,7 @@ const char *const interruption_message
 
 void
 handle_interruption()
+try
 {
 	static bool seen_the_message;
 	if(!seen_the_message)
@@ -206,12 +207,16 @@ handle_interruption()
 		return;
 	}
 
-	if(line.empty())
-		return;
-
 	if(line == "ABORT")
 		abort();
 
 	if(line == "EXIT")
 		exit(0);
+
+	line += "\r\n";
+	ircd::execute(ircd::me, line);
+}
+catch(const std::exception &e)
+{
+	std::cerr << "\033[1;31merror\033[0m: " << e.what() << std::endl;
 }

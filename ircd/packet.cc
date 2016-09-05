@@ -342,7 +342,7 @@ client_dopacket(client::client *client_p, char *buffer, size_t length)
 		me.localClient->receiveB &= 0x03ff;
 	}
 
-	parse(client_p, buffer, buffer + length);
+	//parse(client_p, buffer, buffer + length);
 }
 
 

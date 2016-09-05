@@ -42,6 +42,7 @@ static void do_modreload(client::client &, const std::string &);
 static void do_modlist(client::client &, const std::string &);
 static void do_modrestart(client::client &);
 
+/*
 struct Message modload_msgtab = {
 	"MODLOAD", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, {me_modload, 2}, {mo_modload, 2}}
@@ -66,17 +67,17 @@ struct Message modrestart_msgtab = {
 	"MODRESTART", 0, 0, 0, 0,
 	{mg_unreg, mg_not_oper, mg_ignore, mg_ignore, {me_modrestart, 0}, {mo_modrestart, 0}}
 };
-
+*/
 
 mapi::header IRCD_MODULE
 {
 	"Provides module management commands",
-	mapi::NO_FLAGS,
-	&modload_msgtab,
-	&modunload_msgtab,
-	&modreload_msgtab,
-	&modlist_msgtab,
-	&modrestart_msgtab,
+	mapi::NO_FLAGS
+	//&modload_msgtab,
+	//&modunload_msgtab,
+	//&modreload_msgtab,
+	//&modlist_msgtab,
+	//&modrestart_msgtab,
 };
 
 // load a module ..

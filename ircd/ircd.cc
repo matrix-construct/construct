@@ -36,8 +36,8 @@ struct ServerStatistics ServerStats;
 struct ev_entry *check_splitmode_ev;
 
 int maxconnections;
-//client::client me;		/* That's me */
-struct LocalUser meLocalUser;	/* That's also part of me */
+client::client me;                // That's me
+struct LocalUser meLocalUser;     // That's also part of me
 
 rb_dlink_list global_client_list;
 

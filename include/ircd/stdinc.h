@@ -82,7 +82,7 @@ namespace ircd
 #include "whowas.h"
 #include "tgchange.h"
 #include "msgbuf.h"
-#include "msg.h"
+#include "cmd.h"
 #include "client.h"
 
 #include "mask.h"
@@ -108,7 +108,6 @@ namespace ircd
 #include "monitor.h"
 #include "operhash.h"
 #include "packet.h"
-#include "parse.h"
 #include "privilege.h"
 #include "ratelimit.h"
 #include "reject.h"

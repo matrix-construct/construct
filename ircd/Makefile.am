@@ -40,7 +40,8 @@ libircd_la_SOURCES =   \
 	newconf.cc         \
 	modules.cc         \
 	snomask.cc         \
-	info.cc
+	info.cc            \
+	cmd.cc
 
 #authproc.cc			\
 #bandbi.cc                      \

@@ -31,20 +31,40 @@
 #include "stdinc.h"
 #endif
 
-#ifdef __cplusplus
-
+// TODO: move
 // Allow a reference to an ios to be passed to ircd
+#ifdef __cplusplus
 namespace boost {
 namespace asio  {
 
 	struct io_service;
-}
-}
 
+} // namespace asio
+} // namespace boost
+#endif // __cplusplus
+
+
+
+#ifdef __cplusplus
 namespace ircd {
 
 extern bool debugmode;
 extern boost::asio::io_service *ios;
+extern client::client me;
+
+
+void init(boost::asio::io_service &ios, const std::string &newconf_path);
+
+}      // namespace ircd
+#endif // __cplusplus
+
+
+
+
+
+#ifdef __cplusplus
+namespace ircd {
+
 
 struct SetOptions
 {
@@ -81,7 +101,6 @@ extern bool server_state_foreground;
 extern bool opers_see_all_users; /* sno_farconnect.so loaded, operspy without
 				    accountability, etc */
 
-extern client::client me;
 extern rb_dlink_list global_client_list;
 extern client::client *local[];
 extern struct Counter Count;
@@ -112,8 +131,6 @@ extern int maxconnections;
 void restart(const char *) __attribute__((noreturn));
 void ircd_shutdown() __attribute__((noreturn));
 void server_reboot(void) __attribute__((noreturn));
-
-void init(boost::asio::io_service &ios, const std::string &newconf_path);
 
 }      // namespace ircd
 #endif // __cplusplus
