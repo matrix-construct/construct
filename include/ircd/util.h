@@ -254,6 +254,22 @@ operator!(const std::string &str)
 	return str.empty();
 }
 
+
+constexpr size_t
+hash(const char *const &str,
+     const size_t i = 0)
+{
+	return !str[i]? 7681ULL : (hash(str, i+1) * 33ULL) ^ str[i];
+}
+
+inline size_t
+hash(const std::string &str,
+     const size_t i = 0)
+{
+	return i >= str.size()? 7681ULL : (hash(str, i+1) * 33ULL) ^ str.at(i);
+}
+
+
 }        // namespace util
 }        // namespace ircd
 #endif   // __cplusplus
