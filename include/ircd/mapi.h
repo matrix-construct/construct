@@ -72,7 +72,18 @@ struct header
 	header(const char *const &desc,
 	       const enum flags &flags,
 	       Exports&&... exports);
+
+	header(const char *const &desc = "<no description>");
 };
+
+inline
+header::header(const char *const &desc)
+:header
+{
+	desc, NO_FLAGS
+}
+{
+}
 
 template<class... Exports>
 header::header(const char *const &desc,
