@@ -147,11 +147,25 @@ run git submodule update --init --recursive libs/function
 run git submodule update --init --recursive libs/function_types
 run git submodule update --init --recursive libs/iostreams
 
-run ./bootstrap.sh --prefix=$PWD --libdir=$PWD/lib --with-libraries=$BLIBS $BSFLAGS
-run ./b2 threading=$BTHREADING variant=$BVARIANT link=$BLINK address-model=64
+run git submodule update --init --recursive libs/coroutine
+#run git submodule update --init --recursive libs/coroutine2
+## ASIO does not need coroutine2 at this time, but there is
+## some issue with segmented stack support requiring inclusion
+## of libs/context...
+run git submodule update --init --recursive libs/context
+run git submodule update --init --recursive libs/thread
+run git submodule update --init --recursive libs/chrono
+run git submodule update --init --recursive libs/atomic
+run git submodule update --init --recursive libs/ratio
+run git submodule update --init --recursive libs/intrusive
+run git submodule update --init --recursive libs/tuple
+run git submodule update --init --recursive libs/exception
+run git submodule update --init --recursive libs/algorithm
 
 ### Install should go right into this local submodule repository
-run ./b2 install
+run ./bootstrap.sh --prefix=$PWD --libdir=$PWD/lib --with-libraries=$BLIBS $BSFLAGS
+run ./b2 headers
+run ./b2 install threading=$BTHREADING variant=$BVARIANT link=$BLINK address-model=64 warnings=all
 
 ### TODO: this shouldn't be necessary.
 ### XXX: required when boost submodules are fetched and built la carte, but not required

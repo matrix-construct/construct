@@ -774,7 +774,7 @@ dnl boost support
 dnl
 
 BOOST_VERSION_MIN="1.56"
-BOOST_BUILT_LIBS="system,filesystem"
+BOOST_BUILT_LIBS="system,filesystem,context,coroutine"
 
 AC_MSG_CHECKING([whether you asked to use boost sources included here])
 AC_ARG_WITH(included-boost,
@@ -801,7 +801,7 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 	fi
 
 	boost_linkage="$withval"
-	bash tools/boostrap.sh $BTOOLSET $BOOST_BUILT_LIBS release shared single
+	bash tools/boostrap.sh $BTOOLSET $BOOST_BUILT_LIBS release shared multi
 	if [[ $? != 0 ]]; then
 		AC_MSG_ERROR([Failed to build included boost.])
 	fi
@@ -837,16 +837,16 @@ AC_HELP_STRING([--with-included-boost[[[=shared]]]], [Use the boost sources from
 if [[ "$boost_linkage" = "shared" ]]; then
 	AM_COND_IF([MINGW],
 	[
-		AC_SUBST(BOOST_LIBS, ["-lboost_filesystem-mgw53-1_61.dll -lboost_system-mgw53-1_61.dll"])
+		AC_SUBST(BOOST_LIBS, ["-lboost_coroutine-mgw53-1_61.dll -lboost_context-mgw53-1_61.dll -lboost_thread-mgw53-1_61.dll -lboost_filesystem-mgw53-1_61.dll -lboost_system-mgw53-1_61.dll"])
 	], [
-		AC_SUBST(BOOST_LIBS, ["-lboost_filesystem -lboost_system -lpthread"])
+		AC_SUBST(BOOST_LIBS, ["-lboost_coroutine -lboost_context -lboost_thread -lboost_filesystem -lboost_system -lpthread"])
 	])
 else
 	AM_COND_IF([MINGW],
 	[
-		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_filesystem-mgw53-1_61.dll.a $boost_libdir/libboost_system-mgw53-1_61.dll.a"])
+		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_coroutine-mgw53-1_61.dll.a $boost_libdir/libboost_context-mgw53-1_61.dll.a $boost_libdir/libboost_thread-mgw53-1_61.dll.a $boost_libdir/libboost_filesystem-mgw53-1_61.dll.a $boost_libdir/libboost_system-mgw53-1_61.dll.a"])
 	], [
-		AC_SUBST(BOOST_LIBS, ["-lboost_filesystem -lboost_system -lpthread"])
+		AC_SUBST(BOOST_LIBS, ["-lboost_coroutine -lboost_context -lboost_thread -lboost_filesystem -lboost_system -lpthread"])
 dnl		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_filesystem.a"])
 dnl		AC_SUBST(BOOST_LIBS, ["$boost_libdir/libboost_system.a"])
 	])

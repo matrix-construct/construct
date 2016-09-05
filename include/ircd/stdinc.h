@@ -33,6 +33,7 @@ namespace ircd
 	using std::end;
 	using std::get;
 	using ostream = std::ostream;
+	namespace ph = std::placeholders;
 	using namespace std::string_literals;
 }
 
@@ -77,6 +78,7 @@ namespace ircd
 #include "mode_table.h"
 #include "mode_lease.h"
 #include "snomask.h"
+#include "ctx.h"
 
 #include "cache.h"
 #include "whowas.h"
