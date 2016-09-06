@@ -24,6 +24,202 @@
  */
 
 #include <boost/asio.hpp>
+#include <ircd/ctx_ctx.h>
+
+namespace ircd
+{
+	bool debugmode;                               // set by command line
+	boost::asio::io_service *ios;                 // user's io service
+	ctx::ctx *mc;                                 // IRCd's main context
+
+	void seed_random();
+	void init_system();
+	void handle_sigusr2();
+	void handle_sigusr1();
+	void handle_sigterm();
+	void handle_sigquit();
+	void main(const std::string confpath);
+}
+
+/*
+ * Sets up the IRCd, handlers (main context), and then returns without blocking.
+ * Pass your io_service instance, it will share it with the rest of your program.
+ * An exception will be thrown on error.
+ */
+void
+ircd::init(boost::asio::io_service &io_service,
+           const std::string &configfile)
+{
+	ircd::ios = &io_service;
+	init_system();
+
+	// The log is available, but it is console-only until conf opens files.
+	log::init();
+	log::mark("log started");
+
+	// The master of ceremonies runs the show after this function returns and ios.run()
+	// It cannot spawn when no ios is running so it is deferred just in case.
+	context mc(8_MiB, std::bind(&main, configfile), ctx::DEFER_POST);
+
+	// The context will not be joined and block this function when no parent context
+	// is currently running, but it should still be detached here. It can then delete
+	// itself from within main().
+	ircd::mc = mc.detach();
+
+	log::debug("IRCd initialization completed.");
+}
+
+void
+ircd::main(const std::string configfile)
+try
+{
+	// Ownership is taken of the main context to delete it at function end
+	const custom_ptr<ctx::ctx> mc(ircd::mc, ctx::free);
+	log::debug("IRCd entered main context.");
+
+	log::debug("setting up configuration");
+	conf::init(configfile);
+
+	log::debug("setting up signals");
+	boost::asio::signal_set sigfd(*ios);
+	sigfd.add(SIGTERM);
+	sigfd.add(SIGQUIT);
+	sigfd.add(SIGUSR1);
+	sigfd.add(SIGUSR2);
+
+	log::notice("IRCd ready");
+	do switch(sigfd.async_wait(yield(continuation())))
+	{
+		case SIGTERM:  handle_sigterm();  return;
+		case SIGQUIT:  handle_sigquit();  return;
+		case SIGUSR1:  handle_sigusr1();  continue;
+		case SIGUSR2:  handle_sigusr2();  continue;
+	}
+	while(1);
+}
+catch(const std::exception &e)
+{
+	log::error("main context: %s", e.what());
+	throw;
+}
+
+void
+ircd::handle_sigterm()
+{
+	using namespace ircd;
+
+	log::notice("SIGTERM. Terminating...");
+}
+
+void
+ircd::handle_sigquit()
+{
+	using namespace ircd;
+
+	log::notice("SIGQUIT. Quitting...");
+}
+
+void
+ircd::handle_sigusr1()
+{
+	using namespace ircd;
+
+	log::notice("SIGUSR1. Rehashing configuration...");
+	// dorehash (no longer hangup!)
+}
+
+void
+ircd::handle_sigusr2()
+{
+	using namespace ircd;
+
+	log::notice("SIGUSR2. Flushing caches...");
+	// dorehashbans
+	// doremotd
+}
+
+void
+ircd::init_system()
+{
+
+	/*
+	 * Setup corefile size immediately after boot -kre
+	 */
+	#ifdef HAVE_SYS_RESOURCE_H
+		struct rlimit rlim;	/* resource limits */
+
+		/* Set corefilesize to maximum */
+		if(!getrlimit(RLIMIT_CORE, &rlim))
+		{
+			rlim.rlim_cur = rlim.rlim_max;
+			setrlimit(RLIMIT_CORE, &rlim);
+		}
+	#endif
+
+	#if !defined(_WIN32) && defined(RLIMIT_NOFILE) && defined(HAVE_SYS_RESOURCE_H)
+		struct rlimit limit;
+
+		if(!getrlimit(RLIMIT_NOFILE, &limit))
+			maxconnections = limit.rlim_cur;
+		else
+			maxconnections = MAXCONNECTIONS;
+	#else
+		maxconnections = MAXCONNECTIONS;
+	#endif
+
+	rb_set_time();
+	rb_init_prng(NULL, RB_PRNG_DEFAULT);
+	seed_random();
+}
+
+static bool
+seed_with_urandom()
+{
+	unsigned int seed;
+	int fd;
+
+	fd = open("/dev/urandom", O_RDONLY);
+	if(fd >= 0)
+	{
+		if(read(fd, &seed, sizeof(seed)) == sizeof(seed))
+		{
+			close(fd);
+			srand(seed);
+			return true;
+		}
+		close(fd);
+	}
+	return false;
+}
+
+static void
+seed_with_clock()
+{
+ 	const struct timeval *tv;
+	rb_set_time();
+	tv = rb_current_time_tv();
+	srand(tv->tv_sec ^ (tv->tv_usec | (getpid() << 20)));
+}
+
+void
+ircd::seed_random()
+{
+	unsigned int seed;
+	if(rb_get_random(&seed, sizeof(seed)) == -1)
+	{
+		if(!seed_with_urandom())
+			seed_with_clock();
+		return;
+	}
+	srand(seed);
+}
+
+
+
+
+
+
+
 
 namespace ircd {
 
@@ -69,6 +265,8 @@ int splitchecking;
 int split_users;
 int split_servers;
 int eob_count;
+
+}
 
 /*
 static void
@@ -144,37 +342,6 @@ initialize_global_set_options(void)
 }
 
 
-bool debugmode;
-boost::asio::io_service *ios;
-
-static void sigfd_handler(const boost::system::error_code &, int);
-std::unique_ptr<boost::asio::signal_set> sigfd;
-
-static void seed_random();
-static void init_sigs();
-static void init_sys();
-
-} // namespace ircd
-
-/*
- * This function sets up the IRCd, handlers, and then returns without blocking.
- * Pass your io_service instance, it will share it with the rest of your program.
- * An exception will be thrown on error.
- */
-void
-ircd::init(boost::asio::io_service &io_service,
-           const std::string &configfile)
-{
-	ircd::ios = &io_service;
-
-	init_sys();
-	init_sigs();
-
-	// The log is available, but it is console-only until conf opens files.
-	log::init();
-	log::mark("log started");
-
-	conf::init(configfile);
 
 	// initialise operhash fairly early.
 	//init_operhash();
@@ -273,154 +440,3 @@ ircd::init(boost::asio::io_service &io_service,
 
 	// if(splitmode)
 	//	check_splitmode_ev = rb_event_add("check_splitmode", chan::check_splitmode, NULL, 5);
-
-	log::info("IRCd initialization completed successfully.");
-}
-
-/*
- * init_sys
- *
- * inputs	- boot_daemon flag
- * output	- none
- * side effects	- if boot_daemon flag is not set, don't daemonize
- */
-void
-ircd::init_sys()
-{
-
-	/*
-	 * Setup corefile size immediately after boot -kre
-	 */
-	#ifdef HAVE_SYS_RESOURCE_H
-		struct rlimit rlim;	/* resource limits */
-
-		/* Set corefilesize to maximum */
-		if(!getrlimit(RLIMIT_CORE, &rlim))
-		{
-			rlim.rlim_cur = rlim.rlim_max;
-			setrlimit(RLIMIT_CORE, &rlim);
-		}
-	#endif
-
-	#if !defined(_WIN32) && defined(RLIMIT_NOFILE) && defined(HAVE_SYS_RESOURCE_H)
-		struct rlimit limit;
-
-		if(!getrlimit(RLIMIT_NOFILE, &limit))
-			maxconnections = limit.rlim_cur;
-		else
-			maxconnections = MAXCONNECTIONS;
-	#else
-		maxconnections = MAXCONNECTIONS;
-	#endif
-
-	rb_set_time();
-	rb_init_prng(NULL, RB_PRNG_DEFAULT);
-	seed_random();
-}
-
-static bool
-seed_with_urandom()
-{
-	unsigned int seed;
-	int fd;
-
-	fd = open("/dev/urandom", O_RDONLY);
-	if(fd >= 0)
-	{
-		if(read(fd, &seed, sizeof(seed)) == sizeof(seed))
-		{
-			close(fd);
-			srand(seed);
-			return true;
-		}
-		close(fd);
-	}
-	return false;
-}
-
-static void
-seed_with_clock()
-{
- 	const struct timeval *tv;
-	rb_set_time();
-	tv = rb_current_time_tv();
-	srand(tv->tv_sec ^ (tv->tv_usec | (getpid() << 20)));
-}
-
-void
-ircd::seed_random()
-{
-	unsigned int seed;
-	if(rb_get_random(&seed, sizeof(seed)) == -1)
-	{
-		if(!seed_with_urandom())
-			seed_with_clock();
-		return;
-	}
-	srand(seed);
-}
-
-static void
-sigfd_handle_sigusr2()
-{
-	// dorehashbans
-	// doremotd
-}
-
-static void
-sigfd_handle_sigusr1()
-{
-	// dorehash (no longer hangup!)
-}
-
-static void
-sigfd_handle_sigquit()
-{
-
-}
-
-static void
-sigfd_handle_sigterm()
-{
-
-}
-
-void
-ircd::sigfd_handler(const boost::system::error_code &ec,
-                    int signum)
-{
-	switch(ec.value())
-	{
-		using namespace boost::system::errc;
-
-		case success:             break;
-		case operation_canceled:  return;
-		default:
-			throw error("Signal handler (%d): %s",
-			            signum,
-			            ec.message().c_str());
-	}
-
-	switch(signum)
-	{
-		case SIGTERM:  sigfd_handle_sigterm();  return;
-		case SIGQUIT:  sigfd_handle_sigquit();  return;
-		case SIGUSR1:  sigfd_handle_sigusr1();  break;
-		case SIGUSR2:  sigfd_handle_sigusr2();  break;
-		default:                                break;
-	}
-
-	if(sigfd)
-		sigfd->async_wait(sigfd_handler);
-}
-
-void
-ircd::init_sigs()
-{
-	sigfd.reset(new boost::asio::signal_set(*ios));
-	sigfd->add(SIGTERM);
-	sigfd->add(SIGQUIT);
-	sigfd->add(SIGUSR1);
-	sigfd->add(SIGUSR2);
-	sigfd->async_wait(sigfd_handler);
-}

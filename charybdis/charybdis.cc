@@ -75,6 +75,8 @@ try
 
 	sigs.add(SIGINT);
 	sigs.add(SIGTSTP);
+	sigs.add(SIGQUIT);
+	sigs.add(SIGTERM);
 	sigs.async_wait(sigfd_handler);
 
 	const std::string confpath(configfile?: path::get(path::IRCD_CONF));
