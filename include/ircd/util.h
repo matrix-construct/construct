@@ -270,6 +270,60 @@ hash(const std::string &str,
 }
 
 
+/***
+ * C++14 user defined literals
+ *
+ * These are very useful for dealing with space. Simply write 8_MiB and it's
+ * as if a macro turned that into (8 * 1024 * 1024) at compile time.
+ */
+
+#define UNIT_LITERAL_LL(name, morphism)             \
+constexpr auto                                      \
+operator"" _ ## name(const unsigned long long val)  \
+{                                                   \
+    return (morphism);                              \
+}
+
+#define UNIT_LITERAL_LD(name, morphism)             \
+constexpr auto                                      \
+operator"" _ ## name(const long double val)         \
+{                                                   \
+    return (morphism);                              \
+}
+
+// IEC unit literals
+UNIT_LITERAL_LL( B,    val                                                              )
+UNIT_LITERAL_LL( KiB,  val * 1024LL                                                     )
+UNIT_LITERAL_LL( MiB,  val * 1024LL * 1024LL                                            )
+UNIT_LITERAL_LL( GiB,  val * 1024LL * 1024LL * 1024LL                                   )
+UNIT_LITERAL_LL( TiB,  val * 1024LL * 1024LL * 1024LL * 1024LL                          )
+UNIT_LITERAL_LL( PiB,  val * 1024LL * 1024LL * 1024LL * 1024LL * 1024LL                 )
+UNIT_LITERAL_LL( EiB,  val * 1024LL * 1024LL * 1024LL * 1024LL * 1024LL * 1024LL        )
+
+UNIT_LITERAL_LD( B,    val                                                              )
+UNIT_LITERAL_LD( KiB,  val * 1024.0L                                                    )
+UNIT_LITERAL_LD( MiB,  val * 1024.0L * 1024.0L                                          )
+UNIT_LITERAL_LD( GiB,  val * 1024.0L * 1024.0L * 1024.0L                                )
+UNIT_LITERAL_LD( TiB,  val * 1024.0L * 1024.0L * 1024.0L * 1024.0L                      )
+UNIT_LITERAL_LD( PiB,  val * 1024.0L * 1024.0L * 1024.0L * 1024.0L * 1024.0L            )
+UNIT_LITERAL_LD( EiB,  val * 1024.0L * 1024.0L * 1024.0L * 1024.0L * 1024.0L * 1024.0L  )
+
+// SI unit literals
+UNIT_LITERAL_LL( KB,   val * 1000LL                                                     )
+UNIT_LITERAL_LL( MB,   val * 1000LL * 1000LL                                            )
+UNIT_LITERAL_LL( GB,   val * 1000LL * 1000LL * 1000LL                                   )
+UNIT_LITERAL_LL( TB,   val * 1000LL * 1000LL * 1000LL * 1000LL                          )
+UNIT_LITERAL_LL( PB,   val * 1000LL * 1000LL * 1000LL * 1000LL * 1000LL                 )
+UNIT_LITERAL_LL( EB,   val * 1000LL * 1000LL * 1000LL * 1000LL * 1000LL * 1000LL        )
+
+UNIT_LITERAL_LD( KB,   val * 1000.0L                                                    )
+UNIT_LITERAL_LD( MB,   val * 1000.0L * 1000.0L                                          )
+UNIT_LITERAL_LD( GB,   val * 1000.0L * 1000.0L * 1000.0L                                )
+UNIT_LITERAL_LD( TB,   val * 1000.0L * 1000.0L * 1000.0L * 1000.0L                      )
+UNIT_LITERAL_LD( PB,   val * 1000.0L * 1000.0L * 1000.0L * 1000.0L * 1000.0L            )
+UNIT_LITERAL_LD( EB,   val * 1000.0L * 1000.0L * 1000.0L * 1000.0L * 1000.0L * 1000.0L  )
+
+
 }        // namespace util
 }        // namespace ircd
 #endif   // __cplusplus
