@@ -49,6 +49,10 @@ std::array<bool, num_of<facility>()> file_out;
 std::array<bool, num_of<facility>()> console_out;
 std::array<bool, num_of<facility>()> console_err;
 
+// Suppression state (for struct console_quiet)
+std::array<bool, num_of<facility>()> quieted_out;
+std::array<bool, num_of<facility>()> quieted_err;
+
 // Logfile name and device
 std::array<const char *, num_of<facility>()> fname;
 std::array<std::ofstream, num_of<facility>()> file;
@@ -176,6 +180,23 @@ catch(const std::exception &e)
 
 	std::cerr << buf << std::endl;
 	throw;
+}
+
+log::console_quiet::console_quiet(const bool &showmsg)
+{
+	if(showmsg)
+		notice("Log messages are now quieted at the console");
+
+	std::copy(begin(console_out), end(console_out), begin(quieted_out));
+	std::copy(begin(console_err), end(console_err), begin(quieted_err));
+	std::fill(begin(console_out), end(console_out), false);
+	std::fill(begin(console_err), end(console_err), false);
+}
+
+log::console_quiet::~console_quiet()
+{
+	std::copy(begin(quieted_out), end(quieted_out), begin(console_out));
+	std::copy(begin(quieted_err), end(quieted_err), begin(console_err));
 }
 
 void

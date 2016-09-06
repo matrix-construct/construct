@@ -99,6 +99,12 @@ void notice(const char *fmt, ...) AFP(1, 2);
 void info(const char *fmt, ...) AFP(1, 2);
 void debug(const char *fmt, ...) AFP(1, 2);
 
+struct console_quiet
+{
+	console_quiet(const bool &showmsg = true);
+	~console_quiet();
+};
+
 void flush();
 void close();
 void open();
