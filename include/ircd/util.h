@@ -324,6 +324,19 @@ UNIT_LITERAL_LD( PB,   val * 1000.0L * 1000.0L * 1000.0L * 1000.0L * 1000.0L    
 UNIT_LITERAL_LD( EB,   val * 1000.0L * 1000.0L * 1000.0L * 1000.0L * 1000.0L * 1000.0L  )
 
 
+/* Output the sizeof a structure at compile time.
+ * This stops the compiler with an error (good) containing the size of the target
+ * in the message.
+ *
+ * example: struct foo {}; IRCD_TEST_SIZEOF(foo)
+ */
+
+template<size_t SIZE>
+struct _TEST_SIZEOF_;
+
+#define IRCD_TEST_SIZEOF(name) \
+	ircd::util::_TEST_SIZEOF_<sizeof(name)> _test_;
+
 }        // namespace util
 }        // namespace ircd
 #endif   // __cplusplus
