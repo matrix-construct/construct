@@ -44,7 +44,8 @@ std::array<bool, num_of<facility>()> file_flush;
 std::array<bool, num_of<facility>()> console_flush;
 std::array<const char *, num_of<facility>()> console_ansi;
 
-// Console device toggle
+// Runtime master switches
+std::array<bool, num_of<facility>()> file_out;
 std::array<bool, num_of<facility>()> console_out;
 std::array<bool, num_of<facility>()> console_err;
 
@@ -83,14 +84,14 @@ log::init()
 	console_err[WARNING]     = true;
 	console_err[NOTICE]      = true;
 	console_out[INFO]        = true;
-	console_out[DEBUG]       = true;
+	console_out[DEBUG]       = ircd::debugmode;
 
-	console_flush[CRITICAL]  = true;
-	console_flush[ERROR]     = true;
-	console_flush[WARNING]   = true;
-	console_flush[NOTICE]    = false;
-	console_flush[INFO]      = false;
-	console_flush[DEBUG]     = false;
+	file_out[CRITICAL]       = true;
+	file_out[ERROR]          = true;
+	file_out[WARNING]        = true;
+	file_out[NOTICE]         = true;
+	file_out[INFO]           = true;
+	file_out[DEBUG]          = ircd::debugmode;
 
 	file_flush[CRITICAL]     = true;
 	file_flush[ERROR]        = true;
@@ -128,6 +129,9 @@ log::open()
 		if(!fname[fac])
 			return;
 
+		if(!file_out[fac])
+			return;
+
 		if(file[fac].is_open())
 			file[fac].close();
 
@@ -142,7 +146,8 @@ log::close()
 {
 	for_each<facility>([](const facility &fac)
 	{
-		file[fac].close();
+		if(file[fac].is_open())
+			file[fac].close();
 	});
 }
 
