@@ -251,7 +251,7 @@ rfc1459::parser<it>::parser()
 }
 ,frame // A message frame
 {
-	eps > (-(prefix >> +space) >> command >> params >> terminator)
+	eps > (-(-(prefix >> +space) >> command >> params) >> terminator)
 	,"frame"
 }
 {
