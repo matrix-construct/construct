@@ -19,6 +19,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#pragma once
+#define HAVE_IRCD_CTX_CTX_H
+
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/spawn.hpp>

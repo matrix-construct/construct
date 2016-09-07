@@ -21,9 +21,24 @@
 
 #include <ircd/ircd.h>
 #include <boost/asio.hpp>
+#include <ircd/ctx_ctx.h>
 
 namespace path = ircd::path;
 using ircd::lgetopt;
+
+static void console_spawn();
+static void sigfd_handler(const boost::system::error_code &, int);
+static bool startup_checks();
+static void print_version();
+
+const char *const fatalerrstr
+{R"(
+***
+*** A fatal error has occurred. Please contact the developer with the message below.
+*** Create a coredump by reproducing the error using the -debug command-line option.
+***
+%s
+)"};
 
 bool printversion;
 bool testing_conf;
@@ -39,28 +54,6 @@ lgetopt opts[] =
 	{ "cmd",        &cmdline,         lgetopt::BOOL,    "Interrupt to a command line immediately after startup" },
 	{ nullptr,      nullptr,          lgetopt::STRING,  nullptr },
 };
-
-const char *const fatalerrstr
-{R"(
-***
-*** A fatal error has occurred. Please contact the developer with the message below.
-*** Create a coredump by reproducing the error using the -debug command-line option.
-***
-%s
-)"};
-
-const char *const usererrstr
-{R"(
-***
-*** A fatal startup error has occurred. Please fix the problem to continue. ***
-***
-%s
-)"};
-
-static void handle_interruption();
-static void sigfd_handler(const boost::system::error_code &, int);
-static bool startup_checks();
-static void print_version();
 
 boost::asio::io_service ios;
 boost::asio::signal_set sigs(ios);
@@ -81,14 +74,14 @@ try
 	}
 
 	sigs.add(SIGINT);
-	sigs.add(SIGQUIT);
+	sigs.add(SIGTSTP);
 	sigs.async_wait(sigfd_handler);
 
 	const std::string confpath(configfile?: path::get(path::IRCD_CONF));
 	ircd::init(ios, confpath);
 
 	if(cmdline)
-		raise(SIGINT);
+		console_spawn();
 
 	ios.run();  // Blocks until a clean exit or an exception comes out of it.
 }
@@ -124,6 +117,14 @@ void print_version()
 	printf("VERSION :%s\n", rb_lib_version());
 }
 
+const char *const usererrstr
+{R"(
+***
+*** A fatal startup error has occurred. Please fix the problem to continue. ***
+***
+%s
+)"};
+
 bool startup_checks()
 try
 {
@@ -141,6 +142,26 @@ catch(const std::exception &e)
 	return false;
 }
 
+const char *const generic_message
+{R"(
+*** - To end the console session, type ctrl-d             -> EOF
+*** - To exit cleanly, type DIE or ctrl-\                 -> SIGQUIT
+*** - To exit immediately, type EXIT                      -> exit(0)
+*** - To generate a coredump for developers, type ABORT   -> abort()
+***
+)"};
+
+bool console_active;
+ircd::ctx::ctx *console_ctx;
+boost::asio::posix::stream_descriptor *console_in;
+
+static void handle_line(const std::string &line);
+static void console();
+static void console_cancel();
+static void handle_quit();
+static void handle_interruption();
+static void handle_termstop();
+
 void
 sigfd_handler(const boost::system::error_code &ec,
               int signum)
@@ -149,53 +170,83 @@ sigfd_handler(const boost::system::error_code &ec,
 	{
 		using namespace boost::system::errc;
 
-		case success:             break;
-		case operation_canceled:  return;
-		default:                  throw std::runtime_error(ec.message());
+		case success:
+			break;
+
+		case operation_canceled:
+			console_cancel();
+			return;
+
+		default:
+			console_cancel();
+			throw std::runtime_error(ec.message());
 	}
 
 	switch(signum)
 	{
-		case SIGINT:
-			handle_interruption();
-			break;
-
-		case SIGQUIT:
-			printf("\nQUIT\n");
-			ios.stop();
-			break;
-
-		default:
-			break;
+		case SIGINT:   handle_interruption();   break;
+		case SIGTSTP:  handle_termstop();       break;
+		case SIGHUP:   handle_hangup();         break;
+		case SIGQUIT:  handle_quit();           return;
+		case SIGTERM:                           return;
+		default:                                break;
 	}
 
 	sigs.async_wait(sigfd_handler);
 }
 
-const char *const interruption_message
-{R"(
-*** Charybdis is now paused. A command line has been presented below.
-*** This is actually an IRC client and your commands will originate from
-*** the server itself. The server will resume when you hit enter.
-***
-*** - To exit cleanly, type DIE
-*** - To exit quickly, type ctrl-\ [SIGQUIT]
-*** - To exit immediately, type EXIT
-*** - To generate a coredump for developers, type ABORT
-***
-*** This message will be skipped on the next interrupt.
-)"};
-
 void
-handle_interruption()
+handle_quit()
 try
 {
-	static bool seen_the_message;
-	if(!seen_the_message)
+	console_cancel();
+}
+catch(const std::exception &e)
+{
+	ircd::log::error("SIGQUIT handler: %s", e.what());
+}
+
+void
+handle_hangup()
+try
+{
+	using namespace ircd;
+	using log::console_quiet;
+
+	console_cancel();
+
+	static console_quiet *quieted;
+	if(!quieted)
 	{
-		seen_the_message = true;
-		std::cout << interruption_message;
+		log::notice("Suppressing console log output after terminal hangup");
+		quieted = new console_quiet;
+		return;
 	}
+
+	log::notice("Reactivating console logging after second hangup");
+	delete quieted;
+	quieted = nullptr;
+}
+catch(const std::exception &e)
+{
+	ircd::log::error("SIGHUP handler: %s", e.what());
+}
+
+const char *const termstop_message
+{R"(
+***
+*** The server has been paused and will resume when you hit enter.
+*** This is an IRC client and your commands will originate from the
+*** server itself.
+***)"};
+
+void
+handle_termstop()
+try
+{
+	console_cancel();
+
+	std::cout << termstop_message << generic_message;
 
 	std::string line;
 	std::cout << "\n> " << std::flush;
@@ -207,16 +258,120 @@ try
 		return;
 	}
 
+	handle_line(line);
+}
+catch(const std::exception &e)
+{
+	std::cerr << "\033[1;31merror\033[0m: " << e.what() << std::endl;
+}
+
+void
+handle_interruption()
+try
+{
+	console_cancel();
+	console_spawn();
+}
+catch(const std::exception &e)
+{
+	std::cerr << "\033[1;31merror\033[0m: " << e.what() << std::endl;
+}
+
+void
+console_spawn()
+{
+	if(console_active)
+		return;
+
+	// The console function is executed asynchronously.
+	// This call may or may not return immediately.
+	ircd::context context(std::bind(&console));
+
+	// The console may be joined unless it is released here;
+	// now cleanup must occur by other means.
+	context.detach();
+}
+
+const char *const console_message
+{R"(
+***
+*** The server is still running in the background. A command line
+*** is now available below. This is an IRC client and your commands
+*** will originate from the server itself.
+***)"};
+
+void
+console()
+try
+{
+	using namespace ircd;
+
+	const scope atexit([]
+	{
+		console_active = false;
+		console_in = nullptr;
+		free(console_ctx);
+	});
+
+	console_active = true;
+	console_ctx = &ctx::cur();
+
+	std::cout << console_message << generic_message;
+
+	boost::asio::posix::stream_descriptor in{::ios, dup(STDIN_FILENO)};
+	console_in = &in;
+
+	boost::asio::streambuf buf{BUFSIZE};
+	std::istream is{&buf};
+	std::string line;
+
+	while(1) try
+	{
+		std::cout << "\n> " << std::flush;
+
+		// Suppression scope ends after the command is entered
+		// so the output of the command (log messages) can be seen.
+		{
+			const log::console_quiet quiet(false);
+			boost::asio::async_read_until(in, buf, '\n', yield(continuation()));
+		}
+
+		std::getline(is, line);
+		if(!line.empty())
+			handle_line(line);
+	}
+	catch(const ircd::cmds::not_found &e)
+	{
+		std::cerr << e.what() << std::endl;
+	}
+}
+catch(const std::exception &e)
+{
+	std::cout << "\n***" << std::endl;
+	std::cout << "*** The console session has ended: " << e.what() << std::endl;
+	std::cout << "***" << std::endl;
+}
+
+void
+console_cancel()
+{
+	if(!console_active)
+		return;
+
+	if(!console_in)
+		return;
+
+	console_in->cancel();
+}
+
+void
+handle_line(const std::string &line)
+{
 	if(line == "ABORT")
 		abort();
 
 	if(line == "EXIT")
 		exit(0);
 
-	line += "\r\n";
-	ircd::execute(ircd::me, line);
-}
-catch(const std::exception &e)
-{
-	std::cerr << "\033[1;31merror\033[0m: " << e.what() << std::endl;
+	ircd::execute(ircd::me, line + "\r\n");
 }
