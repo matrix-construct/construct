@@ -74,14 +74,14 @@ extern "C" {
 #include <RB_INC_SET
 #include <RB_INC_LIST
 #include <RB_INC_FORWARD_LIST
-//#include <RB_INC_UNORDERED_MAP
-//#include <RB_INC_DEQUE
+#include <RB_INC_UNORDERED_MAP
+#include <RB_INC_DEQUE
 #include <RB_INC_SSTREAM
 #include <RB_INC_FSTREAM
 #include <RB_INC_IOSTREAM
 #include <RB_INC_IOMANIP
 #include <RB_INC_CSTDIO
-//#include <RB_INC_CHRONO
+#include <RB_INC_CHRONO
 #include <RB_INC_CTIME
 
 //#include <RB_INC_BOOST_LEXICAL_CAST_HPP

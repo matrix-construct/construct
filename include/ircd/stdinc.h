@@ -35,6 +35,7 @@ namespace ircd
 	using ostream = std::ostream;
 	namespace ph = std::placeholders;
 	using namespace std::string_literals;
+	using namespace std::literals::chrono_literals;
 }
 
 // Temp fwd decl scaffold
@@ -79,6 +80,7 @@ namespace ircd
 #include "mode_lease.h"
 #include "snomask.h"
 #include "ctx.h"
+#include "ctx_dock.h"
 
 #include "cache.h"
 #include "whowas.h"
