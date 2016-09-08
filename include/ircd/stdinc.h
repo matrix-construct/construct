@@ -87,6 +87,7 @@ namespace ircd
 #include "whowas.h"
 #include "tgchange.h"
 #include "msgbuf.h"
+#include "line.h"
 #include "cmd.h"
 #include "client.h"
 

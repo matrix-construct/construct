@@ -24,49 +24,6 @@
 
 #ifdef __cplusplus
 namespace ircd {
-
-struct line
-:rfc1459::line
-{
-	using rfc1459::line::line;
-
-	auto &operator[](const size_t &pos) const;
-	auto &operator[](const size_t &pos);
-};
-
-inline auto &pfx(const line &line)               { return line.pfx;                                }
-inline auto &pfx(line &line)                     { return line.pfx;                                }
-inline auto &nick(const line &line)              { return pfx(line).nick;                          }
-inline auto &nick(line &line)                    { return pfx(line).nick;                          }
-inline auto &user(const line &line)              { return pfx(line).user;                          }
-inline auto &user(line &line)                    { return pfx(line).user;                          }
-inline auto &host(const line &line)              { return pfx(line).host;                          }
-inline auto &host(line &line)                    { return pfx(line).host;                          }
-inline auto &command(const line &line)           { return line.cmd;                                }
-inline auto &command(line &line)                 { return line.cmd;                                }
-inline auto &parv(const line &line)              { return line.parv;                               }
-inline auto &parv(line &line)                    { return line.parv;                               }
-inline auto parc(const line &line)               { return parv(line).size();                       }
-
-inline auto &
-line::operator[](const size_t &pos)
-{
-	return parv.at(pos);
-}
-
-inline auto &
-line::operator[](const size_t &pos)
-const
-{
-	return parv.at(pos);
-}
-
-} // namespace ircd
-#endif
-
-
-#ifdef __cplusplus
-namespace ircd {
 namespace cmds {
 
 using client::client;
