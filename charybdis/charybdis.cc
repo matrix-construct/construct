@@ -73,6 +73,7 @@ try
 		return 0;
 	}
 
+	sigs.add(SIGHUP);
 	sigs.add(SIGINT);
 	sigs.add(SIGTSTP);
 	sigs.add(SIGQUIT);
@@ -163,6 +164,7 @@ static void console_cancel();
 static void handle_quit();
 static void handle_interruption();
 static void handle_termstop();
+static void handle_hangup();
 
 void
 sigfd_handler(const boost::system::error_code &ec,
