@@ -56,17 +56,36 @@ namespace conf {
 using namespace ircd;
 
 void
-conf::init(const std::string &path)
+conf::parse(const std::string &path)
+try
 {
-	bootstrap();
 	parse_newconf(path);
+}
+catch(const std::exception &e)
+{
+	log.error("Failed to parse configuration: %s", e.what());
+	throw;
+}
+
+void
+conf::execute()
+try
+{
+	if(newconf::current.empty())
+		throw error("No configuration supplied to parse and execute.");
 
 	// Translate to oldconf and linefeed
+	bootstrap();
 	newconf::translate(newconf::current, []
 	(const std::string &line)
 	{
 		execute(line);
 	});
+}
+catch(const std::exception &e)
+{
+	log.error("Configuration init failed: %s", e.what());
+	throw;
 }
 
 void

@@ -38,7 +38,7 @@ namespace ircd
 	void handle_sigusr1();
 	void handle_sigterm();
 	void handle_sigquit();
-	void main(const std::string confpath);
+	void main() noexcept;
 }
 
 /*
@@ -57,9 +57,13 @@ ircd::init(boost::asio::io_service &io_service,
 	log::init();
 	log::mark("log started");
 
+	log::info("parsing your configuration");
+	conf::parse(configfile);
+
 	// The master of ceremonies runs the show after this function returns and ios.run()
 	// It cannot spawn when no ios is running so it is deferred just in case.
-	context mc(8_MiB, std::bind(&main, configfile), ctx::DEFER_POST);
+	log::debug("spawning main context");
+	context mc(8_MiB, ircd::main, ctx::DEFER_POST);
 
 	// The context will not be joined and block this function when no parent context
 	// is currently running, but it should still be detached here. It can then delete
@@ -70,15 +74,15 @@ ircd::init(boost::asio::io_service &io_service,
 }
 
 void
-ircd::main(const std::string configfile)
-try
+ircd::main()
+noexcept try
 {
 	// Ownership is taken of the main context to delete it at function end
 	const custom_ptr<ctx::ctx> mc(ircd::mc, ctx::free);
 	log::debug("IRCd entered main context.");
 
-	log::debug("setting up configuration");
-	conf::init(configfile);
+	log::info("executing configuration");
+	conf::execute();
 
 	log::debug("setting up signals");
 	boost::asio::signal_set sigfd(*ios);
@@ -100,7 +104,7 @@ try
 catch(const std::exception &e)
 {
 	log::error("main context: %s", e.what());
-	throw;
+	return;
 }
 
 void

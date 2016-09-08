@@ -21,17 +21,16 @@
 
 #include <boost/spirit/include/qi.hpp>
 
-namespace ircd    {
-namespace conf    {
-namespace newconf {
-
-	letters registry;
-
-} // namespace newconf
-} // namespace conf
-} // namespace ircd
-
 using namespace ircd;
+
+namespace qi = boost::spirit::qi;
+namespace ascii = qi::ascii;
+using qi::lexeme;
+using qi::char_;
+using qi::lit;
+using qi::eol;
+using qi::blank;
+using qi::eps;
 
 /*
 	registry['A'] = "admin";
@@ -48,13 +47,9 @@ using namespace ircd;
 	registry['l'] = "log";
 */
 
-namespace qi = boost::spirit::qi;
-namespace ascii = qi::ascii;
-using qi::lexeme;
-using qi::char_;
-using qi::lit;
-using qi::eol;
-using qi::blank;
+namespace ircd    {
+namespace conf    {
+namespace newconf {
 
 using str = std::string;
 using strvec = std::vector<str>;
@@ -77,7 +72,7 @@ struct ignores
 
 template<class iter,
          class ignores>
-struct newconf_parser
+struct parser
 :qi::grammar<iter, strvecvecvec(), ignores>
 {
 	template<class ret> using rule = qi::rule<iter, ret, ignores>;
@@ -90,49 +85,62 @@ struct newconf_parser
 	rule<strvecvec()> block;
 	rule<strvecvecvec()> conf;
 
-	newconf_parser();
+	parser();
 };
+
+letters registry;
+
+} // namespace newconf
+} // namespace conf
+} // namespace ircd
 
 template<class iter,
          class ignores>
-newconf_parser<iter, ignores>::newconf_parser()
-:newconf_parser::base_type // pass reference the topmost level to begin parsing on
+conf::newconf::parser<iter, ignores>::parser()
+:parser::base_type // pass reference the topmost level to begin parsing on
 {
 	conf
 }
 ,unquoted // config values without double-quotes, cannot have ';' because that's the ending
 {
 	lexeme[+(char_ - ';')]
+	,"unquoted"
 }
 ,quoted // config values surrounded by double quotes, which cannot have double quotes in them
 {
 	lexeme['"' >> +(char_ - '"') >> '"']
+	,"quoted"
 }
 ,key // configuration key, must be simple alnum's with underscores
 {
 	+char_("[a-zA-Z0-9_]")
+	,"key"
 }
 ,item // a key-value pair
 {
 	+(key) >> '=' >> +(quoted | unquoted) >> ';'
+	,"item"
 }
 ,topitem // a key-value pair, but at the topconf no '=' is used
 {
 	+(key) >> +(quoted) >> ';'
+	,"topitem"
 }
 ,block // a bracketed conf block, the type-label is like a key, and it can have a unique quoted label
 {
 	*(key >> *(quoted)) >> '{' >> *(item) >> '}' >> ';'
+	,"block"
 }
 ,conf // newconf is comprised of either conf blocks or key-value's at the top level
 {
 	*(block | topitem)
+	,"conf"
 }
 {
 }
 
 template<class iter>
-ignores<iter>::ignores()
+conf::newconf::ignores<iter>::ignores()
 :ignores::base_type // pass reference to the topmost skip-parser
 {
 	skip
@@ -156,34 +164,35 @@ ignores<iter>::ignores()
 {
 }
 
-ircd::conf::newconf::topconf
-ircd::conf::newconf::parse_file(const std::string &path)
+conf::newconf::topconf
+conf::newconf::parse_file(const std::string &path)
 {
 	std::ifstream file(path);
 	return parse(file);
 }
 
-ircd::conf::newconf::topconf
-ircd::conf::newconf::parse(std::ifstream &file)
+conf::newconf::topconf
+conf::newconf::parse(std::ifstream &file)
 {
 	const std::istreambuf_iterator<char> bit(file), eit;
 	return parse(std::string(bit, eit));
 }
 
-ircd::conf::newconf::topconf
-ircd::conf::newconf::parse(const std::string &str)
+conf::newconf::topconf
+conf::newconf::parse(const std::string &str)
+try
 {
 	using iter = std::string::const_iterator;
 
 	strvecvecvec vec;
 	const ignores<iter> ign;
-	const newconf_parser<iter, ignores<iter>> p;
+	const newconf::parser<iter, ignores<iter>> p;
 	if(!phrase_parse(begin(str), end(str), p, ign, vec))
-		throw ircd::error("Failed to parse");
+		throw syntax_error("newconf parse failed for unknown reason");
 
-	// The parser doesn't feed exactly into the ideal topconf format returned to the user.
-	// It's a simple position-semantic vector of strings at the same level.
-	// Translation for the user is here:
+	// This was my first qi grammar and there's a lot wrong with it.
+	// Once it's revisited it should parse directly into the ideal structures
+	// returned to the user. Until then it's translated here.
 	topconf top;
 	for(const auto &v : vec)
 	{
@@ -222,6 +231,27 @@ ircd::conf::newconf::parse(const std::string &str)
 
 	return top;
 }
+catch(const boost::spirit::qi::expectation_failure<std::string::const_iterator> &e)
+{
+	const size_t character(e.last - e.first);
+	const auto line_num(std::count(begin(str), begin(str)+character, '\n'));
+
+	size_t char_num(0);
+	size_t line_start(character);
+	while(line_start && str[--line_start] != '\n')
+		char_num++;
+
+	throw syntax_error("@line %zu +%zu: expecting :%s",
+	                   line_num,
+	                   char_num,
+	                   string(e.what_).c_str());
+}
+catch(const std::exception &e)
+{
+	ircd::log::error("Unexpected newconf error during parsing: %s", e.what());
+	throw;
+}
+
 
 std::list<std::string>
 conf::newconf::translate(const topconf &top)

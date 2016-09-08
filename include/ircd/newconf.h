@@ -28,6 +28,7 @@ namespace conf    {
 namespace newconf {
 
 IRCD_EXCEPTION(ircd::error, error)
+IRCD_EXCEPTION(error, syntax_error)
 IRCD_EXCEPTION(error, unknown_block)
 
 using key = std::string;                             // before the equals sign in an item

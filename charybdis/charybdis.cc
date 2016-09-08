@@ -40,6 +40,14 @@ const char *const fatalerrstr
 %s
 )"};
 
+const char *const usererrstr
+{R"(
+***
+*** A fatal startup error has occurred. Please fix the problem to continue. ***
+***
+%s
+)"};
+
 bool printversion;
 bool testing_conf;
 bool cmdline;
@@ -73,6 +81,9 @@ try
 		return 0;
 	}
 
+	const std::string confpath(configfile?: path::get(path::IRCD_CONF));
+	ircd::init(ios, confpath);
+
 	sigs.add(SIGHUP);
 	sigs.add(SIGINT);
 	sigs.add(SIGTSTP);
@@ -80,13 +91,18 @@ try
 	sigs.add(SIGTERM);
 	sigs.async_wait(sigfd_handler);
 
-	const std::string confpath(configfile?: path::get(path::IRCD_CONF));
-	ircd::init(ios, confpath);
-
 	if(cmdline)
 		console_spawn();
 
 	ios.run();  // Blocks until a clean exit or an exception comes out of it.
+}
+catch(const ircd::conf::newconf::syntax_error &e)
+{
+	if(ircd::debugmode)
+		throw;
+
+	fprintf(stderr, usererrstr, e.what());
+	return EXIT_FAILURE;
 }
 catch(const std::exception &e)
 {
@@ -119,14 +135,6 @@ void print_version()
 
 	printf("VERSION :%s\n", rb_lib_version());
 }
-
-const char *const usererrstr
-{R"(
-***
-*** A fatal startup error has occurred. Please fix the problem to continue. ***
-***
-%s
-)"};
 
 bool startup_checks()
 try

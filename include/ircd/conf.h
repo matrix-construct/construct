@@ -89,7 +89,8 @@ template<class T> std::type_index make_index();
 template<class T = std::string> const T &get(client::client &, const char &, const std::string &label, const std::string &key);
 template<class T = std::string> const T &get(client::client &, const char &, const std::string &key);
 
-void init(const std::string &path);
+void execute();
+void parse(const std::string &path);
 
 
 template<class T>
