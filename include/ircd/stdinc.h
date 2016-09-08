@@ -70,6 +70,7 @@ namespace ircd
 #include "defaults.h"
 #include "exception.h"
 #include "numeric.h"
+#include "color.h"
 #include "messages.h"
 #include "rfc1459.h"
 #include "err.h"
