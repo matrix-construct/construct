@@ -150,6 +150,8 @@ void
 ircd::main_exiting()
 noexcept try
 {
+	mods::unload();
+
 	if(main_exit_func)
 	{
 		log::debug("Notifying user of IRCd completion");

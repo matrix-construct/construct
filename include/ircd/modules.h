@@ -118,6 +118,7 @@ bool reload(const std::string name);
 bool unload(const std::string name);
 bool load(const std::string &name);
 void autoload();
+void unload();
 
 
 template<class T>

@@ -104,6 +104,25 @@ void load_symbol(mod &mod, const std::string &name, const std::type_index &);
 } // namespace ircd
 
 void
+ircd::mods::unload()
+{
+	log.info("Unloading %zu (all) modules...", mods.size());
+
+	// Proper way to unload is by name; don't just clear the map.
+	std::vector<std::string> names(mods.size());
+	std::transform(begin(mods), end(mods), begin(names), []
+	(const auto &pit)
+	{
+		return pit.first;
+	});
+
+	for(const auto &name : names)
+		unload(name);
+
+	log.info("Unloaded all modules.");
+}
+
+void
 ircd::mods::autoload()
 {
 	for(const auto &name : available()) try

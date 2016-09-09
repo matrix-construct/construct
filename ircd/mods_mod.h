@@ -79,8 +79,19 @@ catch(const boost::system::system_error &e)
 }
 
 mod::~mod()
-noexcept
+noexcept try
 {
+	handle.unload();
+	assert(!handle.is_loaded());
+}
+catch(const std::exception &e)
+{
+	log::critical("Module @%p unload: %s",
+	              (const void *)this,
+	              e.what());
+
+	if(!ircd::debugmode)
+		return;
 }
 
 template<class T>
