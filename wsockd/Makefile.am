@@ -3,6 +3,7 @@ AM_CPPFLAGS = \
 	@BOOST_CPPFLAGS@
 
 AM_LDFLAGS = \
+	-L$(top_srcdir)/ircd \
 	-L$(top_srcdir)/rb \
 	@BOOST_LDFLAGS@
 
@@ -10,6 +11,7 @@ AM_LDFLAGS = \
 bin_PROGRAMS = wsockd
 
 wsockd_LDADD = \
+	-lircd \
 	-lrb \
 	@BOOST_LIBS@
 

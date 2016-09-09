@@ -8,6 +8,7 @@ AM_CPPFLAGS = \
 	@BOOST_CPPFLAGS@
 
 AM_LDFLAGS = \
+	-L$(top_srcdir)/ircd \
 	-L$(top_srcdir)/rb \
 	@BOOST_LDFLAGS@
 
@@ -18,6 +19,7 @@ bandb_DEPENDENCIES = \
 	@SQLITE_OBJ@
 
 bandb_LDADD = \
+	-lircd \
 	-lrb \
 	@SQLITE_LDFLAGS@ \
 	@SQLITE_OBJ@ \
@@ -39,6 +41,7 @@ bantool_DEPENDENCIES = \
 	@SQLITE_OBJ@
 
 bantool_LDADD = \
+	-lircd \
 	-lrb \
 	@SQLITE_LDFLAGS@ \
 	@SQLITE_LIBS@ \
