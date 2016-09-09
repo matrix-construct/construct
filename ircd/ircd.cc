@@ -30,10 +30,12 @@ namespace ircd
 {
 	bool debugmode;                               // set by command line
 	boost::asio::io_service *ios;                 // user's io service
+	main_exit_cb main_exit_func;                  // Called when main context exits
 	ctx::ctx *mc;                                 // IRCd's main context
 
 	void seed_random();
 	void init_system();
+	void main_exiting() noexcept;
 	void handle_sigusr2();
 	void handle_sigusr1();
 	void handle_sigterm();
@@ -48,7 +50,8 @@ namespace ircd
  */
 void
 ircd::init(boost::asio::io_service &io_service,
-           const std::string &configfile)
+           const std::string &configfile,
+           main_exit_cb main_exit_func)
 {
 	ircd::ios = &io_service;
 	init_system();
@@ -63,6 +66,7 @@ ircd::init(boost::asio::io_service &io_service,
 	// The master of ceremonies runs the show after this function returns and ios.run()
 	// It cannot spawn when no ios is running so it is deferred just in case.
 	log::debug("spawning main context");
+	at_main_exit(std::move(main_exit_func));
 	context mc(8_MiB, ircd::main, ctx::DEFER_POST);
 
 	// The context will not be joined and block this function when no parent context
@@ -79,6 +83,7 @@ noexcept try
 {
 	// Ownership is taken of the main context to delete it at function end
 	const custom_ptr<ctx::ctx> mc(ircd::mc, ctx::free);
+	const scope main_exit(&main_exiting);
 	log::debug("IRCd entered main context.");
 
 	log::info("executing configuration");
@@ -103,8 +108,7 @@ noexcept try
 }
 catch(const std::exception &e)
 {
-	log::error("main context: %s", e.what());
-	return;
+	log::error("IRCd finished: %s", e.what());
 }
 
 void
@@ -112,7 +116,7 @@ ircd::handle_sigterm()
 {
 	using namespace ircd;
 
-	log::notice("SIGTERM. Terminating...");
+	log::notice("IRCd finished: SIGTERM");
 }
 
 void
@@ -140,6 +144,28 @@ ircd::handle_sigusr2()
 	log::notice("SIGUSR2. Flushing caches...");
 	// dorehashbans
 	// doremotd
+}
+
+void
+ircd::main_exiting()
+noexcept try
+{
+	if(main_exit_func)
+	{
+		log::debug("Notifying user of IRCd completion");
+		main_exit_func();
+	}
+}
+catch(const std::exception &e)
+{
+	log::critical("main context exit: %s", e.what());
+	throw;
+}
+
+void
+ircd::at_main_exit(main_exit_cb main_exit_func)
+{
+	ircd::main_exit_func = std::move(main_exit_func);
 }
 
 void

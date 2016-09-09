@@ -89,6 +89,12 @@ try
 	sigs.add(SIGTSTP);
 	sigs.add(SIGQUIT);
 	sigs.add(SIGTERM);
+	ircd::at_main_exit([]
+	{
+		// Entered when IRCd's main context has finished. ios.run() won't
+		// return because our signal handler out here is still using it.
+		sigs.cancel();
+	});
 	sigs.async_wait(sigfd_handler);
 
 	if(cmdline)

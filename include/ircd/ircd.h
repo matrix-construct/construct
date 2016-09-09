@@ -52,8 +52,12 @@ extern bool debugmode;
 extern boost::asio::io_service *ios;
 extern client::client me;
 
+// Set callback for when IRCd's main context has completed.
+using main_exit_cb = std::function<void ()>;
+void at_main_exit(main_exit_cb);
 
-void init(boost::asio::io_service &ios, const std::string &newconf_path);
+// Library constructor
+void init(boost::asio::io_service &ios, const std::string &newconf_path, main_exit_cb = nullptr);
 
 }      // namespace ircd
 #endif // __cplusplus
