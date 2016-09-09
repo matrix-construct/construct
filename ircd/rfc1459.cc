@@ -22,6 +22,9 @@
  */
 
 #include <boost/spirit/include/qi.hpp>
+#include <ircd/bufs.h>
+
+namespace qi = boost::spirit::qi;
 
 BOOST_FUSION_ADAPT_STRUCT
 (
@@ -39,9 +42,6 @@ BOOST_FUSION_ADAPT_STRUCT
 	( ircd::rfc1459::parv,  parv )
 )
 
-namespace qi = boost::spirit::qi;
-using namespace ircd;
-
 namespace ircd    {
 namespace rfc1459 {
 
@@ -51,9 +51,18 @@ using qi::repeat;
 using qi::attr;
 using qi::eps;
 
-template<class it>
-struct parser
-:qi::grammar<it, rfc1459::line>
+/* The grammar template class.
+ * This aggregates all the rules under one template to make composing them easier.
+ *
+ * The grammar template is instantiated by individual parsers depending on the goal
+ * for the specific parse, or the "top level." The first top-level was an IRC line, so
+ * a class was created `struct head` specifying grammar::line as the top rule, and
+ * rfc1459::line as the top output target to parse into.
+ */
+template<class it,
+         class top>
+struct grammar
+:qi::grammar<it, top>
 {
 	qi::rule<it> space;
 	qi::rule<it> colon;
@@ -71,104 +80,47 @@ struct parser
 	qi::rule<it, std::string()> middle;
 	qi::rule<it, rfc1459::parv> params;
 
+	qi::rule<it, std::string()> numeric;
 	qi::rule<it, rfc1459::cmd> command;
-	qi::rule<it, rfc1459::line> frame;
 
-	parser();
+	qi::rule<it, rfc1459::line> line;
+	qi::rule<it, rfc1459::tape> tape;
+
+	grammar(qi::rule<it, top> &top_rule);
 };
 
-const parser<const uint8_t *> head;
+/* Instantiate the grammar to parse a uint8_t* buffer into an rfc1459::line object.
+ * The top rule is inherited and then specified as grammar::line, which is compatible
+ * with an rfc1459::line object.
+ */
+struct head
+:grammar<const uint8_t *, rfc1459::line>
+{
+	head(): grammar{grammar::line} {}
+}
+static const head;
+
+/* Instantiate the grammar to parse a uint8_t* buffer into an rfc1459::tape object.
+ * The top rule is now grammar::tape and the target object is an rfc1459::tape deque.
+ */
+struct capstan
+:grammar<const uint8_t *, rfc1459::tape>
+{
+	capstan(): grammar{grammar::tape} {}
+}
+static const capstan;
 
 } // namespace rfc1459
 } // namespace ircd
 
+using namespace ircd;
 
-// Informal stream (for now)
-// NOTE: unterminated
-std::ostream &
-rfc1459::operator<<(std::ostream &s, const line &line)
+template<class it,
+         class top>
+rfc1459::grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
+:grammar<it, top>::base_type
 {
-	const auto &pfx(line.pfx);
-	if(!pfx.nick.empty() || !pfx.user.empty() || !pfx.host.empty())
-		s << pfx << ' ';
-
-	s << line.cmd;
-
-	const auto &parv(line.parv);
-	if(!parv.empty())
-		s << ' ' << parv;
-
-	return s;
-}
-
-// Informal stream (for now)
-std::ostream &
-rfc1459::operator<<(std::ostream &s, const parv &parv)
-{
-	ssize_t i(0);
-	for(; i < ssize_t(parv.size()) - 1; ++i)
-		s << parv[i] << ' ';
-
-	if(!parv.empty())
-		s << ':' << parv[parv.size() - 1];
-
-	return s;
-}
-
-// Informal stream (for now)
-std::ostream &
-rfc1459::operator<<(std::ostream &s, const pfx &pfx)
-{
-	s << ':';
-	if(!pfx.nick.empty())
-		s << pfx.nick;
-	else
-		s << '*';
-
-	s << '!';
-	if(!pfx.user.empty())
-		s << pfx.user;
-	else
-		s << '*';
-
-	s << '@';
-	if(!pfx.host.empty())
-		s << pfx.host;
-	else
-		s << '*';
-
-	return s;
-}
-
-rfc1459::line::line(const std::string &str)
-:line
-{
-	reinterpret_cast<const uint8_t *>(str.data()),
-	str.size()
-}
-{
-}
-
-rfc1459::line::line(const uint8_t *const &buf,
-                    const size_t &size)
-try
-{
-	const uint8_t *start(buf);
-	const uint8_t *stop(buf + size);
-	qi::parse(start, stop, head, *this);
-}
-catch(const boost::spirit::qi::expectation_failure<const uint8_t *> &e)
-{
-	throw syntax_error("@%d expecting :%s",
-	                   int(e.last - e.first),
-	                   string(e.what_).c_str());
-}
-
-template<class it>
-rfc1459::parser<it>::parser()
-:parser<it>::base_type
-{
-	frame
+	top_rule
 }
 ,space // A single space character
 {
@@ -244,17 +196,159 @@ rfc1459::parser<it>::parser()
 	*(+space >> middle) >> -(+space >> trailing)
 	,"params"
 }
-,command // A command, or \d\d\d numeric
+,numeric // \d\d\d numeric
 {
-	+char_(gather(character::ALPHA)) | repeat(3)[char_(gather(character::DIGIT))]
+	repeat(3)[char_(gather(character::DIGIT))]
+	,"numeric"
+}
+,command // A command or numeric
+{
+	+char_(gather(character::ALPHA)) | numeric
 	,"command"
 }
-,frame // A message frame
+,line
 {
-	eps > (-(-(prefix >> +space) >> command >> params) >> terminator)
-	,"frame"
+	-(prefix >> +space) >> command >> params
+	,"line"
+}
+,tape
+{
+	+(line >> +terminator)
+	,"tape"
 }
 {
+}
+
+// Informal stream (for now)
+// NOTE: unterminated
+std::ostream &
+rfc1459::operator<<(std::ostream &s, const line &line)
+{
+	const auto &pfx(line.pfx);
+	if(!pfx.nick.empty() || !pfx.user.empty() || !pfx.host.empty())
+		s << pfx << ' ';
+
+	s << line.cmd;
+
+	const auto &parv(line.parv);
+	if(!parv.empty())
+		s << ' ' << parv;
+
+	return s;
+}
+
+// Informal stream (for now)
+std::ostream &
+rfc1459::operator<<(std::ostream &s, const parv &parv)
+{
+	ssize_t i(0);
+	for(; i < ssize_t(parv.size()) - 1; ++i)
+		s << parv[i] << ' ';
+
+	if(!parv.empty())
+		s << ':' << parv[parv.size() - 1];
+
+	return s;
+}
+
+// Informal stream (for now)
+std::ostream &
+rfc1459::operator<<(std::ostream &s, const pfx &pfx)
+{
+	s << ':';
+	if(!pfx.nick.empty())
+		s << pfx.nick;
+	else
+		s << '*';
+
+	s << '!';
+	if(!pfx.user.empty())
+		s << pfx.user;
+	else
+		s << '*';
+
+	s << '@';
+	if(!pfx.host.empty())
+		s << pfx.host;
+	else
+		s << '*';
+
+	return s;
+}
+
+rfc1459::tape::tape(const std::string &str)
+:tape
+{
+	reinterpret_cast<const uint8_t *>(str.data()),
+	str.size()
+}
+{
+}
+
+rfc1459::tape::tape(const char *const &str)
+:tape
+{
+	reinterpret_cast<const uint8_t *>(str),
+	strlen(str)
+}
+{
+}
+
+rfc1459::tape::tape(const uint8_t *const &buf,
+                    const size_t &size)
+try
+{
+	const uint8_t *start(buf);
+	const uint8_t *stop(buf + size);
+	qi::parse(start, stop, capstan, *this);
+}
+catch(const boost::spirit::qi::expectation_failure<const uint8_t *> &e)
+{
+	throw syntax_error("@%d expecting :%s",
+	                   int(e.last - e.first),
+	                   string(e.what_).c_str());
+}
+
+bool
+rfc1459::tape::append(const char *const &buf,
+                      const size_t &len)
+{
+	const auto &start(reinterpret_cast<const uint8_t *>(buf));
+	const auto &stop(start + len);
+	return qi::parse(start, stop, capstan, *this);
+}
+
+rfc1459::line::line(const std::string &str)
+:line
+{
+	reinterpret_cast<const uint8_t *>(str.data()),
+	str.size()
+}
+{
+}
+
+rfc1459::line::line(const char *const &str)
+:line
+{
+	reinterpret_cast<const uint8_t *>(str),
+	strlen(str)
+}
+{
+}
+
+rfc1459::line::line(const uint8_t *const &buf,
+                    const size_t &size)
+try
+{
+	const uint8_t *start(buf);
+	const uint8_t *stop(buf + size);
+	qi::parse(start, stop, head, *this);
+}
+catch(const boost::spirit::qi::expectation_failure<const uint8_t *> &e)
+{
+	throw syntax_error("@%d expecting :%s",
+	                   int(e.last - e.first),
+	                   string(e.what_).c_str());
 }
 
 std::string

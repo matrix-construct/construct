@@ -391,5 +391,5 @@ handle_line(const std::string &line)
 	if(line == "EXIT")
 		exit(0);
 
-	ircd::execute(ircd::me, line + "\r\n");
+	ircd::execute(ircd::me, line);
 }

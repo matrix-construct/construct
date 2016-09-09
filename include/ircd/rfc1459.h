@@ -30,7 +30,8 @@
 namespace ircd      {
 namespace rfc1459   {
 
-IRCD_EXCEPTION(ircd::error, syntax_error)
+IRCD_EXCEPTION(ircd::error, error)
+IRCD_EXCEPTION(error, syntax_error)
 
 namespace character
 {
@@ -158,9 +159,22 @@ struct line
 	struct cmd cmd;
 	struct parv parv;
 
-	line(const uint8_t *const &buf, const size_t &len);
-	line(const std::string &line);
+	explicit line(const uint8_t *const &buf, const size_t &len);
+	explicit line(const std::string &line);
+	line(const char *const &line);
 	line() = default;
+};
+
+struct tape
+:std::deque<line>
+{
+	bool append(const char *const &buf, const size_t &len);
+
+	using std::deque<line>::deque;
+	explicit tape(const uint8_t *const &buf, const size_t &len);
+	explicit tape(const std::string &tape);
+	tape(const char *const &tape);
+	tape() = default;
 };
 
 std::ostream &operator<<(std::ostream &, const pfx &);

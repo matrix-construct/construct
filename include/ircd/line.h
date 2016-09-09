@@ -28,10 +28,10 @@ namespace ircd {
 struct line
 :rfc1459::line
 {
-	using rfc1459::line::line;
-
 	auto &operator[](const size_t &pos) const;
 	auto &operator[](const size_t &pos);
+
+	using rfc1459::line::line;
 };
 
 inline auto &pfx(const line &line)               { return line.pfx;                                }
