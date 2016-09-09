@@ -51,6 +51,7 @@ std::forward_list<filesystem::path> _paths
 	modroot
 };
 
+//TODO: XXX: This should all be folded away somewhere eventually
 std::map<std::type_index, struct type_handlers> type_handlers
 {{
 	// Add a generic init function handler
@@ -66,10 +67,7 @@ std::map<std::type_index, struct type_handlers> type_handlers
 	// Add a generic fini function handler
 	make_index<mapi::fini>(),
 	{
-		[](mod &mod, const std::string &name)
-		{
-			// The fini is ignored on load
-		},
+		nullptr,
 		[](mod &mod, const std::string &name)
 		{
 			get<mapi::fini>(mod, name)();
@@ -226,7 +224,7 @@ try
 {
 	const auto &handlers(type_handlers.at(type));
 	if(!handlers.loader)
-		throw std::out_of_range("");
+		return;
 
 	log.debug("Found loader for \"%s\" in %s (type: %s)",
 	          name.c_str(),
@@ -258,7 +256,7 @@ try
 {
 	const auto &handlers(type_handlers.at(type));
 	if(!handlers.unloader)
-		throw std::out_of_range("");
+		return;
 
 	log.debug("Found unloader for \"%s\" in %s (type: %s)",
 	          name.c_str(),
