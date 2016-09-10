@@ -47,6 +47,14 @@ inline auto &command(line &line)                 { return line.cmd;             
 inline auto &parv(const line &line)              { return line.parv;                               }
 inline auto &parv(line &line)                    { return line.parv;                               }
 inline auto parc(const line &line)               { return parv(line).size();                       }
+bool has(const line &line, const uint &argp);
+
+inline bool
+has(const line &line,
+    const uint &argp)
+{
+	return parc(line) > argp;
+}
 
 inline auto &
 line::operator[](const size_t &pos)
