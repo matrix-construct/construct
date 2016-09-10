@@ -107,7 +107,7 @@ conf::execute(const std::string &line)
 try
 {
 	log.debug("%s", line.c_str());
-	ircd::execute(me, line);
+	ircd::execute(*me, line);
 	return true;
 }
 catch(const std::exception &e)

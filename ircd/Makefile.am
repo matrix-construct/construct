@@ -42,7 +42,8 @@ libircd_la_SOURCES =   \
 	snomask.cc         \
 	info.cc            \
 	cmd.cc             \
-	ctx.cc
+	ctx.cc             \
+	client.cc
 
 #authproc.cc			\
 #bandbi.cc                      \

@@ -20,18 +20,12 @@
  */
 
 #include <boost/asio.hpp>
-#include <ircd/lex_cast.h>
 #include <ircd/ctx_ctx.h>
+#include <ircd/lex_cast.h>
+#include <ircd/client_sock.h>
 
 namespace ip = boost::asio::ip;
 using namespace ircd;
-
-struct clicli
-{
-	ip::tcp::socket socket;
-
-	clicli(): socket{*ircd::ios} {}
-};
 
 const size_t STACK_SIZE
 {
@@ -127,9 +121,9 @@ bool
 listener::accept()
 try
 {
-	auto clit(std::make_unique<clicli>());
-	acceptor.async_accept(clit->socket, yield(continuation()));
-	printf("Got client!\n");
+	auto client(std::make_unique<client::client>());
+	acceptor.async_accept(client->sock->sd, yield(continuation()));
+
 	return true;
 }
 catch(const boost::system::system_error &e)

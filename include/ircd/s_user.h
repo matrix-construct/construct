@@ -36,8 +36,8 @@ extern bool valid_username(const char *username);
 
 extern int user_mode(client::client *, client::client *, int, const char **);
 
-void send_umode_out(client::client &client, const client::client &after, const umode::mask &before = 0);
-void send_umode(client::client &to, const client::client &after, const umode::mask &before = 0);
+//void send_umode_out(client::client &client, const client::client &after, const umode::mask &before = 0);
+//void send_umode(client::client &to, const client::client &after, const umode::mask &before = 0);
 void send_umode(client::client &to, const client::client &source, const char *const &buf);
 
 extern void show_lusers(client::client *source_p);

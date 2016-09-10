@@ -27,6 +27,18 @@
 #include <rb/rb.h>
 #endif
 
+// TODO: move
+// Allow a reference to an ios to be passed to ircd
+#ifdef __cplusplus
+namespace boost {
+namespace asio  {
+
+	struct io_service;
+
+} // namespace asio
+} // namespace boost
+#endif // __cplusplus
+
 namespace ircd
 {
 	using std::begin;
@@ -41,6 +53,8 @@ namespace ircd
 // Temp fwd decl scaffold
 namespace ircd
 {
+	extern boost::asio::io_service *ios;
+
 	namespace client
 	{
 		struct client;

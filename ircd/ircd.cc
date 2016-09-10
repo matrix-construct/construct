@@ -31,6 +31,7 @@ namespace ircd
 	bool debugmode;                               // set by command line
 	boost::asio::io_service *ios;                 // user's io service
 	main_exit_cb main_exit_func;                  // Called when main context exits
+	client::client *me;                           // That's me
 
 	void seed_random();
 	void init_system();
@@ -76,9 +77,12 @@ void
 ircd::main()
 noexcept try
 {
-	// Ownership is taken of the main context to delete it at function end
+	// The user is notified when this function ends; + other cleanup
 	const scope main_exit(&main_exiting);
 	log::debug("IRCd entered main context.");
+
+	// Establish me here after we have an ios
+	me = new client::client;
 
 	log::info("executing configuration");
 	conf::execute();
@@ -145,6 +149,7 @@ ircd::main_exiting()
 noexcept try
 {
 	mods::unload();
+	delete me;
 
 	if(main_exit_func)
 	{
@@ -258,8 +263,7 @@ struct ServerStatistics ServerStats;
 struct ev_entry *check_splitmode_ev;
 
 int maxconnections;
-client::client me;                // That's me
-struct LocalUser meLocalUser;     // That's also part of me
+//struct LocalUser meLocalUser;     // That's also part of me
 
 rb_dlink_list global_client_list;
 

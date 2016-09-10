@@ -75,6 +75,11 @@ boost::asio::signal_set sigs
 	*ios
 };
 
+// TODO: XXX: This has to be declared first before any modules
+// are loaded otherwise the module will not be unloadable.
+boost::asio::ip::tcp::acceptor _dummy_acceptor_ { *ios };
+boost::asio::ip::tcp::socket _dummy_sock_ { *ios };
+
 int main(int argc, char *const *argv)
 try
 {
@@ -395,5 +400,8 @@ handle_line(const std::string &line)
 	if(line == "EXIT")
 		exit(0);
 
-	ircd::execute(ircd::me, line);
+	if(unlikely(!ircd::me))
+		throw ircd::error("IRCd `me' not available to execute on");
+
+	ircd::execute(*ircd::me, line);
 }

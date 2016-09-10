@@ -46,7 +46,7 @@ moduledir=@moduledir@
 #m_kill_la_SOURCES = m_kill.cc
 #m_message_la_SOURCES = m_message.cc
 #m_mode_la_SOURCES = m_mode.cc
-m_modules_la_SOURCES = m_modules.cc
+#m_modules_la_SOURCES = m_modules.cc
 #m_nick_la_SOURCES = m_nick.cc
 #m_part_la_SOURCES = m_part.cc
 #m_quit_la_SOURCES = m_quit.cc
@@ -122,8 +122,8 @@ m_modules_la_SOURCES = m_modules.cc
 #m_xline_la_SOURCES = m_xline.cc
 #sno_routing_la_SOURCES = sno_routing.cc
 
-module_LTLIBRARIES = \
-	m_modules.la
+module_LTLIBRARIES =
+#	m_modules.la
 #  m_ban.la \
 #  m_die.la \
 #  m_error.la \

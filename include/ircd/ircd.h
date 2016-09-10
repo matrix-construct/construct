@@ -31,26 +31,11 @@
 #include "stdinc.h"
 #endif
 
-// TODO: move
-// Allow a reference to an ios to be passed to ircd
-#ifdef __cplusplus
-namespace boost {
-namespace asio  {
-
-	struct io_service;
-
-} // namespace asio
-} // namespace boost
-#endif // __cplusplus
-
-
-
 #ifdef __cplusplus
 namespace ircd {
 
 extern bool debugmode;
-extern boost::asio::io_service *ios;
-extern client::client me;
+extern client::client *me;
 
 // Set callback for when IRCd's main context has completed.
 using main_exit_cb = std::function<void ()>;
