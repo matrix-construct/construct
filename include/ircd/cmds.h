@@ -20,7 +20,7 @@
  */
 
 #pragma once
-#define HAVE_IRCD_CMD_H
+#define HAVE_IRCD_CMDS_H
 
 #ifdef __cplusplus
 namespace ircd {

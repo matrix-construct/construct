@@ -41,7 +41,7 @@ libircd_la_SOURCES =   \
 	modules.cc         \
 	snomask.cc         \
 	info.cc            \
-	cmd.cc             \
+	cmds.cc            \
 	ctx.cc             \
 	client.cc
 

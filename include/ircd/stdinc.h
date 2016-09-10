@@ -103,7 +103,7 @@ namespace ircd
 #include "msgbuf.h"
 #include "line.h"
 #include "tape.h"
-#include "cmd.h"
+#include "cmds.h"
 #include "client.h"
 
 #include "mask.h"
