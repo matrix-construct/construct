@@ -23,31 +23,35 @@
 
 using namespace ircd;
 
-/******************************************************************************
- * ctx.h
- */
+///////////////////////////////////////////////////////////////////////////////
+//
+// ctx.h
+//
 __thread ctx::ctx *ctx::current;
 
-std::chrono::microseconds
-ctx::wait()
+bool
+ctx::wait_until(const std::chrono::steady_clock::time_point &tp,
+                const std::nothrow_t &)
 {
-	const auto rem(wait(std::chrono::microseconds::max()));
-	return std::chrono::microseconds::max() - rem;
+	auto &c(cur());
+	c.alarm.expires_at(tp);
+	c.wait(); // now you're yielding with portals
+
+	return std::chrono::steady_clock::now() >= tp;
 }
 
 std::chrono::microseconds
-ctx::wait(const std::chrono::microseconds &duration)
+ctx::wait(const std::chrono::microseconds &duration,
+          const std::nothrow_t &)
 {
-	assert(current);
 	auto &c(cur());
-
 	c.alarm.expires_from_now(duration);
 	c.wait(); // now you're yielding with portals
+	const auto ret(c.alarm.expires_from_now());
 
 	// return remaining duration.
 	// this is > 0 if notified or interrupted
 	// this is unchanged if a note prevented any wait at all
-	const auto ret(c.alarm.expires_from_now());
 	return std::chrono::duration_cast<std::chrono::microseconds>(ret);
 }
 
@@ -61,8 +65,8 @@ ctx::wait()
 
 ircd::ctx::context::context(const size_t &stack_sz,
                             std::function<void ()> func,
-                            const flags &flags)
-:c{std::make_unique<ctx>(stack_sz, ircd::ios)}
+                            const enum flags &flags)
+:c{std::make_unique<ctx>(stack_sz, flags, ircd::ios)}
 {
 	auto spawn([stack_sz, c(c.get()), func(std::move(func))]
 	{
@@ -88,10 +92,13 @@ ircd::ctx::context::context(const size_t &stack_sz,
 		ios->dispatch(std::move(spawn));
 	else
 		spawn();
+
+	if(flags & SELF_DESTRUCT)
+		c.release();
 }
 
 ircd::ctx::context::context(std::function<void ()> func,
-                            const flags &flags)
+                            const enum flags &flags)
 :context
 {
 	DEFAULT_STACK_SIZE,
@@ -111,6 +118,7 @@ noexcept
 	if(!current)
 		return;
 
+	interrupt();
 	join();
 }
 
@@ -120,10 +128,10 @@ ircd::ctx::context::join()
 	if(joined())
 		return;
 
+	// Set the target context to notify this context when it finishes
 	assert(!c->adjoindre);
 	c->adjoindre = &cur();
 	wait();
-	c.reset(nullptr);
 }
 
 ircd::ctx::ctx *
@@ -138,10 +146,29 @@ ircd::ctx::notify(ctx &ctx)
 	return ctx.note();
 }
 
+void
+ircd::ctx::interrupt(ctx &ctx)
+{
+	ctx.flags |= INTERRUPTED;
+	ctx.wake();
+}
+
 bool
 ircd::ctx::started(const ctx &ctx)
 {
 	return ctx.started();
+}
+
+bool
+ircd::ctx::finished(const ctx &ctx)
+{
+	return ctx.finished();
+}
+
+const enum ctx::flags &
+ircd::ctx::flags(const ctx &ctx)
+{
+	return ctx.flags;
 }
 
 const int64_t &
@@ -150,16 +177,13 @@ ircd::ctx::notes(const ctx &ctx)
 	return ctx.notes;
 }
 
-void
-ircd::ctx::free(const ctx *const ptr)
-{
-	delete ptr;
-}
+///////////////////////////////////////////////////////////////////////////////
+//
+// ctx_ctx.h
+//
 
-/******************************************************************************
- * ctx_ctx.h
- */
 ctx::ctx::ctx(const size_t &stack_max,
+              const enum flags &flags,
               boost::asio::io_service *const &ios)
 :alarm{*ios}
 ,yc{nullptr}
@@ -167,6 +191,7 @@ ctx::ctx::ctx(const size_t &stack_max,
 ,stack_max{stack_max}
 ,notes{1}
 ,adjoindre{nullptr}
+,flags{flags}
 {
 }
 
@@ -180,9 +205,7 @@ noexcept
 	stack_base = uintptr_t(__builtin_frame_address(0));
 	ircd::ctx::current = this;
 
-	// If anything is done to `this' after func() or in atexit, func() cannot
-	// delete its own context, which is a worthy enough convenience to preserve.
-	const scope atexit([]
+	const scope atexit([this]
 	{
 		ircd::ctx::current = nullptr;
 		this->yc = nullptr;

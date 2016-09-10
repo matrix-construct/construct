@@ -66,10 +66,10 @@ inline void
 dock::notify_one()
 noexcept
 {
-	const auto c(q.front());
-	q.pop_front();
+	if(q.empty())
+		return;
 
-	notify(*c);
+	notify(*q.front());
 }
 
 inline void
@@ -77,8 +77,6 @@ dock::notify_all()
 noexcept
 {
 	const auto copy(q);
-	q.clear();
-
 	for(const auto &c : copy)
 		notify(*c);
 }
@@ -181,7 +179,9 @@ dock::wait_until(time_point&& tp,
 inline void
 dock::remove_self()
 {
-	std::remove(begin(q), end(q), &cur());
+	const auto it(std::find(begin(q), end(q), &cur()));
+	assert(it != end(q));
+	q.erase(it);
 }
 
 } // namespace ctx

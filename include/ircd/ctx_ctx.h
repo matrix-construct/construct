@@ -35,22 +35,29 @@ struct ctx
 	boost::asio::yield_context *yc;
 	uintptr_t stack_base;
 	size_t stack_max;
-	int64_t notes;                        // norm: 0 = asleep; 1 = awake; inc by others; dec by self
+	int64_t notes;                               // norm: 0 = asleep; 1 = awake; inc by others; dec by self
 	ctx *adjoindre;
+	enum flags flags;
 
-	bool started() const;
+	bool finished() const                        { return yc == nullptr;                           }
+	bool started() const                         { return bool(yc);                                }
 	bool wait();
 	void wake();
 	bool note();
 
 	void operator()(boost::asio::yield_context, const std::function<void ()>) noexcept;
 
-	ctx(const size_t &stack_max                = DEFAULT_STACK_SIZE,
-	    boost::asio::io_service *const &ios    = ircd::ios);
+	ctx(const size_t &stack_max                  = DEFAULT_STACK_SIZE,
+	    const enum flags &flags                  = (enum flags)0,
+	    boost::asio::io_service *const &ios      = ircd::ios);
 
 	ctx(ctx &&) noexcept = delete;
 	ctx(const ctx &) = delete;
 };
+
+size_t stack_usage_here(const ctx &) __attribute__((noinline));
+bool stack_warning(const ctx &, const double &pct = 0.80);
+void stack_assertion(const ctx &, const double &pct = 0.80);
 
 struct continuation
 {
@@ -63,14 +70,13 @@ struct continuation
 	~continuation() noexcept;
 };
 
-size_t stack_usage_here(const ctx &) __attribute__((noinline));
-
 inline
 continuation::continuation(ctx *const &self)
 :self{self}
 {
 	assert(self != nullptr);
 	assert(self->notes <= 1);
+	stack_assertion(*self);
 	ircd::ctx::current = nullptr;
 }
 
@@ -95,6 +101,20 @@ const
 	return *self->yc;
 }
 
+inline void
+stack_assertion(const ctx &ctx,
+                const double &pct)
+{
+	assert(!stack_warning(ctx, pct));
+}
+
+inline bool
+stack_warning(const ctx &ctx,
+              const double &pct)
+{
+	return stack_usage_here(ctx) > double(ctx.stack_max) * pct;
+}
+
 inline bool
 ctx::note()
 {
@@ -109,10 +129,7 @@ inline void
 ctx::wake()
 try
 {
-	strand.dispatch([this]
-	{
-		alarm.cancel();
-	});
+	alarm.cancel();
 }
 catch(const boost::system::system_error &e)
 {
@@ -131,15 +148,13 @@ ctx::wait()
 	assert(ec == boost::system::errc::operation_canceled ||
 	       ec == boost::system::errc::success);
 
+	// Interruption shouldn't be used for normal operation,
+	// so please eat this branch misprediction.
+	if(unlikely(flags & INTERRUPTED))
+		throw interrupted("ctx(%p)::wait()", (const void *)this);
+
 	// notes = 1; set by continuation dtor on wakeup
 	return true;
-}
-
-inline bool
-ctx::started()
-const
-{
-	return bool(yc);
 }
 
 } // namespace ctx

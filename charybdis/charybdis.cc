@@ -311,12 +311,8 @@ console_spawn()
 		return;
 
 	// The console function is executed asynchronously.
-	// This call may or may not return immediately.
-	ircd::context context(std::bind(&console));
-
-	// The console may be joined unless it is released here;
-	// now cleanup must occur by other means.
-	context.detach();
+	// The SELF_DESTRUCT indicates it will clean itself up.
+	ircd::context(std::bind(&console), ircd::ctx::SELF_DESTRUCT);
 }
 
 const char *const console_message
@@ -337,7 +333,6 @@ try
 	{
 		console_active = false;
 		console_in = nullptr;
-		free(console_ctx);
 	});
 
 	console_active = true;

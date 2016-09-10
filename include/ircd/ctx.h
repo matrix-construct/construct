@@ -29,35 +29,60 @@
 namespace ircd {
 namespace ctx  {
 
+using std::chrono::microseconds;
+using std::chrono::steady_clock;
+using time_point = steady_clock::time_point;
+
 IRCD_EXCEPTION(ircd::error, error)
 IRCD_EXCEPTION(error, interrupted)
 IRCD_EXCEPTION(error, timeout)
 
 enum flags
 {
-	DEFER_POST      = 0x01,   // Defers spawn with an ios.post()
-	DEFER_DISPATCH  = 0x02,   // (Defers) spawn with an ios.dispatch()
-	DEFER_STRAND    = 0x04,   // Defers spawn by posting to strand
-	SPAWN_STRAND    = 0x08,   // Spawn onto a strand, otherwise ios itself
+	DEFER_POST      = 0x0001,   // Defers spawn with an ios.post()
+	DEFER_DISPATCH  = 0x0002,   // (Defers) spawn with an ios.dispatch()
+	DEFER_STRAND    = 0x0004,   // Defers spawn by posting to strand
+	SPAWN_STRAND    = 0x0008,   // Spawn onto a strand, otherwise ios itself
+	SELF_DESTRUCT   = 0x0010,   // Context deletes itself; see struct context constructor notes
+	INTERRUPTED     = 0x0020,   // Marked
 };
 
 const auto DEFAULT_STACK_SIZE = 64_KiB;
 
+// Context implementation
 struct ctx;                                      // Internal implementation to hide boost headers
 
+const int64_t &notes(const ctx &);               // Peeks at internal semaphore count (you don't need this)
+const flags &flags(const ctx &);                 // Get the internal flags value.
+bool finished(const ctx &);                      // Context function returned (or exception).
+bool started(const ctx &);                       // Context was ever entered.
+void interrupt(ctx &);                           // Interrupt the context for termination.
+bool notify(ctx &);                              // Increment the semaphore (only library ppl need this)
+
+// this_context
 extern __thread struct ctx *current;             // Always set to the currently running context or null
 
 ctx &cur();                                      // Convenience for *current (try to use this instead)
-void free(const ctx *);                          // Manual delete (for the incomplete type)
-const int64_t &notes(const ctx &);               // Peeks at internal semaphore count (you don't need this)
-bool started(const ctx &);                       // Context was ever entered. (can't know if finished)
-bool notify(ctx &);                              // Increment the semaphore (only library ppl need this)
+void wait();                                     // Returns when context notified.
+
+// Return remaining time if notified; or <= 0 if not, and timeout thrown on throw overloads
+microseconds wait(const microseconds &, const std::nothrow_t &);
+template<class E, class duration> nothrow_overload<E, duration> wait(const duration &);
+template<class E = timeout, class duration> throw_overload<E, duration> wait(const duration &);
+
+// Returns false if notified; true if time point reached, timeout thrown on throw_overloads
+bool wait_until(const time_point &tp, const std::nothrow_t &);
+template<class E> nothrow_overload<E, bool> wait_until(const time_point &tp);
+template<class E = timeout> throw_overload<E> wait_until(const time_point &tp);
 
 class context
 {
 	std::unique_ptr<ctx> c;
 
   public:
+	bool operator!() const                       { return !c;                                      }
+	operator bool() const                        { return bool(c);                                 }
+
 	operator const ctx &() const                 { return *c;                                      }
 	operator ctx &()                             { return *c;                                      }
 
@@ -66,8 +91,9 @@ class context
 	void join();                                 // Blocks the current context until this one finishes
 	ctx *detach();                               // other calls undefined after this call
 
-	context(const size_t &stack_size, std::function<void ()>, const flags &flags = (enum flags)0);
-	context(std::function<void ()>, const flags &flags = (enum flags)0);
+	// Note: Constructing with SELF_DESTRUCT flag makes any further use of this object undefined.
+	context(const size_t &stack_size, std::function<void ()>, const enum flags &flags = (enum flags)0);
+	context(std::function<void ()>, const enum flags &flags = (enum flags)0);
 	context(context &&) noexcept = default;
 	context(const context &) = delete;
 	~context() noexcept;
@@ -75,51 +101,50 @@ class context
 	friend void swap(context &a, context &b) noexcept;
 };
 
-// "namespace this_context;" interface
-std::chrono::microseconds wait(const std::chrono::microseconds &);
-std::chrono::microseconds wait();
-
-template<class duration>
-duration wait(const duration &d)
-{
-	using std::chrono::duration_cast;
-
-	const auto us(duration_cast<std::chrono::microseconds>(d));
-	return duration_cast<duration>(wait(us));
-}
-
-template<class E>
-nothrow_overload<E, bool>
-wait_until(const std::chrono::steady_clock::time_point &tp)
-{
-	static const auto zero(tp - tp);
-	return wait(tp - std::chrono::steady_clock::now()) <= zero;
-}
-
-template<class E = timeout>
-throw_overload<E>
-wait_until(const std::chrono::steady_clock::time_point &tp)
-{
-	if(wait_until<std::nothrow_t>(tp))
-		throw E();
-}
-
-template<class E = timeout>
-throw_overload<E>
-wait_until()
-{
-	wait_until<E>(std::chrono::steady_clock::time_point::max());
-}
-
-inline
-void swap(context &a, context &b)
+inline void
+swap(context &a, context &b)
 noexcept
 {
 	std::swap(a.c, b.c);
 }
 
-inline
-ctx &cur()
+template<class E>
+throw_overload<E>
+wait_until(const time_point &tp)
+{
+	if(wait_until<std::nothrow_t>(tp))
+		throw E();
+}
+
+template<class E>
+nothrow_overload<E, bool>
+wait_until(const time_point &tp)
+{
+	return wait_until(tp, std::nothrow);
+}
+
+template<class E,
+         class duration>
+throw_overload<E, duration>
+wait(const duration &d)
+{
+	const auto ret(wait<std::nothrow_t>(d));
+	return ret <= duration(0)? throw E() : ret;
+}
+
+template<class E,
+         class duration>
+nothrow_overload<E, duration>
+wait(const duration &d)
+{
+	using std::chrono::duration_cast;
+
+	const auto ret(wait(duration_cast<microseconds>(d), std::nothrow));
+	return duration_cast<duration>(ret);
+}
+
+inline ctx &
+cur()
 {
 	assert(current);
 	return *current;
