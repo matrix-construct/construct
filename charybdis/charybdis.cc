@@ -63,8 +63,17 @@ lgetopt opts[] =
 	{ nullptr,      nullptr,          lgetopt::STRING,  nullptr },
 };
 
-boost::asio::io_service ios;
-boost::asio::signal_set sigs(ios);
+boost::asio::io_service *ios
+{
+	// Having trouble with static destruction in clang so this
+	// has to become still-reachable
+	new boost::asio::io_service
+};
+
+boost::asio::signal_set sigs
+{
+	*ios
+};
 
 int main(int argc, char *const *argv)
 try
@@ -82,7 +91,7 @@ try
 	}
 
 	const std::string confpath(configfile?: path::get(path::IRCD_CONF));
-	ircd::init(ios, confpath);
+	ircd::init(*ios, confpath);
 
 	sigs.add(SIGHUP);
 	sigs.add(SIGINT);
@@ -100,7 +109,7 @@ try
 	if(cmdline)
 		console_spawn();
 
-	ios.run();  // Blocks until a clean exit or an exception comes out of it.
+	ios->run();  // Blocks until a clean exit or an exception comes out of it.
 }
 catch(const ircd::conf::newconf::syntax_error &e)
 {
@@ -336,7 +345,7 @@ try
 
 	std::cout << console_message << generic_message;
 
-	boost::asio::posix::stream_descriptor in{::ios, dup(STDIN_FILENO)};
+	boost::asio::posix::stream_descriptor in{*::ios, dup(STDIN_FILENO)};
 	console_in = &in;
 
 	boost::asio::streambuf buf{BUFSIZE};
