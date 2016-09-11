@@ -81,6 +81,7 @@ namespace ircd
 }
 
 #include "util.h"
+#include "util_timer.h"
 #include "defaults.h"
 #include "exception.h"
 #include "numeric.h"
