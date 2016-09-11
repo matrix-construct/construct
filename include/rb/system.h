@@ -30,6 +30,14 @@ extern "C" {
 	typedef unsigned int uint;
 #endif
 
+#ifndef int128_t
+	typedef __int128 int128_t;
+#endif
+
+#ifndef uint128_t
+	typedef unsigned __int128 uint128_t;
+#endif
+
 #ifdef __GNUC__
 #undef alloca
 #define alloca __builtin_alloca
