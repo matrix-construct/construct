@@ -29,8 +29,8 @@ mapi::header IRCD_MODULE
 struct L
 :conf::top
 {
-	void set(client::client &, std::string label, std::string key, std::string val) override;
-	void del(client::client &, const std::string &label, const std::string &key) override;
+	void set(client &, std::string label, std::string key, std::string val) override;
+	void del(client &, const std::string &label, const std::string &key) override;
 
 	using conf::top::top;
 }
@@ -41,7 +41,7 @@ static L
 };
 
 void
-L::set(client::client &client,
+L::set(client &client,
        std::string label,
        std::string key,
        std::string val)
@@ -59,7 +59,7 @@ catch(const std::exception &e)
 }
 
 void
-L::del(client::client &client,
+L::del(client &client,
        const std::string &label,
        const std::string &key)
 try

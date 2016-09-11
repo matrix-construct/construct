@@ -35,7 +35,7 @@
 namespace ircd {
 
 extern bool debugmode;
-extern client::client *me;
+extern std::shared_ptr<client> me;
 
 // Set callback for when IRCd's main context has completed.
 using main_exit_cb = std::function<void ()>;
@@ -80,15 +80,15 @@ struct Counter
 	unsigned long totalrestartcount;	/* Total client count ever */
 };
 
-extern struct SetOptions GlobalSetOptions;	/* defined in ircd.c */
+/*
+extern struct SetOptions GlobalSetOptions;
 
 extern volatile sig_atomic_t dorehash;
 extern volatile sig_atomic_t dorehashbans;
 extern volatile sig_atomic_t doremotd;
 extern bool kline_queued;
 extern bool server_state_foreground;
-extern bool opers_see_all_users; /* sno_farconnect.so loaded, operspy without
-				    accountability, etc */
+extern bool opers_see_all_users; // sno_farconnect.so loaded, operspy without accountability, etc
 
 extern rb_dlink_list global_client_list;
 extern client::client *local[];
@@ -120,6 +120,7 @@ extern int maxconnections;
 void restart(const char *) __attribute__((noreturn));
 void ircd_shutdown() __attribute__((noreturn));
 void server_reboot(void) __attribute__((noreturn));
+*/
 
 }      // namespace ircd
 #endif // __cplusplus

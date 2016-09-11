@@ -26,8 +26,6 @@
 namespace ircd {
 namespace cmds {
 
-using client::client;
-
 IRCD_EXCEPTION(ircd::error, error)
 IRCD_EXCEPTION(error, not_found)                 // Really should be throwing err::421 directly but..
 IRCD_EXCEPTION(error, already_exists)

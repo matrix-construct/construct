@@ -135,7 +135,7 @@ noexcept
 }
 
 void
-conf::top::operator()(client::client &client,
+conf::top::operator()(client &client,
                       line line)
 try
 {
@@ -156,7 +156,7 @@ catch(const boost::bad_lexical_cast &e)
 
 __attribute__((noreturn))
 void
-conf::top::enu(client::client &client,
+conf::top::enu(client &client,
                const std::string &label,
                const std::string &key)
 {
@@ -165,7 +165,7 @@ conf::top::enu(client::client &client,
 
 __attribute__((noreturn))
 void
-conf::top::del(client::client &client,
+conf::top::del(client &client,
                const std::string &label,
                const std::string &key)
 {
@@ -173,7 +173,7 @@ conf::top::del(client::client &client,
 }
 
 void
-conf::top::set(client::client &client,
+conf::top::set(client &client,
                std::string label,
                std::string key,
                std::string val)
@@ -183,7 +183,7 @@ conf::top::set(client::client &client,
 
 __attribute__((noreturn))
 const uint8_t *
-conf::top::get(client::client &client,
+conf::top::get(client &client,
                const std::string &label,
                const std::string &key)
 const
@@ -192,14 +192,14 @@ const
 }
 
 void
-conf::top::enu(client::client &client,
+conf::top::enu(client &client,
                const std::string &key)
 {
 
 }
 
 void
-conf::top::del(client::client &client,
+conf::top::del(client &client,
                const std::string &key)
 {
 	if(!map.erase(key))
@@ -209,7 +209,7 @@ conf::top::del(client::client &client,
 }
 
 void
-conf::top::set(client::client &client,
+conf::top::set(client &client,
                std::string key,
                std::string val)
 try
@@ -230,7 +230,7 @@ catch(const boost::bad_lexical_cast &e)
 }
 
 const uint8_t *
-conf::top::get(client::client &client,
+conf::top::get(client &client,
                const std::string &key)
 const
 try

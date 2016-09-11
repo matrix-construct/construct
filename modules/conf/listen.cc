@@ -22,9 +22,8 @@
 #include <boost/asio.hpp>
 #include <ircd/ctx_ctx.h>
 #include <ircd/lex_cast.h>
-#include <ircd/client_sock.h>
+#include <ircd/sock.h>
 
-namespace ip = boost::asio::ip;
 using namespace ircd;
 
 const size_t STACK_SIZE
@@ -121,9 +120,9 @@ bool
 listener::accept()
 try
 {
-	auto client(std::make_unique<client::client>());
-	acceptor.async_accept(client->sock->sd, yield(continuation()));
-
+	auto sock(std::make_unique<sock>());
+	acceptor.async_accept(sock->sd, yield(continuation()));
+	add_client(std::move(sock));
 	return true;
 }
 catch(const boost::system::system_error &e)
@@ -155,8 +154,8 @@ struct P
 	void set_host(listener &, std::string);
 	void set_port(listener &, std::string);
 
-	void set(client::client &, std::string label, std::string key, std::string val) override;
-	void del(client::client &, const std::string &label, const std::string &key) override;
+	void set(client &, std::string label, std::string key, std::string val) override;
+	void del(client &, const std::string &label, const std::string &key) override;
 
 	using conf::top::top;
 }
@@ -172,7 +171,7 @@ mapi::header IRCD_MODULE
 };
 
 void
-P::del(client::client &,
+P::del(client &,
        const std::string &label,
        const std::string &key)
 {
@@ -180,7 +179,7 @@ P::del(client::client &,
 }
 
 void
-P::set(client::client &,
+P::set(client &,
        std::string label,
        std::string key,
        std::string val)

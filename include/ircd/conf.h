@@ -54,19 +54,19 @@ struct top
 	virtual void assign(item &item, std::string val) const;
 
 	// Override to provide operations on singleton blocks
-	virtual const uint8_t *get(client::client &, const std::string &key) const;
-	virtual void set(client::client &, std::string key, std::string val);
-	virtual void del(client::client &, const std::string &key);
-	virtual void enu(client::client &, const std::string &key);
+	virtual const uint8_t *get(client &, const std::string &key) const;
+	virtual void set(client &, std::string key, std::string val);
+	virtual void del(client &, const std::string &key);
+	virtual void enu(client &, const std::string &key);
 
 	// Override to provide operations on named blocks
-	virtual const uint8_t *get(client::client &, const std::string &label, const std::string &key) const;
-	virtual void set(client::client &, std::string label, std::string key, std::string val);
-	virtual void del(client::client &, const std::string &label, const std::string &key);
-	virtual void enu(client::client &, const std::string &label, const std::string &key);
+	virtual const uint8_t *get(client &, const std::string &label, const std::string &key) const;
+	virtual void set(client &, std::string label, std::string key, std::string val);
+	virtual void del(client &, const std::string &label, const std::string &key);
+	virtual void enu(client &, const std::string &label, const std::string &key);
 
 	// Override to handle the raw line
-	virtual void operator()(client::client &, line) override;
+	virtual void operator()(client &, line) override;
 
 	top(const char &letter, const std::string &name, const items & = {});
 	~top() noexcept;
@@ -86,8 +86,8 @@ using type_handler = std::function<void (uint8_t *const &ptr, std::string text)>
 extern std::map<std::type_index, type_handler> type_handlers;
 
 template<class T> std::type_index make_index();
-template<class T = std::string> const T &get(client::client &, const char &, const std::string &label, const std::string &key);
-template<class T = std::string> const T &get(client::client &, const char &, const std::string &key);
+template<class T = std::string> const T &get(client &, const char &, const std::string &label, const std::string &key);
+template<class T = std::string> const T &get(client &, const char &, const std::string &key);
 
 void execute();
 void parse(const std::string &path);
@@ -95,7 +95,7 @@ void parse(const std::string &path);
 
 template<class T>
 const T &
-get(client::client &client,
+get(client &client,
     const char &letter,
     const std::string &key)
 {
@@ -109,7 +109,7 @@ get(client::client &client,
 
 template<class T>
 const T &
-get(client::client &client,
+get(client &client,
     const char &letter,
     const std::string &label,
     const std::string &key)
@@ -432,17 +432,17 @@ void replace_old_ban(struct ConfItem *);
 
 void read_conf_files(bool cold);
 
-int attach_conf(client::client *, struct ConfItem *);
-int check_client(client::client *client_p, client::client *source_p, const char *);
+int attach_conf(client *, struct ConfItem *);
+int check_client(client *client_p, client *source_p, const char *);
 
-int detach_conf(client::client *);
+int detach_conf(client *);
 
 struct ConfItem *find_tkline(const char *, const char *, struct sockaddr *);
-char *show_iline_prefix(client::client *, struct ConfItem *, char *);
+char *show_iline_prefix(client *, struct ConfItem *, char *);
 void get_printable_conf(struct ConfItem *,
 			       char **, char **, const char **, char **, int *, char **);
 char *get_user_ban_reason(struct ConfItem *aconf);
-void get_printable_kline(client::client *, struct ConfItem *,
+void get_printable_kline(client *, struct ConfItem *,
 				char **, char **, char **, char **);
 
 int conf_yy_fatal_error(const char *);
@@ -451,8 +451,8 @@ int conf_fgets(char *, int, FILE *);
 int valid_wild_card(const char *, const char *);
 void add_temp_kline(struct ConfItem *);
 void add_temp_dline(struct ConfItem *);
-void report_temp_klines(client::client *);
-void show_temp_klines(client::client *, rb_dlink_list *);
+void report_temp_klines(client *);
+void show_temp_klines(client *, rb_dlink_list *);
 
 bool rehash(bool);
 void rehash_bans(void);
@@ -464,7 +464,7 @@ void conf_add_class(struct ConfItem *, int);
 void conf_add_d_conf(struct ConfItem *);
 void flush_expired_ips(void *);
 
-char *get_oper_name(client::client *client_p);
+char *get_oper_name(client *client_p);
 
 }      // namespace conf
 }      // namespace ircd

@@ -55,13 +55,7 @@ namespace ircd
 {
 	extern boost::asio::io_service *ios;
 
-	namespace client
-	{
-		struct client;
-		struct LocalUser;
-		struct PreClient;
-		struct ListClient;
-	}
+	struct client;
 
 	namespace chan
 	{
@@ -84,6 +78,7 @@ namespace ircd
 #include "util_timer.h"
 #include "defaults.h"
 #include "exception.h"
+#include "ircd_getopt.h"
 #include "numeric.h"
 #include "color.h"
 #include "messages.h"
@@ -98,22 +93,33 @@ namespace ircd
 #include "ctx.h"
 #include "ctx_dock.h"
 
+#include "line.h"
+#include "tape.h"
+#include "cmds.h"
+
+#include "u_id.h"
+
+#include "client.h"
+
+#include "logger.h"
+
+#include "newconf.h"
+#include "conf.h"
+
+#include "modules.h"
+
+#include "info.h"
+#include "stringops.h"
+
+/*
 #include "cache.h"
 #include "whowas.h"
 #include "tgchange.h"
 #include "msgbuf.h"
-#include "line.h"
-#include "tape.h"
-#include "cmds.h"
-#include "client.h"
 
 #include "mask.h"
 #include "chmode.h"
 #include "channel.h"
-
-#include "logger.h"
-#include "newconf.h"
-#include "conf.h"
 
 #include "authproc.h"
 #include "bandbi.h"
@@ -123,10 +129,7 @@ namespace ircd
 #include "dns.h"
 #include "hash.h"
 #include "hook.h"
-#include "ircd_getopt.h"
 #include "listener.h"
-#include "info.h"
-#include "modules.h"
 #include "monitor.h"
 #include "operhash.h"
 #include "packet.h"
@@ -142,4 +145,4 @@ namespace ircd
 #include "supported.h"
 #include "s_user.h"
 #include "wsproc.h"
-#include "stringops.h"
+*/

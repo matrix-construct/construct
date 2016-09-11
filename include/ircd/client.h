@@ -28,30 +28,28 @@
 #define HAVE_IRCD_CLIENT_H
 
 #ifdef __cplusplus
-namespace ircd   {
-namespace client {
+namespace ircd {
 
-enum class state
-{
-	CONNECTING,
-};
+struct sock;
+struct client;
+using clist = std::list<std::shared_ptr<client>>;
 
-enum flags
-{
+// Client socket addressing
+using ip_port_pair = std::pair<std::string, uint16_t>;
+using ip_port = IRCD_WEAK_T(ip_port_pair);
+ip_port remote_address(const client &);
+ip_port local_address(const client &);
+std::string string(const ip_port &);
 
-};
+std::shared_ptr<client> shared_from(client &);
+std::weak_ptr<client> weak_from(client &);
 
-struct client
-{
-	std::unique_ptr<struct sock> sock;
+// Makes a client
+std::shared_ptr<client> add_client();
+std::shared_ptr<client> add_client(std::unique_ptr<struct sock>);
 
-	client(boost::asio::io_service *const &ios = ircd::ios);
-	client(const client &) = delete;
-	client &operator=(const client &) = delete;
-	~client();
-};
+const clist &clients();
 
-}      // namespace client
 }      // namespace ircd
 #endif // __cplusplus
 

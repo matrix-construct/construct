@@ -28,7 +28,7 @@ using namespace ircd;
 struct m_host
 :cmd
 {
-	void operator()(client::client &, line) override;
+	void operator()(client &, line) override;
 
 	using cmd::cmd;
 }
@@ -56,7 +56,7 @@ mapi::header IRCD_MODULE
 };
 
 void
-m_host::operator()(client::client &client,
+m_host::operator()(client &client,
                    line line)
 try
 {

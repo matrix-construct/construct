@@ -31,7 +31,7 @@ namespace ircd
 	bool debugmode;                               // set by command line
 	boost::asio::io_service *ios;                 // user's io service
 	main_exit_cb main_exit_func;                  // Called when main context exits
-	client::client *me;                           // That's me
+	std::shared_ptr<client> me;                   // That's me
 
 	void seed_random();
 	void init_system();
@@ -81,8 +81,7 @@ noexcept try
 	const scope main_exit(&main_exiting);
 	log::debug("IRCd entered main context.");
 
-	// Establish me here after we have an ios
-	me = new client::client;
+	ircd::me = add_client();
 
 	log::info("executing configuration");
 	conf::execute();
@@ -149,7 +148,6 @@ ircd::main_exiting()
 noexcept try
 {
 	mods::unload();
-	delete me;
 
 	if(main_exit_func)
 	{
@@ -252,9 +250,10 @@ ircd::seed_random()
 
 
 
-namespace ircd {
+// namespace ircd {
 
 /* /quote set variables */
+/*
 struct SetOptions GlobalSetOptions;
 
 struct Counter Count;
@@ -266,6 +265,7 @@ int maxconnections;
 //struct LocalUser meLocalUser;     // That's also part of me
 
 rb_dlink_list global_client_list;
+*/
 
 /* unknown/client pointer lists */
 rb_dlink_list unknown_list;        /* unknown clients ON this server only */
@@ -275,6 +275,7 @@ rb_dlink_list global_serv_list;    /* global servers on the network */
 rb_dlink_list local_oper_list;     /* our opers, duplicated in lclient_list */
 rb_dlink_list oper_list;           /* network opers */
 
+/*
 char * const *myargv;
 volatile sig_atomic_t dorehash = false;
 volatile sig_atomic_t dorehashbans = false;
@@ -295,8 +296,9 @@ int splitchecking;
 int split_users;
 int split_servers;
 int eob_count;
+*/
 
-}
+// }
 
 /*
 static void
