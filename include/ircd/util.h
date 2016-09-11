@@ -42,6 +42,13 @@ inline namespace util {
     static constexpr NAME##_t NAME {};
 
 
+#define IRCD_WEAK_TYPEDEF(TYPE, NAME)                       \
+struct NAME                                                 \
+:TYPE                                                       \
+{                                                           \
+    using TYPE::TYPE;                                       \
+};
+
 #define IRCD_STRONG_TYPEDEF(TYPE, NAME)                     \
 struct NAME                                                 \
 {                                                           \
@@ -51,6 +58,8 @@ struct NAME                                                 \
     operator TYPE &()               { return val;  }        \
 };
 
+#define IRCD_WEAK_T(TYPE) \
+    IRCD_WEAK_TYPEDEF(TYPE, IRCD_UNIQUE(weak_t))
 
 // ex: using foo_t = IRCD_STRONG_T(int)
 #define IRCD_STRONG_T(TYPE) \
