@@ -64,8 +64,6 @@ namespace ircd
 	}
 
 	struct ConfItem;
-	struct DNSReply;
-	struct Listener;
 	struct Blacklist;
 	struct PrivilegeSet;
 	struct _ssl_ctl;
@@ -128,7 +126,6 @@ namespace ircd
 #include "dns.h"
 #include "hash.h"
 #include "hook.h"
-#include "listener.h"
 #include "monitor.h"
 #include "operhash.h"
 #include "packet.h"
