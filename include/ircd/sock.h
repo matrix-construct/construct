@@ -26,8 +26,9 @@
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include "bufs.h"
+#include "ctx_ctx.h"
 
-namespace ircd   {
+namespace ircd {
 
 namespace ip = boost::asio::ip;
 using boost::system::error_code;
@@ -35,22 +36,21 @@ using boost::asio::steady_timer;
 
 struct sock
 {
+	using message_flags = boost::asio::socket_base::message_flags;
+
 	ip::tcp::socket sd;
 	steady_timer timer;
-	std::exception_ptr eptr;
-	std::array<char, BUFSIZE> rbuf alignas(16);
-	uint16_t checked;
-	uint16_t length;
-	tape reel;
 
 	operator const ip::tcp::socket &() const     { return sd;                                      }
 	operator ip::tcp::socket &()                 { return sd;                                      }
 	ip::tcp::endpoint remote() const             { return sd.remote_endpoint();                    }
 	ip::tcp::endpoint local() const              { return sd.local_endpoint();                     }
 
-	bool terminated() const;
-	uint16_t remaining() const;
-	size_t handle_pck(const error_code &, const size_t) noexcept;
+	template<class mutable_buffers> auto recv_some(const mutable_buffers &, const message_flags & = 0);
+	template<class mutable_buffers> auto recv(const mutable_buffers &);
+
+	template<class const_buffers> auto send_some(const const_buffers &, const message_flags & = 0);
+	template<class const_buffers> auto send(const const_buffers &);
 
 	sock(boost::asio::io_service *const &ios  = ircd::ios);
 };
@@ -61,6 +61,47 @@ uint16_t remote_port(const sock &);
 ip::address local_address(const sock &);
 std::string local_ip(const sock &);
 uint16_t local_port(const sock &);
+
+inline
+sock::sock(boost::asio::io_service *const &ios)
+:sd{*ios}
+,timer{*ios}
+{
+}
+
+// Block until entirely transmitted
+template<class const_buffers>
+auto
+sock::send(const const_buffers &bufs)
+{
+	return async_write(sd, bufs, yield(continuation()));
+}
+
+// Block until something transmitted, returns amount
+template<class const_buffers>
+auto
+sock::send_some(const const_buffers &bufs,
+                const message_flags &flags)
+{
+	return sd.async_send(bufs, flags, yield(continuation()));
+}
+
+// Block until the buffers are completely full
+template<class mutable_buffers>
+auto
+sock::recv(const mutable_buffers &bufs)
+{
+	return async_read(sd, bufs, yield(continuation()));
+}
+
+// Block until something in buffers, returns size
+template<class mutable_buffers>
+auto
+sock::recv_some(const mutable_buffers &bufs,
+                const message_flags &flags)
+{
+	return sd.async_receive(bufs, flags, yield(continuation()));
+}
 
 inline uint16_t
 local_port(const sock &sock)
@@ -97,9 +138,6 @@ remote_address(const sock &sock)
 {
 	return sock.remote().address();
 }
-
-
-static_assert(BUFSIZE == 512, "");
 
 }      // namespace ircd
 #endif // __cplusplus

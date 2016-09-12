@@ -32,22 +32,38 @@ namespace ircd {
 
 struct sock;
 struct client;
-using clist = std::list<std::shared_ptr<client>>;
+
+std::shared_ptr<client> shared_from(client &);
+std::weak_ptr<client> weak_from(client &);
 
 // Client socket addressing
+bool has_socket(const client &);
+const sock &socket(const client &);
+sock &socket(client &);
+
 using ip_port_pair = std::pair<std::string, uint16_t>;
 using ip_port = IRCD_WEAK_T(ip_port_pair);
 ip_port remote_address(const client &);
 ip_port local_address(const client &);
 std::string string(const ip_port &);
 
-std::shared_ptr<client> shared_from(client &);
-std::weak_ptr<client> weak_from(client &);
+enum class dc
+{
+	RST,          // hardest disconnect
+	FIN,          // graceful shutdown both directions
+	FIN_SEND,     // graceful shutdown send side
+	FIN_RECV,     // graceful shutdown recv side
+};
+
+bool connected(const client &) noexcept;
+bool disconnect(std::nothrow_t, client &, const dc & = dc::FIN) noexcept;
+void disconnect(client &, const dc & = dc::FIN);
 
 // Makes a client
 std::shared_ptr<client> add_client();
 std::shared_ptr<client> add_client(std::unique_ptr<struct sock>);
 
+using clist = std::list<std::shared_ptr<client>>;
 const clist &clients();
 
 }      // namespace ircd
