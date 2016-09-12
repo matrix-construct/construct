@@ -66,9 +66,6 @@ namespace ircd
 	struct ConfItem;
 	struct Blacklist;
 	struct PrivilegeSet;
-	struct _ssl_ctl;
-	struct ev_ctl;
-	struct ws_ctl;
 	struct server_conf;
 }
 
@@ -118,8 +115,6 @@ namespace ircd
 #include "chmode.h"
 #include "channel.h"
 
-#include "authproc.h"
-#include "bandbi.h"
 #include "capability.h"
 #include "certfp.h"
 #include "class.h"
@@ -135,10 +130,8 @@ namespace ircd
 #include "send.h"
 #include "s_newconf.h"
 #include "s_serv.h"
-#include "sslproc.h"
 #include "s_stats.h"
 #include "substitution.h"
 #include "supported.h"
 #include "s_user.h"
-#include "wsproc.h"
 */
