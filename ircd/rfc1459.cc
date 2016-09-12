@@ -213,7 +213,7 @@ rfc1459::grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
 }
 ,tape
 {
-	+(line >> +terminator)
+	+(-line >> +terminator)
 	,"tape"
 }
 {
