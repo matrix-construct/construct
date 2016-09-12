@@ -72,7 +72,7 @@ namespace ircd
 #include "util_timer.h"
 #include "defaults.h"
 #include "exception.h"
-#include "ircd_getopt.h"
+#include "getopt.h"
 #include "numeric.h"
 #include "color.h"
 #include "messages.h"
