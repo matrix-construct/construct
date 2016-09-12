@@ -43,11 +43,11 @@ namespace ircd
 	void main() noexcept;
 }
 
-/*
- * Sets up the IRCd, handlers (main context), and then returns without blocking.
- * Pass your io_service instance, it will share it with the rest of your program.
- * An exception will be thrown on error.
- */
+//
+// Sets up the IRCd, handlers (main context), and then returns without blocking.
+// Pass your io_service instance, it will share it with the rest of your program.
+// An exception will be thrown on error.
+//
 void
 ircd::init(boost::asio::io_service &io_service,
            const std::string &configfile,
@@ -60,19 +60,26 @@ ircd::init(boost::asio::io_service &io_service,
 	log::init();
 	log::mark("log started");
 
+	// The configuration is parsed for grammatical errors only. It is not evaluated.
 	log::info("parsing your configuration");
 	conf::parse(configfile);
 
+	// The caller has no other way to know IRCd has halted as everyone shares the
+	// same io_service, which may not return if the caller has their own tasks.
 	at_main_exit(std::move(main_exit_func));
 
-	// The master of ceremonies runs the show after this function returns and ios.run()
-	// The SELF_DESTRUCT flag indicates it will clean itself.
+	// The master of ceremonies runs the show after this function returns and ios.run().
+	// The SELF_DESTRUCT flag indicates it will clean itself up and cannot join here.
 	log::debug("spawning main context");
 	context(8_MiB, ircd::main, ctx::DEFER_POST | ctx::SELF_DESTRUCT);
 
 	log::debug("IRCd initialization completed.");
 }
 
+//
+// Main context; Main program loop.
+// This function is spawned by init(). Do not call this function.
+//
 void
 ircd::main()
 noexcept try
@@ -83,6 +90,9 @@ noexcept try
 
 	ircd::me = add_client();
 
+	// This is where the configuration is finally evalulated. This must occur
+	// in a context which can block. If execute() does not transact successfully
+	// IRCd never reaches the main loop and aborts.
 	log::info("executing configuration");
 	conf::execute();
 
@@ -93,6 +103,8 @@ noexcept try
 	sigfd.add(SIGUSR1);
 	sigfd.add(SIGUSR2);
 
+	// This is the main program loop. All it does is handle signals.
+	// The configuration will have spawned other loops.
 	log::notice("IRCd ready");
 	do switch(sigfd.async_wait(yield(continuation())))
 	{
@@ -143,6 +155,9 @@ ircd::handle_sigusr2()
 	// doremotd
 }
 
+//
+// Cleanup function for the main context.
+//
 void
 ircd::main_exiting()
 noexcept try
@@ -151,14 +166,17 @@ noexcept try
 
 	if(main_exit_func)
 	{
+		// This function will notify the user of IRCd shutdown. The notification is
+		// posted to the io_service ensuring THERE IS NO CONTINUATION ON THIS STACK by
+		// the user, who is then free to destruct all elements of IRCd.
 		log::debug("Notifying user of IRCd completion");
-		main_exit_func();
+		ios->post(main_exit_func);
 	}
 }
 catch(const std::exception &e)
 {
 	log::critical("main context exit: %s", e.what());
-	throw;
+	std::terminate();
 }
 
 void
