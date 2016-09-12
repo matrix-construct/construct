@@ -351,6 +351,24 @@ catch(const boost::spirit::qi::expectation_failure<const uint8_t *> &e)
 	                   string(e.what_).c_str());
 }
 
+bool
+rfc1459::line::empty()
+const
+{
+	return pfx.empty() &&
+	       cmd.empty() &&
+	       parv.empty();
+}
+
+bool
+rfc1459::pfx::empty()
+const
+{
+	return nick.empty() &&
+	       user.empty() &&
+	       host.empty();
+}
+
 std::string
 rfc1459::character::gather(const attr &attr)
 {

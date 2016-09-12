@@ -31,5 +31,20 @@ struct tape
 	using rfc1459::tape::tape;
 };
 
+void remove_empty(tape &tape);
+
+
+inline
+void remove_empty(tape &tape)
+{
+	const auto eit(std::remove_if(begin(tape), end(tape), []
+	(const auto &line)
+	{
+		return line.empty();
+	}));
+
+	tape.erase(eit, end(tape));
+}
+
 } // namespace ircd
 #endif

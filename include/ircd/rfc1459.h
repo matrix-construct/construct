@@ -151,6 +151,8 @@ struct pfx
 	struct nick nick;
 	struct user user;
 	struct host host;
+
+	bool empty() const;
 };
 
 struct line
@@ -158,6 +160,10 @@ struct line
 	struct pfx pfx;
 	struct cmd cmd;
 	struct parv parv;
+
+	bool empty() const;
+	auto &operator[](const size_t &pos) const    { return parv.at(pos);                            }
+	auto &operator[](const size_t &pos)          { return parv.at(pos);                            }
 
 	explicit line(const uint8_t *const &buf, const size_t &len);
 	explicit line(const std::string &line);

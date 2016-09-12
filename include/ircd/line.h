@@ -25,14 +25,7 @@
 #ifdef __cplusplus
 namespace ircd {
 
-struct line
-:rfc1459::line
-{
-	auto &operator[](const size_t &pos) const;
-	auto &operator[](const size_t &pos);
-
-	using rfc1459::line::line;
-};
+using line = rfc1459::line;
 
 inline auto &pfx(const line &line)               { return line.pfx;                                }
 inline auto &pfx(line &line)                     { return line.pfx;                                }
@@ -47,6 +40,7 @@ inline auto &command(line &line)                 { return line.cmd;             
 inline auto &parv(const line &line)              { return line.parv;                               }
 inline auto &parv(line &line)                    { return line.parv;                               }
 inline auto parc(const line &line)               { return parv(line).size();                       }
+inline bool empty(const line &line)              { return line.empty();                            }
 bool has(const line &line, const uint &argp);
 
 inline bool
@@ -54,19 +48,6 @@ has(const line &line,
     const uint &argp)
 {
 	return parc(line) > argp;
-}
-
-inline auto &
-line::operator[](const size_t &pos)
-{
-	return parv.at(pos);
-}
-
-inline auto &
-line::operator[](const size_t &pos)
-const
-{
-	return parv.at(pos);
 }
 
 } // namespace ircd
