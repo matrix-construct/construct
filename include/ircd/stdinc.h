@@ -120,7 +120,6 @@ namespace ircd
 #include "hash.h"
 #include "hook.h"
 #include "monitor.h"
-#include "operhash.h"
 #include "ratelimit.h"
 #include "reject.h"
 #include "send.h"
