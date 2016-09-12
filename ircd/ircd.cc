@@ -185,17 +185,6 @@ ircd::init_system()
 		}
 	#endif
 
-	#if !defined(_WIN32) && defined(RLIMIT_NOFILE) && defined(HAVE_SYS_RESOURCE_H)
-		struct rlimit limit;
-
-		if(!getrlimit(RLIMIT_NOFILE, &limit))
-			maxconnections = limit.rlim_cur;
-		else
-			maxconnections = MAXCONNECTIONS;
-	#else
-		maxconnections = MAXCONNECTIONS;
-	#endif
-
 	rb_set_time();
 	rb_init_prng(NULL, RB_PRNG_DEFAULT);
 	seed_random();
