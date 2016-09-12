@@ -74,17 +74,23 @@ struct scope
 {
 	const std::function<void ()> func;
 
-	template<class F>
-	scope(F &&func)
-	:func(std::forward<F>(func))
-	{
-	}
-
-	~scope()
-	{
-		func();
-	}
+	template<class F> scope(F &&func);
+	scope(const scope &) = delete;
+	~scope() noexcept;
 };
+
+template<class F>
+scope::scope(F &&func)
+:func(std::forward<F>(func))
+{
+}
+
+inline
+scope::~scope()
+noexcept
+{
+	func();
+}
 
 
 // For conforming enums include a _NUM_ as the last element,
