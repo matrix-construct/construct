@@ -65,7 +65,6 @@ namespace ircd
 
 	struct ConfItem;
 	struct Blacklist;
-	struct PrivilegeSet;
 	struct server_conf;
 }
 
@@ -122,7 +121,6 @@ namespace ircd
 #include "hook.h"
 #include "monitor.h"
 #include "operhash.h"
-#include "privilege.h"
 #include "ratelimit.h"
 #include "reject.h"
 #include "send.h"
