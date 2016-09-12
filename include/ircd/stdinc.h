@@ -115,7 +115,6 @@ namespace ircd
 #include "cache.h"
 #include "whowas.h"
 #include "tgchange.h"
-#include "msgbuf.h"
 
 #include "mask.h"
 #include "chmode.h"
