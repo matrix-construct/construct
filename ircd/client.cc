@@ -124,9 +124,11 @@ namespace ircd
 
 	clist clients_list;
 
-	bool handle_error(client &, const error_code &);
+	bool handle_ec_eof(client &);
+	bool handle_ec_cancel(client &);
+	bool handle_ec_success(client &);
+	bool handle_ec(client &, const error_code &);
 	void handle_recv(client &, const error_code &, const size_t);
-	void set_recv(client &);
 }
 
 using namespace ircd;
@@ -243,11 +245,7 @@ try
 
 	auto &rbuf(client.rbuf);
 	auto &reel(rbuf.reel);
-	for(const auto &line : reel)
-		std::cout << line << std::endl;
-
-	reel.clear();
-	set_recv(client);
+	execute(client, reel);
 }
 catch(const rfc1459::syntax_error &e)
 {
@@ -273,6 +271,45 @@ ircd::handle_error(client &client,
 		case success:    return true;
 		default:         throw boost::system::system_error(ec);
 	}
+
+	return true;
+}
+
+bool
+ircd::handle_ec_cancel(client &client)
+{
+	auto &sock(*client.sock);
+
+	// The cancel can come from a timeout or directly.
+	// If directly, the timer may still needs to be canceled
+	if(!sock.timedout)
+	{
+		error_code ec;
+		sock.timer.cancel(ec);
+		assert(ec == boost::system::errc::success);
+		log::debug("client[%s]: recv canceled", string(remote_address(client)).c_str());
+		return false;
+	}
+
+	log::debug("client[%s]: recv timeout", string(remote_address(client)).c_str());
+	finished(client);
+	return false;
+}
+
+bool
+ircd::handle_ec_eof(client &client)
+{
+	log::debug("client[%s]: eof", string(remote_address(client)).c_str());
+	finished(client);
+	return false;
+}
+
+void
+ircd::finished(client &client)
+{
+	const auto p(shared_from(client));
+	clients_list.erase(client.clit);
+	log::debug("client[%p] finished. (refs: %zu)", (const void *)p.get(), p.use_count());
 }
 
 std::string

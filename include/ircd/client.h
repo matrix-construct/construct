@@ -55,11 +55,17 @@ enum class dc
 	FIN_RECV,     // graceful shutdown recv side
 };
 
+
 bool connected(const client &) noexcept;
 bool disconnect(std::nothrow_t, client &, const dc & = dc::FIN) noexcept;
 void disconnect(client &, const dc & = dc::FIN);
+void set_recv(client &);
 
-// Makes a client
+// Destroys a client. This only removes the client from the clients list,
+// and may result in a destruction and disconnect, or it may not.
+void finished(client &);
+
+// Creates a client.
 std::shared_ptr<client> add_client();
 std::shared_ptr<client> add_client(std::unique_ptr<struct sock>);
 

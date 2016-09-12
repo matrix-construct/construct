@@ -67,6 +67,17 @@ ircd::cmds::cmd::emplace()
 
 void
 ircd::cmds::execute(client &client,
+                    tape &reel)
+{
+	while(!reel.empty())
+	{
+		execute(client, std::move(reel.front()));
+		reel.pop_front();
+	}
+}
+
+void
+ircd::cmds::execute(client &client,
                     const uint8_t *const &ptr,
                     const size_t &len)
 {
@@ -84,6 +95,9 @@ void
 ircd::cmds::execute(client &client,
                     line line)
 {
+	if(line.empty())
+		return;
+
 	auto &handle(find(command(line)));
 	handle(client, std::move(line));
 }

@@ -59,6 +59,7 @@ cmd &find(const std::string &name);
 void execute(client &client, line);
 void execute(client &client, const std::string &line);
 void execute(client &client, const uint8_t *const &line, const size_t &len);
+void execute(client &client, tape &);
 
 } // namespace cmds
 
