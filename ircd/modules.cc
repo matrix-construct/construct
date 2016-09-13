@@ -176,9 +176,10 @@ try
 	const auto iit(mods.emplace_hint(it, nombre, std::move(mod)));
 	{
 		const auto &mod(iit->second);
+		const auto &desc(mods::desc(*mod));
 		log.info("Loaded module %s \"%s\"",
 		         mods::name(*mod).c_str(),
-		         desc(*mod)?: "<no description>");
+		         desc.size()? desc.c_str() : "<no description>");
 	}
 	return true;
 }

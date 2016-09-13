@@ -55,9 +55,10 @@ template<class T> const T &get(const mod &mod, const std::string &symbol);
 template<class T> T *ptr(mod &mod, const std::string &symbol);
 template<class T> T &get(mod &mod, const std::string &symbol);
 const mapi::header &header(const mod &);
-const char *const &desc(const mod &);
+const std::string &meta(const mod &, const std::string &key);
 const version_t &version(const mod &);
 const int64_t &timestamp(const mod &);
+const std::string &desc(const mod &);
 std::string location(const mod &);
 std::string name(const mod &);
 

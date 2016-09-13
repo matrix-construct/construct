@@ -26,6 +26,15 @@
 namespace ircd {
 namespace mapi {
 
+enum flags
+{
+	NO_FLAGS          = 0x00,
+	RELAXED_INIT      = 0x01,
+};
+
+using export_vector = std::vector<std::pair<const void *, std::type_index>>;
+using metadata = std::map<std::string, std::string>;
+
 struct init
 :std::function<void ()>
 {
@@ -37,15 +46,6 @@ struct fini
 {
 	using std::function<void ()>::function;
 };
-
-enum flags
-{
-	NO_FLAGS          = 0x00,
-	RELAXED_INIT      = 0x01,
-};
-
-// Associates RTTI keyed by object location
-using export_vector = std::vector<std::pair<const void *, std::type_index>>;
 
 struct exports
 :export_vector
@@ -61,12 +61,16 @@ struct header
 		0x4D41
 	};
 
-	magic_t magic;           // The magic must match MAGIC
-	version_t version;       // Version indicator
-	enum flags flags;        // Option flags
-	int64_t timestamp;       // Module's compile epoch
-	const char *desc;
-	struct exports exports;
+	magic_t magic;                               // The magic must match MAGIC
+	version_t version;                           // Version indicator
+	enum flags flags;                            // Option flags
+	int64_t timestamp;                           // Module's compile epoch
+	struct exports exports;                      // Generated export vector
+	metadata meta;                               // Various key-value metadata
+
+	// get and set metadata
+	auto &operator[](const std::string &s) const;
+	auto &operator[](const std::string &s);
 
 	template<class... Exports>
 	header(const char *const &desc,
@@ -93,8 +97,11 @@ header::header(const char *const &desc,
 ,version(4)
 ,flags(flags)
 ,timestamp(RB_DATECODE)
-,desc(desc)
 ,exports{std::forward<Exports>(exports)...}
+,meta
+{
+	{ "description", desc }
+}
 {
 }
 
@@ -103,6 +110,19 @@ header::sym_name
 {
 	"IRCD_MODULE"
 };
+
+inline auto &
+header::operator[](const std::string &key)
+{
+	return meta[key];
+}
+
+inline auto &
+header::operator[](const std::string &key)
+const
+{
+	return meta.at(key);
+}
 
 template<class... List>
 exports::exports(List&&... list)

@@ -39,7 +39,7 @@ struct sym
 struct mod
 {
 	boost::dll::shared_library handle;
-	const mapi::header *header;
+	mapi::header *header;
 	std::map<std::string, sym> handled;
 	std::multimap<std::type_index, std::string> unhandled;
 
@@ -72,6 +72,11 @@ try
 		throw error("Bad magic [%04x] need: [%04x]",
 		            header->magic,
 		            mapi::header::MAGIC);
+
+	// Set some basic metadata
+	auto &meta(header->meta);
+	meta["name"] = name(*this);
+	meta["location"] = location(*this);
 }
 catch(const boost::system::system_error &e)
 {
@@ -131,6 +136,18 @@ const
 	return handle.has(name);
 }
 
+const std::string &
+desc(const mod &mod)
+try
+{
+	return meta(mod, "description");
+}
+catch(const std::out_of_range &e)
+{
+	static const std::string empty;
+	return empty;
+}
+
 std::string
 name(const mod &mod)
 {
@@ -149,12 +166,6 @@ version(const mod &mod)
 	return header(mod).version;
 }
 
-const char *const &
-desc(const mod &mod)
-{
-	return header(mod).desc;
-}
-
 const mapi::exports &
 exports(const mod &mod)
 {
@@ -165,6 +176,13 @@ const mapi::flags &
 flags(const mod &mod)
 {
 	return header(mod).flags;
+}
+
+const std::string &
+meta(const mod &mod,
+     const std::string &key)
+{
+	return header(mod)[key];
 }
 
 const mapi::header &
