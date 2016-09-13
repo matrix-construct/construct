@@ -65,43 +65,6 @@ ircd::cmds::cmd::emplace()
 	log::info("Registered command \"%s\" to handler @ %p", name.c_str(), this);
 }
 
-void
-ircd::cmds::execute(client &client,
-                    tape &reel)
-{
-	while(!reel.empty())
-	{
-		execute(client, std::move(reel.front()));
-		reel.pop_front();
-	}
-}
-
-void
-ircd::cmds::execute(client &client,
-                    const uint8_t *const &ptr,
-                    const size_t &len)
-{
-	execute(client, line(ptr, len));
-}
-
-void
-ircd::cmds::execute(client &client,
-                    const std::string &l)
-{
-	execute(client, line(l));
-}
-
-void
-ircd::cmds::execute(client &client,
-                    line line)
-{
-	if(line.empty())
-		return;
-
-	auto &handle(find(command(line)));
-	handle(client, std::move(line));
-}
-
 ircd::cmds::cmd &
 ircd::cmds::find(const std::string &name)
 try

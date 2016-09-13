@@ -20,45 +20,25 @@
  */
 
 #pragma once
-#define HAVE_IRCD_CMDS_H
+#define HAVE_IRCD_VM_H
 
 #ifdef __cplusplus
 namespace ircd {
-namespace cmds {
+namespace vm   {
 
-IRCD_EXCEPTION(ircd::error, error)
-IRCD_EXCEPTION(error, not_found)                 // Really should be throwing err::421 directly but..
-IRCD_EXCEPTION(error, already_exists)
-
-struct cmd
+struct pool
 {
-	std::string name;
-	std::set<std::string> aliases;
-	std::function<void (client &, line)> handler;    // Used if not overloaded
 
-  private:
-	void emplace();
-
-  public:
-	virtual void operator()(client &, line);
-
-	cmd(const std::string &name);
-	cmd(const std::string &name, const decltype(handler) &handler);
-	cmd(cmd &&) = delete;
-	cmd(const cmd &) = delete;
-	virtual ~cmd() noexcept;
 };
 
-// cmd structs are managed by their module (or wherever the instance resides)
-extern std::map<std::string, cmd *, case_insensitive_less> cmds;
+void execute(client &client, line);
+void execute(client &client, tape &);
+void execute(client &client, const std::string &line);
+void execute(client &client, const uint8_t *const &line, const size_t &len);
 
-bool exists(const std::string &name);
-cmd *find(const std::string &name, const std::nothrow_t &);
-cmd &find(const std::string &name);
+} // namespace vm
 
-} // namespace cmds
-
-using cmds::cmd;
+using vm::execute;
 
 } // namespace ircd
 #endif

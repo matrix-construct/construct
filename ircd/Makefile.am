@@ -43,7 +43,8 @@ libircd_la_SOURCES =   \
 	info.cc            \
 	cmds.cc            \
 	ctx.cc             \
-	client.cc
+	client.cc          \
+	vm.cc
 
 #authproc.cc			\
 #bandbi.cc                      \

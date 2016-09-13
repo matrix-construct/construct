@@ -259,9 +259,7 @@ try
 		return;
 
 	auto &rbuf(client.rbuf);
-	auto &reel(rbuf.reel);
-	execute(client, reel);
-	recv_next(client);
+	execute(client, rbuf.reel);
 }
 catch(const std::exception &e)
 {

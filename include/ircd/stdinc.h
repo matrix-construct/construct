@@ -90,6 +90,7 @@ namespace ircd
 #include "line.h"
 #include "tape.h"
 #include "cmds.h"
+#include "vm.h"
 
 #include "u_id.h"
 
