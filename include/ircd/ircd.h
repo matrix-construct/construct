@@ -36,6 +36,7 @@ namespace ircd {
 
 extern bool debugmode;
 extern std::shared_ptr<client> me;
+extern bool main_exited;
 
 // Set callback for when IRCd's main context has completed.
 using main_exit_cb = std::function<void ()>;

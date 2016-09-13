@@ -30,8 +30,9 @@ namespace ircd
 {
 	bool debugmode;                               // set by command line
 	boost::asio::io_service *ios;                 // user's io service
-	main_exit_cb main_exit_func;                  // Called when main context exits
 	std::shared_ptr<client> me;                   // That's me
+	main_exit_cb main_exit_func;                  // Called when main context exits
+	bool main_exited;                             // Set when IRCd is finished
 
 	void seed_random();
 	void init_system();
@@ -172,6 +173,8 @@ noexcept try
 		log::debug("Notifying user of IRCd completion");
 		ios->post(main_exit_func);
 	}
+
+	main_exited = true;
 }
 catch(const std::exception &e)
 {
