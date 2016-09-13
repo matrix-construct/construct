@@ -35,16 +35,21 @@ using boost::system::error_code;
 using boost::asio::steady_timer;
 
 struct sock
+:std::enable_shared_from_this<sock>
 {
 	using message_flags = boost::asio::socket_base::message_flags;
 
 	ip::tcp::socket sd;
 	steady_timer timer;
+	bool timedout;
 
 	operator const ip::tcp::socket &() const     { return sd;                                      }
 	operator ip::tcp::socket &()                 { return sd;                                      }
 	ip::tcp::endpoint remote() const             { return sd.remote_endpoint();                    }
 	ip::tcp::endpoint local() const              { return sd.local_endpoint();                     }
+
+	void handle_timeout(const std::weak_ptr<sock>, const error_code &);
+	template<class duration> void set_timeout(const duration &);
 
 	template<class mutable_buffers> auto recv_some(const mutable_buffers &, const message_flags & = 0);
 	template<class mutable_buffers> auto recv(const mutable_buffers &);
@@ -74,7 +79,9 @@ template<class const_buffers>
 auto
 sock::send(const const_buffers &bufs)
 {
-	return async_write(sd, bufs, yield(continuation()));
+	const auto ret(async_write(sd, bufs, yield(continuation())));
+	timer.cancel();
+	return ret;
 }
 
 // Block until something transmitted, returns amount
@@ -91,7 +98,9 @@ template<class mutable_buffers>
 auto
 sock::recv(const mutable_buffers &bufs)
 {
-	return async_read(sd, bufs, yield(continuation()));
+	const auto ret(async_read(sd, bufs, yield(continuation())));
+	timer.cancel();
+	return ret;
 }
 
 // Block until something in buffers, returns size
@@ -101,6 +110,43 @@ sock::recv_some(const mutable_buffers &bufs,
                 const message_flags &flags)
 {
 	return sd.async_receive(bufs, flags, yield(continuation()));
+}
+
+template<class duration>
+void
+sock::set_timeout(const duration &t)
+{
+	if(t < duration(0))
+		return;
+
+	timer.expires_from_now(t);
+	timer.async_wait(std::bind(&sock::handle_timeout, this, shared_from_this(), ph::_1));
+}
+
+inline void
+sock::handle_timeout(const std::weak_ptr<sock> wp,
+                     const error_code &ec)
+{
+	using namespace boost::system::errc;
+
+	if(!wp.expired()) switch(ec.value())
+	{
+		case success:
+		{
+			timedout = true;
+			error_code sd_ec;
+			sd.cancel(sd_ec);
+			return;
+		}
+
+		case operation_canceled:
+			timedout = false;
+			return;
+
+		default:
+			log::error("sock::handle_timeout(): unexpected: %s\n", ec.message().c_str());
+			return;
+	}
 }
 
 inline uint16_t

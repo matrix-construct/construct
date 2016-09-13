@@ -114,7 +114,7 @@ namespace ircd
 	{
 		struct rbuf rbuf;
 		clist::const_iterator clit;
-		std::unique_ptr<struct sock> sock;
+		std::shared_ptr<struct sock> sock;
 
 		client();
 		client(const client &) = delete;
@@ -149,7 +149,7 @@ ircd::clients()
 }
 
 std::shared_ptr<client>
-ircd::add_client(std::unique_ptr<struct sock> sock)
+ircd::add_client(std::shared_ptr<struct sock> sock)
 {
 	auto client(add_client());
 	client->sock = std::move(sock);
@@ -157,7 +157,7 @@ ircd::add_client(std::unique_ptr<struct sock> sock)
 	          string(remote_address(*client)).c_str(),
 	          string(local_address(*client)).c_str());
 
-	set_recv(*client);
+	recv_next(*client);
 	return client;
 }
 
@@ -221,7 +221,14 @@ catch(...)
 }
 
 void
-ircd::set_recv(client &client)
+ircd::recv_next(client &client)
+{
+	recv_next(client, std::chrono::milliseconds(-1));
+}
+
+void
+ircd::recv_next(client &client,
+                const std::chrono::milliseconds &timeout)
 {
 	using boost::asio::async_read;
 
@@ -229,9 +236,17 @@ ircd::set_recv(client &client)
 	rbuf.reset();
 
 	auto &sock(*client.sock);
+	sock.set_timeout(timeout);
 	async_read(sock.sd, mutable_buffers_1(rbuf.buf.data(), rbuf.buf.size()),
 	           std::bind(&rbuf::handle_pck, &rbuf, ph::_1, ph::_2),
 	           std::bind(&ircd::handle_recv, std::ref(client), ph::_1, ph::_2));
+}
+
+void
+ircd::recv_cancel(client &client)
+{
+	auto &sock(socket(client));
+	sock.sd.cancel();
 }
 
 void
@@ -240,25 +255,26 @@ ircd::handle_recv(client &client,
                   const size_t bytes)
 try
 {
-	if(!handle_error(client, ec))
+	if(!handle_ec(client, ec))
 		return;
 
 	auto &rbuf(client.rbuf);
 	auto &reel(rbuf.reel);
 	execute(client, reel);
-}
-catch(const rfc1459::syntax_error &e)
-{
-	std::cerr << e.what() << std::endl;
+	recv_next(client);
 }
 catch(const std::exception &e)
 {
-	std::cerr << "errored: " << e.what() << std::endl;
+	log::error("client[%s]: error: %s",
+	           string(remote_address(client)).c_str(),
+	           e.what());
+
+	finished(client);
 }
 
 bool
-ircd::handle_error(client &client,
-                   const error_code &ec)
+ircd::handle_ec(client &client,
+                const error_code &ec)
 {
 	using namespace boost::system::errc;
 	using boost::asio::error::eof;
@@ -268,8 +284,21 @@ ircd::handle_error(client &client,
 
 	switch(ec.value())
 	{
-		case success:    return true;
-		default:         throw boost::system::system_error(ec);
+		case success:                return handle_ec_success(client);
+		case operation_canceled:     return handle_ec_cancel(client);
+		case eof:                    return handle_ec_eof(client);
+		default:                     throw boost::system::system_error(ec);
+	}
+}
+
+bool
+ircd::handle_ec_success(client &client)
+{
+	auto &sock(*client.sock);
+	{
+		error_code ec;
+		sock.timer.cancel(ec);
+		assert(ec == boost::system::errc::success);
 	}
 
 	return true;

@@ -59,7 +59,9 @@ enum class dc
 bool connected(const client &) noexcept;
 bool disconnect(std::nothrow_t, client &, const dc & = dc::FIN) noexcept;
 void disconnect(client &, const dc & = dc::FIN);
-void set_recv(client &);
+void recv_cancel(client &);
+void recv_next(client &, const std::chrono::milliseconds &timeout);
+void recv_next(client &);
 
 // Destroys a client. This only removes the client from the clients list,
 // and may result in a destruction and disconnect, or it may not.
@@ -67,7 +69,7 @@ void finished(client &);
 
 // Creates a client.
 std::shared_ptr<client> add_client();
-std::shared_ptr<client> add_client(std::unique_ptr<struct sock>);
+std::shared_ptr<client> add_client(std::shared_ptr<struct sock>);
 
 using clist = std::list<std::shared_ptr<client>>;
 const clist &clients();

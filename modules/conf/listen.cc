@@ -120,7 +120,7 @@ bool
 listener::accept()
 try
 {
-	auto sock(std::make_unique<sock>());
+	auto sock(std::make_shared<sock>());
 	acceptor.async_accept(sock->sd, yield(continuation()));
 	add_client(std::move(sock));
 	return true;
