@@ -325,8 +325,20 @@ ircd::weak_from(client &client)
 	return shared_from(client);
 }
 
+std::weak_ptr<const client>
+ircd::weak_from(const client &client)
+{
+	return shared_from(client);
+}
+
 std::shared_ptr<client>
 ircd::shared_from(client &client)
+{
+	return client.shared_from_this();
+}
+
+std::shared_ptr<const client>
+ircd::shared_from(const client &client)
 {
 	return client.shared_from_this();
 }

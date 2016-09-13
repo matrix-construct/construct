@@ -45,10 +45,8 @@ ircd::vm::execute(client &client,
 {
 	context([wp(weak_from(client)), &client, &reel]
 	{
-		auto cp(wp.lock());    // Hold the client for the lifetime of this context
-
-		if(!cp)                // client already gone though
-			return;
+		// Hold the client for the lifetime of this context
+		const lifeguard<struct client> lg(wp);
 
 		while(!reel.empty()) try
 		{

@@ -60,6 +60,8 @@ m_host::operator()(client &client,
                    line line)
 try
 {
+	const lifeguard<struct client> lg(client);
+
 	const auto &host(line[0]);
 	const auto &port(has(line, 1)? line[1] : std::string{});
 	const ip::tcp::resolver::query query(host, port);

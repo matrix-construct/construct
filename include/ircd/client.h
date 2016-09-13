@@ -33,7 +33,9 @@ namespace ircd {
 struct sock;
 struct client;
 
+std::shared_ptr<const client> shared_from(const client &);
 std::shared_ptr<client> shared_from(client &);
+std::weak_ptr<const client> weak_from(const client &);
 std::weak_ptr<client> weak_from(client &);
 
 // Client socket addressing

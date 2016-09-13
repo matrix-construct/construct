@@ -70,6 +70,7 @@ namespace ircd
 
 #include "util.h"
 #include "util_timer.h"
+#include "life_guard.h"
 #include "defaults.h"
 #include "exception.h"
 #include "getopt.h"
