@@ -184,6 +184,7 @@ struct tape
 };
 
 std::ostream &operator<<(std::ostream &, const pfx &);
+std::ostream &operator<<(std::ostream &, const cmd &);
 std::ostream &operator<<(std::ostream &, const parv &);
 std::ostream &operator<<(std::ostream &, const line &);   // unterminated
 

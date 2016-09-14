@@ -22,9 +22,11 @@
  */
 
 #include <boost/spirit/include/qi.hpp>
+#include <boost/spirit/include/karma.hpp>
 #include <ircd/bufs.h>
 
 namespace qi = boost::spirit::qi;
+namespace karma = boost::spirit::karma;
 
 BOOST_FUSION_ADAPT_STRUCT
 (
@@ -44,6 +46,7 @@ BOOST_FUSION_ADAPT_STRUCT
 
 namespace ircd    {
 namespace rfc1459 {
+namespace parse   {
 
 using qi::lit;
 using qi::char_;
@@ -89,27 +92,7 @@ struct grammar
 	grammar(qi::rule<it, top> &top_rule);
 };
 
-/* Instantiate the grammar to parse a uint8_t* buffer into an rfc1459::line object.
- * The top rule is inherited and then specified as grammar::line, which is compatible
- * with an rfc1459::line object.
- */
-struct head
-:grammar<const uint8_t *, rfc1459::line>
-{
-	head(): grammar{grammar::line} {}
-}
-static const head;
-
-/* Instantiate the grammar to parse a uint8_t* buffer into an rfc1459::tape object.
- * The top rule is now grammar::tape and the target object is an rfc1459::tape deque.
- */
-struct capstan
-:grammar<const uint8_t *, rfc1459::tape>
-{
-	capstan(): grammar{grammar::tape} {}
-}
-static const capstan;
-
+} // namespace parse
 } // namespace rfc1459
 } // namespace ircd
 
@@ -117,7 +100,7 @@ using namespace ircd;
 
 template<class it,
          class top>
-rfc1459::grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
+rfc1459::parse::grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
 :grammar<it, top>::base_type
 {
 	top_rule
@@ -219,62 +202,259 @@ rfc1459::grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
 {
 }
 
-// Informal stream (for now)
-// NOTE: unterminated
+namespace ircd    {
+namespace rfc1459 {
+namespace gen     {
+
+using karma::lit;
+using karma::string;
+using karma::buffer;
+using karma::maxwidth;
+using karma::repeat;
+using karma::skip;
+using karma::omit;
+using karma::delimit;
+using karma::verbatim;
+using karma::char_;
+using karma::int_;
+using karma::eps;
+using karma::eol;
+
+template<class it,
+         class top>
+struct grammar
+:karma::grammar<it, top>
+{
+	std::string trail_save;
+
+	karma::rule<it> space;
+	karma::rule<it> colon;
+	karma::rule<it> terminator;
+
+	karma::rule<it, std::string()> hostname;
+	karma::rule<it, std::string()> user;
+	karma::rule<it, std::string()> nick;
+	karma::rule<it, rfc1459::pfx> prefix;
+	karma::rule<it, rfc1459::pfx> prefix_optionals;
+
+	karma::rule<it, std::string()> trailing;
+	karma::rule<it, std::string()> middle;
+	karma::rule<it, rfc1459::parv> params;
+
+	karma::rule<it, rfc1459::cmd> command_numeric;
+	karma::rule<it, rfc1459::cmd> command_alpha;
+	karma::rule<it, rfc1459::cmd> command;
+	karma::rule<it, rfc1459::line> line;
+
+	grammar(karma::rule<it, top> &top_rule);
+};
+
+} // namespace gen
+} // namespace rfc1459
+} // namespace ircd
+
+template<class it,
+         class top>
+rfc1459::gen::grammar<it, top>::grammar(karma::rule<it, top> &top_rule)
+:grammar<it, top>::base_type
+{
+	top_rule
+}
+,space // A single space character
+{
+	lit(' ')
+	,"space"
+}
+,colon // A single colon character
+{
+	lit(':')
+	,"colon"
+}
+,terminator // The message terminator
+{
+	lit('\r') << lit('\n')
+	,"terminator"
+}
+,hostname // A valid hostname
+{
+	+char_(gather(character::HOST)) // TODO: https://tools.ietf.org/html/rfc952
+	,"hostname"
+}
+,user // A valid username
+{
+	+char_(gather(character::USER))
+	,"user"
+}
+,nick // A valid nickname, leading letter followed by any NICK chars
+{
+	buffer[char_(gather(character::ALPHA)) << *char_(gather(character::NICK))]
+	,"nick"
+}
+,prefix
+{
+	colon << nick << lit('!') << user << lit('@') << hostname
+	,"prefix"
+}
+,prefix_optionals
+{
+	colon        << (nick      | lit('*'))
+	<< lit('!')  << (user      | lit('*'))
+	<< lit('@')  << (hostname  | lit('*'))
+	,"prefix_optionals"
+}
+,trailing
+{
+	colon << +(~char_("\r\n"))
+	,"trailing"
+}
+,middle // Spaced parameters
+{
+	~char_(":\x20\r\n") << +(~char_("\x20\r\n"))
+	,"middle"
+}
+,params //TODO: this doesn't work yet, don't use
+{
+	*(middle % space) << buffer[-trailing]
+	,"params"
+}
+,command_numeric // \d\d\d numeric
+{
+	repeat(3)[char_(gather(character::DIGIT))]
+	,"command_numeric"
+}
+,command_alpha
+{
+	+char_(gather(character::ALPHA))
+	,"command_alpha"
+}
+,command
+{
+	command_alpha | command_numeric
+	,"command"
+}
+,line
+{
+	prefix << command << space << params << terminator
+	,"line"
+}
+{
+}
+
+//NOTE: unterminated
+//TODO: Fix carriage
 std::ostream &
 rfc1459::operator<<(std::ostream &s, const line &line)
 {
-	const auto &pfx(line.pfx);
-	if(!pfx.nick.empty() || !pfx.user.empty() || !pfx.host.empty())
-		s << pfx << ' ';
+	struct carriage
+	:gen::grammar<karma::ostream_iterator<char>, rfc1459::line>
+	{
+		carriage(): grammar{grammar::line} {}
+	}
+	static const carriage;
+
+	if(!line.pfx.empty())
+		s << line.pfx << ' ';
 
 	s << line.cmd;
 
-	const auto &parv(line.parv);
-	if(!parv.empty())
-		s << ' ' << parv;
+	if(!line.parv.empty())
+		s << ' ' << line.parv;
 
 	return s;
 }
 
-// Informal stream (for now)
 std::ostream &
 rfc1459::operator<<(std::ostream &s, const parv &parv)
 {
+	using karma::delimit;
+
+	struct generate_middle
+	:gen::grammar<karma::ostream_iterator<char>, std::string()>
+	{
+		generate_middle(): grammar{grammar::middle} {}
+	}
+	static const generate_middle;
+
+	struct generate_trailing
+	:gen::grammar<karma::ostream_iterator<char>, std::string()>
+	{
+		generate_trailing(): grammar{grammar::trailing} {}
+	}
+	static const generate_trailing;
+
 	ssize_t i(0);
+	karma::ostream_iterator<char> osi(s);
 	for(; i < ssize_t(parv.size()) - 1; ++i)
-		s << parv[i] << ' ';
+		if(!karma::generate(osi, delimit[generate_middle], parv.at(i)))
+			throw syntax_error("Invalid middle parameter");
 
 	if(!parv.empty())
-		s << ':' << parv[parv.size() - 1];
+		if(!karma::generate(osi, generate_trailing, parv.at(parv.size() - 1)))
+			throw syntax_error("Invalid trailing parameter");
 
 	return s;
 }
 
-// Informal stream (for now)
+std::ostream &
+rfc1459::operator<<(std::ostream &s, const cmd &cmd)
+{
+	struct generate_command
+	:gen::grammar<karma::ostream_iterator<char>, rfc1459::cmd>
+	{
+		generate_command(): grammar{grammar::command} {}
+	}
+	static const generate_command;
+
+	karma::ostream_iterator<char> osi(s);
+	if(!karma::generate(osi, generate_command, cmd))
+		throw syntax_error("Bad command or numeric name");
+
+	return s;
+}
+
 std::ostream &
 rfc1459::operator<<(std::ostream &s, const pfx &pfx)
 {
-	s << ':';
-	if(!pfx.nick.empty())
-		s << pfx.nick;
-	else
-		s << '*';
+	struct generate_prefix
+	:gen::grammar<karma::ostream_iterator<char>, rfc1459::pfx>
+	{
+		generate_prefix(): grammar{grammar::prefix} {}
+	}
+	static const generate_prefix;
 
-	s << '!';
-	if(!pfx.user.empty())
-		s << pfx.user;
-	else
-		s << '*';
-
-	s << '@';
-	if(!pfx.host.empty())
-		s << pfx.host;
-	else
-		s << '*';
+	karma::ostream_iterator<char> osi(s);
+	if(!karma::generate(osi, generate_prefix, pfx))
+		throw syntax_error("Invalid prefix");
 
 	return s;
 }
+
+namespace ircd    {
+namespace rfc1459 {
+
+// Instantiate the input grammar to parse a uint8_t* buffer into an rfc1459::line object.
+// The top rule is inherited and then specified as grammar::line, which is compatible
+// with an rfc1459::line object.
+//
+struct head
+:parse::grammar<const uint8_t *, rfc1459::line>
+{
+	head(): grammar{grammar::line} {}
+}
+static const head;
+
+// Instantiate the input grammar to parse a uint8_t* buffer into an rfc1459::tape object.
+// The top rule is now grammar::tape and the target object is an rfc1459::tape deque.
+//
+struct capstan
+:parse::grammar<const uint8_t *, rfc1459::tape>
+{
+	capstan(): grammar{grammar::tape} {}
+}
+static const capstan;
+
+} // namespace rfc1459
+} // namespace ircd
 
 rfc1459::tape::tape(const std::string &str)
 :tape
