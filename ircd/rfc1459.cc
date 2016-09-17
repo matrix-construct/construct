@@ -340,6 +340,274 @@ rfc1459::gen::grammar<it, top>::grammar(karma::rule<it, top> &top_rule)
 {
 }
 
+namespace ircd    {
+namespace rfc1459 {
+namespace fmt     {
+
+const char SPECIFIER
+{
+	'%'
+};
+
+struct spec
+{
+	char sign;
+	int width;
+	std::string name;
+
+	spec(): sign('+'), width(0)
+	{
+		name.reserve(14);
+	}
+};
+
+template<class generator> bool generate_string(char *&out, const generator &, const arg &);
+bool handle_nick(char *&out, const size_t &max, const spec &, const arg &);
+bool handle_user(char *&out, const size_t &max, const spec &, const arg &);
+bool handle_host(char *&out, const size_t &max, const spec &, const arg &);
+void handle_specifier(char *&out, const size_t &max, const spec &, const arg &);
+bool is_specifier(const std::string &name);
+
+std::map<std::string, handler> handlers
+{
+	{ "nick", handle_nick },
+	{ "user", handle_user },
+	{ "host", handle_host },
+};
+
+
+} // namespace fmt
+} // namespace rfc1459
+} // namespace ircd
+
+BOOST_FUSION_ADAPT_STRUCT
+(
+	ircd::rfc1459::fmt::spec,
+	( char,         sign  )
+	( int,          width )
+	( std::string,  name  )
+)
+
+bool
+rfc1459::fmt::is_specifier(const std::string &name)
+{
+	return handlers.count(name);
+}
+
+void
+rfc1459::fmt::handle_specifier(char *&out,
+                               const size_t &max,
+                               const spec &spec,
+                               const arg &val)
+try
+{
+	const auto &type(get<1>(val));
+	const auto &handler(handlers.at(spec.name));
+	if(!handler(out, max, spec, val))
+		throw fmtstr_mismatch("Invalid type `%s' for format specifier '%c%s'",
+		                      type.name(),
+		                      SPECIFIER,
+		                      spec.name.c_str());
+}
+catch(const std::out_of_range &e)
+{
+	throw fmtstr_invalid("Unhandled specifier `%s' in format string",
+	                     spec.name.c_str());
+}
+
+bool
+rfc1459::fmt::handle_host(char *&out,
+                          const size_t &max,
+                          const spec &spec,
+                          const arg &val)
+{
+	using karma::eps;
+	using karma::maxwidth;
+
+	struct generator
+	:gen::grammar<char *, std::string()>
+	{
+		generator(): grammar{grammar::user} {}
+	}
+	static const generator;
+	const auto gen(maxwidth(max)[generator] | eps);
+	return generate_string(out, gen, val);
+}
+
+bool
+rfc1459::fmt::handle_nick(char *&out,
+                          const size_t &max,
+                          const spec &spec,
+                          const arg &val)
+{
+	using karma::eps;
+	using karma::maxwidth;
+
+	struct generator
+	:gen::grammar<char *, std::string()>
+	{
+		generator(): grammar{grammar::nick} {}
+	}
+	static const generator;
+	const auto gen(maxwidth(max)[generator] | eps);
+	return generate_string(out, gen, val);
+}
+
+bool
+rfc1459::fmt::handle_user(char *&out,
+                          const size_t &max,
+                          const spec &spec,
+                          const arg &val)
+{
+	using karma::eps;
+	using karma::maxwidth;
+
+	struct generator
+	:gen::grammar<char *, std::string()>
+	{
+		generator(): grammar{grammar::user} {}
+	}
+	static const generator;
+	const auto gen(maxwidth(max)[generator] | eps);
+	return generate_string(out, gen, val);
+}
+
+template<class generator>
+bool
+rfc1459::fmt::generate_string(char *&out,
+                              const generator &gen,
+                              const arg &val)
+{
+	const auto &ptr(get<0>(val));
+	const auto &type(get<1>(val));
+	if(type == typeid(std::string))
+	{
+		const auto &str(*reinterpret_cast<const std::string *>(ptr));
+		karma::generate(out, gen, str);
+		return true;
+	}
+	else if(type == typeid(const char *))
+	{
+		const auto &str(reinterpret_cast<const char *>(ptr));
+		karma::generate(out, gen, str);
+		return true;
+	}
+	else return false;
+}
+
+namespace ircd    {
+namespace rfc1459 {
+namespace fmt     {
+
+using qi::lit;
+using qi::char_;
+using qi::int_;
+using qi::eps;
+using qi::repeat;
+using qi::omit;
+
+template<class it,
+         class top>
+struct grammar
+:qi::grammar<it, top>
+{
+	qi::rule<it> specsym;
+	qi::rule<it, std::string()> name;
+	qi::rule<it, fmt::spec> spec;
+
+	grammar(qi::rule<it, top> &top_rule);
+};
+
+struct parse_specifier
+:fmt::grammar<const char *, fmt::spec>
+{
+	parse_specifier(): grammar{grammar::spec} {}
+}
+static const parse_specifier;
+
+} // namespace fmt
+} // namespace rfc1459
+} // namespace ircd
+
+template<class it,
+         class top>
+rfc1459::fmt::grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
+:grammar<it, top>::base_type
+{
+	top_rule
+}
+,specsym
+{
+	lit(SPECIFIER)
+}
+,name
+{
+	repeat(1,14)[char_("A-Za-z")]
+}
+{
+	spec %= specsym >> -char_("+-") >> -int_ >> name[([]
+	(auto &str, auto &ctx, auto &valid)
+	{
+		valid = is_specifier(str);
+	})];
+}
+
+ssize_t
+rfc1459::fmt::_snprintf(char *const &buf,
+                        const size_t &max,
+                        const char *const &fmt,
+                        const std::vector<const void *> &p,
+                        const std::vector<std::type_index> &t)
+try
+{
+	if(unlikely(!max))
+		return 0;
+
+	char *out(buf);                             // Always points at next place to write
+	const char *stop(fmt);                      // Saves the 'last' place to copy a literal from
+	const char *start(strchr(fmt, SPECIFIER));  // The running position of the format string parse
+	const char *const end(fmt + strlen(fmt));   // The end of the format string
+
+	// Copies string data between format specifiers.
+	const auto copy_literal([&stop, &buf, &out, &max]
+	(const char *const &end)
+	{
+		const size_t rem(max - std::distance(buf, out) - 1);
+		const size_t len(std::distance(stop, end));
+		const size_t &cpsz(std::min(len, rem));
+		memcpy(out, stop, cpsz);
+		out += cpsz;
+	});
+
+	size_t index(0); // The current position for vectors p and t (specifier count)
+	for(; start && start != end; stop = start++, start = strchr(start, SPECIFIER))
+	{
+		// Copy literal data from where the last parse stopped up to the found specifier
+		copy_literal(start);
+
+		// Parse the specifier with the grammar
+		fmt::spec spec;
+		if(!qi::parse(start, end, fmt::parse_specifier, spec))
+			continue;
+
+		// Throws if the format string has more specifiers than arguments.
+		const auto rem(max - std::distance(buf, out) - 1);
+		handle_specifier(out, rem, spec, { p.at(index), t.at(index) });
+		index++;
+	}
+
+	// If the end of the string is not a format specifier itself, it needs to be copied
+	if(!start)
+		copy_literal(end);
+
+	*out = '\0';
+	return std::distance(buf, out);
+}
+catch(const std::out_of_range &e)
+{
+	throw fmtstr_invalid("Format string requires more than %zu arguments.", p.size());
+}
+
 //NOTE: unterminated
 //TODO: Fix carriage
 std::ostream &
