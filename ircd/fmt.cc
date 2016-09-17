@@ -21,6 +21,7 @@
 
 #include <ircd/rfc1459_parse.h>
 #include <ircd/rfc1459_gen.h>
+#include <ircd/lex_cast.h>
 #include <ircd/fmt.h>
 
 BOOST_FUSION_ADAPT_STRUCT
@@ -42,33 +43,10 @@ const char SPECIFIER
 	'%'
 };
 
-namespace parse
-{
-	using qi::lit;
-	using qi::char_;
-	using qi::int_;
-	using qi::eps;
-	using qi::repeat;
-	using qi::omit;
-
-	template<class it,
-	         class top>
-	struct grammar
-	:qi::grammar<it, top>
-	{
-		qi::rule<it> specsym;
-		qi::rule<it, std::string()> name;
-		qi::rule<it, fmt::spec> spec;
-
-		grammar(qi::rule<it, top> &top_rule);
-	};
-}
+std::map<std::string, specifier *> _specifiers;
 
 template<class generator> bool generate_string(char *&out, const generator &, const arg &);
-void handle_specifier(char *&out, const size_t &max, const spec &, const arg &);
-bool is_specifier(const std::string &name);
-
-std::map<std::string, specifier *> _specifiers;
+template<class integer> bool generate_integer(char *&out, const size_t &max, const spec &, const integer &i);
 
 struct nick_specifier
 :specifier
@@ -103,6 +81,64 @@ const host_specifier
 	"host"s
 };
 
+struct string_specifier
+:specifier
+{
+	bool operator()(char *&out, const size_t &max, const spec &, const arg &val) const override;
+	using specifier::specifier;
+}
+const string_specifier
+{
+	"s"s
+};
+
+struct int_specifier
+:specifier
+{
+	bool operator()(char *&out, const size_t &max, const spec &, const arg &val) const override;
+	using specifier::specifier;
+}
+const int_specifier
+{
+	{ "d"s, "ld"s, "u"s, "lu"s, "zd"s, "zu"s }
+};
+
+struct char_specifier
+:specifier
+{
+	bool operator()(char *&out, const size_t &max, const spec &, const arg &val) const override;
+	using specifier::specifier;
+}
+const char_specifier
+{
+	"c"s
+};
+
+bool is_specifier(const std::string &name);
+void handle_specifier(char *&out, const size_t &max, const uint &idx, const spec &, const arg &);
+
+namespace parse
+{
+	using qi::lit;
+	using qi::char_;
+	using qi::int_;
+	using qi::eps;
+	using qi::repeat;
+	using qi::omit;
+
+	template<class it,
+	         class top>
+	struct grammar
+	:qi::grammar<it, top>
+	{
+		qi::rule<it> specsym;
+		qi::rule<it, std::string()> name;
+		qi::rule<it, fmt::spec> spec;
+
+		grammar(qi::rule<it, top> &top_rule);
+	};
+}
+
 } // namespace fmt
 } // namespace ircd
 
@@ -129,140 +165,6 @@ fmt::parse::grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
 	{
 		valid = is_specifier(str);
 	})];
-}
-
-fmt::specifier::specifier(const std::string &name)
-:name{name}
-{
-	const auto iit(_specifiers.emplace(name, this));
-	if(!iit.second)
-		throw error("Specifier '%c%s' already registered\n",
-		            SPECIFIER,
-		            name.c_str());
-}
-
-fmt::specifier::~specifier()
-noexcept
-{
-	_specifiers.erase(name);
-}
-
-fmt::spec::spec()
-:sign('+')
-,width(0)
-{
-	name.reserve(14);
-}
-
-const decltype(fmt::_specifiers) &
-fmt::specifiers()
-{
-	return _specifiers;
-}
-
-bool
-fmt::is_specifier(const std::string &name)
-{
-	return specifiers().count(name);
-}
-
-void
-fmt::handle_specifier(char *&out,
-                      const size_t &max,
-                      const spec &spec,
-                      const arg &val)
-try
-{
-	const auto &type(get<1>(val));
-	const auto &handler(*specifiers().at(spec.name));
-	if(!handler(out, max, spec, val))
-		throw fmtstr_mismatch("Invalid type `%s' for format specifier '%c%s'",
-		                      type.name(),
-		                      SPECIFIER,
-		                      spec.name.c_str());
-}
-catch(const std::out_of_range &e)
-{
-	throw fmtstr_invalid("Unhandled specifier `%c%s' in format string",
-	                     SPECIFIER,
-	                     spec.name.c_str());
-}
-
-bool
-fmt::host_specifier::operator()(char *&out,
-                                const size_t &max,
-                                const spec &spec,
-                                const arg &val)
-const
-{
-	using karma::maxwidth;
-
-	struct generator
-	:rfc1459::gen::grammar<char *, std::string()>
-	{
-		generator(): grammar{grammar::hostname} {}
-	}
-	static const generator;
-	return generate_string(out, maxwidth(max)[generator], val);
-}
-
-bool
-fmt::user_specifier::operator()(char *&out,
-                                const size_t &max,
-                                const spec &spec,
-                                const arg &val)
-const
-{
-	using karma::maxwidth;
-
-	struct generator
-	:rfc1459::gen::grammar<char *, std::string()>
-	{
-		generator(): grammar{grammar::user} {}
-	}
-	static const generator;
-	return generate_string(out, maxwidth(max)[generator], val);
-}
-
-bool
-fmt::nick_specifier::operator()(char *&out,
-                                const size_t &max,
-                                const spec &spec,
-                                const arg &val)
-const
-{
-	using karma::maxwidth;
-
-	struct generator
-	:rfc1459::gen::grammar<char *, std::string()>
-	{
-		generator(): grammar{grammar::nick} {}
-	}
-	static const generator;
-	return generate_string(out, maxwidth(max)[generator], val);
-}
-
-template<class generator>
-bool
-fmt::generate_string(char *&out,
-                     const generator &gen,
-                     const arg &val)
-{
-	const auto &ptr(get<0>(val));
-	const auto &type(get<1>(val));
-	if(type == typeid(std::string))
-	{
-		const auto &str(*reinterpret_cast<const std::string *>(ptr));
-		karma::generate(out, gen, str);
-		return true;
-	}
-	else if(type == typeid(const char *))
-	{
-		const auto &str(reinterpret_cast<const char *>(ptr));
-		karma::generate(out, gen, str);
-		return true;
-	}
-	else return false;
 }
 
 ssize_t
@@ -298,7 +200,7 @@ try
 	});
 
 	size_t index(0); // The current position for vectors p and t (specifier count)
-	for(; start && start != end; stop = start++, start = strchr(start, SPECIFIER))
+	for(; start; stop = start++, start = start < end? strchr(start, SPECIFIER) : nullptr)
 	{
 		// Copy literal data from where the last parse stopped up to the found specifier
 		copy_literal(start);
@@ -318,7 +220,7 @@ try
 
 		// Throws if the format string has more specifiers than arguments.
 		const arg val{p.at(index), t.at(index)};
-		handle_specifier(out, remaining(), spec, val);
+		handle_specifier(out, remaining(), index, spec, val);
 		index++;
 	}
 
@@ -331,5 +233,360 @@ try
 }
 catch(const std::out_of_range &e)
 {
-	throw fmtstr_invalid("Format string requires more than %zu arguments.", p.size());
+	throw invalid_format("Format string requires more than %zu arguments.", p.size());
+}
+
+const decltype(fmt::_specifiers) &
+fmt::specifiers()
+{
+	return _specifiers;
+}
+
+fmt::specifier::specifier(const std::string &name)
+:specifier{{name}}
+{
+}
+
+fmt::specifier::specifier(const std::initializer_list<std::string> &names)
+:names{names}
+{
+	for(const auto &name : this->names)
+		if(is_specifier(name))
+			throw error("Specifier '%c%s' already registered\n",
+			            SPECIFIER,
+			            name.c_str());
+
+	for(const auto &name : this->names)
+		_specifiers.emplace(name, this);
+}
+
+fmt::specifier::~specifier()
+noexcept
+{
+	for(const auto &name : names)
+		_specifiers.erase(name);
+}
+
+fmt::spec::spec()
+:sign('+')
+,width(0)
+{
+	name.reserve(14);
+}
+
+bool
+fmt::is_specifier(const std::string &name)
+{
+	return specifiers().count(name);
+}
+
+void
+fmt::handle_specifier(char *&out,
+                      const size_t &max,
+                      const uint &idx,
+                      const spec &spec,
+                      const arg &val)
+try
+{
+	const auto &type(get<1>(val));
+	const auto &handler(*specifiers().at(spec.name));
+	if(!handler(out, max, spec, val))
+		throw invalid_type("`%s' for format specifier '%c%s' for argument #%u",
+		                   type.name(),
+		                   SPECIFIER,
+		                   spec.name.c_str(),
+		                   idx);
+}
+catch(const std::out_of_range &e)
+{
+	throw invalid_format("Unhandled specifier `%c%s' for argument #%u in format string",
+	                     SPECIFIER,
+	                     spec.name.c_str(),
+	                     idx);
+}
+catch(const illegal &e)
+{
+	throw illegal("Specifier `%c%s' for argument #%u: %s",
+	              SPECIFIER,
+	              spec.name.c_str(),
+	              idx,
+	              e.what());
+}
+
+bool
+fmt::char_specifier::operator()(char *&out,
+                                const size_t &max,
+                                const spec &,
+                                const arg &val)
+const
+{
+	using karma::char_;
+	using karma::eps;
+	using karma::maxwidth;
+
+	static const auto throw_illegal([]
+	{
+		throw illegal("Not a printable character");
+	});
+
+	struct generator
+	:rfc1459::gen::grammar<char *, char()>
+	{
+		karma::rule<char *, char()> printable
+		{
+			char_(rfc1459::character::gather(rfc1459::character::PRINT))
+		};
+
+		generator(): grammar{printable} {}
+	}
+	static const generator;
+
+	const auto &ptr(get<0>(val));
+	const auto &type(get<1>(val));
+	if(type == typeid(const char))
+	{
+		const auto &c(*reinterpret_cast<const char *>(ptr));
+		karma::generate(out, maxwidth(max)[generator] | eps[throw_illegal], c);
+		return true;
+	}
+	else return false;
+}
+
+bool
+fmt::int_specifier::operator()(char *&out,
+                               const size_t &max,
+                               const spec &s,
+                               const arg &val)
+const
+{
+	const auto &ptr(get<0>(val));
+	const auto &type(get<1>(val));
+
+	if(type == typeid(const char))
+		return generate_integer(out, max, s, *reinterpret_cast<const char *>(ptr));
+
+	if(type == typeid(const unsigned char))
+			return generate_integer(out, max, s, *reinterpret_cast<const unsigned char *>(ptr));
+
+	if(type == typeid(const short))
+			return generate_integer(out, max, s, *reinterpret_cast<const short *>(ptr));
+
+	if(type == typeid(const unsigned short))
+			return generate_integer(out, max, s, *reinterpret_cast<const unsigned short *>(ptr));
+
+	if(type == typeid(const int))
+			return generate_integer(out, max, s, *reinterpret_cast<const int *>(ptr));
+
+	if(type == typeid(const unsigned int))
+			return generate_integer(out, max, s, *reinterpret_cast<const unsigned int *>(ptr));
+
+	if(type == typeid(const long))
+			return generate_integer(out, max, s, *reinterpret_cast<const long *>(ptr));
+
+	if(type == typeid(const unsigned long))
+			return generate_integer(out, max, s, *reinterpret_cast<const unsigned long *>(ptr));
+
+	if(type == typeid(const long long))
+			return generate_integer(out, max, s, *reinterpret_cast<const long long *>(ptr));
+
+	if(type == typeid(const unsigned long long))
+			return generate_integer(out, max, s, *reinterpret_cast<const unsigned long long *>(ptr));
+
+	if(type == typeid(const char[]))
+	{
+		size_t test;
+		const auto &i(reinterpret_cast<const char *>(ptr));
+		const auto len(std::min(max, strlen(i)));
+		if(!boost::conversion::try_lexical_convert(i, test))
+			throw illegal("The string literal value for integer specifier is not a valid integer");
+
+		memcpy(out, i, len);
+		out += len;
+		return true;
+	}
+
+	if(type == typeid(const char *))
+	{
+		size_t test;
+		const auto &i(*reinterpret_cast<const char *const *>(ptr));
+		const auto len(std::min(max, strlen(i)));
+		if(!boost::conversion::try_lexical_convert(i, test))
+			throw illegal("The character buffer for integer specifier is not a valid integer");
+
+		memcpy(out, i, len);
+		out += len;
+		return true;
+	}
+
+	if(type == typeid(const std::string))
+	{
+		size_t test;
+		const auto &i(*reinterpret_cast<const std::string *>(ptr));
+		const auto len(std::min(max, i.size()));
+		if(!boost::conversion::try_lexical_convert(i, test))
+			throw illegal("The string argument for integer specifier is not a valid integer");
+
+		memcpy(out, i.data(), len);
+		out += len;
+		return true;
+	}
+
+	return false;
+}
+
+bool
+fmt::string_specifier::operator()(char *&out,
+                                  const size_t &max,
+                                  const spec &,
+                                  const arg &val)
+const
+{
+	using karma::char_;
+	using karma::eps;
+	using karma::maxwidth;
+
+	static const auto throw_illegal([]
+	{
+		throw illegal("Not a printable string");
+	});
+
+	struct generator
+	:rfc1459::gen::grammar<char *, std::string()>
+	{
+		karma::rule<char *, std::string()> printable
+		{
+			+char_(rfc1459::character::gather(rfc1459::character::PRINT))
+		};
+
+		generator(): grammar{printable} {}
+	}
+	static const generator;
+	return generate_string(out, maxwidth(max)[generator] | eps[throw_illegal], val);
+}
+
+bool
+fmt::host_specifier::operator()(char *&out,
+                                const size_t &max,
+                                const spec &spec,
+                                const arg &val)
+const
+{
+	using karma::eps;
+	using karma::maxwidth;
+
+	static const auto throw_illegal([]
+	{
+		throw illegal("Argument is not a valid host string");
+	});
+
+	struct generator
+	:rfc1459::gen::grammar<char *, std::string()>
+	{
+		generator(): grammar{grammar::hostname} {}
+	}
+	static const generator;
+	return generate_string(out, maxwidth(max)[generator] | eps[throw_illegal], val);
+}
+
+bool
+fmt::user_specifier::operator()(char *&out,
+                                const size_t &max,
+                                const spec &spec,
+                                const arg &val)
+const
+{
+	using karma::eps;
+	using karma::maxwidth;
+
+	static const auto throw_illegal([]
+	{
+		throw illegal("Argument is not a valid user string");
+	});
+
+	struct generator
+	:rfc1459::gen::grammar<char *, std::string()>
+	{
+		generator(): grammar{grammar::user} {}
+	}
+	static const generator;
+	return generate_string(out, maxwidth(max)[generator] | eps[throw_illegal], val);
+}
+
+bool
+fmt::nick_specifier::operator()(char *&out,
+                                const size_t &max,
+                                const spec &spec,
+                                const arg &val)
+const
+{
+	using karma::eps;
+	using karma::maxwidth;
+
+	static const auto throw_illegal([]
+	{
+		throw illegal("Argument is not a valid nick string");
+	});
+
+	struct generator
+	:rfc1459::gen::grammar<char *, std::string()>
+	{
+		generator(): grammar{grammar::nick} {}
+	}
+	static const generator;
+	return generate_string(out, maxwidth(max)[generator] | eps[throw_illegal], val);
+}
+
+template<class integer>
+bool
+fmt::generate_integer(char *&out,
+                      const size_t &max,
+                      const spec &s,
+                      const integer &i)
+{
+	using karma::int_;
+	using karma::maxwidth;
+
+	struct generator
+	:rfc1459::gen::grammar<char *, integer()>
+	{
+		karma::rule<char *, integer()> rule
+		{
+			int_
+		};
+
+		generator(): rfc1459::gen::grammar<char *, integer()>{rule} {}
+	}
+	static const generator;
+	return karma::generate(out, maxwidth(max)[generator], i);
+}
+
+template<class generator>
+bool
+fmt::generate_string(char *&out,
+                     const generator &gen,
+                     const arg &val)
+{
+	using karma::eps;
+
+	const auto &ptr(get<0>(val));
+	const auto &type(get<1>(val));
+	if(type == typeid(std::string))
+	{
+		const auto &str(*reinterpret_cast<const std::string *>(ptr));
+		karma::generate(out, gen, str);
+		return true;
+	}
+	else if(type == typeid(const char *))
+	{
+		const auto &str(*reinterpret_cast<const char *const *>(ptr));
+		karma::generate(out, gen, str);
+		return true;
+	}
+
+	// This for string literals which have unique array types depending on their size.
+	// There is no reasonable way to match them. The best that can be hoped for is the
+	// grammar will fail gracefully (most of the time) or not print something bogus when
+	// it happens to be legal.
+	const auto &str(reinterpret_cast<const char *>(ptr));
+	return karma::generate(out, gen, str);
 }

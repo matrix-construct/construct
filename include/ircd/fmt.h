@@ -27,9 +27,9 @@ namespace ircd {
 namespace fmt  {
 
 IRCD_EXCEPTION(ircd::error, error);
-IRCD_EXCEPTION(error, fmtstr_invalid);
-IRCD_EXCEPTION(error, fmtstr_mismatch);
-IRCD_EXCEPTION(error, fmtstr_illegal);
+IRCD_EXCEPTION(error, invalid_format);
+IRCD_EXCEPTION(error, invalid_type);
+IRCD_EXCEPTION(error, illegal);
 
 //
 // module/internal API
@@ -40,6 +40,7 @@ using ptrs = std::vector<const void *>;
 using types = std::vector<std::type_index>;
 using arg = std::tuple<const void *const &, const std::type_index &>;
 
+// Structural representation of a format specifier
 struct spec
 {
 	char sign;
@@ -49,13 +50,16 @@ struct spec
 	spec();
 };
 
+// A format specifier handler module.
+// This allows a new "%foo" to be defined with custom handling.
 class specifier
 {
-	std::string name;
+	std::vector<std::string> names;
 
   public:
 	virtual bool operator()(char *&out, const size_t &max, const spec &, const arg &) const = 0;
 
+	specifier(const std::initializer_list<std::string> &names);
 	specifier(const std::string &name);
 	virtual ~specifier() noexcept;
 };
@@ -66,8 +70,12 @@ ssize_t _snprintf(char *const &, const size_t &, const char *const &, const ptrs
 //
 // public API
 //
-template<class... Args>
-ssize_t snprintf(char *const &buf, const size_t &max, const char *const &fmt, Args&&... args);
+
+// Implementation of the traditional snprintf(), as best as practical:
+// * The arguments are not restricted by va_list limitations. You can pass a real std::string.
+// * The function participates in the custom protocol-safe ruleset, and the behavior is non-standard.
+//   To be sure to get truly /standard/ snprintf() behavior use ::snprintf() instead.
+template<class... Args> ssize_t snprintf(char *const &buf, const size_t &max, const char *const &fmt, Args&&... args);
 
 
 template<class... Args>
