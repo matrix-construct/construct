@@ -31,8 +31,14 @@ IRCD_EXCEPTION(error, fmtstr_invalid);
 IRCD_EXCEPTION(error, fmtstr_mismatch);
 IRCD_EXCEPTION(error, fmtstr_illegal);
 
+//
 // module/internal API
+//
 extern const char SPECIFIER;
+
+using ptrs = std::vector<const void *>;
+using types = std::vector<std::type_index>;
+using arg = std::tuple<const void *const &, const std::type_index &>;
 
 struct spec
 {
@@ -43,15 +49,23 @@ struct spec
 	spec();
 };
 
-using ptrs = std::vector<const void *>;
-using types = std::vector<std::type_index>;
-using arg = std::tuple<const void *const &, const std::type_index &>;
-using handler = std::function<bool (char *&, const size_t &, const spec &, const arg &)>;
+class specifier
+{
+	std::string name;
+
+  public:
+	virtual bool operator()(char *&out, const size_t &max, const spec &, const arg &) const = 0;
+
+	specifier(const std::string &name);
+	virtual ~specifier() noexcept;
+};
+
+const std::map<std::string, specifier *> &specifiers();
 ssize_t _snprintf(char *const &, const size_t &, const char *const &, const ptrs &, const types &);
 
-extern std::map<std::string, handler> handlers;
-
+//
 // public API
+//
 template<class... Args>
 ssize_t snprintf(char *const &buf, const size_t &max, const char *const &fmt, Args&&... args);
 

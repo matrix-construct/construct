@@ -62,27 +62,45 @@ namespace parse
 
 		grammar(qi::rule<it, top> &top_rule);
 	};
-
-	struct specifier
-	:grammar<const char *, fmt::spec>
-	{
-		specifier(): grammar{grammar::spec} {}
-	}
-	static const specifier;
 }
 
 template<class generator> bool generate_string(char *&out, const generator &, const arg &);
-bool handle_nick(char *&out, const size_t &max, const spec &, const arg &);
-bool handle_user(char *&out, const size_t &max, const spec &, const arg &);
-bool handle_host(char *&out, const size_t &max, const spec &, const arg &);
 void handle_specifier(char *&out, const size_t &max, const spec &, const arg &);
 bool is_specifier(const std::string &name);
 
-std::map<std::string, handler> handlers
+std::map<std::string, specifier *> _specifiers;
+
+struct nick_specifier
+:specifier
 {
-	{ "nick", handle_nick },
-	{ "user", handle_user },
-	{ "host", handle_host },
+	bool operator()(char *&out, const size_t &max, const spec &, const arg &) const override;
+	using specifier::specifier;
+}
+const nick_specifier
+{
+	"nick"s
+};
+
+struct user_specifier
+:specifier
+{
+	bool operator()(char *&out, const size_t &max, const spec &, const arg &) const override;
+	using specifier::specifier;
+}
+const user_specifier
+{
+	"user"s
+};
+
+struct host_specifier
+:specifier
+{
+	bool operator()(char *&out, const size_t &max, const spec &, const arg &) const override;
+	using specifier::specifier;
+}
+const host_specifier
+{
+	"host"s
 };
 
 } // namespace fmt
@@ -113,6 +131,22 @@ fmt::parse::grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
 	})];
 }
 
+fmt::specifier::specifier(const std::string &name)
+:name{name}
+{
+	const auto iit(_specifiers.emplace(name, this));
+	if(!iit.second)
+		throw error("Specifier '%c%s' already registered\n",
+		            SPECIFIER,
+		            name.c_str());
+}
+
+fmt::specifier::~specifier()
+noexcept
+{
+	_specifiers.erase(name);
+}
+
 fmt::spec::spec()
 :sign('+')
 ,width(0)
@@ -120,10 +154,16 @@ fmt::spec::spec()
 	name.reserve(14);
 }
 
+const decltype(fmt::_specifiers) &
+fmt::specifiers()
+{
+	return _specifiers;
+}
+
 bool
 fmt::is_specifier(const std::string &name)
 {
-	return handlers.count(name);
+	return specifiers().count(name);
 }
 
 void
@@ -134,7 +174,7 @@ fmt::handle_specifier(char *&out,
 try
 {
 	const auto &type(get<1>(val));
-	const auto &handler(handlers.at(spec.name));
+	const auto &handler(*specifiers().at(spec.name));
 	if(!handler(out, max, spec, val))
 		throw fmtstr_mismatch("Invalid type `%s' for format specifier '%c%s'",
 		                      type.name(),
@@ -143,17 +183,18 @@ try
 }
 catch(const std::out_of_range &e)
 {
-	throw fmtstr_invalid("Unhandled specifier `%s' in format string",
+	throw fmtstr_invalid("Unhandled specifier `%c%s' in format string",
+	                     SPECIFIER,
 	                     spec.name.c_str());
 }
 
 bool
-fmt::handle_host(char *&out,
-                 const size_t &max,
-                 const spec &spec,
-                 const arg &val)
+fmt::host_specifier::operator()(char *&out,
+                                const size_t &max,
+                                const spec &spec,
+                                const arg &val)
+const
 {
-	using karma::eps;
 	using karma::maxwidth;
 
 	struct generator
@@ -166,12 +207,12 @@ fmt::handle_host(char *&out,
 }
 
 bool
-fmt::handle_user(char *&out,
-                 const size_t &max,
-                 const spec &spec,
-                 const arg &val)
+fmt::user_specifier::operator()(char *&out,
+                                const size_t &max,
+                                const spec &spec,
+                                const arg &val)
+const
 {
-	using karma::eps;
 	using karma::maxwidth;
 
 	struct generator
@@ -184,12 +225,12 @@ fmt::handle_user(char *&out,
 }
 
 bool
-fmt::handle_nick(char *&out,
-                 const size_t &max,
-                 const spec &spec,
-                 const arg &val)
+fmt::nick_specifier::operator()(char *&out,
+                                const size_t &max,
+                                const spec &spec,
+                                const arg &val)
+const
 {
-	using karma::eps;
 	using karma::maxwidth;
 
 	struct generator
@@ -262,9 +303,17 @@ try
 		// Copy literal data from where the last parse stopped up to the found specifier
 		copy_literal(start);
 
+		// Instantiate the format specifier grammar
+		struct parser
+		:parse::grammar<const char *, fmt::spec>
+		{
+			parser(): grammar{grammar::spec} {}
+		}
+		static const parser;
+
 		// Parse the specifier with the grammar
 		fmt::spec spec;
-		if(!qi::parse(start, end, fmt::parse::specifier, spec))
+		if(!qi::parse(start, end, parser, spec))
 			continue;
 
 		// Throws if the format string has more specifiers than arguments.
