@@ -86,6 +86,17 @@ const host_specifier
 	"host"s
 };
 
+struct prefix_specifier
+:specifier
+{
+	bool operator()(char *&out, const size_t &max, const spec &, const arg &) const override;
+	using specifier::specifier;
+}
+const prefix_specifier
+{
+	"prefix"s
+};
+
 struct string_specifier
 :specifier
 {
@@ -472,6 +483,37 @@ const
 	}
 	static const generator;
 	return generate_string(out, maxwidth(max)[generator] | eps[throw_illegal], val);
+}
+
+bool
+fmt::prefix_specifier::operator()(char *&out,
+                                  const size_t &max,
+                                  const spec &spec,
+                                  const arg &val)
+const
+{
+	using karma::eps;
+	using karma::maxwidth;
+
+	static const auto throw_illegal([]
+	{
+		throw illegal("Argument is not a valid IRC prefix");
+	});
+
+	const auto &ptr(get<0>(val));
+	const auto &type(get<1>(val));
+	if(type == typeid(rfc1459::pfx))
+	{
+		struct generator
+		:rfc1459::gen::grammar<char *, rfc1459::pfx>
+		{
+			generator(): grammar{grammar::prefix} {}
+		}
+		static const generator;
+		const auto &pfx(*reinterpret_cast<const rfc1459::pfx *>(ptr));
+		return karma::generate(out, maxwidth(max)[generator] | eps[throw_illegal], pfx);
+	}
+	else return false;
 }
 
 bool
