@@ -78,6 +78,7 @@ namespace ircd
 #include "color.h"
 #include "messages.h"
 #include "rfc1459.h"
+#include "fmt.h"
 #include "err.h"
 #include "fs.h"
 #include "s_assert.h"

@@ -188,45 +188,6 @@ std::ostream &operator<<(std::ostream &, const cmd &);
 std::ostream &operator<<(std::ostream &, const parv &);
 std::ostream &operator<<(std::ostream &, const line &);   // unterminated
 
-namespace fmt
-{
-	IRCD_EXCEPTION(rfc1459::error, error);
-	IRCD_EXCEPTION(error, fmtstr_invalid);
-	IRCD_EXCEPTION(error, fmtstr_mismatch);
-
-	struct spec;
-
-	// internal API
-	using ptrs = std::vector<const void *>;
-	using types = std::vector<std::type_index>;
-	using arg = std::tuple<const void *const &, const std::type_index &>;
-	using handler = std::function<bool (char *&, const size_t &, const spec &, const arg &)>;
-	ssize_t _snprintf(char *const &, const size_t &, const char *const &, const ptrs &, const types &);
-
-	// public API
-	template<class... Args> ssize_t snprintf(char *const &buf, const size_t &max, const char *const &fmt, Args&&... args);
-}
-
-
-template<class... Args>
-ssize_t
-fmt::snprintf(char *const &buf,
-              const size_t &max,
-              const char *const &fmt,
-              Args&&... args)
-{
-	static const std::vector<std::type_index> types
-	{
-		typeid(Args)...
-	};
-
-	const std::vector<const void *> ptrs
-	{
-		std::addressof(args)...
-	};
-
-	return _snprintf(buf, max, fmt, ptrs, types);
-}
 
 inline bool
 less::operator()(const std::string *const &a,
