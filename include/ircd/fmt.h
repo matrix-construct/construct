@@ -35,6 +35,7 @@ IRCD_EXCEPTION(error, illegal);
 // module/internal API
 //
 extern const char SPECIFIER;
+extern const char SPECIFIER_TERMINATOR;
 
 using ptrs = std::vector<const void *>;
 using types = std::vector<std::type_index>;

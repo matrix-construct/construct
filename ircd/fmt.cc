@@ -43,6 +43,11 @@ const char SPECIFIER
 	'%'
 };
 
+const char SPECIFIER_TERMINATOR
+{
+	'$'
+};
+
 std::map<std::string, specifier *> _specifiers;
 
 template<class generator> bool generate_string(char *&out, const generator &, const arg &);
@@ -132,6 +137,7 @@ namespace parse
 	:qi::grammar<it, top>
 	{
 		qi::rule<it> specsym;
+		qi::rule<it> specterm;
 		qi::rule<it, std::string()> name;
 		qi::rule<it, fmt::spec> spec;
 
@@ -155,9 +161,13 @@ fmt::parse::grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
 {
 	lit(SPECIFIER)
 }
+,specterm
+{
+	char_(SPECIFIER_TERMINATOR)
+}
 ,name
 {
-	repeat(1,14)[char_("A-Za-z")]
+	repeat(1,14)[char_("A-Za-z")] >> omit[-specterm]
 }
 {
 	spec %= specsym >> -char_("+-") >> -int_ >> name[([]
