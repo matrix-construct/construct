@@ -119,25 +119,25 @@ struct less
 struct nick
 :std::string
 {
-	using std::string::string;
+	template<class... A> nick(A&&... a): std::string{std::forward<A>(a)...} {}
 };
 
 struct user
 :std::string
 {
-	using std::string::string;
+	template<class... A> user(A&&... a): std::string{std::forward<A>(a)...} {}
 };
 
 struct host
 :std::string
 {
-	using std::string::string;
+	template<class... A> host(A&&... a): std::string{std::forward<A>(a)...} {}
 };
 
 struct cmd
 :std::string
 {
-	using std::string::string;
+	template<class... A> cmd(A&&... a): std::string{std::forward<A>(a)...} {}
 };
 
 struct parv
