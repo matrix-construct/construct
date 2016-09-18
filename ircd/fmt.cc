@@ -53,6 +53,28 @@ std::map<std::string, specifier *> _specifiers;
 template<class generator> bool generate_string(char *&out, const generator &, const arg &);
 template<class integer> bool generate_integer(char *&out, const size_t &max, const spec &, const integer &i);
 
+struct param_specifier
+:specifier
+{
+	bool operator()(char *&out, const size_t &max, const spec &, const arg &) const override;
+	using specifier::specifier;
+}
+const param_specifier
+{
+	"param"s
+};
+
+struct parv_specifier
+:specifier
+{
+	bool operator()(char *&out, const size_t &max, const spec &, const arg &) const override;
+	using specifier::specifier;
+}
+const parv_specifier
+{
+	"parv"s
+};
+
 struct nick_specifier
 :specifier
 {
@@ -583,6 +605,96 @@ const
 	:rfc1459::gen::grammar<char *, std::string()>
 	{
 		generator(): grammar{grammar::nick} {}
+	}
+	static const generator;
+	return generate_string(out, maxwidth(max)[generator] | eps[throw_illegal], val);
+}
+
+bool
+fmt::parv_specifier::operator()(char *&out,
+                                const size_t &max,
+                                const spec &spec,
+                                const arg &val)
+const
+{
+	using karma::eps;
+	using karma::delimit;
+	using karma::maxwidth;
+
+	static const auto throw_illegal([]
+	{
+		throw illegal("Argument is not a valid IRC parameter vector");
+	});
+
+	const auto &ptr(get<0>(val));
+	const auto &type(get<1>(val));
+	if(type == typeid(const rfc1459::parv))
+	{
+		/*
+		struct generator
+		:rfc1459::gen::grammar<char *, rfc1459::parv>
+		{
+			generator(): grammar{grammar::params} {}
+		}
+		static const generator;
+		const auto &parv(*reinterpret_cast<const rfc1459::parv *>(ptr));
+		return karma::generate(out, maxwidth(max)[generator] | eps[throw_illegal], parv);
+		*/
+
+		struct generate_middle
+		:rfc1459::gen::grammar<char *, std::string()>
+		{
+			generate_middle(): grammar{grammar::middle} {}
+		}
+		static const generate_middle;
+
+		struct generate_trailing
+		:rfc1459::gen::grammar<char *, std::string()>
+		{
+			generate_trailing(): grammar{grammar::trailing} {}
+		}
+		static const generate_trailing;
+		const auto &parv(*reinterpret_cast<const rfc1459::parv *>(ptr));
+
+		const char *const start(out);
+		const auto remain([&start, &out, &max]
+		{
+			return max - (out - start);
+		});
+
+		ssize_t i(0);
+		for(; i < ssize_t(parv.size()) - 1; ++i)
+			if(!karma::generate(out, maxwidth(remain())[delimit[generate_middle]], parv.at(i)))
+				throw illegal("Invalid middle parameter");
+
+		if(!parv.empty())
+			if(!karma::generate(out, maxwidth(remain())[generate_trailing], parv.at(parv.size() - 1)))
+				throw illegal("Invalid trailing parameter");
+
+		return true;
+	}
+	else return false;
+}
+
+bool
+fmt::param_specifier::operator()(char *&out,
+                                 const size_t &max,
+                                 const spec &spec,
+                                 const arg &val)
+const
+{
+	using karma::eps;
+	using karma::maxwidth;
+
+	static const auto throw_illegal([]
+	{
+		throw illegal("Argument is not a valid IRC 'middle' parameter");
+	});
+
+	struct generator
+	:rfc1459::gen::grammar<char *, std::string()>
+	{
+		generator(): grammar{grammar::middle} {}
 	}
 	static const generator;
 	return generate_string(out, maxwidth(max)[generator] | eps[throw_illegal], val);
