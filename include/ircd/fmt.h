@@ -32,7 +32,7 @@ IRCD_EXCEPTION(error, invalid_type);
 IRCD_EXCEPTION(error, illegal);
 
 //
-// module/internal API
+// Module API
 //
 extern const char SPECIFIER;
 extern const char SPECIFIER_TERMINATOR;
@@ -66,37 +66,52 @@ class specifier
 };
 
 const std::map<std::string, specifier *> &specifiers();
-ssize_t _snprintf(char *const &, const size_t &, const char *const &, const ptrs &, const types &);
 
 //
-// public API
+// User API
 //
 
-// Implementation of the traditional snprintf(), as best as practical:
-// * The arguments are not restricted by va_list limitations. You can pass a real std::string.
-// * The function participates in the custom protocol-safe ruleset, and the behavior is non-standard.
-//   To be sure to get truly /standard/ snprintf() behavior use ::snprintf() instead.
-template<class... Args> ssize_t snprintf(char *const &buf, const size_t &max, const char *const &fmt, Args&&... args);
+// * The arguments are not restricted by stdarg limitations. You can pass a real std::string.
+// * The function participates in the custom protocol-safe ruleset.
+class snprintf
+{
+	const char *fstart;                          // Current running position in the fmtstr
+	const char *fstop;                           // Saved state from the last position
+	const char *fend;                            // past-the-end iterator of the fmtstr
+	const char *obeg;                            // Saved beginning of the output buffer
+	const char *oend;                            // past-the-end iterator of the output buffer
+	char *out;                                   // Current running position of the output buffer
+	short idx;                                   // Keeps count of the args for better err msgs
 
+  protected:
+	auto finished() const                        { return !fstart || fstop >= fend;                }
+	auto remaining() const                       { return (oend - out) - 1;                        }
+	auto consumed() const                        { return size_t(out - obeg);                      }
+	auto &buffer() const                         { return obeg;                                    }
+
+	void append(const char *const &begin, const char *const &end);
+	void argument(const arg &);
+
+	IRCD_OVERLOAD(internal)
+	snprintf(internal_t, char *const &, const size_t &, const char *const &, const ptrs &, const types &);
+
+  public:
+	operator ssize_t() const                     { return consumed();                              }
+
+	template<class... A>
+	snprintf(char *const &buf, const size_t &max, const char *const &fmt, A&&... args);
+};
 
 template<class... Args>
-ssize_t
-snprintf(char *const &buf,
-         const size_t &max,
-         const char *const &fmt,
-         Args&&... args)
+snprintf::snprintf(char *const &buf,
+                   const size_t &max,
+                   const char *const &fmt,
+                   Args&&... args)
+:snprintf
 {
-	static const std::vector<std::type_index> types
-	{
-		typeid(Args)...
-	};
-
-	const std::vector<const void *> ptrs
-	{
-		std::addressof(args)...
-	};
-
-	return _snprintf(buf, max, fmt, ptrs, types);
+	internal, buf, max, fmt, ptrs{std::addressof(args)...}, types{typeid(Args)...}
+}
+{
 }
 
 }      // namespace fmt

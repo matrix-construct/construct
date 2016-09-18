@@ -210,73 +210,77 @@ fmt::parse::grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
 	})];
 }
 
-ssize_t
-fmt::_snprintf(char *const &buf,
-               const size_t &max,
-               const char *const &fmt,
-               const ptrs &p,
-               const types &t)
+fmt::snprintf::snprintf(internal_t,
+                        char *const &out,
+                        const size_t &max,
+                        const char *const &fstr,
+                        const ptrs &p,
+                        const types &t)
 try
+:fstart{strchr(fstr, SPECIFIER)}
+,fstop{fstr}
+,fend{fstr + strlen(fstr)}
+,obeg{out}
+,oend{out + max}
+,out{out}
+,idx{0}
 {
 	if(unlikely(!max))
-		return 0;
-
-	char *out(buf);                             // Always points at next place to write
-	const char *stop(fmt);                      // Saves the 'last' place to copy a literal from
-	const char *start(strchr(fmt, SPECIFIER));  // The running position of the format string parse
-	const char *const end(fmt + strlen(fmt));   // The end of the format string
-
-	// Calculates remaining room in output buffer
-	const auto remaining([&max, &buf, &out]() -> size_t
 	{
-		return max - std::distance(buf, out) - 1;
-	});
-
-	// Copies string data between format specifiers.
-	const auto copy_literal([&stop, &out, &remaining]
-	(const char *const &end)
-	{
-		const size_t len(std::distance(stop, end));
-		const size_t &cpsz(std::min(len, remaining()));
-		memcpy(out, stop, cpsz);
-		out += cpsz;
-	});
-
-	size_t index(0); // The current position for vectors p and t (specifier count)
-	for(; start; stop = start++, start = start < end? strchr(start, SPECIFIER) : nullptr)
-	{
-		// Copy literal data from where the last parse stopped up to the found specifier
-		copy_literal(start);
-
-		// Instantiate the format specifier grammar
-		struct parser
-		:parse::grammar<const char *, fmt::spec>
-		{
-			parser(): grammar{grammar::spec} {}
-		}
-		static const parser;
-
-		// Parse the specifier with the grammar
-		fmt::spec spec;
-		if(!qi::parse(start, end, parser, spec))
-			continue;
-
-		// Throws if the format string has more specifiers than arguments.
-		const arg val{p.at(index), t.at(index)};
-		handle_specifier(out, remaining(), index, spec, val);
-		index++;
+		fstart = nullptr;
+		return;
 	}
 
-	// If the end of the string is not a format specifier itself, it needs to be copied
-	if(!start)
-		copy_literal(end);
+	if(!fstart)
+	{
+		append(fstr, fend);
+		return;
+	}
 
-	*out = '\0';
-	return std::distance(buf, out);
+	append(fstr, fstart);
+	for(size_t i(0); i < p.size(); ++i)
+		argument(arg{p.at(i), t.at(i)});
 }
 catch(const std::out_of_range &e)
 {
 	throw invalid_format("Format string requires more than %zu arguments.", p.size());
+}
+
+void
+fmt::snprintf::argument(const arg &val)
+{
+	struct parser
+	:parse::grammar<const char *, fmt::spec>
+	{
+		parser(): grammar{grammar::spec} {}
+	}
+	static const parser;
+
+	if(finished())
+		return;
+
+	fmt::spec spec;
+	if(qi::parse(fstart, fend, parser, spec))
+		handle_specifier(out, remaining(), idx++, spec, val);
+
+	fstop = fstart++;
+	if(fstop < fend)
+	{
+		fstart = strchr(fstart, SPECIFIER);
+		append(fstop, fstart?: fend);
+	}
+	else *out = '\0';
+}
+
+void
+fmt::snprintf::append(const char *const &begin,
+                      const char *const &end)
+{
+	const size_t len(std::distance(begin, end));
+	const size_t &cpsz(std::min(len, size_t(remaining())));
+	memcpy(out, begin, cpsz);
+	out += cpsz;
+	*out = '\0';
 }
 
 const decltype(fmt::_specifiers) &
