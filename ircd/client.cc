@@ -91,6 +91,24 @@ ircd::add_client()
 	return client;
 }
 
+void
+ircd::sendf::flush(client &client)
+{
+	static const char *const terminator
+	{
+		"\r\n"
+	};
+
+	const std::array<const_buffer, 2> buffers
+	{{
+		{ buffer(), std::min(consumed(), size_t(510))  },  //TODO: framemax
+		{ terminator, 2                                }
+	}};
+
+	auto &sock(socket(client));
+	sock.send(buffers);
+}
+
 bool
 ircd::disconnect(std::nothrow_t,
                  client &client,
