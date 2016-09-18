@@ -476,7 +476,7 @@ const
 	{
 		karma::rule<char *, std::string()> printable
 		{
-			+char_(rfc1459::character::gather(rfc1459::character::PRINT))
+			*char_(rfc1459::character::gather(rfc1459::character::PRINT))
 		};
 
 		generator(): grammar{printable} {}

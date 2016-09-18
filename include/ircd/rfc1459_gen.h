@@ -122,7 +122,7 @@ rfc1459::gen::grammar<it, top>::grammar(karma::rule<it, top> &top_rule)
 }
 ,middle // Spaced parameters
 {
-	~char_(":\x20\r\n") << +(~char_("\x20\r\n"))
+	~char_(":\x20\r\n") << *(~char_("\x20\r\n"))
 	,"middle"
 }
 ,params //TODO: this doesn't work yet, don't use
