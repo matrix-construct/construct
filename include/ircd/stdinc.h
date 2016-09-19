@@ -91,6 +91,7 @@ namespace ircd
 #include "snomask.h"
 #include "ctx.h"
 #include "ctx_dock.h"
+#include "ctx_mutex.h"
 
 #include "line.h"
 #include "tape.h"
