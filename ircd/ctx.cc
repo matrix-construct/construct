@@ -29,6 +29,12 @@ using namespace ircd;
 //
 __thread ctx::ctx *ctx::current;
 
+void
+ctx::sleep_until(const std::chrono::steady_clock::time_point &tp)
+{
+	while(!wait_until(tp, std::nothrow));
+}
+
 bool
 ctx::wait_until(const std::chrono::steady_clock::time_point &tp,
                 const std::nothrow_t &)

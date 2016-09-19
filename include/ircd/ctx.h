@@ -29,7 +29,6 @@
 namespace ircd {
 namespace ctx  {
 
-using std::chrono::microseconds;
 using std::chrono::steady_clock;
 using time_point = steady_clock::time_point;
 
@@ -75,6 +74,11 @@ bool wait_until(const time_point &tp, const std::nothrow_t &);
 template<class E> nothrow_overload<E, bool> wait_until(const time_point &tp);
 template<class E = timeout> throw_overload<E> wait_until(const time_point &tp);
 
+// Ignores notes. Throws if interrupted.
+void sleep_until(const time_point &tp);
+template<class duration> void sleep(const duration &);
+void sleep(const int &secs);
+
 class context
 {
 	std::unique_ptr<ctx> c;
@@ -106,6 +110,19 @@ swap(context &a, context &b)
 noexcept
 {
 	std::swap(a.c, b.c);
+}
+
+inline void
+sleep(const int &secs)
+{
+	sleep(seconds(secs));
+}
+
+template<class duration>
+void
+sleep(const duration &d)
+{
+	sleep_until(steady_clock::now() + d);
 }
 
 template<class E>

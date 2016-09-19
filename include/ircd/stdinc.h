@@ -44,6 +44,9 @@ namespace ircd
 	using std::begin;
 	using std::end;
 	using std::get;
+	using std::chrono::seconds;
+	using std::chrono::milliseconds;
+	using std::chrono::microseconds;
 	using ostream = std::ostream;
 	namespace ph = std::placeholders;
 	using namespace std::string_literals;
