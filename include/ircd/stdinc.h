@@ -92,6 +92,9 @@ namespace ircd
 #include "ctx.h"
 #include "ctx_dock.h"
 #include "ctx_mutex.h"
+#include "ctx_shared_state.h"
+#include "ctx_promise.h"
+#include "ctx_future.h"
 
 #include "line.h"
 #include "tape.h"
