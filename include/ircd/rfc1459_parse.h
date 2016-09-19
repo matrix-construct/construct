@@ -108,7 +108,7 @@ grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
 	 * This needs to be fixed.
 	 */
 
-	//char_(gather(character::SPACE))
+	//char_(charset(character::SPACE))
 	lit(' ')
 	,"space"
 }
@@ -134,12 +134,12 @@ grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
 }
 ,hostname // A valid hostname
 {
-	+char_(gather(character::HOST)) // TODO: https://tools.ietf.org/html/rfc952
+	+char_(charset(character::HOST)) // TODO: https://tools.ietf.org/html/rfc952
 	,"hostname"
 }
 ,user // A valid username
 {
-	+char_(gather(character::USER))
+	+char_(charset(character::USER))
 	,"user"
 }
 ,server // A valid servername
@@ -149,7 +149,7 @@ grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
 }
 ,nick // A valid nickname, leading letter followed by any NICK chars
 {
-	char_(gather(character::ALPHA)) >> *char_(gather(character::NICK))
+	char_(charset(character::ALPHA)) >> *char_(charset(character::NICK))
 	,"nick"
 }
 ,prefix // A valid prefix, required name, optional user and host (or empty placeholders)
@@ -174,12 +174,12 @@ grammar<it, top>::grammar(qi::rule<it, top> &top_rule)
 }
 ,numeric // \d\d\d numeric
 {
-	repeat(3)[char_(gather(character::DIGIT))]
+	repeat(3)[char_(charset(character::DIGIT))]
 	,"numeric"
 }
 ,command // A command or numeric
 {
-	+char_(gather(character::ALPHA)) | numeric
+	+char_(charset(character::ALPHA)) | numeric
 	,"command"
 }
 ,line

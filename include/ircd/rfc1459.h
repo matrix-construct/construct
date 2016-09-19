@@ -73,6 +73,10 @@ namespace character
 	// Get all characters for an attribute mask
 	size_t gather(const attr &attr, uint8_t *const &buf, const size_t &max);
 	std::string gather(const attr &attr);
+
+	// Like gather() but with special considerations for boost::spirit's char_()
+	size_t charset(const attr &attr, uint8_t *const &buf, const size_t &max);
+	std::string charset(const attr &attr);
 }
 
 using character::is;

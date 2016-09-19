@@ -239,6 +239,33 @@ const
 }
 
 std::string
+rfc1459::character::charset(const attr &attr)
+{
+	uint8_t buf[256];
+	const size_t len(charset(attr, buf, sizeof(buf)));
+	return { reinterpret_cast<const char *>(buf), len };
+}
+
+size_t
+rfc1459::character::charset(const attr &attr,
+                            uint8_t *const &buf,
+                            const size_t &max)
+{
+	const auto len(gather(attr, buf, max));
+	std::sort(buf, buf + len, []
+	(const uint8_t &a, const uint8_t &b)
+	{
+		// Ensure special char '-' is always at the front. Also preserve
+		// the reverse ordering from gather() so NUL is always at the end.
+		return a == '-'?  true:
+		       b == '-'?  false:
+		                  a > b;
+	});
+
+	return len;
+}
+
+std::string
 rfc1459::character::gather(const attr &attr)
 {
 	uint8_t buf[256];

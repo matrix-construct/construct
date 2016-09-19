@@ -90,17 +90,17 @@ rfc1459::gen::grammar<it, top>::grammar(karma::rule<it, top> &top_rule)
 }
 ,hostname // A valid hostname
 {
-	+char_(gather(character::HOST)) // TODO: https://tools.ietf.org/html/rfc952
+	+char_(charset(character::HOST)) // TODO: https://tools.ietf.org/html/rfc952
 	,"hostname"
 }
 ,user // A valid username
 {
-	+char_(gather(character::USER))
+	+char_(charset(character::USER))
 	,"user"
 }
 ,nick // A valid nickname, leading letter followed by any NICK chars
 {
-	buffer[char_(gather(character::ALPHA)) << *char_(gather(character::NICK))]
+	buffer[char_(charset(character::ALPHA)) << *char_(charset(character::NICK))]
 	,"nick"
 }
 ,prefix
@@ -132,12 +132,12 @@ rfc1459::gen::grammar<it, top>::grammar(karma::rule<it, top> &top_rule)
 }
 ,command_numeric // \d\d\d numeric
 {
-	repeat(3)[char_(gather(character::DIGIT))]
+	repeat(3)[char_(charset(character::DIGIT))]
 	,"command_numeric"
 }
 ,command_alpha
 {
-	+char_(gather(character::ALPHA))
+	+char_(charset(character::ALPHA))
 	,"command_alpha"
 }
 ,command
