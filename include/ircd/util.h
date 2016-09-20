@@ -363,6 +363,24 @@ template<class exception_t,
 using throw_overload = typename std::enable_if<!is_nothrow<exception_t>(), return_t>::type;
 
 
+//
+// Test if type is forward declared or complete
+//
+
+template<class T,
+         class = void>
+struct is_complete
+:std::false_type
+{
+};
+
+template<class T>
+struct is_complete<T, decltype(void(sizeof(T)))>
+:std::true_type
+{
+};
+
+
 }        // namespace util
 }        // namespace ircd
 #endif   // __cplusplus
