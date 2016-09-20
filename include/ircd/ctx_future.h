@@ -42,16 +42,16 @@ class future
 	using pointer_type                           = typename shared_state<T>::pointer_type;
 	using reference_type                         = typename shared_state<T>::reference_type;
 
-	bool valid() const                           { return bool(st);                       }
-	bool operator!() const                       { return !valid();                       }
-	operator bool() const                        { return valid();                        }
+	bool valid() const                           { return bool(st);                                }
+	bool operator!() const                       { return !valid();                                }
+	operator bool() const                        { return valid();                                 }
 
 	template<class time_point> future_status wait_until(const time_point &) const;
 	template<class duration> future_status wait(const duration &d) const;
 	void wait() const;
 
 	T get();
-	operator T()                                 { return get();                          }
+	operator T()                                 { return get();                                   }
 
 	future();
 	future(promise<T> &promise);
@@ -65,9 +65,9 @@ class future<void>
   public:
 	using value_type                             = typename shared_state<void>::value_type;
 
-	bool valid() const                           { return bool(st);                       }
-	bool operator!() const                       { return !valid();                       }
-	operator bool() const                        { return valid();                        }
+	bool valid() const                           { return bool(st);                                }
+	bool operator!() const                       { return !valid();                                }
+	operator bool() const                        { return valid();                                 }
 
 	template<class time_point> future_status wait_until(const time_point &) const;
 	template<class duration> future_status wait(const duration &d) const;
