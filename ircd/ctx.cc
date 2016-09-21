@@ -232,3 +232,97 @@ ctx::stack_usage_here(const ctx &ctx)
 {
 	return ctx.stack_base - uintptr_t(__builtin_frame_address(0));
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ctx_pool.h
+//
+
+ctx::pool::pool(const size_t &size,
+                const size_t &stack_size)
+:stack_size{stack_size}
+,available{0}
+{
+	add(size);
+}
+
+ctx::pool::~pool()
+noexcept
+{
+	del(size());
+}
+
+void
+ctx::pool::operator()(closure closure)
+{
+	queue.emplace_back(std::move(closure));
+	dock.notify_one();
+}
+
+void
+ctx::pool::del(const size_t &num)
+{
+	const ssize_t requested(size() - num);
+	const size_t target(std::max(requested, ssize_t(0)));
+	while(ctxs.size() > target)
+		ctxs.pop_back();
+}
+
+void
+ctx::pool::add(const size_t &num)
+{
+	for(size_t i(0); i < num; ++i)
+		ctxs.emplace_back(stack_size, std::bind(&pool::main, this), DEFER_POST);
+}
+
+void
+ctx::pool::main()
+try
+{
+	++available;
+	const scope avail([this]
+	{
+		--available;
+	});
+
+	while(1)
+		next();
+}
+catch(const interrupted &e)
+{
+	log::debug("pool(%p) ctx(%p): %s",
+	           this,
+	           &cur(),
+	           e.what());
+}
+
+void
+ctx::pool::next()
+try
+{
+	dock.wait([this]
+	{
+		return !queue.empty();
+	});
+
+	--available;
+	const scope avail([this]
+	{
+		++available;
+	});
+
+	const auto func(std::move(queue.front()));
+	queue.pop_front();
+	func();
+}
+catch(const interrupted &e)
+{
+	throw;
+}
+catch(const std::exception &e)
+{
+	log::critical("pool(%p) ctx(%p): unhandled: %s",
+	              this,
+	              &cur(),
+	              e.what());
+}

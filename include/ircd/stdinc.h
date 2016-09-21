@@ -96,6 +96,7 @@ namespace ircd
 #include "ctx_promise.h"
 #include "ctx_future.h"
 #include "ctx_async.h"
+#include "ctx_pool.h"
 
 #include "line.h"
 #include "tape.h"
