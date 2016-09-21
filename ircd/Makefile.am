@@ -33,7 +33,6 @@ libircd_la_SOURCES =   \
 	rfc1459.cc         \
 	stringops.cc       \
 	match.cc           \
-	getopt.cc          \
 	logger.cc          \
 	fs.cc              \
 	conf.cc            \

@@ -76,7 +76,6 @@ namespace ircd
 #include "life_guard.h"
 #include "defaults.h"
 #include "exception.h"
-#include "getopt.h"
 #include "numeric.h"
 #include "color.h"
 #include "messages.h"

@@ -22,9 +22,9 @@
  *  USA
  */
 
-namespace ircd {
-
-# define OPTCHAR '-'
+#include <ircd/ircd.h>
+#include "lgetopt.h"
+#define OPTCHAR '-'
 
 using argtype = decltype(lgetopt::argtype);
 
@@ -137,5 +137,3 @@ usage(const char *name, struct lgetopt *myopts)
 
 	exit(EXIT_FAILURE);
 }
-
-} // namespace ircd

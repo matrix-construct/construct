@@ -16,6 +16,7 @@ AM_LDFLAGS += \
 bin_PROGRAMS = charybdis
 
 charybdis_SOURCES = \
+	lgetopt.cc      \
 	charybdis.cc
 
 charybdis_LDADD = \

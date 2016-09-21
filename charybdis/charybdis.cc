@@ -22,9 +22,9 @@
 #include <ircd/ircd.h>
 #include <boost/asio.hpp>
 #include <ircd/ctx_ctx.h>
+#include "lgetopt.h"
 
 namespace path = ircd::path;
-using ircd::lgetopt;
 
 static void console_spawn();
 static void sigfd_handler(const boost::system::error_code &, int);
