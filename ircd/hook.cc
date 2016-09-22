@@ -2,13 +2,17 @@
  * ircd-ratbox: an advanced Internet Relay Chat Daemon(ircd).
  * hook.c - code for dealing with the hook system
  *
+ * ~~~~~~~~
  * This code is basically a slow leaking array.  Events are simply just a
  * position in this array.  When hooks are added, events will be created if
  * they dont exist - this means modules with hooks can be loaded in any
  * order, and events are preserved through module reloads.
+ * ~~~~~~~~~ left the comment but the code is gone. --jzk
  *
  * Copyright (C) 2004-2005 Lee Hardy <lee -at- leeh.co.uk>
  * Copyright (C) 2004-2005 ircd-ratbox development team
+ * Copyright (C) 2016 Charybdis Development Team
+ * Copyright (C) 2016 Jason Volk <jason@zemos.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -36,6 +40,68 @@
  */
 
 namespace ircd {
+namespace hook {
+
+
+} // namespace hook
+} // namespace ircd
+
+using namespace ircd;
+
+bool
+hook::happens_before(const std::string &a_name,
+                     const relationship &a_happens,
+                     const std::string &b_name,
+                     const relationship &b_happens)
+{
+	// Explicit request by b that a happens before
+	if(b_happens.first == a_name)
+		return true;
+
+	// Explicit request by a that b happens before
+	if(a_happens.first == b_name)
+		return false;
+
+	// Explicit request by b that a happens after
+	if(b_happens.second == a_name)
+		return false;
+
+	// Explicit request by a that b happens after
+	if(a_happens.second == b_name)
+		return true;
+
+	// a happens before everything and b has at least something before it
+	if(a_happens.first.empty() && !b_happens.first.empty())
+		return true;
+
+	// b happens before everything and a has at least something before it
+	if(b_happens.first.empty() && !a_happens.first.empty())
+		return false;
+
+	// a happens after everything and b has at least something after it
+	if(a_happens.second.empty() && !b_happens.second.empty())
+		return false;
+
+	// b happens after everything and a has at least something after it
+	if(b_happens.second.empty() && !a_happens.second.empty())
+		return true;
+
+	//TODO: ???
+	// both have the same before requirement
+	if(a_happens.first == b_happens.first)
+		return a_happens.second < b_happens.second;
+
+	//TODO: ???
+	// both have the same after requirement
+	if(a_happens.second == b_happens.second)
+		return a_happens.first < b_happens.first;
+
+	//TODO: ???
+	return false;
+}
+
+
+/*
 
 hook *hooks;
 
@@ -87,128 +153,4 @@ init_hook(void)
 	h_rehash = register_hook("rehash");
 }
 
-/* grow_hooktable()
- *   Enlarges the hook table by HOOK_INCREMENT
- */
-static void
-grow_hooktable(void)
-{
-	hook *newhooks;
-
-	newhooks = (hook *)rb_malloc(sizeof(hook) * (max_hooks + HOOK_INCREMENT));
-	memcpy(newhooks, hooks, sizeof(hook) * num_hooks);
-
-	rb_free(hooks);
-	hooks = newhooks;
-	max_hooks += HOOK_INCREMENT;
-}
-
-/* find_freehookslot()
- *   Finds the next free slot in the hook table, given by an entry with
- *   h->name being NULL.
- */
-static int
-find_freehookslot(void)
-{
-	int i;
-
-	if((num_hooks + 1) > max_hooks)
-		grow_hooktable();
-
-	for(i = 0; i < max_hooks; i++)
-	{
-		if(!hooks[i].name)
-			return i;
-	}
-
-	/* shouldnt ever get here */
-	return(max_hooks - 1);
-}
-
-/* find_hook()
- *   Finds an event in the hook table.
- */
-static int
-find_hook(const char *name)
-{
-	int i;
-
-	for(i = 0; i < max_hooks; i++)
-	{
-		if(!hooks[i].name)
-			continue;
-
-		if(!irccmp(hooks[i].name, name))
-			return i;
-	}
-
-	return -1;
-}
-
-/* register_hook()
- *   Finds an events position in the hook table, creating it if it doesnt
- *   exist.
- */
-int
-register_hook(const char *name)
-{
-	int i;
-
-	if((i = find_hook(name)) < 0)
-	{
-		i = find_freehookslot();
-		hooks[i].name = rb_strdup(name);
-		num_hooks++;
-	}
-
-	return i;
-}
-
-/* add_hook()
- *   Adds a hook to an event in the hook table, creating event first if
- *   needed.
- */
-void
-add_hook(const char *name, hookfn fn)
-{
-	int i;
-
-	i = register_hook(name);
-
-	rb_dlinkAddAlloc(reinterpret_cast<void *>(fn), &hooks[i].hooks);
-}
-
-/* remove_hook()
- *   Removes a hook from an event in the hook table.
- */
-void
-remove_hook(const char *name, hookfn fn)
-{
-	int i;
-
-	if((i = find_hook(name)) < 0)
-		return;
-
-	rb_dlinkFindDestroy(reinterpret_cast<void *>(fn), &hooks[i].hooks);
-}
-
-/* call_hook()
- *   Calls functions from a given event in the hook table.
- */
-void
-call_hook(int id, void *arg)
-{
-	hookfn fn;
-	rb_dlink_node *ptr;
-
-	/* The ID we were passed is the position in the hook table of this
-	 * hook
-	 */
-	RB_DLINK_FOREACH(ptr, hooks[id].hooks.head)
-	{
-		fn = (hookfn)ptr->data;
-		fn(arg);
-	}
-}
-
-} // namespace ircd
+*/

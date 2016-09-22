@@ -44,6 +44,7 @@ libircd_la_SOURCES =   \
 	ctx.cc             \
 	client.cc          \
 	vm.cc              \
+	hook.cc            \
 	fmt.cc
 
 #authproc.cc			\
