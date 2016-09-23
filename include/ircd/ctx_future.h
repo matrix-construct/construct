@@ -46,6 +46,7 @@ class future
 	bool operator!() const                       { return !valid();                                }
 	operator bool() const                        { return valid();                                 }
 
+	template<class U, class time_point> friend future_status wait_until(const future<U> &, const time_point &);
 	template<class time_point> future_status wait_until(const time_point &) const;
 	template<class duration> future_status wait(const duration &d) const;
 	void wait() const;
@@ -69,6 +70,7 @@ class future<void>
 	bool operator!() const                       { return !valid();                                }
 	operator bool() const                        { return valid();                                 }
 
+	template<class U, class time_point> friend future_status wait_until(const future<U> &, const time_point &);
 	template<class time_point> future_status wait_until(const time_point &) const;
 	template<class duration> future_status wait(const duration &d) const;
 	void wait() const;
@@ -76,6 +78,10 @@ class future<void>
 	future();
 	future(promise<void> &promise);
 };
+
+template<class T,
+         class time_point>
+future_status wait_until(const future<T> &, const time_point &);
 
 template<class... T>
 struct scoped_future : future<T...>
@@ -170,41 +176,38 @@ const
 	return this->wait_until(steady_clock::now() + d);
 }
 
-template<class time_point>
-future_status
-future<void>::wait_until(const time_point &tp)
-const
-{
-	const auto wfun([this]() -> bool
-	{
-		return st->finished;
-	});
-
-	if(unlikely(!valid()))
-		throw no_state();
-
-	if(unlikely(!st->cond.wait_until(tp, wfun)))
-		return future_status::timeout;
-
-	return likely(wfun())? future_status::ready:
-	                       future_status::deferred;
-}
-
 template<class T>
 template<class time_point>
 future_status
 future<T>::wait_until(const time_point &tp)
 const
 {
-	const auto wfun([this]
+	return ircd::ctx::wait_until(*this, tp);
+}
+
+template<class time_point>
+future_status
+future<void>::wait_until(const time_point &tp)
+const
+{
+	return ircd::ctx::wait_until(*this, tp);
+}
+
+template<class T,
+         class time_point>
+future_status
+wait_until(const future<T> &f,
+           const time_point &tp)
+{
+	const auto wfun([&f]() -> bool
 	{
-		return st->finished;
+		return f.st->finished;
 	});
 
-	if(unlikely(!valid()))
+	if(unlikely(!f.valid()))
 		throw no_state();
 
-	if(unlikely(!st->cond.wait_until(tp, wfun)))
+	if(unlikely(!f.st->cond.wait_until(tp, wfun)))
 		return future_status::timeout;
 
 	return likely(wfun())? future_status::ready:
