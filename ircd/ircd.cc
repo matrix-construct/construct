@@ -85,10 +85,15 @@ void
 ircd::main()
 noexcept try
 {
-	// The user is notified when this function ends; + other cleanup
-	const scope main_exit(&main_exiting);
 	log::debug("IRCd entered main context.");
+	const scope main_exit(&main_exiting);   // The user is notified when this function ends
 
+	// These objects are the init()'s and fini()'s for each subsystem. Appearing here ties them
+	// to the main context. Initialization can also occur in ircd::init() if static initialization
+	// and destruction is not possible, but there is no complementary destruction up there.
+	mods::init _mods_;
+
+	// Create IRCd's agency
 	ircd::me = add_client();
 
 	// This is where the configuration is finally evalulated. This must occur
@@ -163,8 +168,6 @@ void
 ircd::main_exiting()
 noexcept try
 {
-	mods::unload();
-
 	if(main_exit_func)
 	{
 		// This function will notify the user of IRCd shutdown. The notification is

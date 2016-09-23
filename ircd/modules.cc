@@ -101,6 +101,16 @@ void load_symbol(mod &mod, const std::string &name, const std::type_index &);
 } // namespace mods
 } // namespace ircd
 
+ircd::mods::init::init()
+{
+}
+
+ircd::mods::init::~init()
+noexcept
+{
+	unload();
+}
+
 void
 ircd::mods::unload()
 {

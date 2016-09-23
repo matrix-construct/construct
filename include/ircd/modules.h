@@ -121,6 +121,13 @@ bool load(const std::string &name);
 void autoload();
 void unload();
 
+// Initialization and destruction singleton held by ircd::main()
+struct init
+{
+	init();
+	~init() noexcept;
+};
+
 
 template<class T>
 bool
