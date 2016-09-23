@@ -43,9 +43,16 @@ ip::tcp::resolver tcp_resolver
 	*ircd::ios
 };
 
+ctx::pool pool
+{
+	1,      // There can be X concurrent hostname lookups (if posted to this pool)
+	16_KiB  // The stack size is 16 kilobytes (which is pretty small, so just resolve hostnames)
+};
+
 mapi::fini fini{[]
 {
 	tcp_resolver.cancel();
+	pool.del(pool.size());
 }};
 
 mapi::header IRCD_MODULE
@@ -60,15 +67,16 @@ m_host::operator()(client &client,
                    line line)
 try
 {
-	const lifeguard<struct client> lg(client);
+	const life_guard<struct client> lg(client);
 
 	const auto &host(line[0]);
-	const auto &port(has(line, 1)? line[1] : std::string{});
-	const ip::tcp::resolver::query query(host, port);
+	const ip::tcp::resolver::query query(host, std::string{});
 	auto epit(tcp_resolver.async_resolve(query, yield(continuation())));
 	static const ip::tcp::resolver::iterator end;
 	for(; epit != end; ++epit)
-		std::cout << "ep: " << epit->endpoint().address().to_string() << std::endl;
+		sendf(client, "lookup for %s returned [%s]",
+		      host,
+		      epit->endpoint().address().to_string());
 }
 catch(const std::exception &e)
 {

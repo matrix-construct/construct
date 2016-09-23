@@ -22,23 +22,9 @@
 #pragma once
 #define HAVE_IRCD_VM_H
 
-#ifdef __cplusplus
 namespace ircd {
 namespace vm   {
 
-struct pool
-{
-
-};
-
-void execute(client &client, line);
-void execute(client &client, tape &);
-void execute(client &client, const std::string &line);
-void execute(client &client, const uint8_t *const &line, const size_t &len);
 
 } // namespace vm
-
-using vm::execute;
-
 } // namespace ircd
-#endif

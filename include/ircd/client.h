@@ -30,6 +30,12 @@
 #ifdef __cplusplus
 namespace ircd {
 
+IRCD_EXCEPTION(ircd::error, client_error)
+IRCD_EXCEPTION(client_error, broken_pipe)
+IRCD_EXCEPTION(client_error, disconnected)
+// ctx::timeout also relevant
+// ctx::interrupted also relevant
+
 struct sock;
 struct client;
 
@@ -57,24 +63,14 @@ enum class dc
 	FIN_RECV,     // graceful shutdown recv side
 };
 
-
 bool connected(const client &) noexcept;
 bool disconnect(std::nothrow_t, client &, const dc & = dc::FIN) noexcept;
 void disconnect(client &, const dc & = dc::FIN);
-void recv_cancel(client &);
-void recv_next(client &, const std::chrono::milliseconds &timeout);
-void recv_next(client &);
+void disconnect_all();
 
-class sendf
-:std::array<char, BUFSIZE>
-,public fmt::snprintf
-{
-	void flush(client &);
-
-  public:
-	template<class... Args>
-	sendf(client &, const char *const &fmt, Args&&... args);
-};
+void async_recv_cancel(client &);
+void async_recv_next(client &, const std::chrono::milliseconds &timeout);
+void async_recv_next(client &);
 
 // Destroys a client. This only removes the client from the clients list,
 // and may result in a destruction and disconnect, or it may not.
@@ -87,17 +83,97 @@ std::shared_ptr<client> add_client(std::shared_ptr<struct sock>);
 using clist = std::list<std::shared_ptr<client>>;
 const clist &clients();
 
+extern hook::sequence<client &> h_client_added;
 
-template<class... Args>
-sendf::sendf(client &client,
-             const char *const &fmt,
-             Args&&... args)
-:fmt::snprintf
+void execute(client &client, line);
+void execute(client &client, tape &);
+void execute(client &client, const std::string &line);
+void execute(client &client, const uint8_t *const &line, const size_t &len);
+
+//
+// contexted I/O
+//
+
+IRCD_OVERLOAD(text_raw);            // Sends string as-is
+IRCD_OVERLOAD(text_terminate);      // Sends terminator "\r\n" after string
+void send(client &, text_raw_t, const char *const &, const size_t &len);
+void send(client &, text_raw_t, const char *const &);
+void send(client &, text_raw_t, const std::string &);
+void send(client &, text_terminate_t, const char *const &, const size_t &len);
+void send(client &, text_terminate_t, const char *const &);
+void send(client &, text_terminate_t, const std::string &);
+
+template<class... A> ssize_t snsendf(client &, char *const &buf, const size_t &max, const char *const &fmt, A&&... args);
+template<class... A> ssize_t sendf(client &, const char *const &fmt, A&&... args);
+
+size_t recv(client &, char *const &buf, const size_t &max, milliseconds &timeout);
+template<class duration> size_t recv(client &, char *const &buf, const size_t &max, const duration &timeout = -1s);
+template<class duration> uint recv(client &, tape &, const duration &timeout = -1s);
+template<class duration> line recv(client &, const duration &timeout = -1s);
+
+struct client_init
 {
-	array::data(), array::size(), fmt, std::forward<Args>(args)...
+	client_init();
+	~client_init() noexcept;
+};
+
+
+template<class duration>
+line
+recv(client &client,
+     const duration &timeout)
+{
+	return {};
 }
+
+template<class duration>
+uint
+recv(client &client,
+     tape &tape,
+     const duration &timeout)
 {
-	flush(client);
+	size_t len(0);
+	size_t before(tape.size());
+	milliseconds remaining(timeout);
+	char buf[BUFSIZE]; do
+	{
+		len += recv(client, buf + len, sizeof(buf) - len, remaining);
+	}
+	while(!tape.append(buf, len));
+	return tape.size() - before;
+}
+
+template<class duration>
+size_t
+recv(client &client,
+     char *const &buf,
+     const size_t &max,
+     const duration &timeout)
+{
+	return recv(client, buf, max, milliseconds(timeout));
+}
+
+template<class... A>
+ssize_t
+sendf(client &client,
+      const char *const &fmt,
+      A&&... args)
+{
+	char buf[BUFSIZE];
+	return snsendf(client, buf, sizeof(buf), fmt, std::forward<A>(args)...);
+}
+
+template<class... A>
+ssize_t
+snsendf(client &client,
+        char *const &buf,
+        const size_t &max,
+        const char *const &fmt,
+        A&&... args)
+{
+	const ssize_t len{fmt::snprintf{buf, max, fmt, std::forward<A>(args)...}};
+	send(client, text_terminate, buf, std::min(len, ssize_t(BUFSIZE-2)));
+	return len;
 }
 
 }      // namespace ircd

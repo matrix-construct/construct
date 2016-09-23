@@ -94,6 +94,7 @@ noexcept try
 	ctx::ole::init _ole_;
 	mods::init _mods_;
 	db::init _db_;
+	client_init _client_;
 
 	// Create IRCd's agency
 	ircd::me = add_client();

@@ -29,31 +29,47 @@
 #include <ircd/sock.h>
 #include "rbuf.h"
 
-namespace ircd
+namespace ircd {
+
+struct client
+:std::enable_shared_from_this<client>
 {
-	struct client
-	:std::enable_shared_from_this<client>
-	{
-		struct rbuf rbuf;
-		clist::const_iterator clit;
-		std::shared_ptr<struct sock> sock;
+	struct rbuf rbuf;
+	clist::const_iterator clit;
+	std::shared_ptr<struct sock> sock;
 
-		client();
-		client(const client &) = delete;
-		client &operator=(const client &) = delete;
-		~client() noexcept;
-	};
+	client();
+	client(const client &) = delete;
+	client &operator=(const client &) = delete;
+	~client() noexcept;
+};
 
-	clist clients_list;
+std::unique_ptr<db::handle> client_db;
+clist client_list;
 
-	bool handle_ec_eof(client &);
-	bool handle_ec_cancel(client &);
-	bool handle_ec_success(client &);
-	bool handle_ec(client &, const error_code &);
-	void handle_recv(client &, const error_code &, const size_t);
-}
+hook::sequence<client &> h_client_added;
+
+bool handle_ec_eof(client &);
+bool handle_ec_cancel(client &);
+bool handle_ec_success(client &);
+bool handle_ec(client &, const error_code &);
+void handle_recv(client &, const error_code &, const size_t);
+
+} // namespace ircd
 
 using namespace ircd;
+
+client_init::client_init()
+{
+	client_db.reset(new db::handle("clients"));
+}
+
+client_init::~client_init()
+noexcept
+{
+	disconnect_all();
+	client_db.reset(nullptr);
+}
 
 client::client()
 {
@@ -67,7 +83,7 @@ noexcept
 const clist &
 ircd::clients()
 {
-	return clients_list;
+	return client_list;
 }
 
 std::shared_ptr<client>
@@ -79,7 +95,8 @@ ircd::add_client(std::shared_ptr<struct sock> sock)
 	          string(remote_address(*client)).c_str(),
 	          string(local_address(*client)).c_str());
 
-	recv_next(*client);
+	h_client_added(*client);
+	async_recv_next(*client);
 	return client;
 }
 
@@ -87,26 +104,126 @@ std::shared_ptr<client>
 ircd::add_client()
 {
 	auto client(std::make_shared<client>());
-	client->clit = clients_list.emplace(end(clients_list), client);
+	client->clit = client_list.emplace(end(client_list), client);
 	return client;
 }
 
 void
-ircd::sendf::flush(client &client)
+ircd::finished(client &client)
 {
-	static const char *const terminator
-	{
-		"\r\n"
-	};
+	const auto p(shared_from(client));
+	client_list.erase(client.clit);
+	log::debug("client[%p] finished. (refs: %zu)", (const void *)p.get(), p.use_count());
+}
 
+size_t
+ircd::recv(client &client,
+           char *const &buf,
+           const size_t &max,
+           milliseconds &timeout)
+try
+{
+	using std::chrono::duration_cast;
+
+	auto &sock(socket(client));
+	sock.set_timeout(timeout);
+	const auto ret(sock.recv_some(mutable_buffers_1(buf, max)));
+	if(timeout < milliseconds(0))
+		return ret;
+
+	sock.timer.cancel();
+	timeout = duration_cast<milliseconds>(sock.timer.expires_from_now());
+	return ret;
+}
+catch(const boost::system::system_error &e)
+{
+	using namespace boost::system::errc;
+	using boost::asio::error::eof;
+
+	switch(e.code().value())
+	{
+		case success:
+			return 0;
+
+		case eof:
+			throw disconnected();
+
+		case operation_canceled:
+			if(socket(client).timedout)
+				throw ctx::timeout();
+			else
+				throw ctx::interrupted();
+
+		default:
+			throw error("%s", e.what());
+	}
+}
+
+void
+ircd::send(client &client,
+           text_terminate_t,
+           const std::string &text)
+{
+	send(client, text_terminate, text.c_str(), text.size());
+}
+
+void
+ircd::send(client &client,
+           text_terminate_t,
+           const char *const &text)
+{
+	send(client, text_terminate, text, strlen(text));
+}
+
+void
+ircd::send(client &client,
+           text_terminate_t,
+           const char *const &text,
+           const size_t &len)
+{
+	assert(len <= 510);
 	const std::array<const_buffer, 2> buffers
 	{{
-		{ buffer(), std::min(consumed(), size_t(510))  },  //TODO: framemax
-		{ terminator, 2                                }
+		{ text, len  },
+		{ "\r\n", 2  }
 	}};
 
 	auto &sock(socket(client));
 	sock.send(buffers);
+}
+
+void
+ircd::send(client &client,
+           text_raw_t,
+           const std::string &text)
+{
+	send(client, text_raw, text.c_str(), text.size());
+}
+
+void
+ircd::send(client &client,
+           text_raw_t,
+           const char *const &text)
+{
+	send(client, text_raw, text, strlen(text));
+}
+
+void
+ircd::send(client &client,
+           text_raw_t,
+           const char *const &text,
+           const size_t &len)
+{
+	assert(len <= 512);
+	auto &sock(socket(client));
+	sock.send(const_buffers_1(text, len));
+}
+
+void
+ircd::disconnect_all()
+{
+	for(auto &client : client_list)
+		disconnect(std::nothrow, *client, dc::RST);
 }
 
 bool
@@ -115,6 +232,9 @@ ircd::disconnect(std::nothrow_t,
                  const dc &type)
 noexcept try
 {
+	if(!client.sock)
+		return true;
+
 	disconnect(client, type);
 	return true;
 }
@@ -127,25 +247,8 @@ void
 ircd::disconnect(client &client,
                  const dc &type)
 {
-	auto &sd(socket(client).sd);
-	switch(type)
-	{
-		case dc::RST:
-			sd.close();
-			break;
-
-		case dc::FIN:
-			sd.shutdown(ip::tcp::socket::shutdown_both);
-			break;
-
-		case dc::FIN_SEND:
-			sd.shutdown(ip::tcp::socket::shutdown_send);
-			break;
-
-		case dc::FIN_RECV:
-			sd.shutdown(ip::tcp::socket::shutdown_receive);
-			break;
-	}
+	auto &sock(socket(client));
+	sock.disconnect(type);
 }
 
 bool
@@ -161,14 +264,14 @@ catch(...)
 }
 
 void
-ircd::recv_next(client &client)
+ircd::async_recv_next(client &client)
 {
-	recv_next(client, std::chrono::milliseconds(-1));
+	async_recv_next(client, std::chrono::milliseconds(-1));
 }
 
 void
-ircd::recv_next(client &client,
-                const std::chrono::milliseconds &timeout)
+ircd::async_recv_next(client &client,
+                      const std::chrono::milliseconds &timeout)
 {
 	using boost::asio::async_read;
 
@@ -183,7 +286,7 @@ ircd::recv_next(client &client,
 }
 
 void
-ircd::recv_cancel(client &client)
+ircd::async_recv_cancel(client &client)
 {
 	auto &sock(socket(client));
 	sock.sd.cancel();
@@ -272,11 +375,66 @@ ircd::handle_ec_eof(client &client)
 }
 
 void
-ircd::finished(client &client)
+ircd::execute(client &client,
+              const uint8_t *const &ptr,
+              const size_t &len)
 {
-	const auto p(shared_from(client));
-	clients_list.erase(client.clit);
-	log::debug("client[%p] finished. (refs: %zu)", (const void *)p.get(), p.use_count());
+	execute(client, line(ptr, len));
+}
+
+void
+ircd::execute(client &client,
+              const std::string &l)
+{
+	execute(client, line(l));
+}
+
+void
+ircd::execute(client &client,
+              tape &reel)
+{
+	context([wp(weak_from(client)), &client, &reel]
+	{
+		// Hold the client for the lifetime of this context
+		const life_guard<struct client> lg(wp);
+
+		while(!reel.empty()) try
+		{
+			auto &line(reel.front());
+			const scope pop([&reel]
+			{
+				reel.pop_front();
+			});
+
+			if(line.empty())
+				continue;
+
+			auto &handle(cmds::find(command(line)));
+			handle(client, std::move(line));
+		}
+		catch(const std::exception &e)
+		{
+			log::error("vm: %s", e.what());
+			disconnect(client);
+			finished(client);
+			return;
+		}
+
+		async_recv_next(client);
+	},
+	ctx::DEFER_POST | ctx::SELF_DESTRUCT);
+}
+
+
+void
+ircd::execute(client &c,
+              line line)
+{
+	if(line.empty())
+		return;
+
+	auto &handle(cmds::find(command(line)));
+	handle(c, std::move(line));
 }
 
 std::string

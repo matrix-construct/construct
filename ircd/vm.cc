@@ -20,68 +20,10 @@
  */
 
 namespace ircd {
+namespace vm   {
 
 
+} // namespace vm
 } // namespace ircd
 
-void
-ircd::vm::execute(client &client,
-                  const uint8_t *const &ptr,
-                  const size_t &len)
-{
-	execute(client, line(ptr, len));
-}
-
-void
-ircd::vm::execute(client &client,
-                  const std::string &l)
-{
-	execute(client, line(l));
-}
-
-void
-ircd::vm::execute(client &client,
-                  tape &reel)
-{
-	context([wp(weak_from(client)), &client, &reel]
-	{
-		// Hold the client for the lifetime of this context
-		const lifeguard<struct client> lg(wp);
-
-		while(!reel.empty()) try
-		{
-			auto &line(reel.front());
-			const scope pop([&reel]
-			{
-				reel.pop_front();
-			});
-
-			if(line.empty())
-				continue;
-
-			auto &handle(cmds::find(command(line)));
-			handle(client, std::move(line));
-		}
-		catch(const std::exception &e)
-		{
-			log::error("vm: %s", e.what());
-			disconnect(client);
-			finished(client);
-			return;
-		}
-
-		recv_next(client);
-	},
-	ctx::SELF_DESTRUCT);
-}
-
-void
-ircd::vm::execute(client &client,
-                  line line)
-{
-	if(line.empty())
-		return;
-
-	auto &handle(cmds::find(command(line)));
-	handle(client, std::move(line));
-}
+using namespace ircd;

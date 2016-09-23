@@ -51,11 +51,17 @@ struct sock
 	void handle_timeout(const std::weak_ptr<sock>, const error_code &);
 	template<class duration> void set_timeout(const duration &);
 
+	template<class mutable_buffers> auto recv_some(const mutable_buffers &, error_code &ec, const message_flags & = 0);
 	template<class mutable_buffers> auto recv_some(const mutable_buffers &, const message_flags & = 0);
+	template<class mutable_buffers> auto recv(const mutable_buffers &, error_code &ec);
 	template<class mutable_buffers> auto recv(const mutable_buffers &);
 
+	template<class const_buffers> auto send_some(const const_buffers &, error_code &ec, const message_flags & = 0);
 	template<class const_buffers> auto send_some(const const_buffers &, const message_flags & = 0);
+	template<class const_buffers> auto send(const const_buffers &, error_code &ec);
 	template<class const_buffers> auto send(const const_buffers &);
+
+	void disconnect(const dc &type = dc::FIN);
 
 	sock(boost::asio::io_service *const &ios  = ircd::ios);
 };
@@ -74,12 +80,35 @@ sock::sock(boost::asio::io_service *const &ios)
 {
 }
 
+inline void
+sock::disconnect(const dc &type)
+{
+	if(sd.is_open()) switch(type)
+	{
+		default:
+		case dc::RST:       sd.close();                                     break;
+        case dc::FIN:       sd.shutdown(ip::tcp::socket::shutdown_both);    break;
+        case dc::FIN_SEND:  sd.shutdown(ip::tcp::socket::shutdown_send);    break;
+        case dc::FIN_RECV:  sd.shutdown(ip::tcp::socket::shutdown_receive); break;
+    }
+}
+
 // Block until entirely transmitted
 template<class const_buffers>
 auto
 sock::send(const const_buffers &bufs)
 {
 	const auto ret(async_write(sd, bufs, yield(continuation())));
+	timer.cancel();
+	return ret;
+}
+
+template<class const_buffers>
+auto
+sock::send(const const_buffers &bufs,
+           error_code &ec)
+{
+	const auto ret(async_write(sd, bufs, yield(continuation())[ec]));
 	timer.cancel();
 	return ret;
 }
@@ -93,12 +122,31 @@ sock::send_some(const const_buffers &bufs,
 	return sd.async_send(bufs, flags, yield(continuation()));
 }
 
+template<class const_buffers>
+auto
+sock::send_some(const const_buffers &bufs,
+                error_code &ec,
+                const message_flags &flags)
+{
+	return sd.async_send(bufs, flags, yield(continuation())[ec]);
+}
+
 // Block until the buffers are completely full
 template<class mutable_buffers>
 auto
 sock::recv(const mutable_buffers &bufs)
 {
 	const auto ret(async_read(sd, bufs, yield(continuation())));
+	timer.cancel();
+	return ret;
+}
+
+template<class mutable_buffers>
+auto
+sock::recv(const mutable_buffers &bufs,
+           error_code &ec)
+{
+	const auto ret(async_read(sd, bufs, yield(continuation())[ec]));
 	timer.cancel();
 	return ret;
 }
@@ -110,6 +158,15 @@ sock::recv_some(const mutable_buffers &bufs,
                 const message_flags &flags)
 {
 	return sd.async_receive(bufs, flags, yield(continuation()));
+}
+
+template<class mutable_buffers>
+auto
+sock::recv_some(const mutable_buffers &bufs,
+                error_code &ec,
+                const message_flags &flags)
+{
+	return sd.async_receive(bufs, flags, yield(continuation())[ec]);
 }
 
 template<class duration>
