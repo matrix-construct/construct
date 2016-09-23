@@ -48,10 +48,51 @@ struct pool
 	void del(const size_t & = 1);
 
 	void operator()(closure);
+	template<class F, class... A> future_void<F, A...> async(F&&, A&&...);
+	template<class F, class... A> future_value<F, A...> async(F&&, A&&...);
 
 	pool(const size_t & = 0, const size_t &stack_size = DEFAULT_STACK_SIZE);
 	~pool() noexcept;
 };
+
+template<class F,
+         class... A>
+future_value<F, A...>
+pool::async(F&& f,
+            A&&... a)
+{
+	using R = typename std::result_of<F (A...)>::type;
+
+	auto func(std::bind(std::forward<F>(f), std::forward<A>(a)...));
+	auto p(std::make_shared<promise<R>>());
+	(*this)([p, func(std::move(func))]
+	() -> void
+	{
+		p->set_value(func());
+	});
+
+	return future<R>(*p);
+}
+
+template<class F,
+         class... A>
+future_void<F, A...>
+pool::async(F&& f,
+            A&&... a)
+{
+	using R = typename std::result_of<F (A...)>::type;
+
+	auto func(std::bind(std::forward<F>(f), std::forward<A>(a)...));
+	auto p(std::make_shared<promise<R>>());
+	(*this)([p, func(std::move(func))]
+	() -> void
+	{
+		func();
+		p->set_value();
+	});
+
+	return future<R>(*p);
+}
 
 } // namespace ctx
 } // namespace ircd
