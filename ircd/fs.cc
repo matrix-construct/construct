@@ -156,6 +156,16 @@ catch(const fs::filesystem_error &e)
 	throw filesystem_error("%s", e.what());
 }
 
+std::string
+ircd::path::build(const std::initializer_list<std::string> &list)
+{
+	fs::path ret;
+	for(const auto &s : list)
+		ret /= fs::path(s);
+
+	return ret.string();
+}
+
 const char *
 ircd::path::get(index index)
 noexcept try

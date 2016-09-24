@@ -86,6 +86,8 @@ enum index
 const char *get(index) noexcept;
 const char *name(index) noexcept;
 
+std::string build(const std::initializer_list<std::string> &);
+
 bool exists(const std::string &path);
 bool is_dir(const std::string &path);
 bool is_reg(const std::string &path);
