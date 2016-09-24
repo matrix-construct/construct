@@ -32,6 +32,8 @@ matrix:
     env:
     - CCOMPILER=gcc-4.9
     - CXXCOMPILER=g++-4.9
+    - WITH_INCLUDED_BOOST=--with-included-boost
+    - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
 
   - os: linux
     dist: precise
@@ -48,6 +50,8 @@ matrix:
     env:
     - CCOMPILER=gcc-5
     - CXXCOMPILER=g++-5
+    - WITH_INCLUDED_BOOST=--with-included-boost
+    - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
 
   - os: linux
     dist: trusty
@@ -65,6 +69,8 @@ matrix:
     env:
      - CCOMPILER=gcc-6
      - CXXCOMPILER=g++-6
+     - WITH_INCLUDED_BOOST=--with-included-boost
+     - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
 
   - os: linux
     dist: precise
@@ -82,6 +88,8 @@ matrix:
     env:
     - CCOMPILER=clang-3.6
     - CXXCOMPILER=clang++-3.6
+    - WITH_INCLUDED_BOOST=--with-included-boost
+    - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
 
   - os: linux
     dist: trusty
@@ -101,6 +109,8 @@ matrix:
     env:
     - CCOMPILER=clang-3.8
     - CXXCOMPILER=clang++-3.8
+    - WITH_INCLUDED_BOOST=--with-included-boost
+    - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
 
   - os: osx
     compiler: clang
@@ -108,7 +118,8 @@ matrix:
     - CCOMPILER=clang
     - CXXCOMPILER=clang++
     - LIBTOOLIZE=glibtoolize
-
+    - WITH_INCLUDED_BOOST=--with-included-boost
+    - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
 
 osx_image: xcode7.3
 
@@ -126,6 +137,6 @@ script:
 - $CC --version
 - $CXX --version
 - time bash autogen.sh
-- time ./configure --with-shared-sqlite --with-included-boost CC=$CC CXX=$CXX
+- time ./configure --with-shared-sqlite $WITH_INCLUDED_BOOST $WITH_INCLUDED_ROCKSDB CC=$CC CXX=$CXX
 - time make -j4
 - time make -j4 install

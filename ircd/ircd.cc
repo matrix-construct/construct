@@ -92,6 +92,7 @@ noexcept try
 	// to the main context. Initialization can also occur in ircd::init() if static initialization
 	// and destruction is not possible, but there is no complementary destruction up there.
 	mods::init _mods_;
+	db::init _db_;
 
 	// Create IRCd's agency
 	ircd::me = add_client();

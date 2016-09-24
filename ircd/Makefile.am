@@ -4,6 +4,7 @@ libircddir	= @libdir@
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
+	@ROCKSDB_CPPFLAGS@ \
 	@BOOST_CPPFLAGS@ \
 	-include ircd/ircd.h
 
@@ -19,12 +20,14 @@ AM_LDFLAGS = \
 
 AM_LDFLAGS += \
 	-L$(top_srcdir)/rb \
+	@ROCKSDB_LDFLAGS@ \
 	@BOOST_LDFLAGS@
 
 libircd_LTLIBRARIES = libircd.la
 
 libircd_la_LIBADD = \
 	-lrb \
+	@ROCKSDB_LIBS@ \
 	@BOOST_LIBS@
 
 libircd_la_SOURCES =   \
@@ -45,7 +48,8 @@ libircd_la_SOURCES =   \
 	client.cc          \
 	vm.cc              \
 	hook.cc            \
-	fmt.cc
+	fmt.cc             \
+	db.cc
 
 #authproc.cc			\
 #bandbi.cc                      \

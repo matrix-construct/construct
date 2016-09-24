@@ -83,6 +83,10 @@ extern "C" {
 #include <RB_INC_CSTDIO
 #include <RB_INC_CHRONO
 #include <RB_INC_CTIME
+#include <RB_INC_ATOMIC
+#include <RB_INC_THREAD
+#include <RB_INC_MUTEX
+#include <RB_INC_CONDITION_VARIABLE
 
 //#include <RB_INC_BOOST_LEXICAL_CAST_HPP
 #endif

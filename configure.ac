@@ -338,6 +338,10 @@ RB_CHK_SYSHEADER([iomanip],        [IOMANIP])
 RB_CHK_SYSHEADER([cstdio],         [CSTDIO])
 RB_CHK_SYSHEADER([chrono],         [CHRONO])
 RB_CHK_SYSHEADER([ctime],          [CTIME])
+RB_CHK_SYSHEADER([atomic],         [ATOMIC])
+RB_CHK_SYSHEADER([thread],         [THREAD])
+RB_CHK_SYSHEADER([mutex],          [MUTEX])
+RB_CHK_SYSHEADER([condition_variable], [CONDITION_VARIABLE])
 
 dnl experimental
 RB_CHK_SYSHEADER([string_view],                 [STRING_VIEW])
@@ -867,6 +871,51 @@ RB_DEFINE_UNQUOTED([INC_BOOST_SPIRIT_KARMA_HPP], [boost/spirit/include/karma.hpp
 
 
 dnl
+dnl RocksDB support
+dnl
+
+AC_MSG_CHECKING([whether you asked to use the RocksDB included here])
+AC_ARG_WITH(included-rocksdb,
+AC_HELP_STRING([--with-included-rocksdb[[[=shared]]]], [Use the RocksDB sources from included submodule]),
+[
+	AC_MSG_RESULT([yes])
+	with_included_rocksdb="yes"
+
+	AC_SUBST(ROCKSDB_CPPFLAGS, ["-I $PWD/rocksdb/include"])
+	AC_SUBST(ROCKSDB_LDFLAGS, ["-L$PWD/rocksdb/"])
+
+	AC_MSG_CHECKING([whether to use shared RocksDB])
+	if [[ $withval = "shared" ]]; then
+		AC_MSG_RESULT([yes])
+		rocksdb_linkage="shared_lib"
+		AC_MSG_NOTICE([Shared RocksDB linkage requires running charybdis with an intact build directory])
+		ROCKSDB_LDFLAGS+=" -Wl,-rpath -Wl,$PWD/rocksdb/"
+		AC_SUBST(ROCKSDB_LIBS, ["-lrocksdb"])
+	else
+		AC_MSG_RESULT([no])
+		rocksdb_linkage="static_lib"
+		AC_MSG_NOTICE([static RocksDB linkage requires multiple dependencies])
+		AC_MSG_NOTICE([| You will need: bzip2, zlib, snappy])
+		AC_SUBST(ROCKSDB_LIBS, ["$PWD/rocksdb/librocksdb.a"])
+	fi
+
+	bash tools/buildrocks.sh $rocksdb_linkage
+],[
+	AC_MSG_RESULT([no])
+	with_included_rocksdb="no"
+
+	AC_CHECK_LIB(rocksdb, rocksdb_open, [], [
+		AC_MSG_ERROR([Unable to find required RocksDB package. Try apt-get install librocksdb-dev])
+	])
+
+	AC_SUBST(ROCKSDB_CPPFLAGS, [])
+	AC_SUBST(ROCKSDB_LDFLAGS, [])
+	AC_SUBST(ROCKSDB_LIBS, ["-lrocksdb"])
+])
+
+
+
+dnl
 dnl OpenSSL support
 dnl
 
@@ -1283,6 +1332,7 @@ echo "Configuration time ................ $RB_DATESTR"
 echo "Compiler .......................... $CXX"
 echo "Compiler flags (CXXFLAGS) ......... $CXXFLAGS"
 echo "Building boost .................... $with_included_boost"
+echo "Building RocksDB................... $with_included_rocksdb"
 echo "Precompiled headers ............... $build_pch"
 echo "Developer debug ................... $debug"
 echo "IPv6 support ...................... $ipv6"

@@ -10,6 +10,7 @@ AM_LDFLAGS = \
 AM_LDFLAGS += \
 	-L$(top_srcdir)/ircd \
 	-L$(top_srcdir)/rb \
+	@ROCKSDB_LDFLAGS@ \
 	@BOOST_LDFLAGS@
 
 
@@ -22,4 +23,5 @@ charybdis_SOURCES = \
 charybdis_LDADD = \
 	-lircd \
 	-lrb \
+	@ROCKSDB_LIBS@ \
 	@BOOST_LIBS@
