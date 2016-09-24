@@ -164,8 +164,8 @@ run git submodule update --init --recursive libs/algorithm
 
 ### Install should go right into this local submodule repository
 run ./bootstrap.sh --prefix=$PWD --libdir=$PWD/lib --with-libraries=$BLIBS $BSFLAGS
-run ./b2 headers -d0
-run ./b2 install threading=$BTHREADING variant=$BVARIANT link=$BLINK address-model=64 warnings=all
+run ./b2 -d0 headers
+run ./b2 -d0 install threading=$BTHREADING variant=$BVARIANT link=$BLINK address-model=64 warnings=all
 
 ### TODO: this shouldn't be necessary.
 ### XXX: required when boost submodules are fetched and built la carte, but not required
