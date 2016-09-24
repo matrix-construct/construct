@@ -58,7 +58,8 @@ constexpr auto CPATH = RB_ETC_DIR "/ircd.conf";              // ircd.conf file
 constexpr auto MPATH = RB_ETC_DIR "/ircd.motd";              // MOTD file
 constexpr auto LPATH = RB_LOG_DIR "/ircd.log";               // ircd logfile
 constexpr auto OPATH = RB_ETC_DIR "/opers.motd";             // oper MOTD file
-constexpr auto DBPATH = PKGLOCALSTATEDIR "/ban.db";          // bandb file
+constexpr auto DBPATH = PKGLOCALSTATEDIR;                    // database prefix
+constexpr auto BDBPATH = PKGLOCALSTATEDIR "/ban.db";         // bandb file
 
 // Below are the elements for default paths.
 enum index
@@ -77,6 +78,7 @@ enum index
 	IRCD_LOG,
 	IRCD_OMOTD,
 	BANDB,
+	DB,
 
 	_NUM_
 };

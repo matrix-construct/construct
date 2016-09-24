@@ -53,7 +53,8 @@ std::array<ent, num_of<index>()> paths
 	{ "ircd.motd",         MPATH         },
 	{ "ircd.log",          LPATH         },
 	{ "oper motd",         OPATH         },
-	{ "bandb",             DBPATH        },
+	{ "bandb",             BDBPATH       },
+	{ "db",                DBPATH        },
 }};
 
 } // namespace path
