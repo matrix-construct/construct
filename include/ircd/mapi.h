@@ -110,14 +110,7 @@ inline
 header::~header()
 noexcept
 {
-	if(ircd::main_exited)
-	{
-		// When central IRCd thinks this module is already unloaded when at this point,
-		// the DSO got stuck. This will not assert, but warn the developer to fix it.
-		const auto &name(meta["name"]);
-		log::warning("Module \"%s\" is stuck and failing to unload.", name.c_str());
-		log::warning("Module \"%s\" may result in undefined behavior if not fixed.", name.c_str());
-	}
+	mods::static_destruction = true;
 }
 
 const char *const

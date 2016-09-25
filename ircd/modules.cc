@@ -199,6 +199,12 @@ catch(const std::exception &e)
 	throw;
 }
 
+// Allows module to communicate static destruction is taking place when mapi::header
+// destructs. This allows us to gauge if the module *really* unloaded on command. DSO's
+// are allowed to silently refuse to unload for any reason. We prefer developers to do
+// things that don't trigger such behavior and allow a clean unload.
+bool ircd::mods::static_destruction;
+
 bool
 ircd::mods::unload(const std::string name)
 {
@@ -215,8 +221,17 @@ ircd::mods::unload(const std::string name)
 		unload_symbol(mod, name, sym.type);
 	}
 
+	static_destruction = false;
 	mods.erase(it);
-	log.info("Module '%s' unloaded", filename.c_str());
+
+	if(!static_destruction)
+	{
+		log.error("Module \"%s\" is stuck and failing to unload.", name.c_str());
+		log.warning("Module \"%s\" may result in undefined behavior if not fixed.", name.c_str());
+	} else {
+		log.info("Module '%s' unloaded", filename.c_str());
+	}
+
 	return true;
 }
 

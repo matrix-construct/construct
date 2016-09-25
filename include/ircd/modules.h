@@ -62,8 +62,6 @@ const std::string &desc(const mod &);
 std::string location(const mod &);
 std::string name(const mod &);
 
-extern struct log::log log;
-
 // Symbol handlers
 struct type_handlers
 {
@@ -120,6 +118,9 @@ bool unload(const std::string name);
 bool load(const std::string &name);
 void autoload();
 void unload();
+
+extern struct log::log log;
+extern bool static_destruction;
 
 // Initialization and destruction singleton held by ircd::main()
 struct init
