@@ -123,11 +123,26 @@ class handle
 
   public:
 	using char_closure = std::function<void (const char *, size_t)>;
-	using string_closure = std::function<void (const std::string &)>;
 
+	// Tests if key exists
 	bool has(const std::string &key, const gopts & = {});
+
+	// Perform a get into a closure. This offers a reference to the data with zero-copy.
+	// Be very, very cognizant of the things you do as you sojourn on this odyssey.
 	void get(const std::string &key, const char_closure &, const gopts & = {});
+
+	// Get data into your buffer. The signed char buffer is null terminated; the unsigned is not.
+	size_t get(const std::string &key, char *const &buf, const size_t &max, const gopts & = {});
+	size_t get(const std::string &key, uint8_t *const &buf, const size_t &max, const gopts & = {});
+	std::string get(const std::string &key, const gopts & = {});
+
+	// Write data to the db
+	void set(const std::string &key, const char *const &buf, const size_t &size, const sopts & = {});
+	void set(const std::string &key, const uint8_t *const &buf, const size_t &size, const sopts & = {});
 	void set(const std::string &key, const std::string &value, const sopts & = {});
+
+	// Remove data from the db. not_found is never thrown.
+	void del(const std::string &key, const sopts & = {});
 
 	handle(const std::string &name, const opts & = {});
 	~handle() noexcept;
