@@ -47,6 +47,7 @@ namespace ircd
 	using std::chrono::seconds;
 	using std::chrono::milliseconds;
 	using std::chrono::microseconds;
+	using std::chrono::duration_cast;
 	using ostream = std::ostream;
 	namespace ph = std::placeholders;
 	using namespace std::string_literals;
@@ -89,6 +90,7 @@ namespace ircd
 #include "mode_lease.h"
 #include "snomask.h"
 #include "ctx.h"
+#include "ctx_prof.h"
 #include "ctx_dock.h"
 #include "ctx_mutex.h"
 #include "ctx_shared_state.h"

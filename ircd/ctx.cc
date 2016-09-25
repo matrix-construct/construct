@@ -92,6 +92,10 @@ ircd::ctx::context::context(const size_t &stack_sz,
 		ircd::ctx::current = current;
 	});
 
+	// The profiler is told about the spawn request here, not inside the closure
+	// which is probably the same event-slice as event::CUR_ENTER and not as useful.
+	mark(prof::event::SPAWN);
+
 	if(flags & DEFER_POST)
 		ios->post(std::move(spawn));
 	else if(flags & DEFER_DISPATCH)
@@ -134,10 +138,11 @@ ircd::ctx::context::join()
 	if(joined())
 		return;
 
-	// Set the target context to notify this context when it finishes
+	mark(prof::event::JOIN);
 	assert(!c->adjoindre);
-	c->adjoindre = &cur();
+	c->adjoindre = &cur();       // Set the target context to notify this context when it finishes
 	wait();
+	mark(prof::event::JOINED);
 }
 
 ircd::ctx::ctx *
@@ -210,14 +215,16 @@ noexcept
 	notes = 1;
 	stack_base = uintptr_t(__builtin_frame_address(0));
 	ircd::ctx::current = this;
+	mark(prof::event::CUR_ENTER);
 
 	const scope atexit([this]
 	{
-		ircd::ctx::current = nullptr;
-		this->yc = nullptr;
-
 		if(adjoindre)
 			notify(*adjoindre);
+
+		mark(prof::event::CUR_LEAVE);
+		ircd::ctx::current = nullptr;
+		this->yc = nullptr;
 
 		if(flags & SELF_DESTRUCT)
 			delete this;
@@ -225,12 +232,6 @@ noexcept
 
 	if(likely(bool(func)))
 		func();
-}
-
-size_t
-ctx::stack_usage_here(const ctx &ctx)
-{
-	return ctx.stack_base - uintptr_t(__builtin_frame_address(0));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -325,4 +326,127 @@ catch(const std::exception &e)
 	              this,
 	              &cur(),
 	              e.what());
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ctx_prof.h
+//
+
+namespace ircd {
+namespace ctx  {
+namespace prof {
+
+struct settings settings
+{
+	0.66,        // stack_usage_warning
+	0.87,        // stack_usage_assertion
+
+	5000us,      // slice_warning
+	0us,         // slice_interrupt
+	0us,         // slice_assertion
+};
+
+time_point cur_slice_start;     // Time slice state
+
+size_t stack_usage_here(const ctx &) __attribute__((noinline));
+void check_stack();
+void check_slice();
+void slice_start();
+
+void handle_cur_continue();
+void handle_cur_yield();
+void handle_cur_leave();
+void handle_cur_enter();
+
+} // namespace prof
+} // namespace ctx
+} // namespace ircd
+
+void
+ctx::prof::mark(const event &e)
+{
+	switch(e)
+	{
+		case event::CUR_ENTER:       handle_cur_enter();     break;
+		case event::CUR_LEAVE:       handle_cur_leave();     break;
+		case event::CUR_YIELD:       handle_cur_yield();     break;
+		case event::CUR_CONTINUE:    handle_cur_continue();  break;
+		default:                                             break;
+	}
+}
+
+void
+ctx::prof::handle_cur_enter()
+{
+	slice_start();
+}
+
+void
+ctx::prof::handle_cur_leave()
+{
+	check_slice();
+}
+
+void
+ctx::prof::handle_cur_yield()
+{
+	check_stack();
+	check_slice();
+}
+
+void
+ctx::prof::handle_cur_continue()
+{
+	slice_start();
+}
+
+void
+ctx::prof::slice_start()
+{
+	cur_slice_start = steady_clock::now();
+}
+
+void
+ctx::prof::check_slice()
+{
+	auto &c(cur());
+	const auto time_usage(steady_clock::now() - cur_slice_start);
+	if(unlikely(settings.slice_warning > 0us && time_usage >= settings.slice_warning))
+	{
+		log::warning("CONTEXT TIMESLICE EXCEEDED ctx(%p) last: %06ld microseconds",
+		             (const void *)&c,
+		             duration_cast<microseconds>(time_usage).count());
+
+		assert(settings.slice_assertion == 0us || time_usage < settings.slice_assertion);
+	}
+
+	if(unlikely(settings.slice_interrupt > 0us && time_usage >= settings.slice_interrupt))
+		throw interrupted("ctx(%p): Time slice exceeded (last: %06ld microseconds)",
+		                  (const void *)&c,
+		                  duration_cast<microseconds>(time_usage).count());
+}
+
+void
+ctx::prof::check_stack()
+{
+	auto &c(cur());
+	const double &stack_max(c.stack_max);
+	const auto stack_usage(stack_usage_here(c));
+
+	if(unlikely(stack_usage > stack_max * settings.stack_usage_warning))
+	{
+		log::warning("CONTEXT STACK USAGE ctx(%p) used %zu of %zu bytes",
+		             (const void *)&c,
+		             stack_usage,
+		             c.stack_max);
+
+		assert(stack_usage < c.stack_max * settings.stack_usage_assertion);
+	}
+}
+
+size_t
+ctx::prof::stack_usage_here(const ctx &ctx)
+{
+	return ctx.stack_base - uintptr_t(__builtin_frame_address(0));
 }

@@ -55,10 +55,6 @@ struct ctx
 	ctx(const ctx &) = delete;
 };
 
-size_t stack_usage_here(const ctx &) __attribute__((noinline));
-bool stack_warning(const ctx &, const double &pct = 0.80);
-void stack_assertion(const ctx &, const double &pct = 0.80);
-
 struct continuation
 {
 	ctx *self;
@@ -74,9 +70,9 @@ inline
 continuation::continuation(ctx *const &self)
 :self{self}
 {
+	mark(prof::event::CUR_YIELD);
 	assert(self != nullptr);
 	assert(self->notes <= 1);
-	stack_assertion(*self);
 	ircd::ctx::current = nullptr;
 }
 
@@ -85,6 +81,7 @@ continuation::~continuation()
 noexcept
 {
 	ircd::ctx::current = self;
+	mark(prof::event::CUR_CONTINUE);
 	self->notes = 1;
 }
 
@@ -99,20 +96,6 @@ continuation::operator const boost::asio::yield_context &()
 const
 {
 	return *self->yc;
-}
-
-inline void
-stack_assertion(const ctx &ctx,
-                const double &pct)
-{
-	assert(!stack_warning(ctx, pct));
-}
-
-inline bool
-stack_warning(const ctx &ctx,
-              const double &pct)
-{
-	return stack_usage_here(ctx) > double(ctx.stack_max) * pct;
 }
 
 inline bool
@@ -151,7 +134,10 @@ ctx::wait()
 	// Interruption shouldn't be used for normal operation,
 	// so please eat this branch misprediction.
 	if(unlikely(flags & INTERRUPTED))
+	{
+		mark(prof::event::CUR_INTERRUPT);
 		throw interrupted("ctx(%p)::wait()", (const void *)this);
+	}
 
 	// notes = 1; set by continuation dtor on wakeup
 	return true;
