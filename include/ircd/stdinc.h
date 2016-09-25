@@ -83,7 +83,6 @@ namespace ircd
 #include "fmt.h"
 #include "err.h"
 #include "fs.h"
-#include "db.h"
 #include "s_assert.h"
 #include "match.h"
 #include "mode_table.h"
@@ -98,17 +97,16 @@ namespace ircd
 #include "ctx_async.h"
 #include "ctx_pool.h"
 #include "hook.h"
-
 #include "line.h"
 #include "tape.h"
 #include "cmds.h"
 #include "vm.h"
+#include "logger.h"
+#include "db.h"
 
 #include "u_id.h"
 
 #include "client.h"
-
-#include "logger.h"
 
 #include "newconf.h"
 #include "conf.h"

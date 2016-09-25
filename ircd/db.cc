@@ -25,6 +25,11 @@
 namespace ircd {
 namespace db   {
 
+struct log::log log
+{
+	"db", 'D'            // Database subsystem takes SNOMASK +D
+};
+
 void throw_on_error(const rocksdb::Status &);
 
 rocksdb::WriteOptions make_opts(const sopts &);

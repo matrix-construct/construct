@@ -139,6 +139,9 @@ struct init
 	~init() noexcept;
 };
 
+// db subsystem has its own SNOMASK'ed logging facility.
+extern struct log::log log;
+
 } // namespace db
 } // namespace ircd
 
