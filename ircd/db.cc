@@ -21,12 +21,23 @@
  */
 
 #include <rocksdb/db.h>
-#include <ircd/db_meta.h>
 
 namespace ircd {
 namespace db   {
 
-using rocksdb::DB;
+void throw_on_error(const rocksdb::Status &);
+
+rocksdb::WriteOptions make_opts(const sopts &);
+rocksdb::ReadOptions make_opts(const gopts &);
+rocksdb::Options make_opts(const opts &);
+
+struct meta
+{
+	std::string name;
+	std::string path;
+	rocksdb::Options opts;
+	std::shared_ptr<rocksdb::Cache> cache;
+};
 
 namespace work
 {
@@ -47,6 +58,12 @@ namespace work
 }
 
 void throw_on_error(const rocksdb::Status &);
+rocksdb::Iterator &seek(rocksdb::Iterator &, const iter::op &);
+template<class T> bool has_opt(const optlist<T> &, const T &);
+rocksdb::WriteOptions make_opts(const sopts &);
+rocksdb::ReadOptions make_opts(const gopts &, const bool &iterator = false);
+rocksdb::Options make_opts(const opts &);
+
 void query(std::function<void ()>);
 
 } // namespace db
@@ -68,15 +85,42 @@ noexcept
 db::handle::handle(const std::string &name,
                    const opts &opts)
 try
-:meta{std::make_unique<struct meta>(name, path(name), opts)}
-,d{[this, &name]
+:meta{[&name, &opts]
 {
-	DB *ptr;
-	throw_on_error(DB::Open(meta->opts, path(name), &ptr));
-	std::unique_ptr<DB> ret{ptr};
-	return ret;
+	auto meta(std::make_unique<struct meta>());
+	meta->name = name;
+	meta->path = path(name);
+	meta->opts = make_opts(opts);
+	meta->opts.row_cache = meta->cache;
+	return std::move(meta);
+}()}
+,d{[this]
+{
+	rocksdb::DB *ptr;
+	throw_on_error(rocksdb::DB::Open(meta->opts, meta->path, &ptr));
+	return std::unique_ptr<rocksdb::DB>{ptr};
 }()}
 {
+	log.info("Opened database \"%s\" @ `%s' (handle: %p)",
+	         meta->name.c_str(),
+	         meta->path.c_str(),
+	         (const void *)this);
+}
+catch(const invalid_argument &e)
+{
+	const bool no_create(has_opt(opts, opt::NO_CREATE));
+	const bool no_existing(has_opt(opts, opt::NO_EXISTING));
+	const char *const helpstr
+	{
+		no_create?   " (The database is missing and will not be created)":
+		no_existing? " (The database already exists but must be fresh)":
+		             ""
+	};
+
+	throw error("Failed to open db '%s': %s%s",
+	            name.c_str(),
+	            e.what(),
+	            helpstr);
 }
 catch(const std::exception &e)
 {
@@ -93,30 +137,30 @@ noexcept
 void
 db::handle::set(const std::string &key,
                 const std::string &value,
-                const write_opts &opts)
+                const sopts &sopts)
 {
-	using rocksdb::WriteOptions;
 	using rocksdb::Slice;
 
 	const Slice k(key.data(), key.size());
 	const Slice v(value.data(), value.size());
-	throw_on_error(d->Put(WriteOptions(), k, v));
+
+	auto opts(make_opts(sopts));
+	throw_on_error(d->Put(opts, k, v));
 }
 
 void
 db::handle::get(const std::string &key,
                 const char_closure &func,
-                const read_opts &opts)
+                const gopts &gopts)
 {
-	using rocksdb::ReadOptions;
 	using rocksdb::Iterator;
 	using rocksdb::Slice;
 
-	ReadOptions ropts;
+	auto opts(make_opts(gopts));
 	const Slice sk(key.data(), key.size());
-	query([this, &sk, &func, &ropts]
+	query([this, &sk, &func, &opts]
 	{
-		const std::unique_ptr<Iterator> it(d->NewIterator(ropts));
+		const std::unique_ptr<Iterator> it(d->NewIterator(opts));
 
 		it->Seek(sk);
 		throw_on_error(it->status());
@@ -128,30 +172,28 @@ db::handle::get(const std::string &key,
 
 bool
 db::handle::has(const std::string &key,
-                const read_opts &opts)
+                const gopts &gopts)
 {
-	using rocksdb::ReadOptions;
-	using rocksdb::Iterator;
 	using rocksdb::Slice;
+	using rocksdb::Iterator;
+	using rocksdb::Status;
 
 	bool ret;
-	ReadOptions ropts;
+	auto opts(make_opts(gopts));
 	const Slice k(key.data(), key.size());
-	query([this, &k, &ret, &ropts]
+	query([this, &k, &ret, &opts]
 	{
-		if(!d->KeyMayExist(ropts, k, nullptr, nullptr))
+		if(!d->KeyMayExist(opts, k, nullptr, nullptr))
 		{
 			ret = false;
 			return;
 		}
 
-		const std::unique_ptr<Iterator> it(d->NewIterator(ropts));
+		const std::unique_ptr<Iterator> it(d->NewIterator(opts));
 
 		it->Seek(k);
 		switch(it->status().code())
 		{
-			using rocksdb::Status;
-
 			case Status::kOk:         ret = true;   return;
 			case Status::kNotFound:   ret = false;  return;
 			default:
@@ -168,7 +210,7 @@ db::query(std::function<void ()> func)
 	std::exception_ptr eptr;
 	auto &context(ctx::cur());
 	std::atomic<bool> done{false};
-	auto closure([func(std::move(func)), &eptr, &context, &done]
+	auto closure([&func, &eptr, &context, &done]
 	() noexcept
 	{
 		try
@@ -258,6 +300,164 @@ db::work::pop()
 	auto c(std::move(queue.front()));
 	queue.pop_front();
 	return std::move(c);
+}
+
+rocksdb::Options
+db::make_opts(const opts &opts)
+{
+	rocksdb::Options ret;
+	ret.create_if_missing = true;            // They default this to false, but we invert the option
+
+	for(const auto &o : opts) switch(o.first)
+	{
+		case opt::NO_CREATE:
+			ret.create_if_missing = false;
+			continue;
+
+		case opt::NO_EXISTING:
+			ret.error_if_exists = true;
+			continue;
+
+		case opt::NO_CHECKSUM:
+			ret.paranoid_checks = false;
+			continue;
+
+		case opt::NO_MADV_DONTNEED:
+			ret.allow_os_buffer = false;
+			continue;
+
+		case opt::NO_MADV_RANDOM:
+			ret.advise_random_on_open = false;
+			continue;
+
+		case opt::FALLOCATE:
+			ret.allow_fallocate = true;
+			continue;
+
+		case opt::NO_FALLOCATE:
+			ret.allow_fallocate = false;
+			continue;
+
+		case opt::NO_FDATASYNC:
+			ret.disableDataSync = true;
+			continue;
+
+		case opt::FSYNC:
+			ret.use_fsync = true;
+			continue;
+
+		case opt::MMAP_READS:
+			ret.allow_mmap_reads = true;
+			continue;
+
+		case opt::MMAP_WRITES:
+			ret.allow_mmap_writes = true;
+			continue;
+
+		case opt::STATS_THREAD:
+			ret.enable_thread_tracking = true;
+			continue;
+
+		case opt::STATS_MALLOC:
+			ret.dump_malloc_stats = true;
+			continue;
+
+		case opt::OPEN_FAST:
+			ret.skip_stats_update_on_db_open = true;
+			continue;
+
+		case opt::OPEN_BULKLOAD:
+			ret.PrepareForBulkLoad();
+			continue;
+
+		case opt::OPEN_SMALL:
+			ret.OptimizeForSmallDb();
+			continue;
+
+		default:
+			continue;
+	}
+
+	return ret;
+}
+
+rocksdb::ReadOptions
+db::make_opts(const gopts &opts,
+              const bool &iterator)
+{
+	rocksdb::ReadOptions ret;
+
+	if(iterator)
+		ret.fill_cache = false;
+
+	for(const auto &opt : opts) switch(opt.first)
+	{
+		case get::PIN:
+			ret.pin_data = true;
+			continue;
+
+		case get::CACHE:
+			ret.fill_cache = true;
+			continue;
+
+		case get::NO_CACHE:
+			ret.fill_cache = false;
+			continue;
+
+		case get::NO_CHECKSUM:
+			ret.verify_checksums = false;
+			continue;
+
+		case get::READAHEAD:
+			ret.readahead_size = opt.second;
+			continue;
+
+		default:
+			continue;
+	}
+
+	return ret;
+}
+
+rocksdb::WriteOptions
+db::make_opts(const sopts &opts)
+{
+	rocksdb::WriteOptions ret;
+	for(const auto &opt : opts) switch(opt.first)
+	{
+		case set::FSYNC:
+			ret.sync = true;
+			continue;
+
+		case set::NO_JOURNAL:
+			ret.disableWAL = true;
+			continue;
+
+		case set::MISSING_COLUMNS:
+			ret.ignore_missing_column_families = true;
+			continue;
+
+		default:
+			continue;
+	}
+
+	return ret;
+}
+
+template<class T>
+bool
+db::has_opt(const optlist<T> &list,
+            const T &opt)
+{
+	const auto check([&opt]
+	(const auto &pair)
+	{
+		return pair.first == opt;
+	});
+
+	return std::find_if(begin(list), end(list), check) != end(list);
+}
+
 }
 
 std::string
