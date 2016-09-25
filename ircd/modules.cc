@@ -249,15 +249,17 @@ ircd::mods::load_symbol(mod &mod,
 try
 {
 	const auto &handlers(type_handlers.at(type));
-	if(!handlers.loader)
-		return;
-
-	log.debug("Found loader for \"%s\" in %s (type: %s)",
+	log.debug("Found loader[%s] unloader[%s] reloader[%s] for \"%s\" in %s (type: %s)",
+	          handlers.loader?   "yes" : "no",
+	          handlers.unloader? "yes" : "no",
+	          handlers.reloader? "yes" : "no",
 	          name.c_str(),
 	          mods::name(mod).c_str(),
 	          type.name());
 
-	handlers.loader(mod, name);
+	if(handlers.loader)
+		handlers.loader(mod, name);
+
 	mod.handled.emplace(name, type);
 }
 catch(const std::out_of_range &e)
@@ -284,7 +286,7 @@ try
 	if(!handlers.unloader)
 		return;
 
-	log.debug("Found unloader for \"%s\" in %s (type: %s)",
+	log.debug("Executing unloader for \"%s\" in %s (type: %s)",
 	          name.c_str(),
 	          mods::name(mod).c_str(),
 	          type.name());
