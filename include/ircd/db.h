@@ -55,8 +55,9 @@ struct optval
 	optval(const T &key, const ssize_t &val = std::numeric_limits<ssize_t>::min());
 };
 
-template<class T>
-using optlist = std::initializer_list<optval<T>>;
+template<class T> using optlist = std::initializer_list<optval<T>>;
+template<class T> bool has_opt(const optlist<T> &, const T &);
+template<class T> ssize_t opt_val(const optlist<T> &, const T &);
 
 // Reads may be posted to a separate thread which incurs the time of IO while the calling
 // ircd::context yields.
@@ -108,6 +109,7 @@ enum class opt
 	OPEN_FAST,              // Skips a lot of stuff to make opening a handle faster
 	OPEN_SMALL,             // Optimizes the cache hierarchy for < 1GiB databases.
 	OPEN_BULKLOAD,          // Optimizes the handle to accept a large amount of writes at once
+	LRU_CACHE,              // Pair with a size in bytes for the LRU cache size
 };
 
 struct opts
@@ -116,20 +118,65 @@ struct opts
 	template<class... list> opts(list&&... l): optlist<opt>{std::forward<list>(l)...} {}
 };
 
+struct const_iterator
+{
+	using key_type = std::pair<const char *, size_t>;
+	using mapped_type = std::pair<const char *, size_t>;
+	using value_type = std::pair<key_type, mapped_type>;
+
+  private:
+	friend class handle;
+	struct state;
+
+	std::unique_ptr<struct state> state;
+	mutable value_type val;
+
+	const_iterator(std::unique_ptr<struct state> &&);
+
+  public:
+	operator bool() const;
+	bool operator!() const;
+	bool operator<(const const_iterator &) const;
+	bool operator>(const const_iterator &) const;
+	bool operator==(const const_iterator &) const;
+	bool operator!=(const const_iterator &) const;
+	bool operator<=(const const_iterator &) const;
+	bool operator>=(const const_iterator &) const;
+
+	const value_type *operator->() const;
+	const value_type &operator*() const;
+
+	const_iterator &operator++();
+	const_iterator &operator--();
+
+	const_iterator() = default;
+	const_iterator(const_iterator &&) noexcept;
+	const_iterator(const const_iterator &) = delete;
+	~const_iterator() noexcept;
+};
+
 class handle
 {
+	friend class const_iterator;
+
 	std::unique_ptr<struct meta> meta;
 	std::unique_ptr<rocksdb::DB> d;
 
   public:
-	using char_closure = std::function<void (const char *, size_t)>;
+	using closure = std::function<void (const char *, size_t)>;
+
+	// Iterations
+	const_iterator lower_bound(const std::string &key, const gopts & = {});
+	const_iterator upper_bound(const std::string &key, const gopts & = {});
+	const_iterator cbegin(const gopts & = {});
+	const_iterator cend(const gopts & = {});
 
 	// Tests if key exists
 	bool has(const std::string &key, const gopts & = {});
 
 	// Perform a get into a closure. This offers a reference to the data with zero-copy.
 	// Be very, very cognizant of the things you do as you sojourn on this odyssey.
-	void get(const std::string &key, const char_closure &, const gopts & = {});
+	void get(const std::string &key, const closure &func, const gopts & = {});
 
 	// Get data into your buffer. The signed char buffer is null terminated; the unsigned is not.
 	size_t get(const std::string &key, char *const &buf, const size_t &max, const gopts & = {});
@@ -148,6 +195,9 @@ class handle
 	~handle() noexcept;
 };
 
+const_iterator begin(handle &);
+const_iterator end(handle &);
+
 struct init
 {
 	init();
@@ -159,6 +209,42 @@ extern struct log::log log;
 
 } // namespace db
 } // namespace ircd
+
+inline ircd::db::const_iterator
+ircd::db::end(handle &handle)
+{
+	return handle.cend();
+}
+
+inline ircd::db::const_iterator
+ircd::db::begin(handle &handle)
+{
+	return handle.cbegin();
+}
+
+template<class T>
+ssize_t
+ircd::db::opt_val(const optlist<T> &list,
+                  const T &opt)
+{
+	for(const auto &p : list)
+		if(p.first == opt)
+			return p.second;
+
+	return std::numeric_limits<ssize_t>::min();
+}
+
+template<class T>
+bool
+ircd::db::has_opt(const optlist<T> &list,
+                  const T &opt)
+{
+	for(const auto &p : list)
+		if(p.first == opt)
+			return true;
+
+	return false;
+}
 
 template<class T>
 ircd::db::optval<T>::optval(const T &key,

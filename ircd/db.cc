@@ -21,6 +21,7 @@
  */
 
 #include <rocksdb/db.h>
+#include <rocksdb/cache.h>
 
 namespace ircd {
 namespace db   {
@@ -28,14 +29,6 @@ namespace db   {
 struct log::log log
 {
 	"db", 'D'            // Database subsystem takes SNOMASK +D
-};
-
-struct meta
-{
-	std::string name;
-	std::string path;
-	rocksdb::Options opts;
-	std::shared_ptr<rocksdb::Cache> cache;
 };
 
 namespace work
@@ -56,14 +49,42 @@ namespace work
 	void init();
 }
 
+void yielding(const std::function<void ()> &);
+
 void throw_on_error(const rocksdb::Status &);
-rocksdb::Iterator &seek(rocksdb::Iterator &, const iter::op &);
-template<class T> bool has_opt(const optlist<T> &, const T &);
+bool valid(const rocksdb::Iterator &);
+void valid_or_throw(const rocksdb::Iterator &);
+void valid_equal_or_throw(const rocksdb::Iterator &, const rocksdb::Slice &);
+
+const auto BLOCKING = rocksdb::ReadTier::kReadAllTier;
+const auto NON_BLOCKING = rocksdb::ReadTier::kBlockCacheTier;
+enum class pos
+{
+	FRONT   = -2,    // .front()    | first element
+	PREV    = -1,    // std::prev() | previous element
+	END     = 0,     // break;      | exit iteration (or past the end)
+	NEXT    = 1,     // continue;   | next element
+	BACK    = 2,     // .back()     | last element
+};
+void seek(rocksdb::Iterator &, const pos &);
+void seek(rocksdb::Iterator &, const rocksdb::Slice &);
+template<class pos> void seek(rocksdb::DB &, const pos &, rocksdb::ReadOptions &, std::unique_ptr<rocksdb::Iterator> &);
+std::unique_ptr<rocksdb::Iterator> seek(rocksdb::DB &, const rocksdb::Slice &, rocksdb::ReadOptions &);
+
+// This is important to prevent thrashing the iterators which have to reset on iops
+const auto DEFAULT_READAHEAD = 4_MiB;
+
 rocksdb::WriteOptions make_opts(const sopts &);
 rocksdb::ReadOptions make_opts(const gopts &, const bool &iterator = false);
 rocksdb::Options make_opts(const opts &);
 
-void yielding(const std::function<void ()> &);
+struct meta
+{
+	std::string name;
+	std::string path;
+	rocksdb::Options opts;
+	std::shared_ptr<rocksdb::Cache> cache;
+};
 
 } // namespace db
 } // namespace ircd
@@ -90,6 +111,11 @@ try
 	meta->name = name;
 	meta->path = path(name);
 	meta->opts = make_opts(opts);
+
+	const auto lru_cache_size(opt_val(opts, opt::LRU_CACHE));
+	if(lru_cache_size > 0)
+		meta->cache = rocksdb::NewLRUCache(lru_cache_size);
+
 	meta->opts.row_cache = meta->cache;
 	return std::move(meta);
 }()}
@@ -227,28 +253,18 @@ db::handle::get(const std::string &key,
 
 void
 db::handle::get(const std::string &key,
-                const char_closure &func,
+                const closure &func,
                 const gopts &gopts)
 {
-	using rocksdb::Iterator;
 	using rocksdb::Slice;
+	using rocksdb::Iterator;
 
 	auto opts(make_opts(gopts));
 	const Slice sk(key.data(), key.size());
-	yielding([this, &sk, &func, &opts]
-	{
-		const std::unique_ptr<Iterator> it(d->NewIterator(opts));
-
-		it->Seek(sk);
-		if(!it->Valid())
-			throw not_found();
-
-		if(it->key().compare(sk) != 0)
-			throw not_found();
-
-		const auto &v(it->value());
-		func(v.data(), v.size());
-	});
+	const auto it(seek(*d, sk, opts));
+	valid_equal_or_throw(*it, sk);
+	const auto &v(it->value());
+	func(v.data(), v.size());
 }
 
 bool
@@ -256,65 +272,287 @@ db::handle::has(const std::string &key,
                 const gopts &gopts)
 {
 	using rocksdb::Slice;
-	using rocksdb::Iterator;
 	using rocksdb::Status;
 
-	bool ret;
-	auto opts(make_opts(gopts));
 	const Slice k(key.data(), key.size());
-	yielding([this, &k, &ret, &opts]
+	auto opts(make_opts(gopts));
+
+	// Perform queries which are stymied from any sysentry
+	opts.read_tier = NON_BLOCKING;
+
+	// Perform a co-RP query to the filtration
+	if(!d->KeyMayExist(opts, k, nullptr, nullptr))
+		return false;
+
+	// Perform a query to the cache
+	auto status(d->Get(opts, k, nullptr));
+	if(status.IsIncomplete())
 	{
-		if(!d->KeyMayExist(opts, k, nullptr, nullptr))
+		// DB cache miss; next query requires I/O, offload it
+		opts.read_tier = BLOCKING;
+		yielding([this, &opts, &k, &status]
 		{
-			ret = false;
-			return;
-		}
+			status = d->Get(opts, k, nullptr);
+		});
+	}
 
-		const std::unique_ptr<Iterator> it(d->NewIterator(opts));
-
-		it->Seek(k);
-		switch(it->status().code())
-		{
-			case Status::kOk:         ret = true;   return;
-			case Status::kNotFound:   ret = false;  return;
-			default:
-				throw_on_error(it->status());
-		}
-	});
-
-	return ret;
+	// Finally the result
+	switch(status.code())
+	{
+		case Status::kOk:          return true;
+		case Status::kNotFound:    return false;
+		default:
+			throw_on_error(status);
+			__builtin_unreachable();
+	}
 }
 
-void
-db::yielding(const std::function<void ()> &func)
+namespace ircd {
+namespace db   {
+
+struct const_iterator::state
 {
-	std::exception_ptr eptr;
-	auto &context(ctx::cur());
-	std::atomic<bool> done{false};
-	auto closure([&func, &eptr, &context, &done]
-	() noexcept
-	{
-		try
-		{
-			func();
-		}
-		catch(...)
-		{
-			eptr = std::current_exception();
-		}
+	struct handle *handle;
+	rocksdb::ReadOptions ropts;
+	std::shared_ptr<const rocksdb::Snapshot> snap;
+	std::unique_ptr<rocksdb::Iterator> it;
 
-		done.store(true, std::memory_order_release);
-		notify(context);
-	});
+	state(struct handle *const & = nullptr, const gopts & = {});
+};
 
-	work::push(std::move(closure)); do
+} // namespace db
+} // namespace ircd
+
+db::const_iterator
+db::handle::cend(const gopts &gopts)
+{
+	return {};
+}
+
+db::const_iterator
+db::handle::cbegin(const gopts &gopts)
+{
+	const_iterator ret
 	{
-		ctx::wait();
+		std::make_unique<struct const_iterator::state>(this, gopts)
+	};
+
+	auto &state(*ret.state);
+	if(!has_opt(gopts, db::get::READAHEAD))
+		state.ropts.readahead_size = DEFAULT_READAHEAD;
+
+	seek(*state.handle->d, pos::FRONT, state.ropts, state.it);
+	return std::move(ret);
+}
+
+db::const_iterator
+db::handle::upper_bound(const std::string &key,
+                        const gopts &gopts)
+{
+	using rocksdb::Slice;
+
+	auto it(lower_bound(key, gopts));
+	const Slice sk(key.data(), key.size());
+	if(it && it.state->it->key().compare(sk) == 0)
+		++it;
+
+	return std::move(it);
+}
+
+db::const_iterator
+db::handle::lower_bound(const std::string &key,
+                        const gopts &gopts)
+{
+	using rocksdb::Slice;
+
+	const_iterator ret
+	{
+		std::make_unique<struct const_iterator::state>(this, gopts)
+	};
+
+	auto &state(*ret.state);
+	if(!has_opt(gopts, db::get::READAHEAD))
+		state.ropts.readahead_size = DEFAULT_READAHEAD;
+
+	const Slice sk(key.data(), key.size());
+	seek(*state.handle->d, sk, state.ropts, state.it);
+	return std::move(ret);
+}
+
+db::const_iterator::state::state(struct handle *const &handle,
+                                 const gopts &gopts)
+:handle{handle}
+,ropts{make_opts(gopts, true)}
+,snap
+{
+	[this, &handle, &gopts]() -> const rocksdb::Snapshot *
+	{
+		if(handle && !has_opt(gopts, get::NO_SNAPSHOT))
+			ropts.snapshot = handle->d->GetSnapshot();
+
+		return ropts.snapshot;
+	}()
+	,[this](const auto *const &snap)
+	{
+		if(this->handle && this->handle->d)
+			this->handle->d->ReleaseSnapshot(snap);
 	}
-	while(!done.load(std::memory_order_consume));
+}
+{
+}
 
-	if(eptr)
-		std::rethrow_exception(eptr);
+db::const_iterator::const_iterator(std::unique_ptr<struct state> &&state)
+:state{std::move(state)}
+{
+}
+
+db::const_iterator::const_iterator(const_iterator &&o)
+noexcept
+:state{std::move(o.state)}
+{
+}
+
+db::const_iterator::~const_iterator()
+noexcept
+{
+}
+
+db::const_iterator &
+db::const_iterator::operator--()
+{
+	seek(*state->handle->d, pos::PREV, state->ropts, state->it);
+	return *this;
+}
+
+db::const_iterator &
+db::const_iterator::operator++()
+{
+	seek(*state->handle->d, pos::NEXT, state->ropts, state->it);
+	return *this;
+}
+
+const db::const_iterator::value_type &
+db::const_iterator::operator*()
+const
+{
+	const auto &k(state->it->key());
+	val.first.first = k.data();
+	val.first.second = k.size();
+
+	const auto &v(state->it->value());
+	val.second.first = v.data();
+	val.second.second = v.size();
+
+	return val;
+}
+
+const db::const_iterator::value_type *
+db::const_iterator::operator->()
+const
+{
+	return &operator*();
+}
+
+bool
+db::const_iterator::operator>=(const const_iterator &o)
+const
+{
+	return (*this > o) || (*this == o);
+}
+
+bool
+db::const_iterator::operator<=(const const_iterator &o)
+const
+{
+	return (*this < o) || (*this == o);
+}
+
+bool
+db::const_iterator::operator!=(const const_iterator &o)
+const
+{
+	return !(*this == o);
+}
+
+bool
+db::const_iterator::operator==(const const_iterator &o)
+const
+{
+	if(*this && o)
+	{
+		const auto &a(state->it->key());
+		const auto &b(o.state->it->key());
+		return a.compare(b) == 0;
+	}
+
+	if(!*this && !o)
+		return true;
+
+	return false;
+}
+
+bool
+db::const_iterator::operator>(const const_iterator &o)
+const
+{
+	if(*this && o)
+	{
+		const auto &a(state->it->key());
+		const auto &b(o.state->it->key());
+		return a.compare(b) == 1;
+	}
+
+	if(!*this && o)
+		return true;
+
+	if(!*this && !o)
+		return false;
+
+	assert(!*this && o);
+	return false;
+}
+
+bool
+db::const_iterator::operator<(const const_iterator &o)
+const
+{
+	if(*this && o)
+	{
+		const auto &a(state->it->key());
+		const auto &b(o.state->it->key());
+		return a.compare(b) == -1;
+	}
+
+	if(!*this && o)
+		return false;
+
+	if(!*this && !o)
+		return false;
+
+	assert(*this && !o);
+	return true;
+}
+
+bool
+db::const_iterator::operator!()
+const
+{
+	if(!state)
+		return true;
+
+	if(!state->it)
+		return true;
+
+	if(!state->it->Valid())
+		return true;
+
+	return false;
+}
+
+db::const_iterator::operator bool()
+const
+{
+	return !!*this;
 }
 
 rocksdb::Options
@@ -459,20 +697,107 @@ db::make_opts(const sopts &opts)
 	return ret;
 }
 
-template<class T>
-bool
-db::has_opt(const optlist<T> &list,
-            const T &opt)
+std::unique_ptr<rocksdb::Iterator>
+db::seek(rocksdb::DB &db,
+         const rocksdb::Slice &key,
+         rocksdb::ReadOptions &opts)
 {
-	const auto check([&opt]
-	(const auto &pair)
-	{
-		return pair.first == opt;
-	});
+	using rocksdb::Iterator;
 
-	return std::find_if(begin(list), end(list), check) != end(list);
+	// Perform a query which won't be allowed to do kernel IO
+	opts.read_tier = NON_BLOCKING;
+
+	std::unique_ptr<Iterator> it(db.NewIterator(opts));
+	seek(*it, key);
+
+	if(it->status().IsIncomplete())
+	{
+		// DB cache miss: reset the iterator to blocking mode and offload it
+		opts.read_tier = BLOCKING;
+		it.reset(db.NewIterator(opts));
+		yielding([&] { seek(*it, key); });
+	}
+	// else DB cache hit; no context switch; no thread switch; no kernel I/O; gg
+
+	return std::move(it);
 }
 
+template<class pos>
+void
+db::seek(rocksdb::DB &db,
+         const pos &p,
+         rocksdb::ReadOptions &opts,
+         std::unique_ptr<rocksdb::Iterator> &it)
+{
+	// Start with a non-blocking query
+	if(!it || opts.read_tier == BLOCKING)
+	{
+		opts.read_tier = NON_BLOCKING;
+		it.reset(db.NewIterator(opts));
+	}
+
+	seek(*it, p);
+	if(it->status().IsIncomplete())
+	{
+		// DB cache miss: reset the iterator to blocking mode and offload it
+		opts.read_tier = BLOCKING;
+		it.reset(db.NewIterator(opts));
+		yielding([&] { seek(*it, p); });
+	}
+}
+
+void
+db::seek(rocksdb::Iterator &it,
+         const rocksdb::Slice &sk)
+{
+	it.Seek(sk);
+}
+
+void
+db::seek(rocksdb::Iterator &it,
+         const pos &p)
+{
+	switch(p)
+	{
+		case pos::NEXT:     it.Next();           break;
+		case pos::PREV:     it.Prev();           break;
+		case pos::FRONT:    it.SeekToFirst();    break;
+		case pos::BACK:     it.SeekToLast();     break;
+		default:
+		case pos::END:
+		{
+			it.SeekToLast();
+			if(it.Valid())
+				it.Next();
+
+			break;
+		}
+	}
+}
+
+void
+db::valid_equal_or_throw(const rocksdb::Iterator &it,
+                         const rocksdb::Slice &sk)
+{
+	valid_or_throw(it);
+	if(it.key().compare(sk) != 0)
+		throw not_found();
+}
+
+void
+db::valid_or_throw(const rocksdb::Iterator &it)
+{
+	if(!valid(it))
+	{
+		throw_on_error(it.status());
+		assert(0); // status == ok + !Valid() == ???
+	}
+}
+
+bool
+db::valid(const rocksdb::Iterator &it)
+{
+	return it.Valid();
 }
 
 void
@@ -501,11 +826,36 @@ db::throw_on_error(const rocksdb::Status &s)
 	}
 }
 
-std::string
-db::path(const std::string &name)
+void
+db::yielding(const std::function<void ()> &func)
 {
-	const auto prefix(path::get(path::DB));
-	return path::build({prefix, name});
+	std::exception_ptr eptr;
+	auto &context(ctx::cur());
+	std::atomic<bool> done{false};
+	auto closure([&func, &eptr, &context, &done]
+	() noexcept
+	{
+		try
+		{
+			func();
+		}
+		catch(...)
+		{
+			eptr = std::current_exception();
+		}
+
+		done.store(true, std::memory_order_release);
+		notify(context);
+	});
+
+	work::push(std::move(closure)); do
+	{
+		ctx::wait();
+	}
+	while(!done.load(std::memory_order_consume));
+
+	if(eptr)
+		std::rethrow_exception(eptr);
 }
 
 void
@@ -572,4 +922,11 @@ db::work::pop()
 	auto c(std::move(queue.front()));
 	queue.pop_front();
 	return std::move(c);
+}
+
+std::string
+db::path(const std::string &name)
+{
+	const auto prefix(path::get(path::DB));
+	return path::build({prefix, name});
 }
