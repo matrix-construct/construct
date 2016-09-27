@@ -91,6 +91,7 @@ noexcept try
 	// These objects are the init()'s and fini()'s for each subsystem. Appearing here ties them
 	// to the main context. Initialization can also occur in ircd::init() if static initialization
 	// and destruction is not possible, but there is no complementary destruction up there.
+	ctx::ole::init _ole_;
 	mods::init _mods_;
 	db::init _db_;
 

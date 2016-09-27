@@ -31,26 +31,6 @@ struct log::log log
 	"db", 'D'            // Database subsystem takes SNOMASK +D
 };
 
-namespace work
-{
-	using closure = std::function<void () noexcept>;
-
-	std::mutex mutex;
-	std::condition_variable cond;
-	std::deque<closure> queue;
-	bool interruption;
-	std::thread *thread;
-
-	closure pop();
-	void worker() noexcept;
-	void push(closure &&);
-
-	void fini();
-	void init();
-}
-
-void yielding(const std::function<void ()> &);
-
 void throw_on_error(const rocksdb::Status &);
 bool valid(const rocksdb::Iterator &);
 void valid_or_throw(const rocksdb::Iterator &);
@@ -93,13 +73,11 @@ using namespace ircd;
 
 db::init::init()
 {
-	work::init();
 }
 
 db::init::~init()
 noexcept
 {
-	work::fini();
 }
 
 db::handle::handle(const std::string &name,
@@ -290,7 +268,7 @@ db::handle::has(const std::string &key,
 	{
 		// DB cache miss; next query requires I/O, offload it
 		opts.read_tier = BLOCKING;
-		yielding([this, &opts, &k, &status]
+		ctx::offload([this, &opts, &k, &status]
 		{
 			status = d->Get(opts, k, nullptr);
 		});
@@ -715,7 +693,7 @@ db::seek(rocksdb::DB &db,
 		// DB cache miss: reset the iterator to blocking mode and offload it
 		opts.read_tier = BLOCKING;
 		it.reset(db.NewIterator(opts));
-		yielding([&] { seek(*it, key); });
+		ctx::offload([&] { seek(*it, key); });
 	}
 	// else DB cache hit; no context switch; no thread switch; no kernel I/O; gg
 
@@ -742,7 +720,7 @@ db::seek(rocksdb::DB &db,
 		// DB cache miss: reset the iterator to blocking mode and offload it
 		opts.read_tier = BLOCKING;
 		it.reset(db.NewIterator(opts));
-		yielding([&] { seek(*it, p); });
+		ctx::offload([&] { seek(*it, p); });
 	}
 }
 
@@ -824,104 +802,6 @@ db::throw_on_error(const rocksdb::Status &s)
 		default:
 			throw error("Unknown error");
 	}
-}
-
-void
-db::yielding(const std::function<void ()> &func)
-{
-	std::exception_ptr eptr;
-	auto &context(ctx::cur());
-	std::atomic<bool> done{false};
-	auto closure([&func, &eptr, &context, &done]
-	() noexcept
-	{
-		try
-		{
-			func();
-		}
-		catch(...)
-		{
-			eptr = std::current_exception();
-		}
-
-		done.store(true, std::memory_order_release);
-		notify(context);
-	});
-
-	work::push(std::move(closure)); do
-	{
-		ctx::wait();
-	}
-	while(!done.load(std::memory_order_consume));
-
-	if(eptr)
-		std::rethrow_exception(eptr);
-}
-
-void
-db::work::init()
-{
-	assert(!thread);
-	interruption = false;
-	thread = new std::thread(&worker);
-}
-
-void
-db::work::fini()
-{
-	if(!thread)
-		return;
-
-	mutex.lock();
-	interruption = true;
-	cond.notify_one();
-	mutex.unlock();
-	thread->join();
-	delete thread;
-	thread = nullptr;
-}
-
-void
-db::work::push(closure &&func)
-{
-	const std::lock_guard<decltype(mutex)> lock(mutex);
-	queue.emplace_back(std::move(func));
-	cond.notify_one();
-}
-
-void
-db::work::worker()
-noexcept try
-{
-	while(1)
-	{
-		const auto func(pop());
-		func();
-	}
-}
-catch(const ctx::interrupted &)
-{
-	return;
-}
-
-db::work::closure
-db::work::pop()
-{
-	std::unique_lock<decltype(mutex)> lock(mutex);
-	cond.wait(lock, []
-	{
-		if(!queue.empty())
-			return true;
-
-		if(unlikely(interruption))
-			throw ctx::interrupted();
-
-		return false;
-	});
-
-	auto c(std::move(queue.front()));
-	queue.pop_front();
-	return std::move(c);
 }
 
 std::string

@@ -450,3 +450,125 @@ ctx::prof::stack_usage_here(const ctx &ctx)
 {
 	return ctx.stack_base - uintptr_t(__builtin_frame_address(0));
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ctx_ole.h
+//
+
+namespace ircd {
+namespace ctx  {
+namespace ole  {
+
+using closure = std::function<void () noexcept>;
+
+std::mutex mutex;
+std::condition_variable cond;
+std::deque<closure> queue;
+bool interruption;
+std::thread *thread;
+
+closure pop();
+void worker() noexcept;
+void push(closure &&);
+
+} // namespace ole
+} // namespace ctx
+} // namespace ircd
+
+ctx::ole::init::init()
+{
+	assert(!thread);
+	interruption = false;
+	thread = new std::thread(&worker);
+}
+
+ctx::ole::init::~init()
+noexcept
+{
+	if(!thread)
+		return;
+
+	mutex.lock();
+	interruption = true;
+	cond.notify_one();
+	mutex.unlock();
+	thread->join();
+	delete thread;
+	thread = nullptr;
+}
+
+void
+ctx::ole::offload(const std::function<void ()> &func)
+{
+	std::exception_ptr eptr;
+	auto &context(cur());
+	std::atomic<bool> done{false};
+	auto closure([&func, &eptr, &context, &done]
+	() noexcept
+	{
+		try
+		{
+			func();
+		}
+		catch(...)
+		{
+			eptr = std::current_exception();
+		}
+
+		done.store(true, std::memory_order_release);
+		notify(context);
+	});
+
+	push(std::move(closure)); do
+	{
+		wait();
+	}
+	while(!done.load(std::memory_order_consume));
+
+	if(eptr)
+		std::rethrow_exception(eptr);
+}
+
+void
+ctx::ole::push(closure &&func)
+{
+	const std::lock_guard<decltype(mutex)> lock(mutex);
+	queue.emplace_back(std::move(func));
+	cond.notify_one();
+}
+
+void
+ctx::ole::worker()
+noexcept try
+{
+	while(1)
+	{
+		const auto func(pop());
+		func();
+	}
+}
+catch(const interrupted &)
+{
+	return;
+}
+
+ctx::ole::closure
+ctx::ole::pop()
+{
+	std::unique_lock<decltype(mutex)> lock(mutex);
+	cond.wait(lock, []
+	{
+		if(!queue.empty())
+			return true;
+
+		if(unlikely(interruption))
+			throw interrupted();
+
+		return false;
+	});
+
+	auto c(std::move(queue.front()));
+	queue.pop_front();
+	return std::move(c);
+}
