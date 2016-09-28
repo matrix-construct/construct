@@ -34,15 +34,24 @@ std::pair<std::string, std::string> split(const std::string &str, const std::str
 std::string between(const std::string &str, const std::string &a = "("s, const std::string &b = ")"s);
 bool endswith(const std::string &str, const char *const &val);
 bool endswith(const std::string &str, const std::string &val);
+bool endswith(const std::string &str, const char &val);
 template<class It> bool endswith_any(const std::string &str, const It &begin, const It &end);
 bool startswith(const std::string &str, const char *const &val);
 bool startswith(const std::string &str, const std::string &val);
+bool startswith(const std::string &str, const char &val);
 
 char *strip_colour(char *string);
 char *strip_unprintable(char *string);
 char *reconstruct_parv(int parc, const char **parv);
 
 } // namespace ircd
+
+inline bool
+ircd::startswith(const std::string &str,
+                 const char &val)
+{
+	return !str.empty() && str[0] == val;
+}
 
 inline bool
 ircd::startswith(const std::string &str,
@@ -70,6 +79,13 @@ ircd::endswith_any(const std::string &str,
 	{
 		return endswith(str, val);
 	});
+}
+
+inline bool
+ircd::endswith(const std::string &str,
+               const char &val)
+{
+	return !str.empty() && str[str.size()-1] == val;
 }
 
 inline bool
