@@ -24,26 +24,25 @@ namespace ircd {
 
 struct rbuf
 {
-	tape reel;                                   // @0       +80    ||
-	std::exception_ptr eptr;                     // @80      +8      |
-	uint16_t checked;                            // @88      +2      |
-	uint16_t length;                             // @90      +2      |
-	std::array<char, BUFSIZE> buf alignas(16);   // @96(92)  +512    |||||||||
-	                                             // @608                     | 640
+	unique_buffer<mutable_buffer> buf;
+	tape reel;
+	std::exception_ptr eptr;
+	uint16_t checked;
+	uint16_t length;
+
 	bool terminated() const;                     // rbuf has LF termination
 	uint16_t remaining() const;                  // bytes remaining in rbuf
 
 	size_t handle_pck(const error_code &, const size_t) noexcept;
 	void reset();
 
-	rbuf();
+	rbuf(const size_t &size = BUFSIZE);
 };
 
-static_assert(BUFSIZE == 512, "");
-
 inline
-rbuf::rbuf()
-:checked{0}
+rbuf::rbuf(const size_t &size)
+:buf{size}
+,checked{0}
 ,length{0}
 {
 }
@@ -64,7 +63,7 @@ noexcept try
 		return 0;
 
 	length += bytes;
-	if(reel.append(buf.data(), length))
+	if(reel.append(data<const char *>(buf), length))
 		return 0;
 
 	if(terminated())
@@ -83,15 +82,15 @@ inline uint16_t
 ircd::rbuf::remaining()
 const
 {
-	return buf.size() - length;
+	return size(buf) - length;
 }
 
 inline bool
 rbuf::terminated()
 const
 {
-	const auto b(std::next(buf.rbegin(), remaining()));
-	const auto e(std::next(buf.rbegin(), buf.size() - checked));
+	const auto b(std::next(rbegin(buf), remaining()));
+	const auto e(std::next(rbegin(buf), size(buf) - checked));
 	return std::find(b, e, '\n') != e;
 }
 

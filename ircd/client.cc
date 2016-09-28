@@ -280,7 +280,7 @@ ircd::async_recv_next(client &client,
 
 	auto &sock(*client.sock);
 	sock.set_timeout(timeout);
-	async_read(sock.sd, mutable_buffers_1(rbuf.buf.data(), rbuf.buf.size()),
+	async_read(sock.sd, mutable_buffers_1(data(rbuf.buf), size(rbuf.buf)),
 	           std::bind(&rbuf::handle_pck, &rbuf, ph::_1, ph::_2),
 	           std::bind(&ircd::handle_recv, std::ref(client), ph::_1, ph::_2));
 }
