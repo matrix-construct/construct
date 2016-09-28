@@ -80,6 +80,7 @@ namespace ircd
 #include "numeric.h"
 #include "color.h"
 #include "messages.h"
+#include "protocol.h"
 #include "rfc1459.h"
 #include "fmt.h"
 #include "err.h"
