@@ -49,6 +49,17 @@ size_t size(const const_buffer &buf);
 template<class mutable_buffers> size_t size(const mutable_buffers &iov);
 template<class const_buffers> size_t size(const const_buffers &iov);
 
+template<class T = uint8_t *> T data(const mutable_buffer &buf);
+template<class T = uint8_t *> T begin(const mutable_buffer &buf);
+template<class T = uint8_t *> T end(const mutable_buffer &buf);
+template<class T = uint8_t *> std::reverse_iterator<T> rbegin(const mutable_buffer &buf);
+template<class T = uint8_t *> std::reverse_iterator<T> rend(const mutable_buffer &buf);
+template<class T = const uint8_t *> T data(const const_buffer &buf);
+template<class T = const uint8_t *> T begin(const const_buffer &buf);
+template<class T = const uint8_t *> T end(const const_buffer &buf);
+template<class T = const uint8_t *> std::reverse_iterator<T> rbegin(const const_buffer &buf);
+template<class T = const uint8_t *> std::reverse_iterator<T> rend(const const_buffer &buf);
+
 size_t copy(const const_buffer &src, const mutable_buffer &dst);
 template<class buffers> size_t copy(const buffers &iov, const mutable_buffer &buf);
 template<class mutable_buffers> size_t copy(const mutable_buffer &buf, const mutable_buffers &iov);
@@ -57,6 +68,61 @@ template<class mutable_buffers> size_t copy(const const_buffer &buf, const mutab
 void fill(const mutable_buffer &buf, const uint8_t &val = 0);
 template<class mutable_buffers> void fill(const mutable_buffers &buf, const uint8_t &val = 0);
 
+std::string string(const mutable_buffer &);
+std::string string(const const_buffer &);
+
+template<class buffer>
+struct unique_buffer
+:buffer
+{
+	template<class T> unique_buffer(std::unique_ptr<T[]> &&, const size_t &size);
+	unique_buffer(const size_t &size);
+	~unique_buffer() noexcept;
+};
+
+template<class buffer>
+template<class T>
+unique_buffer<buffer>::unique_buffer(std::unique_ptr<T[]> &&b,
+                                     const size_t &size)
+:buffer{b.release(), size}
+{
+}
+
+template<class buffer>
+unique_buffer<buffer>::unique_buffer(const size_t &size)
+:unique_buffer
+{
+	std::unique_ptr<uint8_t[]>{new __attribute__((aligned(16))) uint8_t[size]},
+	size
+}
+{
+}
+
+template<class buffer>
+unique_buffer<buffer>::~unique_buffer()
+noexcept
+{
+	delete[] data(*this);
+}
+
+template<class buffer>
+std::string
+string(const unique_buffer<buffer> &buf)
+{
+	return string(static_cast<const buffer &>(buf));
+}
+
+inline std::string
+string(const const_buffer &buf)
+{
+	return { data<const char *>(buf), size(buf) };
+}
+
+inline std::string
+string(const mutable_buffer &buf)
+{
+	return { data<const char *>(buf), size(buf) };
+}
 
 template<class mutable_buffers>
 void
@@ -71,7 +137,7 @@ inline void
 fill(const mutable_buffer &buf,
      const uint8_t &val)
 {
-	memset(buffer_cast<uint8_t *>(buf), val, size(buf));
+	memset(data(buf), val, size(buf));
 }
 
 template<class mutable_buffers>
@@ -84,8 +150,8 @@ copy(const const_buffer &buf,
 	{
 		const auto remain(buffer_size(buf) - ret);
 		const auto cp_sz(std::min(buffer_size(dst), remain));
-		const auto src(buffer_cast<const uint8_t *>(buf) + ret);
-		memcpy(buffer_cast<uint8_t *>(dst), src, cp_sz);
+		const auto src(data(buf) + ret);
+		memcpy(data(dst), src, cp_sz);
 		ret += cp_sz;
 	}
 
@@ -102,8 +168,8 @@ copy(const mutable_buffer &buf,
 	{
 		const auto remain(buffer_size(buf) - ret);
 		const auto cp_sz(std::min(buffer_size(dst), remain));
-		const auto src(buffer_cast<const uint8_t *>(buf) + ret);
-		memcpy(buffer_cast<uint8_t *>(dst), src, cp_sz);
+		const auto src(data(buf) + ret);
+		memcpy(data(dst), src, cp_sz);
 		ret += cp_sz;
 	}
 
@@ -120,8 +186,8 @@ copy(const buffers &iov,
 	{
 		const auto remain(buffer_size(buf) - ret);
 		const auto cp_sz(std::min(buffer_size(src), remain));
-		const auto dst(buffer_cast<uint8_t *>(buf) + ret);
-		memcpy(dst, buffer_cast<const uint8_t *>(src), cp_sz);
+		const auto dst(data(buf) + ret);
+		memcpy(dst, data(src), cp_sz);
 		ret += cp_sz;
 	}
 
@@ -133,8 +199,85 @@ copy(const const_buffer &src,
      const mutable_buffer &dst)
 {
 	const auto cp_sz(std::min(buffer_size(src), buffer_size(dst)));
-	memcpy(buffer_cast<uint8_t *>(dst), buffer_cast<const uint8_t *>(src), cp_sz);
+	memcpy(data(dst), data(src), cp_sz);
 	return cp_sz;
+}
+
+template<class T>
+std::reverse_iterator<T>
+rend(const const_buffer &buf)
+{
+	return begin<T>(buf);
+}
+
+template<class T>
+std::reverse_iterator<T>
+rbegin(const const_buffer &buf)
+{
+	return std::reverse_iterator<T>(begin<T>(buf) + size(buf));
+}
+
+template<class T>
+T
+end(const const_buffer &buf)
+{
+	return begin<T>(buf) + size(buf);
+}
+
+template<class T>
+T
+begin(const const_buffer &buf)
+{
+	return data<T>(buf);
+}
+
+template<class T>
+T
+data(const const_buffer &buf)
+{
+	return buffer_cast<T>(buf);
+}
+
+template<class T>
+std::reverse_iterator<T>
+rend(const mutable_buffer &buf)
+{
+	return begin<T>(buf);
+}
+
+template<class T>
+std::reverse_iterator<T>
+rbegin(const mutable_buffer &buf)
+{
+	return std::reverse_iterator<T>(begin<T>(buf) + size(buf));
+}
+
+template<class T>
+T
+end(const mutable_buffer &buf)
+{
+	return begin<T>(buf) + size(buf);
+}
+
+template<class T>
+T
+begin(const mutable_buffer &buf)
+{
+	return data<T>(buf);
+}
+
+template<class T>
+T
+data(const mutable_buffer &buf)
+{
+	return buffer_cast<T>(buf);
+}
+
+template<class buffer>
+size_t
+size(const unique_buffer<buffer> &buf)
+{
+	return size(static_cast<const buffer &>(buf));
 }
 
 template<class buffers>
@@ -144,7 +287,7 @@ size(const buffers &iov)
 	return std::accumulate(begin(iov), end(iov), size_t(0), []
 	(auto ret, const auto &buffer)
 	{
-		return ret += buffer_size(buffer);
+		return ret += size(buffer);
 	});
 }
 
