@@ -246,11 +246,23 @@ microtime(char *const &buf,
 
 
 template<class T>
-std::string
+auto
 string(const T &s)
 {
 	using std::stringstream;
 	return static_cast<stringstream &>(stringstream{} << s).str();
+}
+
+inline auto
+string(const char *const &buf, const size_t &size)
+{
+	return std::string{buf, size};
+}
+
+inline auto
+string(const uint8_t *const &buf, const size_t &size)
+{
+	return string(reinterpret_cast<const char *>(buf), size);
 }
 
 inline auto
