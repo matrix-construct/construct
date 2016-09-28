@@ -83,7 +83,7 @@ namespace ircd
 #include "rfc1459.h"
 #include "fmt.h"
 #include "err.h"
-#include "fs.h"
+#include "path.h"
 #include "s_assert.h"
 #include "match.h"
 #include "mode_table.h"
