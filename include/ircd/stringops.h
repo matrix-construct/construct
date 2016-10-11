@@ -26,6 +26,10 @@
 #ifdef __cplusplus
 namespace ircd {
 
+size_t token_count(const std::string &str, const char *const &sep);
+const std::string &token(const std::string &str, const char *const &sep, const size_t &at);
+const std::string &token_last(const std::string &str, const char *const &sep);
+
 using token_closure_string = std::function<void (const std::string &)>;
 void tokens(const std::string &str, const char *const &sep, const token_closure_string &);
 
