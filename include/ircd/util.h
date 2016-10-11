@@ -249,8 +249,8 @@ template<class T>
 auto
 string(const T &s)
 {
-	using std::stringstream;
-	return static_cast<stringstream &>(stringstream{} << s).str();
+	std::stringstream ss;
+	return (ss << s).str();
 }
 
 inline auto
