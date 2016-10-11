@@ -27,21 +27,17 @@ std::map<std::string, cmd *, case_insensitive_less> cmds;
 } // namespace cmds
 } // namespace ircd
 
-ircd::cmds::cmd::cmd(const std::string &name)
-:name{name}
-{
-	emplace();
-}
+using namespace ircd;
 
-ircd::cmds::cmd::cmd(const std::string &name,
-                     const decltype(handler) &handler)
+cmds::cmd::cmd(const std::string &name,
+               const decltype(handler) &handler)
 :name{name}
 ,handler{handler}
 {
 	emplace();
 }
 
-ircd::cmds::cmd::~cmd()
+cmds::cmd::~cmd()
 noexcept
 {
 	cmds.erase(name);
@@ -49,14 +45,14 @@ noexcept
 }
 
 void
-ircd::cmds::cmd::operator()(client &client,
-                            line line)
+cmds::cmd::operator()(client &client,
+                      line line)
 {
 	handler(client, std::move(line));
 }
 
 void
-ircd::cmds::cmd::emplace()
+cmds::cmd::emplace()
 {
 	const auto iit(cmds.emplace(name, this));
 	if(!iit.second)
@@ -65,8 +61,8 @@ ircd::cmds::cmd::emplace()
 	log::info("Registered command \"%s\" to handler @ %p", name.c_str(), this);
 }
 
-ircd::cmds::cmd &
-ircd::cmds::find(const std::string &name)
+cmds::cmd &
+cmds::find(const std::string &name)
 try
 {
 	return *cmds.at(name);
@@ -76,16 +72,16 @@ catch(const std::out_of_range &e)
 	throw not_found("%s", name.c_str());
 }
 
-ircd::cmds::cmd *
-ircd::cmds::find(const std::string &name,
-                 const std::nothrow_t &)
+cmds::cmd *
+cmds::find(const std::string &name,
+           const std::nothrow_t &)
 {
 	const auto it(cmds.find(name));
 	return it != end(cmds)? it->second : nullptr;
 }
 
 bool
-ircd::cmds::exists(const std::string &name)
+cmds::exists(const std::string &name)
 {
 	return cmds.count(name);
 }

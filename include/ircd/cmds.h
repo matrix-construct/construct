@@ -34,16 +34,15 @@ struct cmd
 {
 	std::string name;
 	std::set<std::string> aliases;
-	std::function<void (client &, line)> handler;    // Used if not overloaded
+	std::function<void (client &, line)> handler;    // Not-overriding calls this by default
 
   private:
 	void emplace();
 
   public:
-	virtual void operator()(client &, line);
+	virtual void operator()(client &, line);         // Handle this command by overriding
 
-	cmd(const std::string &name);
-	cmd(const std::string &name, const decltype(handler) &handler);
+	cmd(const std::string &name, const decltype(handler) &handler = {});
 	cmd(cmd &&) = delete;
 	cmd(const cmd &) = delete;
 	virtual ~cmd() noexcept;
