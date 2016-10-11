@@ -107,6 +107,7 @@ namespace ircd
 #include "vm.h"
 #include "logger.h"
 #include "db.h"
+#include "js.h"
 
 #include "u_id.h"
 

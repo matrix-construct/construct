@@ -2,6 +2,8 @@ prefix = @prefix@
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
+	@ROCKSDB_CPPFLAGS@ \
+	@JS_CPPFLAGS@ \
 	@BOOST_CPPFLAGS@
 
 AM_LDFLAGS = \
@@ -11,6 +13,7 @@ AM_LDFLAGS += \
 	-L$(top_srcdir)/ircd \
 	-L$(top_srcdir)/rb \
 	@ROCKSDB_LDFLAGS@ \
+	@JS_LDFLAGS@ \
 	@BOOST_LDFLAGS@
 
 
@@ -24,4 +27,5 @@ charybdis_LDADD = \
 	-lircd \
 	-lrb \
 	@ROCKSDB_LIBS@ \
+	@JS_LIBS@ \
 	@BOOST_LIBS@

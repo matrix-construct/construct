@@ -918,6 +918,72 @@ AC_HELP_STRING([--with-included-rocksdb[[[=shared]]]], [Use the RocksDB sources 
 
 
 dnl
+dnl SpiderMonkey support
+dnl
+
+AC_MSG_CHECKING([whether you asked to use the JS engine included here])
+AC_ARG_WITH(included-js,
+AC_HELP_STRING([--with-included-js[[[=shared]]]], [Use the JS engine (SpiderMonkey) sources we include here]),
+[
+	AC_MSG_RESULT([yes])
+	with_included_js="yes"
+
+	AC_SUBST(JS_CPPFLAGS)
+	JS_CPPFLAGS+=" -isystem $PWD/gecko-dev/js/src/build_OPT.OBJ/dist/include"
+	#JS_CPPFLAGS+=" -I$PWD/gecko-dev/js/src/build_OPT.OBJ/dist/include"
+
+	AC_SUBST(JS_LDFLAGS)
+	JS_LDFLAGS+=" -L$PWD/gecko-dev/js/src/build_OPT.OBJ/dist/sdk/lib"
+	JS_LDFLAGS+=" -L$PWD/gecko-dev/js/src/build_OPT.OBJ/intl/icu/target/lib"
+	JS_LDFLAGS+=" -L$PWD/gecko-dev/js/src/build_OPT.OBJ/js/src"
+
+	AC_SUBST(JS_LIBS)
+	JS_LIBS+=" -lmozjs-45"
+	#JS_LIBS+=" -lmozglue"
+
+	dnl !!!!
+	dnl HACK BUG-WORKAROUND - Mozilla forgot to include this in their lib?
+	dnl Runtime segfault (unresolved dynamic function address) if this is not specified
+	JS_LIBS+=" $PWD/gecko-dev/js/src/build_OPT.OBJ/mfbt/Unified_cpp_mfbt0.o"
+
+	AC_MSG_CHECKING([whether to use shared JS engine])
+	if [[ $withval = "shared" ]]; then
+		AC_MSG_RESULT([yes])
+		AC_MSG_NOTICE([Shared SpiderMonkey linkage requires running charybdis with an intact build directory])
+		js_linkage="shared"
+		JS_LDFLAGS+=" -Wl,-rpath -Wl,$PWD/gecko-dev/js/src/build_OPT.OBJ/dist/sdk/lib"
+		JS_LDFLAGS+=" -Wl,-rpath -Wl,$PWD/gecko-dev/js/src/build_OPT.OBJ/intl/icu/target/lib"
+	else
+		AC_MSG_RESULT([no])
+		js_linkage="static"
+		JS_LIBS+=" -ljs_static"
+	fi
+
+	js_branch="esr45"
+	js_options="--enable-optimize"
+	js_jobs="4"
+	bash tools/buildjs.sh $js_branch $js_options $js_jobs
+],[
+	AC_MSG_RESULT([no])
+	with_included_js="no"
+
+	dnl TODO mumble mumble
+	AC_CHECK_LIB(mozjs-45, _Z11JS_ShutDownv,
+	[
+
+	], [
+		AC_MSG_ERROR([Unable to find required JS engine (SpiderMonkey 45) package. Try apt-get install libmozjs-dev])
+	])
+
+	dnl TODO
+	AC_SUBST(JS_CPPFLAGS, ["-I/usr/include/mozjs-45"])
+	AC_SUBST(JS_LDFLAGS, [])
+	AC_SUBST(JS_LIBS, ["-lmozjs-45"])
+])
+
+
+
+dnl
 dnl OpenSSL support
 dnl
 
@@ -1335,6 +1401,7 @@ echo "Compiler .......................... $CXX"
 echo "Compiler flags (CXXFLAGS) ......... $CXXFLAGS"
 echo "Building boost .................... $with_included_boost"
 echo "Building RocksDB................... $with_included_rocksdb"
+echo "Building JS (SpiderMonkey) ........ $with_included_js"
 echo "Precompiled headers ............... $build_pch"
 echo "Developer debug ................... $debug"
 echo "IPv6 support ...................... $ipv6"

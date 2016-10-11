@@ -25,6 +25,7 @@
 
 #include <boost/asio.hpp>
 #include <ircd/ctx_ctx.h>
+#include <ircd/js.h>
 
 namespace ircd
 {
@@ -94,6 +95,7 @@ noexcept try
 	ctx::ole::init _ole_;
 	mods::init _mods_;
 	db::init _db_;
+	js::init _js_;
 	client_init _client_;
 
 	// Create IRCd's agency

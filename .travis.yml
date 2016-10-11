@@ -28,12 +28,13 @@ matrix:
         packages:
         - gcc-4.9
         - g++-4.9
-        - ['automake', 'autoconf', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
+        - ['automake', 'autoconf', 'autoconf2.13', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
     env:
     - CCOMPILER=gcc-4.9
     - CXXCOMPILER=g++-4.9
     - WITH_INCLUDED_BOOST=--with-included-boost
     - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
+    - WITH_INCLUDED_JS=--with-included-js=shared
 
   - os: linux
     dist: precise
@@ -46,12 +47,13 @@ matrix:
         packages:
         - gcc-5
         - g++-5
-        - ['automake', 'autoconf', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
+        - ['automake', 'autoconf', 'autoconf2.13', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
     env:
     - CCOMPILER=gcc-5
     - CXXCOMPILER=g++-5
     - WITH_INCLUDED_BOOST=--with-included-boost
     - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
+    - WITH_INCLUDED_JS=--with-included-js=shared
 
   - os: linux
     dist: trusty
@@ -65,12 +67,13 @@ matrix:
         packages:
         - gcc-6
         - g++-6
-        - ['automake', 'autoconf', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
+        - ['automake', 'autoconf', 'autoconf2.13', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
     env:
-     - CCOMPILER=gcc-6
-     - CXXCOMPILER=g++-6
-     - WITH_INCLUDED_BOOST=--with-included-boost
-     - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
+    - CCOMPILER=gcc-6
+    - CXXCOMPILER=g++-6
+    - WITH_INCLUDED_BOOST=--with-included-boost
+    - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
+    - WITH_INCLUDED_JS=--with-included-js=shared
 
   - os: linux
     dist: precise
@@ -84,12 +87,13 @@ matrix:
         - llvm-toolchain-precise-3.6
         packages:
         - clang-3.6
-        - ['automake', 'autoconf', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
+        - ['automake', 'autoconf', 'autoconf2.13', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
     env:
     - CCOMPILER=clang-3.6
     - CXXCOMPILER=clang++-3.6
     - WITH_INCLUDED_BOOST=--with-included-boost
     - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
+    - WITH_INCLUDED_JS=--with-included-js=shared
 
   - os: linux
     dist: trusty
@@ -105,12 +109,13 @@ matrix:
         - clang-3.8
         - gcc-4.9
         - g++-4.9
-        - ['automake', 'autoconf', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
+        - ['automake', 'autoconf', 'autoconf2.13', 'autoconf-archive', 'libtool', 'shtool', 'libsqlite3-dev']
     env:
     - CCOMPILER=clang-3.8
     - CXXCOMPILER=clang++-3.8
     - WITH_INCLUDED_BOOST=--with-included-boost
     - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
+    - WITH_INCLUDED_JS=--with-included-js=shared
 
   - os: osx
     compiler: clang
@@ -120,6 +125,7 @@ matrix:
     - LIBTOOLIZE=glibtoolize
     - WITH_INCLUDED_BOOST=--with-included-boost
     - WITH_INCLUDED_ROCKSDB=--with-included-rocksdb=shared
+    - WITH_INCLUDED_JS=--with-included-js=shared
 
 osx_image: xcode7.3
 
@@ -137,6 +143,6 @@ script:
 - $CC --version
 - $CXX --version
 - time bash autogen.sh
-- time ./configure --with-shared-sqlite $WITH_INCLUDED_BOOST $WITH_INCLUDED_ROCKSDB CC=$CC CXX=$CXX
+- time ./configure --with-shared-sqlite $WITH_INCLUDED_BOOST $WITH_INCLUDED_ROCKSDB $WITH_INCLUDED_JS CC=$CC CXX=$CXX
 - time make -j4
 - time make -j4 install

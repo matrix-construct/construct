@@ -4,3 +4,7 @@
 [submodule "rocksdb"]
 	path = rocksdb
 	url = https://github.com/facebook/rocksdb.git
+[submodule "gecko-dev"]
+	path = gecko-dev
+	url = https://github.com/mozilla/gecko-dev.git
+	branch = esr45
