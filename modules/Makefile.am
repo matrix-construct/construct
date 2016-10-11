@@ -39,6 +39,7 @@ conf_module_LTLIBRARIES =     \
 
 moduledir=@moduledir@
 m_host_la_SOURCES = m_host.cc
+m_get_la_SOURCES = m_get.cc
 #m_ban_la_SOURCES = m_ban.cc
 #m_die_la_SOURCES = m_die.cc
 #m_error_la_SOURCES = m_error.cc
@@ -124,7 +125,8 @@ m_host_la_SOURCES = m_host.cc
 #sno_routing_la_SOURCES = sno_routing.cc
 
 module_LTLIBRARIES = \
-m_host.la
+m_host.la            \
+m_get.la
 
 # m_modules.la
 #  m_ban.la \
