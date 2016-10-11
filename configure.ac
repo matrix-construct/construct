@@ -883,7 +883,7 @@ AC_HELP_STRING([--with-included-rocksdb[[[=shared]]]], [Use the RocksDB sources 
 	AC_MSG_RESULT([yes])
 	with_included_rocksdb="yes"
 
-	AC_SUBST(ROCKSDB_CPPFLAGS, ["-I $PWD/rocksdb/include"])
+	AC_SUBST(ROCKSDB_CPPFLAGS, ["-I$PWD/rocksdb/include"])
 	AC_SUBST(ROCKSDB_LDFLAGS, ["-L$PWD/rocksdb/"])
 
 	AC_MSG_CHECKING([whether to use shared RocksDB])
