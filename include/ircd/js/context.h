@@ -19,30 +19,36 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* This header exposes the SpiderMonkey engine API to all ye who include it.
- * It also anchors all of our own developed headers and utils which use and extend their API.
- *
- * This header is included after the 'stdinc header' <ircd/js.h>. That header creates the
- * namespace ircd::js, and does not include any 3rd party symbols. <ircd/js.h> is included
- * automatically in stdinc.h.
- *
- * This header should be included if you intend to get dirty with the JS engine subsystem
- * which requires jsapi support and can't be satisfied by the stdinc header.
- */
-
 #pragma once
-#define HAVE_IRCD_JS_JS_H
-
-// SpiderMonkey headers require an include basis e.g. -I/usr/include/mozjs-XX as their
-// include directives are written as "jsxxx.h" or "mozilla/xxx.h" etc. Our includes are all
-// <ircd/xxx.h> and shouldn't have any conflict issues.
-#include <jsapi.h>
+#define HAVE_IRCD_JS_CONTEXT_H
 
 namespace ircd {
 namespace js   {
 
+struct context
+:custom_ptr<JSContext>
+{
+	operator const JSContext *() const           { return get();                                   }
+	operator JSContext *()                       { return get();                                   }
+
+	template<class... args> context(JSRuntime *const &, args&&...);
+	context() = default;
+};
+
+// A default JSContext instance is provided residing near the main runtime as a convenience
+// for misc/utility/system purposes if necessary.
+extern context mc;
+
+template<class... args>
+context::context(JSRuntime *const &runtime,
+                 args&&... a)
+:custom_ptr<JSContext>
+{
+	JS_NewContext(runtime, std::forward<args>(a)...),
+	JS_DestroyContext
+}
+{
+}
+
 } // namespace js
 } // namespace ircd
-
-#include "runtime.h"
-#include "context.h"

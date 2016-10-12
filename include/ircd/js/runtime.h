@@ -19,30 +19,35 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* This header exposes the SpiderMonkey engine API to all ye who include it.
- * It also anchors all of our own developed headers and utils which use and extend their API.
- *
- * This header is included after the 'stdinc header' <ircd/js.h>. That header creates the
- * namespace ircd::js, and does not include any 3rd party symbols. <ircd/js.h> is included
- * automatically in stdinc.h.
- *
- * This header should be included if you intend to get dirty with the JS engine subsystem
- * which requires jsapi support and can't be satisfied by the stdinc header.
- */
-
 #pragma once
-#define HAVE_IRCD_JS_JS_H
-
-// SpiderMonkey headers require an include basis e.g. -I/usr/include/mozjs-XX as their
-// include directives are written as "jsxxx.h" or "mozilla/xxx.h" etc. Our includes are all
-// <ircd/xxx.h> and shouldn't have any conflict issues.
-#include <jsapi.h>
+#define HAVE_IRCD_JS_RUNTIME_H
 
 namespace ircd {
 namespace js   {
 
+struct runtime
+:custom_ptr<JSRuntime>
+{
+	operator const JSRuntime *() const           { return get();                                   }
+	operator JSRuntime *()                       { return get();                                   }
+
+	template<class... args> runtime(args&&...);
+	runtime() = default;
+};
+
+// Main JSRuntime instance. This should be passable in any argument requiring a
+// JSRuntime pointer. It is only valid while the js::init object is held by ircd::main().
+extern runtime main;
+
+template<class... args>
+runtime::runtime(args&&... a)
+:custom_ptr<JSRuntime>
+{
+	JS_NewRuntime(std::forward<args>(a)...),
+	JS_DestroyRuntime
+}
+{
+}
+
 } // namespace js
 } // namespace ircd
-
-#include "runtime.h"
-#include "context.h"

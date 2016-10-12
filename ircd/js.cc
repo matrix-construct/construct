@@ -27,6 +27,15 @@
 namespace ircd {
 namespace js   {
 
+// Location of the main JSRuntime instance. An extern reference to this exists in js/runtime.h.
+// It is null until js::init manually constructs (and later destructs) it.
+runtime main;
+
+// Location of the default/main JSContext instance. An extern reference to this exists in js/context.h.
+// Lifetime similar to main runtime
+context mc;
+
+// Logging facility for this submodule with SNOMASK.
 struct log::log log
 {
 	"js", 'J'
@@ -48,11 +57,25 @@ ircd::js::init::init()
 
 	if(!JS_Init())
 		throw error("JS_Init(): failure");
+
+	const size_t main_maxbytes(64_MiB); //TODO: Configuration
+	const size_t mc_stackchunk(8_KiB);  //TODO: Configuration
+
+	log.info("Initializing the main JS Runtime (main_maxbytes: %zu, mc_stackchunk: %zu)",
+	         main_maxbytes,
+	         mc_stackchunk);
+
+	main = runtime(main_maxbytes);
+	mc = context(main, mc_stackchunk);
 }
 
 ircd::js::init::~init()
 noexcept
 {
+	log.info("Terminating the main JS Runtime");
+	mc.reset(nullptr);
+	main.reset(nullptr);
+
 	log.info("Terminating the JS engine");
 	JS_ShutDown();
 }
