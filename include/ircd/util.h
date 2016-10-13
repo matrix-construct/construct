@@ -67,7 +67,7 @@ struct NAME                                                 \
 
 
 template<class T>
-using custom_ptr = std::unique_ptr<T, std::function<void (T *)>>;
+using custom_ptr = std::unique_ptr<T, std::function<void (T *) noexcept>>;
 
 
 struct scope
