@@ -46,3 +46,5 @@ namespace js   {
 
 #include "runtime.h"
 #include "context.h"
+#include "request_guard.h"
+#include "compartment_guard.h"

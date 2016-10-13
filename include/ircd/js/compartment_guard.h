@@ -20,39 +20,34 @@
  */
 
 #pragma once
-#define HAVE_IRCD_JS_RUNTIME_H
+#define HAVE_IRCD_JS_COMPARTMENT_GUARD_H
 
 namespace ircd {
 namespace js   {
 
-class runtime
-:custom_ptr<JSRuntime>
+class compartment_guard
 {
-	static void handle_error(JSContext *, const char *msg, JSErrorReport *);
+	JSContext *cx;
+	JSCompartment *cp;
 
   public:
-	operator JSRuntime *() const                 { return get();                                   }
-	operator JSRuntime &() const                 { return custom_ptr<JSRuntime>::operator*();      }
-
-	void reset()                                 { custom_ptr<JSRuntime>::reset(nullptr);          }
-
-	template<class... args> runtime(args&&...);
-	runtime() = default;
+	compartment_guard(JSContext &, JSObject &);
+	~compartment_guard() noexcept;
 };
 
-// Main JSRuntime instance. This should be passable in any argument requiring a
-// JSRuntime pointer. It is only valid while the js::init object is held by ircd::main().
-extern runtime main;
-
-template<class... args>
-runtime::runtime(args&&... a)
-:custom_ptr<JSRuntime>
+inline
+compartment_guard::compartment_guard(JSContext &cx,
+                                     JSObject &obj)
+:cx{&cx}
+,cp{JS_EnterCompartment(&cx, &obj)}
 {
-	JS_NewRuntime(std::forward<args>(a)...),
-	JS_DestroyRuntime
 }
+
+inline
+compartment_guard::~compartment_guard()
+noexcept
 {
-	JS_SetErrorReporter(get(), handle_error);
+	JS_LeaveCompartment(cx, cp);
 }
 
 } // namespace js

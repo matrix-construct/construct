@@ -73,8 +73,8 @@ ircd::js::init::~init()
 noexcept
 {
 	log.info("Terminating the main JS Runtime");
-	mc.reset(nullptr);
-	main.reset(nullptr);
+	mc.reset();
+	main.reset();
 
 	log.info("Terminating the JS engine");
 	JS_ShutDown();
@@ -97,3 +97,21 @@ ircd::js::version(const ver &type)
 //
 // ircd/js/js.h - With 3rd party (JSAPI) symbols
 //
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/js/context.h
+//
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/js/runtime.h
+//
+
+void
+ircd::js::runtime::handle_error(JSContext *const ctx,
+                                const char *const msg,
+                                JSErrorReport *const report)
+{
+	log.error("JSContext(%p): %s", ctx, msg);
+}

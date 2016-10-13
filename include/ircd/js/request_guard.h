@@ -20,39 +20,32 @@
  */
 
 #pragma once
-#define HAVE_IRCD_JS_RUNTIME_H
+#define HAVE_IRCD_JS_REQUEST_GUARD_H
 
 namespace ircd {
 namespace js   {
 
-class runtime
-:custom_ptr<JSRuntime>
+class request_guard
 {
-	static void handle_error(JSContext *, const char *msg, JSErrorReport *);
+	JSContext *c;
 
   public:
-	operator JSRuntime *() const                 { return get();                                   }
-	operator JSRuntime &() const                 { return custom_ptr<JSRuntime>::operator*();      }
-
-	void reset()                                 { custom_ptr<JSRuntime>::reset(nullptr);          }
-
-	template<class... args> runtime(args&&...);
-	runtime() = default;
+	request_guard(JSContext &);
+	~request_guard() noexcept;
 };
 
-// Main JSRuntime instance. This should be passable in any argument requiring a
-// JSRuntime pointer. It is only valid while the js::init object is held by ircd::main().
-extern runtime main;
-
-template<class... args>
-runtime::runtime(args&&... a)
-:custom_ptr<JSRuntime>
+inline
+request_guard::request_guard(JSContext &c)
+:c(&c)
 {
-	JS_NewRuntime(std::forward<args>(a)...),
-	JS_DestroyRuntime
+	JS_BeginRequest(&c);
 }
+
+inline
+request_guard::~request_guard()
+noexcept
 {
-	JS_SetErrorReporter(get(), handle_error);
+	JS_EndRequest(c);
 }
 
 } // namespace js
