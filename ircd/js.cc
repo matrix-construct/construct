@@ -58,23 +58,25 @@ ircd::js::init::init()
 	if(!JS_Init())
 		throw error("JS_Init(): failure");
 
-	const size_t main_maxbytes(64_MiB); //TODO: Configuration
-	const size_t mc_stackchunk(8_KiB);  //TODO: Configuration
+	struct runtime::opts runtime_opts;
+	struct context::opts context_opts;
+	log.info("Initializing the main JS Runtime (main_maxbytes: %zu)",
+	         runtime_opts.maxbytes);
 
-	log.info("Initializing the main JS Runtime (main_maxbytes: %zu, mc_stackchunk: %zu)",
-	         main_maxbytes,
-	         mc_stackchunk);
-
-	main = runtime(main_maxbytes);
-	mc = context(main, mc_stackchunk);
+	main = runtime(runtime_opts);
+	mc = context(main, context_opts);
+	log.info("Initialized main JS Runtime and context (version: '%s')",
+	         version(mc));
 }
 
 ircd::js::init::~init()
 noexcept
 {
 	log.info("Terminating the main JS Runtime");
-	mc.reset();
-	main.reset();
+
+	// Assign empty objects to free and reset
+	mc = context{};
+	main = runtime{};
 
 	log.info("Terminating the JS engine");
 	JS_ShutDown();
@@ -103,15 +105,168 @@ ircd::js::version(const ver &type)
 // ircd/js/context.h
 //
 
+ircd::js::context::context(JSRuntime *const &runtime,
+                           const struct opts &opts)
+:custom_ptr<JSContext>
+{
+	JS_NewContext(runtime, opts.stack_chunk_size),
+	[opts](JSContext *const ctx)                   //TODO: old gcc/clang can't copy from opts.dtor_gc
+	noexcept
+	{
+		if(!ctx)
+			return;
+
+		// Free the user's privdata managed object
+		delete static_cast<const privdata *>(JS_GetSecondContextPrivate(ctx));
+
+		if(opts.dtor_gc)
+			JS_DestroyContext(ctx);
+		else
+			JS_DestroyContextNoGC(ctx);
+	}
+}
+,opts{opts}
+{
+	JS_SetContextPrivate(get(), this);
+}
+
+ircd::js::context::context(context &&other)
+noexcept
+:custom_ptr<JSContext>{std::move(other)}
+,opts{std::move(other.opts)}
+{
+	// Branch not taken for null/defaulted instance of JSContext smart ptr
+	if(!!*this)
+		JS_SetContextPrivate(get(), this);
+}
+
+ircd::js::context &
+ircd::js::context::operator=(context &&other)
+noexcept
+{
+	static_cast<custom_ptr<JSContext> &>(*this) = std::move(other);
+
+	opts = std::move(other.opts);
+
+	// Branch not taken for null/defaulted instance of JSContext smart ptr
+	if(!!*this)
+		JS_SetContextPrivate(get(), this);
+
+	return *this;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // ircd/js/runtime.h
 //
+
+ircd::js::runtime::runtime(const struct opts &opts)
+:custom_ptr<JSRuntime>
+{
+	JS_NewRuntime(opts.maxbytes),
+	JS_DestroyRuntime
+}
+,opts(opts)
+{
+	JS_SetRuntimePrivate(get(), this);
+
+	JS_SetErrorReporter(get(), handle_error);
+	JS::SetOutOfMemoryCallback(get(), handle_out_of_memory, nullptr);
+	JS::SetLargeAllocationFailureCallback(get(), handle_large_allocation_failure, nullptr);
+	JS_SetGCCallback(get(), handle_gc, nullptr);
+	JS_AddFinalizeCallback(get(), handle_finalize, nullptr);
+	JS_SetDestroyCompartmentCallback(get(), handle_destroy_compartment);
+	JS_SetContextCallback(get(), handle_context, nullptr);
+
+	JS_SetNativeStackQuota(get(), opts.code_stack_max, opts.trusted_stack_max, opts.untrusted_stack_max);
+}
+
+ircd::js::runtime::runtime(runtime &&other)
+noexcept
+:custom_ptr<JSRuntime>{std::move(other)}
+,opts(std::move(other.opts))
+{
+	// Branch not taken for null/defaulted instance of JSRuntime smart ptr
+	if(!!*this)
+		JS_SetRuntimePrivate(get(), this);
+}
+
+ircd::js::runtime &
+ircd::js::runtime::operator=(runtime &&other)
+noexcept
+{
+	static_cast<custom_ptr<JSRuntime> &>(*this) = std::move(other);
+
+	opts = std::move(other.opts);
+
+	// Branch not taken for null/defaulted instance of JSRuntime smart ptr
+	if(!!*this)
+		JS_SetRuntimePrivate(get(), this);
+
+	return *this;
+}
+
+bool
+ircd::js::runtime::handle_interrupt(JSContext *const ctx)
+{
+	auto &runtime(our(ctx).runtime());
+	JS_SetInterruptCallback(runtime, nullptr);
+	return false;
+}
+
+bool
+ircd::js::runtime::handle_context(JSContext *const c,
+                                  const uint op,
+                                  void *const priv)
+{
+	return true;
+}
+
+void
+ircd::js::runtime::handle_iterate_compartments(JSRuntime *const rt,
+                                               void *const priv,
+                                               JSCompartment *const compartment)
+{
+}
+
+void
+ircd::js::runtime::handle_destroy_compartment(JSFreeOp *const fop,
+                                              JSCompartment *const compartment)
+{
+}
+
+void
+ircd::js::runtime::handle_finalize(JSFreeOp *const fop,
+                                   const JSFinalizeStatus status,
+                                   const bool is_compartment,
+                                   void *const priv)
+{
+}
+
+void
+ircd::js::runtime::handle_gc(JSRuntime *const rt,
+                             const JSGCStatus status,
+                             void *const priv)
+{
+}
+
+void
+ircd::js::runtime::handle_large_allocation_failure(void *const priv)
+{
+	log.error("Large allocation failure");
+}
+
+void
+ircd::js::runtime::handle_out_of_memory(JSContext *const ctx,
+                                        void *const priv)
+{
+	log.error("JSContext(%p): out of memory", (const void *)ctx);
+}
 
 void
 ircd::js::runtime::handle_error(JSContext *const ctx,
                                 const char *const msg,
                                 JSErrorReport *const report)
 {
-	log.error("JSContext(%p): %s", ctx, msg);
+	log.error("JSContext(%p): %s", (const void *)ctx, msg);
 }

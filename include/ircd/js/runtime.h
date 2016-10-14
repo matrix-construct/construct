@@ -29,31 +29,79 @@ class runtime
 :custom_ptr<JSRuntime>
 {
 	static void handle_error(JSContext *, const char *msg, JSErrorReport *);
+	static void handle_out_of_memory(JSContext *, void *);
+	static void handle_large_allocation_failure(void *);
+	static void handle_gc(JSRuntime *, JSGCStatus, void *);
+	static void handle_finalize(JSFreeOp *, JSFinalizeStatus, bool is_compartment, void *);
+	static void handle_destroy_compartment(JSFreeOp *, JSCompartment *);
+	static void handle_iterate_compartments(JSRuntime *, void *, JSCompartment *);
+	static bool handle_context(JSContext *, uint op, void *);
+	static bool handle_interrupt(JSContext *);
 
   public:
+	struct opts
+	{
+		size_t maxbytes              = 64_MiB;
+		size_t code_stack_max        = 0;
+		size_t trusted_stack_max     = 0;
+		size_t untrusted_stack_max   = 0;
+	};
+
+	struct opts opts;                            // We keep a copy of the given opts here
+
 	operator JSRuntime *() const                 { return get();                                   }
 	operator JSRuntime &() const                 { return custom_ptr<JSRuntime>::operator*();      }
+	bool operator!() const                       { return !custom_ptr<JSRuntime>::operator bool(); }
+	auto ptr() const                             { return get();                                   }
+	auto ptr()                                   { return get();                                   }
 
-	void reset()                                 { custom_ptr<JSRuntime>::reset(nullptr);          }
-
-	template<class... args> runtime(args&&...);
+	runtime(const struct opts &);
 	runtime() = default;
+	runtime(runtime &&) noexcept;
+	runtime(const runtime &) = delete;
+	runtime &operator=(runtime &&) noexcept;
+	runtime &operator=(const runtime &) = delete;
+
+	friend void interrupt(runtime &);
 };
 
 // Main JSRuntime instance. This should be passable in any argument requiring a
 // JSRuntime pointer. It is only valid while the js::init object is held by ircd::main().
 extern runtime main;
 
-template<class... args>
-runtime::runtime(args&&... a)
-:custom_ptr<JSRuntime>
+// Get to our `struct runtime` from any upstream JSRuntime
+const runtime &our(const JSRuntime *const &);
+runtime &our(JSRuntime *const &);
+
+void interrupt(runtime &r);
+void run_gc(runtime &r);
+
+
+inline void
+run_gc(runtime &r)
 {
-	JS_NewRuntime(std::forward<args>(a)...),
-	JS_DestroyRuntime
+	JS_GC(r);
 }
+
+inline void
+interrupt(runtime &r)
 {
-	JS_SetErrorReporter(get(), handle_error);
+	JS_SetInterruptCallback(r, runtime::handle_interrupt);
+	JS_RequestInterruptCallback(r);
 }
+
+inline runtime &
+our(JSRuntime *const &c)
+{
+	return *static_cast<runtime *>(JS_GetRuntimePrivate(c));
+}
+
+inline const runtime &
+our(const JSRuntime *const &c)
+{
+	return *static_cast<const runtime *>(JS_GetRuntimePrivate(const_cast<JSRuntime *>(c)));
+}
+
 
 } // namespace js
 } // namespace ircd

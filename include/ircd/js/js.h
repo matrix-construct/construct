@@ -41,6 +41,16 @@
 namespace ircd {
 namespace js   {
 
+// Extend this class to store your data with any priv(),
+// i.e priv(runtime, privdata*) or priv(context, privdata*) etc
+struct privdata
+{
+	virtual ~privdata() noexcept = 0;            // Your object is managed by the host
+};
+
+const char *version(const JSVersion &v)          { return JS_VersionToString(v);                   }
+JSVersion version(const char *const &v)          { return JS_StringToVersion(v);                   }
+
 } // namespace js
 } // namespace ircd
 

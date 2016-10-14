@@ -26,90 +26,86 @@ namespace ircd {
 namespace js   {
 
 struct context
-:custom_ptr<JSContext>
+:private custom_ptr<JSContext>
 {
-	struct privdata
+	struct opts
 	{
-		virtual ~privdata() noexcept = 0;
-	};
+		size_t stack_chunk_size     = 8_KiB;
+		bool dtor_gc                = true;
+	}
+	opts;                                        // We keep a copy of the given opts here.
 
 	operator JSContext *() const                 { return get();                                   }
 	operator JSContext &() const                 { return custom_ptr<JSContext>::operator*();      }
+	bool operator!() const                       { return !custom_ptr<JSContext>::operator bool(); }
+	auto &runtime() const                        { return our(JS_GetRuntime(get()));               }
+	auto &runtime()                              { return our(JS_GetRuntime(get()));               }
+	auto ptr() const                             { return get();                                   }
+	auto ptr()                                   { return get();                                   }
 
-	void reset()                                 { custom_ptr<JSContext>::reset(nullptr);          }
-
-	template<class... args> context(JSRuntime *const &, args&&...);
+	context(JSRuntime *const &, const struct opts &);
 	context() = default;
+	context(context &&) noexcept;
+	context(const context &) = delete;
+	context &operator=(context &&) noexcept;
+	context &operator=(const context &) = delete;
 };
 
 // A default JSContext instance is provided residing near the main runtime as a convenience
 // for misc/utility/system purposes if necessary.
 extern context mc;
 
+// Get to our `struct context` from any upstream JSContext
+const context &our(const JSContext *const &);
+context &our(JSContext *const &);
+
 // Get/Set your privdata managed by this object, casting to your expected type.
-template<size_t at, class T = context::privdata> const T *priv(const JSContext &);
-template<size_t at, class T = context::privdata> T *priv(JSContext &);
-template<size_t at, class T> void priv(JSContext &, T *);
+template<class T = privdata> const T *priv(const context &);
+template<class T = privdata> T *priv(context &);
+void priv(context &, privdata *const &);
+
+auto version(const context &c)                   { return version(JS_GetVersion(c));               }
+auto running(const context &c)                   { return JS_IsRunning(c);                         }
+auto uncaught_exception(const context &c)        { return JS_IsExceptionPending(c);                }
+auto rethrow_exception(context &c)               { return JS_ReportPendingException(c);            }
+auto interrupted(const context &c)               { return JS_CheckForInterrupt(c);                 }
+void out_of_memory(context &c)                   { JS_ReportOutOfMemory(c);                        }
+void allocation_overflow(context &c)             { JS_ReportAllocationOverflow(c);                 }
+void run_gc(context &c)                          { JS_MaybeGC(c);                                  }
 
 
-template<class... args>
-context::context(JSRuntime *const &runtime,
-                 args&&... a)
-:custom_ptr<JSContext>
+inline void
+priv(context &c,
+     privdata *const &ptr)
 {
-	JS_NewContext(runtime, std::forward<args>(a)...),
-	[](JSContext *const ctx)
-	{
-		if(likely(ctx))
-		{
-			delete priv<0>(*ctx);
-			delete priv<1>(*ctx);
-			JS_DestroyContext(ctx);
-		}
-	}
-}
-{
+	delete priv(c);                          // Free any existing object to overwrite/null
+	JS_SetSecondContextPrivate(c, ptr);
 }
 
-template<size_t at,
-         class T>
-void
-priv(JSContext &c,
-     T *const &ptr)
-{
-	delete priv<at>(c);
-	switch(at)
-	{
-		default:
-		case 0:   JS_SetContextPrivate(&c, ptr);            break;
-		case 1:   JS_SetSecondContextPrivate(&c, ptr);      break;
-	}
-}
-
-template<size_t at,
-         class T>
+template<class T>
 T *
-priv(JSContext &c)
+priv(context &c)
 {
-	switch(at)
-	{
-		default:
-		case 0:  return dynamic_cast<T *>(static_cast<context::privdata *>(JS_GetContextPrivate(&c)));
-		case 1:  return dynamic_cast<T *>(static_cast<context::privdata *>(JS_GetSecondContextPrivate(&c)));
-	}
+	return dynamic_cast<T *>(static_cast<privdata *>(JS_GetSecondContextPrivate(c)));
 }
 
-template<size_t at,
-         class T>
+template<class T>
 const T *
-priv(const JSContext &c)
+priv(const context &c)
 {
-	switch(at)
-	{
-		default:
-		case 0:  return dynamic_cast<const T *>(static_cast<const context::privdata *>(JS_GetContextPrivate(&c)));
-		case 1:  return dynamic_cast<const T *>(static_cast<const context::privdata *>(JS_GetSecondContextPrivate(&c)));
-	}
+	return dynamic_cast<const T *>(static_cast<const privdata *>(JS_GetSecondContextPrivate(c)));
+}
+
+inline context &
+our(JSContext *const &c)
+{
+	return *static_cast<context *>(JS_GetContextPrivate(c));
+}
+
+inline const context &
+our(const JSContext *const &c)
+{
+	return *static_cast<const context *>(JS_GetContextPrivate(const_cast<JSContext *>(c)));
 }
 
 } // namespace js
