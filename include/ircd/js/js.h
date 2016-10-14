@@ -37,6 +37,7 @@
 // include directives are written as "jsxxx.h" or "mozilla/xxx.h" etc. Our includes are all
 // <ircd/xxx.h> and shouldn't have any conflict issues.
 #include <jsapi.h>
+#include <js/Conversions.h>
 
 namespace ircd {
 namespace js   {
@@ -58,3 +59,7 @@ JSVersion version(const char *const &v)          { return JS_StringToVersion(v);
 #include "context.h"
 #include "request_guard.h"
 #include "compartment_guard.h"
+#include "string.h"
+#include "for_each.h"
+#include "script.h"
+#include "debug.h"
