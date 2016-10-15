@@ -25,64 +25,59 @@
 namespace ircd {
 namespace js   {
 
-JS::RootedValue id(context &, const jsid &);
-const jsid &id(context &, const JSProtoKey &);
-const jsid &id(context &, const uint32_t &);
-const jsid &id(context &, const JS::HandleString &);
-const jsid &id(context &, const JS::HandleValue &);
+JS::RootedValue id(const jsid &);
+const jsid &id(const JSProtoKey &);
+const jsid &id(const uint32_t &);
+const jsid &id(const JS::HandleString &);
+const jsid &id(const JS::HandleValue &);
 
 
 inline const jsid &
-id(context &c,
-   const JS::HandleValue &h)
+id(const JS::HandleValue &h)
 {
-	JS::RootedId ret(c);
-	if(!JS_ValueToId(c, h, &ret))
+	JS::RootedId ret(*cx);
+	if(!JS_ValueToId(*cx, h, &ret))
 		std::terminate(); //TODO: exception
 
 	return ret;
 }
 
 inline const jsid &
-id(context &c,
-   const JS::HandleString &h)
+id(const JS::HandleString &h)
 {
-	JS::RootedId ret(c);
-	if(!JS_StringToId(c, h, &ret))
+	JS::RootedId ret(*cx);
+	if(!JS_StringToId(*cx, h, &ret))
 		std::terminate(); //TODO: exception
 
 	return ret;
 }
 
 inline const jsid &
-id(context &c,
-   const uint32_t &index)
+id(const uint32_t &index)
 {
-	JS::RootedId ret(c);
-	if(!JS_IndexToId(c, index, &ret))
+	JS::RootedId ret(*cx);
+	if(!JS_IndexToId(*cx, index, &ret))
 		std::terminate(); //TODO: exception
 
 	return ret;
 }
 
 inline const jsid &
-id(context &c,
-   const JSProtoKey &key)
+id(const JSProtoKey &key)
 {
-	JS::RootedId ret(c);
-	JS::ProtoKeyToId(c, key, &ret);
+	JS::RootedId ret(*cx);
+	JS::ProtoKeyToId(*cx, key, &ret);
 	return ret;
 }
 
 inline JS::RootedValue
-id(context &c,
-   const jsid &h)
+id(const jsid &h)
 {
-	JS::RootedValue ret(c);
-	if(!JS_IdToValue(c, h, &ret))
+	JS::RootedValue ret(*cx);
+	if(!JS_IdToValue(*cx, h, &ret))
 		std::terminate(); //TODO: exception
 
-	return { c, ret };
+	return { *cx, ret };
 }
 
 } // namespace js

@@ -31,14 +31,14 @@ class trap
 	const JSClass _class;
 
 	// Override these to define JS objects in C
-	virtual bool on_add(context &, const JSObject &, const jsid &, const JS::Value &);
-	virtual bool on_set(context &, const JSObject &, const jsid &, JS::MutableHandleValue);
-	virtual bool on_get(context &, const JSObject &, const jsid &, JS::MutableHandleValue);
-	virtual bool on_del(context &, const JSObject &, const jsid &);
-	virtual bool on_res(context &, const JSObject &, const jsid &, bool &resolved);
-	virtual bool on_enu(context &, const JSObject &);
-	virtual bool on_call(context &, const unsigned &argc, JS::Value &argv);
-	virtual bool on_ctor(context &, const unsigned &argc, JS::Value &argv);
+	virtual bool on_add(const JSObject &, const jsid &, const JS::Value &);
+	virtual bool on_set(const JSObject &, const jsid &, JS::MutableHandleValue);
+	virtual bool on_get(const JSObject &, const jsid &, JS::MutableHandleValue);
+	virtual bool on_del(const JSObject &, const jsid &);
+	virtual bool on_res(const JSObject &, const jsid &, bool &resolved);
+	virtual bool on_enu(const JSObject &);
+	virtual bool on_call(const unsigned &argc, JS::Value &argv);
+	virtual bool on_ctor(const unsigned &argc, JS::Value &argv);
 
   private:
 	static trap &from(const JSObject &);
@@ -61,8 +61,8 @@ class trap
 	auto &name() const                           { return _name;                                   }
 	auto &jsclass() const                        { return _class;                                  }
 
-	JSObject *operator()(context &, JS::HandleObject proto);
-	JSObject *operator()(context &);
+	JSObject *operator()(JS::HandleObject proto);
+	JSObject *operator()();
 
 	trap(std::string name, const uint32_t &flags = 0);
 	trap(trap &&) = delete;

@@ -29,46 +29,43 @@ using closure_id = std::function<void (const JS::HandleId &)>;
 using closure_key_val = std::function<void (JS::HandleValue, JS::HandleValue)>;
 using closure_mutable_key_val = std::function<void (JS::HandleValue, JS::MutableHandleValue)>;
 
-void for_each(context &, const JS::HandleObject &, const closure_id &);
-void for_each(context &, const JS::HandleObject &, const closure_key_val &);
-void for_each(context &, const JS::MutableHandleObject &, const closure_mutable_key_val &);
+void for_each(const JS::HandleObject &, const closure_id &);
+void for_each(const JS::HandleObject &, const closure_key_val &);
+void for_each(const JS::MutableHandleObject &, const closure_mutable_key_val &);
 
 
 inline void
-for_each(context &c,
-         const JS::MutableHandleObject &obj,
+for_each(const JS::MutableHandleObject &obj,
          const closure_mutable_key_val &closure)
 {
-	for_each(c, obj, [&c, &obj, &closure]
+	for_each(obj, [&obj, &closure]
 	(const JS::HandleId &hid)
 	{
-		JS::RootedValue key(c, id(c, hid)), val(c);
-		JS_GetPropertyById(c, obj, hid, &val);
+		JS::RootedValue key(*cx, id(hid)), val(*cx);
+		JS_GetPropertyById(*cx, obj, hid, &val);
 		closure(key, &val);
 	});
 }
 
 inline void
-for_each(context &c,
-         const JS::HandleObject &obj,
+for_each(const JS::HandleObject &obj,
          const closure_key_val &closure)
 {
-	for_each(c, obj, [&c, &obj, &closure]
+	for_each(obj, [&obj, &closure]
 	(const JS::HandleId &hid)
 	{
-		JS::RootedValue key(c, id(c, hid)), val(c);
-		JS_GetPropertyById(c, obj, hid, &val);
+		JS::RootedValue key(*cx, id(hid)), val(*cx);
+		JS_GetPropertyById(*cx, obj, hid, &val);
 		closure(key, val);
 	});
 }
 
 inline void
-for_each(context &c,
-         const JS::HandleObject &obj,
+for_each(const JS::HandleObject &obj,
          const closure_id &closure)
 {
-	JS::Rooted<JS::IdVector> props(c, JS::IdVector(c.ptr()));
-	if(JS_Enumerate(c, obj, &props))
+	JS::Rooted<JS::IdVector> props(*cx, JS::IdVector(cx->ptr()));
+	if(JS_Enumerate(*cx, obj, &props))
 		for(size_t i(0); i < props.length(); ++i)
 			closure(props[i]);
 }

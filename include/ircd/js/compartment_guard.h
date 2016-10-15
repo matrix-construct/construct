@@ -27,19 +27,16 @@ namespace js   {
 
 class compartment_guard
 {
-	JSContext *cx;
 	JSCompartment *cp;
 
   public:
-	compartment_guard(JSContext &, JSObject &);
+	compartment_guard(JSObject &);
 	~compartment_guard() noexcept;
 };
 
 inline
-compartment_guard::compartment_guard(JSContext &cx,
-                                     JSObject &obj)
-:cx{&cx}
-,cp{JS_EnterCompartment(&cx, &obj)}
+compartment_guard::compartment_guard(JSObject &obj)
+:cp{JS_EnterCompartment(*cx, &obj)}
 {
 }
 
@@ -47,7 +44,7 @@ inline
 compartment_guard::~compartment_guard()
 noexcept
 {
-	JS_LeaveCompartment(cx, cp);
+	JS_LeaveCompartment(*cx, cp);
 }
 
 } // namespace js

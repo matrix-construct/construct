@@ -61,12 +61,18 @@ class runtime
 	runtime(const runtime &) = delete;
 	runtime &operator=(runtime &&) noexcept;
 	runtime &operator=(const runtime &) = delete;
+	~runtime() noexcept;
 
 	friend void interrupt(runtime &);
 };
 
-// Main JSRuntime instance. This should be passable in any argument requiring a
-// JSRuntime pointer. It is only valid while the js::init object is held by ircd::main().
+// Current thread_local runtime. Runtimes/Contexts are single-threaded and we maintain
+// one per thread (or only one will be relevant on the given thread you are on).
+// Do not construct more than one runtime on the same thread- this is overwritten.
+extern __thread runtime *rt;
+
+// Main JSRuntime instance. It is only valid while the js::init object is held by ircd::main().
+// This is available to always find main for whatever reason, but use *rt instead.
 extern runtime main;
 
 // Get to our `struct runtime` from any upstream JSRuntime

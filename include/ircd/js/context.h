@@ -28,6 +28,16 @@ namespace js   {
 struct context
 :private custom_ptr<JSContext>
 {
+	class lock
+	{
+		context *c;
+
+	  public:
+		lock(context &c);           // BeginRequest on cx of your choice
+		lock();                     // BeginRequest on the thread_local cx
+		~lock() noexcept;           // EndRequest
+	};
+
 	struct opts
 	{
 		size_t stack_chunk_size     = 8_KiB;
@@ -49,11 +59,17 @@ struct context
 	context(const context &) = delete;
 	context &operator=(context &&) noexcept;
 	context &operator=(const context &) = delete;
+	~context() noexcept;
 };
 
+// Current thread_local context. Runtimes/Contexts (soon to be merged in future SpiderMonkey)
+// are singled-threaded and this points to the context appropos your thread.
+// Do not construct more than one context on the same thread- this is overwritten.
+extern __thread context *cx;
+
 // A default JSContext instance is provided residing near the main runtime as a convenience
-// for misc/utility/system purposes if necessary.
-extern context mc;
+// for misc/utility/system purposes if necessary. You should use *cx instead.
+extern context main_cx;
 
 // Get to our `struct context` from any upstream JSContext
 const context &our(const JSContext *const &);
@@ -72,18 +88,36 @@ auto interrupted(const context &c)               { return JS_CheckForInterrupt(c
 void out_of_memory(context &c)                   { JS_ReportOutOfMemory(c);                        }
 void allocation_overflow(context &c)             { JS_ReportAllocationOverflow(c);                 }
 void run_gc(context &c)                          { JS_MaybeGC(c);                                  }
-JSObject *current_global_p(context &c);
-JS::RootedObject current_global(context &c);
+
+JSObject *current_global(context &c);
+JS::RootedObject current_global(context &c, rooted_t);
+
+// thread_local
+JSObject *current_global();
+JS::RootedObject current_global(rooted_t);
 
 
 inline JS::RootedObject
-current_global(context &c)
+current_global(rooted_t)
 {
-	return { c, current_global_p(c) };
+	return { *cx, current_global(*cx, rooted) };
 }
 
 inline JSObject *
-current_global_p(context &c)
+current_global()
+{
+	return current_global(*cx);
+}
+
+inline JS::RootedObject
+current_global(context &c,
+               rooted_t)
+{
+	return { c, current_global(c, rooted) };
+}
+
+inline JSObject *
+current_global(context &c)
 {
 	return JS::CurrentGlobalOrNull(c);
 }

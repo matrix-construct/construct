@@ -27,12 +27,12 @@ namespace js   {
 
 struct script
 {
-	script(JSContext &);
+	script();
 	~script() noexcept;
 };
 
 inline
-script::script(JSContext &c)
+script::script()
 {
 }
 

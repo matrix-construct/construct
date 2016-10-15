@@ -27,6 +27,11 @@
 namespace ircd {
 namespace js   {
 
+// Location of the thread_local runtext. externs exist in js/runtime.h and js/context.h.
+// If these are null, js is not available on your thread.
+__thread runtime *rt;
+__thread context *cx;
+
 // Location of the main JSRuntime instance. An extern reference to this exists in js/runtime.h.
 // It is null until js::init manually constructs (and later destructs) it.
 runtime main;
@@ -135,16 +140,15 @@ noexcept
 }
 
 JSObject *
-ircd::js::trap::operator()(context &c)
+ircd::js::trap::operator()()
 {
-	return JS_NewObject(c, &_class);
+	return JS_NewObject(*cx, &_class);
 }
 
 JSObject *
-ircd::js::trap::operator()(context &c,
-                           JS::HandleObject proto)
+ircd::js::trap::operator()(JS::HandleObject proto)
 {
-	return JS_NewObjectWithGivenProto(c, &_class, proto);
+	return JS_NewObjectWithGivenProto(*cx, &_class, proto);
 }
 
 void
@@ -158,6 +162,8 @@ ircd::js::trap::handle_ctor(JSContext *const c,
                             unsigned argc,
                             JS::Value *const argv)
 {
+	assert(&our(c) == cx);
+
 	return false;
 }
 
@@ -166,6 +172,8 @@ ircd::js::trap::handle_call(JSContext *const c,
                             unsigned argc,
                             JS::Value *const argv)
 {
+	assert(&our(c) == cx);
+
 	return false;
 }
 
@@ -173,8 +181,10 @@ bool
 ircd::js::trap::handle_enu(JSContext *const c,
                            JS::HandleObject obj)
 {
+	assert(&our(c) == cx);
+
 	auto &trap(from(obj));
-	return trap.on_enu(our(c), *obj.get());
+	return trap.on_enu(*obj.get());
 }
 
 bool
@@ -183,8 +193,10 @@ ircd::js::trap::handle_res(JSContext *const c,
                            JS::HandleId id,
                            bool *const resolved)
 {
+	assert(&our(c) == cx);
+
 	auto &trap(from(obj));
-	return trap.on_res(our(c), *obj.get(), id.get(), *resolved);
+	return trap.on_res(*obj.get(), id.get(), *resolved);
 }
 
 bool
@@ -193,8 +205,10 @@ ircd::js::trap::handle_del(JSContext *const c,
                            JS::HandleId id,
                            JS::ObjectOpResult &res)
 {
+	assert(&our(c) == cx);
+
 	auto &trap(from(obj));
-	if(!trap.on_del(our(c), *obj.get(), id.get()))
+	if(!trap.on_del(*obj.get(), id.get()))
 		return false;
 
 	res.succeed();
@@ -207,8 +221,10 @@ ircd::js::trap::handle_get(JSContext *const c,
                            JS::HandleId id,
                            JS::MutableHandleValue val)
 {
+	assert(&our(c) == cx);
+
 	auto &trap(from(obj));
-	return trap.on_get(our(c), *obj.get(), id.get(), val);
+	return trap.on_get(*obj.get(), id.get(), val);
 }
 
 bool
@@ -218,8 +234,10 @@ ircd::js::trap::handle_set(JSContext *const c,
                            JS::MutableHandleValue val,
                            JS::ObjectOpResult &res)
 {
+	assert(&our(c) == cx);
+
 	auto &trap(from(obj));
-	return trap.on_get(our(c), *obj.get(), id.get(), val);
+	return trap.on_get(*obj.get(), id.get(), val);
 }
 
 bool
@@ -228,8 +246,10 @@ ircd::js::trap::handle_add(JSContext *const c,
                            JS::HandleId id,
                            JS::HandleValue val)
 {
+	assert(&our(c) == cx);
+
 	auto &trap(from(obj));
-	return trap.on_add(our(c), *obj.get(), id.get(), val.get());
+	return trap.on_add(*obj.get(), id.get(), val.get());
 }
 
 bool
@@ -238,6 +258,8 @@ ircd::js::trap::handle_inst(JSContext *const c,
                             JS::MutableHandleValue val,
                             bool *const has_instance)
 {
+	assert(&our(c) == cx);
+
 	return false;
 }
 
@@ -267,31 +289,27 @@ ircd::js::trap::from(const JSObject &o)
 }
 
 bool
-ircd::js::trap::on_ctor(context &c,
-                        const unsigned &argc,
+ircd::js::trap::on_ctor(const unsigned &argc,
                         JS::Value &argv)
 {
 	return false;
 }
 
 bool
-ircd::js::trap::on_call(context &c,
-                        const unsigned &argc,
+ircd::js::trap::on_call(const unsigned &argc,
                         JS::Value &argv)
 {
 	return false;
 }
 
 bool
-ircd::js::trap::on_enu(context &c,
-                       const JSObject &obj)
+ircd::js::trap::on_enu(const JSObject &obj)
 {
 	return false;
 }
 
 bool
-ircd::js::trap::on_res(context &c,
-                       const JSObject &obj,
+ircd::js::trap::on_res(const JSObject &obj,
                        const jsid &id,
                        bool &resolved)
 {
@@ -299,16 +317,14 @@ ircd::js::trap::on_res(context &c,
 }
 
 bool
-ircd::js::trap::on_del(context &c,
-                       const JSObject &obj,
+ircd::js::trap::on_del(const JSObject &obj,
                        const jsid &id)
 {
 	return false;
 }
 
 bool
-ircd::js::trap::on_get(context &c,
-                       const JSObject &obj,
+ircd::js::trap::on_get(const JSObject &obj,
                        const jsid &id,
                        JS::MutableHandleValue val)
 {
@@ -316,8 +332,7 @@ ircd::js::trap::on_get(context &c,
 }
 
 bool
-ircd::js::trap::on_set(context &c,
-                       const JSObject &obj,
+ircd::js::trap::on_set(const JSObject &obj,
                        const jsid &id,
                        JS::MutableHandleValue val)
 {
@@ -325,8 +340,7 @@ ircd::js::trap::on_set(context &c,
 }
 
 bool
-ircd::js::trap::on_add(context &c,
-                       const JSObject &obj,
+ircd::js::trap::on_add(const JSObject &obj,
                        const jsid &id,
                        const JS::Value &val)
 {
@@ -499,7 +513,15 @@ ircd::js::context::context(JSRuntime *const &runtime,
 }
 ,opts{opts}
 {
+	assert(&our(runtime) == rt);  // Trying to construct on thread without runtime thread_local
+
+	// Use their privdata pointer to point to our instance. We can then use our(JSContext*)
+	// to get back to `this` instance. Remember the pointer must change when this class is
+	// std::move()'ed etc via the move constructor/assignment.
 	JS_SetContextPrivate(get(), this);
+
+	// Assign the thread_local here.
+	cx = this;
 }
 
 ircd::js::context::context(context &&other)
@@ -510,6 +532,9 @@ noexcept
 	// Branch not taken for null/defaulted instance of JSContext smart ptr
 	if(!!*this)
 		JS_SetContextPrivate(get(), this);
+
+	// Ensure the thread_local points here now.
+	cx = this;
 }
 
 ircd::js::context &
@@ -517,14 +542,41 @@ ircd::js::context::operator=(context &&other)
 noexcept
 {
 	static_cast<custom_ptr<JSContext> &>(*this) = std::move(other);
-
 	opts = std::move(other.opts);
 
 	// Branch not taken for null/defaulted instance of JSContext smart ptr
 	if(!!*this)
 		JS_SetContextPrivate(get(), this);
 
+	// Ensure the thread_local points here now.
+	cx = this;
+
 	return *this;
+}
+
+ircd::js::context::~context()
+noexcept
+{
+	// Branch not taken on std::move()
+	if(!!*this)
+		cx = nullptr;
+}
+
+ircd::js::context::lock::lock()
+:lock{*cx}
+{
+}
+
+ircd::js::context::lock::lock(context &c)
+:c{&c}
+{
+	JS_BeginRequest(c);
+}
+
+ircd::js::context::lock::~lock()
+noexcept
+{
+	JS_EndRequest(*c);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -540,7 +592,12 @@ ircd::js::runtime::runtime(const struct opts &opts)
 }
 ,opts(opts)
 {
+	// We use their privdata to find `this` via our(JSRuntime*) function.
+	// Any additional user privdata will have to ride a member in this class itself.
 	JS_SetRuntimePrivate(get(), this);
+
+	// Assign the thread_local runtime pointer here.
+	rt = this;
 
 	JS_SetErrorReporter(get(), handle_error);
 	JS::SetOutOfMemoryCallback(get(), handle_out_of_memory, nullptr);
@@ -562,6 +619,9 @@ noexcept
 	// Branch not taken for null/defaulted instance of JSRuntime smart ptr
 	if(!!*this)
 		JS_SetRuntimePrivate(get(), this);
+
+	// Ensure the thread_local runtime always points here
+	rt = this;
 }
 
 ircd::js::runtime &
@@ -569,14 +629,24 @@ ircd::js::runtime::operator=(runtime &&other)
 noexcept
 {
 	static_cast<custom_ptr<JSRuntime> &>(*this) = std::move(other);
-
 	opts = std::move(other.opts);
 
 	// Branch not taken for null/defaulted instance of JSRuntime smart ptr
 	if(!!*this)
 		JS_SetRuntimePrivate(get(), this);
 
+	// Ensure the thread_local runtime always points here
+	rt = this;
+
 	return *this;
+}
+
+ircd::js::runtime::~runtime()
+noexcept
+{
+	// Branch not taken on std::move()
+	if(!!*this)
+		rt = nullptr;
 }
 
 bool

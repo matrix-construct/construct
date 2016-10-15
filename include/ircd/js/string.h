@@ -26,60 +26,54 @@ namespace ircd {
 namespace js   {
 
 // C++ --> JS
-JSString &string(context &, const std::string &);
-JS::RootedString string(context &, const std::string &, rooted_t);
+JSString &string(const std::string &);
+JS::RootedString string(const std::string &, rooted_t);
 
 // JS --> C++
-std::string string(context &, const JSString &);
-std::string string(context &, const JSString *const &);
+std::string string(const JSString &);
+std::string string(const JSString *const &);
 
-std::string string(context &, const JS::Value &);
-std::string string(context &, const jsid &);
+std::string string(const JS::Value &);
+std::string string(const jsid &);
 
 
 inline std::string
-string(context &c,
-       const jsid &hid)
+string(const jsid &hid)
 {
-	return string(c, id(c, hid));
+	return string(id(hid));
 }
 
 inline std::string
-string(context &c,
-       const JS::Value &s)
+string(const JS::Value &s)
 {
-	return s.isString()? string(c, s.toString()) : std::string{};
+	return s.isString()? string(s.toString()) : std::string{};
 }
 
 inline std::string
-string(context &c,
-       const JSString *const &s)
+string(const JSString *const &s)
 {
-	return s? string(c, *s) : std::string{};
+	return s? string(*s) : std::string{};
 }
 
 inline std::string
-string(context &c,
-       const JSString &s)
+string(const JSString &s)
 {
-	std::string ret(JS_GetStringEncodingLength(c, const_cast<JSString *>(&s)), char());
-	JS_EncodeStringToBuffer(c, const_cast<JSString *>(&s), &ret.front(), ret.size());
+	std::string ret(JS_GetStringEncodingLength(*cx, const_cast<JSString *>(&s)), char());
+	JS_EncodeStringToBuffer(*cx, const_cast<JSString *>(&s), &ret.front(), ret.size());
 	return ret;
 }
 
 inline JS::RootedString
-string(context &c,
-       const std::string &s,
+string(const std::string &s,
        rooted_t)
 {
-	return { c, &string(c, s) };
+	return { *cx, &string(s) };
 }
 
 inline JSString &
-string(context &c,
-       const std::string &s)
+string(const std::string &s)
 {
-	const auto ret(JS_NewStringCopyN(c, s.data(), s.size()));
+	const auto ret(JS_NewStringCopyN(*cx, s.data(), s.size()));
 	if(unlikely(!ret))
 		std::terminate();  //TODO: exception
 
