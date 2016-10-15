@@ -102,6 +102,239 @@ ircd::js::version(const ver &type)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// ircd/js/trap.h
+//
+
+ircd::js::trap::trap(std::string name,
+                     const uint32_t &flags)
+:_name{std::move(name)}
+,_class
+{
+	this->_name.c_str(),
+	flags,
+	handle_add,
+	handle_del,
+	handle_get,
+	handle_set,
+	handle_enu,
+	handle_res,
+	nullptr,           // JSConvertOp - Obsolete since SpiderMonkey 44  // 45 = mayResolve?
+	handle_dtor,
+	handle_call,
+	handle_inst,
+	handle_ctor,
+	handle_trace,
+	{ this }           // reserved[0] TODO: ?????????
+}
+{
+}
+
+ircd::js::trap::~trap()
+noexcept
+{
+}
+
+JSObject *
+ircd::js::trap::operator()(context &c)
+{
+	return JS_NewObject(c, &_class);
+}
+
+JSObject *
+ircd::js::trap::operator()(context &c,
+                           JS::HandleObject proto)
+{
+	return JS_NewObjectWithGivenProto(c, &_class, proto);
+}
+
+void
+ircd::js::trap::handle_dtor(JSFreeOp *const op,
+                            JSObject *const obj)
+{
+}
+
+bool
+ircd::js::trap::handle_ctor(JSContext *const c,
+                            unsigned argc,
+                            JS::Value *const argv)
+{
+	return false;
+}
+
+bool
+ircd::js::trap::handle_call(JSContext *const c,
+                            unsigned argc,
+                            JS::Value *const argv)
+{
+	return false;
+}
+
+bool
+ircd::js::trap::handle_enu(JSContext *const c,
+                           JS::HandleObject obj)
+{
+	auto &trap(from(obj));
+	return trap.on_enu(our(c), *obj.get());
+}
+
+bool
+ircd::js::trap::handle_res(JSContext *const c,
+                           JS::HandleObject obj,
+                           JS::HandleId id,
+                           bool *const resolved)
+{
+	auto &trap(from(obj));
+	return trap.on_res(our(c), *obj.get(), id.get(), *resolved);
+}
+
+bool
+ircd::js::trap::handle_del(JSContext *const c,
+                           JS::HandleObject obj,
+                           JS::HandleId id,
+                           JS::ObjectOpResult &res)
+{
+	auto &trap(from(obj));
+	if(!trap.on_del(our(c), *obj.get(), id.get()))
+		return false;
+
+	res.succeed();
+	return true;
+}
+
+bool
+ircd::js::trap::handle_get(JSContext *const c,
+                           JS::HandleObject obj,
+                           JS::HandleId id,
+                           JS::MutableHandleValue val)
+{
+	auto &trap(from(obj));
+	return trap.on_get(our(c), *obj.get(), id.get(), val);
+}
+
+bool
+ircd::js::trap::handle_set(JSContext *const c,
+                           JS::HandleObject obj,
+                           JS::HandleId id,
+                           JS::MutableHandleValue val,
+                           JS::ObjectOpResult &res)
+{
+	auto &trap(from(obj));
+	return trap.on_get(our(c), *obj.get(), id.get(), val);
+}
+
+bool
+ircd::js::trap::handle_add(JSContext *const c,
+                           JS::HandleObject obj,
+                           JS::HandleId id,
+                           JS::HandleValue val)
+{
+	auto &trap(from(obj));
+	return trap.on_add(our(c), *obj.get(), id.get(), val.get());
+}
+
+bool
+ircd::js::trap::handle_inst(JSContext *const c,
+                            JS::HandleObject obj,
+                            JS::MutableHandleValue val,
+                            bool *const has_instance)
+{
+	return false;
+}
+
+void
+ircd::js::trap::handle_trace(JSTracer *const tracer,
+                             JSObject *const obj)
+{
+}
+
+ircd::js::trap &
+ircd::js::trap::from(const JS::HandleObject &o)
+{
+	return from(*o.get());
+}
+
+ircd::js::trap &
+ircd::js::trap::from(const JSObject &o)
+{
+	auto *const c(JS_GetClass(const_cast<JSObject *>(&o)));
+	if(!c)
+		std::terminate(); //TODO: exception
+
+	if(!c->reserved[0])
+		std::terminate(); //TODO: exception
+
+	return *static_cast<trap *>(c->reserved[0]);  //TODO: ???
+}
+
+bool
+ircd::js::trap::on_ctor(context &c,
+                        const unsigned &argc,
+                        JS::Value &argv)
+{
+	return false;
+}
+
+bool
+ircd::js::trap::on_call(context &c,
+                        const unsigned &argc,
+                        JS::Value &argv)
+{
+	return false;
+}
+
+bool
+ircd::js::trap::on_enu(context &c,
+                       const JSObject &obj)
+{
+	return false;
+}
+
+bool
+ircd::js::trap::on_res(context &c,
+                       const JSObject &obj,
+                       const jsid &id,
+                       bool &resolved)
+{
+	return false;
+}
+
+bool
+ircd::js::trap::on_del(context &c,
+                       const JSObject &obj,
+                       const jsid &id)
+{
+	return false;
+}
+
+bool
+ircd::js::trap::on_get(context &c,
+                       const JSObject &obj,
+                       const jsid &id,
+                       JS::MutableHandleValue val)
+{
+	return false;
+}
+
+bool
+ircd::js::trap::on_set(context &c,
+                       const JSObject &obj,
+                       const jsid &id,
+                       JS::MutableHandleValue val)
+{
+	return false;
+}
+
+bool
+ircd::js::trap::on_add(context &c,
+                       const JSObject &obj,
+                       const jsid &id,
+                       const JS::Value &val)
+{
+	return false;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // ircd/js/debug.h
 //
 

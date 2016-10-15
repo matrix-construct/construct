@@ -72,7 +72,21 @@ auto interrupted(const context &c)               { return JS_CheckForInterrupt(c
 void out_of_memory(context &c)                   { JS_ReportOutOfMemory(c);                        }
 void allocation_overflow(context &c)             { JS_ReportAllocationOverflow(c);                 }
 void run_gc(context &c)                          { JS_MaybeGC(c);                                  }
+JSObject *current_global_p(context &c);
+JS::RootedObject current_global(context &c);
 
+
+inline JS::RootedObject
+current_global(context &c)
+{
+	return { c, current_global_p(c) };
+}
+
+inline JSObject *
+current_global_p(context &c)
+{
+	return JS::CurrentGlobalOrNull(c);
+}
 
 inline void
 priv(context &c,

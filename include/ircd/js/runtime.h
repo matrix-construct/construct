@@ -73,6 +73,10 @@ extern runtime main;
 const runtime &our(const JSRuntime *const &);
 runtime &our(JSRuntime *const &);
 
+// Get to our runtime from any JSObject
+const runtime &object_runtime(const JSObject &);
+runtime &object_runtime(JSObject &);
+
 void interrupt(runtime &r);
 void run_gc(runtime &r);
 
@@ -88,6 +92,18 @@ interrupt(runtime &r)
 {
 	JS_SetInterruptCallback(r, runtime::handle_interrupt);
 	JS_RequestInterruptCallback(r);
+}
+
+inline runtime &
+object_runtime(JSObject &o)
+{
+	return our(JS_GetObjectRuntime(&o));
+}
+
+inline const runtime &
+object_runtime(const JSObject &o)
+{
+	return our(JS_GetObjectRuntime(const_cast<JSObject *>(&o)));
 }
 
 inline runtime &
