@@ -25,38 +25,13 @@
 namespace ircd {
 namespace js   {
 
-inline std::string
-debug(const JS::Value &v)
-{
-	std::stringstream ss;
+const char *reflect(const JSExnType &);
+const char *reflect(const JSGCStatus &);
+const char *reflect(const JSFinalizeStatus &);
 
-	if(v.isNull())        ss << "Null ";
-	if(v.isUndefined())   ss << "Undefined ";
-	if(v.isBoolean())     ss << "Boolean ";
-	if(v.isTrue())        ss << "TrueValue ";
-	if(v.isFalse())       ss << "FalseValue ";
-	if(v.isNumber())      ss << "Number ";
-	if(v.isDouble())      ss << "Double ";
-	if(v.isInt32())       ss << "Int32 ";
-	if(v.isString())      ss << "String ";
-	if(v.isObject())      ss << "Object ";
-	if(v.isSymbol())      ss << "Symbol ";
-
-	return ss.str();
-}
-
-inline std::string
-debug(const JSObject &o)
-{
-	std::stringstream ss;
-
-	if(JS_IsGlobalObject(const_cast<JSObject *>(&o)))    ss << "Global ";
-	if(JS_IsNative(const_cast<JSObject *>(&o)))          ss << "Native ";
-	if(JS::IsCallable(const_cast<JSObject *>(&o)))       ss << "Callable ";
-	if(JS::IsConstructor(const_cast<JSObject *>(&o)))    ss << "Constructor ";
-
-	return ss.str();
-}
+std::string debug(const JS::Value &);
+std::string debug(const JS::HandleObject &);
+std::string debug(const JSErrorReport &);
 
 } // namespace js
 } // namespace ircd

@@ -20,7 +20,7 @@
  */
 
 #pragma once
-#define HAVE_IRCD_JS_STRING
+#define HAVE_IRCD_JS_STRING_H
 
 namespace ircd {
 namespace js   {

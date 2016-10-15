@@ -102,6 +102,145 @@ ircd::js::version(const ver &type)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// ircd/js/debug.h
+//
+
+std::string
+ircd::js::debug(const JSErrorReport &r)
+{
+	std::stringstream ss;
+
+	if(JSREPORT_IS_WARNING(r.flags))
+		ss << "WARNING ";
+
+	if(JSREPORT_IS_EXCEPTION(r.flags))
+		ss << "EXCEPTION ";
+
+	if(JSREPORT_IS_STRICT(r.flags))
+		ss << "STRICT ";
+
+	if(JSREPORT_IS_STRICT_MODE_ERROR(r.flags))
+		ss << "STRICT_MODE_ERROR ";
+
+	if(r.isMuted)
+		ss << "MUTED ";
+
+	if(r.filename)
+		ss << "file[" << r.filename << "] ";
+
+	if(r.lineno)
+		ss << "line[" << r.lineno << "] ";
+
+	if(r.column)
+		ss << "col[" << r.column << "] ";
+
+	if(r.linebuf())
+		ss << "code[" << r.linebuf() << "] ";
+
+	//if(r.tokenptr)
+	//	ss << "toke[" << r.tokenptr << "] ";
+
+	if(r.errorNumber)
+		ss << "errnum[" << r.errorNumber << "] ";
+
+	if(r.exnType)
+		ss << reflect(JSExnType(r.exnType)) << " ";
+
+//	ss << "\"" << std::u16string(r.ucmessage) << "\" ";
+
+//	for(auto it(r.messageArgs); it && *it; ++it)
+//		ss << "\"" << std::u16string(*it) << "\" ";
+
+	return ss.str();
+}
+
+std::string
+ircd::js::debug(const JS::HandleObject &o)
+{
+	std::stringstream ss;
+
+	if(JS_IsGlobalObject(o))    ss << "Global ";
+	if(JS_IsNative(o))          ss << "Native ";
+	if(JS::IsCallable(o))       ss << "Callable ";
+	if(JS::IsConstructor(o))    ss << "Constructor ";
+
+	bool ret;
+	if(JS_IsExtensible(*cx, o, &ret) && ret)
+		ss << "Extensible ";
+
+	if(JS_IsArrayObject(*cx, o, &ret) && ret)
+		ss << "Array ";
+
+	return ss.str();
+}
+
+std::string
+ircd::js::debug(const JS::Value &v)
+{
+	std::stringstream ss;
+
+	if(v.isNull())        ss << "Null ";
+	if(v.isUndefined())   ss << "Undefined ";
+	if(v.isBoolean())     ss << "Boolean ";
+	if(v.isTrue())        ss << "TrueValue ";
+	if(v.isFalse())       ss << "FalseValue ";
+	if(v.isNumber())      ss << "Number ";
+	if(v.isDouble())      ss << "Double ";
+	if(v.isInt32())       ss << "Int32 ";
+	if(v.isString())      ss << "String ";
+	if(v.isObject())      ss << "Object ";
+	if(v.isSymbol())      ss << "Symbol ";
+
+	return ss.str();
+}
+
+const char *
+ircd::js::reflect(const JSFinalizeStatus &s)
+{
+	switch(s)
+	{
+		case JSFINALIZE_GROUP_START:        return "GROUP_START";
+		case JSFINALIZE_GROUP_END:          return "GROUP_END";
+		case JSFINALIZE_COLLECTION_END:     return "COLLECTION_END";
+	}
+
+	return "????";
+}
+
+const char *
+ircd::js::reflect(const JSGCStatus &s)
+{
+	switch(s)
+	{
+		case JSGC_BEGIN:   return "BEGIN";
+		case JSGC_END:     return "END";
+	}
+
+	return "????";
+}
+
+const char *
+ircd::js::reflect(const JSExnType &e)
+{
+	switch(e)
+	{
+		case JSEXN_NONE:          return "?NONE?";
+		case JSEXN_ERR:           return "Error";
+		case JSEXN_INTERNALERR:   return "InternalError";
+		case JSEXN_EVALERR:       return "EvalError";
+		case JSEXN_RANGEERR:      return "RangeError";
+		case JSEXN_REFERENCEERR:  return "ReferenceError";
+		case JSEXN_SYNTAXERR:     return "SyntaxError";
+		case JSEXN_TYPEERR:       return "TypeError";
+		case JSEXN_URIERR:        return "URIError";
+		case JSEXN_LIMIT:         return "?LIMIT?";
+	}
+
+	return "????";
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // ircd/js/context.h
 //
 
@@ -177,6 +316,7 @@ ircd::js::runtime::runtime(const struct opts &opts)
 	JS_AddFinalizeCallback(get(), handle_finalize, nullptr);
 	JS_SetDestroyCompartmentCallback(get(), handle_destroy_compartment);
 	JS_SetContextCallback(get(), handle_context, nullptr);
+	//JS_SetInterruptCallback(get(), nullptr);
 
 	JS_SetNativeStackQuota(get(), opts.code_stack_max, opts.trusted_stack_max, opts.untrusted_stack_max);
 }
@@ -241,6 +381,10 @@ ircd::js::runtime::handle_finalize(JSFreeOp *const fop,
                                    const bool is_compartment,
                                    void *const priv)
 {
+	log.debug("fop(%p): %s %s",
+	          (const void *)fop,
+	          reflect(status),
+	          is_compartment? "COMPARTMENT" : "");
 }
 
 void
@@ -248,6 +392,9 @@ ircd::js::runtime::handle_gc(JSRuntime *const rt,
                              const JSGCStatus status,
                              void *const priv)
 {
+	log.debug("runtime(%p): GC %s",
+	          (const void *)rt,
+	          reflect(status));
 }
 
 void
@@ -268,5 +415,5 @@ ircd::js::runtime::handle_error(JSContext *const ctx,
                                 const char *const msg,
                                 JSErrorReport *const report)
 {
-	log.error("JSContext(%p): %s", (const void *)ctx, msg);
+	log.error("JSContext(%p): %s [%s]", (const void *)ctx, msg, debug(*report).c_str());
 }
