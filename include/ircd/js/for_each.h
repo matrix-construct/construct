@@ -40,13 +40,10 @@ for_each(context &c,
          const closure_mutable_key_val &closure)
 {
 	for_each(c, obj, [&c, &obj, &closure]
-	(const JS::HandleId &id)
+	(const JS::HandleId &hid)
 	{
-		JS::RootedValue key(c), val(c);
-		if(!JS_IdToValue(c, id, &key))
-			return;
-
-		JS_GetPropertyById(c, obj, id, &val);
+		JS::RootedValue key(c, id(c, hid)), val(c);
+		JS_GetPropertyById(c, obj, hid, &val);
 		closure(key, &val);
 	});
 }
@@ -57,13 +54,10 @@ for_each(context &c,
          const closure_key_val &closure)
 {
 	for_each(c, obj, [&c, &obj, &closure]
-	(const JS::HandleId &id)
+	(const JS::HandleId &hid)
 	{
-		JS::RootedValue key(c), val(c);
-		if(!JS_IdToValue(c, id, &key))
-			return;
-
-		JS_GetPropertyById(c, obj, id, &val);
+		JS::RootedValue key(c, id(c, hid)), val(c);
+		JS_GetPropertyById(c, obj, hid, &val);
 		closure(key, val);
 	});
 }

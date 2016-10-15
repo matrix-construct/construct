@@ -42,6 +42,10 @@
 namespace ircd {
 namespace js   {
 
+// Used for some convenience overloads which return a value already registered with
+// the garbage collection rather than naked pointer.
+IRCD_OVERLOAD(rooted)
+
 // Extend this class to store your data with any priv(),
 // i.e priv(runtime, privdata*) or priv(context, privdata*) etc
 struct privdata
@@ -59,6 +63,7 @@ JSVersion version(const char *const &v)          { return JS_StringToVersion(v);
 #include "context.h"
 #include "request_guard.h"
 #include "compartment_guard.h"
+#include "id.h"
 #include "string.h"
 #include "for_each.h"
 #include "script.h"

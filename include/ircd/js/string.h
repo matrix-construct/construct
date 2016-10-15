@@ -25,33 +25,65 @@
 namespace ircd {
 namespace js   {
 
-JS::RootedString string(context &, const std::string &);
-std::string string(context &, JSString &);
-std::string string(context &, const JS::HandleValue &);
+// C++ --> JS
+JSString &string(context &, const std::string &);
+JS::RootedString string(context &, const std::string &, rooted_t);
+
+// JS --> C++
+std::string string(context &, const JSString &);
+std::string string(context &, const JSString *const &);
+
+std::string string(context &, const JS::Value &);
+std::string string(context &, const jsid &);
 
 
 inline std::string
 string(context &c,
-       const JS::HandleValue &s)
+       const jsid &hid)
 {
-	const auto jstr(JS::ToString(c, s));
-	return jstr? string(c, *jstr) : std::string{};
+	return string(c, id(c, hid));
 }
 
 inline std::string
 string(context &c,
-       JSString &s)
+       const JS::Value &s)
 {
-	std::string ret(JS_GetStringEncodingLength(c, &s), char());
-	JS_EncodeStringToBuffer(c, &s, &ret.front(), ret.size());
+	return s.isString()? string(c, s.toString()) : std::string{};
+}
+
+inline std::string
+string(context &c,
+       const JSString *const &s)
+{
+	return s? string(c, *s) : std::string{};
+}
+
+inline std::string
+string(context &c,
+       const JSString &s)
+{
+	std::string ret(JS_GetStringEncodingLength(c, const_cast<JSString *>(&s)), char());
+	JS_EncodeStringToBuffer(c, const_cast<JSString *>(&s), &ret.front(), ret.size());
 	return ret;
 }
 
 inline JS::RootedString
 string(context &c,
+       const std::string &s,
+       rooted_t)
+{
+	return { c, &string(c, s) };
+}
+
+inline JSString &
+string(context &c,
        const std::string &s)
 {
-	return { c, JS_NewStringCopyN(c, s.data(), s.size()) };
+	const auto ret(JS_NewStringCopyN(c, s.data(), s.size()));
+	if(unlikely(!ret))
+		std::terminate();  //TODO: exception
+
+	return *ret;
 }
 
 } // namespace js
