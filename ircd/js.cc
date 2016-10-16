@@ -488,6 +488,76 @@ ircd::js::reflect(const JSExnType &e)
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// ircd/js/compartment.h
+//
+
+ircd::js::compartment::compartment(JSObject *const &obj)
+:compartment(obj, *cx)
+{
+}
+
+ircd::js::compartment::compartment(JSObject *const &obj,
+                                   context &c)
+:c{&c}
+,prev{JS_EnterCompartment(c, obj)}
+,ours{JS_EnterCompartment(c, obj)}  // Enter same object compartment again to get its own ptr
+,cprev{static_cast<compartment *>(JS_GetCompartmentPrivate(ours))}
+{
+	JS_SetCompartmentPrivate(ours, this);
+}
+
+ircd::js::compartment::compartment(compartment &&other)
+noexcept
+:c{std::move(other.c)}
+,prev{std::move(other.prev)}
+,ours{std::move(other.ours)}
+,cprev{std::move(other.cprev)}
+{
+	JS_SetCompartmentPrivate(ours, this);
+	other.ours = nullptr;
+}
+
+ircd::js::compartment::~compartment()
+noexcept
+{
+	// branch not taken on std::move()
+	if(ours)
+	{
+		JS_SetCompartmentPrivate(ours, cprev);
+		JS_LeaveCompartment(*c, prev);
+	}
+}
+
+void
+ircd::js::for_each_compartment_our(const compartment::closure_our &closure)
+{
+	for_each_compartment([&closure]
+	(JSCompartment *const &c)
+	{
+		if(our(c))
+			closure(*our(c));
+	});
+}
+
+void
+ircd::js::for_each_compartment(const compartment::closure &closure)
+{
+	JS_IterateCompartments(*rt,
+	                       const_cast<compartment::closure *>(&closure),
+	                       compartment::handle_iterate);
+}
+
+void
+ircd::js::compartment::handle_iterate(JSRuntime *const rt,
+                                      void *const priv,
+                                      JSCompartment *const c)
+{
+	const auto &closure(*static_cast<compartment::closure *>(priv));
+	closure(c);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // ircd/js/context.h
 //
 
@@ -604,7 +674,8 @@ ircd::js::runtime::runtime(const struct opts &opts)
 	JS::SetLargeAllocationFailureCallback(get(), handle_large_allocation_failure, nullptr);
 	JS_SetGCCallback(get(), handle_gc, nullptr);
 	JS_AddFinalizeCallback(get(), handle_finalize, nullptr);
-	JS_SetDestroyCompartmentCallback(get(), handle_destroy_compartment);
+	JS_SetCompartmentNameCallback(get(), handle_compartment_name);
+	JS_SetDestroyCompartmentCallback(get(), handle_compartment_destroy);
 	JS_SetContextCallback(get(), handle_context, nullptr);
 	//JS_SetInterruptCallback(get(), nullptr);
 
@@ -666,15 +737,16 @@ ircd::js::runtime::handle_context(JSContext *const c,
 }
 
 void
-ircd::js::runtime::handle_iterate_compartments(JSRuntime *const rt,
-                                               void *const priv,
-                                               JSCompartment *const compartment)
+ircd::js::runtime::handle_compartment_destroy(JSFreeOp *const fop,
+                                              JSCompartment *const compartment)
 {
 }
 
 void
-ircd::js::runtime::handle_destroy_compartment(JSFreeOp *const fop,
-                                              JSCompartment *const compartment)
+ircd::js::runtime::handle_compartment_name(JSRuntime *const rt,
+                                           JSCompartment *const compartment,
+                                           char *const buf,
+                                           const size_t max)
 {
 }
 

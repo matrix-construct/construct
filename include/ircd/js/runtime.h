@@ -33,8 +33,8 @@ class runtime
 	static void handle_large_allocation_failure(void *);
 	static void handle_gc(JSRuntime *, JSGCStatus, void *);
 	static void handle_finalize(JSFreeOp *, JSFinalizeStatus, bool is_compartment, void *);
-	static void handle_destroy_compartment(JSFreeOp *, JSCompartment *);
-	static void handle_iterate_compartments(JSRuntime *, void *, JSCompartment *);
+	static void handle_compartment_name(JSRuntime *, JSCompartment *, char *buf, size_t);
+	static void handle_compartment_destroy(JSFreeOp *, JSCompartment *);
 	static bool handle_context(JSContext *, uint op, void *);
 	static bool handle_interrupt(JSContext *);
 
