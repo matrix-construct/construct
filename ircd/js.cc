@@ -122,7 +122,7 @@ ircd::js::trap::trap(std::string name,
 	handle_get,
 	handle_set,
 	handle_enu,
-	handle_res,
+	handle_has,
 	nullptr,           // JSConvertOp - Obsolete since SpiderMonkey 44  // 45 = mayResolve?
 	handle_dtor,
 	handle_call,
@@ -155,6 +155,7 @@ void
 ircd::js::trap::handle_dtor(JSFreeOp *const op,
                             JSObject *const obj)
 {
+	//debug("dtor");
 }
 
 bool
@@ -163,6 +164,7 @@ ircd::js::trap::handle_ctor(JSContext *const c,
                             JS::Value *const argv)
 {
 	assert(&our(c) == cx);
+	//debug("ctor");
 
 	return false;
 }
@@ -173,6 +175,7 @@ ircd::js::trap::handle_call(JSContext *const c,
                             JS::Value *const argv)
 {
 	assert(&our(c) == cx);
+	//debug("call");
 
 	return false;
 }
@@ -184,11 +187,12 @@ ircd::js::trap::handle_enu(JSContext *const c,
 	assert(&our(c) == cx);
 
 	auto &trap(from(obj));
+	trap.debug("enu");
 	return trap.on_enu(*obj.get());
 }
 
 bool
-ircd::js::trap::handle_res(JSContext *const c,
+ircd::js::trap::handle_has(JSContext *const c,
                            JS::HandleObject obj,
                            JS::HandleId id,
                            bool *const resolved)
@@ -196,7 +200,8 @@ ircd::js::trap::handle_res(JSContext *const c,
 	assert(&our(c) == cx);
 
 	auto &trap(from(obj));
-	return trap.on_res(*obj.get(), id.get(), *resolved);
+	trap.debug("has: %s", string(id).c_str());
+	return trap.on_has(*obj.get(), id.get(), *resolved);
 }
 
 bool
@@ -208,6 +213,7 @@ ircd::js::trap::handle_del(JSContext *const c,
 	assert(&our(c) == cx);
 
 	auto &trap(from(obj));
+	trap.debug("del: %s", string(id).c_str());
 	if(!trap.on_del(*obj.get(), id.get()))
 		return false;
 
@@ -224,6 +230,7 @@ ircd::js::trap::handle_get(JSContext *const c,
 	assert(&our(c) == cx);
 
 	auto &trap(from(obj));
+	trap.debug("get: %s", string(id).c_str());
 	return trap.on_get(*obj.get(), id.get(), val);
 }
 
@@ -237,6 +244,7 @@ ircd::js::trap::handle_set(JSContext *const c,
 	assert(&our(c) == cx);
 
 	auto &trap(from(obj));
+	trap.debug("set: %s", string(id).c_str());
 	return trap.on_get(*obj.get(), id.get(), val);
 }
 
@@ -249,6 +257,7 @@ ircd::js::trap::handle_add(JSContext *const c,
 	assert(&our(c) == cx);
 
 	auto &trap(from(obj));
+	trap.debug("add: %s", string(id).c_str());
 	return trap.on_add(*obj.get(), id.get(), val.get());
 }
 
@@ -259,6 +268,9 @@ ircd::js::trap::handle_inst(JSContext *const c,
                             bool *const has_instance)
 {
 	assert(&our(c) == cx);
+
+	auto &trap(from(obj));
+	trap.debug("inst");
 
 	return false;
 }
@@ -288,6 +300,24 @@ ircd::js::trap::from(const JSObject &o)
 	return *static_cast<trap *>(c->reserved[0]);  //TODO: ???
 }
 
+void
+ircd::js::trap::debug(const char *const fmt,
+                      ...)
+const
+{
+	va_list ap;
+	va_start(ap, fmt);
+
+	char buf[1024];
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	log.debug("trap(%p) \"%s\": %s",
+	          reinterpret_cast<const void *>(this),
+	          name().c_str(),
+	          buf);
+
+	va_end(ap);
+}
+
 bool
 ircd::js::trap::on_ctor(const unsigned &argc,
                         JS::Value &argv)
@@ -309,7 +339,7 @@ ircd::js::trap::on_enu(const JSObject &obj)
 }
 
 bool
-ircd::js::trap::on_res(const JSObject &obj,
+ircd::js::trap::on_has(const JSObject &obj,
                        const jsid &id,
                        bool &resolved)
 {

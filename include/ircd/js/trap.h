@@ -35,12 +35,14 @@ class trap
 	virtual bool on_set(const JSObject &, const jsid &, JS::MutableHandleValue);
 	virtual bool on_get(const JSObject &, const jsid &, JS::MutableHandleValue);
 	virtual bool on_del(const JSObject &, const jsid &);
-	virtual bool on_res(const JSObject &, const jsid &, bool &resolved);
+	virtual bool on_has(const JSObject &, const jsid &, bool &resolved);
 	virtual bool on_enu(const JSObject &);
 	virtual bool on_call(const unsigned &argc, JS::Value &argv);
 	virtual bool on_ctor(const unsigned &argc, JS::Value &argv);
 
   private:
+	void debug(const char *fmt, ...) const AFP(2, 3);
+
 	static trap &from(const JSObject &);
 	static trap &from(const JS::HandleObject &);
 
@@ -51,7 +53,7 @@ class trap
 	static bool handle_set(JSContext *, JS::HandleObject, JS::HandleId, JS::MutableHandleValue, JS::ObjectOpResult &);
 	static bool handle_get(JSContext *, JS::HandleObject, JS::HandleId, JS::MutableHandleValue);
 	static bool handle_del(JSContext *, JS::HandleObject, JS::HandleId, JS::ObjectOpResult &);
-	static bool handle_res(JSContext *, JS::HandleObject, JS::HandleId, bool *resolved);
+	static bool handle_has(JSContext *, JS::HandleObject, JS::HandleId, bool *resolved);
 	static bool handle_enu(JSContext *, JS::HandleObject);
 	static bool handle_call(JSContext *, unsigned argc, JS::Value *argv);
 	static bool handle_ctor(JSContext *, unsigned argc, JS::Value *argv);
