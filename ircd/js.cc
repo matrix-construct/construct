@@ -137,6 +137,9 @@ ircd::js::trap::trap(std::string name,
 ircd::js::trap::~trap()
 noexcept
 {
+	// Must run GC here to force reclamation of objects before
+	// the JSClass hosted by this trap destructs.
+	run_gc(*rt);
 }
 
 JSObject *
