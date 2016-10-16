@@ -1,5 +1,6 @@
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
+	@JS_CPPFLAGS@ \
 	@BOOST_CPPFLAGS@ \
 	-include $(top_srcdir)/include/ircd/ircd.h \
 	-include $(top_srcdir)/include/ircd/mods/mapi.h
@@ -52,6 +53,7 @@ future_la_SOURCES = future.cc
 require_la_SOURCES = require.cc
 events_la_SOURCES = events.cc
 assert_la_SOURCES = assert.cc
+kernel_la_SOURCES = kernel.cc
 console_la_SOURCES = console.cc
 stream_la_SOURCES = stream.cc
 crypto_la_SOURCES = crypto.cc
@@ -144,6 +146,7 @@ future.la            \
 require.la           \
 assert.la            \
 events.la            \
+kernel.la            \
 console.la           \
 stream.la            \
 crypto.la
