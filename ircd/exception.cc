@@ -41,7 +41,7 @@ noexcept
 {
 	size_t size(0);
 	const bool empty(!fmt || !fmt[0] || fmt[0] == ' ');
-	size = rb_strlcpy(buf, name, sizeof(buf));
+	size = rb_strlcat(buf, name, sizeof(buf));
 	size = rb_strlcat(buf, empty? "." : ": ", sizeof(buf));
 	if(size < sizeof(buf))
 		size += vsnprintf(buf + size, sizeof(buf) - size, fmt, ap);

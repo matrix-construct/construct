@@ -52,6 +52,8 @@ struct exception
 :std::exception
 {
   protected:
+	IRCD_OVERLOAD(generate_skip)
+
 	char buf[BUFSIZE];
 
 	ssize_t generate(const char *const &name, const char *const &fmt, va_list ap) noexcept;
@@ -63,7 +65,7 @@ struct exception
 		return buf;
 	}
 
-	exception() noexcept
+	exception(const generate_skip_t = {}) noexcept
 	{
 		buf[0] = '\0';
 	}
@@ -106,24 +108,36 @@ struct name                                                                   \
 :parent                                                                       \
 {                                                                             \
     name(const char *const fmt = " ", ...) noexcept AFP(2, 3)                 \
+    :parent{generate_skip}                                                    \
     {                                                                         \
         va_list ap;                                                           \
         va_start(ap, fmt);                                                    \
         generate(#name, fmt, ap);                                             \
         va_end(ap);                                                           \
     }                                                                         \
-};
+                                                                              \
+    name(const generate_skip_t) noexcept                                      \
+    :parent{generate_skip}                                                    \
+    {                                                                         \
+    }                                                                         \
+};                                                                            \
 
 #define IRCD_EXCEPTION_HIDENAME(parent, name)                                 \
 struct name                                                                   \
 :parent                                                                       \
 {                                                                             \
-    name(const char *const fmt = " ", ...) noexcept AFP(2, 3)                 \
+    name(const char *const fmt, ...) noexcept AFP(2, 3)                       \
+    parent{generate_skip_t}                                                   \
     {                                                                         \
         va_list ap;                                                           \
         va_start(ap, fmt);                                                    \
         generate(fmt, ap);                                                    \
         va_end(ap);                                                           \
+    }                                                                         \
+                                                                              \
+    name(const generate_skip_t = {}) noexcept                                 \
+    :parent{generate_skip}                                                    \
+    {                                                                         \
     }                                                                         \
 };
 
