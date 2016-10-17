@@ -321,6 +321,29 @@ const
 	va_end(ap);
 }
 
+void
+ircd::js::trap::host_exception(const char *const fmt,
+                               ...)
+const
+{
+	va_list ap;
+	va_start(ap, fmt);
+
+	char buf[1024];
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	log.error("trap(%p) \"%s\": %s",
+	          reinterpret_cast<const void *>(this),
+	          name().c_str(),
+	          buf);
+
+	JS_ReportError(*cx, "BUG: trap(%p) \"%s\" %s",
+	               reinterpret_cast<const void *>(this),
+	               name().c_str(),
+	               buf);
+
+	va_end(ap);
+}
+
 bool
 ircd::js::trap::on_ctor(const unsigned &argc,
                         JS::Value &argv)
@@ -415,6 +438,92 @@ ircd::js::string_convert(const char16_t *const &s)
 	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
 
     return s? converter.to_bytes(s) : std::string{};
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/js/error.h
+//
+
+ircd::js::error_handler::error_handler(closure &&handler)
+:theirs{rt->error_handler}
+,handler{std::move(handler)}
+{
+	rt->error_handler = this;
+}
+
+ircd::js::error_handler::error_handler(const closure &handler)
+:theirs{rt->error_handler}
+,handler{handler}
+{
+	rt->error_handler = this;
+}
+
+ircd::js::error_handler::~error_handler()
+noexcept
+{
+	assert(rt->error_handler == this);
+	rt->error_handler = theirs;
+}
+
+ircd::js::jserror::jserror(generate_skip_t)
+:ircd::js::error(generate_skip)
+{
+}
+
+ircd::js::jserror::jserror(const char *const fmt,
+                           ...)
+:ircd::js::error(generate_skip)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	generate(JSEXN_ERR, fmt, ap);
+	va_end(ap);
+}
+
+void
+ircd::js::jserror::set_pending()
+const
+{
+	JS::RootedValue ex(*cx, create_error());
+	JS_SetPendingException(*cx, ex);
+}
+
+JS::Value
+ircd::js::jserror::create_error(const JS::HandleObject &stack,
+                                const JS::HandleString &file,
+                                const std::pair<uint, uint> &linecol)
+const
+{
+	JS::RootedValue ret(*cx);
+	JS::RootedString msg(*cx);
+	const auto type((JSExnType)report.exnType);
+	const auto &line(linecol.first);
+	const auto &col(linecol.second);
+	if(!JS::CreateError(*cx, type, stack, file, line, col, const_cast<JSErrorReport *>(&report), msg, &ret))
+		throw error("Failed to construct jserror exception!");
+
+	return ret;
+}
+
+JS::Value
+ircd::js::jserror::create_error()
+const
+{
+	JS::RootedObject stack(*cx);
+	JS::RootedString file(*cx);
+	return create_error(stack, file, {0, 0});
+}
+
+void
+ircd::js::jserror::generate(const JSExnType &type,
+                            const char *const &fmt,
+                            va_list ap)
+{
+	ircd::exception::generate(fmt, ap);
+	msg = string_convert(what());
+	report.ucmessage = msg.c_str();
+	report.exnType = type;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -731,7 +840,8 @@ ircd::js::runtime::runtime(const struct opts &opts)
 	JS_NewRuntime(opts.maxbytes),
 	JS_DestroyRuntime
 }
-,opts(opts)
+,error_handler{nullptr}
+,opts{opts}
 {
 	// We use their privdata to find `this` via our(JSRuntime*) function.
 	// Any additional user privdata will have to ride a member in this class itself.
@@ -756,7 +866,8 @@ ircd::js::runtime::runtime(const struct opts &opts)
 ircd::js::runtime::runtime(runtime &&other)
 noexcept
 :custom_ptr<JSRuntime>{std::move(other)}
-,opts(std::move(other.opts))
+,error_handler{nullptr}
+,opts{std::move(other.opts)}
 {
 	// Branch not taken for null/defaulted instance of JSRuntime smart ptr
 	if(!!*this)
@@ -771,6 +882,7 @@ ircd::js::runtime::operator=(runtime &&other)
 noexcept
 {
 	static_cast<custom_ptr<JSRuntime> &>(*this) = std::move(other);
+	error_handler = std::move(other.error_handler);
 	opts = std::move(other.opts);
 
 	// Branch not taken for null/defaulted instance of JSRuntime smart ptr
@@ -860,6 +972,14 @@ void
 ircd::js::runtime::handle_error(JSContext *const ctx,
                                 const char *const msg,
                                 JSErrorReport *const report)
+noexcept
 {
-	log.error("JSContext(%p): %s [%s]", (const void *)ctx, msg, debug(*report).c_str());
+	if(!rt->error_handler)
+	{
+		log.error("Unhandled: JSContext(%p): %s [%s]", (const void *)ctx, msg, debug(*report).c_str());
+		return;
+	}
+
+	assert(report);
+	rt->error_handler->handler(msg, *report);
 }
