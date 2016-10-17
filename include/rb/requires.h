@@ -70,6 +70,8 @@ extern "C" {
 #include <RB_INC_ARRAY
 #include <RB_INC_VECTOR
 #include <RB_INC_STRING
+#include <RB_INC_LOCALE
+#include <RB_INC_CODECVT
 #include <RB_INC_MAP
 #include <RB_INC_SET
 #include <RB_INC_LIST

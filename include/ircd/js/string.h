@@ -25,9 +25,16 @@
 namespace ircd {
 namespace js   {
 
+// SpiderMonkey may use utf-16/char16_t strings; these will help you then
+std::string string_convert(const char16_t *const &);
+std::string string_convert(const std::u16string &);
+std::u16string string_convert(const char *const &);
+std::u16string string_convert(const std::string &);
+
 // C++ --> JS
+JSString &string(const char *const &, const size_t &len);
+JSString &string(const char *const &);
 JSString &string(const std::string &);
-JS::RootedString string(const std::string &, rooted_t);
 
 // JS --> C++
 std::string string(const JSString &);
@@ -73,7 +80,20 @@ string(const std::string &s,
 inline JSString &
 string(const std::string &s)
 {
-	const auto ret(JS_NewStringCopyN(*cx, s.data(), s.size()));
+	return string(s.data(), s.size());
+}
+
+inline JSString &
+string(const char *const &s)
+{
+	return string(s, strlen(s));
+}
+
+inline JSString &
+string(const char *const &s,
+       const size_t &len)
+{
+	const auto ret(JS_NewStringCopyN(*cx, s, len));
 	if(unlikely(!ret))
 		std::terminate();  //TODO: exception
 

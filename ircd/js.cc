@@ -382,6 +382,43 @@ ircd::js::trap::on_add(const JSObject &obj,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// ircd/js/string.h
+//
+
+inline std::u16string
+ircd::js::string_convert(const std::string &s)
+{
+	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
+
+    return converter.from_bytes(s);
+}
+
+inline std::u16string
+ircd::js::string_convert(const char *const &s)
+{
+	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
+
+    return s? converter.from_bytes(s) : std::u16string{};
+}
+
+inline std::string
+ircd::js::string_convert(const std::u16string &s)
+{
+	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
+
+    return converter.to_bytes(s);
+}
+
+inline std::string
+ircd::js::string_convert(const char16_t *const &s)
+{
+	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
+
+    return s? converter.to_bytes(s) : std::string{};
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // ircd/js/debug.h
 //
 
@@ -426,10 +463,11 @@ ircd::js::debug(const JSErrorReport &r)
 	if(r.exnType)
 		ss << reflect(JSExnType(r.exnType)) << " ";
 
-//	ss << "\"" << std::u16string(r.ucmessage) << "\" ";
+	if(r.ucmessage)
+		ss << "\"" << string_convert(r.ucmessage) << "\" ";
 
-//	for(auto it(r.messageArgs); it && *it; ++it)
-//		ss << "\"" << std::u16string(*it) << "\" ";
+	for(auto it(r.messageArgs); it && *it; ++it)
+		ss << "\"" << string_convert(*it) << "\" ";
 
 	return ss.str();
 }
