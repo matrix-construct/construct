@@ -28,15 +28,18 @@ namespace js   {
 class runtime
 :custom_ptr<JSRuntime>
 {
-	static void handle_error(JSContext *, const char *msg, JSErrorReport *);
-	static void handle_out_of_memory(JSContext *, void *);
-	static void handle_large_allocation_failure(void *);
-	static void handle_gc(JSRuntime *, JSGCStatus, void *);
-	static void handle_finalize(JSFreeOp *, JSFinalizeStatus, bool is_compartment, void *);
-	static void handle_compartment_name(JSRuntime *, JSCompartment *, char *buf, size_t);
-	static void handle_compartment_destroy(JSFreeOp *, JSCompartment *);
-	static bool handle_context(JSContext *, uint op, void *);
-	static bool handle_interrupt(JSContext *);
+	static void handle_error(JSContext *, const char *msg, JSErrorReport *) noexcept;
+	static void handle_out_of_memory(JSContext *, void *) noexcept;
+	static void handle_large_allocation_failure(void *) noexcept;
+	static void handle_gc(JSRuntime *, JSGCStatus, void *) noexcept;
+	static void handle_finalize(JSFreeOp *, JSFinalizeStatus, bool is_compartment, void *) noexcept;
+	static void handle_compartment_name(JSRuntime *, JSCompartment *, char *buf, size_t) noexcept;
+	static void handle_compartment_destroy(JSFreeOp *, JSCompartment *) noexcept;
+	static bool handle_context(JSContext *, uint op, void *) noexcept;
+	static bool handle_interrupt(JSContext *) noexcept;
+
+	friend struct error_handler;
+	struct error_handler *error_handler;         // Error reports directed at handler
 
   public:
 	struct opts

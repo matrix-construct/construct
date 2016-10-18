@@ -31,37 +31,41 @@ class trap
 	const JSClass _class;
 
 	// Override these to define JS objects in C
-	virtual bool on_add(const JSObject &, const jsid &, const JS::Value &);
-	virtual bool on_set(const JSObject &, const jsid &, JS::MutableHandleValue);
-	virtual bool on_get(const JSObject &, const jsid &, JS::MutableHandleValue);
+	virtual JS::Value on_add(const JSObject &, const jsid &, const JS::Value &);
+	virtual JS::Value on_set(const JSObject &, const jsid &, const JS::Value &);
+	virtual JS::Value on_get(const JSObject &, const jsid &, const JS::Value &);
 	virtual bool on_del(const JSObject &, const jsid &);
-	virtual bool on_has(const JSObject &, const jsid &, bool &resolved);
+	virtual bool on_has(const JSObject &, const jsid &);
 	virtual bool on_enu(const JSObject &);
 	virtual bool on_call(const unsigned &argc, JS::Value &argv);
 	virtual bool on_ctor(const unsigned &argc, JS::Value &argv);
 
   private:
+	void host_exception(const char *fmt, ...) const AFP(2, 3);
 	void debug(const char *fmt, ...) const AFP(2, 3);
 
 	static trap &from(const JSObject &);
 	static trap &from(const JS::HandleObject &);
 
 	// Internal callback interface
-	static void handle_trace(JSTracer *, JSObject *);
-	static bool handle_inst(JSContext *, JS::HandleObject, JS::MutableHandleValue, bool *yesno);
-	static bool handle_add(JSContext *, JS::HandleObject, JS::HandleId, JS::HandleValue);
-	static bool handle_set(JSContext *, JS::HandleObject, JS::HandleId, JS::MutableHandleValue, JS::ObjectOpResult &);
-	static bool handle_get(JSContext *, JS::HandleObject, JS::HandleId, JS::MutableHandleValue);
-	static bool handle_del(JSContext *, JS::HandleObject, JS::HandleId, JS::ObjectOpResult &);
-	static bool handle_has(JSContext *, JS::HandleObject, JS::HandleId, bool *resolved);
-	static bool handle_enu(JSContext *, JS::HandleObject);
-	static bool handle_call(JSContext *, unsigned argc, JS::Value *argv);
-	static bool handle_ctor(JSContext *, unsigned argc, JS::Value *argv);
-	static void handle_dtor(JSFreeOp *, JSObject *);
+	static void handle_trace(JSTracer *, JSObject *) noexcept;
+	static bool handle_inst(JSContext *, JS::HandleObject, JS::MutableHandleValue, bool *yesno) noexcept;
+	static bool handle_add(JSContext *, JS::HandleObject, JS::HandleId, JS::HandleValue) noexcept;
+	static bool handle_set(JSContext *, JS::HandleObject, JS::HandleId, JS::MutableHandleValue, JS::ObjectOpResult &) noexcept;
+	static bool handle_get(JSContext *, JS::HandleObject, JS::HandleId, JS::MutableHandleValue) noexcept;
+	static bool handle_del(JSContext *, JS::HandleObject, JS::HandleId, JS::ObjectOpResult &) noexcept;
+	static bool handle_has(JSContext *, JS::HandleObject, JS::HandleId, bool *resolved) noexcept;
+	static bool handle_enu(JSContext *, JS::HandleObject) noexcept;
+	static bool handle_call(JSContext *, unsigned argc, JS::Value *argv) noexcept;
+	static bool handle_ctor(JSContext *, unsigned argc, JS::Value *argv) noexcept;
+	static void handle_dtor(JSFreeOp *, JSObject *) noexcept;
 
   public:
 	auto &name() const                           { return _name;                                   }
 	auto &jsclass() const                        { return _class;                                  }
+
+	operator const JSClass &() const             { return jsclass();                               }
+	operator const JSClass *() const             { return &jsclass();                              }
 
 	JSObject *operator()(JS::HandleObject proto);
 	JSObject *operator()();

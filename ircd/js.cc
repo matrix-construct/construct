@@ -157,18 +157,43 @@ ircd::js::trap::operator()(JS::HandleObject proto)
 void
 ircd::js::trap::handle_dtor(JSFreeOp *const op,
                             JSObject *const obj)
+noexcept try
 {
-	//debug("dtor");
+	auto &trap(from(*obj));
+	trap.debug("dtor");
+}
+catch(const jserror &e)
+{
+	e.set_pending();
+	return;
+}
+catch(const std::exception &e)
+{
+	auto &trap(from(*obj));
+	trap.host_exception("dtor: %s", e.what());
+	return;
 }
 
 bool
 ircd::js::trap::handle_ctor(JSContext *const c,
                             unsigned argc,
                             JS::Value *const argv)
+noexcept try
 {
 	assert(&our(c) == cx);
 	//debug("ctor");
 
+	return false;
+}
+catch(const jserror &e)
+{
+	e.set_pending();
+	return false;
+}
+catch(const std::exception &e)
+{
+	//auto &trap(from(obj));
+	//trap.host_exception("call: %s", e.what());
 	return false;
 }
 
@@ -176,16 +201,29 @@ bool
 ircd::js::trap::handle_call(JSContext *const c,
                             unsigned argc,
                             JS::Value *const argv)
+noexcept try
 {
 	assert(&our(c) == cx);
 	//debug("call");
 
 	return false;
 }
+catch(const jserror &e)
+{
+	e.set_pending();
+	return false;
+}
+catch(const std::exception &e)
+{
+	//auto &trap(from(obj));
+	//trap.host_exception("call: %s", e.what());
+	return false;
+}
 
 bool
 ircd::js::trap::handle_enu(JSContext *const c,
                            JS::HandleObject obj)
+noexcept try
 {
 	assert(&our(c) == cx);
 
@@ -193,18 +231,44 @@ ircd::js::trap::handle_enu(JSContext *const c,
 	trap.debug("enu");
 	return trap.on_enu(*obj.get());
 }
+catch(const jserror &e)
+{
+	e.set_pending();
+	return false;
+}
+catch(const std::exception &e)
+{
+	auto &trap(from(obj));
+	trap.host_exception("enu: %s", e.what());
+	return false;
+}
 
 bool
 ircd::js::trap::handle_has(JSContext *const c,
                            JS::HandleObject obj,
                            JS::HandleId id,
                            bool *const resolved)
+noexcept try
 {
 	assert(&our(c) == cx);
 
 	auto &trap(from(obj));
 	trap.debug("has: %s", string(id).c_str());
-	return trap.on_has(*obj.get(), id.get(), *resolved);
+	*resolved = trap.on_has(*obj.get(), id.get());
+	return true;
+}
+catch(const jserror &e)
+{
+	e.set_pending();
+	return false;
+}
+catch(const std::exception &e)
+{
+	auto &trap(from(obj));
+	trap.host_exception("has: '%s': %s",
+	                    string(id).c_str(),
+	                    e.what());
+	return false;
 }
 
 bool
@@ -212,16 +276,29 @@ ircd::js::trap::handle_del(JSContext *const c,
                            JS::HandleObject obj,
                            JS::HandleId id,
                            JS::ObjectOpResult &res)
+noexcept try
 {
 	assert(&our(c) == cx);
 
 	auto &trap(from(obj));
 	trap.debug("del: %s", string(id).c_str());
-	if(!trap.on_del(*obj.get(), id.get()))
-		return false;
+	if(trap.on_del(*obj.get(), id.get()))
+		res.succeed();
 
-	res.succeed();
 	return true;
+}
+catch(const jserror &e)
+{
+	e.set_pending();
+	return false;
+}
+catch(const std::exception &e)
+{
+	auto &trap(from(obj));
+	trap.host_exception("del '%s': %s",
+	                    string(id).c_str(),
+	                    e.what());
+	return false;
 }
 
 bool
@@ -229,12 +306,27 @@ ircd::js::trap::handle_get(JSContext *const c,
                            JS::HandleObject obj,
                            JS::HandleId id,
                            JS::MutableHandleValue val)
+noexcept try
 {
 	assert(&our(c) == cx);
 
 	auto &trap(from(obj));
 	trap.debug("get: %s", string(id).c_str());
-	return trap.on_get(*obj.get(), id.get(), val);
+	val.set(trap.on_get(*obj.get(), id.get(), val));
+	return true;
+}
+catch(const jserror &e)
+{
+	e.set_pending();
+	return false;
+}
+catch(const std::exception &e)
+{
+	auto &trap(from(obj));
+	trap.host_exception("get: '%s': %s",
+	                    string(id).c_str(),
+	                    e.what());
+	return false;
 }
 
 bool
@@ -243,12 +335,30 @@ ircd::js::trap::handle_set(JSContext *const c,
                            JS::HandleId id,
                            JS::MutableHandleValue val,
                            JS::ObjectOpResult &res)
+noexcept try
 {
 	assert(&our(c) == cx);
 
 	auto &trap(from(obj));
 	trap.debug("set: %s", string(id).c_str());
-	return trap.on_get(*obj.get(), id.get(), val);
+	val.set(trap.on_set(*obj.get(), id.get(), val));
+	if(!val.isUndefined())
+		res.succeed();
+
+	return true;
+}
+catch(const jserror &e)
+{
+	e.set_pending();
+	return false;
+}
+catch(const std::exception &e)
+{
+	auto &trap(from(obj));
+	trap.host_exception("get: '%s': %s",
+	                    string(id).c_str(),
+	                    e.what());
+	return false;
 }
 
 bool
@@ -256,12 +366,27 @@ ircd::js::trap::handle_add(JSContext *const c,
                            JS::HandleObject obj,
                            JS::HandleId id,
                            JS::HandleValue val)
+noexcept try
 {
 	assert(&our(c) == cx);
 
 	auto &trap(from(obj));
 	trap.debug("add: %s", string(id).c_str());
-	return trap.on_add(*obj.get(), id.get(), val.get());
+	trap.on_add(*obj.get(), id.get(), val.get());
+	return true;
+}
+catch(const jserror &e)
+{
+	e.set_pending();
+	return false;
+}
+catch(const std::exception &e)
+{
+	auto &trap(from(obj));
+	trap.host_exception("add: '%s': %s",
+	                    string(id).c_str(),
+	                    e.what());
+	return false;
 }
 
 bool
@@ -269,6 +394,7 @@ ircd::js::trap::handle_inst(JSContext *const c,
                             JS::HandleObject obj,
                             JS::MutableHandleValue val,
                             bool *const has_instance)
+noexcept try
 {
 	assert(&our(c) == cx);
 
@@ -277,11 +403,36 @@ ircd::js::trap::handle_inst(JSContext *const c,
 
 	return false;
 }
+catch(const jserror &e)
+{
+	e.set_pending();
+	return false;
+}
+catch(const std::exception &e)
+{
+	auto &trap(from(obj));
+	trap.host_exception("inst: %s", e.what());
+	return false;
+}
 
 void
 ircd::js::trap::handle_trace(JSTracer *const tracer,
                              JSObject *const obj)
+noexcept try
 {
+	auto &trap(from(*obj));
+	trap.debug("trace");
+}
+catch(const jserror &e)
+{
+	e.set_pending();
+	return;
+}
+catch(const std::exception &e)
+{
+	auto &trap(from(*obj));
+	trap.host_exception("trace: %s", e.what());
+	return;
 }
 
 ircd::js::trap &
@@ -366,8 +517,7 @@ ircd::js::trap::on_enu(const JSObject &obj)
 
 bool
 ircd::js::trap::on_has(const JSObject &obj,
-                       const jsid &id,
-                       bool &resolved)
+                       const jsid &id)
 {
 	return false;
 }
@@ -379,28 +529,28 @@ ircd::js::trap::on_del(const JSObject &obj,
 	return false;
 }
 
-bool
+JS::Value
 ircd::js::trap::on_get(const JSObject &obj,
                        const jsid &id,
-                       JS::MutableHandleValue val)
+                       const JS::Value &val)
 {
-	return false;
+	return val;
 }
 
-bool
+JS::Value
 ircd::js::trap::on_set(const JSObject &obj,
                        const jsid &id,
-                       JS::MutableHandleValue val)
+                       const JS::Value &val)
 {
-	return false;
+	return val;
 }
 
-bool
+JS::Value
 ircd::js::trap::on_add(const JSObject &obj,
                        const jsid &id,
                        const JS::Value &val)
 {
-	return false;
+	return val;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -731,6 +881,7 @@ void
 ircd::js::compartment::handle_iterate(JSRuntime *const rt,
                                       void *const priv,
                                       JSCompartment *const c)
+noexcept
 {
 	const auto &closure(*static_cast<compartment::closure *>(priv));
 	closure(c);
@@ -905,6 +1056,7 @@ noexcept
 
 bool
 ircd::js::runtime::handle_interrupt(JSContext *const ctx)
+noexcept
 {
 	auto &runtime(our(ctx).runtime());
 	JS_SetInterruptCallback(runtime, nullptr);
@@ -915,6 +1067,7 @@ bool
 ircd::js::runtime::handle_context(JSContext *const c,
                                   const uint op,
                                   void *const priv)
+noexcept
 {
 	return true;
 }
@@ -922,6 +1075,7 @@ ircd::js::runtime::handle_context(JSContext *const c,
 void
 ircd::js::runtime::handle_compartment_destroy(JSFreeOp *const fop,
                                               JSCompartment *const compartment)
+noexcept
 {
 }
 
@@ -930,6 +1084,7 @@ ircd::js::runtime::handle_compartment_name(JSRuntime *const rt,
                                            JSCompartment *const compartment,
                                            char *const buf,
                                            const size_t max)
+noexcept
 {
 }
 
@@ -938,6 +1093,7 @@ ircd::js::runtime::handle_finalize(JSFreeOp *const fop,
                                    const JSFinalizeStatus status,
                                    const bool is_compartment,
                                    void *const priv)
+noexcept
 {
 	log.debug("fop(%p): %s %s",
 	          (const void *)fop,
@@ -949,6 +1105,7 @@ void
 ircd::js::runtime::handle_gc(JSRuntime *const rt,
                              const JSGCStatus status,
                              void *const priv)
+noexcept
 {
 	log.debug("runtime(%p): GC %s",
 	          (const void *)rt,
@@ -957,6 +1114,7 @@ ircd::js::runtime::handle_gc(JSRuntime *const rt,
 
 void
 ircd::js::runtime::handle_large_allocation_failure(void *const priv)
+noexcept
 {
 	log.error("Large allocation failure");
 }
@@ -964,6 +1122,7 @@ ircd::js::runtime::handle_large_allocation_failure(void *const priv)
 void
 ircd::js::runtime::handle_out_of_memory(JSContext *const ctx,
                                         void *const priv)
+noexcept
 {
 	log.error("JSContext(%p): out of memory", (const void *)ctx);
 }
