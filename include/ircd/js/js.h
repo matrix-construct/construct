@@ -65,6 +65,8 @@ JSVersion version(const char *const &v)          { return JS_StringToVersion(v);
 #include "error.h"
 #include "id.h"
 #include "string.h"
+#include "priv.h"
+#include "get.h"
 #include "for_each.h"
 #include "script.h"
 #include "debug.h"
