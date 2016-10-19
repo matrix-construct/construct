@@ -67,8 +67,8 @@ class trap
 	operator const JSClass &() const             { return jsclass();                               }
 	operator const JSClass *() const             { return &jsclass();                              }
 
-	JSObject *operator()(JS::HandleObject proto);
-	JSObject *operator()();
+	object operator()(const object &proto);
+	object operator()();
 
 	trap(std::string name, const uint32_t &flags = 0);
 	trap(trap &&) = delete;

@@ -20,86 +20,91 @@
  */
 
 #pragma once
-#define HAVE_IRCD_JS_ID_H
+#define HAVE_IRCD_JS_OBJECT_H
 
 namespace ircd {
 namespace js   {
 
-struct id
-:JS::Rooted<jsid>
+struct object
+:JS::Rooted<JSObject *>
 {
-	id(const JSProtoKey &);
-	id(const uint32_t &);
-	id(const jsid &);
-	id(const JS::HandleString &);
-	id(const JS::HandleValue &);
-	id(const JS::MutableHandleId &);
-	id(const JS::HandleId &);
-	id();
-	id(id &&) noexcept;
-	id(const id &) = delete;
+	operator JS::Value() const;
+
+	// new object
+	object(const JSClass *const &, const object &proto);
+	object(const JSClass *const &);
+
+	object(JSObject *const &);
+	object(const value &);
+	object();
+	object(object &&) noexcept;
+	object(const object &) = delete;
+	object &operator=(object &&) noexcept;
 };
 
 inline
-id::id()
-:JS::Rooted<jsid>{*cx}
+object::object()
+:JS::Rooted<JSObject *>{*cx}
 {
 }
 
 inline
-id::id(id &&other)
+object::object(object &&other)
 noexcept
-:JS::Rooted<jsid>{*cx, other}
+:JS::Rooted<JSObject *>{*cx, other}
+{
+	other.set(nullptr);
+}
+
+inline object &
+object::operator=(object &&other)
+noexcept
+{
+	set(other.get());
+	other.set(nullptr);
+	return *this;
+}
+
+inline
+object::object(const value &val)
+:JS::Rooted<JSObject *>{*cx}
+{
+	if(!JS_ValueToObject(*cx, val, &(*this)))
+		throw type_error("Value is not an Object");
+}
+
+inline
+object::object(JSObject *const &obj)
+:JS::Rooted<JSObject *>{*cx, obj}
 {
 }
 
 inline
-id::id(const jsid &i)
-:JS::Rooted<jsid>{*cx, i}
+object::object(const JSClass *const &clasp)
+:JS::Rooted<JSObject *>
+{
+	*cx,
+	JS_NewObject(*cx, clasp)
+}
 {
 }
 
 inline
-id::id(const JS::HandleId &h)
-:JS::Rooted<jsid>{*cx, h}
+object::object(const JSClass *const &clasp,
+               const object &proto)
+:JS::Rooted<JSObject *>
+{
+	*cx,
+	JS_NewObjectWithGivenProto(*cx, clasp, proto)
+}
 {
 }
 
 inline
-id::id(const JS::MutableHandleId &h)
-:JS::Rooted<jsid>{*cx, h}
+object::operator JS::Value()
+const
 {
-}
-
-inline
-id::id(const JS::HandleValue &h)
-:JS::Rooted<jsid>{*cx}
-{
-	if(!JS_ValueToId(*cx, h, &(*this)))
-		throw type_error("Failed to construct id from Value");
-}
-
-inline
-id::id(const JS::HandleString &h)
-:JS::Rooted<jsid>{*cx}
-{
-	if(!JS_StringToId(*cx, h, &(*this)))
-		throw type_error("Failed to construct id from String");
-}
-
-inline
-id::id(const uint32_t &index)
-:JS::Rooted<jsid>{*cx}
-{
-	if(!JS_IndexToId(*cx, index, &(*this)))
-		throw type_error("Failed to construct id from uint32_t index");
-}
-
-inline
-id::id(const JSProtoKey &key)
-:JS::Rooted<jsid>{*cx}
-{
-	JS::ProtoKeyToId(*cx, key, &(*this));
+	return get()? JS::ObjectValue(*get()) : JS::NullValue();
 }
 
 } // namespace js

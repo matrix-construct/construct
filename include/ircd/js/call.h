@@ -20,31 +20,53 @@
  */
 
 #pragma once
-#define HAVE_IRCD_JS_GET_H
+#define HAVE_IRCD_JS_CALL_H
 
 namespace ircd {
 namespace js   {
 
 inline value
-get(const object &obj,
-    const char *const name)
+call(const object &obj,
+     const JS::HandleFunction &func,
+     const JS::HandleValueArray &args = JS::HandleValueArray::empty())
 {
 	value ret;
-	if(!JS_GetProperty(*cx, obj, name, &ret))
-		throw reference_error("%s", name);
+	if(!JS_CallFunction(*cx, obj, func, args, &ret))
+		throw internal_error("Failed to call function");
 
 	return ret;
 }
 
 inline value
-get(const object &obj,
-    const id &id)
+call(const object &obj,
+     const JS::HandleValue &val,
+     const JS::HandleValueArray &args)
 {
 	value ret;
-	if(!JS_GetPropertyById(*cx, obj, id, &ret))
-		throw reference_error("%s", string(id).c_str());
+	if(!JS_CallFunctionValue(*cx, obj, val, args, &ret))
+		throw internal_error("Failed to apply function value to object");
 
 	return ret;
+}
+
+inline value
+call(const object &obj,
+     const char *const &name,
+     const JS::HandleValueArray &args)
+{
+	value ret;
+	if(!JS_CallFunctionName(*cx, obj, name, args, &ret))
+		throw reference_error("Failed to call function \"%s\"", name);
+
+	return ret;
+}
+
+inline value
+call(const object &obj,
+     const std::string &name,
+     const JS::HandleValueArray &args)
+{
+	return call(obj, name.c_str(), args);
 }
 
 } // namespace js

@@ -25,79 +25,109 @@
 namespace ircd {
 namespace js   {
 
-// SpiderMonkey may use utf-16/char16_t strings; these will help you then
-std::string string_convert(const char16_t *const &);
-std::string string_convert(const std::u16string &);
-std::u16string string_convert(const char *const &);
-std::u16string string_convert(const std::string &);
-
-// C++ --> JS
-JSString &string(const char *const &, const size_t &len);
-JSString &string(const char *const &);
-JSString &string(const std::string &);
-
-// JS --> C++
-std::string string(const JSString &);
-std::string string(const JSString *const &);
-
-std::string string(const JS::Value &);
-std::string string(const jsid &);
-
-
-inline std::string
-string(const jsid &hid)
+struct string
+:JS::Rooted<JSString *>
 {
-	return string(id(hid));
+	// SpiderMonkey may use utf-16/char16_t strings; these will help you then
+	static std::string convert(const char16_t *const &);
+	static std::string convert(const std::u16string &);
+	static std::u16string convert(const char *const &);
+	static std::u16string convert(const std::string &);
+
+	static constexpr size_t CBUFSZ = 1024;
+	static constexpr size_t CBUFS = 8;
+	const char *c_str() const;                   // Copy into rotating buf
+
+	explicit operator std::string() const;
+	operator JS::Value() const;
+
+	string(const char *const &, const size_t &len);
+	explicit string(const std::string &);
+	string(const char *const &);
+	string(JSString *const &);
+	string(const value &);
+	string();
+	string(string &&) noexcept;
+	string(const string &) = delete;
+
+	friend std::ostream &operator<<(std::ostream &os, const string &s);
+};
+
+inline
+string::string()
+:JS::Rooted<JSString *>{*cx}
+{
 }
 
-inline std::string
-string(const JS::Value &s)
+inline
+string::string(string &&other)
+noexcept
+:JS::Rooted<JSString *>{*cx, other}
 {
-	return s.isString()? string(s.toString()) : std::string{};
 }
 
-inline std::string
-string(const JSString *const &s)
+inline
+string::string(const value &val)
+:JS::Rooted<JSString *>
 {
-	return s? string(*s) : std::string{};
+	*cx,
+	JS::ToString(*cx, val)
+}
+{
 }
 
-inline std::string
-string(const JSString &s)
+inline
+string::string(JSString *const &val)
+:JS::Rooted<JSString *>{*cx, val}
 {
-	std::string ret(JS_GetStringEncodingLength(*cx, const_cast<JSString *>(&s)), char());
-	JS_EncodeStringToBuffer(*cx, const_cast<JSString *>(&s), &ret.front(), ret.size());
+}
+
+inline
+string::string(const std::string &s)
+:string(s.data(), s.size())
+{
+}
+
+inline
+string::string(const char *const &s)
+:string(s, strlen(s))
+{
+}
+
+inline
+string::string(const char *const &s,
+               const size_t &len)
+:JS::Rooted<JSString *>
+{
+	*cx,
+	JS_NewStringCopyN(*cx, s, len)
+}
+{
+	if(unlikely(!get()))
+		throw type_error("Failed to construct string from character array");
+}
+
+inline
+string::operator JS::Value()
+const
+{
+	return JS::StringValue(get());
+}
+
+inline
+string::operator std::string()
+const
+{
+	std::string ret(JS_GetStringEncodingLength(*cx, const_cast<JSString *>(get())), char());
+	JS_EncodeStringToBuffer(*cx, const_cast<JSString *>(get()), &ret.front(), ret.size());
 	return ret;
 }
 
-inline JS::RootedString
-string(const std::string &s,
-       rooted_t)
+inline
+std::ostream &operator<<(std::ostream &os, const string &s)
 {
-	return { *cx, &string(s) };
-}
-
-inline JSString &
-string(const std::string &s)
-{
-	return string(s.data(), s.size());
-}
-
-inline JSString &
-string(const char *const &s)
-{
-	return string(s, strlen(s));
-}
-
-inline JSString &
-string(const char *const &s,
-       const size_t &len)
-{
-	const auto ret(JS_NewStringCopyN(*cx, s, len));
-	if(unlikely(!ret))
-		std::terminate();  //TODO: exception
-
-	return *ret;
+	os << std::string(s);
+	return os;
 }
 
 } // namespace js

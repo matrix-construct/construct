@@ -25,43 +25,43 @@
 namespace ircd {
 namespace js   {
 
-using closure_id = std::function<void (const JS::HandleId &)>;
-using closure_key_val = std::function<void (JS::HandleValue, JS::HandleValue)>;
-using closure_mutable_key_val = std::function<void (JS::HandleValue, JS::MutableHandleValue)>;
+using closure_id = std::function<void (const id &)>;
+using closure_key_val = std::function<void (const value &, const value &)>;
+using closure_mutable_key_val = std::function<void (const value &, value &)>;
 
-void for_each(const JS::HandleObject &, const closure_id &);
-void for_each(const JS::HandleObject &, const closure_key_val &);
-void for_each(const JS::MutableHandleObject &, const closure_mutable_key_val &);
+void for_each(const object &, const closure_id &);
+void for_each(const object &, const closure_key_val &);
+void for_each(object &, const closure_mutable_key_val &);
 
 
 inline void
-for_each(const JS::MutableHandleObject &obj,
+for_each(object &obj,
          const closure_mutable_key_val &closure)
 {
 	for_each(obj, [&obj, &closure]
-	(const JS::HandleId &hid)
+	(const id &hid)
 	{
-		JS::RootedValue key(*cx, id(hid)), val(*cx);
-		JS_GetPropertyById(*cx, obj, hid, &val);
-		closure(key, &val);
-	});
-}
-
-inline void
-for_each(const JS::HandleObject &obj,
-         const closure_key_val &closure)
-{
-	for_each(obj, [&obj, &closure]
-	(const JS::HandleId &hid)
-	{
-		JS::RootedValue key(*cx, id(hid)), val(*cx);
-		JS_GetPropertyById(*cx, obj, hid, &val);
+		value val(get(obj, hid));
+		const value key(hid);
 		closure(key, val);
 	});
 }
 
 inline void
-for_each(const JS::HandleObject &obj,
+for_each(const object &obj,
+         const closure_key_val &closure)
+{
+	for_each(obj, [&obj, &closure]
+	(const id &hid)
+	{
+		const value val(get(obj, hid));
+		const value key(hid);
+		closure(key, val);
+	});
+}
+
+inline void
+for_each(const object &obj,
          const closure_id &closure)
 {
 	JS::Rooted<JS::IdVector> props(*cx, JS::IdVector(cx->ptr()));

@@ -159,16 +159,16 @@ noexcept
 	run_gc(*rt);
 }
 
-JSObject *
+ircd::js::object
 ircd::js::trap::operator()()
 {
-	return JS_NewObject(*cx, &_class);
+	return { &_class };
 }
 
-JSObject *
-ircd::js::trap::operator()(JS::HandleObject proto)
+ircd::js::object
+ircd::js::trap::operator()(const object &proto)
 {
-	return JS_NewObjectWithGivenProto(*cx, &_class, proto);
+	return object { &_class, proto };
 }
 
 void
@@ -572,35 +572,81 @@ ircd::js::trap::on_add(const JSObject &obj,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// ircd/js/function.h
+//
+
+ircd::js::function::function(JS::AutoObjectVector &stack,
+                             const JS::CompileOptions &opts,
+                             const char *const &name,
+                             const std::vector<std::string> &args,
+                             const std::string &src)
+:JS::Rooted<JSFunction *>{*cx}
+{
+	std::vector<const char *> argp(args.size());
+	std::transform(begin(args), end(args), begin(argp), []
+	(const std::string &arg)
+	{
+		return arg.data();
+	});
+
+	if(!JS::CompileFunction(*cx,
+	                        stack,
+	                        opts,
+	                        name,
+	                        argp.size(),
+	                        &argp.front(),
+	                        src.data(),
+	                        src.size(),
+	                        &(*this)))
+	{
+		throw syntax_error("Failed to compile function");
+	}
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // ircd/js/string.h
 //
 
-inline std::u16string
-ircd::js::string_convert(const std::string &s)
+const char *
+ircd::js::string::c_str()
+const
+{
+	static thread_local char cbuf[CBUFS][CBUFSZ];
+	static thread_local size_t ctr;
+
+	char *const buf(cbuf[ctr]);
+	JS_EncodeStringToBuffer(*cx, const_cast<JSString *>(get()), buf, CBUFSZ);
+	ctr = (ctr + 1) % CBUFS;
+	return buf;
+}
+
+std::u16string
+ircd::js::string::convert(const std::string &s)
 {
 	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
 
     return converter.from_bytes(s);
 }
 
-inline std::u16string
-ircd::js::string_convert(const char *const &s)
+std::u16string
+ircd::js::string::convert(const char *const &s)
 {
 	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
 
     return s? converter.from_bytes(s) : std::u16string{};
 }
 
-inline std::string
-ircd::js::string_convert(const std::u16string &s)
+std::string
+ircd::js::string::convert(const std::u16string &s)
 {
 	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
 
     return converter.to_bytes(s);
 }
 
-inline std::string
-ircd::js::string_convert(const char16_t *const &s)
+std::string
+ircd::js::string::convert(const char16_t *const &s)
 {
 	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
 
@@ -688,7 +734,7 @@ ircd::js::jserror::generate(const JSExnType &type,
                             va_list ap)
 {
 	ircd::exception::generate(fmt, ap);
-	msg = string_convert(what());
+	msg = string::convert(what());
 	report.ucmessage = msg.c_str();
 	report.exnType = type;
 }
@@ -740,10 +786,10 @@ ircd::js::debug(const JSErrorReport &r)
 		ss << reflect(JSExnType(r.exnType)) << " ";
 
 	if(r.ucmessage)
-		ss << "\"" << string_convert(r.ucmessage) << "\" ";
+		ss << "\"" << string::convert(r.ucmessage) << "\" ";
 
 	for(auto it(r.messageArgs); it && *it; ++it)
-		ss << "\"" << string_convert(*it) << "\" ";
+		ss << "\"" << string::convert(*it) << "\" ";
 
 	return ss.str();
 }
