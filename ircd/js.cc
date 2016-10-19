@@ -572,6 +572,41 @@ ircd::js::trap::on_add(const JSObject &obj,
 
 ///////////////////////////////////////////////////////////////////////////////
 //
+// ircd/js/script.h
+//
+
+ircd::js::script::script(const JS::CompileOptions &opts,
+                         const std::string &src)
+:JS::Rooted<JSScript *>{*cx}
+{
+	if(!JS::Compile(*cx, opts, src.data(), src.size(), &(*this)))
+		throw syntax_error("Failed to compile script");
+}
+
+ircd::js::value
+ircd::js::script::operator()()
+const
+{
+	value ret;
+	if(!JS_ExecuteScript(*cx, *this, &ret))
+		throw internal_error("Failed to execute script");
+
+	return ret;
+}
+
+ircd::js::value
+ircd::js::script::operator()(JS::AutoObjectVector &stack)
+const
+{
+	value ret;
+	if(!JS_ExecuteScript(*cx, stack, *this, &ret))
+		throw internal_error("Failed to execute script");
+
+	return ret;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
 // ircd/js/function.h
 //
 
@@ -601,6 +636,74 @@ ircd::js::function::function(JS::AutoObjectVector &stack,
 	{
 		throw syntax_error("Failed to compile function");
 	}
+}
+
+ircd::js::value
+ircd::js::function::operator()(const object &that)
+const
+{
+	return operator()(that, JS::HandleValueArray::empty());
+}
+
+ircd::js::value
+ircd::js::function::operator()(const object &that,
+                               const JS::HandleValueArray &args)
+const
+{
+	value ret;
+	if(!JS_CallFunction(*cx, that, *this, args, &ret))
+		throw internal_error("Failed to call Function");
+
+	return ret;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/js/call.h
+//
+
+ircd::js::value
+ircd::js::call(const object &obj,
+               const JS::HandleFunction &func,
+               const JS::HandleValueArray &args)
+{
+	value ret;
+	if(!JS_CallFunction(*cx, obj, func, args, &ret))
+		throw internal_error("Failed to call function");
+
+	return ret;
+}
+
+ircd::js::value
+ircd::js::call(const object &obj,
+               const JS::HandleValue &val,
+               const JS::HandleValueArray &args)
+{
+	value ret;
+	if(!JS_CallFunctionValue(*cx, obj, val, args, &ret))
+		throw internal_error("Failed to apply function value to object");
+
+	return ret;
+}
+
+ircd::js::value
+ircd::js::call(const object &obj,
+               const char *const &name,
+               const JS::HandleValueArray &args)
+{
+	value ret;
+	if(!JS_CallFunctionName(*cx, obj, name, args, &ret))
+		throw reference_error("Failed to call function \"%s\"", name);
+
+	return ret;
+}
+
+ircd::js::value
+ircd::js::call(const object &obj,
+               const std::string &name,
+               const JS::HandleValueArray &args)
+{
+	return call(obj, name.c_str(), args);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

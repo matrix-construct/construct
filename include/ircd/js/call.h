@@ -25,49 +25,25 @@
 namespace ircd {
 namespace js   {
 
-inline value
+value
 call(const object &obj,
      const JS::HandleFunction &func,
-     const JS::HandleValueArray &args = JS::HandleValueArray::empty())
-{
-	value ret;
-	if(!JS_CallFunction(*cx, obj, func, args, &ret))
-		throw internal_error("Failed to call function");
+     const JS::HandleValueArray &args = JS::HandleValueArray::empty());
 
-	return ret;
-}
-
-inline value
+value
 call(const object &obj,
      const JS::HandleValue &val,
-     const JS::HandleValueArray &args)
-{
-	value ret;
-	if(!JS_CallFunctionValue(*cx, obj, val, args, &ret))
-		throw internal_error("Failed to apply function value to object");
+     const JS::HandleValueArray &args = JS::HandleValueArray::empty());
 
-	return ret;
-}
-
-inline value
+value
 call(const object &obj,
      const char *const &name,
-     const JS::HandleValueArray &args)
-{
-	value ret;
-	if(!JS_CallFunctionName(*cx, obj, name, args, &ret))
-		throw reference_error("Failed to call function \"%s\"", name);
+     const JS::HandleValueArray &args = JS::HandleValueArray::empty());
 
-	return ret;
-}
-
-inline value
+value
 call(const object &obj,
      const std::string &name,
-     const JS::HandleValueArray &args)
-{
-	return call(obj, name.c_str(), args);
-}
+     const JS::HandleValueArray &args = JS::HandleValueArray::empty());
 
 } // namespace js
 } // namespace ircd

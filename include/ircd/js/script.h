@@ -26,19 +26,34 @@ namespace ircd {
 namespace js   {
 
 struct script
+:JS::Rooted<JSScript *>
 {
+	value operator()(JS::AutoObjectVector &stack) const;
+	value operator()() const;
+
+	script(const JS::CompileOptions &opts, const std::string &src);    // new script
+	script(JSScript *const &);
 	script();
-	~script() noexcept;
+	script(script &&) noexcept;
+	script(const script &) = delete;
 };
 
 inline
 script::script()
+:JS::Rooted<JSScript *>{*cx}
 {
 }
 
 inline
-script::~script()
+script::script(script &&other)
 noexcept
+:JS::Rooted<JSScript *>{*cx, other}
+{
+}
+
+inline
+script::script(JSScript *const &val)
+:JS::Rooted<JSScript *>{*cx, val}
 {
 }
 

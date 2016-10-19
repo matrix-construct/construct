@@ -90,25 +90,6 @@ function::function(JSFunction *const &func)
 {
 }
 
-inline value
-function::operator()(const object &that)
-const
-{
-	return operator()(that, JS::HandleValueArray::empty());
-}
-
-inline value
-function::operator()(const object &that,
-                     const JS::HandleValueArray &args)
-const
-{
-	value ret;
-	if(!JS_CallFunction(*cx, that, *this, args, &ret))
-		throw internal_error("Failed to call Function");
-
-	return ret;
-}
-
 inline string
 name(const function &f)
 {
