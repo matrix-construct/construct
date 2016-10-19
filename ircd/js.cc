@@ -55,6 +55,7 @@ struct log::log log
 //
 
 ircd::js::init::init()
+try
 {
 	log.info("Initializing the JS engine [%s: %s]",
 	         "SpiderMonkey",
@@ -72,11 +73,27 @@ ircd::js::init::init()
 	mc = context(main, context_opts);
 	log.info("Initialized main JS Runtime and context (version: '%s')",
 	         version(mc));
+
+	{
+		context::lock lock;
+		ircd::mods::load("kernel");
+	}
+}
+catch(...)
+{
+	this->~init();
+	throw;
 }
 
 ircd::js::init::~init()
 noexcept
 {
+	if(cx && !!*cx)
+	{
+		context::lock lock;
+		ircd::mods::unload("kernel");
+	}
+
 	log.info("Terminating the main JS Runtime");
 
 	// Assign empty objects to free and reset
