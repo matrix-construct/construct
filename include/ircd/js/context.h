@@ -80,40 +80,22 @@ template<class T = privdata> const T *priv(const context &);
 template<class T = privdata> T *priv(context &);
 void priv(context &, privdata *const &);
 
-auto version(const context &c)                   { return version(JS_GetVersion(c));               }
-auto running(const context &c)                   { return JS_IsRunning(c);                         }
-auto uncaught_exception(const context &c)        { return JS_IsExceptionPending(c);                }
-auto rethrow_exception(context &c)               { return JS_ReportPendingException(c);            }
-auto interrupted(const context &c)               { return JS_CheckForInterrupt(c);                 }
-void out_of_memory(context &c)                   { JS_ReportOutOfMemory(c);                        }
-void allocation_overflow(context &c)             { JS_ReportAllocationOverflow(c);                 }
-void run_gc(context &c)                          { JS_MaybeGC(c);                                  }
-
+inline auto version(const context &c)            { return version(JS_GetVersion(c));               }
+inline auto running(const context &c)            { return JS_IsRunning(c);                         }
+inline auto uncaught_exception(const context &c) { return JS_IsExceptionPending(c);                }
+inline auto rethrow_exception(context &c)        { return JS_ReportPendingException(c);            }
+inline auto interrupted(const context &c)        { return JS_CheckForInterrupt(c);                 }
+inline void out_of_memory(context &c)            { JS_ReportOutOfMemory(c);                        }
+inline void allocation_overflow(context &c)      { JS_ReportAllocationOverflow(c);                 }
+inline void run_gc(context &c)                   { JS_MaybeGC(c);                                  }
 JSObject *current_global(context &c);
-JS::RootedObject current_global(context &c, rooted_t);
+JSObject *current_global();                      // thread_local
 
-// thread_local
-JSObject *current_global();
-JS::RootedObject current_global(rooted_t);
-
-
-inline JS::RootedObject
-current_global(rooted_t)
-{
-	return { *cx, current_global(*cx, rooted) };
-}
 
 inline JSObject *
 current_global()
 {
 	return current_global(*cx);
-}
-
-inline JS::RootedObject
-current_global(context &c,
-               rooted_t)
-{
-	return { c, current_global(c, rooted) };
 }
 
 inline JSObject *

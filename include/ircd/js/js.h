@@ -42,10 +42,6 @@
 namespace ircd {
 namespace js   {
 
-// Used for some convenience overloads which return a value already registered with
-// the garbage collection rather than naked pointer.
-IRCD_OVERLOAD(rooted)
-
 // Extend this class to store your data with any priv(),
 // i.e priv(runtime, privdata*) or priv(context, privdata*) etc
 struct privdata
@@ -53,8 +49,8 @@ struct privdata
 	virtual ~privdata() noexcept = 0;            // Your object is managed by the host
 };
 
-const char *version(const JSVersion &v)          { return JS_VersionToString(v);                   }
-JSVersion version(const char *const &v)          { return JS_StringToVersion(v);                   }
+inline const char *version(const JSVersion &v)   { return JS_VersionToString(v);                   }
+inline JSVersion version(const char *const &v)   { return JS_StringToVersion(v);                   }
 
 } // namespace js
 } // namespace ircd
