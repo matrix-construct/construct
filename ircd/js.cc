@@ -134,7 +134,7 @@ ircd::js::trap::trap(std::string name,
 {
 	this->_name.c_str(),
 	flags,
-	handle_add,
+	handle_add, // flags & JSCLASS_GLOBAL_FLAGS? nullptr : handle_add,
 	handle_del,
 	handle_get,
 	handle_set,
@@ -145,7 +145,7 @@ ircd::js::trap::trap(std::string name,
 	handle_call,
 	handle_inst,
 	handle_ctor,
-	handle_trace,
+	flags & JSCLASS_GLOBAL_FLAGS? JS_GlobalObjectTraceHook : handle_trace,
 	{ this }           // reserved[0] TODO: ?????????
 }
 {
