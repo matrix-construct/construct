@@ -117,6 +117,14 @@ ircd::js::version(const ver &type)
 	}
 }
 
+void
+__attribute__((noreturn))
+js::ReportOutOfMemory(ExclusiveContext *const c)
+{
+	ircd::js::log.critical("jsalloc(): Reported out of memory (ExclusiveContext: %p)", (const void *)c);
+	std::terminate();
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // ircd/js/js.h - With 3rd party (JSAPI) symbols
