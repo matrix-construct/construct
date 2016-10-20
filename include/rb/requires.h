@@ -69,6 +69,7 @@ extern "C" {
 #include <RB_INC_SYSTEM_ERROR
 #include <RB_INC_ARRAY
 #include <RB_INC_VECTOR
+#include <RB_INC_STACK
 #include <RB_INC_STRING
 #include <RB_INC_LOCALE
 #include <RB_INC_CODECVT

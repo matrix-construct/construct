@@ -278,7 +278,7 @@ noexcept try
 	assert(&our(c) == cx);
 
 	auto &trap(from(obj));
-	trap.debug("has: %s", string(id).c_str());
+	trap.debug("has: '%s'", string(id).c_str());
 	*resolved = trap.on_has(*obj.get(), id.get());
 	return true;
 }
@@ -306,7 +306,7 @@ noexcept try
 	assert(&our(c) == cx);
 
 	auto &trap(from(obj));
-	trap.debug("del: %s", string(id).c_str());
+	trap.debug("del: '%s'", string(id).c_str());
 	if(trap.on_del(*obj.get(), id.get()))
 		res.succeed();
 
@@ -336,7 +336,7 @@ noexcept try
 	assert(&our(c) == cx);
 
 	auto &trap(from(obj));
-	trap.debug("get: %s", string(id).c_str());
+	trap.debug("get: '%s'", string(id).c_str());
 	val.set(trap.on_get(*obj.get(), id.get(), val));
 	return true;
 }
@@ -365,7 +365,7 @@ noexcept try
 	assert(&our(c) == cx);
 
 	auto &trap(from(obj));
-	trap.debug("set: %s", string(id).c_str());
+	trap.debug("set: '%s'", string(id).c_str());
 	val.set(trap.on_set(*obj.get(), id.get(), val));
 	if(!val.isUndefined())
 		res.succeed();
@@ -380,7 +380,7 @@ catch(const jserror &e)
 catch(const std::exception &e)
 {
 	auto &trap(from(obj));
-	trap.host_exception("get: '%s': %s",
+	trap.host_exception("set: '%s': %s",
 	                    string(id).c_str(),
 	                    e.what());
 	return false;
@@ -396,7 +396,7 @@ noexcept try
 	assert(&our(c) == cx);
 
 	auto &trap(from(obj));
-	trap.debug("add: %s", string(id).c_str());
+	trap.debug("add: '%s'", string(id).c_str());
 	trap.on_add(*obj.get(), id.get(), val.get());
 	return true;
 }
@@ -597,7 +597,7 @@ const
 {
 	value ret;
 	if(!JS_ExecuteScript(*cx, *this, &ret))
-		throw internal_error("Failed to execute script");
+		throw jserror(jserror::pending);
 
 	return ret;
 }
@@ -608,7 +608,7 @@ const
 {
 	value ret;
 	if(!JS_ExecuteScript(*cx, stack, *this, &ret))
-		throw internal_error("Failed to execute script");
+		throw jserror(jserror::pending);
 
 	return ret;
 }
@@ -660,7 +660,7 @@ const
 {
 	value ret;
 	if(!JS_CallFunction(*cx, that, *this, args, &ret))
-		throw internal_error("Failed to call Function");
+		throw jserror(jserror::pending);
 
 	return ret;
 }
@@ -677,7 +677,7 @@ ircd::js::call(const object &obj,
 {
 	value ret;
 	if(!JS_CallFunction(*cx, obj, func, args, &ret))
-		throw internal_error("Failed to call function");
+		throw jserror(jserror::pending);
 
 	return ret;
 }
@@ -689,7 +689,7 @@ ircd::js::call(const object &obj,
 {
 	value ret;
 	if(!JS_CallFunctionValue(*cx, obj, val, args, &ret))
-		throw internal_error("Failed to apply function value to object");
+		throw jserror(jserror::pending);
 
 	return ret;
 }
@@ -701,7 +701,7 @@ ircd::js::call(const object &obj,
 {
 	value ret;
 	if(!JS_CallFunctionName(*cx, obj, name, args, &ret))
-		throw reference_error("Failed to call function \"%s\"", name);
+		throw jserror(jserror::pending);
 
 	return ret;
 }
@@ -821,35 +821,22 @@ ircd::js::native_size(const JSString *const &s)
 // ircd/js/error.h
 //
 
-ircd::js::error_handler::error_handler(closure &&handler)
-:theirs{rt->error_handler}
-,handler{std::move(handler)}
+ircd::js::jserror::jserror(const JS::Value &val)
+:ircd::js::error{generate_skip}
+,val{*cx, val}
 {
-	rt->error_handler = this;
-}
-
-ircd::js::error_handler::error_handler(const closure &handler)
-:theirs{rt->error_handler}
-,handler{handler}
-{
-	rt->error_handler = this;
-}
-
-ircd::js::error_handler::~error_handler()
-noexcept
-{
-	assert(rt->error_handler == this);
-	rt->error_handler = theirs;
 }
 
 ircd::js::jserror::jserror(generate_skip_t)
 :ircd::js::error(generate_skip)
+,val{*cx}
 {
 }
 
 ircd::js::jserror::jserror(const char *const fmt,
                            ...)
-:ircd::js::error(generate_skip)
+:ircd::js::error{generate_skip}
+,val{*cx}
 {
 	va_list ap;
 	va_start(ap, fmt);
@@ -857,38 +844,62 @@ ircd::js::jserror::jserror(const char *const fmt,
 	va_end(ap);
 }
 
+ircd::js::jserror::jserror(const JSErrorReport &report)
+:ircd::js::error{generate_skip}
+,val{*cx}
+{
+	create(report);
+}
+
+ircd::js::jserror::jserror(pending_t)
+:ircd::js::error{generate_skip}
+,val{*cx}
+{
+	auto report(pop_exception(*cx));
+	if(report.flags & JSREPORT_EXCEPTION &&
+	   report.errorNumber != 105)
+	{
+		JS::RootedObject obj(*cx, &val.toObject());
+		if(likely(JS_ErrorFromException(*cx, obj)))
+			report = *JS_ErrorFromException(*cx, obj);
+
+		const auto msg(report.ucmessage? string::convert(report.ucmessage) : std::string{});
+		snprintf(ircd::exception::buf, sizeof(ircd::exception::buf), "%s%s%s",
+		         reflect((JSExnType)report.exnType),
+		         msg.empty()? "." : ": ",
+		         msg.c_str());
+
+		return;
+	}
+
+	switch(report.errorNumber)
+	{
+		case 61: // JSAPI's code for interruption
+			snprintf(ircd::exception::buf, sizeof(ircd::exception::buf),
+			         "interrupted @ line: %u col: %u",
+			         report.lineno,
+			         report.column);
+			break;
+
+		case 105: // JSAPI's code for user reported error
+			snprintf(ircd::exception::buf, sizeof(ircd::exception::buf),
+			         "(BUG) Host exception");
+			break;
+
+		default:
+			snprintf(ircd::exception::buf, sizeof(ircd::exception::buf),
+			         "Unknown non-exception #%u flags[%02x]",
+			         report.errorNumber,
+			         report.flags);
+			break;
+	}
+}
+
 void
 ircd::js::jserror::set_pending()
 const
 {
-	JS::RootedValue ex(*cx, create_error());
-	JS_SetPendingException(*cx, ex);
-}
-
-JS::Value
-ircd::js::jserror::create_error(const JS::HandleObject &stack,
-                                const JS::HandleString &file,
-                                const std::pair<uint, uint> &linecol)
-const
-{
-	JS::RootedValue ret(*cx);
-	JS::RootedString msg(*cx);
-	const auto type((JSExnType)report.exnType);
-	const auto &line(linecol.first);
-	const auto &col(linecol.second);
-	if(!JS::CreateError(*cx, type, stack, file, line, col, const_cast<JSErrorReport *>(&report), msg, &ret))
-		throw error("Failed to construct jserror exception!");
-
-	return ret;
-}
-
-JS::Value
-ircd::js::jserror::create_error()
-const
-{
-	JS::RootedObject stack(*cx);
-	JS::RootedString file(*cx);
-	return create_error(stack, file, {0, 0});
+	JS_SetPendingException(*cx, val);
 }
 
 void
@@ -897,9 +908,37 @@ ircd::js::jserror::generate(const JSExnType &type,
                             va_list ap)
 {
 	ircd::exception::generate(fmt, ap);
-	msg = string::convert(what());
+	const auto msg(string::convert(what()));
+
+	JSErrorReport report;
 	report.ucmessage = msg.c_str();
 	report.exnType = type;
+
+	create(report);
+}
+
+void
+ircd::js::jserror::create(const JSErrorReport &report)
+{
+	const auto type((JSExnType)report.exnType);
+	const auto &col(report.column);
+	const auto &line(report.lineno);
+
+	JS::RootedString msg(*cx);
+	JS::RootedString file(*cx);
+	JS::RootedObject stack(*cx);
+	if(!JS::CreateError(*cx,
+	                    type,
+	                    stack,
+	                    file,
+	                    line,
+	                    col,
+	                    const_cast<JSErrorReport *>(&report),
+	                    msg,
+	                    &val))
+	{
+		throw error("Failed to construct jserror exception!");
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1155,6 +1194,7 @@ ircd::js::context::context(context &&other)
 noexcept
 :custom_ptr<JSContext>{std::move(other)}
 ,opts{std::move(other.opts)}
+,exstate{std::move(other.exstate)}
 {
 	// Branch not taken for null/defaulted instance of JSContext smart ptr
 	if(!!*this)
@@ -1170,6 +1210,7 @@ noexcept
 {
 	static_cast<custom_ptr<JSContext> &>(*this) = std::move(other);
 	opts = std::move(other.opts);
+	exstate = std::move(other.exstate);
 
 	// Branch not taken for null/defaulted instance of JSContext smart ptr
 	if(!!*this)
@@ -1188,6 +1229,37 @@ noexcept
 	if(!!*this)
 		cx = nullptr;
 }
+
+JSErrorReport
+ircd::js::pop_exception(context &c)
+{
+	if(unlikely(c.exstate.empty()))
+		throw error("(internal error) No pending exception to restore");
+
+	auto &top(c.exstate.top());
+	JS_RestoreExceptionState(c, top.state);
+	const auto report(top.report);
+	c.exstate.pop();
+	return report;
+}
+
+void
+ircd::js::push_exception(context &c,
+                         const JSErrorReport &report)
+{
+	c.exstate.push
+	({
+		JS_SaveExceptionState(c),
+		report
+	});
+
+	if(unlikely(!c.exstate.top().state))
+	{
+		c.exstate.pop();
+		throw error("(internal error) No pending exception to save");
+	}
+}
+
 
 ircd::js::context::lock::lock()
 :lock{*cx}
@@ -1217,7 +1289,6 @@ ircd::js::runtime::runtime(const struct opts &opts)
 	JS_NewRuntime(opts.maxbytes),
 	JS_DestroyRuntime
 }
-,error_handler{nullptr}
 ,opts{opts}
 {
 	// We use their privdata to find `this` via our(JSRuntime*) function.
@@ -1243,7 +1314,6 @@ ircd::js::runtime::runtime(const struct opts &opts)
 ircd::js::runtime::runtime(runtime &&other)
 noexcept
 :custom_ptr<JSRuntime>{std::move(other)}
-,error_handler{nullptr}
 ,opts{std::move(other.opts)}
 {
 	// Branch not taken for null/defaulted instance of JSRuntime smart ptr
@@ -1259,7 +1329,6 @@ ircd::js::runtime::operator=(runtime &&other)
 noexcept
 {
 	static_cast<custom_ptr<JSRuntime> &>(*this) = std::move(other);
-	error_handler = std::move(other.error_handler);
 	opts = std::move(other.opts);
 
 	// Branch not taken for null/defaulted instance of JSRuntime smart ptr
@@ -1359,12 +1428,17 @@ ircd::js::runtime::handle_error(JSContext *const ctx,
                                 JSErrorReport *const report)
 noexcept
 {
-	if(!rt->error_handler)
-	{
-		log.error("Unhandled: JSContext(%p): %s [%s]", (const void *)ctx, msg, debug(*report).c_str());
-		return;
-	}
-
 	assert(report);
-	rt->error_handler->handler(msg, *report);
+/*
+	log.debug("JSContext(%p) Error report: %s | %s",
+	          (const void *)ctx,
+	          msg,
+	          debug(*report).c_str());
+
+	log.critical("Unhandled: JSContext(%p): %s [%s]",
+	             (const void *)ctx,
+	             msg,
+	             debug(*report).c_str());
+*/
+	push_exception(our(ctx), *report);
 }

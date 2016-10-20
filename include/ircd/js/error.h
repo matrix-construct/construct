@@ -25,37 +25,22 @@
 namespace ircd {
 namespace js   {
 
-class error_handler
-{
-	friend class runtime;
-	using closure = std::function<void (const char *const &msg, JSErrorReport &)>;
-
-	error_handler *theirs;
-	closure handler;
-
-  public:
-	error_handler(const closure &handler);
-	error_handler(closure &&handler);
-	~error_handler() noexcept;
-};
-
 struct jserror
 :js::error
 {
-  protected:
-	std::u16string msg;
-	JSErrorReport report;
+	IRCD_OVERLOAD(pending)
 
+	JS::PersistentRootedValue val;
+
+	void create(const JSErrorReport &);
 	void generate(const JSExnType &type, const char *const &fmt, va_list ap);
-
-  public:
-	JS::Value create_error(const JS::HandleObject &stack, const JS::HandleString &file, const std::pair<uint, uint> &linecol) const;
-	JS::Value create_error() const;
-
 	void set_pending() const;
 
+	jserror(pending_t);
 	jserror(generate_skip_t);
+	jserror(const JSErrorReport &);
 	jserror(const char *fmt = " ", ...) AFP(2, 3);
+	jserror(const JS::Value &);
 };
 
 #define IRCD_JS_ERROR_DEF(name, type)                 \

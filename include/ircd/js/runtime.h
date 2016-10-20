@@ -38,9 +38,6 @@ class runtime
 	static bool handle_context(JSContext *, uint op, void *) noexcept;
 	static bool handle_interrupt(JSContext *) noexcept;
 
-	friend struct error_handler;
-	struct error_handler *error_handler;         // Error reports directed at handler
-
   public:
 	struct opts
 	{

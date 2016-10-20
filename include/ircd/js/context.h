@@ -42,8 +42,16 @@ struct context
 	{
 		size_t stack_chunk_size     = 8_KiB;
 		bool dtor_gc                = true;
-	}
-	opts;                                        // We keep a copy of the given opts here.
+	};
+
+	struct exstate
+	{
+		JSExceptionState *state;    // exstate
+		JSErrorReport report;       // note: ptrs within are not necessarily safe
+	};
+
+	struct opts opts;                            // We keep a copy of the given opts here.
+	std::stack<struct exstate> exstate;
 
 	operator JSContext *() const                 { return get();                                   }
 	operator JSContext &() const                 { return custom_ptr<JSContext>::operator*();      }
@@ -83,19 +91,29 @@ void priv(context &, privdata *const &);
 inline auto version(const context &c)            { return version(JS_GetVersion(c));               }
 inline auto running(const context &c)            { return JS_IsRunning(c);                         }
 inline auto uncaught_exception(const context &c) { return JS_IsExceptionPending(c);                }
-inline auto rethrow_exception(context &c)        { return JS_ReportPendingException(c);            }
 inline auto interrupted(const context &c)        { return JS_CheckForInterrupt(c);                 }
 inline void out_of_memory(context &c)            { JS_ReportOutOfMemory(c);                        }
 inline void allocation_overflow(context &c)      { JS_ReportAllocationOverflow(c);                 }
 inline void run_gc(context &c)                   { JS_MaybeGC(c);                                  }
 JSObject *current_global(context &c);
-JSObject *current_global();                      // thread_local
+bool rethrow_exception(context &c);
+void push_exception(context &c, const JSErrorReport &);
+JSErrorReport pop_exception(context &c);
+
+// thread_local
+JSObject *current_global();
 
 
 inline JSObject *
 current_global()
 {
 	return current_global(*cx);
+}
+
+inline bool
+rethrow_exception(context &c)
+{
+	return JS_ReportPendingException(c);
 }
 
 inline JSObject *
