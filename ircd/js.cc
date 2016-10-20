@@ -719,6 +719,11 @@ ircd::js::call(const object &obj,
 // ircd/js/string.h
 //
 
+const size_t ircd::js::string::CBUFSZ
+{
+	1024
+};
+
 const char *
 ircd::js::string::c_str()
 const
@@ -727,7 +732,7 @@ const
 	static thread_local size_t ctr;
 
 	char *const buf(cbuf[ctr]);
-	JS_EncodeStringToBuffer(*cx, const_cast<JSString *>(get()), buf, CBUFSZ);
+	native(get(), buf, CBUFSZ);
 	ctr = (ctr + 1) % CBUFS;
 	return buf;
 }
@@ -737,7 +742,7 @@ ircd::js::string::convert(const std::string &s)
 {
 	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
 
-    return converter.from_bytes(s);
+	return converter.from_bytes(s);
 }
 
 std::u16string
@@ -745,7 +750,7 @@ ircd::js::string::convert(const char *const &s)
 {
 	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
 
-    return s? converter.from_bytes(s) : std::u16string{};
+	return s? converter.from_bytes(s) : std::u16string{};
 }
 
 std::string
@@ -753,7 +758,7 @@ ircd::js::string::convert(const std::u16string &s)
 {
 	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
 
-    return converter.to_bytes(s);
+	return converter.to_bytes(s);
 }
 
 std::string
@@ -761,7 +766,54 @@ ircd::js::string::convert(const char16_t *const &s)
 {
 	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
 
-    return s? converter.to_bytes(s) : std::string{};
+	return s? converter.to_bytes(s) : std::string{};
+}
+
+size_t
+ircd::js::string::convert(const char16_t *const &str,
+                          char *const &buf,
+                          const size_t &max)
+{
+	static std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> converter;
+
+	//TODO: optimize
+	const auto s(converter.to_bytes(str));
+	return rb_strlcpy(buf, s.c_str(), max);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// ircd/js/value.h
+//
+
+std::string
+ircd::js::native(const JSString *const &s)
+{
+	std::string ret(native_size(s) + 1, char());
+	native(s, &ret.front(), ret.size());
+	ret.resize(ret.size() - 1);
+	return ret;
+}
+
+size_t
+ircd::js::native(const JSString *const &s,
+                 char *const &buf,
+                 const size_t &max)
+{
+	if(unlikely(!max))
+		return 0;
+
+	ssize_t ret(JS_EncodeStringToBuffer(*cx, const_cast<JSString *>(s), buf, max));
+	ret = std::max(ret, ssize_t(0));
+	ret = std::min(ret, ssize_t(max - 1));
+	buf[ret] = '\0';
+	return ret;
+}
+
+size_t
+ircd::js::native_size(const JSString *const &s)
+{
+	return JS_GetStringEncodingLength(*cx, const_cast<JSString *>(s));
 }
 
 ///////////////////////////////////////////////////////////////////////////////

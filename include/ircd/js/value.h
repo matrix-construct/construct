@@ -25,22 +25,31 @@
 namespace ircd {
 namespace js   {
 
+// Fundamental string utils. This is placed here instead of string.h so
+// `struct value` can make direct conversions without depending on struct string type
+size_t native_size(const JSString *const &);
+size_t native(const JSString *const &, char *const &buf, const size_t &max);
+std::string native(const JSString *const &);
+
 struct value
 :JS::Rooted<JS::Value>
 {
-	explicit operator bool() const               { return JS::ToBoolean(*this);                    }
-	explicit operator uint16_t() const;
-	explicit operator int32_t() const;
-	explicit operator uint32_t() const;
-	explicit operator int64_t() const;
-	explicit operator uint64_t() const;
+	explicit operator std::string() const;
 	explicit operator double() const;
+	explicit operator uint64_t() const;
+	explicit operator int64_t() const;
+	explicit operator uint32_t() const;
+	explicit operator int32_t() const;
+	explicit operator uint16_t() const;
+	explicit operator bool() const               { return JS::ToBoolean(*this);                    }
 
-	explicit value(const bool &);
+	value(const char *const &);
+	explicit value(const std::string &);
 	explicit value(const nullptr_t &);
-	explicit value(const int32_t &);
-	explicit value(const float &);
 	explicit value(const double &);
+	explicit value(const float &);
+	explicit value(const int32_t &);
+	explicit value(const bool &);
 
 	value(const jsid &);
 	value(JSObject &);
@@ -138,12 +147,6 @@ value::value(const bool &b)
 }
 
 inline
-value::value(const nullptr_t &)
-:JS::Rooted<JS::Value>{*cx, JS::NullValue()}
-{
-}
-
-inline
 value::value(const int32_t &val)
 :JS::Rooted<JS::Value>{*cx, JS::Int32Value(val)}
 {
@@ -162,34 +165,38 @@ value::value(const double &val)
 }
 
 inline
-value::operator double()
-const
+value::value(const nullptr_t &)
+:JS::Rooted<JS::Value>{*cx, JS::NullValue()}
 {
-	double ret;
-	if(!JS::ToNumber(*cx, *this, &ret))
-		throw type_error("Failed cast to double");
-
-	return ret;
 }
 
 inline
-value::operator int64_t()
-const
+value::value(const std::string &s)
+:JS::Rooted<JS::Value>
 {
-	int64_t ret;
-	if(!JS::ToInt64(*cx, *this, &ret))
-		throw type_error("Failed cast to int64_t");
-
-	return ret;
+	*cx,
+	JS::StringValue(JS_NewStringCopyN(*cx, s.data(), s.size()))
+}
+{
 }
 
 inline
-value::operator uint64_t()
+value::value(const char *const &s)
+:JS::Rooted<JS::Value>
+{
+	*cx,
+	!s? JS::NullValue() : JS::StringValue(JS_NewStringCopyZ(*cx, s))
+}
+{
+}
+
+inline
+value::operator uint16_t()
 const
 {
-	uint64_t ret;
-	if(!JS::ToUint64(*cx, *this, &ret))
-		throw type_error("Failed cast to uint64_t");
+	uint16_t ret;
+	if(!JS::ToUint16(*cx, *this, &ret))
+		throw type_error("Failed cast to uint16_t");
 
 	return ret;
 }
@@ -217,14 +224,44 @@ const
 }
 
 inline
-value::operator uint16_t()
+value::operator int64_t()
 const
 {
-	uint16_t ret;
-	if(!JS::ToUint16(*cx, *this, &ret))
-		throw type_error("Failed cast to uint16_t");
+	int64_t ret;
+	if(!JS::ToInt64(*cx, *this, &ret))
+		throw type_error("Failed cast to int64_t");
 
 	return ret;
+}
+
+inline
+value::operator uint64_t()
+const
+{
+	uint64_t ret;
+	if(!JS::ToUint64(*cx, *this, &ret))
+		throw type_error("Failed cast to uint64_t");
+
+	return ret;
+}
+
+inline
+value::operator double()
+const
+{
+	double ret;
+	if(!JS::ToNumber(*cx, *this, &ret))
+		throw type_error("Failed cast to double");
+
+	return ret;
+}
+
+inline
+value::operator std::string()
+const
+{
+	const auto s(JS::ToString(*cx, *this));
+	return s? native(s) : throw type_error("Failed to cast to string");
 }
 
 } // namespace js

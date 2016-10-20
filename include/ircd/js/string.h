@@ -29,14 +29,16 @@ struct string
 :JS::Rooted<JSString *>
 {
 	// SpiderMonkey may use utf-16/char16_t strings; these will help you then
+	static size_t convert(const char16_t *const &, char *const &buf, const size_t &max);
 	static std::string convert(const char16_t *const &);
 	static std::string convert(const std::u16string &);
 	static std::u16string convert(const char *const &);
 	static std::u16string convert(const std::string &);
 
-	static constexpr size_t CBUFSZ = 1024;
-	static constexpr size_t CBUFS = 8;
+	static constexpr const size_t CBUFS = 8;
+	static const size_t CBUFSZ;
 	const char *c_str() const;                   // Copy into rotating buf
+	size_t size() const;
 
 	explicit operator std::string() const;
 	operator JS::Value() const;
@@ -118,9 +120,14 @@ inline
 string::operator std::string()
 const
 {
-	std::string ret(JS_GetStringEncodingLength(*cx, const_cast<JSString *>(get())), char());
-	JS_EncodeStringToBuffer(*cx, const_cast<JSString *>(get()), &ret.front(), ret.size());
-	return ret;
+	return native(get());
+}
+
+inline size_t
+string::size()
+const
+{
+	return native_size(get());
 }
 
 inline
