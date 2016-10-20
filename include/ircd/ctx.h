@@ -62,6 +62,7 @@ bool notify(ctx &);                              // Increment the semaphore (onl
 extern __thread struct ctx *current;             // Always set to the currently running context or null
 
 ctx &cur();                                      // Convenience for *current (try to use this instead)
+void yield();                                    // Allow other contexts to run before returning.
 void wait();                                     // Returns when context notified.
 
 // Return remaining time if notified; or <= 0 if not, and timeout thrown on throw overloads

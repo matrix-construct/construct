@@ -69,6 +69,24 @@ ctx::wait()
 	c.wait(); // now you're yielding with portals
 }
 
+void
+ctx::yield()
+{
+	bool done(false);
+	const auto restore([&done, &me(cur())]
+	{
+		done = true;
+		notify(me);
+	});
+
+	// All spurious notifications are ignored until `done`
+	ios->post(restore); do
+	{
+		wait();
+	}
+	while(!done);
+}
+
 ircd::ctx::context::context(const size_t &stack_sz,
                             std::function<void ()> func,
                             const enum flags &flags)
