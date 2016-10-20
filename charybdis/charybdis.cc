@@ -21,7 +21,7 @@
 
 #include <ircd/ircd.h>
 #include <boost/asio.hpp>
-#include <ircd/ctx_ctx.h>
+#include <ircd/ctx/ctx.h>
 #include "lgetopt.h"
 
 namespace path = ircd::path;

@@ -25,7 +25,23 @@
 #pragma once
 #define HAVE_IRCD_CTX_H
 
-#ifdef __cplusplus
+//
+// This is the public interface to the userspace context system. No 3rd party
+// symbols are included from here. This file is included automatically in stdinc.h
+// and you do not have to include it manually.
+//
+// There are two primary objects at work in the context system:
+//
+// `struct context` <ircd/ctx/context.h>
+// Public interface emulating std::thread; included automatically from here.
+// To spawn and manipulate contexts, deal with this object.
+//
+// `struct ctx` <ircd/ctx/ctx.h>
+// Internal implementation of the context and state holder. This is not included here.
+// Several low-level functions are exposed for library creators. This file is usually
+// included when boost/asio.hpp is also included and calls are actually made into boost.
+//
+
 namespace ircd {
 namespace ctx  {
 
@@ -80,71 +96,55 @@ void sleep_until(const time_point &tp);
 template<class duration> void sleep(const duration &);
 void sleep(const int &secs);
 
-class context
-{
-	std::unique_ptr<ctx> c;
+} // namespace ctx
 
-  public:
-	bool operator!() const                       { return !c;                                      }
-	operator bool() const                        { return bool(c);                                 }
+using ctx::timeout;
 
-	operator const ctx &() const                 { return *c;                                      }
-	operator ctx &()                             { return *c;                                      }
+} // namespace ircd
 
-	bool joined() const                          { return !c || ircd::ctx::finished(*c);           }
-	void interrupt()                             { ircd::ctx::interrupt(*c);                       }
-	void join();                                 // Blocks the current context until this one finishes
-	ctx *detach();                               // other calls undefined after this call
-
-	// Note: Constructing with SELF_DESTRUCT flag makes any further use of this object undefined.
-	context(const size_t &stack_size, std::function<void ()>, const enum flags &flags = (enum flags)0);
-	context(std::function<void ()>, const enum flags &flags = (enum flags)0);
-	context(context &&) noexcept = default;
-	context(const context &) = delete;
-	~context() noexcept;
-
-	friend void swap(context &a, context &b) noexcept;
-};
+#include "ctx/context.h"
+#include "ctx/prof.h"
+#include "ctx/dock.h"
+#include "ctx/mutex.h"
+#include "ctx/shared_state.h"
+#include "ctx/promise.h"
+#include "ctx/future.h"
+#include "ctx/async.h"
+#include "ctx/pool.h"
+#include "ctx/ole.h"
 
 inline void
-swap(context &a, context &b)
-noexcept
-{
-	std::swap(a.c, b.c);
-}
-
-inline void
-sleep(const int &secs)
+ircd::ctx::sleep(const int &secs)
 {
 	sleep(seconds(secs));
 }
 
 template<class duration>
 void
-sleep(const duration &d)
+ircd::ctx::sleep(const duration &d)
 {
 	sleep_until(steady_clock::now() + d);
 }
 
 template<class E>
-throw_overload<E>
-wait_until(const time_point &tp)
+ircd::throw_overload<E>
+ircd::ctx::wait_until(const time_point &tp)
 {
 	if(wait_until<std::nothrow_t>(tp))
 		throw E();
 }
 
 template<class E>
-nothrow_overload<E, bool>
-wait_until(const time_point &tp)
+ircd::nothrow_overload<E, bool>
+ircd::ctx::wait_until(const time_point &tp)
 {
 	return wait_until(tp, std::nothrow);
 }
 
 template<class E,
          class duration>
-throw_overload<E, duration>
-wait(const duration &d)
+ircd::throw_overload<E, duration>
+ircd::ctx::wait(const duration &d)
 {
 	const auto ret(wait<std::nothrow_t>(d));
 	return ret <= duration(0)? throw E() : ret;
@@ -152,8 +152,8 @@ wait(const duration &d)
 
 template<class E,
          class duration>
-nothrow_overload<E, duration>
-wait(const duration &d)
+ircd::nothrow_overload<E, duration>
+ircd::ctx::wait(const duration &d)
 {
 	using std::chrono::duration_cast;
 
@@ -161,17 +161,9 @@ wait(const duration &d)
 	return duration_cast<duration>(ret);
 }
 
-inline ctx &
-cur()
+inline ircd::ctx::ctx &
+ircd::ctx::cur()
 {
 	assert(current);
 	return *current;
 }
-
-}      // namespace ctx
-
-using ctx::context;
-using ctx::timeout;
-
-}      // namespace ircd
-#endif // __cplusplus
