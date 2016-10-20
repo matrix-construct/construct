@@ -71,10 +71,6 @@ class runtime
 // Do not construct more than one runtime on the same thread- this is overwritten.
 extern __thread runtime *rt;
 
-// Main JSRuntime instance. It is only valid while the js::init object is held by ircd::main().
-// This is available to always find main for whatever reason, but use *rt instead.
-extern runtime main;
-
 // Get to our `struct runtime` from any upstream JSRuntime
 const runtime &our(const JSRuntime *const &);
 runtime &our(JSRuntime *const &);
@@ -83,6 +79,7 @@ runtime &our(JSRuntime *const &);
 const runtime &object_runtime(const JSObject &);
 runtime &object_runtime(JSObject &);
 
+// Do not call interrupt() unless you know what you're doing; see context.h.
 void interrupt(runtime &r);
 void run_gc(runtime &r);
 
@@ -96,7 +93,6 @@ run_gc(runtime &r)
 inline void
 interrupt(runtime &r)
 {
-	JS_SetInterruptCallback(r, runtime::handle_interrupt);
 	JS_RequestInterruptCallback(r);
 }
 

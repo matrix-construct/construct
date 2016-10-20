@@ -32,13 +32,9 @@ namespace js   {
 __thread runtime *rt;
 __thread context *cx;
 
-// Location of the main JSRuntime instance. An extern reference to this exists in js/runtime.h.
-// It is null until js::init manually constructs (and later destructs) it.
-runtime main;
-
-// Location of the default/main JSContext instance. An extern reference to this exists in js/context.h.
-// Lifetime similar to main runtime
-context mc;
+// Location of the main JSRuntime and JSContext instances.
+runtime *main_runtime;
+context *main_context;
 
 // Logging facility for this submodule with SNOMASK.
 struct log::log log
@@ -55,11 +51,17 @@ struct log::log log
 //
 
 ircd::js::init::init()
-try
 {
 	log.info("Initializing the JS engine [%s: %s]",
 	         "SpiderMonkey",
 	         version(ver::IMPLEMENTATION));
+
+	const scope exit([this]
+	{
+		// Ensure ~init() is always safe to call at any intermediate state
+		if(std::current_exception())
+			this->~init();
+	});
 
 	if(!JS_Init())
 		throw error("JS_Init(): failure");
@@ -69,38 +71,35 @@ try
 	log.info("Initializing the main JS Runtime (main_maxbytes: %zu)",
 	         runtime_opts.maxbytes);
 
-	main = runtime(runtime_opts);
-	mc = context(main, context_opts);
+	main_runtime = new runtime(runtime_opts);
+	main_context = new context(*main_runtime, context_opts);
 	log.info("Initialized main JS Runtime and context (version: '%s')",
-	         version(mc));
+	         version(*main_context));
 
 	{
-		context::lock lock;
+		const std::lock_guard<context> lock{*main_context};
 		ircd::mods::load("kernel");
 	}
-}
-catch(...)
-{
-	this->~init();
-	throw;
 }
 
 ircd::js::init::~init()
 noexcept
 {
-	if(cx && !!*cx)
+	if(main_context && !!*main_context) try
 	{
-		context::lock lock;
+		const std::lock_guard<context> lock{*main_context};
 		ircd::mods::unload("kernel");
 	}
+	catch(const std::exception &e)
+	{
+		log.warning("Failed to unload the kernel: %s", e.what());
+	}
 
-	log.info("Terminating the main JS Runtime");
+	log.info("Terminating the JS Main Runtime");
+	delete main_context;
+	delete main_runtime;
 
-	// Assign empty objects to free and reset
-	mc = context{};
-	main = runtime{};
-
-	log.info("Terminating the JS engine");
+	log.info("Terminating the JS Engine");
 	JS_ShutDown();
 }
 
@@ -855,7 +854,10 @@ ircd::js::jserror::jserror(pending_t)
 :ircd::js::error{generate_skip}
 ,val{*cx}
 {
-	auto report(pop_exception(*cx));
+	if(!restore_exception(*cx))
+		return;
+
+	auto &report(cx->report);
 	if(report.flags & JSREPORT_EXCEPTION &&
 	   report.errorNumber != 105)
 	{
@@ -1161,8 +1163,23 @@ ircd::js::context::context(JSRuntime *const &runtime,
                            const struct opts &opts)
 :custom_ptr<JSContext>
 {
-	JS_NewContext(runtime, opts.stack_chunk_size),
-	[opts](JSContext *const ctx)                   //TODO: old gcc/clang can't copy from opts.dtor_gc
+	// Construct the context
+	[this, &runtime, &opts]
+	{
+		const auto ret(JS_NewContext(runtime, opts.stack_chunk_size));
+
+		// Use their privdata pointer to point to our instance. We can then use our(JSContext*)
+		// to get back to `this` instance.
+		JS_SetContextPrivate(ret, this);
+
+		// Assign the thread_local here.
+		cx = this;
+
+		return ret;
+	}(),
+
+	// Plant the destruction
+	[](JSContext *const ctx)
 	noexcept
 	{
 		if(!ctx)
@@ -1171,111 +1188,233 @@ ircd::js::context::context(JSRuntime *const &runtime,
 		// Free the user's privdata managed object
 		delete static_cast<const privdata *>(JS_GetSecondContextPrivate(ctx));
 
-		if(opts.dtor_gc)
-			JS_DestroyContext(ctx);
-		else
-			JS_DestroyContextNoGC(ctx);
+		JS_DestroyContext(ctx);
+
+		// Indicate to thread_local
+		cx = nullptr;
 	}
 }
 ,opts{opts}
+,state
+{{
+	0,                // Semaphore value starting at 0.
+	phase::ACCEPT,    // ACCEPT phase indicates nothing is running.
+	irq::JS,          // irq::JS is otherwise here in case JS triggers an interrupt.
+}}
+,except{nullptr}
+,limit{opts.timer_limit}
+,started{time_point::min()}
+,interval{opts.timer_interval}
+,timer{std::bind(&context::timer_worker, this)}
 {
 	assert(&our(runtime) == rt);  // Trying to construct on thread without runtime thread_local
-
-	// Use their privdata pointer to point to our instance. We can then use our(JSContext*)
-	// to get back to `this` instance. Remember the pointer must change when this class is
-	// std::move()'ed etc via the move constructor/assignment.
-	JS_SetContextPrivate(get(), this);
-
-	// Assign the thread_local here.
-	cx = this;
-}
-
-ircd::js::context::context(context &&other)
-noexcept
-:custom_ptr<JSContext>{std::move(other)}
-,opts{std::move(other.opts)}
-,exstate{std::move(other.exstate)}
-{
-	// Branch not taken for null/defaulted instance of JSContext smart ptr
-	if(!!*this)
-		JS_SetContextPrivate(get(), this);
-
-	// Ensure the thread_local points here now.
-	cx = this;
-}
-
-ircd::js::context &
-ircd::js::context::operator=(context &&other)
-noexcept
-{
-	static_cast<custom_ptr<JSContext> &>(*this) = std::move(other);
-	opts = std::move(other.opts);
-	exstate = std::move(other.exstate);
-
-	// Branch not taken for null/defaulted instance of JSContext smart ptr
-	if(!!*this)
-		JS_SetContextPrivate(get(), this);
-
-	// Ensure the thread_local points here now.
-	cx = this;
-
-	return *this;
 }
 
 ircd::js::context::~context()
 noexcept
 {
-	// Branch not taken on std::move()
-	if(!!*this)
-		cx = nullptr;
-}
-
-JSErrorReport
-ircd::js::pop_exception(context &c)
-{
-	if(unlikely(c.exstate.empty()))
-		throw error("(internal error) No pending exception to restore");
-
-	auto &top(c.exstate.top());
-	JS_RestoreExceptionState(c, top.state);
-	const auto report(top.report);
-	c.exstate.pop();
-	return report;
+	interval.store(microseconds(0), std::memory_order_release);
+	timer.join();
 }
 
 void
-ircd::js::push_exception(context &c,
-                         const JSErrorReport &report)
+ircd::js::context::timer_worker()
 {
-	c.exstate.push
-	({
-		JS_SaveExceptionState(c),
-		report
-	});
-
-	if(unlikely(!c.exstate.top().state))
+	while(interval.load(std::memory_order_consume) > microseconds(0))
 	{
-		c.exstate.pop();
-		throw error("(internal error) No pending exception to save");
+		std::this_thread::sleep_for(interval.load(std::memory_order_consume));
+		timer_check();
 	}
 }
 
-
-ircd::js::context::lock::lock()
-:lock{*cx}
+void
+ircd::js::context::timer_check()
 {
+	// The interruption is an atomic transaction so our condition
+	// for a timer excess occurs in a synchronous closure.
+
+	interrupt(*this, [this]
+	{
+		// See if the execution has timing.
+		if(started == time_point::min() || limit == microseconds(0))
+			return irq::NONE;
+
+		// Check if timer exceeded limits.
+		const auto over_limit(steady_clock::now() - limit > started);
+		if(!over_limit)
+			return irq::NONE;
+
+		// Attempt to kill it.
+		return irq::TERMINATE;
+	});
 }
 
-ircd::js::context::lock::lock(context &c)
-:c{&c}
+bool
+ircd::js::context::handle_interrupt()
 {
-	JS_BeginRequest(c);
+	auto state(this->state.load(std::memory_order_acquire));
+
+	// Spurious interrupt; ignore.
+	if(unlikely(state.phase != phase::INTR && state.phase != phase::ENTER))
+	{
+		log.warning("context(%p): Spurious interrupt (irq: %02x)",
+		            (const void *)this,
+		            uint(state.irq));
+		return true;
+	}
+
+	// After the interrupt is handled the phase indicates entry back to JS,
+	// IRQ is left indicating JS in case we don't trigger the next interrupt.
+	const scope interrupt_return([this, &state]
+	{
+		state.phase = phase::ENTER;
+		state.irq = irq::JS;
+		this->state.store(state, std::memory_order_release);
+	});
+
+	// Call the user hook if available
+	if(on_intr)
+	{
+		// The user's handler returns -1 for non-overriding behavior
+		const auto ret(on_intr(state.irq));
+		if(ret != -1)
+			return ret;
+	}
+
+	switch(state.irq)
+	{
+		default:
+		case irq::NONE:
+			assert(0);
+
+		case irq::JS:
+		case irq::USER:
+			return true;
+
+		case irq::YIELD:
+			ctx::yield();
+			return true;
+
+		case irq::TERMINATE:
+			return false;
+	}
 }
 
-ircd::js::context::lock::~lock()
-noexcept
+void
+ircd::js::leave(context &c)
 {
-	JS_EndRequest(*c);
+	// Load the state to keep the current sem value up to date.
+	// This thread is the only writer to that value.
+	auto state(c.state.load(std::memory_order_relaxed));
+
+	// The ACCEPT phase locks out the interruptor
+	state.phase = phase::ACCEPT;
+
+	// The ACCEPT is released and the current phase seen by interruptor is acquired.
+	state = c.state.exchange(state, std::memory_order_acq_rel);
+
+	// The executor (us) must check if the interruptor (them) has committed to an interrupt
+	// targeting the JS run we are now leaving. JS may have exited after the commitment
+	// and before the interrupt arrival.
+	if(state.phase == phase::INTR)
+		assert(interrupt_poll(c));
+}
+
+void
+ircd::js::enter(context &c)
+{
+	// Set the start time which will be observable to the interruptor
+	// after a release sequence.
+	c.started = std::chrono::steady_clock::now();
+
+	// State was already acquired by the last leave();
+	auto state(c.state.load(std::memory_order_relaxed));
+
+	// Increment the semaphore for the next execution;
+	++state.sem;
+
+	// Set the IRQ to JS in case we don't trigger an interrupt, the handler
+	// will see a correct value.
+	state.irq = irq::JS;
+	state.phase = phase::ENTER;
+
+	// Commit to next execution.
+	c.state.store(state, std::memory_order_release);
+}
+
+bool
+ircd::js::interrupt(context &c,
+                    const interrupt_condition &closure)
+{
+	// Acquire the execution state.
+	const auto state(c.state.load(std::memory_order_acquire));
+
+	// Only proceed if something is even running.
+	if(state.phase != phase::ENTER)
+		return false;
+
+	// See if user still wants an interruption.
+	const auto req(closure());
+	if(req == irq::NONE)
+		return false;
+
+	// The expected value of the state to transact.
+	struct context::state in
+	{
+		state.sem,          // Expect the sem value to match, else the execution has changed.
+		phase::ENTER,       // Expect the execution to be occurring.
+		irq::JS,            // JS is always expected here instead of NONE.
+	};
+
+	// The restatement after the transaction.
+	const struct context::state out
+	{
+		state.sem,          // Keep the same sem value.
+		phase::INTR,        // Indicate our commitment to interrupting.
+		req                 // Include the irq type.
+	};
+
+	// Attempt commitment to interrupt here.
+	static const auto order_fail(std::memory_order_relaxed);
+	static const auto order_success(std::memory_order_acq_rel);
+	if(!c.state.compare_exchange_strong(in, out, order_success, order_fail))
+	{
+		// To reliably read from `in` here, order_fail should not be relaxed.
+		return false;
+	}
+
+	// Commitment now puts the burden on the executor to not allow this interrupt to bleed into
+	// the next execution, even if JS has already exited before its arrival.
+	interrupt(c.runtime());
+	return true;
+}
+
+bool
+ircd::js::interrupt_poll(const context &c)
+{
+	return JS_CheckForInterrupt(c);
+}
+
+bool
+ircd::js::restore_exception(context &c)
+{
+	if(unlikely(!c.except))
+		return false;
+
+	JS_RestoreExceptionState(c, c.except);
+	c.except = nullptr;
+	return true;
+}
+
+void
+ircd::js::save_exception(context &c,
+                         const JSErrorReport &report)
+{
+	if(c.except)
+		throw error("(internal error): Won't overwrite saved exception");
+
+	c.except = JS_SaveExceptionState(c),
+	c.report = report;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1306,7 +1445,7 @@ ircd::js::runtime::runtime(const struct opts &opts)
 	JS_SetCompartmentNameCallback(get(), handle_compartment_name);
 	JS_SetDestroyCompartmentCallback(get(), handle_compartment_destroy);
 	JS_SetContextCallback(get(), handle_context, nullptr);
-	//JS_SetInterruptCallback(get(), nullptr);
+	JS_SetInterruptCallback(get(), handle_interrupt);
 
 	JS_SetNativeStackQuota(get(), opts.code_stack_max, opts.trusted_stack_max, opts.untrusted_stack_max);
 }
@@ -1353,9 +1492,10 @@ bool
 ircd::js::runtime::handle_interrupt(JSContext *const ctx)
 noexcept
 {
-	auto &runtime(our(ctx).runtime());
-	JS_SetInterruptCallback(runtime, nullptr);
-	return false;
+	log.debug("JSContext(%p): Interrupt", (const void *)ctx);
+
+	auto &c(our(ctx));
+	return c.handle_interrupt();
 }
 
 bool
@@ -1440,5 +1580,5 @@ noexcept
 	             msg,
 	             debug(*report).c_str());
 */
-	push_exception(our(ctx), *report);
+	save_exception(our(ctx), *report);
 }

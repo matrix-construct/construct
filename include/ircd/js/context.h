@@ -25,34 +25,66 @@
 namespace ircd {
 namespace js   {
 
+// Indicates the phase of execution of the javascript
+enum class phase
+:uint8_t
+{
+	ACCEPT,        // JS is not running.
+	ENTER,         // JS is currently executing or is committed to being entered.
+	INTR,          // An interrupt request has or is committed to being sent.
+};
+
+// Indicates what operation the interrupt is for
+enum class irq
+:uint8_t
+{
+	NONE,          // Sentinel value (no interrupt) (spurious)
+	JS,            // JS itself triggers an interrupt after data init before code exec.
+	USER,          // User interrupts to have handler (on_intr) called.
+	YIELD,         // An ircd::ctx yield should take place, then javascript continues.
+	TERMINATE,     // The javascript should be terminated.
+};
+
 struct context
 :private custom_ptr<JSContext>
 {
-	class lock
-	{
-		context *c;
+	using steady_clock = std::chrono::steady_clock;
+	using time_point = steady_clock::time_point;
 
-	  public:
-		lock(context &c);           // BeginRequest on cx of your choice
-		lock();                     // BeginRequest on the thread_local cx
-		~lock() noexcept;           // EndRequest
+	struct alignas(8) state
+	{
+		uint32_t sem;
+		enum phase phase;
+		enum irq irq;
 	};
 
 	struct opts
 	{
-		size_t stack_chunk_size     = 8_KiB;
-		bool dtor_gc                = true;
+		size_t stack_chunk_size       = 8_KiB;
+		microseconds timer_interval   = 250000us;
+		microseconds timer_limit      = 500000us;
 	};
 
-	struct exstate
-	{
-		JSExceptionState *state;    // exstate
-		JSErrorReport report;       // note: ptrs within are not necessarily safe
-	};
+	struct opts opts;
 
-	struct opts opts;                            // We keep a copy of the given opts here.
-	std::stack<struct exstate> exstate;
+	// Interruption state
+	std::atomic<struct state> state;             // Atomic state of execution
+	std::function<int (const irq &)> on_intr;    // User interrupt hook (ret -1 to not interfere)
 
+	// Exception state
+	JSExceptionState *except;                    // Use save_exception()/restore_exception()
+	JSErrorReport report;                        // Note: ptrs may not be valid in here.
+
+	// Execution timer
+	microseconds limit;                          // The maximum duration for an execution
+	steady_clock::time_point started;            // When the execution started
+	std::atomic<microseconds> interval;          // The interval the timer will check the above
+	bool handle_interrupt();                     // Called by runtime on interrupt
+	void timer_check();
+	void timer_worker();
+	std::thread timer;
+
+	// JSContext
 	operator JSContext *() const                 { return get();                                   }
 	operator JSContext &() const                 { return custom_ptr<JSContext>::operator*();      }
 	bool operator!() const                       { return !custom_ptr<JSContext>::operator bool(); }
@@ -61,12 +93,14 @@ struct context
 	auto ptr() const                             { return get();                                   }
 	auto ptr()                                   { return get();                                   }
 
+	// BasicLockable                             // std::lock_guard<context>
+	void lock()                                  { JS_BeginRequest(get());                         }
+	void unlock()                                { JS_EndRequest(get());                           }
+
 	context(JSRuntime *const &, const struct opts &);
 	context() = default;
-	context(context &&) noexcept;
+	context(context &&) = delete;
 	context(const context &) = delete;
-	context &operator=(context &&) noexcept;
-	context &operator=(const context &) = delete;
 	~context() noexcept;
 };
 
@@ -74,10 +108,6 @@ struct context
 // are singled-threaded and this points to the context appropos your thread.
 // Do not construct more than one context on the same thread- this is overwritten.
 extern __thread context *cx;
-
-// A default JSContext instance is provided residing near the main runtime as a convenience
-// for misc/utility/system purposes if necessary. You should use *cx instead.
-extern context main_cx;
 
 // Get to our `struct context` from any upstream JSContext
 const context &our(const JSContext *const &);
@@ -88,32 +118,72 @@ template<class T = privdata> const T *priv(const context &);
 template<class T = privdata> T *priv(context &);
 void priv(context &, privdata *const &);
 
-inline auto version(const context &c)            { return version(JS_GetVersion(c));               }
+// Misc
 inline auto running(const context &c)            { return JS_IsRunning(c);                         }
-inline auto uncaught_exception(const context &c) { return JS_IsExceptionPending(c);                }
-inline auto interrupted(const context &c)        { return JS_CheckForInterrupt(c);                 }
+inline auto version(const context &c)            { return version(JS_GetVersion(c));               }
+JSObject *current_global(context &c);
+JSObject *current_global();                      // thread_local
+
+// Memory
 inline void out_of_memory(context &c)            { JS_ReportOutOfMemory(c);                        }
 inline void allocation_overflow(context &c)      { JS_ReportAllocationOverflow(c);                 }
 inline void run_gc(context &c)                   { JS_MaybeGC(c);                                  }
-JSObject *current_global(context &c);
-bool rethrow_exception(context &c);
-void push_exception(context &c, const JSErrorReport &);
-JSErrorReport pop_exception(context &c);
 
-// thread_local
-JSObject *current_global();
+// Exception
+bool pending_exception(const context &c);
+void save_exception(context &c, const JSErrorReport &);
+bool restore_exception(context &c);
+bool report_exception(context &c);
 
+// Interruption
+// The interruption has to occur transactionally so you send a condition to the interruptor
+// via a synchronous closure. Returns true when committed to interrupt.
+//
+// * If JS is not ready for interruption the condition is ignored.
+// * If it is ready but your condition fails (returns irq::NONE) then no interrupt.
+// * If the condition returns an irq but JS is no longer ready you are declined.
+using interrupt_condition = std::function<irq ()>;
+bool interrupt(context &, const interrupt_condition &);
+bool interrupt_poll(const context &c);
+
+// Execution
+void enter(context &);  // throws if can't enter
+void leave(context &);  // must be called if enter() succeeds
+
+// Enter JS within this closure. Most likely your function will return a `struct value`
+// or JS::Value returned by most calls into JS.
+template<class F> auto run(F&& function);
+
+
+template<class F>
+auto
+run(F&& function)
+{
+	enter(*cx);
+	const scope out([]
+	{
+		leave(*cx);
+	});
+
+	return function();
+}
+
+inline bool
+report_exception(context &c)
+{
+	return JS_ReportPendingException(c);
+}
+
+inline bool
+pending_exception(const context &c)
+{
+	return JS_IsExceptionPending(c);
+}
 
 inline JSObject *
 current_global()
 {
 	return current_global(*cx);
-}
-
-inline bool
-rethrow_exception(context &c)
-{
-	return JS_ReportPendingException(c);
 }
 
 inline JSObject *
@@ -126,7 +196,8 @@ inline void
 priv(context &c,
      privdata *const &ptr)
 {
-	delete priv(c);                          // Free any existing object to overwrite/null
+	// Free any existing object to overwrite/null
+	delete priv(c);
 	JS_SetSecondContextPrivate(c, ptr);
 }
 
@@ -158,3 +229,5 @@ our(const JSContext *const &c)
 
 } // namespace js
 } // namespace ircd
+
+static_assert(sizeof(struct ircd::js::context::state) == 8, "");
