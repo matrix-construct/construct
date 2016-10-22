@@ -32,6 +32,7 @@ struct jserror
 
 	JS::PersistentRootedValue val;
 
+	void create(JSErrorReport &);
 	void create(const JSErrorReport &);
 	void generate(const JSExnType &type, const char *const &fmt, va_list ap);
 	void set_pending() const;

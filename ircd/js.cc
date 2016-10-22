@@ -854,23 +854,33 @@ ircd::js::jserror::jserror(pending_t)
 :ircd::js::error{generate_skip}
 ,val{*cx}
 {
-	if(!restore_exception(*cx))
+	if(unlikely(!restore_exception(*cx)))
+	{
+		snprintf(ircd::exception::buf, sizeof(ircd::exception::buf),
+		         "(internal error): Failed to restore exception.");
 		return;
+	}
 
 	auto &report(cx->report);
-	if(report.flags & JSREPORT_EXCEPTION &&
-	   report.errorNumber != 105)
+	if(JS_GetPendingException(*cx, &val))
 	{
 		JS::RootedObject obj(*cx, &val.toObject());
 		if(likely(JS_ErrorFromException(*cx, obj)))
 			report = *JS_ErrorFromException(*cx, obj);
 
+		char linebuf[64];
+		snprintf(linebuf, sizeof(linebuf), "@%u+%u: ",
+		         report.lineno,
+		         report.column);
+
 		const auto msg(report.ucmessage? string::convert(report.ucmessage) : std::string{});
-		snprintf(ircd::exception::buf, sizeof(ircd::exception::buf), "%s%s%s",
+		snprintf(ircd::exception::buf, sizeof(ircd::exception::buf), "%s%s%s%s",
 		         reflect((JSExnType)report.exnType),
 		         msg.empty()? "." : ": ",
+		         msg.empty()? "" : linebuf,
 		         msg.c_str());
 
+		JS_ClearPendingException(*cx);
 		return;
 	}
 
@@ -922,20 +932,39 @@ ircd::js::jserror::generate(const JSExnType &type,
 void
 ircd::js::jserror::create(const JSErrorReport &report)
 {
-	const auto type((JSExnType)report.exnType);
-	const auto &col(report.column);
-	const auto &line(report.lineno);
+	JSErrorReport cpy(report);
+	create(cpy);
+}
 
-	JS::RootedString msg(*cx);
-	JS::RootedString file(*cx);
-	JS::RootedObject stack(*cx);
+void
+ircd::js::jserror::create(JSErrorReport &report)
+{
+	JS::AutoFilename fn;
+	const auto col(report.column? nullptr : &report.column);
+	const auto line(report.lineno? nullptr : &report.lineno);
+	DescribeScriptedCaller(*cx, &fn, line, col);
+
+	JS::RootedString msg
+	{
+		*cx,
+		JS_NewUCStringCopyZ(*cx, report.ucmessage)
+	};
+
+	JS::RootedString file
+	{
+		*cx,
+		JS_NewStringCopyZ(*cx, fn.get()?: "<unknown>")
+	};
+
+	JS::RootedObject stack(*cx, nullptr);
+	const auto type((JSExnType)report.exnType);
 	if(!JS::CreateError(*cx,
 	                    type,
 	                    stack,
 	                    file,
-	                    line,
-	                    col,
-	                    const_cast<JSErrorReport *>(&report),
+	                    report.lineno,
+	                    report.column,
+	                    &report,
 	                    msg,
 	                    &val))
 	{
