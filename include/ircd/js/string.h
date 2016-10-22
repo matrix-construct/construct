@@ -52,12 +52,24 @@ struct string
 	string(string &&) noexcept;
 	string(const string &) = delete;
 
-	friend std::ostream &operator<<(std::ostream &os, const string &s);
+	friend int cmp(const string &, const string &);
+
+	friend bool operator==(const string &, const string &);
+	friend bool operator==(const string &, const char *const &);
+	friend bool operator==(const char *const &, const string &);
+	friend bool operator==(const string &, const std::string &);
+	friend bool operator==(const std::string &, const string &);
+
+	friend std::ostream &operator<<(std::ostream &, const string &);
 };
 
 inline
 string::string()
-:JS::Rooted<JSString *>{*cx}
+:JS::Rooted<JSString *>
+{
+	*cx,
+	JS_GetEmptyString(*rt)
+}
 {
 }
 
@@ -73,14 +85,18 @@ string::string(const value &val)
 :JS::Rooted<JSString *>
 {
 	*cx,
-	JS::ToString(*cx, val)
+	JS::ToString(*cx, val)?: throw type_error("Failed to convert value to string")
 }
 {
 }
 
 inline
 string::string(JSString *const &val)
-:JS::Rooted<JSString *>{*cx, val}
+:JS::Rooted<JSString *>
+{
+	*cx,
+	likely(val)? val : JS_GetEmptyString(*rt)
+}
 {
 }
 
@@ -135,6 +151,54 @@ std::ostream &operator<<(std::ostream &os, const string &s)
 {
 	os << std::string(s);
 	return os;
+}
+
+inline bool
+operator==(const string &a, const std::string &b)
+{
+	return operator==(a, b.c_str());
+}
+
+inline bool
+operator==(const std::string &a, const string &b)
+{
+	return operator==(a.c_str(), b);
+}
+
+inline bool
+operator==(const string &a, const char *const &b)
+{
+	bool ret;
+	if(unlikely(!JS_StringEqualsAscii(*cx, a, b, &ret)))
+		throw internal_error("Failed to compare string to native");
+
+	return ret;
+}
+
+inline bool
+operator==(const char *const &a, const string &b)
+{
+	bool ret;
+	if(unlikely(!JS_StringEqualsAscii(*cx, b, a, &ret)))
+		throw internal_error("Failed to compare string to native");
+
+	return ret;
+}
+
+inline bool
+operator==(const string &a, const string &b)
+{
+	return cmp(a, b) == 0;
+}
+
+inline int
+cmp(const string &a, const string &b)
+{
+	int32_t ret;
+	if(unlikely(!JS_CompareStrings(*cx, a, b, &ret)))
+		throw internal_error("Failed to compare strings");
+
+	return ret;
 }
 
 } // namespace js

@@ -802,7 +802,7 @@ ircd::js::native(const JSString *const &s,
 	if(unlikely(!max))
 		return 0;
 
-	ssize_t ret(JS_EncodeStringToBuffer(*cx, const_cast<JSString *>(s), buf, max));
+	ssize_t ret(s? JS_EncodeStringToBuffer(*cx, const_cast<JSString *>(s), buf, max) : 0);
 	ret = std::max(ret, ssize_t(0));
 	ret = std::min(ret, ssize_t(max - 1));
 	buf[ret] = '\0';
